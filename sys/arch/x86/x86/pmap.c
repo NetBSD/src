@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.291 2018/06/20 11:57:22 maxv Exp $	*/
+/*	$NetBSD: pmap.c,v 1.292 2018/07/21 06:09:13 maxv Exp $	*/
 
 /*
  * Copyright (c) 2008, 2010, 2016, 2017 The NetBSD Foundation, Inc.
@@ -170,7 +170,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.291 2018/06/20 11:57:22 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.292 2018/07/21 06:09:13 maxv Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -199,6 +199,7 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.291 2018/06/20 11:57:22 maxv Exp $");
 #include <machine/isa_machdep.h>
 #include <machine/cpuvar.h>
 #include <machine/cputypes.h>
+#include <machine/cpu_rng.h>
 
 #include <x86/pmap.h>
 #include <x86/pmap_pv.h>
@@ -372,6 +373,7 @@ static struct pmap kernel_pmap_store;	/* the kernel's pmap (proc0) */
 struct pmap *const kernel_pmap_ptr = &kernel_pmap_store;
 
 struct bootspace bootspace __read_mostly;
+struct slotspace slotspace __read_mostly;
 
 /*
  * pmap_pg_nx: if our processor supports PG_NX in the PTE then we
@@ -501,8 +503,6 @@ static struct pool_cache pmap_pv_cache;
 #ifdef __HAVE_DIRECT_MAP
 vaddr_t pmap_direct_base __read_mostly;
 vaddr_t pmap_direct_end __read_mostly;
-size_t pmap_direct_pdpe __read_mostly;
-size_t pmap_direct_npdp __read_mostly;
 #endif
 
 #ifndef __HAVE_DIRECT_MAP
@@ -1394,6 +1394,80 @@ pmap_pagetree_nentries_range(vaddr_t startva, vaddr_t endva, size_t pgsz)
 }
 #endif
 
+#if defined(__HAVE_DIRECT_MAP)
+static inline void
+slotspace_copy(int type, pd_entry_t *dst, pd_entry_t *src)
+{
+	size_t sslot = slotspace.area[type].sslot;
+	size_t nslot = slotspace.area[type].nslot;
+
+	memcpy(&dst[sslot], &src[sslot], nslot * sizeof(pd_entry_t));
+}
+#endif
+
+#if defined(__HAVE_DIRECT_MAP) && defined(X86ASLR)
+/*
+ * Randomize the location of an area. We count the holes in the VM space. We
+ * randomly select one hole, and then randomly select an area within that hole.
+ * Finally we update the associated entry in the slotspace structure.
+ */
+static vaddr_t
+slotspace_rand(int type, size_t sz, size_t align)
+{
+	struct {
+		int start;
+		int end;
+	} holes[SLSPACE_NAREAS+1];
+	size_t i, nholes, hole;
+	size_t startsl, endsl, nslots, winsize;
+	vaddr_t startva, va;
+
+	sz = roundup(sz, align);
+	nslots = roundup(sz+NBPD_L4, NBPD_L4) / NBPD_L4;
+
+	/* Get the holes. */
+	nholes = 0;
+	for (i = 0; i < SLSPACE_NAREAS-1; i++) {
+		startsl = slotspace.area[i].sslot;
+		if (slotspace.area[i].active)
+			startsl += slotspace.area[i].mslot;
+		endsl = slotspace.area[i+1].sslot;
+		if (endsl - startsl >= nslots) {
+			holes[nholes].start = startsl;
+			holes[nholes].end = endsl;
+			nholes++;
+		}
+	}
+	if (nholes == 0) {
+		panic("%s: impossible", __func__);
+	}
+
+	/* Select a hole. */
+	cpu_earlyrng(&hole, sizeof(hole));
+	hole %= nholes;
+	startsl = holes[hole].start;
+	endsl = holes[hole].end;
+	startva = VA_SIGN_NEG(startsl * NBPD_L4);
+
+	/* Select an area within the hole. */
+	cpu_earlyrng(&va, sizeof(va));
+	winsize = ((endsl - startsl) * NBPD_L4) - sz;
+	va %= winsize;
+	va = rounddown(va, align);
+	va += startva;
+
+	/* Update the entry. */
+	slotspace.area[type].sslot = pl4_i(va);
+	slotspace.area[type].nslot =
+	    pmap_pagetree_nentries_range(va, va+sz, NBPD_L4);
+	if (slotspace.area[type].dropmax) {
+		slotspace.area[type].mslot = slotspace.area[type].nslot;
+	}
+
+	return va;
+}
+#endif
+
 #ifdef __HAVE_PCPU_AREA
 static void
 pmap_init_pcpu(void)
@@ -1494,7 +1568,7 @@ pmap_init_directmap(struct pmap *kpm)
 	extern phys_ram_seg_t mem_clusters[];
 	extern int mem_cluster_cnt;
 
-	const vaddr_t startva = PMAP_DIRECT_DEFAULT_BASE;
+	vaddr_t startva;
 	size_t nL4e, nL3e, nL2e;
 	size_t L4e_idx, L3e_idx, L2e_idx;
 	size_t spahole, epahole;
@@ -1526,6 +1600,12 @@ pmap_init_directmap(struct pmap *kpm)
 	if (lastpa > MAXPHYSMEM) {
 		panic("pmap_init_directmap: lastpa incorrect");
 	}
+
+#ifdef X86ASLR
+	startva = slotspace_rand(SLAREA_DMAP, lastpa, NBPD_L2);
+#else
+	startva = PMAP_DIRECT_DEFAULT_BASE;
+#endif
 	endva = startva + lastpa;
 
 	/* We will use this temporary va. */
@@ -1583,8 +1663,6 @@ pmap_init_directmap(struct pmap *kpm)
 
 	pmap_direct_base = startva;
 	pmap_direct_end = endva;
-	pmap_direct_pdpe = L4e_idx;
-	pmap_direct_npdp = nL4e;
 
 	tlbflush();
 }
@@ -2294,8 +2372,7 @@ pmap_pdp_ctor(void *arg, void *v, int flags)
 	pdir[PDIR_SLOT_PCPU] = PDP_BASE[PDIR_SLOT_PCPU];
 #endif
 #ifdef __HAVE_DIRECT_MAP
-	memcpy(&pdir[pmap_direct_pdpe], &PDP_BASE[pmap_direct_pdpe],
-	    pmap_direct_npdp * sizeof(pd_entry_t));
+	slotspace_copy(SLAREA_DMAP, pdir, PDP_BASE);
 #endif
 #endif /* XEN  && __x86_64__*/
 
