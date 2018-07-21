@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.171 2018/07/14 14:29:40 maxv Exp $	*/
+/*	$NetBSD: locore.S,v 1.172 2018/07/21 06:09:13 maxv Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -975,6 +975,7 @@ longmode_hi:
 
 	pushq	%rdi
 	call	_C_LABEL(init_bootspace)
+	call	_C_LABEL(init_slotspace)
 	popq	%rdi
 	call	_C_LABEL(init_x86_64)
 	call 	_C_LABEL(main)

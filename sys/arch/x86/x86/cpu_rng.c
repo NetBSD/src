@@ -1,4 +1,4 @@
-/* $NetBSD: cpu_rng.c,v 1.5 2016/02/29 00:17:54 riastradh Exp $ */
+/* $NetBSD: cpu_rng.c,v 1.6 2018/07/21 06:09:13 maxv Exp $ */
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -38,6 +38,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/cpu.h>
+#include <sys/sha2.h>
 
 #include <x86/specialreg.h>
 
@@ -192,4 +193,53 @@ cpu_rng(cpu_rng_t *out)
 	default:
 		panic("cpu_rng: unknown mode %d", (int)cpu_rng_mode);
 	}
+}
+
+/* -------------------------------------------------------------------------- */
+
+static uint64_t earlyrng_state;
+
+/*
+ * Small PRNG, that can be used very early. The only requirement is that
+ * cpu_probe got called before.
+ */
+void
+cpu_earlyrng(void *out, size_t sz)
+{
+	uint8_t digest[SHA512_DIGEST_LENGTH];
+	SHA512_CTX ctx;
+	cpu_rng_t buf[8];
+	uint64_t val;
+	int i;
+
+	bool has_rdseed = (cpu_feature[5] & CPUID_SEF_RDSEED) != 0;
+	bool has_rdrand = (cpu_feature[1] & CPUID2_RDRAND) != 0;
+
+	KASSERT(sz + sizeof(uint64_t) <= SHA512_DIGEST_LENGTH);
+
+	SHA512_Init(&ctx);
+
+	SHA512_Update(&ctx, (uint8_t *)&earlyrng_state, sizeof(earlyrng_state));
+	if (has_rdseed) {
+		for (i = 0; i < 8; i++) {
+			if (cpu_rng_rdseed(&buf[i]) == 0) {
+				break;
+			}
+		}
+		SHA512_Update(&ctx, (uint8_t *)buf, i * sizeof(cpu_rng_t));
+	} else if (has_rdrand) {
+		for (i = 0; i < 8; i++) {
+			if (cpu_rng_rdrand(&buf[i]) == 0) {
+				break;
+			}
+		}
+		SHA512_Update(&ctx, (uint8_t *)buf, i * sizeof(cpu_rng_t));
+	}
+	val = rdtsc();
+	SHA512_Update(&ctx, (uint8_t *)&val, sizeof(val));
+
+	SHA512_Final(digest, &ctx);
+
+	memcpy(out, digest, sz);
+	memcpy(&earlyrng_state, &digest[sz], sizeof(earlyrng_state));
 }
