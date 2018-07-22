@@ -1,4 +1,4 @@
-/*	$NetBSD: expand.c,v 1.124 2018/07/20 22:47:26 kre Exp $	*/
+/*	$NetBSD: expand.c,v 1.125 2018/07/22 20:38:06 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)expand.c	8.5 (Berkeley) 5/15/95";
 #else
-__RCSID("$NetBSD: expand.c,v 1.124 2018/07/20 22:47:26 kre Exp $");
+__RCSID("$NetBSD: expand.c,v 1.125 2018/07/22 20:38:06 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -1457,6 +1457,7 @@ expmeta(char *enddir, char *name)
 	int atend;
 	int matchdot;
 
+	CTRACE(DBG_EXPAND|DBG_MATCH, ("expmeta(\"%s\")\n", name));
 	metaflag = 0;
 	start = name;
 	for (p = name ; ; p++) {
@@ -1697,6 +1698,8 @@ patmatch(const char *pattern, const char *string, int squoted)
 	char c;
 	wchar_t wc, wc2;
 
+	VTRACE(DBG_MATCH, ("patmatch(P=\"%s\", W=\"%s\"%s): ",
+	    pattern, string, squoted ? ", SQ" : ""));
 	p = pattern;
 	q = string;
 	bt_p = NULL;
@@ -1706,6 +1709,7 @@ patmatch(const char *pattern, const char *string, int squoted)
 		case '\0':
 			if (*q != '\0')
 				goto backtrack;
+			VTRACE(DBG_MATCH, ("match\n"));
 			return 1;
 		case CTLESC:
 			if (squoted && *q == CTLESC)
@@ -1719,8 +1723,10 @@ patmatch(const char *pattern, const char *string, int squoted)
 		case '?':
 			if (squoted && *q == CTLESC)
 				q++;
-			if (*q++ == '\0')
+			if (*q++ == '\0') {
+				VTRACE(DBG_MATCH, ("?fail\n"));
 				return 0;
+			}
 			break;
 		case '*':
 			c = *p;
@@ -1732,8 +1738,10 @@ patmatch(const char *pattern, const char *string, int squoted)
 					if (squoted && *q == CTLESC &&
 					    q[1] == c)
 						break;
-					if (*q == '\0')
+					if (*q == '\0') {
+						VTRACE(DBG_MATCH, ("*fail\n"));
 						return 0;
+					}
 					if (squoted && *q == CTLESC)
 						q++;
 					q++;
@@ -1786,8 +1794,10 @@ patmatch(const char *pattern, const char *string, int squoted)
 				p++;
 			}
 			found = 0;
-			if (*q == '\0')
+			if (*q == '\0') {
+				VTRACE(DBG_MATCH, ("[]fail\n"));
 				return 0;
+			}
 			chr = (unsigned char)*q++;
 			c = *p++;
 			do {
@@ -1837,10 +1847,14 @@ backtrack:
 			 * of the string), go back to the last '*' seen and
 			 * have it match one additional character.
 			 */
-			if (bt_p == NULL)
+			if (bt_p == NULL) {
+				VTRACE(DBG_MATCH, ("BTP fail\n"));
 				return 0;
-			if (*bt_q == '\0')
+			}
+			if (*bt_q == '\0') {
+				VTRACE(DBG_MATCH, ("BTQ fail\n"));
 				return 0;
+			}
 			bt_q++;
 			p = bt_p;
 			q = bt_q;
@@ -1953,6 +1967,8 @@ casematch(union node *pattern, char *val)
 	int result;
 	char *p;
 
+	CTRACE(DBG_MATCH, ("casematch(P=\"%s\", W=\"%s\")\n",
+	    pattern->narg.text, val));
 	setstackmark(&smark);
 	argbackq = pattern->narg.backquote;
 	STARTSTACKSTR(expdest);
