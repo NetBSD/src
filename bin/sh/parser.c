@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.c,v 1.148 2018/07/20 22:47:26 kre Exp $	*/
+/*	$NetBSD: parser.c,v 1.149 2018/07/22 23:07:48 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)parser.c	8.7 (Berkeley) 5/16/95";
 #else
-__RCSID("$NetBSD: parser.c,v 1.148 2018/07/20 22:47:26 kre Exp $");
+__RCSID("$NetBSD: parser.c,v 1.149 2018/07/22 23:07:48 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -1817,8 +1817,10 @@ readtoken1(int firstc, char const *syn, int magicq)
 			}
 			quotef = 1;	/* current token is quoted */
 			if (ISDBLQUOTE() && c != '\\' && c != '`' &&
-			    c != '$' && (c != '"' || magicq))
+			    c != '$' && (c != '"' || magicq)) {
+				USTPUTC(CTLESC, out);
 				USTPUTC('\\', out);
+			}
 			if (SQSYNTAX[c] == CCTL || SQSYNTAX[c] == CSBACK)
 				USTPUTC(CTLESC, out);
 			else if (!magicq) {
