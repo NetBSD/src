@@ -1,6 +1,6 @@
-/*	$NetBSD: dbregs.c,v 1.9 2018/04/08 14:21:23 kamil Exp $	*/
+/*	$NetBSD: dbregs.c,v 1.10 2018/07/22 15:02:51 maxv Exp $	*/
 
-/*-
+/*
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
@@ -26,7 +26,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/lwp.h>
@@ -39,7 +38,7 @@
 
 #include <machine/pmap.h>
 
-extern struct pool x86_dbregspl;
+struct pool x86_dbregspl;
 
 static struct dbreg initdbstate;
 
@@ -56,7 +55,7 @@ static struct dbreg initdbstate;
 	X86_DR7_GLOBAL_DR3_BREAKPOINT )
 
 void
-x86_dbregs_setup_initdbstate(void)
+x86_dbregs_init(void)
 {
 	/* DR0-DR3 should always be 0 */
 	initdbstate.dr[0] = rdr0();
@@ -70,14 +69,14 @@ x86_dbregs_setup_initdbstate(void)
 	/* DR8-DR15 are reserved - skip */
 
 	/*
-	 * Paranoid case.
-	 *
 	 * Explicitly reset some bits just in case they could be
 	 * set by brave software/hardware before the kernel boot.
 	 */
 	initdbstate.dr[6] &= ~X86_BREAKPOINT_CONDITION_DETECTED;
-
 	initdbstate.dr[7] &= ~X86_DR7_GENERAL_DETECT_ENABLE;
+
+	pool_init(&x86_dbregspl, sizeof(struct dbreg), 16, 0, 0, "dbregs",
+	    NULL, IPL_NONE);
 }
 
 void
@@ -88,16 +87,16 @@ x86_dbregs_clear(struct lwp *l)
 	KASSERT(pcb->pcb_dbregs == NULL);
 
 	/*
-	 * It's sufficient to just disable Debug Control Register (DR7)
-	 * it will deactivate hardware watchpoints
+	 * It's sufficient to just disable Debug Control Register (DR7).
+	 * It will deactivate hardware watchpoints.
 	 */
 	ldr7(0);
 
 	/*
-	 * However at some point we need to clear Debug Status Registers (DR6)
-	 * CPU will never do it automatically
+	 * However at some point we need to clear Debug Status Registers
+	 * (DR6). The CPU will never do it automatically.
 	 *
- 	 * Clear BREAKPOINT_CONDITION_DETECTED bits and ignore the rest
+	 * Clear BREAKPOINT_CONDITION_DETECTED bits and ignore the rest.
 	 */
 	ldr6(rdr6() & ~X86_BREAKPOINT_CONDITION_DETECTED);
 }
@@ -135,6 +134,7 @@ x86_dbregs_store_dr6(struct lwp *l)
 {
 	struct pcb *pcb = lwp_getpcb(l);
 
+	KASSERT(l == curlwp);
 	KASSERT(pcb->pcb_dbregs != NULL);
 
 	pcb->pcb_dbregs->dr[6] = rdr6();
@@ -143,15 +143,14 @@ x86_dbregs_store_dr6(struct lwp *l)
 int
 x86_dbregs_user_trap(void)
 {
-	register_t dr7, dr6;	/* debug registers dr6 and dr7 */
-	register_t bp;		/* breakpoint bits extracted from dr6 */
+	register_t dr7, dr6;
+	register_t bp;
 
 	dr7 = rdr7();
 	if ((dr7 & X86_GLOBAL_BREAKPOINT) == 0) {
 		/*
-		 * all Global Breakpoint bits in the DR7 register are zero,
-		 * thus the trap couldn't have been caused by the
-		 * hardware debug registers
+		 * All Global Breakpoint bits are zero, thus the trap couldn't
+		 * have been caused by the hardware debug registers.
 		 */
 		return 0;
 	}
@@ -161,15 +160,15 @@ x86_dbregs_user_trap(void)
 
 	if (!bp) {
 		/*
-		 * None of the breakpoint bits are set meaning this
-		 * trap was not caused by any of the debug registers
+		 * None of the breakpoint bits are set, meaning this
+		 * trap was not caused by any of the debug registers.
 		 */
 		return 0;
 	}
 
 	/*
-	 * at least one of the breakpoints were hit, check to see
-	 * which ones and if any of them are user space addresses
+	 * At least one of the breakpoints was hit, check to see
+	 * which ones and if any of them are user space addresses.
 	 */
 
 	if (bp & X86_DR6_DR0_BREAKPOINT_CONDITION_DETECTED)
@@ -197,12 +196,14 @@ x86_dbregs_validate(const struct dbreg *regs)
 	size_t i;
 
 	/* Check that DR0-DR3 contain user-space address */
-	for (i = 0; i < X86_DBREGS; i++)
+	for (i = 0; i < X86_DBREGS; i++) {
 		if (regs->dr[i] >= (vaddr_t)VM_MAXUSER_ADDRESS)
 			return EINVAL;
+	}
 
-	if (regs->dr[7] & X86_DR7_GENERAL_DETECT_ENABLE)
+	if (regs->dr[7] & X86_DR7_GENERAL_DETECT_ENABLE) {
 		return EINVAL;
+	}
 
 	/*
 	 * Skip checks for reserved registers (DR4-DR5, DR8-DR15).
@@ -216,8 +217,9 @@ x86_dbregs_write(struct lwp *l, const struct dbreg *regs)
 {
 	struct pcb *pcb = lwp_getpcb(l);
 
-	if (pcb->pcb_dbregs == NULL)
+	if (pcb->pcb_dbregs == NULL) {
 		pcb->pcb_dbregs = pool_get(&x86_dbregspl, PR_WAITOK);
+	}
 
 	memcpy(pcb->pcb_dbregs, regs, sizeof(*regs));
 }

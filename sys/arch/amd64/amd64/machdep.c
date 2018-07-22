@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.307 2018/07/21 06:09:13 maxv Exp $	*/
+/*	$NetBSD: machdep.c,v 1.308 2018/07/22 15:02:51 maxv Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.307 2018/07/21 06:09:13 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.308 2018/07/22 15:02:51 maxv Exp $");
 
 #include "opt_modular.h"
 #include "opt_user_ldt.h"
@@ -280,7 +280,7 @@ void (*delay_func)(unsigned int) = xen_delay;
 void (*initclock_func)(void) = xen_initclocks;
 #endif
 
-struct pool x86_dbregspl;
+extern struct pool x86_dbregspl;
 
 struct nmistore {
 	uint64_t cr3;
@@ -1929,11 +1929,7 @@ init_x86_64(paddr_t first_avail)
 #endif
 
 	pcb->pcb_dbregs = NULL;
-
-	x86_dbregs_setup_initdbstate();
-
-	pool_init(&x86_dbregspl, sizeof(struct dbreg), 16, 0, 0, "dbregs",
-	    NULL, IPL_NONE);
+	x86_dbregs_init();
 }
 
 void

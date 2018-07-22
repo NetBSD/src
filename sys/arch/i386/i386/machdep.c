@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.806 2018/04/05 08:43:07 maxv Exp $	*/
+/*	$NetBSD: machdep.c,v 1.807 2018/07/22 15:02:51 maxv Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009, 2017
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.806 2018/04/05 08:43:07 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.807 2018/07/22 15:02:51 maxv Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_freebsd.h"
@@ -213,7 +213,7 @@ int i386_use_fxsave;
 int i386_has_sse;
 int i386_has_sse2;
 
-struct pool x86_dbregspl;
+extern struct pool x86_dbregspl;
 
 vaddr_t idt_vaddr;
 paddr_t idt_paddr;
@@ -1443,11 +1443,7 @@ init386(paddr_t first_avail)
 	}
 
 	pcb->pcb_dbregs = NULL;
-
-	x86_dbregs_setup_initdbstate();
-
-	pool_init(&x86_dbregspl, sizeof(struct dbreg), 16, 0, 0, "dbregs",
-	    NULL, IPL_NONE);
+	x86_dbregs_init();
 }
 
 #include <dev/ic/mc146818reg.h>		/* for NVRAM POST */
