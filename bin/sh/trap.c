@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.42 2018/07/22 20:38:06 kre Exp $	*/
+/*	$NetBSD: trap.c,v 1.43 2018/07/22 20:42:50 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)trap.c	8.5 (Berkeley) 6/5/95";
 #else
-__RCSID("$NetBSD: trap.c,v 1.42 2018/07/22 20:38:06 kre Exp $");
+__RCSID("$NetBSD: trap.c,v 1.43 2018/07/22 20:42:50 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -523,11 +523,9 @@ dotrap(void)
 		savestatus=exitstatus;
 		CTRACE(DBG_TRAP|DBG_SIG, ("dotrap %d: \"%s\"\n", i,
 		    trap[i] ? trap[i] : "-NULL-"));
-		if ((tr = trap[i]) != NULL) {
-			tr = savestr(tr);	/* trap code may free trap[i] */
-			evalstring(tr, 0);
-			ckfree(tr);
-		}
+		tr = savestr(trap[i]);		/* trap code may free trap[i] */
+		evalstring(tr, 0);
+		ckfree(tr);
 		exitstatus=savestatus;
 	}
 }
