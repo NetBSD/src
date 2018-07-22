@@ -1,4 +1,4 @@
-/*	$NetBSD: expand.c,v 1.126 2018/07/22 21:16:58 kre Exp $	*/
+/*	$NetBSD: expand.c,v 1.127 2018/07/22 23:07:48 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)expand.c	8.5 (Berkeley) 5/15/95";
 #else
-__RCSID("$NetBSD: expand.c,v 1.126 2018/07/22 21:16:58 kre Exp $");
+__RCSID("$NetBSD: expand.c,v 1.127 2018/07/22 23:07:48 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -927,7 +927,9 @@ evalvar(const char *p, int flag)
 					varlen++;
 			} else {
 				while (*val) {
-					if (quotes && syntax[(int)*val] == CCTL)
+					if (quotes && (varflags & VSQUOTE) &&
+					    (syntax[(int)*val] == CCTL ||
+					     syntax[(int)*val] == CBACK))
 						STPUTC(CTLESC, expdest);
 					STPUTC(*val++, expdest);
 				}
@@ -1465,22 +1467,59 @@ expmeta(char *enddir, char *name)
 			metaflag = 1;
 		else if (*p == '[') {
 			q = p + 1;
-			if (*q == '!')
+			if (*q == '!' || *q == '^')
 				q++;
 			for (;;) {
 				while (*q == CTLQUOTEMARK || *q == CTLNONL)
 					q++;
-				if (*q == CTLESC)
+				if (*q == ']') {
 					q++;
-				if (*q == '/' || *q == '\0')
-					break;
-				if (*++q == ']') {
 					metaflag = 1;
 					break;
 				}
+				if (*q == '[' && q[1] == ':') {
+					/*
+					 * character class, look for :] ending
+					 * also stop on ']' (end bracket expr)
+					 * or '\0' or '/' (end pattern)
+					 */
+					while (*++q != '\0' && *q != ']' &&
+					    *q != '/') {
+						if (*q == CTLESC) {
+							if (*++q == '\0')
+								break;
+							if (*q == '/')
+								break;
+						} else if (*q == ':' &&
+						    q[1] == ']')
+							break;
+					}
+					if (*q == ':') {
+						/*
+						 * stopped at ':]'
+						 * still in [...]
+						 * skip ":]" and continue;
+						 */
+						q += 2;
+						continue;
+					}
+
+					/* done at end of pattern, not [...] */
+					if (*q == '\0' || *q == '/')
+						break;
+
+					/* found the ']', we have a [...] */
+					metaflag = 1;
+					q++;	/* skip ']' */
+					break;
+				}
+				if (*q == CTLESC)
+					q++;
+				/* end of pattern cannot be escaped */
+				if (*q == '/' || *q == '\0')
+					break;
+				q++;
 			}
-		} else if (*p == '!' && p[1] == '!'	&& (p == name || p[-1] == '/')) {
-			metaflag = 1;
 		} else if (*p == '\0')
 			break;
 		else if (*p == CTLQUOTEMARK || *p == CTLNONL)
@@ -1707,11 +1746,25 @@ patmatch(const char *pattern, const char *string, int squoted)
 	for (;;) {
 		switch (c = *p++) {
 		case '\0':
+			if (squoted && *q == CTLESC) {
+				if (q[1] == '\0')
+					q++;
+			}
 			if (*q != '\0')
 				goto backtrack;
 			VTRACE(DBG_MATCH, ("match\n"));
 			return 1;
 		case CTLESC:
+			if (squoted && *q == CTLESC)
+				q++;
+			if (*p == '\0' && *q == '\0') {
+				VTRACE(DBG_MATCH, ("match-\\\n"));
+				return 1;
+			}
+			if (*q++ != *p++)
+				goto backtrack;
+			break;
+		case '\\':
 			if (squoted && *q == CTLESC)
 				q++;
 			if (*q++ != *p++)
@@ -1746,6 +1799,10 @@ patmatch(const char *pattern, const char *string, int squoted)
 						q++;
 					q++;
 				}
+			}
+			if (c == CTLESC && p[1] == '\0') {
+				VTRACE(DBG_MATCH, ("match+\\\n"));
+				return 1;
 			}
 			/*
 			 * First try the shortest match for the '*' that
@@ -1798,6 +1855,8 @@ patmatch(const char *pattern, const char *string, int squoted)
 				VTRACE(DBG_MATCH, ("[]fail\n"));
 				return 0;
 			}
+			if (squoted && *q == CTLESC)
+				q++;
 			chr = (unsigned char)*q++;
 			c = *p++;
 			do {
