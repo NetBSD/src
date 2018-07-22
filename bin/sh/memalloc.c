@@ -1,4 +1,4 @@
-/*	$NetBSD: memalloc.c,v 1.30 2017/06/17 07:22:12 kre Exp $	*/
+/*	$NetBSD: memalloc.c,v 1.31 2018/07/22 20:37:57 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)memalloc.c	8.3 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: memalloc.c,v 1.30 2017/06/17 07:22:12 kre Exp $");
+__RCSID("$NetBSD: memalloc.c,v 1.31 2018/07/22 20:37:57 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -207,12 +207,12 @@ growstackblock(void)
 {
 	int newlen = SHELL_ALIGN(stacknleft * 2 + 100);
 
+	INTOFF;
 	if (stacknxt == stackp->space && stackp != &stackbase) {
 		struct stack_block *oldstackp;
 		struct stackmark *xmark;
 		struct stack_block *sp;
 
-		INTOFF;
 		oldstackp = stackp;
 		sp = stackp;
 		stackp = sp->prev;
@@ -221,6 +221,7 @@ growstackblock(void)
 		sp->prev = stackp;
 		stackp = sp;
 		stacknxt = sp->space;
+		sstrnleft += newlen - stacknleft;
 		stacknleft = newlen;
 
 		/*
@@ -231,10 +232,10 @@ growstackblock(void)
 		while (xmark != NULL && xmark->stackp == oldstackp) {
 			xmark->stackp = stackp;
 			xmark->stacknxt = stacknxt;
+			xmark->sstrnleft += stacknleft - xmark->stacknleft;
 			xmark->stacknleft = stacknleft;
 			xmark = xmark->marknext;
 		}
-		INTON;
 	} else {
 		char *oldspace = stacknxt;
 		int oldlen = stacknleft;
@@ -244,6 +245,7 @@ growstackblock(void)
 		stacknxt = p;			/* free the space */
 		stacknleft += newlen;		/* we just allocated */
 	}
+	INTON;
 }
 
 void
