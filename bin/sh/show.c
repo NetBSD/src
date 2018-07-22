@@ -1,4 +1,4 @@
-/*	$NetBSD: show.c,v 1.47 2017/06/30 23:00:40 kre Exp $	*/
+/*	$NetBSD: show.c,v 1.48 2018/07/22 20:38:06 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)show.c	8.3 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: show.c,v 1.47 2017/06/30 23:00:40 kre Exp $");
+__RCSID("$NetBSD: show.c,v 1.48 2018/07/22 20:38:06 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -1070,6 +1070,7 @@ static struct debug_flag {
 	{ 'c',	DBG_CMDS	},	/* command searching, ... */
 	{ 'e',	DBG_EVAL	},	/* evaluation of the parse tree */
 	{ 'f',	DBG_REDIR	},	/* file descriptors & redirections */
+	{ 'g',	DBG_MATCH	},	/* pattern matching (glob) */
 	{ 'h',	DBG_HISTORY	},	/* history & cmd line editing */
 	{ 'i',	DBG_INPUT	},	/* shell input routines */
 	{ 'j',	DBG_JOBS	},	/* job control, structures */
