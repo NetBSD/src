@@ -1,4 +1,4 @@
-/*	$NetBSD: expand.c,v 1.125 2018/07/22 20:38:06 kre Exp $	*/
+/*	$NetBSD: expand.c,v 1.126 2018/07/22 21:16:58 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)expand.c	8.5 (Berkeley) 5/15/95";
 #else
-__RCSID("$NetBSD: expand.c,v 1.125 2018/07/22 20:38:06 kre Exp $");
+__RCSID("$NetBSD: expand.c,v 1.126 2018/07/22 21:16:58 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -107,7 +107,7 @@ STATIC const char *evalvar(const char *, int);
 STATIC int varisset(const char *, int);
 STATIC void varvalue(const char *, int, int, int);
 STATIC void recordregion(int, int, int);
-STATIC void removerecordregions(int); 
+STATIC void removerecordregions(int);
 STATIC void ifsbreakup(char *, struct arglist *);
 STATIC void ifsfree(void);
 STATIC void expandmeta(struct strlist *, int);
@@ -250,7 +250,7 @@ argstr(const char *p, int flag)
 		case CTLENDARI: /* end of a $(( )) string */
 			NULLTERM_4_TRACE(expdest);
 			VTRACE(DBG_EXPAND, ("argstr returning at \"%.6s\"..."
-			    " after %2.2X; added \"%s\" to expdest\n", 
+			    " after %2.2X; added \"%s\" to expdest\n",
 			    p, (c&0xff), stackblock()));
 			return p;
 		case CTLQUOTEMARK:
@@ -288,7 +288,7 @@ argstr(const char *p, int flag)
 			p = evalvar(p, (flag & ~EXP_IFS_SPLIT) | (flag & ifs_split));
 			NULLTERM_4_TRACE(expdest);
 			VTRACE(DBG_EXPAND, ("argstr evalvar "
-			   "added \"%s\" to expdest\n", 
+			   "added \"%s\" to expdest\n",
 			   stackblock() + pos));
 			break;
 		}
@@ -435,7 +435,7 @@ exptilde(const char *p, int flag)
 }
 
 
-STATIC void 
+STATIC void
 removerecordregions(int endoff)
 {
 
@@ -759,7 +759,7 @@ subevalvar_trim(const char *p, int strloc, int subtype, int startloc,
 				goto recordleft;
 			*loc = c;
 			if (quotes && *loc == CTLESC)
-			        loc++;
+				loc++;
 		}
 		return 0;
 
@@ -783,12 +783,12 @@ subevalvar_trim(const char *p, int strloc, int subtype, int startloc,
 		return 0;
 
 	case VSTRIMRIGHT:
-	        for (loc = str - 1; loc >= startp;) {
+		for (loc = str - 1; loc >= startp;) {
 			if (patmatch(str, loc, quotes))
 				goto recordright;
 			loc--;
 			if (quotes && loc > startp &&
-			    *(loc - 1) == CTLESC) { 
+			    *(loc - 1) == CTLESC) {
 				for (q = startp; q < loc; q++)
 					if (*q == CTLESC)
 						q++;
@@ -803,7 +803,7 @@ subevalvar_trim(const char *p, int strloc, int subtype, int startloc,
 			if (patmatch(str, loc, quotes))
 				goto recordright;
 			if (quotes && *loc == CTLESC)
-			        loc++;
+				loc++;
 		}
 		return 0;
 
@@ -965,7 +965,7 @@ evalvar(const char *p, int flag)
 		/* FALLTHROUGH */
 	case VSMINUS:
 		if (!set) {
-		        argstr(p, flag | (apply_ifs ? EXP_IFS_SPLIT : 0));
+			argstr(p, flag | (apply_ifs ? EXP_IFS_SPLIT : 0));
 			/*
 			 * ${x-a b c} doesn't get split, but removing the
 			 * 'apply_ifs = 0' apparently breaks ${1+"$@"}..
@@ -1009,9 +1009,9 @@ evalvar(const char *p, int flag)
 			/* if subevalvar() returns, it always returns 1 */
 
 			varflags &= ~VSNUL;
-			/* 
-			 * Remove any recorded regions beyond 
-			 * start of variable 
+			/*
+			 * Remove any recorded regions beyond
+			 * start of variable
 			 */
 			removerecordregions(startloc);
 			goto again;
@@ -1836,12 +1836,12 @@ patmatch(const char *pattern, const char *string, int squoted)
 				goto backtrack;
 			break;
 		}
-dft:	        default:
+  dft:		default:
 			if (squoted && *q == CTLESC)
 				q++;
 			if (*q++ == c)
 				break;
-backtrack:
+  backtrack:
 			/*
 			 * If we have a mismatch (other than hitting the end
 			 * of the string), go back to the last '*' seen and
