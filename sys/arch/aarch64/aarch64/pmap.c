@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.11 2018/07/21 13:08:35 ryo Exp $	*/
+/*	$NetBSD: pmap.c,v 1.12 2018/07/23 22:32:22 ryo Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.11 2018/07/21 13:08:35 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.12 2018/07/23 22:32:22 ryo Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_ddb.h"
@@ -149,10 +149,6 @@ PMAP_COUNTER(unwire_failure, "pmap_unwire failure");
 #define LX_BLKPAG_ATTR_DEVICE_MEM	__SHIFTIN(3, LX_BLKPAG_ATTR_INDX)
 #define LX_BLKPAG_ATTR_MASK		LX_BLKPAG_ATTR_INDX
 
-/* flags for cpu_info->ci_pmap_flags */
-#define CI_PMAP_FLAGS_KPM_OWNLOCKED	0x00000001
-
-
 struct pv_entry {
 	TAILQ_ENTRY(pv_entry) pv_link;
 	struct pmap *pv_pmap;
@@ -194,33 +190,15 @@ pmap_pv_unlock(struct vm_page_md *md)
 }
 
 
-static inline int
-pm_kpm_ownlocked(struct pmap *pm)
-{
-	if (pm != pmap_kernel())
-		return false;
-
-	return curcpu()->ci_pmap_flags & CI_PMAP_FLAGS_KPM_OWNLOCKED;
-}
-
 static inline void
 pm_lock(struct pmap *pm)
 {
 	mutex_enter(&pm->pm_lock);
-
-	/*
-	 * remember locking myself if pm is pmap_kernel.
-	 * mutex_owned() works only for adaptive lock, therefore we cannot use.
-	 */
-	if (pm == pmap_kernel())
-		curcpu()->ci_pmap_flags |= CI_PMAP_FLAGS_KPM_OWNLOCKED;
 }
 
 static inline void
 pm_unlock(struct pmap *pm)
 {
-	if (pm == pmap_kernel())
-		curcpu()->ci_pmap_flags &= ~CI_PMAP_FLAGS_KPM_OWNLOCKED;
 	mutex_exit(&pm->pm_lock);
 }
 
@@ -973,7 +951,7 @@ pv_dump(struct vm_page_md *md, void (*pr)(const char *, ...))
 #endif /* PMAP_PV_DEBUG & DDB */
 
 static int
-_pmap_enter_pv(struct vm_page *pg, struct pmap *pm, vaddr_t va,
+_pmap_enter_pv(struct vm_page *pg, struct pmap *pm, struct pv_entry **pvp, vaddr_t va,
     pt_entry_t *ptep, paddr_t pa, u_int flags)
 {
 	struct vm_page_md *md;
@@ -999,10 +977,14 @@ _pmap_enter_pv(struct vm_page *pg, struct pmap *pm, vaddr_t va,
 	if (pv == NULL) {
 		pmap_pv_unlock(md);
 
-		/* create and link new pv */
-		pv = pool_cache_get(&_pmap_pv_pool, PR_NOWAIT);
+		/*
+		 * create and link new pv.
+		 * pv is already allocated at beginning of _pmap_enter().
+		 */
+		pv = *pvp;
 		if (pv == NULL)
 			return ENOMEM;
+		*pvp = NULL;
 
 		pv->pv_pmap = pm;
 		pv->pv_va = va;
@@ -1300,6 +1282,7 @@ _pmap_enter(struct pmap *pm, vaddr_t va, paddr_t pa, vm_prot_t prot,
     u_int flags, bool kenter)
 {
 	struct vm_page *pg;
+	struct pv_entry *spv;
 	pd_entry_t pde;
 	pt_entry_t attr, pte, *ptep;
 	pd_entry_t *l0, *l1, *l2, *l3;
@@ -1307,7 +1290,6 @@ _pmap_enter(struct pmap *pm, vaddr_t va, paddr_t pa, vm_prot_t prot,
 	uint32_t mdattr;
 	unsigned int idx;
 	int error = 0;
-	int pm_locked;
 	const bool user = (pm != pmap_kernel());
 	bool executable;
 
@@ -1348,21 +1330,19 @@ _pmap_enter(struct pmap *pm, vaddr_t va, paddr_t pa, vm_prot_t prot,
 	else
 		pg = PHYS_TO_VM_PAGE(pa);
 
-#ifdef PMAPCOUNTERS
-	if (pg == NULL) {
-		PMAP_COUNT(unmanaged_mappings);
-	} else {
+	if (pg != NULL) {
 		PMAP_COUNT(managed_mappings);
+		/*
+		 * allocate pv in advance of pm_lock() to avoid locking myself.
+		 * pool_cache_get() may call pmap_kenter() internally.
+		 */
+		spv = pool_cache_get(&_pmap_pv_pool, PR_NOWAIT);
+	} else {
+		PMAP_COUNT(unmanaged_mappings);
+		spv = NULL;
 	}
-#endif
 
-	/*
-	 * _pmap_enter() may be called recursively. In case of
-	 * pmap_enter() -> _pmap_enter_pv() -> pool_cache_get() -> pmap_kenter()
-	 */
-	pm_locked = pm_kpm_ownlocked(pm);
-	if (!pm_locked)
-		pm_lock(pm);
+	pm_lock(pm);
 
 	/*
 	 * traverse L0 -> L1 -> L2 -> L3 table with growing pdp if needed.
@@ -1440,21 +1420,9 @@ _pmap_enter(struct pmap *pm, vaddr_t va, paddr_t pa, vm_prot_t prot,
 		pm->pm_stats.resident_count--;
 	}
 
-	/*
-	 * _pmap_enter_pv() may call pmap_kenter() internally.
-	 * don't allocate pv_entry (don't call _pmap_enter_pv) when kenter mode.
-	 * `pg' have got to be NULL if (kenter).
-	 */
 	mdattr = VM_PROT_READ | VM_PROT_WRITE;
 	if (pg != NULL) {
-		if (pm != pmap_kernel()) {
-			/* avoid deadlock (see above comment) */
-			pm_lock(pmap_kernel());
-		}
-		error = _pmap_enter_pv(pg, pm, va, ptep, pa, flags);
-		if (pm != pmap_kernel()) {
-			pm_unlock(pmap_kernel());
-		}
+		error = _pmap_enter_pv(pg, pm, &spv, va, ptep, pa, flags);
 
 		if (error != 0) {
 			/*
@@ -1515,8 +1483,12 @@ _pmap_enter(struct pmap *pm, vaddr_t va, paddr_t pa, vm_prot_t prot,
 	pm->pm_stats.resident_count++;
 
  done:
-	if (!pm_locked)
-		pm_unlock(pm);
+	pm_unlock(pm);
+
+	/* spare pv was not used. discard */
+	if (spv != NULL)
+		pool_cache_put(&_pmap_pv_pool, spv);
+
 	return error;
 }
 
