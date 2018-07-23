@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.1 2018/04/01 04:35:03 ryo Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.2 2018/07/23 22:51:39 ryo Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -89,6 +89,7 @@ void aarch64_idcache_wbinv_range(vaddr_t, vsize_t);
 void aarch64_dcache_wbinv_range(vaddr_t, vsize_t);
 void aarch64_dcache_inv_range(vaddr_t, vsize_t);
 void aarch64_dcache_wb_range(vaddr_t, vsize_t);
+void aarch64_icache_inv_all(void);
 void aarch64_drain_writebuf(void);
 
 /* tlb op in cpufunc_asm_armv8.S */
@@ -113,6 +114,7 @@ void aarch64_tlbi_by_asid_va_ll(int, vaddr_t);	/*  an ASID, a VA, lastlevel */
 	(aarch64_dcache_wbinv_all(), aarch64_icache_inv_all())
 #define cpu_icache_sync_all()		\
 	(aarch64_dcache_wb_all(), aarch64_icache_inv_all())
+#define cpu_icache_inv_all()		aarch64_icache_inv_all()
 
 #define cpu_dcache_wbinv_range(v,s)	aarch64_dcache_wbinv_range((v),(s))
 #define cpu_dcache_inv_range(v,s)	aarch64_dcache_inv_range((v),(s))

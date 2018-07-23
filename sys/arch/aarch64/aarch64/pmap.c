@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.12 2018/07/23 22:32:22 ryo Exp $	*/
+/*	$NetBSD: pmap.c,v 1.13 2018/07/23 22:51:39 ryo Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.12 2018/07/23 22:32:22 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.13 2018/07/23 22:51:39 ryo Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_ddb.h"
@@ -1120,6 +1120,9 @@ pmap_protect(struct pmap *pm, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 
 	for (va = sva; va < eva; va += PAGE_SIZE) {
 		pt_entry_t *ptep, pte;
+#ifdef UVMHIST
+		pt_entry_t opte;
+#endif
 		struct vm_page *pg;
 		paddr_t pa;
 		uint32_t mdattr;
@@ -1153,8 +1156,20 @@ pmap_protect(struct pmap *pm, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 		}
 
 		pte = *ptep;
+#ifdef UVMHIST
+		opte = pte;
+#endif
 		executable = l3pte_executable(pte);
 		pte = _pmap_pte_adjust_prot(pte, prot, mdattr);
+
+		if (!executable && (prot & VM_PROT_EXECUTE)) {
+			/* non-exec -> exec */
+			UVMHIST_LOG(pmaphist, "icache_sync: pm=%p, va=%016lx, pte: %016lx -> %016lx",
+			    pm, va, opte, pte);
+			cpu_icache_sync_range(AARCH64_PA_TO_KVA(pa), PAGE_SIZE);
+			cpu_icache_inv_all();	/* for VIPT/VIVT */
+		}
+
 		atomic_swap_64(ptep, pte);
 
 #if 0
@@ -1162,11 +1177,6 @@ pmap_protect(struct pmap *pm, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 #else
 		aarch64_tlbi_by_va(va);
 #endif
-
-		if (!executable && (prot & VM_PROT_EXECUTE)) {
-			/* non-exec -> exec */
-			cpu_icache_sync_range(va, PAGE_SIZE);
-		}
 	}
 
 	pm_unlock(pm);
@@ -1285,6 +1295,9 @@ _pmap_enter(struct pmap *pm, vaddr_t va, paddr_t pa, vm_prot_t prot,
 	struct pv_entry *spv;
 	pd_entry_t pde;
 	pt_entry_t attr, pte, *ptep;
+#ifdef UVMHIST
+	pt_entry_t opte;
+#endif
 	pd_entry_t *l0, *l1, *l2, *l3;
 	paddr_t pdppa;
 	uint32_t mdattr;
@@ -1386,6 +1399,9 @@ _pmap_enter(struct pmap *pm, vaddr_t va, paddr_t pa, vm_prot_t prot,
 	ptep = &l3[idx];	/* as PTE */
 
 	pte = *ptep;
+#ifdef UVMHIST
+	opte = pte;
+#endif
 	executable = l3pte_executable(pte);
 
 	if (l3pte_valid(pte)) {
@@ -1464,6 +1480,15 @@ _pmap_enter(struct pmap *pm, vaddr_t va, paddr_t pa, vm_prot_t prot,
 #endif
 
 	pte = pa | attr;
+
+	if (!executable && (prot & VM_PROT_EXECUTE)) {
+		UVMHIST_LOG(pmaphist, "icache_sync: pm=%p, va=%016lx, pte: %016lx -> %016lx",
+		    pm, va, opte, pte);
+		/* non-exec -> exec */
+		cpu_icache_sync_range(AARCH64_PA_TO_KVA(pa), PAGE_SIZE);
+		cpu_icache_inv_all();	/* for VIPT/VIVT */
+	}
+
 	atomic_swap_64(ptep, pte);
 
 #if 0
@@ -1472,11 +1497,6 @@ _pmap_enter(struct pmap *pm, vaddr_t va, paddr_t pa, vm_prot_t prot,
 #else
 	aarch64_tlbi_by_va(va);
 #endif
-
-	if (!executable && (prot & VM_PROT_EXECUTE)) {
-		/* non-exec -> exec */
-		cpu_icache_sync_range(va, PAGE_SIZE);
-	}
 
 	if (pte & LX_BLKPAG_OS_WIRED)
 		pm->pm_stats.wired_count++;
