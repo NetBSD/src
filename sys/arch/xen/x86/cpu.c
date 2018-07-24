@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.122 2018/06/23 10:30:22 jdolecek Exp $	*/
+/*	$NetBSD: cpu.c,v 1.123 2018/07/24 12:24:45 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.122 2018/06/23 10:30:22 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.123 2018/07/24 12:24:45 bouyer Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -583,7 +583,11 @@ void
 cpu_boot_secondary_processors(void)
 {
 	struct cpu_info *ci;
+	kcpuset_t *cpus;
 	u_long i;
+
+	kcpuset_create(&cpus, true);
+	kcpuset_set(cpus, cpu_index(curcpu()));
 	for (i = 0; i < maxcpus; i++) {
 		ci = cpu_lookup(i);
 		if (ci == NULL)
@@ -595,7 +599,11 @@ cpu_boot_secondary_processors(void)
 		if (ci->ci_flags & (CPUF_BSP|CPUF_SP|CPUF_PRIMARY))
 			continue;
 		cpu_boot_secondary(ci);
+		kcpuset_set(cpus, cpu_index(ci));
 	}
+	while (!kcpuset_match(cpus, kcpuset_running))
+		;
+	kcpuset_destroy(cpus);
 
 	x86_mp_online = true;
 }
