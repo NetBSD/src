@@ -1,4 +1,4 @@
-/*	$NetBSD: tprof_x86_intel.c,v 1.1 2018/07/16 06:18:31 maxv Exp $	*/
+/*	$NetBSD: tprof_x86_intel.c,v 1.2 2018/07/24 09:47:35 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tprof_x86_intel.c,v 1.1 2018/07/16 06:18:31 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tprof_x86_intel.c,v 1.2 2018/07/24 09:47:35 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -241,28 +241,9 @@ tprof_intel_stop(const tprof_param_t *param)
 	intel_nmi_handle = NULL;
 }
 
-static const tprof_backend_ops_t tprof_intel_ops = {
+const tprof_backend_ops_t tprof_intel_ops = {
 	.tbo_estimate_freq = tprof_intel_estimate_freq,
 	.tbo_ident = tprof_intel_ident,
 	.tbo_start = tprof_intel_start,
 	.tbo_stop = tprof_intel_stop,
 };
-
-MODULE(MODULE_CLASS_DRIVER, tprof_pmi, "tprof");
-
-static int
-tprof_pmi_modcmd(modcmd_t cmd, void *arg)
-{
-
-	switch (cmd) {
-	case MODULE_CMD_INIT:
-		return tprof_backend_register("tprof_pmi", &tprof_intel_ops,
-		    TPROF_BACKEND_VERSION);
-
-	case MODULE_CMD_FINI:
-		return tprof_backend_unregister("tprof_pmi");
-
-	default:
-		return ENOTTY;
-	}
-}
