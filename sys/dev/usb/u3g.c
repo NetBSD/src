@@ -1,4 +1,4 @@
-/*	$NetBSD: u3g.c,v 1.34 2017/05/24 20:23:58 christos Exp $	*/
+/*	$NetBSD: u3g.c,v 1.35 2018/07/24 08:15:57 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: u3g.c,v 1.34 2017/05/24 20:23:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: u3g.c,v 1.35 2018/07/24 08:15:57 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -189,6 +189,8 @@ static const struct usb_devno u3g_devs[] = {
 	{ USB_VENDOR_HUAWEI, USB_PRODUCT_HUAWEI_MOBILE },
 	{ USB_VENDOR_HUAWEI, USB_PRODUCT_HUAWEI_E171 },
 	{ USB_VENDOR_HUAWEI, USB_PRODUCT_HUAWEI_E353 },
+	/* LG Electronics */
+	{ USB_VENDOR_LG, USB_PRODUCT_LG_NTT_DOCOMO_L02C_MODEM },
 	/* OEM: Merlin */
 	{ USB_VENDOR_MERLIN, USB_PRODUCT_MERLIN_V620 },
 	/* OEM: Novatel */
@@ -215,8 +217,6 @@ static const struct usb_devno u3g_devs[] = {
 	{ USB_VENDOR_OPTIONNV, USB_PRODUCT_OPTIONNV_QUADPLUSUMTS },
 	{ USB_VENDOR_OPTIONNV, USB_PRODUCT_OPTIONNV_HSDPA },
 	{ USB_VENDOR_OPTIONNV, USB_PRODUCT_OPTIONNV_GTMAXHSUPA },
-	/* OEM: Qualcomm, Inc. */
-	{ USB_VENDOR_QUALCOMM, USB_PRODUCT_QUALCOMM_NTT_DOCOMO_L02C_MODEM },
 
 	/* OEM: Sierra Wireless: */
 	{ USB_VENDOR_SIERRA, USB_PRODUCT_SIERRA_AC595U },
@@ -256,8 +256,8 @@ static const struct usb_devno u3g_devs[] = {
 	{ USB_VENDOR_ZTE, USB_PRODUCT_ZTE_MF820D },
 
 	/* 4G Systems */
-	{ USB_VENDOR_4GSYSTEMS, USB_PRODUCT_4GSYSTEMS_XSSTICK_P14 },
-	{ USB_VENDOR_4GSYSTEMS, USB_PRODUCT_4GSYSTEMS_XSSTICK_W14 },
+	{ USB_VENDOR_LONGCHEER, USB_PRODUCT_LONGCHEER_XSSTICK_P14 },
+	{ USB_VENDOR_LONGCHEER, USB_PRODUCT_LONGCHEER_XSSTICK_W14 },
 };
 
 /*
