@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.316 2018/07/12 10:46:48 maxv Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.317 2018/07/24 15:09:37 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008, 2009
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.316 2018/07/12 10:46:48 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.317 2018/07/24 15:09:37 bouyer Exp $");
 
 #include "opt_kstack.h"
 #include "opt_dtrace.h"
@@ -745,6 +745,7 @@ mi_switch(lwp_t *l)
 		retval = 1;
 	} else {
 		/* Nothing to do - just unlock and return. */
+		pserialize_switchpoint();
 		mutex_spin_exit(spc->spc_mutex);
 		lwp_unlock(l);
 		retval = 0;
