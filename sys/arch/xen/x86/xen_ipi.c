@@ -1,4 +1,4 @@
-/* $NetBSD: xen_ipi.c,v 1.25 2018/06/24 13:35:32 jdolecek Exp $ */
+/* $NetBSD: xen_ipi.c,v 1.26 2018/07/24 12:26:14 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -33,10 +33,10 @@
 
 /* 
  * Based on: x86/ipi.c
- * __KERNEL_RCSID(0, "$NetBSD: xen_ipi.c,v 1.25 2018/06/24 13:35:32 jdolecek Exp $");
+ * __KERNEL_RCSID(0, "$NetBSD: xen_ipi.c,v 1.26 2018/07/24 12:26:14 bouyer Exp $");
  */
 
-__KERNEL_RCSID(0, "$NetBSD: xen_ipi.c,v 1.25 2018/06/24 13:35:32 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_ipi.c,v 1.26 2018/07/24 12:26:14 bouyer Exp $");
 
 #include "opt_ddb.h"
 
@@ -168,7 +168,7 @@ xen_send_ipi(struct cpu_info *ci, uint32_t ipimask)
 {
 	evtchn_port_t evtchn;
 
-	KASSERT(ci != NULL || ci != curcpu());
+	KASSERT(ci != NULL && ci != curcpu());
 
 	if ((ci->ci_flags & CPUF_RUNNING) == 0) {
 		return ENOENT;
