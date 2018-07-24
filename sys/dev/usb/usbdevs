@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.754 2018/07/24 08:13:34 msaitoh Exp $
+$NetBSD: usbdevs,v 1.755 2018/07/24 09:16:23 msaitoh Exp $
 
 /*-
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -1820,17 +1820,19 @@ product HUAWEI E220		0x1003	Huawei E220
 product HUAWEI U8150		0x1037	Huawei U8150
 product HUAWEI EM770W		0x1404	Huawei EM770W
 product HUAWEI E1750		0x140c	Huawei E1750
+product HUAWEI E353             0x1442  Huawei E353
 product HUAWEI E1750INIT	0x1446	Huawei E1750 USB CD
 product HUAWEI K3765		0x1465	Huawei K3765
 product HUAWEI E1820		0x14ac	Huawei E1820
+product HUAWEI HWD12_RNDIS	0x14db	Huawei HWD12 RNDIS mode
 product HUAWEI E171INIT		0x14fe	Huawei E171 USB CD
-product HUAWEI E171		0x1506	Huawei E171
+product HUAWEI E392INIT		0x1505	Huawei E392 EC156 Installer
+product HUAWEI E171		0x1506	Huawei E171 / HWD12 RAS mode
 product HUAWEI E353_HiLink	0x1507	Huawei E353_HiLink
-/* Accessing http://192.168.1.1/html/switchProjectMode.html on
-   a Huawei HiLink device will switch it to u3g mode */
-product HUAWEI E353             0x1442  Huawei E353
 product HUAWEI K3765INIT	0x1520	Huawei K3765 USB CD
+product HUAWEI E3272		0x1c1e	Huawei E3272 E355 / Softbank 203HW
 product HUAWEI E353INIT		0x1f01	Huawei E353 USB CD
+product HUAWEI HWD12_INSTALLER	0x1f03	Huawei HWD12 Installer
 
 /* Huawei-3Com products */
 product HUAWEI3COM RT2573	0x0009	RT2573
@@ -2452,6 +2454,8 @@ product NETGEAR3 WPN111_NF	0x5f01	WPN111
 product NETGEAR4 RTL8188CU	0x9041	RTL8188CU
 
 /* NetIndex products */
+product NETINDEX RTWJ02		0x1022	RT-WJ02
+product NETINDEX UX312NC	0x1032	UX312NC
 product NETINDEX WS002IN	0x2001	Willcom WS002IN (DD)
 
 /* NHJ product */
@@ -2982,6 +2986,9 @@ product SIEMENS SPEEDSTREAM22	0x1022	SpeedStream USB 1022
 /* Siemens Info products */
 product SIEMENS2 WLL013		0x001b	WLL013
 product SIEMENS2 MC75		0x0034	Wireless Modules MC75
+product SIEMENS2 HC28MDMNET     0x004a  HC28 MdmNet
+product SIEMENS2 HC28MS         0x004b  HC28 Mass Storage Device
+product SIEMENS2 HC28MDM        0x004c  HC28 Mdm
 product SIEMENS2 WL54G		0x3c06	54g USB Network Adapter
 
 /* Sierra Wireless products */
@@ -3546,6 +3553,8 @@ product ZTE MF628		0x0015	MF628 modem
 product ZTE MF633		0x0016	MF633 USUPA USB modem
 product ZTE MF626		0x0031	MF626 modem
 product	ZTE UMASS_INSTALLER2	0x0103	USB MSM installer 
+product ZTE MF112		0x0117	MF112 MF119 MF190 MF228 modem / Softbank 004Z
+product	ZTE UMASS_INSTALLER3	0x0149	USB MSM installer (MF288)
 product ZTE MF820D_INSTALLER	0x0166	MF820D CD
 product ZTE MF820D		0x0167	MF820D modem
 product ZTE INSTALLER		0x2000  UMTS CD
