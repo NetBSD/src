@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.206 2018/07/10 17:01:43 maya Exp $
+#	$NetBSD: Makefile,v 1.207 2018/07/24 09:47:35 maxv Exp $
 
 .include <bsd.own.mk>
 
@@ -197,8 +197,7 @@ SUBDIR+=	ichsmb
 SUBDIR+=	odcm
 SUBDIR+=	powernow
 SUBDIR+=	tco
-SUBDIR+=	tprof_pmi
-SUBDIR+=	tprof_amdpmi
+SUBDIR+=	tprof_x86
 SUBDIR+=	vmt
 .endif
 
