@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1600 2018/07/21 06:25:29 maxv Exp $
+# $NetBSD: mi,v 1.1601 2018/07/24 15:29:05 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -76,6 +76,7 @@
 ./usr/share/man/cat1/audit-packages.0		man-obsolete		obsolete
 ./usr/share/man/cat1/awk.0			man-util-catman		.cat
 ./usr/share/man/cat1/banner.0			man-util-catman		.cat
+./usr/share/man/cat1/base64.0			man-util-catman		.cat
 ./usr/share/man/cat1/basename.0			man-util-catman		.cat
 ./usr/share/man/cat1/batch.0			man-cron-catman		.cat
 ./usr/share/man/cat1/bc.0			man-util-catman		.cat
@@ -3302,6 +3303,7 @@
 ./usr/share/man/html1/audit-packages.html	man-obsolete		obsolete
 ./usr/share/man/html1/awk.html			man-util-htmlman	html
 ./usr/share/man/html1/banner.html		man-util-htmlman	html
+./usr/share/man/html1/base64.html		man-util-htmlman	html
 ./usr/share/man/html1/basename.html		man-util-htmlman	html
 ./usr/share/man/html1/batch.html		man-cron-htmlman	html
 ./usr/share/man/html1/bc.html			man-util-htmlman	html
@@ -6138,6 +6140,7 @@
 ./usr/share/man/man1/audit-packages.1		man-obsolete		obsolete
 ./usr/share/man/man1/awk.1			man-util-man		.man
 ./usr/share/man/man1/banner.1			man-util-man		.man
+./usr/share/man/man1/base64.1			man-util-man		.man
 ./usr/share/man/man1/basename.1			man-util-man		.man
 ./usr/share/man/man1/batch.1			man-cron-man		.man
 ./usr/share/man/man1/bc.1			man-util-man		.man
