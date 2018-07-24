@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.79 2018/07/10 17:01:42 maya Exp $
+# $NetBSD: md.i386,v 1.80 2018/07/24 09:47:35 maxv Exp $
 #
 # NOTE that there are three sets of files here:
 # @MODULEDIR@, i386-xen, and i386pae-xen
@@ -172,10 +172,12 @@
 ./@MODULEDIR@/tdfxdrm/tdfxdrm.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/thinkpad				base-kernel-modules	kmod
 ./@MODULEDIR@/thinkpad/thinkpad.kmod		base-kernel-modules	kmod
-./@MODULEDIR@/tprof_amdpmi			base-kernel-modules	kmod
-./@MODULEDIR@/tprof_amdpmi/tprof_amdpmi.kmod	base-kernel-modules	kmod
-./@MODULEDIR@/tprof_pmi				base-kernel-modules	kmod
-./@MODULEDIR@/tprof_pmi/tprof_pmi.kmod		base-kernel-modules	kmod
+./@MODULEDIR@/tprof_amdpmi			base-obsolete		obsolete
+./@MODULEDIR@/tprof_amdpmi/tprof_amdpmi.kmod	base-obsolete		obsolete
+./@MODULEDIR@/tprof_pmi				base-obsolete		obsolete
+./@MODULEDIR@/tprof_pmi/tprof_pmi.kmod		base-obsolete		obsolete
+./@MODULEDIR@/tprof_x86				base-kernel-modules	kmod
+./@MODULEDIR@/tprof_x86/tprof_x86.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/tvpll				base-kernel-modules	kmod
 ./@MODULEDIR@/tvpll/tvpll.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/ubsec				base-kernel-modules	kmod
