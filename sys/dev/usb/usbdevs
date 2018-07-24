@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.753 2018/07/20 16:36:16 martin Exp $
+$NetBSD: usbdevs,v 1.754 2018/07/24 08:13:34 msaitoh Exp $
 
 /*-
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@ vendor ADI		0x0422	ADI Systems
 vendor CATC		0x0423	Computer Access Technology
 vendor SMSC		0x0424	SMSC
 vendor GRAVIS		0x0428	Advanced Gravis Computer
-vendor SUN		0x0430	Sun Microsystems
+vendor FUJITSUCOMP	0x0430	Fujitsu Component
 vendor TAUGA		0x0436	Taugagreining HF
 vendor AMD		0x0438	Advanced Micro Devices
 vendor LEXMARK		0x043d	Lexmark International
@@ -459,7 +459,7 @@ vendor RIM		0x0fca	Research In Motion
 vendor DYNASTREAM	0x0fcf	Dynastream Innovations
 vendor SUNRISING	0x0fe6	SUNRISING
 vendor DVICO		0x0fe9	DViCO
-vendor QUALCOMM		0x1004	Qualcomm
+vendor LG		0x1004	LG Electronics
 vendor MOTOROLA4	0x100d	Motorola
 vendor HP3		0x103c	Hewlett Packard
 vendor GIGABYTE		0x1044	GIGABYTE
@@ -551,11 +551,12 @@ vendor QUANTA		0x1a32	Quanta
 vendor TERMINUS		0x1a40	Terminus Technology
 vendor WINCHIPHEAD2	0x1a86	QinHeng Electronics
 vendor OVISLINK		0x1b75	OvisLink
+vendor LONGCHEER	0x1c9e	Longcheer Technology
 vendor MPMAN		0x1cae	MPMan
-vendor 4GSYSTEMS	0x1c9e	4G Systems
 vendor PEGATRON		0x1d4d	Pegatron
 vendor FUTUREBITS	0x1d50	Future Bits
 vendor LINUXFOUNDATION	0x1d6b  Linux Foundation
+vendor CINTERION	0x1e2d	Cinterion
 vendor AIRTIES		0x1eda	AirTies
 vendor DLINK		0x2001	D-Link
 vendor PLANEX2		0x2019	Planex Communications
@@ -631,11 +632,6 @@ product 3COMUSR OFFICECONN	0x0082	3Com OfficeConnect Analog Modem
 product 3COMUSR USRISDN		0x008f	3Com U.S. Robotics Pro ISDN TA
 product 3COMUSR HOMECONN	0x009d	3Com HomeConnect camera
 product 3COMUSR USR56K		0x3021	U.S.Robotics 56000 Voice Faxmodem Pro
-
-/* 4G Systems products */
-product 4GSYSTEMS XSSTICK_W14	0x9603	4G Systems XSStick W14
-product 4GSYSTEMS XSSTICK_P14	0x9605	4G Systems XSStick P14
-product 4GSYSTEMS XSSTICK_P14_INSTALLER	0xf000	4G Systems XSStick P14 - Windows driver
 
 /* ACDC products */
 product ACDC HUB		0x2315	USB Pen Drive HUB
@@ -1627,6 +1623,15 @@ product FUJIPHOTO MASS0100	0x0100	Mass Storage
 /* Fujitsu protducts */
 product FUJITSU AH_F401U	0x105b	AH-F401U Air H device
 
+/* Fujitsu Component products */
+product FUJITSUCOMP KEYBOARD6	0x0005	Type 6 Keyboard
+product FUJITSUCOMP KEYBOARD7	0x00a2	Type 7 Keyboard
+/* XXX The above is a North American PC style keyboard possibly */
+product FUJITSUCOMP MOUSE	0x0100	Type 6 Mouse
+product FUJITSUCOMP FX5204PS	0x0423	Smart Power Strip FX-5204PS
+product FUJITSUCOMP FX5251WB	0x042a	Base Station FX-5251WB
+product FUJITSUCOMP VIRTETH	0xa4a2	Virtual Eth Device
+
 /* Fujitsu Siemens Computers products */
 product FSC E5400		0x1009	PrismGT USB 2.0 WLAN
 
@@ -2056,6 +2061,14 @@ product LEXAR MCR		0xb018	Multi-Card Reader
 /* Lexmark products */
 product LEXMARK S2450		0x0009	Optra S 2450
 
+/* LG Electronics products */
+product LG CDMA_MSM		0x6000	CDMA Technologies MSM phone
+product LG NTT_DOCOMO_L05A_MODEM	0x6124	NTT DOCOMO L-05A
+product LG NTT_DOCOMO_L05A_STORAGE	0x613a	NTT DOCOMO L-05A
+product LG NTT_DOCOMO_L02C_MODEM	0x618f	NTT DOCOMO L-02C
+product LG NTT_DOCOMO_L02C_STORAGE	0x61dd	NTT DOCOMO L-02C
+product LG MSM_HSDPA		0x6613	HSDPA MSM
+
 /* Linksys products */
 product LINKSYS MAUSB2		0x0105	Camedia MAUSB-2
 product LINKSYS USB10TX1	0x200c	USB10TX
@@ -2136,6 +2149,16 @@ product LOGITECH CDO		0xc504	Cordless Desktop Optical
 product LOGITECH MX700		0xc506	Cordless optical mouse
 product LOGITECH CBT44		0xc517	C-BT44 Receiver
 product LOGITECH QUICKCAMPRO2	0xd001	QuickCam Pro
+
+/* Longcheer products */
+product LONGCHEER WM66		0x6061	Longcheer WM66 HSDPA
+product LONGCHEER D21LCMASS	0x9401	Emobile D21LC Mass only mode
+product LONGCHEER D21LC		0x9404	Emobile D21LC
+product LONGCHEER XSSTICK_W14	0x9603	4G Systems XSStick W14
+product LONGCHEER XSSTICK_P14	0x9605	4G Systems XSStick P14
+product LONGCHEER 510FU		0x9801	IIJmobile 510FU
+product LONGCHEER 510FUMASS	0x98ff	IIJmobile 510FU Mass only mode
+product LONGCHEER XSSTICK_P14_INSTALLER	0xf000	4G Systems XSStick P14 - Windows driver
 
 /* Lucent products */
 product LUCENT EVALKIT		0x1001	USS-720 evaluation kit
@@ -2722,12 +2745,6 @@ product QCOM RT2870		0x6259	RT2870
 product QTRONIX 980N		0x2011	Scorpion-980N keyboard
 
 /* Qualcomm products */
-product QUALCOMM CDMA_MSM	0x6000	CDMA Technologies MSM phone
-product QUALCOMM NTT_DOCOMO_L05A_MODEM	0x6124	NTT DOCOMO L-05A
-product QUALCOMM NTT_DOCOMO_L05A_STORAGE	0x613a	NTT DOCOMO L-05A
-product QUALCOMM NTT_DOCOMO_L02C_MODEM	0x618f	NTT DOCOMO L-02C
-product QUALCOMM NTT_DOCOMO_L02C_STORAGE	0x61dd	NTT DOCOMO L-02C
-product QUALCOMM MSM_HSDPA	0x6613	HSDPA MSM
 product QUALCOMM2 RWT_FCT       0x3100  RWT FCT-CDMA 2000 1xRTT modem
 product QUALCOMM2 CDMA_MSM	0x3196	CDMA Technologies MSM modem
 
@@ -2996,6 +3013,7 @@ product SIERRA AC881E		0x6853	Sierra Wireless AirCard 881E
 product SIERRA AC880U		0x6855	Sierra Wireless AirCard 880U
 product SIERRA AC881U		0x6856	Sierra Wireless AirCard 881U
 product SIERRA AC885U		0x6880	Sierra Wireless AirCard 885U
+product SIERRA C01SW		0x6890	C01SW
 product SIERRA USB305		0x68a3	Sierra Wireless AirCard USB 305
 
 /* Sigmatel products */
@@ -3110,6 +3128,7 @@ product SMSC 2020HUB		0x2020	USB Hub
 product SMSC 2512HUB		0x2512	USB 2.0 2-Port Hub
 product SMSC 2513HUB		0x2513	USB 2.0 3-Port Hub
 product SMSC 2514HUB		0x2514	USB 2.0 4-Port Hub
+product SMSC 2517HUB		0x2517	USB 2.0 7-Port Hub
 product SMSC LAN7500		0x7500	LAN7500 USB 2.0 gigabit ethernet device
 product SMSC LAN7800		0x7800	LAN7800 USB 3.1 gigabit ethernet device
 product SMSC LAN7801		0x7801	LAN7801 USB 3.1 gigabit ethernet device
@@ -3200,12 +3219,6 @@ product SUNTAC VS10U		0x0009	SUNTAC Slipper U
 product SUNTAC IS96U		0x000a	SUNTAC Ir-Trinity
 product SUNTAC AS64LX		0x000b	SUNTAC U-Cable type A3
 product SUNTAC AS144L4		0x0011	U-Cable type A4
-
-/* Sun Microsystems products */
-product SUN KEYBOARD_TYPE_6	0x0005	Type 6 USB keyboard
-product SUN KEYBOARD_TYPE_7	0x00a2	Type 7 USB keyboard
-/* XXX The above is a North American PC style keyboard possibly */
-product SUN MOUSE		0x0100	Type 6 USB mouse
 
 /* SUNRISING products */
 product SUNRISING SR9600	0x8101	SR9600 Ethernet
@@ -3530,7 +3543,9 @@ product ZORAN EX20DSC		0x4343	Digital Camera EX-20 DSC
 /* ZTE products */
 product ZTE MF622		0x0001	MF622 modem
 product ZTE MF628		0x0015	MF628 modem
+product ZTE MF633		0x0016	MF633 USUPA USB modem
 product ZTE MF626		0x0031	MF626 modem
+product	ZTE UMASS_INSTALLER2	0x0103	USB MSM installer 
 product ZTE MF820D_INSTALLER	0x0166	MF820D CD
 product ZTE MF820D		0x0167	MF820D modem
 product ZTE INSTALLER		0x2000  UMTS CD
