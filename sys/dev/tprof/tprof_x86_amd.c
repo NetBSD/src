@@ -1,4 +1,4 @@
-/*	$NetBSD: tprof_x86_amd.c,v 1.1 2018/07/16 06:18:31 maxv Exp $	*/
+/*	$NetBSD: tprof_x86_amd.c,v 1.2 2018/07/24 09:47:35 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tprof_x86_amd.c,v 1.1 2018/07/16 06:18:31 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tprof_x86_amd.c,v 1.2 2018/07/24 09:47:35 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -245,28 +245,9 @@ tprof_amd_stop(const tprof_param_t *param)
 	amd_nmi_handle = NULL;
 }
 
-static const tprof_backend_ops_t tprof_amd_ops = {
+const tprof_backend_ops_t tprof_amd_ops = {
 	.tbo_estimate_freq = tprof_amd_estimate_freq,
 	.tbo_ident = tprof_amd_ident,
 	.tbo_start = tprof_amd_start,
 	.tbo_stop = tprof_amd_stop,
 };
-
-MODULE(MODULE_CLASS_DRIVER, tprof_amdpmi, "tprof");
-
-static int
-tprof_amdpmi_modcmd(modcmd_t cmd, void *arg)
-{
-
-	switch (cmd) {
-	case MODULE_CMD_INIT:
-		return tprof_backend_register("tprof_amd", &tprof_amd_ops,
-		    TPROF_BACKEND_VERSION);
-
-	case MODULE_CMD_FINI:
-		return tprof_backend_unregister("tprof_amd");
-
-	default:
-		return ENOTTY;
-	}
-}
