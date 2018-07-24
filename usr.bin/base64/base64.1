@@ -1,0 +1,74 @@
+.\"	$NetBSD: base64.1,v 1.1 2018/07/24 15:26:16 christos Exp $
+.\"
+.\" Copyright (c) 2018 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" This code is derived from software contributed to The NetBSD Foundation
+.\" by Christos Zoulas.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.\"
+.Dd July 24, 2018
+.Dt base64 1
+.Os
+.Sh NAME
+.Nm base64
+.Nd base64 encode/decode data into the stardard output
+.Sh SYNOPSIS
+.Nm
+.Op Fl di
+.Op Fl w Ar wrap
+.Op Ar
+.Sh DESCRIPTION
+.Nm
+reads from the standard input or from each file argument, and encodes
+or decodes data based on the base64 scheme described in RFC 3548 into
+the standard output.
+.Pp
+The following options are available:
+.Bl -tag -width XXXXXXX
+.It Fl d
+Decode the input instead of encoding it.
+.It Fl i
+Ignore whitespace characters when decoding.
+.It Fl w Ar wrap
+Wrap lines longer than
+.Ar wrap
+characters using a newline.
+The default number of characters is 76.
+.El
+.Sh EXIT STATUS
+.Nm
+exits with 0 if there was no error and non-zero if it could not encode or
+decode, printing an error message.
+.Sh SEE ALSO
+.Xr b64_ntop ,
+.Xr b64_pton .
+.Sh AUTHORS
+Christos Zoulas
+.Sh HISTORY
+The
+.Nm
+command first appeared on
+Linux ?, MacOS/X ?, and
+.Nx 9 .
