@@ -1,4 +1,4 @@
-.\"	$NetBSD: base64.1,v 1.1 2018/07/24 15:26:16 christos Exp $
+.\"	$NetBSD: base64.1,v 1.2 2018/07/24 19:08:22 wiz Exp $
 .\"
 .\" Copyright (c) 2018 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -29,11 +29,11 @@
 .\"
 .\"
 .Dd July 24, 2018
-.Dt base64 1
+.Dt BASE64 1
 .Os
 .Sh NAME
 .Nm base64
-.Nd base64 encode/decode data into the stardard output
+.Nd base64 encode/decode data into the standard output
 .Sh SYNOPSIS
 .Nm
 .Op Fl di
@@ -61,14 +61,14 @@ The default number of characters is 76.
 .Nm
 exits with 0 if there was no error and non-zero if it could not encode or
 decode, printing an error message.
-.Sh SEE ALSO
-.Xr b64_ntop ,
-.Xr b64_pton .
-.Sh AUTHORS
-Christos Zoulas
+.\" .Sh SEE ALSO
+.\" .Xr b64_ntop 3 ,
+.\" .Xr b64_pton 3
 .Sh HISTORY
 The
 .Nm
 command first appeared on
-Linux ?, MacOS/X ?, and
+.\" Linux ?, MacOS/X ?, and
 .Nx 9 .
+.Sh AUTHORS
+.An Christos Zoulas
