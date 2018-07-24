@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.13 2018/07/23 22:51:39 ryo Exp $	*/
+/*	$NetBSD: pmap.c,v 1.14 2018/07/24 10:08:43 ryo Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.13 2018/07/23 22:51:39 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.14 2018/07/24 10:08:43 ryo Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_ddb.h"
@@ -852,7 +852,7 @@ _pmap_pte_adjust_cacheflags(pt_entry_t pte, u_int flags)
 	return pte;
 }
 
-static void
+static struct pv_entry *
 _pmap_remove_pv(struct vm_page *pg, struct pmap *pm, vaddr_t va, pt_entry_t pte)
 {
 	struct vm_page_md *md;
@@ -883,8 +883,7 @@ _pmap_remove_pv(struct vm_page *pg, struct pmap *pm, vaddr_t va, pt_entry_t pte)
 
 	pmap_pv_unlock(md);
 
-	if (pv != NULL)
-		pool_cache_put(&_pmap_pv_pool, pv);
+	return pv;
 }
 
 #if defined(PMAP_PV_DEBUG) || defined(DDB)
@@ -1292,7 +1291,7 @@ _pmap_enter(struct pmap *pm, vaddr_t va, paddr_t pa, vm_prot_t prot,
     u_int flags, bool kenter)
 {
 	struct vm_page *pg;
-	struct pv_entry *spv;
+	struct pv_entry *spv, *opv = NULL;
 	pd_entry_t pde;
 	pt_entry_t attr, pte, *ptep;
 #ifdef UVMHIST
@@ -1428,7 +1427,7 @@ _pmap_enter(struct pmap *pm, vaddr_t va, paddr_t pa, vm_prot_t prot,
 
 			opg = PHYS_TO_VM_PAGE(l3pte_pa(pte));
 			if (opg != NULL)
-				_pmap_remove_pv(opg, pm, va, pte);
+				opv = _pmap_remove_pv(opg, pm, va, pte);
 		}
 
 		if (pte & LX_BLKPAG_OS_WIRED)
@@ -1509,6 +1508,9 @@ _pmap_enter(struct pmap *pm, vaddr_t va, paddr_t pa, vm_prot_t prot,
 	if (spv != NULL)
 		pool_cache_put(&_pmap_pv_pool, spv);
 
+	if (opv != NULL)
+		pool_cache_put(&_pmap_pv_pool, opv);
+
 	return error;
 }
 
@@ -1531,6 +1533,7 @@ _pmap_remove(struct pmap *pm, vaddr_t va, bool kremove)
 {
 	pt_entry_t pte, *ptep;
 	struct vm_page *pg;
+	struct pv_entry *opv = NULL;
 	paddr_t pa;
 
 
@@ -1556,7 +1559,7 @@ _pmap_remove(struct pmap *pm, vaddr_t va, bool kremove)
 			pg = PHYS_TO_VM_PAGE(pa);
 
 		if (pg != NULL)
-			_pmap_remove_pv(pg, pm, va, pte);
+			opv = _pmap_remove_pv(pg, pm, va, pte);
 
 		atomic_swap_64(ptep, 0);
 #if 0
@@ -1571,6 +1574,9 @@ _pmap_remove(struct pmap *pm, vaddr_t va, bool kremove)
 	}
  done:
 	pm_unlock(pm);
+
+	if (opv != NULL)
+		pool_cache_put(&_pmap_pv_pool, opv);
 }
 
 void
