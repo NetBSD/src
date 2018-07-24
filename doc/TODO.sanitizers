@@ -1,7 +1,6 @@
 Sanitizer and related tasks.
 
 Short term:
- - upgrade base Clang/LLVM, libcxx, libcxxabi to at least 7svn (HEAD)
  - compiler-rt import and integration with base
  - merge TSan, MSan and libFuzzer ATF tests
  - prepare MKSANITIZER readme
