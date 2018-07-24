@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1180 2018/07/17 18:55:24 joerg Exp $
+# $NetBSD: mi,v 1.1181 2018/07/24 15:29:05 christos Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -653,6 +653,7 @@
 ./usr/bin/audiorecord				base-audio-bin
 ./usr/bin/awk					base-util-bin
 ./usr/bin/banner				base-util-bin
+./usr/bin/base64				base-util-bin
 ./usr/bin/basename				base-util-bin
 ./usr/bin/batch					base-cron-bin
 ./usr/bin/bc					base-util-bin
