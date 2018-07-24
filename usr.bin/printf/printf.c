@@ -1,4 +1,4 @@
-/*	$NetBSD: printf.c,v 1.39 2018/07/03 01:56:39 kre Exp $	*/
+/*	$NetBSD: printf.c,v 1.40 2018/07/24 20:49:19 kre Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\
 #if 0
 static char sccsid[] = "@(#)printf.c	8.2 (Berkeley) 3/22/95";
 #else
-__RCSID("$NetBSD: printf.c,v 1.39 2018/07/03 01:56:39 kre Exp $");
+__RCSID("$NetBSD: printf.c,v 1.40 2018/07/24 20:49:19 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -293,9 +293,12 @@ int main(int argc, char *argv[])
 					goto out;
 				break;
 			}
+			case 'a':
+			case 'A':
 			case 'e':
 			case 'E':
 			case 'f':
+			case 'F':
 			case 'g':
 			case 'G': {
 				double p = getdouble();
