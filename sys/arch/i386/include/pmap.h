@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.118 2016/09/19 20:46:55 maya Exp $	*/
+/*	$NetBSD: pmap.h,v 1.119 2018/07/25 11:47:07 maxv Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -283,16 +283,6 @@
 #define PG_W		PG_AVAIL1	/* "wired" mapping */
 #define PG_PVLIST	PG_AVAIL2	/* mapping has entry on pvlist */
 #define PG_X		PG_AVAIL3	/* executable mapping */
-
-/*
- * Number of PTE's per cache line.  4 byte pte, 32-byte cache line
- * Used to avoid false sharing of cache lines.
- */
-#ifdef PAE
-#define NPTECL		4
-#else
-#define NPTECL		8
-#endif
 
 #include <x86/pmap.h>
 

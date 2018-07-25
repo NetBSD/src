@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.46 2018/05/19 15:03:26 jdolecek Exp $	*/
+/*	$NetBSD: pmap.h,v 1.47 2018/07/25 11:47:07 maxv Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -211,12 +211,6 @@
 /* PG_AVAIL3 not used */
 
 #define	PG_X		0		/* XXX dummy */
-
-/*
- * Number of PTE's per cache line.  8 byte pte, 64-byte cache line
- * Used to avoid false sharing of cache lines.
- */
-#define NPTECL		8
 
 void svs_pmap_sync(struct pmap *, int);
 void svs_lwp_switch(struct lwp *, struct lwp *);
