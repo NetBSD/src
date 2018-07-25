@@ -1,10 +1,11 @@
-#	$NetBSD: Makefile.fat,v 1.8 2018/06/02 14:30:07 christos Exp $
+#	$NetBSD: Makefile.fat,v 1.9 2018/07/25 23:45:32 kamil Exp $
 
 S=		${.CURDIR}/../../../../..
 
 PROG?=		fatboot
 NOMAN=		# defined
 NOPIE=		# defined
+NOLIBCSANITIZER=# defined
 NOSANITIZER=	# defined
 
 LIBCRT0=	# nothing
