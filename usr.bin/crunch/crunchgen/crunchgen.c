@@ -1,4 +1,4 @@
-/*	$NetBSD: crunchgen.c,v 1.87 2018/06/21 10:55:54 kamil Exp $	*/
+/*	$NetBSD: crunchgen.c,v 1.88 2018/07/25 23:41:28 kamil Exp $	*/
 /*
  * Copyright (c) 1994 University of Maryland
  * All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: crunchgen.c,v 1.87 2018/06/21 10:55:54 kamil Exp $");
+__RCSID("$NetBSD: crunchgen.c,v 1.88 2018/07/25 23:41:28 kamil Exp $");
 #endif
 
 #include <stdlib.h>
@@ -102,7 +102,9 @@ static int goterror = 0;
 
 static const char *pname = "crunchgen";
 
-static int verbose, readcache, useobjs, oneobj, pie, sanitizer;	/* options */
+/* options */
+static int verbose, readcache, useobjs, oneobj, pie, libcsanitizer, sanitizer;
+
 static int reading_cache;
 static char *machine;
 static char *makeobjdirprefix;
@@ -165,6 +167,7 @@ main(int argc, char **argv)
 	case 'O':	oneobj = 0; break;
 	case 'o':       useobjs = 1, oneobj = 0; break;
 	case 's':       sanitizer = 1; break;
+	case 'S':       libcsanitizer = 1; break;
 
 	case 'm':	(void)estrlcpy(outmkname, optarg, sizeof(outmkname)); break;
 	case 'c':	(void)estrlcpy(outcfname, optarg, sizeof(outcfname)); break;
@@ -923,6 +926,8 @@ top_makefile_rules(FILE *outmk)
 
     if (!pie)
 	    fprintf(outmk, "NOPIE=\n");
+    if (!libcsanitizer)
+	    fprintf(outmk, "NOLIBCSANITIZER=\n");
     if (!sanitizer)
 	    fprintf(outmk, "NOSANITIZER=\n");
     fprintf(outmk, "NOMAN=\n\n");
@@ -1020,7 +1025,7 @@ prog_makefile_rules(FILE *outmk, prog_t *p)
 	for (lst = vars; lst != NULL; lst = lst->next)
 	    fprintf(outmk, "%s\\n", lst->str);
 	fprintf(outmk, "'\\\n");
-	fprintf(outmk, MAKECMD "%s ", sanitizer ? "" : "NOSANITIZER=");
+	fprintf(outmk, MAKECMD "%s %s ", libcsanitizer ? "" : "NOLIBCSANITIZER=", sanitizer ? "" : "NOSANITIZER=");
 	if (p->objs)
 	    fprintf(outmk, "${%s_OBJS} ) \n\n", p->ident);
 	else
