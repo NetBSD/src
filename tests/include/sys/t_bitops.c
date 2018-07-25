@@ -1,4 +1,4 @@
-/*	$NetBSD: t_bitops.c,v 1.19 2015/03/21 05:50:19 isaki Exp $ */
+/*	$NetBSD: t_bitops.c,v 1.20 2018/07/25 22:00:32 kamil Exp $ */
 
 /*-
  * Copyright (c) 2011, 2012 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_bitops.c,v 1.19 2015/03/21 05:50:19 isaki Exp $");
+__RCSID("$NetBSD: t_bitops.c,v 1.20 2018/07/25 22:00:32 kamil Exp $");
 
 #include <atf-c.h>
 
@@ -186,7 +186,7 @@ ATF_TC_BODY(ilog2_32bit, tc)
 	uint32_t x;
 
 	for (i = 0; i < 32; i++) {
-		x = 1 << i;
+		x = 1U << i;
 		ATF_REQUIRE(ilog2(x) == i);
 	}
 }
