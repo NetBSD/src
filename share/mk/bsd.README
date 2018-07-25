@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.379 2018/07/12 21:41:25 joerg Exp $
+#	$NetBSD: bsd.README,v 1.380 2018/07/25 19:15:19 kamil Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -405,6 +405,7 @@ MKSANITIZER	if "yes", use the selected sanitizer to compile userland
 		Additional arguments can be passed through SANITIZERFLAGS.
 		The list of supported features and their valid combinations
 		depends on the compiler version and target CPU architecture.
+		Default: no
 
 MKSHARE		If "no", act as "MKCATPAGES=no MKDOC=no MKHTML=no MKINFO=no
 		MKMAN=no MKNLS=no".
