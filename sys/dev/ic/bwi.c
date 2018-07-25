@@ -1,4 +1,4 @@
-/*	$NetBSD: bwi.c,v 1.34 2018/06/26 06:48:00 msaitoh Exp $	*/
+/*	$NetBSD: bwi.c,v 1.35 2018/07/25 07:55:44 msaitoh Exp $	*/
 /*	$OpenBSD: bwi.c,v 1.74 2008/02/25 21:13:30 mglocker Exp $	*/
 
 /*
@@ -48,7 +48,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bwi.c,v 1.34 2018/06/26 06:48:00 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bwi.c,v 1.35 2018/07/25 07:55:44 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -8529,6 +8529,7 @@ bwi_rxeof(struct bwi_softc *sc, int end_idx)
 			mb.m_len = sc->sc_rxtap_len;
 			mb.m_next = m;
 			mb.m_nextpkt = NULL;
+			mb.m_owner = NULL;
 			mb.m_type = 0;
 			mb.m_flags = 0;
 			bpf_mtap3(sc->sc_drvbpf, &mb, BPF_D_IN);
