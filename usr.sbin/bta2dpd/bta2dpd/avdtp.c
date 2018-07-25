@@ -1,4 +1,4 @@
-/* $NetBSD: avdtp.c,v 1.1 2017/01/28 16:55:54 nat Exp $ */
+/* $NetBSD: avdtp.c,v 1.2 2018/07/25 19:03:50 kamil Exp $ */
 
 /*-
  * Copyright (c) 2015 - 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -89,7 +89,7 @@ avdtpCheckResponse(int recvfd, bool *isCommand, uint8_t *trans, uint8_t
 	if (len < AVDTP_LEN_SUCCESS)
 		return ENOMEM;
 
-	*trans = (buffer[0] & TRANSACTIONLABEL) >> TRANSACTIONLABEL_S;
+	*trans = (uint8_t)((buffer[0] & TRANSACTIONLABEL) >> TRANSACTIONLABEL_S);
 	*signalId = buffer[1] & SIGNALID_MASK;
 	if ((buffer[0] & MESSAGETYPE) == COMMAND) {
 		if (datasize)
@@ -377,4 +377,3 @@ avdtpAutoConfigSBC(int fd, int recvfd, uint8_t *capabilities, size_t cap_len,
 auto_config_failed:
 	return EINVAL;
 }
-
