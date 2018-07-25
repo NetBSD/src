@@ -1,7 +1,8 @@
-#	$NetBSD: Makefile.mbr,v 1.20 2018/06/12 21:35:17 kamil Exp $
+#	$NetBSD: Makefile.mbr,v 1.21 2018/07/25 23:45:32 kamil Exp $
 
 S=		${.CURDIR}/../../../../..
 
+NOLIBCSANITIZER=# defined
 NOSANITIZER=	# defined
 NOMAN=		# defined
 
