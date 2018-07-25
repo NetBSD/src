@@ -1,4 +1,4 @@
-/* $NetBSD: if_txp.c,v 1.49 2018/06/26 06:48:01 msaitoh Exp $ */
+/* $NetBSD: if_txp.c,v 1.50 2018/07/25 07:55:44 msaitoh Exp $ */
 
 /*
  * Copyright (c) 2001
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_txp.c,v 1.49 2018/06/26 06:48:01 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_txp.c,v 1.50 2018/07/25 07:55:44 msaitoh Exp $");
 
 #include "opt_inet.h"
 
@@ -569,6 +569,7 @@ txp_download_fw_section(struct txp_softc *sc,
 	 */
 	m.m_type = MT_DATA;
 	m.m_next = m.m_nextpkt = NULL;
+	m.m_owner = NULL;
 	m.m_len = le32toh(sect->nbytes);
 	m.m_data = dma.dma_vaddr;
 	m.m_flags = 0;

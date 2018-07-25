@@ -27,7 +27,7 @@
  *	i4b_ipr.c - isdn4bsd IP over raw HDLC ISDN network driver
  *	---------------------------------------------------------
  *
- *	$Id: i4b_ipr.c,v 1.45 2018/06/26 06:48:03 msaitoh Exp $
+ *	$Id: i4b_ipr.c,v 1.46 2018/07/25 07:55:45 msaitoh Exp $
  *
  * $FreeBSD$
  *
@@ -59,7 +59,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_ipr.c,v 1.45 2018/06/26 06:48:03 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_ipr.c,v 1.46 2018/07/25 07:55:45 msaitoh Exp $");
 
 #include "irip.h"
 #include "opt_irip.h"
@@ -1066,7 +1066,12 @@ error:
 		/* prepend the address family as a four byte field */
 		struct mbuf mm;
 		u_int af = AF_INET;
+
+		mm.m_type = MT_DATA;
+		mm.m_flags = 0;
 		mm.m_next = m;
+		mm.m_nextpkt = NULL;
+		mm.m_owner = NULL;
 		mm.m_len = 4;
 		mm.m_data = (char *)&af;
 
