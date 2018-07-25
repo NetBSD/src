@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.755 2018/07/24 09:16:23 msaitoh Exp $
+$NetBSD: usbdevs,v 1.756 2018/07/25 05:29:33 msaitoh Exp $
 
 /*-
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -1820,6 +1820,7 @@ product HUAWEI E220		0x1003	Huawei E220
 product HUAWEI U8150		0x1037	Huawei U8150
 product HUAWEI EM770W		0x1404	Huawei EM770W
 product HUAWEI E1750		0x140c	Huawei E1750
+product HUAWEI E182		0x1429	Huawei E182
 product HUAWEI E353             0x1442  Huawei E353
 product HUAWEI E1750INIT	0x1446	Huawei E1750 USB CD
 product HUAWEI K3765		0x1465	Huawei K3765
