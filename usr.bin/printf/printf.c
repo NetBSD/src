@@ -1,4 +1,4 @@
-/*	$NetBSD: printf.c,v 1.41 2018/07/25 14:41:52 kre Exp $	*/
+/*	$NetBSD: printf.c,v 1.42 2018/07/25 15:35:27 kre Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\
 #if 0
 static char sccsid[] = "@(#)printf.c	8.2 (Berkeley) 3/22/95";
 #else
-__RCSID("$NetBSD: printf.c,v 1.41 2018/07/25 14:41:52 kre Exp $");
+__RCSID("$NetBSD: printf.c,v 1.42 2018/07/25 15:35:27 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -210,7 +210,7 @@ int main(int argc, char *argv[])
 			ch = *fmt;
 			if (!ch) {
 				warnx("missing format character");
-				return (1);
+				return 1;
 			}
 			/*
 			 * null terminate format string to we can use it
@@ -619,7 +619,7 @@ getwidth(void)
 
 	s = *gargv;
 	if (!*gargv)
-		return (0);
+		return 0;
 	gargv++;
 
 	errno = 0;
@@ -691,7 +691,7 @@ getdouble(void)
 	char *ep;
 
 	if (!*gargv)
-		return (0.0);
+		return 0.0;
 
 	if (**gargv == '\"' || **gargv == '\'')
 		return (double) *((*gargv++)+1);
