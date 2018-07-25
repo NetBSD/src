@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.h,v 1.19 2016/05/09 21:03:10 kre Exp $	*/
+/*	$NetBSD: eval.h,v 1.20 2018/07/25 14:42:50 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -51,6 +51,8 @@ void evalstring(char *, int);
 union node;	/* BLETCH for ansi C */
 void evaltree(union node *, int);
 void evalbackcmd(union node *, struct backcmd *);
+
+const char *syspath(void);
 
 /* in_function returns nonzero if we are currently evaluating a function */
 int in_function(void);		/* return non-zero, if evaluating a function */
