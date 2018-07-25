@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.316 2018/07/12 10:46:41 maxv Exp $
+#	$NetBSD: bsd.prog.mk,v 1.317 2018/07/25 23:34:25 kamil Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .ifndef HOSTPROG
@@ -9,8 +9,8 @@
 
 ##### Sanitizer specific flags.
 
-CFLAGS+=	${SANITIZERFLAGS}
-CXXFLAGS+=	${SANITIZERFLAGS}
+CFLAGS+=	${SANITIZERFLAGS} ${LIBCSANITIZERFLAGS}
+CXXFLAGS+=	${SANITIZERFLAGS} ${LIBCSANITIZERFLAGS}
 LDFLAGS+=	${SANITIZERFLAGS}
 
 # Rename the local function definitions to not conflict with libc/rt/pthread/m.
