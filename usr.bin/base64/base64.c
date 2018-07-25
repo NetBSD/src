@@ -1,4 +1,4 @@
-/*	$NetBSD: base64.c,v 1.1 2018/07/24 15:26:16 christos Exp $	*/
+/*	$NetBSD: base64.c,v 1.2 2018/07/25 03:45:34 christos Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: base64.c,v 1.1 2018/07/24 15:26:16 christos Exp $");
+__RCSID("$NetBSD: base64.c,v 1.2 2018/07/25 03:45:34 christos Exp $");
 
 #include <ctype.h>
 #include <errno.h>
@@ -66,23 +66,22 @@ putoutput(FILE *fout, uint8_t out[4], size_t len, size_t wrap, size_t *pos)
 
 	for (i = 0; i < len + 1; i++) {
 		if (out[i] >= 64) {
-			errno = EINVAL;
-			return -1;
+			return EINVAL;
 		}
 		if (fputc(B64[out[i]], fout) == -1)
-			return -1;
+			return errno;
 		if (++(*pos) == wrap) {
 			if (fputc('\n', fout) == -1)
-				return -1;
+				return errno;
 			*pos = 0;
 		}
 	}
 	for (; i < 4; i++) {
 		if (fputc('=', fout) == -1)
-			return -1;
+			return errno;
 		if (++(*pos) == wrap) {
 			if (fputc('\n', fout) == -1)
-				return -1;
+				return errno;
 			*pos = 0;
 		}
 	}
@@ -106,22 +105,23 @@ b64_encode(FILE *fout, FILE *fin, size_t wrap)
 	uint8_t out[4];
 	size_t ilen;
 	size_t pos = 0;
+	int e;
 
 	while ((ilen = getinput(fin, in)) > 2) {
 		encode(out, in);
-		if (putoutput(fout, out, ilen, wrap, &pos) == -1)
-			return -1;
+		if ((e = putoutput(fout, out, ilen, wrap, &pos)) != 0)
+			return e;
 	}
 
 	if (ilen != 0) {
 		encode(out, in);
-		if (putoutput(fout, out, ilen, wrap, &pos) == -1)
-			return -1;
+		if ((e = putoutput(fout, out, ilen, wrap, &pos)) != 0)
+			return e;
 	}
 
 	if (pos && wrap) {
 		if (fputc('\n', fout) == -1)
-			return -1;
+			return errno;
 	}
 	return 0;
 }
@@ -146,7 +146,7 @@ b64_decode(FILE *fout, FILE *fin, bool ignore)
 
 		pos = strchr(B64, c);
 		if (pos == NULL)
-			return -1;
+			return EFTYPE;
 
 		b = (uint8_t)(pos - B64);
 
@@ -157,19 +157,19 @@ b64_decode(FILE *fout, FILE *fin, bool ignore)
 		case 1:
 			out |= b >> 4;
 			if (fputc(out, fout) == -1)
-				return -1;
+				return errno;
 			out = (uint8_t)((b & 0xf) << 4);
 			break;
 		case 2:
 			out |= b >> 2;
 			if (fputc(out, fout) == -1)
-				return -1;
+				return errno;
 			out = (uint8_t)((b & 0x3) << 6);
 			break;
 		case 3:
 			out |= b;
 			if (fputc(out, fout) == -1)
-				return -1;
+				return errno;
 			out = 0;
 			break;
 		default:
@@ -182,7 +182,7 @@ b64_decode(FILE *fout, FILE *fin, bool ignore)
 		switch (state) {
 		case 0:
 		case 1:
-			return -1;
+			return EFTYPE;
 		case 2:
 			while ((c = getc(fin)) != -1) {
 				if (ignore && isspace(c))
@@ -190,7 +190,7 @@ b64_decode(FILE *fout, FILE *fin, bool ignore)
 				break;
 			}
 			if (c != '=')
-				return -1;
+				return EFTYPE;
 			/*FALLTHROUGH*/
 		case 3:
 			while ((c = getc(fin)) != -1) {
@@ -199,7 +199,7 @@ b64_decode(FILE *fout, FILE *fin, bool ignore)
 				break;
 			}
 			if (c != -1)
-				return -1;
+				return EFTYPE;
 			return 0;
 		default:
 			abort();
@@ -207,7 +207,7 @@ b64_decode(FILE *fout, FILE *fin, bool ignore)
 	}
 
 	if (c != -1 || state != 0)
-		return -1;
+		return EFTYPE;
 
 	return 0;
 }
@@ -226,12 +226,13 @@ doit(FILE *fout, FILE *fin, bool decode, bool ignore, size_t wrap)
 	int e;
 
 	if (decode)
-		e = b64_decode(stdout, stdin, ignore) != 0;
+		e = b64_decode(stdout, stdin, ignore);
 	else
-		e = b64_encode(stdout, stdin, wrap) != 0;
+		e = b64_encode(stdout, stdin, wrap);
 
-	if (e != 0)
-		errx(EXIT_FAILURE, "%scoding failed", decode ? "De": "En");
+	if (e == 0)
+		return;
+	errc(EXIT_FAILURE, e, "%scoding failed", decode ? "De": "En");
 }
 
 int
@@ -242,14 +243,18 @@ main(int argc, char *argv[])
 	bool ignore = false;
 	int c;
 
-	while ((c = getopt(argc, argv, "diw:")) != -1) {
+	while ((c = getopt(argc, argv, "b:Ddiw:")) != -1) {
 		switch (c) {
+		case 'D':
+			decode = ignore = true;
+			break;
 		case 'd':
 			decode = true;
 			break;
 		case 'i':
 			ignore = true;
 			break;
+		case 'b':
 		case 'w':
 			wrap = (size_t)atoi(optarg);
 			break;
