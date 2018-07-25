@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.c,v 1.155 2018/06/22 11:04:55 kre Exp $	*/
+/*	$NetBSD: eval.c,v 1.156 2018/07/25 14:42:50 kre Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.9 (Berkeley) 6/8/95";
 #else
-__RCSID("$NetBSD: eval.c,v 1.155 2018/06/22 11:04:55 kre Exp $");
+__RCSID("$NetBSD: eval.c,v 1.156 2018/07/25 14:42:50 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -703,7 +703,7 @@ evalbackcmd(union node *n, struct backcmd *result)
 		result->fd, result->buf, result->nleft, result->jp));
 }
 
-static const char *
+const char *
 syspath(void)
 {
 	static char *sys_path = NULL;
