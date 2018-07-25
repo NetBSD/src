@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.380 2018/07/25 19:15:19 kamil Exp $
+#	$NetBSD: bsd.README,v 1.381 2018/07/25 23:30:22 kamil Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -275,6 +275,28 @@ MKKYUA		If "no", don't build Kyua nor its dependent library Lutok.
 MKLDAP		If "no", disables building of LDAP infrastructure
 		(libraries and support programs).
 		Default: yes
+
+MKLIBCSANITIZER	If "yes", use the selected sanitizer inside libc to compile
+		userland programs and libraries as defined in
+		USE_LIBCSANITIZER, which defaults to "undefined".
+
+		The undefined behavior detector is currently the only supported
+		sanitizer in this mode. Its runtime differs from the UBSan
+		available in MKSANITIZER, and it is reimplemented from scratch
+		as micro-UBSan in the user mode (uUBSan). Its code is shared
+		with the kernel mode variation (kUBSan). The runtime is
+		stripped down from C++ features, in particular -fsanitize=vptr
+		is not supported and explicitly disabled. The only runtime
+		configuration is restricted to the LIBC_UBSAN environment
+		variable, that is designed to be safe for hardening.
+
+		The USE_LIBCSANITIZER value is passed to the -fsanitize=
+		argument to the compiler in CFLAGS and CXXFLAGS, but not in
+		LDFLAGS, as the runtime part is located inside libc.
+
+		Additional sanitizer arguments can be passed through
+		LIBCSANITIZERFLAGS.
+		Default: no
 
 MKLIBCXX	If not "no", build and install libc++.
 		Default: no
