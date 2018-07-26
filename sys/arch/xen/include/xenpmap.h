@@ -1,4 +1,4 @@
-/*	$NetBSD: xenpmap.h,v 1.39 2017/03/08 18:00:49 maxv Exp $	*/
+/*	$NetBSD: xenpmap.h,v 1.40 2018/07/26 17:20:08 maxv Exp $	*/
 
 /*
  *
@@ -61,9 +61,7 @@ void pmap_xen_suspend(void);
 void pmap_map_recursive_entries(void);
 void pmap_unmap_recursive_entries(void);
 
-#if defined(PAE) || defined(__x86_64__)
 void xen_kpm_sync(struct pmap *, int);
-#endif /* PAE || __x86_64__ */
 
 #define xpq_queue_pin_l1_table(pa)	\
 	xpq_queue_pin_table(pa, MMUEXT_PIN_L1_TABLE)
@@ -135,11 +133,7 @@ MULTI_update_va_mapping(
 	mcl->args[2] = flags;
 #else
 	mcl->args[1] = (new_val & 0xffffffff);
-#ifdef PAE
 	mcl->args[2] = (new_val >> 32);
-#else
-	mcl->args[2] = 0;
-#endif
 	mcl->args[3] = flags;
 #endif
 }
@@ -157,11 +151,7 @@ MULTI_update_va_mapping_otherdomain(
 	mcl->args[3] = domid;
 #else
 	mcl->args[1] = (new_val & 0xffffffff);
-#ifdef PAE
 	mcl->args[2] = (new_val >> 32);
-#else
-	mcl->args[2] = 0;
-#endif
 	mcl->args[3] = flags;
 	mcl->args[4] = domid;
 #endif
