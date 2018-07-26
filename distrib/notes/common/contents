@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.174 2018/06/24 09:38:46 leot Exp $
+.\"	$NetBSD: contents,v 1.175 2018/07/26 16:22:49 maxv Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -94,8 +94,6 @@ The installation kernel.
 .			It Pa netbsd-INSTALL_XEN3PAE_DOMU.gz
 .			It Pa netbsd-INSTALL_XEN3_DOMU.gz
 .			It Pa netbsd-XEN3PAE_DOMU.gz
-.			It Pa netbsd-XEN3_DOM0.gz
-.			It Pa netbsd-XEN3_DOMU.gz
 .\}
 .if \n[mac68k] \{\
 .			It Pa netbsd-GENERIC.gz
