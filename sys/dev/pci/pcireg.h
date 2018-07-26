@@ -1,4 +1,4 @@
-/*	$NetBSD: pcireg.h,v 1.130.2.3 2018/02/26 00:56:29 snj Exp $	*/
+/*	$NetBSD: pcireg.h,v 1.130.2.4 2018/07/26 21:07:19 snj Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1999, 2000
@@ -2029,7 +2029,7 @@ struct pci_rom {
   /* Same */
 #define	PCI_DPC_RPPIO_HLOG 0x20	/* RP PIO Header Log Register */
 #define	PCI_DPC_RPPIO_IMPSLOG 0x30 /* RP PIO ImpSpec Log Register */
-#define	PCI_DPC_RPPIO_TLPPLOG 0x34 /* RP PIO TPL Prefix Log Register */
+#define	PCI_DPC_RPPIO_TLPPLOG 0x34 /* RP PIO TLP Prefix Log Register */
 
 /*
  * Extended capability ID: 0x001e
