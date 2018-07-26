@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.293 2018/07/21 21:26:30 maxv Exp $	*/
+/*	$NetBSD: pmap.c,v 1.294 2018/07/26 08:22:19 maxv Exp $	*/
 
 /*
  * Copyright (c) 2008, 2010, 2016, 2017 The NetBSD Foundation, Inc.
@@ -130,19 +130,6 @@
  */
 
 /*
- * This is the i386 pmap modified and generalized to support x86-64
- * as well. The idea is to hide the upper N levels of the page tables
- * inside pmap_get_ptp, pmap_free_ptp and pmap_growkernel. The rest
- * is mostly untouched, except that it uses some more generalized
- * macros and interfaces.
- *
- * This pmap has been tested on the i386 as well, and it can be easily
- * adapted to PAE.
- *
- * fvdl@wasabisystems.com 18-Jun-2001
- */
-
-/*
  * pmap.c: i386 pmap module rewrite
  * Chuck Cranor <chuck@netbsd>
  * 11-Aug-97
@@ -170,7 +157,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.293 2018/07/21 21:26:30 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.294 2018/07/26 08:22:19 maxv Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -524,6 +511,7 @@ int pmap_enter_default(pmap_t, vaddr_t, paddr_t, vm_prot_t, u_int);
 struct pool_cache pmap_pdp_cache;
 static int  pmap_pdp_ctor(void *, void *, int);
 static void pmap_pdp_dtor(void *, void *);
+
 #ifdef PAE
 /* need to allocate items of 4 pages */
 static void *pmap_pdp_alloc(struct pool *, int);
@@ -533,7 +521,7 @@ static struct pool_allocator pmap_pdp_allocator = {
 	.pa_free = pmap_pdp_free,
 	.pa_pagesz = PAGE_SIZE * PDP_SIZE,
 };
-#endif /* PAE */
+#endif
 
 extern vaddr_t idt_vaddr;
 extern paddr_t idt_paddr;
@@ -1811,17 +1799,18 @@ pmap_init(void)
 	 * are pinned on xen and R/O for the domU
 	 */
 	flags = PR_NOTOUCH;
-#else /* XEN */
+#else
 	flags = 0;
-#endif /* XEN */
+#endif
+
 #ifdef PAE
 	pool_cache_bootstrap(&pmap_pdp_cache, PAGE_SIZE * PDP_SIZE, 0, 0, flags,
 	    "pdppl", &pmap_pdp_allocator, IPL_NONE,
 	    pmap_pdp_ctor, pmap_pdp_dtor, NULL);
-#else /* PAE */
+#else
 	pool_cache_bootstrap(&pmap_pdp_cache, PAGE_SIZE, 0, 0, flags,
 	    "pdppl", NULL, IPL_NONE, pmap_pdp_ctor, pmap_pdp_dtor, NULL);
-#endif /* PAE */
+#endif
 	pool_cache_bootstrap(&pmap_pv_cache, sizeof(struct pv_entry), 0, 0,
 	    PR_LARGECACHE, "pvpl", &pool_allocator_kmem, IPL_NONE, NULL,
 	    NULL, NULL);
@@ -3032,8 +3021,8 @@ pmap_load(void)
 #ifndef XEN
 	ci->ci_tss->tss.tss_ldt = pmap->pm_ldt_sel;
 	ci->ci_tss->tss.tss_cr3 = pcb->pcb_cr3;
-#endif /* !XEN */
-#endif /* i386 */
+#endif
+#endif
 
 	lldt(pmap->pm_ldt_sel);
 
@@ -4652,7 +4641,7 @@ pmap_growkernel(vaddr_t maxkvaddr)
 #ifdef XEN
 #ifdef __x86_64__
 		/* nothing, kernel entries are never entered in user pmap */
-#else /* __x86_64__ */
+#else
 		int pdkidx;
 #ifndef PAE
 		/*
