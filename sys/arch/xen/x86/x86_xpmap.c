@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_xpmap.c,v 1.77 2018/07/26 08:18:25 maxv Exp $	*/
+/*	$NetBSD: x86_xpmap.c,v 1.78 2018/07/26 15:46:09 maxv Exp $	*/
 
 /*
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.77 2018/07/26 08:18:25 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.78 2018/07/26 15:46:09 maxv Exp $");
 
 #include "opt_xen.h"
 #include "opt_ddb.h"
@@ -115,12 +115,10 @@ __KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.77 2018/07/26 08:18:25 maxv Exp $");
 #include <dev/isa/isareg.h>
 #include <machine/isa_machdep.h>
 
-#undef	XENDEBUG
-
 #ifdef XENDEBUG
-#define	XENPRINTF(x) printf x
+#define	__PRINTK(x) printk x
 #else
-#define	XENPRINTF(x)
+#define	__PRINTK(x)
 #endif
 
 /* Xen requires the start_info struct to be page aligned */
@@ -182,8 +180,6 @@ xen_set_ldt(vaddr_t base, uint32_t entries)
 	for (va = base; va < end; va += PAGE_SIZE) {
 		KASSERT(va >= VM_MIN_KERNEL_ADDRESS);
 		ptp = kvtopte(va);
-		XENPRINTF(("xen_set_ldt %#" PRIxVADDR " %d %p\n",
-		    base, entries, ptp));
 		pmap_pte_clearbits(ptp, PG_RW);
 	}
 	s = splvm(); /* XXXSMP */
