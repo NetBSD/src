@@ -1,4 +1,4 @@
-/*	$NetBSD: mii.h,v 1.20 2016/10/28 05:47:16 msaitoh Exp $	*/
+/*	$NetBSD: mii.h,v 1.20.8.1 2018/07/26 21:41:19 snj Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -58,6 +58,7 @@
 #define	BMCR_FDX	0x0100	/* Set duplex mode */
 #define	BMCR_CTEST	0x0080	/* collision test */
 #define	BMCR_SPEED1	0x0040	/* speed selection (MSB) */
+#define	BMCR_UNIDIR	0x0020	/* Unidirectional enable */
 
 #define	BMCR_S10	0x0000		/* 10 Mb/s */
 #define	BMCR_S100	BMCR_SPEED0	/* 100 Mb/s */
@@ -74,6 +75,7 @@
 #define	BMSR_100T2FDX	0x0400	/* 100 base T2 full duplex capable */
 #define	BMSR_100T2HDX	0x0200	/* 100 base T2 half duplex capable */
 #define	BMSR_EXTSTAT	0x0100	/* Extended status in register 15 */
+#define	BMSR_UNIDIR	0x0080	/* Unidirectional ability */
 #define	BMSR_MFPS	0x0040	/* MII Frame Preamble Suppression */
 #define	BMSR_ACOMP	0x0020	/* Autonegotiation complete */
 #define	BMSR_RFAULT	0x0010	/* Link partner fault */
@@ -109,6 +111,7 @@
 #define ANAR_NP		0x8000	/* Next page (ro) */
 #define	ANAR_ACK	0x4000	/* link partner abilities acknowledged (ro) */
 #define ANAR_RF		0x2000	/* remote fault (ro) */
+#define ANAR_XNP	0x1000	/* Extended Next Page */
 		/* Annex 28B.2 */
 #define	ANAR_FC		0x0400	/* local device supports PAUSE */
 #define ANAR_T4		0x0200	/* local device supports 100bT4 */
@@ -129,12 +132,21 @@
 #define	ANAR_X_PAUSE_SYM	(1 << 7)
 #define	ANAR_X_PAUSE_ASYM	(2 << 7)
 #define	ANAR_X_PAUSE_TOWARDS	(3 << 7)
+	/* 37.2.1.5 Remore Fault */
+#define	ANAR_X_RF1	0x1000
+#define	ANAR_X_RF2	0x2000
+#define ANAR_X_RF_MASK		(ANAR_X_RF1 | ANAR_X_RF2)
+#define ANAR_X_RF_NONE		(0 << 12)
+#define ANAR_X_RF_OFFLINE	(1 << 12)
+#define ANAR_X_RF_LINKFAIL	(2 << 12)
+#define ANAR_X_RF_ANEGERR	(3 << 12)
 
-#define	MII_ANLPAR	0x05	/* Autonegotiation lnk partner abilities (rw) */
+#define	MII_ANLPAR	0x05	/* ANEG Link Partner Base Page abilities (rw)*/
 		/* section 28.2.4.1 and 37.2.6.1 */
 #define ANLPAR_NP	0x8000	/* Next page (ro) */
 #define	ANLPAR_ACK	0x4000	/* link partner accepted ACK (ro) */
 #define ANLPAR_RF	0x2000	/* remote fault (ro) */
+#define ANLPAR_XNP	0x1000	/* Extended Next Page */
 #define	ANLPAR_FC	0x0400	/* link partner supports PAUSE */
 #define ANLPAR_T4	0x0200	/* link partner supports 100bT4 */
 #define ANLPAR_TX_FD	0x0100	/* link partner supports 100bTx FD */
@@ -155,20 +167,55 @@
 #define	ANLPAR_X_PAUSE_SYM	(1 << 7)
 #define	ANLPAR_X_PAUSE_ASYM	(2 << 7)
 #define	ANLPAR_X_PAUSE_TOWARDS	(3 << 7)
+	/* 37.2.1.5 Remore Fault */
+#define	ANLPAR_X_RF1	0x1000
+#define	ANLPAR_X_RF2	0x2000
+#define	ANLPAR_X_RF_MASK	(ANLPAR_X_RF1 | ANLPAR_X_RF2)
+#define ANLPAR_X_RF_NONE	(0 << 12)
+#define ANLPAR_X_RF_OFFLINE	(1 << 12)
+#define ANLPAR_X_RF_LINKFAIL	(2 << 12)
+#define ANLPAR_X_RF_ANEGERR	(3 << 12)
 
 #define	MII_ANER	0x06	/* Autonegotiation expansion (ro) */
 		/* section 28.2.4.1 and 37.2.6.1 */
+#define ANER_RNPLA	0x0040	/* Receive Next Page Location Able */
+#define ANER_RNPSL	0x0020	/* Received Next Page Storage Location */
 #define ANER_MLF	0x0010	/* multiple link detection fault */
-#define ANER_LPNP	0x0008	/* link parter next page-able */
+#define ANER_LPNP	0x0008	/* link partner next page-able */
 #define ANER_NP		0x0004	/* next page-able */
 #define ANER_PAGE_RX	0x0002	/* Page received */
-#define ANER_LPAN	0x0001	/* link parter autoneg-able */
+#define ANER_LPAN	0x0001	/* link partner autoneg-able */
 
-#define	MII_ANNP	0x07	/* Autonegotiation next page */
+#define	MII_ANNPT	0x07	/* Autonegotiation next page transmit (rw) */
 		/* section 28.2.4.1 and 37.2.6.1 */
+#define ANNPT_NP	0x8000	/* Next Page */
+#define ANNPT_MP	0x2000	/* Message Page */
+#define ANNPT_ACK2	0x1000	/* Acknowledge 2 */
+#define ANNPT_TOGGLE	0x0800	/* Toggle */
+#define ANNPT_MSGUNF_MASK 0x07ff /* Message(Annex28C)/Unformatted Code Field */
+
+/* Next Page Message Code used in ANNPT and ANLPRNP */
+#define ANNP_MSG_NULL		1    /* Null Message */
+#define ANNP_MSG_1UP_TAF	2    /* 1Up w/ Tech. Ability Field follows */
+#define ANNP_MSG_2UP_TAF	3    /* 2Up w/ Tech. Ability Field follows */
+#define ANNP_MSG_1UP_BCRF	4    /* 1Up w/ Bin. coded Remote Flt follows */
+#define ANNP_MSG_OUIDTMSG	5    /* OUI tagged Message */
+#define ANNP_MSG_PHYIDTC	6    /* PHY Identifier Tag Code */
+#define ANNP_MSG_TMC_100T2	7    /* 100BASE-T2 Tech. Message Code */
+#define ANNP_MSG_TMC_1000T	8    /* 1000BASE-T Tech. Message Code */
+#define ANNP_MSG_TMC_10G1G	9    /* 10GBASE-T/1000BASE-T TMC: (XNP) */
+#define ANNP_MSG_TMC_EEE	10   /* EEE Technology Message Code */
+#define ANNP_MSG_OUIDTM_XNP	11   /* OUI tagged Message (XNP) */
+
 
 #define	MII_ANLPRNP	0x08	/* Autonegotiation link partner rx next page */
 		/* section 32.5.1 and 37.2.6.1 */
+#define ANLPRNP_NP	0x8000	/* Next Page */
+#define ANLPRNP_ACK	0x4000	/* Acknowledge */
+#define ANLPRNP_MP	0x2000	/* Message Page */
+#define ANLPRNP_ACK2	0x1000	/* Acknowledge 2 */
+#define ANLPRNP_TOGGLE	0x0800	/* Toggle */
+#define ANLPRNP_MSGUNF_MASK 0x07ff /* Message(Anx28C)/Unformatted Code Field */
 
 			/* This is also the 1000baseT control register */
 #define	MII_100T2CR	0x09	/* 100base-T2 control register */
@@ -187,14 +234,15 @@
 #define	GTSR_RRS	0x1000	/* remote rx status, 1 = ok */
 #define	GTSR_LP_1000TFDX 0x0800	/* link partner 1000baseT FDX capable */
 #define	GTSR_LP_1000THDX 0x0400	/* link partner 1000baseT HDX capable */
-#define	GTSR_LP_ASM_DIR	0x0200	/* link partner asym. pause dir. capable */
 #define	GTSR_IDLE_ERR	0x00ff	/* IDLE error count */
 
 #define	MII_PSECR	0x0b	/* PSE control register */
+#define	PSECR_DLLC	0x0020	/* Data Link Layer Classification capability */
+#define	PSECR_EPLC	0x0010	/* Enable Physical Layer Classification */
 #define	PSECR_PACTLMASK	0x000c	/* pair control mask */
-#define	PSECR_PSEENMASK	0x0003	/* PSE enable mask */
 #define	PSECR_PINOUTB	0x0008	/* PSE pinout Alternative B */
 #define	PSECR_PINOUTA	0x0004	/* PSE pinout Alternative A */
+#define	PSECR_PSEENMASK	0x0003	/* PSE enable mask */
 #define	PSECR_FOPOWTST	0x0002	/* Force Power Test Mode */
 #define	PSECR_PSEEN	0x0001	/* PSE Enabled */
 #define	PSECR_PSEDIS	0x0000	/* PSE Disabled */
@@ -209,11 +257,18 @@
 #define	PSESR_PDCLMASK	0x0070	/* PD Class mask */
 #define	PSESR_STATMASK	0x000e	/* PSE Status mask */
 #define	PSESR_PAIRCTABL	0x0001	/* PAIR Control Ability */
+#define	PSESR_PDCL_INVALID	(5 << 4)	/* Invalid Class */
 #define	PSESR_PDCL_4		(4 << 4)	/* Class 4 */
 #define	PSESR_PDCL_3		(3 << 4)	/* Class 3 */
 #define	PSESR_PDCL_2		(2 << 4)	/* Class 2 */
 #define	PSESR_PDCL_1		(1 << 4)	/* Class 1 */
 #define	PSESR_PDCL_0		(0 << 4)	/* Class 0 */
+#define	PSESR_STAT_ISFLT	(5 << 1)	/* Implement specific fault */
+#define	PSESR_STAT_TSTERR	(4 << 1)	/* Test Error */
+#define	PSESR_STAT_TSTMODE	(3 << 1)	/* Test Mode */
+#define	PSESR_STAT_DELVPWR	(2 << 1)	/* Delivering power */
+#define	PSESR_STAT_SEARCH	(1 << 1)	/* Searching */
+#define	PSESR_STAT_DIS		(0 << 1)	/* Disabled */
 
 #define	MII_MMDACR	0x0d	/* MMD access control register */
 #define	MMDACR_FUNCMASK	0xc000	/* function */
