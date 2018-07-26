@@ -175,7 +175,7 @@ swap16(uint16_t in)
 	u16	u;
 
 	u.i16 = in;
-	return (u.i8[0] << 8) | u.i8[1];
+	return ((uint16_t)u.i8[0] << 8) | u.i8[1];
 }
 
 static inline uint32_t
@@ -184,7 +184,7 @@ swap32(uint32_t in)
 	u32	u;
 
 	u.i32 = in;
-	return (u.i8[0] << 24) | (u.i8[1] << 16) | (u.i8[2] << 8) | u.i8[3];
+	return ((uint32_t)u.i8[0] << 24) | (u.i8[1] << 16) | (u.i8[2] << 8) | u.i8[3];
 }
 
 static inline int
