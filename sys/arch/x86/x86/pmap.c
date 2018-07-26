@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.294 2018/07/26 08:22:19 maxv Exp $	*/
+/*	$NetBSD: pmap.c,v 1.295 2018/07/26 17:20:08 maxv Exp $	*/
 
 /*
  * Copyright (c) 2008, 2010, 2016, 2017 The NetBSD Foundation, Inc.
@@ -157,7 +157,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.294 2018/07/26 08:22:19 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.295 2018/07/26 17:20:08 maxv Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -4540,7 +4540,7 @@ pmap_alloc_level(struct pmap *cpm, vaddr_t kva, long *needed_ptps)
 			pte = pmap_pa2pte(pa) | PG_V | PG_RW;
 			pmap_pte_set(&pdep[i], pte);
 
-#if defined(XEN) && (defined(PAE) || defined(__x86_64__))
+#ifdef XEN
 			if (level == PTP_LEVELS && i >= PDIR_SLOT_KERN) {
 				if (__predict_true(
 				    cpu_info_primary.ci_flags & CPUF_PRESENT)) {
@@ -4551,18 +4551,17 @@ pmap_alloc_level(struct pmap *cpm, vaddr_t kva, long *needed_ptps)
 					 * too early; update primary CPU
 					 * PMD only (without locks)
 					 */
-#ifdef PAE
-					pd_entry_t *cpu_pdep =
-					    &cpu_info_primary.ci_kpm_pdir[l2tol2(i)];
-#endif
 #ifdef __x86_64__
 					pd_entry_t *cpu_pdep =
 						&cpu_info_primary.ci_kpm_pdir[i];
+#else
+					pd_entry_t *cpu_pdep =
+					    &cpu_info_primary.ci_kpm_pdir[l2tol2(i)];
 #endif
 					pmap_pte_set(cpu_pdep, pte);
 				}
 			}
-#endif /* XEN && (PAE || __x86_64__) */
+#endif
 
 			KASSERT(level != PTP_LEVELS || nkptp[level - 1] +
 			    pl_i(VM_MIN_KERNEL_ADDRESS, level) == i);
@@ -4620,7 +4619,7 @@ pmap_growkernel(vaddr_t maxkvaddr)
 		needed_kptp[i] = target_nptp - nkptp[i];
 	}
 
-#if defined(XEN) && (defined(__x86_64__) || defined(PAE))
+#ifdef XEN
 	/* only pmap_kernel(), or the per-cpu map, has kernel entries */
 	cpm = kpm;
 #else
@@ -4643,21 +4642,6 @@ pmap_growkernel(vaddr_t maxkvaddr)
 		/* nothing, kernel entries are never entered in user pmap */
 #else
 		int pdkidx;
-#ifndef PAE
-		/*
-		 * for PAE this is not needed, because pmap_alloc_level()
-		 * already did update the per-CPU tables
-		 */
-		if (cpm != kpm) {
-			for (pdkidx = PDIR_SLOT_KERN + old;
-			    pdkidx < PDIR_SLOT_KERN + nkptp[PTP_LEVELS - 1];
-			    pdkidx++) {
-				pmap_pte_set(&kpm->pm_pdir[pdkidx],
-				    cpm->pm_pdir[pdkidx]);
-			}
-			pmap_pte_flush();
-		}
-#endif /* !PAE */
 
 		mutex_enter(&pmaps_lock);
 		LIST_FOREACH(pm, &pmaps, pm_list) {
