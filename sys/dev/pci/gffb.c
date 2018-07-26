@@ -1,4 +1,4 @@
-/*	$NetBSD: gffb.c,v 1.12 2017/01/20 12:25:07 maya Exp $	*/
+/*	$NetBSD: gffb.c,v 1.13 2018/07/26 19:32:25 macallan Exp $	*/
 
 /*
  * Copyright (c) 2013 Michael Lorenz
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gffb.c,v 1.12 2017/01/20 12:25:07 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gffb.c,v 1.13 2018/07/26 19:32:25 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -87,9 +87,10 @@ struct gffb_softc {
 	bus_size_t sc_fbsize, sc_regsize;
 	uint8_t *sc_fbaddr;
 	size_t sc_vramsize;
+	uint32_t sc_fboffset;
 
 	int sc_width, sc_height, sc_depth, sc_stride;
-	int sc_locked;
+	int sc_locked, sc_accel;
 	struct vcons_screen sc_console_screen;
 	struct wsscreen_descr sc_defaultscreen_descr;
 	const struct wsscreen_descr *sc_screens[1];
@@ -166,6 +167,8 @@ gffb_match(device_t parent, cfdata_t match, void *aux)
 	/* only card tested on so far - likely need a list */
 	if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_NVIDIA_GEFORCE2MX)
 		return 100;
+	if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_NVIDIA_GEFORCE_6800U)
+		return 100;
 	return (0);
 }
 
@@ -179,7 +182,9 @@ gffb_attach(device_t parent, device_t self, void *aux)
 	struct wsemuldisplaydev_attach_args aa;
 	prop_dictionary_t	dict;
 	unsigned long		defattr;
+	pcireg_t		reg;
 	bool			is_console = FALSE;
+	uint32_t		addr;
 	int			i, j, f;
 	uint8_t			cmap[768];
 
@@ -188,6 +193,10 @@ gffb_attach(device_t parent, device_t self, void *aux)
 	sc->sc_memt = pa->pa_memt;
 	sc->sc_iot = pa->pa_iot;
 	sc->sc_dev = self;
+
+	/* first, see what kind of chip we've got */
+	reg = pci_conf_read(sc->sc_pc, sc->sc_pcitag, PCI_ID_REG);
+	sc->sc_accel = PCI_PRODUCT(reg) == PCI_PRODUCT_NVIDIA_GEFORCE2MX;
 
 	pci_aprint_devinfo(pa, NULL);
 
@@ -217,6 +226,15 @@ gffb_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
+	/*
+	 * on !2MX we need to use the firmware's offset - for some reason
+	 * register writes to anything other than the DACs go wrong
+	 */
+	sc->sc_fboffset = 0;
+	if (prop_dictionary_get_uint32(dict, "address", &addr)) {
+		sc->sc_fboffset = addr & 0x000fffff;	/* XXX */
+	}
+
 	prop_dictionary_get_bool(dict, "is_console", &is_console);
 
 	if (pci_mapreg_map(pa, 0x10, PCI_MAPREG_TYPE_MEM, 0,
@@ -232,8 +250,10 @@ gffb_attach(device_t parent, device_t self, void *aux)
 		aprint_error("%s: can't find the framebuffer?!\n",
 		    device_xname(sc->sc_dev));
 	}
+	if (sc->sc_vramsize == 0) sc->sc_vramsize = sc->sc_fbsize;
 
-	if (bus_space_map(sc->sc_memt, sc->sc_fb, sc->sc_vramsize,
+	/* don't map (much) more than we actually need */
+	if (bus_space_map(sc->sc_memt, sc->sc_fb, 0x1000000,
 	    BUS_SPACE_MAP_PREFETCHABLE | BUS_SPACE_MAP_LINEAR,
 	    &sc->sc_fbh)) {
 		aprint_error("%s: failed to map the framebuffer.\n",
@@ -284,24 +304,32 @@ gffb_attach(device_t parent, device_t self, void *aux)
 
 	ri = &sc->sc_console_screen.scr_ri;
 
-	sc->sc_gc.gc_bitblt = gffb_bitblt;
-	sc->sc_gc.gc_blitcookie = sc;
-	sc->sc_gc.gc_rop = 0xcc;
+	if (sc->sc_accel) {
+		sc->sc_gc.gc_bitblt = gffb_bitblt;
+		sc->sc_gc.gc_blitcookie = sc;
+		sc->sc_gc.gc_rop = 0xcc;
+	}
 
 	if (is_console) {
 		vcons_init_screen(&sc->vd, &sc->sc_console_screen, 1,
 		    &defattr);
 		sc->sc_console_screen.scr_flags |= VCONS_SCREEN_IS_STATIC;
 
-		gffb_rectfill(sc, 0, 0, sc->sc_width, sc->sc_height,
-		    ri->ri_devcmap[(defattr >> 16) & 0xf]);
-
+		if (sc->sc_accel) {
+			gffb_rectfill(sc, 0, 0, sc->sc_width, sc->sc_height,
+		    		ri->ri_devcmap[(defattr >> 16) & 0xf]);
+		} else {
+			memset(sc->sc_fbaddr + sc->sc_fboffset,
+			       ri->ri_devcmap[(defattr >> 16) & 0xf],
+			       sc->sc_stride * sc->sc_height);
+		}
 		sc->sc_defaultscreen_descr.textops = &ri->ri_ops;
 		sc->sc_defaultscreen_descr.capabilities = ri->ri_caps;
 		sc->sc_defaultscreen_descr.nrows = ri->ri_rows;
 		sc->sc_defaultscreen_descr.ncols = ri->ri_cols;
 
-		glyphcache_init(&sc->sc_gc, sc->sc_height + 5,
+		if (sc->sc_accel)
+			glyphcache_init(&sc->sc_gc, sc->sc_height + 5,
 				(0x800000 / sc->sc_stride) - sc->sc_height - 5,
 				sc->sc_width,
 				ri->ri_font->fontwidth,
@@ -323,7 +351,8 @@ gffb_attach(device_t parent, device_t self, void *aux)
 		} else
 			(*ri->ri_ops.allocattr)(ri, 0, 0, 0, &defattr);
 
-		glyphcache_init(&sc->sc_gc, sc->sc_height + 5,
+		if (sc->sc_accel)
+			glyphcache_init(&sc->sc_gc, sc->sc_height + 5,
 				(0x800000 / sc->sc_stride) - sc->sc_height - 5,
 				sc->sc_width,
 				ri->ri_font->fontwidth,
@@ -429,10 +458,17 @@ gffb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag, struct lwp *l)
 			if(new_mode == WSDISPLAYIO_MODE_EMUL) {
 				gffb_init(sc);
 				gffb_restore_palette(sc);
-				glyphcache_wipe(&sc->sc_gc);
-				gffb_rectfill(sc, 0, 0, sc->sc_width,
-				    sc->sc_height, ms->scr_ri.ri_devcmap[
-				    (ms->scr_defattr >> 16) & 0xf]);
+				if (sc->sc_accel) {
+					glyphcache_wipe(&sc->sc_gc);
+					gffb_rectfill(sc, 0, 0, sc->sc_width,
+					    sc->sc_height, ms->scr_ri.ri_devcmap[
+					    (ms->scr_defattr >> 16) & 0xf]);
+				} else {
+					memset(sc->sc_fbaddr + sc->sc_fboffset,
+					       ms->scr_ri.ri_devcmap[
+					         (ms->scr_defattr >> 16) & 0xf],
+					       sc->sc_stride * sc->sc_height);				
+				}
 				vcons_redraw_screen(ms);
 			}
 		}
@@ -515,9 +551,9 @@ gffb_init_screen(void *cookie, struct vcons_screen *scr,
 	ri->ri_width = sc->sc_width;
 	ri->ri_height = sc->sc_height;
 	ri->ri_stride = sc->sc_stride;
-	ri->ri_bits = sc->sc_fbaddr + 0x2000;
-	ri->ri_flg = RI_CENTER;
 	if (sc->sc_depth == 8)
+	ri->ri_bits = sc->sc_fbaddr + sc->sc_fboffset;
+	ri->ri_flg = RI_CENTER;
 		ri->ri_flg |= RI_8BIT_IS_RGB | RI_ENABLE_ALPHA;
 
 	rasops_init(ri, 0, 0);
@@ -528,13 +564,17 @@ gffb_init_screen(void *cookie, struct vcons_screen *scr,
 
 	ri->ri_hw = scr;
 
-	sc->sc_putchar = ri->ri_ops.putchar;
-	ri->ri_ops.copyrows = gffb_copyrows;
-	ri->ri_ops.copycols = gffb_copycols;
-	ri->ri_ops.eraserows = gffb_eraserows;
-	ri->ri_ops.erasecols = gffb_erasecols;
-	ri->ri_ops.cursor = gffb_cursor;
-	ri->ri_ops.putchar = gffb_putchar;
+	if (sc->sc_accel) {
+		sc->sc_putchar = ri->ri_ops.putchar;
+		ri->ri_ops.copyrows = gffb_copyrows;
+		ri->ri_ops.copycols = gffb_copycols;
+		ri->ri_ops.eraserows = gffb_eraserows;
+		ri->ri_ops.erasecols = gffb_erasecols;
+		ri->ri_ops.cursor = gffb_cursor;
+		ri->ri_ops.putchar = gffb_putchar;
+	} else {
+		scr->scr_flags |= VCONS_DONT_READ;
+	}
 }
 
 static int
@@ -753,9 +793,13 @@ gffb_init(struct gffb_softc *sc)
 	int i;
 	uint32_t foo;
 
+	if (!sc->sc_accel) return;
+
+	sc->sc_fboffset = 0x2000;
+
 	/* init display start */
-	GFFB_WRITE_4(GFFB_CRTC0 + GFFB_DISPLAYSTART, 0x2000);
-	GFFB_WRITE_4(GFFB_CRTC1 + GFFB_DISPLAYSTART, 0x2000);
+	GFFB_WRITE_4(GFFB_CRTC0 + GFFB_DISPLAYSTART, sc->sc_fboffset);
+	GFFB_WRITE_4(GFFB_CRTC1 + GFFB_DISPLAYSTART, sc->sc_fboffset);
 	GFFB_WRITE_4(GFFB_PDIO0 + GFFB_PEL_MASK, 0xff);
 	GFFB_WRITE_4(GFFB_PDIO1 + GFFB_PEL_MASK, 0xff);
 
@@ -991,6 +1035,7 @@ static void
 gffb_rectfill(struct gffb_softc *sc, int x, int y, int wi, int he,
      uint32_t colour)
 {
+	if (!sc->sc_accel) return;
 	mutex_enter(&sc->sc_lock);
 	gffb_rop(sc, 0xcc);
 
@@ -1010,6 +1055,7 @@ gffb_bitblt(void *cookie, int xs, int ys, int xd, int yd,
 {
 	struct gffb_softc *sc = cookie;
 
+	if (!sc->sc_accel) return;
 	mutex_enter(&sc->sc_lock);
 
 	gffb_rop(sc, rop);
