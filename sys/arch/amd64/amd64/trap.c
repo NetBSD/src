@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.113 2018/02/25 13:09:33 maxv Exp $	*/
+/*	$NetBSD: trap.c,v 1.114 2018/07/26 09:29:08 maxv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000, 2017 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.113 2018/02/25 13:09:33 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.114 2018/07/26 09:29:08 maxv Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -93,6 +93,7 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.113 2018/02/25 13:09:33 maxv Exp $");
 
 #include <machine/cpufunc.h>
 #include <x86/fpu.h>
+#include <x86/dbregs.h>
 #include <machine/psl.h>
 #include <machine/reg.h>
 #include <machine/trap.h>

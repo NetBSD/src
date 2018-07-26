@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.172 2018/07/21 06:09:13 maxv Exp $	*/
+/*	$NetBSD: locore.S,v 1.173 2018/07/26 09:29:08 maxv Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -1142,6 +1142,11 @@ ENTRY(cpu_switchto)
 	callq	_C_LABEL(x86_64_switch_context)
 #endif
 .Lring0_switched:
+
+	/* Switch the dbregs. */
+	movq	%r13,%rdi
+	movq	%r12,%rsi
+	callq	_C_LABEL(x86_dbregs_switch)
 
 #ifndef XEN
 	movb	_C_LABEL(x86_fpu_eager),%dl
