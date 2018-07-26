@@ -1,4 +1,4 @@
-.\"	$NetBSD: crunchgen.1,v 1.36 2018/07/25 23:41:28 kamil Exp $
+.\"	$NetBSD: crunchgen.1,v 1.37 2018/07/26 08:57:26 wiz Exp $
 .\"
 .\" Copyright (c) 1994 University of Maryland
 .\" All Rights Reserved.
@@ -32,7 +32,7 @@
 .Nd generates build environment for a crunched binary
 .Sh SYNOPSIS
 .Nm
-.Op Fl fOopqs
+.Op Fl fOopqSs
 .Op Fl c Ar c-file-name
 .Op Fl D Ar src-root
 .Op Fl d Ar build-options
@@ -129,10 +129,10 @@ Produce static pie (position independent executables).
 .It Fl q
 Quiet operation.
 Status messages are suppressed.
-.It Fl s
-Enable sanitization.
 .It Fl S
 Enable sanitization with a sanitizer in libc.
+.It Fl s
+Enable sanitization.
 .It Fl v Ar varspec
 Append a variable specification to the on-the fly generated Makefile.
 .El
