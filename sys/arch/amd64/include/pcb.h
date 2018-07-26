@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.28 2017/12/31 07:23:09 maxv Exp $	*/
+/*	$NetBSD: pcb.h,v 1.29 2018/07/26 09:29:08 maxv Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -80,6 +80,7 @@
 struct pcb {
 	int	  pcb_flags;
 #define	PCB_COMPAT32	0x01
+#define	PCB_DBREGS	0x02
 	u_int	  pcb_cr0;		/* saved image of CR0 */
 	uint64_t pcb_rsp0;
 	uint64_t pcb_cr2;		/* page fault address (CR2) */

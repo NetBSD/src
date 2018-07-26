@@ -1,4 +1,4 @@
-/*	$NetBSD: dbregs.c,v 1.10 2018/07/22 15:02:51 maxv Exp $	*/
+/*	$NetBSD: dbregs.c,v 1.11 2018/07/26 09:29:08 maxv Exp $	*/
 
 /*
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -39,7 +39,6 @@
 #include <machine/pmap.h>
 
 struct pool x86_dbregspl;
-
 static struct dbreg initdbstate;
 
 #define X86_BREAKPOINT_CONDITION_DETECTED	( \
@@ -79,13 +78,9 @@ x86_dbregs_init(void)
 	    NULL, IPL_NONE);
 }
 
-void
-x86_dbregs_clear(struct lwp *l)
+static void
+x86_dbregs_reset(void)
 {
-	struct pcb *pcb __diagused = lwp_getpcb(l);
-
-	KASSERT(pcb->pcb_dbregs == NULL);
-
 	/*
 	 * It's sufficient to just disable Debug Control Register (DR7).
 	 * It will deactivate hardware watchpoints.
@@ -102,6 +97,41 @@ x86_dbregs_clear(struct lwp *l)
 }
 
 void
+x86_dbregs_clear(struct lwp *l)
+{
+	struct pcb *pcb = lwp_getpcb(l);
+	struct dbreg *dbregs;
+
+	KASSERT(l == curlwp);
+
+	if (__predict_true(pcb->pcb_dbregs == NULL)) {
+		KASSERT((pcb->pcb_flags & PCB_DBREGS) == 0);
+		return;
+	}
+
+	dbregs = pcb->pcb_dbregs;
+
+	kpreempt_disable();
+	pcb->pcb_dbregs = NULL;
+	pcb->pcb_flags &= ~PCB_DBREGS;
+	x86_dbregs_reset();
+	kpreempt_enable();
+
+	pool_put(&x86_dbregspl, dbregs);
+}
+
+void
+x86_dbregs_abandon(struct lwp *l)
+{
+	struct pcb *pcb = lwp_getpcb(l);
+
+	kpreempt_disable();
+	pcb->pcb_flags &= ~PCB_DBREGS;
+	x86_dbregs_reset();
+	kpreempt_enable();
+}
+
+void
 x86_dbregs_read(struct lwp *l, struct dbreg *regs)
 {
 	struct pcb *pcb = lwp_getpcb(l);
@@ -109,12 +139,29 @@ x86_dbregs_read(struct lwp *l, struct dbreg *regs)
 	if (pcb->pcb_dbregs == NULL) {
 		pcb->pcb_dbregs = pool_get(&x86_dbregspl, PR_WAITOK);
 		memcpy(pcb->pcb_dbregs, &initdbstate, sizeof(initdbstate));
+		pcb->pcb_flags |= PCB_DBREGS;
 	}
 	memcpy(regs, pcb->pcb_dbregs, sizeof(*regs));
 }
 
-void
-x86_dbregs_set(struct lwp *l)
+static void
+x86_dbregs_save(struct lwp *l)
+{
+	struct pcb *pcb = lwp_getpcb(l);
+
+	KASSERT(pcb->pcb_dbregs != NULL);
+
+	pcb->pcb_dbregs->dr[0] = rdr0();
+	pcb->pcb_dbregs->dr[1] = rdr1();
+	pcb->pcb_dbregs->dr[2] = rdr2();
+	pcb->pcb_dbregs->dr[3] = rdr3();
+
+	pcb->pcb_dbregs->dr[6] = rdr6();
+	pcb->pcb_dbregs->dr[7] = rdr7();
+}
+
+static void
+x86_dbregs_restore(struct lwp *l)
 {
 	struct pcb *pcb = lwp_getpcb(l);
 
@@ -222,4 +269,38 @@ x86_dbregs_write(struct lwp *l, const struct dbreg *regs)
 	}
 
 	memcpy(pcb->pcb_dbregs, regs, sizeof(*regs));
+	pcb->pcb_flags |= PCB_DBREGS;
+}
+
+/*
+ * Called with preemption disabled.
+ */
+void
+x86_dbregs_switch(struct lwp *oldlwp, struct lwp *newlwp)
+{
+	struct pcb *oldpcb, *newpcb;
+	bool olddb, newdb;
+
+	oldpcb = (oldlwp != NULL) ? lwp_getpcb(oldlwp) : NULL;
+	newpcb = lwp_getpcb(newlwp);
+
+	olddb = false;
+	if (oldpcb) {
+		olddb = (oldpcb->pcb_flags & PCB_DBREGS) != 0;
+	}
+	newdb = (newpcb->pcb_flags & PCB_DBREGS) != 0;
+
+	if (__predict_true(!olddb && !newdb)) {
+		/* fast path */
+		return;
+	}
+
+	if (olddb) {
+		x86_dbregs_save(oldlwp);
+	}
+	if (newdb) {
+		x86_dbregs_restore(newlwp);
+	} else if (olddb) {
+		x86_dbregs_reset();
+	}
 }
