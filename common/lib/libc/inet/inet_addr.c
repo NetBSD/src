@@ -1,4 +1,4 @@
-/*	$NetBSD: inet_addr.c,v 1.3 2012/03/09 15:41:16 christos Exp $	*/
+/*	$NetBSD: inet_addr.c,v 1.4 2018/07/26 00:20:41 kamil Exp $	*/
 
 /*
  * Copyright (c) 1983, 1990, 1993
@@ -77,7 +77,7 @@
 static const char sccsid[] = "@(#)inet_addr.c	8.1 (Berkeley) 6/17/93";
 static const char rcsid[] = "Id: inet_addr.c,v 1.2.206.2 2004/03/17 00:29:45 marka Exp";
 #else
-__RCSID("$NetBSD: inet_addr.c,v 1.3 2012/03/09 15:41:16 christos Exp $");
+__RCSID("$NetBSD: inet_addr.c,v 1.4 2018/07/26 00:20:41 kamil Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -203,19 +203,20 @@ inet_aton(const char *cp, struct in_addr *addr) {
 	case 2:				/* a.b -- 8.24 bits */
 		if (val > 0xffffffU)
 			return (0);
-		val |= parts[0] << 24;
+		val |= (uint32_t)parts[0] << 24;
 		break;
 
 	case 3:				/* a.b.c -- 8.8.16 bits */
 		if (val > 0xffffU)
 			return (0);
-		val |= (parts[0] << 24) | (parts[1] << 16);
+		val |= ((uint32_t)parts[0] << 24) | (parts[1] << 16);
 		break;
 
 	case 4:				/* a.b.c.d -- 8.8.8.8 bits */
 		if (val > 0xffU)
 			return (0);
-		val |= (parts[0] << 24) | (parts[1] << 16) | (parts[2] << 8);
+		val |= ((uint32_t)parts[0] << 24) | (parts[1] << 16) |
+		        (parts[2] << 8);
 		break;
 	}
 	if (addr != NULL)
