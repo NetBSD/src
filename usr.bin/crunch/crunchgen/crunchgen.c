@@ -1,4 +1,4 @@
-/*	$NetBSD: crunchgen.c,v 1.88 2018/07/25 23:41:28 kamil Exp $	*/
+/*	$NetBSD: crunchgen.c,v 1.89 2018/07/26 08:57:32 wiz Exp $	*/
 /*
  * Copyright (c) 1994 University of Maryland
  * All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: crunchgen.c,v 1.88 2018/07/25 23:41:28 kamil Exp $");
+__RCSID("$NetBSD: crunchgen.c,v 1.89 2018/07/26 08:57:32 wiz Exp $");
 #endif
 
 #include <stdlib.h>
@@ -225,7 +225,7 @@ void
 usage(void)
 {
     fprintf(stderr, 
-	"%s [-fOoq] [-c c-file-name] [-D src-root] [-d build-options]\n"
+	"%s [-fOopqSs] [-c c-file-name] [-D src-root] [-d build-options]\n"
 	"\t  [-e exec-file-name] [-L lib-dir] [-m makefile-name]\n"
 	"\t  [-v var-spec] conf-file\n", pname);
     exit(1);
