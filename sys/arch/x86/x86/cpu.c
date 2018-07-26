@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.159 2018/07/12 18:39:09 maxv Exp $	*/
+/*	$NetBSD: cpu.c,v 1.160 2018/07/26 08:22:19 maxv Exp $	*/
 
 /*
  * Copyright (c) 2000-2012 NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.159 2018/07/12 18:39:09 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.160 2018/07/26 08:22:19 maxv Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -1313,9 +1313,9 @@ cpu_load_pmap(struct pmap *pmap, struct pmap *oldpmap)
 	if (interrupts_enabled)
 		x86_enable_intr();
 	tlbflush();
-#else /* PAE */
+#else
 	lcr3(pmap_pdirpa(pmap, 0));
-#endif /* PAE */
+#endif
 }
 
 /*
