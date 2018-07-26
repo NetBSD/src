@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_xpmap.c,v 1.78 2018/07/26 15:46:09 maxv Exp $	*/
+/*	$NetBSD: x86_xpmap.c,v 1.79 2018/07/26 17:20:09 maxv Exp $	*/
 
 /*
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.78 2018/07/26 15:46:09 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.79 2018/07/26 17:20:09 maxv Exp $");
 
 #include "opt_xen.h"
 #include "opt_ddb.h"
@@ -447,16 +447,14 @@ xpq_update_foreign(paddr_t ptr, pt_entry_t val, int dom)
 #define TABLE_L2_ENTRIES (NKL2_KIMG_ENTRIES + 1)
 #endif
 
-#ifdef PAE
+#ifdef __x86_64__
+static const int l2_4_count = PTP_LEVELS;
+#else
 /*
  * For PAE, we consider a single contiguous L2 "superpage" of 4 pages, all of
  * them mapped by the L3 page. We also need a shadow page for L3[3].
  */
 static const int l2_4_count = 6;
-#elif defined(__x86_64__)
-static const int l2_4_count = PTP_LEVELS;
-#else
-static const int l2_4_count = PTP_LEVELS - 1;
 #endif
 
 /*
@@ -698,7 +696,7 @@ xen_bootstrap_tables(vaddr_t old_pgd, vaddr_t new_pgd, size_t old_count,
 	addr = ((u_long)pde) - KERNBASE;
 	pdtpe[pl3_pi(KERNTEXTOFF)] =
 	    xpmap_ptom_masked(addr) | PG_V | PG_RW;
-#elif defined(PAE)
+#else
 	pdtpe = bt_pgd;
 
 	/*
@@ -723,9 +721,6 @@ xen_bootstrap_tables(vaddr_t old_pgd, vaddr_t new_pgd, size_t old_count,
 	}
 	addr += PAGE_SIZE;
 	pdtpe[3] = xpmap_ptom_masked(addr) | PG_V;
-#else
-	pdtpe = bt_pgd;
-	pde = bt_pgd;
 #endif
 
 	/* Level 1 */
@@ -816,7 +811,17 @@ xen_bootstrap_tables(vaddr_t old_pgd, vaddr_t new_pgd, size_t old_count,
 	}
 
 	/* Install recursive page tables mapping */
-#ifdef PAE
+#ifdef __x86_64__
+	/* Recursive entry in pmap_kernel(). */
+	bt_pgd[PDIR_SLOT_PTE] = xpmap_ptom_masked((paddr_t)bt_pgd - KERNBASE)
+	    | PG_RO | PG_V | xpmap_pg_nx;
+	/* Recursive entry in higher-level per-cpu PD. */
+	bt_cpu_pgd[PDIR_SLOT_PTE] = xpmap_ptom_masked((paddr_t)bt_cpu_pgd - KERNBASE)
+	    | PG_RO | PG_V | xpmap_pg_nx;
+
+	/* Mark tables RO */
+	xen_bt_set_readonly((vaddr_t)pde);
+#else
 	/* Copy L2 KERN into L2 KERN SHADOW, and reference the latter in cpu0. */
 	memcpy(&pde[L2_SLOT_KERN + NPDPG], &pde[L2_SLOT_KERN], PAGE_SIZE);
 	cpu_info_primary.ci_kpm_pdir = &pde[L2_SLOT_KERN + NPDPG];
@@ -844,23 +849,9 @@ xen_bootstrap_tables(vaddr_t old_pgd, vaddr_t new_pgd, size_t old_count,
 		addr = (u_long)pde - KERNBASE + 3 * PAGE_SIZE;
 		xpq_queue_pin_l2_table(xpmap_ptom_masked(addr));
 	}
-#else
-	/* Recursive entry in pmap_kernel(). */
-	bt_pgd[PDIR_SLOT_PTE] = xpmap_ptom_masked((paddr_t)bt_pgd - KERNBASE)
-	    | PG_RO | PG_V | xpmap_pg_nx;
-#ifdef __x86_64__
-	/* Recursive entry in higher-level per-cpu PD. */
-	bt_cpu_pgd[PDIR_SLOT_PTE] = xpmap_ptom_masked((paddr_t)bt_cpu_pgd - KERNBASE)
-	    | PG_RO | PG_V | xpmap_pg_nx;
 #endif
 
-	/* Mark tables RO */
-	xen_bt_set_readonly((vaddr_t)pde);
-#endif
-
-#if defined(__x86_64__) || defined(PAE)
 	xen_bt_set_readonly((vaddr_t)pdtpe);
-#endif
 #ifdef __x86_64__
 	xen_bt_set_readonly(new_pgd);
 #endif
@@ -868,24 +859,26 @@ xen_bootstrap_tables(vaddr_t old_pgd, vaddr_t new_pgd, size_t old_count,
 	/* Pin the PGD */
 #ifdef __x86_64__
 	xpq_queue_pin_l4_table(xpmap_ptom_masked(new_pgd - KERNBASE));
-#elif PAE
-	xpq_queue_pin_l3_table(xpmap_ptom_masked(new_pgd - KERNBASE));
 #else
-	xpq_queue_pin_l2_table(xpmap_ptom_masked(new_pgd - KERNBASE));
+	xpq_queue_pin_l3_table(xpmap_ptom_masked(new_pgd - KERNBASE));
 #endif
 
 	/* Save phys. addr of PDP, for libkvm. */
-#ifdef PAE
-	PDPpaddr = (u_long)pde - KERNBASE; /* PDP is the L2 with PAE */
-#else
+#ifdef __x86_64__
 	PDPpaddr = (u_long)bt_pgd - KERNBASE;
+#else
+	PDPpaddr = (u_long)pde - KERNBASE; /* PDP is the L2 with PAE */
 #endif
 
 	/* Switch to new tables */
 	xpq_queue_pt_switch(xpmap_ptom_masked(new_pgd - KERNBASE));
 
-#ifdef PAE
 	if (final) {
+#ifdef __x86_64__
+		/* Save the address of the real per-cpu L4 page. */
+		cpu_info_primary.ci_kpm_pdir = bt_cpu_pgd;
+		cpu_info_primary.ci_kpm_pdirpa = ((paddr_t)bt_cpu_pgd - KERNBASE);
+#else
 		/* Save the address of the L3 page */
 		cpu_info_primary.ci_pae_l3_pdir = pdtpe;
 		cpu_info_primary.ci_pae_l3_pdirpa = (new_pgd - KERNBASE);
@@ -896,15 +889,8 @@ xen_bootstrap_tables(vaddr_t old_pgd, vaddr_t new_pgd, size_t old_count,
 		    xpmap_ptom(((vaddr_t)&pde[PDIR_SLOT_PTE + 3]) - KERNBASE),
 		    xpmap_ptom_masked(addr) | PG_V);
 		xpq_flush_queue();
-	}
-#elif defined(__x86_64__)
-	if (final) {
-		/* Save the address of the real per-cpu L4 page. */
-		cpu_info_primary.ci_kpm_pdir = bt_cpu_pgd;
-		cpu_info_primary.ci_kpm_pdirpa = ((paddr_t)bt_cpu_pgd - KERNBASE);
-	}
 #endif
-	__USE(pdtpe);
+	}
 
 	/*
 	 * Now we can safely reclaim the space taken by the old tables.
