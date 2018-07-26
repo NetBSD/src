@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_xpmap.c,v 1.76 2018/07/26 08:08:24 maxv Exp $	*/
+/*	$NetBSD: x86_xpmap.c,v 1.77 2018/07/26 08:18:25 maxv Exp $	*/
 
 /*
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.76 2018/07/26 08:08:24 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.77 2018/07/26 08:18:25 maxv Exp $");
 
 #include "opt_xen.h"
 #include "opt_ddb.h"
@@ -693,11 +693,7 @@ xen_bootstrap_tables(vaddr_t old_pgd, vaddr_t new_pgd, size_t old_count,
 	addr = ((u_long)pdtpe) - KERNBASE;
 	bt_pgd[pl4_pi(KERNTEXTOFF)] = bt_cpu_pgd[pl4_pi(KERNTEXTOFF)] =
 	    xpmap_ptom_masked(addr) | PG_V | PG_RW;
-#else
-	pdtpe = bt_pgd;
-#endif
 
-#ifdef __x86_64__
 	/* Level 2 */
 	pde = (pd_entry_t *)avail;
 	memset(pde, 0, PAGE_SIZE);
@@ -707,6 +703,8 @@ xen_bootstrap_tables(vaddr_t old_pgd, vaddr_t new_pgd, size_t old_count,
 	pdtpe[pl3_pi(KERNTEXTOFF)] =
 	    xpmap_ptom_masked(addr) | PG_V | PG_RW;
 #elif defined(PAE)
+	pdtpe = bt_pgd;
+
 	/*
 	 * Our PAE-style level 2, 5 contiguous pages (4 L2 + 1 shadow).
 	 *                  +-----------------+----------------+---------+
@@ -730,6 +728,7 @@ xen_bootstrap_tables(vaddr_t old_pgd, vaddr_t new_pgd, size_t old_count,
 	addr += PAGE_SIZE;
 	pdtpe[3] = xpmap_ptom_masked(addr) | PG_V;
 #else
+	pdtpe = bt_pgd;
 	pde = bt_pgd;
 #endif
 
