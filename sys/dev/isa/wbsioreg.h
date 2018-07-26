@@ -1,4 +1,4 @@
-/* $NetBSD: wbsioreg.h,v 1.5.2.3 2018/02/19 18:50:35 snj Exp $ */
+/* $NetBSD: wbsioreg.h,v 1.5.2.4 2018/07/26 20:37:42 snj Exp $ */
 
 /* $OpenBSD: wbsioreg.h,v 1.4 2015/01/02 23:02:54 chris Exp $ */
 /*
@@ -70,6 +70,7 @@
 #define WBSIO_ID_NCT6792D	0xc91
 #define WBSIO_ID_NCT6793D	0xd12
 #define WBSIO_ID_NCT6795D	0xd35
+#define WBSIO_ID_NCT6796D	0xd42
 
 /* Strapping Function Result */
 #define WBSIO_SFR_24M48M	0x01
