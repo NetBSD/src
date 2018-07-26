@@ -1,5 +1,252 @@
-# $NetBSD: XEN3PAE_DOMU,v 1.2 2008/01/23 19:46:43 bouyer Exp $
+# $NetBSD: XEN3PAE_DOMU,v 1.3 2018/07/26 16:22:49 maxv Exp $
 
-include "arch/i386/conf/XEN3_DOMU"
+include 	"arch/xen/conf/std.xen"
 
-options 	 PAE
+options 	MULTIPROCESSOR
+
+options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
+
+#options 	UVMHIST
+#options 	UVMHIST_PRINT
+#options 	SYSCALL_DEBUG
+
+maxusers	32		# estimated number of users
+
+#
+options 	XEN
+options 	PAE
+#options 	DOM0OPS
+
+makeoptions	CPUFLAGS="-march=i686"
+
+#options 	USER_LDT	# user-settable LDT; used by WINE
+
+#options 	MTRR		# memory-type range register syscall support
+
+#options 	CONSDEVNAME="\"xencons\""
+#options 	CONS_OVERRIDE
+
+options 	INSECURE	# disable kernel security levels - X needs this
+
+options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
+options 	NTP		# NTP phase/frequency locked loop
+
+options 	KTRACE		# system call tracing via ktrace(1)
+
+options 	SYSVMSG		# System V-like message queues
+options 	SYSVSEM		# System V-like semaphores
+#options 	SEMMNI=10	# number of semaphore identifiers
+#options 	SEMMNS=60	# number of semaphores in system
+#options 	SEMUME=10	# max number of undo entries per process
+#options 	SEMMNU=30	# number of undo structures in system
+options 	SYSVSHM		# System V-like memory sharing
+#options 	SHMMAXPGS=2048	# 2048 pages is the default
+
+options 	MODULAR		# new style module(7) framework
+options 	USERCONF	# userconf(4) support
+options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
+
+# Alternate buffer queue strategies for better responsiveness under high
+# disk I/O load.
+#options 	BUFQ_READPRIO
+options 	BUFQ_PRIOCSCAN
+
+# Diagnostic/debugging support options
+options 	DIAGNOSTIC	# inexpensive kernel consistency checks
+#options 	DEBUG		# expensive debugging checks/support
+options 	DDB		# in-kernel debugger
+options 	DDB_ONPANIC=1	# see also sysctl(7): `ddb.onpanic'
+options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
+#options 	KGDB		# remote debugger
+#options 	KGDB_DEVNAME="\"com\"",KGDB_DEVADDR=0x2f8,KGDB_DEVRATE=57600
+#makeoptions	DEBUG="-g"	# compile full symbol table
+options DDB_COMMANDONENTER="trace;show registers"
+
+# Compatibility options
+include 	"conf/compat_netbsd09.config"
+options 	COMPAT_NOMID	# NetBSD 0.8, 386BSD, and BSDI
+#options 	COMPAT_386BSD_MBRPART # recognize old partition ID
+
+options 	COMPAT_OSSAUDIO	# OSS (Voxware) audio driver compatibility
+options 	COMPAT_LINUX	# binary compatibility with Linux
+#options 	COMPAT_FREEBSD	# binary compatibility with FreeBSD
+
+# Wedge support
+options 	DKWEDGE_AUTODISCOVER	# Automatically add dk(4) instances
+options 	DKWEDGE_METHOD_GPT	# Supports GPT partitions as wedges
+#options 	DKWEDGE_METHOD_BSDLABEL	# Support disklabel entries as wedges
+#options 	DKWEDGE_METHOD_MBR	# Support MBR partitions as wedges
+options 	DKWEDGE_METHOD_APPLE	# Support Apple partitions as wedges
+#options 	DKWEDGE_METHOD_RDB	# Support RDB partitions as wedges
+
+# File systems
+file-system	FFS		# UFS
+file-system	EXT2FS		# second extended file system (linux)
+file-system	LFS		# log-structured file system
+file-system	MFS		# memory file system
+file-system	NFS		# Network File System client
+file-system	NTFS		# Windows/NT file system (experimental)
+file-system	CD9660		# ISO 9660 + Rock Ridge file system
+file-system	MSDOSFS		# MS-DOS file system
+file-system	FDESC		# /dev/fd
+file-system	KERNFS		# /kern
+file-system	NULLFS		# loopback file system
+file-system	OVERLAY		# overlay file system
+file-system	PUFFS		# Userspace file systems (e.g. ntfs-3g & sshfs)
+file-system	PROCFS		# /proc
+file-system	UMAPFS		# NULLFS + uid and gid remapping
+file-system	UNION		# union file system
+file-system	CODA		# Coda File System; also needs vcoda (below)
+file-system	SMBFS		# experimental - CIFS; also needs nsmb (below)
+file-system	PTYFS		# /dev/pts/N support
+file-system	TMPFS		# Efficient memory file-system
+file-system	NILFS		# experimental - NTT's NiLFS(2)
+#file-system	V7FS		# 7th Edition(V7) File System
+
+# File system options
+options 	QUOTA		# legacy UFS quotas
+options 	QUOTA2		# new, in-filesystem UFS quotas
+#options 	DISKLABEL_EI	# disklabel Endian Independent support
+#options 	FFS_EI		# FFS Endian Independent support
+options 	WAPBL		# File system journaling support
+#options 	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
+options 	NFSSERVER	# Network File System server
+#options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
+options 	UFS_EXTATTR	# Extended attribute support for UFS1
+#options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
+				# immutable) behave as system flags.
+#options 	V7FS_EI		# V7FS Endian Independent support
+
+# Networking options
+#options 	GATEWAY		# packet forwarding
+options 	INET		# IP + ICMP + TCP + UDP
+options 	INET6		# IPv6
+options 	IPSEC		# IP security
+#options 	IPSEC_DEBUG	# debug for IP security
+#options 	MROUTING	# IP multicast routing
+#options 	PIM		# Protocol Independent Multicast
+options 	NETATALK	# AppleTalk networking protocols
+options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
+options 	PPP_DEFLATE	# Deflate compression support for PPP
+options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
+options 	IPFILTER_LOG	# ipmon(8) log support
+options 	IPFILTER_LOOKUP	# ippool(8) support
+options 	IPFILTER_COMPAT # Compat for IP-Filter
+#options 	IPFILTER_DEFAULT_BLOCK	# block all packets by default
+#options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
+
+#options 	ALTQ		# Manipulate network interfaces' output queues
+#options 	ALTQ_BLUE	# Stochastic Fair Blue
+#options 	ALTQ_CBQ	# Class-Based Queueing
+#options 	ALTQ_CDNR	# Diffserv Traffic Conditioner
+#options 	ALTQ_FIFOQ	# First-In First-Out Queue
+#options 	ALTQ_FLOWVALVE	# RED/flow-valve (red-penalty-box)
+#options 	ALTQ_HFSC	# Hierarchical Fair Service Curve
+#options 	ALTQ_LOCALQ	# Local queueing discipline
+#options 	ALTQ_PRIQ	# Priority Queueing
+#options 	ALTQ_RED	# Random Early Detection
+#options 	ALTQ_RIO	# RED with IN/OUT
+#options 	ALTQ_WFQ	# Weighted Fair Queueing
+
+options 	NFS_BOOT_DHCP,NFS_BOOT_BOOTPARAM
+#options 	NFS_BOOT_BOOTSTATIC
+#options 	NFS_BOOTSTATIC_MYIP="\"169.254.1.2\""
+#options 	NFS_BOOTSTATIC_GWIP="\"169.254.1.1\""
+#options 	NFS_BOOTSTATIC_MASK="\"255.255.255.0\""
+#options 	NFS_BOOTSTATIC_SERVADDR="\"169.254.1.1\""
+#options 	NFS_BOOTSTATIC_SERVER="\"server:/path/to/root\""
+
+#options 	__XEN_INTERFACE_VERSION__=0x00030205 # Xen 3.1 interface
+options 	MAXPHYS=32768	#xbd doesn't handle 64k transfers
+
+config		netbsd	root on ? type ?
+#config		netbsd	root on wd0a type ffs
+#config		netbsd	root on xennet0 type nfs
+
+mainbus0 at root
+
+hypervisor*	at mainbus?		# Xen hypervisor
+
+vcpu*		at hypervisor?		# Xen virtual CPUs
+
+xencons*	at hypervisor?		# Xen virtual console
+
+xenbus* 	at hypervisor?		# Xen virtual bus
+xennet* 	at xenbus?		# Xen virtual network interface
+xbd*		at xenbus?		# Xen virtual block device
+balloon*	at xenbus?		# Xen balloon device
+
+cinclude "arch/i386/conf/GENERIC.local"
+cinclude "arch/i386/conf/XEN3_DOMU.local"
+
+# Pseudo-Devices
+
+pseudo-device	crypto		# /dev/crypto device
+pseudo-device	swcrypto	# software crypto implementation
+
+# disk/mass storage pseudo-devices
+pseudo-device	ccd			# concatenated/striped disk devices
+pseudo-device	cgd			# cryptographic disk devices
+pseudo-device	raid			# RAIDframe disk driver
+options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
+# Options to enable various other RAIDframe RAID types.
+#options 	RF_INCLUDE_EVENODD=1
+#options 	RF_INCLUDE_RAID5_RS=1
+#options 	RF_INCLUDE_PARITYLOGGING=1
+#options 	RF_INCLUDE_CHAINDECLUSTER=1
+#options 	RF_INCLUDE_INTERDECLUSTER=1
+#options 	RF_INCLUDE_PARITY_DECLUSTERING=1
+#options 	RF_INCLUDE_PARITY_DECLUSTERING_DS=1
+pseudo-device	fss			# file system snapshot device
+
+pseudo-device	md			# memory disk device (ramdisk)
+pseudo-device	vnd			# disk-like interface to files
+pseudo-device	dm			# device-mapper driver for LVM
+
+# network pseudo-devices
+pseudo-device	bpfilter		# Berkeley packet filter
+pseudo-device	ipfilter		# IP filter (firewall) and NAT
+pseudo-device	loop			# network loopback
+pseudo-device	ppp			# Point-to-Point Protocol
+pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
+pseudo-device	sl			# Serial Line IP
+pseudo-device	tap			# virtual Ethernet
+pseudo-device	tun			# network tunneling over tty
+pseudo-device	gre			# generic L3 over IP tunnel
+pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC 1933)
+#pseudo-device	faith			# IPv[46] tcp relay translation i/f
+pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
+pseudo-device	vlan			# IEEE 802.1q encapsulation
+pseudo-device	bridge			# simple inter-network bridging
+#options 	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
+#pseudo-device	pf			# PF packet filter
+#pseudo-device	pflog			# PF log if
+#pseudo-device	pfsync			# PF sync if
+#pseudo-device	npf			# NPF packet filter
+
+# accept filters
+pseudo-device	accf_data		# "dataready" accept filter
+pseudo-device	accf_http		# "httpready" accept filter
+
+# miscellaneous pseudo-devices
+pseudo-device	pty			# pseudo-terminals
+pseudo-device	clockctl		# user control of clock subsystem
+pseudo-device	ksyms			# /dev/ksyms
+pseudo-device	putter			# for puffs and pud
+
+# a pseudo device needed for Coda	# also needs CODA (above)
+pseudo-device	vcoda			# coda minicache <-> venus comm.
+
+# a pseudo device needed for SMBFS
+pseudo-device	nsmb			# experimental - SMB requester
+
+# userland interface to drivers, including autoconf and properties retrieval
+pseudo-device	drvctl
+
+options 	PAX_MPROTECT=0		# PaX mprotect(2) restrictions
+options 	PAX_ASLR=0		# PaX Address Space Layout Randomization
+
+# PCI pass-through support:
+#xpci* at xenbus ?			#Xen3 PCI front end driver
+#pci* at xpci ?
+# you then need to add your PCI devices drivers below.
