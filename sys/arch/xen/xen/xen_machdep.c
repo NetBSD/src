@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_machdep.c,v 1.18 2018/06/30 20:53:30 kre Exp $	*/
+/*	$NetBSD: xen_machdep.c,v 1.19 2018/07/26 15:38:26 maxv Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -53,7 +53,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_machdep.c,v 1.18 2018/06/30 20:53:30 kre Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_machdep.c,v 1.19 2018/07/26 15:38:26 maxv Exp $");
 
 #include "opt_xen.h"
 
@@ -418,6 +418,21 @@ xen_suspend_domain(void)
 	/* xencons is back online, we can print to console */
 	aprint_verbose("domain resumed\n");
 
+}
+
+#define PRINTK_BUFSIZE 1024
+void
+printk(const char *fmt, ...)
+{
+	va_list ap;
+	int ret;
+	static char buf[PRINTK_BUFSIZE];
+
+	va_start(ap, fmt);
+	ret = vsnprintf(buf, PRINTK_BUFSIZE - 1, fmt, ap);
+	va_end(ap);
+	buf[ret] = 0;
+	(void)HYPERVISOR_console_io(CONSOLEIO_write, ret, buf);
 }
 
 bool xen_feature_tables[XENFEAT_NR_SUBMAPS * 32];
