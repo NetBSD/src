@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_cpu.c,v 1.71 2015/08/29 12:24:00 maxv Exp $	*/
+/*	$NetBSD: kern_cpu.c,v 1.71.10.1 2018/07/26 21:02:29 snj Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009, 2010, 2012 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.71 2015/08/29 12:24:00 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.71.10.1 2018/07/26 21:02:29 snj Exp $");
 
 #include "opt_cpu_ucode.h"
 #include "opt_compat_netbsd.h"
@@ -619,6 +619,11 @@ cpu_ucode_load(struct cpu_ucode_softc *sc, const char *fwname)
 	}
 
 	sc->sc_blobsize = firmware_get_size(fwh);
+	if (sc->sc_blobsize == 0) {
+		error = EFTYPE;
+		firmware_close(fwh);
+		goto err0;
+	}
 	sc->sc_blob = firmware_malloc(sc->sc_blobsize);
 	if (sc->sc_blob == NULL) {
 		error = ENOMEM;
