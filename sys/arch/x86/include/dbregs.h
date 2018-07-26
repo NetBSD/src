@@ -1,4 +1,4 @@
-/*	$NetBSD: dbregs.h,v 1.5 2018/07/22 15:02:51 maxv Exp $	*/
+/*	$NetBSD: dbregs.h,v 1.6 2018/07/26 09:29:08 maxv Exp $	*/
 
 /*
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -108,11 +108,12 @@ enum x86_dr7_length {
 
 void x86_dbregs_init(void);
 void x86_dbregs_clear(struct lwp *);
+void x86_dbregs_abandon(struct lwp *);
 void x86_dbregs_read(struct lwp *, struct dbreg *);
-void x86_dbregs_set(struct lwp *);
 void x86_dbregs_store_dr6(struct lwp *);
 int x86_dbregs_user_trap(void);
 int x86_dbregs_validate(const struct dbreg *);
 void x86_dbregs_write(struct lwp *, const struct dbreg *);
+void x86_dbregs_switch(struct lwp *, struct lwp *);
 
 #endif /* !_X86_DBREGS_H_ */
