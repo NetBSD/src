@@ -1,10 +1,10 @@
-/*	$NetBSD: miidevs.h,v 1.128.6.1 2017/11/22 14:47:40 martin Exp $	*/
+/*	$NetBSD: miidevs.h,v 1.128.6.2 2018/07/26 21:09:42 snj Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: miidevs,v 1.125.6.1 2017/11/22 14:46:49 martin Exp
+ *	NetBSD: miidevs,v 1.125.6.2 2018/07/26 21:09:22 snj Exp
  */
 
 /*-
@@ -332,6 +332,8 @@
 #define	MII_STR_INTEL_I82579	"i82579 10/100/1000 media interface"
 #define	MII_MODEL_INTEL_I217	0x000a
 #define	MII_STR_INTEL_I217	"i217 10/100/1000 media interface"
+#define	MII_MODEL_INTEL_X540	0x0020
+#define	MII_STR_INTEL_X540	"X540 100M/1G/10G media interface"
 #define	MII_MODEL_INTEL_X550	0x0022
 #define	MII_STR_INTEL_X550	"X550 100M/1G/10G media interface"
 #define	MII_MODEL_INTEL_X557	0x0024
@@ -398,7 +400,7 @@
 #define	MII_MODEL_xxMARVELL_I347	0x001c
 #define	MII_STR_xxMARVELL_I347	"Intel I347-AT4 Gigabit PHY"
 #define	MII_MODEL_xxMARVELL_E1512	0x001d
-#define	MII_STR_xxMARVELL_E1512	"Marvell 88E1512 Gigabit PHY"
+#define	MII_STR_xxMARVELL_E1512	"Marvell 88E151[0248] Gigabit PHY"
 #define	MII_MODEL_xxMARVELL_E1340M	0x001f
 #define	MII_STR_xxMARVELL_E1340M	"Marvell 88E1340 Gigabit PHY"
 #define	MII_MODEL_xxMARVELL_E1116	0x0021
