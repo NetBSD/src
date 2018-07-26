@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.308 2018/07/22 15:02:51 maxv Exp $	*/
+/*	$NetBSD: machdep.c,v 1.309 2018/07/26 09:29:08 maxv Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.308 2018/07/22 15:02:51 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.309 2018/07/26 09:29:08 maxv Exp $");
 
 #include "opt_modular.h"
 #include "opt_user_ldt.h"
@@ -279,8 +279,6 @@ void (*initclock_func)(void) = i8254_initclocks;
 void (*delay_func)(unsigned int) = xen_delay;
 void (*initclock_func)(void) = xen_initclocks;
 #endif
-
-extern struct pool x86_dbregspl;
 
 struct nmistore {
 	uint64_t cr3;
@@ -1367,10 +1365,7 @@ setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 	fpu_save_area_clear(l, pack->ep_osversion >= 699002600
 	    ? __NetBSD_NPXCW__ : __NetBSD_COMPAT_NPXCW__);
 	pcb->pcb_flags = 0;
-	if (pcb->pcb_dbregs != NULL) {
-		pool_put(&x86_dbregspl, pcb->pcb_dbregs);
-		pcb->pcb_dbregs = NULL;
-	}
+	x86_dbregs_clear(l);
 
 	l->l_proc->p_flag &= ~PK_32;
 

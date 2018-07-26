@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.159 2018/07/14 14:29:40 maxv Exp $	*/
+/*	$NetBSD: locore.S,v 1.160 2018/07/26 09:29:08 maxv Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -128,7 +128,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.159 2018/07/14 14:29:40 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.160 2018/07/26 09:29:08 maxv Exp $");
 
 #include "opt_copy_symtab.h"
 #include "opt_ddb.h"
@@ -1115,6 +1115,12 @@ skip_save:
 	movl	CPUVAR(TSS),%ecx
 	movl	%eax,TSS_ESP0(%ecx)
 #endif
+
+	/* Switch the dbregs. */
+	pushl	%edi
+	pushl	%esi
+	call	_C_LABEL(x86_dbregs_switch)
+	addl	$8,%esp
 
 #ifndef XEN
 	pushl	%edx
