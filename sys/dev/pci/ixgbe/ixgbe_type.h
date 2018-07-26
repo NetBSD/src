@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe_type.h,v 1.22.2.5 2018/04/14 10:25:11 martin Exp $ */
+/* $NetBSD: ixgbe_type.h,v 1.22.2.6 2018/07/26 23:21:54 snj Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -131,6 +131,7 @@
 #define IXGBE_SUBDEV_ID_82599EN_SFP_OCP1	0x0001
 #define IXGBE_DEV_ID_82599_XAUI_LOM		PCI_PRODUCT_INTEL_82599_XAUI_LOM
 #define IXGBE_DEV_ID_82599_T3_LOM		0x151C
+#define IXGBE_DEV_ID_82599_LS			0x154F
 #define IXGBE_DEV_ID_82599_VF			0x10ED
 #define IXGBE_DEV_ID_82599_VF_HV		0x152E
 #define IXGBE_DEV_ID_82599_BYPASS		0x155D
@@ -2466,6 +2467,16 @@ enum {
 #define IXGBE_FW_LESM_PARAMETERS_PTR		0x2
 #define IXGBE_FW_LESM_STATE_1			0x1
 #define IXGBE_FW_LESM_STATE_ENABLED		0x8000 /* LESM Enable bit */
+#define IXGBE_FW_LESM_2_STATES_ENABLED_MASK	0x1F
+#define IXGBE_FW_LESM_2_STATES_ENABLED		0x12
+#define IXGBE_FW_LESM_STATE0_10G_ENABLED	0x6FFF
+#define IXGBE_FW_LESM_STATE1_10G_ENABLED	0x4FFF
+#define IXGBE_FW_LESM_STATE0_10G_DISABLED	0x0FFF
+#define IXGBE_FW_LESM_STATE1_10G_DISABLED	0x2FFF
+#define IXGBE_FW_LESM_PORT0_STATE0_OFFSET	0x2
+#define IXGBE_FW_LESM_PORT0_STATE1_OFFSET	0x3
+#define IXGBE_FW_LESM_PORT1_STATE0_OFFSET	0x6
+#define IXGBE_FW_LESM_PORT1_STATE1_OFFSET	0x7
 #define IXGBE_FW_PASSTHROUGH_PATCH_CONFIG_PTR	0x4
 #define IXGBE_FW_PATCH_VERSION_4		0x7
 #define IXGBE_FCOE_IBA_CAPS_BLK_PTR		0x33 /* iSCSI/FCOE block */
@@ -3748,6 +3759,7 @@ enum ixgbe_media_type {
 	ixgbe_media_type_fiber,
 	ixgbe_media_type_fiber_fixed,
 	ixgbe_media_type_fiber_qsfp,
+	ixgbe_media_type_fiber_lco,
 	ixgbe_media_type_copper,
 	ixgbe_media_type_backplane,
 	ixgbe_media_type_cx4,
