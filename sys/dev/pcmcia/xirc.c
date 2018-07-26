@@ -1,4 +1,4 @@
-/*	$NetBSD: xirc.c,v 1.33 2012/02/14 13:51:19 drochner Exp $	*/
+/*	$NetBSD: xirc.c,v 1.33.40.1 2018/07/26 23:55:30 snj Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xirc.c,v 1.33 2012/02/14 13:51:19 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xirc.c,v 1.33.40.1 2018/07/26 23:55:30 snj Exp $");
 
 #include "opt_inet.h"
 
@@ -50,6 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: xirc.c,v 1.33 2012/02/14 13:51:19 drochner Exp $");
 #include <net/if_dl.h>
 #include <net/if_ether.h>
 #include <net/if_media.h>
+#include <net/bpf.h>
 
 #ifdef INET
 #include <netinet/in.h>
@@ -58,10 +59,6 @@ __KERNEL_RCSID(0, "$NetBSD: xirc.c,v 1.33 2012/02/14 13:51:19 drochner Exp $");
 #include <netinet/ip.h>
 #include <netinet/if_inarp.h>
 #endif
-
-
-#include <net/bpf.h>
-#include <net/bpfdesc.h>
 
 #include <sys/intr.h>
 #include <sys/bus.h>

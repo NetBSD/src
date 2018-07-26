@@ -1,4 +1,4 @@
-/*	$NetBSD: if_jme.c,v 1.31.8.1 2017/10/24 08:38:59 snj Exp $	*/
+/*	$NetBSD: if_jme.c,v 1.31.8.2 2018/07/26 23:55:30 snj Exp $	*/
 
 /*
  * Copyright (c) 2008 Manuel Bouyer.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_jme.c,v 1.31.8.1 2017/10/24 08:38:59 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_jme.c,v 1.31.8.2 2018/07/26 23:55:30 snj Exp $");
 
 
 #include <sys/param.h>
@@ -83,9 +83,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_jme.c,v 1.31.8.1 2017/10/24 08:38:59 snj Exp $");
 #include <net/if_dl.h>
 #include <net/route.h>
 #include <net/netisr.h>
-
 #include <net/bpf.h>
-#include <net/bpfdesc.h>
 
 #include <sys/rndsource.h>
 

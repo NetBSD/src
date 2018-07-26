@@ -1,4 +1,4 @@
-/*	$NetBSD: cs89x0.c,v 1.39 2017/03/07 01:28:37 ozaki-r Exp $	*/
+/*	$NetBSD: cs89x0.c,v 1.39.6.1 2018/07/26 23:55:29 snj Exp $	*/
 
 /*
  * Copyright (c) 2004 Christopher Gilbert
@@ -212,7 +212,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs89x0.c,v 1.39 2017/03/07 01:28:37 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs89x0.c,v 1.39.6.1 2018/07/26 23:55:29 snj Exp $");
 
 #include "opt_inet.h"
 
@@ -231,13 +231,12 @@ __KERNEL_RCSID(0, "$NetBSD: cs89x0.c,v 1.39 2017/03/07 01:28:37 ozaki-r Exp $");
 #include <net/if.h>
 #include <net/if_ether.h>
 #include <net/if_media.h>
+#include <net/bpf.h>
+
 #ifdef INET
 #include <netinet/in.h>
 #include <netinet/if_inarp.h>
 #endif
-
-#include <net/bpf.h>
-#include <net/bpfdesc.h>
 
 #include <sys/bus.h>
 #include <sys/intr.h>

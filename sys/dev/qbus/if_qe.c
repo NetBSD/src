@@ -1,4 +1,4 @@
-/*      $NetBSD: if_qe.c,v 1.77 2017/05/22 17:22:29 ragge Exp $ */
+/*      $NetBSD: if_qe.c,v 1.77.2.1 2018/07/26 23:55:30 snj Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden. All rights reserved.
  *
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_qe.c,v 1.77 2017/05/22 17:22:29 ragge Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_qe.c,v 1.77.2.1 2018/07/26 23:55:30 snj Exp $");
 
 #include "opt_inet.h"
 
@@ -46,12 +46,10 @@ __KERNEL_RCSID(0, "$NetBSD: if_qe.c,v 1.77 2017/05/22 17:22:29 ragge Exp $");
 #include <net/if.h>
 #include <net/if_ether.h>
 #include <net/if_dl.h>
+#include <net/bpf.h>
 
 #include <netinet/in.h>
 #include <netinet/if_inarp.h>
-
-#include <net/bpf.h>
-#include <net/bpfdesc.h>
 
 #include <sys/bus.h>
 

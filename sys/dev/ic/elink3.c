@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3.c,v 1.140 2016/12/15 09:28:05 ozaki-r Exp $	*/
+/*	$NetBSD: elink3.c,v 1.140.8.1 2018/07/26 23:55:29 snj Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: elink3.c,v 1.140 2016/12/15 09:28:05 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elink3.c,v 1.140.8.1 2018/07/26 23:55:29 snj Exp $");
 
 #include "opt_inet.h"
 
@@ -83,9 +83,7 @@ __KERNEL_RCSID(0, "$NetBSD: elink3.c,v 1.140 2016/12/15 09:28:05 ozaki-r Exp $")
 #include <net/if_dl.h>
 #include <net/if_ether.h>
 #include <net/if_media.h>
-
 #include <net/bpf.h>
-#include <net/bpfdesc.h>
 
 #include <sys/cpu.h>
 #include <sys/bus.h>
