@@ -1,4 +1,4 @@
-/*	$NetBSD: ofnet.c,v 1.57 2016/12/15 09:28:05 ozaki-r Exp $	*/
+/*	$NetBSD: ofnet.c,v 1.57.8.1 2018/07/26 23:55:30 snj Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofnet.c,v 1.57 2016/12/15 09:28:05 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofnet.c,v 1.57.8.1 2018/07/26 23:55:30 snj Exp $");
 
 #include "ofnet.h"
 #include "opt_inet.h"
@@ -49,14 +49,12 @@ __KERNEL_RCSID(0, "$NetBSD: ofnet.c,v 1.57 2016/12/15 09:28:05 ozaki-r Exp $");
 
 #include <net/if.h>
 #include <net/if_ether.h>
+#include <net/bpf.h>
 
 #ifdef INET
 #include <netinet/in.h>
 #include <netinet/if_inarp.h>
 #endif
-
-#include <net/bpf.h>
-#include <net/bpfdesc.h>
 
 #include <dev/ofw/openfirm.h>
 

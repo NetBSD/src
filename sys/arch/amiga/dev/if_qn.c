@@ -1,4 +1,4 @@
-/*	$NetBSD: if_qn.c,v 1.44 2017/02/22 09:45:15 nonaka Exp $ */
+/*	$NetBSD: if_qn.c,v 1.44.6.1 2018/07/26 23:55:28 snj Exp $ */
 
 /*
  * Copyright (c) 1995 Mika Kortelainen
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_qn.c,v 1.44 2017/02/22 09:45:15 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_qn.c,v 1.44.6.1 2018/07/26 23:55:28 snj Exp $");
 
 #include "qn.h"
 #if NQN > 0
@@ -98,6 +98,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_qn.c,v 1.44 2017/02/22 09:45:15 nonaka Exp $");
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <net/if_ether.h>
+#include <net/bpf.h>
 
 #ifdef INET
 #include <netinet/in.h>
@@ -142,9 +143,6 @@ struct	qn_softc {
 	u_short	volatile *nic_len;
 	u_char	transmit_pending;
 } qn_softc[NQN];
-
-#include <net/bpf.h>
-#include <net/bpfdesc.h>
 
 
 int	qnmatch(device_t, cfdata_t, void *);

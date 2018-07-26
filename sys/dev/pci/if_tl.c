@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tl.c,v 1.107 2017/05/23 02:19:14 ozaki-r Exp $	*/
+/*	$NetBSD: if_tl.c,v 1.107.2.1 2018/07/26 23:55:30 snj Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tl.c,v 1.107 2017/05/23 02:19:14 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tl.c,v 1.107.2.1 2018/07/26 23:55:30 snj Exp $");
 
 #undef TLDEBUG
 #define TL_PRIV_STATS
@@ -61,9 +61,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_tl.c,v 1.107 2017/05/23 02:19:14 ozaki-r Exp $");
 #include <net/if_dl.h>
 #include <net/route.h>
 #include <net/netisr.h>
-
 #include <net/bpf.h>
-#include <net/bpfdesc.h>
 
 #include <sys/rndsource.h>
 

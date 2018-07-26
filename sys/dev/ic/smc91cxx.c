@@ -1,4 +1,4 @@
-/*	$NetBSD: smc91cxx.c,v 1.95 2017/05/23 02:19:14 ozaki-r Exp $	*/
+/*	$NetBSD: smc91cxx.c,v 1.95.2.1 2018/07/26 23:55:30 snj Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smc91cxx.c,v 1.95 2017/05/23 02:19:14 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smc91cxx.c,v 1.95.2.1 2018/07/26 23:55:30 snj Exp $");
 
 #include "opt_inet.h"
 
@@ -94,6 +94,7 @@ __KERNEL_RCSID(0, "$NetBSD: smc91cxx.c,v 1.95 2017/05/23 02:19:14 ozaki-r Exp $"
 #include <net/if_dl.h>
 #include <net/if_ether.h>
 #include <net/if_media.h>
+#include <net/bpf.h>
 
 #ifdef INET
 #include <netinet/in.h>
@@ -102,9 +103,6 @@ __KERNEL_RCSID(0, "$NetBSD: smc91cxx.c,v 1.95 2017/05/23 02:19:14 ozaki-r Exp $"
 #include <netinet/in_var.h>
 #include <netinet/ip.h>
 #endif
-
-#include <net/bpf.h>
-#include <net/bpfdesc.h>
 
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>

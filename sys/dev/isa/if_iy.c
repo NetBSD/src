@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iy.c,v 1.100 2017/03/31 08:38:13 msaitoh Exp $	*/
+/*	$NetBSD: if_iy.c,v 1.100.6.1 2018/07/26 23:55:30 snj Exp $	*/
 /* #define IYDEBUG */
 /* #define IYMEMDEBUG */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iy.c,v 1.100 2017/03/31 08:38:13 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iy.c,v 1.100.6.1 2018/07/26 23:55:30 snj Exp $");
 
 #include "opt_inet.h"
 
@@ -59,11 +59,9 @@ __KERNEL_RCSID(0, "$NetBSD: if_iy.c,v 1.100 2017/03/31 08:38:13 msaitoh Exp $");
 #include <net/if.h>
 #include <net/if_types.h>
 #include <net/if_dl.h>
+#include <net/bpf.h>
 
 #include <net/if_ether.h>
-
-#include <net/bpf.h>
-#include <net/bpfdesc.h>
 
 #ifdef INET
 #include <netinet/in.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie.c,v 1.62 2017/02/22 09:45:16 nonaka Exp $ */
+/*	$NetBSD: if_ie.c,v 1.62.6.1 2018/07/26 23:55:29 snj Exp $ */
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.
@@ -98,7 +98,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ie.c,v 1.62 2017/02/22 09:45:16 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ie.c,v 1.62.6.1 2018/07/26 23:55:29 snj Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -118,9 +118,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_ie.c,v 1.62 2017/02/22 09:45:16 nonaka Exp $");
 #include <net/if_types.h>
 #include <net/if_dl.h>
 #include <net/if_ether.h>
-
 #include <net/bpf.h>
-#include <net/bpfdesc.h>
 
 #ifdef INET
 #include <netinet/in.h>

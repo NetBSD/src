@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.h,v 1.24.6.12 2018/06/09 14:59:43 martin Exp $ */
+/* $NetBSD: ixgbe.h,v 1.24.6.13 2018/07/26 23:55:30 snj Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -89,7 +89,6 @@
 #include <net/if_dl.h>
 #include <net/if_media.h>
 
-#include <net/bpf.h>
 #include <net/if_types.h>
 #include <net/if_vlanvar.h>
 

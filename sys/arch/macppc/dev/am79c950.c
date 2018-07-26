@@ -1,4 +1,4 @@
-/*	$NetBSD: am79c950.c,v 1.38 2017/02/22 09:45:16 nonaka Exp $	*/
+/*	$NetBSD: am79c950.c,v 1.38.6.1 2018/07/26 23:55:28 snj Exp $	*/
 
 /*-
  * Copyright (c) 1997 David Huang <khym@bga.com>
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: am79c950.c,v 1.38 2017/02/22 09:45:16 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: am79c950.c,v 1.38.6.1 2018/07/26 23:55:28 snj Exp $");
 
 #include "opt_inet.h"
 
@@ -54,6 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: am79c950.c,v 1.38 2017/02/22 09:45:16 nonaka Exp $")
 #include <net/if_dl.h>
 #include <net/if_ether.h>
 #include <net/if_media.h>
+#include <net/bpf.h>
 
 #ifdef INET
 #include <netinet/in.h>
@@ -62,9 +63,6 @@ __KERNEL_RCSID(0, "$NetBSD: am79c950.c,v 1.38 2017/02/22 09:45:16 nonaka Exp $")
 #include <netinet/in_var.h>
 #include <netinet/ip.h>
 #endif
-
-#include <net/bpf.h>
-#include <net/bpfdesc.h>
 
 #include <sys/bus.h>
 

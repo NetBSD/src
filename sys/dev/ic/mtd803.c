@@ -1,4 +1,4 @@
-/* $NetBSD: mtd803.c,v 1.33 2016/12/15 09:28:05 ozaki-r Exp $ */
+/* $NetBSD: mtd803.c,v 1.33.8.1 2018/07/26 23:55:29 snj Exp $ */
 
 /*-
  *
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mtd803.c,v 1.33 2016/12/15 09:28:05 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mtd803.c,v 1.33.8.1 2018/07/26 23:55:29 snj Exp $");
 
 
 #include <sys/param.h>
@@ -58,6 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: mtd803.c,v 1.33 2016/12/15 09:28:05 ozaki-r Exp $");
 #include <net/if.h>
 #include <net/if_ether.h>
 #include <net/if_media.h>
+#include <net/bpf.h>
 
 #ifdef INET
 #include <netinet/in.h>
@@ -66,9 +67,6 @@ __KERNEL_RCSID(0, "$NetBSD: mtd803.c,v 1.33 2016/12/15 09:28:05 ozaki-r Exp $");
 #include <netinet/in_var.h>
 #include <netinet/ip.h>
 #endif
-
-#include <net/bpf.h>
-#include <net/bpfdesc.h>
 
 #include <sys/bus.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_alc.c,v 1.24.8.1 2017/10/24 08:38:59 snj Exp $	*/
+/*	$NetBSD: if_alc.c,v 1.24.8.2 2018/07/26 23:55:30 snj Exp $	*/
 /*	$OpenBSD: if_alc.c,v 1.1 2009/08/08 09:31:13 kevlo Exp $	*/
 /*-
  * Copyright (c) 2009, Pyun YongHyeon <yongari@FreeBSD.org>
@@ -49,13 +49,12 @@
 
 #include <sys/bus.h>
 
+#include <net/bpf.h>
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <net/if_llc.h>
 #include <net/if_media.h>
 #include <net/if_ether.h>
-
-#include <net/bpf.h>
 
 #ifdef INET
 #include <netinet/in.h>
@@ -66,8 +65,6 @@
 
 #include <net/if_types.h>
 #include <net/if_vlanvar.h>
-
-#include <net/bpf.h>
 
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>

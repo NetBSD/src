@@ -1,5 +1,5 @@
-/*	$Id: at91emac.c,v 1.19 2017/02/20 08:25:57 ozaki-r Exp $	*/
-/*	$NetBSD: at91emac.c,v 1.19 2017/02/20 08:25:57 ozaki-r Exp $	*/
+/*	$Id: at91emac.c,v 1.19.6.1 2018/07/26 23:55:28 snj Exp $	*/
+/*	$NetBSD: at91emac.c,v 1.19.6.1 2018/07/26 23:55:28 snj Exp $	*/
 
 /*
  * Copyright (c) 2007 Embedtronics Oy
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at91emac.c,v 1.19 2017/02/20 08:25:57 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at91emac.c,v 1.19.6.1 2018/07/26 23:55:28 snj Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -56,6 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: at91emac.c,v 1.19 2017/02/20 08:25:57 ozaki-r Exp $"
 #include <net/if_types.h>
 #include <net/if_media.h>
 #include <net/if_ether.h>
+#include <net/bpf.h>
 
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
@@ -67,9 +68,6 @@ __KERNEL_RCSID(0, "$NetBSD: at91emac.c,v 1.19 2017/02/20 08:25:57 ozaki-r Exp $"
 #include <netinet/ip.h>
 #include <netinet/if_inarp.h>
 #endif
-
-#include <net/bpf.h>
-#include <net/bpfdesc.h>
 
 #ifdef IPKDB_AT91	// @@@
 #include <ipkdb/ipkdb.h>

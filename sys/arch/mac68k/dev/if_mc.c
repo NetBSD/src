@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mc.c,v 1.45 2017/02/22 09:45:16 nonaka Exp $	*/
+/*	$NetBSD: if_mc.c,v 1.45.6.1 2018/07/26 23:55:28 snj Exp $	*/
 
 /*-
  * Copyright (c) 1997 David Huang <khym@azeotrope.org>
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mc.c,v 1.45 2017/02/22 09:45:16 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mc.c,v 1.45.6.1 2018/07/26 23:55:28 snj Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -56,6 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_mc.c,v 1.45 2017/02/22 09:45:16 nonaka Exp $");
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <net/if_ether.h>
+#include <net/bpf.h>
 
 #ifdef INET
 #include <netinet/in.h>
@@ -64,11 +65,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_mc.c,v 1.45 2017/02/22 09:45:16 nonaka Exp $");
 #include <netinet/in_var.h>
 #include <netinet/ip.h>
 #endif
-
-
-
-#include <net/bpf.h>
-#include <net/bpfdesc.h>
 
 #include <machine/bus.h>
 #include <mac68k/dev/if_mcreg.h>
