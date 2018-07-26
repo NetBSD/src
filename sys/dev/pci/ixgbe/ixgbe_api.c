@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe_api.c,v 1.15.8.3 2018/04/14 10:25:11 martin Exp $ */
+/* $NetBSD: ixgbe_api.c,v 1.15.8.4 2018/07/26 23:21:54 snj Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -173,6 +173,7 @@ s32 ixgbe_set_mac_type(struct ixgbe_hw *hw)
 	case IXGBE_DEV_ID_82599_SFP_SF_QP:
 	case IXGBE_DEV_ID_82599_QSFP_SF_QP:
 	case IXGBE_DEV_ID_82599EN_SFP:
+	case IXGBE_DEV_ID_82599_LS:
 	case IXGBE_DEV_ID_82599_CX4:
 	case IXGBE_DEV_ID_82599_BYPASS:
 	case IXGBE_DEV_ID_82599_T3_LOM:

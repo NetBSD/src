@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.88.2.20 2018/06/09 14:59:43 martin Exp $ */
+/* $NetBSD: ixgbe.c,v 1.88.2.21 2018/07/26 23:21:54 snj Exp $ */
 
 /******************************************************************************
 
@@ -391,9 +391,6 @@ SYSCTL_INT(_hw_ix, OID_AUTO, enable_legacy_tx, CTLFLAG_RDTUN,
 static int ixgbe_enable_rss = 1;
 SYSCTL_INT(_hw_ix, OID_AUTO, enable_rss, CTLFLAG_RDTUN, &ixgbe_enable_rss, 0,
     "Enable Receive-Side Scaling (RSS)");
-
-/* Keep running tab on them for sanity check */
-static int ixgbe_total_ports;
 
 #if 0
 static int (*ixgbe_start_locked)(struct ifnet *, struct tx_ring *);
@@ -928,21 +925,6 @@ ixgbe_attach(device_t parent, device_t dev, void *aux)
 		adapter->num_tx_desc = DEFAULT_TXD;
 	} else
 		adapter->num_tx_desc = ixgbe_txd;
-
-	/*
-	 * With many RX rings it is easy to exceed the
-	 * system mbuf allocation. Tuning nmbclusters
-	 * can alleviate this.
-	 */
-	if (nmbclusters > 0) {
-		int s;
-		s = (ixgbe_rxd * adapter->num_queues) * ixgbe_total_ports;
-		if (s > nmbclusters) {
-			aprint_error_dev(dev, "RX Descriptors exceed "
-			    "system mbuf max, using default instead!\n");
-			ixgbe_rxd = DEFAULT_RXD;
-		}
-	}
 
 	if (((ixgbe_rxd * sizeof(union ixgbe_adv_rx_desc)) % DBA_ALIGN) != 0 ||
 	    ixgbe_rxd < MIN_RXD || ixgbe_rxd > MAX_RXD) {
@@ -5956,7 +5938,6 @@ ixgbe_lookup(const struct pci_attach_args *pa)
 			(ent->subvendor_id == 0)) &&
 		    ((PCI_SUBSYS_ID(subid) == ent->subdevice_id) ||
 			(ent->subdevice_id == 0))) {
-			++ixgbe_total_ports;
 			return ent;
 		}
 	}
