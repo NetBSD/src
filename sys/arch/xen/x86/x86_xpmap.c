@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_xpmap.c,v 1.75 2018/06/24 20:28:57 jdolecek Exp $	*/
+/*	$NetBSD: x86_xpmap.c,v 1.76 2018/07/26 08:08:24 maxv Exp $	*/
 
 /*
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.75 2018/06/24 20:28:57 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.76 2018/07/26 08:08:24 maxv Exp $");
 
 #include "opt_xen.h"
 #include "opt_ddb.h"
@@ -677,7 +677,7 @@ xen_bootstrap_tables(vaddr_t old_pgd, vaddr_t new_pgd, size_t old_count,
 	memset(bt_pgd, 0, PAGE_SIZE);
 	avail = new_pgd + PAGE_SIZE;
 
-#if PTP_LEVELS > 3
+#ifdef __x86_64__
 	/* Per-cpu L4 */
 	pd_entry_t *bt_cpu_pgd = bt_pgd;
 	/* pmap_kernel() "shadow" L4 */
@@ -697,7 +697,7 @@ xen_bootstrap_tables(vaddr_t old_pgd, vaddr_t new_pgd, size_t old_count,
 	pdtpe = bt_pgd;
 #endif
 
-#if PTP_LEVELS > 2
+#ifdef __x86_64__
 	/* Level 2 */
 	pde = (pd_entry_t *)avail;
 	memset(pde, 0, PAGE_SIZE);
@@ -849,8 +849,7 @@ xen_bootstrap_tables(vaddr_t old_pgd, vaddr_t new_pgd, size_t old_count,
 		addr = (u_long)pde - KERNBASE + 3 * PAGE_SIZE;
 		xpq_queue_pin_l2_table(xpmap_ptom_masked(addr));
 	}
-#else /* PAE */
-
+#else
 	/* Recursive entry in pmap_kernel(). */
 	bt_pgd[PDIR_SLOT_PTE] = xpmap_ptom_masked((paddr_t)bt_pgd - KERNBASE)
 	    | PG_RO | PG_V | xpmap_pg_nx;
@@ -862,12 +861,12 @@ xen_bootstrap_tables(vaddr_t old_pgd, vaddr_t new_pgd, size_t old_count,
 
 	/* Mark tables RO */
 	xen_bt_set_readonly((vaddr_t)pde);
-#endif /* PAE */
+#endif
 
-#if PTP_LEVELS > 2 || defined(PAE)
+#if defined(__x86_64__) || defined(PAE)
 	xen_bt_set_readonly((vaddr_t)pdtpe);
 #endif
-#if PTP_LEVELS > 3
+#ifdef __x86_64__
 	xen_bt_set_readonly(new_pgd);
 #endif
 
