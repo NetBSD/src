@@ -1948,8 +1948,8 @@ are:
 .St -isoC-99
 .It Li -isoC-2011
 .St -isoC-2011
-.It Li -isoC-2017
-.St -isoC-2017
+.It Li -isoC-2018
+.St -isoC-2018
 .El
 .Pp
 .
