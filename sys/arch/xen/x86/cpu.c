@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.124 2018/07/26 17:20:09 maxv Exp $	*/
+/*	$NetBSD: cpu.c,v 1.125 2018/07/27 09:37:31 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.124 2018/07/26 17:20:09 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.125 2018/07/27 09:37:31 maxv Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -1114,6 +1114,7 @@ cpu_load_pmap(struct pmap *pmap, struct pmap *oldpmap)
 {
 	struct cpu_info *ci = curcpu();
 	cpuid_t cid = cpu_index(ci);
+	int i;
 
 	KASSERT(pmap != pmap_kernel());
 
@@ -1121,50 +1122,40 @@ cpu_load_pmap(struct pmap *pmap, struct pmap *oldpmap)
 	/* make new pmap visible to xen_kpm_sync() */
 	kcpuset_atomic_set(pmap->pm_xen_ptp_cpus, cid);
 
-#ifdef i386
-	{
-		int i;
-		paddr_t l3_pd = xpmap_ptom_masked(ci->ci_pae_l3_pdirpa);
-		/* don't update the kernel L3 slot */
-		for (i = 0 ; i < PDP_SIZE - 1; i++) {
-			xpq_queue_pte_update(l3_pd + i * sizeof(pd_entry_t),
-			    xpmap_ptom(pmap->pm_pdirpa[i]) | PG_V);
-		}
-		tlbflush();
-	}
-#endif
-
 #ifdef __x86_64__
-	{
-		int i;
-		pd_entry_t *new_pgd;
-		paddr_t l4_pd_ma;
+	pd_entry_t *new_pgd;
+	paddr_t l4_pd_ma;
 
-		l4_pd_ma = xpmap_ptom_masked(ci->ci_kpm_pdirpa);
+	l4_pd_ma = xpmap_ptom_masked(ci->ci_kpm_pdirpa);
 
-		/*
-		 * Map user space address in kernel space and load
-		 * user cr3
-		 */
-		new_pgd = pmap->pm_pdir;
-		KASSERT(pmap == ci->ci_pmap);
+	/*
+	 * Map user space address in kernel space and load
+	 * user cr3
+	 */
+	new_pgd = pmap->pm_pdir;
+	KASSERT(pmap == ci->ci_pmap);
 
-		/* Copy user pmap L4 PDEs (in user addr. range) to per-cpu L4 */
-		for (i = 0; i < PDIR_SLOT_PTE; i++) {
-			KASSERT(pmap != pmap_kernel() || new_pgd[i] == 0);
-			if (ci->ci_kpm_pdir[i] != new_pgd[i]) {
-				xpq_queue_pte_update(
-				    l4_pd_ma + i * sizeof(pd_entry_t),
-				    new_pgd[i]);
-			}
+	/* Copy user pmap L4 PDEs (in user addr. range) to per-cpu L4 */
+	for (i = 0; i < PDIR_SLOT_PTE; i++) {
+		KASSERT(pmap != pmap_kernel() || new_pgd[i] == 0);
+		if (ci->ci_kpm_pdir[i] != new_pgd[i]) {
+			xpq_queue_pte_update(l4_pd_ma + i * sizeof(pd_entry_t),
+			    new_pgd[i]);
 		}
+	}
 
-		xen_set_user_pgd(pmap_pdirpa(pmap, 0));
-		ci->ci_xen_current_user_pgd = pmap_pdirpa(pmap, 0);
-
-		tlbflush();
+	xen_set_user_pgd(pmap_pdirpa(pmap, 0));
+	ci->ci_xen_current_user_pgd = pmap_pdirpa(pmap, 0);
+#else
+	paddr_t l3_pd = xpmap_ptom_masked(ci->ci_pae_l3_pdirpa);
+	/* don't update the kernel L3 slot */
+	for (i = 0; i < PDP_SIZE - 1; i++) {
+		xpq_queue_pte_update(l3_pd + i * sizeof(pd_entry_t),
+		    xpmap_ptom(pmap->pm_pdirpa[i]) | PG_V);
 	}
 #endif
+
+	tlbflush();
 
 	/* old pmap no longer visible to xen_kpm_sync() */
 	if (oldpmap != pmap_kernel()) {
@@ -1195,6 +1186,8 @@ cpu_load_pmap(struct pmap *pmap, struct pmap *oldpmap)
 void
 pmap_cpu_init_late(struct cpu_info *ci)
 {
+	int i;
+
 	/*
 	 * The BP has already its own PD page allocated during early
 	 * MD startup.
@@ -1202,7 +1195,6 @@ pmap_cpu_init_late(struct cpu_info *ci)
 
 #ifdef __x86_64__
 	/* Setup per-cpu normal_pdes */
-	int i;
 	extern pd_entry_t * const normal_pdes[];
 	for (i = 0;i < PTP_LEVELS - 1;i++) {
 		ci->ci_normal_pdes[i] = normal_pdes[i];
@@ -1219,8 +1211,7 @@ pmap_cpu_init_late(struct cpu_info *ci)
 	KASSERT(ci->ci_pae_l3_pdirpa != 0);
 
 	/* Initialise L2 entries 0 - 2: Point them to pmap_kernel() */
-	int i;
-	for (i = 0 ; i < PDP_SIZE - 1; i++) {
+	for (i = 0; i < PDP_SIZE - 1; i++) {
 		ci->ci_pae_l3_pdir[i] =
 		    xpmap_ptom_masked(pmap_kernel()->pm_pdirpa[i]) | PG_V;
 	}
