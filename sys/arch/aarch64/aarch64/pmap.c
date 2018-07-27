@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.14 2018/07/24 10:08:43 ryo Exp $	*/
+/*	$NetBSD: pmap.c,v 1.15 2018/07/27 07:04:04 ryo Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.14 2018/07/24 10:08:43 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.15 2018/07/27 07:04:04 ryo Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_ddb.h"
@@ -1163,19 +1163,36 @@ pmap_protect(struct pmap *pm, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 
 		if (!executable && (prot & VM_PROT_EXECUTE)) {
 			/* non-exec -> exec */
-			UVMHIST_LOG(pmaphist, "icache_sync: pm=%p, va=%016lx, pte: %016lx -> %016lx",
+			UVMHIST_LOG(pmaphist, "icache_sync: "
+			    "pm=%p, va=%016lx, pte: %016lx -> %016lx",
 			    pm, va, opte, pte);
-			cpu_icache_sync_range(AARCH64_PA_TO_KVA(pa), PAGE_SIZE);
-			cpu_icache_inv_all();	/* for VIPT/VIVT */
+			if (!l3pte_writable(pte)) {
+				/*
+				 * require write permission for cleaning dcache
+				 * (cpu_icache_sync_range)
+				 */
+				pt_entry_t tpte;
+
+				tpte = pte & ~(LX_BLKPAG_AF|LX_BLKPAG_AP);
+				tpte |= (LX_BLKPAG_AF|LX_BLKPAG_AP_RW);
+				tpte |= (LX_BLKPAG_UXN|LX_BLKPAG_PXN);
+				atomic_swap_64(ptep, tpte);
+				aarch64_tlbi_by_va(va);
+
+				cpu_icache_sync_range(va, PAGE_SIZE);
+
+				atomic_swap_64(ptep, pte);
+				aarch64_tlbi_by_va(va);
+			} else {
+				atomic_swap_64(ptep, pte);
+				aarch64_tlbi_by_va(va);
+
+				cpu_icache_sync_range(va, PAGE_SIZE);
+			}
+		} else {
+			atomic_swap_64(ptep, pte);
+			aarch64_tlbi_by_va(va);
 		}
-
-		atomic_swap_64(ptep, pte);
-
-#if 0
-		aarch64_tlbi_by_asid_va(pm->pm_asid, va);
-#else
-		aarch64_tlbi_by_va(va);
-#endif
 	}
 
 	pm_unlock(pm);
@@ -1481,21 +1498,38 @@ _pmap_enter(struct pmap *pm, vaddr_t va, paddr_t pa, vm_prot_t prot,
 	pte = pa | attr;
 
 	if (!executable && (prot & VM_PROT_EXECUTE)) {
-		UVMHIST_LOG(pmaphist, "icache_sync: pm=%p, va=%016lx, pte: %016lx -> %016lx",
-		    pm, va, opte, pte);
 		/* non-exec -> exec */
-		cpu_icache_sync_range(AARCH64_PA_TO_KVA(pa), PAGE_SIZE);
-		cpu_icache_inv_all();	/* for VIPT/VIVT */
+		UVMHIST_LOG(pmaphist,
+		    "icache_sync: pm=%p, va=%016lx, pte: %016lx -> %016lx",
+		    pm, va, opte, pte);
+		if (!l3pte_writable(pte)) {
+			/*
+			 * require write permission for cleaning dcache
+			 * (cpu_icache_sync_range)
+			 */
+			pt_entry_t tpte;
+
+			tpte = pte & ~(LX_BLKPAG_AF|LX_BLKPAG_AP);
+			tpte |= (LX_BLKPAG_AF|LX_BLKPAG_AP_RW);
+			tpte |= (LX_BLKPAG_UXN|LX_BLKPAG_PXN);
+			atomic_swap_64(ptep, tpte);
+			aarch64_tlbi_by_va(va);
+
+			cpu_icache_sync_range(va, PAGE_SIZE);
+
+			atomic_swap_64(ptep, pte);
+			aarch64_tlbi_by_va(va);
+
+		} else {
+			atomic_swap_64(ptep, pte);
+			aarch64_tlbi_by_va(va);
+
+			cpu_icache_sync_range(va, PAGE_SIZE);
+		}
+	} else {
+		atomic_swap_64(ptep, pte);
+		aarch64_tlbi_by_va(va);
 	}
-
-	atomic_swap_64(ptep, pte);
-
-#if 0
-	/* didn't work??? */
-	aarch64_tlbi_by_asid_va(pm->pm_asid, va);
-#else
-	aarch64_tlbi_by_va(va);
-#endif
 
 	if (pte & LX_BLKPAG_OS_WIRED)
 		pm->pm_stats.wired_count++;
