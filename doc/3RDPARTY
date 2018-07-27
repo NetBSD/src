@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1534 2018/07/24 12:59:15 wiz Exp $
+#	$NetBSD: 3RDPARTY,v 1.1535 2018/07/27 14:38:50 maya Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -451,15 +451,14 @@ Notes:
 There is a flex2netbsd script to help newer imports.
 
 Package:	gcc
-Version:	5.5
-Current Vers:	5.5/6.4/7.2/8.1
+Version:	6.4
+Current Vers:	6.4/7.3/8.2
 Maintainer:	FSF
 Archive Site:	ftp://ftp.gnu.org/gnu/gcc/
 Home Page:	http://www.gnu.org/software/gcc/
 Mailing List:	gcc-bugs@gnu.org
 Responsible:	mrg, christos, skrll
 License:	GPLv3, LGPLv3.1
-Location:	gnu/dist/gcc4
 Location:	external/gpl3/gcc.old/dist
 Location:	external/gpl3/gcc/dist
 Notes:
