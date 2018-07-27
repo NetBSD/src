@@ -713,7 +713,7 @@ EOF
 fi
 if [ "$ARC4RANDOM" = no ]; then
 	echo "COMPAT_SRCS+=	compat/arc4random.c" >>$CONFIG_MK
-	echo "#include		\"compat/arc4random.h\"" >>$CONFIG_H
+	echo "#include			\"compat/arc4random.h\"" >>$CONFIG_H
 fi
 
 if [ -z "$ARC4RANDOM_UNIFORM" ]; then
@@ -735,7 +735,7 @@ EOF
 fi
 if [ "$ARC4RANDOM_UNIFORM" = no ]; then
 	echo "COMPAT_SRCS+=	compat/arc4random_uniform.c" >>$CONFIG_MK
-	echo "#include		\"compat/arc4random_uniform.h\"" >>$CONFIG_H
+	echo "#include			\"compat/arc4random_uniform.h\"" >>$CONFIG_H
 fi
 
 if [ -z "$STRLCPY" ]; then
@@ -759,7 +759,7 @@ EOF
 fi
 if [ "$STRLCPY" = no ]; then
 	echo "COMPAT_SRCS+=	compat/strlcpy.c" >>$CONFIG_MK
-	echo "#include		\"compat/strlcpy.h\"" >>$CONFIG_H
+	echo "#include			\"compat/strlcpy.h\"" >>$CONFIG_H
 fi
 
 if [ -z "$PIDFILE_LOCK" ]; then
@@ -791,7 +791,7 @@ EOF
 fi
 if [ "$PIDFILE_LOCK" = no ]; then
 	echo "COMPAT_SRCS+=	compat/pidfile.c" >>$CONFIG_MK
-	echo "#include		\"compat/pidfile.h\"" >>$CONFIG_H
+	echo "#include			\"compat/pidfile.h\"" >>$CONFIG_H
 else
 	echo "#define	HAVE_UTIL_H" >>$CONFIG_H
 	if [ -n "$LIBUTIL" ]; then
@@ -842,7 +842,7 @@ EOF
 fi
 if [ "$STRTOI" = no ]; then
 	echo "COMPAT_SRCS+=	compat/strtoi.c compat/strtou.c" >>$CONFIG_MK
-	echo "#include		\"compat/strtoi.h\"" >>$CONFIG_H
+	echo "#include			\"compat/strtoi.h\"" >>$CONFIG_H
 fi
 
 if [ -z "$DPRINTF" ]; then
@@ -863,7 +863,7 @@ EOF
 fi
 if [ "$DPRINTF" = no ]; then
 	echo "COMPAT_SRCS+=	compat/dprintf.c" >>$CONFIG_MK
-	echo "#include		\"compat/dprintf.h\"" >>$CONFIG_H
+	echo "#include			\"compat/dprintf.h\"" >>$CONFIG_H
 fi
 
 if [ -z "$TAILQ_FOREACH_SAFE" ]; then
@@ -937,7 +937,7 @@ if [ "$TAILQ_FOREACH_SAFE" = no -o "$TAILQ_CONCAT" = no ]; then
 	if [ "$TAILQ_FOREACH" = yes ]; then
 		echo "#include		<sys/queue.h>">>$CONFIG_H
 	fi
-	echo "#include		\"compat/queue.h\"">>$CONFIG_H
+	echo "#include			\"compat/queue.h\"">>$CONFIG_H
 else
 	echo "#define	HAVE_SYS_QUEUE_H" >>$CONFIG_H
 fi
@@ -962,7 +962,7 @@ EOF
 fi
 if [ "$REALLOCARRAY" = no ]; then
 	echo "COMPAT_SRCS+=	compat/reallocarray.c" >>$CONFIG_MK
-	echo "#include		\"compat/reallocarray.h\"">>$CONFIG_H
+	echo "#include			\"compat/reallocarray.h\"">>$CONFIG_H
 fi
 # Set this for eloop
 echo "#define	HAVE_REALLOCARRAY" >>$CONFIG_H
@@ -1091,7 +1091,7 @@ EOF
 	rm -f _be64enc.c _be64enc
 fi
 if [ "$BE64ENC" = no ]; then
-	echo "#include		\"compat/endian.h\"" >>$CONFIG_H
+	echo "#include			\"compat/endian.h\"" >>$CONFIG_H
 fi
 
 if [ -z "$FLS64" ]; then
@@ -1145,7 +1145,7 @@ EOF
 	rm -f _md5.c _md5
 fi
 if [ "$MD5" = no ]; then
-	echo "#include		\"compat/crypt/md5.h\"" >>$CONFIG_H
+	echo "#include			\"compat/crypt/md5.h\"" >>$CONFIG_H
 	echo "MD5_SRC=	compat/crypt/md5.c" >>$CONFIG_MK
 else
 	echo "MD5_SRC=" >>$CONFIG_MK
@@ -1236,7 +1236,7 @@ EOF
 	fi
 fi
 if [ "$SHA2" = no ]; then
-	echo "#include		\"compat/crypt/sha256.h\"" >>$CONFIG_H
+	echo "#include			\"compat/crypt/sha256.h\"" >>$CONFIG_H
 	echo "SHA256_SRC=	compat/crypt/sha256.c" >>$CONFIG_MK
 else
 	echo "SHA256_SRC=" >>$CONFIG_MK
@@ -1284,7 +1284,7 @@ EOF
 	rm -f _hmac.c _hmac
 fi
 if [ "$HMAC" = no ]; then
-	echo "#include		\"compat/crypt/hmac.h\"" >>$CONFIG_H
+	echo "#include			\"compat/crypt/hmac.h\"" >>$CONFIG_H
 	echo "HMAC_SRC=	compat/crypt/hmac.c" >>$CONFIG_MK
 else
 	# echo "#define	HAVE_HMAC_H" >>$CONFIG_H
