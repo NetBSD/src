@@ -1,4 +1,4 @@
-/*	$NetBSD: dtrace_isa.c,v 1.7 2018/05/28 21:05:03 chs Exp $	*/
+/*	$NetBSD: dtrace_isa.c,v 1.8 2018/07/27 07:32:59 maxv Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -45,9 +45,9 @@ uint16_t dtrace_fuword16_nocheck(void *);
 uint32_t dtrace_fuword32_nocheck(void *);
 uint64_t dtrace_fuword64_nocheck(void *);
 
-uintptr_t kernelbase = (uintptr_t)KERN_BASE;
+uintptr_t kernelbase = (uintptr_t)VM_MIN_KERNEL_ADDRESS;
 
-#define INKERNEL(va) ((intptr_t)(va) < 0)
+#define INKERNEL(va) ((intptr_t)(va) < 0) /* XXX horror */
 
 struct amd64_frame {
 	struct amd64_frame	*f_frame;
