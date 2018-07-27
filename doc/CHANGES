@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2414 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2415 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -181,3 +181,6 @@ Changes from NetBSD 8.0 to NetBSD 9.0:
 	arm: Add support for ARMv7 performance event monitoring with tprof(4).
 		[jmcneill 20180715]
 	dhcpcd: Import 7.0.7. [roy 20180724]
+	tea5767radio(4): Add Philips/NXP TEA5767 I2C-controlled stereo FM radio
+		driver. [rkujawa 20180727]
+

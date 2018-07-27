@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1601 2018/07/24 15:29:05 christos Exp $
+# $NetBSD: mi,v 1.1602 2018/07/27 12:02:26 rkujawa Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1803,6 +1803,7 @@
 ./usr/share/man/cat4/tcu.0			man-sys-catman		.cat
 ./usr/share/man/cat4/tdfxdrm.0			man-sys-catman		.cat
 ./usr/share/man/cat4/tdvfb.0			man-sys-catman		.cat
+./usr/share/man/cat4/tea5767radio.0		man-sys-catman		.cat
 ./usr/share/man/cat4/termios.0			man-sys-catman		.cat
 ./usr/share/man/cat4/tfb.0			man-sys-catman		.cat
 ./usr/share/man/cat4/thinkpad.0			man-sys-catman		.cat
@@ -4875,6 +4876,7 @@
 ./usr/share/man/html4/tcu.html			man-sys-htmlman		html
 ./usr/share/man/html4/tdfxdrm.html		man-sys-htmlman		html
 ./usr/share/man/html4/tdvfb.html		man-sys-htmlman		html
+./usr/share/man/html4/tea5767radio.html		man-sys-htmlman		html
 ./usr/share/man/html4/termios.html		man-sys-htmlman		html
 ./usr/share/man/html4/tfb.html			man-sys-htmlman		html
 ./usr/share/man/html4/thinkpad.html		man-sys-htmlman		html
@@ -7867,6 +7869,7 @@
 ./usr/share/man/man4/tcu.4			man-sys-man		.man
 ./usr/share/man/man4/tdfxdrm.4			man-sys-man		.man
 ./usr/share/man/man4/tdvfb.4			man-sys-man		.man
+./usr/share/man/man4/tea5767radio.4		man-sys-man		.man
 ./usr/share/man/man4/termios.4			man-sys-man		.man
 ./usr/share/man/man4/tfb.4			man-sys-man		.man
 ./usr/share/man/man4/thinkpad.4			man-sys-man		.man
