@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.2,v 1.1.2.96 2018/07/15 10:49:02 martin Exp $
+# $NetBSD: CHANGES-7.2,v 1.1.2.97 2018/07/27 10:47:51 martin Exp $
 
 A complete list of changes from the NetBSD 7.1 release to the NetBSD 7.2
 release:
@@ -5570,4 +5570,202 @@ usr.bin/units/units.c				1.26,1.27
 
 	Fix negative exponents and improve handling of negative numbers.
 	[dholland, ticket #1620]
+
+external/bsd/dhcpcd/dist/compat/crypt/sha256.c  up to 1.1.1.1
+external/bsd/dhcpcd/dist/compat/crypt/md5.c     up to 1.1.1.1
+external/bsd/dhcpcd/dist/compat/crypt/md5.h     up to 1.1.1.2
+external/bsd/dhcpcd/dist/compat/crypt/sha256.h  up to 1.1.1.1
+external/bsd/dhcpcd/dist/compat/crypt/hmac.c    up to 1.1.1.1
+external/bsd/dhcpcd/dist/compat/crypt/hmac.h    up to 1.1.1.1
+external/bsd/dhcpcd/dist/compat/_strtoi.h       up to 1.1.1.1
+external/bsd/dhcpcd/dist/compat/arc4random.c    up to 1.1.1.1
+external/bsd/dhcpcd/dist/compat/arc4random.h    up to 1.1.1.1
+external/bsd/dhcpcd/dist/compat/arc4random_uniform.c up to 1.1.1.1
+external/bsd/dhcpcd/dist/compat/arc4random_uniform.h up to 1.1.1.1
+external/bsd/dhcpcd/dist/compat/bitops.h        up to 1.1.1.1
+external/bsd/dhcpcd/dist/compat/dprintf.c       up to 1.1.1.2
+external/bsd/dhcpcd/dist/compat/dprintf.h       up to 1.1.1.2
+external/bsd/dhcpcd/dist/compat/endian.h        up to 1.1.1.1
+external/bsd/dhcpcd/dist/compat/pidfile.c       up to 1.1.1.1
+external/bsd/dhcpcd/dist/compat/pidfile.h       up to 1.1.1.1
+external/bsd/dhcpcd/dist/compat/queue.h         up to 1.1.1.1
+external/bsd/dhcpcd/dist/compat/reallocarray.c  up to 1.1.1.1
+external/bsd/dhcpcd/dist/compat/reallocarray.h  up to 1.1.1.1
+external/bsd/dhcpcd/dist/compat/strtoi.c        up to 1.1.1.1
+external/bsd/dhcpcd/dist/compat/strtoi.h        up to 1.1.1.1
+external/bsd/dhcpcd/dist/compat/strtou.c        up to 1.1.1.1
+external/bsd/dhcpcd/dist/compat/strlcpy.c       up to 1.1.1.1
+external/bsd/dhcpcd/dist/compat/strlcpy.h       up to 1.1.1.1
+external/bsd/dhcpcd/dist/config-null.mk         up to 1.1.1.1
+external/bsd/dhcpcd/dist/configure              up to 1.1.1.8
+external/bsd/dhcpcd/dist/iconfig.mk             up to 1.1.1.1
+external/bsd/dhcpcd/dist/hooks/01-test          up to 1.1.1.2
+external/bsd/dhcpcd/dist/hooks/02-dump          up to 1.1.1.1
+external/bsd/dhcpcd/dist/hooks/10-wpa_supplicant up to 1.1.1.2
+external/bsd/dhcpcd/dist/hooks/15-timezone      up to 1.1.1.2
+external/bsd/dhcpcd/dist/hooks/20-resolv.conf   up to 1.1.1.2
+external/bsd/dhcpcd/dist/hooks/29-lookup-hostname up to 1.1.1.2
+external/bsd/dhcpcd/dist/hooks/30-hostname      up to 1.1.1.2
+external/bsd/dhcpcd/dist/hooks/50-dhcpcd-compat up to 1.1.1.1
+external/bsd/dhcpcd/dist/hooks/50-ntp.conf      up to 1.1.1.2
+external/bsd/dhcpcd/dist/hooks/50-yp.conf       up to 1.1.1.2
+external/bsd/dhcpcd/dist/hooks/50-ypbind.in     up to 1.1.1.2
+external/bsd/dhcpcd/dist/hooks/Makefile         up to 1.1.1.1
+external/bsd/dhcpcd/dist/hooks/dhcpcd-run-hooks.8.in up to 1.1.1.4
+external/bsd/dhcpcd/dist/hooks/dhcpcd-run-hooks.in up to 1.1.1.4
+external/bsd/dhcpcd/dist/src/GNUmakefile        up to 1.1.1.1
+external/bsd/dhcpcd/dist/src/Makefile           up to 1.1.1.4
+external/bsd/dhcpcd/dist/src/arp.c              up to 1.1.1.7
+external/bsd/dhcpcd/dist/src/arp.h              up to 1.1.1.4
+external/bsd/dhcpcd/dist/src/auth.c             up to 1.1.1.5
+external/bsd/dhcpcd/dist/src/auth.h             up to 1.1.1.3
+external/bsd/dhcpcd/dist/src/bpf.c              up to 1.7
+external/bsd/dhcpcd/dist/src/bpf.h              up to 1.1.1.4
+external/bsd/dhcpcd/dist/src/common.c           up to 1.1.1.5
+external/bsd/dhcpcd/dist/src/common.h           up to 1.1.1.4
+external/bsd/dhcpcd/dist/src/control.c          up to 1.1.1.3
+external/bsd/dhcpcd/dist/src/control.h          up to 1.1.1.2
+external/bsd/dhcpcd/dist/src/defs.h             up to 1.1.1.15
+external/bsd/dhcpcd/dist/src/dev.c              up to 1.1.1.3
+external/bsd/dhcpcd/dist/src/dev.h              up to 1.1.1.2
+external/bsd/dhcpcd/dist/src/dhcp-common.c      up to 1.1.1.4
+external/bsd/dhcpcd/dist/src/dhcp-common.h      up to 1.1.1.2
+external/bsd/dhcpcd/dist/src/dhcp.c             up to 1.11
+external/bsd/dhcpcd/dist/src/dhcp.h             up to 1.1.1.6
+external/bsd/dhcpcd/dist/src/dhcp6.c            up to 1.1.1.12
+external/bsd/dhcpcd/dist/src/dhcp6.h            up to 1.1.1.6
+external/bsd/dhcpcd/dist/src/dhcpcd-definitions-small.conf up to 1.1.1.2
+external/bsd/dhcpcd/dist/src/dhcpcd-definitions.conf up to 1.1.1.2
+external/bsd/dhcpcd/dist/src/dhcpcd-embedded.c.in up to 1.1.1.2
+external/bsd/dhcpcd/dist/src/dhcpcd-embedded.h.in up to 1.1.1.2
+external/bsd/dhcpcd/dist/src/dhcpcd.8.in        up to 1.1.1.10
+external/bsd/dhcpcd/dist/src/dhcpcd.c           up to 1.13
+external/bsd/dhcpcd/dist/src/dhcpcd.conf        up to 1.1.1.2
+external/bsd/dhcpcd/dist/src/dhcpcd.conf.5.in   up to 1.1.1.10
+external/bsd/dhcpcd/dist/src/dhcpcd.h           up to 1.1.1.5
+external/bsd/dhcpcd/dist/src/duid.c             up to 1.1.1.3
+external/bsd/dhcpcd/dist/src/duid.h             up to 1.1.1.1
+external/bsd/dhcpcd/dist/src/eloop.c            up to 1.1.1.5
+external/bsd/dhcpcd/dist/src/eloop.h            up to 1.1.1.3
+external/bsd/dhcpcd/dist/src/genembedc          up to 1.1.1.1
+external/bsd/dhcpcd/dist/src/genembedh          up to 1.1.1.1
+external/bsd/dhcpcd/dist/src/if-bsd.c           up to 1.1.1.8
+external/bsd/dhcpcd/dist/src/if-linux-wext.c    up to 1.1.1.2
+external/bsd/dhcpcd/dist/src/if-linux.c         up to 1.1.1.10
+external/bsd/dhcpcd/dist/src/if-options.c       up to 1.10
+external/bsd/dhcpcd/dist/src/if-options.h       up to 1.1.1.7
+external/bsd/dhcpcd/dist/src/if-sun.c           up to 1.1.1.4
+external/bsd/dhcpcd/dist/src/if.c               up to 1.1.1.8
+external/bsd/dhcpcd/dist/src/if.h               up to 1.1.1.5
+external/bsd/dhcpcd/dist/src/ipv4.c             up to 1.1.1.9
+external/bsd/dhcpcd/dist/src/ipv4.h             up to 1.1.1.4
+external/bsd/dhcpcd/dist/src/ipv4ll.c           up to 1.1.1.4
+external/bsd/dhcpcd/dist/src/ipv4ll.h           up to 1.1.1.4
+external/bsd/dhcpcd/dist/src/ipv6.c             up to 1.1.1.11
+external/bsd/dhcpcd/dist/src/ipv6.h             up to 1.1.1.7
+external/bsd/dhcpcd/dist/src/ipv6nd.c           up to 1.1.1.8
+external/bsd/dhcpcd/dist/src/ipv6nd.h           up to 1.1.1.6
+external/bsd/dhcpcd/dist/src/logerr.c           up to 1.1.1.2
+external/bsd/dhcpcd/dist/src/logerr.h           up to 1.1.1.3
+external/bsd/dhcpcd/dist/src/route.c            up to 1.1.1.8
+external/bsd/dhcpcd/dist/src/route.h            up to 1.1.1.4
+external/bsd/dhcpcd/dist/src/sa.c               up to 1.1.1.3
+external/bsd/dhcpcd/dist/src/sa.h               up to 1.1.1.2
+external/bsd/dhcpcd/dist/src/script.c           up to 1.1.1.4
+external/bsd/dhcpcd/dist/src/script.h           up to 1.1.1.2
+external/bsd/dhcpcd/dist/src/dev/Makefile       up to 1.1.1.1
+external/bsd/dhcpcd/dist/src/dev/udev.c         up to 1.1.1.2
+external/bsd/dhcpcd/dist/tests/crypt/.gitignore up to 1.1.1.1
+external/bsd/dhcpcd/dist/tests/crypt/GNUmakefile up to 1.1.1.1
+external/bsd/dhcpcd/dist/tests/crypt/Makefile   up to 1.1.1.2
+external/bsd/dhcpcd/dist/tests/crypt/README.md  up to 1.1.1.1
+external/bsd/dhcpcd/dist/tests/crypt/run-test.c up to 1.1.1.2
+external/bsd/dhcpcd/dist/tests/crypt/test.h     up to 1.1.1.2
+external/bsd/dhcpcd/dist/tests/crypt/test_hmac_md5.c up to 1.1.1.3
+external/bsd/dhcpcd/dist/tests/Makefile         up to 1.1.1.1
+external/bsd/dhcpcd/dist/tests/eloop-bench/.gitignore up to 1.1.1.1
+external/bsd/dhcpcd/dist/tests/eloop-bench/Makefile up to 1.1.1.2
+external/bsd/dhcpcd/dist/tests/eloop-bench/README.md up to 1.1.1.1
+external/bsd/dhcpcd/dist/tests/eloop-bench/eloop-bench.c up to 1.1.1.3
+external/bsd/dhcpcd/dist/.arcconfig             up to 1.1.1.1
+external/bsd/dhcpcd/dist/.gitignore             up to 1.4
+external/bsd/dhcpcd/dist/BUILDING.md            up to 1.1.1.2
+external/bsd/dhcpcd/dist/LICENSE                up to 1.1.1.2
+external/bsd/dhcpcd/dist/Makefile               up to 1.1.1.5
+external/bsd/dhcpcd/dist/Makefile.inc           up to 1.1.1.2
+external/bsd/dhcpcd/dist/README.md              up to 1.1.1.3
+external/bsd/dhcpcd/dist/bpf-filter.h           delete
+external/bsd/dhcpcd/dist/common.c               delete
+external/bsd/dhcpcd/dist/arp.c                  delete
+external/bsd/dhcpcd/dist/arp.h                  delete
+external/bsd/dhcpcd/dist/auth.c                 delete
+external/bsd/dhcpcd/dist/auth.h                 delete
+external/bsd/dhcpcd/dist/dhcpcd.c               delete
+external/bsd/dhcpcd/dist/control.c              delete
+external/bsd/dhcpcd/dist/common.h               delete
+external/bsd/dhcpcd/dist/config.h               delete
+external/bsd/dhcpcd/dist/dhcp-common.c          delete
+external/bsd/dhcpcd/dist/control.h              delete
+external/bsd/dhcpcd/dist/defs.h                 delete
+external/bsd/dhcpcd/dist/dev.h                  delete
+external/bsd/dhcpcd/dist/dhcpcd-definitions.conf delete
+external/bsd/dhcpcd/dist/dhcp-common.h          delete
+external/bsd/dhcpcd/dist/dhcp.c                 delete
+external/bsd/dhcpcd/dist/dhcp.h                 delete
+external/bsd/dhcpcd/dist/dhcp6.c                delete
+external/bsd/dhcpcd/dist/dhcp6.h                delete
+external/bsd/dhcpcd/dist/dhcpcd-run-hooks.8.in  delete
+external/bsd/dhcpcd/dist/dhcpcd-embedded.c      delete
+external/bsd/dhcpcd/dist/dhcpcd.8.in            delete
+external/bsd/dhcpcd/dist/dhcpcd-embedded.c.in   delete
+external/bsd/dhcpcd/dist/dhcpcd-embedded.h      delete
+external/bsd/dhcpcd/dist/dhcpcd-embedded.h.in   delete
+external/bsd/dhcpcd/dist/ipv4.c                 delete
+external/bsd/dhcpcd/dist/if.c                   delete
+external/bsd/dhcpcd/dist/dhcpcd-run-hooks.in    delete
+external/bsd/dhcpcd/dist/dhcpcd.h               delete
+external/bsd/dhcpcd/dist/dhcpcd.conf            delete
+external/bsd/dhcpcd/dist/dhcpcd.conf.5.in       delete
+external/bsd/dhcpcd/dist/duid.c                 delete
+external/bsd/dhcpcd/dist/duid.h                 delete
+external/bsd/dhcpcd/dist/eloop.c                delete
+external/bsd/dhcpcd/dist/eloop.h                delete
+external/bsd/dhcpcd/dist/if-bsd.c               delete
+external/bsd/dhcpcd/dist/if-options.c           delete
+external/bsd/dhcpcd/dist/if-options.h           delete
+external/bsd/dhcpcd/dist/if.h                   delete
+external/bsd/dhcpcd/dist/crypt/hmac_md5.c       delete
+external/bsd/dhcpcd/dist/crypt/crypt.h          delete
+external/bsd/dhcpcd/dist/ipv4.h                 delete
+external/bsd/dhcpcd/dist/ipv4ll.c               delete
+external/bsd/dhcpcd/dist/ipv6.c                 delete
+external/bsd/dhcpcd/dist/ipv4ll.h               delete
+external/bsd/dhcpcd/dist/ipv6.h                 delete
+external/bsd/dhcpcd/dist/ipv6nd.c               delete
+external/bsd/dhcpcd/dist/ipv6nd.h               delete
+external/bsd/dhcpcd/dist/script.c               delete
+external/bsd/dhcpcd/dist/script.h               delete
+external/bsd/dhcpcd/dist/dhcpcd-hooks/15-timezone delete
+external/bsd/dhcpcd/dist/dhcpcd-hooks/01-test   delete
+external/bsd/dhcpcd/dist/dhcpcd-hooks/02-dump   delete
+external/bsd/dhcpcd/dist/dhcpcd-hooks/10-mtu    delete
+external/bsd/dhcpcd/dist/dhcpcd-hooks/10-wpa_supplicant delete
+external/bsd/dhcpcd/dist/dhcpcd-hooks/20-resolv.conf delete
+external/bsd/dhcpcd/dist/dhcpcd-hooks/29-lookup-hostname delete
+external/bsd/dhcpcd/dist/dhcpcd-hooks/30-hostname delete
+external/bsd/dhcpcd/dist/dhcpcd-hooks/50-ntp.conf delete
+external/bsd/dhcpcd/dist/dhcpcd-hooks/50-ypbind delete
+usr.sbin/postinstall/postinstall		1.211-1.213
+etc/rc.d/dhcpcd					upto 1.5
+doc/3RDPARTY					manual edit
+
+	Import dhcpcd-7.0.7.
+	Adjust postinstall for dhcpcd changes.
+	[roy, ticket #1621]
+
+sys/fs/udf/udf_subr.c				1.142
+
+	Enhance logical volume integrity descriptor handling and provide
+	bug-compatibility for Linux mkudffs 1.3 images.
+	[reinoud, ticket #1622]
 
