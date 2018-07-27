@@ -1,4 +1,4 @@
-/*      $NetBSD: exec_prot_support.c,v 1.1 2014/08/10 05:47:38 matt Exp $ */
+/*      $NetBSD: exec_prot_support.c,v 1.2 2018/07/27 07:09:15 ryo Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,12 +30,12 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: exec_prot_support.c,v 1.1 2014/08/10 05:47:38 matt Exp $");
+__RCSID("$NetBSD: exec_prot_support.c,v 1.2 2018/07/27 07:09:15 ryo Exp $");
 
 #include "../../common/exec_prot.h"
 
 int
 exec_prot_support(void)
 {
-	return NOTIMPL;
+	return PERPAGE_XP;
 }
