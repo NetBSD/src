@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.1,v 1.1.2.2 2018/07/27 00:00:01 snj Exp $
+# $NetBSD: CHANGES-8.1,v 1.1.2.3 2018/07/27 09:57:43 martin Exp $
 
 A complete list of changes from the NetBSD 8.0 release to the NetBSD 8.1
 release:
@@ -205,4 +205,9 @@ libexec/ld.elf_so/headers.c			1.64
 	Apply relocbase for tlsinit of the executable itself. Fixes
 	PIE where relocbase typically is not zero.  PR bin/53465
 	[joerg, ticket #940]
+
+usr.sbin/arp/arp.c				1.62
+
+	arp(8): warn when failing to delete a specified arp entry.
+	[ozaki-r, ticket #925]
 

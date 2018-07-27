@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.232 2018/07/17 14:59:51 martin Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.233 2018/07/27 09:57:43 martin Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -14280,11 +14280,6 @@ crypto/external/bsd/heimdal/lib/libkadm5srv/Makefile		1.5
 	Improve MKREPRO builds for architectures with compat (like
 	amd64).
 	[martin, ticket #924]
-
-usr.sbin/arp/arp.c				1.62
-
-	arp(8): warn when failing to delete a specified arp entry.
-	[ozaki-r, ticket #925]
 
 distrib/notes/common/main			(manually edited)
 sys/sys/param.h					(manually edited)
