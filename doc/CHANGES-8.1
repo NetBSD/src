@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.1,v 1.1.2.1 2018/07/26 18:47:47 snj Exp $
+# $NetBSD: CHANGES-8.1,v 1.1.2.2 2018/07/27 00:00:01 snj Exp $
 
 A complete list of changes from the NetBSD 8.0 release to the NetBSD 8.1
 release:
@@ -8,4 +8,201 @@ sys/sys/param.h					patched by hand
 
 	Welcome to 8.0_STABLE.
 	[snj]
+
+sys/dev/pci/ichsmb.c				1.52, 1.56
+
+	ichsmb(4): Add C620, Apollo Lake, and Gemini Lake devices.
+	[msaitoh, ticket #926]
+
+share/man/man4/lm.4				1.35, 1.36
+sys/dev/ic/nslm7x.c				1.71
+sys/dev/isa/wbsio.c				1.23
+sys/dev/isa/wbsioreg.h				1.8
+
+	lm(4): Support NCT6796D.
+	[msaitoh, ticket #927]
+
+sys/dev/pci/if_wm.c				1.573-1.576, 1.579 and 1.582 via patch
+
+	wm(4):
+	- Count timeout correctly. This change reduce timeout value for 80003
+	  as expected. Reported by mouse@.
+	- Print "device timeout (lost interrupt)"  when all descriptors in a
+	  queue are free.
+	- Rename txq_watchdog to txq_sending to make the meaning clear.
+	- KNF. No functional change.
+	[msaitoh, ticket #928]
+
+sys/arch/x86/x86/cpu_ucode_intel.c		1.14
+sys/kern/kern_cpu.c				1.74
+
+	Add cpu_ucode_intel_verify() to verify microcode image.
+	[msaitoh, ticket #929]
+
+sys/dev/pci/pci_subr.c				1.201
+sys/dev/pci/pcireg.h				1.138
+
+	Fix typo. s/TPL/TLP/
+	[msaitoh, ticket #930]
+
+sys/dev/mii/miidevs				1.127, 1.129
+sys/dev/mii/miidevs.h				regen
+sys/dev/mii/miidevs_data.h			regen
+
+	Add Intel X540 internal PHY.
+	All of 88E151[0248]'s model number is 0x001d.
+	[msaitoh, ticket #931]
+
+sys/dev/mii/mii.h				1.21-1.23
+
+	Miscellaneous additions and cleanup to mii.h
+	[msaitoh, ticket #932]
+
+sys/dev/pci/pci_subr.c				1.202
+sys/dev/pci/pcireg.h				1.139
+sys/dev/pci/ppbreg.h				1.9
+
+	- VGA 16 bit decode bit is not bit 3 but bit 4.
+	- Print Power Management Control/status register in 32bit.
+	- Simplify.
+	[msaitoh, ticket #933]
+
+sys/dev/pci/pcidevs				1.1332-1333, 1335-1339, 1341-1344 via patch
+sys/dev/pci/pcidevs.h				regen
+sys/dev/pci/pcidevs_data.h			regen
+
+	- Add Symbios/LSI RAID and SAS controllers.
+	- Add some broadcom 802.11ac wifi devices.
+	- Add some Marvell Yukon devices.
+	- Add Intel 82Q45 IDER.
+	- Add some Intel 4 series chipset devices.
+	- Add some Intel 82965 devices.
+	- Change Intel 0x2a06 from IDE to IDER.
+	- Add a bunch of nvidia devices from various generations.
+	- Add two more Yukon variants (from OpenBSD).
+	- Add Mobility Radeon HD 4300(0x9552) and Mobility Radeon HD
+	  4500(0x9553) from OpenBSD.
+	- Add nSYS Technologies.
+	- Add Western Digital (Sandisk)  WD Black NVMe SSD as per suggestion
+	  from thorpej@
+	[msaitoh, ticket #934]
+
+sys/dev/pci/ixgbe/ixgbe.c			1.162
+sys/dev/pci/ixgbe/ixgbe_82599.c			1.20
+sys/dev/pci/ixgbe/ixgbe_api.c			1.21
+sys/dev/pci/ixgbe/ixgbe_type.h			1.35
+sys/dev/pci/ixgbe/ixgbe_x540.c			1.16
+
+	- Apply changes of FreeBSD ix-3.2.18.tgz:
+	  - Add IXGBE_DEV_ID_82599_LS(0x154f) support.
+	  - Increase timeout for newer than ixgbe_mac_X550 (i.e. Xeon-D
+	    and Denverton) in ixgbe_acquire_swfw_sync_X540().
+	  - Add some unused macros (IXGBE_FW_LESM_*).
+	- Remove nmbclusters check because we don't use the mbuf cluster.
+	  This change fixes a problem that the number of RX descriptor
+	  unexpectedly decreased from 2048 to 1024 if the number of port
+	  and/or the number of CPU is high.
+	[msaitoh, ticket #935]
+
+sys/arch/x86/x86/coretemp.c			1.36
+
+	- Detect and set Atom's Tj(max) to 90 if it's not the 45nm
+	  D400/D500/N400 series (90 for Diamondville and 100 for Pineview).
+	  From FreeBSD r221509.
+	- Reduce diff a little against FreeBSD.
+	[msaitoh, ticket #936]
+
+sys/dev/mii/mdio.h				1.8-1.9
+
+	- Add 25G(802.3by), 2.5G and 5G (802.3bz).
+  	- Add PMA/PMD control 2 register bit definitions.
+	[msaitoh, ticket #937]
+
+sys/arch/acorn32/podulebus/if_ie.c		1.41
+sys/arch/amiga/dev/if_es.c			1.58
+sys/arch/amiga/dev/if_qn.c			1.45
+sys/arch/arm/at91/at91emac.c			1.20
+sys/arch/arm/ep93xx/epe.c			1.37
+sys/arch/emips/ebus/if_le_ebus.c		1.14
+sys/arch/emips/ebus/if_le_ebus.c		1.15
+sys/arch/mac68k/dev/if_mc.c			1.46
+sys/arch/macppc/dev/am79c950.c			1.39
+sys/arch/newsmips/apbus/if_sn.c			1.40
+sys/arch/next68k/dev/mb8795.c			1.59
+sys/arch/playstation2/dev/if_smap.c		1.25
+sys/arch/playstation2/dev/if_smap.c		1.26
+sys/arch/sun2/dev/if_ec.c			1.28
+sys/arch/sun3/dev/if_ie.c			1.63
+sys/arch/x68k/dev/if_ne_intio.c			1.19
+sys/arch/xen/xen/if_xennet_xenbus.c		1.75
+sys/arch/xen/xen/xennetback_xenbus.c		1.63
+sys/dev/bi/if_ni.c				1.45
+sys/dev/cadence/if_cemac.c			1.12
+sys/dev/ic/am7990.c				1.78
+sys/dev/ic/am79900.c				1.27
+sys/dev/ic/an.c					1.67
+sys/dev/ic/cs89x0.c				1.40
+sys/dev/ic/dm9000.c				1.13
+sys/dev/ic/dm9000.c				1.14
+sys/dev/ic/dp8390.c				1.88
+sys/dev/ic/elink3.c				1.141
+sys/dev/ic/elinkxl.c				1.122
+sys/dev/ic/hme.c				1.98
+sys/dev/ic/i82586.c				1.77
+sys/dev/ic/lance.c				1.53
+sys/dev/ic/mb86950.c				1.27
+sys/dev/ic/mb86960.c				1.86
+sys/dev/ic/mtd803.c				1.34
+sys/dev/ic/pdq_ifsubr.c				1.59
+sys/dev/ic/rrunner.c				1.86
+sys/dev/ic/seeq8005.c				1.58
+sys/dev/ic/sgec.c				1.47
+sys/dev/ic/smc90cx6.c				1.72
+sys/dev/ic/smc91cxx.c				1.96
+sys/dev/ic/tropic.c				1.49
+sys/dev/ic/wi.c					1.245
+sys/dev/isa/if_eg.c				1.93
+sys/dev/isa/if_el.c				1.95
+sys/dev/isa/if_iy.c				1.101
+sys/dev/ofw/ofnet.c				1.58
+sys/dev/pci/if_alc.c				1.27
+sys/dev/pci/if_de.c				1.152
+sys/dev/pci/if_fpa.c				1.61
+sys/dev/pci/if_jme.c				1.34
+sys/dev/pci/if_tl.c				1.108
+sys/dev/pci/if_vte.c				1.19
+sys/dev/pci/ixgbe/ixgbe.h			1.50
+sys/dev/pcmcia/if_cnw.c				1.62
+sys/dev/pcmcia/if_malo_pcmcia.c			1.17
+sys/dev/pcmcia/if_ray.c				1.89
+sys/dev/pcmcia/if_xi.c				1.81
+sys/dev/pcmcia/mhzc.c				1.51
+sys/dev/pcmcia/xirc.c				1.34
+sys/dev/qbus/if_de.c				1.33
+sys/dev/qbus/if_qe.c				1.78
+sys/dev/qbus/if_qt.c				1.22
+sys/dev/sbus/be.c				1.87
+sys/dev/sbus/qe.c				1.68
+sys/dev/scsipi/if_se.c				1.96
+sys/dev/usb/if_atu.c				1.59
+sys/net/if_l2tp.c				1.28 via patch
+sys/net/if_ppp.c				1.160
+
+	No functional change.
+	- It's not required to include net/bpfdesc.h. Remove it.
+	- Simplify bpf_mtap() call.
+	- Remove duplicated inclusion of net/bpf.h.
+	[msaitoh, ticket #938]
+
+usr.bin/netstat/if.c				1.95
+
+	Print iqdrops, too. This change also fixes a bug that Odrops
+	prints iqdrops when kvm read failed.
+	[msaitoh, ticket #939]
+
+libexec/ld.elf_so/headers.c			1.64
+
+	Apply relocbase for tlsinit of the executable itself. Fixes
+	PIE where relocbase typically is not zero.  PR bin/53465
+	[joerg, ticket #940]
 
