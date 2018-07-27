@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.1,v 1.1.2.3 2018/07/27 09:57:43 martin Exp $
+# $NetBSD: CHANGES-8.1,v 1.1.2.4 2018/07/27 10:55:40 martin Exp $
 
 A complete list of changes from the NetBSD 8.0 release to the NetBSD 8.1
 release:
@@ -210,4 +210,33 @@ usr.sbin/arp/arp.c				1.62
 
 	arp(8): warn when failing to delete a specified arp entry.
 	[ozaki-r, ticket #925]
+
+external/bsd/dhcpcd/dist/configure              up to 1.1.1.8
+external/bsd/dhcpcd/dist/src/defs.h             up to 1.1.1.15
+external/bsd/dhcpcd/dist/src/if-linux.c         up to 1.1.1.10
+external/bsd/dhcpcd/dist/src/ipv6.c             up to 1.1.1.11
+external/bsd/dhcpcd/dist/src/route.c            up to 1.1.1.8
+doc/3RDPARTY					manual edit
+
+	Import dhcpcd-7.0.7 with the following changes:
+	   *  host routes work correctly again
+	   *  vlanid is also used to calculate slaac stable private addresses
+	[roy, ticket #941]
+
+sys/fs/udf/udf_subr.c				1.142
+
+	Enhance logical volume integrity descriptor handling and provide
+	bug-compatibility for Linux mkudffs 1.3 images.
+	[reinoud, ticket #942]
+
+usr.sbin/ypserv/ypinit/ypinit.sh		1.13
+
+	Adjust to newer /bin/sh versions and minor cleanup.
+	[kre, ticket #943]
+
+external/mit/xorg/tools/mkfontscale/Makefile	1.13
+share/mk/bsd.own.mk				1.1066
+
+	Fix groff reproducibility and font directories in X builds.
+	[christos, ticket #944]
 
