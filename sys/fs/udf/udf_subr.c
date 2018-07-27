@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.c,v 1.139 2017/04/01 19:35:56 riastradh Exp $ */
+/* $NetBSD: udf_subr.c,v 1.139.6.1 2018/07/27 10:49:48 martin Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.139 2017/04/01 19:35:56 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.139.6.1 2018/07/27 10:49:48 martin Exp $");
 #endif /* not lint */
 
 
@@ -1233,7 +1233,7 @@ udf_retrieve_lvint(struct udf_mount *ump)
 
 		/* are we linking to a new piece? */
 		if (dscr && lvint->next_extent.len) {
-			len    = udf_rw32(lvint->next_extent.len);
+			len   = udf_rw32(lvint->next_extent.len);
 			lbnum = udf_rw32(lvint->next_extent.loc);
 
 			if (trace_len >= UDF_LVDINT_SEGMENTS-1) {
@@ -1279,7 +1279,7 @@ udf_loose_lvint_history(struct udf_mount *ump)
 	uint32_t out_ext, out_wpos, out_len;
 	uint32_t lb_num;
 	uint32_t len, start;
-	int ext, minext, extlen, cnt, cpy_len, dscr_type;
+	int ext, sumext, extlen, cnt, cpy_len, dscr_type;
 	int losing;
 	int error;
 
@@ -1287,18 +1287,29 @@ udf_loose_lvint_history(struct udf_mount *ump)
 
 	/* search smallest extent */
 	trace = &ump->lvint_trace[0];
-	minext = trace->end - trace->start;
+	sumext = trace->end - trace->start;
 	for (ext = 1; ext < UDF_LVDINT_SEGMENTS; ext++) {
 		trace = &ump->lvint_trace[ext];
 		extlen = trace->end - trace->start;
 		if (extlen == 0)
 			break;
-		minext = MIN(minext, extlen);
+		sumext += extlen;
 	}
-	losing = MIN(minext, UDF_LVINT_LOSSAGE);
-	/* no sense wiping all */
-	if (losing == minext)
-		losing--;
+
+	/* just one element? its not legal but be bug compatible */
+	if (sumext == 1) {
+		/* overwrite the only entry */
+		DPRINTF(VOLUMES, ("\tLinux bugcompat overwriting sole entry\n"));
+		trace = &ump->lvint_trace[0];
+		trace->wpos = 0;
+		return 0;
+	}
+
+	losing = MIN(sumext, UDF_LVINT_LOSSAGE);
+
+	/* no sense wiping too much */
+	if (sumext == UDF_LVINT_LOSSAGE)
+		losing = UDF_LVINT_LOSSAGE/2;
 
 	DPRINTF(VOLUMES, ("\tlosing %d entries\n", losing));
 
@@ -1435,7 +1446,6 @@ udf_writeout_lvint(struct udf_mount *ump, int lvflag)
 
 	DPRINTF(VOLUMES, ("writing out logvol integrity descriptor\n"));
 
-again:
 	/* get free space in last chunk */
 	trace = ump->lvint_trace;
 	while (trace->wpos > (trace->end - trace->start)) {
@@ -1463,11 +1473,20 @@ again:
 	if (space < 1) {
 		if (lvflag & UDF_APPENDONLY_LVINT)
 			return EROFS;
+
 		/* loose history by re-writing extents */
 		error = udf_loose_lvint_history(ump);
 		if (error)
 			return error;
-		goto again;
+
+		trace = ump->lvint_trace;
+		while (trace->wpos > (trace->end - trace->start))
+			trace++;
+		space = (trace->end - trace->start) - trace->wpos;
+		DPRINTF(VOLUMES, ("new try: write start = %d, end = %d, "
+				  "pos = %d, wpos = %d, "
+				  "space = %d\n", trace->start, trace->end,
+				  trace->pos, trace->wpos, space));
 	}
 
 	/* update our integrity descriptor to identify us and timestamp it */
@@ -1671,6 +1690,14 @@ udf_write_physical_partition_spacetables(struct udf_mount *ump, int waitfor)
 		DPRINTF(VOLUMES, ("Write unalloc. space bitmap %d\n",
 			lb_num + ptov));
 		dscr = (union dscrptr *) ump->part_unalloc_dscr[phys_part];
+
+		/* force a sane minimum for descriptors CRC length */
+		/* see UDF 2.3.1.2 and 2.3.8.1 */
+		KASSERT(udf_rw16(dscr->sbd.tag.id) == TAGID_SPACE_BITMAP);
+		if (udf_rw16(dscr->sbd.tag.desc_crc_len) == 0)
+			dscr->sbd.tag.desc_crc_len = udf_rw16(8);
+
+		/* write out space bitmap */
 		error = udf_write_phys_dscr_sync(ump, NULL, UDF_C_DSCR,
 				(union dscrptr *) dscr,
 				ptov + lb_num, lb_num);
@@ -1697,6 +1724,14 @@ udf_write_physical_partition_spacetables(struct udf_mount *ump, int waitfor)
 		DPRINTF(VOLUMES, ("Write freed space bitmap %d\n",
 			lb_num + ptov));
 		dscr = (union dscrptr *) ump->part_freed_dscr[phys_part];
+
+		/* force a sane minimum for descriptors CRC length */
+		/* see UDF 2.3.1.2 and 2.3.8.1 */
+		KASSERT(udf_rw16(dscr->sbd.tag.id) == TAGID_SPACE_BITMAP);
+		if (udf_rw16(dscr->sbd.tag.desc_crc_len) == 0)
+			dscr->sbd.tag.desc_crc_len = udf_rw16(8);
+
+		/* write out space bitmap */
 		error = udf_write_phys_dscr_sync(ump, NULL, UDF_C_DSCR,
 				(union dscrptr *) dscr,
 				ptov + lb_num, lb_num);
