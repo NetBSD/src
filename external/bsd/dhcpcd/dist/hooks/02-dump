@@ -1,0 +1,8 @@
+# Just echo our DHCP options we have
+
+case "$reason" in
+DUMP|DUMP6)
+	set | sed -ne 's/^new_//p' | sort
+	exit 0
+	;;
+esac
