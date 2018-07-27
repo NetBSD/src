@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.47 2018/07/25 11:47:07 maxv Exp $	*/
+/*	$NetBSD: pmap.h,v 1.48 2018/07/27 07:35:09 maxv Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -158,7 +158,6 @@
  */
 
 #define PTE_BASE	((pt_entry_t *)(L4_SLOT_PTE * NBPD_L4))
-#define KERN_BASE	((pt_entry_t *)(L4_SLOT_KERN * NBPD_L4))
 
 #define L1_BASE	PTE_BASE
 #define L2_BASE	((pd_entry_t *)((char *)L1_BASE + L4_SLOT_PTE * NBPD_L3))
