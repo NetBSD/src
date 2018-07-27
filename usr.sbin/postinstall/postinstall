@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.175.2.10 2015/09/03 03:31:15 riz Exp $
+# $NetBSD: postinstall,v 1.175.2.11 2018/07/27 10:43:18 martin Exp $
 #
 # Copyright (c) 2002-2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -883,10 +883,37 @@ do_dhcpcd()
 	failed=0
 
 	find_file_in_dirlist dhcpcd.conf "dhcpcd.conf" \
-	    "${SRC_DIR}/external/bsd/dhcpcd/dist" "${SRC_DIR}/etc" || return 1
+	    "${SRC_DIR}/external/bsd/dhcpcd/dist/src" \
+	    "${SRC_DIR}/etc" || return 1
 			# ${dir} is set by find_file_in_dirlist()
 	populate_dir "$op" true "${dir}" "${DEST_DIR}/etc" 644 dhcpcd.conf
 	failed=$(( ${failed} + $? ))
+
+	check_dir "${op}" "${DEST_DIR}/var/db/dhcpcd" 755
+	failed=$(( ${failed} + $? ))
+
+	move_file "${op}" \
+		"${DEST_DIR}/etc/dhcpcd.duid" \
+		"${DEST_DIR}/var/db/dhcpcd/duid"
+	failed=$(( ${failed} + $? ))
+
+	move_file "${op}" \
+		"${DEST_DIR}/etc/dhcpcd.secret" \
+		"${DEST_DIR}/var/db/dhcpcd/secret"
+	failed=$(( ${failed} + $? ))
+
+	move_file "${op}" \
+		"${DEST_DIR}/var/db/dhcpcd-rdm.monotonic" \
+		"${DEST_DIR}/var/db/dhcpcd/rdm_monotonic"
+	failed=$(( ${failed} + $? ))
+
+	for lease in "${DEST_DIR}/var/db/dhcpcd-"*.lease*; do
+		[ -f "${lease}" ] || continue
+		new_lease=$(basename "${lease}" | ${SED} -e 's/dhcpcd-//')
+		new_lease="${DEST_DIR}/var/db/dhcpcd/${new_lease}"
+		move_file "${op}" "${lease}" "${new_lease}"
+		failed=$(( ${failed} + $? ))
+	done
 
 	return ${failed}
 }
