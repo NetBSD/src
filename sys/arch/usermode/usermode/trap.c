@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.68 2018/06/11 19:23:21 reinoud Exp $ */
+/* $NetBSD: trap.c,v 1.69 2018/07/28 17:17:38 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@netbsd.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.68 2018/06/11 19:23:21 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.69 2018/07/28 17:17:38 reinoud Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -320,7 +320,7 @@ handle_signal(int sig, siginfo_t *info, void *ctx)
 	l = curlwp; KASSERT(l);
 	pcb = lwp_getpcb(l); KASSERT(pcb);
 
-	/* get address of possible faulted memory access and page aligne it */
+	/* get address of possible faulted memory access and page align it */
 	va = (vaddr_t) info->si_addr;
 	va = trunc_page(va);
 
