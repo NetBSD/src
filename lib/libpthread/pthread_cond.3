@@ -1,4 +1,4 @@
-.\" $NetBSD: pthread_cond.3,v 1.8 2017/10/22 16:37:24 abhinav Exp $
+.\" $NetBSD: pthread_cond.3,v 1.9 2018/07/28 14:00:19 kre Exp $
 .\"
 .\" Copyright (c) 2002, 2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -128,7 +128,7 @@ The difference between
 and
 .Fn pthread_cond_signal
 is that the former unblocks all threads waiting for the condition variable,
-whereas the latter blocks only one waiting thread.
+whereas the latter unblocks only one waiting thread.
 If no threads are waiting on
 .Fa cond ,
 neither function has any effect.
