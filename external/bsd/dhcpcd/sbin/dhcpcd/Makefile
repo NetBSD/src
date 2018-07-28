@@ -1,61 +1,85 @@
-# $NetBSD: Makefile,v 1.22 2014/06/14 21:00:22 roy Exp $
+# $NetBSD: Makefile,v 1.22.2.1 2018/07/28 13:20:46 martin Exp $
 #
 
+WARNS?=		6
+USE_FORT?=	yes	# network client (local server)
+
+.include <bsd.init.mk>
+.include "../../Makefile.inc"
+
 PROG=		dhcpcd
-SRCS=		common.c control.c dhcpcd.c duid.c eloop.c
-SRCS+=		if.c if-options.c script.c
+SRCS=		common.c control.c dhcpcd.c duid.c eloop.c logerr.c
+SRCS+=		if.c if-options.c route.c sa.c script.c
 SRCS+=		dhcp-common.c dhcpcd-embedded.c
 SRCS+=		if-bsd.c
 
-WARNS?=		5
-USE_FORT?=	yes	# network client (local server)
+# Compat srcs for NetBSD-7
+SRCS+=		hmac.c pidfile.c reallocarray.c
 
-.include <bsd.own.mk>
+# Need to generate this for dependencies
+DPSRCS+=	dhcpcd-embedded.h dhcpcd-embedded.c
 
-SRCS+=		auth.c hmac_md5.c
+CPPFLAGS+=	-DHAVE_CONFIG_H -D_OPENBSD_SOURCE
 
-CPPFLAGS+=	-DINET
-SRCS+=		arp.c dhcp.c ipv4.c ipv4ll.c
+USE_INET?=	yes
+
+.if defined(SMALLPROG)
+CPPFLAGS+=	-DSMALL
+DHCPCD_DEFS=	dhcpcd-definitions-small.conf
+.else
+DHCPCD_DEFS=	dhcpcd-definitions.conf
+CPPFLAGS+=	-DAUTH
+SRCS+=		auth.c
+.endif
+
+.if (${USE_INET} != "no")
+CPPFLAGS+=	-DARP -DINET
+SRCS+=		arp.c bpf.c dhcp.c ipv4.c
+.if !defined(SMALLPROG)
+CPPFLAGS+=	-DIPV4LL -DARPING
+SRCS+=		ipv4ll.c
+.endif
+.endif
 
 .if (${USE_INET6} != "no")
 CPPFLAGS+=	-DINET6
-SRCS+=		ipv6.c ipv6nd.c dhcp6.c
+SRCS+=		ipv6.c ipv6nd.c
+# -DSMALL already strips out prefix delegation
+# A network could be IPv6 only and require DHCPv6
+CPPFLAGS+=	-DDHCP6
+SRCS+=		dhcp6.c
 .endif
 
-DIST=		${NETBSDSRCDIR}/external/bsd/dhcpcd/dist
-CPPFLAGS+=	-I${DIST}
+CPPFLAGS+=	-I${SRCDIR}/include -I${DIST}/src -I${DIST} -I${.OBJDIR}
 
-.PATH: ${DIST} ${DIST}/crypt ${LIBC_NET}
+DPADD+=		${LIBUTIL}
+LDADD+=		-lutil
 
-SCRIPTS=			dhcpcd-run-hooks
-SCRIPTSDIR_dhcpcd-run-hooks=	/libexec
+.PATH: ${DIST}/src ${DIST}/src/crypt ${DIST}/compat ${DIST}/compat/crypt ${LIBC_NET}
 
 CONFIGFILES=			dhcpcd.conf
 FILESDIR_dhcpcd.conf=		/etc
+FILESMODE_dhcpcd.conf=		644	# -rw-r--r--
 
-HOOKS=			01-test 02-dump 10-mtu 10-wpa_supplicant 15-timezone
-HOOKS+=			20-resolv.conf 29-lookup-hostname 30-hostname
-HOOKS+=			50-ntp.conf
+MAN=			dhcpcd.conf.5 dhcpcd.8 
+CLEANFILES=		dhcpcd.conf.5 dhcpcd.8 
 
-FILES=			${HOOKS:C,^,${DIST}/dhcpcd-hooks/,}
-FILESDIR=		/libexec/dhcpcd-hooks
+dhcpcd-embedded.h:	genembedh ${DHCPCD_DEFS} dhcpcd-embedded.h.in
+	${HOST_SH} ${.ALLSRC} $^ > $@
 
-MAN=			dhcpcd.conf.5 dhcpcd.8 dhcpcd-run-hooks.8
+dhcpcd-embedded.c:	genembedc ${DHCPCD_DEFS} dhcpcd-embedded.c.in
+	${HOST_SH} ${.ALLSRC} $^ > $@
 
-CLEANFILES=		dhcpcd.conf.5 dhcpcd.8 \
-			dhcpcd-run-hooks dhcpcd-run-hooks.8
+CLEANFILES+=		dhcpcd-embedded.c dhcpcd-embedded.h
 
-.for f in dhcpcd-run-hooks dhcpcd.conf.5 dhcpcd.8 dhcpcd-run-hooks.8
+.for f in dhcpcd.conf.5 dhcpcd.8
 ${f}:	${f}.in
-	${TOOL_SED} -e 's:@SYSCONFDIR@:/etc:g' -e 's:@DBDIR@:/var/db:g' \
-	    -e 's:@LIBDIR@:/lib:g' \
-	    -e 's:@RUNDIR@:/var/run:g' \
-	    -e 's:@HOOKDIR@:/libexec/dhcpcd-hooks:g' \
-	    -e 's:@SCRIPT@:/libexec/dhcpcd-run-hooks:g' \
-	    -e 's:@SERVICEEXISTS@::g' \
-	    -e 's:@SERVICECMD@::g' \
-	    -e 's:@SERVICESTATUS@::g' \
-	    ${DIST}/${f}.in > $@
+	${TOOL_SED} ${SED_SYS} ${DIST}/src/${f}.in > $@
 .endfor
+
+# XXXGCC5
+.if defined(HAVE_GCC) && ${HAVE_GCC} >= 5 && ${ACTIVE_CC} == "gcc"
+COPTS.if-bsd.c+=  -Wno-error=sign-conversion
+.endif
 
 .include <bsd.prog.mk>
