@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_sta.c,v 1.1.2.2 2018/07/12 16:35:34 phil Exp $ */
+/*	$NetBSD: ieee80211_sta.c,v 1.1.2.3 2018/07/28 00:49:43 phil Exp $ */
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -115,6 +115,7 @@ sta_vdetach(struct ieee80211vap *vap)
 static void
 sta_vattach(struct ieee80211vap *vap)
 {
+	printf ("sta_vattach\n");
 	vap->iv_newstate = sta_newstate;
 	vap->iv_input = sta_input;
 	vap->iv_recv_mgmt = sta_recv_mgmt;

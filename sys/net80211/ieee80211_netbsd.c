@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_netbsd.c,v 1.31.2.4 2018/07/20 20:33:05 phil Exp $ */
+/*	$NetBSD: ieee80211_netbsd.c,v 1.31.2.5 2018/07/28 00:49:43 phil Exp $ */
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 /*  __FBSDID("$FreeBSD$");  */
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_netbsd.c,v 1.31.2.4 2018/07/20 20:33:05 phil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_netbsd.c,v 1.31.2.5 2018/07/28 00:49:43 phil Exp $");
 
 /*
  * IEEE 802.11 support (NetBSD-specific code)
@@ -85,6 +85,43 @@ ieee80211_init0(void)
 	ieee80211_sysctl_setup();
 	return 0;
 }
+
+/*
+ * "taskqueue" support
+ */
+void ieee80211_runwork(struct work *work2do, void *arg)
+{
+	struct task *work_task = (struct task *) work2do;
+	printf ("runwork called! work2do is 0x%lx, t_work.wk_dummy is 0x%lx\n", 
+		(long) work2do, (long)work_task->t_work.wk_dummy);
+	printf ("  runwork:  t_func is 0x%lx, t_arg is 0x%lx\n",
+		(long)work_task->t_func, (long)work_task->t_arg);
+
+	mutex_enter(&work_task->t_mutex);
+	work_task->t_onqueue = 0;
+	mutex_exit(&work_task->t_mutex);
+	
+	work_task->t_func(work_task->t_arg, 0);
+}
+
+void taskqueue_enqueue(struct workqueue *wq, struct task *task_item)
+{
+	printf ("taskqueue_enqueue called\n");
+	mutex_enter(&task_item->t_mutex);
+	if (!task_item->t_onqueue) {
+		printf ("   taskqueue_enqueue adding item to workqueue\n");
+		workqueue_enqueue(wq, &task_item->t_work, NULL);
+		task_item->t_onqueue = 1;
+	}
+	mutex_exit(&task_item->t_mutex);
+}
+
+void taskqueue_drain(struct workqueue *wq, struct task *task_item)
+{
+	printf ("taskqueue_drain called\n");
+	workqueue_wait(wq, &task_item->t_work);
+}
+
 
 static __unused int
 wlan_clone_create(struct if_clone *ifc, int unit, void * params)
@@ -523,7 +560,7 @@ ieee80211_getmgtframe(uint8_t **frm, int headroom, int pktlen)
 		 * frames which all fit in MHLEN.
 		 */
 		if (m != NULL)
-			M_ALIGN(m, len);
+			MH_ALIGN(m, len);
 	} else {
 		m = m_getcl(M_NOWAIT, MT_DATA, M_PKTHDR);
 		if (m != NULL)
@@ -737,7 +774,7 @@ int
 ieee80211_parent_xmitpkt(struct ieee80211com *ic, struct mbuf *m)
 {
 	int error;
-
+	printf ("ieee80211_parent_xmitpkt called\n");
 	/*
 	 * Assert the IC TX lock is held - this enforces the
 	 * processing -> queuing order is maintained

@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_ioctl.c,v 1.60.18.4 2018/07/20 20:33:05 phil Exp $ */
+/*	$NetBSD: ieee80211_ioctl.c,v 1.60.18.5 2018/07/28 00:49:43 phil Exp $ */
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -3020,6 +3020,7 @@ ieee80211_ioctl_set80211(struct ieee80211vap *vap, u_long cmd, struct ieee80211r
 	case OLD_IEEE80211_IOC_SCAN_REQ:
 		IEEE80211_DPRINTF(vap, IEEE80211_MSG_SCAN,
 			"%s: active scan request\n", __func__);
+		printf ("old scan req\n");
 		/*
 		 * If we are in INIT state then the driver has never
 		 * had a chance to setup hardware state to do a scan;
@@ -3028,8 +3029,11 @@ ieee80211_ioctl_set80211(struct ieee80211vap *vap, u_long cmd, struct ieee80211r
 		 * a one-time scan.
 		 */
 		if (vap->iv_state == IEEE80211_S_INIT)
+{  printf ("calling new_state\n");
 			ieee80211_new_state(vap, IEEE80211_S_SCAN, 0);
+}
 		else
+{  printf("calling _start_scan()\n");
 			(void) ieee80211_start_scan(vap,
 				IEEE80211_SCAN_ACTIVE |
 				IEEE80211_SCAN_NOPICK |
@@ -3037,6 +3041,7 @@ ieee80211_ioctl_set80211(struct ieee80211vap *vap, u_long cmd, struct ieee80211r
 				IEEE80211_SCAN_FOREVER, 0, 0,
 				/* XXX use ioctl params */
 				vap->iv_des_nssid, vap->iv_des_ssid);
+}
 		break;
 #endif /* OLD_IEEE80211_IOC_SCAN_REQ */
 	case IEEE80211_IOC_SCAN_REQ:

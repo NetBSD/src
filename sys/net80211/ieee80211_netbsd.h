@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_netbsd.h,v 1.21.2.5 2018/07/20 20:33:05 phil Exp $ */
+/*	$NetBSD: ieee80211_netbsd.h,v 1.21.2.6 2018/07/28 00:49:43 phil Exp $ */
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -75,29 +75,38 @@
 /*
  * task stuff needs major work NNN! 
  */
-static __inline int dummy(void);
-static __inline int dummy(void) { return 0; }
-
-struct timeout_task { int needsWork; };
 
 typedef void task_fn_t(void *context, int pending);
 
 struct task {
 	/* some kind of queue entry? */
-	task_fn_t *t_func;
-	void *t_arg;
-	int  t_pri;
+	struct work t_work;
+	task_fn_t  *t_func;
+	void       *t_arg;
+	kmutex_t    t_mutex;
+	int         t_onqueue;
 };
+
+static __inline int dummy(void);
+static __inline int dummy(void) { return 0; }
+
+struct timeout_task { int needsWork; };
+
+void ieee80211_runwork(struct work *, void *);
+void taskqueue_enqueue(struct workqueue *, struct task *);
+void taskqueue_drain(struct workqueue *, struct task *);
+
 #define TASK_INIT(var, pri, func, arg) do { \
 	(var)->t_func = func; \
-	(var)->t_arg = arg; \
-        (var)->t_pri = pri; \
+        (var)->t_arg = arg; \
+	(var)->t_work.wk_dummy = var; \
+	mutex_init(&(var)->t_mutex, MUTEX_DEFAULT, IPL_SOFTNET);\
+	(var)->t_onqueue = 0;\
 } while(0)
 
 #define taskqueue workqueue
-#define taskqueue_enqueue(queue,task) /* workqueue_enqueue(queue, task, NULL) */
-#define taskqueue_drain(queue,task)   /* workqueue_wait(queue, task) */
-#define taskqueue_free(queue)         /* workqueue_destroy(queue)  */
+#define taskqueue_free(queue)         workqueue_destroy(queue)
+
 #define taskqueue_block(queue)        /* */
 #define taskqueue_unblock(queue)      /* */
 #define taskqueue_drain_timeout(queue, x) /* */
@@ -147,8 +156,14 @@ void       if_inc_counter(struct ifnet *, ift_counter, int64_t);
 
 #define IF_LLADDR(ifp)     IFADDR_FIRST(ifp)
 
+/* Scanners ... needed because no module support; */
+extern const struct ieee80211_scanner sta_default;
+extern const struct ieee80211_scanner ap_default;
+extern const struct ieee80211_scanner adhoc_default;
+extern const struct ieee80211_scanner mesh_default;
+
 /*
- *  Sysctl support??? BBB
+ *  Sysctl support??? NNN
  */
 
 #define SYSCTL_INT(a1, a2, a3, a4, a5, a6, a7)  /* notyet */
@@ -179,7 +194,7 @@ typedef struct {
 #define	IEEE80211_LOCK_INIT(_ic, _name) do {				\
 	ieee80211_com_lock_t *cl = &(_ic)->ic_comlock;			\
 	snprintf(cl->name, sizeof(cl->name), "%s_com_lock", _name);	\
-        mutex_init(&cl->mtx, MUTEX_DEFAULT, IPL_NET);                   \
+        mutex_init(&cl->mtx, MUTEX_DEFAULT, IPL_SOFTNET);               \
 } while (0)
 #define	IEEE80211_LOCK_OBJ(_ic)	(&(_ic)->ic_comlock.mtx)
 #define	IEEE80211_LOCK_DESTROY(_ic) mutex_destroy(IEEE80211_LOCK_OBJ(_ic))
@@ -203,7 +218,7 @@ typedef struct {
 #define	IEEE80211_TX_LOCK_INIT(_ic, _name) do {				\
 	ieee80211_tx_lock_t *cl = &(_ic)->ic_txlock;			\
 	snprintf(cl->name, sizeof(cl->name), "%s_tx_lock", _name);	\
-	mutex_init(&cl->mtx, MUTEX_DEFAULT, IPL_NET);			\
+	mutex_init(&cl->mtx, MUTEX_DEFAULT, IPL_SOFTNET);		\
 } while (0)
 #define	IEEE80211_TX_LOCK_OBJ(_ic)	(&(_ic)->ic_txlock.mtx)
 #define	IEEE80211_TX_LOCK_DESTROY(_ic) mutex_destroy(IEEE80211_TX_LOCK_OBJ(_ic))
@@ -224,7 +239,7 @@ typedef struct {
 #define IEEE80211_FF_LOCK_INIT(_ic, _name) do {				\
 	ieee80211_ff_lock_t *fl = &(_ic)->ic_fflock;			\
 	snprintf(fl->name, sizeof(fl->name), "%s_ff_lock", _name);	\
-	mutex_init(&fl->mtx, MUTEX_DEFAULT, IPL_NET);                   \
+	mutex_init(&fl->mtx, MUTEX_DEFAULT, IPL_SOFTNET);               \
 } while (0)
 #define IEEE80211_FF_LOCK_OBJ(_ic)	(&(_ic)->ic_fflock.mtx)
 #define IEEE80211_FF_LOCK_DESTROY(_ic)	mutex_destroy(IEEE80211_FF_LOCK_OBJ(_ic))
@@ -243,7 +258,7 @@ typedef struct {
 #define	IEEE80211_NODE_LOCK_INIT(_nt, _name) do {			\
 	ieee80211_node_lock_t *nl = &(_nt)->nt_nodelock;		\
 	snprintf(nl->name, sizeof(nl->name), "%s_node_lock", _name);	\
-	mutex_init(&nl->mtx, MUTEX_DEFAULT, IPL_NET);                   \
+	mutex_init(&nl->mtx, MUTEX_DEFAULT, IPL_SOFTNET);               \
 } while (0)
 #define	IEEE80211_NODE_LOCK_OBJ(_nt)	(&(_nt)->nt_nodelock.mtx)
 #define	IEEE80211_NODE_LOCK_DESTROY(_nt) \
@@ -262,7 +277,7 @@ typedef struct {
  */
 typedef kmutex_t ieee80211_psq_lock_t;
 #define	IEEE80211_PSQ_INIT(_psq, _name) \
-	mutex_init(&(_psq)->psq_lock, MUTEX_DEFAULT, IPL_NET)
+	mutex_init(&(_psq)->psq_lock, MUTEX_DEFAULT, IPL_SOFTNET)
 #define	IEEE80211_PSQ_DESTROY(_psq)	mutex_destroy(&(_psq)->psq_lock)
 #define	IEEE80211_PSQ_LOCK(_psq)	mutex_enter(&(_psq)->psq_lock)
 #define	IEEE80211_PSQ_UNLOCK(_psq)	mutex_exit(&(_psq)->psq_lock)
@@ -287,7 +302,7 @@ typedef kmutex_t ieee80211_psq_lock_t;
  */
 typedef kmutex_t ieee80211_ageq_lock_t;
 #define	IEEE80211_AGEQ_INIT(_aq, _name) \
-	mutex_init(&(_aq)->aq_lock, MUTEX_DEFAULT, IPL_NET)
+	mutex_init(&(_aq)->aq_lock, MUTEX_DEFAULT, IPL_SOFTNET)
 #define	IEEE80211_AGEQ_DESTROY(_aq)	mutex_destroy(&(_aq)->aq_lock)
 #define	IEEE80211_AGEQ_LOCK(_aq)	mutex_enter(&(_aq)->aq_lock)
 #define	IEEE80211_AGEQ_UNLOCK(_aq)	mutex_exit(&(_aq)->aq_lock)
@@ -297,7 +312,7 @@ typedef kmutex_t ieee80211_ageq_lock_t;
  */
 typedef kmutex_t acl_lock_t;
 #define	ACL_LOCK_INIT(_as, _name) \
-	mutex_init(&(_as)->as_lock, MUTEX_DEFAULT, IPL_NET)
+	mutex_init(&(_as)->as_lock, MUTEX_DEFAULT, IPL_SOFTNET)
 #define	ACL_LOCK_DESTROY(_as)		mutex_destroy(&(_as)->as_lock)
 #define	ACL_LOCK(_as)			mutex_enter(&(_as)->as_lock)
 #define	ACL_UNLOCK(_as)			mutex_exit(&(_as)->as_lock)
@@ -309,14 +324,14 @@ typedef kmutex_t acl_lock_t;
  */
 typedef kmutex_t ieee80211_scan_table_lock_t;
 #define	IEEE80211_SCAN_TABLE_LOCK_INIT(_st, _name) \
-	mutex_init(&(_st)->st_lock, MUTEX_DEFAULT, IPL_NET)
+	mutex_init(&(_st)->st_lock, MUTEX_DEFAULT, IPL_SOFTNET)
 #define	IEEE80211_SCAN_TABLE_LOCK_DESTROY(_st)	mutex_destroy(&(_st)->st_lock)
 #define	IEEE80211_SCAN_TABLE_LOCK(_st)		mutex_enter(&(_st)->st_lock)
 #define	IEEE80211_SCAN_TABLE_UNLOCK(_st)	mutex_exit(&(_st)->st_lock)
 
 typedef kmutex_t ieee80211_scan_iter_lock_t;
 #define	IEEE80211_SCAN_ITER_LOCK_INIT(_st, _name) \
-	mutex_init(&(_st)->st_scanlock, MUTEX_DEFAULT, IPL_NET)
+	mutex_init(&(_st)->st_scanlock, MUTEX_DEFAULT, IPL_SOFTNET)
 #define	IEEE80211_SCAN_ITER_LOCK_DESTROY(_st)	mutex_destroy(&(_st)->st_scanlock)
 #define	IEEE80211_SCAN_ITER_LOCK(_st)		mutex_enter(&(_st)->st_scanlock)
 #define	IEEE80211_SCAN_ITER_UNLOCK(_st)	mutex_exit(&(_st)->st_scanlock)
@@ -326,7 +341,7 @@ typedef kmutex_t ieee80211_scan_iter_lock_t;
  */
 typedef kmutex_t ieee80211_rte_lock_t;
 #define	MESH_RT_ENTRY_LOCK_INIT(_rt, _name) \
-	mutex_init(&(rt)->rt_lock, MUTEX_DEFAULT, IPL_NET)
+	mutex_init(&(rt)->rt_lock, MUTEX_DEFAULT, IPL_SOFTNET)
 #define	MESH_RT_ENTRY_LOCK_DESTROY(_rt) \
 	mutex_destroy(&(_rt)->rt_lock)
 #define	MESH_RT_ENTRY_LOCK(rt)	mutex_enter(&(rt)->rt_lock)
@@ -340,7 +355,7 @@ typedef kmutex_t ieee80211_rt_lock_t;
 	FBSDKASSERT(mutex_owned(&(ms)->ms_rt_lock), ("lock not owned"))
 #define	MESH_RT_UNLOCK(ms)	mutex_exit(&(ms)->ms_rt_lock)
 #define	MESH_RT_LOCK_INIT(ms, name) \
-	mutex_init(&(ms)->ms_rt_lock, MUTEX_DEFAULT, IPL_NET)
+	mutex_init(&(ms)->ms_rt_lock, MUTEX_DEFAULT, IPL_SOFTNET)
 #define	MESH_RT_LOCK_DESTROY(ms) \
 	mutex_destroy(&(ms)->ms_rt_lock)
 

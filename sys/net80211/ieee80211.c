@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211.c,v 1.56.18.4 2018/07/20 20:33:05 phil Exp $ */
+/*	$NetBSD: ieee80211.c,v 1.56.18.5 2018/07/28 00:49:43 phil Exp $ */
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -398,8 +398,14 @@ ieee80211_ifattach(struct ieee80211com *ic)
 	    ic->ic_name);
 	ic->ic_ierrors = counter_u64_alloc(M_WAITOK);
 	ic->ic_oerrors = counter_u64_alloc(M_WAITOK);
-#elif__NetBSD__
-	/* NNN task/workqueue get it ready.... */
+#elif __NetBSD__
+	/*
+	 * Create a workqueue for all state changes, ieee80211_netbsd.*
+	 * has glue to translate taskqueue functions to workqueue.
+	 */
+	if (workqueue_create(&ic->ic_tq, "net80211_wq",
+	    ieee80211_runwork, ic, PRI_SOFTNET, IPL_NET, WQ_MPSAFE))
+		panic("net80211 workqueue not created");
 	ic->ic_ierrors = 0;
 	ic->ic_oerrors = 0;
 #endif
@@ -455,7 +461,9 @@ ieee80211_ifdetach(struct ieee80211com *ic)
 	LIST_REMOVE(ic, ic_next);
 	mtx_unlock(&ic_list_mtx);
 
+#if __FreeBSD__	
 	taskqueue_drain(taskqueue_thread, &ic->ic_restart_task);
+#endif
 
 	/*
 	 * The VAP is responsible for setting and clearing
@@ -809,8 +817,10 @@ ieee80211_vap_detach(struct ieee80211vap *vap)
 	ieee80211_draintask(ic, &vap->iv_wme_task);
 	ieee80211_draintask(ic, &ic->ic_parent_task);
 
+#if __FreeBSD__	
 	/* XXX band-aid until ifnet handles this for us */
 	taskqueue_drain(taskqueue_swi, &ifp->if_linktask);
+#endif
 
 	IEEE80211_LOCK(ic);
 	KASSERT(vap->iv_state == IEEE80211_S_INIT , ("vap still running"));

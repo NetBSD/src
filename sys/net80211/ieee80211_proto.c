@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_proto.c,v 1.34.14.4 2018/07/20 20:33:05 phil Exp $ */
+/*	$NetBSD: ieee80211_proto.c,v 1.34.14.5 2018/07/28 00:49:43 phil Exp $ */
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -287,6 +287,8 @@ ieee80211_proto_attach(struct ieee80211com *ic)
 {
 	uint8_t hdrlen;
 
+	printf ("i33380211_proto_attach called\n");  /* NNN debug */
+
 	/* override the 802.3 setting */
 	hdrlen = ic->ic_headroom
 		+ sizeof(struct ieee80211_qosframe_addr4)
@@ -302,6 +304,10 @@ ieee80211_proto_attach(struct ieee80211com *ic)
 	ic->ic_protmode = IEEE80211_PROT_CTSONLY;
 
 	TASK_INIT(&ic->ic_parent_task, 0, parent_updown, ic);
+	printf ("parent task: t_work.wk_dummy 0x%lx, t_func 0x%lx t_arg 0x%lx\n",
+		(long)(ic->ic_parent_task.t_work.wk_dummy),
+		(long)(ic->ic_parent_task.t_func),
+		(long)(ic->ic_parent_task.t_arg));
 	TASK_INIT(&ic->ic_mcast_task, 0, update_mcast, ic);
 	TASK_INIT(&ic->ic_promisc_task, 0, update_promisc, ic);
 	TASK_INIT(&ic->ic_chan_task, 0, update_channel, ic);
@@ -370,6 +376,7 @@ ieee80211_proto_vattach(struct ieee80211vap *vap)
 	TASK_INIT(&vap->iv_nstate_task, 0, ieee80211_newstate_cb, vap);
 	TASK_INIT(&vap->iv_swbmiss_task, 0, beacon_swmiss, vap);
 	TASK_INIT(&vap->iv_wme_task, 0, vap_update_wme, vap);
+
 	/*
 	 * Install default tx rate handling: no fixed rate, lowest
 	 * supported rate for mgmt and multicast frames.  Default
@@ -1405,7 +1412,8 @@ parent_updown(void *arg, int npending)
 {
 	struct ieee80211com *ic = arg;
 
-	ic->ic_parent(ic);
+	printf ("parent_updown called on %s!\n", ic->ic_name);
+	// ic->ic_parent(ic);
 }
 
 static void
@@ -1793,7 +1801,11 @@ ieee80211_restart_all(struct ieee80211com *ic)
 	 * NB: do not use ieee80211_runtask here, we will
 	 * block & drain net80211 taskqueue.
 	 */
+#if __FreeBSD__
 	taskqueue_enqueue(taskqueue_thread, &ic->ic_restart_task);
+#elif __NetBSD__
+	printf ("ieee80211_restart_all called .... should add code.\n");
+#endif
 }
 
 void
