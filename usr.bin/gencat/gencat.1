@@ -1,4 +1,4 @@
-.\" $NetBSD: gencat.1,v 1.13 2011/12/29 16:41:38 christos Exp $
+.\" $NetBSD: gencat.1,v 1.14 2018/07/28 08:03:41 wiz Exp $
 .\"
 .\" Copyright (c) 2007 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -178,7 +178,6 @@ described above is ignored as a syntax error.
 .Pp
 Text message strings may contain any characters and
 the following special characters and escape sequences.
-.Pp
 .Bl -column -offset indent ".Sy carriage return" ".Sy Symbol" ".Sy Sequence"
 .It Sy Description Ta Sy Symbol Ta Sy Sequence
 .It newline Ta NL(LF) Ta Li \en
@@ -224,10 +223,11 @@ Producing the following message:
 .\".St -p1003.1-2004
 .\"standard.
 .Sh AUTHORS
+.An -nosplit
 The Native Language Support (NLS) message catalog facility was
 contributed by
 .An J.T. Conklin
-.Aq jtc@NetBSD.org .
+.Aq Mt jtc@NetBSD.org .
 This page was originally written by
 .An Kee Hinckley
-.Aq nazgul@somewhere.com .
+.Aq Mt nazgul@somewhere.com .
