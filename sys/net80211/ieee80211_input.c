@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_input.c,v 1.114.2.3 2018/07/16 20:11:11 phil Exp $ */
+/*	$NetBSD: ieee80211_input.c,v 1.114.2.4 2018/07/28 00:49:43 phil Exp $ */
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -152,6 +152,7 @@ ieee80211_input_mimo_all(struct ieee80211com *ic, struct mbuf *m)
 		/* NB: could check for IFF_UP but this is cheaper */
 		if (vap->iv_state == IEEE80211_S_INIT)
 			continue;
+
 		/*
 		 * WDS vap's only receive directed traffic from the
 		 * station at the ``far end''.  That traffic should
@@ -180,6 +181,7 @@ ieee80211_input_mimo_all(struct ieee80211com *ic, struct mbuf *m)
 			m = NULL;
 		}
 		ni = ieee80211_ref_node(vap->iv_bss);
+		printf ("ieee80211_input_mimo_all on %s, ni=0x%lx\n", vap->iv_ifp->if_xname, (long)ni);
 		type = ieee80211_input_mimo(ni, mcopy);
 		ieee80211_free_node(ni);
 	}

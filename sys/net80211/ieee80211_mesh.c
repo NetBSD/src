@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_mesh.c,v 1.1.2.3 2018/07/16 20:11:11 phil Exp $ */
+/*	$NetBSD: ieee80211_mesh.c,v 1.1.2.4 2018/07/28 00:49:43 phil Exp $ */
 
 /*- 
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -673,6 +673,7 @@ mesh_vdetach(struct ieee80211vap *vap)
 static void
 mesh_vattach(struct ieee80211vap *vap)
 {
+	printf ("mesh_vattach\n");
 	struct ieee80211_mesh_state *ms;
 	vap->iv_newstate = mesh_newstate;
 	vap->iv_input = mesh_input;

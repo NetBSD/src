@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_tdma.c,v 1.1.2.2 2018/07/12 16:35:34 phil Exp $ */
+/*	$NetBSD: ieee80211_tdma.c,v 1.1.2.3 2018/07/28 00:49:43 phil Exp $ */
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -157,6 +157,7 @@ setackpolicy(struct ieee80211com *ic, int noack)
 void
 ieee80211_tdma_vattach(struct ieee80211vap *vap)
 {
+	printf ("ieee80211_tdma_vattach\n");
 	struct ieee80211_tdma_state *ts;
 
 	KASSERT(vap->iv_caps & IEEE80211_C_TDMA,

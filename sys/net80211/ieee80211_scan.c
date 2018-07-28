@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_scan.c,v 1.1.56.4 2018/07/16 20:11:11 phil Exp $ */
+/*	$NetBSD: ieee80211_scan.c,v 1.1.56.5 2018/07/28 00:49:43 phil Exp $ */
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -174,7 +174,7 @@ ieee80211_scan_vdetach(struct ieee80211vap *vap)
 	IEEE80211_UNLOCK(ic);
 }
 
-#ifdef notyet
+#if __FreeBSD__
 /*
  * Simple-minded scanner module support.
  */
@@ -187,15 +187,34 @@ static const char *scan_modnames[IEEE80211_OPMODE_MAX] = {
 	"wlan_scan_monitor",	/* IEEE80211_M_MONITOR */
 	"wlan_scan_sta",	/* IEEE80211_M_MBSS */
 };
-#endif
+
 static const struct ieee80211_scanner *scanners[IEEE80211_OPMODE_MAX];
+#elif __NetBSD__
+/*
+ * No module support means we need to initialize them here.
+ */
+static const struct ieee80211_scanner *scanners[IEEE80211_OPMODE_MAX] = {
+	&adhoc_default,		/* IEEE80211_M_IBSS */ 
+	&sta_default,		/* IEEE80211_M_STA */
+	NULL,			/* IEEE80211_M_WDS */
+	&adhoc_default,		/* IEEE80211_M_AHDEMO */
+	&ap_default,		/* IEEE80211_M_HOSTAP */
+	NULL,			/* IEEE80211_M_MONITOR */
+#ifdef IEEE80211_SUPPORT_MESH	
+	&mesh_default,		/* IEEE80211_M_MBSS */
+#else
+	NULL,
+#endif
+};
+
+#endif
 
 const struct ieee80211_scanner *
 ieee80211_scanner_get(enum ieee80211_opmode mode)
 {
 	if (mode >= IEEE80211_OPMODE_MAX)
 		return NULL;
-#ifdef notyet
+#if __FreeBSD__
 	if (scanners[mode] == NULL)
 		ieee80211_load_module(scan_modnames[mode]);
 #endif
@@ -338,6 +357,7 @@ ieee80211_start_scan(struct ieee80211vap *vap, int flags,
 	u_int duration, u_int mindwell, u_int maxdwell,
 	u_int nssid, const struct ieee80211_scan_ssid ssids[])
 {
+printf ("ieee80211_start_scan called\n");
 	const struct ieee80211_scanner *scan;
 	struct ieee80211com *ic = vap->iv_ic;
 
@@ -363,6 +383,7 @@ ieee80211_check_scan(struct ieee80211vap *vap, int flags,
 	u_int duration, u_int mindwell, u_int maxdwell,
 	u_int nssid, const struct ieee80211_scan_ssid ssids[])
 {
+	printf ("ieee80211_check_scan called, opmode is %d\n", vap->iv_opmode);
 	struct ieee80211com *ic = vap->iv_ic;
 	struct ieee80211_scan_state *ss = ic->ic_scan;
 	const struct ieee80211_scanner *scan;
@@ -382,7 +403,8 @@ ieee80211_check_scan(struct ieee80211vap *vap, int flags,
 	 * XXX want more than the ap we're currently associated with
 	 */
 
-	IEEE80211_LOCK(ic);
+	// IEEE80211_LOCK(ic);  NNN who has this locked?
+	IEEE80211_LOCK_ASSERT(ic);
 	IEEE80211_DPRINTF(vap, IEEE80211_MSG_SCAN,
 	    "%s: %s scan, %s%s%s%s%s\n"
 	    , __func__
@@ -407,7 +429,7 @@ ieee80211_check_scan(struct ieee80211vap *vap, int flags,
 	result = ic->ic_scan_methods->sc_check_scan(scan, vap, flags, duration,
 	    mindwell, maxdwell, nssid, ssids);
 
-	IEEE80211_UNLOCK(ic);
+	// IEEE80211_UNLOCK(ic);
 
 	return (result);
 }
@@ -594,6 +616,7 @@ ieee80211_add_scan(struct ieee80211vap *vap,
 {
 	struct ieee80211com *ic = vap->iv_ic;
 
+	printf ("ieee80211_add_scan ...\n");
 	return (ic->ic_scan_methods->sc_add_scan(vap, curchan, sp, wh, subtype,
 	    rssi, noise));
 }

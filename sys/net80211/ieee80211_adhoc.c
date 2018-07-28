@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_adhoc.c,v 1.1.2.2 2018/07/12 16:35:34 phil Exp $ */
+/*	$NetBSD: ieee80211_adhoc.c,v 1.1.2.3 2018/07/28 00:49:43 phil Exp $ */
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -114,6 +114,7 @@ adhoc_vdetach(struct ieee80211vap *vap)
 static void
 adhoc_vattach(struct ieee80211vap *vap)
 {
+	printf ("adhoc_vattach\n");
 	vap->iv_newstate = adhoc_newstate;
 	vap->iv_input = adhoc_input;
 	if (vap->iv_opmode == IEEE80211_M_IBSS)
@@ -152,6 +153,7 @@ adhoc_newstate(struct ieee80211vap *vap, enum ieee80211_state nstate, int arg)
 	struct ieee80211_node *ni;
 	enum ieee80211_state ostate;
 
+	printf ("running adhoc_newstate for %s\n", vap->iv_ifp->if_xname); // NNN
 	IEEE80211_LOCK_ASSERT(vap->iv_ic);
 
 	ostate = vap->iv_state;
@@ -335,6 +337,8 @@ adhoc_input(struct ieee80211_node *ni, struct mbuf *m,
 	int is_hw_decrypted = 0;
 	int has_decrypted = 0;
 
+	printf ("adhoc input called for %s\n", ifp->if_xname); // NNN
+	
 	/*
 	 * Some devices do hardware decryption all the way through
 	 * to pretending the frame wasn't encrypted in the first place.
@@ -727,6 +731,7 @@ adhoc_recv_mgmt(struct ieee80211_node *ni, struct mbuf *m0,
 #if 0
 	int ht_state_change = 0;
 #endif
+	printf ("adhoc_recv_mgmt called, for %s\n", vap->iv_ifp->if_xname);
 
 	wh = mtod(m0, struct ieee80211_frame *);
 	frm = (uint8_t *)&wh[1];
