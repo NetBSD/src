@@ -1,4 +1,4 @@
-/*	$NetBSD: disasm.c,v 1.3 2018/07/17 10:07:49 ryo Exp $	*/
+/*	$NetBSD: disasm.c,v 1.4 2018/07/28 09:54:32 ryo Exp $	*/
 
 /*
  * Copyright (c) 2018 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disasm.c,v 1.3 2018/07/17 10:07:49 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disasm.c,v 1.4 2018/07/28 09:54:32 ryo Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -157,7 +157,20 @@ static const char *simdregs[5][32] = {
 		"q24", "q25", "q26", "q27", "q28", "q29", "q30", "q31"
 	}
 };
+#define FREGSZ_B	0
+#define FREGSZ_H	1
+#define FREGSZ_S	2
+#define FREGSZ_D	3
+#define FREGSZ_Q	4
 #define FREGNAME(s, n)	(simdregs[(s)][(n) & 31])
+
+static const char *vecregs[32] = {
+	 "v0",  "v1",  "v2",  "v3",  "v4",  "v5",  "v6",  "v7",
+	 "v8",  "v9", "v10", "v11", "v12", "v13", "v14", "v15",
+	"v16", "v17", "v18", "v19", "v20", "v21", "v22", "v23",
+	"v24", "v25", "v26", "v27", "v28", "v29", "v30", "v31"
+};
+#define VREGNAME(n)	vecregs[(n) & 31]
 
 static const char *cregs[16] = {
 	 "C0",  "C1",  "C2",  "C3",  "C4",  "C5",  "C6",  "C7",
@@ -1279,19 +1292,10 @@ OP5FUNC(op_sys, op1, CRn, CRm, op2, Rt)
 		if (op_sys_table[i].code != code)
 			continue;
 
-		if (((op_sys_table[i].flags & OPE_XT) != 0) &&
-		    (Rt != 31)) {
+		if (((op_sys_table[i].flags & OPE_XT) != 0) || (Rt != 31)) {
 			PRINTF("%s, %s\n",
 			    op_sys_table[i].opname,
 			    ZREGNAME(1, Rt));
-		} else if (Rt != 31) {
-#if 0
-			/* Rt suppressed, but Rt field is not a xzr */
-			UNDEFINED(pc, insn, "illegal Rt");
-#else
-			/* fallback to sys instruction */
-			break;
-#endif
 		} else {
 			PRINTF("%s\n",
 			    op_sys_table[i].opname);
@@ -3292,10 +3296,113 @@ OP7FUNC(op_simd_ldstr_reg, size, opc, Rm, option, S, Rn, Rt)
 	}
 }
 
+OP4FUNC(op_simd_aes, m, d, Rn, Rt)
+{
+	const char *aesop[2][2] = {
+		{	"aese",  "aesd",	},
+		{	"aesmc", "aesimc"	}
+	};
+
+	PRINTF("%s\t%s.16b, %s.16b\n",
+	    aesop[m & 1][d & 1],
+	    VREGNAME(Rn),
+	    VREGNAME(Rt));
+}
+
+OP4FUNC(op_simd_sha_reg3, Rm, op, Rn, Rd)
+{
+	const char *shaop[8] = {
+		"sha1c",   "sha1p",    "sha1m",     "sha1su0",
+		"sha256h", "sha256h2", "sha256su1", NULL
+	};
+
+	switch (op) {
+	case 0:
+	case 1:
+	case 2:
+		PRINTF("%s\t%s, %s, %s.4s\n",
+		    shaop[op],
+		    FREGNAME(FREGSZ_Q, Rd),
+		    FREGNAME(FREGSZ_S, Rn),
+		    VREGNAME(Rm));
+		break;
+
+	case 4:
+	case 5:
+		PRINTF("%s\t%s, %s, %s.4s\n",
+		    shaop[op],
+		    FREGNAME(FREGSZ_Q, Rd),
+		    FREGNAME(FREGSZ_Q, Rn),
+		    VREGNAME(Rm));
+		break;
+
+	case 3:
+	case 6:
+		PRINTF("%s\t%s.4s, %s.4s, %s.4s\n",
+		    shaop[op],
+		    VREGNAME(Rd),
+		    VREGNAME(Rn),
+		    VREGNAME(Rm));
+		break;
+
+	default:
+		UNDEFINED(pc, insn, "illegal sha operation");
+		break;
+	}
+}
+
+OP3FUNC(op_simd_sha_reg2, op, Rn, Rd)
+{
+	const char *shaop[4] = {
+		"sha1h", "sha1su1", "sha256su0", NULL
+	};
+
+	switch (op) {
+	case 0:
+		PRINTF("%s\t%s, %s\n",
+		    shaop[op],
+		    FREGNAME(FREGSZ_S, Rd),
+		    FREGNAME(FREGSZ_S, Rn));
+		break;
+	case 1:
+	case 2:
+		PRINTF("%s\t%s.4s, %s.4s\n",
+		    shaop[op],
+		    VREGNAME(Rd),
+		    VREGNAME(Rn));
+		break;
+	default:
+		UNDEFINED(pc, insn, "illegal sha operation");
+		break;
+	}
+}
+
+OP5FUNC(op_simd_pmull, q, size, Rm, Rn, Rd)
+{
+	const char *op = (q == 0) ? "pmull" : "pmull2";
+	const char *regspec_Ta[4] = {
+		"8h", NULL, NULL, "1q"
+	};
+	const char *regspec_Tb[8] = {
+		"8b", "16b", NULL, NULL,
+		NULL, NULL, "1d", "2d"
+	};
+
+	if ((regspec_Ta[size & 3] != NULL) &&
+	    (regspec_Tb[((size & 3) << 1) + (q & 1)] != NULL)) {
+		PRINTF("%s\t%s.%s, %s.%s, %s.%s\n",
+		    op,
+		    VREGNAME(Rd), regspec_Ta[size & 3],
+		    VREGNAME(Rn), regspec_Tb[((size & 3) << 1) + (q & 1)],
+		    VREGNAME(Rd), regspec_Tb[((size & 3) << 1) + (q & 1)]);
+	} else {
+		UNDEFINED(pc, insn, "illegal pmull size");
+	}
+}
 
 /*
- * SIMD instructions except load/store insns are not supported (yet?),
- * and disassembled as 'undefined'.
+ * SIMD instructions are not supported except some insns.
+ * They are disassembled as '.insn 0xXXXXXXXX'.
  */
 struct bitpos {
 	uint8_t pos;
@@ -3321,6 +3428,10 @@ struct insn_info {
 	{{ 8, 4}, { 0, 0}, { 0, 0}, { 0, 0}, { 0, 0}, { 0, 0}, { 0, 0}, { 0, 0}}
 #define FMT_CRM_OP2			\
 	{{ 8, 4}, { 5, 3}, { 0, 0}, { 0, 0}, { 0, 0}, { 0, 0}, { 0, 0}, { 0, 0}}
+#define FMT_M_D_RN_RD			\
+	{{13, 1}, {12, 1}, { 5, 5}, { 0, 5}, { 0, 0}, { 0, 0}, { 0, 0}, { 0, 0}}
+#define FMT_OP_RN_RD			\
+	{{12, 3}, { 5, 5}, { 0, 5}, { 0, 0}, { 0, 0}, { 0, 0}, { 0, 0}, { 0, 0}}
 #define FMT_OP1_CRM_OP2			\
 	{{16, 3}, { 8, 4}, { 5, 3}, { 0, 0}, { 0, 0}, { 0, 0}, { 0, 0}, { 0, 0}}
 #define FMT_OP1_CRN_CRM_OP2_RT		\
@@ -3329,6 +3440,8 @@ struct insn_info {
 	{{16, 5}, { 5, 5}, { 0, 5}, { 0, 0}, { 0, 0}, { 0, 0}, { 0, 0}, { 0, 0}}
 #define FMT_RS_RN_RT			\
 	{{16, 5}, { 5, 5}, { 0, 5}, { 0, 0}, { 0, 0}, { 0, 0}, { 0, 0}, { 0, 0}}
+#define FMT_RM_OP_RN_RD			\
+	{{16, 5}, {12, 3}, { 5, 5}, { 0, 5}, { 0, 0}, { 0, 0}, { 0, 0}, { 0, 0}}
 #define FMT_RM_RA_RN_RD			\
 	{{16, 5}, {10, 5}, { 5, 5}, { 0, 5}, { 0, 0}, { 0, 0}, { 0, 0}, { 0, 0}}
 #define FMT_IMM9_RN_RT			\
@@ -3371,6 +3484,8 @@ struct insn_info {
 	{{30, 1}, {16, 5}, {13, 3}, {12, 1}, { 5, 5}, { 0, 5}, { 0, 0}, { 0, 0}}
 #define FMT_SIZE_IMM12_RN_RT		\
 	{{30, 1}, {10,12}, { 5, 5}, { 0, 5}, { 0, 0}, { 0, 0}, { 0, 0}, { 0, 0}}
+#define FMT_Q_SIZE_RM_RN_RD		\
+	{{30, 1}, {22, 2}, {16, 5}, { 5, 5}, { 0, 5}, { 0, 0}, { 0, 0}, { 0, 0}}
 #define FMT_SIZE_IMM19_RT		\
 	{{30, 1}, { 5,19}, { 0, 5}, { 0, 0}, { 0, 0}, { 0, 0}, { 0, 0}, { 0, 0}}
 #define FMT_IMMLO_IMMHI_RD		\
@@ -3443,6 +3558,8 @@ static const struct insn_info insn_tables[] = {
  { 0xfffff0ff, 0xd503309f, FMT_CRM,                     op_dsb },
  { 0xfffff0ff, 0xd50330df, FMT_CRM,                     op_isb },
  { 0xfffff01f, 0xd503201f, FMT_CRM_OP2,                 op_hint },
+ { 0xffffcc00, 0x4e284800, FMT_M_D_RN_RD,               op_simd_aes },
+ { 0xffff8c00, 0x5e280800, FMT_OP_RN_RD,                op_simd_sha_reg2 },
  { 0xfff8f01f, 0xd500401f, FMT_OP1_CRM_OP2,             op_msr_imm },
  { 0xfff80000, 0xd5080000, FMT_OP1_CRN_CRM_OP2_RT,      op_sys },
  { 0xfff80000, 0xd5280000, FMT_OP1_CRN_CRM_OP2_RT,      op_sysl },
@@ -3452,6 +3569,7 @@ static const struct insn_info insn_tables[] = {
  { 0xffe0fc00, 0x08007c00, FMT_RS_RN_RT,                op_stxrb },
  { 0xffe0fc00, 0x48007c00, FMT_RS_RN_RT,                op_stxrh },
  { 0xffe0fc00, 0x9bc07c00, FMT_RM_RN_RD,                op_umulh },
+ { 0xffe08c00, 0x5e000000, FMT_RM_OP_RN_RD,             op_simd_sha_reg3 },
  { 0xffe08000, 0x9b208000, FMT_RM_RA_RN_RD,             op_smsubl },
  { 0xffe08000, 0x9ba08000, FMT_RM_RA_RN_RD,             op_umsubl },
  { 0xffe08000, 0x9b200000, FMT_RM_RA_RN_RD,             op_smaddl },
@@ -3539,6 +3657,7 @@ static const struct insn_info insn_tables[] = {
  { 0xbfe00c00, 0xb8000000, FMT_SIZE_IMM9_RN_RT,         op_stur },
  { 0xbfc00000, 0xb9400000, FMT_SIZE_IMM12_RN_RT,        op_ldr_immunsign },
  { 0xbfc00000, 0xb9000000, FMT_SIZE_IMM12_RN_RT,        op_str_immunsign },
+ { 0xbf20fc00, 0x0e20e000, FMT_Q_SIZE_RM_RN_RD,         op_simd_pmull },
  { 0xbf000000, 0x18000000, FMT_SIZE_IMM19_RT,           op_ldr_literal },
  { 0x9f000000, 0x10000000, FMT_IMMLO_IMMHI_RD,          op_adr },
  { 0x9f000000, 0x90000000, FMT_IMMLO_IMMHI_RD,          op_adrp },
