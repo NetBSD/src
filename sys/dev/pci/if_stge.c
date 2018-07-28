@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stge.c,v 1.64 2017/09/28 16:23:57 christos Exp $	*/
+/*	$NetBSD: if_stge.c,v 1.64.2.1 2018/07/28 04:37:46 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_stge.c,v 1.64 2017/09/28 16:23:57 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_stge.c,v 1.64.2.1 2018/07/28 04:37:46 pgoyette Exp $");
 
 
 #include <sys/param.h>
@@ -972,7 +972,7 @@ stge_start(struct ifnet *ifp)
 		/*
 		 * Pass the packet to any BPF listeners.
 		 */
-		bpf_mtap(ifp, m0);
+		bpf_mtap(ifp, m0, BPF_D_OUT);
 	}
 
 	if (sc->sc_txpending == (STGE_NTXDESC - 1)) {

@@ -1,4 +1,4 @@
-/* $NetBSD: sun4i_emac.c,v 1.3 2018/02/12 17:04:58 maxv Exp $ */
+/* $NetBSD: sun4i_emac.c,v 1.3.2.1 2018/07/28 04:37:29 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2013-2017 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: sun4i_emac.c,v 1.3 2018/02/12 17:04:58 maxv Exp $");
+__KERNEL_RCSID(1, "$NetBSD: sun4i_emac.c,v 1.3.2.1 2018/07/28 04:37:29 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -333,7 +333,7 @@ sun4i_emac_attach(device_t parent, device_t self, void *aux)
 		enaddr[4] = a0 >>  8;
 		enaddr[5] = a0 >>  0;
 	}
-	aprint_normal_dev(self, "Ethernet address: %s\n", ether_sprintf(enaddr));
+	aprint_normal_dev(self, "Ethernet address %s\n", ether_sprintf(enaddr));
 
 	snprintf(ifp->if_xname, IFNAMSIZ, EMAC_IFNAME, device_unit(self));
 	ifp->if_softc = sc;
@@ -614,7 +614,7 @@ sun4i_emac_tx_enqueue(struct sun4i_emac_softc *sc, struct mbuf *m, u_int slot)
 	sun4i_emac_write(sc, pl_reg, len);
 	sun4i_emac_clear_set(sc, ctl_reg, 0, EMAC_TX_CTL_START);
 
-	bpf_mtap(ifp, m);
+	bpf_mtap(ifp, m, BPF_D_OUT);
 
 	m_freem(m);
 }

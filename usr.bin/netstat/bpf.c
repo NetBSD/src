@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.11 2012/12/14 08:15:44 msaitoh Exp $	*/
+/*	$NetBSD: bpf.c,v 1.11.28.1 2018/07/28 04:38:14 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -147,7 +147,8 @@ bpf_dump(const char *bpfif)
 			
 			printf("%c", BPFEXT(bde_promisc) ? 'P' : '-');
 			printf("%c", BPFEXT(bde_immediate) ? 'R' : '-');
-			printf("%c", BPFEXT(bde_seesent) ? 'S' : '-');
+			printf("%c", (BPFEXT(bde_direction) == BPF_D_IN) ? '-'
+			    : (BPFEXT(bde_direction) == BPF_D_OUT) ? 'O' : 'S');
 			printf("%c", BPFEXT(bde_hdrcmplt) ? 'H' : '-');
 			printf("  %-8d ", BPFEXT(bde_bufsize));
 

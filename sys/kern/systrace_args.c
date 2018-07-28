@@ -1,4 +1,4 @@
-/* $NetBSD: systrace_args.c,v 1.29.2.7 2018/04/18 00:01:18 pgoyette Exp $ */
+/* $NetBSD: systrace_args.c,v 1.29.2.8 2018/07/28 04:38:08 pgoyette Exp $ */
 
 /*
  * System call argument to DTrace register array converstion.
@@ -2414,24 +2414,6 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 		uarg[3] = (intptr_t) SCARG(p, tramp); /* const void * */
 		iarg[4] = SCARG(p, vers); /* int */
 		*n_args = 5;
-		break;
-	}
-	/* sys_pmc_get_info */
-	case 341: {
-		const struct sys_pmc_get_info_args *p = params;
-		iarg[0] = SCARG(p, ctr); /* int */
-		iarg[1] = SCARG(p, op); /* int */
-		uarg[2] = (intptr_t) SCARG(p, args); /* void * */
-		*n_args = 3;
-		break;
-	}
-	/* sys_pmc_control */
-	case 342: {
-		const struct sys_pmc_control_args *p = params;
-		iarg[0] = SCARG(p, ctr); /* int */
-		iarg[1] = SCARG(p, op); /* int */
-		uarg[2] = (intptr_t) SCARG(p, args); /* void * */
-		*n_args = 3;
 		break;
 	}
 	/* sys_rasctl */
@@ -7620,38 +7602,6 @@ systrace_entry_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 			break;
 		};
 		break;
-	/* sys_pmc_get_info */
-	case 341:
-		switch(ndx) {
-		case 0:
-			p = "int";
-			break;
-		case 1:
-			p = "int";
-			break;
-		case 2:
-			p = "void *";
-			break;
-		default:
-			break;
-		};
-		break;
-	/* sys_pmc_control */
-	case 342:
-		switch(ndx) {
-		case 0:
-			p = "int";
-			break;
-		case 1:
-			p = "int";
-			break;
-		case 2:
-			p = "void *";
-			break;
-		default:
-			break;
-		};
-		break;
 	/* sys_rasctl */
 	case 343:
 		switch(ndx) {
@@ -11299,16 +11249,6 @@ systrace_return_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 		break;
 	/* sys___sigaction_sigtramp */
 	case 340:
-		if (ndx == 0 || ndx == 1)
-			p = "int";
-		break;
-	/* sys_pmc_get_info */
-	case 341:
-		if (ndx == 0 || ndx == 1)
-			p = "int";
-		break;
-	/* sys_pmc_control */
-	case 342:
 		if (ndx == 0 || ndx == 1)
 			p = "int";
 		break;

@@ -1,4 +1,4 @@
-/* $NetBSD: if_ti.c,v 1.103 2018/02/08 09:05:19 dholland Exp $ */
+/* $NetBSD: if_ti.c,v 1.103.2.1 2018/07/28 04:37:46 pgoyette Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ti.c,v 1.103 2018/02/08 09:05:19 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ti.c,v 1.103.2.1 2018/07/28 04:37:46 pgoyette Exp $");
 
 #include "opt_inet.h"
 
@@ -1727,7 +1727,7 @@ ti_attach(device_t parent, device_t self, void *aux)
 	/*
 	 * A Tigon chip was detected. Inform the world.
 	 */
-	aprint_normal_dev(self, "Ethernet address: %s\n",ether_sprintf(eaddr));
+	aprint_normal_dev(self, "Ethernet address %s\n",ether_sprintf(eaddr));
 
 	sc->sc_dmat = pa->pa_dmat;
 
@@ -2431,7 +2431,7 @@ ti_start(struct ifnet *ifp)
 		 * If there's a BPF listener, bounce a copy of this frame
 		 * to him.
 		 */
-		bpf_mtap(ifp, m_head);
+		bpf_mtap(ifp, m_head, BPF_D_OUT);
 	}
 
 	/* Transmit */

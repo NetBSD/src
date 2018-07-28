@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.270.2.1 2018/05/21 04:36:15 pgoyette Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.270.2.2 2018/07/28 04:38:08 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -67,11 +67,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.270.2.1 2018/05/21 04:36:15 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.270.2.2 2018/07/28 04:38:08 pgoyette Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_dtrace.h"
-#include "opt_perfctrs.h"
 #include "opt_sysv.h"
 
 #include <sys/param.h>
@@ -89,9 +88,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.270.2.1 2018/05/21 04:36:15 pgoyette
 #include <sys/syslog.h>
 #include <sys/pool.h>
 #include <sys/uidinfo.h>
-#if defined(PERFCTRS)
-#include <sys/pmc.h>
-#endif
 #include <sys/ptrace.h>
 #include <sys/acct.h>
 #include <sys/filedesc.h>
@@ -420,17 +416,6 @@ exit1(struct lwp *l, int exitcode, int signo)
 		((p->p_sflag & PS_COREDUMP) ? CLD_DUMPED :
 		 (p->p_xsig ? CLD_KILLED : CLD_EXITED)),
 		0,0,0,0);
-
-#if PERFCTRS
-	/*
-	 * Save final PMC information in parent process & clean up.
-	 */
-	if (PMC_ENABLED(p)) {
-		pmc_save_context(p);
-		pmc_accumulate(p->p_pptr, p);
-		pmc_process_exit(p);
-	}
-#endif
 
 	/*
 	 * Reset p_opptr pointer of all former children which got

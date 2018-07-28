@@ -1,4 +1,4 @@
-/*      $NetBSD: if_xge.c,v 1.25 2016/12/15 09:28:05 ozaki-r Exp $ */
+/*      $NetBSD: if_xge.c,v 1.25.14.1 2018/07/28 04:37:46 pgoyette Exp $ */
 
 /*
  * Copyright (c) 2004, SUNET, Swedish University Computer Network.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xge.c,v 1.25 2016/12/15 09:28:05 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xge.c,v 1.25.14.1 2018/07/28 04:37:46 pgoyette Exp $");
 
 
 #include <sys/param.h>
@@ -1003,7 +1003,7 @@ xge_start(struct ifnet *ifp)
 		TXP_WCSR(TXDL_PAR, par);
 		TXP_WCSR(TXDL_LCR, lcr);
 
-		bpf_mtap(ifp, m);
+		bpf_mtap(ifp, m, BPF_D_OUT);
 
 		sc->sc_nexttx = NEXTTX(nexttx);
 	}

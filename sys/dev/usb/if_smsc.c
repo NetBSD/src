@@ -1,4 +1,4 @@
-/*	$NetBSD: if_smsc.c,v 1.33 2018/01/21 13:57:12 skrll Exp $	*/
+/*	$NetBSD: if_smsc.c,v 1.33.2.1 2018/07/28 04:37:58 pgoyette Exp $	*/
 
 /*	$OpenBSD: if_smsc.c,v 1.4 2012/09/27 12:38:11 jsg Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/net/if_smsc.c,v 1.1 2012/08/15 04:03:55 gonzo Exp $ */
@@ -642,7 +642,7 @@ smsc_start(struct ifnet *ifp)
 	}
 	IFQ_DEQUEUE(&ifp->if_snd, m_head);
 
-	bpf_mtap(ifp, m_head);
+	bpf_mtap(ifp, m_head, BPF_D_OUT);
 
 	ifp->if_flags |= IFF_OACTIVE;
 

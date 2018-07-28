@@ -1,4 +1,4 @@
-/*	$NetBSD: fil.c,v 1.22.2.1 2018/06/25 07:26:03 pgoyette Exp $	*/
+/*	$NetBSD: fil.c,v 1.22.2.2 2018/07/28 04:38:00 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -133,12 +133,15 @@ extern struct callout ipf_slowtimer_ch;
 # include <sys/timeout.h>
 extern struct timeout ipf_slowtimer_ch;
 #endif
+#if defined(__NetBSD__)
+#include <netinet/in_offload.h>
+#endif
 /* END OF INCLUDES */
 
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fil.c,v 1.22.2.1 2018/06/25 07:26:03 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fil.c,v 1.22.2.2 2018/07/28 04:38:00 pgoyette Exp $");
 #else
 static const char sccsid[] = "@(#)fil.c	1.36 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: fil.c,v 1.1.1.2 2012/07/22 13:45:07 darrenr Exp $";
@@ -2853,7 +2856,7 @@ ipf_check(void *ctx, ip_t *ip, int hlen, void *ifp, int out,
 	 * disable delayed checksums.
 	 */
 	if (m->m_pkthdr.csum_flags & CSUM_DELAY_DATA) {
-		in_delayed_cksum(m);
+		in_undefer_cksum_tcpudp(m);
 		m->m_pkthdr.csum_flags &= ~CSUM_DELAY_DATA;
 	}
 #  endif /* CSUM_DELAY_DATA */

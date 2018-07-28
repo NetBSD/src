@@ -1,4 +1,4 @@
-/*	$NetBSD: synaptics.c,v 1.36.2.1 2018/06/25 07:26:01 pgoyette Exp $	*/
+/*	$NetBSD: synaptics.c,v 1.36.2.2 2018/07/28 04:37:57 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2005, Steve C. Woodford
@@ -48,7 +48,7 @@
 #include "opt_pms.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: synaptics.c,v 1.36.2.1 2018/06/25 07:26:01 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: synaptics.c,v 1.36.2.2 2018/07/28 04:37:57 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -179,13 +179,28 @@ synaptics_poll_reset(struct pms_softc *psc)
 }
 
 static int
-synaptics_poll_status(struct pms_softc *psc, u_char slice, u_char resp[3])
+synaptics_special_read(struct pms_softc *psc, u_char slice, u_char resp[3])
 {
 	u_char cmd[1] = { PMS_SEND_DEV_STATUS };
 	int res = pms_sliced_command(psc->sc_kbctag, psc->sc_kbcslot, slice);
 
 	return res | pckbport_poll_cmd(psc->sc_kbctag, psc->sc_kbcslot,
 	    cmd, 1, 3, resp, 0);
+}
+
+static int
+synaptics_special_write(struct pms_softc *psc, u_char command, u_char arg)
+{
+	int res = pms_sliced_command(psc->sc_kbctag, psc->sc_kbcslot, arg);
+	if (res)
+		return res;
+
+	u_char cmd[2];
+	cmd[0] = PMS_SET_SAMPLE;
+	cmd[1] = command;
+	res = pckbport_poll_cmd(psc->sc_kbctag, psc->sc_kbcslot,
+	    cmd, 2, 0, NULL, 0);
+	return res;
 }
 
 static void
@@ -213,7 +228,7 @@ pms_synaptics_probe_extended(struct pms_softc *psc)
 	if (((sc->caps & SYNAPTICS_CAP_EXTNUM) + 0x08)
 	    >= SYNAPTICS_EXTENDED_QUERY)
 	{
-		res = synaptics_poll_status(psc, SYNAPTICS_EXTENDED_QUERY, resp);
+		res = synaptics_special_read(psc, SYNAPTICS_EXTENDED_QUERY, resp);
 		if (res == 0) {
 			int buttons = (resp[1] >> 4);
 			aprint_debug_dev(psc->sc_dev,
@@ -245,7 +260,7 @@ pms_synaptics_probe_extended(struct pms_softc *psc)
 	if (((sc->caps & SYNAPTICS_CAP_EXTNUM) + 0x08) >=
 	    SYNAPTICS_CONTINUED_CAPABILITIES)
 	{
-		res = synaptics_poll_status(psc,
+		res = synaptics_special_read(psc,
 		    SYNAPTICS_CONTINUED_CAPABILITIES, resp);
 
 /*
@@ -362,7 +377,7 @@ pms_synaptics_probe_init(void *vsc)
 
 
 	/* Query the hardware capabilities. */
-	res = synaptics_poll_status(psc, SYNAPTICS_READ_CAPABILITIES, resp);
+	res = synaptics_special_read(psc, SYNAPTICS_READ_CAPABILITIES, resp);
 	if (res) {
 		/* Hmm, failed to get capabilites. */
 		aprint_error_dev(psc->sc_dev,
@@ -410,7 +425,6 @@ pms_synaptics_enable(void *vsc)
 	struct synaptics_softc *sc = &psc->u.synaptics;
 	u_char enable_modes;
 	int res;
-	u_char cmd[1], resp[3];
 
 	if (sc->flags & SYN_FLAG_HAS_PASSTHROUGH) {
 		/*
@@ -441,37 +455,17 @@ pms_synaptics_enable(void *vsc)
 	for (int i = 0; i < 2; i++)
 		synaptics_poll_cmd(psc, PMS_SET_SCALE11, 0);
 
-	res = pms_sliced_command(psc->sc_kbctag, psc->sc_kbcslot,
-	    enable_modes);
+	res = synaptics_special_write(psc, SYNAPTICS_CMD_SET_MODE2, enable_modes);
 	if (res)
 		aprint_error("synaptics: set mode error\n");
-
-	synaptics_poll_cmd(psc, PMS_SET_SAMPLE, SYNAPTICS_CMD_SET_MODE2, 0);
 
 	/* a couple of set scales to clear out pending commands */
 	for (int i = 0; i < 2; i++)
 		synaptics_poll_cmd(psc, PMS_SET_SCALE11, 0);
 
-	/*
-	 * Enable multi-finger capability in cold boot case with
-	 * undocumented sequence.
-	 * Parameters from
-	 * https://github.com/RehabMan/OS-X-Voodoo-PS2-Controller/
-	 * VoodooPS2Trackpad/VoodooPS2SynapticsTouchPad.cpp
-	 * setTouchPadModeByte function.
-	 */
-	if (sc->flags & SYN_FLAG_HAS_EXTENDED_WMODE) {
-		static const uint8_t seq[] = {
-		    0xe6, 0xe8, 0x00, 0xe8, 0x00,
-		    0xe8, 0x00, 0xe8, 0x03, 0xf3,
-		    0xc8,
-		};
-		for (size_t s = 0; s < __arraycount(seq); s++) {
-			cmd[0] = seq[s];
-			(void)pckbport_poll_cmd(psc->sc_kbctag, psc->sc_kbcslot,
-				cmd, 1, 3, resp, 0);
-		}
-	}
+	/* Set advanced gesture mode */
+	if (sc->flags & SYN_FLAG_HAS_EXTENDED_WMODE)
+		synaptics_special_write(psc, SYNAPTICS_WRITE_DELUXE_3, 0x3); 
 
 	synaptics_poll_cmd(psc, PMS_DEV_ENABLE, 0);
 

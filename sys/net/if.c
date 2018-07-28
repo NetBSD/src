@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.419.2.8 2018/06/25 07:26:06 pgoyette Exp $	*/
+/*	$NetBSD: if.c,v 1.419.2.9 2018/07/28 04:38:09 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.419.2.8 2018/06/25 07:26:06 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.419.2.9 2018/07/28 04:38:09 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -279,8 +279,6 @@ void
 ifinit(void)
 {
 
-	if_sysctl_setup(NULL);
-
 #if (defined(INET) || defined(INET6))
 	encapinit();
 #endif
@@ -321,6 +319,14 @@ ifinit1(void)
 #if NETHER > 0 || NFDDI > 0 || defined(NETATALK) || NTOKEN > 0 || defined(WLAN)
 	etherinit();
 #endif
+}
+
+/* XXX must be after domaininit() */
+void
+ifinit_post(void)
+{
+
+	if_sysctl_setup(NULL);
 }
 
 ifnet_t *
@@ -589,7 +595,7 @@ if_free_sadl(struct ifnet *ifp, int factory)
 	KASSERT(ifp->if_sadl != NULL);
 
 	s = splsoftnet();
-	rtinit(ifa, RTM_DELETE, 0);
+	KASSERT(ifa->ifa_addr->sa_family == AF_LINK);
 	ifa_remove(ifp, ifa);
 	if_deactivate_sadl(ifp);
 	splx(s);
@@ -810,7 +816,7 @@ if_percpuq_softint(void *arg)
 
 	while ((m = if_percpuq_dequeue(ipq)) != NULL) {
 		ifp->if_ipackets++;
-		bpf_mtap(ifp, m);
+		bpf_mtap(ifp, m, BPF_D_IN);
 
 		ifp->_if_input(ifp, m);
 	}
@@ -1103,7 +1109,7 @@ if_input(struct ifnet *ifp, struct mbuf *m)
 	KASSERT(!cpu_intr_p());
 
 	ifp->if_ipackets++;
-	bpf_mtap(ifp, m);
+	bpf_mtap(ifp, m, BPF_D_IN);
 
 	ifp->_if_input(ifp, m);
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: unzip.c,v 1.23 2017/04/20 13:11:35 joerg Exp $ */
+/* $NetBSD: unzip.c,v 1.23.10.1 2018/07/28 04:38:14 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2009, 2010 Joerg Sonnenberger <joerg@NetBSD.org>
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: unzip.c,v 1.23 2017/04/20 13:11:35 joerg Exp $");
+__RCSID("$NetBSD: unzip.c,v 1.23.10.1 2018/07/28 04:38:14 pgoyette Exp $");
 
 #include <sys/queue.h>
 #include <sys/stat.h>
@@ -386,6 +386,13 @@ static void
 extract_dir(struct archive *a, struct archive_entry *e, const char *path)
 {
 	int mode;
+
+	/*
+	 * Dropbox likes to create '/' directory entries, just ignore
+	 * such junk.
+	 */
+	if (*path == '\0')
+		return;
 
 	mode = archive_entry_mode(e) & 0777;
 	if (mode == 0)

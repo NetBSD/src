@@ -1,6 +1,6 @@
 .\" -*- nroff -*-
 .\"
-.\"	$NetBSD: bpf.4,v 1.60 2018/01/13 23:43:46 wiz Exp $
+.\"	$NetBSD: bpf.4,v 1.60.2.1 2018/07/28 04:37:24 pgoyette Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1992, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -24,7 +24,7 @@
 .\" This document is derived in part from the enet man page (enet.4)
 .\" distributed with 4.3BSD Unix.
 .\"
-.Dd July 24, 2014
+.Dd June 22, 2018
 .Dt BPF 4
 .Os
 .Sh NAME
@@ -297,13 +297,34 @@ Set to one if the link level source address will be written,
 as provided, to the wire.
 This flag is initialized to zero by default.
 .It Dv BIOCGSEESENT , BIOCSSEESENT ( u_int )
-Enable/disable or get the
-.Dq see sent
-flag status.
-If enabled, packets sent by the host (not from
-.Nm )
-will be passed to the filter.
-By default, the flag is enabled (value is 1).
+These commands are obsolete but left for compatibility.
+Use
+.Dv BIOCSDIRECTION
+and
+.Dv BIOCGDIRECTION
+instead.
+Set or get the flag determining whether locally generated packets on the
+interface should be returned by BPF.
+Set to zero to see only incoming packets on the interface.
+Set to one to see packets originating locally and remotely on the interface.
+This flag is initialized to one by default.
+.It Dv BIOCSDIRECTION
+.It Dv BIOCGDIRECTION
+.Pq Li u_int
+Set or get the setting determining whether incoming, outgoing, or all packets
+on the interface should be returned by BPF.
+Set to
+.Dv BPF_D_IN
+to see only incoming packets on the interface.
+Set to
+.Dv BPF_D_INOUT
+to see packets originating locally and remotely on the interface.
+Set to
+.Dv BPF_D_OUT
+to see only outgoing packets on the interface.
+This setting is initialized to
+.Dv BPF_D_INOUT
+by default.
 .It Dv BIOCFEEDBACK , BIOCSFEEDBACK , BIOCGFEEDBACK ( u_int )
 Set (or get)
 .Dq packet feedback mode .

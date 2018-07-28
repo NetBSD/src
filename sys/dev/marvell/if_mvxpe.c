@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mvxpe.c,v 1.17.16.1 2018/06/25 07:25:51 pgoyette Exp $	*/
+/*	$NetBSD: if_mvxpe.c,v 1.17.16.2 2018/07/28 04:37:45 pgoyette Exp $	*/
 /*
  * Copyright (c) 2015 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mvxpe.c,v 1.17.16.1 2018/06/25 07:25:51 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mvxpe.c,v 1.17.16.2 2018/07/28 04:37:45 pgoyette Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -1709,7 +1709,7 @@ mvxpe_start(struct ifnet *ifp)
 		ifp->if_opackets++;
 		ifp->if_timer = 1;
 		sc->sc_wdogsoft = 1;
-		bpf_mtap(ifp, m);
+		bpf_mtap(ifp, m, BPF_D_OUT);
 	}
 	mvxpe_sc_unlock(sc);
 

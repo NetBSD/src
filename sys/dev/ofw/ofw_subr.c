@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_subr.c,v 1.30 2017/07/03 00:47:34 jmcneill Exp $	*/
+/*	$NetBSD: ofw_subr.c,v 1.30.4.1 2018/07/28 04:37:46 pgoyette Exp $	*/
 
 /*
  * Copyright 1998
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_subr.c,v 1.30 2017/07/03 00:47:34 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_subr.c,v 1.30.4.1 2018/07/28 04:37:46 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -450,7 +450,7 @@ of_enter_i2c_devs(prop_dictionary_t props, int ofnode, size_t cell_size,
     int addr_shift)
 {
 	int node, len;
-	char name[32], compatible[32];
+	char name[32];
 	uint64_t reg64;
 	uint32_t reg32;
 	uint64_t addr;
@@ -493,14 +493,6 @@ of_enter_i2c_devs(prop_dictionary_t props, int ofnode, size_t cell_size,
 		prop_dictionary_set_uint32(dev, "addr", addr);
 		prop_dictionary_set_uint64(dev, "cookie", node);
 		of_to_dataprop(dev, node, "compatible", "compatible");
-		if (OF_getprop(node, "compatible", compatible,
-		    sizeof(compatible)) > 0) {
-			/* Set size for EEPROM's that we know about */
-			if (strcmp(compatible, "i2c-at24c64") == 0)
-				prop_dictionary_set_uint32(dev, "size", 8192);
-			if (strcmp(compatible, "i2c-at34c02") == 0)
-				prop_dictionary_set_uint32(dev, "size", 256);
-		}
 		prop_array_add(array, dev);
 		prop_object_release(dev);
 	}

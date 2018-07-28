@@ -1,4 +1,4 @@
-# $NetBSD: md.sun3,v 1.63 2015/12/24 14:16:46 christos Exp $
+# $NetBSD: md.sun3,v 1.63.14.1 2018/07/28 04:32:59 pgoyette Exp $
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/sun3				comp-c-include
 ./usr/include/sun3/_G_config.h			comp-obsolete		obsolete
@@ -50,7 +50,7 @@
 ./usr/include/sun3/pmap.h			comp-c-include
 ./usr/include/sun3/pmap3.h			comp-c-include
 ./usr/include/sun3/pmap3x.h			comp-c-include
-./usr/include/sun3/pmc.h			comp-c-include
+./usr/include/sun3/pmc.h			comp-obsolete		obsolete
 ./usr/include/sun3/proc.h			comp-c-include
 ./usr/include/sun3/profile.h			comp-c-include
 ./usr/include/sun3/psl.h			comp-c-include

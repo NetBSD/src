@@ -1,4 +1,4 @@
-/*	$NetBSD: rgephy.c,v 1.42.2.1 2018/06/25 07:25:51 pgoyette Exp $	*/
+/*	$NetBSD: rgephy.c,v 1.42.2.2 2018/07/28 04:37:45 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2003
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rgephy.c,v 1.42.2.1 2018/06/25 07:25:51 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rgephy.c,v 1.42.2.2 2018/07/28 04:37:45 pgoyette Exp $");
 
 
 /*
@@ -51,6 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: rgephy.c,v 1.42.2.1 2018/06/25 07:25:51 pgoyette Exp
 #include <net/if_media.h>
 
 #include <dev/mii/mii.h>
+#include <dev/mii/mdio.h>
 #include <dev/mii/miivar.h>
 #include <dev/mii/miidevs.h>
 
@@ -675,9 +676,9 @@ rgephy_reset(struct mii_softc *sc)
 		/* RTL8211F */
 		delay(10000);
 		/* disable EEE */
-		PHY_WRITE(sc, RGEPHY_MII_MACR, 0x0007);
-		PHY_WRITE(sc, RGEPHY_MII_MAADR, 0x003c);
-		PHY_WRITE(sc, RGEPHY_MII_MACR, 0x4007);
-		PHY_WRITE(sc, RGEPHY_MII_MAADR, 0x0000);
+		PHY_WRITE(sc, MII_MMDACR, MMDACR_FN_ADDRESS | MDIO_MMD_AN);
+		PHY_WRITE(sc, MII_MMDAADR, MDIO_AN_EEEADVERT);
+		PHY_WRITE(sc, MII_MMDACR, MMDACR_FN_DATANPI | MDIO_MMD_AN);
+		PHY_WRITE(sc, MII_MMDAADR, 0x0000);
 	}
 }

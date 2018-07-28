@@ -1,4 +1,4 @@
-/*	$NetBSD: pcireg.h,v 1.137.2.1 2018/05/21 04:36:11 pgoyette Exp $	*/
+/*	$NetBSD: pcireg.h,v 1.137.2.2 2018/07/28 04:37:56 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1999, 2000
@@ -1327,7 +1327,7 @@ typedef u_int8_t pci_intr_line_t;
 #define   PCI_BRIDGE_CONTROL_SERR		(1 <<  1)
 #define   PCI_BRIDGE_CONTROL_ISA		(1 <<  2)
 #define   PCI_BRIDGE_CONTROL_VGA		(1 <<  3)
-#define   PCI_BRIDGE_CONTROL_VGA16		(1 <<  3)
+#define   PCI_BRIDGE_CONTROL_VGA16		(1 <<  4)
 #define   PCI_BRIDGE_CONTROL_MABRT		(1 <<  5)
 #define   PCI_BRIDGE_CONTROL_SECBR		(1 <<  6)
 #define   PCI_BRIDGE_CONTROL_SECFASTB2B		(1 <<  7)

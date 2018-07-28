@@ -1,4 +1,4 @@
-/*	$NetBSD: svs.c,v 1.13.2.4 2018/05/02 07:20:06 pgoyette Exp $	*/
+/*	$NetBSD: svs.c,v 1.13.2.5 2018/07/28 04:37:42 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svs.c,v 1.13.2.4 2018/05/02 07:20:06 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svs.c,v 1.13.2.5 2018/07/28 04:37:42 pgoyette Exp $");
 
 #include "opt_svs.h"
 
@@ -571,8 +571,10 @@ svs_enable(void)
 {
 	extern uint8_t svs_enter, svs_enter_end;
 	extern uint8_t svs_enter_altstack, svs_enter_altstack_end;
+	extern uint8_t svs_enter_nmi, svs_enter_nmi_end;
 	extern uint8_t svs_leave, svs_leave_end;
 	extern uint8_t svs_leave_altstack, svs_leave_altstack_end;
+	extern uint8_t svs_leave_nmi, svs_leave_nmi_end;
 	u_long psl, cr0;
 	uint8_t *bytes;
 	size_t size;
@@ -590,6 +592,11 @@ svs_enable(void)
 	    (size_t)&svs_enter_altstack;
 	x86_hotpatch(HP_NAME_SVS_ENTER_ALT, bytes, size);
 
+	bytes = &svs_enter_nmi;
+	size = (size_t)&svs_enter_nmi_end -
+	    (size_t)&svs_enter_nmi;
+	x86_hotpatch(HP_NAME_SVS_ENTER_NMI, bytes, size);
+
 	bytes = &svs_leave;
 	size = (size_t)&svs_leave_end - (size_t)&svs_leave;
 	x86_hotpatch(HP_NAME_SVS_LEAVE, bytes, size);
@@ -599,6 +606,11 @@ svs_enable(void)
 	    (size_t)&svs_leave_altstack;
 	x86_hotpatch(HP_NAME_SVS_LEAVE_ALT, bytes, size);
 
+	bytes = &svs_leave_nmi;
+	size = (size_t)&svs_leave_nmi_end -
+	    (size_t)&svs_leave_nmi;
+	x86_hotpatch(HP_NAME_SVS_LEAVE_NMI, bytes, size);
+
 	x86_patch_window_close(psl, cr0);
 }
 
@@ -607,8 +619,10 @@ svs_disable_hotpatch(void)
 {
 	extern uint8_t nosvs_enter, nosvs_enter_end;
 	extern uint8_t nosvs_enter_altstack, nosvs_enter_altstack_end;
+	extern uint8_t nosvs_enter_nmi, nosvs_enter_nmi_end;
 	extern uint8_t nosvs_leave, nosvs_leave_end;
 	extern uint8_t nosvs_leave_altstack, nosvs_leave_altstack_end;
+	extern uint8_t nosvs_leave_nmi, nosvs_leave_nmi_end;
 	u_long psl, cr0;
 	uint8_t *bytes;
 	size_t size;
@@ -624,6 +638,11 @@ svs_disable_hotpatch(void)
 	    (size_t)&nosvs_enter_altstack;
 	x86_hotpatch(HP_NAME_SVS_ENTER_ALT, bytes, size);
 
+	bytes = &nosvs_enter_nmi;
+	size = (size_t)&nosvs_enter_nmi_end -
+	    (size_t)&nosvs_enter_nmi;
+	x86_hotpatch(HP_NAME_SVS_ENTER_NMI, bytes, size);
+
 	bytes = &nosvs_leave;
 	size = (size_t)&nosvs_leave_end - (size_t)&nosvs_leave;
 	x86_hotpatch(HP_NAME_SVS_LEAVE, bytes, size);
@@ -632,6 +651,11 @@ svs_disable_hotpatch(void)
 	size = (size_t)&nosvs_leave_altstack_end -
 	    (size_t)&nosvs_leave_altstack;
 	x86_hotpatch(HP_NAME_SVS_LEAVE_ALT, bytes, size);
+
+	bytes = &nosvs_leave_nmi;
+	size = (size_t)&nosvs_leave_nmi_end -
+	    (size_t)&nosvs_leave_nmi;
+	x86_hotpatch(HP_NAME_SVS_LEAVE_NMI, bytes, size);
 
 	x86_patch_window_close(psl, cr0);
 }

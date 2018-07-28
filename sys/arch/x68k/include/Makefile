@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.37 2015/12/24 14:13:36 christos Exp $
+#	$NetBSD: Makefile,v 1.37.16.1 2018/07/28 04:37:42 pgoyette Exp $
 
 INCSDIR= /usr/include/x68k
 
@@ -16,7 +16,7 @@ INCS=	ansi.h aout_machdep.h asm.h \
 	lock.h limits.h \
 	math.h mcontext.h mutex.h \
 	opmbellio.h opmreg.h \
-	param.h parioctl.h pcb.h pmap.h pmc.h proc.h \
+	param.h parioctl.h pcb.h pmap.h proc.h \
 	profile.h psl.h pte.h ptrace.h \
 	reg.h remote-sl.h rwlock.h \
 	setjmp.h signal.h sram.h \

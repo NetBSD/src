@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16 2017/08/01 20:07:37 joerg Exp $
+#	$NetBSD: Makefile,v 1.16.2.1 2018/07/28 04:33:04 pgoyette Exp $
 
 PROG_CXX=	lli
 NOMAN=		yes
@@ -7,8 +7,7 @@ NOMAN=		yes
 
 .PATH: ${LLVM_SRCDIR}/tools/lli
 
-SRCS=	lli.cpp \
-	OrcLazyJIT.cpp
+SRCS=	lli.cpp
 
 LLVM_LIBS+= \
 	Orc \
@@ -22,6 +21,7 @@ LLVM_LIBS+= \
 	AsmParser \
 	Object \
 	MCParser \
+	BitWriter \
 	BitReader \
 	MCJIT \
 	RuntimeDyld \

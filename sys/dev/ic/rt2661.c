@@ -1,4 +1,4 @@
-/*	$NetBSD: rt2661.c,v 1.36.2.1 2018/05/02 07:20:06 pgoyette Exp $	*/
+/*	$NetBSD: rt2661.c,v 1.36.2.2 2018/07/28 04:37:45 pgoyette Exp $	*/
 /*	$OpenBSD: rt2661.c,v 1.17 2006/05/01 08:41:11 damien Exp $	*/
 /*	$FreeBSD: rt2560.c,v 1.5 2006/06/02 19:59:31 csjp Exp $	*/
 
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rt2661.c,v 1.36.2.1 2018/05/02 07:20:06 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rt2661.c,v 1.36.2.2 2018/07/28 04:37:45 pgoyette Exp $");
 
 
 #include <sys/param.h>
@@ -1146,7 +1146,8 @@ rt2661_rx_intr(struct rt2661_softc *sc)
 			tap->wr_chan_flags = htole16(sc->sc_curchan->ic_flags);
 			tap->wr_antsignal = desc->rssi;
 
-			bpf_mtap2(sc->sc_drvbpf, tap, sc->sc_rxtap_len, m);
+			bpf_mtap2(sc->sc_drvbpf, tap, sc->sc_rxtap_len, m,
+			    BPF_D_IN);
 		}
 
 		wh = mtod(m, struct ieee80211_frame *);
@@ -1549,7 +1550,7 @@ rt2661_tx_mgt(struct rt2661_softc *sc, struct mbuf *m0,
 		tap->wt_chan_freq = htole16(sc->sc_curchan->ic_freq);
 		tap->wt_chan_flags = htole16(sc->sc_curchan->ic_flags);
 
-		bpf_mtap2(sc->sc_drvbpf, tap, sc->sc_txtap_len, m0);
+		bpf_mtap2(sc->sc_drvbpf, tap, sc->sc_txtap_len, m0, BPF_D_OUT);
 	}
 
 	data->m = m0;
@@ -1787,7 +1788,7 @@ rt2661_tx_data(struct rt2661_softc *sc, struct mbuf *m0,
 		tap->wt_chan_freq = htole16(sc->sc_curchan->ic_freq);
 		tap->wt_chan_flags = htole16(sc->sc_curchan->ic_flags);
 
-		bpf_mtap2(sc->sc_drvbpf, tap, sc->sc_txtap_len, m0);
+		bpf_mtap2(sc->sc_drvbpf, tap, sc->sc_txtap_len, m0, BPF_D_OUT);
 	}
 
 	data->m = m0;
@@ -1849,7 +1850,7 @@ rt2661_start(struct ifnet *ifp)
 
 			ni = M_GETCTX(m0, struct ieee80211_node *);
 			M_CLEARCTX(m0);
-			bpf_mtap3(ic->ic_rawbpf, m0);
+			bpf_mtap3(ic->ic_rawbpf, m0, BPF_D_OUT);
 			if (rt2661_tx_mgt(sc, m0, ni) != 0)
 				break;
 
@@ -1878,14 +1879,14 @@ rt2661_start(struct ifnet *ifp)
 				continue;
 			}
 
-			bpf_mtap3(ifp->if_bpf, m0);
+			bpf_mtap(ifp, m0, BPF_D_OUT);
 			m0 = ieee80211_encap(ic, m0, ni);
 			if (m0 == NULL) {
 				ieee80211_free_node(ni);
 				ifp->if_oerrors++;
 				continue;
 			}
-			bpf_mtap3(ic->ic_rawbpf, m0);
+			bpf_mtap3(ic->ic_rawbpf, m0, BPF_D_OUT);
 			if (rt2661_tx_data(sc, m0, ni, 0) != 0) {
 				if (ni != NULL)
 					ieee80211_free_node(ni);

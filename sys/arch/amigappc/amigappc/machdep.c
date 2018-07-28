@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.52 2016/12/22 14:47:54 cherry Exp $ */
+/* $NetBSD: machdep.c,v 1.52.14.1 2018/07/28 04:37:27 pgoyette Exp $ */
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.52 2016/12/22 14:47:54 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.52.14.1 2018/07/28 04:37:27 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -61,7 +61,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.52 2016/12/22 14:47:54 cherry Exp $");
 #include <amigappc/amigappc/p5reg.h>
 
 #include "opt_ddb.h"
-#include "opt_ipkdb.h"
 
 #include "fd.h"
 #include "ser.h"

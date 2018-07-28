@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urtw.c,v 1.14 2018/01/21 13:57:12 skrll Exp $	*/
+/*	$NetBSD: if_urtw.c,v 1.14.2.1 2018/07/28 04:37:58 pgoyette Exp $	*/
 /*	$OpenBSD: if_urtw.c,v 1.39 2011/07/03 15:47:17 matthew Exp $	*/
 
 /*-
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urtw.c,v 1.14 2018/01/21 13:57:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urtw.c,v 1.14.2.1 2018/07/28 04:37:58 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -2440,7 +2440,7 @@ urtw_start(struct ifnet *ifp)
 			IF_DEQUEUE(&ic->ic_mgtq, m0);
 			ni = M_GETCTX(m0, struct ieee80211_node *);
 			M_CLEARCTX(m0);
-			bpf_mtap3(ic->ic_rawbpf, m0);
+			bpf_mtap3(ic->ic_rawbpf, m0, BPF_D_OUT);
 			if (urtw_tx_start(sc, ni, m0, URTW_PRIORITY_NORMAL)
 			    != 0)
 				break;
@@ -2466,13 +2466,13 @@ urtw_start(struct ifnet *ifp)
 				m_freem(m0);
 				continue;
 			}
-			bpf_mtap(ifp, m0);
+			bpf_mtap(ifp, m0, BPF_D_OUT);
 			m0 = ieee80211_encap(ic, m0, ni);
 			if (m0 == NULL) {
 				ieee80211_free_node(ni);
 				continue;
 			}
-			bpf_mtap3(ic->ic_rawbpf, m0);
+			bpf_mtap3(ic->ic_rawbpf, m0, BPF_D_OUT);
 			if (urtw_tx_start(sc, ni, m0, URTW_PRIORITY_NORMAL)
 			    != 0) {
 				ieee80211_free_node(ni);
@@ -2613,7 +2613,7 @@ urtw_tx_start(struct urtw_softc *sc, struct ieee80211_node *ni, struct mbuf *m0,
 		tap->wt_chan_freq = htole16(ic->ic_bss->ni_chan->ic_freq);
 		tap->wt_chan_flags = htole16(ic->ic_bss->ni_chan->ic_flags);
 
-		bpf_mtap2(sc->sc_drvbpf, tap, sc->sc_txtap_len, m0);
+		bpf_mtap2(sc->sc_drvbpf, tap, sc->sc_txtap_len, m0, BPF_D_OUT);
 	}
 
 	if (sc->sc_hwrev & URTW_HWREV_8187)
@@ -3136,7 +3136,7 @@ urtw_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 		tap->wr_chan_flags = htole16(ic->ic_ibss_chan->ic_flags);
 		tap->wr_dbm_antsignal = (int8_t)rssi;
 
-		bpf_mtap2(sc->sc_drvbpf, tap, sc->sc_rxtap_len, m);
+		bpf_mtap2(sc->sc_drvbpf, tap, sc->sc_rxtap_len, m, BPF_D_IN);
 	}
 	wh = mtod(m, struct ieee80211_frame *);
 	if ((wh->i_fc[0] & IEEE80211_FC0_TYPE_MASK) == IEEE80211_FC0_TYPE_DATA)

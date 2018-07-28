@@ -1,4 +1,4 @@
-# $NetBSD: md.cesfic,v 1.8 2015/12/24 14:16:46 christos Exp $
+# $NetBSD: md.cesfic,v 1.8.14.1 2018/07/28 04:32:59 pgoyette Exp $
 ./usr/include/cesfic				comp-c-include
 ./usr/include/cesfic/_G_config.h		comp-obsolete		obsolete
 ./usr/include/cesfic/ansi.h			comp-c-include
@@ -30,7 +30,7 @@
 ./usr/include/cesfic/param.h			comp-c-include
 ./usr/include/cesfic/pcb.h			comp-c-include
 ./usr/include/cesfic/pmap.h			comp-c-include
-./usr/include/cesfic/pmc.h			comp-c-include
+./usr/include/cesfic/pmc.h			comp-obsolete		obsolete
 ./usr/include/cesfic/proc.h			comp-c-include
 ./usr/include/cesfic/profile.h			comp-c-include
 ./usr/include/cesfic/psl.h			comp-c-include

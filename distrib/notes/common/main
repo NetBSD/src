@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.543.2.2 2018/06/25 07:25:06 pgoyette Exp $
+.\"	$NetBSD: main,v 1.543.2.3 2018/07/28 04:32:58 pgoyette Exp $
 .\"
 .\" Copyright (c) 1999-2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -257,15 +257,14 @@ with the appropriate device for your system:
 On Windows, you will need to use a program such as Win32 Disk Imager,
 which can be found at
 .Lk http://sourceforge.net/projects/win32diskimager/
+or
+Rawrite32 which can be found at
+.Lk https://www.NetBSD.org/~martin/rawrite32 .
 .if \n[amd64]:\n[i386] \{\
 If you have problems writing a raw image to a floppy,
 the
 .Ic rawrite.exe
 MS-DOS program
-or the
-.Ic Rawrite32
-Windows32 program (installed by
-.Pa rawr32.exe )
 in the
 .Pa \*M/installation/misc/
 directory may be of help.
@@ -512,10 +511,6 @@ The following features are to be removed from
 .Nx
 in the future:
 .(bullet
-.Xr dhclient 8
-in favor of
-.Xr dhcpcd 8 .
-.It
 .Xr groff 1 .
 Man pages are now handled with
 .Xr mandoc 1 ,

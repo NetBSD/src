@@ -1,12 +1,12 @@
-# $NetBSD: files.fdt,v 1.15.2.1 2018/06/25 07:25:39 pgoyette Exp $
+# $NetBSD: files.fdt,v 1.15.2.2 2018/07/28 04:37:28 pgoyette Exp $
 
 include	"dev/pckbport/files.pckbport"
 
-device	armfdt { }: bus_space_generic, fdtbus
+device	armfdt { }: bus_space_generic, fdt
 attach	armfdt at root with arm_fdt
 file	arch/arm/fdt/arm_fdt.c			arm_fdt
 
-attach	cpu at cpus with cpu_fdt
+attach	cpu at fdt with cpu_fdt
 file	arch/arm/fdt/cpu_fdt.c			cpu_fdt
 
 device	cpufreqdt
@@ -49,6 +49,12 @@ file	arch/arm/fdt/plrtc_fdt.c		plrtc_fdt
 
 attach	psci at fdt with psci_fdt
 file	arch/arm/fdt/psci_fdt.c			psci_fdt
+
+device	armpmu
+attach	armpmu at fdt with pmu_fdt
+file	arch/arm/fdt/pmu_fdt.c			pmu_fdt
+file	dev/tprof/tprof_armv7.c			pmu_fdt & arm32
+file	dev/tprof/tprof_armv8.c			pmu_fdt & aarch64
 
 attach	genfb at fdt with plfb_fdt: fdt_display_timing
 file	arch/arm/fdt/plfb_fdt.c			plfb_fdt

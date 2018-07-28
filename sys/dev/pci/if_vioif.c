@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vioif.c,v 1.39.2.1 2018/06/25 07:25:52 pgoyette Exp $	*/
+/*	$NetBSD: if_vioif.c,v 1.39.2.2 2018/07/28 04:37:46 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.39.2.1 2018/06/25 07:25:52 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.39.2.2 2018/07/28 04:37:46 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -872,7 +872,7 @@ skip:
 		virtio_enqueue_commit(vsc, vq, slot, false);
 
 		queued++;
-		bpf_mtap(ifp, m);
+		bpf_mtap(ifp, m, BPF_D_OUT);
 	}
 
 	if (queued > 0) {

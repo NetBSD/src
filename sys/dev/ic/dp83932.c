@@ -1,4 +1,4 @@
-/*	$NetBSD: dp83932.c,v 1.41 2017/07/29 01:34:49 riastradh Exp $	*/
+/*	$NetBSD: dp83932.c,v 1.41.2.1 2018/07/28 04:37:45 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dp83932.c,v 1.41 2017/07/29 01:34:49 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dp83932.c,v 1.41.2.1 2018/07/28 04:37:45 pgoyette Exp $");
 
 
 #include <sys/param.h>
@@ -468,7 +468,7 @@ sonic_start(struct ifnet *ifp)
 		/*
 		 * Pass the packet to any BPF listeners.
 		 */
-		bpf_mtap(ifp, m0);
+		bpf_mtap(ifp, m0, BPF_D_OUT);
 	}
 
 	if (sc->sc_txpending == (SONIC_NTXDESC - 1)) {

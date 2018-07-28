@@ -1,4 +1,4 @@
-#	$NetBSD: HPT5325,v 1.35.2.1 2018/03/15 09:12:02 pgoyette Exp $
+#	$NetBSD: HPT5325,v 1.35.2.2 2018/07/28 04:37:31 pgoyette Exp $
 #
 #  This configuration supports for HP T5325 Thin Client
 #
@@ -134,7 +134,6 @@ options 	BUFQ_PRIOCSCAN
 
 # Development and Debugging options
 
-#options 	PERFCTRS	# performance counters
 options 	DIAGNOSTIC	# internal consistency checks
 #options 	DEBUG
 #options 	PMAP_DEBUG	# Enable pmap_debug_level code

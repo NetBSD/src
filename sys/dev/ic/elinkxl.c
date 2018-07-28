@@ -1,4 +1,4 @@
-/*	$NetBSD: elinkxl.c,v 1.121.12.1 2018/06/25 07:25:50 pgoyette Exp $	*/
+/*	$NetBSD: elinkxl.c,v 1.121.12.2 2018/07/28 04:37:45 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: elinkxl.c,v 1.121.12.1 2018/06/25 07:25:50 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elinkxl.c,v 1.121.12.2 2018/07/28 04:37:45 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1194,7 +1194,7 @@ ex_start(struct ifnet *ifp)
 		/*
 		 * Pass packet to bpf if there is a listener.
 		 */
-		bpf_mtap(ifp, mb_head);
+		bpf_mtap(ifp, mb_head, BPF_D_OUT);
 	}
  out:
 	if (sc->tx_head) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.c,v 1.123 2018/02/08 09:05:17 dholland Exp $	*/
+/*	$NetBSD: puffs.c,v 1.123.2.1 2018/07/28 04:37:23 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: puffs.c,v 1.123 2018/02/08 09:05:17 dholland Exp $");
+__RCSID("$NetBSD: puffs.c,v 1.123.2.1 2018/07/28 04:37:23 pgoyette Exp $");
 #endif /* !lint */
 
 #include <sys/param.h>
@@ -904,21 +904,23 @@ puffs__theloop(struct puffs_cc *pcc)
 			}
 
 			what = 0;
-			if (curev->filter == EVFILT_READ) {
+			switch (curev->filter) {
+			case EVFILT_READ:
 				puffs__framev_input(pu, pfctrl, fio);
 				what |= PUFFS_FBIO_READ;
-			}
-
-			else if (curev->filter == EVFILT_WRITE) {
+				break;
+			case EVFILT_WRITE:
 				puffs__framev_output(pu, pfctrl, fio);
 				what |= PUFFS_FBIO_WRITE;
-			}
-
-			else if (__predict_false(curev->filter==EVFILT_SIGNAL)){
+				break;
+			case EVFILT_SIGNAL:
 				if ((pu->pu_state & PU_DONEXIT) == 0) {
 					PU_SETSFLAG(pu, PU_DONEXIT);
 					puffs_exit(pu, 0);
 				}
+				break;
+			default:
+				warn("unhandled filter %d", curev->filter);
 			}
 			if (what)
 				puffs__framev_notify(fio, what);

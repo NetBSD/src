@@ -1,5 +1,5 @@
 
-/*	$NetBSD: trap.c,v 1.293.2.1 2018/05/21 04:36:00 pgoyette Exp $	*/
+/*	$NetBSD: trap.c,v 1.293.2.2 2018/07/28 04:37:34 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2005, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.293.2.1 2018/05/21 04:36:00 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.293.2.2 2018/07/28 04:37:34 pgoyette Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -106,6 +106,7 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.293.2.1 2018/05/21 04:36:00 pgoyette Exp 
 #include <machine/mca_machdep.h>
 #endif
 
+#include <x86/dbregs.h>
 #include <x86/nmi.h>
 
 #include "isa.h"

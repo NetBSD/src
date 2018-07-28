@@ -1,4 +1,4 @@
-/*	$NetBSD: if_faith.c,v 1.57.2.1 2018/05/02 07:20:22 pgoyette Exp $	*/
+/*	$NetBSD: if_faith.c,v 1.57.2.2 2018/07/28 04:38:10 pgoyette Exp $	*/
 /*	$KAME: if_faith.c,v 1.21 2001/02/20 07:59:26 itojun Exp $	*/
 
 /*
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_faith.c,v 1.57.2.1 2018/05/02 07:20:22 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_faith.c,v 1.57.2.2 2018/07/28 04:38:10 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -193,7 +193,7 @@ faithoutput(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 		m_adj(m, sizeof(int));
 	}
 
-	bpf_mtap_af(ifp, af, m);
+	bpf_mtap_af(ifp, af, m, BPF_D_OUT);
 
 	if (rt && rt->rt_flags & (RTF_REJECT|RTF_BLACKHOLE)) {
 		m_freem(m);

@@ -1,4 +1,4 @@
-# $NetBSD: md.arc,v 1.25 2015/12/21 16:49:37 christos Exp $
+# $NetBSD: md.arc,v 1.25.14.1 2018/07/28 04:32:59 pgoyette Exp $
 ./usr/include/arc				comp-c-include
 ./usr/include/arc/_G_config.h			comp-obsolete		obsolete
 ./usr/include/arc/ansi.h			comp-c-include
@@ -37,7 +37,7 @@
 ./usr/include/arc/pcb.h				comp-c-include
 ./usr/include/arc/pccons.h			comp-c-include
 ./usr/include/arc/pmap.h			comp-c-include
-./usr/include/arc/pmc.h				comp-c-include
+./usr/include/arc/pmc.h				comp-obsolete		obsolete
 ./usr/include/arc/proc.h			comp-c-include
 ./usr/include/arc/profile.h			comp-c-include
 ./usr/include/arc/psl.h				comp-c-include

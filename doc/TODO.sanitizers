@@ -1,0 +1,53 @@
+Sanitizer and related tasks.
+
+Short term:
+ - compiler-rt import and integration with base
+ - merge TSan, MSan and libFuzzer ATF tests
+ - prepare MKSANITIZER readme
+ - kernel-asan port
+ - kernel-ubsan port
+ - switch syscall(2)/__syscall(2) to libc calls
+ - upstream local patches, mostly to compiler-rt
+ - develop fts(3) interceptors (MSan, for ls(1), find(1), mtree(8)
+ - investigate and address the libcxx failing tests on NetBSD
+ - no-ASLR boot.cfg option, required for MKSANITIZER
+
+Long term:
+ - FILE and DIR sanitization (needed by at least: ESan, MSan)
+ - add missing interceptors (mostly MSan-centric)
+ - improve the framework for ioctl(2) database and handle special cases when a
+   part of a struct can be uninitialized and passed to the kernel (MSan)
+ - port or finish the port of:
+   * ESan,
+   * LSan,
+   * XRay,
+   * shadowcallstack,
+   * cfi,
+   * scudo,
+   * profile,
+   * DFSan.
+ - finish the research of a new syscall for StopTheWorld() operation
+   ptrace(2) style for self-introspection and debugging (LSan)
+ - port HWASan -- aarch64 specific, needs hardware or emulator
+ - make MKSANITIZER usable with any supported by a compiler combination of
+   sanitizers
+ - detect and fix more bugs in basesystem
+ - pkgsrc integration with sanitizers and MKSANITIZER (PKGSANITIZER?)
+ - port what possible to !amd64
+ - fixes with the signal code
+ - attach a NetBSD buildbot testing build of compiler-rt and executing tests
+ - make compiler-rt buildable with GCC
+ - finish the support of float128 for Clang/LLVM/libstdc++/libgcc
+ - lld port to NetBSD (GNU ld(1) is too slow for serious LLVM development)
+ - merge of the libFuzzer integration with the basesystem
+ - oom-killer ATF tests and fixes
+ - uvm_map.c E2BIG workaround or limit raise (1MB -> 10MB?), needed by libFuzzer
+
+Unspecified:
+ - kernel-tsan? upstream development is stalled with patches for Linux 4.2
+   https://github.com/google/ktsan
+ - kernek-msan? in development for Linux
+   https://github.com/google/kmsan
+ - kernel-safestack? implemented in Fuchsia/Magenta
+ - kernel coverage (KCOV?)
+ - syzkaller port

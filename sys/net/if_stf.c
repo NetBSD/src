@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stf.c,v 1.103.2.1 2018/05/02 07:20:22 pgoyette Exp $	*/
+/*	$NetBSD: if_stf.c,v 1.103.2.2 2018/07/28 04:38:10 pgoyette Exp $	*/
 /*	$KAME: if_stf.c,v 1.62 2001/06/07 22:32:16 itojun Exp $ */
 
 /*
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_stf.c,v 1.103.2.1 2018/05/02 07:20:22 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_stf.c,v 1.103.2.2 2018/07/28 04:38:10 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -420,7 +420,7 @@ stf_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 		return ENETUNREACH;
 	}
 
-	bpf_mtap_af(ifp, AF_INET6, m);
+	bpf_mtap_af(ifp, AF_INET6, m, BPF_D_OUT);
 
 	M_PREPEND(m, sizeof(struct ip), M_DONTWAIT);
 	if (m && m->m_len < sizeof(struct ip))
@@ -656,7 +656,7 @@ in_stf_input(struct mbuf *m, int off, int proto, void *eparg)
 	pktlen = m->m_pkthdr.len;
 	m_set_rcvif(m, ifp);
 
-	bpf_mtap_af(ifp, AF_INET6, m);
+	bpf_mtap_af(ifp, AF_INET6, m, BPF_D_IN);
 
 	/*
 	 * Put the packet to the network layer input queue according to the

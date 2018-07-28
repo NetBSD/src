@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_timer.c,v 1.18 2012/11/12 18:00:38 skrll Exp $ */
+/*	$NetBSD: ixp425_timer.c,v 1.18.36.1 2018/07/28 04:37:29 pgoyette Exp $ */
 
 /*
  * Copyright (c) 2003
@@ -28,10 +28,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp425_timer.c,v 1.18 2012/11/12 18:00:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp425_timer.c,v 1.18.36.1 2018/07/28 04:37:29 pgoyette Exp $");
 
 #include "opt_ixp425.h"
-#include "opt_perfctrs.h"
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -138,9 +137,6 @@ cpu_initclocks(void)
 {
 	struct ixpclk_softc *sc = ixpclk_sc;
 	u_int oldirqstate;
-#if defined(PERFCTRS)
-	void *pmu_ih;
-#endif
 
 	if (hz < 50 || COUNTS_PER_SEC % hz) {
 		aprint_error("Cannot get %d Hz clock; using 100 Hz\n", hz);
@@ -170,13 +166,6 @@ cpu_initclocks(void)
 					 ixpclk_intr, NULL);
 	if (clock_ih == NULL)
 		panic("cpu_initclocks: unable to register timer interrupt");
-
-#if defined(PERFCTRS)
-	pmu_ih = ixp425_intr_establish(IXP425_INT_XPMU, IPL_STATCLOCK,
-					xscale_pmc_dispatch, NULL);
-	if (pmu_ih == NULL)
-		panic("cpu_initclocks: unable to register timer interrupt");
-#endif
 
 	/* Set up the new clock parameters. */
 

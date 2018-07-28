@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_mmc_pwrseq.c,v 1.1 2017/10/22 13:56:49 jmcneill Exp $ */
+/* $NetBSD: fdt_mmc_pwrseq.c,v 1.1.4.1 2018/07/28 04:37:44 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,11 +27,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_mmc_pwrseq.c,v 1.1 2017/10/22 13:56:49 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_mmc_pwrseq.c,v 1.1.4.1 2018/07/28 04:37:44 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
 #include <sys/kmem.h>
+#include <sys/queue.h>
 
 #include <libfdt.h>
 #include <dev/fdt/fdtvar.h>
@@ -41,10 +42,11 @@ struct fdtbus_mmc_pwrseq {
 	int mps_phandle;
 	const struct fdtbus_mmc_pwrseq_func *mps_funcs;
 
-	struct fdtbus_mmc_pwrseq *mps_next;
+	LIST_ENTRY(fdtbus_mmc_pwrseq) mps_next;
 };
 
-static struct fdtbus_mmc_pwrseq *fdtbus_mps = NULL;
+static LIST_HEAD(, fdtbus_mmc_pwrseq) fdtbus_mmc_pwrseqs =
+    LIST_HEAD_INITIALIZER(fdtbus_mmc_pwrseqs);
 
 int
 fdtbus_register_mmc_pwrseq(device_t dev, int phandle,
@@ -57,8 +59,7 @@ fdtbus_register_mmc_pwrseq(device_t dev, int phandle,
 	mps->mps_phandle = phandle;
 	mps->mps_funcs = funcs;
 
-	mps->mps_next = fdtbus_mps;
-	fdtbus_mps = mps;
+	LIST_INSERT_HEAD(&fdtbus_mmc_pwrseqs, mps, mps_next);
 
 	return 0;
 }
@@ -68,10 +69,9 @@ fdtbus_get_mmc_pwrseq(int phandle)
 {
 	struct fdtbus_mmc_pwrseq *mps;
 
-	for (mps = fdtbus_mps; mps; mps = mps->mps_next) {
-		if (mps->mps_phandle == phandle) {
+	LIST_FOREACH(mps, &fdtbus_mmc_pwrseqs, mps_next) {
+		if (mps->mps_phandle == phandle)
 			return mps;
-		}
 	}
 
 	return NULL;

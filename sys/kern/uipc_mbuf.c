@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.181.2.6 2018/05/21 04:36:15 pgoyette Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.181.2.7 2018/07/28 04:38:08 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -62,12 +62,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.181.2.6 2018/05/21 04:36:15 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.181.2.7 2018/07/28 04:38:08 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_mbuftrace.h"
 #include "opt_nmbclusters.h"
 #include "opt_ddb.h"
+#include "ether.h"
 #endif
 
 #include <sys/param.h>
@@ -1647,6 +1648,12 @@ m_print(const struct mbuf *m, const char *modif, void (*pr)(const char *, ...))
 {
 	char ch;
 	bool opt_c = false;
+	bool opt_d = false;
+#if NETHER > 0
+	bool opt_v = false;
+	const struct mbuf *m0 = NULL;
+#endif
+	int no = 0;
 	char buf[512];
 
 	while ((ch = *(modif++)) != '\0') {
@@ -1654,14 +1661,39 @@ m_print(const struct mbuf *m, const char *modif, void (*pr)(const char *, ...))
 		case 'c':
 			opt_c = true;
 			break;
+		case 'd':
+			opt_d = true;
+			break;
+#if NETHER > 0
+		case 'v':
+			opt_v = true;
+			m0 = m;
+			break;
+#endif
+		default:
+			break;
 		}
 	}
 
 nextchain:
-	(*pr)("MBUF %p\n", m);
+	(*pr)("MBUF(%d) %p\n", no, m);
 	snprintb(buf, sizeof(buf), M_FLAGS_BITS, (u_int)m->m_flags);
 	(*pr)("  data=%p, len=%d, type=%d, flags=%s\n",
 	    m->m_data, m->m_len, m->m_type, buf);
+	if (opt_d) {
+		int i;
+		unsigned char *p = m->m_data;
+
+		(*pr)("  data:");
+
+		for (i = 0; i < m->m_len; i++) {
+			if (i % 16 == 0)
+				(*pr)("\n");
+			(*pr)(" %02x", p[i]);
+		}
+
+		(*pr)("\n");
+	}
 	(*pr)("  owner=%p, next=%p, nextpkt=%p\n", m->m_owner, m->m_next,
 	    m->m_nextpkt);
 	(*pr)("  leadingspace=%u, trailingspace=%u, readonly=%u\n",
@@ -1697,9 +1729,15 @@ nextchain:
 	if (opt_c) {
 		m = m->m_next;
 		if (m != NULL) {
+			no++;
 			goto nextchain;
 		}
 	}
+
+#if NETHER > 0
+	if (opt_v && m0)
+		m_examine(m0, AF_ETHER, modif, pr);
+#endif
 }
 #endif /* defined(DDB) */
 

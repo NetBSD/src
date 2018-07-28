@@ -1,4 +1,4 @@
-/*	$NetBSD: ne2000var.h,v 1.27 2013/08/11 12:34:16 rkujawa Exp $	*/
+/*	$NetBSD: ne2000var.h,v 1.27.28.1 2018/07/28 04:37:45 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -59,10 +59,6 @@ int	ne2000_attach(struct ne2000_softc *, uint8_t *);
 int	ne2000_detect(bus_space_tag_t, bus_space_handle_t,
 	    bus_space_tag_t, bus_space_handle_t);
 int	ne2000_detach(struct ne2000_softc *, int);
-
-#ifdef IPKDB_NE
-int	ne2000_ipkdb_attach(struct ipkdb_if *);
-#endif
 
 /* pmf(9) */
 bool ne2000_suspend(device_t, const pmf_qual_t *);

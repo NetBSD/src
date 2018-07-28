@@ -1,4 +1,4 @@
-/*	$NetBSD: i2c.c,v 1.57.2.2 2018/06/25 07:25:50 pgoyette Exp $	*/
+/*	$NetBSD: i2c.c,v 1.57.2.3 2018/07/28 04:37:44 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.57.2.2 2018/06/25 07:25:50 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.57.2.3 2018/07/28 04:37:44 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -285,7 +285,6 @@ iic_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 	}
 
 	ia.ia_tag = sc->sc_tag;
-	ia.ia_size = cf->cf_loc[IICCF_SIZE];
 	ia.ia_type = sc->sc_type;
 
 	ia.ia_name = NULL;
@@ -441,7 +440,7 @@ iic_attach(device_t parent, device_t self, void *aux)
 		unsigned int i, count;
 		prop_dictionary_t dev;
 		prop_data_t cdata;
-		uint32_t addr, size;
+		uint32_t addr;
 		uint64_t cookie;
 		const char *name;
 		struct i2c_attach_args ia;
@@ -462,10 +461,6 @@ iic_attach(device_t parent, device_t self, void *aux)
 			if (!prop_dictionary_get_uint64(dev, "cookie", &cookie))
 				cookie = 0;
 			loc[IICCF_ADDR] = addr;
-			if (prop_dictionary_get_uint32(dev, "size", &size))
-				loc[IICCF_SIZE] = size;
-			else
-				size = loc[IICCF_SIZE] = IICCF_SIZE_DEFAULT;
 
 			memset(&ia, 0, sizeof ia);
 			ia.ia_addr = addr;
@@ -473,7 +468,6 @@ iic_attach(device_t parent, device_t self, void *aux)
 			ia.ia_tag = ic;
 			ia.ia_name = name;
 			ia.ia_cookie = cookie;
-			ia.ia_size = size;
 			ia.ia_prop = dev;
 
 			buf = NULL;
@@ -695,22 +689,22 @@ iic_fill_compat(struct i2c_attach_args *ia, const char *compat, size_t len,
  *	Match a device's "compatible" property against the list
  *	of compatible strings provided by the driver.
  */
-const struct device_compatible_entry *
+int
 iic_compatible_match(const struct i2c_attach_args *ia,
 		     const struct device_compatible_entry *compats,
-		     int *match_resultp)
+		     const struct device_compatible_entry **matching_entryp)
 {
-	const struct device_compatible_entry *dce;
-	int match_weight;
+	int match_result;
 
-	dce = device_compatible_match(ia->ia_compat, ia->ia_ncompat,
-				      compats, &match_weight);
-	if (dce != NULL && match_resultp != NULL) {
-		*match_resultp = MIN(I2C_MATCH_DIRECT_COMPATIBLE + match_weight,
-				     I2C_MATCH_DIRECT_COMPATIBLE_MAX);
+	match_result = device_compatible_match(ia->ia_compat, ia->ia_ncompat,
+					       compats, matching_entryp);
+	if (match_result) {
+		match_result =
+		    MIN(I2C_MATCH_DIRECT_COMPATIBLE + match_result - 1,
+			I2C_MATCH_DIRECT_COMPATIBLE_MAX);
 	}
 
-	return dce;
+	return match_result;
 }
 
 /*
@@ -735,8 +729,7 @@ iic_use_direct_match(const struct i2c_attach_args *ia, const cfdata_t cf,
 	}
 
 	if (ia->ia_ncompat > 0 && ia->ia_compat != NULL) {
-		if (iic_compatible_match(ia, compats, match_resultp) == NULL)
-			*match_resultp = 0;
+		*match_resultp = iic_compatible_match(ia, compats, NULL);
 		return true;
 	}
 

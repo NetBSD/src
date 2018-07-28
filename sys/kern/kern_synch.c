@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.314.2.1 2018/05/21 04:36:15 pgoyette Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.314.2.2 2018/07/28 04:38:08 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008, 2009
@@ -69,10 +69,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.314.2.1 2018/05/21 04:36:15 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.314.2.2 2018/07/28 04:38:08 pgoyette Exp $");
 
 #include "opt_kstack.h"
-#include "opt_perfctrs.h"
 #include "opt_dtrace.h"
 
 #define	__MUTEX_PRIVATE
@@ -81,9 +80,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.314.2.1 2018/05/21 04:36:15 pgoyett
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/kernel.h>
-#if defined(PERFCTRS)
-#include <sys/pmc.h>
-#endif
 #include <sys/cpu.h>
 #include <sys/pserialize.h>
 #include <sys/resourcevar.h>
@@ -559,15 +555,6 @@ mi_switch(lwp_t *l)
 	if (!returning) {
 		SYSCALL_TIME_SLEEP(l);
 
-		/*
-		 * XXXSMP If we are using h/w performance counters,
-		 * save context.
-		 */
-#if PERFCTRS
-		if (PMC_ENABLED(l->l_proc)) {
-			pmc_save_context(l->l_proc);
-		}
-#endif
 		updatertime(l, &bt);
 	}
 
@@ -758,6 +745,7 @@ mi_switch(lwp_t *l)
 		retval = 1;
 	} else {
 		/* Nothing to do - just unlock and return. */
+		pserialize_switchpoint();
 		mutex_spin_exit(spc->spc_mutex);
 		lwp_unlock(l);
 		retval = 0;
@@ -766,15 +754,6 @@ mi_switch(lwp_t *l)
 	KASSERT(l == curlwp);
 	KASSERT(l->l_stat == LSONPROC);
 
-	/*
-	 * XXXSMP If we are using h/w performance counters, restore context.
-	 * XXXSMP preemption problem.
-	 */
-#if PERFCTRS
-	if (PMC_ENABLED(l->l_proc)) {
-		pmc_restore_context(l->l_proc);
-	}
-#endif
 	SYSCALL_TIME_WAKEUP(l);
 	LOCKDEBUG_BARRIER(NULL, 1);
 

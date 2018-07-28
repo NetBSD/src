@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_clock.c,v 1.136 2018/02/04 17:31:51 maxv Exp $	*/
+/*	$NetBSD: kern_clock.c,v 1.136.2.1 2018/07/28 04:38:08 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -69,11 +69,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.136 2018/02/04 17:31:51 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.136.2.1 2018/07/28 04:38:08 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_dtrace.h"
-#include "opt_perfctrs.h"
 #include "opt_gprof.h"
 #endif
 
@@ -302,48 +301,6 @@ stopprofclock(struct proc *p)
 			psdiv = 1;
 	}
 }
-
-#if defined(PERFCTRS)
-/*
- * Independent profiling "tick" in case we're using a separate
- * clock or profiling event source.  Currently, that's just
- * performance counters--hence the wrapper.
- */
-void
-proftick(struct clockframe *frame)
-{
-#ifdef GPROF
-        struct gmonparam *g;
-        intptr_t i;
-#endif
-	struct lwp *l;
-	struct proc *p;
-
-	l = curcpu()->ci_data.cpu_onproc;
-	p = (l ? l->l_proc : NULL);
-	if (CLKF_USERMODE(frame)) {
-		mutex_spin_enter(&p->p_stmutex);
-		if (p->p_stflag & PST_PROFIL)
-			addupc_intr(l, CLKF_PC(frame));
-		mutex_spin_exit(&p->p_stmutex);
-	} else {
-#ifdef GPROF
-		g = &_gmonparam;
-		if (g->state == GMON_PROF_ON) {
-			i = CLKF_PC(frame) - g->lowpc;
-			if (i < g->textsize) {
-				i /= HISTFRACTION * sizeof(*g->kcount);
-				g->kcount[i]++;
-			}
-		}
-#endif
-#ifdef LWP_PC
-		if (p != NULL && (p->p_stflag & PST_PROFIL) != 0)
-			addupc_intr(l, LWP_PC(l));
-#endif
-	}
-}
-#endif
 
 void
 schedclock(struct lwp *l)

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.191.2.1 2018/05/02 07:20:22 pgoyette Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.191.2.2 2018/07/28 04:38:08 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -211,7 +211,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.191.2.1 2018/05/02 07:20:22 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.191.2.2 2018/07/28 04:38:08 pgoyette Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -1846,7 +1846,7 @@ lwp_ctl_alloc(vaddr_t *uaddr)
 			i = 0;
 	}
 	bit = ffs(lcp->lcp_bitmap[i]) - 1;
-	lcp->lcp_bitmap[i] ^= (1 << bit);
+	lcp->lcp_bitmap[i] ^= (1U << bit);
 	lcp->lcp_rotor = i;
 	lcp->lcp_nfree--;
 	l->l_lcpage = lcp;
@@ -1889,7 +1889,7 @@ lwp_ctl_free(lwp_t *l)
 	mutex_enter(&lp->lp_lock);
 	lcp->lcp_nfree++;
 	map = offset >> 5;
-	lcp->lcp_bitmap[map] |= (1 << (offset & 31));
+	lcp->lcp_bitmap[map] |= (1U << (offset & 31));
 	if (lcp->lcp_bitmap[lcp->lcp_rotor] == 0)
 		lcp->lcp_rotor = map;
 	if (TAILQ_FIRST(&lp->lp_pages)->lcp_nfree == 0) {

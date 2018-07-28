@@ -1,4 +1,4 @@
-/*	$NetBSD: bpfdesc.h,v 1.45 2018/01/25 02:45:02 ozaki-r Exp $	*/
+/*	$NetBSD: bpfdesc.h,v 1.45.2.1 2018/07/28 04:38:09 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -97,7 +97,7 @@ struct bpf_d {
 	u_char		bd_state;	/* idle, waiting, or timed out */
 	u_char		bd_immediate;	/* true to return on packet arrival */
 	int		bd_hdrcmplt;	/* false to fill in src lladdr */
-	int		bd_seesent;	/* true if bpf should see sent packets */
+	u_int		bd_direction;	/* select packet direction */
 	int 		bd_feedback;	/* true to feed back sent packets */
 	int		bd_async;	/* non-zero if packet reception should generate signal */
 	pid_t		bd_pgid;	/* process or group id for signal */
@@ -149,7 +149,7 @@ struct bpf_d_ext {
 	uint8_t		bde_state;
 	uint8_t		bde_immediate;
 	int32_t		bde_hdrcmplt;
-	int32_t		bde_seesent;
+	uint32_t	bde_direction;
 	pid_t		bde_pid;
 	uint64_t	bde_rcount;		/* number of packets received */
 	uint64_t	bde_dcount;		/* number of packets dropped */

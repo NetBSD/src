@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.249.2.3 2018/05/02 07:20:24 pgoyette Exp $	*/
+/*	$NetBSD: key.c,v 1.249.2.4 2018/07/28 04:38:11 pgoyette Exp $	*/
 /*	$FreeBSD: key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.249.2.3 2018/05/02 07:20:24 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.249.2.4 2018/07/28 04:38:11 pgoyette Exp $");
 
 /*
  * This code is referred to RFC 2367
@@ -113,7 +113,7 @@ __KERNEL_RCSID(0, "$NetBSD: key.c,v 1.249.2.3 2018/05/02 07:20:24 pgoyette Exp $
 #include <netipsec/xform.h>
 #include <netipsec/ipcomp.h>
 
-#define FULLMASK	0xff
+#define FULLMASK	0xffu
 #define	_BITS(bytes)	((bytes) << 3)
 
 #define PORT_NONE	0
@@ -994,7 +994,8 @@ key_gettunnel(const struct sockaddr *osrc,
 	KEYDEBUG_PRINTF(KEYDEBUG_IPSEC_STAMP, "DP from %s:%u\n", where, tag);
 
 	if (isrc->sa_family != idst->sa_family) {
-		IPSECLOG(LOG_ERR, "protocol family mismatched %d != %d\n.",
+		IPSECLOG(LOG_ERR,
+		    "address family mismatched src %u, dst %u.\n",
 		    isrc->sa_family, idst->sa_family);
 		sp = NULL;
 		goto done;
@@ -1185,14 +1186,14 @@ key_sendup_message_delete(struct secasvar *sav)
 
 	/* set sadb_address for saidx's. */
 	m = key_setsadbaddr(SADB_EXT_ADDRESS_SRC, &sav->sah->saidx.src.sa,
-	    sav->sah->saidx.src.sa.sa_len << 3, IPSEC_ULPROTO_ANY);
+	    _BITS(sav->sah->saidx.src.sa.sa_len), IPSEC_ULPROTO_ANY);
 	if (m == NULL)
 		goto msgfail;
 	m_cat(result, m);
 
 	/* set sadb_address for saidx's. */
 	m = key_setsadbaddr(SADB_EXT_ADDRESS_DST, &sav->sah->saidx.src.sa,
-	    sav->sah->saidx.src.sa.sa_len << 3, IPSEC_ULPROTO_ANY);
+	    _BITS(sav->sah->saidx.src.sa.sa_len), IPSEC_ULPROTO_ANY);
 	if (m == NULL)
 		goto msgfail;
 	m_cat(result, m);
@@ -3458,7 +3459,9 @@ key_checkspidup(const struct secasindex *saidx, u_int32_t spi)
 
 	/* check address family */
 	if (saidx->src.sa.sa_family != saidx->dst.sa.sa_family) {
-		IPSECLOG(LOG_DEBUG, "address family mismatched.\n");
+		IPSECLOG(LOG_DEBUG,
+		    "address family mismatched src %u, dst %u.\n",
+		    saidx->src.sa.sa_family, saidx->dst.sa.sa_family);
 		return false;
 	}
 
@@ -3764,6 +3767,31 @@ key_init_xform(struct secasvar *sav)
 		break;
 	}
 
+	/* check algo */
+	switch (sav->sah->saidx.proto) {
+	case IPPROTO_AH:
+	case IPPROTO_TCP:
+		if (sav->alg_enc != SADB_EALG_NONE) {
+			IPSECLOG(LOG_DEBUG,
+			    "protocol %u and algorithm mismatched %u != %u.\n",
+			    sav->sah->saidx.proto,
+			    sav->alg_enc, SADB_EALG_NONE);
+			return EINVAL;
+		}
+		break;
+	case IPPROTO_IPCOMP:
+		if (sav->alg_auth != SADB_AALG_NONE) {
+			IPSECLOG(LOG_DEBUG,
+			    "protocol %u and algorithm mismatched %d != %d.\n",
+			    sav->sah->saidx.proto,
+			    sav->alg_auth, SADB_AALG_NONE);
+			return(EINVAL);
+		}
+		break;
+	default:
+		break;
+	}
+
 	/* check satype */
 	switch (sav->sah->saidx.proto) {
 	case IPPROTO_ESP:
@@ -3783,32 +3811,17 @@ key_init_xform(struct secasvar *sav)
 			    "invalid flag (derived) given to AH SA.\n");
 			return EINVAL;
 		}
-		if (sav->alg_enc != SADB_EALG_NONE) {
-			IPSECLOG(LOG_DEBUG,
-			    "protocol and algorithm mismated.\n");
-			return(EINVAL);
-		}
 		error = xform_init(sav, XF_AH);
 		break;
 	case IPPROTO_IPCOMP:
-		if (sav->alg_auth != SADB_AALG_NONE) {
-			IPSECLOG(LOG_DEBUG,
-			    "protocol and algorithm mismated.\n");
-			return(EINVAL);
-		}
 		if ((sav->flags & SADB_X_EXT_RAWCPI) == 0
-		 && ntohl(sav->spi) >= 0x10000) {
+		    && ntohl(sav->spi) >= 0x10000) {
 			IPSECLOG(LOG_DEBUG, "invalid cpi for IPComp.\n");
 			return(EINVAL);
 		}
 		error = xform_init(sav, XF_IPCOMP);
 		break;
 	case IPPROTO_TCP:
-		if (sav->alg_enc != SADB_EALG_NONE) {
-			IPSECLOG(LOG_DEBUG,
-			    "protocol and algorithm mismated.\n");
-			return(EINVAL);
-		}
 		error = xform_init(sav, XF_TCPSIGNATURE);
 		break;
 	default:
@@ -4217,6 +4230,19 @@ key_setsadbsa(struct secasvar *sav)
 	return m;
 }
 
+static uint8_t
+key_sabits(const struct sockaddr *saddr)
+{
+	switch (saddr->sa_family) {
+	case AF_INET:
+		return _BITS(sizeof(struct in_addr));
+	case AF_INET6:
+		return _BITS(sizeof(struct in6_addr));
+	default:
+		return FULLMASK;
+	}
+}
+
 /*
  * set data into sadb_address.
  */
@@ -4244,16 +4270,7 @@ key_setsadbaddr(u_int16_t exttype, const struct sockaddr *saddr,
 	p->sadb_address_exttype = exttype;
 	p->sadb_address_proto = ul_proto;
 	if (prefixlen == FULLMASK) {
-		switch (saddr->sa_family) {
-		case AF_INET:
-			prefixlen = sizeof(struct in_addr) << 3;
-			break;
-		case AF_INET6:
-			prefixlen = sizeof(struct in6_addr) << 3;
-			break;
-		default:
-			; /*XXX*/
-		}
+		prefixlen = key_sabits(saddr);
 	}
 	p->sadb_address_prefixlen = prefixlen;
 	p->sadb_address_reserved = 0;
@@ -6020,7 +6037,8 @@ key_setident(struct secashead *sah, struct mbuf *m,
 
 	/* validity check */
 	if (idsrc->sadb_ident_type != iddst->sadb_ident_type) {
-		IPSECLOG(LOG_DEBUG, "ident type mismatch.\n");
+		IPSECLOG(LOG_DEBUG, "ident type mismatched src %u, dst %u.\n",
+		    idsrc->sadb_ident_type, iddst->sadb_ident_type);
 		return EINVAL;
 	}
 
@@ -7842,47 +7860,50 @@ key_parse(struct mbuf *m, struct socket *so)
 		/* check upper layer protocol */
 		if (src0->sadb_address_proto != dst0->sadb_address_proto) {
 			IPSECLOG(LOG_DEBUG,
-			    "upper layer protocol mismatched.\n");
+			    "upper layer protocol mismatched src %u, dst %u.\n",
+			    src0->sadb_address_proto, dst0->sadb_address_proto);
+
 			goto invaddr;
 		}
 
 		/* check family */
 		if (sa0->sa_family != da0->sa_family) {
-			IPSECLOG(LOG_DEBUG, "address family mismatched.\n");
+			IPSECLOG(LOG_DEBUG,
+			    "address family mismatched src %u, dst %u.\n",
+			    sa0->sa_family, da0->sa_family);
 			goto invaddr;
 		}
 		if (sa0->sa_len != da0->sa_len) {
 			IPSECLOG(LOG_DEBUG,
-			    "address struct size mismatched.\n");
+			    "address size mismatched src %u, dst %u.\n",
+			    sa0->sa_len, da0->sa_len);
 			goto invaddr;
 		}
 
 		switch (sa0->sa_family) {
 		case AF_INET:
-			if (sa0->sa_len != sizeof(struct sockaddr_in))
+			if (sa0->sa_len != sizeof(struct sockaddr_in)) {
+				IPSECLOG(LOG_DEBUG,
+				    "address size mismatched %u != %zu.\n",
+				    sa0->sa_len, sizeof(struct sockaddr_in));
 				goto invaddr;
+			}
 			break;
 		case AF_INET6:
-			if (sa0->sa_len != sizeof(struct sockaddr_in6))
+			if (sa0->sa_len != sizeof(struct sockaddr_in6)) {
+				IPSECLOG(LOG_DEBUG,
+				    "address size mismatched %u != %zu.\n",
+				    sa0->sa_len, sizeof(struct sockaddr_in6));
 				goto invaddr;
+			}
 			break;
 		default:
-			IPSECLOG(LOG_DEBUG, "unsupported address family.\n");
+			IPSECLOG(LOG_DEBUG, "unsupported address family %u.\n",
+			    sa0->sa_family);
 			error = EAFNOSUPPORT;
 			goto senderror;
 		}
-
-		switch (sa0->sa_family) {
-		case AF_INET:
-			plen = sizeof(struct in_addr) << 3;
-			break;
-		case AF_INET6:
-			plen = sizeof(struct in6_addr) << 3;
-			break;
-		default:
-			plen = 0;	/*fool gcc*/
-			break;
-		}
+		plen = key_sabits(sa0);
 
 		/* check max prefix length */
 		if (src0->sadb_address_prefixlen > plen ||

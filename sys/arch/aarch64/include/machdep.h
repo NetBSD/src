@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.h,v 1.1.2.2 2018/04/07 04:12:11 pgoyette Exp $	*/
+/*	$NetBSD: machdep.h,v 1.1.2.3 2018/07/28 04:37:26 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -65,6 +65,10 @@ extern void (*cpu_powerdown_address)(void);
 
 extern char *booted_kernel;
 
+#ifdef MULTIPROCESSOR
+extern u_int arm_cpu_max;
+#endif
+
 vaddr_t initarm_common(vaddr_t, vsize_t, const struct boot_physmem *, size_t);
 
 void parse_mi_bootargs(char *);
@@ -73,7 +77,7 @@ void dumpsys(void);
 struct trapframe;
 
 /* fault.c */
-void data_abort_handler(struct trapframe *, uint32_t, const char *);
+void data_abort_handler(struct trapframe *, uint32_t);
 
 /* trap.c */
 void lwp_trampoline(void);
@@ -130,18 +134,21 @@ struct fpreg;
 void load_fpregs(struct fpreg *);
 void save_fpregs(struct fpreg *);
 
-static inline void
-do_trapsignal(struct lwp *l, int signo, int code, void *addr, int trap)
-{
-	ksiginfo_t ksi;
+#ifdef TRAP_SIGDEBUG
+#define do_trapsignal(l, signo, code, addr, trap) \
+    do_trapsignal1(__func__, __LINE__, tf, l, signo, code, addr, trap)
+#else
+#define do_trapsignal(l, signo, code, addr, trap) \
+    do_trapsignal1(l, signo, code, addr, trap)
+#endif
 
-	KSI_INIT_TRAP(&ksi);
-	ksi.ksi_signo = signo;
-	ksi.ksi_code = code;
-	ksi.ksi_addr = addr;
-	ksi.ksi_trap = trap;
-	(*l->l_proc->p_emul->e_trapsignal)(l, &ksi);
-}
+void do_trapsignal1(
+#ifdef TRAP_SIGDEBUG
+    const char *func, size_t line, struct trapframe *tf,
+#endif
+    struct lwp *l, int signo, int code, void *addr, int trap);
+
+const char *eclass_trapname(uint32_t);
 
 #include <sys/pcu.h>
 

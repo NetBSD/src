@@ -1,4 +1,4 @@
-/*	$NetBSD: umodeswitch.c,v 1.3 2017/08/05 12:38:08 khorben Exp $	*/
+/*	$NetBSD: umodeswitch.c,v 1.3.6.1 2018/07/28 04:37:58 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2009, 2017 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umodeswitch.c,v 1.3 2017/08/05 12:38:08 khorben Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umodeswitch.c,v 1.3.6.1 2018/07/28 04:37:58 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -401,8 +401,8 @@ umodeswitch_match(device_t parent, cfdata_t match, void *aux)
 		}
 		break;
 
-	case USB_VENDOR_QUALCOMM:
-		if (uaa->uaa_product == USB_PRODUCT_QUALCOMM_NTT_DOCOMO_L02C_STORAGE)
+	case USB_VENDOR_LG:
+		if (uaa->uaa_product == USB_PRODUCT_LG_NTT_DOCOMO_L02C_STORAGE)
 			return u3g_bulk_scsi_eject(uaa->uaa_device);
 		break;
 
@@ -431,8 +431,8 @@ umodeswitch_match(device_t parent, cfdata_t match, void *aux)
 		}
 		break;
 
-	case USB_VENDOR_4GSYSTEMS:
-		if (uaa->uaa_product == USB_PRODUCT_4GSYSTEMS_XSSTICK_P14_INSTALLER)
+	case USB_VENDOR_LONGCHEER:
+		if (uaa->uaa_product == USB_PRODUCT_LONGCHEER_XSSTICK_P14_INSTALLER)
 			return u3g_4gsystems_reinit(uaa->uaa_device);
 		break;
 

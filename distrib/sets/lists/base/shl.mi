@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.832.2.5 2018/06/25 07:25:09 pgoyette Exp $
+# $NetBSD: shl.mi,v 1.832.2.6 2018/07/28 04:32:59 pgoyette Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -381,6 +381,9 @@
 ./usr/lib/libldap_r.so				base-ldap-shlib		ldap,compatfile
 ./usr/lib/libldap_r.so.4			base-ldap-shlib		ldap,compatfile
 ./usr/lib/libldap_r.so.4.3			base-ldap-shlib		ldap,compatfile
+./usr/lib/liblsan.so				base-sys-shlib		compatfile,gcc
+./usr/lib/liblsan.so.1				base-sys-shlib		compatfile,gcc=6
+./usr/lib/liblsan.so.1.0			base-sys-shlib		compatfile,gcc=6
 ./usr/lib/liblua.so				base-sys-shlib		compatfile
 ./usr/lib/liblua.so.5				base-sys-shlib		compatfile
 ./usr/lib/liblua.so.5.3				base-sys-shlib		compatfile

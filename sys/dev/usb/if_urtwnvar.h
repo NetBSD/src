@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urtwnvar.h,v 1.10 2016/10/12 03:23:29 nat Exp $	*/
+/*	$NetBSD: if_urtwnvar.h,v 1.10.14.1 2018/07/28 04:37:58 pgoyette Exp $	*/
 /*	$OpenBSD: if_urtwnreg.h,v 1.3 2010/11/16 18:02:59 damien Exp $	*/
 
 /*-
@@ -28,7 +28,7 @@
 #define URTWN_HOST_CMD_RING_COUNT	32
 
 #define URTWN_RXBUFSZ	(16 * 1024)
-#define URTWN_TXBUFSZ	(sizeof(struct r92c_tx_desc) + IEEE80211_MAX_LEN + 8)
+#define URTWN_TXBUFSZ	(sizeof(struct r92c_tx_desc_usb) + IEEE80211_MAX_LEN + 8)
 
 #define URTWN_RIDX_COUNT	28
 

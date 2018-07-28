@@ -1,5 +1,5 @@
-/*	$Id: mpcsa_machdep.c,v 1.9 2013/08/18 15:58:20 matt Exp $	*/
-/*	$NetBSD: mpcsa_machdep.c,v 1.9 2013/08/18 15:58:20 matt Exp $	*/
+/*	$Id: mpcsa_machdep.c,v 1.9.28.1 2018/07/28 04:37:32 pgoyette Exp $	*/
+/*	$NetBSD: mpcsa_machdep.c,v 1.9.28.1 2018/07/28 04:37:32 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2007 Embedtronics Oy
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpcsa_machdep.c,v 1.9 2013/08/18 15:58:20 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpcsa_machdep.c,v 1.9.28.1 2018/07/28 04:37:32 pgoyette Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -148,7 +148,6 @@ __KERNEL_RCSID(0, "$NetBSD: mpcsa_machdep.c,v 1.9 2013/08/18 15:58:20 matt Exp $
 #include <arm/at91/at91rm9200reg.h>
 #include <arm/at91/at91rm9200busvar.h>
 
-#include "opt_ipkdb.h"
 #include "ksyms.h"
 
 #include <arm/at91/at91busvar.h>

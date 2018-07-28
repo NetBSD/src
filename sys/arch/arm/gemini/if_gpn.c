@@ -1,4 +1,4 @@
-/* $NetBSD: if_gpn.c,v 1.8 2017/06/25 12:44:04 maxv Exp $ */
+/* $NetBSD: if_gpn.c,v 1.8.4.1 2018/07/28 04:37:28 pgoyette Exp $ */
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include "opt_gemini.h"
 
-__KERNEL_RCSID(0, "$NetBSD: if_gpn.c,v 1.8 2017/06/25 12:44:04 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gpn.c,v 1.8.4.1 2018/07/28 04:37:28 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -404,7 +404,7 @@ gpn_ifstart(struct ifnet *ifp)
 			return;
 		}
 
-		bpf_mtap(ifp, m);
+		bpf_mtap(ifp, m, BPF_D_OUT);
 #ifdef GPNDEBUG
 		printf("%s: tx len=%d crc=%#x\n", ifp->if_xname,
 		    m->m_pkthdr.len, m_crc32_le(m));

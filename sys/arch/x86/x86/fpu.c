@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.28.2.1 2018/06/25 07:25:47 pgoyette Exp $	*/
+/*	$NetBSD: fpu.c,v 1.28.2.2 2018/07/28 04:37:42 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.  All
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.28.2.1 2018/06/25 07:25:47 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.28.2.2 2018/07/28 04:37:42 pgoyette Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -359,6 +359,20 @@ fpu_eagerswitch(struct lwp *oldlwp, struct lwp *newlwp)
 	int s;
 
 	s = splhigh();
+#ifdef DIAGNOSTIC
+	if (oldlwp != NULL) {
+		struct pcb *pcb = lwp_getpcb(oldlwp);
+		struct cpu_info *ci = curcpu();
+		if (pcb->pcb_fpcpu == NULL) {
+			KASSERT(ci->ci_fpcurlwp != oldlwp);
+		} else if (pcb->pcb_fpcpu == ci) {
+			KASSERT(ci->ci_fpcurlwp == oldlwp);
+		} else {
+			panic("%s: oldlwp's state installed elsewhere",
+			    __func__);
+		}
+	}
+#endif
 	fpusave_cpu(true);
 	if (!(newlwp->l_flag & LW_SYSTEM))
 		fpu_eagerrestore(newlwp);
@@ -647,24 +661,36 @@ fpu_save_area_clear(struct lwp *l, unsigned int x87_cw)
 	}
 	KASSERT(pcb->pcb_fpcpu == NULL);
 
-	if (i386_use_fxsave) {
+	switch (x86_fpu_save) {
+	case FPU_SAVE_FSAVE:
+		memset(&fpu_save->sv_87, 0, x86_fpu_save_size);
+		fpu_save->sv_87.s87_tw = 0xffff;
+		fpu_save->sv_87.s87_cw = x87_cw;
+		break;
+	case FPU_SAVE_FXSAVE:
+		memset(&fpu_save->sv_xmm, 0, x86_fpu_save_size);
+		fpu_save->sv_xmm.fx_mxcsr = __INITIAL_MXCSR__;
+		fpu_save->sv_xmm.fx_mxcsr_mask = x86_fpu_mxcsr_mask;
+		fpu_save->sv_xmm.fx_cw = x87_cw;
+		break;
+	case FPU_SAVE_XSAVE:
+	case FPU_SAVE_XSAVEOPT:
 		memset(&fpu_save->sv_xmm, 0, x86_fpu_save_size);
 		fpu_save->sv_xmm.fx_mxcsr = __INITIAL_MXCSR__;
 		fpu_save->sv_xmm.fx_mxcsr_mask = x86_fpu_mxcsr_mask;
 		fpu_save->sv_xmm.fx_cw = x87_cw;
 
-		/* Force a reload of CW */
-		if ((x87_cw != __INITIAL_NPXCW__) &&
-		    (x86_fpu_save == FPU_SAVE_XSAVE ||
-		    x86_fpu_save == FPU_SAVE_XSAVEOPT)) {
+		/*
+		 * Force a reload of CW if we're using the non-default
+		 * value.
+		 */
+		if (__predict_false(x87_cw != __INITIAL_NPXCW__)) {
 			fpu_save->sv_xsave_hdr.xsh_xstate_bv |=
 			    XCR0_X87;
 		}
-	} else {
-		memset(&fpu_save->sv_87, 0, x86_fpu_save_size);
-		fpu_save->sv_87.s87_tw = 0xffff;
-		fpu_save->sv_87.s87_cw = x87_cw;
+		break;
 	}
+
 	pcb->pcb_fpu_dflt_cw = x87_cw;
 
 	if (x86_fpu_eager) {
@@ -697,17 +723,10 @@ fpu_save_area_reset(struct lwp *l)
 void
 fpu_save_area_fork(struct pcb *pcb2, const struct pcb *pcb1)
 {
-	ssize_t extra;
+	const uint8_t *src = (const uint8_t *)&pcb1->pcb_savefpu;
+	uint8_t *dst = (uint8_t *)&pcb2->pcb_savefpu;
 
-	/*
-	 * The pcb itself has been copied, but the xsave area
-	 * extends further.
-	 */
-	extra = offsetof(struct pcb, pcb_savefpu) + x86_fpu_save_size -
-	    sizeof (struct pcb);
-
-	if (extra > 0)
-		memcpy(pcb2 + 1, pcb1 + 1, extra);
+	memcpy(dst, src, x86_fpu_save_size);
 
 	KASSERT(pcb2->pcb_fpcpu == NULL);
 }

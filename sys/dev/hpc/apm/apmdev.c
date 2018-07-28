@@ -1,4 +1,4 @@
-/*	$NetBSD: apmdev.c,v 1.31 2017/10/25 08:12:38 maya Exp $ */
+/*	$NetBSD: apmdev.c,v 1.31.2.1 2018/07/28 04:37:44 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apmdev.c,v 1.31 2017/10/25 08:12:38 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apmdev.c,v 1.31.2.1 2018/07/28 04:37:44 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_apm.h"
@@ -137,7 +137,6 @@ const struct cdevsw apmdev_cdevsw = {
 };
 
 /* configurable variables */
-int	apm_bogus_bios = 0;
 #ifdef APM_NO_STANDBY
 int	apm_do_standby = 0;
 #else

@@ -1,4 +1,4 @@
-/* $NetBSD: ecma167-udf.h,v 1.14 2011/07/07 17:45:38 reinoud Exp $ */
+/* $NetBSD: ecma167-udf.h,v 1.14.52.1 2018/07/28 04:38:08 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2003, 2004, 2005, 2006, 2008, 2009
@@ -203,14 +203,14 @@ union icb {
 
 
 /* short/long/ext extent have flags encoded in length */
-#define UDF_EXT_ALLOCATED              (0<<30)
-#define UDF_EXT_FREED                  (1<<30)
-#define UDF_EXT_ALLOCATED_BUT_NOT_USED (1<<30)
-#define UDF_EXT_FREE                   (2<<30)
-#define UDF_EXT_REDIRECT               (3<<30)
-#define UDF_EXT_FLAGS(len) ((len) & (3<<30))
-#define UDF_EXT_LEN(len)   ((len) & ((1<<30)-1))
-#define UDF_EXT_MAXLEN     ((1<<30)-1)
+#define UDF_EXT_ALLOCATED              (0U<<30)
+#define UDF_EXT_FREED                  (1U<<30)
+#define UDF_EXT_ALLOCATED_BUT_NOT_USED (1U<<30)
+#define UDF_EXT_FREE                   (2U<<30)
+#define UDF_EXT_REDIRECT               (3U<<30)
+#define UDF_EXT_FLAGS(len) ((len) & (3U<<30))
+#define UDF_EXT_LEN(len)   ((len) & ((1U<<30)-1))
+#define UDF_EXT_MAXLEN     ((1U<<30)-1)
 
 
 /* Character set spec [1/7.2.1] */
@@ -832,4 +832,3 @@ union dscrptr {
 
 
 #endif /* !_FS_UDF_ECMA167_UDF_H_ */
-

@@ -1,4 +1,4 @@
-/*	$NetBSD: arm11_pmc.c,v 1.4 2013/12/01 02:53:46 joerg Exp $	*/
+/*	$NetBSD: arm11_pmc.c,v 1.4.28.1 2018/07/28 04:37:27 pgoyette Exp $	*/
 
 /* Copyright (c) 2007 Microsoft
  * All rights reserved.
@@ -34,8 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm11_pmc.c,v 1.4 2013/12/01 02:53:46 joerg Exp $");
-#include "opt_perfctrs.h"
+__KERNEL_RCSID(0, "$NetBSD: arm11_pmc.c,v 1.4.28.1 2018/07/28 04:37:27 pgoyette Exp $");
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>

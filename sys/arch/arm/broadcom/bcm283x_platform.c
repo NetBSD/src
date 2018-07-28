@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm283x_platform.c,v 1.2.2.3 2018/06/25 07:25:39 pgoyette Exp $	*/
+/*	$NetBSD: bcm283x_platform.c,v 1.2.2.4 2018/07/28 04:37:27 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2017 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm283x_platform.c,v 1.2.2.3 2018/06/25 07:25:39 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm283x_platform.c,v 1.2.2.4 2018/07/28 04:37:27 pgoyette Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_bcm283x.h"
@@ -616,7 +616,7 @@ bcm283x_uartinit(bus_space_tag_t iot, bus_space_handle_t ioh)
 	uint32_t res;
 
 	bcm2835_mbox_write(iot, ioh, BCMMBOX_CHANARM2VC,
-	    KERN_VTOPHYS(&vb_uart));
+	    KERN_VTOPHYS((vaddr_t)&vb_uart));
 
 	bcm2835_mbox_read(iot, ioh, BCMMBOX_CHANARM2VC, &res);
 
@@ -680,7 +680,8 @@ bcm283x_bootparams(bus_space_tag_t iot, bus_space_handle_t ioh)
 #endif
 	    0) << 4);
 
-	bcm2835_mbox_write(iot, ioh, BCMMBOX_CHANARM2VC, KERN_VTOPHYS(&vb));
+	bcm2835_mbox_write(iot, ioh, BCMMBOX_CHANARM2VC,
+	    KERN_VTOPHYS((vaddr_t)&vb));
 
 	bcm2835_mbox_read(iot, ioh, BCMMBOX_CHANARM2VC, &res);
 
@@ -728,13 +729,13 @@ bcm283x_bootparams(bus_space_tag_t iot, bus_space_handle_t ioh)
 		printf("%s: board model  %x\n", __func__,
 		    vb.vbt_boardmodel.model);
 	if (vcprop_tag_success_p(&vb.vbt_macaddr.tag))
-		printf("%s: mac-address  %llx\n", __func__,
+		printf("%s: mac-address  %" PRIx64 "\n", __func__,
 		    vb.vbt_macaddr.addr);
 	if (vcprop_tag_success_p(&vb.vbt_boardrev.tag))
 		printf("%s: board rev    %x\n", __func__,
 		    vb.vbt_boardrev.rev);
 	if (vcprop_tag_success_p(&vb.vbt_serial.tag))
-		printf("%s: board serial %llx\n", __func__,
+		printf("%s: board serial %" PRIx64 "\n", __func__,
 		    vb.vbt_serial.sn);
 	if (vcprop_tag_success_p(&vb.vbt_dmachan.tag))
 		printf("%s: DMA channel mask 0x%08x\n", __func__,
@@ -774,18 +775,51 @@ bcm2836_bootstrap(void)
 {
 #define RPI_CPU_MAX	4
 
-#ifdef MULTIPROCESSOR
-	extern int cortex_mmuinfo;
-
-	arm_cpu_max = RPI_CPU_MAX;
-	cortex_mmuinfo = armreg_ttbr_read();
 #ifdef VERBOSE_INIT_ARM
-	printf("%s: %d cpus present\n", __func__, arm_cpu_max);
-	printf("%s: cortex_mmuinfo %x\n", __func__, cortex_mmuinfo);
-#endif
+#define DPRINTF(...)	printf(__VA_ARGS__)
+#else
+#define DPRINTF(...)
 #endif
 
-#ifndef __aarch64__
+#ifdef MULTIPROCESSOR
+	arm_cpu_max = RPI_CPU_MAX;
+	DPRINTF("%s: %d cpus present\n", __func__, arm_cpu_max);
+#ifdef __arm__
+	extern int cortex_mmuinfo;
+	cortex_mmuinfo = armreg_ttbr_read();
+	DPRINTF("%s: cortex_mmuinfo %x\n", __func__, cortex_mmuinfo);
+#endif
+#endif /* MULTIPROCESSOR */
+
+#ifdef __aarch64__
+	/*
+	 * XXX: use psci_fdt_bootstrap()
+	 */
+	extern void aarch64_mpstart(void);
+	for (int i = 1; i < RPI_CPU_MAX; i++) {
+		/*
+		 * Reference:
+		 *   armstubs/armstub8.S
+		 *   in https://github.com/raspberrypi/tools
+		 */
+		volatile uint64_t *cpu_release_addr;
+#define RPI3_ARMSTUB8_SPINADDR_BASE	0x000000d8
+		cpu_release_addr = (void *)
+		    AARCH64_PA_TO_KVA(RPI3_ARMSTUB8_SPINADDR_BASE + i * 8);
+		*cpu_release_addr = aarch64_kern_vtophys((vaddr_t)aarch64_mpstart);
+
+		/* need flush cache. secondary processors are cache disabled */
+		cpu_dcache_wb_range((vaddr_t)cpu_release_addr, sizeof(cpu_release_addr));
+		__asm __volatile("sev" ::: "memory");
+
+#if defined(VERBOSE_INIT_ARM) && defined(EARLYCONS)
+		/* wait secondary processor's debug output */
+		gtmr_delay(100000);
+#endif
+	}
+#endif /* __aarch64__ */
+
+#ifdef __arm__
 	/*
 	 * Even if no options MULTIPROCESSOR,
 	 * It is need to initialize the secondary CPU,
@@ -803,6 +837,7 @@ bcm2836_bootstrap(void)
 		    (uint32_t)cortex_mpstart);
 	}
 #endif
+
 #ifdef MULTIPROCESSOR
 	/* Wake up AP in case firmware has placed it in WFE state */
 	__asm __volatile("sev" ::: "memory");
@@ -819,6 +854,10 @@ bcm2836_bootstrap(void)
 			    __func__, i);
 		}
 	}
+#if defined(VERBOSE_INIT_ARM) && defined(EARLYCONS)
+	/* for viewability of secondary processor's debug outputs */
+	printf("\n");
+#endif
 #endif
 }
 

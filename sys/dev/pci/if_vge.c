@@ -1,4 +1,4 @@
-/* $NetBSD: if_vge.c,v 1.62 2018/01/14 17:43:55 maxv Exp $ */
+/* $NetBSD: if_vge.c,v 1.62.2.1 2018/07/28 04:37:46 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2004
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vge.c,v 1.62 2018/01/14 17:43:55 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vge.c,v 1.62.2.1 2018/07/28 04:37:46 pgoyette Exp $");
 
 /*
  * VIA Networking Technologies VT612x PCI gigabit ethernet NIC driver.
@@ -938,7 +938,7 @@ vge_attach(device_t parent, device_t self, void *aux)
 	eaddr[4] = val & 0xff;
 	eaddr[5] = val >> 8;
 
-	aprint_normal_dev(self, "Ethernet address: %s\n",
+	aprint_normal_dev(self, "Ethernet address %s\n",
 	    ether_sprintf(eaddr));
 
 	/*
@@ -1677,7 +1677,7 @@ vge_start(struct ifnet *ifp)
 		 * If there's a BPF listener, bounce a copy of this frame
 		 * to him.
 		 */
-		bpf_mtap(ifp, m_head);
+		bpf_mtap(ifp, m_head, BPF_D_OUT);
 	}
 
 	if (sc->sc_tx_free < ofree) {

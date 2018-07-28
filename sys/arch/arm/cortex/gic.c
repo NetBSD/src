@@ -1,4 +1,4 @@
-/*	$NetBSD: gic.c,v 1.32.2.2 2018/05/02 07:20:03 pgoyette Exp $	*/
+/*	$NetBSD: gic.c,v 1.32.2.3 2018/07/28 04:37:27 pgoyette Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -34,7 +34,7 @@
 #define _INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gic.c,v 1.32.2.2 2018/05/02 07:20:03 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gic.c,v 1.32.2.3 2018/07/28 04:37:27 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -75,6 +75,8 @@ static void armgic_source_name(struct pic_softc *, int, char *, size_t);
 #ifdef MULTIPROCESSOR
 static void armgic_cpu_init(struct pic_softc *, struct cpu_info *);
 static void armgic_ipi_send(struct pic_softc *, const kcpuset_t *, u_long);
+static void armgic_get_affinity(struct pic_softc *, size_t, kcpuset_t *);
+static int armgic_set_affinity(struct pic_softc *, size_t, const kcpuset_t *);
 #endif
 
 static const struct pic_ops armgic_picops = {
@@ -88,6 +90,8 @@ static const struct pic_ops armgic_picops = {
 #ifdef MULTIPROCESSOR
 	.pic_cpu_init = armgic_cpu_init,
 	.pic_ipi_send = armgic_ipi_send,
+	.pic_get_affinity = armgic_get_affinity,
+	.pic_set_affinity = armgic_set_affinity,
 #endif
 };
 
@@ -104,6 +108,7 @@ static struct armgic_softc {
 	uint32_t sc_gic_valid_lines[1024/32];
 	uint32_t sc_enabled_local;
 #ifdef MULTIPROCESSOR
+	uint32_t sc_target[MAXCPUS];
 	uint32_t sc_mptargets;
 #endif
 	uint32_t sc_bptargets;
@@ -221,6 +226,63 @@ armgic_set_priority(struct pic_softc *pic, int ipl)
 	const uint32_t priority = armgic_ipl_to_priority(ipl);
 	gicc_write(sc, GICC_PMR, priority);
 }
+
+#ifdef MULTIPROCESSOR
+static void
+armgic_get_affinity(struct pic_softc *pic, size_t irq, kcpuset_t *affinity)
+{
+	struct armgic_softc * const sc = PICTOSOFTC(pic);
+	const size_t group = irq / 32;
+	int n;
+
+	kcpuset_zero(affinity);
+	if (group == 0) {
+		/* All CPUs are targets for group 0 (SGI/PPI) */
+		for (n = 0; n < MAXCPUS; n++) {
+			if (sc->sc_target[n] != 0)
+				kcpuset_set(affinity, n);
+		}
+	} else {
+		/* Find distributor targets (SPI) */
+		const u_int byte_shift = 8 * (irq & 3);
+		const bus_size_t targets_reg = GICD_ITARGETSRn(irq / 4);
+		const uint32_t targets = gicd_read(sc, targets_reg);
+		const uint32_t targets_val = (targets >> byte_shift) & 0xff;
+
+		for (n = 0; n < MAXCPUS; n++) {
+			if (sc->sc_target[n] & targets_val)
+				kcpuset_set(affinity, n);
+		}
+	}
+}
+
+static int
+armgic_set_affinity(struct pic_softc *pic, size_t irq,
+    const kcpuset_t *affinity)
+{
+	struct armgic_softc * const sc = PICTOSOFTC(pic);
+	const size_t group = irq / 32;
+	if (group == 0)
+		return EINVAL;
+
+	const u_int byte_shift = 8 * (irq & 3);
+	const bus_size_t targets_reg = GICD_ITARGETSRn(irq / 4);
+	uint32_t targets_val = 0;
+	int n;
+
+	for (n = 0; n < MAXCPUS; n++) {
+		if (kcpuset_isset(affinity, n))
+			targets_val |= sc->sc_target[n];
+	}
+
+	uint32_t targets = gicd_read(sc, targets_reg);
+	targets &= ~(0xff << byte_shift);
+	targets |= (targets_val << byte_shift);
+	gicd_write(sc, targets_reg, targets);
+
+	return 0;
+}
+#endif
 
 #ifdef __HAVE_PIC_FAST_SOFTINTS
 void
@@ -451,7 +513,8 @@ void
 armgic_cpu_init(struct pic_softc *pic, struct cpu_info *ci)
 {
 	struct armgic_softc * const sc = PICTOSOFTC(pic);
-	sc->sc_mptargets |= gicd_find_targets(sc);
+	sc->sc_target[cpu_index(ci)] = gicd_find_targets(sc);
+	sc->sc_mptargets |= sc->sc_target[cpu_index(ci)];
 	KASSERTMSG(ci->ci_cpl == IPL_HIGH, "ipl %d not IPL_HIGH", ci->ci_cpl);
 	armgic_cpu_init_priorities(sc);
 	if (!CPU_IS_PRIMARY(ci)) {

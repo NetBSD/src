@@ -1,4 +1,4 @@
-/*	$NetBSD: pdq_ifsubr.c,v 1.58.14.1 2018/06/25 07:25:50 pgoyette Exp $	*/
+/*	$NetBSD: pdq_ifsubr.c,v 1.58.14.2 2018/07/28 04:37:45 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pdq_ifsubr.c,v 1.58.14.1 2018/06/25 07:25:50 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pdq_ifsubr.c,v 1.58.14.2 2018/07/28 04:37:45 pgoyette Exp $");
 
 #ifdef __NetBSD__
 #include "opt_inet.h"
@@ -269,7 +269,7 @@ pdq_os_transmit_done(
 {
     pdq_softc_t *sc = pdq->pdq_os_ctx;
     if (sc->sc_bpf != NULL)
-	PDQ_BPF_MTAP(sc, m);
+	    PDQ_BPF_MTAP(sc, m, BPF_D_OUT);
     PDQ_OS_DATABUF_FREE(pdq, m);
     sc->sc_if.if_opackets++;
 }

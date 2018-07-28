@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tun.c,v 1.142.2.1 2018/03/22 01:44:51 pgoyette Exp $	*/
+/*	$NetBSD: if_tun.c,v 1.142.2.2 2018/07/28 04:38:10 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.142.2.1 2018/03/22 01:44:51 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.142.2.2 2018/07/28 04:38:10 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -553,7 +553,7 @@ tun_output(struct ifnet *ifp, struct mbuf *m0, const struct sockaddr *dst,
 	 */
 	IFQ_CLASSIFY(&ifp->if_snd, m0, dst->sa_family);
 
-	bpf_mtap_af(ifp, dst->sa_family, m0);
+	bpf_mtap_af(ifp, dst->sa_family, m0, BPF_D_OUT);
 
 	if ((error = pfil_run_hooks(ifp->if_pfil, &m0, ifp, PFIL_OUT)) != 0)
 		goto out;
@@ -944,7 +944,7 @@ tunwrite(dev_t dev, struct uio *uio, int ioflag)
 	top->m_pkthdr.len = tlen;
 	m_set_rcvif(top, ifp);
 
-	bpf_mtap_af(ifp, dst.sa_family, top);
+	bpf_mtap_af(ifp, dst.sa_family, top, BPF_D_IN);
 
 	if ((error = pfil_run_hooks(ifp->if_pfil, &top, ifp, PFIL_IN)) != 0)
 		goto out0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3.c,v 1.140.14.1 2018/06/25 07:25:50 pgoyette Exp $	*/
+/*	$NetBSD: elink3.c,v 1.140.14.2 2018/07/28 04:37:45 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: elink3.c,v 1.140.14.1 2018/06/25 07:25:50 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elink3.c,v 1.140.14.2 2018/07/28 04:37:45 pgoyette Exp $");
 
 #include "opt_inet.h"
 
@@ -1148,7 +1148,7 @@ startagain:
 	bus_space_write_2(iot, ioh, ELINK_COMMAND, SET_TX_START_THRESH |
 	    ((len / 4 + sc->tx_start_thresh) /* >> sc->ep_pktlenshift*/));
 
-	bpf_mtap(ifp, m0);
+	bpf_mtap(ifp, m0, BPF_D_OUT);
 
 	/*
 	 * Do the output at a high interrupt priority level so that an

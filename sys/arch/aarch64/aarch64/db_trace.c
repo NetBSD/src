@@ -1,4 +1,4 @@
-/* $NetBSD: db_trace.c,v 1.1.28.1 2018/04/07 04:12:10 pgoyette Exp $ */
+/* $NetBSD: db_trace.c,v 1.1.28.2 2018/07/28 04:37:25 pgoyette Exp $ */
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.1.28.1 2018/04/07 04:12:10 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.1.28.2 2018/07/28 04:37:25 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -159,7 +159,7 @@ db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
 
 	if (!have_addr) {
 		if (trace_lwp) {
-			addr = curlwp;
+			addr = (db_expr_t)curlwp;
 		} else if (trace_thread) {
 			addr = curlwp->l_proc->p_pid;
 		} else {
@@ -194,13 +194,13 @@ db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
 		db_read_bytes((db_addr_t)l.l_proc, sizeof(p), (char *)&p);
 
 		if (addr == (db_addr_t)curlwp) {
-			fp = &DDB_REGS->tf_reg[29];	/* &reg[29]={fp,lr} */
+			fp = (uint64_t)&DDB_REGS->tf_reg[29];	/* &reg[29]={fp,lr} */
 			tf = DDB_REGS;
 			(*pr)("trace: pid %d lid %d (curlwp) at tf %016lx\n",
 			    p.p_pid, l.l_lid, tf);
 		} else {
 			tf = l.l_md.md_ktf;
-			db_read_bytes(&tf->tf_reg[29], sizeof(fp), (char *)&fp);
+			db_read_bytes((db_addr_t)&tf->tf_reg[29], sizeof(fp), (char *)&fp);
 			(*pr)("trace: pid %d lid %d at tf %016lx\n",
 			    p.p_pid, l.l_lid, tf);
 		}
@@ -222,8 +222,8 @@ db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
 		      "------------------------\n");
 
 		lastfp = lastlr = lr = fp = 0;
-		db_read_bytes(&tf->tf_pc, sizeof(lr), (char *)&lr);
-		db_read_bytes(&tf->tf_reg[29], sizeof(fp), (char *)&fp);
+		db_read_bytes((db_addr_t)&tf->tf_pc, sizeof(lr), (char *)&lr);
+		db_read_bytes((db_addr_t)&tf->tf_reg[29], sizeof(fp), (char *)&fp);
 
 		pr_traceaddr("fp", fp, lr - 4, flags, pr);
 	}
@@ -250,11 +250,11 @@ db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
 
 			tf = (struct trapframe *)(lastfp + 16);
 
-			lastfp = tf;
+			lastfp = (uint64_t)tf;
 			lastlr = lr;
 			lr = fp = 0;
-			db_read_bytes(&tf->tf_pc, sizeof(lr), (char *)&lr);
-			db_read_bytes(&tf->tf_reg[29], sizeof(fp), (char *)&fp);
+			db_read_bytes((db_addr_t)&tf->tf_pc, sizeof(lr), (char *)&lr);
+			db_read_bytes((db_addr_t)&tf->tf_reg[29], sizeof(fp), (char *)&fp);
 
 			/*
 			 * no need to display the frame of el0_trap
@@ -264,7 +264,7 @@ db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
 			    (lr == 0))
 				break;
 
-			pr_traceaddr("tf", tf, lastlr - 4, flags, pr);
+			pr_traceaddr("tf", (db_addr_t)tf, lastlr - 4, flags, pr);
 
 			if (lr == 0)
 				break;

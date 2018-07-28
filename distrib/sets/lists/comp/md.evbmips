@@ -1,4 +1,4 @@
-# $NetBSD: md.evbmips,v 1.23 2016/10/31 20:22:35 skrll Exp $
+# $NetBSD: md.evbmips,v 1.23.12.1 2018/07/28 04:32:59 pgoyette Exp $
 ./usr/include/evbmips				comp-c-include
 ./usr/include/evbmips/_G_config.h		comp-obsolete		obsolete
 ./usr/include/evbmips/ansi.h			comp-c-include
@@ -39,7 +39,7 @@
 ./usr/include/evbmips/pcb.h			comp-c-include
 ./usr/include/evbmips/pci_machdep.h		comp-obsolete		obsolete
 ./usr/include/evbmips/pmap.h			comp-c-include
-./usr/include/evbmips/pmc.h			comp-c-include
+./usr/include/evbmips/pmc.h			comp-obsolete		obsolete
 ./usr/include/evbmips/proc.h			comp-c-include
 ./usr/include/evbmips/profile.h			comp-c-include
 ./usr/include/evbmips/psl.h			comp-c-include

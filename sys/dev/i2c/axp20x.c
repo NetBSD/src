@@ -1,4 +1,4 @@
-/* $NetBSD: axp20x.c,v 1.10.4.1 2018/06/25 07:25:50 pgoyette Exp $ */
+/* $NetBSD: axp20x.c,v 1.10.4.2 2018/07/28 04:37:44 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2014-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_fdt.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: axp20x.c,v 1.10.4.1 2018/06/25 07:25:50 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: axp20x.c,v 1.10.4.2 2018/07/28 04:37:44 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -214,14 +214,9 @@ static void	axp20x_fdt_attach(struct axp20x_softc *);
 CFATTACH_DECL_NEW(axp20x, sizeof(struct axp20x_softc),
     axp20x_match, axp20x_attach, NULL, NULL);
 
-static const char * compatible[] = {
-	"x-powers,axp209",
-	NULL
-};
-
-static const struct device_compatible_entry axp20x_compat_data[] = {
-	DEVICE_COMPAT_ENTRY(compatible),
-	DEVICE_COMPAT_TERMINATOR
+static const struct device_compatible_entry compat_data[] = {
+	{ "x-powers,axp209",		0 },
+	{ NULL,				0 }
 };
 
 static int
@@ -230,7 +225,7 @@ axp20x_match(device_t parent, cfdata_t match, void *aux)
 	struct i2c_attach_args * const ia = aux;
 	int match_result;
 
-	if (iic_use_direct_match(ia, match, axp20x_compat_data, &match_result))
+	if (iic_use_direct_match(ia, match, compat_data, &match_result))
 		return match_result;
 
 	/* This device is direct-config only. */

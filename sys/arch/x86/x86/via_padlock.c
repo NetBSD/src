@@ -1,5 +1,5 @@
 /*	$OpenBSD: via.c,v 1.8 2006/11/17 07:47:56 tom Exp $	*/
-/*	$NetBSD: via_padlock.c,v 1.25 2016/02/27 00:54:59 tls Exp $ */
+/*	$NetBSD: via_padlock.c,v 1.25.16.1 2018/07/28 04:37:42 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2003 Jason Wright
@@ -20,7 +20,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: via_padlock.c,v 1.25 2016/02/27 00:54:59 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: via_padlock.c,v 1.25.16.1 2018/07/28 04:37:42 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -332,10 +332,13 @@ static __inline void
 via_padlock_cbc(void *cw, void *src, void *dst, void *key, int rep,
     void *iv)
 {
-	unsigned int creg0;
+	unsigned int cr0;
+	int s;
 
-	creg0 = rcr0();		/* Permit access to SIMD/FPU path */
-	lcr0(creg0 & ~(CR0_EM|CR0_TS));
+	s = splhigh();
+
+	cr0 = rcr0();		/* Permit access to SIMD/FPU path */
+	lcr0(cr0 & ~(CR0_EM|CR0_TS));
 
 	/* Do the deed */
 	__asm __volatile("pushfl; popfl");	/* force key reload */
@@ -343,7 +346,9 @@ via_padlock_cbc(void *cw, void *src, void *dst, void *key, int rep,
 			: "a" (iv), "b" (key), "c" (rep), "d" (cw), "S" (src), "D" (dst)
 			: "memory", "cc");
 
-	lcr0(creg0);
+	lcr0(cr0);
+
+	splx(s);
 }
 
 int

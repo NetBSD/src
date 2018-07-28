@@ -1,4 +1,4 @@
-/* $NetBSD: ix_txrx.c,v 1.34.2.7 2018/06/25 07:26:01 pgoyette Exp $ */
+/* $NetBSD: ix_txrx.c,v 1.34.2.8 2018/07/28 04:37:56 pgoyette Exp $ */
 
 /******************************************************************************
 
@@ -167,7 +167,7 @@ ixgbe_legacy_start_locked(struct ifnet *ifp, struct tx_ring *txr)
 		}
 
 		/* Send a copy of the frame to the BPF listener */
-		bpf_mtap(ifp, m_head);
+		bpf_mtap(ifp, m_head, BPF_D_OUT);
 	}
 
 	return IXGBE_SUCCESS;
@@ -315,7 +315,7 @@ ixgbe_mq_start_locked(struct ifnet *ifp, struct tx_ring *txr)
 			if_inc_counter(ifp, IFCOUNTER_OMCASTS, 1);
 #endif
 		/* Send a copy of the frame to the BPF listener */
-		bpf_mtap(ifp, next);
+		bpf_mtap(ifp, next, BPF_D_OUT);
 		if ((ifp->if_flags & IFF_RUNNING) == 0)
 			break;
 	}

@@ -1,4 +1,4 @@
-# $NetBSD: md.pmax,v 1.67 2015/12/21 16:49:37 christos Exp $
+# $NetBSD: md.pmax,v 1.67.14.1 2018/07/28 04:32:59 pgoyette Exp $
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/pmax				comp-c-include
 ./usr/include/pmax/_G_config.h			comp-obsolete		obsolete
@@ -45,7 +45,7 @@
 ./usr/include/pmax/param.h			comp-c-include
 ./usr/include/pmax/pcb.h			comp-c-include
 ./usr/include/pmax/pmap.h			comp-c-include
-./usr/include/pmax/pmc.h			comp-c-include
+./usr/include/pmax/pmc.h			comp-obsolete		obsolete
 ./usr/include/pmax/pmioctl.h			comp-obsolete		obsolete
 ./usr/include/pmax/proc.h			comp-c-include
 ./usr/include/pmax/profile.h			comp-c-include

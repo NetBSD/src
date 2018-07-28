@@ -1,4 +1,4 @@
-/*	$NetBSD: radeonfb.c,v 1.94.2.1 2018/06/25 07:26:01 pgoyette Exp $ */
+/*	$NetBSD: radeonfb.c,v 1.94.2.2 2018/07/28 04:37:56 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.94.2.1 2018/06/25 07:26:01 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.94.2.2 2018/07/28 04:37:56 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -589,7 +589,14 @@ radeonfb_attach(device_t parent, device_t dev, void *aux)
 	PRINTREG(RADEON_FP_H_SYNC_STRT_WID);
 	PRINTREG(RADEON_CRTC2_H_SYNC_STRT_WID);
 	PRINTREG(RADEON_FP_H2_SYNC_STRT_WID);
-	if (IS_RV100(sc))
+
+/*
+ * XXX
+ * This was if (IS_RV100()), which is set for all pre-R3xx chips.
+ * I suspect this only makes sense on Sun XVR-100 with firmware that doesn't
+ * support DVI, so for now let's restrict it to only actual RV100
+ */
+	if (sc->sc_family == RADEON_RV100)
 		PUT32(sc, RADEON_TMDS_PLL_CNTL, 0xa27);
 
 	/* XXX

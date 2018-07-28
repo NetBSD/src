@@ -1,19 +1,40 @@
-# $NetBSD: ad.aarch64,v 1.25.14.1 2018/04/07 04:11:56 pgoyette Exp $
-./libexec/ld.elf_so-eabi			base-compat-shlib	compat,pic
-./libexec/ld.elf_so-eabihf			base-compat-shlib	compat,pic
-./libexec/ld.elf_so-oabi			base-sysutil-bin	compat,pic
-./usr/lib/eabi/libarm.so.0			base-compat-shlib	compat,pic
-./usr/lib/eabi/libarm.so.0.0			base-compat-shlib	compat,pic
-./usr/lib/eabi/libc_vfp.so.0			base-compat-shlib	compat,pic
-./usr/lib/eabi/libc_vfp.so.0.0			base-compat-shlib	compat,pic
-./usr/lib/eabihf/libarm.so.0			base-compat-shlib	compat,pic
-./usr/lib/eabihf/libarm.so.0.0			base-compat-shlib	compat,pic
-./usr/lib/oabi/libarm.so.0			base-compat-shlib	compat,pic
-./usr/lib/oabi/libarm.so.0.0			base-compat-shlib	compat,pic
-./usr/lib/oabi/libc_vfp.so.0			base-compat-shlib	compat,pic
-./usr/lib/oabi/libc_vfp.so.0.0			base-compat-shlib	compat,pic
-./usr/libexec/ld.elf_so-eabi			base-compat-shlib	compat,pic
-./usr/libexec/ld.elf_so-eabihf			base-compat-shlib	compat,pic
-./usr/libexec/ld.elf_so-oabi			base-sysutil-bin	compat,pic
+# $NetBSD: ad.aarch64,v 1.25.14.2 2018/07/28 04:32:59 pgoyette Exp $
+./lib/eabi					base-compat-lib		compat,llvm
+./lib/eabi/npf					base-compat-lib		compat,llvm
+./lib/eabihf					base-compat-lib		compat,llvm
+./lib/eabihf/npf				base-compat-lib		compat,llvm
+./lib/oabi					base-compat-lib		compat,llvm
+./lib/oabi/npf					base-compat-lib		compat,llvm
+./libexec/ld.elf_so-eabi			base-compat-shlib	compat,pic,llvm
+./libexec/ld.elf_so-eabihf			base-compat-shlib	compat,pic,llvm
+./libexec/ld.elf_so-oabi			base-sysutil-bin	compat,pic,llvm
+./usr/lib/eabi					base-compat-lib		compat,llvm
+./usr/lib/eabi/i18n				base-compat-lib		compat,llvm
+./usr/lib/eabi/libarm.so.0			base-compat-shlib	compat,pic,llvm
+./usr/lib/eabi/libarm.so.0.0			base-compat-shlib	compat,pic,llvm
+./usr/lib/eabi/libc_vfp.so.0			base-compat-shlib	compat,pic,llvm
+./usr/lib/eabi/libc_vfp.so.0.0			base-compat-shlib	compat,pic,llvm
+./usr/lib/eabi/lua				base-compat-lib		compat,llvm
+./usr/lib/eabi/lua/5.3				base-compat-lib		compat,llvm
+./usr/lib/eabi/security				base-compat-lib		compat,llvm
+./usr/lib/eabihf				base-compat-lib		compat,llvm
+./usr/lib/eabihf/i18n				base-compat-lib		compat,llvm
+./usr/lib/eabihf/libarm.so.0			base-compat-shlib	compat,pic,llvm
+./usr/lib/eabihf/libarm.so.0.0			base-compat-shlib	compat,pic,llvm
+./usr/lib/eabihf/lua				base-compat-lib		compat,llvm
+./usr/lib/eabihf/lua/5.3			base-compat-lib		compat,llvm
+./usr/lib/eabihf/security			base-compat-lib		compat,llvm
+./usr/lib/oabi					base-compat-lib		compat,llvm
+./usr/lib/oabi/i18n				base-compat-lib		compat,llvm
+./usr/lib/oabi/libarm.so.0			base-compat-shlib	compat,pic,llvm
+./usr/lib/oabi/libarm.so.0.0			base-compat-shlib	compat,pic,llvm
+./usr/lib/oabi/libc_vfp.so.0			base-compat-shlib	compat,pic,llvm
+./usr/lib/oabi/libc_vfp.so.0.0			base-compat-shlib	compat,pic,llvm
+./usr/lib/oabi/lua				base-compat-lib		compat,llvm
+./usr/lib/oabi/lua/5.3				base-compat-lib		compat,llvm
+./usr/lib/oabi/security				base-compat-lib		compat,llvm
+./usr/libexec/ld.elf_so-eabi			base-compat-shlib	compat,pic,llvm
+./usr/libexec/ld.elf_so-eabihf			base-compat-shlib	compat,pic,llvm
+./usr/libexec/ld.elf_so-oabi			base-sysutil-bin	compat,pic,llvm
 ./usr/sbin/ofctl				base-sysutil-bin
 ./usr/sbin/tpctl				base-sysutil-bin

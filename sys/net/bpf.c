@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.223.2.2 2018/06/25 07:26:06 pgoyette Exp $	*/
+/*	$NetBSD: bpf.c,v 1.223.2.3 2018/07/28 04:38:09 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.223.2.2 2018/06/25 07:26:06 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.223.2.3 2018/07/28 04:38:09 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_bpf.h"
@@ -238,7 +238,7 @@ static struct pslist_head bpf_dlist;
 static int	bpf_allocbufs(struct bpf_d *);
 static void	bpf_deliver(struct bpf_if *,
 		            void *(*cpfn)(void *, const void *, size_t),
-		            void *, u_int, u_int, const bool);
+		            void *, u_int, u_int, const u_int);
 static void	bpf_freed(struct bpf_d *);
 static void	bpf_free_filter(struct bpf_filter *);
 static void	bpf_ifname(struct ifnet *, struct ifreq *);
@@ -551,7 +551,7 @@ bpfopen(dev_t dev, int flag, int mode, struct lwp *l)
 
 	d = kmem_zalloc(sizeof(*d), KM_SLEEP);
 	d->bd_bufsize = bpf_bufsize;
-	d->bd_seesent = 1;
+	d->bd_direction = BPF_D_INOUT;
 	d->bd_feedback = 0;
 	d->bd_pid = l->l_proc->p_pid;
 #ifdef _LP64
@@ -898,8 +898,8 @@ reset_d(struct bpf_d *d)
  *  BIOCSHDRCMPLT	Set "header already complete" flag.
  *  BIOCSFEEDBACK	Set packet feedback mode.
  *  BIOCGFEEDBACK	Get packet feedback mode.
- *  BIOCGSEESENT  	Get "see sent packets" mode.
- *  BIOCSSEESENT  	Set "see sent packets" mode.
+ *  BIOCGDIRECTION	Get packet direction flag
+ *  BIOCSDIRECTION	Set packet direction flag
  */
 /* ARGSUSED */
 static int
@@ -1186,17 +1186,30 @@ bpf_ioctl(struct file *fp, u_long cmd, void *addr)
 		break;
 
 	/*
-	 * Get "see sent packets" flag
+	 * Get packet direction flag
 	 */
-	case BIOCGSEESENT:
-		*(u_int *)addr = d->bd_seesent;
+	case BIOCGDIRECTION:
+		*(u_int *)addr = d->bd_direction;
 		break;
 
 	/*
-	 * Set "see sent" packets flag
+	 * Set packet direction flag
 	 */
-	case BIOCSSEESENT:
-		d->bd_seesent = *(u_int *)addr;
+	case BIOCSDIRECTION:
+		{
+			u_int	direction;
+
+			direction = *(u_int *)addr;
+			switch (direction) {
+			case BPF_D_IN:
+			case BPF_D_INOUT:
+			case BPF_D_OUT:
+				d->bd_direction = direction;
+				break;
+			default:
+				error = EINVAL;
+			}
+		}
 		break;
 
 	/*
@@ -1543,15 +1556,15 @@ bpf_mcpy(void *dst_arg, const void *src_arg, size_t len)
 /*
  * Dispatch a packet to all the listeners on interface bp.
  *
- * pkt     pointer to the packet, either a data buffer or an mbuf chain
- * buflen  buffer length, if pkt is a data buffer
- * cpfn    a function that can copy pkt into the listener's buffer
- * pktlen  length of the packet
- * rcv     true if packet came in
+ * pkt       pointer to the packet, either a data buffer or an mbuf chain
+ * buflen    buffer length, if pkt is a data buffer
+ * cpfn      a function that can copy pkt into the listener's buffer
+ * pktlen    length of the packet
+ * direction BPF_D_IN or BPF_D_OUT
  */
 static inline void
 bpf_deliver(struct bpf_if *bp, void *(*cpfn)(void *, const void *, size_t),
-    void *pkt, u_int pktlen, u_int buflen, const bool rcv)
+    void *pkt, u_int pktlen, u_int buflen, const u_int direction)
 {
 	uint32_t mem[BPF_MEMWORDS];
 	bpf_args_t args = {
@@ -1578,9 +1591,14 @@ bpf_deliver(struct bpf_if *bp, void *(*cpfn)(void *, const void *, size_t),
 		u_int slen = 0;
 		struct bpf_filter *filter;
 
-		if (!d->bd_seesent && !rcv) {
-			continue;
+		if (direction == BPF_D_IN) {
+			if (d->bd_direction == BPF_D_OUT)
+				continue;
+		} else { /* BPF_D_OUT */
+			if (d->bd_direction == BPF_D_IN)
+				continue;
 		}
+
 		atomic_inc_ulong(&d->bd_rcount);
 		BPF_STATINC(recv);
 
@@ -1612,7 +1630,8 @@ bpf_deliver(struct bpf_if *bp, void *(*cpfn)(void *, const void *, size_t),
  * a buffer, and the tail is in an mbuf chain.
  */
 static void
-_bpf_mtap2(struct bpf_if *bp, void *data, u_int dlen, struct mbuf *m)
+_bpf_mtap2(struct bpf_if *bp, void *data, u_int dlen, struct mbuf *m,
+	u_int direction)
 {
 	u_int pktlen;
 	struct mbuf mb;
@@ -1631,18 +1650,19 @@ _bpf_mtap2(struct bpf_if *bp, void *data, u_int dlen, struct mbuf *m)
 	 * absolutely needed--this mbuf should never go anywhere else.
 	 */
 	(void)memset(&mb, 0, sizeof(mb));
+	mb.m_type = MT_DATA;
 	mb.m_next = m;
 	mb.m_data = data;
 	mb.m_len = dlen;
 
-	bpf_deliver(bp, bpf_mcpy, &mb, pktlen, 0, m->m_pkthdr.rcvif_index != 0);
+	bpf_deliver(bp, bpf_mcpy, &mb, pktlen, 0, direction);
 }
 
 /*
  * Incoming linkage from device drivers, when packet is in an mbuf chain.
  */
 static void
-_bpf_mtap(struct bpf_if *bp, struct mbuf *m)
+_bpf_mtap(struct bpf_if *bp, struct mbuf *m, u_int direction)
 {
 	void *(*cpfn)(void *, const void *, size_t);
 	u_int pktlen, buflen;
@@ -1666,7 +1686,7 @@ _bpf_mtap(struct bpf_if *bp, struct mbuf *m)
 		buflen = 0;
 	}
 
-	bpf_deliver(bp, cpfn, marg, pktlen, buflen, m->m_pkthdr.rcvif_index != 0);
+	bpf_deliver(bp, cpfn, marg, pktlen, buflen, direction);
 }
 
 /*
@@ -1677,16 +1697,19 @@ _bpf_mtap(struct bpf_if *bp, struct mbuf *m)
  * try to free it or keep a pointer a to it).
  */
 static void
-_bpf_mtap_af(struct bpf_if *bp, uint32_t af, struct mbuf *m)
+_bpf_mtap_af(struct bpf_if *bp, uint32_t af, struct mbuf *m, u_int direction)
 {
 	struct mbuf m0;
 
+	m0.m_type = MT_DATA;
 	m0.m_flags = 0;
 	m0.m_next = m;
+	m0.m_nextpkt = NULL;
+	m0.m_owner = NULL;
 	m0.m_len = 4;
 	m0.m_data = (char *)&af;
 
-	_bpf_mtap(bp, &m0);
+	_bpf_mtap(bp, &m0, direction);
 }
 
 /*
@@ -1708,7 +1731,7 @@ _bpf_mtap_sl_in(struct bpf_if *bp, u_char *chdr, struct mbuf **m)
 	hp[SLX_DIR] = SLIPDIR_IN;
 	(void)memcpy(&hp[SLX_CHDR], chdr, CHDR_LEN);
 
-	_bpf_mtap(bp, *m);
+	_bpf_mtap(bp, *m, BPF_D_IN);
 
 	m_adj(*m, SLIP_HDRLEN);
 }
@@ -1724,8 +1747,11 @@ _bpf_mtap_sl_out(struct bpf_if *bp, u_char *chdr, struct mbuf *m)
 	struct mbuf m0;
 	u_char *hp;
 
+	m0.m_type = MT_DATA;
 	m0.m_flags = 0;
 	m0.m_next = m;
+	m0.m_nextpkt = NULL;
+	m0.m_owner = NULL;
 	m0.m_data = m0.m_dat;
 	m0.m_len = SLIP_HDRLEN;
 
@@ -1734,7 +1760,7 @@ _bpf_mtap_sl_out(struct bpf_if *bp, u_char *chdr, struct mbuf *m)
 	hp[SLX_DIR] = SLIPDIR_OUT;
 	(void)memcpy(&hp[SLX_CHDR], chdr, CHDR_LEN);
 
-	_bpf_mtap(bp, &m0);
+	_bpf_mtap(bp, &m0, BPF_D_OUT);
 	m_freem(m);
 }
 
@@ -1797,7 +1823,7 @@ bpf_mtap_si(void *arg)
 		log(LOG_DEBUG, "%s: tapping mbuf=%p on %s\n",
 		    __func__, m, bp->bif_ifp->if_xname);
 #endif
-		bpf_ops->bpf_mtap(bp, m);
+		bpf_ops->bpf_mtap(bp, m, BPF_D_IN);
 		m_freem(m);
 	}
 }
@@ -2327,7 +2353,7 @@ sysctl_net_bpf_peers(SYSCTLFN_ARGS)
 			BPF_EXT(state);
 			BPF_EXT(immediate);
 			BPF_EXT(hdrcmplt);
-			BPF_EXT(seesent);
+			BPF_EXT(direction);
 			BPF_EXT(pid);
 			BPF_EXT(rcount);
 			BPF_EXT(dcount);

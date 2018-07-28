@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.34 2017/08/01 20:07:42 joerg Exp $
+#	$NetBSD: Makefile,v 1.34.2.1 2018/07/28 04:37:12 pgoyette Exp $
 
 LIB=	LLVMSupport
 
@@ -6,33 +6,36 @@ LIB=	LLVMSupport
 
 .PATH: ${LLVM_SRCDIR}/lib/Support
 
-SRCS+=	AMDGPUCodeObjectMetadata.cpp \
+SRCS+=	Allocator.cpp \
+	AMDGPUMetadata.cpp \
 	APFloat.cpp \
 	APInt.cpp \
 	APSInt.cpp \
 	ARMAttributeParser.cpp \
 	ARMBuildAttrs.cpp \
 	ARMWinEH.cpp \
-	Allocator.cpp \
 	BinaryStreamError.cpp \
 	BinaryStreamReader.cpp \
 	BinaryStreamRef.cpp \
 	BinaryStreamWriter.cpp \
 	BlockFrequency.cpp \
 	BranchProbability.cpp \
-	COM.cpp \
 	CachePruning.cpp \
 	Chrono.cpp \
+	circular_raw_ostream.cpp \
+	CodeGenCoverage.cpp \
+	COM.cpp \
 	CommandLine.cpp \
 	Compression.cpp \
 	ConvertUTF.cpp \
 	ConvertUTFWrapper.cpp \
 	CrashRecoveryContext.cpp \
+	DAGDeltaAlgorithm.cpp \
 	DataExtractor.cpp \
 	DebugCounter.cpp \
 	Debug.cpp \
 	DeltaAlgorithm.cpp \
-	DAGDeltaAlgorithm.cpp \
+	DJB.cpp \
 	Error.cpp \
 	ErrorHandling.cpp \
 	FileOutputBuffer.cpp \
@@ -42,26 +45,36 @@ SRCS+=	AMDGPUCodeObjectMetadata.cpp \
 	GlobPattern.cpp \
 	GraphWriter.cpp \
 	Hashing.cpp \
+	InitLLVM.cpp \
 	IntEqClasses.cpp \
 	IntervalMap.cpp \
 	JamCRC.cpp \
+	JSON.cpp \
+	KnownBits.cpp \
 	LEB128.cpp \
 	LineIterator.cpp \
 	Locale.cpp \
 	LockFileManager.cpp \
 	LowLevelType.cpp \
-	MD5.cpp \
 	ManagedStatic.cpp \
 	MathExtras.cpp \
+	MD5.cpp \
 	MemoryBuffer.cpp \
 	NativeFormatting.cpp \
 	Options.cpp \
 	Parallel.cpp \
 	PluginLoader.cpp \
 	PrettyStackTrace.cpp \
+	raw_os_ostream.cpp \
+	raw_ostream.cpp \
+	regcomp.c \
+	regerror.c \
 	Regex.cpp \
-	SHA1.cpp \
+	regexec.c \
+	regfree.c \
+	regstrlcpy.c \
 	ScopedPrinter.cpp \
+	SHA1.cpp \
 	SmallPtrSet.cpp \
 	SmallVector.cpp \
 	SourceMgr.cpp \
@@ -73,27 +86,22 @@ SRCS+=	AMDGPUCodeObjectMetadata.cpp \
 	StringRef.cpp \
 	StringSaver.cpp \
 	SystemUtils.cpp \
-	TarWriter.cpp \
 	TargetParser.cpp \
 	TargetRegistry.cpp \
-	TrigramIndex.cpp \
+	TarWriter.cpp \
 	Timer.cpp \
 	ToolOutputFile.cpp \
+	TrigramIndex.cpp \
 	Triple.cpp \
 	Twine.cpp \
+	UnicodeCaseFold.cpp \
 	Unicode.cpp \
+	VersionTuple.cpp \
 	Watchdog.cpp \
+	WithColor.cpp \
+	xxhash.cpp \
 	YAMLParser.cpp \
 	YAMLTraits.cpp \
-	circular_raw_ostream.cpp \
-	raw_os_ostream.cpp \
-	raw_ostream.cpp \
-	regcomp.c \
-	regerror.c \
-	regexec.c \
-	regfree.c \
-	regstrlcpy.c \
-	xxhash.cpp
 
 SRCS+=	Atomic.cpp \
 	DynamicLibrary.cpp \

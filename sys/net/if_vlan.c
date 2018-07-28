@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vlan.c,v 1.124.2.2 2018/06/25 07:26:06 pgoyette Exp $	*/
+/*	$NetBSD: if_vlan.c,v 1.124.2.3 2018/07/28 04:38:10 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.124.2.2 2018/06/25 07:26:06 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.124.2.3 2018/07/28 04:38:10 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1336,7 +1336,7 @@ vlan_start(struct ifnet *ifp)
 		KERNEL_UNLOCK_ONE(NULL);
 #endif /* ALTQ */
 
-		bpf_mtap(ifp, m);
+		bpf_mtap(ifp, m, BPF_D_OUT);
 		/*
 		 * If the parent can insert the tag itself, just mark
 		 * the tag in the mbuf header.
@@ -1448,7 +1448,7 @@ vlan_transmit(struct ifnet *ifp, struct mbuf *m)
 	p = mib->ifvm_p;
 	ec = (void *)mib->ifvm_p;
 
-	bpf_mtap(ifp, m);
+	bpf_mtap(ifp, m, BPF_D_OUT);
 
 	if ((error = pfil_run_hooks(ifp->if_pfil, &m, ifp, PFIL_OUT)) != 0)
 		goto out;

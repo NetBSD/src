@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_pwm.c,v 1.1.2.2 2018/05/21 04:36:05 pgoyette Exp $ */
+/* $NetBSD: fdt_pwm.c,v 1.1.2.3 2018/07/28 04:37:44 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,11 +27,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_pwm.c,v 1.1.2.2 2018/05/21 04:36:05 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_pwm.c,v 1.1.2.3 2018/07/28 04:37:44 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
 #include <sys/kmem.h>
+#include <sys/queue.h>
 
 #include <libfdt.h>
 #include <dev/fdt/fdtvar.h>
@@ -41,10 +42,11 @@ struct fdtbus_pwm_controller {
 	int pc_phandle;
 	const struct fdtbus_pwm_controller_func *pc_funcs;
 
-	struct fdtbus_pwm_controller *pc_next;
+	LIST_ENTRY(fdtbus_pwm_controller) pc_next;
 };
 
-static struct fdtbus_pwm_controller *fdtbus_pc = NULL;
+static LIST_HEAD(, fdtbus_pwm_controller) fdtbus_pwm_controllers =
+    LIST_HEAD_INITIALIZER(fdtbus_pwm_controllers);
 
 int
 fdtbus_register_pwm_controller(device_t dev, int phandle,
@@ -57,8 +59,7 @@ fdtbus_register_pwm_controller(device_t dev, int phandle,
 	pc->pc_phandle = phandle;
 	pc->pc_funcs = funcs;
 
-	pc->pc_next = fdtbus_pc;
-	fdtbus_pc = pc;
+	LIST_INSERT_HEAD(&fdtbus_pwm_controllers, pc, pc_next);
 
 	return 0;
 }
@@ -68,10 +69,9 @@ fdtbus_get_pwm_controller(int phandle)
 {
 	struct fdtbus_pwm_controller *pc;
 
-	for (pc = fdtbus_pc; pc; pc = pc->pc_next) {
-		if (pc->pc_phandle == phandle) {
+	LIST_FOREACH(pc, &fdtbus_pwm_controllers, pc_next) {
+		if (pc->pc_phandle == phandle)
 			return pc;
-		}
 	}
 
 	return NULL;

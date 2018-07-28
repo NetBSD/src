@@ -1,4 +1,4 @@
-#	$NetBSD: IMX31LITE,v 1.33 2017/09/14 07:58:40 mrg Exp $
+#	$NetBSD: IMX31LITE,v 1.33.2.1 2018/07/28 04:37:31 pgoyette Exp $
 #
 #	IMX31LITE -- Freescale IMX31LITE Evaluation Board Kernel
 #
@@ -109,7 +109,6 @@ options 	DIAGNOSTIC	# internal consistency checks
 options 	DEBUG
 #options 	LOCKDEBUG
 options 	PMAP_DEBUG	# Enable pmap_debug_level code
-#options 	IPKDB		# remote kernel debugging
 options 	VERBOSE_INIT_ARM # verbose bootstraping messages
 options 	DDB		# in-kernel debugger
 options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB

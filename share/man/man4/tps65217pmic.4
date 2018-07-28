@@ -1,4 +1,4 @@
-.\" $NetBSD: tps65217pmic.4,v 1.8 2016/10/16 05:25:52 wiz Exp $
+.\" $NetBSD: tps65217pmic.4,v 1.8.12.1 2018/07/28 04:37:25 pgoyette Exp $
 .\"
 .\" Copyright (c) 2013 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd April 29, 2013
+.Dd June 28, 2018
 .Dt TPS65217PMIC 4
 .Os
 .Sh NAME
@@ -82,9 +82,18 @@ White LED (backlight) support was added by
 The driver can only report current voltage regulator settings.
 It can not measure the real voltage, as the TPS65217 chip lacks hardware to do
 that.
+Some boards allow voltage measurement by connecting the power output to
+external sensor, or analog input of the MPU, but this is outside of the
+scope of this driver.
 .Pp
 Modifying voltage regulator parameters from user space was deliberately left
-unimplemented, as these parameters should only be set at the firmware level.
+unimplemented, as these parameters should only be set at the firmware or
+kernel level.
 Setting wrong parameters may result in permanent hardware damage.
+.Pp
+The
+.Nm
+driver offers a function that can be used to change the voltage from other
+kernel components (currently used by AM335x support code).
 .Sh BUGS
 Battery and interrupt support is not implemented.

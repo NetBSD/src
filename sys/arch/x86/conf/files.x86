@@ -1,4 +1,4 @@
-#	$NetBSD: files.x86,v 1.97.2.5 2018/06/25 07:25:47 pgoyette Exp $
+#	$NetBSD: files.x86,v 1.97.2.6 2018/07/28 04:37:42 pgoyette Exp $
 
 # options for MP configuration through the MP spec
 defflag opt_mpbios.h MPBIOS MPDEBUG MPBIOS_SCANPCI
@@ -96,7 +96,6 @@ file 	arch/x86/x86/patch.c		machdep
 file	arch/x86/x86/platform.c		machdep
 file 	arch/x86/x86/pmap.c		machdep
 file 	arch/x86/x86/x86_tlb.c		machdep
-file 	arch/x86/x86/pmc.c		machdep
 file	arch/x86/x86/procfs_machdep.c	procfs
 file 	arch/x86/x86/svs.c		machdep & svs
 file	arch/x86/x86/sys_machdep.c	machdep
@@ -149,9 +148,6 @@ attach	ipmi at ipmibus
 file	arch/x86/x86/ipmi.c		ipmi needs-flag
 
 file	arch/x86/x86/vga_post.c		vga_post
-
-file	arch/x86/x86/tprof_pmi.c	tprof_pmi
-file	arch/x86/x86/tprof_amdpmi.c	tprof_amdpmi
 
 file	arch/x86/pci/pci_machdep.c	pci
 #file	arch/x86/pci/pci_ranges.c	pci

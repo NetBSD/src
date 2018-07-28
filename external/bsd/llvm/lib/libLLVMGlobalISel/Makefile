@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2017/08/01 20:07:41 joerg Exp $
+#	$NetBSD: Makefile,v 1.2.2.1 2018/07/28 04:37:11 pgoyette Exp $
 
 LIB=	LLVMGlobalISel
 
@@ -7,15 +7,19 @@ LIB=	LLVMGlobalISel
 .PATH: ${LLVM_SRCDIR}/lib/CodeGen/GlobalISel
 
 SRCS+=	CallLowering.cpp \
+	Combiner.cpp \
+	CombinerHelper.cpp \
 	GlobalISel.cpp \
 	InstructionSelect.cpp \
 	InstructionSelector.cpp \
 	IRTranslator.cpp \
-	MachineIRBuilder.cpp \
+	LegalityPredicates.cpp \
+	LegalizeMutations.cpp \
 	Legalizer.cpp \
 	LegalizerHelper.cpp \
 	LegalizerInfo.cpp \
 	Localizer.cpp \
+	MachineIRBuilder.cpp \
 	RegBankSelect.cpp \
 	RegisterBank.cpp \
 	RegisterBankInfo.cpp \

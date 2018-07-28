@@ -1,4 +1,4 @@
-/*	$NetBSD: trap_subr.S,v 1.78.26.1 2018/05/21 04:36:01 pgoyette Exp $	*/
+/*	$NetBSD: trap_subr.S,v 1.78.26.2 2018/07/28 04:37:40 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -170,8 +170,7 @@
 
 /*
  * This code gets copied to all the trap vectors
- * (except ISI/DSI, ALI, the interrupts, and possibly the debugging
- * traps when using IPKDB).
+ * (except ISI/DSI, ALI, the interrupts).
  */
 
 /* LINTSTUB: Var: int trapcode[1], trapsize[1]; */
@@ -729,42 +728,6 @@ _C_LABEL(ddblow):
 _C_LABEL(ddbsize) = .-_C_LABEL(ddblow)
 #endif	/* DDB || KGDB */
 
-#if defined(IPKDB) && !defined(DISTANT_KERNEL)
-/* IPKDB doesn't work together with DISTANT_KERNEL at the moment! */
-
-#define	ipkdbsave	0xde0		/* primary save area for IPKDB */
-/*
- * In case of IPKDB we want a separate trap catcher for it
- */
-
-	.local	ipkdbstk
-	.comm	ipkdbstk,INTSTK,8		/* ipkdb stack */
-
-/* LINTSTUB: Var: int ipkdblow[1], ipkdbsize[1]; */
-	.globl	_C_LABEL(ipkdblow),_C_LABEL(ipkdbsize)
-_C_LABEL(ipkdblow):
-	mtsprg1	%r1			/* save SP */
-	ENABLE_64BIT_BRIDGE(%r1)
-	GET_CPUINFO(%r1)
-	streg	%r28,(CI_IPKDBSAVE+CPUSAVE_R28)(%r1) /* save r28 */
-	streg	%r29,(CI_IPKDBSAVE+CPUSAVE_R29)(%r1) /* save r29 */
-	streg	%r30,(CI_IPKDBSAVE+CPUSAVE_R30)(%r1) /* save r30 */
-	streg	%r31,(CI_IPKDBSAVE+CPUSAVE_R31)(%r1) /* save r31 */
-	mflr	%r28			/* save LR */
-	mfcr	%r29			/* save CR */
-	lis	%r1,ipkdbstk+INTSTK@ha	/* get new SP */
-	addi	%r1,%r1,ipkdbstk+INTSTK@l
-#if defined(DISTANT_KERNEL)
-	lis	%r31,ipkdbtrap@ha
-	addi	%r31,%r31,ipkdbtrap@l
-	mtlr	%r31
-	blrl
-#else
-	bla	ipkdbtrap
-#endif
-_C_LABEL(ipkdbsize) = .-_C_LABEL(ipkdblow)
-#endif	/* IPKDB */
-
 /*
  * FRAME_SETUP assumes:
  *	SPRG1		SP (%r1)
@@ -1254,111 +1217,6 @@ ddbtrap:
 	RFI
 #endif /* DDB || KGDB */
 
-#if defined(IPKDB) && !defined(DISTANT_KERNEL)
-/*
- * Deliberate entry to ipkdbtrap
- */
-	.globl	_C_LABEL(ipkdb_trap)
-_C_LABEL(ipkdb_trap):
-	mtsprg1	%r1
-	mfmsr	%r3
-	mtsrr1	%r3
-	andi.	%r3,%r3,~(PSL_EE|PSL_ME)@l
-	mtmsr	%r3			/* disable interrupts */
-	isync
-	ENABLE_64BIT_BRIDGE(%r3)
-	GET_CPUINFO(%r3)
-	streg	%r28,(CI_IPKDBSAVE+CPUSAVE_R28)(%r3)
-	streg	%r29,(CI_IPKDBSAVE+CPUSAVE_R29)(%r3)
-	streg	%r30,(CI_IPKDBSAVE+CPUSAVE_R30)(%r3)
-	streg	%r31,(CI_IPKDBSAVE+CPUSAVE_R31)(%r3)
-	mflr	%r28
-	li	%r29,EXC_BPT
-	mtlr	%r29
-	mfcr	%r29
-	mtsrr0	%r28
-
-/*
- * Now the ipkdb trap catching code.
- */
-ipkdbtrap:
-	FRAME_SETUP(CI_IPKDBSAVE)
-/* Call C trap code: */
-	addi	%r3,%r1,FRAME_TF
-	bl	_C_LABEL(ipkdb_trap_glue)
-	or.	%r3,%r3,%r3
-	beq	trapagain
-	FRAME_RESTORE_CALLEE
-	FRAME_LEAVE(CI_IPKDBSAVE)
-	RFI
-
-ipkdbfault:
-	ba	_ipkdbfault
-_ipkdbfault:
-	mfsrr0	%r3
-	addi	%r3,%r3,4
-	mtsrr0	%r3
-	li	%r3,-1
-	RFI
-
-/*
- * int ipkdbfbyte(unsigned char *p)
- */
-	.globl	_C_LABEL(ipkdbfbyte)
-_C_LABEL(ipkdbfbyte):
-	li	%r9,EXC_DSI		/* establish new fault routine */
-	ldint	%r5,0(%r9)
-	lis	%r6,ipkdbfault@ha
-	ldint	%r6,ipkdbfault@l(%r6)
-	stint	%r6,0(%r9)
-#ifdef	IPKDBUSERHACK
-	lis	%r8,_C_LABEL(ipkdbsr)@ha
-	ldreg	%r8,_C_LABEL(ipkdbsr)@l(%r8)
-	mtsr	USER_SR,8
-	isync
-#endif
-	dcbst	%r0,%r9			/* flush data... */
-	sync
-	icbi	%r0,%r9			/* and instruction caches */
-	lbz	%r3,0(%r3)		/* fetch data */
-	stint	%r5,0(%r9)		/* restore previous fault handler */
-	dcbst	%r0,%r9			/* and flush data... */
-	sync
-	icbi	%r0,%r9			/* and instruction caches */
-	blr
-
-/*
- * int ipkdbsbyte(unsigned char *p, int c)
- */
-	.globl	_C_LABEL(ipkdbsbyte)
-_C_LABEL(ipkdbsbyte):
-	li	%r9,EXC_DSI		/* establish new fault routine */
-	ldint	%r5,0(%r9)
-	lis	%r6,ipkdbfault@ha
-	ldint	%r6,ipkdbfault@l(%r6)
-	stint	%r6,0(%r9)
-#ifdef	IPKDBUSERHACK
-	lis	%r8,_C_LABEL(ipkdbsr)@ha
-	ldreg	%r8,_C_LABEL(ipkdbsr)@l(%r8)
-	mtsr	USER_SR,%r8
-	isync
-#endif
-	dcbst	%r0,%r9			/* flush data... */
-	sync
-	icbi	%r0,%r9			/* and instruction caches */
-	mr	%r6,%r3
-	li	%r3,0
-	stb	%r4,0(%r6)
-	dcbst	%r0,%r6			/* Now do appropriate flushes
-					   to data... */
-	sync
-	icbi	%r0,%r6			/* and instruction caches */
-	stint	%r5,0(%r9)		/* restore previous fault handler */
-	dcbst	%r0,%r9			/* and flush data... */
-	sync
-	icbi	%r0,%r9			/* and instruction caches */
-	blr
-#endif	/* IPKDB */
 	.globl	_C_LABEL(trapend)
 _C_LABEL(trapend):
 

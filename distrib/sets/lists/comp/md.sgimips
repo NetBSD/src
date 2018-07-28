@@ -1,4 +1,4 @@
-# $NetBSD: md.sgimips,v 1.22 2015/12/21 16:49:37 christos Exp $
+# $NetBSD: md.sgimips,v 1.22.14.1 2018/07/28 04:32:59 pgoyette Exp $
 ./usr/include/dev/crmfbreg.h			comp-c-include
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/sgimips				comp-c-include
@@ -41,7 +41,7 @@
 ./usr/include/sgimips/pcb.h			comp-c-include
 ./usr/include/sgimips/pci_machdep.h		comp-c-include
 ./usr/include/sgimips/pmap.h			comp-c-include
-./usr/include/sgimips/pmc.h			comp-c-include
+./usr/include/sgimips/pmc.h			comp-obsolete		obsolete
 ./usr/include/sgimips/proc.h			comp-c-include
 ./usr/include/sgimips/profile.h			comp-c-include
 ./usr/include/sgimips/psl.h			comp-c-include

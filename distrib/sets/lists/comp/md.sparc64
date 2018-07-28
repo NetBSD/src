@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc64,v 1.199.2.1 2018/03/30 06:20:05 pgoyette Exp $
+# $NetBSD: md.sparc64,v 1.199.2.2 2018/07/28 04:32:59 pgoyette Exp $
 ./usr/include/g++/bits/sparc			comp-c-include		compat
 ./usr/include/g++/bits/sparc/c++config.h	comp-c-include		gcc,compat
 ./usr/include/g++/bits/sparc64			comp-c-include		compat
@@ -57,7 +57,7 @@
 ./usr/include/sparc/param.h			comp-c-include
 ./usr/include/sparc/pcb.h			comp-c-include
 ./usr/include/sparc/pmap.h			comp-c-include
-./usr/include/sparc/pmc.h			comp-c-include
+./usr/include/sparc/pmc.h			comp-obsolete		obsolete
 ./usr/include/sparc/proc.h			comp-c-include
 ./usr/include/sparc/profile.h			comp-c-include
 ./usr/include/sparc/psl.h			comp-c-include
@@ -129,7 +129,7 @@
 ./usr/include/sparc64/param.h			comp-c-include
 ./usr/include/sparc64/pcb.h			comp-c-include
 ./usr/include/sparc64/pmap.h			comp-c-include
-./usr/include/sparc64/pmc.h			comp-c-include
+./usr/include/sparc64/pmc.h			comp-obsolete		obsolete
 ./usr/include/sparc64/proc.h			comp-c-include
 ./usr/include/sparc64/profile.h			comp-c-include
 ./usr/include/sparc64/psl.h			comp-c-include

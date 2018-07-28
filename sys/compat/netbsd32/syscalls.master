@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.120.2.1 2018/05/21 04:36:04 pgoyette Exp $
+	$NetBSD: syscalls.master,v 1.120.2.2 2018/07/28 04:37:43 pgoyette Exp $
 
 ;	from: NetBSD: syscalls.master,v 1.81 1998/07/05 08:49:50 jonathan Exp
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -680,8 +680,8 @@
 			    netbsd32_sigactionp_t nsa, \
 			    netbsd32_sigactionp_t osa, \
 			    netbsd32_voidp tramp, int vers); }
-341	UNIMPL		{ int|netbsd32||pmc_get_info(int ctr, int op, void *args); }
-342	UNIMPL		{ int|netbsd32||pmc_control(int ctr, int op, void *args); }
+341	OBSOL		netbsd32_pmc_get_info
+342	OBSOL		netbsd32_pmc_control
 343	STD		{ int|netbsd32||rasctl(netbsd32_voidp addr, \
 			    netbsd32_size_t len, int op); }
 344	NOARGS		{ int|sys||kqueue(void); }

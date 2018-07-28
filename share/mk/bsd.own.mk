@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1046.2.8 2018/06/25 07:25:37 pgoyette Exp $
+#	$NetBSD: bsd.own.mk,v 1.1046.2.9 2018/07/28 04:37:25 pgoyette Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -50,12 +50,6 @@ NEED_OWN_INSTALL_TARGET?=	yes
 
 TOOLCHAIN_MISSING?=	no
 
-.if ${MACHINE_CPU} == "aarch64" && !defined(EXTERNAL_TOOLCHAIN) && ${MKLLVM:Uyes} != "no"
-MKLLVM?=	yes
-HAVE_LLVM?=	yes
-MKGCC?=		no
-.endif
-
 #
 # GCC Using platforms.
 #
@@ -64,12 +58,7 @@ MKGCC?=		no
 #
 # What GCC is used?
 #
-.if \
-    ${MACHINE_CPU} == "aarch64"
-HAVE_GCC?=	0
-.else
 HAVE_GCC?=	6
-.endif
 
 #
 # Platforms that can't run a modern GCC natively
@@ -125,7 +114,7 @@ HAVE_LIBGCC?=	yes
 .endif
 
 
-# ia64 is not support
+# Should libgcc have unwinding code?
 .if ${HAVE_LLVM:Uno} == "yes" || !empty(MACHINE_ARCH:Mearm*)
 HAVE_LIBGCC_EH?=	no
 .else
@@ -786,8 +775,7 @@ MKGCC:= no
 MKGCC:= no
 .endif
 
-# No GDB support for aarch64
-MKGDB.aarch64=	no
+# No GDB support for aarch64eb
 MKGDB.aarch64eb=no
 MKGDB.or1k=	no
 MKGDB.riscv32=	no
@@ -945,9 +933,9 @@ dependall:	.NOTMAIN realdepend .MAKE
 # including bsd.own.mk.
 #
 .for var in \
-	NOCRYPTO NODOC NOHTML NOINFO NOLINKLIB NOLINT NOMAN NONLS NOOBJ NOPIC \
-	NOPICINSTALL NOPROFILE NOSHARE NOSTATICLIB NODEBUGLIB NOSANITIZER \
-	NORELRO
+	NOCRYPTO NODOC NOHTML NOINFO NOLIBCSANITIZER NOLINKLIB NOLINT NOMAN \
+	NONLS NOOBJ NOPIC NOPICINSTALL NOPROFILE NOSHARE NOSTATICLIB \
+	NODEBUGLIB NOSANITIZER NORELRO
 .if defined(${var})
 MK${var:S/^NO//}:=	no
 .endif
@@ -1054,8 +1042,8 @@ MKRELRO?=	partial
 MKRELRO?=	no
 .endif
 
-.if ${MACHINE_ARCH} == "x86_64"
-MKSTATICPIE?=	no
+.if ${MACHINE_ARCH} == "x86_64" || ${MACHINE_ARCH} == "i386"
+MKSTATICPIE?=	yes
 .else
 MKSTATICPIE?=	no
 .endif
@@ -1103,6 +1091,12 @@ MKGCCCMDS?=	${MKGCC}
 #
 MKSANITIZER?=	no
 USE_SANITIZER?=	address
+
+#
+# Sanitizers implemented in libc, only "undefined" is supported
+#
+MKLIBCSANITIZER?=	no
+USE_LIBCSANITIZER?=	undefined
 
 #
 # Exceptions to the above:

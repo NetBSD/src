@@ -1,4 +1,4 @@
-/* $NetBSD: types.h,v 1.4 2016/01/23 22:31:20 christos Exp $ */
+/* $NetBSD: types.h,v 1.4.18.1 2018/07/28 04:37:39 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -53,9 +53,6 @@ typedef __UINTPTR_TYPE__	vsize_t;
 
 typedef unsigned long int register_t;
 
-typedef unsigned long	pmc_evid_t;
-#define PMC_INVALID_EVID	(-1)
-typedef unsigned long	pmc_ctr_t;
 typedef unsigned short	tlb_asid_t;
 #endif
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmppc_locore.S,v 1.11 2011/06/20 19:56:11 matt Exp $	*/
+/*	$NetBSD: pmppc_locore.S,v 1.11.52.1 2018/07/28 04:37:33 pgoyette Exp $	*/
 /*	$OpenBSD: locore.S,v 1.4 1997/01/26 09:06:38 rahnds Exp $	*/
 
 /*
@@ -34,7 +34,6 @@
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
-#include "opt_ipkdb.h"
 #include "opt_multiprocessor.h"
 #include "opt_openpic.h"
 #include "opt_ppcparam.h"

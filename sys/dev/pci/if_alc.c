@@ -1,4 +1,4 @@
-/*	$NetBSD: if_alc.c,v 1.25.2.1 2018/06/25 07:25:51 pgoyette Exp $	*/
+/*	$NetBSD: if_alc.c,v 1.25.2.2 2018/07/28 04:37:46 pgoyette Exp $	*/
 /*	$OpenBSD: if_alc.c,v 1.1 2009/08/08 09:31:13 kevlo Exp $	*/
 /*-
  * Copyright (c) 2009, Pyun YongHyeon <yongari@FreeBSD.org>
@@ -1989,7 +1989,7 @@ alc_start(struct ifnet *ifp)
 		 * If there's a BPF listener, bounce a copy of this frame
 		 * to him.
 		 */
-		bpf_mtap(ifp, m_head);
+		bpf_mtap(ifp, m_head, BPF_D_OUT);
 	}
 
 	if (enq) {

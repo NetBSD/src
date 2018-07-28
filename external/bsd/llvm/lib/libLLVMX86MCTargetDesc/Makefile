@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2017/01/11 12:02:31 joerg Exp $
+#	$NetBSD: Makefile,v 1.8.12.1 2018/07/28 04:37:12 pgoyette Exp $
 
 LIB=	LLVMX86MCTargetDesc
 
@@ -11,12 +11,13 @@ CPPFLAGS+=	-I${X86_OBJDIR} -I${LLVM_SRCDIR}/lib/Target/X86
 
 SRCS+=	X86AsmBackend.cpp \
 	X86ELFObjectWriter.cpp \
+	X86MachObjectWriter.cpp \
 	X86MCAsmInfo.cpp \
 	X86MCCodeEmitter.cpp \
 	X86MCTargetDesc.cpp \
-	X86MachObjectWriter.cpp \
 	X86WinCOFFObjectWriter.cpp \
-	X86WinCOFFStreamer.cpp
+	X86WinCOFFStreamer.cpp \
+	X86WinCOFFTargetStreamer.cpp
 
 .if defined(HOSTLIB)
 .include <bsd.hostlib.mk>

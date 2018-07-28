@@ -1,4 +1,4 @@
-/*	$NetBSD: copy.S,v 1.27 2018/01/27 09:33:25 maxv Exp $	*/
+/*	$NetBSD: copy.S,v 1.27.2.1 2018/07/28 04:37:34 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000, 2004, 2008 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: copy.S,v 1.27 2018/01/27 09:33:25 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: copy.S,v 1.27.2.1 2018/07/28 04:37:34 pgoyette Exp $");
 
 #include "assym.h"
 
@@ -106,7 +106,7 @@ LABEL(x86_copyfunc_start)
  * pmap on returning, because a preemption occurred within one of the
  * copy functions.
  */
-NENTRY(do_pmap_load)
+ENTRY(do_pmap_load)
 	pushl	%ebp
 	movl	%esp,%ebp
 	pushl	%ebx
@@ -295,7 +295,7 @@ ENTRY(copyin)
 	DEFERRED_SWITCH_CALL
 END(copyin)
 
-NENTRY(copy_efault)
+ENTRY(copy_efault)
 	movl	$EFAULT,%eax
 	popl	%edi
 	popl	%esi
@@ -308,20 +308,20 @@ END(copy_efault)
  * they're distinguished for lazy pmap switching.  see trap().
  */
 
-NENTRY(kcopy_fault)
+ENTRY(kcopy_fault)
 	popl	%edi
 	popl	%esi
 	ret
 END(kcopy_fault)
 
-NENTRY(copy_fault)
+ENTRY(copy_fault)
 	SMAP_ENABLE
 	popl	%edi
 	popl	%esi
 	ret
 END(copy_fault)
 
-NENTRY(return_address_fault)
+ENTRY(return_address_fault)
 	movl	$0,PCB_ONFAULT(%edx)
 	movl	$0,%eax
 	ret
@@ -433,12 +433,12 @@ ENTRY(copyinstr)
 	DEFERRED_SWITCH_CALL
 END(copyinstr)
 
-NENTRY(copystr_efault)
+ENTRY(copystr_efault)
 	movl	$EFAULT,%eax
 	jmp	copystr_return
 END(copystr_efault)
 
-NENTRY(copystr_fault)
+ENTRY(copystr_fault)
 	SMAP_ENABLE
 copystr_return:
 	/* Set *lencopied and return %eax. */
@@ -569,7 +569,7 @@ END(fubyte)
 /*
  * Handle faults from [fs]u*().  Clean up and return -1.
  */
-NENTRY(fusufault)
+ENTRY(fusufault)
 	SMAP_ENABLE
 	movl	$0,PCB_ONFAULT(%ecx)
 	movl	$-1,%eax
@@ -581,7 +581,7 @@ END(fusufault)
  * fusufault() in that trap() will recognize it and return immediately rather
  * than trying to page fault.
  */
-NENTRY(fusubail)
+ENTRY(fusubail)
 	SMAP_ENABLE
 	movl	$0,PCB_ONFAULT(%ecx)
 	movl	$-1,%eax
@@ -591,7 +591,7 @@ END(fusubail)
 /*
  * Handle earlier faults from [fs]u*(), due to our of range addresses.
  */
-NENTRY(fusuaddrfault)
+ENTRY(fusuaddrfault)
 	movl	$-1,%eax
 	ret
 END(fusuaddrfault)
@@ -679,12 +679,12 @@ ENTRY(ucas_32)
 	DEFERRED_SWITCH_CALL
 END(ucas_32)
 
-NENTRY(ucas_efault)
+ENTRY(ucas_efault)
 	movl	$EFAULT,%eax
 	ret
 END(ucas_efault)
 
-NENTRY(ucas_fault)
+ENTRY(ucas_fault)
 	SMAP_ENABLE
 	ret
 END(ucas_fault)
@@ -758,13 +758,13 @@ ENTRY(x86_copyargs)
 	DEFERRED_SWITCH_CALL
 END(x86_copyargs)
 
-NENTRY(x86_copyargs_efault)
+ENTRY(x86_copyargs_efault)
 	movl	$EFAULT,%eax
 	popl	%esi
 	ret
 END(x86_copyargs_efault)
 
-NENTRY(x86_copyargs_fault)
+ENTRY(x86_copyargs_fault)
 	SMAP_ENABLE
 	popl	%esi
 	ret

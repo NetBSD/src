@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.23.2.5 2018/06/25 07:26:09 pgoyette Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.23.2.6 2018/07/28 04:38:12 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.23.2.5 2018/06/25 07:26:09 pgoyette Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.23.2.6 2018/07/28 04:38:12 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -5646,8 +5646,9 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC_HAVE_PID(tp, vfork4);
 	ATF_TP_ADD_TC(tp, vfork5);
 	ATF_TP_ADD_TC_HAVE_PID(tp, vfork6);
-	ATF_TP_ADD_TC_HAVE_PID(tp, vfork7);
-	ATF_TP_ADD_TC_HAVE_PID(tp, vfork8);
+// thes tests hang on SMP machines, disable them for now
+//	ATF_TP_ADD_TC_HAVE_PID(tp, vfork7);
+//	ATF_TP_ADD_TC_HAVE_PID(tp, vfork8);
 
 	ATF_TP_ADD_TC(tp, bytes_transfer_piod_read_d_8);
 	ATF_TP_ADD_TC(tp, bytes_transfer_piod_read_d_16);

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cpsw.c,v 1.1 2017/10/26 01:16:32 jakllsch Exp $	*/
+/*	$NetBSD: if_cpsw.c,v 1.1.4.1 2018/07/28 04:37:29 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: if_cpsw.c,v 1.1 2017/10/26 01:16:32 jakllsch Exp $");
+__KERNEL_RCSID(1, "$NetBSD: if_cpsw.c,v 1.1.4.1 2018/07/28 04:37:29 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -720,7 +720,7 @@ cpsw_start(struct ifnet *ifp)
 			sc->sc_txnext = TXDESC_NEXT(sc->sc_txnext);
 		}
 
-		bpf_mtap(ifp, m);
+		bpf_mtap(ifp, m, BPF_D_OUT);
 	}
 
 	if (txstart >= 0) {

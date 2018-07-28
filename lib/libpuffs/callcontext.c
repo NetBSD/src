@@ -1,4 +1,4 @@
-/*	$NetBSD: callcontext.c,v 1.27 2011/12/06 21:15:39 skrll Exp $	*/
+/*	$NetBSD: callcontext.c,v 1.27.38.1 2018/07/28 04:37:23 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2008 Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: callcontext.c,v 1.27 2011/12/06 21:15:39 skrll Exp $");
+__RCSID("$NetBSD: callcontext.c,v 1.27.38.1 2018/07/28 04:37:23 pgoyette Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>

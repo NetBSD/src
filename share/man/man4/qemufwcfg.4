@@ -1,4 +1,4 @@
-.\"	$NetBSD: qemufwcfg.4,v 1.3 2017/11/28 11:02:02 wiz Exp $
+.\"	$NetBSD: qemufwcfg.4,v 1.3.2.1 2018/07/28 04:37:24 pgoyette Exp $
 .\"
 .\" Copyright (c) 2017 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd November 26, 2017
+.Dd July 11, 2018
 .Dt QEMUFWCFG 4
 .Os
 .Sh NAME
@@ -32,6 +32,7 @@
 .Nd QEMU Firmware Configuration device driver
 .Sh SYNOPSIS
 .Cd "qemufwcfg* at acpi?"
+.Cd "qemufwcfg* at fdt?"
 .Sh DESCRIPTION
 The
 .Nm
@@ -39,7 +40,7 @@ interface allows QEMU to provide data items and files to guest
 operating systems.
 .Pp
 See the
-.Fl -fw_cfg
+.Fl fw_cfg
 option in the
 .Nm qemu
 man page.

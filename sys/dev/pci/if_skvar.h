@@ -1,4 +1,4 @@
-/* $NetBSD: if_skvar.h,v 1.18 2015/04/13 16:33:25 riastradh Exp $ */
+/* $NetBSD: if_skvar.h,v 1.18.16.1 2018/07/28 04:37:46 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -200,7 +200,8 @@ struct sk_softc {
 	int			sk_int_mod_pending;
 	bus_dma_tag_t		sc_dmatag;
 	struct sk_if_softc	*sk_if[2];
-	krndsource_t     rnd_source;
+	u_int8_t		rnd_attached;
+	krndsource_t		rnd_source;
 };
 
 /* Softc for each logical interface */

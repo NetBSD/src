@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cnw.c,v 1.61.14.1 2018/06/25 07:26:01 pgoyette Exp $	*/
+/*	$NetBSD: if_cnw.c,v 1.61.14.2 2018/07/28 04:37:57 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cnw.c,v 1.61.14.1 2018/06/25 07:26:01 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cnw.c,v 1.61.14.2 2018/07/28 04:37:57 pgoyette Exp $");
 
 #include "opt_inet.h"
 
@@ -667,7 +667,7 @@ cnw_start(struct ifnet *ifp)
 		if (m0 == 0)
 			break;
 
-		bpf_mtap(ifp, m0);
+		bpf_mtap(ifp, m0, BPF_D_OUT);
 
 		cnw_transmit(sc, m0);
 		++ifp->if_opackets;

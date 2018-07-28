@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bm.c,v 1.53 2016/12/15 09:28:03 ozaki-r Exp $	*/
+/*	$NetBSD: if_bm.c,v 1.53.14.1 2018/07/28 04:37:36 pgoyette Exp $	*/
 
 /*-
  * Copyright (C) 1998, 1999, 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bm.c,v 1.53 2016/12/15 09:28:03 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bm.c,v 1.53.14.1 2018/07/28 04:37:36 pgoyette Exp $");
 
 #include "opt_inet.h"
 
@@ -574,7 +574,7 @@ bmac_start(struct ifnet *ifp)
 		 * If BPF is listening on this interface, let it see the
 		 * packet before we commit it to the wire.
 		 */
-		bpf_mtap(ifp, m);
+		bpf_mtap(ifp, m, BPF_D_OUT);
 
 		ifp->if_flags |= IFF_OACTIVE;
 		tlen = bmac_put(sc, sc->sc_txbuf, m);

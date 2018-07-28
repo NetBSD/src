@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.1.28.1 2018/04/07 04:12:10 pgoyette Exp $	*/
+/*	$NetBSD: syscall.c,v 1.1.28.2 2018/07/28 04:37:25 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
 #define EMULNAME(x)	(x)
 #define EMULNAMEU(x)	(x)
 
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.1.28.1 2018/04/07 04:12:10 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.1.28.2 2018/07/28 04:37:25 pgoyette Exp $");
 
 void
 cpu_spawn_return(struct lwp *l)
@@ -103,7 +103,7 @@ EMULNAME(syscall)(struct trapframe *tf)
 	curcpu()->ci_data.cpu_nsyscall++;
 
 	size_t code = tf->tf_esr & 0xffff;
-	register_t *params = tf->tf_reg;
+	register_t *params = (void *)tf->tf_reg;
 	size_t nargs = NARGREG;
 
 	switch (code) {

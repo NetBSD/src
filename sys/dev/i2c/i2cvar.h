@@ -1,4 +1,4 @@
-/*	$NetBSD: i2cvar.h,v 1.10.2.1 2018/06/25 07:25:50 pgoyette Exp $	*/
+/*	$NetBSD: i2cvar.h,v 1.10.2.2 2018/07/28 04:37:44 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -133,7 +133,6 @@ struct i2cbus_attach_args {
 struct i2c_attach_args {
 	i2c_tag_t	ia_tag;		/* our controller */
 	i2c_addr_t	ia_addr;	/* address of device */
-	int		ia_size;	/* size (for EEPROMs) */
 	int		ia_type;	/* bus type */
 	/* only set if using direct config */
 	const char *	ia_name;	/* name of the device */
@@ -164,9 +163,9 @@ int	iicbus_print(void *, const char *);
 /*
  * API presented to i2c devices.
  */
-const struct device_compatible_entry *
-	iic_compatible_match(const struct i2c_attach_args *,
-			     const struct device_compatible_entry *, int *);
+int	iic_compatible_match(const struct i2c_attach_args *,
+			     const struct device_compatible_entry *,
+			     const struct device_compatible_entry **);
 bool	iic_use_direct_match(const struct i2c_attach_args *, const cfdata_t,
 			     const struct device_compatible_entry *, int *);
 

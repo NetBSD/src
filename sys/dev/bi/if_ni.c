@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ni.c,v 1.44.14.1 2018/06/25 07:25:49 pgoyette Exp $ */
+/*	$NetBSD: if_ni.c,v 1.44.14.2 2018/07/28 04:37:44 pgoyette Exp $ */
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
  *
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ni.c,v 1.44.14.1 2018/06/25 07:25:49 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ni.c,v 1.44.14.2 2018/07/28 04:37:44 pgoyette Exp $");
 
 #include "opt_inet.h"
 
@@ -533,7 +533,7 @@ nistart(struct ifnet *ifp)
 		if (cnt > NTXFRAGS)
 			panic("nistart"); /* XXX */
 
-		bpf_mtap(ifp, m);
+		bpf_mtap(ifp, m, BPF_D_OUT);
 		bdp = &bbd[(data->bufs[0]._index & 0x7fff)];
 		for (m0 = m, i = 0, mlen = 0; m0; m0 = m0->m_next) {
 			if (m0->m_len == 0)

@@ -1,4 +1,4 @@
-#	$NetBSD: files.rockchip,v 1.12.2.1 2018/06/25 07:25:39 pgoyette Exp $
+#	$NetBSD: files.rockchip,v 1.12.2.2 2018/07/28 04:37:29 pgoyette Exp $
 #
 # Configuration info for Rockchip family SoCs
 #
@@ -28,6 +28,11 @@ file	arch/arm/rockchip/rk_iomux.c		rk_iomux
 device	rkgpio: gpiobus
 attach	rkgpio at rkiomux with rk_gpio
 file	arch/arm/rockchip/rk_gpio.c		rk_gpio
+
+# I2C
+device	rkiic: i2cbus, i2cexec
+attach	rkiic at fdt with rk_i2c
+file	arch/arm/rockchip/rk_i2c.c		rk_i2c
 
 # USB PHY
 device	rkusb { }

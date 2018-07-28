@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.1.2.2 2018/04/07 04:12:10 pgoyette Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.1.2.3 2018/07/28 04:37:25 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.1.2.2 2018/04/07 04:12:10 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.1.2.3 2018/07/28 04:37:25 pgoyette Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -144,6 +144,9 @@ aarch64_getcacheinfo(void)
 		case CLIDR_TYPE_UNIFIEDCACHE:
 			cacheable = CACHE_CACHEABLE_UNIFIED;
 			extract_cacheunit(level, false, CACHE_TYPE_PIPT);
+			break;
+		default:
+			cacheable = CACHE_CACHEABLE_NONE;
 			break;
 		}
 

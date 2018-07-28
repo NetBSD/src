@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.S,v 1.2.2.1 2018/06/25 07:25:38 pgoyette Exp $	*/
+/*	$NetBSD: trap.S,v 1.2.2.2 2018/07/28 04:37:27 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2017 The NetBSD Foundation, Inc. All rights reserved.
@@ -167,7 +167,7 @@ IDTVEC_END(trap20)
  *  sf_rsp
  *  sf_ss
  */
-NENTRY(alltraps)
+ENTRY(alltraps)
 	movq	%rsp,%rdi
 	call	_C_LABEL(trap)
 	/* NOTREACHED */

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_kse.c,v 1.31 2016/12/15 09:28:05 ozaki-r Exp $	*/
+/*	$NetBSD: if_kse.c,v 1.31.14.1 2018/07/28 04:37:46 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_kse.c,v 1.31 2016/12/15 09:28:05 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_kse.c,v 1.31.14.1 2018/07/28 04:37:46 pgoyette Exp $");
 
 
 #include <sys/param.h>
@@ -404,7 +404,7 @@ kse_attach(device_t parent, device_t self, void *aux)
 	enaddr[3] = i; enaddr[2] = i >> 8;
 	i = CSR_READ_2(sc, MARH);
 	enaddr[1] = i; enaddr[0] = i >> 8;
-	printf("%s: Ethernet address: %s\n",
+	printf("%s: Ethernet address %s\n",
 		device_xname(sc->sc_dev), ether_sprintf(enaddr));
 
 	/*
@@ -1002,7 +1002,7 @@ kse_start(struct ifnet *ifp)
 		/*
 		 * Pass the packet to any BPF listeners.
 		 */
-		bpf_mtap(ifp, m0);
+		bpf_mtap(ifp, m0, BPF_D_OUT);
 	}
 
 	if (sc->sc_txsfree == 0 || sc->sc_txfree == 0) {

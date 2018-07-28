@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.167 2017/09/06 03:10:09 macallan Exp $	*/
+/*	$NetBSD: machdep.c,v 1.167.2.1 2018/07/28 04:37:37 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,12 +32,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.167 2017/09/06 03:10:09 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.167.2.1 2018/07/28 04:37:37 pgoyette Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
-#include "opt_ipkdb.h"
 #include "opt_altivec.h"
 #include "opt_multiprocessor.h"
 #include "adb.h"
@@ -68,10 +67,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.167 2017/09/06 03:10:09 macallan Exp $
 
 #ifdef KGDB
 #include <sys/kgdb.h>
-#endif
- 
-#ifdef IPKDB
-#include <ipkdb/ipkdb.h>
 #endif
 
 #include <dev/ofw/openfirm.h>

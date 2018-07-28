@@ -1,4 +1,4 @@
-# $NetBSD: SANDPOINT,v 1.14 2017/09/14 07:58:43 mrg Exp $
+# $NetBSD: SANDPOINT,v 1.14.2.1 2018/07/28 04:37:40 pgoyette Exp $
 #
 # Sandpoint X3/X2 machine description file
 # 
@@ -23,17 +23,12 @@ options 	PIC_I8259
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"SANDPOINT-$Revision: 1.14 $"
+#ident 		"SANDPOINT-$Revision: 1.14.2.1 $"
 
 maxusers	32
 
 options 	ALTIVEC		# Include AltiVec support
 
-#options 	IPKDBUSERHACK	# Allow access to mapped memory via kgdb
-#options 	DEBUG_BY_TOOLS	# Allow debugging from toolsnet
-# HMAC key to be used for debugging sessions
-#options 	IPKDBKEY="\"HMAC pass phrase text\""
-#options 	IPKDBSECURE	# Allow debugging even when securelevel > 0
 #makeoptions	DEBUG="-g"
 
 #options 	DEBUG

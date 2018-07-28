@@ -1,4 +1,4 @@
-/* $NetBSD: rk_cru_pll.c,v 1.2.2.2 2018/06/25 07:25:39 pgoyette Exp $ */
+/* $NetBSD: rk_cru_pll.c,v 1.2.2.3 2018/07/28 04:37:29 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rk_cru_pll.c,v 1.2.2.2 2018/06/25 07:25:39 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rk_cru_pll.c,v 1.2.2.3 2018/07/28 04:37:29 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -146,11 +146,14 @@ rk_cru_pll_set_rate(struct rk_cru_softc *sc,
 	const uint32_t write_val = pll->mode_mask;
 	CRU_WRITE(sc, pll->mode_reg, write_mask | write_val);
 
+	syscon_lock(sc->sc_grf);
 	for (retry = 1000; retry > 0; retry--) {
-		if (GRF_READ(sc, GRF_SOC_STATUS0) & pll->lock_mask)
+		if (syscon_read_4(sc->sc_grf, GRF_SOC_STATUS0) & pll->lock_mask)
 			break;
 		delay(1);
 	}
+	syscon_unlock(sc->sc_grf);
+
 	if (retry == 0)
 		device_printf(sc->sc_dev, "WARNING: %s failed to lock\n",
 		    clk->base.name);

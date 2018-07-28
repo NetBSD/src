@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2017/01/11 12:02:32 joerg Exp $
+#	$NetBSD: Makefile,v 1.7.12.1 2018/07/28 04:37:12 pgoyette Exp $
 
 LIB=	LLVMipo
 
@@ -9,6 +9,8 @@ LIB=	LLVMipo
 SRCS+=	AlwaysInliner.cpp \
 	ArgumentPromotion.cpp \
 	BarrierNoopPass.cpp \
+	BlockExtractor.cpp \
+	CalledValuePropagation.cpp \
 	ConstantMerge.cpp \
 	CrossDSOCFI.cpp \
 	DeadArgumentElimination.cpp \
@@ -20,12 +22,12 @@ SRCS+=	AlwaysInliner.cpp \
 	GlobalDCE.cpp \
 	GlobalOpt.cpp \
 	GlobalSplit.cpp \
+	InferFunctionAttrs.cpp \
+	Inliner.cpp \
+	InlineSimple.cpp \
+	Internalize.cpp \
 	IPConstantPropagation.cpp \
 	IPO.cpp \
-	InferFunctionAttrs.cpp \
-	InlineSimple.cpp \
-	Inliner.cpp \
-	Internalize.cpp \
 	LoopExtractor.cpp \
 	LowerTypeTests.cpp \
 	MergeFunctions.cpp \
@@ -33,8 +35,10 @@ SRCS+=	AlwaysInliner.cpp \
 	PassManagerBuilder.cpp \
 	PruneEH.cpp \
 	SampleProfile.cpp \
+	SCCP.cpp \
 	StripDeadPrototypes.cpp \
 	StripSymbols.cpp \
+	SyntheticCountsPropagation.cpp \
 	ThinLTOBitcodeWriter.cpp \
 	WholeProgramDevirt.cpp
 

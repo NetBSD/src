@@ -1,4 +1,4 @@
-/* $NetBSD: if_mec.c,v 1.55.14.1 2018/03/30 06:20:12 pgoyette Exp $ */
+/* $NetBSD: if_mec.c,v 1.55.14.2 2018/07/28 04:37:41 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2004, 2008 Izumi Tsutsui.  All rights reserved.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mec.c,v 1.55.14.1 2018/03/30 06:20:12 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mec.c,v 1.55.14.2 2018/07/28 04:37:41 pgoyette Exp $");
 
 #include "opt_ddb.h"
 
@@ -1291,7 +1291,7 @@ mec_start(struct ifnet *ifp)
 		/*
 		 * Pass packet to bpf if there is a listener.
 		 */
-		bpf_mtap(ifp, m0);
+		bpf_mtap(ifp, m0, BPF_D_OUT);
 		MEC_EVCNT_INCR(&sc->sc_ev_txpkts);
 
 		/*

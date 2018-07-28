@@ -1,4 +1,4 @@
-/*	$NetBSD: gemini_machdep.c,v 1.24 2016/12/30 07:35:14 rin Exp $	*/
+/*	$NetBSD: gemini_machdep.c,v 1.24.14.1 2018/07/28 04:37:31 pgoyette Exp $	*/
 
 /* adapted from:
  *	NetBSD: sdp24xx_machdep.c,v 1.4 2008/08/27 11:03:10 matt Exp
@@ -129,12 +129,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gemini_machdep.c,v 1.24 2016/12/30 07:35:14 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gemini_machdep.c,v 1.24.14.1 2018/07/28 04:37:31 pgoyette Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
-#include "opt_ipkdb.h"
 #include "opt_md.h"
 #include "opt_com.h"
 #include "opt_gemini.h"
@@ -733,13 +732,6 @@ initarm(void *arg)
 
 #ifdef VERBOSE_INIT_ARM
 	printf("done.\n");
-#endif
-
-#ifdef IPKDB
-	/* Initialise ipkdb */
-	ipkdb_init();
-	if (boothowto & RB_KDB)
-		ipkdb_connect(0);
 #endif
 
 #if defined(MEMORY_DISK_DYNAMIC)

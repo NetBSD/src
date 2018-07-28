@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci_pci.c,v 1.11.2.1 2018/04/16 02:00:01 pgoyette Exp $	*/
+/*	$NetBSD: xhci_pci.c,v 1.11.2.2 2018/07/28 04:37:56 pgoyette Exp $	*/
 /*	OpenBSD: xhci_pci.c,v 1.4 2014/07/12 17:38:51 yuo Exp	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci_pci.c,v 1.11.2.1 2018/04/16 02:00:01 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci_pci.c,v 1.11.2.2 2018/07/28 04:37:56 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_xhci_pci.h"
@@ -125,7 +125,7 @@ xhci_pci_attach(device_t parent, device_t self, void *aux)
 	const pcitag_t tag = pa->pa_tag;
 	pci_intr_type_t intr_type;
 	char const *intrstr;
-	pcireg_t csr, memtype;
+	pcireg_t csr, memtype, usbrev;
 	int err;
 	uint32_t hccparams;
 	char intrbuf[PCI_INTRSTR_LEN];
@@ -216,6 +216,28 @@ alloc_retry:
 		}
 	}
 	aprint_normal_dev(self, "interrupting at %s\n", intrstr);
+
+	usbrev = pci_conf_read(pc, tag, PCI_USBREV) & PCI_USBREV_MASK;
+	switch (usbrev) {
+	case PCI_USBREV_3_0:
+		sc->sc_bus.ub_revision = USBREV_3_0;
+		break;
+	case PCI_USBREV_3_1:
+		sc->sc_bus.ub_revision = USBREV_3_1;
+		break;
+	default:
+		if (usbrev < PCI_USBREV_3_0) {
+			aprint_error_dev(self, "Unknown revision (%02x)\n",
+			    usbrev);
+			sc->sc_bus.ub_revision = USBREV_UNKNOWN;
+		} else {
+			/* Default to the latest revision */
+			aprint_normal_dev(self,
+			    "Unknown revision (%02x). Set to 3.1.\n", usbrev);
+			sc->sc_bus.ub_revision = USBREV_3_1;
+		}
+		break;
+	}
 
 	/* Intel chipset requires SuperSpeed enable and USB2 port routing */
 	switch (PCI_VENDOR(pa->pa_id)) {

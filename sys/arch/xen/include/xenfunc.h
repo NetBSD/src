@@ -1,4 +1,4 @@
-/*	$NetBSD: xenfunc.h,v 1.15 2009/10/23 02:32:33 snj Exp $	*/
+/*	$NetBSD: xenfunc.h,v 1.15.62.1 2018/07/28 04:37:42 pgoyette Exp $	*/
 
 /*
  *
@@ -35,12 +35,6 @@
 #include <xen/evtchn.h>
 #include <xen/xenpmap.h>
 #include <machine/pte.h>
-
-#ifdef XENDEBUG_LOW
-#define	__PRINTK(x) printk x
-#else
-#define	__PRINTK(x)
-#endif
 
 void xen_set_ldt(vaddr_t, uint32_t);
 #endif /* _XEN_XENFUNC_H_ */

@@ -1,11 +1,11 @@
-# $NetBSD: md.amd64,v 1.274 2017/12/22 07:19:02 maxv Exp $
+# $NetBSD: md.amd64,v 1.274.2.1 2018/07/28 04:32:59 pgoyette Exp $
 ./dev/lms0					base-obsolete		obsolete
 ./dev/mms0					base-obsolete		obsolete
 ./sbin/mount_qemufwcfg				base-sysutil-root
 ./libexec/ld.elf_so-i386			base-sys-shlib		compat,pic
 ./usr/bin/fdformat				base-util-bin
 ./usr/bin/iasl					base-util-bin
-./usr/bin/pmc					base-util-bin
+./usr/bin/pmc					base-obsolete		obsolete
 ./usr/lib/i386/libi386.so.2			base-compat-shlib	compat,pic
 ./usr/lib/i386/libi386.so.2.0			base-compat-shlib	compat,pic
 ./usr/lib/i386/libproc.so.1			base-compat-shlib	compat,pic,dtrace

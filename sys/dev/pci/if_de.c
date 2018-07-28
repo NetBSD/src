@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.150.14.2 2018/06/25 07:25:51 pgoyette Exp $	*/
+/*	$NetBSD: if_de.c,v 1.150.14.3 2018/07/28 04:37:46 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1994-1997 Matt Thomas (matt@3am-software.com)
@@ -37,7 +37,7 @@
  *   board which support 21040, 21041, or 21140 (mostly).
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_de.c,v 1.150.14.2 2018/06/25 07:25:51 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_de.c,v 1.150.14.3 2018/07/28 04:37:46 pgoyette Exp $");
 
 #define	TULIP_HDR_DATA
 
@@ -4541,7 +4541,7 @@ tulip_txput(
 #endif /* TULIP_BUS_DMA */
 
     if (sc->tulip_bpf != NULL)
-	bpf_mtap(&sc->tulip_if, m);
+	bpf_mtap(&sc->tulip_if, m, BPF_D_OUT);
     /*
      * The descriptors have been filled in.  Now get ready
      * to transmit.

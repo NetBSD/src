@@ -1,4 +1,4 @@
-/*	$NetBSD: tprof_types.h,v 1.2 2011/04/14 16:23:59 yamt Exp $	*/
+/*	$NetBSD: tprof_types.h,v 1.2.56.1 2018/07/28 04:37:57 pgoyette Exp $	*/
 
 /*-
  * Copyright (c)2010,2011 YAMAMOTO Takashi,
@@ -30,14 +30,14 @@
 #define _DEV_TPROF_TPROF_TYPES_H_
 
 /*
- * definitions used by both of kernel and userland
+ * definitions used by both kernel and userland
  */
 
 #if defined(_KERNEL)
 #include <sys/types.h>
-#else /* defined(_KERNEL) */
+#else
 #include <stdint.h>
-#endif /* defined(_KERNEL) */
+#endif
 
 typedef struct {
 	uint32_t s_pid;		/* process id */
@@ -47,10 +47,24 @@ typedef struct {
 	uintptr_t s_pc;		/* program counter */
 } tprof_sample_t;
 
-/*
- * s_flags
- */
+typedef struct tprof_param {
+	uint64_t p_event;	/* event class */
+	uint64_t p_unit;	/* unit within the event class */
+	uint64_t p_flags;
+} tprof_param_t;
 
+/* s_flags */
 #define	TPROF_SAMPLE_INKERNEL	1	/* s_pc is in kernel address space */
+
+/* p_flags */
+#define	TPROF_PARAM_KERN	0x01
+#define	TPROF_PARAM_USER	0x02
+
+/* ti_ident */
+#define	TPROF_IDENT_NONE		0x00
+#define	TPROF_IDENT_INTEL_GENERIC	0x01
+#define	TPROF_IDENT_AMD_GENERIC		0x02
+#define	TPROF_IDENT_ARMV8_GENERIC	0x03
+#define	TPROF_IDENT_ARMV7_GENERIC	0x04
 
 #endif /* _DEV_TPROF_TPROF_TYPES_H_ */

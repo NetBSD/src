@@ -1,4 +1,4 @@
-/*	$NetBSD: exynos_var.h,v 1.23 2015/12/30 04:30:27 marty Exp $	*/
+/*	$NetBSD: exynos_var.h,v 1.23.16.1 2018/07/28 04:37:29 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2013, 2014 The NetBSD Foundation, Inc.
@@ -106,10 +106,15 @@ struct exynos_gpio_pindata {
 
 struct exynos_gpio_pin_cfg {
 	uint32_t cfg;
+	int cfg_valid;
 	uint32_t pud;
+	int pud_valid;
 	uint32_t drv;
+	int drv_valid;
 	uint32_t conpwd;
+	int conpwd_valid;
 	uint32_t pudpwd;
+	int pudpwd_valid;
 };
 
 struct exynos_gpio_softc {
@@ -170,10 +175,9 @@ extern void exynos_gpio_pinset_release(const struct exynos_gpio_pinset *);
 extern void exynos_gpio_pinset_to_pindata(const struct exynos_gpio_pinset *,
 	int pinnr, struct exynos_gpio_pindata *);
 extern bool exynos_gpio_pin_reserve(const char *, struct exynos_gpio_pindata *);
-extern void exynos_gpio_pin_ctl_read(const struct exynos_gpio_bank *,
-				     struct exynos_gpio_pin_cfg *);
 extern void exynos_gpio_pin_ctl_write(const struct exynos_gpio_bank *,
-				      const struct exynos_gpio_pin_cfg *);
+				      const struct exynos_gpio_pin_cfg *,
+				      int);
 static inline void
 exynos_gpio_pindata_write(const struct exynos_gpio_pindata *pd, int value)
 {

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_l2tp.c,v 1.20.2.4 2018/06/25 07:26:06 pgoyette Exp $	*/
+/*	$NetBSD: if_l2tp.c,v 1.20.2.5 2018/07/28 04:38:10 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2017 Internet Initiative Japan Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_l2tp.c,v 1.20.2.4 2018/06/25 07:26:06 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_l2tp.c,v 1.20.2.5 2018/07/28 04:38:10 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -428,7 +428,7 @@ l2tpintr(struct l2tp_variant *var)
 		if (m == NULL)
 			break;
 		m->m_flags &= ~(M_BCAST|M_MCAST);
-		bpf_mtap(ifp, m);
+		bpf_mtap(ifp, m, BPF_D_OUT);
 		switch (var->lv_psrc->sa_family) {
 #ifdef INET
 		case AF_INET:
@@ -586,7 +586,7 @@ l2tp_transmit(struct ifnet *ifp, struct mbuf *m)
 	}
 
 	m->m_flags &= ~(M_BCAST|M_MCAST);
-	bpf_mtap(ifp, m);
+	bpf_mtap(ifp, m, BPF_D_OUT);
 	switch (var->lv_psrc->sa_family) {
 #ifdef INET
 	case AF_INET:

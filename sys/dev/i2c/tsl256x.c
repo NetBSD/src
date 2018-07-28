@@ -1,4 +1,4 @@
-/* $NetBSD: tsl256x.c,v 1.5.2.2 2018/06/25 07:25:50 pgoyette Exp $ */
+/* $NetBSD: tsl256x.c,v 1.5.2.3 2018/07/28 04:37:44 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2018 Jason R. Thorpe
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tsl256x.c,v 1.5.2.2 2018/06/25 07:25:50 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tsl256x.c,v 1.5.2.3 2018/07/28 04:37:44 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,15 +78,10 @@ static void	tsllux_attach(device_t, device_t, void *);
 CFATTACH_DECL_NEW(tsllux, sizeof(struct tsllux_softc),
     tsllux_match, tsllux_attach, NULL, NULL);
 
-static const char *tsllux_compats[] = {
-	"amstaos,tsl2560",
-	"amstaos,tsl2561",
-	NULL
-};
-
 static const struct device_compatible_entry tsllux_compat_data[] = {
-	DEVICE_COMPAT_ENTRY(tsllux_compats),
-	DEVICE_COMPAT_TERMINATOR
+	{ "amstaos,tsl2560",		0 },
+	{ "amstaos,tsl2561",		0 },
+	{ NULL,				0 }
 };
 
 static int	tsllux_read1(struct tsllux_softc *, uint8_t, uint8_t *);

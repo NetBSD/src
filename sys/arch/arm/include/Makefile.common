@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.common,v 1.2 2013/05/02 03:56:40 matt Exp $
+#	$NetBSD: Makefile.common,v 1.2.38.1 2018/07/28 04:37:28 pgoyette Exp $
 
 .PATH: ../../arm/include/common
 
@@ -12,7 +12,7 @@ INCS+=	ansi.h aout_machdep.h asm.h \
 	int_const.h int_fmtio.h int_limits.h int_mwgwtypes.h int_types.h \
 	limits.h lock.h \
 	math.h mcontext.h mutex.h \
-	param.h pcb.h pmap.h pmc.h proc.h profile.h ptrace.h \
+	param.h pcb.h pmap.h proc.h profile.h ptrace.h \
 	reg.h rwlock.h \
 	setjmp.h signal.h sysarch.h \
 	trap.h types.h \

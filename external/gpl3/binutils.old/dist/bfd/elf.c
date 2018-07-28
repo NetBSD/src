@@ -4159,7 +4159,7 @@ static bfd_size_type
 get_program_header_size (bfd *abfd, struct bfd_link_info *info)
 {
   size_t segs;
-  asection *s;
+  asection *s, *s2;
   const struct elf_backend_data *bed;
 
   /* Assume we will need exactly two PT_LOAD segments: one for text
@@ -4167,18 +4167,25 @@ get_program_header_size (bfd *abfd, struct bfd_link_info *info)
   segs = 2;
 
   s = bfd_get_section_by_name (abfd, ".interp");
+  s2 = bfd_get_section_by_name (abfd, ".dynamic");
   if (s != NULL && (s->flags & SEC_LOAD) != 0)
     {
-      /* If we have a loadable interpreter section, we need a
-	 PT_INTERP segment.  In this case, assume we also need a
-	 PT_PHDR segment, although that may not be true for all
-	 targets.  */
-      segs += 2;
+      ++segs;
     }
 
-  if (bfd_get_section_by_name (abfd, ".dynamic") != NULL)
+  if (s2 != NULL && (s2->flags & SEC_LOAD) != 0)
     {
       /* We need a PT_DYNAMIC segment.  */
+      ++segs;
+    }
+
+  if ((s != NULL && (s->flags & SEC_LOAD) != 0) ||
+      (s2 != NULL && (s2->flags & SEC_LOAD) != 0))
+    {
+      /*
+       * If either a PT_INTERP or PT_DYNAMIC segment is created,
+       * also create a PT_PHDR segment.
+       */
       ++segs;
     }
 
@@ -4447,7 +4454,13 @@ _bfd_elf_map_sections_to_segments (bfd *abfd, struct bfd_link_info *info)
 	 the program headers and a PT_INTERP segment for the .interp
 	 section.  */
       s = bfd_get_section_by_name (abfd, ".interp");
-      if (s != NULL && (s->flags & SEC_LOAD) != 0)
+      if (s != NULL && (s->flags & SEC_LOAD) == 0)
+	s = NULL;
+      dynsec = bfd_get_section_by_name (abfd, ".dynamic");
+      if (dynsec != NULL && (dynsec->flags & SEC_LOAD) == 0)
+	dynsec = NULL;
+
+      if (s != NULL || dynsec != NULL)
 	{
 	  amt = sizeof (struct elf_segment_map);
 	  m = (struct elf_segment_map *) bfd_zalloc (abfd, amt);
@@ -4462,7 +4475,10 @@ _bfd_elf_map_sections_to_segments (bfd *abfd, struct bfd_link_info *info)
 
 	  *pm = m;
 	  pm = &m->next;
+	}
 
+      if (s != NULL)
+	{
 	  amt = sizeof (struct elf_segment_map);
 	  m = (struct elf_segment_map *) bfd_zalloc (abfd, amt);
 	  if (m == NULL)
@@ -4489,10 +4505,6 @@ _bfd_elf_map_sections_to_segments (bfd *abfd, struct bfd_link_info *info)
       if (maxpagesize == 0)
 	maxpagesize = 1;
       writable = FALSE;
-      dynsec = bfd_get_section_by_name (abfd, ".dynamic");
-      if (dynsec != NULL
-	  && (dynsec->flags & SEC_LOAD) == 0)
-	dynsec = NULL;
 
       /* Deal with -Ttext or something similar such that the first section
 	 is not adjacent to the program headers.  This is an

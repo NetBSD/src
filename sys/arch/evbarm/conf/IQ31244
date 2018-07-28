@@ -1,4 +1,4 @@
-#	$NetBSD: IQ31244,v 1.73 2017/09/14 07:58:40 mrg Exp $
+#	$NetBSD: IQ31244,v 1.73.2.1 2018/07/28 04:37:31 pgoyette Exp $
 #
 #	IQ31244 -- Intel IQ31244 Evaluation Board Kernel
 #
@@ -107,7 +107,6 @@ options 	USERCONF	# userconf(4) support
 
 # Development and Debugging options
 
-options 	PERFCTRS	# performance counters
 options 	DIAGNOSTIC	# internal consistency checks
 #options 	DEBUG
 #options 	PMAP_DEBUG	# Enable pmap_debug_level code

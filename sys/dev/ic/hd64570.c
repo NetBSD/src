@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64570.c,v 1.53 2017/02/20 07:43:29 ozaki-r Exp $	*/
+/*	$NetBSD: hd64570.c,v 1.53.12.1 2018/07/28 04:37:45 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1999 Christian E. Hopps
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd64570.c,v 1.53 2017/02/20 07:43:29 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd64570.c,v 1.53.12.1 2018/07/28 04:37:45 pgoyette Exp $");
 
 #include "opt_inet.h"
 
@@ -1118,7 +1118,7 @@ X
 	/*
 	 * Pass packet to bpf if there is a listener.
 	 */
-	bpf_mtap(ifp, mb_head);
+	bpf_mtap(ifp, mb_head, BPF_D_OUT);
 
 	m_freem(mb_head);
 

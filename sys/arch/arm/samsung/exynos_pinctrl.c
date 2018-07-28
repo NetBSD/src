@@ -1,4 +1,4 @@
-/*	$NetBSD: exynos_pinctrl.c,v 1.12 2017/07/02 18:21:52 jmcneill Exp $ */
+/*	$NetBSD: exynos_pinctrl.c,v 1.12.6.1 2018/07/28 04:37:29 pgoyette Exp $ */
 
 /*-
 * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #include "gpio.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exynos_pinctrl.c,v 1.12 2017/07/02 18:21:52 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exynos_pinctrl.c,v 1.12.6.1 2018/07/28 04:37:29 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -83,13 +83,6 @@ exynos_pinctrl_match(device_t parent, cfdata_t cf, void *aux)
 	return of_match_compatible(faa->faa_phandle, compatible);
 }
 
-static bool
-is_pinctrl(int phandle)
-{
-	int len = OF_getproplen(phandle, "samsung,pins");
-	return len > 0;
-}
-
 static void
 exynos_pinctrl_attach(device_t parent, device_t self, void *aux)
 {
@@ -122,11 +115,11 @@ exynos_pinctrl_attach(device_t parent, device_t self, void *aux)
 	for (child = OF_child(faa->faa_phandle); child;
 	     child = OF_peer(child)) {
 
-		if (of_getprop_bool(child, "gpio-controller")) {
+		if (of_hasprop(child, "gpio-controller")) {
 			exynos_gpio_bank_config(sc, faa, child);
 		}
 
-		if (is_pinctrl(child)) {
+		if (of_hasprop(child, "samsung,pins")) {
 			fdtbus_register_pinctrl_config(self, child,
 						       &exynos_pinctrl_controller_func);
 		}
@@ -138,11 +131,26 @@ exynos_pinctrl_attach(device_t parent, device_t self, void *aux)
 static void
 exynos_parse_config(int phandle, struct exynos_gpio_pin_cfg *gc)
 {
-	of_getprop_uint32(phandle, "samsung,pin-function", &gc->cfg);
-	of_getprop_uint32(phandle, "samsung,pin-pud", &gc->pud);
-	of_getprop_uint32(phandle, "samsung,pin-drv", &gc->drv);
-	of_getprop_uint32(phandle, "samsung,pin-conpwd", &gc->conpwd);
-	of_getprop_uint32(phandle, "samsung,pin-pudpwd", &gc->pudpwd);
+	gc->cfg_valid = of_getprop_uint32(phandle, "samsung,pin-function", &gc->cfg) == 0;
+	gc->pud_valid = of_getprop_uint32(phandle, "samsung,pin-pud", &gc->pud) == 0;
+	gc->drv_valid = of_getprop_uint32(phandle, "samsung,pin-drv", &gc->drv) == 0;
+	gc->conpwd_valid = of_getprop_uint32(phandle, "samsung,pin-conpwd", &gc->conpwd) == 0;
+	gc->pudpwd_valid = of_getprop_uint32(phandle, "samsung,pin-pudpwd", &gc->pudpwd) == 0;
+}
+
+static int
+exynos_parse_pin(const char *pinname)
+{
+
+	const int len = strlen(pinname);
+
+	if (len == 0)
+		return -1;
+
+	if (pinname[len - 1] < '0' || pinname[len - 1] > '9')
+		return -1;
+
+	return pinname[len - 1] - '0';
 }
 
 static int
@@ -151,6 +159,7 @@ exynos_do_config(struct exynos_pinctrl_config *pc)
 	struct exynos_gpio_pin_cfg *gc = &pc->pc_pincfg;
 	struct exynos_gpio_bank *bank;
 	const char *pins;
+	int pin;
 
 	int pins_len = OF_getproplen(pc->pc_phandle, "samsung,pins");
 	if (pins_len <= 0)
@@ -160,12 +169,13 @@ exynos_do_config(struct exynos_pinctrl_config *pc)
 	     pins_len > 0;
 	     pins_len -= strlen(pins) + 1, pins += strlen(pins) + 1) {
 		bank = exynos_gpio_bank_lookup(pins);
+		pin = exynos_parse_pin(pins);
 		if (bank == NULL) {
 			aprint_error_dev(pc->pc_sc->sc_dev,
 			    "unknown pin name '%s'\n", pins);
 			continue;
 		}
-		exynos_gpio_pin_ctl_write(bank, gc);
+		exynos_gpio_pin_ctl_write(bank, gc, pin);
 	}
 
 	return 0;

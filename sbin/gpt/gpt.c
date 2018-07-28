@@ -35,7 +35,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/gpt.c,v 1.16 2006/07/07 02:44:23 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: gpt.c,v 1.74 2018/02/13 00:34:11 sevan Exp $");
+__RCSID("$NetBSD: gpt.c,v 1.74.2.1 2018/07/28 04:37:23 pgoyette Exp $");
 #endif
 
 #include <sys/param.h>
@@ -587,7 +587,7 @@ void
 gpt_close(gpt_t gpt)
 {
 
-	if (!(gpt->flags & GPT_MODIFIED))
+	if (!(gpt->flags & GPT_MODIFIED) || !(gpt->flags & GPT_SYNC))
 		goto out;
 
 	if (!(gpt->flags & GPT_NOSYNC)) {

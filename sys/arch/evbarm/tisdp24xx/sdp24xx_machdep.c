@@ -1,4 +1,4 @@
-/*	$NetBSD: sdp24xx_machdep.c,v 1.18 2016/12/24 17:36:59 mlelstv Exp $ */
+/*	$NetBSD: sdp24xx_machdep.c,v 1.18.14.1 2018/07/28 04:37:32 pgoyette Exp $ */
 
 /*
  * Machine dependent functions for kernel setup for TI OSK5912 board.
@@ -125,12 +125,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdp24xx_machdep.c,v 1.18 2016/12/24 17:36:59 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdp24xx_machdep.c,v 1.18.14.1 2018/07/28 04:37:32 pgoyette Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
-#include "opt_ipkdb.h"
 #include "opt_md.h"
 #include "opt_com.h"
 #include "opt_omap.h"
@@ -554,13 +553,6 @@ initarm(void *arg)
 
 #ifdef VERBOSE_INIT_ARM
 	printf("done.\n");
-#endif
-
-#ifdef IPKDB
-	/* Initialise ipkdb */
-	ipkdb_init();
-	if (boothowto & RB_KDB)
-		ipkdb_connect(0);
 #endif
 
 #ifdef KGDB

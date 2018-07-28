@@ -1,4 +1,4 @@
-/*	$NetBSD: pf_ioctl.c,v 1.52 2017/10/15 04:30:05 pgoyette Exp $	*/
+/*	$NetBSD: pf_ioctl.c,v 1.52.2.1 2018/07/28 04:37:59 pgoyette Exp $	*/
 /*	$OpenBSD: pf_ioctl.c,v 1.182 2007/06/24 11:17:13 mcbride Exp $ */
 
 /*
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pf_ioctl.c,v 1.52 2017/10/15 04:30:05 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pf_ioctl.c,v 1.52.2.1 2018/07/28 04:37:59 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -84,6 +84,7 @@ __KERNEL_RCSID(0, "$NetBSD: pf_ioctl.c,v 1.52 2017/10/15 04:30:05 pgoyette Exp $
 #include <dev/rndvar.h>
 #include <crypto/md5.h>
 #else
+#include <netinet/in_offload.h>
 #include <sys/md5.h>
 #endif /* __NetBSD__ */
 #include <net/pfvar.h>
@@ -3293,7 +3294,7 @@ pfil4_wrapper(void *arg, struct mbuf **mp, struct ifnet *ifp, int dir)
 	 */
 	if (dir == PFIL_OUT) {
 		if ((*mp)->m_pkthdr.csum_flags & (M_CSUM_TCPv4|M_CSUM_UDPv4)) {
-			in_delayed_cksum(*mp);
+			in_undefer_cksum_tcpudp(*mp);
 			(*mp)->m_pkthdr.csum_flags &=
 			    ~(M_CSUM_TCPv4|M_CSUM_UDPv4);
 		}

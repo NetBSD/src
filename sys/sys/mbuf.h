@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.178.2.7 2018/06/25 07:26:07 pgoyette Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.178.2.8 2018/07/28 04:38:12 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1999, 2001, 2007 The NetBSD Foundation, Inc.
@@ -898,6 +898,10 @@ m_copy_rcvif(struct mbuf *m, const struct mbuf *n)
 }
 
 void m_print(const struct mbuf *, const char *, void (*)(const char *, ...)
+    __printflike(1, 2));
+
+/* from uipc_mbufdebug.c */
+void	m_examine(const struct mbuf *, int, const char *, void (*)(const char *, ...)
     __printflike(1, 2));
 
 /*

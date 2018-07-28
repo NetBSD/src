@@ -1,4 +1,4 @@
-/* $NetBSD: exynos_dwcmmc.c,v 1.5 2017/06/22 06:42:38 skrll Exp $ */
+/* $NetBSD: exynos_dwcmmc.c,v 1.5.6.1 2018/07/28 04:37:29 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exynos_dwcmmc.c,v 1.5 2017/06/22 06:42:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exynos_dwcmmc.c,v 1.5.6.1 2018/07/28 04:37:29 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -43,7 +43,6 @@ __KERNEL_RCSID(0, "$NetBSD: exynos_dwcmmc.c,v 1.5 2017/06/22 06:42:38 skrll Exp 
 #include <dev/ic/dwc_mmc_var.h>
 #include <dev/fdt/fdtvar.h>
 
-#define	FIFO_REG	0x200
 #define	MPS_BEGIN	0x200
 #define	MPS_END		0x204
 #define	MPS_CTRL	0x20c
@@ -56,12 +55,14 @@ static int	exynos_dwcmmc_match(device_t, cfdata_t, void *);
 static void	exynos_dwcmmc_attach(device_t, device_t, void *);
 
 static int	exynos_dwcmmc_card_detect(struct dwc_mmc_softc *);
+static int	exynos_dwcmmc_bus_clock(struct dwc_mmc_softc *, int);
 
 struct exynos_dwcmmc_softc {
 	struct dwc_mmc_softc	sc;
 	struct clk		*sc_clk_biu;
 	struct clk		*sc_clk_ciu;
 	struct fdtbus_gpio_pin	*sc_pin_cd;
+	u_int			sc_ciu_div;
 };
 
 CFATTACH_DECL_NEW(exynos_dwcmmc, sizeof(struct dwc_mmc_softc),
@@ -92,7 +93,6 @@ exynos_dwcmmc_attach(device_t parent, device_t self, void *aux)
 	char intrstr[128];
 	bus_addr_t addr;
 	bus_size_t size;
-	u_int ciu_div, fifo_depth;
 	int error;
 
 	if (fdtbus_get_reg(phandle, 0, &addr, &size) != 0) {
@@ -100,13 +100,7 @@ exynos_dwcmmc_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	//if (of_getprop_uint32(phandle, "bus-width", &bus_width)) {
-	//	bus_width = 4;
-	//}
-	if (of_getprop_uint32(phandle, "fifo-depth", &fifo_depth)) {
-		fifo_depth = 64;
-	}
-	if (of_getprop_uint32(phandle, "samsung,dw-mshc-ciu-div", &ciu_div)) {
+	if (of_getprop_uint32(phandle, "samsung,dw-mshc-ciu-div", &esc->sc_ciu_div)) {
 		aprint_error(": missing samsung,dw-mshc-ciu-div property\n");
 		return;
 	}
@@ -143,10 +137,10 @@ exynos_dwcmmc_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	sc->sc_clock_freq = clk_get_rate(esc->sc_clk_ciu) / (ciu_div + 1);
-	sc->sc_fifo_depth = fifo_depth;
-	sc->sc_fifo_reg = FIFO_REG;
-	sc->sc_flags = DWC_MMC_F_USE_HOLD_REG | DWC_MMC_F_DMA;
+	sc->sc_clock_freq = clk_get_rate(esc->sc_clk_ciu) / (esc->sc_ciu_div + 1);
+	of_getprop_uint32(phandle, "fifo-depth", &sc->sc_fifo_depth);
+	sc->sc_flags = DWC_MMC_F_DMA;
+	sc->sc_bus_clock = exynos_dwcmmc_bus_clock;
 
 	esc->sc_pin_cd = fdtbus_gpio_acquire(phandle, "cd-gpios",
 	    GPIO_PIN_INPUT);
@@ -192,4 +186,26 @@ exynos_dwcmmc_card_detect(struct dwc_mmc_softc *sc)
 	KASSERT(esc->sc_pin_cd != NULL);
 
 	return fdtbus_gpio_read(esc->sc_pin_cd);
+}
+
+static int
+exynos_dwcmmc_bus_clock(struct dwc_mmc_softc *sc, int rate)
+{
+	struct exynos_dwcmmc_softc *esc = device_private(sc->sc_dev);
+	const int ciu_div = esc->sc_ciu_div + 1;
+	int error;
+
+	error = clk_set_rate(esc->sc_clk_ciu, 1000 * rate * ciu_div);
+	if (error != 0) {
+		aprint_error_dev(sc->sc_dev, "failed to set rate to %u Hz: %d\n",
+		    rate * ciu_div * 1000, error);
+		return error;
+	}
+
+	sc->sc_clock_freq = clk_get_rate(esc->sc_clk_ciu) / ciu_div;
+
+	aprint_debug_dev(sc->sc_dev, "set clock rate to %u Hz (target %u Hz)\n",
+	    sc->sc_clock_freq, rate * 1000);
+
+	return 0;
 }

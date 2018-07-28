@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ppp.c,v 1.159.2.1 2018/06/25 07:26:06 pgoyette Exp $	*/
+/*	$NetBSD: if_ppp.c,v 1.159.2.2 2018/07/28 04:38:10 pgoyette Exp $	*/
 /*	Id: if_ppp.c,v 1.6 1997/03/04 03:33:00 paulus Exp 	*/
 
 /*
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.159.2.1 2018/06/25 07:26:06 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.159.2.2 2018/07/28 04:38:10 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "ppp.h"
@@ -1008,7 +1008,7 @@ pppoutput(struct ifnet *ifp, struct mbuf *m0, const struct sockaddr *dst,
 	/*
 	 * See if bpf wants to look at the packet.
 	 */
-	bpf_mtap(&sc->sc_if, m0);
+	bpf_mtap(&sc->sc_if, m0, BPF_D_OUT);
 
 	/*
 	 * Put the packet on the appropriate queue.
@@ -1659,7 +1659,7 @@ ppp_inproc(struct ppp_softc *sc, struct mbuf *m)
 	}
 
 	/* See if bpf wants to look at the packet. */
-	bpf_mtap(&sc->sc_if, m);
+	bpf_mtap(&sc->sc_if, m, BPF_D_IN);
 
 	switch (proto) {
 #ifdef INET

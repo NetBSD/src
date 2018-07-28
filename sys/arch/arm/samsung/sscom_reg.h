@@ -1,4 +1,4 @@
-/* $NetBSD: sscom_reg.h,v 1.2 2014/04/14 21:16:15 reinoud Exp $ */
+/* $NetBSD: sscom_reg.h,v 1.2.34.1 2018/07/28 04:37:29 pgoyette Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Fujitsu Component Limited
@@ -49,6 +49,7 @@
 #define	 ULCON_PARITY_ONE	__SHIFTIN(6, ULCON_PARITY)
 #define	 ULCON_PARITY_ZERO	__SHIFTIN(7, ULCON_PARITY)
 #define	 ULCON_STOP		__BIT(2)
+#define  ULCON_LENGTH		__BITS(1,0)
 #define	 ULCON_LENGTH_5		0
 #define	 ULCON_LENGTH_6		1
 #define	 ULCON_LENGTH_7		2

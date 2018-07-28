@@ -1,4 +1,4 @@
-/* $NetBSD: sun50i-a64-pinebook.dts,v 1.3.2.2 2018/05/21 04:35:59 pgoyette Exp $ */
+/* $NetBSD: sun50i-a64-pinebook.dts,v 1.3.2.3 2018/07/28 04:37:28 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -67,8 +67,8 @@
 	backlight: backlight {
 		compatible = "pwm-backlight";
 		pwms = <&pwm 0 50000 0>;
-		brightness-levels = <0 30 40 50 60 70 80 90 100>;
-		default-brightness-level = <6>;
+		brightness-levels = <0 10 20 30 40 50 60 70 80 90 100>;
+		default-brightness-level = <3>;
 		enable-gpios = <&pio 3 23 GPIO_ACTIVE_HIGH>;	/* PD23 */
 	};
 

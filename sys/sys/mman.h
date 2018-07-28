@@ -1,4 +1,4 @@
-/*	$NetBSD: mman.h,v 1.53 2018/01/24 09:04:45 skrll Exp $	*/
+/*	$NetBSD: mman.h,v 1.53.2.1 2018/07/28 04:38:12 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -106,7 +106,7 @@ typedef	__off_t		off_t;		/* file offset */
  * Alignment (expressed in log2).  Must be >= log2(PAGE_SIZE) and
  * < # bits in a pointer (32 or 64).
  */
-#define	MAP_ALIGNED(n)		((n) << MAP_ALIGNMENT_SHIFT)
+#define	MAP_ALIGNED(n)	((int)((unsigned int)(n) << MAP_ALIGNMENT_SHIFT))
 #define	MAP_ALIGNMENT_SHIFT	24
 #define	MAP_ALIGNMENT_MASK	MAP_ALIGNED(0xff)
 #define	MAP_ALIGNMENT_64KB	MAP_ALIGNED(16)	/* 2^16 */

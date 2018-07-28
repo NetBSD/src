@@ -1,4 +1,4 @@
-/* $NetBSD: cpus.c,v 1.2 2017/06/02 00:01:00 jmcneill Exp $ */
+/* $NetBSD: cpus.c,v 1.2.12.1 2018/07/28 04:37:44 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpus.c,v 1.2 2017/06/02 00:01:00 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpus.c,v 1.2.12.1 2018/07/28 04:37:44 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -57,22 +57,9 @@ cpus_attach(device_t parent, device_t self, void *aux)
 {
 	struct fdt_attach_args * const faa = aux;
 	const int phandle = faa->faa_phandle;
-	int child;
 
 	aprint_naive("\n");
 	aprint_normal("\n");
 
-	for (child = OF_child(phandle); child; child = OF_peer(child)) {
-		if (!fdtbus_status_okay(child))
-			continue;
-
-		struct fdt_attach_args cfaa = *faa;
-		cfaa.faa_phandle = child;
-		cfaa.faa_name = "cpu";
-		cfaa.faa_quiet = 0;
-
-		device_t cpu = config_found(self, &cfaa, fdtbus_print);
-		if (cpu)
-			config_found(cpu, &cfaa, NULL);
-	}
+	fdt_add_bus(self, phandle, faa);
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: exynos5410_clock.c,v 1.2 2017/06/20 17:43:51 skrll Exp $ */
+/* $NetBSD: exynos5410_clock.c,v 1.2.10.1 2018/07/28 04:37:29 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exynos5410_clock.c,v 1.2 2017/06/20 17:43:51 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exynos5410_clock.c,v 1.2.10.1 2018/07/28 04:37:29 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -669,7 +669,7 @@ exynos5410_clock_set_rate_div(struct exynos5410_clock_softc *sc,
 	clk_parent = exynos5410_clock_get_parent(sc, &eclk->base);
 	const u_int parent_rate = exynos5410_clock_get_rate(sc, clk_parent);
 
-	for (tmp_div = 0; tmp_div < popcount32(ediv->bits); tmp_div++) {
+	for (tmp_div = 0; tmp_div < __SHIFTOUT_MASK(ediv->bits); tmp_div++) {
 		tmp_rate = parent_rate / (tmp_div + 1);
 		if (tmp_rate <= rate) {
 			new_div = tmp_div;

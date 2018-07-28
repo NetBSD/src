@@ -1,8 +1,9 @@
-# $NetBSD: Makefile.boot,v 1.70.12.1 2018/06/25 07:25:42 pgoyette Exp $
+# $NetBSD: Makefile.boot,v 1.70.12.2 2018/07/28 04:37:34 pgoyette Exp $
 
 S=	${.CURDIR}/../../../../..
 
 NOMAN=
+NOLIBCSANITIZER=
 NOSANITIZER=
 NOPIE=
 PROG?= boot

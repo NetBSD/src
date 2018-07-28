@@ -1,4 +1,4 @@
-/*	$NetBSD: histedit.c,v 1.52 2017/06/28 13:46:06 kre Exp $	*/
+/*	$NetBSD: histedit.c,v 1.52.4.1 2018/07/28 04:32:56 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)histedit.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: histedit.c,v 1.52 2017/06/28 13:46:06 kre Exp $");
+__RCSID("$NetBSD: histedit.c,v 1.52.4.1 2018/07/28 04:32:56 pgoyette Exp $");
 #endif
 #endif /* not lint */
 
@@ -210,8 +210,8 @@ sethistsize(const char *hs)
 	HistEvent he;
 
 	if (hist != NULL) {
-		if (hs == NULL || *hs == '\0' ||
-		   (histsize = atoi(hs)) < 0)
+		if (hs == NULL || *hs == '\0' || *hs == '-' ||
+		   (histsize = number(hs)) < 0)
 			histsize = 100;
 		history(hist, &he, H_SETSIZE, histsize);
 		history(hist, &he, H_SETUNIQUE, 1);
@@ -529,7 +529,7 @@ str_to_event(const char *str, int last)
 		s++;
 	}
 	if (is_number(s)) {
-		i = atoi(s);
+		i = number(s);
 		if (relative) {
 			while (retval != -1 && i--) {
 				retval = history(hist, &he, H_NEXT);

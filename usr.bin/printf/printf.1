@@ -1,4 +1,4 @@
-.\"	$NetBSD: printf.1,v 1.25.22.1 2018/03/15 09:12:08 pgoyette Exp $
+.\"	$NetBSD: printf.1,v 1.25.22.2 2018/07/28 04:38:14 pgoyette Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"	from: @(#)printf.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd March 11, 2018
+.Dd July 25, 2018
 .Dt PRINTF 1
 .Os
 .Sh NAME
@@ -169,6 +169,7 @@ For
 .Cm e ,
 .Cm E ,
 .Cm f ,
+.Cm F ,
 .Cm g ,
 and
 .Cm G
@@ -240,7 +241,7 @@ formats); if the digit string is missing, the precision is treated
 as zero;
 .It Format :
 A character which indicates the type of format to use (one of
-.Cm diouxXfwEgGbBcs ) .
+.Cm diouxXfFeEgGaAbBcs ) .
 .El
 .Pp
 A field width or precision may be
@@ -257,7 +258,7 @@ The
 .Ar argument
 is printed as a signed decimal (d or i), unsigned octal, unsigned decimal,
 or unsigned hexadecimal (X or x), respectively.
-.It Cm f
+.It Cm fF
 The
 .Ar argument
 is printed in the style
@@ -269,6 +270,17 @@ after the decimal point is equal to the precision specification for
 the argument.
 If the precision is missing, 6 digits are given; if the precision
 is explicitly 0, no digits and no decimal point are printed.
+If the number is Infinity, or Not a Number (NaN), then
+.Dq inf
+.Pq \&or Dq nan
+is printed for
+.Cm f
+format, and
+.Dq INF
+.Pq \&or Dq NAN
+for
+.Cm F
+format.
 .It Cm eE
 The
 .Ar argument
@@ -282,16 +294,28 @@ the precision specification for the argument; when the precision is
 missing, 6 digits are produced.
 An upper-case E is used for an
 .Sq E
+format, and upper-case for Infinity and NaN as for
+.Sq F
 format.
 .It Cm gG
 The
 .Ar argument
 is printed in style
 .Cm f
+.Pq Cm F
 or in style
 .Cm e
 .Pq Cm E
 whichever gives full precision in minimum space.
+.It Cm aA
+The
+.Ar argument
+is treated as a floating point number,
+for which the underlying hexadecimal representation is
+printed.
+See
+.Xr printf 3
+for the details.
 .It Cm b
 Characters from the string
 .Ar argument

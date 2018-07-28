@@ -1,4 +1,4 @@
-/* $NetBSD: sun8i-a83t-bananapi-m3.dts,v 1.1 2017/10/28 16:09:14 jmcneill Exp $ */
+/* $NetBSD: sun8i-a83t-bananapi-m3.dts,v 1.1.4.1 2018/07/28 04:37:28 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -28,19 +28,3 @@
 
 #include "../../../external/gpl2/dts/dist/arch/arm/boot/dts/sun8i-a83t-bananapi-m3.dts"
 #include "sun8i-a83t.dtsi"
-
-&emac {
-	pinctrl-names = "default";
-	pinctrl-0 = <&emac_pins_rgmii_a>;
-	phy-mode = "rgmii";
-	phy = <&phy1>;
-	status = "okay";
-
-	/* EMAC transmit/receive clock delay chain values for BPI-M3 */
-	tx-delay = <0x7>;
-	rx-delay = <0x7>;
-
-	phy1: ethernet-phy@1 {
-		reg = <1>;
-	};
-};

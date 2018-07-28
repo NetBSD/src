@@ -1,4 +1,4 @@
-/* $NetBSD: lemac.c,v 1.48 2017/05/23 02:19:14 ozaki-r Exp $ */
+/* $NetBSD: lemac.c,v 1.48.8.1 2018/07/28 04:37:45 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 1994, 1995, 1997 Matt Thomas <matt@3am-software.com>
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lemac.c,v 1.48 2017/05/23 02:19:14 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lemac.c,v 1.48.8.1 2018/07/28 04:37:45 pgoyette Exp $");
 
 #include "opt_inet.h"
 
@@ -713,7 +713,7 @@ lemac_ifstart(
 	}
 
 	LEMAC_OUTB(sc, LEMAC_REG_TQ, tx_pg);	/* tell chip to transmit this packet */
-	bpf_mtap(&sc->sc_if, m);
+	bpf_mtap(&sc->sc_if, m, BPF_D_OUT);
 	m_freem(m);			/* free the mbuf */
     }
     LEMAC_INTR_ENABLE(sc);

@@ -1,4 +1,4 @@
-# $NetBSD: md.hpcsh,v 1.28 2016/08/25 12:17:26 christos Exp $
+# $NetBSD: md.hpcsh,v 1.28.12.1 2018/07/28 04:32:59 pgoyette Exp $
 ./usr/include/hpcsh				comp-c-include
 ./usr/include/hpcsh/_G_config.h			comp-obsolete		obsolete
 ./usr/include/hpcsh/ansi.h			comp-c-include
@@ -39,7 +39,7 @@
 ./usr/include/hpcsh/pcb.h			comp-c-include
 ./usr/include/hpcsh/pio.h			comp-obsolete		obsolete
 ./usr/include/hpcsh/pmap.h			comp-c-include
-./usr/include/hpcsh/pmc.h			comp-c-include
+./usr/include/hpcsh/pmc.h			comp-obsolete		obsolete
 ./usr/include/hpcsh/proc.h			comp-c-include
 ./usr/include/hpcsh/profile.h			comp-c-include
 ./usr/include/hpcsh/psl.h			comp-c-include

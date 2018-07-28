@@ -1,4 +1,4 @@
-/*	$NetBSD: tprof.c,v 1.13 2015/08/20 14:40:18 christos Exp $	*/
+/*	$NetBSD: tprof.c,v 1.13.16.1 2018/07/28 04:37:57 pgoyette Exp $	*/
 
 /*-
  * Copyright (c)2008,2009,2010 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tprof.c,v 1.13 2015/08/20 14:40:18 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tprof.c,v 1.13.16.1 2018/07/28 04:37:57 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -247,8 +247,22 @@ tprof_stop1(void)
 	workqueue_destroy(tprof_wq);
 }
 
+static void
+tprof_getinfo(struct tprof_info *info)
+{
+	tprof_backend_t *tb;
+
+	KASSERT(mutex_owned(&tprof_startstop_lock));
+
+	memset(info, 0, sizeof(*info));
+	info->ti_version = TPROF_VERSION;
+	if ((tb = tprof_backend) != NULL) {
+		info->ti_ident = tb->tb_ops->tbo_ident();
+	}
+}
+
 static int
-tprof_start(const struct tprof_param *param)
+tprof_start(const tprof_param_t *param)
 {
 	CPU_INFO_ITERATOR cii;
 	struct cpu_info *ci;
@@ -296,7 +310,7 @@ tprof_start(const struct tprof_param *param)
 		callout_setfunc(&c->c_callout, tprof_kick, ci);
 	}
 
-	error = tb->tb_ops->tbo_start(NULL);
+	error = tb->tb_ops->tbo_start(param);
 	if (error != 0) {
 		KASSERT(tb->tb_usecount > 0);
 		tb->tb_usecount--;
@@ -404,7 +418,7 @@ tprof_backend_lookup(const char *name)
  */
 
 void
-tprof_sample(tprof_backend_cookie_t *cookie, const tprof_frame_info_t *tfi)
+tprof_sample(void *unused, const tprof_frame_info_t *tfi)
 {
 	tprof_cpu_t * const c = tprof_curcpu();
 	tprof_buf_t * const buf = c->c_buf;
@@ -608,14 +622,16 @@ tprof_read(dev_t dev, struct uio *uio, int flags)
 static int
 tprof_ioctl(dev_t dev, u_long cmd, void *data, int flags, struct lwp *l)
 {
-	const struct tprof_param *param;
+	const tprof_param_t *param;
 	int error = 0;
 
 	KASSERT(minor(dev) == 0);
 
 	switch (cmd) {
-	case TPROF_IOC_GETVERSION:
-		*(int *)data = TPROF_VERSION;
+	case TPROF_IOC_GETINFO:
+		mutex_enter(&tprof_startstop_lock);
+		tprof_getinfo(data);
+		mutex_exit(&tprof_startstop_lock);
 		break;
 	case TPROF_IOC_START:
 		param = data;

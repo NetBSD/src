@@ -1,4 +1,4 @@
-/* $NetBSD: ipsec.c,v 1.151.2.4 2018/05/21 04:36:16 pgoyette Exp $ */
+/* $NetBSD: ipsec.c,v 1.151.2.5 2018/07/28 04:38:11 pgoyette Exp $ */
 /* $FreeBSD: ipsec.c,v 1.2.2.2 2003/07/01 01:38:13 sam Exp $ */
 /* $KAME: ipsec.c,v 1.103 2001/05/24 07:14:18 sakane Exp $ */
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.151.2.4 2018/05/21 04:36:16 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.151.2.5 2018/07/28 04:38:11 pgoyette Exp $");
 
 /*
  * IPsec controller part.
@@ -81,6 +81,7 @@ __KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.151.2.4 2018/05/21 04:36:16 pgoyette Exp
 #include <netinet6/ip6_var.h>
 #endif
 #include <netinet/in_pcb.h>
+#include <netinet/in_offload.h>
 #ifdef INET6
 #include <netinet6/in6_pcb.h>
 #include <netinet/icmp6.h>
@@ -664,7 +665,7 @@ ipsec4_output(struct mbuf *m, struct inpcb *inp, int flags,
 	 * this is done in the normal processing path.
 	 */
 	if (m->m_pkthdr.csum_flags & (M_CSUM_TCPv4|M_CSUM_UDPv4)) {
-		in_delayed_cksum(m);
+		in_undefer_cksum_tcpudp(m);
 		m->m_pkthdr.csum_flags &= ~(M_CSUM_TCPv4|M_CSUM_UDPv4);
 	}
 

@@ -1,4 +1,4 @@
-# $NetBSD: md.playstation2,v 1.14 2015/12/21 16:49:37 christos Exp $
+# $NetBSD: md.playstation2,v 1.14.14.1 2018/07/28 04:32:59 pgoyette Exp $
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/playstation2			comp-c-include
 ./usr/include/playstation2/_G_config.h		comp-obsolete		obsolete
@@ -36,7 +36,7 @@
 ./usr/include/playstation2/param.h		comp-c-include
 ./usr/include/playstation2/pcb.h		comp-c-include
 ./usr/include/playstation2/pmap.h		comp-c-include
-./usr/include/playstation2/pmc.h		comp-c-include
+./usr/include/playstation2/pmc.h		comp-obsolete		obsolete
 ./usr/include/playstation2/proc.h		comp-c-include
 ./usr/include/playstation2/profile.h		comp-c-include
 ./usr/include/playstation2/psl.h		comp-c-include

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.231 2017/06/01 02:45:13 chs Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.231.8.1 2018/07/28 04:38:08 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.231 2017/06/01 02:45:13 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.231.8.1 2018/07/28 04:38:08 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -185,7 +185,7 @@ fd_isused(filedesc_t *fdp, unsigned fd)
 
 	KASSERT(fd < fdp->fd_dt->dt_nfiles);
 
-	return (fdp->fd_lomap[off] & (1 << (fd & NDENTRYMASK))) != 0;
+	return (fdp->fd_lomap[off] & (1U << (fd & NDENTRYMASK))) != 0;
 }
 
 /*
@@ -293,17 +293,17 @@ fd_used(filedesc_t *fdp, unsigned fd)
 	ff = fdp->fd_dt->dt_ff[fd];
 
 	KASSERT(mutex_owned(&fdp->fd_lock));
-	KASSERT((fdp->fd_lomap[off] & (1 << (fd & NDENTRYMASK))) == 0);
+	KASSERT((fdp->fd_lomap[off] & (1U << (fd & NDENTRYMASK))) == 0);
 	KASSERT(ff != NULL);
 	KASSERT(ff->ff_file == NULL);
 	KASSERT(!ff->ff_allocated);
 
 	ff->ff_allocated = true;
-	fdp->fd_lomap[off] |= 1 << (fd & NDENTRYMASK);
+	fdp->fd_lomap[off] |= 1U << (fd & NDENTRYMASK);
 	if (__predict_false(fdp->fd_lomap[off] == ~0)) {
 		KASSERT((fdp->fd_himap[off >> NDENTRYSHIFT] &
-		    (1 << (off & NDENTRYMASK))) == 0);
-		fdp->fd_himap[off >> NDENTRYSHIFT] |= 1 << (off & NDENTRYMASK);
+		    (1U << (off & NDENTRYMASK))) == 0);
+		fdp->fd_himap[off >> NDENTRYSHIFT] |= 1U << (off & NDENTRYMASK);
 	}
 
 	if ((int)fd > fdp->fd_lastfile) {
@@ -338,12 +338,12 @@ fd_unused(filedesc_t *fdp, unsigned fd)
 
 	if (fdp->fd_lomap[off] == ~0) {
 		KASSERT((fdp->fd_himap[off >> NDENTRYSHIFT] &
-		    (1 << (off & NDENTRYMASK))) != 0);
+		    (1U << (off & NDENTRYMASK))) != 0);
 		fdp->fd_himap[off >> NDENTRYSHIFT] &=
-		    ~(1 << (off & NDENTRYMASK));
+		    ~(1U << (off & NDENTRYMASK));
 	}
-	KASSERT((fdp->fd_lomap[off] & (1 << (fd & NDENTRYMASK))) != 0);
-	fdp->fd_lomap[off] &= ~(1 << (fd & NDENTRYMASK));
+	KASSERT((fdp->fd_lomap[off] & (1U << (fd & NDENTRYMASK))) != 0);
+	fdp->fd_lomap[off] &= ~(1U << (fd & NDENTRYMASK));
 	ff->ff_allocated = false;
 
 	KASSERT(fd <= fdp->fd_lastfile);
@@ -1489,13 +1489,13 @@ fd_copy(void)
 
 		/* Fix up bitmaps. */
 		j = i >> NDENTRYSHIFT;
-		KASSERT((newfdp->fd_lomap[j] & (1 << (i & NDENTRYMASK))) == 0);
-		newfdp->fd_lomap[j] |= 1 << (i & NDENTRYMASK);
+		KASSERT((newfdp->fd_lomap[j] & (1U << (i & NDENTRYMASK))) == 0);
+		newfdp->fd_lomap[j] |= 1U << (i & NDENTRYMASK);
 		if (__predict_false(newfdp->fd_lomap[j] == ~0)) {
 			KASSERT((newfdp->fd_himap[j >> NDENTRYSHIFT] &
-			    (1 << (j & NDENTRYMASK))) == 0);
+			    (1U << (j & NDENTRYMASK))) == 0);
 			newfdp->fd_himap[j >> NDENTRYSHIFT] |=
-			    1 << (j & NDENTRYMASK);
+			    1U << (j & NDENTRYMASK);
 		}
 		newlast = i;
 	}

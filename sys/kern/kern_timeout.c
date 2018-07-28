@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_timeout.c,v 1.54 2018/01/16 08:15:29 ozaki-r Exp $	*/
+/*	$NetBSD: kern_timeout.c,v 1.54.2.1 2018/07/28 04:38:08 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_timeout.c,v 1.54 2018/01/16 08:15:29 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_timeout.c,v 1.54.2.1 2018/07/28 04:38:08 pgoyette Exp $");
 
 /*
  * Timeouts are kept in a hierarchical timing wheel.  The c_time is the
@@ -717,12 +717,12 @@ callout_softclock(void *v)
 
 		/* If due run it, otherwise insert it into the right bucket. */
 		ticks = cc->cc_ticks;
-		delta = c->c_time - ticks;
-		if (delta > 0) {
+		if (c->c_time > ticks) {
+			delta = c->c_time - ticks;
 			CIRCQ_INSERT(&c->c_list, BUCKET(cc, delta, c->c_time));
 			continue;
 		}
-		if (delta < 0)
+		if (c->c_time < ticks)
 			cc->cc_ev_late.ev_count++;
 
 		c->c_flags = (c->c_flags & ~CALLOUT_PENDING) |

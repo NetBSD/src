@@ -1,4 +1,4 @@
-/*	$NetBSD: sysarch.h,v 1.12 2017/07/12 17:33:29 maxv Exp $	*/
+/*	$NetBSD: sysarch.h,v 1.12.4.1 2018/07/28 04:37:42 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -38,9 +38,6 @@
 #define X86_GET_IOPERM		3
 #define X86_SET_IOPERM		4
 #define X86_OLD_VM86		5
-#define X86_PMC_INFO		8
-#define X86_PMC_STARTSTOP	9
-#define X86_PMC_READ		10
 #define X86_GET_MTRR		11
 #define X86_SET_MTRR		12
 #define X86_VM86		13
@@ -61,9 +58,6 @@
 #define I386_GET_IOPERM		X86_GET_IOPERM
 #define I386_SET_IOPERM		X86_SET_IOPERM
 #define I386_OLD_VM86		X86_OLD_VM86
-#define I386_PMC_INFO		X86_PMC_INFO
-#define I386_PMC_STARTSTOP	X86_PMC_STARTSTOP
-#define I386_PMC_READ		X86_PMC_READ
 #define I386_GET_MTRR		X86_GET_MTRR
 #define I386_SET_MTRR		X86_SET_MTRR
 #define I386_VM86		X86_VM86
@@ -80,9 +74,6 @@
 #define X86_64_GET_IOPERM	X86_GET_IOPERM
 #define X86_64_SET_IOPERM	X86_SET_IOPERM
 #define X86_64_OLD_VM86		X86_OLD_VM86
-#define X86_64_PMC_INFO		X86_PMC_INFO
-#define X86_64_PMC_STARTSTOP	X86_PMC_STARTSTOP
-#define X86_64_PMC_READ		X86_PMC_READ
 #define X86_64_GET_MTRR		X86_GET_MTRR
 #define X86_64_SET_MTRR		X86_SET_MTRR
 #define X86_64_VM86		X86_VM86
@@ -130,50 +121,6 @@ struct _X86_SYSARCH_L(set_ioperm_args) {
 	u_long *iomap;
 };
 
-struct _X86_SYSARCH_L(pmc_info_args) {
-	int vers;
-	int type;
-	uint32_t nctrs;
-	uint64_t nsamp;
-};
-
-#define	PMC_VERSION		1
-
-#define	PMC_TYPE_NONE		0
-#define	PMC_TYPE_I586		1
-#define	PMC_TYPE_I686		2
-#define	PMC_TYPE_K7		3
-#define	PMC_TYPE_F10H		4
-
-#define	PMC_INFO_HASTSC		0x01
-
-#define	PMC_NCOUNTERS		4
-
-struct _X86_SYSARCH_L(pmc_startstop_args) {
-	uint32_t counter;
-	uint64_t val;
-	uint32_t event;
-	uint32_t unit;
-	uint32_t compare;
-	uint32_t flags;
-};
-
-#define	PMC_SETUP_KERNEL	0x01
-#define	PMC_SETUP_USER		0x02
-#define	PMC_SETUP_EDGE		0x04
-#define	PMC_SETUP_INV		0x08
-
-typedef struct {
-	uint64_t ctrval;
-	uint32_t overfl;
-} x86_pmc_cpuval_t;
-
-struct _X86_SYSARCH_L(pmc_read_args) {
-	uint32_t counter;
-	x86_pmc_cpuval_t *values;
-	uint32_t nval;
-};
-
 struct mtrr;
 
 #ifdef _KERNEL
@@ -192,9 +139,6 @@ __BEGIN_DECLS
 int _X86_SYSARCH_L(get_ldt)(int, union descriptor *, int);
 int _X86_SYSARCH_L(set_ldt)(int, union descriptor *, int);
 int _X86_SYSARCH_L(iopl)(int);
-int _X86_SYSARCH_L(pmc_info)(struct _X86_SYSARCH_L(pmc_info_args *));
-int _X86_SYSARCH_L(pmc_startstop)(struct _X86_SYSARCH_L(pmc_startstop_args *));
-int _X86_SYSARCH_L(pmc_read)(struct _X86_SYSARCH_L(pmc_read_args *));
 int _X86_SYSARCH_L(set_mtrr)(struct mtrr *, int *);
 int _X86_SYSARCH_L(get_mtrr)(struct mtrr *, int *);
 int sysarch(int, void *);

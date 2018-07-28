@@ -1,4 +1,4 @@
-/*	$NetBSD: mb86950.c,v 1.26.12.1 2018/06/25 07:25:50 pgoyette Exp $	*/
+/*	$NetBSD: mb86950.c,v 1.26.12.2 2018/07/28 04:37:45 pgoyette Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -67,7 +67,7 @@
   */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mb86950.c,v 1.26.12.1 2018/06/25 07:25:50 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mb86950.c,v 1.26.12.2 2018/07/28 04:37:45 pgoyette Exp $");
 
 /*
  * Device driver for Fujitsu mb86950 based Ethernet cards.
@@ -570,7 +570,7 @@ mb86950_start(struct ifnet *ifp)
 		return;
 
 	/* Tap off here if there is a BPF listener. */
-	bpf_mtap(ifp, m);
+	bpf_mtap(ifp, m, BPF_D_OUT);
 
 	/* Send the packet to the mb86950 */
 	len = mb86950_put_fifo(sc,m);

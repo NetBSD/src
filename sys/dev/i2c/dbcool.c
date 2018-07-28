@@ -1,4 +1,4 @@
-/*	$NetBSD: dbcool.c,v 1.48.2.1 2018/06/25 07:25:50 pgoyette Exp $ */
+/*	$NetBSD: dbcool.c,v 1.48.2.2 2018/07/28 04:37:44 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbcool.c,v 1.48.2.1 2018/06/25 07:25:50 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbcool.c,v 1.48.2.2 2018/07/28 04:37:44 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -731,17 +731,12 @@ static char dbcool_cur_behav[16];
 CFATTACH_DECL_NEW(dbcool, sizeof(struct dbcool_softc),
     dbcool_match, dbcool_attach, dbcool_detach, NULL);
 
-static const char * dbcool_compats[] = {
-	"i2c-adm1031",
-	"adt7467",
-	"adt7460",
-	"adm1030",
-	NULL
-};
-
-static const struct device_compatible_entry dbcool_compat_data[] = {
-	DEVICE_COMPAT_ENTRY(dbcool_compats),
-	DEVICE_COMPAT_TERMINATOR
+static const struct device_compatible_entry compat_data[] = {
+	{ "i2c-adm1031",		0 },
+	{ "adt7467",			0 },
+	{ "adt7460",			0 },
+	{ "adm1030",			0 },
+	{ NULL,				0 }
 };
 
 int
@@ -756,7 +751,7 @@ dbcool_match(device_t parent, cfdata_t cf, void *aux)
 	dc.dc_writereg = dbcool_writereg;
 	int match_result;
 
-	if (iic_use_direct_match(ia, cf, dbcool_compat_data, &match_result))
+	if (iic_use_direct_match(ia, cf, compat_data, &match_result))
 		return match_result;
 
 	if ((ia->ia_addr & DBCOOL_ADDRMASK) != DBCOOL_ADDR)

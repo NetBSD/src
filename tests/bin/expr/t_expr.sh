@@ -1,4 +1,4 @@
-# $NetBSD: t_expr.sh,v 1.3.32.1 2018/06/25 07:26:08 pgoyette Exp $
+# $NetBSD: t_expr.sh,v 1.3.32.2 2018/07/28 04:38:12 pgoyette Exp $
 #
 # Copyright (c) 2007 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -80,6 +80,25 @@ overflow_body() {
 	          "expr: integer overflow or underflow occurred for operation '-9223372036854775808 % -1'"
 	test_expr '-9223372036854775808 / -1' \
 	          "expr: integer overflow or underflow occurred for operation '-9223372036854775808 / -1'"
+	test_expr '0 + -9223372036854775808' '-9223372036854775808'
+	test_expr '0 + -1' '-1'
+	test_expr '0 + 0' '0'
+	test_expr '0 + 1' '1'
+	test_expr '0 + 9223372036854775807' '9223372036854775807'
+	test_expr '-9223372036854775808 + 0' '-9223372036854775808'
+	test_expr '9223372036854775807 + 0' '9223372036854775807'
+	test_expr '4611686018427387904 \* -1' '-4611686018427387904'
+	test_expr '4611686018427387904 \* -2' '-9223372036854775808'
+	test_expr '4611686018427387904 \* -3' \
+	          "expr: integer overflow or underflow occurred for operation '4611686018427387904 * -3'"
+	test_expr '-4611686018427387904 \* -1' '4611686018427387904'
+	test_expr '-4611686018427387904 \* -2' \
+	          "expr: integer overflow or underflow occurred for operation '-4611686018427387904 * -2'"
+	test_expr '-4611686018427387904 \* -3' \
+	          "expr: integer overflow or underflow occurred for operation '-4611686018427387904 * -3'"
+	test_expr '0 \* -1' '0'
+	test_expr '0 \* 0' '0'
+	test_expr '0 \* 1' '0'
 }
 
 atf_test_case gtkmm

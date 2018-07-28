@@ -1,4 +1,4 @@
-/* $NetBSD: pte.h,v 1.2.12.1 2018/04/07 04:12:11 pgoyette Exp $ */
+/* $NetBSD: pte.h,v 1.2.12.2 2018/07/28 04:37:26 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -72,6 +72,10 @@ typedef uint64_t pt_entry_t;	/* L3(4k) table entry */
 #define LX_BLKPAG_APUSER	__BIT(6)
 #define LX_BLKPAG_NS		__BIT(5)
 #define LX_BLKPAG_ATTR_INDX	__BITS(4,2)	/* refer MAIR_EL1 attr<n> */
+#define  LX_BLKPAG_ATTR_INDX_0	__SHIFTIN(0,LX_BLKPAG_ATTR_INDX)
+#define  LX_BLKPAG_ATTR_INDX_1	__SHIFTIN(1,LX_BLKPAG_ATTR_INDX)
+#define  LX_BLKPAG_ATTR_INDX_2	__SHIFTIN(2,LX_BLKPAG_ATTR_INDX)
+#define  LX_BLKPAG_ATTR_INDX_3	__SHIFTIN(3,LX_BLKPAG_ATTR_INDX)
 #define LX_TYPE			__BIT(1)
 #define LX_TYPE_BLK		__SHIFTIN(0, LX_TYPE)
 #define LX_TYPE_TBL		__SHIFTIN(1, LX_TYPE)

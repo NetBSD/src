@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.298.2.5 2018/06/25 07:26:07 pgoyette Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.298.2.6 2018/07/28 04:38:10 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.298.2.5 2018/06/25 07:26:07 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.298.2.6 2018/07/28 04:38:10 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -707,7 +707,7 @@ sendit:
 			if (sw_csum & (M_CSUM_TCPv4|M_CSUM_UDPv4)) {
 				if (IN_NEED_CHECKSUM(ifp,
 				    sw_csum & (M_CSUM_TCPv4|M_CSUM_UDPv4))) {
-					in_delayed_cksum(m);
+					in_undefer_cksum_tcpudp(m);
 				}
 				m->m_pkthdr.csum_flags &=
 				    ~(M_CSUM_TCPv4|M_CSUM_UDPv4);
@@ -733,7 +733,7 @@ sendit:
 	if (m->m_pkthdr.csum_flags & (M_CSUM_TCPv4|M_CSUM_UDPv4)) {
 		if (IN_NEED_CHECKSUM(ifp,
 		    m->m_pkthdr.csum_flags & (M_CSUM_TCPv4|M_CSUM_UDPv4))) {
-			in_delayed_cksum(m);
+			in_undefer_cksum_tcpudp(m);
 		}
 		m->m_pkthdr.csum_flags &= ~(M_CSUM_TCPv4|M_CSUM_UDPv4);
 	}
@@ -957,31 +957,6 @@ sendorfree:
 	}
 
 	return error;
-}
-
-/*
- * Process a delayed payload checksum calculation.
- */
-void
-in_delayed_cksum(struct mbuf *m)
-{
-	struct ip *ip;
-	u_int16_t csum, offset;
-
-	ip = mtod(m, struct ip *);
-	offset = ip->ip_hl << 2;
-	csum = in4_cksum(m, 0, offset, ntohs(ip->ip_len) - offset);
-	if (csum == 0 && (m->m_pkthdr.csum_flags & M_CSUM_UDPv4) != 0)
-		csum = 0xffff;
-
-	offset += M_CSUM_DATA_IPv4_OFFSET(m->m_pkthdr.csum_data);
-
-	if ((offset + sizeof(u_int16_t)) > m->m_len) {
-		/* This happens when ip options were inserted */
-		m_copyback(m, offset, sizeof(csum), (void *)&csum);
-	} else {
-		*(u_int16_t *)(mtod(m, char *) + offset) = csum;
-	}
 }
 
 /*
@@ -2157,7 +2132,7 @@ ip_mloopback(struct ifnet *ifp, struct mbuf *m, const struct sockaddr_in *dst)
 	ip = mtod(copym, struct ip *);
 
 	if (copym->m_pkthdr.csum_flags & (M_CSUM_TCPv4|M_CSUM_UDPv4)) {
-		in_delayed_cksum(copym);
+		in_undefer_cksum_tcpudp(copym);
 		copym->m_pkthdr.csum_flags &=
 		    ~(M_CSUM_TCPv4|M_CSUM_UDPv4);
 	}

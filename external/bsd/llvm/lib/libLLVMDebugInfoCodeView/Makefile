@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2017/08/01 20:07:40 joerg Exp $
+#	$NetBSD: Makefile,v 1.4.2.1 2018/07/28 04:37:10 pgoyette Exp $
 
 LIB=	LLVMDebugInfoCodeView
 
@@ -6,36 +6,41 @@ LIB=	LLVMDebugInfoCodeView
 
 .PATH: ${LLVM_SRCDIR}/lib/DebugInfo/CodeView
 
-SRCS+=	CVSymbolVisitor.cpp \
-	CVTypeVisitor.cpp \
+SRCS+=	AppendingTypeTableBuilder.cpp \
 	CodeViewError.cpp \
 	CodeViewRecordIO.cpp \
-	DebugFrameDataSubsection.cpp \
+	ContinuationRecordBuilder.cpp \
+	CVSymbolVisitor.cpp \
+	CVTypeVisitor.cpp \
 	DebugChecksumsSubsection.cpp \
 	DebugCrossExSubsection.cpp \
-	DebugSymbolsSubsection.cpp \
 	DebugCrossImpSubsection.cpp \
+	DebugFrameDataSubsection.cpp \
 	DebugInlineeLinesSubsection.cpp \
-	DebugSubsectionRecord.cpp \
-	DebugSubsection.cpp \
-	DebugSubsectionVisitor.cpp \
 	DebugLinesSubsection.cpp \
 	DebugStringTableSubsection.cpp \
+	DebugSubsection.cpp \
+	DebugSubsectionRecord.cpp \
+	DebugSubsectionVisitor.cpp \
+	DebugSymbolsSubsection.cpp \
 	EnumTables.cpp \
 	Formatters.cpp \
+	GlobalTypeTableBuilder.cpp \
+	LazyRandomTypeCollection.cpp \
 	Line.cpp \
+	MergingTypeTableBuilder.cpp \
+	RecordName.cpp \
 	RecordSerialization.cpp \
+	SimpleTypeSerializer.cpp \
 	StringsAndChecksums.cpp \
 	SymbolDumper.cpp \
 	SymbolRecordMapping.cpp \
 	SymbolSerializer.cpp \
 	TypeDumpVisitor.cpp \
+	TypeHashing.cpp \
 	TypeIndex.cpp \
 	TypeIndexDiscovery.cpp \
-	TypeName.cpp \
-	LazyRandomTypeCollection.cpp \
 	TypeRecordMapping.cpp \
-	TypeSerializer.cpp \
 	TypeStreamMerger.cpp \
 	TypeTableCollection.cpp
 

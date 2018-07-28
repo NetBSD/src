@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.157.2.7 2018/06/25 07:25:38 pgoyette Exp $	*/
+/*	$NetBSD: locore.S,v 1.157.2.8 2018/07/28 04:37:26 pgoyette Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -975,6 +975,7 @@ longmode_hi:
 
 	pushq	%rdi
 	call	_C_LABEL(init_bootspace)
+	call	_C_LABEL(init_slotspace)
 	popq	%rdi
 	call	_C_LABEL(init_x86_64)
 	call 	_C_LABEL(main)
@@ -1088,38 +1089,6 @@ ENTRY(cpu_switchto)
 	movq	%rbp,PCB_RBP(%rax)
 .Lskip_save:
 
-#ifdef SVS
-	pushq	%rdx
-	movb	_C_LABEL(svs_enabled),%dl
-	testb	%dl,%dl
-	jz	.Lskip_svs
-	callq	_C_LABEL(svs_lwp_switch)
-.Lskip_svs:
-	popq	%rdx
-
-	/* RDI/RSI got clobbered. */
-	movq	%r13,%rdi
-	movq	%r12,%rsi
-#endif
-
-#ifndef XEN
-	pushq	%rdx
-	callq	_C_LABEL(speculation_barrier)
-	popq	%rdx
-
-	/* RDI/RSI got clobbered. */
-	movq	%r13,%rdi
-	movq	%r12,%rsi
-
-	pushq	%rdx
-	movb	_C_LABEL(x86_fpu_eager),%dl
-	testb	%dl,%dl
-	jz	.Lno_eagerfpu
-	callq	_C_LABEL(fpu_eagerswitch)
-.Lno_eagerfpu:
-	popq	%rdx
-#endif
-
 	/* Switch to newlwp's stack. */
 	movq	L_PCB(%r12),%r14
 	movq	PCB_RSP(%r14),%rsp
@@ -1135,6 +1104,20 @@ ENTRY(cpu_switchto)
 	/* Skip the rest if returning to a pinned LWP. */
 	testb	%dl,%dl		/* returning = true ? */
 	jnz	.Lswitch_return
+
+#ifdef SVS
+	movb	_C_LABEL(svs_enabled),%dl
+	testb	%dl,%dl
+	jz	.Lskip_svs
+	callq	_C_LABEL(svs_lwp_switch)
+.Lskip_svs:
+#endif
+
+#ifndef XEN
+	movq	%r13,%rdi
+	movq	%r12,%rsi
+	callq	_C_LABEL(speculation_barrier)
+#endif
 
 	/* Switch ring0 stack */
 #ifdef SVS
@@ -1159,6 +1142,21 @@ ENTRY(cpu_switchto)
 	callq	_C_LABEL(x86_64_switch_context)
 #endif
 .Lring0_switched:
+
+	/* Switch the dbregs. */
+	movq	%r13,%rdi
+	movq	%r12,%rsi
+	callq	_C_LABEL(x86_dbregs_switch)
+
+#ifndef XEN
+	movb	_C_LABEL(x86_fpu_eager),%dl
+	testb	%dl,%dl
+	jz	.Lno_eagerfpu
+	movq	%r13,%rdi
+	movq	%r12,%rsi
+	callq	_C_LABEL(fpu_eagerswitch)
+.Lno_eagerfpu:
+#endif
 
 	/* Don't bother with the rest if switching to a system process. */
 	testl	$LW_SYSTEM,L_FLAG(%r12)
@@ -1286,7 +1284,7 @@ END(savectx)
 /*
  * Syscall handler.
  */
-NENTRY(handle_syscall)
+ENTRY(handle_syscall)
 	STI(si)
 
 	movq	CPUVAR(CURLWP),%r14
@@ -1364,7 +1362,7 @@ END(handle_syscall)
  * This is a trampoline function pushed run by newly created LWPs
  * in order to do additional setup in their context.
  */
-NENTRY(lwp_trampoline)
+ENTRY(lwp_trampoline)
 	movq	%rbp,%rsi
 	movq	%rbp,%r14	/* for .Lsyscall_checkast */
 	movq	%rax,%rdi
@@ -1641,6 +1639,13 @@ LABEL(svs_enter_altstack)
 1234:
 LABEL(svs_enter_altstack_end)
 
+LABEL(svs_enter_nmi)
+	movq	%cr3,%rax
+	movq	%rax,(FRAMESIZE+1*8)(%rsp)	/* nmistore->scratch */
+	movq	(FRAMESIZE+0*8)(%rsp),%rax	/* nmistore->cr3 */
+	movq	%rax,%cr3
+LABEL(svs_enter_nmi_end)
+
 LABEL(svs_leave)
 	testb	$SEL_UPL,TF_CS(%rsp)
 	jz	1234f
@@ -1658,6 +1663,11 @@ LABEL(svs_leave_altstack)
 1234:
 LABEL(svs_leave_altstack_end)
 
+LABEL(svs_leave_nmi)
+	movq	(FRAMESIZE+1*8)(%rsp),%rax	/* nmistore->scratch */
+	movq	%rax,%cr3
+LABEL(svs_leave_nmi_end)
+
 LABEL(nosvs_enter)
 	NOSVS_ENTER
 LABEL(nosvs_enter_end)
@@ -1666,6 +1676,10 @@ LABEL(nosvs_enter_altstack)
 	NOSVS_ENTER_ALTSTACK
 LABEL(nosvs_enter_altstack_end)
 
+LABEL(nosvs_enter_nmi)
+	NOSVS_ENTER_NMI
+LABEL(nosvs_enter_nmi_end)
+
 LABEL(nosvs_leave)
 	NOSVS_LEAVE
 LABEL(nosvs_leave_end)
@@ -1673,6 +1687,10 @@ LABEL(nosvs_leave_end)
 LABEL(nosvs_leave_altstack)
 	NOSVS_LEAVE_ALTSTACK
 LABEL(nosvs_leave_altstack_end)
+
+LABEL(nosvs_leave_nmi)
+	NOSVS_LEAVE_NMI
+LABEL(nosvs_leave_nmi_end)
 #endif
 
 	.globl	ibrs_enter, ibrs_enter_end

@@ -15,12 +15,11 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Transforms/Utils/UnifyFunctionExitNodes.h"
-#include "llvm/ADT/StringExtras.h"
 #include "llvm/IR/BasicBlock.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/Type.h"
-#include "llvm/Transforms/Scalar.h"
+#include "llvm/Transforms/Utils.h"
 using namespace llvm;
 
 char UnifyFunctionExitNodes::ID = 0;

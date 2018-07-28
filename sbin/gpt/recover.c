@@ -33,7 +33,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/recover.c,v 1.8 2005/08/31 01:47:19 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: recover.c,v 1.17 2017/03/22 19:59:16 martin Exp $");
+__RCSID("$NetBSD: recover.c,v 1.17.10.1 2018/07/28 04:37:23 pgoyette Exp $");
 #endif
 
 #include <sys/types.h>
@@ -59,7 +59,7 @@ struct gpt_cmd c_recover = {
 	"recover",
 	cmd_recover,
 	recoverhelp, __arraycount(recoverhelp),
-	0,
+	GPT_SYNC,
 };
 
 #define usage() gpt_usage(NULL, &c_recover)

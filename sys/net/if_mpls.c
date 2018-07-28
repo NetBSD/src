@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mpls.c,v 1.33 2018/01/19 15:04:29 maxv Exp $ */
+/*	$NetBSD: if_mpls.c,v 1.33.2.1 2018/07/28 04:38:10 pgoyette Exp $ */
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mpls.c,v 1.33 2018/01/19 15:04:29 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mpls.c,v 1.33.2.1 2018/07/28 04:38:10 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -192,7 +192,7 @@ mpls_input(struct ifnet *ifp, struct mbuf *m)
 	 * I'd love to unshim the packet, guess family
 	 * and pass it to bpf
 	 */
-	bpf_mtap_af(ifp, AF_MPLS, m);
+	bpf_mtap_af(ifp, AF_MPLS, m, BPF_D_IN);
 #endif
 
 	mpls_lse(m);
@@ -246,7 +246,7 @@ mpls_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 		return EINVAL;
 	}
 
-	bpf_mtap_af(ifp, dst->sa_family, m);
+	bpf_mtap_af(ifp, dst->sa_family, m, BPF_D_OUT);
 
 	memset(&mh, 0, sizeof(mh));
 	mh.s_addr = MPLS_GETSADDR(rt);

@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.311.2.2 2018/06/25 07:25:37 pgoyette Exp $
+#	$NetBSD: bsd.prog.mk,v 1.311.2.3 2018/07/28 04:37:25 pgoyette Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .ifndef HOSTPROG
@@ -9,9 +9,16 @@
 
 ##### Sanitizer specific flags.
 
-CFLAGS+=	${SANITIZERFLAGS}
-CXXFLAGS+=	${SANITIZERFLAGS}
+CFLAGS+=	${SANITIZERFLAGS} ${LIBCSANITIZERFLAGS}
+CXXFLAGS+=	${SANITIZERFLAGS} ${LIBCSANITIZERFLAGS}
 LDFLAGS+=	${SANITIZERFLAGS}
+
+# Rename the local function definitions to not conflict with libc/rt/pthread/m.
+.if ${MKSANITIZER:Uno} == "yes" && defined(SANITIZER_RENAME_SYMBOL)
+.	for _symbol in ${SANITIZER_RENAME_SYMBOL}
+CPPFLAGS+=	-D${_symbol}=__mksanitizer_${_symbol}
+.	endfor
+.endif
 
 #
 # Definitions and targets shared among all programs built by a single
@@ -165,7 +172,6 @@ LIBCRTI=	${DESTDIR}/usr/lib/${MLIBDIR:D${MLIBDIR}/}crti.o
 	pam \
 	pcap \
 	pci \
-	pmc \
 	posix \
 	pthread \
 	puffs \

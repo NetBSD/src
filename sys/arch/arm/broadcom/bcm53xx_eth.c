@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: bcm53xx_eth.c,v 1.30 2017/10/23 09:23:25 msaitoh Exp $");
+__KERNEL_RCSID(1, "$NetBSD: bcm53xx_eth.c,v 1.30.2.1 2018/07/28 04:37:27 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -1663,7 +1663,7 @@ bcmeth_txq_consume(
 			printf("%s: mbuf %p: consumed a %u byte packet\n",
 			    __func__, m, m->m_pkthdr.len);
 #endif
-			bpf_mtap(ifp, m);
+			bpf_mtap(ifp, m, BPF_D_OUT);
 			ifp->if_opackets++;
 			ifp->if_obytes += m->m_pkthdr.len;
 			if (m->m_flags & M_MCAST)

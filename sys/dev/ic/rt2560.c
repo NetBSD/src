@@ -1,4 +1,4 @@
-/*	$NetBSD: rt2560.c,v 1.32.2.1 2018/05/02 07:20:06 pgoyette Exp $	*/
+/*	$NetBSD: rt2560.c,v 1.32.2.2 2018/07/28 04:37:45 pgoyette Exp $	*/
 /*	$OpenBSD: rt2560.c,v 1.15 2006/04/20 20:31:12 miod Exp $  */
 /*	$FreeBSD: rt2560.c,v 1.3 2006/03/21 21:15:43 damien Exp $*/
 
@@ -24,7 +24,7 @@
  * http://www.ralinktech.com/
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rt2560.c,v 1.32.2.1 2018/05/02 07:20:06 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rt2560.c,v 1.32.2.2 2018/07/28 04:37:45 pgoyette Exp $");
 
 
 #include <sys/param.h>
@@ -1360,7 +1360,8 @@ rt2560_decryption_intr(struct rt2560_softc *sc)
 			tap->wr_antenna = sc->rx_ant;
 			tap->wr_antsignal = desc->rssi;
 
-			bpf_mtap2(sc->sc_drvbpf, tap, sc->sc_txtap_len, m);
+			bpf_mtap2(sc->sc_drvbpf, tap, sc->sc_txtap_len, m,
+			    BPF_D_IN);
 		}
 
 		wh = mtod(m, struct ieee80211_frame *);
@@ -1479,7 +1480,7 @@ rt2560_beacon_expire(struct rt2560_softc *sc)
 
 	ieee80211_beacon_update(ic, data->ni, &sc->sc_bo, data->m, 1);
 
-	bpf_mtap3(ic->ic_rawbpf, data->m);
+	bpf_mtap3(ic->ic_rawbpf, data->m, BPF_D_OUT);
 	rt2560_tx_bcn(sc, data->m, data->ni);
 
 	DPRINTFN(15, ("beacon expired\n"));
@@ -1817,7 +1818,7 @@ rt2560_tx_mgt(struct rt2560_softc *sc, struct mbuf *m0,
 		tap->wt_chan_flags = htole16(ic->ic_ibss_chan->ic_flags);
 		tap->wt_antenna = sc->tx_ant;
 
-		bpf_mtap2(sc->sc_drvbpf, tap, sc->sc_txtap_len, m0);
+		bpf_mtap2(sc->sc_drvbpf, tap, sc->sc_txtap_len, m0, BPF_D_OUT);
 	}
 
 	data->m = m0;
@@ -2052,7 +2053,7 @@ rt2560_tx_data(struct rt2560_softc *sc, struct mbuf *m0,
 		tap->wt_chan_flags = htole16(ic->ic_ibss_chan->ic_flags);
 		tap->wt_antenna = sc->tx_ant;
 
-		bpf_mtap2(sc->sc_drvbpf, tap, sc->sc_txtap_len, m0);
+		bpf_mtap2(sc->sc_drvbpf, tap, sc->sc_txtap_len, m0, BPF_D_OUT);
 	}
 
 	data->m = m0;
@@ -2124,7 +2125,7 @@ rt2560_start(struct ifnet *ifp)
 
 			ni = M_GETCTX(m0, struct ieee80211_node *);
 			M_CLEARCTX(m0);
-			bpf_mtap3(ic->ic_rawbpf, m0);
+			bpf_mtap3(ic->ic_rawbpf, m0, BPF_D_OUT);
 			if (rt2560_tx_mgt(sc, m0, ni) != 0)
 				break;
 
@@ -2149,7 +2150,7 @@ rt2560_start(struct ifnet *ifp)
 				m_freem(m0);
 				continue;
 			}
-			bpf_mtap(ifp, m0);
+			bpf_mtap(ifp, m0, BPF_D_OUT);
 
 			m0 = ieee80211_encap(ic, m0, ni);
 			if (m0 == NULL) {
@@ -2157,7 +2158,7 @@ rt2560_start(struct ifnet *ifp)
 				continue;
                         }
 
-			bpf_mtap3(ic->ic_rawbpf, m0);
+			bpf_mtap3(ic->ic_rawbpf, m0, BPF_D_OUT);
 
 			if (rt2560_tx_data(sc, m0, ni) != 0) {
 				ieee80211_free_node(ni);

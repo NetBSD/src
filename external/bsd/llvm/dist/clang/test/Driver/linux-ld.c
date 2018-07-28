@@ -71,6 +71,27 @@
 // CHECK-LD-RT: libclang_rt.builtins-x86_64.a"
 //
 // RUN: %clang -no-canonical-prefixes %s -### -o %t.o 2>&1 \
+// RUN:     --target=i686-unknown-linux \
+// RUN:     --gcc-toolchain="" \
+// RUN:     --sysroot=%S/Inputs/basic_linux_tree \
+// RUN:     --rtlib=compiler-rt \
+// RUN:   | FileCheck --check-prefix=CHECK-LD-RT-I686 %s
+// CHECK-LD-RT-I686-NOT: warning:
+// CHECK-LD-RT-I686: "{{.*}}ld{{(.exe)?}}" "--sysroot=[[SYSROOT:[^"]+]]"
+// CHECK-LD-RT-I686: "--eh-frame-hdr"
+// CHECK-LD-RT-I686: "-m" "elf_i386"
+// CHECK-LD-RT-I686: "-dynamic-linker"
+// CHECK-LD-RT-I686: "{{.*}}/usr/lib/gcc/i686-unknown-linux/4.6.0{{/|\\\\}}crtbegin.o"
+// CHECK-LD-RT-I686: "-L[[SYSROOT]]/usr/lib/gcc/i686-unknown-linux/4.6.0"
+// CHECK-LD-RT-I686: "-L[[SYSROOT]]/usr/lib/gcc/i686-unknown-linux/4.6.0/../../../../i686-unknown-linux/lib"
+// CHECK-LD-RT-I686: "-L[[SYSROOT]]/usr/lib/gcc/i686-unknown-linux/4.6.0/../../.."
+// CHECK-LD-RT-I686: "-L[[SYSROOT]]/lib"
+// CHECK-LD-RT-I686: "-L[[SYSROOT]]/usr/lib"
+// CHECK-LD-RT-I686: libclang_rt.builtins-i386.a"
+// CHECK-LD-RT-I686: "-lc"
+// CHECK-LD-RT-I686: libclang_rt.builtins-i386.a"
+//
+// RUN: %clang -no-canonical-prefixes %s -### -o %t.o 2>&1 \
 // RUN:     --target=arm-linux-androideabi \
 // RUN:     --gcc-toolchain="" \
 // RUN:     --sysroot=%S/Inputs/basic_android_tree/sysroot \
@@ -135,7 +156,7 @@
 // RUN:   | FileCheck --check-prefix=CHECK-LD-64-STATIC %s
 // CHECK-LD-64-STATIC-NOT: warning:
 // CHECK-LD-64-STATIC: "{{.*}}ld{{(.exe)?}}" "--sysroot=[[SYSROOT:[^"]+]]"
-// CHECK-LD-64-STATIC-NOT: "--eh-frame-hdr"
+// CHECK-LD-64-STATIC: "--eh-frame-hdr"
 // CHECK-LD-64-STATIC: "-m" "elf_x86_64"
 // CHECK-LD-64-STATIC-NOT: "-dynamic-linker"
 // CHECK-LD-64-STATIC: "-static"
@@ -405,6 +426,7 @@
 // RUN:     -stdlib=libc++ \
 // RUN:     -ccc-install-dir %S/Inputs/basic_linux_tree/usr/bin \
 // RUN:     --gcc-toolchain="" \
+// RUN:     -resource-dir=%S/Inputs/resource_dir \
 // RUN:     --sysroot=%S/Inputs/basic_linux_libcxx_tree \
 // RUN:   | FileCheck --check-prefix=CHECK-BASIC-LIBCXX-SYSROOT %s
 // CHECK-BASIC-LIBCXX-SYSROOT: "{{[^"]*}}clang{{[^"]*}}" "-cc1"
@@ -417,6 +439,7 @@
 // RUN:     -stdlib=libc++ \
 // RUN:     -ccc-install-dir %S/Inputs/basic_linux_libcxx_tree/usr/bin \
 // RUN:     --gcc-toolchain="" \
+// RUN:     -resource-dir=%S/Inputs/resource_dir \
 // RUN:     --sysroot=%S/Inputs/basic_linux_libcxx_tree \
 // RUN:   | FileCheck --check-prefix=CHECK-BASIC-LIBCXX-INSTALL %s
 // CHECK-BASIC-LIBCXX-INSTALL: "{{[^"]*}}clang{{[^"]*}}" "-cc1"
@@ -1112,6 +1135,7 @@
 // RUN:     --sysroot=%S/Inputs/basic_android_tree/sysroot \
 // RUN:   | FileCheck --check-prefix=CHECK-ANDROID %s
 // CHECK-ANDROID: "{{.*}}ld{{(.exe)?}}" "--sysroot=[[SYSROOT:[^"]+]]"
+// CHECK-ANDROID: "--enable-new-dtags"
 // CHECK-ANDROID: "{{.*}}{{/|\\\\}}crtbegin_dynamic.o"
 // CHECK-ANDROID: "-L[[SYSROOT]]/usr/lib"
 // CHECK-ANDROID-NOT: "gcc_s"
@@ -1284,31 +1308,6 @@
 // CHECK-ANDROID-PIE: "-lgcc"
 // CHECK-ANDROID-PIE-NOT: "gcc_s"
 // CHECK-ANDROID-PIE: "{{.*}}{{/|\\\\}}crtend_android.o"
-// RUN: %clang -no-canonical-prefixes %s -### -o %t.o 2>&1 \
-// RUN:     --target=arm-linux-androideabi \
-// RUN:   | FileCheck --check-prefix=CHECK-ANDROID-NO-DEFAULT-PIE %s
-// RUN: %clang -no-canonical-prefixes %s -### -o %t.o 2>&1 \
-// RUN:     --target=arm-linux-android \
-// RUN:   | FileCheck --check-prefix=CHECK-ANDROID-NO-DEFAULT-PIE %s
-// RUN: %clang -no-canonical-prefixes %s -### -o %t.o 2>&1 \
-// RUN:     --target=aarch64-linux-android \
-// RUN:   | FileCheck --check-prefix=CHECK-ANDROID-NO-DEFAULT-PIE %s
-// RUN: %clang -no-canonical-prefixes %s -### -o %t.o 2>&1 \
-// RUN:     --target=arm64-linux-android \
-// RUN:   | FileCheck --check-prefix=CHECK-ANDROID-NO-DEFAULT-PIE %s
-// RUN: %clang -no-canonical-prefixes %s -### -o %t.o 2>&1 \
-// RUN:     --target=mipsel-linux-android \
-// RUN:   | FileCheck --check-prefix=CHECK-ANDROID-NO-DEFAULT-PIE %s
-// RUN: %clang -no-canonical-prefixes %s -### -o %t.o 2>&1 \
-// RUN:     --target=mips64el-linux-android \
-// RUN:   | FileCheck --check-prefix=CHECK-ANDROID-NO-DEFAULT-PIE %s
-// RUN: %clang -no-canonical-prefixes %s -### -o %t.o 2>&1 \
-// RUN:     --target=i686-linux-android \
-// RUN:   | FileCheck --check-prefix=CHECK-ANDROID-NO-DEFAULT-PIE %s
-// RUN: %clang -no-canonical-prefixes %s -### -o %t.o 2>&1 \
-// RUN:     --target=x86_64-linux-android \
-// RUN:   | FileCheck --check-prefix=CHECK-ANDROID-NO-DEFAULT-PIE %s
-// CHECK-ANDROID-NO-DEFAULT-PIE-NOT: -pie
 // RUN: %clang -no-canonical-prefixes %s -### -o %t.o 2>&1 \
 // RUN:     --target=arm-linux-androideabi \
 // RUN:     --gcc-toolchain="" \
@@ -1783,3 +1782,13 @@
 // CHECK-LD-GENTOO-X32: "-lgcc" "--as-needed" "-lgcc_s" "--no-as-needed"
 // CHECK-LD-GENTOO-X32: "-lc"
 // CHECK-LD-GENTOO-X32: "-lgcc" "--as-needed" "-lgcc_s" "--no-as-needed"
+
+// RUN: %clang -no-canonical-prefixes %s -### -o %t.o 2>&1 \
+// RUN:     --target=x86_64-unknown-linux-gnu \
+// RUN:     --gcc-toolchain="%S/Inputs/rhel_7_tree/opt/rh/devtoolset-7/root/usr" \
+// RUN:     --sysroot=%S/Inputs/rhel_7_tree \
+// RUN:   | FileCheck --check-prefix=CHECK-LD-RHEL7-DTS %s
+// CHECK-LD-RHEL7-DTS: "{{.*}}ld{{(.exe)?}}" "--sysroot=[[SYSROOT:[^"]+]]"
+// CHECK-LD-RHLE7-DTS: Selected GCC installation: [[GCC_INSTALL:[[SYSROOT]]/lib/gcc/x86_64-redhat-linux/7]]
+// CHECK-LD-RHEL7-DTS-NOT: /usr/bin/ld
+// CHECK-LD-RHLE7-DTS: [[GCC_INSTALL]/../../../bin/ld

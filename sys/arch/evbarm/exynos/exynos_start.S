@@ -1,4 +1,4 @@
-/*	$NetBSD: exynos_start.S,v 1.5 2018/03/03 13:46:32 skrll Exp $	*/
+/*	$NetBSD: exynos_start.S,v 1.5.2.1 2018/07/28 04:37:31 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,6 @@
  */
 
 #include "opt_exynos.h"
-#include "opt_sscom.h"
 #include "opt_cpuoptions.h"
 #include "opt_cputypes.h"
 #include "opt_multiprocessor.h"
@@ -46,24 +45,10 @@
 
 #include <evbarm/exynos/platform.h>
 
-RCSID("$NetBSD: exynos_start.S,v 1.5 2018/03/03 13:46:32 skrll Exp $")
+RCSID("$NetBSD: exynos_start.S,v 1.5.2.1 2018/07/28 04:37:31 pgoyette Exp $")
 
-
-#if defined(VERBOSE_INIT_ARM)
-
-#define	XPUTC(n)	mov r0, n; bl exynos_putc
-#if KERNEL_BASE_VOFFSET == 0
-#define	XPUTC2(n)	mov r0, n; bl exynos_putc
-#else
-#define	XPUTC2(n)	mov r0, n; blx r11
-#endif
-#ifdef __ARMEB__
-#define COM_BSWAP
-#endif
-#else
-#define	XPUTC(n)
-#define	XPUTC2(n)
-#endif
+#define XPUTC(n)
+#define XPUTC2(n)
 
 #define INIT_MEMSIZE	128
 
@@ -135,23 +120,6 @@ _C_LABEL(exynos_start):
 	str	r0, [r4]				// save soc_id
 	mov	r5, r0					// save soc_id
 
-	/* Pick uart address for the SoC */
-	adr	r1, .Lsscom_exynos5_table
-#ifdef SSCOM0CONSOLE
-	ldr	r2, [r1, #0*8+4]
-#endif
-#ifdef SSCOM1CONSOLE
-	ldr	r2, [r1, #1*8+4]
-#endif
-#ifdef SSCOM2CONSOLE
-	ldr	r2, [r1, #2*8+4]
-#endif
-#ifdef SSCOM3CONSOLE
-	ldr	r2, [r1, #3*8+4]
-#endif
-	add	r2, r2, #EXYNOS_CORE_PBASE
-	mcr	p15, 0, r2, c13, c0, 3		// TPIDRURO set (uart address)
-
 	/*
 	 * Turn on the SMP bit
 	 */
@@ -183,9 +151,6 @@ _C_LABEL(exynos_start):
 	 * so setup the lr to be in .text.  Cache the address for exynos_putc
 	 * before we go.
 	 */
-#if defined(VERBOSE_INIT_ARM)
-	adr	r11, exynos_putc		@ for XPUTC2
-#endif
 	movw	lr, #:lower16:1f
 	movt	lr, #:upper16:1f
 	b	arm_cpuinit
@@ -205,63 +170,6 @@ _C_LABEL(exynos_start):
 	/* NOTREACHED */
 #ifndef KERNEL_BASES_EQUAL
 	.popsection
-#endif
-
-	.align 0
-	.global _C_LABEL(num_exynos_uarts_entries)
-_C_LABEL(num_exynos_uarts_entries):
-	.word	8				// update number of entries!!!
-	.global _C_LABEL(exynos_uarts)
-_C_LABEL(exynos_uarts):
-.Lsscom_exynos5_table:
-	.word	0
-	.word	EXYNOS5_UART0_OFFSET
-	.word	1
-	.word	EXYNOS5_UART1_OFFSET
-	.word	2
-	.word	EXYNOS5_UART2_OFFSET
-	.word	3
-	.word	EXYNOS5_UART3_OFFSET
-
-
-#if defined(VERBOSE_INIT_ARM)
-	.align 0
-	.global exynos_putc
-	.global _C_LABEL(exynos_putchar)
-	.type	exynos_putc,%function
-
-#define TIMO		0x25000
-_C_LABEL(exynos_putchar):
-exynos_putc:
-	mov	r2, #TIMO
-	mrc	p15, 0, r3, c13, c0, 3		// TPIDRURO get (uart address)
-1:
-	ldr	r1, [r3, #SSCOM_UTRSTAT]
-#ifdef __ARMEB__
-	rev	r1, r1
-#endif
-	tst	r1, #UTRSTAT_TXEMPTY
-	bne	2f
-	subs	r2, r2, #1
-	bne	1b
-2:
-#ifdef __ARMEB__
-	rev	r0, r0
-#endif
-	str	r0, [r3, #SSCOM_UTXH]
-
-	mov	r2, #TIMO
-3:
-	ldr	r1, [r3, #SSCOM_UTRSTAT]
-#ifdef __ARMEB__
-	rev	r1, r1
-#endif
-	tst	r1, #UTRSTAT_TXSHIFTER_EMPTY
-	bne	4f
-	subs	r2, r2, #1
-	bne	3b
-4:
-	bx	lr
 #endif
 
 #include <arm/cortex/a9_mpsubr.S>
@@ -287,6 +195,26 @@ mmu_init_table:
 	/* Map EXYNOS CORE (so console will work) */
 	MMU_INIT(EXYNOS_CORE_PBASE, EXYNOS_CORE_PBASE,
 		EXYNOS_CORE_SIZE / L1_S_SIZE,
+		L1_S_PROTO_armv7 | L1_S_APv7_KRW | L1_S_V6_XN)
+
+	/* Map EXYNOS AUDIOBASE */
+	MMU_INIT(EXYNOS5_AUDIOCORE_VBASE, EXYNOS5_AUDIOCORE_VBASE,
+	        EXYNOS5_AUDIOCORE_SIZE / L1_S_SIZE,
+		L1_S_PROTO_armv7 | L1_S_APv7_KRW | L1_S_V6_XN)
+
+	/* Map EXYNOS AUDIOBASE */
+	MMU_INIT(EXYNOS5_AUDIOCORE_PBASE, EXYNOS5_AUDIOCORE_VBASE,
+	        EXYNOS5_AUDIOCORE_SIZE / L1_S_SIZE,
+		L1_S_PROTO_armv7 | L1_S_APv7_KRW | L1_S_V6_XN)
+
+	/* Map sysram for MP startup */
+	MMU_INIT(EXYNOS5_SYSRAM_VBASE, EXYNOS5_SYSRAM_PBASE,
+	        EXYNOS5_SYSRAM_SIZE / L1_S_SIZE,
+		L1_S_PROTO_armv7 | L1_S_APv7_KRW | L1_S_V6_XN)
+
+	/* Map sysram for MP startup */
+	MMU_INIT(EXYNOS5_SYSRAM_PBASE, EXYNOS5_SYSRAM_PBASE,
+	        EXYNOS5_SYSRAM_SIZE / L1_S_SIZE,
 		L1_S_PROTO_armv7 | L1_S_APv7_KRW | L1_S_V6_XN)
 
 	/* Map DTB location in SDRAM, patched in later */

@@ -28,7 +28,7 @@
 #ifdef __FBSDID
 __FBSDID("$FreeBSD: head/lib/libproc/tests/proc_test.c 286863 2015-08-17 23:19:36Z emaste $");
 #endif
-__RCSID("$NetBSD: proc_test.c,v 1.5 2015/09/25 19:08:33 christos Exp $");
+__RCSID("$NetBSD: proc_test.c,v 1.5.14.1 2018/07/28 04:33:04 pgoyette Exp $");
 
 #include <sys/types.h>
 #include <sys/wait.h>
@@ -49,12 +49,10 @@ static const char *r_debug_state = "_rtld_debug_state";
 static const char *r_debug_state = "r_debug_state";
 #endif
 
-#if !defined(__aarch64__)
 #if defined(__NetBSD__)
 static const char *ldelf_object = "ld.elf_so";
 #elif defined(__FreeBSD__)
 static const char *ldelf_object = "ld-elf.so.1";
-#endif
 #endif
 static const char *target_prog_file = "target_prog";
 
@@ -100,7 +98,6 @@ start_prog(const struct atf_tc *tc, bool sig)
 	return (phdl);
 }
 
-#if !defined(__aarch64__)
 static void
 set_bkpt(struct proc_handle *phdl, uintptr_t addr, proc_breakpoint_t *saved)
 {
@@ -178,7 +175,6 @@ verify_bkpt(struct proc_handle *phdl, GElf_Sym *sym, const char *symname,
 	ATF_REQUIRE_EQ_MSG(strcmp(mapname, mapbname), 0,
 	    "expected map name '%s' doesn't match '%s'", mapname, mapbname);
 }
-#endif
 
 ATF_TC(map_alias_obj2map);
 ATF_TC_HEAD(map_alias_obj2map, tc)
@@ -283,7 +279,6 @@ ATF_TC_BODY(map_alias_name2sym, tc)
 	proc_free(phdl);
 }
 
-#if !defined(__aarch64__)
 ATF_TC(symbol_lookup);
 ATF_TC_HEAD(symbol_lookup, tc)
 {
@@ -360,7 +355,6 @@ ATF_TC_BODY(symbol_lookup_fail, tc)
 
 	proc_free(phdl);
 }
-#endif
 
 ATF_TC(signal_forward);
 ATF_TC_HEAD(signal_forward, tc)
@@ -409,11 +403,8 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, map_alias_obj2map);
 	ATF_TP_ADD_TC(tp, map_alias_name2map);
 	ATF_TP_ADD_TC(tp, map_alias_name2sym);
-/* On arm64 triggers panic ARM64TODO: pmap_sync_icache (PR202305). */
-#if !defined(__aarch64__)
 	ATF_TP_ADD_TC(tp, symbol_lookup);
 	ATF_TP_ADD_TC(tp, symbol_lookup_fail);
-#endif
 	ATF_TP_ADD_TC(tp, signal_forward);
 
 	return (atf_no_error());

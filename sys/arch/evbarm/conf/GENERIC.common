@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC.common,v 1.27.2.1 2018/04/07 04:12:12 pgoyette Exp $
+#	$NetBSD: GENERIC.common,v 1.27.2.2 2018/07/28 04:37:31 pgoyette Exp $
 #
 #	GENERIC evbarm kernel config (template)
 #
@@ -106,13 +106,11 @@ options 	BUFQ_PRIOCSCAN
 
 # Development and Debugging options
 
-#options 	PERFCTRS	# performance counters
 options 	DIAGNOSTIC	# internal consistency checks
 #options 	DEBUG
 options 	KDTRACE_HOOKS	# kernel DTrace hooks
 #options 	LOCKDEBUG
 #options 	PMAP_DEBUG	# Enable pmap_debug_level code
-#options 	IPKDB		# remote kernel debugging
 #options 	VERBOSE_INIT_ARM # verbose bootstraping messages
 options 	DDB		# in-kernel debugger
 options 	DDB_ONPANIC=1

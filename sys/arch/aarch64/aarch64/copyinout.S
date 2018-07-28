@@ -1,4 +1,4 @@
-/* $NetBSD: copyinout.S,v 1.2.2.1 2018/04/07 04:12:10 pgoyette Exp $ */
+/* $NetBSD: copyinout.S,v 1.2.2.2 2018/07/28 04:37:25 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -32,8 +32,7 @@
 #include <aarch64/asm.h>
 #include "assym.h"
 
-RCSID("$NetBSD: copyinout.S,v 1.2.2.1 2018/04/07 04:12:10 pgoyette Exp $");
-
+RCSID("$NetBSD: copyinout.S,v 1.2.2.2 2018/07/28 04:37:25 pgoyette Exp $");
 
 	.macro enter_cpu_onfault
 	stp	fp, lr, [sp, #-16]!	/* save fp, lr */
@@ -49,8 +48,8 @@ RCSID("$NetBSD: copyinout.S,v 1.2.2.1 2018/04/07 04:12:10 pgoyette Exp $");
 	stp	x2, x3, [sp, #-16]!	/* save x2, x3 */
 	bl	cpu_set_onfault
 	ldp	x2, x3, [sp], #16	/* restore x2, x3 */
-	mvn	x8, xzr			/* temporary return value = -1 */
-	cbnz	w0, 9f			/* return if error */
+	mov	x8, x0			/* x8 = cpu_set_onfault() */
+	cbnz	x0, 9f			/* return if error */
 
 	mov	x0, x19			/* x0 = x19 = arg0 */
 	mov	x1, x20			/* x1 = x20 = arg1 */

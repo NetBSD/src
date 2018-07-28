@@ -1,6 +1,6 @@
-/*	$NetBSD: in_offload.c,v 1.7 2016/04/26 09:30:01 ozaki-r Exp $	*/
+/*	$NetBSD: in_offload.c,v 1.7.16.1 2018/07/28 04:38:10 pgoyette Exp $	*/
 
-/*-
+/*
  * Copyright (c)2005, 2006 YAMAMOTO Takashi,
  * All rights reserved.
  *
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_offload.c,v 1.7 2016/04/26 09:30:01 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_offload.c,v 1.7.16.1 2018/07/28 04:38:10 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -41,53 +41,18 @@ __KERNEL_RCSID(0, "$NetBSD: in_offload.c,v 1.7 2016/04/26 09:30:01 ozaki-r Exp $
 #include <netinet/tcp.h>
 #include <netinet/in_offload.h>
 
-struct ip_tso_output_args {
-	struct ifnet *ifp;
-	const struct sockaddr *sa;
-	struct rtentry *rt;
-};
-
-static int ip_tso_output_callback(void *, struct mbuf *);
-
+/*
+ * Handle M_CSUM_TSOv4 in software. Split the TCP payload in chunks of
+ * size MSS, and send them.
+ */
 static int
-ip_tso_output_callback(void *vp, struct mbuf *m)
-{
-	struct ip_tso_output_args *args = vp;
-	struct ifnet *ifp = args->ifp;
-
-	return ip_if_output(ifp, m, args->sa, args->rt);
-}
-
-int
-ip_tso_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *sa,
+tcp4_segment(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *sa,
     struct rtentry *rt)
 {
-	struct ip_tso_output_args args;
-
-	args.ifp = ifp;
-	args.sa = sa;
-	args.rt = rt;
-
-	return tcp4_segment(m, ip_tso_output_callback, &args);
-}
-
-/*
- * tcp4_segment: handle M_CSUM_TSOv4 by software.
- *
- * => always consume m.
- * => call output_func with output_arg for each segments.
- */
-
-int
-tcp4_segment(struct mbuf *m, int (*output_func)(void *, struct mbuf *),
-    void *output_arg)
-{
 	int mss;
-	int iphlen;
-	int thlen;
-	int hlen;
-	int len;
-	struct ip *iph;
+	int iphlen, thlen;
+	int hlen, len;
+	struct ip *ip;
 	struct tcphdr *th;
 	uint16_t ipid;
 	uint32_t tcpseq;
@@ -101,21 +66,21 @@ tcp4_segment(struct mbuf *m, int (*output_func)(void *, struct mbuf *),
 	m->m_pkthdr.csum_flags = 0;
 
 	len = m->m_pkthdr.len;
-	KASSERT(len >= sizeof(*iph) + sizeof(*th));
+	KASSERT(len >= sizeof(*ip) + sizeof(*th));
 
-	if (m->m_len < sizeof(*iph)) {
-		m = m_pullup(m, sizeof(*iph));
+	if (m->m_len < sizeof(*ip)) {
+		m = m_pullup(m, sizeof(*ip));
 		if (m == NULL) {
 			error = ENOMEM;
 			goto quit;
 		}
 	}
-	iph = mtod(m, struct ip *);
-	iphlen = iph->ip_hl * 4;
-	KASSERT(iph->ip_v == IPVERSION);
-	KASSERT(iphlen >= sizeof(*iph));
-	KASSERT(iph->ip_p == IPPROTO_TCP);
-	ipid = ntohs(iph->ip_id);
+	ip = mtod(m, struct ip *);
+	iphlen = ip->ip_hl * 4;
+	KASSERT(ip->ip_v == IPVERSION);
+	KASSERT(iphlen >= sizeof(*ip));
+	KASSERT(ip->ip_p == IPPROTO_TCP);
+	ipid = ntohs(ip->ip_id);
 
 	hlen = iphlen + sizeof(*th);
 	if (m->m_len < hlen) {
@@ -165,18 +130,18 @@ tcp4_segment(struct mbuf *m, int (*output_func)(void *, struct mbuf *),
 		KASSERT(n->m_len >= hlen); /* XXX */
 
 		n->m_pkthdr.len = hlen + mss;
-		iph = mtod(n, struct ip *);
-		KASSERT(iph->ip_v == IPVERSION);
-		iph->ip_len = htons(n->m_pkthdr.len);
-		iph->ip_id = htons(ipid);
+		ip = mtod(n, struct ip *);
+		KASSERT(ip->ip_v == IPVERSION);
+		ip->ip_len = htons(n->m_pkthdr.len);
+		ip->ip_id = htons(ipid);
 		th = (void *)(mtod(n, char *) + iphlen);
 		th->th_seq = htonl(tcpseq);
-		iph->ip_sum = 0;
-		iph->ip_sum = in_cksum(n, iphlen);
+		ip->ip_sum = 0;
+		ip->ip_sum = in_cksum(n, iphlen);
 		th->th_sum = 0;
 		th->th_sum = in4_cksum(n, IPPROTO_TCP, iphlen, thlen + mss);
 
-		error = (*output_func)(output_arg, n);
+		error = ip_if_output(ifp, n, sa, rt);
 		if (error) {
 			goto quit;
 		}
@@ -197,8 +162,19 @@ quit:
 	return error;
 }
 
+int
+ip_tso_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *sa,
+    struct rtentry *rt)
+{
+	return tcp4_segment(ifp, m, sa, rt);
+}
+
+/*
+ * Compute now in software the IP and TCP/UDP checksums. Cancel the
+ * hardware offloading.
+ */
 void
-ip_undefer_csum(struct mbuf *m, size_t hdrlen, int csum_flags)
+in_undefer_cksum(struct mbuf *m, size_t hdrlen, int csum_flags)
 {
 	const size_t iphdrlen = M_CSUM_DATA_IPv4_IPHL(m->m_pkthdr.csum_data);
 	uint16_t csum;
@@ -246,9 +222,39 @@ ip_undefer_csum(struct mbuf *m, size_t hdrlen, int csum_flags)
 		if (__predict_true(l4offset + sizeof(uint16_t) <= m->m_len)) {
 			*(uint16_t *)(mtod(m, char *) + l4offset) = csum;
 		} else {
-			m_copyback(m, l4offset, sizeof(csum), (void *) &csum);
+			m_copyback(m, l4offset, sizeof(csum), (void *)&csum);
 		}
 	}
 
 	m->m_pkthdr.csum_flags ^= csum_flags;
+}
+
+/*
+ * Compute now in software the TCP/UDP checksum. Cancel the hardware
+ * offloading.
+ */
+void
+in_undefer_cksum_tcpudp(struct mbuf *m)
+{
+	struct ip *ip;
+	uint16_t csum, offset;
+
+	KASSERT((m->m_flags & M_PKTHDR) != 0);
+	KASSERT((m->m_pkthdr.csum_flags & (M_CSUM_TCPv4|M_CSUM_UDPv4)) != 0);
+	KASSERT((m->m_pkthdr.csum_flags & (M_CSUM_TCPv6|M_CSUM_UDPv6)) == 0);
+
+	ip = mtod(m, struct ip *);
+	offset = ip->ip_hl << 2;
+
+	csum = in4_cksum(m, 0, offset, ntohs(ip->ip_len) - offset);
+	if (csum == 0 && (m->m_pkthdr.csum_flags & M_CSUM_UDPv4) != 0)
+		csum = 0xffff;
+
+	offset += M_CSUM_DATA_IPv4_OFFSET(m->m_pkthdr.csum_data);
+
+	if ((offset + sizeof(uint16_t)) <= m->m_len) {
+		*(uint16_t *)(mtod(m, char *) + offset) = csum;
+	} else {
+		m_copyback(m, offset, sizeof(csum), (void *)&csum);
+	}
 }

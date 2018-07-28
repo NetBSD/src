@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.66 2016/12/22 14:47:59 cherry Exp $	*/
+/*	$NetBSD: machdep.c,v 1.66.14.1 2018/07/28 04:37:40 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,11 +32,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.66 2016/12/22 14:47:59 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.66.14.1 2018/07/28 04:37:40 pgoyette Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
-#include "opt_ipkdb.h"
 #include "opt_interrupt.h"
 #include "opt_modular.h"
 
@@ -205,14 +204,6 @@ initppc(u_int startkernel, u_int endkernel, u_int args, void *btinfo)
 
 #if 0 /* NKSYMS || defined(DDB) || defined(MODULAR) */
 	ksyms_addsyms_elf((int)((u_int)endsym - (u_int)startsym), startsym, endsym);
-#endif
-#ifdef IPKDB
-	/*
-	 * Now trap to IPKDB
-	 */
-	ipkdb_init();
-	if (boothowto & RB_KDB)
-		ipkdb_connect(0);
 #endif
 }
 

@@ -1,4 +1,4 @@
-# $NetBSD: md.atari,v 1.60 2015/12/24 14:16:46 christos Exp $
+# $NetBSD: md.atari,v 1.60.14.1 2018/07/28 04:32:59 pgoyette Exp $
 ./usr/include/atari				comp-c-include
 ./usr/include/atari/_G_config.h			comp-obsolete		obsolete
 ./usr/include/atari/ahdilabel.h			comp-c-include
@@ -40,7 +40,7 @@
 ./usr/include/atari/param.h			comp-c-include
 ./usr/include/atari/pcb.h			comp-c-include
 ./usr/include/atari/pmap.h			comp-c-include
-./usr/include/atari/pmc.h			comp-c-include
+./usr/include/atari/pmc.h			comp-obsolete		obsolete
 ./usr/include/atari/proc.h			comp-c-include
 ./usr/include/atari/profile.h			comp-c-include
 ./usr/include/atari/psl.h			comp-c-include

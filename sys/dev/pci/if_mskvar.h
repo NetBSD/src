@@ -1,5 +1,5 @@
 /*	$OpenBSD: if_mskvar.h,v 1.3 2006/12/28 16:34:42 kettenis Exp $	*/
-/*	$NetBSD: if_mskvar.h,v 1.12.16.1 2018/06/25 07:25:52 pgoyette Exp $	*/
+/*	$NetBSD: if_mskvar.h,v 1.12.16.2 2018/07/28 04:37:46 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -123,6 +123,8 @@ struct msk_chain_data {
 	/* Stick the jumbo mem management stuff here too. */
 	void *			sk_jslots[MSK_JSLOTS];
 	void			*sk_jumbo_buf;
+	bus_dma_segment_t	sk_jumbo_seg;
+	int			sk_jumbo_nseg;
 };
 
 struct msk_ring_data {
@@ -209,7 +211,8 @@ struct sk_softc {
 	int			sk_status_nseg;
 	int			sk_status_idx;
 	int			sk_status_own_idx;
-	krndsource_t     rnd_source;
+	u_int8_t		rnd_attached;
+	krndsource_t		rnd_source;
 };
 
 /* Softc for each logical interface */
@@ -223,9 +226,10 @@ struct sk_if_softc {
 	u_int32_t		sk_rx_ramend;
 	u_int32_t		sk_tx_ramstart;
 	u_int32_t		sk_tx_ramend;
-	int			sk_cnt;
+	int			sk_pktlen;	/* XXX set but unused for now */
 	int			sk_link;
 	struct callout		sk_tick_ch;
+	struct callout		sk_tick_rx;
 	struct msk_chain_data	sk_cdata;
 	struct msk_ring_data	*sk_rdata;
 	bus_dmamap_t		sk_ring_map;

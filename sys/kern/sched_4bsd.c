@@ -1,4 +1,4 @@
-/*	$NetBSD: sched_4bsd.c,v 1.33 2017/07/14 13:23:48 maxv Exp $	*/
+/*	$NetBSD: sched_4bsd.c,v 1.33.4.1 2018/07/28 04:38:08 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -68,11 +68,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.33 2017/07/14 13:23:48 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.33.4.1 2018/07/28 04:38:08 pgoyette Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
-#include "opt_perfctrs.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

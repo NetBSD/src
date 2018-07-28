@@ -1,4 +1,4 @@
-/*	$NetBSD: lm87.c,v 1.7.16.1 2018/06/25 07:25:50 pgoyette Exp $	*/
+/*	$NetBSD: lm87.c,v 1.7.16.2 2018/07/28 04:37:44 pgoyette Exp $	*/
 /*	$OpenBSD: lm87.c,v 1.20 2008/11/10 05:19:48 cnst Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lm87.c,v 1.7.16.1 2018/06/25 07:25:50 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lm87.c,v 1.7.16.2 2018/07/28 04:37:44 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -135,18 +135,13 @@ void	lmenv_refresh(struct sysmon_envsys *, envsys_data_t *);
 CFATTACH_DECL_NEW(lmenv, sizeof(struct lmenv_softc),
 	lmenv_match, lmenv_attach, NULL, NULL);
 
-static const char * lmenv_compats[] = {
-	"lm87",
-	"lm87cimt",
-	"adm9240",
-	"lm81",
-	"ds1780",
-	NULL
-};
-
-static const struct device_compatible_entry lmenv_compat_data[] = {
-	DEVICE_COMPAT_ENTRY(lmenv_compats),
-	DEVICE_COMPAT_TERMINATOR,
+static const struct device_compatible_entry compat_data[] = {
+	{ "lm87",			0 },
+	{ "lm87cimt",			0 },
+	{ "adm9240",			0 },
+	{ "lm81",			0 },
+	{ "ds1780",			0 },
+	{ NULL,				0 }
 };
 
 int
@@ -156,7 +151,7 @@ lmenv_match(device_t parent, cfdata_t match, void *aux)
 	u_int8_t cmd, val;
 	int error, i, match_result;
 
-	if (iic_use_direct_match(ia, match, lmenv_compat_data, &match_result))
+	if (iic_use_direct_match(ia, match, compat_data, &match_result))
 		return match_result;
 	
 	/*

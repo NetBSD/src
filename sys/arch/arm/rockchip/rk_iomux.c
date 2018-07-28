@@ -1,4 +1,4 @@
-/* $NetBSD: rk_iomux.c,v 1.2.2.2 2018/06/25 07:25:39 pgoyette Exp $ */
+/* $NetBSD: rk_iomux.c,v 1.2.2.3 2018/07/28 04:37:29 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rk_iomux.c,v 1.2.2.2 2018/06/25 07:25:39 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rk_iomux.c,v 1.2.2.3 2018/07/28 04:37:29 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -39,6 +39,7 @@ __KERNEL_RCSID(0, "$NetBSD: rk_iomux.c,v 1.2.2.2 2018/06/25 07:25:39 pgoyette Ex
 #include <sys/lwp.h>
 
 #include <dev/fdt/fdtvar.h>
+#include <dev/fdt/syscon.h>
 
 #define	GRF_GPIO_P_REG(_bank, _idx)	(0x0100 + (_bank) * 0x10 + ((_idx) >> 3) * 4)
 #define	 GRF_GPIO_P_CTL(_idx)		(0x3 << (((_idx) & 7) * 2))
@@ -123,16 +124,19 @@ static const struct of_compat_data compat_data[] = {
 
 struct rk_iomux_softc {
 	device_t sc_dev;
-	bus_space_tag_t sc_bst;
-	bus_space_handle_t sc_bsh;
+	struct syscon *sc_syscon;
 
 	const struct rk_iomux_config *sc_conf;
 };
 
-#define RD4(sc, reg) 		\
-    bus_space_read_4((sc)->sc_bst, (sc)->sc_bsh, (reg))
-#define WR4(sc, reg, val) 	\
-    bus_space_write_4((sc)->sc_bst, (sc)->sc_bsh, (reg), (val))
+#define	LOCK(sc)		\
+	syscon_lock((sc)->sc_syscon)
+#define	UNLOCK(sc)		\
+	syscon_unlock((sc)->sc_syscon)
+#define	RD4(sc, reg) 		\
+	syscon_read_4((sc)->sc_syscon, (reg))
+#define	WR4(sc, reg, val) 	\
+	syscon_write_4((sc)->sc_syscon, (reg), (val))
 
 static int	rk_iomux_match(device_t, cfdata_t, void *);
 static void	rk_iomux_attach(device_t, device_t, void *);
@@ -250,7 +254,9 @@ rk_iomux_pinctrl_set_config(device_t dev, const void *data, size_t len)
 		const u_int mux = be32toh(pins[2]);
 		const int cfg = fdtbus_get_phandle_from_native(be32toh(pins[3]));
 
+		LOCK(sc);
 		rk_iomux_config(sc, cfg, bank, idx, mux);
+		UNLOCK(sc);
 
 		pins_len -= 16;
 		pins += 4;
@@ -277,25 +283,12 @@ rk_iomux_attach(device_t parent, device_t self, void *aux)
 	struct rk_iomux_softc * const sc = device_private(self);
 	struct fdt_attach_args * const faa = aux;
 	const int phandle = faa->faa_phandle;
-	bus_addr_t addr;
-	bus_size_t size;
 	int child, sub;
 
-	const int grf_phandle = fdtbus_get_phandle(phandle, "rockchip,grf");
-	if (grf_phandle == -1) {
-		aprint_error(": couldn't get grf phandle\n");
-		return;
-	}
-
-	if (fdtbus_get_reg(grf_phandle, 0, &addr, &size) != 0) {
-		aprint_error(": couldn't get grf registers\n");
-		return;
-	}
-
 	sc->sc_dev = self;
-	sc->sc_bst = faa->faa_bst;
-	if (bus_space_map(sc->sc_bst, addr, size, 0, &sc->sc_bsh) != 0) {
-		aprint_error(": couldn't map registers\n");
+	sc->sc_syscon = fdtbus_syscon_acquire(phandle, "rockchip,grf");
+	if (sc->sc_syscon == NULL) {
+		aprint_error(": couldn't acquire grf syscon\n");
 		return;
 	}
 	sc->sc_conf = (void *)of_search_compatible(phandle, compat_data)->data;

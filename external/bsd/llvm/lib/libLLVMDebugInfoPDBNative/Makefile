@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2017/08/01 20:07:41 joerg Exp $
+#	$NetBSD: Makefile,v 1.1.2.1 2018/07/28 04:37:11 pgoyette Exp $
 
 LIB=	LLVMDebugInfoPDBNative
 
@@ -6,14 +6,14 @@ LIB=	LLVMDebugInfoPDBNative
 
 .PATH: ${LLVM_SRCDIR}/lib/DebugInfo/PDB/Native
 
-SRCS+=	DbiModuleDescriptor.cpp \
-	DbiModuleDescriptorBuilder.cpp \
+SRCS+=	DbiModuleDescriptorBuilder.cpp \
+	DbiModuleDescriptor.cpp \
 	DbiModuleList.cpp \
 	DbiStreamBuilder.cpp \
 	DbiStream.cpp \
 	EnumTables.cpp \
 	GlobalsStream.cpp \
-	GSI.cpp \
+	GSIStreamBuilder.cpp \
 	Hash.cpp \
 	HashTable.cpp \
 	InfoStreamBuilder.cpp \
@@ -23,15 +23,16 @@ SRCS+=	DbiModuleDescriptor.cpp \
 	NativeBuiltinSymbol.cpp \
 	NativeCompilandSymbol.cpp \
 	NativeEnumModules.cpp \
+	NativeEnumSymbol.cpp \
+	NativeEnumTypes.cpp \
 	NativeExeSymbol.cpp \
 	NativeRawSymbol.cpp \
 	NativeSession.cpp \
 	PDBFileBuilder.cpp \
 	PDBFile.cpp \
-	PDBStringTable.cpp \
 	PDBStringTableBuilder.cpp \
+	PDBStringTable.cpp \
 	PublicsStream.cpp \
-	PublicsStreamBuilder.cpp \
 	RawError.cpp \
 	SymbolStream.cpp \
 	TpiHashing.cpp \

@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2363.2.9 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2363.2.10 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -165,3 +165,22 @@ Changes from NetBSD 8.0 to NetBSD 9.0:
 	arm: Add support for QEMU ARM Virtual Machine ("virt"). [jmcneill 20180614]
 	arm: Add support for Rockchip RK3328 SoC. [jmcneill 20180615]
 	dhcpcd: Import 7.0.6. [roy 20180621]
+	bpf(4): Add the BPF direction filter (BIOC[GS]DIRECTION).
+		[msaitoh 20180626]
+	gcc: add lsan the Leak Sanitizer [christos 20180626]
+	aarch64: Add support for SMP. [ryo 20180709]
+	viadrm(4): Removed, superseded by viadrmums. [maya 20180710]
+	ssh-agent(1): /usr/pkg/lib* whitelisted by default for PKCS11 related
+		libraries, in place of /usr/local/lib*. [sevan 20180710]
+	x86: Support for -static -pie binaries. [joerg 20180712]
+	kernel: Remove pmc(9) and X86PMC. [maxv 20180714]
+	tprof(4): Revamped. tpfmt(1) merged into tprof(8). [maxv 20180714]
+	ipkdb(4): Removed. [maxv 20180714]
+	arm: Add support for ARMv8 performance event monitoring with tprof(4).
+		[jmcneill 20180715]
+	arm: Add support for ARMv7 performance event monitoring with tprof(4).
+		[jmcneill 20180715]
+	dhcpcd: Import 7.0.7. [roy 20180724]
+	tea5767radio(4): Add Philips/NXP TEA5767 I2C-controlled stereo FM radio
+		driver. [rkujawa 20180727]
+

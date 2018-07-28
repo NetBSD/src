@@ -1,5 +1,5 @@
-/*	$Id: at91emac.c,v 1.19.12.1 2018/06/25 07:25:39 pgoyette Exp $	*/
-/*	$NetBSD: at91emac.c,v 1.19.12.1 2018/06/25 07:25:39 pgoyette Exp $	*/
+/*	$Id: at91emac.c,v 1.19.12.2 2018/07/28 04:37:27 pgoyette Exp $	*/
+/*	$NetBSD: at91emac.c,v 1.19.12.2 2018/07/28 04:37:27 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2007 Embedtronics Oy
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at91emac.c,v 1.19.12.1 2018/06/25 07:25:39 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at91emac.c,v 1.19.12.2 2018/07/28 04:37:27 pgoyette Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -67,10 +67,6 @@ __KERNEL_RCSID(0, "$NetBSD: at91emac.c,v 1.19.12.1 2018/06/25 07:25:39 pgoyette 
 #include <netinet/in_var.h>
 #include <netinet/ip.h>
 #include <netinet/if_inarp.h>
-#endif
-
-#ifdef IPKDB_AT91	// @@@
-#include <ipkdb/ipkdb.h>
 #endif
 
 #include <arm/at91/at91var.h>
@@ -673,7 +669,7 @@ start:
 		IFQ_DEQUEUE(&ifp->if_snd, m);
 	}
 
-	bpf_mtap(ifp, m);
+	bpf_mtap(ifp, m, BPF_D_OUT);
 
 	nsegs = sc->txq[bi].m_dmamap->dm_nsegs;
 	segs = sc->txq[bi].m_dmamap->dm_segs;

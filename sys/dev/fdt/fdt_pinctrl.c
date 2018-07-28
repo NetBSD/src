@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_pinctrl.c,v 1.4 2017/07/02 15:27:58 jmcneill Exp $ */
+/* $NetBSD: fdt_pinctrl.c,v 1.4.6.1 2018/07/28 04:37:44 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -28,11 +28,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_pinctrl.c,v 1.4 2017/07/02 15:27:58 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_pinctrl.c,v 1.4.6.1 2018/07/28 04:37:44 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
 #include <sys/kmem.h>
+#include <sys/queue.h>
 
 #include <libfdt.h>
 #include <dev/fdt/fdtvar.h>
@@ -42,10 +43,11 @@ struct fdtbus_pinctrl_controller {
 	int pc_phandle;
 	const struct fdtbus_pinctrl_controller_func *pc_funcs;
 
-	struct fdtbus_pinctrl_controller *pc_next;
+	LIST_ENTRY(fdtbus_pinctrl_controller) pc_next;
 };
 
-static struct fdtbus_pinctrl_controller *fdtbus_pc = NULL;
+static LIST_HEAD(, fdtbus_pinctrl_controller) fdtbus_pinctrl_controllers =
+    LIST_HEAD_INITIALIZER(fdtbus_pinctrl_controllers);
 
 int
 fdtbus_register_pinctrl_config(device_t dev, int phandle,
@@ -58,8 +60,7 @@ fdtbus_register_pinctrl_config(device_t dev, int phandle,
 	pc->pc_phandle = phandle;
 	pc->pc_funcs = funcs;
 
-	pc->pc_next = fdtbus_pc;
-	fdtbus_pc = pc;
+	LIST_INSERT_HEAD(&fdtbus_pinctrl_controllers, pc, pc_next);
 
 	return 0;
 }
@@ -69,9 +70,10 @@ fdtbus_pinctrl_lookup(int phandle)
 {
 	struct fdtbus_pinctrl_controller *pc;
 
-	for (pc = fdtbus_pc; pc; pc = pc->pc_next)
+	LIST_FOREACH(pc, &fdtbus_pinctrl_controllers, pc_next) {
 		if (pc->pc_phandle == phandle)
 			return pc;
+	}
 
 	return NULL;
 }

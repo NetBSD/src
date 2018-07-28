@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.2 2013/11/29 23:02:49 joerg Exp $
+# $NetBSD: Makefile.inc,v 1.2.24.1 2018/07/28 04:33:03 pgoyette Exp $
 
 .include <bsd.own.mk>
 
@@ -16,6 +16,7 @@ LDADD+=		-L${LIBELFTOSBOBJDIR} -lelftosb
 CPPFLAGS+=	-I${DIST}/common
 CPPFLAGS+=	-I${DIST}/elftosb2
 CPPFLAGS+=	-DLinux
+CXXFLAGS+=	-std=gnu++03
 
 CWARNFLAGS+=	-Wno-multichar
 CWARNFLAGS.clang+=	-Wno-switch -Wno-error=delete-non-virtual-dtor \

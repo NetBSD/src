@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.3.2.1 2018/04/07 04:12:10 pgoyette Exp $ */
+/* $NetBSD: trap.c,v 1.3.2.2 2018/07/28 04:37:25 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.3.2.1 2018/04/07 04:12:10 pgoyette Exp $");
+__KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.3.2.2 2018/07/28 04:37:25 pgoyette Exp $");
 
 #include "opt_arm_intr_impl.h"
 #include "opt_compat_netbsd32.h"
@@ -118,14 +118,14 @@ const char * const trap_names[] = {
 	[ESR_EC_VECTOR_CATCH]	= "A32: Vector Catch Exception"
 };
 
-static inline const char *
+const char *
 eclass_trapname(uint32_t eclass)
 {
 	static char trapnamebuf[sizeof("Unknown trap 0x????????")];
 
 	if (eclass >= __arraycount(trap_names) || trap_names[eclass] == NULL) {
 		snprintf(trapnamebuf, sizeof(trapnamebuf),
-		    "Unknown trap 0x%02x", eclass);
+		    "Unknown trap %#02x", eclass);
 		return trapnamebuf;
 	}
 	return trap_names[eclass];
@@ -175,7 +175,6 @@ trap_el1h_sync(struct trapframe *tf)
 {
 	const uint32_t esr = tf->tf_esr;
 	const uint32_t eclass = __SHIFTOUT(esr, ESR_EC); /* exception class */
-	const char *trapname;
 
 	/* re-enable traps and interrupts */
 	if (!(tf->tf_spsr & SPSR_I))
@@ -183,12 +182,10 @@ trap_el1h_sync(struct trapframe *tf)
 	else
 		daif_enable(DAIF_D|DAIF_A);
 
-	trapname = eclass_trapname(eclass);
-
 	switch (eclass) {
 	case ESR_EC_INSN_ABT_EL1:
 	case ESR_EC_DATA_ABT_EL1:
-		data_abort_handler(tf, eclass, trapname);
+		data_abort_handler(tf, eclass);
 		break;
 
 	case ESR_EC_BRKPNT_EL1:
@@ -217,8 +214,9 @@ trap_el1h_sync(struct trapframe *tf)
 	case ESR_EC_SP_ALIGNMENT:
 	case ESR_EC_ILL_STATE:
 	default:
-		panic("Trap: fatal %s: pc=%016llx sp=%016llx esr=%08x",
-		    trapname, tf->tf_pc, tf->tf_sp, esr);
+		panic("Trap: fatal %s: pc=%016" PRIx64 "sp=%016" PRIx64
+		    "esr=%08x", eclass_trapname(eclass), tf->tf_pc, tf->tf_sp,
+		    esr);
 		break;
 	}
 }
@@ -229,17 +227,14 @@ trap_el0_sync(struct trapframe *tf)
 	struct lwp * const l = curlwp;
 	const uint32_t esr = tf->tf_esr;
 	const uint32_t eclass = __SHIFTOUT(esr, ESR_EC); /* exception class */
-	const char *trapname;
 
 	/* enable traps and interrupts */
 	daif_enable(DAIF_D|DAIF_A|DAIF_I|DAIF_F);
 
-	trapname = eclass_trapname(eclass);
-
 	switch (eclass) {
 	case ESR_EC_INSN_ABT_EL0:
 	case ESR_EC_DATA_ABT_EL0:
-		data_abort_handler(tf, eclass, trapname);
+		data_abort_handler(tf, eclass);
 		userret(l);
 		break;
 
@@ -256,11 +251,11 @@ trap_el0_sync(struct trapframe *tf)
 		break;
 
 	case ESR_EC_PC_ALIGNMENT:
-		do_trapsignal(l, SIGBUS, BUS_ADRALN, tf->tf_pc, esr);
+		do_trapsignal(l, SIGBUS, BUS_ADRALN, (void *)tf->tf_pc, esr);
 		userret(l);
 		break;
 	case ESR_EC_SP_ALIGNMENT:
-		do_trapsignal(l, SIGBUS, BUS_ADRALN, tf->tf_sp, esr);
+		do_trapsignal(l, SIGBUS, BUS_ADRALN, (void *)tf->tf_sp, esr);
 		userret(l);
 		break;
 
@@ -269,7 +264,7 @@ trap_el0_sync(struct trapframe *tf)
 	case ESR_EC_SW_STEP_EL0:
 	case ESR_EC_WTCHPNT_EL0:
 		/* XXX notyet */
-		do_trapsignal(l, SIGTRAP, TRAP_BRKPT, tf->tf_pc, esr);
+		do_trapsignal(l, SIGTRAP, TRAP_BRKPT, (void *)tf->tf_pc, esr);
 		userret(l);
 		break;
 
@@ -277,7 +272,7 @@ trap_el0_sync(struct trapframe *tf)
 		/* XXX notyet */
 	case ESR_EC_UNKNOWN:
 		/* illegal or not implemented instruction */
-		do_trapsignal(l, SIGILL, ILL_ILLTRP, tf->tf_pc, esr);
+		do_trapsignal(l, SIGILL, ILL_ILLTRP, (void *)tf->tf_pc, esr);
 		userret(l);
 		break;
 	}
@@ -304,12 +299,9 @@ trap_el0_32sync(struct trapframe *tf)
 	struct lwp * const l = curlwp;
 	const uint32_t esr = tf->tf_esr;
 	const uint32_t eclass = __SHIFTOUT(esr, ESR_EC); /* exception class */
-	const char *trapname;
 
 	/* enable traps and interrupts */
 	daif_enable(DAIF_D|DAIF_A|DAIF_I|DAIF_F);
-
-	trapname = eclass_trapname(eclass);
 
 	switch (eclass) {
 	case ESR_EC_FP_ACCESS:
@@ -319,16 +311,16 @@ trap_el0_32sync(struct trapframe *tf)
 
 	case ESR_EC_INSN_ABT_EL0:
 	case ESR_EC_DATA_ABT_EL0:
-		data_abort_handler(tf, eclass, trapname);
+		data_abort_handler(tf, eclass);
 		userret(l);
 		break;
 
 	case ESR_EC_PC_ALIGNMENT:
-		do_trapsignal(l, SIGBUS, BUS_ADRALN, tf->tf_pc, esr);
+		do_trapsignal(l, SIGBUS, BUS_ADRALN, (void *)tf->tf_pc, esr);
 		userret(l);
 		break;
 	case ESR_EC_SP_ALIGNMENT:
-		do_trapsignal(l, SIGBUS, BUS_ADRALN, tf->tf_sp, esr);
+		do_trapsignal(l, SIGBUS, BUS_ADRALN, (void *)tf->tf_sp, esr);
 		userret(l);
 		break;
 
@@ -344,15 +336,17 @@ trap_el0_32sync(struct trapframe *tf)
 	case ESR_EC_FP_TRAP_A32:
 	case ESR_EC_BKPT_INSN_A32:
 		/* XXX notyet */
-		printf("%s:%d: %s\n", __func__, __LINE__, trapname);
-		do_trapsignal(l, SIGILL, ILL_ILLTRP, tf->tf_pc, esr);
+		printf("%s:%d: %s\n", __func__, __LINE__,
+		    eclass_trapname(eclass));
+		do_trapsignal(l, SIGILL, ILL_ILLTRP, (void *)tf->tf_pc, esr);
 		userret(l);
 		break;
 #endif /* COMPAT_NETBSD32 */
 	default:
 		/* XXX notyet */
-		printf("%s:%d: %s\n", __func__, __LINE__, trapname);
-		do_trapsignal(l, SIGILL, ILL_ILLTRP, tf->tf_pc, esr);
+		printf("%s:%d: %s\n", __func__, __LINE__,
+		    eclass_trapname(eclass));
+		do_trapsignal(l, SIGILL, ILL_ILLTRP, (void *)tf->tf_pc, esr);
 		userret(l);
 		break;
 	}
@@ -450,4 +444,65 @@ copystr(const void *kfaddr, void *kdaddr, size_t len, size_t *done)
 		cpu_unset_onfault();
 	}
 	return error;
+}
+
+#ifdef TRAP_SIGDEBUG
+static void
+frame_dump(const struct trapframe *tf)
+{
+	const struct reg *r = &tf->tf_regs;
+
+	printf("trapframe %p\n", tf);
+	for (size_t i = 0; i < __arraycount(r->r_reg); i++) {
+		printf(" r%.2zu %#018" PRIx64 "%c", i, r->r_reg[i],
+		    " \n"[i && (i & 1) == 0]);
+	}
+
+	printf("\n");
+	printf("   sp %#018" PRIx64 "    pc %#018" PRIx64 "\n",
+	    r->r_sp, r->r_pc);
+	printf(" spsr %#018" PRIx64 " tpidr %#018" PRIx64 "\n",
+	    r->r_spsr, r->r_tpidr);
+	printf("  esr %#018" PRIx64 "   far %#018" PRIx64 "\n",
+	    tf->tf_esr, tf->tf_far);
+
+	printf("\n");
+	hexdump(printf, "Stack dump", tf, 256);
+}
+
+static void
+sigdebug(const struct trapframe *tf, const ksiginfo_t *ksi)
+{
+	struct lwp *l = curlwp;
+	struct proc *p = l->l_proc;
+	const uint32_t eclass = __SHIFTOUT(ksi->ksi_trap, ESR_EC);
+
+	printf("pid %d.%d (%s): signal %d (trap %#x) "
+	    "@pc %#" PRIx64 ", addr %p, error=%s\n",
+	    p->p_pid, l->l_lid, p->p_comm, ksi->ksi_signo, ksi->ksi_trap,
+	    tf->tf_regs.r_pc, ksi->ksi_addr, eclass_trapname(eclass));
+	frame_dump(tf);
+}
+#endif
+
+void do_trapsignal1(
+#ifdef TRAP_SIGDEBUG
+    const char *func,
+    size_t line,
+    struct trapframe *tf,
+#endif
+    struct lwp *l, int signo, int code, void *addr, int trap)
+{
+	ksiginfo_t ksi;
+
+	KSI_INIT_TRAP(&ksi);
+	ksi.ksi_signo = signo;
+	ksi.ksi_code = code;
+	ksi.ksi_addr = addr;
+	ksi.ksi_trap = trap;
+#ifdef TRAP_SIGDEBUG
+	printf("%s, %zu: ", func, line);
+	sigdebug(tf, &ksi);
+#endif
+	(*l->l_proc->p_emul->e_trapsignal)(l, &ksi);
 }

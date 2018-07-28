@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_gpio.c,v 1.5 2017/08/13 18:27:11 jmcneill Exp $ */
+/* $NetBSD: fdt_gpio.c,v 1.5.4.1 2018/07/28 04:37:44 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,11 +27,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_gpio.c,v 1.5 2017/08/13 18:27:11 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_gpio.c,v 1.5.4.1 2018/07/28 04:37:44 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
 #include <sys/kmem.h>
+#include <sys/queue.h>
 
 #include <libfdt.h>
 #include <dev/fdt/fdtvar.h>
@@ -41,10 +42,11 @@ struct fdtbus_gpio_controller {
 	int gc_phandle;
 	const struct fdtbus_gpio_controller_func *gc_funcs;
 
-	struct fdtbus_gpio_controller *gc_next;
+	LIST_ENTRY(fdtbus_gpio_controller) gc_next;
 };
 
-static struct fdtbus_gpio_controller *fdtbus_gc = NULL;
+static LIST_HEAD(, fdtbus_gpio_controller) fdtbus_gpio_controllers =
+    LIST_HEAD_INITIALIZER(fdtbus_gpio_controllers);
 
 int
 fdtbus_register_gpio_controller(device_t dev, int phandle,
@@ -57,8 +59,7 @@ fdtbus_register_gpio_controller(device_t dev, int phandle,
 	gc->gc_phandle = phandle;
 	gc->gc_funcs = funcs;
 
-	gc->gc_next = fdtbus_gc;
-	fdtbus_gc = gc;
+	LIST_INSERT_HEAD(&fdtbus_gpio_controllers, gc, gc_next);
 
 	return 0;
 }
@@ -68,10 +69,9 @@ fdtbus_get_gpio_controller(int phandle)
 {
 	struct fdtbus_gpio_controller *gc;
 
-	for (gc = fdtbus_gc; gc; gc = gc->gc_next) {
-		if (gc->gc_phandle == phandle) {
+	LIST_FOREACH(gc, &fdtbus_gpio_controllers, gc_next) {
+		if (gc->gc_phandle == phandle)
 			return gc;
-		}
 	}
 
 	return NULL;

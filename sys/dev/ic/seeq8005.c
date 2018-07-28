@@ -1,4 +1,4 @@
-/* $NetBSD: seeq8005.c,v 1.57.14.1 2018/06/25 07:25:50 pgoyette Exp $ */
+/* $NetBSD: seeq8005.c,v 1.57.14.2 2018/07/28 04:37:45 pgoyette Exp $ */
 
 /*
  * Copyright (c) 2000, 2001 Ben Harris
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: seeq8005.c,v 1.57.14.1 2018/06/25 07:25:50 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: seeq8005.c,v 1.57.14.2 2018/07/28 04:37:45 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -918,7 +918,7 @@ ea_txpacket(struct seeq8005_softc *sc)
 	}
 
 	/* Give the packet to the bpf, if any. */
-	bpf_mtap(ifp, m0);
+	bpf_mtap(ifp, m0, BPF_D_OUT);
 
 	DPRINTF(SEEQ_DEBUG_TX, ("Tx new packet\n"));
 

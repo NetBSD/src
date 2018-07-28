@@ -1,4 +1,4 @@
-/*	$NetBSD: i386_trap.S,v 1.12.2.2 2018/05/21 04:36:00 pgoyette Exp $	*/
+/*	$NetBSD: i386_trap.S,v 1.12.2.3 2018/07/28 04:37:34 pgoyette Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -66,7 +66,7 @@
 
 #if 0
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: i386_trap.S,v 1.12.2.2 2018/05/21 04:36:00 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i386_trap.S,v 1.12.2.3 2018/07/28 04:37:34 pgoyette Exp $");
 #endif
 
 /*
@@ -403,7 +403,7 @@ LABEL(trap_return_fault_return)
 END(trap_return_fault_return)
 
 /* LINTSTUB: Ignore */
-NENTRY(alltraps)
+ENTRY(alltraps)
 	INTRENTRY
 	STI(%eax)
 calltrap:

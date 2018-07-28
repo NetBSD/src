@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2013/06/03 20:23:39 mrg Exp $
+#	$NetBSD: Makefile,v 1.3.26.1 2018/07/28 04:37:20 pgoyette Exp $
 
 .include <bsd.own.mk>
 
@@ -6,6 +6,7 @@ PROG=	fc-cache
 
 CPPFLAGS+=	-I${X11SRCDIR.fontconfig} -I.
 CPPFLAGS+=	-DHAVE_CONFIG_H -I${X11SRCDIR.fontconfig}/../include
+CPPFLAGS+=	-DHAVE_GETOPT_LONG=1
 
 LDADD+=	-lfontconfig -lfreetype -lexpat
 DPADD+=	${LIBFONTCONFIG} ${LIBFREETYPE} ${LIBEXPAT}

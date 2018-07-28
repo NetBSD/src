@@ -1,4 +1,4 @@
-/*	$NetBSD: vectors.S,v 1.4.2.1 2018/04/07 04:12:10 pgoyette Exp $	*/
+/*	$NetBSD: vectors.S,v 1.4.2.2 2018/07/28 04:37:25 pgoyette Exp $	*/
 
 #include <aarch64/asm.h>
 #include "assym.h"
@@ -67,7 +67,7 @@
 	str	x0, [x1, #L_PRIVATE]	/* curlwp->l_private = tpidr_el0 */
 	.endif
 
-	adr	lr, el\el\()_trap_exit	/* el[01]_trap_exit */
+	adr	x30, el\el\()_trap_exit	/* el[01]_trap_exit */
 	mov	x0, sp
 	b	\label
 	.endm

@@ -1,4 +1,4 @@
-# $NetBSD: md.macppc,v 1.41 2015/12/20 16:22:39 christos Exp $
+# $NetBSD: md.macppc,v 1.41.14.1 2018/07/28 04:32:59 pgoyette Exp $
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/macppc				comp-c-include
 ./usr/include/macppc/_G_config.h		comp-obsolete		obsolete
@@ -45,7 +45,7 @@
 ./usr/include/macppc/pcb.h			comp-c-include
 ./usr/include/macppc/pio.h			comp-obsolete		obsolete
 ./usr/include/macppc/pmap.h			comp-c-include
-./usr/include/macppc/pmc.h			comp-c-include
+./usr/include/macppc/pmc.h			comp-obsolete		obsolete
 ./usr/include/macppc/powerpc.h			comp-obsolete		obsolete
 ./usr/include/macppc/proc.h			comp-c-include
 ./usr/include/macppc/profile.h			comp-c-include

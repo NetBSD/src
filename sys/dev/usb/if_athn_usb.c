@@ -1,4 +1,4 @@
-/*	$NetBSD: if_athn_usb.c,v 1.26 2018/02/01 16:49:34 maxv Exp $	*/
+/*	$NetBSD: if_athn_usb.c,v 1.26.2.1 2018/07/28 04:37:57 pgoyette Exp $	*/
 /*	$OpenBSD: if_athn_usb.c,v 1.12 2013/01/14 09:50:31 jsing Exp $	*/
 
 /*-
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_athn_usb.c,v 1.26 2018/02/01 16:49:34 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_athn_usb.c,v 1.26.2.1 2018/07/28 04:37:57 pgoyette Exp $");
 
 #ifdef	_KERNEL_OPT
 #include "opt_inet.h"
@@ -2200,7 +2200,7 @@ athn_usb_rx_radiotap(struct athn_softc *sc, struct mbuf *m,
 		default:  tap->wr_rate =   0; break;
 		}
 	}
-	bpf_mtap2(sc->sc_drvbpf, tap, sc->sc_rxtap_len, m);
+	bpf_mtap2(sc->sc_drvbpf, tap, sc->sc_rxtap_len, m, BPF_D_IN);
 }
 
 Static void
@@ -2485,7 +2485,7 @@ athn_usb_tx(struct athn_softc *sc, struct mbuf *m, struct ieee80211_node *ni,
 		if (wh->i_fc[1] & IEEE80211_FC1_PROTECTED)
 			tap->wt_flags |= IEEE80211_RADIOTAP_F_WEP;
 
-		bpf_mtap2(sc->sc_drvbpf, tap, sc->sc_txtap_len, m);
+		bpf_mtap2(sc->sc_drvbpf, tap, sc->sc_txtap_len, m, BPF_D_OUT);
 	}
 	sta_index = an->sta_index;
 
@@ -2607,7 +2607,7 @@ athn_usb_start(struct ifnet *ifp)
 			continue;
 		}
 
-		bpf_mtap(ifp, m);
+		bpf_mtap(ifp, m, BPF_D_OUT);
 
 		if ((m = ieee80211_encap(ic, m, ni)) == NULL) {
 			ieee80211_free_node(ni);
@@ -2615,7 +2615,7 @@ athn_usb_start(struct ifnet *ifp)
 			continue;
 		}
  sendit:
-		bpf_mtap3(ic->ic_rawbpf, m);
+		bpf_mtap3(ic->ic_rawbpf, m, BPF_D_OUT);
 
 		if (athn_usb_tx(sc, m, ni, data) != 0) {
 			m_freem(m);

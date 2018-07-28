@@ -1,4 +1,4 @@
-/*	$NetBSD: epe.c,v 1.36.12.1 2018/06/25 07:25:39 pgoyette Exp $	*/
+/*	$NetBSD: epe.c,v 1.36.12.2 2018/07/28 04:37:28 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2004 Jesse Off
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: epe.c,v 1.36.12.1 2018/06/25 07:25:39 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: epe.c,v 1.36.12.2 2018/07/28 04:37:28 pgoyette Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -599,7 +599,7 @@ more:
 		IFQ_DEQUEUE(&ifp->if_snd, m);
 	}
 
-	bpf_mtap(ifp, m);
+	bpf_mtap(ifp, m, BPF_D_OUT);
 
 	nsegs = sc->txq[bi].m_dmamap->dm_nsegs;
 	segs = sc->txq[bi].m_dmamap->dm_segs;

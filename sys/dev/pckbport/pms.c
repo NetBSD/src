@@ -1,4 +1,4 @@
-/* $NetBSD: pms.c,v 1.36 2017/08/13 08:49:27 christos Exp $ */
+/* $NetBSD: pms.c,v 1.36.2.1 2018/07/28 04:37:57 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2004 Kentaro Kurahone.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pms.c,v 1.36 2017/08/13 08:49:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pms.c,v 1.36.2.1 2018/07/28 04:37:57 pgoyette Exp $");
 
 #include "opt_pms.h"
 
@@ -675,6 +675,10 @@ pmsinput(void *vsc, int data)
 	}
 }
 
+/* 
+ * Touchpad special command sequence used by Synaptics and others.
+ * Sends 0xE6 0xE8 rr 0xE8 ss 0xE8 tt 0xE8 uu where (rr*64)+(ss*16)+(tt*4)+uu
+ */
 int
 pms_sliced_command(pckbport_tag_t tag, pckbport_slot_t slot, u_char scmd)
 {

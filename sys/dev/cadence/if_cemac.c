@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cemac.c,v 1.11.10.1 2018/06/25 07:25:49 pgoyette Exp $	*/
+/*	$NetBSD: if_cemac.c,v 1.11.10.2 2018/07/28 04:37:44 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2015  Genetec Corporation.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cemac.c,v 1.11.10.1 2018/06/25 07:25:49 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cemac.c,v 1.11.10.2 2018/07/28 04:37:44 pgoyette Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -74,10 +74,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_cemac.c,v 1.11.10.1 2018/06/25 07:25:49 pgoyette 
 #include <netinet/in_var.h>
 #include <netinet/ip.h>
 #include <netinet/if_inarp.h>
-#endif
-
-#ifdef IPKDB_AT91	// @@@
-#include <ipkdb/ipkdb.h>
 #endif
 
 #include <dev/cadence/cemacreg.h>
@@ -826,7 +822,7 @@ start:
 		IFQ_DEQUEUE(&ifp->if_snd, m);
 	}
 
-	bpf_mtap(ifp, m);
+	bpf_mtap(ifp, m, BPF_D_OUT);
 
 	nsegs = sc->txq[bi].m_dmamap->dm_nsegs;
 	segs = sc->txq[bi].m_dmamap->dm_segs;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.258.2.12 2018/06/25 07:26:06 pgoyette Exp $	*/
+/*	$NetBSD: if.h,v 1.258.2.13 2018/07/28 04:38:09 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -1090,6 +1090,7 @@ void	if_link_state_change_softint(struct ifnet *, int);
 void	if_up(struct ifnet *);
 void	ifinit(void);
 void	ifinit1(void);
+void	ifinit_post(void);
 int	ifaddrpref_ioctl(struct socket *, u_long, void *, struct ifnet *);
 extern int (*ifioctl)(struct socket *, u_long, void *, struct lwp *);
 int	ifioctl_common(struct ifnet *, u_long, void *);

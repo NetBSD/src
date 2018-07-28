@@ -1,4 +1,4 @@
-# $NetBSD: md.ofppc,v 1.18 2015/12/20 16:22:39 christos Exp $
+# $NetBSD: md.ofppc,v 1.18.14.1 2018/07/28 04:32:59 pgoyette Exp $
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/ofppc				comp-c-include
 ./usr/include/ofppc/_G_config.h			comp-obsolete		obsolete
@@ -37,7 +37,7 @@
 ./usr/include/ofppc/param.h			comp-c-include
 ./usr/include/ofppc/pcb.h			comp-c-include
 ./usr/include/ofppc/pmap.h			comp-c-include
-./usr/include/ofppc/pmc.h			comp-c-include
+./usr/include/ofppc/pmc.h			comp-obsolete		obsolete
 ./usr/include/ofppc/proc.h			comp-c-include
 ./usr/include/ofppc/profile.h			comp-c-include
 ./usr/include/ofppc/psl.h			comp-c-include

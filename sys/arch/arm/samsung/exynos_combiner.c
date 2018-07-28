@@ -1,4 +1,4 @@
-/*	$NetBSD: exynos_combiner.c,v 1.7 2017/06/11 16:19:27 jmcneill Exp $ */
+/*	$NetBSD: exynos_combiner.c,v 1.7.6.1 2018/07/28 04:37:29 pgoyette Exp $ */
 
 /*-
 * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #include "gpio.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exynos_combiner.c,v 1.7 2017/06/11 16:19:27 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exynos_combiner.c,v 1.7.6.1 2018/07/28 04:37:29 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -50,14 +50,13 @@ __KERNEL_RCSID(1, "$NetBSD: exynos_combiner.c,v 1.7 2017/06/11 16:19:27 jmcneill
 
 #include <dev/fdt/fdtvar.h>
 
-#define COMBINER_IESR_OFFSET   0x00
-#define COMBINER_IECR_OFFSET   0x04
-#define COMBINER_ISTR_OFFSET   0x08
-#define COMBINER_IMSR_OFFSET   0x0C
-#define COMBINER_GROUP_SIZE    0x10
-#define COMBINER_IRQS_PER_BLOCK   8
-#define COMBINER_BLOCKS_PER_GROUP 4
-#define COMBINER_N_BLOCKS        32
+#define	COMBINER_GROUP_BASE(group)	(((group) / 4) * 0x10)
+#define	COMBINER_GROUP_MASK(group)	(0xff << (((group) % 4) * 8))
+
+#define	COMBINER_IESR_REG(group)	(COMBINER_GROUP_BASE(group) + 0x00)
+#define	COMBINER_IECR_REG(group)	(COMBINER_GROUP_BASE(group) + 0x04)
+#define	COMBINER_ISTR_REG(group)	(COMBINER_GROUP_BASE(group) + 0x08)
+#define	COMBINER_IMSR_REG(group)	(COMBINER_GROUP_BASE(group) + 0x0c)
 
 struct exynos_combiner_softc;
 
@@ -69,12 +68,13 @@ struct exynos_combiner_irq_entry {
 	bool				irq_mpsafe;
 };
 
-struct exynos_combiner_irq_block {
-	int irq_block_no;
+struct exynos_combiner_irq_group {
+	int irq_group_no;
 	struct exynos_combiner_softc	*irq_sc;
 	struct exynos_combiner_irq_entry *irq_entries;
-	struct exynos_combiner_irq_block *irq_block_next;
+	struct exynos_combiner_irq_group *irq_group_next;
 	void *irq_ih;
+	int irq_ipl;
 };
 
 struct exynos_combiner_softc {
@@ -82,7 +82,7 @@ struct exynos_combiner_softc {
 	bus_space_tag_t		sc_bst;
 	bus_space_handle_t	sc_bsh;
 	int			sc_phandle;
-	struct exynos_combiner_irq_block *irq_blocks;
+	struct exynos_combiner_irq_group *irq_groups;
 };
 
 static int exynos_combiner_match(device_t, cfdata_t, void *);
@@ -129,7 +129,6 @@ exynos_combiner_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dev = self;
 	sc->sc_phandle = faa->faa_phandle;
 	sc->sc_bst = faa->faa_bst;
-	sc->irq_blocks = NULL;
 
 	error = bus_space_map(sc->sc_bst, addr, size, 0, &sc->sc_bsh);
 	if (error) {
@@ -145,53 +144,53 @@ exynos_combiner_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	aprint_normal(" @ 0x%08x: interrupt combiner", (uint)addr);
 	aprint_naive("\n");
-	aprint_normal("\n");
+	aprint_normal(" @ 0x%08x: interrupt combiner\n", (uint)addr);
 
 }
 
-static struct exynos_combiner_irq_block *
-exynos_combiner_new_block(struct exynos_combiner_softc *sc, int block_no)
+static struct exynos_combiner_irq_group *
+exynos_combiner_new_group(struct exynos_combiner_softc *sc, int group_no)
 {
-	struct exynos_combiner_irq_block *n = kmem_zalloc(sizeof(*n),
+	struct exynos_combiner_irq_group *n = kmem_zalloc(sizeof(*n),
 							  KM_SLEEP);
-	n->irq_block_no = block_no;
-	n->irq_block_next = sc->irq_blocks;
-	sc->irq_blocks = n;
+	n->irq_group_no = group_no;
+	n->irq_group_next = sc->irq_groups;
+	n->irq_sc = sc;
+	sc->irq_groups = n;
 	return n;
 }
 			  
-static struct exynos_combiner_irq_block *
-exynos_combiner_get_block(struct exynos_combiner_softc *sc, int block)
+static struct exynos_combiner_irq_group *
+exynos_combiner_get_group(struct exynos_combiner_softc *sc, int group_no)
 {
-	for (struct exynos_combiner_irq_block *b = sc->irq_blocks;
-	     b; b = b->irq_block_next) {
-		if (b->irq_block_no == block)
-			return b;
+	for (struct exynos_combiner_irq_group *g = sc->irq_groups;
+	     g; g = g->irq_group_next) {
+		if (g->irq_group_no == group_no)
+			return g;
 	}
 	return NULL;
 }
 
 static struct exynos_combiner_irq_entry *
-exynos_combiner_new_irq(struct exynos_combiner_irq_block *block,
+exynos_combiner_new_irq(struct exynos_combiner_irq_group *group,
 			int irq, bool mpsafe, int (*func)(void *), void *arg)
 {
 	struct exynos_combiner_irq_entry * n = kmem_zalloc(sizeof(*n),
 							   KM_SLEEP);
 	n->irq_no = irq;
 	n->irq_handler = func;
-	n->irq_next = block->irq_entries;
+	n->irq_next = group->irq_entries;
 	n->irq_arg = arg;
 	n->irq_mpsafe = mpsafe;
-	block->irq_entries = n;
+	group->irq_entries = n;
 	return n;
 }
 
 static struct exynos_combiner_irq_entry *
-exynos_combiner_get_irq(struct exynos_combiner_irq_block *b, int irq)
+exynos_combiner_get_irq(struct exynos_combiner_irq_group *g, int irq)
 {
-	for (struct exynos_combiner_irq_entry *p = b->irq_entries; p;
+	for (struct exynos_combiner_irq_entry *p = g->irq_entries; p;
 	     p = p->irq_next) {
 		if (p->irq_no == irq)
 			return p;
@@ -202,31 +201,33 @@ exynos_combiner_get_irq(struct exynos_combiner_irq_block *b, int irq)
 static int
 exynos_combiner_irq(void *cookie)
 {
-	struct exynos_combiner_irq_block *blockp = cookie;
-	struct exynos_combiner_softc *sc = blockp->irq_sc;
-	int intr = blockp->irq_block_no;
-	int iblock = 
-		intr / COMBINER_BLOCKS_PER_GROUP * COMBINER_GROUP_SIZE
-		+ COMBINER_IESR_OFFSET;
-	int istatus =
-		bus_space_read_4(sc->sc_bst, sc->sc_bsh, iblock);
-	istatus >>= (intr % 4) *8;
+	struct exynos_combiner_irq_group *groupp = cookie;
+	struct exynos_combiner_softc *sc = groupp->irq_sc;
+	int rv = 0;
+
+	const int group_no = groupp->irq_group_no;
+
+	const uint32_t istr =
+	    bus_space_read_4(sc->sc_bst, sc->sc_bsh, COMBINER_ISTR_REG(group_no));
+	const uint32_t istatus = __SHIFTOUT(istr, COMBINER_GROUP_MASK(group_no));
+
 	for (int irq = 0; irq < 8; irq++) {
-		if (istatus & 1 << irq) {
+		if (istatus & __BIT(irq)) {
 			struct exynos_combiner_irq_entry *e =
-				exynos_combiner_get_irq(blockp, irq);
+				exynos_combiner_get_irq(groupp, irq);
 			if (e) {
 				if (!e->irq_mpsafe)
 					KERNEL_LOCK(1, curlwp);
-				e->irq_handler(e->irq_arg);
+				rv += e->irq_handler(e->irq_arg);
 				if (!e->irq_mpsafe)
 					KERNEL_UNLOCK_ONE(curlwp);
 			} else
-				printf("%s: Unexpected irq %d, %d\n", __func__,
-				       intr, irq);
+				printf("%s: Unexpected irq (%d) on group %d\n", __func__,
+				       irq, group_no);
 		}
 	}
-	return 0;
+
+	return !!rv;
 }
 
 static void *
@@ -235,37 +236,43 @@ exynos_combiner_establish(device_t dev, u_int *specifier,
 			  int (*func)(void *), void *arg)
 {
 	struct exynos_combiner_softc * const sc = device_private(dev);
-	struct exynos_combiner_irq_block *blockp;
+	struct exynos_combiner_irq_group *groupp;
 	struct exynos_combiner_irq_entry *entryp;
 	const bool mpsafe = (flags & FDT_INTR_MPSAFE) != 0;
+	uint32_t iesr;
 
-	const u_int intr = be32toh(specifier[0]);
-	const u_int irq = be32toh(specifier[1]);
+	const u_int group = be32toh(specifier[0]);
+	const u_int intr = be32toh(specifier[1]);
 
-	int iblock = 
-		intr / COMBINER_BLOCKS_PER_GROUP * COMBINER_GROUP_SIZE
-		+ COMBINER_IESR_OFFSET;
-
-	blockp = exynos_combiner_get_block(sc, intr);
-	if (!blockp) {
-		blockp = exynos_combiner_new_block(sc, intr);
-		KASSERT(blockp);
-		blockp->irq_ih = fdtbus_intr_establish(sc->sc_phandle, intr,
-		    IPL_VM /* XXX */, FDT_INTR_MPSAFE, exynos_combiner_irq,
-		    blockp);
+	groupp = exynos_combiner_get_group(sc, group);
+	if (!groupp) {
+		groupp = exynos_combiner_new_group(sc, group);
+		if (arg == NULL) {
+			groupp->irq_ih = fdtbus_intr_establish(sc->sc_phandle, group,
+			    ipl /* XXX */, flags, func, NULL);
+		} else {
+			groupp->irq_ih = fdtbus_intr_establish(sc->sc_phandle, group,
+			    ipl /* XXX */, FDT_INTR_MPSAFE, exynos_combiner_irq,
+			    groupp);
+		}
+		KASSERT(groupp->irq_ih != NULL);
+		groupp->irq_ipl = ipl;
+	} else if (groupp->irq_ipl != ipl) {
+		aprint_error_dev(dev,
+		    "interrupt combiner cannot share interrupts with different ipl\n");
+		return NULL;
 	}
 
-	entryp = exynos_combiner_get_irq(blockp, irq);
-	if (entryp)
+	if (exynos_combiner_get_irq(groupp, intr) != NULL)
 		return NULL;
-	entryp = exynos_combiner_new_irq(blockp, irq, mpsafe, func, arg);
-	KASSERT(entryp);
 
-	int istatus =
-		bus_space_read_4(sc->sc_bst, sc->sc_bsh, iblock);
-	istatus |= 1 << (irq + ((intr % 4) * 8));
-	bus_space_write_4(sc->sc_bst, sc->sc_bsh, iblock, istatus);
-	return (void *)istatus;
+	entryp = exynos_combiner_new_irq(groupp, intr, mpsafe, func, arg);
+
+	iesr = bus_space_read_4(sc->sc_bst, sc->sc_bsh, COMBINER_IESR_REG(group));
+	iesr |= __SHIFTIN((1 << intr), COMBINER_GROUP_MASK(group));
+	bus_space_write_4(sc->sc_bst, sc->sc_bsh, COMBINER_IESR_REG(group), iesr);
+
+	return entryp;
 }
 
 static void
@@ -280,13 +287,13 @@ exynos_combiner_intrstr(device_t dev, u_int *specifier, char *buf,
 			size_t buflen)
 {
 
-	/* 1st cell is the interrupt block */
-	/* 2nd cell is the interrupt number */
+	/* 1st cell is the combiner group number */
+	/* 2nd cell is the interrupt number within the group */
 
-	const u_int intr = be32toh(specifier[0]);
-	const u_int irq = be32toh(specifier[1]);
+	const u_int group = be32toh(specifier[0]);
+	const u_int intr = be32toh(specifier[1]);
 
-	snprintf(buf, buflen, "combiner intr %d irq %d", intr, irq);
+	snprintf(buf, buflen, "interrupt combiner group %d intr %d", group, intr);
 
 	return true;
 }

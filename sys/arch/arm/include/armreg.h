@@ -1,4 +1,4 @@
-/*	$NetBSD: armreg.h,v 1.118.2.3 2018/05/21 04:35:59 pgoyette Exp $	*/
+/*	$NetBSD: armreg.h,v 1.118.2.4 2018/07/28 04:37:28 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Ben Harris
@@ -835,8 +835,16 @@ ARMREG_READ_INLINE(pmcntenclr, "p15,0,%0,c9,c12,2") /* PMC Count Enable Clear */
 ARMREG_WRITE_INLINE(pmcntenclr, "p15,0,%0,c9,c12,2") /* PMC Count Enable Clear */
 ARMREG_READ_INLINE(pmovsr, "p15,0,%0,c9,c12,3") /* PMC Overflow Flag Status */
 ARMREG_WRITE_INLINE(pmovsr, "p15,0,%0,c9,c12,3") /* PMC Overflow Flag Status */
+ARMREG_READ_INLINE(pmselr, "p15,0,%0,c9,c12,5") /* PMC Event Counter Selection */
+ARMREG_WRITE_INLINE(pmselr, "p15,0,%0,c9,c12,5") /* PMC Event Counter Selection */
+ARMREG_READ_INLINE(pmceid0, "p15,0,%0,c9,c12,6") /* PMC Event ID 0 */
+ARMREG_READ_INLINE(pmceid1, "p15,0,%0,c9,c12,7") /* PMC Event ID 1 */
 ARMREG_READ_INLINE(pmccntr, "p15,0,%0,c9,c13,0") /* PMC Cycle Counter */
 ARMREG_WRITE_INLINE(pmccntr, "p15,0,%0,c9,c13,0") /* PMC Cycle Counter */
+ARMREG_READ_INLINE(pmxevtyper, "p15,0,%0,c9,c13,1") /* PMC Event Type Select */
+ARMREG_WRITE_INLINE(pmxevtyper, "p15,0,%0,c9,c13,1") /* PMC Event Type Select */
+ARMREG_READ_INLINE(pmxevcntr, "p15,0,%0,c9,c13,2") /* PMC Event Count */
+ARMREG_WRITE_INLINE(pmxevcntr, "p15,0,%0,c9,c13,2") /* PMC Event Count */
 ARMREG_READ_INLINE(pmuserenr, "p15,0,%0,c9,c14,0") /* PMC User Enable */
 ARMREG_WRITE_INLINE(pmuserenr, "p15,0,%0,c9,c14,0") /* PMC User Enable */
 ARMREG_READ_INLINE(pmintenset, "p15,0,%0,c9,c14,1") /* PMC Interrupt Enable Set */

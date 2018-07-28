@@ -1,8 +1,8 @@
-/*	$NetBSD: if_cnmac.c,v 1.8 2018/01/01 13:25:22 jmcneill Exp $	*/
+/*	$NetBSD: if_cnmac.c,v 1.8.2.1 2018/07/28 04:37:37 pgoyette Exp $	*/
 
 #include <sys/cdefs.h>
 #if 0
-__KERNEL_RCSID(0, "$NetBSD: if_cnmac.c,v 1.8 2018/01/01 13:25:22 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cnmac.c,v 1.8.2.1 2018/07/28 04:37:37 pgoyette Exp $");
 #endif
 
 #include "opt_octeon.h"
@@ -1144,7 +1144,7 @@ octeon_eth_start(struct ifnet *ifp)
 
 		IFQ_DEQUEUE(&ifp->if_snd, m);
 
-		bpf_mtap(ifp, m);
+		bpf_mtap(ifp, m, BPF_D_OUT);
 
 		/* XXX XXX XXX */
 		if (sc->sc_soft_req_cnt > sc->sc_soft_req_thresh)

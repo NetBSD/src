@@ -1,9 +1,17 @@
-#	$NetBSD: bsd.lib.mk,v 1.372.8.1 2018/06/25 07:25:37 pgoyette Exp $
+#	$NetBSD: bsd.lib.mk,v 1.372.8.2 2018/07/28 04:37:25 pgoyette Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
 .include <bsd.shlib.mk>
 .include <bsd.gcc.mk>
+
+# Rename the local function definitions to not conflict with libc/rt/pthread/m.
+.if ${MKSANITIZER:Uno} == "yes" && defined(SANITIZER_RENAME_SYMBOL)
+.	for _symbol in ${SANITIZER_RENAME_SYMBOL}
+CPPFLAGS+=	-D${_symbol}=__mksanitizer_${_symbol}
+.	endfor
+.endif
+
 # Pull in <bsd.sys.mk> here so we can override its .c.o rule
 .include <bsd.sys.mk>
 
@@ -149,7 +157,7 @@ SHLIB_FULLVERSION=${SHLIB_MAJOR}
 PICFLAGS ?= -fPIC
 
 .if ${MKPICLIB} != "no"
-CSHLIBFLAGS+= ${PICFLAGS} ${SANITIZERFLAGS}
+CSHLIBFLAGS+= ${PICFLAGS} ${SANITIZERFLAGS} ${LIBCSANITIZERFLAGS}
 .endif
 
 .if defined(CSHLIBFLAGS) && !empty(CSHLIBFLAGS)

@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_dma.c,v 1.1 2017/04/29 11:00:56 jmcneill Exp $ */
+/* $NetBSD: fdt_dma.c,v 1.1.14.1 2018/07/28 04:37:44 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,11 +27,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_dma.c,v 1.1 2017/04/29 11:00:56 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_dma.c,v 1.1.14.1 2018/07/28 04:37:44 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
 #include <sys/kmem.h>
+#include <sys/queue.h>
 
 #include <libfdt.h>
 #include <dev/fdt/fdtvar.h>
@@ -41,10 +42,11 @@ struct fdtbus_dma_controller {
 	int dma_phandle;
 	const struct fdtbus_dma_controller_func *dma_funcs;
 
-	struct fdtbus_dma_controller *dma_next;
+	LIST_ENTRY(fdtbus_dma_controller) dma_next;
 };
 
-static struct fdtbus_dma_controller *fdtbus_dma = NULL;
+static LIST_HEAD(, fdtbus_dma_controller) fdtbus_dma_controllers =
+    LIST_HEAD_INITIALIZER(fdtbus_dma_controllers);
 
 int
 fdtbus_register_dma_controller(device_t dev, int phandle,
@@ -57,8 +59,7 @@ fdtbus_register_dma_controller(device_t dev, int phandle,
 	dma->dma_phandle = phandle;
 	dma->dma_funcs = funcs;
 
-	dma->dma_next = fdtbus_dma;
-	fdtbus_dma = dma;
+	LIST_INSERT_HEAD(&fdtbus_dma_controllers, dma, dma_next);
 
 	return 0;
 }
@@ -68,10 +69,9 @@ fdtbus_get_dma_controller(int phandle)
 {
 	struct fdtbus_dma_controller *dma;
 
-	for (dma = fdtbus_dma; dma; dma = dma->dma_next) {
-		if (dma->dma_phandle == phandle) {
+	LIST_FOREACH(dma, &fdtbus_dma_controllers, dma_next) {
+		if (dma->dma_phandle == phandle)
 			return dma;
-		}
 	}
 
 	return NULL;

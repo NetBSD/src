@@ -1,4 +1,4 @@
-#	$NetBSD: special,v 1.162 2018/01/09 03:31:14 christos Exp $
+#	$NetBSD: special,v 1.162.2.1 2018/07/28 04:33:02 pgoyette Exp $
 #	@(#)special	8.2 (Berkeley) 1/23/94
 #
 # This file may be overwritten on upgrades.
@@ -63,9 +63,6 @@
 ./etc/defaults/rc.conf		type=file mode=0444
 ./etc/defaults/security.conf	type=file mode=0444
 ./etc/defaults/weekly.conf	type=file mode=0444
-./etc/dhclient-enter-hooks	type=file mode=0644 optional
-./etc/dhclient-exit-hooks	type=file mode=0644 optional
-./etc/dhclient.conf		type=file mode=0644 optional
 ./etc/dhcpcd.conf		type=file mode=0644
 ./etc/dhcpcd.duid		type=file mode=0644 optional
 ./etc/dhcpcd.hook		type=file mode=0644 optional
@@ -208,7 +205,6 @@
 ./etc/rc.d/cleartmp		type=file mode=0555
 ./etc/rc.d/cron			type=file mode=0555
 ./etc/rc.d/devpubd		type=file mode=0555
-./etc/rc.d/dhclient		type=file mode=0555
 ./etc/rc.d/dhcpcd		type=file mode=0555
 ./etc/rc.d/dhcpd		type=file mode=0555
 ./etc/rc.d/dhcpd6		type=file mode=0555

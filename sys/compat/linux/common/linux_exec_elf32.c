@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec_elf32.c,v 1.94 2017/02/06 23:45:49 uwe Exp $	*/
+/*	$NetBSD: linux_exec_elf32.c,v 1.94.12.1 2018/07/28 04:37:43 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_exec_elf32.c,v 1.94 2017/02/06 23:45:49 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_exec_elf32.c,v 1.94.12.1 2018/07/28 04:37:43 pgoyette Exp $");
 
 #ifndef ELFSIZE
 /* XXX should die */
@@ -73,10 +73,12 @@ __KERNEL_RCSID(0, "$NetBSD: linux_exec_elf32.c,v 1.94 2017/02/06 23:45:49 uwe Ex
 #include <compat/linux/linux_syscallargs.h>
 #include <compat/linux/linux_syscall.h>
 
+#define LINUX_GO_RT0_SIGNATURE
+
 #ifdef DEBUG_LINUX
 #define DPRINTF(a)	uprintf a
 #else
-#define DPRINTF(a)
+#define DPRINTF(a)	do {} while (0)
 #endif
 
 #ifdef LINUX_ATEXIT_SIGNATURE
@@ -264,6 +266,95 @@ out:
 }
 #endif
 
+#ifdef LINUX_GO_RT0_SIGNATURE
+/*
+ * Look for a .gopclntab, specific to go binaries
+ * in it look for a symbol called _rt0_<cpu>_linux
+ */
+static int
+ELFNAME2(linux,go_rt0_signature)(struct lwp *l, struct exec_package *epp, Elf_Ehdr *eh)
+{
+	Elf_Shdr *sh;
+	size_t shsize;
+	u_int shstrndx;
+	size_t i;
+	static const char signature[] = ".gopclntab";
+	const size_t sigsz = sizeof(signature);
+	char tbuf[sizeof(signature)], *tmp = NULL;
+	char mbuf[64];
+	const char *m;
+	int mlen;
+	int error;
+
+	/* Load the section header table. */
+	shsize = eh->e_shnum * sizeof(Elf_Shdr);
+	sh = malloc(shsize, M_TEMP, M_WAITOK);
+	error = exec_read_from(l, epp->ep_vp, eh->e_shoff, sh, shsize);
+	if (error)
+		goto out;
+
+	/* Now let's find the string table. If it does not exist, give up. */
+	shstrndx = eh->e_shstrndx;
+	if (shstrndx == SHN_UNDEF || shstrndx >= eh->e_shnum) {
+		error = ENOEXEC;
+		goto out;
+	}
+
+	/* Check if any section has the name we're looking for. */
+	const off_t stroff = sh[shstrndx].sh_offset;
+	for (i = 0; i < eh->e_shnum; i++) {
+		Elf_Shdr *s = &sh[i];
+
+		if (s->sh_name + sigsz > sh[shstrndx].sh_size)
+			continue;
+
+		error = exec_read_from(l, epp->ep_vp, stroff + s->sh_name, tbuf,
+		    sigsz);
+		if (error)
+			goto out;
+		if (!memcmp(tbuf, signature, sigsz)) {
+			DPRINTF(("linux_goplcntab_sig=%s\n", tbuf));
+			break;
+		}
+	}
+
+	if (i == eh->e_shnum) {
+		error = ENOEXEC;
+		goto out;
+	}
+
+	// Don't scan more than 1MB
+	if (sh[i].sh_size > 1024 * 1024)
+		sh[i].sh_size = 1024 * 1024;
+
+	tmp = malloc(sh[i].sh_size, M_TEMP, M_WAITOK);
+	error = exec_read_from(l, epp->ep_vp, sh[i].sh_offset, tmp,
+	    sh[i].sh_size);
+	if (error)
+		goto out;
+
+#if (ELFSIZE == 32)
+	extern const char machine32[] __weak;
+	if (machine32 != NULL)
+		m = machine32;
+	else
+		m = machine;
+#else
+	m = machine;
+#endif
+	mlen = snprintf(mbuf, sizeof(mbuf), "_rt0_%s_linux", m);
+	if (memmem(tmp, sh[i].sh_size, mbuf, mlen) == NULL)
+		error = ENOEXEC;
+	else
+		DPRINTF(("linux_rt0_sig=%s\n", mbuf));
+out:
+	if (tmp)
+		free(tmp, M_TEMP);
+	free(sh, M_TEMP);
+	return error;
+}
+#endif
+
 int
 ELFNAME2(linux,signature)(struct lwp *l, struct exec_package *epp, Elf_Ehdr *eh, char *itp)
 {
@@ -355,6 +446,9 @@ ELFNAME2(linux,probe)(struct lwp *l, struct exec_package *epp, void *eh,
 #endif
 #ifdef LINUX_DEBUGLINK_SIGNATURE
 	    ((error = ELFNAME2(linux,debuglink_signature)(l, epp, eh)) != 0) &&
+#endif
+#ifdef LINUX_GO_RT0_SIGNATURE
+	    ((error = ELFNAME2(linux,go_rt0_signature)(l, epp, eh)) != 0) &&
 #endif
 	    1) {
 			DPRINTF(("linux_probe: returning %d\n", error));

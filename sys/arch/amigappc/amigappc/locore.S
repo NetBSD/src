@@ -1,4 +1,4 @@
-/*      $NetBSD: locore.S,v 1.25 2014/08/06 15:11:17 joerg Exp $   */
+/*      $NetBSD: locore.S,v 1.25.26.1 2018/07/28 04:37:27 pgoyette Exp $   */
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -36,7 +36,6 @@
  * Rewritten for 4.0 and bootargs support by Frank Wille.
  */
 #include "opt_ddb.h"
-#include "opt_ipkdb.h"
 #include "opt_lockdebug.h"
 #include "opt_multiprocessor.h"
 #include "opt_ppcparam.h"

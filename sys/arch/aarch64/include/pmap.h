@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.h,v 1.1.28.4 2018/06/25 07:25:37 pgoyette Exp $ */
+/* $NetBSD: pmap.h,v 1.1.28.5 2018/07/28 04:37:26 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -97,6 +97,9 @@ struct vm_page_md {
 #define l3pte_pa(pde)		((paddr_t)((pde) & LX_TBL_PA))
 #define l3pte_executable(pde)	\
     (((pde) & (LX_BLKPAG_UXN|LX_BLKPAG_PXN)) != (LX_BLKPAG_UXN|LX_BLKPAG_PXN))
+#define l3pte_readable(pde)	((pde) & LX_BLKPAG_AF)
+#define l3pte_writable(pde)	\
+    (((pde) & (LX_BLKPAG_AF|LX_BLKPAG_AP)) == (LX_BLKPAG_AF|LX_BLKPAG_AP_RW))
 #define l3pte_index(v)		(((vaddr_t)(v) & L3_ADDR_BITS) >> L3_SHIFT)
 #define l3pte_valid(pde)	(((pde) & LX_VALID) == LX_VALID)
 #define l3pte_is_page(pde)	(((pde) & LX_TYPE) == L3_TYPE_PAG)

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_malo_pcmcia.c,v 1.16 2018/01/22 14:40:53 maxv Exp $	*/
+/*	$NetBSD: if_malo_pcmcia.c,v 1.16.2.1 2018/07/28 04:37:57 pgoyette Exp $	*/
 /*      $OpenBSD: if_malo.c,v 1.65 2009/03/29 21:53:53 sthen Exp $ */
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_malo_pcmcia.c,v 1.16 2018/01/22 14:40:53 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_malo_pcmcia.c,v 1.16.2.1 2018/07/28 04:37:57 pgoyette Exp $");
 
 #ifdef _MODULE
 #include <sys/module.h>
@@ -522,8 +522,7 @@ cmalo_start(struct ifnet *ifp)
 
 	IFQ_DEQUEUE(&ifp->if_snd, m);
 
-	if (ifp->if_bpf)
-		bpf_ops->bpf_mtap(ifp->if_bpf, m);
+	bpf_mtap(ifp, m, BPF_D_OUT);
 
 	if (cmalo_tx(sc, m) != 0)
 		ifp->if_oerrors++;

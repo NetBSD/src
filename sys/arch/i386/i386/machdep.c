@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.803.2.2 2018/04/07 04:12:13 pgoyette Exp $	*/
+/*	$NetBSD: machdep.c,v 1.803.2.3 2018/07/28 04:37:34 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009, 2017
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.803.2.2 2018/04/07 04:12:13 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.803.2.3 2018/07/28 04:37:34 pgoyette Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_freebsd.h"
@@ -212,8 +212,6 @@ int i386_fpu_fdivbug;
 int i386_use_fxsave;
 int i386_has_sse;
 int i386_has_sse2;
-
-struct pool x86_dbregspl;
 
 vaddr_t idt_vaddr;
 paddr_t idt_paddr;
@@ -874,10 +872,8 @@ setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 
 	memcpy(&pcb->pcb_fsd, &gdtstore[GUDATA_SEL], sizeof(pcb->pcb_fsd));
 	memcpy(&pcb->pcb_gsd, &gdtstore[GUDATA_SEL], sizeof(pcb->pcb_gsd));
-	if (pcb->pcb_dbregs != NULL) {
-		pool_put(&x86_dbregspl, pcb->pcb_dbregs);
-		pcb->pcb_dbregs = NULL;
-	}
+
+	x86_dbregs_clear(l);
 
 	tf = l->l_md.md_regs;
 	tf->tf_gs = GSEL(GUGS_SEL, SEL_UPL);
@@ -1443,11 +1439,7 @@ init386(paddr_t first_avail)
 	}
 
 	pcb->pcb_dbregs = NULL;
-
-	x86_dbregs_setup_initdbstate();
-
-	pool_init(&x86_dbregspl, sizeof(struct dbreg), 16, 0, 0, "dbregs",
-	    NULL, IPL_NONE);
+	x86_dbregs_init();
 }
 
 #include <dev/ic/mc146818reg.h>		/* for NVRAM POST */

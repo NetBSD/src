@@ -1,4 +1,4 @@
-#	$NetBSD: t_asan_global_buffer_overflow.sh,v 1.1.2.2 2018/04/07 04:12:21 pgoyette Exp $
+#	$NetBSD: t_asan_global_buffer_overflow.sh,v 1.1.2.3 2018/07/28 04:38:13 pgoyette Exp $
 #
 # Copyright (c) 2018 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -201,10 +201,10 @@ atf_init_test_cases()
 	}
 
 	atf_add_test_case global_buffer_overflow
-	atf_add_test_case global_buffer_overflow_profile
+#	atf_add_test_case global_buffer_overflow_profile
 	atf_add_test_case global_buffer_overflow_pic
 	atf_add_test_case global_buffer_overflow_pie
-	atf_add_test_case global_buffer_overflow32
+#	atf_add_test_case global_buffer_overflow32
 	# static option not supported
 	# -static and -fsanitize=address can't be used together for compilation
 	# (gcc version  5.4.0 and clang 7.1) tested on April 2nd 2018.

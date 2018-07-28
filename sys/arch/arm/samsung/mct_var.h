@@ -1,4 +1,4 @@
-/*	$NetBSD: mct_var.h,v 1.5 2017/06/11 01:09:44 jmcneill Exp $	*/
+/*	$NetBSD: mct_var.h,v 1.5.4.1 2018/07/28 04:37:29 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -36,11 +36,11 @@
 #include <sys/bus.h>
 #include <sys/device.h>
 
-static struct mct_softc {
+struct mct_softc {
 	device_t		 sc_dev;
 	bus_space_tag_t		 sc_bst;
 	bus_space_handle_t	 sc_bsh;
-	uint32_t		 sc_irq;
+	int			 sc_phandle;
 
 	uint32_t		 sc_freq;
 	void			*sc_global_ih;
@@ -48,8 +48,7 @@ static struct mct_softc {
 	uint64_t		 sc_lastintr;
 	uint32_t		 sc_autoinc;
 	struct evcnt		 sc_ev_missing_ticks;
-
-} mct_sc;
+};
 
 void mct_init_cpu_clock(struct cpu_info *ci);
 void mct_delay(u_int);

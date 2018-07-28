@@ -1,12 +1,12 @@
 ; RUN: llc -march=hexagon -O2 < %s | FileCheck %s
 
-; CHECK: v{{[0-9]+}}.h{{ *}}={{ *}}vadd(v{{[0-9]+}}.h,v{{[0-9]+}}.h)
+; CHECK: v{{[0-9]+}}.h = vadd(v{{[0-9]+}}.h,v{{[0-9]+}}.h)
 ; CHECK: }
 ; CHECK: {
-; CHECK: v{{[0-9]+}}{{ *}}={{ *}}valign(v{{[0-9]+}},v{{[0-9]+}},r{{[0-9]+}})
+; CHECK: v{{[0-9]+}} = valign(v{{[0-9]+}},v{{[0-9]+}},r{{[0-9]+}})
 ; CHECK: }
 ; CHECK: {
-; CHECK: v{{[0-9]+}}{{ *}}={{ *}}valign(v{{[0-9]+}},v{{[0-9]+}},r{{[0-9]+}})
+; CHECK: v{{[0-9]+}} = valign(v{{[0-9]+}},v{{[0-9]+}},r{{[0-9]+}})
 
 target triple = "hexagon"
 
@@ -95,7 +95,7 @@ declare <16 x i32> @llvm.hexagon.V6.valignb(<16 x i32>, <16 x i32>, i32) #1
 declare <16 x i32> @llvm.hexagon.V6.vabsdiffh(<16 x i32>, <16 x i32>) #1
 declare <16 x i32> @llvm.hexagon.V6.vabsh(<16 x i32>) #1
 
-attributes #0 = { nounwind "target-cpu"="hexagonv60" "target-features"="+hvx" }
+attributes #0 = { nounwind "target-cpu"="hexagonv60" "target-features"="+hvxv60,+hvx-length64b" }
 attributes #1 = { nounwind readnone }
 
 !1 = !{!2, !2, i64 0}

@@ -1,4 +1,4 @@
-/*	$NetBSD: rrunner.c,v 1.85.2.1 2018/06/25 07:25:50 pgoyette Exp $	*/
+/*	$NetBSD: rrunner.c,v 1.85.2.2 2018/07/28 04:37:45 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rrunner.c,v 1.85.2.1 2018/06/25 07:25:50 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rrunner.c,v 1.85.2.2 2018/07/28 04:37:45 pgoyette Exp $");
 
 #include "opt_inet.h"
 
@@ -1927,7 +1927,7 @@ eshstart(struct ifnet *ifp)
 			m->m_len -= 8;
 			m->m_data += 8;
 			m->m_pkthdr.len -= 8;
-			bpf_mtap(ifp, m);
+			bpf_mtap(ifp, m, BPF_D_OUT);
 			m->m_len += 8;
 			m->m_data -= 8;
 			m->m_pkthdr.len += 8;

@@ -1,4 +1,4 @@
-/*	$NetBSD: xen.h,v 1.37 2016/07/07 06:55:40 msaitoh Exp $	*/
+/*	$NetBSD: xen.h,v 1.37.16.1 2018/07/28 04:37:42 pgoyette Exp $	*/
 
 /*
  *
@@ -75,12 +75,8 @@ void	idle_block(void);
 /* xen_machdep.c */
 void	sysctl_xen_suspend_setup(void);
 
-#if defined(XENDEBUG) || 1 /* XXX */
 #include <sys/stdarg.h>
-
 void printk(const char *, ...);
-void vprintk(const char *, va_list);
-#endif
 
 #endif
 

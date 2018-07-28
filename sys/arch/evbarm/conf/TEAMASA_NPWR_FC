@@ -1,4 +1,4 @@
-#	$NetBSD: TEAMASA_NPWR_FC,v 1.52 2017/09/14 07:58:40 mrg Exp $
+#	$NetBSD: TEAMASA_NPWR_FC,v 1.52.2.1 2018/07/28 04:37:31 pgoyette Exp $
 #
 #	TeamASA NPWR-FC, i80321-based SBC
 #
@@ -108,7 +108,6 @@ options 	USERCONF	# userconf(4) support
 
 # Development and Debugging options
 
-options 	PERFCTRS	# performance counters
 options 	DIAGNOSTIC	# internal consistency checks
 #options 	DEBUG
 #options 	PMAP_DEBUG	# Enable pmap_debug_level code

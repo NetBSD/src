@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_pinmux.c,v 1.1 2017/09/22 14:36:22 jmcneill Exp $ */
+/* $NetBSD: tegra_pinmux.c,v 1.1.4.1 2018/07/28 04:37:28 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_tegra.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_pinmux.c,v 1.1 2017/09/22 14:36:22 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_pinmux.c,v 1.1.4.1 2018/07/28 04:37:28 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -250,7 +250,8 @@ tegra_pinmux_attach(device_t parent, device_t self, void *aux)
 		}
 		error = bus_space_map(sc->sc_bst, addr, size, res, &sc->sc_bsh[res]);
 		if (error) {
-			aprint_error(": couldn't map %#llx: %d", (uint64_t)addr, error);
+			aprint_error(": couldn't map %#" PRIx64 ": %d",
+			    (uint64_t)addr, error);
 			return;
 		}
 	}

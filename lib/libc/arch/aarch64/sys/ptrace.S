@@ -1,4 +1,4 @@
-/* $NetBSD: ptrace.S,v 1.1 2014/08/10 05:47:37 matt Exp $ */
+/* $NetBSD: ptrace.S,v 1.1.24.1 2018/07/28 04:37:22 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 
 ENTRY(ptrace)
 	sub	sp, sp, #48
-	stp	x29, x30, [sp, #32]!
+	stp	x29, x30, [sp, #32]
 	add	x29, sp, #32
 	stp	x0, x1, [sp, #0]
 	stp	x2, x3, [sp, #16]

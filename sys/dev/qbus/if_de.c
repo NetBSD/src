@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.32.8.1 2018/06/25 07:26:01 pgoyette Exp $	*/
+/*	$NetBSD: if_de.c,v 1.32.8.2 2018/07/28 04:37:57 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989 Regents of the University of California.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_de.c,v 1.32.8.1 2018/06/25 07:26:01 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_de.c,v 1.32.8.2 2018/07/28 04:37:57 pgoyette Exp $");
 
 #include "opt_inet.h"
 
@@ -426,7 +426,7 @@ destart(struct ifnet *ifp)
 		rp = &dc->dc_xrent[sc->sc_xfree];
 		if (rp->r_flags & XFLG_OWN)
 			panic("deuna xmit in progress");
-		bpf_mtap(ifp, m);
+		bpf_mtap(ifp, m, BPF_D_OUT);
 
 		len = if_ubaput(&sc->sc_ifuba, &sc->sc_ifw[sc->sc_xfree], m);
 		rp->r_slen = len;

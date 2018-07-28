@@ -1,4 +1,4 @@
-/* $NetBSD: if_admsw.c,v 1.16 2016/12/15 09:28:03 ozaki-r Exp $ */
+/* $NetBSD: if_admsw.c,v 1.16.14.1 2018/07/28 04:37:37 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2007 Ruslan Ermilov and Vsevolod Lobko.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_admsw.c,v 1.16 2016/12/15 09:28:03 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_admsw.c,v 1.16.14.1 2018/07/28 04:37:37 pgoyette Exp $");
 
 
 #include <sys/param.h>
@@ -677,7 +677,7 @@ admsw_start(struct ifnet *ifp)
 		sc->sc_txnext = ADMSW_NEXTTXL(nexttx);
 
 		/* Pass the packet to any BPF listeners. */
-		bpf_mtap(ifp, m0);
+		bpf_mtap(ifp, m0, BPF_D_OUT);
 
 		/* Set a watchdog timer in case the chip flakes out. */
 		sc->sc_ethercom[0].ec_if.if_timer = 5;

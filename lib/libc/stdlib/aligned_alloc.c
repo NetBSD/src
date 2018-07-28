@@ -1,4 +1,4 @@
-/* $NetBSD: aligned_alloc.c,v 1.1 2015/11/07 16:21:42 nros Exp $ */
+/* $NetBSD: aligned_alloc.c,v 1.1.14.1 2018/07/28 04:37:22 pgoyette Exp $ */
 
 /*-
  * Copyright (C) 2015 The NetBSD Foundation, Inc.
@@ -42,11 +42,9 @@ aligned_alloc(size_t alignment, size_t size)
         int err;
 	
         /*
-         * Check that alignment is a power of 2
-         * and that size is an integer multiple of alignment.
+         * Check that alignment is a power of 2.
          */
-        if (alignment == 0 || ((alignment - 1) & alignment) != 0 ||
-            (size & (alignment-1)) != 0) {
+        if (alignment == 0 || ((alignment - 1) & alignment) != 0) {
                 errno = EINVAL;
                 return NULL;
         }

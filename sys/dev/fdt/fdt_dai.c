@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_dai.c,v 1.1.2.3 2018/06/25 07:25:49 pgoyette Exp $ */
+/* $NetBSD: fdt_dai.c,v 1.1.2.4 2018/07/28 04:37:44 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,11 +27,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_dai.c,v 1.1.2.3 2018/06/25 07:25:49 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_dai.c,v 1.1.2.4 2018/07/28 04:37:44 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
 #include <sys/kmem.h>
+#include <sys/queue.h>
 
 #include <libfdt.h>
 #include <dev/fdt/fdtvar.h>
@@ -41,10 +42,11 @@ struct fdtbus_dai_controller {
 	int dc_phandle;
 	const struct fdtbus_dai_controller_func *dc_funcs;
 
-	struct fdtbus_dai_controller *dc_next;
+	LIST_ENTRY(fdtbus_dai_controller) dc_next;
 };
 
-static struct fdtbus_dai_controller *fdtbus_dc = NULL;
+static LIST_HEAD(, fdtbus_dai_controller) fdtbus_dai_controllers =
+    LIST_HEAD_INITIALIZER(fdtbus_dai_controllers);
 
 int
 fdtbus_register_dai_controller(device_t dev, int phandle,
@@ -57,8 +59,7 @@ fdtbus_register_dai_controller(device_t dev, int phandle,
 	dc->dc_phandle = phandle;
 	dc->dc_funcs = funcs;
 
-	dc->dc_next = fdtbus_dc;
-	fdtbus_dc = dc;
+	LIST_INSERT_HEAD(&fdtbus_dai_controllers, dc, dc_next);
 
 	return 0;
 }
@@ -68,10 +69,9 @@ fdtbus_get_dai_controller(int phandle)
 {
 	struct fdtbus_dai_controller *dc;
 
-	for (dc = fdtbus_dc; dc; dc = dc->dc_next) {
-		if (dc->dc_phandle == phandle) {
+	LIST_FOREACH(dc, &fdtbus_dai_controllers, dc_next) {
+		if (dc->dc_phandle == phandle)
 			return dc;
-		}
 	}
 
 	return NULL;

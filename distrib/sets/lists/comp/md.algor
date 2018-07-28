@@ -1,4 +1,4 @@
-# $NetBSD: md.algor,v 1.17 2015/12/21 16:49:37 christos Exp $
+# $NetBSD: md.algor,v 1.17.14.1 2018/07/28 04:32:59 pgoyette Exp $
 ./usr/include/algor				comp-c-include
 ./usr/include/algor/_G_config.h			comp-obsolete		obsolete
 ./usr/include/algor/ansi.h			comp-c-include
@@ -40,7 +40,7 @@
 ./usr/include/algor/pcb.h			comp-c-include
 ./usr/include/algor/pci_machdep.h		comp-c-include
 ./usr/include/algor/pmap.h			comp-c-include
-./usr/include/algor/pmc.h			comp-c-include
+./usr/include/algor/pmc.h			comp-obsolete		obsolete
 ./usr/include/algor/proc.h			comp-c-include
 ./usr/include/algor/profile.h			comp-c-include
 ./usr/include/algor/psl.h			comp-c-include

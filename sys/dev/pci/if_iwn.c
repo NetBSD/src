@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwn.c,v 1.88.2.1 2018/05/02 07:20:06 pgoyette Exp $	*/
+/*	$NetBSD: if_iwn.c,v 1.88.2.2 2018/07/28 04:37:46 pgoyette Exp $	*/
 /*	$OpenBSD: if_iwn.c,v 1.135 2014/09/10 07:22:09 dcoppa Exp $	*/
 
 /*-
@@ -22,7 +22,7 @@
  * adapters.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.88.2.1 2018/05/02 07:20:06 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.88.2.2 2018/07/28 04:37:46 pgoyette Exp $");
 
 #define IWN_USE_RBUF	/* Use local storage for RX */
 #undef IWN_HWCRYPTO	/* XXX does not even compile yet */
@@ -2170,7 +2170,7 @@ iwn_rx_done(struct iwn_softc *sc, struct iwn_rx_desc *desc,
 		default:  tap->wr_rate =   0;
 		}
 
-		bpf_mtap2(sc->sc_drvbpf, tap, sc->sc_rxtap_len, m);
+		bpf_mtap2(sc->sc_drvbpf, tap, sc->sc_rxtap_len, m, BPF_D_IN);
 	}
 
 	/*
@@ -2965,7 +2965,7 @@ iwn_tx(struct iwn_softc *sc, struct mbuf *m, struct ieee80211_node *ni, int ac)
 		if (wh->i_fc[1] & IEEE80211_FC1_WEP)
 			tap->wt_flags |= IEEE80211_RADIOTAP_F_WEP;
 
-		bpf_mtap2(sc->sc_drvbpf, tap, sc->sc_txtap_len, m);
+		bpf_mtap2(sc->sc_drvbpf, tap, sc->sc_txtap_len, m, BPF_D_OUT);
 	}
 
 	/* Prepare TX firmware command. */
@@ -3228,7 +3228,7 @@ iwn_start(struct ifnet *ifp)
 		    M_WME_GETAC(m) : WME_AC_BE;
 
 		if (sc->sc_beacon_wait == 0)
-			bpf_mtap(ifp, m);
+			bpf_mtap(ifp, m, BPF_D_OUT);
 
 		if ((m = ieee80211_encap(ic, m, ni)) == NULL) {
 			ieee80211_free_node(ni);
@@ -3239,7 +3239,7 @@ sendit:
 		if (sc->sc_beacon_wait)
 			continue;
 
-		bpf_mtap3(ic->ic_rawbpf, m);
+		bpf_mtap3(ic->ic_rawbpf, m, BPF_D_OUT);
 
 		if (iwn_tx(sc, m, ni, ac) != 0) {
 			ieee80211_free_node(ni);

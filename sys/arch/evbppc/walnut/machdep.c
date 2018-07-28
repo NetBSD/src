@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.55 2012/07/27 22:13:58 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.55.38.1 2018/07/28 04:37:33 pgoyette Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -67,11 +67,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.55 2012/07/27 22:13:58 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.55.38.1 2018/07/28 04:37:33 pgoyette Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
-#include "opt_ipkdb.h"
 
 #include <sys/param.h>
 #include <sys/boot_flag.h>
@@ -203,14 +202,6 @@ initppc(vaddr_t startkernel, vaddr_t endkernel, char *args, void *info_block)
 #ifdef DDB
 	if (boothowto & RB_KDB)
 		Debugger();
-#endif
-#ifdef IPKDB
-	/*
-	 * Now trap to IPKDB
-	 */
-	ipkdb_init();
-	if (boothowto & RB_KDB)
-		ipkdb_connect(0);
 #endif
 
 	/*

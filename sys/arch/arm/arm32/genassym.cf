@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.77 2018/01/24 09:04:44 skrll Exp $
+#	$NetBSD: genassym.cf,v 1.77.2.1 2018/07/28 04:37:27 pgoyette Exp $
 
 # Copyright (c) 1982, 1990 The Regents of the University of California.
 # All rights reserved.
@@ -149,6 +149,8 @@ define	PAGE_MASK		PAGE_MASK
 define	PAGE_SIZE		PAGE_SIZE
 define	UPAGES			UPAGES
 define	PGSHIFT			PGSHIFT
+
+define	MAXCPUS			MAXCPUS
 
 # Important offsets into the lwp and proc structs & associated constants
 define	L_PCB			offsetof(struct lwp, l_addr)

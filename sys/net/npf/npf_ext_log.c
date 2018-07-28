@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_ext_log.c,v 1.13 2017/02/18 23:27:32 christos Exp $	*/
+/*	$NetBSD: npf_ext_log.c,v 1.13.12.1 2018/07/28 04:38:10 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2010-2012 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_ext_log.c,v 1.13 2017/02/18 23:27:32 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_ext_log.c,v 1.13.12.1 2018/07/28 04:38:10 pgoyette Exp $");
 
 #include <sys/types.h>
 #include <sys/module.h>
@@ -145,7 +145,7 @@ npf_log(npf_cache_t *npc, void *meta, const npf_match_info_t *mi, int *decision)
 	ifp->if_opackets++;
 	ifp->if_obytes += m->m_pkthdr.len;
 	if (ifp->if_bpf)
-		bpf_mtap2(ifp->if_bpf, &hdr, NPFLOG_HDRLEN, m);
+		bpf_mtap2(ifp->if_bpf, &hdr, NPFLOG_HDRLEN, m, BPF_D_OUT);
 	if_put(ifp, &psref);
 
 	KERNEL_UNLOCK_ONE(NULL);

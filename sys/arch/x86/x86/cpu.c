@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.149.2.5 2018/06/25 07:25:47 pgoyette Exp $	*/
+/*	$NetBSD: cpu.c,v 1.149.2.6 2018/07/28 04:37:42 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2000-2012 NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.149.2.5 2018/06/25 07:25:47 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.149.2.6 2018/07/28 04:37:42 pgoyette Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -1286,7 +1286,9 @@ void
 cpu_load_pmap(struct pmap *pmap, struct pmap *oldpmap)
 {
 #ifdef SVS
-	svs_pdir_switch(pmap);
+	if (svs_enabled) {
+		svs_pdir_switch(pmap);
+	}
 #endif
 
 #ifdef PAE
@@ -1311,9 +1313,9 @@ cpu_load_pmap(struct pmap *pmap, struct pmap *oldpmap)
 	if (interrupts_enabled)
 		x86_enable_intr();
 	tlbflush();
-#else /* PAE */
+#else
 	lcr3(pmap_pdirpa(pmap, 0));
-#endif /* PAE */
+#endif
 }
 
 /*

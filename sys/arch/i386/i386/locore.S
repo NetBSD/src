@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.156.2.1 2018/06/25 07:25:42 pgoyette Exp $	*/
+/*	$NetBSD: locore.S,v 1.156.2.2 2018/07/28 04:37:34 pgoyette Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -128,7 +128,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.156.2.1 2018/06/25 07:25:42 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.156.2.2 2018/07/28 04:37:34 pgoyette Exp $");
 
 #include "opt_copy_symtab.h"
 #include "opt_ddb.h"
@@ -934,7 +934,7 @@ END(hypercall_page)
  * this only happens at run time when the GDT is resized.
  */
 /* LINTSTUB: Func: void lgdt_finish(void) */
-NENTRY(lgdt_finish)
+ENTRY(lgdt_finish)
 	movl	$GSEL(GDATA_SEL, SEL_KPL),%eax
 	movw	%ax,%ds
 	movw	%ax,%es
@@ -961,7 +961,7 @@ END(lgdt_finish)
  * stub to call.
  * NOTE: This function does not have a normal calling sequence!
  */
-NENTRY(lwp_trampoline)
+ENTRY(lwp_trampoline)
 	movl	%ebp,%edi	/* for .Lsyscall_checkast */
 	xorl	%ebp,%ebp
 	pushl	%edi
@@ -981,7 +981,7 @@ END(lwp_trampoline)
  * Signal trampoline; copied to top of user stack.  Used only for
  * compatibility with old releases of NetBSD.
  */
-NENTRY(sigcode)
+ENTRY(sigcode)
 	/*
 	 * Handler has returned here as if we called it.  The sigcontext
 	 * is on the stack after the 3 args "we" pushed.
@@ -1089,19 +1089,6 @@ ENTRY(cpu_switchto)
 	movl	%ebp,PCB_EBP(%eax)
 skip_save:
 
-#ifndef XEN
-	pushl	%edx
-	movb	_C_LABEL(x86_fpu_eager),%dl
-	testb	%dl,%dl
-	jz	.Lno_eagerfpu
-	pushl	%edi
-	pushl	%esi
-	call	_C_LABEL(fpu_eagerswitch)
-	addl	$8,%esp
-.Lno_eagerfpu:
-	popl	%edx
-#endif
-
 	/* Switch to newlwp's stack. */
 	movl	L_PCB(%edi),%ebx
 	movl	PCB_EBP(%ebx),%ebp
@@ -1127,6 +1114,25 @@ skip_save:
 	movl	PCB_ESP0(%ebx),%eax
 	movl	CPUVAR(TSS),%ecx
 	movl	%eax,TSS_ESP0(%ecx)
+#endif
+
+	/* Switch the dbregs. */
+	pushl	%edi
+	pushl	%esi
+	call	_C_LABEL(x86_dbregs_switch)
+	addl	$8,%esp
+
+#ifndef XEN
+	pushl	%edx
+	movb	_C_LABEL(x86_fpu_eager),%dl
+	testb	%dl,%dl
+	jz	.Lno_eagerfpu
+	pushl	%edi
+	pushl	%esi
+	call	_C_LABEL(fpu_eagerswitch)
+	addl	$8,%esp
+.Lno_eagerfpu:
+	popl	%edx
 #endif
 
 	/* Don't bother with the rest if switching to a system process. */
@@ -1336,7 +1342,7 @@ IDTVEC_END(syscall)
  * Used when checking for the FDIV bug on first generations pentiums.
  * Anything 120MHz or above is fine.
  */
-NENTRY(npx586bug1)
+ENTRY(npx586bug1)
 	fildl	4(%esp)		/* x */
 	fildl	8(%esp)		/* y */
 	fld	%st(1)

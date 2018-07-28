@@ -1,4 +1,4 @@
-/*	$NetBSD: sockin.c,v 1.65 2017/09/21 07:15:35 ozaki-r Exp $	*/
+/*	$NetBSD: sockin.c,v 1.65.2.1 2018/07/28 04:38:11 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sockin.c,v 1.65 2017/09/21 07:15:35 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sockin.c,v 1.65.2.1 2018/07/28 04:38:11 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/condvar.h>
@@ -289,7 +289,7 @@ sockin_process(struct socket *so)
 	}
 	m->m_len = m->m_pkthdr.len = n;
 
-	bpf_mtap_af(&sockin_if, AF_UNSPEC, m);
+	bpf_mtap_af(&sockin_if, AF_UNSPEC, m, BPF_D_IN);
 
 	mutex_enter(softnet_lock);
 	if (so->so_proto->pr_type == SOCK_DGRAM) {
@@ -626,7 +626,7 @@ sockin_send(struct socket *so, struct mbuf *m, struct sockaddr *saddr,
 	int error = 0;
 	int s;
 
-	bpf_mtap_af(&sockin_if, AF_UNSPEC, m);
+	bpf_mtap_af(&sockin_if, AF_UNSPEC, m, BPF_D_OUT);
 
 	memset(&mhdr, 0, sizeof(mhdr));
 

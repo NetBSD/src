@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC64,v 1.1.2.5 2018/06/25 07:25:40 pgoyette Exp $
+#	$NetBSD: GENERIC64,v 1.1.2.6 2018/07/28 04:37:31 pgoyette Exp $
 #
 #	GENERIC ARM (aarch64) kernel
 #
@@ -17,6 +17,7 @@ makeoptions	DTSGNUARCH="arm arm64"
 makeoptions	DTSSUBDIR="allwinner broadcom nvidia rockchip"
 makeoptions	DTS="
 	bcm2837-rpi-3-b.dts
+	bcm2837-rpi-3-b-plus.dts
 
 	rk3328-evb.dts
 	rk3328-roc-cc.dts
@@ -32,6 +33,7 @@ makeoptions	DTS="
 	sun50i-a64-sopine-baseboard.dts
 	sun50i-a64-teres-i.dts
 
+	sun50i-h5-libretech-all-h3-cc.dts
 	sun50i-h5-nanopi-neo-plus2.dts
 	sun50i-h5-nanopi-neo2.dts
 	sun50i-h5-orangepi-pc2.dts
@@ -55,7 +57,7 @@ options 	SOC_SUN50I_A64
 options 	SOC_SUN50I_H5
 options 	SOC_SUN50I_H6
 options 	SOC_VIRT
-#options 	MULTIPROCESSOR
+options 	MULTIPROCESSOR
 
 pseudo-device 	openfirm	# /dev/openfirm
 
@@ -63,7 +65,6 @@ options 	DIAGNOSTIC	# internal consistency checks
 options 	DEBUG
 #options 	LOCKDEBUG
 #options 	PMAP_DEBUG	# Enable pmap_debug_level code
-#options 	IPKDB		# remote kernel debugging
 options 	VERBOSE_INIT_ARM # verbose bootstrapping messages
 # EARLYCONS is required for early init messages from VERBOSE_INIT_ARM.
 #options 	EARLYCONS=bcm2837
@@ -79,11 +80,15 @@ config		netbsd		root on ? type ?
 
 # Device tree support
 armfdt0		at root
-fdt*		at fdtbus?
+simplebus*	at fdt? pass 0
 
 # CPUs
 cpus*		at fdt? pass 0
-cpu*		at cpus?
+cpu*		at fdt? pass 0
+
+# Performance monitors
+armpmu*		at fdt?
+pseudo-device	tprof
 
 # CPU frequency scaling
 cpufreqdt*	at cpu?
@@ -98,6 +103,9 @@ gregulator*	at fdt? pass 4
 gpiokeys*	at fdt?
 wskbd*		at gpiokeys? console ? mux 1
 gpioleds*	at fdt?
+
+# System Controller
+syscon*		at fdt? pass 1		# Generic System Controller
 
 # Timer
 gtmr*		at fdt? pass 1		# ARM Generic Timer
@@ -215,6 +223,7 @@ plcom*		at fdt?			# ARM PL011 UART
 
 # I2C controllers
 bsciic*		at fdt?			# Broadcom BCM283x Serial Control
+rkiic*		at fdt?			# Rockchip I2C
 sunxirsb*	at fdt?			# Allwinner RSB
 sunxitwi*	at fdt?			# Allwinner TWI
 tegrai2c*	at fdt? pass 4		# NVIDIA Tegra I2C

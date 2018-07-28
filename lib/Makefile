@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.254.2.3 2018/06/25 07:25:33 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.254.2.4 2018/07/28 04:37:22 pgoyette Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 .include <bsd.own.mk>
@@ -24,7 +24,7 @@ SUBDIR+=	libarch \
 		libbluetooth libbsdmalloc libbz2 \
 		libcompat libcrypt \
 		libintl libipsec libkvm libm \
-		libossaudio libpci libpmc libposix libprop libpthread \
+		libossaudio libpci libposix libprop libpthread \
 		libpuffs libresolv librmt librpcsvc librt \
 		libtelnet libterminfo \
 		libusbhid libutil libwrap liby libz
@@ -165,7 +165,7 @@ SUBDIR+=	../external/gpl3/${EXTERNAL_GCC_SUBDIR}/lib/libsupc++
 #==================== 2nd library dependency barrier ====================
 SUBDIR+=	.WAIT
 
-.for sanitizer in asan ubsan
+.for sanitizer in asan lsan ubsan
 .if exists(../external/gpl3/${EXTERNAL_GCC_SUBDIR}/lib/lib${sanitizer})
 SUBDIR+= ../external/gpl3/${EXTERNAL_GCC_SUBDIR}/lib/lib${sanitizer}
 .endif

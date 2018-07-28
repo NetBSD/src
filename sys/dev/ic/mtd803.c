@@ -1,4 +1,4 @@
-/* $NetBSD: mtd803.c,v 1.33.14.1 2018/06/25 07:25:50 pgoyette Exp $ */
+/* $NetBSD: mtd803.c,v 1.33.14.2 2018/07/28 04:37:45 pgoyette Exp $ */
 
 /*-
  *
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mtd803.c,v 1.33.14.1 2018/06/25 07:25:50 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mtd803.c,v 1.33.14.2 2018/07/28 04:37:45 pgoyette Exp $");
 
 
 #include <sys/param.h>
@@ -470,7 +470,7 @@ mtd_start(struct ifnet *ifp)
 		if (m == NULL)
 			break;
 
-		bpf_mtap(ifp, m);
+		bpf_mtap(ifp, m, BPF_D_OUT);
 
 		/* Copy mbuf chain into tx buffer */
 		(void)mtd_put(sc, sc->cur_tx, m);

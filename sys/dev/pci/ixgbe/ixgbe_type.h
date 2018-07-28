@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe_type.h,v 1.31.2.3 2018/06/25 07:26:01 pgoyette Exp $ */
+/* $NetBSD: ixgbe_type.h,v 1.31.2.4 2018/07/28 04:37:56 pgoyette Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -4166,6 +4166,7 @@ struct ixgbe_phy_info {
 	enum ixgbe_media_type		media_type;
 	u32 phy_semaphore_mask;
 	bool				reset_disable;
+	bool				force_10_100_autonego;
 	ixgbe_autoneg_advertised	autoneg_advertised;
 	ixgbe_link_speed speeds_supported;
 	ixgbe_link_speed eee_speeds_supported;

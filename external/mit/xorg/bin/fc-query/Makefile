@@ -1,10 +1,11 @@
-#	$NetBSD: Makefile,v 1.3 2016/04/17 02:16:26 nakayama Exp $
+#	$NetBSD: Makefile,v 1.3.14.1 2018/07/28 04:37:21 pgoyette Exp $
 
 .include <bsd.own.mk>
 
 PROG=	fc-query
 
 CPPFLAGS+=	-I${X11SRCDIR.fontconfig} -I. -I${DESTDIR}${X11INCDIR}/freetype2
+CPPFLAGS+=	-DHAVE_GETOPT_LONG=1
 
 LDADD+=	-lfontconfig -lfreetype -lexpat
 DPADD+=	${LIBFONTCONFIG} ${LIBFREETYPE} ${LIBEXPAT}

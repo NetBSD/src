@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.12 2017/05/20 16:35:55 kre Exp $
+# $NetBSD: Makefile,v 1.12.8.1 2018/07/28 04:38:12 pgoyette Exp $
 #
 
 .include <bsd.own.mk>
@@ -15,6 +15,7 @@ TESTS_SH+=	t_expand
 TESTS_SH+=	t_fsplit
 TESTS_SH+=	t_here
 TESTS_SH+=	t_option
+TESTS_SH+=	t_patterns
 TESTS_SH+=	t_redir
 TESTS_SH+=	t_redircloexec
 TESTS_SH+=	t_set_e

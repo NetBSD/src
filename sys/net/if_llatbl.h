@@ -1,4 +1,4 @@
-/*	$NetBSD: if_llatbl.h,v 1.13.4.2 2018/04/22 07:20:27 pgoyette Exp $	*/
+/*	$NetBSD: if_llatbl.h,v 1.13.4.3 2018/07/28 04:38:10 pgoyette Exp $	*/
 /*
  * Copyright (c) 2004 Luigi Rizzo, Alessandro Cerri. All rights reserved.
  * Copyright (c) 2004-2008 Qing Li. All rights reserved.
@@ -37,6 +37,7 @@
 #endif
 
 #include <sys/rwlock.h>
+#include <sys/syslog.h>
 
 #include <netinet/in.h>
 
@@ -106,7 +107,7 @@ struct llentry {
 
 
 #if 0
-#define LLE_LOCK_TRACE(t, lle)	aprint_normal( \
+#define LLE_LOCK_TRACE(t, lle)	log(LOG_DEBUG, \
 				    "%s:%d: LOCK(" #t "): lle=%p\n", \
 				    __func__, __LINE__, (lle))
 #else
@@ -142,7 +143,7 @@ struct llentry {
 #define LLE_IS_VALID(lle)	(((lle) != NULL) && ((lle) != (void *)-1))
 
 #if 0
-#define LLE_REF_TRACE(t, n)	aprint_normal("%s:%d: REF(" #t "): refcnt=%d\n", \
+#define LLE_REF_TRACE(t, n)	log(LOG_DEBUG, "%s:%d: REF(" #t "): refcnt=%d\n", \
 				    __func__, __LINE__, (n))
 #else
 #define LLE_REF_TRACE(t, n)	do {} while (0)

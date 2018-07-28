@@ -1,4 +1,4 @@
-/*	$NetBSD: dp8390var.h,v 1.33 2015/04/13 16:33:24 riastradh Exp $	*/
+/*	$NetBSD: dp8390var.h,v 1.33.16.1 2018/07/28 04:37:45 pgoyette Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -179,7 +179,3 @@ int	dp8390_mediachange(struct ifnet *);
 void	dp8390_mediastatus(struct ifnet *, struct ifmediareq *);
 
 void	dp8390_media_init(struct dp8390_softc *);
-
-#ifdef IPKDB_DP8390
-int	dp8390_ipkdb_attach(struct ipkdb_if *);
-#endif

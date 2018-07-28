@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.43.2.3 2018/04/22 07:20:16 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.43.2.4 2018/07/28 04:37:19 pgoyette Exp $
 
 LIBISPRIVATE=	yes
 
@@ -448,9 +448,16 @@ CASECFNDEPS=	aarch64-builtins.c arm-builtins.c i386.c rs6000.c builtins.c \
 		gimple-ssa-backprop.c
 ${CASECFNDEPS}: case-cfn-macros.h
 
+aarch64-builtin-iterators.h: ${DIST}/gcc/config/aarch64/geniterators.sh \
+    ${DIST}/gcc/config/aarch64/iterators.md
+	$(HOST_SH) ${.ALLSRC} > ${.TARGET}
+
+CLEANFILES+=	aarch-builtin-iterators.h
+
 #
 # Required hard-coded dependancies.
 #
+aarch64-builtins.o: aarch64-builtin-iterators.h
 tm.h: insn-constants.h
 genextract.lo: insn-config.h
 gencondmd.lo: tm_p.h tm-constrs.h
@@ -583,3 +590,6 @@ CFLAGS+= -fno-exceptions -fno-rtti -fasynchronous-unwind-tables
 
 .PATH: ${DIST}/gcc ${DIST}/libiberty ${GCCARCH} ${G_out_file:H} ${DIST}/include
 .PATH: ${DIST}/gcc/config
+.if ${MACHINE_ARCH} == "aarch64"
+.PATH: ${DIST}/gcc/config/arm
+.endif

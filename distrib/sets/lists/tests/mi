@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.775.2.6 2018/06/25 07:25:10 pgoyette Exp $
+# $NetBSD: mi,v 1.775.2.7 2018/07/28 04:33:01 pgoyette Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1277,6 +1277,7 @@
 ./usr/tests/bin/sh/t_fsplit			tests-bin-tests		compattestfile,atf
 ./usr/tests/bin/sh/t_here			tests-bin-tests		compattestfile,atf
 ./usr/tests/bin/sh/t_option			tests-bin-tests		compattestfile,atf
+./usr/tests/bin/sh/t_patterns			tests-bin-tests		compattestfile,atf
 ./usr/tests/bin/sh/t_redir			tests-bin-tests		compattestfile,atf
 ./usr/tests/bin/sh/t_redircloexec		tests-bin-tests		compattestfile,atf
 ./usr/tests/bin/sh/t_set_e			tests-bin-tests		compattestfile,atf

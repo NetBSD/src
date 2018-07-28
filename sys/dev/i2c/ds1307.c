@@ -1,4 +1,4 @@
-/*	$NetBSD: ds1307.c,v 1.25.2.1 2018/06/25 07:25:50 pgoyette Exp $	*/
+/*	$NetBSD: ds1307.c,v 1.25.2.2 2018/07/28 04:37:44 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ds1307.c,v 1.25.2.1 2018/06/25 07:25:50 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ds1307.c,v 1.25.2.2 2018/07/28 04:37:44 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -75,7 +75,6 @@ struct dsrtc_model {
 #define	DSRTC_FLAG_CLOCK_HOLD_REVERSED	0x20
 };
 
-static const char *ds1307_compats[] = { "dallas,ds1307", "maxim,ds1307", NULL };
 static const i2c_addr_t ds1307_valid_addrs[] = { DS1307_ADDR, 0 };
 static const struct dsrtc_model ds1307_model = {
 	.dm_valid_addrs = ds1307_valid_addrs,
@@ -89,7 +88,6 @@ static const struct dsrtc_model ds1307_model = {
 	.dm_flags = DSRTC_FLAG_BCD | DSRTC_FLAG_CLOCK_HOLD,
 };
 
-static const char *ds1339_compats[] = { "dallas,ds1339", "maxim,ds1339", NULL };
 static const struct dsrtc_model ds1339_model = {
 	.dm_valid_addrs = ds1307_valid_addrs,
 	.dm_model = 1339,
@@ -98,7 +96,6 @@ static const struct dsrtc_model ds1339_model = {
 	.dm_flags = DSRTC_FLAG_BCD,
 };
 
-static const char *ds1340_compats[] = { "dallas,ds1340", "maxim,ds1340", NULL };
 static const struct dsrtc_model ds1340_model = {
 	.dm_valid_addrs = ds1307_valid_addrs,
 	.dm_model = 1340,
@@ -109,7 +106,6 @@ static const struct dsrtc_model ds1340_model = {
 	.dm_flags = DSRTC_FLAG_BCD,
 };
 
-static const char *ds1672_compats[] = { "dallas,ds1672", "maxim,ds1672", NULL };
 static const struct dsrtc_model ds1672_model = {
 	.dm_valid_addrs = ds1307_valid_addrs,
 	.dm_model = 1672,
@@ -120,7 +116,6 @@ static const struct dsrtc_model ds1672_model = {
 	.dm_flags = 0,
 };
 
-static const char *ds3231_compats[] = { "dallas,ds3231", "maxim,ds3231", NULL };
 static const struct dsrtc_model ds3231_model = {
 	.dm_valid_addrs = ds1307_valid_addrs,
 	.dm_model = 3231,
@@ -129,7 +124,6 @@ static const struct dsrtc_model ds3231_model = {
 	.dm_flags = DSRTC_FLAG_BCD | DSRTC_FLAG_TEMP,
 };
 
-static const char *ds3232_compats[] = { "dallas,ds3232", "maxim,ds3232", NULL };
 static const struct dsrtc_model ds3232_model = {
 	.dm_valid_addrs = ds1307_valid_addrs,
 	.dm_model = 3232,
@@ -145,8 +139,6 @@ static const struct dsrtc_model ds3232_model = {
 	.dm_flags = DSRTC_FLAG_BCD,
 };
 
-				/* XXX vendor prefix */
-static const char *mcp7940_compats[] = { "microchip,mcp7940", NULL };
 static const i2c_addr_t mcp7940_valid_addrs[] = { MCP7940_ADDR, 0 };
 static const struct dsrtc_model mcp7940_model = {
 	.dm_valid_addrs = mcp7940_valid_addrs,
@@ -163,15 +155,28 @@ static const struct dsrtc_model mcp7940_model = {
 		DSRTC_FLAG_VBATEN | DSRTC_FLAG_CLOCK_HOLD_REVERSED,
 };
 
-static const struct device_compatible_entry dsrtc_compat_data[] = {
-	DEVICE_COMPAT_ENTRY_WITH_DATA(ds1307_compats,  &ds1307_model),
-	DEVICE_COMPAT_ENTRY_WITH_DATA(ds1339_compats,  &ds1339_model),
-	DEVICE_COMPAT_ENTRY_WITH_DATA(ds1340_compats,  &ds1340_model),
-	DEVICE_COMPAT_ENTRY_WITH_DATA(ds1672_compats,  &ds1672_model),
-	DEVICE_COMPAT_ENTRY_WITH_DATA(ds3231_compats,  &ds3231_model),
-	DEVICE_COMPAT_ENTRY_WITH_DATA(ds3232_compats,  &ds3232_model),
-	DEVICE_COMPAT_ENTRY_WITH_DATA(mcp7940_compats, &mcp7940_model),
-	DEVICE_COMPAT_TERMINATOR
+static const struct device_compatible_entry compat_data[] = {
+	{ "dallas,ds1307",		(uintptr_t)&ds1307_model },
+	{ "maxim,ds1307",		(uintptr_t)&ds1307_model },
+
+	{ "dallas,ds1339",		(uintptr_t)&ds1339_model },
+	{ "maxim,ds1339",		(uintptr_t)&ds1339_model },
+
+	{ "dallas,ds1340",		(uintptr_t)&ds1340_model },
+	{ "maxim,ds1340",		(uintptr_t)&ds1340_model },
+
+	{ "dallas,ds1672",		(uintptr_t)&ds1672_model },
+	{ "maxim,ds1672",		(uintptr_t)&ds1672_model },
+
+	{ "dallas,ds3231",		(uintptr_t)&ds3231_model },
+	{ "maxim,ds3231",		(uintptr_t)&ds3231_model },
+
+	{ "dallas,ds3232",		(uintptr_t)&ds3232_model },
+	{ "maxim,ds3232",		(uintptr_t)&ds3232_model },
+
+	{ "microchip,mcp7940",		(uintptr_t)&mcp7940_model },
+
+	{ NULL,				0 }
 };
 
 struct dsrtc_softc {
@@ -234,9 +239,8 @@ dsrtc_model_by_number(u_int model)
 	if (model == 0)
 		return &ds1307_model;
 
-	for (dce = dsrtc_compat_data;
-	     DEVICE_COMPAT_ENTRY_IS_TERMINATOR(dce) == false; dce++) {
-		dm = DEVICE_COMPAT_ENTRY_GET_PTR(dce);
+	for (dce = compat_data; dce->compat != NULL; dce++) {
+		dm = (void *)dce->data;
 		if (dm->dm_model == model)
 			return dm;
 	}
@@ -249,9 +253,8 @@ dsrtc_model_by_compat(const struct i2c_attach_args *ia)
 	const struct dsrtc_model *dm = NULL;
 	const struct device_compatible_entry *dce;
 
-	dce = iic_compatible_match(ia, dsrtc_compat_data, NULL);
-	if (dce != NULL)
-		dm = DEVICE_COMPAT_ENTRY_GET_PTR(dce);
+	if (iic_compatible_match(ia, compat_data, &dce))
+		dm = (void *)dce->data;
 
 	return dm;
 }
@@ -274,7 +277,7 @@ dsrtc_match(device_t parent, cfdata_t cf, void *arg)
 	const struct dsrtc_model *dm;
 	int match_result;
 
-	if (iic_use_direct_match(ia, cf, dsrtc_compat_data, &match_result))
+	if (iic_use_direct_match(ia, cf, compat_data, &match_result))
 		return match_result;
 
 	dm = dsrtc_model_by_number(cf->cf_flags & 0xffff);

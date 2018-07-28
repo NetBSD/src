@@ -1,4 +1,4 @@
-/*	$NetBSD: if_udav.c,v 1.52 2018/01/21 13:57:12 skrll Exp $	*/
+/*	$NetBSD: if_udav.c,v 1.52.2.1 2018/07/28 04:37:58 pgoyette Exp $	*/
 /*	$nabe: if_udav.c,v 1.3 2003/08/21 16:57:19 nabe Exp $	*/
 
 /*
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_udav.c,v 1.52 2018/01/21 13:57:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_udav.c,v 1.52.2.1 2018/07/28 04:37:58 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1007,7 +1007,7 @@ udav_start(struct ifnet *ifp)
 
 	IFQ_DEQUEUE(&ifp->if_snd, m_head);
 
-	bpf_mtap(ifp, m_head);
+	bpf_mtap(ifp, m_head, BPF_D_OUT);
 
 	ifp->if_flags |= IFF_OACTIVE;
 

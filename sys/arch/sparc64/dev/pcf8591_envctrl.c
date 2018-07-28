@@ -1,4 +1,4 @@
-/*	$NetBSD: pcf8591_envctrl.c,v 1.6.38.1 2018/06/25 07:25:45 pgoyette Exp $	*/
+/*	$NetBSD: pcf8591_envctrl.c,v 1.6.38.2 2018/07/28 04:37:41 pgoyette Exp $	*/
 /*	$OpenBSD: pcf8591_envctrl.c,v 1.6 2007/10/25 21:17:20 kettenis Exp $ */
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcf8591_envctrl.c,v 1.6.38.1 2018/06/25 07:25:45 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcf8591_envctrl.c,v 1.6.38.2 2018/07/28 04:37:41 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,14 +69,9 @@ static void	ecadc_get_limits(struct sysmon_envsys *, envsys_data_t *,
 CFATTACH_DECL_NEW(ecadc, sizeof(struct ecadc_softc),
 	ecadc_match, ecadc_attach, NULL, NULL);
 
-static const char * ecadc_compats[] = {
-	"ecadc",
-	NULL
-};
-
-static const struct device_compatible_entry ecadc_compat_data[] = {
-	DEVICE_COMPAT_ENTRY(ecadc_compats),
-	DEVICE_COMPAT_TERMINATOR
+static const struct device_compatible_entry compat_data[] = {
+	{ "ecadc",		0 },
+	{ NULL,			0 }
 };
 
 static int
@@ -85,7 +80,7 @@ ecadc_match(device_t parent, cfdata_t cf, void *aux)
 	struct i2c_attach_args *ia = aux;
 	int match_result;
 
-	if (iic_use_direct_match(ia, cf, ecadc_compat_data, &match_result))
+	if (iic_use_direct_match(ia, cf, compat_data, &match_result))
 		return match_result;
 
 	/* This driver is direct-config only. */

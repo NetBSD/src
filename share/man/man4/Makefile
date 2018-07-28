@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.651.2.2 2018/06/25 07:25:36 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.651.2.3 2018/07/28 04:37:24 pgoyette Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/18/93
 
 MAN=	aac.4 ac97.4 acardide.4 aceride.4 acphy.4 \
@@ -32,7 +32,7 @@ MAN=	aac.4 ac97.4 acardide.4 aceride.4 acphy.4 \
 	ibmcd.4 ibmhawk.4 ichsmb.4 icmp.4 icp.4 icsphy.4 iee.4 ieee80211.4 \
 	ifmedia.4 igmafb.4 igphy.4 igsfb.4 iha.4 ihidev.4 ihphy.4 iic.4 ims.4 \
 	inet.4 ikphy.4 inphy.4 intersil7170.4 intro.4 \
-	ioasic.4 ioat.4 iop.4 iophy.4 iopsp.4 ip.4 ipkdb.4 ipmi.4 ipw.4 \
+	ioasic.4 ioat.4 iop.4 iophy.4 iopsp.4 ip.4 ipmi.4 ipw.4 \
 	irmce.4 isp.4 ismt.4 isv.4 itesio.4 iteide.4 iwi.4 iwm.4 iwn.4 ixg.4 \
 	ixpide.4 ixv.4 \
 	jme.4 jmide.4 joy.4 \
@@ -61,8 +61,8 @@ MAN=	aac.4 ac97.4 acardide.4 aceride.4 acphy.4 \
 	sm.4 smsh.4 sn.4 sony.4 spc.4 speaker.4 spif.4 sqphy.4 ss.4 \
 	st.4 ste.4 stge.4 sti.4 stpcide.4 sv.4 strip.4 \
 	svwsata.4 swsensor.4 swwdog.4 sysmon.4 \
-	tap.4 tc.4 tcds.4 tcp.4 tcu.4 tdvfb.4 termios.4 tfb.4 thinkpad.4 \
-	ti.4 tl.4 tlp.4 tlphy.4 tpm.4 tprof.4 tr.4 tra.4 \
+	tap.4 tc.4 tcds.4 tcp.4 tcu.4 tdvfb.4 tea5767radio.4 termios.4 tfb.4 \
+	thinkpad.4 ti.4 tl.4 tlp.4 tlphy.4 tpm.4 tprof.4 tr.4 tra.4 \
 	trm.4 tsllux.4 tty.4 tun.4 tqphy.4 twa.4 twe.4 txp.4 \
 	uark.4 ubsec.4 udp.4 uep.4 ug.4 uha.4 uk.4 ukphy.4 unix.4 userconf.4 \
 	vald.4 valz.4 veriexec.4 vga.4 vge.4 viaide.4 video.4 vioif.4 viomb.4 \
@@ -177,7 +177,6 @@ MLINKS+=drm.4 radeondrm.4
 MLINKS+=drm.4 savagedrm.4
 MLINKS+=drm.4 sisdrm.4
 MLINKS+=drm.4 tdfxdrm.4
-MLINKS+=drm.4 viadrm.4
 
 MLINKS+=acpiec.4 acpiecdt.4
 MLINKS+=acpivga.4 acpiout.4

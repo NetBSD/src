@@ -1,4 +1,4 @@
-/* $Id: if_ae.c,v 1.30 2016/12/15 09:28:03 ozaki-r Exp $ */
+/* $Id: if_ae.c,v 1.30.14.1 2018/07/28 04:37:37 pgoyette Exp $ */
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
  * Copyright (c) 2006 Garrett D'Amore.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ae.c,v 1.30 2016/12/15 09:28:03 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ae.c,v 1.30.14.1 2018/07/28 04:37:37 pgoyette Exp $");
 
 
 #include <sys/param.h>
@@ -732,7 +732,7 @@ ae_start(struct ifnet *ifp)
 		/*
 		 * Pass the packet to any BPF listeners.
 		 */
-		bpf_mtap(ifp, m0);
+		bpf_mtap(ifp, m0, BPF_D_OUT);
 	}
 
 	if (txs == NULL || sc->sc_txfree == 0) {

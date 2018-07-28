@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wpi.c,v 1.79 2017/10/23 09:31:18 msaitoh Exp $	*/
+/*	$NetBSD: if_wpi.c,v 1.79.2.1 2018/07/28 04:37:46 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wpi.c,v 1.79 2017/10/23 09:31:18 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wpi.c,v 1.79.2.1 2018/07/28 04:37:46 pgoyette Exp $");
 
 /*
  * Driver for Intel PRO/Wireless 3945ABG 802.11 network adapters.
@@ -1612,7 +1612,7 @@ wpi_rx_intr(struct wpi_softc *sc, struct wpi_rx_desc *desc,
 		if (le16toh(head->flags) & 0x4)
 			tap->wr_flags |= IEEE80211_RADIOTAP_F_SHORTPRE;
 
-		bpf_mtap2(sc->sc_drvbpf, tap, sc->sc_rxtap_len, m);
+		bpf_mtap2(sc->sc_drvbpf, tap, sc->sc_rxtap_len, m, BPF_D_IN);
 	}
 
 	/* grab a reference to the source node */
@@ -1960,7 +1960,7 @@ wpi_tx_data(struct wpi_softc *sc, struct mbuf *m0, struct ieee80211_node *ni,
 		if (wh->i_fc[1] & IEEE80211_FC1_WEP)
 			tap->wt_flags |= IEEE80211_RADIOTAP_F_WEP;
 
-		bpf_mtap2(sc->sc_drvbpf, tap, sc->sc_txtap_len, m0);
+		bpf_mtap2(sc->sc_drvbpf, tap, sc->sc_txtap_len, m0, BPF_D_OUT);
 	}
 
 	cmd = &ring->cmd[ring->cur];
@@ -2127,7 +2127,7 @@ wpi_start(struct ifnet *ifp)
 				ifp->if_oerrors++;
 				continue;
 			}
-			bpf_mtap3(ic->ic_rawbpf, m0);
+			bpf_mtap3(ic->ic_rawbpf, m0, BPF_D_OUT);
 			if (wpi_tx_data(sc, m0, ni, 0) != 0) {
 				ifp->if_oerrors++;
 				break;
@@ -2170,14 +2170,14 @@ wpi_start(struct ifnet *ifp)
 				break;
 			}
 			IFQ_DEQUEUE(&ifp->if_snd, m0);
-			bpf_mtap(ifp, m0);
+			bpf_mtap(ifp, m0, BPF_D_OUT);
 			m0 = ieee80211_encap(ic, m0, ni);
 			if (m0 == NULL) {
 				ieee80211_free_node(ni);
 				ifp->if_oerrors++;
 				continue;
 			}
-			bpf_mtap3(ic->ic_rawbpf, m0);
+			bpf_mtap3(ic->ic_rawbpf, m0, BPF_D_OUT);
 			if (wpi_tx_data(sc, m0, ni, ac) != 0) {
 				ieee80211_free_node(ni);
 				ifp->if_oerrors++;

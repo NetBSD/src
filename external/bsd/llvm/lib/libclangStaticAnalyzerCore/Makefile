@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16 2017/08/01 20:07:43 joerg Exp $
+#	$NetBSD: Makefile,v 1.16.2.1 2018/07/28 04:37:13 pgoyette Exp $
 
 LIB=	clangStaticAnalyzerCore
 
@@ -14,8 +14,8 @@ SRCS+=	APSIntType.cpp \
 	BugReporter.cpp \
 	BugReporterVisitors.cpp \
 	CallEvent.cpp \
-	Checker.cpp \
 	CheckerContext.cpp \
+	Checker.cpp \
 	CheckerHelpers.cpp \
 	CheckerManager.cpp \
 	CheckerRegistry.cpp \
@@ -25,14 +25,15 @@ SRCS+=	APSIntType.cpp \
 	DynamicTypeMap.cpp \
 	Environment.cpp \
 	ExplodedGraph.cpp \
-	ExprEngine.cpp \
-	ExprEngineC.cpp \
-	ExprEngineCXX.cpp \
 	ExprEngineCallAndReturn.cpp \
+	ExprEngineC.cpp \
+	ExprEngine.cpp \
+	ExprEngineCXX.cpp \
 	ExprEngineObjC.cpp \
 	FunctionSummary.cpp \
 	HTMLDiagnostics.cpp \
 	IssueHash.cpp \
+	LoopUnrolling.cpp \
 	LoopWidening.cpp \
 	MemRegion.cpp \
 	PathDiagnostic.cpp \
@@ -44,10 +45,11 @@ SRCS+=	APSIntType.cpp \
 	SimpleConstraintManager.cpp \
 	SimpleSValBuilder.cpp \
 	Store.cpp \
+	SubEngine.cpp \
 	SValBuilder.cpp \
 	SVals.cpp \
-	SubEngine.cpp \
 	SymbolManager.cpp \
+	WorkList.cpp \
 	Z3ConstraintManager.cpp
 
 .if defined(HOSTLIB)

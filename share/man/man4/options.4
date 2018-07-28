@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.483.2.4 2018/06/25 07:25:36 pgoyette Exp $
+.\"	$NetBSD: options.4,v 1.483.2.5 2018/07/28 04:37:24 pgoyette Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -30,7 +30,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd June 13, 2018
+.Dd July 13, 2018
 .Dt OPTIONS 4
 .Os
 .Sh NAME
@@ -1587,13 +1587,6 @@ Compiles in the in-kernel device configuration manager.
 See
 .Xr userconf 4
 for details.
-.It Cd options PERFCTRS
-Compiles in kernel support for CPU performance-monitoring counters.
-See
-.Xr pmc 1
-for details.
-.Em NOTE :
-not available on all architectures.
 .It Cd options SCDEBUG_DEFAULT
 Used with the
 .Cd options SYSCALL_DEBUG
@@ -2709,7 +2702,6 @@ bolded
 .Xr gcc 1 ,
 .Xr gdb 1 ,
 .Xr ktrace 1 ,
-.Xr pmc 1 ,
 .Xr quota 1 ,
 .Xr vndcompress 1 ,
 .Xr gettimeofday 2 ,

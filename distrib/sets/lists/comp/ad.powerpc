@@ -1,4 +1,4 @@
-# $NetBSD: ad.powerpc,v 1.90 2018/02/13 10:02:12 mrg Exp $
+# $NetBSD: ad.powerpc,v 1.90.2.1 2018/07/28 04:32:59 pgoyette Exp $
 ./usr/bin/elf2aout				comp-sysutil-bin
 ./usr/bin/psim					comp-debug-bin		gdb
 ./usr/include/altivec.h				comp-obsolete		obsolete
@@ -11,9 +11,12 @@
 ./usr/include/clang-4.0/altivec.h		comp-obsolete		obsolete
 ./usr/include/clang-4.0/htmintrin.h		comp-obsolete		obsolete
 ./usr/include/clang-4.0/htmxlintrin.h		comp-obsolete		obsolete
-./usr/include/clang-5.0/altivec.h		comp-c-include		llvm
-./usr/include/clang-5.0/htmintrin.h		comp-c-include		llvm
-./usr/include/clang-5.0/htmxlintrin.h		comp-c-include		llvm
+./usr/include/clang-5.0/altivec.h		comp-obsolete		obsolete
+./usr/include/clang-5.0/htmintrin.h		comp-obsolete		obsolete
+./usr/include/clang-5.0/htmxlintrin.h		comp-obsolete		obsolete
+./usr/include/clang-7.0/altivec.h		comp-c-include		llvm
+./usr/include/clang-7.0/htmintrin.h		comp-c-include		llvm
+./usr/include/clang-7.0/htmxlintrin.h		comp-c-include		llvm
 ./usr/include/g++/bits/powerpc			comp-c-include		compat
 ./usr/include/g++/bits/powerpc/c++config.h	comp-c-include		compat,gcc
 ./usr/include/g++/bits/powerpc64		comp-c-include		compat
@@ -120,7 +123,7 @@
 ./usr/include/powerpc/param.h			comp-c-include
 ./usr/include/powerpc/pcb.h			comp-c-include
 ./usr/include/powerpc/pmap.h			comp-c-include
-./usr/include/powerpc/pmc.h			comp-c-include
+./usr/include/powerpc/pmc.h			comp-obsolete		obsolete
 ./usr/include/powerpc/proc.h			comp-c-include
 ./usr/include/powerpc/profile.h			comp-c-include
 ./usr/include/powerpc/psl.h			comp-c-include

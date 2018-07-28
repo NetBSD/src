@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vr.c,v 1.123 2018/02/28 18:03:48 flxd Exp $	*/
+/*	$NetBSD: if_vr.c,v 1.123.2.1 2018/07/28 04:37:46 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vr.c,v 1.123 2018/02/28 18:03:48 flxd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vr.c,v 1.123.2.1 2018/07/28 04:37:46 pgoyette Exp $");
 
 
 
@@ -1095,7 +1095,7 @@ vr_start(struct ifnet *ifp)
 		 * If there's a BPF listener, bounce a copy of this frame
 		 * to him.
 		 */
-		bpf_mtap(ifp, m0);
+		bpf_mtap(ifp, m0, BPF_D_OUT);
 
 		/*
 		 * Fill in the transmit descriptor.
@@ -1622,7 +1622,7 @@ vr_attach(device_t parent, device_t self, void *aux)
 	/*
 	 * A Rhine chip was detected. Inform the world.
 	 */
-	aprint_normal_dev(self, "Ethernet address: %s\n", ether_sprintf(eaddr));
+	aprint_normal_dev(self, "Ethernet address %s\n", ether_sprintf(eaddr));
 
 	memcpy(sc->vr_enaddr, eaddr, ETHER_ADDR_LEN);
 

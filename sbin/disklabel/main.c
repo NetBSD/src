@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.48.2.1 2018/04/07 04:12:09 pgoyette Exp $	*/
+/*	$NetBSD: main.c,v 1.48.2.2 2018/07/28 04:37:23 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\
 static char sccsid[] = "@(#)disklabel.c	8.4 (Berkeley) 5/4/95";
 /* from static char sccsid[] = "@(#)disklabel.c	1.2 (Symmetric) 11/28/85"; */
 #else
-__RCSID("$NetBSD: main.c,v 1.48.2.1 2018/04/07 04:12:09 pgoyette Exp $");
+__RCSID("$NetBSD: main.c,v 1.48.2.2 2018/07/28 04:37:23 pgoyette Exp $");
 #endif
 #endif	/* not lint */
 
@@ -1189,7 +1189,7 @@ readlabel(int f)
 static struct disklabel *
 find_label(int f, u_int sector)
 {
-	struct disklabel *disk_lp, hlp;
+	struct disklabel *disk_lp, hlp, tlp;
 	int i;
 	off_t offset;
 	const char *is_deleted;
@@ -1209,30 +1209,31 @@ find_label(int f, u_int sector)
 	/* Check expected offset first */
 	for (offset = LABEL_OFFSET, i = -4;; offset = i += 4) {
 		is_deleted = "";
-		disk_lp = (void *)(bootarea + offset);
 		if (i == LABEL_OFFSET)
 			continue;
+		disk_lp = (void *)(bootarea + offset);
+		memcpy(&tlp, disk_lp, sizeof(tlp));
 		if ((char *)(disk_lp + 1) > bootarea + bootarea_len)
 			break;
-		if (disk_lp->d_magic2 != disk_lp->d_magic)
+		if (tlp.d_magic2 != tlp.d_magic)
 			continue;
-		if (read_all && (disk_lp->d_magic == DISKMAGIC_DELETED ||
-		    disk_lp->d_magic == DISKMAGIC_DELETED_REV)) {
-			disk_lp->d_magic ^= ~0u;
-			disk_lp->d_magic2 ^= ~0u;
+		if (read_all && (tlp.d_magic == DISKMAGIC_DELETED ||
+		    tlp.d_magic == DISKMAGIC_DELETED_REV)) {
+			tlp.d_magic ^= ~0u;
+			tlp.d_magic2 ^= ~0u;
 			is_deleted = "deleted ";
 		}
-		if (target32toh(disk_lp->d_magic) != DISKMAGIC) {
+		if (target32toh(tlp.d_magic) != DISKMAGIC) {
 			/* XXX: Do something about byte-swapped labels ? */
-			if (target32toh(disk_lp->d_magic) == DISKMAGIC_REV &&
-			    target32toh(disk_lp->d_magic2) == DISKMAGIC_REV)
+			if (target32toh(tlp.d_magic) == DISKMAGIC_REV &&
+			    target32toh(tlp.d_magic2) == DISKMAGIC_REV)
 				warnx("ignoring %sbyteswapped label"
 				    " at offset %jd from sector %u",
 				    is_deleted, (intmax_t)offset, sector);
 			continue;
 		}
-		if (target16toh(disk_lp->d_npartitions) > maxpartitions ||
-		    dkcksum_target(disk_lp) != 0) {
+		if (target16toh(tlp.d_npartitions) > maxpartitions ||
+		    dkcksum_target(&tlp) != 0) {
 			if (verbose > 0)
 				warnx("corrupt label found at offset %jd in "
 				    "sector %u", (intmax_t)offset, sector);
@@ -1246,7 +1247,7 @@ find_label(int f, u_int sector)
 
 		/* To print all the labels we have to do it here */
 		/* XXX: maybe we should compare them? */
-		targettohlabel(&hlp, disk_lp);
+		targettohlabel(&hlp, &tlp);
 		printf("# %ssector %u offset %jd bytes\n",
 		    is_deleted, sector, (intmax_t)offset);
 		if (tflag)
@@ -1256,7 +1257,8 @@ find_label(int f, u_int sector)
 			showpartitions(stdout, &hlp, Cflag);
 		}
 		checklabel(&hlp);
-		htotargetlabel(disk_lp, &hlp);
+		htotargetlabel(&tlp, &hlp);
+		memcpy(disk_lp, &tlp, sizeof(tlp));
 		/* Remember we've found a label */
 		read_all = 2;
 	}

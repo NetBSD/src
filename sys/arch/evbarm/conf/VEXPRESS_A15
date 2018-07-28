@@ -1,5 +1,5 @@
 #
-#	$NetBSD: VEXPRESS_A15,v 1.17.6.1 2018/06/25 07:25:40 pgoyette Exp $
+#	$NetBSD: VEXPRESS_A15,v 1.17.6.2 2018/07/28 04:37:31 pgoyette Exp $
 #
 #	ARM Versatile Express A15
 #
@@ -18,7 +18,6 @@ pseudo-device 	openfirm	# /dev/openfirm
 #options 	DEBUG
 #options 	LOCKDEBUG
 #options 	PMAP_DEBUG	# Enable pmap_debug_level code
-#options 	IPKDB		# remote kernel debugging
 #options 	VERBOSE_INIT_ARM # verbose bootstrapping messages
 #options 	CONSADDR=0x1c090000
 
@@ -29,11 +28,11 @@ config		netbsd		root on ? type ?
 
 # Device tree support
 armfdt0		at root
-fdt*		at fdtbus?
+simplebus*	at fdt? pass 0
 
 # CPUs
 cpus*		at fdt? pass 0
-cpu*		at cpus?
+cpu*		at fdt? pass 0
 
 fclock*		at fdt? pass 4
 fregulator*	at fdt? pass 4

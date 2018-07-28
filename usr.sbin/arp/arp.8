@@ -1,4 +1,4 @@
-.\"	$NetBSD: arp.8,v 1.23 2013/07/08 04:31:12 apb Exp $
+.\"	$NetBSD: arp.8,v 1.23.26.1 2018/07/28 04:38:14 pgoyette Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	from: @(#)arp.8	8.2 (Berkeley) 4/27/95
 .\"
-.Dd July 8, 2013
+.Dd July 5, 2018
 .Dt ARP 8
 .Os
 .Sh NAME
@@ -132,11 +132,19 @@ server,
 responding to requests for
 .Ar hostname
 even though the host address is not its own.
+.Pp
 If the word
 .Cm proxy
 is also given, the published entry will be a
 .Dq proxy only
 entry.
+In this case the
+.Ar ether_addr
+can be given as
+.Cm auto
+in which case the interfaces on this host will be examined,
+and if one of them is found to occupy the same subnet, its
+Ethernet address will be used.
 .It Fl v
 Display verbose information when adding or deleting
 .Tn ARP

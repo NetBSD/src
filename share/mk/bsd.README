@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.367.2.4 2018/06/25 07:25:37 pgoyette Exp $
+#	$NetBSD: bsd.README,v 1.367.2.5 2018/07/28 04:37:25 pgoyette Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -276,6 +276,28 @@ MKLDAP		If "no", disables building of LDAP infrastructure
 		(libraries and support programs).
 		Default: yes
 
+MKLIBCSANITIZER	If "yes", use the selected sanitizer inside libc to compile
+		userland programs and libraries as defined in
+		USE_LIBCSANITIZER, which defaults to "undefined".
+
+		The undefined behavior detector is currently the only supported
+		sanitizer in this mode. Its runtime differs from the UBSan
+		available in MKSANITIZER, and it is reimplemented from scratch
+		as micro-UBSan in the user mode (uUBSan). Its code is shared
+		with the kernel mode variation (kUBSan). The runtime is
+		stripped down from C++ features, in particular -fsanitize=vptr
+		is not supported and explicitly disabled. The only runtime
+		configuration is restricted to the LIBC_UBSAN environment
+		variable, that is designed to be safe for hardening.
+
+		The USE_LIBCSANITIZER value is passed to the -fsanitize=
+		argument to the compiler in CFLAGS and CXXFLAGS, but not in
+		LDFLAGS, as the runtime part is located inside libc.
+
+		Additional sanitizer arguments can be passed through
+		LIBCSANITIZERFLAGS.
+		Default: no
+
 MKLIBCXX	If not "no", build and install libc++.
 		Default: no
 
@@ -392,7 +414,7 @@ MKSANITIZER	if "yes", use the selected sanitizer to compile userland
 		"address". A selection of available sanitizers:
 			address:	A memory error detector (default)
 			thread:		A data race detector
-			memory:		An uninitializer read detector
+			memory:		An uninitialized memory read detector
 			undefined:	An undefined behavior detector
 			leak:		A memory leak detector
 			dataflow:	A general data flow analysis
@@ -400,12 +422,12 @@ MKSANITIZER	if "yes", use the selected sanitizer to compile userland
 			safe-stack:	Protect against stack-based corruption
 			scudo:		The Scudo Hardened allocator
 		It's possible to specify multiple sanitizers within the
-		USE_SANITIZER option (comma separated) and some combinations of
-		them work. The USE_SANITIZER value is passed to the -fsanitize=
-		argument to a compiler.
+		USE_SANITIZER option (comma separated). The USE_SANITIZER value
+		is passed to the -fsanitize= argument to the compiler.
 		Additional arguments can be passed through SANITIZERFLAGS.
-		The list of supported features depends on the compiler version
-		and target CPU architecture.
+		The list of supported features and their valid combinations
+		depends on the compiler version and target CPU architecture.
+		Default: no
 
 MKSHARE		If "no", act as "MKCATPAGES=no MKDOC=no MKHTML=no MKINFO=no
 		MKMAN=no MKNLS=no".
@@ -431,7 +453,8 @@ MKSTATICLIB	If "no", don't build or install the normal static (*.a)
 		Default: yes
 
 MKSTATICPIE	Compile in support for static pie binaries. These binaries
-		use a special rcrt0.o/mcrt0.o that do the necessary relocations
+		use a special support in crt0.o for resolving relative
+		relocations and require linker support.
 		Default: yes on platforms that support it.
 
 MKSTRIPSYM	If "yes", strip all local symbols from shared libraries;
@@ -1645,7 +1668,6 @@ DPADD		Additional dependencies for the program.  Usually used for
 		LIBPANEL?=	${DESTDIR}/usr/lib/libpanel.a
 		LIBPCAP?=	${DESTDIR}/usr/lib/libpcap.a
 		LIBPCI?=	${DESTDIR}/usr/lib/libpci.a
-		LIBPMC?=	${DESTDIR}/usr/lib/libpmc.a
 		LIBPOSIX?=	${DESTDIR}/usr/lib/libposix.a
 		LIBPTHREAD?=	${DESTDIR}/usr/lib/libpthread.a
 		LIBPUFFS?=	${DESTDIR}/usr/lib/libpuffs.a

@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1172.2.3 2018/06/25 07:25:09 pgoyette Exp $
+# $NetBSD: mi,v 1.1172.2.4 2018/07/28 04:32:59 pgoyette Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -479,8 +479,8 @@
 ./sbin/chown					base-sysutil-root
 ./sbin/clri					base-sysutil-root
 ./sbin/devpubd					base-sysutil-root
-./sbin/dhclient					base-dhclient-root
-./sbin/dhclient-script				base-dhclient-root
+./sbin/dhclient					base-obsolete		obsolete
+./sbin/dhclient-script				base-obsolete		obsolete
 ./sbin/dhcpcd					base-dhcpcd-root
 ./sbin/disklabel				base-sysutil-root
 ./sbin/dkctl					base-sysutil-root
@@ -653,6 +653,7 @@
 ./usr/bin/audiorecord				base-audio-bin
 ./usr/bin/awk					base-util-bin
 ./usr/bin/banner				base-util-bin
+./usr/bin/base64				base-util-bin
 ./usr/bin/basename				base-util-bin
 ./usr/bin/batch					base-cron-bin
 ./usr/bin/bc					base-util-bin
@@ -974,7 +975,7 @@
 ./usr/bin/tn3270				base-obsolete		obsolete
 ./usr/bin/top					base-util-bin
 ./usr/bin/touch					base-util-bin
-./usr/bin/tpfmt					base-util-bin
+./usr/bin/tpfmt					base-obsolete		obsolete
 ./usr/bin/tpm_sealdata				base-tpm-bin		tpm
 ./usr/bin/tpm_unsealdata			base-tpm-bin		tpm
 ./usr/bin/tpm_version				base-tpm-bin		tpm
@@ -1067,7 +1068,8 @@
 ./usr/include/clang-3.6				base-obsolete		obsolete
 ./usr/include/clang-3.8				base-obsolete		obsolete
 ./usr/include/clang-4.0				base-obsolete		obsolete
-./usr/include/clang-5.0				base-c-usr
+./usr/include/clang-5.0				base-obsolete		obsolete
+./usr/include/clang-7.0				base-c-usr
 ./usr/include/compat				base-obsolete		obsolete
 ./usr/include/crypto				base-c-usr
 ./usr/include/dev				base-c-usr

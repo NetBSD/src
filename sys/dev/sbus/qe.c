@@ -1,4 +1,4 @@
-/*	$NetBSD: qe.c,v 1.67.14.1 2018/06/25 07:26:01 pgoyette Exp $	*/
+/*	$NetBSD: qe.c,v 1.67.14.2 2018/07/28 04:37:57 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qe.c,v 1.67.14.1 2018/06/25 07:26:01 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qe.c,v 1.67.14.2 2018/07/28 04:37:57 pgoyette Exp $");
 
 #define QEDEBUG
 
@@ -455,7 +455,7 @@ qestart(struct ifnet *ifp)
 		 * If BPF is listening on this interface, let it see the
 		 * packet before we commit it to the wire.
 		 */
-		bpf_mtap(ifp, m);
+		bpf_mtap(ifp, m, BPF_D_OUT);
 
 		/*
 		 * Copy the mbuf chain into the transmit buffer.

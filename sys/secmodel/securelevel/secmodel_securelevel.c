@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_securelevel.c,v 1.30.28.1 2018/05/02 07:20:24 pgoyette Exp $ */
+/* $NetBSD: secmodel_securelevel.c,v 1.30.28.2 2018/07/28 04:38:11 pgoyette Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_securelevel.c,v 1.30.28.1 2018/05/02 07:20:24 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_securelevel.c,v 1.30.28.2 2018/07/28 04:38:11 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_insecure.h"
@@ -348,17 +348,6 @@ secmodel_securelevel_system_cb(kauth_cred_t cred, kauth_action_t action,
 		break;
 
 	case KAUTH_SYSTEM_DEBUG:
-		switch (req) {
-		case KAUTH_REQ_SYSTEM_DEBUG_IPKDB:
-			if (securelevel > 0)
-				result = KAUTH_RESULT_DENY;
-			break;
-
-		default:
-			break;
-		}
-		break;
-
 	default:
 		break;
 	}

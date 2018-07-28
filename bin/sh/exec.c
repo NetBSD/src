@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.c,v 1.51.4.1 2018/06/25 07:25:04 pgoyette Exp $	*/
+/*	$NetBSD: exec.c,v 1.51.4.2 2018/07/28 04:32:56 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)exec.c	8.4 (Berkeley) 6/8/95";
 #else
-__RCSID("$NetBSD: exec.c,v 1.51.4.1 2018/06/25 07:25:04 pgoyette Exp $");
+__RCSID("$NetBSD: exec.c,v 1.51.4.2 2018/07/28 04:32:56 pgoyette Exp $");
 #endif
 #endif /* not lint */
 
@@ -1064,8 +1064,15 @@ typecmd(int argc, char **argv)
 		}
 	}
 
-	if (p_flag && (v_flag || V_flag))
-		error("cannot specify -p with -v or -V");
+	if (argv[0][0] != 'c' && v_flag | V_flag | p_flag)
+		error("usage: %s name...", argv[0]);
+
+	if (v_flag && V_flag)
+		error("-v and -V cannot both be specified");
+
+	if (*argptr == NULL)
+		error("usage: %s%s name ...", argv[0],
+		    argv[0][0] == 'c' ? " [-p] [-v|-V]" : "");
 
 	while ((arg = *argptr++)) {
 		if (!v_flag)
@@ -1077,7 +1084,7 @@ typecmd(int argc, char **argv)
 
 		if (*pp) {
 			if (v_flag)
-				err = 1;
+				out1fmt("%s\n", arg);
 			else
 				out1str(" is a shell keyword\n");
 			continue;
@@ -1085,27 +1092,42 @@ typecmd(int argc, char **argv)
 
 		/* Then look at the aliases */
 		if ((ap = lookupalias(arg, 1)) != NULL) {
-			if (!v_flag)
-				out1fmt(" is an alias for \n");
+			int ml = 0;
+
+			if (!v_flag) {
+				out1str(" is an alias ");
+				if (strchr(ap->val, '\n')) {
+					out1str("(multiline)...\n");
+					ml = 1;
+				} else
+					out1str("for: ");
+			}
 			out1fmt("%s\n", ap->val);
+			if (ml && *argptr != NULL)
+				out1c('\n');
 			continue;
 		}
 
 		/* Then check if it is a tracked alias */
-		if ((cmdp = cmdlookup(arg, 0)) != NULL) {
+		if (!p_flag && (cmdp = cmdlookup(arg, 0)) != NULL) {
 			entry.cmdtype = cmdp->cmdtype;
 			entry.u = cmdp->param;
 		} else {
+			cmdp = NULL;
 			/* Finally use brute force */
-			find_command(arg, &entry, DO_ABS, pathval());
+			find_command(arg, &entry, DO_ABS,
+			     p_flag ? syspath() + 5 : pathval());
 		}
 
 		switch (entry.cmdtype) {
 		case CMDNORMAL: {
 			if (strchr(arg, '/') == NULL) {
-				const char *path = pathval();
+				const char *path;
 				char *name;
 				int j = entry.u.index;
+
+				path = p_flag ? syspath() + 5 : pathval();
+
 				do {
 					name = padvance(&path, arg, 1);
 					stunalloc(name);

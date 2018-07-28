@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cas.c,v 1.26 2016/12/15 09:28:05 ozaki-r Exp $	*/
+/*	$NetBSD: if_cas.c,v 1.26.14.1 2018/07/28 04:37:46 pgoyette Exp $	*/
 /*	$OpenBSD: if_cas.c,v 1.29 2009/11/29 16:19:38 kettenis Exp $	*/
 
 /*
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cas.c,v 1.26 2016/12/15 09:28:05 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cas.c,v 1.26.14.1 2018/07/28 04:37:46 pgoyette Exp $");
 
 #ifndef _MODULE
 #include "opt_inet.h"
@@ -2036,7 +2036,7 @@ cas_start(struct ifnet *ifp)
 		 * If BPF is listening on this interface, let it see the
 		 * packet before we commit it to the wire.
 		 */
-		bpf_mtap(ifp, m);
+		bpf_mtap(ifp, m, BPF_D_OUT);
 
 		/*
 		 * Encapsulate this packet and start it going...

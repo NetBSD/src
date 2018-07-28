@@ -1,4 +1,4 @@
-/*	$NetBSD: if_virt.c,v 1.56 2017/10/23 13:12:23 msaitoh Exp $	*/
+/*	$NetBSD: if_virt.c,v 1.56.2.1 2018/07/28 04:38:11 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2008, 2013 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_virt.c,v 1.56 2017/10/23 13:12:23 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_virt.c,v 1.56.2.1 2018/07/28 04:38:11 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -320,7 +320,7 @@ virtif_start(struct ifnet *ifp)
 		}
 		if (i == LB_SH && m)
 			panic("lazy bum");
-		bpf_mtap(ifp, m0);
+		bpf_mtap(ifp, m0, BPF_D_OUT);
 
 		VIFHYPER_SEND(sc->sc_viu, io, i);
 

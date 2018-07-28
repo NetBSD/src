@@ -1,4 +1,4 @@
-/* $NetBSD: sun8i-a83t.dtsi,v 1.1 2017/10/28 16:09:14 jmcneill Exp $ */
+/* $NetBSD: sun8i-a83t.dtsi,v 1.1.4.1 2018/07/28 04:37:28 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -38,31 +38,5 @@
 			allwinner,pipeline = "mixer0-lcd0-hdmi";
 			status = "disabled";
 		};
-	};
-
-	soc {
-		emac: ethernet@1c30000 {
-			compatible = "allwinner,sun8i-a83t-emac";
-			reg = <0x01c30000 0x104>, <0x01c00030 0x4>;
-			reg-names = "emac", "syscon";
-			interrupts = <GIC_SPI 82 IRQ_TYPE_LEVEL_HIGH>;
-			resets = <&ccu RST_BUS_EMAC>;
-			reset-names = "ahb";
-			clocks = <&ccu CLK_BUS_EMAC>;
-			clock-names = "ahb";
-			#address-cells = <1>;
-			#size-cells = <0>;
-			status = "disabled";
-		};
-	};
-};
-
-&pio {
-	emac_pins_rgmii_a: emac_rgmii@0 {
-		pins = "PD2", "PD3", "PD4", "PD5", "PD6", "PD7",
-		       "PD11", "PD12", "PD13", "PD14",
-		       "PD18", "PD19", "PD20", "PD21", "PD22", "PD23";
-		function = "emac";
-		drive-strength = <40>;
 	};
 };

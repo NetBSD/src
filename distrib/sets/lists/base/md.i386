@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.148 2017/11/29 09:34:01 wiz Exp $
+# $NetBSD: md.i386,v 1.148.2.1 2018/07/28 04:32:59 pgoyette Exp $
 ./dev/lms0					base-obsolete		obsolete
 ./dev/mms0					base-obsolete		obsolete
 ./dev/pms0					base-obsolete		obsolete
@@ -18,7 +18,7 @@
 ./usr/bin/fdformat				base-util-bin
 ./usr/bin/fontedit				base-obsolete		obsolete
 ./usr/bin/iasl					base-util-bin
-./usr/bin/pmc					base-util-bin
+./usr/bin/pmc					base-obsolete		obsolete
 ./usr/bin/vttest				base-obsolete		obsolete
 ./usr/lib/libi386.so				base-sys-shlib		pic
 ./usr/lib/libi386.so.2				base-sys-shlib		pic
@@ -59,6 +59,7 @@
 ./usr/mdec/biosboot_resetvideo.sym		base-obsolete		obsolete
 ./usr/mdec/boot					base-sysutil-bin
 ./usr/mdec/bootfd				base-obsolete		obsolete
+./usr/mdec/bootia32.efi				base-sysutil-bin
 ./usr/mdec/bootsd				base-obsolete		obsolete
 ./usr/mdec/bootwd				base-obsolete		obsolete
 ./usr/mdec/bootxx_cd9660			base-sysutil-bin

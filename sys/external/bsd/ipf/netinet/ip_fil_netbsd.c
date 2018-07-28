@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil_netbsd.c,v 1.26.2.1 2018/05/21 04:36:14 pgoyette Exp $	*/
+/*	$NetBSD: ip_fil_netbsd.c,v 1.26.2.2 2018/07/28 04:38:00 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -8,7 +8,7 @@
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_fil_netbsd.c,v 1.26.2.1 2018/05/21 04:36:14 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_fil_netbsd.c,v 1.26.2.2 2018/07/28 04:38:00 pgoyette Exp $");
 #else
 static const char sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: ip_fil_netbsd.c,v 1.1.1.2 2012/07/22 13:45:17 darrenr Exp";
@@ -56,6 +56,9 @@ static const char rcsid[] = "@(#)Id: ip_fil_netbsd.c,v 1.1.1.2 2012/07/22 13:45:
 #if (__NetBSD_Version__ >= 799003000)
 #include <sys/module.h>
 #include <sys/mutex.h>
+#endif
+#if defined(__NetBSD__)
+#include <netinet/in_offload.h>
 #endif
 
 #include <net/if.h>
@@ -219,7 +222,7 @@ ipf_check_wrapper(void *arg, struct mbuf **mp, struct ifnet *ifp, int dir)
 	 */
 	if (dir == PFIL_OUT) {
 		if ((*mp)->m_pkthdr.csum_flags & (M_CSUM_TCPv4|M_CSUM_UDPv4)) {
-			in_delayed_cksum(*mp);
+			in_undefer_cksum_tcpudp(*mp);
 			(*mp)->m_pkthdr.csum_flags &=
 			    ~(M_CSUM_TCPv4|M_CSUM_UDPv4);
 		}

@@ -161,7 +161,7 @@ static header *last_alloca_header = NULL;	/* -> last alloca header.  */
 PTR
 C_alloca (size_t size)
 {
-  auto char probe;		/* Probes stack depth: */
+  char probe;		/* Probes stack depth: */
   register char *depth = ADDRESS_FUNCTION (probe);
 
 #if STACK_DIRECTION == 0

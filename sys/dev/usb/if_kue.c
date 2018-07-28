@@ -1,4 +1,4 @@
-/*	$NetBSD: if_kue.c,v 1.91 2018/01/21 13:57:12 skrll Exp $	*/
+/*	$NetBSD: if_kue.c,v 1.91.2.1 2018/07/28 04:37:58 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_kue.c,v 1.91 2018/01/21 13:57:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_kue.c,v 1.91.2.1 2018/07/28 04:37:58 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -839,7 +839,7 @@ kue_start(struct ifnet *ifp)
 	 * If there's a BPF listener, bounce a copy of this frame
 	 * to him.
 	 */
-	bpf_mtap(ifp, m);
+	bpf_mtap(ifp, m, BPF_D_OUT);
 	m_freem(m);
 
 	ifp->if_flags |= IFF_OACTIVE;

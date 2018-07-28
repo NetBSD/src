@@ -1,10 +1,10 @@
-/*	$NetBSD: sdmmcdevs.h,v 1.2 2009/04/21 03:10:41 nonaka Exp $	*/
+/*	$NetBSD: sdmmcdevs.h,v 1.2.72.1 2018/07/28 04:37:57 pgoyette Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		NetBSD: sdmmcdevs,v 1.1 2009/04/21 03:00:31 nonaka Exp 
+ *		NetBSD: sdmmcdevs,v 1.3 2018/06/28 13:31:38 jmcneill Exp 
  */
 /*	$OpenBSD: sdmmcdevs,v 1.8 2007/05/11 17:16:16 mglocker Exp $	*/
 
@@ -30,11 +30,13 @@
 #define	SDMMC_VENDOR_CGUYS	0x0092	/* C-guys, Inc. */
 #define	SDMMC_VENDOR_TOSHIBA	0x0098	/* Toshiba */
 #define	SDMMC_VENDOR_SOCKETCOM	0x0104	/* Socket Communications, Inc. */
+#define	SDMMC_VENDOR_REALTEK	0x024c	/* Realtek */
 #define	SDMMC_VENDOR_ATHEROS	0x0271	/* Atheros */
 #define	SDMMC_VENDOR_SYCHIP	0x02db	/* SyChip Inc. */
 #define	SDMMC_VENDOR_SPECTEC	0x02fe	/* Spectec Computer Co., Ltd */
 #define	SDMMC_VENDOR_MEDIATEK	0x037a	/* MediaTek Inc. */
 #define	SDMMC_VENDOR_GLOBALSAT	0x0501	/* Globalsat Technology Co. */
+#define	SDMMC_VENDOR_RICOH	0x1180	/* Ricoh */
 #define	SDMMC_VENDOR_ABOCOM	0x13d1	/* AboCom Systems, Inc. */
 
 /*
@@ -92,3 +94,11 @@
 #define	SDMMC_PRODUCT_SOCKETCOM_SDSCANNER	0x005e
 #define	SDMMC_CIS_SOCKETCOM_BTCARD	{ NULL, NULL, NULL, NULL }
 #define	SDMMC_PRODUCT_SOCKETCOM_BTCARD	0x00c5
+
+/* Realtek */
+#define	SDMMC_CIS_REALTEK_RTL8703BS	{ NULL, NULL, NULL, NULL }
+#define	SDMMC_PRODUCT_REALTEK_RTL8703BS	0xb703
+
+/* Ricoh */
+#define	SDMMC_CIS_RICOH_MMCREADER	{ NULL, NULL, NULL, NULL }
+#define	SDMMC_PRODUCT_RICOH_MMCREADER	0xe823

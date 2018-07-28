@@ -1,4 +1,4 @@
-/*	$NetBSD: uhso.c,v 1.27 2018/01/21 13:57:12 skrll Exp $	*/
+/*	$NetBSD: uhso.c,v 1.27.2.1 2018/07/28 04:37:58 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2009 Iain Hibbert
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhso.c,v 1.27 2018/01/21 13:57:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhso.c,v 1.27.2.1 2018/07/28 04:37:58 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -2173,7 +2173,7 @@ uhso_ifnet_input(struct ifnet *ifp, struct mbuf **mb, uint8_t *cp, size_t cc)
 
 		s = splnet();
 
-		bpf_mtap(ifp, m);
+		bpf_mtap(ifp, m, BPF_D_IN);
 
 		if (__predict_false(!pktq_enqueue(ip_pktq, m, 0))) {
 			m_freem(m);
@@ -2332,7 +2332,7 @@ uhso_ifnet_start(struct ifnet *ifp)
 		hp->hp_wlen = hp->hp_wsize;
 	}
 
-	bpf_mtap(ifp, m);
+	bpf_mtap(ifp, m, BPF_D_OUT);
 
 	m_copydata(m, 0, hp->hp_wlen, hp->hp_wbuf);
 	m_freem(m);

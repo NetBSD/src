@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.36 2017/08/01 20:07:37 joerg Exp $
+#	$NetBSD: Makefile,v 1.36.2.1 2018/07/28 04:33:04 pgoyette Exp $
 
 PROG_CXX=	clang
 NOMAN=		yes
@@ -14,7 +14,8 @@ SYMLINKS+=	clang ${BINDIR}/clang-cpp
 
 SRCS=	driver.cpp \
 	cc1_main.cpp \
-	cc1as_main.cpp
+	cc1as_main.cpp \
+	cc1gen_reproducer_main.cpp
 
 CLANG_LIBS+= \
 	clangFrontendTool \
@@ -23,25 +24,30 @@ CLANG_LIBS+= \
 	clangStaticAnalyzerFrontend \
 	clangStaticAnalyzerCheckers \
 	clangStaticAnalyzerCore \
+	clangCrossTU \
+	clangIndex \
 	clangASTMatchers \
-	clangDriver \
-	clangSerialization \
 	clangCodeGen \
+	clangFrontendRewrite \
+	clangFrontend \
+	clangSerialization \
 	clangParse \
 	clangSema \
-	clangEdit \
 	clangAnalysis \
-	clangFrontendRewrite \
+	clangEdit \
+	clangDriver \
 	clangRewrite \
 	clangAST \
 	clangLex \
 	clangBasic
 
 LLVM_LIBS+= \
+	TransformsAggressiveInstCombine \
 	TransformsCoroutines \
 	ProfileDataCoverage \
 	LTO \
 	ObjCARC \
+	Passes \
 	ipo \
 	IRReader \
 	AsmParser \
@@ -58,6 +64,7 @@ LLVM_LIBS+= \
 	ARMMCTargetDesc \
 	ARMAsmParser \
 	ARMAsmPrinter \
+	ARMUtils \
 	MipsCodeGen \
 	MipsTargetInfo \
 	MipsAsmPrinter \
@@ -84,7 +91,6 @@ LLVM_LIBS+= \
 	AsmPrinter \
 	DebugInfoCodeView \
 	DebugInfoMSF \
-	Passes \
 	CodeGen \
 	Vectorize \
 	Target \

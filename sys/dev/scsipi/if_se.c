@@ -1,4 +1,4 @@
-/*	$NetBSD: if_se.c,v 1.95.2.1 2018/06/25 07:26:01 pgoyette Exp $	*/
+/*	$NetBSD: if_se.c,v 1.95.2.2 2018/07/28 04:37:57 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1997 Ian W. Dall <ian.dall@dsto.defence.gov.au>
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_se.c,v 1.95.2.1 2018/06/25 07:26:01 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_se.c,v 1.95.2.2 2018/07/28 04:37:57 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -436,7 +436,7 @@ se_ifstart(struct ifnet *ifp)
 	/* If BPF is listening on this interface, let it see the
 	 * packet before we commit it to the wire.
 	 */
-	bpf_mtap(ifp, m0);
+	bpf_mtap(ifp, m0, BPF_D_OUT);
 
 	/* We need to use m->m_pkthdr.len, so require the header */
 	if ((m0->m_flags & M_PKTHDR) == 0)

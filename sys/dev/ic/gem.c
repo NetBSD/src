@@ -1,4 +1,4 @@
-/*	$NetBSD: gem.c,v 1.109 2018/02/28 23:08:30 macallan Exp $ */
+/*	$NetBSD: gem.c,v 1.109.2.1 2018/07/28 04:37:45 pgoyette Exp $ */
 
 /*
  *
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.109 2018/02/28 23:08:30 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.109.2.1 2018/07/28 04:37:45 pgoyette Exp $");
 
 #include "opt_inet.h"
 
@@ -1599,7 +1599,7 @@ gem_start(struct ifnet *ifp)
 		/*
 		 * Pass the packet to any BPF listeners.
 		 */
-		bpf_mtap(ifp, m0);
+		bpf_mtap(ifp, m0, BPF_D_OUT);
 	}
 
 	if (txs == NULL || sc->sc_txfree == 0) {

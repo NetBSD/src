@@ -1,4 +1,4 @@
-/* $NetBSD: rk_cru.c,v 1.2.2.2 2018/06/25 07:25:39 pgoyette Exp $ */
+/* $NetBSD: rk_cru.c,v 1.2.2.3 2018/07/28 04:37:29 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #include "opt_fdt_arm.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rk_cru.c,v 1.2.2.2 2018/06/25 07:25:39 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rk_cru.c,v 1.2.2.3 2018/07/28 04:37:29 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -300,19 +300,9 @@ rk_cru_attach(struct rk_cru_softc *sc)
 	int i;
 
 	if (of_hasprop(sc->sc_phandle, "rockchip,grf")) {
-		const int grf_phandle = fdtbus_get_phandle(sc->sc_phandle, "rockchip,grf");
-		if (grf_phandle == -1) {
-			aprint_error(": couldn't get grf phandle\n");
-			return ENXIO;
-		}
-
-		if (fdtbus_get_reg(grf_phandle, 0, &addr, &size) != 0) {
-			aprint_error(": couldn't get grf registers\n");
-			return ENXIO;
-		}
-
-		if (bus_space_map(sc->sc_bst, addr, size, 0, &sc->sc_bsh_grf) != 0) {
-			aprint_error(": couldn't map registers\n");
+		sc->sc_grf = fdtbus_syscon_acquire(sc->sc_phandle, "rockchip,grf");
+		if (sc->sc_grf == NULL) {
+			aprint_error(": couldn't get grf syscon\n");
 			return ENXIO;
 		}
 	}
@@ -367,13 +357,13 @@ rk_cru_print(struct rk_cru_softc *sc)
 		default:			type = "???"; break;
 		}
 
-        	device_printf(sc->sc_dev,
+        	aprint_debug_dev(sc->sc_dev,
 		    "%3d %-14s %2s %-14s %-7s ",
 		    clk->id,
         	    clk->base.name,
         	    clkp_parent ? "<-" : "",
         	    clkp_parent ? clkp_parent->name : "",
         	    type);
-		printf("%10d Hz\n", clk_get_rate(&clk->base));
+		aprint_debug("%10d Hz\n", clk_get_rate(&clk->base));
 	}
 }

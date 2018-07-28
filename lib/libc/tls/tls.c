@@ -1,4 +1,4 @@
-/*	$NetBSD: tls.c,v 1.8 2014/12/14 23:49:17 chs Exp $	*/
+/*	$NetBSD: tls.c,v 1.8.14.1 2018/07/28 04:37:23 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tls.c,v 1.8 2014/12/14 23:49:17 chs Exp $");
+__RCSID("$NetBSD: tls.c,v 1.8.14.1 2018/07/28 04:37:23 pgoyette Exp $");
 
 #include "namespace.h"
 
@@ -45,6 +45,7 @@ __RCSID("$NetBSD: tls.c,v 1.8 2014/12/14 23:49:17 chs Exp $");
 #include <sys/mman.h>
 #include <link_elf.h>
 #include <lwp.h>
+#include <stdbool.h>
 #include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
@@ -52,6 +53,7 @@ __RCSID("$NetBSD: tls.c,v 1.8 2014/12/14 23:49:17 chs Exp $");
 
 __dso_hidden void	__libc_static_tls_setup(void);
 
+static bool is_dynamic;
 static const void *tls_initaddr;
 static size_t tls_initsize;
 static size_t tls_size;
@@ -131,8 +133,6 @@ _rtld_tls_free(struct tls_tcb *tcb)
 		free(p);
 }
 
-__weakref_visible int rtld_DYNAMIC __weak_reference(_DYNAMIC);
-
 static int __section(".text.startup")
 __libc_static_tls_setup_cb(struct dl_phdr_info *data, size_t len, void *cookie)
 {
@@ -140,6 +140,10 @@ __libc_static_tls_setup_cb(struct dl_phdr_info *data, size_t len, void *cookie)
 	const Elf_Phdr *phlimit = data->dlpi_phdr + data->dlpi_phnum;
 
 	for (; phdr < phlimit; ++phdr) {
+		if (phdr->p_type == PT_INTERP) {
+			is_dynamic = true;
+			return -1;
+		}
 		if (phdr->p_type != PT_TLS)
 			continue;
 		tls_initaddr = (void *)(phdr->p_vaddr + data->dlpi_addr);
@@ -154,11 +158,9 @@ __libc_static_tls_setup(void)
 {
 	struct tls_tcb *tcb;
 
-	if (&rtld_DYNAMIC != NULL) {
-		return;
-	}
-
 	dl_iterate_phdr(__libc_static_tls_setup_cb, NULL);
+	if (is_dynamic)
+		return;
 
 	tcb = _rtld_tls_allocate();
 #ifdef __HAVE___LWP_SETTCB

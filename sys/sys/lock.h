@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.86 2010/07/01 13:00:57 hannken Exp $	*/
+/*	$NetBSD: lock.h,v 1.86.58.1 2018/07/28 04:38:12 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2006, 2007 The NetBSD Foundation, Inc.
@@ -100,8 +100,6 @@ do {								\
 	if ((count) < SPINLOCK_BACKOFF_MAX)			\
 		(count) += (count);				\
 } while (/* CONSTCOND */ 0);
-
-#define	SPINLOCK_RUN_HOOK(count)	((count) >= SPINLOCK_BACKOFF_MAX)
 
 #ifdef LOCKDEBUG
 #define	SPINLOCK_SPINOUT(spins)		((spins)++ > 0x0fffffff)

@@ -1,4 +1,4 @@
-/*	$NetBSD: userret.h,v 1.12 2017/02/23 03:34:22 kamil Exp $	*/
+/*	$NetBSD: userret.h,v 1.12.12.1 2018/07/28 04:37:26 pgoyette Exp $	*/
 
 /*
  * XXXfvdl same as i386 counterpart, but should probably be independent.
@@ -67,7 +67,6 @@
  */
 
 #include <sys/userret.h>
-#include <x86/dbregs.h>
 
 static __inline void userret(struct lwp *);
 
@@ -78,13 +77,6 @@ static __inline void userret(struct lwp *);
 static __inline void
 userret(struct lwp *l)
 {
-	struct pcb *pcb = lwp_getpcb(l);
-
 	/* Invoke MI userret code */
 	mi_userret(l);
-
-	if (pcb->pcb_dbregs)
-		x86_dbregs_set(l);
-	else
-		x86_dbregs_clear(l);
 }

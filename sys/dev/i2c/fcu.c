@@ -1,4 +1,4 @@
-/* $NetBSD: fcu.c,v 1.1.2.4 2018/06/25 07:25:50 pgoyette Exp $ */
+/* $NetBSD: fcu.c,v 1.1.2.5 2018/07/28 04:37:44 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2018 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fcu.c,v 1.1.2.4 2018/06/25 07:25:50 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fcu.c,v 1.1.2.5 2018/07/28 04:37:44 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -115,14 +115,9 @@ static void fcu_adjust(void *);
 CFATTACH_DECL_NEW(fcu, sizeof(struct fcu_softc),
     fcu_match, fcu_attach, NULL, NULL);
 
-static const char * fcu_compats[] = {
-	"fcu",
-	NULL
-};
-
-static const struct device_compatible_entry fcu_compat_data[] = {
-	DEVICE_COMPAT_ENTRY(fcu_compats),
-	DEVICE_COMPAT_TERMINATOR
+static const struct device_compatible_entry compat_data[] = {
+	{ "fcu",			0 },
+	{ NULL,				0 }
 };
 
 static int
@@ -131,7 +126,7 @@ fcu_match(device_t parent, cfdata_t match, void *aux)
 	struct i2c_attach_args *ia = aux;
 	int match_result;
 
-	if (iic_use_direct_match(ia, match, fcu_compat_data, &match_result))
+	if (iic_use_direct_match(ia, match, compat_data, &match_result))
 		return match_result;
 	
 	if (ia->ia_addr == 0x2f)
@@ -261,7 +256,7 @@ fcu_attach(device_t parent, device_t self, void *aux)
 			} else if (strstr(descr, "INTAKE") != NULL) {
 				KASSERT(eeprom != NULL);
 				memcpy(&rmin, &eeprom[0x4c], 2);
-				memcpy(&rmax, &eeprom[0x5e], 2);
+				memcpy(&rmax, &eeprom[0x4e], 2);
 				fan->base_rpm = rmin;
 				fan->max_rpm = rmax;
 				fan->step = (rmax - rmin) / 30;
@@ -281,6 +276,8 @@ fcu_attach(device_t parent, device_t self, void *aux)
 				fan->max_rpm = 3000;
 				fan->step = 100;
 			}
+			DPRINTF("fan %s: %d - %d rpm, step %d\n",
+			   descr, fan->base_rpm, fan->max_rpm, fan->step);
 
 			/* now stuff them into zones */
 			if (strstr(descr, "CPU A") != NULL) {
@@ -508,7 +505,7 @@ fcu_adjust(void *cookie)
 		sc->sc_pwm = FALSE;
 		for (i = 0; i < FCU_ZONE_COUNT; i++)
 			fcu_adjust_zone(sc, i);
-		kpause("fanctrl", true, mstohz(sc->sc_pwm ? 2000 : 30000), NULL);
+		kpause("fanctrl", true, mstohz(sc->sc_pwm ? 1000 : 5000), NULL);
 	}
 	kthread_exit(0);
 }

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2017/08/01 20:07:43 joerg Exp $
+#	$NetBSD: Makefile,v 1.1.2.1 2018/07/28 04:37:14 pgoyette Exp $
 
 LIB=	clangToolingRefactoring
 
@@ -6,11 +6,20 @@ LIB=	clangToolingRefactoring
 
 .PATH: ${CLANG_SRCDIR}/lib/Tooling/Refactoring
 
-SRCS+=	AtomicChange.cpp
+SRCS+=	ASTSelection.cpp \
+	ASTSelectionRequirements.cpp \
+	AtomicChange.cpp \
+	RefactoringActions.cpp
+
+.PATH: ${CLANG_SRCDIR}/lib/Tooling/Refactoring/Extract
+
+SRCS+=	Extract.cpp \
+	SourceExtraction.cpp
 
 .PATH: ${CLANG_SRCDIR}/lib/Tooling/Refactoring/Rename
 
 SRCS+=	RenamingAction.cpp \
+	SymbolOccurrences.cpp \
 	USRFinder.cpp \
 	USRFindingAction.cpp \
 	USRLocFinder.cpp

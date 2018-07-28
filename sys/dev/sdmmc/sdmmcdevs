@@ -1,4 +1,4 @@
-	$NetBSD: sdmmcdevs,v 1.2 2013/10/19 22:45:12 mlelstv Exp $
+	$NetBSD: sdmmcdevs,v 1.2.28.1 2018/07/28 04:37:57 pgoyette Exp $
 /*	$OpenBSD: sdmmcdevs,v 1.8 2007/05/11 17:16:16 mglocker Exp $	*/
 
 /*
@@ -23,6 +23,7 @@
 vendor CGUYS			0x0092	C-guys, Inc.
 vendor TOSHIBA			0x0098	Toshiba
 vendor SOCKETCOM		0x0104	Socket Communications, Inc.
+vendor REALTEK			0x024c	Realtek
 vendor ATHEROS			0x0271	Atheros
 vendor SYCHIP			0x02db	SyChip Inc.
 vendor SPECTEC			0x02fe	Spectec Computer Co., Ltd
@@ -69,6 +70,9 @@ product TOSHIBA SDBTCARD3	0x0003	Toshiba SD BT Card 3
 /* Socket Communications, Inc. */
 product SOCKETCOM SDSCANNER	0x005e	Socket SD Scanner
 product SOCKETCOM BTCARD	0x00c5	Socket BT Card
+
+/* Realtek */
+product REALTEK RTL8703BS	0xb703	RTL8703BS Wireless LAN 802.11n SDIO
 
 /* Ricoh */
 product RICOH MMCREADER		0xe823  MMC card reader

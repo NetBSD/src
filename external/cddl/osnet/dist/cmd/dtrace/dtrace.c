@@ -555,7 +555,7 @@ static void
 print_probe_info(const dtrace_probeinfo_t *p)
 {
 	char buf[BUFSIZ];
-	const char *user;
+	char *user;
 	int i;
 
 	oprintf("\n\tProbe Description Attributes\n");
@@ -1164,8 +1164,8 @@ go(void)
 	int i;
 
 	struct {
-		const char *name;
-		const char *optname;
+		char *name;
+		char *optname;
 		dtrace_optval_t val;
 	} bufs[] = {
 		{ "buffer size", "bufsize" },
@@ -1221,7 +1221,7 @@ go(void)
 
 	for (i = 0; rates[i].name != NULL; i++) {
 		dtrace_optval_t nval;
-		const char *dir;
+		char *dir;
 
 		if (rates[i].val == DTRACEOPT_UNSET)
 			continue;

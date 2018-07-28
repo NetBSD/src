@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_machdep.c,v 1.20.2.2 2018/06/25 07:25:41 pgoyette Exp $ */
+/* $NetBSD: fdt_machdep.c,v 1.20.2.3 2018/07/28 04:37:31 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.20.2.2 2018/06/25 07:25:41 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.20.2.3 2018/07/28 04:37:31 pgoyette Exp $");
 
 #include "opt_machdep.h"
 #include "opt_bootconfig.h"
@@ -95,10 +95,10 @@ __KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.20.2.2 2018/06/25 07:25:41 pgoyett
 BootConfig bootconfig;
 char bootargs[FDT_MAX_BOOT_STRING] = "";
 char *boot_args = NULL;
-/*
- * filled in by xxx_start.S (must not be in bss)
- */
-unsigned long  uboot_args[4] = { 0 };
+
+/* filled in before cleaning bss. keep in .data */
+u_long uboot_args[4] __attribute__((__section__(".data")));
+
 const uint8_t *fdt_addr_r = (const uint8_t *)0xdeadc0de;
 
 static char fdt_memory_ext_storage[EXTENT_FIXED_STORAGE_SIZE(DRAM_BLOCKS)];
@@ -137,8 +137,9 @@ fdt_putchar(char c)
 	}
 #ifdef EARLYCONS
 	else {
-		void uartputc(int);	/* evbarm/fdt/fdt_start.S */
-		uartputc(c);
+#define PLATFORM_EARLY_PUTCHAR ___CONCAT(EARLYCONS, _platform_early_putchar)
+		void PLATFORM_EARLY_PUTCHAR(char);
+		PLATFORM_EARLY_PUTCHAR(c);
 	}
 #endif
 }
@@ -208,10 +209,10 @@ fdt_add_reserved_memory_range(uint64_t addr, uint64_t size)
 	int error = extent_free(fdt_memory_ext, start,
 	     end - start, EX_NOWAIT);
 	if (error != 0)
-		printf("MEM ERROR: res %llx-%llx failed: %d\n",
+		printf("MEM ERROR: res %" PRIx64 "-%" PRIx64 " failed: %d\n",
 		    start, end, error);
 	else
-		DPRINTF("MEM: res %llx-%llx\n", start, end);
+		DPRINTF("MEM: res %" PRIx64 "-%" PRIx64 "\n", start, end);
 }
 
 /*
@@ -263,9 +264,9 @@ fdt_build_bootconfig(uint64_t mem_start, uint64_t mem_end)
 		error = extent_alloc_region(fdt_memory_ext, addr, size,
 		    EX_NOWAIT);
 		if (error != 0)
-			printf("MEM ERROR: add %llx-%llx failed: %d\n",
+			printf("MEM ERROR: add %" PRIx64 "-%" PRIx64 " failed: %d\n",
 			    addr, addr + size, error);
-		DPRINTF("MEM: add %llx-%llx\n", addr, addr + size);
+		DPRINTF("MEM: add %" PRIx64 "-%" PRIx64 "\n", addr, addr + size);
 	}
 
 	fdt_add_reserved_memory(mem_end);

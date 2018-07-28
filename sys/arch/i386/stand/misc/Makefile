@@ -1,10 +1,9 @@
-#	$NetBSD: Makefile,v 1.7.58.1 2018/05/02 07:20:04 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.7.58.2 2018/07/28 04:37:35 pgoyette Exp $
 
 .include <bsd.hostinit.mk>
 
 MISC_FILES=	rawrite.c
 UUDECODE_FILES=	pfdisk.doc pfdisk.exe pfdisktc.zip \
-		rawr32.exe \
 		rawrite.doc rawrite.exe
 
 .include <bsd.files.mk>

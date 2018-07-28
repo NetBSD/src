@@ -1,4 +1,4 @@
-/* $NetBSD: rk_cru_mux.c,v 1.1.2.2 2018/06/25 07:25:39 pgoyette Exp $ */
+/* $NetBSD: rk_cru_mux.c,v 1.1.2.3 2018/07/28 04:37:29 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rk_cru_mux.c,v 1.1.2.2 2018/06/25 07:25:39 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rk_cru_mux.c,v 1.1.2.3 2018/07/28 04:37:29 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -42,13 +42,19 @@ rk_cru_mux_get_parent(struct rk_cru_softc *sc,
 {
 	struct rk_cru_mux *mux = &clk->u.mux;
 	const bool mux_grf = (mux->flags & RK_MUX_GRF) != 0;
+	uint32_t val;
 
 	KASSERT(clk->type == RK_CRU_MUX);
 
-	if (mux_grf && !HAS_GRF(sc))
-		return NULL;
-
-	const uint32_t val = mux_grf ? GRF_READ(sc, mux->reg) : CRU_READ(sc, mux->reg);
+	if (mux_grf) {
+		if (!HAS_GRF(sc))
+			return NULL;
+		syscon_lock(sc->sc_grf);
+		val = syscon_read_4(sc->sc_grf, mux->reg);
+		syscon_unlock(sc->sc_grf);
+	} else {
+		val = CRU_READ(sc, mux->reg);
+	}
 	const u_int index = __SHIFTOUT(val, mux->mask);
 
 	return mux->parents[index];
@@ -71,9 +77,11 @@ rk_cru_mux_set_parent(struct rk_cru_softc *sc,
 			const uint32_t write_mask = mux->mask << 16;
 			const uint32_t write_val = __SHIFTIN(index, mux->mask);
 
-			if (mux_grf)
-				GRF_WRITE(sc, mux->reg, write_mask | write_val);
-			else
+			if (mux_grf) {
+				syscon_lock(sc->sc_grf);
+				syscon_write_4(sc->sc_grf, mux->reg, write_mask | write_val);
+				syscon_unlock(sc->sc_grf);
+			} else
 				CRU_WRITE(sc, mux->reg, write_mask | write_val);
 
 			return 0;

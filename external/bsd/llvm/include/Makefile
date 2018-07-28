@@ -1,68 +1,89 @@
-#	$NetBSD: Makefile,v 1.41.2.1 2018/05/02 07:20:00 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.41.2.2 2018/07/28 04:37:09 pgoyette Exp $
 
 .include <bsd.init.mk>
 
 .PATH:	${CLANG_SRCDIR}/lib/Headers
 
+
 .if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"
-INCS=	__wmmintrin_aes.h \
-	__wmmintrin_pclmul.h \
-	adxintrin.h \
+INCS=	adxintrin.h \
 	ammintrin.h \
 	avx2intrin.h \
+	avx512bitalgintrin.h \
 	avx512bwintrin.h \
 	avx512cdintrin.h \
 	avx512dqintrin.h \
-	avx512fintrin.h \
 	avx512erintrin.h \
+	avx512fintrin.h \
 	avx512ifmaintrin.h \
 	avx512ifmavlintrin.h \
 	avx512pfintrin.h \
+	avx512vbmi2intrin.h \
 	avx512vbmiintrin.h \
 	avx512vbmivlintrin.h \
+	avx512vlbitalgintrin.h \
 	avx512vlbwintrin.h \
 	avx512vlcdintrin.h \
 	avx512vldqintrin.h \
 	avx512vlintrin.h \
+	avx512vlvbmi2intrin.h \
+	avx512vlvnniintrin.h \
+	avx512vnniintrin.h \
 	avx512vpopcntdqintrin.h \
+	avx512vpopcntdqvlintrin.h \
 	avxintrin.h \
 	bmi2intrin.h \
 	bmiintrin.h \
+	cetintrin.h \
+	cldemoteintrin.h \
 	clflushoptintrin.h \
+	clwbintrin.h \
 	clzerointrin.h \
 	cpuid.h \
 	emmintrin.h \
 	f16cintrin.h \
-	fmaintrin.h \
 	fma4intrin.h \
+	fmaintrin.h \
 	fxsrintrin.h \
+	gfniintrin.h \
 	ia32intrin.h \
 	immintrin.h \
+	invpcidintrin.h \
 	lwpintrin.h \
 	lzcntintrin.h \
 	mm3dnow.h \
 	mmintrin.h \
 	mm_malloc.h \
+	movdirintrin.h \
 	mwaitxintrin.h \
 	nmmintrin.h \
+	pconfigintrin.h \
 	pkuintrin.h \
 	pmmintrin.h \
 	popcntintrin.h \
 	prfchwintrin.h \
+	ptwriteintrin.h \
 	rdseedintrin.h \
 	rtmintrin.h \
+	sgxintrin.h \
 	shaintrin.h \
 	smmintrin.h \
 	tbmintrin.h \
 	tmmintrin.h \
+	vaesintrin.h \
+	vpclmulqdqintrin.h \
+	waitpkgintrin.h \
+	wbnoinvdintrin.h \
 	wmmintrin.h \
+	__wmmintrin_aes.h \
+	__wmmintrin_pclmul.h \
 	x86intrin.h \
 	xmmintrin.h \
 	xopintrin.h \
-	xsavesintrin.h \
+	xsavecintrin.h \
 	xsaveintrin.h \
 	xsaveoptintrin.h \
-	xsavecintrin.h \
+	xsavesintrin.h \
 	xtestintrin.h
 
 .elif ${MACHINE_ARCH} == "powerpc" || ${MACHINE_ARCH} == "powerpc64"
@@ -72,6 +93,9 @@ INCS=	altivec.h \
 .elif ${MACHINE_CPU} == "arm" || ${MACHINE_CPU} == "aarch64"
 INCS=	arm_acle.h \
 	arm_neon.h
+.  if ${MACHINE_CPU} == "aarch64"
+INCS+=	arm64intr.h
+.  endif
 .elif ${MACHINE_CPU} == "mips" || ${MACHINE_CPU} == "mips64"
 INCS=	msa.h
 .endif
@@ -87,14 +111,25 @@ INCSDIR=	/usr/include/clang-${CLANG_VERSION:R}
 TABLEGEN_SRC=	Attributes.td Intrinsics.td Options.td
 
 TABLEGEN_OUTPUT.Attributes.td= \
-	llvm/IR/Attributes.gen|-gen-attrs
+	llvm/IR/Attributes.inc|-gen-attrs
 
 TABLEGEN_OUTPUT.Intrinsics.td= \
-	llvm/IR/Intrinsics.gen|-gen-intrinsic
+	llvm/IR/IntrinsicEnums.inc|-gen-intrinsic-enums \
+	llvm/IR/IntrinsicImpl.inc|-gen-intrinsic-impl
 
-CLANG_TABLEGEN_SRC=	Attr.td CommentCommands.td CommentHTMLTags.td \
-	CommentNodes.td CommentHTMLNamedCharacterReferences.td DeclNodes.td \
-	StmtNodes.td Diagnostic.td arm_neon.td Checkers.td
+CLANG_TABLEGEN_SRC=	\
+	arm_fp16.td \
+	arm_neon.td \
+	Attr.td \
+	Checkers.td \
+	CommentCommands.td \
+	CommentHTMLNamedCharacterReferences.td \
+	CommentHTMLTags.td \
+	CommentNodes.td \
+	DeclNodes.td \
+	Diagnostic.td \
+	StmtDataCollectors.td \
+	StmtNodes.td
 
 CLANG_TABLEGEN_INCLUDES.Attr.td=	-I${CLANG_SRCDIR}/include
 CLANG_TABLEGEN_OUTPUT.Attr.td= \
@@ -117,6 +152,9 @@ CLANG_TABLEGEN_OUTPUT.Attr.td= \
 
 CLANG_TABLEGEN_OUTPUT.StmtNodes.td= \
 	clang/AST/StmtNodes.inc|-gen-clang-stmt-nodes
+
+CLANG_TABLEGEN_OUTPUT.StmtDataCollectors.td= \
+	clang/AST/StmtDataCollectors.inc|-gen-clang-data-collectors
 
 CLANG_TABLEGEN_OUTPUT.DeclNodes.td= \
 	clang/AST/DeclNodes.inc|-gen-clang-decl-nodes
@@ -141,20 +179,30 @@ CLANG_TABLEGEN_OUTPUT.Diagnostic.td= \
 	clang/Basic/DiagnosticASTKinds.inc|-gen-clang-diags-defs^-clang-component=AST \
 	clang/Basic/DiagnosticCommentKinds.inc|-gen-clang-diags-defs^-clang-component=Comment \
 	clang/Basic/DiagnosticCommonKinds.inc|-gen-clang-diags-defs^-clang-component=Common \
+	clang/Basic/DiagnosticCrossTUKinds.inc|-gen-clang-diags-defs^-clang-component=CrossTU \
 	clang/Basic/DiagnosticDriverKinds.inc|-gen-clang-diags-defs^-clang-component=Driver \
 	clang/Basic/DiagnosticFrontendKinds.inc|-gen-clang-diags-defs^-clang-component=Frontend \
+	clang/Basic/DiagnosticGroups.inc|-gen-clang-diag-groups \
+	clang/Basic/DiagnosticIndexName.inc|-gen-clang-diags-index-name \
 	clang/Basic/DiagnosticLexKinds.inc|-gen-clang-diags-defs^-clang-component=Lex \
 	clang/Basic/DiagnosticParseKinds.inc|-gen-clang-diags-defs^-clang-component=Parse \
+	clang/Basic/DiagnosticRefactoringKinds.inc|-gen-clang-diags-defs^-clang-component=Refactoring \
 	clang/Basic/DiagnosticSemaKinds.inc|-gen-clang-diags-defs^-clang-component=Sema \
-	clang/Basic/DiagnosticSerializationKinds.inc|-gen-clang-diags-defs^-clang-component=Serialization \
-	clang/Basic/DiagnosticGroups.inc|-gen-clang-diag-groups \
-	clang/Basic/DiagnosticIndexName.inc|-gen-clang-diags-index-name
+	clang/Basic/DiagnosticSerializationKinds.inc|-gen-clang-diags-defs^-clang-component=Serialization
 
+
+CLANG_TABLEGEN_INCLUDES.arm_neon.td=	-I${CLANG_SRCDIR}/include/clang/Basic
 CLANG_TABLEGEN_OUTPUT.arm_neon.td= \
 	clang/Basic/arm_neon.inc|-gen-arm-neon-sema \
 	arm_neon.h|-gen-arm-neon
 
-CLANG_TABLEGEN_INCLUDES.Checkers.td=	-I${CLANG_SRCDIR}/include
+CLANG_TABLEGEN_INCLUDES.arm_fp16.td=	-I${CLANG_SRCDIR}/include/clang/Basic
+CLANG_TABLEGEN_OUTPUT.arm_fp16.td= \
+	clang/Basic/arm_fp16.inc|-gen-arm-neon-sema
+
+CLANG_TABLEGEN_INCLUDES.Checkers.td=	\
+	-I${CLANG_SRCDIR}/include \
+	-I${CLANG_SRCDIR}/include/clang/StaticAnalyzer/Checkers
 CLANG_TABLEGEN_OUTPUT.Checkers.td= \
 	clang/StaticAnalyzer/Checkers/Checkers.inc|-gen-clang-sa-checkers
 

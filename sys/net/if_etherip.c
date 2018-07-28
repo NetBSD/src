@@ -1,4 +1,4 @@
-/*      $NetBSD: if_etherip.c,v 1.42 2018/01/26 14:47:41 maxv Exp $        */
+/*      $NetBSD: if_etherip.c,v 1.42.2.1 2018/07/28 04:38:10 pgoyette Exp $        */
 
 /*
  *  Copyright (c) 2006, Hans Rosenfeld <rosenfeld@grumpf.hope-2000.org>
@@ -87,7 +87,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_etherip.c,v 1.42 2018/01/26 14:47:41 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_etherip.c,v 1.42.2.1 2018/07/28 04:38:10 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -384,7 +384,7 @@ etheripintr(void *arg)
 		if (m == NULL)
 			break;
 
-		bpf_mtap(ifp, m);
+		bpf_mtap(ifp, m, BPF_D_OUT);
 
 		ifp->if_opackets++;
 		if (sc->sc_src && sc->sc_dst) {

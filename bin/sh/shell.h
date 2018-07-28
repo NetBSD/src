@@ -1,4 +1,4 @@
-/*	$NetBSD: shell.h,v 1.25 2017/07/26 03:44:43 kre Exp $	*/
+/*	$NetBSD: shell.h,v 1.25.2.1 2018/07/28 04:32:56 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -189,10 +189,11 @@ extern	int		ShNest;
 #define	DBG_ARITH	(1LL << 15)		/* a */
 #define	DBG_HISTORY	(1LL << 16)		/* h */
 #define	DBG_SIG		(1LL << 17)		/* s */
+#define	DBG_MATCH	(1LL << 18)		/* g (glob) */
 
 /*
  * reserved extras: b=builtins l=alias
- * still free:  d g k n q u y
+ * still free:  d k n q u y
  */
 
 	/* use VTRACE(DBG_ALWAYS, (...)) to test this one */

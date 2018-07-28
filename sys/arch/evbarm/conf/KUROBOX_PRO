@@ -1,4 +1,4 @@
-#	$NetBSD: KUROBOX_PRO,v 1.8.16.2 2018/06/25 07:25:40 pgoyette Exp $
+#	$NetBSD: KUROBOX_PRO,v 1.8.16.3 2018/07/28 04:37:31 pgoyette Exp $
 #
 #  KUROBOX_PRO -- KUROUTOSHIKOU. KURO-BOX/PRO platform kernel
 #
@@ -18,7 +18,6 @@ config		netbsd-wd0	root on wd0 type ffs
 
 # Development and Debugging options
 
-#options 	PERFCTRS	# performance counters
 options 	DIAGNOSTIC	# internal consistency checks
 options 	DEBUG
 #options 	PMAP_DEBUG	# Enable pmap_debug_level code

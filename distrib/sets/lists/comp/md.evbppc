@@ -1,4 +1,4 @@
-# $NetBSD: md.evbppc,v 1.16 2015/12/20 16:22:39 christos Exp $
+# $NetBSD: md.evbppc,v 1.16.14.1 2018/07/28 04:32:59 pgoyette Exp $
 ./usr/include/evbppc				comp-c-include
 ./usr/include/evbppc/_G_config.h		comp-obsolete		obsolete
 ./usr/include/evbppc/ansi.h			comp-c-include
@@ -37,7 +37,7 @@
 ./usr/include/evbppc/pcb.h			comp-c-include
 ./usr/include/evbppc/pio.h			comp-obsolete		obsolete
 ./usr/include/evbppc/pmap.h			comp-c-include
-./usr/include/evbppc/pmc.h			comp-c-include
+./usr/include/evbppc/pmc.h			comp-obsolete		obsolete
 ./usr/include/evbppc/powerpc.h			comp-obsolete		obsolete
 ./usr/include/evbppc/proc.h			comp-c-include
 ./usr/include/evbppc/profile.h			comp-c-include

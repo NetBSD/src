@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_subr.c,v 1.49 2016/05/07 11:59:08 maxv Exp $	*/
+/*	$NetBSD: ffs_subr.c,v 1.49.16.1 2018/07/28 04:38:12 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -36,7 +36,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_subr.c,v 1.49 2016/05/07 11:59:08 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_subr.c,v 1.49.16.1 2018/07/28 04:38:12 pgoyette Exp $");
 
 #include <sys/param.h>
 
@@ -287,7 +287,8 @@ ffs_clusteracct(struct fs *fs, struct cg *cgp, int32_t blkno, int cnt)
 	int32_t *sump;
 	int32_t *lp;
 	u_char *freemapp, *mapp;
-	int i, start, end, forw, back, map, bit;
+	int i, start, end, forw, back, map;
+	unsigned int bit;
 	const int needswap = UFS_FSNEEDSWAP(fs);
 
 	/* KASSERT(mutex_owned(&ump->um_lock)); */
@@ -312,7 +313,7 @@ ffs_clusteracct(struct fs *fs, struct cg *cgp, int32_t blkno, int cnt)
 		end = ufs_rw32(cgp->cg_nclusterblks, needswap);
 	mapp = &freemapp[start / NBBY];
 	map = *mapp++;
-	bit = 1 << (start % NBBY);
+	bit = 1U << (start % NBBY);
 	for (i = start; i < end; i++) {
 		if ((map & bit) == 0)
 			break;
@@ -333,7 +334,7 @@ ffs_clusteracct(struct fs *fs, struct cg *cgp, int32_t blkno, int cnt)
 		end = -1;
 	mapp = &freemapp[start / NBBY];
 	map = *mapp--;
-	bit = 1 << (start % NBBY);
+	bit = 1U << (start % NBBY);
 	for (i = start; i > end; i--) {
 		if ((map & bit) == 0)
 			break;
@@ -341,7 +342,7 @@ ffs_clusteracct(struct fs *fs, struct cg *cgp, int32_t blkno, int cnt)
 			bit >>= 1;
 		} else {
 			map = *mapp--;
-			bit = 1 << (NBBY - 1);
+			bit = 1U << (NBBY - 1);
 		}
 	}
 	back = start - i;

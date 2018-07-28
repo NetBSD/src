@@ -1,4 +1,4 @@
-/*	$NetBSD: disasm.c,v 1.1.2.3 2018/06/25 07:25:37 pgoyette Exp $	*/
+/*	$NetBSD: disasm.c,v 1.1.2.4 2018/07/28 04:37:25 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2018 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disasm.c,v 1.1.2.3 2018/06/25 07:25:37 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disasm.c,v 1.1.2.4 2018/07/28 04:37:25 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -708,8 +708,13 @@ DecodeShift(uint64_t shift)
 	return SHIFTOP4(shift, "lsl", "lsr", "asr", "ror");
 }
 
+#ifdef DISASM_WITH_COMMENT
 #define UNDEFINED(pc, insn, comment)	\
 	PRINTF(".insn\t0x%08x\t# %s\n", insn, comment);
+#else
+#define UNDEFINED(pc, insn, comment)	\
+	PRINTF(".insn\t0x%08x\n", insn);
+#endif
 
 static void
 extendreg_common(const disasm_interface_t *di, uint64_t pc, uint32_t insn,

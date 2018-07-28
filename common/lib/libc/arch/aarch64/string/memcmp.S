@@ -1,4 +1,4 @@
-/* $NetBSD: memcmp.S,v 1.2 2018/02/04 21:52:16 skrll Exp $ */
+/* $NetBSD: memcmp.S,v 1.2.2.1 2018/07/28 04:32:56 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: memcmp.S,v 1.2 2018/02/04 21:52:16 skrll Exp $")
+RCSID("$NetBSD: memcmp.S,v 1.2.2.1 2018/07/28 04:32:56 pgoyette Exp $")
 
 ENTRY(memcmp)
 	mov	x9, x0
@@ -55,17 +55,19 @@ ENTRY(memcmp)
 	sub	x2, x2, #8		/* now subtract a dword */
 
 	sub	x9, x9, x3		/* dword align src1 */
-	sub	x10, x10, x3		/* adjust src2 */
 
+	ldr	x6, [x10], #8		/* load dword from src2 */
+	sub	x10, x10, x3		/* src2 -= x3 */
 	lsl	x3, x3, #3		/* convert bytes to bits */
 	ldr	x4, [x9], #8		/* load dword from src1 */
-	ldr	x6, [x10], #8		/* load dword from src2 */
 #ifdef __AARCH64EB__
 	lsl	x4, x4, x3		/* discard leading bytes from data1 */
-	lsl	x6, x6, x3		/* discard leading bytes from data2 */
+	lsr	x6, x6, x3		/* discard leading bytes from data2 */
+	lsl	x6, x6, x3		/* get back bit position */
 #else
 	lsr	x4, x4, x3		/* discard leading bytes from data1 */
-	lsr	x6, x6, x3		/* discard leading bytes from data2 */
+	lsl	x6, x6, x3		/* discard leading bytes from data2 */
+	lsr	x6, x6, x3		/* get back bit position */
 #endif
 	subs	x0, x4, x6		/* compare data */
 	b.ne	.Lmemcmp_last_compare	/* difference.  find it */

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_es.c,v 1.57.12.1 2018/06/25 07:25:38 pgoyette Exp $ */
+/*	$NetBSD: if_es.c,v 1.57.12.2 2018/07/28 04:37:27 pgoyette Exp $ */
 
 /*
  * Copyright (c) 1995 Michael L. Hitch
@@ -33,7 +33,7 @@
 #include "opt_ns.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_es.c,v 1.57.12.1 2018/06/25 07:25:38 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_es.c,v 1.57.12.2 2018/07/28 04:37:27 pgoyette Exp $");
 
 
 #include <sys/param.h>
@@ -919,7 +919,7 @@ esstart(struct ifnet *ifp)
 		if (smc->b2.pnr != active_pnr)
 			printf("%s: esstart - PNR changed %x->%x\n",
 			    device_xname(sc->sc_dev), active_pnr, smc->b2.pnr);
-		bpf_mtap(&sc->sc_ethercom.ec_if, m0);
+		bpf_mtap(&sc->sc_ethercom.ec_if, m0, BPF_D_OUT);
 		m_freem(m0);
 		sc->sc_ethercom.ec_if.if_opackets++;	/* move to interrupt? */
 		sc->sc_intctl |= MSK_TX_EMPTY | MSK_TX;

@@ -1,4 +1,4 @@
-/* $NetBSD: db_machdep.c,v 1.1.28.1 2018/04/07 04:12:10 pgoyette Exp $ */
+/* $NetBSD: db_machdep.c,v 1.1.28.2 2018/07/28 04:37:25 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,13 +30,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.1.28.1 2018/04/07 04:12:10 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.1.28.2 2018/07/28 04:37:25 pgoyette Exp $");
 
 #include "opt_kernhist.h"
 #include "opt_uvmhist.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/atomic.h>
+#include <sys/cpu.h>
 #include <sys/lwp.h>
 #include <sys/intr.h>
 
@@ -52,6 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.1.28.1 2018/04/07 04:12:10 pgoyette
 #include <ddb/db_command.h>
 #include <ddb/db_output.h>
 #include <ddb/db_variables.h>
+#include <ddb/db_run.h>
 #include <ddb/db_sym.h>
 #include <ddb/db_extern.h>
 #include <ddb/db_interface.h>
@@ -68,6 +71,9 @@ void db_md_pte_cmd(db_expr_t, bool, db_expr_t, const char *);
 void db_md_tlbi_cmd(db_expr_t, bool, db_expr_t, const char *);
 void db_md_sysreg_cmd(db_expr_t, bool, db_expr_t, const char *);
 void db_md_watch_cmd(db_expr_t, bool, db_expr_t, const char *);
+#if defined(_KERNEL) && defined(MULTIPROCESSOR)
+void db_md_switch_cpu_cmd(db_expr_t, bool, db_expr_t, const char *);
+#endif
 
 const struct db_command db_machine_command_table[] = {
 #if defined(_KERNEL) && defined(MULTIPROCESSOR)
@@ -233,7 +239,7 @@ db_md_cpuinfo_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
 	int i;
 
 	ci = curcpu();
-	db_read_bytes(ci, sizeof(cpuinfobuf), (char *)&cpuinfobuf);
+	db_read_bytes((db_addr_t)ci, sizeof(cpuinfobuf), (char *)&cpuinfobuf);
 
 	cpuid = cpuinfobuf.ci_cpuid;
 	db_printf("cpu_info=%p\n", ci);
@@ -245,7 +251,7 @@ db_md_cpuinfo_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
 		db_printf("%p cpu[%lu].ci_softlwps[%d] = %p\n",
 		    &ci->ci_softlwps[i], cpuid, i, cpuinfobuf.ci_softlwps[i]);
 	}
-	db_printf("%p cpu[%lu].ci_lastintr     = %llu\n",
+	db_printf("%p cpu[%lu].ci_lastintr     = %" PRIu64 "\n",
 	    &ci->ci_lastintr, cpuid, cpuinfobuf.ci_lastintr);
 	db_printf("%p cpu[%lu].ci_want_resched = %d\n",
 	    &ci->ci_want_resched, cpuid, cpuinfobuf.ci_want_resched);
@@ -298,7 +304,7 @@ db_md_lwp_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
 	db_printf("\tl->l_md.md_ktf    =%p\n", l->l_md.md_ktf);
 	if (l->l_md.md_ktf != l->l_md.md_utf)
 		dump_trapframe(l->l_md.md_ktf, db_printf);
-	db_printf("\tl->l_md.md_cpacr  =%016llx\n", l->l_md.md_cpacr);
+	db_printf("\tl->l_md.md_cpacr  =%016" PRIx64 "\n", l->l_md.md_cpacr);
 	db_printf("\tl->l_md.md_flags  =%08x\n", l->l_md.md_flags);
 
 	db_printf("\tl->l_cpu          =%p\n", l->l_cpu);
@@ -429,7 +435,7 @@ db_md_sysreg_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
     const char *modif)
 {
 #define SHOW_ARMREG(x)	\
-	db_printf("%-16s = %016llx\n", #x, reg_ ## x ## _read())
+	db_printf("%-16s = %016" PRIx64 "x\n", #x, reg_ ## x ## _read())
 
 	SHOW_ARMREG(cbar_el1);
 	SHOW_ARMREG(ccsidr_el1);
@@ -708,14 +714,14 @@ show_watchpoints(void)
 		if (wcr & DBGWCR_E) {
 			bas = __SHIFTOUT(wcr, DBGWCR_BAS);
 			if (bas == 0) {
-				db_printf("%d: disabled %016llx", i, addr);
+				db_printf("%d: disabled %016" PRIx64, i, addr);
 			} else {
 				offset = ffs(bas) - 1;
 				addr += offset;
 				bas >>= offset;
 				size = ffs(~bas) - 1;
 
-				db_printf("%d: watching %016llx, %d bytes", i,
+				db_printf("%d: watching %016" PRIx64 ", %d bytes", i,
 				    addr, size);
 
 				switch (__SHIFTOUT(wcr, DBGWCR_LSC)) {
@@ -823,9 +829,51 @@ db_md_watch_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
 	show_watchpoints();
 }
 
+#ifdef MULTIPROCESSOR
+volatile struct cpu_info *db_trigger;
+volatile struct cpu_info *db_onproc;
+volatile struct cpu_info *db_newcpu;
+
+#ifdef _KERNEL
+void
+db_md_switch_cpu_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
+    const char *modif)
+{
+	if (addr >= ncpu) {
+		db_printf("cpu %"DDB_EXPR_FMT"d out of range", addr);
+		return;
+	}
+
+	struct cpu_info *new_ci = cpu_lookup(addr);
+	if (new_ci == NULL) {
+		db_printf("cpu %"DDB_EXPR_FMT"d does not exist", addr);
+		return;
+	}
+
+	if (new_ci == curcpu())
+		return;
+
+	/* XXX */
+	membar_consumer();
+	if (db_trigger == curcpu()) {
+		DDB_REGS->tf_pc -= 4;
+		db_trigger = NULL;
+		membar_producer();
+	}
+
+	db_newcpu = new_ci;
+	db_continue_cmd(0, false, 0, "");
+}
+
+#endif /* _KERNEL */
+#endif /* MULTIPROCESSOR */
+
 int
 kdb_trap(int type, struct trapframe *tf)
 {
+#ifdef MULTIPROCESSOR
+	struct cpu_info * const ci = curcpu();
+#endif
 	int s;
 
 	switch (type) {
@@ -843,18 +891,71 @@ kdb_trap(int type, struct trapframe *tf)
 		break;
 	}
 
-	/* Should switch to kdb`s own stack here. */
-	ddb_regs = *tf;
+#ifdef MULTIPROCESSOR
+	/*
+	 * Try to take ownership of DDB.
+	 * If we do, tell all other CPUs to enter DDB too.
+	 */
+	if ((ncpu > 1) &&
+	    (atomic_cas_ptr(&db_onproc, NULL, ci) == NULL)) {
+		intr_ipi_send(NULL, IPI_DDB);
+		db_trigger = ci;
+		membar_producer();
+	}
+#endif
 
-	s = splhigh();
-	db_active++;
-	cnpollc(true);
-	db_trap(type, 0/*code*/);
-	cnpollc(false);
-	db_active--;
-	splx(s);
+	for (;;) {
+#ifdef MULTIPROCESSOR
+		if (ncpu > 1) {
 
-	*tf = ddb_regs;
+			/* waiting my turn, or exit */
+			membar_consumer();
+			while (db_onproc != ci) {
+				__asm __volatile ("wfe");
+
+				membar_consumer();
+				if (db_onproc == NULL) {
+					return 1;
+				}
+			}
+			/* It's my turn! */
+		}
+#endif /* MULTIPROCESSOR */
+
+		/* Should switch to kdb`s own stack here. */
+		ddb_regs = *tf;
+
+		s = splhigh();
+		db_active++;
+		cnpollc(true);
+		db_trap(type, 0/*code*/);
+		cnpollc(false);
+		db_active--;
+		splx(s);
+
+		*tf = ddb_regs;
+
+#ifdef MULTIPROCESSOR
+		if ((ncpu > 1) && (db_newcpu != NULL)) {
+			db_onproc = db_newcpu;
+			db_newcpu = NULL;
+			membar_producer();
+			__asm __volatile ("sev; sev; sev");
+			continue;	/* redo DDB on new cpu */
+		}
+#endif /* MULTIPROCESSOR */
+
+		break;
+	}
+
+#ifdef MULTIPROCESSOR
+	if (ncpu > 1) {
+		db_onproc = NULL;
+		membar_producer();
+		__asm __volatile ("sev; sev; sev");
+	}
+	db_trigger = NULL;
+#endif
 
 	return 1;
 }

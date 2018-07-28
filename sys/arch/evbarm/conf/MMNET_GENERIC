@@ -1,4 +1,4 @@
-# $NetBSD: MMNET_GENERIC,v 1.34.2.2 2018/06/25 07:25:40 pgoyette Exp $
+# $NetBSD: MMNET_GENERIC,v 1.34.2.3 2018/07/28 04:37:31 pgoyette Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include		"arch/evbarm/conf/std.mmnet"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.34.2.2 $"
+#ident 		"GENERIC-$Revision: 1.34.2.3 $"
 
 maxusers	32		# estimated number of users
 
@@ -31,9 +31,6 @@ options 	CPU_ARM9E
 makeoptions	CPUFLAGS="-mtune=arm926ej-s -mcpu=arm926ej-s"
 
 # CPU-related options.
-
-# doesn't work with MP just yet..
-#options 	PERFCTRS	# performance-monitoring counters support
 
 #options 	MULTIBOOT	# Multiboot support (see multiboot(8))
 
@@ -282,7 +279,7 @@ ohci0		at at91bus0 addr 0x00500000 size 0x100000 pid 20
 at91twi0	at at91bus0 addr 0xfffac000 size 0x4000 pid 11
 iic0		at at91twi?
 #ds1672rtc*	at iic0 addr 0x68
-#seeprom*	at iic0 addr 0x50 size 4096
+#seeprom*	at iic0 addr 0x50 flags 32	# 4096 bytes
 
 # Hardware monitors
 

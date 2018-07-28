@@ -1,4 +1,4 @@
-#	$NetBSD: CP3100,v 1.46 2017/09/14 07:58:40 mrg Exp $
+#	$NetBSD: CP3100,v 1.46.2.1 2018/07/28 04:37:31 pgoyette Exp $
 #
 #	CP3100 -- Certance CP3100 Kernel
 #
@@ -109,7 +109,6 @@ options 	USERCONF	# userconf(4) support
 
 # Development and Debugging options
 
-options 	PERFCTRS	# performance counters
 options 	DIAGNOSTIC	# internal consistency checks
 #options 	DEBUG
 #options 	PMAP_DEBUG	# Enable pmap_debug_level code

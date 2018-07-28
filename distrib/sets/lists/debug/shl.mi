@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.193.2.4 2018/06/25 07:25:10 pgoyette Exp $
+# $NetBSD: shl.mi,v 1.193.2.5 2018/07/28 04:33:00 pgoyette Exp $
 ./usr/lib/libbfd_g.a						comp-c-debuglib	debuglib,compatfile,binutils
 ./usr/libdata/debug/lib						base-sys-usr	debug,dynamicroot,compatdir
 ./usr/libdata/debug/lib/libblacklist.so.0.0.debug		comp-sys-debug	debug,dynamicroot
@@ -131,6 +131,7 @@
 ./usr/libdata/debug/usr/lib/liblber.so.3.3.debug		comp-ldap-debug	debug,compatfile,ldap
 ./usr/libdata/debug/usr/lib/libldap.so.4.3.debug		comp-ldap-debug	debug,compatfile,ldap
 ./usr/libdata/debug/usr/lib/libldap_r.so.4.3.debug		comp-ldap-debug	debug,compatfile,ldap
+./usr/libdata/debug/usr/lib/liblsan.so.1.0.debug		comp-sys-debug	debug,compatfile,gcc=6
 ./usr/libdata/debug/usr/lib/liblua.so.5.3.debug			comp-sys-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/liblutok.so.1.0.debug		comp-obsolete	debug,compatfile,obsolete
 ./usr/libdata/debug/usr/lib/liblutok.so.2.0.debug		comp-kyua-debug	debug,compatfile,kyua

@@ -1,4 +1,4 @@
-/*	$NetBSD: obs200_machdep.c,v 1.19 2011/06/22 18:06:32 matt Exp $	*/
+/*	$NetBSD: obs200_machdep.c,v 1.19.52.1 2018/07/28 04:37:33 pgoyette Exp $	*/
 /*	Original: machdep.c,v 1.3 2005/01/17 17:24:09 shige Exp	*/
 
 /*
@@ -68,11 +68,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obs200_machdep.c,v 1.19 2011/06/22 18:06:32 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obs200_machdep.c,v 1.19.52.1 2018/07/28 04:37:33 pgoyette Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
-#include "opt_ipkdb.h"
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -170,14 +169,6 @@ initppc(vaddr_t startkernel, vaddr_t endkernel, char *args, void *info_block)
 #ifdef DDB
 	if (boothowto & RB_KDB)
 		Debugger();
-#endif
-#ifdef IPKDB
-	/*
-	 * Now trap to IPKDB
-	 */
-	ipkdb_init();
-	if (boothowto & RB_KDB)
-		ipkdb_connect(0);
 #endif
 
 	/*

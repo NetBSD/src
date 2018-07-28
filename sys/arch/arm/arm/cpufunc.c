@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.167.2.1 2018/04/07 04:12:11 pgoyette Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.167.2.2 2018/07/28 04:37:27 pgoyette Exp $	*/
 
 /*
  * arm7tdmi support code Copyright (c) 2001 John Fremlin
@@ -49,15 +49,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.167.2.1 2018/04/07 04:12:11 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.167.2.2 2018/07/28 04:37:27 pgoyette Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_cpuoptions.h"
-#include "opt_perfctrs.h"
 
 #include <sys/types.h>
 #include <sys/param.h>
-#include <sys/pmc.h>
 #include <sys/systm.h>
 #include <machine/cpu.h>
 #include <machine/bootconfig.h>
@@ -96,10 +94,6 @@ __KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.167.2.1 2018/04/07 04:12:11 pgoyette E
 #include <arm/marvell/armadaxpreg.h>
 #include <arm/marvell/armadaxpvar.h>
 #endif
-#endif
-
-#if defined(PERFCTRS)
-struct arm_pmc_funcs *arm_pmc;
 #endif
 
 #if defined(CPU_ARMV7) && (defined(CPU_ARMV6) || defined(CPU_PRE_ARMV6))
@@ -2068,9 +2062,6 @@ set_cpufuncs(void)
 			: "r" (BCUCTL_E0|BCUCTL_E1|BCUCTL_EV));
 
 		cpufuncs = xscale_cpufuncs;
-#if defined(PERFCTRS)
-		xscale_pmu_init();
-#endif
 
 		/*
 		 * i80200 errata: Step-A0 and A1 have a bug where
@@ -2106,9 +2097,6 @@ set_cpufuncs(void)
 			       PMNC_CC_IF));
 
 		cpufuncs = xscale_cpufuncs;
-#if defined(PERFCTRS)
-		xscale_pmu_init();
-#endif
 
 		get_cachetype_cp15();
 		pmap_pte_init_xscale();
@@ -2122,9 +2110,6 @@ set_cpufuncs(void)
 	    (cputype & ~CPU_ID_XSCALE_COREREV_MASK) == CPU_ID_PXA210) {
 
 		cpufuncs = xscale_cpufuncs;
-#if defined(PERFCTRS)
-		xscale_pmu_init();
-#endif
 
 		get_cachetype_cp15();
 		pmap_pte_init_xscale();
@@ -2141,9 +2126,6 @@ set_cpufuncs(void)
 		ixp425_icu_init();
 
 		cpufuncs = xscale_cpufuncs;
-#if defined(PERFCTRS)
-		xscale_pmu_init();
-#endif
 
 		get_cachetype_cp15();
 		pmap_pte_init_xscale();

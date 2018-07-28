@@ -1,4 +1,4 @@
-# $NetBSD: md.mmeye,v 1.32 2016/08/25 12:17:26 christos Exp $
+# $NetBSD: md.mmeye,v 1.32.12.1 2018/07/28 04:32:59 pgoyette Exp $
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/mmeye				comp-c-include
 ./usr/include/mmeye/_G_config.h			comp-obsolete		obsolete
@@ -41,7 +41,7 @@
 ./usr/include/mmeye/pcb.h			comp-c-include
 ./usr/include/mmeye/pio.h			comp-obsolete		obsolete
 ./usr/include/mmeye/pmap.h			comp-c-include
-./usr/include/mmeye/pmc.h			comp-c-include
+./usr/include/mmeye/pmc.h			comp-obsolete		obsolete
 ./usr/include/mmeye/proc.h			comp-c-include
 ./usr/include/mmeye/profile.h			comp-c-include
 ./usr/include/mmeye/psl.h			comp-c-include

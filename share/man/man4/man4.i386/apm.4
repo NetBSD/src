@@ -24,9 +24,9 @@
 .\" ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"   $NetBSD: apm.4,v 1.18 2011/04/05 08:24:43 wiz Exp $
+.\"   $NetBSD: apm.4,v 1.18.42.1 2018/07/28 04:37:25 pgoyette Exp $
 .\"
-.Dd May 18, 1996
+.Dd July 10, 2018
 .Dt APM 4 i386
 .Os
 .Sh NAME
@@ -49,10 +49,6 @@ jointly by the Intel Corporation and the Microsoft Corporation.
 The APM driver's behavior may be adjusted by specifying any of the
 following kernel configuration options:
 .Bl -tag -width indent -compact
-.It Dv APM_NO_IDLE
-Do not call the BIOS CPU idle function from the system idle loop.
-(Some systems will hang on certain device accesses, such as sound
-cards or floppy diskette drives, without this option)
 .It Dv APM_V10_ONLY
 Use only the APM revision 1.0 specification calls.
 (Some systems do not implement APM v1.1 very well, and generate
@@ -65,10 +61,6 @@ Don't attach to the BIOS as APM v1.2 compliant device.
 Do not attempt to put the system into standby mode.
 .It Dv APM_NO_POWEROFF
 Do not attempt to turn off power when halting the system.
-.It Dv APM_FORCE_64K_SEGMENTS
-Force the length of the APM BIOS code and data segments to 64KB.
-.It Dv APM_ALLOW_BOGUS_SEGMENTS
-Allow the use of data segments which are in unexpected locations.
 .It Dv APMDEBUG
 Enable kernel printout of events received from the APM BIOS.
 .It Dv APMCALLDEBUG
@@ -82,14 +74,6 @@ events.
 activity, it may consume increased battery power.
 Some systems generate the events too frequently,
 and printing the status may disturb single-user operations.)
-.It Dv APM_DISABLE_INTERRUPTS
-Set this to zero if you don't want the kernel to disable interrupts
-before calling the BIOS.
-This is required for most IBM ThinkPads, and some other newer laptops.
-A good indication that you need this is that
-the machine hangs just after resuming from suspended state.
-It's unclear if doing this has negative effects on older BIOS, therefore it
-defaults to one (i.e interrupts are disabled).
 .El
 .Pp
 If no processes are holding open file descriptors to the APM device, the

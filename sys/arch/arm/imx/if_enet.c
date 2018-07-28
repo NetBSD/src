@@ -1,4 +1,4 @@
-/*	$NetBSD: if_enet.c,v 1.12.2.1 2018/05/21 04:35:59 pgoyette Exp $	*/
+/*	$NetBSD: if_enet.c,v 1.12.2.2 2018/07/28 04:37:28 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2014 Ryo Shimizu <ryo@nerv.org>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_enet.c,v 1.12.2.1 2018/05/21 04:35:59 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_enet.c,v 1.12.2.2 2018/07/28 04:37:28 pgoyette Exp $");
 
 #include "vlan.h"
 
@@ -916,7 +916,7 @@ enet_start(struct ifnet *ifp)
 		}
 
 		/* Pass the packet to any BPF listeners */
-		bpf_mtap(ifp, m);
+		bpf_mtap(ifp, m, BPF_D_OUT);
 	}
 
 	if (npkt) {

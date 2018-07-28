@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.12 2016/09/21 18:00:26 mrg Exp $
+#	$NetBSD: Makefile,v 1.12.12.1 2018/07/28 04:37:21 pgoyette Exp $
 
 DRIVER=		xf86-video-nv
 DRIVER_NAME=	nv_drv
 
-SRCS=		nv_cursor.c nv_dac.c nv_dga.c nv_driver.c nv_hw.c
-SRCS+=		nv_setup.c nv_shadow.c nv_video.c riva_cursor.c
+SRCS=		nv_cursor.c nv_dac.c nv_dga.c nv_driver.c nv_exa.c nv_hw.c
+SRCS+=		nv_setup.c nv_shadow.c nv_video.c nv_xaa.c riva_cursor.c
 SRCS+=		riva_dac.c riva_dga.c riva_driver.c riva_hw.c
 SRCS+=		riva_setup.c riva_shadow.c g80_cursor.c
 SRCS+=		g80_dac.c g80_display.c g80_dma.c g80_driver.c g80_exa.c
@@ -13,7 +13,7 @@ MAN=		nv.4
 
 # XAA files have generic functions as well
 #.if ${XORG_SERVER_SUBDIR} == "xorg-server.old"
-SRCS+=		nv_xaa.c riva_xaa.c g80_xaa.c
+SRCS+=		riva_xaa.c g80_xaa.c
 #.endif
 
 .if ${MACHINE} == "macppc"

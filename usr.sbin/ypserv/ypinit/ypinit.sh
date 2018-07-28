@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$NetBSD: ypinit.sh,v 1.12 2004/10/05 11:35:35 tron Exp $
+#	$NetBSD: ypinit.sh,v 1.12.88.1 2018/07/28 04:38:15 pgoyette Exp $
 #
 # ypinit.sh - setup a master or slave YP server
 #
@@ -10,27 +10,27 @@
 #
 
 PATH=/bin:/usr/sbin:/usr/bin:${PATH}
-DOMAINNAME=/bin/domainname
-HOSTNAME=/bin/hostname
+BIN_DOMAINNAME=/bin/domainname
+BIN_HOSTNAME=/bin/hostname
 ID=/usr/bin/id
 INSTALL=/usr/bin/install
 MAKEDBM=/usr/sbin/makedbm
 YPWHICH=/usr/bin/ypwhich
 YPXFR=/usr/sbin/ypxfr
 
-progname=`basename $0`
+progname=$( basename $0 )
 yp_dir=/var/yp
-tmpfile=`mktemp /tmp/ypservers.XXXXXX` || exit 1
+tmpfile=$(mktemp /tmp/ypservers.XXXXXX) || exit 1
 trap "rm -f ${tmpfile} ; exit 0" EXIT INT QUIT
 
 umask 077				# protect created directories
 
-if [ `${ID} -u` != 0 ]; then
+if [ $( ${ID} -u ) != 0 ]; then
 	echo 1>&2 "$progname: you must be root to run this"
 	exit 1
 fi
 
-args=`getopt cl:ms: $*`
+args=$(getopt cl:ms: $*)		# XXX should switch to getopts
 if [ $? -eq 0 ]; then
 	set -- $args
 	for i; do
@@ -66,12 +66,12 @@ if [ $? -eq 0 ]; then
 		domain=${1}
 		shift;
 	else
-		domain=`${DOMAINNAME}`
+		domain=$( ${BIN_DOMAINNAME} )
 	fi
 fi
 
 if [ -z ${servertype} ]; then
-	cat 1>&2 << __usage 
+	cat 1>&2 << __usage
 usage: 	${progname} -c [domainname] [-l server1,...,serverN]
 	${progname} -m [domainname] [-l server1,...,serverN]
 	${progname} -s master_server [domainname] [-l server1,...,serverN]
@@ -95,7 +95,7 @@ __no_domain
 fi
 
 # Check if hostname is set, don't accept an empty hostname
-host=`${HOSTNAME}`
+host=$( ${BIN_HOSTNAME} )
 if [ -z "${host}" ]; then
 	cat 1>&2 << __no_hostname
 $progname: The local host's hostname has not been set.
@@ -258,7 +258,7 @@ master)
 		cp ${yp_dir}/Makefile.main ${yp_dir}/Makefile
 	fi
 
-	subdir=`grep "^SUBDIR=" ${yp_dir}/Makefile`
+	subdir=$(grep "^SUBDIR=" ${yp_dir}/Makefile)
 
 	if [ -z "${subdir}" ]; then
 		echo 1>&2 \
@@ -267,14 +267,14 @@ master)
 	fi
 
 	newsubdir="SUBDIR="
-	for dir in `echo ${subdir} | cut -c8-255`; do
+	for dir in $(echo ${subdir} | cut -c8-255); do
 		if [ "${dir}" != "${domain}" ]; then
 			newsubdir="${newsubdir} ${dir}"
 		fi
 	done
 	newsubdir="${newsubdir} ${domain}"
 
-	if [ -f ${yp_dir}/Makefile.tmp ]; then 
+	if [ -f ${yp_dir}/Makefile.tmp ]; then
 		rm ${yp_dir}/Makefile.tmp
 	fi
 
@@ -305,9 +305,9 @@ master)
 slave)
 	echo ""
 
-	maps=`${YPWHICH} -d ${domain} -h ${master} -f -m 2>/dev/null | \
+	maps=$( ${YPWHICH} -d ${domain} -h ${master} -f -m 2>/dev/null |
 	    awk '{ if (substr($2, 1, length("'$master'")) == "'$master'") \
-		print $1; }'`
+		print $1; }' )
 
 	if [ -z "${maps}" ]; then
 		cat 1>&2 << __no_maps

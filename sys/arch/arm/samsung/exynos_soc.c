@@ -1,4 +1,4 @@
-/*	$NetBSD: exynos_soc.c,v 1.32 2017/06/10 15:13:18 jmcneill Exp $	*/
+/*	$NetBSD: exynos_soc.c,v 1.32.4.1 2018/07/28 04:37:29 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include "opt_exynos.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exynos_soc.c,v 1.32 2017/06/10 15:13:18 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exynos_soc.c,v 1.32.4.1 2018/07/28 04:37:29 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -136,47 +136,6 @@ bus_space_handle_t exynos_sysreg_bsh;
 
 static int sysctl_cpufreq_target(SYSCTLFN_ARGS);
 static int sysctl_cpufreq_current(SYSCTLFN_ARGS);
-
-/*
- * the early serial console
- */
-#ifdef EXYNOS_CONSOLE_EARLY
-
-#include "opt_sscom.h"
-#include <arm/samsung/sscom_reg.h>
-#include <arm/samsung/sscom_var.h>
-#include <dev/cons.h>
-
-static volatile uint8_t *uart_base;
-
-#define CON_REG(a) (*((volatile uint32_t *)(uart_base + (a))))
-
-static int
-exynos_cngetc(dev_t dv)
-{
-        if ((CON_REG(SSCOM_UTRSTAT) & UTRSTAT_RXREADY) == 0)
-		return -1;
-
-	return CON_REG(SSCOM_URXH);
-}
-
-static void
-exynos_cnputc(dev_t dv, int c)
-{
-	int timo = 150000;
-
-	while ((CON_REG(SSCOM_UFSTAT) & UFSTAT_TXFULL) && --timo > 0);
-
-	CON_REG(SSCOM_UTXH) = c & 0xff;
-}
-
-static struct consdev exynos_earlycons = {
-	.cn_putc = exynos_cnputc,
-	.cn_getc = exynos_cngetc,
-	.cn_pollc = nullcnpollc,
-};
-#endif /* EXYNOS_CONSOLE_EARLY */
-
 
 #ifdef ARM_TRUSTZONE_FIRMWARE
 int

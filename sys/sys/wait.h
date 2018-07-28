@@ -1,4 +1,4 @@
-/*	$NetBSD: wait.h,v 1.35 2016/11/10 18:35:17 christos Exp $	*/
+/*	$NetBSD: wait.h,v 1.35.14.1 2018/07/28 04:38:12 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993, 1994
@@ -69,7 +69,7 @@
 #define	WCOREFLAG	0200
 #define WCOREDUMP(x)	(_W_INT(x) & WCOREFLAG)
 
-#define	W_EXITCODE(ret, sig)	((ret) << 8 | (sig))
+#define	W_EXITCODE(ret, sig)	((unsigned int)(ret) << 8 | (sig))
 #define	W_STOPCODE(sig)		((sig) << 8 | _WSTOPPED)
 #define	W_CONTCODE()		(_WCONTINUED)
 #endif

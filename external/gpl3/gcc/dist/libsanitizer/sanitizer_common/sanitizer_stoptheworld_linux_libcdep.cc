@@ -12,8 +12,8 @@
 
 #include "sanitizer_platform.h"
 
-#if SANITIZER_LINUX && (defined(__x86_64__) || defined(__mips__) || \
-                        defined(__aarch64__))
+#if (SANITIZER_NETBSD || SANITIZER_LINUX) && \
+    (defined(__x86_64__) || defined(__mips__) || defined(__aarch64__))
 
 #include "sanitizer_stoptheworld.h"
 
@@ -23,7 +23,10 @@
 #include <errno.h>
 #include <sched.h> // for CLONE_* definitions
 #include <stddef.h>
+#include <signal.h>
+#if SANITIZER_LINUX
 #include <sys/prctl.h> // for PR_* definitions
+#endif
 #include <sys/ptrace.h> // for PTRACE_* definitions
 #include <sys/types.h> // for pid_t
 #include <sys/uio.h> // for iovec
@@ -31,11 +34,23 @@
 #if SANITIZER_ANDROID && defined(__arm__)
 # include <linux/user.h>  // for pt_regs
 #else
-# ifdef __aarch64__
+# if SANITIZER_LINUX && defined( __aarch64__)
 // GLIBC 2.20+ sys/user does not include asm/ptrace.h
 #  include <asm/ptrace.h>
 # endif
-# include <sys/user.h>  // for user_regs_struct
+# if !SANITIZER_NETBSD
+#  include <sys/user.h>  // for user_regs_struct
+# else
+#  define PTRACE_ATTACH PT_ATTACH
+#  define PTRACE_GETREGS PT_GETREGS
+#  define PTRACE_KILL PT_KILL
+#  define PTRACE_DETACH PT_DETACH
+#  define PTRACE_CONT PT_CONTINUE
+#  define CLONE_UNTRACED 0
+#  include <machine/reg.h>
+typedef struct reg user_regs;
+typedef struct reg user_regs_struct;
+# endif
 #endif
 #include <sys/wait.h> // for signal-related stuff
 
@@ -250,7 +265,9 @@ static int TracerThread(void* argument) {
   TracerThreadArgument *tracer_thread_argument =
       (TracerThreadArgument *)argument;
 
+#ifdef PR_SET_PDEADTHSIG
   internal_prctl(PR_SET_PDEATHSIG, SIGKILL, 0, 0, 0);
+#endif
   // Check if parent is already dead.
   if (internal_getppid() != tracer_thread_argument->parent_pid)
     internal__exit(4);
@@ -333,15 +350,19 @@ class StopTheWorldScope {
   StopTheWorldScope() {
     // Make this process dumpable. Processes that are not dumpable cannot be
     // attached to.
+#ifdef PR_GET_DUMPABLE
     process_was_dumpable_ = internal_prctl(PR_GET_DUMPABLE, 0, 0, 0, 0);
     if (!process_was_dumpable_)
       internal_prctl(PR_SET_DUMPABLE, 1, 0, 0, 0);
+#endif
   }
 
   ~StopTheWorldScope() {
+#ifdef PR_GET_DUMPABLE
     // Restore the dumpable flag.
     if (!process_was_dumpable_)
       internal_prctl(PR_SET_DUMPABLE, 0, 0, 0, 0);
+#endif
   }
 
  private:
@@ -443,38 +464,39 @@ void StopTheWorld(StopTheWorldCallback callback, void *argument) {
 }
 
 // Platform-specific methods from SuspendedThreadsList.
-#if SANITIZER_ANDROID && defined(__arm__)
+#if SANITIZER_ANDROID
+# if defined(__arm__)
 typedef pt_regs regs_struct;
-#define REG_SP ARM_sp
-
-#elif SANITIZER_LINUX && defined(__arm__)
+#  define PTRACE_REG_SP(r) (r)->ARM_sp
+# endif
+#elif SANITIZER_LINUX
+# if defined(__arm__)
 typedef user_regs regs_struct;
-#define REG_SP uregs[13]
-
-#elif defined(__i386__) || defined(__x86_64__)
+#  define PTRACE_REG_SP(r) (r)->uregs[13]
+# elif defined(__i386__)
 typedef user_regs_struct regs_struct;
-#if defined(__i386__)
-#define REG_SP esp
-#else
-#define REG_SP rsp
+#  define PTRACE_REG_SP(r) (r)->esp
+# elif defined(__x86_64__)
+typedef user_regs_struct regs_struct;
+#  define PTRACE_REG_SP(r) (r)->rsp
+# elif defined(__powerpc__) || defined(__powerpc64__)
+typedef pt_regs regs_struct;
+#  define PTRACE_REG_SP(r) (r)->gpr[PT_R1]
+# elif defined(__mips__)
+typedef struct user regs_struct;
+#  define PTRACE_REG_SP(r) (r)->regs[EF_REG29]
+# elif defined(__aarch64__)
+typedef struct user_pt_regs regs_struct;
+#  define PTRACE_REG_SP(r) (r)->sp
+#  define ARCH_IOVEC_FOR_GETREGSET
+# endif
+#elif SANITIZER_NETBSD 
+typedef reg regs_struct;
 #endif
 
-#elif defined(__powerpc__) || defined(__powerpc64__)
-typedef pt_regs regs_struct;
-#define REG_SP gpr[PT_R1]
-
-#elif defined(__mips__)
-typedef struct user regs_struct;
-#define REG_SP regs[EF_REG29]
-
-#elif defined(__aarch64__)
-typedef struct user_pt_regs regs_struct;
-#define REG_SP sp
-#define ARCH_IOVEC_FOR_GETREGSET
-
-#else
+#ifndef PTRACE_REG_SP
 #error "Unsupported architecture"
-#endif // SANITIZER_ANDROID && defined(__arm__)
+#endif
 
 int SuspendedThreadsList::GetRegistersAndSP(uptr index,
                                             uptr *buffer,
@@ -499,7 +521,7 @@ int SuspendedThreadsList::GetRegistersAndSP(uptr index,
     return -1;
   }
 
-  *sp = regs.REG_SP;
+  *sp = PTRACE_REG_SP(&regs);
   internal_memcpy(buffer, &regs, sizeof(regs));
   return 0;
 }

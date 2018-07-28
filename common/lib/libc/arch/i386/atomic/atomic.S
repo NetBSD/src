@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic.S,v 1.22 2014/05/23 03:17:31 uebayasi Exp $	*/
+/*	$NetBSD: atomic.S,v 1.22.22.1 2018/07/28 04:32:56 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -43,6 +43,7 @@
 #endif
 
 #ifdef _HARDKERNEL
+#include "opt_xen.h"
 #define	LOCK(n)		.Lpatch ## n:	lock
 #define	ENDLABEL(a)	_ALIGN_TEXT; LABEL(a)
 #else
@@ -196,6 +197,9 @@ END(_membar_sync)
 ENDLABEL(membar_sync_end)
 
 #if defined(__HAVE_ATOMIC64_OPS) || defined(_KERNEL)
+#ifdef XEN
+STRONG_ALIAS(_atomic_cas_64,_atomic_cas_cx8)
+#else
 ENTRY(_atomic_cas_64)
 #ifdef _HARDKERNEL
 	pushf
@@ -227,6 +231,7 @@ ENTRY(_atomic_cas_64)
 	jmp	1b
 END(_atomic_cas_64)
 ENDLABEL(_atomic_cas_64_end)
+#endif /* !XEN */
 
 ENTRY(_atomic_cas_cx8)
 	pushl	%edi

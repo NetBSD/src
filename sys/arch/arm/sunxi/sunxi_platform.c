@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_platform.c,v 1.20.2.3 2018/04/16 01:59:53 pgoyette Exp $ */
+/* $NetBSD: sunxi_platform.c,v 1.20.2.4 2018/07/28 04:37:29 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
 #include "opt_fdt_arm.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_platform.c,v 1.20.2.3 2018/04/16 01:59:53 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_platform.c,v 1.20.2.4 2018/07/28 04:37:29 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -372,7 +372,7 @@ ARM_PLATFORM(sun9i_a80, "allwinner,sun9i-a80", &sun9i_platform);
 
 static const struct arm_platform sun50i_platform = {
 	.devmap = sunxi_platform_devmap,
-	.bootstrap = sunxi_platform_bootstrap,
+	.bootstrap = sunxi_platform_psci_bootstrap,
 	.init_attach_args = sunxi_platform_init_attach_args,
 	.early_putchar = sunxi_platform_early_putchar,
 	.device_register = sunxi_platform_device_register,
@@ -386,7 +386,7 @@ ARM_PLATFORM(sun50i_h5, "allwinner,sun50i-h5", &sun50i_platform);
 
 static const struct arm_platform sun50i_h6_platform = {
 	.devmap = sunxi_platform_devmap,
-	.bootstrap = sunxi_platform_bootstrap,
+	.bootstrap = sunxi_platform_psci_bootstrap,
 	.init_attach_args = sunxi_platform_init_attach_args,
 	.early_putchar = sunxi_platform_early_putchar,
 	.device_register = sunxi_platform_device_register,

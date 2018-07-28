@@ -1,6 +1,6 @@
-/*	$NetBSD: dbregs.h,v 1.4 2017/02/23 03:34:22 kamil Exp $	*/
+/*	$NetBSD: dbregs.h,v 1.4.14.1 2018/07/28 04:37:42 pgoyette Exp $	*/
 
-/*-
+/*
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
@@ -26,7 +26,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-
 #ifndef	_X86_DBREGS_H_
 #define	_X86_DBREGS_H_
 
@@ -50,11 +49,11 @@
 /*
  * CPU Debug Control Register (DR7)
  *
- * LOCAL_EXACT_BREAKPOINT and GLOBAL_EXACT_BREAKPOINT are no longer used since
- * the P6 processor family - portable code should set these bits
- * unconditionally in oder to get exact breakpoints
+ * LOCAL_EXACT_BREAKPOINT and GLOBAL_EXACT_BREAKPOINT are no longer used
+ * since the P6 processor family - portable code should set these bits
+ * unconditionally in order to get exact breakpoints.
  *
- * Reserved bits: 10, 12, 14-15 and on x86_64 32-64
+ * Reserved bits: 10, 12, 14-15 and on x86_64 32-64.
  */
 #define X86_DR7_LOCAL_DR0_BREAKPOINT		__BIT(0)
 #define X86_DR7_GLOBAL_DR0_BREAKPOINT		__BIT(1)
@@ -79,9 +78,9 @@
 #define X86_DR7_DR3_LENGTH_MASK			__BITS(30, 31)
 
 /*
- * X86_DR7_CONDITION_IO_READWRITE is currently unused
- * it requires DE (debug extension) flag in control register CR4 set
- * not all CPUs support it
+ * X86_DR7_CONDITION_IO_READWRITE is currently unused. It requires DE
+ * (debug extension) flag in control register CR4 set, and not all CPUs
+ * support it.
  */
 enum x86_dr7_condition {
 	X86_DR7_CONDITION_EXECUTION		= 0x0,
@@ -91,7 +90,7 @@ enum x86_dr7_condition {
 };
 
 /*
- * 0x2 is currently unimplemented - it reflects 8 bytes on modern CPUs
+ * 0x2 is currently unimplemented - it reflects 8 bytes on modern CPUs.
  */
 enum x86_dr7_length {
 	X86_DR7_LENGTH_BYTE		= 0x0,
@@ -107,46 +106,14 @@ enum x86_dr7_length {
  */
 #define X86_DBREGS	4
 
-/*
- * Store the initial Debug Register state of CPU
- * This copy will be used to initialize new debug register state
- */
-void x86_dbregs_setup_initdbstate(void);
-
-/*
- * Reset CPU Debug Registers - to be used after returning to user context
- */
-void x86_dbregs_clear(struct lwp *l);
-
-/*
- * Retrieve Debug Registers from LWP's PCB and save in regs
- * In case of empty register set, initialize it
- */
-void x86_dbregs_read(struct lwp *l, struct dbreg *regs);
-
-/*
- * Set CPU Debug Registers - to be used before entering user-land context
- */
-void x86_dbregs_set(struct lwp *l);
-
-/*
- * Store DR6 in LWP - to be used in trap function
- */
-void x86_dbregs_store_dr6(struct lwp *l);
-
-/*
- * Check if trap is triggered from user-land if so return nonzero value
- */
+void x86_dbregs_init(void);
+void x86_dbregs_clear(struct lwp *);
+void x86_dbregs_abandon(struct lwp *);
+void x86_dbregs_read(struct lwp *, struct dbreg *);
+void x86_dbregs_store_dr6(struct lwp *);
 int x86_dbregs_user_trap(void);
-
-/*
- * Check if trap is triggered from user-land if so return nonzero value
- */
-int x86_dbregs_validate(const struct dbreg *regs);
-
-/*
- * Write new Debug Registers from regs into LWP's PCB
- */
-void x86_dbregs_write(struct lwp *l, const struct dbreg *regs);
+int x86_dbregs_validate(const struct dbreg *);
+void x86_dbregs_write(struct lwp *, const struct dbreg *);
+void x86_dbregs_switch(struct lwp *, struct lwp *);
 
 #endif /* !_X86_DBREGS_H_ */

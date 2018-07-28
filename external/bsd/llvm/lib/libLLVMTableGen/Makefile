@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2014/08/10 17:34:22 joerg Exp $
+#	$NetBSD: Makefile,v 1.5.22.1 2018/07/28 04:37:12 pgoyette Exp $
 
 LIB=	LLVMTableGen
 
@@ -7,6 +7,7 @@ LIB=	LLVMTableGen
 .PATH: ${LLVM_SRCDIR}/lib/TableGen
 
 SRCS+=	Error.cpp \
+	JSONBackend.cpp \
 	Main.cpp \
 	Record.cpp \
 	SetTheory.cpp \

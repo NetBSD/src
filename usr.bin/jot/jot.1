@@ -1,4 +1,4 @@
-.\"	$NetBSD: jot.1,v 1.15 2017/07/03 21:34:19 wiz Exp $
+.\"	$NetBSD: jot.1,v 1.15.4.1 2018/07/28 04:38:14 pgoyette Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)jot.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd January 5, 2016
+.Dd June 25, 2018
 .Dt JOT 1
 .Os
 .Sh NAME
@@ -104,8 +104,7 @@ in which case the data are inserted rather than appended.
 The last four arguments indicate, respectively,
 the number of data, the lower bound, the upper bound,
 and the step size or, for random data, the seed.
-While at least one of them must appear,
-any of the other three may be omitted, and
+Any argument may be omitted, and
 will be considered as such if given as
 .Dq - .
 Any three of these arguments determines the fourth.

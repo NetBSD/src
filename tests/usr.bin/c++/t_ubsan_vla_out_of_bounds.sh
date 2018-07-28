@@ -187,8 +187,8 @@ atf_init_test_cases()
 		return 0
 	}
 	atf_add_test_case vla_out_of_bounds
-	atf_add_test_case vla_out_of_bounds_profile
+#	atf_add_test_case vla_out_of_bounds_profile
 	atf_add_test_case vla_out_of_bounds_pie
 	atf_add_test_case vla_out_of_bounds_pic
-	atf_add_test_case vla_out_of_bounds32
+#	atf_add_test_case vla_out_of_bounds32
 }

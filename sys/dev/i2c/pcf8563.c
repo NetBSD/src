@@ -1,4 +1,4 @@
-/*	$NetBSD: pcf8563.c,v 1.8.2.1 2018/06/25 07:25:50 pgoyette Exp $	*/
+/*	$NetBSD: pcf8563.c,v 1.8.2.2 2018/07/28 04:37:44 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2011 Jonathan A. Kollasch
@@ -32,7 +32,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcf8563.c,v 1.8.2.1 2018/06/25 07:25:50 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcf8563.c,v 1.8.2.2 2018/07/28 04:37:44 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,15 +48,10 @@ __KERNEL_RCSID(0, "$NetBSD: pcf8563.c,v 1.8.2.1 2018/06/25 07:25:50 pgoyette Exp
 #include <dev/fdt/fdtvar.h>
 #endif
 
-static const char *compatible[] = {
-	"nxp,pcf8563",
-	"pcf8563rtc",
-	NULL
-};
-
-static const struct device_compatible_entry pcf8563rtc_compat_data[] = {
-	DEVICE_COMPAT_ENTRY(compatible),
-	DEVICE_COMPAT_TERMINATOR
+static const struct device_compatible_entry compat_data[] = {
+	{ "nxp,pcf8563",		0 },
+	{ "pcf8563rtc",			0 },
+	{ NULL,				0 }
 };
 
 struct pcf8563rtc_softc {
@@ -83,7 +78,7 @@ pcf8563rtc_match(device_t parent, cfdata_t cf, void *aux)
 	struct i2c_attach_args *ia = aux;
 	int match_result;
 
-	if (iic_use_direct_match(ia, cf, pcf8563rtc_compat_data, &match_result))
+	if (iic_use_direct_match(ia, cf, compat_data, &match_result))
 		return match_result;
 
 	/* indirect config - check typical address */

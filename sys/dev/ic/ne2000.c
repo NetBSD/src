@@ -1,4 +1,4 @@
-/*	$NetBSD: ne2000.c,v 1.74 2013/08/11 12:34:16 rkujawa Exp $	*/
+/*	$NetBSD: ne2000.c,v 1.74.28.1 2018/07/28 04:37:45 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -48,9 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ne2000.c,v 1.74 2013/08/11 12:34:16 rkujawa Exp $");
-
-#include "opt_ipkdb.h"
+__KERNEL_RCSID(0, "$NetBSD: ne2000.c,v 1.74.28.1 2018/07/28 04:37:45 pgoyette Exp $");
 
 #include "rtl80x9.h"
 
@@ -76,10 +74,6 @@ __KERNEL_RCSID(0, "$NetBSD: ne2000.c,v 1.74 2013/08/11 12:34:16 rkujawa Exp $");
 #define	bus_space_write_multi_stream_2	bus_space_write_multi_2
 #define	bus_space_read_multi_stream_2	bus_space_read_multi_2
 #endif /* __BUS_SPACE_HAS_STREAM_METHODS */
-
-#ifdef IPKDB_NE
-#include <ipkdb/ipkdb.h>
-#endif
 
 #include <dev/ic/dp8390reg.h>
 #include <dev/ic/dp8390var.h>
@@ -884,141 +878,6 @@ ne2000_detach(struct ne2000_softc *sc, int flags)
 
 	return dp8390_detach(&sc->sc_dp8390, flags);
 }
-
-#ifdef IPKDB_NE
-/*
- * This code is essentially the same as ne2000_attach above.
- */
-int
-ne2000_ipkdb_attach(struct ipkdb_if *kip)
-{
-	struct ne2000_softc *np = kip->port;
-	struct dp8390_softc *dp = &np->sc_dp8390;
-	bus_space_tag_t nict = dp->sc_regt;
-	bus_space_handle_t nich = dp->sc_regh;
-	bus_space_tag_t asict = np->sc_asict;
-	bus_space_handle_t asich = np->sc_asich;
-	int i, useword;
-
-#ifdef GWETHER
-	/* Not supported (yet?) */
-	return -1;
-#endif
-
-	if (np->sc_type == NE2000_TYPE_UNKNOWN)
-		np->sc_type = ne2000_detect(nict, nich, asict, asich);
-	if (np->sc_type == NE2000_TYPE_UNKNOWN)
-		return -1;
-
-	switch (np->sc_type) {
-	case NE2000_TYPE_NE1000:
-		dp->mem_start = 8192;
-		dp->mem_size = 8192;
-		useword = 0;
-		kip->name = "ne1000";
-		break;
-	case NE2000_TYPE_NE2000:
-	case NE2000_TYPE_AX88190:
-	case NE2000_TYPE_AX88790:
-	case NE2000_TYPE_AX88796:
-#if NRTL80X9 > 0
-	case NE2000_TYPE_RTL8019:
-#endif
-		dp->mem_start = 16384;
-		dp->mem_size = 16384;
-		useword = 1;
-		if (
-#ifdef NE2000_DETECT_8BIT
-		    ne2000_detect_8bit(nict, nich, asict, asich) ||
-#endif
-		    (np->sc_quirk & NE2000_QUIRK_8BIT) != 0) {
-			/* in 8 bit mode, only 8KB memory can be used */
-			dp->mem_size = 8192;
-			useword = 0;
-		}
-		kip->name =
-		    (np->sc_type == NE2000_TYPE_AX88190 ||
-		     np->sc_type == NE2000_TYPE_AX88790) ?
-		    "ax88190" : "ne2000";
-		break;
-	case NE2000_TYPE_DL10019:
-	case NE2000_TYPE_DL10022:
-		dp->mem_start = 8192 * 3;
-		dp->mem_size = 8192 * 3;
-		useword = 1;
-		kip->name = (np->sc_type == NE2000_TYPE_DL10019) ?
-		    "dl10022" : "dl10019";
-		break;
-	default:
-		return -1;
-		break;
-	}
-
-	np->sc_useword = useword;
-#if NRTL80X9 > 0
-	if (np->sc_type == NE2000_TYPE_RTL8019) {
-		dp->init_card = rtl80x9_init_card;
-		dp->sc_media_init = rtl80x9_media_init;
-		dp->sc_mediachange = rtl80x9_mediachange;
-		dp->sc_mediastatus = rtl80x9_mediastatus;
-	}
-#endif
-
-	dp->cr_proto = ED_CR_RD2;
-	if (np->sc_type == NE2000_TYPE_AX88190 ||
-	    np->sc_type == NE2000_TYPE_AX88790) {
-		dp->rcr_proto = ED_RCR_INTT;
-		dp->sc_flags |= DP8390_DO_AX88190_WORKAROUND;
-	} else
-		dp->rcr_proto = 0;
-	dp->dcr_reg = ED_DCR_FT1 | ED_DCR_LS | (useword ? ED_DCR_WTS : 0);
-
-	dp->test_mem = ne2000_test_mem;
-	dp->ring_copy = ne2000_ring_copy;
-	dp->write_mbuf = ne2000_write_mbuf;
-	dp->read_hdr = ne2000_read_hdr;
-
-	for (i = 0; i < 16; i++)
-		dp->sc_reg_map[i] = i;
-
-	if (dp8390_ipkdb_attach(kip))
-		return -1;
-
-	if (!(kip->flags & IPKDB_MYHW)) {
-		char romdata[16];
-
-		/* Read the station address. */
-		if (np->sc_type == NE2000_TYPE_AX88190 ||
-		    np->sc_type == NE2000_TYPE_AX88790 ||
-		    np->sc_type == NE2000_TYPE_AX88796) {
-			/* Select page 0 registers. */
-			NIC_BARRIER(nict, nich);
-			bus_space_write_1(nict, nich, ED_P0_CR,
-				ED_CR_RD2 | ED_CR_PAGE_0 | ED_CR_STA);
-			NIC_BARRIER(nict, nich);
-			/* Select word transfer */
-			bus_space_write_1(nict, nich, ED_P0_DCR,
-			    useword ? ED_DCR_WTS : 0);
-			ne2000_readmem(nict, nich, asict, asich,
-				AX88190_NODEID_OFFSET, kip->myenetaddr,
-				ETHER_ADDR_LEN, useword);
-		} else {
-			bool ne1000 = (np->sc_type == NE2000_TYPE_NE1000);
-
-			ne2000_readmem(nict, nich, asict, asich,
-				0, romdata, sizeof romdata, useword);
-			for (i = 0; i < ETHER_ADDR_LEN; i++)
-				kip->myenetaddr[i] =
-				    romdata[i * (ne1000 ? 1 : 2)];
-		}
-		kip->flags |= IPKDB_MYHW;
-
-	}
-	dp8390_stop(dp);
-
-	return 0;
-}
-#endif
 
 bool
 ne2000_suspend(device_t self, const pmf_qual_t *qual)
