@@ -1,4 +1,4 @@
-/*	$NetBSD: pdqvar.h,v 1.48 2017/06/22 16:46:53 flxd Exp $	*/
+/*	$NetBSD: pdqvar.h,v 1.48.4.1 2018/07/28 04:37:45 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -130,7 +130,7 @@ typedef	u_int16_t pdq_bus_ioport_t;
 typedef volatile pdq_uint32_t *pdq_bus_memaddr_t;
 typedef pdq_bus_memaddr_t pdq_bus_memoffset_t;
 #if BSD >= 199506	/* __FreeBSD__ */
-#define	PDQ_BPF_MTAP(sc, m)	bpf_mtap(&(sc)->sc_if, m)
+#define	PDQ_BPF_MTAP(sc, m, d)	bpf_mtap(&(sc)->sc_if, m, d)
 #define	PDQ_BPFATTACH(sc, t, s)	bpfattach(&(sc)->sc_if, t, s)
 #endif
 
@@ -247,7 +247,7 @@ extern void pdq_os_databuf_free(struct _pdq_os_ctx_t *, struct mbuf *);
 #endif
 
 #if !defined(PDQ_BPF_MTAP)
-#define	PDQ_BPF_MTAP(sc, m)	bpf_mtap3((sc)->sc_bpf, m)
+#define	PDQ_BPF_MTAP(sc, m, d)	bpf_mtap3((sc)->sc_bpf, m, d)
 #endif
 
 #if !defined(PDQ_BPFATTACH)

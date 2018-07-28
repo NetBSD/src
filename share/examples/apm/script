@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: script,v 1.5 2003/03/10 16:14:37 david Exp $
+# $NetBSD: script,v 1.5.94.1 2018/07/28 04:37:24 pgoyette Exp $
 #
 
 #
@@ -44,7 +44,7 @@ case $0 in
 	umount -a    -t nfs
 	umount -a -f -t nfs
 	ifconfig $if down
-	sh /etc/rc.d/dhclient stop
+	sh /etc/rc.d/dhcpcd stop
 	$LOGGER 'Suspending done.'
 	;;
 
@@ -55,14 +55,14 @@ case $0 in
 	umount -a    -t nfs
 	umount -a -f -t nfs
 	ifconfig $if down
-	sh /etc/rc.d/dhclient stop
+	sh /etc/rc.d/dhcpcd stop
 	$LOGGER 'Standby done.'
 	;;
 
 *resume)
 	$LOGGER 'Resuming...'
 	noise $S/KDE_Startup.wav
-	sh /etc/rc.d/dhclient start
+	sh /etc/rc.d/dhcpcd start
 	# mount /home
 	# mount /data
 	$LOGGER 'Resuming done.'

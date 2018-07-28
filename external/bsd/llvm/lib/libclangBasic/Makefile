@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16 2017/08/01 20:07:42 joerg Exp $
+#	$NetBSD: Makefile,v 1.16.2.1 2018/07/28 04:37:13 pgoyette Exp $
 
 LIB=	clangBasic
 
@@ -23,6 +23,7 @@ SRCS+=	Attributes.cpp \
 	OpenMPKinds.cpp \
 	OperatorPrecedence.cpp \
 	SanitizerBlacklist.cpp \
+	SanitizerSpecialCaseList.cpp \
 	Sanitizers.cpp \
 	SourceLocation.cpp \
 	SourceManager.cpp \
@@ -30,10 +31,38 @@ SRCS+=	Attributes.cpp \
 	Targets.cpp \
 	TokenKinds.cpp \
 	Version.cpp \
-	VersionTuple.cpp \
 	VirtualFileSystem.cpp \
 	Warnings.cpp \
+	XRayInstr.cpp \
 	XRayLists.cpp
+
+.PATH: ${CLANG_SRCDIR}/lib/Basic/Targets
+
+SRCS+=	AArch64.cpp \
+	AMDGPU.cpp \
+	ARM.cpp \
+	AVR.cpp \
+	BPF.cpp \
+	Hexagon.cpp \
+	Lanai.cpp \
+	Le64.cpp \
+	MSP430.cpp \
+	Mips.cpp \
+	NVPTX.cpp \
+	Nios2.cpp \
+	OSTargets.cpp \
+	PNaCl.cpp \
+	PPC.cpp \
+	RISCV.cpp \
+	SPIR.cpp \
+	Sparc.cpp \
+	SystemZ.cpp \
+	TCE.cpp \
+	WebAssembly.cpp \
+	X86.cpp \
+	XCore.cpp
+
+CPPFLAGS+=	-I${CLANG_SRCDIR}/lib/Basic
 
 CPPFLAGS.Version.cpp=	-DSVN_REVISION=\"${CLANG_REVISION}\" \
 			-DLLVM_REVISION=\"${LLVM_REVISION}\"

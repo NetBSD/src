@@ -1,4 +1,4 @@
-#	$NetBSD: NSLU2,v 1.42 2017/09/14 07:58:40 mrg Exp $
+#	$NetBSD: NSLU2,v 1.42.2.1 2018/07/28 04:37:31 pgoyette Exp $
 #
 #	Linksys NSLU2 "Slug" NAS Device
 #
@@ -112,7 +112,6 @@ options 	CONUNIT=0		# Console port number
 
 # Development and Debugging options
 
-#options 	PERFCTRS	# performance counters
 options 	DIAGNOSTIC	# internal consistency checks
 options 	DEBUG
 #options 	PMAP_DEBUG	# Enable pmap_debug_level code

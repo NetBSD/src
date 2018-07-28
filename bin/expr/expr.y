@@ -1,4 +1,4 @@
-/* $NetBSD: expr.y,v 1.39.12.1 2018/06/25 07:25:04 pgoyette Exp $ */
+/* $NetBSD: expr.y,v 1.39.12.2 2018/07/28 04:32:56 pgoyette Exp $ */
 
 /*_
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 %{
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: expr.y,v 1.39.12.1 2018/06/25 07:25:04 pgoyette Exp $");
+__RCSID("$NetBSD: expr.y,v 1.39.12.2 2018/07/28 04:32:56 pgoyette Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -351,17 +351,27 @@ perform_arith_op(const char *left, const char *op, const char *right)
 		 * Check for over-& underflow.
 		 */
 
-		/* Simplify the conditions */
+		/*
+		 * Simplify the conditions:
+		 *  - remove the case of both negative arguments
+		 *    unless the operation will cause an overflow
+		 */
 		if (l < 0 && r < 0 && l != INT64_MIN && r != INT64_MIN) {
 			l = -l;
 			r = -r;
 		}
 
+		/* - remove the case of legative l and positive r */
+		if (l < 0 && r >= 0) {
+			/* Use res as a temporary variable */
+			res = l;
+			l = r;
+			r = res;
+		}
+
 		if ((l < 0 && r < 0) ||
-		    ((l != 0 && r != 0) &&
-		     (((l > 0 && r > 0) && (l > INT64_MAX / r)) ||
-		     ((((l < 0 && r > 0) || (l > 0 && r < 0)) &&
-		      (r != -1 && (l < INT64_MIN / r))))))) {
+		    (r > 0 && l > INT64_MAX / r) ||
+		    (r <= 0 && l != 0 && r < INT64_MIN / l)) {
 			yyerror("integer overflow or underflow occurred for "
 			    "operation '%s %s %s'", left, op, right);
 			/* NOTREACHED */

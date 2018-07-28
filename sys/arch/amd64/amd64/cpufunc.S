@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.S,v 1.31 2017/11/01 09:17:28 maxv Exp $	*/
+/*	$NetBSD: cpufunc.S,v 1.31.2.1 2018/07/28 04:37:26 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007, 2008 The NetBSD Foundation, Inc.
@@ -344,7 +344,7 @@ END(wrxcr)
 /*
  * MSR operations fault handler
  */
-NENTRY(msr_onfault)
+ENTRY(msr_onfault)
 	movq	CPUVAR(CURLWP), %r8
 	movq	L_PCB(%r8), %r8
 	movq	$0, PCB_ONFAULT(%r8)
@@ -382,6 +382,14 @@ ENTRY(rdpmc)
 	orq	%rdx, %rax
 	ret
 END(rdpmc)
+
+ENTRY(rdtsc)
+	xorq	%rax,%rax
+	rdtsc
+	shlq	$32,%rdx
+	orq	%rdx,%rax
+	ret
+END(rdtsc)
 
 ENTRY(breakpoint)
 	pushq	%rbp
@@ -499,7 +507,7 @@ ENTRY(x86_mwait)
 	ret
 END(x86_mwait)
 
-NENTRY(x86_pause)
+ENTRY(x86_pause)
 	pause
 	ret
 END(x86_pause)

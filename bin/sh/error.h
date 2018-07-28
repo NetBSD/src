@@ -1,4 +1,4 @@
-/*	$NetBSD: error.h,v 1.19 2012/03/15 02:02:20 joerg Exp $	*/
+/*	$NetBSD: error.h,v 1.19.32.1 2018/07/28 04:32:56 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -83,9 +83,9 @@ extern volatile int suppressint;
 extern volatile int intpending;
 
 #define INTOFF suppressint++
-#define INTON { if (--suppressint == 0 && intpending) onint(); }
-#define FORCEINTON {suppressint = 0; if (intpending) onint();}
-#define CLEAR_PENDING_INT intpending = 0
+#define INTON do { if (--suppressint == 0 && intpending) onint(); } while (0)
+#define FORCEINTON do { suppressint = 0; if (intpending) onint(); } while (0)
+#define CLEAR_PENDING_INT (intpending = 0)
 #define int_pending() intpending
 
 #if ! defined(SHELL_BUILTIN)

@@ -1,4 +1,4 @@
-# $NetBSD: md.amigappc,v 1.14 2015/12/20 16:22:39 christos Exp $
+# $NetBSD: md.amigappc,v 1.14.14.1 2018/07/28 04:32:59 pgoyette Exp $
 ./usr/include/amigappc				comp-c-include
 ./usr/include/amigappc/_G_config.h		comp-obsolete		obsolete
 ./usr/include/amigappc/ansi.h			comp-c-include
@@ -39,7 +39,7 @@
 ./usr/include/amigappc/pcb.h			comp-c-include
 ./usr/include/amigappc/pio.h			comp-obsolete		obsolete
 ./usr/include/amigappc/pmap.h			comp-c-include
-./usr/include/amigappc/pmc.h			comp-c-include
+./usr/include/amigappc/pmc.h			comp-obsolete		obsolete
 ./usr/include/amigappc/powerpc.h		comp-obsolete		obsolete
 ./usr/include/amigappc/proc.h			comp-c-include
 ./usr/include/amigappc/profile.h		comp-c-include

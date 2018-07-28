@@ -1,4 +1,4 @@
-# $NetBSD: ad.arm,v 1.83.2.1 2018/03/22 01:44:40 pgoyette Exp $
+# $NetBSD: ad.arm,v 1.83.2.2 2018/07/28 04:32:59 pgoyette Exp $
 ./usr/include/acorn26				comp-obsolete		obsolete
 ./usr/include/acorn26/ansi.h			comp-obsolete		obsolete
 ./usr/include/acorn26/aout_machdep.h		comp-obsolete		obsolete
@@ -165,7 +165,7 @@
 ./usr/include/arm/mutex.h			comp-c-include
 ./usr/include/arm/param.h			comp-c-include
 ./usr/include/arm/pcb.h				comp-c-include
-./usr/include/arm/pmc.h				comp-c-include
+./usr/include/arm/pmc.h				comp-obsolete		obsolete
 ./usr/include/arm/proc.h			comp-c-include
 ./usr/include/arm/profile.h			comp-c-include
 ./usr/include/arm/ptrace.h			comp-c-include
@@ -301,8 +301,10 @@
 ./usr/include/clang-3.8/arm_neon.h		comp-obsolete		obsolete
 ./usr/include/clang-4.0/arm_acle.h		comp-obsolete		obsolete
 ./usr/include/clang-4.0/arm_neon.h		comp-obsolete		obsolete
-./usr/include/clang-5.0/arm_acle.h		comp-c-include		llvm
-./usr/include/clang-5.0/arm_neon.h		comp-c-include		llvm
+./usr/include/clang-5.0/arm_acle.h		comp-obsolete		obsolete
+./usr/include/clang-5.0/arm_neon.h		comp-obsolete		obsolete
+./usr/include/clang-7.0/arm_acle.h		comp-c-include		llvm
+./usr/include/clang-7.0/arm_neon.h		comp-c-include		llvm
 ./usr/include/epoc32				comp-c-include
 ./usr/include/epoc32/ansi.h			comp-obsolete		obsolete
 ./usr/include/epoc32/aout_machdep.h		comp-obsolete		obsolete
@@ -570,7 +572,7 @@
 ./usr/include/netwinder/varargs.h		comp-obsolete		obsolete
 ./usr/include/netwinder/vmparam.h		comp-obsolete		obsolete
 ./usr/include/netwinder/wchar_limits.h		comp-obsolete		obsolete
-./usr/include/pmc.h				comp-c-include
+./usr/include/pmc.h				comp-obsolete		obsolete
 ./usr/include/shark				comp-c-include
 ./usr/include/shark/ansi.h			comp-obsolete		obsolete
 ./usr/include/shark/aout_machdep.h		comp-obsolete		obsolete
@@ -678,8 +680,8 @@
 ./usr/lib/libarm_p.a				comp-c-lib		profile,compatfile
 ./usr/lib/libc_vfp.a				comp-c-lib		softfloat
 ./usr/lib/libc_vfp_p.a				comp-c-lib		profile,softfloat
-./usr/lib/libpmc.a				comp-c-lib		compatfile
-./usr/lib/libpmc_p.a				comp-c-proflib		profile,compatfile
+./usr/lib/libpmc.a				comp-obsolete		obsolete
+./usr/lib/libpmc_p.a				comp-obsolete		obsolete
 ./usr/lib/oabi/libc_vfp.a			comp-c-lib		compat
 ./usr/lib/oabi/libc_vfp.so			base-sys-shlib		compat,pic
 ./usr/lib/oabi/libc_vfp_p.a			comp-c-proflib		compat,profile

@@ -7,7 +7,7 @@
 ; Function Attrs: minsize nounwind optsize readonly
 define %struct.s* @s_idx(%struct.s* readonly %xl) local_unnamed_addr #0 !dbg !8 {
 entry:
-  tail call void @llvm.dbg.value(metadata %struct.s* %xl, i64 0, metadata !17, metadata !18), !dbg !19
+  tail call void @llvm.dbg.value(metadata %struct.s* %xl, metadata !17, metadata !18), !dbg !19
   br label %while.cond, !dbg !20
 
 while.cond:                                       ; preds = %while.body, %entry
@@ -18,7 +18,7 @@ while.cond:                                       ; preds = %while.body, %entry
 while.body:                                       ; preds = %while.cond
   %next = getelementptr inbounds %struct.s, %struct.s* %xl.addr.0, i32 0, i32 0
   %0 = load %struct.s*, %struct.s** %next, align 4
-  tail call void @llvm.dbg.value(metadata %struct.s* %0, i64 0, metadata !17, metadata !18), !dbg !19
+  tail call void @llvm.dbg.value(metadata %struct.s* %0, metadata !17, metadata !18), !dbg !19
   br label %while.cond
 
 while.end:                                        ; preds = %while.cond
@@ -26,7 +26,7 @@ while.end:                                        ; preds = %while.cond
 }
 
 ; Function Attrs: nounwind readnone
-declare void @llvm.dbg.value(metadata, i64, metadata, metadata) #1
+declare void @llvm.dbg.value(metadata, metadata, metadata) #1
 
 !llvm.dbg.cu = !{!0}
 !llvm.module.flags = !{!3, !4, !5, !6}
@@ -39,7 +39,7 @@ declare void @llvm.dbg.value(metadata, i64, metadata, metadata) #1
 !5 = !{i32 1, !"wchar_size", i32 4}
 !6 = !{i32 1, !"min_enum_size", i32 4}
 !7 = !{!"clang version 4.0.0 "}
-!8 = distinct !DISubprogram(name: "s_idx", scope: !1, file: !1, line: 6, type: !9, isLocal: false, isDefinition: true, scopeLine: 7, flags: DIFlagPrototyped, isOptimized: true, unit: !0, variables: !16)
+!8 = distinct !DISubprogram(name: "s_idx", scope: !1, file: !1, line: 6, type: !9, isLocal: false, isDefinition: true, scopeLine: 7, flags: DIFlagPrototyped, isOptimized: true, unit: !0, retainedNodes: !16)
 !9 = !DISubroutineType(types: !10)
 !10 = !{!11, !11}
 !11 = !DIDerivedType(tag: DW_TAG_typedef, name: "ezxml_t", file: !1, line: 1, baseType: !12)

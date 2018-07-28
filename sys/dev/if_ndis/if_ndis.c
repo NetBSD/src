@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ndis.c,v 1.39 2018/02/08 09:05:19 dholland Exp $	*/
+/*	$NetBSD: if_ndis.c,v 1.39.2.1 2018/07/28 04:37:45 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2003
@@ -37,7 +37,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/if_ndis/if_ndis.c,v 1.69.2.6 2005/03/31 04:24:36 wpaul Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: if_ndis.c,v 1.39 2018/02/08 09:05:19 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ndis.c,v 1.39.2.1 2018/07/28 04:37:45 pgoyette Exp $");
 #endif
 
 
@@ -1436,7 +1436,7 @@ ndis_start(struct ifnet *ifp)
 		 * If there's a BPF listener, bounce a copy of this frame
 		 * to him.
 		 */
-		bpf_mtap(ifp, m);
+		bpf_mtap(ifp, m, BPF_D_OUT);
 		/*
 		 * The array that p0 points to must appear contiguous,
 		 * so we must not wrap past the end of sc->ndis_txarray[].

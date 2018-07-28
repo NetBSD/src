@@ -79,7 +79,7 @@ public:
   }
 };
 
-/// \brief Dumps deserialized declarations.
+/// Dumps deserialized declarations.
 class DeserializedDeclsDumper : public DelegatingDeserializationListener {
 public:
   explicit DeserializedDeclsDumper(ASTDeserializationListener *Previous,
@@ -88,15 +88,17 @@ public:
 
   void DeclRead(serialization::DeclID ID, const Decl *D) override {
     llvm::outs() << "PCH DECL: " << D->getDeclKindName();
-    if (const NamedDecl *ND = dyn_cast<NamedDecl>(D))
-      llvm::outs() << " - " << *ND;
+    if (const NamedDecl *ND = dyn_cast<NamedDecl>(D)) {
+      llvm::outs() << " - ";
+      ND->printQualifiedName(llvm::outs());
+    }
     llvm::outs() << "\n";
 
     DelegatingDeserializationListener::DeclRead(ID, D);
   }
 };
 
-/// \brief Checks deserialized declarations and emits error if a name
+/// Checks deserialized declarations and emits error if a name
 /// matches one given in command-line using -error-on-deserialized-decl.
 class DeserializedDeclsChecker : public DelegatingDeserializationListener {
   ASTContext &Ctx;
@@ -151,6 +153,10 @@ FrontendAction::CreateWrappedASTConsumer(CompilerInstance &CI,
 
   // If there are no registered plugins we don't need to wrap the consumer
   if (FrontendPluginRegistry::begin() == FrontendPluginRegistry::end())
+    return Consumer;
+
+  // If this is a code completion run, avoid invoking the plugin consumers
+  if (CI.hasCodeCompletionConsumer())
     return Consumer;
 
   // Collect the list of plugins that go before the main action (in Consumers)
@@ -282,7 +288,7 @@ static void addHeaderInclude(StringRef HeaderName,
     Includes += "}\n";
 }
 
-/// \brief Collect the set of header includes needed to construct the given 
+/// Collect the set of header includes needed to construct the given 
 /// module and update the TopHeaders file set of the module.
 ///
 /// \param Module The module we're collecting includes from.
@@ -633,18 +639,12 @@ bool FrontendAction::BeginSourceFile(CompilerInstance &CI,
     return true;
   }
 
-  if (!CI.hasVirtualFileSystem()) {
-    if (IntrusiveRefCntPtr<vfs::FileSystem> VFS =
-          createVFSFromCompilerInvocation(CI.getInvocation(),
-                                          CI.getDiagnostics()))
-      CI.setVirtualFileSystem(VFS);
-    else
-      goto failure;
-  }
-
   // Set up the file and source managers, if needed.
-  if (!CI.hasFileManager())
-    CI.createFileManager();
+  if (!CI.hasFileManager()) {
+    if (!CI.createFileManager()) {
+      goto failure;
+    }
+  }
   if (!CI.hasSourceManager())
     CI.createSourceManager(CI.getFileManager());
 
@@ -754,10 +754,11 @@ bool FrontendAction::BeginSourceFile(CompilerInstance &CI,
         goto failure;
 
       // Reinitialize the main file entry to refer to the new input.
-      if (!CI.InitializeSourceManager(FrontendInputFile(
-              Buffer.release(), Input.getKind().withFormat(InputKind::Source),
-              CurrentModule->IsSystem)))
-        goto failure;
+      auto Kind = CurrentModule->IsSystem ? SrcMgr::C_System : SrcMgr::C_User;
+      auto &SourceMgr = CI.getSourceManager();
+      auto BufferID = SourceMgr.createFileID(std::move(Buffer), Kind);
+      assert(BufferID.isValid() && "couldn't creaate module buffer ID");
+      SourceMgr.setMainFileID(BufferID);
     }
   }
 
@@ -862,6 +863,13 @@ bool FrontendAction::BeginSourceFile(CompilerInstance &CI,
     else
       CI.getDiagnostics().Report(diag::err_module_map_not_found) << Filename;
   }
+
+  // Add a module declaration scope so that modules from -fmodule-map-file
+  // arguments may shadow modules found implicitly in search paths.
+  CI.getPreprocessor()
+      .getHeaderSearchInfo()
+      .getModuleMap()
+      .finishModuleDeclarationScope();
 
   // If we were asked to load any module files, do so now.
   for (const auto &ModuleFile : CI.getFrontendOpts().ModuleFiles)

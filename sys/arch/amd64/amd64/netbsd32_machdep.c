@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.115 2017/12/07 23:11:50 christos Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.115.2.1 2018/07/28 04:37:26 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.115 2017/12/07 23:11:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.115.2.1 2018/07/28 04:37:26 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -63,6 +63,7 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.115 2017/12/07 23:11:50 chris
 #include <sys/kauth.h>
 
 #include <x86/fpu.h>
+#include <x86/dbregs.h>
 #include <machine/frame.h>
 #include <machine/reg.h>
 #include <machine/vmparam.h>
@@ -79,8 +80,6 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.115 2017/12/07 23:11:50 chris
 
 #include <compat/sys/signal.h>
 #include <compat/sys/signalvar.h>
-
-extern struct pool x86_dbregspl;
 
 /* Provide a the name of the architecture we're emulating */
 const char	machine32[] = "i386";
@@ -138,10 +137,7 @@ netbsd32_setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 	fpu_save_area_clear(l, pack->ep_osversion >= 699002600
 	    ?  __NetBSD_NPXCW__ : __NetBSD_COMPAT_NPXCW__);
 
-	if (pcb->pcb_dbregs != NULL) {
-		pool_put(&x86_dbregspl, pcb->pcb_dbregs);
-		pcb->pcb_dbregs = NULL;
-	}
+	x86_dbregs_clear(l);
 
 	p->p_flag |= PK_32;
 

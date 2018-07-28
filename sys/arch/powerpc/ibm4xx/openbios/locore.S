@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.11 2014/08/05 16:28:39 joerg Exp $	*/
+/*	$NetBSD: locore.S,v 1.11.26.1 2018/07/28 04:37:39 pgoyette Exp $	*/
 /*	$OpenBSD: locore.S,v 1.4 1997/01/26 09:06:38 rahnds Exp $	*/
 
 /*
@@ -70,7 +70,6 @@
 #undef PPC_4XX_NOCACHE
 
 #include "opt_ddb.h"
-#include "opt_ipkdb.h"
 #include "opt_lockdebug.h"
 #include "opt_modular.h"
 #include "opt_multiprocessor.h"

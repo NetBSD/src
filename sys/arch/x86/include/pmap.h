@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.76.2.2 2018/06/25 07:25:47 pgoyette Exp $	*/
+/*	$NetBSD: pmap.h,v 1.76.2.3 2018/07/28 04:37:42 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -152,6 +152,25 @@ struct bootspace {
 	/* Area dedicated to kernel modules (amd64 only). */
 	vaddr_t smodule;
 	vaddr_t emodule;
+};
+
+#define SLSPACE_NONE	0
+#define SLAREA_USER	1
+#define SLAREA_PTE	2
+#define SLAREA_MAIN	3
+#define SLAREA_PCPU	4
+#define SLAREA_DMAP	5
+#define SLAREA_KERN	6
+#define SLSPACE_NAREAS	7
+
+struct slotspace {
+	struct {
+		size_t sslot; /* start slot */
+		size_t nslot; /* # of slots */
+		size_t mslot; /* max # of slots */
+		bool active;  /* area is active */
+		bool dropmax; /* !resizable */
+	} area[SLSPACE_NAREAS];
 };
 
 #ifndef MAXGDTSIZ

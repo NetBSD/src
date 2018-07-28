@@ -1,4 +1,4 @@
-/*	$NetBSD: frameasm.h,v 1.37.2.1 2018/03/30 06:20:11 pgoyette Exp $	*/
+/*	$NetBSD: frameasm.h,v 1.37.2.2 2018/07/28 04:37:26 pgoyette Exp $	*/
 
 #ifndef _AMD64_MACHINE_FRAMEASM_H
 #define _AMD64_MACHINE_FRAMEASM_H
@@ -46,6 +46,8 @@
 #define HP_NAME_SVS_LEAVE_ALT	8
 #define HP_NAME_IBRS_ENTER	9
 #define HP_NAME_IBRS_LEAVE	10
+#define HP_NAME_SVS_ENTER_NMI	11
+#define HP_NAME_SVS_LEAVE_NMI	12
 
 #define HOTPATCH(name, size) \
 123:						; \
@@ -165,9 +167,27 @@
 	HOTPATCH(HP_NAME_SVS_LEAVE_ALT, SVS_LEAVE_ALT_BYTES)	; \
 	NOSVS_LEAVE_ALTSTACK
 
+#define SVS_ENTER_NMI_BYTES	22
+#define NOSVS_ENTER_NMI \
+	.byte 0xEB, (SVS_ENTER_NMI_BYTES-2)	/* jmp */	; \
+	.fill	(SVS_ENTER_NMI_BYTES-2),1,0xCC
+#define SVS_ENTER_NMI \
+	HOTPATCH(HP_NAME_SVS_ENTER_NMI, SVS_ENTER_NMI_BYTES)	; \
+	NOSVS_ENTER_NMI
+
+#define SVS_LEAVE_NMI_BYTES	11
+#define NOSVS_LEAVE_NMI \
+	.byte 0xEB, (SVS_LEAVE_NMI_BYTES-2)	/* jmp */	; \
+	.fill	(SVS_LEAVE_NMI_BYTES-2),1,0xCC
+#define SVS_LEAVE_NMI \
+	HOTPATCH(HP_NAME_SVS_LEAVE_NMI, SVS_LEAVE_NMI_BYTES)	; \
+	NOSVS_LEAVE_NMI
+
 #else
 #define SVS_ENTER	/* nothing */
+#define SVS_ENTER_NMI	/* nothing */
 #define SVS_LEAVE	/* nothing */
+#define SVS_LEAVE_NMI	/* nothing */
 #define SVS_ENTER_ALTSTACK	/* nothing */
 #define SVS_LEAVE_ALTSTACK	/* nothing */
 #endif

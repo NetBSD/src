@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_reset.c,v 1.1 2015/12/22 21:42:11 jmcneill Exp $ */
+/* $NetBSD: fdt_reset.c,v 1.1.20.1 2018/07/28 04:37:44 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,11 +27,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_reset.c,v 1.1 2015/12/22 21:42:11 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_reset.c,v 1.1.20.1 2018/07/28 04:37:44 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
 #include <sys/kmem.h>
+#include <sys/queue.h>
 
 #include <libfdt.h>
 #include <dev/fdt/fdtvar.h>
@@ -41,10 +42,11 @@ struct fdtbus_reset_controller {
 	int rc_phandle;
 	const struct fdtbus_reset_controller_func *rc_funcs;
 
-	struct fdtbus_reset_controller *rc_next;
+	LIST_ENTRY(fdtbus_reset_controller) rc_next;
 };
 
-static struct fdtbus_reset_controller *fdtbus_rc = NULL;
+static LIST_HEAD(, fdtbus_reset_controller) fdtbus_reset_controllers =
+    LIST_HEAD_INITIALIZER(fdtbus_reset_controllers);
 
 int
 fdtbus_register_reset_controller(device_t dev, int phandle,
@@ -57,8 +59,7 @@ fdtbus_register_reset_controller(device_t dev, int phandle,
 	rc->rc_phandle = phandle;
 	rc->rc_funcs = funcs;
 
-	rc->rc_next = fdtbus_rc;
-	fdtbus_rc = rc;
+	LIST_INSERT_HEAD(&fdtbus_reset_controllers, rc, rc_next);
 
 	return 0;
 }
@@ -68,10 +69,9 @@ fdtbus_get_reset_controller(int phandle)
 {
 	struct fdtbus_reset_controller *rc;
 
-	for (rc = fdtbus_rc; rc; rc = rc->rc_next) {
-		if (rc->rc_phandle == phandle) {
+	LIST_FOREACH(rc, &fdtbus_reset_controllers, rc_next) {
+		if (rc->rc_phandle == phandle)
 			return rc;
-		}
 	}
 
 	return NULL;

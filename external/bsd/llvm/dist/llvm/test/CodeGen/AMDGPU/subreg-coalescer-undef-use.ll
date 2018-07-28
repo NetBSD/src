@@ -1,24 +1,26 @@
-; RUN: llc -march=amdgcn -mcpu=SI -o - %s | FileCheck %s
+; RUN: llc -march=amdgcn -mcpu=tahiti -o - %s | FileCheck %s
 ; Don't crash when the use of an undefined value is only detected by the
 ; register coalescer because it is hidden with subregister insert/extract.
 target triple="amdgcn--"
 
 ; CHECK-LABEL: foobar:
-; CHECK: s_load_dword s2, s[0:1], 0x9
-; CHECK-NEXT: s_load_dwordx2 s[4:5], s[0:1], 0xb
-; CHECK-NEXT: s_waitcnt lgkmcnt(0)
-; CHECK: v_mbcnt_lo_u32_b32_e64
+; CHECK: s_load_dwordx2 s[2:3], s[0:1], 0x9
+; CHECK-NEXT: s_load_dwordx2 s[0:1], s[0:1], 0xb
+; CHECK-NEXT: v_mbcnt_lo_u32_b32_e64
 ; CHECK-NEXT: v_cmp_eq_u32_e32 vcc, 0, v0
-; CHECK-NEXT: s_and_saveexec_b64 s[2:3], vcc
-; CHECK-NEXT: s_xor_b64 s[2:3], exec, s[2:3]
-; BB0_1:
-; CHECK: s_load_dword s0, s[0:1], 0xa
 ; CHECK-NEXT: s_waitcnt lgkmcnt(0)
-; BB0_2:
+; CHECK-NEXT: v_mov_b32_e32 v1, s3
+; CHECK-NEXT: s_and_saveexec_b64 s[2:3], vcc
+
+; CHECK: BB0_1:
+; CHECK-NEXT: ; kill: def $vgpr0_vgpr1 killed $sgpr2_sgpr3 killed $exec
+; CHECK-NEXT: ; implicit-def: $vgpr0_vgpr1_vgpr2_vgpr3
+
+; CHECK: BB0_2:
 ; CHECK: s_or_b64 exec, exec, s[2:3]
-; CHECK-NEXT: s_mov_b32 s7, 0xf000
-; CHECK-NEXT: s_mov_b32 s6, -1
-; CHECK-NEXT: buffer_store_dword v1, off, s[4:7], 0
+; CHECK-NEXT: s_mov_b32 s3, 0xf000
+; CHECK-NEXT: s_mov_b32 s2, -1
+; CHECK-NEXT: buffer_store_dword v1, off, s[0:3], 0
 ; CHECK-NEXT: s_endpgm
 define amdgpu_kernel void @foobar(float %a0, float %a1, float addrspace(1)* %out) nounwind {
 entry:

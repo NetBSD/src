@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ntptime.c,v 1.57 2015/11/23 23:45:44 joerg Exp $	*/
+/*	$NetBSD: kern_ntptime.c,v 1.57.16.1 2018/07/28 04:38:08 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/sys/kern/kern_ntptime.c,v 1.59 2005/05/28 14:34:41 rwatson Exp $"); */
-__KERNEL_RCSID(0, "$NetBSD: kern_ntptime.c,v 1.57 2015/11/23 23:45:44 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ntptime.c,v 1.57.16.1 2018/07/28 04:38:08 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ntp.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_carp.c,v 1.94.2.3 2018/06/25 07:26:06 pgoyette Exp $	*/
+/*	$NetBSD: ip_carp.c,v 1.94.2.4 2018/07/28 04:38:10 pgoyette Exp $	*/
 /*	$OpenBSD: ip_carp.c,v 1.113 2005/11/04 08:11:54 mcbride Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_carp.c,v 1.94.2.3 2018/06/25 07:26:06 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_carp.c,v 1.94.2.4 2018/07/28 04:38:10 pgoyette Exp $");
 
 /*
  * TODO:
@@ -1504,7 +1504,7 @@ carp_input(struct mbuf *m, u_int8_t *shost, u_int8_t *dhost, u_int16_t etype)
 
 	m_set_rcvif(m, ifp);
 
-	bpf_mtap(ifp, m);
+	bpf_mtap(ifp, m, BPF_D_IN);
 	ifp->if_ipackets++;
 	ether_input(ifp, m);
 	return (0);

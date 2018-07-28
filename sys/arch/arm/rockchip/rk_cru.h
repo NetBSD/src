@@ -1,4 +1,4 @@
-/* $NetBSD: rk_cru.h,v 1.1.2.2 2018/06/25 07:25:39 pgoyette Exp $ */
+/* $NetBSD: rk_cru.h,v 1.1.2.3 2018/07/28 04:37:29 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -30,6 +30,7 @@
 #define _ARM_RK_CRU_H
 
 #include <dev/clk/clk_backend.h>
+#include <dev/fdt/syscon.h>
 
 struct rk_cru_softc;
 struct rk_cru_clk;
@@ -293,7 +294,7 @@ struct rk_cru_softc {
 	int			sc_phandle;
 	bus_space_tag_t		sc_bst;
 	bus_space_handle_t	sc_bsh;
-	bus_space_handle_t	sc_bsh_grf;
+	struct syscon		*sc_grf;
 
 	struct clk_domain	sc_clkdom;
 
@@ -311,11 +312,6 @@ void	rk_cru_print(struct rk_cru_softc *);
 #define CRU_WRITE(sc, reg, val)	\
 	bus_space_write_4((sc)->sc_bst, (sc)->sc_bsh, (reg), (val))
 
-#define	GRF_READ(sc, reg)	\
-	bus_space_read_4((sc)->sc_bst, (sc)->sc_bsh_grf, (reg))
-#define GRF_WRITE(sc, reg, val)	\
-	bus_space_write_4((sc)->sc_bst, (sc)->sc_bsh_grf, (reg), (val))
-
-#define	HAS_GRF(sc)	((sc)->sc_bsh_grf != 0)
+#define	HAS_GRF(sc)	((sc)->sc_grf != NULL)
 
 #endif /* _ARM_RK_CRU_H */

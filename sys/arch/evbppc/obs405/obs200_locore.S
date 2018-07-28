@@ -1,4 +1,4 @@
-/*	$NetBSD: obs200_locore.S,v 1.12 2014/08/05 16:28:39 joerg Exp $	*/
+/*	$NetBSD: obs200_locore.S,v 1.12.26.1 2018/07/28 04:37:33 pgoyette Exp $	*/
 /*	Original Tag: locore.S,v 1.1 2003/09/23 15:21:58 shige Exp	*/
 /*	$OpenBSD: locore.S,v 1.4 1997/01/26 09:06:38 rahnds Exp $	*/
 
@@ -71,7 +71,6 @@
 #undef PPC_4XX_NOCACHE
 
 #include "opt_ddb.h"
-#include "opt_ipkdb.h"
 #include "opt_lockdebug.h"
 #include "opt_modular.h"
 #include "opt_multiprocessor.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.57 2017/10/31 12:02:20 maxv Exp $	*/
+/*	$NetBSD: pcb.h,v 1.57.2.1 2018/07/28 04:37:34 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1998, 2009 The NetBSD Foundation, Inc.
@@ -93,7 +93,10 @@ struct pcb {
 	struct dbreg	*pcb_dbregs;	/* CPU Debug Registers */
 	uint16_t pcb_fpu_dflt_cw;
 
-	int	not_used[16];
+#define	PCB_DBREGS	0x01
+	int	pcb_flags;
+
+	int	not_used[15];
 
 	/* floating point state */
 	struct cpu_info	*pcb_fpcpu;	/* cpu holding our fp state. */

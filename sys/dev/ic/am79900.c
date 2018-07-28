@@ -1,4 +1,4 @@
-/*	$NetBSD: am79900.c,v 1.26.8.1 2018/06/25 07:25:50 pgoyette Exp $	*/
+/*	$NetBSD: am79900.c,v 1.26.8.2 2018/07/28 04:37:44 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -103,7 +103,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: am79900.c,v 1.26.8.1 2018/06/25 07:25:50 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: am79900.c,v 1.26.8.2 2018/07/28 04:37:44 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -511,7 +511,7 @@ am79900_start(struct ifnet *ifp)
 		 * If BPF is listening on this interface, let it see the packet
 		 * before we commit it to the wire.
 		 */
-		bpf_mtap(ifp, m);
+		bpf_mtap(ifp, m, BPF_D_OUT);
 
 		/*
 		 * Copy the mbuf chain into the transmit buffer.

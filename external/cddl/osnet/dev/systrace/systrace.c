@@ -1,4 +1,4 @@
-/*	$NetBSD: systrace.c,v 1.9.12.1 2018/06/25 07:25:15 pgoyette Exp $	*/
+/*	$NetBSD: systrace.c,v 1.9.12.2 2018/07/28 04:37:15 pgoyette Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -356,7 +356,7 @@ systrace_provide(void *arg, dtrace_probedesc_t *desc)
 #else
 		const char *name = ALTSYSCALLNAMES[i] ? ALTSYSCALLNAMES[i] :
 		    SYSCALLNAMES[i];
-		if (dtrace_probe_lookup(systrace_id, NULL, __UNCONST(name), __UNCONST("entry")) != 0)
+		if (dtrace_probe_lookup(systrace_id, NULL, name, "entry") != 0)
 			continue;
 
 		(void) dtrace_probe_create(systrace_id, NULL,

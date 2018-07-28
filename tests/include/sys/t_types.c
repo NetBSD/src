@@ -1,4 +1,4 @@
-/*	$NetBSD: t_types.c,v 1.4 2012/03/18 07:14:08 jruoho Exp $ */
+/*	$NetBSD: t_types.c,v 1.4.30.1 2018/07/28 04:38:12 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_types.c,v 1.4 2012/03/18 07:14:08 jruoho Exp $");
+__RCSID("$NetBSD: t_types.c,v 1.4.30.1 2018/07/28 04:38:12 pgoyette Exp $");
 
 #include <sys/types.h>
 
@@ -60,7 +60,7 @@ ATF_TC_BODY(types_limits, tc)
 	size = SSIZE_MAX;
 	ATF_REQUIRE(size > 0);
 
-	size = size + 1;
+	size = (ssize_t)((size_t)size + 1);
 	ATF_REQUIRE(size < 0);
 
 	/*

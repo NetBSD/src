@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.20 2017/08/01 20:07:42 joerg Exp $
+#	$NetBSD: Makefile,v 1.20.2.1 2018/07/28 04:37:12 pgoyette Exp $
 
 LIB=	LLVMTransformsUtils
 
@@ -6,20 +6,21 @@ LIB=	LLVMTransformsUtils
 
 .PATH: ${LLVM_SRCDIR}/lib/Transforms/Utils
 
-SRCS+=	ASanStackFrameLayout.cpp \
-	AddDiscriminators.cpp \
+SRCS+=	AddDiscriminators.cpp \
+	ASanStackFrameLayout.cpp \
 	BasicBlockUtils.cpp \
 	BreakCriticalEdges.cpp \
 	BuildLibCalls.cpp \
 	BypassSlowDivision.cpp \
+	CallPromotionUtils.cpp \
 	CloneFunction.cpp \
 	CloneModule.cpp \
-	CmpInstAnalysis.cpp \
 	CodeExtractor.cpp \
 	CtorUtils.cpp \
 	DemoteRegToStack.cpp \
-	Evaluator.cpp \
+	EntryExitInstrumenter.cpp \
 	EscapeEnumerator.cpp \
+	Evaluator.cpp \
 	FlattenCFG.cpp \
 	FunctionComparator.cpp \
 	FunctionImportUtils.cpp \
@@ -31,7 +32,9 @@ SRCS+=	ASanStackFrameLayout.cpp \
 	LCSSA.cpp \
 	LibCallsShrinkWrap.cpp \
 	Local.cpp \
+	LoopRotationUtils.cpp \
 	LoopSimplify.cpp \
+	LoopUnrollAndJam.cpp \
 	LoopUnroll.cpp \
 	LoopUnrollPeel.cpp \
 	LoopUnrollRuntime.cpp \
@@ -47,20 +50,20 @@ SRCS+=	ASanStackFrameLayout.cpp \
 	OrderedInstructions.cpp \
 	PredicateInfo.cpp \
 	PromoteMemoryToRegister.cpp \
-	SSAUpdater.cpp \
 	SanitizerStats.cpp \
 	SimplifyCFG.cpp \
 	SimplifyIndVar.cpp \
-	SimplifyInstructions.cpp \
 	SimplifyLibCalls.cpp \
 	SplitModule.cpp \
+	SSAUpdaterBulk.cpp \
+	SSAUpdater.cpp \
 	StripGCRelocates.cpp \
 	StripNonLineTableDebugInfo.cpp \
 	SymbolRewriter.cpp \
 	UnifyFunctionExitNodes.cpp \
 	Utils.cpp \
-	VNCoercion.cpp \
-	ValueMapper.cpp
+	ValueMapper.cpp \
+	VNCoercion.cpp
 
 .if defined(HOSTLIB)
 .include <bsd.hostlib.mk>

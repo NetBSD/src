@@ -1,4 +1,4 @@
-; RUN: opt < %s -basicaa -globals-aa -S -enable-non-lto-gmr=true -licm | FileCheck %s
+; RUN: opt < %s -basicaa -globals-aa -S -licm | FileCheck %s
 
 target datalayout = "e-m:o-i64:64-f80:128-n8:16:32:64-S128"
 target triple = "x86_64-apple-macosx10.10.0"
@@ -59,7 +59,7 @@ for.end:                                          ; preds = %for.cond
 }
 
 ; Function Attrs: nounwind argmemonly
-declare void @llvm.memset.p0i8.i64(i8* nocapture, i8, i64, i32, i1) nounwind argmemonly
+declare void @llvm.memset.p0i8.i64(i8* nocapture, i8, i64, i1) nounwind argmemonly
 
 ; Function Attrs: noreturn nounwind
 declare void @abort() noreturn nounwind

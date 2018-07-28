@@ -1,4 +1,4 @@
-/*	$NetBSD: ibm4xx_machdep.c,v 1.25 2016/12/26 21:25:08 rin Exp $	*/
+/*	$NetBSD: ibm4xx_machdep.c,v 1.25.14.1 2018/07/28 04:37:39 pgoyette Exp $	*/
 /*	Original: ibm40x_machdep.c,v 1.3 2005/01/17 17:19:36 shige Exp $ */
 
 /*
@@ -68,12 +68,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibm4xx_machdep.c,v 1.25 2016/12/26 21:25:08 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibm4xx_machdep.c,v 1.25.14.1 2018/07/28 04:37:39 pgoyette Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
-#include "opt_ipkdb.h"
 #include "opt_modular.h"
 #include "ksyms.h" /* for NKSYMS */
 
@@ -92,10 +91,6 @@ __KERNEL_RCSID(0, "$NetBSD: ibm4xx_machdep.c,v 1.25 2016/12/26 21:25:08 rin Exp 
 
 #if defined(KGDB)
 #include <sys/kgdb.h>
-#endif
-
-#if defined(IPKDB)
-#include <ipkdb/ipkdb.h>
 #endif
 
 #include <machine/powerpc.h>
@@ -131,8 +126,6 @@ extern const uint32_t pitfitwdog[], pitfitwdogsize;
 extern const uint32_t errata51handler[], errata51size;
 #if defined(DDB)
 extern const uint32_t ddblow[], ddbsize;
-#elif defined(IPKDB)
-extern const uint32_t ipkdblow[], ipkdbsize;
 #endif
 static const struct exc_info trap_table[] = {
 	{ EXC_SC,	sctrap,		(uintptr_t)&scsize },
@@ -147,8 +140,6 @@ static const struct exc_info trap_table[] = {
 			errata51handler, (uintptr_t)&errata51size },
 #if defined(DDB)
 	{ EXC_PGM,	ddblow,		(uintptr_t)&ddbsize },
-#elif defined(IPKDB)
-	{ EXC_PGM,	ipkdblow,	(uintptr_t)&ipkdbsize },
 #endif
 };
 

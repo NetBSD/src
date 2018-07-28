@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.107 2013/04/21 15:42:11 kiyohara Exp $	*/
+/*	$NetBSD: machdep.c,v 1.107.34.1 2018/07/28 04:37:29 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,11 +32,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.107 2013/04/21 15:42:11 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.107.34.1 2018/07/28 04:37:29 pgoyette Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
-#include "opt_ipkdb.h"
 
 #define _POWERPC_BUS_DMA_PRIVATE
 

@@ -22,6 +22,10 @@
 // RUN: %clang -target powerpc-unknown-linux-gnu %s -msoft-float -mhard-float -### -o %t.o 2>&1 | FileCheck --check-prefix=CHECK-SOFTHARD %s
 // CHECK-SOFTHARD-NOT: "-target-feature" "-hard-float"
 
+// check -msecure-plt option for ppc32
+// RUN: %clang -target powerpc-unknown-linux-gnu -msecure-plt %s  -### -o %t.o 2>&1 | FileCheck --check-prefix=CHECK-SECUREPLT %s
+// CHECK-SECUREPLT: "-target-feature" "+secure-plt"
+
 // check -mfloat-abi=x option
 // RUN: %clang -target powerpc-unknown-linux-gnu %s -mfloat-abi=x -### -o %t.o 2>&1 | FileCheck --check-prefix=CHECK-ERRMSG %s
 // CHECK-ERRMSG: error: invalid float ABI '-mfloat-abi=x'
@@ -171,8 +175,8 @@
 
 // RUN: %clang -target powerpc64le-unknown-linux-gnu %s -### -o %t.o -no-integrated-as 2>&1 | FileCheck -check-prefix=CHECK_LE_AS_ARGS %s
 // CHECK_LE_AS_ARGS: "-mppc64"
-// CHECK_LE_AS_ARGS: "-many"
 // CHECK_LE_AS_ARGS: "-mlittle-endian"
+// CHECK_LE_AS_ARGS: "-mpower8"
 
 // linker features
 // RUN: %clang -target powerpc64-unknown-linux-gnu %s -### -o %t.o 2>&1 | FileCheck -check-prefix=CHECK_BE_LD_ARGS %s

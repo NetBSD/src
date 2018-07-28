@@ -1,26 +1,23 @@
 ; RUN: llc -O0 -mtriple=x86_64-apple-darwin < %s -filetype=obj \
-; RUN:     | llvm-dwarfdump -debug-dump=info - \
+; RUN:     | llvm-dwarfdump -v -debug-info - \
 ; RUN:     | FileCheck %s -check-prefix=CHECK -check-prefix=DWARF4
 ; RUN: llc -O0 -mtriple=x86_64-apple-darwin < %s -filetype=obj -dwarf-version=3 \
-; RUN:     | llvm-dwarfdump -debug-dump=info - \
+; RUN:     | llvm-dwarfdump -v -debug-info - \
 ; RUN:     | FileCheck %s -check-prefix=CHECK -check-prefix=DWARF3
 
-; FIXME: The location here needs to be fixed, but llvm-dwarfdump doesn't handle
-; DW_AT_location lists yet.
-; DWARF4: DW_AT_location [DW_FORM_sec_offset]                      (0x00000000)
+; DWARF4: DW_AT_location [DW_FORM_sec_offset]                      (0x00000000
+; DWARF4-NEXT:  {{.*}}: DW_OP_breg2 RCX+0, DW_OP_deref
 
-; FIXME: The location here needs to be fixed, but llvm-dwarfdump doesn't handle
-; DW_AT_location lists yet.
-; DWARF3: DW_AT_location [DW_FORM_data4]                      (0x00000000)
+; DWARF3: DW_AT_location [DW_FORM_data4]                      (0x00000000
+; DWARF3-NEXT:  {{.*}}: DW_OP_breg2 RCX+0, DW_OP_deref
 
 ; CHECK-NOT: DW_TAG
 ; CHECK: DW_AT_name [DW_FORM_strp]  ( .debug_str[0x00000067] = "vla")
 
-; Unfortunately llvm-dwarfdump can't unparse a list of DW_AT_locations
-; right now, so we check the asm output:
+; Check the DEBUG_VALUE comments for good measure.
 ; RUN: llc -O0 -mtriple=x86_64-apple-darwin %s -o - -filetype=asm | FileCheck %s -check-prefix=ASM-CHECK
 ; vla should have a register-indirect address at one point.
-; ASM-CHECK: DEBUG_VALUE: vla <- [DW_OP_deref] [%RCX+0]
+; ASM-CHECK: DEBUG_VALUE: vla <- [DW_OP_deref] [$rcx+0]
 ; ASM-CHECK: DW_OP_breg2
 
 ; RUN: llvm-as %s -o - | llvm-dis - | FileCheck %s --check-prefix=PRETTY-PRINT
@@ -82,7 +79,7 @@ declare void @llvm.stackrestore(i8*) nounwind
 
 !0 = distinct !DICompileUnit(language: DW_LANG_C99, producer: "clang version 3.2 (trunk 156005) (llvm/trunk 156000)", isOptimized: false, emissionKind: FullDebug, file: !28, enums: !1, retainedTypes: !1, globals: !1, imports:  !1)
 !1 = !{}
-!5 = distinct !DISubprogram(name: "testVLAwithSize", line: 1, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, unit: !0, scopeLine: 2, file: !28, scope: !6, type: !7, variables: !1)
+!5 = distinct !DISubprogram(name: "testVLAwithSize", line: 1, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, unit: !0, scopeLine: 2, file: !28, scope: !6, type: !7, retainedNodes: !1)
 !6 = !DIFile(filename: "bar.c", directory: "/Users/echristo/tmp")
 !7 = !DISubroutineType(types: !8)
 !8 = !{null, !9}

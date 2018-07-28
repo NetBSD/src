@@ -1,4 +1,4 @@
-/*	$NetBSD: bioscall.S,v 1.9 2010/07/24 00:45:54 jym Exp $ */
+/*	$NetBSD: bioscall.S,v 1.9.58.1 2018/07/28 04:37:34 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: bioscall.S,v 1.9 2010/07/24 00:45:54 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bioscall.S,v 1.9.58.1 2018/07/28 04:37:34 pgoyette Exp $");
 
 #include <machine/bioscall.h>
 
@@ -63,7 +63,7 @@ _C_LABEL(biostramp_image_size):
  *	Fills in *regs with registers as returned by BIOS.
  */
 /* LINTSTUB: Func: void bioscall(int function, struct bioscallregs *regs) */
-NENTRY(bioscall)
+ENTRY(bioscall)
 	pushl	%ebp
 	movl	%esp,%ebp		/* set up frame ptr */
 

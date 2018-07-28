@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2.18.1 2018/06/25 07:26:05 pgoyette Exp $
+# $NetBSD: Makefile,v 1.2.18.2 2018/07/28 04:38:09 pgoyette Exp $
 
 .include "../../Makefile.inc"
 
@@ -14,5 +14,6 @@ CPPFLAGS+=	-I${NETBSDSRCDIR}/external/cddl/osnet/sys \
 CPPFLAGS+=	-Wno-unknown-pragmas -Wno-cast-qual
 
 CPPFLAGS+=	${${ACTIVE_CC} == "gcc" :? -Wno-discarded-qualifiers :}
+CPPFLAGS+=	${${ACTIVE_CC} == "clang" :? -Wno-incompatible-pointer-types-discards-qualifiers :}
 
 .include <bsd.kmodule.mk>

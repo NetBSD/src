@@ -1,10 +1,10 @@
-#	$NetBSD: files.i2c,v 1.84.2.4 2018/06/25 07:25:50 pgoyette Exp $
+#	$NetBSD: files.i2c,v 1.84.2.5 2018/07/28 04:37:44 pgoyette Exp $
 
 obsolete defflag	opt_i2cbus.h		I2C_SCAN
 define	i2cbus { }
 define	i2cexec
 
-device	iic { [addr = -1], [size = -1] } : i2c_bitbang
+device	iic { [addr = -1] } : i2c_bitbang
 attach	iic at i2cbus
 file	dev/i2c/i2c.c				iic
 file	dev/i2c/i2c_exec.c			iic | i2cbus | i2cexec
@@ -339,3 +339,9 @@ file	dev/i2c/imt.c				imt
 device	tsllux: sysmon_envsys
 attach	tsllux at iic
 file	dev/i2c/tsl256x.c			tsllux
+
+# Philips/NXP TEA5767 
+device tea5767radio : radiodev
+attach tea5767radio at iic
+file dev/i2c/tea5767.c				tea5767radio
+

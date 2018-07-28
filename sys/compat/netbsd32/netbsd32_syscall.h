@@ -1,4 +1,4 @@
-/* $NetBSD: netbsd32_syscall.h,v 1.134.2.1 2018/05/21 04:36:04 pgoyette Exp $ */
+/* $NetBSD: netbsd32_syscall.h,v 1.134.2.2 2018/07/28 04:37:43 pgoyette Exp $ */
 
 /*
  * System call numbers.
@@ -885,6 +885,8 @@
 /* syscall: "netbsd32___sigaction_sigtramp" ret: "int" args: "int" "netbsd32_sigactionp_t" "netbsd32_sigactionp_t" "netbsd32_voidp" "int" */
 #define	NETBSD32_SYS_netbsd32___sigaction_sigtramp	340
 
+				/* 341 is obsolete netbsd32_pmc_get_info */
+				/* 342 is obsolete netbsd32_pmc_control */
 /* syscall: "netbsd32_rasctl" ret: "int" args: "netbsd32_voidp" "netbsd32_size_t" "int" */
 #define	NETBSD32_SYS_netbsd32_rasctl	343
 

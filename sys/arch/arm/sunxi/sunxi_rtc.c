@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_rtc.c,v 1.3 2017/10/08 14:03:46 jmcneill Exp $ */
+/* $NetBSD: sunxi_rtc.c,v 1.3.4.1 2018/07/28 04:37:29 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2014-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_rtc.c,v 1.3 2017/10/08 14:03:46 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_rtc.c,v 1.3.4.1 2018/07/28 04:37:29 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -226,14 +226,14 @@ sunxi_rtc_settime(todr_chip_handle_t tch, struct clock_ymdhms *dt)
 	 * Sanity check the date before writing it back
 	 */
 	if (dt->dt_year < conf->base_year) {
-		aprint_normal_dev(sc->sc_dev, "year pre the epoch: %llu, "
-		    "not writing back time\n", dt->dt_year);
+		aprint_normal_dev(sc->sc_dev, "year pre the epoch: %" PRIu64
+		    ", not writing back time\n", dt->dt_year);
 		return EIO;
 	}
 	maxyear = __SHIFTOUT(0xffffffff, conf->year) + conf->base_year;
 	if (dt->dt_year > maxyear) {
 		aprint_normal_dev(sc->sc_dev, "year exceeds available field:"
-		    " %llu, not writing back time\n", dt->dt_year);
+		    " %" PRIu64 ", not writing back time\n", dt->dt_year);
 		return EIO;
 	}
 

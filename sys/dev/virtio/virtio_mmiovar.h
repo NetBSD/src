@@ -1,4 +1,4 @@
-/* $NetBSD: virtio_mmiovar.h,v 1.1.2.2 2018/06/25 07:26:03 pgoyette Exp $ */
+/* $NetBSD: virtio_mmiovar.h,v 1.1.2.3 2018/07/28 04:37:59 pgoyette Exp $ */
 /*
  * Copyright (c) 2018 Jonathan A. Kollasch
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #ifndef _VIRTIO_MMIOVAR_H_
-#define _VIRTIO_MMIOREG_H_
+#define _VIRTIO_MMIOVAR_H_
 
 #include <dev/pci/virtiovar.h> /* XXX: move to non-pci */
 
@@ -48,4 +48,4 @@ void virtio_mmio_common_attach(struct virtio_mmio_softc *);
 int virtio_mmio_common_detach(struct virtio_mmio_softc *, int);
 int virtio_mmio_intr(void *);
 
-#endif /* _VIRTIO_MMIOREG_H_ */
+#endif /* _VIRTIO_MMIOVAR_H_ */

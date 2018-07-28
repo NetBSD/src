@@ -1,6 +1,35 @@
-/*	$NetBSD: tprof.c,v 1.5 2012/01/10 23:39:33 joerg Exp $	*/
+/*	$NetBSD: tprof.c,v 1.5.38.1 2018/07/28 04:38:15 pgoyette Exp $	*/
 
-/*-
+/*
+ * Copyright (c) 2018 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Maxime Villard.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
+
+/*
  * Copyright (c)2008 YAMAMOTO Takashi,
  * All rights reserved.
  *
@@ -28,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: tprof.c,v 1.5 2012/01/10 23:39:33 joerg Exp $");
+__RCSID("$NetBSD: tprof.c,v 1.5.38.1 2018/07/28 04:38:15 pgoyette Exp $");
 #endif /* not lint */
 
 #include <sys/ioctl.h>
@@ -47,22 +76,41 @@ __RCSID("$NetBSD: tprof.c,v 1.5 2012/01/10 23:39:33 joerg Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include "tprof.h"
 
 #define	_PATH_TPROF	"/dev/tprof"
 
 int devfd;
 int outfd;
 
+static void tprof_list(int, char **);
+static void tprof_monitor(int, char **) __dead;
+
+static struct cmdtab {
+	const char *label;
+	bool takesargs;
+	bool argsoptional;
+	void (*func)(int, char **);
+} const tprof_cmdtab[] = {
+	{ "list",	false, false, tprof_list },
+	{ "monitor",	true,  false, tprof_monitor },
+	{ "analyze",	true,  true,  tprof_analyze },
+	{ NULL,		false, false, NULL },
+};
+
 __dead static void
 usage(void)
 {
 
-	fprintf(stderr, "%s [options] command ...\n", getprogname());
+	fprintf(stderr, "%s op [arguments]\n", getprogname());
 	fprintf(stderr, "\n");
-	fprintf(stderr, "-o filename\t"
-	    "output to the file.  [default: -o tprof.out]\n");
-	fprintf(stderr, "-c\t\t"
-	    "output to stdout.  NOTE: the output is a binary stream.\n");
+	fprintf(stderr, "\tlist\n");
+	fprintf(stderr, "\t\tList the available events.\n");
+	fprintf(stderr, "\tmonitor -e name:option [-o outfile] command\n");
+	fprintf(stderr, "\t\tMonitor the event 'name' with option 'option'\n"
+	    "\t\tcounted during the execution of 'command'.\n");
+	fprintf(stderr, "\tanalyze [-CkLPs] [-p pid] file\n");
+	fprintf(stderr, "\t\tAnalyze the samples of the file 'file'.\n");
 
 	exit(EXIT_FAILURE);
 }
@@ -98,27 +146,40 @@ process_samples(void *dummy)
 	return NULL;
 }
 
-int
-main(int argc, char *argv[])
+static void
+tprof_list(int argc, char **argv)
 {
+	tprof_event_list();
+}
+
+static void
+tprof_monitor(int argc, char **argv)
+{
+	const char *outfile = "tprof.out";
 	struct tprof_param param;
 	struct tprof_stat ts;
-	const char *outfile = "tprof.out";
-	bool cflag = false;
 	pid_t pid;
 	pthread_t pt;
-	int error;
-	int ret;
-	int ch;
-	int version;
+	int ret, ch;
+	char *tokens[2];
 
-	while ((ch = getopt(argc, argv, "co:")) != -1) {
+	memset(&param, 0, sizeof(param));
+
+	while ((ch = getopt(argc, argv, "o:e:")) != -1) {
 		switch (ch) {
-		case 'c':
-			cflag = true;
-			break;
 		case 'o':
 			outfile = optarg;
+			break;
+		case 'e':
+			tokens[0] = strtok(optarg, ":");
+			tokens[1] = strtok(NULL, ":");
+			if (tokens[1] == NULL)
+				usage();
+			tprof_event_lookup(tokens[0], &param);
+			if (strchr(tokens[1], 'u'))
+				param.p_flags |= TPROF_PARAM_USER;
+			if (strchr(tokens[1], 'k'))
+				param.p_flags |= TPROF_PARAM_KERN;
 			break;
 		default:
 			usage();
@@ -130,30 +191,15 @@ main(int argc, char *argv[])
 		usage();
 	}
 
-	if (cflag) {
-		outfd = STDOUT_FILENO;
-	} else {
-		outfd = open(outfile, O_WRONLY | O_CREAT | O_TRUNC, 0666);
-		if (outfd == -1) {
-			err(EXIT_FAILURE, "%s", outfile);
-		}
+	if (param.p_flags == 0) {
+		usage();
 	}
 
-	devfd = open(_PATH_TPROF, O_RDWR);
-	if (devfd == -1) {
-		err(EXIT_FAILURE, "%s", _PATH_TPROF);
+	outfd = open(outfile, O_WRONLY | O_CREAT | O_TRUNC, 0666);
+	if (outfd == -1) {
+		err(EXIT_FAILURE, "%s", outfile);
 	}
 
-	ret = ioctl(devfd, TPROF_IOC_GETVERSION, &version);
-	if (ret == -1) {
-		err(EXIT_FAILURE, "TPROF_IOC_GETVERSION");
-	}
-	if (version != TPROF_VERSION) {
-		errx(EXIT_FAILURE, "version mismatch: version=%d, expected=%d",
-		    version, TPROF_VERSION);
-	}
-
-	memset(&param, 0, sizeof(param));
 	ret = ioctl(devfd, TPROF_IOC_START, &param);
 	if (ret == -1) {
 		err(EXIT_FAILURE, "TPROF_IOC_START");
@@ -171,9 +217,9 @@ main(int argc, char *argv[])
 
 	signal(SIGINT, SIG_IGN);
 
-	error = pthread_create(&pt, NULL, process_samples, NULL);
-	if (error != 0) {
-		errx(1, "pthread_create: %s", strerror(error));
+	ret = pthread_create(&pt, NULL, process_samples, NULL);
+	if (ret != 0) {
+		errx(1, "pthread_create: %s", strerror(ret));
 	}
 
 	for (;;) {
@@ -212,4 +258,50 @@ main(int argc, char *argv[])
 	fprintf(stderr, "\tdropbuf_sample %" PRIu64 "\n", ts.ts_dropbuf_sample);
 
 	exit(EXIT_SUCCESS);
+}
+
+int
+main(int argc, char *argv[])
+{
+	struct tprof_info info;
+	const struct cmdtab *ct;
+	int ret;
+
+	setprogname(argv[0]);
+	argv += 1, argc -= 1;
+
+	devfd = open(_PATH_TPROF, O_RDWR);
+	if (devfd == -1) {
+		err(EXIT_FAILURE, "%s", _PATH_TPROF);
+	}
+
+	ret = ioctl(devfd, TPROF_IOC_GETINFO, &info);
+	if (ret == -1) {
+		err(EXIT_FAILURE, "TPROF_IOC_GETINFO");
+	}
+	if (info.ti_version != TPROF_VERSION) {
+		errx(EXIT_FAILURE, "version mismatch: version=%d, expected=%d",
+		    info.ti_version, TPROF_VERSION);
+	}
+	if (tprof_event_init(info.ti_ident) == -1) {
+		errx(EXIT_FAILURE, "cpu not supported");
+	}
+
+	if (argc == 0)
+		usage();
+
+	for (ct = tprof_cmdtab; ct->label != NULL; ct++) {
+		if (strcmp(argv[0], ct->label) == 0) {
+			if (!ct->argsoptional &&
+			    ((ct->takesargs == 0) ^ (argv[1] == NULL)))
+			{
+				usage();
+			}
+			(*ct->func)(argc, argv);
+			break;
+		}
+	}
+	if (ct->label == NULL) {
+		usage();
+	}
 }

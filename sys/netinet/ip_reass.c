@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_reass.c,v 1.13.2.3 2018/05/21 04:36:16 pgoyette Exp $	*/
+/*	$NetBSD: ip_reass.c,v 1.13.2.4 2018/07/28 04:38:10 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_reass.c,v 1.13.2.3 2018/05/21 04:36:16 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_reass.c,v 1.13.2.4 2018/07/28 04:38:10 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -612,11 +612,12 @@ ip_reass_slowtimo(void)
  * => On complete, m0 represents a constructed final packet.
  */
 int
-ip_reass_packet(struct mbuf **m0, struct ip *ip)
+ip_reass_packet(struct mbuf **m0)
 {
+	struct mbuf *m = *m0;
+	struct ip *ip = mtod(m, struct ip *);
 	const int hlen = ip->ip_hl << 2;
 	const int len = ntohs(ip->ip_len);
-	struct mbuf *m = *m0;
 	int ipsecflags = m->m_flags & (M_DECRYPTED|M_AUTHIPHDR);
 	ipfr_queue_t *fp;
 	ipfr_qent_t *ipqe;

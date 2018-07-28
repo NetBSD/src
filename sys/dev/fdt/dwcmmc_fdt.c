@@ -1,4 +1,4 @@
-/* $NetBSD: dwcmmc_fdt.c,v 1.3.2.2 2018/06/25 07:25:49 pgoyette Exp $ */
+/* $NetBSD: dwcmmc_fdt.c,v 1.3.2.3 2018/07/28 04:37:44 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2015-2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwcmmc_fdt.c,v 1.3.2.2 2018/06/25 07:25:49 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwcmmc_fdt.c,v 1.3.2.3 2018/07/28 04:37:44 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -129,11 +129,11 @@ dwcmmc_fdt_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dmat = faa->faa_dmat;
 	error = bus_space_map(sc->sc_bst, addr, size, 0, &sc->sc_bsh);
 	if (error) {
-		aprint_error(": couldn't map %#llx: %d\n",
+		aprint_error(": couldn't map %#" PRIx64 ": %d\n",
 		    (uint64_t)addr, error);
 		return;
 	}
-	esc->sc_conf = of_search_compatible(phandle, compat_data)->data;
+	esc->sc_conf = (void *)of_search_compatible(phandle, compat_data)->data;
 
 
 	if (of_getprop_uint32(phandle, "max-frequency", &sc->sc_clock_freq) != 0)
@@ -193,7 +193,7 @@ dwcmmc_fdt_bus_clock(struct dwc_mmc_softc *sc, int rate)
 		return error;
 	}
 
-	sc->sc_clock_freq = (clk_get_rate(esc->sc_clk_ciu) / ciu_div) / 1000;
+	sc->sc_clock_freq = clk_get_rate(esc->sc_clk_ciu) / ciu_div;
 
 	aprint_debug_dev(sc->sc_dev, "set clock rate to %u kHz (target %u kHz)\n",
 	    sc->sc_clock_freq, rate);

@@ -1,4 +1,4 @@
-#	$NetBSD: files.i80321,v 1.16 2007/10/17 19:53:43 garbled Exp $
+#	$NetBSD: files.i80321,v 1.16.106.1 2018/07/28 04:37:29 pgoyette Exp $
 #
 # Configuration info for Intel i80321 XScale I/O Processor support
 #
@@ -10,8 +10,6 @@ file	arch/arm/xscale/i80321_icu.c
 file	arch/arm/arm32/irq_dispatch.S
 file	arch/arm/xscale/i80321_mcu.c
 file	arch/arm/xscale/i80321_timer.c
-
-file	arch/arm/xscale/xscale_pmc.c		perfctrs
 
 device	iopxs {}: pcibus, bus_space_generic
 # Board-specific front-end provides attachment.

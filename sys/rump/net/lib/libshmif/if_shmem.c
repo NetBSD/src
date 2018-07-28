@@ -1,4 +1,4 @@
-/*	$NetBSD: if_shmem.c,v 1.74 2017/10/23 12:55:26 msaitoh Exp $	*/
+/*	$NetBSD: if_shmem.c,v 1.74.2.1 2018/07/28 04:38:11 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.74 2017/10/23 12:55:26 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.74.2.1 2018/07/28 04:38:11 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -562,7 +562,7 @@ shmif_start(struct ifnet *ifp)
 		sp.sp_usec = tv.tv_usec;
 		sp.sp_sender = sc->sc_uuid;
 
-		bpf_mtap(ifp, m0);
+		bpf_mtap(ifp, m0, BPF_D_OUT);
 
 		shmif_lockbus(busmem);
 		KASSERT(busmem->shm_magic == SHMIF_MAGIC);

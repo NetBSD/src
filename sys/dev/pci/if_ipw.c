@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ipw.c,v 1.67.2.1 2018/05/02 07:20:06 pgoyette Exp $	*/
+/*	$NetBSD: if_ipw.c,v 1.67.2.2 2018/07/28 04:37:46 pgoyette Exp $	*/
 /*	FreeBSD: src/sys/dev/ipw/if_ipw.c,v 1.15 2005/11/13 17:17:40 damien Exp 	*/
 
 /*-
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ipw.c,v 1.67.2.1 2018/05/02 07:20:06 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ipw.c,v 1.67.2.2 2018/07/28 04:37:46 pgoyette Exp $");
 
 /*-
  * Intel(R) PRO/Wireless 2100 MiniPCI driver
@@ -1089,7 +1089,7 @@ ipw_data_intr(struct ipw_softc *sc, struct ipw_status *status,
 
 		tap->wr_antsignal = status->rssi;
 
-		bpf_mtap2(sc->sc_drvbpf, tap, sc->sc_rxtap_len, m);
+		bpf_mtap2(sc->sc_drvbpf, tap, sc->sc_rxtap_len, m, BPF_D_IN);
 	}
 
 	if (ic->ic_state == IEEE80211_S_SCAN)
@@ -1378,7 +1378,7 @@ ipw_tx_start(struct ifnet *ifp, struct mbuf *m0, struct ieee80211_node *ni)
 	if (sc->sc_drvbpf != NULL) {
 		struct ipw_tx_radiotap_header *tap = &sc->sc_txtap;
 
-		bpf_mtap2(sc->sc_drvbpf, tap, sc->sc_txtap_len, m0);
+		bpf_mtap2(sc->sc_drvbpf, tap, sc->sc_txtap_len, m0, BPF_D_OUT);
 	}
 
 	shdr = TAILQ_FIRST(&sc->sc_free_shdr);
@@ -1546,7 +1546,7 @@ ipw_start(struct ifnet *ifp)
 			continue;
 		}
 
-		bpf_mtap(ifp, m0);
+		bpf_mtap(ifp, m0, BPF_D_OUT);
 
 		m0 = ieee80211_encap(ic, m0, ni);
 		if (m0 == NULL) {
@@ -1554,7 +1554,7 @@ ipw_start(struct ifnet *ifp)
 			continue;
 		}
 
-		bpf_mtap3(ic->ic_rawbpf, m0);
+		bpf_mtap3(ic->ic_rawbpf, m0, BPF_D_OUT);
 
 		if (ipw_tx_start(ifp, m0, ni) != 0) {
 			ieee80211_free_node(ni);

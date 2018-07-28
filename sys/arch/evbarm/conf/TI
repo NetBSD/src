@@ -1,4 +1,4 @@
-#	$NetBSD: TI,v 1.2 2017/10/26 23:28:14 jmcneill Exp $
+#	$NetBSD: TI,v 1.2.4.1 2018/07/28 04:37:31 pgoyette Exp $
 #
 
 include "arch/evbarm/conf/std.ti"
@@ -29,10 +29,10 @@ options 	OMAP_SYSTEM_CLOCK_FREQ="48000000UL"
 config		netbsd	root on ? type ?
 
 armfdt0	 	at root
-fdt* 		at fdtbus?
+simplebus*	at fdt? pass 0
 
 cpus*           at fdt? pass 0
-cpu*            at cpus?
+cpu*            at fdt? pass 0
 
 am3prcm*	at fdt? pass 1
 

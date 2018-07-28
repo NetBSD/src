@@ -1,4 +1,4 @@
-/* $NetBSD: rk3328_cru.c,v 1.2.2.2 2018/06/25 07:25:39 pgoyette Exp $ */
+/* $NetBSD: rk3328_cru.c,v 1.2.2.3 2018/07/28 04:37:29 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: rk3328_cru.c,v 1.2.2.2 2018/06/25 07:25:39 pgoyette Exp $");
+__KERNEL_RCSID(1, "$NetBSD: rk3328_cru.c,v 1.2.2.3 2018/07/28 04:37:29 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -299,6 +299,34 @@ static struct rk_cru_clk rk3328_cru_clks[] = {
 		     CLKGATE_CON(3),	/* gate_reg */
 		     __BIT(5),		/* gate_mask */
 		     0),
+	RK_COMPOSITE(RK3328_SCLK_I2C0, "clk_i2c0", mux_2plls_parents,
+		     CLKSEL_CON(34),	/* muxdiv_reg */
+		     __BIT(7),		/* mux_mask */
+		     __BITS(6,0),	/* div_mask */
+		     CLKGATE_CON(2),	/* gate_reg */
+		     __BIT(9),		/* gate_mask */
+		     0),
+	RK_COMPOSITE(RK3328_SCLK_I2C1, "clk_i2c1", mux_2plls_parents,
+		     CLKSEL_CON(34),	/* muxdiv_reg */
+		     __BIT(15),		/* mux_mask */
+		     __BITS(14,8),	/* div_mask */
+		     CLKGATE_CON(2),	/* gate_reg */
+		     __BIT(10),		/* gate_mask */
+		     0),
+	RK_COMPOSITE(RK3328_SCLK_I2C2, "clk_i2c2", mux_2plls_parents,
+		     CLKSEL_CON(35),	/* muxdiv_reg */
+		     __BIT(7),		/* mux_mask */
+		     __BITS(6,0),	/* div_mask */
+		     CLKGATE_CON(2),	/* gate_reg */
+		     __BIT(11),		/* gate_mask */
+		     0),
+	RK_COMPOSITE(RK3328_SCLK_I2C3, "clk_i2c3", mux_2plls_parents,
+		     CLKSEL_CON(35),	/* muxdiv_reg */
+		     __BIT(15),		/* mux_mask */
+		     __BITS(14,8),	/* div_mask */
+		     CLKGATE_CON(2),	/* gate_reg */
+		     __BIT(12),		/* gate_mask */
+		     0),
 
 	RK_GATE(0, "apll_core", "apll", CLKGATE_CON(0), 0),
 	RK_GATE(0, "dpll_core", "dpll", CLKGATE_CON(0), 1),
@@ -310,6 +338,10 @@ static struct rk_cru_clk rk3328_cru_clks[] = {
 	RK_GATE(0, "pclk_bus", "pclk_bus_pre", CLKGATE_CON(8), 3),
 	RK_GATE(0, "pclk_phy_pre", "pclk_bus_pre", CLKGATE_CON(8), 4),
 	RK_GATE(RK3328_ACLK_PERI, "aclk_peri", "aclk_peri_pre", CLKGATE_CON(10), 0),
+	RK_GATE(RK3328_PCLK_I2C0, "pclk_i2c0", "pclk_bus", CLKGATE_CON(15), 10),
+	RK_GATE(RK3328_PCLK_I2C1, "pclk_i2c1", "pclk_bus", CLKGATE_CON(16), 0),
+	RK_GATE(RK3328_PCLK_I2C2, "pclk_i2c2", "pclk_bus", CLKGATE_CON(16), 1),
+	RK_GATE(RK3328_PCLK_I2C3, "pclk_i2c3", "pclk_bus", CLKGATE_CON(16), 2),
 	RK_GATE(RK3328_PCLK_GPIO0, "pclk_gpio0", "pclk_bus", CLKGATE_CON(16), 7),
 	RK_GATE(RK3328_PCLK_GPIO1, "pclk_gpio1", "pclk_bus", CLKGATE_CON(16), 8),
 	RK_GATE(RK3328_PCLK_GPIO2, "pclk_gpio2", "pclk_bus", CLKGATE_CON(16), 9),

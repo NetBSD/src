@@ -1,4 +1,4 @@
-/* $NetBSD: psci_fdt.c,v 1.3.4.1 2018/06/25 07:25:39 pgoyette Exp $ */
+/* $NetBSD: psci_fdt.c,v 1.3.4.2 2018/07/28 04:37:28 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -29,13 +29,14 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: psci_fdt.c,v 1.3.4.1 2018/06/25 07:25:39 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: psci_fdt.c,v 1.3.4.2 2018/07/28 04:37:28 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
 #include <sys/device.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
+#include <sys/atomic.h>
 
 #include <dev/fdt/fdtvar.h>
 
@@ -108,15 +109,16 @@ psci_fdt_attach(device_t parent, device_t self, void *aux)
 static int
 psci_fdt_init(const int phandle)
 {
-	char method[4];
+	const char *method, *psciver;
 	uint32_t val;
 
-	if (!of_hasprop(phandle, "method")) {
-		aprint_error("PSCI: missing 'method' property\n");
+	method = fdtbus_get_string(phandle, "method");
+	psciver = fdtbus_get_string(phandle, "compatible");
+	if (method == NULL || psciver == NULL) {
+		aprint_error("PSCI: missing required property on /psci\n");
 		return EINVAL;
 	}
 
-	OF_getprop(phandle, "method", method, sizeof(method));
 	if (strcmp(method, "smc") == 0)
 		psci_init(psci_call_smc);
 	else if (strcmp(method, "hvc") == 0)
@@ -126,7 +128,11 @@ psci_fdt_init(const int phandle)
 		return EINVAL;
 	}
 
-	if (of_match_compatible(phandle, compatible) == 1) {
+	/*
+	 * If the first compatible string is "arm,psci" then we
+	 * are dealing with PSCI 0.1
+	 */
+	if (strcmp(psciver, "arm,psci") == 0) {
 		psci_clearfunc();
 		if (of_getprop_uint32(phandle, "cpu_on", &val) == 0)
 			psci_setfunc(PSCI_FUNC_CPU_ON, val);
@@ -147,13 +153,35 @@ psci_fdt_preinit(void)
 	return psci_fdt_init(phandle);
 }
 
+#ifdef MULTIPROCESSOR
+static bus_addr_t psci_fdt_read_mpidr_aff(void)
+{
+#ifdef __aarch64__
+	return reg_mpidr_el1_read() & (MPIDR_AFF3|MPIDR_AFF2|MPIDR_AFF1|MPIDR_AFF0);
+#else
+	return armreg_mpidr_read() & (MPIDR_AFF2|MPIDR_AFF1|MPIDR_AFF0);
+#endif
+}
+
+static register_t
+psci_fdt_mpstart_pa(void)
+{
+#ifdef __aarch64__
+	extern void aarch64_mpstart(void);
+	return (register_t)aarch64_kern_vtophys((vaddr_t)aarch64_mpstart);
+#else
+	extern void cortex_mpstart(void);
+	return (register_t)cortex_mpstart;
+#endif
+}
+#endif
+
 void
 psci_fdt_bootstrap(void)
 {
 #ifdef MULTIPROCESSOR
 	extern void cortex_mpstart(void);
-	bus_addr_t mpidr;
-	uint32_t bp_mpidr;
+	bus_addr_t mpidr, bp_mpidr;
 	int child;
 
 	const int cpus = OF_finddevice("/cpus");
@@ -173,7 +201,7 @@ psci_fdt_bootstrap(void)
 		return;
 
 	/* MPIDR affinity levels of boot processor. */
-	bp_mpidr = armreg_mpidr_read() & (MPIDR_AFF2|MPIDR_AFF1|MPIDR_AFF0);
+	bp_mpidr = psci_fdt_read_mpidr_aff();
 
 	/* Boot APs */
 	uint32_t started = 0;
@@ -186,20 +214,18 @@ psci_fdt_bootstrap(void)
 			continue; 	/* BP already started */
 
 		/* XXX NetBSD requires all CPUs to be in the same cluster */
-		const u_int bp_clid = __SHIFTOUT(bp_mpidr, CORTEXA9_MPIDR_CLID);
-		const u_int clid = __SHIFTOUT(mpidr, CORTEXA9_MPIDR_CLID);
-		if (bp_clid != clid)
+		if ((mpidr & ~MPIDR_AFF0) != (bp_mpidr & ~MPIDR_AFF0))
 			continue;
 
-		const u_int cpuid = __SHIFTOUT(mpidr, CORTEXA9_MPIDR_CPUID);
-		int ret = psci_cpu_on(cpuid, (register_t)cortex_mpstart, 0);
+		const u_int cpuid = __SHIFTOUT(mpidr, MPIDR_AFF0);
+		int ret = psci_cpu_on(cpuid, psci_fdt_mpstart_pa(), 0);
 		if (ret == PSCI_SUCCESS)
 			started |= __BIT(cpuid);
 	}
 
 	/* Wait for APs to start */
 	for (u_int i = 0x10000000; i > 0; i--) {
-		arm_dmb();
+		membar_consumer();
 		if (arm_cpu_hatched == started)
 			break;
 	}

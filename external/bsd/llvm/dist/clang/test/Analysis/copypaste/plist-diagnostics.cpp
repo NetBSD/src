@@ -1,4 +1,4 @@
-// RUN: %clang_analyze_cc1 -analyzer-output=plist -o %t.plist -std=c++11 -analyzer-checker=alpha.clone.CloneChecker -verify %s
+// RUN: %clang_analyze_cc1 -analyzer-output=plist -o %t.plist -std=c++11 -analyzer-checker=alpha.clone.CloneChecker -analyzer-config alpha.clone.CloneChecker:MinimumCloneComplexity=10 -verify %s
 // RUN: FileCheck --input-file=%t.plist %s
 
 void log();
@@ -17,12 +17,39 @@ int maxClone(int a, int b) { // expected-note{{Similar code here}}
   return b;
 }
 
-// FIXME: This plist output doesn't include the extra note on line 13.
-// It should be updated once the format for extra notes in plists is defined.
-
 // CHECK:  <key>diagnostics</key>
 // CHECK-NEXT:  <array>
 // CHECK-NEXT:   <dict>
+// CHECK-NEXT:    <key>notes</key>
+// CHECK-NEXT:    <array>
+// CHECK-NEXT:     <dict>
+// CHECK-NEXT:      <key>location</key>
+// CHECK-NEXT:      <dict>
+// CHECK-NEXT:       <key>line</key><integer>13</integer>
+// CHECK-NEXT:       <key>col</key><integer>28</integer>
+// CHECK-NEXT:       <key>file</key><integer>0</integer>
+// CHECK-NEXT:      </dict>
+// CHECK-NEXT:      <key>ranges</key>
+// CHECK-NEXT:      <array>
+// CHECK-NEXT:        <array>
+// CHECK-NEXT:         <dict>
+// CHECK-NEXT:          <key>line</key><integer>13</integer>
+// CHECK-NEXT:          <key>col</key><integer>28</integer>
+// CHECK-NEXT:          <key>file</key><integer>0</integer>
+// CHECK-NEXT:         </dict>
+// CHECK-NEXT:         <dict>
+// CHECK-NEXT:          <key>line</key><integer>18</integer>
+// CHECK-NEXT:          <key>col</key><integer>1</integer>
+// CHECK-NEXT:          <key>file</key><integer>0</integer>
+// CHECK-NEXT:         </dict>
+// CHECK-NEXT:        </array>
+// CHECK-NEXT:      </array>
+// CHECK-NEXT:      <key>extended_message</key>
+// CHECK-NEXT:      <string>Similar code here</string>
+// CHECK-NEXT:      <key>message</key>
+// CHECK-NEXT:      <string>Similar code here</string>
+// CHECK-NEXT:     </dict>
+// CHECK-NEXT:    </array>
 // CHECK-NEXT:    <key>path</key>
 // CHECK-NEXT:    <array>
 // CHECK-NEXT:     <dict>

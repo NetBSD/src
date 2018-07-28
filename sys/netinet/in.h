@@ -1,4 +1,4 @@
-/*	$NetBSD: in.h,v 1.104.2.1 2018/04/22 07:20:28 pgoyette Exp $	*/
+/*	$NetBSD: in.h,v 1.104.2.2 2018/07/28 04:38:10 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -569,7 +569,6 @@ int	in_canforward(struct in_addr);
 int	cpu_in_cksum(struct mbuf *, int, int, uint32_t);
 int	in_cksum(struct mbuf *, int);
 int	in4_cksum(struct mbuf *, u_int8_t, int, int);
-void	in_delayed_cksum(struct mbuf *);
 int	in_localaddr(struct in_addr);
 void	in_socktrim(struct sockaddr_in *);
 

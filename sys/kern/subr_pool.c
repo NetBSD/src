@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.221 2018/01/12 18:54:37 para Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.221.2.1 2018/07/28 04:38:08 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000, 2002, 2007, 2008, 2010, 2014, 2015
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.221 2018/01/12 18:54:37 para Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.221.2.1 2018/07/28 04:38:08 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -248,7 +248,7 @@ pr_item_notouch_put(const struct pool *pp, struct pool_item_header *ph,
 {
 	unsigned int idx = pr_item_notouch_index(pp, ph, obj);
 	pool_item_bitmap_t *bitmap = ph->ph_bitmap + (idx / BITMAP_SIZE);
-	pool_item_bitmap_t mask = 1 << (idx & BITMAP_MASK);
+	pool_item_bitmap_t mask = 1U << (idx & BITMAP_MASK);
 
 	KASSERT((*bitmap & mask) == 0);
 	*bitmap |= mask;
@@ -271,7 +271,7 @@ pr_item_notouch_get(const struct pool *pp, struct pool_item_header *ph)
 
 			bit--;
 			idx = (i * BITMAP_SIZE) + bit;
-			mask = 1 << bit;
+			mask = 1U << bit;
 			KASSERT((bitmap[i] & mask) != 0);
 			bitmap[i] &= ~mask;
 			break;

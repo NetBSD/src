@@ -475,9 +475,11 @@ class SizeClassAllocator64 {
  private:
   static const uptr kRegionSize = kSpaceSize / kNumClassesRounded;
   static const uptr kSpaceEnd = kSpaceBeg + kSpaceSize;
+#if _LP64
   COMPILER_CHECK(kSpaceBeg % kSpaceSize == 0);
   // kRegionSize must be >= 2^32.
   COMPILER_CHECK((kRegionSize) >= (1ULL << (SANITIZER_WORDSIZE / 2)));
+#endif
   // Populate the free list with at most this number of bytes at once
   // or with one element if its size is greater.
   static const uptr kPopulateSize = 1 << 14;
@@ -495,7 +497,9 @@ class SizeClassAllocator64 {
     uptr mapped_meta;  // Bytes mapped for metadata.
     uptr n_allocated, n_freed;  // Just stats.
   };
+#if _LP64
   COMPILER_CHECK(sizeof(RegionInfo) >= kCacheLineSize);
+#endif
 
   RegionInfo *GetRegionInfo(uptr class_id) {
     CHECK_LT(class_id, kNumClasses);

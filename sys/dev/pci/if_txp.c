@@ -1,4 +1,4 @@
-/* $NetBSD: if_txp.c,v 1.48 2017/09/26 07:42:06 knakahara Exp $ */
+/* $NetBSD: if_txp.c,v 1.48.2.1 2018/07/28 04:37:46 pgoyette Exp $ */
 
 /*
  * Copyright (c) 2001
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_txp.c,v 1.48 2017/09/26 07:42:06 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_txp.c,v 1.48.2.1 2018/07/28 04:37:46 pgoyette Exp $");
 
 #include "opt_inet.h"
 
@@ -569,6 +569,7 @@ txp_download_fw_section(struct txp_softc *sc,
 	 */
 	m.m_type = MT_DATA;
 	m.m_next = m.m_nextpkt = NULL;
+	m.m_owner = NULL;
 	m.m_len = le32toh(sect->nbytes);
 	m.m_data = dma.dma_vaddr;
 	m.m_flags = 0;
@@ -1517,7 +1518,7 @@ txp_start(struct ifnet *ifp)
 
 		ifp->if_timer = 5;
 
-		bpf_mtap(ifp, m);
+		bpf_mtap(ifp, m, BPF_D_OUT);
 
 		txd->tx_flags |= TX_FLAGS_VALID;
 		bus_dmamap_sync(sc->sc_dmat, sc->sc_txhiring_dma.dma_map,

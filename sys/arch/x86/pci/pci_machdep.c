@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.79.8.2 2018/06/25 07:25:47 pgoyette Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.79.8.3 2018/07/28 04:37:42 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.79.8.2 2018/06/25 07:25:47 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.79.8.3 2018/07/28 04:37:42 pgoyette Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -340,20 +340,23 @@ pci_conf_lock(struct pci_conf_lock *ocl, uint32_t sel)
 	if (cpuno == cl->cl_cpuno) {
 		ocl->cl_cpuno = cpuno;
 	} else {
-		u_int spins;
+#ifdef LOCKDEBUG
+		u_int spins = 0;
+#endif
+		u_int count;
+		count = SPINLOCK_BACKOFF_MIN;
 
 		ocl->cl_cpuno = 0;
 
-		spins = SPINLOCK_BACKOFF_MIN;
 		while (atomic_cas_32(&cl->cl_cpuno, 0, cpuno) != 0) {
-			SPINLOCK_BACKOFF(spins);
+			SPINLOCK_BACKOFF(count);
 #ifdef LOCKDEBUG
 			if (SPINLOCK_SPINOUT(spins)) {
 				panic("%s: cpu %" PRId32
 				    " spun out waiting for cpu %" PRId32,
 				    __func__, cpuno, cl->cl_cpuno);
 			}
-#endif	/* LOCKDEBUG */
+#endif
 		}
 	}
 

@@ -16,9 +16,8 @@
 ; Test that we correctly lower dbg.declares for arrays.
 ;
 ; CHECK: define i32 @main
-; CHECK: call void @llvm.dbg.value(metadata i32 42, i64 0, metadata ![[ARRAY:[0-9]+]], metadata ![[EXPR:[0-9]+]])
+; CHECK: call void @llvm.dbg.value(metadata i32 42, metadata ![[ARRAY:[0-9]+]], metadata !DIExpression(DW_OP_LLVM_fragment, 0, 32))
 ; CHECK: ![[ARRAY]] = !DILocalVariable(name: "array",{{.*}} line: 6
-; CHECK: ![[EXPR]] = !DIExpression(DW_OP_LLVM_fragment, 0, 32)
 target datalayout = "e-m:o-i64:64-f80:128-n8:16:32:64-S128"
 target triple = "x86_64-apple-macosx10.9.0"
 
@@ -53,7 +52,7 @@ entry:
   call void @llvm.dbg.declare(metadata i8*** %argv.addr, metadata !25, metadata !DIExpression()), !dbg !24
   call void @llvm.dbg.declare(metadata [4 x i32]* %array, metadata !26, metadata !DIExpression()), !dbg !30
   %0 = bitcast [4 x i32]* %array to i8*, !dbg !30
-  call void @llvm.memcpy.p0i8.p0i8.i64(i8* %0, i8* bitcast ([4 x i32]* @main.array to i8*), i64 16, i32 16, i1 false), !dbg !30
+  call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 16 %0, i8* align 16 bitcast ([4 x i32]* @main.array to i8*), i64 16, i1 false), !dbg !30
   %arraydecay = getelementptr inbounds [4 x i32], [4 x i32]* %array, i32 0, i32 0, !dbg !31
   call void @f(i32* %arraydecay), !dbg !31
   %arrayidx = getelementptr inbounds [4 x i32], [4 x i32]* %array, i32 0, i64 0, !dbg !32
@@ -62,7 +61,7 @@ entry:
 }
 
 ; Function Attrs: nounwind
-declare void @llvm.memcpy.p0i8.p0i8.i64(i8* nocapture, i8* nocapture readonly, i64, i32, i1) #2
+declare void @llvm.memcpy.p0i8.p0i8.i64(i8* nocapture, i8* nocapture readonly, i64, i1) #2
 
 attributes #0 = { nounwind ssp uwtable }
 attributes #1 = { nounwind readnone }
@@ -75,13 +74,13 @@ attributes #2 = { nounwind }
 !0 = distinct !DICompileUnit(language: DW_LANG_C99, producer: "clang version 3.5.0 ", isOptimized: false, emissionKind: FullDebug, file: !1, enums: !2, retainedTypes: !2, globals: !2, imports: !2)
 !1 = !DIFile(filename: "array.c", directory: "")
 !2 = !{}
-!4 = distinct !DISubprogram(name: "f", line: 1, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, unit: !0, scopeLine: 1, file: !1, scope: !5, type: !6, variables: !2)
+!4 = distinct !DISubprogram(name: "f", line: 1, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, unit: !0, scopeLine: 1, file: !1, scope: !5, type: !6, retainedNodes: !2)
 !5 = !DIFile(filename: "array.c", directory: "")
 !6 = !DISubroutineType(types: !7)
 !7 = !{null, !8}
 !8 = !DIDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, baseType: !9)
 !9 = !DIBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
-!10 = distinct !DISubprogram(name: "main", line: 5, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, unit: !0, scopeLine: 5, file: !1, scope: !5, type: !11, variables: !2)
+!10 = distinct !DISubprogram(name: "main", line: 5, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, unit: !0, scopeLine: 5, file: !1, scope: !5, type: !11, retainedNodes: !2)
 !11 = !DISubroutineType(types: !12)
 !12 = !{!9, !9, !13}
 !13 = !DIDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, baseType: !14)

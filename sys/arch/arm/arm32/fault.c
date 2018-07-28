@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.105 2017/10/28 00:37:12 pgoyette Exp $	*/
+/*	$NetBSD: fault.c,v 1.105.2.1 2018/07/28 04:37:27 pgoyette Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -81,7 +81,7 @@
 #include "opt_kgdb.h"
 
 #include <sys/types.h>
-__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.105 2017/10/28 00:37:12 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.105.2.1 2018/07/28 04:37:27 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -383,7 +383,7 @@ data_abort_handler(trapframe_t *tf)
 	     (read_insn(tf->tf_pc, false) & 0x05200000) != 0x04200000))) {
 		map = kernel_map;
 
-		/* Was the fault due to the FPE/IPKDB ? */
+		/* Was the fault due to the FPE ? */
 		if (__predict_false((tf->tf_spsr & PSR_MODE)==PSR_UND32_MODE)) {
 			KSI_INIT_TRAP(&ksi);
 			ksi.ksi_signo = SIGSEGV;

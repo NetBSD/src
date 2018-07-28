@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.162.2.3 2018/06/25 07:26:04 pgoyette Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.162.2.4 2018/07/28 04:38:08 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -37,11 +37,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.162.2.3 2018/06/25 07:26:04 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.162.2.4 2018/07/28 04:38:08 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
-#include "opt_ipkdb.h"
 #include "opt_kgdb.h"
 #include "opt_dump.h"
 #include "opt_rnd_printf.h"
@@ -72,10 +71,6 @@ __KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.162.2.3 2018/06/25 07:26:04 pgoyette 
 #include <dev/cons.h>
 
 #include <net/if.h>
-
-#ifdef IPKDB
-#include <ipkdb/ipkdb.h>
-#endif
 
 static kmutex_t kprintf_mtx;
 static bool kprintf_inited = false;
@@ -327,9 +322,6 @@ vpanic(const char *fmt, va_list ap)
 	if (logenabled(msgbufp))
 		panicend = msgbufp->msg_bufx;
 
-#ifdef IPKDB
-	ipkdb_panic();
-#endif
 #ifdef KGDB
 	kgdb_panic();
 #endif

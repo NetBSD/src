@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.h,v 1.31.2.1 2018/04/22 07:20:27 pgoyette Exp $	*/
+/*	$NetBSD: if_arp.h,v 1.31.2.2 2018/07/28 04:38:09 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1986, 1993
@@ -74,15 +74,21 @@ struct	arphdr {
 } __packed;
 
 static __inline uint8_t *
+ar_data(struct arphdr *ap)
+{
+	return (uint8_t *)(void *)(ap + 1);
+}
+
+static __inline uint8_t *
 ar_sha(struct arphdr *ap)
 {
-	return ((uint8_t *)(ap + 1)) + 0;
+	return ar_data(ap) + 0;
 }
 
 static __inline uint8_t *
 ar_spa(struct arphdr *ap)
 {
-	return ((uint8_t *)(ap + 1)) + ap->ar_hln;
+	return ar_data(ap) + ap->ar_hln;
 }
 
 static __inline uint8_t *
@@ -91,7 +97,7 @@ ar_tha(struct arphdr *ap)
 	if (ntohs(ap->ar_hrd) == ARPHRD_IEEE1394) {
 		return NULL;
 	} else {
-		return ((uint8_t *)(ap + 1)) + ap->ar_hln + ap->ar_pln;
+		return ar_data(ap) + ap->ar_hln + ap->ar_pln;
 	}
 }
 
@@ -99,10 +105,9 @@ static __inline uint8_t *
 ar_tpa(struct arphdr *ap)
 {
 	if (ntohs(ap->ar_hrd) == ARPHRD_IEEE1394) {
-		return ((uint8_t *)(ap + 1)) + ap->ar_hln + ap->ar_pln;
+		return ar_data(ap) + ap->ar_hln + ap->ar_pln;
 	} else {
-		return ((uint8_t *)(ap + 1)) + ap->ar_hln + ap->ar_pln +
-		    ap->ar_hln;
+		return ar_data(ap) + ap->ar_hln + ap->ar_pln + ap->ar_hln;
 	}
 }
 

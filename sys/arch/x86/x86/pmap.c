@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.289.2.2 2018/06/25 07:25:47 pgoyette Exp $	*/
+/*	$NetBSD: pmap.c,v 1.289.2.3 2018/07/28 04:37:42 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2008, 2010, 2016, 2017 The NetBSD Foundation, Inc.
@@ -130,19 +130,6 @@
  */
 
 /*
- * This is the i386 pmap modified and generalized to support x86-64
- * as well. The idea is to hide the upper N levels of the page tables
- * inside pmap_get_ptp, pmap_free_ptp and pmap_growkernel. The rest
- * is mostly untouched, except that it uses some more generalized
- * macros and interfaces.
- *
- * This pmap has been tested on the i386 as well, and it can be easily
- * adapted to PAE.
- *
- * fvdl@wasabisystems.com 18-Jun-2001
- */
-
-/*
  * pmap.c: i386 pmap module rewrite
  * Chuck Cranor <chuck@netbsd>
  * 11-Aug-97
@@ -170,7 +157,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.289.2.2 2018/06/25 07:25:47 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.289.2.3 2018/07/28 04:37:42 pgoyette Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -199,6 +186,7 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.289.2.2 2018/06/25 07:25:47 pgoyette Exp 
 #include <machine/isa_machdep.h>
 #include <machine/cpuvar.h>
 #include <machine/cputypes.h>
+#include <machine/cpu_rng.h>
 
 #include <x86/pmap.h>
 #include <x86/pmap_pv.h>
@@ -372,6 +360,7 @@ static struct pmap kernel_pmap_store;	/* the kernel's pmap (proc0) */
 struct pmap *const kernel_pmap_ptr = &kernel_pmap_store;
 
 struct bootspace bootspace __read_mostly;
+struct slotspace slotspace __read_mostly;
 
 /*
  * pmap_pg_nx: if our processor supports PG_NX in the PTE then we
@@ -501,8 +490,6 @@ static struct pool_cache pmap_pv_cache;
 #ifdef __HAVE_DIRECT_MAP
 vaddr_t pmap_direct_base __read_mostly;
 vaddr_t pmap_direct_end __read_mostly;
-size_t pmap_direct_pdpe __read_mostly;
-size_t pmap_direct_npdp __read_mostly;
 #endif
 
 #ifndef __HAVE_DIRECT_MAP
@@ -524,6 +511,7 @@ int pmap_enter_default(pmap_t, vaddr_t, paddr_t, vm_prot_t, u_int);
 struct pool_cache pmap_pdp_cache;
 static int  pmap_pdp_ctor(void *, void *, int);
 static void pmap_pdp_dtor(void *, void *);
+
 #ifdef PAE
 /* need to allocate items of 4 pages */
 static void *pmap_pdp_alloc(struct pool *, int);
@@ -533,7 +521,7 @@ static struct pool_allocator pmap_pdp_allocator = {
 	.pa_free = pmap_pdp_free,
 	.pa_pagesz = PAGE_SIZE * PDP_SIZE,
 };
-#endif /* PAE */
+#endif
 
 extern vaddr_t idt_vaddr;
 extern paddr_t idt_paddr;
@@ -1394,6 +1382,80 @@ pmap_pagetree_nentries_range(vaddr_t startva, vaddr_t endva, size_t pgsz)
 }
 #endif
 
+#if defined(__HAVE_DIRECT_MAP)
+static inline void
+slotspace_copy(int type, pd_entry_t *dst, pd_entry_t *src)
+{
+	size_t sslot = slotspace.area[type].sslot;
+	size_t nslot = slotspace.area[type].nslot;
+
+	memcpy(&dst[sslot], &src[sslot], nslot * sizeof(pd_entry_t));
+}
+#endif
+
+#if defined(__HAVE_DIRECT_MAP)
+/*
+ * Randomize the location of an area. We count the holes in the VM space. We
+ * randomly select one hole, and then randomly select an area within that hole.
+ * Finally we update the associated entry in the slotspace structure.
+ */
+static vaddr_t
+slotspace_rand(int type, size_t sz, size_t align)
+{
+	struct {
+		int start;
+		int end;
+	} holes[SLSPACE_NAREAS+1];
+	size_t i, nholes, hole;
+	size_t startsl, endsl, nslots, winsize;
+	vaddr_t startva, va;
+
+	sz = roundup(sz, align);
+	nslots = roundup(sz+NBPD_L4, NBPD_L4) / NBPD_L4;
+
+	/* Get the holes. */
+	nholes = 0;
+	for (i = 0; i < SLSPACE_NAREAS-1; i++) {
+		startsl = slotspace.area[i].sslot;
+		if (slotspace.area[i].active)
+			startsl += slotspace.area[i].mslot;
+		endsl = slotspace.area[i+1].sslot;
+		if (endsl - startsl >= nslots) {
+			holes[nholes].start = startsl;
+			holes[nholes].end = endsl;
+			nholes++;
+		}
+	}
+	if (nholes == 0) {
+		panic("%s: impossible", __func__);
+	}
+
+	/* Select a hole. */
+	cpu_earlyrng(&hole, sizeof(hole));
+	hole %= nholes;
+	startsl = holes[hole].start;
+	endsl = holes[hole].end;
+	startva = VA_SIGN_NEG(startsl * NBPD_L4);
+
+	/* Select an area within the hole. */
+	cpu_earlyrng(&va, sizeof(va));
+	winsize = ((endsl - startsl) * NBPD_L4) - sz;
+	va %= winsize;
+	va = rounddown(va, align);
+	va += startva;
+
+	/* Update the entry. */
+	slotspace.area[type].sslot = pl4_i(va);
+	slotspace.area[type].nslot =
+	    pmap_pagetree_nentries_range(va, va+sz, NBPD_L4);
+	if (slotspace.area[type].dropmax) {
+		slotspace.area[type].mslot = slotspace.area[type].nslot;
+	}
+
+	return va;
+}
+#endif
+
 #ifdef __HAVE_PCPU_AREA
 static void
 pmap_init_pcpu(void)
@@ -1494,7 +1556,7 @@ pmap_init_directmap(struct pmap *kpm)
 	extern phys_ram_seg_t mem_clusters[];
 	extern int mem_cluster_cnt;
 
-	const vaddr_t startva = PMAP_DIRECT_DEFAULT_BASE;
+	vaddr_t startva;
 	size_t nL4e, nL3e, nL2e;
 	size_t L4e_idx, L3e_idx, L2e_idx;
 	size_t spahole, epahole;
@@ -1526,6 +1588,8 @@ pmap_init_directmap(struct pmap *kpm)
 	if (lastpa > MAXPHYSMEM) {
 		panic("pmap_init_directmap: lastpa incorrect");
 	}
+
+	startva = slotspace_rand(SLAREA_DMAP, lastpa, NBPD_L2);
 	endva = startva + lastpa;
 
 	/* We will use this temporary va. */
@@ -1583,8 +1647,6 @@ pmap_init_directmap(struct pmap *kpm)
 
 	pmap_direct_base = startva;
 	pmap_direct_end = endva;
-	pmap_direct_pdpe = L4e_idx;
-	pmap_direct_npdp = nL4e;
 
 	tlbflush();
 }
@@ -1737,17 +1799,18 @@ pmap_init(void)
 	 * are pinned on xen and R/O for the domU
 	 */
 	flags = PR_NOTOUCH;
-#else /* XEN */
+#else
 	flags = 0;
-#endif /* XEN */
+#endif
+
 #ifdef PAE
 	pool_cache_bootstrap(&pmap_pdp_cache, PAGE_SIZE * PDP_SIZE, 0, 0, flags,
 	    "pdppl", &pmap_pdp_allocator, IPL_NONE,
 	    pmap_pdp_ctor, pmap_pdp_dtor, NULL);
-#else /* PAE */
+#else
 	pool_cache_bootstrap(&pmap_pdp_cache, PAGE_SIZE, 0, 0, flags,
 	    "pdppl", NULL, IPL_NONE, pmap_pdp_ctor, pmap_pdp_dtor, NULL);
-#endif /* PAE */
+#endif
 	pool_cache_bootstrap(&pmap_pv_cache, sizeof(struct pv_entry), 0, 0,
 	    PR_LARGECACHE, "pvpl", &pool_allocator_kmem, IPL_NONE, NULL,
 	    NULL, NULL);
@@ -2294,8 +2357,7 @@ pmap_pdp_ctor(void *arg, void *v, int flags)
 	pdir[PDIR_SLOT_PCPU] = PDP_BASE[PDIR_SLOT_PCPU];
 #endif
 #ifdef __HAVE_DIRECT_MAP
-	memcpy(&pdir[pmap_direct_pdpe], &PDP_BASE[pmap_direct_pdpe],
-	    pmap_direct_npdp * sizeof(pd_entry_t));
+	slotspace_copy(SLAREA_DMAP, pdir, PDP_BASE);
 #endif
 #endif /* XEN  && __x86_64__*/
 
@@ -2959,8 +3021,8 @@ pmap_load(void)
 #ifndef XEN
 	ci->ci_tss->tss.tss_ldt = pmap->pm_ldt_sel;
 	ci->ci_tss->tss.tss_cr3 = pcb->pcb_cr3;
-#endif /* !XEN */
-#endif /* i386 */
+#endif
+#endif
 
 	lldt(pmap->pm_ldt_sel);
 
@@ -4478,7 +4540,7 @@ pmap_alloc_level(struct pmap *cpm, vaddr_t kva, long *needed_ptps)
 			pte = pmap_pa2pte(pa) | PG_V | PG_RW;
 			pmap_pte_set(&pdep[i], pte);
 
-#if defined(XEN) && (defined(PAE) || defined(__x86_64__))
+#ifdef XEN
 			if (level == PTP_LEVELS && i >= PDIR_SLOT_KERN) {
 				if (__predict_true(
 				    cpu_info_primary.ci_flags & CPUF_PRESENT)) {
@@ -4489,18 +4551,17 @@ pmap_alloc_level(struct pmap *cpm, vaddr_t kva, long *needed_ptps)
 					 * too early; update primary CPU
 					 * PMD only (without locks)
 					 */
-#ifdef PAE
-					pd_entry_t *cpu_pdep =
-					    &cpu_info_primary.ci_kpm_pdir[l2tol2(i)];
-#endif
 #ifdef __x86_64__
 					pd_entry_t *cpu_pdep =
 						&cpu_info_primary.ci_kpm_pdir[i];
+#else
+					pd_entry_t *cpu_pdep =
+					    &cpu_info_primary.ci_kpm_pdir[l2tol2(i)];
 #endif
 					pmap_pte_set(cpu_pdep, pte);
 				}
 			}
-#endif /* XEN && (PAE || __x86_64__) */
+#endif
 
 			KASSERT(level != PTP_LEVELS || nkptp[level - 1] +
 			    pl_i(VM_MIN_KERNEL_ADDRESS, level) == i);
@@ -4558,7 +4619,7 @@ pmap_growkernel(vaddr_t maxkvaddr)
 		needed_kptp[i] = target_nptp - nkptp[i];
 	}
 
-#if defined(XEN) && (defined(__x86_64__) || defined(PAE))
+#ifdef XEN
 	/* only pmap_kernel(), or the per-cpu map, has kernel entries */
 	cpm = kpm;
 #else
@@ -4579,23 +4640,8 @@ pmap_growkernel(vaddr_t maxkvaddr)
 #ifdef XEN
 #ifdef __x86_64__
 		/* nothing, kernel entries are never entered in user pmap */
-#else /* __x86_64__ */
+#else
 		int pdkidx;
-#ifndef PAE
-		/*
-		 * for PAE this is not needed, because pmap_alloc_level()
-		 * already did update the per-CPU tables
-		 */
-		if (cpm != kpm) {
-			for (pdkidx = PDIR_SLOT_KERN + old;
-			    pdkidx < PDIR_SLOT_KERN + nkptp[PTP_LEVELS - 1];
-			    pdkidx++) {
-				pmap_pte_set(&kpm->pm_pdir[pdkidx],
-				    cpm->pm_pdir[pdkidx]);
-			}
-			pmap_pte_flush();
-		}
-#endif /* !PAE */
 
 		mutex_enter(&pmaps_lock);
 		LIST_FOREACH(pm, &pmaps, pm_list) {

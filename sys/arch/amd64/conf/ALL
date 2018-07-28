@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.82.2.6 2018/06/25 07:25:38 pgoyette Exp $
+# $NetBSD: ALL,v 1.82.2.7 2018/07/28 04:37:26 pgoyette Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"ALL-$Revision: 1.82.2.6 $"
+#ident		"ALL-$Revision: 1.82.2.7 $"
 
 maxusers	64		# estimated number of users
 
@@ -39,8 +39,6 @@ odcm0		at cpu0		# On-demand clock modulation
 powernow0	at cpu0		# AMD PowerNow! and Cool'n'Quiet (non-ACPI)
 viac7temp*	at cpu?		# VIA C7 temperature sensor
 vmt0		at cpu0		# VMware Tools
-
-options 	PMC	# performance-monitoring counters support
 
 # Beep when it is safe to power down the system (requires sysbeep)
 options 	BEEP_ONHALT
@@ -319,7 +317,6 @@ config		netbsd	root on ? type ?
 #options 	APM_V10_ONLY		# Use only the APM 1.0 calls
 #options 	APM_NO_POWEROFF		# Don't power off on halt(8)
 #options 	APM_POWER_PRINT		# Print stats on the console
-#options 	APM_DISABLE_INTERRUPTS=0 # Don't disable interrupts
 
 
 # Basic Bus Support
@@ -511,7 +508,6 @@ wcfb*	at pci? dev ? function ?
 #sisdrm* 	at drm?		# SiS DRM driver
 #tdfxdrm*	at drm?		# 3dfx (voodoo) DRM driver
 #vboxdrm*	at drm?		# VirtualBox DRM driver
-#viadrm* 	at drm?		# VIA UniChrome DRM driver
 
 # DRMKMS drivers
 i915drmkms*	at pci? dev ? function ?
@@ -522,6 +518,9 @@ radeondrmkmsfb* at radeonfbbus?
 
 nouveau*	at pci? dev ? function ?
 nouveaufb*	at nouveaufbbus?
+
+# DRMUMS drivers
+viadrmums*	at drm?
 
 attimer0	at isa?
 pcppi0		at isa?
@@ -2382,7 +2381,6 @@ options XDC_DEBUG
 options XDDEBUG
 options XDEBUG
 options XENDEBUG
-options XENDEBUG_LOW
 options XENDEBUG_NET
 options XENDEBUG_VBD
 options XENNET_DEBUG
@@ -2390,7 +2388,6 @@ options XENNET_DEBUG_DUMP
 options XEN_CLOCK_DEBUG
 options XE_DEBUG
 options XHCI_DEBUG
-options XXXXENDEBUG_LOW
 options XYC_DEBUG
 options ZSKBD_DEBUG
 options ZSMACDEBUG

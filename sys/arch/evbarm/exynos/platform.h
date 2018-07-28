@@ -1,4 +1,4 @@
-/*	$NetBSD: platform.h,v 1.2 2017/06/10 15:13:19 jmcneill Exp $	*/
+/*	$NetBSD: platform.h,v 1.2.6.1 2018/07/28 04:37:31 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -38,6 +38,6 @@
  * IO space
  */
 
-#define EXYNOS_CORE_VBASE	0xf0000000
+#define EXYNOS_CORE_VBASE	KERNEL_IO_VBASE
 
 #endif /* _ARM_EXYNOS_PLATFORM_H */

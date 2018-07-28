@@ -1,7 +1,7 @@
 ; RUN: llc -mtriple=i686-w64-mingw32 -o %t -filetype=obj %s
-; RUN: llvm-dwarfdump -debug-dump=all %t | FileCheck %s
+; RUN: llvm-dwarfdump -v -all %t | FileCheck %s
 ; RUN: llc -mtriple=i686-w64-mingw32 -o %t -filetype=obj -dwarf-version=3 %s
-; RUN: llvm-dwarfdump -debug-dump=all %t | FileCheck %s -check-prefix=DWARF3
+; RUN: llvm-dwarfdump -v -all %t | FileCheck %s -check-prefix=DWARF3
 
 ; CHECK:         DW_AT_stmt_list [DW_FORM_sec_offset]
 ; DWARF3:        DW_AT_stmt_list [DW_FORM_data4]
@@ -33,7 +33,7 @@ attributes #0 = { nounwind "less-precise-fpmad"="false" "no-frame-pointer-elim"=
 !0 = distinct !DICompileUnit(language: DW_LANG_C99, producer: "clang version 3.4 ", isOptimized: false, emissionKind: FullDebug, file: !1, enums: !2, retainedTypes: !2, globals: !2, imports: !2)
 !1 = !DIFile(filename: "test.c", directory: "C:\5CProjects")
 !2 = !{}
-!4 = distinct !DISubprogram(name: "main", line: 1, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: false, unit: !0, scopeLine: 2, file: !1, scope: !5, type: !6, variables: !2)
+!4 = distinct !DISubprogram(name: "main", line: 1, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: false, unit: !0, scopeLine: 2, file: !1, scope: !5, type: !6, retainedNodes: !2)
 !5 = !DIFile(filename: "test.c", directory: "C:CProjects")
 !6 = !DISubroutineType(types: !7)
 !7 = !{!8}

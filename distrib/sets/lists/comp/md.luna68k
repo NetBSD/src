@@ -1,4 +1,4 @@
-# $NetBSD: md.luna68k,v 1.22 2017/03/09 14:05:58 tsutsui Exp $
+# $NetBSD: md.luna68k,v 1.22.10.1 2018/07/28 04:32:59 pgoyette Exp $
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/luna68k				comp-c-include
 ./usr/include/luna68k/_G_config.h		comp-obsolete		obsolete
@@ -36,7 +36,7 @@
 ./usr/include/luna68k/param.h			comp-c-include
 ./usr/include/luna68k/pcb.h			comp-c-include
 ./usr/include/luna68k/pmap.h			comp-c-include
-./usr/include/luna68k/pmc.h			comp-c-include
+./usr/include/luna68k/pmc.h			comp-obsolete		obsolete
 ./usr/include/luna68k/proc.h			comp-c-include
 ./usr/include/luna68k/profile.h			comp-c-include
 ./usr/include/luna68k/psl.h			comp-c-include

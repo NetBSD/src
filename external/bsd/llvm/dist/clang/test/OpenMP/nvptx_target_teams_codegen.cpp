@@ -9,8 +9,9 @@
 #define HEADER
 
 // Check that the execution mode of all 2 target regions is set to Generic Mode.
-// CHECK-DAG: {{@__omp_offloading_.+l26}}_exec_mode = weak constant i8 1
-// CHECK-DAG: {{@__omp_offloading_.+l31}}_exec_mode = weak constant i8 1
+// CHECK-DAG: {{@__omp_offloading_.+l27}}_exec_mode = weak constant i8 1
+// CHECK-DAG: {{@__omp_offloading_.+l32}}_exec_mode = weak constant i8 1
+// CHECK-DAG: {{@__omp_offloading_.+l37}}_exec_mode = weak constant i8 0
 
 template<typename tx>
 tx ftemplate(int n) {
@@ -33,6 +34,13 @@ tx ftemplate(int n) {
     aa = 1;
   }
 
+  #pragma omp target teams
+  {
+#pragma omp parallel
+#pragma omp parallel
+    aa = 1;
+  }
+
   return a;
 }
 
@@ -44,14 +52,14 @@ int bar(int n){
   return a;
 }
 
-  // CHECK-NOT: define {{.*}}void {{@__omp_offloading_.+template.+l21}}_worker()
+  // CHECK-NOT: define {{.*}}void {{@__omp_offloading_.+template.+l22}}_worker()
 
 
 
 
 
 
-  // CHECK-LABEL: define {{.*}}void {{@__omp_offloading_.+template.+l26}}_worker()
+  // CHECK-LABEL: define {{.*}}void {{@__omp_offloading_.+template.+l27}}_worker()
   // CHECK-DAG: [[OMP_EXEC_STATUS:%.+]] = alloca i8,
   // CHECK-DAG: [[OMP_WORK_FN:%.+]] = alloca i8*,
   // CHECK: store i8* null, i8** [[OMP_WORK_FN]],
@@ -60,7 +68,7 @@ int bar(int n){
   //
   // CHECK: [[AWAIT_WORK]]
   // CHECK: call void @llvm.nvvm.barrier0()
-  // CHECK: [[KPR:%.+]] = call i1 @__kmpc_kernel_parallel(i8** [[OMP_WORK_FN]])
+  // CHECK: [[KPR:%.+]] = call i1 @__kmpc_kernel_parallel(i8** [[OMP_WORK_FN]], i16 1)
   // CHECK: [[KPRB:%.+]] = zext i1 [[KPR]] to i8
   // store i8 [[KPRB]], i8* [[OMP_EXEC_STATUS]], align 1
   // CHECK: [[WORK:%.+]] = load i8*, i8** [[OMP_WORK_FN]],
@@ -86,14 +94,14 @@ int bar(int n){
   // CHECK: [[EXIT]]
   // CHECK: ret void
 
-  // CHECK: define {{.*}}void [[T1:@__omp_offloading_.+template.+l26]](i[[SZ:32|64]] [[A:%[^)]+]])
+  // CHECK: define {{.*}}void [[T1:@__omp_offloading_.+template.+l27]](i[[SZ:32|64]] [[A:%[^)]+]])
   // CHECK: store i[[SZ]] [[A]], i[[SZ]]* [[A_ADDR:%.+]], align
   // CHECK: [[CONV:%.+]] = bitcast i[[SZ]]* [[A_ADDR]] to i8*
 
   // CHECK-DAG: [[TID:%.+]] = call i32 @llvm.nvvm.read.ptx.sreg.tid.x()
   // CHECK-DAG: [[NTH:%.+]] = call i32 @llvm.nvvm.read.ptx.sreg.ntid.x()
   // CHECK-DAG: [[WS:%.+]] = call i32 @llvm.nvvm.read.ptx.sreg.warpsize()
-  // CHECK-DAG: [[TH_LIMIT:%.+]] = sub i32 [[NTH]], [[WS]]
+  // CHECK-DAG: [[TH_LIMIT:%.+]] = sub nuw i32 [[NTH]], [[WS]]
   // CHECK: [[IS_WORKER:%.+]] = icmp ult i32 [[TID]], [[TH_LIMIT]]
   // CHECK: br i1 [[IS_WORKER]], label {{%?}}[[WORKER:.+]], label {{%?}}[[CHECK_MASTER:.+]]
   //
@@ -111,7 +119,7 @@ int bar(int n){
   // CHECK: [[MASTER]]
   // CHECK-DAG: [[MNTH:%.+]] = call i32 @llvm.nvvm.read.ptx.sreg.ntid.x()
   // CHECK-DAG: [[MWS:%.+]] = call i32 @llvm.nvvm.read.ptx.sreg.warpsize()
-  // CHECK: [[MTMP1:%.+]] = sub i32 [[MNTH]], [[MWS]]
+  // CHECK: [[MTMP1:%.+]] = sub nuw i32 [[MNTH]], [[MWS]]
   // CHECK: call void @__kmpc_kernel_init(i32 [[MTMP1]]
   //
   // CHECK-NOT: kmpc_fork_teams
@@ -125,7 +133,7 @@ int bar(int n){
   // CHECK: br label {{%?}}[[TERMINATE:.+]]
   //
   // CHECK: [[TERMINATE]]
-  // CHECK: call void @__kmpc_kernel_deinit()
+  // CHECK: call void @__kmpc_kernel_deinit(
   // CHECK: call void @llvm.nvvm.barrier0()
   // CHECK: br label {{%?}}[[EXIT]]
   //
@@ -137,7 +145,7 @@ int bar(int n){
 
 
 
-  // CHECK-LABEL: define {{.*}}void {{@__omp_offloading_.+template.+l31}}_worker()
+  // CHECK-LABEL: define {{.*}}void {{@__omp_offloading_.+template.+l32}}_worker()
   // CHECK-DAG: [[OMP_EXEC_STATUS:%.+]] = alloca i8,
   // CHECK-DAG: [[OMP_WORK_FN:%.+]] = alloca i8*,
   // CHECK: store i8* null, i8** [[OMP_WORK_FN]],
@@ -146,7 +154,7 @@ int bar(int n){
   //
   // CHECK: [[AWAIT_WORK]]
   // CHECK: call void @llvm.nvvm.barrier0()
-  // CHECK: [[KPR:%.+]] = call i1 @__kmpc_kernel_parallel(i8** [[OMP_WORK_FN]])
+  // CHECK: [[KPR:%.+]] = call i1 @__kmpc_kernel_parallel(i8** [[OMP_WORK_FN]], i16 1)
   // CHECK: [[KPRB:%.+]] = zext i1 [[KPR]] to i8
   // store i8 [[KPRB]], i8* [[OMP_EXEC_STATUS]], align 1
   // CHECK: [[WORK:%.+]] = load i8*, i8** [[OMP_WORK_FN]],
@@ -172,14 +180,14 @@ int bar(int n){
   // CHECK: [[EXIT]]
   // CHECK: ret void
 
-  // CHECK: define {{.*}}void [[T2:@__omp_offloading_.+template.+l31]](i[[SZ:32|64]] [[AA:%[^)]+]])
+  // CHECK: define {{.*}}void [[T2:@__omp_offloading_.+template.+l32]](i[[SZ:32|64]] [[AA:%[^)]+]])
   // CHECK: store i[[SZ]] [[AA]], i[[SZ]]* [[AA_ADDR:%.+]], align
   // CHECK: [[CONV:%.+]] = bitcast i[[SZ]]* [[AA_ADDR]] to i16*
 
   // CHECK-DAG: [[TID:%.+]] = call i32 @llvm.nvvm.read.ptx.sreg.tid.x()
   // CHECK-DAG: [[NTH:%.+]] = call i32 @llvm.nvvm.read.ptx.sreg.ntid.x()
   // CHECK-DAG: [[WS:%.+]] = call i32 @llvm.nvvm.read.ptx.sreg.warpsize()
-  // CHECK-DAG: [[TH_LIMIT:%.+]] = sub i32 [[NTH]], [[WS]]
+  // CHECK-DAG: [[TH_LIMIT:%.+]] = sub nuw i32 [[NTH]], [[WS]]
   // CHECK: [[IS_WORKER:%.+]] = icmp ult i32 [[TID]], [[TH_LIMIT]]
   // CHECK: br i1 [[IS_WORKER]], label {{%?}}[[WORKER:.+]], label {{%?}}[[CHECK_MASTER:.+]]
   //
@@ -197,7 +205,7 @@ int bar(int n){
   // CHECK: [[MASTER]]
   // CHECK-DAG: [[MNTH:%.+]] = call i32 @llvm.nvvm.read.ptx.sreg.ntid.x()
   // CHECK-DAG: [[MWS:%.+]] = call i32 @llvm.nvvm.read.ptx.sreg.warpsize()
-  // CHECK: [[MTMP1:%.+]] = sub i32 [[MNTH]], [[MWS]]
+  // CHECK: [[MTMP1:%.+]] = sub nuw i32 [[MNTH]], [[MWS]]
   // CHECK: call void @__kmpc_kernel_init(i32 [[MTMP1]]
   //
   // CHECK-NOT: kmpc_fork_teams
@@ -211,12 +219,32 @@ int bar(int n){
   // CHECK: br label {{%?}}[[TERMINATE:.+]]
   //
   // CHECK: [[TERMINATE]]
-  // CHECK: call void @__kmpc_kernel_deinit()
+  // CHECK: call void @__kmpc_kernel_deinit(
   // CHECK: call void @llvm.nvvm.barrier0()
   // CHECK: br label {{%?}}[[EXIT]]
   //
   // CHECK: [[EXIT]]
   // CHECK: ret void
 
+// CHECK: define weak void @__omp_offloading_{{.*}}ftemplate{{.*}}_l37(
+// CHECK: call void @__kmpc_spmd_kernel_init(
+// CHECK: call void @__kmpc_data_sharing_init_stack_spmd
+// CHECK: call i8* @__kmpc_data_sharing_push_stack(
+// CHECK-NOT: call void @__kmpc_serialized_parallel(
+// CHECK: call void [[L0:@.+]](i32* %{{.+}}, i32* %{{.+}}, i16* %{{.*}})
+// CHECK-NOT: call void @__kmpc_end_serialized_parallel(
+// CHECK: call void @__kmpc_data_sharing_pop_stack(
+// CHECK: call void @__kmpc_spmd_kernel_deinit()
+// CHECK: ret
+
+// CHECK: define internal void [[L0]](i32* noalias %{{.+}}, i32* noalias %{{.+}}, i16* dereferenceable
+// CHECK: call void @__kmpc_serialized_parallel(
+// CHECK: call void [[L1:@.+]](i32* %{{.+}}, i32* %{{.+}}, i16* %{{.+}})
+// CHECK: call void @__kmpc_end_serialized_parallel(
+// CHECK: ret void
+
+// CHECK: define internal void [[L1]](i32* noalias %{{.+}}, i32* noalias %{{.+}}, i16* dereferenceable
+// CHECK: store i16 1, i16* %
+// CHECK: ret void
 
 #endif

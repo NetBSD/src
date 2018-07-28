@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_power.c,v 1.1 2017/05/28 15:55:11 jmcneill Exp $ */
+/* $NetBSD: fdt_power.c,v 1.1.12.1 2018/07/28 04:37:44 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,11 +27,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_power.c,v 1.1 2017/05/28 15:55:11 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_power.c,v 1.1.12.1 2018/07/28 04:37:44 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
 #include <sys/kmem.h>
+#include <sys/queue.h>
 
 #include <libfdt.h>
 #include <dev/fdt/fdtvar.h>
@@ -41,10 +42,11 @@ struct fdtbus_power_controller {
 	int power_phandle;
 	const struct fdtbus_power_controller_func *power_funcs;
 
-	struct fdtbus_power_controller *power_next;
+	LIST_ENTRY(fdtbus_power_controller) power_next;
 };
 
-static struct fdtbus_power_controller *fdtbus_power = NULL;
+static LIST_HEAD(, fdtbus_power_controller) fdtbus_power_controllers =
+    LIST_HEAD_INITIALIZER(fdtbus_power_controllers);
 
 int
 fdtbus_register_power_controller(device_t dev, int phandle,
@@ -57,8 +59,7 @@ fdtbus_register_power_controller(device_t dev, int phandle,
 	power->power_phandle = phandle;
 	power->power_funcs = funcs;
 
-	power->power_next = fdtbus_power;
-	fdtbus_power = power;
+	LIST_INSERT_HEAD(&fdtbus_power_controllers, power, power_next);
 
 	return 0;
 }
@@ -68,7 +69,7 @@ fdtbus_power_reset(void)
 {
 	struct fdtbus_power_controller *power;
 
-	for (power = fdtbus_power; power; power = power->power_next) {
+	LIST_FOREACH(power, &fdtbus_power_controllers, power_next) {
 		if (power->power_funcs->reset)
 			power->power_funcs->reset(power->power_dev);
 	}
@@ -79,7 +80,7 @@ fdtbus_power_poweroff(void)
 {
 	struct fdtbus_power_controller *power;
 
-	for (power = fdtbus_power; power; power = power->power_next) {
+	LIST_FOREACH(power, &fdtbus_power_controllers, power_next) {
 		if (power->power_funcs->poweroff)
 			power->power_funcs->poweroff(power->power_dev);
 	}

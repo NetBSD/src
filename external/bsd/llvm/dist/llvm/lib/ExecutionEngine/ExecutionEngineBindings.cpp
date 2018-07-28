@@ -17,8 +17,8 @@
 #include "llvm/ExecutionEngine/RTDyldMemoryManager.h"
 #include "llvm/IR/DerivedTypes.h"
 #include "llvm/IR/Module.h"
-#include "llvm/Support/CodeGenCWrappers.h"
 #include "llvm/Support/ErrorHandling.h"
+#include "llvm/Target/CodeGenCWrappers.h"
 #include "llvm/Target/TargetOptions.h"
 #include <cstring>
 
@@ -198,8 +198,10 @@ LLVMBool LLVMCreateMCJITCompilerForModule(
   builder.setEngineKind(EngineKind::JIT)
          .setErrorStr(&Error)
          .setOptLevel((CodeGenOpt::Level)options.OptLevel)
-         .setCodeModel(unwrap(options.CodeModel))
          .setTargetOptions(targetOptions);
+  bool JIT;
+  if (Optional<CodeModel::Model> CM = unwrap(options.CodeModel, JIT))
+    builder.setCodeModel(*CM);
   if (options.MCJMM)
     builder.setMCJITMemoryManager(
       std::unique_ptr<RTDyldMemoryManager>(unwrap(options.MCJMM)));

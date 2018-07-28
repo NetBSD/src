@@ -1,4 +1,4 @@
-# $NetBSD: md.mvmeppc,v 1.18 2015/12/20 16:22:39 christos Exp $
+# $NetBSD: md.mvmeppc,v 1.18.14.1 2018/07/28 04:32:59 pgoyette Exp $
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/mvmeppc				comp-c-include
 ./usr/include/mvmeppc/_G_config.h		comp-obsolete		obsolete
@@ -41,7 +41,7 @@
 ./usr/include/mvmeppc/pcb.h			comp-c-include
 ./usr/include/mvmeppc/pio.h			comp-obsolete		obsolete
 ./usr/include/mvmeppc/pmap.h			comp-c-include
-./usr/include/mvmeppc/pmc.h			comp-c-include
+./usr/include/mvmeppc/pmc.h			comp-obsolete		obsolete
 ./usr/include/mvmeppc/powerpc.h			comp-obsolete		obsolete
 ./usr/include/mvmeppc/proc.h			comp-c-include
 ./usr/include/mvmeppc/profile.h			comp-c-include

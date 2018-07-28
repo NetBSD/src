@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.S,v 1.28 2018/01/07 13:43:23 maxv Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.28.2.1 2018/07/28 04:37:26 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -307,7 +307,7 @@ ENTRY(__cpu_simple_lock_init)
 	ret
 END(__cpu_simple_lock_init)
 
-NENTRY(__cpu_simple_lock)
+ENTRY(__cpu_simple_lock)
 	movl	$0x0100, %eax
 1:
 	LOCK(6)
@@ -324,7 +324,7 @@ NENTRY(__cpu_simple_lock)
 	jmp	2b
 END(__cpu_simple_lock)
 
-NENTRY(__cpu_simple_unlock)
+ENTRY(__cpu_simple_unlock)
 	movb	$0, (%rdi)
 	ret
 END(__cpu_simple_unlock)

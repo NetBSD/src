@@ -1,4 +1,4 @@
-#	$NetBSD: files.drm,v 1.7 2011/03/27 08:45:11 mlelstv Exp $
+#	$NetBSD: files.drm,v 1.7.54.1 2018/07/28 04:37:59 pgoyette Exp $
 
 # direct rendering modules
 define	drmbase
@@ -117,15 +117,3 @@ file	external/bsd/drm/dist/shared-core/sis_mm.c		sisdrm
 device	tdfxdrm: drmbase, drmpci
 attach	tdfxdrm at drm
 file	external/bsd/drm/dist/bsd-core/tdfx_drv.c		tdfxdrm
-
-device	viadrm: drmbase, drmpci
-attach	viadrm at drm
-file	external/bsd/drm/dist/bsd-core/via_drv.c		viadrm
-file	external/bsd/drm/dist/bsd-core/via_dmablit.c		viadrm
-file	external/bsd/drm/dist/shared-core/via_dma.c		viadrm
-file	external/bsd/drm/dist/shared-core/via_ds.c		viadrm
-file	external/bsd/drm/dist/shared-core/via_irq.c		viadrm
-file	external/bsd/drm/dist/shared-core/via_map.c		viadrm
-file	external/bsd/drm/dist/shared-core/via_mm.c		viadrm
-file	external/bsd/drm/dist/shared-core/via_verifier.c	viadrm
-file	external/bsd/drm/dist/shared-core/via_video.c		viadrm

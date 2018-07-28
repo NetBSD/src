@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ieee1394subr.c,v 1.59.12.2 2018/05/21 04:36:15 pgoyette Exp $	*/
+/*	$NetBSD: if_ieee1394subr.c,v 1.59.12.3 2018/07/28 04:38:10 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ieee1394subr.c,v 1.59.12.2 2018/05/21 04:36:15 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ieee1394subr.c,v 1.59.12.3 2018/07/28 04:38:10 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -197,7 +197,7 @@ ieee1394_output(struct ifnet *ifp, struct mbuf *m0, const struct sockaddr *dst,
 			    ifp->if_broadcastaddr)->iha_uid, 8);
 		memcpy(h.ibh_shost, myaddr->iha_uid, 8);
 		h.ibh_type = etype;
-		bpf_mtap2(ifp->if_bpf, &h, sizeof(h), m0);
+		bpf_mtap2(ifp->if_bpf, &h, sizeof(h), m0, BPF_D_OUT);
 	}
 	if ((ifp->if_flags & IFF_SIMPLEX) &&
 	    unicast &&
@@ -372,7 +372,7 @@ ieee1394_input(struct ifnet *ifp, struct mbuf *m, uint16_t src)
 			memcpy(h.ibh_dhost, myaddr->iha_uid, 8);
 		}
 		h.ibh_type = htons(etype);
-		bpf_mtap2(ifp->if_bpf, &h, sizeof(h), m);
+		bpf_mtap2(ifp->if_bpf, &h, sizeof(h), m, BPF_D_IN);
 	}
 
 	switch (etype) {

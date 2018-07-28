@@ -1,4 +1,4 @@
-/*	$NetBSD: spifreg.h,v 1.5 2014/11/15 19:18:19 christos Exp $	*/
+/*	$NetBSD: spifreg.h,v 1.5.18.1 2018/07/28 04:37:57 pgoyette Exp $	*/
 /*	$OpenBSD: spifreg.h,v 1.5 2003/06/02 18:32:41 jason Exp $	*/
 
 /*
@@ -379,13 +379,6 @@
 #define	STTYF_STOP		0x20		/* stopped */
 
 #define	STTY_RBUF_SIZE		(2 * 512)
-
-/*
- * useful macros
- */
-#define	SET(t, f)	((t) |= (f))
-#define	CLR(t, f)	((t) &= ~(f))
-#define	ISSET(t, f)	((t) & (f))
 
 /*
  * internal function prototypes

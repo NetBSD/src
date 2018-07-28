@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.32.2.2 2018/06/25 07:25:47 pgoyette Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.32.2.3 2018/07/28 04:37:42 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.32.2.2 2018/06/25 07:25:47 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.32.2.3 2018/07/28 04:37:42 pgoyette Exp $");
 
 #include "opt_mtrr.h"
 
@@ -155,17 +155,18 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 		KASSERT(l1 == &lwp0);
 	}
 
-	/* Copy the PCB from parent. */
-	memcpy(pcb2, pcb1, sizeof(struct pcb));
+	/* Copy the PCB from parent, except the FPU state. */
+	memcpy(pcb2, pcb1, offsetof(struct pcb, pcb_savefpu));
 
 	/* FPU state not installed. */
 	pcb2->pcb_fpcpu = NULL;
 
-	/* Copy any additional fpu state */
+	/* Copy FPU state. */
 	fpu_save_area_fork(pcb2, pcb1);
 
 	/* Never inherit CPU Debug Registers */
 	pcb2->pcb_dbregs = NULL;
+	pcb2->pcb_flags &= ~PCB_DBREGS;
 
 #if defined(XEN)
 	pcb2->pcb_iopl = IOPL_KPL;
@@ -262,6 +263,9 @@ cpu_lwp_free(struct lwp *l, int proc)
 	/* If we were using the FPU, forget about it. */
 	fpusave_lwp(l, false);
 
+	/* Abandon the dbregs state. */
+	x86_dbregs_abandon(l);
+
 #ifdef MTRR
 	if (proc && l->l_proc->p_md.md_flags & MDP_USEDMTRR)
 		mtrr_clean(l->l_proc);
@@ -287,7 +291,7 @@ cpu_lwp_free2(struct lwp *l)
 	KASSERT(l->l_md.md_gc_pmap == NULL);
 
 	pcb = lwp_getpcb(l);
-
+	KASSERT((pcb->pcb_flags & PCB_DBREGS) == 0);
 	if (pcb->pcb_dbregs) {
 		pool_put(&x86_dbregspl, pcb->pcb_dbregs);
 		pcb->pcb_dbregs = NULL;

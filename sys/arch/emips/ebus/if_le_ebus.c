@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_ebus.c,v 1.13.14.1 2018/06/25 07:25:40 pgoyette Exp $	*/
+/*	$NetBSD: if_le_ebus.c,v 1.13.14.2 2018/07/28 04:37:30 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le_ebus.c,v 1.13.14.1 2018/06/25 07:25:40 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le_ebus.c,v 1.13.14.2 2018/07/28 04:37:30 pgoyette Exp $");
 
 #include "opt_inet.h"
 
@@ -873,7 +873,7 @@ enic_start(struct ifnet *ifp)
 		 * If BPF is listening on this interface, let it see the packet
 		 * before we commit it to the wire.
 		 */
-		bpf_mtap(ifp, m);
+		bpf_mtap(ifp, m, BPF_D_OUT);
 
 		/*
 		 * Copy the mbuf chain into a contiguous transmit buffer.

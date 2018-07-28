@@ -1,4 +1,4 @@
-/*	$NetBSD: if_et.c,v 1.16 2018/02/08 07:53:47 mrg Exp $	*/
+/*	$NetBSD: if_et.c,v 1.16.2.1 2018/07/28 04:37:46 pgoyette Exp $	*/
 /*	$OpenBSD: if_et.c,v 1.11 2008/06/08 06:18:07 jsg Exp $	*/
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_et.c,v 1.16 2018/02/08 07:53:47 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_et.c,v 1.16.2.1 2018/07/28 04:37:46 pgoyette Exp $");
 
 #include "opt_inet.h"
 #include "vlan.h"
@@ -1102,7 +1102,7 @@ et_start(struct ifnet *ifp)
 
 		trans = 1;
 
-		bpf_mtap(ifp, m);
+		bpf_mtap(ifp, m, BPF_D_OUT);
 	}
 
 	if (trans) {

@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_phy.c,v 1.1 2017/06/29 17:04:17 jmcneill Exp $ */
+/* $NetBSD: fdt_phy.c,v 1.1.10.1 2018/07/28 04:37:44 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,11 +27,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_phy.c,v 1.1 2017/06/29 17:04:17 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_phy.c,v 1.1.10.1 2018/07/28 04:37:44 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
 #include <sys/kmem.h>
+#include <sys/queue.h>
 
 #include <libfdt.h>
 #include <dev/fdt/fdtvar.h>
@@ -41,10 +42,11 @@ struct fdtbus_phy_controller {
 	int pc_phandle;
 	const struct fdtbus_phy_controller_func *pc_funcs;
 
-	struct fdtbus_phy_controller *pc_next;
+	LIST_ENTRY(fdtbus_phy_controller) pc_next;
 };
 
-static struct fdtbus_phy_controller *fdtbus_pc = NULL;
+static LIST_HEAD(, fdtbus_phy_controller) fdtbus_phy_controllers =
+    LIST_HEAD_INITIALIZER(fdtbus_phy_controllers);
 
 int
 fdtbus_register_phy_controller(device_t dev, int phandle,
@@ -57,8 +59,7 @@ fdtbus_register_phy_controller(device_t dev, int phandle,
 	pc->pc_phandle = phandle;
 	pc->pc_funcs = funcs;
 
-	pc->pc_next = fdtbus_pc;
-	fdtbus_pc = pc;
+	LIST_INSERT_HEAD(&fdtbus_phy_controllers, pc, pc_next);
 
 	return 0;
 }
@@ -68,10 +69,9 @@ fdtbus_get_phy_controller(int phandle)
 {
 	struct fdtbus_phy_controller *pc;
 
-	for (pc = fdtbus_pc; pc; pc = pc->pc_next) {
-		if (pc->pc_phandle == phandle) {
+	LIST_FOREACH(pc, &fdtbus_phy_controllers, pc_next) {
+		if (pc->pc_phandle == phandle)
 			return pc;
-		}
 	}
 
 	return NULL;

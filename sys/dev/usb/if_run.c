@@ -1,4 +1,4 @@
-/*	$NetBSD: if_run.c,v 1.26 2018/02/01 16:49:34 maxv Exp $	*/
+/*	$NetBSD: if_run.c,v 1.26.2.1 2018/07/28 04:37:58 pgoyette Exp $	*/
 /*	$OpenBSD: if_run.c,v 1.90 2012/03/24 15:11:04 jsg Exp $	*/
 
 /*-
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_run.c,v 1.26 2018/02/01 16:49:34 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_run.c,v 1.26.2.1 2018/07/28 04:37:58 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -2302,7 +2302,7 @@ run_rx_frame(struct run_softc *sc, uint8_t *buf, int dmalen)
 			}
 			break;
 		}
-		bpf_mtap2(sc->sc_drvbpf, tap, sc->sc_rxtap_len, m);
+		bpf_mtap2(sc->sc_drvbpf, tap, sc->sc_rxtap_len, m, BPF_D_IN);
 	}
 
 	s = splnet();
@@ -2543,7 +2543,7 @@ run_tx(struct run_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 		if (mcs & RT2860_PHY_SHPRE)
 			tap->wt_flags |= IEEE80211_RADIOTAP_F_SHORTPRE;
 
-		bpf_mtap2(sc->sc_drvbpf, tap, sc->sc_txtap_len, m);
+		bpf_mtap2(sc->sc_drvbpf, tap, sc->sc_txtap_len, m, BPF_D_OUT);
 	}
 
 	m_copydata(m, 0, m->m_pkthdr.len, ((uint8_t *)txwi) + txwisize);
@@ -2612,7 +2612,7 @@ run_start(struct ifnet *ifp)
 			continue;
 		}
 
-		bpf_mtap(ifp, m);
+		bpf_mtap(ifp, m, BPF_D_OUT);
 
 		if ((m = ieee80211_encap(ic, m, ni)) == NULL) {
 			ieee80211_free_node(ni);
@@ -2620,7 +2620,7 @@ run_start(struct ifnet *ifp)
 			continue;
 		}
 sendit:
-		bpf_mtap3(ic->ic_rawbpf, m);
+		bpf_mtap3(ic->ic_rawbpf, m, BPF_D_OUT);
 
 		if (run_tx(sc, m, ni) != 0) {
 			ieee80211_free_node(ni);

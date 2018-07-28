@@ -1,4 +1,4 @@
-/*	$NetBSD: imx7d-clock.h,v 1.1.1.3.4.1 2018/05/02 07:20:21 pgoyette Exp $	*/
+/*	$NetBSD: imx7d-clock.h,v 1.1.1.3.4.2 2018/07/28 04:38:06 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 2014-2015 Freescale Semiconductor, Inc.
@@ -170,7 +170,7 @@
 #define IMX7D_SPDIF_ROOT_SRC		155
 #define IMX7D_SPDIF_ROOT_CG		156
 #define IMX7D_SPDIF_ROOT_DIV		157
-#define IMX7D_ENET1_REF_ROOT_CLK	158
+#define IMX7D_ENET1_IPG_ROOT_CLK        158
 #define IMX7D_ENET1_REF_ROOT_SRC	159
 #define IMX7D_ENET1_REF_ROOT_CG		160
 #define IMX7D_ENET1_REF_ROOT_DIV	161
@@ -178,7 +178,7 @@
 #define IMX7D_ENET1_TIME_ROOT_SRC	163
 #define IMX7D_ENET1_TIME_ROOT_CG	164
 #define IMX7D_ENET1_TIME_ROOT_DIV	165
-#define IMX7D_ENET2_REF_ROOT_CLK	166
+#define IMX7D_ENET2_IPG_ROOT_CLK        166
 #define IMX7D_ENET2_REF_ROOT_SRC	167
 #define IMX7D_ENET2_REF_ROOT_CG		168
 #define IMX7D_ENET2_REF_ROOT_DIV	169

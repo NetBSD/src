@@ -1,4 +1,4 @@
-/* $NetBSD: cpuswitch.S,v 1.1.2.2 2018/04/07 04:12:10 pgoyette Exp $ */
+/* $NetBSD: cpuswitch.S,v 1.1.2.3 2018/07/28 04:37:25 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include "opt_ddb.h"
 
-RCSID("$NetBSD: cpuswitch.S,v 1.1.2.2 2018/04/07 04:12:10 pgoyette Exp $")
+RCSID("$NetBSD: cpuswitch.S,v 1.1.2.3 2018/07/28 04:37:25 pgoyette Exp $")
 
 /*
  * At IPL_SCHED:
@@ -200,13 +200,6 @@ END(softint_cleanup)
  *	x28 = arg
  */
 ENTRY_NP(lwp_trampoline)
-#if defined(MULTIPROCESSOR)
-	mov	x19, x0
-	mov	x20, x1
-	bl	_C_LABEL(proc_trampoline_mp)
-	mov	x1, x20
-	mov	x0, x19
-#endif
 	bl	_C_LABEL(lwp_startup)
 
 	/*
@@ -344,24 +337,6 @@ ENTRY_NP(cpu_Debugger)
 	ret
 END(cpu_Debugger)
 #endif /* DDB */
-
-#ifdef MULTIPROCESSOR
-/*
- * void
- * cpu_spinup_trampoline(int cpu_index)
- * {
- *      ci := tp == cpu_info[cpu_index]
- *      ci->ci_curlwp = ci->ci_data.ci_idlelwp;
- *      sp := ci->ci_curlwp->l_addr + USPACE - sizeof(struct trapframe)
- *      cpu_hatch(ci);
- *      jump to idle_loop() to join the cpu pool.
- * }
- */
-ENTRY_NP(cpu_spinup_trampoline)
-	bl	_C_LABEL(cpu_hatch)
-	b	_C_LABEL(cpu_idle)
-END(cpu_spinup_trampoline)
-#endif
 
 /*
  * int cpu_set_onfault(struct faultbuf *fb)

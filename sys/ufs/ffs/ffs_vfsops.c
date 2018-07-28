@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.356.2.1 2018/06/25 07:26:08 pgoyette Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.356.2.2 2018/07/28 04:38:12 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.356.2.1 2018/06/25 07:26:08 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.356.2.2 2018/07/28 04:38:12 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -971,7 +971,7 @@ ffs_superblock_validate(struct fs *fs)
 	 * XXX: these values are just zero-checked to prevent obvious
 	 * bugs. We need more strict checks.
 	 */
-	if (fs->fs_size == 0)
+	if (fs->fs_size == 0 && fs->fs_old_size == 0)
 		return 0;
 	if (fs->fs_cssize == 0)
 		return 0;

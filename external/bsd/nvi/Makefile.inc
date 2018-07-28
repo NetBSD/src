@@ -1,6 +1,8 @@
-#	$NetBSD: Makefile.inc,v 1.5 2017/01/21 22:27:43 rin Exp $
+#	$NetBSD: Makefile.inc,v 1.5.10.1 2018/07/28 04:37:14 pgoyette Exp $
 
 .include <bsd.own.mk>
+
+SANITIZER_RENAME_SYMBOL+=	regcomp regerror regexec regfree
 
 DIST= ${NETBSDSRCDIR}/external/bsd/nvi/dist
 .PATH: ${DIST}

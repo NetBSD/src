@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ipsec.c,v 1.3.4.4 2018/06/25 07:26:06 pgoyette Exp $  */
+/*	$NetBSD: if_ipsec.c,v 1.3.4.5 2018/07/28 04:38:10 pgoyette Exp $  */
 
 /*
  * Copyright (c) 2017 Internet Initiative Japan Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ipsec.c,v 1.3.4.4 2018/06/25 07:26:06 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ipsec.c,v 1.3.4.5 2018/07/28 04:38:10 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -441,7 +441,7 @@ if_ipsec_out_direct(struct ipsec_variant *var, struct mbuf *m, int family)
 	len = m->m_pkthdr.len;
 
 	/* input DLT_NULL frame to BPF */
-	bpf_mtap(ifp, m);
+	bpf_mtap(ifp, m, BPF_D_OUT);
 
 	/* grab and chop off inner af type */
 	/* XXX need pullup? */
@@ -465,7 +465,7 @@ if_ipsec_input(struct mbuf *m, int af, struct ifnet *ifp)
 
 	m_set_rcvif(m, ifp);
 
-	bpf_mtap_af(ifp, af, m);
+	bpf_mtap_af(ifp, af, m, BPF_D_IN);
 
 	if_ipsec_in_enqueue(m, af, ifp);
 

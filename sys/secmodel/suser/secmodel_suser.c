@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_suser.c,v 1.43.4.1 2018/05/02 07:20:24 pgoyette Exp $ */
+/* $NetBSD: secmodel_suser.c,v 1.43.4.2 2018/07/28 04:38:12 pgoyette Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_suser.c,v 1.43.4.1 2018/05/02 07:20:24 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_suser.c,v 1.43.4.2 2018/07/28 04:38:12 pgoyette Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -392,17 +392,6 @@ secmodel_suser_system_cb(kauth_cred_t cred, kauth_action_t action,
 		break;
 
 	case KAUTH_SYSTEM_DEBUG:
-		switch (req) {
-		case KAUTH_REQ_SYSTEM_DEBUG_IPKDB:
-			if (isroot)
-				result = KAUTH_RESULT_ALLOW;
-
-			break;
-
-		default:
-			break;
-		}
-
 		break;
 
 	case KAUTH_SYSTEM_CHSYSFLAGS:
@@ -853,7 +842,6 @@ secmodel_suser_machdep_cb(kauth_cred_t cred, kauth_action_t action,
 	case KAUTH_MACHDEP_NVRAM:
 	case KAUTH_MACHDEP_UNMANAGEDMEM:
 	case KAUTH_MACHDEP_PXG:
-	case KAUTH_MACHDEP_X86PMC:
 	case KAUTH_MACHDEP_SVS_DISABLE:
 		if (isroot)
 			result = KAUTH_RESULT_ALLOW;

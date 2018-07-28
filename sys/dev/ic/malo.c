@@ -1,4 +1,4 @@
-/*	$NetBSD: malo.c,v 1.10 2017/10/23 09:31:17 msaitoh Exp $ */
+/*	$NetBSD: malo.c,v 1.10.2.1 2018/07/28 04:37:45 pgoyette Exp $ */
 /*	$OpenBSD: malo.c,v 1.92 2010/08/27 17:08:00 jsg Exp $ */
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: malo.c,v 1.10 2017/10/23 09:31:17 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: malo.c,v 1.10.2.1 2018/07/28 04:37:45 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -1038,7 +1038,7 @@ malo_start(struct ifnet *ifp)
 			ni = M_GETCTX(m0, struct ieee80211_node *);
 			M_CLEARCTX(m0);
 
-			bpf_mtap3(ic->ic_rawbpf, m0);
+			bpf_mtap3(ic->ic_rawbpf, m0, BPF_D_OUT);
 
 			if (malo_tx_data(sc, m0, ni) != 0)
 				break;
@@ -1069,12 +1069,12 @@ malo_start(struct ifnet *ifp)
 			// XXX must I call ieee_classify at this point ?
 
 			IFQ_DEQUEUE(&ifp->if_snd, m0);
-			bpf_mtap(ifp, m0);
+			bpf_mtap(ifp, m0, BPF_D_OUT);
 
 			m0 = ieee80211_encap(ic, m0, ni);
 			if (m0 == NULL)
 				continue;
-			bpf_mtap(ifp, m0);
+			bpf_mtap3(ic->ic_rawbpf, m0, BPF_D_OUT);
 
 			if (malo_tx_data(sc, m0, ni) != 0) {
 				ieee80211_free_node(ni);
@@ -1454,7 +1454,7 @@ malo_tx_data(struct malo_softc *sc, struct mbuf *m0,
 		if (wh->i_fc[1] & IEEE80211_FC1_WEP)
 			tap->wt_flags |= IEEE80211_RADIOTAP_F_WEP;
 
-		bpf_mtap2(sc->sc_drvbpf, tap, sc->sc_txtap_len, m0);
+		bpf_mtap2(sc->sc_drvbpf, tap, sc->sc_txtap_len, m0, BPF_D_OUT);
 	}
 
 	/*
@@ -1631,7 +1631,8 @@ malo_rx_intr(struct malo_softc *sc)
 			tap->wr_chan_flags =
 			    htole16(ic->ic_bss->ni_chan->ic_flags);
 
-			bpf_mtap2(sc->sc_drvbpf, tap, sc->sc_rxtap_len, m);
+			bpf_mtap2(sc->sc_drvbpf, tap, sc->sc_rxtap_len, m,
+			    BPF_D_IN);
 		}
 
 		wh = mtod(m, struct ieee80211_frame *);

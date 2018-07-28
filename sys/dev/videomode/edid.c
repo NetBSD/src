@@ -1,4 +1,4 @@
-/* $NetBSD: edid.c,v 1.13 2014/11/17 00:46:04 jmcneill Exp $ */
+/* $NetBSD: edid.c,v 1.13.18.1 2018/07/28 04:37:59 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */ 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: edid.c,v 1.13 2014/11/17 00:46:04 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: edid.c,v 1.13.18.1 2018/07/28 04:37:59 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -420,6 +420,22 @@ edid_det_timing(uint8_t *data, struct videomode *vmp)
 	return 1;
 }
 
+static void bump_preferred_mode(struct edid_info *edid, struct videomode *m)
+{
+	/*
+	 * XXX
+	 * Iiyama 4800 series monitors may have their native resolution in the
+	 * 2nd detailed timing descriptor instead of the 1st. Try to detect
+	 * that here and pick the native mode anyway.
+	 */
+	if (edid->edid_preferred_mode == NULL) {
+		edid->edid_preferred_mode = m;
+	} else if ((strncmp(edid->edid_vendor, "IVM", 3) == 0) &&
+	           (edid->edid_product == 0x4800) &&
+	           (edid->edid_preferred_mode->dot_clock < m->dot_clock))
+		edid->edid_preferred_mode = m;
+}
+
 static void
 edid_block(struct edid_info *edid, uint8_t *data)
 {
@@ -433,13 +449,11 @@ edid_block(struct edid_info *edid, uint8_t *data)
 		exist_mode = edid_search_mode(edid, &mode);
 		if (exist_mode != NULL) {
 			*exist_mode = mode;
-			if (edid->edid_preferred_mode == NULL)
-				edid->edid_preferred_mode = exist_mode;
+			bump_preferred_mode(edid, exist_mode);
 		} else {
 			edid->edid_modes[edid->edid_nmodes] = mode;
-			if (edid->edid_preferred_mode == NULL)
-				edid->edid_preferred_mode =
-				    &edid->edid_modes[edid->edid_nmodes];
+			bump_preferred_mode(edid,
+			    &edid->edid_modes[edid->edid_nmodes]);
 			edid->edid_nmodes++;	
 		}
 		return;

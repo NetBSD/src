@@ -1,4 +1,4 @@
-$NetBSD: miidevs,v 1.126.4.2 2018/06/25 07:25:51 pgoyette Exp $
+$NetBSD: miidevs,v 1.126.4.3 2018/07/28 04:37:45 pgoyette Exp $
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -49,36 +49,36 @@ $NetBSD: miidevs,v 1.126.4.2 2018/06/25 07:25:51 pgoyette Exp $
  * Use "make -f Makefile.miidevs" to regenerate miidevs.h and miidevs_data.h
  */
 
-oui AGERE			0x00053d	Agere
-oui ALTIMA			0x0010a9	Altima Communications
 oui AMD				0x00001a	Advanced Micro Devices
-oui ATHEROS			0x001374	Atheros
-oui ATTANSIC			0x00c82e	Attansic Technology
-oui BROADCOM			0x001018	Broadcom Corporation
+oui CICADA			0x0003f1	Cicada Semiconductor
+oui AGERE			0x00053d	Agere
 oui BROADCOM2			0x000af7	Broadcom Corporation
-oui BROADCOM3			0x001be9	Broadcom Corporation
-oui CICADA			0x0003F1	Cicada Semiconductor
-oui DAVICOM			0x00606e	Davicom Semiconductor
+oui BROADCOM			0x001018	Broadcom Corporation
+oui MICREL			0x0010a1	Micrel
+oui ALTIMA			0x0010a9	Altima Communications
 oui ENABLESEMI			0x0010dd	Enable Semiconductor
-oui ICPLUS			0x0090c3	IC Plus Corp.
-oui ICS				0x00a0be	Integrated Circuit Systems
-oui INTEL			0x00aa00	Intel
-oui JMICRON			0x00d831	JMicron
+oui ATHEROS			0x001374	Atheros
+oui BROADCOM3			0x001be9	Broadcom Corporation
 oui LEVEL1			0x00207b	Level 1
 oui MARVELL			0x005043	Marvell Semiconductor
-oui MICREL			0x0010a1	Micrel
-oui MYSON			0x00c0b4	Myson Technology
-oui NATSEMI			0x080017	National Semiconductor
-oui PMCSIERRA			0x00e004	PMC-Sierra
-oui RDC				0x00d02d	RDC Semiconductor
-oui REALTEK			0x00e04c	RealTek
 oui QUALSEMI			0x006051	Quality Semiconductor
-oui SEEQ			0x00a07d	Seeq
-oui SIS				0x00e006	Silicon Integrated Systems
+oui DAVICOM			0x00606e	Davicom Semiconductor
 oui SMSC			0x00800f	SMSC
-oui TI				0x080028	Texas Instruments
+oui ICPLUS			0x0090c3	IC Plus Corp.
+oui SEEQ			0x00a07d	Seeq
+oui ICS				0x00a0be	Integrated Circuit Systems
+oui INTEL			0x00aa00	Intel
 oui TSC				0x00c039	TDK Semiconductor
+oui MYSON			0x00c0b4	Myson Technology
+oui ATTANSIC			0x00c82e	Attansic Technology
+oui RDC				0x00d02d	RDC Semiconductor
+oui JMICRON			0x00d831	JMicron
+oui PMCSIERRA			0x00e004	PMC-Sierra
+oui SIS				0x00e006	Silicon Integrated Systems
+oui REALTEK			0x00e04c	RealTek
 oui XAQTI			0x00e0ae	XaQti Corp.
+oui NATSEMI			0x080017	National Semiconductor
+oui TI				0x080028	Texas Instruments
 
 /* Some Intel 82553's use an alternative OUI. */
 oui xxINTEL			0x001f00	Intel
@@ -103,6 +103,7 @@ oui xxLEVEL1			0x782000	Level 1
 oui xxXAQTI			0xace000	XaQti Corp.
 
 /* Don't know what's going on here. */
+oui xxASIX			0x000674	Asix Semiconductor
 oui xxPMCSIERRA			0x0009c0	PMC-Sierra
 oui xxPMCSIERRA2		0x009057	PMC-Sierra
 
@@ -116,6 +117,9 @@ oui yyREALTEK			0x000004	Realtek
  * Agere PHYs
  */
 model AGERE ET1011		0x0004 Agere ET1011 10/100/1000baseT PHY
+
+/* Asix semiconductor PHYs */
+model xxASIX AX88X9X		0x0031 Ax88x9x internal PHY
 
 /* Atheros PHYs */
 model ATHEROS F1		0x0001 F1 10/100/1000 PHY
@@ -296,7 +300,7 @@ model MYSON MTD803		0x0000 MTD803 3-in-1 media interface
 /* National Semiconductor PHYs */
 model xxNATSEMI DP83840		0x0000 DP83840 10/100 media interface
 model xxNATSEMI DP83843		0x0001 DP83843 10/100 media interface
-model xxNATSEMI DP83815		0x0002 DP83815 10/100 media interface
+model xxNATSEMI DP83815		0x0002 DP83815/DP83846A 10/100 media interface
 model xxNATSEMI DP83847		0x0003 DP83847 10/100 media interface
 model xxNATSEMI DP83891		0x0005 DP83891 1000BASE-T media interface
 model xxNATSEMI DP83861		0x0006 DP83861 1000BASE-T media interface

@@ -1,4 +1,4 @@
-/*	$NetBSD: i80200_irq.S,v 1.17 2013/08/18 06:28:18 matt Exp $	*/
+/*	$NetBSD: i80200_irq.S,v 1.17.28.1 2018/07/28 04:37:29 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -36,7 +36,6 @@
  */
 
 #include "assym.h"
-#include "opt_perfctrs.h"
 
 #include <arm/asm.h>
 #include <arm/locore.h>
@@ -55,11 +54,6 @@
 
 .Lintr_dispatch:
 	.word	_C_LABEL(i80200_extirq_dispatch)
-
-#if defined(PERFCTRS)
-.Lpmc_dispatch:
-	.word	_C_LABEL(xscale_pmc_dispatch)
-#endif
 
 LOCK_CAS_CHECK_LOCALS
 
@@ -85,20 +79,6 @@ ASENTRY_NP(irq_entry)
 	 * Get the interrupt status into a callee-save register.
 	 */
 	mrc	p13, 0, r5, c4, c0, 0
-
-#if defined(PERFCTRS)
-	/*
-	 * Check for PMU interrupts.
-	 * If we have one, call the routine to handle it.
-	 */
-	tst	r5, #(INTSRC_PI)
-	beq	.Lpmc_intr_return
-	mov	r1, r5
-	mov	r0, sp
-	mov	lr, pc
-	ldr	pc, .Lpmc_dispatch
-.Lpmc_intr_return:
-#endif
 
 	/*
 	 * XXX - any need to handle BMU interrupts?

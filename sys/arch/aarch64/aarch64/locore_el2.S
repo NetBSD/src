@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_el2.S,v 1.1.2.2 2018/04/07 04:12:10 pgoyette Exp $	*/
+/*	$NetBSD: locore_el2.S,v 1.1.2.3 2018/07/28 04:37:25 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2012-2014 Andrew Turner
@@ -32,17 +32,15 @@
 #include <aarch64/hypervisor.h>
 #include "assym.h"
 
-RCSID("$NetBSD: locore_el2.S,v 1.1.2.2 2018/04/07 04:12:10 pgoyette Exp $")
+RCSID("$NetBSD: locore_el2.S,v 1.1.2.3 2018/07/28 04:37:25 pgoyette Exp $")
 
 
 /* for use in #include "locore_el2.S" */
 	.text
 drop_to_el1_inline:
-	mov	x27, sp
-	mov	x28, lr
+	mov	x8, lr
 	bl	drop_to_el1
-	mov	lr, x28
-	mov	sp, x27
+	mov	lr, x8
 	b	drop_to_el1_inline_done
 
 	.text
@@ -110,12 +108,21 @@ drop_to_el1:
 	/* GIC[3:0] == 0001 - GIC CPU interface via special regs. supported */
 	cmp	x2, #ID_AA64PFR0_EL1_GIC_CPUIF_EN
 	b.ne	2f
+#ifdef __clang__
+#define ICC_SRE_EL2 icc_sre_el2
+#else
+#define ICC_SRE_EL2 S3_4_C12_C9_5
+#endif
 
-	mrs	x2, icc_sre_el2
+	mrs	x2, ICC_SRE_EL2
 	orr	x2, x2, #ICC_SRE_EL2_EN	/* Enable access from insecure EL1 */
 	orr	x2, x2, #ICC_SRE_EL2_SRE	/* Enable system registers */
-	msr	icc_sre_el2, x2
+	msr	ICC_SRE_EL2, x2
 2:
+
+	/* keep stack pointer */
+	mov	x0, sp
+	msr	sp_el1, x0
 
 	/* Set the address to return to our return address */
 	msr	elr_el2, x30

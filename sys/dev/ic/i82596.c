@@ -1,4 +1,4 @@
-/* $NetBSD: i82596.c,v 1.37 2017/07/29 01:45:22 riastradh Exp $ */
+/* $NetBSD: i82596.c,v 1.37.2.1 2018/07/28 04:37:45 pgoyette Exp $ */
 
 /*
  * Copyright (c) 2003 Jochen Kunz.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82596.c,v 1.37 2017/07/29 01:45:22 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82596.c,v 1.37.2.1 2018/07/28 04:37:45 pgoyette Exp $");
 
 /* autoconfig and device stuff */
 #include <sys/param.h>
@@ -809,7 +809,7 @@ iee_start(struct ifnet *ifp)
 			iee_cb_setup(sc, IEE_CB_CMD_TR);
 		sc->sc_next_tbd += n;
 		/* Pass packet to bpf if someone listens. */
-		bpf_mtap(ifp, sc->sc_tx_mbuf[t]);
+		bpf_mtap(ifp, sc->sc_tx_mbuf[t], BPF_D_OUT);
 	}
 	if (t == 0)
 		/* No packets got set up for TX. */

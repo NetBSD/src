@@ -1,5 +1,5 @@
 #
-#	$NetBSD: N900,v 1.26.2.1 2018/03/15 09:12:02 pgoyette Exp $
+#	$NetBSD: N900,v 1.26.2.2 2018/07/28 04:37:31 pgoyette Exp $
 #
 #	N900 -- Nokia N900 Kernel
 #
@@ -108,12 +108,10 @@ options 	KTRACE		# system call tracing, a la ktrace(1)
 
 # Development and Debugging options
 
-#options 	PERFCTRS	# performance counters
 options 	DIAGNOSTIC	# internal consistency checks
 #options 	DEBUG
 #options 	LOCKDEBUG	# expensive locking checks/support
 #options 	PMAP_DEBUG	# Enable pmap_debug_level code
-#options 	IPKDB		# remote kernel debugging
 #options 	VERBOSE_INIT_ARM # verbose bootstraping messages
 options 	DDB		# in-kernel debugger
 options 	DDB_ONPANIC=1

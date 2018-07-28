@@ -1,7 +1,6 @@
-/*	$NetBSD: xenfunc.c,v 1.17.2.1 2018/06/25 07:25:47 pgoyette Exp $	*/
+/*	$NetBSD: xenfunc.c,v 1.17.2.2 2018/07/28 04:37:43 pgoyette Exp $	*/
 
 /*
- *
  * Copyright (c) 2004 Christian Limpach.
  * All rights reserved.
  *
@@ -27,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenfunc.c,v 1.17.2.1 2018/06/25 07:25:47 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenfunc.c,v 1.17.2.2 2018/07/28 04:37:43 pgoyette Exp $");
 
 #include <sys/param.h>
 
@@ -41,12 +40,6 @@ __KERNEL_RCSID(0, "$NetBSD: xenfunc.c,v 1.17.2.1 2018/06/25 07:25:47 pgoyette Ex
 //#include <xen/evtchn.h>
 #include <xen/xenpmap.h>
 #include <machine/pte.h>
-
-#ifdef XENDEBUG_LOW
-#define	__PRINTK(x) printk x
-#else
-#define	__PRINTK(x)
-#endif
 
 void xen_set_ldt(vaddr_t, uint32_t);
 
@@ -68,7 +61,6 @@ lldt(u_short sel)
 
 	if (ci->ci_curldt == sel)
 		return;
-	/* __PRINTK(("ldt %x\n", IDXSELN(sel))); */
 	if (sel == GSEL(GLDT_SEL, SEL_KPL))
 		xen_set_ldt((vaddr_t)ldtstore, NLDT);
 	else

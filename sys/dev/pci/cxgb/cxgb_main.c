@@ -28,7 +28,7 @@ POSSIBILITY OF SUCH DAMAGE.
 ***************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cxgb_main.c,v 1.4 2013/01/23 23:31:26 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cxgb_main.c,v 1.4.36.1 2018/07/28 04:37:56 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1423,7 +1423,7 @@ cxgb_start_tx(struct ifnet *ifp, uint32_t txmax)
             printf("t3_encap() returned %d\n", err);
             break;
         }
-//        bpf_mtap(ifp, m);
+//        bpf_mtap(ifp, m, BPF_D_OUT);
         if (free_it)
 	{
             m_freem(m);

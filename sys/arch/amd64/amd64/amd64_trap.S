@@ -1,4 +1,4 @@
-/*	$NetBSD: amd64_trap.S,v 1.37.2.4 2018/06/25 07:25:38 pgoyette Exp $	*/
+/*	$NetBSD: amd64_trap.S,v 1.37.2.5 2018/07/28 04:37:26 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007, 2008, 2017 The NetBSD Foundation, Inc.
@@ -254,13 +254,14 @@ IDTVEC(trap02)
 	subq	$TF_REGSIZE,%rsp
 	INTR_SAVE_GPRS
 	IBRS_ENTER
-	SVS_ENTER_ALTSTACK
 	cld
 	SMAP_ENABLE
 	movw	%gs,TF_GS(%rsp)
 	movw	%fs,TF_FS(%rsp)
 	movw	%es,TF_ES(%rsp)
 	movw	%ds,TF_DS(%rsp)
+
+	SVS_ENTER_NMI
 
 	movl	$MSR_GSBASE,%ecx
 	rdmsr
@@ -271,7 +272,6 @@ IDTVEC(trap02)
 	movq	%rsp,%rdi
 	incq	CPUVAR(NTRAP)
 	call	_C_LABEL(nmitrap)
-	SVS_LEAVE_ALTSTACK
 	swapgs
 	jmp	.Lnmileave
 
@@ -279,9 +279,9 @@ IDTVEC(trap02)
 	movq	%rsp,%rdi
 	incq	CPUVAR(NTRAP)
 	call	_C_LABEL(nmitrap)
-	SVS_LEAVE_ALTSTACK
 
 .Lnmileave:
+	SVS_LEAVE_NMI
 	IBRS_LEAVE
 	INTR_RESTORE_GPRS
 	addq	$TF_REGSIZE+16,%rsp
@@ -626,7 +626,7 @@ END(kernuser_reenter)
  * All traps go through here. Call the generic trap handler, and
  * check for ASTs afterwards.
  */
-NENTRY(alltraps)
+ENTRY(alltraps)
 	INTRENTRY
 .Lalltraps_noentry:
 	STI(si)

@@ -1,4 +1,4 @@
-# $NetBSD: md.alpha,v 1.73 2018/02/03 21:27:45 mrg Exp $
+# $NetBSD: md.alpha,v 1.73.2.1 2018/07/28 04:32:59 pgoyette Exp $
 ./usr/include/alpha				comp-c-include
 ./usr/include/alpha/_G_config.h			comp-obsolete		obsolete
 ./usr/include/alpha/alpha_cpu.h			comp-c-include
@@ -49,7 +49,7 @@
 ./usr/include/alpha/pcb.h			comp-c-include
 ./usr/include/alpha/pio.h			comp-c-include
 ./usr/include/alpha/pmap.h			comp-c-include
-./usr/include/alpha/pmc.h			comp-c-include
+./usr/include/alpha/pmc.h			comp-obsolete		obsolete
 ./usr/include/alpha/proc.h			comp-c-include
 ./usr/include/alpha/profile.h			comp-c-include
 ./usr/include/alpha/prom.h			comp-c-include

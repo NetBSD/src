@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.275.2.2 2018/06/25 07:25:37 pgoyette Exp $
+#	$NetBSD: bsd.sys.mk,v 1.275.2.3 2018/07/28 04:37:25 pgoyette Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -146,6 +146,12 @@ SANITIZERFLAGS+=	-fsanitize=${USE_SANITIZER}
 SANITIZERFLAGS=		# empty
 .endif
 
+.if ${MKLIBCSANITIZER:Uno} == "yes"
+LIBCSANITIZERFLAGS+=	-fsanitize=${USE_LIBCSANITIZER}
+LIBCSANITIZERFLAGS+=	-fno-sanitize=vptr	# Unsupported in micro-UBSan
+.else
+LIBCSANITIZERFLAGS=	# empty
+.endif
 
 CWARNFLAGS+=	${CWARNFLAGS.${ACTIVE_CC}}
 

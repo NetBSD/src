@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_var.h,v 1.122.2.2 2018/04/16 02:00:08 pgoyette Exp $	*/
+/*	$NetBSD: ip_var.h,v 1.122.2.3 2018/07/28 04:38:10 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -209,7 +209,7 @@ int	 ip_output(struct mbuf *, struct mbuf *, struct route *, int,
 int	 ip_fragment(struct mbuf *, struct ifnet *, u_long);
 
 void	 ip_reass_init(void);
-int	 ip_reass_packet(struct mbuf **, struct ip *);
+int	 ip_reass_packet(struct mbuf **);
 void	 ip_reass_slowtimo(void);
 void	 ip_reass_drain(void);
 

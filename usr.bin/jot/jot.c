@@ -1,4 +1,4 @@
-/*	$NetBSD: jot.c,v 1.25 2009/04/12 11:19:18 lukem Exp $	*/
+/*	$NetBSD: jot.c,v 1.25.44.1 2018/07/28 04:38:14 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\
 #if 0
 static char sccsid[] = "@(#)jot.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: jot.c,v 1.25 2009/04/12 11:19:18 lukem Exp $");
+__RCSID("$NetBSD: jot.c,v 1.25.44.1 2018/07/28 04:38:14 pgoyette Exp $");
 #endif /* not lint */
 
 /*
@@ -216,9 +216,7 @@ getargs(int argc, char *argv[])
 				    argv[0]);
 			have |= REPS;
 		}
-		break;
 	case 0:
-		usage();
 		break;
 	default:
 		errx(EXIT_FAILURE,

@@ -1,11 +1,11 @@
 #!/bin/sh
 #
-# $NetBSD: wpa_supplicant,v 1.6 2015/01/22 19:50:21 jmcneill Exp $
+# $NetBSD: wpa_supplicant,v 1.6.14.1 2018/07/28 04:33:03 pgoyette Exp $
 #
 
 # PROVIDE: wpa_supplicant
 # REQUIRE: network mountcritlocal
-# BEFORE:  NETWORKING dhclient
+# BEFORE:  NETWORKING dhcpcd
 #
 #	We need to run a command that resides in /usr/sbin, and the
 #	/usr file system is traditionally mounted by mountcritremote.

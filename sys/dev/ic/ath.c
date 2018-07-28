@@ -1,4 +1,4 @@
-/*	$NetBSD: ath.c,v 1.123 2017/02/02 10:05:35 nonaka Exp $	*/
+/*	$NetBSD: ath.c,v 1.123.12.1 2018/07/28 04:37:44 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -41,7 +41,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/ath/if_ath.c,v 1.104 2005/09/16 10:09:23 ru Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.123 2017/02/02 10:05:35 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.123.12.1 2018/07/28 04:37:44 pgoyette Exp $");
 #endif
 
 /*
@@ -1399,7 +1399,7 @@ ath_start(struct ifnet *ifp)
 			}
 			ifp->if_opackets++;
 
-			bpf_mtap(ifp, m);
+			bpf_mtap(ifp, m, BPF_D_OUT);
 			/*
 			 * Encapsulate the packet in prep for transmission.
 			 */
@@ -3226,7 +3226,7 @@ rx_accept:
 			sc->sc_rx_th.wr_antenna = ds->ds_rxstat.rs_antenna;
 
 			bpf_mtap2(sc->sc_drvbpf, &sc->sc_rx_th,
-			    sc->sc_rx_th_len, m);
+			    sc->sc_rx_th_len, m, BPF_D_IN);
 		}
 
 		if (ds->ds_rxstat.rs_status & rxerr_tap) {
@@ -3984,7 +3984,7 @@ ath_tx_start(struct ath_softc *sc, struct ieee80211_node *ni, struct ath_buf *bf
 	if (IFF_DUMPPKTS(sc, ATH_DEBUG_XMIT))
 		ieee80211_dump_pkt(mtod(m0, void *), m0->m_len,
 			sc->sc_hwmap[txrate].ieeerate, -1);
-	bpf_mtap3(ic->ic_rawbpf, m0);
+	bpf_mtap3(ic->ic_rawbpf, m0, BPF_D_OUT);
 	if (sc->sc_drvbpf) {
 		u_int64_t tsf = ath_hal_gettsf64(ah);
 
@@ -3998,7 +3998,8 @@ ath_tx_start(struct ath_softc *sc, struct ieee80211_node *ni, struct ath_buf *bf
 		sc->sc_tx_th.wt_txpower = ni->ni_txpower;
 		sc->sc_tx_th.wt_antenna = sc->sc_txantenna;
 
-		bpf_mtap2(sc->sc_drvbpf, &sc->sc_tx_th, sc->sc_tx_th_len, m0);
+		bpf_mtap2(sc->sc_drvbpf, &sc->sc_tx_th, sc->sc_tx_th_len, m0,
+		    BPF_D_OUT);
 	}
 
 	/*

@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1196.2.10 2018/06/25 07:25:48 pgoyette Exp $
+#	$NetBSD: files,v 1.1196.2.11 2018/07/28 04:37:43 pgoyette Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20171118
@@ -324,10 +324,6 @@ defparam opt_memory_disk_image.h	makeoptions_MEMORY_DISK_IMAGE
 
 defflag opt_tftproot.h		TFTPROOT TFTPROOT_DEBUG
 
-# Support for hardware performance monitoring counters
-#
-defflag	opt_perfctrs.h		PERFCTRS
-
 defflag	opt_wlan.h		WLAN
 
 # Machine-independent device majors assignements
@@ -456,11 +452,6 @@ define	arp
 # ALTQ network traffic shaping subsystem
 #
 include "altq/files.altq"
-
-#
-# IPKDB kernel debugger
-#
-include "ipkdb/files.ipkdb"
 
 # Logical disk
 #
@@ -756,9 +747,8 @@ file	dev/ic/dwc_gmac.c		awge
 
 # 8390-family Ethernet controllers
 #
-defflag	opt_ipkdb.h		IPKDB_DP8390
 define	dp8390nic
-file	dev/ic/dp8390.c			dp8390nic | ipkdb_dp8390
+file	dev/ic/dp8390.c			dp8390nic
 
 # National Semiconductor DP83905 AT/LANTIC Ethernet media support
 #
@@ -898,9 +888,8 @@ file	dev/ic/tms320av110.c		tms320av110
 # Novell NE2000-compatible Ethernet cards, based on the
 # National Semiconductor DS8390.
 #
-defflag	opt_ipkdb.h		IPKDB_NE			: IPKDB_DP8390
 device	ne: ether, ifnet, arp, dp8390nic, mii
-file	dev/ic/ne2000.c			ne | ipkdb_ne
+file	dev/ic/ne2000.c			ne
 
 # 8250/16[45]50-based "com" ports
 #

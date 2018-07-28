@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2016/02/27 21:47:34 joerg Exp $
+#	$NetBSD: Makefile,v 1.1.14.1 2018/07/28 04:37:11 pgoyette Exp $
 
 LIB=	LLVMPasses
 
@@ -6,7 +6,8 @@ LIB=	LLVMPasses
 
 .PATH: ${LLVM_SRCDIR}/lib/Passes
 
-SRCS+=	PassBuilder.cpp
+SRCS+=	PassBuilder.cpp \
+	PassPlugin.cpp
 
 .if defined(HOSTLIB)
 .include <bsd.hostlib.mk>

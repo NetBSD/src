@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.31.2.1 2018/04/07 04:12:11 pgoyette Exp $	*/
+/*	$NetBSD: spl.S,v 1.31.2.2 2018/07/28 04:37:26 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -137,7 +137,7 @@ IDTVEC_END(softintr)
  *
  *	%rax		prevlwp from cpu_switchto()
  */
-NENTRY(softintr_ret)
+ENTRY(softintr_ret)
 	incl	CPUVAR(MTX_COUNT)	/* re-adjust after mi_switch */
 	movl	$0,L_CTXSWTCH(%rax)	/* %rax from cpu_switchto */
 	cli
@@ -149,7 +149,7 @@ END(softintr_ret)
  *
  * Software interrupt registration.
  */
-NENTRY(softint_trigger)
+ENTRY(softint_trigger)
 	orl	%edi,CPUVAR(IPENDING)	/* atomic on local cpu */
 	ret
 END(softint_trigger)

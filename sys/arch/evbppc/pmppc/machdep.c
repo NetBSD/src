@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.13 2016/12/22 14:47:57 cherry Exp $	*/
+/*	$NetBSD: machdep.c,v 1.13.14.1 2018/07/28 04:37:33 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.13 2016/12/22 14:47:57 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.13.14.1 2018/07/28 04:37:33 pgoyette Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -69,7 +69,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.13 2016/12/22 14:47:57 cherry Exp $");
 #include "opt_inet.h"
 #include "opt_ccitt.h"
 #include "opt_ns.h"
-#include "opt_ipkdb.h"
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -225,14 +224,6 @@ initppc(u_int startkernel, u_int endkernel, u_int args, void *btinfo)
 	 */
 	pmap_bootstrap(startkernel, endkernel);
 
-#ifdef IPKDB
-	/*
-	 * Now trap to IPKDB
-	 */
-	ipkdb_init();
-	if (boothowto & RB_KDB)
-		ipkdb_connect(0);
-#endif
 #ifdef KGDB
 	kgdb_port_init();
 	if (boothowto & RB_KDB) {

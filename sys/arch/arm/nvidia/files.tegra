@@ -1,4 +1,4 @@
-#	$NetBSD: files.tegra,v 1.46.2.2 2018/04/07 04:12:12 pgoyette Exp $
+#	$NetBSD: files.tegra,v 1.46.2.3 2018/07/28 04:37:28 pgoyette Exp $
 #
 # Configuration info for NVIDIA Tegra ARM Peripherals
 #
@@ -12,9 +12,6 @@ file	arch/arm/nvidia/soc_tegra124.c		soc_tegra124
 device	tegra124cpu
 attach	tegra124cpu at cpu with tegra124_cpu
 file	arch/arm/nvidia/tegra124_cpu.c		tegra124_cpu
-
-# Tegra T210 (X1) support
-file	arch/arm/nvidia/soc_tegra210.c		soc_tegra210
 
 # Interrupt controller
 device	tegralic

@@ -1,4 +1,4 @@
-#	$NetBSD: files.amd64,v 1.101.2.2 2018/06/25 07:25:38 pgoyette Exp $
+#	$NetBSD: files.amd64,v 1.101.2.3 2018/07/28 04:37:26 pgoyette Exp $
 #
 # new style config file for amd64 architecture
 #
@@ -27,7 +27,6 @@ defflag opt_spectre.h	SPECTRE_V2_GCC_MITIGATION
 # with the i386 (they include the opt_*.h for these)
 #
 
-defflag			PMC
 defflag			USER_LDT
 defflag			KASLR
 defflag eisa.h EISA

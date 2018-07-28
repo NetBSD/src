@@ -1,4 +1,4 @@
-#	$NetBSD: DEVNAMES,v 1.307.2.2 2018/06/25 07:25:49 pgoyette Exp $
+#	$NetBSD: DEVNAMES,v 1.307.2.3 2018/07/28 04:37:43 pgoyette Exp $
 #
 # This file contains all used device names and defined attributes in
 # alphabetical order. New devices added to the system somewhere should first
@@ -1325,6 +1325,7 @@ tcx			sparc64
 tdvfb			MI
 te			vax
 tea5757			MI
+tea5767radio		MI
 tfb			MI
 tga			MI
 ti			MI

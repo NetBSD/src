@@ -1,4 +1,4 @@
-/*	$NetBSD: if_agr.c,v 1.46 2018/01/25 03:54:57 christos Exp $	*/
+/*	$NetBSD: if_agr.c,v 1.46.2.1 2018/07/28 04:38:10 pgoyette Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_agr.c,v 1.46 2018/01/25 03:54:57 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_agr.c,v 1.46.2.1 2018/07/28 04:38:10 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -392,7 +392,7 @@ agr_start(struct ifnet *ifp)
 		if (m == NULL) {
 			break;
 		}
-		bpf_mtap(ifp, m);
+		bpf_mtap(ifp, m, BPF_D_OUT);
 		port = agr_select_tx_port(sc, m);
 		if (port) {
 			int error;

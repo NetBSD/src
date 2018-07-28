@@ -1,4 +1,4 @@
-# $NetBSD: md.amiga,v 1.60 2015/12/24 14:16:46 christos Exp $
+# $NetBSD: md.amiga,v 1.60.14.1 2018/07/28 04:32:59 pgoyette Exp $
 ./usr/include/amiga				comp-c-include
 ./usr/include/amiga/_G_config.h			comp-obsolete		obsolete
 ./usr/include/amiga/ansi.h			comp-c-include
@@ -37,7 +37,7 @@
 ./usr/include/amiga/param.h			comp-c-include
 ./usr/include/amiga/pcb.h			comp-c-include
 ./usr/include/amiga/pmap.h			comp-c-include
-./usr/include/amiga/pmc.h			comp-c-include
+./usr/include/amiga/pmc.h			comp-obsolete		obsolete
 ./usr/include/amiga/proc.h			comp-c-include
 ./usr/include/amiga/profile.h			comp-c-include
 ./usr/include/amiga/psl.h			comp-c-include

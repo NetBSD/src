@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.69 2017/11/19 03:23:01 kre Exp $	*/
+/*	$NetBSD: var.c,v 1.69.2.1 2018/07/28 04:32:56 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: var.c,v 1.69 2017/11/19 03:23:01 kre Exp $");
+__RCSID("$NetBSD: var.c,v 1.69.2.1 2018/07/28 04:32:56 pgoyette Exp $");
 #endif
 #endif /* not lint */
 
@@ -50,6 +50,7 @@ __RCSID("$NetBSD: var.c,v 1.69 2017/11/19 03:23:01 kre Exp $");
 #include <time.h>
 #include <pwd.h>
 #include <fcntl.h>
+#include <inttypes.h>
 
 /*
  * Shell variables.
@@ -230,14 +231,17 @@ INIT {
 	 *
 	 * PPID is readonly
 	 * Always default IFS
+	 * POSIX: "Whenever the shell is invoked, OPTIND shall
+	 *         be initialized to 1."
 	 * PSc indicates the root/non-root status of this shell.
-	 * NETBSD_SHELL is a constant (readonly), and is never exported
 	 * START_TIME belongs only to this shell.
+	 * NETBSD_SHELL is a constant (readonly), and is never exported
 	 * LINENO is simply magic...
 	 */
 	snprintf(buf, sizeof(buf), "%d", (int)getppid());
 	setvar("PPID", buf, VREADONLY);
 	setvar("IFS", ifs_default, VTEXTFIXED);
+	setvar("OPTIND", "1", VTEXTFIXED);
 	setvar("PSc", (geteuid() == 0 ? "#" : "$"), VTEXTFIXED);
 
 #ifndef SMALL
@@ -1427,7 +1431,7 @@ get_random(struct var *vp)
 			}
 		} else
 			/* good enough for today */
-			random_val = atoi(vp->text + vp->name_len + 1);
+			random_val = strtoimax(vp->text+vp->name_len+1,NULL,0);
 
 		srandom((long)random_val);
 	}

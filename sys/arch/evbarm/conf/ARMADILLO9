@@ -1,4 +1,4 @@
-#	$NetBSD: ARMADILLO9,v 1.55.2.2 2018/06/25 07:25:40 pgoyette Exp $
+#	$NetBSD: ARMADILLO9,v 1.55.2.3 2018/07/28 04:37:31 pgoyette Exp $
 #
 #	ARMADILLO9 -- Atmark Techno, Armadillo-9
 #
@@ -107,7 +107,6 @@ options 	KTRACE		# system call tracing, a la ktrace(1)
 
 # Development and Debugging options
 
-#options 	PERFCTRS	# performance counters
 options 	DIAGNOSTIC	# internal consistency checks
 #options 	DEBUG
 #options 	PMAP_DEBUG	# Enable pmap_debug_level code
@@ -167,7 +166,7 @@ epled0		at epgpio0 port 4 bit1 0 bit2 1
 # I^2C Controller Unit
 armadillo9iic0	at epgpio0 port 1 bit1 4 bit2 5
 iic*		at armadillo9iic?
-seeprom0	at iic? addr 0x50 size 128
+seeprom0	at iic? addr 0x50 flags 1	# 128 bytes
 #s3531rtc0	at iic? addr 0x30
 
 # PCMCIA bus support

@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.193.2.2 2018/06/25 07:25:37 pgoyette Exp $
+$NetBSD: acronyms.comp,v 1.193.2.3 2018/07/28 04:37:25 pgoyette Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -68,6 +68,7 @@ APT	advanced persistent threat
 AQM	active queue management
 ARAT	always running APIC timer
 ARC	adaptive replacement cache
+ARC	Advanced RISC Computing
 ARC	automatic reference counting
 ARM	Advanced RISC Machines
 ARP	Address Resolution Protocol
@@ -77,6 +78,7 @@ ARR	address range register
 ARU	audio response unit
 AS	autonomous system
 ASA	Adaptive Security Appliance
+ASAN	Address Sanitizer
 ASC	advanced smart cache
 ASCII	American Standard Code for Information Interchange
 ASD	agile software development
@@ -204,6 +206,7 @@ CF	compact flash
 CFB	cipher feedback
 CFG	context-free grammar
 CFG	control-flow graph
+CFI	control-flow integrity sanitizer
 CG	control gate
 CGA	Color Graphics Adapter
 CGI	common gateway interface
@@ -311,6 +314,7 @@ DCC	direct cable connect
 DCD	data carrier detect
 DCE	data control equipment
 DCE	distributed computing environment
+DCL	Digital Command Language
 DCOM	distributed component object model
 DCOP	Desktop COmmunication Protocol
 DCS	data collection systems
@@ -336,6 +340,7 @@ DFA	deterministic finite automaton
 DFC	data flow control
 DFS	depth first search
 DFS	distributed file system
+DFSAN	Data Flow Sanitizer
 DFT	diagnostic function test
 DFT	discrete Fourier transform
 DGL	data generation language
@@ -411,6 +416,7 @@ EAI	Enterprise Application Integration
 EAP	Extensible Authentication Protocol
 EAPOL	EAP over Lan
 EBCDIC	Extended Binary Coded Decimal Interchange Code
+EBDA	Extended BIOS Data Area
 EBR	extended boot record
 EC	elliptic curve
 ECC	elliptic curve cryptography
@@ -447,6 +453,7 @@ ELS	entry level system
 EMI	electro-magnetic interference
 EMP	electro-magnetic pulse
 EMR	electro-magnetic radiation
+EMACS	Editor MACroS
 EOF	end of file
 EOI	end of interrupt
 EOL	end of line
@@ -459,6 +466,7 @@ ERD	emergency recovery disk
 ERD	entity relationship diagram
 ERE	extended regular expression
 ERST	error record serialization table
+ESAN	Efficiency Sanitizer
 ESB	enterprise service bus
 ESDRAM	enhanced synchronous dynamic random access memory
 ESS	electronic switching system
@@ -590,6 +598,8 @@ HTT	hyper-threading technology
 HTTP	Hypertext Transfer Protocol
 HTTPS	Hypertext Transfer Protocol Secure
 HVM	hardware virtual machine
+HVDS	High-Voltage Differential Signaling
+HWASAN	Hardware-assisted Address Sanitizer
 HZ	Hertz
 I2O	intelligent input/output
 IA	information assurance
@@ -732,6 +742,8 @@ LILO	LInux LOader
 LILO	last in, last out
 LINT	local interrupt
 LIR	local Internet registry
+LISP	LISt Processor
+LISP	Locator/ID Separation Protocol
 LKM	{Linux,loadable} kernel module
 LKML	Linux kernel mailing list
 LL	load linked
@@ -752,6 +764,7 @@ LRC	longitudinal redundancy check
 LRM	left-to-right mark
 LRO	left-to-right override
 LRU	least recently used
+LSAN	Leak Sanitizer
 LSB	Linux standards base
 LSB	least significant {bit,byte}
 LSI	large scale integration
@@ -771,6 +784,7 @@ LUN	logical unit number
 LV	logical volume
 LVM	logical volume management
 LVT	local vector table
+LVDS	Low-Voltage Differential Signaling
 LWP	light-weight process
 LZW	Lempel Ziv Welch
 MAC	mandatory access control
@@ -854,6 +868,7 @@ MQTT	Message Queuing Telemetry Transport
 MR	modem ready
 MRU	most recently used
 MS	Microsoft
+MSAN	Memory Sanitizer
 MSB	most significant {bit,byte}
 MSE	mean square error
 MSF	minutes seconds frames
@@ -1130,6 +1145,7 @@ RDBMS	relational database management system
 RDF	Resource Description Framework
 RDM	relational data model
 RDMA	remote direct memory access
+RDRAM	Rambus DRAM
 RE	regular expression
 REST	representational state transfer
 RF	radio frequency
@@ -1395,6 +1411,7 @@ TS	terminal services
 TS	time series
 TS	time stamp
 TS	transport stream
+TSAN	Thread Sanitizer
 TSC	time stamp counter
 TSD	time stamp disable
 TSDB	time series database
@@ -1418,6 +1435,7 @@ UAF	use-after-free
 UART	universal asynchronous receiver/transmitter
 UAT	user acceptance testing
 UB	undefined behavior
+UBSAN	Undefined Behavior Sanitizer
 UC	uncacheable
 UCS	uniform-cost search
 UDMA	ultra DMA
@@ -1469,6 +1487,7 @@ VG	volume group
 VGA	Video Graphics Array
 VHDCI	very high density cable interconnect
 VID	{VLAN,voltage level} identifier
+VIM	Vi IMproved
 VIPT	virtually indexed, physically tagged
 VIVT	virtually indexed, virtually tagged
 VLAN	virtual local area network

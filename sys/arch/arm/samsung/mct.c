@@ -1,11 +1,11 @@
-/*	$NetBSD: mct.c,v 1.12 2017/06/11 16:21:41 jmcneill Exp $	*/
+/*	$NetBSD: mct.c,v 1.12.4.1 2018/07/28 04:37:29 pgoyette Exp $	*/
 
 /*-
- * Copyright (c) 2014 The NetBSD Foundation, Inc.
+ * Copyright (c) 2014-2018 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Reinoud Zandijk.
+ * by Reinoud Zandijk and Jared McNeill.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: mct.c,v 1.12 2017/06/11 16:21:41 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: mct.c,v 1.12.4.1 2018/07/28 04:37:29 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -50,15 +50,24 @@ __KERNEL_RCSID(1, "$NetBSD: mct.c,v 1.12 2017/06/11 16:21:41 jmcneill Exp $");
 #include <arm/samsung/mct_reg.h>
 #include <arm/samsung/mct_var.h>
 
-#include <arm/cortex/gtmr_intr.h>
-#include <arm/cortex/mpcore_var.h>
-#include <arm/cortex/gtmr_var.h>
-
 #include <dev/fdt/fdtvar.h>
 #include <arm/fdt/arm_fdtvar.h>
 
+static struct mct_softc mct_sc;
+
 static int  mct_match(device_t, cfdata_t, void *);
 static void mct_attach(device_t, device_t, void *);
+
+static u_int mct_get_timecount(struct timecounter *);
+
+static struct timecounter mct_timecounter = {
+	.tc_get_timecount = mct_get_timecount,
+	.tc_counter_mask = ~0u,
+	.tc_frequency = EXYNOS_F_IN_FREQ,
+	.tc_name = "MCT",
+	.tc_quality = 500,
+	.tc_priv = &mct_sc,
+};
 
 CFATTACH_DECL_NEW(exyo_mct, 0, mct_match, mct_attach, NULL, NULL);
 
@@ -85,19 +94,30 @@ mct_write_global(struct mct_softc *sc, bus_size_t o, uint32_t v)
 		wreg = MCT_G_CNT_WSTAT;
 		bit  = (o == MCT_G_CNT_L) ? G_CNT_WSTAT_L : G_CNT_WSTAT_U;
 	} else {
-		wreg = MCT_G_WSTAT;
 		switch (o) {
 		case MCT_G_COMP0_L:
+			wreg = MCT_G_WSTAT;
 			bit  = G_WSTAT_COMP0_L;
 			break;
 		case MCT_G_COMP0_U:
+			wreg = MCT_G_WSTAT;
 			bit  = G_WSTAT_COMP0_U;
 			break;
 		case MCT_G_COMP0_ADD_INCR:
+			wreg = MCT_G_WSTAT;
 			bit  = G_WSTAT_ADD_INCR;
 			break;
 		case MCT_G_TCON:
+			wreg = MCT_G_WSTAT;
 			bit  = G_WSTAT_TCON;
+			break;
+		case MCT_G_CNT_L:
+			wreg = MCT_G_CNT_WSTAT;
+			bit  = G_CNT_WSTAT_L;
+			break;
+		case MCT_G_CNT_U:
+			wreg = MCT_G_CNT_WSTAT;
+			bit  = G_CNT_WSTAT_U;
 			break;
 		default:
 			/* all other registers */
@@ -120,7 +140,69 @@ mct_write_global(struct mct_softc *sc, bus_size_t o, uint32_t v)
 static void
 mct_fdt_cpu_hatch(void *priv, struct cpu_info *ci)
 {
-	gtmr_init_cpu_clock(ci);
+	panic("%s: not implemented", __func__);
+}
+
+static int
+mct_intr(void *arg)
+{
+	struct mct_softc * const sc = &mct_sc;
+	struct clockframe *frame = arg;
+
+	mct_write_global(sc, MCT_G_INT_CSTAT, G_INT_CSTAT_CLEAR);
+
+	hardclock(frame);
+
+	return 1;
+}
+
+static u_int
+mct_get_timecount(struct timecounter *tc)
+{
+	struct mct_softc * const sc = tc->tc_priv;
+
+	return mct_read_global(sc, MCT_G_CNT_L);
+}
+
+static uint64_t
+mct_read_gcnt(struct mct_softc *sc)
+{
+	uint32_t gcntl, gcntu;
+
+	do {
+		gcntu = mct_read_global(sc, MCT_G_CNT_U);
+		gcntl = mct_read_global(sc, MCT_G_CNT_L);
+	} while (gcntu != mct_read_global(sc, MCT_G_CNT_U));
+
+	return ((uint64_t)gcntu << 32) | gcntl;
+}
+
+static void
+mct_cpu_initclocks(void)
+{
+	struct mct_softc * const sc = &mct_sc;
+	char intrstr[128];
+
+	if (!fdtbus_intr_str(sc->sc_phandle, 0, intrstr, sizeof(intrstr)))
+		panic("%s: failed to decode interrupt", __func__);
+
+	sc->sc_global_ih = fdtbus_intr_establish(sc->sc_phandle, 0, IPL_CLOCK,
+	    FDT_INTR_MPSAFE, mct_intr, NULL);
+	if (sc->sc_global_ih == NULL)
+		panic("%s: failed to establish timer interrupt on %s", __func__, intrstr);
+
+	aprint_normal_dev(sc->sc_dev, "interrupting on %s\n", intrstr);
+
+	/* Start the timer */
+	const u_int autoinc = sc->sc_freq / hz;
+	const uint64_t comp0 = mct_read_gcnt(sc) + autoinc;
+
+	mct_write_global(sc, MCT_G_TCON, G_TCON_START | G_TCON_COMP0_AUTOINC);
+	mct_write_global(sc, MCT_G_COMP0_ADD_INCR, autoinc);
+	mct_write_global(sc, MCT_G_COMP0_L, (uint32_t)comp0);
+	mct_write_global(sc, MCT_G_COMP0_U, (uint32_t)(comp0 >> 32));
+	mct_write_global(sc, MCT_G_INT_ENB, G_INT_ENB_ENABLE);
+	mct_write_global(sc, MCT_G_TCON, G_TCON_START | G_TCON_COMP0_ENABLE | G_TCON_COMP0_AUTOINC);
 }
 
 static int
@@ -149,9 +231,9 @@ mct_attach(device_t parent, device_t self, void *aux)
 
 	self->dv_private = sc;
 	sc->sc_dev = self;
+	sc->sc_phandle = faa->faa_phandle;
 	sc->sc_bst = faa->faa_bst;
 	sc->sc_freq = EXYNOS_F_IN_FREQ;
-
 	error = bus_space_map(sc->sc_bst, addr, size, 0, &sc->sc_bsh);
 	if (error) {
 		aprint_error(": couldn't map %#llx: %d",
@@ -162,18 +244,31 @@ mct_attach(device_t parent, device_t self, void *aux)
 	aprint_naive("\n");
 	aprint_normal(": Exynos SoC multi core timer (64 bits)\n");
 
-	/* Start the timer */
-	uint32_t tcon = mct_read_global(sc, MCT_G_TCON);
-	tcon |= G_TCON_START;
-	mct_write_global(sc, MCT_G_TCON, tcon);
-
-	/* Attach ARMv7 generic timer */
-	struct mpcore_attach_args mpcaa = {
-		.mpcaa_name = "armgtmr",
-		.mpcaa_irq = IRQ_GTMR_PPI_VTIMER
-	};
-
-	config_found(self, &mpcaa, NULL);
+	tc_init(&mct_timecounter);
 
 	arm_fdt_cpu_hatch_register(self, mct_fdt_cpu_hatch);
+	arm_fdt_timer_register(mct_cpu_initclocks);
+}
+
+void
+mct_delay(u_int n)
+{
+	struct mct_softc * const sc = &mct_sc;
+	uint64_t cur, prev;
+
+	if (sc->sc_bsh == 0)
+		panic("%s: mct driver not attached", __func__);
+
+	const long incs_per_us = sc->sc_freq / 1000000;
+	long ticks = n * incs_per_us;
+
+	prev = mct_read_gcnt(sc);
+	while (ticks > 0) {
+		cur = mct_read_gcnt(sc);
+		if (cur > prev)
+			ticks -= (cur - prev);
+		else
+			ticks -= (UINT64_MAX - cur + prev);
+		prev = cur;
+	}
 }

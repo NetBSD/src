@@ -1,4 +1,4 @@
-/*	$NetBSD: hci.h,v 1.44 2017/12/21 09:30:30 plunky Exp $	*/
+/*	$NetBSD: hci.h,v 1.44.2.1 2018/07/28 04:38:10 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -54,7 +54,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: hci.h,v 1.44 2017/12/21 09:30:30 plunky Exp $
+ * $Id: hci.h,v 1.44.2.1 2018/07/28 04:38:10 pgoyette Exp $
  * $FreeBSD: src/sys/netgraph/bluetooth/include/ng_hci.h,v 1.6 2005/01/07 01:45:43 imp Exp $
  */
 
@@ -2300,7 +2300,7 @@ hci_filter_test(uint8_t bit, const struct hci_filter *filter)
 	uint8_t off = (uint8_t)((bit - 1) >> 5);
 	uint8_t sh = (uint8_t)((bit - 1) & 0x1f);
 
-	return (filter->mask[off] >> sh) & 1U;
+	return (int)((filter->mask[off] >> sh) & 1U);
 }
 
 /*

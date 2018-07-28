@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_keylock.c,v 1.8 2014/02/25 18:30:13 pooka Exp $ */
+/* $NetBSD: secmodel_keylock.c,v 1.8.28.1 2018/07/28 04:38:11 pgoyette Exp $ */
 /*-
  * Copyright (c) 2009 Marc Balmer <marc@msys.ch>
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_keylock.c,v 1.8 2014/02/25 18:30:13 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_keylock.c,v 1.8.28.1 2018/07/28 04:38:11 pgoyette Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -248,14 +248,6 @@ secmodel_keylock_system_cb(kauth_cred_t cred,
 		break;
 
 	case KAUTH_SYSTEM_DEBUG:
-		switch (req) {
-		case KAUTH_REQ_SYSTEM_DEBUG_IPKDB:
-			if (kstate == KEYLOCK_CLOSE)
-				result = KAUTH_RESULT_DENY;
-			break;
-		default:
-			break;
-		}
 		break;
 	}
 

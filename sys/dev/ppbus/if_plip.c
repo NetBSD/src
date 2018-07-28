@@ -1,4 +1,4 @@
-/* $NetBSD: if_plip.c,v 1.28 2017/06/25 12:27:13 maxv Exp $ */
+/* $NetBSD: if_plip.c,v 1.28.4.1 2018/07/28 04:37:57 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 1997 Poul-Henning Kamp
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_plip.c,v 1.28 2017/06/25 12:27:13 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_plip.c,v 1.28.4.1 2018/07/28 04:37:57 pgoyette Exp $");
 
 /*
  * Parallel port TCP/IP interfaces added.  I looked at the driver from
@@ -41,7 +41,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_plip.c,v 1.28 2017/06/25 12:27:13 maxv Exp $");
  * This driver sends two bytes (0x08, 0x00) in front of each packet,
  * to allow us to distinguish another format later.
  *
- * Now added an Linux/Crynwr compatibility mode which is enabled using
+ * Now added a Linux/Crynwr compatibility mode which is enabled using
  * IF_LINK0 - Tim Wilkinson.
  *
  * TODO:
@@ -194,7 +194,7 @@ static void lpinittables(void);
 static void lpfreetables(void);
 static int lpioctl(struct ifnet *, u_long, void *);
 static int lpoutput(struct ifnet *, struct mbuf *, const struct sockaddr *,
-	const struct rtentry *);
+    const struct rtentry *);
 static void lpstart(struct ifnet *);
 static void lp_intr(void *);
 
@@ -205,7 +205,7 @@ lp_probe(device_t parent, cfdata_t match, void *aux)
 	struct ppbus_attach_args * args = aux;
 
 	/* Fail if ppbus is not interrupt capable */
-	if(args->capabilities & PPBUS_HAS_INTR)
+	if (args->capabilities & PPBUS_HAS_INTR)
 		return 1;
 
 	printf("%s(%s): not an interrupt-driven port.\n", __func__,
@@ -243,7 +243,7 @@ lp_attach(device_t parent, device_t self, void *aux)
 
 	bpf_attach(ifp, DLT_NULL, sizeof(u_int32_t));
 
-	if(lp_count++ == 0)
+	if (lp_count++ == 0)
 		lpinittables();
 	printf("\n");
 }
@@ -255,8 +255,8 @@ lp_detach(device_t self, int flags)
 	struct lp_softc * lp = device_private(self);
 	device_t ppbus = device_parent(self);
 
-	if(lp->sc_dev_ok) {
-		if(!(flags & DETACH_QUIET))
+	if (lp->sc_dev_ok) {
+		if (!(flags & DETACH_QUIET))
 			LP_PRINTF("%s(%s): device not properly attached! "
 				"Skipping detach....\n", __func__,
 				device_xname(self));
@@ -264,33 +264,33 @@ lp_detach(device_t self, int flags)
 	}
 
 	/* If interface is up, bring it down and release ppbus */
-	if(lp->sc_if.if_flags & IFF_RUNNING) {
+	if (lp->sc_if.if_flags & IFF_RUNNING) {
 		ppbus_wctr(ppbus, 0x00);
 		if_detach(&lp->sc_if);
 		error = ppbus_remove_handler(ppbus, lp_intr);
-		if(error) {
-			if(!(flags & DETACH_QUIET))
+		if (error) {
+			if (!(flags & DETACH_QUIET))
 				LP_PRINTF("%s(%s): unable to remove interrupt "
 					"callback.\n", __func__,
 					device_xname(self));
-			if(!(flags & DETACH_FORCE))
+			if (!(flags & DETACH_FORCE))
 				return error;
 		}
 		error = ppbus_release_bus(ppbus, self, 0, 0);
-		if(error) {
-			if(!(flags & DETACH_QUIET))
+		if (error) {
+			if (!(flags & DETACH_QUIET))
 				LP_PRINTF("%s(%s): error releasing bus %s.\n",
 					__func__, device_xname(self),
 					device_xname(ppbus));
-			if(!(flags & DETACH_FORCE))
+			if (!(flags & DETACH_FORCE))
 				return error;
 		}
 	}
 
-	if(lp->sc_ifbuf)
+	if (lp->sc_ifbuf)
 		free(lp->sc_ifbuf, M_DEVBUF);
 
-	if(--lp_count == 0)
+	if (--lp_count == 0)
 		lpfreetables();
 	return error;
 }
@@ -301,7 +301,7 @@ lp_detach(device_t self, int flags)
  * precalculate them when we initialize.
  */
 static void
-lpinittables (void)
+lpinittables(void)
 {
 	int i;
 
@@ -311,14 +311,14 @@ lpinittables (void)
 	if (!ctxmith)
 		ctxmith = malloc(4*LPIPTBLSIZE, M_DEVBUF, M_WAITOK);
 
-	for(i = 0; i < LPIPTBLSIZE; i++) {
+	for (i = 0; i < LPIPTBLSIZE; i++) {
 		ctxmith[i] = (i & 0xF0) >> 4;
 		ctxmitl[i] = 0x10 | (i & 0x0F);
 		ctrecvh[i] = (i & 0x78) << 1;
 		ctrecvl[i] = (i & 0x78) >> 3;
 	}
 
-	for(i = 0; i < LPIPTBLSIZE; i++) {
+	for (i = 0; i < LPIPTBLSIZE; i++) {
 		txmith[i] = ((i & 0x80) >> 3) | ((i & 0x70) >> 4) | 0x08;
 		txmitl[i] = ((i & 0x08) << 1) | (i & 0x07);
 		trecvh[i] = ((~i) & 0x80) | ((i & 0x38) << 1);
@@ -328,7 +328,7 @@ lpinittables (void)
 
 /* Free translation tables */
 static void
-lpfreetables (void)
+lpfreetables(void)
 {
 	if (txmith)
 		free(txmith, M_DEVBUF);
@@ -353,7 +353,7 @@ lpioctl(struct ifnet *ifp, u_long cmd, void *data)
 	error = 0;
 	s = splnet();
 
-	if(sc->sc_dev_ok) {
+	if (sc->sc_dev_ok) {
 		LP_PRINTF("%s(%s): device not properly attached!", __func__,
 			device_xname(dev));
 		error = ENODEV;
@@ -377,15 +377,15 @@ lpioctl(struct ifnet *ifp, u_long cmd, void *data)
 	case SIOCSIFFLAGS:
 		if ((error = ifioctl_common(ifp, cmd, data)) != 0)
 			break;
-		if((ifp->if_flags & (IFF_UP|IFF_RUNNING)) == IFF_UP) {
-			if((error = ppbus_request_bus(ppbus, dev, 0, 0)))
+		if ((ifp->if_flags & (IFF_UP|IFF_RUNNING)) == IFF_UP) {
+			if ((error = ppbus_request_bus(ppbus, dev, 0, 0)))
 				break;
 			error = ppbus_set_mode(ppbus, PPBUS_COMPATIBLE, 0);
-			if(error)
+			if (error)
 				break;
 
 			error = ppbus_add_handler(ppbus, lp_intr, dev);
-			if(error) {
+			if (error) {
 				LP_PRINTF("%s(%s): unable to register interrupt"
 					" callback.\n", __func__,
 					device_xname(dev));
@@ -394,7 +394,7 @@ lpioctl(struct ifnet *ifp, u_long cmd, void *data)
 			}
 
 			/* Allocate a buffer if necessary */
-			if(sc->sc_ifbuf == NULL) {
+			if (sc->sc_ifbuf == NULL) {
 				sc->sc_ifbuf = malloc(sc->sc_if.if_mtu +
 					MLPIPHDRLEN, M_DEVBUF, M_NOWAIT);
 				if (!sc->sc_ifbuf) {
@@ -407,7 +407,7 @@ lpioctl(struct ifnet *ifp, u_long cmd, void *data)
 			ppbus_wctr(ppbus, IRQENABLE);
 			ifp->if_flags |= IFF_RUNNING;
 		}
-		if((ifp->if_flags & (IFF_UP|IFF_RUNNING)) == IFF_RUNNING) {
+		if ((ifp->if_flags & (IFF_UP|IFF_RUNNING)) == IFF_RUNNING) {
 			ppbus_remove_handler(ppbus, lp_intr);
 			error = ppbus_release_bus(ppbus, dev, 0, 0);
 			ifp->if_flags &= ~IFF_RUNNING;
@@ -417,7 +417,7 @@ lpioctl(struct ifnet *ifp, u_long cmd, void *data)
 		break;
 
 	case SIOCSIFMTU:
-		if(sc->sc_if.if_mtu == ifr->ifr_mtu)
+		if (sc->sc_if.if_mtu == ifr->ifr_mtu)
 			break;
 		ptr = sc->sc_ifbuf;
 		sc->sc_ifbuf = malloc(ifr->ifr_mtu+MLPIPHDRLEN, M_DEVBUF,
@@ -427,7 +427,7 @@ lpioctl(struct ifnet *ifp, u_long cmd, void *data)
 			error = ENOBUFS;
 			break;
 		}
-		if(ptr)
+		if (ptr)
 			free(ptr,M_DEVBUF);
 		/*FALLTHROUGH*/
 	case SIOCGIFMTU:
@@ -466,7 +466,7 @@ end:
 }
 
 static inline int
-clpoutbyte (u_char byte, int spin, device_t ppbus)
+clpoutbyte(u_char byte, int spin, device_t ppbus)
 {
 	int s = spin;
 	ppbus_wdtr(ppbus, ctxmitl[byte]);
@@ -486,13 +486,13 @@ clpoutbyte (u_char byte, int spin, device_t ppbus)
 }
 
 static inline int
-clpinbyte (int spin, device_t ppbus)
+clpinbyte(int spin, device_t ppbus)
 {
 	u_char c, cl;
 	int s = spin;
 
-	while(ppbus_rstr(ppbus) & CLPIP_SHAKE) {
-		if(!--s) {
+	while (ppbus_rstr(ppbus) & CLPIP_SHAKE) {
+		if (!--s) {
 			return -1;
 		}
 	}
@@ -500,8 +500,8 @@ clpinbyte (int spin, device_t ppbus)
 	ppbus_wdtr(ppbus, 0x10);
 
 	s = spin;
-	while(!(ppbus_rstr(ppbus) & CLPIP_SHAKE)) {
-		if(!--s) {
+	while (!(ppbus_rstr(ppbus) & CLPIP_SHAKE)) {
+		if (!--s) {
 			return -1;
 		}
 	}
@@ -512,7 +512,7 @@ clpinbyte (int spin, device_t ppbus)
 }
 
 static void
-lptap(struct ifnet *ifp, struct mbuf *m)
+lptap(struct ifnet *ifp, struct mbuf *m, u_int direction)
 {
 	/*
 	 * Send a packet through bpf. We need to prepend the address family
@@ -523,15 +523,19 @@ lptap(struct ifnet *ifp, struct mbuf *m)
 	u_int32_t af = AF_INET;
 	struct mbuf m0;
 
+	m0.m_type = MT_DATA;
 	m0.m_next = m;
+	m0.m_nextpkt = NULL;
+	m0.m_owner = NULL;
 	m0.m_len = sizeof(u_int32_t);
 	m0.m_data = (char *)&af;
-	bpf_mtap(ifp, &m0);
+	m0.m_flags = 0;
+	bpf_mtap(ifp, &m0, direction);
 }
 
 /* Soft interrupt handler called by hardware interrupt handler */
 static void
-lp_intr (void *arg)
+lp_intr(void *arg)
 {
 	device_t dev = (device_t)arg;
         device_t ppbus = device_parent(dev);
@@ -545,18 +549,18 @@ lp_intr (void *arg)
 	s = splnet();
 
 	/* Do nothing if device not properly attached */
-	if(sc->sc_dev_ok) {
+	if (sc->sc_dev_ok) {
 		LP_PRINTF("%s(%s): device not properly attached!", __func__,
 			device_xname(dev));
 		goto done;
 	}
 
 	/* Do nothing if interface is not up */
-	if((ifp->if_flags & (IFF_UP|IFF_RUNNING)) != (IFF_UP|IFF_RUNNING))
+	if ((ifp->if_flags & (IFF_UP|IFF_RUNNING)) != (IFF_UP|IFF_RUNNING))
 		goto done;
 
 	/* If other side is no longer transmitting, do nothing */
-	if(!(ppbus_rstr(ppbus) & LPIP_SHAKE))
+	if (!(ppbus_rstr(ppbus) & LPIP_SHAKE))
 		goto done;
 
 	/* Disable interrupts until we finish */
@@ -565,23 +569,23 @@ lp_intr (void *arg)
 	top = NULL;
 	bp = sc->sc_ifbuf;
 	/* Linux/crynwyr protocol receiving */
-	if(ifp->if_flags & IFF_LINK0) {
+	if (ifp->if_flags & IFF_LINK0) {
 		/* Ack. the request */
 		ppbus_wdtr(ppbus, 0x01);
 
 		/* Get the packet length */
 		j = clpinbyte(LPMAXSPIN2, ppbus);
-		if(j == -1)
+		if (j == -1)
 			goto err;
 		len = j;
 		j = clpinbyte(LPMAXSPIN2, ppbus);
-		if(j == -1)
+		if (j == -1)
 			goto err;
 		len = len + (j << 8);
-		if(len > ifp->if_mtu + MLPIPHDRLEN)
+		if (len > ifp->if_mtu + MLPIPHDRLEN)
 			goto err;
 
-		while(len--) {
+		while (len--) {
 			j = clpinbyte(LPMAXSPIN2, ppbus);
 			if (j == -1) {
 				goto err;
@@ -590,7 +594,7 @@ lp_intr (void *arg)
 		}
 		/* Get and ignore checksum */
 		j = clpinbyte(LPMAXSPIN2, ppbus);
-		if(j == -1) {
+		if (j == -1) {
 			goto err;
 		}
 
@@ -605,13 +609,14 @@ lp_intr (void *arg)
 	/* FreeBSD protocol receiving */
 	else {
 		len = ifp->if_mtu + LPIPHDRLEN;
-		while(len--) {
+		while (len--) {
 			cl = ppbus_rstr(ppbus);
 			ppbus_wdtr(ppbus, 0x08);
 
 			j = LPMAXSPIN2;
-			while((ppbus_rstr(ppbus) & LPIP_SHAKE)) {
-				if(!--j) goto err;
+			while ((ppbus_rstr(ppbus) & LPIP_SHAKE)) {
+				if (!--j)
+					goto err;
 			}
 
 			c = ppbus_rstr(ppbus);
@@ -620,18 +625,19 @@ lp_intr (void *arg)
 			*bp++= trecvh[cl] | trecvl[c];
 
 			j = LPMAXSPIN2;
-			while(!((cl=ppbus_rstr(ppbus)) & LPIP_SHAKE)) {
-				if(cl != c &&
+			while (!((cl = ppbus_rstr(ppbus)) & LPIP_SHAKE)) {
+				if (cl != c &&
 					(((cl = ppbus_rstr(ppbus)) ^ 0xb8) &
 					0xf8) == (c & 0xf8))
 					goto end;
-				if(!--j) goto err;
+				if (!--j)
+					goto err;
 			}
 		}
 
 end:
 		len = bp - sc->sc_ifbuf;
-		if(len <= LPIPHDRLEN)
+		if (len <= LPIPHDRLEN)
 			goto err;
 		len -= LPIPHDRLEN;
 		top = m_devget(sc->sc_ifbuf + LPIPHDRLEN, len, 0, ifp, NULL);
@@ -642,7 +648,7 @@ end:
 		goto err;
 	}
 	if (ifp->if_bpf) {
-		lptap(ifp, top);
+		lptap(ifp, top, BPF_D_IN);
 	}
 	if (__predict_false(!pktq_enqueue(ip_pktq, top, 0))) {
 		ifp->if_iqdrops++;
@@ -662,7 +668,7 @@ err:
 	sc->sc_iferrs++;
 	LP_PRINTF("R");
 	/* Disable interface if there are too many errors */
-	if(sc->sc_iferrs > LPMAXERRS) {
+	if (sc->sc_iferrs > LPMAXERRS) {
 		aprint_error_dev(dev, "Too many consecutive errors, going off-line.\n");
 		ppbus_wctr(ppbus, ~IRQENABLE);
 		if_down(ifp);
@@ -673,7 +679,7 @@ done:
 	/* Re-enable interrupts */
 	ppbus_wctr(ppbus, IRQENABLE);
 	/* If interface is not active, send some packets */
-	if((ifp->if_flags & IFF_OACTIVE) == 0)
+	if ((ifp->if_flags & IFF_OACTIVE) == 0)
 		lpstart(ifp);
 	splx(s);
 	return;
@@ -684,14 +690,14 @@ lpoutbyte(u_char byte, int spin, device_t ppbus)
 {
 	int s = spin;
 	ppbus_wdtr(ppbus, txmith[byte]);
-	while(!(ppbus_rstr(ppbus) & LPIP_SHAKE)) {
-		if(--s == 0)
+	while (!(ppbus_rstr(ppbus) & LPIP_SHAKE)) {
+		if (--s == 0)
 			return 1;
 	}
 	s = spin;
 	ppbus_wdtr(ppbus, txmitl[byte]);
-	while(ppbus_rstr(ppbus) & LPIP_SHAKE) {
-		if(--s == 0)
+	while (ppbus_rstr(ppbus) & LPIP_SHAKE) {
+		if (--s == 0)
 			return 1;
 	}
 	return 0;
@@ -700,7 +706,7 @@ lpoutbyte(u_char byte, int spin, device_t ppbus)
 /* Queue a packet for delivery */
 static int
 lpoutput(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
-	const struct rtentry *rt)
+    const struct rtentry *rt)
 {
 	struct lp_softc * sc = ifp->if_softc;
 	device_t dev = sc->ppbus_dev.sc_dev;
@@ -710,20 +716,20 @@ lpoutput(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 
 	s = splnet();
 
-	if(sc->sc_dev_ok) {
+	if (sc->sc_dev_ok) {
 		LP_PRINTF("%s(%s): device not properly attached!", __func__,
 			device_xname(dev));
 		err = ENODEV;
 		goto endoutput;
 	}
 
-	if((ifp->if_flags & (IFF_UP|IFF_RUNNING)) != (IFF_UP|IFF_RUNNING)) {
+	if ((ifp->if_flags & (IFF_UP|IFF_RUNNING)) != (IFF_UP|IFF_RUNNING)) {
 		err = ENETDOWN;
 		goto endoutput;
 	}
 
 	/* Only support INET */
-	if(dst->sa_family != AF_INET) {
+	if (dst->sa_family != AF_INET) {
 		LP_PRINTF("%s: af%d not supported\n", ifp->if_xname,
 		    dst->sa_family);
 		ifp->if_noproto++;
@@ -733,17 +739,16 @@ lpoutput(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 
 	IFQ_CLASSIFY(&ifp->if_snd, m, dst->sa_family);
 	IFQ_ENQUEUE(&ifp->if_snd, m, err);
-	if(err == 0) {
-		if((ifp->if_flags & IFF_OACTIVE) == 0)
+	if (err == 0) {
+		if ((ifp->if_flags & IFF_OACTIVE) == 0)
 			lpstart(ifp);
-	}
-	else {
+	} else {
 		ifp->if_oerrors++;
 		sc->sc_iferrs++;
 		LP_PRINTF("Q");
 
 		/* Disable interface if there are too many errors */
-		if(sc->sc_iferrs > LPMAXERRS) {
+		if (sc->sc_iferrs > LPMAXERRS) {
 			aprint_error_dev(dev, "Too many errors, going off-line.\n");
 			ppbus_wctr(ppbus, ~IRQENABLE);
 			if_down(ifp);
@@ -752,7 +757,7 @@ lpoutput(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 	}
 
 endoutput:
-	if((err != 0) && (err != ENOBUFS))
+	if ((err != 0) && (err != ENOBUFS))
 		m_freem(m);
 	splx(s);
 	return err;
@@ -771,13 +776,13 @@ lpstart(struct ifnet * ifp)
 	int err, i, len, spin, count;
 	u_char str, chksum;
 
-	if(lp->sc_dev_ok) {
+	if (lp->sc_dev_ok) {
 		LP_PRINTF("%s(%s): device not properly attached!", __func__,
 			device_xname(dev));
 		return;
 	}
 
-	if((ifp->if_flags & (IFF_UP|IFF_RUNNING)) != (IFF_UP|IFF_RUNNING)) {
+	if ((ifp->if_flags & (IFF_UP|IFF_RUNNING)) != (IFF_UP|IFF_RUNNING)) {
 		return;
 	}
 
@@ -787,22 +792,22 @@ lpstart(struct ifnet * ifp)
 	ppbus_wdtr(ppbus, 0);
 
 	/* Output loop */
-	for(;;) {
+	for (;;) {
 		/* Check if there are packets to send */
-		if(IFQ_IS_EMPTY(&ifp->if_snd)) {
+		if (IFQ_IS_EMPTY(&ifp->if_snd)) {
 			goto final;
 		}
 		/* Try to send a packet, dequeue it later if successful */
 		IFQ_POLL(&ifp->if_snd, m);
-		if(m == NULL)
+		if (m == NULL)
 			goto final;
 
 		str = ppbus_rstr(ppbus);
 		/* Wait until other side is not transmitting */
-		if((str & LPIP_SHAKE) ||
+		if ((str & LPIP_SHAKE) ||
 			((ifp->if_flags & IFF_LINK0) && !(str & CLPIP_SHAKE))) {
 			LP_PRINTF("&");
-			if(++lp->sc_xmit_rtry > LPMAXRTRY) {
+			if (++lp->sc_xmit_rtry > LPMAXRTRY) {
 				aprint_error_dev(dev, "Too many retries while channel "
 					"busy, going off-line.\n");
 				ppbus_wctr(ppbus, ~IRQENABLE);
@@ -819,38 +824,38 @@ lpstart(struct ifnet * ifp)
 		err = 1;
 
 		/* Output packet for Linux/crynwyr compatible protocol */
-		if(ifp->if_flags & IFF_LINK0) {
+		if (ifp->if_flags & IFF_LINK0) {
 			/* Calculate packet length */
 			count = 14;		/* Ethernet header len */
-			for(mm = m; mm; mm = mm->m_next) {
+			for (mm = m; mm; mm = mm->m_next) {
 				count += mm->m_len;
 			}
 
 			/* Alert other end to pending packet */
 			spin = LPMAXSPIN1;
 			ppbus_wdtr(ppbus, 0x08);
-			while((ppbus_rstr(ppbus) & 0x08) == 0) {
+			while ((ppbus_rstr(ppbus) & 0x08) == 0) {
 				if (--spin == 0) {
 					goto nend;
 				}
 			}
 
-			if(clpoutbyte(count & 0xFF, LPMAXSPIN1, ppbus))
+			if (clpoutbyte(count & 0xFF, LPMAXSPIN1, ppbus))
 				goto nend;
-			if(clpoutbyte((count >> 8) & 0xFF, LPMAXSPIN1, ppbus))
+			if (clpoutbyte((count >> 8) & 0xFF, LPMAXSPIN1, ppbus))
 				goto nend;
 
 			/* Send dummy ethernet header */
 			chksum = 0;
-			for(i = 0; i < 12; i++) {
-				if(clpoutbyte(i, LPMAXSPIN1, ppbus))
+			for (i = 0; i < 12; i++) {
+				if (clpoutbyte(i, LPMAXSPIN1, ppbus))
 					goto nend;
 				chksum += i;
 			}
 
-			if(clpoutbyte(0x08, LPMAXSPIN1, ppbus))
+			if (clpoutbyte(0x08, LPMAXSPIN1, ppbus))
 				goto nend;
-			if(clpoutbyte(0x00, LPMAXSPIN1, ppbus))
+			if (clpoutbyte(0x00, LPMAXSPIN1, ppbus))
 				goto nend;
 			chksum += 0x08 + 0x00;		/* Add into checksum */
 
@@ -858,15 +863,15 @@ lpstart(struct ifnet * ifp)
 			do {
 				cp = mtod(mm, u_char *);
 				len = mm->m_len;
-				while(len--) {
-					if(clpoutbyte(*cp, LPMAXSPIN2, ppbus))
+				while (len--) {
+					if (clpoutbyte(*cp, LPMAXSPIN2, ppbus))
 						goto nend;
 					chksum += *cp++;
 				}
 			} while ((mm = mm->m_next));
 
 			/* Send checksum */
-			if(clpoutbyte(chksum, LPMAXSPIN2, ppbus))
+			if (clpoutbyte(chksum, LPMAXSPIN2, ppbus))
 				goto nend;
 
 			/* No errors */
@@ -879,17 +884,17 @@ lpstart(struct ifnet * ifp)
 			/* We need a sensible value if we abort */
 			cp = NULL;
 
-			if(lpoutbyte(0x08, LPMAXSPIN1, ppbus))
+			if (lpoutbyte(0x08, LPMAXSPIN1, ppbus))
 				goto end;
-			if(lpoutbyte(0x00, LPMAXSPIN2, ppbus))
+			if (lpoutbyte(0x00, LPMAXSPIN2, ppbus))
 				goto end;
 
 			mm = m;
 			do {
 				cp = mtod(mm,u_char *);
 				len = mm->m_len;
-				while(len--)
-					if(lpoutbyte(*cp++, LPMAXSPIN2, ppbus))
+				while (len--)
+					if (lpoutbyte(*cp++, LPMAXSPIN2, ppbus))
 						goto end;
 			} while ((mm = mm->m_next));
 
@@ -897,7 +902,7 @@ lpstart(struct ifnet * ifp)
 			err = 0;
 
 end:
-			if(cp)
+			if (cp)
 				ppbus_wdtr(ppbus, txmitl[*(--cp)] ^ 0x17);
 			else
 				ppbus_wdtr(ppbus, txmitl['\0'] ^ 0x17);
@@ -907,7 +912,7 @@ nend:
 		/* Re-enable interrupt generation */
 		ppbus_wctr(ppbus, IRQENABLE);
 
-		if(err) {
+		if (err) {
 			/* Go quiescent */
 			ppbus_wdtr(ppbus, 0);
 
@@ -916,19 +921,18 @@ nend:
 			LP_PRINTF("X");
 
 			/* Disable interface if there are too many errors */
-			if(lp->sc_iferrs > LPMAXERRS) {
+			if (lp->sc_iferrs > LPMAXERRS) {
 				aprint_error_dev(dev, "Too many errors, going off-line.\n");
 				ppbus_wctr(ppbus, ~IRQENABLE);
 				if_down(ifp);
 				lp->sc_iferrs = 0;
 				goto final;
 			}
-		}
-		else {
+		} else {
 			/* Dequeue packet on success */
 			IFQ_DEQUEUE(&ifp->if_snd, m);
 			if(ifp->if_bpf)
-				lptap(ifp, m);
+				lptap(ifp, m, BPF_D_OUT);
 			ifp->if_opackets++;
 			ifp->if_obytes += m->m_pkthdr.len;
 			m_freem(m);

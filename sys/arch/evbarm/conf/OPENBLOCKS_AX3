@@ -1,4 +1,4 @@
-#	$NetBSD: OPENBLOCKS_AX3,v 1.23 2017/09/14 07:58:40 mrg Exp $
+#	$NetBSD: OPENBLOCKS_AX3,v 1.23.2.1 2018/07/28 04:37:31 pgoyette Exp $
 #
 #	OPENBLOCKS_AX3 -- Plat'Home. OpenBlockS AX3 kernel
 #
@@ -137,7 +137,6 @@ options 	USBVERBOSE	# Verbose USB device auto configuration messages
 
 # Development and Debugging options
 
-#options 	PERFCTRS	# performance counters
 options 	DIAGNOSTIC	# internal consistency checks
 options 	DEBUG
 #options 	PMAP_DEBUG	# Enable pmap_debug_level code

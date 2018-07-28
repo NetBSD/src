@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.c,v 1.145.2.1 2018/04/22 07:20:06 pgoyette Exp $	*/
+/*	$NetBSD: parser.c,v 1.145.2.2 2018/07/28 04:32:56 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)parser.c	8.7 (Berkeley) 5/16/95";
 #else
-__RCSID("$NetBSD: parser.c,v 1.145.2.1 2018/04/22 07:20:06 pgoyette Exp $");
+__RCSID("$NetBSD: parser.c,v 1.145.2.2 2018/07/28 04:32:56 pgoyette Exp $");
 #endif
 #endif /* not lint */
 
@@ -1506,7 +1506,7 @@ parseredir(const char *out,  int c)
 	union node *np;
 	int fd;
 
-	fd = (*out == '\0') ? -1 : atoi(out);
+	fd = (*out == '\0') ? -1 : number(out);
 
 	np = stalloc(sizeof(struct nfile));
 	if (c == '>') {
@@ -1770,7 +1770,7 @@ readtoken1(int firstc, char const *syn, int magicq)
 	for (c = firstc ;; c = pgetc_macro()) {	/* until of token */
 		if (syntax == ARISYNTAX)
 			out = insert_elided_nl(out);
-		CHECKSTRSPACE(4, out);	/* permit 4 calls to USTPUTC */
+		CHECKSTRSPACE(6, out);	/* permit 6 calls to USTPUTC */
 		switch (syntax[c]) {
 		case CNL:	/* '\n' */
 			if (syntax == BASESYNTAX && varnest == 0)
@@ -1788,6 +1788,7 @@ readtoken1(int firstc, char const *syn, int magicq)
 				out = readcstyleesc(out);
 				continue;
 			}
+			USTPUTC(CTLESC, out);
 			/* FALLTHROUGH */
 		case CWORD:
 			USTPUTC(c, out);
@@ -1816,9 +1817,11 @@ readtoken1(int firstc, char const *syn, int magicq)
 			}
 			quotef = 1;	/* current token is quoted */
 			if (ISDBLQUOTE() && c != '\\' && c != '`' &&
-			    c != '$' && (c != '"' || magicq))
+			    c != '$' && (c != '"' || magicq)) {
+				USTPUTC(CTLESC, out);
 				USTPUTC('\\', out);
-			if (SQSYNTAX[c] == CCTL)
+			}
+			if (SQSYNTAX[c] == CCTL || SQSYNTAX[c] == CSBACK)
 				USTPUTC(CTLESC, out);
 			else if (!magicq) {
 				USTPUTC(CTLQUOTEMARK, out);

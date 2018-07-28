@@ -1,4 +1,4 @@
-/*	$NetBSD: aic6915.c,v 1.35 2017/05/23 02:19:14 ozaki-r Exp $	*/
+/*	$NetBSD: aic6915.c,v 1.35.8.1 2018/07/28 04:37:44 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic6915.c,v 1.35 2017/05/23 02:19:14 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic6915.c,v 1.35.8.1 2018/07/28 04:37:44 pgoyette Exp $");
 
 
 #include <sys/param.h>
@@ -463,7 +463,7 @@ sf_start(struct ifnet *ifp)
 		/*
 		 * Pass the packet to any BPF listeners.
 		 */
-		bpf_mtap(ifp, m0);
+		bpf_mtap(ifp, m0, BPF_D_OUT);
 	}
 
 	if (sc->sc_txpending == (SF_NTXDESC - 1)) {

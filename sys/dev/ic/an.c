@@ -1,4 +1,4 @@
-/*	$NetBSD: an.c,v 1.66.2.1 2018/06/25 07:25:50 pgoyette Exp $	*/
+/*	$NetBSD: an.c,v 1.66.2.2 2018/07/28 04:37:44 pgoyette Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: an.c,v 1.66.2.1 2018/06/25 07:25:50 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: an.c,v 1.66.2.2 2018/07/28 04:37:44 pgoyette Exp $");
 
 
 #include <sys/param.h>
@@ -756,7 +756,7 @@ an_start(struct ifnet *ifp)
 		}
 		IFQ_DEQUEUE(&ifp->if_snd, m);
 		ifp->if_opackets++;
-		bpf_mtap(ifp, m);
+		bpf_mtap(ifp, m, BPF_D_OUT);
 		eh = mtod(m, struct ether_header *);
 		ni = ieee80211_find_txnode(ic, eh->ether_dhost);
 		if (ni == NULL) {
@@ -766,7 +766,7 @@ an_start(struct ifnet *ifp)
 		if ((m = ieee80211_encap(ic, m, ni)) == NULL)
 			goto bad;
 		ieee80211_free_node(ni);
-		bpf_mtap3(ic->ic_rawbpf, m);
+		bpf_mtap3(ic->ic_rawbpf, m, BPF_D_OUT);
 
 		wh = mtod(m, struct ieee80211_frame *);
 		if (ic->ic_flags & IEEE80211_F_PRIVACY)
@@ -812,7 +812,8 @@ an_start(struct ifnet *ifp)
 			tap->at_chan_freq = htole16(ic->ic_bss->ni_chan->ic_freq);
 			tap->at_chan_flags = htole16(ic->ic_bss->ni_chan->ic_flags);
 			/* TBD tap->wt_flags */
-			bpf_mtap2(sc->sc_drvbpf, tap, tap->at_ihdr.it_len, m);
+			bpf_mtap2(sc->sc_drvbpf, tap, tap->at_ihdr.it_len, m,
+			    BPF_D_OUT);
 		}
 
 #ifdef AN_DEBUG
@@ -1507,7 +1508,8 @@ an_rx_intr(struct an_softc *sc)
 		    (le16toh(frmhdr.an_rx_status) & AN_STAT_UNDECRYPTABLE))
 		    tap->ar_flags |= IEEE80211_RADIOTAP_F_BADFCS;
 
-		bpf_mtap2(sc->sc_drvbpf, tap, tap->ar_ihdr.it_len, m);
+		bpf_mtap2(sc->sc_drvbpf, tap, tap->ar_ihdr.it_len, m,
+		    BPF_D_IN);
 	}
 	wh = mtod(m, struct ieee80211_frame_min *);
 	if (wh->i_fc[1] & IEEE80211_FC1_WEP) {

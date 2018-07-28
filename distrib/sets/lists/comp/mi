@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2185.2.5 2018/06/25 07:25:09 pgoyette Exp $
+#	$NetBSD: mi,v 1.2185.2.6 2018/07/28 04:32:59 pgoyette Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -363,7 +363,8 @@
 ./usr/include/clang-4.0/stdalign.h		comp-obsolete		obsolete
 ./usr/include/clang-4.0/stdatomic.h		comp-obsolete		obsolete
 ./usr/include/clang-4.0/stdnoreturn.h		comp-obsolete		obsolete
-./usr/include/clang-5.0/stdatomic.h		comp-c-include		llvm
+./usr/include/clang-5.0/stdatomic.h		comp-obsolete		obsolete
+./usr/include/clang-7.0/stdatomic.h		comp-c-include		llvm
 ./usr/include/complex.h				comp-c-include
 ./usr/include/cpio.h				comp-c-include
 ./usr/include/crypto/cryptodev.h		comp-c-include
@@ -2388,6 +2389,7 @@
 ./usr/include/netinet/igmp_var.h		comp-c-include
 ./usr/include/netinet/in.h			comp-c-include
 ./usr/include/netinet/in_gif.h			comp-c-include
+./usr/include/netinet/in_offload.h		comp-c-include
 ./usr/include/netinet/in_l2tp.h			comp-c-include
 ./usr/include/netinet/in_pcb.h			comp-c-include
 ./usr/include/netinet/in_pcb_hdr.h		comp-c-include
@@ -3002,7 +3004,7 @@
 ./usr/include/sys/param.h			comp-c-include
 ./usr/include/sys/pcu.h				comp-c-include
 ./usr/include/sys/pipe.h			comp-c-include
-./usr/include/sys/pmc.h				comp-c-include
+./usr/include/sys/pmc.h				comp-obsolete		obsolete
 ./usr/include/sys/pmf.h				comp-c-include
 ./usr/include/sys/poll.h			comp-c-include
 ./usr/include/sys/pool.h			comp-c-include
@@ -3423,6 +3425,8 @@
 ./usr/lib/libldap_p.a				comp-ldap-proflib	compatfile,ldap,profile
 ./usr/lib/libldap_r.a				comp-ldap-lib		compatfile,ldap
 ./usr/lib/libldap_r_p.a				comp-ldap-proflib	compatfile,ldap,profile
+./usr/lib/liblsan.a				comp-c-lib		compatfile,gcc
+./usr/lib/liblsan_p.a				comp-c-proflib		compatfile,profile,gcc
 ./usr/lib/liblua.a				comp-c-lib		compatfile
 ./usr/lib/liblua_p.a				comp-c-proflib		compatfile,profile
 ./usr/lib/liblutok.a				comp-c-lib		compatfile,kyua
@@ -4339,8 +4343,8 @@
 ./usr/share/man/cat2/pathconf.0			comp-c-catman		.cat
 ./usr/share/man/cat2/pipe.0			comp-c-catman		.cat
 ./usr/share/man/cat2/pipe2.0			comp-c-catman		.cat
-./usr/share/man/cat2/pmc_control.0		comp-c-catman		.cat
-./usr/share/man/cat2/pmc_get_info.0		comp-c-catman		.cat
+./usr/share/man/cat2/pmc_control.0		comp-obsolete		obsolete
+./usr/share/man/cat2/pmc_get_info.0		comp-obsolete		obsolete
 ./usr/share/man/cat2/poll.0			comp-c-catman		.cat
 ./usr/share/man/cat2/pollts.0			comp-c-catman		.cat
 ./usr/share/man/cat2/posix_fadvise.0		comp-c-catman		.cat
@@ -8574,7 +8578,7 @@
 ./usr/share/man/cat3/pmap_rmtcall.0		comp-c-catman		.cat
 ./usr/share/man/cat3/pmap_set.0			comp-c-catman		.cat
 ./usr/share/man/cat3/pmap_unset.0		comp-c-catman		.cat
-./usr/share/man/cat3/pmc.0			comp-c-catman		.cat
+./usr/share/man/cat3/pmc.0			comp-obsolete		obsolete
 ./usr/share/man/cat3/pnoutrefresh.0		comp-c-catman		.cat
 ./usr/share/man/cat3/popcount.0			comp-c-catman		.cat
 ./usr/share/man/cat3/popcount32.0		comp-c-catman		.cat
@@ -10284,7 +10288,7 @@
 ./usr/share/man/cat9/PMAP_MAP_POOLPAGE.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/PMAP_PREFER.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/PMAP_UNMAP_POOLPAGE.0	comp-sys-catman		.cat
-./usr/share/man/cat9/PMC_ENABLED.0		comp-sys-catman		.cat
+./usr/share/man/cat9/PMC_ENABLED.0		comp-obsolete		obsolete
 ./usr/share/man/cat9/PSLIST_DESTROY.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/PSLIST_ENTRY_DESTROY.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/PSLIST_ENTRY_INIT.0	comp-sys-catman		.cat
@@ -10939,16 +10943,16 @@
 ./usr/share/man/cat9/ioctl_copyin.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/ioctl_copyout.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/ipi.0			comp-sys-catman		.cat
-./usr/share/man/cat9/ipkdb.0			comp-sys-catman		.cat
-./usr/share/man/cat9/ipkdb_connect.0		comp-sys-catman		.cat
-./usr/share/man/cat9/ipkdb_init.0		comp-sys-catman		.cat
-./usr/share/man/cat9/ipkdb_poll.0		comp-sys-catman		.cat
-./usr/share/man/cat9/ipkdb_trap.0		comp-sys-catman		.cat
-./usr/share/man/cat9/ipkdbcmds.0		comp-sys-catman		.cat
-./usr/share/man/cat9/ipkdbfbyte.0		comp-sys-catman		.cat
-./usr/share/man/cat9/ipkdbif_init.0		comp-sys-catman		.cat
-./usr/share/man/cat9/ipkdbinit.0		comp-sys-catman		.cat
-./usr/share/man/cat9/ipkdbsbyte.0		comp-sys-catman		.cat
+./usr/share/man/cat9/ipkdb.0			comp-obsolete		obsolete
+./usr/share/man/cat9/ipkdb_connect.0		comp-obsolete		obsolete
+./usr/share/man/cat9/ipkdb_init.0		comp-obsolete		obsolete
+./usr/share/man/cat9/ipkdb_poll.0		comp-obsolete		obsolete
+./usr/share/man/cat9/ipkdb_trap.0		comp-obsolete		obsolete
+./usr/share/man/cat9/ipkdbcmds.0		comp-obsolete		obsolete
+./usr/share/man/cat9/ipkdbfbyte.0		comp-obsolete		obsolete
+./usr/share/man/cat9/ipkdbif_init.0		comp-obsolete		obsolete
+./usr/share/man/cat9/ipkdbinit.0		comp-obsolete		obsolete
+./usr/share/man/cat9/ipkdbsbyte.0		comp-obsolete		obsolete
 ./usr/share/man/cat9/is_leap_year.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/isa.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/isa_dmaabort.0		comp-sys-catman		.cat
@@ -11328,22 +11332,22 @@
 ./usr/share/man/cat9/pmap_wired_count.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/pmap_zero_page.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/pmatch.0			comp-sys-catman		.cat
-./usr/share/man/cat9/pmc.0			comp-sys-catman		.cat
-./usr/share/man/cat9/pmc_accumulate.0		comp-sys-catman		.cat
-./usr/share/man/cat9/pmc_alloc_kernel_counter.0 comp-sys-catman		.cat
-./usr/share/man/cat9/pmc_configure_counter.0	comp-sys-catman		.cat
-./usr/share/man/cat9/pmc_counter_isconfigured.0 comp-sys-catman		.cat
-./usr/share/man/cat9/pmc_counter_isrunning.0	comp-sys-catman		.cat
-./usr/share/man/cat9/pmc_disable_counter.0	comp-sys-catman		.cat
-./usr/share/man/cat9/pmc_enable_counter.0	comp-sys-catman		.cat
-./usr/share/man/cat9/pmc_free_kernel_counter.0	comp-sys-catman		.cat
-./usr/share/man/cat9/pmc_get_counter_type.0	comp-sys-catman		.cat
-./usr/share/man/cat9/pmc_get_counter_value.0	comp-sys-catman		.cat
-./usr/share/man/cat9/pmc_get_num_counters.0	comp-sys-catman		.cat
-./usr/share/man/cat9/pmc_restore_context.0	comp-sys-catman		.cat
-./usr/share/man/cat9/pmc_save_context.0		comp-sys-catman		.cat
-./usr/share/man/cat9/pmc_start_profiling.0	comp-sys-catman		.cat
-./usr/share/man/cat9/pmc_stop_profiling.0	comp-sys-catman		.cat
+./usr/share/man/cat9/pmc.0			comp-obsolete		obsolete
+./usr/share/man/cat9/pmc_accumulate.0		comp-obsolete		obsolete
+./usr/share/man/cat9/pmc_alloc_kernel_counter.0 comp-obsolete		obsolete
+./usr/share/man/cat9/pmc_configure_counter.0	comp-obsolete		obsolete
+./usr/share/man/cat9/pmc_counter_isconfigured.0 comp-obsolete		obsolete
+./usr/share/man/cat9/pmc_counter_isrunning.0	comp-obsolete		obsolete
+./usr/share/man/cat9/pmc_disable_counter.0	comp-obsolete		obsolete
+./usr/share/man/cat9/pmc_enable_counter.0	comp-obsolete		obsolete
+./usr/share/man/cat9/pmc_free_kernel_counter.0	comp-obsolete		obsolete
+./usr/share/man/cat9/pmc_get_counter_type.0	comp-obsolete		obsolete
+./usr/share/man/cat9/pmc_get_counter_value.0	comp-obsolete		obsolete
+./usr/share/man/cat9/pmc_get_num_counters.0	comp-obsolete		obsolete
+./usr/share/man/cat9/pmc_restore_context.0	comp-obsolete		obsolete
+./usr/share/man/cat9/pmc_save_context.0		comp-obsolete		obsolete
+./usr/share/man/cat9/pmc_start_profiling.0	comp-obsolete		obsolete
+./usr/share/man/cat9/pmc_stop_profiling.0	comp-obsolete		obsolete
 ./usr/share/man/cat9/pmf.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/pmf_class_display_register.0 comp-sys-catman	.cat
 ./usr/share/man/cat9/pmf_class_input_register.0 comp-sys-catman		.cat
@@ -12186,8 +12190,8 @@
 ./usr/share/man/html2/pathconf.html		comp-c-htmlman		html
 ./usr/share/man/html2/pipe.html			comp-c-htmlman		html
 ./usr/share/man/html2/pipe2.html		comp-c-htmlman		html
-./usr/share/man/html2/pmc_control.html		comp-c-htmlman		html
-./usr/share/man/html2/pmc_get_info.html		comp-c-htmlman		html
+./usr/share/man/html2/pmc_control.html		comp-obsolete		obsolete
+./usr/share/man/html2/pmc_get_info.html		comp-obsolete		obsolete
 ./usr/share/man/html2/poll.html			comp-c-htmlman		html
 ./usr/share/man/html2/pollts.html		comp-c-htmlman		html
 ./usr/share/man/html2/posix_fadvise.html	comp-c-htmlman		html
@@ -16363,7 +16367,7 @@
 ./usr/share/man/html3/pmap_rmtcall.html		comp-c-htmlman		html
 ./usr/share/man/html3/pmap_set.html		comp-c-htmlman		html
 ./usr/share/man/html3/pmap_unset.html		comp-c-htmlman		html
-./usr/share/man/html3/pmc.html			comp-c-htmlman		html
+./usr/share/man/html3/pmc.html			comp-obsolete		obsolete
 ./usr/share/man/html3/pnoutrefresh.html		comp-c-htmlman		html
 ./usr/share/man/html3/popcount.html		comp-c-htmlman		html
 ./usr/share/man/html3/popcount32.html		comp-c-htmlman		html
@@ -18024,7 +18028,7 @@
 ./usr/share/man/html9/PMAP_MAP_POOLPAGE.html	comp-sys-htmlman	html
 ./usr/share/man/html9/PMAP_PREFER.html		comp-sys-htmlman	html
 ./usr/share/man/html9/PMAP_UNMAP_POOLPAGE.html	comp-sys-htmlman	html
-./usr/share/man/html9/PMC_ENABLED.html		comp-sys-htmlman	html
+./usr/share/man/html9/PMC_ENABLED.html		comp-obsolete		obsolete
 ./usr/share/man/html9/PSLIST_DESTROY.html	comp-sys-htmlman	html
 ./usr/share/man/html9/PSLIST_ENTRY_DESTROY.html	comp-sys-htmlman	html
 ./usr/share/man/html9/PSLIST_ENTRY_INIT.html	comp-sys-htmlman	html
@@ -18646,16 +18650,16 @@
 ./usr/share/man/html9/ioctl_copyin.html		comp-sys-htmlman	html
 ./usr/share/man/html9/ioctl_copyout.html	comp-sys-htmlman	html
 ./usr/share/man/html9/ipi.html			comp-sys-htmlman	html
-./usr/share/man/html9/ipkdb.html		comp-sys-htmlman	html
-./usr/share/man/html9/ipkdb_connect.html	comp-sys-htmlman	html
-./usr/share/man/html9/ipkdb_init.html		comp-sys-htmlman	html
-./usr/share/man/html9/ipkdb_poll.html		comp-sys-htmlman	html
-./usr/share/man/html9/ipkdb_trap.html		comp-sys-htmlman	html
-./usr/share/man/html9/ipkdbcmds.html		comp-sys-htmlman	html
-./usr/share/man/html9/ipkdbfbyte.html		comp-sys-htmlman	html
-./usr/share/man/html9/ipkdbif_init.html		comp-sys-htmlman	html
-./usr/share/man/html9/ipkdbinit.html		comp-sys-htmlman	html
-./usr/share/man/html9/ipkdbsbyte.html		comp-sys-htmlman	html
+./usr/share/man/html9/ipkdb.html		comp-obsolete		obsolete
+./usr/share/man/html9/ipkdb_connect.html	comp-obsolete		obsolete
+./usr/share/man/html9/ipkdb_init.html		comp-obsolete		obsolete
+./usr/share/man/html9/ipkdb_poll.html		comp-obsolete		obsolete
+./usr/share/man/html9/ipkdb_trap.html		comp-obsolete		obsolete
+./usr/share/man/html9/ipkdbcmds.html		comp-obsolete		obsolete
+./usr/share/man/html9/ipkdbfbyte.html		comp-obsolete		obsolete
+./usr/share/man/html9/ipkdbif_init.html		comp-obsolete		obsolete
+./usr/share/man/html9/ipkdbinit.html		comp-obsolete		obsolete
+./usr/share/man/html9/ipkdbsbyte.html		comp-obsolete		obsolete
 ./usr/share/man/html9/is_leap_year.html		comp-sys-htmlman	html
 ./usr/share/man/html9/isa.html			comp-sys-htmlman	html
 ./usr/share/man/html9/isa_dmaabort.html		comp-sys-htmlman	html
@@ -19028,22 +19032,22 @@
 ./usr/share/man/html9/pmap_wired_count.html	comp-sys-htmlman	html
 ./usr/share/man/html9/pmap_zero_page.html	comp-sys-htmlman	html
 ./usr/share/man/html9/pmatch.html		comp-sys-htmlman	html
-./usr/share/man/html9/pmc.html			comp-sys-htmlman	html
-./usr/share/man/html9/pmc_accumulate.html	comp-sys-htmlman	html
-./usr/share/man/html9/pmc_alloc_kernel_counter.html	comp-sys-htmlman	html
-./usr/share/man/html9/pmc_configure_counter.html	comp-sys-htmlman	html
-./usr/share/man/html9/pmc_counter_isconfigured.html	comp-sys-htmlman	html
-./usr/share/man/html9/pmc_counter_isrunning.html	comp-sys-htmlman	html
-./usr/share/man/html9/pmc_disable_counter.html	comp-sys-htmlman	html
-./usr/share/man/html9/pmc_enable_counter.html	comp-sys-htmlman	html
-./usr/share/man/html9/pmc_free_kernel_counter.html	comp-sys-htmlman	html
-./usr/share/man/html9/pmc_get_counter_type.html comp-sys-htmlman	html
-./usr/share/man/html9/pmc_get_counter_value.html	comp-sys-htmlman	html
-./usr/share/man/html9/pmc_get_num_counters.html comp-sys-htmlman	html
-./usr/share/man/html9/pmc_restore_context.html	comp-sys-htmlman	html
-./usr/share/man/html9/pmc_save_context.html	comp-sys-htmlman	html
-./usr/share/man/html9/pmc_start_profiling.html	comp-sys-htmlman	html
-./usr/share/man/html9/pmc_stop_profiling.html	comp-sys-htmlman	html
+./usr/share/man/html9/pmc.html			comp-obsolete		obsolete
+./usr/share/man/html9/pmc_accumulate.html	comp-obsolete		obsolete
+./usr/share/man/html9/pmc_alloc_kernel_counter.html	comp-obsolete		obsolete
+./usr/share/man/html9/pmc_configure_counter.html	comp-obsolete		obsolete
+./usr/share/man/html9/pmc_counter_isconfigured.html	comp-obsolete		obsolete
+./usr/share/man/html9/pmc_counter_isrunning.html	comp-obsolete		obsolete
+./usr/share/man/html9/pmc_disable_counter.html	comp-obsolete		obsolete
+./usr/share/man/html9/pmc_enable_counter.html	comp-obsolete		obsolete
+./usr/share/man/html9/pmc_free_kernel_counter.html	comp-obsolete		obsolete
+./usr/share/man/html9/pmc_get_counter_type.html comp-obsolete		obsolete
+./usr/share/man/html9/pmc_get_counter_value.html	comp-obsolete		obsolete
+./usr/share/man/html9/pmc_get_num_counters.html comp-obsolete		obsolete
+./usr/share/man/html9/pmc_restore_context.html	comp-obsolete		obsolete
+./usr/share/man/html9/pmc_save_context.html	comp-obsolete		obsolete
+./usr/share/man/html9/pmc_start_profiling.html	comp-obsolete		obsolete
+./usr/share/man/html9/pmc_stop_profiling.html	comp-obsolete		obsolete
 ./usr/share/man/html9/pmf.html			comp-sys-htmlman	html
 ./usr/share/man/html9/pmf_class_display_register.html comp-sys-htmlman	html
 ./usr/share/man/html9/pmf_class_input_register.html comp-sys-htmlman	html
@@ -19860,8 +19864,8 @@
 ./usr/share/man/man2/pathconf.2			comp-c-man		.man
 ./usr/share/man/man2/pipe.2			comp-c-man		.man
 ./usr/share/man/man2/pipe2.2			comp-c-man		.man
-./usr/share/man/man2/pmc_control.2		comp-c-man		.man
-./usr/share/man/man2/pmc_get_info.2		comp-c-man		.man
+./usr/share/man/man2/pmc_control.2		comp-obsolete		obsolete
+./usr/share/man/man2/pmc_get_info.2		comp-obsolete		obsolete
 ./usr/share/man/man2/poll.2			comp-c-man		.man
 ./usr/share/man/man2/pollts.2			comp-c-man		.man
 ./usr/share/man/man2/posix_fadvise.2		comp-c-man		.man
@@ -24141,7 +24145,7 @@
 ./usr/share/man/man3/pmap_rmtcall.3		comp-c-man		.man
 ./usr/share/man/man3/pmap_set.3			comp-c-man		.man
 ./usr/share/man/man3/pmap_unset.3		comp-c-man		.man
-./usr/share/man/man3/pmc.3			comp-c-man		.man
+./usr/share/man/man3/pmc.3			comp-obsolete		obsolete
 ./usr/share/man/man3/pnoutrefresh.3		comp-c-man		.man
 ./usr/share/man/man3/popcount.3			comp-c-man		.man
 ./usr/share/man/man3/popcount32.3		comp-c-man		.man
@@ -25846,7 +25850,7 @@
 ./usr/share/man/man9/PMAP_MAP_POOLPAGE.9	comp-sys-man		.man
 ./usr/share/man/man9/PMAP_PREFER.9		comp-sys-man		.man
 ./usr/share/man/man9/PMAP_UNMAP_POOLPAGE.9	comp-sys-man		.man
-./usr/share/man/man9/PMC_ENABLED.9		comp-sys-man		.man
+./usr/share/man/man9/PMC_ENABLED.9		comp-obsolete		obsolete
 ./usr/share/man/man9/PSLIST_DESTROY.9		comp-sys-man		.man
 ./usr/share/man/man9/PSLIST_ENTRY_DESTROY.9	comp-sys-man		.man
 ./usr/share/man/man9/PSLIST_ENTRY_INIT.9	comp-sys-man		.man
@@ -26501,16 +26505,16 @@
 ./usr/share/man/man9/ioctl_copyin.9		comp-sys-man		.man
 ./usr/share/man/man9/ioctl_copyout.9		comp-sys-man		.man
 ./usr/share/man/man9/ipi.9			comp-sys-man		.man
-./usr/share/man/man9/ipkdb.9			comp-sys-man		.man
-./usr/share/man/man9/ipkdb_connect.9		comp-sys-man		.man
-./usr/share/man/man9/ipkdb_init.9		comp-sys-man		.man
-./usr/share/man/man9/ipkdb_poll.9		comp-sys-man		.man
-./usr/share/man/man9/ipkdb_trap.9		comp-sys-man		.man
-./usr/share/man/man9/ipkdbcmds.9		comp-sys-man		.man
-./usr/share/man/man9/ipkdbfbyte.9		comp-sys-man		.man
-./usr/share/man/man9/ipkdbif_init.9		comp-sys-man		.man
-./usr/share/man/man9/ipkdbinit.9		comp-sys-man		.man
-./usr/share/man/man9/ipkdbsbyte.9		comp-sys-man		.man
+./usr/share/man/man9/ipkdb.9			comp-obsolete		obsolete
+./usr/share/man/man9/ipkdb_connect.9		comp-obsolete		obsolete
+./usr/share/man/man9/ipkdb_init.9		comp-obsolete		obsolete
+./usr/share/man/man9/ipkdb_poll.9		comp-obsolete		obsolete
+./usr/share/man/man9/ipkdb_trap.9		comp-obsolete		obsolete
+./usr/share/man/man9/ipkdbcmds.9		comp-obsolete		obsolete
+./usr/share/man/man9/ipkdbfbyte.9		comp-obsolete		obsolete
+./usr/share/man/man9/ipkdbif_init.9		comp-obsolete		obsolete
+./usr/share/man/man9/ipkdbinit.9		comp-obsolete		obsolete
+./usr/share/man/man9/ipkdbsbyte.9		comp-obsolete		obsolete
 ./usr/share/man/man9/is_leap_year.9		comp-sys-man		.man
 ./usr/share/man/man9/isa.9			comp-sys-man		.man
 ./usr/share/man/man9/isa_dmaabort.9		comp-sys-man		.man
@@ -26890,22 +26894,22 @@
 ./usr/share/man/man9/pmap_wired_count.9		comp-sys-man		.man
 ./usr/share/man/man9/pmap_zero_page.9		comp-sys-man		.man
 ./usr/share/man/man9/pmatch.9			comp-sys-man		.man
-./usr/share/man/man9/pmc.9			comp-sys-man		.man
-./usr/share/man/man9/pmc_accumulate.9		comp-sys-man		.man
-./usr/share/man/man9/pmc_alloc_kernel_counter.9 comp-sys-man		.man
-./usr/share/man/man9/pmc_configure_counter.9	comp-sys-man		.man
-./usr/share/man/man9/pmc_counter_isconfigured.9 comp-sys-man		.man
-./usr/share/man/man9/pmc_counter_isrunning.9	comp-sys-man		.man
-./usr/share/man/man9/pmc_disable_counter.9	comp-sys-man		.man
-./usr/share/man/man9/pmc_enable_counter.9	comp-sys-man		.man
-./usr/share/man/man9/pmc_free_kernel_counter.9	comp-sys-man		.man
-./usr/share/man/man9/pmc_get_counter_type.9	comp-sys-man		.man
-./usr/share/man/man9/pmc_get_counter_value.9	comp-sys-man		.man
-./usr/share/man/man9/pmc_get_num_counters.9	comp-sys-man		.man
-./usr/share/man/man9/pmc_restore_context.9	comp-sys-man		.man
-./usr/share/man/man9/pmc_save_context.9		comp-sys-man		.man
-./usr/share/man/man9/pmc_start_profiling.9	comp-sys-man		.man
-./usr/share/man/man9/pmc_stop_profiling.9	comp-sys-man		.man
+./usr/share/man/man9/pmc.9			comp-obsolete		obsolete
+./usr/share/man/man9/pmc_accumulate.9		comp-obsolete		obsolete
+./usr/share/man/man9/pmc_alloc_kernel_counter.9 comp-obsolete		obsolete
+./usr/share/man/man9/pmc_configure_counter.9	comp-obsolete		obsolete
+./usr/share/man/man9/pmc_counter_isconfigured.9 comp-obsolete		obsolete
+./usr/share/man/man9/pmc_counter_isrunning.9	comp-obsolete		obsolete
+./usr/share/man/man9/pmc_disable_counter.9	comp-obsolete		obsolete
+./usr/share/man/man9/pmc_enable_counter.9	comp-obsolete		obsolete
+./usr/share/man/man9/pmc_free_kernel_counter.9	comp-obsolete		obsolete
+./usr/share/man/man9/pmc_get_counter_type.9	comp-obsolete		obsolete
+./usr/share/man/man9/pmc_get_counter_value.9	comp-obsolete		obsolete
+./usr/share/man/man9/pmc_get_num_counters.9	comp-obsolete		obsolete
+./usr/share/man/man9/pmc_restore_context.9	comp-obsolete		obsolete
+./usr/share/man/man9/pmc_save_context.9		comp-obsolete		obsolete
+./usr/share/man/man9/pmc_start_profiling.9	comp-obsolete		obsolete
+./usr/share/man/man9/pmc_stop_profiling.9	comp-obsolete		obsolete
 ./usr/share/man/man9/pmf.9			comp-sys-man		.man
 ./usr/share/man/man9/pmf_class_display_register.9 comp-sys-man		.man
 ./usr/share/man/man9/pmf_class_input_register.9 comp-sys-man		.man

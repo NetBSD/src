@@ -1,4 +1,4 @@
-# $NetBSD: md.bebox,v 1.40 2015/12/20 16:22:39 christos Exp $
+# $NetBSD: md.bebox,v 1.40.14.1 2018/07/28 04:32:59 pgoyette Exp $
 ./usr/include/bebox				comp-c-include
 ./usr/include/bebox/_G_config.h			comp-obsolete		obsolete
 ./usr/include/bebox/ansi.h			comp-c-include
@@ -45,7 +45,7 @@
 ./usr/include/bebox/pccons.h			comp-obsolete		obsolete
 ./usr/include/bebox/pio.h			comp-obsolete		obsolete
 ./usr/include/bebox/pmap.h			comp-c-include
-./usr/include/bebox/pmc.h			comp-c-include
+./usr/include/bebox/pmc.h			comp-obsolete		obsolete
 ./usr/include/bebox/powerpc.h			comp-obsolete		obsolete
 ./usr/include/bebox/proc.h			comp-c-include
 ./usr/include/bebox/profile.h			comp-c-include

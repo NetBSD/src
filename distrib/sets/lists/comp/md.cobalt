@@ -1,4 +1,4 @@
-# $NetBSD: md.cobalt,v 1.28 2015/12/21 16:49:37 christos Exp $
+# $NetBSD: md.cobalt,v 1.28.14.1 2018/07/28 04:32:59 pgoyette Exp $
 ./usr/include/cobalt				comp-c-include
 ./usr/include/cobalt/_G_config.h		comp-obsolete		obsolete
 ./usr/include/cobalt/ansi.h			comp-c-include
@@ -40,7 +40,7 @@
 ./usr/include/cobalt/param.h			comp-c-include
 ./usr/include/cobalt/pcb.h			comp-c-include
 ./usr/include/cobalt/pmap.h			comp-c-include
-./usr/include/cobalt/pmc.h			comp-c-include
+./usr/include/cobalt/pmc.h			comp-obsolete		obsolete
 ./usr/include/cobalt/proc.h			comp-c-include
 ./usr/include/cobalt/profile.h			comp-c-include
 ./usr/include/cobalt/psl.h			comp-c-include

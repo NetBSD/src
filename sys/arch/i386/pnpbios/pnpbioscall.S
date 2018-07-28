@@ -1,4 +1,4 @@
-/* $NetBSD: pnpbioscall.S,v 1.2 2007/12/11 23:06:14 lukem Exp $ */
+/* $NetBSD: pnpbioscall.S,v 1.2.96.1 2018/07/28 04:37:34 pgoyette Exp $ */
 /*
  * Copyright (c) 1999
  * 	Matthias Drochner.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: pnpbioscall.S,v 1.2 2007/12/11 23:06:14 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pnpbioscall.S,v 1.2.96.1 2018/07/28 04:37:34 pgoyette Exp $");
 
 #include "assym.h"
 #include <machine/segments.h>
@@ -35,7 +35,7 @@ __KERNEL_RCSID(0, "$NetBSD: pnpbioscall.S,v 1.2 2007/12/11 23:06:14 lukem Exp $"
 saveesp:
 	.space	4
 
-NENTRY(pnpbioscall)
+ENTRY(pnpbioscall)
 	pushl	%ebp
 	movl	%esp, %ebp
 	/*
@@ -52,7 +52,7 @@ NENTRY(pnpbioscall)
 	popl	%ebp
 	ret
 
-NENTRY(pnpbiostramp)
+ENTRY(pnpbiostramp)
 	pushl	%ebx
 
 	/* save current stack pointer */

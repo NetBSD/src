@@ -1,4 +1,4 @@
-# $NetBSD: ad.hppa,v 1.12 2018/02/03 21:27:45 mrg Exp $
+# $NetBSD: ad.hppa,v 1.12.2.1 2018/07/28 04:32:59 pgoyette Exp $
 ./usr/include/gcc-4.8/tgmath.h			comp-c-include		obsolete
 ./usr/include/gcc-5/tgmath.h			comp-c-include		gcccmds,gcc=5
 ./usr/include/gcc-6/tgmath.h			comp-c-include		gcccmds,gcc=6
@@ -32,7 +32,7 @@
 ./usr/include/hppa/param.h			comp-c-include
 ./usr/include/hppa/pcb.h			comp-c-include
 ./usr/include/hppa/pmap.h			comp-c-include
-./usr/include/hppa/pmc.h			comp-c-include
+./usr/include/hppa/pmc.h			comp-obsolete		obsolete
 ./usr/include/hppa/proc.h			comp-c-include
 ./usr/include/hppa/profile.h			comp-c-include
 ./usr/include/hppa/psl.h			comp-c-include

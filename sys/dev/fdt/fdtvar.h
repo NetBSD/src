@@ -1,4 +1,4 @@
-/* $NetBSD: fdtvar.h,v 1.28.2.3 2018/06/25 07:25:49 pgoyette Exp $ */
+/* $NetBSD: fdtvar.h,v 1.28.2.4 2018/07/28 04:37:44 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -210,6 +210,8 @@ struct fdtbus_mmc_pwrseq_func {
 	void	(*reset)(device_t);
 };
 
+struct syscon;
+
 struct fdt_console {
 	int	(*match)(int);
 	void	(*consinit)(struct fdt_attach_args *, u_int);
@@ -256,6 +258,7 @@ int		fdtbus_register_pwm_controller(device_t, int,
 		    const struct fdtbus_pwm_controller_func *);
 int		fdtbus_register_mmc_pwrseq(device_t, int,
 		    const struct fdtbus_mmc_pwrseq_func *);
+int		fdtbus_register_syscon(device_t, int, struct syscon *);
 
 void		fdtbus_set_decoderegprop(bool);
 
@@ -292,6 +295,8 @@ int		fdtbus_regulator_set_voltage(struct fdtbus_regulator *,
 		    u_int, u_int);
 int		fdtbus_regulator_get_voltage(struct fdtbus_regulator *,
 		    u_int *);
+struct syscon *	fdtbus_syscon_acquire(int, const char *);
+struct syscon *	fdtbus_syscon_lookup(int);
 
 struct fdtbus_dma *fdtbus_dma_get(int, const char *, void (*)(void *), void *);
 struct fdtbus_dma *fdtbus_dma_get_index(int, u_int, void (*)(void *),
@@ -328,6 +333,8 @@ int		fdtbus_todr_attach(device_t, int, todr_chip_handle_t);
 void		fdtbus_power_reset(void);
 void		fdtbus_power_poweroff(void);
 
+device_t	fdtbus_attach_i2cbus(device_t, int, i2c_tag_t, cfprint_t);
+
 bool		fdtbus_set_data(const void *);
 const void *	fdtbus_get_data(void);
 int		fdtbus_phandle2offset(int);
@@ -346,6 +353,8 @@ bool		fdtbus_status_okay(int);
 const void *	fdtbus_get_prop(int, const char *, int *);
 const char *	fdtbus_get_string(int, const char *);
 const char *	fdtbus_get_string_index(int, const char *, u_int);
+
+void		fdt_add_bus(device_t, int, struct fdt_attach_args *);
 
 void		fdt_remove_byhandle(int);
 void		fdt_remove_bycompat(const char *[]);

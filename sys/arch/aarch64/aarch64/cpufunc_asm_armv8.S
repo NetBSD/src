@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc_asm_armv8.S,v 1.1.2.2 2018/04/07 04:12:10 pgoyette Exp $	*/
+/*	$NetBSD: cpufunc_asm_armv8.S,v 1.1.2.3 2018/07/28 04:37:25 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2014 Robin Randhawa
@@ -133,14 +133,14 @@ END(aarch64_icache_sync_range)
 ENTRY(aarch64_icache_inv_all)
 	dsb	ish
 #ifdef MULTIPROCESSOR
-	ic	iallu
-#else
 	ic	ialluis
+#else
+	ic	iallu
 #endif
 	dsb	ish
 	isb
 	ret
-END(aarch64_icache_sync_range)
+END(aarch64_icache_inv_all)
 
 
 

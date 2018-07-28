@@ -1,4 +1,4 @@
-/*	$NetBSD: hme.c,v 1.96.8.2 2018/06/25 07:25:50 pgoyette Exp $	*/
+/*	$NetBSD: hme.c,v 1.96.8.3 2018/07/28 04:37:45 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.96.8.2 2018/06/25 07:25:50 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.96.8.3 2018/07/28 04:37:45 pgoyette Exp $");
 
 /* #define HMEDEBUG */
 
@@ -903,7 +903,7 @@ hme_start(struct ifnet *ifp)
 		 * If BPF is listening on this interface, let it see the
 		 * packet before we commit it to the wire.
 		 */
-		bpf_mtap(ifp, m);
+		bpf_mtap(ifp, m, BPF_D_OUT);
 
 #ifdef INET
 		/* collect bits for h/w csum, before hme_put frees the mbuf */

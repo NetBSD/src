@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1504.2.8 2018/06/25 07:25:11 pgoyette Exp $
+#	$NetBSD: 3RDPARTY,v 1.1504.2.9 2018/07/28 04:33:02 pgoyette Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -186,7 +186,7 @@ Todo[5]: Reconcile the doc directory.
 
 Package:	binutils
 Version:	2.27
-Current Vers:	2.30
+Current Vers:	2.31
 Maintainer:	FSF
 Archive Site:	ftp://ftp.gnu.org/gnu/binutils/
 Home Page:	http://www.gnu.org/software/binutils/
@@ -334,8 +334,8 @@ Notes:
 Use the dhcp2netbsd script.
 
 Package:	dhcpcd
-Version:	7.0.6
-Current Vers:	7.0.6
+Version:	7.0.7
+Current Vers:	7.0.7
 Maintainer:	roy
 Archive Site:	ftp://roy.marples.name/pub/dhcpcd/
 Home Page:	http://roy.marples.name/projects/dhcpcd/
@@ -451,15 +451,14 @@ Notes:
 There is a flex2netbsd script to help newer imports.
 
 Package:	gcc
-Version:	5.5
-Current Vers:	5.5/6.4/7.2/8.1
+Version:	6.4
+Current Vers:	6.4/7.3/8.2
 Maintainer:	FSF
 Archive Site:	ftp://ftp.gnu.org/gnu/gcc/
 Home Page:	http://www.gnu.org/software/gcc/
 Mailing List:	gcc-bugs@gnu.org
 Responsible:	mrg, christos, skrll
 License:	GPLv3, LGPLv3.1
-Location:	gnu/dist/gcc4
 Location:	external/gpl3/gcc.old/dist
 Location:	external/gpl3/gcc/dist
 Notes:
@@ -750,8 +749,8 @@ Notes:
   .so'ing only. Copy the rest to man.
 
 Package:	llvm
-Version:	5.0.0RC1+ (r309604)
-Current Vers.:	6.0.0svn
+Version:	7.0.0svn (r337282)
+Current Vers.:	7.0.0svn
 Maintainer:	llvm-dev@lists.llvm.org
 Home Page:	https://llvm.org
 Responsible:	joerg
@@ -1717,8 +1716,8 @@ Notes:
 external/gpl2/dtc/dtc2netbsd should be used to create directories to import
 
 Package:	dts
-Version:	4.17-rc2
-Current Vers:	4.17-rc2
+Version:	4.18-rc2
+Current Vers:	4.18-rc2
 Maintainer:	https://www.kernel.org/
 Archive Site:	https://cdn.kernel.org/pub/linux/kernel/v4.x/
 Home Page:	https://www.kernel.org/

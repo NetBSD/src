@@ -1,4 +1,4 @@
-/*	$NetBSD: cs89x0.c,v 1.39.12.1 2018/06/25 07:25:50 pgoyette Exp $	*/
+/*	$NetBSD: cs89x0.c,v 1.39.12.2 2018/07/28 04:37:45 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2004 Christopher Gilbert
@@ -212,7 +212,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs89x0.c,v 1.39.12.1 2018/06/25 07:25:50 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs89x0.c,v 1.39.12.2 2018/07/28 04:37:45 pgoyette Exp $");
 
 #include "opt_inet.h"
 
@@ -1904,7 +1904,7 @@ cs_start_output(struct ifnet *ifp)
 	         * If BPF is listening on this interface, let it see the packet
 	         * before we commit it to the wire.
 	         */
-		bpf_mtap(ifp, pMbufChain);
+		bpf_mtap(ifp, pMbufChain, BPF_D_OUT);
 
 		/* Find the total length of the data to transmit */
 		Length = 0;

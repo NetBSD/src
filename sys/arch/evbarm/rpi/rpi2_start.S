@@ -34,12 +34,13 @@
 #include "opt_arm_debug.h"
 #include "opt_fdt.h"
 
+#include <sys/cdefs.h>
 #include <arm/asm.h>
 #include <arm/armreg.h>
 
 #include "assym.h"
 
-RCSID("$NetBSD: rpi2_start.S,v 1.5 2018/03/03 13:46:32 skrll Exp $")
+RCSID("$NetBSD: rpi2_start.S,v 1.5.2.1 2018/07/28 04:37:32 pgoyette Exp $")
 
 #if defined(KERNEL_BASES_EQUAL)
 #define CALL(f)		bl	_C_LABEL(f)
@@ -51,10 +52,11 @@ RCSID("$NetBSD: rpi2_start.S,v 1.5 2018/03/03 13:46:32 skrll Exp $")
 	blx	fp
 #endif
 
-#if defined(VERBOSE_INIT_ARM)
-#define	XPUTC(n)	mov r0, n; CALL(bcm2836_platform_early_putchar)
+#if defined(VERBOSE_INIT_ARM) && defined(EARLYCONS)
+#define	PLATFORM_EARLY_PUTCHAR	___CONCAT(EARLYCONS, _platform_early_putchar)
+#define	XPUTC(n)	push {r1-r12, lr}; mov r0, n; CALL(PLATFORM_EARLY_PUTCHAR); pop {r1-r12, lr}
 #if KERNEL_BASE_VOFFSET == 0
-#define	XPUTC2(n)	mov r0, n; CALL(bcm2836_platform_early_putchar)
+#define	XPUTC2(n)	mov r0, n; CALL(PLATFORM_EARLY_PUTCHAR)
 #else
 #define XPUTC2(n)	mov r0, n; blx r11
 #endif
@@ -80,6 +82,15 @@ RCSID("$NetBSD: rpi2_start.S,v 1.5 2018/03/03 13:46:32 skrll Exp $")
 
 	.global	_C_LABEL(rpi_start)
 _C_LABEL(rpi_start):
+
+#if defined(VERBOSE_INIT_ARM) && defined(EARLYCONS)
+	/* stack for calling bcm283*_platform_early_putchar() */
+	movw	sp, #:lower16:bootstk
+	movt	sp, #:upper16:bootstk
+#if !defined(KERNEL_BASES_EQUAL)
+	sub	sp, sp, #KERNEL_BASE_VOFFSET
+#endif
+#endif /* VERBOSE_INIT_ARM */
 
 #ifdef __ARMEB__
 	setend	be			/* force big endian */
@@ -124,9 +135,6 @@ _C_LABEL(rpi_start):
 	movt	r0, #:upper16:TEMP_L1_TABLE
 	movw	r1, #:lower16:.Lmmu_init_table
 	movt	r1, #:upper16:.Lmmu_init_table
-#if !defined(KERNEL_BASES_EQUAL)
-	sub	r8, r8, #KERNEL_BASE_VOFFSET
-#endif
 	bl	arm_boot_l1pt_init
 	XPUTC(#'D')
 
@@ -143,9 +151,9 @@ _C_LABEL(rpi_start):
 	 * so setup the lr to be in .text.  Cache the address for
 	 * bcm283x_platform_early_putchar before we go.
 	 */
-#if defined(VERBOSE_INIT_ARM)
-	movw	r11, #:lower16:bcm2836_platform_early_putchar
-	movt	r11, #:upper16:bcm2836_platform_early_putchar
+#if defined(VERBOSE_INIT_ARM) && defined(EARLYCONS)
+	movw	r11, #:lower16:PLATFORM_EARLY_PUTCHAR
+	movt	r11, #:upper16:PLATFORM_EARLY_PUTCHAR
 #endif
 	movw	lr, #:lower16:1f
 	movt	lr, #:upper16:1f
@@ -177,6 +185,14 @@ _C_LABEL(rpi_start):
 	/* NOTREACHED */
 
 #ifndef KERNEL_BASES_EQUAL
+	.popsection
+#endif
+
+#if defined(VERBOSE_INIT_ARM) && defined(EARLYCONS)
+	.pushsection .bss
+	.align	3
+	.space	256
+bootstk:
 	.popsection
 #endif
 

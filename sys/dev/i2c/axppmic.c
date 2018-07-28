@@ -1,4 +1,4 @@
-/* $NetBSD: axppmic.c,v 1.9.2.3 2018/06/25 07:25:50 pgoyette Exp $ */
+/* $NetBSD: axppmic.c,v 1.9.2.4 2018/07/28 04:37:44 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2014-2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: axppmic.c,v 1.9.2.3 2018/06/25 07:25:50 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: axppmic.c,v 1.9.2.4 2018/07/28 04:37:44 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -264,7 +264,6 @@ struct axpreg_attach_args {
 	i2c_addr_t	reg_addr;
 };
 
-static const char *axp803_compatstrings[] = { "x-powers,axp803", NULL };
 static const struct axppmic_config axp803_config = {
 	.name = "AXP803",
 	.controls = axp803_ctrls,
@@ -283,8 +282,6 @@ static const struct axppmic_config axp803_config = {
 	.chargestirq = AXPPMIC_IRQ(4, __BITS(1,0)),	
 };
 
-static const char *axp805_compatstrings[] = { "x-powers,axp805",
-					      "x-powers,axp806", NULL };
 static const struct axppmic_config axp805_config = {
 	.name = "AXP805/806",
 	.controls = axp805_ctrls,
@@ -293,10 +290,11 @@ static const struct axppmic_config axp805_config = {
 	.poklirq = AXPPMIC_IRQ(2, __BIT(0)),
 };
 
-static const struct device_compatible_entry axppmic_compat_data[] = {
-	DEVICE_COMPAT_ENTRY_WITH_DATA(axp803_compatstrings, &axp803_config),
-	DEVICE_COMPAT_ENTRY_WITH_DATA(axp805_compatstrings, &axp805_config),
-	DEVICE_COMPAT_TERMINATOR
+static const struct device_compatible_entry compat_data[] = {
+	{ "x-powers,axp803",		(uintptr_t)&axp803_config },
+	{ "x-powers,axp805",		(uintptr_t)&axp805_config },
+	{ "x-powers,axp806",		(uintptr_t)&axp805_config },
+	{ NULL,				0 }
 };
 
 static int
@@ -682,7 +680,7 @@ axppmic_match(device_t parent, cfdata_t match, void *aux)
 	struct i2c_attach_args *ia = aux;
 	int match_result;
 
-	if (iic_use_direct_match(ia, match, axppmic_compat_data, &match_result))
+	if (iic_use_direct_match(ia, match, compat_data, &match_result))
 		return match_result;
 
 	/* This device is direct-config only. */
@@ -694,7 +692,7 @@ static void
 axppmic_attach(device_t parent, device_t self, void *aux)
 {
 	struct axppmic_softc *sc = device_private(self);
-	const struct device_compatible_entry *dce;
+	const struct device_compatible_entry *dce = NULL;
 	const struct axppmic_config *c;
 	struct axpreg_attach_args aaa;
 	struct i2c_attach_args *ia = aux;
@@ -702,9 +700,9 @@ axppmic_attach(device_t parent, device_t self, void *aux)
 	uint32_t irq_mask;
 	void *ih;
 
-	dce = iic_compatible_match(ia, axppmic_compat_data, NULL);
+	(void) iic_compatible_match(ia, compat_data, &dce);
 	KASSERT(dce != NULL);
-	c = DEVICE_COMPAT_ENTRY_GET_PTR(dce);
+	c = (void *)dce->data;
 
 	sc->sc_dev = self;
 	sc->sc_i2c = ia->ia_tag;

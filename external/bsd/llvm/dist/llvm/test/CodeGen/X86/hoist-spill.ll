@@ -3,10 +3,8 @@
 ; Check no spills to the same stack slot after hoisting.
 ; CHECK: mov{{.}} %{{.*}}, [[SPOFFSET1:-?[0-9]*]](%rsp)
 ; CHECK: mov{{.}} %{{.*}}, [[SPOFFSET2:-?[0-9]*]](%rsp)
-; CHECK: mov{{.}} %{{.*}}, [[SPOFFSET3:-?[0-9]*]](%rsp)
 ; CHECK-NOT: mov{{.}} %{{.*}}, [[SPOFFSET1]](%rsp)
 ; CHECK-NOT: mov{{.}} %{{.*}}, [[SPOFFSET2]](%rsp)
-; CHECK-NOT: mov{{.}} %{{.*}}, [[SPOFFSET3]](%rsp)
 
 target datalayout = "e-m:e-i64:64-f80:128-n8:16:32:64-S128"
 target triple = "x86_64-unknown-linux-gnu"
@@ -49,9 +47,6 @@ for.cond:                                         ; preds = %for.inc14, %entry
   %sub. = select i1 %cmp, i32 %sub, i32 0
   %cmp326 = icmp sgt i32 %k.0, %p1
   br i1 %cmp326, label %for.cond4.preheader, label %for.body.preheader
-
-for.body.preheader:                               ; preds = %for.cond
-  br label %for.body
 
 for.cond4.preheader:                              ; preds = %for.body, %for.cond
   %k.1.lcssa = phi i32 [ %k.0, %for.cond ], [ %add, %for.body ]
@@ -96,6 +91,9 @@ vector.body:                                      ; preds = %vector.body, %vecto
 
 middle.block:                                     ; preds = %vector.body, %vector.body.preheader.split
   br i1 undef, label %for.inc14, label %for.body6
+
+for.body.preheader:                               ; preds = %for.cond
+  br label %for.body
 
 for.body:                                         ; preds = %for.body, %for.body.preheader
   %k.127 = phi i32 [ %k.0, %for.body.preheader ], [ %add, %for.body ]

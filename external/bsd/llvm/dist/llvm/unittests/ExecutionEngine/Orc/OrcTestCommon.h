@@ -17,6 +17,7 @@
 
 #include "llvm/ExecutionEngine/ExecutionEngine.h"
 #include "llvm/ExecutionEngine/JITSymbol.h"
+#include "llvm/ExecutionEngine/Orc/IndirectionUtils.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/LLVMContext.h"
@@ -24,6 +25,7 @@
 #include "llvm/IR/TypeBuilder.h"
 #include "llvm/Object/ObjectFile.h"
 #include "llvm/Support/TargetSelect.h"
+#include "llvm/Support/TargetRegistry.h"
 #include <memory>
 
 namespace llvm {
@@ -59,15 +61,26 @@ public:
       // If we found a TargetMachine, check that it's one that Orc supports.
       const Triple& TT = TM->getTargetTriple();
 
+      // Bail out for windows platforms. We do not support these yet.
       if ((TT.getArch() != Triple::x86_64 && TT.getArch() != Triple::x86) ||
-          TT.isOSWindows())
-        TM = nullptr;
+           TT.isOSWindows())
+        return;
+
+      // Target can JIT?
+      SupportsJIT = TM->getTarget().hasJIT();
+      // Use ability to create callback manager to detect whether Orc
+      // has indirection support on this platform. This way the test
+      // and Orc code do not get out of sync.
+      SupportsIndirection = !!orc::createLocalCompileCallbackManager(TT, ES, 0);
     }
   };
 
 protected:
+  orc::ExecutionSession ES;
   LLVMContext Context;
   std::unique_ptr<TargetMachine> TM;
+  bool SupportsJIT = false;
+  bool SupportsIndirection = false;
 };
 
 class ModuleBuilder {
@@ -105,72 +118,62 @@ public:
   }
 };
 
-template <typename HandleT,
-          typename AddModuleFtor,
-          typename RemoveModuleFtor,
-          typename FindSymbolFtor,
-          typename FindSymbolInFtor>
+template <typename HandleT, typename ModuleT>
 class MockBaseLayer {
 public:
 
-  typedef HandleT ModuleHandleT;
+  using ModuleHandleT = HandleT;
 
-  MockBaseLayer(AddModuleFtor &&AddModule,
-                RemoveModuleFtor &&RemoveModule,
-                FindSymbolFtor &&FindSymbol,
-                FindSymbolInFtor &&FindSymbolIn)
-      : AddModule(std::move(AddModule)),
-        RemoveModule(std::move(RemoveModule)),
-        FindSymbol(std::move(FindSymbol)),
-        FindSymbolIn(std::move(FindSymbolIn))
-  {}
+  using AddModuleSignature =
+    Expected<ModuleHandleT>(ModuleT M,
+                            std::shared_ptr<JITSymbolResolver> R);
 
-  template <typename ModuleT, typename MemoryManagerPtrT,
-            typename SymbolResolverPtrT>
-  Expected<ModuleHandleT> addModule(ModuleT Ms, MemoryManagerPtrT MemMgr,
-                                    SymbolResolverPtrT Resolver) {
-    return AddModule(std::move(Ms), std::move(MemMgr), std::move(Resolver));
+  using RemoveModuleSignature = Error(ModuleHandleT H);
+  using FindSymbolSignature = JITSymbol(const std::string &Name,
+                                        bool ExportedSymbolsOnly);
+  using FindSymbolInSignature = JITSymbol(ModuleHandleT H,
+                                          const std::string &Name,
+                                          bool ExportedSymbolsONly);
+  using EmitAndFinalizeSignature = Error(ModuleHandleT H);
+
+  std::function<AddModuleSignature> addModuleImpl;
+  std::function<RemoveModuleSignature> removeModuleImpl;
+  std::function<FindSymbolSignature> findSymbolImpl;
+  std::function<FindSymbolInSignature> findSymbolInImpl;
+  std::function<EmitAndFinalizeSignature> emitAndFinalizeImpl;
+
+  Expected<ModuleHandleT> addModule(ModuleT M,
+                                    std::shared_ptr<JITSymbolResolver> R) {
+    assert(addModuleImpl &&
+           "addModule called, but no mock implementation was provided");
+    return addModuleImpl(std::move(M), std::move(R));
   }
 
   Error removeModule(ModuleHandleT H) {
-    return RemoveModule(H);
+    assert(removeModuleImpl &&
+           "removeModule called, but no mock implementation was provided");
+    return removeModuleImpl(H);
   }
 
   JITSymbol findSymbol(const std::string &Name, bool ExportedSymbolsOnly) {
-    return FindSymbol(Name, ExportedSymbolsOnly);
+    assert(findSymbolImpl &&
+           "findSymbol called, but no mock implementation was provided");
+    return findSymbolImpl(Name, ExportedSymbolsOnly);
   }
 
   JITSymbol findSymbolIn(ModuleHandleT H, const std::string &Name,
                          bool ExportedSymbolsOnly) {
-    return FindSymbolIn(H, Name, ExportedSymbolsOnly);
+    assert(findSymbolInImpl &&
+           "findSymbolIn called, but no mock implementation was provided");
+    return findSymbolInImpl(H, Name, ExportedSymbolsOnly);
   }
 
-private:
-  AddModuleFtor AddModule;
-  RemoveModuleFtor RemoveModule;
-  FindSymbolFtor FindSymbol;
-  FindSymbolInFtor FindSymbolIn;
+  Error emitAndFinaliez(ModuleHandleT H) {
+    assert(emitAndFinalizeImpl &&
+           "emitAndFinalize called, but no mock implementation was provided");
+    return emitAndFinalizeImpl(H);
+  }
 };
-
-template <typename ModuleHandleT,
-          typename AddModuleFtor,
-          typename RemoveModuleFtor,
-          typename FindSymbolFtor,
-          typename FindSymbolInFtor>
-MockBaseLayer<ModuleHandleT, AddModuleFtor, RemoveModuleFtor,
-              FindSymbolFtor, FindSymbolInFtor>
-createMockBaseLayer(AddModuleFtor &&AddModule,
-                    RemoveModuleFtor &&RemoveModule,
-                    FindSymbolFtor &&FindSymbol,
-                    FindSymbolInFtor &&FindSymbolIn) {
-  return MockBaseLayer<ModuleHandleT, AddModuleFtor, RemoveModuleFtor,
-                       FindSymbolFtor, FindSymbolInFtor>(
-                         std::forward<AddModuleFtor>(AddModule),
-                         std::forward<RemoveModuleFtor>(RemoveModule),
-                         std::forward<FindSymbolFtor>(FindSymbol),
-                         std::forward<FindSymbolInFtor>(FindSymbolIn));
-}
-
 
 class ReturnNullJITSymbol {
 public:

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.238 2017/12/25 11:03:30 kamil Exp $
+#	$NetBSD: Makefile.inc,v 1.238.2.1 2018/07/28 04:37:22 pgoyette Exp $
 #	@(#)Makefile.inc	8.3 (Berkeley) 10/24/94
 
 # sys sources
@@ -130,7 +130,7 @@ ASM=	access.S acct.S \
 		munmap.S \
 	nfssvc.S __ntp_gettime50.S \
 	openat.S \
-	pathconf.S pipe2.S pmc_get_info.S pmc_control.S \
+	pathconf.S pipe2.S \
 		__posix_chown.S __posix_fchown.S __posix_lchown.S \
 		__posix_rename.S profil.S \
 	__quotactl.S \
@@ -265,7 +265,7 @@ MAN+=	accept.2 access.2 acct.2 adjtime.2 bind.2 brk.2 chdir.2 \
 	mount.2 \
 	mprotect.2 mremap.2 msgctl.2 msgget.2 msgrcv.2 msgsnd.2 msync.2 \
 	munmap.2 nanosleep.2 nfssvc.2 ntp_adjtime.2 open.2 pathconf.2 pipe.2 \
-	pmc_control.2 poll.2 posix_fadvise.2 \
+	poll.2 posix_fadvise.2 \
 	profil.2 ptrace.2 __quotactl.2 \
 	rasctl.2 read.2 readlink.2 \
 	reboot.2 recv.2 rename.2 revoke.2 rmdir.2 \
@@ -351,7 +351,6 @@ MLINKS+=mount.2 unmount.2
 MLINKS+=open.2 openat.2
 MLINKS+=ntp_adjtime.2 ntp_gettime.2
 MLINKS+=pathconf.2 fpathconf.2
-MLINKS+=pmc_control.2 pmc_get_info.2
 MLINKS+=poll.2 pollts.2
 MLINKS+=read.2 readv.2 read.2 pread.2 read.2 preadv.2
 MLINKS+=readlink.2 readlinkat.2

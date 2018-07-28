@@ -1,4 +1,4 @@
-/* $NetBSD: rk_usb.c,v 1.2.2.2 2018/06/25 07:25:39 pgoyette Exp $ */
+/* $NetBSD: rk_usb.c,v 1.2.2.3 2018/07/28 04:37:29 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: rk_usb.c,v 1.2.2.2 2018/06/25 07:25:39 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rk_usb.c,v 1.2.2.3 2018/07/28 04:37:29 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -41,13 +41,14 @@ __KERNEL_RCSID(0, "$NetBSD: rk_usb.c,v 1.2.2.2 2018/06/25 07:25:39 pgoyette Exp 
 #include <dev/clk/clk_backend.h>
 
 #include <dev/fdt/fdtvar.h>
+#include <dev/fdt/syscon.h>
 
 static int rk_usb_match(device_t, cfdata_t, void *);
 static void rk_usb_attach(device_t, device_t, void *);
 
-#define	CON0_REG	0x00
-#define	CON1_REG	0x04
-#define	CON2_REG	0x08
+#define	CON0_REG	0x100
+#define	CON1_REG	0x104
+#define	CON2_REG	0x108
 #define	 USBPHY_COMMONONN	__BIT(4)
 
 enum rk_usb_type {
@@ -61,23 +62,16 @@ static const struct of_compat_data compat_data[] = {
 
 struct rk_usb_clk {
 	struct clk		base;
-	bus_size_t		reg;
 };
 
 struct rk_usb_softc {
 	device_t		sc_dev;
-	bus_space_tag_t		sc_bst;
-	bus_space_handle_t	sc_bsh;
+	struct syscon		*sc_syscon;
 	enum rk_usb_type	sc_type;
 
 	struct clk_domain	sc_clkdom;
 	struct rk_usb_clk	sc_usbclk;
 };
-
-#define USB_READ(sc, reg)			\
-	bus_space_read_4((sc)->sc_bst, (sc)->sc_bsh, (reg))
-#define USB_WRITE(sc, reg, val)			\
-	bus_space_write_4((sc)->sc_bst, (sc)->sc_bsh, (reg), (val))
 
 CFATTACH_DECL_NEW(rk_usb, sizeof(struct rk_usb_softc),
 	rk_usb_match, rk_usb_attach, NULL, NULL);
@@ -111,7 +105,10 @@ rk_usb_clk_enable(void *priv, struct clk *clk)
 
 	const uint32_t write_mask = USBPHY_COMMONONN << 16;
 	const uint32_t write_val = 0;
-	USB_WRITE(sc, CON2_REG, write_mask | write_val);
+
+	syscon_lock(sc->sc_syscon);
+	syscon_write_4(sc->sc_syscon, CON2_REG, write_mask | write_val);
+	syscon_unlock(sc->sc_syscon);
 
 	return 0;
 }
@@ -123,7 +120,10 @@ rk_usb_clk_disable(void *priv, struct clk *clk)
 
 	const uint32_t write_mask = USBPHY_COMMONONN << 16;
 	const uint32_t write_val = USBPHY_COMMONONN;
-	USB_WRITE(sc, CON2_REG, write_mask | write_val);
+
+	syscon_lock(sc->sc_syscon);
+	syscon_write_4(sc->sc_syscon, CON2_REG, write_mask | write_val);
+	syscon_unlock(sc->sc_syscon);
 
 	return 0;
 }
@@ -165,23 +165,13 @@ rk_usb_attach(device_t parent, device_t self, void *aux)
 	struct rk_usb_softc * const sc = device_private(self);
 	struct fdt_attach_args * const faa = aux;
 	const int phandle = faa->faa_phandle;
-	bus_addr_t grf_addr, phy_addr, phy_size;
 	int child;
 
 	sc->sc_dev = self;
-	sc->sc_bst = faa->faa_bst;
 	sc->sc_type = of_search_compatible(phandle, compat_data)->data;
-
-	if (fdtbus_get_reg(OF_parent(phandle), 0, &grf_addr, NULL) != 0) {
-		aprint_error(": couldn't get grf registers\n");
-		return;
-	}
-	if (fdtbus_get_reg(phandle, 0, &phy_addr, &phy_size) != 0) {
-		aprint_error(": couldn't get phy registers\n");
-		return;
-	}
-	if (bus_space_map(sc->sc_bst, grf_addr + phy_addr, phy_size, 0, &sc->sc_bsh) != 0) {
-		aprint_error(": couldn't map phy registers\n");
+	sc->sc_syscon = fdtbus_syscon_lookup(OF_parent(phandle));
+	if (sc->sc_syscon == NULL) {
+		aprint_error(": couldn't get grf syscon\n");
 		return;
 	}
 
@@ -252,7 +242,10 @@ rk_usbphy_otg_enable(device_t dev, void *priv, bool enable)
 
 	const uint32_t write_mask = 0x1ffU << 16;
 	const uint32_t write_val = enable ? 0 : 0x1d1;
-	USB_WRITE(usb_sc, CON0_REG, write_mask | write_val);
+
+	syscon_lock(usb_sc->sc_syscon);
+	syscon_write_4(usb_sc->sc_syscon, CON0_REG, write_mask | write_val);
+	syscon_unlock(usb_sc->sc_syscon);
 
 	return 0;
 }
@@ -264,7 +257,10 @@ rk_usbphy_host_enable(device_t dev, void *priv, bool enable)
 
 	const uint32_t write_mask = 0x1ffU << 16;
 	const uint32_t write_val = enable ? 0 : 0x1d1;
-	USB_WRITE(usb_sc, CON1_REG, write_mask | write_val);
+
+	syscon_lock(usb_sc->sc_syscon);
+	syscon_write_4(usb_sc->sc_syscon, CON1_REG, write_mask | write_val);
+	syscon_unlock(usb_sc->sc_syscon);
 
 	return 0;
 }

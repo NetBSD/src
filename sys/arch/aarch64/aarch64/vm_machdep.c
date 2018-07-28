@@ -1,4 +1,4 @@
-/* $NetBSD: vm_machdep.c,v 1.1.28.1 2018/04/07 04:12:10 pgoyette Exp $ */
+/* $NetBSD: vm_machdep.c,v 1.1.28.2 2018/07/28 04:37:25 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.1.28.1 2018/04/07 04:12:10 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.1.28.2 2018/07/28 04:37:25 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -39,7 +39,6 @@ __KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.1.28.1 2018/04/07 04:12:10 pgoyette
 #include <sys/vnode.h>
 #include <sys/cpu.h>
 #include <sys/buf.h>
-#include <sys/pmc.h>
 #include <sys/exec.h>
 #include <sys/syslog.h>
 
@@ -125,8 +124,8 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 
 	/* build a new switchframe */
 	struct trapframe * const ktf = utf - 1;
-	ktf->tf_reg[27] = func;
-	ktf->tf_reg[28] = arg;
+	ktf->tf_reg[27] = (uint64_t)func;
+	ktf->tf_reg[28] = (uint64_t)arg;
 	ktf->tf_reg[29] = 0;
 	KASSERT(reg_daif_read() == 0);
 	ktf->tf_lr = (uintptr_t)lwp_trampoline;

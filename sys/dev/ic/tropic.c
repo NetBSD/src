@@ -1,4 +1,4 @@
-/*	$NetBSD: tropic.c,v 1.48.14.1 2018/06/25 07:25:50 pgoyette Exp $	*/
+/*	$NetBSD: tropic.c,v 1.48.14.2 2018/07/28 04:37:45 pgoyette Exp $	*/
 
 /*
  * Ported to NetBSD by Onno van der Linden
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tropic.c,v 1.48.14.1 2018/06/25 07:25:50 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tropic.c,v 1.48.14.2 2018/07/28 04:37:45 pgoyette Exp $");
 
 #include "opt_inet.h"
 
@@ -712,7 +712,7 @@ next:
 
 	if (m0 == 0)
 		return;
-	bpf_mtap(ifp, m0);
+	bpf_mtap(ifp, m0, BPF_D_OUT);
 	first_txbuf = txbuf = TXCA_INW(sc, TXCA_FREE_QUEUE_HEAD) - XMIT_NEXTBUF;
 	framedata = txbuf + XMIT_FP_DATA;
 	size = 0;
@@ -1319,7 +1319,7 @@ tr_oldxint(struct tr_softc *sc)
 		/* if data in queue, copy mbuf chain to DHB */
 		IFQ_DEQUEUE(&ifp->if_snd, m0);
 		if (m0 != 0) {
-			bpf_mtap(ifp, m0);
+			bpf_mtap(ifp, m0, BPF_D_OUT);
 			/* Pull packet off interface send queue, fill DHB. */
 			trh = mtod(m0, struct token_header *);
 			hlen = sizeof(struct token_header);

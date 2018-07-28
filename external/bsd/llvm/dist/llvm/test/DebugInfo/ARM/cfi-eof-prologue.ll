@@ -29,7 +29,7 @@ target triple = "thumbv7-apple-ios"
 ; Function Attrs: nounwind
 define %struct.B* @_ZN1BC2Ev(%struct.B* %this) unnamed_addr #0 align 2 !dbg !28 {
 entry:
-  tail call void @llvm.dbg.value(metadata %struct.B* %this, i64 0, metadata !30, metadata !40), !dbg !41
+  tail call void @llvm.dbg.value(metadata %struct.B* %this, metadata !30, metadata !40), !dbg !41
   %0 = getelementptr inbounds %struct.B, %struct.B* %this, i32 0, i32 0, !dbg !42
   %call = tail call %struct.A* @_ZN1AC2Ev(%struct.A* %0) #3, !dbg !42
   %1 = getelementptr inbounds %struct.B, %struct.B* %this, i32 0, i32 0, i32 0, !dbg !42
@@ -42,8 +42,8 @@ declare %struct.A* @_ZN1AC2Ev(%struct.A*)
 ; Function Attrs: nounwind
 define %struct.B* @_ZN1BC1Ev(%struct.B* %this) unnamed_addr #0 align 2 !dbg !32 {
 entry:
-  tail call void @llvm.dbg.value(metadata %struct.B* %this, i64 0, metadata !34, metadata !40), !dbg !46
-  tail call void @llvm.dbg.value(metadata %struct.B* %this, i64 0, metadata !47, metadata !40) #3, !dbg !49
+  tail call void @llvm.dbg.value(metadata %struct.B* %this, metadata !34, metadata !40), !dbg !46
+  tail call void @llvm.dbg.value(metadata %struct.B* %this, metadata !47, metadata !40) #3, !dbg !49
   %0 = getelementptr inbounds %struct.B, %struct.B* %this, i32 0, i32 0, !dbg !50
   %call.i = tail call %struct.A* @_ZN1AC2Ev(%struct.A* %0) #3, !dbg !50
   %1 = getelementptr inbounds %struct.B, %struct.B* %this, i32 0, i32 0, i32 0, !dbg !50
@@ -52,7 +52,7 @@ entry:
 }
 
 ; Function Attrs: nounwind readnone
-declare void @llvm.dbg.value(metadata, i64, metadata, metadata) #2
+declare void @llvm.dbg.value(metadata, metadata, metadata) #2
 
 attributes #0 = { nounwind }
 attributes #2 = { nounwind readnone }
@@ -89,11 +89,11 @@ attributes #3 = { nounwind }
 !24 = !{null, !25}
 !25 = !DIDerivedType(tag: DW_TAG_pointer_type, size: 32, align: 32, flags: DIFlagArtificial | DIFlagObjectPointer, baseType: !13)
 !26 = !DISubprogram(name: "~A", line: 3, isLocal: false, isDefinition: false, virtuality: DW_VIRTUALITY_virtual, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 3, file: !5, scope: !13, type: !23, containingType: !13)
-!28 = distinct !DISubprogram(name: "B", linkageName: "_ZN1BC2Ev", line: 9, isLocal: false, isDefinition: true, flags: DIFlagPrototyped, isOptimized: true, unit: !0, scopeLine: 9, file: !5, scope: !4, type: !9, declaration: !8, variables: !29)
+!28 = distinct !DISubprogram(name: "B", linkageName: "_ZN1BC2Ev", line: 9, isLocal: false, isDefinition: true, flags: DIFlagPrototyped, isOptimized: true, unit: !0, scopeLine: 9, file: !5, scope: !4, type: !9, declaration: !8, retainedNodes: !29)
 !29 = !{!30}
 !30 = !DILocalVariable(name: "this", arg: 1, flags: DIFlagArtificial | DIFlagObjectPointer, scope: !28, type: !31)
 !31 = !DIDerivedType(tag: DW_TAG_pointer_type, size: 32, align: 32, baseType: !4)
-!32 = distinct !DISubprogram(name: "B", linkageName: "_ZN1BC1Ev", line: 9, isLocal: false, isDefinition: true, flags: DIFlagPrototyped, isOptimized: true, unit: !0, scopeLine: 9, file: !5, scope: !4, type: !9, declaration: !8, variables: !33)
+!32 = distinct !DISubprogram(name: "B", linkageName: "_ZN1BC1Ev", line: 9, isLocal: false, isDefinition: true, flags: DIFlagPrototyped, isOptimized: true, unit: !0, scopeLine: 9, file: !5, scope: !4, type: !9, declaration: !8, retainedNodes: !33)
 !33 = !{!34}
 !34 = !DILocalVariable(name: "this", arg: 1, flags: DIFlagArtificial | DIFlagObjectPointer, scope: !32, type: !31)
 !35 = !{i32 2, !"Dwarf Version", i32 4}

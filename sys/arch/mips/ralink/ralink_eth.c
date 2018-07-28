@@ -1,4 +1,4 @@
-/*	$NetBSD: ralink_eth.c,v 1.13 2017/02/20 08:25:57 ozaki-r Exp $	*/
+/*	$NetBSD: ralink_eth.c,v 1.13.12.1 2018/07/28 04:37:37 pgoyette Exp $	*/
 /*-
  * Copyright (c) 2011 CradlePoint Technology, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
 /* ralink_eth.c -- Ralink Ethernet Driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ralink_eth.c,v 1.13 2017/02/20 08:25:57 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ralink_eth.c,v 1.13.12.1 2018/07/28 04:37:37 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -1285,7 +1285,7 @@ ralink_eth_start(struct ifnet *ifp)
 		SIMPLEQ_INSERT_TAIL(&sc->sc_txdirtyq, txs, txs_q);
 
 		/* Pass the packet to any BPF listeners. */
-		bpf_mtap(ifp, m0);
+		bpf_mtap(ifp, m0, BPF_D_OUT);
 
 		/* Set a watchdog timer in case the chip flakes out. */
 		ifp->if_timer = 5;

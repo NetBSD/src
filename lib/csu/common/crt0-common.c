@@ -1,4 +1,4 @@
-/* $NetBSD: crt0-common.c,v 1.14.14.2 2018/03/30 06:20:10 pgoyette Exp $ */
+/* $NetBSD: crt0-common.c,v 1.14.14.3 2018/07/28 04:37:22 pgoyette Exp $ */
 
 /*
  * Copyright (c) 1998 Christos Zoulas
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: crt0-common.c,v 1.14.14.2 2018/03/30 06:20:10 pgoyette Exp $");
+__RCSID("$NetBSD: crt0-common.c,v 1.14.14.3 2018/07/28 04:37:22 pgoyette Exp $");
 
 #include <sys/types.h>
 #include <sys/exec.h>
@@ -192,11 +192,110 @@ fix_iplt(void)
 }
 #endif
 
+#if defined(__x86_64__) || defined(__i386__)
+#  define HAS_RELOCATE_SELF
+#  if defined(__x86_64__)
+#  define RELA
+#  define REL_TAG DT_RELA
+#  define RELSZ_TAG DT_RELASZ
+#  define REL_TYPE Elf_Rela
+#  else
+#  define REL_TAG DT_REL
+#  define RELSZ_TAG DT_RELSZ
+#  define REL_TYPE Elf_Rel
+#  endif
+
+#include <elf.h>
+
+static void relocate_self(struct ps_strings *) __noinline;
+
+static void
+relocate_self(struct ps_strings *ps_strings)
+{
+	AuxInfo *aux = (AuxInfo *)(ps_strings->ps_argvstr + ps_strings->ps_nargvstr +
+	    ps_strings->ps_nenvstr + 2);
+	uintptr_t relocbase = (uintptr_t)~0U;
+	const Elf_Phdr *phdr = NULL;
+	Elf_Half phnum = (Elf_Half)~0;
+
+	for (; aux->a_type != AT_NULL; ++aux) {
+		switch (aux->a_type) {
+		case AT_BASE:
+			if (aux->a_v)
+				return;
+			break;
+		case AT_PHDR:
+			phdr = (void *)aux->a_v;
+			break;
+		case AT_PHNUM:
+			phnum = (Elf_Half)aux->a_v;
+			break;
+		}
+	}
+
+	if (phdr == NULL || phnum == (Elf_Half)~0)
+		return;
+
+	const Elf_Phdr *phlimit = phdr + phnum, *dynphdr = NULL;
+
+	for (; phdr < phlimit; ++phdr) {
+		if (phdr->p_type == PT_DYNAMIC)
+			dynphdr = phdr;
+		if (phdr->p_type == PT_PHDR)
+			relocbase = (uintptr_t)phdr - phdr->p_vaddr;
+	}
+	if (dynphdr == NULL || relocbase == (uintptr_t)~0U)
+		return;
+
+	Elf_Dyn *dynp = (Elf_Dyn *)((uint8_t *)dynphdr->p_vaddr + relocbase);
+
+	const REL_TYPE *relocs = 0, *relocslim;
+	Elf_Addr relocssz = 0;
+
+	for (; dynp->d_tag != DT_NULL; dynp++) {
+		switch (dynp->d_tag) {
+		case REL_TAG:
+			relocs =
+			    (const REL_TYPE *)(relocbase + dynp->d_un.d_ptr);
+			break;
+		case RELSZ_TAG:
+			relocssz = dynp->d_un.d_val;
+			break;
+		}
+	}
+	relocslim = (const REL_TYPE *)((const uint8_t *)relocs + relocssz);
+	for (; relocs < relocslim; ++relocs) {
+		Elf_Addr *where;
+
+		where = (Elf_Addr *)(relocbase + relocs->r_offset);
+
+		switch (ELF_R_TYPE(relocs->r_info)) {
+		case R_TYPE(RELATIVE):  /* word64 B + A */
+#ifdef RELA
+			*where = (Elf_Addr)(relocbase + relocs->r_addend);
+#else
+			*where += (Elf_Addr)relocbase;
+#endif
+			break;
+#ifdef IFUNC_RELOCATION
+		case IFUNC_RELOCATION:
+			break;
+#endif
+		default:
+			abort();
+		}
+	}
+}
+#endif
+
 void
 ___start(void (*cleanup)(void),			/* from shared loader */
     const Obj_Entry *obj,			/* from shared loader */
     struct ps_strings *ps_strings)
 {
+#if defined(HAS_RELOCATE_SELF)
+	relocate_self(ps_strings);
+#endif
 
 	if (ps_strings == NULL)
 		_FATAL("ps_strings missing\n");
@@ -215,9 +314,7 @@ ___start(void (*cleanup)(void),			/* from shared loader */
 		__progname = empty_string;
 	}
 
-	if (&rtld_DYNAMIC != NULL) {
-		if (obj == NULL)
-			_FATAL("NULL Obj_Entry pointer in GOT\n");
+	if (&rtld_DYNAMIC != NULL && obj != NULL) {
 		if (obj->magic != RTLD_MAGIC)
 			_FATAL("Corrupt Obj_Entry pointer in GOT\n");
 		if (obj->version != RTLD_VERSION)

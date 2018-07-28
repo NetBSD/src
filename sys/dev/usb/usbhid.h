@@ -1,4 +1,4 @@
-/*	$NetBSD: usbhid.h,v 1.17 2017/12/10 17:03:07 bouyer Exp $	*/
+/*	$NetBSD: usbhid.h,v 1.17.2.1 2018/07/28 04:37:59 pgoyette Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbhid.h,v 1.7 1999/11/17 22:33:51 n_hibma Exp $ */
 
 /*
@@ -34,6 +34,8 @@
 
 #ifndef _DEV_USB_USBHID_H_
 #define _DEV_USB_USBHID_H_
+
+#include <dev/hid/hid.h>
 
 #define UR_GET_HID_DESCRIPTOR	0x06
 #define  UDESC_HID		0x21

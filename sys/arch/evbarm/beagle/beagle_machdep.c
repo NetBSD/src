@@ -1,4 +1,4 @@
-/*	$NetBSD: beagle_machdep.c,v 1.68.14.1 2018/06/25 07:25:40 pgoyette Exp $ */
+/*	$NetBSD: beagle_machdep.c,v 1.68.14.2 2018/07/28 04:37:31 pgoyette Exp $ */
 
 /*
  * Machine dependent functions for kernel setup for TI OSK5912 board.
@@ -125,12 +125,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: beagle_machdep.c,v 1.68.14.1 2018/06/25 07:25:40 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: beagle_machdep.c,v 1.68.14.2 2018/07/28 04:37:31 pgoyette Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
-#include "opt_ipkdb.h"
 #include "opt_md.h"
 #include "opt_com.h"
 #include "opt_omap.h"
@@ -223,7 +222,8 @@ char *boot_file = NULL;
 
 static uint8_t beagle_edid[128];	/* EDID storage */
 
-u_int uboot_args[4] = { 0 };	/* filled in by beagle_start.S (not in bss) */
+/* filled in before cleaning bss. keep in .data */
+u_int uboot_args[4] __attribute__((__section__(".data")));
 
 /* Same things, but for the free (unused by the kernel) memory. */
 

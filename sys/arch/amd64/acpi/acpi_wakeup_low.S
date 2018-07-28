@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_wakeup_low.S,v 1.9 2017/11/01 09:47:53 maxv Exp $	*/
+/*	$NetBSD: acpi_wakeup_low.S,v 1.9.2.1 2018/07/28 04:37:26 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2007 Joerg Sonnenberger <joerg@netbsd.org>
@@ -36,7 +36,7 @@
 	.text
 
 	.p2align 2, 0x90
-NENTRY(acpi_md_sleep_exit)
+ENTRY(acpi_md_sleep_exit)
 	lgdt	ACPI_SUSPEND_GDT(%r8)
 
 	/* Reload fixed descriptors for new GDT */
@@ -113,7 +113,7 @@ NENTRY(acpi_md_sleep_exit)
 END(acpi_md_sleep_exit)
 
 	.p2align 2, 0x90
-NENTRY(acpi_md_sleep_prepare)
+ENTRY(acpi_md_sleep_prepare)
 	movq	CPUVAR(SELF),%r8
 	movq	%rbx,ACPI_SUSPEND_REG+(1*8)(%r8)
 	movq	%rbp,ACPI_SUSPEND_REG+(2*8)(%r8)

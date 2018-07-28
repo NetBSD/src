@@ -1,5 +1,5 @@
 #
-#	$NetBSD: EXYNOS,v 1.22 2017/06/20 20:20:02 skrll Exp $
+#	$NetBSD: EXYNOS,v 1.22.6.1 2018/07/28 04:37:31 pgoyette Exp $
 #
 #	Samsung Exynos SoC kernel
 #
@@ -26,10 +26,7 @@ pseudo-device 	openfirm	# /dev/openfirm
 #options 	DEBUG
 #options 	LOCKDEBUG
 #options 	PMAP_DEBUG	# Enable pmap_debug_level code
-#options 	IPKDB		# remote kernel debugging
 #options 	VERBOSE_INIT_ARM # verbose bootstrapping messages
-# SSCOMnCONSOLE is required for early init messages from VERBOSE_INIT_ARM.
-#options 	SSCOM2CONSOLE
 
 makeoptions	DEBUG="-g"	# compile full symbol table
 makeoptions	COPY_SYMTAB=1
@@ -38,19 +35,23 @@ config		netbsd		root on ? type ?
 
 # Device tree support
 armfdt0		at root
-fdt*		at fdtbus?
+simplebus*	at fdt? pass 0
 
 # CPUs
 cpus*		at fdt? pass 0
-cpu*		at cpus?
+cpu*		at fdt? pass 0
 
 fclock*		at fdt? pass 4
 fregulator*	at fdt? pass 4
 gpiokeys*	at fdt?
 
+# System Controller
+syscon*		at fdt? pass 1		# Generic System Controller
+
 # Timer
-mct*		at fdt?			# Exynos Multi Core Timer (MCT)
-armgtmr0	at mct?			# ARM Generic Timer
+mct*		at fdt? pass 2		# Exynos Multi Core Timer (MCT)
+gtmr*		at fdt? pass 2
+armgtmr0	at gtmr?
 
 # Interrupt controller
 exyointr*	at fdt? pass 1
@@ -65,12 +66,14 @@ exy5422clk*	at fdt? pass 3		# Exynos5422 clock controller
 exyopctl*	at fdt? pass 2		# GPIO
 gpio*		at gpiobus?
 
-# Exynos SoC support
-chipid*		at fdt?
-sysmmu*		at fdt?
+# PWM timer
+expwm*		at fdt? pass 4		# PWM
+
+# Fan
+pwmfan*		at fdt?			# PWM Fan controls
 
 # UART
-sscom*		at fdt?			# UART
+exuart*		at fdt?			# UART
 
 # I2C
 exyoi2c*	at fdt?			# I2C
@@ -89,12 +92,12 @@ ld3		at sdmmc3
 ld*		at sdmmc?
 
 # USB
-exyousbphy*	at fdt?
-exyousb*	at fdt?
-ohci*		at fdt?			# OUSB
-ehci*		at fdt?			# EUSB
-usb*		at ohci?
-usb*		at ehci?
+exusbphy*	at fdt? pass 9		# Samsung Exynos USB2 PHY
+exusbdrdphy*	at fdt? pass 9		# Samsung Exynos USB3 DRD PHY
+ohci*		at fdt?			# OHCI
+ehci*		at fdt?			# EHCI
+xhci*		at fdt?			# XHCI
+usb*		at usbus?
 
 include "dev/usb/usbdevices.config"
 midi*		at midibus?

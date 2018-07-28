@@ -1,4 +1,4 @@
-/* $NetBSD: gic_fdt.c,v 1.8.4.1 2018/06/25 07:25:39 pgoyette Exp $ */
+/* $NetBSD: gic_fdt.c,v 1.8.4.2 2018/07/28 04:37:28 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gic_fdt.c,v 1.8.4.1 2018/06/25 07:25:39 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gic_fdt.c,v 1.8.4.2 2018/07/28 04:37:28 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -37,6 +37,7 @@ __KERNEL_RCSID(0, "$NetBSD: gic_fdt.c,v 1.8.4.1 2018/06/25 07:25:39 pgoyette Exp
 #include <sys/kernel.h>
 #include <sys/lwp.h>
 #include <sys/kmem.h>
+#include <sys/queue.h>
 
 #include <arm/cortex/gic_intr.h>
 #include <arm/cortex/mpcore_var.h>
@@ -75,6 +76,7 @@ struct gic_fdt_irqhandler {
 struct gic_fdt_irq {
 	struct gic_fdt_softc	*intr_sc;
 	void			*intr_ih;
+	void			*intr_arg;
 	int			intr_refcnt;
 	int			intr_ipl;
 	int			intr_level;
@@ -188,6 +190,7 @@ gic_fdt_establish(device_t dev, u_int *specifier, int ipl, int flags,
 		firq = kmem_alloc(sizeof(*firq), KM_SLEEP);
 		firq->intr_sc = sc;
 		firq->intr_refcnt = 0;
+		firq->intr_arg = arg;
 		firq->intr_ipl = ipl;
 		firq->intr_level = level;
 		firq->intr_mpsafe = mpsafe;
@@ -206,7 +209,7 @@ gic_fdt_establish(device_t dev, u_int *specifier, int ipl, int flags,
 		}
 		sc->sc_irq[irq] = firq;
 	} else {
-		if (arg) {
+		if (firq->intr_arg == NULL && arg != NULL) {
 			device_printf(dev, "cannot share irq with NULL arg\n");
 			return NULL;
 		}
@@ -236,28 +239,36 @@ gic_fdt_establish(device_t dev, u_int *specifier, int ipl, int flags,
 	firqh->ih_arg = arg;
 	TAILQ_INSERT_TAIL(&firq->intr_handlers, firqh, ih_next);
 
-	return firqh;
+	return firq->intr_ih;
 }
 
 static void
 gic_fdt_disestablish(device_t dev, void *ih)
 {
 	struct gic_fdt_softc * const sc = device_private(dev);
-	struct gic_fdt_irqhandler *firqh = ih;
-	struct gic_fdt_irq *firq = firqh->ih_irq;
-	const int irq = firq->intr_irq;
+	struct gic_fdt_irqhandler *firqh;
+	struct gic_fdt_irq *firq;
+	u_int n;
 
-	KASSERT(firq->intr_refcnt > 0);
+	for (n = 0; n < GIC_MAXIRQ; n++) {
+		firq = sc->sc_irq[n];
+		if (firq->intr_ih != ih)
+			continue;
 
-	TAILQ_REMOVE(&firq->intr_handlers, firqh, ih_next);
-	kmem_free(firqh, sizeof(*firqh));
+		KASSERT(firq->intr_refcnt > 0);
 
-	firq->intr_refcnt--;
-	if (firq->intr_refcnt == 0) {
+		if (firq->intr_refcnt > 1)
+			panic("%s: cannot disestablish shared irq", __func__);
+
+		firqh = TAILQ_FIRST(&firq->intr_handlers);
+		kmem_free(firqh, sizeof(*firqh));
 		intr_disestablish(firq->intr_ih);
 		kmem_free(firq, sizeof(*firq));
-		sc->sc_irq[irq] = NULL;
+		sc->sc_irq[n] = NULL;
+		return;
 	}
+
+	panic("%s: interrupt not established", __func__);
 }
 
 static int

@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.86.2.4 2018/05/21 04:36:12 pgoyette Exp $	*/
+/*	$NetBSD: xhci.c,v 1.86.2.5 2018/07/28 04:37:59 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.86.2.4 2018/05/21 04:36:12 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.86.2.5 2018/07/28 04:37:59 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -879,6 +879,18 @@ xhci_ecp(struct xhci_softc *sc, uint32_t hcc)
 	"b\0AC64\0"						\
 	"\0"
 
+#define XHCI_HCC2_BITS	\
+	"\177\020"	/* New bitmask */			\
+	"b\7ETC_TSC\0"						\
+	"b\6ETC\0"						\
+	"b\5CIC\0"						\
+	"b\4LEC\0"						\
+	"b\3CTC\0"						\
+	"b\2FSC\0"						\
+	"b\1CMC\0"						\
+	"b\0U3C\0"						\
+	"\0"
+
 void
 xhci_start(struct xhci_softc *sc)
 {
@@ -900,7 +912,7 @@ int
 xhci_init(struct xhci_softc *sc)
 {
 	bus_size_t bsz;
-	uint32_t cap, hcs1, hcs2, hcs3, hcc, dboff, rtsoff;
+	uint32_t cap, hcs1, hcs2, hcs3, hcc, dboff, rtsoff, hcc2;
 	uint32_t pagesize, config;
 	int i = 0;
 	uint16_t hciversion;
@@ -911,7 +923,6 @@ xhci_init(struct xhci_softc *sc)
 	/* Set up the bus struct for the usb 3 and usb 2 buses */
 	sc->sc_bus.ub_methods = &xhci_bus_methods;
 	sc->sc_bus.ub_pipesize = sizeof(struct xhci_pipe);
-	sc->sc_bus.ub_revision = USBREV_3_0;
 	sc->sc_bus.ub_usedma = true;
 	sc->sc_bus.ub_hcpriv = sc;
 
@@ -962,6 +973,11 @@ xhci_init(struct xhci_softc *sc)
 		snprintb(sbuf, sizeof(sbuf), XHCI_HCCV1_x_BITS, hcc);
 	aprint_debug_dev(sc->sc_dev, "hcc=%s\n", sbuf);
 	aprint_debug_dev(sc->sc_dev, "xECP %x\n", XHCI_HCC_XECP(hcc) * 4);
+	if (hciversion >= XHCI_HCIVERSION_1_1) {
+		hcc2 = xhci_cap_read_4(sc, XHCI_HCCPARAMS2);
+		snprintb(sbuf, sizeof(sbuf), XHCI_HCC2_BITS, hcc2);
+		aprint_debug_dev(sc->sc_dev, "hcc2=%s\n", sbuf);
+	}
 
 	/* default all ports to bus 0, i.e. usb 3 */
 	sc->sc_ctlrportbus = kmem_zalloc(
@@ -2176,12 +2192,12 @@ xhci_poll(struct usbd_bus *bus)
 
 	XHCIHIST_FUNC(); XHCIHIST_CALLED();
 
-	mutex_spin_enter(&sc->sc_intr_lock);
+	mutex_enter(&sc->sc_intr_lock);
 	int ret = xhci_intr1(sc);
 	if (ret) {
 		xhci_softintr(bus);
 	}
-	mutex_spin_exit(&sc->sc_intr_lock);
+	mutex_exit(&sc->sc_intr_lock);
 
 	return;
 }
@@ -3984,6 +4000,7 @@ xhci_device_intr_start(struct usbd_xfer *xfer)
 	struct xhci_ring * const tr = &xs->xs_ep[dci].xe_tr;
 	struct xhci_xfer * const xx = XHCI_XFER2XXFER(xfer);
 	const uint32_t len = xfer->ux_length;
+	const bool polling = xhci_polling_p(sc);
 	usb_dma_t * const dma = &xfer->ux_dmabuf;
 	uint64_t parameter;
 	uint32_t status;
@@ -4010,13 +4027,15 @@ xhci_device_intr_start(struct usbd_xfer *xfer)
 	    XHCI_TRB_3_IOC_BIT;
 	xhci_trb_put(&xx->xx_trb[i++], parameter, status, control);
 
-	mutex_enter(&tr->xr_lock);
+	if (!polling)
+		mutex_enter(&tr->xr_lock);
 	xhci_ring_put(sc, tr, xfer, xx->xx_trb, i);
-	mutex_exit(&tr->xr_lock);
+	if (!polling)
+		mutex_exit(&tr->xr_lock);
 
 	xhci_db_write_4(sc, XHCI_DOORBELL(xs->xs_idx), dci);
 
-	if (xfer->ux_timeout && !xhci_polling_p(sc)) {
+	if (xfer->ux_timeout && !polling) {
 		callout_reset(&xfer->ux_callout, mstohz(xfer->ux_timeout),
 		    xhci_timeout, xfer);
 	}

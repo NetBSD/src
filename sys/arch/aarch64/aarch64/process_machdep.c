@@ -1,4 +1,4 @@
-/* $NetBSD: process_machdep.c,v 1.1.28.1 2018/04/07 04:12:10 pgoyette Exp $ */
+/* $NetBSD: process_machdep.c,v 1.1.28.2 2018/07/28 04:37:25 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: process_machdep.c,v 1.1.28.1 2018/04/07 04:12:10 pgoyette Exp $");
+__KERNEL_RCSID(1, "$NetBSD: process_machdep.c,v 1.1.28.2 2018/07/28 04:37:25 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -60,7 +60,7 @@ process_write_regs(struct lwp *l, const struct reg *regs)
 		return EINVAL;
 
 	l->l_md.md_utf->tf_regs = *regs;
-	l->l_private = regs->r_tpidr;
+	l->l_private = (void *)regs->r_tpidr;
 	return 0;
 }
 

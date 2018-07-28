@@ -1,4 +1,4 @@
-/* $NetBSD: if_aumac.c,v 1.43 2016/12/15 09:28:03 ozaki-r Exp $ */
+/* $NetBSD: if_aumac.c,v 1.43.14.1 2018/07/28 04:37:37 pgoyette Exp $ */
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aumac.c,v 1.43 2016/12/15 09:28:03 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aumac.c,v 1.43.14.1 2018/07/28 04:37:37 pgoyette Exp $");
 
 
 
@@ -450,7 +450,7 @@ aumac_start(struct ifnet *ifp)
 		sc->sc_txnext = AUMAC_NEXTTX(nexttx);
 
 		/* Pass the packet to any BPF listeners. */
-		bpf_mtap(ifp, m);
+		bpf_mtap(ifp, m, BPF_D_OUT);
 
 		m_freem(m);
 

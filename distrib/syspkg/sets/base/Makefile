@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2010/01/16 16:10:39 roy Exp $
+#	$NetBSD: Makefile,v 1.11.46.1 2018/07/28 04:33:01 pgoyette Exp $
 
 SUBDIR+=base-adosfs-root
 SUBDIR+=base-amd-bin
@@ -19,7 +19,6 @@ SUBDIR+=base-crypto-root
 SUBDIR+=base-crypto-shlib
 SUBDIR+=base-cxx-usr
 SUBDIR+=base-debug-bin
-SUBDIR+=base-dhclient-root
 SUBDIR+=base-dhcpd-bin
 SUBDIR+=base-dhcpd-examples
 SUBDIR+=base-ext2fs-root

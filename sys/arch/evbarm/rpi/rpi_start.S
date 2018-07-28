@@ -1,4 +1,4 @@
-/*	$NetBSD: rpi_start.S,v 1.17 2018/03/03 13:46:32 skrll Exp $	*/
+/*	$NetBSD: rpi_start.S,v 1.17.2.1 2018/07/28 04:37:32 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003  Genetec Corporation.  All rights reserved.
@@ -96,11 +96,11 @@
 #include <arm/armreg.h>
 #include "assym.h"
 
-RCSID("$NetBSD: rpi_start.S,v 1.17 2018/03/03 13:46:32 skrll Exp $")
+RCSID("$NetBSD: rpi_start.S,v 1.17.2.1 2018/07/28 04:37:32 pgoyette Exp $")
 
 
 #if defined(VERBOSE_INIT_ARM)
-#define	XPUTC(n)	mov r0, n; bl bcm283x_platform_early_putchar
+#define	XPUTC(n)	push {r1-r12, lr}; mov r0, n; bl bcm2835_platform_early_putchar; pop {r1-r12, lr}
 #else
 #define	XPUTC(n)
 #endif
@@ -137,6 +137,15 @@ RCSID("$NetBSD: rpi_start.S,v 1.17 2018/03/03 13:46:32 skrll Exp $")
 
 	.global	_C_LABEL(rpi_start)
 _C_LABEL(rpi_start):
+
+#if defined(VERBOSE_INIT_ARM)
+	/* stack for calling bcm2835_platform_early_putchar() */
+	ldr	sp, Lbootstk
+#if !defined(KERNEL_BASES_EQUAL)
+	sub	sp, sp, #KERNEL_BASE_VOFFSET
+#endif
+#endif /* VERBOSE_INIT_ARM */
+
 	ldr	r8, Luboot_args
 	stmia	r8!, {r0-r3}
 
@@ -344,6 +353,17 @@ Lcontrol_wax:
 	/* bits to disable the caches */
 Lctl_ID_dis:
 	.word	~(CPU_CONTROL_IC_ENABLE|CPU_CONTROL_DC_ENABLE)
+
+#if defined(VERBOSE_INIT_ARM)
+Lbootstk:
+	.word	bootstk
+
+	.pushsection .bss
+	.align	3
+	.space	256
+bootstk:
+	.popsection
+#endif
 
 /* We'll modify va and pa at run time so we can use relocatable addresses. */
 #define MMU_INIT(va,pa,n_sec,attr) \

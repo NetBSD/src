@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.485.2.6 2018/06/25 07:25:38 pgoyette Exp $
+# $NetBSD: GENERIC,v 1.485.2.7 2018/07/28 04:37:26 pgoyette Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.485.2.6 $"
+#ident		"GENERIC-$Revision: 1.485.2.7 $"
 
 maxusers	64		# estimated number of users
 
@@ -87,8 +87,6 @@ est0		at cpu0		# Intel Enhanced SpeedStep (non-ACPI)
 #odcm0		at cpu0		# On-demand clock modulation
 powernow0	at cpu0		# AMD PowerNow! and Cool'n'Quiet (non-ACPI)
 vmt0		at cpu0		# VMware Tools
-
-options 	PMC		# performance-monitoring counters support
 
 # Alternate buffer queue strategies for better responsiveness under high
 # disk I/O load.
@@ -419,7 +417,6 @@ sysbeep0	at pcppi?
 #savagedrm*	at drm?		# S3 Savage DRM driver
 #sisdrm* 	at drm?		# SiS DRM driver
 #tdfxdrm*	at drm?		# 3dfx (voodoo) DRM driver
-#viadrm* 	at drm?		# VIA DRM driver
 
 # DRMKMS drivers
 i915drmkms*	at pci? dev ? function ?
@@ -430,6 +427,9 @@ radeondrmkmsfb* at radeonfbbus?
 
 nouveau*	at pci? dev ? function ?
 nouveaufb*	at nouveaufbbus?
+
+# DRMUMS drivers
+#viadrmums*	at drm?
 
 # Cryptographic Devices
 

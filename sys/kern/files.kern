@@ -1,10 +1,13 @@
-#	$NetBSD: files.kern,v 1.16.2.5 2018/03/20 08:11:25 pgoyette Exp $
+#	$NetBSD: files.kern,v 1.16.2.6 2018/07/28 04:38:08 pgoyette Exp $
 
 #
 # kernel sources
 #
 define	kern:	machdep, uvm
 defflag	opt_kern.h			KERN
+defflag	opt_script.h			SETUIDSCRIPTS FDSCRIPTS
+file	compat/common/compat_util.c	kern
+file	compat/common/compat_mod.c	compat_netbsd | compat_netbsd32
 file	conf/debugsyms.c		kern
 file	conf/param.c			kern
 file	kern/bufq_disksort.c		bufq_disksort
@@ -150,7 +153,6 @@ file	kern/sys_module.c		kern
 file	kern/sys_mqueue.c		mqueue
 file	kern/sys_lwp.c			kern
 file	kern/sys_pipe.c			!pipe_socketpair
-file	kern/sys_pmc.c			kern
 file	kern/sys_process.c		ptrace_hooks | ktrace
 file	kern/sys_ptrace.c		ptrace
 file	kern/sys_ptrace_common.c	ptrace
@@ -175,6 +177,7 @@ file	kern/uipc_accf.c		kern
 file	kern/uipc_domain.c		kern
 file	kern/uipc_mbuf.c		kern
 file	kern/uipc_mbuf2.c		kern
+file	kern/uipc_mbufdebug.c		kern & ether
 file	net/link_proto.c		kern	# XXX
 file	kern/uipc_proto.c		kern
 file	kern/uipc_sem.c			kern

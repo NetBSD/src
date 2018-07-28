@@ -1,4 +1,4 @@
-.\"	$NetBSD: fgetln.3,v 1.15 2014/06/19 14:27:50 christos Exp $
+.\"	$NetBSD: fgetln.3,v 1.15.22.1 2018/07/28 04:37:22 pgoyette Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)fgetln.3	8.3 (Berkeley) 4/19/94
 .\"
-.Dd June 19, 2014
+.Dd July 4, 2018
 .Dt FGETLN 3
 .Os
 .Sh NAME
@@ -138,7 +138,7 @@ temporary buffer:
 		if (len > 0 && buf[len - 1] == '\en')
 			buf[len - 1] = '\e0';
 		else if ((lbuf = strndup(buf, len + 1)) == NULL)
-				err(1, NULL);
+			err(1, NULL);
 		printf("%s\en", lbuf);
 
 		if (lbuf != buf)

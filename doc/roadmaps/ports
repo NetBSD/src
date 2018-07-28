@@ -1,4 +1,4 @@
-$NetBSD: ports,v 1.6 2017/10/21 15:12:27 maxv Exp $
+$NetBSD: ports,v 1.6.2.1 2018/07/28 04:33:02 pgoyette Exp $
 
 NetBSD Ports Roadmap
 ====================
@@ -9,15 +9,13 @@ material even if it's not strictly port-specific.
 The following elements, projects, and goals are considered strategic
 priorities for the project:
 
- 1. EFI boot for x86
- 2. xhci support (done and will be in -8)
- 3. Get arm64/aarch64 working
+ 0. DRMKMS update
 
 The following elements, projects, and goals are not strategic
 priorities but are still important undertakings worth doing:
 
- 4. riscv and/or or1k ports
- 5. cheri port
+ 1. riscv and/or or1k ports
+ 2. cheri port
 
 The following elements, projects, and goals are perhaps less pressing;
 this doesn't mean one shouldn't work on them but the expected payoff
@@ -29,42 +27,24 @@ is perhaps less than for other things:
 Explanations
 ============
 
+ 0. DRMKMS update
 
- 1. EFI boot for x86
+The DRM drivers get old with time. The current drivers are from Linux 3.15,
+having a newer version would be nice.
 
-EFI boot is now often required for new x86 hardware. This is
-effectively a mandatory item for -8. Fortunately, nonaka has most of
-it done, though it's not yet committed.
+- As of July 2018, maya is working on this.
 
- - As of January 2017 nobody is known to be working on this.
- - There is currently no clear timeframe or release target.
- - Contact agc for further information.
-
-
- 2. xhci support
-
-xhci is also critical for new x86 hardware. skrll@ says this is done;
-it will be -8.
-
- 3. Get arm64/aarch64 working
-
-We have some arm64 code but apparently it doesn't really work yet.
-
- - As of January 2017 nobody is known to be actively working on this.
- - There is currently no clear timeframe or release target.
- - Contact: ? (XXX)
-
-
- 4. riscv and/or or1k ports
+ 1. riscv and/or or1k ports
 
 We have some riscv code and a bit of or1k code, but neither is done.
 
- - As of January 2017 nobody is known to be working on this.
- - There is currently no clear timeframe or release target.
+ - As of July 2018, zmcgrew is working on riscv in a separate repository
+   https://github.com/zmcgrew/src/tree/riscv
+   Nobody is working on or1k.
  - Contact matt@ for further information.
 
 
- 5. cheri port
+ 2. cheri port
 
 http://cheri-cpu.org
 There are a number of reasons to tackle this; it will serve as a code

@@ -33,7 +33,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/migrate.c,v 1.16 2005/09/01 02:42:52 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: migrate.c,v 1.32 2016/06/09 19:04:43 christos Exp $");
+__RCSID("$NetBSD: migrate.c,v 1.32.14.1 2018/07/28 04:37:23 pgoyette Exp $");
 #endif
 
 #include <sys/types.h>
@@ -88,7 +88,7 @@ struct gpt_cmd c_migrate = {
 	"migrate",
 	cmd_migrate,
 	migratehelp, __arraycount(migratehelp),
-	0,
+	GPT_SYNC,
 };
 
 #define usage() gpt_usage(NULL, &c_migrate)

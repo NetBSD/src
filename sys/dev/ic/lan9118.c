@@ -1,4 +1,4 @@
-/*	$NetBSD: lan9118.c,v 1.26 2017/06/02 23:39:08 jmcneill Exp $	*/
+/*	$NetBSD: lan9118.c,v 1.26.8.1 2018/07/28 04:37:45 pgoyette Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lan9118.c,v 1.26 2017/06/02 23:39:08 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lan9118.c,v 1.26.8.1 2018/07/28 04:37:45 pgoyette Exp $");
 
 /*
  * The LAN9118 Family
@@ -456,7 +456,7 @@ discard:
 		/*
 		 * Pass the packet to any BPF listeners.
 		 */
-		bpf_mtap(ifp, m0);
+		bpf_mtap(ifp, m0, BPF_D_OUT);
 
 		m_freem(m0);
 	}

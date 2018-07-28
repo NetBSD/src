@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2015/12/24 14:13:36 christos Exp $
+#	$NetBSD: Makefile,v 1.12.16.1 2018/07/28 04:37:41 pgoyette Exp $
 
 INCSDIR= /usr/include/sun2
 
@@ -13,7 +13,7 @@ INCS=	ansi.h aout_machdep.h asm.h autoconf.h \
 	kbd.h kbio.h kcore.h \
 	leds.h limits.h lock.h \
 	math.h mcontext.h mon.h mutex.h \
-	param.h pcb.h pmap.h pmc.h promlib.h \
+	param.h pcb.h pmap.h promlib.h \
 	proc.h profile.h psl.h pte.h ptrace.h \
 	reg.h rwlock.h \
 	setjmp.h signal.h \

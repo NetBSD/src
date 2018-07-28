@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipiconf.h,v 1.126 2016/11/29 03:23:00 mlelstv Exp $	*/
+/*	$NetBSD: scsipiconf.h,v 1.126.14.1 2018/07/28 04:37:57 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2004 The NetBSD Foundation, Inc.
@@ -805,10 +805,10 @@ _4btol(const u_int8_t *bytes)
 {
 	u_int32_t rv;
 
-	rv = (bytes[0] << 24) |
-	     (bytes[1] << 16) |
-	     (bytes[2] << 8) |
-	     bytes[3];
+	rv = ((u_int32_t)bytes[0] << 24) |
+	     ((u_int32_t)bytes[1] << 16) |
+	     ((u_int32_t)bytes[2] << 8) |
+	     (u_int32_t)bytes[3];
 	return (rv);
 }
 
@@ -894,10 +894,10 @@ _4ltol(const u_int8_t *bytes)
 {
 	u_int32_t rv;
 
-	rv = bytes[0] |
-	     (bytes[1] << 8) |
-	     (bytes[2] << 16) |
-	     (bytes[3] << 24);
+	rv = (u_int32_t)bytes[0] |
+	     ((u_int32_t)bytes[1] << 8) |
+	     ((u_int32_t)bytes[2] << 16) |
+	     ((u_int32_t)bytes[3] << 24);
 	return (rv);
 }
 

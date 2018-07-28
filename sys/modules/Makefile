@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.202.2.23 2018/06/25 07:26:05 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.202.2.24 2018/07/28 04:38:08 pgoyette Exp $
 
 .include <bsd.own.mk>
 
@@ -206,8 +206,7 @@ SUBDIR+=	ichsmb
 SUBDIR+=	odcm
 SUBDIR+=	powernow
 SUBDIR+=	tco
-SUBDIR+=	tprof_pmi
-SUBDIR+=	tprof_amdpmi
+SUBDIR+=	tprof_x86
 SUBDIR+=	vmt
 .endif
 
@@ -293,7 +292,6 @@ SUBDIR+=	savagedrm
 SUBDIR+=	sisdrm
 SUBDIR+=	tdfxdrm
 SUBDIR+=	viac7temp
-SUBDIR+=	viadrm
 SUBDIR+=	viadrmums
 .endif
 

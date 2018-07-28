@@ -1,5 +1,5 @@
 ; RUN: llc -filetype=obj -o %t.o %s
-; RUN: llvm-dwarfdump %t.o | FileCheck %s
+; RUN: llvm-dwarfdump -v %t.o | FileCheck %s
 
 ; Testcase generated using 'clang -g -O2 -S -emit-llvm' from the following:
 ;; void sink(void);
@@ -19,20 +19,19 @@
 ; CHECK:       DW_TAG_inlined_subroutine
 ; CHECK-NEXT:    DW_AT_abstract_origin {{.*}} "bar"
 ; CHECK:         DW_TAG_formal_parameter
-; CHECK-NEXT:      DW_AT_location [DW_FORM_data4]	(0x00000000)
+; CHECK-NEXT:      DW_AT_location [DW_FORM_data4]	(
+; CHECK-NEXT:        [{{.*}}, {{.*}}): DW_OP_consts +0)
 ; CHECK-NEXT:      DW_AT_abstract_origin {{.*}} "a"
-;
-; CHECK: .debug_loc
-; CHECK: Location description: 11 00
+
 target datalayout = "e-m:o-i64:64-f80:128-n8:16:32:64-S128"
 target triple = "x86_64-apple-darwin"
 
 ; Function Attrs: nounwind ssp uwtable
 define void @foo() #0 !dbg !4 {
 entry:
-  tail call void @llvm.dbg.value(metadata i32 0, i64 0, metadata !12, metadata !17) #3, !dbg !18
+  tail call void @llvm.dbg.value(metadata i32 0, metadata !12, metadata !17) #3, !dbg !18
   tail call void @sink() #3, !dbg !20
-  tail call void @llvm.dbg.value(metadata i32 0, i64 0, metadata !12, metadata !17) #3, !dbg !21
+  tail call void @llvm.dbg.value(metadata i32 0, metadata !12, metadata !17) #3, !dbg !21
   tail call void @sink() #3, !dbg !23
   ret void, !dbg !24
 }
@@ -40,7 +39,7 @@ entry:
 declare void @sink()
 
 ; Function Attrs: nounwind readnone
-declare void @llvm.dbg.value(metadata, i64, metadata, metadata) #2
+declare void @llvm.dbg.value(metadata, metadata, metadata) #2
 
 attributes #0 = { nounwind ssp uwtable  }
 attributes #2 = { nounwind readnone }
@@ -53,10 +52,10 @@ attributes #3 = { nounwind }
 !0 = distinct !DICompileUnit(language: DW_LANG_C99, file: !1, producer: "clang version 3.7.0 (trunk 235110) (llvm/trunk 235108)", isOptimized: true, runtimeVersion: 0, emissionKind: FullDebug, enums: !2, retainedTypes: !2, globals: !2, imports: !2)
 !1 = !DIFile(filename: "t.c", directory: "/path/to/dir")
 !2 = !{}
-!4 = distinct !DISubprogram(name: "foo", scope: !1, file: !1, line: 3, type: !5, isLocal: false, isDefinition: true, scopeLine: 3, flags: DIFlagPrototyped, isOptimized: true, unit: !0, variables: !2)
+!4 = distinct !DISubprogram(name: "foo", scope: !1, file: !1, line: 3, type: !5, isLocal: false, isDefinition: true, scopeLine: 3, flags: DIFlagPrototyped, isOptimized: true, unit: !0, retainedNodes: !2)
 !5 = !DISubroutineType(types: !6)
 !6 = !{null}
-!7 = distinct !DISubprogram(name: "bar", scope: !1, file: !1, line: 2, type: !8, isLocal: true, isDefinition: true, scopeLine: 2, flags: DIFlagPrototyped, isOptimized: true, unit: !0, variables: !11)
+!7 = distinct !DISubprogram(name: "bar", scope: !1, file: !1, line: 2, type: !8, isLocal: true, isDefinition: true, scopeLine: 2, flags: DIFlagPrototyped, isOptimized: true, unit: !0, retainedNodes: !11)
 !8 = !DISubroutineType(types: !9)
 !9 = !{null, !10}
 !10 = !DIBasicType(name: "int", size: 32, align: 32, encoding: DW_ATE_signed)

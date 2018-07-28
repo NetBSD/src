@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.172 2018/01/16 06:38:42 maxv Exp $ */
+/*	$NetBSD: if_gre.c,v 1.172.2.1 2018/07/28 04:38:10 pgoyette Exp $ */
 
 /*
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.172 2018/01/16 06:38:42 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.172.2.1 2018/07/28 04:38:10 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_atalk.h"
@@ -856,7 +856,7 @@ gre_input(struct gre_softc *sc, struct mbuf *m, const struct gre_h *gh)
 	}
 	m_adj(m, hlen);
 
-	bpf_mtap_af(&sc->sc_if, af, m);
+	bpf_mtap_af(&sc->sc_if, af, m, BPF_D_IN);
 
 	m_set_rcvif(m, &sc->sc_if);
 
@@ -902,7 +902,7 @@ gre_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 		goto end;
 	}
 
-	bpf_mtap_af(ifp, dst->sa_family, m);
+	bpf_mtap_af(ifp, dst->sa_family, m, BPF_D_OUT);
 
 	m->m_flags &= ~(M_BCAST|M_MCAST);
 

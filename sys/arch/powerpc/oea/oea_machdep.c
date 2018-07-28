@@ -1,4 +1,4 @@
-/*	$NetBSD: oea_machdep.c,v 1.74 2018/02/11 00:01:12 mrg Exp $	*/
+/*	$NetBSD: oea_machdep.c,v 1.74.2.1 2018/07/28 04:37:39 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 2002 Matt Thomas
@@ -33,13 +33,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: oea_machdep.c,v 1.74 2018/02/11 00:01:12 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: oea_machdep.c,v 1.74.2.1 2018/07/28 04:37:39 pgoyette Exp $");
 
 #include "opt_ppcarch.h"
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
-#include "opt_ipkdb.h"
 #include "opt_multiprocessor.h"
 #include "opt_altivec.h"
 
@@ -67,10 +66,6 @@ __KERNEL_RCSID(0, "$NetBSD: oea_machdep.c,v 1.74 2018/02/11 00:01:12 mrg Exp $")
 
 #ifdef KGDB
 #include <sys/kgdb.h>
-#endif
- 
-#ifdef IPKDB
-#include <ipkdb/ipkdb.h>
 #endif
 
 #include <machine/powerpc.h>
@@ -139,9 +134,6 @@ oea_init(void (*handler)(void))
 	extern int tlbdsmiss[], tlbdsmsize[];
 #if defined(DDB) || defined(KGDB)
 	extern int ddblow[], ddbsize[];
-#endif
-#ifdef IPKDB
-	extern int ipkdblow[], ipkdbsize[];
 #endif
 #ifdef ALTIVEC
 	register_t msr;
@@ -265,7 +257,7 @@ oea_init(void (*handler)(void))
 			memcpy((void *)exc, trapcode, size);
 			memcpy((void *)(exc_base + EXC_VEC),  trapcode, size);
 			break;
-#if defined(DDB) || defined(IPKDB) || defined(KGDB)
+#if defined(DDB) || defined(KGDB)
 		case EXC_RUNMODETRC:
 #ifdef PPC_OEA601
 			if (cpuvers != MPC601) {
@@ -280,18 +272,10 @@ oea_init(void (*handler)(void))
 		case EXC_PGM:
 		case EXC_TRC:
 		case EXC_BPT:
-#if defined(DDB) || defined(KGDB)
 			size = (size_t)ddbsize;
 			memcpy((void *)exc, ddblow, size);
-#if defined(IPKDB)
-#error "cannot enable IPKDB with DDB or KGDB"
-#endif
-#else
-			size = (size_t)ipkdbsize;
-			memcpy((void *)exc, ipkdblow, size);
-#endif
 			break;
-#endif /* DDB || IPKDB || KGDB */
+#endif /* DDB || KGDB */
 		}
 #if 0
 		exc += roundup(size, 32);

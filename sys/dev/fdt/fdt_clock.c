@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_clock.c,v 1.1.20.1 2018/06/25 07:25:49 pgoyette Exp $ */
+/* $NetBSD: fdt_clock.c,v 1.1.20.2 2018/07/28 04:37:44 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,11 +27,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_clock.c,v 1.1.20.1 2018/06/25 07:25:49 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_clock.c,v 1.1.20.2 2018/07/28 04:37:44 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
 #include <sys/kmem.h>
+#include <sys/queue.h>
 
 #include <libfdt.h>
 #include <dev/fdt/fdtvar.h>
@@ -43,10 +44,11 @@ struct fdtbus_clock_controller {
 	int cc_phandle;
 	const struct fdtbus_clock_controller_func *cc_funcs;
 
-	struct fdtbus_clock_controller *cc_next;
+	LIST_ENTRY(fdtbus_clock_controller) cc_next;
 };
 
-static struct fdtbus_clock_controller *fdtbus_cc = NULL;
+static LIST_HEAD(, fdtbus_clock_controller) fdtbus_clock_controllers =
+    LIST_HEAD_INITIALIZER(fdtbus_clock_controller);
 
 int
 fdtbus_register_clock_controller(device_t dev, int phandle,
@@ -59,8 +61,7 @@ fdtbus_register_clock_controller(device_t dev, int phandle,
 	cc->cc_phandle = phandle;
 	cc->cc_funcs = funcs;
 
-	cc->cc_next = fdtbus_cc;
-	fdtbus_cc = cc;
+	LIST_INSERT_HEAD(&fdtbus_clock_controllers, cc, cc_next);
 
 	fdtbus_clock_assign(phandle);
 
@@ -72,10 +73,9 @@ fdtbus_get_clock_controller(int phandle)
 {
 	struct fdtbus_clock_controller *cc;
 
-	for (cc = fdtbus_cc; cc; cc = cc->cc_next) {
-		if (cc->cc_phandle == phandle) {
+	LIST_FOREACH(cc, &fdtbus_clock_controllers, cc_next) {
+		if (cc->cc_phandle == phandle)
 			return cc;
-		}
 	}
 
 	return NULL;
@@ -185,7 +185,7 @@ fdtbus_clock_byname(const char *clkname)
 	u_int len, resid, index, clock_cells;
 	const char *p;
 
-	for (cc = fdtbus_cc; cc; cc = cc->cc_next) {
+	LIST_FOREACH(cc, &fdtbus_clock_controllers, cc_next) {
 		if (!of_hasprop(cc->cc_phandle, "clock-output-names"))
 			continue;
 		p = fdtbus_get_prop(cc->cc_phandle, "clock-output-names", &len);

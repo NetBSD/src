@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sn.c,v 1.39.2.1 2018/06/25 07:25:44 pgoyette Exp $	*/
+/*	$NetBSD: if_sn.c,v 1.39.2.2 2018/07/28 04:37:38 pgoyette Exp $	*/
 
 /*
  * National Semiconductor  DP8393X SONIC Driver
@@ -16,7 +16,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sn.c,v 1.39.2.1 2018/06/25 07:25:44 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sn.c,v 1.39.2.2 2018/07/28 04:37:38 pgoyette Exp $");
 
 #include "opt_inet.h"
 
@@ -333,7 +333,7 @@ outloop:
 	 * If bpf is listening on this interface, let it
 	 * see the packet before we commit it to the wire.
 	 */
-	bpf_mtap(ifp, m);
+	bpf_mtap(ifp, m, BPF_D_OUT);
 
 	/*
 	 * If there is nothing in the o/p queue, and there is room in

@@ -1,4 +1,4 @@
-/*	$NetBSD: pq3etsec.c,v 1.32.2.1 2018/06/25 07:25:44 pgoyette Exp $	*/
+/*	$NetBSD: pq3etsec.c,v 1.32.2.2 2018/07/28 04:37:39 pgoyette Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pq3etsec.c,v 1.32.2.1 2018/06/25 07:25:44 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pq3etsec.c,v 1.32.2.2 2018/07/28 04:37:39 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -2087,7 +2087,7 @@ pq3etsec_tx_offload(
 		if (mn == NULL) {
 			if (csum_flags & M_CSUM_IP4) {
 #ifdef INET
-				ip_undefer_csum(m, ETHER_HDR_LEN,
+				in_undefer_cksum(m, ETHER_HDR_LEN,
 				    csum_flags & M_CSUM_IP4);
 #else
 				panic("%s: impossible M_CSUM flags %#x",
@@ -2222,7 +2222,7 @@ pq3etsec_txq_consume(
 #endif
 			if (m->m_flags & M_HASFCB)
 				m_adj(m, sizeof(struct txfcb));
-			bpf_mtap(ifp, m);
+			bpf_mtap(ifp, m, BPF_D_OUT);
 			ifp->if_opackets++;
 			ifp->if_obytes += m->m_pkthdr.len;
 			if (m->m_flags & M_MCAST)

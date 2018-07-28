@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_input.c,v 1.110.2.2 2018/06/25 07:26:06 pgoyette Exp $	*/
+/*	$NetBSD: ieee80211_input.c,v 1.110.2.3 2018/07/28 04:38:10 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2001 Atsushi Onoe
@@ -37,7 +37,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_input.c,v 1.81 2005/08/10 16:22:29 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.110.2.2 2018/06/25 07:26:06 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.110.2.3 2018/07/28 04:38:10 pgoyette Exp $");
 #endif
 
 #ifdef _KERNEL_OPT
@@ -309,7 +309,7 @@ ieee80211_input_data(struct ieee80211com *ic, struct mbuf **mp,
 	}
 
 	/* copy to listener after decrypt */
-	bpf_mtap3(ic->ic_rawbpf, m);
+	bpf_mtap3(ic->ic_rawbpf, m, BPF_D_IN);
 
 	/*
 	 * Finally, strip the 802.11 header.
@@ -452,7 +452,7 @@ ieee80211_input_management(struct ieee80211com *ic, struct mbuf **mp,
 		wh->i_fc[1] &= ~IEEE80211_FC1_WEP;
 	}
 
-	bpf_mtap3(ic->ic_rawbpf, m);
+	bpf_mtap3(ic->ic_rawbpf, m, BPF_D_IN);
 	(*ic->ic_recv_mgmt)(ic, m, ni, subtype, rssi, rstamp);
 	m_freem(m);
 
@@ -746,7 +746,7 @@ err:
 
 out:
 	if (m != NULL) {
-		bpf_mtap3(ic->ic_rawbpf, m);
+		bpf_mtap3(ic->ic_rawbpf, m, BPF_D_IN);
 		m_freem(m);
 	}
 	return type;

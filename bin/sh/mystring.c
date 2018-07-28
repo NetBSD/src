@@ -1,4 +1,4 @@
-/*	$NetBSD: mystring.c,v 1.17 2013/04/28 17:01:28 dholland Exp $	*/
+/*	$NetBSD: mystring.c,v 1.17.28.1 2018/07/28 04:32:56 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)mystring.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: mystring.c,v 1.17 2013/04/28 17:01:28 dholland Exp $");
+__RCSID("$NetBSD: mystring.c,v 1.17.28.1 2018/07/28 04:32:56 pgoyette Exp $");
 #endif
 #endif /* not lint */
 
@@ -51,6 +51,8 @@ __RCSID("$NetBSD: mystring.c,v 1.17 2013/04/28 17:01:28 dholland Exp $");
  *	is_number(s)		Return true if s is a string of digits.
  */
 
+#include <inttypes.h>
+#include <limits.h>
 #include <stdlib.h>
 #include "shell.h"
 #include "syntax.h"
@@ -110,10 +112,15 @@ prefix(const char *pfx, const char *string)
 int
 number(const char *s)
 {
+	char *ep = NULL;
+	intmax_t n;
 
-	if (! is_number(s))
-		error("Illegal number: %s", s);
-	return atoi(s);
+	if (!is_digit(*s) || ((n = strtoimax(s, &ep, 10)), 
+	    (ep == NULL || ep == s || *ep != '\0')))
+		error("Illegal number: '%s'", s);
+	if (n < INT_MIN || n > INT_MAX)
+		error("Number out of range: %s", s);
+	return (int)n;
 }
 
 

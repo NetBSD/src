@@ -1,4 +1,4 @@
-/*	$NetBSD: i80321_timer.c,v 1.21 2013/12/17 01:28:56 joerg Exp $ */
+/*	$NetBSD: i80321_timer.c,v 1.21.28.1 2018/07/28 04:37:29 pgoyette Exp $ */
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -40,9 +40,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i80321_timer.c,v 1.21 2013/12/17 01:28:56 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i80321_timer.c,v 1.21.28.1 2018/07/28 04:37:29 pgoyette Exp $");
 
-#include "opt_perfctrs.h"
 #include "opt_i80321.h"
 
 #include <sys/param.h>
@@ -58,8 +57,6 @@ __KERNEL_RCSID(0, "$NetBSD: i80321_timer.c,v 1.21 2013/12/17 01:28:56 joerg Exp 
 
 #include <arm/xscale/i80321reg.h>
 #include <arm/xscale/i80321var.h>
-
-#include <arm/xscale/xscalevar.h>
 
 void	(*i80321_hardclock_hook)(void);
 
@@ -211,9 +208,6 @@ void
 cpu_initclocks(void)
 {
 	u_int oldirqstate;
-#if defined(PERFCTRS)
-	void *pmu_ih;
-#endif
 
 	if (hz < 50 || COUNTS_PER_SEC % hz) {
 		aprint_error("Cannot get %d Hz clock; using 100 Hz\n", hz);
@@ -243,13 +237,6 @@ cpu_initclocks(void)
 	    clockhandler, NULL);
 	if (clock_ih == NULL)
 		panic("cpu_initclocks: unable to register timer interrupt");
-
-#if defined(PERFCTRS)
-	pmu_ih = i80321_intr_establish(ICU_INT_PMU, IPL_HIGH,
-	    xscale_pmc_dispatch, NULL);
-	if (pmu_ih == NULL)
-		panic("cpu_initclocks: unable to register timer interrupt");
-#endif
 
 	/* Set up the new clock parameters. */
 

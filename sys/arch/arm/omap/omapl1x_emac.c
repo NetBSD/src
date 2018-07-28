@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: omapl1x_emac.c,v 1.6 2017/06/01 02:45:05 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omapl1x_emac.c,v 1.6.8.1 2018/07/28 04:37:28 pgoyette Exp $");
 
 #include "opt_omapl1x.h"
 
@@ -933,7 +933,7 @@ remap:
 			      __func__);
 
 		emac_add_desc_tail(sc, chan, entry);
-		bpf_mtap(ifp, mb);
+		bpf_mtap(ifp, mb, BPF_D_OUT);
 
 		IFQ_POLL(&ifp->if_snd, mb);
 		if (mb == NULL)

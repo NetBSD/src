@@ -1,4 +1,4 @@
-$NetBSD: TODO.smpnet,v 1.19 2018/02/27 14:28:01 maxv Exp $
+$NetBSD: TODO.smpnet,v 1.19.2.1 2018/07/28 04:33:02 pgoyette Exp $
 
 MP-safe components
 ==================
@@ -104,7 +104,7 @@ This is the list of the functions that have such bpf_mtap:
 
  - sca_frame_process() @ sys/dev/ic/hd64570.c
  - en_intr() @ sys/dev/ic/midway.c
- - rxintr_cleanup() and txintr_cleanup() @ sys/dev/pci/if_lmc.c
+ - rxintr_cleanup() @ sys/dev/pci/if_lmc.c
  - ipr_rx_data_rdy() @ sys/netisdn/i4b_ipr.c
 
 Ideally we should make the functions run in softint somehow, but we don't have

@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.495.2.1 2018/04/22 07:20:27 pgoyette Exp $	*/
+/*	$NetBSD: init_main.c,v 1.495.2.2 2018/07/28 04:38:08 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.495.2.1 2018/04/22 07:20:27 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.495.2.2 2018/07/28 04:38:08 pgoyette Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -572,6 +572,7 @@ main(void)
 	lltableinit();
 #endif
 	domaininit(true);
+	ifinit_post();
 	if_attachdomain();
 	splx(s);
 

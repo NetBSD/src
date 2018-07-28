@@ -52,11 +52,12 @@ $BB0_4:
     .set FPU_MASK,$f7
     .set  $tmp7, $BB0_4-$BB0_2
     .set f6,$f6
+    .set r1,$1
 # CHECK:    abs.s   $f6, $f7           # encoding: [0x46,0x00,0x39,0x85]
 # CHECK:    lui     $1, %hi($tmp7)     # encoding: [0x3c,0x01,A,A]
 # CHECK:                               #   fixup A - offset: 0, value: %hi($tmp7), kind: fixup_Mips_HI16
     abs.s  f6,FPU_MASK
-    lui $1, %hi($tmp7)
+    lui r1, %hi($tmp7)
 
 # CHECK:    .set mips32r2
 # CHECK:    ldxc1   $f0, $zero($5)     # encoding: [0x4c,0xa0,0x00,0x01]
@@ -83,3 +84,10 @@ $BB0_4:
    .set dsp
    lbux    $7, $10($11)
    lhx     $5, $6($7)
+
+# CHECK:   .set dspr2
+# CHECK:   append   $7, $10, 2          # encoding: [0x7d,0x47,0x10,0x31]
+# CHECK:   balign   $5, $6, 3           # encoding: [0x7c,0xc5,0x1c,0x31]
+   .set dspr2
+   append   $7, $10, 2
+   balign   $5, $6, 3

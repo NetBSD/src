@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rndq.c,v 1.89.16.1 2018/03/21 02:01:34 pgoyette Exp $	*/
+/*	$NetBSD: kern_rndq.c,v 1.89.16.2 2018/07/28 04:38:08 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1997-2013 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.89.16.1 2018/03/21 02:01:34 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.89.16.2 2018/07/28 04:38:08 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -753,6 +753,18 @@ rnd_attach_source(krndsource_t *rs, const char *name, uint32_t type,
 	rs->state = rnd_sample_allocate(rs);
 
 	mutex_spin_enter(&rnd_global.lock);
+
+#ifdef DIAGNOSTIC
+	krndsource_t *s;
+	LIST_FOREACH(s, &rnd_global.sources, list) {
+		if (s == rs) {
+			panic("%s: source '%s' already attached",
+			    __func__, name);
+			/* NOTREACHED */
+		}
+	}
+#endif
+
 	LIST_INSERT_HEAD(&rnd_global.sources, rs, list);
 
 #ifdef RND_VERBOSE

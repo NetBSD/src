@@ -1,4 +1,4 @@
-/* $NetBSD: if_ie.c,v 1.40.4.1 2018/06/25 07:25:38 pgoyette Exp $ */
+/* $NetBSD: if_ie.c,v 1.40.4.2 2018/07/28 04:37:26 pgoyette Exp $ */
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ie.c,v 1.40.4.1 2018/06/25 07:25:38 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ie.c,v 1.40.4.2 2018/07/28 04:37:26 pgoyette Exp $");
 
 #define IGNORE_ETHER1_IDROM_CHECKSUM
 
@@ -1483,7 +1483,7 @@ iestart(struct ifnet *ifp)
 			len += m->m_len;
 		}
 
-		bpf_mtap(ifp, m0);
+		bpf_mtap(ifp, m0, BPF_D_OUT);
 
 		m_freem(m0);
 		if (len < ETHER_MIN_LEN - ETHER_CRC_LEN) {

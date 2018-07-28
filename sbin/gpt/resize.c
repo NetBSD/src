@@ -33,7 +33,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/add.c,v 1.14 2006/06/22 22:05:28 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: resize.c,v 1.22 2015/12/04 16:54:28 christos Exp $");
+__RCSID("$NetBSD: resize.c,v 1.22.14.1 2018/07/28 04:37:23 pgoyette Exp $");
 #endif
 
 #include <sys/types.h>
@@ -59,7 +59,7 @@ struct gpt_cmd c_resize = {
 	"resize",
 	cmd_resize,
 	resizehelp, __arraycount(resizehelp),
-	0,
+	GPT_SYNC,
 };
 
 #define usage() gpt_usage(NULL, &c_resize)

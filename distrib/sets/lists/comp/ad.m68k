@@ -1,4 +1,4 @@
-# $NetBSD: ad.m68k,v 1.55 2018/02/03 21:27:45 mrg Exp $
+# $NetBSD: ad.m68k,v 1.55.2.1 2018/07/28 04:32:59 pgoyette Exp $
 ./usr/bin/elf2aout				comp-sysutil-bin
 ./usr/include/gcc-4.8/math-68881.h		comp-c-include		obsolete
 ./usr/include/gcc-4.8/tgmath.h			comp-c-include		obsolete
@@ -47,7 +47,7 @@
 ./usr/include/m68k/param.h			comp-c-include
 ./usr/include/m68k/pcb.h			comp-c-include
 ./usr/include/m68k/pmap_motorola.h		comp-c-include
-./usr/include/m68k/pmc.h			comp-c-include
+./usr/include/m68k/pmc.h			comp-obsolete		obsolete
 ./usr/include/m68k/proc.h			comp-c-include
 ./usr/include/m68k/profile.h			comp-c-include
 ./usr/include/m68k/psl.h			comp-c-include

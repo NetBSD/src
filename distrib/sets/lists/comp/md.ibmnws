@@ -1,4 +1,4 @@
-# $NetBSD: md.ibmnws,v 1.14 2015/12/20 16:22:39 christos Exp $
+# $NetBSD: md.ibmnws,v 1.14.14.1 2018/07/28 04:32:59 pgoyette Exp $
 ./usr/include/ibmnws				comp-c-include
 ./usr/include/ibmnws/_G_config.h		comp-obsolete		obsolete
 ./usr/include/ibmnws/ansi.h			comp-c-include
@@ -40,7 +40,7 @@
 ./usr/include/ibmnws/pcb.h			comp-c-include
 ./usr/include/ibmnws/pio.h			comp-obsolete		obsolete
 ./usr/include/ibmnws/pmap.h			comp-c-include
-./usr/include/ibmnws/pmc.h			comp-c-include
+./usr/include/ibmnws/pmc.h			comp-obsolete		obsolete
 ./usr/include/ibmnws/powerpc.h			comp-obsolete		obsolete
 ./usr/include/ibmnws/proc.h			comp-c-include
 ./usr/include/ibmnws/profile.h			comp-c-include

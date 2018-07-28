@@ -1,4 +1,4 @@
-/*	$NetBSD: trap_subr.S,v 1.26 2016/12/28 09:36:02 rin Exp $	*/
+/*	$NetBSD: trap_subr.S,v 1.26.14.1 2018/07/28 04:37:39 pgoyette Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -197,17 +197,6 @@ _C_LABEL(ddblow):
 	bla	ddbtrap
 _C_LABEL(ddbsize) = .-_C_LABEL(ddblow)
 #endif	/* DDB || KGDB */
-
-#ifdef IPKDB
-/*
- * In case of IPKDB we want a separate trap catcher for it
- */
-	.globl	_C_LABEL(ipkdblow),_C_LABEL(ipkdbsize)
-_C_LABEL(ipkdblow):
-	ACCESS_PROLOG(CI_IPKDBSAVE)
-	bla	ipkdbtrap
-_C_LABEL(ipkdbsize) = .-_C_LABEL(ipkdblow)
-#endif	/* IPKDB */
 
 #ifdef DEBUG
 #define TRAP_IF_ZERO(r)	tweqi	r,0
@@ -525,107 +514,3 @@ ddbtrap:
 	beq	trapagain
 	b	trapexit
 #endif /* DDB || KGDB */
-
-#ifdef IPKDB
-/*
- * Deliberate entry to ipkdbtrap
- */
-	.globl	_C_LABEL(ipkdb_trap)
-_C_LABEL(ipkdb_trap):
-	mtsprg1	%r1
-	GET_CPUINFO(%r4)
-	mfmsr	%r3
-	stw	%r3,(CI_IPKDBSAVE+CPUSAVE_SRR1)(%r4)
-	wrteei	0			/* disable interrupts */
-	isync
-	stmw	%r28,CI_IPKDBSAVE(%r4)
-	mflr	%r28
-	stw	%r28,(CI_IPKDBSAVE+CPUSAVE_SRR0)(%r4)
-	li	%r29,EXC_BPT
-	mtlr	%r29
-	mfcr	%r29
-
-/*
- * Now the ipkdb trap catching code.
- */
-ipkdbtrap:
-	FRAME_SETUP(CI_IPKDBSAVE)
-/* Call C trap code: */
-	addi	%r3,%r1,FRAME_TF
-	bl	_C_LABEL(ipkdb_trap_glue)
-	or.	%r3,%r3,%r3
-	beq	trapagain
-	b	trapexit
-
-ipkdbfault:
-	ba	_ipkdbfault
-_ipkdbfault:
-	mfsrr0	%r3
-	addi	%r3,%r3,4
-	mtsrr0	%r3
-	li	%r3,-1
-	rfi
-	ba	.	/* Protect against prefetch */
-
-/*
- * int ipkdbfbyte(unsigned char *p)
- */
-	.globl	_C_LABEL(ipkdbfbyte)
-_C_LABEL(ipkdbfbyte):
-	li	%r9,EXC_DSI		/* establish new fault routine */
-	lwz	%r5,0(%r9)
-	lis	%r6,ipkdbfault@ha
-	lwz	%r6,ipkdbfault@l(%r6)
-	stw	%r6,0(%r9)
-#ifdef	IPKDBUSERHACK
-#ifndef PPC_IBM4XX
-	lis	%r8,_C_LABEL(ipkdbsr)@ha
-	lwz	%r8,_C_LABEL(ipkdbsr)@l(%r8)
-	mtsr	USER_SR,%r8
-	isync
-#endif
-#endif
-	dcbst	%r0,%r9			/* flush data... */
-	sync
-	icbi	%r0,%r9			/* and instruction caches */
-	lbz	%r3,0(%r3)		/* fetch data */
-	stw	%r5,0(%r9)		/* restore previous fault handler */
-	dcbst	%r0,%r9			/* and flush data... */
-	sync
-	icbi	%r0,%r9			/* and instruction caches */
-	blr
-
-/*
- * int ipkdbsbyte(unsigned char *p, int c)
- */
-	.globl	_C_LABEL(ipkdbsbyte)
-_C_LABEL(ipkdbsbyte):
-	li	%r9,EXC_DSI		/* establish new fault routine */
-	lwz	%r5,0(%r9)
-	lis	%r6,ipkdbfault@ha
-	lwz	%r6,ipkdbfault@l(%r6)
-	stw	%r6,0(%r9)
-#ifdef	IPKDBUSERHACK
-#ifndef PPC_IBM4XX
-	lis	%r8,_C_LABEL(ipkdbsr)@ha
-	lwz	%r8,_C_LABEL(ipkdbsr)@l(%r8)
-	mtsr	USER_SR,%r8
-	isync
-#endif
-#endif
-	dcbst	%r0,%r9			/* flush data... */
-	sync
-	icbi	%r0,%r9			/* and instruction caches */
-	mr	%r6,%r3
-	xor	%r3,%r3,%r3
-	stb	%r4,0(%r6)
-	dcbst	%r0,%r6			/* Now do appropriate flushes
-					   to data... */
-	sync
-	icbi	%r0,%r6			/* and instruction caches */
-	stw	%r5,0(%r9)		/* restore previous fault handler */
-	dcbst	%r0,%r9			/* and flush data... */
-	sync
-	icbi	%r0,%r9			/* and instruction caches */
-	blr
-#endif	/* IPKDB */

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lii.c,v 1.17 2016/12/15 09:28:05 ozaki-r Exp $	*/
+/*	$NetBSD: if_lii.c,v 1.17.14.1 2018/07/28 04:37:46 pgoyette Exp $	*/
 
 /*
  *  Copyright (c) 2008 The NetBSD Foundation.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_lii.c,v 1.17 2016/12/15 09:28:05 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_lii.c,v 1.17.14.1 2018/07/28 04:37:46 pgoyette Exp $");
 
 
 #include <sys/param.h>
@@ -889,7 +889,7 @@ lii_start(struct ifnet *ifp)
 
 		IFQ_DEQUEUE(&ifp->if_snd, m0);
 
-		bpf_mtap(ifp, m0);
+		bpf_mtap(ifp, m0, BPF_D_OUT);
 		m_freem(m0);
 	}
 }

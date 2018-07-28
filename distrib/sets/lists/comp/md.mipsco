@@ -1,4 +1,4 @@
-# $NetBSD: md.mipsco,v 1.24 2015/12/21 16:49:37 christos Exp $
+# $NetBSD: md.mipsco,v 1.24.14.1 2018/07/28 04:32:59 pgoyette Exp $
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/mipsco				comp-c-include
 ./usr/include/mipsco/_G_config.h		comp-obsolete		obsolete
@@ -42,7 +42,7 @@
 ./usr/include/mipsco/param.h			comp-c-include
 ./usr/include/mipsco/pcb.h			comp-c-include
 ./usr/include/mipsco/pmap.h			comp-c-include
-./usr/include/mipsco/pmc.h			comp-c-include
+./usr/include/mipsco/pmc.h			comp-obsolete		obsolete
 ./usr/include/mipsco/proc.h			comp-c-include
 ./usr/include/mipsco/profile.h			comp-c-include
 ./usr/include/mipsco/psl.h			comp-c-include

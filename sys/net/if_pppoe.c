@@ -1,4 +1,4 @@
-/* $NetBSD: if_pppoe.c,v 1.134.2.3 2018/06/25 07:26:06 pgoyette Exp $ */
+/* $NetBSD: if_pppoe.c,v 1.134.2.4 2018/07/28 04:38:10 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2002, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.134.2.3 2018/06/25 07:26:06 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.134.2.4 2018/07/28 04:38:10 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "pppoe.h"
@@ -1084,7 +1084,7 @@ pppoe_data_input(struct mbuf *m)
 
 	plen = ntohs(ph->plen);
 
-	bpf_mtap(&sc->sc_sppp.pp_if, m);
+	bpf_mtap(&sc->sc_sppp.pp_if, m, BPF_D_IN);
 
 	m_adj(m, PPPOE_HEADERLEN);
 
@@ -1848,7 +1848,7 @@ pppoe_start(struct ifnet *ifp)
 		p = mtod(m, uint8_t *);
 		PPPOE_ADD_HEADER(p, 0, sc->sc_session, len);
 
-		bpf_mtap(&sc->sc_sppp.pp_if, m);
+		bpf_mtap(&sc->sc_sppp.pp_if, m, BPF_D_OUT);
 
 		pppoe_output(sc, m);
 	}
@@ -1884,7 +1884,7 @@ pppoe_transmit(struct ifnet *ifp, struct mbuf *m)
 	p = mtod(m, uint8_t *);
 	PPPOE_ADD_HEADER(p, 0, sc->sc_session, len);
 
-	bpf_mtap(&sc->sc_sppp.pp_if, m);
+	bpf_mtap(&sc->sc_sppp.pp_if, m, BPF_D_OUT);
 
 	pppoe_output(sc, m);
 	PPPOE_UNLOCK(sc);

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.167 2017/09/26 07:42:06 knakahara Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.167.2.1 2018/07/28 04:37:46 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.167 2017/09/26 07:42:06 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.167.2.1 2018/07/28 04:37:46 pgoyette Exp $");
 
 
 
@@ -1645,7 +1645,7 @@ sipcom_start(struct ifnet *ifp)
 		/*
 		 * Pass the packet to any BPF listeners.
 		 */
-		bpf_mtap(ifp, m0);
+		bpf_mtap(ifp, m0, BPF_D_OUT);
 	}
 
 	if (txs == NULL || sc->sc_txfree == 0) {

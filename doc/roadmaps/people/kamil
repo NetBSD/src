@@ -1,9 +1,0 @@
-Things I want to finish for 8:
-
-- as much as possible from the LLDB, Swift, .NET and VirtualBox projects
-- more c11 in libc
-
-Things I want to research for 9:
-
-- turn system utilities into C libraries + add bindings for Lua
-- rebase Haiku stack on NetBSD + add Kit(s) for system utilities

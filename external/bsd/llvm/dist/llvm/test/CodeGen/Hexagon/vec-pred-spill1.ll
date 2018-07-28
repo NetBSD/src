@@ -1,9 +1,9 @@
-; RUN: llc -march=hexagon -mcpu=hexagonv60 -O2 -enable-hexagon-hvx < %s | FileCheck %s
+; RUN: llc -march=hexagon -mcpu=hexagonv60 -O2 -mattr=+hvxv60,hvx-length64b < %s | FileCheck %s
 
 ; CHECK: vmem(r{{[0-9]+}}+#3) = v{{[0-9]+}}
 ; CHECK: call puts
 ; CHECK: call print_vecpred
-; CHECK: v{{[0-9]+}}{{ *}}={{ *}}vmem(r{{[0-9]+}}+#3)
+; CHECK: v{{[0-9]+}} = vmem(r{{[0-9]+}}+#3)
 
 target triple = "hexagon"
 

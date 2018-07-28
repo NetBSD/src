@@ -1,4 +1,4 @@
-# $NetBSD: ad.sh3,v 1.39 2018/03/02 23:11:42 uwe Exp $
+# $NetBSD: ad.sh3,v 1.39.2.1 2018/07/28 04:32:59 pgoyette Exp $
 ./usr/include/gcc-4.5/tgmath.h			comp-obsolete		obsolete
 ./usr/include/gcc-4.8/tgmath.h			comp-c-include		obsolete
 ./usr/include/gcc-5/tgmath.h			comp-c-include		gcccmds,gcc=5
@@ -40,7 +40,7 @@
 ./usr/include/sh3/param.h			comp-c-include
 ./usr/include/sh3/pcb.h				comp-c-include
 ./usr/include/sh3/pmap.h			comp-c-include
-./usr/include/sh3/pmc.h				comp-c-include
+./usr/include/sh3/pmc.h				comp-obsolete		obsolete
 ./usr/include/sh3/proc.h			comp-c-include
 ./usr/include/sh3/profile.h			comp-c-include
 ./usr/include/sh3/psl.h				comp-c-include

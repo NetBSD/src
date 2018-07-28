@@ -1,4 +1,4 @@
-.\"	$NetBSD: ddb.4,v 1.174.2.1 2018/03/22 01:44:40 pgoyette Exp $
+.\"	$NetBSD: ddb.4,v 1.174.2.2 2018/07/28 04:37:24 pgoyette Exp $
 .\"
 .\" Copyright (c) 1997 - 2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -56,7 +56,7 @@
 .\" any improvements or extensions that they make and grant Carnegie Mellon
 .\" the rights to redistribute these changes.
 .\"
-.Dd March 19, 2018
+.Dd July 20, 2018
 .Dt DDB 4
 .Os
 .Sh NAME
@@ -673,12 +673,20 @@ Print the mount structure at
 If
 .Cm /f
 is specified, the complete vnode list is printed.
-.It Ic show mbuf Ns Oo Cm /c Oc Ar address
+.It Ic show mbuf Ns Oo Cm /cdv Oc Ar address
 Print the mbuf structure at
 .Ar address .
-If
-.Cm /c
-is specified, the mbufs in the chain are followed.
+Valid modifiers:
+.Bl -tag -width 4n -compact
+.It Cm /c
+The mbufs in the chain are followed.
+.It Cm /d
+The data is dumped.
+.It Cm /v
+Decode the mbuf chain as a packet.
+It currently supports Ethernet, PPP, PPPoE, ARP, IPv4, ICMP, IPv6, ICMP6, TCP
+and UDP.
+.El
 .It Ic show ncache Ar address
 Dump the namecache list associated with vnode at
 .Ar address .
@@ -742,6 +750,25 @@ of LWPs will be shown.
 If the run queue has LWPs, but the sched_whichqs bit is not set for that
 queue, the queue index will be prefixed with a
 .Sq \&! .
+.It Ic show socket Ns Oo Cm /ampv Oc
+Print usage of system's socket buffers.
+By default, empty sockets aren't printed.
+.Bl -tag -width 4n -compact
+.It Cm /a
+Print all processes which use the socket.
+.It Cm /m
+Print mbuf chain in the socket buffer.
+.It Cm /p
+By default, a process which uses the socket is printed (only one socket).
+If
+.Cm /p
+is specified, the process isn't printed.
+.It Cm /v
+Verbose mode.
+If
+.Cm /v
+is specified, all sockets are printed.
+.El
 .It Ic show uvmexp
 Print a selection of UVM counters and statistics.
 .It Ic show kernhist Oo Ar addr Oc

@@ -7,37 +7,35 @@
 ; (fabs (f32 bitcast (i32 a))) => (f32 bitcast (and (i32 a), 0x7FFFFFFF))
 ; unless isFabsFree returns true
 
-; FUNC-LABEL: {{^}}fabs_fn_free:
+; FUNC-LABEL: {{^}}s_fabs_fn_free:
 ; R600-NOT: AND
 ; R600: |PV.{{[XYZW]}}|
 
-; GCN: v_and_b32
-
-define amdgpu_kernel void @fabs_fn_free(float addrspace(1)* %out, i32 %in) {
+; GCN: s_and_b32 s{{[0-9]+}}, s{{[0-9]+}}, 0x7fffffff
+define amdgpu_kernel void @s_fabs_fn_free(float addrspace(1)* %out, i32 %in) {
   %bc= bitcast i32 %in to float
   %fabs = call float @fabs(float %bc)
   store float %fabs, float addrspace(1)* %out
   ret void
 }
 
-; FUNC-LABEL: {{^}}fabs_free:
+; FUNC-LABEL: {{^}}s_fabs_free:
 ; R600-NOT: AND
 ; R600: |PV.{{[XYZW]}}|
 
-; GCN: v_and_b32
-
-define amdgpu_kernel void @fabs_free(float addrspace(1)* %out, i32 %in) {
+; GCN: s_and_b32 s{{[0-9]+}}, s{{[0-9]+}}, 0x7fffffff
+define amdgpu_kernel void @s_fabs_free(float addrspace(1)* %out, i32 %in) {
   %bc= bitcast i32 %in to float
   %fabs = call float @llvm.fabs.f32(float %bc)
   store float %fabs, float addrspace(1)* %out
   ret void
 }
 
-; FUNC-LABEL: {{^}}fabs_f32:
+; FUNC-LABEL: {{^}}s_fabs_f32:
 ; R600: |{{(PV|T[0-9])\.[XYZW]}}|
 
-; GCN: v_and_b32
-define amdgpu_kernel void @fabs_f32(float addrspace(1)* %out, float %in) {
+; GCN: s_and_b32 s{{[0-9]+}}, s{{[0-9]+}}, 0x7fffffff
+define amdgpu_kernel void @s_fabs_f32(float addrspace(1)* %out, float %in) {
   %fabs = call float @llvm.fabs.f32(float %in)
   store float %fabs, float addrspace(1)* %out
   ret void
@@ -72,10 +70,11 @@ define amdgpu_kernel void @fabs_v4f32(<4 x float> addrspace(1)* %out, <4 x float
 }
 
 ; GCN-LABEL: {{^}}fabs_fn_fold:
-; SI: s_load_dword [[ABS_VALUE:s[0-9]+]], s[{{[0-9]+:[0-9]+}}], 0xb
-; VI: s_load_dword [[ABS_VALUE:s[0-9]+]], s[{{[0-9]+:[0-9]+}}], 0x2c
+; SI: s_load_dwordx2 s{{\[}}[[ABS_VALUE:[0-9]+]]:[[MUL_VAL:[0-9]+]]{{\]}}, s[{{[0-9]+:[0-9]+}}], 0xb
+; VI: s_load_dwordx2 s{{\[}}[[ABS_VALUE:[0-9]+]]:[[MUL_VAL:[0-9]+]]{{\]}}, s[{{[0-9]+:[0-9]+}}], 0x2c
 ; GCN-NOT: and
-; GCN: v_mul_f32_e64 v{{[0-9]+}}, |[[ABS_VALUE]]|, v{{[0-9]+}}
+; GCN: v_mov_b32_e32 [[V_MUL_VI:v[0-9]+]], s[[MUL_VAL]]
+; GCN: v_mul_f32_e64 v{{[0-9]+}}, |s[[ABS_VALUE]]|, [[V_MUL_VI]]
 define amdgpu_kernel void @fabs_fn_fold(float addrspace(1)* %out, float %in0, float %in1) {
   %fabs = call float @fabs(float %in0)
   %fmul = fmul float %fabs, %in1
@@ -83,15 +82,28 @@ define amdgpu_kernel void @fabs_fn_fold(float addrspace(1)* %out, float %in0, fl
   ret void
 }
 
-; GCN-LABEL: {{^}}fabs_fold:
-; SI: s_load_dword [[ABS_VALUE:s[0-9]+]], s[{{[0-9]+:[0-9]+}}], 0xb
-; VI: s_load_dword [[ABS_VALUE:s[0-9]+]], s[{{[0-9]+:[0-9]+}}], 0x2c
+; FUNC-LABEL: {{^}}fabs_fold:
+; SI: s_load_dwordx2 s{{\[}}[[ABS_VALUE:[0-9]+]]:[[MUL_VAL:[0-9]+]]{{\]}}, s[{{[0-9]+:[0-9]+}}], 0xb
+; VI: s_load_dwordx2 s{{\[}}[[ABS_VALUE:[0-9]+]]:[[MUL_VAL:[0-9]+]]{{\]}}, s[{{[0-9]+:[0-9]+}}], 0x2c
 ; GCN-NOT: and
-; GCN: v_mul_f32_e64 v{{[0-9]+}}, |[[ABS_VALUE]]|, v{{[0-9]+}}
+; GCN: v_mov_b32_e32 [[V_MUL_VI:v[0-9]+]], s[[MUL_VAL]]
+; GCN: v_mul_f32_e64 v{{[0-9]+}}, |s[[ABS_VALUE]]|, [[V_MUL_VI]]
 define amdgpu_kernel void @fabs_fold(float addrspace(1)* %out, float %in0, float %in1) {
   %fabs = call float @llvm.fabs.f32(float %in0)
   %fmul = fmul float %fabs, %in1
   store float %fmul, float addrspace(1)* %out
+  ret void
+}
+
+; Make sure we turn some integer operations back into fabs
+; FUNC-LABEL: {{^}}bitpreserve_fabs_f32:
+; GCN: v_add_f32_e64 v{{[0-9]+}}, |s{{[0-9]+}}|, 1.0
+define amdgpu_kernel void @bitpreserve_fabs_f32(float addrspace(1)* %out, float %in) {
+  %in.bc = bitcast float %in to i32
+  %int.abs = and i32 %in.bc, 2147483647
+  %bc = bitcast i32 %int.abs to float
+  %fadd = fadd float %bc, 1.0
+  store float %fadd, float addrspace(1)* %out
   ret void
 }
 

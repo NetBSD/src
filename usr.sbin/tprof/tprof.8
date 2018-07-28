@@ -1,4 +1,4 @@
-.\"	$NetBSD: tprof.8,v 1.3 2011/12/09 15:26:48 yamt Exp $
+.\"	$NetBSD: tprof.8,v 1.3.40.1 2018/07/28 04:38:15 pgoyette Exp $
 .\"
 .\" Copyright (c)2011 YAMAMOTO Takashi,
 .\" All rights reserved.
@@ -24,26 +24,23 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" ------------------------------------------------------------
-.Dd November 26, 2011
+.Dd July 24, 2018
 .Dt TPROF 8
 .Os
-.\" ------------------------------------------------------------
 .Sh NAME
 .Nm tprof
 .Nd record tprof profiling samples
-.\" ------------------------------------------------------------
 .Sh SYNOPSIS
 .Nm
-.Op Fl c
-.Op Fl o Ar file
-.Ar command ...
-.\" ------------------------------------------------------------
+.Ar op
+.Op Ar arguments
 .Sh DESCRIPTION
 The
 .Nm
-is a sampling based profiler.
+tool can be used to monitor hardware events (PMCs) during the execution of
+certain commands.
 .Pp
+The
 .Nm
 utility makes the kernel driver start profiling,
 executes the specified command,
@@ -57,24 +54,86 @@ pseudo driver and a suitable backend should be loaded beforehand.
 The
 .Nm
 utility accepts the following options.
-.Bl -tag -width hogehoge
-.It Fl o Ar file
-Write the collected samples to the file named
-.Ar file .
+The first argument,
+.Ar op ,
+specifies the action to take.
+Valid actions are:
+.Bl -tag -width offline -offset indent
+.It list
+Display a list of performance counter events available on the system.
+.It monitor Xo
+.Fl e
+.Ar name:option
+.Op Fl o Ar outfile
+.Ar command
+.Xc
+Monitor the execution of command
+.Ar command .
+.Ar name
+specifies the name of the event to count; it must be taken from the list of
+available events.
+.Ar option
+specifies the source of the event; it must be a combination of
+.Ar u
+(userland) and
+.Ar k
+(kernel).
+The collected samples are written into the file
+.Ar outfile
+if specified.
 The default is
 .Dq Pa tprof.out .
-.It Fl c
-Write the collected samples to the standard output.
-Note that the output is a binary stream.
+.It analyze Xo
+.Op Fl CkLPs
+.Op Fl p Ar pid
+.Ar file
+.Xc
+Analyze the samples produced by a previous run of
+.Nm tprof ,
+stored in
+.Ar file ,
+and generate a plain text representation of them.
+.Bl -tag -width XPXpidXX -offset indent
+.It Fl C
+Don't distinguish CPUs.
+All samples are treated as its CPU number is 0.
+.It Fl k
+Kernel only.
+Ignore samples for userland code.
+.It Fl L
+Don't distinguish LWPs.
+All samples are treated as its LWP ID is 0.
+.It Fl P
+Don't distinguish processes.
+All samples are treated as its PID is 0.
+.It Fl p Ar pid
+Process only samples for the process with PID
+.Ar pid
+and ignore the rest.
+.It Fl s
+Per symbol.
 .El
-.\" ------------------------------------------------------------
+.El
 .Sh EXAMPLES
-The following command profiles the system during 1 second and shows
-the top-10 kernel functions which likely consumed CPU cycles.
-.Bd -literal
-	tprof -c sleep 1 2>/dev/null | tpfmt -skCLP | head -10
-.Ed
-.\" ------------------------------------------------------------
+The following command profiles the system during 20 seconds and writes the
+samples into the file myfile.out.
+.Dl # tprof monitor -e llc-misses:k -o myfile.out sleep 20
+The following command displays the results of the sampling.
+.Dl # tprof analyze myfile.out
+.Sh SUPPORT
+The following CPU models are supported:
+.Bl -hyphen -compact -offset indent
+.It
+ARMv7
+.It
+ARMv8
+.It
+x86 AMD Family 10h
+.It
+x86 Intel Generic (all Intel CPUs)
+.It
+x86 Intel Skylake/Kabylake
+.El
 .Sh DIAGNOSTICS
 The
 .Nm
@@ -97,23 +156,17 @@ exceeds the limit.
 The number of samples dropped because the buffers containing the samples
 were dropped.
 .El
-.\" ------------------------------------------------------------
-.\".Sh HISTORY
-.\"The
-.\".Nm
-.\"utility first appeared in
-.\".Nx XXX .
-.\" ------------------------------------------------------------
 .Sh SEE ALSO
-.Xr tpfmt 1 ,
 .Xr tprof 4
-.\" ------------------------------------------------------------
 .Sh AUTHORS
+.An -nosplit
 The
 .Nm
 utility is written by
 .An YAMAMOTO Takashi .
-.\" ------------------------------------------------------------
+It was revamped by
+.An Maxime Villard
+in 2018.
 .Sh CAVEATS
 The contents and representation of recorded samples are undocumented and
 will likely be changed for future releases of

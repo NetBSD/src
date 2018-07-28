@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.94 2017/02/23 07:57:10 ozaki-r Exp $	*/
+/*	$NetBSD: if.c,v 1.94.10.1 2018/07/28 04:38:14 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)if.c	8.2 (Berkeley) 2/21/94";
 #else
-__RCSID("$NetBSD: if.c,v 1.94 2017/02/23 07:57:10 ozaki-r Exp $");
+__RCSID("$NetBSD: if.c,v 1.94.10.1 2018/07/28 04:38:14 pgoyette Exp $");
 #endif
 #endif /* not lint */
 
@@ -152,14 +152,17 @@ intpr_header(void)
 			       "Ibytes", "Obytes");
 		} else {
 			printf("%-5.5s %-5.5s %-13.13s %-17.17s "
-			       "%8.8s %5.5s %8.8s %5.5s %5.5s",
-			       "Name", "Mtu", "Network", "Address", "Ipkts", "Ierrs",
-			       "Opkts", "Oerrs", "Colls");
+			    "%8.8s %5.5s",
+			    "Name", "Mtu", "Network", "Address", "Ipkts", "Ierrs");
+			if (dflag)
+				printf(" %6.6s", "Idrops");
+			printf(" %8.8s %5.5s %5.5s",
+			    "Opkts", "Oerrs", "Colls");
 		}
+		if (dflag)
+			printf(" %6.6s", "Odrops");
 		if (tflag)
 			printf(" %4.4s", "Time");
-		if (dflag)
-			printf(" %5.5s", "Drops");
 		putchar('\n');
 	}
 }
@@ -617,19 +620,21 @@ print_addr(const int ifindex, struct sockaddr *sa,
 		else
 			printf("%10llu", (unsigned long long)ifd->ifi_obytes);
 	} else {
-		printf("%8llu %5llu %8llu %5llu %5llu",
+		printf("%8llu %5llu",
 			(unsigned long long)ifd->ifi_ipackets,
-			(unsigned long long)ifd->ifi_ierrors,
+			(unsigned long long)ifd->ifi_ierrors);
+		if (dflag)
+			printf(" %6" PRIu64, ifd->ifi_iqdrops);
+		printf(" %8llu %5llu %5llu",
 			(unsigned long long)ifd->ifi_opackets,
 			(unsigned long long)ifd->ifi_oerrors,
 			(unsigned long long)ifd->ifi_collisions);
 	}
+	if (dflag)
+		printf(" %6lld", ifnet ?
+		    (unsigned long long)ifnet->if_snd.ifq_drops : 0);
 	if (tflag)
 		printf(" %4d", ifnet ? ifnet->if_timer : 0);
-	if (dflag)
-		printf(" %5lld", ifnet ?
-		    (unsigned long long)ifnet->if_snd.ifq_drops :
-		    ifd->ifi_iqdrops);
 	putchar('\n');
 }
 

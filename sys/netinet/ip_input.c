@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.376.2.3 2018/05/21 04:36:16 pgoyette Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.376.2.4 2018/07/28 04:38:10 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.376.2.3 2018/05/21 04:36:16 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.376.2.4 2018/07/28 04:38:10 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -752,7 +752,7 @@ ours:
 		/*
 		 * Pass to IP reassembly mechanism.
 		 */
-		if (ip_reass_packet(&m, ip) != 0) {
+		if (ip_reass_packet(&m) != 0) {
 			/* Failed; invalid fragment(s) or packet. */
 			goto out;
 		}

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.1174.2.3 2018/06/25 07:25:42 pgoyette Exp $
+# $NetBSD: GENERIC,v 1.1174.2.4 2018/07/28 04:37:34 pgoyette Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.1174.2.3 $"
+#ident		"GENERIC-$Revision: 1.1174.2.4 $"
 
 maxusers	64		# estimated number of users
 
@@ -44,7 +44,6 @@ viac7temp*	at cpu?		# VIA C7 temperature sensor
 vmt0		at cpu0		# VMware Tools
 
 options 	MTRR		# memory-type range register syscall support
-options 	PMC		# performance-monitoring counters support
 
 options 	MULTIBOOT	# Multiboot support (see multiboot(8))
 
@@ -299,7 +298,6 @@ config		netbsd	root on ? type ?
 #options 	APM_V10_ONLY		# Use only the APM 1.0 calls
 #options 	APM_NO_POWEROFF		# Don't power off on halt(8)
 #options 	APM_POWER_PRINT		# Print stats on the console
-#options 	APM_DISABLE_INTERRUPTS=0 # Don't disable interrupts
 
 
 # Basic Bus Support
@@ -558,7 +556,6 @@ sysbeep0	at pcppi?
 #savagedrm*	at drm?		# S3 Savage DRM driver
 #sisdrm* 	at drm?		# SiS DRM driver
 #tdfxdrm*	at drm?		# 3dfx (voodoo) DRM driver
-#viadrm* 	at drm?		# VIA DRM driver
 
 # DRMKMS drivers
 i915drmkms*	at pci? dev ? function ?

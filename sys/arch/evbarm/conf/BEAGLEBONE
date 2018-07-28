@@ -1,5 +1,5 @@
 #
-#	$NetBSD: BEAGLEBONE,v 1.43 2017/06/26 03:15:16 sevan Exp $
+#	$NetBSD: BEAGLEBONE,v 1.43.4.1 2018/07/28 04:37:31 pgoyette Exp $
 #
 #	BEAGLEBONE -- TI AM335x board Kernel
 #
@@ -104,7 +104,7 @@ gpio* 		at gpiobus?
 # I2C Controller
 tiiic0		at obio0 addr 0x44e0b000 size 0x1000 intr 70
 iic*		at tiiic?
-seeprom*	at iic0 addr 0x50 size 32768
+seeprom*	at iic0 addr 0x50 flags 256	# 32768 bytes
 tps65217pmic*	at iic0 addr 0x24
 
 # On-board 16550 UARTs

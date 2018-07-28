@@ -1,10 +1,10 @@
 #!/bin/sh
 #
-# $NetBSD: pf,v 1.10 2011/11/21 20:56:21 darcy Exp $
+# $NetBSD: pf,v 1.10.40.1 2018/07/28 04:33:03 pgoyette Exp $
 #
 
 # PROVIDE: pf
-# REQUIRE: root bootconf mountcritlocal tty network dhclient
+# REQUIRE: root bootconf mountcritlocal tty network dhcpcd
 # BEFORE: NETWORKING
 
 $_rc_subr_loaded . /etc/rc.subr

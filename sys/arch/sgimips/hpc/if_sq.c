@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sq.c,v 1.48 2016/12/15 09:28:04 ozaki-r Exp $	*/
+/*	$NetBSD: if_sq.c,v 1.48.14.1 2018/07/28 04:37:40 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2001 Rafal K. Boni
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sq.c,v 1.48 2016/12/15 09:28:04 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sq.c,v 1.48.14.1 2018/07/28 04:37:40 pgoyette Exp $");
 
 
 #include <sys/param.h>
@@ -636,7 +636,7 @@ sq_start(struct ifnet *ifp)
 		/*
 		 * Pass the packet to any BPF listeners.
 		 */
-		bpf_mtap(ifp, m0);
+		bpf_mtap(ifp, m0, BPF_D_OUT);
 		if (m != NULL) {
 			m_freem(m0);
 			m0 = m;

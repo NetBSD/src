@@ -1,4 +1,4 @@
-/* $NetBSD: coretemp.c,v 1.35 2016/07/07 06:55:40 msaitoh Exp $ */
+/* $NetBSD: coretemp.c,v 1.35.16.1 2018/07/28 04:37:42 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coretemp.c,v 1.35 2016/07/07 06:55:40 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coretemp.c,v 1.35.16.1 2018/07/28 04:37:42 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -265,14 +265,12 @@ coretemp_tjmax(device_t self)
 	model = CPUID_TO_MODEL(ci->ci_signature);
 	stepping = CPUID_TO_STEPPING(ci->ci_signature);
 
+	/*
+	 * Use 100C as the initial value.
+	 */
 	sc->sc_tjmax = 100;
 
-	/*
-	 * On some Core 2 CPUs, there is an undocumented
-	 * MSR that tells if Tj(max) is 100 or 85. Note
-	 * that MSR_IA32_EXT_CONFIG is not safe on all CPUs.
-	 */
-	if ((model == 0x0F && stepping >= 2) || (model == 0x0E)) {
+	if ((model == 0x0f && stepping >= 2) || (model == 0x0e)) {
 
 		if (rdmsr_safe(MSR_IA32_EXT_CONFIG, &msr) == EFAULT)
 			return;
@@ -285,6 +283,12 @@ coretemp_tjmax(device_t self)
 		/* The mobile Penryn family. */
 		sc->sc_tjmax = 105;
 		return;
+	} else if (model == 0x1c) {
+		if (stepping == 0x0a) {
+			/* 45nm Atom D400, N400 and D500 series */
+			sc->sc_tjmax = 100;
+		} else
+			sc->sc_tjmax = 90;
 	} else {
 		/*
 		 * Attempt to get Tj(max) from IA32_TEMPERATURE_TARGET,

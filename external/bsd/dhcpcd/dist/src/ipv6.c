@@ -253,6 +253,7 @@ ipv6_makestableprivate1(struct in6_addr *addr,
     const struct in6_addr *prefix, int prefix_len,
     const unsigned char *netiface, size_t netiface_len,
     const unsigned char *netid, size_t netid_len,
+    unsigned short vlanid,
     uint32_t *dad_counter,
     const unsigned char *secret, size_t secret_len)
 {
@@ -267,6 +268,8 @@ ipv6_makestableprivate1(struct in6_addr *addr,
 
 	l = (size_t)(ROUNDUP8(prefix_len) / NBBY);
 	len = l + netiface_len + netid_len + sizeof(*dad_counter) + secret_len;
+	if (vlanid != 0)
+		len += sizeof(vlanid);
 	if (len > sizeof(buf)) {
 		errno = ENOBUFS;
 		return -1;
@@ -281,6 +284,12 @@ ipv6_makestableprivate1(struct in6_addr *addr,
 		p += netiface_len;
 		memcpy(p, netid, netid_len);
 		p += netid_len;
+		/* Don't use a vlanid if not set.
+		 * This ensures prior versions have the same unique address. */
+		if (vlanid != 0) {
+			memcpy(p, &vlanid, sizeof(vlanid));
+			p += sizeof(vlanid);
+		}
 		memcpy(p, dad_counter, sizeof(*dad_counter));
 		p += sizeof(*dad_counter);
 		memcpy(p, secret, secret_len);
@@ -333,7 +342,7 @@ ipv6_makestableprivate(struct in6_addr *addr,
 	r = ipv6_makestableprivate1(addr, prefix, prefix_len,
 	    ifp->hwaddr, ifp->hwlen,
 	    ifp->ssid, ifp->ssid_len,
-	    &dad,
+	    ifp->vlanid, &dad,
 	    ifp->ctx->secret, ifp->ctx->secret_len);
 
 	if (r == 0)

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2017/01/11 12:02:25 joerg Exp $
+#	$NetBSD: Makefile,v 1.5.12.1 2018/07/28 04:33:04 pgoyette Exp $
 
 PROG_CXX=	clang-format
 NOMAN=		yes
@@ -12,6 +12,7 @@ SRCS=	ClangFormat.cpp
 CLANG_LIBS+= \
 	clangFormat \
 	clangToolingCore \
+	clangToolingInclusions \
 	clangTooling \
 	clangFrontend \
 	clangSerialization \

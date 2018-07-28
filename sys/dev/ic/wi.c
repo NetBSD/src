@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.244.2.1 2018/06/25 07:25:50 pgoyette Exp $	*/
+/*	$NetBSD: wi.c,v 1.244.2.2 2018/07/28 04:37:45 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.244.2.1 2018/06/25 07:25:50 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.244.2.2 2018/07/28 04:37:45 pgoyette Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -1177,7 +1177,7 @@ wi_start(struct ifnet *ifp)
 			ifp->if_opackets++;
 			m_copydata(m0, 0, ETHER_HDR_LEN,
 			    (void *)&frmhdr.wi_ehdr);
-			bpf_mtap(ifp, m0);
+			bpf_mtap(ifp, m0, BPF_D_OUT);
 
 			eh = mtod(m0, struct ether_header *);
 			ni = ieee80211_find_txnode(ic, eh->ether_dhost);
@@ -1198,7 +1198,7 @@ wi_start(struct ifnet *ifp)
 			wh = mtod(m0, struct ieee80211_frame *);
 		} else
 			break;
-		bpf_mtap3(ic->ic_rawbpf, m0);
+		bpf_mtap3(ic->ic_rawbpf, m0, BPF_D_OUT);
 		frmhdr.wi_tx_ctl =
 		    htole16(WI_ENC_TX_802_11|WI_TXCNTL_TX_EX|WI_TXCNTL_TX_OK);
 #ifndef	IEEE80211_NO_HOSTAP
@@ -1228,7 +1228,8 @@ wi_start(struct ifnet *ifp)
 			    htole16(ic->ic_bss->ni_chan->ic_flags);
 			/* TBD tap->wt_flags */
 
-			bpf_mtap2(sc->sc_drvbpf, tap, tap->wt_ihdr.it_len, m0);
+			bpf_mtap2(sc->sc_drvbpf, tap, tap->wt_ihdr.it_len, m0,
+			    BPF_D_OUT);
 		}
 
 		rd = SLIST_FIRST(&sc->sc_rssdfree);
@@ -1756,7 +1757,8 @@ wi_rx_intr(struct wi_softc *sc)
 			tap->wr_flags |= IEEE80211_RADIOTAP_F_CFP;
 
 		/* XXX IEEE80211_RADIOTAP_F_WEP */
-		bpf_mtap2(sc->sc_drvbpf, tap, tap->wr_ihdr.it_len, m);
+		bpf_mtap2(sc->sc_drvbpf, tap, tap->wr_ihdr.it_len, m,
+		    BPF_D_IN);
 	}
 
 	/* synchronize driver's BSSID with firmware's BSSID */

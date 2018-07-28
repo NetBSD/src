@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.245.2.5 2018/06/25 07:26:07 pgoyette Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.245.2.6 2018/07/28 04:38:10 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -66,13 +66,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.245.2.5 2018/06/25 07:26:07 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.245.2.6 2018/07/28 04:38:10 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
 #include "opt_ipsec.h"
 #include "opt_inet_csum.h"
-#include "opt_ipkdb.h"
 #include "opt_mbuftrace.h"
 #include "opt_net_mpsafe.h"
 #endif
@@ -117,10 +116,6 @@ __KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.245.2.5 2018/06/25 07:26:07 pgoyett
 #ifdef IPSEC
 #include <netipsec/ipsec.h>
 #include <netipsec/esp.h>
-#endif
-
-#ifdef IPKDB
-#include <ipkdb/ipkdb.h>
 #endif
 
 int udpcksum = 1;
@@ -434,17 +429,6 @@ udp_input(struct mbuf *m, ...)
 			goto bad;
 		}
 		UDP_STATINC(UDP_STAT_NOPORT);
-#ifdef IPKDB
-		if (checkipkdb(&ip->ip_src, uh->uh_sport, uh->uh_dport,
-		    m, iphlen + sizeof(struct udphdr),
-		    m->m_pkthdr.len - iphlen - sizeof(struct udphdr))) {
-			/*
-			 * It was a debugger connect packet,
-			 * just drop it now
-			 */
-			goto bad;
-		}
-#endif
 		icmp_error(m, ICMP_UNREACH, ICMP_UNREACH_PORT, 0, 0);
 		m = NULL;
 	}

@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.390.2.3 2018/06/25 07:25:42 pgoyette Exp $
+#	$NetBSD: files.i386,v 1.390.2.4 2018/07/28 04:37:34 pgoyette Exp $
 #
 # new style config file for i386 architecture
 #
@@ -18,7 +18,6 @@ defparam		CPURESET_DELAY
 # Obsolete Xbox support
 obsolete defflag	XBOX
 
-defflag			PMC
 defflag			KASLR
 
 # User-settable LDT (used by WINE)

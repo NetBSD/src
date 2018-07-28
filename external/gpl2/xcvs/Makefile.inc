@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.4 2016/01/30 16:47:00 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.4.14.1 2018/07/28 04:37:15 pgoyette Exp $
 
 .include <bsd.own.mk>
 
@@ -24,3 +24,5 @@ COBJDIR!=cd $(.CURDIR)/../../lib/libcvs && ${PRINTOBJDIR}
 LIBDIFF=	${DOBJDIR}/libdiff.a
 LIBCVS=		${COBJDIR}/libcvs.a
 .endif
+
+SANITIZER_RENAME_SYMBOL+=	regcomp regerror regexec regfree

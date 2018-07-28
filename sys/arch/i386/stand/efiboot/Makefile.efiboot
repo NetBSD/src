@@ -1,9 +1,10 @@
-# $NetBSD: Makefile.efiboot,v 1.9.10.4 2018/06/25 07:25:42 pgoyette Exp $
+# $NetBSD: Makefile.efiboot,v 1.9.10.5 2018/07/28 04:37:35 pgoyette Exp $
 
 S=		${.CURDIR}/../../../../..
 
 NOMAN=		# defined
 NOPIE=		# defined
+NOLIBCSANITIZER=# defined
 NOSANITIZER=	# defined
 NORELRO=	# defined
 PROG?=		boot.efi

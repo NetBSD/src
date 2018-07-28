@@ -1,4 +1,4 @@
-# $NetBSD: md.sun2,v 1.21 2015/12/24 14:16:46 christos Exp $
+# $NetBSD: md.sun2,v 1.21.14.1 2018/07/28 04:32:59 pgoyette Exp $
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/sun2				comp-c-include
 ./usr/include/sun2/_G_config.h			comp-obsolete		obsolete
@@ -42,7 +42,7 @@
 ./usr/include/sun2/param.h			comp-c-include
 ./usr/include/sun2/pcb.h			comp-c-include
 ./usr/include/sun2/pmap.h			comp-c-include
-./usr/include/sun2/pmc.h			comp-c-include
+./usr/include/sun2/pmc.h			comp-obsolete		obsolete
 ./usr/include/sun2/proc.h			comp-c-include
 ./usr/include/sun2/profile.h			comp-c-include
 ./usr/include/sun2/promlib.h			comp-c-include

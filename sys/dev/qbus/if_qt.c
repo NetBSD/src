@@ -1,4 +1,4 @@
-/*	$NetBSD: if_qt.c,v 1.21.14.1 2018/06/25 07:26:01 pgoyette Exp $	*/
+/*	$NetBSD: if_qt.c,v 1.21.14.2 2018/07/28 04:37:57 pgoyette Exp $	*/
 /*
  * Copyright (c) 1992 Steven M. Schultz
  * All rights reserved.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_qt.c,v 1.21.14.1 2018/06/25 07:26:01 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_qt.c,v 1.21.14.2 2018/07/28 04:37:57 pgoyette Exp $");
 
 #include "opt_inet.h"
 
@@ -455,7 +455,7 @@ qtstart(struct ifnet *ifp)
 		if ((rp->tmd3 & TMD3_OWN) == 0)
 			panic("qtstart");
 
-		bpf_mtap(ifp, m);
+		bpf_mtap(ifp, m, BPF_D_OUT);
 
 		len = if_ubaput(&sc->sc_ifuba, &sc->sc_ifw[sc->xnext], m);
 		if (len < MINPACKETSIZE)

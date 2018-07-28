@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_i2c.c,v 1.2 2015/12/16 12:17:45 jmcneill Exp $ */
+/* $NetBSD: fdt_i2c.c,v 1.2.20.1 2018/07/28 04:37:44 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,11 +27,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_i2c.c,v 1.2 2015/12/16 12:17:45 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_i2c.c,v 1.2.20.1 2018/07/28 04:37:44 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
 #include <sys/kmem.h>
+#include <sys/queue.h>
 
 #include <libfdt.h>
 #include <dev/fdt/fdtvar.h>
@@ -41,10 +42,11 @@ struct fdtbus_i2c_controller {
 	int i2c_phandle;
 	const struct fdtbus_i2c_controller_func *i2c_funcs;
 
-	struct fdtbus_i2c_controller *i2c_next;
+	LIST_ENTRY(fdtbus_i2c_controller) i2c_next;
 };
 
-static struct fdtbus_i2c_controller *fdtbus_i2c = NULL;
+static LIST_HEAD(, fdtbus_i2c_controller) fdtbus_i2c_controllers =
+    LIST_HEAD_INITIALIZER(fdtbus_i2c_controllers);
 
 int
 fdtbus_register_i2c_controller(device_t dev, int phandle,
@@ -57,8 +59,7 @@ fdtbus_register_i2c_controller(device_t dev, int phandle,
 	i2c->i2c_phandle = phandle;
 	i2c->i2c_funcs = funcs;
 
-	i2c->i2c_next = fdtbus_i2c;
-	fdtbus_i2c = i2c;
+	LIST_INSERT_HEAD(&fdtbus_i2c_controllers, i2c, i2c_next);
 
 	return 0;
 }
@@ -68,10 +69,9 @@ fdtbus_get_i2c_controller(int phandle)
 {
 	struct fdtbus_i2c_controller *i2c;
 
-	for (i2c = fdtbus_i2c; i2c; i2c = i2c->i2c_next) {
-		if (i2c->i2c_phandle == phandle) {
+	LIST_FOREACH(i2c, &fdtbus_i2c_controllers, i2c_next) {
+		if (i2c->i2c_phandle == phandle)
 			return i2c;
-		}
 	}
 
 	return NULL;
@@ -87,4 +87,27 @@ fdtbus_get_i2c_tag(int phandle)
 		return NULL;
 
 	return i2c->i2c_funcs->get_tag(i2c->i2c_dev);
+}
+
+device_t
+fdtbus_attach_i2cbus(device_t dev, int phandle, i2c_tag_t tag, cfprint_t print)
+{
+	struct i2cbus_attach_args iba;
+	prop_dictionary_t devs;
+	u_int address_cells;
+
+	devs = prop_dictionary_create();
+	if (of_getprop_uint32(phandle, "#address-cells", &address_cells))
+		address_cells = 1;
+
+	of_enter_i2c_devs(devs, phandle, address_cells * 4, 0);
+
+	memset(&iba, 0, sizeof(iba));
+	iba.iba_tag = tag;
+	iba.iba_child_devices = prop_dictionary_get(devs, "i2c-child-devices");
+	if (iba.iba_child_devices)
+		prop_object_retain(iba.iba_child_devices);
+	prop_object_release(devs);
+
+	return config_found_ia(dev, "i2cbus", &iba, print);
 }

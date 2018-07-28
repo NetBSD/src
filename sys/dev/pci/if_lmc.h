@@ -1,5 +1,5 @@
 /*-
- * $NetBSD: if_lmc.h,v 1.24 2017/01/24 09:05:28 ozaki-r Exp $
+ * $NetBSD: if_lmc.h,v 1.24.12.1 2018/07/28 04:37:46 pgoyette Exp $
  *
  * Copyright (c) 2002-2006 David Boggs. (boggs@boggs.palo-alto.ca.us)
  * All rights reserved.
@@ -984,7 +984,6 @@ typedef int intr_return_t;
 # define SLEEP(usecs)		tsleep(sc, PZERO, DEVICE_NAME, 1+(usecs/tick))
 # define DMA_SYNC(map, size, flags) bus_dmamap_sync(ring->tag, map, 0, size, flags)
 # define DMA_LOAD(map, addr, size)  bus_dmamap_load(ring->tag, map, addr, size, 0, BUS_DMA_NOWAIT)
-#  define LMC_BPF_MTAP(sc, mbuf)	bpf_mtap_softint((sc)->ifp, mbuf)
 #  define LMC_BPF_ATTACH(sc, dlt, len)			\
 	do {						\
 		bpf_attach((sc)->ifp, dlt, len);	\

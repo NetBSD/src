@@ -1,4 +1,4 @@
-/*	$NetBSD: athn.c,v 1.17 2017/10/23 09:25:11 msaitoh Exp $	*/
+/*	$NetBSD: athn.c,v 1.17.2.1 2018/07/28 04:37:44 pgoyette Exp $	*/
 /*	$OpenBSD: athn.c,v 1.83 2014/07/22 13:12:11 mpi Exp $	*/
 
 /*-
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: athn.c,v 1.17 2017/10/23 09:25:11 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: athn.c,v 1.17.2.1 2018/07/28 04:37:44 pgoyette Exp $");
 
 #ifndef _MODULE
 #include "athn_usb.h"		/* for NATHN_USB */
@@ -2712,12 +2712,12 @@ athn_start(struct ifnet *ifp)
 			continue;
 		}
 
-		bpf_mtap(ifp, m);
+		bpf_mtap(ifp, m, BPF_D_OUT);
 
 		if ((m = ieee80211_encap(ic, m, ni)) == NULL)
 			continue;
  sendit:
-		bpf_mtap3(ic->ic_rawbpf, m);
+		bpf_mtap3(ic->ic_rawbpf, m, BPF_D_OUT);
 
 		if (sc->sc_ops.tx(sc, m, ni, 0) != 0) {
 			ieee80211_free_node(ni);

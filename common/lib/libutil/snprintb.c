@@ -1,4 +1,4 @@
-/*	$NetBSD: snprintb.c,v 1.17 2017/10/14 18:41:41 ryo Exp $	*/
+/*	$NetBSD: snprintb.c,v 1.17.2.1 2018/07/28 04:32:57 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #  include <sys/cdefs.h>
 #  if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: snprintb.c,v 1.17 2017/10/14 18:41:41 ryo Exp $");
+__RCSID("$NetBSD: snprintb.c,v 1.17.2.1 2018/07/28 04:32:57 pgoyette Exp $");
 #  endif
 
 #  include <sys/types.h>
@@ -51,7 +51,7 @@ __RCSID("$NetBSD: snprintb.c,v 1.17 2017/10/14 18:41:41 ryo Exp $");
 #  include <errno.h>
 # else /* ! _KERNEL */
 #  include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: snprintb.c,v 1.17 2017/10/14 18:41:41 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: snprintb.c,v 1.17.2.1 2018/07/28 04:32:57 pgoyette Exp $");
 #  include <sys/param.h>
 #  include <sys/inttypes.h>
 #  include <sys/systm.h>
@@ -175,7 +175,7 @@ snprintb_m(char *buf, size_t buflen, const char *bitfmt, uint64_t val,
 		/* old (standard) format. */
 		for (;(bit = *bitfmt) != 0;) {
 			cur_fmt = bitfmt++;
-			if (val & (1 << (bit - 1))) {
+			if (val & (1U << (bit - 1))) {
 				PUTSEP;
 				if (restart)
 					continue;

@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.243.2.4 2018/06/25 07:25:10 pgoyette Exp $
+# $NetBSD: mi,v 1.243.2.5 2018/07/28 04:33:00 pgoyette Exp $
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib,compatfile
@@ -95,6 +95,7 @@
 ./usr/lib/liblber_g.a				comp-c-debuglib		debuglib,ldap,compatfile
 ./usr/lib/libldap_g.a				comp-c-debuglib		debuglib,ldap,compatfile
 ./usr/lib/libldap_r_g.a				comp-c-debuglib		debuglib,ldap,compatfile
+./usr/lib/liblsan_g.a				comp-c-debuglib		debuglib,compatfile,gcc
 ./usr/lib/liblua_g.a				comp-c-debuglib		debuglib,compatfile
 ./usr/lib/liblwres_g.a				comp-c-debuglib		debuglib,compatfile
 ./usr/lib/liblzf_g.a				comp-c-debuglib		debuglib,compatfile
@@ -318,7 +319,7 @@
 ./usr/libdata/debug/sbin/chown.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/clri.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/devpubd.debug		comp-sysutil-debug	debug
-./usr/libdata/debug/sbin/dhclient.debug		comp-dhclient-debug	debug
+./usr/libdata/debug/sbin/dhclient.debug		comp-obsolete		obsolete
 ./usr/libdata/debug/sbin/dhcpcd.debug		comp-dhcpcd-debug	debug
 ./usr/libdata/debug/sbin/disklabel.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/dkctl.debug		comp-sysutil-debug	debug
@@ -462,6 +463,7 @@
 ./usr/libdata/debug/usr/bin/audiorecord.debug	comp-audio-debug	debug
 ./usr/libdata/debug/usr/bin/awk.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/banner.debug	comp-util-debug		debug
+./usr/libdata/debug/usr/bin/base64.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/basename.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/bc.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/bdes.debug		comp-crypto-debug	debug
@@ -802,7 +804,7 @@
 ./usr/libdata/debug/usr/bin/tn3270.debug	comp-obsolete		obsolete
 ./usr/libdata/debug/usr/bin/top.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/touch.debug		comp-util-debug		debug
-./usr/libdata/debug/usr/bin/tpfmt.debug		comp-util-debug		debug
+./usr/libdata/debug/usr/bin/tpfmt.debug		comp-obsolete		obsolete
 ./usr/libdata/debug/usr/bin/tpm_sealdata.debug	comp-tpm-debug		tpm,debug
 ./usr/libdata/debug/usr/bin/tpm_unsealdata.debug	comp-tpm-debug		tpm,debug
 ./usr/libdata/debug/usr/bin/tpm_version.debug	comp-tpm-debug		tpm,debug

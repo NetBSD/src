@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gif.c,v 1.139.2.2 2018/06/25 07:26:06 pgoyette Exp $	*/
+/*	$NetBSD: if_gif.c,v 1.139.2.3 2018/07/28 04:38:10 pgoyette Exp $	*/
 /*	$KAME: if_gif.c,v 1.76 2001/08/20 02:01:02 kjc Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.139.2.2 2018/06/25 07:26:06 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.139.2.3 2018/07/28 04:38:10 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -528,7 +528,7 @@ gif_start(struct ifnet *ifp)
 			}
 		}
 		family = *mtod(m, int *);
-		bpf_mtap(ifp, m);
+		bpf_mtap(ifp, m, BPF_D_OUT);
 		m_adj(m, sizeof(int));
 
 		len = m->m_pkthdr.len;
@@ -586,7 +586,7 @@ gif_transmit_direct(struct gif_variant *var, struct mbuf *m)
 		}
 	}
 	family = *mtod(m, int *);
-	bpf_mtap(ifp, m);
+	bpf_mtap(ifp, m, BPF_D_OUT);
 	m_adj(m, sizeof(int));
 
 	len = m->m_pkthdr.len;
@@ -617,7 +617,7 @@ gif_input(struct mbuf *m, int af, struct ifnet *ifp)
 	m_set_rcvif(m, ifp);
 	pktlen = m->m_pkthdr.len;
 
-	bpf_mtap_af(ifp, af, m);
+	bpf_mtap_af(ifp, af, m, BPF_D_IN);
 
 	/*
 	 * Put the packet to the network layer input queue according to the

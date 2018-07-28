@@ -1,4 +1,4 @@
-# $NetBSD: md.x68k,v 1.61 2015/12/24 14:16:46 christos Exp $
+# $NetBSD: md.x68k,v 1.61.14.1 2018/07/28 04:32:59 pgoyette Exp $
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/x68k				comp-c-include
 ./usr/include/x68k/_G_config.h			comp-obsolete		obsolete
@@ -46,7 +46,7 @@
 ./usr/include/x68k/pcb.h			comp-c-include
 ./usr/include/x68k/pci_machdep.h		comp-obsolete		obsolete
 ./usr/include/x68k/pmap.h			comp-c-include
-./usr/include/x68k/pmc.h			comp-c-include
+./usr/include/x68k/pmc.h			comp-obsolete		obsolete
 ./usr/include/x68k/powioctl.h			comp-obsolete		obsolete
 ./usr/include/x68k/proc.h			comp-c-include
 ./usr/include/x68k/profile.h			comp-c-include

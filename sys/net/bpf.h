@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.h,v 1.69.12.2 2018/06/25 07:26:06 pgoyette Exp $	*/
+/*	$NetBSD: bpf.h,v 1.69.12.3 2018/07/28 04:38:09 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -144,13 +144,25 @@ struct bpf_version {
 #define BIOCSHDRCMPLT	 _IOW('B',117, u_int)
 #define BIOCSDLT	 _IOW('B',118, u_int)
 #define BIOCGDLTLIST	_IOWR('B',119, struct bpf_dltlist)
-#define BIOCGSEESENT	 _IOR('B',120, u_int)
-#define BIOCSSEESENT	 _IOW('B',121, u_int)
+#define BIOCGDIRECTION	 _IOR('B',120, u_int)
+#define BIOCSDIRECTION	 _IOW('B',121, u_int)
 #define BIOCSRTIMEOUT	 _IOW('B',122, struct timeval)
 #define BIOCGRTIMEOUT	 _IOR('B',123, struct timeval)
 #define BIOCGFEEDBACK	 _IOR('B',124, u_int)
 #define BIOCSFEEDBACK	 _IOW('B',125, u_int)
 #define BIOCFEEDBACK     BIOCSFEEDBACK		/* FreeBSD name */
+
+/* Obsolete */
+#define	BIOCGSEESENT	BIOCGDIRECTION
+#define	BIOCSSEESENT	BIOCSDIRECTION
+
+/*
+ * Packet directions.
+ * BPF_D_IN = 0, BPF_D_INOUT =1 for backward compatibility of BIOC[GS]SEESENT.
+ */
+#define	BPF_D_IN	0	/* See incoming packets */
+#define	BPF_D_INOUT	1	/* See incoming and outgoing packets */
+#define	BPF_D_OUT	2	/* See outgoing packets */
 
 /*
  * Structure prepended to each packet. This is "wire" format, so we
@@ -417,9 +429,10 @@ struct bpf_ops {
 	void (*bpf_detach)(struct ifnet *);
 	void (*bpf_change_type)(struct ifnet *, u_int, u_int);
 
-	void (*bpf_mtap)(struct bpf_if *, struct mbuf *);
-	void (*bpf_mtap2)(struct bpf_if *, void *, u_int, struct mbuf *);
-	void (*bpf_mtap_af)(struct bpf_if *, uint32_t, struct mbuf *);
+	void (*bpf_mtap)(struct bpf_if *, struct mbuf *, u_int);
+	void (*bpf_mtap2)(struct bpf_if *, void *, u_int, struct mbuf *,
+	    u_int);
+	void (*bpf_mtap_af)(struct bpf_if *, uint32_t, struct mbuf *, u_int);
 	void (*bpf_mtap_sl_in)(struct bpf_if *, u_char *, struct mbuf **);
 	void (*bpf_mtap_sl_out)(struct bpf_if *, u_char *, struct mbuf *);
 
@@ -442,30 +455,32 @@ bpf_attach2(struct ifnet *_ifp, u_int _dlt, u_int _hdrlen, struct bpf_if **_dp)
 }
 
 static __inline void
-bpf_mtap(struct ifnet *_ifp, struct mbuf *_m)
+bpf_mtap(struct ifnet *_ifp, struct mbuf *_m, u_int _direction)
 {
 	if (_ifp->if_bpf)
-		bpf_ops->bpf_mtap(_ifp->if_bpf, _m);
+		bpf_ops->bpf_mtap(_ifp->if_bpf, _m, _direction);
 }
 
 static __inline void
-bpf_mtap2(struct bpf_if *_bpf, void *_data, u_int _dlen, struct mbuf *_m)
+bpf_mtap2(struct bpf_if *_bpf, void *_data, u_int _dlen, struct mbuf *_m,
+	u_int _direction)
 {
-	bpf_ops->bpf_mtap2(_bpf, _data, _dlen, _m);
+	bpf_ops->bpf_mtap2(_bpf, _data, _dlen, _m, _direction);
 }
 
 static __inline void
-bpf_mtap3(struct bpf_if *_bpf, struct mbuf *_m)
+bpf_mtap3(struct bpf_if *_bpf, struct mbuf *_m, u_int _direction)
 {
 	if (_bpf)
-		bpf_ops->bpf_mtap(_bpf, _m);
+		bpf_ops->bpf_mtap(_bpf, _m, _direction);
 }
 
 static __inline void
-bpf_mtap_af(struct ifnet *_ifp, uint32_t _af, struct mbuf *_m)
+bpf_mtap_af(struct ifnet *_ifp, uint32_t _af, struct mbuf *_m,
+    u_int _direction)
 {
 	if (_ifp->if_bpf)
-		bpf_ops->bpf_mtap_af(_ifp->if_bpf, _af, _m);
+		bpf_ops->bpf_mtap_af(_ifp->if_bpf, _af, _m, _direction);
 }
 
 static __inline void

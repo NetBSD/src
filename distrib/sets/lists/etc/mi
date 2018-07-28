@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.251 2018/02/17 03:02:04 uwe Exp $
+# $NetBSD: mi,v 1.251.2.1 2018/07/28 04:33:00 pgoyette Exp $
 #
 # Note: end-user configuration files that are moved to another location
 #	should not be marked "obsolete"; they should just be removed from
@@ -202,7 +202,7 @@
 ./etc/rc.d/cleartmp				etc-sys-rc
 ./etc/rc.d/cron					etc-cron-rc
 ./etc/rc.d/devpubd				etc-sys-rc
-./etc/rc.d/dhclient				etc-dhclient-rc
+./etc/rc.d/dhclient				etc-obsolete		obsolete
 ./etc/rc.d/dhcpcd				etc-dhcpcd-rc
 ./etc/rc.d/dhcpd				etc-dhcpd-rc
 ./etc/rc.d/dhcpd6				etc-dhcpd-rc

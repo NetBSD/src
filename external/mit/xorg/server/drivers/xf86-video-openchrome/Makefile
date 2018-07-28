@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2018/02/02 01:02:40 mrg Exp $
+#	$NetBSD: Makefile,v 1.13.2.1 2018/07/28 04:37:21 pgoyette Exp $
 
 DRIVER=		xf86-video-openchrome
 DRIVER_NAME=	openchrome_drv
@@ -24,6 +24,7 @@ SRCS=	\
 	via_tv.c \
 	via_vgahw.c \
 	via_vt162x.c \
+	via_vt1632.c \
 	via_xv_overlay.c \
 	via_xv.c
 

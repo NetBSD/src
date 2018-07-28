@@ -1,4 +1,4 @@
-# $NetBSD: md.dreamcast,v 1.18 2016/08/25 12:17:26 christos Exp $
+# $NetBSD: md.dreamcast,v 1.18.12.1 2018/07/28 04:32:59 pgoyette Exp $
 ./usr/include/dreamcast				comp-c-include
 ./usr/include/dreamcast/_G_config.h		comp-obsolete		obsolete
 ./usr/include/dreamcast/ansi.h			comp-c-include
@@ -35,7 +35,7 @@
 ./usr/include/dreamcast/param.h			comp-c-include
 ./usr/include/dreamcast/pcb.h			comp-c-include
 ./usr/include/dreamcast/pmap.h			comp-c-include
-./usr/include/dreamcast/pmc.h			comp-c-include
+./usr/include/dreamcast/pmc.h			comp-obsolete		obsolete
 ./usr/include/dreamcast/proc.h			comp-c-include
 ./usr/include/dreamcast/profile.h		comp-c-include
 ./usr/include/dreamcast/psl.h			comp-c-include

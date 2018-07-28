@@ -1,4 +1,4 @@
-# $NetBSD: md.hpcmips,v 1.34 2015/12/21 16:49:37 christos Exp $
+# $NetBSD: md.hpcmips,v 1.34.14.1 2018/07/28 04:32:59 pgoyette Exp $
 ./usr/include/dev/hpc/hpcfbio.h			comp-c-include
 ./usr/include/hpcmips				comp-c-include
 ./usr/include/hpcmips/_G_config.h		comp-obsolete		obsolete
@@ -42,7 +42,7 @@
 ./usr/include/hpcmips/param.h			comp-c-include
 ./usr/include/hpcmips/pcb.h			comp-c-include
 ./usr/include/hpcmips/pmap.h			comp-c-include
-./usr/include/hpcmips/pmc.h			comp-c-include
+./usr/include/hpcmips/pmc.h			comp-obsolete		obsolete
 ./usr/include/hpcmips/proc.h			comp-c-include
 ./usr/include/hpcmips/profile.h			comp-c-include
 ./usr/include/hpcmips/psl.h			comp-c-include

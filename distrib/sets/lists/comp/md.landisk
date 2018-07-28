@@ -1,4 +1,4 @@
-# $NetBSD: md.landisk,v 1.6 2016/08/25 12:45:52 christos Exp $
+# $NetBSD: md.landisk,v 1.6.12.1 2018/07/28 04:32:59 pgoyette Exp $
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/landisk				comp-c-include
 ./usr/include/landisk/ansi.h			comp-c-include
@@ -37,7 +37,7 @@
 ./usr/include/landisk/param.h			comp-c-include
 ./usr/include/landisk/pcb.h			comp-c-include
 ./usr/include/landisk/pmap.h			comp-c-include
-./usr/include/landisk/pmc.h			comp-c-include
+./usr/include/landisk/pmc.h			comp-obsolete		obsolete
 ./usr/include/landisk/proc.h			comp-c-include
 ./usr/include/landisk/profile.h			comp-c-include
 ./usr/include/landisk/psl.h			comp-c-include

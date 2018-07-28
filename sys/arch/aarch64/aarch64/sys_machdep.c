@@ -1,4 +1,4 @@
-/* $NetBSD: sys_machdep.c,v 1.1.28.1 2018/04/07 04:12:10 pgoyette Exp $ */
+/* $NetBSD: sys_machdep.c,v 1.1.28.2 2018/07/28 04:37:25 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: sys_machdep.c,v 1.1.28.1 2018/04/07 04:12:10 pgoyette Exp $");
+__KERNEL_RCSID(1, "$NetBSD: sys_machdep.c,v 1.1.28.2 2018/07/28 04:37:25 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -51,6 +51,6 @@ sys_sysarch(struct lwp *l, const struct sys_sysarch_args *uap,
 int
 cpu_lwp_setprivate(lwp_t *l, void *addr)
 {
-	l->l_private = (register_t)addr;
+	l->l_private = addr;
 	return 0;
 }

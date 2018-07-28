@@ -1,5 +1,5 @@
 #
-#	$NetBSD: RPI64,v 1.1.2.2 2018/04/07 04:12:12 pgoyette Exp $
+#	$NetBSD: RPI64,v 1.1.2.3 2018/07/28 04:37:31 pgoyette Exp $
 #
 #	RPI64 - Raspberry Pi 3 and Pi 2 v1.2 in AARCH64 mode
 #
@@ -13,11 +13,13 @@ makeoptions DTSSUBDIR="broadcom"
 
 makeoptions	DTS="
 	bcm2837-rpi-3-b.dts
+	bcm2837-rpi-3-b-plus.dts
 "
 
 # CPU options
 options 	CPU_CORTEXA53
 options 	SOC_BCM2836
+options 	MULTIPROCESSOR
 
 # verbose bootstraping messages
 options 	EARLYCONS=bcm2837
@@ -61,11 +63,11 @@ config		netbsd		root on ? type ?
 
 # Device tree support
 armfdt0 	at root
-fdt*		at fdtbus?
+simplebus*	at fdt? pass 0
 
 # The CPU(s)
 cpus*		at fdt? pass 0
-cpu*		at cpus?
+cpu*		at fdt? pass 0
 
 gtmr*		at fdt? pass 1		# ARM Generic Timer
 armgtmr0	at gtmr?

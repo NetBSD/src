@@ -1,4 +1,4 @@
-/*	$NetBSD: ftok.c,v 1.11 2012/03/20 16:36:05 matt Exp $	*/
+/*	$NetBSD: ftok.c,v 1.11.30.1 2018/07/28 04:37:22 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1994 SigmaSoft, Th. Lockert <tholo@sigmasoft.com>
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: ftok.c,v 1.11 2012/03/20 16:36:05 matt Exp $");
+__RCSID("$NetBSD: ftok.c,v 1.11.30.1 2018/07/28 04:37:22 pgoyette Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -53,5 +53,6 @@ ftok(const char *path, int id)
 		return (key_t)-1;
 
 	return (key_t)
-	    (id << 24 | (st.st_dev & 0xff) << 16 | (st.st_ino & 0xffff));
+	    ((unsigned int)id << 24 | (st.st_dev & 0xff) << 16 |
+	     (st.st_ino & 0xffff));
 }

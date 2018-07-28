@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_pmap.c,v 1.26 2017/03/23 18:08:06 maxv Exp $	*/
+/*	$NetBSD: xen_pmap.c,v 1.26.12.1 2018/07/28 04:37:43 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_pmap.c,v 1.26 2017/03/23 18:08:06 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_pmap.c,v 1.26.12.1 2018/07/28 04:37:43 pgoyette Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -322,8 +322,6 @@ pmap_unmap_recursive_entries(void)
 	}
 }
 
-#if defined(PAE) || defined(__x86_64__)
-
 static __inline void
 pmap_kpm_setpte(struct cpu_info *ci, struct pmap *pmap, int index)
 {
@@ -332,15 +330,17 @@ pmap_kpm_setpte(struct cpu_info *ci, struct pmap *pmap, int index)
 	if (pmap == pmap_kernel()) {
 		KASSERT(index >= PDIR_SLOT_KERN);
 	}
-#ifdef PAE
-	xpq_queue_pte_update(
-	    xpmap_ptetomach(&ci->ci_kpm_pdir[l2tol2(index)]),
-	    pmap->pm_pdir[index]);
-#elif defined(__x86_64__)
+
+#ifdef __x86_64__
 	xpq_queue_pte_update(
 	    xpmap_ptetomach(&ci->ci_kpm_pdir[index]),
 	    pmap->pm_pdir[index]);
+#else
+	xpq_queue_pte_update(
+	    xpmap_ptetomach(&ci->ci_kpm_pdir[l2tol2(index)]),
+	    pmap->pm_pdir[index]);
 #endif
+
 	xpq_flush_queue();
 }
 
@@ -377,5 +377,3 @@ xen_kpm_sync(struct pmap *pmap, int index)
 		mutex_exit(&ci->ci_kpm_mtx);
 	}
 }
-
-#endif /* PAE || __x86_64__ */

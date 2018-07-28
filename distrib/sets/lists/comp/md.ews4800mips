@@ -1,4 +1,4 @@
-# $NetBSD: md.ews4800mips,v 1.10 2015/12/21 16:49:37 christos Exp $
+# $NetBSD: md.ews4800mips,v 1.10.14.1 2018/07/28 04:32:59 pgoyette Exp $
 ./usr/include/ews4800mips			comp-c-include
 ./usr/include/ews4800mips/ansi.h		comp-c-include
 ./usr/include/ews4800mips/aout_machdep.h	comp-c-include
@@ -35,7 +35,7 @@
 ./usr/include/ews4800mips/pcb.h		comp-c-include
 ./usr/include/ews4800mips/pdinfo.h		comp-c-include
 ./usr/include/ews4800mips/pmap.h		comp-c-include
-./usr/include/ews4800mips/pmc.h		comp-c-include
+./usr/include/ews4800mips/pmc.h		comp-obsolete		obsolete
 ./usr/include/ews4800mips/proc.h		comp-c-include
 ./usr/include/ews4800mips/profile.h		comp-c-include
 ./usr/include/ews4800mips/psl.h		comp-c-include

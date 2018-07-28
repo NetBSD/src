@@ -1,4 +1,4 @@
-#	$NetBSD: DNS323,v 1.9.2.2 2018/06/25 07:25:40 pgoyette Exp $
+#	$NetBSD: DNS323,v 1.9.2.3 2018/07/28 04:37:31 pgoyette Exp $
 #
 #  DNS323 -- D-Link. DNS-323 platform kernel
 #
@@ -14,7 +14,6 @@ no options	CPU_SHEEVA
 
 # Development and Debugging options
 
-#options 	PERFCTRS	# performance counters
 options 	DIAGNOSTIC	# internal consistency checks
 options 	DEBUG
 #options 	PMAP_DEBUG	# Enable pmap_debug_level code

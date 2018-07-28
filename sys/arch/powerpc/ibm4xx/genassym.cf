@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.23 2011/06/20 19:56:12 matt Exp $
+#	$NetBSD: genassym.cf,v 1.23.52.1 2018/07/28 04:37:39 pgoyette Exp $
 
 #
 # Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -46,7 +46,6 @@ define	KERNEL_PID	KERNEL_PID
 define	CI_INTSTK	offsetof(struct cpu_info, ci_intstk)
 define	CI_TEMPSAVE	offsetof(struct cpu_info, ci_savearea[CI_SAVETEMP])
 define	CI_DDBSAVE	offsetof(struct cpu_info, ci_savearea[CI_SAVEDDB])
-define	CI_IPKDBSAVE	offsetof(struct cpu_info, ci_savearea[CI_SAVEIPKDB])
 define	CI_TLBMISSSAVE	offsetof(struct cpu_info, ci_savearea[CI_SAVEMMU])
 
 define	CPUSAVE_R28	CPUSAVE_R28*sizeof(register_t)

@@ -33,7 +33,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/add.c,v 1.14 2006/06/22 22:05:28 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: add.c,v 1.43 2015/12/29 16:45:04 christos Exp $");
+__RCSID("$NetBSD: add.c,v 1.43.14.1 2018/07/28 04:37:23 pgoyette Exp $");
 #endif
 
 #include <sys/types.h>
@@ -62,7 +62,7 @@ struct gpt_cmd c_add = {
 	"add",
 	cmd_add,
 	addhelp, __arraycount(addhelp),
-	0,
+	GPT_SYNC,
 };
 
 #define usage() gpt_usage(NULL, &c_add)

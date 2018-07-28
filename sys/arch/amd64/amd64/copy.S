@@ -1,4 +1,4 @@
-/*	$NetBSD: copy.S,v 1.29 2018/01/07 12:42:46 maxv Exp $	*/
+/*	$NetBSD: copy.S,v 1.29.2.1 2018/07/28 04:37:26 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -236,16 +236,16 @@ ENTRY(copyin)
 	DEFERRED_SWITCH_CALL
 END(copyin)
 
-NENTRY(copy_efault)
+ENTRY(copy_efault)
 	movq	$EFAULT,%rax
 	ret
 END(copy_efault)
 
-NENTRY(kcopy_fault)
+ENTRY(kcopy_fault)
 	ret
 END(kcopy_fault)
 
-NENTRY(copy_fault)
+ENTRY(copy_fault)
 	SMAP_ENABLE
 	ret
 END(copy_fault)
@@ -547,7 +547,7 @@ ENTRY(ucas_efault)
 	ret
 END(ucas_efault)
 
-NENTRY(ucas_fault)
+ENTRY(ucas_fault)
 	SMAP_ENABLE
 	ret
 END(ucas_fault)

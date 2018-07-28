@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.6 2013/11/29 23:01:05 joerg Exp $	*/
+/*	$NetBSD: main.c,v 1.6.24.1 2018/07/28 04:38:15 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2002 TAKEMRUA Shin
@@ -49,7 +49,7 @@
 
 #ifndef lint
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: main.c,v 1.6 2013/11/29 23:01:05 joerg Exp $");
+__RCSID("$NetBSD: main.c,v 1.6.24.1 2018/07/28 04:38:15 pgoyette Exp $");
 #endif /* not lint */
 
 void load_data(const char *, struct tpctl_data *);
@@ -380,7 +380,7 @@ drawcross(struct fb *fb, int x, int y, int size, fb_pixel_t pixel)
 int
 check_esc(void *data)
 {
-	int fd = (int)data;
+	int fd = (int)(intptr_t)data;
 	int flg, n, error;
 	char buf[1];
 	struct termios tm, raw;

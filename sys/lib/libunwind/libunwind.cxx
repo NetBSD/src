@@ -277,6 +277,8 @@ void _Unwind_SetIP(struct _Unwind_Context *context, uintptr_t new_value) {
   unw_proc_info_t info;
   cursor->getInfo(&info);
   cursor->setInfoBasedOnIPRegister(false);
+  if (info.extra_args)
+    cursor->setSP(cursor->getSP() + info.extra_args);
 }
 
 uintptr_t _Unwind_GetRegionStart(struct _Unwind_Context *context) {

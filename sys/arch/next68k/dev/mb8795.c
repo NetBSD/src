@@ -1,4 +1,4 @@
-/*	$NetBSD: mb8795.c,v 1.58.12.1 2018/06/25 07:25:44 pgoyette Exp $	*/
+/*	$NetBSD: mb8795.c,v 1.58.12.2 2018/07/28 04:37:38 pgoyette Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mb8795.c,v 1.58.12.1 2018/06/25 07:25:44 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mb8795.c,v 1.58.12.2 2018/07/28 04:37:38 pgoyette Exp $");
 
 #include "opt_inet.h"
 
@@ -700,7 +700,7 @@ mb8795_start(struct ifnet *ifp)
 		/*
 		 * Pass packet to bpf if there is a listener.
 		 */
-		bpf_mtap(ifp, m);
+		bpf_mtap(ifp, m, BPF_D_OUT);
 
 		s = spldma();
 		IF_ENQUEUE(&sc->sc_tx_snd, m);

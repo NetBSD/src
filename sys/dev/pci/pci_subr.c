@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.200.2.1 2018/05/21 04:36:06 pgoyette Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.200.2.2 2018/07/28 04:37:46 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.200.2.1 2018/05/21 04:36:06 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.200.2.2 2018/07/28 04:37:46 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -1172,11 +1172,9 @@ static void
 pci_conf_print_pcipm_cap(const pcireg_t *regs, int capoff)
 {
 	uint16_t caps, pmcsr;
-	pcireg_t reg;
 
 	caps = regs[o2i(capoff)] >> PCI_PMCR_SHIFT;
-	reg = regs[o2i(capoff + PCI_PMCSR)];
-	pmcsr = reg & 0xffff;
+	pmcsr = regs[o2i(capoff + PCI_PMCSR)];
 
 	printf("\n  PCI Power Management Capabilities Register\n");
 
@@ -1195,7 +1193,7 @@ pci_conf_print_pcipm_cap(const pcireg_t *regs, int capoff)
 	onoff("PME# support D3 hot", caps, PCI_PMCR_PME_D3HOT);
 	onoff("PME# support D3 cold", caps, PCI_PMCR_PME_D3COLD);
 
-	printf("    Control/status register: 0x%04x\n", pmcsr);
+	printf("    Control/status register: 0x%08x\n", pmcsr);
 	printf("      Power state: D%d\n", pmcsr & PCI_PMCSR_STATE_MASK);
 	onoff("PCI Express reserved", (pmcsr >> 2), 1);
 	onoff("No soft reset", pmcsr, PCI_PMCSR_NO_SOFTRST);
@@ -1207,11 +1205,11 @@ pci_conf_print_pcipm_cap(const pcireg_t *regs, int capoff)
 	    __SHIFTOUT(pmcsr, PCI_PMCSR_DATASCL_MASK));
 	onoff("PME# status", pmcsr, PCI_PMCSR_PME_STS);
 	printf("    Bridge Support Extensions register: 0x%02x\n",
-	    (reg >> 16) & 0xff);
-	onoff("B2/B3 support", reg, PCI_PMCSR_B2B3_SUPPORT);
-	onoff("Bus Power/Clock Control Enable", reg, PCI_PMCSR_BPCC_EN);
-	printf("    Data register: 0x%02x\n", __SHIFTOUT(reg, PCI_PMCSR_DATA));
-	
+	    (pmcsr >> 16) & 0xff);
+	onoff("B2/B3 support", pmcsr, PCI_PMCSR_B2B3_SUPPORT);
+	onoff("Bus Power/Clock Control Enable", pmcsr, PCI_PMCSR_BPCC_EN);
+	printf("    Data register: 0x%02x\n",
+	       __SHIFTOUT(pmcsr, PCI_PMCSR_DATA));
 }
 
 /* XXX pci_conf_print_vpd_cap */

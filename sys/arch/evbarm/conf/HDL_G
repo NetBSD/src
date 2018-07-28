@@ -1,4 +1,4 @@
-# $NetBSD: HDL_G,v 1.51 2017/09/14 07:58:40 mrg Exp $
+# $NetBSD: HDL_G,v 1.51.2.1 2018/07/28 04:37:31 pgoyette Exp $
 #
 #       HDL_G -- I-O DATA HDL-G Kernel
 #
@@ -113,7 +113,6 @@ options 	USERCONF	# userconf(4) support
 
 # Development and Debugging options
 
-#options 	PERFCTRS	# performance counters
 #options 	DIAGNOSTIC	# internal consistency checks
 #options 	DEBUG
 #options 	PMAP_DEBUG	# Enable pmap_debug_level code

@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1319.2.8 2018/06/25 07:25:52 pgoyette Exp $
+$NetBSD: pcidevs,v 1.1319.2.9 2018/07/28 04:37:47 pgoyette Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -596,6 +596,7 @@ vendor GEOCAST		0x15a1	Geocast Network Systems
 vendor BLUESTEEL	0x15ab	Bluesteel Networks
 vendor VMWARE		0x15ad	VMware
 vendor MELLANOX		0x15b3	Mellanox Technologies
+vendor SANDISK		0x15b7	Western Digital (SanDisk)
 vendor AGILENT		0x15bc	Agilent Technologies
 vendor SUPERMICRO	0x15d9	Super Micro Computer Inc
 vendor NDC		0x15e8	National Datacomm
@@ -6736,6 +6737,9 @@ product SAMSUNGSEMI	KS8920	0x8920	KS8920 10/100 Ethernet
 product SANDBURST	QE1000	0x0180	QE1000
 product SANDBURST	FE1000	0x0200	FE1000
 /*product SANDBURST	SE1600	0x0100	SE1600*/
+
+/* Western Digital (SanDisk) products */
+product SANDISK	WDBLACK_NVME	0x5002	WD Black NVMe SSD
 
 /* SEGA Enterprises products */
 product SEGA	BROADBAND	0x1234	Broadband Adapter

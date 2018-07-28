@@ -1,4 +1,4 @@
-/*	$NetBSD: mt2701-resets.h,v 1.1.1.2 2017/07/27 18:10:50 jmcneill Exp $	*/
+/*	$NetBSD: mt2701-resets.h,v 1.1.1.2.6.1 2018/07/28 04:38:07 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2015 MediaTek, Shunli Wang <shunli.wang@mediatek.com>
@@ -88,5 +88,8 @@
 #define MT2701_ETHSYS_FE_RST			6
 #define MT2701_ETHSYS_GMAC_RST			23
 #define MT2701_ETHSYS_PPE_RST			31
+
+/* G3DSYS resets */
+#define MT2701_G3DSYS_CORE_RST			0
 
 #endif  /* _DT_BINDINGS_RESET_CONTROLLER_MT2701 */

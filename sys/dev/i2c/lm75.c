@@ -1,4 +1,4 @@
-/*	$NetBSD: lm75.c,v 1.30.2.1 2018/06/25 07:25:50 pgoyette Exp $	*/
+/*	$NetBSD: lm75.c,v 1.30.2.2 2018/07/28 04:37:44 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lm75.c,v 1.30.2.1 2018/06/25 07:25:50 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lm75.c,v 1.30.2.2 2018/07/28 04:37:44 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -101,19 +101,14 @@ static void	lmtemp_setlim_lm77(struct sysmon_envsys *, envsys_data_t *,
 static void	lmtemp_setup_sysctl(struct lmtemp_softc *);
 static int	sysctl_lm75_temp(SYSCTLFN_ARGS);
 
-static const char * lmtemp_compats[] = {
-	"i2c-lm75",
-	"ds1775",
+static const struct device_compatible_entry compat_data[] = {
+	{ "i2c-lm75",			0 },
+	{ "ds1775",			0 },
 	/*
 	 * see XXX in _attach() below: add code once non-lm75 matches are
 	 * added here!
 	 */
-	NULL
-};
-
-static const struct device_compatible_entry lmtemp_compat_data[] = {
-	DEVICE_COMPAT_ENTRY(lmtemp_compats),
-	DEVICE_COMPAT_TERMINATOR
+	{ NULL,				0 }
 };
 
 enum {
@@ -153,7 +148,7 @@ lmtemp_match(device_t parent, cfdata_t cf, void *aux)
 	struct i2c_attach_args *ia = aux;
 	int i, match_result;
 
-	if (iic_use_direct_match(ia, cf, lmtemp_compat_data, &match_result))
+	if (iic_use_direct_match(ia, cf, compat_data, &match_result))
 		return match_result;
 
 	/*

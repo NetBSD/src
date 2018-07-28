@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.301.2.4 2018/06/25 07:25:38 pgoyette Exp $	*/
+/*	$NetBSD: machdep.c,v 1.301.2.5 2018/07/28 04:37:26 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -110,6 +110,7 @@
  */
 
 #include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.301.2.5 2018/07/28 04:37:26 pgoyette Exp $");
 
 #include "opt_modular.h"
 #include "opt_user_ldt.h"
@@ -261,6 +262,7 @@ paddr_t ldt_paddr;
 static struct vm_map module_map_store;
 extern struct vm_map *module_map;
 extern struct bootspace bootspace;
+extern struct slotspace slotspace;
 
 struct vm_map *phys_map = NULL;
 
@@ -278,7 +280,10 @@ void (*delay_func)(unsigned int) = xen_delay;
 void (*initclock_func)(void) = xen_initclocks;
 #endif
 
-struct pool x86_dbregspl;
+struct nmistore {
+	uint64_t cr3;
+	uint64_t scratch;
+} __packed;
 
 /*
  * Size of memory segments, before any memory is stolen.
@@ -316,6 +321,7 @@ int dump_seg_count_range(paddr_t, paddr_t);
 int dumpsys_seg(paddr_t, paddr_t);
 
 void init_bootspace(void);
+void init_slotspace(void);
 void init_x86_64(paddr_t);
 
 /*
@@ -505,6 +511,7 @@ cpu_init_tss(struct cpu_info *ci)
 	const cpuid_t cid = cpu_index(ci);
 #endif
 	struct cpu_tss *cputss;
+	struct nmistore *store;
 	uintptr_t p;
 
 #ifdef __HAVE_PCPU_AREA
@@ -532,13 +539,15 @@ cpu_init_tss(struct cpu_info *ci)
 #endif
 	cputss->tss.tss_ist[1] = p + PAGE_SIZE - 16;
 
-	/* NMI */
+	/* NMI - store a structure at the top of the stack */
 #ifdef __HAVE_PCPU_AREA
 	p = (vaddr_t)&pcpuarea->ent[cid].ist2;
 #else
 	p = uvm_km_alloc(kernel_map, PAGE_SIZE, 0, UVM_KMF_WIRED|UVM_KMF_ZERO);
 #endif
-	cputss->tss.tss_ist[2] = p + PAGE_SIZE - 16;
+	cputss->tss.tss_ist[2] = p + PAGE_SIZE - sizeof(struct nmistore);
+	store = (struct nmistore *)(p + PAGE_SIZE - sizeof(struct nmistore));
+	store->cr3 = pmap_pdirpa(pmap_kernel(), 0);
 
 	/* DB */
 #ifdef __HAVE_PCPU_AREA
@@ -1356,10 +1365,7 @@ setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 	fpu_save_area_clear(l, pack->ep_osversion >= 699002600
 	    ? __NetBSD_NPXCW__ : __NetBSD_COMPAT_NPXCW__);
 	pcb->pcb_flags = 0;
-	if (pcb->pcb_dbregs != NULL) {
-		pool_put(&x86_dbregspl, pcb->pcb_dbregs);
-		pcb->pcb_dbregs = NULL;
-	}
+	x86_dbregs_clear(l);
 
 	l->l_proc->p_flag &= ~PK_32;
 
@@ -1578,6 +1584,58 @@ init_bootspace(void)
 	/* Kernel module map. */
 	bootspace.smodule = (vaddr_t)atdevbase + IOM_SIZE;
 	bootspace.emodule = KERNBASE + NKL2_KIMG_ENTRIES * NBPD_L2;
+}
+
+void
+init_slotspace(void)
+{
+	memset(&slotspace, 0, sizeof(slotspace));
+
+	/* User. */
+	slotspace.area[SLAREA_USER].sslot = 0;
+	slotspace.area[SLAREA_USER].mslot = PDIR_SLOT_PTE;
+	slotspace.area[SLAREA_USER].nslot = PDIR_SLOT_PTE;
+	slotspace.area[SLAREA_USER].active = true;
+	slotspace.area[SLAREA_USER].dropmax = false;
+
+	/* PTE. */
+	slotspace.area[SLAREA_PTE].sslot = PDIR_SLOT_PTE;
+	slotspace.area[SLAREA_PTE].mslot = 1;
+	slotspace.area[SLAREA_PTE].nslot = 1;
+	slotspace.area[SLAREA_PTE].active = true;
+	slotspace.area[SLAREA_PTE].dropmax = false;
+
+	/* Main. */
+	slotspace.area[SLAREA_MAIN].sslot = PDIR_SLOT_KERN;
+	slotspace.area[SLAREA_MAIN].mslot = NKL4_MAX_ENTRIES;
+	slotspace.area[SLAREA_MAIN].nslot = 0 /* variable */;
+	slotspace.area[SLAREA_MAIN].active = true;
+	slotspace.area[SLAREA_MAIN].dropmax = false;
+
+#ifdef __HAVE_PCPU_AREA
+	/* Per-CPU. */
+	slotspace.area[SLAREA_PCPU].sslot = PDIR_SLOT_PCPU;
+	slotspace.area[SLAREA_PCPU].mslot = 1;
+	slotspace.area[SLAREA_PCPU].nslot = 1;
+	slotspace.area[SLAREA_PCPU].active = true;
+	slotspace.area[SLAREA_PCPU].dropmax = false;
+#endif
+
+#ifdef __HAVE_DIRECT_MAP
+	/* Direct Map. */
+	slotspace.area[SLAREA_DMAP].sslot = PDIR_SLOT_DIRECT;
+	slotspace.area[SLAREA_DMAP].mslot = NL4_SLOT_DIRECT+1;
+	slotspace.area[SLAREA_DMAP].nslot = 0 /* variable */;
+	slotspace.area[SLAREA_DMAP].active = false;
+	slotspace.area[SLAREA_DMAP].dropmax = true;
+#endif
+
+	/* Kernel. */
+	slotspace.area[SLAREA_KERN].sslot = L4_SLOT_KERNBASE;
+	slotspace.area[SLAREA_KERN].mslot = 1;
+	slotspace.area[SLAREA_KERN].nslot = 1;
+	slotspace.area[SLAREA_KERN].active = true;
+	slotspace.area[SLAREA_KERN].dropmax = false;
 }
 
 void
@@ -1866,11 +1924,7 @@ init_x86_64(paddr_t first_avail)
 #endif
 
 	pcb->pcb_dbregs = NULL;
-
-	x86_dbregs_setup_initdbstate();
-
-	pool_init(&x86_dbregspl, sizeof(struct dbreg), 16, 0, 0, "dbregs",
-	    NULL, IPL_NONE);
+	x86_dbregs_init();
 }
 
 void

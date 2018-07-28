@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2017/01/11 12:02:32 joerg Exp $
+#	$NetBSD: Makefile,v 1.3.12.1 2018/07/28 04:37:14 pgoyette Exp $
 
 LIB=	clangToolingCore
 
@@ -8,7 +8,6 @@ LIB=	clangToolingCore
 
 SRCS+=	Diagnostic.cpp \
 	Lookup.cpp \
-	QualTypeNames.cpp \
 	Replacement.cpp
 
 .if defined(HOSTLIB)

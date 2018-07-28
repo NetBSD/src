@@ -1,4 +1,4 @@
-/* $NetBSD: tcagpio.c,v 1.1.4.1 2018/06/25 07:25:50 pgoyette Exp $ */
+/* $NetBSD: tcagpio.c,v 1.1.4.2 2018/07/28 04:37:44 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcagpio.c,v 1.1.4.1 2018/06/25 07:25:50 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcagpio.c,v 1.1.4.2 2018/07/28 04:37:44 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,14 +68,9 @@ struct tcagpio_pin {
 	bool			pin_actlo;
 };
 
-static const char * compatible[] = {
-	"ti,tca9539",
-	NULL
-};
-
-static const struct device_compatible_entry tcagpio_compat_data[] = {
-	DEVICE_COMPAT_ENTRY(compatible),
-	DEVICE_COMPAT_TERMINATOR
+static const struct device_compatible_entry compat_data[] = {
+	{ "ti,tca9539",			0 },
+	{ NULL,				0 }
 };
 
 static uint8_t
@@ -253,7 +248,7 @@ tcagpio_match(device_t parent, cfdata_t match, void *aux)
 	struct i2c_attach_args *ia = aux;
 	int match_result;
 
-	if (iic_use_direct_match(ia, match, tcagpio_compat_data, &match_result))
+	if (iic_use_direct_match(ia, match, compat_data, &match_result))
 		return match_result;
 
 	return 0;

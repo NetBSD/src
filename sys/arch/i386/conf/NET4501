@@ -1,4 +1,4 @@
-# $NetBSD: NET4501,v 1.100 2017/11/06 02:57:18 rin Exp $
+# $NetBSD: NET4501,v 1.100.2.1 2018/07/28 04:37:34 pgoyette Exp $
 #
 # NET4501 -- kernel configuration for a Soekris Engineering net4501
 # single-board computer.
@@ -10,7 +10,7 @@ include 	"arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"NET4501-$Revision: 1.100 $"
+#ident 		"NET4501-$Revision: 1.100.2.1 $"
 
 maxusers	32		# estimated number of users
 
@@ -23,7 +23,6 @@ makeoptions	COPTS="-Os"
 #options 	USER_LDT	# user-settable LDT; used by WINE
 
 #options 	MTRR		# memory-type range register syscall support
-#options 	PMC		# performance-monitoring counters support
 
 # delay between "rebooting ..." message and hardware reset, in milliseconds
 #options 	CPURESET_DELAY=2000

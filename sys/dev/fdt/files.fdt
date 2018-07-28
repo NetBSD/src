@@ -1,13 +1,13 @@
-# $NetBSD: files.fdt,v 1.22.4.4 2018/06/25 07:25:49 pgoyette Exp $
+# $NetBSD: files.fdt,v 1.22.4.5 2018/07/28 04:37:44 pgoyette Exp $
 
 include	"external/bsd/libfdt/conf/files.libfdt"
 
 defflag	opt_fdt.h				FDT: libfdt, ofw_subr
 
-define	fdtbus { } : clk, pwm
+define	fdt { [pass = 10] } : clk, pwm
 
-device	fdt { [pass = 10] } : fdtbus
-attach	fdt at fdtbus
+device	simplebus { } : fdt
+attach	simplebus at fdt
 file	dev/fdt/fdtbus.c			fdt
 
 device	fregulator
@@ -44,24 +44,25 @@ device	panel: fdt_port
 attach	panel at fdt with fdt_panel
 file	dev/fdt/panel_fdt.c			fdt_panel
 
-file	dev/fdt/fdt_openfirm.c			fdtbus
-file	dev/fdt/fdt_subr.c			fdtbus
-file	dev/fdt/fdt_clock.c			fdtbus
-file	dev/fdt/fdt_dai.c			fdtbus
-file	dev/fdt/fdt_dma.c			fdtbus
-file	dev/fdt/fdt_gpio.c			fdtbus
-file	dev/fdt/fdt_i2c.c			fdtbus
-file	dev/fdt/fdt_intr.c			fdtbus
-file	dev/fdt/fdt_mmc_pwrseq.c		fdtbus
-file	dev/fdt/fdt_phy.c			fdtbus
-file	dev/fdt/fdt_power.c			fdtbus
-file	dev/fdt/fdt_pwm.c			fdtbus
-file	dev/fdt/fdt_regulator.c			fdtbus
-file	dev/fdt/fdt_reset.c			fdtbus
-file	dev/fdt/fdt_rtc.c			fdtbus
-file	dev/fdt/fdt_pinctrl.c			fdtbus
+file	dev/fdt/fdt_openfirm.c			fdt
+file	dev/fdt/fdt_subr.c			fdt
+file	dev/fdt/fdt_clock.c			fdt
+file	dev/fdt/fdt_dai.c			fdt
+file	dev/fdt/fdt_dma.c			fdt
+file	dev/fdt/fdt_gpio.c			fdt
+file	dev/fdt/fdt_i2c.c			fdt
+file	dev/fdt/fdt_intr.c			fdt
+file	dev/fdt/fdt_mmc_pwrseq.c		fdt
+file	dev/fdt/fdt_phy.c			fdt
+file	dev/fdt/fdt_power.c			fdt
+file	dev/fdt/fdt_pwm.c			fdt
+file	dev/fdt/fdt_regulator.c			fdt
+file	dev/fdt/fdt_reset.c			fdt
+file	dev/fdt/fdt_rtc.c			fdt
+file	dev/fdt/fdt_syscon.c			fdt
+file	dev/fdt/fdt_pinctrl.c			fdt
 
-device	cpus { } : fdtbus
+device	cpus { } : fdt
 attach	cpus at fdt
 file	dev/fdt/cpus.c				cpus
 
@@ -69,9 +70,17 @@ device	mmcpwrseq
 attach	mmcpwrseq at fdt
 file	dev/fdt/mmc_pwrseq_simple.c		mmcpwrseq
 
+device	syscon { } : fdt
+attach	syscon at fdt
+file	dev/fdt/syscon.c			syscon
+
 device	pwmbacklight
 attach	pwmbacklight at fdt
 file	dev/fdt/pwm_backlight.c			pwmbacklight
+
+device	pwmfan
+attach	pwmfan at fdt
+file	dev/fdt/pwm_fan.c			pwmfan
 
 device	ausoc: audiobus
 attach	ausoc at fdt
@@ -99,6 +108,11 @@ file	dev/fdt/dwc3_fdt.c			dwc3_fdt
 # Designware SD/MMC
 attach	dwcmmc at fdt with dwcmmc_fdt
 file	dev/fdt/dwcmmc_fdt.c			dwcmmc_fdt
+
+# Designware Watchdog Timer
+device	dwcwdt: sysmon_wdog
+attach	dwcwdt at fdt with dwcwdt_fdt
+file	dev/fdt/dwcwdt_fdt.c			dwcwdt_fdt
 
 # Virtio virtio,mmio
 attach	virtio at fdt with virtio_mmio_fdt:	virtio_mmio

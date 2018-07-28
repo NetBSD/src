@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.bootxx,v 1.49.16.1 2018/06/25 07:25:42 pgoyette Exp $
+# $NetBSD: Makefile.bootxx,v 1.49.16.2 2018/07/28 04:37:35 pgoyette Exp $
 
 S=	${.CURDIR}/../../../../..
 
@@ -7,6 +7,7 @@ AFLAGS.pbr.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
 
 NOPIE=
 NOMAN=
+NOLIBCSANITIZER=
 NOSANITIZER=
 PROG?= bootxx_${FS}
 BINDIR= /usr/mdec

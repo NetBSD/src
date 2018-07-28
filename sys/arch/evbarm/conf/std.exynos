@@ -1,4 +1,4 @@
-#	$NetBSD: std.exynos,v 1.5 2017/07/05 01:08:44 jmcneill Exp $
+#	$NetBSD: std.exynos,v 1.5.6.1 2018/07/28 04:37:31 pgoyette Exp $
 #
 
 machine	evbarm arm
@@ -27,6 +27,7 @@ options 	FPU_VFP
 options 	PCI_NETBSD_CONFIGURE
 options 	__HAVE_PCI_CONF_HOOK
 options 	__BUS_SPACE_HAS_STREAM_METHODS
+options 	__HAVE_GENERIC_CPU_INITCLOCKS
 
 makeoptions	KERNEL_BASE_PHYS="0x40000000"
 makeoptions	KERNEL_BASE_VIRT="0x80000000"

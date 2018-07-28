@@ -33,7 +33,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/remove.c,v 1.10 2006/10/04 18:20:25 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: remove.c,v 1.21 2015/12/03 01:07:28 christos Exp $");
+__RCSID("$NetBSD: remove.c,v 1.21.14.1 2018/07/28 04:37:23 pgoyette Exp $");
 #endif
 
 #include <sys/types.h>
@@ -60,7 +60,7 @@ struct gpt_cmd c_remove = {
 	"remove",
 	cmd_remove,
 	removehelp, __arraycount(removehelp),
-	0,
+	GPT_SYNC,
 };
 
 #define usage() gpt_usage(NULL, &c_remove)

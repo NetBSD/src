@@ -90,10 +90,6 @@
 #include "dev_sdmmc.h"
 #include "s3csdi.h"
 
-#define SET(t, f)       ((t) |= (f))
-#define ISSET(t, f)     ((t) & (f))
-#define CLR(t, f)       ((t) &= ~(f))
-
 //#define SDMMC_DEBUG
 #ifdef SDMMC_DEBUG
 #define DPRINTF(s) do {printf s; } while (/*CONSTCOND*/0)

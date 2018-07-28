@@ -1,5 +1,5 @@
-/*	$Id: mmnet_machdep.c,v 1.2 2012/08/16 18:22:45 matt Exp $	*/
-/*	$NetBSD: mmnet_machdep.c,v 1.2 2012/08/16 18:22:45 matt Exp $	*/
+/*	$Id: mmnet_machdep.c,v 1.2.38.1 2018/07/28 04:37:32 pgoyette Exp $	*/
+/*	$NetBSD: mmnet_machdep.c,v 1.2.38.1 2018/07/28 04:37:32 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2007 Embedtronics Oy
@@ -78,7 +78,7 @@
 /* Adaptation for Propox MMnet by Aymeric Vincent is in the public domain */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mmnet_machdep.c,v 1.2 2012/08/16 18:22:45 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mmnet_machdep.c,v 1.2.38.1 2018/07/28 04:37:32 pgoyette Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -125,7 +125,6 @@ __KERNEL_RCSID(0, "$NetBSD: mmnet_machdep.c,v 1.2 2012/08/16 18:22:45 matt Exp $
 #include <arm/at91/at91sam9260reg.h>
 #include <arm/at91/at91sam9260busvar.h>
 
-#include "opt_ipkdb.h"
 #include "ksyms.h"
 
 #include <arm/at91/at91busvar.h>

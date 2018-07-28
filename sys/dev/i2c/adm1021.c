@@ -1,4 +1,4 @@
-/*	$NetBSD: adm1021.c,v 1.16.2.1 2018/06/25 07:25:50 pgoyette Exp $ */
+/*	$NetBSD: adm1021.c,v 1.16.2.2 2018/07/28 04:37:44 pgoyette Exp $ */
 /*	$OpenBSD: adm1021.c,v 1.27 2007/06/24 05:34:35 dlg Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adm1021.c,v 1.16.2.1 2018/06/25 07:25:50 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adm1021.c,v 1.16.2.2 2018/07/28 04:37:44 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -151,16 +151,11 @@ CFATTACH_DECL_NEW(admtemp, sizeof(struct admtemp_softc),
 	admtemp_match, admtemp_attach, NULL, NULL);
 
 /* XXX: add flags for compats to admtemp_setflags() */
-static const char * admtemp_compats[] = {
-	"i2c-max1617",
-	"max6642",
-	"max6690",
-	NULL
-};
-
-static const struct device_compatible_entry admtemp_compat_data[] = {
-	DEVICE_COMPAT_ENTRY(admtemp_compats),
-	DEVICE_COMPAT_TERMINATOR
+static const struct device_compatible_entry compat_data[] = {
+	{ "i2c-max1617",		0 },
+	{ "max6642",			0 },
+	{ "max6690",			0 },
+	{ NULL,				0 }
 };
 
 int
@@ -169,7 +164,7 @@ admtemp_match(device_t parent, cfdata_t match, void *aux)
 	struct i2c_attach_args *ia = aux;
 	int match_result;
 
-	if (iic_use_direct_match(ia, match, admtemp_compat_data, &match_result))
+	if (iic_use_direct_match(ia, match, compat_data, &match_result))
 		return match_result;
 	
 	/*

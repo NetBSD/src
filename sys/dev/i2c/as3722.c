@@ -1,4 +1,4 @@
-/* $NetBSD: as3722.c,v 1.12.10.1 2018/06/25 07:25:50 pgoyette Exp $ */
+/* $NetBSD: as3722.c,v 1.12.10.2 2018/07/28 04:37:44 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_fdt.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: as3722.c,v 1.12.10.1 2018/06/25 07:25:50 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: as3722.c,v 1.12.10.2 2018/07/28 04:37:44 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -222,14 +222,9 @@ CFATTACH_DECL_NEW(as3722reg, sizeof(struct as3722reg_softc),
     as3722reg_match, as3722reg_attach, NULL, NULL);
 #endif
 
-static const char * as3722_compats[] = {
-	"ams,as3722",
-	NULL
-};
-
-static const struct device_compatible_entry as3722_compat_data[] = {
-	DEVICE_COMPAT_ENTRY(as3722_compats),
-	DEVICE_COMPAT_TERMINATOR
+static const struct device_compatible_entry compat_data[] = {
+	{ "ams,as3722",			0 },
+	{ NULL,				0 }
 };
 
 static int
@@ -239,7 +234,7 @@ as3722_match(device_t parent, cfdata_t match, void *aux)
 	uint8_t reg, id1;
 	int error, match_result;
 
-	if (iic_use_direct_match(ia, match, as3722_compat_data, &match_result))
+	if (iic_use_direct_match(ia, match, compat_data, &match_result))
 		return match_result;
 	
 	if (ia->ia_addr != AS3722_I2C_ADDR)

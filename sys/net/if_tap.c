@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tap.c,v 1.105 2017/12/19 03:32:35 ozaki-r Exp $	*/
+/*	$NetBSD: if_tap.c,v 1.105.2.1 2018/07/28 04:38:10 pgoyette Exp $	*/
 
 /*
  *  Copyright (c) 2003, 2004, 2008, 2009 The NetBSD Foundation.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.105 2017/12/19 03:32:35 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.105.2.1 2018/07/28 04:38:10 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 
@@ -513,7 +513,7 @@ tap_start(struct ifnet *ifp)
 				goto done;
 
 			ifp->if_opackets++;
-			bpf_mtap(ifp, m0);
+			bpf_mtap(ifp, m0, BPF_D_OUT);
 
 			m_freem(m0);
 		}
@@ -885,7 +885,7 @@ tap_dev_close(struct tap_softc *sc)
 				break;
 
 			ifp->if_opackets++;
-			bpf_mtap(ifp, m);
+			bpf_mtap(ifp, m, BPF_D_OUT);
 			m_freem(m);
 		}
 	}
@@ -973,7 +973,7 @@ tap_dev_read(int unit, struct uio *uio, int flags)
 	}
 
 	ifp->if_opackets++;
-	bpf_mtap(ifp, m);
+	bpf_mtap(ifp, m, BPF_D_OUT);
 
 	/*
 	 * One read is one packet.

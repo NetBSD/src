@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16 2017/08/01 20:07:43 joerg Exp $
+#	$NetBSD: Makefile,v 1.16.2.1 2018/07/28 04:37:13 pgoyette Exp $
 
 LIB=	clangFrontend
 
@@ -22,6 +22,7 @@ SRCS+=	ASTConsumers.cpp \
 	FrontendAction.cpp \
 	FrontendActions.cpp \
 	FrontendOptions.cpp \
+	FrontendTiming.cpp \
 	HeaderIncludeGen.cpp \
 	InitHeaderSearch.cpp \
 	InitPreprocessor.cpp \

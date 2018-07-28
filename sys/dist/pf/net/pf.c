@@ -1,4 +1,4 @@
-/*	$NetBSD: pf.c,v 1.80.2.1 2018/05/21 04:36:12 pgoyette Exp $	*/
+/*	$NetBSD: pf.c,v 1.80.2.2 2018/07/28 04:37:59 pgoyette Exp $	*/
 /*	$OpenBSD: pf.c,v 1.552.2.1 2007/11/27 16:37:57 henning Exp $ */
 
 /*
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pf.c,v 1.80.2.1 2018/05/21 04:36:12 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pf.c,v 1.80.2.2 2018/07/28 04:37:59 pgoyette Exp $");
 
 #include "pflog.h"
 
@@ -5353,7 +5353,7 @@ pf_route(struct mbuf **m, struct pf_rule *r, int dir, struct ifnet *oifp,
 	/* Catch routing changes wrt. hardware checksumming for TCP or UDP. */
 #ifdef __NetBSD__
 	if (m0->m_pkthdr.csum_flags & (M_CSUM_TCPv4|M_CSUM_UDPv4)) {
-		in_delayed_cksum(m0);
+		in_undefer_cksum_tcpudp(m0);
 		m0->m_pkthdr.csum_flags &= ~(M_CSUM_TCPv4|M_CSUM_UDPv4);
 	}
 #else
