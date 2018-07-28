@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.7 2018/07/19 18:30:28 christos Exp $ */
+/* $NetBSD: trap.c,v 1.8 2018/07/28 09:57:59 ryo Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,12 +31,13 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.7 2018/07/19 18:30:28 christos Exp $");
+__KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.8 2018/07/28 09:57:59 ryo Exp $");
 
 #include "opt_arm_intr_impl.h"
 #include "opt_compat_netbsd32.h"
 
 #include <sys/param.h>
+#include <sys/kauth.h>
 #include <sys/types.h>
 #include <sys/atomic.h>
 #include <sys/cpu.h>
@@ -73,6 +74,9 @@ __KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.7 2018/07/19 18:30:28 christos Exp $");
 #include <machine/db_machdep.h>
 #endif
 
+#ifdef DDB
+int sigill_debug = 0;
+#endif
 
 const char * const trap_names[] = {
 	[ESR_EC_UNKNOWN]	= "Unknown Reason (Illegal Instruction)",
@@ -271,6 +275,15 @@ trap_el0_sync(struct trapframe *tf)
 	default:
 		/* XXX notyet */
 	case ESR_EC_UNKNOWN:
+#ifdef DDB
+		if (sigill_debug) {
+			/* show illegal instruction */
+			printf("TRAP: pid %d (%s), uid %d: %s: pc=0x%016lx: %s\n",
+			    curlwp->l_proc->p_pid, curlwp->l_proc->p_comm,
+			    l->l_cred ? kauth_cred_geteuid(l->l_cred) : -1,
+			    eclass_trapname(eclass), tf->tf_pc, strdisasm(tf->tf_pc));
+		}
+#endif
 		/* illegal or not implemented instruction */
 		do_trapsignal(l, SIGILL, ILL_ILLTRP, (void *)tf->tf_pc, esr);
 		userret(l);
