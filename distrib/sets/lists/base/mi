@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1087.2.12 2017/11/05 20:42:18 snj Exp $
+# $NetBSD: mi,v 1.1087.2.13 2018/07/29 06:38:34 martin Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -408,7 +408,7 @@
 ./libexec/dhcpcd-hooks				base-dhcpcd-root
 ./libexec/dhcpcd-hooks/01-test			base-dhcpcd-root
 ./libexec/dhcpcd-hooks/02-dump			base-dhcpcd-root
-./libexec/dhcpcd-hooks/10-mtu			base-dhcpcd-root
+./libexec/dhcpcd-hooks/10-mtu			base-obsolete      obsolete
 ./libexec/dhcpcd-hooks/10-resolv.conf		base-obsolete			obsolete
 ./libexec/dhcpcd-hooks/10-wpa_supplicant	base-dhcpcd-root
 ./libexec/dhcpcd-hooks/14-lookup-hostname	base-obsolete			obsolete
