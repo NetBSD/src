@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urtwn.c,v 1.60 2018/06/29 04:02:10 thorpej Exp $	*/
+/*	$NetBSD: if_urtwn.c,v 1.61 2018/07/29 02:07:22 riastradh Exp $	*/
 /*	$OpenBSD: if_urtwn.c,v 1.42 2015/02/10 23:25:46 mpi Exp $	*/
 
 /*-
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.60 2018/06/29 04:02:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.61 2018/07/29 02:07:22 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -539,12 +539,12 @@ urtwn_detach(device_t self, int flags)
 
 	sc->sc_dying = 1;
 
-	callout_stop(&sc->sc_scan_to);
-	callout_stop(&sc->sc_calib_to);
+	callout_halt(&sc->sc_scan_to, NULL);
+	callout_halt(&sc->sc_calib_to, NULL);
 
 	if (ISSET(sc->sc_flags, URTWN_FLAG_ATTACHED)) {
-		usb_rem_task(sc->sc_udev, &sc->sc_task);
 		urtwn_stop(ifp, 0);
+		usb_rem_task_wait(sc->sc_udev, &sc->sc_task, USB_TASKQ_DRIVER);
 
 		ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 		bpf_detach(ifp);
