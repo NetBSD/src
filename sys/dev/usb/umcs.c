@@ -1,4 +1,4 @@
-/* $NetBSD: umcs.c,v 1.10 2016/07/07 06:55:42 msaitoh Exp $ */
+/* $NetBSD: umcs.c,v 1.11 2018/07/29 02:07:56 riastradh Exp $ */
 /* $FreeBSD: head/sys/dev/usb/serial/umcs.c 260559 2014-01-12 11:44:28Z hselasky $ */
 
 /*-
@@ -41,7 +41,7 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umcs.c,v 1.10 2016/07/07 06:55:42 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umcs.c,v 1.11 2018/07/29 02:07:56 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -517,7 +517,7 @@ umcs7840_detach(device_t self, int flags)
 		kmem_free(sc->sc_intr_buf, sc->sc_intr_buflen);
 		sc->sc_intr_pipe = NULL;
 	}
-	usb_rem_task(sc->sc_udev, &sc->sc_change_task);
+	usb_rem_task_wait(sc->sc_udev, &sc->sc_change_task, USB_TASKQ_DRIVER);
 
 	/* detach children */
 	for (i = 0; i < sc->sc_numports; i++) {
