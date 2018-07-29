@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.169 2018/06/29 17:48:24 msaitoh Exp $	*/
+/*	$NetBSD: usb.c,v 1.170 2018/07/29 01:59:46 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2002, 2008, 2012 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.169 2018/06/29 17:48:24 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.170 2018/07/29 01:59:46 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -146,6 +146,7 @@ struct usb_taskq {
 	kcondvar_t cv;
 	struct lwp *task_thread_lwp;
 	const char *name;
+	struct usb_task *current_task;
 };
 
 static struct usb_taskq usb_taskq[USB_NUM_TASKQS];
@@ -294,6 +295,7 @@ usb_once_init(void)
 		mutex_init(&taskq->lock, MUTEX_DEFAULT, IPL_USB);
 		cv_init(&taskq->cv, "usbtsk");
 		taskq->name = taskq_names[i];
+		taskq->current_task = NULL;
 		if (kthread_create(PRI_NONE, KTHREAD_MPSAFE, NULL,
 		    usb_task_thread, taskq, &taskq->task_thread_lwp,
 		    "%s", taskq->name)) {
@@ -426,8 +428,14 @@ usb_add_task(struct usbd_device *dev, struct usb_task *task, int queue)
 }
 
 /*
- * XXX This does not wait for completion!  Most uses need such an
- * operation.  Urgh...
+ * usb_rem_task(dev, task)
+ *
+ *	If task is queued to run, remove it from the queue.
+ *
+ *	Caller is _not_ guaranteed that the task is not running when
+ *	this is done.
+ *
+ *	Never sleeps.
  */
 void
 usb_rem_task(struct usbd_device *dev, struct usb_task *task)
@@ -444,6 +452,85 @@ usb_rem_task(struct usbd_device *dev, struct usb_task *task)
 			task->queue = USB_NUM_TASKQS;
 			mutex_exit(&taskq->lock);
 			break;
+		}
+		mutex_exit(&taskq->lock);
+	}
+}
+
+/*
+ * usb_taskq_wait(taskq, task)
+ *
+ *	Wait for taskq to finish executing task, if it is executing
+ *	task.  Caller must hold the taskq lock.
+ */
+static void
+usb_taskq_wait(struct usb_taskq *taskq, struct usb_task *task)
+{
+
+	KASSERT(mutex_owned(&taskq->lock));
+
+	while (taskq->current_task == task)
+		cv_wait(&taskq->cv, &taskq->lock);
+
+	KASSERT(taskq->current_task != task);
+}
+
+/*
+ * usb_rem_task_wait(dev, task, queue)
+ *
+ *	If task is scheduled to run, remove it from the queue.  If it
+ *	may have already begun to run, wait for it to complete.
+ *
+ *	Caller MUST guarantee that task will not be scheduled on a
+ *	_different_ queue, at least until after this returns.
+ *
+ *	If caller guarantees that task will not be scheduled on the
+ *	same queue before this returns, then caller is guaranteed that
+ *	the task is not running at all when this returns.
+ *
+ *	May sleep.
+ */
+void
+usb_rem_task_wait(struct usbd_device *dev, struct usb_task *task, int queue)
+{
+	struct usb_taskq *taskq;
+	int queue1;
+
+	USBHIST_FUNC(); USBHIST_CALLED(usbdebug);
+	ASSERT_SLEEPABLE();
+	KASSERT(0 <= queue);
+	KASSERT(queue < USB_NUM_TASKQS);
+
+	taskq = &usb_taskq[queue];
+
+	if ((queue1 = task->queue) == USB_NUM_TASKQS) {
+		/*
+		 * It is not on the queue, but it may have already run.
+		 * Wait for it.
+		 */
+		mutex_enter(&taskq->lock);
+		usb_taskq_wait(taskq, task);
+		mutex_exit(&taskq->lock);
+	} else {
+		/*
+		 * It may be on the queue (and not another one), but
+		 * the state may have changed by now because we don't
+		 * have the queue locked.  Lock and reload.
+		 */
+		KASSERTMSG(queue1 == queue,
+		    "task %p on q%d expected on q%d", task, queue1, queue);
+		mutex_enter(&taskq->lock);
+		queue1 = task->queue;
+		if (queue1 == queue) {
+			/* Still queued, not run.  Just remove it.  */
+			TAILQ_REMOVE(&taskq->tasks, task, next);
+			task->queue = USB_NUM_TASKQS;
+		} else {
+			/* Already ran.  Wait for it.  */
+			KASSERTMSG(queue1 == USB_NUM_TASKQS,
+			    "task %p on q%d expected on q%d",
+			    task, queue1, queue);
+			usb_taskq_wait(taskq, task);
 		}
 		mutex_exit(&taskq->lock);
 	}
@@ -517,6 +604,7 @@ usb_task_thread(void *arg)
 			mpsafe = ISSET(task->flags, USB_TASKQ_MPSAFE);
 			TAILQ_REMOVE(&taskq->tasks, task, next);
 			task->queue = USB_NUM_TASKQS;
+			taskq->current_task = task;
 			mutex_exit(&taskq->lock);
 
 			if (!mpsafe)
@@ -527,6 +615,10 @@ usb_task_thread(void *arg)
 				KERNEL_UNLOCK_ONE(curlwp);
 
 			mutex_enter(&taskq->lock);
+			KASSERTMSG(taskq->current_task == task,
+			    "somebody scribbled on usb taskq %p", taskq);
+			taskq->current_task = NULL;
+			cv_broadcast(&taskq->cv);
 		}
 	}
 	mutex_exit(&taskq->lock);
