@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axe.c,v 1.90 2018/06/26 06:48:02 msaitoh Exp $	*/
+/*	$NetBSD: if_axe.c,v 1.91 2018/07/29 02:00:27 riastradh Exp $	*/
 /*	$OpenBSD: if_axe.c,v 1.137 2016/04/13 11:03:37 mpi Exp $ */
 
 /*
@@ -87,7 +87,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.90 2018/06/26 06:48:02 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.91 2018/07/29 02:00:27 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1111,11 +1111,8 @@ axe_detach(device_t self, int flags)
 	if (sc->axe_ep[AXE_ENDPT_INTR] != NULL)
 		usbd_abort_pipe(sc->axe_ep[AXE_ENDPT_INTR]);
 
-	/*
-	 * Remove any pending tasks.  They cannot be executing because they run
-	 * in the same thread as detach.
-	 */
-	usb_rem_task(sc->axe_udev, &sc->axe_tick_task);
+	callout_halt(&sc->axe_stat_ch, NULL);
+	usb_rem_task_wait(sc->axe_udev, &sc->axe_tick_task, USB_TASKQ_DRIVER);
 
 	s = splusb();
 
