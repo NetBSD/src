@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.2,v 1.1.2.98 2018/07/28 13:21:11 martin Exp $
+# $NetBSD: CHANGES-7.2,v 1.1.2.99 2018/07/29 06:44:56 martin Exp $
 
 A complete list of changes from the NetBSD 7.1 release to the NetBSD 7.2
 release:
@@ -5768,11 +5768,18 @@ external/bsd/dhcpcd/sbin/dhcpcd/Makefile        up to 1.43
 external/bsd/dhcpcd/include/config.h		(apply patch)
 external/bsd/dhcpcd/sbin/dhcpcd/Makefile	(apply patch)
 usr.sbin/postinstall/postinstall		1.211-1.213
+distrib/sets/lists/base/mi			1.1120
+distrib/sets/lists/misc/mi			1.197
+distrib/sets/lists/base/mi			1.1111
+etc/mtree/NetBSD.dist.base			1.151
 etc/rc.d/dhcpcd					upto 1.5
 doc/3RDPARTY					manual edit
 
 	Import dhcpcd-7.0.7.
 	Adjust postinstall for dhcpcd changes.
+	Move 10-wpa_supplicant, 15-timezone, 29-lookup-hostname and 50-ypbind
+	from /libexec/dhcpcd-hooks to /usr/share/examples/dhcpcd/hooks so they
+	are not run by default.
 	[roy, ticket #1621]
 
 sys/fs/udf/udf_subr.c				1.142
