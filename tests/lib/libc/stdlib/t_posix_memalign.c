@@ -1,4 +1,4 @@
-/*	$NetBSD: t_posix_memalign.c,v 1.4 2015/11/07 17:35:31 nros Exp $ */
+/*	$NetBSD: t_posix_memalign.c,v 1.5 2018/07/29 01:45:25 maya Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_posix_memalign.c,v 1.4 2015/11/07 17:35:31 nros Exp $");
+__RCSID("$NetBSD: t_posix_memalign.c,v 1.5 2018/07/29 01:45:25 maya Exp $");
 
 #include <atf-c.h>
 
@@ -121,9 +121,6 @@ ATF_TC_BODY(aligned_alloc_basic, tc)
 			ATF_REQUIRE_EQ_MSG((align[i] - 1) & align[i], 0,
 			    "aligned_alloc: success when alignment was not "
 			    "a power of 2");
-			ATF_REQUIRE_EQ_MSG(size[i] % align[i], 0,
-			    "aligned_alloc: success when size was not an "
-			    "integer multiple of alignment");
 			ATF_REQUIRE_EQ_MSG(((intptr_t)p) & (align[i] - 1), 0,
 			    "p = %p", p);
 			free(p);
