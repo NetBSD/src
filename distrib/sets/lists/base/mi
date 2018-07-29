@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1087.2.13 2018/07/29 06:38:34 martin Exp $
+# $NetBSD: mi,v 1.1087.2.14 2018/07/29 06:44:19 martin Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -409,13 +409,13 @@
 ./libexec/dhcpcd-hooks/01-test			base-dhcpcd-root
 ./libexec/dhcpcd-hooks/02-dump			base-dhcpcd-root
 ./libexec/dhcpcd-hooks/10-mtu			base-obsolete      obsolete
-./libexec/dhcpcd-hooks/10-resolv.conf		base-obsolete			obsolete
-./libexec/dhcpcd-hooks/10-wpa_supplicant	base-dhcpcd-root
-./libexec/dhcpcd-hooks/14-lookup-hostname	base-obsolete			obsolete
-./libexec/dhcpcd-hooks/15-hostname		base-obsolete			obsolete
-./libexec/dhcpcd-hooks/15-timezone		base-dhcpcd-root
+./libexec/dhcpcd-hooks/10-resolv.conf		base-obsolete      obsolete
+./libexec/dhcpcd-hooks/10-wpa_supplicant	base-obsolete      obsolete
+./libexec/dhcpcd-hooks/14-lookup-hostname	base-obsolete      obsolete
+./libexec/dhcpcd-hooks/15-hostname		base-obsolete      obsolete
+./libexec/dhcpcd-hooks/15-timezone		base-obsolete      obsolete
 ./libexec/dhcpcd-hooks/20-resolv.conf		base-dhcpcd-root
-./libexec/dhcpcd-hooks/29-lookup-hostname	base-dhcpcd-root
+./libexec/dhcpcd-hooks/29-lookup-hostname	base-obsolete      obsolete
 ./libexec/dhcpcd-hooks/30-hostname		base-dhcpcd-root
 ./libexec/dhcpcd-hooks/50-ntp.conf		base-dhcpcd-root
 ./libexec/dhcpcd-run-hooks			base-dhcpcd-root
@@ -2118,6 +2118,8 @@
 ./usr/share/examples/blacklist/blacklistd.conf	base-sys-examples
 ./usr/share/examples/blacklist/npf.conf		base-sys-examples
 ./usr/share/examples/dhcp			base-dhcpd-examples
+./usr/share/examples/dhcpcd			base-dhcpcd-examples
+./usr/share/examples/dhcpcd/hooks		base-dhcpcd-examples
 ./usr/share/examples/disktab			base-sys-examples
 ./usr/share/examples/emul			base-sys-examples
 ./usr/share/examples/emul/linux			base-sys-examples
