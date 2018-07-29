@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.194 2014/07/20 15:58:40 tron Exp $
+# $NetBSD: mi,v 1.194.2.1 2018/07/29 06:44:19 martin Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1360,6 +1360,10 @@
 ./usr/share/examples/atf/tests-results.css	misc-atf-examples	share,atf,!kyua
 ./usr/share/examples/atf/tests-results.css	misc-obsolete		share,kyua,obsolete
 ./usr/share/examples/dhcp/dhcpd.conf		misc-dhcpd-examples	share
+./usr/share/examples/dhcpcd/hooks/10-wpa_supplicant	misc-dhcpcd-examples	share
+./usr/share/examples/dhcpcd/hooks/15-timezone	misc-dhcpcd-examples	share
+./usr/share/examples/dhcpcd/hooks/29-lookup-hostname	misc-dhcpcd-examples	share
+./usr/share/examples/dhcpcd/hooks/50-ypbind	misc-dhcpcd-examples	share
 ./usr/share/examples/disktab/disktab		misc-sys-examples	share
 ./usr/share/examples/emul/linux/etc/LINUX_MAKEDEV	misc-sys-examples	share
 ./usr/share/examples/emul/svr4/etc/SVR4_MAKEDEV	misc-sys-examples	share
