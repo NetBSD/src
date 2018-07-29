@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.224 2018/04/30 05:04:34 mlelstv Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.225 2018/07/29 02:08:07 riastradh Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.224 2018/04/30 05:04:34 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.225 2018/07/29 02:08:07 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -823,7 +823,7 @@ usbd_kill_pipe(struct usbd_pipe *pipe)
 	usbd_lock_pipe(pipe);
 	pipe->up_methods->upm_close(pipe);
 	usbd_unlock_pipe(pipe);
-	usb_rem_task(pipe->up_dev, &pipe->up_async_task);
+	usb_rem_task_wait(pipe->up_dev, &pipe->up_async_task, USB_TASKQ_DRIVER);
 	pipe->up_endpoint->ue_refcnt--;
 	kmem_free(pipe, pipe->up_dev->ud_bus->ub_pipesize);
 }
