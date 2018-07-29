@@ -1,4 +1,4 @@
-.\"	$NetBSD: BUILDING.mdoc,v 1.124 2018/02/16 10:05:01 leot Exp $
+.\"	$NetBSD: BUILDING.mdoc,v 1.125 2018/07/29 20:53:29 sevan Exp $
 .\"
 .\" Copyright (c) 2001-2011 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -33,7 +33,7 @@
 .\" Toolchain prefix for commands
 .ds toolprefix nb
 .
-.Dd October 21, 2017
+.Dd July 29, 2018
 .Dt BUILDING 8
 .Os NetBSD
 .
@@ -506,7 +506,7 @@ set and installed in
 .YorN
 Indicates whether debug information (see
 .Sy MKDEBUG )
-should also be generated for all libraries build.
+should also be generated for all libraries built.
 .DFLTn
 .
 .It Sy MKDOC
@@ -545,9 +545,9 @@ object directory names as programs built to be run on the target.
 .
 .It Sy MKINFO
 .YorN
-Indicates whether GNU Info files, used for the documentation for
-most of the compilation tools, will be created and installed during a
-build.
+Indicates whether GNU Info files will be created and installed during a build.
+GNU Info files are used for providing documentation by most of the compilation
+tools.
 .DFLTy
 .
 .It Sy MKKDEBUG
