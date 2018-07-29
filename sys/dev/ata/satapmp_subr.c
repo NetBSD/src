@@ -1,4 +1,4 @@
-/*	$NetBSD: satapmp_subr.c,v 1.13 2017/10/07 16:05:32 jdolecek Exp $	*/
+/*	$NetBSD: satapmp_subr.c,v 1.14 2018/07/29 14:11:30 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2012 Manuel Bouyer.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: satapmp_subr.c,v 1.13 2017/10/07 16:05:32 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: satapmp_subr.c,v 1.14 2018/07/29 14:11:30 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -239,7 +239,7 @@ satapmp_reset_device_port(struct ata_channel *chp, int port,
 	return(sstatus & SStatus_DET_mask);
 }
 
-void
+static void __noinline
 satapmp_rescan(struct ata_channel *chp, struct ata_xfer *xfer)
 {
 	int i;
