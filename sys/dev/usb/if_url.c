@@ -1,4 +1,4 @@
-/*	$NetBSD: if_url.c,v 1.58 2018/06/26 06:48:02 msaitoh Exp $	*/
+/*	$NetBSD: if_url.c,v 1.59 2018/07/29 02:08:17 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.58 2018/06/26 06:48:02 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.59 2018/07/29 02:08:17 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -346,11 +346,18 @@ url_detach(device_t self, int flags)
 	if (!sc->sc_attached)
 		return 0;
 
-	callout_stop(&sc->sc_stat_ch);
+	/*
+	 * XXX Halting callout guarantees no more tick tasks.  What
+	 * guarantees no more stop tasks?  What guarantees no more
+	 * calls to url_send?  Don't we need to wait for if_detach or
+	 * something?  Should set sc->sc_dying here?  Is device
+	 * deactivation guaranteed to have already happened?
+	 */
+	callout_halt(&sc->sc_stat_ch, NULL);
 
 	/* Remove any pending tasks */
-	usb_rem_task(sc->sc_udev, &sc->sc_tick_task);
-	usb_rem_task(sc->sc_udev, &sc->sc_stop_task);
+	usb_rem_task_wait(sc->sc_udev, &sc->sc_tick_task, USB_TASKQ_DRIVER);
+	usb_rem_task_wait(sc->sc_udev, &sc->sc_stop_task, USB_TASKQ_DRIVER);
 
 	s = splusb();
 
