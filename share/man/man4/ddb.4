@@ -1,4 +1,4 @@
-.\"	$NetBSD: ddb.4,v 1.181 2018/07/20 08:34:24 wiz Exp $
+.\"	$NetBSD: ddb.4,v 1.182 2018/07/30 06:18:25 ryo Exp $
 .\"
 .\" Copyright (c) 1997 - 2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -56,7 +56,7 @@
 .\" any improvements or extensions that they make and grant Carnegie Mellon
 .\" the rights to redistribute these changes.
 .\"
-.Dd July 20, 2018
+.Dd July 30, 2018
 .Dt DDB 4
 .Os
 .Sh NAME
@@ -991,6 +991,45 @@ to indicate that they are part of the machine-specific command
 set (e.g.
 .Ic machine reboot ) .
 Some of these commands are:
+.Ss AARCH64
+.Bl -tag -width "traptrace" -compact
+.It Ic cpu
+Switch to another cpu.
+.It Ic cpuinfo
+Print cpu information about the ``struct cpuinfo''.
+.It Ic frame
+Given a trap frame address, print out the trap frame.
+.It Ic lwp
+Print lwp information about the ``struct lwp''.
+.It Ic pte
+Print PTE information.
+.It Ic sysreg
+Print system registers.
+.It Ic watch
+Set or clear a hardware watchpoint.
+Pass the address to be watched, or watchpoint number to clear the watchpoint.
+Optional modifiers are
+.Dq l
+for load access,
+.Dq s
+for store access,
+.Dq 1
+for 8 bit width,
+.Dq 2
+for 16 bit,
+.Dq 3
+for 24 bit,
+.Dq 4
+for 32 bit,
+.Dq 5
+for 40 bit,
+.Dq 6
+for 48 bit,
+.Dq 7
+for 56 bit,
+.Dq 8
+for 64 bit.
+.El
 .Ss ALPHA
 .Bl -tag -width "traptrace" -compact
 .It Ic cpu
