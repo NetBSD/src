@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1345 2018/07/30 03:21:51 msaitoh Exp $
+$NetBSD: pcidevs,v 1.1346 2018/07/30 05:59:57 msaitoh Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -7145,6 +7145,8 @@ product TOSHIBA2 PICCOLO	0x0101	Piccolo IDE Controller
 product TOSHIBA2 PICCOLO2	0x0102	Piccolo 2 IDE Controller
 product TOSHIBA2 PICCOLO3	0x0103	Piccolo 3 IDE Controller
 product TOSHIBA2 PICCOLO5	0x0105	Piccolo 5 IDE Controller
+product TOSHIBA2 NVME_XG4	0x0115	XG4 NVMe SSD
+product TOSHIBA2 NVME_XG5	0x0116	XG5 NVMe SSD
 product TOSHIBA2 HOST		0x0601	Host Bridge/Controller
 product TOSHIBA2 ISA		0x0602	PCI-ISA Bridge
 product TOSHIBA2 ToPIC95	0x0603	ToPIC95 PCI-CardBus Bridge
