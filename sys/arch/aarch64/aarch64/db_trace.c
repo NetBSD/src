@@ -1,4 +1,4 @@
-/* $NetBSD: db_trace.c,v 1.3 2018/07/17 00:31:22 christos Exp $ */
+/* $NetBSD: db_trace.c,v 1.4 2018/07/30 15:59:44 ryo Exp $ */
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.3 2018/07/17 00:31:22 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.4 2018/07/30 15:59:44 ryo Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -248,7 +248,7 @@ db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
 		if (((char *)(lr - 4) == (char *)el0_trap) ||
 		    ((char *)(lr - 4) == (char *)el1_trap)) {
 
-			tf = (struct trapframe *)(lastfp + 16);
+			tf = (struct trapframe *)fp;
 
 			lastfp = (uint64_t)tf;
 			lastlr = lr;
