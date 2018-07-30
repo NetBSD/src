@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urtwn.c,v 1.61 2018/07/29 02:07:22 riastradh Exp $	*/
+/*	$NetBSD: if_urtwn.c,v 1.62 2018/07/30 00:17:28 jmcneill Exp $	*/
 /*	$OpenBSD: if_urtwn.c,v 1.42 2015/02/10 23:25:46 mpi Exp $	*/
 
 /*-
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.61 2018/07/29 02:07:22 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.62 2018/07/30 00:17:28 jmcneill Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -4968,7 +4968,8 @@ urtwn_chip_stop(struct urtwn_softc *sc)
 
 	DPRINTFN(DBG_FN, ("%s: %s\n", device_xname(sc->sc_dev), __func__));
 
-	if (ISSET(sc->chip, URTWN_CHIP_92EU))
+	if (ISSET(sc->chip, URTWN_CHIP_88E) ||
+	    ISSET(sc->chip, URTWN_CHIP_92EU))
 		return;
 
 	mutex_enter(&sc->sc_write_mtx);
