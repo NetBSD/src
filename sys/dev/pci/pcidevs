@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1344 2018/07/06 14:46:27 prlw1 Exp $
+$NetBSD: pcidevs,v 1.1345 2018/07/30 03:21:51 msaitoh Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -3356,6 +3356,7 @@ product INTEL CORE5G_M_GT3_28W	0x162b	Iris Graphics 6100
 product INTEL CORE6G_H_HB_1	0x1900	Core 6G Host and DRAM (H, Dual Core)
 product INTEL CORE6G_PCIE_X16	0x1901	Core 6G PCIe x16
 product INTEL CORE6G_PEN_GTX_1	0x1902	HD Graphics 510
+product INTEL CORE6G_THERM	0x1903	Core 6G Thermal
 product INTEL CORE6G_U_HB	0x1904	Core 6G Host and DRAM (U)
 product INTEL CORE6G_PCIE_X8	0x1905	Core 6G PCIe x8
 product INTEL CORE6G_PEN_GTX_2	0x1906	HD Graphics 510
@@ -4601,7 +4602,9 @@ product INTEL CORE7G_S_D_HOST_DRAM 0x590f Core 7G (S, Dual) Host Bridge, DRAM
 product INTEL CORE7G_H_M_Q_HOST_DRAM 0x5910 Core 7G (H, Mobile, Quad) Host Bridge, DRAM
 product INTEL CORE7G_GMM	0x5911	Core 7G Gaussian Mixture Model
 product INTEL CORE7G_S_GT2	0x5912	HD Graphics 630 (GT1)
+product INTEL CORE8G_U_HB_DRAM	0x5914	Core 7G,8G Host Bridge, DRAM
 product INTEL CORE7G_U_GT2	0x5916	HD Graphics 620 (GT2)
+product INTEL CORE8G_U_GT2	0x5917	UHD Graphics 620 (GT2)
 product INTEL CORE7G_H_SW_HOST_DRAM 0x5918 Core 7G (H, Server or Workstation) Host Bridge, DRAM
 product INTEL CORE7G_IU		0x5919	Core 7G Image Unit
 product INTEL CORE7G_H_M_GT2	0x591b	HD Graphics 630 (GT2, Mobile)
@@ -5029,12 +5032,19 @@ product INTEL 100SERIES_LP_MEI_3 0x9d3e	100 Series MEI
 product INTEL 100SERIES_LP_LPC_1 0x9d43	100 Series (PCH-U) LPC
 product INTEL 100SERIES_LP_LPC_2 0x9d46	100 Series (PCH-Y) LPC
 product INTEL 100SERIES_LP_LPC_3 0x9d48	100 Series (PCH-U) LPC
+product INTEL 2HS_Y_LPC_1	0x9d4b	200 Series LPC
+product INTEL 2HS_U_LPC_1	0x9d4e	200 Series LPC
+product INTEL 2HS_U_LPC_2	0x9d50	200 Series LPC
+product INTEL 2HS_U_LPC_3	0x9d53	200 Series LPC
+product INTEL 2HS_Y_LPC_2	0x9d56	200 Series LPC
+product INTEL 2HS_U_LPC_4	0x9d58	200 Series LPC
 product INTEL 100SERIES_LP_I2C_0 0x9d60	100 Series I2C 0
 product INTEL 100SERIES_LP_I2C_1 0x9d61	100 Series I2C 1
 product INTEL 100SERIES_LP_I2C_2 0x9d62	100 Series I2C 2
 product INTEL 100SERIES_LP_I2C_3 0x9d63	100 Series I2C 3
 product INTEL 100SERIES_LP_UART_2 0x9d66 100 Series UART 2
 product INTEL 100SERIES_LP_HDA	0x9d70	100 Series HD Audio
+product INTEL 2HS_U_HDA		0x9d71	200 Series HD Audio
 product INTEL PINEVIEW_HB	0xa000	Pineview Host Bridge
 product INTEL PINEVIEW_IGD	0xa001	Pineview Integrated Graphics Device
 product INTEL PINEVIEW_IGD_1	0xa002	Pineview Integrated Graphics Device
@@ -5234,7 +5244,9 @@ product INTEL 2HS_LPC_Q27	0xa2c6	Q270 LPC
 product INTEL 2HS_LPC_Q25	0xa2c7	Q250 LPC
 product INTEL 2HS_LPC_B25	0xa2c8	B250 LPC
 product INTEL 2HS_LPC_Z37	0xa2c9	Z370 LPC
+product INTEL 2HS_LPC_H310C	0xa2ca	H310C LPC
 product INTEL 2HS_LPC_X29	0xa2d2	X299 LPC
+product INTEL 2HS_LPC_C422	0xa2d3	C422 LPC
 product INTEL 2HS_I2C_0		0xa2e0	200 Series I2C 0
 product INTEL 2HS_I2C_1		0xa2e1	200 Series I2C 1
 product INTEL 2HS_I2C_2		0xa2e2	200 Series I2C 2
