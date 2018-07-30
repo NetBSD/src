@@ -1,5 +1,5 @@
 /*	$OpenBSD: eval.c,v 1.66 2008/08/21 21:01:47 espie Exp $	*/
-/*	$NetBSD: eval.c,v 1.26 2017/10/23 02:38:46 christos Exp $	*/
+/*	$NetBSD: eval.c,v 1.27 2018/07/30 22:58:09 kre Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -42,7 +42,7 @@
 #include "nbtool_config.h"
 #endif
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: eval.c,v 1.26 2017/10/23 02:38:46 christos Exp $");
+__RCSID("$NetBSD: eval.c,v 1.27 2018/07/30 22:58:09 kre Exp $");
 
 #include <sys/types.h>
 #include <ctype.h>
@@ -987,6 +987,7 @@ map(char *dest, const char *src, const char *from, const char *to)
 			}
 		} else {
 			while (*src) {
+				sch = (unsigned char)(*src++);
 				dch = mapvec[sch];
 				while (dch != sch) {
 					sch = dch;
