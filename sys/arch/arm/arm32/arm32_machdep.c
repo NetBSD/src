@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_machdep.c,v 1.115 2017/10/31 12:37:23 martin Exp $	*/
+/*	$NetBSD: arm32_machdep.c,v 1.116 2018/07/31 07:00:48 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -42,8 +42,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.115 2017/10/31 12:37:23 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.116 2018/07/31 07:00:48 skrll Exp $");
 
+#include "opt_arm_debug.h"
 #include "opt_modular.h"
 #include "opt_md.h"
 #include "opt_pmap_debug.h"
@@ -79,6 +80,13 @@ __KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.115 2017/10/31 12:37:23 martin E
 
 #include <machine/bootconfig.h>
 #include <machine/pcb.h>
+
+#ifdef VERBOSE_INIT_ARM
+#define VPRINTF(...)	printf(__VA_ARGS__)
+#else
+#define VPRINTF(...)	do { } while (/* CONSTCOND */ 0)
+#endif
+
 
 void (*cpu_reset_address)(void);	/* Used by locore */
 paddr_t cpu_reset_address_paddr;	/* Used by locore */
@@ -151,9 +159,7 @@ arm32_vector_init(vaddr_t va, int which)
 		vector_page = (vaddr_t)page0rel;
 		KASSERT((vector_page & 0x1f) == 0);
 		armreg_vbar_write(vector_page);
-#ifdef VERBOSE_INIT_ARM
-		printf(" vbar=%p", page0rel);
-#endif
+		VPRINTF(" vbar=%p", page0rel);
 		cpu_control(CPU_CONTROL_VECRELOC, 0);
 		return;
 #ifndef ARM_HAS_VBAR
@@ -700,9 +706,7 @@ cpu_uarea_alloc_idlelwp(struct cpu_info *ci)
 void
 cpu_boot_secondary_processors(void)
 {
-#ifdef VERBOSE_INIT_ARM
-	printf("%s: writing mbox with %#x\n", __func__, arm_cpu_hatched);
-#endif
+	VPRINTF("%s: writing mbox with %#x\n", __func__, arm_cpu_hatched);
 	arm_cpu_mbox = arm_cpu_hatched;
 	membar_producer();
 #ifdef _ARM_ARCH_7
