@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.292 2018/07/12 10:46:48 maxv Exp $
+	$NetBSD: syscalls.master,v 1.293 2018/07/31 13:00:13 rjs Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -411,7 +411,8 @@
 			    struct stat12 *ub); } lstat12
 191	STD 	RUMP	{ long|sys||pathconf(const char *path, int name); }
 192	STD 	RUMP	{ long|sys||fpathconf(int fd, int name); }
-193	UNIMPL
+193	STD	RUMP	{ int|sys||getsockopt2(int s, int level, int name, \
+			    void *val, socklen_t *avalsize); }
 194	STD 	RUMP	{ int|sys||getrlimit(int which, \
 			    struct rlimit *rlp); }
 195	STD 	RUMP	{ int|sys||setrlimit(int which, \
