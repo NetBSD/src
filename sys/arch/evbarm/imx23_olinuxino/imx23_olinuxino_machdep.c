@@ -1,4 +1,4 @@
-/* $Id: imx23_olinuxino_machdep.c,v 1.6 2015/01/10 12:18:09 jmcneill Exp $ */
+/* $Id: imx23_olinuxino_machdep.c,v 1.7 2018/07/31 06:46:26 skrll Exp $ */
 
 /*
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -29,6 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "opt_arm_debug.h"
 #include "opt_imx.h"
 
 #include <sys/bus.h>

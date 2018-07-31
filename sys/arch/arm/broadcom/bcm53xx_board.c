@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm53xx_board.c,v 1.24 2018/06/05 08:03:28 hkenken Exp $	*/
+/*	$NetBSD: bcm53xx_board.c,v 1.25 2018/07/31 06:46:25 skrll Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -28,6 +28,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "opt_arm_debug.h"
 #include "opt_broadcom.h"
 #include "arml2cc.h"
 
@@ -35,7 +36,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: bcm53xx_board.c,v 1.24 2018/06/05 08:03:28 hkenken Exp $");
+__KERNEL_RCSID(1, "$NetBSD: bcm53xx_board.c,v 1.25 2018/07/31 06:46:25 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>

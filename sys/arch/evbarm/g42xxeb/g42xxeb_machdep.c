@@ -1,4 +1,4 @@
-/*	$NetBSD: g42xxeb_machdep.c,v 1.30 2016/12/22 14:47:55 cherry Exp $ */
+/*	$NetBSD: g42xxeb_machdep.c,v 1.31 2018/07/31 06:46:26 skrll Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004, 2005  Genetec Corporation.  
@@ -107,6 +107,7 @@
  * boards using RedBoot firmware.
  */
 
+#include "opt_arm_debug.h"
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
 #include "opt_pmap_debug.h"
