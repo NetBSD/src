@@ -1,4 +1,4 @@
-/*	$NetBSD: socketvar.h,v 1.144.6.3 2018/06/09 15:16:30 martin Exp $	*/
+/*	$NetBSD: socketvar.h,v 1.144.6.4 2018/07/31 17:01:20 martin Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -571,6 +571,10 @@ struct	accept_filter *accept_filt_get(char *);
 SYSCTL_DECL(_net_inet_accf);
 #endif
 void	accept_filter_init(void);
+#endif
+#ifdef DDB
+int sofindproc(struct socket *so, int all, void (*pr)(const char *, ...));
+void socket_print(const char *modif, void (*pr)(const char *, ...));
 #endif
 
 #endif /* _KERNEL */
