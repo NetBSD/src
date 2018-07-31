@@ -1,4 +1,4 @@
-/* $NetBSD: systrace_args.c,v 1.30 2018/07/12 10:46:48 maxv Exp $ */
+/* $NetBSD: systrace_args.c,v 1.31 2018/07/31 13:02:15 rjs Exp $ */
 
 /*
  * System call argument to DTrace register array converstion.
@@ -1365,6 +1365,17 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 		iarg[0] = SCARG(p, fd); /* int */
 		iarg[1] = SCARG(p, name); /* int */
 		*n_args = 2;
+		break;
+	}
+	/* sys_getsockopt2 */
+	case 193: {
+		const struct sys_getsockopt2_args *p = params;
+		iarg[0] = SCARG(p, s); /* int */
+		iarg[1] = SCARG(p, level); /* int */
+		iarg[2] = SCARG(p, name); /* int */
+		uarg[3] = (intptr_t) SCARG(p, val); /* void * */
+		uarg[4] = (intptr_t) SCARG(p, avalsize); /* socklen_t * */
+		*n_args = 5;
 		break;
 	}
 	/* sys_getrlimit */
@@ -5855,6 +5866,28 @@ systrace_entry_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 			break;
 		case 1:
 			p = "int";
+			break;
+		default:
+			break;
+		};
+		break;
+	/* sys_getsockopt2 */
+	case 193:
+		switch(ndx) {
+		case 0:
+			p = "int";
+			break;
+		case 1:
+			p = "int";
+			break;
+		case 2:
+			p = "int";
+			break;
+		case 3:
+			p = "void *";
+			break;
+		case 4:
+			p = "socklen_t *";
 			break;
 		default:
 			break;
@@ -10640,6 +10673,11 @@ systrace_return_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 	case 192:
 		if (ndx == 0 || ndx == 1)
 			p = "long";
+		break;
+	/* sys_getsockopt2 */
+	case 193:
+		if (ndx == 0 || ndx == 1)
+			p = "int";
 		break;
 	/* sys_getrlimit */
 	case 194:
