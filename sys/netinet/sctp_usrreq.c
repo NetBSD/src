@@ -1,5 +1,5 @@
 /*	$KAME: sctp_usrreq.c,v 1.50 2005/06/16 20:45:29 jinmei Exp $	*/
-/*	$NetBSD: sctp_usrreq.c,v 1.11 2018/07/31 13:36:31 rjs Exp $	*/
+/*	$NetBSD: sctp_usrreq.c,v 1.12 2018/07/31 16:28:56 rjs Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Cisco Systems, Inc.
@@ -33,7 +33,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sctp_usrreq.c,v 1.11 2018/07/31 13:36:31 rjs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sctp_usrreq.c,v 1.12 2018/07/31 16:28:56 rjs Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -131,11 +131,15 @@ unsigned int sctp_assoc_rtx_max_default = SCTP_DEF_MAX_SEND;
 unsigned int sctp_path_rtx_max_default = SCTP_DEF_MAX_SEND/2;
 unsigned int sctp_nr_outgoing_streams_default = SCTP_OSTREAM_INITIAL;
 
+static void sysctl_net_inet_sctp_setup(struct sysctllog **);
+
 void
 sctp_init(void)
 {
 	/* Init the SCTP pcb in sctp_pcb.c */
 	u_long sb_max_adj;
+
+	sysctl_net_inet_sctp_setup(NULL);
 
 	sctp_pcb_init();
 
@@ -3882,7 +3886,8 @@ sctp_purgeif(struct socket *so, struct ifnet *ifp)
 /*
  * Sysctl for sctp variables.
  */
-SYSCTL_SETUP(sysctl_net_inet_sctp_setup, "sysctl net.inet.sctp subtree setup")
+static void
+sysctl_net_inet_sctp_setup(struct sysctllog **clog)
 {
 
 	sysctl_createv(clog, 0, NULL, NULL,
@@ -3920,7 +3925,7 @@ SYSCTL_SETUP(sysctl_net_inet_sctp_setup, "sysctl net.inet.sctp subtree setup")
 
        sysctl_createv(clog, 0, NULL, NULL,
                        CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-                       CTLTYPE_INT, "autoasconf",
+                       CTLTYPE_INT, "auto_asconf",
                        SYSCTL_DESCR("Enable SCTP Auto-ASCONF"),
                        NULL, 0, &sctp_auto_asconf, 0,
                        CTL_NET, PF_INET, IPPROTO_SCTP, SCTPCTL_AUTOASCONF,
