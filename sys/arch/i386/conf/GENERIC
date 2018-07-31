@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.1183 2018/07/13 09:37:32 maxv Exp $
+# $NetBSD: GENERIC,v 1.1184 2018/07/31 16:44:29 khorben Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.1183 $"
+#ident		"GENERIC-$Revision: 1.1184 $"
 
 maxusers	64		# estimated number of users
 
@@ -1268,6 +1268,7 @@ cdce*	at uhub? port ?		# CDC, Ethernet Networking Control Model
 cue*	at uhub? port ?		# CATC USB-EL1201A based adapters
 kue*	at uhub? port ?		# Kawasaki LSI KL5KUSB101B based adapters
 udav*	at uhub? port ?		# Davicom DM9601 based adapters
+#umb*	at uhub? port ?		# Mobile Broadband Interface Model (EXPERIMENTAL)
 url*	at uhub? port ?		# Realtek RTL8150L based adapters
 urndis*	at uhub? port ?		# Microsoft RNDIS specification
 
