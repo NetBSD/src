@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.1,v 1.1.2.5 2018/07/31 16:11:46 martin Exp $
+# $NetBSD: CHANGES-8.1,v 1.1.2.6 2018/07/31 17:09:45 martin Exp $
 
 A complete list of changes from the NetBSD 8.0 release to the NetBSD 8.1
 release:
@@ -264,4 +264,34 @@ sys/arch/sun3/dev/if_ie.c			1.64
 
 	Remove bpf_tap() in iexmit() because ie_start() does bpf_mtap().
 	[msaitoh, ticket #948]
+
+sys/dev/ic/rt2661.c				1.38
+
+	bpf_mtap*() before ieee80211_encap() should be bpf_mtap() rather than
+	bpf_mtap3().
+	[msaitoh, ticket #951]
+
+sys/dev/ic/malo.c				1.11
+
+	bpf_mtap*() after ieee80211_encap() should be bpf_mtap3() rather than
+	bpf_mtap().
+	[msaitoh, ticket #952]
+
+share/man/man4/ddb.4				1.180,1.181
+sys/ddb/db_command.c				1.154
+sys/kern/uipc_socket2.c				1.131
+sys/sys/socketvar.h				1.157
+
+	Add "show socket" command to ddb(4).
+	[msaitoh, ticket #954]
+
+sys/dev/ppbus/if_plip.c				1.29
+
+	KNF & fix typo. No functional change.
+	[msaitoh, ticket #955]
+
+usr.sbin/arp/arp.c				1.63
+
+	arp(8): Fix the host output with -dav argument.
+	[nonaka, ticket #957]
 
