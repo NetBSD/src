@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.150.8.1 2018/07/26 23:55:30 snj Exp $	*/
+/*	$NetBSD: if_de.c,v 1.150.8.2 2018/07/31 16:03:37 martin Exp $	*/
 
 /*-
  * Copyright (c) 1994-1997 Matt Thomas (matt@3am-software.com)
@@ -37,7 +37,7 @@
  *   board which support 21040, 21041, or 21140 (mostly).
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_de.c,v 1.150.8.1 2018/07/26 23:55:30 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_de.c,v 1.150.8.2 2018/07/31 16:03:37 martin Exp $");
 
 #define	TULIP_HDR_DATA
 
@@ -3639,10 +3639,6 @@ tulip_rx_intr(
 #endif /* TULIP_BUS_DMA */
 
 	    eh = *mtod(ms, struct ether_header *);
-	    if (sc->tulip_bpf != NULL) {
-		if (me == ms)
-		    bpf_tap(ifp, mtod(ms, void *), total_len);
-	    }
 	    sc->tulip_flags |= TULIP_RXACT;
 	    if ((sc->tulip_flags & (TULIP_PROMISC|TULIP_HASHONLY))
 		    && (eh.ether_dhost[0] & 1) == 0
