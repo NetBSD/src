@@ -1,4 +1,4 @@
-.\"	$NetBSD: getsockopt.2,v 1.36 2018/07/31 13:04:10 rjs Exp $
+.\"	$NetBSD: getsockopt.2,v 1.37 2018/07/31 22:28:26 sevan Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)getsockopt.2	8.4 (Berkeley) 5/2/95
 .\"
-.Dd January 23, 2012
+.Dd July 31, 2018
 .Dt GETSOCKOPT 2
 .Os
 .Sh NAME
@@ -120,7 +120,6 @@ Options at other protocol levels vary in format and
 name; consult the appropriate entries in
 section
 4 of the manual, including:
-.Xr clnp 4 ,
 .Xr faith 4 ,
 .Xr icmp6 4 ,
 .Xr ip 4 ,
@@ -130,7 +129,6 @@ section
 .Xr pim 4 ,
 .Xr route 4 ,
 .Xr tcp 4 ,
-.Xr tp 4 ,
 and
 .Xr unix 4 .
 .Pp
@@ -441,7 +439,6 @@ is a file, not a socket.
 .Xr select 2 ,
 .Xr socket 2 ,
 .Xr getprotoent 3 ,
-.Xr clnp 4 ,
 .Xr faith 4 ,
 .Xr icmp6 4 ,
 .Xr ip 4 ,
@@ -451,7 +448,6 @@ is a file, not a socket.
 .Xr pim 4 ,
 .Xr route 4 ,
 .Xr tcp 4 ,
-.Xr tp 4 ,
 .Xr unix 4 ,
 .Xr protocols 5 ,
 .Xr accept_filter 9
