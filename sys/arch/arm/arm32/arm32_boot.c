@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_boot.c,v 1.19 2017/07/02 16:16:44 skrll Exp $	*/
+/*	$NetBSD: arm32_boot.c,v 1.20 2018/07/31 07:00:48 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2005  Genetec Corporation.  All rights reserved.
@@ -123,8 +123,9 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: arm32_boot.c,v 1.19 2017/07/02 16:16:44 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: arm32_boot.c,v 1.20 2018/07/31 07:00:48 skrll Exp $");
 
+#include "opt_arm_debug.h"
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
 #include "opt_multiprocessor.h"
@@ -151,6 +152,12 @@ __KERNEL_RCSID(1, "$NetBSD: arm32_boot.c,v 1.19 2017/07/02 16:16:44 skrll Exp $"
 #include <sys/kgdb.h>
 #endif
 
+#ifdef VERBOSE_INIT_ARM
+#define VPRINTF(...)	printf(__VA_ARGS__)
+#else
+#define VPRINTF(...)	do { } while (/* CONSTCOND */ 0)
+#endif
+
 #ifdef MULTIPROCESSOR
 static kmutex_t cpu_hatch_lock;
 #endif
@@ -161,11 +168,9 @@ initarm_common(vaddr_t kvm_base, vsize_t kvm_size,
 {
 	struct bootmem_info * const bmi = &bootmem_info;
 
-#ifdef VERBOSE_INIT_ARM
-	printf("nfreeblocks = %u, free_pages = %d (%#x)\n",
+	VPRINTF("nfreeblocks = %u, free_pages = %d (%#x)\n",
 	    bmi->bmi_nfreeblocks, bmi->bmi_freepages,
 	    bmi->bmi_freepages);
-#endif
 
 	/*
 	 * Moved from cpu_startup() as data_abort_handler() references
@@ -194,17 +199,11 @@ initarm_common(vaddr_t kvm_base, vsize_t kvm_size,
  	tf->tf_spsr = PSR_USR32_MODE;
 #endif
 
-#ifdef VERBOSE_INIT_ARM
-	printf("bootstrap done.\n");
-#endif
+	VPRINTF("bootstrap done.\n");
 
-#ifdef VERBOSE_INIT_ARM
-	printf("vectors");
-#endif
+	VPRINTF("vectors");
 	arm32_vector_init(systempage.pv_va, ARM_VEC_ALL);
-#ifdef VERBOSE_INIT_ARM
-	printf(" %#"PRIxVADDR"\n", vector_page);
-#endif
+	VPRINTF(" %#"PRIxVADDR"\n", vector_page);
 
 	/*
 	 * Pages were allocated during the secondary bootstrap for the
@@ -214,9 +213,7 @@ initarm_common(vaddr_t kvm_base, vsize_t kvm_size,
 	 * Since the ARM stacks use STMFD etc. we must set r13 to the top end
 	 * of the stack memory.
 	 */
-#ifdef VERBOSE_INIT_ARM
-	printf("init subsystems: stacks ");
-#endif
+	VPRINTF("init subsystems: stacks ");
 	set_stackptr(PSR_FIQ32_MODE,
 	    fiqstack.pv_va + FIQ_STACK_SIZE * PAGE_SIZE);
 	set_stackptr(PSR_IRQ32_MODE,
@@ -235,28 +232,20 @@ initarm_common(vaddr_t kvm_base, vsize_t kvm_size,
 	 * Initialisation of the vectors will just panic on a data abort.
 	 * This just fills in a slightly better one.
 	 */
-#ifdef VERBOSE_INIT_ARM
-	printf("vectors ");
-#endif
+	VPRINTF("vectors ");
 	data_abort_handler_address = (u_int)data_abort_handler;
 	prefetch_abort_handler_address = (u_int)prefetch_abort_handler;
 	undefined_handler_address = (u_int)undefinedinstruction_bounce;
 
 	/* Initialise the undefined instruction handlers */
-#ifdef VERBOSE_INIT_ARM
-	printf("undefined ");
-#endif
+	VPRINTF("undefined ");
 	undefined_init();
 
 	/* Load memory into UVM. */
-#ifdef VERBOSE_INIT_ARM
-	printf("page ");
-#endif
+	VPRINTF("page ");
 	uvm_md_init();
 
-#ifdef VERBOSE_INIT_ARM
-	printf("pmap_physload ");
-#endif
+	VPRINTF("pmap_physload ");
 	KASSERT(bp != NULL || nbp == 0);
 	KASSERT(bp == NULL || nbp != 0);
 
@@ -297,9 +286,7 @@ initarm_common(vaddr_t kvm_base, vsize_t kvm_size,
 	}
 
 	/* Boot strap pmap telling it where the kernel page table is */
-#ifdef VERBOSE_INIT_ARM
-	printf("pmap ");
-#endif
+	VPRINTF("pmap ");
 	pmap_bootstrap(kvm_base, kvm_base + kvm_size);
 
 #ifdef __HAVE_MEMORY_DISK__
@@ -329,9 +316,7 @@ initarm_common(vaddr_t kvm_base, vsize_t kvm_size,
 	mutex_init(&cpu_hatch_lock, MUTEX_DEFAULT, IPL_NONE);
 #endif
 
-#ifdef VERBOSE_INIT_ARM
-	printf("done.\n");
-#endif
+	VPRINTF("done.\n");
 
 	/* We return the new stack pointer address */
 	return pcb->pcb_ksp;
@@ -359,9 +344,7 @@ cpu_hatch(struct cpu_info *ci, cpuid_t cpuid, void (*md_cpu_init)(struct cpu_inf
 #endif
 #endif
 
-#ifdef VERBOSE_INIT_ARM
-	printf("%s(%s): ", __func__, ci->ci_data.cpu_name);
-#endif
+	VPRINTF("%s(%s): ", __func__, ci->ci_data.cpu_name);
 	uint32_t mpidr = armreg_mpidr_read();
 	if (mpidr & MPIDR_MT) {
 		ci->ci_data.cpu_smt_id = mpidr & MPIDR_AFF0;
@@ -375,18 +358,14 @@ cpu_hatch(struct cpu_info *ci, cpuid_t cpuid, void (*md_cpu_init)(struct cpu_inf
 	/*
 	 * Make sure we have the right vector page.
 	 */
-#ifdef VERBOSE_INIT_ARM
-	printf(" vectors");
-#endif
+	VPRINTF(" vectors");
 	arm32_vector_init(systempage.pv_va, ARM_VEC_ALL);
 
 	/*
 	 * Initialize the stack for each mode (we are already running on the
 	 * SVC32 stack of the idlelwp).
 	 */
-#ifdef VERBOSE_INIT_ARM
-	printf(" stacks");
-#endif
+	VPRINTF(" stacks");
 	set_stackptr(PSR_FIQ32_MODE,
 	    fiqstack.pv_va + (cpu_index(ci) + 1) * FIQ_STACK_SIZE * PAGE_SIZE);
 	set_stackptr(PSR_IRQ32_MODE,
@@ -399,9 +378,7 @@ cpu_hatch(struct cpu_info *ci, cpuid_t cpuid, void (*md_cpu_init)(struct cpu_inf
 	ci->ci_lastlwp = NULL;
 	ci->ci_pmap_lastuser = NULL;
 #ifdef ARM_MMU_EXTENDED
-#ifdef VERBOSE_INIT_ARM
-	printf(" tlb");
-#endif
+	VPRINTF(" tlb");
 	/*
 	 * Attach to the tlb.
 	 */
@@ -424,30 +401,22 @@ cpu_hatch(struct cpu_info *ci, cpuid_t cpuid, void (*md_cpu_init)(struct cpu_inf
 	aprint_naive("%s", device_xname(ci->ci_dev));
 	aprint_normal("%s", device_xname(ci->ci_dev));
 	identify_arm_cpu(ci->ci_dev, ci);
-#ifdef VERBOSE_INIT_ARM
-	printf(" vfp");
-#endif
+	VPRINTF(" vfp");
 	vfp_attach(ci);
 
 	mutex_exit(&cpu_hatch_lock);
 
-#ifdef VERBOSE_INIT_ARM
-	printf(" interrupts");
-#endif
+	VPRINTF(" interrupts");
 	/*
 	 * Let the interrupts do what they need to on this CPU.
 	 */
 	intr_cpu_init(ci);
 
-#ifdef VERBOSE_INIT_ARM
-	printf(" md(%p)", md_cpu_init);
-#endif
+	VPRINTF(" md(%p)", md_cpu_init);
 	if (md_cpu_init != NULL)
 		(*md_cpu_init)(ci);
 
-#ifdef VERBOSE_INIT_ARM
-	printf(" done!\n");
-#endif
+	VPRINTF(" done!\n");
 	atomic_and_32(&arm_cpu_mbox, ~(1 << cpuid));
 	membar_producer();
 	__asm __volatile("sev; sev; sev");
