@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.239 2018/07/12 10:46:41 maxv Exp $
+#	$NetBSD: Makefile.inc,v 1.240 2018/07/31 13:04:10 rjs Exp $
 #	@(#)Makefile.inc	8.3 (Berkeley) 10/24/94
 
 # sys sources
@@ -111,7 +111,7 @@ ASM=	access.S acct.S \
 	__getcwd.S __getdents30.S __getfh30.S getvfsstat.S getgroups.S\
 		__getitimer50.S __getlogin.S getpeername.S getpgid.S getpgrp.S \
 		getpriority.S getrlimit.S __getrusage50.S getsid.S \
-		getsockname.S getsockopt.S __gettimeofday50.S \
+		getsockname.S getsockopt.S getsockopt2.S __gettimeofday50.S \
 	ioctl.S \
 	kqueue.S kqueue1.S ktrace.S \
 		_ksem_close.S _ksem_destroy.S _ksem_getvalue.S _ksem_init.S \
@@ -319,6 +319,7 @@ MLINKS+=getpgrp.2 getpgid.2
 MLINKS+=getpid.2 getppid.2
 MLINKS+=getpriority.2 setpriority.2
 MLINKS+=getrlimit.2 setrlimit.2
+MLINKS+=getsockopt.2 getsockopt2.2
 MLINKS+=getsockopt.2 setsockopt.2
 MLINKS+=gettimeofday.2 settimeofday.2
 MLINKS+=getuid.2 geteuid.2
