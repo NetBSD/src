@@ -1,4 +1,4 @@
-/*	$NetBSD: sockio.h,v 1.33 2015/05/02 14:41:32 roy Exp $	*/
+/*	$NetBSD: sockio.h,v 1.34 2018/07/31 16:44:30 khorben Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993, 1994
@@ -138,6 +138,10 @@
 
 #define	SIOCGETHERCAP	_IOWR('i', 139, struct eccapreq) /* get ethercap */
 #define SIOCGIFINDEX  _IOWR('i', 140, struct ifreq)   /* get ifnet index */
+
+#define SIOCGUMBINFO	_IOWR('i', 190, struct ifreq)	/* get MBIM info */
+#define SIOCSUMBPARAM	_IOW('i', 191, struct ifreq)	/* set MBIM param */
+#define SIOCGUMBPARAM	_IOWR('i', 192, struct ifreq)	/* get MBIM param */
 
 #define	SIOCSETPFSYNC	_IOW('i', 247, struct ifreq)	
 #define	SIOCGETPFSYNC	_IOWR('i', 248, struct ifreq)

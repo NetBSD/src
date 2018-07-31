@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1181 2018/07/24 15:29:05 christos Exp $
+# $NetBSD: mi,v 1.1182 2018/07/31 16:44:28 khorben Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -616,6 +616,7 @@
 ./sbin/tbrconfig				base-router-root
 ./sbin/ttyflags					base-sysutil-root
 ./sbin/tunefs					base-sysutil-root
+./sbin/umbctl					base-netutil-root
 ./sbin/umount					base-sysutil-root
 ./sbin/veriexecctl				base-sysutil-root
 ./sbin/verifiedexec_load			base-obsolete		obsolete
