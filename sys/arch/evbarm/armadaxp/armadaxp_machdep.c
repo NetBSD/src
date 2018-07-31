@@ -1,4 +1,4 @@
-/*	$NetBSD: armadaxp_machdep.c,v 1.14 2018/07/15 05:16:41 maxv Exp $	*/
+/*	$NetBSD: armadaxp_machdep.c,v 1.15 2018/07/31 06:46:26 skrll Exp $	*/
 /*******************************************************************************
 Copyright (C) Marvell International Ltd. and its affiliates
 
@@ -37,8 +37,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *******************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: armadaxp_machdep.c,v 1.14 2018/07/15 05:16:41 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: armadaxp_machdep.c,v 1.15 2018/07/31 06:46:26 skrll Exp $");
 
+#include "opt_arm_debug.h"
 #include "opt_machdep.h"
 #include "opt_mvsoc.h"
 #include "opt_evbarm_boardtype.h"
