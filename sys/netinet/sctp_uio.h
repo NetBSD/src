@@ -1,5 +1,5 @@
 /*	$KAME: sctp_uio.h,v 1.11 2005/03/06 16:04:18 itojun Exp $	*/
-/*	$NetBSD: sctp_uio.h,v 1.3 2017/12/10 11:52:14 rjs Exp $ */
+/*	$NetBSD: sctp_uio.h,v 1.4 2018/07/31 13:36:31 rjs Exp $ */
 
 #ifndef __SCTP_UIO_H__
 #define __SCTP_UIO_H__
@@ -584,6 +584,14 @@ struct sctp_recvv_rn {
 #define SCTP_RECVV_NXTINFO	0x0002
 #define SCTP_RECVV_RN		0x0003
 
+struct sctp_connectx_addrs {
+	int cx_num;
+	int cx_len;
+	void *cx_addrs;
+} __packed;
+
+#define SIOCCONNECTX	_IOWR('s', 11, struct sctp_connectx_addrs)
+#define SIOCCONNECTXDEL	_IOWR('s', 12, struct sctp_connectx_addrs)
 
 /*
  * API system calls
