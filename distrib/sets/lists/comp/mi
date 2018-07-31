@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2212 2018/07/17 18:55:24 joerg Exp $
+#	$NetBSD: mi,v 1.2213 2018/07/31 13:04:10 rjs Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -4272,6 +4272,7 @@
 ./usr/share/man/cat2/getsid.0			comp-c-catman		.cat
 ./usr/share/man/cat2/getsockname.0		comp-c-catman		.cat
 ./usr/share/man/cat2/getsockopt.0		comp-c-catman		.cat
+./usr/share/man/cat2/getsockopt2.0		comp-c-catman		.cat
 ./usr/share/man/cat2/gettimeofday.0		comp-c-catman		.cat
 ./usr/share/man/cat2/getuid.0			comp-c-catman		.cat
 ./usr/share/man/cat2/getvfsstat.0		comp-c-catman		.cat
@@ -12121,6 +12122,7 @@
 ./usr/share/man/html2/getsid.html		comp-c-htmlman		html
 ./usr/share/man/html2/getsockname.html		comp-c-htmlman		html
 ./usr/share/man/html2/getsockopt.html		comp-c-htmlman		html
+./usr/share/man/html2/getsockopt2.html		comp-c-htmlman		html
 ./usr/share/man/html2/gettimeofday.html		comp-c-htmlman		html
 ./usr/share/man/html2/getuid.html		comp-c-htmlman		html
 ./usr/share/man/html2/getvfsstat.html		comp-c-htmlman		html
@@ -19793,6 +19795,7 @@
 ./usr/share/man/man2/getsid.2			comp-c-man		.man
 ./usr/share/man/man2/getsockname.2		comp-c-man		.man
 ./usr/share/man/man2/getsockopt.2		comp-c-man		.man
+./usr/share/man/man2/getsockopt2.2		comp-c-man		.man
 ./usr/share/man/man2/gettimeofday.2		comp-c-man		.man
 ./usr/share/man/man2/getuid.2			comp-c-man		.man
 ./usr/share/man/man2/getvfsstat.2		comp-c-man		.man
