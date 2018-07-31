@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.1,v 1.1.2.4 2018/07/27 10:55:40 martin Exp $
+# $NetBSD: CHANGES-8.1,v 1.1.2.5 2018/07/31 16:11:46 martin Exp $
 
 A complete list of changes from the NetBSD 8.0 release to the NetBSD 8.1
 release:
@@ -239,4 +239,29 @@ share/mk/bsd.own.mk				1.1066
 
 	Fix groff reproducibility and font directories in X builds.
 	[christos, ticket #944]
+
+sys/arch/i386/i386/trap.c			1.290
+
+	Don't use a const variable as an array size, because it is not a
+	constant expression and will cause the array to needlessly become a
+	variable-size one.
+	[taca, ticket #945]
+
+sbin/cgdconfig/cgdconfig.8			1.37,1.38
+sbin/cgdconfig/cgdconfig.c			1.42-1.45
+
+	Check whether the cgd device selected is available to be
+	configured,that is, not already in use, before requesting
+	passwords.
+	[kre, ticket #946]
+
+sys/dev/pci/if_de.c				1.153
+
+	Remove bpf_tap() call in rx. It's done in if_percpuq_softint().
+	[msaitoh, ticket #947]
+
+sys/arch/sun3/dev/if_ie.c			1.64
+
+	Remove bpf_tap() in iexmit() because ie_start() does bpf_mtap().
+	[msaitoh, ticket #948]
 
