@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_kvminit.c,v 1.42 2018/07/31 07:00:48 skrll Exp $	*/
+/*	$NetBSD: arm32_kvminit.c,v 1.43 2018/07/31 10:31:02 martin Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2005  Genetec Corporation.  All rights reserved.
@@ -126,7 +126,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_kvminit.c,v 1.42 2018/07/31 07:00:48 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_kvminit.c,v 1.43 2018/07/31 10:31:02 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -834,10 +834,12 @@ arm32_kernel_vm_init(vaddr_t kernel_vm_base, vaddr_t vectors, vaddr_t iovbase,
 	VPRINTF("%22s       Physical              Virtual        Num\n", " ");
 	VPRINTF("%22s Starting    Ending    Starting    Ending   Pages\n", " ");
 
+#ifdef VERBOSE_INIT_ARM
 	static const char mem_fmt[] =
 	    "%20s: 0x%08lx 0x%08lx 0x%08lx 0x%08lx %u\n";
 	static const char mem_fmt_nov[] =
 	    "%20s: 0x%08lx 0x%08lx                       %zu\n";
+#endif
 
 	VPRINTF(mem_fmt, "SDRAM", bmi->bmi_start, bmi->bmi_end - 1,
 	    KERN_PHYSTOV(bmi, bmi->bmi_start), KERN_PHYSTOV(bmi, bmi->bmi_end - 1),
