@@ -1,4 +1,4 @@
-/* $NetBSD: exynos_platform.c,v 1.10 2018/07/02 12:49:37 jmcneill Exp $ */
+/* $NetBSD: exynos_platform.c,v 1.11 2018/07/31 06:46:25 skrll Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,6 +26,7 @@
  * SUCH DAMAGE.
  */
 
+#include "opt_arm_debug.h"
 #include "opt_exynos.h"
 #include "opt_multiprocessor.h"
 #include "opt_fdt_arm.h"
@@ -33,7 +34,7 @@
 #include "ukbd.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exynos_platform.c,v 1.10 2018/07/02 12:49:37 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exynos_platform.c,v 1.11 2018/07/31 06:46:25 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>

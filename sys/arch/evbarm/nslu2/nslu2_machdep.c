@@ -1,4 +1,4 @@
-/*	$NetBSD: nslu2_machdep.c,v 1.27 2016/12/22 14:47:56 cherry Exp $	*/
+/*	$NetBSD: nslu2_machdep.c,v 1.28 2018/07/31 06:46:27 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -94,8 +94,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nslu2_machdep.c,v 1.27 2016/12/22 14:47:56 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nslu2_machdep.c,v 1.28 2018/07/31 06:46:27 skrll Exp $");
 
+#include "opt_arm_debug.h"
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
 #include "opt_pmap_debug.h"
