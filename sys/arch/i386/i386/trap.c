@@ -1,5 +1,5 @@
 
-/*	$NetBSD: trap.c,v 1.287.6.1 2017/07/05 19:59:29 snj Exp $	*/
+/*	$NetBSD: trap.c,v 1.287.6.2 2018/07/31 15:57:11 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2005, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.287.6.1 2017/07/05 19:59:29 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.287.6.2 2018/07/31 15:57:11 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -422,7 +422,7 @@ kernelfault:
 	{
 		static const char lcall[7] = { 0x9a, 0, 0, 0, 0, 7, 0 };
 		const size_t sz = sizeof(lcall);
-		char tmp[sz];
+		char tmp[sizeof(lcall)];
 
 		/* Check for the osyscall lcall instruction. */
 		if (frame->tf_eip < VM_MAXUSER_ADDRESS - sz &&
