@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.194 2018/05/04 08:47:55 christos Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.195 2018/07/31 13:00:13 rjs Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.194 2018/05/04 08:47:55 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.195 2018/07/31 13:00:13 rjs Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pipe.h"
@@ -1192,17 +1192,10 @@ sys_setsockopt(struct lwp *l, const struct sys_setsockopt_args *uap,
 	return error;
 }
 
-int
-sys_getsockopt(struct lwp *l, const struct sys_getsockopt_args *uap,
-    register_t *retval)
+static int
+getsockopt(struct lwp *l, const struct sys_getsockopt_args *uap,
+    register_t *retval, bool copyarg)
 {
-	/* {
-		syscallarg(int)			s;
-		syscallarg(int)			level;
-		syscallarg(int)			name;
-		syscallarg(void *)		val;
-		syscallarg(unsigned int *)	avalsize;
-	} */
 	struct sockopt	sopt;
 	struct socket	*so;
 	file_t		*fp;
@@ -1216,37 +1209,66 @@ sys_getsockopt(struct lwp *l, const struct sys_getsockopt_args *uap,
 	} else
 		valsize = 0;
 
-	if ((error = fd_getsock1(SCARG(uap, s), &so, &fp)) != 0)
-		return (error);
-
 	if (valsize > MCLBYTES)
 		return EINVAL;
 
+	if ((error = fd_getsock1(SCARG(uap, s), &so, &fp)) != 0)
+		return error;
+
 	sockopt_init(&sopt, SCARG(uap, level), SCARG(uap, name), valsize);
+	if (copyarg && valsize > 0) {
+		error = copyin(SCARG(uap, val), sopt.sopt_data, valsize);
+		if (error)
+			goto out;
+	}
 
 	if (fp->f_flag & FNOSIGPIPE)
 		so->so_options |= SO_NOSIGPIPE;
 	else
 		so->so_options &= ~SO_NOSIGPIPE;
+
 	error = sogetopt(so, &sopt);
+	if (error || valsize == 0)
+		goto out;
+
+	len = min(valsize, sopt.sopt_retsize);
+	error = copyout(sopt.sopt_data, SCARG(uap, val), len);
 	if (error)
 		goto out;
 
-	if (valsize > 0) {
-		len = min(valsize, sopt.sopt_retsize);
-		error = copyout(sopt.sopt_data, SCARG(uap, val), len);
-		if (error)
-			goto out;
-
-		error = copyout(&len, SCARG(uap, avalsize), sizeof(len));
-		if (error)
-			goto out;
-	}
-
+	error = copyout(&len, SCARG(uap, avalsize), sizeof(len));
  out:
 	sockopt_destroy(&sopt);
 	fd_putfile(SCARG(uap, s));
 	return error;
+}
+
+int
+sys_getsockopt(struct lwp *l, const struct sys_getsockopt_args *uap,
+    register_t *retval)
+{
+	/* {
+		syscallarg(int)			s;
+		syscallarg(int)			level;
+		syscallarg(int)			name;
+		syscallarg(void *)		val;
+		syscallarg(unsigned int *)	avalsize;
+	} */
+	return getsockopt(l, uap, retval, false);
+}
+
+int
+sys_getsockopt2(struct lwp *l, const struct sys_getsockopt2_args *uap,
+    register_t *retval)
+{
+	/* {
+		syscallarg(int)			s;
+		syscallarg(int)			level;
+		syscallarg(int)			name;
+		syscallarg(void *)		val;
+		syscallarg(unsigned int *)	avalsize;
+	} */
+	return getsockopt(l, (const struct sys_getsockopt_args *) uap, retval, true);
 }
 
 #ifdef PIPE_SOCKETPAIR
