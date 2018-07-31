@@ -8,6 +8,9 @@ Another TODO list is available here:
 
 -- add more examples
 
+-- modify the doc of IPF and PF to indicate they are deprecated, and that
+   NPF should be used instead
+
 ====== NPFCTL ======
 
 -- npfctl start does not load the configuration if not loaded.
