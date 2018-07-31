@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.122 2018/07/12 10:46:48 maxv Exp $
+	$NetBSD: syscalls.master,v 1.123 2018/07/31 21:00:02 rjs Exp $
 
 ;	from: NetBSD: syscalls.master,v 1.81 1998/07/05 08:49:50 jonathan Exp
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -384,7 +384,8 @@
 191	STD		{ netbsd32_long|netbsd32||pathconf(netbsd32_charp path, \
 			    int name); }
 192	STD		{ netbsd32_long|netbsd32||fpathconf(int fd, int name); }
-193	UNIMPL
+193	STD		{ int|netbsd32||getsockopt2(int s, int level, int name, \
+			    netbsd32_voidp val, netbsd32_intp avalsize); }
 194	STD		{ int|netbsd32||getrlimit(int which, \
 			    netbsd32_rlimitp_t rlp); }
 195	STD		{ int|netbsd32||setrlimit(int which, \

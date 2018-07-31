@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.216 2018/05/06 13:40:51 kamil Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.217 2018/07/31 21:00:02 rjs Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2008 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.216 2018/05/06 13:40:51 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.217 2018/07/31 21:00:02 rjs Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -1037,6 +1037,26 @@ netbsd32_getsockopt(struct lwp *l, const struct netbsd32_getsockopt_args *uap, r
 	NETBSD32TOP_UAP(val, void);
 	NETBSD32TOP_UAP(avalsize, socklen_t);
 	return (sys_getsockopt(l, &ua, retval));
+}
+
+int
+netbsd32_getsockopt2(struct lwp *l, const struct netbsd32_getsockopt2_args *uap, register_t *retval)
+{
+	/* {
+		syscallarg(int) s;
+		syscallarg(int) level;
+		syscallarg(int) name;
+		syscallarg(netbsd32_voidp) val;
+		syscallarg(netbsd32_intp) avalsize;
+	} */
+	struct sys_getsockopt2_args ua;
+
+	NETBSD32TO64_UAP(s);
+	NETBSD32TO64_UAP(level);
+	NETBSD32TO64_UAP(name);
+	NETBSD32TOP_UAP(val, void);
+	NETBSD32TOP_UAP(avalsize, socklen_t);
+	return (sys_getsockopt2(l, &ua, retval));
 }
 
 int
