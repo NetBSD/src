@@ -1,4 +1,4 @@
-/* $NetBSD: cgdconfig.c,v 1.41 2017/01/10 20:45:19 christos Exp $ */
+/* $NetBSD: cgdconfig.c,v 1.41.6.1 2018/07/31 16:01:12 martin Exp $ */
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 2002, 2003\
  The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: cgdconfig.c,v 1.41 2017/01/10 20:45:19 christos Exp $");
+__RCSID("$NetBSD: cgdconfig.c,v 1.41.6.1 2018/07/31 16:01:12 martin Exp $");
 #endif
 
 #include <err.h>
@@ -136,17 +136,19 @@ static void
 usage(void)
 {
 
-	(void)fprintf(stderr, "usage: %s [-nv] [-V vmeth] cgd dev [paramsfile]\n",
+	(void)fprintf(stderr, "usage: %s [-npv] [-V vmeth] cgd dev "
+	    "[paramsfile]\n", getprogname());
+	(void)fprintf(stderr, "       %s -C [-npv] [-f configfile]\n",
 	    getprogname());
-	(void)fprintf(stderr, "       %s -C [-nv] [-f configfile]\n", getprogname());
-	(void)fprintf(stderr, "       %s -G [-nv] [-i ivmeth] [-k kgmeth] "
+	(void)fprintf(stderr, "       %s -G [-npv] [-i ivmeth] [-k kgmeth] "
 	    "[-o outfile] paramsfile\n", getprogname());
 	(void)fprintf(stderr, "       %s -g [-nv] [-i ivmeth] [-k kgmeth] "
 	    "[-o outfile] alg [keylen]\n", getprogname());
-	(void)fprintf(stderr, "       %s -l\n", getprogname());
+	(void)fprintf(stderr, "       %s -l [-v[v]] [cgd]\n", getprogname());
 	(void)fprintf(stderr, "       %s -s [-nv] [-i ivmeth] cgd dev alg "
 	    "[keylen]\n", getprogname());
-	(void)fprintf(stderr, "       %s -U [-nv] [-f configfile]\n", getprogname());
+	(void)fprintf(stderr, "       %s -U [-nv] [-f configfile]\n",
+	    getprogname());
 	(void)fprintf(stderr, "       %s -u [-nv] cgd\n", getprogname());
 	exit(EXIT_FAILURE);
 }
@@ -515,12 +517,33 @@ configure(int argc, char **argv, struct params *inparams, int flags)
 	char		 devicename[PATH_MAX];
 	const char	*dev = NULL;	/* XXX: gcc */
 
-	if (argc == 2 || argc == 3) {
-		dev = getfsspecname(devicename, sizeof(devicename), argv[1]);
-		if (dev == NULL) {
-			warnx("getfsspecname failed: %s", devicename);
+	if (argc < 2 || argc > 3) {
+		/* print usage and exit, only if called from main() */
+		if (flags == CONFIG_FLAGS_FROMMAIN) {
+			warnx("wrong number of args");
+			usage();
+		}
+		return -1;
+	}
+
+	if ((
+	  fd = opendisk1(*argv, O_RDWR, cgdname, sizeof(cgdname), 1, prog_open)
+	    ) != -1) {
+		struct cgd_user cgu;
+
+		cgu.cgu_unit = -1;
+		if (prog_ioctl(fd, CGDIOCGET, &cgu) != -1 && cgu.cgu_dev != 0) {
+			warnx("device %s already in use", *argv);
+			prog_close(fd);
 			return -1;
 		}
+		prog_close(fd);
+	}
+
+	dev = getfsspecname(devicename, sizeof(devicename), argv[1]);
+	if (dev == NULL) {
+		warnx("getfsspecname failed: %s", devicename);
+		return -1;
 	}
 
 	if (argc == 2) {
@@ -529,16 +552,8 @@ configure(int argc, char **argv, struct params *inparams, int flags)
 		/* make string writable for basename */
 		strlcpy(pfile, dev, sizeof(pfile));
 		p = params_cget(basename(pfile));
-	} else if (argc == 3) {
+	} else
 		p = params_cget(argv[2]);
-	} else {
-		/* print usage and exit, only if called from main() */
-		if (flags == CONFIG_FLAGS_FROMMAIN) {
-			warnx("wrong number of args");
-			usage();
-		}
-		return -1;
-	}
 
 	if (!p)
 		return -1;
