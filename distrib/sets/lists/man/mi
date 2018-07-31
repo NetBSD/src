@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1603 2018/07/31 16:44:29 khorben Exp $
+# $NetBSD: mi,v 1.1604 2018/07/31 19:30:18 rjs Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -4724,6 +4724,7 @@
 ./usr/share/man/html4/schide.html		man-sys-htmlman		html
 ./usr/share/man/html4/scsi.html			man-sys-htmlman		html
 ./usr/share/man/html4/scsibus.html		man-sys-htmlman		html
+./usr/share/man/html4/sctp.html			man-sys-htmlman		html
 ./usr/share/man/html4/sd.html			man-sys-htmlman		html
 ./usr/share/man/html4/sdhc.html			man-sys-htmlman		html
 ./usr/share/man/html4/sdmmc.html		man-sys-htmlman		html
@@ -7712,6 +7713,7 @@
 ./usr/share/man/man4/schide.4			man-sys-man		.man
 ./usr/share/man/man4/scsi.4			man-sys-man		.man
 ./usr/share/man/man4/scsibus.4			man-sys-man		.man
+./usr/share/man/man4/sctp.4			man-sys-man		.man
 ./usr/share/man/man4/sd.4			man-sys-man		.man
 ./usr/share/man/man4/sdhc.4			man-sys-man		.man
 ./usr/share/man/man4/sdmmc.4			man-sys-man		.man
