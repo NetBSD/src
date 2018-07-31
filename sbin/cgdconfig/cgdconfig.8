@@ -1,4 +1,4 @@
-.\" $NetBSD: cgdconfig.8,v 1.36 2016/09/11 01:09:34 sevan Exp $
+.\" $NetBSD: cgdconfig.8,v 1.36.6.1 2018/07/31 16:01:12 martin Exp $
 .\"
 .\" Copyright (c) 2002, The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd September 11, 2016
+.Dd May 9, 2018
 .Dt CGDCONFIG 8
 .Os
 .Sh NAME
@@ -41,11 +41,11 @@
 .Op Ar paramsfile
 .Nm
 .Fl C
-.Op Fl nv
+.Op Fl npv
 .Op Fl f Ar configfile
 .Nm
 .Fl G
-.Op Fl nv
+.Op Fl npv
 .Op Fl i Ar ivmeth
 .Op Fl k Ar kgmeth
 .Op Fl o Ar outfile
@@ -60,7 +60,8 @@
 .Op Ar keylen
 .Nm
 .Fl l
-.Op Fl cgd
+.Op Fl v Ns Op Cm v
+.Op Ar cgd
 .Nm
 .Fl s
 .Op Fl nv
@@ -96,7 +97,7 @@ configuration file
 Generate a new paramsfile (to stdout) using the values from
 .Ar paramsfile
 which will generate the same key.
-This may need to prompt for multiple passphrases.
+This may need to obtain multiple passphrases.
 .It Fl g
 Generate a paramsfile (to stdout).
 .It Fl i Ar ivmeth
@@ -116,6 +117,9 @@ When generating a
 .Ar paramsfile ,
 store it in
 .Ar outfile .
+If
+.Fl o
+is not given, any paramsfile content is written to standard output.
 .It Fl p
 Read all passphrases from stdin rather than
 .Pa /dev/tty .
@@ -126,7 +130,7 @@ If this flag is specified then verification errors will cause the device
 in question to be unconfigured rather than prompting for the passphrase
 again.
 .It Fl s
-Read the key from stdin.
+Read the key (nb: not the passphrase) from stdin.
 .It Fl U
 Unconfigure all the devices listed in the cgd configuration file.
 .It Fl u
@@ -421,7 +425,7 @@ And use the entered passphrase to generate the key.
 .Pp
 Although not required, the partition type
 .Ar cgd
-should be used in the disklabel for the cgd partition.
+should be used in the disklabel or GPT type field for the cgd partition.
 .Sh DIAGNOSTICS
 .Bl -diag
 .It "cgdconfig: could not calibrate pkcs5_pbkdf2"
@@ -431,7 +435,9 @@ Ensure that the processor clock frequency remains static throughout the
 program's execution.
 .El
 .Sh SEE ALSO
-.Xr cgd 4
+.Xr cgd 4 ,
+.Xr disklabel 8 ,
+.Xr gpt 8
 .Pp
 .Dq PKCS #5 v2.0: Password-Based Cryptography Standard ,
 RSA Laboratories, March 25, 1999.
@@ -443,6 +449,12 @@ utility appeared in
 .Sh BUGS
 Since
 .Nm
+without
+.Fl p
 uses
 .Xr getpass 3
-to read in the passphrase, it is limited to 128 characters.
+to read in the passphrase,
+it is limited to sysconf(_SC_PASS_MAX) (128) characters.
+With
+.Fl p
+the limit is 1023 characters.
