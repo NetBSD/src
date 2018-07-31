@@ -53,3 +53,5 @@ Another TODO list is available here:
 -- support large IPv6 options, as explained here:
        http://mail-index.netbsd.org/tech-net/2018/04/08/msg006786.html
    But it's not a big problem - perhaps we don't care at all.
+
+-- add command line variables.  See -D option in pf.
