@@ -1,4 +1,4 @@
-#	$NetBSD: files.usb,v 1.150 2018/03/05 09:35:01 ws Exp $
+#	$NetBSD: files.usb,v 1.151 2018/07/31 16:44:29 khorben Exp $
 #
 # Config file and device description for machine-independent USB code.
 # Included by ports that need it.  Ports that use it must provide
@@ -378,6 +378,11 @@ file	dev/usb/if_udav.c		udav
 device	otus: arp, ether, firmload, ifnet, wlan
 attach	otus at usbdevif
 file	dev/usb/if_otus.c		otus
+
+# Mobile Broadband Interface Model
+device	umb: ifnet
+attach	umb at usbifif
+file	dev/usb/if_umb.c		umb
 
 # Serial drivers
 # Modems

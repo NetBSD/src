@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.49 2018/04/11 00:26:38 rin Exp $
+#	$NetBSD: list,v 1.50 2018/07/31 16:44:29 khorben Exp $
 
 SRCDIRS	bin
 
@@ -114,6 +114,7 @@ PROG	swapctl		swapon
 PROG	sysctl
 PROG	ttyflags
 PROG	tunefs
+PROG	umbctl
 PROG	umount
 PROG	wdogctl
 PROG	veriexecctl

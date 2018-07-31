@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.175 2017/10/28 00:37:12 pgoyette Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.176 2018/07/31 16:44:30 khorben Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012, 2015 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.175 2017/10/28 00:37:12 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.176 2018/07/31 16:44:30 khorben Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -70,6 +70,7 @@ static void *usbd_alloc_buffer(struct usbd_xfer *, uint32_t);
 static void usbd_free_buffer(struct usbd_xfer *);
 static struct usbd_xfer *usbd_alloc_xfer(struct usbd_device *, unsigned int);
 static usbd_status usbd_free_xfer(struct usbd_xfer *);
+static void usbd_request_async_cb(struct usbd_xfer *, void *, usbd_status);
 
 #if defined(USB_DEBUG)
 void
@@ -1118,6 +1119,36 @@ usbd_do_request_flags(struct usbd_device *dev, usb_device_request_t *req,
 		USBHIST_LOG(usbdebug, "returning err = %jd", err, 0, 0, 0);
 	}
 	return err;
+}
+
+static void
+usbd_request_async_cb(struct usbd_xfer *xfer, void *priv, usbd_status status)
+{
+	usbd_free_xfer(xfer);
+}
+
+/*
+ * Execute a request without waiting for completion.
+ * Can be used from interrupt context.
+ */
+usbd_status
+usbd_request_async(struct usbd_device *dev, struct usbd_xfer *xfer,
+    usb_device_request_t *req, void *priv, usbd_callback callback)
+{
+	usbd_status err;
+
+	if (callback == NULL)
+		callback = usbd_request_async_cb;
+
+	usbd_setup_default_xfer(xfer, dev, priv,
+	    USBD_DEFAULT_TIMEOUT, req, NULL, UGETW(req->wLength), 0,
+	    callback);
+	err = usbd_transfer(xfer);
+	if (err != USBD_IN_PROGRESS) {
+		usbd_free_xfer(xfer);
+		return (err);
+	}
+	return (USBD_NORMAL_COMPLETION);
 }
 
 const struct usbd_quirks *

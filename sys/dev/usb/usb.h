@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.h,v 1.115 2017/01/19 16:05:00 skrll Exp $	*/
+/*	$NetBSD: usb.h,v 1.116 2018/07/31 16:44:30 khorben Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -205,6 +205,7 @@ typedef struct {
 typedef struct {
 	uByte		bLength;
 	uByte		bDescriptorType;
+	uByte		bDescriptorSubtype;
 } UPACKED usb_descriptor_t;
 
 typedef struct {
@@ -659,16 +660,19 @@ typedef struct {
 #define  UISUBCLASS_VIDEOCOLLECTION	3
 
 #define UICLASS_CDC		0x02 /* communication */
-#define	 UISUBCLASS_DIRECT_LINE_CONTROL_MODEL	1
+#define  UISUBCLASS_DIRECT_LINE_CONTROL_MODEL	1
 #define  UISUBCLASS_ABSTRACT_CONTROL_MODEL	2
-#define	 UISUBCLASS_TELEPHONE_CONTROL_MODEL	3
-#define	 UISUBCLASS_MULTICHANNEL_CONTROL_MODEL	4
-#define	 UISUBCLASS_CAPI_CONTROLMODEL		5
-#define	 UISUBCLASS_ETHERNET_NETWORKING_CONTROL_MODEL 6
-#define	 UISUBCLASS_ATM_NETWORKING_CONTROL_MODEL 7
-#define	  UIPROTO_CDC_NOCLASS			0 /* no class specific
+#define  UISUBCLASS_TELEPHONE_CONTROL_MODEL	3
+#define  UISUBCLASS_MULTICHANNEL_CONTROL_MODEL	4
+#define  UISUBCLASS_CAPI_CONTROLMODEL		5
+#define  UISUBCLASS_ETHERNET_NETWORKING_CONTROL_MODEL 6
+#define  UISUBCLASS_ATM_NETWORKING_CONTROL_MODEL 7
+#define  UISUBCLASS_MOBILE_DIRECT_LINE_MODEL	10
+#define  UISUBCLASS_NETWORK_CONTROL_MODEL	13
+#define  UISUBCLASS_MOBILE_BROADBAND_INTERFACE_MODEL	14
+#define  UIPROTO_CDC_NOCLASS			0 /* no class specific
 						     protocol required */
-#define   UIPROTO_CDC_AT			1
+#define  UIPROTO_CDC_AT				1
 
 #define UICLASS_HID		0x03
 #define  UISUBCLASS_BOOT	1
@@ -706,6 +710,7 @@ typedef struct {
 
 #define UICLASS_CDC_DATA	0x0a
 #define  UISUBCLASS_DATA		0
+#define   UIPROTO_DATA_MBIM		0x02    /* MBIM */
 #define   UIPROTO_DATA_ISDNBRI		0x30    /* Physical iface */
 #define   UIPROTO_DATA_HDLC		0x31    /* HDLC */
 #define   UIPROTO_DATA_TRANSPARENT	0x32    /* Transparent */
