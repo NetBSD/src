@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.258 2018/07/24 15:29:05 christos Exp $
+# $NetBSD: mi,v 1.259 2018/07/31 16:44:29 khorben Exp $
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib,compatfile
@@ -430,6 +430,7 @@
 ./usr/libdata/debug/sbin/tbrconfig.debug	comp-router-debug	debug
 ./usr/libdata/debug/sbin/ttyflags.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/tunefs.debug		comp-sysutil-debug	debug
+./usr/libdata/debug/sbin/umbctl.debug		comp-netutil-debug	debug
 ./usr/libdata/debug/sbin/umount.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/veriexecctl.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/wdogctl.debug		comp-sysutil-debug	debug

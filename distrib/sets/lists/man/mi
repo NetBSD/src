@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1602 2018/07/27 12:02:26 rkujawa Exp $
+# $NetBSD: mi,v 1.1603 2018/07/31 16:44:29 khorben Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1866,6 +1866,7 @@
 ./usr/share/man/cat4/ukyopon.0			man-sys-catman		.cat
 ./usr/share/man/cat4/ulpt.0			man-sys-catman		.cat
 ./usr/share/man/cat4/umass.0			man-sys-catman		.cat
+./usr/share/man/cat4/umb.0			man-sys-catman		.cat
 ./usr/share/man/cat4/umcs.0			man-sys-catman		.cat
 ./usr/share/man/cat4/umct.0			man-sys-catman		.cat
 ./usr/share/man/cat4/umidi.0			man-sys-catman		.cat
@@ -3152,6 +3153,7 @@
 ./usr/share/man/cat8/trsp.0			man-obsolete		obsolete
 ./usr/share/man/cat8/ttyflags.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/tunefs.0			man-sysutil-catman	.cat
+./usr/share/man/cat8/umbctl.0			man-isdn-catman		.cat
 ./usr/share/man/cat8/umount.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/unbound-anchor.0		man-netutil-catman	.cat,unbound
 ./usr/share/man/cat8/unbound-checkconf.0	man-netutil-catman	.cat,unbound
@@ -4937,6 +4939,7 @@
 ./usr/share/man/html4/ukyopon.html		man-sys-htmlman		html
 ./usr/share/man/html4/ulpt.html			man-sys-htmlman		html
 ./usr/share/man/html4/umass.html		man-sys-htmlman		html
+./usr/share/man/html4/umb.html			man-sys-htmlman		html
 ./usr/share/man/html4/umcs.html			man-sys-htmlman		html
 ./usr/share/man/html4/umct.html			man-sys-htmlman		html
 ./usr/share/man/html4/umidi.html		man-sys-htmlman		html
@@ -6010,6 +6013,7 @@
 ./usr/share/man/html8/trpt.html			man-netutil-htmlman	html
 ./usr/share/man/html8/ttyflags.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/tunefs.html		man-sysutil-htmlman	html
+./usr/share/man/html8/umbctl.html		man-isdn-htmlman	html
 ./usr/share/man/html8/umount.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/unbound-anchor.html	man-netutil-htmlman	html,unbound
 ./usr/share/man/html8/unbound-checkconf.html	man-netutil-htmlman	html,unbound
@@ -7932,6 +7936,7 @@
 ./usr/share/man/man4/ukyopon.4			man-sys-man		.man
 ./usr/share/man/man4/ulpt.4			man-sys-man		.man
 ./usr/share/man/man4/umass.4			man-sys-man		.man
+./usr/share/man/man4/umb.4			man-sys-man		.man
 ./usr/share/man/man4/umcs.4			man-sys-man		.man
 ./usr/share/man/man4/umct.4			man-sys-man		.man
 ./usr/share/man/man4/umidi.4			man-sys-man		.man
@@ -9215,6 +9220,7 @@
 ./usr/share/man/man8/trsp.8			man-obsolete		obsolete
 ./usr/share/man/man8/ttyflags.8			man-sysutil-man		.man
 ./usr/share/man/man8/tunefs.8			man-sysutil-man		.man
+./usr/share/man/man8/umbctl.8			man-isdn-man		.man
 ./usr/share/man/man8/umount.8			man-sysutil-man		.man
 ./usr/share/man/man8/unbound-anchor.8		man-netutil-man		.man,unbound
 ./usr/share/man/man8/unbound-checkconf.8	man-netutil-man		.man,unbound
