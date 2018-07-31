@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2213 2018/07/31 13:04:10 rjs Exp $
+#	$NetBSD: mi,v 1.2214 2018/07/31 16:44:28 khorben Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -736,6 +736,8 @@
 ./usr/include/dev/tc/tcdsvar.h			comp-obsolete		obsolete
 ./usr/include/dev/tc/tcreg.h			comp-obsolete		obsolete
 ./usr/include/dev/tc/tcvar.h			comp-obsolete		obsolete
+./usr/include/dev/usb/if_umbreg.h		comp-c-include
+./usr/include/dev/usb/mbim.h			comp-c-include
 ./usr/include/dev/usb/ukyopon.h			comp-c-include
 ./usr/include/dev/usb/urio.h			comp-c-include
 ./usr/include/dev/usb/usb.h			comp-c-include

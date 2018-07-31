@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.h,v 1.93 2018/07/29 01:59:46 riastradh Exp $	*/
+/*	$NetBSD: usbdi.h,v 1.94 2018/07/31 16:44:30 khorben Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.h,v 1.18 1999/11/17 22:33:49 n_hibma Exp $	*/
 
 /*
@@ -139,6 +139,8 @@ usbd_status usbd_sync_transfer(struct usbd_xfer *);
 usbd_status usbd_sync_transfer_sig(struct usbd_xfer *);
 
 usbd_status usbd_do_request(struct usbd_device *, usb_device_request_t *, void *);
+usbd_status usbd_request_async(struct usbd_device *, struct usbd_xfer *,
+    usb_device_request_t *, void *, usbd_callback);
 usbd_status usbd_do_request_flags(struct usbd_device *, usb_device_request_t *,
     void *, uint16_t, int *, uint32_t);
 
