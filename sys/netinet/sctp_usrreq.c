@@ -1,5 +1,5 @@
 /*	$KAME: sctp_usrreq.c,v 1.50 2005/06/16 20:45:29 jinmei Exp $	*/
-/*	$NetBSD: sctp_usrreq.c,v 1.10 2018/05/01 07:21:39 maxv Exp $	*/
+/*	$NetBSD: sctp_usrreq.c,v 1.11 2018/07/31 13:36:31 rjs Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Cisco Systems, Inc.
@@ -33,7 +33,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sctp_usrreq.c,v 1.10 2018/05/01 07:21:39 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sctp_usrreq.c,v 1.11 2018/07/31 13:36:31 rjs Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1134,18 +1134,26 @@ sctp_count_max_addresses(struct sctp_inpcb *inp)
 }
 
 static int
-sctp_do_connect_x(struct socket *so, struct sctp_inpcb *inp, struct mbuf *m,
-		  struct lwp *l, int delay)
+sctp_do_connect_x(struct socket *so, struct sctp_connectx_addrs *sca,
+    struct lwp *l, int delay)
 {
         int error = 0;
+	struct sctp_inpcb *inp;
 	struct sctp_tcb *stcb = NULL;
 	struct sockaddr *sa;
-	int num_v6=0, num_v4=0, *totaddrp, totaddr, i, incr, at;
+	int num_v6=0, num_v4=0, totaddr, i, incr, at;
+	char buf[2048];
+	size_t len;
+	sctp_assoc_t id;
 #ifdef SCTP_DEBUG
 	if (sctp_debug_on & SCTP_DEBUG_PCB1) {
 		printf("Connectx called\n");
 	}
 #endif /* SCTP_DEBUG */
+
+	inp = (struct sctp_inpcb *)so->so_pcb;
+	if (inp == 0)
+		return EINVAL;
 
 	if ((inp->sctp_flags & SCTP_PCB_FLAGS_TCPTYPE) &&
 	    (inp->sctp_flags & SCTP_PCB_FLAGS_CONNECTED)) {
@@ -1168,9 +1176,16 @@ sctp_do_connect_x(struct socket *so, struct sctp_inpcb *inp, struct mbuf *m,
 		return (EFAULT);
 	}
 
-	totaddrp = mtod(m, int *);
-	totaddr = *totaddrp;
-	sa = (struct sockaddr *)(totaddrp + 1);
+	len = sca->cx_len;
+	totaddr = sca->cx_num;
+	if (len > sizeof(buf)) {
+		return E2BIG;
+	}
+	error = copyin(sca->cx_addrs, buf, len);
+	if (error) {
+		return error;
+	}
+	sa = (struct sockaddr *)buf;
 	at = incr = 0;
 	/* account and validate addresses */
 	SCTP_INP_WLOCK(inp);
@@ -1201,13 +1216,13 @@ sctp_do_connect_x(struct socket *so, struct sctp_inpcb *inp, struct mbuf *m,
 			SCTP_TCB_UNLOCK(stcb);
 			return (EALREADY);
 		}
-		if ((at + incr) > m->m_len) {
+		if ((at + incr) > len) {
 			totaddr = i;
 			break;
 		}
 		sa = (struct sockaddr *)((vaddr_t)sa + incr);
 	}
-	sa = (struct sockaddr *)(totaddrp + 1);
+	sa = (struct sockaddr *)buf;
 	SCTP_INP_WLOCK(inp);
 	SCTP_INP_DECR_REF(inp);
 	SCTP_INP_WUNLOCK(inp);
@@ -1252,6 +1267,7 @@ sctp_do_connect_x(struct socket *so, struct sctp_inpcb *inp, struct mbuf *m,
 		SCTP_ASOC_CREATE_UNLOCK(inp);
 		return (error);
 	}
+
 	/* move to second address */
 	if (sa->sa_family == AF_INET)
 		sa = (struct sockaddr *)((vaddr_t)sa + sizeof(struct sockaddr_in));
@@ -1280,6 +1296,10 @@ sctp_do_connect_x(struct socket *so, struct sctp_inpcb *inp, struct mbuf *m,
 		sa = (struct sockaddr *)((vaddr_t)sa + incr);
 	}
 	stcb->asoc.state = SCTP_STATE_COOKIE_WAIT;
+
+	id = sctp_get_associd(stcb);
+	memcpy(&sca->cx_num, &id, sizeof(sctp_assoc_t));
+
 	if (delay) {
 		/* doing delayed connection */
 		stcb->asoc.delayed_connection = 1;
@@ -1922,7 +1942,7 @@ sctp_optsget(struct socket *so, struct sockopt *sopt)
 				break;
 			}
 		}
-		if (	(stcb == NULL) &&
+		if ((stcb == NULL) &&
 			((((struct sockaddr *)&paddrp->spp_address)->sa_family == AF_INET) ||
 			 (((struct sockaddr *)&paddrp->spp_address)->sa_family == AF_INET6))) {
 			/* Lookup via address */
@@ -2099,6 +2119,7 @@ sctp_optsget(struct socket *so, struct sockopt *sopt)
 			stcb = sctp_findassociation_ep_asocid(inp, sstat->sstat_assoc_id);
 
 		if (stcb == NULL) {
+			printf("SCTP status, no stcb\n");
 			error = EINVAL;
 			break;
 		}
@@ -2538,22 +2559,6 @@ sctp_optsset(struct socket *so, struct sockopt *sopt)
 		memset(sctp_pegs, 0, sizeof(sctp_pegs));
 		error = 0;
 		break;
-	case SCTP_CONNECT_X:
-		if (sopt->sopt_size < (sizeof(int) + sizeof(struct sockaddr_in))) {
-			error = EINVAL;
-			break;
-		}
-		error = sctp_do_connect_x(so, inp, sopt->sopt_data, curlwp, 0);
-		break;
-
-	case SCTP_CONNECT_X_DELAYED:
-		if (sopt->sopt_size < (sizeof(int) + sizeof(struct sockaddr_in))) {
-			error = EINVAL;
-			break;
-		}
-		error = sctp_do_connect_x(so, inp, sopt->sopt_data, curlwp, 1);
-		break;
-
 	case SCTP_CONNECT_X_COMPLETE:
 	{
 		struct sockaddr *sa;
@@ -3829,20 +3834,30 @@ sctp_ioctl(struct socket *so, u_long cmd, void *nam, struct ifnet *ifp)
 	int error = 0;
 	int family;
 
-	family = so->so_proto->pr_domain->dom_family;
-	switch (family) {
+	if (cmd == SIOCCONNECTX) {
+		solock(so);
+		error = sctp_do_connect_x(so, nam, curlwp, 0);
+		sounlock(so);
+	} else if (cmd == SIOCCONNECTXDEL) {
+		solock(so);
+		error = sctp_do_connect_x(so, nam, curlwp, 1);
+		sounlock(so);
+	} else {
+		family = so->so_proto->pr_domain->dom_family;
+		switch (family) {
 #ifdef INET
-	case PF_INET:
-		error = in_control(so, cmd, nam, ifp);
-		break;
+		case PF_INET:
+			error = in_control(so, cmd, nam, ifp);
+			break;
 #endif
 #ifdef INET6
-	case PF_INET6:
-		error = in6_control(so, cmd, nam, ifp);
-		break;
+		case PF_INET6:
+			error = in6_control(so, cmd, nam, ifp);
+			break;
 #endif
-	default:
-		error =  EAFNOSUPPORT;
+		default:
+			error =  EAFNOSUPPORT;
+		}
 	}
 	return (error);
 }
