@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.3 2018/07/17 00:29:55 christos Exp $ */
+/* $NetBSD: cpu.c,v 1.4 2018/07/31 07:00:48 skrll Exp $ */
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: cpu.c,v 1.3 2018/07/17 00:29:55 christos Exp $");
+__KERNEL_RCSID(1, "$NetBSD: cpu.c,v 1.4 2018/07/31 07:00:48 skrll Exp $");
 
 #include "locators.h"
 #include "opt_arm_debug.h"
@@ -48,6 +48,12 @@ __KERNEL_RCSID(1, "$NetBSD: cpu.c,v 1.3 2018/07/17 00:29:55 christos Exp $");
 
 #ifdef FDT
 #include <arm/fdt/arm_fdtvar.h>
+#endif
+
+#ifdef VERBOSE_INIT_ARM
+#define VPRINTF(...)	printf(__VA_ARGS__)
+#else
+#define VPRINTF(...)	do { } while (/* CONSTCOND */ 0)
 #endif
 
 void cpu_attach(device_t, cpuid_t);
@@ -495,9 +501,7 @@ cpu_boot_secondary_processors(void)
 {
 	mutex_init(&cpu_hatch_lock, MUTEX_DEFAULT, IPL_NONE);
 
-#ifdef VERBOSE_INIT_ARM
-	printf("%s: writing mbox with %#x\n", __func__, arm_cpu_hatched);
-#endif
+	VPRINTF("%s: writing mbox with %#x\n", __func__, arm_cpu_hatched);
 
 	/* send mbox to have secondary processors do cpu_hatch() */
 	atomic_or_32(&arm_cpu_mbox, arm_cpu_hatched);
@@ -508,9 +512,7 @@ cpu_boot_secondary_processors(void)
 		__asm __volatile ("wfe");
 	}
 
-#ifdef VERBOSE_INIT_ARM
-	printf("%s: secondary processors hatched\n", __func__);
-#endif
+	VPRINTF("%s: secondary processors hatched\n", __func__);
 
 	/* add available processors to kcpuset */
 	uint32_t mbox = arm_cpu_hatched;

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.15 2018/07/27 07:04:04 ryo Exp $	*/
+/*	$NetBSD: pmap.c,v 1.16 2018/07/31 07:00:48 skrll Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.15 2018/07/27 07:04:04 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.16 2018/07/31 07:00:48 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_ddb.h"
@@ -50,6 +50,11 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.15 2018/07/27 07:04:04 ryo Exp $");
 //#define PMAP_DEBUG
 //#define PMAP_PV_DEBUG
 
+#ifdef VERBOSE_INIT_ARM
+#define VPRINTF(...)	printf(__VA_ARGS__)
+#else
+#define VPRINTF(...)	do { } while (/* CONSTCOND */ 0)
+#endif
 
 UVMHIST_DEFINE(pmaphist);
 #ifdef UVMHIST
@@ -289,16 +294,12 @@ pmap_devmap_bootstrap(const struct pmap_devmap *table)
 
 	l0 = (void *)AARCH64_PA_TO_KVA(reg_ttbr1_el1_read());
 
-#ifdef VERBOSE_INIT_ARM
-	printf("%s:\n", __func__);
-#endif
+	VPRINTF("%s:\n", __func__);
 	for (i = 0; table[i].pd_size != 0; i++) {
-#ifdef VERBOSE_INIT_ARM
-		printf(" devmap: pa %08lx-%08lx = va %016lx\n",
+		VPRINTF(" devmap: pa %08lx-%08lx = va %016lx\n",
 		    table[i].pd_pa,
 		    table[i].pd_pa + table[i].pd_size - 1,
 		    table[i].pd_va);
-#endif
 		va = table[i].pd_va;
 
 		/* update and check virtual_devmap_addr */
