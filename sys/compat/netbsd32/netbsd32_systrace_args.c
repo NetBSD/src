@@ -1,4 +1,4 @@
-/* $NetBSD: netbsd32_systrace_args.c,v 1.25 2018/05/10 02:36:26 christos Exp $ */
+/* $NetBSD: netbsd32_systrace_args.c,v 1.26 2018/07/31 21:02:00 rjs Exp $ */
 
 /*
  * System call argument to DTrace register array converstion.
@@ -1322,6 +1322,17 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 		iarg[0] = SCARG(p, fd); /* int */
 		iarg[1] = SCARG(p, name); /* int */
 		*n_args = 2;
+		break;
+	}
+	/* netbsd32_getsockopt2 */
+	case 193: {
+		const struct netbsd32_getsockopt2_args *p = params;
+		iarg[0] = SCARG(p, s); /* int */
+		iarg[1] = SCARG(p, level); /* int */
+		iarg[2] = SCARG(p, name); /* int */
+		uarg[3] = (intptr_t) SCARG(p, val).i32; /* netbsd32_voidp */
+		uarg[4] = (intptr_t) SCARG(p, avalsize).i32; /* netbsd32_intp */
+		*n_args = 5;
 		break;
 	}
 	/* netbsd32_getrlimit */
@@ -5613,6 +5624,28 @@ systrace_entry_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 			break;
 		case 1:
 			p = "int";
+			break;
+		default:
+			break;
+		};
+		break;
+	/* netbsd32_getsockopt2 */
+	case 193:
+		switch(ndx) {
+		case 0:
+			p = "int";
+			break;
+		case 1:
+			p = "int";
+			break;
+		case 2:
+			p = "int";
+			break;
+		case 3:
+			p = "netbsd32_voidp";
+			break;
+		case 4:
+			p = "netbsd32_intp";
 			break;
 		default:
 			break;
@@ -10156,6 +10189,11 @@ systrace_return_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 	case 192:
 		if (ndx == 0 || ndx == 1)
 			p = "netbsd32_long";
+		break;
+	/* netbsd32_getsockopt2 */
+	case 193:
+		if (ndx == 0 || ndx == 1)
+			p = "int";
 		break;
 	/* netbsd32_getrlimit */
 	case 194:
