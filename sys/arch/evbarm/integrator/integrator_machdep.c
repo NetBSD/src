@@ -1,4 +1,4 @@
-/*	$NetBSD: integrator_machdep.c,v 1.74 2013/08/18 15:58:20 matt Exp $	*/
+/*	$NetBSD: integrator_machdep.c,v 1.75 2018/07/31 06:46:27 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001,2002 ARM Ltd
@@ -68,8 +68,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: integrator_machdep.c,v 1.74 2013/08/18 15:58:20 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: integrator_machdep.c,v 1.75 2018/07/31 06:46:27 skrll Exp $");
 
+#include "opt_arm_debug.h"
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
 

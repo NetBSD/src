@@ -1,4 +1,4 @@
-/*	$NetBSD: exynos_soc.c,v 1.33 2018/07/05 13:11:58 jmcneill Exp $	*/
+/*	$NetBSD: exynos_soc.c,v 1.34 2018/07/31 06:46:25 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -29,10 +29,11 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "opt_arm_debug.h"
 #include "opt_exynos.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exynos_soc.c,v 1.33 2018/07/05 13:11:58 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exynos_soc.c,v 1.34 2018/07/31 06:46:25 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>

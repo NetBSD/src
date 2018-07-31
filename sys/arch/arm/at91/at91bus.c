@@ -1,4 +1,4 @@
-/*	$NetBSD: at91bus.c,v 1.20 2018/07/15 05:16:41 maxv Exp $	*/
+/*	$NetBSD: at91bus.c,v 1.21 2018/07/31 06:46:25 skrll Exp $	*/
 
 /*
  * Copyright (c) 2007 Embedtronics Oy
@@ -27,8 +27,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at91bus.c,v 1.20 2018/07/15 05:16:41 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at91bus.c,v 1.21 2018/07/31 06:46:25 skrll Exp $");
 
+#include "opt_arm_debug.h"
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
 #include "opt_pmap_debug.h"
