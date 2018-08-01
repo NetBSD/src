@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.63 2017/09/14 07:58:43 mrg Exp $
+#	$NetBSD: INSTALL,v 1.64 2018/08/01 20:04:14 maxv Exp $
 #
 #	Shark installation kernel
 #
@@ -233,7 +233,7 @@ pseudo-device	bpfilter		# packet filter
 #pseudo-device	sl			# CSLIP
 #pseudo-device	ppp			# PPP
 #pseudo-device	tun			# network tunneling over tty
-#pseudo-device	ipfilter 		# ip filter
+#pseudo-device	npf			# NPF packet filter
 
 pseudo-device	pty			# pseudo-terminals
 #pseudo-device	vnd			# disk-like interface to files

@@ -1,4 +1,4 @@
-# $NetBSD: RPC44,v 1.54 2018/01/23 14:47:54 sevan Exp $
+# $NetBSD: RPC44,v 1.55 2018/08/01 20:04:10 maxv Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/arc/conf/std.arc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.54 $"
+#ident		"GENERIC-$Revision: 1.55 $"
 
 maxusers	32		# estimated number of users
 
@@ -113,9 +113,6 @@ options 	INET		# IP + ICMP + TCP + UDP
 #options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 #options 	PPP_DEFLATE	# Deflate compression support for PPP
 #options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
-#options 	IPFILTER_LOG	# ipmon(8) log support
-#options 	IPFILTER_LOOKUP	# ippool(8) support
-##options 	IPFILTER_DEFAULT_BLOCK	# block all packets by default
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
 # JIT compiler for bpfilter
@@ -262,7 +259,7 @@ pseudo-device	putter			# for puffs and pud
 
 # network pseudo-devices
 pseudo-device	bpfilter		# Berkeley packet filter
-#pseudo-device	ipfilter		# IP filter (firewall) and NAT
+#pseudo-device	npf			# NPF packet filter
 pseudo-device	loop			# network loopback
 #pseudo-device	ppp			# Point-to-Point Protocol
 #pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)

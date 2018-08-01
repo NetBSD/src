@@ -1,4 +1,4 @@
-#	$NetBSD: POWERMAC,v 1.69 2018/02/23 02:54:56 sevan Exp $
+#	$NetBSD: POWERMAC,v 1.70 2018/08/01 20:04:12 maxv Exp $
 #
 # POWERMAC config file
 #
@@ -45,10 +45,6 @@ options 	APPLE_UFS	# Apple UFS support in FFS
 
 # Networking options
 options 	INET		# IP + ICMP + TCP + UDP
-options 	IPFILTER_LOG	# ipmon(8) log support
-options 	IPFILTER_LOOKUP	# ippool(8) support
-options 	IPFILTER_COMPAT # Compat for IP-Filter
-#options 	IPFILTER_DEFAULT_BLOCK	# block all packets by default
 
 # These options enable verbose messages for several subsystems.
 options 	SCSIVERBOSE	# Verbose SCSI errors
@@ -119,7 +115,7 @@ sd*	at scsibus? target ? lun ?	# SCSI disks
 
 pseudo-device	loop			# network loopback
 pseudo-device	bpfilter		# packet filter
-pseudo-device	ipfilter		# IP filter (firewall) and NAT
+pseudo-device	npf			# NPF packet filter
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	vnd			# disk-like interface to files
 pseudo-device	ccd			# concatenated/striped disk devices

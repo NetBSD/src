@@ -1,4 +1,4 @@
-#	$NetBSD: ZYXELKX,v 1.12 2017/09/14 07:58:40 mrg Exp $
+#	$NetBSD: ZYXELKX,v 1.13 2018/08/01 20:04:11 maxv Exp $
 
 include 	"arch/evbmips/conf/std.rasoc"
 
@@ -103,9 +103,6 @@ options 	MROUTING	# IP multicast routing
 #options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 #options 	PPP_DEFLATE	# Deflate compression support for PPP
 #options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
-#options 	IPFILTER_LOG	# ipmon(8) log support
-#options 	IPFILTER_LOOKUP	# ippool(8) support
-#options 	IPFILTER_DEFAULT_BLOCK	# block all packets by default
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
 #options 	ALTQ		# Manipulate network interfaces' output queues
@@ -227,8 +224,7 @@ pseudo-device	bpfilter		# Berkeley packet filter
 pseudo-device	bridge			# simple inter-network bridging
 pseudo-device	loop			# network loopback
 pseudo-device	tap			# virtual Ethernet
-pseudo-device	pf			# PF packet filter
-pseudo-device	pflog			# PF log if
+pseudo-device	npf			# NPF packet filter
 pseudo-device	pppoe			# PPPoE protocol
 pseudo-device	vlan			# 802.1q
 
