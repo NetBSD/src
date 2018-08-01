@@ -1,4 +1,4 @@
-# 	$NetBSD: NEWS1200,v 1.66 2017/09/14 07:58:42 mrg Exp $
+# 	$NetBSD: NEWS1200,v 1.67 2018/08/01 20:04:13 maxv Exp $
 
 #	news1200 config file
 #
@@ -77,8 +77,6 @@ options 	INET6		# IPV6
 #options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 #options 	PPP_DEFLATE	# Deflate compression support for PPP
 #options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
-#options 	IPFILTER_LOG	# ipmon(8) log support
-#options 	IPFILTER_LOOKUP	# ippool(8) support
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
 options 	NFS_BOOT_BOOTPARAM
@@ -129,7 +127,7 @@ pseudo-device	ppp			# PPP interfaces
 pseudo-device	tun			# Network "tunnel" device
 #pseudo-device	gre			# generic L3 over IP tunnel
 pseudo-device	bpfilter		# Berkeley Packet Filter
-pseudo-device	ipfilter		# ip filter
+pseudo-device	npf			# NPF packet filter
 #pseudo-device	strip			# Starmode Radio IP (Metricom)
 pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith			# IPv[46] tcp relay translation i/f

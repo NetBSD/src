@@ -1,10 +1,10 @@
-#	$NetBSD: RB153,v 1.19 2017/08/19 09:10:24 maya Exp $
+#	$NetBSD: RB153,v 1.20 2018/08/01 20:04:11 maxv Exp $
 #
 # Example kernel config for the RouterBOARD 153.
 
 include 	"arch/evbmips/conf/std.adm5120"
 
-#ident 		"RB153-$Revision: 1.19 $"
+#ident 		"RB153-$Revision: 1.20 $"
 
 maxusers	32
 
@@ -75,7 +75,6 @@ options 	INET6		# IPV6
 #options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 #options 	PPP_DEFLATE	# Deflate compression support for PPP
 #options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
-#options 	IPFILTER_LOG	# ipmon(8) log support
 
 # JIT compiler for bpfilter
 #options	SLJIT
@@ -113,8 +112,7 @@ pseudo-device	gif			# RFC1933 tunnel
 # Miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals
 #pseudo-device	sequencer		# MIDI sequencer
-pseudo-device	pf			# PF packet filter
-pseudo-device	pflog			# PF log if
+pseudo-device	npf			# NPF packet filter
 
 # A pseudo device needed for Coda	# also needs CODA (above)
 #pseudo-device	vcoda			# coda minicache <-> venus comm.

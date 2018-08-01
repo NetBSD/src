@@ -1,4 +1,4 @@
-#	$NetBSD: CP3100,v 1.47 2018/07/12 10:46:43 maxv Exp $
+#	$NetBSD: CP3100,v 1.48 2018/08/01 20:04:10 maxv Exp $
 #
 #	CP3100 -- Certance CP3100 Kernel
 #
@@ -67,8 +67,6 @@ options 	INET6		# IPV6
 #options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 #options 	PPP_DEFLATE	# Deflate compression support for PPP
 #options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
-options 	IPFILTER_LOG	# ipmon(8) log support
-options 	IPFILTER_LOOKUP	# ippool(8) support
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
 options 	NFS_BOOT_BOOTP
@@ -211,7 +209,7 @@ options 	VND_COMPRESSION		# compressed vnd(4)
 
 # network pseudo-devices
 pseudo-device	bpfilter		# Berkeley packet filter
-pseudo-device	ipfilter		# IP filter (firewall) and NAT
+pseudo-device	npf			# NPF packet filter
 pseudo-device	loop			# network loopback
 #pseudo-device	tun			# network tunneling over tty
 #pseudo-device	vlan			# IEEE 802.1q encapsulation
