@@ -1,4 +1,4 @@
-/*	$NetBSD: db_memrw.c,v 1.1 2018/08/01 10:22:20 reinoud Exp $	*/
+/*	$NetBSD: db_memrw.c,v 1.2 2018/08/01 10:27:28 reinoud Exp $	*/
 
 /*-
  * Copyright (c) 1996, 2000 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_memrw.c,v 1.1 2018/08/01 10:22:20 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_memrw.c,v 1.2 2018/08/01 10:27:28 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -216,7 +216,7 @@ db_write_bytes(vaddr_t addr, size_t size, const char *data)
 //	size_t i;
 
 	dst = (char *)addr;
-thunk_printf("\n%s : %p + %d\n", __func__, dst, (int) size);
+	thunk_printf_debug("\n%s : %p + %d\n", __func__, dst, (int) size);
 #if 0
 	// TODO: check if we in kernel range and if so, do the mmap dance
 	// ourselves?
