@@ -1,4 +1,4 @@
-.\"	$NetBSD: umbctl.8,v 1.1 2018/07/31 16:44:29 khorben Exp $
+.\"	$NetBSD: umbctl.8,v 1.2 2018/08/01 17:26:30 wiz Exp $
 .\"
 .\" Copyright (c) 2018 by Pierre Pronchery <khorben@defora.org>
 .\" All rights reserved.
@@ -26,7 +26,7 @@
 .\"
 .\" From: pppoectl.8,v 1.30 2016/09/12 05:35:20 sevan Exp $
 .\"
-.\" $Id: umbctl.8,v 1.1 2018/07/31 16:44:29 khorben Exp $
+.\" $Id: umbctl.8,v 1.2 2018/08/01 17:26:30 wiz Exp $
 .\"
 .\" last edit-date: [Thu Aug 31 10:47:33 2000]
 .\"
@@ -35,7 +35,7 @@
 .Os
 .Sh NAME
 .Nm umbctl
-.Nd "display or set parameters for a MBIM interface (4G/LTE)"
+.Nd display or set parameters for a MBIM interface (4G/LTE)
 .Sh SYNOPSIS
 .Nm umbctl
 .Op Fl v
@@ -49,13 +49,12 @@
 .Ar ifname
 .Op Ar parameter Ns Op \&= Ns Ar value
 .Op Ar ...
-.Pp
 .Sh DESCRIPTION
-.Bl -tag -width indent
-.It Fl v
-enables verbose mode.
-.It Fl f
-parse
+.Nm
+supports the following options:
+.Bl -tag -width XfXconfigXfileXXX -offset indent
+.It Fl f Ar config-file
+Parse
 .Ar config-file
 for
 .Ar parameter Ns Op \&= Ns Ar value
@@ -63,6 +62,8 @@ pairs, one per line, as if they had been specified on the command line.
 This allows the password or PIN codes to be not passed as command line
 arguments.
 Comments starting with # to the end of the current line are ignored.
+.It Fl v
+Enables verbose mode.
 .El
 .Pp
 The
@@ -104,7 +105,7 @@ is also enabled, which will cause a final printout of the status as
 described above once all other actions have been taken.
 .Pp
 The parameters currently supported include:
-.Bl -tag -width xxxxxxxxxxxxxxxxxxxxxxxxx
+.Bl -tag -width xxxxxxxxxxxxxxxxxxxxxxxxx -offset indent
 .It Ar apn Ns \&= Ns Em access-point
 Set the APN to
 .Em access-point .
@@ -136,13 +137,11 @@ umb0: state up, mode automatic, registration home network
 .Ed
 .Pp
 Display the settings for umb0.
-.Ed
 .Bd -literal
 # umbctl umb0 apn operator.internet username mobile password mobile
 .Ed
 .Pp
 Configure the connection parameters for umb0 from the command line.
-.Ed
 .Bd -literal
 # umbctl -f /dev/stdin umb0 << EOF
 pin=1234
@@ -150,16 +149,16 @@ EOF
 .Ed
 .Pp
 Configure the connection parameters for umb0 from a file.
-.Ed
 .Sh SEE ALSO
 .Xr netstat 1 ,
+.Xr umb 4 ,
 .Xr ifconfig 8 ,
-.Xr ifwatchd 8 ,
-.Xr umb 4
+.Xr ifwatchd 8
 .Sh HISTORY
 The
 .Nm
 utility first appeared in
 .Nx 9.0 .
 .Sh AUTHORS
-The program was written by Pierre Pronchery.
+The program was written by
+.An Pierre Pronchery .
