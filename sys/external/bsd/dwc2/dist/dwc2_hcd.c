@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2_hcd.c,v 1.19 2016/02/24 22:17:54 skrll Exp $	*/
+/*	$NetBSD: dwc2_hcd.c,v 1.20 2018/08/01 16:44:14 skrll Exp $	*/
 
 /*
  * hcd.c - DesignWare HS OTG Controller host-mode routines
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc2_hcd.c,v 1.19 2016/02/24 22:17:54 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc2_hcd.c,v 1.20 2018/08/01 16:44:14 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/kmem.h>
@@ -727,7 +727,7 @@ static int dwc2_hc_setup_align_buf(struct dwc2_hsotg *hsotg, struct dwc2_qh *qh,
 
 		qh->dw_align_buf = NULL;
 		qh->dw_align_buf_dma = 0;
-		err = usb_allocmem(&hsotg->hsotg_sc->sc_bus, buf_size, buf_size,
+		err = usb_allocmem(&hsotg->hsotg_sc->sc_bus, buf_size, 0,
 				   &qh->dw_align_buf_usbdma);
 		if (!err) {
 			usb_dma_t *ud = &qh->dw_align_buf_usbdma;
