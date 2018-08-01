@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.195 2018/07/31 13:00:13 rjs Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.196 2018/08/01 23:35:32 rjs Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,10 +61,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.195 2018/07/31 13:00:13 rjs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.196 2018/08/01 23:35:32 rjs Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pipe.h"
+#include "opt_sctp.h"
 #endif
 
 #define MBUFTYPES
@@ -84,6 +85,11 @@ __KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.195 2018/07/31 13:00:13 rjs Exp 
 #include <sys/event.h>
 #include <sys/atomic.h>
 #include <sys/kauth.h>
+
+#ifdef SCTP
+#include <netinet/sctp_uio.h>
+#include <netinet/sctp_peeloff.h>
+#endif
 
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
@@ -1605,4 +1611,70 @@ sockargs(struct mbuf **mp, const void *bf, size_t buflen, enum uio_seg seg,
 	default:
 		return EINVAL;
 	}
+}
+
+int
+do_sys_peeloff(struct socket *head, void *data)
+{
+#ifdef SCTP
+	/*file_t *lfp = NULL;*/
+	file_t *nfp = NULL;
+	int error;
+	struct socket *so;
+	int fd;
+	uint32_t name;
+	/*short fflag;*/		/* type must match fp->f_flag */
+
+	name = *(uint32_t *) data;
+	error = sctp_can_peel_off(head, name);
+	if (error) {
+		printf("peeloff failed\n");
+		return error;
+	}
+	/*
+	 * At this point we know we do have a assoc to pull
+	 * we proceed to get the fd setup. This may block
+	 * but that is ok.
+	 */
+	error = fd_allocfile(&nfp, &fd);
+	if (error) {
+		/*
+		 * Probably ran out of file descriptors. Put the
+		 * unaccepted connection back onto the queue and
+		 * do another wakeup so some other process might
+		 * have a chance at it.
+		 */
+		return error;
+	}
+	*(int *) data = fd;
+
+	so = sctp_get_peeloff(head, name, &error);
+	if (so == NULL) {
+		/*
+		 * Either someone else peeled it off OR
+		 * we can't get a socket.
+		 * close the new descriptor, assuming someone hasn't ripped it
+		 * out from under us.
+		 */
+		mutex_enter(&nfp->f_lock);
+		nfp->f_count++;
+		mutex_exit(&nfp->f_lock);
+		fd_abort(curlwp->l_proc, nfp, fd);
+		return error;
+	}
+	so->so_state &= ~SS_NOFDREF;
+	so->so_state &= ~SS_ISCONNECTING;
+	so->so_head = NULL;
+	so->so_cred = kauth_cred_dup(head->so_cred);
+	nfp->f_socket = so;
+	nfp->f_flag = FREAD|FWRITE;
+	nfp->f_ops = &socketops;
+	nfp->f_type = DTYPE_SOCKET;
+
+	fd_affix(curlwp->l_proc, nfp, fd);
+
+	return error;
+#else
+	return EOPNOTSUPP;
+#endif
 }

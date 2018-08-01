@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_socket.c,v 1.76 2017/11/30 20:25:55 christos Exp $	*/
+/*	$NetBSD: sys_socket.c,v 1.77 2018/08/01 23:35:32 rjs Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_socket.c,v 1.76 2017/11/30 20:25:55 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_socket.c,v 1.77 2018/08/01 23:35:32 rjs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -190,6 +190,12 @@ soo_ioctl(file_t *fp, u_long cmd, void *data)
 
 	case SIOCATMARK:
 		*(int *)data = (so->so_state&SS_RCVATMARK) != 0;
+		break;
+
+	case SIOCPEELOFF:
+		solock(so);
+		error = do_sys_peeloff(so, data);
+		sounlock(so);
 		break;
 
 	default:
