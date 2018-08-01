@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.3 2017/07/23 01:05:11 mrg Exp $
+#	$NetBSD: Makefile,v 1.1.1.4 2018/08/01 22:19:01 mrg Exp $
 
 LIBISPRIVATE=	yes
 
@@ -20,8 +20,14 @@ SRCS+=		driver-i386.c
 SRCS+=		driver-rs6000.c
 .PATH:		${DIST}/gcc/config/rs6000
 .endif
+.if  ${GCC_MACHINE_ARCH} == "aarch64" 
+SRCS+=		driver-aarch64.c
+.PATH:		${DIST}/gcc/config/aarch64
+.endif
 
 .include "../Makefile.target-defines"
+
+version.c: ${GCCARCH}/defs.mk ${TOP}/tools/gcc/gcc-version.mk
 
 CPPFLAGS+=	-I${GCCARCH} -I. \
 		${G_ALL_CFLAGS:M-D*} ${G_INCLUDES:M-I*:N-I.*} \

@@ -1,5 +1,5 @@
 /* DWARF2 EH unwinding support for Alpha Linux.
-   Copyright (C) 2004-2015 Free Software Foundation, Inc.
+   Copyright (C) 2004-2016 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -51,7 +51,7 @@ alpha_fallback_frame_state (struct _Unwind_Context *context,
     {
       struct rt_sigframe {
 	siginfo_t info;
-	ucontext_t uc;
+	struct ucontext uc;
       } *rt_ = context->cfa;
       sc = &rt_->uc.uc_mcontext;
     }

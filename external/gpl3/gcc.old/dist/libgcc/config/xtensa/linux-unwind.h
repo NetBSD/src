@@ -1,5 +1,5 @@
 /* DWARF2 EH unwinding support for Xtensa.
-   Copyright (C) 2008-2015 Free Software Foundation, Inc.
+   Copyright (C) 2008-2016 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -67,7 +67,7 @@ xtensa_fallback_frame_state (struct _Unwind_Context *context,
 
   struct rt_sigframe {
     siginfo_t info;
-    ucontext_t uc;
+    struct ucontext uc;
   } *rt_;
 
   /* movi a2, __NR_rt_sigreturn; syscall */
