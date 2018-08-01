@@ -1,4 +1,4 @@
-/*	$NetBSD: if_umb.c,v 1.1 2018/07/31 16:44:29 khorben Exp $ */
+/*	$NetBSD: if_umb.c,v 1.2 2018/08/01 12:25:50 khorben Exp $ */
 /*	$OpenBSD: if_umb.c,v 1.18 2018/02/19 08:59:52 mpi Exp $ */
 
 /*
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_umb.c,v 1.1 2018/07/31 16:44:29 khorben Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_umb.c,v 1.2 2018/08/01 12:25:50 khorben Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -2736,13 +2736,13 @@ inet_ntop(int af, const void *src, char *dst, socklen_t size)
 {
 	switch (af) {
 	case AF_INET:
-		return (inet_ntop4(src, dst, (size_t)size));
+		return inet_ntop4(src, dst, (size_t)size);
 #ifdef INET6
 	case AF_INET6:
-		return (inet_ntop6(src, dst, (size_t)size));
+		return inet_ntop6(src, dst, (size_t)size);
 #endif /* INET6 */
 	default:
-		return (NULL);
+		return NULL;
 	}
 	/* NOTREACHED */
 }
@@ -2767,10 +2767,10 @@ inet_ntop4(const u_char *src, char *dst, size_t size)
 	l = snprintf(tmp, sizeof(tmp), "%u.%u.%u.%u",
 	    src[0], src[1], src[2], src[3]);
 	if (l <= 0 || l >= size) {
-		return (NULL);
+		return NULL;
 	}
 	strlcpy(dst, tmp, size);
-	return (dst);
+	return dst;
 }
 
 #ifdef INET6
@@ -2843,7 +2843,7 @@ inet_ntop6(const u_char *src, char *dst, size_t size)
 		    i < (best.base + best.len)) {
 			if (i == best.base) {
 				if (tp + 1 >= ep)
-					return (NULL);
+					return NULL;
 				*tp++ = ':';
 			}
 			continue;
@@ -2851,39 +2851,39 @@ inet_ntop6(const u_char *src, char *dst, size_t size)
 		/* Are we following an initial run of 0x00s or any real hex? */
 		if (i != 0) {
 			if (tp + 1 >= ep)
-				return (NULL);
+				return NULL;
 			*tp++ = ':';
 		}
 		/* Is this address an encapsulated IPv4? */
 		if (i == 6 && best.base == 0 &&
 		    (best.len == 6 || (best.len == 5 && words[5] == 0xffff))) {
 			if (!inet_ntop4(src+12, tp, (size_t)(ep - tp)))
-				return (NULL);
+				return NULL;
 			tp += strlen(tp);
 			break;
 		}
 		advance = snprintf(tp, ep - tp, "%x", words[i]);
 		if (advance <= 0 || advance >= ep - tp)
-			return (NULL);
+			return NULL;
 		tp += advance;
 	}
 	/* Was it a trailing run of 0x00's? */
 	if (best.base != -1 && (best.base + best.len) == (IN6ADDRSZ / INT16SZ)) {
 		if (tp + 1 >= ep)
-			return (NULL);
+			return NULL;
 		*tp++ = ':';
 	}
 	if (tp + 1 >= ep)
-		return (NULL);
+		return NULL;
 	*tp++ = '\0';
 
 	/*
 	 * Check for overflow, copy, and we're done.
 	 */
 	if ((size_t)(tp - tmp) > size) {
-		return (NULL);
+		return NULL;
 	}
 	strlcpy(dst, tmp, size);
-	return (dst);
+	return dst;
 }
 #endif /* INET6 */
