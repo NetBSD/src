@@ -1,4 +1,4 @@
-/* $NetBSD: armreg.h,v 1.12 2018/07/17 00:35:03 christos Exp $ */
+/* $NetBSD: armreg.h,v 1.13 2018/08/01 13:42:58 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -71,64 +71,64 @@ reg_##regname##_write(uint64_t __val)				\
  */
 AARCH64REG_READ_INLINE(ctr_el0)		// Cache Type Register
 
-#define	CTR_EL0_CWG_LINE	__BITS(27,24) // Cacheback Writeback Granule
-#define	CTR_EL0_ERG_LINE	__BITS(23,20) // Exclusives Reservation Granule
-#define	CTR_EL0_DMIN_LINE	__BITS(19,16) // Dcache MIN LINE size (log2 - 2)
+#define	CTR_EL0_CWG_LINE	__BITS(27,24)	// Cacheback Writeback Granule
+#define	CTR_EL0_ERG_LINE	__BITS(23,20)	// Exclusives Reservation Granule
+#define	CTR_EL0_DMIN_LINE	__BITS(19,16)	// Dcache MIN LINE size (log2 - 2)
 #define	CTR_EL0_L1IP_MASK	__BITS(15,14)
-#define	CTR_EL0_L1IP_AIVIVT	1 // ASID-tagged Virtual Index, Virtual Tag
-#define	CTR_EL0_L1IP_VIPT	2 // Virtual Index, Physical Tag
-#define	CTR_EL0_L1IP_PIPT	3 // Physical Index, Physical Tag
-#define	CTR_EL0_IMIN_LINE	__BITS(3,0) // Icache MIN LINE size (log2 - 2)
+#define	 CTR_EL0_L1IP_AIVIVT	1		//  ASID-tagged Virtual Index, Virtual Tag
+#define	 CTR_EL0_L1IP_VIPT	2		//  Virtual Index, Physical Tag
+#define	 CTR_EL0_L1IP_PIPT	3		//  Physical Index, Physical Tag
+#define	CTR_EL0_IMIN_LINE	__BITS(3,0)	// Icache MIN LINE size (log2 - 2)
 
-AARCH64REG_READ_INLINE(dczid_el0)	// Data Cache Zero ID Register
+AARCH64REG_READ_INLINE(dczid_el0)		// Data Cache Zero ID Register
 
-#define	DCZID_DZP __BIT(4)	// Data Zero Prohibited
-#define	DCZID_BS  __BITS(3,0)	// Block Size (log2 - 2)
+#define	DCZID_DZP		__BIT(4)	// Data Zero Prohibited
+#define	DCZID_BS		__BITS(3,0)	// Block Size (log2 - 2)
 
-AARCH64REG_READ_INLINE(fpcr)		// Floating Point Control Register
+AARCH64REG_READ_INLINE(fpcr)			// Floating Point Control Register
 AARCH64REG_WRITE_INLINE(fpcr)
 
-#define	FPCR_AHP    __BIT(26)	// Alternative Half Precision
-#define	FPCR_DN     __BIT(25)	// Default Nan Control
-#define	FPCR_FZ     __BIT(24)	// Flush-To-Zero
-#define	FPCR_RMODE  __BITS(23,22)// Rounding Mode
-#define	 FPCR_RN     0		//  Round Nearest
-#define	 FPCR_RP     1		//  Round towards Plus infinity
-#define	 FPCR_RM     2		//  Round towards Minus infinity
-#define	 FPCR_RZ     3		//  Round towards Zero
-#define	FPCR_STRIDE __BITS(21,20)
-#define	FPCR_LEN    __BITS(18,16)
-#define	FPCR_IDE    __BIT(15)	// Input Denormal Exception enable
-#define	FPCR_IXE    __BIT(12)	// IneXact Exception enable
-#define	FPCR_UFE    __BIT(11)	// UnderFlow Exception enable
-#define	FPCR_OFE    __BIT(10)	// OverFlow Exception enable
-#define	FPCR_DZE    __BIT(9)	// Divide by Zero Exception enable
-#define	FPCR_IOE    __BIT(8)	// Invalid Operation Exception enable
-#define	FPCR_ESUM   0x1F00
+#define	FPCR_AHP		__BIT(26)	// Alternative Half Precision
+#define	FPCR_DN			__BIT(25)	// Default Nan Control
+#define	FPCR_FZ			__BIT(24)	// Flush-To-Zero
+#define	FPCR_RMODE		__BITS(23,22)	// Rounding Mode
+#define	 FPCR_RN		0		//  Round Nearest
+#define	 FPCR_RP		1		//  Round towards Plus infinity
+#define	 FPCR_RM		2		//  Round towards Minus infinity
+#define	 FPCR_RZ		3		//  Round towards Zero
+#define	FPCR_STRIDE		__BITS(21,20)
+#define	FPCR_LEN		__BITS(18,16)
+#define	FPCR_IDE		__BIT(15)	// Input Denormal Exception enable
+#define	FPCR_IXE		__BIT(12)	// IneXact Exception enable
+#define	FPCR_UFE		__BIT(11)	// UnderFlow Exception enable
+#define	FPCR_OFE		__BIT(10)	// OverFlow Exception enable
+#define	FPCR_DZE		__BIT(9)	// Divide by Zero Exception enable
+#define	FPCR_IOE		__BIT(8)	// Invalid Operation Exception enable
+#define	FPCR_ESUM		0x1F00
 
 AARCH64REG_READ_INLINE(fpsr)		// Floating Point Status Register
 AARCH64REG_WRITE_INLINE(fpsr)
 
-#define	FPSR_N32  __BIT(31) // AARCH32 Negative
-#define	FPSR_Z32  __BIT(30) // AARCH32 Zero
-#define	FPSR_C32  __BIT(29) // AARCH32 Carry
-#define	FPSR_V32  __BIT(28) // AARCH32 Overflow
-#define	FPSR_QC   __BIT(27) // SIMD Saturation
-#define	FPSR_IDC  __BIT(7) // Input Denormal Cumulative status
-#define	FPSR_IXC  __BIT(4) // IneXact Cumulative status
-#define	FPSR_UFC  __BIT(3) // UnderFlow Cumulative status
-#define	FPSR_OFC  __BIT(2) // OverFlow Cumulative status
-#define	FPSR_DZC  __BIT(1) // Divide by Zero Cumulative status
-#define	FPSR_IOC  __BIT(0) // Invalid Operation Cumulative status
-#define	FPSR_CSUM 0x1F
+#define	FPSR_N32		__BIT(31)	// AARCH32 Negative
+#define	FPSR_Z32		__BIT(30)	// AARCH32 Zero
+#define	FPSR_C32		__BIT(29)	// AARCH32 Carry
+#define	FPSR_V32		__BIT(28)	// AARCH32 Overflow
+#define	FPSR_QC			__BIT(27)	// SIMD Saturation
+#define	FPSR_IDC		__BIT(7)	// Input Denormal Cumulative status
+#define	FPSR_IXC		__BIT(4)	// IneXact Cumulative status
+#define	FPSR_UFC		__BIT(3)	// UnderFlow Cumulative status
+#define	FPSR_OFC		__BIT(2)	// OverFlow Cumulative status
+#define	FPSR_DZC		__BIT(1)	// Divide by Zero Cumulative status
+#define	FPSR_IOC		__BIT(0)	// Invalid Operation Cumulative status
+#define	FPSR_CSUM		0x1F
 
 AARCH64REG_READ_INLINE(nzcv)		// condition codes
 AARCH64REG_WRITE_INLINE(nzcv)
 
-#define	NZCV_N __BIT(31) // Negative
-#define	NZCV_Z __BIT(30) // Zero
-#define	NZCV_C __BIT(29) // Carry
-#define	NZCV_V __BIT(28) // Overflow
+#define	NZCV_N			__BIT(31)	// Negative
+#define	NZCV_Z			__BIT(30)	// Zero
+#define	NZCV_C			__BIT(29)	// Carry
+#define	NZCV_V			__BIT(28)	// Overflow
 
 AARCH64REG_READ_INLINE(tpidr_el0)	// Thread Pointer ID Register (RW)
 AARCH64REG_WRITE_INLINE(tpidr_el0)
@@ -146,68 +146,68 @@ AARCH64REG_READ_INLINE(aidr_el1)
 
 AARCH64REG_READ_INLINE2(cbar_el1, s3_1_c15_c3_0)	 // Cortex-A57
 
-#define	CBAR_PA	__BITS(47,18)
+#define	CBAR_PA			__BITS(47,18)
 
 AARCH64REG_READ_INLINE(ccsidr_el1)
 
-#define	CCSIDR_WT	 __BIT(31)	// Write-through supported
-#define	CCSIDR_WB	 __BIT(30)	// Write-back supported
-#define	CCSIDR_RA	 __BIT(29)	// Read-allocation supported
-#define	CCSIDR_WA	 __BIT(28)	// Write-allocation supported
-#define	CCSIDR_NUMSET __BITS(27,13)	// (Number of sets in cache) - 1
-#define	CCSIDR_ASSOC __BITS(12,3)	// (Associativity of cache) - 1
-#define	CCSIDR_LINESIZE __BITS(2,0)	// Number of bytes in cache line
+#define	CCSIDR_WT		__BIT(31)	// Write-through supported
+#define	CCSIDR_WB		__BIT(30)	// Write-back supported
+#define	CCSIDR_RA		__BIT(29)	// Read-allocation supported
+#define	CCSIDR_WA		__BIT(28)	// Write-allocation supported
+#define	CCSIDR_NUMSET		__BITS(27,13)	// (Number of sets in cache) - 1
+#define	CCSIDR_ASSOC		__BITS(12,3)	// (Associativity of cache) - 1
+#define	CCSIDR_LINESIZE 	__BITS(2,0)	// Number of bytes in cache line
 
 AARCH64REG_READ_INLINE(clidr_el1)
 
-#define	CLIDR_LOUU   __BITS(29,27)	// Level of Unification Uniprocessor
-#define	CLIDR_LOC    __BITS(26,24)	// Level of Coherency
-#define	CLIDR_LOUIS  __BITS(23,21)	// Level of Unification InnerShareable*/
-#define	CLIDR_CTYPE7 __BITS(20,18)	// Cache Type field for level7
-#define	CLIDR_CTYPE6 __BITS(17,15)	// Cache Type field for level6
-#define	CLIDR_CTYPE5 __BITS(14,12)	// Cache Type field for level5
-#define	CLIDR_CTYPE4 __BITS(11,9)	// Cache Type field for level4
-#define	CLIDR_CTYPE3 __BITS(8,6)		// Cache Type field for level3
-#define	CLIDR_CTYPE2 __BITS(5,3)		// Cache Type field for level2
-#define	CLIDR_CTYPE1 __BITS(2,0)		// Cache Type field for level1
-#define	 CLIDR_TYPE_NOCACHE	 0	// No cache
-#define	 CLIDR_TYPE_ICACHE	 1	// Instruction cache only
-#define	 CLIDR_TYPE_DCACHE	 2	// Data cache only
-#define	 CLIDR_TYPE_IDCACHE	 3	// Separate inst and data caches
-#define	 CLIDR_TYPE_UNIFIEDCACHE 4	// Unified cache
+#define	CLIDR_LOUU		__BITS(29,27)	// Level of Unification Uniprocessor
+#define	CLIDR_LOC		__BITS(26,24)	// Level of Coherency
+#define	CLIDR_LOUIS		__BITS(23,21)	// Level of Unification InnerShareable*/
+#define	CLIDR_CTYPE7		__BITS(20,18)	// Cache Type field for level7
+#define	CLIDR_CTYPE6		__BITS(17,15)	// Cache Type field for level6
+#define	CLIDR_CTYPE5		__BITS(14,12)	// Cache Type field for level5
+#define	CLIDR_CTYPE4		__BITS(11,9)	// Cache Type field for level4
+#define	CLIDR_CTYPE3		__BITS(8,6)	// Cache Type field for level3
+#define	CLIDR_CTYPE2		__BITS(5,3)	// Cache Type field for level2
+#define	CLIDR_CTYPE1		__BITS(2,0)	// Cache Type field for level1
+#define	 CLIDR_TYPE_NOCACHE	 0		//  No cache
+#define	 CLIDR_TYPE_ICACHE	 1		//  Instruction cache only
+#define	 CLIDR_TYPE_DCACHE	 2		//  Data cache only
+#define	 CLIDR_TYPE_IDCACHE	 3		//  Separate inst and data caches
+#define	 CLIDR_TYPE_UNIFIEDCACHE 4		//  Unified cache
 
 AARCH64REG_READ_INLINE(currentel)
 AARCH64REG_READ_INLINE(id_aa64afr0_el1)
 AARCH64REG_READ_INLINE(id_aa64afr1_el1)
 AARCH64REG_READ_INLINE(id_aa64dfr0_el1)
 
-#define	ID_AA64DFR0_EL1_CTX_CMPS __BITS(31,28)
-#define	ID_AA64DFR0_EL1_WRPS __BITS(20,23)
-#define	ID_AA64DFR0_EL1_BRPS __BITS(12,15)
-#define	ID_AA64DFR0_EL1_PMUVER __BITS(8,11)
-#define	 ID_AA64DFR0_EL1_PMUVER_NONE 0
+#define	ID_AA64DFR0_EL1_CTX_CMPS	__BITS(31,28)
+#define	ID_AA64DFR0_EL1_WRPS		__BITS(20,23)
+#define	ID_AA64DFR0_EL1_BRPS		__BITS(12,15)
+#define	ID_AA64DFR0_EL1_PMUVER		__BITS(8,11)
+#define	 ID_AA64DFR0_EL1_PMUVER_NONE	 0
 #define	 ID_AA64DFR0_EL1_PMUVER_V3	 1
-#define	 ID_AA64DFR0_EL1_PMUVER_NOV3 2
-#define	ID_AA64DFR0_EL1_TRACEVER __BITS(4,7)
-#define	 ID_AA64DFR0_EL1_TRACEVER_NONE 0
-#define	 ID_AA64DFR0_EL1_TRACEVER_IMPL 1
-#define	ID_AA64DFR0_EL1_DEBUGVER __BITS(0,3)
-#define	 ID_AA64DFR0_EL1_DEBUGVER_V8A 6
+#define	 ID_AA64DFR0_EL1_PMUVER_NOV3	 2
+#define	ID_AA64DFR0_EL1_TRACEVER	__BITS(4,7)
+#define	 ID_AA64DFR0_EL1_TRACEVER_NONE	 0
+#define	 ID_AA64DFR0_EL1_TRACEVER_IMPL	 1
+#define	ID_AA64DFR0_EL1_DEBUGVER	__BITS(0,3)
+#define	 ID_AA64DFR0_EL1_DEBUGVER_V8A	 6
 
 AARCH64REG_READ_INLINE(id_aa64dfr1_el1)
 
 AARCH64REG_READ_INLINE(id_aa64isar0_el1)
 
-#define	ID_AA64ISAR0_EL1_CRC32 __BITS(19,16)
-#define	 ID_AA64ISAR0_EL1_CRC32_NONE 0
-#define	 ID_AA64ISAR0_EL1_CRC32_CRC32X 1
-#define	ID_AA64ISAR0_EL1_SHA2 __BITS(15,12)
+#define	ID_AA64ISAR0_EL1_CRC32		__BITS(19,16)
+#define	 ID_AA64ISAR0_EL1_CRC32_NONE	 0
+#define	 ID_AA64ISAR0_EL1_CRC32_CRC32X	 1
+#define	ID_AA64ISAR0_EL1_SHA2		__BITS(15,12)
 #define	 ID_AA64ISAR0_EL1_SHA2_NONE	 0
 #define	 ID_AA64ISAR0_EL1_SHA2_SHA256HSU 1
-#define	ID_AA64ISAR0_EL1_SHA1 __BITS(11,8)
+#define	ID_AA64ISAR0_EL1_SHA1		__BITS(11,8)
 #define	 ID_AA64ISAR0_EL1_SHA1_NONE	 0
 #define	 ID_AA64ISAR0_EL1_SHA1_SHA1CPMHSU 1
-#define	ID_AA64ISAR0_EL1_AES __BITS(7,4)
+#define	ID_AA64ISAR0_EL1_AES		__BITS(7,4)
 #define	 ID_AA64ISAR0_EL1_AES_NONE	 0
 #define	 ID_AA64ISAR0_EL1_AES_AES	 1
 #define	 ID_AA64ISAR0_EL1_AES_PMUL	 2
@@ -215,34 +215,34 @@ AARCH64REG_READ_INLINE(id_aa64isar0_el1)
 AARCH64REG_READ_INLINE(id_aa64isar1_el1)
 AARCH64REG_READ_INLINE(id_aa64mmfr0_el1)
 
-#define	ID_AA64MMFR0_EL1_TGRAN4 __BITS(31,28)
-#define	 ID_AA64MMFR0_EL1_TGRAN4_4KB 0
-#define	 ID_AA64MMFR0_EL1_TGRAN4_NONE 15
-#define	ID_AA64MMFR0_EL1_TGRAN64 __BITS(24,27)
-#define	 ID_AA64MMFR0_EL1_TGRAN64_64KB 0
-#define	 ID_AA64MMFR0_EL1_TGRAN64_NONE 15
-#define	ID_AA64MMFR0_EL1_TGRAN16 __BITS(20,23)
-#define	 ID_AA64MMFR0_EL1_TGRAN16_NONE 0
-#define	 ID_AA64MMFR0_EL1_TGRAN16_16KB 1
-#define	ID_AA64MMFR0_EL1_BIGENDEL0 __BITS(16,19)
+#define	ID_AA64MMFR0_EL1_TGRAN4		__BITS(31,28)
+#define	 ID_AA64MMFR0_EL1_TGRAN4_4KB	 0
+#define	 ID_AA64MMFR0_EL1_TGRAN4_NONE	 15
+#define	ID_AA64MMFR0_EL1_TGRAN64	__BITS(24,27)
+#define	 ID_AA64MMFR0_EL1_TGRAN64_64KB	 0
+#define	 ID_AA64MMFR0_EL1_TGRAN64_NONE	 15
+#define	ID_AA64MMFR0_EL1_TGRAN16	__BITS(20,23)
+#define	 ID_AA64MMFR0_EL1_TGRAN16_NONE	 0
+#define	 ID_AA64MMFR0_EL1_TGRAN16_16KB	 1
+#define	ID_AA64MMFR0_EL1_BIGENDEL0	__BITS(16,19)
 #define	 ID_AA64MMFR0_EL1_BIGENDEL0_NONE 0
-#define	 ID_AA64MMFR0_EL1_BIGENDEL0_MIX 1
-#define	ID_AA64MMFR0_EL1_SNSMEM __BITS(12,15)
-#define	 ID_AA64MMFR0_EL1_SNSMEM_NONE 0
-#define	 ID_AA64MMFR0_EL1_SNSMEM_SNSMEM 1
-#define	ID_AA64MMFR0_EL1_BIGEND __BITS(8,11)
-#define	 ID_AA64MMFR0_EL1_BIGEND_NONE 0
-#define	 ID_AA64MMFR0_EL1_BIGEND_MIX 1
-#define	ID_AA64MMFR0_EL1_ASIDBITS __BITS(4,7)
-#define	 ID_AA64MMFR0_EL1_ASIDBITS_8BIT 0
+#define	 ID_AA64MMFR0_EL1_BIGENDEL0_MIX	 1
+#define	ID_AA64MMFR0_EL1_SNSMEM		__BITS(12,15)
+#define	 ID_AA64MMFR0_EL1_SNSMEM_NONE	 0
+#define	 ID_AA64MMFR0_EL1_SNSMEM_SNSMEM	 1
+#define	ID_AA64MMFR0_EL1_BIGEND		__BITS(8,11)
+#define	 ID_AA64MMFR0_EL1_BIGEND_NONE	 0
+#define	 ID_AA64MMFR0_EL1_BIGEND_MIX	 1
+#define	ID_AA64MMFR0_EL1_ASIDBITS	__BITS(4,7)
+#define	 ID_AA64MMFR0_EL1_ASIDBITS_8BIT	 0
 #define	 ID_AA64MMFR0_EL1_ASIDBITS_16BIT 2
-#define	ID_AA64MMFR0_EL1_PARANGE __BITS(0,3)
-#define	 ID_AA64MMFR0_EL1_PARANGE_4G 0
-#define	 ID_AA64MMFR0_EL1_PARANGE_64G 1
-#define	 ID_AA64MMFR0_EL1_PARANGE_1T 2
-#define	 ID_AA64MMFR0_EL1_PARANGE_4T 3
-#define	 ID_AA64MMFR0_EL1_PARANGE_16T 4
-#define	 ID_AA64MMFR0_EL1_PARANGE_256T 5
+#define	ID_AA64MMFR0_EL1_PARANGE	__BITS(0,3)
+#define	 ID_AA64MMFR0_EL1_PARANGE_4G	 0
+#define	 ID_AA64MMFR0_EL1_PARANGE_64G	 1
+#define	 ID_AA64MMFR0_EL1_PARANGE_1T	 2
+#define	 ID_AA64MMFR0_EL1_PARANGE_4T	 3
+#define	 ID_AA64MMFR0_EL1_PARANGE_16T	 4
+#define	 ID_AA64MMFR0_EL1_PARANGE_256T	 5
 
 AARCH64REG_READ_INLINE(id_aa64mmfr1_el1)
 AARCH64REG_READ_INLINE(id_aa64pfr0_el1)
@@ -252,12 +252,12 @@ AARCH64REG_READ_INLINE(isr_el1)
 AARCH64REG_READ_INLINE(midr_el1)
 AARCH64REG_READ_INLINE(mpidr_el1)
 
-#define	MPIDR_AFF3	__BITS(32,39)
-#define	MPIDR_U	 	__BIT(30)		// 1 = Uni-Processor System
-#define	MPIDR_MT	__BIT(24)		// 1 = SMT(AFF0 is logical)
-#define	MPIDR_AFF2	__BITS(16,23)
-#define	MPIDR_AFF1	__BITS(8,15)
-#define	MPIDR_AFF0	__BITS(0,7)
+#define	MPIDR_AFF3		__BITS(32,39)
+#define	MPIDR_U	 		__BIT(30)		// 1 = Uni-Processor System
+#define	MPIDR_MT		__BIT(24)		// 1 = SMT(AFF0 is logical)
+#define	MPIDR_AFF2		__BITS(16,23)
+#define	MPIDR_AFF1		__BITS(8,15)
+#define	MPIDR_AFF0		__BITS(0,7)
 
 AARCH64REG_READ_INLINE(mvfr0_el1)
 
