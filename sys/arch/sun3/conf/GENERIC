@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.178 2018/03/07 09:44:22 mrg Exp $
+# $NetBSD: GENERIC,v 1.179 2018/08/01 20:04:14 maxv Exp $
 #
 # GENERIC machine description file
 # 
@@ -25,7 +25,7 @@ include 	"arch/sun3/conf/std.sun3"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.178 $"
+#ident		"GENERIC-$Revision: 1.179 $"
 
 makeoptions	COPTS="-Os"		# bootloader has size limit (~2MB)
 
@@ -260,7 +260,7 @@ pseudo-device	ppp			# PPP
 #pseudo-device	tun			# network tunneling over tty
 #pseudo-device	tap			# virtual Ethernet
 #pseudo-device	gre			# generic L3 over IP tunnel
-#pseudo-device	ipfilter		# ip filter
+#pseudo-device	npf			# NPF packet filter
 #pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith			# IPv[46] tcp relay translation i/f
 #pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
@@ -287,8 +287,6 @@ pseudo-device	vnd			# paging to files
 #pseudo-device	fss			# file system snapshot device
 pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms
-#pseudo-device	pf			# PF packet filter
-#pseudo-device	pflog			# PF log if
 
 # Veriexec
 #

@@ -1,4 +1,4 @@
-# $NetBSD: RAMDISK,v 1.58 2017/09/14 07:58:43 mrg Exp $
+# $NetBSD: RAMDISK,v 1.59 2018/08/01 20:04:14 maxv Exp $
 
 # RAMDISK: Root/swap on ramdisk
 # This kernel is used to:
@@ -223,7 +223,7 @@ pseudo-device	sl			# CSLIP
 #pseudo-device	ppp			# PPP
 #pseudo-device	tun			# network tunneling over tty
 #pseudo-device	gre			# generic L3 over IP tunnel
-#pseudo-device	ipfilter		# ip filter
+#pseudo-device	npf			# NPF packet filter
 #pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith			# IPv[46] tcp relay translation i/f
 #pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
