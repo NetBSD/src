@@ -1,4 +1,4 @@
-/* $NetBSD: strlen.S,v 1.2 2017/08/22 06:45:07 ryo Exp $ */
+/* $NetBSD: strlen.S,v 1.3 2018/08/01 17:09:26 ryo Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: strlen.S,v 1.2 2017/08/22 06:45:07 ryo Exp $")
+RCSID("$NetBSD: strlen.S,v 1.3 2018/08/01 17:09:26 ryo Exp $")
 
 #ifdef STRNLEN
 #define FUNCNAME	strnlen
@@ -49,7 +49,10 @@ ENTRY(FUNCNAME)
 	add	x9, x0, #8		/* start + dword */
 	bic	x9, x9, #7		/* and aligned */
 #ifdef STRNLEN
-	add	x10, x0, x1		/* don't go past here */
+	adds	x10, x0, x1		/* x10 = s + maxlen */
+	b.cc	1f			/* if go past, */
+	mvn	x10, xzr		/* set limit 0xffffffffffffffff */
+1:
 #endif
 	mov	x11, #MASK8_0x01	/* test mask */
 
@@ -76,7 +79,7 @@ ENTRY(FUNCNAME)
 .Lstrlen_dword_loop:
 #ifdef STRNLEN
 	cmp	x4, x10
-	b.ge	.Lstrlen_done
+	b.hs	.Lstrlen_done
 #endif
 	ldr	x7, [x4], #8		/* load dword */
 .Lstrlen_dword_loop_noload:
@@ -103,7 +106,7 @@ ENTRY(FUNCNAME)
 	sub	x0, x0, x9		/* subtract start from the length */
 #ifdef STRNLEN
 	cmp	x0, x1			/* did we go too far? */
-	csel	x0, x0, x1, lt		/* yes, return max length */
+	csel	x0, x0, x1, lo		/* yes, return max length */
 #endif
 	ret
 #ifdef STRNLEN
