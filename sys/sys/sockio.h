@@ -1,4 +1,4 @@
-/*	$NetBSD: sockio.h,v 1.34 2018/07/31 16:44:30 khorben Exp $	*/
+/*	$NetBSD: sockio.h,v 1.35 2018/08/01 23:35:32 rjs Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993, 1994
@@ -44,6 +44,9 @@
 #define	SIOCATMARK	 _IOR('s',  7, int)		/* at oob mark? */
 #define	SIOCSPGRP	 _IOW('s',  8, int)		/* set process group */
 #define	SIOCGPGRP	 _IOR('s',  9, int)		/* get process group */
+#define SIOCPEELOFF	_IOWR('s', 10, int)
+/* ('s', 11, ...) is SIOCCONNECTX in sctp_uio.h */
+/* ('s', 12, ...) is SIOCCONNECTXDEL in sctp_uio.h */
 
 #define	SIOCADDRT	 _IOW('r', 10, struct ortentry)	/* add route */
 #define	SIOCDELRT	 _IOW('r', 11, struct ortentry)	/* delete route */
