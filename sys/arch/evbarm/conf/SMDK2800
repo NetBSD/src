@@ -1,4 +1,4 @@
-#	$NetBSD: SMDK2800,v 1.60 2017/09/14 07:58:40 mrg Exp $
+#	$NetBSD: SMDK2800,v 1.61 2018/08/01 20:04:11 maxv Exp $
 #
 #	SMDK2800 -- Samsung's S3C2800 evaluation board.
 #
@@ -205,7 +205,7 @@ ukphy*		at mii? phy ?			# generic unknown PHYs
 
 # network pseudo-devices
 pseudo-device	bpfilter		# Berkeley packet filter
-pseudo-device	ipfilter		# IP filter (firewall) and NAT
+pseudo-device	npf			# NPF packet filter
 pseudo-device	loop			# network loopback
 #pseudo-device	kttcp			# network loopback
 #pseudo-device	ppp			# Point-to-Point Protocol
@@ -222,8 +222,6 @@ pseudo-device	loop			# network loopback
 #pseudo-device	vlan			# IEEE 802.1q encapsulation
 #pseudo-device	bridge			# simple inter-network bridging
 #options	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
-#pseudo-device	pf			# PF packet filter
-#pseudo-device	pflog			# PF log if
 
 # miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals

@@ -1,4 +1,4 @@
-# $NetBSD: VR41XX,v 1.69 2017/09/14 07:58:41 mrg Exp $
+# $NetBSD: VR41XX,v 1.70 2018/08/01 20:04:11 maxv Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 include		"arch/hpcmips/conf/std.hpcmips"
 include		"arch/hpcmips/conf/std.hpcmips.vr41"
-#ident 		"GENERIC-$Revision: 1.69 $"
+#ident 		"GENERIC-$Revision: 1.70 $"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
@@ -99,10 +99,6 @@ options 	INET6		# IPV6
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# Multicast routing support
 #options 	PIM		# Protocol Independent Multicast
-options 	IPFILTER_LOG	# ipmon(8) log support
-options 	IPFILTER_LOOKUP	# ippool(8) support
-options 	IPFILTER_COMPAT # Compat for IP-Filter
-#options 	IPFILTER_DEFAULT_BLOCK	# block all packets by default
 
 # JIT compiler for bpfilter
 #options	SLJIT
@@ -516,7 +512,7 @@ pseudo-device	loop			# network loopback
 pseudo-device	ppp			# serial-line IP ports
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	bpfilter		# packet filter ports
-pseudo-device	ipfilter		# IP filter, NAT
+pseudo-device	npf			# NPF packet filter
 
 pseudo-device	vnd			# virtual disk ick
 #pseudo-device	ccd			# concatenated disks

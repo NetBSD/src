@@ -1,4 +1,4 @@
-#	$NetBSD: NETBOOKPRO,v 1.24 2018/06/07 13:36:29 thorpej Exp $
+#	$NetBSD: NETBOOKPRO,v 1.25 2018/08/01 20:04:11 maxv Exp $
 #
 #	NETBOOKPRO -- Psion Teklogix NETBOOK PRO
 #
@@ -8,7 +8,7 @@ include	"arch/hpcarm/conf/files.netbookpro"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.24 $"
+#ident 		"GENERIC-$Revision: 1.25 $"
 
 # estimated number of users
 maxusers	32
@@ -286,7 +286,7 @@ pseudo-device	bpfilter 		# packet filter
 pseudo-device	ppp			# PPP
 pseudo-device	tun			# network tunneling over tty
 #pseudo-device	gre			# generic L3 over IP tunnel
-#pseudo-device	ipfilter 		# ip filter
+#pseudo-device	npf			# NPF packet filter
 #pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith			# IPv[46] tcp relay translation i/f
 #pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation

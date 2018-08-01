@@ -1,4 +1,4 @@
-#	$NetBSD: SMDK2410,v 1.65 2017/09/14 07:58:40 mrg Exp $
+#	$NetBSD: SMDK2410,v 1.66 2018/08/01 20:04:11 maxv Exp $
 #
 #	SMDK2410 -- Samsung's S3C2410 evaluation board.
 #
@@ -325,7 +325,7 @@ ugen*	at uhub? port ?
 
 # network pseudo-devices
 #pseudo-device	bpfilter		# Berkeley packet filter
-pseudo-device	ipfilter		# IP filter (firewall) and NAT
+pseudo-device	npf			# NPF packet filter
 pseudo-device	loop			# network loopback
 #pseudo-device	ppp			# Point-to-Point Protocol
 #pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)

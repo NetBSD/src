@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC.in,v 1.115 2018/01/23 14:47:54 sevan Exp $
+#	$NetBSD: GENERIC.in,v 1.116 2018/08/01 20:04:10 maxv Exp $
 #
 # Generic atari
 #
@@ -83,11 +83,6 @@ options 	INET6		# IPV6
 options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 options 	PPP_DEFLATE	# Deflate compression support for PPP
 options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
-
-#options 	IPFILTER_LOG	# ipmon(8) log support
-#options 	IPFILTER_LOOKUP	# ippool(8) support
-#options 	IPFILTER_COMPAT # Compat for IP-Filter
-#options  	IPFILTER_DEFAULT_BLOCK	# block packages by default
 
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
@@ -283,11 +278,9 @@ pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
 # options 	RF_INCLUDE_PARITY_DECLUSTERING=1
 # options	RF_INCLUDE_PARITY_DECLUSTERING_DS=1
 #pseudo-device	fss			# file system snapshot device
-#pseudo-device	ipfilter		# IP filtering device
+#pseudo-device	npf			# NPF packet filter
 pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms
-#pseudo-device	pf			# PF packet filter
-#pseudo-device	pflog			# PF log if
 #endif /* !SMALL030_KERNEL */
 
 #if defined(HADES_KERNEL) || defined(MILAN_KERNEL)

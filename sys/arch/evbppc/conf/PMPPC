@@ -1,4 +1,4 @@
-#	$NetBSD: PMPPC,v 1.42 2017/09/14 07:58:40 mrg Exp $
+#	$NetBSD: PMPPC,v 1.43 2018/08/01 20:04:11 maxv Exp $
 #
 #	PMPPC
 #
@@ -88,10 +88,6 @@ options 	PIM		# Protocol Independent Multicast
 #options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 #options 	PPP_DEFLATE	# Deflate compression support for PPP
 #options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
-#options 	IPFILTER_LOG	# ipmon(8) log support
-#options 	IPFILTER_LOOKUP	# ippool(8) support
-#options 	IPFILTER_COMPAT # Compat for IP-Filter
-#options 	IPFILTER_DEFAULT_BLOCK	# block all packets by default
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
 # These options enable verbose messages for several subsystems.
@@ -425,7 +421,7 @@ pseudo-device	vnd			# disk-like interface to files
 #pseudo-device	md			# memory disk device
 pseudo-device	loop			# network loopback
 pseudo-device	bpfilter		# packet filter
-pseudo-device	ipfilter		# IP filter (firewall) and NAT
+pseudo-device	npf			# NPF packet filter
 pseudo-device	ppp			# Point-to-Point Protocol
 pseudo-device	sl			# Serial Line IP
 pseudo-device	tun			# network tunneling over tty

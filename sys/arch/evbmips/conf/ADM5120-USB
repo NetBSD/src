@@ -1,11 +1,11 @@
-#	$NetBSD: ADM5120-USB,v 1.24 2018/07/21 19:39:45 maya Exp $
+#	$NetBSD: ADM5120-USB,v 1.25 2018/08/01 20:04:11 maxv Exp $
 #
 # Kernel config for the Alchemy Semiconductor (AMD) PB1000, PB1500,
 # DBAu1000 and DBAu1500 evaluation boards.
 
 include 	"arch/evbmips/conf/std.adm5120"
 
-#ident 		"GENERIC-$Revision: 1.24 $"
+#ident 		"GENERIC-$Revision: 1.25 $"
 
 maxusers	32
 
@@ -79,7 +79,6 @@ options 	INET		# Internet protocols
 #options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 #options 	PPP_DEFLATE	# Deflate compression support for PPP
 #options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
-#options 	IPFILTER_LOG	# ipmon(8) log support
 
 # JIT compiler for bpfilter
 #options	SLJIT

@@ -1,4 +1,4 @@
-# $NetBSD: ENCPP1,v 1.20 2018/07/14 15:09:41 maxv Exp $
+# $NetBSD: ENCPP1,v 1.21 2018/08/01 20:04:13 maxv Exp $
 #
 # Ampro EnCorePP1 machine description file
 # 
@@ -23,7 +23,7 @@ options 	PIC_I8259
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ENCPP1-$Revision: 1.20 $"
+#ident 		"ENCPP1-$Revision: 1.21 $"
 
 maxusers	32
 
@@ -90,7 +90,7 @@ pseudo-device	vlan			# IEEE 802.1q encapsulation
 #pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
 #pseudo-device	bridge			# simple inter-network bridging
 #options	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
-#pseudo-device	ipfilter
+#pseudo-device	npf			# NPF packet filter
 pseudo-device	loop
 
 # mouse & keyboard multiplexor pseudo-devices
@@ -103,8 +103,6 @@ pseudo-device	loop
 pseudo-device	pty
 pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms
-#pseudo-device	pf			# PF packet filter
-#pseudo-device	pflog			# PF log if
 pseudo-device	fss			# file system snapshot device
 
 #

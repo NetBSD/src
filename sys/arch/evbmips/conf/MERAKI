@@ -1,10 +1,10 @@
-#	$NetBSD: MERAKI,v 1.30 2017/09/14 07:58:40 mrg Exp $
+#	$NetBSD: MERAKI,v 1.31 2018/08/01 20:04:11 maxv Exp $
 
 include 	"arch/evbmips/conf/std.meraki"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"MERAKI-$Revision: 1.30 $"
+#ident 		"MERAKI-$Revision: 1.31 $"
 
 maxusers	32
 
@@ -93,7 +93,6 @@ options 	INET		# Internet protocols
 #options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 #options 	PPP_DEFLATE	# Deflate compression support for PPP
 #options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
-#options 	IPFILTER_LOG	# ipmon(8) log support
 
 # JIT compiler for bpfilter
 #options	SLJIT
@@ -168,7 +167,7 @@ ukphy*		at mii? phy ?		# generic unknown PHYs
 
 # Network pseudo-devices
 pseudo-device	bpfilter			# Berkeley packet filter
-#pseudo-device	ipfilter			# IP filter (firewall) and NAT
+#pseudo-device	npf			# NPF packet filter
 pseudo-device	loop				# network loopback
 #pseudo-device	ppp				# Point-to-Point Protocol
 #pseudo-device	sl				# Serial Line IP

@@ -1,4 +1,4 @@
-# $NetBSD: KRUPS,v 1.76 2018/02/05 15:18:11 maxv Exp $
+# $NetBSD: KRUPS,v 1.77 2018/08/01 20:04:14 maxv Exp $
 # From: NetBSD: GENERIC,v 1.197 2006/12/04 23:43:35 elad Exp
 #
 # Krups (JavaStation-NC) machine description file
@@ -8,7 +8,7 @@ include 	"arch/sparc/conf/std.sparc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"KRUPS-$Revision: 1.76 $"
+#ident 		"KRUPS-$Revision: 1.77 $"
 
 maxusers	32
 
@@ -206,9 +206,6 @@ options 	INET6		# IPV6
 #options 	NETATALK	# AppleTalk (over Ethernet) protocol
 options 	NTP		# Network Time Protocol in-kernel support
 #options 	PPS_SYNC	# Add serial line synchronization for NTP
-options 	IPFILTER_LOG	# Add ipmon(8) logging for ipfilter device
-options 	IPFILTER_LOOKUP	# ippool(8) support
-#options 	IPFILTER_DEFAULT_BLOCK	# block all packets by default
 options 	PPP_BSDCOMP	# Add BSD compression to ppp device
 options 	PPP_DEFLATE	# Add deflate (libz) compression to ppp device
 options 	PPP_FILTER	# Add active filters for ppp (via bpf)
@@ -293,9 +290,7 @@ pseudo-device	bpfilter
 
 #pseudo-device	carp			# Common Address Redundancy Protocol
 
-## IP Filter, used in firewall and NAT applications.  See ipnat(8) for
-## one example of the use of the IP Filter.
-#pseudo-device	ipfilter
+#pseudo-device	npf			# NPF packet filter
 
 ## for IPv6
 #pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC1933)
@@ -344,8 +339,6 @@ pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms
 pseudo-device	putter			# for puffs and pud
 
-#pseudo-device	pf			# PF packet filter
-#pseudo-device	pflog			# PF log if
 #pseudo-device	fss			# file system snapshot device
 
 #options 	FILEASSOC		# fileassoc(9)

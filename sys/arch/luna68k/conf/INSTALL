@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.25 2018/01/23 14:47:55 sevan Exp $
+# $NetBSD: INSTALL,v 1.26 2018/08/01 20:04:12 maxv Exp $
 #
 # config for installation ramdisk kernel
 # 
@@ -88,9 +88,6 @@ options 	INET		# IP protocol stack support
 #options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 #options 	PPP_DEFLATE	# Deflate compression support for PPP
 #options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
-#options 	IPFILTER_LOG	# ipmon(8) log support
-#options 	IPFILTER_LOOKUP	# ippool(8) support
-#options 	IPFILTER_DEFAULT_BLOCK	# block all packets by default
 options 	NFS_BOOT_DHCP	# superset of BOOTP
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
@@ -160,7 +157,7 @@ pseudo-device	bpfilter		# Berkeley Packet Filter
 #pseudo-device	ccd			# concatenated and striped disks
 #pseudo-device	cgd			# cryptographic disks
 #pseudo-device	gre			# generic L3 over IP tunnel
-#pseudo-device	ipfilter		# ip filter
+#pseudo-device	npf			# NPF packet filter
 pseudo-device	loop			# loopback interface; required
 pseudo-device	md			# memory disk device
 #pseudo-device	ppp			# PPP interfaces
@@ -179,8 +176,6 @@ pseudo-device	pty			# pseudo-terminals
 #options 	VND_COMPRESSION		# compressed vnd(4)
 #pseudo-device	clockctl		# user control of clock subsystem
 #pseudo-device	ksyms			# /dev/ksyms
-#pseudo-device	pf			# PF packet filter
-#pseudo-device	pflog			# PF log if
 
 # Veriexec
 #

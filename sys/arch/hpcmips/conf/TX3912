@@ -1,7 +1,7 @@
 #
 # Distribution kernel (TOSHIBA TX3912 based model) kernel config file
 #
-#	$NetBSD: TX3912,v 1.88 2017/09/14 07:58:41 mrg Exp $
+#	$NetBSD: TX3912,v 1.89 2018/08/01 20:04:11 maxv Exp $
 #
 include 	"arch/hpcmips/conf/std.hpcmips"
 
@@ -267,7 +267,7 @@ pseudo-device	vnd			# disk-like interface to files
 
 # network pseudo-devices
 pseudo-device	bpfilter		# Berkeley packet filter
-pseudo-device	ipfilter		# IP filter (firewall) and NAT
+pseudo-device	npf			# NPF packet filter
 pseudo-device	loop			# network loopback
 pseudo-device	ppp			# Point-to-Point Protocol
 

@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.99 2018/02/05 15:18:11 maxv Exp $
+#	$NetBSD: INSTALL,v 1.100 2018/08/01 20:04:14 maxv Exp $
 #
 # from: NetBSD: GENERIC,v 1.84 1999/06/06 13:00:03 mrg Exp
 #
@@ -174,8 +174,6 @@ options 	INET		# IP (Internet Protocol) v4
 #options 	NETATALK	# AppleTalk (over Ethernet) protocol
 #options 	NTP		# Network Time Protocol in-kernel support
 #options 	PPS_SYNC	# Add serial line synchronization for NTP
-#options 	IPFILTER_LOG	# Add ipmon(8) logging for ipfilter device
-#options 	IPFILTER_LOOKUP	# ippool(8) support
 #options 	PPP_BSDCOMP	# Add BSD compression to ppp device
 #options 	PPP_DEFLATE	# Add deflate (libz) compression to ppp device
 #options 	PPP_FILTER	# Add active filters for ppp (via bpf)
@@ -479,10 +477,7 @@ pseudo-device	loop
 ## interface that allows selective examining of incoming packets.
 #pseudo-device	bpfilter
 
-## IP Filter, used in firewall and NAT applications.  See ipnat(8) for
-## one example of the use of the IP Filter.
-#pseudo-device	ipfilter
-
+#pseudo-device	npf			# NPF packet filter
 
 #### Audio and video devices
 

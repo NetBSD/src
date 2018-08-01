@@ -1,8 +1,8 @@
-#	$NetBSD: NONPLUS64,v 1.54 2018/02/05 15:18:11 maxv Exp $
+#	$NetBSD: NONPLUS64,v 1.55 2018/08/01 20:04:14 maxv Exp $
 
 include 	"arch/sparc64/conf/std.sparc64"
 
-#ident		"NONPLUS64-$Revision: 1.54 $"
+#ident		"NONPLUS64-$Revision: 1.55 $"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
@@ -148,8 +148,6 @@ options 	GATEWAY		# packet forwarding ("router switch")
 options 	NETATALK	# AppleTalk (over Ethernet) protocol
 options 	NTP		# Network Time Protocol in-kernel support
 #options 	PPS_SYNC	# Add serial line synchronization for NTP
-#options 	IPFILTER_LOG	# Add ipmon(8) logging for ipfilter device
-#options 	IPFILTER_LOOKUP	# ippool(8) support
 options 	PPP_BSDCOMP	# Add BSD compression to ppp device
 options 	PPP_DEFLATE	# Add deflate (libz) compression to ppp device
 options 	PPP_FILTER	# Add active filters for ppp (via bpf)
@@ -338,9 +336,7 @@ pseudo-device	tun
 ## interface that allows selective examining of incoming packets.
 pseudo-device	bpfilter
 
-## IP Filter, used in firewall and NAT applications.  See ipnat(8) for
-## one example of the use of the IP Filter.
-pseudo-device	ipfilter
+pseudo-device	npf			# NPF packet filter
 
 
 #### Audio and video devices

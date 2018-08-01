@@ -1,11 +1,11 @@
-# $NetBSD: GENERIC,v 1.27 2017/02/19 07:47:01 rin Exp $
+# $NetBSD: GENERIC,v 1.28 2018/08/01 20:04:12 maxv Exp $
 #
 
 include 	"arch/mvmeppc/conf/std.mvmeppc"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident		"GENERIC-$Revision: 1.27 $"
+ident		"GENERIC-$Revision: 1.28 $"
 
 maxusers	8
 
@@ -80,8 +80,6 @@ options 	INET		# IP + ICMP + TCP + UDP
 #options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 #options 	PPP_DEFLATE	# Deflate compression support for PPP
 #options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
-#options 	IPFILTER_LOG	# ipmon(8) log support
-#options 	IPFILTER_LOOKUP	# ippool(8) support
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
 # These options enable verbose messages for several subsystems.
@@ -225,7 +223,7 @@ ukphy*	at mii? phy ?			# generic unknown PHYs
 # network pseudo-devices
 pseudo-device	loop			# network loopback
 #pseudo-device	bpfilter		# Berkeley packet filter
-#pseudo-device	ipfilter		# IP filter (firewall) and NAT
+#pseudo-device	npf			# NPF packet filter
 #pseudo-device	ppp			# Point-to-Point Protocol
 #pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
 #pseudo-device	sl			# Serial Line IP

@@ -1,7 +1,7 @@
 #
 # deafult config file.
 #
-# 	$NetBSD: config.playstation2,v 1.25 2014/03/31 11:43:53 martin Exp $
+# 	$NetBSD: config.playstation2,v 1.26 2018/08/01 20:04:13 maxv Exp $
 #
 
 maxusers	16
@@ -76,7 +76,7 @@ pseudo-device	loop		1	# network loopback
 pseudo-device	pty			# pseudo-terminals
 
 pseudo-device	bpfilter		# packet filter ports
-pseudo-device	ipfilter		# IP filter, NAT
+pseudo-device	npf			# NPF packet filter
 
 pseudo-device	vnd			# virtual disk ick
 pseudo-device	clockctl		# user control of clock subsystem

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.98 2018/01/23 14:47:55 sevan Exp $
+# $NetBSD: GENERIC,v 1.99 2018/08/01 20:04:12 maxv Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/mvme68k/conf/std.mvme68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.98 $"
+#ident 		"GENERIC-$Revision: 1.99 $"
 
 makeoptions	COPTS="-O2 -fno-reorder-blocks"	# see share/mk/sys.mk
 
@@ -137,8 +137,7 @@ pseudo-device	vnd
 pseudo-device	fss			# file system snapshot device
 pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms
-#pseudo-device	pf			# PF packet filter
-#pseudo-device	pflog			# PF log if
+#pseudo-device	npf			# NPF packet filter
 
 # random number generator pseudo-device
 #options 	RND_COM			# use "com" randomness as well (BROKEN)

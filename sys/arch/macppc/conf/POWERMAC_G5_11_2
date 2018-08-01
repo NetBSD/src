@@ -181,8 +181,7 @@ pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms
 pseudo-device	nsmb			# SMB requester
 pseudo-device   bpfilter        8       # Berkeley packet filter
-#pseudo-device	pf			# PF packet filter
-#pseudo-device	pflog			# PF log if
+#pseudo-device	npf			# NPF packet filter
 
 options		OFWOEA_WSCONS_NO_ROM_FONT
 options		EXSTORAGE_MAX=24

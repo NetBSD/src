@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.69 2018/01/23 14:47:54 sevan Exp $
+# $NetBSD: GENERIC,v 1.70 2018/08/01 20:04:10 maxv Exp $
 #
 # GENERIC machine description file
 # 
@@ -133,11 +133,9 @@ pseudo-device	pty			# pseudo ptys
 #pseudo-device	ccd			# concatenated disk devices
 #pseudo-device	cgd			# cryptographic disk devices
 pseudo-device	loop			# loopback network interface
-#pseudo-device	ipfilter 		# IP Filter package
+#pseudo-device	npf			# NPF packet filter
 pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms
-#pseudo-device	pf			# PF packet filter
-#pseudo-device	pflog			# PF log if
 
 # Veriexec
 #

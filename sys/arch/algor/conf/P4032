@@ -1,4 +1,4 @@
-#	$NetBSD: P4032,v 1.74 2017/09/14 07:58:38 mrg Exp $
+#	$NetBSD: P4032,v 1.75 2018/08/01 20:04:09 maxv Exp $
 #
 # Algorithmics P-4032 kernel.
 #
@@ -7,7 +7,7 @@ include	"arch/algor/conf/std.algor"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"P4032-$Revision: 1.74 $"
+#ident 		"P4032-$Revision: 1.75 $"
 
 maxusers 32
 
@@ -307,7 +307,7 @@ pseudo-device	ccd
 #pseudo-device	raid			# RAIDframe disk driver
 #options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 #pseudo-device	fss			# file system snapshot device
-pseudo-device	ipfilter	
+pseudo-device	npf			# NPF packet filter
 pseudo-device	loop		
 pseudo-device	md		
 pseudo-device	ppp		

@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.60 2017/09/14 07:58:43 mrg Exp $
+# $NetBSD: INSTALL,v 1.61 2018/08/01 20:04:14 maxv Exp $
 #
 # INSTALL - Installation kernel for the Sun3
 #
@@ -176,7 +176,7 @@ pseudo-device	sl			# CSLIP
 pseudo-device	ppp			# PPP
 pseudo-device	tun			# network tunneling over tty
 #pseudo-device	gre			# generic L3 over IP tunnel
-#pseudo-device	ipfilter		# ip filter
+#pseudo-device	npf			# NPF packet filter
 
 pseudo-device	pty			# pseudo-terminals
 #pseudo-device	vnd			# paging to files

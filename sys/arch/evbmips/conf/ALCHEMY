@@ -1,11 +1,11 @@
-#	$NetBSD: ALCHEMY,v 1.63 2017/09/14 07:58:40 mrg Exp $
+#	$NetBSD: ALCHEMY,v 1.64 2018/08/01 20:04:11 maxv Exp $
 #
 # Kernel config for the Alchemy Semiconductor (AMD) PB1000, PB1500,
 # DBAu1000 and DBAu1500 evaluation boards.
 
 include 	"arch/evbmips/conf/std.alchemy"
 
-#ident 		"ALCHEMY-$Revision: 1.63 $"
+#ident 		"ALCHEMY-$Revision: 1.64 $"
 
 maxusers	32
 
@@ -92,10 +92,6 @@ options 	INET		# Internet protocols
 #options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 #options 	PPP_DEFLATE	# Deflate compression support for PPP
 #options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
-options 	IPFILTER_LOG	# ipmon(8) log support
-options 	IPFILTER_LOOKUP	# ippool(8) support
-options 	IPFILTER_COMPAT # Compat for IP-Filter
-#options 	IPFILTER_DEFAULT_BLOCK	# block all packets by default
 
 # JIT compiler for bpfilter
 #options	SLJIT
@@ -231,7 +227,7 @@ pseudo-device	vnd				# disk-like interface to files
 
 # Network pseudo-devices
 pseudo-device	bpfilter			# Berkeley packet filter
-pseudo-device	ipfilter			# IP filter (firewall) and NAT
+pseudo-device	npf			# NPF packet filter
 pseudo-device	loop				# network loopback
 #pseudo-device	ppp				# Point-to-Point Protocol
 #pseudo-device	sl				# Serial Line IP
