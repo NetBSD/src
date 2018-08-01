@@ -1,5 +1,5 @@
 /* Interprocedural semantic function equality pass
-   Copyright (C) 2014-2015 Free Software Foundation, Inc.
+   Copyright (C) 2014-2016 Free Software Foundation, Inc.
 
    Contributed by Jan Hubicka <hubicka@ucw.cz> and Martin Liska <mliska@suse.cz>
 
@@ -87,10 +87,10 @@ public:
 
 /* Hash traits for symbol_compare_collection map.  */
 
-struct symbol_compare_hashmap_traits: default_hashmap_traits
+struct symbol_compare_hash : nofree_ptr_hash <symbol_compare_collection>
 {
   static hashval_t
-  hash (const symbol_compare_collection *v)
+  hash (value_type v)
   {
     inchash::hash hstate;
     hstate.add_int (v->m_references.length ());
@@ -107,8 +107,7 @@ struct symbol_compare_hashmap_traits: default_hashmap_traits
   }
 
   static bool
-  equal_keys (const symbol_compare_collection *a,
-	      const symbol_compare_collection *b)
+  equal (value_type a, value_type b)
   {
     if (a->m_references.length () != b->m_references.length ()
 	|| a->m_interposables.length () != b->m_interposables.length ())
@@ -246,16 +245,32 @@ protected:
   /* Accumulate to HSTATE a hash of type T.  */
   static void add_type (const_tree t, inchash::hash &hstate);
 
+  /* Compare properties of symbol that does not affect semantics of symbol
+     itself but affects semantics of its references.
+     If ADDRESS is true, do extra checking needed for IPA_REF_ADDR.  */
+  static bool compare_referenced_symbol_properties (symtab_node *used_by,
+						    symtab_node *n1,
+					            symtab_node *n2,
+					            bool address);
+
+  /* Compare two attribute lists.  */
+  static bool compare_attributes (const_tree list1, const_tree list2);
+
+  /* Hash properties compared by compare_referenced_symbol_properties.  */
+  void hash_referenced_symbol_properties (symtab_node *ref,
+					  inchash::hash &hstate,
+					  bool address);
+
   /* For a given symbol table nodes N1 and N2, we check that FUNCTION_DECLs
      point to a same function. Comparison can be skipped if IGNORED_NODES
      contains these nodes.  ADDRESS indicate if address is taken.  */
-  bool compare_cgraph_references (hash_map <symtab_node *, sem_item *>
+  bool compare_symbol_references (hash_map <symtab_node *, sem_item *>
 				  &ignored_nodes,
 				  symtab_node *n1, symtab_node *n2,
 				  bool address);
-
+protected:
   /* Hash of item.  */
-  hashval_t hash;
+  hashval_t m_hash;
 
   /* Indicated whether a hash value has been set or not.  */
   bool m_hash_set;
@@ -304,7 +319,7 @@ public:
   }
 
   /* Improve accumulated hash for HSTATE based on a gimple statement STMT.  */
-  void hash_stmt (gimple stmt, inchash::hash &inchash);
+  void hash_stmt (gimple *stmt, inchash::hash &inchash);
 
   /* Return true if polymorphic comparison must be processed.  */
   bool compare_polymorphic_p (void);
@@ -362,8 +377,7 @@ private:
   bool compare_edge_flags (cgraph_edge *e1, cgraph_edge *e2);
 
   /* Processes function equality comparison.  */
-  bool equals_private (sem_item *item,
-		       hash_map <symtab_node *, sem_item *> &ignored_nodes);
+  bool equals_private (sem_item *item);
 
   /* Returns true if tree T can be compared as a handled component.  */
   static bool icf_handled_component_p (tree t);
@@ -428,17 +442,15 @@ struct congruence_class_group
 };
 
 /* Congruence class set structure.  */
-struct congruence_class_group_hash: typed_noop_remove <congruence_class_group>
+struct congruence_class_group_hash : nofree_ptr_hash <congruence_class_group>
 {
-  typedef congruence_class_group value_type;
-  typedef congruence_class_group compare_type;
-
-  static inline hashval_t hash (const value_type *item)
+  static inline hashval_t hash (const congruence_class_group *item)
   {
     return item->hash;
   }
 
-  static inline int equal (const value_type *item1, const compare_type *item2)
+  static inline int equal (const congruence_class_group *item1,
+			   const congruence_class_group *item2)
   {
     return item1->hash == item2->hash && item1->type == item2->type;
   }
@@ -471,12 +483,15 @@ public:
   void dump (void);
 
   /* Verify congruence classes if checking is enabled.  */
+  void checking_verify_classes (void);
+
+  /* Verify congruence classes.  */
   void verify_classes (void);
 
   /* Write IPA ICF summary for symbols.  */
   void write_summary (void);
 
-  /* Read IPA IPA ICF summary for symbols.  */
+  /* Read IPA ICF summary for symbols.  */
   void read_summary (void);
 
   /* Callgraph removal hook called for a NODE with a custom DATA.  */

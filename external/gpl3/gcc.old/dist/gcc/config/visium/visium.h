@@ -1,5 +1,5 @@
 /* Definitions of target machine for Visium.
-   Copyright (C) 2002-2015 Free Software Foundation, Inc.
+   Copyright (C) 2002-2016 Free Software Foundation, Inc.
    Contributed by C.Nettleton, J.P.Parkes and P.Garbett.
 
    This file is part of GCC.
@@ -1075,14 +1075,6 @@ struct visium_args
    If not defined, this defaults to the value 1. */
 #define DEFAULT_PCC_STRUCT_RETURN 0
 
-/* `STRUCT_VALUE'
-
-   If the structure value address is not passed in a register, define
-   `STRUCT_VALUE' as an expression returning an RTX for the place
-   where the address is passed.  If it returns 0, the address is
-   passed as an "invisible" first argument. */
-#define STRUCT_VALUE 0
-
 /* Caller-Saves Register Allocation
 
    If you enable it, GNU CC can save registers around function calls.
@@ -1485,49 +1477,6 @@ do									\
 #define ADDITIONAL_REGISTER_NAMES \
   {{"r22", HARD_FRAME_POINTER_REGNUM}, {"r23", STACK_POINTER_REGNUM}}
 
-/* `PRINT_OPERAND (STREAM, X, CODE)'
-
-   A C compound statement to output to stdio stream STREAM the
-   assembler syntax for an instruction operand X.  X is an RTL
-   expression.
-
-   CODE is a value that can be used to specify one of several ways of
-   printing the operand.  It is used when identical operands must be
-   printed differently depending on the context.  CODE comes from the
-   `%' specification that was used to request printing of the operand.
-   If the specification was just `%DIGIT' then CODE is 0; if the
-   specification was `%LTR DIGIT' then CODE is the ASCII code for LTR.
-
-   If X is a register, this macro should print the register's name.
-   The names can be found in an array `reg_names' whose type is `char
-   *[]'.  `reg_names' is initialized from `REGISTER_NAMES'.
-
-   When the machine description has a specification `%PUNCT' (a `%'
-   followed by a punctuation character), this macro is called with a
-   null pointer for X and the punctuation character for CODE. */
-#define PRINT_OPERAND(STREAM, X, CODE) print_operand (STREAM, X, CODE)
-
-/* `PRINT_OPERAND_PUNCT_VALID_P (CODE)'
-
-   A C expression which evaluates to true if CODE is a valid
-   punctuation character for use in the `PRINT_OPERAND' macro.  If
-   `PRINT_OPERAND_PUNCT_VALID_P' is not defined, it means that no
-   punctuation characters (except for the standard one, `%') are used */
-#define PRINT_OPERAND_PUNCT_VALID_P(CODE) ((CODE) == '#')
-
-/* `PRINT_OPERAND_ADDRESS (STREAM, X)'
-
-   A C compound statement to output to stdio stream STREAM the
-   assembler syntax for an instruction operand that is a memory
-   reference whose address is X.  X is an RTL expression.
-
-   On some machines, the syntax for a symbolic address depends on the
-   section that the address refers to.  On these machines, define the
-   macro `ENCODE_SECTION_INFO' to store the information into the
-   `symbol_ref', and then check for it here. */
-#define PRINT_OPERAND_ADDRESS(STREAM, ADDR) \
-  print_operand_address (STREAM, ADDR)
-
 /* `REGISTER_PREFIX'
    `LOCAL_LABEL_PREFIX'
    `USER_LABEL_PREFIX'
@@ -1715,14 +1664,14 @@ do									\
 #define ASM_OUTPUT_COMMON(STREAM, NAME, SIZE, ROUNDED)      \
 ( fputs ("\n\t.comm  ", (STREAM)),                        \
   assemble_name ((STREAM), (NAME)),                         \
-  fprintf ((STREAM), ","HOST_WIDE_INT_PRINT_UNSIGNED"\n", ROUNDED))
+  fprintf ((STREAM), "," HOST_WIDE_INT_PRINT_UNSIGNED"\n", ROUNDED))
 
 /* This says how to output assembler code to declare an
    unitialised internal linkage data object. */
 #define ASM_OUTPUT_LOCAL(STREAM, NAME, SIZE, ROUNDED)     \
 ( fputs ("\n\t.lcomm ", (STREAM)),                      \
   assemble_name ((STREAM), (NAME)),                     \
-  fprintf ((STREAM), ","HOST_WIDE_INT_PRINT_UNSIGNED"\n", ROUNDED))
+  fprintf ((STREAM), "," HOST_WIDE_INT_PRINT_UNSIGNED"\n", ROUNDED))
 
 /* Prettify the assembly.  */
 extern int visium_indent_opcode;
@@ -1735,3 +1684,19 @@ extern int visium_indent_opcode;
 	visium_indent_opcode = 0;	\
       }					\
   } while (0)
+
+/* Configure-time default values for common options.  */
+#define OPTION_DEFAULT_SPECS { "cpu", "%{!mcpu=*:-mcpu=%(VALUE)}" }
+
+/* Values of TARGET_CPU_DEFAULT specified via --with-cpu.  */
+#define TARGET_CPU_gr5	0
+#define TARGET_CPU_gr6	1
+
+/* Default -mcpu multilib for above values.  */
+#if TARGET_CPU_DEFAULT == TARGET_CPU_gr5
+#define MULTILIB_DEFAULTS { "mcpu=gr5" }
+#elif TARGET_CPU_DEFAULT == TARGET_CPU_gr6
+#define MULTILIB_DEFAULTS { "mcpu=gr6" }
+#else
+#error Unrecognized value in TARGET_CPU_DEFAULT
+#endif
