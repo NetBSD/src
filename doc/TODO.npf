@@ -55,3 +55,6 @@ Another TODO list is available here:
    But it's not a big problem - perhaps we don't care at all.
 
 -- add command line variables.  See -D option in pf.
+
+-- improve mss clamping, as explained here:
+       http://mail-index.netbsd.org/tech-net/2017/01/15/msg006224.html
