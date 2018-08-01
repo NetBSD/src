@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.160 2018/07/26 09:29:08 maxv Exp $	*/
+/*	$NetBSD: locore.S,v 1.161 2018/08/01 13:35:01 maxv Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -128,7 +128,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.160 2018/07/26 09:29:08 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.161 2018/08/01 13:35:01 maxv Exp $");
 
 #include "opt_copy_symtab.h"
 #include "opt_ddb.h"
@@ -253,9 +253,7 @@ __KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.160 2018/07/26 09:29:08 maxv Exp $");
 	.ascii	",VIRT_ENTRY=0xc0100000" /* KERNTEXTOFF */
 	.ascii	",HYPERCALL_PAGE=0x00000101"
 		/* (???+HYPERCALL_PAGE_OFFSET)/PAGE_SIZE) */
-#ifdef PAE
 	.ascii	",PAE=yes[extended-cr3]"
-#endif
 	.ascii	",LOADER=generic"
 #if (NKSYMS || defined(DDB) || defined(MODULAR)) && !defined(makeoptions_COPY_SYMTAB)
 	.ascii	",BSD_SYMTAB=yes"
@@ -906,9 +904,7 @@ begin:
 	addl	$(USPACE+PAGE_SIZE),%esi
 	subl	$KERNBASE,%esi		/* init386 wants a physical address */
 
-#ifdef PAE
 	pushl	$0	/* init386() expects a 64 bits paddr_t with PAE */
-#endif
 	pushl	%esi
 	call	_C_LABEL(init_bootspace)
 	call	_C_LABEL(init386)
