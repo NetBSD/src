@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.h,v 1.5 2011/08/24 19:59:26 reinoud Exp $ */
+/* $NetBSD: pmap.h,v 1.6 2018/08/01 09:50:57 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,5 +30,8 @@
 #define _ARCH_USERMODE_INCLUDE_PMAP_H
 
 #define	PMAP_GROWKERNEL		1
+#define VTOPHYS_FAILED ((paddr_t)-1L)  /* POOL_PADDR_INVALID */
+
+paddr_t vtophys(vaddr_t);
 
 #endif /* !_ARCH_USERMODE_INCLUDE_PMAP_H */
