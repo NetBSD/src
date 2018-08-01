@@ -1,4 +1,4 @@
-/*	$NetBSD: power.h,v 1.20 2015/01/06 15:39:54 bouyer Exp $	*/
+/*	$NetBSD: power.h,v 1.21 2018/08/01 20:09:34 kre Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -282,6 +282,13 @@ struct power_type {
 	char	power_type[32];
 };
 #define	POWER_IOC_GET_TYPE	_IOR('P', 0, struct power_type)
+
+#ifdef _KERNEL
+/*
+ * so the kernel can provide binary compat for applications
+ * built when POWER_IOC_GET_TYPE was incorrectly defined as:
+ */
 #define	POWER_IOC_GET_TYPE_WITH_LOSSAGE _IOR('P', 0, sizeof(struct power_type))
+#endif
 
 #endif /* _SYS_POWER_H_ */
