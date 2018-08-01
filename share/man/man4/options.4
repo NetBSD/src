@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.490 2018/07/13 09:37:32 maxv Exp $
+.\"	$NetBSD: options.4,v 1.491 2018/08/01 16:50:24 sevan Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -30,7 +30,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd July 13, 2018
+.Dd August 1, 2018
 .Dt OPTIONS 4
 .Os
 .Sh NAME
@@ -1660,10 +1660,8 @@ Default is 4.
 .It Cd options GATEWAY
 Enables
 .Em IPFORWARDING
-(which see)
 and (on most ports) increases the size of
-.Em NMBCLUSTERS
-(which see).
+.Em NMBCLUSTERS .
 In general,
 .Em GATEWAY
 is used to indicate that a system should act as a router, and
@@ -1671,7 +1669,7 @@ is used to indicate that a system should act as a router, and
 is not invoked directly.
 (Note that
 .Em GATEWAY
-has no impact on protocols other than IP, such as CLNP).
+has no impact on protocols other than IP).
 .Em GATEWAY
 option also compiles IPv4 and IPv6 fast forwarding code into the kernel.
 .It Cd options IPFORWARDING=value
