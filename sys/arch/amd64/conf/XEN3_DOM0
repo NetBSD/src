@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOM0,v 1.153 2018/06/23 14:14:42 jakllsch Exp $
+# $NetBSD: XEN3_DOM0,v 1.154 2018/08/01 16:59:09 maxv Exp $
 
 include 	"arch/amd64/conf/std.xen"
 
@@ -10,7 +10,7 @@ options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 #options 	UVMHIST_PRINT
 #options 	SYSCALL_DEBUG
 
-#ident		"XEN3_DOM0-$Revision: 1.153 $"
+#ident		"XEN3_DOM0-$Revision: 1.154 $"
 
 maxusers	32		# estimated number of users
 
@@ -131,9 +131,6 @@ options 	NETATALK	# AppleTalk networking protocols
 options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 options 	PPP_DEFLATE	# Deflate compression support for PPP
 options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
-options 	IPFILTER_LOG	# ipmon(8) log support
-options 	IPFILTER_LOOKUP	# ippool(8) support
-#options 	IPFILTER_DEFAULT_BLOCK	# block all packets by default
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
 #options 	ALTQ		# Manipulate network interfaces' output queues
@@ -861,7 +858,6 @@ pseudo-device	dm			# device-mapper driver for LVM
 
 # network pseudo-devices
 pseudo-device	bpfilter		# Berkeley packet filter
-pseudo-device	ipfilter		# IP filter (firewall) and NAT
 pseudo-device	loop			# network loopback
 pseudo-device	ppp			# Point-to-Point Protocol
 pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
@@ -875,10 +871,7 @@ pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
 pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	bridge			# simple inter-network bridging
 #options 	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
-#pseudo-device	pf			# PF packet filter
-#pseudo-device	pflog			# PF log if
-#pseudo-device	pfsync			# PF sync if
-#pseudo-device	npf			# NPF packet filter
+pseudo-device	npf			# NPF packet filter
 
 # miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals
