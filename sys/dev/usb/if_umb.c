@@ -1,4 +1,4 @@
-/*	$NetBSD: if_umb.c,v 1.3 2018/08/01 12:36:56 khorben Exp $ */
+/*	$NetBSD: if_umb.c,v 1.4 2018/08/01 18:27:58 khorben Exp $ */
 /*	$OpenBSD: if_umb.c,v 1.18 2018/02/19 08:59:52 mpi Exp $ */
 
 /*
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_umb.c,v 1.3 2018/08/01 12:36:56 khorben Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_umb.c,v 1.4 2018/08/01 18:27:58 khorben Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -923,7 +923,7 @@ umb_start(struct ifnet *ifp)
 	}
 	IFQ_DEQUEUE(&ifp->if_snd, m_head);
 
-	bpf_mtap(ifp, m_head);
+	bpf_mtap(ifp, m_head, BPF_D_OUT);
 
 	ifp->if_flags |= IFF_OACTIVE;
 	ifp->if_timer = (2 * umb_xfer_tout) / 1000;
