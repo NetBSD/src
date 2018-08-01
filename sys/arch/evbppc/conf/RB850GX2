@@ -1,4 +1,4 @@
-#	$NetBSD: RB850GX2,v 1.4 2017/09/14 07:58:40 mrg Exp $
+#	$NetBSD: RB850GX2,v 1.5 2018/08/01 20:04:11 maxv Exp $
 #
 #	RouterBOARD RB850Gx2
 #
@@ -7,7 +7,7 @@ include 	"arch/evbppc/conf/std.mpc85xx"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident 		"RB850GX2-$Revision: 1.4 $"
+ident 		"RB850GX2-$Revision: 1.5 $"
 
 maxusers	32
 
@@ -100,8 +100,6 @@ options 	INET6		# IPV6
 #options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 #options 	PPP_DEFLATE	# Deflate compression support for PPP
 #options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
-#options 	IPFILTER_LOG	# ipmon(8) log support
-#options 	IPFILTER_LOOKUP	# ippool(8) support
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
 # These options enable verbose messages for several subsystems.

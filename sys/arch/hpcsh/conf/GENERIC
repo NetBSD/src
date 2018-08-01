@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.110 2018/01/23 15:08:11 sevan Exp $
+# $NetBSD: GENERIC,v 1.111 2018/08/01 20:04:11 maxv Exp $
 #
 # GENERIC machine description file
 #
@@ -138,10 +138,6 @@ options 	INET6		# IPV6
 options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 options 	PPP_DEFLATE	# Deflate compression support for PPP
 options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
-
-#options 	IPFILTER_LOG	# ipmon(8) log support
-#options 	IPFILTER_LOOKUP	# ippool(8) support
-#options 	IPFILTER_DEFAULT_BLOCK	# block all packets by default
 
 #options 	ALTQ		# Manipulate network interfaces' output queues
 #options 	ALTQ_BLUE	# Stochastic Fair Blue
@@ -346,9 +342,7 @@ pseudo-device	loop			# network loopback
 pseudo-device	ppp			# serial-line IP ports
 pseudo-device	bpfilter		# Berkeley packet filter
 #pseudo-device	carp			# Common Address Redundancy Protocol
-#pseudo-device	ipfilter		# IP filter, NAT
-#pseudo-device	pf			# PF packet filter
-#pseudo-device	pflog			# PF log if
+#pseudo-device	npf			# NPF packet filter
 
 #
 # accept filters
