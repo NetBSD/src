@@ -1,4 +1,4 @@
-# $NetBSD: files.usermode,v 1.17 2018/06/05 20:02:42 reinoud Exp $
+# $NetBSD: files.usermode,v 1.18 2018/08/01 09:50:57 reinoud Exp $
 
 maxpartitions 8
 maxusers 8 16 64
@@ -62,6 +62,9 @@ file	arch/usermode/usermode/sys_machdep.c
 file	arch/usermode/usermode/syscall.c
 file	arch/usermode/usermode/trap.c
 file	arch/usermode/usermode/vm_machdep.c
+file	arch/usermode/usermode/db_memrw.c	ddb | kgdb
+file	arch/usermode/usermode/kgdb_machdep.c	ddb | kgdb
+file	arch/usermode/usermode/cpufunc.S	ddb | kgdb
 file	dev/cons.c
 file	dev/md_root.c				memory_disk_hooks
 file	kern/subr_disk_mbr.c			disk
