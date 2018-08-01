@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.109 2018/08/01 09:44:31 reinoud Exp $ */
+/* $NetBSD: pmap.c,v 1.110 2018/08/01 12:09:01 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@NetBSD.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.109 2018/08/01 09:44:31 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.110 2018/08/01 12:09:01 reinoud Exp $");
 
 #include "opt_memsize.h"
 #include "opt_kmempages.h"
@@ -285,7 +285,7 @@ pmap_bootstrap(void)
 		(uint64_t) pv_table_size/1024, (uintptr_t) phys_npages);
 
 	/* calculate number of pmap entries needed for a complete map */
-	pm_nentries = (kmem_k_end - VM_MIN_ADDRESS) / PAGE_SIZE;
+	pm_nentries = (kmem_k_start - VM_MIN_ADDRESS) / PAGE_SIZE;
 	pm_entries_size = round_page(pm_nentries * sizeof(struct pv_entry *));
 	thunk_printf_debug("tlb va->pa lookup table is %"PRIu64" KB for "
 		"%d logical pages\n", pm_entries_size/1024, pm_nentries);
@@ -660,7 +660,8 @@ pmap_fault(pmap_t pmap, vaddr_t va, vm_prot_t *atype)
 
 	/* not known! then it must be UVM's work */
 	if (pv == NULL) {
-		thunk_printf_debug("%s: no mapping yet\n", __func__);
+		//thunk_printf("%s: no mapping yet for %p\n",
+		//	__func__, (void *) va);
 		*atype = VM_PROT_READ;		/* assume it was a read */
 		return false;
 	}
@@ -1090,7 +1091,7 @@ pmap_extract(pmap_t pmap, vaddr_t va, paddr_t *ppa)
 	thunk_printf_debug("pmap_extract: extracting va %p\n", (void *) va);
 #ifdef DIAGNOSTIC
 	if ((va < VM_MIN_ADDRESS) || (va > VM_MAX_KERNEL_ADDRESS)) {
-		thunk_printf_debug("pmap_extract: invalid va issued\n");
+		thunk_printf_debug("pmap_extract: invalid va isued\n");
 		thunk_printf("%p not in [%p, %p]\n", (void *) va,
 		    (void *) VM_MIN_ADDRESS, (void *) VM_MAX_KERNEL_ADDRESS);
 		return false;
