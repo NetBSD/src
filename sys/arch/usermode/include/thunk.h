@@ -1,4 +1,4 @@
-/* $NetBSD: thunk.h,v 1.65 2018/06/04 19:53:01 reinoud Exp $ */
+/* $NetBSD: thunk.h,v 1.66 2018/08/01 09:46:46 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -126,6 +126,11 @@ int	thunk_fsync(int);
 int	thunk_mkstemp(char *);
 int	thunk_unlink(const char *);
 pid_t	thunk_getpid(void);
+
+int	thunk_gdb_open(void);
+int	thunk_gdb_accept(int sockfd);
+int	thunk_kgdb_getc(int fd, char *ch);
+int	thunk_kgdb_putc(int fd, char ch);
 
 int	thunk_sigaction(int, const struct sigaction *, struct sigaction *);
 int	thunk_sigaltstack(const stack_t *, stack_t *);
