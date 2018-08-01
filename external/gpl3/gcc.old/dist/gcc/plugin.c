@@ -1,5 +1,5 @@
 /* Support for GCC plugin mechanism.
-   Copyright (C) 2009-2015 Free Software Foundation, Inc.
+   Copyright (C) 2009-2016 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -23,24 +23,12 @@ along with GCC; see the file COPYING3.  If not see
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
-#include "hash-table.h"
-#include "diagnostic-core.h"
-#include "hash-set.h"
-#include "machmode.h"
-#include "vec.h"
-#include "double-int.h"
-#include "input.h"
-#include "alias.h"
-#include "symtab.h"
 #include "options.h"
-#include "flags.h"
-#include "wide-int.h"
-#include "inchash.h"
-#include "tree.h"
 #include "tree-pass.h"
+#include "diagnostic-core.h"
+#include "flags.h"
 #include "intl.h"
 #include "plugin.h"
-#include "ggc.h"
 
 #ifdef ENABLE_PLUGIN
 #include "plugin-version.h"
@@ -64,18 +52,16 @@ const char **plugin_event_name = plugin_event_name_init;
 
 /* Event hashtable helpers.  */
 
-struct event_hasher : typed_noop_remove <const char *>
+struct event_hasher : nofree_ptr_hash <const char *>
 {
-  typedef const char *value_type;
-  typedef const char *compare_type;
-  static inline hashval_t hash (const value_type *);
-  static inline bool equal (const value_type *, const compare_type *);
+  static inline hashval_t hash (const char **);
+  static inline bool equal (const char **, const char **);
 };
 
 /* Helper function for the event hash table that hashes the entry V.  */
 
 inline hashval_t
-event_hasher::hash (const value_type *v)
+event_hasher::hash (const char **v)
 {
   return htab_hash_string (*v);
 }
@@ -84,7 +70,7 @@ event_hasher::hash (const value_type *v)
    existing entry (S1) with the given string (S2).  */
 
 inline bool
-event_hasher::equal (const value_type *s1, const compare_type *s2)
+event_hasher::equal (const char **s1, const char **s2)
 {
   return !strcmp (*s1, *s2);
 }
@@ -127,6 +113,16 @@ static const char *str_plugin_init_func_name = "plugin_init";
    distributed under a GPL-compatible license.  */
 static const char *str_license = "plugin_is_GPL_compatible";
 #endif
+
+/* Helper function for hashing the base_name of the plugin_name_args
+   structure to be inserted into the hash table.  */
+
+static hashval_t
+htab_hash_plugin (const PTR p)
+{
+  const struct plugin_name_args *plugin = (const struct plugin_name_args *) p;
+  return htab_hash_string (plugin->base_name);
+ }
 
 /* Helper function for the hash table that compares the base_name of the
    existing entry (S1) with the given string (S2).  */
@@ -197,10 +193,11 @@ add_new_plugin (const char* plugin_name)
   /* If this is the first -fplugin= option we encounter, create
      'plugin_name_args_tab' hash table.  */
   if (!plugin_name_args_tab)
-    plugin_name_args_tab = htab_create (10, htab_hash_string, htab_str_eq,
+    plugin_name_args_tab = htab_create (10, htab_hash_plugin, htab_str_eq,
                                         NULL);
 
-  slot = htab_find_slot (plugin_name_args_tab, base_name, INSERT);
+  slot = htab_find_slot_with_hash (plugin_name_args_tab, base_name,
+				   htab_hash_string (base_name), INSERT);
 
   /* If the same plugin (name) has been specified earlier, either emit an
      error or a warning message depending on if they have identical full
@@ -287,7 +284,8 @@ parse_plugin_arg_opt (const char *arg)
   /* Check if the named plugin has already been specified earlier in the
      command-line.  */
   if (plugin_name_args_tab
-      && ((slot = htab_find_slot (plugin_name_args_tab, name, NO_INSERT))
+      && ((slot = htab_find_slot_with_hash (plugin_name_args_tab, name,
+					    htab_hash_string (name), NO_INSERT))
           != NULL))
     {
       struct plugin_name_args *plugin = (struct plugin_name_args *) *slot;
@@ -343,7 +341,8 @@ parse_plugin_arg_opt (const char *arg)
 static void
 register_plugin_info (const char* name, struct plugin_info *info)
 {
-  void **slot = htab_find_slot (plugin_name_args_tab, name, NO_INSERT);
+  void **slot = htab_find_slot_with_hash (plugin_name_args_tab, name,
+					  htab_hash_string (name), NO_INSERT);
   struct plugin_name_args *plugin = (struct plugin_name_args *) *slot;
   plugin->version = info->version;
   plugin->help = info->help;
@@ -441,6 +440,8 @@ register_callback (const char *plugin_name,
 	    return;
 	  }
       /* Fall through.  */
+      case PLUGIN_START_PARSE_FUNCTION:
+      case PLUGIN_FINISH_PARSE_FUNCTION:
       case PLUGIN_FINISH_TYPE:
       case PLUGIN_FINISH_DECL:
       case PLUGIN_START_UNIT:
@@ -519,6 +520,8 @@ invoke_plugin_callbacks_full (int event, void *gcc_data)
 	gcc_assert (event >= PLUGIN_EVENT_FIRST_DYNAMIC);
 	gcc_assert (event < event_last);
       /* Fall through.  */
+      case PLUGIN_START_PARSE_FUNCTION:
+      case PLUGIN_FINISH_PARSE_FUNCTION:
       case PLUGIN_FINISH_TYPE:
       case PLUGIN_FINISH_DECL:
       case PLUGIN_START_UNIT:
@@ -637,7 +640,8 @@ init_one_plugin (void **slot, void * ARG_UNUSED (info))
   bool ok = try_init_one_plugin (plugin);
   if (!ok)
     {
-      htab_remove_elt (plugin_name_args_tab, plugin->base_name);
+      htab_remove_elt_with_hash (plugin_name_args_tab, plugin->base_name,
+				 htab_hash_string (plugin->base_name));
       XDELETE (plugin);
     }
   return 1;

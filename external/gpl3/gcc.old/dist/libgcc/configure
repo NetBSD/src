@@ -566,6 +566,7 @@ sfp_machine_header
 set_use_emutls
 set_have_cc_tls
 vis_hide
+real_host_noncanonical
 accel_dir_suffix
 force_explicit_eh_registry
 fixed_point
@@ -669,7 +670,6 @@ enable_maintainer_mode
 with_build_libsubdir
 enable_decimal_float
 with_system_libunwind
-enable_sjlj_exceptions
 enable_explicit_exception_frame_registration
 with_glibc_version
 enable_tls
@@ -1307,8 +1307,6 @@ Optional Features:
 			enable decimal float extension to C.  Selecting 'bid'
 			or 'dpd' choses which decimal floating point format
 			to use
-  --enable-sjlj-exceptions
-                          force use of builtin_setjmp for exceptions
   --enable-explicit-exception-frame-registration
                           register exception tables explicitly at module
                           start, for use e.g. for compatibility with
@@ -4438,7 +4436,7 @@ else
 
   case $host in
     powerpc*-*-linux* | i?86*-*-linux* | x86_64*-*-linux* | s390*-*-linux* | \
-    i?86*-*-gnu* | \
+    i?86*-*-elfiamcu | i?86*-*-gnu* | \
     i?86*-*-mingw* | x86_64*-*-mingw* | \
     i?86*-*-cygwin* | x86_64*-*-cygwin*)
       enable_decimal_float=yes
@@ -4538,80 +4536,43 @@ $as_echo "#define HAVE_GETIPINFO 1" >>confdefs.h
   fi
 
 
-# The sjlj test is almost duplicated here and in libgo/configure.ac (for C),
-# libstdc++-v3/acinclude.m4 and libjava/configure.ac (for C++), and
-# libobjc/configure.ac (for Objective-C).
-# FIXME: This should be centralized in config/sjlj.m4.
-# Check whether --enable-sjlj-exceptions was given.
-if test "${enable_sjlj_exceptions+set}" = set; then :
-  enableval=$enable_sjlj_exceptions; case "$enableval" in
-   yes|no|auto) ;;
-   *) as_fn_error "unknown argument to --enable-sjlj-exceptions" "$LINENO" 5 ;;
-   esac
-else
-  enable_sjlj_exceptions=auto
-fi
-
-
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether to use setjmp/longjmp exceptions" >&5
-$as_echo_n "checking whether to use setjmp/longjmp exceptions... " >&6; }
-if test "${libgcc_cv_lib_sjlj_exceptions+set}" = set; then :
+# Check if the compiler is configured for setjmp/longjmp exceptions.
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the compiler is configured for setjmp/longjmp exceptions" >&5
+$as_echo_n "checking whether the compiler is configured for setjmp/longjmp exceptions... " >&6; }
+if test "${ac_cv_sjlj_exceptions+set}" = set; then :
   $as_echo_n "(cached) " >&6
 else
   cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
-
-void bar ();
-void clean (int *);
-void foo ()
+#ifdef __USING_SJLJ_EXCEPTIONS__
+          this will fail
+          #endif
+int
+main ()
 {
-  int i __attribute__ ((cleanup (clean)));
-  bar();
+int i;
+  ;
+  return 0;
 }
-
 _ACEOF
-CFLAGS_hold=$CFLAGS
-CFLAGS="--save-temps -fexceptions"
-libgcc_cv_lib_sjlj_exceptions=unknown
-if ac_fn_c_try_compile; then :
-  if grep _Unwind_SjLj_Resume conftest.s >/dev/null 2>&1; then
-    libgcc_cv_lib_sjlj_exceptions=yes
-  elif grep _Unwind_Resume conftest.s >/dev/null 2>&1; then
-    libgcc_cv_lib_sjlj_exceptions=no
-  fi
+if ac_fn_c_try_compile "$LINENO"; then :
+  ac_cv_sjlj_exceptions=no
+else
+  ac_cv_sjlj_exceptions=yes
 fi
-CFLAGS=$CFLAGS_hold
-rm -f conftest*
-
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
 fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $libgcc_cv_lib_sjlj_exceptions" >&5
-$as_echo "$libgcc_cv_lib_sjlj_exceptions" >&6; }
-
-if test "$enable_sjlj_exceptions" = "auto"; then
-  enable_sjlj_exceptions=$libgcc_cv_lib_sjlj_exceptions
-fi
-
-case $enable_sjlj_exceptions in
-yes)
-
-$as_echo "#define LIBGCC_SJLJ_EXCEPTIONS 1" >>confdefs.h
-
-  ;;
-no)
-  ;;
-*)
-  as_fn_error "unable to detect exception model" "$LINENO" 5
-  ;;
-esac
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_sjlj_exceptions" >&5
+$as_echo "$ac_cv_sjlj_exceptions" >&6; }
 
 # Check whether --enable-explicit-exception-frame-registration was given.
 if test "${enable_explicit_exception_frame_registration+set}" = set; then :
   enableval=$enable_explicit_exception_frame_registration;
 force_explicit_eh_registry=
 if test "$enable_explicit_exception_frame_registration" = yes; then
-  if test "$enable_sjlj_exceptions" = yes; then
-    as_fn_error "Can't enable both of --enable-sjlj-exceptions
-                  and --enable-explicit-exception-frame-registration" "$LINENO" 5
+  if test $ac_cv_sjlj_exceptions = yes; then
+    as_fn_error "Can't --enable-explicit-exception-frame-registration
+                  with setjmp/longjmp exceptions" "$LINENO" 5
   fi
   force_explicit_eh_registry=-DUSE_EH_FRAME_REGISTRY_ALWAYS
 fi
@@ -4805,24 +4766,80 @@ esac
 ;;
 esac
 
+case ${host} in
+# At present, we cannot turn -mfloat128 on via #pragma GCC target,
+# so just check if we have VSX (ISA 2.06) support to build the
+# software libraries, and whether the assembler can handle xsaddqp
+# for hardware support.
+powerpc*-*-linux*)
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for PowerPC ISA 2.06 to build __float128 libraries" >&5
+$as_echo_n "checking for PowerPC ISA 2.06 to build __float128 libraries... " >&6; }
+if test "${libgcc_cv_powerpc_float128+set}" = set; then :
+  $as_echo_n "(cached) " >&6
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#pragma GCC target ("vsx")
+     vector double dadd (vector double a, vector double b) { return a + b; }
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  libgcc_cv_powerpc_float128=yes
+else
+  libgcc_cv_powerpc_float128=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $libgcc_cv_powerpc_float128" >&5
+$as_echo "$libgcc_cv_powerpc_float128" >&6; }
+
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for PowerPC ISA 3.0 to build hardware __float128 libraries" >&5
+$as_echo_n "checking for PowerPC ISA 3.0 to build hardware __float128 libraries... " >&6; }
+if test "${libgcc_cv_powerpc_float128_hw+set}" = set; then :
+  $as_echo_n "(cached) " >&6
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#pragma GCC target ("vsx,power9-vector")
+     #include <sys/auxv.h>
+     #ifndef AT_PLATFORM
+     #error "AT_PLATFORM is not defined"
+     #endif
+     vector unsigned char (vector unsigned char a, vector unsigned char b)
+     {
+       vector unsigned char ret;
+       __asm__ ("xsaddqp %0,%1,%2" : "=v" (ret) : "v" (a), "v" (b));
+       return ret;
+     }
+     void *add_resolver (void) { return (void *) add; }
+     __float128 add_ifunc (__float128, __float128)
+	__attribute__ ((__ifunc__ ("add_resolver")));
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  libgcc_cv_powerpc_float128_hw=yes
+else
+  libgcc_cv_powerpc_float128_hw=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $libgcc_cv_powerpc_float128_hw" >&5
+$as_echo "$libgcc_cv_powerpc_float128_hw" >&6; }
+esac
+
 # Collect host-machine-specific information.
 . ${srcdir}/config.host
 
 # Used for constructing correct paths for offload compilers.
 accel_dir_suffix=
+real_host_noncanonical=${host_noncanonical}
 if test x"$enable_as_accelerator_for" != x; then
   accel_dir_suffix=/accel/${target_noncanonical}
-  case "${target_noncanonical}" in
-    *-intelmicemul-*)
-      # In this case we expect offload compiler to be built as native, so we
-      # need to change install directory for driver to be able to find libgcc.
-      host_noncanonical=${enable_as_accelerator_for} ;;
-  esac
+  real_host_noncanonical=${enable_as_accelerator_for}
 fi
 
 
+
 if test x"$enable_offload_targets" != x; then
-  extra_parts="${extra_parts} crtoffloadbegin.o crtoffloadend.o"
+  extra_parts="${extra_parts} crtoffloadbegin.o crtoffloadend.o crtoffloadtable.o"
 fi
 
 # Check if Solaris/x86 linker supports ZERO terminator unwind entries.

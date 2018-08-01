@@ -1,5 +1,5 @@
 /* Top level of GCC compilers (cc1, cc1plus, etc.)
-   Copyright (C) 1987-2015 Free Software Foundation, Inc.
+   Copyright (C) 1987-2016 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -25,114 +25,66 @@ along with GCC; see the file COPYING3.  If not see
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
-#include "tm.h"
-#include "line-map.h"
-#include "input.h"
-#include "hash-set.h"
-#include "machmode.h"
-#include "vec.h"
-#include "double-int.h"
-#include "alias.h"
-#include "symtab.h"
-#include "wide-int.h"
-#include "inchash.h"
+#include "backend.h"
+#include "target.h"
+#include "rtl.h"
 #include "tree.h"
-#include "fold-const.h"
+#include "gimple.h"
+#include "alloc-pool.h"
+#include "timevar.h"
+#include "tm_p.h"
+#include "optabs-libfuncs.h"
+#include "insn-config.h"
+#include "ira.h"
+#include "recog.h"
+#include "cgraph.h"
+#include "coverage.h"
+#include "diagnostic.h"
 #include "varasm.h"
 #include "tree-inline.h"
 #include "realmpfr.h"	/* For GMP/MPFR/MPC versions, in print_version.  */
 #include "version.h"
-#include "rtl.h"
-#include "tm_p.h"
 #include "flags.h"
 #include "insn-attr.h"
-#include "insn-config.h"
-#include "insn-flags.h"
-#include "hard-reg-set.h"
-#include "recog.h"
 #include "output.h"
-#include "except.h"
-#include "function.h"
 #include "toplev.h"
-#include "hashtab.h"
-#include "statistics.h"
-#include "real.h"
-#include "fixed-value.h"
-#include "expmed.h"
-#include "dojump.h"
-#include "explow.h"
-#include "calls.h"
-#include "emit-rtl.h"
-#include "stmt.h"
 #include "expr.h"
 #include "intl.h"
-#include "regs.h"
-#include "timevar.h"
-#include "diagnostic.h"
 #include "tree-diagnostic.h"
-#include "tree-pretty-print.h"
 #include "params.h"
 #include "reload.h"
-#include "ira.h"
 #include "lra.h"
 #include "dwarf2asm.h"
 #include "debug.h"
-#include "target.h"
 #include "common/common-target.h"
 #include "langhooks.h"
 #include "cfgloop.h" /* for init_set_costs */
 #include "hosthooks.h"
-#include "predict.h"
-#include "basic-block.h"
-#include "hash-map.h"
-#include "is-a.h"
-#include "plugin-api.h"
-#include "ipa-ref.h"
-#include "cgraph.h"
 #include "opts.h"
 #include "opts-diagnostic.h"
-#include "coverage.h"
-#include "value-prof.h"
-#include "alloc-pool.h"
 #include "asan.h"
 #include "tsan.h"
-#include "tree-ssa-alias.h"
-#include "internal-fn.h"
-#include "gimple-expr.h"
-#include "gimple.h"
 #include "plugin.h"
 #include "context.h"
 #include "pass_manager.h"
 #include "auto-profile.h"
 #include "dwarf2out.h"
-#include "bitmap.h"
 #include "ipa-reference.h"
 #include "symbol-summary.h"
 #include "ipa-prop.h"
 #include "gcse.h"
-#include "insn-codes.h"
-#include "optabs.h"
 #include "tree-chkp.h"
 #include "omp-low.h"
+#include "hsa.h"
 
 #if defined(DBX_DEBUGGING_INFO) || defined(XCOFF_DEBUGGING_INFO)
 #include "dbxout.h"
 #endif
 
-#ifdef SDB_DEBUGGING_INFO
 #include "sdbout.h"
-#endif
 
 #ifdef XCOFF_DEBUGGING_INFO
-#include "xcoffout.h"		/* Needed for external data
-				   declarations for e.g. AIX 4.x.  */
-#endif
-
-#ifndef HAVE_epilogue
-#define HAVE_epilogue 0
-#endif
-#ifndef HAVE_prologue
-#define HAVE_prologue 0
+#include "xcoffout.h"		/* Needed for external data declarations. */
 #endif
 
 static void general_init (const char *, bool);
@@ -498,86 +450,6 @@ wrapup_global_declarations (tree *vec, int len)
   return output_something;
 }
 
-/* A subroutine of check_global_declarations.  Issue appropriate warnings
-   for the global declaration DECL.  */
-
-void
-check_global_declaration_1 (tree decl)
-{
-  /* Warn about any function declared static but not defined.  We don't
-     warn about variables, because many programs have static variables
-     that exist only to get some text into the object file.  */
-  if (TREE_CODE (decl) == FUNCTION_DECL
-      && DECL_INITIAL (decl) == 0
-      && DECL_EXTERNAL (decl)
-      && ! DECL_ARTIFICIAL (decl)
-      && ! TREE_NO_WARNING (decl)
-      && ! TREE_PUBLIC (decl)
-      && (warn_unused_function
-	  || TREE_SYMBOL_REFERENCED (DECL_ASSEMBLER_NAME (decl))))
-    {
-      if (TREE_SYMBOL_REFERENCED (DECL_ASSEMBLER_NAME (decl)))
-	pedwarn (input_location, 0, "%q+F used but never defined", decl);
-      else
-	warning (OPT_Wunused_function, "%q+F declared %<static%> but never defined", decl);
-      /* This symbol is effectively an "extern" declaration now.  */
-      TREE_PUBLIC (decl) = 1;
-    }
-
-  /* Warn about static fns or vars defined but not used.  */
-  if (((warn_unused_function && TREE_CODE (decl) == FUNCTION_DECL)
-       /* We don't warn about "static const" variables because the
-	  "rcs_id" idiom uses that construction.  */
-       || (warn_unused_variable
-	   && TREE_CODE (decl) == VAR_DECL && ! TREE_READONLY (decl)))
-      && ! DECL_IN_SYSTEM_HEADER (decl)
-      && ! TREE_USED (decl)
-      /* The TREE_USED bit for file-scope decls is kept in the identifier,
-	 to handle multiple external decls in different scopes.  */
-      && ! (DECL_NAME (decl) && TREE_USED (DECL_NAME (decl)))
-      && ! DECL_EXTERNAL (decl)
-      && ! TREE_PUBLIC (decl)
-      /* A volatile variable might be used in some non-obvious way.  */
-      && ! TREE_THIS_VOLATILE (decl)
-      /* Global register variables must be declared to reserve them.  */
-      && ! (TREE_CODE (decl) == VAR_DECL && DECL_REGISTER (decl))
-      /* Otherwise, ask the language.  */
-      && lang_hooks.decls.warn_unused_global (decl))
-    warning ((TREE_CODE (decl) == FUNCTION_DECL)
-	     ? OPT_Wunused_function
-             : OPT_Wunused_variable,
-	     "%q+D defined but not used", decl);
-}
-
-/* Issue appropriate warnings for the global declarations in V (of
-   which there are LEN).  */
-
-void
-check_global_declarations (tree *v, int len)
-{
-  int i;
-
-  for (i = 0; i < len; i++)
-    check_global_declaration_1 (v[i]);
-}
-
-/* Emit debugging information for all global declarations in VEC.  */
-
-void
-emit_debug_global_declarations (tree *vec, int len)
-{
-  int i;
-
-  /* Avoid confusing the debug information machinery when there are errors.  */
-  if (seen_error ())
-    return;
-
-  timevar_push (TV_SYMOUT);
-  for (i = 0; i < len; i++)
-    debug_hooks->global_decl (vec[i]);
-  timevar_pop (TV_SYMOUT);
-}
-
 /* Compile an entire translation unit.  Write a file of assembly
    output and various debugging dumps.  */
 
@@ -587,12 +459,14 @@ compile_file (void)
   timevar_start (TV_PHASE_PARSING);
   timevar_push (TV_PARSE_GLOBAL);
 
-  /* Call the parser, which parses the entire file (calling
-     rest_of_compilation for each function).  */
+  /* Parse entire file and generate initial debug information.  */
   lang_hooks.parse_file ();
 
   timevar_pop (TV_PARSE_GLOBAL);
   timevar_stop (TV_PHASE_PARSING);
+
+  if (flag_dump_locations)
+    dump_location_info (stderr);
 
   /* Compilation is now finished except for writing
      what's left of the symbol table output.  */
@@ -607,8 +481,20 @@ compile_file (void)
 
   ggc_protect_identifiers = false;
 
-  /* This must also call finalize_compilation_unit.  */
-  lang_hooks.decls.final_write_globals ();
+  /* Run the actual compilation process.  */
+  if (!in_lto_p)
+    {
+      timevar_start (TV_PHASE_OPT_GEN);
+      symtab->finalize_compilation_unit ();
+      timevar_stop (TV_PHASE_OPT_GEN);
+    }
+
+  /* Perform any post compilation-proper parser cleanups and
+     processing.  This is currently only needed for the C++ parser,
+     which can be hopefully cleaned up so this hook is no longer
+     necessary.  */
+  if (lang_hooks.decls.post_compilation_parsing_cleanups)
+    lang_hooks.decls.post_compilation_parsing_cleanups ();
 
   if (seen_error ())
     return;
@@ -630,6 +516,8 @@ compile_file (void)
 	chkp_finish_file ();
 
       omp_finish_file ();
+
+      hsa_output_brig ();
 
       output_shared_constant_pool ();
       output_object_blocks ();
@@ -753,7 +641,7 @@ print_version (FILE *file, const char *indent, bool show_global_state)
 #endif
     ;
   static const char fmt2[] =
-    N_("GMP version %s, MPFR version %s, MPC version %s\n");
+    N_("GMP version %s, MPFR version %s, MPC version %s, isl version %s\n");
   static const char fmt3[] =
     N_("%s%swarning: %s header version %s differs from library version %s.\n");
   static const char fmt4[] =
@@ -787,7 +675,15 @@ print_version (FILE *file, const char *indent, bool show_global_state)
 #endif
   fprintf (file,
 	   file == stderr ? _(fmt2) : fmt2,
-	   GCC_GMP_STRINGIFY_VERSION, MPFR_VERSION_STRING, MPC_VERSION_STRING);
+	   GCC_GMP_STRINGIFY_VERSION, MPFR_VERSION_STRING, MPC_VERSION_STRING,
+#ifndef HAVE_isl
+	   "none"
+#elif HAVE_ISL_OPTIONS_SET_SCHEDULE_SERIALIZE_SCCS
+	   "0.15"
+#else
+	   "0.14 or 0.13"
+#endif
+	   );
   if (strcmp (GCC_GMP_STRINGIFY_VERSION, gmp_version))
     fprintf (file,
 	     file == stderr ? _(fmt3) : fmt3,
@@ -1017,7 +913,9 @@ init_asm_output (const char *name)
 						   NULL);
 	    }
 	  else
-	    inform (input_location, "-frecord-gcc-switches is not supported by the current target");
+	    inform (UNKNOWN_LOCATION,
+		    "-frecord-gcc-switches is not supported by "
+		    "the current target");
 	}
 
       if (flag_verbose_asm)
@@ -1120,7 +1018,7 @@ output_stack_usage (void)
 	}
 
       fprintf (stack_usage_file,
-	       "%s:%d:%d:%s\t"HOST_WIDE_INT_PRINT_DEC"\t%s\n",
+	       "%s:%d:%d:%s\t" HOST_WIDE_INT_PRINT_DEC"\t%s\n",
 	       lbasename (loc.file),
 	       loc.line,
 	       loc.column,
@@ -1241,6 +1139,7 @@ general_init (const char *argv0, bool init_signals)
   linemap_init (line_table, BUILTINS_LOCATION);
   line_table->reallocator = realloc_for_line_map;
   line_table->round_alloc_size = ggc_round_alloc_size;
+  line_table->default_range_bits = 5;
   init_ttree ();
 
   /* Initialize register usage now so switches may override.  */
@@ -1326,8 +1225,9 @@ process_options (void)
 
   if (flag_section_anchors && !target_supports_section_anchors_p ())
     {
-      warning (OPT_fsection_anchors,
-	       "this target does not support %qs", "-fsection-anchors");
+      warning_at (UNKNOWN_LOCATION, OPT_fsection_anchors,
+		  "this target does not support %qs",
+		  "-fsection-anchors");
       flag_section_anchors = 0;
     }
 
@@ -1349,13 +1249,10 @@ process_options (void)
 
 #ifndef HAVE_isl
   if (flag_graphite
+      || flag_loop_nest_optimize
       || flag_graphite_identity
-      || flag_loop_block
-      || flag_loop_interchange
-      || flag_loop_strip_mine
-      || flag_loop_parallelize_all
-      || flag_loop_unroll_jam)
-    sorry ("Graphite loop optimizations cannot be used (ISL is not available)" 
+      || flag_loop_parallelize_all)
+    sorry ("Graphite loop optimizations cannot be used (isl is not available)"
 	   "(-fgraphite, -fgraphite-identity, -floop-block, "
 	   "-floop-interchange, -floop-strip-mine, -floop-parallelize-all, "
 	   "-floop-unroll-and-jam, and -ftree-loop-linear)");
@@ -1365,30 +1262,40 @@ process_options (void)
     {
       if (targetm.chkp_bound_mode () == VOIDmode)
 	{
-	  error ("%<-fcheck-pointer-bounds%> is not supported for this "
-		 "target");
+	  error_at (UNKNOWN_LOCATION,
+		    "%<-fcheck-pointer-bounds%> is not supported for this "
+		    "target");
 	  flag_check_pointer_bounds = 0;
 	}
 
-      if (flag_sanitize & SANITIZE_BOUNDS)
+      if (flag_sanitize & SANITIZE_BOUNDS_STRICT)
 	{
-	  error ("%<-fcheck-pointer-bounds%> is not supported with "
-		 "%<-fsanitize=bounds%>");
- 	  flag_check_pointer_bounds = 0;
- 	}
+	  error_at (UNKNOWN_LOCATION,
+		    "%<-fcheck-pointer-bounds%> is not supported with "
+		    "%<-fsanitize=bounds-strict%>");
+	  flag_check_pointer_bounds = 0;
+	}
+      else if (flag_sanitize & SANITIZE_BOUNDS)
+	{
+	  error_at (UNKNOWN_LOCATION,
+		    "%<-fcheck-pointer-bounds%> is not supported with "
+		    "%<-fsanitize=bounds%>");
+	  flag_check_pointer_bounds = 0;
+	}
 
       if (flag_sanitize & SANITIZE_ADDRESS)
 	{
-	  error ("%<-fcheck-pointer-bounds%> is not supported with "
-		 "Address Sanitizer");
+	  error_at (UNKNOWN_LOCATION,
+		    "%<-fcheck-pointer-bounds%> is not supported with "
+		    "Address Sanitizer");
 	  flag_check_pointer_bounds = 0;
 	}
 
       if (flag_sanitize & SANITIZE_THREAD)
 	{
-	  error (UNKNOWN_LOCATION,
-		 "%<-fcheck-pointer-bounds%> is not supported with "
-		 "Thread Sanitizer");
+	  error_at (UNKNOWN_LOCATION,
+		    "%<-fcheck-pointer-bounds%> is not supported with "
+		    "Thread Sanitizer");
 
 	  flag_check_pointer_bounds = 0;
 	}
@@ -1402,7 +1309,8 @@ process_options (void)
   if (!abi_version_at_least (2))
     {
       /* -fabi-version=1 support was removed after GCC 4.9.  */
-      error ("%<-fabi-version=1%> is no longer supported");
+      error_at (UNKNOWN_LOCATION,
+		"%<-fabi-version=1%> is no longer supported");
       flag_abi_version = 2;
     }
 
@@ -1429,12 +1337,12 @@ process_options (void)
   /* Warn about options that are not supported on this machine.  */
 #ifndef INSN_SCHEDULING
   if (flag_schedule_insns || flag_schedule_insns_after_reload)
-    warning (0, "instruction scheduling not supported on this target machine");
+    warning_at (UNKNOWN_LOCATION, 0,
+		"instruction scheduling not supported on this target machine");
 #endif
-#ifndef DELAY_SLOTS
-  if (flag_delayed_branch)
-    warning (0, "this target machine does not have delayed branches");
-#endif
+  if (!DELAY_SLOTS && flag_delayed_branch)
+    warning_at (UNKNOWN_LOCATION, 0,
+		"this target machine does not have delayed branches");
 
   user_label_prefix = USER_LABEL_PREFIX;
   if (flag_leading_underscore != -1)
@@ -1447,8 +1355,9 @@ process_options (void)
 	  user_label_prefix = flag_leading_underscore ? "_" : "";
 	}
       else
-	warning (0, "-f%sleading-underscore not supported on this target machine",
-		 flag_leading_underscore ? "" : "no-");
+	warning_at (UNKNOWN_LOCATION, 0,
+		    "-f%sleading-underscore not supported on this "
+		    "target machine", flag_leading_underscore ? "" : "no-");
     }
 
   /* If we are in verbose mode, write out the version and maybe all the
@@ -1484,14 +1393,16 @@ process_options (void)
       FILE *final_output = fopen (flag_dump_final_insns, "w");
       if (!final_output)
 	{
-	  error ("could not open final insn dump file %qs: %m",
-		 flag_dump_final_insns);
+	  error_at (UNKNOWN_LOCATION,
+		    "could not open final insn dump file %qs: %m",
+		    flag_dump_final_insns);
 	  flag_dump_final_insns = NULL;
 	}
       else if (fclose (final_output))
 	{
-	  error ("could not close zeroed insn dump file %qs: %m",
-		 flag_dump_final_insns);
+	  error_at (UNKNOWN_LOCATION,
+		    "could not close zeroed insn dump file %qs: %m",
+		    flag_dump_final_insns);
 	  flag_dump_final_insns = NULL;
 	}
     }
@@ -1511,10 +1422,8 @@ process_options (void)
   else if (write_symbols == XCOFF_DEBUG)
     debug_hooks = &xcoff_debug_hooks;
 #endif
-#ifdef SDB_DEBUGGING_INFO
-  else if (write_symbols == SDB_DEBUG)
+  else if (SDB_DEBUGGING_INFO && write_symbols == SDB_DEBUG)
     debug_hooks = &sdb_debug_hooks;
-#endif
 #ifdef DWARF2_DEBUGGING_INFO
   else if (write_symbols == DWARF2_DEBUG)
     debug_hooks = &dwarf2_debug_hooks;
@@ -1523,9 +1432,14 @@ process_options (void)
   else if (write_symbols == VMS_DEBUG || write_symbols == VMS_AND_DWARF2_DEBUG)
     debug_hooks = &vmsdbg_debug_hooks;
 #endif
+#ifdef DWARF2_LINENO_DEBUGGING_INFO
+  else if (write_symbols == DWARF2_DEBUG)
+    debug_hooks = &dwarf2_lineno_debug_hooks;
+#endif
   else
-    error ("target system does not support the %qs debug format",
-	   debug_type_names[write_symbols]);
+    error_at (UNKNOWN_LOCATION,
+	      "target system does not support the %qs debug format",
+	      debug_type_names[write_symbols]);
 
   /* We know which debug output will be used so we can set flag_var_tracking
      and flag_var_tracking_uninit if the user has not specified them.  */
@@ -1536,11 +1450,13 @@ process_options (void)
 	  || flag_var_tracking_uninit == 1)
         {
 	  if (debug_info_level < DINFO_LEVEL_NORMAL)
-	    warning (0, "variable tracking requested, but useless unless "
-		     "producing debug info");
+	    warning_at (UNKNOWN_LOCATION, 0,
+			"variable tracking requested, but useless unless "
+			"producing debug info");
 	  else
-	    warning (0, "variable tracking requested, but not supported "
-		     "by this debug format");
+	    warning_at (UNKNOWN_LOCATION, 0,
+			"variable tracking requested, but not supported "
+			"by this debug format");
 	}
       flag_var_tracking = 0;
       flag_var_tracking_uninit = 0;
@@ -1576,14 +1492,16 @@ process_options (void)
 
   if (flag_var_tracking_assignments
       && (flag_selective_scheduling || flag_selective_scheduling2))
-    warning (0, "var-tracking-assignments changes selective scheduling");
+    warning_at (UNKNOWN_LOCATION, 0,
+		"var-tracking-assignments changes selective scheduling");
 
   if (flag_tree_cselim == AUTODETECT_VALUE)
-#ifdef HAVE_conditional_move
-    flag_tree_cselim = 1;
-#else
-    flag_tree_cselim = 0;
-#endif
+    {
+      if (HAVE_conditional_move)
+	flag_tree_cselim = 1;
+      else
+	flag_tree_cselim = 0;
+    }
 
   /* If auxiliary info generation is desired, open the output file.
      This goes in the same directory as the source file--unlike
@@ -1592,42 +1510,46 @@ process_options (void)
     {
       aux_info_file = fopen (aux_info_file_name, "w");
       if (aux_info_file == 0)
-	fatal_error (input_location, "can%'t open %s: %m", aux_info_file_name);
+	fatal_error (UNKNOWN_LOCATION,
+		     "can%'t open %s: %m", aux_info_file_name);
     }
 
   if (!targetm_common.have_named_sections)
     {
       if (flag_function_sections)
 	{
-	  warning (0, "-ffunction-sections not supported for this target");
+	  warning_at (UNKNOWN_LOCATION, 0,
+		      "-ffunction-sections not supported for this target");
 	  flag_function_sections = 0;
 	}
       if (flag_data_sections)
 	{
-	  warning (0, "-fdata-sections not supported for this target");
+	  warning_at (UNKNOWN_LOCATION, 0,
+		      "-fdata-sections not supported for this target");
 	  flag_data_sections = 0;
 	}
     }
 
-#ifndef HAVE_prefetch
-  if (flag_prefetch_loop_arrays > 0)
+  if (flag_prefetch_loop_arrays > 0 && !targetm.code_for_prefetch)
     {
-      warning (0, "-fprefetch-loop-arrays not supported for this target");
+      warning_at (UNKNOWN_LOCATION, 0,
+		  "-fprefetch-loop-arrays not supported for this target");
       flag_prefetch_loop_arrays = 0;
     }
-#else
-  if (flag_prefetch_loop_arrays > 0 && !HAVE_prefetch)
+  else if (flag_prefetch_loop_arrays > 0 && !targetm.have_prefetch ())
     {
-      warning (0, "-fprefetch-loop-arrays not supported for this target (try -march switches)");
+      warning_at (UNKNOWN_LOCATION, 0,
+		  "-fprefetch-loop-arrays not supported for this target "
+		  "(try -march switches)");
       flag_prefetch_loop_arrays = 0;
     }
-#endif
 
   /* This combination of options isn't handled for i386 targets and doesn't
      make much sense anyway, so don't allow it.  */
   if (flag_prefetch_loop_arrays > 0 && optimize_size)
     {
-      warning (0, "-fprefetch-loop-arrays is not supported with -Os");
+      warning_at (UNKNOWN_LOCATION, 0,
+		  "-fprefetch-loop-arrays is not supported with -Os");
       flag_prefetch_loop_arrays = 0;
     }
 
@@ -1638,7 +1560,9 @@ process_options (void)
   /* We cannot reassociate if we want traps or signed zeros.  */
   if (flag_associative_math && (flag_trapping_math || flag_signed_zeros))
     {
-      warning (0, "-fassociative-math disabled; other options take precedence");
+      warning_at (UNKNOWN_LOCATION, 0,
+		  "-fassociative-math disabled; other options take "
+		  "precedence");
       flag_associative_math = 0;
     }
 
@@ -1654,7 +1578,8 @@ process_options (void)
      target already uses a soft frame pointer, the transition is trivial.  */
   if (!FRAME_GROWS_DOWNWARD && flag_stack_protect)
     {
-      warning (0, "-fstack-protector not supported for this target");
+      warning_at (UNKNOWN_LOCATION, 0,
+		  "-fstack-protector not supported for this target");
       flag_stack_protect = 0;
     }
   if (!flag_stack_protect)
@@ -1665,22 +1590,23 @@ process_options (void)
   if ((flag_sanitize & SANITIZE_ADDRESS)
       && !FRAME_GROWS_DOWNWARD)
     {
-      warning (0,
-	       "-fsanitize=address and -fsanitize=kernel-address "
-	       "are not supported for this target");
+      warning_at (UNKNOWN_LOCATION, 0,
+		  "-fsanitize=address and -fsanitize=kernel-address "
+		  "are not supported for this target");
       flag_sanitize &= ~SANITIZE_ADDRESS;
     }
 
   if ((flag_sanitize & SANITIZE_USER_ADDRESS)
       && targetm.asan_shadow_offset == NULL)
     {
-      warning (0, "-fsanitize=address not supported for this target");
+      warning_at (UNKNOWN_LOCATION, 0,
+		  "-fsanitize=address not supported for this target");
       flag_sanitize &= ~SANITIZE_ADDRESS;
     }
 
  /* Do not use IPA optimizations for register allocation if profiler is active
     or port does not emit prologue and epilogue as RTL.  */
-  if (profile_flag || !HAVE_prologue || !HAVE_epilogue)
+  if (profile_flag || !targetm.have_prologue () || !targetm.have_epilogue ())
     flag_ipa_ra = 0;
 
   /* Enable -Werror=coverage-mismatch when -Werror and -Wno-error
@@ -1824,6 +1750,8 @@ static int rtl_initialized;
 void
 initialize_rtl (void)
 {
+  auto_timevar tv (g_timer, TV_INITIALIZE_RTL);
+
   /* Initialization done just once per compilation, but delayed
      till code generation.  */
   if (!rtl_initialized)
@@ -1963,6 +1891,7 @@ dump_memory_report (bool final)
   dump_rtx_statistics ();
   dump_alloc_pool_statistics ();
   dump_bitmap_statistics ();
+  dump_hash_table_loc_statistics ();
   dump_vec_loc_statistics ();
   dump_ggc_loc_statistics (final);
   dump_alias_stats (stderr);
@@ -2097,19 +2026,28 @@ do_compile ()
     }
 }
 
-toplev::toplev (bool use_TV_TOTAL, bool init_signals)
-  : m_use_TV_TOTAL (use_TV_TOTAL),
+toplev::toplev (timer *external_timer,
+		bool init_signals)
+  : m_use_TV_TOTAL (external_timer == NULL),
     m_init_signals (init_signals)
 {
-  if (!m_use_TV_TOTAL)
-    start_timevars ();
+  if (external_timer)
+    g_timer = external_timer;
 }
 
 toplev::~toplev ()
 {
-  timevar_stop (TV_TOTAL);
-  timevar_print (stderr);
+  if (g_timer && m_use_TV_TOTAL)
+    {
+      g_timer->stop (TV_TOTAL);
+      g_timer->print (stderr);
+      delete g_timer;
+      g_timer = NULL;
+    }
 }
+
+/* Potentially call timevar_init (which will create g_timevars if it
+   doesn't already exist).  */
 
 void
 toplev::start_timevars ()
@@ -2141,6 +2079,7 @@ toplev::main (int argc, char **argv)
   /* One-off initialization of options that does not need to be
      repeated when options are added for particular functions.  */
   init_options_once ();
+  init_opts_obstack ();
 
   /* Initialize global options structures; this must be repeated for
      each structure used for parsing options.  */
@@ -2194,6 +2133,9 @@ toplev::main (int argc, char **argv)
 
   finalize_plugins ();
   location_adhoc_data_fini (line_table);
+
+  after_memory_report = true;
+
   if (seen_error () || werrorcount)
     return (FATAL_EXIT_CODE);
 
@@ -2222,11 +2164,15 @@ toplev::finalize (void)
   finalize_options_struct (&global_options);
   finalize_options_struct (&global_options_set);
 
+  /* save_decoded_options uses opts_obstack, so these must
+     be cleaned up together.  */
+  obstack_free (&opts_obstack, NULL);
   XDELETEVEC (save_decoded_options);
+  save_decoded_options = NULL;
+  save_decoded_options_count = 0;
 
   /* Clean up the context (and pass_manager etc). */
   delete g;
   g = NULL;
 
-  obstack_free (&opts_obstack, NULL);
 }

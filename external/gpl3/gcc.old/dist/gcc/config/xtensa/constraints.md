@@ -1,5 +1,5 @@
 ;; Constraint definitions for Xtensa.
-;; Copyright (C) 2006-2015 Free Software Foundation, Inc.
+;; Copyright (C) 2006-2016 Free Software Foundation, Inc.
 ;;
 ;; This file is part of GCC.
 ;;
@@ -110,6 +110,11 @@
   instruction."
  (and (match_code "const_int")
       (match_test "xtensa_mask_immediate (ival)")))
+
+(define_constraint "Y"
+ "A constant that can be used in relaxed MOVI instructions."
+ (and (match_code "const_int,const_double,const,symbol_ref,label_ref")
+      (match_test "TARGET_AUTO_LITPOOLS")))
 
 ;; Memory constraints.  Do not use define_memory_constraint here.  Doing so
 ;; causes reload to force some constants into the constant pool, but since

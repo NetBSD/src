@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.1.1.4 2017/07/23 01:05:10 mrg Exp $
+#	$NetBSD: Makefile.inc,v 1.1.1.5 2018/08/01 22:19:00 mrg Exp $
 
 LIBGCC_MACHINE_ARCH?=${MACHINE_ARCH:S/earmv5/earm/}
 
@@ -68,6 +68,7 @@ LIB2FUNCS_ALL+= \
 
 .if ${LIBGCC_MACHINE_ARCH} != "coldfire" && \
     empty(LIBGCC_MACHINE_ARCH:Mearm*) && \
+    empty(LIBGCC_MACHINE_ARCH:Maarch64*) && \
     empty(LIBGCC_MACHINE_ARCH:Mmips64*)
 
 # non swfloat versions 

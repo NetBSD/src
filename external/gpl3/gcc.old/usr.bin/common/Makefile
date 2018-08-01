@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.2 2017/07/23 01:05:11 mrg Exp $
+#	$NetBSD: Makefile,v 1.1.1.3 2018/08/01 22:19:01 mrg Exp $
 
 LIBISPRIVATE=	yes
 
@@ -9,11 +9,15 @@ LIB=		common
 
 SRCS=		diagnostic.c \
 		diagnostic-color.c \
+		diagnostic-show-locus.o \
 		pretty-print.c \
-		intl.c \
 		vec.c \
+		intl.c \
 		input.c \
-		version.c
+		version.c \
+		hash-table.c \
+		ggc-none.c \
+		memory-block.cc
 
 # XXX make sure this doesn't have more than it needs
 CPPFLAGS+=	-I${GCCARCH} -I${BACKENDOBJ} -I. \
@@ -30,6 +34,8 @@ HOSTPROG_CXX=	1
 
 COPTS.diagnostic.c=	-Wno-stack-protector
 COPTS.intl.c=		-Wno-stack-protector
+
+version.c: ${GCCARCH}/defs.mk ${TOP}/tools/gcc/gcc-version.mk
 
 ${SRCS}: ${GCCARCH}/defs.mk
 

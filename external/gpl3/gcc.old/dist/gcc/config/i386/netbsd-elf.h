@@ -1,6 +1,6 @@
 /* Definitions of target machine for GCC,
    for i386/ELF NetBSD systems.
-   Copyright (C) 2001-2015 Free Software Foundation, Inc.
+   Copyright (C) 2001-2016 Free Software Foundation, Inc.
    Contributed by matthew green <mrg@eterna.com.au>
 
 This file is part of GCC.
@@ -111,10 +111,6 @@ along with GCC; see the file COPYING3.  If not see
 #define DEFAULT_PCC_STRUCT_RETURN 1
 
 #define IX86_MAYBE_NO_LIBGCC_TFMODE
-
-#undef X87_ENABLE_ARITH
-#define X87_ENABLE_ARITH(MODE) \
-  (flag_excess_precision == EXCESS_PRECISION_FAST || (MODE) == DFmode)
 
 /* Preserve i386 psABI  */
 #undef PREFERRED_STACK_BOUNDARY_DEFAULT
