@@ -1,5 +1,5 @@
-/* GNU compiler hardware transactional execution intrinsics
-   Copyright (C) 2015 Free Software Foundation, Inc.
+/* GNU compiler vector extension intrinsics
+   Copyright (C) 2015-2016 Free Software Foundation, Inc.
    Contributed by Andreas Krebbel (Andreas.Krebbel@de.ibm.com)
 
 This file is part of GCC.
@@ -20,8 +20,6 @@ along with GCC; see the file COPYING3.  If not see
 
 #ifndef _VECINTRIN_H
 #define _VECINTRIN_H
-
-#ifdef __VEC__
 
 #define __VFTCI_ZERO           1<<11
 #define __VFTCI_ZERO_N         1<<10
@@ -75,17 +73,9 @@ __lcbb(const void *ptr, int bndry)
 #define vec_splat_s32 __builtin_s390_vec_splat_s32
 #define vec_splat_u64 __builtin_s390_vec_splat_u64
 #define vec_splat_s64 __builtin_s390_vec_splat_s64
-#define vec_add_u128 __builtin_s390_vaq
-#define vec_addc_u128 __builtin_s390_vaccq
-#define vec_adde_u128 __builtin_s390_vacq
-#define vec_addec_u128 __builtin_s390_vacccq
 #define vec_checksum __builtin_s390_vcksm
 #define vec_gfmsum_128 __builtin_s390_vgfmg
 #define vec_gfmsum_accum_128 __builtin_s390_vgfmag
-#define vec_sub_u128 __builtin_s390_vsq
-#define vec_subc_u128 __builtin_s390_vscbiq
-#define vec_sube_u128 __builtin_s390_vsbiq
-#define vec_subec_u128 __builtin_s390_vsbcbiq
 #define vec_ceil(X) __builtin_s390_vfidb((X), 4, 6)
 #define vec_roundp(X) __builtin_s390_vfidb((X), 4, 6)
 #define vec_floor(X) __builtin_s390_vfidb((X), 4, 7)
@@ -97,53 +87,50 @@ __lcbb(const void *ptr, int bndry)
 #define vec_madd __builtin_s390_vfmadb
 #define vec_msub __builtin_s390_vfmsdb
 
-static inline int
-vec_all_nan (__vector double a)
-{
-  int cc;
-  __builtin_s390_vftcidb (a,
-			  __VFTCI_QNAN
-			  | __VFTCI_QNAN_N
-			  | __VFTCI_SNAN
-			  | __VFTCI_SNAN_N, &cc);
-  return cc == 0 ? 1 : 0;
-}
+#define vec_all_nan(a)						\
+  __extension__ ({						\
+      int __cc;							\
+      __builtin_s390_vftcidb (a,				\
+			      __VFTCI_QNAN			\
+			      | __VFTCI_QNAN_N			\
+			      | __VFTCI_SNAN			\
+			      | __VFTCI_SNAN_N, &__cc);		\
+      __cc == 0 ? 1 : 0;					\
+    })
 
-static inline int
-vec_all_numeric (__vector double a)
-{
-  int cc;
-  __builtin_s390_vftcidb (a,
-			  __VFTCI_NORMAL
-			  | __VFTCI_NORMAL_N
-			  | __VFTCI_SUBNORMAL
-			  | __VFTCI_SUBNORMAL_N, &cc);
-  return cc == 0 ? 1 : 0;
-}
+#define vec_all_numeric(a)					\
+  __extension__ ({						\
+      int __cc;							\
+      __builtin_s390_vftcidb (a,				\
+			      __VFTCI_NORMAL			\
+			      | __VFTCI_NORMAL_N		\
+			      | __VFTCI_SUBNORMAL		\
+			      | __VFTCI_SUBNORMAL_N, &__cc);	\
+      __cc == 0 ? 1 : 0;					\
+    })
 
-static inline int
-vec_any_nan (__vector double a)
-{
-  int cc;
-  __builtin_s390_vftcidb (a,
-			  __VFTCI_QNAN
-			  | __VFTCI_QNAN_N
-			  | __VFTCI_SNAN
-			  | __VFTCI_SNAN_N, &cc);
-  return cc != 3 ? 1 : 0;
-}
+#define vec_any_nan(a)						\
+  __extension__ ({						\
+      int __cc;							\
+      __builtin_s390_vftcidb (a,				\
+			      __VFTCI_QNAN			\
+			      | __VFTCI_QNAN_N			\
+			      | __VFTCI_SNAN			\
+			      | __VFTCI_SNAN_N, &cc);		\
+      cc != 3 ? 1 : 0;						\
+    })
 
-static inline int
-vec_any_numeric (__vector double a)
-{
-  int cc;
-  __builtin_s390_vftcidb (a,
-			  __VFTCI_NORMAL
-			  | __VFTCI_NORMAL_N
-			  | __VFTCI_SUBNORMAL
-			  | __VFTCI_SUBNORMAL_N, &cc);
-  return cc != 3 ? 1 : 0;
-}
+#define vec_any_numeric(a)					\
+  __extension__ ({						\
+      int __cc;							\
+      __builtin_s390_vftcidb (a,				\
+			      __VFTCI_NORMAL			\
+			      | __VFTCI_NORMAL_N		\
+			      | __VFTCI_SUBNORMAL		\
+			      | __VFTCI_SUBNORMAL_N, &cc);	\
+      cc != 3 ? 1 : 0;						\
+    })
+
 #define vec_gather_element __builtin_s390_vec_gather_element
 #define vec_xld2 __builtin_s390_vec_xld2
 #define vec_xlw4 __builtin_s390_vec_xlw4
@@ -174,6 +161,10 @@ vec_any_numeric (__vector double a)
 #define vec_unpackh __builtin_s390_vec_unpackh
 #define vec_unpackl __builtin_s390_vec_unpackl
 #define vec_addc __builtin_s390_vec_addc
+#define vec_add_u128 __builtin_s390_vec_add_u128
+#define vec_addc_u128 __builtin_s390_vec_addc_u128
+#define vec_adde_u128 __builtin_s390_vec_adde_u128
+#define vec_addec_u128 __builtin_s390_vec_addec_u128
 #define vec_and __builtin_s390_vec_and
 #define vec_andc __builtin_s390_vec_andc
 #define vec_avg __builtin_s390_vec_avg
@@ -224,6 +215,10 @@ vec_any_numeric (__vector double a)
 #define vec_srl __builtin_s390_vec_srl
 #define vec_srb __builtin_s390_vec_srb
 #define vec_subc __builtin_s390_vec_subc
+#define vec_sub_u128 __builtin_s390_vec_sub_u128
+#define vec_subc_u128 __builtin_s390_vec_subc_u128
+#define vec_sube_u128 __builtin_s390_vec_sube_u128
+#define vec_subec_u128 __builtin_s390_vec_subec_u128
 #define vec_sum2 __builtin_s390_vec_sum2
 #define vec_sum_u128 __builtin_s390_vec_sum_u128
 #define vec_sum4 __builtin_s390_vec_sum4
@@ -273,5 +268,4 @@ vec_any_numeric (__vector double a)
 #define vec_ctul __builtin_s390_vec_ctul
 #define vec_ld2f __builtin_s390_vec_ld2f
 #define vec_st2f __builtin_s390_vec_st2f
-#endif /* __VEC__ */
 #endif /* _VECINTRIN_H */

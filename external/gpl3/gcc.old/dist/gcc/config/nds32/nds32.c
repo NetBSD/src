@@ -1,5 +1,5 @@
 /* Subroutines used for code generation of Andes NDS32 cpu for GNU compiler
-   Copyright (C) 2012-2015 Free Software Foundation, Inc.
+   Copyright (C) 2012-2016 Free Software Foundation, Inc.
    Contributed by Andes Technology Corporation.
 
    This file is part of GCC.
@@ -23,62 +23,28 @@
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
-#include "tm.h"
-#include "hash-set.h"
-#include "machmode.h"
-#include "vec.h"
-#include "double-int.h"
-#include "input.h"
-#include "alias.h"
-#include "symtab.h"
-#include "wide-int.h"
-#include "inchash.h"
+#include "backend.h"
+#include "target.h"
+#include "rtl.h"
 #include "tree.h"
+#include "df.h"
+#include "tm_p.h"
+#include "optabs.h"		/* For GEN_FCN.  */
+#include "regs.h"
+#include "emit-rtl.h"
+#include "recog.h"
+#include "diagnostic-core.h"
 #include "stor-layout.h"
 #include "varasm.h"
 #include "calls.h"
-#include "rtl.h"
-#include "regs.h"
-#include "hard-reg-set.h"
-#include "insn-config.h"	/* Required by recog.h.  */
-#include "conditions.h"
 #include "output.h"
-#include "insn-attr.h"		/* For DFA state_t.  */
-#include "insn-codes.h"		/* For CODE_FOR_xxx.  */
-#include "reload.h"		/* For push_reload().  */
-#include "flags.h"
-#include "function.h"
-#include "hashtab.h"
-#include "statistics.h"
-#include "real.h"
-#include "fixed-value.h"
-#include "insn-config.h"
-#include "expmed.h"
-#include "dojump.h"
 #include "explow.h"
-#include "emit-rtl.h"
-#include "stmt.h"
 #include "expr.h"
-#include "recog.h"
-#include "diagnostic-core.h"
-#include "dominance.h"
-#include "cfg.h"
-#include "cfgrtl.h"
-#include "cfganal.h"
-#include "lcm.h"
-#include "cfgbuild.h"
-#include "cfgcleanup.h"
-#include "predict.h"
-#include "basic-block.h"
-#include "df.h"
-#include "tm_p.h"
 #include "tm-constrs.h"
-#include "optabs.h"		/* For GEN_FCN.  */
-#include "target.h"
-#include "target-def.h"
-#include "langhooks.h"		/* For add_builtin_function().  */
-#include "ggc.h"
 #include "builtins.h"
+
+/* This file should be included last.  */
+#include "target-def.h"
 
 /* ------------------------------------------------------------------------ */
 
@@ -470,7 +436,7 @@ nds32_emit_stack_push_multiple (rtx Rb, rtx Re, rtx En4, bool vaarg_p)
       mem = gen_frame_mem (SImode, plus_constant (Pmode,
 						  stack_pointer_rtx,
 						  offset));
-      push_rtx = gen_rtx_SET (VOIDmode, mem, reg);
+      push_rtx = gen_rtx_SET (mem, reg);
       XVECEXP (parallel_insn, 0, par_index) = push_rtx;
       RTX_FRAME_RELATED_P (push_rtx) = 1;
       offset = offset + 4;
@@ -484,7 +450,7 @@ nds32_emit_stack_push_multiple (rtx Rb, rtx Re, rtx En4, bool vaarg_p)
       mem = gen_frame_mem (SImode, plus_constant (Pmode,
 						  stack_pointer_rtx,
 						  offset));
-      push_rtx = gen_rtx_SET (VOIDmode, mem, reg);
+      push_rtx = gen_rtx_SET (mem, reg);
       XVECEXP (parallel_insn, 0, par_index) = push_rtx;
       RTX_FRAME_RELATED_P (push_rtx) = 1;
       offset = offset + 4;
@@ -496,7 +462,7 @@ nds32_emit_stack_push_multiple (rtx Rb, rtx Re, rtx En4, bool vaarg_p)
       mem = gen_frame_mem (SImode, plus_constant (Pmode,
 						  stack_pointer_rtx,
 						  offset));
-      push_rtx = gen_rtx_SET (VOIDmode, mem, reg);
+      push_rtx = gen_rtx_SET (mem, reg);
       XVECEXP (parallel_insn, 0, par_index) = push_rtx;
       RTX_FRAME_RELATED_P (push_rtx) = 1;
       offset = offset + 4;
@@ -508,7 +474,7 @@ nds32_emit_stack_push_multiple (rtx Rb, rtx Re, rtx En4, bool vaarg_p)
       mem = gen_frame_mem (SImode, plus_constant (Pmode,
 						  stack_pointer_rtx,
 						  offset));
-      push_rtx = gen_rtx_SET (VOIDmode, mem, reg);
+      push_rtx = gen_rtx_SET (mem, reg);
       XVECEXP (parallel_insn, 0, par_index) = push_rtx;
       RTX_FRAME_RELATED_P (push_rtx) = 1;
       offset = offset + 4;
@@ -520,8 +486,7 @@ nds32_emit_stack_push_multiple (rtx Rb, rtx Re, rtx En4, bool vaarg_p)
   /* We need to re-calculate the offset value again for adjustment.  */
   offset = -(num_use_regs * 4);
   adjust_sp_rtx
-    = gen_rtx_SET (VOIDmode,
-		   stack_pointer_rtx,
+    = gen_rtx_SET (stack_pointer_rtx,
 		   plus_constant (Pmode, stack_pointer_rtx, offset));
   XVECEXP (parallel_insn, 0, par_index) = adjust_sp_rtx;
   RTX_FRAME_RELATED_P (adjust_sp_rtx) = 1;
@@ -624,7 +589,7 @@ nds32_emit_stack_pop_multiple (rtx Rb, rtx Re, rtx En4)
       mem = gen_frame_mem (SImode, plus_constant (Pmode,
 						  stack_pointer_rtx,
 						  offset));
-      pop_rtx = gen_rtx_SET (VOIDmode, reg, mem);
+      pop_rtx = gen_rtx_SET (reg, mem);
       XVECEXP (parallel_insn, 0, par_index) = pop_rtx;
       RTX_FRAME_RELATED_P (pop_rtx) = 1;
       offset = offset + 4;
@@ -640,7 +605,7 @@ nds32_emit_stack_pop_multiple (rtx Rb, rtx Re, rtx En4)
       mem = gen_frame_mem (SImode, plus_constant (Pmode,
 						  stack_pointer_rtx,
 						  offset));
-      pop_rtx = gen_rtx_SET (VOIDmode, reg, mem);
+      pop_rtx = gen_rtx_SET (reg, mem);
       XVECEXP (parallel_insn, 0, par_index) = pop_rtx;
       RTX_FRAME_RELATED_P (pop_rtx) = 1;
       offset = offset + 4;
@@ -654,7 +619,7 @@ nds32_emit_stack_pop_multiple (rtx Rb, rtx Re, rtx En4)
       mem = gen_frame_mem (SImode, plus_constant (Pmode,
 						  stack_pointer_rtx,
 						  offset));
-      pop_rtx = gen_rtx_SET (VOIDmode, reg, mem);
+      pop_rtx = gen_rtx_SET (reg, mem);
       XVECEXP (parallel_insn, 0, par_index) = pop_rtx;
       RTX_FRAME_RELATED_P (pop_rtx) = 1;
       offset = offset + 4;
@@ -668,7 +633,7 @@ nds32_emit_stack_pop_multiple (rtx Rb, rtx Re, rtx En4)
       mem = gen_frame_mem (SImode, plus_constant (Pmode,
 						  stack_pointer_rtx,
 						  offset));
-      pop_rtx = gen_rtx_SET (VOIDmode, reg, mem);
+      pop_rtx = gen_rtx_SET (reg, mem);
       XVECEXP (parallel_insn, 0, par_index) = pop_rtx;
       RTX_FRAME_RELATED_P (pop_rtx) = 1;
       offset = offset + 4;
@@ -681,8 +646,7 @@ nds32_emit_stack_pop_multiple (rtx Rb, rtx Re, rtx En4)
 
   /* The offset value is already in place.  No need to re-calculate it.  */
   adjust_sp_rtx
-    = gen_rtx_SET (VOIDmode,
-		   stack_pointer_rtx,
+    = gen_rtx_SET (stack_pointer_rtx,
 		   plus_constant (Pmode, stack_pointer_rtx, offset));
   XVECEXP (parallel_insn, 0, par_index) = adjust_sp_rtx;
 
@@ -766,7 +730,7 @@ nds32_emit_stack_v3push (rtx Rb,
       mem = gen_frame_mem (SImode, plus_constant (Pmode,
 						  stack_pointer_rtx,
 						  offset));
-      push_rtx = gen_rtx_SET (VOIDmode, mem, reg);
+      push_rtx = gen_rtx_SET (mem, reg);
       XVECEXP (parallel_insn, 0, par_index) = push_rtx;
       RTX_FRAME_RELATED_P (push_rtx) = 1;
       offset = offset + 4;
@@ -778,7 +742,7 @@ nds32_emit_stack_v3push (rtx Rb,
   mem = gen_frame_mem (SImode, plus_constant (Pmode,
 					      stack_pointer_rtx,
 					      offset));
-  push_rtx = gen_rtx_SET (VOIDmode, mem, reg);
+  push_rtx = gen_rtx_SET (mem, reg);
   XVECEXP (parallel_insn, 0, par_index) = push_rtx;
   RTX_FRAME_RELATED_P (push_rtx) = 1;
   offset = offset + 4;
@@ -788,7 +752,7 @@ nds32_emit_stack_v3push (rtx Rb,
   mem = gen_frame_mem (SImode, plus_constant (Pmode,
 					      stack_pointer_rtx,
 					      offset));
-  push_rtx = gen_rtx_SET (VOIDmode, mem, reg);
+  push_rtx = gen_rtx_SET (mem, reg);
   XVECEXP (parallel_insn, 0, par_index) = push_rtx;
   RTX_FRAME_RELATED_P (push_rtx) = 1;
   offset = offset + 4;
@@ -798,7 +762,7 @@ nds32_emit_stack_v3push (rtx Rb,
   mem = gen_frame_mem (SImode, plus_constant (Pmode,
 					      stack_pointer_rtx,
 					      offset));
-  push_rtx = gen_rtx_SET (VOIDmode, mem, reg);
+  push_rtx = gen_rtx_SET (mem, reg);
   XVECEXP (parallel_insn, 0, par_index) = push_rtx;
   RTX_FRAME_RELATED_P (push_rtx) = 1;
   offset = offset + 4;
@@ -809,8 +773,7 @@ nds32_emit_stack_v3push (rtx Rb,
   /* We need to re-calculate the offset value again for adjustment.  */
   offset = -(num_use_regs * 4);
   adjust_sp_rtx
-    = gen_rtx_SET (VOIDmode,
-		   stack_pointer_rtx,
+    = gen_rtx_SET (stack_pointer_rtx,
 		   plus_constant (Pmode,
 				  stack_pointer_rtx,
 				  offset - INTVAL (imm8u)));
@@ -892,7 +855,7 @@ nds32_emit_stack_v3pop (rtx Rb,
       mem = gen_frame_mem (SImode, plus_constant (Pmode,
 						  stack_pointer_rtx,
 						  offset));
-      pop_rtx = gen_rtx_SET (VOIDmode, reg, mem);
+      pop_rtx = gen_rtx_SET (reg, mem);
       XVECEXP (parallel_insn, 0, par_index) = pop_rtx;
       RTX_FRAME_RELATED_P (pop_rtx) = 1;
       offset = offset + 4;
@@ -906,7 +869,7 @@ nds32_emit_stack_v3pop (rtx Rb,
   mem = gen_frame_mem (SImode, plus_constant (Pmode,
 					      stack_pointer_rtx,
 					      offset));
-  pop_rtx = gen_rtx_SET (VOIDmode, reg, mem);
+  pop_rtx = gen_rtx_SET (reg, mem);
   XVECEXP (parallel_insn, 0, par_index) = pop_rtx;
   RTX_FRAME_RELATED_P (pop_rtx) = 1;
   offset = offset + 4;
@@ -918,7 +881,7 @@ nds32_emit_stack_v3pop (rtx Rb,
   mem = gen_frame_mem (SImode, plus_constant (Pmode,
 					      stack_pointer_rtx,
 					      offset));
-  pop_rtx = gen_rtx_SET (VOIDmode, reg, mem);
+  pop_rtx = gen_rtx_SET (reg, mem);
   XVECEXP (parallel_insn, 0, par_index) = pop_rtx;
   RTX_FRAME_RELATED_P (pop_rtx) = 1;
   offset = offset + 4;
@@ -930,7 +893,7 @@ nds32_emit_stack_v3pop (rtx Rb,
   mem = gen_frame_mem (SImode, plus_constant (Pmode,
 					      stack_pointer_rtx,
 					      offset));
-  pop_rtx = gen_rtx_SET (VOIDmode, reg, mem);
+  pop_rtx = gen_rtx_SET (reg, mem);
   XVECEXP (parallel_insn, 0, par_index) = pop_rtx;
   RTX_FRAME_RELATED_P (pop_rtx) = 1;
   offset = offset + 4;
@@ -941,8 +904,7 @@ nds32_emit_stack_v3pop (rtx Rb,
 
   /* The offset value is already in place.  No need to re-calculate it.  */
   adjust_sp_rtx
-    = gen_rtx_SET (VOIDmode,
-		   stack_pointer_rtx,
+    = gen_rtx_SET (stack_pointer_rtx,
 		   plus_constant (Pmode,
 				  stack_pointer_rtx,
 				  offset + INTVAL (imm8u)));
@@ -1019,7 +981,7 @@ nds32_force_addi_stack_int (int full_value)
 	  rtx set_rtx;
 
 	  plus_rtx = plus_constant (Pmode, stack_pointer_rtx, full_value);
-	  set_rtx = gen_rtx_SET (VOIDmode, stack_pointer_rtx, plus_rtx);
+	  set_rtx = gen_rtx_SET (stack_pointer_rtx, plus_rtx);
 	  add_reg_note (sp_adjust_insn, REG_FRAME_RELATED_EXPR, set_rtx);
 
 	  RTX_FRAME_RELATED_P (sp_adjust_insn) = 1;
@@ -2121,13 +2083,13 @@ nds32_memory_move_cost (machine_mode mode ATTRIBUTE_UNUSED,
    Refer to gcc/rtlanal.c for more information.  */
 static bool
 nds32_rtx_costs (rtx x,
-		 int code,
+		 machine_mode mode,
 		 int outer_code,
 		 int opno,
 		 int *total,
 		 bool speed)
 {
-  return nds32_rtx_costs_impl (x, code, outer_code, opno, total, speed);
+  return nds32_rtx_costs_impl (x, mode, outer_code, opno, total, speed);
 }
 
 static int
@@ -2349,7 +2311,7 @@ nds32_print_operand (FILE *stream, rtx x, int code)
       break;
 
     case MEM:
-      output_address (XEXP (x, 0));
+      output_address (GET_MODE (x), XEXP (x, 0));
       break;
 
     case CODE_LABEL:
@@ -2369,7 +2331,7 @@ nds32_print_operand (FILE *stream, rtx x, int code)
 }
 
 static void
-nds32_print_operand_address (FILE *stream, rtx x)
+nds32_print_operand_address (FILE *stream, machine_mode /*mode*/, rtx x)
 {
   rtx op0, op1;
 

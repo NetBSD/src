@@ -1,4 +1,4 @@
-/* Copyright (C) 2014-2015 Free Software Foundation, Inc.
+/* Copyright (C) 2014-2016 Free Software Foundation, Inc.
 
    Contributed by Mentor Embedded.
 
@@ -46,9 +46,10 @@ extern "C" {
 enum offload_target_type
 {
   OFFLOAD_TARGET_TYPE_HOST = 2,
-  OFFLOAD_TARGET_TYPE_HOST_NONSHM = 3,
+  /* OFFLOAD_TARGET_TYPE_HOST_NONSHM = 3 removed.  */
   OFFLOAD_TARGET_TYPE_NVIDIA_PTX = 5,
-  OFFLOAD_TARGET_TYPE_INTEL_MIC = 6
+  OFFLOAD_TARGET_TYPE_INTEL_MIC = 6,
+  OFFLOAD_TARGET_TYPE_HSA = 7
 };
 
 /* Auxiliary struct, used for transferring pairs of addresses from plugin
@@ -63,6 +64,7 @@ struct addr_pair
 extern void *GOMP_PLUGIN_malloc (size_t) __attribute__ ((malloc));
 extern void *GOMP_PLUGIN_malloc_cleared (size_t) __attribute__ ((malloc));
 extern void *GOMP_PLUGIN_realloc (void *, size_t);
+void GOMP_PLUGIN_target_task_completion (void *);
 
 extern void GOMP_PLUGIN_debug (int, const char *, ...)
 	__attribute__ ((format (printf, 2, 3)));
