@@ -1,5 +1,5 @@
 /* Rematerialize pseudos values.
-   Copyright (C) 2014-2015 Free Software Foundation, Inc.
+   Copyright (C) 2014-2016 Free Software Foundation, Inc.
    Contributed by Vladimir Makarov <vmakarov@redhat.com>.
 
 This file is part of GCC.
@@ -55,49 +55,14 @@ along with GCC; see the file COPYING3.	If not see
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
-#include "tm.h"
-#include "hard-reg-set.h"
+#include "backend.h"
 #include "rtl.h"
-#include "rtl-error.h"
-#include "tm_p.h"
-#include "target.h"
-#include "insn-config.h"
-#include "recog.h"
-#include "output.h"
-#include "regs.h"
-#include "hashtab.h"
-#include "hash-set.h"
-#include "vec.h"
-#include "machmode.h"
-#include "input.h"
-#include "function.h"
-#include "symtab.h"
-#include "flags.h"
-#include "statistics.h"
-#include "double-int.h"
-#include "real.h"
-#include "fixed-value.h"
-#include "alias.h"
-#include "wide-int.h"
-#include "inchash.h"
-#include "tree.h"
-#include "expmed.h"
-#include "dojump.h"
-#include "explow.h"
-#include "calls.h"
-#include "emit-rtl.h"
-#include "varasm.h"
-#include "stmt.h"
-#include "expr.h"
-#include "predict.h"
-#include "dominance.h"
-#include "cfg.h"
-#include "basic-block.h"
-#include "except.h"
 #include "df.h"
+#include "insn-config.h"
+#include "regs.h"
 #include "ira.h"
-#include "sparseset.h"
-#include "params.h"
+#include "recog.h"
+#include "lra.h"
 #include "lra-int.h"
 
 /* Number of candidates for rematerialization.  */
@@ -448,6 +413,10 @@ operand_to_remat (rtx_insn *insn)
       if (reg->regno >= FIRST_PSEUDO_REGISTER
 	  && bitmap_bit_p (&subreg_regs, reg->regno))
 	return -1;
+
+      /* Don't allow hard registers to be rematerialized.  */
+      if (reg->regno < FIRST_PSEUDO_REGISTER)
+	return -1;
     }
   if (found_reg == NULL)
     return -1;
@@ -614,10 +583,8 @@ create_remat_bb_data (void)
 			   last_basic_block_for_fn (cfun));
   FOR_ALL_BB_FN (bb, cfun)
     {
-#ifdef ENABLE_CHECKING
-      if (bb->index < 0 || bb->index >= last_basic_block_for_fn (cfun))
-	abort ();
-#endif
+      gcc_checking_assert (bb->index >= 0
+			   && bb->index < last_basic_block_for_fn (cfun));
       bb_info = get_remat_bb_data (bb);
       bb_info->bb = bb;
       bitmap_initialize (&bb_info->changed_regs, &reg_obstack);
@@ -755,21 +722,46 @@ calculate_local_reg_remat_bb_data (void)
 
 
 
-/* Return true if REGNO is an input operand of INSN.  */
+/* Return true if REG overlaps an input operand of INSN.  */
 static bool
-input_regno_present_p (rtx_insn *insn, int regno)
+reg_overlap_for_remat_p (lra_insn_reg *reg, rtx_insn *insn)
 {
   int iter;
   lra_insn_recog_data_t id = lra_get_insn_recog_data (insn);
   struct lra_static_insn_data *static_id = id->insn_static_data;
-  struct lra_insn_reg *reg;
-  
+  unsigned regno = reg->regno;
+  int nregs;
+
+  if (regno >= FIRST_PSEUDO_REGISTER && reg_renumber[regno] >= 0)
+    regno = reg_renumber[regno];
+  if (regno >= FIRST_PSEUDO_REGISTER)
+    nregs = 1;
+  else
+    nregs = hard_regno_nregs[regno][reg->biggest_mode];
+
+  struct lra_insn_reg *reg2;
+
   for (iter = 0; iter < 2; iter++)
-    for (reg = (iter == 0 ? id->regs : static_id->hard_regs);
-	 reg != NULL;
-	 reg = reg->next)
-      if (reg->type == OP_IN && reg->regno == regno)
-	return true;
+    for (reg2 = (iter == 0 ? id->regs : static_id->hard_regs);
+	 reg2 != NULL;
+	 reg2 = reg2->next)
+      {
+	if (reg2->type != OP_IN)
+	  continue;
+	unsigned regno2 = reg2->regno;
+	int nregs2;
+
+	if (regno2 >= FIRST_PSEUDO_REGISTER && reg_renumber[regno2] >= 0)
+	  regno2 = reg_renumber[regno2];
+	if (regno >= FIRST_PSEUDO_REGISTER)
+	  nregs2 = 1;
+	else
+	  nregs2 = hard_regno_nregs[regno2][reg->biggest_mode];
+
+	if ((regno2 + nregs2 - 1 >= regno && regno2 < regno + nregs)
+	    || (regno + nregs - 1 >= regno2 && regno < regno2 + nregs2))
+	  return true;
+      }
   return false;
 }
 
@@ -870,7 +862,7 @@ calculate_gen_cands (void)
 			  && dst_regno == cand->regno)
 			continue;
 		      if (cand->regno == reg->regno
-			  || input_regno_present_p (insn2, reg->regno))
+			  || reg_overlap_for_remat_p (reg, insn2))
 			{
 			  bitmap_clear_bit (gen_cands, cand->index);
 			  bitmap_set_bit (&temp_bitmap, uid);
@@ -1266,7 +1258,7 @@ do_remat (void)
 			&& dst_regno == cand->regno)
 		      continue;
 		    if (cand->regno == reg->regno
-			|| input_regno_present_p (cand->insn, reg->regno))
+			|| reg_overlap_for_remat_p (reg, cand->insn))
 		      bitmap_set_bit (&temp_bitmap, cand->index);
 		  }
 

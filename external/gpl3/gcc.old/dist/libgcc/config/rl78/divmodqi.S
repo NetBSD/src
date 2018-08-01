@@ -1,5 +1,5 @@
 /* QImode div/mod functions for the GCC support library for the Renesas RL78 processors.
-   Copyright (C) 2012-2015 Free Software Foundation, Inc.
+   Copyright (C) 2012-2016 Free Software Foundation, Inc.
    Contributed by Red Hat.
 
    This file is part of GCC.
@@ -63,7 +63,7 @@ num_eq_den\which:
 	ret
 	
 den_is_zero\which:
-	mov	r8, #0xff
+	mov	r8, #0x00
 	ret
 
 	;; These routines leave DE alone - the signed functions use DE

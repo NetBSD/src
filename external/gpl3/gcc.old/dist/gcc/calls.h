@@ -1,5 +1,5 @@
 /* Declarations and data types for RTL call insn generation.
-   Copyright (C) 2013-2015 Free Software Foundation, Inc.
+   Copyright (C) 2013-2016 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -23,7 +23,7 @@ along with GCC; see the file COPYING3.  If not see
 extern int flags_from_decl_or_type (const_tree);
 extern int call_expr_flags (const_tree);
 extern int setjmp_call_p (const_tree);
-extern bool gimple_alloca_call_p (const_gimple);
+extern bool gimple_alloca_call_p (const gimple *);
 extern bool alloca_call_p (const_tree);
 extern bool must_pass_in_stack_var_size (machine_mode, const_tree);
 extern bool must_pass_in_stack_var_size_or_pad (machine_mode, const_tree);
@@ -31,6 +31,11 @@ extern rtx prepare_call_address (tree, rtx, rtx, rtx *, int, int);
 extern bool shift_return_value (machine_mode, bool, rtx);
 extern rtx expand_call (tree, rtx, int);
 extern void fixup_tail_calls (void);
+
+extern bool pass_by_reference (CUMULATIVE_ARGS *, machine_mode,
+			       tree, bool);
+extern bool reference_callee_copied (CUMULATIVE_ARGS *, machine_mode,
+				     tree, bool);
 
 
 
