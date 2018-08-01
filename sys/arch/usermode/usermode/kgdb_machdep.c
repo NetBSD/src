@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_machdep.c,v 1.1 2018/08/01 10:22:20 reinoud Exp $	*/
+/*	$NetBSD: kgdb_machdep.c,v 1.2 2018/08/01 10:23:55 reinoud Exp $	*/
 
 /*
  * Copyright (c) 1996 Matthias Pfaller.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kgdb_machdep.c,v 1.1 2018/08/01 10:22:20 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kgdb_machdep.c,v 1.2 2018/08/01 10:23:55 reinoud Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -58,7 +58,7 @@ kgdb_acc(vaddr_t va, size_t len)
 	va  &= ~PGOFSET;
 	last_va &= ~PGOFSET;
 
-thunk_printf("%s: [%p .. %p]\n", __func__, (void *) va, (void *) last_va);
+	thunk_printf_debug("%s: [%p .. %p]\n", __func__, (void *) va, (void *) last_va);
 	do {
 		if (db_validate_address(va))
 			return (0);
