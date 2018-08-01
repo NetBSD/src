@@ -1,4 +1,4 @@
-#	$NetBSD: RB800,v 1.35 2018/02/05 15:18:10 maxv Exp $
+#	$NetBSD: RB800,v 1.36 2018/08/01 20:04:11 maxv Exp $
 #
 #	RB800 -- everything that's currently supported
 #
@@ -7,7 +7,7 @@ include 	"arch/evbppc/conf/std.mpc85xx"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident 		"RB800-$Revision: 1.35 $"
+ident 		"RB800-$Revision: 1.36 $"
 
 maxusers	32
 
@@ -105,8 +105,6 @@ options 	UDP_CSUM_COUNTERS
 #options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 #options 	PPP_DEFLATE	# Deflate compression support for PPP
 #options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
-#options 	IPFILTER_LOG	# ipmon(8) log support
-#options 	IPFILTER_LOOKUP	# ippool(8) support
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
 # These options enable verbose messages for several subsystems.

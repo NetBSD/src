@@ -1,4 +1,4 @@
-#	$NetBSD: WALNUT,v 1.73 2018/02/05 15:18:10 maxv Exp $
+#	$NetBSD: WALNUT,v 1.74 2018/08/01 20:04:11 maxv Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -90,10 +90,6 @@ options 	INET6		# IPV6
 options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 options 	PPP_DEFLATE	# Deflate compression support for PPP
 options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
-options 	IPFILTER_LOG	# ipmon(8) log support
-options 	IPFILTER_LOOKUP	# ippool(8) support
-options 	IPFILTER_COMPAT # Compat for IP-Filter
-#options 	IPFILTER_DEFAULT_BLOCK	# block all packets by default
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
 # These options enable verbose messages for several subsystems.
@@ -244,7 +240,7 @@ options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 #pseudo-device	fss			# file system snapshot device
 pseudo-device	loop			# network loopback
 pseudo-device	bpfilter		# packet filter
-pseudo-device	ipfilter		# IP filter (firewall) and NAT
+pseudo-device	npf			# NPF packet filter
 pseudo-device	ppp			# Point-to-Point Protocol
 pseudo-device	sl			# Serial Line IP
 pseudo-device	tun			# network tunneling over tty

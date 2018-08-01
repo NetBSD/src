@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.235 2017/09/14 07:58:41 mrg Exp $
+# $NetBSD: GENERIC,v 1.236 2018/08/01 20:04:11 maxv Exp $
 #
 # GENERIC machine description file
 # 
@@ -24,7 +24,7 @@ include 	"arch/hpcmips/conf/std.hpcmips.tx39"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.235 $"
+#ident 		"GENERIC-$Revision: 1.236 $"
 
 maxusers	16
 
@@ -106,10 +106,6 @@ options 	INET6		# IPV6
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# Multicast routing support
 #options 	PIM		# Protocol Independent Multicast
-options 	IPFILTER_LOG	# ipmon(8) log support
-options 	IPFILTER_LOOKUP	# ippool(8) support
-options 	IPFILTER_COMPAT # Compat for IP-Filter
-#options 	IPFILTER_DEFAULT_BLOCK	# block all packets by default
 
 #options 	ALTQ		# Manipulate network interfaces' output queues
 #options 	ALTQ_BLUE	# Stochastic Fair Blue
@@ -661,7 +657,7 @@ pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	bpfilter		# packet filter ports
 #pseudo-device	carp			# Common Address Redundancy Protocol
-pseudo-device	ipfilter		# IP filter, NAT
+pseudo-device	npf			# NPF packet filter
 
 pseudo-device	vnd			# virtual disk ick
 #options 	VND_COMPRESSION		# compressed vnd(4)
@@ -698,8 +694,6 @@ pseudo-device	bridge
 #options	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
 pseudo-device	agr			# IEEE 802.3ad link aggregation
 pseudo-device	ksyms			# /dev/ksyms
-#pseudo-device	pf			# PF packet filter
-#pseudo-device	pflog			# PF log if
 
 # Veriexec
 #
