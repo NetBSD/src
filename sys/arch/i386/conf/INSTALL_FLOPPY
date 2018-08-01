@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_FLOPPY,v 1.43 2017/11/06 02:57:18 rin Exp $
+#	$NetBSD: INSTALL_FLOPPY,v 1.44 2018/08/01 16:59:09 maxv Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -743,7 +743,6 @@ pseudo-device	md			# memory disk device (ramdisk)
 
 # network pseudo-devices
 pseudo-device	bpfilter		# Berkeley packet filter
-#pseudo-device	ipfilter		# IP filter (firewall) and NAT
 pseudo-device	loop			# network loopback
 #pseudo-device	ppp			# Point-to-Point Protocol
 pseudo-device	sl			# Serial Line IP
