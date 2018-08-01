@@ -1,4 +1,4 @@
-.\"	$NetBSD: gif.4,v 1.31 2018/02/18 21:31:32 pgoyette Exp $
+.\"	$NetBSD: gif.4,v 1.32 2018/08/01 00:07:27 sevan Exp $
 .\"	$KAME: gif.4,v 1.24 2001/02/20 12:54:01 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -28,7 +28,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd February 19, 2018
+.Dd August 1, 2018
 .Dt GIF 4
 .Os
 .Sh NAME
@@ -45,8 +45,6 @@ Therefore, there can be four possible configurations.
 The behavior of
 .Nm
 is mainly based on RFC 2893 IPv6-over-IPv4 configured tunnel.
-.Nm
-can also tunnel ISO traffic over IPv[46] using EON encapsulation.
 .Pp
 To use
 .Nm gif ,
@@ -131,7 +129,7 @@ Note that the ECN friendly behavior violates RFC 2893.
 This should be used in mutual agreement with the peer.
 .Ss Packet format
 Every inner packet is encapsulated in an outer packet.
-The inner packet may be IPv4, IPv6, or ISO CLNP.
+The inner packet may be IPv4 or IPv6.
 The outer packet may be IPv4 or IPv6, and has all the
 usual IP headers, including a protocol field that identifies the
 type of inner packet.
@@ -142,9 +140,6 @@ is 4
 When the inner packet is IPv6, the protocol field of the outer packet
 is 41
 .Dv ( IPPROTO_IPV6 ) .
-When the inner packet is ISO CNLP, the protocol field of the outer packet
-is 80
-.Dv ( IPPROTO_EON ) .
 .Ss Security
 Malicious party may try to circumvent security filters by using
 tunneled packets.
