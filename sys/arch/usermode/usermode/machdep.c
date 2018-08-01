@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.56 2018/06/11 19:35:56 reinoud Exp $ */
+/* $NetBSD: machdep.c,v 1.57 2018/08/01 09:44:31 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@netbsd.org>
@@ -37,7 +37,7 @@
 #include "opt_memsize.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.56 2018/06/11 19:35:56 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.57 2018/08/01 09:44:31 reinoud Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -59,6 +59,11 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.56 2018/06/11 19:35:56 reinoud Exp $")
 #include <machine/machdep.h>
 #include <machine/mainbus.h>
 #include <machine/thunk.h>
+#include <machine/cpu.h>
+#include <sys/kgdb.h>
+
+#include "opt_ddb.h"
+#include "opt_kgdb.h"
 
 #ifndef MAX_DISK_IMAGES
 #define MAX_DISK_IMAGES	4
@@ -272,6 +277,18 @@ main(int argc, char *argv[])
 	splinit();
 	splraise(IPL_HIGH);
 
+#ifdef DDB
+	if (boothowto & RB_KDB)
+		Debugger();
+#endif
+#ifdef KGDB
+	if (boothowto & RB_KDB) {
+		kgdb_port_init();
+		kgdb_debug_init = 1;
+		kgdb_connect(1);
+	}
+#endif
+
 	kernmain();
 }
 
@@ -297,6 +314,7 @@ setstatclockrate(int arg)
 void
 consinit(void)
 {
+//	kgdb_connect(0);
 	printf("NetBSD/usermode startup\n");
 }
 
