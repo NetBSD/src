@@ -1,4 +1,4 @@
-/*	$NetBSD: if_umb.c,v 1.2 2018/08/01 12:25:50 khorben Exp $ */
+/*	$NetBSD: if_umb.c,v 1.3 2018/08/01 12:36:56 khorben Exp $ */
 /*	$OpenBSD: if_umb.c,v 1.18 2018/02/19 08:59:52 mpi Exp $ */
 
 /*
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_umb.c,v 1.2 2018/08/01 12:25:50 khorben Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_umb.c,v 1.3 2018/08/01 12:36:56 khorben Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -498,16 +498,9 @@ umb_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(self, "failed to open control pipe\n");
 		goto fail;
 	}
-	sc->sc_resp_buf = kmem_alloc(sc->sc_ctrl_len, KM_NOSLEEP);
-	if (sc->sc_resp_buf == NULL) {
-		aprint_error_dev(self, "allocation of resp buffer failed\n");
-		goto fail;
-	}
-	sc->sc_ctrl_msg = kmem_alloc(sc->sc_ctrl_len, KM_NOSLEEP);
-	if (sc->sc_ctrl_msg == NULL) {
-		aprint_error_dev(self, "allocation of ctrl msg buffer failed\n");
-		goto fail;
-	}
+
+	sc->sc_resp_buf = kmem_alloc(sc->sc_ctrl_len, KM_SLEEP);
+	sc->sc_ctrl_msg = kmem_alloc(sc->sc_ctrl_len, KM_SLEEP);
 
 	sc->sc_info.regstate = MBIM_REGSTATE_UNKNOWN;
 	sc->sc_info.pin_attempts_left = UMB_VALUE_UNKNOWN;
