@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.95 2018/07/26 15:46:09 maxv Exp $
+# $NetBSD: ALL,v 1.96 2018/08/01 18:36:13 khorben Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"ALL-$Revision: 1.95 $"
+#ident		"ALL-$Revision: 1.96 $"
 
 maxusers	64		# estimated number of users
 
@@ -1222,6 +1222,7 @@ cue*	at uhub? port ?		# CATC USB-EL1201A based adapters
 kue*	at uhub? port ?		# Kawasaki LSI KL5KUSB101B based adapters
 #mos*	at uhub? port ?		# Moschip MCS7730/MCS7830/MCS7832 based adapters
 udav*	at uhub? port ?		# Davicom DM9601 based adapters
+umb*	at uhub? port ?		# Mobile Broadband Interface Model (EXPERIMENTAL)
 url*	at uhub? port ?		# Realtek RTL8150L based adapters
 urndis* at uhub? port ? 	# Microsoft RNDIS specification
 
