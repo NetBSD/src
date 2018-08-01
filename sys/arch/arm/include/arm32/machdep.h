@@ -1,7 +1,7 @@
-/* $NetBSD: machdep.h,v 1.22 2018/07/15 05:16:41 maxv Exp $ */
+/* $NetBSD: machdep.h,v 1.23 2018/08/01 13:48:00 skrll Exp $ */
 
-#ifndef _ARM32_BOOT_MACHDEP_H_
-#define _ARM32_BOOT_MACHDEP_H_
+#ifndef _ARM32_MACHDEP_H_
+#define _ARM32_MACHDEP_H_
 
 /* Define various stack sizes in pages */
 #ifndef IRQ_STACK_SIZE
