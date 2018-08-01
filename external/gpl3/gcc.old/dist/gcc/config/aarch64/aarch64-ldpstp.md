@@ -1,5 +1,5 @@
 ;; AArch64 ldp/stp peephole optimizations.
-;; Copyright (C) 2014-2015 Free Software Foundation, Inc.
+;; Copyright (C) 2014-2016 Free Software Foundation, Inc.
 ;; Contributed by ARM Ltd.
 ;;
 ;; This file is part of GCC.
@@ -80,9 +80,9 @@
 
 (define_peephole2
   [(set (match_operand:GPF 0 "aarch64_mem_pair_operand" "")
-	(match_operand:GPF 1 "register_operand" ""))
+	(match_operand:GPF 1 "aarch64_reg_or_fp_zero" ""))
    (set (match_operand:GPF 2 "memory_operand" "")
-	(match_operand:GPF 3 "register_operand" ""))]
+	(match_operand:GPF 3 "aarch64_reg_or_fp_zero" ""))]
   "aarch64_operands_ok_for_ldpstp (operands, false, <MODE>mode)"
   [(parallel [(set (match_dup 0) (match_dup 1))
 	      (set (match_dup 2) (match_dup 3))])]
@@ -97,6 +97,47 @@
       std::swap (operands[1], operands[3]);
     }
 })
+
+(define_peephole2
+  [(set (match_operand:VD 0 "register_operand" "")
+	(match_operand:VD 1 "aarch64_mem_pair_operand" ""))
+   (set (match_operand:VD 2 "register_operand" "")
+	(match_operand:VD 3 "memory_operand" ""))]
+  "aarch64_operands_ok_for_ldpstp (operands, true, <MODE>mode)"
+  [(parallel [(set (match_dup 0) (match_dup 1))
+	      (set (match_dup 2) (match_dup 3))])]
+{
+  rtx base, offset_1, offset_2;
+
+  extract_base_offset_in_addr (operands[1], &base, &offset_1);
+  extract_base_offset_in_addr (operands[3], &base, &offset_2);
+  if (INTVAL (offset_1) > INTVAL (offset_2))
+    {
+      std::swap (operands[0], operands[2]);
+      std::swap (operands[1], operands[3]);
+    }
+})
+
+(define_peephole2
+  [(set (match_operand:VD 0 "aarch64_mem_pair_operand" "")
+	(match_operand:VD 1 "register_operand" ""))
+   (set (match_operand:VD 2 "memory_operand" "")
+	(match_operand:VD 3 "register_operand" ""))]
+  "TARGET_SIMD && aarch64_operands_ok_for_ldpstp (operands, false, <MODE>mode)"
+  [(parallel [(set (match_dup 0) (match_dup 1))
+	      (set (match_dup 2) (match_dup 3))])]
+{
+  rtx base, offset_1, offset_2;
+
+  extract_base_offset_in_addr (operands[0], &base, &offset_1);
+  extract_base_offset_in_addr (operands[2], &base, &offset_2);
+  if (INTVAL (offset_1) > INTVAL (offset_2))
+    {
+      std::swap (operands[0], operands[2]);
+      std::swap (operands[1], operands[3]);
+    }
+})
+
 
 ;; Handle sign/zero extended consecutive load/store.
 
@@ -308,13 +349,13 @@
 (define_peephole2
   [(match_scratch:DI 8 "r")
    (set (match_operand:GPF 0 "memory_operand" "")
-	(match_operand:GPF 1 "aarch64_reg_or_zero" ""))
+	(match_operand:GPF 1 "aarch64_reg_or_fp_zero" ""))
    (set (match_operand:GPF 2 "memory_operand" "")
-	(match_operand:GPF 3 "aarch64_reg_or_zero" ""))
+	(match_operand:GPF 3 "aarch64_reg_or_fp_zero" ""))
    (set (match_operand:GPF 4 "memory_operand" "")
-	(match_operand:GPF 5 "aarch64_reg_or_zero" ""))
+	(match_operand:GPF 5 "aarch64_reg_or_fp_zero" ""))
    (set (match_operand:GPF 6 "memory_operand" "")
-	(match_operand:GPF 7 "aarch64_reg_or_zero" ""))
+	(match_operand:GPF 7 "aarch64_reg_or_fp_zero" ""))
    (match_dup 8)]
   "aarch64_operands_adjust_ok_for_ldpstp (operands, false, <MODE>mode)"
   [(const_int 0)]
