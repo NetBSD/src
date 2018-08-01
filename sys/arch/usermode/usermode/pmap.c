@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.108 2018/08/01 09:43:17 reinoud Exp $ */
+/* $NetBSD: pmap.c,v 1.109 2018/08/01 09:44:31 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@NetBSD.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.108 2018/08/01 09:43:17 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.109 2018/08/01 09:44:31 reinoud Exp $");
 
 #include "opt_memsize.h"
 #include "opt_kmempages.h"
@@ -660,7 +660,6 @@ pmap_fault(pmap_t pmap, vaddr_t va, vm_prot_t *atype)
 
 	/* not known! then it must be UVM's work */
 	if (pv == NULL) {
-thunk_printf("%s: no mapping yet for %p\n", __func__, (void *) va);
 		thunk_printf_debug("%s: no mapping yet\n", __func__);
 		*atype = VM_PROT_READ;		/* assume it was a read */
 		return false;
