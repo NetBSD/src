@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_TINY,v 1.156 2017/11/06 02:57:18 rin Exp $
+#	$NetBSD: INSTALL_TINY,v 1.157 2018/08/01 16:59:10 maxv Exp $
 #
 #	This kernel should be derived from INSTALL (which is derived
 #	from GENERIC) with some features commented out.
@@ -485,7 +485,6 @@ pseudo-device	md			# memory disk device (ramdisk)
 
 # network pseudo-devices
 #pseudo-device	bpfilter		# Berkeley packet filter
-#pseudo-device	ipfilter		# IP filter (firewall) and NAT
 pseudo-device	loop			# network loopback
 #pseudo-device	ppp			# Point-to-Point Protocol
 #pseudo-device	sl			# Serial Line IP
