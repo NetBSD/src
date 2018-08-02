@@ -1,4 +1,4 @@
-// Copyright (C) 1997-2015 Free Software Foundation, Inc.
+// Copyright (C) 1997-2016 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -23,7 +23,7 @@
 #define _GLIBCXX_USE_CXX11_ABI 1
 #include <clocale>
 #include <cstring>
-#include <cstdlib>     // For getenv, free.
+#include <cstdlib>     // For free.
 #include <cctype>
 #include <cwctype>     // For towupper, etc.
 #include <locale>

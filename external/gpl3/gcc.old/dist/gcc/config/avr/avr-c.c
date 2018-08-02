@@ -1,4 +1,4 @@
-/* Copyright (C) 2009-2015 Free Software Foundation, Inc.
+/* Copyright (C) 2009-2016 Free Software Foundation, Inc.
    Contributed by Anatoly Sokolov (aesok@post.ru)
 
    This file is part of GCC.
@@ -22,22 +22,9 @@
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
-#include "tm.h"
-#include "tm_p.h"
-#include "cpplib.h"
-#include "hash-set.h"
-#include "machmode.h"
-#include "vec.h"
-#include "double-int.h"
-#include "input.h"
-#include "alias.h"
-#include "symtab.h"
-#include "wide-int.h"
-#include "inchash.h"
-#include "tree.h"
-#include "stor-layout.h"
 #include "target.h"
 #include "c-family/c-common.h"
+#include "stor-layout.h"
 #include "langhooks.h"
 
 
