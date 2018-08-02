@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf2.c,v 1.32 2018/04/29 07:13:10 maxv Exp $	*/
+/*	$NetBSD: uipc_mbuf2.c,v 1.33 2018/08/02 04:28:56 msaitoh Exp $	*/
 /*	$KAME: uipc_mbuf2.c,v 1.29 2001/02/14 13:42:10 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf2.c,v 1.32 2018/04/29 07:13:10 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf2.c,v 1.33 2018/08/02 04:28:56 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -118,7 +118,12 @@ m_pulldown(struct mbuf *m, int off, int len, int *offp)
 	 * The target data is on <n, off>. If we got enough data on the mbuf
 	 * "n", we're done.
 	 */
+#ifdef __NO_STRICT_ALIGNMENT
 	if ((off == 0 || offp) && len <= n->m_len - off && !sharedcluster)
+#else
+	if ((off == 0 || offp) && len <= n->m_len - off && !sharedcluster &&
+	    ALIGNED_POINTER((mtod(n, char *) + off), uint32_t))
+#endif
 		goto ok;
 
 	/*
@@ -180,6 +185,9 @@ m_pulldown(struct mbuf *m, int off, int len, int *offp)
 		goto ok;
 	}
 	if ((off == 0 || offp) && M_LEADINGSPACE(n->m_next) >= hlen &&
+#ifndef __NO_STRICT_ALIGNMENT
+	    ALIGNED_POINTER((n->m_next->m_data - hlen), uint32_t) &&
+#endif
 	    !sharedcluster && n->m_next->m_len >= tlen) {
 		n->m_next->m_data -= hlen;
 		n->m_next->m_len += hlen;
