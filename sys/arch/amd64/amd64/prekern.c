@@ -1,4 +1,4 @@
-/*	$NetBSD: prekern.c,v 1.2 2018/08/02 16:58:00 maxv Exp $	*/
+/*	$NetBSD: prekern.c,v 1.3 2018/08/02 17:18:00 maxv Exp $	*/
 
 /*
  * Copyright (c) 2017 The NetBSD Foundation, Inc. All rights reserved.
@@ -46,7 +46,10 @@
 #include <dev/isa/isareg.h>
 #include <machine/isa_machdep.h>
 
+#define PREKERN_API_VERSION	1
+
 struct prekern_args {
+	int version;
 	int boothowto;
 	void *bootinfo;
 	void *bootspace;
@@ -122,6 +125,10 @@ start_prekern(struct prekern_args *pkargs)
 {
 	paddr_t first_avail;
 
+	if (pkargs->version != PREKERN_API_VERSION) {
+		return -1;
+	}
+
 	prekern_copy_args(pkargs);
 	first_avail = pkargs->first_avail;
 
@@ -134,5 +141,5 @@ start_prekern(struct prekern_args *pkargs)
 
 	panic("main returned");
 
-	return -1;
+	return 0;
 }
