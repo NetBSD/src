@@ -1,5 +1,5 @@
 /* Definitions for GCC.  Part of the machine description for CRIS.
-   Copyright (C) 1998-2015 Free Software Foundation, Inc.
+   Copyright (C) 1998-2016 Free Software Foundation, Inc.
    Contributed by Axis Communications.  Written by Hans-Peter Nilsson.
 
 This file is part of GCC.
@@ -134,7 +134,7 @@ extern int cris_cpu_version;
    %{!metrax*:\
     %{!mcpu=*:\
      %{!mtune=*:-D__tune_v" CRIS_DEFAULT_TUNE "}\
-     -D__arch_v"CRIS_DEFAULT_TUNE\
+     -D__arch_v" CRIS_DEFAULT_TUNE \
    " -D__CRIS_arch_version=" CRIS_DEFAULT_TUNE "}}}"
 #endif
 
@@ -620,7 +620,7 @@ enum reg_class
 
 /* Node: Frame Layout */
 
-#define STACK_GROWS_DOWNWARD
+#define STACK_GROWS_DOWNWARD 1
 #define FRAME_GROWS_DOWNWARD 1
 
 /* It seems to be indicated in the code (at least 2.1) that this is

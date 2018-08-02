@@ -1,11 +1,16 @@
-#	$NetBSD: Makefile.hacks,v 1.5 2017/07/23 01:11:47 mrg Exp $
+#	$NetBSD: Makefile.hacks,v 1.6 2018/08/02 00:03:32 mrg Exp $
 
 # some random crap we need in a few places
 
-.if ${MACHINE_CPU} == "mips"
+.if ${MACHINE_CPU} == "mips" || ${MACHINE} == "amd64" || ${MACHINE} == "i386"
 insn-constants.h:
 	${_MKTARGET_CREATE}
+.if ${MACHINE_CPU} == "mips"
 	echo "enum processor { on, off };" > ${.TARGET}
+.endif
+.if ${MACHINE} == "amd64" || ${MACHINE} == "i386"
+	echo "#define FIRST_PSEUDO_REG 81" > ${.TARGET}
+.endif
 DPSRCS+=	insn-constants.h
 CLEANFILES+=	insn-constants.h
 .else

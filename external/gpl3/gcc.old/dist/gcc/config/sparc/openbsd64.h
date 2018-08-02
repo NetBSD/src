@@ -1,5 +1,5 @@
 /* Configuration file for sparc64 OpenBSD target.
-   Copyright (C) 1999-2015 Free Software Foundation, Inc.
+   Copyright (C) 1999-2016 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -46,7 +46,7 @@ along with GCC; see the file COPYING3.  If not see
 
 #undef ASM_SPEC
 #define ASM_SPEC "\
--s %{fpic|fPIC|fpie|fPIE:-K PIC} \
+-s %{" FPIE_OR_FPIC_SPEC ":-K PIC} \
 %(asm_cpu) %(asm_arch) \
 "
 

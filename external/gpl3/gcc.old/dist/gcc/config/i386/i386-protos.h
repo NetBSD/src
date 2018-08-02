@@ -1,5 +1,5 @@
 /* Definitions of target machine for GCC for IA-32.
-   Copyright (C) 1988-2015 Free Software Foundation, Inc.
+   Copyright (C) 1988-2016 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -44,6 +44,8 @@ extern bool ix86_use_pseudo_pic_reg (void);
 
 extern void ix86_reset_previous_fndecl (void);
 
+extern bool ix86_using_red_zone (void);
+
 #ifdef RTX_CODE
 extern int standard_80387_constant_p (rtx);
 extern const char *standard_80387_constant_opcode (rtx);
@@ -67,8 +69,6 @@ extern bool ix86_expand_set_or_movmem (rtx, rtx, rtx, rtx, rtx, rtx,
 extern bool constant_address_p (rtx);
 extern bool legitimate_pic_operand_p (rtx);
 extern bool legitimate_pic_address_disp_p (rtx);
-extern bool ix86_legitimize_reload_address (rtx, machine_mode,
-					    int, int, int);
 extern void print_reg (rtx, int, FILE*);
 extern void ix86_print_operand (FILE *, rtx, int);
 
@@ -131,6 +131,10 @@ extern bool ix86_expand_fp_vcond (rtx[]);
 extern bool ix86_expand_int_vcond (rtx[]);
 extern void ix86_expand_vec_perm (rtx[]);
 extern bool ix86_expand_vec_perm_const (rtx[]);
+extern bool ix86_expand_mask_vec_cmp (rtx[]);
+extern bool ix86_expand_int_vec_cmp (rtx[]);
+extern bool ix86_expand_fp_vec_cmp (rtx[]);
+extern void ix86_expand_sse_movcc (rtx, rtx, rtx, rtx);
 extern void ix86_expand_sse_unpack (rtx, rtx, bool, bool);
 extern bool ix86_expand_int_addcc (rtx[]);
 extern rtx ix86_expand_call (rtx, rtx, rtx, rtx, rtx, bool);
@@ -143,6 +147,7 @@ extern void ix86_split_ashr (rtx *, rtx, machine_mode);
 extern void ix86_split_lshr (rtx *, rtx, machine_mode);
 extern rtx ix86_find_base_term (rtx);
 extern bool ix86_check_movabs (rtx, int);
+extern bool ix86_check_no_addr_space (rtx);
 extern void ix86_split_idivmod (machine_mode, rtx[], bool);
 
 extern rtx assign_386_stack_local (machine_mode, enum ix86_stack_slot);
@@ -225,6 +230,7 @@ extern void ix86_expand_vector_extract (bool, rtx, rtx, int);
 extern void ix86_expand_reduc (rtx (*)(rtx, rtx, rtx), rtx, rtx);
 
 extern void ix86_expand_vec_extract_even_odd (rtx, rtx, rtx, unsigned);
+extern bool ix86_expand_pextr (rtx *);
 extern bool ix86_expand_pinsr (rtx *);
 extern void ix86_expand_mul_widen_evenodd (rtx, rtx, rtx, bool, bool);
 extern void ix86_expand_mul_widen_hilo (rtx, rtx, rtx, bool, bool);
@@ -279,12 +285,11 @@ extern rtx maybe_get_pool_constant (rtx);
 extern char internal_label_prefix[16];
 extern int internal_label_prefix_len;
 
-enum ix86_address_seg { SEG_DEFAULT, SEG_FS, SEG_GS };
 struct ix86_address
 {
   rtx base, index, disp;
   HOST_WIDE_INT scale;
-  enum ix86_address_seg seg;
+  addr_space_t seg;
 };
 
 extern int ix86_decompose_address (rtx, struct ix86_address *);
@@ -308,6 +313,8 @@ extern enum attr_cpu ix86_schedule;
 extern const char * ix86_output_call_insn (rtx_insn *insn, rtx call_op);
 extern const char * ix86_output_indirect_jmp (rtx call_op, bool ret_p);
 extern const char * ix86_output_function_return (bool long_p);
+extern bool ix86_operands_ok_for_move_multiple (rtx *operands, bool load,
+						enum machine_mode mode);
 
 #ifdef RTX_CODE
 /* Target data for multipass lookahead scheduling.
@@ -326,3 +333,6 @@ struct ix86_first_cycle_multipass_data_
 # define TARGET_SCHED_FIRST_CYCLE_MULTIPASS_DATA_T	\
   struct ix86_first_cycle_multipass_data_
 #endif /* RTX_CODE */
+
+const addr_space_t ADDR_SPACE_SEG_FS = 1;
+const addr_space_t ADDR_SPACE_SEG_GS = 2;

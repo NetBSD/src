@@ -1,5 +1,5 @@
 /* Integrated Register Allocator (IRA) entry point.
-   Copyright (C) 2006-2015 Free Software Foundation, Inc.
+   Copyright (C) 2006-2016 Free Software Foundation, Inc.
    Contributed by Vladimir Makarov <vmakarov@redhat.com>.
 
 This file is part of GCC.
@@ -366,61 +366,31 @@ along with GCC; see the file COPYING3.  If not see
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
-#include "tm.h"
-#include "regs.h"
-#include "hash-set.h"
-#include "machmode.h"
-#include "vec.h"
-#include "double-int.h"
-#include "input.h"
-#include "alias.h"
-#include "symtab.h"
-#include "wide-int.h"
-#include "inchash.h"
-#include "tree.h"
-#include "rtl.h"
-#include "tm_p.h"
+#include "backend.h"
 #include "target.h"
-#include "flags.h"
-#include "obstack.h"
-#include "bitmap.h"
-#include "hard-reg-set.h"
-#include "predict.h"
-#include "function.h"
-#include "dominance.h"
-#include "cfg.h"
+#include "rtl.h"
+#include "tree.h"
+#include "df.h"
+#include "tm_p.h"
+#include "insn-config.h"
+#include "regs.h"
+#include "ira.h"
+#include "ira-int.h"
+#include "diagnostic-core.h"
 #include "cfgrtl.h"
 #include "cfgbuild.h"
 #include "cfgcleanup.h"
-#include "basic-block.h"
-#include "df.h"
-#include "hashtab.h"
-#include "statistics.h"
-#include "real.h"
-#include "fixed-value.h"
-#include "insn-config.h"
-#include "expmed.h"
-#include "dojump.h"
-#include "explow.h"
-#include "calls.h"
-#include "emit-rtl.h"
-#include "varasm.h"
-#include "stmt.h"
 #include "expr.h"
-#include "recog.h"
-#include "params.h"
 #include "tree-pass.h"
 #include "output.h"
-#include "except.h"
 #include "reload.h"
-#include "diagnostic-core.h"
-#include "ggc.h"
-#include "ira-int.h"
+#include "cfgloop.h"
 #include "lra.h"
 #include "dce.h"
 #include "dbgcnt.h"
 #include "rtl-iter.h"
 #include "shrink-wrap.h"
+#include "print-rtl.h"
 
 struct target_ira default_target_ira;
 struct target_ira_int default_target_ira_int;
@@ -1395,9 +1365,8 @@ setup_reg_class_relations (void)
 
 /* Output all uniform and important classes into file F.  */
 static void
-print_unform_and_important_classes (FILE *f)
+print_uniform_and_important_classes (FILE *f)
 {
-  static const char *const reg_class_names[] = REG_CLASS_NAMES;
   int i, cl;
 
   fprintf (f, "Uniform classes:\n");
@@ -1422,7 +1391,6 @@ print_translated_classes (FILE *f, bool pressure_p)
   enum reg_class *class_translate = (pressure_p
 				     ? ira_pressure_class_translate
 				     : ira_allocno_class_translate);
-  static const char *const reg_class_names[] = REG_CLASS_NAMES;
   int i;
 
   fprintf (f, "%s classes:\n", pressure_p ? "Pressure" : "Allocno");
@@ -1439,7 +1407,7 @@ print_translated_classes (FILE *f, bool pressure_p)
 void
 ira_debug_allocno_classes (void)
 {
-  print_unform_and_important_classes (stderr);
+  print_uniform_and_important_classes (stderr);
   print_translated_classes (stderr, false);
   print_translated_classes (stderr, true);
 }
@@ -1767,9 +1735,9 @@ setup_prohibited_mode_move_regs (void)
   if (ira_prohibited_mode_move_regs_initialized_p)
     return;
   ira_prohibited_mode_move_regs_initialized_p = true;
-  test_reg1 = gen_rtx_REG (VOIDmode, 0);
-  test_reg2 = gen_rtx_REG (VOIDmode, 0);
-  move_pat = gen_rtx_SET (VOIDmode, test_reg1, test_reg2);
+  test_reg1 = gen_rtx_REG (word_mode, LAST_VIRTUAL_REGISTER + 1);
+  test_reg2 = gen_rtx_REG (word_mode, LAST_VIRTUAL_REGISTER + 2);
+  move_pat = gen_rtx_SET (test_reg1, test_reg2);
   move_insn = gen_rtx_INSN (VOIDmode, 0, 0, 0, move_pat, 0, -1, 0);
   for (i = 0; i < NUM_MACHINE_MODES; i++)
     {
@@ -1778,10 +1746,8 @@ setup_prohibited_mode_move_regs (void)
 	{
 	  if (! HARD_REGNO_MODE_OK (j, (machine_mode) i))
 	    continue;
-	  SET_REGNO_RAW (test_reg1, j);
-	  PUT_MODE (test_reg1, (machine_mode) i);
-	  SET_REGNO_RAW (test_reg2, j);
-	  PUT_MODE (test_reg2, (machine_mode) i);
+	  set_mode_and_regno (test_reg1, (machine_mode) i, j);
+	  set_mode_and_regno (test_reg2, (machine_mode) i, j);
 	  INSN_CODE (move_insn) = -1;
 	  recog_memoized (move_insn);
 	  if (INSN_CODE (move_insn) < 0)
@@ -1808,7 +1774,6 @@ ira_setup_alts (rtx_insn *insn, HARD_REG_SET &alts)
   int nop, nalt;
   bool curr_swapped;
   const char *p;
-  rtx op;
   int commutative = -1;
 
   extract_insn (insn);
@@ -1835,7 +1800,13 @@ ira_setup_alts (rtx_insn *insn, HARD_REG_SET &alts)
 	    {
 	      insn_constraints[nop * recog_data.n_alternatives + nalt] = p;
 	      while (*p && *p != ',')
-		p++;
+		{
+		  /* We only support one commutative marker, the first
+		     one.  We already set commutative above.  */
+		  if (*p == '%' && commutative < 0)
+		    commutative = nop;
+		  p++;
+		}
 	      if (*p)
 		p++;
 	    }
@@ -1850,7 +1821,7 @@ ira_setup_alts (rtx_insn *insn, HARD_REG_SET &alts)
 	    {
 	      int c, len;
 
-	      op = recog_data.operand[nop];
+	      rtx op = recog_data.operand[nop];
 	      p = insn_constraints[nop * recog_data.n_alternatives + nalt];
 	      if (*p == 0 || *p == ',')
 		continue;
@@ -1866,11 +1837,7 @@ ira_setup_alts (rtx_insn *insn, HARD_REG_SET &alts)
 		    break;
 		  
 		  case '%':
-		    /* We only support one commutative marker, the
-		       first one.  We already set commutative
-		       above.  */
-		    if (commutative < 0)
-		      commutative = nop;
+		    /* The commutative modifier is handled above.  */
 		    break;
 
 		  case '0':  case '1':  case '2':  case '3':  case '4':
@@ -1901,6 +1868,7 @@ ira_setup_alts (rtx_insn *insn, HARD_REG_SET &alts)
 
 			case CT_ADDRESS:
 			case CT_MEMORY:
+			case CT_SPECIAL_MEMORY:
 			  goto op_success;
 
 			case CT_FIXED_FORM:
@@ -1921,12 +1889,11 @@ ira_setup_alts (rtx_insn *insn, HARD_REG_SET &alts)
 	}
       if (commutative < 0)
 	break;
+      /* Swap forth and back to avoid changing recog_data.  */
+      std::swap (recog_data.operand[commutative],
+		 recog_data.operand[commutative + 1]);
       if (curr_swapped)
 	break;
-      op = recog_data.operand[commutative];
-      recog_data.operand[commutative] = recog_data.operand[commutative + 1];
-      recog_data.operand[commutative + 1] = op;
-
     }
 }
 
@@ -2045,8 +2012,8 @@ decrease_live_ranges_number (void)
 {
   basic_block bb;
   rtx_insn *insn;
-  rtx set, src, dest, dest_death, q, note;
-  rtx_insn *p;
+  rtx set, src, dest, dest_death, note;
+  rtx_insn *p, *q;
   int sregno, dregno;
 
   if (! flag_expensive_optimizations)
@@ -2344,19 +2311,20 @@ ira_setup_eliminable_regset (void)
       else
 	df_set_regs_ever_live (eliminables[i].from, true);
     }
-#if !HARD_FRAME_POINTER_IS_FRAME_POINTER
-  if (!TEST_HARD_REG_BIT (crtl->asm_clobbers, HARD_FRAME_POINTER_REGNUM))
+  if (!HARD_FRAME_POINTER_IS_FRAME_POINTER)
     {
-      SET_HARD_REG_BIT (eliminable_regset, HARD_FRAME_POINTER_REGNUM);
-      if (frame_pointer_needed)
-	SET_HARD_REG_BIT (ira_no_alloc_regs, HARD_FRAME_POINTER_REGNUM);
+      if (!TEST_HARD_REG_BIT (crtl->asm_clobbers, HARD_FRAME_POINTER_REGNUM))
+	{
+	  SET_HARD_REG_BIT (eliminable_regset, HARD_FRAME_POINTER_REGNUM);
+	  if (frame_pointer_needed)
+	    SET_HARD_REG_BIT (ira_no_alloc_regs, HARD_FRAME_POINTER_REGNUM);
+	}
+      else if (frame_pointer_needed)
+	error ("%s cannot be used in asm here",
+	       reg_names[HARD_FRAME_POINTER_REGNUM]);
+      else
+	df_set_regs_ever_live (HARD_FRAME_POINTER_REGNUM, true);
     }
-  else if (frame_pointer_needed)
-    error ("%s cannot be used in asm here",
-	   reg_names[HARD_FRAME_POINTER_REGNUM]);
-  else
-    df_set_regs_ever_live (HARD_FRAME_POINTER_REGNUM, true);
-#endif
 
 #else
   if (!TEST_HARD_REG_BIT (crtl->asm_clobbers, HARD_FRAME_POINTER_REGNUM))
@@ -2508,12 +2476,12 @@ calculate_allocation_cost (void)
   if (internal_flag_ira_verbose > 0 && ira_dump_file != NULL)
     {
       fprintf (ira_dump_file,
-	       "+++Costs: overall %"PRId64
-	       ", reg %"PRId64
-	       ", mem %"PRId64
-	       ", ld %"PRId64
-	       ", st %"PRId64
-	       ", move %"PRId64,
+	       "+++Costs: overall %" PRId64
+	       ", reg %" PRId64
+	       ", mem %" PRId64
+	       ", ld %" PRId64
+	       ", st %" PRId64
+	       ", move %" PRId64,
 	       ira_overall_cost, ira_reg_cost, ira_mem_cost,
 	       ira_load_cost, ira_store_cost, ira_shuffle_cost);
       fprintf (ira_dump_file, "\n+++       move loops %d, new jumps %d\n",
@@ -2711,20 +2679,22 @@ fix_reg_equiv_init (void)
 {
   int max_regno = max_reg_num ();
   int i, new_regno, max;
-  rtx x, prev, next, insn, set;
+  rtx set;
+  rtx_insn_list *x, *next, *prev;
+  rtx_insn *insn;
 
   if (max_regno_before_ira < max_regno)
     {
       max = vec_safe_length (reg_equivs);
       grow_reg_equivs ();
       for (i = FIRST_PSEUDO_REGISTER; i < max; i++)
-	for (prev = NULL_RTX, x = reg_equiv_init (i);
+	for (prev = NULL, x = reg_equiv_init (i);
 	     x != NULL_RTX;
 	     x = next)
 	  {
-	    next = XEXP (x, 1);
-	    insn = XEXP (x, 0);
-	    set = single_set (as_a <rtx_insn *> (insn));
+	    next = x->next ();
+	    insn = x->insn ();
+	    set = single_set (insn);
 	    ira_assert (set != NULL_RTX
 			&& (REG_P (SET_DEST (set)) || REG_P (SET_SRC (set))));
 	    if (REG_P (SET_DEST (set))
@@ -3255,13 +3225,18 @@ memref_referenced_p (rtx memref, rtx x)
 }
 
 /* TRUE if some insn in the range (START, END] references a memory location
-   that would be affected by a store to MEMREF.  */
+   that would be affected by a store to MEMREF.
+
+   Callers should not call this routine if START is after END in the
+   RTL chain.  */
+
 static int
 memref_used_between_p (rtx memref, rtx_insn *start, rtx_insn *end)
 {
   rtx_insn *insn;
 
-  for (insn = NEXT_INSN (start); insn != NEXT_INSN (end);
+  for (insn = NEXT_INSN (start);
+       insn && insn != NEXT_INSN (end);
        insn = NEXT_INSN (insn))
     {
       if (!NONDEBUG_INSN_P (insn))
@@ -3275,6 +3250,7 @@ memref_used_between_p (rtx memref, rtx_insn *start, rtx_insn *end)
 	return 1;
     }
 
+  gcc_assert (insn == NEXT_INSN (end));
   return 0;
 }
 
@@ -3367,6 +3343,7 @@ update_equiv_regs (void)
   int loop_depth;
   bitmap cleared_regs;
   bool *pdx_subregs;
+  bitmap_head seen_insns;
 
   /* Use pdx_subregs to show whether a reg is used in a paradoxical
      subreg.  */
@@ -3636,10 +3613,13 @@ update_equiv_regs (void)
   /* A second pass, to gather additional equivalences with memory.  This needs
      to be done after we know which registers we are going to replace.  */
 
+  bitmap_initialize (&seen_insns, NULL);
   for (insn = get_insns (); insn; insn = NEXT_INSN (insn))
     {
       rtx set, src, dest;
       unsigned regno;
+
+      bitmap_set_bit (&seen_insns, INSN_UID (insn));
 
       if (! INSN_P (insn))
 	continue;
@@ -3681,6 +3661,7 @@ update_equiv_regs (void)
 	  rtx_insn *init_insn =
 	    as_a <rtx_insn *> (XEXP (reg_equiv[regno].init_insns, 0));
 	  if (validate_equiv_mem (init_insn, src, dest)
+	      && bitmap_bit_p (&seen_insns, INSN_UID (init_insn))
 	      && ! memref_used_between_p (dest, init_insn, insn)
 	      /* Attaching a REG_EQUIV note will fail if INIT_INSN has
 		 multiple sets.  */
@@ -3691,9 +3672,15 @@ update_equiv_regs (void)
 	      ira_reg_equiv[regno].init_insns
 		= gen_rtx_INSN_LIST (VOIDmode, insn, NULL_RTX);
 	      df_notes_rescan (init_insn);
+	      if (dump_file)
+		fprintf (dump_file,
+			 "Adding REG_EQUIV to insn %d for source of insn %d\n",
+			 INSN_UID (init_insn),
+			 INSN_UID (insn));
 	    }
 	}
     }
+  bitmap_clear (&seen_insns);
 
   cleared_regs = BITMAP_ALLOC (NULL);
   /* Now scan all regs killed in an insn to see if any of them are
@@ -4413,7 +4400,7 @@ rtx_moveable_p (rtx *loc, enum op_type type)
       return rtx_moveable_p (&SET_DEST (x), OP_OUT);
 
     case UNSPEC_VOLATILE:
-      /* It is a bad idea to consider insns with with such rtl
+      /* It is a bad idea to consider insns with such rtl
 	 as moveable ones.  The insn scheduler also considers them as barrier
 	 for a reason.  */
       return false;
@@ -4674,15 +4661,14 @@ find_moveable_pseudos (void)
 			   ? " (no unique first use)" : "");
 		continue;
 	      }
-#ifdef HAVE_cc0
-	    if (reg_referenced_p (cc0_rtx, PATTERN (closest_use)))
+	    if (HAVE_cc0 && reg_referenced_p (cc0_rtx, PATTERN (closest_use)))
 	      {
 		if (dump_file)
 		  fprintf (dump_file, "Reg %d: closest user uses cc0\n",
 			   regno);
 		continue;
 	      }
-#endif
+
 	    bitmap_set_bit (&interesting, regno);
 	    /* If we get here, we know closest_use is a non-NULL insn
 	       (as opposed to const_0_rtx).  */
@@ -4757,10 +4743,7 @@ find_moveable_pseudos (void)
 	    {
 	      if (bitmap_bit_p (def_bb_moveable, regno)
 		  && !control_flow_insn_p (use_insn)
-#ifdef HAVE_cc0
-		  && !sets_cc0_p (use_insn)
-#endif
-		  )
+		  && (!HAVE_cc0 || !sets_cc0_p (use_insn)))
 		{
 		  if (modified_between_p (DF_REF_REG (use), def_insn, use_insn))
 		    {
@@ -5008,26 +4991,41 @@ split_live_ranges_for_shrink_wrap (void)
       if (!dest || dest == pic_offset_table_rtx)
 	continue;
 
-      rtx newreg = NULL_RTX;
+      bool need_newreg = false;
       df_ref use, next;
       for (use = DF_REG_USE_CHAIN (REGNO (dest)); use; use = next)
 	{
 	  rtx_insn *uin = DF_REF_INSN (use);
 	  next = DF_REF_NEXT_REG (use);
 
+	  if (DEBUG_INSN_P (uin))
+	    continue;
+
 	  basic_block ubb = BLOCK_FOR_INSN (uin);
 	  if (ubb == call_dom
 	      || dominated_by_p (CDI_DOMINATORS, ubb, call_dom))
 	    {
-	      if (!newreg)
-		newreg = ira_create_new_reg (dest);
-	      validate_change (uin, DF_REF_REAL_LOC (use), newreg, true);
+	      need_newreg = true;
+	      break;
 	    }
 	}
 
-      if (newreg)
+      if (need_newreg)
 	{
-	  rtx new_move = gen_move_insn (newreg, dest);
+	  rtx newreg = ira_create_new_reg (dest);
+
+	  for (use = DF_REG_USE_CHAIN (REGNO (dest)); use; use = next)
+	    {
+	      rtx_insn *uin = DF_REF_INSN (use);
+	      next = DF_REF_NEXT_REG (use);
+
+	      basic_block ubb = BLOCK_FOR_INSN (uin);
+	      if (ubb == call_dom
+		  || dominated_by_p (CDI_DOMINATORS, ubb, call_dom))
+		validate_change (uin, DF_REF_REAL_LOC (use), newreg, true);
+	    }
+
+	  rtx_insn *new_move = gen_move_insn (newreg, dest);
 	  emit_insn_after (new_move, bb_note (call_dom));
 	  if (dump_file)
 	    {
@@ -5211,9 +5209,9 @@ ira (FILE *f)
     df_remove_problem (df_live);
   gcc_checking_assert (df_live == NULL);
 
-#ifdef ENABLE_CHECKING
-  df->changeable_flags |= DF_VERIFY_SCHEDULED;
-#endif
+  if (flag_checking)
+    df->changeable_flags |= DF_VERIFY_SCHEDULED;
+
   df_analyze ();
 
   init_reg_equiv ();
@@ -5450,9 +5448,8 @@ do_reload (void)
     {
       df_set_flags (DF_NO_INSN_RESCAN);
       build_insn_chain ();
-      
-      need_dce = reload (get_insns (), ira_conflicts_p);
 
+      need_dce = reload (get_insns (), ira_conflicts_p);
     }
 
   timevar_pop (TV_RELOAD);
@@ -5467,7 +5464,7 @@ do_reload (void)
 
   if (internal_flag_ira_verbose > 0 && ira_dump_file != NULL
       && overall_cost_before != ira_overall_cost)
-    fprintf (ira_dump_file, "+++Overall after reload %"PRId64 "\n",
+    fprintf (ira_dump_file, "+++Overall after reload %" PRId64 "\n",
 	     ira_overall_cost);
 
   flag_ira_share_spill_slots = saved_flag_ira_share_spill_slots;
@@ -5528,6 +5525,20 @@ do_reload (void)
       error_at (DECL_SOURCE_LOCATION (current_function_decl),
                 "frame pointer required, but reserved");
       inform (DECL_SOURCE_LOCATION (decl), "for %qD", decl);
+    }
+
+  /* If we are doing generic stack checking, give a warning if this
+     function's frame size is larger than we expect.  */
+  if (flag_stack_check == GENERIC_STACK_CHECK)
+    {
+      HOST_WIDE_INT size = get_frame_size () + STACK_CHECK_FIXED_FRAME_SIZE;
+
+      for (int i = 0; i < FIRST_PSEUDO_REGISTER; i++)
+	if (df_regs_ever_live_p (i) && !fixed_regs[i] && call_used_regs[i])
+	  size += UNITS_PER_WORD;
+
+      if (size > STACK_CHECK_MAX_FRAME_SIZE)
+	warning (0, "frame size too large for reliable stack checking");
     }
 
   if (pic_offset_table_regno != INVALID_REGNUM)

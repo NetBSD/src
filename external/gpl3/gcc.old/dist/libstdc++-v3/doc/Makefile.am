@@ -1,6 +1,6 @@
 ## Makefile for the doc subdirectory of the GNU C++ Standard library.
 ##
-## Copyright (C) 2008-2015 Free Software Foundation, Inc.
+## Copyright (C) 2008-2016 Free Software Foundation, Inc.
 ##
 ## This file is part of the libstdc++ version 3 distribution.
 ## Process this file with automake to produce Makefile.in.
@@ -257,6 +257,7 @@ stamp-latex-doxygen: ${doxygen_outdir}/latex
 # include asking a wizard to enlarge capacity. If this is the case,
 # find texmf.cnf and add a zero for pool_size, string_vacancies,
 # max_strings, and pool_free values.
+# Errors like "File `foo.sty' not found" mean a TeX package is missing.
 stamp-pdf-doxygen: stamp-latex-doxygen ${doxygen_outdir}/pdf
 	-(cd ${doxygen_outdir}/latex && $(MAKE) -i pdf;)
 	echo "Generating doxygen pdf file...";
@@ -265,6 +266,7 @@ stamp-pdf-doxygen: stamp-latex-doxygen ${doxygen_outdir}/pdf
 	  echo ":: PDF file is ${api_pdf}"; \
 	else \
 	  echo "... error"; \
+	  grep -F 'LaTeX Error' ${doxygen_outdir}/latex/refman.log; \
 	  exit 12; \
 	fi
 	$(STAMP) stamp-pdf-doxygen

@@ -1,5 +1,5 @@
 ;; Scheduling description for the Xilinx PowerPC 405 APU Floating Point Unit.
-;; Copyright (C) 2008-2015 Free Software Foundation, Inc.
+;; Copyright (C) 2008-2016 Free Software Foundation, Inc.
 ;; Contributed by Michael Eager (eager@eagercon.com).
 ;;
 ;; This file is part of GCC.
@@ -55,7 +55,7 @@
 
 (define_insn_reservation "fp-default" 2
   (and (and 
-        (eq_attr "type" "fp")
+        (eq_attr "type" "fp,fpsimple")
         (eq_attr "fp_type" "fp_default"))
        (eq_attr "cpu" "ppc405"))
   "Xfpu_issue*2")
@@ -67,14 +67,14 @@
 
 (define_insn_reservation "fp-addsub-s" 14
   (and (and
-        (eq_attr "type" "fp")
+        (eq_attr "type" "fp,fpsimple")
         (eq_attr "fp_type" "fp_addsub_s"))
        (eq_attr "cpu" "ppc405"))
   "Xfpu_issue*2,Xfpu_addsub")
 
 (define_insn_reservation "fp-addsub-d" 18
   (and (and
-        (eq_attr "type" "fp")
+        (eq_attr "type" "fp,fpsimple")
         (eq_attr "fp_type" "fp_addsub_d"))
        (eq_attr "cpu" "ppc405"))
   "Xfpu_issue*2,Xfpu_addsub")

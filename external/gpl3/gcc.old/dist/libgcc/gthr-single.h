@@ -1,6 +1,6 @@
 /* Threads compatibility routines for libgcc2 and libobjc.  */
 /* Compile this one with gcc.  */
-/* Copyright (C) 1997-2015 Free Software Foundation, Inc.
+/* Copyright (C) 1997-2016 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -35,7 +35,7 @@ typedef int __gthread_recursive_mutex_t;
 
 #define __GTHREAD_ONCE_INIT 0
 #define __GTHREAD_MUTEX_INIT 0
-#define __GTHREAD_MUTEX_INIT_FUNCTION(mx)
+#define __GTHREAD_MUTEX_INIT_FUNCTION(mx) do {} while (0)
 #define __GTHREAD_RECURSIVE_MUTEX_INIT 0
 
 #define UNUSED __attribute__((__unused__))

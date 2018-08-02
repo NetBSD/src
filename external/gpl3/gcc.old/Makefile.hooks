@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.hooks,v 1.4 2018/03/13 03:17:01 mrg Exp $
+#	$NetBSD: Makefile.hooks,v 1.5 2018/08/02 00:02:46 mrg Exp $
 
 #
 # Makefile fragment to build genhooks and *target-hooks*.h

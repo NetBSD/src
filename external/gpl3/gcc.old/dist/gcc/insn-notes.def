@@ -1,5 +1,5 @@
 /* Insn note definitions.
-   Copyright (C) 2004-2015 Free Software Foundation, Inc.
+   Copyright (C) 2004-2016 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -86,5 +86,9 @@ INSN_NOTE (CFI)
 /* When emitting dwarf2 frame information, contains the number of a debug
    label that should be emitted.  */
 INSN_NOTE (CFI_LABEL)
+
+/* This note indicates that the function context must be updated if
+   the Setjmp/Longjmp exception mechanism is used.  */
+INSN_NOTE (UPDATE_SJLJ_CONTEXT)
 
 #undef INSN_NOTE

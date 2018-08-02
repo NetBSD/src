@@ -1,6 +1,6 @@
 // Map implementation -*- C++ -*-
 
-// Copyright (C) 2001-2015 Free Software Foundation, Inc.
+// Copyright (C) 2001-2016 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -160,10 +160,9 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
        *  @brief  Default constructor creates no elements.
        */
       map()
-#if __cplusplus >= 201103L
-      noexcept(is_nothrow_default_constructible<allocator_type>::value
-               && is_nothrow_default_constructible<key_compare>::value)
-#endif
+      _GLIBCXX_NOEXCEPT_IF(
+	  is_nothrow_default_constructible<allocator_type>::value
+	  && is_nothrow_default_constructible<key_compare>::value)
       : _M_t() { }
 
       /**
@@ -593,6 +592,125 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
 	}
 #endif
 
+#if __cplusplus > 201402L
+#define __cpp_lib_map_try_emplace 201411
+      /**
+       *  @brief Attempts to build and insert a std::pair into the %map.
+       *
+       *  @param __k    Key to use for finding a possibly existing pair in
+       *                the map.
+       *  @param __args  Arguments used to generate the .second for a new pair 
+       *                instance.
+       *
+       *  @return  A pair, of which the first element is an iterator that points
+       *           to the possibly inserted pair, and the second is a bool that
+       *           is true if the pair was actually inserted.
+       *
+       *  This function attempts to build and insert a (key, value) %pair into
+       *  the %map.
+       *  A %map relies on unique keys and thus a %pair is only inserted if its
+       *  first element (the key) is not already present in the %map.
+       *  If a %pair is not inserted, this function has no effect.
+       *
+       *  Insertion requires logarithmic time.
+       */
+      template <typename... _Args>
+        pair<iterator, bool>
+        try_emplace(const key_type& __k, _Args&&... __args)
+        {
+          iterator __i = lower_bound(__k);
+          if (__i == end() || key_comp()(__k, (*__i).first))
+            {
+              __i = emplace_hint(__i, std::piecewise_construct,
+                                 std::forward_as_tuple(__k),
+                                 std::forward_as_tuple(
+                                   std::forward<_Args>(__args)...));
+              return {__i, true};
+            }
+          return {__i, false};
+        }
+
+      // move-capable overload
+      template <typename... _Args>
+        pair<iterator, bool>
+        try_emplace(key_type&& __k, _Args&&... __args)
+        {
+          iterator __i = lower_bound(__k);
+          if (__i == end() || key_comp()(__k, (*__i).first))
+            {
+              __i = emplace_hint(__i, std::piecewise_construct,
+                                 std::forward_as_tuple(std::move(__k)),
+                                 std::forward_as_tuple(
+                                   std::forward<_Args>(__args)...));
+              return {__i, true};
+            }
+          return {__i, false};
+        }
+
+      /**
+       *  @brief Attempts to build and insert a std::pair into the %map.
+       *
+       *  @param  __hint  An iterator that serves as a hint as to where the
+       *                  pair should be inserted.
+       *  @param __k    Key to use for finding a possibly existing pair in
+       *                the map.
+       *  @param __args  Arguments used to generate the .second for a new pair 
+       *                instance.
+       *  @return An iterator that points to the element with key of the
+       *          std::pair built from @a __args (may or may not be that
+       *          std::pair).
+       *
+       *  This function is not concerned about whether the insertion took place,
+       *  and thus does not return a boolean like the single-argument 
+       *  try_emplace() does. However, if insertion did not take place,
+       *  this function has no effect.
+       *  Note that the first parameter is only a hint and can potentially
+       *  improve the performance of the insertion process. A bad hint would
+       *  cause no gains in efficiency.
+       *
+       *  See
+       *  https://gcc.gnu.org/onlinedocs/libstdc++/manual/associative.html#containers.associative.insert_hints
+       *  for more on @a hinting.
+       *
+       *  Insertion requires logarithmic time (if the hint is not taken).
+       */
+      template <typename... _Args>
+        iterator
+        try_emplace(const_iterator __hint, const key_type& __k,
+                    _Args&&... __args)
+        {
+          iterator __i;
+          auto __true_hint = _M_t._M_get_insert_hint_unique_pos(__hint, __k);
+          if (__true_hint.second)
+            __i = emplace_hint(iterator(__true_hint.second),
+                               std::piecewise_construct,
+                               std::forward_as_tuple(__k),
+                               std::forward_as_tuple(
+                                 std::forward<_Args>(__args)...));
+          else
+            __i = iterator(__true_hint.first);
+          return __i;
+        }
+
+      // move-capable overload
+      template <typename... _Args>
+        iterator
+        try_emplace(const_iterator __hint, key_type&& __k, _Args&&... __args)
+        {
+          iterator __i;
+          auto __true_hint = _M_t._M_get_insert_hint_unique_pos(__hint, __k);
+          if (__true_hint.second)
+            __i = emplace_hint(iterator(__true_hint.second),
+                               std::piecewise_construct,
+                               std::forward_as_tuple(std::move(__k)),
+                               std::forward_as_tuple(
+                                 std::forward<_Args>(__args)...));
+          else
+            __i = iterator(__true_hint.first);
+          return __i;
+        }
+#endif
+
       /**
        *  @brief Attempts to insert a std::pair into the %map.
 
@@ -688,6 +806,123 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
         void
         insert(_InputIterator __first, _InputIterator __last)
         { _M_t._M_insert_unique(__first, __last); }
+
+#if __cplusplus > 201402L
+#define __cpp_lib_map_insertion 201411
+      /**
+       *  @brief Attempts to insert or assign a std::pair into the %map.
+       *  @param __k    Key to use for finding a possibly existing pair in
+       *                the map.
+       *  @param __obj  Argument used to generate the .second for a pair 
+       *                instance.
+       *
+       *  @return  A pair, of which the first element is an iterator that 
+       *           points to the possibly inserted pair, and the second is 
+       *           a bool that is true if the pair was actually inserted.
+       *
+       *  This function attempts to insert a (key, value) %pair into the %map.
+       *  A %map relies on unique keys and thus a %pair is only inserted if its
+       *  first element (the key) is not already present in the %map.
+       *  If the %pair was already in the %map, the .second of the %pair
+       *  is assigned from __obj.
+       *
+       *  Insertion requires logarithmic time.
+       */
+      template <typename _Obj>
+        pair<iterator, bool>
+        insert_or_assign(const key_type& __k, _Obj&& __obj)
+        {
+          iterator __i = lower_bound(__k);
+          if (__i == end() || key_comp()(__k, (*__i).first))
+            {
+              __i = emplace_hint(__i, std::piecewise_construct,
+                                 std::forward_as_tuple(__k),
+                                 std::forward_as_tuple(
+                                   std::forward<_Obj>(__obj)));
+              return {__i, true};
+            }
+          (*__i).second = std::forward<_Obj>(__obj);
+          return {__i, false};
+        }
+
+      // move-capable overload
+      template <typename _Obj>
+        pair<iterator, bool>
+        insert_or_assign(key_type&& __k, _Obj&& __obj)
+        {
+          iterator __i = lower_bound(__k);
+          if (__i == end() || key_comp()(__k, (*__i).first))
+            {
+              __i = emplace_hint(__i, std::piecewise_construct,
+                                 std::forward_as_tuple(std::move(__k)),
+                                 std::forward_as_tuple(
+                                   std::forward<_Obj>(__obj)));
+              return {__i, true};
+            }
+          (*__i).second = std::forward<_Obj>(__obj);
+          return {__i, false};
+        }
+
+      /**
+       *  @brief Attempts to insert or assign a std::pair into the %map.
+       *  @param  __hint  An iterator that serves as a hint as to where the
+       *                  pair should be inserted.
+       *  @param __k    Key to use for finding a possibly existing pair in
+       *                the map.
+       *  @param __obj  Argument used to generate the .second for a pair 
+       *                instance.
+       *
+       *  @return An iterator that points to the element with key of
+       *           @a __x (may or may not be the %pair passed in).
+       *
+       *  This function attempts to insert a (key, value) %pair into the %map.
+       *  A %map relies on unique keys and thus a %pair is only inserted if its
+       *  first element (the key) is not already present in the %map.
+       *  If the %pair was already in the %map, the .second of the %pair
+       *  is assigned from __obj.
+       *
+       *  Insertion requires logarithmic time.
+       */
+      template <typename _Obj>
+        iterator
+        insert_or_assign(const_iterator __hint,
+                         const key_type& __k, _Obj&& __obj)
+        {
+          iterator __i;
+          auto __true_hint = _M_t._M_get_insert_hint_unique_pos(__hint, __k);
+          if (__true_hint.second)
+            {
+              return emplace_hint(iterator(__true_hint.second),
+                                  std::piecewise_construct,
+                                  std::forward_as_tuple(__k),
+                                  std::forward_as_tuple(
+                                    std::forward<_Obj>(__obj)));
+            }
+          __i = iterator(__true_hint.first);
+          (*__i).second = std::forward<_Obj>(__obj);
+          return __i;
+        }
+
+      // move-capable overload
+      template <typename _Obj>
+        iterator
+        insert_or_assign(const_iterator __hint, key_type&& __k, _Obj&& __obj)
+        {
+          iterator __i;
+          auto __true_hint = _M_t._M_get_insert_hint_unique_pos(__hint, __k);
+          if (__true_hint.second)
+            {
+              return emplace_hint(iterator(__true_hint.second),
+                                  std::piecewise_construct,
+                                  std::forward_as_tuple(std::move(__k)),
+                                  std::forward_as_tuple(
+                                    std::forward<_Obj>(__obj)));
+            }
+          __i = iterator(__true_hint.first);
+          (*__i).second = std::forward<_Obj>(__obj);
+          return __i;
+        }
+#endif
 
 #if __cplusplus >= 201103L
       // _GLIBCXX_RESOLVE_LIB_DEFECTS
@@ -795,9 +1030,7 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
        */
       void
       swap(map& __x)
-#if __cplusplus >= 201103L
-      noexcept(_Alloc_traits::_S_nothrow_swap())
-#endif
+      _GLIBCXX_NOEXCEPT_IF(__is_nothrow_swappable<_Compare>::value)
       { _M_t.swap(__x._M_t); }
 
       /**
@@ -1129,6 +1362,7 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
     inline void
     swap(map<_Key, _Tp, _Compare, _Alloc>& __x,
 	 map<_Key, _Tp, _Compare, _Alloc>& __y)
+    _GLIBCXX_NOEXCEPT_IF(noexcept(__x.swap(__y)))
     { __x.swap(__y); }
 
 _GLIBCXX_END_NAMESPACE_CONTAINER

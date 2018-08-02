@@ -1,5 +1,5 @@
 /* Base configuration file for all NetBSD targets.
-   Copyright (C) 1997-2015 Free Software Foundation, Inc.
+   Copyright (C) 1997-2016 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -63,7 +63,7 @@ along with GCC; see the file COPYING3.  If not see
  * XXX figure out a better way to do this
  */
 #undef GCC_INCLUDE_DIR
-#define GCC_INCLUDE_DIR "/usr/include/gcc-5"
+#define GCC_INCLUDE_DIR "/usr/include/gcc-6"
 
 /* Under NetBSD, the normal location of the various *crt*.o files is the
    /usr/lib directory.  */

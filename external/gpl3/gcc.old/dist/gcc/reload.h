@@ -1,5 +1,5 @@
 /* Communication between reload.c, reload1.c and the rest of compiler.
-   Copyright (C) 1987-2015 Free Software Foundation, Inc.
+   Copyright (C) 1987-2016 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -168,7 +168,7 @@ struct target_reload {
      value indicates the level of indirect addressing supported, e.g., two
      means that (MEM (MEM (REG n))) is also valid if (REG n) does not get
      a hard register.  */
-  bool x_spill_indirect_levels;
+  unsigned char x_spill_indirect_levels;
 
   /* True if caller-save has been reinitialized.  */
   bool x_caller_save_initialized_p;
@@ -239,7 +239,7 @@ struct reg_equivs_t
 
   /* The list of insns that initialized reg N from its equivalent
      constant or memory slot.  */
-  rtx init;
+  rtx_insn_list *init;
 };
 
 #define reg_equiv_constant(ELT) \

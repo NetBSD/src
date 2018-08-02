@@ -1,5 +1,5 @@
 /* Functions for generic Darwin as target machine for GNU C compiler.
-   Copyright (C) 1989-2015 Free Software Foundation, Inc.
+   Copyright (C) 1989-2016 Free Software Foundation, Inc.
    Contributed by Apple Computer Inc.
 
 This file is part of GCC.
@@ -21,75 +21,26 @@ along with GCC; see the file COPYING3.  If not see
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
-#include "tm.h"
-#include "rtl.h"
-#include "regs.h"
-#include "hard-reg-set.h"
-#include "insn-config.h"
-#include "conditions.h"
-#include "insn-flags.h"
-#include "output.h"
-#include "insn-attr.h"
-#include "flags.h"
-#include "hash-set.h"
-#include "machmode.h"
-#include "vec.h"
-#include "double-int.h"
-#include "input.h"
-#include "alias.h"
-#include "symtab.h"
-#include "wide-int.h"
-#include "inchash.h"
-#include "tree.h"
-#include "fold-const.h"
-#include "stringpool.h"
-#include "varasm.h"
-#include "stor-layout.h"
-#include "hashtab.h"
-#include "function.h"
-#include "statistics.h"
-#include "real.h"
-#include "fixed-value.h"
-#include "expmed.h"
-#include "dojump.h"
-#include "explow.h"
-#include "calls.h"
-#include "emit-rtl.h"
-#include "stmt.h"
-#include "expr.h"
-#include "reload.h"
-#include "ggc.h"
-#include "langhooks.h"
+#include "backend.h"
 #include "target.h"
-#include "tm_p.h"
-#include "diagnostic-core.h"
-#include "toplev.h"
-#include "dominance.h"
-#include "cfg.h"
-#include "cfgrtl.h"
-#include "cfganal.h"
-#include "lcm.h"
-#include "cfgbuild.h"
-#include "cfgcleanup.h"
-#include "predict.h"
-#include "basic-block.h"
-#include "df.h"
-#include "debug.h"
-#include "obstack.h"
-#include "hash-table.h"
-#include "tree-ssa-alias.h"
-#include "internal-fn.h"
-#include "gimple-fold.h"
-#include "tree-eh.h"
-#include "gimple-expr.h"
-#include "is-a.h"
+#include "rtl.h"
+#include "tree.h"
 #include "gimple.h"
-#include "gimplify.h"
-#include "hash-map.h"
-#include "plugin-api.h"
-#include "ipa-ref.h"
+#include "cfghooks.h"
+#include "df.h"
+#include "tm_p.h"
+#include "stringpool.h"
+#include "insn-config.h"
+#include "emit-rtl.h"
 #include "cgraph.h"
 #include "lto-streamer.h"
+#include "output.h"
+#include "varasm.h"
+#include "stor-layout.h"
+#include "explow.h"
+#include "expr.h"
+#include "langhooks.h"
+#include "toplev.h"
 #include "lto-section-names.h"
 
 /* Darwin supports a feature called fix-and-continue, which is used
@@ -145,12 +96,15 @@ int darwin_running_cxx;
 /* Some code-gen now depends on OS major version numbers (at least).  */
 int generating_for_darwin_version ;
 
+/* For older linkers we need to emit special sections (marked 'coalesced') for
+   for weak or single-definition items.  */
+static bool ld_uses_coal_sects = false;
+
 /* Section names.  */
 section * darwin_sections[NUM_DARWIN_SECTIONS];
 
 /* While we transition to using in-tests instead of ifdef'd code.  */
-#ifndef HAVE_lo_sum
-#define HAVE_lo_sum 0
+#if !HAVE_lo_sum
 #define gen_macho_high(a,b) (a)
 #define gen_macho_low(a,b,c) (a)
 #endif
@@ -269,6 +223,11 @@ darwin_init_sections (void)
   readonly_data_section = darwin_sections[const_section];
   exception_section = darwin_sections[darwin_exception_section];
   eh_frame_section = darwin_sections[darwin_eh_frame_section];
+
+  /* If our linker is new enough to coalesce weak symbols, then we
+     can just put picbase_thunks into the text section.  */
+  if (! ld_uses_coal_sects )
+    darwin_sections[picbase_thunk_section] = text_section;
 }
 
 int
@@ -489,11 +448,11 @@ typedef struct GTY ((for_user)) machopic_indirection
   /* True iff this entry is for a stub (as opposed to a non-lazy
      pointer).  */
   bool stub_p;
-  /* True iff this stub or pointer pointer has been referenced.  */
+  /* True iff this stub or pointer has been referenced.  */
   bool used;
 } machopic_indirection;
 
-struct indirection_hasher : ggc_hasher<machopic_indirection *>
+struct indirection_hasher : ggc_ptr_hash<machopic_indirection>
 {
   typedef const char *compare_type;
   static hashval_t hash (machopic_indirection *);
@@ -523,7 +482,31 @@ indirection_hasher::equal (machopic_indirection *s, const char *k)
 }
 
 /* Return the name of the non-lazy pointer (if STUB_P is false) or
-   stub (if STUB_B is true) corresponding to the given name.  */
+   stub (if STUB_B is true) corresponding to the given name.
+
+  If we have a situation like:
+
+global_weak_symbol:
+  ....
+Lnon_weak_local:
+  ....
+
+  ld64 will be unable to split this into two atoms (because the "L" makes
+  the second symbol 'invisible').  This means that legitimate direct accesses
+  to the second symbol will appear to be non-allowed direct accesses to an
+  atom of type weak, global which are not allowed.
+
+  To avoid this, we make the indirections have a leading 'l' (lower-case L)
+  which has a special meaning: linker can see this and use it to determine
+  atoms, but it is not placed into the final symbol table.
+
+  The implementation here is somewhat heavy-handed in that it will also mark
+  indirections to the __IMPORT,__pointers section the same way which is
+  really unnecessary, since ld64 _can_ split those into atoms as they are
+  fixed size.  FIXME: determine if this is a penalty worth extra code to
+  fix.
+
+*/
 
 const char *
 machopic_indirection_name (rtx sym_ref, bool stub_p)
@@ -534,6 +517,7 @@ machopic_indirection_name (rtx sym_ref, bool stub_p)
   machopic_indirection *p;
   bool needs_quotes;
   const char *suffix;
+  char L_or_l = 'L';
   const char *prefix = user_label_prefix;
   const char *quote = "";
   tree id;
@@ -568,9 +552,13 @@ machopic_indirection_name (rtx sym_ref, bool stub_p)
   if (stub_p)
     suffix = STUB_SUFFIX;
   else
-    suffix = NON_LAZY_POINTER_SUFFIX;
+    {
+      suffix = NON_LAZY_POINTER_SUFFIX;
+      /* Let the linker see this.  */
+      L_or_l = 'l';
+    }
 
-  buffer = XALLOCAVEC (char, strlen ("&L")
+  buffer = XALLOCAVEC (char, 2  /* strlen ("&L") or ("&l") */
 		   + strlen (prefix)
 		   + namelen
 		   + strlen (suffix)
@@ -578,7 +566,7 @@ machopic_indirection_name (rtx sym_ref, bool stub_p)
 		   + 1 /* '\0' */);
 
   /* Construct the name of the non-lazy pointer or stub.  */
-  sprintf (buffer, "&%sL%s%s%s%s", quote, prefix, name, suffix, quote);
+  sprintf (buffer, "&%s%c%s%s%s%s", quote, L_or_l, prefix, name, suffix, quote);
 
   if (!machopic_indirections)
     machopic_indirections = hash_table<indirection_hasher>::create_ggc (37);
@@ -687,10 +675,10 @@ machopic_indirect_data_reference (rtx orig, rtx reg)
 
 	  gcc_assert (reg);
 
-	  emit_insn (gen_rtx_SET (Pmode, hi_sum_reg,
+	  emit_insn (gen_rtx_SET (hi_sum_reg,
 			      gen_rtx_PLUS (Pmode, pic_offset_table_rtx,
 				       gen_rtx_HIGH (Pmode, offset))));
-	  emit_insn (gen_rtx_SET (Pmode, reg,
+	  emit_insn (gen_rtx_SET (reg,
 				  gen_rtx_LO_SUM (Pmode, hi_sum_reg,
 						  copy_rtx (offset))));
 
@@ -700,11 +688,9 @@ machopic_indirect_data_reference (rtx orig, rtx reg)
 	    {
 	  gcc_assert (reg);
 
-	  emit_insn (gen_rtx_SET (VOIDmode, reg,
-				  gen_rtx_HIGH (Pmode, offset)));
-	  emit_insn (gen_rtx_SET (VOIDmode, reg,
-				  gen_rtx_LO_SUM (Pmode, reg,
-						  copy_rtx (offset))));
+	  emit_insn (gen_rtx_SET (reg, gen_rtx_HIGH (Pmode, offset)));
+	  emit_insn (gen_rtx_SET (reg, gen_rtx_LO_SUM (Pmode, reg,
+						       copy_rtx (offset))));
 	  emit_use (pic_offset_table_rtx);
 
 	  orig = gen_rtx_PLUS (Pmode, pic_offset_table_rtx, reg);
@@ -725,7 +711,7 @@ machopic_indirect_data_reference (rtx orig, rtx reg)
           && reg 
           && MACHO_DYNAMIC_NO_PIC_P)
 	{
-	    emit_insn (gen_rtx_SET (Pmode, reg, ptr_ref));
+	    emit_insn (gen_rtx_SET (reg, ptr_ref));
 	    ptr_ref = reg;
 	}
 
@@ -874,7 +860,7 @@ machopic_legitimize_pic_address (rtx orig, machine_mode mode, rtx reg)
 	      mem = gen_const_mem (GET_MODE (orig),
 				   gen_rtx_LO_SUM (Pmode, temp_reg,
 						   copy_rtx (asym)));
-	      emit_insn (gen_rtx_SET (VOIDmode, reg, mem));
+	      emit_insn (gen_rtx_SET (reg, mem));
 #else
 	      /* Some other CPU -- WriteMe! but right now there are no other
 		 platforms that can use dynamic-no-pic  */
@@ -901,24 +887,24 @@ machopic_legitimize_pic_address (rtx orig, machine_mode mode, rtx reg)
 	      if (! MACHO_DYNAMIC_NO_PIC_P)
 		sum = gen_rtx_PLUS (Pmode, pic_offset_table_rtx, sum);
 
-	      emit_insn (gen_rtx_SET (Pmode, hi_sum_reg, sum));
+	      emit_insn (gen_rtx_SET (hi_sum_reg, sum));
 
 	      mem = gen_const_mem (GET_MODE (orig),
 				  gen_rtx_LO_SUM (Pmode,
 						  hi_sum_reg,
 						  copy_rtx (offset)));
-	      insn = emit_insn (gen_rtx_SET (VOIDmode, reg, mem));
+	      insn = emit_insn (gen_rtx_SET (reg, mem));
 	      set_unique_reg_note (insn, REG_EQUAL, pic_ref);
 
 	      pic_ref = reg;
 #else
 	      emit_use (gen_rtx_REG (Pmode, PIC_OFFSET_TABLE_REGNUM));
 
-	      emit_insn (gen_rtx_SET (VOIDmode, reg,
+	      emit_insn (gen_rtx_SET (reg,
 				      gen_rtx_HIGH (Pmode,
 						    gen_rtx_CONST (Pmode,
 								   offset))));
-	      emit_insn (gen_rtx_SET (VOIDmode, reg,
+	      emit_insn (gen_rtx_SET (reg,
 				  gen_rtx_LO_SUM (Pmode, reg,
 					   gen_rtx_CONST (Pmode,
 						   	  copy_rtx (offset)))));
@@ -969,22 +955,21 @@ machopic_legitimize_pic_address (rtx orig, machine_mode mode, rtx reg)
 
 	      hi_sum_reg = reg;
 
-	      emit_insn (gen_rtx_SET (Pmode, hi_sum_reg,
+	      emit_insn (gen_rtx_SET (hi_sum_reg,
 				      (MACHO_DYNAMIC_NO_PIC_P)
 				      ? gen_rtx_HIGH (Pmode, offset)
 				      : gen_rtx_PLUS (Pmode,
 						      pic_offset_table_rtx,
 						      gen_rtx_HIGH (Pmode,
 								    offset))));
-	      emit_insn (gen_rtx_SET (VOIDmode, reg,
+	      emit_insn (gen_rtx_SET (reg,
 				      gen_rtx_LO_SUM (Pmode,
 						      hi_sum_reg,
 						      copy_rtx (offset))));
 	      pic_ref = reg;
 #else
-	      emit_insn (gen_rtx_SET (VOIDmode, reg,
-				      gen_rtx_HIGH (Pmode, offset)));
-	      emit_insn (gen_rtx_SET (VOIDmode, reg,
+	      emit_insn (gen_rtx_SET (reg, gen_rtx_HIGH (Pmode, offset)));
+	      emit_insn (gen_rtx_SET (reg,
 				      gen_rtx_LO_SUM (Pmode, reg,
 						      copy_rtx (offset))));
 	      pic_ref = gen_rtx_PLUS (Pmode,
@@ -1270,9 +1255,9 @@ darwin_mark_decl_preserved (const char *name)
 }
 
 static section *
-darwin_rodata_section (int weak, bool zsize)
+darwin_rodata_section (int use_coal, bool zsize)
 {
-  return (weak
+  return (use_coal
 	  ? darwin_sections[const_coal_section]
 	  : (zsize ? darwin_sections[zobj_const_section]
 		   : darwin_sections[const_section]));
@@ -1441,7 +1426,8 @@ darwin_objc2_section (tree decl ATTRIBUTE_UNUSED, tree meta, section * base)
     return darwin_sections[objc2_image_info_section];
 
   else if (!strncmp (p, "V2_EHTY", 7))
-    return darwin_sections[data_coal_section];
+    return ld_uses_coal_sects ? darwin_sections[data_coal_section]
+                              : data_section;
 
   else if (!strncmp (p, "V2_CSTR", 7))
     return darwin_sections[objc2_constant_string_object_section];
@@ -1540,20 +1526,22 @@ machopic_select_section (tree decl,
 			 int reloc,
 			 unsigned HOST_WIDE_INT align)
 {
-  bool zsize, one, weak, ro;
+  bool zsize, one, weak, use_coal, ro;
   section *base_section = NULL;
 
   weak = (DECL_P (decl)
 	  && DECL_WEAK (decl)
 	  && !lookup_attribute ("weak_import", DECL_ATTRIBUTES (decl)));
 
-  zsize = (DECL_P (decl) 
+  zsize = (DECL_P (decl)
 	   && (TREE_CODE (decl) == VAR_DECL || TREE_CODE (decl) == CONST_DECL) 
 	   && tree_to_uhwi (DECL_SIZE_UNIT (decl)) == 0);
 
-  one = DECL_P (decl) 
+  one = DECL_P (decl)
 	&& TREE_CODE (decl) == VAR_DECL 
 	&& DECL_COMDAT_GROUP (decl);
+
+  use_coal = (weak || one) && ld_uses_coal_sects;
 
   ro = TREE_READONLY (decl) || TREE_CONSTANT (decl) ;
 
@@ -1565,7 +1553,7 @@ machopic_select_section (tree decl,
 
     case SECCAT_RODATA:
     case SECCAT_SRODATA:
-      base_section = darwin_rodata_section (weak, zsize);
+      base_section = darwin_rodata_section (use_coal, zsize);
       break;
 
     case SECCAT_RODATA_MERGE_STR:
@@ -1587,7 +1575,7 @@ machopic_select_section (tree decl,
     case SECCAT_DATA_REL_RO_LOCAL:
     case SECCAT_SDATA:
     case SECCAT_TDATA:
-      if (weak || one)
+      if (use_coal)
 	{
 	  if (ro)
 	    base_section = darwin_sections[const_data_coal_section];
@@ -1616,7 +1604,7 @@ machopic_select_section (tree decl,
     case SECCAT_BSS:
     case SECCAT_SBSS:
     case SECCAT_TBSS:
-      if (weak || one) 
+      if (use_coal)
 	base_section = darwin_sections[data_coal_section];
       else
 	{
@@ -2259,7 +2247,7 @@ fprintf (file, "# dadon: %s %s (%llu, %u) local %d weak %d"
 
       ASM_OUTPUT_LABEL (file, xname);
       size = 1;
-      fprintf (file, "\t.space\t"HOST_WIDE_INT_PRINT_UNSIGNED"\n", size);
+      fprintf (file, "\t.space\t" HOST_WIDE_INT_PRINT_UNSIGNED"\n", size);
 
       /* Check that we've correctly picked up the zero-sized item and placed it
          properly.  */
@@ -2312,14 +2300,18 @@ darwin_asm_declare_constant_name (FILE *file, const char *name,
 static void
 darwin_emit_weak_or_comdat (FILE *fp, tree decl, const char *name,
 				  unsigned HOST_WIDE_INT size, 
+				  bool use_coal,
 				  unsigned int align)
 {
-  /* Since the sections used here are coalesed, they will not be eligible
-     for section anchors, and therefore we don't need to break that out.  */
+  /* Since the sections used here are coalesced, they will not be eligible
+     for section anchors, and therefore we don't need to break that out.
+     CHECKME: for modern linker on PowerPC.  */
  if (TREE_READONLY (decl) || TREE_CONSTANT (decl))
-    switch_to_section (darwin_sections[const_data_coal_section]);
+    switch_to_section (use_coal ? darwin_sections[const_data_coal_section]
+				: darwin_sections[const_data_section]);
   else
-    switch_to_section (darwin_sections[data_coal_section]);
+    switch_to_section (use_coal ? darwin_sections[data_coal_section]
+				: data_section);
 
   /* To be consistent, we'll allow darwin_asm_declare_object_name to assemble
      the align info for zero-sized items... but do it here otherwise.  */
@@ -2400,7 +2392,7 @@ darwin_emit_local_bss (FILE *fp, tree decl, const char *name,
 	fprintf (fp, "\t.align\t%u\n", l2align);
 
       assemble_name (fp, name);        
-      fprintf (fp, ":\n\t.space\t"HOST_WIDE_INT_PRINT_UNSIGNED"\n", size);
+      fprintf (fp, ":\n\t.space\t" HOST_WIDE_INT_PRINT_UNSIGNED"\n", size);
     }
   else 
     {
@@ -2421,10 +2413,10 @@ darwin_emit_local_bss (FILE *fp, tree decl, const char *name,
 	size = 1;
 
       if (l2align)
-	fprintf (fp, ","HOST_WIDE_INT_PRINT_UNSIGNED",%u\n",
+	fprintf (fp, "," HOST_WIDE_INT_PRINT_UNSIGNED",%u\n",
 		 size, (unsigned) l2align);
       else
-	fprintf (fp, ","HOST_WIDE_INT_PRINT_UNSIGNED"\n", size);
+	fprintf (fp, "," HOST_WIDE_INT_PRINT_UNSIGNED"\n", size);
     }
 
   (*targetm.encode_section_info) (decl, DECL_RTL (decl), false);
@@ -2538,7 +2530,7 @@ fprintf (fp, "# albss: %s (%lld,%d) ro %d cst %d stat %d com %d"
     {
       /* Weak or COMDAT objects are put in mergeable sections.  */
       darwin_emit_weak_or_comdat (fp, decl, name, size, 
-					DECL_ALIGN (decl));
+				  ld_uses_coal_sects, DECL_ALIGN (decl));
       return;
     } 
 
@@ -2572,7 +2564,7 @@ fprintf (fp, "# albss: %s (%lld,%d) ro %d cst %d stat %d com %d"
 	fprintf (fp, "\t.align\t%u\n", l2align);
 
       assemble_name (fp, name);
-      fprintf (fp, ":\n\t.space\t"HOST_WIDE_INT_PRINT_UNSIGNED"\n", size);
+      fprintf (fp, ":\n\t.space\t" HOST_WIDE_INT_PRINT_UNSIGNED"\n", size);
     }
   else 
     {
@@ -2593,9 +2585,9 @@ fprintf (fp, "# albss: %s (%lld,%d) ro %d cst %d stat %d com %d"
 	size = 1;
 
       if (l2align)
-	fprintf (fp, ","HOST_WIDE_INT_PRINT_UNSIGNED",%u\n", size, l2align);
+	fprintf (fp, "," HOST_WIDE_INT_PRINT_UNSIGNED",%u\n", size, l2align);
       else
-	fprintf (fp, ","HOST_WIDE_INT_PRINT_UNSIGNED"\n", size);
+	fprintf (fp, "," HOST_WIDE_INT_PRINT_UNSIGNED"\n", size);
     }
   (* targetm.encode_section_info) (decl, DECL_RTL (decl), false);
 }
@@ -2652,7 +2644,7 @@ fprintf (fp, "# adcom: %s (%lld,%d) ro %d cst %d stat %d com %d pub %d"
     {
       /* Weak or COMDAT objects are put in mergable sections.  */
       darwin_emit_weak_or_comdat (fp, decl, name, size, 
-					DECL_ALIGN (decl));
+				  ld_uses_coal_sects, DECL_ALIGN (decl));
       return;
     } 
 
@@ -2722,7 +2714,7 @@ fprintf (fp, "# adloc: %s (%lld,%d) ro %d cst %d stat %d one %d pub %d"
     {
       /* Weak or COMDAT objects are put in mergable sections.  */
       darwin_emit_weak_or_comdat (fp, decl, name, size, 
-					DECL_ALIGN (decl));
+				  ld_uses_coal_sects, DECL_ALIGN (decl));
       return;
     } 
 
@@ -3050,23 +3042,23 @@ darwin_asm_output_anchor (rtx symbol)
 	   SYMBOL_REF_BLOCK_OFFSET (symbol));
 }
 
-/* Disable section anchoring on any section containing a zero-sized 
+/* Disable section anchoring on any section containing a zero-sized
    object.  */
 bool
 darwin_use_anchors_for_symbol_p (const_rtx symbol)
 {
-  if (DARWIN_SECTION_ANCHORS && flag_section_anchors) 
+  if (DARWIN_SECTION_ANCHORS && flag_section_anchors)
     {
       section *sect;
       /* If the section contains a zero-sized object it's ineligible.  */
       sect = SYMBOL_REF_BLOCK (symbol)->sect;
       /* This should have the effect of disabling anchors for vars that follow
-         any zero-sized one, in a given section.  */     
+         any zero-sized one, in a given section.  */
       if (sect->common.flags & SECTION_NO_ANCHOR)
 	return false;
 
-        /* Also check the normal reasons for suppressing.  */
-        return default_use_anchors_for_symbol_p (symbol);
+      /* Also check the normal reasons for suppressing.  */
+      return default_use_anchors_for_symbol_p (symbol);
     }
   else
     return false;
@@ -3103,6 +3095,12 @@ darwin_override_options (void)
 
       /* Earlier versions are not specifically accounted, until required.  */
     }
+
+  /* Older Darwin ld could not coalesce weak entities without them being
+     placed in special sections.  */
+  if (darwin_target_linker
+      && (strverscmp (darwin_target_linker, MIN_LD64_NO_COAL_SECTS) < 0))
+    ld_uses_coal_sects = true;
 
   /* In principle, this should be c-family only.  However, we really need to
      set sensible defaults for LTO as well, since the section selection stuff
@@ -3295,7 +3293,7 @@ typedef struct GTY ((for_user)) cfstring_descriptor {
   tree constructor;
 } cfstring_descriptor;
 
-struct cfstring_hasher : ggc_hasher<cfstring_descriptor *>
+struct cfstring_hasher : ggc_ptr_hash<cfstring_descriptor>
 {
   static hashval_t hash (cfstring_descriptor *);
   static bool equal (cfstring_descriptor *, cfstring_descriptor *);
@@ -3629,12 +3627,13 @@ darwin_function_section (tree decl, enum node_frequency freq,
 			  bool startup, bool exit)
 {
   /* Decide if we need to put this in a coalescable section.  */
-  bool weak = (decl 
+  bool weak = (decl
 	       && DECL_WEAK (decl)
 	       && (!DECL_ATTRIBUTES (decl)
 		   || !lookup_attribute ("weak_import", 
 					  DECL_ATTRIBUTES (decl))));
 
+  bool use_coal = weak && ld_uses_coal_sects;
   /* If there is a specified section name, we should not be trying to
      override.  */
   if (decl && DECL_SECTION_NAME (decl) != NULL)
@@ -3642,8 +3641,8 @@ darwin_function_section (tree decl, enum node_frequency freq,
 
   /* We always put unlikely executed stuff in the cold section.  */
   if (freq == NODE_FREQUENCY_UNLIKELY_EXECUTED)
-    return (weak) ? darwin_sections[text_cold_coal_section]
-		  : darwin_sections[text_cold_section];
+    return (use_coal) ? darwin_sections[text_cold_coal_section]
+		      : darwin_sections[text_cold_section];
 
   /* If we have LTO *and* feedback information, then let LTO handle
      the function ordering, it makes a better job (for normal, hot,
@@ -3653,23 +3652,23 @@ darwin_function_section (tree decl, enum node_frequency freq,
 
   /* Non-cold startup code should go to startup subsection.  */
   if (startup)
-    return (weak) ? darwin_sections[text_startup_coal_section]
-		  : darwin_sections[text_startup_section];
+    return (use_coal) ? darwin_sections[text_startup_coal_section]
+		      : darwin_sections[text_startup_section];
 
   /* Similarly for exit.  */
   if (exit)
-    return (weak) ? darwin_sections[text_exit_coal_section]
-		  : darwin_sections[text_exit_section];
+    return (use_coal) ? darwin_sections[text_exit_coal_section]
+		      : darwin_sections[text_exit_section];
 
   /* Place hot code.  */
   if (freq == NODE_FREQUENCY_HOT)
-    return (weak) ? darwin_sections[text_hot_coal_section]
-		  : darwin_sections[text_hot_section];
+    return (use_coal) ? darwin_sections[text_hot_coal_section]
+		      : darwin_sections[text_hot_section];
 
   /* Otherwise, default to the 'normal' non-reordered sections.  */
 default_function_sections:
-  return (weak) ? darwin_sections[text_coal_section]
-		: text_section;
+  return (use_coal) ? darwin_sections[text_coal_section]
+		    : text_section;
 }
 
 /* When a function is partitioned between sections, we need to insert a label

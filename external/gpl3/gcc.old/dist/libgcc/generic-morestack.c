@@ -1,5 +1,5 @@
 /* Library support for -fsplit-stack.  */
-/* Copyright (C) 2009-2015 Free Software Foundation, Inc.
+/* Copyright (C) 2009-2016 Free Software Foundation, Inc.
    Contributed by Ian Lance Taylor <iant@google.com>.
 
 This file is part of GCC.
@@ -22,6 +22,9 @@ You should have received a copy of the GNU General Public License and
 a copy of the GCC Runtime Library Exception along with this program;
 see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
 <http://www.gnu.org/licenses/>.  */
+
+/* powerpc 32-bit not supported.  */
+#if !defined __powerpc__ || defined __powerpc64__
 
 #include "tconfig.h"
 #include "tsystem.h"
@@ -935,6 +938,11 @@ __splitstack_find (void *segment_arg, void *sp, size_t *len,
       nsp -= 12 * sizeof (void *);
 #elif defined (__i386__)
       nsp -= 6 * sizeof (void *);
+#elif defined __powerpc64__
+#elif defined __s390x__
+      nsp -= 2 * 160;
+#elif defined __s390__
+      nsp -= 2 * 96;
 #else
 #error "unrecognized target"
 #endif
@@ -1170,3 +1178,4 @@ __splitstack_find_context (void *context[NUMBER_OFFSETS], size_t *stack_size,
 }
 
 #endif /* !defined (inhibit_libc) */
+#endif /* not powerpc 32-bit */

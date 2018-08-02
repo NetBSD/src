@@ -1,5 +1,5 @@
 ;; builtin definitions for DEC VAX.
-;; Copyright (C) 2007-2015 Free Software Foundation, Inc.
+;; Copyright (C) 2007-2016 Free Software Foundation, Inc.
 ;;
 ;; This file is part of GCC.
 ;;
@@ -77,13 +77,13 @@
   [(parallel
     [(set (pc)
 	  (if_then_else
-	    (ne (zero_extract:SI (match_operand:QI 0 "memory_operand" "g")
+	    (ne (zero_extract:SI (match_operand:QI 0 "volatile_mem_operand" "g")
 				 (const_int 1)
 				 (match_operand:SI 1 "general_operand" "nrm"))
 		(const_int 0))
 	    (label_ref (match_operand 2 "" ""))
 	    (pc)))
-     (set (zero_extract:SI (match_operand:QI 3 "memory_operand" "+0")
+     (set (zero_extract:SI (match_operand:QI 3 "volatile_mem_operand" "+0")
 			   (const_int 1)
 			   (match_dup 1))
 	  (const_int 1))])]
@@ -94,13 +94,13 @@
   [(parallel
     [(set (pc)
 	  (if_then_else
-	    (ne (zero_extract:SI (match_operand:HI 0 "memory_operand" "Q")
+	    (ne (zero_extract:SI (match_operand:HI 0 "volatile_mem_operand" "Q")
 				 (const_int 1)
 				 (match_operand:SI 1 "general_operand" "nrm"))
 		(const_int 0))
 	    (label_ref (match_operand 2 "" ""))
 	    (pc)))
-     (set (zero_extract:SI (match_operand:HI 3 "memory_operand" "+0")
+     (set (zero_extract:SI (match_operand:HI 3 "volatile_mem_operand" "+0")
 			   (const_int 1)
 			   (match_dup 1))
 	  (const_int 1))])]
@@ -111,13 +111,13 @@
   [(parallel
     [(set (pc)
 	  (if_then_else
-	    (ne (zero_extract:SI (match_operand:SI 0 "memory_operand" "Q")
+	    (ne (zero_extract:SI (match_operand:SI 0 "volatile_mem_operand" "Q")
 				 (const_int 1)
 				 (match_operand:SI 1 "general_operand" "nrm"))
 		(const_int 0))
 	    (label_ref (match_operand 2 "" ""))
 	    (pc)))
-     (set (zero_extract:SI (match_operand:SI 3 "memory_operand" "+0")
+     (set (zero_extract:SI (match_operand:SI 3 "volatile_mem_operand" "+0")
 			   (const_int 1)
 			   (match_dup 1))
 	  (const_int 1))])]

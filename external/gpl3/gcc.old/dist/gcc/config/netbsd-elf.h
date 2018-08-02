@@ -1,5 +1,5 @@
 /* Common configuration file for NetBSD ELF targets.
-   Copyright (C) 2002-2015 Free Software Foundation, Inc.
+   Copyright (C) 2002-2016 Free Software Foundation, Inc.
    Contributed by Wasabi Systems, Inc.
 
 This file is part of GCC.
@@ -89,10 +89,10 @@ along with GCC; see the file COPYING3.  If not see
        %{rdynamic:-export-dynamic} \
        %(netbsd_link_ld_elf_so)} \
      %{static:-static \
-       %{pie: %(netbsd_link_ld_elf_so)}}} \
-   %{!nostdlib:%{!nodefaultlibs:\
+       %{pie: --no-dynamic-linker}}} \
+   %{!shared:%{!nostdlib:%{!nodefaultlibs:\
      %{%:sanitize(address): -lasan } \
-     %{%:sanitize(undefined): -lubsan}}}"
+     %{%:sanitize(undefined): -lubsan}}}}"
 
 /* Provide the standard list of subtarget extra specs for NetBSD targets.  */
 #define NETBSD_SUBTARGET_EXTRA_SPECS \

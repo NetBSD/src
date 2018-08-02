@@ -1,5 +1,5 @@
 /* Output routines for graphical representation.
-   Copyright (C) 1998-2015 Free Software Foundation, Inc.
+   Copyright (C) 1998-2016 Free Software Foundation, Inc.
    Contributed by Ulrich Drepper <drepper@cygnus.com>, 1998.
    Rewritten for DOT output by Steven Bosscher, 2012.
 
@@ -22,25 +22,14 @@ along with GCC; see the file COPYING3.  If not see
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
+#include "backend.h"
+#include "cfghooks.h"
+#include "pretty-print.h"
 #include "diagnostic-core.h" /* for fatal_error */
-#include "sbitmap.h"
-#include "predict.h"
-#include "vec.h"
-#include "hashtab.h"
-#include "hash-set.h"
-#include "machmode.h"
-#include "tm.h"
-#include "hard-reg-set.h"
-#include "input.h"
-#include "function.h"
-#include "dominance.h"
-#include "cfg.h"
 #include "cfganal.h"
-#include "basic-block.h"
 #include "cfgloop.h"
 #include "graph.h"
 #include "dumpfile.h"
-#include "pretty-print.h"
 
 /* DOT files with the .dot extension are recognized as document templates
    by a well-known piece of word processing software out of Redmond, WA.
@@ -284,14 +273,13 @@ draw_cfg_edges (pretty_printer *pp, struct function *fun)
    subgraphs right for GraphViz, which requires nodes to be defined
    before edges to cluster nodes properly.  */
 
-void
-print_graph_cfg (const char *base, struct function *fun)
+void DEBUG_FUNCTION
+print_graph_cfg (FILE *fp, struct function *fun)
 {
-  const char *funcname = function_name (fun);
-  FILE *fp = open_graph_file (base, "a");
   pretty_printer graph_slim_pp;
   graph_slim_pp.buffer->stream = fp;
   pretty_printer *const pp = &graph_slim_pp;
+  const char *funcname = function_name (fun);
   pp_printf (pp, "subgraph \"cluster_%s\" {\n"
 		 "\tstyle=\"dashed\";\n"
 		 "\tcolor=\"black\";\n"
@@ -301,6 +289,30 @@ print_graph_cfg (const char *base, struct function *fun)
   draw_cfg_edges (pp, fun);
   pp_printf (pp, "}\n");
   pp_flush (pp);
+}
+
+/* Overload with additional flag argument.  */
+
+void DEBUG_FUNCTION
+print_graph_cfg (FILE *fp, struct function *fun, int flags)
+{
+  int saved_dump_flags = dump_flags;
+  dump_flags = flags;
+  print_graph_cfg (fp, fun);
+  dump_flags = saved_dump_flags;
+}
+
+
+/* Print a graphical representation of the CFG of function FUN.
+   First print all basic blocks.  Draw all edges at the end to get
+   subgraphs right for GraphViz, which requires nodes to be defined
+   before edges to cluster nodes properly.  */
+
+void
+print_graph_cfg (const char *base, struct function *fun)
+{
+  FILE *fp = open_graph_file (base, "a");
+  print_graph_cfg (fp, fun);
   fclose (fp);
 }
 

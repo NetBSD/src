@@ -1,6 +1,6 @@
 ## Linker script for GNU versioning (GNU ld 2.13.91+ only.)
 ##
-## Copyright (C) 2002-2015 Free Software Foundation, Inc.
+## Copyright (C) 2002-2016 Free Software Foundation, Inc.
 ##
 ## This file is part of the GNU ISO C++ Library.  This library is free
 ## software; you can redistribute it and/or modify it under the
@@ -24,7 +24,7 @@ GLIBCXX_3.4 {
     # Names inside the 'extern' block are demangled names.
     extern "C++"
     {
-      std::[A-Z]*;
+      std::[ABD-Z]*;
       std::a[a-c]*;
       std::ad[a-n]*;
       std::ad[p-z]*;
@@ -106,7 +106,7 @@ GLIBCXX_3.4 {
 #     std::istringstream*;
       std::istrstream*;
       std::i[t-z]*;
-      std::[A-Zj-k]*;
+      std::[j-k]*;
 #     std::length_error::l*;
 #     std::length_error::~l*;
       std::locale::[A-Za-e]*;
@@ -132,9 +132,8 @@ GLIBCXX_3.4 {
 #     std::logic_error::l*;
       std::logic_error::what*;
 #     std::logic_error::~l*;
-#     std::[A-Zm-r]*;
-#     std::[A-Zm]*;
-      std::[A-Z]*;
+#     std::[m-r]*;
+#     std::[m]*;
       std::messages[^_]*;
 #     std::messages_byname*;
       std::money_*;
@@ -175,12 +174,13 @@ GLIBCXX_3.4 {
 #     std::t[i-n]*;
       std::tr1::h[^a]*;
       std::t[s-z]*;
-#     std::[A-Zu-z]*;
+#     std::[u-z]*;
 #     std::underflow_error::u*;
 #     std::underflow_error::~u*;
-      std::uncaught_exception*;
       std::unexpected*;
-      std::[A-Zv-z]*;
+      std::valarray*;
+      # std::vector*
+      std::[w-z]*;
       std::_List_node_base::hook*;
       std::_List_node_base::swap*;
       std::_List_node_base::unhook*;
@@ -1027,6 +1027,9 @@ GLIBCXX_3.4 {
     _ZNSt6locale5_Impl19_M_replace_categoryEPKS0_PKPKNS_2idE;
     _ZNSt6locale5_Impl21_M_replace_categoriesEPKS0_i;
 
+    # std::uncaught_exception()
+    _ZSt18uncaught_exceptionv;
+
   # DO NOT DELETE THIS LINE.  Port-specific symbols, if any, will be here.
 
   local:
@@ -1863,6 +1866,48 @@ GLIBCXX_3.4.21 {
 
 } GLIBCXX_3.4.20;
 
+GLIBCXX_3.4.22 {
+
+    # std::uncaught_exceptions()
+    _ZSt19uncaught_exceptionsv;
+
+    # std::thread::_State::~_State()
+    _ZT[ISV]NSt6thread6_StateE;
+    _ZNSt6thread6_StateD[012]Ev;
+    _ZNSt6thread15_M_start_threadESt10unique_ptrINS_6_StateESt14default_deleteIS1_EEPFvvE;
+
+    # Support for the Transactional Memory TS (N4514)
+    _ZGTtNSt11logic_errorC[12]EPKc;
+    _ZGTtNSt11logic_errorC[12]ERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEE;
+    _ZGTtNKSt11logic_error4whatEv;
+    _ZGTtNSt11logic_errorD[012]Ev;
+    _ZGTtNSt12domain_errorC[12]EPKc;
+    _ZGTtNSt12domain_errorC[12]ERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEE;
+    _ZGTtNSt12domain_errorD[012]Ev;
+    _ZGTtNSt16invalid_argumentC[12]EPKc;
+    _ZGTtNSt16invalid_argumentC[12]ERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEE;
+    _ZGTtNSt16invalid_argumentD[012]Ev;
+    _ZGTtNSt12length_errorC[12]EPKc;
+    _ZGTtNSt12length_errorC[12]ERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEE;
+    _ZGTtNSt12length_errorD[012]Ev;
+    _ZGTtNSt12out_of_rangeC[12]EPKc;
+    _ZGTtNSt12out_of_rangeC[12]ERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEE;
+    _ZGTtNSt12out_of_rangeD[012]Ev;
+    _ZGTtNSt13runtime_errorC[12]EPKc;
+    _ZGTtNSt13runtime_errorC[12]ERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEE;
+    _ZGTtNKSt13runtime_error4whatEv;
+    _ZGTtNSt13runtime_errorD[012]Ev;
+    _ZGTtNSt11range_errorC[12]EPKc;
+    _ZGTtNSt11range_errorC[12]ERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEE;
+    _ZGTtNSt11range_errorD[012]Ev;
+    _ZGTtNSt14overflow_errorC[12]EPKc;
+    _ZGTtNSt14overflow_errorC[12]ERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEE;
+    _ZGTtNSt14overflow_errorD[012]Ev;
+    _ZGTtNSt15underflow_errorC[12]EPKc;
+    _ZGTtNSt15underflow_errorC[12]ERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEE;
+    _ZGTtNSt15underflow_errorD[012]Ev;
+
+} GLIBCXX_3.4.21;
 
 # Symbols in the support library (libsupc++) have their own tag.
 CXXABI_1.3 {
@@ -2094,6 +2139,18 @@ CXXABI_1.3.9 {
     _ZdaPv[jmy];
 
 } CXXABI_1.3.8;
+
+CXXABI_1.3.10 {
+
+    # Support for the Transactional Memory TS (N4514)
+    _ZGTtNKSt9exceptionD1Ev;
+    _ZGTtNKSt9exception4whatEv;
+    _ZGTtNKSt13bad_exceptionD1Ev;
+    _ZGTtNKSt13bad_exception4whatEv;
+
+    _ZN9__gnu_cxx9__freeresEv;
+
+} CXXABI_1.3.9;
 
 # Symbols in the support library (libsupc++) supporting transactional memory.
 CXXABI_TM_1 {

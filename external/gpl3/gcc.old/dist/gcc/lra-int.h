@@ -1,5 +1,5 @@
 /* Local Register Allocator (LRA) intercommunication header file.
-   Copyright (C) 2010-2015 Free Software Foundation, Inc.
+   Copyright (C) 2010-2016 Free Software Foundation, Inc.
    Contributed by Vladimir Makarov <vmakarov@redhat.com>.
 
 This file is part of GCC.
@@ -20,14 +20,6 @@ along with GCC; see the file COPYING3.	If not see
 
 #ifndef GCC_LRA_INT_H
 #define GCC_LRA_INT_H
-
-#include "lra.h"
-#include "bitmap.h"
-#include "recog.h"
-#include "insn-attr.h"
-#include "insn-codes.h"
-#include "insn-config.h"
-#include "regs.h"
 
 #define lra_assert(c) gcc_checking_assert (c)
 
@@ -99,12 +91,10 @@ struct lra_reg
   /* True if the pseudo should not be assigned to a stack register.  */
   bool no_stack_p;
 #endif
-#ifdef ENABLE_CHECKING
   /* True if the pseudo crosses a call.	 It is setup in lra-lives.c
      and used to check that the pseudo crossing a call did not get a
      call used hard register.  */
   bool call_p;
-#endif
   /* Number of references and execution frequencies of the register in
      *non-debug* insns.	 */
   int nrefs, freq;

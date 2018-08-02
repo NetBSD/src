@@ -1,5 +1,5 @@
 /* Darwin/powerpc host-specific hook definitions.
-   Copyright (C) 2003-2015 Free Software Foundation, Inc.
+   Copyright (C) 2003-2016 Free Software Foundation, Inc.
 
    This file is part of GCC.
 
@@ -20,10 +20,10 @@
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
+#include "diagnostic.h"
 #include <sys/ucontext.h>
 #include "hosthooks.h"
 #include "hosthooks-def.h"
-#include "diagnostic.h"
 #include "config/host-darwin.h"
 
 static void segv_crash_handler (int);

@@ -1,5 +1,5 @@
 /* Support routines shared by all runtimes.
-   Copyright (C) 2011-2015 Free Software Foundation, Inc.
+   Copyright (C) 2011-2016 Free Software Foundation, Inc.
    Contributed by Iain Sandoe (partially split from objc-act.c)
 
 This file is part of GCC.
@@ -22,17 +22,6 @@ along with GCC; see the file COPYING3.  If not see
 #include "system.h"
 #include "coretypes.h"
 #include "tm.h"
-#include "hash-set.h"
-#include "machmode.h"
-#include "vec.h"
-#include "double-int.h"
-#include "input.h"
-#include "alias.h"
-#include "symtab.h"
-#include "options.h"
-#include "wide-int.h"
-#include "inchash.h"
-#include "tree.h"
 #include "stringpool.h"
 
 #ifdef OBJCPLUS
@@ -41,7 +30,6 @@ along with GCC; see the file COPYING3.  If not see
 #include "c/c-tree.h"
 #include "c/c-lang.h"
 #endif
-#include "langhooks.h"
 #include "c-family/c-objc.h"
 #include "objc-act.h"
 
@@ -521,6 +509,9 @@ build_module_descriptor (long vers, tree attr)
   /* This is the root of the metadata for defined classes and categories, it
      is referenced by the runtime and, therefore, needed.  */
   DECL_PRESERVE_P (UOBJC_MODULES_decl) = 1;
+
+  /* Squash `defined but not used' warning.  */
+  TREE_USED (UOBJC_MODULES_decl) = 1;
 
   /* Allow the runtime to mark meta-data such that it can be assigned to target
      specific sections by the back-end.  */

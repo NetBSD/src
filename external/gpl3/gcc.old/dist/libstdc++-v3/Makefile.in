@@ -338,9 +338,9 @@ WARN_CXXFLAGS = \
 
 
 # -I/-D flags to pass when compiling.
-AM_CPPFLAGS = $(GLIBCXX_INCLUDES)
-@GLIBCXX_HOSTED_TRUE@hosted_source = src doc po 
-SUBDIRS = include libsupc++ $(hosted_source) python
+AM_CPPFLAGS = $(GLIBCXX_INCLUDES) $(CPPFLAGS)
+@GLIBCXX_HOSTED_TRUE@hosted_source = src doc po python
+SUBDIRS = include libsupc++ $(hosted_source)
 ACLOCAL_AMFLAGS = -I . -I .. -I ../config
 @BUILD_XML_FALSE@STAMP_XML = 
 

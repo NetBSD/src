@@ -1,5 +1,5 @@
 /* Perform optimizations on tree structure.
-   Copyright (C) 1998-2015 Free Software Foundation, Inc.
+   Copyright (C) 1998-2016 Free Software Foundation, Inc.
    Written by Mark Michell (mark@codesourcery.com).
 
 This file is part of GCC.
@@ -21,37 +21,13 @@ along with GCC; see the file COPYING3.  If not see
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
-#include "tm.h"
-#include "hash-set.h"
-#include "machmode.h"
-#include "vec.h"
-#include "double-int.h"
-#include "input.h"
-#include "alias.h"
-#include "symtab.h"
-#include "wide-int.h"
-#include "inchash.h"
-#include "tree.h"
-#include "stringpool.h"
-#include "cp-tree.h"
-#include "input.h"
-#include "params.h"
-#include "hashtab.h"
 #include "target.h"
+#include "cp-tree.h"
+#include "stringpool.h"
+#include "cgraph.h"
 #include "debug.h"
 #include "tree-inline.h"
-#include "flags.h"
-#include "langhooks.h"
-#include "diagnostic-core.h"
-#include "dumpfile.h"
 #include "tree-iterator.h"
-#include "hash-map.h"
-#include "is-a.h"
-#include "plugin-api.h"
-#include "hard-reg-set.h"
-#include "function.h"
-#include "ipa-ref.h"
-#include "cgraph.h"
 
 /* Prototypes.  */
 

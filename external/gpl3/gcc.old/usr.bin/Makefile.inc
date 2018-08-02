@@ -1,9 +1,10 @@
-#	$NetBSD: Makefile.inc,v 1.8 2017/08/22 09:17:50 mrg Exp $
+#	$NetBSD: Makefile.inc,v 1.9 2018/08/02 00:03:58 mrg Exp $
 
 .ifndef _EXTERNAL_GPL3_GCC_USR_BIN_MAKEFILE_INC_
 _EXTERNAL_GPL3_GCC_USR_BIN_MAKEFILE_INC_=1
 
-.include <bsd.own.mk>
+NOCTF=	# defined
+.include <bsd.init.mk>
 
 .sinclude "../../Makefile.gcc_path"
 
@@ -38,6 +39,8 @@ FRONTENDOBJ!=		cd ${.CURDIR}/../frontend && ${PRINTOBJDIR}
 .if ${USETOOLS} == "yes"
 NBCOMPATLIB=   -L${TOOLDIR}/lib -lnbcompat
 .endif
+
+CXXFLAGS+=	-std=gnu++98
 
 GNUHOSTDIST=	${DIST}
 BUILD_PREFIX=	${C_BUILD_PREFIX}

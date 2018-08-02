@@ -1,5 +1,5 @@
 /* Definitions of target machine GNU compiler.  IA-64 version.
-   Copyright (C) 1999-2015 Free Software Foundation, Inc.
+   Copyright (C) 1999-2016 Free Software Foundation, Inc.
    Contributed by James E. Wilson <wilson@cygnus.com> and
    		  David Mosberger <davidm@hpl.hp.com>.
 
@@ -1178,7 +1178,7 @@ do {									\
    Indirect function calls are more expensive that direct function calls, so
    don't cse function addresses.  */
 
-#define NO_FUNCTION_CSE
+#define NO_FUNCTION_CSE 1
 
 
 /* Dividing the output into sections.  */
@@ -1631,7 +1631,7 @@ do {									\
 /* Define this macro if operations between registers with integral mode smaller
    than a word are always performed on the entire register.  */
 
-#define WORD_REGISTER_OPERATIONS
+#define WORD_REGISTER_OPERATIONS 1
 
 /* Define this macro to be a C expression indicating when insns that read
    memory in MODE, an integral mode narrower than a word, set the bits outside

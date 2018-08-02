@@ -1,5 +1,5 @@
 /* Common hooks for Adapteva Epiphany
-   Copyright (C) 1994-2015 Free Software Foundation, Inc.
+   Copyright (C) 1994-2016 Free Software Foundation, Inc.
    Contributed by Embecosm on behalf of Adapteva, Inc.
 
 This file is part of GCC.
@@ -23,7 +23,7 @@ along with GCC; see the file COPYING3.  If not see
 #include "coretypes.h"
 #include "common/common-target.h"
 #include "opts.h"
-#include "flags.h"
+#include "options.h"
 
 #define TARGET_OPTION_OPTIMIZATION_TABLE epiphany_option_optimization_table
 

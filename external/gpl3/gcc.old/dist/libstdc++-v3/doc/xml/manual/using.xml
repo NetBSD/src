@@ -16,7 +16,8 @@
       The standard library conforms to the dialect of C++ specified by the
       <option>-std</option> option passed to the compiler.
       By default, <command>g++</command> is equivalent to
-      <command>g++ -std=gnu++98</command> for GCC 5 and older releases.
+      <command>g++ -std=gnu++14</command> since GCC 6, and
+      <command>g++ -std=gnu++98</command> for older releases.
     </para>
 
  <table frame="all" xml:id="table.cmd_options">
@@ -745,7 +746,7 @@ files that may then be used to speed up compilations that use these headers.
 </listitem>
 
 <listitem><para>extc++.h</para>
-<para>Includes all of the Extension headers
+<para>Includes all of &lt;stdc++.h&gt;, and adds all the Extension headers
 (and in C++98 mode also adds all the TR1 headers by including all of
 &lt;stdtr1c++.h&gt;).
 </para></listitem>
@@ -907,16 +908,28 @@ g++ -Winvalid-pch -I. -include stdc++.h -H -g -O2 hello.cc -o test.exe
 	<code>--enable-concept-checks</code>.  When defined, performs
 	compile-time checking on certain template instantiations to
 	detect violations of the requirements of the standard.  This
-	is described in more detail in
+	macro has no effect for freestanding implementations.
+	This is described in more detail in
 	<link linkend="manual.ext.compile_checks">Compile Time Checks</link>.
       </para>
     </listitem></varlistentry>
 
+    <varlistentry><term><code>_GLIBCXX_ASSERTIONS</code></term>
+    <listitem>
+      <para>
+	Undefined by default. When defined, enables extra error checking in
+        the form of precondition assertions, such as bounds checking in
+        strings and null pointer checks when dereferencing smart pointers.
+      </para>
+    </listitem></varlistentry>
     <varlistentry><term><code>_GLIBCXX_DEBUG</code></term>
     <listitem>
       <para>
 	Undefined by default. When defined, compiles user code using
 	the <link linkend="manual.ext.debug_mode">debug mode</link>.
+        When defined, <code>_GLIBCXX_ASSERTIONS</code> is defined
+        automatically, so all the assertions enabled by that macro are also
+        enabled in debug mode.
       </para>
     </listitem></varlistentry>
     <varlistentry><term><code>_GLIBCXX_DEBUG_PEDANTIC</code></term>
@@ -935,12 +948,28 @@ g++ -Winvalid-pch -I. -include stdc++.h -H -g -O2 hello.cc -o test.exe
 	mode</link>.
       </para>
     </listitem></varlistentry>
+    <varlistentry><term><code>_GLIBCXX_PARALLEL_ASSERTIONS</code></term>
+    <listitem>
+      <para>Undefined by default, but when any parallel mode header is included
+      this macro will be defined to a non-zero value if
+      <code>_GLIBCXX_ASSERTIONS</code> has a non-zero value, otherwise to zero.
+      When defined to a non-zero value, it enables extra error checking and
+      assertions in the parallel mode.
+      </para>
+    </listitem></varlistentry>
 
     <varlistentry><term><code>_GLIBCXX_PROFILE</code></term>
     <listitem>
       <para>Undefined by default. When defined, compiles user code
 	using the <link linkend="manual.ext.profile_mode">profile
 	mode</link>.
+      </para>
+    </listitem></varlistentry>
+
+    <varlistentry><term><code>__STDCPP_WANT_MATH_SPEC_FUNCS__</code></term>
+    <listitem>
+      <para>Undefined by default. When defined to a non-zero integer constant,
+	enables support for ISO/IEC 29124 Special Math Functions.
       </para>
     </listitem></varlistentry>
     </variablelist>

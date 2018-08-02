@@ -1,5 +1,5 @@
 /* Callgraph clones
-   Copyright (C) 2003-2015 Free Software Foundation, Inc.
+   Copyright (C) 2003-2016 Free Software Foundation, Inc.
    Contributed by Jan Hubicka
 
 This file is part of GCC.
@@ -67,58 +67,19 @@ along with GCC; see the file COPYING3.  If not see
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
-#include "tm.h"
+#include "backend.h"
+#include "target.h"
 #include "rtl.h"
-#include "hash-set.h"
-#include "machmode.h"
-#include "vec.h"
-#include "double-int.h"
-#include "input.h"
-#include "alias.h"
-#include "symtab.h"
-#include "wide-int.h"
-#include "inchash.h"
 #include "tree.h"
-#include "fold-const.h"
-#include "stringpool.h"
-#include "hard-reg-set.h"
-#include "input.h"
-#include "function.h"
-#include "emit-rtl.h"
-#include "predict.h"
-#include "basic-block.h"
-#include "tree-ssa-alias.h"
-#include "internal-fn.h"
-#include "tree-eh.h"
-#include "gimple-expr.h"
-#include "is-a.h"
 #include "gimple.h"
-#include "bitmap.h"
+#include "stringpool.h"
+#include "cgraph.h"
+#include "lto-streamer.h"
+#include "tree-eh.h"
 #include "tree-cfg.h"
 #include "tree-inline.h"
-#include "langhooks.h"
-#include "toplev.h"
-#include "flags.h"
-#include "debug.h"
-#include "target.h"
-#include "diagnostic.h"
-#include "params.h"
-#include "intl.h"
-#include "hash-map.h"
-#include "plugin-api.h"
-#include "ipa-ref.h"
-#include "cgraph.h"
-#include "alloc-pool.h"
-#include "symbol-summary.h"
-#include "ipa-prop.h"
-#include "tree-iterator.h"
 #include "tree-dump.h"
 #include "gimple-pretty-print.h"
-#include "coverage.h"
-#include "ipa-inline.h"
-#include "ipa-utils.h"
-#include "lto-streamer.h"
-#include "except.h"
 
 /* Create clone of edge in the node N represented by CALL_EXPR
    the callgraph.  */
@@ -474,7 +435,7 @@ cgraph_node::create_clone (tree new_decl, gcov_type gcov_count, int freq,
   new_node->tp_first_run = tp_first_run;
   new_node->tm_clone = tm_clone;
   new_node->icf_merged = icf_merged;
-  new_node->merged = merged;
+  new_node->merged_comdat = merged_comdat;
 
   new_node->clone.tree_map = NULL;
   new_node->clone.args_to_skip = args_to_skip;
@@ -552,13 +513,7 @@ clone_function_name_1 (const char *name, const char *suffix)
   prefix = XALLOCAVEC (char, len + strlen (suffix) + 2);
   memcpy (prefix, name, len);
   strcpy (prefix + len + 1, suffix);
-#ifndef NO_DOT_IN_LABEL
-  prefix[len] = '.';
-#elif !defined NO_DOLLAR_IN_LABEL
-  prefix[len] = '$';
-#else
-  prefix[len] = '_';
-#endif
+  prefix[len] = symbol_table::symbol_suffix_separator ();
   ASM_FORMAT_PRIVATE_NAME (tmp_name, prefix, clone_fn_id_num++);
   return get_identifier (tmp_name);
 }
@@ -591,9 +546,7 @@ cgraph_node::create_virtual_clone (vec<cgraph_edge *> redirect_callers,
   ipa_replace_map *map;
   char *name;
 
-  if (!in_lto_p)
-    gcc_checking_assert (tree_versionable_function_p (old_decl));
-
+  gcc_checking_assert (local.versionable);
   gcc_assert (local.can_change_signature || !args_to_skip);
 
   /* Make a new FUNCTION_DECL tree node */
@@ -746,7 +699,7 @@ cgraph_node::find_replacement (void)
    call.  */
 
 void
-cgraph_node::set_call_stmt_including_clones (gimple old_stmt,
+cgraph_node::set_call_stmt_including_clones (gimple *old_stmt,
 					     gcall *new_stmt,
 					     bool update_speculative)
 {
@@ -802,7 +755,7 @@ cgraph_node::set_call_stmt_including_clones (gimple old_stmt,
 
 void
 cgraph_node::create_edge_including_clones (cgraph_node *callee,
-					   gimple old_stmt, gcall *stmt,
+					   gimple *old_stmt, gcall *stmt,
 					   gcov_type count,
 					   int freq,
 					   cgraph_inline_failed_t reason)
@@ -1086,7 +1039,7 @@ cgraph_materialize_clone (cgraph_node *node)
 /* Once all functions from compilation unit are in memory, produce all clones
    and update all calls.  We might also do this on demand if we don't want to
    bring all functions to memory prior compilation, but current WHOPR
-   implementation does that and it is is bit easier to keep everything right in
+   implementation does that and it is a bit easier to keep everything right in
    this order.  */
 
 void
@@ -1098,9 +1051,8 @@ symbol_table::materialize_all_clones (void)
 
   if (symtab->dump_file)
     fprintf (symtab->dump_file, "Materializing clones\n");
-#ifdef ENABLE_CHECKING
-  cgraph_node::verify_cgraph_nodes ();
-#endif
+
+  cgraph_node::checking_verify_cgraph_nodes ();
 
   /* We can also do topological order, but number of iterations should be
      bounded by number of IPA passes since single IPA pass is probably not
@@ -1169,9 +1121,9 @@ symbol_table::materialize_all_clones (void)
       node->clear_stmts_in_references ();
   if (symtab->dump_file)
     fprintf (symtab->dump_file, "Materialization Call site updates done.\n");
-#ifdef ENABLE_CHECKING
-  cgraph_node::verify_cgraph_nodes ();
-#endif
+
+  cgraph_node::checking_verify_cgraph_nodes ();
+
   symtab->remove_unreachable_nodes (symtab->dump_file);
 }
 

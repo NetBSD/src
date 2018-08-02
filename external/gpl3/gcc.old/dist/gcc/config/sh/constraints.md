@@ -1,5 +1,5 @@
 ;; Constraint definitions for Renesas / SuperH SH.
-;; Copyright (C) 2007-2015 Free Software Foundation, Inc.
+;; Copyright (C) 2007-2016 Free Software Foundation, Inc.
 ;;
 ;; This file is part of GCC.
 ;;
@@ -25,6 +25,7 @@
 ;;  Bsc: SCRATCH - for the scratch register in movsi_ie in the
 ;;       fldi0 / fldi0 cases
 ;; Cxx: Constants other than only CONST_INT
+;;  Ccl: call site label
 ;;  Css: signed 16-bit constant, literal or symbolic
 ;;  Csu: unsigned 16-bit constant, literal or symbolic
 ;;  Csy: label or symbol
@@ -233,6 +234,11 @@
    hence mova is being used, hence do not select this pattern."
   (match_code "scratch"))
 
+(define_constraint "Ccl"
+  "A call site label, for bsrf."
+  (and (match_code "unspec")
+       (match_test "XINT (op, 1) == UNSPEC_CALLER")))
+
 (define_constraint "Css"
   "A signed 16-bit constant, literal or symbolic."
   (and (match_code "const")
@@ -307,6 +313,19 @@
 (define_memory_constraint "Snd"
   "A memory reference that excludes displacement addressing."
   (and (match_code "mem")
+       (match_test "! satisfies_constraint_Sdd (op)")))
+
+(define_memory_constraint "Sid"
+  "A memory reference that uses index addressing."
+  (and (match_code "mem")
+       (match_code "plus" "0")
+       (match_code "reg" "00")
+       (match_code "reg" "01")))
+
+(define_memory_constraint "Ssd"
+  "A memory reference that excludes index and displacement addressing."
+  (and (match_code "mem")
+       (match_test "! satisfies_constraint_Sid (op)")
        (match_test "! satisfies_constraint_Sdd (op)")))
 
 (define_memory_constraint "Sbv"
