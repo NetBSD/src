@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2017/11/15 07:47:10 mrg Exp $
+#	$NetBSD: Makefile,v 1.7 2018/08/02 00:03:59 mrg Exp $
 
 LIBISPRIVATE=	yes
 
@@ -19,6 +19,10 @@ SRCS+=		driver-i386.c
 .if ${GCC_MACHINE_ARCH} == "powerpc" || ${GCC_MACHINE_ARCH} == "powerpc64"
 SRCS+=		driver-rs6000.c
 .PATH:		${DIST}/gcc/config/rs6000
+.endif
+.if  ${GCC_MACHINE_ARCH} == "aarch64" 
+SRCS+=		driver-aarch64.c
+.PATH:		${DIST}/gcc/config/aarch64
 .endif
 
 .include "../Makefile.target-defines"

@@ -1,5 +1,5 @@
 /* Compute different info about registers.
-   Copyright (C) 1987-2015 Free Software Foundation, Inc.
+   Copyright (C) 1987-2016 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -28,49 +28,20 @@ along with GCC; see the file COPYING3.  If not see
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
-#include "tm.h"
-#include "hard-reg-set.h"
-#include "hash-set.h"
-#include "machmode.h"
-#include "vec.h"
-#include "double-int.h"
-#include "input.h"
-#include "alias.h"
-#include "symtab.h"
-#include "wide-int.h"
-#include "inchash.h"
-#include "tree.h"
-#include "rtl.h"
-#include "hashtab.h"
-#include "function.h"
-#include "flags.h"
-#include "statistics.h"
-#include "real.h"
-#include "fixed-value.h"
-#include "insn-config.h"
-#include "expmed.h"
-#include "dojump.h"
-#include "explow.h"
-#include "calls.h"
-#include "emit-rtl.h"
-#include "varasm.h"
-#include "stmt.h"
-#include "expr.h"
-#include "tm_p.h"
-#include "predict.h"
-#include "dominance.h"
-#include "cfg.h"
-#include "basic-block.h"
-#include "regs.h"
-#include "addresses.h"
-#include "recog.h"
-#include "reload.h"
-#include "diagnostic-core.h"
-#include "output.h"
+#include "backend.h"
 #include "target.h"
-#include "tree-pass.h"
+#include "rtl.h"
+#include "tree.h"
 #include "df.h"
+#include "tm_p.h"
+#include "insn-config.h"
+#include "regs.h"
 #include "ira.h"
+#include "recog.h"
+#include "diagnostic-core.h"
+#include "reload.h"
+#include "output.h"
+#include "tree-pass.h"
 
 /* Maximum register number used in this function, plus one.  */
 
@@ -84,15 +55,6 @@ struct simplifiable_subreg
 
   subreg_shape shape;
   HARD_REG_SET simplifiable_regs;
-};
-
-struct simplifiable_subregs_hasher : typed_noop_remove <simplifiable_subreg>
-{
-  typedef simplifiable_subreg value_type;
-  typedef subreg_shape compare_type;
-
-  static inline hashval_t hash (const value_type *);
-  static inline bool equal (const value_type *, const compare_type *);
 };
 
 struct target_hard_regs default_target_hard_regs;
@@ -470,14 +432,12 @@ init_reg_sets_1 (void)
 	}
       else if (i == FRAME_POINTER_REGNUM)
 	;
-#if !HARD_FRAME_POINTER_IS_FRAME_POINTER
-      else if (i == HARD_FRAME_POINTER_REGNUM)
+      else if (!HARD_FRAME_POINTER_IS_FRAME_POINTER
+	       && i == HARD_FRAME_POINTER_REGNUM)
 	;
-#endif
-#if ARG_POINTER_REGNUM != FRAME_POINTER_REGNUM
-      else if (i == ARG_POINTER_REGNUM && fixed_regs[i])
+      else if (FRAME_POINTER_REGNUM != ARG_POINTER_REGNUM
+	       && i == ARG_POINTER_REGNUM && fixed_regs[i])
 	;
-#endif
       else if (!PIC_OFFSET_TABLE_REG_CALL_CLOBBERED
 	       && i == (unsigned) PIC_OFFSET_TABLE_REGNUM && fixed_regs[i])
 	;
@@ -1234,14 +1194,14 @@ reg_classes_intersect_p (reg_class_t c1, reg_class_t c2)
 
 
 inline hashval_t
-simplifiable_subregs_hasher::hash (const value_type *value)
+simplifiable_subregs_hasher::hash (const simplifiable_subreg *value)
 {
   return value->shape.unique_id ();
 }
 
 inline bool
-simplifiable_subregs_hasher::equal (const value_type *value,
-				    const compare_type *compare)
+simplifiable_subregs_hasher::equal (const simplifiable_subreg *value,
+				    const subreg_shape *compare)
 {
   return value->shape == *compare;
 }
@@ -1284,8 +1244,16 @@ simplifiable_subregs (const subreg_shape &shape)
 static HARD_REG_SET **valid_mode_changes;
 static obstack valid_mode_changes_obstack;
 
+/* Restrict the choice of register for SUBREG_REG (SUBREG) based
+   on information about SUBREG.
+
+   If PARTIAL_DEF, SUBREG is a partial definition of a multipart inner
+   register and we want to ensure that the other parts of the inner
+   register are correctly preserved.  If !PARTIAL_DEF we need to
+   ensure that SUBREG itself can be formed.  */
+
 static void
-record_subregs_of_mode (rtx subreg)
+record_subregs_of_mode (rtx subreg, bool partial_def)
 {
   unsigned int regno;
 
@@ -1296,15 +1264,41 @@ record_subregs_of_mode (rtx subreg)
   if (regno < FIRST_PSEUDO_REGISTER)
     return;
 
+  subreg_shape shape (shape_of_subreg (subreg));
+  if (partial_def)
+    {
+      /* The number of independently-accessible SHAPE.outer_mode values
+	 in SHAPE.inner_mode is GET_MODE_SIZE (SHAPE.inner_mode) / SIZE.
+	 We need to check that the assignment will preserve all the other
+	 SIZE-byte chunks in the inner register besides the one that
+	 includes SUBREG.
+
+	 In practice it is enough to check whether an equivalent
+	 SHAPE.inner_mode value in an adjacent SIZE-byte chunk can be formed.
+	 If the underlying registers are small enough, both subregs will
+	 be valid.  If the underlying registers are too large, one of the
+	 subregs will be invalid.
+
+	 This relies on the fact that we've already been passed
+	 SUBREG with PARTIAL_DEF set to false.  */
+      unsigned int size = MAX (REGMODE_NATURAL_SIZE (shape.inner_mode),
+			       GET_MODE_SIZE (shape.outer_mode));
+      gcc_checking_assert (size < GET_MODE_SIZE (shape.inner_mode));
+      if (shape.offset >= size)
+	shape.offset -= size;
+      else
+	shape.offset += size;
+    }
+
   if (valid_mode_changes[regno])
     AND_HARD_REG_SET (*valid_mode_changes[regno],
-		      simplifiable_subregs (shape_of_subreg (subreg)));
+		      simplifiable_subregs (shape));
   else
     {
       valid_mode_changes[regno]
 	= XOBNEW (&valid_mode_changes_obstack, HARD_REG_SET);
       COPY_HARD_REG_SET (*valid_mode_changes[regno],
-			 simplifiable_subregs (shape_of_subreg (subreg)));
+			 simplifiable_subregs (shape));
     }
 }
 
@@ -1317,7 +1311,7 @@ find_subregs_of_mode (rtx x)
   int i;
 
   if (code == SUBREG)
-    record_subregs_of_mode (x);
+    record_subregs_of_mode (x, false);
 
   /* Time for some deep diving.  */
   for (i = GET_RTX_LENGTH (code) - 1; i >= 0; i--)
@@ -1345,7 +1339,14 @@ init_subregs_of_mode (void)
   FOR_EACH_BB_FN (bb, cfun)
     FOR_BB_INSNS (bb, insn)
       if (NONDEBUG_INSN_P (insn))
-        find_subregs_of_mode (PATTERN (insn));
+	{
+	  find_subregs_of_mode (PATTERN (insn));
+	  df_ref def;
+	  FOR_EACH_INSN_DEF (def, insn)
+	    if (DF_REF_FLAGS_IS_SET (def, DF_REF_PARTIAL)
+		&& df_read_modify_subreg_p (DF_REF_REG (def)))
+	      record_subregs_of_mode (DF_REF_REG (def), true);
+	}
 }
 
 const HARD_REG_SET *

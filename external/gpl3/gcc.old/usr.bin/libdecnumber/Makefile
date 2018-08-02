@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.5 2017/07/23 01:12:27 mrg Exp $
+#	$NetBSD: Makefile,v 1.6 2018/08/02 00:04:07 mrg Exp $
 
 DIST=		${GCCDIST}
 GNUHOSTDIST=	${DIST}
 
 LIBISPRIVATE=   yes
 
-.include <bsd.own.mk>
+.include <bsd.init.mk>
 
 LIB=		decnumber
 

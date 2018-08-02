@@ -184,7 +184,8 @@
 	  When you have all these pieces, bundle them up in a
 	  mail message and send it to libstdc++@gcc.gnu.org. All
 	  patches and related discussion should be sent to the
-	  libstdc++ mailing list.
+	  libstdc++ mailing list. In common with the rest of GCC,
+	  patches should also be sent to the gcc-patches mailing list.
 	</para>
       </listitem>
     </itemizedlist>
@@ -381,7 +382,9 @@ In addition, a subdirectory holds the convenience library libsupc++.
 <para>
 Note that glibc also has a <filename class="directory">bits/</filename>
 subdirectory.  We need to be careful not to collide with names in its
-<filename class="directory">bits/</filename> directory.
+<filename class="directory">bits/</filename> directory. For example
+<filename class="headerfile">&lt;bits/std_mutex.h&gt;</filename> has to be
+renamed from <filename class="headerfile">&lt;bits/mutex.h&gt;</filename>.
 Another solution would be to rename <filename class="directory">bits</filename>
 to (e.g.) <filename class="directory">cppbits</filename>.
 </para>

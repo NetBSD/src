@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2017/07/23 01:11:58 mrg Exp $
+#	$NetBSD: Makefile,v 1.7 2018/08/02 00:03:42 mrg Exp $
 
 # build GCC's libgomp, so that -fopenmp works.
 
@@ -47,7 +47,8 @@ SRCS= \
 	oacc-mem.c \
 	oacc-async.c \
 	oacc-plugin.c \
-	oacc-cuda.c
+	oacc-cuda.c \
+	priority_queue.c
 
 
 GOMP_MACHINE_ARCH?=	${MACHINE_ARCH:S/earmv5/earm/}
@@ -66,8 +67,9 @@ CWARNFLAGS.clang+=	-Wno-conversion
 
 # libgomp is 1.0 is in GCC 4.5, and 1.1 in 4.8 since it added more symbols
 # XXXGCC5 -- marking 1.2 for GCC 5.3 for now
+# XXXGCC6 -- marking 1.3 for GCC 6 for now
 SHLIB_MAJOR=	1
-SHLIB_MINOR=	2
+SHLIB_MINOR=	3
 
 LDFLAGS+=	-Wl,--version-script,${DIST}/libgomp/libgomp.map
 
@@ -77,7 +79,7 @@ FILES=		libgomp.spec
 FILESDIR=	${LIBDIR}
 
 INCS=		omp.h openacc.h
-INCSDIR=	/usr/include/gcc-5
+INCSDIR=	/usr/include/gcc-6
 .endif
 
 .else			# } else {
