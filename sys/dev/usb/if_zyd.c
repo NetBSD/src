@@ -1,5 +1,5 @@
 /*	$OpenBSD: if_zyd.c,v 1.52 2007/02/11 00:08:04 jsg Exp $	*/
-/*	$NetBSD: if_zyd.c,v 1.49 2018/07/29 02:07:33 riastradh Exp $	*/
+/*	$NetBSD: if_zyd.c,v 1.50 2018/08/02 06:09:04 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2006 by Damien Bergamini <damien.bergamini@free.fr>
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_zyd.c,v 1.49 2018/07/29 02:07:33 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_zyd.c,v 1.50 2018/08/02 06:09:04 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -468,7 +468,7 @@ zyd_detach(device_t self, int flags)
 	zyd_stop(ifp, 1);
 	callout_halt(&sc->sc_scan_ch, NULL);
 	callout_halt(&sc->sc_amrr_ch, NULL);
-	usb_rem_task_wait(sc->sc_udev, &sc->sc_task, USB_TASKQ_DRIVER);
+	usb_rem_task_wait(sc->sc_udev, &sc->sc_task, USB_TASKQ_DRIVER, NULL);
 
 	/* Abort, etc. done by zyd_stop */
 	zyd_close_pipes(sc);
