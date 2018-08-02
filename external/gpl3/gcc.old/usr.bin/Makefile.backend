@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.backend,v 1.6 2017/08/04 01:18:39 mrg Exp $
+#	$NetBSD: Makefile.backend,v 1.7 2018/08/02 00:03:58 mrg Exp $
 
 .ifndef _EXTERNAL_GPL3_GCC_USR_BIN_MAKEFILE_BACKEND_
 _EXTERNAL_GPL3_GCC_USR_BIN_MAKEFILE_BACKEND_=1
@@ -10,7 +10,7 @@ BINDIR=		/usr/libexec
 CPPFLAGS+=	-I${GCCARCH} -I${BACKENDOBJ} \
 		${G_ALL_CFLAGS:M-D*} ${G_INCLUDES:M-I*:N-I.*}
 
-.include <bsd.own.mk>
+.include <bsd.init.mk>
 
 DPADD+=			${BACKENDOBJ}/libbackend.a
 LDADD+=			${BACKENDOBJ}/libbackend.a

@@ -1,4 +1,4 @@
-/* Copyright (C) 2006-2015 Free Software Foundation, Inc.
+/* Copyright (C) 2006-2016 Free Software Foundation, Inc.
 
    This file is free software; you can redistribute it and/or modify it under
    the terms of the GNU General Public License as published by the Free
@@ -17,82 +17,46 @@
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
-#include "tm.h"
+#include "backend.h"
+#include "target.h"
 #include "rtl.h"
-#include "regs.h"
-#include "hard-reg-set.h"
-#include "insn-config.h"
-#include "conditions.h"
-#include "insn-attr.h"
-#include "flags.h"
-#include "recog.h"
-#include "obstack.h"
-#include "hash-set.h"
-#include "machmode.h"
-#include "vec.h"
-#include "double-int.h"
-#include "input.h"
-#include "alias.h"
-#include "symtab.h"
-#include "wide-int.h"
-#include "inchash.h"
 #include "tree.h"
-#include "fold-const.h"
+#include "gimple.h"
+#include "cfghooks.h"
+#include "cfgloop.h"
+#include "df.h"
+#include "tm_p.h"
 #include "stringpool.h"
+#include "expmed.h"
+#include "optabs.h"
+#include "regs.h"
+#include "emit-rtl.h"
+#include "recog.h"
+#include "diagnostic-core.h"
+#include "insn-attr.h"
+#include "alias.h"
+#include "fold-const.h"
 #include "stor-layout.h"
 #include "calls.h"
 #include "varasm.h"
-#include "hashtab.h"
-#include "function.h"
-#include "statistics.h"
-#include "real.h"
-#include "fixed-value.h"
-#include "expmed.h"
-#include "dojump.h"
 #include "explow.h"
-#include "emit-rtl.h"
-#include "stmt.h"
 #include "expr.h"
-#include "insn-codes.h"
-#include "optabs.h"
-#include "except.h"
 #include "output.h"
-#include "predict.h"
-#include "dominance.h"
-#include "cfg.h"
 #include "cfgrtl.h"
-#include "cfganal.h"
-#include "lcm.h"
 #include "cfgbuild.h"
-#include "cfgcleanup.h"
-#include "basic-block.h"
-#include "diagnostic-core.h"
-#include "ggc.h"
-#include "tm_p.h"
-#include "target.h"
-#include "target-def.h"
 #include "langhooks.h"
 #include "reload.h"
 #include "sched-int.h"
 #include "params.h"
-#include "hash-table.h"
-#include "tree-ssa-alias.h"
-#include "internal-fn.h"
-#include "gimple-fold.h"
-#include "tree-eh.h"
-#include "gimple-expr.h"
-#include "is-a.h"
-#include "gimple.h"
 #include "gimplify.h"
 #include "tm-constrs.h"
-#include "sbitmap.h"
-#include "df.h"
 #include "ddg.h"
-#include "timevar.h"
 #include "dumpfile.h"
-#include "cfgloop.h"
 #include "builtins.h"
 #include "rtl-iter.h"
+
+/* This file should be included last.  */
+#include "target-def.h"
 
 /* Builtin types, data and prototypes. */
 
@@ -467,7 +431,7 @@ spu_expand_extv (rtx ops[], int unsignedp)
       gcc_assert (REG_P (r) && SCALAR_INT_MODE_P (GET_MODE (r)));
       s0 = gen_reg_rtx (TImode);
       if (GET_MODE_SIZE (GET_MODE (r)) < GET_MODE_SIZE (TImode))
-	emit_insn (gen_rtx_SET (VOIDmode, s0, gen_rtx_ZERO_EXTEND (TImode, r)));
+	emit_insn (gen_rtx_SET (s0, gen_rtx_ZERO_EXTEND (TImode, r)));
       else
 	emit_move_insn (s0, src);
     }
@@ -494,7 +458,7 @@ spu_expand_insv (rtx ops[])
 {
   HOST_WIDE_INT width = INTVAL (ops[1]);
   HOST_WIDE_INT start = INTVAL (ops[2]);
-  HOST_WIDE_INT maskbits;
+  unsigned HOST_WIDE_INT maskbits;
   machine_mode dst_mode;
   rtx dst = ops[0], src = ops[3];
   int dst_size;
@@ -549,15 +513,15 @@ spu_expand_insv (rtx ops[])
   switch (dst_size)
     {
     case 32:
-      maskbits = (-1ll << (32 - width - start));
+      maskbits = (~(unsigned HOST_WIDE_INT)0 << (32 - width - start));
       if (start)
-	maskbits += (1ll << (32 - start));
+	maskbits += ((unsigned HOST_WIDE_INT)1 << (32 - start));
       emit_move_insn (mask, GEN_INT (maskbits));
       break;
     case 64:
-      maskbits = (-1ll << (64 - width - start));
+      maskbits = (~(unsigned HOST_WIDE_INT)0 << (64 - width - start));
       if (start)
-	maskbits += (1ll << (64 - start));
+	maskbits += ((unsigned HOST_WIDE_INT)1 << (64 - start));
       emit_move_insn (mask, GEN_INT (maskbits));
       break;
     case 128:
@@ -960,7 +924,7 @@ spu_emit_branch_or_set (int is_set, rtx cmp, rtx operands[])
 	bcomp = gen_rtx_NE (comp_mode, compare_result, const0_rtx);
 
       loc_ref = gen_rtx_LABEL_REF (VOIDmode, operands[3]);
-      emit_jump_insn (gen_rtx_SET (VOIDmode, pc_rtx,
+      emit_jump_insn (gen_rtx_SET (pc_rtx,
 				   gen_rtx_IF_THEN_ELSE (VOIDmode, bcomp,
 							 loc_ref, pc_rtx)));
     }
@@ -1003,7 +967,7 @@ spu_emit_branch_or_set (int is_set, rtx cmp, rtx operands[])
     {
       rtx target = operands[0];
       if (reverse_test)
-	emit_insn (gen_rtx_SET (VOIDmode, compare_result,
+	emit_insn (gen_rtx_SET (compare_result,
 				gen_rtx_NOT (comp_mode, compare_result)));
       if (GET_MODE (target) == SImode && GET_MODE (compare_result) == HImode)
 	emit_insn (gen_extendhisi2 (target, compare_result));
@@ -1019,17 +983,12 @@ HOST_WIDE_INT
 const_double_to_hwint (rtx x)
 {
   HOST_WIDE_INT val;
-  REAL_VALUE_TYPE rv;
   if (GET_MODE (x) == SFmode)
-    {
-      REAL_VALUE_FROM_CONST_DOUBLE (rv, x);
-      REAL_VALUE_TO_TARGET_SINGLE (rv, val);
-    }
+    REAL_VALUE_TO_TARGET_SINGLE (*CONST_DOUBLE_REAL_VALUE (x), val);
   else if (GET_MODE (x) == DFmode)
     {
       long l[2];
-      REAL_VALUE_FROM_CONST_DOUBLE (rv, x);
-      REAL_VALUE_TO_TARGET_DOUBLE (rv, l);
+      REAL_VALUE_TO_TARGET_DOUBLE (*CONST_DOUBLE_REAL_VALUE (x), l);
       val = l[0];
       val = (val << 32) | (l[1] & 0xffffffff);
     }
@@ -1053,7 +1012,7 @@ hwint_to_const_double (machine_mode mode, HOST_WIDE_INT v)
       tv[0] = v >> 32;
     }
   real_from_target (&rv, tv, mode);
-  return CONST_DOUBLE_FROM_REAL_VALUE (rv, mode);
+  return const_double_from_real_value (rv, mode);
 }
 
 void
@@ -1380,7 +1339,7 @@ print_operand (FILE * file, rtx x, int code)
 	    /* Used in indirect function calls. */
 	    fprintf (file, "%s", reg_names[REGNO (XEXP (x, 0))]);
 	  else
-	    output_address (XEXP (x, 0));
+	    output_address (GET_MODE (x), XEXP (x, 0));
 	}
       return;
 
@@ -1473,7 +1432,7 @@ print_operand (FILE * file, rtx x, int code)
       if (xcode == REG)
 	fprintf (file, "%s", reg_names[REGNO (x)]);
       else if (xcode == MEM)
-	output_address (XEXP (x, 0));
+	output_address (GET_MODE (x), XEXP (x, 0));
       else if (xcode == CONST_VECTOR)
 	print_operand (file, CONST_VECTOR_ELT (x, 0), 0);
       else
@@ -1552,8 +1511,7 @@ spu_split_immediate (rtx * ops)
 	hi = array_to_constant (imode, arrhi);
 	lo = array_to_constant (imode, arrlo);
 	emit_move_insn (temp, hi);
-	emit_insn (gen_rtx_SET
-		   (VOIDmode, to, gen_rtx_IOR (imode, temp, lo)));
+	emit_insn (gen_rtx_SET (to, gen_rtx_IOR (imode, temp, lo)));
 	return 1;
       }
     case IC_FSMBI2:
@@ -1582,8 +1540,7 @@ spu_split_immediate (rtx * ops)
 	reg_fsmbi = array_to_constant (imode, arr_fsmbi);
 	reg_and = array_to_constant (imode, arr_andbi);
 	emit_move_insn (to, reg_fsmbi);
-	emit_insn (gen_rtx_SET
-		   (VOIDmode, to, gen_rtx_AND (imode, to, reg_and)));
+	emit_insn (gen_rtx_SET (to, gen_rtx_AND (imode, to, reg_and)));
 	return 1;
       }
     case IC_POOL:
@@ -3099,7 +3056,7 @@ spu_float_const (const char *string, machine_mode mode)
 {
   REAL_VALUE_TYPE value;
   value = REAL_VALUE_ATOF (string, mode);
-  return CONST_DOUBLE_FROM_REAL_VALUE (value, mode);
+  return const_double_from_real_value (value, mode);
 }
 
 int
@@ -3209,11 +3166,8 @@ classify_immediate (rtx op, machine_mode mode)
       && mode == V4SImode
       && GET_CODE (op) == CONST_VECTOR
       && GET_CODE (CONST_VECTOR_ELT (op, 0)) != CONST_INT
-      && GET_CODE (CONST_VECTOR_ELT (op, 0)) != CONST_DOUBLE
-      && CONST_VECTOR_ELT (op, 0) == CONST_VECTOR_ELT (op, 1)
-      && CONST_VECTOR_ELT (op, 1) == CONST_VECTOR_ELT (op, 2)
-      && CONST_VECTOR_ELT (op, 2) == CONST_VECTOR_ELT (op, 3))
-    op = CONST_VECTOR_ELT (op, 0);
+      && GET_CODE (CONST_VECTOR_ELT (op, 0)) != CONST_DOUBLE)
+    op = unwrap_const_vec_duplicate (op);
 
   switch (GET_CODE (op))
     {
@@ -3415,11 +3369,8 @@ arith_immediate_p (rtx op, machine_mode mode,
 
   constant_to_array (mode, op, arr);
 
-  if (VECTOR_MODE_P (mode))
-    mode = GET_MODE_INNER (mode);
-
-  bytes = GET_MODE_SIZE (mode);
-  mode = mode_for_size (GET_MODE_BITSIZE (mode), MODE_INT, 0);
+  bytes = GET_MODE_UNIT_SIZE (mode);
+  mode = mode_for_size (GET_MODE_UNIT_BITSIZE (mode), MODE_INT, 0);
 
   /* Check that bytes are repeated. */
   for (i = bytes; i < 16; i += bytes)
@@ -3459,8 +3410,7 @@ exp2_immediate_p (rtx op, machine_mode mode, int low, int high)
 
   constant_to_array (mode, op, arr);
 
-  if (VECTOR_MODE_P (mode))
-    mode = GET_MODE_INNER (mode);
+  mode = GET_MODE_INNER (mode);
 
   bytes = GET_MODE_SIZE (mode);
   int_mode = mode_for_size (GET_MODE_BITSIZE (mode), MODE_INT, 0);
@@ -3535,9 +3485,7 @@ spu_legitimate_constant_p (machine_mode mode, rtx x)
       && (GET_CODE (CONST_VECTOR_ELT (x, 0)) == SYMBOL_REF
 	  || GET_CODE (CONST_VECTOR_ELT (x, 0)) == LABEL_REF
 	  || GET_CODE (CONST_VECTOR_ELT (x, 0)) == CONST))
-    return CONST_VECTOR_ELT (x, 0) == CONST_VECTOR_ELT (x, 1)
-	   && CONST_VECTOR_ELT (x, 1) == CONST_VECTOR_ELT (x, 2)
-	   && CONST_VECTOR_ELT (x, 2) == CONST_VECTOR_ELT (x, 3);
+    return const_vec_duplicate_p (x);
 
   if (GET_CODE (x) == CONST_VECTOR
       && !const_vector_immediate_p (x))
@@ -4067,7 +4015,6 @@ spu_gimplify_va_arg_expr (tree valist, tree type, gimple_seq * pre_p,
   f_args = TYPE_FIELDS (TREE_TYPE (va_list_type_node));
   f_skip = DECL_CHAIN (f_args);
 
-  valist = build_simple_mem_ref (valist);
   args =
     build3 (COMPONENT_REF, TREE_TYPE (f_args), valist, f_args, NULL_TREE);
   skip =
@@ -4381,7 +4328,7 @@ ea_load_store_inline (rtx mem, bool is_store, rtx ea_addr, rtx data_addr)
   hit_label = gen_label_rtx ();
   hit_ref = gen_rtx_LABEL_REF (VOIDmode, hit_label);
   bcomp = gen_rtx_NE (SImode, tag_eq_pack_si, const0_rtx);
-  insn = emit_jump_insn (gen_rtx_SET (VOIDmode, pc_rtx,
+  insn = emit_jump_insn (gen_rtx_SET (pc_rtx,
 				      gen_rtx_IF_THEN_ELSE (VOIDmode, bcomp,
 							    hit_ref, pc_rtx)));
   /* Say that this branch is very likely to happen.  */
@@ -4551,7 +4498,7 @@ spu_convert_move (rtx dst, rtx src)
   rtx reg;
   gcc_assert (GET_MODE (src) == TImode);
   reg = int_mode != mode ? gen_reg_rtx (int_mode) : dst;
-  emit_insn (gen_rtx_SET (VOIDmode, reg,
+  emit_insn (gen_rtx_SET (reg,
 	       gen_rtx_TRUNCATE (int_mode,
 		 gen_rtx_LSHIFTRT (TImode, src,
 		   GEN_INT (int_mode == DImode ? 64 : 96)))));
@@ -5260,11 +5207,11 @@ spu_asm_globalize_label (FILE * file, const char *name)
 }
 
 static bool
-spu_rtx_costs (rtx x, int code, int outer_code ATTRIBUTE_UNUSED,
+spu_rtx_costs (rtx x, machine_mode mode, int outer_code ATTRIBUTE_UNUSED,
 	       int opno ATTRIBUTE_UNUSED, int *total,
 	       bool speed ATTRIBUTE_UNUSED)
 {
-  machine_mode mode = GET_MODE (x);
+  int code = GET_CODE (x);
   int cost = COSTS_N_INSNS (2);
 
   /* Folding to a CONST_VECTOR will use extra space but there might
@@ -6500,8 +6447,7 @@ spu_expand_builtin_1 (struct spu_builtin_description *d,
 
       /* negate addr */
       op = gen_reg_rtx (GET_MODE (addr));
-      emit_insn (gen_rtx_SET (VOIDmode, op,
-                 gen_rtx_NEG (GET_MODE (addr), addr)));
+      emit_insn (gen_rtx_SET (op, gen_rtx_NEG (GET_MODE (addr), addr)));
       op = gen_rtx_MEM (mode, op);
 
       pat = GEN_FCN (icode) (target, op);
@@ -7156,6 +7102,41 @@ spu_canonicalize_comparison (int *code, rtx *op0, rtx *op1,
       *code = (int)swap_condition ((enum rtx_code)*code);
     }
 }
+
+/* Expand an atomic fetch-and-operate pattern.  CODE is the binary operation
+   to perform.  MEM is the memory on which to operate.  VAL is the second
+   operand of the binary operator.  BEFORE and AFTER are optional locations to
+   return the value of MEM either before of after the operation.  */
+void
+spu_expand_atomic_op (enum rtx_code code, rtx mem, rtx val,
+		      rtx orig_before, rtx orig_after)
+{
+  machine_mode mode = GET_MODE (mem);
+  rtx before = orig_before, after = orig_after;
+
+  if (before == NULL_RTX)
+    before = gen_reg_rtx (mode);
+
+  emit_move_insn (before, mem);
+
+  if (code == MULT)  /* NAND operation */
+    {
+      rtx x = expand_simple_binop (mode, AND, before, val,
+				   NULL_RTX, 1, OPTAB_LIB_WIDEN);
+      after = expand_simple_unop (mode, NOT, x, after, 1);
+    }
+  else
+    {
+      after = expand_simple_binop (mode, code, before, val,
+				   after, 1, OPTAB_LIB_WIDEN);
+    }
+
+  emit_move_insn (mem, after);
+
+  if (orig_after && after != orig_after)
+    emit_move_insn (orig_after, after);
+}
+
 
 /*  Table of machine attributes.  */
 static const struct attribute_spec spu_attribute_table[] =

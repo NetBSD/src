@@ -1,5 +1,5 @@
 /* Xstormy16 cpu description.
-   Copyright (C) 1997-2015 Free Software Foundation, Inc.
+   Copyright (C) 1997-2016 Free Software Foundation, Inc.
    Contributed by Red Hat, Inc.
 
    This file is part of GCC.
@@ -345,7 +345,7 @@ enum reg_class
 
 #define SLOW_BYTE_ACCESS 0
 
-#define NO_FUNCTION_CSE
+#define NO_FUNCTION_CSE 1
 
 
 /* Dividing the output into sections.  */
@@ -487,7 +487,7 @@ enum reg_class
 
 #define CASE_VECTOR_MODE SImode
 
-#define WORD_REGISTER_OPERATIONS
+#define WORD_REGISTER_OPERATIONS 1
 
 #define LOAD_EXTEND_OP(MODE) ZERO_EXTEND
 

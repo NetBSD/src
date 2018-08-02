@@ -1,5 +1,5 @@
 /* PowerPC AltiVec include file.
-   Copyright (C) 2002-2015 Free Software Foundation, Inc.
+   Copyright (C) 2002-2016 Free Software Foundation, Inc.
    Contributed by Aldy Hernandez (aldyh@redhat.com).
    Rewritten by Paolo Bonzini (bonzini@gnu.org).
 
@@ -100,6 +100,8 @@
    typed builtins.  */
 #define vec_vaddfp __builtin_vec_vaddfp
 #define vec_addc __builtin_vec_addc
+#define vec_adde __builtin_vec_adde
+#define vec_addec __builtin_vec_addec
 #define vec_vaddsws __builtin_vec_vaddsws
 #define vec_vaddshs __builtin_vec_vaddshs
 #define vec_vaddsbs __builtin_vec_vaddsbs
@@ -125,6 +127,7 @@
 #define vec_cts __builtin_vec_cts
 #define vec_ctu __builtin_vec_ctu
 #define vec_cpsgn __builtin_vec_copysign
+#define vec_double __builtin_vec_double
 #define vec_expte __builtin_vec_expte
 #define vec_floor __builtin_vec_floor
 #define vec_loge __builtin_vec_loge
@@ -205,6 +208,8 @@
 #define vec_lvebx __builtin_vec_lvebx
 #define vec_lvehx __builtin_vec_lvehx
 #define vec_lvewx __builtin_vec_lvewx
+#define vec_pmsum_be __builtin_vec_vpmsum
+#define vec_shasigma_be __builtin_crypto_vshasigma
 /* Cell only intrinsics.  */
 #ifdef __PPU__
 #define vec_lvlx __builtin_vec_lvlx
@@ -340,6 +345,7 @@
 #define vec_vaddudm __builtin_vec_vaddudm
 #define vec_vadduqm __builtin_vec_vadduqm
 #define vec_vbpermq __builtin_vec_vbpermq
+#define vec_bperm __builtin_vec_vbpermq
 #define vec_vclz __builtin_vec_vclz
 #define vec_cntlz __builtin_vec_vclz
 #define vec_vclzb __builtin_vec_vclzb
@@ -351,6 +357,7 @@
 #define vec_vsubecuq __builtin_vec_vsubecuq
 #define vec_vsubeuqm __builtin_vec_vsubeuqm
 #define vec_vgbbd __builtin_vec_vgbbd
+#define vec_gb __builtin_vec_vgbbd
 #define vec_vmaxsd __builtin_vec_vmaxsd
 #define vec_vmaxud __builtin_vec_vmaxud
 #define vec_vminsd __builtin_vec_vminsd
@@ -375,6 +382,31 @@
 #define vec_vsubuqm __builtin_vec_vsubuqm
 #define vec_vupkhsw __builtin_vec_vupkhsw
 #define vec_vupklsw __builtin_vec_vupklsw
+#endif
+
+#ifdef _ARCH_PWR9
+/* Vector additions added in ISA 3.0.  */
+#define vec_vctz __builtin_vec_vctz
+#define vec_cntlz __builtin_vec_vctz
+#define vec_vctzb __builtin_vec_vctzb
+#define vec_vctzd __builtin_vec_vctzd
+#define vec_vctzh __builtin_vec_vctzh
+#define vec_vctzw __builtin_vec_vctzw
+#define vec_vprtyb __builtin_vec_vprtyb
+#define vec_vprtybd __builtin_vec_vprtybd
+#define vec_vprtybw __builtin_vec_vprtybw
+
+#ifdef _ARCH_PPC64
+#define vec_vprtybq __builtin_vec_vprtybq
+#endif
+
+#define vec_slv __builtin_vec_vslv
+#define vec_srv __builtin_vec_vsrv
+
+#define vec_absd __builtin_vec_vadu
+#define vec_absdb __builtin_vec_vadub
+#define vec_absdh __builtin_vec_vaduh
+#define vec_absdw __builtin_vec_vaduw
 #endif
 
 /* Predicates.

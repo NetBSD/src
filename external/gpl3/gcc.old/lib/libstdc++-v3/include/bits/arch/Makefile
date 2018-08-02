@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2017/07/23 01:12:14 mrg Exp $
+#	$NetBSD: Makefile,v 1.4 2018/08/02 00:03:58 mrg Exp $
 
 # install multilib c++config.h files
 
@@ -27,9 +27,10 @@ SUBDIR=		riscv32 riscv64
 CXXCONFIGARGS=	riscv64 _LP64 riscv32
 .endif
 
-# XXX arm variants are missing, but hopefully won't need them
-# until aarch64 anyway.
-
+.if ${MACHINE_ARCH} == "aarch64"
+SUBDIR=		arm aarch64
+CXXCONFIGARGS=	aarch64 _LP64 arm
+.endif
 
 # now install the generated front end
 

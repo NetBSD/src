@@ -1,6 +1,6 @@
 // Boilerplate support routines for -*- C++ -*- dynamic memory management.
 
-// Copyright (C) 1997-2015 Free Software Foundation, Inc.
+// Copyright (C) 1997-2016 Free Software Foundation, Inc.
 //
 // This file is part of GCC.
 //
@@ -39,6 +39,9 @@ _GLIBCXX_END_NAMESPACE_VERSION
 #endif
 
 #include "new"
+
+// The sized deletes are defined in other files.
+#pragma GCC diagnostic ignored "-Wsized-deallocation"
 
 _GLIBCXX_WEAK_DEFINITION void
 operator delete(void* ptr) _GLIBCXX_USE_NOEXCEPT
