@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urtw.c,v 1.16 2018/07/29 02:06:11 riastradh Exp $	*/
+/*	$NetBSD: if_urtw.c,v 1.17 2018/08/02 06:09:04 riastradh Exp $	*/
 /*	$OpenBSD: if_urtw.c,v 1.39 2011/07/03 15:47:17 matthew Exp $	*/
 
 /*-
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urtw.c,v 1.16 2018/07/29 02:06:11 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urtw.c,v 1.17 2018/08/02 06:09:04 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -779,8 +779,9 @@ urtw_detach(device_t self, int flags)
 	callout_destroy(&sc->scan_to);
 	callout_destroy(&sc->sc_led_ch);
 
-	usb_rem_task_wait(sc->sc_udev, &sc->sc_task, USB_TASKQ_DRIVER);
-	usb_rem_task_wait(sc->sc_udev, &sc->sc_ledtask, USB_TASKQ_DRIVER);
+	usb_rem_task_wait(sc->sc_udev, &sc->sc_task, USB_TASKQ_DRIVER, NULL);
+	usb_rem_task_wait(sc->sc_udev, &sc->sc_ledtask, USB_TASKQ_DRIVER,
+	    NULL);
 
 	if (ifp->if_softc != NULL) {
 		bpf_detach(ifp);

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_upgt.c,v 1.21 2018/07/29 02:01:54 riastradh Exp $	*/
+/*	$NetBSD: if_upgt.c,v 1.22 2018/08/02 06:09:04 riastradh Exp $	*/
 /*	$OpenBSD: if_upgt.c,v 1.49 2010/04/20 22:05:43 tedu Exp $ */
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_upgt.c,v 1.21 2018/07/29 02:01:54 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_upgt.c,v 1.22 2018/08/02 06:09:04 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -506,8 +506,10 @@ upgt_detach(device_t self, int flags)
 	/* remove tasks and timeouts */
 	callout_halt(&sc->scan_to, NULL);
 	callout_halt(&sc->led_to, NULL);
-	usb_rem_task_wait(sc->sc_udev, &sc->sc_task_newstate, USB_TASKQ_DRIVER);
-	usb_rem_task_wait(sc->sc_udev, &sc->sc_task_tx, USB_TASKQ_DRIVER);
+	usb_rem_task_wait(sc->sc_udev, &sc->sc_task_newstate, USB_TASKQ_DRIVER,
+	    NULL);
+	usb_rem_task_wait(sc->sc_udev, &sc->sc_task_tx, USB_TASKQ_DRIVER,
+	    NULL);
 	callout_destroy(&sc->scan_to);
 	callout_destroy(&sc->led_to);
 
