@@ -1,4 +1,4 @@
-/* $NetBSD: umbctl.c,v 1.1 2018/07/31 16:44:29 khorben Exp $ */
+/* $NetBSD: umbctl.c,v 1.2 2018/08/02 03:40:51 roy Exp $ */
 /*
  * Copyright (c) 2018 Pierre Pronchery <khorben@defora.org>
  *
@@ -122,7 +122,7 @@ static int _char_to_utf16(const char * in, uint16_t * out, size_t outlen)
 
 
 /* error */
-static int _error(int ret, char const * format, ...)
+__printflike(2, 3) static int _error(int ret, char const * format, ...)
 {
 	va_list ap;
 
