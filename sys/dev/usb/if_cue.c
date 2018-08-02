@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cue.c,v 1.79 2018/07/29 02:00:48 riastradh Exp $	*/
+/*	$NetBSD: if_cue.c,v 1.80 2018/08/02 06:09:04 riastradh Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cue.c,v 1.79 2018/07/29 02:00:48 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cue.c,v 1.80 2018/08/02 06:09:04 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -579,8 +579,10 @@ cue_detach(device_t self, int flags)
 	 * deactivation guaranteed to have already happened?
 	 */
 	callout_halt(&sc->cue_stat_ch, NULL);
-	usb_rem_task_wait(sc->cue_udev, &sc->cue_tick_task, USB_TASKQ_DRIVER);
-	usb_rem_task_wait(sc->cue_udev, &sc->cue_stop_task, USB_TASKQ_DRIVER);
+	usb_rem_task_wait(sc->cue_udev, &sc->cue_tick_task, USB_TASKQ_DRIVER,
+	    NULL);
+	usb_rem_task_wait(sc->cue_udev, &sc->cue_stop_task, USB_TASKQ_DRIVER,
+	    NULL);
 
 	if (!sc->cue_attached) {
 		/* Detached before attached finished, so just bail out. */

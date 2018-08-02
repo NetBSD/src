@@ -1,4 +1,4 @@
-/*	$NetBSD: if_atu.c,v 1.62 2018/07/29 02:00:07 riastradh Exp $ */
+/*	$NetBSD: if_atu.c,v 1.63 2018/08/02 06:09:04 riastradh Exp $ */
 /*	$OpenBSD: if_atu.c,v 1.48 2004/12/30 01:53:21 dlg Exp $ */
 /*
  * Copyright (c) 2003, 2004
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_atu.c,v 1.62 2018/07/29 02:00:07 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_atu.c,v 1.63 2018/08/02 06:09:04 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -2235,7 +2235,7 @@ atu_stop(struct ifnet *ifp, int disable)
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 	ifp->if_timer = 0;
 
-	usb_rem_task_wait(sc->atu_udev, &sc->sc_task, USB_TASKQ_DRIVER);
+	usb_rem_task_wait(sc->atu_udev, &sc->sc_task, USB_TASKQ_DRIVER, NULL);
 	ieee80211_new_state(ic, IEEE80211_S_INIT, -1);
 
 	/* Stop transfers. */

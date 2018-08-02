@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.h,v 1.94 2018/07/31 16:44:30 khorben Exp $	*/
+/*	$NetBSD: usbdi.h,v 1.95 2018/08/02 06:09:04 riastradh Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.h,v 1.18 1999/11/17 22:33:49 n_hibma Exp $	*/
 
 /*
@@ -221,7 +221,8 @@ struct usb_task {
 
 void usb_add_task(struct usbd_device *, struct usb_task *, int);
 void usb_rem_task(struct usbd_device *, struct usb_task *);
-void usb_rem_task_wait(struct usbd_device *, struct usb_task *, int);
+bool usb_rem_task_wait(struct usbd_device *, struct usb_task *, int,
+    kmutex_t *);
 #define usb_init_task(t, f, a, fl) ((t)->fun = (f), (t)->arg = (a), (t)->queue = USB_NUM_TASKQS, (t)->flags = (fl))
 
 struct usb_devno {

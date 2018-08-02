@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ural.c,v 1.56 2018/07/29 02:02:04 riastradh Exp $ */
+/*	$NetBSD: if_ural.c,v 1.57 2018/08/02 06:09:04 riastradh Exp $ */
 /*	$FreeBSD: /repoman/r/ncvs/src/sys/dev/usb/if_ural.c,v 1.40 2006/06/02 23:14:40 sam Exp $	*/
 
 /*-
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ural.c,v 1.56 2018/07/29 02:02:04 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ural.c,v 1.57 2018/08/02 06:09:04 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -536,7 +536,7 @@ ural_detach(device_t self, int flags)
 	ural_stop(ifp, 1);
 	callout_halt(&sc->sc_scan_ch, NULL);
 	callout_halt(&sc->sc_amrr_ch, NULL);
-	usb_rem_task_wait(sc->sc_udev, &sc->sc_task, USB_TASKQ_DRIVER);
+	usb_rem_task_wait(sc->sc_udev, &sc->sc_task, USB_TASKQ_DRIVER, NULL);
 
 	bpf_detach(ifp);
 	ieee80211_ifdetach(ic);

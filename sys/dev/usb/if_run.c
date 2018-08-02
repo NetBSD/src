@@ -1,4 +1,4 @@
-/*	$NetBSD: if_run.c,v 1.28 2018/07/29 02:01:22 riastradh Exp $	*/
+/*	$NetBSD: if_run.c,v 1.29 2018/08/02 06:09:04 riastradh Exp $	*/
 /*	$OpenBSD: if_run.c,v 1.90 2012/03/24 15:11:04 jsg Exp $	*/
 
 /*-
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_run.c,v 1.28 2018/07/29 02:01:22 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_run.c,v 1.29 2018/08/02 06:09:04 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -762,7 +762,8 @@ run_detach(device_t self, int flags)
 		run_stop(ifp, 0);
 		callout_halt(&sc->scan_to, NULL);
 		callout_halt(&sc->calib_to, NULL);
-		usb_rem_task_wait(sc->sc_udev, &sc->sc_task, USB_TASKQ_DRIVER);
+		usb_rem_task_wait(sc->sc_udev, &sc->sc_task, USB_TASKQ_DRIVER,
+		    NULL);
 	}
 
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);

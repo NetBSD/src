@@ -1,4 +1,4 @@
-/*	$NetBSD: if_url.c,v 1.59 2018/07/29 02:08:17 riastradh Exp $	*/
+/*	$NetBSD: if_url.c,v 1.60 2018/08/02 06:09:04 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.59 2018/07/29 02:08:17 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.60 2018/08/02 06:09:04 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -356,8 +356,10 @@ url_detach(device_t self, int flags)
 	callout_halt(&sc->sc_stat_ch, NULL);
 
 	/* Remove any pending tasks */
-	usb_rem_task_wait(sc->sc_udev, &sc->sc_tick_task, USB_TASKQ_DRIVER);
-	usb_rem_task_wait(sc->sc_udev, &sc->sc_stop_task, USB_TASKQ_DRIVER);
+	usb_rem_task_wait(sc->sc_udev, &sc->sc_tick_task, USB_TASKQ_DRIVER,
+	    NULL);
+	usb_rem_task_wait(sc->sc_udev, &sc->sc_stop_task, USB_TASKQ_DRIVER,
+	    NULL);
 
 	s = splusb();
 

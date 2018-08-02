@@ -1,5 +1,5 @@
 /*	$OpenBSD: if_rum.c,v 1.40 2006/09/18 16:20:20 damien Exp $	*/
-/*	$NetBSD: if_rum.c,v 1.62 2018/07/29 02:01:11 riastradh Exp $	*/
+/*	$NetBSD: if_rum.c,v 1.63 2018/08/02 06:09:04 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2005-2007 Damien Bergamini <damien.bergamini@free.fr>
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rum.c,v 1.62 2018/07/29 02:01:11 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rum.c,v 1.63 2018/08/02 06:09:04 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -498,7 +498,7 @@ rum_detach(device_t self, int flags)
 	rum_stop(ifp, 1);
 	callout_halt(&sc->sc_scan_ch, NULL);
 	callout_halt(&sc->sc_amrr_ch, NULL);
-	usb_rem_task_wait(sc->sc_udev, &sc->sc_task, USB_TASKQ_DRIVER);
+	usb_rem_task_wait(sc->sc_udev, &sc->sc_task, USB_TASKQ_DRIVER, NULL);
 
 	bpf_detach(ifp);
 	ieee80211_ifdetach(ic);	/* free all nodes */
