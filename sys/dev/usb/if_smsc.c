@@ -1,4 +1,4 @@
-/*	$NetBSD: if_smsc.c,v 1.35 2018/07/29 02:01:32 riastradh Exp $	*/
+/*	$NetBSD: if_smsc.c,v 1.36 2018/08/02 06:09:04 riastradh Exp $	*/
 
 /*	$OpenBSD: if_smsc.c,v 1.4 2012/09/27 12:38:11 jsg Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/net/if_smsc.c,v 1.1 2012/08/15 04:03:55 gonzo Exp $ */
@@ -1149,8 +1149,10 @@ smsc_detach(device_t self, int flags)
 	if (sc->sc_ep[SMSC_ENDPT_INTR] != NULL)
 		usbd_abort_pipe(sc->sc_ep[SMSC_ENDPT_INTR]);
 
-	usb_rem_task_wait(sc->sc_udev, &sc->sc_tick_task, USB_TASKQ_DRIVER);
-	usb_rem_task_wait(sc->sc_udev, &sc->sc_stop_task, USB_TASKQ_DRIVER);
+	usb_rem_task_wait(sc->sc_udev, &sc->sc_tick_task, USB_TASKQ_DRIVER,
+	    NULL);
+	usb_rem_task_wait(sc->sc_udev, &sc->sc_stop_task, USB_TASKQ_DRIVER,
+	    NULL);
 
 	s = splusb();
 
