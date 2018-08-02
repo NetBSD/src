@@ -1,5 +1,5 @@
 ;; Faraday FA626TE Pipeline Description
-;; Copyright (C) 2010-2015 Free Software Foundation, Inc.
+;; Copyright (C) 2010-2016 Free Software Foundation, Inc.
 ;; Written by I-Jui Sung, based on ARM926EJ-S Pipeline Description.
 ;;
 ;; This file is part of GCC.
@@ -60,7 +60,7 @@
 
 ;; ALU instructions require two cycles to execute, and use the ALU
 ;; pipeline in each of the three stages.  The results are available
-;; after the execute stage stage has finished.
+;; after the execute stage has finished.
 ;;
 ;; If the destination register is the PC, the pipelines are stalled
 ;; for several cycles.  That case is not modeled here.

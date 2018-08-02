@@ -1,5 +1,5 @@
 /* RunTime Type Identification
-   Copyright (C) 1995-2015 Free Software Foundation, Inc.
+   Copyright (C) 1995-2016 Free Software Foundation, Inc.
    Mostly written by Jason Merrill (jason@cygnus.com).
 
 This file is part of GCC.
@@ -20,26 +20,13 @@ along with GCC; see the file COPYING3.  If not see
 
 #include "config.h"
 #include "system.h"
-#include "intl.h"
 #include "coretypes.h"
-#include "tm.h"
-#include "hash-set.h"
-#include "machmode.h"
-#include "vec.h"
-#include "double-int.h"
-#include "input.h"
-#include "alias.h"
-#include "symtab.h"
-#include "wide-int.h"
-#include "inchash.h"
-#include "tree.h"
+#include "target.h"
+#include "cp-tree.h"
 #include "tm_p.h"
 #include "stringpool.h"
+#include "intl.h"
 #include "stor-layout.h"
-#include "cp-tree.h"
-#include "flags.h"
-#include "convert.h"
-#include "target.h"
 #include "c-family/c-pragma.h"
 
 /* C++ returns type information to the user in struct type_info
@@ -72,7 +59,7 @@ along with GCC; see the file COPYING3.  If not see
    translation, when we are emitting the type info objects.  */
 
 /* Auxiliary data we hold for each type_info derived object we need.  */
-typedef struct GTY (()) tinfo_s {
+struct GTY (()) tinfo_s {
   tree type;  /* The RECORD_TYPE for this type_info object */
 
   tree vtable; /* The VAR_DECL of the vtable.  Only filled at end of
@@ -80,10 +67,10 @@ typedef struct GTY (()) tinfo_s {
 
   tree name;  /* IDENTIFIER_NODE for the ABI specified name of
 		 the type_info derived type.  */
-} tinfo_s;
+};
 
 
-typedef enum tinfo_kind
+enum tinfo_kind
 {
   TK_TYPE_INFO_TYPE,    /* abi::__type_info_pseudo */
   TK_BASE_TYPE,		/* abi::__base_class_type_info */
@@ -97,7 +84,7 @@ typedef enum tinfo_kind
   TK_SI_CLASS_TYPE,	/* abi::__si_class_type_info */
   TK_FIXED		/* end of fixed descriptors. */
   /* ...		   abi::__vmi_type_info<I> */
-} tinfo_kind;
+};
 
 /* Helper macro to get maximum scalar-width of pointer or of the 'long'-type.
    This of interest for llp64 targets.  */
@@ -520,12 +507,13 @@ get_typeid (tree type, tsubst_flags_t complain)
 static tree
 ifnonnull (tree test, tree result, tsubst_flags_t complain)
 {
-  return build3 (COND_EXPR, TREE_TYPE (result),
-		 build2 (EQ_EXPR, boolean_type_node, test,
-			 cp_convert (TREE_TYPE (test), nullptr_node,
-				     complain)),
-		 cp_convert (TREE_TYPE (result), nullptr_node, complain),
-		 result);
+  tree cond = build2 (NE_EXPR, boolean_type_node, test,
+		      cp_convert (TREE_TYPE (test), nullptr_node, complain));
+  /* This is a compiler generated comparison, don't emit
+     e.g. -Wnonnull-compare warning for it.  */
+  TREE_NO_WARNING (cond) = 1;
+  return build3 (COND_EXPR, TREE_TYPE (result), cond, result,
+		 cp_convert (TREE_TYPE (result), nullptr_node, complain));
 }
 
 /* Execute a dynamic cast, as described in section 5.2.6 of the 9/93 working
@@ -991,6 +979,11 @@ ptr_initializer (tinfo_s *ti, tree target)
 
   if (incomplete)
     flags |= 8;
+  if (tx_safe_fn_type_p (to))
+    {
+      flags |= 0x20;
+      to = tx_unsafe_fn_variant (to);
+    }
   CONSTRUCTOR_APPEND_ELT (v, NULL_TREE, init);
   CONSTRUCTOR_APPEND_ELT (v, NULL_TREE, build_int_cst (NULL_TREE, flags));
   CONSTRUCTOR_APPEND_ELT (v, NULL_TREE,

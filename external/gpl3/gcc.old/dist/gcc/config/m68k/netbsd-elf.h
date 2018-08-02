@@ -1,7 +1,7 @@
 /* Definitions of target machine for GNU compiler,
    for m68k (including m68010) NetBSD platforms using the
    ELF object format.
-   Copyright (C) 2002-2015 Free Software Foundation, Inc.
+   Copyright (C) 2002-2016 Free Software Foundation, Inc.
    Contributed by Wasabi Systems. Inc.
 
    This file is derived from <m68k/m68kv4.h>, <m68k/m68kelf.h>,
@@ -68,11 +68,10 @@ along with GCC; see the file COPYING3.  If not see
 
 #undef ASM_SPEC
 #define ASM_SPEC \
-  "%(asm_default_spec) \
-    %{m68010} %{m68020} %{m68030} %{m68040} %{m68060} \
-    %{m5200} %{m5206e} %{m528x} %{m5307} %{m5407} %{mcfv4e}\
-    %{mcpu=*:-mcpu=%*} %{march=*:-march=%*}\
-    %{fpic|fpie:-k} %{fPIC|fPIE:-k -K}"
+  "%(asm_cpu_spec) \
+   %{m68010} %{m68020} %{m68030} %{m68040} %{m68060} \
+   %{m5200} %{m5206e} %{m528x} %{m5307} %{m5407} %{mcfv4e} \
+   %{" FPIE1_OR_FPIC1_SPEC ":-k} %{" FPIE2_OR_FPIC2_SPEC ":-k -K}"
 
 /* Provide a LINK_SPEC appropriate for a NetBSD/m68k ELF target.  */
 

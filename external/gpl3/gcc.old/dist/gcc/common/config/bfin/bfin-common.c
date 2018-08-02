@@ -1,5 +1,5 @@
 /* Common hooks for Blackfin.
-   Copyright (C) 2005-2015 Free Software Foundation, Inc.
+   Copyright (C) 2005-2016 Free Software Foundation, Inc.
 
    This file is part of GCC.
 
@@ -22,7 +22,6 @@
 #include "coretypes.h"
 #include "diagnostic-core.h"
 #include "tm.h"
-#include "machmode.h"
 #include "tm_p.h"
 #include "common/common-target.h"
 #include "common/common-target-def.h"
