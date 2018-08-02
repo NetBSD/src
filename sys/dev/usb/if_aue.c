@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aue.c,v 1.144 2018/07/29 02:00:17 riastradh Exp $	*/
+/*	$NetBSD: if_aue.c,v 1.145 2018/08/02 06:09:04 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.144 2018/07/29 02:00:17 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.145 2018/08/02 06:09:04 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -894,8 +894,10 @@ aue_detach(device_t self, int flags)
 	 * deactivation guaranteed to have already happened?
 	 */
 	callout_halt(&sc->aue_stat_ch, NULL);
-	usb_rem_task_wait(sc->aue_udev, &sc->aue_tick_task, USB_TASKQ_DRIVER);
-	usb_rem_task_wait(sc->aue_udev, &sc->aue_stop_task, USB_TASKQ_DRIVER);
+	usb_rem_task_wait(sc->aue_udev, &sc->aue_tick_task, USB_TASKQ_DRIVER,
+	    NULL);
+	usb_rem_task_wait(sc->aue_udev, &sc->aue_stop_task, USB_TASKQ_DRIVER,
+	    NULL);
 
 	sc->aue_closing = 1;
 	cv_signal(&sc->aue_domc);
