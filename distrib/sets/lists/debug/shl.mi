@@ -1,8 +1,8 @@
-# $NetBSD: shl.mi,v 1.202 2018/07/31 22:29:55 kre Exp $
+# $NetBSD: shl.mi,v 1.203 2018/08/02 08:40:48 rjs Exp $
 ./usr/lib/libbfd_g.a						comp-c-debuglib	debuglib,compatfile,binutils
 ./usr/libdata/debug/lib						base-sys-usr	debug,dynamicroot,compatdir
 ./usr/libdata/debug/lib/libblacklist.so.0.0.debug		comp-sys-debug	debug,dynamicroot
-./usr/libdata/debug/lib/libc.so.12.210.debug			comp-sys-debug	debug,dynamicroot
+./usr/libdata/debug/lib/libc.so.12.211.debug			comp-sys-debug	debug,dynamicroot
 ./usr/libdata/debug/lib/libcrypt.so.1.0.debug			comp-sys-debug	debug,dynamicroot
 ./usr/libdata/debug/lib/libcrypto.so.12.0.debug			comp-sys-debug	debug,dynamicroot,openssl=10
 ./usr/libdata/debug/lib/libcrypto.so.13.0.debug			comp-sys-debug	debug,dynamicroot,openssl=11
@@ -72,7 +72,7 @@
 ./usr/libdata/debug/usr/lib/libbsdmalloc.so.0.0.debug		comp-sys-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libbz2.so.1.1.debug			comp-sys-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libc++.so.1.0.debug			comp-sys-debug	debug,compatfile,libcxx
-./usr/libdata/debug/usr/lib/libc.so.12.210.debug		comp-sys-debug	debug,compatfile
+./usr/libdata/debug/usr/lib/libc.so.12.211.debug		comp-sys-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libcom_err.so.8.0.debug		comp-krb5-debug	debug,compatfile,kerberos
 ./usr/libdata/debug/usr/lib/libcrypt.so.1.0.debug		comp-sys-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libcrypto.so.12.0.debug		comp-crypto-debug	debug,compatfile,openssl=10

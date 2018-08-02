@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.87 2017/06/18 04:03:44 manu Exp $
+#	$NetBSD: Makefile.inc,v 1.88 2018/08/02 08:40:48 rjs Exp $
 #	@(#)Makefile.inc	8.2 (Berkeley) 9/5/93
 
 # net sources
@@ -13,7 +13,7 @@ SRCS+=	base64.c ethers.c gethnamaddr.c getifaddrs.c \
 	iso_addr.c linkaddr.c \
 	nsdispatch.c nslexer.l nsparser.y nsap_addr.c \
 	rcmd.c recv.c send.c sethostent.c \
-	sockatmark.c
+	sctp_sys_calls.c sockatmark.c
 
 .if (${MKHESIOD} != "no")
 SRCS+=	hesiod.c
@@ -145,3 +145,8 @@ MLINKS+=getaddrinfo.3 freeaddrinfo.3 \
 	inet6_rth_space.3 inet6_rth_getaddr.3 \
 	rcmd.3 rcmd_af.3 rcmd.3 iruserok_sa.3 rcmd.3 rresvport_af.3 \
 	rcmd.3 orcmd_af.3
+
+# SCTP
+MAN+=	sctp_bindx.3 sctp_connectx.3 sctp_freepaddrs.3 sctp_getaddrlen.3 \
+	sctp_getassocid.3 sctp_getpaddrs.3 sctp_opt_info.3 sctp_peeloff.3 \
+	sctp_recvmsg.3 sctp_send.3 sctp_sendmsg.3

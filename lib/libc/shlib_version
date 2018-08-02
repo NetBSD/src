@@ -1,4 +1,4 @@
-#	$NetBSD: shlib_version,v 1.280 2018/07/31 13:04:10 rjs Exp $
+#	$NetBSD: shlib_version,v 1.281 2018/08/02 08:40:48 rjs Exp $
 #	Remember to update distrib/sets/lists/base/shl.* when changing
 #
 # things we wish to do on next major version bump:
@@ -53,4 +53,4 @@
 # - move environ and __ps_strings from crt0.o into libc.
 # - move statfs() to libcompat since we have statvfs()
 major=12
-minor=210
+minor=211

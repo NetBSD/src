@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2214 2018/07/31 16:44:28 khorben Exp $
+#	$NetBSD: mi,v 1.2215 2018/08/02 08:40:47 rjs Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -16992,6 +16992,17 @@
 ./usr/share/man/html3/scrl.html			comp-c-htmlman		html
 ./usr/share/man/html3/scroll.html		comp-c-htmlman		html
 ./usr/share/man/html3/scrollok.html		comp-c-htmlman		html
+./usr/share/man/html3/sctp_bindx.html		comp-c-htmlman		html
+./usr/share/man/html3/sctp_connectx.html	comp-c-htmlman		html
+./usr/share/man/html3/sctp_freepaddrs.html	comp-c-htmlman		html
+./usr/share/man/html3/sctp_getaddrlen.html	comp-c-htmlman		html
+./usr/share/man/html3/sctp_getassocid.html	comp-c-htmlman		html
+./usr/share/man/html3/sctp_getpaddrs.html	comp-c-htmlman		html
+./usr/share/man/html3/sctp_opt_info.html	comp-c-htmlman		html
+./usr/share/man/html3/sctp_peeloff.html		comp-c-htmlman		html
+./usr/share/man/html3/sctp_recvmsg.html		comp-c-htmlman		html
+./usr/share/man/html3/sctp_send.html		comp-c-htmlman		html
+./usr/share/man/html3/sctp_sendmsg.html		comp-c-htmlman		html
 ./usr/share/man/html3/sdp.html			comp-c-htmlman		html
 ./usr/share/man/html3/sdp_attr2desc.html	comp-obsolete		obsolete
 ./usr/share/man/html3/sdp_change_service.html	comp-obsolete		obsolete
@@ -24777,6 +24788,17 @@
 ./usr/share/man/man3/scrl.3			comp-c-man		.man
 ./usr/share/man/man3/scroll.3			comp-c-man		.man
 ./usr/share/man/man3/scrollok.3			comp-c-man		.man
+./usr/share/man/man3/sctp_bindx.3		comp-c-man		.man
+./usr/share/man/man3/sctp_connectx.3		comp-c-man		.man
+./usr/share/man/man3/sctp_freepaddrs.3		comp-c-man		.man
+./usr/share/man/man3/sctp_getaddrlen.3		comp-c-man		.man
+./usr/share/man/man3/sctp_getassocid.3		comp-c-man		.man
+./usr/share/man/man3/sctp_getpaddrs.3		comp-c-man		.man
+./usr/share/man/man3/sctp_opt_info.3		comp-c-man		.man
+./usr/share/man/man3/sctp_peeloff.3		comp-c-man		.man
+./usr/share/man/man3/sctp_recvmsg.3		comp-c-man		.man
+./usr/share/man/man3/sctp_send.3		comp-c-man		.man
+./usr/share/man/man3/sctp_sendmsg.3		comp-c-man		.man
 ./usr/share/man/man3/sdp.3			comp-c-man		.man
 ./usr/share/man/man3/sdp_attr2desc.3		comp-obsolete		obsolete
 ./usr/share/man/man3/sdp_change_service.3	comp-obsolete		obsolete
