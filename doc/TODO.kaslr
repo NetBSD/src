@@ -1,7 +1,7 @@
 ====== POINTER LEAKS ======
 
--- Change the permissions of /dev/ksyms, as discussed in:
-       http://mail-index.netbsd.org/tech-kern/2018/01/17/msg022960.html
+[DONE] -- Change the permissions of /dev/ksyms, as discussed in:
+          http://mail-index.netbsd.org/tech-kern/2018/01/17/msg022960.html
 
 -- The address of a non-public section is leaked because of Meltdown,
    "jmp handler". This can easily be fixed by pushing the handlers into
@@ -29,7 +29,7 @@
 
 -- Randomize the kernel main memory (VM_MIN_KERNEL_ADDRESS).
 
--- Randomize the direct map.
+[DONE] -- Randomize the direct map.
 
 -- Randomize the PCPU area.
 
