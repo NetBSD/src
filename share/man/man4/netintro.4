@@ -1,4 +1,4 @@
-.\"	$NetBSD: netintro.4,v 1.28 2014/07/13 12:47:13 mbalmer Exp $
+.\"	$NetBSD: netintro.4,v 1.29 2018/08/02 00:41:17 sevan Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)netintro.4	8.2 (Berkeley) 11/30/93
 .\"
-.Dd July 13, 2014
+.Dd August 2, 2018
 .Dt NETINTRO 4
 .Os
 .Sh NAME
@@ -104,17 +104,12 @@ and/or in the system error log,
 .Xr syslogd 8 ) ,
 due to errors in device operation.
 .Sh PROTOCOLS
-The system currently supports the Internet protocols and some of the
-.Tn ISO OSI
-protocols.
+The system currently supports the Internet protocols.
 Raw socket interfaces are provided to the
 .Tn IP
-protocol layer of the Internet, and to the
-.Tn IDP
-protocol of Xerox
-.Tn NS .
+protocol layer of the Internet.
 Consult the appropriate manual pages in this section for more
-information regarding the support for each protocol family.
+information regarding the support a protocol.
 .Sh ADDRESSING
 Associated with each protocol family is an address format.
 All network address adhere to a general structure, called a sockaddr,
