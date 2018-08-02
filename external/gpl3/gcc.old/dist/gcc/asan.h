@@ -1,5 +1,5 @@
 /* AddressSanitizer, a fast memory error detector.
-   Copyright (C) 2011-2015 Free Software Foundation, Inc.
+   Copyright (C) 2011-2016 Free Software Foundation, Inc.
    Contributed by Kostya Serebryany <kcc@google.com>
 
 This file is part of GCC.
@@ -78,6 +78,8 @@ asan_red_zone_size (unsigned int size)
 }
 
 extern bool set_asan_shadow_offset (const char *);
+
+extern void set_sanitized_sections (const char *);
 
 /* Return TRUE if builtin with given FCODE will be intercepted by
    libasan.  */

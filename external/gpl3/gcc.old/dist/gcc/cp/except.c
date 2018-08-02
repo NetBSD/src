@@ -1,5 +1,5 @@
 /* Handle exceptional things in C++.
-   Copyright (C) 1989-2015 Free Software Foundation, Inc.
+   Copyright (C) 1989-2016 Free Software Foundation, Inc.
    Contributed by Michael Tiemann <tiemann@cygnus.com>
    Rewritten by Mike Stump <mrs@cygnus.com>, based upon an
    initial re-implementation courtesy Tad Hunt.
@@ -24,25 +24,11 @@ along with GCC; see the file COPYING3.  If not see
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
-#include "tm.h"
-#include "hash-set.h"
-#include "machmode.h"
-#include "vec.h"
-#include "double-int.h"
-#include "input.h"
-#include "alias.h"
-#include "symtab.h"
-#include "wide-int.h"
-#include "inchash.h"
-#include "tree.h"
+#include "cp-tree.h"
 #include "stringpool.h"
 #include "trans-mem.h"
 #include "attribs.h"
-#include "cp-tree.h"
-#include "flags.h"
-#include "tree-inline.h"
 #include "tree-iterator.h"
-#include "target.h"
 
 static void push_eh_cleanup (tree);
 static tree prepare_eh_type (tree);
@@ -579,7 +565,11 @@ expand_end_catch_block (void)
   if (in_function_try_handler
       && (DECL_CONSTRUCTOR_P (current_function_decl)
 	  || DECL_DESTRUCTOR_P (current_function_decl)))
-    finish_expr_stmt (build_throw (NULL_TREE));
+    {
+      tree rethrow = build_throw (NULL_TREE);
+      TREE_NO_WARNING (rethrow) = true;
+      finish_expr_stmt (rethrow);
+    }
 }
 
 tree
@@ -672,6 +662,16 @@ do_free_exception (tree ptr)
       /* Declare void __cxa_free_exception (void *) throw().  */
       fn = declare_library_fn (fn, void_type_node, ptr_type_node,
 			       ECF_NOTHROW | ECF_LEAF);
+
+      if (flag_tm)
+	{
+	  tree fn2 = get_identifier ("_ITM_cxa_free_exception");
+	  if (!get_global_value_if_present (fn2, &fn2))
+	    fn2 = declare_library_fn (fn2, void_type_node,
+				      ptr_type_node,
+				      ECF_NOTHROW | ECF_LEAF | ECF_TM_PURE);
+	  record_tm_replacement (fn, fn2);
+	}
     }
 
   return cp_build_function_call_nary (fn, tf_warning_or_error, ptr, NULL_TREE);
@@ -1160,7 +1160,9 @@ check_noexcept_r (tree *tp, int * /*walk_subtrees*/, void * /*data*/)
          We could use TREE_NOTHROW (t) for !TREE_PUBLIC fns, though... */
       tree fn = (code == AGGR_INIT_EXPR
 		 ? AGGR_INIT_EXPR_FN (t) : CALL_EXPR_FN (t));
-      tree type = TREE_TYPE (TREE_TYPE (fn));
+      tree type = TREE_TYPE (fn);
+      gcc_assert (POINTER_TYPE_P (type));
+      type = TREE_TYPE (type);
 
       STRIP_NOPS (fn);
       if (TREE_CODE (fn) == ADDR_EXPR)
@@ -1189,10 +1191,10 @@ check_noexcept_r (tree *tp, int * /*walk_subtrees*/, void * /*data*/)
 /* If a function that causes a noexcept-expression to be false isn't
    defined yet, remember it and check it for TREE_NOTHROW again at EOF.  */
 
-typedef struct GTY(()) pending_noexcept {
+struct GTY(()) pending_noexcept {
   tree fn;
   location_t loc;
-} pending_noexcept;
+};
 static GTY(()) vec<pending_noexcept, va_gc> *pending_noexcept_checks;
 
 /* FN is a FUNCTION_DECL that caused a noexcept-expr to be false.  Warn if
@@ -1205,8 +1207,9 @@ maybe_noexcept_warning (tree fn)
     {
       warning (OPT_Wnoexcept, "noexcept-expression evaluates to %<false%> "
 	       "because of a call to %qD", fn);
-      warning (OPT_Wnoexcept, "but %q+D does not throw; perhaps "
-	       "it should be declared %<noexcept%>", fn);
+      warning_at (DECL_SOURCE_LOCATION (fn), OPT_Wnoexcept,
+		  "but %qD does not throw; perhaps "
+		  "it should be declared %<noexcept%>", fn);
     }
 }
 

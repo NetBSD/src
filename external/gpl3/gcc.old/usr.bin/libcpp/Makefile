@@ -1,6 +1,8 @@
-#	$NetBSD: Makefile,v 1.5 2017/07/23 01:12:23 mrg Exp $
+#	$NetBSD: Makefile,v 1.6 2018/08/02 00:04:03 mrg Exp $
 
 LIBISPRIVATE=	yes
+
+.include <bsd.init.mk>
 
 LIB=		cpp
 

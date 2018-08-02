@@ -1,5 +1,5 @@
 /* Prototypes for alpha.c functions used in the md file & elsewhere.
-   Copyright (C) 1999-2015 Free Software Foundation, Inc.
+   Copyright (C) 1999-2016 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -65,12 +65,9 @@ extern void alpha_expand_builtin_revert_vms_condition_handler (rtx);
 
 extern rtx alpha_return_addr (int, rtx);
 extern rtx alpha_gp_save_rtx (void);
-extern void print_operand (FILE *, rtx, int);
-extern void print_operand_address (FILE *, rtx);
 extern void alpha_initialize_trampoline (rtx, rtx, rtx, int, int, int);
 
 extern rtx alpha_va_arg (tree, tree);
-extern rtx function_value (const_tree, const_tree, machine_mode);
 
 extern void alpha_start_function (FILE *, const char *, tree);
 extern void alpha_end_function (FILE *, const char *, tree);
