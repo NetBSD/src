@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_proto.c,v 1.34.14.5 2018/07/28 00:49:43 phil Exp $ */
+/*	$NetBSD: ieee80211_proto.c,v 1.34.14.6 2018/08/03 19:47:25 phil Exp $ */
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -371,6 +371,7 @@ ieee80211_proto_vattach(struct ieee80211vap *vap)
 	callout_init(&vap->iv_mgtsend, 1);
 #elif __NetBSD__
 	/* NNN need to do something with iv_swbmiss ... */
+	callout_init(&vap->iv_swbmiss, CALLOUT_MPSAFE);
 	callout_init(&vap->iv_mgtsend, CALLOUT_MPSAFE);
 #endif
 	TASK_INIT(&vap->iv_nstate_task, 0, ieee80211_newstate_cb, vap);
@@ -1156,7 +1157,7 @@ ieee80211_wme_initparams_locked(struct ieee80211vap *vap)
 		wme->wme_hipri_switch_thresh =
 			(HIGH_PRI_SWITCH_THRESH * vap->iv_bss->ni_intval) / 100;
 		wme->wme_flags &= ~WME_F_AGGRMODE;
-		ieee80211_wme_updateparams(vap);
+		ieee80211_wme_updateparams_locked(vap); // BUG ???
 	}
 }
 
@@ -1658,6 +1659,7 @@ ieee80211_init(struct ifnet *ifp)
 
 	IEEE80211_DPRINTF(vap, IEEE80211_MSG_STATE | IEEE80211_MSG_DEBUG,
 	    "%s\n", __func__);
+	printf ("ieee80211_init called.\n"); // NNN
 
 	RUN_ONCE(&ieee80211_init_once, ieee80211_init0);
 
@@ -1865,7 +1867,11 @@ ieee80211_swbmiss(void *arg)
 	struct ieee80211vap *vap = arg;
 	struct ieee80211com *ic = vap->iv_ic;
 
+#if __FreeBSD__
 	IEEE80211_LOCK_ASSERT(ic);
+#elif __NetBSD__
+	IEEE80211_LOCK(ic);
+#endif
 
 	KASSERT(vap->iv_state >= IEEE80211_S_RUN,
 	    ("wrong state %d", vap->iv_state));
@@ -1889,6 +1895,10 @@ ieee80211_swbmiss(void *arg)
 		vap->iv_swbmiss_count = 0;
 	callout_reset(&vap->iv_swbmiss, vap->iv_swbmiss_period,
 		ieee80211_swbmiss, vap);
+
+#if __NetBSD__
+	IEEE80211_UNLOCK(ic);
+#endif
 }
 
 /*

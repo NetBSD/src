@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_node.c,v 1.75.4.3 2018/07/16 20:11:11 phil Exp $ */
+/*	$NetBSD: ieee80211_node.c,v 1.75.4.4 2018/08/03 19:47:25 phil Exp $ */
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -916,7 +916,8 @@ ieee80211_sta_join1(struct ieee80211_node *selbs)
 	 * mode is locked.
 	 */ 
 	ieee80211_reset_erp(ic);
-	ieee80211_wme_initparams(vap);
+	IEEE80211_UNLOCK(ic);  // NNN BUG??? -- 
+	ieee80211_wme_initparams(vap); 
 
 	if (vap->iv_opmode == IEEE80211_M_STA) {
 		if (canreassoc) {
@@ -934,6 +935,7 @@ ieee80211_sta_join1(struct ieee80211_node *selbs)
 		}
 	} else
 		ieee80211_new_state(vap, IEEE80211_S_RUN, -1);
+	IEEE80211_LOCK(ic);  // NNN BUG ??? --- unlock for full function?
 	return 1;
 }
 
@@ -1457,9 +1459,7 @@ ieee80211_alloc_node(struct ieee80211_node_table *nt,
 	IEEE80211_NOTE(vap, IEEE80211_MSG_INACT, ni,
 	    "%s: inact_reload %u", __func__, ni->ni_inact_reload);
 
-	printf ("before ratectl_node_init call\n");
 	ieee80211_ratectl_node_init(ni);
-	printf ("after ratectl_node_init\n");
 
 	return ni;
 }

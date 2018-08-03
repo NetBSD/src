@@ -1,4 +1,4 @@
-# $NetBSD: TESTWIFI,v 1.1.2.1 2018/07/12 16:35:33 phil Exp $
+# $NetBSD: TESTWIFI,v 1.1.2.2 2018/08/03 19:47:25 phil Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.1.2.1 $"
+#ident		"GENERIC-$Revision: 1.1.2.2 $"
 
 maxusers	64		# estimated number of users
 
@@ -100,6 +100,8 @@ options 	DIAGNOSTIC	# inexpensive kernel consistency checks
 				# XXX to be commented out on release branch
 options 	DEBUG		# expensive debugging checks/support
 options 	LOCKDEBUG	# expensive locking checks/support
+options		URTWN_DEBUG     # debug the urtwn driver
+options		IEEE80211_DEBUG # debug 802.11 code
 
 #
 # Because gcc omits the frame pointer for any -O level, the line below
@@ -108,9 +110,9 @@ options 	LOCKDEBUG	# expensive locking checks/support
 makeoptions	COPTS="-O2 -fno-omit-frame-pointer"
 options 	DDB		# in-kernel debugger
 #options 	DDB_COMMANDONENTER="bt"	# execute command when ddb is entered
-#options 	DDB_ONPANIC=1	# see also sysctl(7): `ddb.onpanic'
+options 	DDB_ONPANIC=1	# see also sysctl(7): `ddb.onpanic'
 options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
-#options 	KGDB		# remote debugger
+options 	KGDB		# remote debugger
 #options 	KGDB_DEVNAME="\"com\"",KGDB_DEVADDR=0x3f8,KGDB_DEVRATE=9600
 makeoptions	DEBUG="-g"	# compile full symbol table for CTF
 #options 	SYSCALL_STATS	# per syscall counts

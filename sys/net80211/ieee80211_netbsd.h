@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_netbsd.h,v 1.21.2.6 2018/07/28 00:49:43 phil Exp $ */
+/*	$NetBSD: ieee80211_netbsd.h,v 1.21.2.7 2018/08/03 19:47:25 phil Exp $ */
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -78,48 +78,71 @@
 
 typedef void task_fn_t(void *context, int pending);
 
+// NNN use more standard feature for getting pointers from fields ...???
 struct task {
-	/* some kind of queue entry? */
-	struct work t_work;
+	struct work t_work;    /* Must be first so we can cast a work to a task */
 	task_fn_t  *t_func;
 	void       *t_arg;
 	kmutex_t    t_mutex;
 	int         t_onqueue;
+	const char *t_func_name;
 };
+
+struct timeout_task { 
+	struct task to_task;	/* Must be first so we can cast to a task. */
+	struct workqueue *to_wq;
+	callout_t   to_callout;
+	int	    to_scheduled;
+};
+
 
 static __inline int dummy(void);
 static __inline int dummy(void) { return 0; }
-
-struct timeout_task { int needsWork; };
 
 void ieee80211_runwork(struct work *, void *);
 void taskqueue_enqueue(struct workqueue *, struct task *);
 void taskqueue_drain(struct workqueue *, struct task *);
 
+int  taskqueue_enqueue_timeout(struct workqueue	*queue,
+	 struct	timeout_task *timeout_task, int	nticks);
+int  taskqueue_cancel_timeout(struct workqueue *queue,
+	 struct	timeout_task *timeout_task, u_int *pendp);
+void taskqueue_drain_timeout(struct workqueue *queue,
+	 struct	timeout_task *timeout_task);
+
+/* NNN ---- Need to add a way to mutex_destroy at the right time. */
+
 #define TASK_INIT(var, pri, func, arg) do { \
 	(var)->t_func = func; \
         (var)->t_arg = arg; \
-	(var)->t_work.wk_dummy = var; \
 	mutex_init(&(var)->t_mutex, MUTEX_DEFAULT, IPL_SOFTNET);\
 	(var)->t_onqueue = 0;\
+	(var)->t_func_name = #func; \
 } while(0)
+
+#define TIMEOUT_TASK_INIT(queue, task, pri, func, arg) do { \
+	(task)->to_task.t_func = func; \
+        (task)->to_task.t_arg = arg; \
+	mutex_init(&(task)->to_task.t_mutex, MUTEX_DEFAULT, IPL_SOFTNET);\
+	(task)->to_task.t_onqueue = 0;\
+	(task)->to_task.t_func_name = #func; \
+	(task)->to_wq = queue;\
+	callout_init(&(task)->to_callout, CALLOUT_MPSAFE);\
+	(task)->to_scheduled = 0;\
+} while (0)
 
 #define taskqueue workqueue
 #define taskqueue_free(queue)         workqueue_destroy(queue)
 
 #define taskqueue_block(queue)        /* */
 #define taskqueue_unblock(queue)      /* */
-#define taskqueue_drain_timeout(queue, x) /* */
-#define taskqueue_enqueue_timeout(queue, x, y) { int __unused zzz = 0; }
-#define taskqueue_cancel_timeout(queue, x, y)  dummy()
-#define TIMEOUT_TASK_INIT(queue, a2, a3, a4, a5) /* */
 
 /*  Other stuff that needs to be fixed NNN */
 #define priv_check(x,y) 1
 
-/* Coult it be this simple? */
+/* Coult it be this simple? NNN */
 #define if_addr_rlock(ifp) IFNET_LOCK(ifp)
-#define if_addr_runlock(x) IFNET_UNLOCK(ifp)
+#define if_addr_runlock(ifp) IFNET_UNLOCK(ifp)
 
 /* VNET defines to remove them ... NNN may need a lot of work! */
 

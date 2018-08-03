@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_sta.c,v 1.1.2.3 2018/07/28 00:49:43 phil Exp $ */
+/*	$NetBSD: ieee80211_sta.c,v 1.1.2.4 2018/08/03 19:47:25 phil Exp $ */
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -188,7 +188,9 @@ sta_beacon_miss(struct ieee80211vap *vap)
 		/*
 		 * Try to reassociate before scanning for a new ap.
 		 */
+		IEEE80211_UNLOCK(ic); // NNN FreeBSD BUG?
 		ieee80211_new_state(vap, IEEE80211_S_ASSOC, 1);
+		IEEE80211_LOCK(ic); // NNN FreeBSD BUG?
 	} else {
 		/*
 		 * Somebody else is controlling state changes (e.g.
@@ -196,7 +198,9 @@ sta_beacon_miss(struct ieee80211vap *vap)
 		 * confuse them; just drop into scan mode so they'll
 		 * notified of the state change and given control.
 		 */
+		IEEE80211_UNLOCK(ic); // NNN FreeBSD BUG?
 		ieee80211_new_state(vap, IEEE80211_S_SCAN, 0);
+		IEEE80211_LOCK(ic); // NNN FreeBSD BUG?
 	}
 }
 
