@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.789 2018/07/10 06:49:29 kre Exp $
+# $NetBSD: mi,v 1.790 2018/08/03 04:24:41 kamil Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -102,6 +102,7 @@
 ./usr/libdata/debug/usr/tests/lib/libc/ieeefp				tests-obsolete		obsolete
 ./usr/libdata/debug/usr/tests/lib/libc/inet				tests-lib-debug		compattestfile,atf
 ./usr/libdata/debug/usr/tests/lib/libc/locale				tests-lib-debug		compattestfile,atf
+./usr/libdata/debug/usr/tests/lib/libc/misc				tests-lib-debug		compattestfile,atf
 ./usr/libdata/debug/usr/tests/lib/libc/net				tests-lib-debug		compattestfile,atf
 ./usr/libdata/debug/usr/tests/lib/libc/net/getaddrinfo			tests-lib-debug		compattestfile,atf
 ./usr/libdata/debug/usr/tests/lib/libc/regex				tests-lib-debug		compattestfile,atf
@@ -2579,6 +2580,11 @@
 ./usr/tests/lib/libc/locale/t_wcstod		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/locale/t_wctomb		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/locale/t_wctype		tests-lib-tests		compattestfile,atf
+./usr/tests/lib/libc/misc			tests-lib-tests	compattestfile,atf
+./usr/tests/lib/libc/misc/Atffile		tests-lib-tests		compattestfile,atf
+./usr/tests/lib/libc/misc/Kyuafile		tests-lib-tests		compattestfile,atf,kyua
+./usr/tests/lib/libc/misc/t_ubsan		tests-lib-tests		compattestfile,atf
+./usr/tests/lib/libc/misc/t_ubsanxx		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/net			tests-lib-tests	compattestfile,atf
 ./usr/tests/lib/libc/net/Atffile		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/net/Kyuafile		tests-lib-tests		compattestfile,atf,kyua
