@@ -1,4 +1,4 @@
-/*	$NetBSD: rpi_start.S,v 1.18 2018/06/27 11:12:15 ryo Exp $	*/
+/*	$NetBSD: rpi_start.S,v 1.19 2018/08/03 15:38:16 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003  Genetec Corporation.  All rights reserved.
@@ -96,7 +96,7 @@
 #include <arm/armreg.h>
 #include "assym.h"
 
-RCSID("$NetBSD: rpi_start.S,v 1.18 2018/06/27 11:12:15 ryo Exp $")
+RCSID("$NetBSD: rpi_start.S,v 1.19 2018/08/03 15:38:16 skrll Exp $")
 
 
 #if defined(VERBOSE_INIT_ARM)
@@ -141,16 +141,16 @@ _C_LABEL(rpi_start):
 #if defined(VERBOSE_INIT_ARM)
 	/* stack for calling bcm2835_platform_early_putchar() */
 	ldr	sp, Lbootstk
-#if !defined(KERNEL_BASES_EQUAL)
 	sub	sp, sp, #KERNEL_BASE_VOFFSET
-#endif
 #endif /* VERBOSE_INIT_ARM */
 
 	ldr	r8, Luboot_args
+	sub	r8, r8, #KERNEL_BASE_VOFFSET
 	stmia	r8!, {r0-r3}
 
 #ifdef FDT
 	ldr	r8, Lfdt_addr_r
+	sub	r8, r8, #KERNEL_BASE_VOFFSET
 	str	r2, [r8]
 #endif
 	mrs	r0, cpsr
