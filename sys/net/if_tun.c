@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tun.c,v 1.144 2018/06/26 06:48:02 msaitoh Exp $	*/
+/*	$NetBSD: if_tun.c,v 1.145 2018/08/03 09:54:40 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.144 2018/06/26 06:48:02 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.145 2018/08/03 09:54:40 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1058,17 +1058,14 @@ filt_tunread(struct knote *kn, long hint)
 	struct ifnet *ifp = &tp->tun_if;
 	struct mbuf *m;
 
-	mutex_enter(&tp->tun_lock);
+	KASSERT(mutex_owned(&tp->tun_lock));
+
 	IF_POLL(&ifp->if_snd, m);
-	if (m == NULL) {
-		mutex_exit(&tp->tun_lock);
+	if (m == NULL)
 		return 0;
-	}
 
 	for (kn->kn_data = 0; m != NULL; m = m->m_next)
 		kn->kn_data += m->m_len;
-
-	mutex_exit(&tp->tun_lock);
 
 	return 1;
 }
