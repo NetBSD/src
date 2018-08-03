@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_machdep.c,v 1.29 2018/08/03 12:48:33 skrll Exp $ */
+/* $NetBSD: fdt_machdep.c,v 1.30 2018/08/03 13:48:24 skrll Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.29 2018/08/03 12:48:33 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.30 2018/08/03 13:48:24 skrll Exp $");
 
 #include "opt_machdep.h"
 #include "opt_bootconfig.h"
@@ -68,14 +68,9 @@ __KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.29 2018/08/03 12:48:33 skrll Exp $
 #include <arm/armreg.h>
 
 #include <arm/cpufunc.h>
-#ifdef __aarch64__
-#include <aarch64/machdep.h>
-#else
-#include <arm/arm32/machdep.h>
-#endif
-
 
 #include <evbarm/include/autoconf.h>
+#include <evbarm/fdt/machdep.h>
 #include <evbarm/fdt/platform.h>
 
 #include <arm/fdt/arm_fdtvar.h>

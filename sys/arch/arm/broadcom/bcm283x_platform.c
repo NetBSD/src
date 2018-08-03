@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm283x_platform.c,v 1.8 2018/07/16 23:11:47 christos Exp $	*/
+/*	$NetBSD: bcm283x_platform.c,v 1.9 2018/08/03 13:48:24 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2017 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm283x_platform.c,v 1.8 2018/07/16 23:11:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm283x_platform.c,v 1.9 2018/08/03 13:48:24 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_bcm283x.h"
@@ -64,9 +64,7 @@ __KERNEL_RCSID(0, "$NetBSD: bcm283x_platform.c,v 1.8 2018/07/16 23:11:47 christo
 #include <uvm/uvm_extern.h>
 
 #include <machine/bootconfig.h>
-#ifdef __aarch64__
-#include <aarch64/machdep.h>
-#endif
+
 #include <arm/armreg.h>
 #include <arm/cpufunc.h>
 
@@ -81,6 +79,7 @@ __KERNEL_RCSID(0, "$NetBSD: bcm283x_platform.c,v 1.8 2018/07/16 23:11:47 christo
 
 #include <evbarm/dev/plcomreg.h>
 #include <evbarm/dev/plcomvar.h>
+#include <evbarm/fdt/machdep.h>
 
 #include <dev/ic/ns16550reg.h>
 #include <dev/ic/comreg.h>
