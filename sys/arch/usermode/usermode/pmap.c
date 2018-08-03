@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.111 2018/08/03 06:52:50 reinoud Exp $ */
+/* $NetBSD: pmap.c,v 1.112 2018/08/03 11:18:22 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@NetBSD.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.111 2018/08/03 06:52:50 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.112 2018/08/03 11:18:22 reinoud Exp $");
 
 #include "opt_memsize.h"
 #include "opt_kmempages.h"
@@ -139,7 +139,7 @@ pmap_bootstrap(void)
 	struct pmap *pmap;
 	paddr_t DRAM_cfg;
 	paddr_t fpos, file_len;
-	paddr_t pv_fpos, tlb_fpos, pm_l1_fpos, pm_fpos;
+	paddr_t kernel_fpos, pv_fpos, tlb_fpos, pm_l1_fpos, pm_fpos;
 	paddr_t wlen;
 	paddr_t barrier_len;
 	paddr_t pv_table_size;
@@ -281,9 +281,11 @@ pmap_bootstrap(void)
 	assert(err == 0);
 
 	/* map the kernel at the start of the 'memory' file */
-	written = thunk_pwrite(mem_fh, (void *) kmem_k_start, kmem_k_length, 0);
+	kernel_fpos = 0;
+	written = thunk_pwrite(mem_fh, (void *) kmem_k_start, kmem_k_length,
+			kernel_fpos);
 	assert(written == kmem_k_length);
-	fpos = kmem_k_length;
+	fpos = kernel_fpos + kmem_k_length;
 
 	/* initialize counters */
 	free_start = fpos;     /* in physical space ! */
@@ -298,7 +300,7 @@ pmap_bootstrap(void)
 		(uint64_t) pv_table_size/1024, (uintptr_t) phys_npages);
 
 	/* calculate number of pmap entries needed for a complete map */
-	pm_nentries = (kmem_k_start - VM_MIN_ADDRESS) / PAGE_SIZE;
+	pm_nentries = (kmem_k_end - VM_MIN_ADDRESS) / PAGE_SIZE;
 	pm_entries_size = round_page(pm_nentries * sizeof(struct pv_entry *));
 	thunk_printf_debug("tlb va->pa lookup table is %"PRIu64" KB for "
 		"%d logical pages\n", pm_entries_size/1024, pm_nentries);
@@ -417,6 +419,15 @@ pmap_bootstrap(void)
 		pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE, 0);
 	}
 	thunk_printf_debug("kernel pmap entries mem added to the kernel pmap\n");
+#if 0
+	/* not yet, or not needed */
+	for (pg = 0; pg < kmem_k_length; pg += PAGE_SIZE) {
+		pa = kernel_fpos + pg;
+		va = (vaddr_t) kmem_k_start + pg;
+		pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE | VM_PROT_EXECUTE, 0);
+	}
+	thunk_printf_debug("kernel mem added to the kernel pmap\n");
+#endif
 
 	/* add file space to uvm's FREELIST */
 	uvm_page_physload(atop(0),

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_memrw.c,v 1.2 2018/08/01 10:27:28 reinoud Exp $	*/
+/*	$NetBSD: db_memrw.c,v 1.3 2018/08/03 11:18:22 reinoud Exp $	*/
 
 /*-
  * Copyright (c) 1996, 2000 The NetBSD Foundation, Inc.
@@ -53,11 +53,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_memrw.c,v 1.2 2018/08/01 10:27:28 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_memrw.c,v 1.3 2018/08/03 11:18:22 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
 #include <sys/systm.h>
+#include <sys/mman.h>
 
 #include <machine/pmap.h>
 #include <machine/db_machdep.h>
@@ -211,29 +212,30 @@ db_write_text(vaddr_t addr, size_t size, const char *data)
 void
 db_write_bytes(vaddr_t addr, size_t size, const char *data)
 {
-//	extern struct bootspace bootspace;
 	char *dst;
-//	size_t i;
+	int ret;
 
 	dst = (char *)addr;
 	thunk_printf_debug("\n%s : %p + %d\n", __func__, dst, (int) size);
-#if 0
-	// TODO: check if we in kernel range and if so, do the mmap dance
-	// ourselves?
 
-	/* If any part is in kernel text or rodata, use db_write_text() */
-	for (i = 0; i < BTSPACE_NSEGS; i++) {
-		if (bootspace.segs[i].type != BTSEG_TEXT &&
-		    bootspace.segs[i].type != BTSEG_RODATA) {
-			continue;
-		}
-		if (addr >= bootspace.segs[i].va &&
-		    addr < (bootspace.segs[i].va + bootspace.segs[i].sz)) {
-			db_write_text(addr, size, data);
-			return;
-		}
+	if (db_validate_address((vaddr_t)addr)) {
+		printf("address %p is invalid\n", (void *) addr);
+		return;
 	}
-#endif
+
+	/*
+	 * if we are in the kernel range, just allow writing by using
+	 * mprotect(); Note that this needs an unprotected binary, set with
+	 * `paxctl -agm netbsd`
+	 */
+	if (addr > kmem_k_start) {
+		ret = thunk_mprotect((void *) trunc_page(addr), PAGE_SIZE,
+			PROT_READ | PROT_WRITE | PROT_EXEC);
+		if (ret != 0)
+			panic("please unprotect kernel binary with "
+			      "`paxctl -agm netbsd`");
+		assert(ret == 0);
+	}
 
 	dst = (char *)addr;
 
