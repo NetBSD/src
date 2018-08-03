@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vlan.c,v 1.130 2018/06/26 06:48:02 msaitoh Exp $	*/
+/*	$NetBSD: if_vlan.c,v 1.131 2018/08/03 11:24:19 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.130 2018/06/26 06:48:02 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.131 2018/08/03 11:24:19 jmcneill Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -161,6 +161,7 @@ struct ifvlan {
 					 * instead of direct dereference
 					 */
 	kmutex_t ifv_lock;		/* writer lock for ifv_mib */
+	pserialize_t ifv_psz;
 
 	LIST_HEAD(__vlan_mchead, vlan_mc_entry) ifv_mc_listhead;
 	LIST_ENTRY(ifvlan) ifv_list;
@@ -355,6 +356,7 @@ vlan_clone_create(struct if_clone *ifc, int unit)
 	psref_target_init(&mib->ifvm_psref, ifvm_psref_class);
 
 	mutex_init(&ifv->ifv_lock, MUTEX_DEFAULT, IPL_NONE);
+	ifv->ifv_psz = pserialize_create();
 	ifv->ifv_mib = mib;
 
 	mutex_enter(&ifv_list.lock);
@@ -792,7 +794,7 @@ vlan_linkmib_update(struct ifvlan *ifv, struct ifvlan_linkmib *nmib)
 	membar_producer();
 	ifv->ifv_mib = nmib;
 
-	pserialize_perform(vlan_psz);
+	pserialize_perform(ifv->ifv_psz);
 	psref_target_destroy(&omib->ifvm_psref, ifvm_psref_class);
 }
 
