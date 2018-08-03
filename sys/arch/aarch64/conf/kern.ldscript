@@ -1,3 +1,5 @@
+#include "assym.h"
+
 /* Default linker script, for normal executables */
 OUTPUT_FORMAT("elf64-littleaarch64", "elf64-bigaarch64",
 	      "elf64-littleaarch64")
@@ -30,9 +32,11 @@ SECTIONS
   PROVIDE (__etext = .);
   PROVIDE (_etext = .);
   PROVIDE (etext = .);
-  /* Adjust the address for the data segment.  We want to adjust up to
-     the same address within the page on the next page up.  */
-  . = ALIGN (CONSTANT (MAXPAGESIZE)) - ((CONSTANT (MAXPAGESIZE) - .) & (CONSTANT (MAXPAGESIZE) - 1)); . = DATA_SEGMENT_ALIGN (CONSTANT (MAXPAGESIZE), CONSTANT (COMMONPAGESIZE));
+  /* Adjust the address for the data segment. Move .data to the next L2 block,
+     and .text and .rodata will be set readonly if needed. */
+  PROVIDE (_erodata = .);
+  . = ALIGN (L2_SIZE);
+  . = DATA_SEGMENT_ALIGN (CONSTANT (MAXPAGESIZE), CONSTANT (COMMONPAGESIZE));
   /* Exception handling  */
   .eh_frame       : ONLY_IF_RW { KEEP (*(.eh_frame)) }
   .gcc_except_table   : ONLY_IF_RW { *(.gcc_except_table .gcc_except_table.*) }
