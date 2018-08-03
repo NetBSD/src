@@ -1,4 +1,4 @@
-/*	$NetBSD: sshkey.c,v 1.14 2018/04/06 18:59:00 christos Exp $	*/
+/*	$NetBSD: sshkey.c,v 1.15 2018/08/03 04:32:12 kamil Exp $	*/
 /* $OpenBSD: sshkey.c,v 1.64 2018/03/22 07:05:48 markus Exp $ */
 /*
  * Copyright (c) 2000, 2001 Markus Friedl.  All rights reserved.
@@ -26,7 +26,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "includes.h"
-__RCSID("$NetBSD: sshkey.c,v 1.14 2018/04/06 18:59:00 christos Exp $");
+__RCSID("$NetBSD: sshkey.c,v 1.15 2018/08/03 04:32:12 kamil Exp $");
 
 #include <sys/types.h>
 #include <netinet/in.h>
@@ -1641,7 +1641,7 @@ dsa_generate_private_key(u_int bits, DSA **dsap)
 int
 sshkey_ecdsa_key_to_nid(EC_KEY *k)
 {
-	EC_GROUP *eg;
+	EC_GROUP *eg = NULL;
 	int nids[] = {
 		NID_X9_62_prime256v1,
 		NID_secp384r1,
