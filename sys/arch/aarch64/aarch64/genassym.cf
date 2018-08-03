@@ -1,4 +1,4 @@
-# $NetBSD: genassym.cf,v 1.5 2018/07/17 10:01:59 ryo Exp $
+# $NetBSD: genassym.cf,v 1.6 2018/08/03 16:32:55 ryo Exp $
 #-
 # Copyright (c) 2014 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -120,6 +120,8 @@ define	L2_SIZE			L2_SIZE
 define	LX_BLKPAG_UXN		LX_BLKPAG_UXN
 define	LX_BLKPAG_PXN		LX_BLKPAG_PXN
 define	LX_BLKPAG_AF		LX_BLKPAG_AF
+define	LX_BLKPAG_AP		LX_BLKPAG_AP
+define	LX_BLKPAG_AP_RO		LX_BLKPAG_AP_RO
 define	LX_BLKPAG_AP_RW		LX_BLKPAG_AP_RW
 define	LX_BLKPAG_SH_IS		LX_BLKPAG_SH_IS
 define	LX_BLKPAG_ATTR_INDX_0	LX_BLKPAG_ATTR_INDX_0

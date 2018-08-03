@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.13 2018/07/17 18:08:36 christos Exp $	*/
+/*	$NetBSD: locore.S,v 1.14 2018/08/03 16:32:55 ryo Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -35,7 +35,7 @@
 #include <aarch64/hypervisor.h>
 #include "assym.h"
 
-RCSID("$NetBSD: locore.S,v 1.13 2018/07/17 18:08:36 christos Exp $")
+RCSID("$NetBSD: locore.S,v 1.14 2018/08/03 16:32:55 ryo Exp $")
 
 /* #define DEBUG_LOCORE */
 /* #define DEBUG_MMU */
@@ -650,9 +650,44 @@ arm_boot_l0pt_init:
 	lsr	x4, x4, #L2_SHIFT
 	bl	l2_setblocks
 
+#ifndef DDB
+	/* map READONLY from VM_MIN_KERNEL_ADDRESS to __data_start */
+	VERBOSE("Set kernel text/rodata READONLY\r\n")
+	ldr	x3, =__data_start
+	ands	x0, x3, #(L2_SIZE - 1)
+	beq	1f
+	ldr	x1, =_erodata
+	and	x1, x1, #L2_ADDR_BITS	/* _erodata & L2_ADDR_BIT */
+	and	x0, x3, #L2_ADDR_BITS	/* __data_start & L2_ADDR_BIT */
+	cmp	x0, x1
+	bne	1f
+	/* __data_start and _erodata are in same L2 block */
+	PRINT("Warning: data section not aligned on size of L2 block\r\n")
+1:
+	/* x3 = l2pde_index(__data_start) */
+	and	x3, x3, #L2_ADDR_BITS
+	lsr	x3, x3, #L2_SHIFT
+
+	/* x2 = l2pde_inex(VM_MIN_KERNEL_ADDRESS) */
+	mov	x2, #VM_MIN_KERNEL_ADDRESS
+	and	x2, x2, #L2_ADDR_BITS
+	lsr	x2, x2, #L2_SHIFT
+
+	ADDR	x1, ttbr1_l2table_kva
+	b	9f
+1:
+	ldr	x0, [x1, x2, lsl #3]	/* x0 = l2table[x2] */
+	and	x0, x0, #~LX_BLKPAG_AP
+	orr	x0, x0, #LX_BLKPAG_AP_RO
+	str	x0, [x1, x2, lsl #3]	/* l2table[x2] = x0 */
+	add	x2, x2, #1
+9:
+	cmp	x2, x3
+	blo	1b
+#endif
+
 	VERBOSE("Creating devmap tables\r\n")
 	/* devmap=PA table for L1 */
-nop
 	ADDR	x0, ttbr1_l1table_kva
 	ldr	x1, .L_devmap_addr
 	ADDR	x2, ttbr1_l2table_devmap
