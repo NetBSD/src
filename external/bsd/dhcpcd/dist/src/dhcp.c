@@ -3267,7 +3267,7 @@ get_udp_data(void *udp, size_t *len)
 	struct bootp_pkt *p;
 
 	p = (struct bootp_pkt *)udp;
-	*len = ntohs(p->ip.ip_len) - sizeof(p->ip) - sizeof(p->udp);
+	*len = (size_t)ntohs(p->ip.ip_len) - sizeof(p->ip) - sizeof(p->udp);
 	return (char *)udp + offsetof(struct bootp_pkt, bootp);
 }
 
