@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.259 2018/07/31 16:44:29 khorben Exp $
+# $NetBSD: mi,v 1.260 2018/08/03 04:24:41 kamil Exp $
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib,compatfile
@@ -1980,6 +1980,8 @@
 ./usr/libdata/debug/usr/tests/lib/libc/locale/t_wcstod.debug		tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libc/locale/t_wctomb.debug		tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libc/locale/t_wctype.debug		tests-lib-debug		debug,atf,compattestfile
+./usr/libdata/debug/usr/tests/lib/libc/misc/t_ubsan.debug		tests-lib-debug		debug,atf,compattestfile
+./usr/libdata/debug/usr/tests/lib/libc/misc/t_ubsanxx.debug		tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libc/net/getaddrinfo/h_gai.debug	tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libc/net/h_dns_server.debug		tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libc/net/h_hostent.debug		tests-lib-debug		debug,atf,compattestfile
