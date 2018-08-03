@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1604 2018/07/31 19:30:18 rjs Exp $
+# $NetBSD: mi,v 1.1605 2018/08/03 06:07:02 kamil Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1642,6 +1642,7 @@
 ./usr/share/man/cat4/schide.0			man-sys-catman		.cat
 ./usr/share/man/cat4/scsi.0			man-sys-catman		.cat
 ./usr/share/man/cat4/scsibus.0			man-sys-catman		.cat
+./usr/share/man/cat4/sctp.0			man-sys-catman		.cat
 ./usr/share/man/cat4/sd.0			man-sys-catman		.cat
 ./usr/share/man/cat4/sdhc.0			man-sys-catman		.cat
 ./usr/share/man/cat4/sdmmc.0			man-sys-catman		.cat
