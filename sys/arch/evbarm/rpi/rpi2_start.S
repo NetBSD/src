@@ -40,7 +40,7 @@
 
 #include "assym.h"
 
-RCSID("$NetBSD: rpi2_start.S,v 1.7 2018/06/27 11:12:15 ryo Exp $")
+RCSID("$NetBSD: rpi2_start.S,v 1.8 2018/08/03 15:46:41 skrll Exp $")
 
 #if defined(KERNEL_BASES_EQUAL)
 #define CALL(f)		bl	_C_LABEL(f)
@@ -121,6 +121,12 @@ _C_LABEL(rpi_start):
 	sub	r4, r4, #KERNEL_BASE_VOFFSET
 	str	r2, [r4]
 #endif
+
+	mov	r2, #KERNEL_BASE_VOFFSET
+	movw	r4, #:lower16:kern_vtopdiff
+	movt	r4, #:upper16:kern_vtopdiff
+	sub	r4, r4, #KERNEL_BASE_VOFFSET
+	str	r2, [r4]
 
 	/*
 	 * Setup the CPU
