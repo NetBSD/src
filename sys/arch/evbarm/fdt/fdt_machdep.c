@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_machdep.c,v 1.28 2018/08/03 07:44:31 skrll Exp $ */
+/* $NetBSD: fdt_machdep.c,v 1.29 2018/08/03 12:48:33 skrll Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.28 2018/08/03 07:44:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.29 2018/08/03 12:48:33 skrll Exp $");
 
 #include "opt_machdep.h"
 #include "opt_bootconfig.h"
@@ -156,9 +156,9 @@ earlyconsgetc(dev_t dev)
 }
 
 #ifdef VERBOSE_INIT_ARM
-#define DPRINTF(...)	printf(__VA_ARGS__)
+#define VPRINTF(...)	printf(__VA_ARGS__)
 #else
-#define DPRINTF(...)
+#define VPRINTF(...)
 #endif
 
 /*
@@ -179,13 +179,13 @@ fdt_get_memory(uint64_t *pstart, uint64_t *pend)
 	*pstart = cur_addr;
 	*pend = cur_addr + cur_size;
 
-	DPRINTF("FDT /memory [%d] @ 0x%" PRIx64 " size 0x%" PRIx64 "\n",
+	VPRINTF("FDT /memory [%d] @ 0x%" PRIx64 " size 0x%" PRIx64 "\n",
 	    0, *pstart, *pend - *pstart);
 
 	for (index = 1;
 	     fdtbus_get_reg64(memory, index, &cur_addr, &cur_size) == 0;
 	     index++) {
-		DPRINTF("FDT /memory [%d] @ 0x%" PRIx64 " size 0x%" PRIx64 "\n",
+		VPRINTF("FDT /memory [%d] @ 0x%" PRIx64 " size 0x%" PRIx64 "\n",
 		    index, cur_addr, cur_size);
 
 #ifdef __aarch64__
@@ -211,7 +211,7 @@ fdt_add_reserved_memory_range(uint64_t addr, uint64_t size)
 		printf("MEM ERROR: res %" PRIx64 "-%" PRIx64 " failed: %d\n",
 		    start, end, error);
 	else
-		DPRINTF("MEM: res %" PRIx64 "-%" PRIx64 "\n", start, end);
+		VPRINTF("MEM: res %" PRIx64 "-%" PRIx64 "\n", start, end);
 }
 
 /*
@@ -265,7 +265,7 @@ fdt_build_bootconfig(uint64_t mem_start, uint64_t mem_end)
 		if (error != 0)
 			printf("MEM ERROR: add %" PRIx64 "-%" PRIx64 " failed: %d\n",
 			    addr, addr + size, error);
-		DPRINTF("MEM: add %" PRIx64 "-%" PRIx64 "\n", addr, addr + size);
+		VPRINTF("MEM: add %" PRIx64 "-%" PRIx64 "\n", addr, addr + size);
 	}
 
 	fdt_add_reserved_memory(mem_end);
@@ -274,10 +274,10 @@ fdt_build_bootconfig(uint64_t mem_start, uint64_t mem_end)
 	if (initrd_size > 0)
 		fdt_add_reserved_memory_range(initrd_start, initrd_size);
 
-	DPRINTF("Usable memory:\n");
+	VPRINTF("Usable memory:\n");
 	bc->dramblocks = 0;
 	LIST_FOREACH(er, &fdt_memory_ext->ex_regions, er_link) {
-		DPRINTF("  %lx - %lx\n", er->er_start, er->er_end);
+		VPRINTF("  %lx - %lx\n", er->er_start, er->er_end);
 		bc->dram[bc->dramblocks].address = er->er_start;
 		bc->dram[bc->dramblocks].pages =
 		    (er->er_end - er->er_start) / PAGE_SIZE;
@@ -378,25 +378,25 @@ initarm(void *arg)
 		panic("Kernel does not support this device");
 
 	/* Early console may be available, announce ourselves. */
-	DPRINTF("FDT<%p>\n", fdt_addr_r);
+	VPRINTF("FDT<%p>\n", fdt_addr_r);
 
 	const int chosen = OF_finddevice("/chosen");
 	if (chosen >= 0)
 		OF_getprop(chosen, "bootargs", bootargs, sizeof(bootargs));
 	boot_args = bootargs;
 
-	DPRINTF("devmap\n");
+	VPRINTF("devmap\n");
 	pmap_devmap_register(plat->devmap());
 #ifdef __aarch64__
 	pmap_devmap_bootstrap(plat->devmap());
 #endif
 
 	/* Heads up ... Setup the CPU / MMU / TLB functions. */
-	DPRINTF("cpufunc\n");
+	VPRINTF("cpufunc\n");
 	if (set_cpufuncs())
 		panic("cpu not recognized!");
 
-	DPRINTF("bootstrap\n");
+	VPRINTF("bootstrap\n");
 	plat->bootstrap();
 
 	/*
@@ -405,11 +405,11 @@ initarm(void *arg)
 	 */
 	fdt_update_stdout_path();
 
-	DPRINTF("consinit ");
+	VPRINTF("consinit ");
 	consinit();
-	DPRINTF("ok\n");
+	VPRINTF("ok\n");
 
-	DPRINTF("uboot: args %#lx, %#lx, %#lx, %#lx\n",
+	VPRINTF("uboot: args %#lx, %#lx, %#lx, %#lx\n",
 	    uboot_args[0], uboot_args[1], uboot_args[2], uboot_args[3]);
 
 	cpu_reset_address = fdt_reset;
@@ -417,7 +417,7 @@ initarm(void *arg)
 	evbarm_device_register = fdt_device_register;
 
 	/* Talk to the user */
-	DPRINTF("\nNetBSD/evbarm (fdt) booting ...\n");
+	VPRINTF("\nNetBSD/evbarm (fdt) booting ...\n");
 
 #ifdef BOOT_ARGS
 	char mi_bootargs[] = BOOT_ARGS;
@@ -425,7 +425,7 @@ initarm(void *arg)
 #endif
 
 #ifndef __aarch64__
-	DPRINTF("KERNEL_BASE=0x%x, "
+	VPRINTF("KERNEL_BASE=0x%x, "
 		"KERNEL_VM_BASE=0x%x, "
 		"KERNEL_VM_BASE - KERNEL_BASE=0x%x, "
 		"KERNEL_BASE_VOFFSET=0x%x\n",
@@ -450,7 +450,7 @@ initarm(void *arg)
 	const bool mapallmem_p = true;
 #ifndef PMAP_NEED_ALLOC_POOLPAGE
 	if (memory_size > KERNEL_VM_BASE - KERNEL_BASE) {
-		DPRINTF("%s: dropping RAM size from %luMB to %uMB\n",
+		VPRINTF("%s: dropping RAM size from %luMB to %uMB\n",
 		    __func__, (unsigned long) (memory_size >> 20),
 		    (KERNEL_VM_BASE - KERNEL_BASE) >> 20);
 		memory_size = KERNEL_VM_BASE - KERNEL_BASE;
@@ -480,7 +480,7 @@ initarm(void *arg)
 	paddr_t	kernstart_phys = KERN_VTOPHYS(kernstart);
 	paddr_t kernend_phys = KERN_VTOPHYS(kernend);
 
-	DPRINTF("%s: kernel phys start %lx end %lx\n", __func__, kernstart_phys, kernend_phys);
+	VPRINTF("%s: kernel phys start %lx end %lx\n", __func__, kernstart_phys, kernend_phys);
 
         fdt_add_reserved_memory_range(kernstart_phys,
 	     kernend_phys - kernstart_phys);
@@ -490,7 +490,7 @@ initarm(void *arg)
 	    plat->devmap(), mapallmem_p);
 #endif
 
-	DPRINTF("bootargs: %s\n", bootargs);
+	VPRINTF("bootargs: %s\n", bootargs);
 
 	parse_mi_bootargs(boot_args);
 
@@ -500,7 +500,7 @@ initarm(void *arg)
 	struct extent_region *er;
 
 	LIST_FOREACH(er, &fdt_memory_ext->ex_regions, er_link) {
-		DPRINTF("  %lx - %lx\n", er->er_start, er->er_end);
+		VPRINTF("  %lx - %lx\n", er->er_start, er->er_end);
 		struct boot_physmem *bp = &fdt_physmem[nfdt_physmem++];
 
 		KASSERT(nfdt_physmem <= MAX_PHYSMEM);
