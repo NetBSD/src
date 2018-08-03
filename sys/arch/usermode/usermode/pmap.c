@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.110 2018/08/01 12:09:01 reinoud Exp $ */
+/* $NetBSD: pmap.c,v 1.111 2018/08/03 06:52:50 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@NetBSD.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.110 2018/08/01 12:09:01 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.111 2018/08/03 06:52:50 reinoud Exp $");
 
 #include "opt_memsize.h"
 #include "opt_kmempages.h"
@@ -76,6 +76,14 @@ struct pmap {
 	struct	pmap_l2 **pm_l1;
 };
 
+/*
+ * pv_table is list of pv_entry structs completely spanning the total memory.
+ * It is indexed on physical page number. Each entry will be daisy chained
+ * with pv_entry records for each usage in all the pmaps.
+ *
+ * kernel_pm_entries contains all kernel L2 pages for its complete map.
+ *
+ */
 
 static struct pv_entry **kernel_pm_entries;
 static struct pv_entry  *pv_table;	/* physical pages info (direct mapped) */
@@ -95,7 +103,6 @@ static int pm_l1_size = 0;
 static uint64_t pm_entries_size = 0;
 
 static struct pool pmap_pool;
-static struct pool pmap_l1_pool;
 static struct pool pmap_pventry_pool;
 
 /* forwards */
@@ -139,6 +146,7 @@ pmap_bootstrap(void)
 	vaddr_t free_start, free_end;
 	paddr_t pa;
 	vaddr_t va;
+	size_t  kmem_k_length, written;
 	uintptr_t pg, l1;
 	void *addr;
 	int err;
@@ -165,6 +173,7 @@ pmap_bootstrap(void)
 	/* calculate kernel section (R-X) */
 	kmem_k_start = (vaddr_t) PAGE_SIZE * (atop(_start)    );
 	kmem_k_end   = (vaddr_t) PAGE_SIZE * (atop(&etext) + 1);
+	kmem_k_length = kmem_k_end - kmem_k_start;
 
 	/* calculate total available memory space & available pages */
 	DRAM_cfg = (vaddr_t) TEXTADDR;
@@ -260,7 +269,7 @@ pmap_bootstrap(void)
 #endif
 
 	/* protect the current kernel section */
-	err = thunk_mprotect((void *) kmem_k_start, kmem_k_end - kmem_k_start,
+	err = thunk_mprotect((void *) kmem_k_start, kmem_k_length,
 		THUNK_PROT_READ | THUNK_PROT_EXEC);
 	assert(err == 0);
 
@@ -271,14 +280,18 @@ pmap_bootstrap(void)
 		THUNK_MADV_WILLNEED | THUNK_MADV_RANDOM);
 	assert(err == 0);
 
+	/* map the kernel at the start of the 'memory' file */
+	written = thunk_pwrite(mem_fh, (void *) kmem_k_start, kmem_k_length, 0);
+	assert(written == kmem_k_length);
+	fpos = kmem_k_length;
+
 	/* initialize counters */
-	fpos = 0;
 	free_start = fpos;     /* in physical space ! */
 	free_end   = file_len; /* in physical space ! */
 	kmem_kvm_cur_start = kmem_kvm_start;
 
 	/* calculate pv table size */
-	phys_npages = (free_end - free_start) / PAGE_SIZE;
+	phys_npages = file_len / PAGE_SIZE;
 	pv_table_size = round_page(phys_npages * sizeof(struct pv_entry));
 	thunk_printf_debug("claiming %"PRIu64" KB of pv_table for "
 		"%"PRIdPTR" pages of physical memory\n",
@@ -292,7 +305,7 @@ pmap_bootstrap(void)
 
 	/* calculate how big the l1 tables are going to be */
 	pm_nl1 = pm_nentries / PMAP_L2_NENTRY;
-	pm_l1_size = pm_nl1 * sizeof(struct pmap_l1 *);
+	pm_l1_size = round_page(pm_nl1 * sizeof(struct pmap_l1 *));
 
 	/* claim pv table */
 	pv_fpos = fpos;
@@ -449,8 +462,6 @@ pmap_deferred_init(void)
 	/* create pmap pool */
 	pool_init(&pmap_pool, sizeof(struct pmap), 0, 0, 0,
 	    "pmappool", NULL, IPL_NONE);
-	pool_init(&pmap_l1_pool, pm_l1_size, 0, 0, 0,
-	    "pmapl1pool", NULL, IPL_NONE);
 	pool_init(&pmap_pventry_pool, sizeof(struct pv_entry), 0, 0, 0,
 	    "pventry", NULL, IPL_HIGH);
 }
@@ -484,8 +495,8 @@ pmap_create(void)
 	pmap->pm_flags = 0;
 
 	/* claim l1 table */
-	pmap->pm_l1 = pool_get(&pmap_l1_pool, PR_WAITOK);
-	memset(pmap->pm_l1, 0, pm_l1_size);
+	pmap->pm_l1 = kmem_zalloc(pm_l1_size, KM_SLEEP);
+	assert(pmap->pm_l1);
 
 	thunk_printf_debug("\tpmap %p\n", pmap);
 
@@ -527,7 +538,7 @@ pmap_destroy(pmap_t pmap)
 			continue;
 		kmem_free(l2tbl, PMAP_L2_SIZE);
 	}
-	pool_put(&pmap_l1_pool, pmap->pm_l1);
+	kmem_free(pmap->pm_l1, pm_l1_size);
 	pool_put(&pmap_pool, pmap);
 }
 
