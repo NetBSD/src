@@ -1,4 +1,4 @@
-/*	$NetBSD: ubsan.c,v 1.2 2018/08/03 03:12:32 kamil Exp $	*/
+/*	$NetBSD: ubsan.c,v 1.3 2018/08/03 16:31:04 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -38,9 +38,9 @@
 
 #include <sys/cdefs.h>
 #if defined(_KERNEL)
-__KERNEL_RCSID(0, "$NetBSD: ubsan.c,v 1.2 2018/08/03 03:12:32 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubsan.c,v 1.3 2018/08/03 16:31:04 kamil Exp $");
 #else
-__RCSID("$NetBSD: ubsan.c,v 1.2 2018/08/03 03:12:32 kamil Exp $");
+__RCSID("$NetBSD: ubsan.c,v 1.3 2018/08/03 16:31:04 kamil Exp $");
 #endif
 
 #if defined(_KERNEL)
@@ -1269,7 +1269,7 @@ DeserializeUINT128(char *pBuffer, size_t zBUfferLength, struct CTypeDescriptor *
 #if BYTE_ORDER == LITTLE_ENDIAN
 	for (zI = sizeof(ulongest) - 1; zI >= 0; zI--) {
 #else
-	for (zI = 0; zI < sizeof(ulongest); zI++) {
+	for (zI = 0; zI < (ssize_t)sizeof(ulongest); zI++) {
 #endif
 		snprintf(szBuf, sizeof(szBuf), "%02" PRIx8, rgNumber[zI]);
 		strlcat(pBuffer, szBuf, zBUfferLength);
