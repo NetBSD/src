@@ -1,4 +1,4 @@
-#	$NetBSD: files.kern,v 1.20 2018/07/18 07:06:40 msaitoh Exp $
+#	$NetBSD: files.kern,v 1.21 2018/08/03 04:35:20 kamil Exp $
 
 #
 # kernel sources
@@ -218,3 +218,9 @@ file	miscfs/genfs/layer_vfsops.c	layerfs
 file	miscfs/genfs/layer_vnops.c	layerfs
 
 file	miscfs/specfs/spec_vnops.c	vfs
+
+defflag	KUBSAN
+prefix	../common/lib/libc/misc
+file	ubsan.c				kubsan
+prefix
+makeoptions	kubsan	CFLAGS+="-fsanitize=undefined"
