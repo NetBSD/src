@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.tests,v 1.151 2018/06/15 09:54:02 yamaguchi Exp $
+#	$NetBSD: NetBSD.dist.tests,v 1.152 2018/08/03 04:24:41 kamil Exp $
 
 ./usr/libdata/debug/usr/tests
 ./usr/libdata/debug/usr/tests/atf
@@ -83,6 +83,7 @@
 ./usr/libdata/debug/usr/tests/lib/libc/hash
 ./usr/libdata/debug/usr/tests/lib/libc/locale
 ./usr/libdata/debug/usr/tests/lib/libc/inet
+./usr/libdata/debug/usr/tests/lib/libc/misc
 ./usr/libdata/debug/usr/tests/lib/libc/net
 ./usr/libdata/debug/usr/tests/lib/libc/net/getaddrinfo
 ./usr/libdata/debug/usr/tests/lib/libc/regex
@@ -266,6 +267,7 @@
 ./usr/tests/lib/libc/hash/data
 ./usr/tests/lib/libc/locale
 ./usr/tests/lib/libc/inet
+./usr/tests/lib/libc/misc
 ./usr/tests/lib/libc/net
 ./usr/tests/lib/libc/net/getaddrinfo
 ./usr/tests/lib/libc/net/getaddrinfo/data
