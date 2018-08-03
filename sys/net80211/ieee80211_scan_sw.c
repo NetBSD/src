@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_scan_sw.c,v 1.1.2.3 2018/07/20 20:33:05 phil Exp $ */
+/*	$NetBSD: ieee80211_scan_sw.c,v 1.1.2.4 2018/08/03 19:47:25 phil Exp $ */
 
 /*-
  * Copyright (c) 2002-2008 Sam Leffler, Errno Consulting
@@ -633,7 +633,7 @@ scan_mindwell(struct ieee80211_scan_state *ss)
 	scan_signal(ss, 0);
 }
 
-static __unused void
+static void
 scan_start(void *arg, int pending)
 {
 #define	ISCAN_REP	(ISCAN_MINDWELL | ISCAN_DISCARD)
@@ -655,6 +655,7 @@ scan_start(void *arg, int pending)
 			"%s: no channels to scan\n", __func__);
 		scan_done(ss, 1);
 		return;
+
 	}
 
 	/*
@@ -714,6 +715,7 @@ end:
 	    (ss_priv->ss_iflags & ISCAN_ABORT) ||
 	     ieee80211_time_after(ticks + ss->ss_mindwell, ss_priv->ss_scanend)) {
 		ss_priv->ss_iflags &= ~ISCAN_RUNNING;
+		/* scan_end unlocks the IEEE80211_LOCK(ic) */
 		scan_end(ss, scandone);
 		return;
 	} else

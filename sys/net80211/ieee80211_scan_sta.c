@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_scan_sta.c,v 1.1.56.5 2018/07/28 00:49:43 phil Exp $ */
+/*	$NetBSD: ieee80211_scan_sta.c,v 1.1.56.6 2018/08/03 19:47:25 phil Exp $ */
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -263,7 +263,7 @@ sta_add(struct ieee80211_scan_state *ss,
 	const struct ieee80211_frame *wh,
 	int subtype, int rssi, int noise)
 {
-	printf ("sta_add called\n");
+	printf ("sta_add called, ss_flags 0x%x\n", ss->ss_flags);
 #define	ISPROBE(_st)	((_st) == IEEE80211_FC0_SUBTYPE_PROBE_RESP)
 #define	PICK1ST(_ss) \
 	((ss->ss_flags & (IEEE80211_SCAN_PICK1ST | IEEE80211_SCAN_GOTPICK)) == \
@@ -989,6 +989,8 @@ match_ssid(const uint8_t *ie,
 {
 	int i;
 
+	printf ("match_ssid called:;; %s vs %s\n", ie, ssids[0].ssid);
+		
 	for (i = 0; i < nssid; i++) {
 		if (match_id(ie, ssids[i].ssid, ssids[i].len))
 			return 1;
@@ -1023,6 +1025,7 @@ match_bss(struct ieee80211vap *vap,
         uint8_t rate;
         int fail;
 
+	printf ("match_bss, iv_opmode is 0x%x\n", vap->iv_opmode);
 	fail = 0;
 	if (isclr(ic->ic_chan_active, ieee80211_chan2ieee(ic, se->se_chan)))
 		fail |= MATCH_CHANNEL;
@@ -1193,6 +1196,7 @@ match_bss(struct ieee80211vap *vap,
 		printf("%s\n", fail & (MATCH_SSID | MATCH_MESHID) ? "!" : "");
 	}
 #endif
+	printf ("match_bss exit, fail = 0x%x\n", fail);
 	return fail;
 }
 
@@ -1263,6 +1267,14 @@ sta_pick_bss(struct ieee80211_scan_state *ss, struct ieee80211vap *vap)
 	struct sta_table *st = ss->ss_priv;
 	struct sta_entry *selbs;
 	struct ieee80211_channel *chan;
+
+	{       int i;
+		printf ("sta_pick_bss called. vap des_ssid %s, scan ssids:", 
+			vap->iv_des_ssid[0].ssid);
+		for (i=0; i < ss->ss_nssid; i++)
+			printf ("%s, ", ss->ss_ssid[i].ssid);
+		printf ("\n");
+	}
 
 	KASSERT(vap->iv_opmode == IEEE80211_M_STA,
 		("wrong mode %u", vap->iv_opmode));

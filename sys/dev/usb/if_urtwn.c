@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urtwn.c,v 1.59.2.4 2018/07/28 00:49:43 phil Exp $	*/
+/*	$NetBSD: if_urtwn.c,v 1.59.2.5 2018/08/03 19:47:25 phil Exp $	*/
 /*	$OpenBSD: if_urtwn.c,v 1.42 2015/02/10 23:25:46 mpi Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.59.2.4 2018/07/28 00:49:43 phil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.59.2.5 2018/08/03 19:47:25 phil Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -111,7 +111,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.59.2.4 2018/07/28 00:49:43 phil Exp $
 #define	DBG_REG		__BIT(6)
 #define	DBG_ALL		0xffffffffU
 /* NNN Reset urtwn_debug to 0 when done debugging. */
-u_int urtwn_debug = DBG_ALL & ~DBG_REG;
+u_int urtwn_debug = DBG_FN;
 #define DPRINTFN(n, s)	\
 	do { if (urtwn_debug & (n)) printf s; } while (/*CONSTCOND*/0)
 #else
@@ -284,7 +284,7 @@ static void	urtwn_calib_to_cb(struct urtwn_softc *, void *);
 static void	urtwn_next_scan(void *);
 static int	urtwn_newstate(struct ieee80211vap *, enum ieee80211_state,
 		    int);
-// static void	urtwn_newstate_cb(struct urtwn_softc *, void *);
+//static void	urtwn_newstate_cb(struct urtwn_softc *, void *);
 static int	urtwn_wme_update(struct ieee80211com *);
 static void	urtwn_wme_update_cb(struct urtwn_softc *, void *);
 static void	urtwn_update_avgrssi(struct urtwn_softc *, int, int8_t);
@@ -346,6 +346,7 @@ static void	urtwn_scan_start(struct ieee80211com *);
 static void	urtwn_scan_end(struct ieee80211com *);
 static void	urtwn_set_channel(struct ieee80211com *);
 static int	urtwn_transmit(struct ieee80211com *, struct mbuf *);
+static int	urtwn_send_mgmt(struct ieee80211_node *, int, int);
 static int	urtwn_raw_xmit(struct ieee80211_node *, struct mbuf *,
 		    const struct ieee80211_bpf_params *);
 static void	urtwn_getradiocaps(struct ieee80211com *, int, int *,
@@ -383,7 +384,7 @@ urtwn_attach(device_t parent, device_t self, void *aux)
 	char *devinfop;
 	const struct urtwn_dev *dev;
 	usb_device_request_t req;
-	size_t i;
+	// NNN loop below size_t i;
 	int error;
 
 	sc->sc_dev = self;
@@ -417,7 +418,6 @@ urtwn_attach(device_t parent, device_t self, void *aux)
 	(void) usbd_do_request(sc->sc_udev, &req, 0);
 
 	mutex_init(&sc->sc_task_mtx, MUTEX_DEFAULT, IPL_NET);
-	printf ("sc_tx_mtx INIT, addr 0x%lx\n", (long) &sc->sc_tx_mtx);
 	mutex_init(&sc->sc_tx_mtx, MUTEX_DEFAULT, IPL_SOFTNET);
 	mutex_init(&sc->sc_rx_mtx, MUTEX_DEFAULT, IPL_SOFTNET);
 	mutex_init(&sc->sc_fwcmd_mtx, MUTEX_DEFAULT, IPL_NONE);
@@ -506,6 +506,7 @@ urtwn_attach(device_t parent, device_t self, void *aux)
 
 	ic->ic_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 
+#ifdef should_delete_NNN
 	/* Set supported .11b and .11g channels (1 through 14). */
 	ic->ic_nchans = 14;  /* NNN ? get this from somewhere? */
 	for (i = 0; i < 14; i++) {
@@ -515,6 +516,10 @@ urtwn_attach(device_t parent, device_t self, void *aux)
 		    IEEE80211_CHAN_CCK | IEEE80211_CHAN_OFDM |
 		    IEEE80211_CHAN_DYN | IEEE80211_CHAN_2GHZ;
 	}
+#else
+	urtwn_getradiocaps(ic, IEEE80211_CHAN_MAX, &ic->ic_nchans, 
+	    ic->ic_channels);
+#endif	
 
 	ieee80211_ifattach(ic);
 
@@ -528,29 +533,28 @@ urtwn_attach(device_t parent, device_t self, void *aux)
 	ic->ic_scan_end = urtwn_scan_end;
 	ic->ic_set_channel = urtwn_set_channel;
 	ic->ic_transmit = urtwn_transmit;
+	// ic->ic_send_mgmt = urtwn_send_mgmt;
 	ic->ic_raw_xmit = urtwn_raw_xmit;
 	ic->ic_getradiocaps = urtwn_getradiocaps;
 	
 
-	/* Shouldn't do it, but call vap_create??? */
-	uint8_t bssid[IEEE80211_ADDR_LEN] = {0};
+	/* How should this get called the first time?  Not here? */
+	// uint8_t bssid[IEEE80211_ADDR_LEN] = {0};
 
 	struct ieee80211vap *vap =
 	    urtwn_vap_create(ic, device_xname(sc->sc_dev),
-	        device_unit(sc->sc_dev), IEEE80211_M_IBSS,
-	        IEEE80211_CLONE_MACADDR, bssid, ic->ic_macaddr);
+	        device_unit(sc->sc_dev), IEEE80211_M_STA,
+	        IEEE80211_CLONE_MACADDR, ic->ic_macaddr, ic->ic_macaddr);
 
 	if (vap == NULL) {
 		/* Didn't work ... now what! */
-		printf ("vap_create didn't work ...\n");
+		printf ("NNN vap_create didn't work ...\n");
 		ieee80211_ifdetach(ic);
 		goto fail;
 	}
 
 	/* Debug all! NNN */
 	vap->iv_debug = IEEE80211_MSG_ANY;
-
-	printf ("Initial vap->iv_flags is 0x%lx\n", (long)vap->iv_flags);
 
 	bpf_attach2(vap->iv_ifp, DLT_IEEE802_11_RADIO,
 	    sizeof(struct ieee80211_frame) + IEEE80211_RADIOTAP_HDRLEN,
@@ -616,7 +620,6 @@ urtwn_detach(device_t self, int flags)
 
 	mutex_destroy(&sc->sc_write_mtx);
 	mutex_destroy(&sc->sc_fwcmd_mtx);
-	printf ("sc_tx_mtx destroy\n");
 	mutex_destroy(&sc->sc_tx_mtx);
 	mutex_destroy(&sc->sc_rx_mtx);
 	mutex_destroy(&sc->sc_task_mtx);
@@ -761,7 +764,6 @@ urtwn_alloc_rx_list(struct urtwn_softc *sc)
 	for (size_t j = 0; j < sc->rx_npipe; j++) {
 		TAILQ_INIT(&sc->rx_free_list[j]);
 		for (i = 0; i < URTWN_RX_LIST_COUNT; i++) {
-			printf ("alloc rx_data[%ld][%ld]\n", j, i);
 			data = &sc->rx_data[j][i];
 
 			data->sc = sc;	/* Backpointer for callbacks. */
@@ -811,7 +813,6 @@ urtwn_alloc_tx_list(struct urtwn_softc *sc)
 
 	DPRINTFN(DBG_FN, ("%s: %s\n", device_xname(sc->sc_dev), __func__));
 
-	printf ("enter sc_tx_mtx, adr is 0x%lx\n", (long)&sc->sc_tx_mtx);
 	mutex_enter(&sc->sc_tx_mtx);
 	for (size_t j = 0; j < sc->tx_npipe; j++) {
 		TAILQ_INIT(&sc->tx_free_list[j]);
@@ -837,14 +838,11 @@ urtwn_alloc_tx_list(struct urtwn_softc *sc)
 		}
 	}
 	mutex_exit(&sc->sc_tx_mtx);
-	printf ("exit sc_tx_mtx\n");
 	return 0;
 
  fail:
 	urtwn_free_tx_list(sc);
 	mutex_exit(&sc->sc_tx_mtx);
-	printf ("exit sc_tx_mtx\n");
-	printf ("Out of urtwn_alloc_tx_list with error.\n");
 	return error;
 }
 
@@ -1537,6 +1535,8 @@ urtwn_r88e_read_rom(struct urtwn_softc *sc)
 	mutex_exit(&sc->sc_write_mtx);
 }
 
+/*  NNN  Do we need to do something with this?  */
+
 static __unused int
 urtwn_media_change(struct ifnet *ifp)
 {
@@ -1808,7 +1808,6 @@ urtwn_calib_to(void *arg)
 		return;
 
 	/* Do it in a process context. */
-	printf ("Doing a urtwn_calib_to via do_async...\n");
 	urtwn_do_async(sc, urtwn_calib_to_cb, vap, sizeof(struct ieee80211vap *));
 }
 
@@ -1859,7 +1858,7 @@ urtwn_calib_to_cb(struct urtwn_softc *sc, void *arg)
 static void
 urtwn_next_scan(void *arg)
 {
-	printf ("urtwn_next_scan called....\n");
+	printf ("NNN urtwn_next_scan called....\n");
 #ifdef notyet
 	struct urtwn_softc *sc = arg;
 	int s;
@@ -1881,6 +1880,7 @@ urtwn_newassoc(struct ieee80211_node *ni, int isnew)
 {
 	DPRINTFN(DBG_FN, ("%s: new node %s\n", __func__,
 	    ether_sprintf(ni->ni_macaddr)));
+
 	/* start with lowest Tx rate */
 	ni->ni_txrate = 0;
 }
@@ -2053,7 +2053,6 @@ urtwn_newstate_cb(struct urtwn_softc *sc, void *arg)
 		/* Start periodic scan. */
 		if (!sc->sc_dying)
 			callout_schedule(&sc->sc_scan_to, hz / 5);
-		printf ("Finished to scan code\n");
 		break;
 
 	case IEEE80211_S_AUTH:
@@ -2083,8 +2082,7 @@ urtwn_newstate_cb(struct urtwn_softc *sc, void *arg)
 	case IEEE80211_S_ASSOC:
 		break;
 
-	case IEEE80211_S_RUN:
-		printf ("if_urtwn: going to new state S_RUN\n");
+	case IEEE80211_S_RUN:       
 		ni = vap->iv_bss;
 
 		/* XXX: Set 20MHz mode */
@@ -2220,7 +2218,7 @@ urtwn_newstate_cb(struct urtwn_softc *sc, void *arg)
 }
 #endif
 
-static __unused int
+static int
 urtwn_newstate(struct ieee80211vap *vap, enum ieee80211_state nstate, int arg)
 {
 	struct urtwn_softc *sc = vap->iv_ic->ic_softc;
@@ -2366,7 +2364,6 @@ urtwn_newstate(struct ieee80211vap *vap, enum ieee80211_state nstate, int arg)
 		/* Start periodic scan. */
 		if (!sc->sc_dying)
 			callout_schedule(&sc->sc_scan_to, hz / 5);
-		printf ("Finished to scan code\n");
 		break;
 
 	case IEEE80211_S_AUTH:
@@ -2397,7 +2394,6 @@ urtwn_newstate(struct ieee80211vap *vap, enum ieee80211_state nstate, int arg)
 		break;
 
 	case IEEE80211_S_RUN:
-		printf ("if_urtwn: going to new state S_RUN\n");
 		ni = vap->iv_bss;
 
 		/* XXX: Set 20MHz mode */
@@ -2836,19 +2832,16 @@ urtwn_rx_frame(struct urtwn_softc *sc, uint8_t *buf, int pktlen)
 
 	ni = ieee80211_find_rxnode(ic, (struct ieee80211_frame_min *)wh);
 
-	printf ("urtwn rx_frame, ni is 0x%lx.\n", (long)ni);
 	if (ni != NULL) {
-		printf ("  ... and vap = 0x%lx\n", (long)ni->ni_vap);
 		if (ni->ni_vap != NULL) {
-			printf ("  ... and iv_input = 0x%lx\n", (long)ni->ni_vap->iv_input);
 
 		} else {
-			printf ("iv_input is null, not continuing.\n");
 			splx(s);
 			return;
 		}
 		/* push the frame up to the 802.11 stack */
-		ieee80211_input(ni, m, rssi, 0);
+		/* NNN Convert rssi to -10 to 110 ? for 802.11 layer */
+		ieee80211_input(ni, m, rssi+90, 0);
 
 		/* Node is no longer needed. */
 		ieee80211_free_node(ni);
@@ -2856,7 +2849,7 @@ urtwn_rx_frame(struct urtwn_softc *sc, uint8_t *buf, int pktlen)
 	} else {
 
 		/* No node found ... process differently. */
-		(void) ieee80211_input_all(ic, m, rssi, 0);
+		(void) ieee80211_input_all(ic, m, rssi+90, 0);
 	}
 
 	splx(s);
@@ -2961,13 +2954,10 @@ urtwn_txeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 	DPRINTFN(DBG_FN|DBG_TX, ("%s: %s: status=%d\n",
 	    device_xname(sc->sc_dev), __func__, status));
 
-	printf ("enter sc_tx_mtx, adr is 0x%lx (from txeof)\n", (long)&sc->sc_tx_mtx);
 	mutex_enter(&sc->sc_tx_mtx);
 	/* Put this Tx buffer back to our free list. */
 	TAILQ_INSERT_TAIL(&sc->tx_free_list[pidx], data, next);
 	mutex_exit(&sc->sc_tx_mtx);
-	printf ("exit sc_tx_mtx (from txeof)\n");
-
 
 	s = splnet();
 	sc->tx_timer = 0;
@@ -3007,6 +2997,11 @@ urtwn_tx(struct urtwn_softc *sc, struct mbuf *m, struct ieee80211_node *ni,
 
 	DPRINTFN(DBG_FN, ("%s: %s\n", device_xname(sc->sc_dev), __func__));
 
+	KASSERT(sc != NULL); // NNN
+	KASSERT(m != NULL);
+	KASSERT(ni != NULL);
+	KASSERT(data != NULL);
+
 	wh = mtod(m, struct ieee80211_frame *);
 	type = wh->i_fc[0] & IEEE80211_FC0_TYPE_MASK;
 	txd_len = sizeof(*txd);
@@ -3014,8 +3009,7 @@ urtwn_tx(struct urtwn_softc *sc, struct mbuf *m, struct ieee80211_node *ni,
 	if (!ISSET(sc->chip, URTWN_CHIP_92EU))
 		txd_len = 32;
 
-#define IEEE80211_FC1_WEP  1 /* NNN need to find where we know there is WEP */
-	if (wh->i_fc[1] & IEEE80211_FC1_WEP) {
+	if (wh->i_fc[1] & IEEE80211_FC1_PROTECTED) {
 		k = ieee80211_crypto_encap(ni, m);
 		if (k == NULL)
 			return ENOBUFS;
@@ -3024,14 +3018,13 @@ urtwn_tx(struct urtwn_softc *sc, struct mbuf *m, struct ieee80211_node *ni,
 		wh = mtod(m, struct ieee80211_frame *);
 	}
 
-
 	if (__predict_false(sc->sc_drvbpf != NULL)) {
 		struct urtwn_tx_radiotap_header *tap = &sc->sc_txtap;
 
 		tap->wt_flags = 0;
 		tap->wt_chan_freq = htole16(ic->ic_curchan->ic_freq);
 		tap->wt_chan_flags = htole16(ic->ic_curchan->ic_flags);
-		if (wh->i_fc[1] & IEEE80211_FC1_WEP)
+		if (wh->i_fc[1] & IEEE80211_FC1_PROTECTED)
 			tap->wt_flags |= IEEE80211_RADIOTAP_F_WEP;
 
 		/* XXX: set tap->wt_rate? */
@@ -3059,6 +3052,7 @@ urtwn_tx(struct urtwn_softc *sc, struct mbuf *m, struct ieee80211_node *ni,
 
 	/* Fill Tx descriptor. */
 	txd = (struct r92c_tx_desc *)data->buf;
+	KASSERT(txd != NULL); // NNN
 	memset(txd, 0, txd_len + padsize);
 
 	txd->txdw0 |= htole32(
@@ -3183,6 +3177,8 @@ urtwn_tx(struct urtwn_softc *sc, struct mbuf *m, struct ieee80211_node *ni,
 	xferlen = txd_len + m->m_pkthdr.len + padsize;
 	m_copydata(m, 0, m->m_pkthdr.len, (char *)&txd[0] + txd_len + padsize);
 
+	printf ("urtwn_tx just before splnet()\n");
+	KASSERT(data != NULL);
 	s = splnet();
 	usbd_setup_xfer(data->xfer, data, data->buf, xferlen,
 	    USBD_FORCE_SHORT_XFER, URTWN_TX_TIMEOUT,
@@ -3196,6 +3192,7 @@ urtwn_tx(struct urtwn_softc *sc, struct mbuf *m, struct ieee80211_node *ni,
 		return error;
 	}
 	splx(s);
+	printf ("urtwn_tx just before splnet()\n");	
 	return 0;
 }
 
@@ -3204,14 +3201,12 @@ urtwn_get_tx_data(struct urtwn_softc *sc, size_t pidx)
 {
 	struct urtwn_tx_data *data = NULL;
 
-	printf ("enter sc_tx_mtx, adr is 0x%lx (from tx_data)\n", (long)&sc->sc_tx_mtx);
 	mutex_enter(&sc->sc_tx_mtx); 
 	if (!TAILQ_EMPTY(&sc->tx_free_list[pidx])) {
 		data = TAILQ_FIRST(&sc->tx_free_list[pidx]);
 		TAILQ_REMOVE(&sc->tx_free_list[pidx], data, next);
 	}
 	mutex_exit(&sc->sc_tx_mtx);
-	printf ("exit sc_tx_mtx (from tx_data)\n");
 
 	return data;
 }
@@ -3355,8 +3350,6 @@ urtwn_vap_create(struct ieee80211com *ic,  const char name[IFNAMSIZ],
     const uint8_t bssid[IEEE80211_ADDR_LEN],
     const uint8_t macaddr[IEEE80211_ADDR_LEN])
 {
-	printf ("in urtwn_vap_create ... \n");
-
 	struct urtwn_softc *sc = ic->ic_softc;
 	struct ifnet *ifp;
 	struct ieee80211vap *vap;
@@ -3390,8 +3383,9 @@ urtwn_vap_create(struct ieee80211com *ic,  const char name[IFNAMSIZ],
 	memcpy(ifp->if_xname, device_xname(sc->sc_dev), IFNAMSIZ);
 
 	/* Override state transition machine. */
-	// sc->sc_newstate = vap->iv_newstate;
-	// vap->iv_newstate = urtwn_newstate;
+	/* NNN --- many possible newstate machines ... issue! */
+	sc->sc_newstate = vap->iv_newstate;
+	vap->iv_newstate = urtwn_newstate;
 
 	/* Finish setup */
 	ieee80211_vap_attach(vap, urtwn_media_change,
@@ -3429,21 +3423,93 @@ urtwn_parent(struct ieee80211com *ic)
 static void
 urtwn_scan_start(struct ieee80211com *ic)
 {
-	struct urtwn_softc *sc __unused = ic->ic_softc;
+	struct urtwn_softc *sc = ic->ic_softc;
+	//uint32_t reg;
+	//int s;
 
 	DPRINTFN(DBG_FN, ("%s: %s\n",device_xname(sc->sc_dev), __func__));
 
-	/* Not sure what to do here yet. */
+	/*
+	 * Not sure what to do here yet.  Try #1:  do what was in the
+	 * state machine.  NNN
+	 */
+#if NOTWITHSTATEMACHINEOVERRIDE
+	/*
+	 * Begin of scanning
+	 */
+	
+	s = splnet();
+	mutex_enter(&sc->sc_write_mtx);
+
+	/* Set gain for scanning. */
+	reg = urtwn_bb_read(sc, R92C_OFDM0_AGCCORE1(0));
+	reg = RW(reg, R92C_OFDM0_AGCCORE1_GAIN, 0x20);
+	urtwn_bb_write(sc, R92C_OFDM0_AGCCORE1(0), reg);
+
+	if (!ISSET(sc->chip, URTWN_CHIP_88E)) {
+		reg = urtwn_bb_read(sc, R92C_OFDM0_AGCCORE1(1));
+		reg = RW(reg, R92C_OFDM0_AGCCORE1_GAIN, 0x20);
+		urtwn_bb_write(sc, R92C_OFDM0_AGCCORE1(1), reg);
+	}
+
+	/* Set media status to 'No Link'. */
+	urtwn_set_nettype0_msr(sc, R92C_CR_NETTYPE_NOLINK);
+
+	/* Allow Rx from any BSSID. */
+	urtwn_write_4(sc, R92C_RCR,
+	    urtwn_read_4(sc, R92C_RCR) &
+	    ~(R92C_RCR_CBSSID_DATA | R92C_RCR_CBSSID_BCN));
+
+	/* Stop Rx of data frames. */
+	urtwn_write_2(sc, R92C_RXFLTMAP2, 0);
+
+	/* Disable update TSF */
+	urtwn_write_1(sc, R92C_BCN_CTRL,
+	    urtwn_read_1(sc, R92C_BCN_CTRL) |
+	    R92C_BCN_CTRL_DIS_TSF_UDT0);
+
+	/* Make link LED blink during scan. */
+	urtwn_set_led(sc, URTWN_LED_LINK, !sc->ledlink);
+	
+	/* Pause AC Tx queues. */
+	urtwn_write_1(sc, R92C_TXPAUSE,
+	    urtwn_read_1(sc, R92C_TXPAUSE) | 0x0f);
+
+	urtwn_set_chan(sc, ic->ic_curchan,
+	    IEEE80211_HTINFO_2NDCHAN_NONE);
+
+	mutex_exit(&sc->sc_write_mtx);
+	splx(s);
+#endif
 } 
 
 static void
 urtwn_scan_end(struct ieee80211com *ic)
 {
-	struct urtwn_softc *sc __unused = ic->ic_softc;
+	struct urtwn_softc *sc = ic->ic_softc;
 
 	DPRINTFN(DBG_FN, ("%s: %s\n",device_xname(sc->sc_dev), __func__));
 
-	/* Not sure what to do here yet. */
+#ifdef NOTWITHSTATEMACHINEOVERRIDE
+	/*
+	 * End of scanning
+	 */
+
+	mutex_enter(&sc->sc_write_mtx);
+	
+	/* flush 4-AC Queue after site_survey */
+	urtwn_write_1(sc, R92C_TXPAUSE, 0x0);
+	
+	/* Allow Rx from our BSSID only. */
+	urtwn_write_4(sc, R92C_RCR,
+	    urtwn_read_4(sc, R92C_RCR) |
+	    R92C_RCR_CBSSID_DATA | R92C_RCR_CBSSID_BCN);
+
+	/* Turn link LED off. */
+	urtwn_set_led(sc, URTWN_LED_LINK, 0);
+
+	mutex_exit(&sc->sc_write_mtx);
+#endif
 } 
 
 static void
@@ -3490,6 +3556,14 @@ out:
         return error;
 }
 
+static __unused int urtwn_send_mgmt(struct ieee80211_node *ni, int type, int arg)
+{
+	printf ("urtwn_send_mgmt: type %d, arg %d\n", type, arg);
+	return ENOENT;
+}
+
+
+
 static int
 urtwn_raw_xmit(struct ieee80211_node *ni , struct mbuf *m,
     const struct ieee80211_bpf_params *bpfp)
@@ -3501,6 +3575,11 @@ urtwn_raw_xmit(struct ieee80211_node *ni , struct mbuf *m,
 	int error;
 
 	DPRINTFN(DBG_FN, ("%s: %s\n",device_xname(sc->sc_dev), __func__));
+
+	KASSERT(vap != NULL);  // NNN need these?
+	KASSERT(ic != NULL);
+	KASSERT(sc != NULL);
+	KASSERT(m != NULL);
 
 	data = urtwn_get_tx_data(sc, sc->ac2idx[WME_AC_VO]);
 
@@ -3517,6 +3596,9 @@ urtwn_raw_xmit(struct ieee80211_node *ni , struct mbuf *m,
 	if (error != 0) {
 			printf("ERROR3\n");
 			vap->iv_ifp->if_oerrors++;
+	} else {
+		sc->tx_timer = 5;
+		vap->iv_ifp->if_timer = 1;
 	}
 	m_freem(m);
 	ieee80211_free_node(ni);
@@ -3561,14 +3643,11 @@ urtwn_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 			break;
 		switch (ifp->if_flags & (IFF_UP | IFF_RUNNING)) {
 		case IFF_UP | IFF_RUNNING:
-			printf (" up and running...\n");
 			break;
 		case IFF_UP:
-			printf (" just up ... will start\n");
 			urtwn_init(ifp);
 			break;
 		case IFF_RUNNING:
-			printf (" just running .. will stop\n");
 			urtwn_stop(ifp, 1);
 			break;
 		case 0:
@@ -4109,12 +4188,12 @@ urtwn_load_firmware(struct urtwn_softc *sc)
 	if (ISSET(sc->chip, URTWN_CHIP_88E) ||
 	    ISSET(sc->chip, URTWN_CHIP_92EU))
 		urtwn_r88e_fw_reset(sc);
-	for (ntries = 0; ntries < 1000; ntries++) {
+	for (ntries = 0; ntries < 1500; ntries++) {
 		if (urtwn_read_4(sc, R92C_MCUFWDL) & R92C_MCUFWDL_WINTINI_RDY)
 			break;
 		DELAY(5);
 	}
-	if (ntries == 1000) {
+	if (ntries == 1500) {
 		aprint_error_dev(sc->sc_dev,
 		    "timeout waiting for firmware readiness\n");
 		error = ETIMEDOUT;
@@ -5537,6 +5616,9 @@ urtwn_init(struct ifnet *ifp)
 	else if (vap->iv_roaming != IEEE80211_ROAMING_MANUAL)
 		ieee80211_new_state(vap, IEEE80211_S_SCAN, -1);
 	urtwn_wait_async(sc);
+
+	/* Init the rest of the 802.11 stuff */
+	ieee80211_init(ifp);
 
 	return 0;
 

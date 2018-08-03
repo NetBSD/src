@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_ioctl.c,v 1.60.18.5 2018/07/28 00:49:43 phil Exp $ */
+/*	$NetBSD: ieee80211_ioctl.c,v 1.60.18.6 2018/08/03 19:47:25 phil Exp $ */
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -3537,6 +3537,7 @@ ieee80211_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	//	struct ieee80211_nwkey *nwkey;
 	//	struct ieee80211_power *power;
 	//	struct ieee80211chanreq *chanreq;
+	struct ieee80211_bssid *bssid;
 
 	ifr = (struct ifreq *)data;
 #endif
@@ -3665,7 +3666,11 @@ ieee80211_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		case AF_INET:
 			if ((ifp->if_flags & IFF_UP) == 0) {
 				ifp->if_flags |= IFF_UP;
+#if __FreeBSD__				
 				ifp->if_init(ifp->if_softc);
+#elif __NetBSD__
+				ifp->if_init(ifp);
+#endif				
 			}
 			arp_ifinit(ifp, ifa);
 			break;
@@ -3673,7 +3678,11 @@ ieee80211_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		default:
 			if ((ifp->if_flags & IFF_UP) == 0) {
 				ifp->if_flags |= IFF_UP;
+#if __FreeBSD__
 				ifp->if_init(ifp->if_softc);
+#elif __NetBSD__
+				ifp->if_init(ifp);
+#endif
 			}
 			break;
 		}
@@ -3709,12 +3718,46 @@ ieee80211_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		break;
 	case SIOCS80211NWKEY:
 	case SIOCG80211NWKEY:
-		printf ("NetBSD NWKEY ioctl\n");
+		printf ("NetBSD NWKEY ioctl\n"); // NNN
 		error = ENOTTY;
 	        break;
 	case SIOCS80211POWER:
-		printf ("NEtBSD POWER ioctl\n");
+		printf ("NetBSD POWER ioctl\n"); // NNN
 		error = ENOTTY;
+		break;
+	case SIOCS80211BSSID:
+		bssid = (struct ieee80211_bssid *)data;
+		IEEE80211_ADDR_COPY(vap->iv_des_bssid, bssid->i_bssid);
+		if (IEEE80211_ADDR_EQ(vap->iv_des_bssid, zerobssid))
+			vap->iv_flags &= ~IEEE80211_F_DESBSSID;
+		else
+			vap->iv_flags |= IEEE80211_F_DESBSSID;
+		error = ENETRESET;
+		break;
+	case SIOCG80211BSSID:
+		bssid = (struct ieee80211_bssid *)data;
+		switch (vap->iv_state) { 
+		case IEEE80211_S_RUN:
+		case IEEE80211_S_SLEEP:
+			IEEE80211_ADDR_COPY(bssid->i_bssid,
+			    vap->iv_opmode == IEEE80211_M_WDS ?
+			    vap->iv_bss->ni_macaddr : vap->iv_bss->ni_bssid);
+			break;
+		case IEEE80211_S_INIT:
+		case IEEE80211_S_SCAN:
+			if (vap->iv_opmode == IEEE80211_M_HOSTAP)
+				IEEE80211_ADDR_COPY(bssid->i_bssid,
+				    vap->iv_myaddr);
+			else if (vap->iv_flags & IEEE80211_F_DESBSSID)
+				IEEE80211_ADDR_COPY(bssid->i_bssid,
+				    vap->iv_des_bssid);
+			else
+				memset(bssid->i_bssid, 0, IEEE80211_ADDR_LEN);
+			
+			break;
+		default:				 
+			memset(bssid->i_bssid, 0, IEEE80211_ADDR_LEN);
+		}
 		break;
 #endif
 	default:

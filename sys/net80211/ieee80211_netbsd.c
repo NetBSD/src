@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_netbsd.c,v 1.31.2.5 2018/07/28 00:49:43 phil Exp $ */
+/*	$NetBSD: ieee80211_netbsd.c,v 1.31.2.6 2018/08/03 19:47:25 phil Exp $ */
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 /*  __FBSDID("$FreeBSD$");  */
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_netbsd.c,v 1.31.2.5 2018/07/28 00:49:43 phil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_netbsd.c,v 1.31.2.6 2018/08/03 19:47:25 phil Exp $");
 
 /*
  * IEEE 802.11 support (NetBSD-specific code)
@@ -87,16 +87,21 @@ ieee80211_init0(void)
 }
 
 /*
- * "taskqueue" support
+ * "taskqueue" support for doing FreeBSD style taskqueue operations using
+ * NetBSD's workqueue to do the actual function calls for the work.
+ * Many features of the FreeBSD taskqueue are not implemented.   This should
+ * be enough features for the 802.11 stack to run its tasks and time delayed
+ * tasks.
  */
-void ieee80211_runwork(struct work *work2do, void *arg)
+
+void
+ieee80211_runwork(struct work *work2do, void *arg)
 {
 	struct task *work_task = (struct task *) work2do;
-	printf ("runwork called! work2do is 0x%lx, t_work.wk_dummy is 0x%lx\n", 
-		(long) work2do, (long)work_task->t_work.wk_dummy);
-	printf ("  runwork:  t_func is 0x%lx, t_arg is 0x%lx\n",
-		(long)work_task->t_func, (long)work_task->t_arg);
-
+#ifdef IEEE80211_DEBUG	
+	printf ("runwork:  %s (t_arg is 0x%lx)\n",
+		work_task->t_func_name, (long)work_task->t_arg);
+#endif
 	mutex_enter(&work_task->t_mutex);
 	work_task->t_onqueue = 0;
 	mutex_exit(&work_task->t_mutex);
@@ -104,22 +109,66 @@ void ieee80211_runwork(struct work *work2do, void *arg)
 	work_task->t_func(work_task->t_arg, 0);
 }
 
-void taskqueue_enqueue(struct workqueue *wq, struct task *task_item)
+void
+taskqueue_enqueue(struct workqueue *wq, struct task *task_item)
 {
-	printf ("taskqueue_enqueue called\n");
 	mutex_enter(&task_item->t_mutex);
 	if (!task_item->t_onqueue) {
-		printf ("   taskqueue_enqueue adding item to workqueue\n");
+		printf ("taskqueue_enqueue function %s\n", task_item->t_func_name);
 		workqueue_enqueue(wq, &task_item->t_work, NULL);
 		task_item->t_onqueue = 1;
 	}
 	mutex_exit(&task_item->t_mutex);
 }
 
-void taskqueue_drain(struct workqueue *wq, struct task *task_item)
+void
+taskqueue_drain(struct workqueue *wq, struct task *task_item)
 {
 	printf ("taskqueue_drain called\n");
 	workqueue_wait(wq, &task_item->t_work);
+}
+
+static void
+taskqueue_callout_enqueue(void *arg)
+{
+	struct timeout_task *timeout_task = arg;
+	mutex_enter(&timeout_task->to_task.t_mutex);
+	timeout_task->to_scheduled = 0;
+	mutex_exit(&timeout_task->to_task.t_mutex);
+
+	taskqueue_enqueue(timeout_task->to_wq, (struct task*) timeout_task);
+}
+
+int
+taskqueue_enqueue_timeout(struct workqueue *queue,
+     struct timeout_task *timeout_task, int nticks)
+{
+	mutex_enter(&timeout_task->to_task.t_mutex);
+	if (!timeout_task->to_scheduled) {
+		printf ("taskqueue_enqueue_timeout: Scheduling the function %s.\n", 
+			timeout_task->to_task.t_func_name);
+		callout_reset(&timeout_task->to_callout, nticks, 
+		    taskqueue_callout_enqueue, timeout_task);
+		timeout_task->to_scheduled = 1;
+	}
+	mutex_exit(&timeout_task->to_task.t_mutex);
+	
+	return -1;
+}
+
+int
+taskqueue_cancel_timeout(struct workqueue *queue, 
+    struct timeout_task *timeout_task, u_int *pendp)
+{
+	printf ("taskqueue_cancel_timeout called\n");
+	return -1;
+}
+
+void
+taskqueue_drain_timeout(struct workqueue *queue, 
+    struct timeout_task *timeout_task)
+{
+	printf ("taskqueue_drain_timeout called\n");
 }
 
 
@@ -832,7 +881,7 @@ static void
 notify_macaddr(struct ifnet *ifp, int op, const uint8_t mac[IEEE80211_ADDR_LEN])
 {
 	struct ieee80211_join_event iev;
-
+	printf ("NNN notify_macaddr called\n");
 	CURVNET_SET(ifp->if_vnet);
 	memset(&iev, 0, sizeof(iev));
 	IEEE80211_ADDR_COPY(iev.iev_addr, mac);
@@ -1096,7 +1145,7 @@ static eventhandler_tag wlan_ifllevent;
 static void
 bpf_track(void *arg, struct ifnet *ifp, int dlt, int attach)
 {
-	/* NB: identify vap's by if_init */
+	/* NB: identify vap's by if_init */  // NNN won't work with urtwn ...
 	if (dlt == DLT_IEEE802_11_RADIO &&
 	    ifp->if_init == ieee80211_init) {
 		struct ieee80211vap *vap = ifp->if_softc;
@@ -1125,7 +1174,7 @@ bpf_track(void *arg, struct ifnet *ifp, int dlt, int attach)
 static void
 wlan_iflladdr(void *arg __unused, struct ifnet *ifp)
 {
-	/* NB: identify vap's by if_init */
+	/* NB: identify vap's by if_init */  // NNN wont work on urtwn 
 	if (ifp->if_init == ieee80211_init &&
 	    (ifp->if_flags & IFF_UP) == 0) {
 		struct ieee80211vap *vap = ifp->if_softc;
