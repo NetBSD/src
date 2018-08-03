@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2215 2018/08/02 08:40:47 rjs Exp $
+#	$NetBSD: mi,v 1.2216 2018/08/03 06:07:02 kamil Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -9205,6 +9205,17 @@
 ./usr/share/man/cat3/sched_setparam.0		comp-c-catman		.cat
 ./usr/share/man/cat3/sched_setscheduler.0	comp-c-catman		.cat
 ./usr/share/man/cat3/sched_yield.0		comp-c-catman		.cat
+./usr/share/man/cat3/sctp_bindx.0		comp-c-catman		.cat
+./usr/share/man/cat3/sctp_connectx.0		comp-c-catman		.cat
+./usr/share/man/cat3/sctp_freepaddrs.0		comp-c-catman		.cat
+./usr/share/man/cat3/sctp_getaddrlen.0		comp-c-catman		.cat
+./usr/share/man/cat3/sctp_getassocid.0		comp-c-catman		.cat
+./usr/share/man/cat3/sctp_getpaddrs.0		comp-c-catman		.cat
+./usr/share/man/cat3/sctp_opt_info.0		comp-c-catman		.cat
+./usr/share/man/cat3/sctp_peeloff.0		comp-c-catman		.cat
+./usr/share/man/cat3/sctp_recvmsg.0		comp-c-catman		.cat
+./usr/share/man/cat3/sctp_send.0		comp-c-catman		.cat
+./usr/share/man/cat3/sctp_sendmsg.0		comp-c-catman		.cat
 ./usr/share/man/cat3/scrl.0			comp-c-catman		.cat
 ./usr/share/man/cat3/scroll.0			comp-c-catman		.cat
 ./usr/share/man/cat3/scrollok.0			comp-c-catman		.cat
