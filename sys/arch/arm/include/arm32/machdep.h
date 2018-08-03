@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.h,v 1.23 2018/08/01 13:48:00 skrll Exp $ */
+/* $NetBSD: machdep.h,v 1.24 2018/08/03 15:46:41 skrll Exp $ */
 
 #ifndef _ARM32_MACHDEP_H_
 #define _ARM32_MACHDEP_H_
@@ -16,7 +16,6 @@
 #ifndef FIQ_STACK_SIZE
 #define FIQ_STACK_SIZE	1
 #endif
-
 
 extern void (*cpu_reset_address)(void);
 extern paddr_t cpu_reset_address_paddr;
@@ -71,6 +70,26 @@ void dumpsys(void);
 u_int initarm(void *);
 struct pmap_devmap;
 struct boot_physmem;
+
+static inline paddr_t
+aarch32_kern_vtophys(vaddr_t va)
+{
+	extern u_long kern_vtopdiff;
+
+	return va - kern_vtopdiff;
+}
+
+static inline vaddr_t
+aarch32_kern_phystov(paddr_t pa)
+{
+	extern u_long kern_vtopdiff;
+
+	return pa + kern_vtopdiff;
+}
+
+#define KERN_VTOPHYS(va)	aarch32_kern_vtophys(va)
+#define KERN_PHYSTOV(pa)	aarch32_kern_phystov(pa)
+
 void arm32_bootmem_init(paddr_t memstart, psize_t memsize, paddr_t kernelstart);
 void arm32_kernel_vm_init(vaddr_t kvm_base, vaddr_t vectors,
 	vaddr_t iovbase /* (can be zero) */,

@@ -1,4 +1,4 @@
-/*	$NetBSD: rpi_start.S,v 1.19 2018/08/03 15:38:16 skrll Exp $	*/
+/*	$NetBSD: rpi_start.S,v 1.20 2018/08/03 15:46:41 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003  Genetec Corporation.  All rights reserved.
@@ -96,7 +96,7 @@
 #include <arm/armreg.h>
 #include "assym.h"
 
-RCSID("$NetBSD: rpi_start.S,v 1.19 2018/08/03 15:38:16 skrll Exp $")
+RCSID("$NetBSD: rpi_start.S,v 1.20 2018/08/03 15:46:41 skrll Exp $")
 
 
 #if defined(VERBOSE_INIT_ARM)
@@ -153,6 +153,12 @@ _C_LABEL(rpi_start):
 	sub	r8, r8, #KERNEL_BASE_VOFFSET
 	str	r2, [r8]
 #endif
+
+	ldr	r8, =kern_vtopdiff
+	sub	r8, r8, #KERNEL_BASE_VOFFSET
+	mov	r2, #KERNEL_BASE_VOFFSET
+	str	r2, [r8]
+
 	mrs	r0, cpsr
 	bic	r0, r0, #PSR_MODE
 	orr	r0, r0, #(I32_bit | F32_bit | PSR_SVC32_MODE)

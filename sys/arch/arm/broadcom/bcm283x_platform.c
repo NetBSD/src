@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm283x_platform.c,v 1.9 2018/08/03 13:48:24 skrll Exp $	*/
+/*	$NetBSD: bcm283x_platform.c,v 1.10 2018/08/03 15:46:41 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2017 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm283x_platform.c,v 1.9 2018/08/03 13:48:24 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm283x_platform.c,v 1.10 2018/08/03 15:46:41 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_bcm283x.h"
@@ -306,15 +306,6 @@ bcm2836_platform_devmap(void)
  * Macros to translate between physical and virtual for a subset of the
  * kernel address space.  *Not* for general use.
  */
-
-/*
- * AARCH64 defines its own
- */
-#if !(defined(KERN_VTOPHYS) && defined(KERN_PHYSTOV))
-#define KERN_VTOPDIFF	KERNEL_BASE_VOFFSET
-#define KERN_VTOPHYS(va) ((paddr_t)((vaddr_t)va - KERN_VTOPDIFF))
-#define KERN_PHYSTOV(pa) ((vaddr_t)((paddr_t)pa + KERN_VTOPDIFF))
-#endif
 
 #ifndef RPI_FB_WIDTH
 #define RPI_FB_WIDTH	1280

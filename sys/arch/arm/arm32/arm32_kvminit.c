@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_kvminit.c,v 1.43 2018/07/31 10:31:02 martin Exp $	*/
+/*	$NetBSD: arm32_kvminit.c,v 1.44 2018/08/03 15:46:41 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2005  Genetec Corporation.  All rights reserved.
@@ -126,7 +126,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_kvminit.c,v 1.43 2018/07/31 10:31:02 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_kvminit.c,v 1.44 2018/08/03 15:46:41 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -175,27 +175,23 @@ extern char _end[];
 /* Page tables for mapping kernel VM */
 #define KERNEL_L2PT_VMDATA_NUM	8	/* start with 32MB of KVM */
 
-/*
- * Macros to translate between physical and virtual for a subset of the
- * kernel address space.  *Not* for general use.
- */
-#if defined(KERNEL_BASE_VOFFSET)
-#define KERN_VTOPHYS(bmi, va) \
-	((paddr_t)((vaddr_t)(va) - KERNEL_BASE_VOFFSET))
-#define KERN_PHYSTOV(bmi, pa) \
-	((vaddr_t)((paddr_t)(pa) + KERNEL_BASE_VOFFSET))
-#else
-#define KERN_VTOPHYS(bmi, va) \
-	((paddr_t)((vaddr_t)(va) - KERNEL_BASE + (bmi)->bmi_start))
-#define KERN_PHYSTOV(bmi, pa) \
-	((vaddr_t)((paddr_t)(pa) - (bmi)->bmi_start + KERNEL_BASE))
-#endif
+u_long kern_vtopdiff __attribute__((__section__(".data")));
 
 void
 arm32_bootmem_init(paddr_t memstart, psize_t memsize, vsize_t kernelstart)
 {
 	struct bootmem_info * const bmi = &bootmem_info;
 	pv_addr_t *pv = bmi->bmi_freeblocks;
+
+	/*
+	 * FDT/generic boot fills in kern_vtopdiff early
+	 */
+#if defined(KERNEL_BASE_VOFFSET)
+	kern_vtopdiff = KERNEL_BASE_VOFFSET;
+#else
+	KASSERT(memstart == kernelstart);
+	kern_vtopdiff = KERNEL_BASE + memstart;
+#endif
 
 	VPRINTF("%s: memstart=%#lx, memsize=%#lx, kernelstart=%#lx\n",
 	    __func__, memstart, memsize, kernelstart);
@@ -217,7 +213,7 @@ arm32_bootmem_init(paddr_t memstart, psize_t memsize, vsize_t kernelstart)
 	 * Let's record where the kernel lives.
 	 */
 	bmi->bmi_kernelstart = kernelstart;
-	bmi->bmi_kernelend = KERN_VTOPHYS(bmi, round_page((vaddr_t)_end));
+	bmi->bmi_kernelend = KERN_VTOPHYS(round_page((vaddr_t)_end));
 
 #if defined(FDT)
 	fdt_add_reserved_memory_range(bmi->bmi_kernelstart,
@@ -230,7 +226,7 @@ arm32_bootmem_init(paddr_t memstart, psize_t memsize, vsize_t kernelstart)
 	 * Now the rest of the free memory must be after the kernel.
 	 */
 	pv->pv_pa = bmi->bmi_kernelend;
-	pv->pv_va = KERN_PHYSTOV(bmi, pv->pv_pa);
+	pv->pv_va = KERN_PHYSTOV(pv->pv_pa);
 	pv->pv_size = bmi->bmi_end - bmi->bmi_kernelend;
 	bmi->bmi_freepages += pv->pv_size / PAGE_SIZE;
 	VPRINTF("%s: adding %lu free pages: [%#lx..%#lx] (VA %#lx)\n",
@@ -244,7 +240,7 @@ arm32_bootmem_init(paddr_t memstart, psize_t memsize, vsize_t kernelstart)
 	 */
 	if (bmi->bmi_start < bmi->bmi_kernelstart) {
 		pv->pv_pa = bmi->bmi_start;
-		pv->pv_va = KERN_PHYSTOV(bmi, pv->pv_pa);
+		pv->pv_va = KERN_PHYSTOV(pv->pv_pa);
 		pv->pv_size = bmi->bmi_kernelstart - pv->pv_pa;
 		bmi->bmi_freepages += pv->pv_size / PAGE_SIZE;
 		VPRINTF("%s: adding %lu free pages: [%#lx..%#lx] (VA %#lx)\n",
@@ -627,7 +623,7 @@ arm32_kernel_vm_init(vaddr_t kernel_vm_base, vaddr_t vectors, vaddr_t iovbase,
 	}
 
 	const vaddr_t kernel_base =
-	    KERN_PHYSTOV(bmi, bmi->bmi_kernelstart & -L2_S_SEGSIZE);
+	    KERN_PHYSTOV(bmi->bmi_kernelstart & -L2_S_SEGSIZE);
 	for (size_t idx = 0; idx < KERNEL_L2PT_KERNEL_NUM; idx++) {
 		pmap_link_l2pt(l1pt_va, kernel_base + idx * L2_S_SEGSIZE,
 		    &kernel_l2pt[idx]);
@@ -656,16 +652,16 @@ arm32_kernel_vm_init(vaddr_t kernel_vm_base, vaddr_t vectors, vaddr_t iovbase,
 
 	VPRINTF("Mapping kernel\n");
 
-	extern char etext[], _end[];
+	extern char etext[];
 	size_t totalsize = bmi->bmi_kernelend - bmi->bmi_kernelstart;
-	size_t textsize = KERN_VTOPHYS(bmi, (uintptr_t)etext) - bmi->bmi_kernelstart;
+	size_t textsize = KERN_VTOPHYS((uintptr_t)etext) - bmi->bmi_kernelstart;
 
 	textsize = (textsize + PGOFSET) & ~PGOFSET;
 
 	/* start at offset of kernel in RAM */
 
 	text.pv_pa = bmi->bmi_kernelstart;
-	text.pv_va = KERN_PHYSTOV(bmi, bmi->bmi_kernelstart);
+	text.pv_va = KERN_PHYSTOV(bmi->bmi_kernelstart);
 	text.pv_size = textsize;
 	text.pv_prot = VM_PROT_READ | VM_PROT_EXECUTE;
 	text.pv_cache = PTE_CACHE;
@@ -705,7 +701,7 @@ arm32_kernel_vm_init(vaddr_t kernel_vm_base, vaddr_t vectors, vaddr_t iovbase,
 		pv = SLIST_NEXT(pv, pv_list);
 	} else {
 		cur_pv.pv_va = KERNEL_BASE;
-		cur_pv.pv_pa = KERN_VTOPHYS(bmi, cur_pv.pv_va);
+		cur_pv.pv_pa = KERN_VTOPHYS(cur_pv.pv_va);
 		cur_pv.pv_size = pv->pv_pa - cur_pv.pv_pa;
 		cur_pv.pv_prot = VM_PROT_READ | VM_PROT_WRITE;
 		cur_pv.pv_cache = PTE_CACHE;
@@ -842,19 +838,19 @@ arm32_kernel_vm_init(vaddr_t kernel_vm_base, vaddr_t vectors, vaddr_t iovbase,
 #endif
 
 	VPRINTF(mem_fmt, "SDRAM", bmi->bmi_start, bmi->bmi_end - 1,
-	    KERN_PHYSTOV(bmi, bmi->bmi_start), KERN_PHYSTOV(bmi, bmi->bmi_end - 1),
+	    KERN_PHYSTOV(bmi->bmi_start), KERN_PHYSTOV(bmi->bmi_end - 1),
 	    (int)physmem);
 	VPRINTF(mem_fmt, "text section",
 	       text.pv_pa, text.pv_pa + text.pv_size - 1,
 	       text.pv_va, text.pv_va + text.pv_size - 1,
 	       (int)(text.pv_size / PAGE_SIZE));
 	VPRINTF(mem_fmt, "data section",
-	       KERN_VTOPHYS(bmi, __data_start), KERN_VTOPHYS(bmi, _edata),
+	       KERN_VTOPHYS((vaddr_t)__data_start), KERN_VTOPHYS((vaddr_t)_edata),
 	       (vaddr_t)__data_start, (vaddr_t)_edata,
 	       (int)((round_page((vaddr_t)_edata)
 		      - trunc_page((vaddr_t)__data_start)) / PAGE_SIZE));
 	VPRINTF(mem_fmt, "bss section",
-	       KERN_VTOPHYS(bmi, __bss_start), KERN_VTOPHYS(bmi, __bss_end__),
+	       KERN_VTOPHYS((vaddr_t)__bss_start), KERN_VTOPHYS((vaddr_t)__bss_end__),
 	       (vaddr_t)__bss_start, (vaddr_t)__bss_end__,
 	       (int)((round_page((vaddr_t)__bss_end__)
 		      - trunc_page((vaddr_t)__bss_start)) / PAGE_SIZE));
