@@ -1,7 +1,7 @@
-/*	$NetBSD: linit.c,v 1.8 2017/04/26 13:17:33 mbalmer Exp $	*/
+/*	$NetBSD: linit.c,v 1.9 2018/08/04 17:30:01 alnsn Exp $	*/
 
 /*
-** Id: linit.c,v 1.39 2016/12/04 20:17:24 roberto Exp 
+** Id: linit.c,v 1.39.1.1 2017/04/19 17:20:42 roberto Exp 
 ** Initialization of libraries for lua.c and other clients
 ** See Copyright Notice in lua.h
 */
