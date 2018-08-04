@@ -1,7 +1,7 @@
-/*	$NetBSD: ldblib.c,v 1.1.1.11 2017/04/26 12:30:27 mbalmer Exp $	*/
+/*	$NetBSD: ldblib.c,v 1.1.1.12 2018/08/04 17:14:15 alnsn Exp $	*/
 
 /*
-** Id: ldblib.c,v 1.151 2015/11/23 11:29:43 roberto Exp 
+** Id: ldblib.c,v 1.151.1.1 2017/04/19 17:20:42 roberto Exp 
 ** Interface from Lua to its debug API
 ** See Copyright Notice in lua.h
 */

@@ -1,7 +1,7 @@
-/*	$NetBSD: lgc.h,v 1.1.1.10 2017/04/26 12:30:28 mbalmer Exp $	*/
+/*	$NetBSD: lgc.h,v 1.1.1.11 2018/08/04 17:14:15 alnsn Exp $	*/
 
 /*
-** Id: lgc.h,v 2.91 2015/12/21 13:02:14 roberto Exp 
+** Id: lgc.h,v 2.91.1.1 2017/04/19 17:39:34 roberto Exp 
 ** Garbage Collector
 ** See Copyright Notice in lua.h
 */

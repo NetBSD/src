@@ -1,7 +1,7 @@
-/*	$NetBSD: lcode.h,v 1.1.1.8 2017/04/26 12:30:32 mbalmer Exp $	*/
+/*	$NetBSD: lcode.h,v 1.1.1.9 2018/08/04 17:14:16 alnsn Exp $	*/
 
 /*
-** Id: lcode.h,v 1.64 2016/01/05 16:22:37 roberto Exp 
+** Id: lcode.h,v 1.64.1.1 2017/04/19 17:20:42 roberto Exp 
 ** Code generator for Lua
 ** See Copyright Notice in lua.h
 */

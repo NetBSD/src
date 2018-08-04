@@ -1,7 +1,7 @@
-/*	$NetBSD: lauxlib.h,v 1.1.1.10 2017/04/26 12:30:31 mbalmer Exp $	*/
+/*	$NetBSD: lauxlib.h,v 1.1.1.11 2018/08/04 17:14:16 alnsn Exp $	*/
 
 /*
-** Id: lauxlib.h,v 1.131 2016/12/06 14:54:31 roberto Exp 
+** Id: lauxlib.h,v 1.131.1.1 2017/04/19 17:20:42 roberto Exp 
 ** Auxiliary functions for building Lua libraries
 ** See Copyright Notice in lua.h
 */

@@ -1,7 +1,7 @@
-/*	$NetBSD: lbaselib.c,v 1.1.1.11 2017/04/26 12:30:29 mbalmer Exp $	*/
+/*	$NetBSD: lbaselib.c,v 1.1.1.12 2018/08/04 17:14:15 alnsn Exp $	*/
 
 /*
-** Id: lbaselib.c,v 1.314 2016/09/05 19:06:34 roberto Exp 
+** Id: lbaselib.c,v 1.314.1.1 2017/04/19 17:39:34 roberto Exp 
 ** Basic library
 ** See Copyright Notice in lua.h
 */

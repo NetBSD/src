@@ -1,7 +1,7 @@
-/*	$NetBSD: lmem.c,v 1.1.1.10 2017/04/26 12:30:29 mbalmer Exp $	*/
+/*	$NetBSD: lmem.c,v 1.1.1.11 2018/08/04 17:14:15 alnsn Exp $	*/
 
 /*
-** Id: lmem.c,v 1.91 2015/03/06 19:45:54 roberto Exp 
+** Id: lmem.c,v 1.91.1.1 2017/04/19 17:20:42 roberto Exp 
 ** Interface to Memory Manager
 ** See Copyright Notice in lua.h
 */

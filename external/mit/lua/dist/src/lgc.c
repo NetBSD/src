@@ -1,7 +1,7 @@
-/*	$NetBSD: lgc.c,v 1.1.1.11 2017/04/26 12:30:31 mbalmer Exp $	*/
+/*	$NetBSD: lgc.c,v 1.1.1.12 2018/08/04 17:14:16 alnsn Exp $	*/
 
 /*
-** Id: lgc.c,v 2.215 2016/12/22 13:08:50 roberto Exp 
+** Id: lgc.c,v 2.215.1.2 2017/08/31 16:15:27 roberto Exp 
 ** Garbage Collector
 ** See Copyright Notice in lua.h
 */
@@ -645,8 +645,9 @@ static void clearkeys (global_State *g, GCObject *l, GCObject *f) {
     for (n = gnode(h, 0); n < limit; n++) {
       if (!ttisnil(gval(n)) && (iscleared(g, gkey(n)))) {
         setnilvalue(gval(n));  /* remove value ... */
-        removeentry(n);  /* and remove entry from table */
       }
+      if (ttisnil(gval(n)))  /* is entry empty? */
+        removeentry(n);  /* remove entry from table */
     }
   }
 }
