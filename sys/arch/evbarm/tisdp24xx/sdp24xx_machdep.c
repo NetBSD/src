@@ -1,4 +1,4 @@
-/*	$NetBSD: sdp24xx_machdep.c,v 1.20 2018/07/31 06:46:28 skrll Exp $ */
+/*	$NetBSD: sdp24xx_machdep.c,v 1.21 2018/08/04 16:21:40 skrll Exp $ */
 
 /*
  * Machine dependent functions for kernel setup for TI OSK5912 board.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdp24xx_machdep.c,v 1.20 2018/07/31 06:46:28 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdp24xx_machdep.c,v 1.21 2018/08/04 16:21:40 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_machdep.h"
@@ -210,14 +210,11 @@ pv_addr_t kernel_pt_table[NUM_KERNEL_PTS];
  * kernel address space.  *Not* for general use.
  */
 #define KERNEL_BASE_PHYS ((paddr_t)&KERNEL_BASE_phys)
+
 #if 0
-#define KERN_VTOPHYS(va) \
-	((paddr_t)((vaddr_t)va - KERNEL_BASE + KERNEL_BASE_PHYS))
-#define KERN_PHYSTOV(pa) \
-	((vaddr_t)((paddr_t)pa - KERNEL_BASE_PHYS + KERNEL_BASE))
+u_long kern_vtopdiff = KERNEL_BASE + KERNEL_BASE_PHYS;
 #else
-#define KERN_VTOPHYS(va) ((paddr_t)(va))
-#define KERN_PHYSTOV(pa) ((vaddr_t)(pa))
+u_long kern_vtopdiff = 0;
 #endif
 
 /* Prototypes */
@@ -865,16 +862,16 @@ printf("\t%#lx:%#lx\n", kernel_pt_table[pt_index].pv_va, kernel_pt_table[pt_inde
 	    KERN_PHYSTOV(physical_start), KERN_PHYSTOV(physical_end-1),
 	    (int)physmem);
 	printf(mem_fmt, "text section",
-	       KERN_VTOPHYS(physical_start), KERN_VTOPHYS(etext-1),
+	       KERN_VTOPHYS(physical_start), KERN_VTOPHYS((vaddr_t)etext-1),
 	       (vaddr_t)KERNEL_BASE_phys, (vaddr_t)etext-1,
 	       (int)(textsize / PAGE_SIZE));
 	printf(mem_fmt, "data section",
-	       KERN_VTOPHYS(__data_start), KERN_VTOPHYS(_edata),
+	       KERN_VTOPHYS((vaddr_t)__data_start), KERN_VTOPHYS((vaddr_t)_edata),
 	       (vaddr_t)__data_start, (vaddr_t)_edata,
 	       (int)((round_page((vaddr_t)_edata)
 		      - trunc_page((vaddr_t)__data_start)) / PAGE_SIZE));
 	printf(mem_fmt, "bss section",
-	       KERN_VTOPHYS(__bss_start), KERN_VTOPHYS(__bss_end__),
+	       KERN_VTOPHYS((vaddr_t)__bss_start), KERN_VTOPHYS((vaddr_t)__bss_end__),
 	       (vaddr_t)__bss_start, (vaddr_t)__bss_end__,
 	       (int)((round_page((vaddr_t)__bss_end__)
 		      - trunc_page((vaddr_t)__bss_start)) / PAGE_SIZE));
