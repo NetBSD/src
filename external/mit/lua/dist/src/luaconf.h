@@ -1,7 +1,7 @@
-/*	$NetBSD: luaconf.h,v 1.22 2018/05/26 20:17:56 alnsn Exp $	*/
+/*	$NetBSD: luaconf.h,v 1.23 2018/08/04 17:30:01 alnsn Exp $	*/
 
 /*
-** Id: luaconf.h,v 1.259 2016/12/22 13:08:50 roberto Exp 
+** Id: luaconf.h,v 1.259.1.1 2017/04/19 17:29:57 roberto Exp 
 ** Configuration file for Lua
 ** See Copyright Notice in lua.h
 */
@@ -627,6 +627,13 @@
 #if !defined(LUA_USE_C89)
 #define lua_strx2number(s,p)		lua_str2number(s,p)
 #endif
+
+
+/*
+@@ lua_pointer2str converts a pointer to a readable string in a
+** non-specified way.
+*/
+#define lua_pointer2str(buff,sz,p)	l_sprintf(buff,sz,"%p",p)
 
 
 /*
