@@ -1,7 +1,7 @@
-/*	$NetBSD: ltable.c,v 1.10 2018/07/01 10:08:38 mbalmer Exp $	*/
+/*	$NetBSD: ltable.c,v 1.11 2018/08/04 17:30:01 alnsn Exp $	*/
 
 /*
-** Id: ltable.c,v 2.118 2016/11/07 12:38:35 roberto Exp 
+** Id: ltable.c,v 2.118.1.4 2018/06/08 16:22:51 roberto Exp 
 ** Lua tables (hash)
 ** See Copyright Notice in lua.h
 */
@@ -231,7 +231,9 @@ static unsigned int computesizes (unsigned int nums[], unsigned int *pna) {
   unsigned int na = 0;  /* number of elements to go to array part */
   unsigned int optimal = 0;  /* optimal size for array part */
   /* loop while keys can fill more than half of total size */
-  for (i = 0, twotoi = 1; *pna > twotoi / 2; i++, twotoi *= 2) {
+  for (i = 0, twotoi = 1;
+       twotoi > 0 && *pna > twotoi / 2;
+       i++, twotoi *= 2) {
     if (nums[i] > 0) {
       a += nums[i];
       if (a > twotoi/2) {  /* more than half elements present? */
@@ -641,13 +643,13 @@ void luaH_setint (lua_State *L, Table *t, lua_Integer key, TValue *value) {
 }
 
 
-static int unbound_search (Table *t, unsigned int j) {
-  unsigned int i = j;  /* i is zero or a present index */
+static lua_Unsigned unbound_search (Table *t, lua_Unsigned j) {
+  lua_Unsigned i = j;  /* i is zero or a present index */
   j++;
   /* find 'i' and 'j' such that i is present and j is not */
   while (!ttisnil(luaH_getint(t, j))) {
     i = j;
-    if (j > cast(unsigned int, MAX_INT)/2) {  /* overflow? */
+    if (j > l_castS2U(LUA_MAXINTEGER) / 2) {  /* overflow? */
       /* table was built with bad purposes: resort to linear search */
       i = 1;
       while (!ttisnil(luaH_getint(t, i))) i++;
@@ -657,7 +659,7 @@ static int unbound_search (Table *t, unsigned int j) {
   }
   /* now do a binary search between them */
   while (j - i > 1) {
-    unsigned int m = (i+j)/2;
+    lua_Unsigned m = (i+j)/2;
     if (ttisnil(luaH_getint(t, m))) j = m;
     else i = m;
   }
@@ -669,7 +671,7 @@ static int unbound_search (Table *t, unsigned int j) {
 ** Try to find a boundary in table 't'. A 'boundary' is an integer index
 ** such that t[i] is non-nil and t[i+1] is nil (and 0 if t[1] is nil).
 */
-int luaH_getn (Table *t) {
+lua_Unsigned luaH_getn (Table *t) {
   unsigned int j = t->sizearray;
   if (j > 0 && ttisnil(&t->array[j - 1])) {
     /* there is a boundary in the array part: (binary) search for it */
