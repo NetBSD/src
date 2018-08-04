@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm53xx_machdep.c,v 1.12 2018/08/04 13:27:03 kre Exp $	*/
+/*	$NetBSD: bcm53xx_machdep.c,v 1.13 2018/08/04 21:59:28 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #define IDM_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm53xx_machdep.c,v 1.12 2018/08/04 13:27:03 kre Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm53xx_machdep.c,v 1.13 2018/08/04 21:59:28 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_evbarm_boardtype.h"
@@ -93,15 +93,7 @@ static void bcm53xx_system_reset(void);
  * Macros to translate between physical and virtual for a subset of the
  * kernel address space.  *Not* for general use.
  */
-#if !defined(KERN_VTOPHYS) || !defined(KERN_PHYSTOV)
 #define	KERN_VTOPDIFF	((vaddr_t)KERNEL_BASE_phys - (vaddr_t)KERNEL_BASE_virt)
-#endif
-#ifndef KERN_VTOPHYS
-#define KERN_VTOPHYS(va) ((paddr_t)((vaddr_t)va + KERN_VTOPDIFF))
-#endif
-#ifndef KERN_PHYSTOV
-#define KERN_PHYSTOV(pa) ((vaddr_t)((paddr_t)pa - KERN_VTOPDIFF))
-#endif
 
 #ifndef CONADDR
 #define CONADDR		(BCM53XX_IOREG_PBASE + CCA_UART0_BASE)
@@ -202,6 +194,8 @@ static const struct boot_physmem bp_first256 = {
 u_int
 initarm(void *arg)
 {
+	kern_vtopdiff = KERN_VTOPDIFF;
+
 	pmap_devmap_register(devmap);
 	bcm53xx_bootstrap(KERNEL_IO_IOREG_VBASE);
 
