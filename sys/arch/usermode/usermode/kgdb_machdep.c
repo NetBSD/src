@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_machdep.c,v 1.3 2018/08/01 10:24:41 reinoud Exp $	*/
+/*	$NetBSD: kgdb_machdep.c,v 1.4 2018/08/05 18:42:48 reinoud Exp $	*/
 
 /*
  * Copyright (c) 1996 Matthias Pfaller.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kgdb_machdep.c,v 1.3 2018/08/01 10:24:41 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kgdb_machdep.c,v 1.4 2018/08/05 18:42:48 reinoud Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -127,34 +127,25 @@ kgdb_getregs(db_regs_t *regs, kgdb_reg_t *gdb_regs)
 	gdb_regs[19] = gregs[_REG_SS];
 		
 #elif defined(__i386)
-	gdb_regs[ 0] = regs->tf_eax;
-	gdb_regs[ 1] = regs->tf_ecx;
-	gdb_regs[ 2] = regs->tf_edx;
-	gdb_regs[ 3] = regs->tf_ebx;
-	gdb_regs[ 4] = regs->tf_esp;
-	gdb_regs[ 5] = regs->tf_ebp;
-	gdb_regs[ 6] = regs->tf_esi;
-	gdb_regs[ 7] = regs->tf_edi;
-	gdb_regs[ 8] = regs->tf_eip;
-	gdb_regs[ 9] = regs->tf_eflags;
-	gdb_regs[10] = regs->tf_cs;
-	gdb_regs[11] = regs->tf_ss;
-	gdb_regs[12] = regs->tf_ds;
-	gdb_regs[13] = regs->tf_es;
-	gdb_regs[14] = regs->tf_fs;
-	gdb_regs[15] = regs->tf_gs;
+	kgdb_reg_t *gregs = regs->uc_mcontext.__gregs;
 
-/*XXX OOPS XXX? */
-#if 0
-	if (KERNELMODE(regs->tf_cs)) {
-		/*
-		 * Kernel mode - esp and ss not saved.
-		 */
-		gdb_regs[ 4] = (kgdb_reg_t)&regs->tf_esp; /* kernel stack
-							     pointer */
-		gdb_regs[11] = x86_getss();
-	}
-#endif
+	gdb_regs[ 0] = gregs[_REG_EAX];
+	gdb_regs[ 1] = gregs[_REG_ECX];
+	gdb_regs[ 2] = gregs[_REG_EDX];
+	gdb_regs[ 3] = gregs[_REG_EBX];
+	gdb_regs[ 4] = gregs[_REG_ESP];
+	gdb_regs[ 5] = gregs[_REG_EBP];
+	gdb_regs[ 6] = gregs[_REG_ESI];
+	gdb_regs[ 7] = gregs[_REG_EDI];
+	gdb_regs[ 8] = gregs[_REG_EIP];
+	gdb_regs[ 9] = gregs[_REG_EFL];
+	gdb_regs[10] = gregs[_REG_CS];
+	gdb_regs[11] = gregs[_REG_SS];
+	gdb_regs[12] = gregs[_REG_DS];
+	gdb_regs[13] = gregs[_REG_ES];
+	gdb_regs[14] = gregs[_REG_FS];
+	gdb_regs[15] = gregs[_REG_GS];
+
 #else
 #error port kgdb_machdep.c kgdb_getregs
 #endif
@@ -192,26 +183,21 @@ kgdb_setregs(db_regs_t *regs, kgdb_reg_t *gdb_regs)
 	gregs[_REG_SS ] = gdb_regs[19];
 #elif defined(__i386)
 panic("%s", __func__);
-	regs->tf_eax    = gdb_regs[ 0];
-	regs->tf_ecx    = gdb_regs[ 1];
-	regs->tf_edx    = gdb_regs[ 2];
-	regs->tf_ebx    = gdb_regs[ 3];
-	regs->tf_ebp    = gdb_regs[ 5];
-	regs->tf_esi    = gdb_regs[ 6];
-	regs->tf_edi    = gdb_regs[ 7];
-	regs->tf_eip    = gdb_regs[ 8];
-	regs->tf_eflags = gdb_regs[ 9];
-	regs->tf_cs     = gdb_regs[10];
-	regs->tf_ds     = gdb_regs[12];
-	regs->tf_es     = gdb_regs[13];
+	kgdb_reg_t *gregs = regs->uc_mcontext.__gregs;
 
-	if (KERNELMODE(regs->tf_cs) == 0) {
-		/*
-		 * Trapped in user mode - restore esp and ss.
-		 */
-		regs->tf_esp = gdb_regs[ 4];
-		regs->tf_ss  = gdb_regs[11];
-	}
+	gregs[_REG_EAX] = gdb_regs[ 0];
+	gregs[_REG_ECX] = gdb_regs[ 1];
+	gregs[_REG_EDX] = gdb_regs[ 2];
+	gregs[_REG_EBX] = gdb_regs[ 3];
+	gregs[_REG_EBP] = gdb_regs[ 5];
+	gregs[_REG_ESI] = gdb_regs[ 6];
+	gregs[_REG_EDI] = gdb_regs[ 7];
+	gregs[_REG_EIP] = gdb_regs[ 8];
+	gregs[_REG_EFL] = gdb_regs[ 9];
+	gregs[_REG_CS]  = gdb_regs[10];
+	gregs[_REG_DS]  = gdb_regs[12];
+	gregs[_REG_ES]  = gdb_regs[13];
+
 #else
 panic("%s", __func__);
 #endif
