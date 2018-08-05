@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_i2c.c,v 1.19 2018/07/16 23:11:47 christos Exp $ */
+/* $NetBSD: tegra_i2c.c,v 1.20 2018/08/05 15:37:10 skrll Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_i2c.c,v 1.19 2018/07/16 23:11:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_i2c.c,v 1.20 2018/08/05 15:37:10 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -136,8 +136,8 @@ tegra_i2c_attach(device_t parent, device_t self, void *aux)
 	sc->sc_cid = device_unit(self);
 	error = bus_space_map(sc->sc_bst, addr, size, 0, &sc->sc_bsh);
 	if (error) {
-		aprint_error(": couldn't map %#" PRIx64 ": %d",
-		    (uint64_t)addr, error);
+		aprint_error(": couldn't map %#" PRIxBUSADDR ": %d",
+		    addr, error);
 		return;
 	}
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_VM);
