@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm283x_platform.c,v 1.10 2018/08/03 15:46:41 skrll Exp $	*/
+/*	$NetBSD: bcm283x_platform.c,v 1.11 2018/08/05 14:02:35 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2017 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm283x_platform.c,v 1.10 2018/08/03 15:46:41 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm283x_platform.c,v 1.11 2018/08/05 14:02:35 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_bcm283x.h"
@@ -1415,14 +1415,14 @@ bcm283x_platform_uart_freq(void)
 
 #if defined(SOC_BCM2835)
 static const struct arm_platform bcm2835_platform = {
-	.devmap = bcm2835_platform_devmap,
-	.bootstrap = bcm2835_platform_bootstrap,
-	.init_attach_args = bcm2835_platform_init_attach_args,
-	.early_putchar = bcm2835_platform_early_putchar,
-	.device_register = bcm283x_platform_device_register,
-	.reset = bcm2835_system_reset,
-	.delay = bcm2835_tmr_delay,
-	.uart_freq = bcm283x_platform_uart_freq,
+	.ap_devmap = bcm2835_platform_devmap,
+	.ap_bootstrap = bcm2835_platform_bootstrap,
+	.ap_init_attach_args = bcm2835_platform_init_attach_args,
+	.ap_early_putchar = bcm2835_platform_early_putchar,
+	.ap_device_register = bcm283x_platform_device_register,
+	.ap_reset = bcm2835_system_reset,
+	.ap_delay = bcm2835_tmr_delay,
+	.ap_uart_freq = bcm283x_platform_uart_freq,
 };
 
 ARM_PLATFORM(bcm2835, "brcm,bcm2835", &bcm2835_platform);
@@ -1437,25 +1437,25 @@ bcm2837_platform_uart_freq(void)
 }
 
 static const struct arm_platform bcm2836_platform = {
-	.devmap = bcm2836_platform_devmap,
-	.bootstrap = bcm2836_platform_bootstrap,
-	.init_attach_args = bcm2836_platform_init_attach_args,
-	.early_putchar = bcm2836_platform_early_putchar,
-	.device_register = bcm283x_platform_device_register,
-	.reset = bcm2835_system_reset,
-	.delay = gtmr_delay,
-	.uart_freq = bcm283x_platform_uart_freq,
+	.ap_devmap = bcm2836_platform_devmap,
+	.ap_bootstrap = bcm2836_platform_bootstrap,
+	.ap_init_attach_args = bcm2836_platform_init_attach_args,
+	.ap_early_putchar = bcm2836_platform_early_putchar,
+	.ap_device_register = bcm283x_platform_device_register,
+	.ap_reset = bcm2835_system_reset,
+	.ap_delay = gtmr_delay,
+	.ap_uart_freq = bcm283x_platform_uart_freq,
 };
 
 static const struct arm_platform bcm2837_platform = {
-	.devmap = bcm2836_platform_devmap,
-	.bootstrap = bcm2836_platform_bootstrap,
-	.init_attach_args = bcm2836_platform_init_attach_args,
-	.early_putchar = bcm2837_platform_early_putchar,
-	.device_register = bcm283x_platform_device_register,
-	.reset = bcm2835_system_reset,
-	.delay = gtmr_delay,
-	.uart_freq = bcm2837_platform_uart_freq,
+	.ap_devmap = bcm2836_platform_devmap,
+	.ap_bootstrap = bcm2836_platform_bootstrap,
+	.ap_init_attach_args = bcm2836_platform_init_attach_args,
+	.ap_early_putchar = bcm2837_platform_early_putchar,
+	.ap_device_register = bcm283x_platform_device_register,
+	.ap_reset = bcm2835_system_reset,
+	.ap_delay = gtmr_delay,
+	.ap_uart_freq = bcm2837_platform_uart_freq,
 };
 
 ARM_PLATFORM(bcm2836, "brcm,bcm2836", &bcm2836_platform);
