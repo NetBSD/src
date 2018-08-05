@@ -1,4 +1,4 @@
-.\"	$NetBSD: xfer,v 1.4 2009/04/25 21:21:49 snj Exp $
+.\"	$NetBSD: xfer,v 1.4.26.1 2018/08/05 14:07:47 martin Exp $
 .
 .(tag instop
 .It Em "Domain-0 / privileged" installation
@@ -12,7 +12,7 @@ party packages in the
 installation notes).
 .It
 download the Xen binary from:
-.Lk ftp://ftp.NetBSD.org/pub/NetBSD/arch/xen/misc/xen-1.2-fixed.gz
+.Lk https://cdn.NetBSD.org/pub/NetBSD/arch/xen/misc/xen-1.2-fixed.gz
 .It
 get a copy of the xen12load kernel loader from the
 .Nx \*V

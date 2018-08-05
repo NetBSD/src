@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.510.4.8 2017/03/11 08:48:42 snj Exp $
+.\"	$NetBSD: main,v 1.510.4.9 2018/08/05 14:07:47 martin Exp $
 .\"
 .\" Copyright (c) 1999-2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -50,7 +50,7 @@
 .as MACHINE_LIST " sgimips shark sparc sparc64 sun2 sun3 vax x68k xen zaurus .
 .so \*[.CURDIR]/../common/macros
 .
-.Dd March 11, 2017
+.Dd August 7, 2018
 .Dt INSTALL 8
 .Os NetBSD
 .Sh NAME
@@ -480,7 +480,7 @@ possible,
 would not exist.
 .
 .if \n[FOR_RELEASE] \{\
-.Ss Changes Between The NetBSD 7.0 and 7.1 Releases
+.Ss Changes Between The NetBSD 7.2 and 7.1.2 Releases
 .Pp
 The
 .Nx
@@ -491,13 +491,13 @@ The result of these improvements is a stable operating system fit for
 production use that rivals most commercially available systems.
 .Pp
 See
-.Lk http://www.NetBSD.org/releases/formal-7/NetBSD-7.1.html
+.Lk http://www.NetBSD.org/releases/formal-7/NetBSD-7.2.html
 for some of the more noteworthy changes in this release.
 .Pp
 A more extensive list of changes can be found in the
-CHANGES-7.1:
-.Lk http://ftp.NetBSD.org/pub/NetBSD/NetBSD-7.1/CHANGES-7.1
-file in the top level directory of the NetBSD 7.1 release tree.
+CHANGES-7.2:
+.Lk https://cdn.NetBSD.org/pub/NetBSD/NetBSD-7.2/CHANGES-7.2
+file in the top level directory of the NetBSD 7.2 release tree.
 .Pp
 .\} \" \n[FOR_RELEASE]
 .
@@ -567,6 +567,8 @@ Changes between the 6.0 and 7.0 releases.
 Changes between the initial 7.0 branch and the final release of 7.0.
 .It Li CHANGES-7.1
 Changes between the final release of 7.0 and the final release of 7.1.
+.It Li CHANGES-7.2
+Changes between the final release of 7.1 and the final release of 7.2.
 .It Li CHANGES.prev
 Changes in previous
 .Nx
