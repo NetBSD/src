@@ -1,4 +1,4 @@
-/* $NetBSD: ucontext.h,v 1.1 2018/08/01 09:52:15 reinoud Exp $ */
+/* $NetBSD: ucontext.h,v 1.2 2018/08/05 18:42:48 reinoud Exp $ */
 
 #ifndef _USERMODE_UCONTEXT_H
 #define _USERMODE_UCONTEXT_H
@@ -8,6 +8,8 @@
 #include <machine/psl.h>
 
 #if defined(__i386__)
+
+#define _UC_MACHINE_EFLAGS(uc) ((uc)->uc_mcontext.__gregs[_REG_EFL])
 
 #elif defined(__x86_64__)
 
