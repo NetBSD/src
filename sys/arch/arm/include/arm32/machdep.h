@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.h,v 1.24 2018/08/03 15:46:41 skrll Exp $ */
+/* $NetBSD: machdep.h,v 1.25 2018/08/05 06:18:05 skrll Exp $ */
 
 #ifndef _ARM32_MACHDEP_H_
 #define _ARM32_MACHDEP_H_
@@ -52,6 +52,8 @@ extern char *booted_kernel;
 extern volatile uint32_t arm_cpu_hatched;
 extern volatile uint32_t arm_cpu_mbox;
 extern u_int arm_cpu_max;
+extern u_long kern_vtopdiff;
+
 
 /* misc prototypes used by the many arm machdeps */
 void cortex_pmc_ccnt_init(void);
@@ -74,16 +76,12 @@ struct boot_physmem;
 static inline paddr_t
 aarch32_kern_vtophys(vaddr_t va)
 {
-	extern u_long kern_vtopdiff;
-
 	return va - kern_vtopdiff;
 }
 
 static inline vaddr_t
 aarch32_kern_phystov(paddr_t pa)
 {
-	extern u_long kern_vtopdiff;
-
 	return pa + kern_vtopdiff;
 }
 
