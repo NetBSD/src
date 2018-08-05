@@ -1,9 +1,9 @@
-/* $NetBSD: ti_platform.c,v 1.3 2018/03/17 18:34:09 ryo Exp $ */
+/* $NetBSD: ti_platform.c,v 1.4 2018/08/05 14:02:35 skrll Exp $ */
 
 #include "opt_fdt_arm.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ti_platform.c,v 1.3 2018/03/17 18:34:09 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ti_platform.c,v 1.4 2018/08/05 14:02:35 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -124,12 +124,12 @@ am33xx_platform_delay(u_int n)
 }
 
 static const struct arm_platform am33xx_platform = {
-	.devmap = am33xx_platform_devmap,
-	.init_attach_args = am33xx_platform_init_attach_args,
-	.early_putchar = am33xx_platform_early_putchar,
-	.bootstrap = am33xx_platform_bootstrap,
-	.uart_freq = am33xx_platform_uart_freq,
-	.delay = am33xx_platform_delay,
+	.ap_devmap = am33xx_platform_devmap,
+	.ap_init_attach_args = am33xx_platform_init_attach_args,
+	.ap_early_putchar = am33xx_platform_early_putchar,
+	.ap_bootstrap = am33xx_platform_bootstrap,
+	.ap_uart_freq = am33xx_platform_uart_freq,
+	.ap_delay = am33xx_platform_delay,
 };
 
 void dummysetstatclockrate(int);

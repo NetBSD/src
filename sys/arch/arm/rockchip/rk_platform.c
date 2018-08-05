@@ -1,4 +1,4 @@
-/* $NetBSD: rk_platform.c,v 1.1 2018/06/16 00:19:04 jmcneill Exp $ */
+/* $NetBSD: rk_platform.c,v 1.2 2018/08/05 14:02:35 skrll Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
 #include "opt_fdt_arm.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rk_platform.c,v 1.1 2018/06/16 00:19:04 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rk_platform.c,v 1.2 2018/08/05 14:02:35 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -145,14 +145,14 @@ rk3328_platform_uart_freq(void)
 }
 
 static const struct arm_platform rk3328_platform = {
-	.devmap = rk3328_platform_devmap,
-	.bootstrap = rk_platform_bootstrap,
-	.init_attach_args = rk_platform_init_attach_args,
-	.early_putchar = rk3328_platform_early_putchar,
-	.device_register = rk_platform_device_register,
-	.reset = psci_fdt_reset,
-	.delay = gtmr_delay,
-	.uart_freq = rk3328_platform_uart_freq,
+	.ap_devmap = rk3328_platform_devmap,
+	.ap_bootstrap = rk_platform_bootstrap,
+	.ap_init_attach_args = rk_platform_init_attach_args,
+	.ap_early_putchar = rk3328_platform_early_putchar,
+	.ap_device_register = rk_platform_device_register,
+	.ap_reset = psci_fdt_reset,
+	.ap_delay = gtmr_delay,
+	.ap_uart_freq = rk3328_platform_uart_freq,
 };
 
 ARM_PLATFORM(rk3328, "rockchip,rk3328", &rk3328_platform);
