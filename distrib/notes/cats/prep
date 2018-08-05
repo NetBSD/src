@@ -1,4 +1,4 @@
-.\"	$NetBSD: prep,v 1.11.26.1 2014/11/14 14:58:28 martin Exp $
+.\"	$NetBSD: prep,v 1.11.26.2 2018/08/05 14:07:47 martin Exp $
 .
 A \*M machine usually needs little or no preparation before installing
 .Nx ,
@@ -45,7 +45,7 @@ This is available in the packages collection under pkgsrc/sysutils/cdrtools.
 Systems not supported by the packages
 collection should get it from the official website:
 .br
-.Lk ftp://ftp.NetBSD.org/pub/NetBSD/packages/pkgsrc/sysutils/cdrtools/README.html
+.Lk https://cdn.NetBSD.org/pub/NetBSD/packages/pkgsrc/sysutils/cdrtools/README.html
 .br
 .Lk http://www.fokus.gmd.de/research/cc/glone/employees/joerg.schilling/private/cdrecord.html
 .Pp

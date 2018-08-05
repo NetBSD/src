@@ -1,4 +1,4 @@
-.\"	$NetBSD: postinstall,v 1.79.2.1 2015/05/24 11:14:43 martin Exp $
+.\"	$NetBSD: postinstall,v 1.79.2.2 2018/08/05 14:07:47 martin Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -330,10 +330,10 @@ More information on the package system is available at
 .Lk http://www.NetBSD.org/docs/software/packages.html
 .It
 A list of available packages suitable for browsing is at
-.Lk ftp://ftp.NetBSD.org/pub/pkgsrc/current/pkgsrc/README.html
+.Lk https://cdn.NetBSD.org/pub/pkgsrc/current/pkgsrc/README.html
 .It
 Precompiled binaries can be found at
-.Lk ftp://ftp.NetBSD.org/pub/pkgsrc/packages/NetBSD/
+.Lk https://cdn.NetBSD.org/pub/pkgsrc/packages/NetBSD/
 usually in the
 .Pa \*M/\*V/All
 subdir.
@@ -373,7 +373,7 @@ post-installation configuration menu, the
 .Xr pkgsrc 7
 framework for compiling packages can be obtained by
 retrieving the file
-.Lk ftp://ftp.NetBSD.org/pub/pkgsrc/pkgsrc.tar.gz .
+.Lk https://cdn.NetBSD.org/pub/pkgsrc/pkgsrc.tar.gz .
 It is typically extracted into
 .Pa /usr/pkgsrc
 (though other locations work fine) with the commands:

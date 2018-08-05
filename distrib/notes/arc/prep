@@ -1,4 +1,4 @@
-.\"	$NetBSD: prep,v 1.2.26.1 2014/11/14 14:58:28 martin Exp $
+.\"	$NetBSD: prep,v 1.2.26.2 2018/08/05 14:07:47 martin Exp $
 .
 First and foremost, before beginning the installation process,
 .Em make sure you have a reliable backup
@@ -49,7 +49,7 @@ This is available in the packages collection under pkgsrc/sysutils/cdrtools.
 Systems not supported by the packages
 collection should get it from the official website:
 .br
-.Lk ftp://ftp.NetBSD.org/pub/NetBSD/packages/pkgsrc/sysutils/cdrtools/README.html
+.Lk https://cdn.NetBSD.org/pub/NetBSD/packages/pkgsrc/sysutils/cdrtools/README.html
 .br
 .Lk http://cdrecord.berlios.de/old/private/cdrecord.html
 .Pp

@@ -1,4 +1,4 @@
-.\"	$NetBSD: prep.OPENFIRMWARE,v 1.15.20.2 2015/05/24 11:14:44 martin Exp $
+.\"	$NetBSD: prep.OPENFIRMWARE,v 1.15.20.3 2018/08/05 14:07:47 martin Exp $
 .if \*[OF_VERSION_3] \{\
 .
 .Ss2 Updating your BootROM
@@ -364,7 +364,7 @@ the
 .Tn MacOS
 BootVars tool.
 .Pp
-.Lk ftp://ftp.NetBSD.org/pub/NetBSD/arch/macppc/macos-utils/bootvars/bootvars.sit.hqx
+.Lk https://cdn.NetBSD.org/pub/NetBSD/arch/macppc/macos-utils/bootvars/bootvars.sit.hqx
 .(Note
 BootVars does
 .Em not
@@ -1021,8 +1021,8 @@ of your drive \(em it does not preserve data from any of your partitions.
 is the most flexible (and most difficult to use) partitioning tool
 available.
 It runs on almost all OSes that \*M machines support.  Download it:
-.Lk ftp://ftp.NetBSD.org/pub/NetBSD/arch/macppc/netbsd-pdisk/
-.Lk ftp://ftp.NetBSD.org/pub/NetBSD/arch/macppc/macos-utils/pdisk.sea.hqx
+.Lk https://cdn.NetBSD.org/pub/NetBSD/arch/macppc/netbsd-pdisk/
+.Lk https://cdn.NetBSD.org/pub/NetBSD/arch/macppc/macos-utils/pdisk.sea.hqx
 .Pp
 There is built-in help describing how it works.  When it asks you to enter
 the
@@ -1048,7 +1048,7 @@ for
 file systems, and 
 .Ic hfstools
 to create and mount HFS file systems.
-.Lk ftp://ftp.NetBSD.org/pub/NetBSD/packages/pkgsrc/sysutils/hfsutils/README.html
+.Lk https://cdn.NetBSD.org/pub/NetBSD/packages/pkgsrc/sysutils/hfsutils/README.html
 .Pp
 Make the following partitions:
 .(tag "A/UXxUserxandxA/UXxFree1" -offset indent
@@ -1191,7 +1191,7 @@ Other
 .Ul
 systems should get it from the official website:
 .br
-.Lk ftp://ftp.NetBSD.org/pub/NetBSD/packages/pkgsrc/sysutils/cdrtools/README.html
+.Lk https://cdn.NetBSD.org/pub/NetBSD/packages/pkgsrc/sysutils/cdrtools/README.html
 .br
 .Lk http://www.fokus.gmd.de/research/cc/glone/employees/joerg.schilling/private/cdrecord.html
 .Pp
@@ -1379,7 +1379,7 @@ Other
 .Ul
 systems should get it from the official website:
 .br
-.Lk ftp://ftp.NetBSD.org/pub/NetBSD/packages/pkgsrc/sysutils/cdrtools/README.html
+.Lk https://cdn.NetBSD.org/pub/NetBSD/packages/pkgsrc/sysutils/cdrtools/README.html
 .br
 .Lk http://www.fokus.gmd.de/research/cc/glone/employees/joerg.schilling/private/cdrecord.html
 .Pp
