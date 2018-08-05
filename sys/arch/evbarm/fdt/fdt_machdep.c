@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_machdep.c,v 1.31 2018/08/05 06:48:50 skrll Exp $ */
+/* $NetBSD: fdt_machdep.c,v 1.32 2018/08/05 14:02:36 skrll Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.31 2018/08/05 06:48:50 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.32 2018/08/05 14:02:36 skrll Exp $");
 
 #include "opt_machdep.h"
 #include "opt_bootconfig.h"
@@ -126,8 +126,8 @@ static void
 fdt_putchar(char c)
 {
 	const struct arm_platform *plat = arm_fdt_platform();
-	if (plat && plat->early_putchar) {
-		plat->early_putchar(c);
+	if (plat && plat->ap_early_putchar) {
+		plat->ap_early_putchar(c);
 	}
 #ifdef EARLYCONS
 	else {
@@ -381,9 +381,9 @@ initarm(void *arg)
 	boot_args = bootargs;
 
 	VPRINTF("devmap\n");
-	pmap_devmap_register(plat->devmap());
+	pmap_devmap_register(plat->ap_devmap());
 #ifdef __aarch64__
-	pmap_devmap_bootstrap(plat->devmap());
+	pmap_devmap_bootstrap(plat->ap_devmap());
 #endif
 
 	/* Heads up ... Setup the CPU / MMU / TLB functions. */
@@ -392,7 +392,7 @@ initarm(void *arg)
 		panic("cpu not recognized!");
 
 	VPRINTF("bootstrap\n");
-	plat->bootstrap();
+	plat->ap_bootstrap();
 
 	/*
 	 * If stdout-path is specified on the command line, override the
@@ -514,11 +514,11 @@ consinit(void)
 	if (initialized || cons == NULL)
 		return;
 
-	plat->init_attach_args(&faa);
+	plat->ap_init_attach_args(&faa);
 	faa.faa_phandle = fdtbus_get_stdout_phandle();
 
-	if (plat->uart_freq != NULL)
-		uart_freq = plat->uart_freq();
+	if (plat->ap_uart_freq != NULL)
+		uart_freq = plat->ap_uart_freq();
 
 	cons->consinit(&faa, uart_freq);
 
@@ -534,7 +534,7 @@ delay(u_int us)
 {
 	const struct arm_platform *plat = arm_fdt_platform();
 
-	plat->delay(us);
+	plat->ap_delay(us);
 }
 
 static void
@@ -545,8 +545,8 @@ fdt_device_register(device_t self, void *aux)
 	if (device_is_a(self, "armfdt"))
 		fdt_setup_initrd();
 
-	if (plat && plat->device_register)
-		plat->device_register(self, aux);
+	if (plat && plat->ap_device_register)
+		plat->ap_device_register(self, aux);
 }
 
 static void
@@ -556,8 +556,8 @@ fdt_reset(void)
 
 	fdtbus_power_reset();
 
-	if (plat && plat->reset)
-		plat->reset();
+	if (plat && plat->ap_reset)
+		plat->ap_reset();
 }
 
 static void

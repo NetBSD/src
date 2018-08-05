@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_platform.c,v 1.13 2018/07/08 11:37:50 jmcneill Exp $ */
+/* $NetBSD: tegra_platform.c,v 1.14 2018/08/05 14:02:35 skrll Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared D. McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
 #include "ukbd.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_platform.c,v 1.13 2018/07/08 11:37:50 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_platform.c,v 1.14 2018/08/05 14:02:35 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -213,14 +213,14 @@ tegra_platform_uart_freq(void)
 
 #ifdef SOC_TEGRA124
 static const struct arm_platform tegra124_platform = {
-	.devmap = tegra_platform_devmap,
-	.bootstrap = tegra124_platform_bootstrap,
-	.init_attach_args = tegra_platform_init_attach_args,
-	.early_putchar = tegra_platform_early_putchar,
-	.device_register = tegra_platform_device_register,
-	.reset = tegra_platform_reset,
-	.delay = tegra_platform_delay,
-	.uart_freq = tegra_platform_uart_freq,
+	.ap_devmap = tegra_platform_devmap,
+	.ap_bootstrap = tegra124_platform_bootstrap,
+	.ap_init_attach_args = tegra_platform_init_attach_args,
+	.ap_early_putchar = tegra_platform_early_putchar,
+	.ap_device_register = tegra_platform_device_register,
+	.ap_reset = tegra_platform_reset,
+	.ap_delay = tegra_platform_delay,
+	.ap_uart_freq = tegra_platform_uart_freq,
 };
 
 ARM_PLATFORM(tegra124, "nvidia,tegra124", &tegra124_platform);
@@ -228,14 +228,14 @@ ARM_PLATFORM(tegra124, "nvidia,tegra124", &tegra124_platform);
 
 #ifdef SOC_TEGRA210
 static const struct arm_platform tegra210_platform = {
-	.devmap = tegra_platform_devmap,
-	.bootstrap = tegra210_platform_bootstrap,
-	.init_attach_args = tegra_platform_init_attach_args,
-	.early_putchar = tegra_platform_early_putchar,
-	.device_register = tegra_platform_device_register,
-	.reset = tegra_platform_reset,
-	.delay = tegra_platform_delay,
-	.uart_freq = tegra_platform_uart_freq,
+	.ap_devmap = tegra_platform_devmap,
+	.ap_bootstrap = tegra210_platform_bootstrap,
+	.ap_init_attach_args = tegra_platform_init_attach_args,
+	.ap_early_putchar = tegra_platform_early_putchar,
+	.ap_device_register = tegra_platform_device_register,
+	.ap_reset = tegra_platform_reset,
+	.ap_delay = tegra_platform_delay,
+	.ap_uart_freq = tegra_platform_uart_freq,
 };
 
 ARM_PLATFORM(tegra210, "nvidia,tegra210", &tegra210_platform);
