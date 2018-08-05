@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_machdep.c,v 1.30 2018/08/03 13:48:24 skrll Exp $ */
+/* $NetBSD: fdt_machdep.c,v 1.31 2018/08/05 06:48:50 skrll Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.30 2018/08/03 13:48:24 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.31 2018/08/05 06:48:50 skrll Exp $");
 
 #include "opt_machdep.h"
 #include "opt_bootconfig.h"
@@ -419,17 +419,6 @@ initarm(void *arg)
 	parse_mi_bootargs(mi_bootargs);
 #endif
 
-#ifndef __aarch64__
-	VPRINTF("KERNEL_BASE=0x%x, "
-		"KERNEL_VM_BASE=0x%x, "
-		"KERNEL_VM_BASE - KERNEL_BASE=0x%x, "
-		"KERNEL_BASE_VOFFSET=0x%x\n",
-		KERNEL_BASE,
-		KERNEL_VM_BASE,
-		KERNEL_VM_BASE - KERNEL_BASE,
-		KERNEL_BASE_VOFFSET);
-#endif
-
 	fdt_get_memory(&memory_start, &memory_end);
 
 #if !defined(_LP64)
@@ -437,24 +426,8 @@ initarm(void *arg)
 	if (memory_end >= 0x100000000ULL)
 		memory_end = 0x100000000ULL - PAGE_SIZE;
 
+#endif
 	uint64_t memory_size = memory_end - memory_start;
-#endif
-
-#ifndef __aarch64__
-#ifdef __HAVE_MM_MD_DIRECT_MAPPED_PHYS
-	const bool mapallmem_p = true;
-#ifndef PMAP_NEED_ALLOC_POOLPAGE
-	if (memory_size > KERNEL_VM_BASE - KERNEL_BASE) {
-		VPRINTF("%s: dropping RAM size from %luMB to %uMB\n",
-		    __func__, (unsigned long) (memory_size >> 20),
-		    (KERNEL_VM_BASE - KERNEL_BASE) >> 20);
-		memory_size = KERNEL_VM_BASE - KERNEL_BASE;
-	}
-#endif
-#else
-	const bool mapallmem_p = false;
-#endif
-#endif
 
 	/* Parse ramdisk info */
 	fdt_probe_initrd(&initrd_start, &initrd_end);
@@ -465,25 +438,8 @@ initarm(void *arg)
 	 */
 	fdt_build_bootconfig(memory_start, memory_end);
 
-#ifdef __aarch64__
-	extern char __kernel_text[];
-	extern char _end[];
-
-	vaddr_t kernstart = trunc_page((vaddr_t)__kernel_text);
-	vaddr_t kernend = round_page((vaddr_t)_end);
-
-	paddr_t	kernstart_phys = KERN_VTOPHYS(kernstart);
-	paddr_t kernend_phys = KERN_VTOPHYS(kernend);
-
-	VPRINTF("%s: kernel phys start %lx end %lx\n", __func__, kernstart_phys, kernend_phys);
-
-        fdt_add_reserved_memory_range(kernstart_phys,
-	     kernend_phys - kernstart_phys);
-#else
-	arm32_bootmem_init(memory_start, memory_size, KERNEL_BASE_PHYS);
-	arm32_kernel_vm_init(KERNEL_VM_BASE, ARM_VECTORS_HIGH, 0,
-	    plat->devmap(), mapallmem_p);
-#endif
+	/* Perform PT build and VM init */
+	cpu_kernel_vm_init(memory_start, memory_size);
 
 	VPRINTF("bootargs: %s\n", bootargs);
 

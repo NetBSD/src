@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.h,v 1.25 2018/08/05 06:18:05 skrll Exp $ */
+/* $NetBSD: machdep.h,v 1.26 2018/08/05 06:48:50 skrll Exp $ */
 
 #ifndef _ARM32_MACHDEP_H_
 #define _ARM32_MACHDEP_H_
@@ -87,6 +87,8 @@ aarch32_kern_phystov(paddr_t pa)
 
 #define KERN_VTOPHYS(va)	aarch32_kern_vtophys(va)
 #define KERN_PHYSTOV(pa)	aarch32_kern_phystov(pa)
+
+void cpu_kernel_vm_init(paddr_t, psize_t);
 
 void arm32_bootmem_init(paddr_t memstart, psize_t memsize, paddr_t kernelstart);
 void arm32_kernel_vm_init(vaddr_t kvm_base, vaddr_t vectors,

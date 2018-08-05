@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_machdep.c,v 1.116 2018/07/31 07:00:48 skrll Exp $	*/
+/*	$NetBSD: arm32_machdep.c,v 1.117 2018/08/05 06:48:50 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -42,9 +42,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.116 2018/07/31 07:00:48 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.117 2018/08/05 06:48:50 skrll Exp $");
 
 #include "opt_arm_debug.h"
+#include "opt_fdt.h"
 #include "opt_modular.h"
 #include "opt_md.h"
 #include "opt_pmap_debug.h"
@@ -81,12 +82,16 @@ __KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.116 2018/07/31 07:00:48 skrll Ex
 #include <machine/bootconfig.h>
 #include <machine/pcb.h>
 
+#if defined(FDT)
+#include <arm/fdt/arm_fdtvar.h>
+#include <arch/evbarm/fdt/platform.h>
+#endif
+
 #ifdef VERBOSE_INIT_ARM
 #define VPRINTF(...)	printf(__VA_ARGS__)
 #else
 #define VPRINTF(...)	do { } while (/* CONSTCOND */ 0)
 #endif
-
 
 void (*cpu_reset_address)(void);	/* Used by locore */
 paddr_t cpu_reset_address_paddr;	/* Used by locore */
@@ -763,3 +768,54 @@ mm_md_page_color(paddr_t pa, int *colorp)
 	return true;
 #endif
 }
+
+#if defined(FDT)
+extern char KERNEL_BASE_phys[];
+#define KERNEL_BASE_PHYS ((paddr_t)KERNEL_BASE_phys)
+
+void
+cpu_kernel_vm_init(paddr_t memory_start, psize_t memory_size)
+{
+	const struct arm_platform *plat = arm_fdt_platform();
+
+#ifdef VERBOSE_INIT_ARM
+	extern char _end[];
+
+	const vaddr_t kernend = round_page((vaddr_t)_end);
+
+	const paddr_t kernstart_phys = KERNEL_BASE_PHYS;
+	const paddr_t kernend_phys = KERN_VTOPHYS(kernend);
+#endif
+
+	VPRINTF("KERNEL_BASE=0x%x, "
+	    "KERNEL_VM_BASE=0x%x, "
+	    "KERNEL_VM_BASE - KERNEL_BASE=0x%x, "
+	    "KERNEL_BASE_VOFFSET=0x%x\n",
+	    KERNEL_BASE,
+	    KERNEL_VM_BASE,
+	    KERNEL_VM_BASE - KERNEL_BASE,
+	    KERNEL_BASE_VOFFSET);
+
+	VPRINTF("%s: kernel phys start %lx end %lx\n", __func__,
+	    kernstart_phys, kernend_phys);
+
+#ifdef __HAVE_MM_MD_DIRECT_MAPPED_PHYS
+	const bool mapallmem_p = true;
+#ifndef PMAP_NEED_ALLOC_POOLPAGE
+	if (memory_size > KERNEL_VM_BASE - KERNEL_BASE) {
+		VPRINTF("%s: dropping RAM size from %luMB to %uMB\n",
+		    __func__, (unsigned long) (memory_size >> 20),
+		    (KERNEL_VM_BASE - KERNEL_BASE) >> 20);
+		memory_size = KERNEL_VM_BASE - KERNEL_BASE;
+	}
+#endif
+#else
+	const bool mapallmem_p = false;
+#endif
+
+	arm32_bootmem_init(memory_start, memory_size, KERNEL_BASE_PHYS);
+	arm32_kernel_vm_init(KERNEL_VM_BASE, ARM_VECTORS_HIGH, 0,
+	    plat->devmap(), mapallmem_p);
+}
+#endif
+

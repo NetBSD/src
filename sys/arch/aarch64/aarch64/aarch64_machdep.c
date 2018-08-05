@@ -1,4 +1,4 @@
-/* $NetBSD: aarch64_machdep.c,v 1.7 2018/07/17 12:40:00 christos Exp $ */
+/* $NetBSD: aarch64_machdep.c,v 1.8 2018/08/05 06:48:50 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: aarch64_machdep.c,v 1.7 2018/07/17 12:40:00 christos Exp $");
+__KERNEL_RCSID(1, "$NetBSD: aarch64_machdep.c,v 1.8 2018/08/05 06:48:50 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_ddb.h"
@@ -60,6 +60,14 @@ __KERNEL_RCSID(1, "$NetBSD: aarch64_machdep.c,v 1.7 2018/07/17 12:40:00 christos
 #include <aarch64/pte.h>
 #include <aarch64/vmparam.h>
 
+#include <arch/evbarm/fdt/platform.h>
+
+#ifdef VERBOSE_INIT_ARM
+#define VPRINTF(...)	printf(__VA_ARGS__)
+#else
+#define VPRINTF(...)	do { } while (/* CONSTCOND */ 0)
+#endif
+
 char cpu_model[32];
 char machine[] = MACHINE;
 char machine_arch[] = MACHINE_ARCH;
@@ -84,6 +92,31 @@ vaddr_t physical_start;
 vaddr_t physical_end;
 /* filled in before cleaning bss. keep in .data */
 u_long kern_vtopdiff __attribute__((__section__(".data")));
+
+void
+cpu_kernel_vm_init(uint64_t memory_start, uint64_t memory_size)
+{
+
+	extern char __kernel_text[];
+	extern char _end[];
+
+	vaddr_t kernstart = trunc_page((vaddr_t)__kernel_text);
+	vaddr_t kernend = round_page((vaddr_t)_end);
+
+	paddr_t	kernstart_phys = KERN_VTOPHYS(kernstart);
+	paddr_t kernend_phys = KERN_VTOPHYS(kernend);
+
+	VPRINTF("%s: kernel phys start %lx end %lx\n", __func__,
+	    kernstart_phys, kernend_phys);
+
+        fdt_add_reserved_memory_range(kernstart_phys,
+	     kernend_phys - kernstart_phys);
+
+	/*
+	 * XXX whole bunch of stuff to map kernel correctly
+	 */
+}
+
 
 
 /*
@@ -143,8 +176,7 @@ initarm_common(vaddr_t kvm_base, vsize_t kvm_size,
 	physical_start = bootconfig.dram[0].address;
 	physical_end = physical_start + ptoa(bootconfig.dram[0].pages);
 
-#ifdef VERBOSE_INIT_ARM
-	printf(
+	VPRINTF(
 	    "------------------------------------------\n"
 	    "kern_vtopdiff         = 0x%016lx\n"
 	    "physical_start        = 0x%016lx\n"
@@ -171,7 +203,6 @@ initarm_common(vaddr_t kvm_base, vsize_t kvm_size,
 	    kernend,
 	    kernend_l2,
 	    VM_MAX_KERNEL_ADDRESS);
-#endif
 
 	/*
 	 * msgbuf is always allocated from bottom of 1st memory block.
