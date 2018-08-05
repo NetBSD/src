@@ -1,4 +1,4 @@
-/* $NetBSD: vexpress_platform.c,v 1.8 2018/06/11 19:49:18 jakllsch Exp $ */
+/* $NetBSD: vexpress_platform.c,v 1.9 2018/08/05 14:02:35 skrll Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #include "opt_fdt_arm.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vexpress_platform.c,v 1.8 2018/06/11 19:49:18 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vexpress_platform.c,v 1.9 2018/08/05 14:02:35 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -219,14 +219,14 @@ vexpress_platform_uart_freq(void)
 }
 
 static const struct arm_platform vexpress_platform = {
-	.devmap = vexpress_platform_devmap,
-	.bootstrap = vexpress_platform_bootstrap,
-	.init_attach_args = vexpress_platform_init_attach_args,
-	.early_putchar = vexpress_platform_early_putchar,
-	.device_register = vexpress_platform_device_register,
-	.reset = vexpress_platform_reset,
-	.delay = gtmr_delay,
-	.uart_freq = vexpress_platform_uart_freq,
+	.ap_devmap = vexpress_platform_devmap,
+	.ap_bootstrap = vexpress_platform_bootstrap,
+	.ap_init_attach_args = vexpress_platform_init_attach_args,
+	.ap_early_putchar = vexpress_platform_early_putchar,
+	.ap_device_register = vexpress_platform_device_register,
+	.ap_reset = vexpress_platform_reset,
+	.ap_delay = gtmr_delay,
+	.ap_uart_freq = vexpress_platform_uart_freq,
 };
 
 ARM_PLATFORM(vexpress, "arm,vexpress", &vexpress_platform);

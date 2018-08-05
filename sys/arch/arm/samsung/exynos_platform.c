@@ -1,4 +1,4 @@
-/* $NetBSD: exynos_platform.c,v 1.11 2018/07/31 06:46:25 skrll Exp $ */
+/* $NetBSD: exynos_platform.c,v 1.12 2018/08/05 14:02:35 skrll Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared D. McNeill <jmcneill@invisible.ca>
@@ -34,7 +34,7 @@
 #include "ukbd.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exynos_platform.c,v 1.11 2018/07/31 06:46:25 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exynos_platform.c,v 1.12 2018/08/05 14:02:35 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -130,14 +130,14 @@ exynos_platform_uart_freq(void)
 }
 
 static const struct arm_platform exynos5_platform = {
-	.devmap = exynos_platform_devmap,
-	.bootstrap = exynos_platform_bootstrap,
-	.init_attach_args = exynos_platform_init_attach_args,
-	.early_putchar = exynos_platform_early_putchar,
-	.device_register = exynos_platform_device_register,
-	.reset = exynos5_platform_reset,
-	.delay = mct_delay,
-	.uart_freq = exynos_platform_uart_freq,
+	.ap_devmap = exynos_platform_devmap,
+	.ap_bootstrap = exynos_platform_bootstrap,
+	.ap_init_attach_args = exynos_platform_init_attach_args,
+	.ap_early_putchar = exynos_platform_early_putchar,
+	.ap_device_register = exynos_platform_device_register,
+	.ap_reset = exynos5_platform_reset,
+	.ap_delay = mct_delay,
+	.ap_uart_freq = exynos_platform_uart_freq,
 };
 
 ARM_PLATFORM(exynos5, "samsung,exynos5", &exynos5_platform);
