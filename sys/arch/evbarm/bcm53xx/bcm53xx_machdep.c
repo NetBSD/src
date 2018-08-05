@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm53xx_machdep.c,v 1.13 2018/08/04 21:59:28 skrll Exp $	*/
+/*	$NetBSD: bcm53xx_machdep.c,v 1.14 2018/08/05 13:41:27 kre Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #define IDM_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm53xx_machdep.c,v 1.13 2018/08/04 21:59:28 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm53xx_machdep.c,v 1.14 2018/08/05 13:41:27 kre Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_evbarm_boardtype.h"
@@ -94,6 +94,8 @@ static void bcm53xx_system_reset(void);
  * kernel address space.  *Not* for general use.
  */
 #define	KERN_VTOPDIFF	((vaddr_t)KERNEL_BASE_phys - (vaddr_t)KERNEL_BASE_virt)
+
+vaddr_t kern_vtopdiff;	/*XXX should be in some header ?? XXX*/
 
 #ifndef CONADDR
 #define CONADDR		(BCM53XX_IOREG_PBASE + CCA_UART0_BASE)
