@@ -5,10 +5,14 @@
 #if defined(__i386__)
 
 ENTRY(breakpoint)
-	.byte 0xcc	// BKPT_INST
+	pushl	%ebp
+	movl	%esp, %ebp
+	int	$0x03		/* paranoid, not 'int3' */
+	popl	%ebp
 	ret
+END(breakpoint)
 
-#error implement setjmp/longjmp for i386
+//#error TODO implement setjmp/longjmp for i386?
 
 #elif defined(__amd64__)
 ENTRY(breakpoint)

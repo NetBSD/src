@@ -1,4 +1,4 @@
-/* $NetBSD: db_machdep.h,v 1.3 2018/08/01 09:50:57 reinoud Exp $ */
+/* $NetBSD: db_machdep.h,v 1.4 2018/08/05 18:42:48 reinoud Exp $ */
 
 #ifndef _USERMODE_DB_MACHDEP_H
 #define _USERMODE_DB_MACHDEP_H
@@ -27,6 +27,7 @@ extern db_regs_t *ddb_regp;
 #define ddb_regs	(*ddb_regp)
 #endif
 
+/* copied here in verbatim to remove dependencies */
 #if defined(__i386__)
 
 #define BKPT_SIZE 1
@@ -34,8 +35,30 @@ extern db_regs_t *ddb_regp;
 #define	BKPT_ADDR(addr)	(addr)
 #define BKPT_SET(inst, addr) (BKPT_INST)
 
-#error append db_machdep.h for i386
+#define	db_clear_single_step(regs)	_UC_MACHINE_EFLAGS(regs) &= ~PSL_T
+#define	db_set_single_step(regs)	_UC_MACHINE_EFLAGS(regs) |= PSL_T
 
+#define	IS_BREAKPOINT_TRAP(type, code)	((type) == T_BPTFLT)
+#define IS_WATCHPOINT_TRAP(type, code)	((type) == T_TRCTRAP && (code) & 15)
+
+#define	I_CALL		0xe8
+#define	I_CALLI		0xff
+#define	I_RET		0xc3
+#define	I_IRET		0xcf
+
+#define	inst_trap_return(ins)	(((ins)&0xff) == I_IRET)
+#define	inst_return(ins)	(((ins)&0xff) == I_RET)
+#define	inst_call(ins)		(((ins)&0xff) == I_CALL || \
+				 (((ins)&0xff) == I_CALLI && \
+				  ((ins)&0x3800) == 0x1000))
+#define inst_load(ins)		0
+#define inst_store(ins)		0
+
+typedef	int		kgdb_reg_t;
+#define	KGDB_NUMREGS	16
+#define	KGDB_BUFLEN	512
+
+/* copied here in verbatim to remove dependencies */
 #elif defined(__x86_64__)
 
 #define	DDB_EXPR_FMT	"l"	/* expression is long */
