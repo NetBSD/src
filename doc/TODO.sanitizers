@@ -5,12 +5,10 @@ Short term:
  - merge TSan, MSan and libFuzzer ATF tests
  - prepare MKSANITIZER readme
  - kernel-asan port
- - kernel-ubsan port
  - switch syscall(2)/__syscall(2) to libc calls
  - upstream local patches, mostly to compiler-rt
  - develop fts(3) interceptors (MSan, for ls(1), find(1), mtree(8)
  - investigate and address the libcxx failing tests on NetBSD
- - no-ASLR boot.cfg option, required for MKSANITIZER
 
 Long term:
  - FILE and DIR sanitization (needed by at least: ESan, MSan)
