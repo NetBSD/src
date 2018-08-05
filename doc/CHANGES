@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2416 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2417 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -186,4 +186,9 @@ Changes from NetBSD 8.0 to NetBSD 9.0:
 		[maxv 20180726]
 	tea5767radio(4): Add Philips/NXP TEA5767 I2C-controlled stereo FM radio
 		driver. [rkujawa 20180727]
-
+	UBSan: Imported a clean-room reimplementation of the sanitizer runtime
+		called micro-UBSan. [kamil 20180803]
+	uUBSan: Added support for micro-UBSan (user-UBSan) in MKLIBCSANITIZER.
+		[kamil 20180803]
+	kUBSan: Added support for micro-UBSan (kernel-UBSan) as KUBSAN.
+		[kamil 20180803]
