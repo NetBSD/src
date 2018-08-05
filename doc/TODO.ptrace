@@ -1,4 +1,4 @@
-$NetBSD: TODO.ptrace,v 1.29 2017/08/28 00:46:07 kamil Exp $
+$NetBSD: TODO.ptrace,v 1.30 2018/08/05 13:07:33 kamil Exp $
 
 Items we (currently) plan to finish in the ptrace(2) field:
 
@@ -7,7 +7,6 @@ Items we (currently) plan to finish in the ptrace(2) field:
  - adapt OpenBSD regress test (regress/sys/ptrace/ptrace.c) for the ATF context
  - reiterate over FreeBSD tests and add missing ones if applicable
  - add PT_DUMPCORE tests in the ATF framework
- - add ATF tests for PT_WRITE_I and PIOD_WRITE_I - test mprotect restrictions
  - research kevent support for tracing a process over a file descriptor,
    this means alternative to wait(2)-based events with passing events over the
    kqueue API - signal handlers are global per application and they clash with
@@ -16,10 +15,8 @@ Items we (currently) plan to finish in the ptrace(2) field:
    protocol (this is how it is done in LLDB)
  - add support for PT_STEP, PT_GETREGS, PT_SETREGS, PT_GETFPREGS, PT_SETFPREGS
    in all ports
- - add proper implementation of PTRACE_VFORK for vfork(2)-like events
  - add ATF tests for SIGCHLD
  - fix more calls for netbsd32 compat
- - research ipkdb(4)
  - research kgdb(4)
  - check 64-bit debugger on 64-bit kernel tracing capabilities of 32-bit tracee
 
