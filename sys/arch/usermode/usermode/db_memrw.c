@@ -1,4 +1,4 @@
-/*	$NetBSD: db_memrw.c,v 1.3 2018/08/03 11:18:22 reinoud Exp $	*/
+/*	$NetBSD: db_memrw.c,v 1.4 2018/08/05 18:57:49 reinoud Exp $	*/
 
 /*-
  * Copyright (c) 1996, 2000 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_memrw.c,v 1.3 2018/08/03 11:18:22 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_memrw.c,v 1.4 2018/08/05 18:57:49 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -226,14 +226,14 @@ db_write_bytes(vaddr_t addr, size_t size, const char *data)
 	/*
 	 * if we are in the kernel range, just allow writing by using
 	 * mprotect(); Note that this needs an unprotected binary, set with
-	 * `paxctl -agm netbsd`
+	 * `paxctl +agm netbsd`
 	 */
 	if (addr > kmem_k_start) {
 		ret = thunk_mprotect((void *) trunc_page(addr), PAGE_SIZE,
 			PROT_READ | PROT_WRITE | PROT_EXEC);
 		if (ret != 0)
 			panic("please unprotect kernel binary with "
-			      "`paxctl -agm netbsd`");
+			      "`paxctl +agm netbsd`");
 		assert(ret == 0);
 	}
 
