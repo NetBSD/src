@@ -1,4 +1,4 @@
-/*	$NetBSD: imx7_machdep.c,v 1.7 2018/07/17 18:41:01 christos Exp $	*/
+/*	$NetBSD: imx7_machdep.c,v 1.8 2018/08/05 13:05:45 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx7_machdep.c,v 1.7 2018/07/17 18:41:01 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx7_machdep.c,v 1.8 2018/08/05 13:05:45 skrll Exp $");
 
 #include "opt_evbarm_boardtype.h"
 #include "opt_arm_debug.h"
@@ -81,8 +81,6 @@ u_int uboot_args[4] __attribute__((__section__(".data")));
  * kernel address space.  *Not* for general use.
  */
 #define KERN_VTOPDIFF	((vaddr_t)KERNEL_BASE_phys - (vaddr_t)KERNEL_BASE_virt)
-#define KERN_VTOPHYS(va) ((paddr_t)((vaddr_t)va + (vaddr_t)KERN_VTOPDIFF))
-#define KERN_PHYSTOV(pa) ((vaddr_t)((paddr_t)pa - (vaddr_t)KERN_VTOPDIFF))
 
 #ifndef CONADDR
 #define CONADDR	(IMX7_AIPS_BASE + AIPS3_UART1_BASE)
@@ -159,6 +157,8 @@ u_int
 initarm(void *arg)
 {
 	psize_t memsize;
+
+	kern_vtopdiff = KERN_VTOPDIFF;
 
 	pmap_devmap_register(devmap);
 	imx7_bootstrap(KERNEL_IO_IOREG_VBASE);
