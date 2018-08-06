@@ -1,4 +1,4 @@
-/*	$NetBSD: bitops.h,v 1.12 2018/08/06 00:29:49 riastradh Exp $	*/
+/*	$NetBSD: bitops.h,v 1.13 2018/08/06 00:29:57 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -171,7 +171,8 @@ find_first_zero_bit(const unsigned long *ptr, unsigned long nbits)
 			break;
 	}
 
-	result += ffs(~*p | (~0UL << MIN(nbits, bpl)));
+	CTASSERT(sizeof(unsigned long) <= sizeof(uint64_t));
+	result += ffs64(~(uint64_t)*p | (~0UL << MIN(nbits, bpl)));
 	return result;
 }
 
