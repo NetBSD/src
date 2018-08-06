@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.10 2014/01/09 02:18:10 christos Exp $
+# $NetBSD: Makefile,v 1.11 2018/08/06 04:50:11 msaitoh Exp $
 
 .include <bsd.own.mk>
 
@@ -11,6 +11,7 @@ TESTSDIR=	${TESTSBASE}/lib/libc/net
 
 TESTS_C+=	t_getprotoent
 TESTS_C+=	t_ether_aton
+TESTS_C+=	t_if_nametoindex
 
 SRCS.t_ether_aton=	aton_ether_subr.c t_ether_aton.c
 
