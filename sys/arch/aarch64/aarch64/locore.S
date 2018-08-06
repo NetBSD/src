@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.15 2018/08/06 12:50:56 ryo Exp $	*/
+/*	$NetBSD: locore.S,v 1.16 2018/08/06 20:05:26 ryo Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -35,7 +35,7 @@
 #include <aarch64/hypervisor.h>
 #include "assym.h"
 
-RCSID("$NetBSD: locore.S,v 1.15 2018/08/06 12:50:56 ryo Exp $")
+RCSID("$NetBSD: locore.S,v 1.16 2018/08/06 20:05:26 ryo Exp $")
 
 /* #define DEBUG_LOCORE */
 /* #define DEBUG_MMU */
@@ -683,6 +683,38 @@ arm_boot_l0pt_init:
 9:
 	cmp	x2, x3
 	blo	1b
+
+
+	/* add eXecute Never bit from _rodata to _end */
+	VERBOSE("Set kernel rodata/data non-Executable\r\n")
+	ldr	x0, =__rodata_start
+	ands	x0, x0, #(L2_SIZE - 1)
+	beq	1f
+	PRINT("Warning: rodata section not aligned on size of L2 block\r\n")
+1:
+	/* x2 = l2pde_index(__rodata_start) */
+	ldr	x2, =__rodata_start
+	mov	x0, #(L2_SIZE - 1)
+	add	x2, x2, x0		/* round block */
+	and	x2, x2, #L2_ADDR_BITS
+	lsr	x2, x2, #L2_SHIFT
+
+	/* x3 = l2pde_inex(_end) */
+	ldr	x3, =_end
+	and	x3, x3, #L2_ADDR_BITS
+	lsr	x3, x3, #L2_SHIFT
+
+	ADDR	x1, ttbr1_l2table_kva
+	b	9f
+1:
+	ldr	x0, [x1, x2, lsl #3]	/* x0 = l2table[x2] */
+	orr	x0, x0, #(LX_BLKPAG_UXN|LX_BLKPAG_PXN)
+	str	x0, [x1, x2, lsl #3]	/* l2table[x2] = x0 */
+	add	x2, x2, #1
+9:
+	cmp	x2, x3			/* including the L2 block of _end[] */
+	bls	1b
+
 
 	VERBOSE("Creating devmap tables\r\n")
 	/* devmap=PA table for L1 */
