@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.h,v 1.6 2018/07/27 07:04:04 ryo Exp $ */
+/* $NetBSD: pmap.h,v 1.7 2018/08/06 12:50:56 ryo Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -107,7 +107,11 @@ struct vm_page_md {
 
 void pmap_bootstrap(vaddr_t, vaddr_t);
 bool pmap_fault_fixup(struct pmap *, vaddr_t, vm_prot_t, bool user);
+
+/* for ddb */
 void pmap_db_pteinfo(vaddr_t, void (*)(const char *, ...));
+pt_entry_t *kvtopte(vaddr_t);
+pt_entry_t pmap_kvattr(vaddr_t, vm_prot_t);
 
 /* Hooks for the pool allocator */
 paddr_t vtophys(vaddr_t);

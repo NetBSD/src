@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.14 2018/08/03 16:32:55 ryo Exp $	*/
+/*	$NetBSD: locore.S,v 1.15 2018/08/06 12:50:56 ryo Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -35,7 +35,7 @@
 #include <aarch64/hypervisor.h>
 #include "assym.h"
 
-RCSID("$NetBSD: locore.S,v 1.14 2018/08/03 16:32:55 ryo Exp $")
+RCSID("$NetBSD: locore.S,v 1.15 2018/08/06 12:50:56 ryo Exp $")
 
 /* #define DEBUG_LOCORE */
 /* #define DEBUG_MMU */
@@ -650,7 +650,6 @@ arm_boot_l0pt_init:
 	lsr	x4, x4, #L2_SHIFT
 	bl	l2_setblocks
 
-#ifndef DDB
 	/* map READONLY from VM_MIN_KERNEL_ADDRESS to __data_start */
 	VERBOSE("Set kernel text/rodata READONLY\r\n")
 	ldr	x3, =__data_start
@@ -684,7 +683,6 @@ arm_boot_l0pt_init:
 9:
 	cmp	x2, x3
 	blo	1b
-#endif
 
 	VERBOSE("Creating devmap tables\r\n")
 	/* devmap=PA table for L1 */
