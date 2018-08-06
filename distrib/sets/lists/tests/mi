@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.791 2018/08/06 04:50:11 msaitoh Exp $
+# $NetBSD: mi,v 1.792 2018/08/06 07:14:02 msaitoh Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2616,7 +2616,7 @@
 ./usr/tests/lib/libc/net/t_ether_aton		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/net/t_getprotoent		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/net/t_hostent		tests-lib-tests		compattestfile,atf
-./usr/tests/lib/libc/net/t_ifnametoindex		tests-lib-tests		compattestfile,atf
+./usr/tests/lib/libc/net/t_if_nametoindex		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/net/t_nsdispatch		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/net/t_protoent		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/net/t_servent		tests-lib-tests		compattestfile,atf
