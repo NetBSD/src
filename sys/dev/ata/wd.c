@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.439 2018/06/03 18:38:35 jdolecek Exp $ */
+/*	$NetBSD: wd.c,v 1.440 2018/08/06 20:07:05 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.439 2018/06/03 18:38:35 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.440 2018/08/06 20:07:05 jdolecek Exp $");
 
 #include "opt_ata.h"
 #include "opt_wd.h"
@@ -2162,3 +2162,26 @@ wd_sysctl_detach(struct wd_softc *wd)
 	sysctl_teardown(&wd->nodelog);
 }
 
+#ifdef ATADEBUG
+int wddebug(void);
+
+int
+wddebug(void)
+{
+	struct wd_softc *wd;
+	  struct dk_softc *dksc;
+	  int unit;
+
+	  for (unit = 0; unit <= 3; unit++) {
+		    wd = device_lookup_private(&wd_cd, unit);
+		    if (wd == NULL)
+				continue;
+		    dksc = &wd->sc_dksc;
+		printf("%s fl %x bufq %p:\n",
+		    dksc->sc_xname, wd->sc_flags, bufq_peek(dksc->sc_bufq));
+
+		atachannel_debug(wd->drvp->chnl_softc);
+	}
+	return 0;
+}
+#endif /* ATADEBUG */
