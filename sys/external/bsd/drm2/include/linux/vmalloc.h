@@ -1,7 +1,7 @@
-/*	$NetBSD: vmalloc.h,v 1.4 2014/08/23 08:03:33 riastradh Exp $	*/
+/*	$NetBSD: vmalloc.h,v 1.5 2018/08/06 00:30:07 riastradh Exp $	*/
 
 /*-
- * Copyright (c) 2013 The NetBSD Foundation, Inc.
+ * Copyright (c) 2013, 2018 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -38,6 +38,8 @@
 
 #include <linux/mm_types.h>
 
+#include <asm/page.h>
+
 static inline bool
 is_vmalloc_addr(void *addr)
 {
@@ -69,28 +71,67 @@ vfree(void *ptr)
 	return free(ptr, M_TEMP);
 }
 
-#define	PAGE_KERNEL	0	/* XXX pgprot */
+#define	PAGE_KERNEL	UVM_PROT_RW
 
+/*
+ * vmap(pages, npages, flags, prot)
+ *
+ *	Map pages[0], pages[1], ..., pages[npages-1] into contiguous
+ *	kernel virtual address space with the specified protection, and
+ *	return a KVA pointer to the start.
+ *
+ *	prot may be a bitwise ior of UVM_PROT_READ/WRITE/EXEC and
+ *	PMAP_* cache flags accepted by pmap_enter().
+ */
 static inline void *
-vmap(struct page **pages, unsigned npages, unsigned long flags __unused,
-    pgprot_t prot __unused)
+vmap(struct page **pages, unsigned npages, unsigned long flags,
+    pgprot_t protflags)
 {
+	vm_prot_t justprot = protflags & UVM_PROT_ALL;
 	vaddr_t va;
+	unsigned i;
 
-	/* XXX Sleazy cast should be OK here.  */
-	__CTASSERT(sizeof(*pages[0]) == sizeof(struct vm_page));
-	va = uvm_pagermapin((struct vm_page **)pages, npages, 0);
+	/* Allocate some KVA, or return NULL if we can't.  */
+	va = uvm_km_alloc(kernel_map, (vsize_t)npages << PAGE_SHIFT, PAGE_SIZE,
+	    UVM_KMF_VAONLY|UVM_KMF_NOWAIT);
 	if (va == 0)
 		return NULL;
+
+	/* Ask pmap to map the KVA to the specified page addresses.  */
+	for (i = 0; i < npages; i++) {
+		pmap_kenter_pa(va + i*PAGE_SIZE, page_to_phys(pages[i]),
+		    justprot, protflags);
+	}
+
+	/* Commit the pmap updates.  */
+	pmap_update(pmap_kernel());
 
 	return (void *)va;
 }
 
+/*
+ * vunmap(ptr, npages)
+ *
+ *	Unmap the KVA pages starting at ptr that were mapped by a call
+ *	to vmap with the same npages parameter.
+ */
 static inline void
 vunmap(void *ptr, unsigned npages)
 {
+	vaddr_t va = (vaddr_t)ptr;
 
-	uvm_pagermapout((vaddr_t)ptr, npages);
+	/* Ask pmap to unmap the KVA.  */
+	pmap_kremove(va, (vsize_t)npages << PAGE_SHIFT);
+
+	/* Commit the pmap updates.  */
+	pmap_update(pmap_kernel());
+
+	/*
+	 * Now that the pmap is no longer mapping the KVA we allocated
+	 * on any CPU, it is safe to free the KVA.
+	 */
+	uvm_km_free(kernel_map, va, (vsize_t)npages << PAGE_SHIFT,
+	    UVM_KMF_VAONLY);
 }
 
 #endif  /* _LINUX_VMALLOC_H_ */
