@@ -1,4 +1,4 @@
-/*	$NetBSD: atavar.h,v 1.97 2018/06/01 18:13:30 macallan Exp $	*/
+/*	$NetBSD: atavar.h,v 1.98 2018/08/06 20:07:05 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -574,6 +574,10 @@ bool	ata_waitdrain_xfer_check(struct ata_channel *, struct ata_xfer *);
 
 void	atacmd_toncq(struct ata_xfer *, uint8_t *, uint16_t *, uint16_t *,
 	    uint8_t *);
+
+#ifdef ATADEBUG
+void	atachannel_debug(struct ata_channel *);
+#endif
 
 #endif /* _KERNEL */
 

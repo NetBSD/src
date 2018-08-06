@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_subr.c,v 1.4 2017/10/20 07:06:07 jdolecek Exp $	*/
+/*	$NetBSD: ata_subr.c,v 1.5 2018/08/06 20:07:05 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata_subr.c,v 1.4 2017/10/20 07:06:07 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata_subr.c,v 1.5 2018/08/06 20:07:05 jdolecek Exp $");
 
 #include "opt_ata.h"
 
@@ -436,3 +436,31 @@ ata_channel_lock_owned(struct ata_channel *chp)
 {
 	KASSERT(mutex_owned(&chp->ch_lock));
 }
+
+#ifdef ATADEBUG
+void
+atachannel_debug(struct ata_channel *chp)
+{
+	struct ata_queue *chq = chp->ch_queue;
+
+	printf("  ch %s flags 0x%x ndrives %d\n",
+	    device_xname(chp->atabus), chp->ch_flags, chp->ch_ndrives);
+	printf("  que: flags 0x%x avail 0x%x used 0x%x\n",
+	    chq->queue_flags, chq->queue_xfers_avail, chq->active_xfers_used);
+	printf("        act %d freez %d open %u\n",
+	    chq->queue_active, chq->queue_freeze, chq->queue_openings);
+
+#if 0
+	printf("  xfers:\n");
+	for(int i=0; i < chq->queue_openings; i++) {
+		struct ata_xfer *xfer = &chq->queue_xfers[i];
+
+		printf("    #%d sl %d drv %d retr %d fl %x",
+		    i, xfer->c_slot, xfer->c_drive, xfer->c_retries,
+		    xfer->c_flags);
+		printf(" data %p bcount %d skip %d\n",
+		    xfer->c_databuf, xfer->c_bcount, xfer->c_skip);
+	}
+#endif
+}
+#endif /* ATADEBUG */
