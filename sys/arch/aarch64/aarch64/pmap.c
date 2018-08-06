@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.16 2018/07/31 07:00:48 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.17 2018/08/06 12:50:56 ryo Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.16 2018/07/31 07:00:48 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.17 2018/08/06 12:50:56 ryo Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_ddb.h"
@@ -1990,6 +1990,90 @@ pmap_is_referenced(struct vm_page *pg)
 }
 
 #ifdef DDB
+/* get pointer to kernel segment L2 or L3 table entry */
+pt_entry_t *
+kvtopte(vaddr_t va)
+{
+	pd_entry_t *l0, *l1, *l2, *l3;
+	pd_entry_t pde;
+	pt_entry_t *ptep;
+	unsigned int idx;
+
+	KASSERT(VM_MIN_KERNEL_ADDRESS <= va && va < VM_MAX_KERNEL_ADDRESS);
+
+	/*
+	 * traverse L0 -> L1 -> L2 block (or -> L3 table)
+	 */
+	l0 = pmap_kernel()->pm_l0table;
+
+	idx = l0pde_index(va);
+	pde = l0[idx];
+	if (!l0pde_valid(pde))
+		return NULL;
+
+	l1 = (void *)AARCH64_PA_TO_KVA(l0pde_pa(pde));
+	idx = l1pde_index(va);
+	pde = l1[idx];
+	if (!l1pde_valid(pde))
+		return NULL;
+
+	if (l1pde_is_block(pde))
+		return NULL;
+
+	l2 = (void *)AARCH64_PA_TO_KVA(l1pde_pa(pde));
+	idx = l2pde_index(va);
+	pde = l2[idx];
+	if (!l2pde_valid(pde))
+		return NULL;
+	if (l2pde_is_block(pde))
+		return &l2[idx];	/* kernel text/data use L2 blocks */
+
+	l3 = (void *)AARCH64_PA_TO_KVA(l2pde_pa(pde));
+	idx = l3pte_index(va);
+	ptep = &l3[idx];		/* or may use L3 page? */
+
+	return ptep;
+}
+
+/* change attribute of kernel segment */
+pt_entry_t
+pmap_kvattr(vaddr_t va, vm_prot_t prot)
+{
+	pt_entry_t *ptep, pte, opte;
+
+	KASSERT(VM_MIN_KERNEL_ADDRESS <= va && va < VM_MAX_KERNEL_ADDRESS);
+
+	ptep = kvtopte(va);
+	if (ptep == NULL)
+		panic("%s: %016lx is not mapped\n", __func__, va);
+
+	opte = pte = *ptep;
+
+	pte &= ~(LX_BLKPAG_AF|LX_BLKPAG_AP);
+	switch (prot & (VM_PROT_READ|VM_PROT_WRITE)) {
+	case 0:
+		break;
+	case VM_PROT_READ:
+		pte |= (LX_BLKPAG_AF|LX_BLKPAG_AP_RO);
+		break;
+	case VM_PROT_WRITE:
+	case VM_PROT_READ|VM_PROT_WRITE:
+		pte |= (LX_BLKPAG_AF|LX_BLKPAG_AP_RW);
+		break;
+	}
+
+	if ((prot & VM_PROT_EXECUTE) == 0) {
+		pte |= (LX_BLKPAG_UXN|LX_BLKPAG_PXN);
+	} else {
+		pte |= LX_BLKPAG_AF;
+		pte &= ~(LX_BLKPAG_UXN|LX_BLKPAG_PXN);
+	}
+
+	*ptep = pte;
+
+	return opte;
+}
+
 static void
 pmap_db_pte_print(pt_entry_t pte, int level, void (*pr)(const char *, ...))
 {
