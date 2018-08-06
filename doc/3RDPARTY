@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1536 2018/08/05 17:39:55 alnsn Exp $
+#	$NetBSD: 3RDPARTY,v 1.1537 2018/08/06 21:58:22 sevan Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -1068,6 +1068,7 @@ markus is very cooperative about it):
 - add all missing functions
 - always bump major when importing to avoid api problems.
 - make compile with gcc-4.5; const fixes, fileno() checks, shadow fixes.
+- adjust the DEFAULT_PKCS11_WHITELIST for ssh-agent
 
 Package:	OpenSSL
 Version:	1.0.2o/1.1.0h
@@ -1130,7 +1131,7 @@ pdksh-5.2.14-patches.1 and pdksh-5.2.14-patches.2 have been applied.
 
 Package:	PF (openbsd packet filter)
 Version:	OpenBSD 4.2
-Current Vers:	OpenBSD 6.1-current
+Current Vers:	OpenBSD 6.3-current
 Maintainer:	The OpenBSD Project
 Archive Site:	ftp://ftp.openbsd.org/
 Home Page:	http://www.openbsd.org/faq/pf/
@@ -1457,7 +1458,7 @@ Remember to run cleantags
 
 Package:	services, protocols
 Version:	2013-02-21 (services), 2013-02-17 (protocols)
-Current Vers:	2013-11-27 (services), 2013-11-12 (protocols)
+Current Vers:	2018-08-01 (services), 2017-10-13 (protocols)
 Maintainer:	IANA
 Archive Site:	http://www.iana.org/assignments/service-names-port-numbers/service-names-port-numbers.txt (services)
 Archive Site:	http://www.iana.org/assignments/protocol-numbers/protocol-numbers.txt (protocols)
