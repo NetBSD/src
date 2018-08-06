@@ -1,4 +1,4 @@
-/* $NetBSD: db_interface.c,v 1.4 2018/06/03 20:18:10 christos Exp $ */
+/* $NetBSD: db_interface.c,v 1.5 2018/08/06 12:50:56 ryo Exp $ */
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,16 +27,18 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.4 2018/06/03 20:18:10 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.5 2018/08/06 12:50:56 ryo Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
 
 #include <uvm/uvm.h>
+#include <uvm/uvm_prot.h>
 
 #include <aarch64/db_machdep.h>
 #include <aarch64/machdep.h>
 #include <aarch64/pmap.h>
+#include <aarch64/cpufunc.h>
 
 #include <ddb/db_access.h>
 #include <ddb/db_command.h>
@@ -88,11 +90,73 @@ db_read_bytes(vaddr_t addr, size_t size, char *data)
 	}
 }
 
+static void
+db_write_text(vaddr_t addr, size_t size, const char *data)
+{
+	pt_entry_t *ptep, pte;
+	size_t s;
+
+	/*
+	 * consider page boundary, and
+	 * it works even if kernel_text is mapped with L2 or L3.
+	 */
+	if (atop(addr) != atop(addr + size - 1)) {
+		s = PAGE_SIZE - (addr & PAGE_MASK);
+		db_write_text(addr, s, data);
+		addr += s;
+		size -= s;
+		data += s;
+	}
+	while (size > 0) {
+		ptep = kvtopte(addr);
+		KASSERT(ptep != NULL);
+
+		/* save pte */
+		pte = *ptep;
+
+		/* change to writable */
+		pmap_kvattr(addr, VM_PROT_READ|VM_PROT_WRITE);
+		aarch64_tlbi_all();
+
+		s = size;
+		if (size > PAGE_SIZE)
+			s = PAGE_SIZE;
+
+		memcpy((void *)addr, data, s);
+		cpu_icache_sync_range(addr, size);
+
+		/* restore pte */
+		*ptep = pte;
+		aarch64_tlbi_all();
+
+		addr += s;
+		size -= s;
+		data += s;
+	}
+}
+
 void
 db_write_bytes(vaddr_t addr, size_t size, const char *data)
 {
+	vaddr_t kernstart, datastart;
 	vaddr_t lastpage = -1;
 	char *dst;
+
+	/* if readonly page, require changing attribute to write */
+	extern char __kernel_text[], __data_start[];
+	kernstart = trunc_page((vaddr_t)__kernel_text);
+	datastart = trunc_page((vaddr_t)__data_start);
+	if (kernstart <= addr && addr < datastart) {
+		size_t s;
+
+		s = datastart - addr;
+		if (s > size)
+			s = size;
+		db_write_text(addr, s, data);
+		addr += s;
+		size -= s;
+		data += s;
+	}
 
 	/* XXX: need to check read only block/page */
 	for (dst = (char *)addr; size > 0;) {
