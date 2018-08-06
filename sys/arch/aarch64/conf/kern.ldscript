@@ -20,6 +20,9 @@ SECTIONS
     *(.stub .text.* .gnu.linkonce.t.*)
     /* .gnu.warning sections are handled specially by elf32.em.  */
   } =0
+  /* Move .rodata to the next L2 block to set unexecutable */
+  . = ALIGN (L2_SIZE);
+  PROVIDE (__rodata_start = .);
   .rodata         : { *(.rodata .rodata.* .gnu.linkonce.r.*) }
   .rodata1        : { *(.rodata1) }
   .eh_frame_hdr : { *(.eh_frame_hdr) }
