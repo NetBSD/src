@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.430 2018/07/09 14:54:01 christos Exp $	*/
+/*	$NetBSD: if.c,v 1.431 2018/08/06 06:54:40 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.430 2018/07/09 14:54:01 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.431 2018/08/06 06:54:40 msaitoh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -3779,7 +3779,7 @@ sysctl_net_pktq_setup(struct sysctllog **clog, int pf)
 		       CTL_NET, pf, ipn, qid, IFQCTL_MAXLEN, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
-		       CTLTYPE_INT, "drops",
+		       CTLTYPE_QUAD, "drops",
 		       SYSCTL_DESCR("Packets dropped due to full input queue"),
 		       drops_func, 0, NULL, 0,
 		       CTL_NET, pf, ipn, qid, IFQCTL_DROPS, CTL_EOL);
