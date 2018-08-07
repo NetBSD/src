@@ -1,7 +1,10 @@
-$NetBSD: TODO.smpnet,v 1.20 2018/06/25 09:32:28 msaitoh Exp $
+$NetBSD: TODO.smpnet,v 1.21 2018/08/07 07:19:09 ozaki-r Exp $
 
 MP-safe components
 ==================
+
+They work without the big kernel lock (KERNEL_LOCK), i.e., with NET_MPSAFE
+kernel option.  Some components scale up and some don't.
 
  - Device drivers
    - vioif(4)
@@ -34,8 +37,25 @@ MP-safe components
 Non MP-safe components and kernel options
 =========================================
 
+The components and options aren't MP-safe, i.e., requires the big kernel lock,
+yet.  Some of them can be used safely even if NET_MPSAFE is enabled because
+they're still protected by the big kernel lock.  The others aren't protected and
+so unsafe, e.g, they may crash the kernel.
+
+Protected ones
+--------------
+
  - Device drivers
    - Most drivers other than ones listed in the above section
+ - Layer 4
+   - DCCP
+   - SCTP
+   - TCP
+   - UDP
+
+Unprotected ones
+----------------
+
  - Layer 2
    - ARCNET (if_arcsubr.c)
    - ATM (if_atmsubr.c)
@@ -51,11 +71,6 @@ Non MP-safe components and kernel options
    - PIM
    - MPLS (mpls(4))
    - IPv6 address selection policy
- - Layer 4
-   - DCCP
-   - SCTP
-   - TCP
-   - UDP
  - Interfaces
    - agr(4)
    - carp(4)
