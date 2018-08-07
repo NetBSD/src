@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2.c,v 1.49 2018/04/09 16:21:11 jakllsch Exp $	*/
+/*	$NetBSD: dwc2.c,v 1.50 2018/08/07 08:36:30 rin Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc2.c,v 1.49 2018/04/09 16:21:11 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc2.c,v 1.50 2018/08/07 08:36:30 rin Exp $");
 
 #include "opt_usb.h"
 
@@ -1475,7 +1475,9 @@ void dwc2_host_complete(struct dwc2_hsotg *hsotg, struct dwc2_qtd *qtd,
 		 * everything else does.
 		 */
 		if (!(xfertype == UE_CONTROL &&
-		    UGETW(xfer->ux_request.wLength) == 0)) {
+		    UGETW(xfer->ux_request.wLength) == 0) &&
+		    xfer->ux_actlen > 0	/* XXX PR/53503 */
+		    ) {
 			int rd = usbd_xfer_isread(xfer);
 
 			usb_syncmem(&xfer->ux_dmabuf, 0, xfer->ux_actlen,
