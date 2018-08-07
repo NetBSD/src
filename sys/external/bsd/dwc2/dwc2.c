@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2.c,v 1.50 2018/08/07 08:36:30 rin Exp $	*/
+/*	$NetBSD: dwc2.c,v 1.51 2018/08/07 16:35:08 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc2.c,v 1.50 2018/08/07 08:36:30 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc2.c,v 1.51 2018/08/07 16:35:08 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -1327,6 +1327,11 @@ dwc2_init(struct dwc2_softc *sc)
 	    hsotg->hcd_enabled = 1;
         }
 #endif
+
+	uint32_t snpsid = hsotg->hw_params.snpsid;
+	aprint_verbose_dev(sc->sc_dev, "Core Release: %x.%x%x%x (snpsid=%x)\n",
+	    snpsid >> 12 & 0xf, snpsid >> 8 & 0xf,
+	    snpsid >> 4 & 0xf, snpsid & 0xf, snpsid);
 
 	return 0;
 
