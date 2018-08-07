@@ -1,4 +1,4 @@
-.\"    $NetBSD: npf.conf.5,v 1.51 2017/12/11 23:07:49 wiz Exp $
+.\"    $NetBSD: npf.conf.5,v 1.52 2018/08/07 00:22:13 sevan Exp $
 .\"
 .\" Copyright (c) 2009-2017 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd December 10, 2017
+.Dd August 7, 2018
 .Dt NPF.CONF 5
 .Os
 .Sh NAME
@@ -40,31 +40,30 @@ is the default configuration file for the NPF packet filter.
 .Pp
 This manual page serves as a reference for editing
 .Nm .
-Please refer to the official NPF documentation for comprehensive and
+Please refer to the official NPF documentation website for comprehensive and
 in-depth information.
 .Pp
-There are multiple structural elements
+There are multiple structural elements that
 .Nm
-may contain:
-.Cd variable
-and
-.Cd table
-definitions (with or without content), abstraction
-.Cd groups ,
-packet filtering
-.Cd rules ,
-.Cd map
-rules for address translation and
-.Cd procedure
-definitions to call on filtered packets.
-The minimal
-.Nm
-must contain a mandatory
-.Cd default group .
+may contain, such as:
+.Bl -bullet -offset indent
+.It
+variables
+.It
+table definitions (with or without content)
+.It
+abstraction groups
+.It
+packet filtering rules
+.It
+map rules for address translation
+.It
+procedure definitions to call on filtered packets.
+
 .Sh SYNTAX
 .Ss Variables
-Variables are specified using the dollar ($) sign, which is used both
-in definitions and uses of a variable.
+Variables are specified using the dollar ($) sign, which is used for both
+definition and referencing of a variable.
 Variables are defined by assigning a value to them as follows:
 .Bd -literal
 $var1 = 10.0.0.1
@@ -85,26 +84,28 @@ The following is an example of table definition:
 table <black> type hash dynamic
 .Pp
 .Ed
-Currently, tables support three storage types: "hash", "tree", or "cdb".
-They can also be "dynamic" or static i.e. loaded from the specified file.
+Currently, tables support three data storage types: "hash", "tree", or "cdb".
+Tables can also be set as containing "dynamic" or "static" data i.e. loaded from
+ a specified file.
+Tables of type "hash" and "cdb" can only contain IP addresses.
+Only static data can be used with a storage type of "cdb".
 .Pp
-The file should contain a list of IP addresses and/or networks in the form of:
+The specified file should contain a list of IP addresses and/or networks in the
+form of:
 .Bd -literal
 10.0.0.0/24
 10.1.1.1
 .Ed
-.Pp
-Tables of type "hash" and "cdb" can only contain IP addresses.
-Also, the latter can only be static.
 .Ss Interfaces
 Interfaces can be specified as the values of the variables:
 .Bd -literal
 $pub_if_list = { inet4(wm0), inet4(wm1) }
 .Ed
 .Pp
-In the context of filtering, an interface provides a list of its
-all IP addresses, including IPv4 and IPv6.
-Specific interface addresses can be selected by the family, e.g.:
+In the context of filtering, an interface provides a list of all its IP
+addresses, both IPv4 and IPv6.
+Specific addresses configured on an interface can also be selected by family,
+e.g.:
 .Bd -literal
 $pub_if4 = inet4(wm0)
 $pub_if46 = { inet4(wm0), inet6(wm0) }
@@ -123,10 +124,11 @@ reflecting any changes to the interface, including the attach and detach.
 Marking the interface as ``down'' has no effect, i.e. all addresses will
 remain present.
 .Pp
-The dynamic address list represents both the IPv4 and IPv6 addresses,
-therefore the
+A dynamic address list represents both the IPv4 and IPv6 addresses configured on
+an interface.
+The
 .Cd family
-keyword can be used in combination to make the filtering more narrow.
+keyword can be used in combination of a filtering rule to be explicit. 
 .Ss Groups
 Groups may have the following options: name, interface, and direction.
 They are defined in the following form:
@@ -135,13 +137,17 @@ group "my-name" in on wm0 {
 	# List of rules
 }
 .Ed
+A minimal
+.Nm
+must contain a mandatory
+.Cd default group .
 .Ss Rules
 With a rule statement NPF is instructed to
 .Cd pass
 or
 .Cd block
 a packet depending on packet header information, transit direction and
-interface it arrives on, either immediately upon match (keyword
+the interface it arrived on, either immediately upon match (keyword
 .Cd final )
 or using the last match.
 The rule can also instruct NPF to create an entry in the state table
@@ -396,6 +402,8 @@ group default {
 .Xr pcap-filter 7 ,
 .Xr npfctl 8 ,
 .Xr npfd 8
+.Pp
+.Lk http://www.netbsd.org/~rmind/npf/ "NPF documentation website"
 .Sh HISTORY
 NPF first appeared in
 .Nx 6.0 .
