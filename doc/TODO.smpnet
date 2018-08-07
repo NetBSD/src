@@ -1,4 +1,4 @@
-$NetBSD: TODO.smpnet,v 1.21 2018/08/07 07:19:09 ozaki-r Exp $
+$NetBSD: TODO.smpnet,v 1.22 2018/08/07 07:19:28 ozaki-r Exp $
 
 MP-safe components
 ==================
@@ -21,6 +21,7 @@ kernel option.  Some components scale up and some don't.
    - All except for items in the below section
  - Interfaces
    - gif(4)
+   - ipsecif(4)
    - l2tp(4)
    - pppoe(4)
      - if_spppsubr.c
