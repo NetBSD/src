@@ -1,4 +1,4 @@
-/*	$NetBSD: vi.c,v 1.6 2014/01/26 21:43:45 christos Exp $ */
+/*	$NetBSD: vi.c,v 1.7 2018/08/07 08:05:47 rin Exp $ */
 /*-
  * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -16,7 +16,7 @@
 static const char sccsid[] = "Id: vi.c,v 10.73 2002/04/11 19:49:30 skimo Exp  (Berkeley) Date: 2002/04/11 19:49:30 ";
 #endif /* not lint */
 #else
-__RCSID("$NetBSD: vi.c,v 1.6 2014/01/26 21:43:45 christos Exp $");
+__RCSID("$NetBSD: vi.c,v 1.7 2018/08/07 08:05:47 rin Exp $");
 #endif
 
 #include <sys/types.h>
@@ -76,6 +76,9 @@ vi(SCR **spp)
 	VICMD cmd, *vp;
 	VI_PRIVATE *vip;
 	int comcount, mapped, rval;
+#ifdef IMCTRL
+	int ret;
+#endif
 
 	/* Get the first screen. */
 	sp = *spp;
@@ -236,8 +239,18 @@ vi(SCR **spp)
 		v_comlog(sp, vp);
 #endif
 		/* Call the function. */
+#ifndef IMCTRL
 ex_continue:	if (vp->kp->func(sp, vp))
 			goto err;
+#else
+ex_continue:	if (strchr(O_STR(sp, O_IMKEY), vp->key))
+			sp->gp->scr_imctrl(sp, IMCTRL_ON);
+		ret = vp->kp->func(sp, vp);
+		if (strchr(O_STR(sp, O_IMKEY), vp->key))
+			sp->gp->scr_imctrl(sp, IMCTRL_OFF);
+		if (ret)
+			goto err;
+#endif
 #ifdef DEBUG
 		/* Make sure no function left the temporary space locked. */
 		if (F_ISSET(wp, W_TMP_INUSE)) {
@@ -712,7 +725,17 @@ usage:			if (ismotion == NULL)
 
 	/* Pick up required trailing character. */
 	if (LF_ISSET(V_CHAR))
+#ifndef IMCTRL
 		KEY(vp->character, 0);
+#else
+	{
+		if (strchr(O_STR(sp, O_IMKEY), vp->key))
+			sp->gp->scr_imctrl(sp, IMCTRL_ON);
+		KEY(vp->character, 0);
+		if (strchr(O_STR(sp, O_IMKEY), vp->key))
+			sp->gp->scr_imctrl(sp, IMCTRL_OFF);
+	}
+#endif
 
 	/* Get any associated cursor word. */
 	if (F_ISSET(kp, V_KEYW) && v_curword(sp))
@@ -747,6 +770,9 @@ v_motion(SCR *sp, VICMD *dm, VICMD *vp, int *mappedp)
 	u_long cnt;
 	u_int flags;
 	int tilde_reset, notused;
+#ifdef IMKEY
+	int rval;
+#endif
 
 	/*
 	 * If '.' command, use the dot motion, else get the motion command.
@@ -869,8 +895,18 @@ v_motion(SCR *sp, VICMD *dm, VICMD *vp, int *mappedp)
 		    motion.m_stop.cno = motion.m_start.cno = sp->cno;
 
 		/* Run the function. */
+#ifndef IMKEY
 		if ((motion.kp->func)(sp, &motion))
 			return (1);
+#else
+		if (strchr(O_STR(sp, O_IMKEY), motion.key))
+			imreset(sp);
+		rval = (motion.kp->func)(sp, &motion);
+		if (strchr(O_STR(sp, O_IMKEY), motion.key))
+			imoff(sp);
+		if (rval)
+			return (1);
+#endif
 
 		/*
 		 * If the current line is missing, i.e. the file is empty,

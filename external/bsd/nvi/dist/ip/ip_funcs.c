@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_funcs.c,v 1.4 2014/01/26 21:43:45 christos Exp $	*/
+/*	$NetBSD: ip_funcs.c,v 1.5 2018/08/07 08:05:47 rin Exp $	*/
 /*-
  * Copyright (c) 1996
  *	Keith Bostic.  All rights reserved.
@@ -14,7 +14,7 @@
 static const char sccsid[] = "Id: ip_funcs.c,v 8.23 2001/06/25 15:19:23 skimo Exp  (Berkeley) Date: 2001/06/25 15:19:23 ";
 #endif /* not lint */
 #else
-__RCSID("$NetBSD: ip_funcs.c,v 1.4 2014/01/26 21:43:45 christos Exp $");
+__RCSID("$NetBSD: ip_funcs.c,v 1.5 2018/08/07 08:05:47 rin Exp $");
 #endif
 
 #include <sys/types.h>
@@ -315,6 +315,23 @@ ip_ex_adjust(SCR *sp, exadj_t action)
 	abort();
 	/* NOTREACHED */
 }
+
+#ifdef IMCTRL
+/*
+ * ip_imctrl --
+ *	XXX not implemented yet.
+ *
+ * PUBLIC: #ifdef IMCTRL
+ * PUBLIC: void ip_imctrl __P((SCR *, imctrl_t));
+ * PUBLIC: #endif
+ */
+void
+ip_imctrl(SCR *sp, imctrl_t action)
+{
+
+	return;
+}
+#endif
 
 /*
  * ip_insertln --

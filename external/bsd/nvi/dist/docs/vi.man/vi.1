@@ -1,4 +1,4 @@
-.\"	$NetBSD: vi.1,v 1.5 2016/12/27 06:50:03 abhinav Exp $
+.\"	$NetBSD: vi.1,v 1.6 2018/08/07 08:05:47 rin Exp $
 .\"
 .\" Copyright (c) 1994
 .\"     The Regents of the University of California.  All rights reserved.
@@ -12,7 +12,7 @@
 .\"
 .\"     Id: vi.1,v 8.53 2001/01/28 13:20:06 skimo Exp  (Berkeley) Date: 2001/01/28 13:20:06 
 .\"
-.TH VI 1 "November 22, 2013"
+.TH VI 1 "August 7, 2018"
 .UC
 .SH NAME
 ex, vi, view \- text editors
@@ -1146,6 +1146,19 @@ as long as an upper-case letter does not appear in the search string.
 .TP
 .B "ignorecase, ic [off]"
 Ignore case differences in regular expressions.
+.TP
+.B "imctrl [off]"
+Control input method by using escape sequences compatible to
+Tera Term and RLogin.
+The state of input method in commands specified by imkey option is
+saved and restored automatically.
+Input method is then deactivated on returning to command mode.
+If terminal does not accept these escape sequences,
+screen should be corrupted.
+.TP
+.B "imkey [/?aioAIO]"
+Set commands which the state of input method is restored and saved on
+entering and leaving, respectively.
 .TP
 .B "keytime [6]"
 The 10th's of a second

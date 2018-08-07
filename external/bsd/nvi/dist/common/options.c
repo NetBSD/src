@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.5 2017/11/06 03:21:13 rin Exp $ */
+/*	$NetBSD: options.c,v 1.6 2018/08/07 08:05:47 rin Exp $ */
 /*-
  * Copyright (c) 1991, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -16,7 +16,7 @@
 static const char sccsid[] = "Id: options.c,v 10.65 2002/01/18 22:34:43 skimo Exp  (Berkeley) Date: 2002/01/18 22:34:43 ";
 #endif /* not lint */
 #else
-__RCSID("$NetBSD: options.c,v 1.5 2017/11/06 03:21:13 rin Exp $");
+__RCSID("$NetBSD: options.c,v 1.6 2018/08/07 08:05:47 rin Exp $");
 #endif
 
 #include <sys/types.h>
@@ -112,6 +112,18 @@ OPTLIST const optlist[] = {
 	{L("iclower"),	f_recompile,	OPT_0BOOL,	0},
 /* O_IGNORECASE	    4BSD */
 	{L("ignorecase"),	f_recompile,	OPT_0BOOL,	0},
+/* O_IMCTRL	nvi-m17n/NetBSD */
+#ifdef IMCTRL
+	{L("imctrl"),	f_imctrl,	OPT_0BOOL,	0},
+#else
+	{L("imctrl"),	NULL,		OPT_0BOOL,	OPT_NDISP|OPT_NOSAVE|OPT_NOSET},
+#endif
+/* O_IMKEY	nvi-m17n/NetBSD */
+#ifdef IMCTRL
+	{L("imkey"),	NULL,		OPT_STR,	0},
+#else
+	{L("imkey"),	NULL,		OPT_STR,	OPT_NDISP|OPT_NOSAVE},
+#endif
 /* O_INPUTENCODING */
 	{L("inputencoding"),f_encoding,	OPT_STR,	OPT_WC},
 /* O_KEYTIME	  4.4BSD */
@@ -405,6 +417,9 @@ opts_init(SCR *sp, int *oargs)
 	OI(O_TABSTOP, L("tabstop=8"));
 	(void)SPRINTF(b2, SIZE(b2), L("tags=%s"), _PATH_TAGS);
 	OI(O_TAGS, b2);
+#ifdef IMCTRL
+	OI(O_IMKEY, L("imkey=/?aioAIO"));
+#endif
 
 	/*
 	 * XXX

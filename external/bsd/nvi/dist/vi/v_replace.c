@@ -1,4 +1,4 @@
-/*	$NetBSD: v_replace.c,v 1.3 2014/01/26 21:43:45 christos Exp $ */
+/*	$NetBSD: v_replace.c,v 1.4 2018/08/07 08:05:47 rin Exp $ */
 /*-
  * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -16,7 +16,7 @@
 static const char sccsid[] = "Id: v_replace.c,v 10.24 2001/06/25 15:19:34 skimo Exp  (Berkeley) Date: 2001/06/25 15:19:34 ";
 #endif /* not lint */
 #else
-__RCSID("$NetBSD: v_replace.c,v 1.3 2014/01/26 21:43:45 christos Exp $");
+__RCSID("$NetBSD: v_replace.c,v 1.4 2018/08/07 08:05:47 rin Exp $");
 #endif
 
 #include <sys/types.h>
@@ -136,6 +136,9 @@ next:		if (v_event_get(sp, &ev, 0, 0))
 			return (0);
 		case E_WRESIZE:
 			/* <resize> interrupts the input mode. */
+#ifdef IMCTRL
+			sp->gp->scr_imctrl(sp, IMCTRL_OFF);
+#endif
 			v_emsg(sp, NULL, VIM_WRESIZE);
 			return (0);
 		case E_REPAINT:

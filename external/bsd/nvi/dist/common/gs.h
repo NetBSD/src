@@ -1,4 +1,4 @@
-/*	$NetBSD: gs.h,v 1.3 2013/11/25 22:43:46 christos Exp $ */
+/*	$NetBSD: gs.h,v 1.4 2018/08/07 08:05:47 rin Exp $ */
 /*-
  * Copyright (c) 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -44,6 +44,11 @@ typedef enum { EX_TERM_CE, EX_TERM_SCROLL } exadj_t;
 
 /* Screen attribute arguments to scr_attr(). */
 typedef enum { SA_ALTERNATE, SA_INVERSE } scr_attr_t;
+
+#ifdef IMCTRL
+/* Input method control arguments to scr_imctrl(). */
+typedef enum { IMCTRL_INIT, IMCTRL_OFF, IMCTRL_ON } imctrl_t;
+#endif
 
 /* Key type arguments to scr_keyval(). */
 typedef enum { KEY_VEOF, KEY_VERASE, KEY_VKILL, KEY_VWERASE } scr_keyval_t;
@@ -152,6 +157,10 @@ struct _gs {
 	    __P((SCR *, seq_t, CHAR_T *, size_t, CHAR_T *, size_t));
 					/* Get terminal key value. */
 	int	(*scr_keyval) __P((SCR *, scr_keyval_t, CHAR_T *, int *));
+#ifdef IMCTRL
+					/* Control the state of input method. */
+	void	(*scr_imctrl) __P((SCR *, imctrl_t));
+#endif
 					/* Insert a line. */
 	int	(*scr_insertln) __P((SCR *));
 					/* Handle an option change. */
