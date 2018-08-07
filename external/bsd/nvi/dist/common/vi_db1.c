@@ -15,7 +15,7 @@
 static const char sccsid[] = "Id: db1.c,v 10.1 2002/03/09 12:53:57 skimo Exp  (Berkeley) Date: 2002/03/09 12:53:57 ";
 #endif /* not lint */
 #else
-__RCSID("$NetBSD: vi_db1.c,v 1.9 2017/11/10 14:35:25 rin Exp $");
+__RCSID("$NetBSD: vi_db1.c,v 1.10 2018/08/07 11:25:45 rin Exp $");
 #endif
 
 #include <sys/types.h>
@@ -98,7 +98,6 @@ db_get(SCR *sp, db_recno_t lno, u_int32_t flags, CHAR_T **pp, size_t *lenp)
 	db_recno_t l1, l2;
 	const CHAR_T *wp;
 	size_t wlen;
-	size_t nlen;
 
 	/*
 	 * The underlying recno stuff handles zero by returning NULL, but
@@ -159,11 +158,6 @@ db_get(SCR *sp, db_recno_t lno, u_int32_t flags, CHAR_T **pp, size_t *lenp)
 	sp->c_lno = OOBLNO;
 
 nocache:
-	nlen = 1024;
-retry:
-	/* data.size contains length in bytes */
-	BINC_GOTO(sp, CHAR_T, sp->c_lp, sp->c_blen, nlen);
-
 	/* Get the line from the underlying database. */
 	key.data = &lno;
 	key.size = sizeof(lno);
@@ -179,12 +173,8 @@ err3:		if (lenp != NULL)
 		if (pp != NULL)
 			*pp = NULL;
 		return (1);
-	case 0:
-		if (data.size > nlen) {
-			nlen = data.size;
-			goto retry;
-		} else
-			memcpy(sp->c_lp, data.data, data.size);
+	default:
+		break;
 	}
 
 	if (FILE2INT(sp, data.data, data.size, wp, wlen)) {
@@ -199,7 +189,8 @@ err3:		if (lenp != NULL)
 	if (wp != data.data) {
 	    BINC_GOTOW(sp, sp->c_lp, sp->c_blen, wlen);
 	    MEMCPYW(sp->c_lp, wp, wlen);
-	}
+	} else
+	    sp->c_lp = data.data;
 	sp->c_lno = lno;
 	sp->c_len = wlen;
 
@@ -560,8 +551,8 @@ alloc_err:
 		msgq(sp, M_DBERR, "007|unable to get last line");
 		*lnop = 0;
 		return (1);
-        case 0:
-		;
+	default:
+		break;
 	}
 
 	memcpy(&lno, key.data, sizeof(lno));
@@ -570,8 +561,11 @@ alloc_err:
 	    FILE2INT(sp, data.data, data.size, wp, wlen);
 
 	    /* Fill the cache. */
-	    BINC_GOTOW(sp, sp->c_lp, sp->c_blen, wlen);
-	    MEMCPYW(sp->c_lp, wp, wlen);
+	    if (wp != data.data) {
+		BINC_GOTOW(sp, sp->c_lp, sp->c_blen, wlen);
+		MEMCPYW(sp->c_lp, wp, wlen);
+	    } else
+		sp->c_lp = data.data;
 	    sp->c_lno = lno;
 	    sp->c_len = wlen;
 	}
