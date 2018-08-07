@@ -1,4 +1,4 @@
-/*	$NetBSD: errata.c,v 1.23 2016/01/05 10:20:22 hannken Exp $	*/
+/*	$NetBSD: errata.c,v 1.24 2018/08/07 10:50:12 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: errata.c,v 1.23 2016/01/05 10:20:22 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: errata.c,v 1.24 2018/08/07 10:50:12 maxv Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -70,8 +70,8 @@ typedef enum cpurev {
 	BH_E4, CH_CG, CH_D0, DH_CG, DH_D0, DH_E3, DH_E6, JH_E1,
 	JH_E6, SH_B0, SH_B3, SH_C0, SH_CG, SH_D0, SH_E4, SH_E5,
 	DR_BA, DR_B2, DR_B3, RB_C2, RB_C3, BL_C2, BL_C3, DA_C2,
-	DA_C3, HY_D0, HY_D1, HY_D1_G34R1,  PH_E0, LN_B0,
-	OINK
+	DA_C3, HY_D0, HY_D1, HY_D1_G34R1,  PH_E0, LN_B0, KB_A1,
+	ML_A1, ZP_B1, ZP_B2, PiR_B2, OINK
 } cpurev_t;
 
 static const u_int cpurevs[] = {
@@ -89,7 +89,9 @@ static const u_int cpurevs[] = {
 	RB_C2, 0x0100f42, RB_C3, 0x0100f43, BL_C2, 0x0100f52,
 	BL_C3, 0x0100f53, DA_C2, 0x0100f62, DA_C3, 0x0100f63,
 	HY_D0, 0x0100f80, HY_D1, 0x0100f81, HY_D1_G34R1, 0x0100f91,
-	PH_E0, 0x0100fa0, LN_B0, 0x0300f10,
+	PH_E0, 0x0100fa0, LN_B0, 0x0300f10, KB_A1, 0x0700F01,
+	ML_A1, 0x0730F01, ZP_B1, 0x0800F11, ZP_B2, 0x0800F12,
+	PiR_B2, 0x0800F82,
 	OINK
 };
 
@@ -141,6 +143,26 @@ static const uint8_t x86_errata_set11[] = {
 	DR_BA, DR_B2, DR_B3, RB_C2, RB_C3, BL_C2, BL_C3, DA_C2,
 	DA_C3, HY_D0, HY_D1, HY_D1_G34R1,  PH_E0, LN_B0, OINK
 };
+
+#ifdef notyet_f16h
+static const uint8_t x86_errata_set12[] = {
+	KB_A1, OINK
+};
+#endif
+
+static const uint8_t x86_errata_set13[] = {
+	ZP_B1, ZP_B2, PiR_B2, OINK
+};
+
+static const uint8_t x86_errata_set14[] = {
+	ZP_B1, OINK
+};
+
+#ifdef notyet_f16h
+static const uint8_t x86_errata_set15[] = {
+	KB_A1, ML_A1, OINK
+};
+#endif
 
 static bool x86_errata_setmsr(struct cpu_info *, errata_t *);
 static bool x86_errata_testmsr(struct cpu_info *, errata_t *);
@@ -284,6 +306,62 @@ static errata_t errata[] = {
 	{
 		721, FALSE, MSR_DE_CFG, x86_errata_set11,
 		x86_errata_setmsr, DE_CFG_ERRATA_721
+	},
+#ifdef notyet_f16h	/* TODO: needs to be tested */
+	/*
+	 * 776: Incorrect Processor Branch Prediction for Two Consecutive
+	 * Linear Pages
+	 */
+	{
+		776, FALSE, MSR_IC_CFG, x86_errata_set12,
+		x86_errata_setmsr, IC_CFG_ERRATA_776
+	},
+	/*
+	 * 793: Specific Combination of Writes to Write Combined Memory
+	 * Types and Locked Instructions May Cause Core Hang
+	 */
+	{
+		793, FALSE, MSR_LS_CFG, x86_errata_set15,
+		x86_errata_setmsr, LS_CFG_ERRATA_793
+	},
+#endif
+	/*
+	 * 1021: Load Operation May Receive Stale Data From Older Store
+	 * Operation
+	 */
+	{
+		1021, FALSE, MSR_DE_CFG, x86_errata_set13,
+		x86_errata_setmsr, DE_CFG_ERRATA_1021
+	},
+	/*
+	 * 1033: A Lock Operation May Cause the System to Hang
+	 */
+	{
+		1033, FALSE, MSR_LS_CFG, x86_errata_set14,
+		x86_errata_setmsr, LS_CFG_ERRATA_1033
+	},
+	/*
+	 * 1049: FCMOV Instruction May Not Execute Correctly
+	 */
+	{
+		1049, FALSE, MSR_FP_CFG, x86_errata_set13,
+		x86_errata_setmsr, FP_CFG_ERRATA_1049
+	},
+	/*
+	 * 1091: Address Boundary Crossing Load Operation May Receive
+	 * Stale Data
+	 */
+	{
+		1091, FALSE, MSR_LS_CFG2, x86_errata_set13,
+		x86_errata_setmsr, LS_CFG2_ERRATA_1091
+	},
+	/*
+	 * 1095: Potential Violation of Read Ordering In Lock Operation
+	 * In SMT (Simultaneous Multithreading) Mode
+	 */
+	{
+		1095, FALSE, MSR_LS_CFG, x86_errata_set13,
+		x86_errata_setmsr, LS_CFG_ERRATA_1095
 	},
 };
 

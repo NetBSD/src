@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.128 2018/07/13 09:37:32 maxv Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.129 2018/08/07 10:50:12 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -857,6 +857,9 @@
 #define 	NB_CFG_INITAPICCPUIDLO	(1ULL << 54)
 
 #define MSR_LS_CFG	0xc0011020
+#define 	LS_CFG_ERRATA_1033	__BIT(4)
+#define 	LS_CFG_ERRATA_793	__BIT(15)
+#define 	LS_CFG_ERRATA_1095	__BIT(57)
 #define 	LS_CFG_DIS_LS2_SQUISH	0x02000000
 #define 	LS_CFG_DIS_SSB_F15H	0x0040000000000000ULL
 #define 	LS_CFG_DIS_SSB_F16H	0x0000000200000000ULL
@@ -865,6 +868,7 @@
 #define MSR_IC_CFG	0xc0011021
 #define 	IC_CFG_DIS_SEQ_PREFETCH	0x00000800
 #define 	IC_CFG_DIS_IND		0x00004000
+#define 	IC_CFG_ERRATA_776	__BIT(26)
 
 #define MSR_DC_CFG	0xc0011022
 #define 	DC_CFG_DIS_CNV_WC_SSO	0x00000008
@@ -879,8 +883,15 @@
 #define 	BU_CFG_WBPFSMCCHKDIS	0x0000200000000000ULL
 #define 	BU_CFG_WBENHWSBDIS	0x0001000000000000ULL
 
+#define MSR_FP_CFG	0xc0011028
+#define 	FP_CFG_ERRATA_1049	__BIT(4)
+
 #define MSR_DE_CFG	0xc0011029
 #define 	DE_CFG_ERRATA_721	0x00000001
+#define 	DE_CFG_ERRATA_1021	__BIT(13)
+
+#define MSR_LS_CFG2	0xc001102d
+#define 	LS_CFG2_ERRATA_1091	__BIT(34)
 
 /* AMD Family10h MSRs */
 #define MSR_OSVW_ID_LENGTH		0xc0010140
