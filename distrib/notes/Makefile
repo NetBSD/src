@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.45 2018/01/24 09:04:40 skrll Exp $
+#	$NetBSD: Makefile,v 1.46 2018/08/07 08:26:42 martin Exp $
 #
 
 .include <bsd.own.mk>
@@ -47,7 +47,6 @@ SUBDIR+= sun2
 SUBDIR+= sun3
 SUBDIR+= vax
 SUBDIR+= x68k
-SUBDIR+= xen
 .endif
 
 .include <bsd.subdir.mk>

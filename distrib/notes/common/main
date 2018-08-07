@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.548 2018/06/29 12:34:13 roy Exp $
+.\"	$NetBSD: main,v 1.549 2018/08/07 08:26:42 martin Exp $
 .\"
 .\" Copyright (c) 1999-2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -47,7 +47,7 @@
 .as MACHINE_LIST " i386 ibmnws iyonix landisk luna68k mac68k macppc mipsco
 .as MACHINE_LIST " mmeye mvme68k mvmeppc netwinder news68k newsmips next68k
 .as MACHINE_LIST " ofppc playstation2 pmax prep rs6000 sandpoint sbmips
-.as MACHINE_LIST " sgimips shark sparc sparc64 sun2 sun3 vax x68k xen zaurus .
+.as MACHINE_LIST " sgimips shark sparc sparc64 sun2 sun3 vax x68k zaurus .
 .so \*[.CURDIR]/../common/macros
 .
 .Dd May 9, 2015
@@ -677,12 +677,6 @@ own checksum files, just as the source distribution does.
 .
 .so hardware -----------------------------------------------
 .br_ne 7P
-.
-.if \n[xen] \{.Ss "Installation options"
-.br_ne 7P
-.
-.so instopt -----------------------------------------------
-.\}
 .
 .Ss "Getting the NetBSD System on to Useful Media"
 .

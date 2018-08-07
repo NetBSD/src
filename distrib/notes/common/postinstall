@@ -1,4 +1,4 @@
-.\"	$NetBSD: postinstall,v 1.82 2018/01/24 09:04:41 skrll Exp $
+.\"	$NetBSD: postinstall,v 1.83 2018/08/07 08:26:42 martin Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -179,7 +179,6 @@ For example:
 .if \n[shark]     .ds IFname cs0
 .if \n[sparc64]   .ds IFname hme0
 .if \n[x68k]      .ds IFname ne0
-.if \n[xen]       .ds IFname xennet0
 .
 .Dl ifconfig_\*[IFname]="inet 192.0.2.123 netmask 255.255.255.0"
 .Pp
