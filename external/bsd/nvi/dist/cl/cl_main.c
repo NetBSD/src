@@ -1,4 +1,4 @@
-/*	$NetBSD: cl_main.c,v 1.9 2017/12/06 17:16:14 jmcneill Exp $ */
+/*	$NetBSD: cl_main.c,v 1.10 2018/08/07 08:05:47 rin Exp $ */
 /*-
  * Copyright (c) 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -16,7 +16,7 @@
 static const char sccsid[] = "Id: cl_main.c,v 10.54 2001/07/29 19:07:27 skimo Exp  (Berkeley) Date: 2001/07/29 19:07:27 ";
 #endif /* not lint */
 #else
-__RCSID("$NetBSD: cl_main.c,v 1.9 2017/12/06 17:16:14 jmcneill Exp $");
+__RCSID("$NetBSD: cl_main.c,v 1.10 2018/08/07 08:05:47 rin Exp $");
 #endif
 
 #include <sys/types.h>
@@ -442,6 +442,9 @@ cl_func_std(WIN *wp)
 	gp->scr_event = cl_event;
 	gp->scr_ex_adjust = cl_ex_adjust;
 	gp->scr_fmap = cl_fmap;
+#ifdef IMCTRL
+	gp->scr_imctrl = cl_imctrl;
+#endif
 	gp->scr_insertln = cl_insertln;
 	gp->scr_keyval = cl_keyval;
 	gp->scr_move = cl_move;
