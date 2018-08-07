@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.177 2018/08/02 16:26:09 maxv Exp $
+.\"	$NetBSD: contents,v 1.178 2018/08/07 08:26:42 martin Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -315,7 +315,7 @@ Method), below.
 .\}
 .
 .if !\n[alpha]:\n[bebox]:\n[cats]:\n[evbppc]:\n[mvme68k]:\n[macppc]:\
-\n[sgimips]:\n[sandpoint]:\n[sparc]:\n[xen] \{\
+\n[sgimips]:\n[sandpoint]:\n[sparc] \{\
 .		It Pa misc/
 .
 Miscellaneous \*M installation utilities; see
@@ -819,9 +819,6 @@ and the same kernel in the format needed by the bootloader as
 These kernels are specific to the IBM 405GP based Walnut evaluation board.
 .\}
 .el \{\
-.ie \n[xen] \{\
-.\}
-.el \{\
 .It Sy kern-GENERIC
 This set contains a
 .Nx*M
@@ -837,7 +834,6 @@ This set also contains an a.out kernel named
 .Pa /netbsd.aout
 that your system may need to boot.
 .\}
-.\} \" !\n[xen]
 .\} \" !\n[evbppc]
 .\} \" !\n[sparc64]
 .\} \" !\n[sparc]
