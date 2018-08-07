@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe_netbsd.c,v 1.6.2.1 2018/06/09 14:59:43 martin Exp $ */
+/* $NetBSD: ixgbe_netbsd.c,v 1.6.2.2 2018/08/07 13:33:23 martin Exp $ */
 /*
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -162,10 +162,10 @@ post_zalloc_err:
 }
 
 void
-ixgbe_jcl_reinit(struct adapter *adapter, bus_dma_tag_t dmat, int nbuf,
-    size_t size)
+ixgbe_jcl_reinit(struct adapter *adapter, bus_dma_tag_t dmat,
+    struct rx_ring *rxr, int nbuf, size_t size)
 {
-	ixgbe_extmem_head_t *eh = &adapter->jcl_head;
+	ixgbe_extmem_head_t *eh = &rxr->jcl_head;
 	ixgbe_extmem_t *em;
 	int i;
 
@@ -182,8 +182,8 @@ ixgbe_jcl_reinit(struct adapter *adapter, bus_dma_tag_t dmat, int nbuf,
 	 *  Note that the num_rx_desc is currently fixed value. It's never
 	 * changed after device is attached.
 	 */
-	if ((adapter->osdep.last_rx_mbuf_sz == adapter->rx_mbuf_sz)
-	    && (adapter->osdep.last_num_rx_desc == adapter->num_rx_desc))
+	if ((rxr->last_rx_mbuf_sz == rxr->mbuf_sz)
+	    && (rxr->last_num_rx_desc == adapter->num_rx_desc))
 		return;
 
 	/* Free all dmamem */
@@ -205,8 +205,8 @@ ixgbe_jcl_reinit(struct adapter *adapter, bus_dma_tag_t dmat, int nbuf,
 	}
 
 	/* Keep current parameters */
-	adapter->osdep.last_rx_mbuf_sz = adapter->rx_mbuf_sz;
-	adapter->osdep.last_num_rx_desc = adapter->num_rx_desc;
+	rxr->last_rx_mbuf_sz = adapter->rx_mbuf_sz;
+	rxr->last_num_rx_desc = adapter->num_rx_desc;
 }
 
 static void
