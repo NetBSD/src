@@ -1,4 +1,4 @@
-/*	$NetBSD: options_f.c,v 1.3 2014/01/26 21:43:45 christos Exp $ */
+/*	$NetBSD: options_f.c,v 1.4 2018/08/07 08:05:47 rin Exp $ */
 /*-
  * Copyright (c) 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -16,7 +16,7 @@
 static const char sccsid[] = "Id: options_f.c,v 10.33 2001/06/25 15:19:11 skimo Exp  (Berkeley) Date: 2001/06/25 15:19:11 ";
 #endif /* not lint */
 #else
-__RCSID("$NetBSD: options_f.c,v 1.3 2014/01/26 21:43:45 christos Exp $");
+__RCSID("$NetBSD: options_f.c,v 1.4 2018/08/07 08:05:47 rin Exp $");
 #endif
 
 #include <sys/types.h>
@@ -301,3 +301,19 @@ f_encoding(SCR *sp, OPTION *op, const char *str, u_long *valp)
 
 	return conv_enc(sp, offset, str);
 }
+
+#ifdef IMCTRL
+/*
+ * PUBLIC: #ifdef IMCTRL
+ * PUBLIC: int f_imctrl __P((SCR *, OPTION *, const char *, u_long *));
+ * PUBLIC: #endif
+ */
+int
+f_imctrl(SCR *sp, OPTION *op, const char *str, u_long *valp)
+{
+
+	if (*valp)
+		sp->gp->scr_imctrl(sp, IMCTRL_INIT);
+	return (0);
+}
+#endif
