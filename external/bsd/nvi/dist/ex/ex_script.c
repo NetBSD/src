@@ -1,4 +1,4 @@
-/*	$NetBSD: ex_script.c,v 1.8 2017/11/06 03:27:34 rin Exp $ */
+/*	$NetBSD: ex_script.c,v 1.9 2018/08/07 11:41:23 rin Exp $ */
 /*-
  * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -19,7 +19,7 @@
 static const char sccsid[] = "Id: ex_script.c,v 10.38 2001/06/25 15:19:19 skimo Exp  (Berkeley) Date: 2001/06/25 15:19:19 ";
 #endif /* not lint */
 #else
-__RCSID("$NetBSD: ex_script.c,v 1.8 2017/11/06 03:27:34 rin Exp $");
+__RCSID("$NetBSD: ex_script.c,v 1.9 2018/08/07 11:41:23 rin Exp $");
 #endif
 
 #include <sys/types.h>
@@ -262,17 +262,17 @@ sscr_exec(SCR *sp, db_recno_t lno)
 	ssize_t nw;
 	char *bp = NULL;
 	const char *p;
-	const CHAR_T *ip;
-	size_t ilen;
+	const CHAR_T *wp;
+	size_t wlen;
 
 	sc = sp->script;
 
 	/* If there's a prompt on the last line, append the command. */
 	if (db_last(sp, &last_lno))
 		return (1);
-	if (db_get(sp, last_lno, DBG_FATAL, __UNCONST(&ip), &ilen))
+	if (db_get(sp, last_lno, DBG_FATAL, __UNCONST(&wp), &wlen))
 		return (1);
-	INT2CHAR(sp, ip, ilen, p, last_len);
+	INT2CHAR(sp, wp, wlen, p, last_len);
 	if (last_len == sc->sh_prompt_len &&
 	    memcmp(p, sc->sh_prompt, last_len) == 0) {
 		matchprompt = 1;
@@ -282,16 +282,16 @@ sscr_exec(SCR *sp, db_recno_t lno)
 		matchprompt = 0;
 
 	/* Get something to execute. */
-	if (db_eget(sp, lno, __UNCONST(&ip), &ilen, &isempty)) {
+	if (db_eget(sp, lno, __UNCONST(&wp), &wlen, &isempty)) {
 		if (isempty)
 			goto empty;
 		goto err1;
 	}
 
 	/* Empty lines aren't interesting. */
-	if (ilen == 0)
+	if (wlen == 0)
 		goto empty;
-	INT2CHAR(sp, ip, ilen, p, len);
+	INT2CHAR(sp, wp, wlen, p, len);
 
 	/* Delete any prompt. */
 	if (len >= sc->sh_prompt_len &&
@@ -318,8 +318,8 @@ err2:		if (nw == 0)
 	if (matchprompt) {
 		ADD_SPACE_GOTO(sp, char, bp, blen, last_len + len);
 		memmove(bp + last_len, p, len);
-		CHAR2INT(sp, bp, last_len + len, ip, ilen);
-		if (db_set(sp, last_lno, ip, ilen))
+		CHAR2INT(sp, bp, last_len + len, wp, wlen);
+		if (db_set(sp, last_lno, wp, wlen))
 err1:			rval = 1;
 	}
 	if (matchprompt)
@@ -432,8 +432,8 @@ sscr_insert(SCR *sp)
 	size_t len;
 	ssize_t nr;
 	char bp[1024];
-	const CHAR_T *ip;
-	size_t ilen = 0;
+	const CHAR_T *wp;
+	size_t wlen = 0;
 
 	/* Find out where the end of the file is. */
 	if (db_last(sp, &lno))
@@ -459,8 +459,8 @@ more:	switch (nr = read(sc->sh_master, endp, bp + sizeof(bp) - endp)) {
 	for (p = t = bp; p < endp; ++p) {
 		if (*p == '\r' || *p == '\n') {
 			len = p - t;
-			if (CHAR2INT(sp, t, len, ip, ilen) ||
-			    db_append(sp, 1, lno++, ip, ilen))
+			if (CHAR2INT(sp, t, len, wp, wlen) ||
+			    db_append(sp, 1, lno++, wp, wlen))
 				return (1);
 			t = p + 1;
 		}
@@ -481,8 +481,8 @@ more:	switch (nr = read(sc->sh_master, endp, bp + sizeof(bp) - endp)) {
 		FD_SET(sc->sh_master, &rdfd);
 		if (select(sc->sh_master + 1, &rdfd, NULL, NULL, &tv) == 1) {
 			if (len == sizeof(bp)) {
-				if (CHAR2INT(sp, t, len, ip, ilen) ||
-				    db_append(sp, 1, lno++, ip, ilen))
+				if (CHAR2INT(sp, t, len, wp, wlen) ||
+				    db_append(sp, 1, lno++, wp, wlen))
 					return (1);
 				endp = bp;
 			} else {
@@ -497,10 +497,10 @@ more:	switch (nr = read(sc->sh_master, endp, bp + sizeof(bp) - endp)) {
 
 	/* Append the remains into the file, and the cursor moves to EOF. */
 	if (len > 0) {
-		if (CHAR2INT(sp, t, len, ip, ilen) ||
-		    db_append(sp, 1, lno++, ip, ilen))
+		if (CHAR2INT(sp, t, len, wp, wlen) ||
+		    db_append(sp, 1, lno++, wp, wlen))
 			return (1);
-		sp->cno = ilen - 1;
+		sp->cno = wlen - 1;
 	} else
 		sp->cno = 0;
 	sp->lno = lno;
