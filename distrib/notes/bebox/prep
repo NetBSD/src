@@ -1,4 +1,4 @@
-.\"	$NetBSD: prep,v 1.2 2010/11/15 21:39:12 wiz Exp $
+.\"	$NetBSD: prep,v 1.2.26.1 2018/08/07 15:53:17 martin Exp $
 .
 .Pp
 . 
@@ -45,13 +45,8 @@ If you have an x86 PC which runs
 and use it to write the floppy image(s) to floppy disk,
 you can use the
 .Ic Rawrite32
-Windows32 program
-.Pq installed by Pa rawr32.exe
-available in the
-.Pa i386/installation/misc/
-directory of the
-.Nx
-distribution.
+Windows program which can be found at
+.Lk https://www.NetBSD.org/~martin/rawrite32 .
 .Pp
 Also you can create boot.fs in the following way:
 .Pp
