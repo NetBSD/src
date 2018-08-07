@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.2,v 1.1.2.99 2018/07/29 06:44:56 martin Exp $
+# $NetBSD: CHANGES-7.2,v 1.1.2.100 2018/08/07 16:07:49 martin Exp $
 
 A complete list of changes from the NetBSD 7.1 release to the NetBSD 7.2
 release:
@@ -5787,4 +5787,27 @@ sys/fs/udf/udf_subr.c				1.142
 	Enhance logical volume integrity descriptor handling and provide
 	bug-compatibility for Linux mkudffs 1.3 images.
 	[reinoud, ticket #1622]
+
+sys/arch/i386/stand/misc/Makefile		1.9
+sys/arch/i386/stand/misc/rawr32.exe.uue		delete
+
+	Remove Rawrite32 installer from install media
+	[martin, ticket #1623]
+
+distrib/notes/bebox/prep			1.3
+distrib/notes/common/main			1.547
+distrib/notes/ews4800mips/xfer			1.3
+distrib/notes/i386/xfer				1.21
+distrib/notes/news68k/xfer			1.4
+distrib/notes/newsmips/xfer			1.3
+
+	Replace references to i386 install media for Rawrite32 with
+	links to the homepage.
+	[martin, ticket #1624]
+
+external/gpl2/gmake/dist/glob/glob.c		1.5
+	(applied to gnu/dist/gmake)
+
+	Fix build failure on Ubuntu 18.04.
+	[nonaka, ticket #1625]
 
