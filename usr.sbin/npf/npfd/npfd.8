@@ -1,4 +1,4 @@
-.\"	$NetBSD: npfd.8,v 1.4 2018/08/07 22:02:08 sevan Exp $
+.\"	$NetBSD: npfd.8,v 1.5 2018/08/07 22:55:47 sevan Exp $
 .\"	$OpenBSD: pflogd.8,v 1.35 2007/05/31 19:19:47 jmc Exp $
 .\"
 .\" Copyright (c) 2001 Can Erkin Acar.  All rights reserved.
@@ -43,24 +43,16 @@
 .Op Ar expression
 .Sh DESCRIPTION
 .Nm
-is a background daemon which reads packets logged by
-.Xr npf 7
-to an
-.\" .Xr npflog 4
-npflog
-interface, normally
-.Pa npflog0 ,
-and writes the packets to a logfile (normally
-.Pa /var/log/npflog0.pcap )
-in
+is a background daemon which writes to a file in
 .Xr pcap 3
-format, which can be read by
-.Xr tcpdump 8 .
-These logs can be reviewed later using the
-.Fl r
-option of
-.Xr tcpdump 8 ,
-hopefully offline in case there are bugs in the packet parsing code of
+format logged packets read from an npflog interface.
+The npflog interface is used by
+.Xr npf 7
+to log packets as defined in
+.Xr npf.conf 5 .
+The generated
+.Xr pcap 3
+files can then be analysed using tools such as
 .Xr tcpdump 8 .
 .Pp
 .Nm
@@ -260,3 +252,7 @@ command appeared in
 .Sh AUTHORS
 This manual page was written by
 .An Can Erkin Acar Aq Mt canacar@openbsd.org .
+.Sh CAVEATS
+Offline analysis of captured data is advised to alleviate issues with
+malicious data intended to exploit bugs in the packet parsing code of
+.Xr tcpdump 8 .
