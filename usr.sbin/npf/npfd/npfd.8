@@ -1,4 +1,4 @@
-.\"	$NetBSD: npfd.8,v 1.3 2017/01/08 13:59:53 wiz Exp $
+.\"	$NetBSD: npfd.8,v 1.4 2018/08/07 22:02:08 sevan Exp $
 .\"	$OpenBSD: pflogd.8,v 1.35 2007/05/31 19:19:47 jmc Exp $
 .\"
 .\" Copyright (c) 2001 Can Erkin Acar.  All rights reserved.
@@ -26,7 +26,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd January 5, 2017
+.Dd August 7, 2018
 .Dt NPFD 8
 .Os
 .Sh NAME
@@ -231,23 +231,22 @@ Each
 rule is marked with an id number, shown using:
 .Bd -literal -offset indent
 # npfctl show
-...
+\&...
         block final all apply "log" # id="45"
-...
+\&...
 .Ed
 .Pp
 This id is the rule id shown by tcpdump:
 .Bd -literal -offset indent
 # tcpdump -enr /var/log/npflog0.pcap
-...
+\&...
 11:26:02.288199 rule 45.rules.0/0(match): block in on sk0: \e
 1.2.3.4.46063 > 5.6.7.8.23231: Flags [S], seq 1, win 8192, \e
 options [mss 1440], length 0
-...
+\&...
 .Ed
 .Sh SEE ALSO
 .Xr pcap 3 ,
-\" .Xr if_npflog 4 ,
 .Xr npf.conf 5 ,
 .Xr npf 7 ,
 .Xr newsyslog 8 ,
