@@ -1,4 +1,4 @@
-/* $NetBSD: if_lmc.c,v 1.63 2017/01/24 09:05:28 ozaki-r Exp $ */
+/* $NetBSD: if_lmc.c,v 1.63.6.1 2018/08/07 13:02:31 martin Exp $ */
 
 /*-
  * Copyright (c) 2002-2006 David Boggs. <boggs@boggs.palo-alto.ca.us>
@@ -74,7 +74,7 @@
  */
 
 # include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_lmc.c,v 1.63 2017/01/24 09:05:28 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_lmc.c,v 1.63.6.1 2018/08/07 13:02:31 martin Exp $");
 # include <sys/param.h>	/* OS version */
 # include "opt_inet.h"	/* INET6, INET */
 # include "opt_altq_enabled.h" /* ALTQ */
@@ -3388,7 +3388,7 @@ ifnet_output(struct ifnet *ifp, struct mbuf *m,
     }
   else
     /* Process tx pkts; do not process rx pkts. */
-    lmc_interrupt(sc, 0, 0);
+    ifnet_start(ifp);
 
   return error;
   }
@@ -3466,9 +3466,43 @@ static void  /* context: process */
 ifnet_start(struct ifnet *ifp)
   {
   softc_t *sc = IFP2SC(ifp);
+  int activity;
 
-  /* Process tx pkts; do not process rx pkts. */
-  lmc_interrupt(sc, 0, 0);
+  /* Do this FIRST!  Otherwise UPs deadlock and MPs spin. */
+  WRITE_CSR(sc, TLP_STATUS, READ_CSR(sc, TLP_STATUS));
+
+  /* If any CPU is inside this critical section, then */
+  /*  other CPUs should go away without doing anything. */
+  if (BOTTOM_TRYLOCK(sc) == 0)
+    {
+    sc->status.cntrs.lck_intr++;
+    return;
+    }
+
+  /* In Linux, pci_alloc_consistent() means DMA */
+  /*  descriptors do not need explicit syncing? */
+#if BSD
+  {
+  struct desc_ring *ring = &sc->txring;
+  DMA_SYNC(sc->txring.map, sc->txring.size_descs,
+   BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
+  }
+#endif
+
+  do
+    {
+    activity = txintr_setup(sc);
+    } while (activity);
+
+#if BSD
+  {
+  struct desc_ring *ring = &sc->txring;
+  DMA_SYNC(sc->txring.map, sc->txring.size_descs,
+   BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+  }
+#endif
+
+  BOTTOM_UNLOCK(sc);
   }
 
 static void  /* context: softirq */
@@ -4294,7 +4328,7 @@ rxintr_cleanup(softc_t *sc)
     sc->status.cntrs.ipackets++;
 
     /* Berkeley Packet Filter */
-    LMC_BPF_MTAP(sc, first_mbuf);
+    bpf_mtap_softint(sc->ifp, first_mbuf);
 
     /* Give this good packet to the network stacks. */
     sc->quota--;
@@ -4444,9 +4478,6 @@ txintr_cleanup(softc_t *sc)
         /* Include CRC and one flag byte in output byte count. */
         sc->status.cntrs.obytes += m->m_pkthdr.len + sc->config.crc_len +1;
         sc->status.cntrs.opackets++;
-
-        /* Berkeley Packet Filter */
-        LMC_BPF_MTAP(sc, m);
 	}
 
       m_freem(m);
@@ -4563,6 +4594,9 @@ txintr_setup(softc_t *sc)
 
   /* Enqueue the mbuf; txintr_cleanup will free it. */
   mbuf_enqueue(ring, sc->tx_mbuf);
+
+  /* Berkeley Packet Filter */
+  bpf_mtap(sc->ifp, sc->tx_mbuf);
 
   /* The transmitter has room for another packet. */
   sc->tx_mbuf = NULL;
@@ -4969,7 +5003,6 @@ lmc_interrupt(void *arg, int quota, int check_status)
   do
     {
     activity  = txintr_cleanup(sc);
-    activity += txintr_setup(sc);
     activity += rxintr_cleanup(sc);
     activity += rxintr_setup(sc);
     } while (activity);
