@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.510.4.9 2018/08/05 14:07:47 martin Exp $
+.\"	$NetBSD: main,v 1.510.4.10 2018/08/07 15:53:17 martin Exp $
 .\"
 .\" Copyright (c) 1999-2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -257,15 +257,14 @@ with the appropriate device for your system:
 On Windows, you will need to use a program such as Win32 Disk Imager,
 which can be found at
 .Lk http://sourceforge.net/projects/win32diskimager/
+or
+Rawrite32 which can be found at
+.Lk https://www.NetBSD.org/~martin/rawrite32 .
 .if \n[amd64]:\n[i386] \{\
 If you have problems writing a raw image to a floppy,
 the
 .Ic rawrite.exe
 MS-DOS program
-or the
-.Ic Rawrite32
-Windows32 program (installed by
-.Pa rawr32.exe )
 in the
 .Pa \*M/installation/misc/
 directory may be of help.

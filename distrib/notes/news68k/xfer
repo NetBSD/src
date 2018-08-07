@@ -1,4 +1,4 @@
-.\"	$NetBSD: xfer,v 1.3 2011/05/27 17:38:44 tsutsui Exp $
+.\"	$NetBSD: xfer,v 1.3.24.1 2018/08/07 15:53:18 martin Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -57,20 +57,15 @@ If you have an i386 machine which runs
 .Tn Microsoft Windows
 and use it to write the floppy image(s) to floppy disk, you can use the
 .Ic Rawrite32
-Windows32 program.
-It can be installed by
-Pa rawr32.exe
-provided in the
-.Pa i386/installation/misc/
-directory of the
-.Nx
-distribution.
+Windows program.
+It can be downloaded from
+.Lk https://www.NetBSD.org/~martin/rawrite32 .
 .Ic rawrite
 utility for the
 .Tn MS-DOS
 environment is also available in the
 .Pa i386/installation/misc/
-directory.
+directory of i386 install media.
 .Pp
 Though
 .Nx*M
