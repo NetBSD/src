@@ -1,4 +1,4 @@
-/* $NetBSD: cgdconfig.c,v 1.41.6.1 2018/07/31 16:01:12 martin Exp $ */
+/* $NetBSD: cgdconfig.c,v 1.41.6.2 2018/08/07 13:19:51 martin Exp $ */
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 2002, 2003\
  The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: cgdconfig.c,v 1.41.6.1 2018/07/31 16:01:12 martin Exp $");
+__RCSID("$NetBSD: cgdconfig.c,v 1.41.6.2 2018/08/07 13:19:51 martin Exp $");
 #endif
 
 #include <err.h>
@@ -89,8 +89,10 @@ int	nflag = 0;
 
 /* if pflag is set to PFLAG_STDIN read from stdin rather than getpass(3) */
 
-#define	PFLAG_GETPASS	0x01
-#define	PFLAG_STDIN	0x02
+#define	PFLAG_GETPASS		0x01
+#define	PFLAG_GETPASS_ECHO	0x02
+#define	PFLAG_GETPASS_MASK	0x03
+#define	PFLAG_STDIN		0x04
 int	pflag = PFLAG_GETPASS;
 
 static int	configure(int, char **, struct params *, int);
@@ -136,11 +138,11 @@ static void
 usage(void)
 {
 
-	(void)fprintf(stderr, "usage: %s [-npv] [-V vmeth] cgd dev "
+	(void)fprintf(stderr, "usage: %s [-enpv] [-V vmeth] cgd dev "
 	    "[paramsfile]\n", getprogname());
-	(void)fprintf(stderr, "       %s -C [-npv] [-f configfile]\n",
+	(void)fprintf(stderr, "       %s -C [-enpv] [-f configfile]\n",
 	    getprogname());
-	(void)fprintf(stderr, "       %s -G [-npv] [-i ivmeth] [-k kgmeth] "
+	(void)fprintf(stderr, "       %s -G [-enpv] [-i ivmeth] [-k kgmeth] "
 	    "[-o outfile] paramsfile\n", getprogname());
 	(void)fprintf(stderr, "       %s -g [-nv] [-i ivmeth] [-k kgmeth] "
 	    "[-o outfile] alg [keylen]\n", getprogname());
@@ -201,7 +203,7 @@ main(int argc, char **argv)
 	p = params_new();
 	kg = NULL;
 
-	while ((ch = getopt(argc, argv, "CGUV:b:f:gi:k:lno:spuv")) != -1)
+	while ((ch = getopt(argc, argv, "CGUV:b:ef:gi:k:lno:spuv")) != -1)
 		switch (ch) {
 		case 'C':
 			set_action(&action, ACTION_CONFIGALL);
@@ -229,6 +231,9 @@ main(int argc, char **argv)
 					usage();
 				p = params_combine(p, tp);
 			}
+			break;
+		case 'e':
+			pflag = PFLAG_GETPASS_ECHO;
 			break;
 		case 'f':
 			if (cfile)
@@ -377,12 +382,17 @@ static char *
 maybe_getpass(char *prompt)
 {
 	char	 buf[1024];
-	char	*p = buf;
-	char	*tmp;
+	char	*p = NULL;
+	char	*tmp, *pass;
 
 	switch (pflag) {
 	case PFLAG_GETPASS:
-		p = getpass(prompt);
+		p = getpass_r(prompt, buf, sizeof(buf));
+		break;
+
+	case PFLAG_GETPASS_ECHO:
+		p = getpassfd(prompt, buf, sizeof(buf), NULL,
+		    GETPASS_ECHO|GETPASS_ECHO_NL|GETPASS_NEED_TTY, 0);
 		break;
 
 	case PFLAG_STDIN:
@@ -401,7 +411,10 @@ maybe_getpass(char *prompt)
 	if (!p)
 		err(EXIT_FAILURE, "failed to read passphrase");
 
-	return estrdup(p);
+	pass = estrdup(p);
+	explicit_memset(buf, 0, sizeof(buf));
+
+	return pass;
 }
 
 /*ARGSUSED*/
@@ -422,7 +435,8 @@ getkey_pkcs5_pbkdf2(const char *target, struct keygen *kg, size_t keylen,
 	char		 buf[1024];
 	u_int8_t	*tmp;
 
-	snprintf(buf, sizeof(buf), "%s's passphrase:", target);
+	snprintf(buf, sizeof(buf), "%s's passphrase%s:", target,
+	    pflag & PFLAG_GETPASS_ECHO ? " (echo)" : "");
 	passp = maybe_getpass(buf);
 	if (pkcs5_pbkdf2(&tmp, BITS2BYTES(keylen), (uint8_t *)passp,
 	    strlen(passp),
@@ -434,7 +448,7 @@ getkey_pkcs5_pbkdf2(const char *target, struct keygen *kg, size_t keylen,
 
 	ret = bits_new(tmp, keylen);
 	kg->kg_key = bits_dup(ret);
-	memset(passp, 0, strlen(passp));
+	explicit_memset(passp, 0, strlen(passp));
 	free(passp);
 	free(tmp);
 	return ret;
@@ -585,7 +599,9 @@ configure(int argc, char **argv, struct params *inparams, int flags)
 	 * a password.
 	 */
 
-	for (kg = p->keygen; pflag == PFLAG_GETPASS && kg; kg = kg->next)
+	for (kg = p->keygen;
+	    (pflag & PFLAG_GETPASS_MASK) && kg;
+	    kg = kg->next)
 		if ((kg->kg_method == KEYGEN_PKCS5_PBKDF2_SHA1) ||
 		    (kg->kg_method == KEYGEN_PKCS5_PBKDF2_OLD )) {
 			loop = 1;

@@ -1,4 +1,4 @@
-.\" $NetBSD: cgdconfig.8,v 1.36.6.1 2018/07/31 16:01:12 martin Exp $
+.\" $NetBSD: cgdconfig.8,v 1.36.6.2 2018/08/07 13:19:51 martin Exp $
 .\"
 .\" Copyright (c) 2002, The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -35,17 +35,17 @@
 .Nd configuration utility for the cryptographic disk driver
 .Sh SYNOPSIS
 .Nm
-.Op Fl npv
+.Op Fl enpv
 .Op Fl V Ar vmeth
 .Ar cgd dev
 .Op Ar paramsfile
 .Nm
 .Fl C
-.Op Fl npv
+.Op Fl enpv
 .Op Fl f Ar configfile
 .Nm
 .Fl G
-.Op Fl npv
+.Op Fl enpv
 .Op Fl i Ar ivmeth
 .Op Fl k Ar kgmeth
 .Op Fl o Ar outfile
@@ -89,6 +89,8 @@ The options are as follows:
 .Bl -tag -width configfilexxxx
 .It Fl C
 Configure all the devices listed in the cgd configuration file.
+.It Fl e
+Echo the passphase.
 .It Fl f Ar configfile
 Specify the configuration file explicitly, rather than using the default
 configuration file
@@ -447,14 +449,4 @@ The
 utility appeared in
 .Nx 2.0 .
 .Sh BUGS
-Since
-.Nm
-without
-.Fl p
-uses
-.Xr getpass 3
-to read in the passphrase,
-it is limited to sysconf(_SC_PASS_MAX) (128) characters.
-With
-.Fl p
-the limit is 1023 characters.
+Pass phrases are limited to 1023 bytes.
