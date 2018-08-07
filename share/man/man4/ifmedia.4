@@ -1,4 +1,4 @@
-.\"	$NetBSD: ifmedia.4,v 1.29 2009/04/10 17:07:15 joerg Exp $
+.\"	$NetBSD: ifmedia.4,v 1.29.40.1 2018/08/07 13:36:41 martin Exp $
 .\"
 .\" Copyright (c) 1998, 1999, 2000, 2001, 2002, 2003, 2004
 .\"	The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd October 7, 2006
+.Dd August 3, 2018
 .Dt IFMEDIA 4
 .Os
 .Sh NAME
@@ -134,8 +134,12 @@ connector.  [100baseT4, 100T4]
 1000BASE-SX, 1Gb/s over multi-mode fiber optic cables. (short waves)
 [1000baseSX, 1000SX]
 .It Dv IFM_1000_LX
-1000BASE-LX, 1Gb/s over single-mode fiber optic cables. (long waves)
+1000BASE-LX, 1Gb/s over single-mode fiber or multi-mode fiber optic cables.
+(long waves)
 [1000baseLX, 1000LX]
+.It Dv IFM_1000_BX10
+1000BASE-BX10, 1Gb/s over bidirectional fiber optic cables. (long waves)
+[1000BASE-BX10]
 .It Dv IFM_1000_CX
 1000BASE-CX, 1Gb/s over shielded twisted pair. (twinax)
 [1000baseCX, 1000CX]
@@ -143,8 +147,37 @@ connector.  [100baseT4, 100T4]
 1000BASE-T, 1Gb/s over category 5 unshielded twisted pair, 802.3ab, RJ45
 connector.
 [1000baseT, 1000T]
+.It Dv IFM_1000_KX
+1000BASE-KX, 1Gb/s backplane.
+[1000BASE-KX, 1000baseKX]
+.It Dv IFM_2500_SX
+2500BASE-SX, 2.5Gb/s over multi-mode fiber optic cables.
+[2500baseSX, 2500SX]
+.It Dv IFM_2500_T
+2.5GBASE-T, 2.5Gb/s over category 5e.
+[2.5GBASE-T, 2500baseT]
+.It Dv IFM_2500_KX
+2500BASE-KX, 2.5Gb/s backplane.
+[2500BASE-KX, 2500baseKX]
+.It Dv IFM_5000_T
+5GBASE-T, 5Gb/s over category 6.
+[5GBASE-T, 5GbaseT]
+.It Dv IFM_10G_CX4
+10GBASE-CX4, 10Gb/s over XAUI 4-lane PCS and copper cables.
+[10GbaseCX4, 10GCX4, 10GBASE-CX4]
 .It Dv IFM_10G_LR
 10GBASE-LR, 10Gb/s over single-mode fiber optic cables.  [10GbaseLR, 10GLR]
+.It Dv IFM_10G_LRM
+10GBASE-LR, 10Gb/s over single-mode fiber optic cables.  [10GbaseLRM]
+.It Dv IFM_10G_SR
+10GBASE-SR, 10Gb/s over multi-mode fiber optic cables.
+[10GbaseSR, 10GSR, 10GBASE-SR]
+.It Dv IFM_10G_T
+10GBASE-T, 10Gb/s over unshielded twisted pair, RJ45 connector.
+[10Gbase-T]
+.It Dv IFM_10G_TWINAX
+SFP+ direct attach, 10Gb/s over twinaxial cable.
+[10Gbase-Twinax]
 .El
 .Pp
 The following media option is defined for Ethernet:
