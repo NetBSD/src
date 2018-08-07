@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.1,v 1.1.2.6 2018/07/31 17:09:45 martin Exp $
+# $NetBSD: CHANGES-8.1,v 1.1.2.7 2018/08/07 13:40:40 martin Exp $
 
 A complete list of changes from the NetBSD 8.0 release to the NetBSD 8.1
 release:
@@ -294,4 +294,51 @@ usr.sbin/arp/arp.c				1.63
 
 	arp(8): Fix the host output with -dav argument.
 	[nonaka, ticket #957]
+
+doc/TODO.smpnet					1.20
+sys/dev/pci/if_lmc.c				1.65
+sys/dev/pci/if_lmc.h				1.25
+
+	Move txintr_setup() stuff from lmc_interrupt() and do it in
+	ifnet_start() so we can use bpf_mtap() in the TX path.
+	[msaitoh, ticket #950]
+
+usr.bin/m4/eval.c				1.27
+
+	Avoid an infinite loop.
+	[kre, ticket #956]
+
+sbin/cgdconfig/cgdconfig.8			1.39,1.40
+sbin/cgdconfig/cgdconfig.c			1.46-1.48
+
+	Add '-e' option (echo the passphrase).
+	[alnsn, ticket #958]
+
+external/bsd/cron/dist/entry.c			1.9,1.10
+
+	Avoid negative random values when using '?' in a crontab.
+	[kre, ticket #959]
+
+sys/arch/x86/x86/cpu.c				1.159
+
+	Don't call svs_pdir_switch if SVS is disabled.
+	[maxv, ticket #960]
+
+sys/dev/pci/ixgbe/ix_txrx.c			1.49
+sys/dev/pci/ixgbe/ixgbe.c			1.163
+sys/dev/pci/ixgbe/ixgbe.h			1.51
+sys/dev/pci/ixgbe/ixgbe_netbsd.c		1.8
+sys/dev/pci/ixgbe/ixgbe_osdep.h			1.23
+sys/dev/pci/ixgbe/ixgbe_type.h			1.36
+sys/dev/pci/ixgbe/ixgbe_x550.c			1.13
+
+	ixg(4):
+	Add force_10_100_autonego sysctl. The default value is 0 (false).
+	Make jcl allocation per queue to reduce mutex spin.
+	[msaitoh, ticket #961]
+
+share/man/man4/ifmedia.4			1.30
+
+	Add some missing IFM_* entries.
+	[msaitoh, ticket #962]
 
