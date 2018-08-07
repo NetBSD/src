@@ -847,9 +847,10 @@ static s32 ixgbe_setup_fw_link(struct ixgbe_hw *hw)
 		setup[0] |= FW_PHY_ACT_SETUP_LINK_EEE;
 
 #ifdef IXGBE_DENVERTON_WA
-	/* Don't use auto-nego for 10/100Mbps */
-	if ((hw->phy.autoneg_advertised == IXGBE_LINK_SPEED_100_FULL)
-	    || (hw->phy.autoneg_advertised == IXGBE_LINK_SPEED_10_FULL)) {
+	if ((hw->phy.force_10_100_autonego == false)
+	    && ((hw->phy.autoneg_advertised == IXGBE_LINK_SPEED_100_FULL)
+		|| (hw->phy.autoneg_advertised == IXGBE_LINK_SPEED_10_FULL))) {
+		/* Don't use auto-nego for 10/100Mbps */
 		setup[0] &= ~FW_PHY_ACT_SETUP_LINK_AN;
 		setup[0] &= ~FW_PHY_ACT_SETUP_LINK_EEE;
 		setup[0] &= ~(FW_PHY_ACT_SETUP_LINK_PAUSE_RXTX
@@ -862,6 +863,9 @@ static s32 ixgbe_setup_fw_link(struct ixgbe_hw *hw)
 		return rc;
 
 #ifdef IXGBE_DENVERTON_WA
+	if (hw->phy.force_10_100_autonego == true)
+		goto out;
+
 	ret_val = ixgbe_read_phy_reg_x550a(hw, MII_BMCR, 0, &phydata);
 	if (ret_val != 0)
 		goto out;
