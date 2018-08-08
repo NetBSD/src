@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.5 2018/07/23 22:32:22 ryo Exp $ */
+/* $NetBSD: cpu.h,v 1.6 2018/08/08 19:01:15 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -78,6 +78,10 @@ struct cpu_info {
 	struct evcnt ci_vfp_reuse;
 	struct evcnt ci_vfp_save;
 	struct evcnt ci_vfp_release;
+
+	/* interrupt controller */
+	u_int ci_gic_redist;	/* GICv3 redistributor index */
+	uint64_t ci_gic_sgir;	/* GICv3 SGIR target */
 };
 
 static inline struct cpu_info *
