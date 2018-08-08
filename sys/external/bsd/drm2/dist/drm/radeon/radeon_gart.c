@@ -268,7 +268,7 @@ radeon_gart_pre_update(struct radeon_device *rdev, unsigned gpu_pgstart,
 
 		bus_dmamap_sync(rdev->ddev->dmat, rdev->gart.rg_table_map,
 		    gpu_pgstart*entsize, gpu_npages*entsize,
-		    BUS_DMASYNC_PREWRITE);
+		    BUS_DMASYNC_POSTWRITE);
 	}
 }
 
@@ -284,7 +284,7 @@ radeon_gart_post_update(struct radeon_device *rdev, unsigned gpu_pgstart,
 
 		bus_dmamap_sync(rdev->ddev->dmat, rdev->gart.rg_table_map,
 		    gpu_pgstart*entsize, gpu_npages*entsize,
-		    BUS_DMASYNC_POSTWRITE);
+		    BUS_DMASYNC_PREWRITE);
 	}
 	radeon_gart_tlb_flush(rdev);
 }
