@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_exec.c,v 1.65 2016/10/16 10:57:58 maxv Exp $	*/
+/*	$NetBSD: cpu_exec.c,v 1.66 2018/08/08 07:50:12 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_exec.c,v 1.65 2016/10/16 10:57:58 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_exec.c,v 1.66 2018/08/08 07:50:12 simonb Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_ultrix.h"
@@ -96,7 +96,9 @@ mips_netbsd_elf32_probe(struct lwp *l, struct exec_package *epp, void *eh0,
 {
 	struct proc * const p = l->l_proc;
 	const Elf32_Ehdr * const eh = eh0;
+#ifdef DEBUG_EXEC
 	int old_abi = p->p_md.md_abi;
+#endif /* DEBUG_EXEC */
 	const char *itp_suffix = NULL;
 
 	/*
@@ -138,8 +140,10 @@ mips_netbsd_elf32_probe(struct lwp *l, struct exec_package *epp, void *eh0,
 	case EF_MIPS_ABI2:
 		itp_suffix = "n32";
 		p->p_md.md_abi = _MIPS_BSD_API_N32;
+#ifdef DEBUG_EXEC
 		if (old_abi != p->p_md.md_abi)
 			printf("pid %d(%s): ABI set to N32 (e_flags=%#x)\n", p->p_pid, p->p_comm, eh->e_flags);
+#endif /* DEBUG_EXEC */
 		break;
 #endif
 #ifdef COMPAT_16
@@ -150,9 +154,11 @@ mips_netbsd_elf32_probe(struct lwp *l, struct exec_package *epp, void *eh0,
 	case EF_MIPS_ABI_O32:
 		itp_suffix = "o32";
 		p->p_md.md_abi = _MIPS_BSD_API_O32;
+#ifdef DEBUG_EXEC
 		if (old_abi != p->p_md.md_abi)
 			printf("pid %d(%s): ABI set to O32 (e_flags=%#x)\n", p->p_pid, p->p_comm, eh->e_flags);
 		break;
+#endif /* DEBUG_EXEC */
 	default:
 		return ENOEXEC;
 	}
@@ -208,7 +214,9 @@ mips_netbsd_elf64_probe(struct lwp *l, struct exec_package *epp, void *eh0,
 {
 	struct proc * const p = l->l_proc;
 	const Elf64_Ehdr * const eh = eh0;
+#ifdef DEBUG_EXEC
 	int old_abi = p->p_md.md_abi;
+#endif /* DEBUG_EXEC */
 	const char *itp_suffix = NULL;
 
 	switch (eh->e_flags & EF_MIPS_ARCH) {
@@ -247,14 +255,18 @@ mips_netbsd_elf64_probe(struct lwp *l, struct exec_package *epp, void *eh0,
 	case 0:
 		itp_suffix = "64";
 		p->p_md.md_abi = _MIPS_BSD_API_N64;
+#ifdef DEBUG_EXEC
 		if (old_abi != p->p_md.md_abi)
 			printf("pid %d(%s): ABI set to N64 (e_flags=%#x)\n", p->p_pid, p->p_comm, eh->e_flags);
+#endif /* DEBUG_EXEC */
 		break;
 	case EF_MIPS_ABI_O64:
 		itp_suffix = "o64";
 		p->p_md.md_abi = _MIPS_BSD_API_O64;
+#ifdef DEBUG_EXEC
 		if (old_abi != p->p_md.md_abi)
 			printf("pid %d(%s): ABI set to O64 (e_flags=%#x)\n", p->p_pid, p->p_comm, eh->e_flags);
+#endif /* DEBUG_EXEC */
 		break;
 	default:
 		return ENOEXEC;
