@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1606 2018/08/08 21:15:42 maya Exp $
+# $NetBSD: mi,v 1.1607 2018/08/08 21:17:46 maya Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1494,7 +1494,7 @@
 ./usr/share/man/cat4/nside.0			man-sys-catman		.cat
 ./usr/share/man/cat4/nsip.0			man-obsolete		obsolete
 ./usr/share/man/cat4/nsmb.0			man-sys-catman		.cat
-./usr/share/man/cat4/nsp.0			man-obsolete		.cat
+./usr/share/man/cat4/nsp.0			man-obsolete		obsolete
 ./usr/share/man/cat4/nsphy.0			man-sys-catman		.cat
 ./usr/share/man/cat4/nsphyter.0			man-sys-catman		.cat
 ./usr/share/man/cat4/ntwo.0			man-sys-catman		.cat
@@ -4601,7 +4601,7 @@
 ./usr/share/man/html4/nsclpcsio.html		man-sys-htmlman		html
 ./usr/share/man/html4/nside.html		man-sys-htmlman		html
 ./usr/share/man/html4/nsmb.html			man-sys-htmlman		html
-./usr/share/man/html4/nsp.html			man-obsolete		html
+./usr/share/man/html4/nsp.html			man-obsolete		obsolete
 ./usr/share/man/html4/nsphy.html		man-sys-htmlman		html
 ./usr/share/man/html4/nsphyter.html		man-sys-htmlman		html
 ./usr/share/man/html4/ntwo.html			man-sys-htmlman		html
@@ -7566,7 +7566,7 @@
 ./usr/share/man/man4/nside.4			man-sys-man		.man
 ./usr/share/man/man4/nsip.4			man-obsolete		obsolete
 ./usr/share/man/man4/nsmb.4			man-sys-man		.man
-./usr/share/man/man4/nsp.4			man-obsolete		.man
+./usr/share/man/man4/nsp.4			man-obsolete		obsolete
 ./usr/share/man/man4/nsphy.4			man-sys-man		.man
 ./usr/share/man/man4/nsphyter.4			man-sys-man		.man
 ./usr/share/man/man4/ntwo.4			man-sys-man		.man
