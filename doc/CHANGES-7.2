@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.2,v 1.1.2.100 2018/08/07 16:07:49 martin Exp $
+# $NetBSD: CHANGES-7.2,v 1.1.2.101 2018/08/08 10:18:41 martin Exp $
 
 A complete list of changes from the NetBSD 7.1 release to the NetBSD 7.2
 release:
@@ -5810,4 +5810,31 @@ external/gpl2/gmake/dist/glob/glob.c		1.5
 
 	Fix build failure on Ubuntu 18.04.
 	[nonaka, ticket #1625]
+
+sys/dev/usb/if_athn_usb.c			1.28,1.29
+sys/dev/usb/if_atu.c				1.62,1.63
+sys/dev/usb/if_aue.c				1.144,1.145
+sys/dev/usb/if_axe.c				1.91,1.92
+sys/dev/usb/if_axen.c				1.15,1.16
+sys/dev/usb/if_cue.c				1.79,1.80
+sys/dev/usb/if_otus.c				1.34,1.35
+sys/dev/usb/if_rum.c				1.62,1.63
+sys/dev/usb/if_run.c				1.28,1.29
+sys/dev/usb/if_smsc.c				1.35,1.36
+sys/dev/usb/if_udav.c				1.54,1.55
+sys/dev/usb/if_upgt.c				1.21,1.22
+sys/dev/usb/if_ural.c				1.56,1.57
+sys/dev/usb/if_url.c				1.59,1.60
+sys/dev/usb/if_urtw.c				1.16,1.17
+sys/dev/usb/if_urtwn.c				1.61,1.63
+sys/dev/usb/if_zyd.c				1.49,1.50
+sys/dev/usb/uatp.c				1.16,1.17
+sys/dev/usb/umcs.c				1.11,1.12
+sys/dev/usb/usb.c				1.170,1.171
+sys/dev/usb/usb_subr.c				1.225,1.226
+sys/dev/usb/usbdi.h				1.93,1.95
+
+	Make usb detach more reliable by using a new
+	function usb_rem_task_wait.
+	[riastradh, ticket #1626]
 
