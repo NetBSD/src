@@ -1,4 +1,4 @@
-/*	$NetBSD: if_upgt.c,v 1.17.8.1 2018/01/31 18:01:54 martin Exp $	*/
+/*	$NetBSD: if_upgt.c,v 1.17.8.2 2018/08/08 10:28:35 martin Exp $	*/
 /*	$OpenBSD: if_upgt.c,v 1.49 2010/04/20 22:05:43 tedu Exp $ */
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_upgt.c,v 1.17.8.1 2018/01/31 18:01:54 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_upgt.c,v 1.17.8.2 2018/08/08 10:28:35 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -504,8 +504,12 @@ upgt_detach(device_t self, int flags)
 		upgt_stop(sc);
 
 	/* remove tasks and timeouts */
-	usb_rem_task(sc->sc_udev, &sc->sc_task_newstate);
-	usb_rem_task(sc->sc_udev, &sc->sc_task_tx);
+	callout_halt(&sc->scan_to, NULL);
+	callout_halt(&sc->led_to, NULL);
+	usb_rem_task_wait(sc->sc_udev, &sc->sc_task_newstate, USB_TASKQ_DRIVER,
+	    NULL);
+	usb_rem_task_wait(sc->sc_udev, &sc->sc_task_tx, USB_TASKQ_DRIVER,
+	    NULL);
 	callout_destroy(&sc->scan_to);
 	callout_destroy(&sc->led_to);
 
@@ -1346,6 +1350,11 @@ upgt_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 {
 	struct upgt_softc *sc = ic->ic_ifp->if_softc;
 
+	/*
+	 * XXXSMP: This does not wait for the task, if it is in flight,
+	 * to complete.  If this code works at all, it must rely on the
+	 * kernel lock to serialize with the USB task thread.
+	 */
 	usb_rem_task(sc->sc_udev, &sc->sc_task_newstate);
 	callout_stop(&sc->scan_to);
 
