@@ -1,4 +1,4 @@
-/*	$NetBSD: if_athn_usb.c,v 1.22.2.2 2018/01/31 18:01:54 martin Exp $	*/
+/*	$NetBSD: if_athn_usb.c,v 1.22.2.3 2018/08/08 10:28:35 martin Exp $	*/
 /*	$OpenBSD: if_athn_usb.c,v 1.12 2013/01/14 09:50:31 jsing Exp $	*/
 
 /*-
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_athn_usb.c,v 1.22.2.2 2018/01/31 18:01:54 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_athn_usb.c,v 1.22.2.3 2018/08/08 10:28:35 martin Exp $");
 
 #ifdef	_KERNEL_OPT
 #include "opt_inet.h"
@@ -334,7 +334,8 @@ athn_usb_attach(device_t parent, device_t self, void *aux)
 	athn_usb_free_tx_cmd(usc);
 	athn_usb_free_tx_msg(usc);
 	athn_usb_close_pipes(usc);
-	usb_rem_task(usc->usc_udev, &usc->usc_task);
+	usb_rem_task_wait(usc->usc_udev, &usc->usc_task, USB_TASKQ_DRIVER,
+	    NULL);
 
 	cv_destroy(&usc->usc_cmd_cv);
 	cv_destroy(&usc->usc_msg_cv);
@@ -500,7 +501,8 @@ athn_usb_detach(device_t self, int flags)
 
 	athn_usb_wait_async(usc);
 
-	usb_rem_task(usc->usc_udev, &usc->usc_task);
+	usb_rem_task_wait(usc->usc_udev, &usc->usc_task, USB_TASKQ_DRIVER,
+	    NULL);
 
 	/* Abort Tx/Rx pipes. */
 	athn_usb_abort_pipes(usc);

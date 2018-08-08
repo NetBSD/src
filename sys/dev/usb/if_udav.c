@@ -1,4 +1,4 @@
-/*	$NetBSD: if_udav.c,v 1.51.8.1 2018/01/31 18:01:54 martin Exp $	*/
+/*	$NetBSD: if_udav.c,v 1.51.8.2 2018/08/08 10:28:35 martin Exp $	*/
 /*	$nabe: if_udav.c,v 1.3 2003/08/21 16:57:19 nabe Exp $	*/
 
 /*
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_udav.c,v 1.51.8.1 2018/01/31 18:01:54 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_udav.c,v 1.51.8.2 2018/08/08 10:28:35 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -352,11 +352,13 @@ udav_detach(device_t self, int flags)
 	if (!sc->sc_attached)
 		return 0;
 
-	callout_stop(&sc->sc_stat_ch);
+	callout_halt(&sc->sc_stat_ch, NULL);
 
 	/* Remove any pending tasks */
-	usb_rem_task(sc->sc_udev, &sc->sc_tick_task);
-	usb_rem_task(sc->sc_udev, &sc->sc_stop_task);
+	usb_rem_task_wait(sc->sc_udev, &sc->sc_tick_task, USB_TASKQ_DRIVER,
+	    NULL);
+	usb_rem_task_wait(sc->sc_udev, &sc->sc_stop_task, USB_TASKQ_DRIVER,
+	    NULL);
 
 	s = splusb();
 

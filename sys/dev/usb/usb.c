@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.165.6.2 2017/11/02 21:29:52 snj Exp $	*/
+/*	$NetBSD: usb.c,v 1.165.6.3 2018/08/08 10:28:35 martin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2002, 2008, 2012 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.165.6.2 2017/11/02 21:29:52 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.165.6.3 2018/08/08 10:28:35 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -146,6 +146,7 @@ struct usb_taskq {
 	kcondvar_t cv;
 	struct lwp *task_thread_lwp;
 	const char *name;
+	struct usb_task *current_task;
 };
 
 static struct usb_taskq usb_taskq[USB_NUM_TASKQS];
@@ -293,6 +294,7 @@ usb_once_init(void)
 		mutex_init(&taskq->lock, MUTEX_DEFAULT, IPL_USB);
 		cv_init(&taskq->cv, "usbtsk");
 		taskq->name = taskq_names[i];
+		taskq->current_task = NULL;
 		if (kthread_create(PRI_NONE, KTHREAD_MPSAFE, NULL,
 		    usb_task_thread, taskq, &taskq->task_thread_lwp,
 		    "%s", taskq->name)) {
@@ -422,8 +424,14 @@ usb_add_task(struct usbd_device *dev, struct usb_task *task, int queue)
 }
 
 /*
- * XXX This does not wait for completion!  Most uses need such an
- * operation.  Urgh...
+ * usb_rem_task(dev, task)
+ *
+ *	If task is queued to run, remove it from the queue.
+ *
+ *	Caller is _not_ guaranteed that the task is not running when
+ *	this is done.
+ *
+ *	Never sleeps.
  */
 void
 usb_rem_task(struct usbd_device *dev, struct usb_task *task)
@@ -443,6 +451,74 @@ usb_rem_task(struct usbd_device *dev, struct usb_task *task)
 		}
 		mutex_exit(&taskq->lock);
 	}
+}
+
+/*
+ * usb_rem_task_wait(dev, task, queue, interlock)
+ *
+ *	If task is scheduled to run, remove it from the queue.  If it
+ *	may have already begun to run, drop interlock if not null, wait
+ *	for it to complete, and reacquire interlock if not null.
+ *	Return true if it successfully removed the task from the queue,
+ *	false if not.
+ *
+ *	Caller MUST guarantee that task will not be scheduled on a
+ *	_different_ queue, at least until after this returns.
+ *
+ *	If caller guarantees that task will not be scheduled on the
+ *	same queue before this returns, then caller is guaranteed that
+ *	the task is not running at all when this returns.
+ *
+ *	May sleep.
+ */
+bool
+usb_rem_task_wait(struct usbd_device *dev, struct usb_task *task, int queue,
+    kmutex_t *interlock)
+{
+	struct usb_taskq *taskq;
+	int queue1;
+	bool removed;
+
+	USBHIST_FUNC(); USBHIST_CALLED(usbdebug);
+	ASSERT_SLEEPABLE();
+	KASSERT(0 <= queue);
+	KASSERT(queue < USB_NUM_TASKQS);
+
+	taskq = &usb_taskq[queue];
+	mutex_enter(&taskq->lock);
+	queue1 = task->queue;
+	if (queue1 == USB_NUM_TASKQS) {
+		/*
+		 * It is not on the queue.  It may be about to run, or
+		 * it may have already finished running -- there is no
+		 * stopping it now.  Wait for it if it is running.
+		 */
+		if (interlock)
+			mutex_exit(interlock);
+		while (taskq->current_task == task)
+			cv_wait(&taskq->cv, &taskq->lock);
+		removed = false;
+	} else {
+		/*
+		 * It is still on the queue.  We can stop it before the
+		 * task thread will run it.
+		 */
+		KASSERTMSG(queue1 == queue, "task %p on q%d expected on q%d",
+		    task, queue1, queue);
+		TAILQ_REMOVE(&taskq->tasks, task, next);
+		task->queue = USB_NUM_TASKQS;
+		removed = true;
+	}
+	mutex_exit(&taskq->lock);
+
+	/*
+	 * If there's an interlock, and we dropped it to wait,
+	 * reacquire it.
+	 */
+	if (interlock && !removed)
+		mutex_enter(interlock);
+
+	return removed;
 }
 
 void
@@ -513,6 +589,7 @@ usb_task_thread(void *arg)
 			mpsafe = ISSET(task->flags, USB_TASKQ_MPSAFE);
 			TAILQ_REMOVE(&taskq->tasks, task, next);
 			task->queue = USB_NUM_TASKQS;
+			taskq->current_task = task;
 			mutex_exit(&taskq->lock);
 
 			if (!mpsafe)
@@ -523,6 +600,10 @@ usb_task_thread(void *arg)
 				KERNEL_UNLOCK_ONE(curlwp);
 
 			mutex_enter(&taskq->lock);
+			KASSERTMSG(taskq->current_task == task,
+			    "somebody scribbled on usb taskq %p", taskq);
+			taskq->current_task = NULL;
+			cv_broadcast(&taskq->cv);
 		}
 	}
 	mutex_exit(&taskq->lock);
