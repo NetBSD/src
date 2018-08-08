@@ -1,4 +1,4 @@
-/*	$NetBSD: gic_reg.h,v 1.6 2017/06/22 07:02:14 skrll Exp $	*/
+/*	$NetBSD: gic_reg.h,v 1.7 2018/08/08 19:01:54 jmcneill Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -133,11 +133,20 @@
 
 #define	GICD_ITARGETSRn(n)	(0x800+4*(n)) // Interrupt Processor Targets Registers
 #define	GICD_ICFGRn(n)		(0xC00+4*(n)) // Interrupt Configuration Registers
+#define	GICD_IGRPMODRn(n)	(0xD00+4*(n)) // Interrupt Group Modifier Registers
 #define	GICD_NSACRn(n)		(0xE00+4*(n)) // Non-secure Access Control Registers, optional
 #define	GICD_SGIR		0xF00 // Software Generated Interrupt Register
 #define	GICD_CPENDSGIR(n)	(0xF10+4*(n)) // SGI Clear-Pending Registers
 #define	GICD_SPENDSGIR(n)	(0xF20+4*(n)) // SGI Set-Pending Registers
+#define	GICD_IROUTER(n)		(0x6100+8*(n)) // Interrupt Routing Registers
 
+#define	GICD_CTRL_RWP			__BIT(31)	// GICv3
+#define	GICD_CTRL_E1NWF			__BIT(7)	// GICv3
+#define	GICD_CTRL_DS			__BIT(6)	// GICv3
+#define	GICD_CTRL_ARE_NS		__BIT(5)	// GICv3
+#define	GICD_CTRL_ARE_S			__BIT(4)	// GICv3
+#define	GICD_CTRL_EnableGrp1S		__BIT(2)	// GICv3
+#define	GICD_CTRL_EnableGrp1NS		__BIT(1)	// GICv3
 #define	GICD_CTRL_Enable		__BIT(0)
 
 #define	GICD_TYPER_LSPI			__BITS(15,11)
@@ -174,6 +183,61 @@
 #define	GICD_SGIR_TargetList		__BITS(23,16)
 #define	GICD_SGIR_NSATT			__BIT(15)
 #define	GICD_SGIR_SGIINTID		__BITS(3,0)
+
+#define	GICD_IROUTER_Aff3		__BITS(39,32)
+#define	GICD_IROUTER_Interrupt_Routing_mode __BIT(31)
+#define	GICD_IROUTER_Aff2		__BITS(23,16)
+#define	GICD_IROUTER_Aff1		__BITS(15,8)
+#define	GICD_IROUTER_Aff0		__BITS(7,0)
+
+#define	GICR_CTRL		0x0000	// Redistributor Control Register
+#define	GICR_IIDR		0x0004	// Implementor Identification Register
+#define	GICR_TYPER		0x0008	// Redistributor Type Register
+#define	GICR_STATUSR		0x0010	// Error Reporting Status Register, optional
+#define	GICR_WAKER		0x0014	// Redistributor Wake Register
+#define	GICR_SETLPIR		0x0040	// Set LPI Pending Register
+#define	GICR_CLRLPIR		0x0048	// Clear LPI Pending Register
+#define	GICR_PROPBASER		0x0070	// Redistributor Properties Base Address Register
+#define	GICR_PENDBASER		0x0078	// Redistributor LPI Pending Table Base Address Register
+#define	GICR_INVLPIR		0x00A0	// Redistributor Invalidate LPI Register
+#define	GICR_INVALLR		0x00B0	// Redistributor Invalidate All Register
+#define	GICR_SYNCR		0x00C0	// Redistributor Synchronize Register
+
+#define	GICR_IGROUPR0		0x10080	// Interrupt Group Register 0
+#define	GICR_ISENABLER0		0x10100	// Interrupt Set-Enable Register 0
+#define	GICR_ICENABLER0		0x10180	// Interrupt Clear-Enable Register 0
+#define	GICR_ISPENDR0		0x10200	// Interrupt Set-Pend Register 0
+#define	GICR_ICPENDR0		0x10280	// Interrupt Clear-Pend Register 0
+#define	GICR_ISACTIVER0		0x10300	// Interrupt Set-Active Register 0
+#define	GICR_ICACTIVER0		0x10380	// Interrupt Clear-Active Register 0
+#define	GICR_IPRIORITYRn(n)	(0x10400+4*(n)) // Interrupt Priority Registers
+#define	GICR_ICFGRn(n)		(0x10C00+4*(n)) // SGI (0) / PPI (1) Configuration Register
+#define	GICR_IGRPMODR0		0x10D00	// Interrupt Group Modifier Register 0
+#define	GICR_NSACR		0x10E00	// Non-Secure Access Control Register
+
+#define	GICR_CTRL_UWP			__BIT(31)
+#define	GICR_CTRL_DPG1S			__BIT(26)
+#define	GICR_CTRL_DPG1NS		__BIT(25)
+#define	GICR_CTRL_DPG0			__BIT(24)
+#define	GICR_CTRL_RWP			__BIT(3)
+#define	GICR_CTRL_Enable_LPIs		__BIT(0)
+
+#define	GICR_TYPER_Affinity_Value	__BITS(63,32)
+#define	GICR_TYPER_Affinity_Value_Aff3	__BITS(63,56)
+#define	GICR_TYPER_Affinity_Value_Aff2	__BITS(55,48)
+#define	GICR_TYPER_Affinity_Value_Aff1	__BITS(47,40)
+#define	GICR_TYPER_Affinity_Value_Aff0	__BITS(39,32)
+#define	GICR_TYPER_CommonLPIAff		__BITS(25,24)
+#define	GICR_TYPER_Processor_Number	__BITS(23,8)
+#define	GICR_TYPER_DPGS			__BIT(5)
+#define	GICR_TYPER_Last			__BIT(4)
+#define	GICR_TYPER_DirectLPI		__BIT(3)
+#define	GICR_TYPER_VLPIS		__BIT(1)
+#define	GICR_TYPER_PLPIS		__BIT(0)
+
+#define	GICR_WAKER_ChildrenAsleep	__BIT(2)
+#define	GICR_WAKER_ProcessorSleep	__BIT(1)
+
 
 /*
  * GICv1 names
