@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.398 2018/07/15 05:16:45 maxv Exp $
+#	$NetBSD: files.pci,v 1.399 2018/08/08 21:00:28 maya Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -1059,11 +1059,6 @@ file	dev/pci/siisata_pci.c		siisata_pci
 device	alipm: i2cbus
 attach	alipm at pci
 file	dev/pci/alipm.c				alipm
-
-#
-# NetOctave NSP2000
-#
-include "dev/pci/n8/files.n8"
 
 #
 # Broadcom AirForce / Apple Airport Extreme
