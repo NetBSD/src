@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2_hcdqueue.c,v 1.14 2016/02/14 10:53:30 skrll Exp $	*/
+/*	$NetBSD: dwc2_hcdqueue.c,v 1.14.10.1 2018/08/08 10:36:08 martin Exp $	*/
 
 /*
  * hcd_queue.c - DesignWare HS OTG Controller host queuing routines
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc2_hcdqueue.c,v 1.14 2016/02/14 10:53:30 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc2_hcdqueue.c,v 1.14.10.1 2018/08/08 10:36:08 martin Exp $");
 
 #include <sys/types.h>
 #include <sys/kmem.h>
@@ -64,6 +64,10 @@ __KERNEL_RCSID(0, "$NetBSD: dwc2_hcdqueue.c,v 1.14 2016/02/14 10:53:30 skrll Exp
 #include "dwc2_hcd.h"
 
 static u32 dwc2_calc_bus_time(struct dwc2_hsotg *, int, int, int, int);
+static void dwc2_wait_timer_fn(void *);
+
+/* If we get a NAK, wait this long before retrying */
+#define DWC2_RETRY_WAIT_DELAY 1	/* msec */
 
 /**
  * dwc2_qh_init() - Initializes a QH structure
@@ -82,6 +86,10 @@ static void dwc2_qh_init(struct dwc2_hsotg *hsotg, struct dwc2_qh *qh,
 	dev_vdbg(hsotg->dev, "%s()\n", __func__);
 
 	/* Initialize QH */
+	qh->hsotg = hsotg;
+	/* XXX timer_setup(&qh->wait_timer, dwc2_wait_timer_fn, 0); */
+	callout_init(&qh->wait_timer, 0);
+	callout_setfunc(&qh->wait_timer, dwc2_wait_timer_fn, qh);
 	qh->ep_type = dwc2_hcd_get_pipe_type(&urb->pipe_info);
 	qh->ep_is_in = dwc2_hcd_is_pipe_in(&urb->pipe_info) ? 1 : 0;
 
@@ -250,6 +258,17 @@ struct dwc2_qh *dwc2_hcd_qh_create(struct dwc2_hsotg *hsotg,
 void dwc2_hcd_qh_free(struct dwc2_hsotg *hsotg, struct dwc2_qh *qh)
 {
 	struct dwc2_softc *sc = hsotg->hsotg_sc;
+
+	/*
+	 * We don't have the lock so we can safely wait until the wait timer
+	 * finishes.  Of course, at this point in time we'd better have set
+	 * wait_timer_active to false so if this timer was still pending it
+	 * won't do anything anyway, but we want it to finish before we free
+	 * memory.
+	 */
+	/* XXX del_timer_sync(&qh->wait_timer); */
+	callout_destroy(&qh->wait_timer);	/* XXX need to callout_halt() first? */
+
 	if (qh->desc_list) {
 		dwc2_hcd_qh_free_ddma(hsotg, qh);
 	} else if (qh->dw_align_buf) {
@@ -583,6 +602,55 @@ static void dwc2_deschedule_periodic(struct dwc2_hsotg *hsotg,
 }
 
 /**
+ * dwc2_wait_timer_fn() - Timer function to re-queue after waiting
+ *
+ * As per the spec, a NAK indicates that "a function is temporarily unable to
+ * transmit or receive data, but will eventually be able to do so without need
+ * of host intervention".
+ *
+ * That means that when we encounter a NAK we're supposed to retry.
+ *
+ * ...but if we retry right away (from the interrupt handler that saw the NAK)
+ * then we can end up with an interrupt storm (if the other side keeps NAKing
+ * us) because on slow enough CPUs it could take us longer to get out of the
+ * interrupt routine than it takes for the device to send another NAK.  That
+ * leads to a constant stream of NAK interrupts and the CPU locks.
+ *
+ * ...so instead of retrying right away in the case of a NAK we'll set a timer
+ * to retry some time later.  This function handles that timer and moves the
+ * qh back to the "inactive" list, then queues transactions.
+ *
+ * @t: Pointer to wait_timer in a qh.
+ */
+static void dwc2_wait_timer_fn(void *arg)
+{
+	struct dwc2_qh *qh = arg;
+	struct dwc2_hsotg *hsotg = qh->hsotg;
+	unsigned long flags;
+
+	spin_lock_irqsave(&hsotg->lock, flags);
+
+	/*
+	 * We'll set wait_timer_cancel to true if we want to cancel this
+	 * operation in dwc2_hcd_qh_unlink().
+	 */
+	if (!qh->wait_timer_cancel) {
+		enum dwc2_transaction_type tr_type;
+
+		qh->want_wait = false;
+
+		list_move(&qh->qh_list_entry,
+			  &hsotg->non_periodic_sched_inactive);
+
+		tr_type = dwc2_hcd_select_transactions(hsotg);
+		if (tr_type != DWC2_TRANSACTION_NONE)
+			dwc2_hcd_queue_transactions(hsotg, tr_type);
+	}
+
+	spin_unlock_irqrestore(&hsotg->lock, flags);
+}
+
+/**
  * dwc2_hcd_qh_add() - Adds a QH to either the non periodic or periodic
  * schedule if it is not already in the schedule. If the QH is already in
  * the schedule, no action is taken.
@@ -614,9 +682,18 @@ int dwc2_hcd_qh_add(struct dwc2_hsotg *hsotg, struct dwc2_qh *qh)
 
 	/* Add the new QH to the appropriate schedule */
 	if (dwc2_qh_is_non_per(qh)) {
-		/* Always start in inactive schedule */
-		list_add_tail(&qh->qh_list_entry,
-			      &hsotg->non_periodic_sched_inactive);
+		if (qh->want_wait) {
+			list_add_tail(&qh->qh_list_entry,
+				      &hsotg->non_periodic_sched_waiting);
+			qh->wait_timer_cancel = false;
+			/* XXX mod_timer(&qh->wait_timer,
+				  jiffies + DWC2_RETRY_WAIT_DELAY + 1); */
+			callout_schedule(&qh->wait_timer,
+			    mstohz(DWC2_RETRY_WAIT_DELAY));
+		} else {
+			list_add_tail(&qh->qh_list_entry,
+				      &hsotg->non_periodic_sched_inactive);
+		}
 		return 0;
 	}
 
@@ -645,6 +722,9 @@ void dwc2_hcd_qh_unlink(struct dwc2_hsotg *hsotg, struct dwc2_qh *qh)
 	u32 intr_mask;
 
 	dev_vdbg(hsotg->dev, "%s()\n", __func__);
+
+	/* If the wait_timer is pending, this will stop it from acting */
+	qh->wait_timer_cancel = true;
 
 	if (list_empty(&qh->qh_list_entry))
 		/* QH is not in a schedule */
@@ -726,7 +806,7 @@ void dwc2_hcd_qh_deactivate(struct dwc2_hsotg *hsotg, struct dwc2_qh *qh,
 	if (dwc2_qh_is_non_per(qh)) {
 		dwc2_hcd_qh_unlink(hsotg, qh);
 		if (!list_empty(&qh->qtd_list))
-			/* Add back to inactive non-periodic schedule */
+			/* Add back to inactive/waiting non-periodic schedule */
 			dwc2_hcd_qh_add(hsotg, qh);
 		return;
 	}

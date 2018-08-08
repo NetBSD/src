@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2_core.h,v 1.8 2016/02/24 22:17:54 skrll Exp $	*/
+/*	$NetBSD: dwc2_core.h,v 1.8.10.1 2018/08/08 10:36:08 martin Exp $	*/
 
 /*
  * core.h - DesignWare HS OTG Controller common declarations
@@ -756,6 +756,7 @@ struct dwc2_hsotg {
 	} flags;
 
 	struct list_head non_periodic_sched_inactive;
+	struct list_head non_periodic_sched_waiting;
 	struct list_head non_periodic_sched_active;
 	struct list_head *non_periodic_qh_ptr;
 	struct list_head periodic_sched_inactive;
