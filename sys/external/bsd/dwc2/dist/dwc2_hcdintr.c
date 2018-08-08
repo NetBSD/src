@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2_hcdintr.c,v 1.13 2016/02/14 10:53:30 skrll Exp $	*/
+/*	$NetBSD: dwc2_hcdintr.c,v 1.14 2018/08/08 07:20:44 simonb Exp $	*/
 
 /*
  * hcd_intr.c - DesignWare HS OTG Controller host-mode interrupt handling
@@ -40,7 +40,7 @@
  * This file contains the interrupt handlers for Host mode
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc2_hcdintr.c,v 1.13 2016/02/14 10:53:30 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc2_hcdintr.c,v 1.14 2018/08/08 07:20:44 simonb Exp $");
 
 #include <sys/types.h>
 #include <sys/pool.h>
@@ -59,6 +59,13 @@ __KERNEL_RCSID(0, "$NetBSD: dwc2_hcdintr.c,v 1.13 2016/02/14 10:53:30 skrll Exp 
 
 #include "dwc2_core.h"
 #include "dwc2_hcd.h"
+
+/*
+ * If we get this many NAKs on a split transaction we'll slow down
+ * retransmission.  A 1 here means delay after the first NAK.
+ */
+#define DWC2_NAKS_BEFORE_DELAY		3
+int dwc2_naks_before_delay = DWC2_NAKS_BEFORE_DELAY;
 
 /* This function is for debug only */
 static void dwc2_track_missed_sofs(struct dwc2_hsotg *hsotg)
@@ -1256,6 +1263,16 @@ static void dwc2_hc_nak_intr(struct dwc2_hsotg *hsotg,
 	/*
 	 * Handle NAK for IN/OUT SSPLIT/CSPLIT transfers, bulk, control, and
 	 * interrupt. Re-start the SSPLIT transfer.
+	 *
+	 * Normally for non-periodic transfers we'll retry right away, but to
+	 * avoid interrupt storms we'll wait before retrying if we've got
+	 * several NAKs. If we didn't do this we'd retry directly from the
+	 * interrupt handler and could end up quickly getting another
+	 * interrupt (another NAK), which we'd retry.
+	 *
+	 * Note that in DMA mode software only gets involved to re-send NAKed
+	 * transfers for split transactions unless the core is missing OUT NAK
+	 * enhancement.
 	 */
 	if (chan->do_split) {
 		/*
@@ -1272,6 +1289,8 @@ static void dwc2_hc_nak_intr(struct dwc2_hsotg *hsotg,
 		if (chan->complete_split)
 			qtd->error_count = 0;
 		qtd->complete_split = 0;
+		qtd->num_naks++;
+		qtd->qh->want_wait = qtd->num_naks >= dwc2_naks_before_delay;
 		dwc2_halt_channel(hsotg, chan, qtd, DWC2_HC_XFER_NAK);
 		goto handle_nak_done;
 	}
@@ -1297,7 +1316,12 @@ static void dwc2_hc_nak_intr(struct dwc2_hsotg *hsotg,
 		 */
 		qtd->error_count = 0;
 
-		if (!chan->qh->ping_state) {
+		if (hsotg->core_params->dma_enable > 0 && !chan->ep_is_in) {
+			/*
+			 * Avoid interrupt storms.
+			 */
+			qtd->qh->want_wait = 1;
+		} else if (!chan->qh->ping_state) {
 			dwc2_update_urb_state_abn(hsotg, chan, chnum, qtd->urb,
 						  qtd, DWC2_HC_XFER_NAK);
 			dwc2_hcd_save_data_toggle(hsotg, chan, chnum, qtd);
