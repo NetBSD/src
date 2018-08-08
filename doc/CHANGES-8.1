@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.1,v 1.1.2.7 2018/08/07 13:40:40 martin Exp $
+# $NetBSD: CHANGES-8.1,v 1.1.2.8 2018/08/08 10:37:27 martin Exp $
 
 A complete list of changes from the NetBSD 8.0 release to the NetBSD 8.1
 release:
@@ -341,4 +341,46 @@ share/man/man4/ifmedia.4			1.30
 
 	Add some missing IFM_* entries.
 	[msaitoh, ticket #962]
+
+sys/dev/usb/if_athn_usb.c			1.28,1.29
+sys/dev/usb/if_atu.c				1.62,1.63
+sys/dev/usb/if_aue.c				1.144,1.145
+sys/dev/usb/if_axe.c				1.91,1.92
+sys/dev/usb/if_axen.c				1.15,1.16
+sys/dev/usb/if_cue.c				1.79,1.80
+sys/dev/usb/if_otus.c				1.34,1.35
+sys/dev/usb/if_rum.c				1.62,1.63
+sys/dev/usb/if_run.c				1.28,1.29
+sys/dev/usb/if_smsc.c				1.35,1.36
+sys/dev/usb/if_udav.c				1.54,1.55
+sys/dev/usb/if_upgt.c				1.21,1.22
+sys/dev/usb/if_ural.c				1.56,1.57
+sys/dev/usb/if_url.c				1.59,1.60
+sys/dev/usb/if_urtw.c				1.16,1.17
+sys/dev/usb/if_urtwn.c				1.61,1.63
+sys/dev/usb/if_zyd.c				1.49,1.50
+sys/dev/usb/uatp.c				1.16,1.17
+sys/dev/usb/umcs.c				1.11,1.12
+sys/dev/usb/usb.c				1.170,1.171
+sys/dev/usb/usb_subr.c				1.225,1.226
+sys/dev/usb/usbdi.h				1.93,1.95
+
+	Make usb detach more reliable by using a new
+	function usb_rem_task_wait.
+	[riastradh, ticket #963]
+
+lib/libcurses/addbytes.c			1.48
+
+	Avoid curx going beyond end of window when adding a wide
+	character to the last column.
+	[simonb, ticket #964]
+
+sys/external/bsd/dwc2/dist/dwc2_core.h		1.9
+sys/external/bsd/dwc2/dist/dwc2_hcd.c		1.21
+sys/external/bsd/dwc2/dist/dwc2_hcd.h		1.15
+sys/external/bsd/dwc2/dist/dwc2_hcdintr.c	1.14
+sys/external/bsd/dwc2/dist/dwc2_hcdqueue.c	1.15
+
+	Fix woeful USB disk performance on ERLITE.
+	[simonb, ticket #966]
 
