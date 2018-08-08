@@ -1,4 +1,4 @@
-# $NetBSD: files.cortex,v 1.7 2018/06/05 08:03:28 hkenken Exp $
+# $NetBSD: files.cortex,v 1.8 2018/08/08 19:02:28 jmcneill Exp $
 
 defflag opt_cpu_in_cksum.h			NEON_IN_CKSUM
 
@@ -15,6 +15,10 @@ file	arch/arm/cortex/armperiph.c		armperiph
 device	armgic: pic, pic_splfuncs
 attach	armgic at mpcorebus
 file	arch/arm/cortex/gic.c			armgic
+
+# ARM Generic Interrupt Controller v3+
+device	gicvthree: pic, pic_splfuncs
+file	arch/arm/cortex/gicv3.c			gicvthree
 
 # ARM PL310 L2 Cache Controller(initially on Cortex-A9)
 device	arml2cc
