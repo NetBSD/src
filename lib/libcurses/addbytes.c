@@ -1,4 +1,4 @@
-/*	$NetBSD: addbytes.c,v 1.47 2017/01/06 14:25:41 roy Exp $	*/
+/*	$NetBSD: addbytes.c,v 1.47.6.1 2018/08/08 10:32:18 martin Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)addbytes.c	8.4 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: addbytes.c,v 1.47 2017/01/06 14:25:41 roy Exp $");
+__RCSID("$NetBSD: addbytes.c,v 1.47.6.1 2018/08/08 10:32:18 martin Exp $");
 #endif
 #endif				/* not lint */
 
@@ -582,7 +582,7 @@ _cursesi_addwchar(WINDOW *win, __LINE **lnp, int *y, int *x,
 		if (newx > *(*lnp)->lastchp)
 			*(*lnp)->lastchp = newx;
 		__touchline(win, *y, sx, (int) win->maxx - 1);
-		win->curx = sx;
+		*x = win->curx = sx;
 	} else {
 		win->curx = *x;
 
