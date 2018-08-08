@@ -1,4 +1,4 @@
-/*	$NetBSD: uatp.c,v 1.10.2.2 2017/04/05 19:54:19 snj Exp $	*/
+/*	$NetBSD: uatp.c,v 1.10.2.3 2018/08/08 10:17:11 martin Exp $	*/
 
 /*-
  * Copyright (c) 2011-2014 The NetBSD Foundation, Inc.
@@ -146,7 +146,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uatp.c,v 1.10.2.2 2017/04/05 19:54:19 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uatp.c,v 1.10.2.3 2018/08/08 10:17:11 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1363,7 +1363,8 @@ geyser34_finalize(struct uatp_softc *sc)
 {
 
 	DPRINTF(sc, UATP_DEBUG_MISC, ("finalizing\n"));
-	usb_rem_task(sc->sc_hdev.sc_parent->sc_udev, &sc->sc_reset_task);
+	usb_rem_task_wait(sc->sc_hdev.sc_parent->sc_udev, &sc->sc_reset_task,
+	    USB_TASKQ_DRIVER, NULL);
 
 	return 0;
 }
