@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2_hcd.h,v 1.14 2016/04/23 10:15:30 skrll Exp $	*/
+/*	$NetBSD: dwc2_hcd.h,v 1.15 2018/08/08 07:20:44 simonb Exp $	*/
 
 /*
  * hcd.h - DesignWare HS OTG Controller host-mode declarations
@@ -222,6 +222,7 @@ enum dwc2_transaction_type {
 /**
  * struct dwc2_qh - Software queue head structure
  *
+ * @hsotg:              The HCD state structure for the DWC OTG controller
  * @ep_type:            Endpoint type. One of the following values:
  *                       - USB_ENDPOINT_XFER_CONTROL
  *                       - USB_ENDPOINT_XFER_BULK
@@ -264,13 +265,18 @@ enum dwc2_transaction_type {
  * @n_bytes:            Xfer Bytes array. Each element corresponds to a transfer
  *                      descriptor and indicates original XferSize value for the
  *                      descriptor
+ * @wait_timer:         Timer used to wait before re-queuing.
  * @tt_buffer_dirty     True if clear_tt_buffer_complete is pending
+ * @want_wait:          We should wait before re-queuing; only matters for non-
+ *                      periodic transfers and is ignored for periodic ones.
+ * @wait_timer_cancel:  Set to true to cancel the wait_timer.
  *
  * A Queue Head (QH) holds the static characteristics of an endpoint and
  * maintains a list of transfers (QTDs) for that endpoint. A QH structure may
  * be entered in either the non-periodic or periodic schedule.
  */
 struct dwc2_qh {
+	struct dwc2_hsotg *hsotg;
 	u8 ep_type;
 	u8 ep_is_in;
 	u16 maxp;
@@ -299,7 +305,11 @@ struct dwc2_qh {
 	dma_addr_t desc_list_dma;
 	u32 desc_list_sz;
 	u32 *n_bytes;
+	/* XXX struct timer_list wait_timer; */
+	callout_t wait_timer;
 	unsigned tt_buffer_dirty:1;
+	unsigned want_wait:1;
+	unsigned wait_timer_cancel:1;
 };
 
 /**
@@ -330,6 +340,7 @@ struct dwc2_qh {
  * @n_desc:             Number of DMA descriptors for this QTD
  * @isoc_frame_index_last: Last activated frame (packet) index, used in
  *                      descriptor DMA mode only
+ * @num_naks:           Number of NAKs received on this QTD.
  * @urb:                URB for this transfer
  * @qh:                 Queue head for this QTD
  * @qtd_list_entry:     For linking to the QH's list of QTDs
@@ -360,6 +371,7 @@ struct dwc2_qtd {
 	u8 error_count;
 	u8 n_desc;
 	u16 isoc_frame_index_last;
+	u16 num_naks;
 	struct dwc2_hcd_urb *urb;
 	struct dwc2_qh *qh;
 	struct list_head qtd_list_entry;
