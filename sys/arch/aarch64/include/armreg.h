@@ -1,4 +1,4 @@
-/* $NetBSD: armreg.h,v 1.14 2018/08/05 07:49:02 skrll Exp $ */
+/* $NetBSD: armreg.h,v 1.15 2018/08/08 19:00:53 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -66,6 +66,11 @@ reg_##regname##_write(uint64_t __val)				\
 
 #define AARCH64REG_WRITEIMM_INLINE(regname)			\
 	AARCH64REG_WRITEIMM_INLINE2(regname, regname)
+
+#define AARCH64REG_READWRITE_INLINE2(regname, regdesc)		\
+	AARCH64REG_READ_INLINE2(regname, regdesc)		\
+	AARCH64REG_WRITE_INLINE2(regname, regdesc)
+
 /*
  * System registers available at EL0 (user)
  */
@@ -951,17 +956,69 @@ AARCH64REG_WRITE_INLINE(cntvct_el0)
 #define	 ID_AA64PFR0_EL1_EL0_64	 	 1
 #define	 ID_AA64PFR0_EL1_EL0_64_32	 2
 
+/*
+ * GICv3 system registers
+ */
+AARCH64REG_READWRITE_INLINE2(icc_sre_el1, s3_0_c12_c12_5)
+AARCH64REG_READWRITE_INLINE2(icc_ctlr_el1, s3_0_c12_c12_4)
+AARCH64REG_READWRITE_INLINE2(icc_pmr_el1, s3_0_c4_c6_0)
+AARCH64REG_READWRITE_INLINE2(icc_bpr0_el1, s3_0_c12_c8_3)
+AARCH64REG_READWRITE_INLINE2(icc_bpr1_el1, s3_0_c12_c12_3)
+AARCH64REG_READWRITE_INLINE2(icc_igrpen0_el1, s3_0_c12_c12_6)
+AARCH64REG_READWRITE_INLINE2(icc_igrpen1_el1, s3_0_c12_c12_7)
+AARCH64REG_READWRITE_INLINE2(icc_eoir0_el1, s3_0_c12_c8_1)
+AARCH64REG_READWRITE_INLINE2(icc_eoir1_el1, s3_0_c12_c12_1)
+AARCH64REG_READWRITE_INLINE2(icc_sgi1r_el1, s3_0_c12_c11_5)
+AARCH64REG_READ_INLINE2(icc_iar1_el1, s3_0_c12_c12_0)
+
 // ICC_SRE_EL1: Interrupt Controller System Register Enable register
-#define	ICC_SRE_EL1_SRE		 __BIT(0)
-#define	ICC_SRE_EL1_DFB		 __BIT(1)
-#define	ICC_SRE_EL1_DIB		 __BIT(2)
+#define	ICC_SRE_EL1_DIB		__BIT(2)
+#define	ICC_SRE_EL1_DFB		__BIT(1)
+#define	ICC_SRE_EL1_SRE		__BIT(0)
 
-// ICC_SRE_EL2: Interrupt Controller System Register Enable register
-#define	ICC_SRE_EL2_SRE		 __BIT(0)
-#define	ICC_SRE_EL2_DFB		 __BIT(1)
-#define	ICC_SRE_EL2_DIB		 __BIT(2)
-#define	ICC_SRE_EL2_EN		 __BIT(3)
+// ICC_BPR[01]_EL1: Interrupt Controller Binary Point Register 0/1
+#define	ICC_BPR_EL1_BinaryPoint	__BITS(2,0)
 
+// ICC_CTLR_EL1: Interrupt Controller Control Register
+#define	ICC_CTLR_EL1_A3V	__BIT(15)
+#define	ICC_CTLR_EL1_SEIS	__BIT(14)
+#define	ICC_CTLR_EL1_IDbits	__BITS(13,11)
+#define	ICC_CTLR_EL1_PRIbits	__BITS(10,8)
+#define	ICC_CTLR_EL1_PMHE	__BIT(6)
+#define	ICC_CTLR_EL1_EOImode	__BIT(1)
+#define	ICC_CTLR_EL1_CBPR	__BIT(0)
+
+// ICC_IGRPEN[01]_EL1: Interrupt Controller Interrupt Group 0/1 Enable register
+#define	ICC_IGRPEN_EL1_Enable	__BIT(0)
+
+// ICC_SGI[01]R_EL1: Interrupt Controller Software Generated Interrupt Group 0/1 Register
+#define	ICC_SGIR_EL1_Aff3	__BITS(55,48)
+#define	ICC_SGIR_EL1_IRM	__BIT(40)
+#define	ICC_SGIR_EL1_Aff2	__BITS(39,32)
+#define	ICC_SGIR_EL1_INTID	__BITS(27,24)
+#define	ICC_SGIR_EL1_Aff1	__BITS(23,16)
+#define	ICC_SGIR_EL1_TargetList	__BITS(15,0)
+#define	ICC_SGIR_EL1_Aff	(ICC_SGIR_EL1_Aff3|ICC_SGIR_EL1_Aff2|ICC_SGIR_EL1_Aff1)
+
+// ICC_IAR[01]_EL1: Interrupt Controller Interrupt Acknowledge Register 0/1
+#define	ICC_IAR_INTID		__BITS(23,0)
+#define	ICC_IAR_INTID_SPURIOUS	1023
+
+/*
+ * GICv3 REGISTER ACCESS
+ */
+
+#define	icc_sre_read		reg_icc_sre_el1_read
+#define	icc_sre_write		reg_icc_sre_el1_write
+#define	icc_pmr_write		reg_icc_pmr_el1_write
+#define	icc_bpr0_write		reg_icc_bpr0_el1_write
+#define	icc_bpr1_write		reg_icc_bpr1_el1_write
+#define	icc_ctlr_read		reg_icc_ctlr_el1_read
+#define	icc_ctlr_write		reg_icc_ctlr_el1_write
+#define	icc_igrpen1_write	reg_icc_igrpen1_el1_write
+#define	icc_sgi1r_write		reg_icc_sgi1r_el1_write
+#define	icc_iar1_read		reg_icc_iar1_el1_read
+#define	icc_eoi1r_write		reg_icc_eoir1_el1_write
 
 /*
  * GENERIC TIMER REGISTER ACCESS
