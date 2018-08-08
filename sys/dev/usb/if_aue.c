@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aue.c,v 1.132.2.2 2018/02/19 19:33:06 snj Exp $	*/
+/*	$NetBSD: if_aue.c,v 1.132.2.3 2018/08/08 10:17:11 martin Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.132.2.2 2018/02/19 19:33:06 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.132.2.3 2018/08/08 10:17:11 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -883,13 +883,18 @@ aue_detach(device_t self, int flags)
 		return 0;
 	}
 
-	callout_stop(&sc->aue_stat_ch);
 	/*
-	 * Remove any pending tasks.  They cannot be executing because they run
-	 * in the same thread as detach.
+	 * XXX Halting callout guarantees no more tick tasks.  What
+	 * guarantees no more stop tasks?  What guarantees no more
+	 * calls to aue_send?  Don't we need to wait for if_detach or
+	 * something?  Should we set sc->aue_dying here?  Is device
+	 * deactivation guaranteed to have already happened?
 	 */
-	usb_rem_task(sc->aue_udev, &sc->aue_tick_task);
-	usb_rem_task(sc->aue_udev, &sc->aue_stop_task);
+	callout_halt(&sc->aue_stat_ch, NULL);
+	usb_rem_task_wait(sc->aue_udev, &sc->aue_tick_task, USB_TASKQ_DRIVER,
+	    NULL);
+	usb_rem_task_wait(sc->aue_udev, &sc->aue_stop_task, USB_TASKQ_DRIVER,
+	    NULL);
 
 	sc->aue_closing = 1;
 

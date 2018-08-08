@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cue.c,v 1.68.2.2 2018/02/19 19:33:06 snj Exp $	*/
+/*	$NetBSD: if_cue.c,v 1.68.2.3 2018/08/08 10:17:11 martin Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cue.c,v 1.68.2.2 2018/02/19 19:33:06 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cue.c,v 1.68.2.3 2018/08/08 10:17:11 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -581,13 +581,18 @@ cue_detach(device_t self, int flags)
 
 	DPRINTFN(2,("%s: %s: enter\n", device_xname(sc->cue_dev), __func__));
 
-	callout_stop(&sc->cue_stat_ch);
 	/*
-	 * Remove any pending task.  It cannot be executing because it run
-	 * in the same thread as detach.
+	 * XXX Halting callout guarantees no more tick tasks.  What
+	 * guarantees no more stop tasks?  What guarantees no more
+	 * calls to cue_send?  Don't we need to wait for if_detach or
+	 * something?  Should we set sc->cue_dying here?  Is device
+	 * deactivation guaranteed to have already happened?
 	 */
-	usb_rem_task(sc->cue_udev, &sc->cue_tick_task);
-	usb_rem_task(sc->cue_udev, &sc->cue_stop_task);
+	callout_halt(&sc->cue_stat_ch, NULL);
+	usb_rem_task_wait(sc->cue_udev, &sc->cue_tick_task, USB_TASKQ_DRIVER,
+	    NULL);
+	usb_rem_task_wait(sc->cue_udev, &sc->cue_stop_task, USB_TASKQ_DRIVER,
+	    NULL);
 
 	if (!sc->cue_attached) {
 		/* Detached before attached finished, so just bail out. */

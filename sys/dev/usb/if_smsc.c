@@ -1,4 +1,4 @@
-/*	$NetBSD: if_smsc.c,v 1.19.2.4 2018/02/19 19:33:06 snj Exp $	*/
+/*	$NetBSD: if_smsc.c,v 1.19.2.5 2018/08/08 10:17:11 martin Exp $	*/
 
 /*	$OpenBSD: if_smsc.c,v 1.4 2012/09/27 12:38:11 jsg Exp $	*/
 /* $FreeBSD: src/sys/dev/usb/net/if_smsc.c,v 1.1 2012/08/15 04:03:55 gonzo Exp $ */
@@ -1168,7 +1168,7 @@ smsc_detach(device_t self, int flags)
 	struct ifnet *ifp = &sc->sc_ec.ec_if;
 	int s;
 
-	callout_stop(&sc->sc_stat_ch);
+	callout_halt(&sc->sc_stat_ch, NULL);
 
 	if (sc->sc_ep[SMSC_ENDPT_TX] != NULL)
 		usbd_abort_pipe(sc->sc_ep[SMSC_ENDPT_TX]);
@@ -1177,12 +1177,10 @@ smsc_detach(device_t self, int flags)
 	if (sc->sc_ep[SMSC_ENDPT_INTR] != NULL)
 		usbd_abort_pipe(sc->sc_ep[SMSC_ENDPT_INTR]);
 
-	/*
-	 * Remove any pending tasks.  They cannot be executing because they run
-	 * in the same thread as detach.
-	 */
-	usb_rem_task(sc->sc_udev, &sc->sc_tick_task);
-	usb_rem_task(sc->sc_udev, &sc->sc_stop_task);
+	usb_rem_task_wait(sc->sc_udev, &sc->sc_tick_task, USB_TASKQ_DRIVER,
+	    NULL);
+	usb_rem_task_wait(sc->sc_udev, &sc->sc_stop_task, USB_TASKQ_DRIVER,
+	    NULL);
 
 	s = splusb();
 

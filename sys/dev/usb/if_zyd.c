@@ -1,5 +1,5 @@
 /*	$OpenBSD: if_zyd.c,v 1.52 2007/02/11 00:08:04 jsg Exp $	*/
-/*	$NetBSD: if_zyd.c,v 1.36.12.2 2018/02/19 19:33:06 snj Exp $	*/
+/*	$NetBSD: if_zyd.c,v 1.36.12.3 2018/08/08 10:17:11 martin Exp $	*/
 
 /*-
  * Copyright (c) 2006 by Damien Bergamini <damien.bergamini@free.fr>
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_zyd.c,v 1.36.12.2 2018/02/19 19:33:06 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_zyd.c,v 1.36.12.3 2018/08/08 10:17:11 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -474,9 +474,9 @@ zyd_detach(device_t self, int flags)
 	s = splusb();
 
 	zyd_stop(ifp, 1);
-	usb_rem_task(sc->sc_udev, &sc->sc_task);
-	callout_stop(&sc->sc_scan_ch);
-	callout_stop(&sc->sc_amrr_ch);
+	callout_halt(&sc->sc_scan_ch, NULL);
+	callout_halt(&sc->sc_amrr_ch, NULL);
+	usb_rem_task_wait(sc->sc_udev, &sc->sc_task, USB_TASKQ_DRIVER, NULL);
 
 	/* Abort, etc. done by zyd_stop */
 	zyd_close_pipes(sc);
@@ -771,6 +771,11 @@ zyd_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 	if (!sc->attached)
 		return ENXIO;
 
+	/*
+	 * XXXSMP: This does not wait for the task, if it is in flight,
+	 * to complete.  If this code works at all, it must rely on the
+	 * kernel lock to serialize with the USB task thread.
+	 */
 	usb_rem_task(sc->sc_udev, &sc->sc_task);
 	callout_stop(&sc->sc_scan_ch);
 	callout_stop(&sc->sc_amrr_ch);

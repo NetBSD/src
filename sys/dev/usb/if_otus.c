@@ -1,4 +1,4 @@
-/*	$NetBSD: if_otus.c,v 1.25.4.2 2018/02/19 19:33:06 snj Exp $	*/
+/*	$NetBSD: if_otus.c,v 1.25.4.3 2018/08/08 10:17:11 martin Exp $	*/
 /*	$OpenBSD: if_otus.c,v 1.18 2010/08/27 17:08:00 jsg Exp $	*/
 
 /*-
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_otus.c,v 1.25.4.2 2018/02/19 19:33:06 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_otus.c,v 1.25.4.3 2018/08/08 10:17:11 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -705,7 +705,7 @@ otus_detach(device_t self, int flags)
 	if (ifp != NULL)	/* Failed to attach properly */
 		otus_stop(ifp);
 
-	usb_rem_task(sc->sc_udev, &sc->sc_task);
+	usb_rem_task_wait(sc->sc_udev, &sc->sc_task, USB_TASKQ_DRIVER, NULL);
 	callout_destroy(&sc->sc_scan_to);
 	callout_destroy(&sc->sc_calib_to);
 
