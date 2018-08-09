@@ -1,4 +1,4 @@
-/*	$NetBSD: packet.c,v 1.31 2018/04/06 18:59:00 christos Exp $	*/
+/*	$NetBSD: packet.c,v 1.32 2018/08/09 08:32:41 christos Exp $	*/
 /* $OpenBSD: packet.c,v 1.269 2017/12/18 23:13:42 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -39,7 +39,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: packet.c,v 1.31 2018/04/06 18:59:00 christos Exp $");
+__RCSID("$NetBSD: packet.c,v 1.32 2018/08/09 08:32:41 christos Exp $");
 
 #include <sys/param.h>	/* MIN roundup */
 #include <sys/types.h>
@@ -1898,7 +1898,7 @@ ssh_packet_disconnect(struct ssh *ssh, const char *fmt,...)
 
 	/* Close the connection. */
 	ssh_packet_close(ssh);
-	cleanup_exit(255);
+	cleanup_exit(254);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: session.c,v 1.24 2018/04/06 18:59:00 christos Exp $	*/
+/*	$NetBSD: session.c,v 1.25 2018/08/09 08:32:41 christos Exp $	*/
 /* $OpenBSD: session.c,v 1.294 2018/03/03 03:15:51 djm Exp $ */
 /*
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -35,7 +35,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: session.c,v 1.24 2018/04/06 18:59:00 christos Exp $");
+__RCSID("$NetBSD: session.c,v 1.25 2018/08/09 08:32:41 christos Exp $");
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <sys/un.h>
@@ -709,7 +709,7 @@ do_login(struct ssh *ssh, Session *s, const char *command)
 		if (getpeername(packet_get_connection_in(),
 		    (struct sockaddr *)&from, &fromlen) < 0) {
 			debug("getpeername: %.100s", strerror(errno));
-			cleanup_exit(255);
+			cleanup_exit(254);
 		}
 	}
 
