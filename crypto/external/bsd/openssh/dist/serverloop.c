@@ -1,4 +1,4 @@
-/*	$NetBSD: serverloop.c,v 1.19 2018/04/06 18:59:00 christos Exp $	*/
+/*	$NetBSD: serverloop.c,v 1.20 2018/08/09 08:32:41 christos Exp $	*/
 /* $OpenBSD: serverloop.c,v 1.205 2018/03/03 03:15:51 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -37,7 +37,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: serverloop.c,v 1.19 2018/04/06 18:59:00 christos Exp $");
+__RCSID("$NetBSD: serverloop.c,v 1.20 2018/08/09 08:32:41 christos Exp $");
 
 #include <sys/param.h>	/* MIN MAX */
 #include <sys/types.h>
@@ -331,7 +331,7 @@ process_input(struct ssh *ssh, fd_set *readset, int connection_in)
 				    "%.100s port %d: %.100s",
 				    ssh_remote_ipaddr(ssh),
 				    ssh_remote_port(ssh), strerror(errno));
-				cleanup_exit(255);
+				cleanup_exit(254);
 			}
 		} else {
 			/* Buffer any received data. */
@@ -428,7 +428,7 @@ server_loop2(struct ssh *ssh, Authctxt *authctxt)
 		if (received_sigterm) {
 			logit("Exiting on signal %d", (int)received_sigterm);
 			/* Clean up sessions, utmp, etc. */
-			cleanup_exit(255);
+			cleanup_exit(254);
 		}
 
 		collect_children(ssh);

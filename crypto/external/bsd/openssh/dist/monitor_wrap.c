@@ -1,4 +1,4 @@
-/*	$NetBSD: monitor_wrap.c,v 1.19 2018/04/06 18:59:00 christos Exp $	*/
+/*	$NetBSD: monitor_wrap.c,v 1.20 2018/08/09 08:32:41 christos Exp $	*/
 /* $OpenBSD: monitor_wrap.c,v 1.99 2018/03/03 03:15:51 djm Exp $ */
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -27,7 +27,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: monitor_wrap.c,v 1.19 2018/04/06 18:59:00 christos Exp $");
+__RCSID("$NetBSD: monitor_wrap.c,v 1.20 2018/08/09 08:32:41 christos Exp $");
 #include <sys/types.h>
 #include <sys/uio.h>
 #include <sys/queue.h>
@@ -149,7 +149,7 @@ mm_request_receive(int sock, Buffer *m)
 
 	if (atomicio(read, sock, buf, sizeof(buf)) != sizeof(buf)) {
 		if (errno == EPIPE)
-			cleanup_exit(255);
+			cleanup_exit(254);
 		fatal("%s: read: %s", __func__, strerror(errno));
 	}
 	msg_len = get_u32(buf);
