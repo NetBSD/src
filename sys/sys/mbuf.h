@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.208 2018/07/17 05:52:07 msaitoh Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.209 2018/08/09 17:43:54 maxv Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1999, 2001, 2007 The NetBSD Foundation, Inc.
@@ -773,7 +773,6 @@ extern int max_datalen;		/* MHLEN - max_hdr */
 extern const int msize;			/* mbuf base size */
 extern const int mclbytes;		/* mbuf cluster size */
 extern pool_cache_t mb_cache;
-extern pool_cache_t mcl_cache;
 #ifdef MBUFTRACE
 LIST_HEAD(mownerhead, mowner);
 extern struct mownerhead mowners;
