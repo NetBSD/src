@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.217 2018/07/18 07:06:40 msaitoh Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.218 2018/08/09 17:43:55 maxv Exp $	*/
 
 /*
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.217 2018/07/18 07:06:40 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.218 2018/08/09 17:43:55 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_mbuftrace.h"
@@ -89,7 +89,7 @@ __KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.217 2018/07/18 07:06:40 msaitoh Exp 
 #include <net/if.h>
 
 pool_cache_t mb_cache;	/* mbuf cache */
-pool_cache_t mcl_cache;	/* mbuf cluster cache */
+static pool_cache_t mcl_cache;	/* mbuf cluster cache */
 
 struct mbstat mbstat;
 int max_linkhdr;
