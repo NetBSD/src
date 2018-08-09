@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2018/08/03 04:18:40 kamil Exp $
+# $NetBSD: Makefile,v 1.2 2018/08/09 12:45:15 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -24,5 +24,7 @@ CWARNFLAGS+=		-Wno-return-type -Wno-strict-aliasing
 CWARNFLAGS.clang+=	-Wno-incompatible-pointer-types-discards-qualifiers
 CWARNFLAGS.clang+=	-Wno-nullability-completeness 
 .endif
+COPTS.t_ubsan.c += -Wno-stack-protector
+COPTS.t_ubsanxx.cpp += -Wno-stack-protector
 
 .include <bsd.test.mk>
