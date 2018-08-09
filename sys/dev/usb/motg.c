@@ -1,4 +1,4 @@
-/*	$NetBSD: motg.c,v 1.21 2018/04/09 16:21:11 jakllsch Exp $	*/
+/*	$NetBSD: motg.c,v 1.22 2018/08/09 06:26:47 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2011, 2012, 2014 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: motg.c,v 1.21 2018/04/09 16:21:11 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: motg.c,v 1.22 2018/08/09 06:26:47 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -2153,22 +2153,46 @@ motg_device_clear_toggle(struct usbd_pipe *pipe)
 static void
 motg_device_xfer_abort(struct usbd_xfer *xfer)
 {
-	int wake;
+	MOTGHIST_FUNC(); MOTGHIST_CALLED();
 	uint8_t csr;
 	struct motg_softc *sc = MOTG_XFER2SC(xfer);
 	struct motg_pipe *otgpipe = MOTG_PIPE2MPIPE(xfer->ux_pipe);
+
 	KASSERT(mutex_owned(&sc->sc_lock));
+	ASSERT_SLEEPABLE();
 
-	MOTGHIST_FUNC(); MOTGHIST_CALLED();
+	/*
+	 * We are synchronously aborting.  Try to stop the
+	 * callout and task, but if we can't, wait for them to
+	 * complete.
+	 */
+	callout_halt(&xfer->ux_callout, &sc->sc_lock);
+	usb_rem_task_wait(xfer->ux_pipe->up_dev, &xfer->ux_aborttask,
+	    USB_TASKQ_HC, &sc->sc_lock);
 
-	if (xfer->ux_hcflags & UXFER_ABORTING) {
-		DPRINTF("already aborting", 0, 0, 0, 0);
-		xfer->ux_hcflags |= UXFER_ABORTWAIT;
-		while (xfer->ux_hcflags & UXFER_ABORTING)
-			cv_wait(&xfer->ux_hccv, &sc->sc_lock);
+	/*
+	 * The xfer cannot have been cancelled already.  It is the
+	 * responsibility of the caller of usbd_abort_pipe not to try
+	 * to abort a pipe multiple times, whether concurrently or
+	 * sequentially.
+	 */
+	KASSERT(xfer->ux_status != USBD_CANCELLED);
+
+	/* If anyone else beat us, we're done.  */
+	if (xfer->ux_status != USBD_IN_PROGRESS)
 		return;
+
+	/* We beat everyone else.  Claim the status.  */
+	xfer->ux_status = USBD_CANCELLED;
+
+	/*
+	 * If we're dying, skip the hardware action and just notify the
+	 * software that we're done.
+	 */
+	if (sc->sc_dying) {
+		goto dying;
 	}
-	xfer->ux_hcflags |= UXFER_ABORTING;
+
 	if (otgpipe->hw_ep->xfer == xfer) {
 		KASSERT(xfer->ux_status == USBD_IN_PROGRESS);
 		otgpipe->hw_ep->xfer = NULL;
@@ -2196,10 +2220,7 @@ motg_device_xfer_abort(struct usbd_xfer *xfer)
 			otgpipe->hw_ep->phase = IDLE;
 		}
 	}
-	xfer->ux_status = USBD_CANCELLED; /* make software ignore it */
-	wake = xfer->ux_hcflags & UXFER_ABORTWAIT;
-	xfer->ux_hcflags &= ~(UXFER_ABORTING | UXFER_ABORTWAIT);
+dying:
 	usb_transfer_complete(xfer);
-	if (wake)
-		cv_broadcast(&xfer->ux_hccv);
+	KASSERT(mutex_owned(&sc->sc_lock));
 }
