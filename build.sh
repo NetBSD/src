@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.327 2018/05/02 07:34:44 pgoyette Exp $
+#	$NetBSD: build.sh,v 1.328 2018/08/09 08:30:29 christos Exp $
 #
 # Copyright (c) 2001-2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -615,6 +615,7 @@ level of source directory"
 #
 valid_MACHINE_ARCH='
 MACHINE=acorn32		MACHINE_ARCH=arm
+MACHINE=acorn32		MACHINE_ARCH=earmv4	ALIAS=eacorn32 DEFAULT
 MACHINE=algor		MACHINE_ARCH=mips64el	ALIAS=algor64
 MACHINE=algor		MACHINE_ARCH=mipsel	DEFAULT
 MACHINE=alpha		MACHINE_ARCH=alpha
@@ -633,6 +634,7 @@ MACHINE=cobalt		MACHINE_ARCH=mipsel	DEFAULT
 MACHINE=dreamcast	MACHINE_ARCH=sh3el
 MACHINE=emips		MACHINE_ARCH=mipseb
 MACHINE=epoc32		MACHINE_ARCH=arm
+MACHINE=epoc32		MACHINE_ARCH=earmv4	ALIAS=eepoc32 DEFAULT
 MACHINE=evbarm		MACHINE_ARCH=arm	ALIAS=evboarm-el
 MACHINE=evbarm		MACHINE_ARCH=armeb	ALIAS=evboarm-eb
 MACHINE=evbarm		MACHINE_ARCH=earm	ALIAS=evbearm-el DEFAULT
@@ -651,7 +653,7 @@ MACHINE=evbarm		MACHINE_ARCH=earmv7	ALIAS=evbearmv7-el
 MACHINE=evbarm		MACHINE_ARCH=earmv7eb	ALIAS=evbearmv7-eb
 MACHINE=evbarm		MACHINE_ARCH=earmv7hf	ALIAS=evbearmv7hf-el
 MACHINE=evbarm		MACHINE_ARCH=earmv7hfeb	ALIAS=evbearmv7hf-eb
-MACHINE=evbarm		MACHINE_ARCH=aarch64	ALIAS=evbarm64-el DEFAULT
+MACHINE=evbarm		MACHINE_ARCH=aarch64	ALIAS=evbarm64-el ALIAS=evbarm64 DEFAULT
 MACHINE=evbarm		MACHINE_ARCH=aarch64eb	ALIAS=evbarm64-eb
 MACHINE=evbcf		MACHINE_ARCH=coldfire
 MACHINE=evbmips		MACHINE_ARCH=		NO_DEFAULT
@@ -1932,7 +1934,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.327 2018/05/02 07:34:44 pgoyette Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.328 2018/08/09 08:30:29 christos Exp $
 # with these arguments: ${_args}
 #
 
