@@ -1,4 +1,4 @@
-/*      $NetBSD: xennetback_xenbus.c,v 1.66 2018/08/09 17:26:00 maxv Exp $      */
+/*      $NetBSD: xennetback_xenbus.c,v 1.67 2018/08/09 17:32:44 maxv Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xennetback_xenbus.c,v 1.66 2018/08/09 17:26:00 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xennetback_xenbus.c,v 1.67 2018/08/09 17:32:44 maxv Exp $");
 
 #include "opt_xen.h"
 
@@ -173,13 +173,9 @@ static void xennetback_get_new_mcl_pages(void);
 
 /*
  * If we can't transfer the mbuf directly, we have to copy it to a page which
- * will be transferred to the remote domain. We use a pool_cache
- * for this, or the mbuf cluster pool cache if MCLBYTES == PAGE_SIZE
+ * will be transferred to the remote domain. We use a pool_cache for this.
  */
-#if MCLBYTES != PAGE_SIZE
 pool_cache_t xmit_pages_cache;
-#endif
-pool_cache_t xmit_pages_cachep;
 
 /* arrays used in xennetback_ifstart(), too large to allocate on stack */
 /* XXXSMP */
@@ -227,13 +223,8 @@ xvifattach(int n)
 	/* initialise pools */
 	pool_init(&xni_pkt_pool, sizeof(struct xni_pkt), 0, 0, 0,
 	    "xnbpkt", NULL, IPL_VM);
-#if MCLBYTES != PAGE_SIZE
 	xmit_pages_cache = pool_cache_init(PAGE_SIZE, 0, 0, 0, "xnbxm", NULL,
 	    IPL_VM, NULL, NULL, NULL);
-	xmit_pages_cachep = xmit_pages_cache;
-#else
-	xmit_pages_cachep = mcl_cache;
-#endif
 
 	SLIST_INIT(&xnetback_instances);
 	mutex_init(&xnetback_lock, MUTEX_DEFAULT, IPL_NONE);
@@ -1048,8 +1039,7 @@ xennetback_ifsoftstart_transfer(void *arg)
 			} else {
 				/* we have to copy the packet */
 				xmit_va = (vaddr_t)pool_cache_get_paddr(
-				    xmit_pages_cachep,
-				    PR_NOWAIT, &xmit_pa);
+				    xmit_pages_cache, PR_NOWAIT, &xmit_pa);
 				if (__predict_false(xmit_va == 0))
 					break; /* out of memory */
 
@@ -1185,7 +1175,7 @@ xennetback_ifsoftstart_transfer(void *arg)
 				m_freem(mbufs_sent[j]);
 			}
 			for (j = 0; j < nppitems; j++) {
-				pool_cache_put_paddr(xmit_pages_cachep,
+				pool_cache_put_paddr(xmit_pages_cache,
 				    (void *)pages_pool_free[j].va,
 				    pages_pool_free[j].pa);
 			}
