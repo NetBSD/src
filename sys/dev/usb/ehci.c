@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.260 2018/08/09 06:26:47 mrg Exp $ */
+/*	$NetBSD: ehci.c,v 1.261 2018/08/09 18:17:39 jakllsch Exp $ */
 
 /*
  * Copyright (c) 2004-2012 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.260 2018/08/09 06:26:47 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.261 2018/08/09 18:17:39 jakllsch Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -1037,9 +1037,8 @@ ehci_idone(struct ehci_xfer *ex, ex_completeq_t *cq)
 	ehci_soft_qtd_t *sqtd, *fsqtd, *lsqtd;
 	uint32_t status = 0, nstatus = 0;
 	int actlen = 0;
-	bool polling = sc->sc_bus.ub_usepolling;
 
-	KASSERT(polling || mutex_owned(&sc->sc_lock));
+	KASSERT(sc->sc_bus.ub_usepolling || mutex_owned(&sc->sc_lock));
 
 	DPRINTF("ex=%#jx", (uintptr_t)ex, 0, 0, 0);
 
