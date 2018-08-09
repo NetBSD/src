@@ -1,4 +1,4 @@
-/* $NetBSD: armreg.h,v 1.15 2018/08/08 19:00:53 jmcneill Exp $ */
+/* $NetBSD: armreg.h,v 1.16 2018/08/09 10:27:17 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -975,6 +975,12 @@ AARCH64REG_READ_INLINE2(icc_iar1_el1, s3_0_c12_c12_0)
 #define	ICC_SRE_EL1_DIB		__BIT(2)
 #define	ICC_SRE_EL1_DFB		__BIT(1)
 #define	ICC_SRE_EL1_SRE		__BIT(0)
+
+// ICC_SRE_EL2: Interrupt Controller System Register Enable register
+#define	ICC_SRE_EL2_EN		__BIT(3)
+#define	ICC_SRE_EL2_DIB		__BIT(2)
+#define	ICC_SRE_EL2_DFB		__BIT(1)
+#define	ICC_SRE_EL2_SRE		__BIT(0)
 
 // ICC_BPR[01]_EL1: Interrupt Controller Binary Point Register 0/1
 #define	ICC_BPR_EL1_BinaryPoint	__BITS(2,0)
