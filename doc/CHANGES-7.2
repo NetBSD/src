@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.2,v 1.1.2.101 2018/08/08 10:18:41 martin Exp $
+# $NetBSD: CHANGES-7.2,v 1.1.2.102 2018/08/09 14:39:22 martin Exp $
 
 A complete list of changes from the NetBSD 7.1 release to the NetBSD 7.2
 release:
@@ -5837,4 +5837,10 @@ sys/dev/usb/usbdi.h				1.93,1.95
 	Make usb detach more reliable by using a new
 	function usb_rem_task_wait.
 	[riastradh, ticket #1626]
+
+lib/libcurses/addbytes.c			1.48
+
+	Avoid curx going beyond end of window when adding a wide character
+	to the last column.
+	[simonb, ticket #1627]
 
