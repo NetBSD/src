@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.1,v 1.1.2.8 2018/08/08 10:37:27 martin Exp $
+# $NetBSD: CHANGES-8.1,v 1.1.2.9 2018/08/09 13:25:35 martin Exp $
 
 A complete list of changes from the NetBSD 8.0 release to the NetBSD 8.1
 release:
@@ -383,4 +383,16 @@ sys/external/bsd/dwc2/dist/dwc2_hcdqueue.c	1.15
 
 	Fix woeful USB disk performance on ERLITE.
 	[simonb, ticket #966]
+
+crypto/external/bsd/openssl.old/dist/crypto/evp/evp.h 1.6
+crypto/external/bsd/openssl.old/dist/crypto/x509/x509_vfy.h 1.2
+	(applied to crypto/external/bsd/openssl/)
+
+	Add missing functions for racoon2 to compile under netbsd-8.
+	[christos, ticket #967]
+
+sys/fs/tmpfs/tmpfs_vfsops.c			1.73
+
+	Set the MP-safe flag for tmpfs early enough for the root vnode.
+	[christos, ticket #968]
 
