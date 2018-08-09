@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.95 2018/07/18 10:44:17 msaitoh Exp $	*/
+/*	$NetBSD: xhci.c,v 1.96 2018/08/09 06:26:47 mrg Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.95 2018/07/18 10:44:17 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.96 2018/08/09 06:26:47 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1696,55 +1696,64 @@ xhci_close_pipe(struct usbd_pipe *pipe)
 static void
 xhci_abort_xfer(struct usbd_xfer *xfer, usbd_status status)
 {
+	XHCIHIST_FUNC(); XHCIHIST_CALLED();
 	struct xhci_softc * const sc = XHCI_XFER2SC(xfer);
 	struct xhci_slot * const xs = xfer->ux_pipe->up_dev->ud_hcpriv;
 	const u_int dci = xhci_ep_get_dci(xfer->ux_pipe->up_endpoint->ue_edesc);
 
-	XHCIHIST_FUNC(); XHCIHIST_CALLED();
+	KASSERTMSG((status == USBD_CANCELLED || status == USBD_TIMEOUT),
+	    "invalid status for abort: %d", (int)status);
+
 	DPRINTFN(4, "xfer %#jx pipe %#jx status %jd",
 	    (uintptr_t)xfer, (uintptr_t)xfer->ux_pipe, status, 0);
 
 	KASSERT(mutex_owned(&sc->sc_lock));
+	ASSERT_SLEEPABLE();
 
+	if (status == USBD_CANCELLED) {
+		/*
+		 * We are synchronously aborting.  Try to stop the
+		 * callout and task, but if we can't, wait for them to
+		 * complete.
+		 */
+		callout_halt(&xfer->ux_callout, &sc->sc_lock);
+		usb_rem_task_wait(xfer->ux_pipe->up_dev, &xfer->ux_aborttask,
+		    USB_TASKQ_HC, &sc->sc_lock);
+	} else {
+		/* Otherwise, we are timing out.  */
+		KASSERT(status == USBD_TIMEOUT);
+	}
+
+	/*
+	 * The xfer cannot have been cancelled already.  It is the
+	 * responsibility of the caller of usbd_abort_pipe not to try
+	 * to abort a pipe multiple times, whether concurrently or
+	 * sequentially.
+	 */
+	KASSERT(xfer->ux_status != USBD_CANCELLED);
+
+	/* Only the timeout, which runs only once, can time it out.  */
+	KASSERT(xfer->ux_status != USBD_TIMEOUT);
+
+	/* If anyone else beat us, we're done.  */
+	if (xfer->ux_status != USBD_IN_PROGRESS)
+		return;
+
+	/* We beat everyone else.  Claim the status.  */
+	xfer->ux_status = status;
+
+	/*
+	 * If we're dying, skip the hardware action and just notify the
+	 * software that we're done.
+	 */
 	if (sc->sc_dying) {
-		/* If we're dying, just do the software part. */
 		DPRINTFN(4, "xfer %#jx dying %ju", (uintptr_t)xfer,
 		    xfer->ux_status, 0, 0);
-		xfer->ux_status = status;
-		callout_stop(&xfer->ux_callout);
-		usb_transfer_complete(xfer);
-		return;
+		goto dying;
 	}
 
 	/*
-	 * If an abort is already in progress then just wait for it to
-	 * complete and return.
-	 */
-	if (xfer->ux_hcflags & UXFER_ABORTING) {
-		DPRINTFN(4, "already aborting", 0, 0, 0, 0);
-#ifdef DIAGNOSTIC
-		if (status == USBD_TIMEOUT)
-			DPRINTFN(4, "TIMEOUT while aborting", 0, 0, 0, 0);
-#endif
-		/* Override the status which might be USBD_TIMEOUT. */
-		xfer->ux_status = status;
-		DPRINTFN(4, "xfer %#jx waiting for abort to finish",
-		    (uintptr_t)xfer, 0, 0, 0);
-		xfer->ux_hcflags |= UXFER_ABORTWAIT;
-		while (xfer->ux_hcflags & UXFER_ABORTING)
-			cv_wait(&xfer->ux_hccv, &sc->sc_lock);
-		return;
-	}
-	xfer->ux_hcflags |= UXFER_ABORTING;
-
-	/*
-	 * Step 1: Stop xfer timeout timer.
-	 */
-	xfer->ux_status = status;
-	callout_stop(&xfer->ux_callout);
-
-	/*
-	 * Step 2: Stop execution of TD on the ring.
+	 * HC Step 1: Stop execution of TD on the ring.
 	 */
 	switch (xhci_get_epstate(sc, xs, dci)) {
 	case XHCI_EPSTATE_HALTED:
@@ -1763,19 +1772,15 @@ xhci_abort_xfer(struct usbd_xfer *xfer, usbd_status status)
 #endif
 
 	/*
-	 * Step 3: Remove any vestiges of the xfer from the ring.
+	 * HC Step 2: Remove any vestiges of the xfer from the ring.
 	 */
 	xhci_set_dequeue_locked(xfer->ux_pipe);
 
 	/*
-	 * Step 4: Notify completion to waiting xfers.
+	 * Final Step: Notify completion to waiting xfers.
 	 */
-	int wake = xfer->ux_hcflags & UXFER_ABORTWAIT;
-	xfer->ux_hcflags &= ~(UXFER_ABORTING | UXFER_ABORTWAIT);
+dying:
 	usb_transfer_complete(xfer);
-	if (wake) {
-		cv_broadcast(&xfer->ux_hccv);
-	}
 	DPRINTFN(14, "end", 0, 0, 0, 0);
 
 	KASSERT(mutex_owned(&sc->sc_lock));
@@ -2006,7 +2011,8 @@ xhci_event_transfer(struct xhci_softc * const sc,
 		 * don't complete the transfer being aborted
 		 * as abort_xfer does instead.
 		 */
-		if (xfer->ux_hcflags & UXFER_ABORTING) {
+		if (xfer->ux_status == USBD_CANCELLED ||
+		    xfer->ux_status == USBD_TIMEOUT) {
 			DPRINTFN(14, "ignore aborting xfer %#jx",
 			    (uintptr_t)xfer, 0, 0, 0);
 			return;
@@ -2017,7 +2023,6 @@ xhci_event_transfer(struct xhci_softc * const sc,
 	case XHCI_TRB_ERROR_BABBLE:
 		DPRINTFN(1, "ERR %ju slot %ju dci %ju", trbcode, slot, dci, 0);
 		xr->is_halted = true;
-		err = USBD_STALLED;
 		/*
 		 * Stalled endpoints can be recoverd by issuing
 		 * command TRB TYPE_RESET_EP on xHCI instead of
@@ -2031,8 +2036,19 @@ xhci_event_transfer(struct xhci_softc * const sc,
 		 * asynchronously (and then umass issues clear
 		 * UF_ENDPOINT_HALT).
 		 */
-		xfer->ux_status = err;
+
+		/* Override the status.  */
+		xfer->ux_status = USBD_STALLED;
+
+		/*
+		 * Cancel the timeout and the task, which have not yet
+		 * run.  If they have already fired, at worst they are
+		 * waiting for the lock.  They will see that the xfer
+		 * is no longer in progress and give up.
+		 */
 		callout_stop(&xfer->ux_callout);
+		usb_rem_task(xfer->ux_pipe->up_dev, &xfer->ux_aborttask);
+
 		xhci_clear_endpoint_stall_async(xfer);
 		return;
 	default:
@@ -2040,15 +2056,32 @@ xhci_event_transfer(struct xhci_softc * const sc,
 		err = USBD_IOERROR;
 		break;
 	}
+
+	/*
+	 * If software has completed it, either by cancellation
+	 * or timeout, drop it on the floor.
+	 */
+	if (xfer->ux_status != USBD_IN_PROGRESS) {
+		KASSERTMSG((xfer->ux_status == USBD_CANCELLED ||
+		            xfer->ux_status == USBD_TIMEOUT),
+			   "xfer %p status %x", xfer, xfer->ux_status);
+		return;;
+	}
+
+	/* Otherwise, set the status.  */
 	xfer->ux_status = err;
 
-	if ((trb_3 & XHCI_TRB_3_ED_BIT) != 0) {
-		if ((trb_0 & 0x3) == 0x0) {
-			callout_stop(&xfer->ux_callout);
-			usb_transfer_complete(xfer);
-		}
-	} else {
-		callout_stop(&xfer->ux_callout);
+	/*
+	 * Cancel the timeout and the task, which have not yet
+	 * run.  If they have already fired, at worst they are
+	 * waiting for the lock.  They will see that the xfer
+	 * is no longer in progress and give up.
+	 */
+	callout_stop(&xfer->ux_callout);
+	usb_rem_task(xfer->ux_pipe->up_dev, &xfer->ux_aborttask);
+
+	if ((trb_3 & XHCI_TRB_3_ED_BIT) == 0 ||
+	    (trb_0 & 0x3) == 0x0) {
 		usb_transfer_complete(xfer);
 	}
 }
@@ -2213,6 +2246,8 @@ xhci_allocx(struct usbd_bus *bus, unsigned int nframes)
 	xfer = pool_cache_get(sc->sc_xferpool, PR_WAITOK);
 	if (xfer != NULL) {
 		memset(xfer, 0, sizeof(struct xhci_xfer));
+		usb_init_task(&xfer->ux_aborttask, xhci_timeout_task, xfer,
+		    USB_TASKQ_MPSAFE);
 #ifdef DIAGNOSTIC
 		xfer->ux_state = XFER_BUSY;
 #endif
@@ -3800,6 +3835,7 @@ xhci_device_ctrl_start(struct usbd_xfer *xfer)
 	    XHCI_TRB_3_TYPE_SET(XHCI_TRB_TYPE_STATUS_STAGE) |
 	    XHCI_TRB_3_IOC_BIT;
 	xhci_trb_put(&xx->xx_trb[i++], parameter, status, control);
+	xfer->ux_status = USBD_IN_PROGRESS;
 
 	mutex_enter(&tr->xr_lock);
 	xhci_ring_put(sc, tr, xfer, xx->xx_trb, i);
@@ -3917,6 +3953,7 @@ xhci_device_bulk_start(struct usbd_xfer *xfer)
 	    (usbd_xfer_isread(xfer) ? XHCI_TRB_3_ISP_BIT : 0) |
 	    XHCI_TRB_3_IOC_BIT;
 	xhci_trb_put(&xx->xx_trb[i++], parameter, status, control);
+	xfer->ux_status = USBD_IN_PROGRESS;
 
 	mutex_enter(&tr->xr_lock);
 	xhci_ring_put(sc, tr, xfer, xx->xx_trb, i);
@@ -4026,6 +4063,7 @@ xhci_device_intr_start(struct usbd_xfer *xfer)
 	    (usbd_xfer_isread(xfer) ? XHCI_TRB_3_ISP_BIT : 0) |
 	    XHCI_TRB_3_IOC_BIT;
 	xhci_trb_put(&xx->xx_trb[i++], parameter, status, control);
+	xfer->ux_status = USBD_IN_PROGRESS;
 
 	if (!polling)
 		mutex_enter(&tr->xr_lock);
@@ -4093,29 +4131,24 @@ xhci_device_intr_close(struct usbd_pipe *pipe)
 static void
 xhci_timeout(void *addr)
 {
+	XHCIHIST_FUNC(); XHCIHIST_CALLED();
 	struct xhci_xfer * const xx = addr;
 	struct usbd_xfer * const xfer = &xx->xx_xfer;
 	struct xhci_softc * const sc = XHCI_XFER2SC(xfer);
+	struct usbd_device *dev = xfer->ux_pipe->up_dev;
 
-	XHCIHIST_FUNC(); XHCIHIST_CALLED();
-
-	if (sc->sc_dying) {
-		return;
-	}
-
-	usb_init_task(&xx->xx_abort_task, xhci_timeout_task, addr,
-	    USB_TASKQ_MPSAFE);
-	usb_add_task(xx->xx_xfer.ux_pipe->up_dev, &xx->xx_abort_task,
-	    USB_TASKQ_HC);
+	mutex_enter(&sc->sc_lock);
+	if (!sc->sc_dying && xfer->ux_status == USBD_IN_PROGRESS)
+		usb_add_task(dev, &xfer->ux_aborttask, USB_TASKQ_HC);
+	mutex_exit(&sc->sc_lock);
 }
 
 static void
 xhci_timeout_task(void *addr)
 {
+	XHCIHIST_FUNC(); XHCIHIST_CALLED();
 	struct usbd_xfer * const xfer = addr;
 	struct xhci_softc * const sc = XHCI_XFER2SC(xfer);
-
-	XHCIHIST_FUNC(); XHCIHIST_CALLED();
 
 	mutex_enter(&sc->sc_lock);
 	xhci_abort_xfer(xfer, USBD_TIMEOUT);
