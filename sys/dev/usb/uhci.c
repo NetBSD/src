@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.281 2018/08/09 06:26:47 mrg Exp $	*/
+/*	$NetBSD: uhci.c,v 1.282 2018/08/09 21:16:43 prlw1 Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2011, 2012 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.281 2018/08/09 06:26:47 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.282 2018/08/09 21:16:43 prlw1 Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1555,7 +1555,7 @@ uhci_idone(struct uhci_xfer *ux, ux_completeq_t *cqp)
 	struct uhci_pipe *upipe = UHCI_PIPE2UPIPE(xfer->ux_pipe);
 	uhci_soft_td_t *std;
 	uint32_t status = 0, nstatus;
-	bool polling = sc->sc_bus.ub_usepolling;
+	bool polling __diagused = sc->sc_bus.ub_usepolling;
 	int actlen;
 
 	KASSERT(polling || mutex_owned(&sc->sc_lock));
