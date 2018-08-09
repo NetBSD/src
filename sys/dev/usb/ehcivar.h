@@ -1,4 +1,4 @@
-/*	$NetBSD: ehcivar.h,v 1.44 2018/04/09 16:21:11 jakllsch Exp $ */
+/*	$NetBSD: ehcivar.h,v 1.45 2018/08/09 06:26:47 mrg Exp $ */
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -91,7 +91,6 @@ typedef struct ehci_soft_itd {
 
 struct ehci_xfer {
 	struct usbd_xfer ex_xfer;
-	struct usb_task ex_aborttask;
 	TAILQ_ENTRY(ehci_xfer) ex_next; /* list of active xfers */
 	enum {
 		EX_NONE,
@@ -208,8 +207,6 @@ typedef struct ehci_softc {
 	uint8_t sc_istthreshold;	/* ISOC Scheduling Threshold (uframes) */
 	struct usbd_xfer *sc_intrxfer;
 	char sc_isreset[EHCI_MAX_PORTS];
-	char sc_softwake;
-	kcondvar_t sc_softwake_cv;
 
 	uint32_t sc_eintrs;
 	ehci_soft_qh_t *sc_async_head;
