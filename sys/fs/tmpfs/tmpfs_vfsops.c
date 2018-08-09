@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vfsops.c,v 1.72 2017/06/01 02:45:13 chs Exp $	*/
+/*	$NetBSD: tmpfs_vfsops.c,v 1.72.2.1 2018/08/09 13:24:41 martin Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vfsops.c,v 1.72 2017/06/01 02:45:13 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vfsops.c,v 1.72.2.1 2018/08/09 13:24:41 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -182,6 +182,13 @@ tmpfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 		return 0;
 	}
 
+	mp->mnt_flag |= MNT_LOCAL;
+	mp->mnt_stat.f_namemax = TMPFS_MAXNAMLEN;
+	mp->mnt_fs_bshift = PAGE_SHIFT;
+	mp->mnt_dev_bshift = DEV_BSHIFT;
+	mp->mnt_iflag |= IMNT_MPSAFE | IMNT_CAN_RWTORO;
+	vfs_getnewfsid(mp);
+
 	/* Allocate the tmpfs mount structure and fill it. */
 	tmp = kmem_zalloc(sizeof(tmpfs_mount_t), KM_SLEEP);
 	tmp->tm_nodes_max = nodes;
@@ -219,13 +226,6 @@ tmpfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	root->tn_spec.tn_dir.tn_parent = root;
 	tmp->tm_root = root;
 	vrele(vp);
-
-	mp->mnt_flag |= MNT_LOCAL;
-	mp->mnt_stat.f_namemax = TMPFS_MAXNAMLEN;
-	mp->mnt_fs_bshift = PAGE_SHIFT;
-	mp->mnt_dev_bshift = DEV_BSHIFT;
-	mp->mnt_iflag |= IMNT_MPSAFE | IMNT_CAN_RWTORO;
-	vfs_getnewfsid(mp);
 
 	error = set_statvfs_info(path, UIO_USERSPACE, "tmpfs", UIO_SYSSPACE,
 	    mp->mnt_op->vfs_name, mp, curlwp);
