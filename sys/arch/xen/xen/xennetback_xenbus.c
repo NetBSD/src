@@ -1,4 +1,4 @@
-/*      $NetBSD: xennetback_xenbus.c,v 1.65 2018/06/26 06:48:00 msaitoh Exp $      */
+/*      $NetBSD: xennetback_xenbus.c,v 1.66 2018/08/09 17:26:00 maxv Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xennetback_xenbus.c,v 1.65 2018/06/26 06:48:00 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xennetback_xenbus.c,v 1.66 2018/08/09 17:26:00 maxv Exp $");
 
 #include "opt_xen.h"
 
@@ -61,6 +61,10 @@ __KERNEL_RCSID(0, "$NetBSD: xennetback_xenbus.c,v 1.65 2018/06/26 06:48:00 msait
 
 #include <uvm/uvm.h>
 
+/*
+ * Backend network device driver for Xen.
+ */
+
 #ifdef XENDEBUG_NET
 #define XENPRINTF(x) printf x
 #else
@@ -83,19 +87,17 @@ struct xni_pkt {
 	struct xnetback_instance *pkt_xneti; /* pointer back to our softc */
 };
 
-static inline void xni_pkt_unmap(struct xni_pkt *, vaddr_t);
-
-
 /* pools for xni_pkt */
 struct pool xni_pkt_pool;
 /* ratecheck(9) for pool allocation failures */
 struct timeval xni_pool_errintvl = { 30, 0 };  /* 30s, each */
-/*
- * Backend network device driver for Xen
- */
 
 /* state of a xnetback instance */
-typedef enum {CONNECTED, DISCONNECTING, DISCONNECTED} xnetback_state_t;
+typedef enum {
+	CONNECTED,
+	DISCONNECTING,
+	DISCONNECTED
+} xnetback_state_t;
 
 /* we keep the xnetback instances in a linked list */
 struct xnetback_instance {
@@ -157,6 +159,7 @@ static struct xenbus_backend_driver xvif_backend_driver = {
  * transmit at once).
  */
 #define NB_XMIT_PAGES_BATCH 64
+
 /*
  * We will transfer a mapped page to the remote domain, and remap another
  * page in place immediately. For this we keep a list of pages available.
@@ -167,6 +170,7 @@ static unsigned long mcl_pages[NB_XMIT_PAGES_BATCH]; /* our physical pages */
 int mcl_pages_alloc; /* current index in mcl_pages */
 static int  xennetback_get_mcl_page(paddr_t *);
 static void xennetback_get_new_mcl_pages(void);
+
 /*
  * If we can't transfer the mbuf directly, we have to copy it to a page which
  * will be transferred to the remote domain. We use a pool_cache
@@ -371,6 +375,7 @@ xennetback_xenbus_create(struct xenbus_device *xbusd)
 		goto fail;
 	}
 	return 0;
+
 abort_xbt:
 	xenbus_transaction_end(xbt, 1);
 fail:
@@ -454,7 +459,7 @@ xennetback_connect(struct xnetback_instance *xneti)
 	u_long revtchn, rx_copy;
 	struct xenbus_device *xbusd = xneti->xni_xbusd;
 
-	/* read comunication informations */
+	/* read communication information */
 	err = xenbus_read_ul(NULL, xbusd->xbusd_otherend,
 	    "tx-ring-ref", &tx_ring_ref, 10);
 	if (err) {
@@ -668,17 +673,18 @@ xnetif_lookup(domid_t dom , uint32_t handle)
 	return found;
 }
 
-/* get a page to remplace a mbuf cluster page given to a domain */
+/* get a page to replace a mbuf cluster page given to a domain */
 static int
 xennetback_get_mcl_page(paddr_t *map)
 {
-	if (mcl_pages_alloc < 0)
+	if (mcl_pages_alloc < 0) {
 		/*
 		 * we exhausted our allocation. We can't allocate new ones yet
 		 * because the current pages may not have been loaned to
 		 * the remote domain yet. We have to let the caller do this.
 		 */
 		return -1;
+	}
 
 	*map = ((paddr_t)mcl_pages[mcl_pages_alloc]) << PAGE_SHIFT;
 	mcl_pages_alloc--;
@@ -861,9 +867,12 @@ xennetback_evthandler(void *arg)
 				continue; /* packet is not for us */
 			}
 		}
+
 #ifdef notyet
-a lot of work is needed in the tcp stack to handle read-only ext storage
-so always copy for now.
+		/*
+		 * A lot of work is needed in the tcp stack to handle read-only
+		 * ext storage so always copy for now.
+		 */
 		if (((req_cons + 1) & (NET_TX_RING_SIZE - 1)) ==
 		    (xneti->xni_txring.rsp_prod_pvt & (NET_TX_RING_SIZE - 1)))
 #else
@@ -1436,10 +1445,11 @@ static void
 xennetback_ifwatchdog(struct ifnet * ifp)
 {
 	/*
-	 * We can get to the following condition:
-	 * transmit stalls because the ring is full when the ifq is full too.
-	 * In this case (as, unfortunably, we don't get an interrupt from xen
-	 * on transmit) noting will ever call xennetback_ifstart() again.
+	 * We can get to the following condition: transmit stalls because the
+	 * ring is full when the ifq is full too.
+	 *
+	 * In this case (as, unfortunately, we don't get an interrupt from xen
+	 * on transmit) nothing will ever call xennetback_ifstart() again.
 	 * Here we abuse the watchdog to get out of this condition.
 	 */
 	XENPRINTF(("xennetback_ifwatchdog\n"));
