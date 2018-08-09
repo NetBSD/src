@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2.c,v 1.51 2018/08/07 16:35:08 skrll Exp $	*/
+/*	$NetBSD: dwc2.c,v 1.52 2018/08/09 06:26:47 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc2.c,v 1.51 2018/08/07 16:35:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc2.c,v 1.52 2018/08/09 06:26:47 mrg Exp $");
 
 #include "opt_usb.h"
 
@@ -203,17 +203,22 @@ dwc2_allocx(struct usbd_bus *bus, unsigned int nframes)
 {
 	struct dwc2_softc *sc = DWC2_BUS2SC(bus);
 	struct dwc2_xfer *dxfer;
+	struct usbd_xfer *xfer;
 
 	DPRINTFN(10, "\n");
 
 	DWC2_EVCNT_INCR(sc->sc_ev_xferpoolget);
 	dxfer = pool_cache_get(sc->sc_xferpool, PR_WAITOK);
+	xfer = (struct usbd_xfer *)dxfer;
 	if (dxfer != NULL) {
 		memset(dxfer, 0, sizeof(*dxfer));
 
 		dxfer->urb = dwc2_hcd_urb_alloc(sc->sc_hsotg,
 		    nframes, GFP_KERNEL);
 
+		/* Initialise this always so we can call remove on it. */
+		usb_init_task(&xfer->ux_aborttask, dwc2_timeout_task, xfer,
+		    USB_TASKQ_MPSAFE);
 #ifdef DIAGNOSTIC
 		dxfer->xfer.ux_state = XFER_BUSY;
 #endif
@@ -298,8 +303,8 @@ dwc2_softintr(void *v)
 		 * sc_complete queue
 		 */
 		/*XXXNH not tested */
-		if (dxfer->xfer.ux_hcflags & UXFER_ABORTING) {
-			cv_broadcast(&dxfer->xfer.ux_hccv);
+		if (dxfer->xfer.ux_status == USBD_CANCELLED ||
+		    dxfer->xfer.ux_status == USBD_TIMEOUT) {
 			continue;
 		}
 
@@ -316,24 +321,15 @@ Static void
 dwc2_timeout(void *addr)
 {
 	struct usbd_xfer *xfer = addr;
-	struct dwc2_xfer *dxfer = DWC2_XFER2DXFER(xfer);
-// 	struct dwc2_pipe *dpipe = DWC2_XFER2DPIPE(xfer);
  	struct dwc2_softc *sc = DWC2_XFER2SC(xfer);
+	struct usbd_device *dev = xfer->ux_pipe->up_dev;
 
 	DPRINTF("dxfer=%p\n", dxfer);
 
-	if (sc->sc_dying) {
-		mutex_enter(&sc->sc_lock);
-		dwc2_abort_xfer(&dxfer->xfer, USBD_TIMEOUT);
-		mutex_exit(&sc->sc_lock);
-		return;
-	}
-
-	/* Execute the abort in a process context. */
-	usb_init_task(&dxfer->abort_task, dwc2_timeout_task, addr,
-	    USB_TASKQ_MPSAFE);
-	usb_add_task(dxfer->xfer.ux_pipe->up_dev, &dxfer->abort_task,
-	    USB_TASKQ_HC);
+	mutex_enter(&sc->sc_lock);
+	if (!sc->sc_dying && xfer->ux_status == USBD_IN_PROGRESS)
+		usb_add_task(dev, &xfer->ux_aborttask, USB_TASKQ_HC);
+	mutex_exit(&sc->sc_lock);
 }
 
 Static void
@@ -449,46 +445,67 @@ dwc2_abort_xfer(struct usbd_xfer *xfer, usbd_status status)
 	struct dwc2_softc *sc = DWC2_XFER2SC(xfer);
 	struct dwc2_hsotg *hsotg = sc->sc_hsotg;
 	struct dwc2_xfer *d, *tmp;
-	bool wake;
 	int err;
 
-	DPRINTF("xfer=%p\n", xfer);
+	KASSERTMSG((status == USBD_CANCELLED || status == USBD_TIMEOUT),
+	    "invalid status for abort: %d", (int)status);
+
+	DPRINTF("xfer %pjx pipe %pjx status %jd", xfer, xfer->ux_pipe, status);
 
 	KASSERT(mutex_owned(&sc->sc_lock));
-	KASSERT(!cpu_intr_p() && !cpu_softintr_p());
+	ASSERT_SLEEPABLE();
 
-	if (sc->sc_dying) {
-		xfer->ux_status = status;
-		callout_stop(&xfer->ux_callout);
-		usb_transfer_complete(xfer);
-		return;
+	if (status == USBD_CANCELLED) {
+		/*
+		 * We are synchronously aborting.  Try to stop the
+		 * callout and task, but if we can't, wait for them to
+		 * complete.
+		 */
+		callout_halt(&xfer->ux_callout, &sc->sc_lock);
+		usb_rem_task_wait(xfer->ux_pipe->up_dev, &xfer->ux_aborttask,
+		    USB_TASKQ_HC, &sc->sc_lock);
+	} else {
+		/* Otherwise, we are timing out.  */
+		KASSERT(status == USBD_TIMEOUT);
 	}
 
 	/*
-	 * If an abort is already in progress then just wait for it to
-	 * complete and return.
+	 * The xfer cannot have been cancelled already.  It is the
+	 * responsibility of the caller of usbd_abort_pipe not to try
+	 * to abort a pipe multiple times, whether concurrently or
+	 * sequentially.
 	 */
-	if (xfer->ux_hcflags & UXFER_ABORTING) {
-		xfer->ux_status = status;
-		xfer->ux_hcflags |= UXFER_ABORTWAIT;
-		while (xfer->ux_hcflags & UXFER_ABORTING)
-			cv_wait(&xfer->ux_hccv, &sc->sc_lock);
+	KASSERT(xfer->ux_status != USBD_CANCELLED);
+
+	/* Only the timeout, which runs only once, can time it out.  */
+	KASSERT(xfer->ux_status != USBD_TIMEOUT);
+
+	/* If anyone else beat us, we're done.  */
+	if (xfer->ux_status != USBD_IN_PROGRESS)
 		return;
+
+	/* We beat everyone else.  Claim the status.  */
+	xfer->ux_status = status;
+
+	/*
+	 * If we're dying, skip the hardware action and just notify the
+	 * software that we're done.
+	 */
+	if (sc->sc_dying) {
+		DPRINTFN(4, "xfer %#jx dying %ju", (uintptr_t)xfer,
+		    xfer->ux_status, 0, 0);
+		goto dying;
 	}
 
 	/*
-	 * Step 1: Make the stack ignore it and stop the callout.
+	 * HC Step 1: Handle the hardware.
 	 */
 	mutex_spin_enter(&hsotg->lock);
-	xfer->ux_hcflags |= UXFER_ABORTING;
-
-	xfer->ux_status = status;	/* make software ignore it */
-	callout_stop(&xfer->ux_callout);
-
 	/* XXXNH suboptimal */
 	TAILQ_FOREACH_SAFE(d, &sc->sc_complete, xnext, tmp) {
 		if (d == dxfer) {
 			TAILQ_REMOVE(&sc->sc_complete, dxfer, xnext);
+			break;
 		}
 	}
 
@@ -500,15 +517,11 @@ dwc2_abort_xfer(struct usbd_xfer *xfer, usbd_status status)
 	mutex_spin_exit(&hsotg->lock);
 
 	/*
-	 * Step 2: Execute callback.
+	 * Final Step: Notify completion to waiting xfers.
 	 */
-	wake = xfer->ux_hcflags & UXFER_ABORTWAIT;
-	xfer->ux_hcflags &= ~(UXFER_ABORTING | UXFER_ABORTWAIT);
-
+dying:
 	usb_transfer_complete(xfer);
-	if (wake) {
-		cv_broadcast(&xfer->ux_hccv);
-	}
+	KASSERT(mutex_owned(&sc->sc_lock));
 }
 
 Static void
@@ -1112,7 +1125,7 @@ dwc2_device_start(struct usbd_xfer *xfer)
 	return USBD_IN_PROGRESS;
 
 fail2:
-	callout_stop(&xfer->ux_callout);
+	callout_halt(&xfer->ux_callout, &hsotg->lock);
 	dwc2_urb->priv = NULL;
 	mutex_spin_exit(&hsotg->lock);
 	pool_cache_put(sc->sc_qtdpool, qtd);
@@ -1414,6 +1427,25 @@ void dwc2_host_complete(struct dwc2_hsotg *hsotg, struct dwc2_qtd *qtd,
 		return;
 	}
 
+	/*
+	 * If software has completed it, either by cancellation
+	 * or timeout, drop it on the floor.
+	 */
+	if (xfer->ux_status != USBD_IN_PROGRESS) {
+		KASSERT(xfer->ux_status == USBD_CANCELLED ||
+		    xfer->ux_status == USBD_TIMEOUT);
+		return;
+	}
+
+	/*
+	 * Cancel the timeout and the task, which have not yet
+	 * run.  If they have already fired, at worst they are
+	 * waiting for the lock.  They will see that the xfer
+	 * is no longer in progress and give up.
+	 */
+	callout_stop(&xfer->ux_callout);
+	usb_rem_task(xfer->ux_pipe->up_dev, &xfer->ux_aborttask);
+
 	dxfer = DWC2_XFER2DXFER(xfer);
 	sc = DWC2_XFER2SC(xfer);
 	ed = xfer->ux_pipe->up_endpoint->ue_edesc;
@@ -1500,8 +1532,6 @@ void dwc2_host_complete(struct dwc2_hsotg *hsotg, struct dwc2_qtd *qtd,
 	}
 
 	qtd->urb = NULL;
-	callout_stop(&xfer->ux_callout);
-
 	KASSERT(mutex_owned(&hsotg->lock));
 
 	TAILQ_INSERT_TAIL(&sc->sc_complete, dxfer, xnext);
