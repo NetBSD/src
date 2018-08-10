@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.17 2018/08/06 12:50:56 ryo Exp $	*/
+/*	$NetBSD: pmap.c,v 1.18 2018/08/10 21:06:42 ryo Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.17 2018/08/06 12:50:56 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.18 2018/08/10 21:06:42 ryo Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_ddb.h"
@@ -163,7 +163,7 @@ struct pv_entry {
 };
 
 static pt_entry_t *_pmap_pte_lookup(struct pmap *, vaddr_t);
-static pt_entry_t _pmap_pte_adjust_prot(pt_entry_t, vm_prot_t, vm_prot_t);
+static pt_entry_t _pmap_pte_adjust_prot(pt_entry_t, vm_prot_t, vm_prot_t, bool);
 static pt_entry_t _pmap_pte_adjust_cacheflags(pt_entry_t, u_int);
 static void _pmap_remove(struct pmap *, vaddr_t, bool);
 static int _pmap_enter(struct pmap *, vaddr_t, paddr_t, vm_prot_t, u_int, bool);
@@ -249,11 +249,15 @@ _pmap_map_chunk(pd_entry_t *l2, vaddr_t va, paddr_t pa, vsize_t size,
 	oldpte = l2[l2pde_index(va)];
 	KDASSERT(!l2pde_valid(oldpte));
 
-	attr = _pmap_pte_adjust_prot(L2_BLOCK, prot, VM_PROT_ALL);
+	attr = _pmap_pte_adjust_prot(L2_BLOCK, prot, VM_PROT_ALL, false);
 	attr = _pmap_pte_adjust_cacheflags(attr, flags | PMAP_DEV);
 #ifdef MULTIPROCESSOR
 	attr |= LX_BLKPAG_SH_IS;
 #endif
+	/* user cannot execute, and kernel follows the prot */
+	attr |= (LX_BLKPAG_UXN|LX_BLKPAG_PXN);
+	if (prot & VM_PROT_EXECUTE)
+		attr &= ~LX_BLKPAG_PXN;
 
 	resid = (size + (L2_SIZE - 1)) & ~(L2_SIZE - 1);
 	size = resid;
@@ -780,9 +784,11 @@ _pmap_pte_lookup(struct pmap *pm, vaddr_t va)
 }
 
 static pt_entry_t
-_pmap_pte_adjust_prot(pt_entry_t pte, vm_prot_t prot, vm_prot_t protmask)
+_pmap_pte_adjust_prot(pt_entry_t pte, vm_prot_t prot, vm_prot_t protmask,
+    bool user)
 {
 	vm_prot_t masked;
+	pt_entry_t xn;
 
 	masked = prot & protmask;
 	pte &= ~(LX_BLKPAG_OS_RWMASK|LX_BLKPAG_AF|LX_BLKPAG_AP);
@@ -820,10 +826,12 @@ _pmap_pte_adjust_prot(pt_entry_t pte, vm_prot_t prot, vm_prot_t protmask)
 		break;
 	}
 
-	if ((prot & VM_PROT_EXECUTE) == 0)
-		pte |= (LX_BLKPAG_UXN|LX_BLKPAG_PXN);
-	else
-		pte &= ~(LX_BLKPAG_UXN|LX_BLKPAG_PXN);
+	/* executable for kernel or user? first set never exec both */
+	pte |= (LX_BLKPAG_UXN|LX_BLKPAG_PXN);
+	/* and either to executable */
+	xn = user ? LX_BLKPAG_UXN : LX_BLKPAG_PXN;
+	if (prot & VM_PROT_EXECUTE)
+		pte &= ~xn;			
 
 	return pte;
 }
@@ -1052,6 +1060,7 @@ _pmap_protect_pv(struct vm_page *pg, struct pv_entry *pv, vm_prot_t prot)
 	pt_entry_t *ptep, pte;
 	vm_prot_t pteprot;
 	uint32_t mdattr;
+	const bool user = (pv->pv_pmap != pmap_kernel());
 
 	UVMHIST_FUNC(__func__);
 	UVMHIST_CALLED(pmaphist);
@@ -1073,11 +1082,11 @@ _pmap_protect_pv(struct vm_page *pg, struct pv_entry *pv, vm_prot_t prot)
 		pteprot |= VM_PROT_READ;
 	if ((pte & LX_BLKPAG_AP) == LX_BLKPAG_AP_RW)
 		pteprot |= VM_PROT_WRITE;
-	if ((pte & (LX_BLKPAG_UXN|LX_BLKPAG_PXN)) == 0)
+	if (l3pte_executable(pte, user))
 		pteprot |= VM_PROT_EXECUTE;
 
 	/* new prot = prot & pteprot & mdattr */
-	pte = _pmap_pte_adjust_prot(pte, prot & pteprot, mdattr);
+	pte = _pmap_pte_adjust_prot(pte, prot & pteprot, mdattr, user);
 	atomic_swap_64(ptep, pte);
 
 #if 0
@@ -1093,6 +1102,7 @@ void
 pmap_protect(struct pmap *pm, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 {
 	vaddr_t va;
+	const bool user = (pm != pmap_kernel());
 
 	KASSERT((prot & VM_PROT_READ) || !(prot & VM_PROT_WRITE));
 
@@ -1159,8 +1169,8 @@ pmap_protect(struct pmap *pm, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 #ifdef UVMHIST
 		opte = pte;
 #endif
-		executable = l3pte_executable(pte);
-		pte = _pmap_pte_adjust_prot(pte, prot, mdattr);
+		executable = l3pte_executable(pte, user);
+		pte = _pmap_pte_adjust_prot(pte, prot, mdattr, user);
 
 		if (!executable && (prot & VM_PROT_EXECUTE)) {
 			/* non-exec -> exec */
@@ -1419,7 +1429,7 @@ _pmap_enter(struct pmap *pm, vaddr_t va, paddr_t pa, vm_prot_t prot,
 #ifdef UVMHIST
 	opte = pte;
 #endif
-	executable = l3pte_executable(pte);
+	executable = l3pte_executable(pte, user);
 
 	if (l3pte_valid(pte)) {
 		KASSERT(!kenter);	/* pmap_kenter_pa() cannot override */
@@ -1486,7 +1496,7 @@ _pmap_enter(struct pmap *pm, vaddr_t va, paddr_t pa, vm_prot_t prot,
 	}
 #endif
 
-	attr = _pmap_pte_adjust_prot(L3_PAGE, prot, mdattr);
+	attr = _pmap_pte_adjust_prot(L3_PAGE, prot, mdattr, user);
 	attr = _pmap_pte_adjust_cacheflags(attr, flags);
 	if (VM_MAXUSER_ADDRESS > va)
 		attr |= LX_BLKPAG_APUSER;
@@ -1780,7 +1790,7 @@ pmap_fault_fixup(struct pmap *pm, vaddr_t va, vm_prot_t accessprot, bool user)
 		pmap_prot = (VM_PROT_READ|VM_PROT_WRITE);
 		break;
 	}
-	if ((pte & (LX_BLKPAG_UXN|LX_BLKPAG_PXN)) == 0)
+	if (l3pte_executable(pte, pm != pmap_kernel()))
 		pmap_prot |= VM_PROT_EXECUTE;
 
 	UVMHIST_LOG(pmaphist, "va=%016lx, pmapprot=%08x, accessprot=%08x",
@@ -2063,10 +2073,10 @@ pmap_kvattr(vaddr_t va, vm_prot_t prot)
 	}
 
 	if ((prot & VM_PROT_EXECUTE) == 0) {
-		pte |= (LX_BLKPAG_UXN|LX_BLKPAG_PXN);
+		pte |= LX_BLKPAG_PXN;
 	} else {
 		pte |= LX_BLKPAG_AF;
-		pte &= ~(LX_BLKPAG_UXN|LX_BLKPAG_PXN);
+		pte &= ~LX_BLKPAG_PXN;
 	}
 
 	*ptep = pte;
@@ -2152,8 +2162,10 @@ pmap_db_pte_print(pt_entry_t pte, int level, void (*pr)(const char *, ...))
 			pr(", pmap_read");
 		if (pte & LX_BLKPAG_OS_WRITE)
 			pr(", pmap_write");
-		if ((pte & (LX_BLKPAG_UXN|LX_BLKPAG_PXN)) == 0)
-			pr(", executable");
+		if ((pte & LX_BLKPAG_UXN) == 0)
+			pr(", user-executable");
+		if ((pte & LX_BLKPAG_PXN) == 0)
+			pr(", kernel-executable");
 
 	} else {
 		/* L1 and L2 pde */

@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.h,v 1.7 2018/08/06 12:50:56 ryo Exp $ */
+/* $NetBSD: pmap.h,v 1.8 2018/08/10 21:06:42 ryo Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -95,8 +95,8 @@ struct vm_page_md {
 #define l2pde_is_table(pde)	(((pde) & LX_TYPE) == LX_TYPE_TBL)
 
 #define l3pte_pa(pde)		((paddr_t)((pde) & LX_TBL_PA))
-#define l3pte_executable(pde)	\
-    (((pde) & (LX_BLKPAG_UXN|LX_BLKPAG_PXN)) != (LX_BLKPAG_UXN|LX_BLKPAG_PXN))
+#define l3pte_executable(pde,user)	\
+    (((pde) & ((user) ? LX_BLKPAG_UXN : LX_BLKPAG_PXN)) == 0)
 #define l3pte_readable(pde)	((pde) & LX_BLKPAG_AF)
 #define l3pte_writable(pde)	\
     (((pde) & (LX_BLKPAG_AF|LX_BLKPAG_AP)) == (LX_BLKPAG_AF|LX_BLKPAG_AP_RW))
