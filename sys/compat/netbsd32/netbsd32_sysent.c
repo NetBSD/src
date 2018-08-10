@@ -1,4 +1,4 @@
-/* $NetBSD: netbsd32_sysent.c,v 1.134 2018/07/31 21:02:00 rjs Exp $ */
+/* $NetBSD: netbsd32_sysent.c,v 1.135 2018/08/10 21:47:15 pgoyette Exp $ */
 
 /*
  * System call switch table.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_sysent.c,v 1.134 2018/07/31 21:02:00 rjs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_sysent.c,v 1.135 2018/08/10 21:47:15 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -2071,4 +2071,23 @@ struct sysent netbsd32_sysent[] = {
 	{
 		.sy_call = sys_nosys,
 	},		/* 511 = filler */
+};
+
+const uint32_t netbsd32_sysent_nomodbits[] = {
+	0x04000000,	/* syscalls   0- 31 */
+	0x00000000,	/* syscalls  32- 63 */
+	0x00000000,	/* syscalls  64- 95 */
+	0x00000000,	/* syscalls  96-127 */
+	0x08000000,	/* syscalls 128-159 */
+	0x00000e00,	/* syscalls 160-191 */
+	0xf0000000,	/* syscalls 192-223 */
+	0x000000ff,	/* syscalls 224-255 */
+	0x000007fe,	/* syscalls 256-287 */
+	0x0000e000,	/* syscalls 288-319 */
+	0x00000000,	/* syscalls 320-351 */
+	0x00000000,	/* syscalls 352-383 */
+	0x00000000,	/* syscalls 384-415 */
+	0x1c030000,	/* syscalls 416-447 */
+	0x00000000,	/* syscalls 448-479 */
+	0x00000000,	/* syscalls 480-511 */
 };
