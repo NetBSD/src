@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.116 2017/09/16 00:47:16 matt Exp $	*/
+/*	$NetBSD: cpu.c,v 1.117 2018/08/10 16:17:30 maxv Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -46,7 +46,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.116 2017/09/16 00:47:16 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.117 2018/08/10 16:17:30 maxv Exp $");
 
 #include <sys/systm.h>
 #include <sys/conf.h>
@@ -739,15 +739,6 @@ identify_arm_cpu(device_t dv, struct cpu_info *ci)
 
 
 	switch (cpu_class) {
-#ifdef CPU_ARM2
-	case CPU_CLASS_ARM2:
-#endif
-#ifdef CPU_ARM250
-	case CPU_CLASS_ARM2AS:
-#endif
-#ifdef CPU_ARM3
-	case CPU_CLASS_ARM3:
-#endif
 #ifdef CPU_ARM6
 	case CPU_CLASS_ARM6:
 #endif
