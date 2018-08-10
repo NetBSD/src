@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec.c,v 1.119 2018/05/06 13:40:51 kamil Exp $	*/
+/*	$NetBSD: linux_exec.c,v 1.120 2018/08/10 21:44:58 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1994, 1995, 1998, 2000, 2007, 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_exec.c,v 1.119 2018/05/06 13:40:51 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_exec.c,v 1.120 2018/08/10 21:44:58 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,6 +70,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_exec.c,v 1.119 2018/05/06 13:40:51 kamil Exp $
 #include <compat/linux/common/linux_emuldata.h>
 
 extern struct sysent linux_sysent[];
+extern const uint32_t linux_sysent_nomodbits[];
 extern const char * const linux_syscallnames[];
 extern char linux_sigcode[], linux_esigcode[];
 
@@ -89,6 +90,7 @@ struct emul emul_linux = {
 	.e_nsysent =		LINUX_SYS_NSYSENT,
 #endif
 	.e_sysent =		linux_sysent,
+	.e_nomodbits =		linux_sysent_nomodbits,
 	.e_syscallnames =	linux_syscallnames,
 	.e_sendsig =		linux_sendsig,
 	.e_trapsignal =		linux_trapsignal,

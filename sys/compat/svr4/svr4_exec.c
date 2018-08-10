@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_exec.c,v 1.68 2018/05/06 13:40:51 kamil Exp $	 */
+/*	$NetBSD: svr4_exec.c,v 1.69 2018/08/10 21:44:59 pgoyette Exp $	 */
 
 /*-
  * Copyright (c) 1994, 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_exec.c,v 1.68 2018/05/06 13:40:51 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_exec.c,v 1.69 2018/08/10 21:44:59 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_syscall_debug.h"
@@ -53,6 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: svr4_exec.c,v 1.68 2018/05/06 13:40:51 kamil Exp $")
 
 extern char svr4_sigcode[], svr4_esigcode[];
 extern struct sysent svr4_sysent[];
+extern const uint32_t svr4_sysent_nomodbits[];
 extern const char * const svr4_syscallnames[];
 #ifndef __HAVE_SYSCALL_INTERN
 void syscall(void);
@@ -70,6 +71,7 @@ struct emul emul_svr4 = {
 	.e_nsysent =		SVR4_SYS_NSYSENT,
 #endif
 	.e_sysent =		svr4_sysent,
+	.e_nomodbits =		svr4_systent_nomodbits,
 #ifdef SYSCALL_DEBUG
 	.e_syscallnames =	svr4_syscallnames,
 #else

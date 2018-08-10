@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.459 2018/05/28 11:32:20 kamil Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.460 2018/08/10 21:44:59 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.459 2018/05/28 11:32:20 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.460 2018/08/10 21:44:59 pgoyette Exp $");
 
 #include "opt_exec.h"
 #include "opt_execfmt.h"
@@ -209,6 +209,7 @@ struct emul emul_netbsd = {
 	.e_sc_autoload =	netbsd_syscalls_autoload,
 #endif
 	.e_sysent =		sysent,
+	.e_nomodbits =		sysent_nomodbits,
 #ifdef SYSCALL_DEBUG
 	.e_syscallnames =	syscallnames,
 #else
