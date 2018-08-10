@@ -1,4 +1,4 @@
-#	$NetBSD: files.arm,v 1.139 2018/04/01 04:35:04 ryo Exp $
+#	$NetBSD: files.arm,v 1.140 2018/08/10 16:17:30 maxv Exp $
 
 # temporary define to allow easy moving to ../arch/arm/arm32
 defflag				ARM32
@@ -17,9 +17,6 @@ defflag	opt_cputypes.h		CPU_ARMV5TE: CPU_ARMV5T
 defflag	opt_cputypes.h		CPU_XSCALE: CPU_ARMV5TE
 defflag	opt_cputypes.h		CPU_ARMV6: ARM32_DISABLE_ALIGNMENT_FAULTS
 defflag	opt_cputypes.h		CPU_ARMV7: ARM32_DISABLE_ALIGNMENT_FAULTS
-defflag	opt_cputypes.h		CPU_ARM2: CPU_ARMV2
-defflag	opt_cputypes.h		CPU_ARM250: CPU_ARMV2
-defflag	opt_cputypes.h		CPU_ARM3: CPU_ARMV2
 defflag	opt_cputypes.h		CPU_ARM6: CPU_ARMV3
 defflag	opt_cputypes.h		CPU_ARM7: CPU_ARMV3
 defflag	opt_cputypes.h		CPU_ARM8: CPU_ARMV4
@@ -156,7 +153,6 @@ file	arch/arm/arm/core_machdep.c
 file	arch/arm/arm/cpu_in_cksum.S		(inet | inet6) & cpu_in_cksum
 file	arch/arm/arm/cpufunc.c
 file	arch/arm/arm/cpufunc_asm.S
-file	arch/arm/arm/cpufunc_asm_arm3.S		cpu_arm2 | cpu_arm250 | cpu_arm3
 file	arch/arm/arm/cpufunc_asm_arm67.S	cpu_arm6 | cpu_arm7
 file	arch/arm/arm/cpufunc_asm_arm7tdmi.S	cpu_arm7tdmi
 file	arch/arm/arm/cpufunc_asm_arm8.S		cpu_arm8

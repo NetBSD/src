@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.170 2018/07/12 12:48:50 jakllsch Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.171 2018/08/10 16:17:29 maxv Exp $	*/
 
 /*
  * arm7tdmi support code Copyright (c) 2001 John Fremlin
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.170 2018/07/12 12:48:50 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.171 2018/08/10 16:17:29 maxv Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_cpuoptions.h"
@@ -117,174 +117,6 @@ u_int	arm_dcache_align_mask;
 
 /* 1 == use cpu_sleep(), 0 == don't */
 int cpu_do_powersave;
-
-#ifdef CPU_ARM2
-struct cpu_functions arm2_cpufuncs = {
-	/* CPU functions */
-
-	.cf_id			= arm2_id,
-	.cf_cpwait		= cpufunc_nullop,
-
-	/* MMU functions */
-
-	.cf_control		= (void *)cpufunc_nullop,
-
-	/* TLB functions */
-
-	.cf_tlb_flushID		= cpufunc_nullop,
-	.cf_tlb_flushID_SE	= (void *)cpufunc_nullop,
-	.cf_tlb_flushI		= cpufunc_nullop,
-	.cf_tlb_flushI_SE	= (void *)cpufunc_nullop,
-	.cf_tlb_flushD		= cpufunc_nullop,
-	.cf_tlb_flushD_SE	= (void *)cpufunc_nullop,
-
-	/* Cache operations */
-
-	.cf_icache_sync_all	= cpufunc_nullop,
-	.cf_icache_sync_range	= (void *) cpufunc_nullop,
-
-	.cf_dcache_wbinv_all	= arm3_cache_flush,
-	.cf_dcache_wbinv_range	= (void *)cpufunc_nullop,
-	.cf_dcache_inv_range	= (void *)cpufunc_nullop,
-	.cf_dcache_wb_range	= (void *)cpufunc_nullop,
-
-	.cf_sdcache_wbinv_range	= (void *)cpufunc_nullop,
-	.cf_sdcache_inv_range	= (void *)cpufunc_nullop,
-	.cf_sdcache_wb_range	= (void *)cpufunc_nullop,
-
-	.cf_idcache_wbinv_all	= cpufunc_nullop,
-	.cf_idcache_wbinv_range	= (void *)cpufunc_nullop,
-
-	/* Other functions */
-
-	.cf_flush_prefetchbuf	= cpufunc_nullop,
-	.cf_drain_writebuf	= cpufunc_nullop,
-	.cf_flush_brnchtgt_C	= cpufunc_nullop,
-	.cf_flush_brnchtgt_E	= (void *)cpufunc_nullop,
-
-	.cf_sleep		= (void *)cpufunc_nullop,
-
-	/* Soft functions */
-
-	.cf_dataabt_fixup	= early_abort_fixup,
-	.cf_prefetchabt_fixup	= cpufunc_null_fixup,
-
-	.cf_setup		= (void *)cpufunc_nullop
-
-};
-#endif	/* CPU_ARM2 */
-
-#ifdef CPU_ARM250
-struct cpu_functions arm250_cpufuncs = {
-	/* CPU functions */
-
-	.cf_id			= arm250_id,
-	.cf_cpwait		= cpufunc_nullop,
-
-	/* MMU functions */
-
-	.cf_control		= (void *)cpufunc_nullop,
-
-	/* TLB functions */
-
-	.cf_tlb_flushID		= cpufunc_nullop,
-	.cf_tlb_flushID_SE	= (void *)cpufunc_nullop,
-	.cf_tlb_flushI		= cpufunc_nullop,
-	.cf_tlb_flushI_SE	= (void *)cpufunc_nullop,
-	.cf_tlb_flushD		= cpufunc_nullop,
-	.cf_tlb_flushD_SE	= (void *)cpufunc_nullop,
-
-	/* Cache operations */
-
-	.cf_icache_sync_all	= cpufunc_nullop,
-	.cf_icache_sync_range	= (void *) cpufunc_nullop,
-
-	.cf_dcache_wbinv_all	= arm3_cache_flush,
-	.cf_dcache_wbinv_range	= (void *)cpufunc_nullop,
-	.cf_dcache_inv_range	= (void *)cpufunc_nullop,
-	.cf_dcache_wb_range	= (void *)cpufunc_nullop,
-
-	.cf_sdcache_wbinv_range	= (void *)cpufunc_nullop,
-	.cf_sdcache_inv_range	= (void *)cpufunc_nullop,
-	.cf_sdcache_wb_range	= (void *)cpufunc_nullop,
-
-	.cf_idcache_wbinv_all	= cpufunc_nullop,
-	.cf_idcache_wbinv_range	= (void *)cpufunc_nullop,
-
-	/* Other functions */
-
-	.cf_flush_prefetchbuf	= cpufunc_nullop,
-	.cf_drain_writebuf	= cpufunc_nullop,
-	.cf_flush_brnchtgt_C	= cpufunc_nullop,
-	.cf_flush_brnchtgt_E	= (void *)cpufunc_nullop,
-
-	.cf_sleep		= (void *)cpufunc_nullop,
-
-	/* Soft functions */
-
-	.cf_dataabt_fixup	= early_abort_fixup,
-	.cf_prefetchabt_fixup	= cpufunc_null_fixup,
-
-	.cf_setup		= (void *)cpufunc_nullop
-
-};
-#endif	/* CPU_ARM250 */
-
-#ifdef CPU_ARM3
-struct cpu_functions arm3_cpufuncs = {
-	/* CPU functions */
-
-	.cf_id			= cpufunc_id,
-	.cf_cpwait		= cpufunc_nullop,
-
-	/* MMU functions */
-
-	.cf_control		= arm3_control,
-
-	/* TLB functions */
-
-	.cf_tlb_flushID		= cpufunc_nullop,
-	.cf_tlb_flushID_SE	= (void *)cpufunc_nullop,
-	.cf_tlb_flushI		= cpufunc_nullop,
-	.cf_tlb_flushI_SE	= (void *)cpufunc_nullop,
-	.cf_tlb_flushD		= cpufunc_nullop,
-	.cf_tlb_flushD_SE	= (void *)cpufunc_nullop,
-
-	/* Cache operations */
-
-	.cf_icache_sync_all	= cpufunc_nullop,
-	.cf_icache_sync_range	= (void *) cpufunc_nullop,
-
-	.cf_dcache_wbinv_all	= arm3_cache_flush,
-	.cf_dcache_wbinv_range	= (void *)arm3_cache_flush,
-	.cf_dcache_inv_range	= (void *)arm3_cache_flush,
-	.cf_dcache_wb_range	= (void *)cpufunc_nullop,
-
-	.cf_sdcache_wbinv_range	= (void *)cpufunc_nullop,
-	.cf_sdcache_inv_range	= (void *)cpufunc_nullop,
-	.cf_sdcache_wb_range	= (void *)cpufunc_nullop,
-
-	.cf_idcache_wbinv_all	= arm3_cache_flush,
-	.cf_idcache_wbinv_range	= (void *)arm3_cache_flush,
-
-	/* Other functions */
-
-	.cf_flush_prefetchbuf	= cpufunc_nullop,
-	.cf_drain_writebuf	= cpufunc_nullop,
-	.cf_flush_brnchtgt_C	= cpufunc_nullop,
-	.cf_flush_brnchtgt_E	= (void *)cpufunc_nullop,
-
-	.cf_sleep		= (void *)cpufunc_nullop,
-
-	/* Soft functions */
-
-	.cf_dataabt_fixup	= early_abort_fixup,
-	.cf_prefetchabt_fixup	= cpufunc_null_fixup,
-
-	.cf_setup		= (void *)cpufunc_nullop
-
-};
-#endif	/* CPU_ARM3 */
 
 #ifdef CPU_ARM6
 struct cpu_functions arm6_cpufuncs = {
@@ -1684,8 +1516,7 @@ get_cachetype_cp15(void)
 }
 #endif /* ARM7TDMI || ARM8 || ARM9 || XSCALE */
 
-#if defined(CPU_ARM2) || defined(CPU_ARM250) || defined(CPU_ARM3) || \
-    defined(CPU_ARM6) || defined(CPU_ARM7) || defined(CPU_SA110) || \
+#if defined(CPU_ARM6) || defined(CPU_ARM7) || defined(CPU_SA110) || \
     defined(CPU_SA1100) || defined(CPU_SA1110) || defined(CPU_IXP12X0)
 /* Cache information for CPUs without cache type registers. */
 struct cachetab {
@@ -1755,7 +1586,7 @@ get_cachetype_table(void)
 	arm_dcache_align_mask = arm_dcache_align - 1;
 }
 
-#endif /* ARM2 || ARM250 || ARM3 || ARM6 || ARM7 || SA110 || SA1100 || SA1111 || IXP12X0 */
+#endif /* ARM6 || ARM7 || SA110 || SA1100 || SA1111 || IXP12X0 */
 
 
 #if defined(CPU_CORTEX) || defined(CPU_PJ4B)
@@ -1793,28 +1624,6 @@ set_cpufuncs(void)
 	 * NOTE: cpu_do_powersave defaults to off.  If we encounter a
 	 * CPU type where we want to use it by default, then we set it.
 	 */
-#ifdef CPU_ARM2
-	if (cputype == CPU_ID_ARM2) {
-		cpufuncs = arm2_cpufuncs;
-		get_cachetype_table();
-		return 0;
-	}
-#endif /* CPU_ARM2 */
-#ifdef CPU_ARM250
-	if (cputype == CPU_ID_ARM250) {
-		cpufuncs = arm250_cpufuncs;
-		get_cachetype_table();
-		return 0;
-	}
-#endif
-#ifdef CPU_ARM3
-	if ((cputype & CPU_ID_IMPLEMENTOR_MASK) == CPU_ID_ARM_LTD &&
-	    (cputype & 0x00000f00) == 0x00000300) {
-		cpufuncs = arm3_cpufuncs;
-		get_cachetype_table();
-		return 0;
-	}
-#endif	/* CPU_ARM3 */
 #ifdef CPU_ARM6
 	if ((cputype & CPU_ID_IMPLEMENTOR_MASK) == CPU_ID_ARM_LTD &&
 	    (cputype & 0x00000f00) == 0x00000600) {
@@ -2179,22 +1988,6 @@ set_cpufuncs(void)
 	return ARCHITECTURE_NOT_PRESENT;
 }
 
-#ifdef CPU_ARM2
-u_int arm2_id(void)
-{
-
-	return CPU_ID_ARM2;
-}
-#endif /* CPU_ARM2 */
-
-#ifdef CPU_ARM250
-u_int arm250_id(void)
-{
-
-	return CPU_ID_ARM250;
-}
-#endif /* CPU_ARM250 */
-
 /*
  * Fixup routines for data and prefetch aborts.
  *
@@ -2218,8 +2011,7 @@ cpufunc_null_fixup(void *arg)
 }
 
 
-#if defined(CPU_ARM2) || defined(CPU_ARM250) || defined(CPU_ARM3) || \
-    defined(CPU_ARM6) || defined(CPU_ARM7) || defined(CPU_ARM7TDMI)
+#if defined(CPU_ARM6) || defined(CPU_ARM7) || defined(CPU_ARM7TDMI)
 
 #ifdef DEBUG_FAULT_CORRECTION
 #define DFC_PRINTF(x)		printf x
@@ -2364,7 +2156,7 @@ early_abort_fixup(void *arg)
 
 	return(ABORT_FIXUP_OK);
 }
-#endif	/* CPU_ARM2/250/3/6/7 */
+#endif	/* CPU_ARM6/7 */
 
 
 #if (defined(CPU_ARM6) && defined(ARM6_LATE_ABORT)) || defined(CPU_ARM7) || \

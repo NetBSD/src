@@ -1,4 +1,4 @@
-/*	$NetBSD: fiq_subr.S,v 1.7 2018/01/24 09:04:44 skrll Exp $	*/
+/*	$NetBSD: fiq_subr.S,v 1.8 2018/08/10 16:17:29 maxv Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -40,16 +40,6 @@
 #include <arm/armreg.h>
 #include <arm/asm.h>
 #include <arm/cpuconf.h>
-
-/*
- * MODE_CHANGE_NOP should be inserted between a mode change and a
- * banked register (R8--R15) access.
- */
-#if defined(CPU_ARM2) || defined(CPU_ARM250)
-#define	MODE_CHANGE_NOP	mov	r0, r0
-#else
-#define	MODE_CHANGE_NOP	/* Data sheet says ARM3 doesn't need it */
-#endif
 
 #ifdef _ARM_ARCH_6
 #define	SWITCH_TO_FIQ_MODE						\
