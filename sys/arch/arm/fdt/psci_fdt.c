@@ -1,4 +1,4 @@
-/* $NetBSD: psci_fdt.c,v 1.10 2018/07/16 23:11:47 christos Exp $ */
+/* $NetBSD: psci_fdt.c,v 1.11 2018/08/10 22:34:36 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: psci_fdt.c,v 1.10 2018/07/16 23:11:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: psci_fdt.c,v 1.11 2018/08/10 22:34:36 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -218,7 +218,7 @@ psci_fdt_bootstrap(void)
 			continue;
 
 		const u_int cpuid = __SHIFTOUT(mpidr, MPIDR_AFF0);
-		int ret = psci_cpu_on(cpuid, psci_fdt_mpstart_pa(), 0);
+		int ret = psci_cpu_on(mpidr, psci_fdt_mpstart_pa(), 0);
 		if (ret == PSCI_SUCCESS)
 			started |= __BIT(cpuid);
 	}
