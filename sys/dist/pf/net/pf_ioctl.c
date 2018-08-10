@@ -1,4 +1,4 @@
-/*	$NetBSD: pf_ioctl.c,v 1.54 2018/07/11 11:13:16 kre Exp $	*/
+/*	$NetBSD: pf_ioctl.c,v 1.55 2018/08/10 06:46:08 maxv Exp $	*/
 /*	$OpenBSD: pf_ioctl.c,v 1.182 2007/06/24 11:17:13 mcbride Exp $ */
 
 /*
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pf_ioctl.c,v 1.54 2018/07/11 11:13:16 kre Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pf_ioctl.c,v 1.55 2018/08/10 06:46:08 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -3344,7 +3344,7 @@ pfil6_wrapper(void *arg, struct mbuf **mp, struct ifnet *ifp, int dir)
 	 */
 	if (dir == PFIL_OUT) {
 		if ((*mp)->m_pkthdr.csum_flags & (M_CSUM_TCPv6|M_CSUM_UDPv6)) {
-			in6_delayed_cksum(*mp);
+			in6_undefer_cksum_tcpudp(*mp);
 			(*mp)->m_pkthdr.csum_flags &=
 			    ~(M_CSUM_TCPv6|M_CSUM_UDPv6);
 		}

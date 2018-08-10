@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_offload.c,v 1.8 2018/06/01 08:56:00 maxv Exp $	*/
+/*	$NetBSD: in6_offload.c,v 1.9 2018/08/10 06:46:09 maxv Exp $	*/
 
 /*-
  * Copyright (c)2006 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_offload.c,v 1.8 2018/06/01 08:56:00 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_offload.c,v 1.9 2018/08/10 06:46:09 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -193,8 +193,12 @@ quit:
 	return error;
 }
 
+/*
+ * Compute now in software the IP and TCP/UDP checksums. Cancel the
+ * hardware offloading.
+ */
 void
-ip6_undefer_csum(struct mbuf *m, size_t hdrlen, int csum_flags)
+in6_undefer_cksum(struct mbuf *m, size_t hdrlen, int csum_flags)
 {
 	const size_t ip6_plen_offset =
 	    hdrlen + offsetof(struct ip6_hdr, ip6_plen);
@@ -230,4 +234,32 @@ ip6_undefer_csum(struct mbuf *m, size_t hdrlen, int csum_flags)
 	}
 
 	m->m_pkthdr.csum_flags ^= csum_flags;
+}
+
+/*
+ * Compute now in software the TCP/UDP checksum. Cancel the hardware
+ * offloading.
+ */
+void
+in6_undefer_cksum_tcpudp(struct mbuf *m)
+{
+	uint16_t csum, offset;
+
+	KASSERT((m->m_pkthdr.csum_flags & (M_CSUM_UDPv6|M_CSUM_TCPv6)) != 0);
+	KASSERT((~m->m_pkthdr.csum_flags & (M_CSUM_UDPv6|M_CSUM_TCPv6)) != 0);
+	KASSERT((m->m_pkthdr.csum_flags
+	    & (M_CSUM_UDPv4|M_CSUM_TCPv4|M_CSUM_TSOv4)) == 0);
+
+	offset = M_CSUM_DATA_IPv6_IPHL(m->m_pkthdr.csum_data);
+	csum = in6_cksum(m, 0, offset, m->m_pkthdr.len - offset);
+	if (csum == 0 && (m->m_pkthdr.csum_flags & M_CSUM_UDPv6) != 0) {
+		csum = 0xffff;
+	}
+
+	offset += M_CSUM_DATA_IPv6_OFFSET(m->m_pkthdr.csum_data);
+	if ((offset + sizeof(csum)) > m->m_len) {
+		m_copyback(m, offset, sizeof(csum), &csum);
+	} else {
+		*(uint16_t *)(mtod(m, char *) + offset) = csum;
+	}
 }
