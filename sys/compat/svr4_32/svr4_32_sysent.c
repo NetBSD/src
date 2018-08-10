@@ -1,4 +1,4 @@
-/* $NetBSD: svr4_32_sysent.c,v 1.28 2017/05/10 06:19:49 riastradh Exp $ */
+/* $NetBSD: svr4_32_sysent.c,v 1.29 2018/08/10 21:47:16 pgoyette Exp $ */
 
 /*
  * System call switch table.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_sysent.c,v 1.28 2017/05/10 06:19:49 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_sysent.c,v 1.29 2018/08/10 21:47:16 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ntp.h"
@@ -976,4 +976,15 @@ struct sysent svr4_32_sysent[] = {
 	{
 		.sy_call = sys_nosys,
 	},		/* 255 = filler */
+};
+
+const uint32_t svr4_32_sysent_nomodbits[] = {
+	0x00000000,	/* syscalls   0- 31 */
+	0x00000000,	/* syscalls  32- 63 */
+	0x00000000,	/* syscalls  64- 95 */
+	0x00000000,	/* syscalls  96-127 */
+	0x00000000,	/* syscalls 128-159 */
+	0x00000000,	/* syscalls 160-191 */
+	0x00000000,	/* syscalls 192-223 */
+	0x00000000,	/* syscalls 224-255 */
 };

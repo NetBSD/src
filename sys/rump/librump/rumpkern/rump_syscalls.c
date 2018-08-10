@@ -1,4 +1,4 @@
-/* $NetBSD: rump_syscalls.c,v 1.139 2018/07/31 13:02:15 rjs Exp $ */
+/* $NetBSD: rump_syscalls.c,v 1.140 2018/08/10 21:47:16 pgoyette Exp $ */
 
 /*
  * System call vector and marshalling for rump.
@@ -15,7 +15,7 @@
 
 #ifdef __NetBSD__
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump_syscalls.c,v 1.139 2018/07/31 13:02:15 rjs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump_syscalls.c,v 1.140 2018/08/10 21:47:16 pgoyette Exp $");
 
 #include <sys/fstypes.h>
 #include <sys/proc.h>
@@ -8537,6 +8537,25 @@ struct sysent rump_sysent[] = {
 		.sy_flags = SYCALL_NOSYS,
 		.sy_call = (sy_call_t *)rumpns_enosys,
 	},		/* 511 = filler */
+};
+
+const uint32_t rump_sysent_nomodbits[] = {
+	0x042c4180,	/* syscalls   0- 31 */
+	0xc0b14140,	/* syscalls  32- 63 */
+	0x23f80083,	/* syscalls  64- 95 */
+	0x2437f0ea,	/* syscalls  96-127 */
+	0x7877f406,	/* syscalls 128-159 */
+	0x7f000e1e,	/* syscalls 160-191 */
+	0xf0044010,	/* syscalls 192-223 */
+	0xff9167ff,	/* syscalls 224-255 */
+	0x01d107ff,	/* syscalls 256-287 */
+	0x0000fc88,	/* syscalls 288-319 */
+	0x02000001,	/* syscalls 320-351 */
+	0x00600080,	/* syscalls 352-383 */
+	0x007fc338,	/* syscalls 384-415 */
+	0x1c470040,	/* syscalls 416-447 */
+	0x00000000,	/* syscalls 448-479 */
+	0x00000000,	/* syscalls 480-511 */
 };
 CTASSERT(__arraycount(rump_sysent) == SYS_NSYSENT);
 __strong_alias(rumpns_sysent,rump_sysent);
