@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_syscall.c,v 1.53 2017/08/12 07:21:57 maxv Exp $	*/
+/*	$NetBSD: linux_syscall.c,v 1.54 2018/08/10 21:44:58 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.53 2017/08/12 07:21:57 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.54 2018/08/10 21:44:58 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,6 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.53 2017/08/12 07:21:57 maxv Exp 
 
 static void linux_syscall(struct trapframe *);
 extern struct sysent linux_sysent[];
+extern const uint32_t linux_sysent_nomodbits[];
 
 void
 linux_syscall_intern(struct proc *p)

@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_cygwin_component.c,v 1.2 2016/01/26 23:12:17 pooka Exp $	*/
+/*	$NetBSD: sys_cygwin_component.c,v 1.3 2018/08/10 21:44:59 pgoyette Exp $	*/
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -10,10 +10,12 @@
 #include "rump_cygwin_syscall.h"
 
 extern struct sysent rump_cygwin_sysent[];
+extern const uint32_t rump_cygwin_sysent_nomodbits[];
 
 struct emul emul_rump_sys_cygwin = {
 	.e_name = "cygwin-rump",
 	.e_sysent = rump_cygwin_sysent,
+	.e_nomodbits = rump_cygwin_sysent_nomodbits,
 #ifndef __HAVE_MINIMAL_EMUL
 	.e_nsysent = RUMP_CYGWIN_SYS_NSYSENT,
 #endif

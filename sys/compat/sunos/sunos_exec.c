@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_exec.c,v 1.56 2018/05/06 13:40:51 kamil Exp $	*/
+/*	$NetBSD: sunos_exec.c,v 1.57 2018/08/10 21:44:59 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1993 Theo de Raadt
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos_exec.c,v 1.56 2018/05/06 13:40:51 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos_exec.c,v 1.57 2018/08/10 21:44:59 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_syscall_debug.h"
@@ -52,6 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: sunos_exec.c,v 1.56 2018/05/06 13:40:51 kamil Exp $"
 
 extern int nsunos_sysent;
 extern struct sysent sunos_sysent[];
+extern const uint32_t sunos_sysent_nomodbits[];
 #ifdef SYSCALL_DEBUG
 extern const char * const sunos_syscallnames[];
 #endif
@@ -72,6 +73,7 @@ struct emul emul_sunos = {
 	.e_nsysent =		SUNOS_SYS_NSYSENT,
 #endif
 	.e_sysent =		sunos_sysent,
+	.e_nomodbits =		sunos_sysent_nomodbits,
 #ifdef SYSCALL_DEBUG
 	.e_syscallnames =	sunos_syscallnames,
 #else
