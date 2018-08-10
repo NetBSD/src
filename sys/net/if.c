@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.431 2018/08/06 06:54:40 msaitoh Exp $	*/
+/*	$NetBSD: if.c,v 1.432 2018/08/10 07:24:09 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.431 2018/08/06 06:54:40 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.432 2018/08/10 07:24:09 msaitoh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -3767,7 +3767,7 @@ sysctl_net_pktq_setup(struct sysctllog **clog, int pf)
 
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
-		       CTLTYPE_INT, "len",
+		       CTLTYPE_QUAD, "len",
 		       SYSCTL_DESCR("Current input queue length"),
 		       len_func, 0, NULL, 0,
 		       CTL_NET, pf, ipn, qid, IFQCTL_LEN, CTL_EOL);
