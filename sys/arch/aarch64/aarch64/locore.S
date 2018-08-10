@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.17 2018/08/10 17:46:06 maxv Exp $	*/
+/*	$NetBSD: locore.S,v 1.18 2018/08/10 21:06:42 ryo Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -35,7 +35,7 @@
 #include <aarch64/hypervisor.h>
 #include "assym.h"
 
-RCSID("$NetBSD: locore.S,v 1.17 2018/08/10 17:46:06 maxv Exp $")
+RCSID("$NetBSD: locore.S,v 1.18 2018/08/10 21:06:42 ryo Exp $")
 
 /* #define DEBUG_LOCORE */
 /* #define DEBUG_MMU */
@@ -640,7 +640,7 @@ arm_boot_l0pt_init:
 	adr	x2, start		/* physical addr. before MMU */
 	and	x2, x2, #L2_BLK_OA	/* L2 block size aligned (2MB) */
 	mov	x1, #VM_MIN_KERNEL_ADDRESS
-	mov	x3, #L2_BLKPAG_ATTR_NORMAL_WB
+	mov	x3, #(L2_BLKPAG_ATTR_NORMAL_WB|LX_BLKPAG_UXN)
 
 	/* kernelsize = _end - start */
 	ldr	x1, =start
