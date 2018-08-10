@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.440 2018/08/06 20:07:05 jdolecek Exp $ */
+/*	$NetBSD: wd.c,v 1.441 2018/08/10 22:43:22 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.440 2018/08/06 20:07:05 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.441 2018/08/10 22:43:22 jdolecek Exp $");
 
 #include "opt_ata.h"
 #include "opt_wd.h"
@@ -917,7 +917,7 @@ noerror:	if ((xfer->c_bio.flags & ATA_CORR) || xfer->c_retries > 0)
 	ata_free_xfer(wd->drvp->chnl_softc, xfer);
 
 	dk_done(dksc, bp);
-	ata_channel_start(wd->drvp->chnl_softc, wd->drvp->drive);
+	ata_channel_start(wd->drvp->chnl_softc, wd->drvp->drive, true);
 }
 
 static void
@@ -1071,6 +1071,8 @@ static int
 wd_lastclose(device_t self)
 {
 	struct wd_softc *wd = device_private(self);
+
+	KASSERTMSG(bufq_peek(wd->sc_dksc.sc_bufq) == NULL, "bufq not empty");
 
 	wd_flushcache(wd, AT_WAIT, false);
 
@@ -1667,7 +1669,7 @@ wd_setcache(struct wd_softc *wd, int bits)
 
 out:
 	ata_free_xfer(wd->drvp->chnl_softc, xfer);
-	ata_channel_start(wd->drvp->chnl_softc, wd->drvp->drive);
+	ata_channel_start(wd->drvp->chnl_softc, wd->drvp->drive, true);
 	return error;
 }
 
@@ -1711,12 +1713,18 @@ wd_standby(struct wd_softc *wd, int flags)
 
 out:
 	ata_free_xfer(wd->drvp->chnl_softc, xfer);
-	/* drive is supposed to go idle, do not call ata_channel_start() */
+
+	/*
+	 * Drive is supposed to go idle, start only other drives.
+	 * bufq might be actually already freed at this moment.
+	 */
+	ata_channel_start(wd->drvp->chnl_softc, wd->drvp->drive, false);
+
 	return error;
 }
 
 int
-wd_flushcache(struct wd_softc *wd, int flags, bool start)
+wd_flushcache(struct wd_softc *wd, int flags, bool start_self)
 {
 	struct dk_softc *dksc = &wd->sc_dksc;
 	struct ata_xfer *xfer;
@@ -1783,9 +1791,8 @@ out_xfer:
 	ata_free_xfer(wd->drvp->chnl_softc, xfer);
 
 out:
-	/* kick queue processing blocked while waiting for flush xfer */
-	if (start)
-		ata_channel_start(wd->drvp->chnl_softc, wd->drvp->drive);
+	/* start again I/O processing possibly stopped due to no xfer */
+	ata_channel_start(wd->drvp->chnl_softc, wd->drvp->drive, start_self);
 
 	return error;
 }
@@ -1848,7 +1855,7 @@ wd_trim(struct wd_softc *wd, daddr_t bno, long size)
 
 out:
 	ata_free_xfer(wd->drvp->chnl_softc, xfer);
-	ata_channel_start(wd->drvp->chnl_softc, wd->drvp->drive);
+	ata_channel_start(wd->drvp->chnl_softc, wd->drvp->drive, true);
 	return error;
 }
 
@@ -2060,7 +2067,7 @@ wdioctlstrategy(struct buf *bp)
 out:
 	ata_free_xfer(wi->wi_softc->drvp->chnl_softc, xfer);
 	ata_channel_start(wi->wi_softc->drvp->chnl_softc,
-	    wi->wi_softc->drvp->drive);
+	    wi->wi_softc->drvp->drive, true);
 out2:
 	bp->b_error = error;
 	if (error)

@@ -1,4 +1,4 @@
-/*	$NetBSD: atavar.h,v 1.98 2018/08/06 20:07:05 jdolecek Exp $	*/
+/*	$NetBSD: atavar.h,v 1.99 2018/08/10 22:43:22 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -538,7 +538,7 @@ void	ata_kill_active(struct ata_channel *, int, int);
 void	ata_reset_channel(struct ata_channel *, int);
 void	ata_channel_freeze(struct ata_channel *);
 void	ata_channel_thaw(struct ata_channel *);
-void	ata_channel_start(struct ata_channel *, int);
+void	ata_channel_start(struct ata_channel *, int, bool);
 void	ata_channel_lock(struct ata_channel *);
 void	ata_channel_unlock(struct ata_channel *);
 void	ata_channel_lock_owned(struct ata_channel *);
