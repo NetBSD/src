@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_sysent.c,v 1.67 2017/05/10 06:19:49 riastradh Exp $ */
+/* $NetBSD: osf1_sysent.c,v 1.68 2018/08/10 21:47:15 pgoyette Exp $ */
 
 /*
  * System call switch table.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_sysent.c,v 1.67 2017/05/10 06:19:49 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_sysent.c,v 1.68 2018/08/10 21:47:15 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_43.h"
@@ -1776,4 +1776,23 @@ struct sysent osf1_sysent[] = {
 	{
 		.sy_call = sys_nosys,
 	},		/* 511 = filler */
+};
+
+const uint32_t osf1_sysent_nomodbits[] = {
+	0x00000000,	/* syscalls   0- 31 */
+	0x00000000,	/* syscalls  32- 63 */
+	0x00000000,	/* syscalls  64- 95 */
+	0x00000000,	/* syscalls  96-127 */
+	0x00000000,	/* syscalls 128-159 */
+	0x00000000,	/* syscalls 160-191 */
+	0x00000000,	/* syscalls 192-223 */
+	0x00000000,	/* syscalls 224-255 */
+	0x00000000,	/* syscalls 256-287 */
+	0x00000000,	/* syscalls 288-319 */
+	0x00000000,	/* syscalls 320-351 */
+	0x00000000,	/* syscalls 352-383 */
+	0x00000000,	/* syscalls 384-415 */
+	0x00000000,	/* syscalls 416-447 */
+	0x00000000,	/* syscalls 448-479 */
+	0x00000000,	/* syscalls 480-511 */
 };
