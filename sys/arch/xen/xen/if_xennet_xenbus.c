@@ -1,4 +1,4 @@
-/*      $NetBSD: if_xennet_xenbus.c,v 1.77 2018/06/26 06:48:00 msaitoh Exp $      */
+/*      $NetBSD: if_xennet_xenbus.c,v 1.78 2018/08/10 06:23:12 maxv Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.77 2018/06/26 06:48:00 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.78 2018/08/10 06:23:12 maxv Exp $");
 
 #include "opt_xen.h"
 #include "opt_nfs_boot.h"
@@ -131,6 +131,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.77 2018/06/26 06:48:00 msaito
 
 #undef XENNET_DEBUG_DUMP
 #undef XENNET_DEBUG
+
 #ifdef XENNET_DEBUG
 #define XEDB_FOLLOW     0x01
 #define XEDB_INIT       0x02
@@ -1171,7 +1172,7 @@ xennet_softstart(void *arg)
 	struct mbuf *m, *new_m;
 	netif_tx_request_t *txreq;
 	RING_IDX req_prod;
-	paddr_t pa, pa2;
+	paddr_t pa;
 	struct xennet_txreq *req;
 	int notify;
 	int do_notify = 0;
@@ -1290,9 +1291,13 @@ xennet_softstart(void *arg)
 		    "mbuf %p, buf %p/%p/%p, size %d\n",
 		    req->txreq_id, m, mtod(m, void *), (void *)pa,
 		    (void *)xpmap_ptom_masked(pa), m->m_pkthdr.len));
+#ifdef XENNET_DEBUG
+		paddr_t pa2;
 		pmap_extract_ma(pmap_kernel(), mtod(m, vaddr_t), &pa2);
 		DPRINTFN(XEDB_MBUF, ("xennet_start pa %p ma %p/%p\n",
 		    (void *)pa, (void *)xpmap_ptom_masked(pa), (void *)pa2));
+#endif
+
 #ifdef XENNET_DEBUG_DUMP
 		xennet_hex_dump(mtod(m, u_char *), m->m_pkthdr.len, "s",
 			       	req->txreq_id);
