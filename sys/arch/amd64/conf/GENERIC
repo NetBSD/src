@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.499 2018/08/03 04:35:20 kamil Exp $
+# $NetBSD: GENERIC,v 1.500 2018/08/10 17:54:46 sevan Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.499 $"
+#ident		"GENERIC-$Revision: 1.500 $"
 
 maxusers	64		# estimated number of users
 
@@ -204,6 +204,10 @@ options 	PPP_DEFLATE	# Deflate compression support for PPP
 options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 #options 	TCP_SIGNATURE	# Enable RFC-2385 TCP md5 signatures
+
+# JIT compiler for bpfilter
+#options 	SLJIT
+#options 	BPFJIT
 
 #options 	ALTQ		# Manipulate network interfaces' output queues
 #options 	ALTQ_BLUE	# Stochastic Fair Blue
