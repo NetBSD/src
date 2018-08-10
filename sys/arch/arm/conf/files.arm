@@ -1,4 +1,4 @@
-#	$NetBSD: files.arm,v 1.140 2018/08/10 16:17:30 maxv Exp $
+#	$NetBSD: files.arm,v 1.141 2018/08/10 17:47:14 maxv Exp $
 
 # temporary define to allow easy moving to ../arch/arm/arm32
 defflag				ARM32
@@ -8,8 +8,7 @@ defflag	opt_cpuoptions.h	ARM32_DISABLE_ALIGNMENT_FAULTS
 
 # CPU types.  Make sure to update <arm/cpuconf.h> if you change this list.
 defflag	opt_cputypes.h		CPU_PRE_ARMV6
-defflag	opt_cputypes.h		CPU_ARMV2: CPU_PRE_ARMV6
-defflag	opt_cputypes.h		CPU_ARMV3: CPU_ARMV2
+defflag	opt_cputypes.h		CPU_ARMV3: CPU_PRE_ARMV6
 defflag	opt_cputypes.h		CPU_ARMV4: CPU_ARMV3
 defflag	opt_cputypes.h		CPU_ARMV4T: CPU_ARMV4
 defflag	opt_cputypes.h		CPU_ARMV5T: CPU_ARMV4T
