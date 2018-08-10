@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuconf.h,v 1.26 2018/04/01 04:35:04 ryo Exp $	*/
+/*	$NetBSD: cpuconf.h,v 1.27 2018/08/10 16:17:30 maxv Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -62,9 +62,7 @@
  * Step 1: Count the number of CPU types configured into the kernel.
  */
 #if defined(_KERNEL_OPT)
-#define	CPU_NTYPES	(defined(CPU_ARM2) + defined(CPU_ARM250) +	\
-			 defined(CPU_ARM3) +				\
-			 defined(CPU_ARM6) + defined(CPU_ARM7) +	\
+#define	CPU_NTYPES	(defined(CPU_ARM6) + defined(CPU_ARM7) +	\
 			 defined(CPU_ARM7TDMI) +			\
 			 defined(CPU_ARM8) + defined(CPU_ARM9) +	\
 			 defined(CPU_ARM9E) +				\
@@ -90,8 +88,7 @@
 /*
  * Step 2: Determine which ARM architecture versions are configured.
  */
-#if !defined(_KERNEL_OPT) ||						\
-    (defined(CPU_ARM2) || defined(CPU_ARM250) || defined(CPU_ARM3))
+#if !defined(_KERNEL_OPT)
 #define	ARM_ARCH_2	1
 #else
 #define	ARM_ARCH_2	0
@@ -175,8 +172,7 @@
  *
  *	ARM_MMU_V7		ARM v7 MMU.
  */
-#if !defined(_KERNEL_OPT) ||						\
-    (defined(CPU_ARM2) || defined(CPU_ARM250) || defined(CPU_ARM3))
+#if !defined(_KERNEL_OPT)
 #define	ARM_MMU_MEMC		1
 #else
 #define	ARM_MMU_MEMC		0
