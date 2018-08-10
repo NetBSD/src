@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.106 2018/07/15 05:16:41 maxv Exp $	*/
+/*	$NetBSD: fault.c,v 1.107 2018/08/10 16:17:30 maxv Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -81,7 +81,7 @@
 #include "opt_kgdb.h"
 
 #include <sys/types.h>
-__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.106 2018/07/15 05:16:41 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.107 2018/08/10 16:17:30 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -119,8 +119,7 @@ extern char fusubailout[];
 int last_fault_code;	/* For the benefit of pmap_fault_fixup() */
 #endif
 
-#if defined(CPU_ARM3) || defined(CPU_ARM6) || \
-    defined(CPU_ARM7) || defined(CPU_ARM7TDMI)
+#if defined(CPU_ARM6) || defined(CPU_ARM7) || defined(CPU_ARM7TDMI)
 /* These CPUs may need data/prefetch abort fixups */
 #define	CPU_ABORT_FIXUP_REQUIRED
 #endif
