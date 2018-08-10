@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil_netbsd.c,v 1.30 2018/08/10 06:46:08 maxv Exp $	*/
+/*	$NetBSD: ip_fil_netbsd.c,v 1.31 2018/08/10 07:16:13 maxv Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -8,7 +8,7 @@
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_fil_netbsd.c,v 1.30 2018/08/10 06:46:08 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_fil_netbsd.c,v 1.31 2018/08/10 07:16:13 maxv Exp $");
 #else
 static const char sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: ip_fil_netbsd.c,v 1.1.1.2 2012/07/22 13:45:17 darrenr Exp";
@@ -83,6 +83,7 @@ static const char rcsid[] = "@(#)Id: ip_fil_netbsd.c,v 1.1.1.2 2012/07/22 13:45:
 # endif
 # if __NetBSD_Version__ >= 499001100
 #  include <netinet6/scope6_var.h>
+#  include <netinet6/in6_offload.h>
 # endif
 #endif
 #include "netinet/ip_fil.h"
