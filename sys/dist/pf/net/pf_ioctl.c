@@ -1,4 +1,4 @@
-/*	$NetBSD: pf_ioctl.c,v 1.55 2018/08/10 06:46:08 maxv Exp $	*/
+/*	$NetBSD: pf_ioctl.c,v 1.56 2018/08/10 07:16:13 maxv Exp $	*/
 /*	$OpenBSD: pf_ioctl.c,v 1.182 2007/06/24 11:17:13 mcbride Exp $ */
 
 /*
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pf_ioctl.c,v 1.55 2018/08/10 06:46:08 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pf_ioctl.c,v 1.56 2018/08/10 07:16:13 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -100,6 +100,7 @@ __KERNEL_RCSID(0, "$NetBSD: pf_ioctl.c,v 1.55 2018/08/10 06:46:08 maxv Exp $");
 #ifdef INET6
 #include <netinet/ip6.h>
 #include <netinet/in_pcb.h>
+#include <netinet6/in6_offload.h>
 #endif /* INET6 */
 
 #ifdef ALTQ
