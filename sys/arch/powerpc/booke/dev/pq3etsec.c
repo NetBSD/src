@@ -1,4 +1,4 @@
-/*	$NetBSD: pq3etsec.c,v 1.35 2018/07/11 05:25:45 maxv Exp $	*/
+/*	$NetBSD: pq3etsec.c,v 1.36 2018/08/10 06:46:08 maxv Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pq3etsec.c,v 1.35 2018/07/11 05:25:45 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pq3etsec.c,v 1.36 2018/08/10 06:46:08 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -2095,7 +2095,7 @@ pq3etsec_tx_offload(
 #endif
 			} else if (csum_flags & M_CSUM_IP6) {
 #ifdef INET6
-				ip6_undefer_csum(m, ETHER_HDR_LEN,
+				in6_undefer_cksum(m, ETHER_HDR_LEN,
 				    csum_flags & M_CSUM_IP6);
 #else
 				panic("%s: impossible M_CSUM flags %#x",
