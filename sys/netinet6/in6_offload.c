@@ -1,6 +1,6 @@
-/*	$NetBSD: in6_offload.c,v 1.9 2018/08/10 06:46:09 maxv Exp $	*/
+/*	$NetBSD: in6_offload.c,v 1.10 2018/08/10 06:55:04 maxv Exp $	*/
 
-/*-
+/*
  * Copyright (c)2006 YAMAMOTO Takashi,
  * All rights reserved.
  *
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_offload.c,v 1.9 2018/08/10 06:46:09 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_offload.c,v 1.10 2018/08/10 06:55:04 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -43,47 +43,13 @@ __KERNEL_RCSID(0, "$NetBSD: in6_offload.c,v 1.9 2018/08/10 06:46:09 maxv Exp $")
 #include <netinet6/nd6.h>
 #include <netinet6/in6_offload.h>
 
-struct ip6_tso_output_args {
-	struct ifnet *ifp;
-	struct ifnet *origifp;
-	const struct sockaddr_in6 *dst;
-	struct rtentry *rt;
-};
-
-static int ip6_tso_output_callback(void *, struct mbuf *);
-
-static int
-ip6_tso_output_callback(void *vp, struct mbuf *m)
-{
-	struct ip6_tso_output_args *args = vp;
-
-	return ip6_if_output(args->ifp, args->origifp, m, args->dst, args->rt);
-}
-
-int
-ip6_tso_output(struct ifnet *ifp, struct ifnet *origifp, struct mbuf *m,
-    const struct sockaddr_in6 *dst, struct rtentry *rt)
-{
-	struct ip6_tso_output_args args;
-
-	args.ifp = ifp;
-	args.origifp = origifp;
-	args.dst = dst;
-	args.rt = rt;
-
-	return tcp6_segment(m, ip6_tso_output_callback, &args);
-}
-
 /*
- * tcp6_segment: handle M_CSUM_TSOv6 by software.
- *
- * => always consume m.
- * => call output_func with output_arg for each segments.
+ * Handle M_CSUM_TSOv6 in software. Split the TCP payload in chunks of
+ * size MSS, and send them.
  */
-
-int
-tcp6_segment(struct mbuf *m, int (*output_func)(void *, struct mbuf *),
-    void *output_arg)
+static int
+tcp6_segment(struct ifnet *ifp, struct ifnet *origifp, struct mbuf *m,
+    const struct sockaddr_in6 *dst, struct rtentry *rt)
 {
 	int mss;
 	int iphlen;
@@ -173,7 +139,7 @@ tcp6_segment(struct mbuf *m, int (*output_func)(void *, struct mbuf *),
 		th->th_sum = 0;
 		th->th_sum = in6_cksum(n, IPPROTO_TCP, iphlen, thlen + mss);
 
-		error = (*output_func)(output_arg, n);
+		error = ip6_if_output(ifp, origifp, n, dst, rt);
 		if (error) {
 			goto quit;
 		}
@@ -191,6 +157,13 @@ quit:
 	}
 
 	return error;
+}
+
+int
+ip6_tso_output(struct ifnet *ifp, struct ifnet *origifp, struct mbuf *m,
+    const struct sockaddr_in6 *dst, struct rtentry *rt)
+{
+	return tcp6_segment(ifp, origifp, m, dst, rt);
 }
 
 /*

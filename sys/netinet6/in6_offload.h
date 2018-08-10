@@ -1,6 +1,6 @@
-/*	$NetBSD: in6_offload.h,v 1.8 2018/08/10 06:46:09 maxv Exp $	*/
+/*	$NetBSD: in6_offload.h,v 1.9 2018/08/10 06:55:04 maxv Exp $	*/
 
-/*-
+/*
  * Copyright (c)2005, 2006 YAMAMOTO Takashi,
  * All rights reserved.
  *
@@ -26,14 +26,12 @@
  * SUCH DAMAGE.
  */
 
-/*
- * subroutines to do software-only equivalent of h/w offloading.
- */
-
 #if !defined(_NETINET6_IN6_OFFLOAD_H_)
 #define	_NETINET6_IN6_OFFLOAD_H_
 
-int tcp6_segment(struct mbuf *, int (*)(void *, struct mbuf *), void *);
+/*
+ * Subroutines to do software-only equivalent of h/w offloading.
+ */
 int ip6_tso_output(struct ifnet *, struct ifnet *, struct mbuf *,
     const struct sockaddr_in6 *, struct rtentry *);
 void in6_undefer_cksum(struct mbuf *, size_t, int);
