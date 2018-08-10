@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.16 2018/08/06 20:05:26 ryo Exp $	*/
+/*	$NetBSD: locore.S,v 1.17 2018/08/10 17:46:06 maxv Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -35,7 +35,7 @@
 #include <aarch64/hypervisor.h>
 #include "assym.h"
 
-RCSID("$NetBSD: locore.S,v 1.16 2018/08/06 20:05:26 ryo Exp $")
+RCSID("$NetBSD: locore.S,v 1.17 2018/08/10 17:46:06 maxv Exp $")
 
 /* #define DEBUG_LOCORE */
 /* #define DEBUG_MMU */
@@ -589,28 +589,30 @@ arm_boot_l0pt_init:
 	b.lo	1b
 
 	VERBOSE("Creating VA=PA tables\r\n")
-	/* VA=PA table for L0 */
+
+	/* VA=PA table, link L0->L1 */
 	ADDR	x0, ttbr0_l0table
 	mov	x1, #0
 	ADDR	x2, ttbr0_l1table
 	bl	l0_settable
 
-	/* VA=PA blocks */
+	/* VA=PA L1 blocks */
 	ADDR	x0, ttbr0_l1table
-	mov	x1, #0			/* PA */
-	mov	x2, #0			/* VA */
+	mov	x1, #0			/* VA */
+	mov	x2, #0			/* PA */
 	mov	x3, #L2_BLKPAG_ATTR_DEVICE_MEM
 	mov	x4, #4			/* 4GB = whole 32bit */
 	bl	l1_setblocks
 
 	VERBOSE("Creating KSEG tables\r\n")
-	/* KSEG table for L0 */
+
+	/* KSEG table, link L0->L1 */
 	ADDR	x0, ttbr1_l0table
 	mov	x1, #AARCH64_KSEG_START
 	ADDR	x2, ttbr1_l1table_kseg
 	bl	l0_settable
 
-	/* KSEG blocks */
+	/* KSEG L1 blocks */
 	ADDR	x0, ttbr1_l1table_kseg
 	mov	x1, #AARCH64_KSEG_START
 	mov	x2, #0
@@ -620,19 +622,20 @@ arm_boot_l0pt_init:
 	bl	l1_setblocks
 
 	VERBOSE("Creating KVA=PA tables\r\n")
-	/* KVA=PA table for L0 */
+
+	/* KVA=PA table, link L0->L1 */
 	ADDR	x0, ttbr1_l0table
 	mov	x1, #VM_MIN_KERNEL_ADDRESS
 	ADDR	x2, ttbr1_l1table_kva
 	bl	l0_settable
 
-	/* KVA=PA table for L1 */
+	/* KVA=PA table, link L1->L2 */
 	ADDR	x0, ttbr1_l1table_kva
 	mov	x1, #VM_MIN_KERNEL_ADDRESS
 	ADDR	x2, ttbr1_l2table_kva
 	bl	l1_settable
 
-	/* KVA=PA blocks */
+	/* KVA=PA L2 blocks */
 	ADDR	x0, ttbr1_l2table_kva
 	adr	x2, start		/* physical addr. before MMU */
 	and	x2, x2, #L2_BLK_OA	/* L2 block size aligned (2MB) */
@@ -717,7 +720,7 @@ arm_boot_l0pt_init:
 
 
 	VERBOSE("Creating devmap tables\r\n")
-	/* devmap=PA table for L1 */
+	/* devmap=PA table, link L1->L2 */
 	ADDR	x0, ttbr1_l1table_kva
 	ldr	x1, .L_devmap_addr
 	ADDR	x2, ttbr1_l2table_devmap
