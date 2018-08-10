@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.217 2018/07/31 21:00:02 rjs Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.218 2018/08/10 21:44:58 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2008 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.217 2018/07/31 21:00:02 rjs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.218 2018/08/10 21:44:58 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -90,6 +90,7 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.217 2018/07/31 21:00:02 rjs Ex
 #endif
 
 extern struct sysent netbsd32_sysent[];
+extern const uint32_t netbsd32_sysent_nomodbits[];
 #ifdef SYSCALL_DEBUG
 extern const char * const netbsd32_syscallnames[];
 #endif
@@ -122,6 +123,7 @@ struct emul emul_netbsd32 = {
 	.e_nsysent =		NETBSD32_SYS_NSYSENT,
 #endif
 	.e_sysent =		netbsd32_sysent,
+	.e_nomodbits =		netbsd32_sysent_nomodbits,
 #ifdef SYSCALL_DEBUG
 	.e_syscallnames =	netbsd32_syscallnames,
 #else

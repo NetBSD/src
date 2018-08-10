@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_syscall.c,v 1.16 2017/03/24 17:40:44 christos Exp $	*/
+/*	$NetBSD: kern_syscall.c,v 1.17 2018/08/10 21:44:59 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_syscall.c,v 1.16 2017/03/24 17:40:44 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_syscall.c,v 1.17 2018/08/10 21:44:59 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_modular.h"
@@ -123,7 +123,10 @@ syscall_establish(const struct emul *em, const struct syscall_package *sp)
 	 * on error.
 	 */
 	for (i = 0; sp[i].sp_call != NULL; i++) {
-		if (sy[sp[i].sp_code].sy_call != sys_nomodule) {
+		if (sp[i].sp_code >= SYS_NSYSENT)
+			return EINVAL;
+		if (sy[sp[i].sp_code].sy_call != sys_nomodule &&
+		    sy[sp[i].sp_code].sy_call != sys_nosys) {
 #ifdef DIAGNOSTIC
 			printf("syscall %d is busy\n", sp[i].sp_code);
 #endif
@@ -142,6 +145,7 @@ int
 syscall_disestablish(const struct emul *em, const struct syscall_package *sp)
 {
 	struct sysent *sy;
+	const uint32_t *sb;
 	uint64_t where;
 	lwp_t *l;
 	int i;
@@ -152,14 +156,17 @@ syscall_disestablish(const struct emul *em, const struct syscall_package *sp)
 		em = &emul_netbsd;
 	}
 	sy = em->e_sysent;
+	sb = em->e_nomodbits;
 
 	/*
-	 * First, patch the system calls to sys_nomodule to gate further
-	 * activity.
+	 * First, patch the system calls to sys_nomodule or sys_nosys
+	 * to gate further activity.
 	 */
 	for (i = 0; sp[i].sp_call != NULL; i++) {
 		KASSERT(sy[sp[i].sp_code].sy_call == sp[i].sp_call);
-		sy[sp[i].sp_code].sy_call = sys_nomodule;
+		sy[sp[i].sp_code].sy_call =
+		    sb[sp[i].sp_code / 32] & (1 << (sp[i].sp_code % 32)) ?
+		      sys_nomodule : sys_nosys;
 	}
 
 	/*
