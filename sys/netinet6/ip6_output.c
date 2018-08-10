@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.211 2018/06/01 08:56:00 maxv Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.212 2018/08/10 06:46:09 maxv Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.211 2018/06/01 08:56:00 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.212 2018/08/10 06:46:09 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -302,7 +302,7 @@ ip6_output(
 
 	if (needipsec &&
 	    (m->m_pkthdr.csum_flags & (M_CSUM_UDPv6|M_CSUM_TCPv6)) != 0) {
-		in6_delayed_cksum(m);
+		in6_undefer_cksum_tcpudp(m);
 		m->m_pkthdr.csum_flags &= ~(M_CSUM_UDPv6|M_CSUM_TCPv6);
 	}
 
@@ -836,7 +836,7 @@ ip6_output(
 		if ((sw_csum & (M_CSUM_UDPv6|M_CSUM_TCPv6)) != 0) {
 			if (IN6_NEED_CHECKSUM(ifp,
 			    sw_csum & (M_CSUM_UDPv6|M_CSUM_TCPv6))) {
-				in6_delayed_cksum(m);
+				in6_undefer_cksum_tcpudp(m);
 			}
 			m->m_pkthdr.csum_flags &= ~(M_CSUM_UDPv6|M_CSUM_TCPv6);
 		}
@@ -914,7 +914,7 @@ ip6_output(
 			if (IN6_NEED_CHECKSUM(ifp,
 			    m->m_pkthdr.csum_flags &
 			    (M_CSUM_UDPv6|M_CSUM_TCPv6))) {
-				in6_delayed_cksum(m);
+				in6_undefer_cksum_tcpudp(m);
 			}
 			m->m_pkthdr.csum_flags &= ~(M_CSUM_UDPv6|M_CSUM_TCPv6);
 		}
@@ -1069,33 +1069,6 @@ ip6_copyexthdr(struct mbuf **mp, void *hdr, int hlen)
 
 	*mp = m;
 	return 0;
-}
-
-/*
- * Process a delayed payload checksum calculation.
- */
-void
-in6_delayed_cksum(struct mbuf *m)
-{
-	uint16_t csum, offset;
-
-	KASSERT((m->m_pkthdr.csum_flags & (M_CSUM_UDPv6|M_CSUM_TCPv6)) != 0);
-	KASSERT((~m->m_pkthdr.csum_flags & (M_CSUM_UDPv6|M_CSUM_TCPv6)) != 0);
-	KASSERT((m->m_pkthdr.csum_flags
-	    & (M_CSUM_UDPv4|M_CSUM_TCPv4|M_CSUM_TSOv4)) == 0);
-
-	offset = M_CSUM_DATA_IPv6_IPHL(m->m_pkthdr.csum_data);
-	csum = in6_cksum(m, 0, offset, m->m_pkthdr.len - offset);
-	if (csum == 0 && (m->m_pkthdr.csum_flags & M_CSUM_UDPv6) != 0) {
-		csum = 0xffff;
-	}
-
-	offset += M_CSUM_DATA_IPv6_OFFSET(m->m_pkthdr.csum_data);
-	if ((offset + sizeof(csum)) > m->m_len) {
-		m_copyback(m, offset, sizeof(csum), &csum);
-	} else {
-		*(uint16_t *)(mtod(m, char *) + offset) = csum;
-	}
 }
 
 /*
