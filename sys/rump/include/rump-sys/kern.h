@@ -1,4 +1,4 @@
-/*	$NetBSD: kern.h,v 1.3 2016/02/08 18:18:19 pooka Exp $	*/
+/*	$NetBSD: kern.h,v 1.4 2018/08/10 21:44:59 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -51,6 +51,7 @@ extern int rump_threads;
 extern struct device rump_rootdev;
 
 extern struct sysent rump_sysent[];
+extern const uint32_t rump_sysent_nomodbits[];
 
 enum rump_component_type {
 	RUMP_COMPONENT_DEV,
