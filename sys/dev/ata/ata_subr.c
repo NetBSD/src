@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_subr.c,v 1.5 2018/08/06 20:07:05 jdolecek Exp $	*/
+/*	$NetBSD: ata_subr.c,v 1.6 2018/08/10 22:43:22 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata_subr.c,v 1.5 2018/08/06 20:07:05 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata_subr.c,v 1.6 2018/08/10 22:43:22 jdolecek Exp $");
 
 #include "opt_ata.h"
 
@@ -377,7 +377,7 @@ out:
  * released.
  */ 
 void
-ata_channel_start(struct ata_channel *chp, int drive)
+ata_channel_start(struct ata_channel *chp, int drive, bool start_self)
 {
 	int i, s;
 	struct ata_drive_datas *drvp;
@@ -413,7 +413,8 @@ ata_channel_start(struct ata_channel *chp, int drive)
 	}
 
 	/* Now try to kick off xfers on the current drive */
-	ATA_DRIVE_START(chp, drive);
+	if (start_self)
+		ATA_DRIVE_START(chp, drive);
 
 	splx(s);
 #undef ATA_DRIVE_START
