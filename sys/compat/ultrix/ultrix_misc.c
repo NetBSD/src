@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_misc.c,v 1.124 2018/05/06 13:40:51 kamil Exp $	*/
+/*	$NetBSD: ultrix_misc.c,v 1.125 2018/08/10 21:44:59 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1995, 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ultrix_misc.c,v 1.124 2018/05/06 13:40:51 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ultrix_misc.c,v 1.125 2018/08/10 21:44:59 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -149,6 +149,7 @@ static int ultrix_to_bsd_flock(struct ultrix_flock *, struct flock *);
 static void bsd_to_ultrix_flock(struct flock *, struct ultrix_flock *);
 
 extern struct sysent ultrix_sysent[];
+extern const uint32_t ultrix_sysent_nomodbits[];
 extern const char * const ultrix_syscallnames[];
 extern char ultrix_sigcode[], ultrix_esigcode[];
 
@@ -168,6 +169,7 @@ struct emul emul_ultrix = {
 	.e_nsysent =		ULTRIX_SYS_NSYSENT,
 #endif
 	.e_sysent =		ultrix_sysent,
+	.e_nomodbits =		ultrix_sysent_nomodbits,
 #ifdef SYSCALL_DEBUG
 	.e_syscallnames =	ultrix_syscallnames,
 #else

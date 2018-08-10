@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.185 2017/11/21 15:22:06 ozaki-r Exp $	*/
+/*	$NetBSD: emul.c,v 1.186 2018/08/10 21:44:59 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.185 2017/11/21 15:22:06 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.186 2018/08/10 21:44:59 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/cprng.h>
@@ -119,6 +119,7 @@ struct loadavg averunnable = {
 struct emul emul_netbsd = {
 	.e_name = "netbsd-rump",
 	.e_sysent = rump_sysent,
+	.e_nomodbits = rump_sysent_nomodbits,
 #ifndef __HAVE_MINIMAL_EMUL
 	.e_nsysent = SYS_NSYSENT,
 #endif
