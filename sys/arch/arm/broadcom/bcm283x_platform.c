@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm283x_platform.c,v 1.11 2018/08/05 14:02:35 skrll Exp $	*/
+/*	$NetBSD: bcm283x_platform.c,v 1.12 2018/08/10 04:44:15 rin Exp $	*/
 
 /*-
  * Copyright (c) 2017 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm283x_platform.c,v 1.11 2018/08/05 14:02:35 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm283x_platform.c,v 1.12 2018/08/10 04:44:15 rin Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_bcm283x.h"
@@ -134,125 +134,83 @@ struct bus_space bcm2835_a4x_bs_tag;
 struct bus_space bcm2836_bs_tag;
 struct bus_space bcm2836_a4x_bs_tag;
 
-int bcm283x_bs_map(void *, bus_addr_t, bus_size_t, int, bus_space_handle_t *);
-paddr_t bcm283x_bs_mmap(void *, bus_addr_t, off_t, int, int);
-paddr_t bcm283x_a4x_bs_mmap(void *, bus_addr_t, off_t, int, int);
+static paddr_t bcm2835_bus_to_phys(bus_addr_t);
+static paddr_t bcm2836_bus_to_phys(bus_addr_t);
 
-int
-bcm283x_bs_map(void *t, bus_addr_t ba, bus_size_t size, int flag,
-    bus_space_handle_t *bshp)
+static paddr_t
+bcm2835_bus_to_phys(bus_addr_t ba)
 {
-	u_long startpa, endpa, pa;
-	vaddr_t va;
 
-	/* Convert BA to PA */
-	pa = ba & ~BCM2835_BUSADDR_CACHE_MASK;
+	/* Attempt to find the PA device mapping */
+	if (ba >= BCM2835_PERIPHERALS_BASE_BUS &&
+	    ba < BCM2835_PERIPHERALS_BASE_BUS + BCM2835_PERIPHERALS_SIZE)
+		return BCM2835_PERIPHERALS_BUS_TO_PHYS(ba);
 
-	startpa = trunc_page(pa);
-	endpa = round_page(pa + size);
-
-	/* XXX use extent manager to check duplicate mapping */
-
-	va = uvm_km_alloc(kernel_map, endpa - startpa, 0,
-	    UVM_KMF_VAONLY | UVM_KMF_NOWAIT | UVM_KMF_COLORMATCH);
-	if (!va)
-		return ENOMEM;
-
-	*bshp = (bus_space_handle_t)(va + (pa - startpa));
-
-	int pmapflags;
-	if (flag & BUS_SPACE_MAP_PREFETCHABLE)
-		pmapflags = PMAP_WRITE_COMBINE;
-	else if (flag & BUS_SPACE_MAP_CACHEABLE)
-		pmapflags = 0;
-	else
-		pmapflags = PMAP_NOCACHE;
-	for (pa = startpa; pa < endpa; pa += PAGE_SIZE, va += PAGE_SIZE) {
-		pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE, pmapflags);
-	}
-	pmap_update(pmap_kernel());
-
-	return 0;
+	return ba & ~BCM2835_BUSADDR_CACHE_MASK;
 }
 
-paddr_t
-bcm283x_bs_mmap(void *t, bus_addr_t bpa, off_t offset, int prot, int flags)
+static paddr_t
+bcm2836_bus_to_phys(bus_addr_t ba)
 {
-	/* Convert BA to PA */
-	const paddr_t pa = bpa & ~BCM2835_BUSADDR_CACHE_MASK;
-	paddr_t bus_flags = 0;
 
-	if (flags & BUS_SPACE_MAP_PREFETCHABLE)
-		bus_flags |= ARM_MMAP_WRITECOMBINE;
+	/* Attempt to find the PA device mapping */
+	if (ba >= BCM2835_PERIPHERALS_BASE_BUS &&
+	    ba < BCM2835_PERIPHERALS_BASE_BUS + BCM2835_PERIPHERALS_SIZE)
+		return BCM2836_PERIPHERALS_BUS_TO_PHYS(ba);
 
-	return arm_btop(pa + offset) | bus_flags;
-}
+	if (ba >= BCM2836_ARM_LOCAL_BASE &&
+	    ba < BCM2836_ARM_LOCAL_BASE + BCM2836_ARM_LOCAL_SIZE)
+		return ba;
 
-paddr_t
-bcm283x_a4x_bs_mmap(void *t, bus_addr_t bpa, off_t offset, int prot, int flags)
-{
-	/* Convert BA to PA */
-	const paddr_t pa = bpa & ~BCM2835_BUSADDR_CACHE_MASK;
-	paddr_t bus_flags = 0;
-
-	if (flags & BUS_SPACE_MAP_PREFETCHABLE)
-		bus_flags |= ARM_MMAP_WRITECOMBINE;
-
-	return arm_btop(pa + 4 * offset) | bus_flags;
+	return ba & ~BCM2835_BUSADDR_CACHE_MASK;
 }
 
 int
 bcm2835_bs_map(void *t, bus_addr_t ba, bus_size_t size, int flag,
     bus_space_handle_t *bshp)
 {
-	const struct pmap_devmap *pd;
-	bool match = false;
-	u_long pa;
+	const paddr_t pa = bcm2835_bus_to_phys(ba);
 
-	/* Attempt to find the PA device mapping */
-	if (ba >= BCM2835_PERIPHERALS_BASE_BUS &&
-	    ba < BCM2835_PERIPHERALS_BASE_BUS + BCM2835_PERIPHERALS_SIZE) {
-		match = true;
-		pa = BCM2835_PERIPHERALS_BUS_TO_PHYS(ba);
-	}
+	return bus_space_map(&arm_generic_bs_tag, pa, size, flag, bshp);
+}
 
-	if (match && (pd = pmap_devmap_find_pa(pa, size)) != NULL) {
-		/* Device was statically mapped. */
-		*bshp = pd->pd_va + (pa - pd->pd_pa);
-		return 0;
-	}
+paddr_t
+bcm2835_bs_mmap(void *t, bus_addr_t ba, off_t offset, int prot, int flags)
+{
+	const paddr_t pa = bcm2835_bus_to_phys(ba);
 
-	return bcm283x_bs_map(t, ba, size, flag, bshp);
+	return bus_space_mmap(&arm_generic_bs_tag, pa, offset, prot, flags);
+}
+
+paddr_t
+bcm2835_a4x_bs_mmap(void *t, bus_addr_t ba, off_t offset, int prot, int flags)
+{
+
+	return bcm2835_bs_mmap(t, ba, 4 * offset, prot, flags);
 }
 
 int
 bcm2836_bs_map(void *t, bus_addr_t ba, bus_size_t size, int flag,
     bus_space_handle_t *bshp)
 {
-	const struct pmap_devmap *pd;
-	bool match = false;
-	u_long pa;
+	const paddr_t pa = bcm2836_bus_to_phys(ba);
 
-	/* Attempt to find the PA device mapping */
-	if (ba >= BCM2835_PERIPHERALS_BASE_BUS &&
-	    ba < BCM2835_PERIPHERALS_BASE_BUS + BCM2835_PERIPHERALS_SIZE) {
-		match = true;
-		pa = BCM2836_PERIPHERALS_BUS_TO_PHYS(ba);
-	}
+	return bus_space_map(&arm_generic_bs_tag, pa, size, flag, bshp);
+}
 
-	if (ba >= BCM2836_ARM_LOCAL_BASE &&
-	    ba < BCM2836_ARM_LOCAL_BASE + BCM2836_ARM_LOCAL_SIZE) {
-		match = true;
-		pa = ba;
-	}
+paddr_t
+bcm2836_bs_mmap(void *t, bus_addr_t ba, off_t offset, int prot, int flags)
+{
+	const paddr_t pa = bcm2836_bus_to_phys(ba);
 
-	if (match && (pd = pmap_devmap_find_pa(pa, size)) != NULL) {
-		/* Device was statically mapped. */
-		*bshp = pd->pd_va + (pa - pd->pd_pa);
-		return 0;
-	}
+	return bus_space_mmap(&arm_generic_bs_tag, pa, offset, prot, flags);
+}
 
-	return bcm283x_bs_map(t, ba, size, flag, bshp);
+paddr_t
+bcm2836_a4x_bs_mmap(void *t, bus_addr_t ba, off_t offset, int prot, int flags)
+{
+
+	return bcm2836_bs_mmap(t, ba, 4 * offset, prot, flags);
 }
 
 struct arm32_dma_range bcm2835_dma_ranges[] = {
@@ -1223,9 +1181,9 @@ bcm2835_platform_bootstrap(void)
 	bcm2835_a4x_bs_tag = arm_generic_a4x_bs_tag;
 
 	bcm2835_bs_tag.bs_map = bcm2835_bs_map;
-	bcm2835_bs_tag.bs_mmap = bcm283x_bs_mmap;
+	bcm2835_bs_tag.bs_mmap = bcm2835_bs_mmap;
 	bcm2835_a4x_bs_tag.bs_map = bcm2835_bs_map;
-	bcm2835_a4x_bs_tag.bs_mmap = bcm283x_a4x_bs_mmap;
+	bcm2835_a4x_bs_tag.bs_mmap = bcm2835_a4x_bs_mmap;
 
 	fdtbus_set_decoderegprop(false);
 
@@ -1244,9 +1202,9 @@ bcm2836_platform_bootstrap(void)
 	bcm2836_a4x_bs_tag = arm_generic_a4x_bs_tag;
 
 	bcm2836_bs_tag.bs_map = bcm2836_bs_map;
-	bcm2836_bs_tag.bs_mmap = bcm283x_bs_mmap;
+	bcm2836_bs_tag.bs_mmap = bcm2836_bs_mmap;
 	bcm2836_a4x_bs_tag.bs_map = bcm2836_bs_map;
-	bcm2836_a4x_bs_tag.bs_mmap = bcm283x_a4x_bs_mmap;
+	bcm2836_a4x_bs_tag.bs_mmap = bcm2836_a4x_bs_mmap;
 
 	fdtbus_set_decoderegprop(false);
 
