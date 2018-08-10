@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2.c,v 1.52 2018/08/09 06:26:47 mrg Exp $	*/
+/*	$NetBSD: dwc2.c,v 1.53 2018/08/10 04:24:46 rin Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc2.c,v 1.52 2018/08/09 06:26:47 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc2.c,v 1.53 2018/08/10 04:24:46 rin Exp $");
 
 #include "opt_usb.h"
 
@@ -324,7 +324,7 @@ dwc2_timeout(void *addr)
  	struct dwc2_softc *sc = DWC2_XFER2SC(xfer);
 	struct usbd_device *dev = xfer->ux_pipe->up_dev;
 
-	DPRINTF("dxfer=%p\n", dxfer);
+	DPRINTF("xfer=%p\n", xfer);
 
 	mutex_enter(&sc->sc_lock);
 	if (!sc->sc_dying && xfer->ux_status == USBD_IN_PROGRESS)
@@ -450,7 +450,7 @@ dwc2_abort_xfer(struct usbd_xfer *xfer, usbd_status status)
 	KASSERTMSG((status == USBD_CANCELLED || status == USBD_TIMEOUT),
 	    "invalid status for abort: %d", (int)status);
 
-	DPRINTF("xfer %pjx pipe %pjx status %jd", xfer, xfer->ux_pipe, status);
+	DPRINTF("xfer %p pipe %p status 0x%08x", xfer, xfer->ux_pipe, status);
 
 	KASSERT(mutex_owned(&sc->sc_lock));
 	ASSERT_SLEEPABLE();
@@ -492,8 +492,7 @@ dwc2_abort_xfer(struct usbd_xfer *xfer, usbd_status status)
 	 * software that we're done.
 	 */
 	if (sc->sc_dying) {
-		DPRINTFN(4, "xfer %#jx dying %ju", (uintptr_t)xfer,
-		    xfer->ux_status, 0, 0);
+		DPRINTFN(4, "xfer %p dying 0x%08x", xfer, xfer->ux_status);
 		goto dying;
 	}
 
