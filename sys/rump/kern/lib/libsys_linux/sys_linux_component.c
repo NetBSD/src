@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_linux_component.c,v 1.3 2016/01/26 23:12:17 pooka Exp $	*/
+/*	$NetBSD: sys_linux_component.c,v 1.4 2018/08/10 21:44:59 pgoyette Exp $	*/
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -12,6 +12,7 @@
 #include "rump_linux_syscall.h"
 
 extern struct sysent rump_linux_sysent[];
+extern const uint32_t rump_linux_sysent_nomodbits[];
 
 #ifdef __HAVE_SYSCALL_INTERN
 static void
@@ -25,6 +26,7 @@ rumplinux_syscall_intern(struct proc *p)
 struct emul emul_rump_sys_linux = {
 	.e_name = "linux-rump",
 	.e_sysent = rump_linux_sysent,
+	.e_nomodbits = rump_linux_sysent_nomodbits,
 #ifndef __HAVE_MINIMAL_EMUL
 	.e_nsysent = RUMP_LINUX_SYS_NSYSENT,
 	.e_errno = native_to_linux_errno,

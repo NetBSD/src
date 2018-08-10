@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_exec.c,v 1.46 2018/05/06 13:40:51 kamil Exp $ */
+/* $NetBSD: osf1_exec.c,v 1.47 2018/08/10 21:44:58 pgoyette Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_exec.c,v 1.46 2018/05/06 13:40:51 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_exec.c,v 1.47 2018/08/10 21:44:58 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_syscall_debug.h"
@@ -50,6 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: osf1_exec.c,v 1.46 2018/05/06 13:40:51 kamil Exp $")
 #include <compat/osf1/osf1_cvt.h>
 
 extern struct sysent osf1_sysent[];
+extern const uint32_t osf1_sysent_nomodbits[];
 extern const char * const osf1_syscallnames[];
 extern char osf1_sigcode[], osf1_esigcode[];
 #ifdef __HAVE_SYSCALL_INTERN
@@ -70,6 +71,7 @@ struct emul emul_osf1 = {
 	.e_nsysent =		OSF1_SYS_NSYSENT,
 #endif
 	.e_sysent =		osf1_sysent,
+	.e_nomodbits =		osf1_sysent_nomodbits,
 #ifdef SYSCALL_DEBUG
 	.e_syscallnames =	osf1_syscallnames,
 #else

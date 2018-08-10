@@ -1,4 +1,4 @@
-#	$NetBSD: makesyscalls.sh,v 1.169 2017/05/10 06:08:56 riastradh Exp $
+#	$NetBSD: makesyscalls.sh,v 1.170 2018/08/10 21:44:59 pgoyette Exp $
 #
 # Copyright (c) 1994, 1996, 2000 Christopher G. Demetriou
 # All rights reserved.
@@ -855,9 +855,12 @@ function putent(type, compatwrap) {
 	if (argc != 0) {
 		printf("\n\t\tns(struct %s%s_args),", compatwrap_, funcname) > sysent
 	}
-	if (modular) 
+	if (modular) {
 		wfn = "sys_nomodule";
-	else if (compatwrap == "")
+		idx = int(syscall / 32);
+		bit = 2 ^ (syscall % 32);
+		nomodbits[ idx ] += bit;
+	} else if (compatwrap == "")
 		wfn = funcname;
 	else
 		wfn = compatwrap "(" funcname ")";
@@ -1126,6 +1129,13 @@ END {
 	}
 
 	maxsyscall = syscall
+
+	# XXX
+	# XXX The following comparisons with nsysent will produce
+	# XXX unexpected results if (for example) syscall has a
+	# XXX value of 900 and nsysent has a value of "1024".  We
+	# XXX probably ought to make nsysent a numeric variable.
+	# XXX
 	if (nsysent) {
 		if (syscall > nsysent) {
 			printf("%s: line %d: too many syscalls [%d > %d]\n", infile, NR, syscall, nsysent)
@@ -1140,6 +1150,16 @@ END {
 			    > sysnamesfriendly
 			syscall++
 		}
+	}
+	printf("};\n") > sysent
+	printf("\nconst uint32_t %s_nomodbits[] = {\n", switchname) > sysent
+	printf("};\n") > rumpsysent
+	printf("\nconst uint32_t rump_sysent_nomodbits[] = {\n") > rumpsysent
+	for (i = 0; i < syscall / 32; i++) {
+		printf("\t0x%08x,\t/* syscalls %3d-%3d */\n",
+			nomodbits[i], i * 32, i * 32 + 31) > sysent
+		printf("\t0x%08x,\t/* syscalls %3d-%3d */\n",
+			nomodbits[i], i * 32, i * 32 + 31) > rumpsysent
 	}
 	printf("};\n") > sysent
 	printf("};\n") > rumpsysent

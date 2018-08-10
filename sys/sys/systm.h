@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.276 2018/05/28 21:04:41 chs Exp $	*/
+/*	$NetBSD: systm.h,v 1.277 2018/08/10 21:44:59 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -127,6 +127,7 @@ extern struct sysent {		/* system call table */
 	uint32_t sy_return;	/* DTrace return ID for systrace. */
 } sysent[];
 extern int nsysent;
+extern const uint32_t sysent_nomodbits[];
 #endif
 
 #if	BYTE_ORDER == BIG_ENDIAN
