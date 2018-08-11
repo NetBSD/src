@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1199.2.11 2018/01/03 21:37:36 snj Exp $
+$NetBSD: pcidevs,v 1.1199.2.12 2018/08/11 13:34:21 martin Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -3054,6 +3054,10 @@ product INTEL X552_1G_T		0x15ae	X552 1000Base-T
 product INTEL I219_LM2		0x15b7	I219-LM Ethernet Connection
 product INTEL I219_V2		0x15b8	I219-V Ethernet Connection
 product INTEL I219_LM3		0x15b9	I219-LM Ethernet Connection
+product INTEL I219_LM7		0x15bb	I219-LM Ethernet Connection
+product INTEL I219_V7		0x15bc	I219-V Ethernet Connection
+product INTEL I219_LM6		0x15bd	I219-LM Ethernet Connection
+product INTEL I219_V6		0x15be	I219-V Ethernet Connection
 product INTEL X550T1	 	0x15d1	X550 10G Ethernet
 product INTEL I219_V5		0x15d6	I219-V Ethernet Connection
 product INTEL I219_LM4		0x15d7	I219-LM Ethernet Connection

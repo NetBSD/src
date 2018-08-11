@@ -1,4 +1,4 @@
-/*	$NetBSD: pcireg.h,v 1.95.2.3 2014/12/14 16:49:35 martin Exp $	*/
+/*	$NetBSD: pcireg.h,v 1.95.2.4 2018/08/11 13:34:21 martin Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1999, 2000
@@ -1314,6 +1314,18 @@ struct pci_rom {
 #define	PCI_EXTCAPLIST_CAP(ecr)		((ecr) & 0xffff)
 #define	PCI_EXTCAPLIST_VERSION(ecr)	(((ecr) >> 16) & 0xf)
 #define	PCI_EXTCAPLIST_NEXT(ecr)	(((ecr) >> 20) & 0xfff)
+
+/*
+ * Extended capability ID: 0x0018
+ * Latency Tolerance Reporting
+ */
+#define	PCI_LTR_MAXSNOOPLAT	0x04	/* Max Snoop Latency */
+#define	PCI_LTR_MAXSNOOPLAT_VAL	__BITS(9, 0)	/* Max Snoop LatencyValue */
+#define	PCI_LTR_MAXSNOOPLAT_SCALE __BITS(12, 10) /* Max Snoop LatencyScale */
+#define	PCI_LTR_MAXNOSNOOPLAT	0x04	/* Max No-Snoop Latency */
+#define	PCI_LTR_MAXNOSNOOPLAT_VAL __BITS(25, 16) /* Max No-Snoop LatencyValue*/
+#define	PCI_LTR_MAXNOSNOOPLAT_SCALE __BITS(28, 26) /*Max NoSnoop LatencyScale*/
+#define	PCI_LTR_SCALETONS(x) (1 << ((x) * 5))
 
 /*
  * Local constants

@@ -1,4 +1,4 @@
-/*	$NetBSD: ihphyreg.h,v 1.1 2010/11/27 20:15:27 christos Exp $	*/
+/*	$NetBSD: ihphyreg.h,v 1.1.38.1 2018/08/11 13:34:21 martin Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -107,5 +107,16 @@
 
 /* Diagnostics Status Register */
 #define	IHPHY_MII_DSR		BME1000_REG(0, 31)
+
+/*
+ * XXX I21[789] documents say that the SMBus Address register is at
+ * PHY address 01, Page 0 (not 768), Register 26.
+ */
+#define HV_SMB_ADDR		BME1000_REG(768, 26)
+#define HV_SMB_ADDR_ADDR	0x007f
+#define HV_SMB_ADDR_VALID	(1 << 7)
+#define HV_SMB_ADDR_FREQ_LOW	(1 << 8)
+#define HV_SMB_ADDR_PEC_EN	(1 << 9)
+#define HV_SMB_ADDR_FREQ_HIGH	(1 << 12)
 
 #endif /* _DEV_IHPHY_MIIREG_H_ */
