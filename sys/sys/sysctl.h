@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.226 2018/05/16 20:21:39 joerg Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.227 2018/08/11 11:33:10 kamil Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -632,8 +632,6 @@ struct kinfo_proc2 {
 #define	P_STOPEXEC		0x01000000
 #define	P_STOPEXIT		0x02000000
 #define	P_SYSCALL		0x04000000
-#define	P_PAXMPROTECT		0x08000000
-#define	P_PAXNOMPROTECT		0x10000000
 
 /*
  * LWP compat flags.
