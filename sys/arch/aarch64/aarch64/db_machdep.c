@@ -1,4 +1,4 @@
-/* $NetBSD: db_machdep.c,v 1.5 2018/07/17 00:31:03 christos Exp $ */
+/* $NetBSD: db_machdep.c,v 1.6 2018/08/11 04:46:17 ryo Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.5 2018/07/17 00:31:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.6 2018/08/11 04:46:17 ryo Exp $");
 
 #include "opt_kernhist.h"
 #include "opt_uvmhist.h"
@@ -435,7 +435,7 @@ db_md_sysreg_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
     const char *modif)
 {
 #define SHOW_ARMREG(x)	\
-	db_printf("%-16s = %016" PRIx64 "x\n", #x, reg_ ## x ## _read())
+	db_printf("%-16s = %016" PRIx64 "\n", #x, reg_ ## x ## _read())
 
 	SHOW_ARMREG(cbar_el1);
 	SHOW_ARMREG(ccsidr_el1);
@@ -822,7 +822,7 @@ db_md_watch_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
 	}
 
 	if (added >= 0)
-		db_printf("add watchpoint %d as %016llx\n", added, addr);
+		db_printf("add watchpoint %d as %016"DDB_EXPR_FMT"x\n", added, addr);
 	if (cleared >= 0)
 		db_printf("clear watchpoint %d\n", cleared);
 
