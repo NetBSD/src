@@ -1,4 +1,4 @@
-/* $NetBSD: gicv3.c,v 1.1 2018/08/08 19:02:28 jmcneill Exp $ */
+/* $NetBSD: gicv3.c,v 1.2 2018/08/11 00:32:17 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
 #define	_INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gicv3.c,v 1.1 2018/08/08 19:02:28 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gicv3.c,v 1.2 2018/08/11 00:32:17 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -147,6 +147,7 @@ gicv3_establish_irq(struct pic_softc *pic, struct intrsource *is)
 	uint64_t irouter;
 	u_int n;
 
+	const u_int ipriority_val = 0x80 | IPL_TO_PRIORITY(is->is_ipl);
 	const u_int ipriority_shift = (is->is_irq & 0x3) * 8;
 	const u_int icfg_shift = (is->is_irq & 0xf) * 2;
 
@@ -165,7 +166,7 @@ gicv3_establish_irq(struct pic_softc *pic, struct intrsource *is)
 
 			ipriority = gicr_read_4(sc, n, GICR_IPRIORITYRn(is->is_irq / 4));
 			ipriority &= ~(0xff << ipriority_shift);
-			ipriority |= (IPL_TO_PRIORITY(is->is_ipl) << ipriority_shift);
+			ipriority |= (ipriority_val << ipriority_shift);
 			gicr_write_4(sc, n, GICR_IPRIORITYRn(is->is_irq / 4), ipriority);
 		}
 	} else {
@@ -189,7 +190,7 @@ gicv3_establish_irq(struct pic_softc *pic, struct intrsource *is)
 		/* Update interrupt priority */
 		ipriority = gicd_read_4(sc, GICD_IPRIORITYRn(is->is_irq / 4));
 		ipriority &= ~(0xff << ipriority_shift);
-		ipriority |= (IPL_TO_PRIORITY(is->is_ipl) << ipriority_shift);
+		ipriority |= (ipriority_val << ipriority_shift);
 		gicd_write_4(sc, GICD_IPRIORITYRn(is->is_irq / 4), ipriority);
 	}
 }
@@ -261,8 +262,10 @@ gicv3_redist_enable(struct gicv3_softc *sc, struct cpu_info *ci)
 			struct intrsource * const is = sc->sc_pic.pic_sources[n + o];
 			if (is == NULL)
 				priority |= 0xff << byte_shift;
-			else
-				priority |= IPL_TO_PRIORITY(is->is_ipl) << byte_shift;
+			else {
+				const u_int ipriority_val = 0x80 | IPL_TO_PRIORITY(is->is_ipl);
+				priority |= ipriority_val << byte_shift;
+			}
 		}
 		gicr_write_4(sc, ci->ci_gic_redist, GICR_IPRIORITYRn(n / 4), priority);
 	}
@@ -426,6 +429,8 @@ gicv3_ipi_send(struct pic_softc *pic, const kcpuset_t *kcp, u_long ipi)
 		aff = 0;
 		targets = 0;
 		for (CPU_INFO_FOREACH(cii, ci)) {
+			if (!kcpuset_isset(kcp, cpu_index(ci)))
+				continue;
 			if ((ci->ci_gic_sgir & ICC_SGIR_EL1_Aff) != aff) {
 				if (targets != 0) {
 					icc_sgi1r_write(intid | aff | targets);
@@ -474,7 +479,7 @@ gicv3_irq_handler(void *frame)
 		KASSERT(is != NULL);
 
 		const int ipl = is->is_ipl;
-		if (ci->ci_cpl != ipl)
+		if (ci->ci_cpl < ipl)
 			pic_set_priority(ci, ipl);
 
 		cpsie(I32_bit);
