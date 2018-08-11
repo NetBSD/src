@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.1,v 1.1.2.9 2018/08/09 13:25:35 martin Exp $
+# $NetBSD: CHANGES-8.1,v 1.1.2.10 2018/08/11 14:56:05 martin Exp $
 
 A complete list of changes from the NetBSD 8.0 release to the NetBSD 8.1
 release:
@@ -395,4 +395,85 @@ sys/fs/tmpfs/tmpfs_vfsops.c			1.73
 
 	Set the MP-safe flag for tmpfs early enough for the root vnode.
 	[christos, ticket #968]
+
+sys/dev/pci/if_wm.c				1.584
+sys/dev/pci/if_wmvar.h				1.39
+
+	- Print MDIC_WA and CLSEMWA workaround flags when boot.
+	- Fix a bug that the link can't detect in link interrupt function for 
+	  non-SERDES fiber.
+	- Fix a bug that 82542 misunderstand fiber's signal detection.	        
+	[msaitoh, ticket #969]
+
+external/mit/lua/dist/README.import             up to 1.2
+external/mit/lua/dist/README                    up to 1.8
+external/mit/lua/dist/doc/contents.html         up to 1.7
+external/mit/lua/dist/doc/lua.css               up to 1.7
+external/mit/lua/dist/doc/manual.html           up to 1.8
+external/mit/lua/dist/doc/readme.html           up to 1.7
+external/mit/lua/dist/src/Makefile              up to 1.5
+external/mit/lua/dist/src/lapi.c                up to 1.11
+external/mit/lua/dist/src/lapi.h                up to 1.9
+external/mit/lua/dist/src/lauxlib.c             up to 1.11
+external/mit/lua/dist/src/lauxlib.h             up to 1.8
+external/mit/lua/dist/src/lbaselib.c            up to 1.10
+external/mit/lua/dist/src/lbitlib.c             up to 1.7
+external/mit/lua/dist/src/lcode.c               up to 1.11
+external/mit/lua/dist/src/lcode.h               up to 1.8
+external/mit/lua/dist/src/lcorolib.c            up to 1.7
+external/mit/lua/dist/src/lctype.c              up to 1.7
+external/mit/lua/dist/src/lctype.h              up to 1.7
+external/mit/lua/dist/src/ldblib.c              up to 1.11
+external/mit/lua/dist/src/ldebug.c              up to 1.11
+external/mit/lua/dist/src/ldebug.h              up to 1.9
+external/mit/lua/dist/src/ldo.c                 up to 1.9
+external/mit/lua/dist/src/ldo.h                 up to 1.9
+external/mit/lua/dist/src/ldump.c               up to 1.9
+external/mit/lua/dist/src/lfunc.c               up to 1.8
+external/mit/lua/dist/src/lfunc.h               up to 1.8
+external/mit/lua/dist/src/lgc.c                 up to 1.10
+external/mit/lua/dist/src/lgc.h                 up to 1.8
+external/mit/lua/dist/src/linit.c               up to 1.9
+external/mit/lua/dist/src/liolib.c              up to 1.9
+external/mit/lua/dist/src/llex.c                up to 1.12
+external/mit/lua/dist/src/llex.h                up to 1.8
+external/mit/lua/dist/src/llimits.h             up to 1.10
+external/mit/lua/dist/src/lmathlib.c            up to 1.9
+external/mit/lua/dist/src/lmem.c                up to 1.9
+external/mit/lua/dist/src/lmem.h                up to 1.8
+external/mit/lua/dist/src/loadlib.c             up to 1.9
+external/mit/lua/dist/src/lobject.c             up to 1.12
+external/mit/lua/dist/src/lobject.h             up to 1.10
+external/mit/lua/dist/src/lopcodes.c            up to 1.8
+external/mit/lua/dist/src/lopcodes.h            up to 1.8
+external/mit/lua/dist/src/loslib.c              up to 1.11
+external/mit/lua/dist/src/lparser.c             up to 1.11
+external/mit/lua/dist/src/lparser.h             up to 1.8
+external/mit/lua/dist/src/lprefix.h             up to 1.7
+external/mit/lua/dist/src/lstate.c              up to 1.9
+external/mit/lua/dist/src/lstate.h              up to 1.9
+external/mit/lua/dist/src/lstring.c             up to 1.9
+external/mit/lua/dist/src/lstring.h             up to 1.9
+external/mit/lua/dist/src/lstrlib.c             up to 1.18
+external/mit/lua/dist/src/ltable.c              up to 1.11
+external/mit/lua/dist/src/ltable.h              up to 1.8
+external/mit/lua/dist/src/ltablib.c             up to 1.9
+external/mit/lua/dist/src/ltm.c                 up to 1.9
+external/mit/lua/dist/src/ltm.h                 up to 1.8
+external/mit/lua/dist/src/lua.c                 up to 1.9
+external/mit/lua/dist/src/lua.h                 up to 1.11
+external/mit/lua/dist/src/luac.c                up to 1.10
+external/mit/lua/dist/src/luaconf.h             up to 1.23
+external/mit/lua/dist/src/lualib.h              up to 1.7
+external/mit/lua/dist/src/lundump.c             up to 1.8
+external/mit/lua/dist/src/lundump.h             up to 1.7
+external/mit/lua/dist/src/lutf8lib.c            up to 1.8
+external/mit/lua/dist/src/lvm.c                 up to 1.14
+external/mit/lua/dist/src/lvm.h                 up to 1.10
+external/mit/lua/dist/src/lzio.c                up to 1.8
+external/mit/lua/dist/src/lzio.h                up to 1.8
+doc/3RDPARTY					1.1536
+
+	Import lua 5.3.5.
+	[alnsn, ticket #970]
 
