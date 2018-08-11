@@ -1,4 +1,4 @@
-/*	$NetBSD: file.c,v 1.7 2011/04/18 22:46:48 joerg Exp $	*/
+/*	$NetBSD: file.c,v 1.8 2018/08/11 16:03:37 christos Exp $	*/
 /*	$FreeBSD: head/usr.bin/grep/file.c 211496 2010-08-19 09:28:59Z des $	*/
 /*	$OpenBSD: file.c,v 1.11 2010/07/02 20:48:48 nicm Exp $	*/
 
@@ -35,13 +35,12 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: file.c,v 1.7 2011/04/18 22:46:48 joerg Exp $");
+__RCSID("$NetBSD: file.c,v 1.8 2018/08/11 16:03:37 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 
-#include <bzlib.h>
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -51,7 +50,6 @@ __RCSID("$NetBSD: file.c,v 1.7 2011/04/18 22:46:48 joerg Exp $");
 #include <unistd.h>
 #include <wchar.h>
 #include <wctype.h>
-#include <zlib.h>
 
 #include "grep.h"
 
