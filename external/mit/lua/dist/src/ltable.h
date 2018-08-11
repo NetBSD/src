@@ -1,7 +1,7 @@
-/*	$NetBSD: ltable.h,v 1.7 2017/04/26 13:17:33 mbalmer Exp $	*/
+/*	$NetBSD: ltable.h,v 1.7.2.1 2018/08/11 14:54:50 martin Exp $	*/
 
 /*
-** Id: ltable.h,v 2.23 2016/12/22 13:08:50 roberto Exp 
+** Id: ltable.h,v 2.23.1.2 2018/05/24 19:39:05 roberto Exp 
 ** Lua tables (hash)
 ** See Copyright Notice in lua.h
 */
@@ -56,7 +56,7 @@ LUAI_FUNC void luaH_resize (lua_State *L, Table *t, unsigned int nasize,
 LUAI_FUNC void luaH_resizearray (lua_State *L, Table *t, unsigned int nasize);
 LUAI_FUNC void luaH_free (lua_State *L, Table *t);
 LUAI_FUNC int luaH_next (lua_State *L, Table *t, StkId key);
-LUAI_FUNC int luaH_getn (Table *t);
+LUAI_FUNC lua_Unsigned luaH_getn (Table *t);
 
 
 #if defined(LUA_DEBUG)

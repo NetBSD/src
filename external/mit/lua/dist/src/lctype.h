@@ -1,7 +1,7 @@
-/*	$NetBSD: lctype.h,v 1.6 2017/04/26 13:17:33 mbalmer Exp $	*/
+/*	$NetBSD: lctype.h,v 1.6.2.1 2018/08/11 14:54:50 martin Exp $	*/
 
 /*
-** Id: lctype.h,v 1.12 2011/07/15 12:50:29 roberto Exp 
+** Id: lctype.h,v 1.12.1.1 2013/04/12 18:48:47 roberto Exp 
 ** 'ctype' functions for Lua
 ** See Copyright Notice in lua.h
 */

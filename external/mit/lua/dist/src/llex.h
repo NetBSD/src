@@ -1,7 +1,7 @@
-/*	$NetBSD: llex.h,v 1.7 2017/04/26 13:17:33 mbalmer Exp $	*/
+/*	$NetBSD: llex.h,v 1.7.2.1 2018/08/11 14:54:50 martin Exp $	*/
 
 /*
-** Id: llex.h,v 1.79 2016/05/02 14:02:12 roberto Exp 
+** Id: llex.h,v 1.79.1.1 2017/04/19 17:20:42 roberto Exp 
 ** Lexical Analyzer
 ** See Copyright Notice in lua.h
 */

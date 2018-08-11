@@ -1,7 +1,7 @@
-/*	$NetBSD: ldump.c,v 1.8 2017/04/26 13:17:33 mbalmer Exp $	*/
+/*	$NetBSD: ldump.c,v 1.8.2.1 2018/08/11 14:54:50 martin Exp $	*/
 
 /*
-** Id: ldump.c,v 2.37 2015/10/08 15:53:49 roberto Exp 
+** Id: ldump.c,v 2.37.1.1 2017/04/19 17:20:42 roberto Exp 
 ** save precompiled Lua chunks
 ** See Copyright Notice in lua.h
 */
