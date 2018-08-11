@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.321 2017/08/20 05:37:03 maya Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.322 2018/08/11 20:16:21 zafer Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.321 2017/08/20 05:37:03 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.322 2018/08/11 20:16:21 zafer Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -959,6 +959,11 @@ lfs_mkdir(void *v)
 	if (fs->lfs_ronly) {
 		return EROFS;
 	}
+
+	if ((nlink_t)dp->i_nlink >= LINK_MAX) {
+		return EMLINK;
+	}
+
 	dirblksiz = fs->um_dirblksiz;
 	/* XXX dholland 20150911 I believe this to be true, but... */
 	//KASSERT(dirblksiz == LFS_DIRBLKSIZ);
@@ -966,11 +971,6 @@ lfs_mkdir(void *v)
 	error = lfs_set_dirop(dvp, NULL);
 	if (error)
 		return error;
-
-	if ((nlink_t)dp->i_nlink >= LINK_MAX) {
-		error = EMLINK;
-		goto out;
-	}
 
 	/*
 	 * Must simulate part of lfs_makeinode here to acquire the inode,
