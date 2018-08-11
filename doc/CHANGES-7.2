@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.2,v 1.1.2.102 2018/08/09 14:39:22 martin Exp $
+# $NetBSD: CHANGES-7.2,v 1.1.2.103 2018/08/11 13:36:49 martin Exp $
 
 A complete list of changes from the NetBSD 7.1 release to the NetBSD 7.2
 release:
@@ -5843,4 +5843,116 @@ lib/libcurses/addbytes.c			1.48
 	Avoid curx going beyond end of window when adding a wide character
 	to the last column.
 	[simonb, ticket #1627]
+
+share/man/man4/wm.4				1.40 via patch
+sys/dev/mii/ihphyreg.h				1.2
+sys/dev/mii/inbmphyreg.h			1.10
+sys/dev/pci/if_wm.c				1.504, 1.506, 1.510-1.535, 1.539-1.540, 1.546, 1.548, 1.551-1.552, 1.558, 1.565-1.573, 1.575, 1.579, 1.582, 1.584 via patch
+sys/dev/pci/if_wmreg.h				1.99-1.103, 1.106-1.107 via patch
+sys/dev/pci/if_wmvar.h				1.34-1.39 via patch
+sys/dev/pci/pcidevs				1.1327 via patch
+sys/dev/pci/pcidevs.h				regen
+sys/dev/pci/pcidevs_data.h			regen
+sys/dev/pci/pcireg.h				patch
+
+	Sync wm(4) up to 2018/08/08 except MSI/MSI-X and NET_MPSAFE:
+	- remove extra "+"
+	- Fix a bug that non-GMII devices don't send a routing message when
+	  the link status is changed.
+	- Set WMREG_KABGTXD not in wm_init_locked() but in wm_reset(). Same as
+	  other OSes.
+	- If a interrupt is a spurious interrupt, don't print debug message.
+	- Don't print the Image Unique ID if an NVM is iNVM (i210 and I211).
+	- Print sc_flags with snprintb().
+	- Fix a bug that a RAL was written at incorrect address when the index
+	  number is more than 16 on 82544 and newer.
+	- The layout of RAL on PCH* are different from others. Fix it.
+	- Flush every MTA write. Same as Linux.
+	- Move the location of calling wm_set_filter. Same as some other OSes.
+	- Add CSR_WRITE_FLUSH() after writing WMREG_CTRL in
+	  wm_gmii_mediachange().
+	- Add missing "else" in wm_nvm_release().
+	- Make new wm_phy_post_reset() and use this function at all location
+	  after resetting phy.
+	- Move the location of calling wm_get_hw_control. Same as Linux.
+	- Add I219 specific wokaround for legacy interrupt. From OpenBSD.
+	- Move the location of calling wm_lplu_d0_disable().
+	- Fix latency calculation in wm_platform_pm_pch_lpt().
+	- Set OBFF water mark and enable OBFF on PCH_LPT and newer.
+	- Disable D0 LPLU on 8257[12356], 82580, I350 and I21[01], too.	Before
+	  this commit, above devices and non-PCIe devices accessed wrong
+	  register.
+	- Use device_printf() instead of aprint_error_dev() for PHY read/write
+	  functions because those are used not only in device attach.
+	- Fix a bug that wm_gmii_i82544_{read,write}reg() didn't take care of
+	  page select. PHY access from igphy() automatically did it, but
+	  accessing from wm(4) for wrokaround didn't work correctly. This
+	  change affects 8254[17], 8257[12] ICH8, ICH9 and ICH10.
+	- Call wm_kmrn_lock_loss_workaround_ich8lan() before any PHY access in
+	  wm_linkintr_gmii().
+	- Register access in wm_kmrn_lock_loss_workaround_ich8lan() now works
+	  correctly. Enable this function.
+	- Configure the LCD with the extended configuration region in NVM if
+	  it's required.
+	- If TX is not required to flush, RX is also not required to flush
+	  in wm_flush_desc_rings(). Same as other OSes.
+	- Remove wrong semaphore access in wm_nvm_{read,write}_{ich8,spt} to
+	  prevent hangup. A semaphore is get/put in wm_nvm_{read,write}.
+	- Move some initialization stuff in wm_attach() before wm_reset(). Some
+	  flags and callback function are required to set correctly before
+	  wm_reset() because wm_reset() and some helper functions refer them.
+	- Add wm_write_smbus_addr() to set SMBus address by software.
+	- Modify wm_gmii_hv_{read,write}reg_locked() to make them access
+	  HV_SMB_ADDR correctly.
+	- Use new nvm.{acquire,release}() for semaphore.
+	- Our MII readreg/writereg API has not way to detect an error.
+	  kmrn_{read,write}reg() are not used for MII API, so it's not required
+	  for these functions to use the same API. So,
+	  - Change return value as error code.
+	  - Change register value from int to uint16_t.
+	  - read: pass pointer for uint16_t as an argument.
+	  - Check return value on caller side.
+	- Check whether it's required to use MDIC workaround for 80003 or not
+	  in wm_reset(). If the workaround isn't required, don't use the
+	  workaround code in wm_gmii_i80003_{read,write}reg.
+	- Add WM_F_WA_I210_CLSEM flag for a workaround. FreeBSD/Linux drivers
+	  say "In rare circumstances, the SW semaphore may already be held
+	  unintentionally on I21[01]". PXE boot is one of the case.
+	- Qemu's e1000e emulation (82574L)'s SPI has only 64 words. I've never
+	  seen on real 82574 hardware with such small SPI ROM. Check
+	  sc->sc_nvm_wordsize before accessing higher address words to prevent
+	  timeout.
+	- Check some wm_nvm_read()'s return vale.
+	- Print NVM offset and word count when EERD polling failed.
+	- On I219, drop TARC0 bit 28 for DMA hang workaround (from Linux).
+	- 82583 supports jumbo frame. Fixes PR#52773 reported by
+	  Shinichi Doyashiki.
+	- Fix typo in comment. Reported by Shinichi Doyashiki in PR#52885.
+	- Add ASPM workaround for 8257[1234] and 82583 to prevent device
+	  timeout or hangup. Fixes PR#52818 reported by Shinichi Doyashiki.
+	- CID-1427779: Fix uninitialized variables.
+	- Fix a bug that wm_pll_workaround_i210() is not called when
+	  a) Chip is I211 or b) Chip is I210 and it uses iNVM (not FLASH).
+	- Do wm_reset_mdicnfg_82580() on 82580 only.
+	- Fix FLASH access on PCH_SPT and newer. Their FLASH access should be
+	  done by 32bit. Especially for ICH_FLASH_HSFCTL register, it's located
+	  at 0x0006, so it must be accessed via ICH_FLASH_HSFSTS(0x0004) and
+	  use shift or mask.
+	- Make wm_nvm_valid_bank_detect_ich8lan() the same as other OSes.
+	- If the extended configuration size in the EXTCNFSIZE register is 0,
+	  don't continue in wm_init_lcd_from_nvm().
+	- Add PCH_CNP support (I219 with Intel 300 series chipset).
+	- Enable I219 support.
+	- I354 uses an external PHY, so don't use wm_set_eee_i350().
+	- Fix a bug that the link can't detect in link interrupt function for
+	  non-SERDES fiber.
+	- Fix a bug that 82542 misunderstand fiber's signal detection.
+	- Add debug printf()s.
+	- Update comment.
+	- Rename functions and variables.
+	- Add diagnostic code.
+	- Sort registers.
+	- Lowercase hexadecimal values.
+	- KNF.
+	[msaitoh, #1628]
 
