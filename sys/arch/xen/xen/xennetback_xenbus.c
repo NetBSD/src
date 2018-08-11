@@ -1,4 +1,4 @@
-/*      $NetBSD: xennetback_xenbus.c,v 1.67 2018/08/09 17:32:44 maxv Exp $      */
+/*      $NetBSD: xennetback_xenbus.c,v 1.68 2018/08/11 10:34:25 jdolecek Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xennetback_xenbus.c,v 1.67 2018/08/09 17:32:44 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xennetback_xenbus.c,v 1.68 2018/08/11 10:34:25 jdolecek Exp $");
 
 #include "opt_xen.h"
 
@@ -383,8 +383,7 @@ xennetback_xenbus_destroy(void *arg)
 
 	aprint_verbose_ifnet(&xneti->xni_if, "disconnecting\n");
 
-	if (xneti->xni_status == CONNECTED) {
-		KASSERT(xneti->xni_ih);
+	if (xneti->xni_ih != NULL) {
 		hypervisor_mask_event(xneti->xni_evtchn);
 		intr_disestablish(xneti->xni_ih);
 		xneti->xni_ih = NULL;
