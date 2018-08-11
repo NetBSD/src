@@ -1,7 +1,7 @@
-/*	$NetBSD: luaconf.h,v 1.21 2017/04/26 13:17:33 mbalmer Exp $	*/
+/*	$NetBSD: luaconf.h,v 1.21.2.1 2018/08/11 14:54:50 martin Exp $	*/
 
 /*
-** Id: luaconf.h,v 1.259 2016/12/22 13:08:50 roberto Exp 
+** Id: luaconf.h,v 1.259.1.1 2017/04/19 17:29:57 roberto Exp 
 ** Configuration file for Lua
 ** See Copyright Notice in lua.h
 */
@@ -630,6 +630,13 @@
 
 
 /*
+@@ lua_pointer2str converts a pointer to a readable string in a
+** non-specified way.
+*/
+#define lua_pointer2str(buff,sz,p)	l_sprintf(buff,sz,"%p",p)
+
+
+/*
 @@ lua_number2strx converts a float to an hexadecimal numeric string.
 ** In C99, 'sprintf' (with format specifiers '%a'/'%A') does that.
 ** Otherwise, you can leave 'lua_number2strx' undefined and Lua will
@@ -757,7 +764,9 @@
 ** smaller buffer would force a memory allocation for each call to
 ** 'string.format'.)
 */
-#if LUA_FLOAT_TYPE == LUA_FLOAT_LONGDOUBLE
+#ifdef _KERNEL
+#define LUAL_BUFFERSIZE		128
+#elif LUA_FLOAT_TYPE == LUA_FLOAT_LONGDOUBLE
 #define LUAL_BUFFERSIZE		8192
 #else
 #define LUAL_BUFFERSIZE   ((int)(0x80 * sizeof(void*) * sizeof(lua_Integer)))

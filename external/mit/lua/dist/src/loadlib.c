@@ -1,7 +1,7 @@
-/*	$NetBSD: loadlib.c,v 1.8 2017/04/26 13:17:33 mbalmer Exp $	*/
+/*	$NetBSD: loadlib.c,v 1.8.2.1 2018/08/11 14:54:50 martin Exp $	*/
 
 /*
-** Id: loadlib.c,v 1.130 2017/01/12 17:14:26 roberto Exp 
+** Id: loadlib.c,v 1.130.1.1 2017/04/19 17:20:42 roberto Exp 
 ** Dynamic library loader for Lua
 ** See Copyright Notice in lua.h
 **
