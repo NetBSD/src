@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2011/08/17 15:32:20 christos Exp $
+#	$NetBSD: Makefile,v 1.6 2018/08/11 19:43:54 christos Exp $
 #	$FreeBSD: head/usr.bin/grep/Makefile 210389 2010-07-22 19:11:57Z gabor $
 #	$OpenBSD: Makefile,v 1.6 2003/06/25 15:00:04 millert Exp $
 
@@ -20,6 +20,7 @@ MLINKS=	grep.1 egrep.1	\
 LDADD=	-lz -lbz2
 DPADD=	${LIBZ} ${LIBBZ2}
 
+.if empty(HOST_CPPFLAGS:M*-DWITHOUT_NLS*)
 .PATH: ${.CURDIR}/nls
 
 NLS=	C.msg \
@@ -33,6 +34,7 @@ NLS=	C.msg \
 	ru_RU.KOI8-R.msg \
 	uk_UA.UTF-8.msg \
 	zh_CN.UTF-8.msg
+.endif
 
 COPTS.grep.c += -Wno-format-nonliteral
 COPTS.util.c += -Wno-format-nonliteral
