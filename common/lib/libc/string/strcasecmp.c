@@ -1,4 +1,4 @@
-/*	$NetBSD: strcasecmp.c,v 1.2 2007/06/04 18:19:27 christos Exp $	*/
+/*	$NetBSD: strcasecmp.c,v 1.3 2018/08/11 16:25:32 christos Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -29,12 +29,16 @@
  * SUCH DAMAGE.
  */
 
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)strcasecmp.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: strcasecmp.c,v 1.2 2007/06/04 18:19:27 christos Exp $");
+__RCSID("$NetBSD: strcasecmp.c,v 1.3 2018/08/11 16:25:32 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
