@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.18 2018/08/10 21:06:42 ryo Exp $	*/
+/*	$NetBSD: pmap.c,v 1.19 2018/08/11 12:16:34 ryo Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.18 2018/08/10 21:06:42 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.19 2018/08/11 12:16:34 ryo Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_ddb.h"
@@ -154,6 +154,41 @@ PMAP_COUNTER(unwire_failure, "pmap_unwire failure");
 #define LX_BLKPAG_ATTR_DEVICE_MEM	__SHIFTIN(3, LX_BLKPAG_ATTR_INDX)
 #define LX_BLKPAG_ATTR_MASK		LX_BLKPAG_ATTR_INDX
 
+/*
+ * invalidate TLB entry for ASID and VA.
+ * `ll' invalidates only the Last Level (usually L3) of TLB entry
+ */
+#define AARCH64_TLBI_BY_ASID_VA(asid, va, ll)				\
+	do {								\
+		if ((ll)) {						\
+			if ((asid) == 0)				\
+				aarch64_tlbi_by_va_ll((va));		\
+			else						\
+				aarch64_tlbi_by_asid_va_ll((asid), (va)); \
+		} else {						\
+			if ((asid) == 0)				\
+				aarch64_tlbi_by_va((va));		\
+			else						\
+				aarch64_tlbi_by_asid_va((asid), (va));	\
+		}							\
+	} while (0/*CONSTCOND*/)
+
+/*
+ * aarch64 require write permission in pte to invalidate instruction cache.
+ * changing pte to writable temporarly before cpu_icache_sync_range().
+ * this macro modifies PTE (*ptep). need to update PTE after this.
+ */
+#define PTE_ICACHE_SYNC_PAGE(pte, ptep, pm, va, ll)			\
+	do {								\
+		pt_entry_t tpte;					\
+		tpte = (pte) & ~(LX_BLKPAG_AF|LX_BLKPAG_AP);		\
+		tpte |= (LX_BLKPAG_AF|LX_BLKPAG_AP_RW);			\
+		tpte |= (LX_BLKPAG_UXN|LX_BLKPAG_PXN);			\
+		atomic_swap_64((ptep), tpte);				\
+		AARCH64_TLBI_BY_ASID_VA((pm)->pm_asid, (va), (ll));	\
+		cpu_icache_sync_range((va), PAGE_SIZE);			\
+	} while (0/*CONSTCOND*/)
+
 struct pv_entry {
 	TAILQ_ENTRY(pv_entry) pv_link;
 	struct pmap *pv_pmap;
@@ -267,11 +302,18 @@ _pmap_map_chunk(pd_entry_t *l2, vaddr_t va, paddr_t pa, vsize_t size,
 
 		pte = pa | attr;
 
+		if (prot & VM_PROT_EXECUTE) {
+			pt_entry_t tpte;
+			/* need write permission to invalidate icache */
+			tpte = pte & ~(LX_BLKPAG_AF|LX_BLKPAG_AP);
+			tpte |= (LX_BLKPAG_AF|LX_BLKPAG_AP_RW);
+			tpte |= (LX_BLKPAG_UXN|LX_BLKPAG_PXN);
+			atomic_swap_64(&l2[l2pde_index(va)], tpte);
+			aarch64_tlbi_by_va(va);
+			cpu_icache_sync_range(va, L2_SIZE);
+		}
 		atomic_swap_64(&l2[l2pde_index(va)], pte);
 		aarch64_tlbi_by_va(va);
-
-		if (prot & VM_PROT_EXECUTE)
-			cpu_icache_sync_range(va, L2_SIZE);
 
 		va += L2_SIZE;
 		pa += L2_SIZE;
@@ -1088,12 +1130,7 @@ _pmap_protect_pv(struct vm_page *pg, struct pv_entry *pv, vm_prot_t prot)
 	/* new prot = prot & pteprot & mdattr */
 	pte = _pmap_pte_adjust_prot(pte, prot & pteprot, mdattr, user);
 	atomic_swap_64(ptep, pte);
-
-#if 0
-	aarch64_tlbi_by_asid_va(pv->pv_pmap->pm_asid, pv->pv_va);
-#else
-	aarch64_tlbi_by_va(pv->pv_va);
-#endif
+	AARCH64_TLBI_BY_ASID_VA(pv->pv_pmap->pm_asid, pv->pv_va, true);
 
 	pm_unlock(pv->pv_pmap);
 }
@@ -1178,31 +1215,17 @@ pmap_protect(struct pmap *pm, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 			    "pm=%p, va=%016lx, pte: %016lx -> %016lx",
 			    pm, va, opte, pte);
 			if (!l3pte_writable(pte)) {
-				/*
-				 * require write permission for cleaning dcache
-				 * (cpu_icache_sync_range)
-				 */
-				pt_entry_t tpte;
-
-				tpte = pte & ~(LX_BLKPAG_AF|LX_BLKPAG_AP);
-				tpte |= (LX_BLKPAG_AF|LX_BLKPAG_AP_RW);
-				tpte |= (LX_BLKPAG_UXN|LX_BLKPAG_PXN);
-				atomic_swap_64(ptep, tpte);
-				aarch64_tlbi_by_va(va);
-
-				cpu_icache_sync_range(va, PAGE_SIZE);
-
+				PTE_ICACHE_SYNC_PAGE(pte, ptep, pm, va, true);
 				atomic_swap_64(ptep, pte);
-				aarch64_tlbi_by_va(va);
+				AARCH64_TLBI_BY_ASID_VA(pm->pm_asid, va, true);
 			} else {
 				atomic_swap_64(ptep, pte);
-				aarch64_tlbi_by_va(va);
-
+				AARCH64_TLBI_BY_ASID_VA(pm->pm_asid, va, true);
 				cpu_icache_sync_range(va, PAGE_SIZE);
 			}
 		} else {
 			atomic_swap_64(ptep, pte);
-			aarch64_tlbi_by_va(va);
+			AARCH64_TLBI_BY_ASID_VA(pm->pm_asid, va, true);
 		}
 	}
 
@@ -1332,6 +1355,7 @@ _pmap_enter(struct pmap *pm, vaddr_t va, paddr_t pa, vm_prot_t prot,
 	int error = 0;
 	const bool user = (pm != pmap_kernel());
 	bool executable;
+	bool l3only = true;
 
 	UVMHIST_FUNC(__func__);
 	UVMHIST_CALLED(pmaphist);
@@ -1395,6 +1419,7 @@ _pmap_enter(struct pmap *pm, vaddr_t va, paddr_t pa, vm_prot_t prot,
 		_pmap_alloc_pdp(pm, &pdppa);
 		KASSERT(pdppa != POOL_PADDR_INVALID);
 		atomic_swap_64(&l0[idx], pdppa | L0_TABLE);
+		l3only = false;
 	} else {
 		pdppa = l0pde_pa(pde);
 	}
@@ -1406,6 +1431,7 @@ _pmap_enter(struct pmap *pm, vaddr_t va, paddr_t pa, vm_prot_t prot,
 		_pmap_alloc_pdp(pm, &pdppa);
 		KASSERT(pdppa != POOL_PADDR_INVALID);
 		atomic_swap_64(&l1[idx], pdppa | L1_TABLE);
+		l3only = false;
 	} else {
 		pdppa = l1pde_pa(pde);
 	}
@@ -1417,6 +1443,7 @@ _pmap_enter(struct pmap *pm, vaddr_t va, paddr_t pa, vm_prot_t prot,
 		_pmap_alloc_pdp(pm, &pdppa);
 		KASSERT(pdppa != POOL_PADDR_INVALID);
 		atomic_swap_64(&l2[idx], pdppa | L2_TABLE);
+		l3only = false;
 	} else {
 		pdppa = l2pde_pa(pde);
 	}
@@ -1514,32 +1541,17 @@ _pmap_enter(struct pmap *pm, vaddr_t va, paddr_t pa, vm_prot_t prot,
 		    "icache_sync: pm=%p, va=%016lx, pte: %016lx -> %016lx",
 		    pm, va, opte, pte);
 		if (!l3pte_writable(pte)) {
-			/*
-			 * require write permission for cleaning dcache
-			 * (cpu_icache_sync_range)
-			 */
-			pt_entry_t tpte;
-
-			tpte = pte & ~(LX_BLKPAG_AF|LX_BLKPAG_AP);
-			tpte |= (LX_BLKPAG_AF|LX_BLKPAG_AP_RW);
-			tpte |= (LX_BLKPAG_UXN|LX_BLKPAG_PXN);
-			atomic_swap_64(ptep, tpte);
-			aarch64_tlbi_by_va(va);
-
-			cpu_icache_sync_range(va, PAGE_SIZE);
-
+			PTE_ICACHE_SYNC_PAGE(pte, ptep, pm, va, l3only);
 			atomic_swap_64(ptep, pte);
-			aarch64_tlbi_by_va(va);
-
+			AARCH64_TLBI_BY_ASID_VA(pm->pm_asid, va ,true);
 		} else {
 			atomic_swap_64(ptep, pte);
-			aarch64_tlbi_by_va(va);
-
+			AARCH64_TLBI_BY_ASID_VA(pm->pm_asid, va, l3only);
 			cpu_icache_sync_range(va, PAGE_SIZE);
 		}
 	} else {
 		atomic_swap_64(ptep, pte);
-		aarch64_tlbi_by_va(va);
+		AARCH64_TLBI_BY_ASID_VA(pm->pm_asid, va, l3only);
 	}
 
 	if (pte & LX_BLKPAG_OS_WIRED)
@@ -1607,11 +1619,7 @@ _pmap_remove(struct pmap *pm, vaddr_t va, bool kremove)
 			opv = _pmap_remove_pv(pg, pm, va, pte);
 
 		atomic_swap_64(ptep, 0);
-#if 0
-		aarch64_tlbi_by_asid_va(pm->pm_asid, va);
-#else
-		aarch64_tlbi_by_va(va);
-#endif
+		AARCH64_TLBI_BY_ASID_VA(pm->pm_asid, va, true);
 
 		if ((pte & LX_BLKPAG_OS_WIRED) != 0)
 			pm->pm_stats.wired_count--;
@@ -1661,12 +1669,9 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 		TAILQ_FOREACH_SAFE(pv, &md->mdpg_pvhead, pv_link, pvtmp) {
 
 			opte = atomic_swap_64(pv->pv_ptep, 0);
-#if 0
-			aarch64_tlbi_by_asid_va(pv->pv_pmap->pm_asid,
-			    pv->pv_va);
-#else
-			aarch64_tlbi_by_va(pv->pv_va);
-#endif
+			AARCH64_TLBI_BY_ASID_VA(pv->pv_pmap->pm_asid,
+			    pv->pv_va, true);
+
 			if ((opte & LX_BLKPAG_OS_WIRED) != 0)
 				pv->pv_pmap->pm_stats.wired_count--;
 			pv->pv_pmap->pm_stats.resident_count--;
@@ -1851,12 +1856,8 @@ pmap_fault_fixup(struct pmap *pm, vaddr_t va, vm_prot_t accessprot, bool user)
 	pmap_pv_unlock(md);
 
 	atomic_swap_64(ptep, pte);
-#if 0
-	/* didn't work??? */
-	aarch64_tlbi_by_asid_va(pm->pm_asid, va);
-#else
-	aarch64_tlbi_by_va(va);
-#endif
+	AARCH64_TLBI_BY_ASID_VA(pm->pm_asid, va, true);
+
 	fixed = true;
 
  done:
@@ -1909,11 +1910,7 @@ pmap_clear_modify(struct vm_page *pg)
 			goto tryagain;
 		}
 
-#if 0
-		aarch64_tlbi_by_asid_va(pv->pv_pmap->pm_asid, va);
-#else
-		aarch64_tlbi_by_va(va);
-#endif
+		AARCH64_TLBI_BY_ASID_VA(pv->pv_pmap->pm_asid, va, true);
 
 		UVMHIST_LOG(pmaphist,
 		    "va=%016llx, ptep=%p, pa=%016lx, RW -> RO",
@@ -1968,11 +1965,7 @@ pmap_clear_reference(struct vm_page *pg)
 			goto tryagain;
 		}
 
-#if 0
-		aarch64_tlbi_by_asid_va(pv->pv_pmap->pm_asid, va);
-#else
-		aarch64_tlbi_by_va(va);
-#endif
+		AARCH64_TLBI_BY_ASID_VA(pv->pv_pmap->pm_asid, va, true);
 
 		UVMHIST_LOG(pmaphist, "va=%016llx, ptep=%p, pa=%016lx, unse AF",
 		    va, ptep, l3pte_pa(pte), 0);
