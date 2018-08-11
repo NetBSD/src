@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_defs.h,v 1.112 2018/06/13 04:17:43 maya Exp $	*/
+/*	$NetBSD: compat_defs.h,v 1.113 2018/08/11 16:24:59 christos Exp $	*/
 
 #ifndef	__NETBSD_COMPAT_DEFS_H__
 #define	__NETBSD_COMPAT_DEFS_H__
@@ -493,6 +493,9 @@ char		*strndup(const char *, size_t);
 #endif
 #if !HAVE_DECL_STRNLEN
 size_t		strnlen(const char *, size_t);
+#endif
+#if !HAVE_DECL_STRCASECMP
+int		strcasecmp(const char *, const char *);
 #endif
 #if !HAVE_DECL_LCHFLAGS
 int		lchflags(const char *, unsigned long);

@@ -1,6 +1,6 @@
 /* nbtool_config.h.in.  Generated from configure.ac by autoheader.  */
 
-/*      $NetBSD: nbtool_config.h.in,v 1.44 2018/06/13 04:17:43 maya Exp $    */
+/*      $NetBSD: nbtool_config.h.in,v 1.45 2018/08/11 16:24:59 christos Exp $    */
  
 #ifndef __NETBSD_NBTOOL_CONFIG_H__
 #define __NETBSD_NBTOOL_CONFIG_H__
@@ -309,6 +309,10 @@
 /* Define to 1 if you have the declaration of `snprintf', and to 0 if you
    don't. */
 #undef HAVE_DECL_SNPRINTF
+
+/* Define to 1 if you have the declaration of `strcasecmp', and to 0 if you
+   don't. */
+#undef HAVE_DECL_STRCASECMP
 
 /* Define to 1 if you have the declaration of `strlcat', and to 0 if you
    don't. */
@@ -633,6 +637,9 @@
 
 /* Define to 1 if you have the <stdlib.h> header file. */
 #undef HAVE_STDLIB_H
+
+/* Define to 1 if you have the `strcasecmp' function. */
+#undef HAVE_STRCASECMP
 
 /* Define to 1 if you have the <strings.h> header file. */
 #undef HAVE_STRINGS_H
