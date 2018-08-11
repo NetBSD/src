@@ -1,4 +1,4 @@
-/* $NetBSD: qp.c,v 1.1 2014/08/10 05:47:37 matt Exp $ */
+/* $NetBSD: qp.c,v 1.2 2018/08/11 10:06:40 ryo Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -47,13 +47,13 @@ long double __multf3(long double, long double);
 long double __negtf2(long double);
 long double __subtf3(long double, long double);
 
-int __getf2(long double, long double);
-int __lttf2(long double, long double);
-int __gttf2(long double, long double);
-int __letf2(long double, long double);
-int __eqtf2(long double, long double);
-int __netf2(long double, long double);
-int __unordtf2(long double, long double);
+int __libc_getf2(long double, long double);
+int __libc_lttf2(long double, long double);
+int __libc_gttf2(long double, long double);
+int __libc_letf2(long double, long double);
+int __libc_eqtf2(long double, long double);
+int __libc_netf2(long double, long double);
+int __libc_unordtf2(long double, long double);
 
 double __trunctfdf2(long double);
 float __trunctfsf2(long double);
@@ -182,8 +182,18 @@ _Qp_cmpe(float128 *a, float128 *b)
 }
 #endif
 
+#ifdef __weak_alias
+__weak_alias(__eqtf2, __libc_eqtf2)
+__weak_alias(__getf2, __libc_getf2)
+__weak_alias(__gttf2, __libc_gttf2)
+__weak_alias(__letf2, __libc_letf2)
+__weak_alias(__lttf2, __libc_lttf2)
+__weak_alias(__netf2, __libc_netf2)
+__weak_alias(__unordtf2, __libc_unordtf2)
+#endif
+
 int
-__eqtf2(long double ld_a, long double ld_b)
+__libc_eqtf2(long double ld_a, long double ld_b)
 {
 	const union sf_ieee_ldbl_u a = { .ldblu_ld = ld_a };
 	const union sf_ieee_ldbl_u b = { .ldblu_ld = ld_b };
@@ -192,7 +202,7 @@ __eqtf2(long double ld_a, long double ld_b)
 }
 
 int
-__getf2(long double ld_a, long double ld_b)
+__libc_getf2(long double ld_a, long double ld_b)
 {
 	const union sf_ieee_ldbl_u a = { .ldblu_ld = ld_a };
 	const union sf_ieee_ldbl_u b = { .ldblu_ld = ld_b };
@@ -201,7 +211,7 @@ __getf2(long double ld_a, long double ld_b)
 }
 
 int
-__gttf2(long double ld_a, long double ld_b)
+__libc_gttf2(long double ld_a, long double ld_b)
 {
 	const union sf_ieee_ldbl_u a = { .ldblu_ld = ld_a };
 	const union sf_ieee_ldbl_u b = { .ldblu_ld = ld_b };
@@ -210,7 +220,7 @@ __gttf2(long double ld_a, long double ld_b)
 }
 
 int
-__letf2(long double ld_a, long double ld_b)
+__libc_letf2(long double ld_a, long double ld_b)
 {
 	const union sf_ieee_ldbl_u a = { .ldblu_ld = ld_a };
 	const union sf_ieee_ldbl_u b = { .ldblu_ld = ld_b };
@@ -219,7 +229,7 @@ __letf2(long double ld_a, long double ld_b)
 }
 
 int
-__lttf2(long double ld_a, long double ld_b)
+__libc_lttf2(long double ld_a, long double ld_b)
 {
 	const union sf_ieee_ldbl_u a = { .ldblu_ld = ld_a };
 	const union sf_ieee_ldbl_u b = { .ldblu_ld = ld_b };
@@ -228,7 +238,7 @@ __lttf2(long double ld_a, long double ld_b)
 }
 
 int
-__netf2(long double ld_a, long double ld_b)
+__libc_netf2(long double ld_a, long double ld_b)
 {
 	const union sf_ieee_ldbl_u a = { .ldblu_ld = ld_a };
 	const union sf_ieee_ldbl_u b = { .ldblu_ld = ld_b };
@@ -363,7 +373,7 @@ __floatditf(int64_t a)
 }
 
 int
-__unordtf2(long double ld_a, long double ld_b)
+__libc_unordtf2(long double ld_a, long double ld_b)
 {
 	const union sf_ieee_ldbl_u a = { .ldblu_ld = ld_a };
 	const union sf_ieee_ldbl_u b = { .ldblu_ld = ld_b };
