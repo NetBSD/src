@@ -1,4 +1,4 @@
-#	$NetBSD: configure.ac,v 1.91 2018/06/13 04:17:43 maya Exp $
+#	$NetBSD: configure.ac,v 1.92 2018/08/11 16:24:59 christos Exp $
 #
 # Autoconf definition file for libnbcompat.
 #
@@ -192,7 +192,7 @@ AC_CHECK_FUNCS(atoll asprintf asnprintf basename devname dirfd dirname \
 	pwrite raise_default_signal random reallocarr setenv \
 	setgroupent setprogname setpassent \
 	snprintb_m snprintf strlcat strlcpy strmode \
-	strndup strnlen strsep strsuftoll strtoi strtoll strtou \
+	strcasecmp strndup strnlen strsep strsuftoll strtoi strtoll strtou \
 	user_from_uid uid_from_user vasprintf vasnprintf vsnprintf)
 
 AC_CHECK_DECLS([user_from_uid, uid_from_user, pwcache_userdb],,,[
@@ -201,7 +201,7 @@ AC_CHECK_DECLS([user_from_uid, uid_from_user, pwcache_userdb],,,[
 AC_CHECK_DECLS([group_from_gid, gid_from_group, pwcache_groupdb],,,[
 #include <grp.h>
 ])
-AC_CHECK_DECLS([strlcpy, strlcat, strndup, strnlen, strsep],,,[
+AC_CHECK_DECLS([strcasecmp, strlcpy, strlcat, strndup, strnlen, strsep],,,[
 #include <string.h>
 ])
 AC_CHECK_DECLS([strsuftoll, mi_vector_hash],,,[#include <stdlib.h>])
