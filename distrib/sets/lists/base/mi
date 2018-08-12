@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1182 2018/07/31 16:44:28 khorben Exp $
+# $NetBSD: mi,v 1.1183 2018/08/12 17:11:55 christos Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -1767,7 +1767,7 @@
 ./usr/sbin/lpc					base-lpr-bin
 ./usr/sbin/lpd					base-lpr-bin
 ./usr/sbin/lptest				base-lpr-bin
-./usr/sbin/lwresd				base-bind-bin
+./usr/sbin/lwresd				base-obsolete		obsolete
 ./usr/sbin/mailstats				base-obsolete		obsolete
 ./usr/sbin/mailwrapper				base-mailwrapper-bin
 ./usr/sbin/makedbm				base-nis-bin		yp
@@ -5974,7 +5974,7 @@
 ./var/chroot/named/usr/libexec			base-bind-root
 ./var/chroot/named/var				base-bind-root
 ./var/chroot/named/var/run			base-bind-root
-./var/chroot/named/var/run/lwresd		base-bind-root
+./var/chroot/named/var/run/lwresd		base-obsolete		obsolete
 ./var/chroot/named/var/run/named		base-bind-root
 ./var/chroot/named/var/tmp			base-bind-root
 ./var/chroot/nsd				base-sys-root
@@ -6042,7 +6042,7 @@
 ./var/preserve					base-util-root
 ./var/quotas					base-util-root
 ./var/run					base-sys-root
-./var/run/lwresd				base-bind-root
+./var/run/lwresd				base-obsolete		obsolete
 ./var/run/named					base-bind-root
 ./var/rwho					base-netutil-root
 ./var/shm					base-sys-root
