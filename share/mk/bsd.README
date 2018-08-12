@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.381 2018/07/25 23:30:22 kamil Exp $
+#	$NetBSD: bsd.README,v 1.382 2018/08/12 11:50:51 christos Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -403,7 +403,7 @@ MKRADEONFIRMWARE If "no", install the /libdata/firmware/radeon directory,
 MKRELRO		If "partial", set the non-PLT GOT to read-only. If "full"
 		also force immediate symbol binding.
 		Default: no
-	
+
 MKREPRO         If "yes", create reproducible builds. This enables
 		different switches to make two builds from the same source tree
 		result in the same build results.
@@ -491,7 +491,7 @@ MKUPDATE 	If not "no", 'make install' only installs targets that are
 		installed counterparts.
 		Default: no
 
-MKX11		If not "no", 'make build' also descends into 
+MKX11		If not "no", 'make build' also descends into
 		src/external/mit/xorg to cross-build X11 and automatically
 		enables creation of X sets.
 		Default: no
@@ -1141,7 +1141,7 @@ UUDECODE_FILES	List of files which are stored as <file>.uue in the source
 
 UUDECODE_FILES_RENAME_<fn>
 		Rename the output from the decode to the provided name.
-		
+
 		*NOTE: These files are simply decoded, with no install or other
 		       rule applying implicitly except being added to the clean
 		       target.
@@ -1605,154 +1605,161 @@ DPADD		Additional dependencies for the program.  Usually used for
 
 		The following system libraries are predefined for DPADD:
 
-		LIBARCHIVE?=	${DESTDIR}/usr/lib/libarchive.a
-		LIBASN1?=	${DESTDIR}/usr/lib/libasn1.a
-		LIBATF_C?=	${DESTDIR}/usr/lib/libatf-c.a
-		LIBATF_CXX?=	${DESTDIR}/usr/lib/libatf-c++.a
-		LIBBIND9?=	${DESTDIR}/usr/lib/libbind9.a
-		LIBBLUETOOTH?=	${DESTDIR}/usr/lib/libbluetooth.a
-		LIBBSDMALLOC?=	${DESTDIR}/usr/lib/libbsdmalloc.a
-		LIBBZ2?=	${DESTDIR}/usr/lib/libbz2.a
-		LIBC?=		${DESTDIR}/usr/lib/libc.a
-		LIBCOMPAT?=	${DESTDIR}/usr/lib/libcompat.a
-		LIBCOM_ERR?=	${DESTDIR}/usr/lib/libcom_err.a
-		LIBCRT0?=	${DESTDIR}/usr/lib/crt0.o
-		LIBCRTI?=	${DESTDIR}/usr/lib/crti.o
-		LIBCRYPT?=	${DESTDIR}/usr/lib/libcrypt.a
-		LIBCRYPTO?=	${DESTDIR}/usr/lib/libcrypto.a
-		LIBCURSES?=	${DESTDIR}/usr/lib/libcurses.a
-		LIBC_PIC?=	${DESTDIR}/usr/lib/libc_pic.a
-		LIBDBM?=	${DESTDIR}/usr/lib/libdbm.a
-		LIBDES?=	${DESTDIR}/usr/lib/libdes.a
-		LIBDNS?=	${DESTDIR}/usr/lib/libdns.a
-		LIBEDIT?=	${DESTDIR}/usr/lib/libedit.a
-		LIBEVENT?=	${DESTDIR}/usr/lib/libevent.a
+		LIBARCHIVE?=		${DESTDIR}/usr/lib/libarchive.a
+		LIBASN1?=		${DESTDIR}/usr/lib/libasn1.a
+		LIBATF_C?=		${DESTDIR}/usr/lib/libatf-c.a
+		LIBATF_CXX?=		${DESTDIR}/usr/lib/libatf-c++.a
+		LIBBIND9?=		${DESTDIR}/usr/lib/libbind9.a
+		LIBBLUETOOTH?=		${DESTDIR}/usr/lib/libbluetooth.a
+		LIBBSDMALLOC?=		${DESTDIR}/usr/lib/libbsdmalloc.a
+		LIBBZ2?=		${DESTDIR}/usr/lib/libbz2.a
+		LIBC_PIC?=		${DESTDIR}/usr/lib/libc_pic.a
+		LIBC?=			${DESTDIR}/usr/lib/libc.a
+		LIBCOMPAT?=		${DESTDIR}/usr/lib/libcompat.a
+		LIBCOM_ERR?=		${DESTDIR}/usr/lib/libcom_err.a
+		LIBCRYPT?=		${DESTDIR}/usr/lib/libcrypt.a
+		LIBCRYPTO?=		${DESTDIR}/usr/lib/libcrypto.a
+		LIBCURSES?=		${DESTDIR}/usr/lib/libcurses.a
+		LIBC_PIC?=		${DESTDIR}/usr/lib/libc_pic.a
+		LIBDBM?=		${DESTDIR}/usr/lib/libdbm.a
+		LIBDES?=		${DESTDIR}/usr/lib/libdes.a
+		LIBDNS?=		${DESTDIR}/usr/lib/libdns.a
+		LIBEDIT?=		${DESTDIR}/usr/lib/libedit.a
+		LIBEVENT?=		${DESTDIR}/usr/lib/libevent.a
 		LIBEVENT_OPENSSL?=	${DESTDIR}/usr/lib/libevent_openssl.a
 		LIBEVENT_PTHREADS?=	${DESTDIR}/usr/lib/libevent_pthreads.a
-		LIBEXECINFO?=	${DESTDIR}/usr/lib/libexecinfo.a
-		LIBEXPAT?=	${DESTDIR}/usr/lib/libexpat.a
-		LIBFETCH?=	${DESTDIR}/usr/lib/libfetch.a
-		LIBFORM?=	${DESTDIR}/usr/lib/libform.a
-		LIBFL?=		${DESTDIR}/usr/lib/libfl.a
-		LIBG2C?=	${DESTDIR}/usr/lib/libg2c.a
-		LIBGCC?=	${DESTDIR}/usr/lib/libgcc.a
-		LIBGNUMALLOC?=	${DESTDIR}/usr/lib/libgnumalloc.a
-		LIBGSSAPI?=	${DESTDIR}/usr/lib/libgssapi.a
-		LIBHDB?=	${DESTDIR}/usr/lib/libhdb.a
-		LIBHEIMBASE?=	${DESTDIR}/usr/lib/libheimbase.a
-		LIBHEIMNTLM?=	${DESTDIR}/usr/lib/libheimntlm.a
-		LIBHX500?=	${DESTDIR}/usr/lib/libhx500.a
-		LIBINTL?=	${DESTDIR}/usr/lib/libintl.a
-		LIBIPSEC?=	${DESTDIR}/usr/lib/libipsec.a
-		LIBISC?=	${DESTDIR}/usr/lib/libisc.a
-		LIBISCCC?=	${DESTDIR}/usr/lib/libisccc.a
-		LIBISCFG?=	${DESTDIR}/usr/lib/libiscfg.a
-		LIBKADM5CLNT?=	${DESTDIR}/usr/lib/libkadm5clnt.a
-		LIBKADM5SRV?=	${DESTDIR}/usr/lib/libkadm5srv.a
-		LIBKAFS?=	${DESTDIR}/usr/lib/libkafs.a
-		LIBKRB5?=	${DESTDIR}/usr/lib/libkrb5.a
-		LIBKVM?=	${DESTDIR}/usr/lib/libkvm.a
-		LIBL?=		${DESTDIR}/usr/lib/libl.a
-		LIBLBER?=	${DESTDIR}/usr/lib/liblber.a
-		LIBLDAP?=	${DESTDIR}/usr/lib/libldap.a
-		LIBLDAP_R?=	${DESTDIR}/usr/lib/libldap_r.a
-		LIBLUA?=	${DESTDIR}/usr/lib/liblua.a
-		LIBLUTOK?=	${DESTDIR}/usr/lib/liblutok.a
-		LIBLWRES?=	${DESTDIR}/usr/lib/liblwres.a
-		LIBM?=		${DESTDIR}/usr/lib/libm.a
-		LIBMAGIC?=	${DESTDIR}/usr/lib/libmagic.a
-		LIBMENU?=	${DESTDIR}/usr/lib/libmenu.a
-		LIBOBJC?=	${DESTDIR}/usr/lib/libobjc.a
-		LIBOSSAUDIO?=	${DESTDIR}/usr/lib/libossaudio.a
-		LIBPAM?=	${DESTDIR}/usr/lib/libpam.a
-		LIBPANEL?=	${DESTDIR}/usr/lib/libpanel.a
-		LIBPCAP?=	${DESTDIR}/usr/lib/libpcap.a
-		LIBPCI?=	${DESTDIR}/usr/lib/libpci.a
-		LIBPOSIX?=	${DESTDIR}/usr/lib/libposix.a
-		LIBPTHREAD?=	${DESTDIR}/usr/lib/libpthread.a
-		LIBPUFFS?=	${DESTDIR}/usr/lib/libpuffs.a
-		LIBQUOTA?=	${DESTDIR}/usr/lib/libquota.a
-		LIBRADIUS?=	${DESTDIR}/usr/lib/libradius.a
-		LIBREFUSE?=	${DESTDIR}/usr/lib/librefuse.a
-		LIBRESOLV?=	${DESTDIR}/usr/lib/libresolv.a
-		LIBRMT?=	${DESTDIR}/usr/lib/librmt.a
-		LIBROKEN?=	${DESTDIR}/usr/lib/libroken.a
-		LIBRPCSVC?=	${DESTDIR}/usr/lib/librpcsvc.a
-		LIBRT?=		${DESTDIR}/usr/lib/librt.a
-		LIBRUMP?=	${DESTDIR}/usr/lib/librump.a
-		LIBRUMPFS_CD9660FS?=${DESTDIR}/usr/lib/librumpfs_cd9660fs.a
-		LIBRUMPFS_EFS?=	${DESTDIR}/usr/lib/librumpfs_efs.a
-		LIBRUMPFS_EXT2FS?=${DESTDIR}/usr/lib/librumpfs_ext2fs.a
-		LIBRUMPFS_FFS?=	${DESTDIR}/usr/lib/librumpfs_ffs.a
-		LIBRUMPFS_HFS?=	${DESTDIR}/usr/lib/librumpfs_hfs.a
-		LIBRUMPFS_LFS?=	${DESTDIR}/usr/lib/librumpfs_lfs.a
-		LIBRUMPFS_MSDOSFS?=${DESTDIR}/usr/lib/librumpfs_msdosfs.a
-		LIBRUMPFS_NFS?=	${DESTDIR}/usr/lib/librumpfs_nfs.a
-		LIBRUMPFS_NTFS?=${DESTDIR}/usr/lib/librumpfs_ntfs.a
-		LIBRUMPFS_SYSPUFFS?=${DESTDIR}/usr/lib/librumpfs_syspuffs.a
-		LIBRUMPFS_TMPFS?=${DESTDIR}/usr/lib/librumpfs_tmpfs.a
-		LIBRUMPFS_UDF?=	${DESTDIR}/usr/lib/librumpfs_udf.a
-		LIBRUMPFS_UFS?=	${DESTDIR}/usr/lib/librumpfs_ufs.a
-		LIBRUMPUSER?=	${DESTDIR}/usr/lib/librumpuser.a
-		LIBSASLC?=	${DESTDIR}/usr/lib/libsaslc.a
-		LIBSKEY?=	${DESTDIR}/usr/lib/libskey.a
-		LIBSL?=		${DESTDIR}/usr/lib/libsl.a
-		LIBSQLITE3?=	${DESTDIR}/usr/lib/libsqlite3.a
-		LIBSS?=		${DESTDIR}/usr/lib/libss.a
-		LIBSSH?=	${DESTDIR}/usr/lib/libssh.a
-		LIBSSL?=	${DESTDIR}/usr/lib/libssl.a
-		LIBSSP?=	${DESTDIR}/usr/lib/libssp.a
-		LIBSTDCXX?=	${DESTDIR}/usr/lib/libstdc++.a
-		LIBSUPCXX?=	${DESTDIR}/usr/lib/libsupc++.a
-		LIBTERMINFO?=	${DESTDIR}/usr/lib/libterminfo.a
-		LIBTRE?=	${DESTDIR}/usr/lib/libtre.a
-		LIBUNBOUND?=	${DESTDIR}/usr/lib/libunbound.a
-		LIBUSBHID?=	${DESTDIR}/usr/lib/libusbhid.a
-		LIBUTIL?=	${DESTDIR}/usr/lib/libutil.a
-		LIBWIND?=	${DESTDIR}/usr/lib/libwind.a
-		LIBWRAP?=	${DESTDIR}/usr/lib/libwrap.a
-		LIBY?=		${DESTDIR}/usr/lib/liby.a
-		LIBZ?=		${DESTDIR}/usr/lib/libz.a
+		LIBEXECINFO?=		${DESTDIR}/usr/lib/libexecinfo.a
+		LIBEXPAT?=		${DESTDIR}/usr/lib/libexpat.a
+		LIBFETCH?=		${DESTDIR}/usr/lib/libfetch.a
+		LIBFL?=			${DESTDIR}/usr/lib/libfl.a
+		LIBFORM?=		${DESTDIR}/usr/lib/libform.a
+		LIBG2C?=		${DESTDIR}/usr/lib/libg2c.a
+		LIBGCC?=		${DESTDIR}/usr/lib/libgcc.a
+		LIBGNUMALLOC?=		${DESTDIR}/usr/lib/libgnumalloc.a
+		LIBGSSAPI?=		${DESTDIR}/usr/lib/libgssapi.a
+		LIBHDB?=		${DESTDIR}/usr/lib/libhdb.a
+		LIBHEIMBASE?=		${DESTDIR}/usr/lib/libheimbase.a
+		LIBHEIMNTLM?=		${DESTDIR}/usr/lib/libheimntlm.a
+		LIBHX500?=		${DESTDIR}/usr/lib/libhx500.a
+		LIBINTL?=		${DESTDIR}/usr/lib/libintl.a
+		LIBIPSEC?=		${DESTDIR}/usr/lib/libipsec.a
+		LIBISC?=		${DESTDIR}/usr/lib/libisc.a
+		LIBISCCC?=		${DESTDIR}/usr/lib/libisccc.a
+		LIBISCFG?=		${DESTDIR}/usr/lib/libiscfg.a
+		LIBKADM5CLNT?=		${DESTDIR}/usr/lib/libkadm5clnt.a
+		LIBKADM5SRV?=		${DESTDIR}/usr/lib/libkadm5srv.a
+		LIBKAFS?=		${DESTDIR}/usr/lib/libkafs.a
+		LIBKRB5?=		${DESTDIR}/usr/lib/libkrb5.a
+		LIBKVM?=		${DESTDIR}/usr/lib/libkvm.a
+		LIBL?=			${DESTDIR}/usr/lib/libl.a
+		LIBLBER?=		${DESTDIR}/usr/lib/liblber.a
+		LIBLDAP?=		${DESTDIR}/usr/lib/libldap.a
+		LIBLDAP_R?=		${DESTDIR}/usr/lib/libldap_r.a
+		LIBLUA?=		${DESTDIR}/usr/lib/liblua.a
+		LIBLUTOK?=		${DESTDIR}/usr/lib/liblutok.a
+		LIBM?=			${DESTDIR}/usr/lib/libm.a
+		LIBMAGIC?=		${DESTDIR}/usr/lib/libmagic.a
+		LIBMENU?=		${DESTDIR}/usr/lib/libmenu.a
+		LIBNETPGPVERIFY?=	${DESTDIR}/usr/lib/libnetpgpverify.a
+		LIBNS?=			${DESTDIR}/usr/lib/libns.a
+		LIBOBJC?=		${DESTDIR}/usr/lib/libobjc.a
+		LIBOSSAUDIO?=		${DESTDIR}/usr/lib/libossaudio.a
+		LIBPAM?=		${DESTDIR}/usr/lib/libpam.a
+		LIBPANEL?=		${DESTDIR}/usr/lib/libpanel.a
+		LIBPCAP?=		${DESTDIR}/usr/lib/libpcap.a
+		LIBPCI?=		${DESTDIR}/usr/lib/libpci.a
+		LIBPOSIX?=		${DESTDIR}/usr/lib/libposix.a
+		LIBPTHREAD?=		${DESTDIR}/usr/lib/libpthread.a
+		LIBPUFFS?=		${DESTDIR}/usr/lib/libpuffs.a
+		LIBQUOTA?=		${DESTDIR}/usr/lib/libquota.a
+		LIBRADIUS?=		${DESTDIR}/usr/lib/libradius.a
+		LIBREFUSE?=		${DESTDIR}/usr/lib/librefuse.a
+		LIBRESOLV?=		${DESTDIR}/usr/lib/libresolv.a
+		LIBRMT?=		${DESTDIR}/usr/lib/librmt.a
+		LIBROKEN?=		${DESTDIR}/usr/lib/libroken.a
+		LIBRPCSVC?=		${DESTDIR}/usr/lib/librpcsvc.a
+		LIBRT?=			${DESTDIR}/usr/lib/librt.a
+		LIBRUMP?=		${DESTDIR}/usr/lib/librump.a
+		LIBRUMPFS_CD966	0FS?=	${DESTDIR}/usr/lib/librumpfs_cd9660fs.a
+		LIBRUMPFS_EFS?=		${DESTDIR}/usr/lib/librumpfs_efs.a
+		LIBRUMPFS_EXT2FS?=	${DESTDIR}/usr/lib/librumpfs_ext2fs.a
+		LIBRUMPFS_FFS?=		${DESTDIR}/usr/lib/librumpfs_ffs.a
+		LIBRUMPFS_HFS?=		${DESTDIR}/usr/lib/librumpfs_hfs.a
+		LIBRUMPFS_LFS?=		${DESTDIR}/usr/lib/librumpfs_lfs.a
+		LIBRUMPFS_MSDOSFS?=	${DESTDIR}/usr/lib/librumpfs_msdosfs.a
+		LIBRUMPFS_NFS?=		${DESTDIR}/usr/lib/librumpfs_nfs.a
+		LIBRUMPFS_NTFS?=	${DESTDIR}/usr/lib/librumpfs_ntfs.a
+		LIBRUMPFS_SYSPUFFS?=	${DESTDIR}/usr/lib/librumpfs_syspuffs.a
+		LIBRUMPFS_TMPFS?=	${DESTDIR}/usr/lib/librumpfs_tmpfs.a
+		LIBRUMPFS_UDF?=		${DESTDIR}/usr/lib/librumpfs_udf.a
+		LIBRUMPFS_UFS?=		${DESTDIR}/usr/lib/librumpfs_ufs.a
+		LIBRUMPUSER?=		${DESTDIR}/usr/lib/librumpuser.a
+		LIBSASLC?=		${DESTDIR}/usr/lib/libsaslc.a
+		LIBSKEY?=		${DESTDIR}/usr/lib/libskey.a
+		LIBSL?=			${DESTDIR}/usr/lib/libsl.a
+		LIBSQLITE3?=		${DESTDIR}/usr/lib/libsqlite3.a
+		LIBSS?=			${DESTDIR}/usr/lib/libss.a
+		LIBSSH?=		${DESTDIR}/usr/lib/libssh.a
+		LIBSSL?=		${DESTDIR}/usr/lib/libssl.a
+		LIBSSP?=		${DESTDIR}/usr/lib/libssp.a
+		LIBSTDCXX?=		${DESTDIR}/usr/lib/libstdc++.a
+		LIBSUPCXX?=		${DESTDIR}/usr/lib/libsupc++.a
+		LIBTERMINFO?=		${DESTDIR}/usr/lib/libterminfo.a
+		LIBTRE?=		${DESTDIR}/usr/lib/libtre.a
+		LIBUNBOUND?=		${DESTDIR}/usr/lib/libunbound.a
+		LIBUSBHID?=		${DESTDIR}/usr/lib/libusbhid.a
+		LIBUTIL?=		${DESTDIR}/usr/lib/libutil.a
+		LIBWIND?=		${DESTDIR}/usr/lib/libwind.a
+		LIBWRAP?=		${DESTDIR}/usr/lib/libwrap.a
+		LIBY?=			${DESTDIR}/usr/lib/liby.a
+		LIBZ?=			${DESTDIR}/usr/lib/libz.a
+
+		The following c startup files.
+
+		LIBCRT0?=		${DESTDIR}/usr/lib/crt0.o
+		LIBCRTI?=		${DESTDIR}/usr/lib/crti.o
+		LIBCRTBEGIN?=		${DESTDIR}/usr/lib/crti.o
+		LIBCRTEND?=		${DESTDIR}/usr/lib/crtn.o
 
 		The following X-Windows libraries are predefined for DPADD:
 
-		LIBFS?=		${DESTDIR}/usr/X11R7/lib/libFS.a
-		LIBGL?=		${DESTDIR}/usr/X11R7/lib/libGL.a
-		LIBGLU?=	${DESTDIR}/usr/X11R7/lib/libGLU.a
-		LIBICE?=	${DESTDIR}/usr/X11R7/lib/libICE.a
-		LIBSM?=		${DESTDIR}/usr/X11R7/lib/libSM.a
-		LIBX11?=	${DESTDIR}/usr/X11R7/lib/libX11.a
-		LIBX11_XCB?=	${DESTDIR}/usr/X11R7/lib/libX11-xcb.a
-		LIBXTRAP?=	${DESTDIR}/usr/X11R7/lib/libXTrap.a
-		LIBXAU?=	${DESTDIR}/usr/X11R7/lib/libXau.a
-		LIBXAW?=	${DESTDIR}/usr/X11R7/lib/libXaw.a
-		LIBXCB?=	${DESTDIR}/usr/X11R7/lib/libxcb.a
-		LIBXDMCP?=	${DESTDIR}/usr/X11R7/lib/libXdmcp.a
-		LIBXEXT?=	${DESTDIR}/usr/X11R7/lib/libXext.a
-		LIBXFONT?=	${DESTDIR}/usr/X11R7/lib/libXfont.a
-		LIBXFONT2?=	${DESTDIR}/usr/X11R7/lib/libXfont2.a
-		LIBXFT?=	${DESTDIR}/usr/X11R7/lib/libXft.a
-		LIBXI?=		${DESTDIR}/usr/X11R7/lib/libXi.a
-		LIBXINERAMA?=	${DESTDIR}/usr/X11R7/lib/libXinerama.a
-		LIBXMU?=	${DESTDIR}/usr/X11R7/lib/libXmu.a
-		LIBXMUU?=	${DESTDIR}/usr/X11R7/lib/libXmuu.a
-		LIBXPM?=	${DESTDIR}/usr/X11R7/lib/libXpm.a
-		LIBXRANDR?=	${DESTDIR}/usr/X11R7/lib/libXrandr.a
-		LIBXRENDER?=	${DESTDIR}/usr/X11R7/lib/libXrender.a
-		LIBXSS?=	${DESTDIR}/usr/X11R7/lib/libXss.a
-		LIBXT?=		${DESTDIR}/usr/X11R7/lib/libXt.a
-		LIBXTST?=	${DESTDIR}/usr/X11R7/lib/libXtst.a
-		LIBXV?=		${DESTDIR}/usr/X11R7/lib/libXv.a
-		LIBXXF86DGA?=	${DESTDIR}/usr/X11R7/lib/libXxf86dga.a
-		LIBXXF86MISC?=	${DESTDIR}/usr/X11R7/lib/libXxf86misc.a
-		LIBXXF86VM?=	${DESTDIR}/usr/X11R7/lib/libXxf86vm.a
-		LIBDPS?=	${DESTDIR}/usr/X11R7/lib/libdps.a
-		LIBFNTSTUBS?=	${DESTDIR}/usr/X11R7/lib/libfntstubs.a
-		LIBFONTCONFIG?=	${DESTDIR}/usr/X11R7/lib/libfontconfig.a
-		LIBFONTENC?=	${DESTDIR}/usr/X11R7/lib/libfontenc.a
-		LIBFREETYPE?=	${DESTDIR}/usr/X11R7/lib/libfreetype.a
-		LIBLBXUTIL?=	${DESTDIR}/usr/X11R7/lib/liblbxutil.a
-		LIBXKBFILE?=	${DESTDIR}/usr/X11R7/lib/libxkbfile.a
+		LIBFS?=			${DESTDIR}/usr/X11R7/lib/libFS.a
+		LIBGL?=			${DESTDIR}/usr/X11R7/lib/libGL.a
+		LIBGLU?=		${DESTDIR}/usr/X11R7/lib/libGLU.a
+		LIBICE?=		${DESTDIR}/usr/X11R7/lib/libICE.a
+		LIBSM?=			${DESTDIR}/usr/X11R7/lib/libSM.a
+		LIBX11?=		${DESTDIR}/usr/X11R7/lib/libX11.a
+		LIBX11_XCB?=		${DESTDIR}/usr/X11R7/lib/libX11-xcb.a
+		LIBXTRAP?=		${DESTDIR}/usr/X11R7/lib/libXTrap.a
+		LIBXAU?=		${DESTDIR}/usr/X11R7/lib/libXau.a
+		LIBXAW?=		${DESTDIR}/usr/X11R7/lib/libXaw.a
+		LIBXCB?=		${DESTDIR}/usr/X11R7/lib/libxcb.a
+		LIBXDMCP?=		${DESTDIR}/usr/X11R7/lib/libXdmcp.a
+		LIBXEXT?=		${DESTDIR}/usr/X11R7/lib/libXext.a
+		LIBXFONT?=		${DESTDIR}/usr/X11R7/lib/libXfont.a
+		LIBXFONT2?=		${DESTDIR}/usr/X11R7/lib/libXfont2.a
+		LIBXFT?=		${DESTDIR}/usr/X11R7/lib/libXft.a
+		LIBXI?=			${DESTDIR}/usr/X11R7/lib/libXi.a
+		LIBXINERAMA?=		${DESTDIR}/usr/X11R7/lib/libXinerama.a
+		LIBXMU?=		${DESTDIR}/usr/X11R7/lib/libXmu.a
+		LIBXMUU?=		${DESTDIR}/usr/X11R7/lib/libXmuu.a
+		LIBXPM?=		${DESTDIR}/usr/X11R7/lib/libXpm.a
+		LIBXRANDR?=		${DESTDIR}/usr/X11R7/lib/libXrandr.a
+		LIBXRENDER?=		${DESTDIR}/usr/X11R7/lib/libXrender.a
+		LIBXSS?=		${DESTDIR}/usr/X11R7/lib/libXss.a
+		LIBXT?=			${DESTDIR}/usr/X11R7/lib/libXt.a
+		LIBXTST?=		${DESTDIR}/usr/X11R7/lib/libXtst.a
+		LIBXV?=			${DESTDIR}/usr/X11R7/lib/libXv.a
+		LIBXXF86DGA?=		${DESTDIR}/usr/X11R7/lib/libXxf86dga.a
+		LIBXXF86MISC?=		${DESTDIR}/usr/X11R7/lib/libXxf86misc.a
+		LIBXXF86VM?=		${DESTDIR}/usr/X11R7/lib/libXxf86vm.a
+		LIBDPS?=		${DESTDIR}/usr/X11R7/lib/libdps.a
+		LIBFNTSTUBS?=		${DESTDIR}/usr/X11R7/lib/libfntstubs.a
+		LIBFONTCONFIG?=		${DESTDIR}/usr/X11R7/lib/libfontconfig.a
+		LIBFONTENC?=		${DESTDIR}/usr/X11R7/lib/libfontenc.a
+		LIBFREETYPE?=		${DESTDIR}/usr/X11R7/lib/libfreetype.a
+		LIBLBXUTIL?=		${DESTDIR}/usr/X11R7/lib/liblbxutil.a
+		LIBXKBFILE?=		${DESTDIR}/usr/X11R7/lib/libxkbfile.a
 
 SHAREDSTRINGS	If defined, a new .c.o rule is used that results in shared
 		strings, using xstr(1). Note that this will not work with
