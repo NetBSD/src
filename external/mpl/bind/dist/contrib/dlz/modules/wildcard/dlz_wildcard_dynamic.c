@@ -1,4 +1,4 @@
-/*	$NetBSD: dlz_wildcard_dynamic.c,v 1.1.1.1 2018/08/12 12:07:50 christos Exp $	*/
+/*	$NetBSD: dlz_wildcard_dynamic.c,v 1.2 2018/08/12 13:02:32 christos Exp $	*/
 
 /*
  * Copyright (C) 2002 Stichting NLnet, Netherlands, stichting@nlnet.nl.
@@ -64,7 +64,7 @@
 		union { const void *k; void *v; } _u; \
 		_u.k = konst; \
 		var = _u.v; \
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 /* fnmatch() return values. */
 #define	FNM_NOMATCH	1	/* Match failed. */

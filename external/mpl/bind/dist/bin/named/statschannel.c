@@ -1,4 +1,4 @@
-/*	$NetBSD: statschannel.c,v 1.1.1.1 2018/08/12 12:07:42 christos Exp $	*/
+/*	$NetBSD: statschannel.c,v 1.2 2018/08/12 13:02:27 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -161,7 +161,7 @@ static const char *gluecachestats_xmldesc[dns_gluecachestatscounter_max];
 #define gluecachestats_xmldesc NULL
 #endif	/* EXTENDED_STATS */
 
-#define TRY0(a) do { xmlrc = (a); if (xmlrc < 0) goto error; } while(0)
+#define TRY0(a) do { xmlrc = (a); if (xmlrc < 0) goto error; } while(/*CONSTCOND*/0)
 
 /*%
  * Mapping arrays to represent statistics counters in the order of our
@@ -218,7 +218,7 @@ init_desc(void) {
 			 ns_statscounter_max, \
 			 desc, nsstats_desc, xmldesc, nsstats_xmldesc); \
 		nsstats_index[i++] = ns_statscounter_ ## counterid; \
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 	i = 0;
 	SET_NSSTATDESC(requestv4, "IPv4 requests received", "Requestv4");
@@ -329,7 +329,7 @@ init_desc(void) {
 			 dns_resstatscounter_max, \
 			 desc, resstats_desc, xmldesc, resstats_xmldesc); \
 		resstats_index[i++] = dns_resstatscounter_ ## counterid; \
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 	i = 0;
 	SET_RESSTATDESC(queryv4, "IPv4 queries sent", "Queryv4");
@@ -417,7 +417,7 @@ init_desc(void) {
 		set_desc(dns_adbstats_ ## id, dns_adbstats_max, \
 			 desc, adbstats_desc, xmldesc, adbstats_xmldesc); \
 		adbstats_index[i++] = dns_adbstats_ ## id; \
-	} while (0)
+	} while (/*CONSTCOND*/0)
 	i = 0;
 	SET_ADBSTATDESC(nentries, "Address hash table size", "nentries");
 	SET_ADBSTATDESC(entriescnt, "Addresses in hash table", "entriescnt");
@@ -440,7 +440,7 @@ init_desc(void) {
 			 dns_zonestatscounter_max, \
 			 desc, zonestats_desc, xmldesc, zonestats_xmldesc); \
 		zonestats_index[i++] = dns_zonestatscounter_ ## counterid; \
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 	i = 0;
 	SET_ZONESTATDESC(notifyoutv4, "IPv4 notifies sent", "NotifyOutv4");
@@ -473,7 +473,7 @@ init_desc(void) {
 			 isc_sockstatscounter_max, \
 			 desc, sockstats_desc, xmldesc, sockstats_xmldesc); \
 		sockstats_index[i++] = isc_sockstatscounter_ ## counterid; \
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 	i = 0;
 	SET_SOCKSTATDESC(udp4open, "UDP/IPv4 sockets opened", "UDP4Open");
@@ -593,7 +593,7 @@ init_desc(void) {
 			 desc, dnssecstats_desc, \
 			 xmldesc, dnssecstats_xmldesc); \
 		dnssecstats_index[i++] = dns_dnssecstats_ ## counterid; \
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 	i = 0;
 	SET_DNSSECSTATDESC(asis, "dnssec validation success with signer "
@@ -2219,7 +2219,7 @@ render_xml_traffic(const char *url, isc_httpdurl_t *urlinfo,
 		result = ISC_R_NOMEMORY;\
 		goto error;\
 	} \
-} while(0)
+} while(/*CONSTCOND*/0)
 
 static void
 wrap_jsonfree(isc_buffer_t *buffer, void *arg) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: nsupdate.c,v 1.1.1.1 2018/08/12 12:07:10 christos Exp $	*/
+/*	$NetBSD: nsupdate.c,v 1.2 2018/08/12 13:02:28 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -227,8 +227,6 @@ typedef struct nsu_gssinfo {
 	gss_ctx_id_t context;
 } nsu_gssinfo_t;
 
-static void
-failed_gssrequest();
 static void
 start_gssrequest(dns_name_t *master);
 static void
@@ -2869,7 +2867,7 @@ get_ticket_realm(isc_mem_t *mctx) {
 }
 
 static void
-failed_gssrequest() {
+failed_gssrequest(void) {
 	seenerror = ISC_TRUE;
 
 	dns_name_free(&tmpzonename, gmctx);

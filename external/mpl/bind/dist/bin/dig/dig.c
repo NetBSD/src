@@ -1,4 +1,4 @@
-/*	$NetBSD: dig.c,v 1.1.1.1 2018/08/12 12:07:09 christos Exp $	*/
+/*	$NetBSD: dig.c,v 1.2 2018/08/12 13:02:27 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -759,14 +759,14 @@ plus_option(const char *option, isc_boolean_t is_batchfile,
 		size_t _l = strlen(cmd); \
 		if (_l >= sizeof(A) || strncasecmp(cmd, A, _l) != 0) \
 			goto invalid_option; \
-	} while (0)
+	} while (/*CONSTCOND*/0)
 #define FULLCHECK2(A, B) \
 	do { \
 		size_t _l = strlen(cmd); \
 		if ((_l >= sizeof(A) || strncasecmp(cmd, A, _l) != 0) && \
 		    (_l >= sizeof(B) || strncasecmp(cmd, B, _l) != 0)) \
 			goto invalid_option; \
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 	switch (cmd[0]) {
 	case 'a':
