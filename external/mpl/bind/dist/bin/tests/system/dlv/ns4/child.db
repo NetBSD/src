@@ -1,0 +1,34 @@
+; Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+;
+; This Source Code Form is subject to the terms of the Mozilla Public
+; License, v. 2.0. If a copy of the MPL was not distributed with this
+; file, You can obtain one at http://mozilla.org/MPL/2.0/.
+;
+; See the COPYRIGHT file distributed with this work for additional
+; information regarding copyright ownership.
+
+$TTL	120
+@		SOA	ns hostmaster.ns 1 3600 1200 604800 60
+@		NS	ns
+ns		A	10.53.0.3
+;
+rootservers	NS	ns.rootservers
+ns.rootservers	A	10.53.0.1
+;
+child1		NS	ns.child1
+ns.child1	A	10.53.0.3
+;
+child2		NS	ns.child2
+ns.child2	A	10.53.0.4
+;
+child3		NS	ns.child3
+ns.child3	A	10.53.0.3
+;
+child4		NS	ns.child4
+ns.child4	A	10.53.0.3
+;
+child5		NS	ns.child5
+ns.child5	A	10.53.0.3
+;
+child6		NS	ns.child5
+ns.child6	A	10.53.0.4

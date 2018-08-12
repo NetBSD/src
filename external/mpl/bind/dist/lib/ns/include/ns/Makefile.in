@@ -1,0 +1,35 @@
+# Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+#
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+#
+# See the COPYRIGHT file distributed with this work for additional
+# information regarding copyright ownership.
+
+srcdir =	@srcdir@
+VPATH =		@srcdir@
+top_srcdir =	@top_srcdir@
+
+VERSION=@BIND9_VERSION@
+
+HEADERS =	client.h interfacemgr.h lib.h listenlist.h log.h \
+		notify.h query.h server.h sortlist.h stats.h \
+		types.h update.h version.h xfrout.h
+SUBDIRS =
+TARGETS =
+
+@BIND9_MAKE_RULES@
+
+installdirs:
+	$(SHELL) ${top_srcdir}/mkinstalldirs ${DESTDIR}${includedir}/ns
+
+install:: installdirs
+	for i in ${HEADERS}; do \
+		${INSTALL_DATA} ${srcdir}/$$i ${DESTDIR}${includedir}/ns ; \
+	done
+
+uninstall::
+	for i in ${HEADERS}; do \
+		rm -f ${DESTDIR}${includedir}/ns/$$i ; \
+	done

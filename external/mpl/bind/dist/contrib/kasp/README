@@ -1,0 +1,11 @@
+This directory is for tools and scripts related to the OpenDNSSEC KASP
+("key and signature policy") format. Currently it only contains
+"kasp2policy.py", a python script for converting KASP key policy
+to the "dnssec.policy" format that is used by dnssec-keymgr.
+
+This depends on PLY (python lex/yacc) and on the "isc.dnskey" module in
+bin/python/isc.
+
+Basic test:
+$ python kasp2policy.py kasp.xml > policy.out
+$ diff policy.out policy.good 

@@ -1,0 +1,548 @@
+<!--
+ - Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ -
+ - This Source Code Form is subject to the terms of the Mozilla Public
+ - License, v. 2.0. If a copy of the MPL was not distributed with this
+ - file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ -
+ - See the COPYRIGHT file distributed with this work for additional
+ - information regarding copyright ownership.
+-->
+
+<!-- Converted by db4-upgrade version 1.0 -->
+<refentry xmlns:db="http://docbook.org/ns/docbook" version="5.0" xml:id="man.named">
+  <info>
+    <date>2014-02-19</date>
+  </info>
+  <refentryinfo>
+    <corpname>ISC</corpname>
+    <corpauthor>Internet Systems Consortium, Inc.</corpauthor>
+  </refentryinfo>
+
+  <refmeta>
+    <refentrytitle><application>named</application></refentrytitle>
+    <manvolnum>8</manvolnum>
+    <refmiscinfo>BIND9</refmiscinfo>
+  </refmeta>
+
+  <refnamediv>
+    <refname><application>named</application></refname>
+    <refpurpose>Internet domain name server</refpurpose>
+  </refnamediv>
+
+  <docinfo>
+    <copyright>
+      <year>2000</year>
+      <year>2001</year>
+      <year>2003</year>
+      <year>2004</year>
+      <year>2005</year>
+      <year>2006</year>
+      <year>2007</year>
+      <year>2008</year>
+      <year>2009</year>
+      <year>2011</year>
+      <year>2013</year>
+      <year>2014</year>
+      <year>2015</year>
+      <year>2016</year>
+      <year>2017</year>
+      <year>2018</year>
+      <holder>Internet Systems Consortium, Inc. ("ISC")</holder>
+    </copyright>
+  </docinfo>
+
+  <refsynopsisdiv>
+    <cmdsynopsis sepchar=" ">
+      <command>named</command>
+      <group choice="opt" rep="norepeat">
+	<arg choice="opt" rep="norepeat"><option>-4</option></arg>
+	<arg choice="opt" rep="norepeat"><option>-6</option></arg>
+      </group>
+      <arg choice="opt" rep="norepeat"><option>-c <replaceable class="parameter">config-file</replaceable></option></arg>
+      <arg choice="opt" rep="norepeat"><option>-d <replaceable class="parameter">debug-level</replaceable></option></arg>
+      <arg choice="opt" rep="norepeat"><option>-D <replaceable class="parameter">string</replaceable></option></arg>
+      <arg choice="opt" rep="norepeat"><option>-E <replaceable class="parameter">engine-name</replaceable></option></arg>
+      <arg choice="opt" rep="norepeat"><option>-f</option></arg>
+      <arg choice="opt" rep="norepeat"><option>-g</option></arg>
+      <arg choice="opt" rep="norepeat"><option>-L <replaceable class="parameter">logfile</replaceable></option></arg>
+      <arg choice="opt" rep="norepeat"><option>-M <replaceable class="parameter">option</replaceable></option></arg>
+      <arg choice="opt" rep="norepeat"><option>-m <replaceable class="parameter">flag</replaceable></option></arg>
+      <arg choice="opt" rep="norepeat"><option>-n <replaceable class="parameter">#cpus</replaceable></option></arg>
+      <arg choice="opt" rep="norepeat"><option>-p <replaceable class="parameter">port</replaceable></option></arg>
+      <arg choice="opt" rep="norepeat"><option>-s</option></arg>
+      <arg choice="opt" rep="norepeat"><option>-S <replaceable class="parameter">#max-socks</replaceable></option></arg>
+      <arg choice="opt" rep="norepeat"><option>-t <replaceable class="parameter">directory</replaceable></option></arg>
+      <arg choice="opt" rep="norepeat"><option>-U <replaceable class="parameter">#listeners</replaceable></option></arg>
+      <arg choice="opt" rep="norepeat"><option>-u <replaceable class="parameter">user</replaceable></option></arg>
+      <arg choice="opt" rep="norepeat"><option>-v</option></arg>
+      <arg choice="opt" rep="norepeat"><option>-V</option></arg>
+      <arg choice="opt" rep="norepeat"><option>-X <replaceable class="parameter">lock-file</replaceable></option></arg>
+      <arg choice="opt" rep="norepeat"><option>-x <replaceable class="parameter">cache-file</replaceable></option></arg>
+    </cmdsynopsis>
+  </refsynopsisdiv>
+
+  <refsection><info><title>DESCRIPTION</title></info>
+
+    <para><command>named</command>
+      is a Domain Name System (DNS) server,
+      part of the BIND 9 distribution from ISC.  For more
+      information on the DNS, see RFCs 1033, 1034, and 1035.
+    </para>
+    <para>
+      When invoked without arguments, <command>named</command>
+      will
+      read the default configuration file
+      <filename>/etc/named.conf</filename>, read any initial
+      data, and listen for queries.
+    </para>
+  </refsection>
+
+  <refsection><info><title>OPTIONS</title></info>
+
+
+    <variablelist>
+      <varlistentry>
+        <term>-4</term>
+        <listitem>
+          <para>
+            Use IPv4 only even if the host machine is capable of IPv6.
+            <option>-4</option> and <option>-6</option> are mutually
+            exclusive.
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>-6</term>
+        <listitem>
+          <para>
+            Use IPv6 only even if the host machine is capable of IPv4.
+            <option>-4</option> and <option>-6</option> are mutually
+            exclusive.
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>-c <replaceable class="parameter">config-file</replaceable></term>
+        <listitem>
+          <para>
+            Use <replaceable class="parameter">config-file</replaceable> as the
+            configuration file instead of the default,
+            <filename>/etc/named.conf</filename>.  To
+            ensure that reloading the configuration file continues
+            to work after the server has changed its working
+            directory due to to a possible
+            <option>directory</option> option in the configuration
+            file, <replaceable class="parameter">config-file</replaceable> should be
+            an absolute pathname.
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>-d <replaceable class="parameter">debug-level</replaceable></term>
+        <listitem>
+          <para>
+            Set the daemon's debug level to <replaceable class="parameter">debug-level</replaceable>.
+            Debugging traces from <command>named</command> become
+            more verbose as the debug level increases.
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>-D <replaceable class="parameter">string</replaceable></term>
+        <listitem>
+          <para>
+            Specifies a string that is used to identify a instance of
+            <command>named</command> in a process listing.  The contents
+            of <replaceable class="parameter">string</replaceable> are
+            not examined.
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>-E <replaceable class="parameter">engine-name</replaceable></term>
+        <listitem>
+          <para>
+            When applicable, specifies the hardware to use for
+            cryptographic operations, such as a secure key store used
+            for signing.
+          </para>
+          <para>
+            When BIND is built with OpenSSL PKCS#11 support, this defaults
+            to the string "pkcs11", which identifies an OpenSSL engine
+            that can drive a cryptographic accelerator or hardware service
+            module.  When BIND is built with native PKCS#11 cryptography
+            (--enable-native-pkcs11), it defaults to the path of the PKCS#11
+            provider library specified via "--with-pkcs11".
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>-f</term>
+        <listitem>
+          <para>
+            Run the server in the foreground (i.e. do not daemonize).
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>-g</term>
+        <listitem>
+          <para>
+            Run the server in the foreground and force all logging
+            to <filename>stderr</filename>.
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>-L <replaceable class="parameter">logfile</replaceable></term>
+        <listitem>
+          <para>
+            Log to the file <option>logfile</option> by default
+            instead of the system log.
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>-M <replaceable class="parameter">option</replaceable></term>
+        <listitem>
+          <para>
+            Sets the default memory context options. If set to
+            <replaceable class="parameter">external</replaceable>,
+            this causes the internal memory manager to be bypassed
+            in favor of system-provided memory allocation functions.
+            If set to <replaceable class="parameter">fill</replaceable>,
+            blocks of memory will be filled with tag values when allocated
+            or freed, to assist debugging of memory problems.
+            (<replaceable class="parameter">nofill</replaceable>
+            disables this behavior, and is the default unless
+            <command>named</command> has been compiled with developer
+            options.)
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>-m <replaceable class="parameter">flag</replaceable></term>
+        <listitem>
+          <para>
+            Turn on memory usage debugging flags.  Possible flags are
+            <replaceable class="parameter">usage</replaceable>,
+            <replaceable class="parameter">trace</replaceable>,
+            <replaceable class="parameter">record</replaceable>,
+            <replaceable class="parameter">size</replaceable>, and
+            <replaceable class="parameter">mctx</replaceable>.
+            These correspond to the ISC_MEM_DEBUGXXXX flags described in
+            <filename>&lt;isc/mem.h&gt;</filename>.
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>-n <replaceable class="parameter">#cpus</replaceable></term>
+        <listitem>
+          <para>
+            Create <replaceable class="parameter">#cpus</replaceable> worker threads
+            to take advantage of multiple CPUs.  If not specified,
+            <command>named</command> will try to determine the
+            number of CPUs present and create one thread per CPU.
+            If it is unable to determine the number of CPUs, a
+            single worker thread will be created.
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>-p <replaceable class="parameter">port</replaceable></term>
+        <listitem>
+          <para>
+            Listen for queries on port <replaceable class="parameter">port</replaceable>.  If not
+            specified, the default is port 53.
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>-s</term>
+        <listitem>
+          <para>
+            Write memory usage statistics to <filename>stdout</filename> on exit.
+          </para>
+          <note>
+            <para>
+              This option is mainly of interest to BIND 9 developers
+              and may be removed or changed in a future release.
+            </para>
+          </note>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>-S <replaceable class="parameter">#max-socks</replaceable></term>
+        <listitem>
+          <para>
+            Allow <command>named</command> to use up to
+            <replaceable class="parameter">#max-socks</replaceable> sockets.
+            The default value is 4096 on systems built with default
+            configuration options, and 21000 on systems built with
+            "configure --with-tuning=large".
+          </para>
+          <warning>
+            <para>
+              This option should be unnecessary for the vast majority
+              of users.
+              The use of this option could even be harmful because the
+              specified value may exceed the limitation of the
+              underlying system API.
+              It is therefore set only when the default configuration
+              causes exhaustion of file descriptors and the
+              operational environment is known to support the
+              specified number of sockets.
+              Note also that the actual maximum number is normally a little
+              fewer than the specified value because
+              <command>named</command> reserves some file descriptors
+              for its internal use.
+            </para>
+          </warning>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>-t <replaceable class="parameter">directory</replaceable></term>
+        <listitem>
+          <para>Chroot
+            to <replaceable class="parameter">directory</replaceable> after
+            processing the command line arguments, but before
+            reading the configuration file.
+          </para>
+          <warning>
+            <para>
+              This option should be used in conjunction with the
+              <option>-u</option> option, as chrooting a process
+              running as root doesn't enhance security on most
+              systems; the way <function>chroot(2)</function> is
+              defined allows a process with root privileges to
+              escape a chroot jail.
+            </para>
+          </warning>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>-U <replaceable class="parameter">#listeners</replaceable></term>
+        <listitem>
+          <para>
+            Use <replaceable class="parameter">#listeners</replaceable>
+            worker threads to listen for incoming UDP packets on each
+            address.  If not specified, <command>named</command> will
+            calculate a default value based on the number of detected
+            CPUs: 1 for 1 CPU, and the number of detected CPUs
+            minus one for machines with more than 1 CPU. This cannot
+            be increased to a value higher than the number of CPUs.
+            If <option>-n</option> has been set to a higher value than
+            the number of detected CPUs, then <option>-U</option> may
+            be increased as high as that value, but no higher.
+            On Windows, the number of UDP listeners is hardwired to 1
+            and this option has no effect.
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>-u <replaceable class="parameter">user</replaceable></term>
+        <listitem>
+          <para>Setuid
+            to <replaceable class="parameter">user</replaceable> after completing
+            privileged operations, such as creating sockets that
+            listen on privileged ports.
+          </para>
+          <note>
+            <para>
+              On Linux, <command>named</command> uses the kernel's
+                        capability mechanism to drop all root privileges
+              except the ability to <function>bind(2)</function> to
+              a
+              privileged port and set process resource limits.
+              Unfortunately, this means that the <option>-u</option>
+              option only works when <command>named</command> is
+              run
+              on kernel 2.2.18 or later, or kernel 2.3.99-pre3 or
+              later, since previous kernels did not allow privileges
+              to be retained after <function>setuid(2)</function>.
+            </para>
+          </note>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>-v</term>
+        <listitem>
+          <para>
+            Report the version number and exit.
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>-V</term>
+        <listitem>
+          <para>
+            Report the version number and build options, and exit.
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>-X <replaceable class="parameter">lock-file</replaceable></term>
+        <listitem>
+          <para>
+            Acquire a lock on the specified file at runtime; this
+            helps to prevent duplicate <command>named</command> instances
+            from running simultaneously.
+            Use of this option overrides the <command>lock-file</command>
+            option in <filename>named.conf</filename>.
+            If set to <literal>none</literal>, the lock file check
+            is disabled.
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>-x <replaceable class="parameter">cache-file</replaceable></term>
+        <listitem>
+          <para>
+            Load data from <replaceable class="parameter">cache-file</replaceable> into the
+            cache of the default view.
+          </para>
+          <warning>
+            <para>
+              This option must not be used.  It is only of interest
+              to BIND 9 developers and may be removed or changed in a
+              future release.
+            </para>
+          </warning>
+        </listitem>
+      </varlistentry>
+
+    </variablelist>
+
+  </refsection>
+
+  <refsection><info><title>SIGNALS</title></info>
+
+    <para>
+      In routine operation, signals should not be used to control
+      the nameserver; <command>rndc</command> should be used
+      instead.
+    </para>
+
+    <variablelist>
+
+      <varlistentry>
+        <term>SIGHUP</term>
+        <listitem>
+          <para>
+            Force a reload of the server.
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>SIGINT, SIGTERM</term>
+        <listitem>
+          <para>
+            Shut down the server.
+          </para>
+        </listitem>
+      </varlistentry>
+
+    </variablelist>
+
+    <para>
+      The result of sending any other signals to the server is undefined.
+    </para>
+
+  </refsection>
+
+  <refsection><info><title>CONFIGURATION</title></info>
+
+    <para>
+      The <command>named</command> configuration file is too complex
+      to describe in detail here.  A complete description is provided
+      in the
+      <citetitle>BIND 9 Administrator Reference Manual</citetitle>.
+    </para>
+
+    <para>
+      <command>named</command> inherits the <function>umask</function>
+      (file creation mode mask) from the parent process. If files
+      created by <command>named</command>, such as journal files,
+      need to have custom permissions, the <function>umask</function>
+      should be set explicitly in the script used to start the
+      <command>named</command> process.
+    </para>
+
+  </refsection>
+
+  <refsection><info><title>FILES</title></info>
+
+
+    <variablelist>
+
+      <varlistentry>
+        <term><filename>/etc/named.conf</filename></term>
+        <listitem>
+          <para>
+            The default configuration file.
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><filename>/var/run/named/named.pid</filename></term>
+        <listitem>
+          <para>
+            The default process-id file.
+          </para>
+        </listitem>
+      </varlistentry>
+
+    </variablelist>
+
+  </refsection>
+
+  <refsection><info><title>SEE ALSO</title></info>
+
+    <para><citetitle>RFC 1033</citetitle>,
+      <citetitle>RFC 1034</citetitle>,
+      <citetitle>RFC 1035</citetitle>,
+      <citerefentry>
+        <refentrytitle>named-checkconf</refentrytitle>
+        <manvolnum>8</manvolnum>
+      </citerefentry>,
+      <citerefentry>
+        <refentrytitle>named-checkzone</refentrytitle>
+        <manvolnum>8</manvolnum>
+      </citerefentry>,
+      <citerefentry>
+        <refentrytitle>rndc</refentrytitle>
+        <manvolnum>8</manvolnum>
+      </citerefentry>,
+      <citerefentry>
+        <refentrytitle>named.conf</refentrytitle>
+        <manvolnum>5</manvolnum>
+      </citerefentry>,
+      <citetitle>BIND 9 Administrator Reference Manual</citetitle>.
+    </para>
+  </refsection>
+
+</refentry>

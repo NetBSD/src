@@ -1,0 +1,303 @@
+.\"	$NetBSD: dnssec-keymgr.8,v 1.1.1.1 2018/08/12 12:07:40 christos Exp $
+.\"
+.\" Copyright (C) 2016-2018 Internet Systems Consortium, Inc. ("ISC")
+.\" 
+.\" This Source Code Form is subject to the terms of the Mozilla Public
+.\" License, v. 2.0. If a copy of the MPL was not distributed with this
+.\" file, You can obtain one at http://mozilla.org/MPL/2.0/.
+.\"
+.hy 0
+.ad l
+'\" t
+.\"     Title: dnssec-keymgr
+.\"    Author: 
+.\" Generator: DocBook XSL Stylesheets v1.78.1 <http://docbook.sf.net/>
+.\"      Date: 2016-06-03
+.\"    Manual: BIND9
+.\"    Source: ISC
+.\"  Language: English
+.\"
+.TH "DNSSEC\-KEYMGR" "8" "2016\-06\-03" "ISC" "BIND9"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "NAME"
+dnssec-keymgr \- Ensures correct DNSKEY coverage for a zone based on a defined policy
+.SH "SYNOPSIS"
+.HP \w'\fBdnssec\-keymgr\fR\ 'u
+\fBdnssec\-keymgr\fR [\fB\-K\ \fR\fB\fIdirectory\fR\fR] [\fB\-c\ \fR\fB\fIfile\fR\fR] [\fB\-f\fR] [\fB\-k\fR] [\fB\-q\fR] [\fB\-v\fR] [\fB\-z\fR] [\fB\-g\ \fR\fB\fIpath\fR\fR] [\fB\-r\ \fR\fB\fIpath\fR\fR] [\fB\-s\ \fR\fB\fIpath\fR\fR] [zone...]
+.SH "DESCRIPTION"
+.PP
+\fBdnssec\-keymgr\fR
+is a high level Python wrapper to facilitate the key rollover process for zones handled by BIND\&. It uses the BIND commands for manipulating DNSSEC key metadata:
+\fBdnssec\-keygen\fR
+and
+\fBdnssec\-settime\fR\&.
+.PP
+DNSSEC policy can be read from a configuration file (default
+/etc/dnssec\-policy\&.conf), from which the key parameters, publication and rollover schedule, and desired coverage duration for any given zone can be determined\&. This file may be used to define individual DNSSEC policies on a per\-zone basis, or to set a default policy used for all zones\&.
+.PP
+When
+\fBdnssec\-keymgr\fR
+runs, it examines the DNSSEC keys for one or more zones, comparing their timing metadata against the policies for those zones\&. If key settings do not conform to the DNSSEC policy (for example, because the policy has been changed), they are automatically corrected\&.
+.PP
+A zone policy can specify a duration for which we want to ensure the key correctness (\fBcoverage\fR)\&. It can also specify a rollover period (\fBroll\-period\fR)\&. If policy indicates that a key should roll over before the coverage period ends, then a successor key will automatically be created and added to the end of the key series\&.
+.PP
+If zones are specified on the command line,
+\fBdnssec\-keymgr\fR
+will examine only those zones\&. If a specified zone does not already have keys in place, then keys will be generated for it according to policy\&.
+.PP
+If zones are
+\fInot\fR
+specified on the command line, then
+\fBdnssec\-keymgr\fR
+will search the key directory (either the current working directory or the directory set by the
+\fB\-K\fR
+option), and check the keys for all the zones represented in the directory\&.
+.PP
+It is expected that this tool will be run automatically and unattended (for example, by
+\fBcron\fR)\&.
+.SH "OPTIONS"
+.PP
+\-c \fIfile\fR
+.RS 4
+If
+\fB\-c\fR
+is specified, then the DNSSEC policy is read from
+\fBfile\fR\&. (If not specified, then the policy is read from
+/etc/dnssec\-policy\&.conf; if that file doesn\*(Aqt exist, a built\-in global default policy is used\&.)
+.RE
+.PP
+\-f
+.RS 4
+Force: allow updating of key events even if they are already in the past\&. This is not recommended for use with zones in which keys have already been published\&. However, if a set of keys has been generated all of which have publication and activation dates in the past, but the keys have not been published in a zone as yet, then this option can be used to clean them up and turn them into a proper series of keys with appropriate rollover intervals\&.
+.RE
+.PP
+\-g \fIkeygen\-path\fR
+.RS 4
+Specifies a path to a
+\fBdnssec\-keygen\fR
+binary\&. Used for testing\&. See also the
+\fB\-s\fR
+option\&.
+.RE
+.PP
+\-h
+.RS 4
+Print the
+\fBdnssec\-keymgr\fR
+help summary and exit\&.
+.RE
+.PP
+\-K \fIdirectory\fR
+.RS 4
+Sets the directory in which keys can be found\&. Defaults to the current working directory\&.
+.RE
+.PP
+\-k
+.RS 4
+Only apply policies to KSK keys\&. See also the
+\fB\-z\fR
+option\&.
+.RE
+.PP
+\-q
+.RS 4
+Quiet: suppress printing of
+\fBdnssec\-keygen\fR
+and
+\fBdnssec\-settime\fR\&.
+.RE
+.PP
+\-r \fIrandomdev\fR
+.RS 4
+Specifies a path to a file containing random data\&. This is passed to the
+\fBdnssec\-keygen\fR
+binary using its
+\fB\-r\fR
+option\&.
+.RE
+.PP
+\-s \fIsettime\-path\fR
+.RS 4
+Specifies a path to a
+\fBdnssec\-settime\fR
+binary\&. Used for testing\&. See also the
+\fB\-g\fR
+option\&.
+.RE
+.PP
+\-v
+.RS 4
+Print the
+\fBdnssec\-keymgr\fR
+version and exit\&.
+.RE
+.PP
+\-z
+.RS 4
+Only apply policies to ZSK keys\&. See also the
+\fB\-k\fR
+option\&.
+.RE
+.SH "POLICY CONFIGURATION"
+.PP
+The
+dnssec\-policy\&.conf
+file can specify three kinds of policies:
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+\fIPolicy classes\fR
+(\fBpolicy \fR\fB\fIname\fR\fR\fB { \&.\&.\&. };\fR) can be inherited by zone policies or other policy classes; these can be used to create sets of different security profiles\&. For example, a policy class
+\fBnormal\fR
+might specify 1024\-bit key sizes, but a class
+\fBextra\fR
+might specify 2048 bits instead;
+\fBextra\fR
+would be used for zones that had unusually high security needs\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+Algorithm policies: (\fBalgorithm\-policy \fR\fB\fIalgorithm\fR\fR\fB { \&.\&.\&. };\fR
+) override default per\-algorithm settings\&. For example, by default, RSASHA256 keys use 2048\-bit key sizes for both KSK and ZSK\&. This can be modified using
+\fBalgorithm\-policy\fR, and the new key sizes would then be used for any key of type RSASHA256\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+Zone policies: (\fBzone \fR\fB\fIname\fR\fR\fB { \&.\&.\&. };\fR
+) set policy for a single zone by name\&. A zone policy can inherit a policy class by including a
+\fBpolicy\fR
+option\&. Zone names beginning with digits (i\&.e\&., 0\-9) must be quoted\&.
+.RE
+.PP
+Options that can be specified in policies:
+.PP
+\fBalgorithm\fR
+.RS 4
+The key algorithm\&. If no policy is defined, the default is RSASHA256\&.
+.RE
+.PP
+\fBcoverage\fR
+.RS 4
+The length of time to ensure that keys will be correct; no action will be taken to create new keys to be activated after this time\&. This can be represented as a number of seconds, or as a duration using human\-readable units (examples: "1y" or "6 months")\&. A default value for this option can be set in algorithm policies as well as in policy classes or zone policies\&. If no policy is configured, the default is six months\&.
+.RE
+.PP
+\fBdirectory\fR
+.RS 4
+Specifies the directory in which keys should be stored\&.
+.RE
+.PP
+\fBkey\-size\fR
+.RS 4
+Specifies the number of bits to use in creating keys\&. Takes two arguments: keytype (eihter "zsk" or "ksk") and size\&. A default value for this option can be set in algorithm policies as well as in policy classes or zone policies\&. If no policy is configured, the default is 1024 bits for DSA keys and 2048 for RSA\&.
+.RE
+.PP
+\fBkeyttl\fR
+.RS 4
+The key TTL\&. If no policy is defined, the default is one hour\&.
+.RE
+.PP
+\fBpost\-publish\fR
+.RS 4
+How long after inactivation a key should be deleted from the zone\&. Note: If
+\fBroll\-period\fR
+is not set, this value is ignored\&. Takes two arguments: keytype (eihter "zsk" or "ksk") and a duration\&. A default value for this option can be set in algorithm policies as well as in policy classes or zone policies\&. The default is one month\&.
+.RE
+.PP
+\fBpre\-publish\fR
+.RS 4
+How long before activation a key should be published\&. Note: If
+\fBroll\-period\fR
+is not set, this value is ignored\&. Takes two arguments: keytype (either "zsk" or "ksk") and a duration\&. A default value for this option can be set in algorithm policies as well as in policy classes or zone policies\&. The default is one month\&.
+.RE
+.PP
+\fBroll\-period\fR
+.RS 4
+How frequently keys should be rolled over\&. Takes two arguments: keytype (eihter "zsk" or "ksk") and a duration\&. A default value for this option can be set in algorithm policies as well as in policy classes or zone policies\&. If no policy is configured, the default is one year for ZSK\*(Aqs\&. KSK\*(Aqs do not roll over by default\&.
+.RE
+.PP
+\fBstandby\fR
+.RS 4
+Not yet implemented\&.
+.RE
+.SH "REMAINING WORK"
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+Enable scheduling of KSK rollovers using the
+\fB\-P sync\fR
+and
+\fB\-D sync\fR
+options to
+\fBdnssec\-keygen\fR
+and
+\fBdnssec\-settime\fR\&. Check the parent zone (as in
+\fBdnssec\-checkds\fR) to determine when it\*(Aqs safe for the key to roll\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+Allow configuration of standby keys and use of the REVOKE bit, for keys that use RFC 5011 semantics\&.
+.RE
+.SH "SEE ALSO"
+.PP
+\fBdnssec-coverage\fR(8),
+\fBdnssec-keygen\fR(8),
+\fBdnssec-settime\fR(8),
+\fBdnssec-checkds\fR(8)
+.SH "AUTHOR"
+.PP
+\fBInternet Systems Consortium, Inc\&.\fR
+.SH "COPYRIGHT"
+.br
+Copyright \(co 2016-2018 Internet Systems Consortium, Inc. ("ISC")
+.br

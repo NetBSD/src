@@ -1,0 +1,27 @@
+; Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+;
+; This Source Code Form is subject to the terms of the Mozilla Public
+; License, v. 2.0. If a copy of the MPL was not distributed with this
+; file, You can obtain one at http://mozilla.org/MPL/2.0/.
+;
+; See the COPYRIGHT file distributed with this work for additional
+; information regarding copyright ownership.
+
+$TTL 3600
+@		SOA	. . 0 0 0 2419200 3600	; 28 day expire
+@		NS	.
+data		A	1.2.3.4
+dname		DNAME	data
+longttl 2419200 A	1.2.3.4
+sub.dname	TXT	sub.dname
+sub.empty	TXT	sub.empty
+sub		NS	ns.sub
+ns.sub  	A	1.2.3.4
+ns.sub  	AAAA	2002::1.2.3.4
+ns.sub		WKS	1.2.3.4 udp domain
+other.sub	TXT	other.sub
+secure		NS	secure
+secure		DS	1312 50 100 96EEB2FFD9B00CD4694E78278B5EFDAB0A80446567B69F634DA078F0
+secure  	A	1.2.3.4
+secure  	AAAA	2002::1.2.3.4
+out-of-zone.	A	1.2.3.4
