@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1607 2018/08/08 21:17:46 maya Exp $
+# $NetBSD: mi,v 1.1608 2018/08/12 17:11:55 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2694,7 +2694,7 @@
 ./usr/share/man/cat8/lvresize.0			man-lvm-catman		lvm,.cat
 ./usr/share/man/cat8/lvs.0			man-lvm-catman		lvm,.cat
 ./usr/share/man/cat8/lvscan.0			man-lvm-catman		lvm,.cat
-./usr/share/man/cat8/lwresd.0			man-bind-catman		.cat
+./usr/share/man/cat8/lwresd.0			man-obsolete		obsolete
 ./usr/share/man/cat8/mac68k/MAKEDEV.0		man-obsolete		obsolete
 ./usr/share/man/cat8/mac68k/boot.0		man-sys-catman		.cat
 ./usr/share/man/cat8/mac68k/makedev.0		man-obsolete		obsolete
@@ -5651,7 +5651,7 @@
 ./usr/share/man/html8/lvresize.html		man-lvm-htmlman		lvm,html
 ./usr/share/man/html8/lvs.html			man-lvm-htmlman		lvm,html
 ./usr/share/man/html8/lvscan.html		man-lvm-htmlman		lvm,html
-./usr/share/man/html8/lwresd.html		man-bind-htmlman	html
+./usr/share/man/html8/lwresd.html		man-obsolete		obsolete
 ./usr/share/man/html8/mac68k/boot.html		man-sys-htmlman		html
 ./usr/share/man/html8/macppc/boot.html		man-sys-htmlman		html
 ./usr/share/man/html8/macppc/ofwboot.elf.html	man-sysutil-htmlman	html
@@ -8766,7 +8766,7 @@
 ./usr/share/man/man8/lvresize.8			man-lvm-man		lvm,.man
 ./usr/share/man/man8/lvs.8			man-lvm-man		lvm,.man
 ./usr/share/man/man8/lvscan.8			man-lvm-man		lvm,.man
-./usr/share/man/man8/lwresd.8			man-bind-man		.man
+./usr/share/man/man8/lwresd.8			man-obsolete		obsolete
 ./usr/share/man/man8/mac68k/MAKEDEV.8		man-obsolete		obsolete
 ./usr/share/man/man8/mac68k/boot.8		man-sys-man		.man
 ./usr/share/man/man8/mac68k/makedev.8		man-obsolete		obsolete
