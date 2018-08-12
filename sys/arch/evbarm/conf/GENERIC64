@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC64,v 1.29 2018/07/15 18:00:14 jmcneill Exp $
+#	$NetBSD: GENERIC64,v 1.30 2018/08/12 16:49:25 jmcneill Exp $
 #
 #	GENERIC ARM (aarch64) kernel
 #
@@ -22,6 +22,13 @@ makeoptions	DTS="
 	rk3328-evb.dts
 	rk3328-roc-cc.dts
 	rk3328-rock64.dts
+
+	rk3399-evb.dts
+	rk3399-firefly.dts
+	rk3399-gru-kevin.dts
+	rk3399-puma-haikou.dts
+	rk3399-sapphire-excavator.dts
+	rk3399-sapphire.dts
 
 	sun50i-a64-bananapi-m64.dts
 	sun50i-a64-nanopi-a64.dts
@@ -52,6 +59,7 @@ options 	CPU_CORTEXA53
 options 	CPU_CORTEXA57
 options 	SOC_BCM2837
 options 	SOC_RK3328
+options 	SOC_RK3399
 options 	SOC_TEGRA210
 options 	SOC_SUN50I_A64
 options 	SOC_SUN50I_H5
@@ -119,8 +127,9 @@ watchdog*	at fdt?			# Broadcom BCM283x watchdog
 # Interrupt controller
 bcmicu*		at fdt? pass 1		# Broadcom BCM283x ICU
 tegralic*	at fdt? pass 1		# NVIDIA Tegra LIC
-gic*		at fdt? pass 1		# ARM GIC
+gic*		at fdt? pass 1		# ARM GICv2
 armgic0		at gic?
+gicvthree*	at fdt? pass 1		# ARM GICv3
 sunxinmi*	at fdt? pass 2		# Allwinner NMI / R_INTC
 
 # Memory controller
@@ -168,7 +177,7 @@ gpio*		at gpiobus?
 sunxipwm*	at fdt? pass 3		# Allwinner PWM
 
 # MPIO / Pinmux
-rkiomux*	at fdt?	pass 2		# Rockchip IOMUX
+rkiomux*	at fdt?	pass 3		# Rockchip IOMUX
 tegrapinmux*	at fdt?			# NVIDIA Tegra MPIO
 
 # XUSB PADCTL
