@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.3 2018/06/22 20:48:43 christos Exp $
+# $NetBSD: Makefile.inc,v 1.4 2018/08/12 15:39:22 christos Exp $
 
 WARNS?=	1	# XXX -Wshadow -Wcast-qual -Wsign-compare
 
@@ -38,7 +38,7 @@ LDADD+= ${OMOBJDIR}/libomapi.a
 LDADD+=-Wl,-Bstatic
 .endif
 LDADD+= -lirs -lisccfg -ldns -lisc
-LDADD+=-lpthread
+LDADD+=-lpthread -lz
 .if (${MKKERBEROS} != "no")
 LDADD+= -lgssapi -lheimntlm ${LIBKRB5_LDADD} ${LIBKRB5_STATIC_LDADD}
 DPADD+= ${LIBKRB5_DPADD} ${LIBHEIMNTLM} ${LIBGSSAPI} ${LIBKRB5_STATIC_DPADD}
@@ -54,4 +54,4 @@ LDADD+=-Wl,-Bdynamic
 DPADD+= ${COBJDIR}/libdhcp.a
 DPADD+= ${OMOBJDIR}/libomapi.a
 DPADD+=	${LIBDNS} ${LIBISC}
-DPADD+= ${LIBPTHREAD}
+DPADD+= ${LIBPTHREAD} ${LIBZ}
