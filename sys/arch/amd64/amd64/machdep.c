@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.309 2018/07/26 09:29:08 maxv Exp $	*/
+/*	$NetBSD: machdep.c,v 1.310 2018/08/12 08:17:50 maxv Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.309 2018/07/26 09:29:08 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.310 2018/08/12 08:17:50 maxv Exp $");
 
 #include "opt_modular.h"
 #include "opt_user_ldt.h"
@@ -263,6 +263,9 @@ static struct vm_map module_map_store;
 extern struct vm_map *module_map;
 extern struct bootspace bootspace;
 extern struct slotspace slotspace;
+
+vaddr_t vm_min_kernel_address __read_mostly = VM_MIN_KERNEL_ADDRESS_DEFAULT;
+vaddr_t vm_max_kernel_address __read_mostly = VM_MAX_KERNEL_ADDRESS_DEFAULT;
 
 struct vm_map *phys_map = NULL;
 
@@ -1605,12 +1608,14 @@ init_slotspace(void)
 	slotspace.area[SLAREA_PTE].active = true;
 	slotspace.area[SLAREA_PTE].dropmax = false;
 
+#ifdef XEN
 	/* Main. */
 	slotspace.area[SLAREA_MAIN].sslot = PDIR_SLOT_KERN;
 	slotspace.area[SLAREA_MAIN].mslot = NKL4_MAX_ENTRIES;
 	slotspace.area[SLAREA_MAIN].nslot = 0 /* variable */;
 	slotspace.area[SLAREA_MAIN].active = true;
 	slotspace.area[SLAREA_MAIN].dropmax = false;
+#endif
 
 #ifdef __HAVE_PCPU_AREA
 	/* Per-CPU. */
@@ -1636,6 +1641,20 @@ init_slotspace(void)
 	slotspace.area[SLAREA_KERN].nslot = 1;
 	slotspace.area[SLAREA_KERN].active = true;
 	slotspace.area[SLAREA_KERN].dropmax = false;
+
+#ifndef XEN
+	vaddr_t slotspace_rand(int, size_t, size_t);
+	vaddr_t va;
+
+	/* Main. */
+	slotspace.area[SLAREA_MAIN].mslot = NKL4_MAX_ENTRIES+1;
+	slotspace.area[SLAREA_MAIN].dropmax = false;
+	va = slotspace_rand(SLAREA_MAIN, NKL4_MAX_ENTRIES * NBPD_L4,
+	    NBPD_L4);
+
+	vm_min_kernel_address = va;
+	vm_max_kernel_address = va + NKL4_MAX_ENTRIES * NBPD_L4;
+#endif
 }
 
 void
