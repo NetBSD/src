@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.261 2018/08/06 08:05:32 martin Exp $
+# $NetBSD: mi,v 1.262 2018/08/12 17:11:55 christos Exp $
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib,compatfile
@@ -97,7 +97,7 @@
 ./usr/lib/libldap_r_g.a				comp-c-debuglib		debuglib,ldap,compatfile
 ./usr/lib/liblsan_g.a				comp-c-debuglib		debuglib,compatfile,gcc
 ./usr/lib/liblua_g.a				comp-c-debuglib		debuglib,compatfile
-./usr/lib/liblwres_g.a				comp-c-debuglib		debuglib,compatfile
+./usr/lib/liblwres_g.a				comp-obsolete		obsolete
 ./usr/lib/liblzf_g.a				comp-c-debuglib		debuglib,compatfile
 ./usr/lib/liblzma_g.a				comp-c-debuglib		debuglib,compatfile
 ./usr/lib/libm_g.a				comp-c-debuglib		debuglib,compatfile
@@ -109,6 +109,7 @@
 ./usr/lib/libnetpgp_g.a				comp-c-debuglib		debuglib,compatfile
 ./usr/lib/libnetpgpverify_g.a			comp-c-debuglib		debuglib,compatfile
 ./usr/lib/libnpf_g.a				comp-c-debuglib		debuglib,compatfile
+./usr/lib/libns_g.a				comp-c-debuglib		debuglib,compatfile
 ./usr/lib/libnvpair_g.a				comp-c-debuglib		debuglib,zfs,compatfile
 ./usr/lib/libobjc_g.a				comp-c-debuglib		debuglib,gcc,compatfile
 ./usr/lib/libopcodes_g.a			comp-c-debuglib		debuglib,compatfile,binutils
