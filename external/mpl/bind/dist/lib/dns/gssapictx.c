@@ -1,4 +1,4 @@
-/*	$NetBSD: gssapictx.c,v 1.1.1.1 2018/08/12 12:08:10 christos Exp $	*/
+/*	$NetBSD: gssapictx.c,v 1.2 2018/08/12 13:02:35 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -98,20 +98,20 @@ static gss_OID_set_desc mech_oid_set = {
 	do { \
 		(gb).length = (r).length; \
 		(gb).value = (r).base; \
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 #define GBUFFER_TO_REGION(gb, r) \
 	do { \
 	  (r).length = (unsigned int)(gb).length; \
 		(r).base = (gb).value; \
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 
 #define RETERR(x) do { \
 	result = (x); \
 	if (result != ISC_R_SUCCESS) \
 		goto out; \
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 #ifdef GSSAPI
 static inline void

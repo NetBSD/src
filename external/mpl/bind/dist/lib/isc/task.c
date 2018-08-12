@@ -1,4 +1,4 @@
-/*	$NetBSD: task.c,v 1.1.1.1 2018/08/12 12:08:24 christos Exp $	*/
+/*	$NetBSD: task.c,v 1.2 2018/08/12 13:02:37 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -1819,7 +1819,7 @@ isc_task_exiting(isc_task_t *t) {
 
 
 #ifdef HAVE_LIBXML2
-#define TRY0(a) do { xmlrc = (a); if (xmlrc < 0) goto error; } while(0)
+#define TRY0(a) do { xmlrc = (a); if (xmlrc < 0) goto error; } while(/*CONSTCOND*/0)
 int
 isc_taskmgr_renderxml(isc_taskmgr_t *mgr0, xmlTextWriterPtr writer) {
 	isc__taskmgr_t *mgr = (isc__taskmgr_t *)mgr0;
@@ -1927,7 +1927,7 @@ isc_taskmgr_renderxml(isc_taskmgr_t *mgr0, xmlTextWriterPtr writer) {
 		result = ISC_R_NOMEMORY;\
 		goto error;\
 	} \
-} while(0)
+} while(/*CONSTCOND*/0)
 
 isc_result_t
 isc_taskmgr_renderjson(isc_taskmgr_t *mgr0, json_object *tasks) {

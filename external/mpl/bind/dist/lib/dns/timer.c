@@ -1,4 +1,4 @@
-/*	$NetBSD: timer.c,v 1.1.1.1 2018/08/12 12:08:14 christos Exp $	*/
+/*	$NetBSD: timer.c,v 1.2 2018/08/12 13:02:35 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -26,7 +26,7 @@
 #define CHECK(op) \
 	do { result = (op);					\
 		if (result != ISC_R_SUCCESS) goto failure;	\
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 isc_result_t
 dns_timer_setidle(isc_timer_t *timer, unsigned int maxtime,

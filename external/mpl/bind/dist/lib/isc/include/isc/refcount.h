@@ -1,4 +1,4 @@
-/*	$NetBSD: refcount.h,v 1.1.1.1 2018/08/12 12:08:26 christos Exp $	*/
+/*	$NetBSD: refcount.h,v 1.2 2018/08/12 13:02:38 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -161,7 +161,7 @@ typedef struct isc_refcount {
 		prev = isc_atomic_xadd(&(rp)->refs, 1);		\
 		if (_tmp != NULL)				\
 			*_tmp = prev + 1;			\
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 #define isc_refcount_increment(rp, tp)				\
 	do {							\
@@ -171,7 +171,7 @@ typedef struct isc_refcount {
 		ISC_REQUIRE(prev > 0);				\
 		if (_tmp != NULL)				\
 			*_tmp = prev + 1;			\
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 #define isc_refcount_decrement(rp, tp)				\
 	do {							\
@@ -181,7 +181,7 @@ typedef struct isc_refcount {
 		ISC_REQUIRE(prev > 0);				\
 		if (_tmp != NULL)				\
 			*_tmp = prev - 1;			\
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 #endif /* ISC_REFCOUNT_HAVESTDATOMIC */
 
@@ -199,7 +199,7 @@ typedef struct isc_refcount {
 		ISC_REQUIRE((rp)->refs == 0);				\
 		_result = isc_mutex_destroy(&(rp)->lock);		\
 		ISC_ERROR_RUNTIMECHECK(_result == ISC_R_SUCCESS);	\
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 #define isc_refcount_current(rp) ((unsigned int)((rp)->refs))
 
@@ -218,7 +218,7 @@ typedef struct isc_refcount {
 			*_tmp = ((rp)->refs);				\
 		_result = isc_mutex_unlock(&(rp)->lock);		\
 		ISC_ERROR_RUNTIMECHECK(_result == ISC_R_SUCCESS);	\
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 #define isc_refcount_increment(rp, tp)					\
 	do {								\
@@ -232,7 +232,7 @@ typedef struct isc_refcount {
 			*_tmp = ((rp)->refs);				\
 		_result = isc_mutex_unlock(&(rp)->lock);		\
 		ISC_ERROR_RUNTIMECHECK(_result == ISC_R_SUCCESS);	\
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 /*%
  * Decrements the reference count, returning the new value in 'tp'
@@ -250,7 +250,7 @@ typedef struct isc_refcount {
 			*_tmp = ((rp)->refs);				\
 		_result = isc_mutex_unlock(&(rp)->lock);		\
 		ISC_ERROR_RUNTIMECHECK(_result == ISC_R_SUCCESS);	\
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 #endif /* (defined(ISC_PLATFORM_HAVESTDATOMIC) && defined(ATOMIC_INT_LOCK_FREE)) || defined(ISC_PLATFORM_HAVEXADD) */
 #else  /* ISC_PLATFORM_USETHREADS */
@@ -268,7 +268,7 @@ typedef struct isc_refcount {
 		int _n = ++(rp)->refs;					\
 		if (_tmp != NULL)					\
 			*_tmp = _n;					\
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 #define isc_refcount_increment(rp, tp)					\
 	do {								\
@@ -278,7 +278,7 @@ typedef struct isc_refcount {
 		_n = ++(rp)->refs;					\
 		if (_tmp != NULL)					\
 			*_tmp = _n;					\
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 #define isc_refcount_decrement(rp, tp)					\
 	do {								\
@@ -288,7 +288,7 @@ typedef struct isc_refcount {
 		_n = --(rp)->refs;					\
 		if (_tmp != NULL)					\
 			*_tmp = _n;					\
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 #endif /* ISC_PLATFORM_USETHREADS */
 

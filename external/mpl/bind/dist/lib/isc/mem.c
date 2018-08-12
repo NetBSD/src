@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.1.1.1 2018/08/12 12:08:23 christos Exp $	*/
+/*	$NetBSD: mem.c,v 1.2 2018/08/12 13:02:37 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -209,13 +209,13 @@ struct isc__mempool {
 		if (ISC_UNLIKELY((isc_mem_debugging & TRACE_OR_RECORD) != 0 && \
 				 b != NULL))				\
 			add_trace_entry(a, b, c, d, e);			\
-	} while (0)
+	} while (/*CONSTCOND*/0)
 #define DELETE_TRACE(a, b, c, d, e)					\
 	do {								\
 		if (ISC_UNLIKELY((isc_mem_debugging & TRACE_OR_RECORD) != 0 && \
 				 b != NULL))				\
 			delete_trace_entry(a, b, c, d, e);		\
-	} while(0)
+	} while (/*CONSTCOND*/0)
 
 static void
 print_active(isc__mem_t *ctx, FILE *out);
@@ -2353,7 +2353,7 @@ typedef struct summarystat {
 } summarystat_t;
 
 #ifdef HAVE_LIBXML2
-#define TRY0(a) do { xmlrc = (a); if (xmlrc < 0) goto error; } while(0)
+#define TRY0(a) do { xmlrc = (a); if (xmlrc < 0) goto error; } while(/*CONSTCOND*/0)
 static int
 xml_renderctx(isc__mem_t *ctx, summarystat_t *summary,
 	      xmlTextWriterPtr writer)
@@ -2542,7 +2542,7 @@ isc_mem_renderxml(xmlTextWriterPtr writer) {
 		result = ISC_R_NOMEMORY;\
 		goto error;\
 	} \
-} while(0)
+} while(/*CONSTCOND*/0)
 
 static isc_result_t
 json_renderctx(isc__mem_t *ctx, summarystat_t *summary, json_object *array) {

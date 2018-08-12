@@ -1,4 +1,4 @@
-/*	$NetBSD: keytable.c,v 1.1.1.1 2018/08/12 12:08:10 christos Exp $	*/
+/*	$NetBSD: keytable.c,v 1.2 2018/08/12 13:02:35 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -386,7 +386,7 @@ dns_keytable_deletekeynode(dns_keytable_t *keytable, dst_key_t *dstkey) {
 		goto finish;
 	}
 
-	kprev = (dns_keynode_t **) &node->data;
+	kprev = (dns_keynode_t **)(void *)&node->data;
 	while (knode != NULL) {
 		if (knode->key != NULL &&
 		    dst_key_compare(knode->key, dstkey) == ISC_TRUE)

@@ -1,4 +1,4 @@
-/*	$NetBSD: dig.h,v 1.1.1.1 2018/08/12 12:07:09 christos Exp $	*/
+/*	$NetBSD: dig.h,v 1.2 2018/08/12 13:02:27 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -267,7 +267,7 @@ extern isc_boolean_t free_now;
 extern isc_boolean_t debugging, debugtiming, memdebugging;
 extern isc_boolean_t keep_open;
 
-extern char *progname;
+extern const char *progname;
 extern int tries;
 extern int fatalexit;
 extern isc_boolean_t verbose;

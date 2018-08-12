@@ -1,4 +1,4 @@
-/*	$NetBSD: named-checkconf.c,v 1.1.1.1 2018/08/12 12:07:13 christos Exp $	*/
+/*	$NetBSD: named-checkconf.c,v 1.2 2018/08/12 13:02:26 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -55,7 +55,7 @@ isc_log_t *logc = NULL;
 		result = (r); \
 		if (result != ISC_R_SUCCESS) \
 			goto cleanup; \
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 /*% usage */
 ISC_PLATFORM_NORETURN_PRE static void
@@ -538,6 +538,7 @@ main(int argc, char **argv) {
 	isc_boolean_t print = ISC_FALSE;
 	unsigned int flags = 0;
 
+	isc__mem_register();
 	isc_commandline_errprint = ISC_FALSE;
 
 	/*

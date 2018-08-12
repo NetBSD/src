@@ -1,4 +1,4 @@
-/*	$NetBSD: dlz_mysqldyn_mod.c,v 1.1.1.1 2018/08/12 12:07:50 christos Exp $	*/
+/*	$NetBSD: dlz_mysqldyn_mod.c,v 1.2 2018/08/12 13:02:32 christos Exp $	*/
 
 /*
  * Copyright (C) 2014 Maui Systems Ltd, Scotland, contact@maui-systems.co.uk.

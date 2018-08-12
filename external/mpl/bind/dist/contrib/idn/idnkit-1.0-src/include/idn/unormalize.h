@@ -1,4 +1,4 @@
-/*	$NetBSD: unormalize.h,v 1.1.1.1 2018/08/12 12:07:47 christos Exp $	*/
+/*	$NetBSD: unormalize.h,v 1.2 2018/08/12 13:02:32 christos Exp $	*/
 
 /* Id: unormalize.h,v 1.1 2003/06/04 00:25:44 marka Exp  */
 /*

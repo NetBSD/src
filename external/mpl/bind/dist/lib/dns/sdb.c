@@ -1,4 +1,4 @@
-/*	$NetBSD: sdb.c,v 1.1.1.1 2018/08/12 12:08:14 christos Exp $	*/
+/*	$NetBSD: sdb.c,v 1.2 2018/08/12 13:02:35 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -124,14 +124,14 @@ typedef struct sdb_rdatasetiter {
 		unsigned int flags = sdb->implementation->flags;	\
 		if ((flags & DNS_SDBFLAG_THREADSAFE) == 0)		\
 			LOCK(&sdb->implementation->driverlock);		\
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 #define MAYBE_UNLOCK(sdb)						\
 	do {								\
 		unsigned int flags = sdb->implementation->flags;	\
 		if ((flags & DNS_SDBFLAG_THREADSAFE) == 0)		\
 			UNLOCK(&sdb->implementation->driverlock);	\
-	} while (0)
+	} while (/*CONSTCOND*/0)
 #endif
 
 static int dummy;
@@ -662,7 +662,7 @@ createnode(dns_sdb_t *sdb, dns_sdbnode_t **nodep) {
 		return (ISC_R_NOMEMORY);
 
 	node->sdb = NULL;
-	attach((dns_db_t *)sdb, (dns_db_t **)&node->sdb);
+	attach((dns_db_t *)sdb, (dns_db_t **)(void *)&node->sdb);
 	ISC_LIST_INIT(node->lists);
 	ISC_LIST_INIT(node->buffers);
 	ISC_LINK_INIT(node, link);

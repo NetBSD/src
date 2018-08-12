@@ -1,4 +1,4 @@
-/*	$NetBSD: lookup.c,v 1.1.1.1 2018/08/12 12:08:16 christos Exp $	*/
+/*	$NetBSD: lookup.c,v 1.2 2018/08/12 13:02:35 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -338,7 +338,7 @@ lookup_find(dns_lookup_t *lookup, dns_fetchevent_t *event) {
 		lookup->event->result = result;
 		lookup->event->ev_sender = lookup;
 		isc_task_sendanddetach(&lookup->task,
-				       (isc_event_t **)&lookup->event);
+				       (isc_event_t **)(void *)&lookup->event);
 		dns_view_detach(&lookup->view);
 	}
 

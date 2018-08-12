@@ -1,4 +1,4 @@
-/*	$NetBSD: dst_api.c,v 1.1.1.1 2018/08/12 12:08:14 christos Exp $	*/
+/*	$NetBSD: dst_api.c,v 1.2 2018/08/12 13:02:35 christos Exp $	*/
 
 /*
  * Portions Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -118,7 +118,7 @@ static isc_result_t	addsuffix(char *filename, int len,
 		result = (x);			\
 		if (result != ISC_R_SUCCESS)	\
 			goto out;		\
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 #define CHECKALG(alg)				\
 	do {					\
@@ -126,7 +126,7 @@ static isc_result_t	addsuffix(char *filename, int len,
 		_r = algorithm_status(alg);	\
 		if (_r != ISC_R_SUCCESS)	\
 			return (_r);		\
-	} while (0);				\
+	} while (/*CONSTCOND*/0);				\
 
 #if defined(OPENSSL)
 static void *
@@ -155,6 +155,7 @@ dst_lib_init2(isc_mem_t *mctx, isc_entropy_t *ectx,
 	isc_result_t result;
 
 	REQUIRE(mctx != NULL);
+	UNUSED(ectx);
 	REQUIRE(dst_initialized == ISC_FALSE);
 
 #if !defined(OPENSSL) && !defined(PKCS11CRYPTO)
