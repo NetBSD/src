@@ -1,0 +1,53 @@
+# Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+#
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+#
+# See the COPYRIGHT file distributed with this work for additional
+# information regarding copyright ownership.
+
+srcdir =	@srcdir@
+VPATH =		@srcdir@
+top_srcdir =	@top_srcdir@
+
+# Attempt to disable parallel processing.
+.NOTPARALLEL:
+.NO_PARALLEL:
+
+VERSION=@BIND9_VERSION@
+
+@BIND9_MAKE_INCLUDES@
+
+CINCLUDES =	-I. -Iinclude -I../include ${ISC_INCLUDES} ${IRS_INCLUDES}
+CDEFINES =	-DTESTS="\"${top_builddir}/lib/irs/tests/\""
+
+CFGLIBS =	../../isccfg/libisccfg.@A@
+CFGDEPLIBS =	../../isccfg/libisccfg.@A@
+DNSLIBS =	../../dns/libdns.@A@ @DNS_CRYPTO_LIBS@
+DNSDEPLIBS =	../../dns/libdns.@A@
+ISCLIBS =	../../isc/libisc.@A@ @ISC_OPENSSL_LIBS@
+ISCDEPLIBS =	../../isc/libisc.@A@
+IRSLIBS =	../libirs.@A@
+IRSDEPLIBS =	../libirs.@A@
+
+LIBS =		${IRSLIBS} ${CFGLIBS} ${DNSLIBS} ${ISCLIBS} @LIBS@ @ATFLIBS@
+
+OBJS =
+SRCS =		resconf_test.c
+
+SUBDIRS =
+TARGETS =	resconf_test@EXEEXT@
+
+@BIND9_MAKE_RULES@
+
+resconf_test@EXEEXT@: resconf_test.@O@ ${CFGDEPLIBS} ${DNSDEPLIBS} ${IRSDEPLIBS} ${ISCDEPLIBS}
+	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} ${LDFLAGS} -o $@ \
+			resconf_test.@O@ ${LIBS}
+
+unit::
+	sh ${top_builddir}/unit/unittest.sh
+
+clean distclean::
+	rm -f ${TARGETS}
+	rm -f atf.out

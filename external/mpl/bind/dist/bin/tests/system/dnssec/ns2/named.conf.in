@@ -1,0 +1,161 @@
+/*
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
+ */
+
+// NS2
+
+options {
+	query-source address 10.53.0.2;
+	notify-source 10.53.0.2;
+	transfer-source 10.53.0.2;
+	port @PORT@;
+	pid-file "named.pid";
+	listen-on { 10.53.0.2; };
+	listen-on-v6 { none; };
+	recursion no;
+	notify yes;
+	dnssec-enable yes;
+	dnssec-validation yes;
+	notify-delay 1;
+	minimal-responses no;
+};
+
+zone "." {
+	type hint;
+	file "../../common/root.hint";
+};
+
+zone "dlv" {
+	type master;
+	file "dlv.db.signed";
+};
+
+zone "example" {
+	type master;
+	file "example.db.signed";
+	allow-update { any; };
+};
+
+zone "private.secure.example" {
+	type master;
+	file "private.secure.example.db.signed";
+	allow-update { any; };
+};
+
+zone "insecure.secure.example" {
+	type master;
+	file "insecure.secure.example.db";
+	allow-update { any; };
+};
+
+zone "rfc2335.example" {
+	type master;
+	file "rfc2335.example.db";
+};
+
+zone "child.nsec3.example" {
+	type master;
+	file "child.nsec3.example.db";
+	allow-update { none; };
+};
+
+zone "child.optout.example" {
+	type master;
+	file "child.optout.example.db";
+	allow-update { none; };
+};
+
+zone "badparam" {
+	type master;
+	file "badparam.db.bad";
+};
+
+zone "single-nsec3" {
+	type master;
+	file "single-nsec3.db.signed";
+};
+
+zone "algroll" {
+	type master;
+	file "algroll.db.signed";
+};
+
+zone "nsec3chain-test" {
+	type master;
+	file "nsec3chain-test.db.signed";
+	allow-update {any;};
+};
+
+zone "in-addr.arpa" {
+	type master;
+	file "in-addr.arpa.db.signed";
+};
+
+zone "cds.secure" {
+	type master;
+	file "cds.secure.db.signed";
+};
+
+zone "cds-x.secure" {
+	type master;
+	file "cds-x.secure.db.signed";
+};
+
+zone "cds-update.secure" {
+	type master;
+	file "cds-update.secure.db.signed";
+	allow-update { any; };
+};
+
+zone "cds-kskonly.secure" {
+	type master;
+	dnssec-dnskey-kskonly yes;
+	file "cds-kskonly.secure.db.signed";
+	allow-update { any; };
+};
+
+zone "cds-auto.secure" {
+	type master;
+	file "cds-auto.secure.db.signed";
+	auto-dnssec maintain;
+	allow-update { any; };
+};
+
+zone "cdnskey.secure" {
+	type master;
+	file "cdnskey.secure.db.signed";
+};
+
+zone "cdnskey-x.secure" {
+	type master;
+	file "cdnskey-x.secure.db.signed";
+};
+
+zone "cdnskey-update.secure" {
+	type master;
+	file "cdnskey-update.secure.db.signed";
+	allow-update { any; };
+};
+
+zone "cdnskey-kskonly.secure" {
+	type master;
+	dnssec-dnskey-kskonly yes;
+	file "cdnskey-kskonly.secure.db.signed";
+	allow-update { any; };
+};
+
+zone "cdnskey-auto.secure" {
+	type master;
+	file "cdnskey-auto.secure.db.signed";
+	auto-dnssec maintain;
+	allow-update { any; };
+};
+
+include "trusted.conf";

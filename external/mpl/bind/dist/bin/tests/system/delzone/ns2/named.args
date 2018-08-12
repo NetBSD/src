@@ -1,0 +1,1 @@
+-D ns2 -X named.lock -m record,size,mctx -T clienttest -c named.conf -g -U 4

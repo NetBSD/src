@@ -1,0 +1,112 @@
+/*
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
+ */
+
+options {
+	query-source address 10.53.0.1;
+	notify-source 10.53.0.1;
+	transfer-source 10.53.0.1;
+	port @PORT@;
+	pid-file "named.pid";
+	listen-on { 10.53.0.1; };
+	listen-on-v6 { none; };
+	recursion no;
+	notify yes;
+	ixfr-from-differences yes;
+	check-integrity no;
+};
+
+zone "." {
+	type hint;
+	file "../../common/root.hint";
+};
+
+zone "mx-cname-fail" {
+	type master;
+	check-integrity yes;
+	check-mx-cname fail;
+	file "mx-cname.db";
+};
+
+zone "mx-cname-warn" {
+	type master;
+	check-integrity yes;
+	check-mx-cname warn;
+	file "mx-cname.db";
+};
+
+zone "mx-cname-ignore" {
+	type master;
+	check-integrity yes;
+	check-mx-cname ignore;
+	file "mx-cname.db";
+};
+
+zone "no-mx-cname-fail" {
+	type master;
+	check-integrity no;
+	check-mx-cname fail;
+	file "mx-cname.db";
+};
+
+zone "no-mx-cname-warn" {
+	type master;
+	check-integrity no;
+	check-mx-cname warn;
+	file "mx-cname.db";
+};
+
+zone "no-mx-cname-ignore" {
+	type master;
+	check-integrity no;
+	check-mx-cname ignore;
+	file "mx-cname.db";
+};
+
+zone "srv-cname-fail" {
+	type master;
+	check-integrity yes;
+	check-srv-cname fail;
+	file "srv-cname.db";
+};
+
+zone "srv-cname-warn" {
+	type master;
+	check-integrity yes;
+	check-srv-cname warn;
+	file "srv-cname.db";
+};
+
+zone "srv-cname-ignore" {
+	type master;
+	check-integrity yes;
+	check-srv-cname ignore;
+	file "srv-cname.db";
+};
+zone "no-srv-cname-fail" {
+	type master;
+	check-integrity no;
+	check-srv-cname fail;
+	file "srv-cname.db";
+};
+
+zone "no-srv-cname-warn" {
+	type master;
+	check-integrity no;
+	check-srv-cname warn;
+	file "srv-cname.db";
+};
+
+zone "no-srv-cname-ignore" {
+	type master;
+	check-integrity no;
+	check-srv-cname ignore;
+	file "srv-cname.db";
+};

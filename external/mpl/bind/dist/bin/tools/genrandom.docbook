@@ -1,0 +1,110 @@
+<!--
+ - Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ -
+ - This Source Code Form is subject to the terms of the Mozilla Public
+ - License, v. 2.0. If a copy of the MPL was not distributed with this
+ - file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ -
+ - See the COPYRIGHT file distributed with this work for additional
+ - information regarding copyright ownership.
+-->
+
+<!-- Converted by db4-upgrade version 1.0 -->
+<refentry xmlns:db="http://docbook.org/ns/docbook" version="5.0" xml:id="man.genrandom">
+  <info>
+    <date>2011-08-08</date>
+  </info>
+  <refentryinfo>
+    <corpname>ISC</corpname>
+    <corpauthor>Internet Systems Consortium, Inc.</corpauthor>
+  </refentryinfo>
+
+  <refmeta>
+    <refentrytitle><application>genrandom</application></refentrytitle>
+    <manvolnum>8</manvolnum>
+    <refmiscinfo>BIND9</refmiscinfo>
+  </refmeta>
+
+  <refnamediv>
+    <refname><application>genrandom</application></refname>
+    <refpurpose>generate a file containing random data</refpurpose>
+  </refnamediv>
+
+  <docinfo>
+    <copyright>
+      <year>2009</year>
+      <year>2010</year>
+      <year>2011</year>
+      <year>2014</year>
+      <year>2015</year>
+      <year>2016</year>
+      <year>2018</year>
+      <holder>Internet Systems Consortium, Inc. ("ISC")</holder>
+    </copyright>
+  </docinfo>
+
+  <refsynopsisdiv>
+    <cmdsynopsis sepchar=" ">
+      <command>genrandom</command>
+      <arg choice="opt" rep="norepeat"><option>-n <replaceable class="parameter">number</replaceable></option></arg>
+      <arg choice="req" rep="norepeat"><replaceable class="parameter">size</replaceable></arg>
+      <arg choice="req" rep="norepeat"><replaceable class="parameter">filename</replaceable></arg>
+    </cmdsynopsis>
+  </refsynopsisdiv>
+
+  <refsection><info><title>DESCRIPTION</title></info>
+
+    <para>
+      <command>genrandom</command>
+      generates a file or a set of files containing a specified quantity
+      of pseudo-random data, which can be used as a source of entropy for
+      other commands on systems with no random device.
+    </para>
+  </refsection>
+
+  <refsection><info><title>ARGUMENTS</title></info>
+
+    <variablelist>
+      <varlistentry>
+        <term>-n <replaceable class="parameter">number</replaceable></term>
+        <listitem>
+          <para>
+            In place of generating one file, generates <option>number</option>
+            (from 2 to 9) files, appending <option>number</option> to the name.
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>size</term>
+        <listitem>
+          <para>
+            The size of the file, in kilobytes, to generate.
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>filename</term>
+        <listitem>
+          <para>
+            The file name into which random data should be written.
+          </para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+  </refsection>
+
+  <refsection><info><title>SEE ALSO</title></info>
+
+    <para>
+      <citerefentry>
+        <refentrytitle>rand</refentrytitle><manvolnum>3</manvolnum>
+      </citerefentry>,
+      <citerefentry>
+        <refentrytitle>arc4random</refentrytitle><manvolnum>3</manvolnum>
+      </citerefentry>
+    </para>
+  </refsection>
+
+</refentry>

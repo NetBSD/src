@@ -1,0 +1,44 @@
+# Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+#
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+#
+# See the COPYRIGHT file distributed with this work for additional
+# information regarding copyright ownership.
+
+srcdir =	@srcdir@
+VPATH =		@srcdir@
+top_srcdir =	@top_srcdir@
+
+#
+# Only list headers that are to be installed and are not
+# machine generated.  The latter are handled specially in the
+# install target below.
+#
+HEADERS =	context.h dnsconf.h resconf.h types.h version.h
+
+SUBDIRS =
+TARGETS =
+
+@BIND9_MAKE_RULES@
+
+installdirs:
+	$(SHELL) ${top_srcdir}/mkinstalldirs ${DESTDIR}${includedir}/irs
+
+install:: installdirs
+	for i in ${HEADERS}; do \
+		${INSTALL_DATA} ${srcdir}/$$i ${DESTDIR}${includedir}/irs ; \
+	done
+	${INSTALL_DATA} netdb.h ${DESTDIR}${includedir}/irs
+	${INSTALL_DATA} platform.h ${DESTDIR}${includedir}/irs
+
+uninstall::
+	rm -f ${DESTDIR}${includedir}/irs/platform.h
+	rm -f ${DESTDIR}${includedir}/irs/netdb.h
+	for i in ${HEADERS}; do \
+		rm -f ${DESTDIR}${includedir}/irs/$$i ; \
+	done
+
+distclean::
+	rm -f netdb.h platform.h
