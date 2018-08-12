@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.301 2018/08/12 12:42:54 maxv Exp $	*/
+/*	$NetBSD: pmap.c,v 1.302 2018/08/12 15:31:01 maxv Exp $	*/
 
 /*
  * Copyright (c) 2008, 2010, 2016, 2017 The NetBSD Foundation, Inc.
@@ -157,7 +157,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.301 2018/08/12 12:42:54 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.302 2018/08/12 15:31:01 maxv Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -304,7 +304,11 @@ const vaddr_t ptp_masks[] = PTP_MASK_INITIALIZER;
 const int ptp_shifts[] = PTP_SHIFT_INITIALIZER;
 const long nkptpmax[] = NKPTPMAX_INITIALIZER;
 const long nbpd[] = NBPD_INITIALIZER;
+#ifdef i386
 pd_entry_t * const normal_pdes[] = PDES_INITIALIZER;
+#else
+pd_entry_t *normal_pdes[3];
+#endif
 
 long nkptp[] = NKPTP_INITIALIZER;
 

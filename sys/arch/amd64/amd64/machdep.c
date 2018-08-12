@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.313 2018/08/12 12:42:53 maxv Exp $	*/
+/*	$NetBSD: machdep.c,v 1.314 2018/08/12 15:31:01 maxv Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.313 2018/08/12 12:42:53 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.314 2018/08/12 15:31:01 maxv Exp $");
 
 #include "opt_modular.h"
 #include "opt_user_ldt.h"
@@ -266,6 +266,7 @@ extern struct slotspace slotspace;
 
 vaddr_t vm_min_kernel_address __read_mostly = VM_MIN_KERNEL_ADDRESS_DEFAULT;
 vaddr_t vm_max_kernel_address __read_mostly = VM_MAX_KERNEL_ADDRESS_DEFAULT;
+pd_entry_t *pte_base __read_mostly;
 
 struct vm_map *phys_map = NULL;
 
@@ -1589,6 +1590,21 @@ init_bootspace(void)
 	bootspace.emodule = KERNBASE + NKL2_KIMG_ENTRIES * NBPD_L2;
 }
 
+static void init_pte(void)
+{
+#ifndef XEN
+	extern uint32_t nox_flag;
+	pd_entry_t *pdir = (pd_entry_t *)bootspace.pdir;
+	pdir[L4_SLOT_PTE] = PDPpaddr | PG_KW | ((uint64_t)nox_flag << 32) |
+	    PG_V;
+#endif
+
+	extern pd_entry_t *normal_pdes[3];
+	normal_pdes[0] = L2_BASE;
+	normal_pdes[1] = L3_BASE;
+	normal_pdes[2] = L4_BASE;
+}
+
 void
 init_slotspace(void)
 {
@@ -1604,12 +1620,14 @@ init_slotspace(void)
 	slotspace.area[SLAREA_USER].active = true;
 	slotspace.area[SLAREA_USER].dropmax = false;
 
+#ifdef XEN
 	/* PTE. */
 	slotspace.area[SLAREA_PTE].sslot = PDIR_SLOT_PTE;
 	slotspace.area[SLAREA_PTE].mslot = 1;
 	slotspace.area[SLAREA_PTE].nslot = 1;
 	slotspace.area[SLAREA_PTE].active = true;
 	slotspace.area[SLAREA_PTE].dropmax = false;
+#endif
 
 #ifdef __HAVE_PCPU_AREA
 	/* Per-CPU. */
@@ -1652,6 +1670,14 @@ init_slotspace(void)
 	    NBPD_L4);
 	vm_min_kernel_address = va;
 	vm_max_kernel_address = va + NKL4_MAX_ENTRIES * NBPD_L4;
+
+#ifndef XEN
+	/* PTE. */
+	slotspace.area[SLAREA_PTE].mslot = 1;
+	slotspace.area[SLAREA_PTE].dropmax = false;
+	va = slotspace_rand(SLAREA_PTE, NBPD_L4, NBPD_L4);
+	pte_base = (pd_entry_t *)va;
+#endif
 }
 
 void
@@ -1674,6 +1700,8 @@ init_x86_64(paddr_t first_avail)
 	KASSERT(HYPERVISOR_shared_info != NULL);
 	cpu_info_primary.ci_vcpu = &HYPERVISOR_shared_info->vcpu_info[0];
 #endif
+
+	init_pte();
 
 	uvm_lwp_setuarea(&lwp0, lwp0uarea);
 
