@@ -1,4 +1,4 @@
-/* $NetBSD: rk_gmac.c,v 1.7 2018/07/16 23:11:47 christos Exp $ */
+/* $NetBSD: rk_gmac.c,v 1.8 2018/08/12 16:48:05 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: rk_gmac.c,v 1.7 2018/07/16 23:11:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rk_gmac.c,v 1.8 2018/08/12 16:48:05 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -49,6 +49,30 @@ __KERNEL_RCSID(0, "$NetBSD: rk_gmac.c,v 1.7 2018/07/16 23:11:47 christos Exp $")
 #include <dev/fdt/fdtvar.h>
 #include <dev/fdt/syscon.h>
 
+#define	RK_GMAC_TXDLY_DEFAULT	0x30
+#define	RK_GMAC_RXDLY_DEFAULT	0x10
+
+enum rk_gmac_type {
+	GMAC_RK3328 = 1,
+	GMAC_RK3399
+};
+
+static const struct of_compat_data compat_data[] = {
+	{ "rockchip,rk3328-gmac",	GMAC_RK3328 },
+	{ "rockchip,rk3399-gmac",	GMAC_RK3399 },
+	{ NULL }
+};
+
+struct rk_gmac_softc {
+	struct dwc_gmac_softc	sc_base;
+	struct syscon		*sc_syscon;
+	enum rk_gmac_type	sc_type;
+};
+
+/*
+ * RK3328 specific
+ */
+
 #define	RK3328_GRF_MAC_CON0	0x0900
 #define	 RK3328_GRF_MAC_CON0_RXDLY	__BITS(13,7)
 #define	 RK3328_GRF_MAC_CON0_TXDLY	__BITS(6,0)
@@ -63,56 +87,6 @@ __KERNEL_RCSID(0, "$NetBSD: rk_gmac.c,v 1.7 2018/07/16 23:11:47 christos Exp $")
 #define	  RK3328_GRF_MAC_CON1_SEL_RGMII	1
 #define	 RK3328_GRF_MAC_CON1_RXDLY_EN	__BIT(1)
 #define	 RK3328_GRF_MAC_CON1_TXDLY_EN	__BIT(0)
-
-#define	RK_GMAC_TXDLY_DEFAULT	0x30
-#define	RK_GMAC_RXDLY_DEFAULT	0x10
-
-static const char * compatible[] = {
-	"rockchip,rk3328-gmac",
-	NULL
-};
-
-struct rk_gmac_softc {
-	struct dwc_gmac_softc	sc_base;
-	struct syscon		*sc_syscon;
-};
-
-static int
-rk_gmac_reset(const int phandle)
-{
-	struct fdtbus_gpio_pin *pin_reset;
-	const u_int *reset_delay_us;
-	bool reset_active_low;
-	int len;
-
-	if (!of_hasprop(phandle, "snps,reset-gpio"))
-		return 0;
-
-	pin_reset = fdtbus_gpio_acquire(phandle, "snps,reset-gpio", GPIO_PIN_OUTPUT);
-	if (pin_reset == NULL)
-		return ENOENT;
-
-	reset_delay_us = fdtbus_get_prop(phandle, "snps,reset-delays-us", &len);
-	if (reset_delay_us == NULL || len != 12)
-		return ENXIO;
-
-	reset_active_low = of_hasprop(phandle, "snps,reset-active-low");
-
-	fdtbus_gpio_write_raw(pin_reset, reset_active_low ? 1 : 0);
-	delay(be32toh(reset_delay_us[0]));
-	fdtbus_gpio_write_raw(pin_reset, reset_active_low ? 0 : 1);
-	delay(be32toh(reset_delay_us[1]));
-	fdtbus_gpio_write_raw(pin_reset, reset_active_low ? 1 : 0);
-	delay(be32toh(reset_delay_us[2]));
-
-	return 0;
-}
-
-static int
-rk_gmac_intr(void *arg)
-{
-	return dwc_gmac_intr(arg);
-}
 
 static void
 rk3328_gmac_set_mode_rgmii(struct dwc_gmac_softc *sc, u_int tx_delay, u_int rx_delay)
@@ -165,6 +139,112 @@ rk3328_gmac_set_speed_rgmii(struct dwc_gmac_softc *sc, int speed)
 	    (RK3328_GRF_MAC_CON1_CLKSEL << 16) |
 	    __SHIFTIN(RK3328_GRF_MAC_CON1_CLKSEL_125M, RK3328_GRF_MAC_CON1_CLKSEL));
 	syscon_unlock(rk_sc->sc_syscon);
+}
+
+/*
+ * RK3399 specific
+ */
+
+#define	RK3399_GRF_SOC_CON5		0x0c214
+#define	 RK3399_GRF_SOC_CON5_GMAC_PHY_INTF_SEL	__BITS(11,9)
+#define	 RK3399_GRF_SOC_CON5_GMAC_FLOWCTRL	__BIT(8)
+#define	 RK3399_GRF_SOC_CON5_GMAC_SPEED		__BIT(7)
+#define	 RK3399_GRF_SOC_CON5_RMII_MODE		__BIT(6)
+#define	 RK3399_GRF_SOC_CON5_GMAC_CLK_SEL	__BITS(5,4)
+#define	  RK3399_GRF_SOC_CON5_GMAC_CLK_SEL_125M	0
+#define	  RK3399_GRF_SOC_CON5_GMAC_CLK_SEL_25M	1
+#define	  RK3399_GRF_SOC_CON5_GMAC_CLK_SEL_2_5M	2
+#define	 RK3399_GRF_SOC_CON5_RMII_CLK_SEL	__BIT(3)
+#define	RK3399_GRF_SOC_CON6		0x0c218
+#define	 RK3399_GRF_SOC_CON6_GMAC_RXCLK_DLY_ENA	__BIT(15)
+#define	 RK3399_GRF_SOC_CON6_GMAC_CLK_RX_DL_CFG	__BITS(14,8)
+#define	 RK3399_GRF_SOC_CON6_GMAC_TXCLK_DLY_ENA	__BIT(7)
+#define	 RK3399_GRF_SOC_CON6_GMAC_CLK_TX_DL_CFG	__BITS(6,0)
+
+static void
+rk3399_gmac_set_mode_rgmii(struct dwc_gmac_softc *sc, u_int tx_delay, u_int rx_delay)
+{
+	struct rk_gmac_softc * const rk_sc = (struct rk_gmac_softc *)sc;
+
+	const uint32_t con5_mask =
+	    (RK3399_GRF_SOC_CON5_RMII_MODE | RK3399_GRF_SOC_CON5_GMAC_PHY_INTF_SEL) << 16;
+	const uint32_t con5 = __SHIFTIN(1, RK3399_GRF_SOC_CON5_GMAC_PHY_INTF_SEL);
+
+	const uint32_t con6_mask =
+	    (RK3399_GRF_SOC_CON6_GMAC_CLK_RX_DL_CFG | RK3399_GRF_SOC_CON6_GMAC_CLK_TX_DL_CFG) << 16;
+	const uint32_t con6 =
+	    __SHIFTIN(rx_delay, RK3399_GRF_SOC_CON6_GMAC_CLK_RX_DL_CFG) |
+	    __SHIFTIN(tx_delay, RK3399_GRF_SOC_CON6_GMAC_CLK_TX_DL_CFG);
+
+	syscon_lock(rk_sc->sc_syscon);
+	syscon_write_4(rk_sc->sc_syscon, RK3399_GRF_SOC_CON5, con5 | con5_mask);
+	syscon_write_4(rk_sc->sc_syscon, RK3399_GRF_SOC_CON6, con6 | con6_mask);
+	syscon_unlock(rk_sc->sc_syscon);
+}
+
+static void
+rk3399_gmac_set_speed_rgmii(struct dwc_gmac_softc *sc, int speed)
+{
+	struct rk_gmac_softc * const rk_sc = (struct rk_gmac_softc *)sc;
+	u_int clksel;
+
+	switch (speed) {
+	case IFM_10_T:
+		clksel = RK3399_GRF_SOC_CON5_GMAC_CLK_SEL_2_5M;
+		break;
+	case IFM_100_TX:
+		clksel = RK3399_GRF_SOC_CON5_GMAC_CLK_SEL_25M;
+		break;
+	default:
+		clksel = RK3399_GRF_SOC_CON5_GMAC_CLK_SEL_125M;
+		break;
+	}
+
+	const uint32_t con5_mask =
+	    RK3399_GRF_SOC_CON5_GMAC_CLK_SEL << 16;
+	const uint32_t con5 =
+	    __SHIFTIN(clksel, RK3399_GRF_SOC_CON5_GMAC_CLK_SEL);
+
+	syscon_lock(rk_sc->sc_syscon);
+	syscon_write_4(rk_sc->sc_syscon, RK3399_GRF_SOC_CON5, con5 | con5_mask);
+	syscon_unlock(rk_sc->sc_syscon);
+}
+
+static int
+rk_gmac_reset(const int phandle)
+{
+	struct fdtbus_gpio_pin *pin_reset;
+	const u_int *reset_delay_us;
+	bool reset_active_low;
+	int len;
+
+	if (!of_hasprop(phandle, "snps,reset-gpio"))
+		return 0;
+
+	pin_reset = fdtbus_gpio_acquire(phandle, "snps,reset-gpio", GPIO_PIN_OUTPUT);
+	if (pin_reset == NULL)
+		return ENOENT;
+
+	reset_delay_us = fdtbus_get_prop(phandle, "snps,reset-delays-us", &len);
+	if (reset_delay_us == NULL || len != 12)
+		return ENXIO;
+
+	reset_active_low = of_hasprop(phandle, "snps,reset-active-low");
+
+	fdtbus_gpio_write_raw(pin_reset, reset_active_low ? 1 : 0);
+	delay(be32toh(reset_delay_us[0]));
+	fdtbus_gpio_write_raw(pin_reset, reset_active_low ? 0 : 1);
+	delay(be32toh(reset_delay_us[1]));
+	fdtbus_gpio_write_raw(pin_reset, reset_active_low ? 1 : 0);
+	delay(be32toh(reset_delay_us[2]));
+
+	return 0;
+}
+
+static int
+rk_gmac_intr(void *arg)
+{
+	return dwc_gmac_intr(arg);
 }
 
 static int
@@ -234,7 +314,7 @@ rk_gmac_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compatible(faa->faa_phandle, compatible);
+	return of_match_compat_data(faa->faa_phandle, compat_data);
 }
 
 static void
@@ -254,6 +334,8 @@ rk_gmac_attach(device_t parent, device_t self, void *aux)
 		aprint_error(": couldn't get registers\n");
 		return;
 	}
+
+	rk_sc->sc_type = of_search_compatible(phandle, compat_data)->data;
 
 	rk_sc->sc_syscon = fdtbus_syscon_acquire(phandle, "rockchip,grf");
 	if (rk_sc->sc_syscon == NULL) {
@@ -300,13 +382,27 @@ rk_gmac_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	if (strcmp(phy_mode, "rgmii") == 0) {
-		rk3328_gmac_set_mode_rgmii(sc, tx_delay, rx_delay);
+	switch (rk_sc->sc_type) {
+	case GMAC_RK3328:
+		if (strcmp(phy_mode, "rgmii") == 0) {
+			rk3328_gmac_set_mode_rgmii(sc, tx_delay, rx_delay);
 
-		sc->sc_set_speed = rk3328_gmac_set_speed_rgmii;
-	} else {
-		aprint_error(": unsupported phy-mode '%s'\n", phy_mode);
-		return;
+			sc->sc_set_speed = rk3328_gmac_set_speed_rgmii;
+		} else {
+			aprint_error(": unsupported phy-mode '%s'\n", phy_mode);
+			return;
+		}
+		break;
+	case GMAC_RK3399:
+		if (strcmp(phy_mode, "rgmii") == 0) {
+			rk3399_gmac_set_mode_rgmii(sc, tx_delay, rx_delay);
+
+			sc->sc_set_speed = rk3399_gmac_set_speed_rgmii;
+		} else {
+			aprint_error(": unsupported phy-mode '%s'\n", phy_mode);
+			return;
+		}
+		break;
 	}
 
 	aprint_naive("\n");

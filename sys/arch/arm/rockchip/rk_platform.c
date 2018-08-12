@@ -1,4 +1,4 @@
-/* $NetBSD: rk_platform.c,v 1.2 2018/08/05 14:02:35 skrll Exp $ */
+/* $NetBSD: rk_platform.c,v 1.3 2018/08/12 16:48:05 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
 #include "opt_fdt_arm.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rk_platform.c,v 1.2 2018/08/05 14:02:35 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rk_platform.c,v 1.3 2018/08/12 16:48:05 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -158,3 +158,61 @@ static const struct arm_platform rk3328_platform = {
 ARM_PLATFORM(rk3328, "rockchip,rk3328", &rk3328_platform);
 
 #endif /* SOC_RK3328 */
+
+
+#ifdef SOC_RK3399
+
+#include <arm/rockchip/rk3399_platform.h>
+
+static const struct pmap_devmap *
+rk3399_platform_devmap(void)
+{
+	static const struct pmap_devmap devmap[] = {
+		DEVMAP_ENTRY(RK3399_CORE_VBASE,
+			     RK3399_CORE_PBASE,
+			     RK3399_CORE_SIZE),
+		DEVMAP_ENTRY_END
+	};
+
+	return devmap;
+}
+
+void rk3399_platform_early_putchar(char);
+
+void
+rk3399_platform_early_putchar(char c)
+{
+#ifdef CONSADDR
+#define CONSADDR_VA	((CONSADDR - RK3399_CORE_PBASE) + RK3399_CORE_VBASE)
+	volatile uint32_t *uartaddr = cpu_earlydevice_va_p() ?
+	    (volatile uint32_t *)CONSADDR_VA :
+	    (volatile uint32_t *)CONSADDR;
+
+	while ((le32toh(uartaddr[com_lsr]) & LSR_TXRDY) == 0)
+		;
+
+	uartaddr[com_data] = htole32(c);
+#undef CONSADDR_VA
+#endif
+}
+
+static u_int
+rk3399_platform_uart_freq(void)
+{
+	return RK3399_UART_FREQ;
+}
+
+static const struct arm_platform rk3399_platform = {
+	.ap_devmap = rk3399_platform_devmap,
+	.ap_bootstrap = rk_platform_bootstrap,
+	.ap_init_attach_args = rk_platform_init_attach_args,
+	.ap_early_putchar = rk3399_platform_early_putchar,
+	.ap_device_register = rk_platform_device_register,
+	.ap_reset = psci_fdt_reset,
+	.ap_delay = gtmr_delay,
+	.ap_uart_freq = rk3399_platform_uart_freq,
+};
+
+ARM_PLATFORM(rk3399, "rockchip,rk3399", &rk3399_platform);
+
+#endif /* SOC_RK3399 */
