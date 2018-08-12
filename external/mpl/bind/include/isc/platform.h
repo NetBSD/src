@@ -324,7 +324,7 @@
  * If <stdatomic.h> is available on this architecture,
  * ISC_PLATFORM_HAVESTDATOMIC will be defined.
  */
-#ifndef __lint__
+#ifdef notyet
 #define ISC_PLATFORM_HAVESTDATOMIC 1
 #endif
 
