@@ -1,4 +1,4 @@
-/*	$NetBSD: errata.c,v 1.24 2018/08/07 10:50:12 maxv Exp $	*/
+/*	$NetBSD: errata.c,v 1.25 2018/08/12 05:43:42 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: errata.c,v 1.24 2018/08/07 10:50:12 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: errata.c,v 1.25 2018/08/12 05:43:42 maxv Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -144,11 +144,9 @@ static const uint8_t x86_errata_set11[] = {
 	DA_C3, HY_D0, HY_D1, HY_D1_G34R1,  PH_E0, LN_B0, OINK
 };
 
-#ifdef notyet_f16h
 static const uint8_t x86_errata_set12[] = {
 	KB_A1, OINK
 };
-#endif
 
 static const uint8_t x86_errata_set13[] = {
 	ZP_B1, ZP_B2, PiR_B2, OINK
@@ -158,11 +156,9 @@ static const uint8_t x86_errata_set14[] = {
 	ZP_B1, OINK
 };
 
-#ifdef notyet_f16h
 static const uint8_t x86_errata_set15[] = {
 	KB_A1, ML_A1, OINK
 };
-#endif
 
 static bool x86_errata_setmsr(struct cpu_info *, errata_t *);
 static bool x86_errata_testmsr(struct cpu_info *, errata_t *);
@@ -307,7 +303,6 @@ static errata_t errata[] = {
 		721, FALSE, MSR_DE_CFG, x86_errata_set11,
 		x86_errata_setmsr, DE_CFG_ERRATA_721
 	},
-#ifdef notyet_f16h	/* TODO: needs to be tested */
 	/*
 	 * 776: Incorrect Processor Branch Prediction for Two Consecutive
 	 * Linear Pages
@@ -324,7 +319,6 @@ static errata_t errata[] = {
 		793, FALSE, MSR_LS_CFG, x86_errata_set15,
 		x86_errata_setmsr, LS_CFG_ERRATA_793
 	},
-#endif
 	/*
 	 * 1021: Load Operation May Receive Stale Data From Older Store
 	 * Operation
