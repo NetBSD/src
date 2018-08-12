@@ -1,4 +1,4 @@
-/*	$NetBSD: x86.c,v 1.1 2011/04/30 16:57:58 christos Exp $	*/
+/*	$NetBSD: x86.c,v 1.2 2018/08/12 15:05:13 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: x86.c,v 1.1 2011/04/30 16:57:58 christos Exp $");
+__RCSID("$NetBSD: x86.c,v 1.2 2018/08/12 15:05:13 christos Exp $");
 #endif /* not lint */
 
 #include <ddb/ddb.h>
@@ -47,7 +47,10 @@ __RCSID("$NetBSD: x86.c,v 1.1 2011/04/30 16:57:58 christos Exp $");
 
 #include "extern.h"
 
+vaddr_t vm_min_kernel_address = VM_MIN_KERNEL_ADDRESS_DEFAULT;
+
 static struct nlist nl[] = {
+	{ .n_name = "vm_min_kernel_address" },
 	{ .n_name = "_dumppcb" },
 	{ .n_name = NULL },
 };
@@ -64,6 +67,11 @@ db_mach_init(kvm_t *kd)
 	if ((size_t)kvm_read(kd, nl[0].n_value, &pcb, sizeof(pcb)) !=
 	    sizeof(pcb)) {
 		errx(EXIT_FAILURE, "cannot read dumppcb: %s", kvm_geterr(kd));
+	}
+	if ((size_t)kvm_read(kd, nl[1].n_value, &vm_min_kernel_address,
+	    sizeof(vm_min_kernel_address)) != sizeof(vm_min_kernel_address)) {
+		errx(EXIT_FAILURE, "cannot read vm_min_kernel_address: %s",
+		    kvm_geterr(kd));
 	}
         ddb_regs.tf_sp = pcb.pcb_sp;
         ddb_regs.tf_bp = pcb.pcb_bp;
