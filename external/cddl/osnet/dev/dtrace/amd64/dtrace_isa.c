@@ -1,4 +1,4 @@
-/*	$NetBSD: dtrace_isa.c,v 1.8 2018/07/27 07:32:59 maxv Exp $	*/
+/*	$NetBSD: dtrace_isa.c,v 1.9 2018/08/12 16:07:27 christos Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -45,7 +45,11 @@ uint16_t dtrace_fuword16_nocheck(void *);
 uint32_t dtrace_fuword32_nocheck(void *);
 uint64_t dtrace_fuword64_nocheck(void *);
 
+#ifdef VM_MIN_KERNEL_ADDRESS_DEFAULT
+__strong_alias(kernelbase, vm_min_kernel_address)
+#else
 uintptr_t kernelbase = (uintptr_t)VM_MIN_KERNEL_ADDRESS;
+#endif
 
 #define INKERNEL(va) ((intptr_t)(va) < 0) /* XXX horror */
 
