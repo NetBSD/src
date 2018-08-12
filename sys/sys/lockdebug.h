@@ -1,4 +1,4 @@
-/*	$NetBSD: lockdebug.h,v 1.19 2018/03/19 08:41:21 ozaki-r Exp $	*/
+/*	$NetBSD: lockdebug.h,v 1.20 2018/08/12 22:05:29 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -53,6 +53,7 @@ typedef	struct lockops {
 #define	LOCKDEBUG_ABORT(f, ln, l, o, m) \
     lockdebug_abort(f, ln, l, o, m)
 
+void	lockdebug_dismiss(void);
 void	lockdebug_abort(const char *, size_t, const volatile void *,
     lockops_t *, const char *);
 
