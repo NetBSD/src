@@ -1,4 +1,4 @@
-/*	$NetBSD: frameasm.h,v 1.40 2018/07/13 14:11:02 martin Exp $	*/
+/*	$NetBSD: frameasm.h,v 1.41 2018/08/12 13:31:16 maxv Exp $	*/
 
 #ifndef _AMD64_MACHINE_FRAMEASM_H
 #define _AMD64_MACHINE_FRAMEASM_H
@@ -130,7 +130,7 @@
 #ifdef SVS
 
 /* XXX: put this somewhere else */
-#define SVS_UTLS		0xffffc00000000000 /* PMAP_PCPU_BASE */
+#define SVS_UTLS		0xffffff0000000000 /* PMAP_PCPU_BASE */
 #define UTLS_KPDIRPA		0
 #define UTLS_SCRATCH		8
 #define UTLS_RSP0		16
