@@ -1,4 +1,4 @@
-/* $NetBSD: armreg.h,v 1.17 2018/08/12 17:16:18 skrll Exp $ */
+/* $NetBSD: armreg.h,v 1.18 2018/08/12 17:21:35 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -1025,6 +1025,19 @@ AARCH64REG_READ_INLINE2(icc_iar1_el1, s3_0_c12_c12_0)
 #define	icc_iar1_read		reg_icc_iar1_el1_read
 #define	icc_eoi1r_write		reg_icc_eoir1_el1_write
 
+#if defined(_KERNEL)
+
+/*
+ * CPU REGISTER ACCESS
+ */
+static __inline register_t
+cpu_mpidr_aff_read(void)
+{
+
+	return reg_mpidr_el1_read() &
+	    (MPIDR_AFF3|MPIDR_AFF2|MPIDR_AFF1|MPIDR_AFF0);
+}
+
 /*
  * GENERIC TIMER REGISTER ACCESS
  */
@@ -1117,5 +1130,6 @@ gtmr_cntv_cval_read(void)
 
 	return reg_cntv_cval_el0_read();
 }
+#endif /* _KERNEL */
 
 #endif /* _AARCH64_ARMREG_H_ */
