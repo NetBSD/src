@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.300 2018/08/12 12:23:33 maxv Exp $	*/
+/*	$NetBSD: pmap.c,v 1.301 2018/08/12 12:42:54 maxv Exp $	*/
 
 /*
  * Copyright (c) 2008, 2010, 2016, 2017 The NetBSD Foundation, Inc.
@@ -157,7 +157,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.300 2018/08/12 12:23:33 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.301 2018/08/12 12:42:54 maxv Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -1418,7 +1418,7 @@ slotspace_rand(int type, size_t sz, size_t align)
 
 	/* Get the holes. */
 	nholes = 0;
-	size_t curslot = 0 + 255; /* end of SLAREA_USER */
+	size_t curslot = 0 + 256; /* end of SLAREA_USER */
 	while (1) {
 		/*
 		 * Find the first occupied slot after the current one.
