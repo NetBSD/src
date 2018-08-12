@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.83 2018/08/12 10:50:35 maxv Exp $	*/
+/*	$NetBSD: pmap.h,v 1.84 2018/08/12 13:31:16 maxv Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -559,7 +559,7 @@ void	pmap_free_ptps(struct vm_page *);
 
 #ifdef __HAVE_PCPU_AREA
 extern struct pcpu_area *pcpuarea;
-#define PDIR_SLOT_PCPU		384
+#define PDIR_SLOT_PCPU		510
 #define PMAP_PCPU_BASE		(VA_SIGN_NEG((PDIR_SLOT_PCPU * NBPD_L4)))
 #endif
 
