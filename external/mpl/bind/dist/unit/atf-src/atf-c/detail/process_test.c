@@ -1,4 +1,4 @@
-/*	$NetBSD: process_test.c,v 1.1.1.1 2018/08/12 12:08:36 christos Exp $	*/
+/*	$NetBSD: process_test.c,v 1.2 2018/08/12 13:02:42 christos Exp $	*/
 
 /* Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -755,7 +755,7 @@ child_spawn_loop_and_wait_eintr(void *v ATF_DEFS_ATTRIBUTE_UNUSED)
             atf_error_free(_aux_err); \
             abort(); \
         } \
-    } while (0)
+    } while (/*CONSTCOND*/0)
 
     {
         atf_process_stream_t outsb, errsb;
