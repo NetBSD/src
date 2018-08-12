@@ -1,4 +1,4 @@
-/*	$NetBSD: grep.h,v 1.8 2012/05/06 22:27:00 joerg Exp $	*/
+/*	$NetBSD: grep.h,v 1.9 2018/08/12 07:53:19 christos Exp $	*/
 /*	$OpenBSD: grep.h,v 1.15 2010/04/05 03:03:55 tedu Exp $	*/
 /*	$FreeBSD: head/usr.bin/grep/grep.h 211496 2010-08-19 09:28:59Z des $	*/
 
@@ -29,7 +29,9 @@
  * SUCH DAMAGE.
  */
 
+#ifndef WITHOUT_BZ2
 #include <bzlib.h>
+#endif
 #include <limits.h>
 #include <regex.h>
 #include <stdbool.h>

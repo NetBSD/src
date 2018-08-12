@@ -1,4 +1,4 @@
-/*	$NetBSD: grep.c,v 1.13 2018/08/11 19:44:19 christos Exp $	*/
+/*	$NetBSD: grep.c,v 1.14 2018/08/12 07:53:19 christos Exp $	*/
 /* 	$FreeBSD: head/usr.bin/grep/grep.c 211519 2010-08-19 22:55:17Z delphij $	*/
 /*	$OpenBSD: grep.c,v 1.42 2010/07/02 22:18:03 tedu Exp $	*/
 
@@ -34,7 +34,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: grep.c,v 1.13 2018/08/11 19:44:19 christos Exp $");
+__RCSID("$NetBSD: grep.c,v 1.14 2018/08/12 07:53:19 christos Exp $");
 
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -197,7 +197,9 @@ struct option long_options[] =
 	{"no-filename",		no_argument,		NULL, 'h'},
 	{"with-filename",	no_argument,		NULL, 'H'},
 	{"ignore-case",		no_argument,		NULL, 'i'},
+#ifndef WITHOUT_BZ2
 	{"bz2decompress",	no_argument,		NULL, 'J'},
+#endif
 	{"files-with-matches",	no_argument,		NULL, 'l'},
 	{"files-without-match", no_argument,            NULL, 'L'},
 	{"max-count",		required_argument,	NULL, 'm'},
@@ -491,9 +493,11 @@ main(int argc, char *argv[])
 			iflag =  true;
 			cflags |= REG_ICASE;
 			break;
+#ifndef WITHOUT_BZ2
 		case 'J':
 			filebehave = FILE_BZIP;
 			break;
+#endif
 		case 'L':
 			lflag = false;
 			Lflag = true;
