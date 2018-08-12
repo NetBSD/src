@@ -1,4 +1,4 @@
-/* $NetBSD: rk3399_pmucru.c,v 1.1 2018/08/12 16:48:05 jmcneill Exp $ */
+/* $NetBSD: rk3399_pmucru.c,v 1.2 2018/08/12 19:28:41 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: rk3399_pmucru.c,v 1.1 2018/08/12 16:48:05 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: rk3399_pmucru.c,v 1.2 2018/08/12 19:28:41 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -293,11 +293,33 @@ static struct rk_cru_clk rk3399_pmucru_clks[] = {
 		   __BIT(31),		/* lock_mask */
 		   pll_rates),
 
+        RK_COMPOSITE_NOMUX(RK3399_SCLK_I2C0_PMU, "clk_i2c0_pmu", "ppll",
+			   CLKSEL_CON(2),	/* div_reg */
+			   __BITS(6,0),		/* div_mask */
+			   CLKGATE_CON(0),	/* gate_reg */
+			   __BIT(9),		/* gate_mask */
+			   0),
+        RK_COMPOSITE_NOMUX(RK3399_SCLK_I2C4_PMU, "clk_i2c4_pmu", "ppll",
+			   CLKSEL_CON(3),	/* div_reg */
+			   __BITS(6,0),		/* div_mask */
+			   CLKGATE_CON(0),	/* gate_reg */
+			   __BIT(10),		/* gate_mask */
+			   0),
+        RK_COMPOSITE_NOMUX(RK3399_SCLK_I2C8_PMU, "clk_i2c8_pmu", "ppll",
+			   CLKSEL_CON(2),	/* div_reg */
+			   __BITS(14,8),	/* div_mask */
+			   CLKGATE_CON(0),	/* gate_reg */
+			   __BIT(11),		/* gate_mask */
+			   0),
+
 	RK_DIV(RK3399_PCLK_SRC_PMU, "pclk_pmu_src", "ppll", CLKSEL_CON(0), __BITS(4,0), 0),
 
 	RK_GATE(RK3399_PCLK_PMU, "pclk_pmu", "pclk_pmu_src", CLKGATE_CON(1), 0),
 	RK_GATE(RK3399_PCLK_GPIO0_PMU, "pclk_gpio0_pmu", "pclk_pmu_src", CLKGATE_CON(1), 3),
 	RK_GATE(RK3399_PCLK_GPIO1_PMU, "pclk_gpio1_pmu", "pclk_pmu_src", CLKGATE_CON(1), 4),
+	RK_GATE(RK3399_PCLK_I2C0_PMU, "pclk_i2c0_pmu", "pclk_pmu_src", CLKGATE_CON(1), 7),
+	RK_GATE(RK3399_PCLK_I2C4_PMU, "pclk_i2c4_pmu", "pclk_pmu_src", CLKGATE_CON(1), 8),
+	RK_GATE(RK3399_PCLK_I2C8_PMU, "pclk_i2c8_pmu", "pclk_pmu_src", CLKGATE_CON(1), 9),
 };
 
 static int
