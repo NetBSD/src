@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.48 2018/07/27 07:35:09 maxv Exp $	*/
+/*	$NetBSD: pmap.h,v 1.49 2018/08/12 08:17:50 maxv Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -139,7 +139,7 @@
 
 #define L4_SLOT_PTE		255
 #ifndef XEN
-#define L4_SLOT_KERN		256 /* pl4_i(VM_MIN_KERNEL_ADDRESS) */
+#define L4_SLOT_KERN		slotspace.area[SLAREA_MAIN].sslot
 #else
 /* Xen use slots 256-272, let's move farther */
 #define L4_SLOT_KERN		320 /* pl4_i(VM_MIN_KERNEL_ADDRESS) */

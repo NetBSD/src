@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.295 2018/07/26 17:20:08 maxv Exp $	*/
+/*	$NetBSD: pmap.c,v 1.296 2018/08/12 08:17:50 maxv Exp $	*/
 
 /*
  * Copyright (c) 2008, 2010, 2016, 2017 The NetBSD Foundation, Inc.
@@ -157,7 +157,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.295 2018/07/26 17:20:08 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.296 2018/08/12 08:17:50 maxv Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -1394,12 +1394,14 @@ slotspace_copy(int type, pd_entry_t *dst, pd_entry_t *src)
 #endif
 
 #if defined(__HAVE_DIRECT_MAP)
+vaddr_t slotspace_rand(int, size_t, size_t);
+
 /*
  * Randomize the location of an area. We count the holes in the VM space. We
  * randomly select one hole, and then randomly select an area within that hole.
  * Finally we update the associated entry in the slotspace structure.
  */
-static vaddr_t
+vaddr_t
 slotspace_rand(int type, size_t sz, size_t align)
 {
 	struct {
@@ -1415,17 +1417,36 @@ slotspace_rand(int type, size_t sz, size_t align)
 
 	/* Get the holes. */
 	nholes = 0;
-	for (i = 0; i < SLSPACE_NAREAS-1; i++) {
-		startsl = slotspace.area[i].sslot;
-		if (slotspace.area[i].active)
-			startsl += slotspace.area[i].mslot;
-		endsl = slotspace.area[i+1].sslot;
-		if (endsl - startsl >= nslots) {
-			holes[nholes].start = startsl;
-			holes[nholes].end = endsl;
+	size_t curslot = 0 + 255; /* end of SLAREA_USER */
+	while (1) {
+		/*
+		 * Find the first occupied slot after the current one.
+		 * The area between the two is a hole.
+		 */
+		size_t minsslot = 512;
+		size_t minnslot = 0;
+		for (i = 0; i < SLSPACE_NAREAS-1; i++) {
+			if (!slotspace.area[i].active)
+				continue;
+			if (slotspace.area[i].sslot >= curslot &&
+			    slotspace.area[i].sslot < minsslot) {
+				minsslot = slotspace.area[i].sslot;
+				minnslot = slotspace.area[i].nslot;
+			}
+		}
+		if (minsslot == 512) {
+			break;
+		}
+
+		if (minsslot - curslot >= nslots) {
+			holes[nholes].start = curslot;
+			holes[nholes].end = minsslot;
 			nholes++;
 		}
+
+		curslot = minsslot + minnslot;
 	}
+
 	if (nholes == 0) {
 		panic("%s: impossible", __func__);
 	}
@@ -1451,6 +1472,7 @@ slotspace_rand(int type, size_t sz, size_t align)
 	if (slotspace.area[type].dropmax) {
 		slotspace.area[type].mslot = slotspace.area[type].nslot;
 	}
+	slotspace.area[type].active = true;
 
 	return va;
 }
