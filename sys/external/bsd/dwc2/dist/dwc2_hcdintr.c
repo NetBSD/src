@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2_hcdintr.c,v 1.14 2018/08/08 07:20:44 simonb Exp $	*/
+/*	$NetBSD: dwc2_hcdintr.c,v 1.15 2018/08/12 09:59:30 skrll Exp $	*/
 
 /*
  * hcd_intr.c - DesignWare HS OTG Controller host-mode interrupt handling
@@ -40,7 +40,7 @@
  * This file contains the interrupt handlers for Host mode
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc2_hcdintr.c,v 1.14 2018/08/08 07:20:44 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc2_hcdintr.c,v 1.15 2018/08/12 09:59:30 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/pool.h>
@@ -66,6 +66,9 @@ __KERNEL_RCSID(0, "$NetBSD: dwc2_hcdintr.c,v 1.14 2018/08/08 07:20:44 simonb Exp
  */
 #define DWC2_NAKS_BEFORE_DELAY		3
 int dwc2_naks_before_delay = DWC2_NAKS_BEFORE_DELAY;
+
+#define DWC2_OUT_NAKS_BEFORE_DELAY	1
+int dwc2_out_naks_before_delay = DWC2_OUT_NAKS_BEFORE_DELAY;
 
 /* This function is for debug only */
 static void dwc2_track_missed_sofs(struct dwc2_hsotg *hsotg)
@@ -1320,8 +1323,10 @@ static void dwc2_hc_nak_intr(struct dwc2_hsotg *hsotg,
 			/*
 			 * Avoid interrupt storms.
 			 */
-			qtd->qh->want_wait = 1;
-		} else if (!chan->qh->ping_state) {
+			qtd->num_naks++;
+			qtd->qh->want_wait = qtd->num_naks >= dwc2_out_naks_before_delay;
+		}
+		if (!chan->qh->ping_state) {
 			dwc2_update_urb_state_abn(hsotg, chan, chnum, qtd->urb,
 						  qtd, DWC2_HC_XFER_NAK);
 			dwc2_hcd_save_data_toggle(hsotg, chan, chnum, qtd);
