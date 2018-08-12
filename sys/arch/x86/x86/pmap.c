@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.296 2018/08/12 08:17:50 maxv Exp $	*/
+/*	$NetBSD: pmap.c,v 1.297 2018/08/12 10:45:27 maxv Exp $	*/
 
 /*
  * Copyright (c) 2008, 2010, 2016, 2017 The NetBSD Foundation, Inc.
@@ -157,7 +157,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.296 2018/08/12 08:17:50 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.297 2018/08/12 10:45:27 maxv Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -1425,7 +1425,7 @@ slotspace_rand(int type, size_t sz, size_t align)
 		 */
 		size_t minsslot = 512;
 		size_t minnslot = 0;
-		for (i = 0; i < SLSPACE_NAREAS-1; i++) {
+		for (i = 0; i < SLSPACE_NAREAS; i++) {
 			if (!slotspace.area[i].active)
 				continue;
 			if (slotspace.area[i].sslot >= curslot &&
