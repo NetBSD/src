@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs.h,v 1.135 2017/12/26 17:08:56 christos Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.136 2018/08/12 10:43:04 skrll Exp $	*/
 
 /* * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -578,9 +578,13 @@
     (((uintmax_t)(__n) >= NBBY * sizeof(uintmax_t)) ? 0 : \
     ((uintmax_t)1 << (uintmax_t)((__n) & (NBBY * sizeof(uintmax_t) - 1))))
 
+/* Macros for min/max. */
+#define	__MIN(a,b)	((/*CONSTCOND*/(a)<(b))?(a):(b))
+#define	__MAX(a,b)	((/*CONSTCOND*/(a)>(b))?(a):(b))
+
 /* __BITS(m, n): bits m through n, m < n. */
 #define	__BITS(__m, __n)	\
-	((__BIT(MAX((__m), (__n)) + 1) - 1) ^ (__BIT(MIN((__m), (__n))) - 1))
+	((__BIT(__MAX((__m), (__n)) + 1) - 1) ^ (__BIT(__MIN((__m), (__n))) - 1))
 #endif /* !__ASSEMBLER__ */
 
 /* find least significant bit that is set */
