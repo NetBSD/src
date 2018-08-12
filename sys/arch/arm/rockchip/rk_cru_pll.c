@@ -1,4 +1,4 @@
-/* $NetBSD: rk_cru_pll.c,v 1.3 2018/06/30 17:54:07 jmcneill Exp $ */
+/* $NetBSD: rk_cru_pll.c,v 1.4 2018/08/12 16:48:05 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rk_cru_pll.c,v 1.3 2018/06/30 17:54:07 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rk_cru_pll.c,v 1.4 2018/08/12 16:48:05 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -169,5 +169,5 @@ rk_cru_pll_get_parent(struct rk_cru_softc *sc,
 
 	KASSERT(clk->type == RK_CRU_PLL);
 
-	return pll->parent;
+	return pll->parents[0];
 }
