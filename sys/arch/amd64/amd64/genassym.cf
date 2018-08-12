@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.69 2018/08/12 06:11:47 maxv Exp $
+#	$NetBSD: genassym.cf,v 1.70 2018/08/12 15:31:01 maxv Exp $
 
 #
 # Copyright (c) 1998, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -142,8 +142,6 @@ define	L4_SLOT_KERNBASE	L4_SLOT_KERNBASE
 define	L3_SLOT_KERNBASE	pl3_pi(KERNBASE)
 define	L2_SLOT_KERNBASE	pl2_pi(KERNBASE)
 define	L1_SLOT_KERNBASE	pl1_pi(KERNBASE)
-
-define	PDIR_SLOT_PTE		PDIR_SLOT_PTE
 
 define	PDE_SIZE		sizeof(pd_entry_t)
 

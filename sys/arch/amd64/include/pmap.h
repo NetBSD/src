@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.52 2018/08/12 12:42:53 maxv Exp $	*/
+/*	$NetBSD: pmap.h,v 1.53 2018/08/12 15:31:01 maxv Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -137,7 +137,11 @@
  */
 #define VA_SIGN_POS(va)		((va) & ~VA_SIGN_MASK)
 
+#ifndef XEN
+#define L4_SLOT_PTE		slotspace.area[SLAREA_PTE].sslot
+#else
 #define L4_SLOT_PTE		509
+#endif
 #define L4_SLOT_KERN		slotspace.area[SLAREA_MAIN].sslot
 #define L4_SLOT_KERNBASE	511 /* pl4_i(KERNBASE) */
 
@@ -153,7 +157,12 @@
  * PDP_PDE: the VA of the PDE that points back to the PDP
  */
 
+#ifndef XEN
+extern pt_entry_t *pte_base;
+#define PTE_BASE	pte_base
+#else
 #define PTE_BASE	((pt_entry_t *)VA_SIGN_NEG((L4_SLOT_PTE * NBPD_L4)))
+#endif
 
 #define L1_BASE	PTE_BASE
 #define L2_BASE	((pd_entry_t *)((char *)L1_BASE + L4_SLOT_PTE * NBPD_L3))

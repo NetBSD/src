@@ -1,4 +1,4 @@
-/*	$NetBSD: prekern.c,v 1.4 2018/08/12 12:42:53 maxv Exp $	*/
+/*	$NetBSD: prekern.c,v 1.5 2018/08/12 15:31:01 maxv Exp $	*/
 
 /*
  * Copyright (c) 2017 The NetBSD Foundation, Inc. All rights reserved.
@@ -111,8 +111,20 @@ prekern_copy_args(struct prekern_args *pkargs)
 }
 
 static void
+prekern_unmap_pte(void)
+{
+	extern struct bootspace bootspace;
+	pd_entry_t *pdir = (pd_entry_t *)bootspace.pdir;
+
+	/* Unmap the prekern recursive PTE slot. */
+	pdir[509] = 0;
+	tlbflushg();
+}
+
+static void
 prekern_unmap(void)
 {
+	/* Unmap the prekern itself. */
 	L4_BASE[0] = 0;
 	tlbflushg();
 }
@@ -132,9 +144,9 @@ start_prekern(struct prekern_args *pkargs)
 	prekern_copy_args(pkargs);
 	first_avail = pkargs->first_avail;
 
+	prekern_unmap_pte();
 	init_slotspace();
 	init_x86_64(first_avail);
-
 	prekern_unmap();
 
 	main();
