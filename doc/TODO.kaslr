@@ -25,9 +25,9 @@
 
 ====== RANDOMIZATION ======
 
--- Randomize the PTE space.
+[DONE] -- Randomize the PTE space.
 
--- Randomize the kernel main memory (VM_MIN_KERNEL_ADDRESS).
+[DONE] -- Randomize the kernel main memory (VM_MIN_KERNEL_ADDRESS).
 
 [DONE] -- Randomize the direct map.
 
