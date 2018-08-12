@@ -1,0 +1,93 @@
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
+               "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd"
+	       [<!ENTITY mdash "&#8212;">]>
+<!--
+ - Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ -
+ - This Source Code Form is subject to the terms of the Mozilla Public
+ - License, v. 2.0. If a copy of the MPL was not distributed with this
+ - file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ -
+ - See the COPYRIGHT file distributed with this work for additional
+ - information regarding copyright ownership.
+-->
+
+<refentry id="man.named-nzd2nzf">
+  <refentryinfo>
+    <date>May 5, 2016</date>
+  </refentryinfo>
+
+  <refmeta>
+    <refentrytitle><application>named-nzd2nzf</application></refentrytitle>
+    <manvolnum>8</manvolnum>
+    <refmiscinfo>BIND9</refmiscinfo>
+  </refmeta>
+
+  <refnamediv>
+    <refname><application>named-nzd2nzf</application></refname>
+    <refpurpose>
+      Convert an NZD database to NZF text format
+    </refpurpose>
+  </refnamediv>
+
+  <docinfo>
+    <copyright>
+      <year>2016</year>
+      <year>2018</year>
+      <holder>Internet Systems Consortium, Inc. ("ISC")</holder>
+    </copyright>
+  </docinfo>
+
+  <refsynopsisdiv>
+    <cmdsynopsis>
+      <command>named-nzd2nzf</command>
+      <arg choice="req">filename</arg>
+    </cmdsynopsis>
+  </refsynopsisdiv>
+
+  <refsect1>
+    <title>DESCRIPTION</title>
+    <para>
+      <command>named-nzd2nzf</command> converts an NZD database to NZF
+      format and prints it to standard output.  This can be used to
+      review the configuration of zones that were added to
+      <command>named</command> via <command>rndc addzone</command>.
+      It can also be used to restore the old file format
+      when rolling back from a newer version
+      of BIND to an older version.
+    </para>
+  </refsect1>
+
+  <refsect1>
+    <title>ARGUMENTS</title>
+    <variablelist>
+      <varlistentry>
+        <term>filename</term>
+        <listitem>
+          <para>
+            The name of the <filename>.nzd</filename> file whose contents
+            should be printed.
+          </para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+  </refsect1>
+
+  <refsect1>
+    <title>SEE ALSO</title>
+    <para>
+      <citetitle>BIND 9 Administrator Reference Manual</citetitle>
+    </para>
+  </refsect1>
+
+  <refsect1>
+    <title>AUTHOR</title>
+    <para><corpauthor>Internet Systems Consortium</corpauthor>
+    </para>
+  </refsect1>
+
+</refentry><!--
+ - Local variables:
+ - mode: sgml
+ - End:
+-->

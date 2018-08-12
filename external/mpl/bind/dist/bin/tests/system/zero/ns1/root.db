@@ -1,0 +1,24 @@
+; Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+;
+; This Source Code Form is subject to the terms of the Mozilla Public
+; License, v. 2.0. If a copy of the MPL was not distributed with this
+; file, You can obtain one at http://mozilla.org/MPL/2.0/.
+;
+; See the COPYRIGHT file distributed with this work for additional
+; information regarding copyright ownership.
+
+$TTL 300
+@	SOA ns1. hostmaster.warn.example. (
+	    1 3600 1200 604800 3600 )
+	NS  ns1.
+ns1. A 10.53.0.1
+;
+example. NS ns2.example.
+ns2.example. A 10.53.0.2
+example. NS ns4.example.
+ns4.example. A 10.53.0.4
+increment. NS incrementns.
+incrementns. A 10.53.0.5
+tld. NS ns2.tld.
+ns2.tld. A 10.53.0.2
+

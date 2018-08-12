@@ -1,0 +1,60 @@
+/*
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
+ */
+
+# dnsrpzd configuration.
+
+pid-file ../dnsrpzd.pid
+
+include ../dnsrpzd-license-cur.conf
+
+# configure NOTIFY and zone transfers
+port @EXTRAPORT1@;
+listen-on port @EXTRAPORT1@ { 10.53.0.3; };
+allow-notify { 10.53.0.0/24; };
+
+zone "bl0"		{type master; file "../ns5/bl.db"; };
+zone "bl1"		{type master; file "../ns5/bl.db"; };
+zone "bl2"		{type master; file "../ns5/bl.db"; };
+zone "bl3"		{type master; file "../ns5/bl.db"; };
+zone "bl4"		{type master; file "../ns5/bl.db"; };
+zone "bl5"		{type master; file "../ns5/bl.db"; };
+zone "bl6"		{type master; file "../ns5/bl.db"; };
+zone "bl7"		{type master; file "../ns5/bl.db"; };
+zone "bl8"		{type master; file "../ns5/bl.db"; };
+zone "bl9"		{type master; file "../ns5/bl.db"; };
+zone "bl10"		{type master; file "../ns5/bl.db"; };
+zone "bl11"		{type master; file "../ns5/bl.db"; };
+zone "bl12"		{type master; file "../ns5/bl.db"; };
+zone "bl13"		{type master; file "../ns5/bl.db"; };
+zone "bl14"		{type master; file "../ns5/bl.db"; };
+zone "bl15"		{type master; file "../ns5/bl.db"; };
+zone "bl16"		{type master; file "../ns5/bl.db"; };
+zone "bl17"		{type master; file "../ns5/bl.db"; };
+zone "bl18"		{type master; file "../ns5/bl.db"; };
+zone "bl19"		{type master; file "../ns5/bl.db"; };
+
+zone "bl"		{type slave; masters port @PORT@ { 10.53.0.3; }; };
+zone "bl-2"		{type slave; masters port @PORT@ { 10.53.0.3; }; };
+zone "bl-given"		{type slave; masters port @PORT@ { 10.53.0.3; }; };
+zone "bl-passthru"	{type slave; masters port @PORT@ { 10.53.0.3; }; };
+zone "bl-no-op"		{type slave; masters port @PORT@ { 10.53.0.3; }; };
+zone "bl-disabled"	{type slave; masters port @PORT@ { 10.53.0.3; }; };
+zone "bl-nodata"	{type slave; masters port @PORT@ { 10.53.0.3; }; };
+zone "bl-nxdomain"	{type slave; masters port @PORT@ { 10.53.0.3; }; };
+zone "bl-cname"		{type slave; masters port @PORT@ { 10.53.0.3; }; };
+zone "bl-wildcname"	{type slave; masters port @PORT@ { 10.53.0.3; }; };
+zone "bl-garden"	{type slave; masters port @PORT@ { 10.53.0.3; }; };
+zone "bl-drop"		{type slave; masters port @PORT@ { 10.53.0.3; }; };
+zone "bl-tcp-only"	{type slave; masters port @PORT@ { 10.53.0.3; }; };
+zone "bl.tld2"		{type slave; masters port @PORT@ { 10.53.0.3; }; };
+
+zone "policy1"		{type slave; masters port @PORT@ { 10.53.0.6; }; };
+zone "policy2"		{type slave; masters port @PORT@ { 10.53.0.7; }; };

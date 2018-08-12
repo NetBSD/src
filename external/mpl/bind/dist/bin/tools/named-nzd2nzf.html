@@ -1,0 +1,85 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<!--
+ - Copyright (C) 2016, 2018 Internet Systems Consortium, Inc. ("ISC")
+ - 
+ - This Source Code Form is subject to the terms of the Mozilla Public
+ - License, v. 2.0. If a copy of the MPL was not distributed with this
+ - file, You can obtain one at http://mozilla.org/MPL/2.0/.
+-->
+<html lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+<title>named-nzd2nzf</title>
+<meta name="generator" content="DocBook XSL Stylesheets V1.78.1">
+</head>
+<body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="refentry">
+<a name="man.named-nzd2nzf"></a><div class="titlepage"></div>
+  
+
+  
+
+  <div class="refnamediv">
+<h2>Name</h2>
+<p>
+    <span class="application">named-nzd2nzf</span>
+     &#8212; 
+      Convert an NZD database to NZF text format
+    
+  </p>
+</div>
+
+  
+
+  <div class="refsynopsisdiv">
+<h2>Synopsis</h2>
+    <div class="cmdsynopsis"><p>
+      <code class="command">named-nzd2nzf</code> 
+       {filename}
+    </p></div>
+  </div>
+
+  <div class="refsect1">
+<a name="id-1.6"></a><h2>DESCRIPTION</h2>
+    
+    <p>
+      <span class="command"><strong>named-nzd2nzf</strong></span> converts an NZD database to NZF
+      format and prints it to standard output.  This can be used to
+      review the configuration of zones that were added to
+      <span class="command"><strong>named</strong></span> via <span class="command"><strong>rndc addzone</strong></span>.
+      It can also be used to restore the old file format
+      when rolling back from a newer version
+      of BIND to an older version.
+    </p>
+  </div>
+
+  <div class="refsect1">
+<a name="id-1.7"></a><h2>ARGUMENTS</h2>
+    
+    <div class="variablelist"><dl class="variablelist">
+<dt><span class="term">filename</span></dt>
+<dd>
+          <p>
+            The name of the <code class="filename">.nzd</code> file whose contents
+            should be printed.
+          </p>
+        </dd>
+</dl></div>
+  </div>
+
+  <div class="refsect1">
+<a name="id-1.8"></a><h2>SEE ALSO</h2>
+    
+    <p>
+      <em class="citetitle">BIND 9 Administrator Reference Manual</em>
+    </p>
+  </div>
+
+  <div class="refsect1">
+<a name="id-1.9"></a><h2>AUTHOR</h2>
+    
+    <p><span class="corpauthor">Internet Systems Consortium</span>
+    </p>
+  </div>
+
+</div></body>
+</html>

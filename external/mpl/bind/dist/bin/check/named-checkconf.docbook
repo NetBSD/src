@@ -1,0 +1,207 @@
+<!DOCTYPE book [
+<!ENTITY mdash "&#8212;">]>
+<!--
+ - Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ -
+ - This Source Code Form is subject to the terms of the Mozilla Public
+ - License, v. 2.0. If a copy of the MPL was not distributed with this
+ - file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ -
+ - See the COPYRIGHT file distributed with this work for additional
+ - information regarding copyright ownership.
+-->
+
+<!-- Converted by db4-upgrade version 1.0 -->
+<refentry xmlns:db="http://docbook.org/ns/docbook" version="5.0" xml:id="man.named-checkconf">
+  <info>
+    <date>2014-01-10</date>
+  </info>
+  <refentryinfo>
+    <corpname>ISC</corpname>
+    <corpauthor>Internet Systems Consortium, Inc.</corpauthor>
+  </refentryinfo>
+
+  <refmeta>
+    <refentrytitle><application>named-checkconf</application></refentrytitle>
+    <manvolnum>8</manvolnum>
+    <refmiscinfo>BIND9</refmiscinfo>
+  </refmeta>
+
+  <docinfo>
+    <copyright>
+      <year>2000</year>
+      <year>2001</year>
+      <year>2002</year>
+      <year>2004</year>
+      <year>2005</year>
+      <year>2007</year>
+      <year>2009</year>
+      <year>2014</year>
+      <year>2015</year>
+      <year>2016</year>
+      <year>2018</year>
+      <holder>Internet Systems Consortium, Inc. ("ISC")</holder>
+    </copyright>
+  </docinfo>
+
+  <refnamediv>
+    <refname><application>named-checkconf</application></refname>
+    <refpurpose>named configuration file syntax checking tool</refpurpose>
+  </refnamediv>
+
+  <refsynopsisdiv>
+    <cmdsynopsis sepchar=" ">
+      <command>named-checkconf</command>
+      <arg choice="opt" rep="norepeat"><option>-hjlvz</option></arg>
+      <arg choice="opt" rep="norepeat"><option>-p</option>
+	<arg choice="opt" rep="norepeat"><option>-x</option>
+      </arg></arg>
+      <arg choice="opt" rep="norepeat"><option>-t <replaceable class="parameter">directory</replaceable></option></arg>
+      <arg choice="req" rep="norepeat">filename</arg>
+    </cmdsynopsis>
+  </refsynopsisdiv>
+
+  <refsection><info><title>DESCRIPTION</title></info>
+
+    <para><command>named-checkconf</command>
+      checks the syntax, but not the semantics, of a
+      <command>named</command> configuration file.  The file is parsed
+      and checked for syntax errors, along with all files included by it.
+      If no file is specified, <filename>/etc/named.conf</filename> is read
+      by default.
+    </para>
+    <para>
+      Note: files that <command>named</command> reads in separate
+      parser contexts, such as <filename>rndc.key</filename> and
+      <filename>bind.keys</filename>, are not automatically read
+      by <command>named-checkconf</command>.  Configuration
+      errors in these files may cause <command>named</command> to
+      fail to run, even if <command>named-checkconf</command> was
+      successful.  <command>named-checkconf</command> can be run
+      on these files explicitly, however.
+    </para>
+  </refsection>
+
+  <refsection><info><title>OPTIONS</title></info>
+
+    <variablelist>
+      <varlistentry>
+        <term>-h</term>
+        <listitem>
+          <para>
+            Print the usage summary and exit.
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>-j</term>
+        <listitem>
+          <para>
+            When loading a zonefile read the journal if it exists.
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>-l</term>
+        <listitem>
+          <para>
+            List all the configured zones. Each line of output
+            contains the zone name, class (e.g. IN), view, and type
+            (e.g. master or slave).
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>-p</term>
+        <listitem>
+          <para>
+	    Print out the <filename>named.conf</filename> and included files
+	    in canonical form if no errors were detected.
+            See also the <option>-x</option> option.
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>-t <replaceable class="parameter">directory</replaceable></term>
+        <listitem>
+          <para>
+            Chroot to <filename>directory</filename> so that include
+            directives in the configuration file are processed as if
+            run by a similarly chrooted <command>named</command>.
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>-v</term>
+        <listitem>
+          <para>
+            Print the version of the <command>named-checkconf</command>
+            program and exit.
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>-x</term>
+        <listitem>
+          <para>
+	    When printing the configuration files in canonical
+            form, obscure shared secrets by replacing them with
+            strings of question marks ('?'). This allows the
+            contents of <filename>named.conf</filename> and related
+            files to be shared &mdash; for example, when submitting
+            bug reports &mdash; without compromising private data.
+            This option cannot be used without <option>-p</option>.
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>-z</term>
+        <listitem>
+          <para>
+	    Perform a test load of all master zones found in
+	    <filename>named.conf</filename>.
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>filename</term>
+        <listitem>
+          <para>
+            The name of the configuration file to be checked.  If not
+            specified, it defaults to <filename>/etc/named.conf</filename>.
+          </para>
+        </listitem>
+      </varlistentry>
+
+    </variablelist>
+
+  </refsection>
+
+  <refsection><info><title>RETURN VALUES</title></info>
+
+    <para><command>named-checkconf</command>
+      returns an exit status of 1 if
+      errors were detected and 0 otherwise.
+    </para>
+  </refsection>
+
+  <refsection><info><title>SEE ALSO</title></info>
+
+    <para><citerefentry>
+        <refentrytitle>named</refentrytitle><manvolnum>8</manvolnum>
+      </citerefentry>,
+      <citerefentry>
+        <refentrytitle>named-checkzone</refentrytitle><manvolnum>8</manvolnum>
+      </citerefentry>,
+      <citetitle>BIND 9 Administrator Reference Manual</citetitle>.
+    </para>
+  </refsection>
+</refentry>

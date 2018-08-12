@@ -1,0 +1,100 @@
+.\"	$NetBSD: pkcs11-list.8,v 1.1.1.1 2018/08/12 12:07:27 christos Exp $
+.\"
+.\" Copyright (C) 2009, 2014-2016, 2018 Internet Systems Consortium, Inc. ("ISC")
+.\" 
+.\" This Source Code Form is subject to the terms of the Mozilla Public
+.\" License, v. 2.0. If a copy of the MPL was not distributed with this
+.\" file, You can obtain one at http://mozilla.org/MPL/2.0/.
+.\"
+.hy 0
+.ad l
+'\" t
+.\"     Title: pkcs11-list
+.\"    Author: 
+.\" Generator: DocBook XSL Stylesheets v1.78.1 <http://docbook.sf.net/>
+.\"      Date: 2009-10-05
+.\"    Manual: BIND9
+.\"    Source: ISC
+.\"  Language: English
+.\"
+.TH "PKCS11\-LIST" "8" "2009\-10\-05" "ISC" "BIND9"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "NAME"
+pkcs11-list \- list PKCS#11 objects
+.SH "SYNOPSIS"
+.HP \w'\fBpkcs11\-list\fR\ 'u
+\fBpkcs11\-list\fR [\fB\-P\fR] [\fB\-m\ \fR\fB\fImodule\fR\fR] [\fB\-s\ \fR\fB\fIslot\fR\fR] [\-i\ \fIID\fR] [\-l\ \fIlabel\fR] [\fB\-p\ \fR\fB\fIPIN\fR\fR]
+.SH "DESCRIPTION"
+.PP
+\fBpkcs11\-list\fR
+lists the PKCS#11 objects with
+\fBID\fR
+or
+\fBlabel\fR
+or by default all objects\&. The object class, label, and ID are displayed for all keys\&. For private or secret keys, the extractability attribute is also displayed, as either
+true,
+false, or
+never\&.
+.SH "ARGUMENTS"
+.PP
+\-P
+.RS 4
+List only the public objects\&. (Note that on some PKCS#11 devices, all objects are private\&.)
+.RE
+.PP
+\-m \fImodule\fR
+.RS 4
+Specify the PKCS#11 provider module\&. This must be the full path to a shared library object implementing the PKCS#11 API for the device\&.
+.RE
+.PP
+\-s \fIslot\fR
+.RS 4
+Open the session with the given PKCS#11 slot\&. The default is slot 0\&.
+.RE
+.PP
+\-i \fIID\fR
+.RS 4
+List only key objects with the given object ID\&.
+.RE
+.PP
+\-l \fIlabel\fR
+.RS 4
+List only key objects with the given label\&.
+.RE
+.PP
+\-p \fIPIN\fR
+.RS 4
+Specify the PIN for the device\&. If no PIN is provided on the command line,
+\fBpkcs11\-list\fR
+will prompt for it\&.
+.RE
+.SH "SEE ALSO"
+.PP
+\fBpkcs11-destroy\fR(8),
+\fBpkcs11-keygen\fR(8),
+\fBpkcs11-tokens\fR(8)
+.SH "AUTHOR"
+.PP
+\fBInternet Systems Consortium, Inc\&.\fR
+.SH "COPYRIGHT"
+.br
+Copyright \(co 2009, 2014-2016, 2018 Internet Systems Consortium, Inc. ("ISC")
+.br

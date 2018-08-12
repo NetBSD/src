@@ -1,0 +1,44 @@
+# Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+#
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+#
+# See the COPYRIGHT file distributed with this work for additional
+# information regarding copyright ownership.
+
+srcdir =	@srcdir@
+VPATH =		@srcdir@
+top_srcdir =	@top_srcdir@
+
+CINCLUDES =	-I${srcdir}/include \
+		-I${srcdir}/../@ISC_THREAD_DIR@/include \
+		-I../include \
+		-I${srcdir}/../include \
+		-I${srcdir}/.. @ISC_OPENSSL_INC@
+
+CDEFINES =	@CRYPTO@
+CWARNINGS =
+
+# Alphabetically
+OBJS =		@ISC_IPV6_O@ @ISC_PK11_API_O@ \
+		app.@O@ dir.@O@ entropy.@O@ errno.@O@ errno2result.@O@ \
+		file.@O@ fsaccess.@O@ interfaceiter.@O@ \
+		keyboard.@O@ meminfo.@O@ \
+		net.@O@ os.@O@ resource.@O@ socket.@O@ stdio.@O@ stdtime.@O@ \
+		strerror.@O@ syslog.@O@ time.@O@
+
+# Alphabetically
+SRCS =		@ISC_IPV6_C@ @ISC_PK11_API_C@ \
+		app.c dir.c entropy.c errno.c errno2result.c \
+		file.c fsaccess.c interfaceiter.c keyboard.c meminfo.c \
+		net.c os.c resource.c socket.c stdio.c stdtime.c \
+		strerror.c syslog.c time.c
+
+SUBDIRS =	include
+TARGETS =	${OBJS}
+
+@BIND9_MAKE_RULES@
+
+interfaceiter.@O@: interfaceiter.c ifiter_ioctl.c ifiter_sysctl.c ifiter_getifaddrs.c
+

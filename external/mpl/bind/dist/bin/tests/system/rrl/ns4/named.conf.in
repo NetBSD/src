@@ -1,0 +1,62 @@
+/*
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
+ */
+
+options {
+	query-source address 10.53.0.4;
+	notify-source 10.53.0.4;
+	transfer-source 10.53.0.4;
+	port @PORT@;
+	session-keyfile "session.key";
+	pid-file "named.pid";
+	statistics-file	"named.stats";
+	listen-on { 10.53.0.4; };
+	listen-on-v6 { none; };
+	notify no;
+
+	rate-limit {
+	    responses-per-second 2;
+	    all-per-second 50;
+	    slip 3;
+	    exempt-clients { 10.53.0.7; };
+	    log-only yes;
+
+	    // small enough to force a table expansion
+	    min-table-size 75;
+	};
+};
+
+key rndc_key {
+	secret "1234abcd8765";
+	algorithm hmac-sha256;
+};
+controls {
+	inet 10.53.0.4 port @CONTROLPORT@ allow { any; } keys { rndc_key; };
+};
+
+/*
+ * These log settings have no effect unless "-g" is removed from ../../start.pl
+ */
+logging {
+	channel debug {
+	    file "log-debug";
+	    print-category yes; print-severity yes; severity debug 10;
+	};
+	channel queries {
+	    file "log-queries";
+	    print-category yes; print-severity yes; severity info;
+	};
+	category rate-limit { debug; queries; };
+	category queries { debug; queries; };
+};
+
+zone "." { type hint; file "hints"; };
+
+zone "tld4."{ type master; file "tld4.db"; };

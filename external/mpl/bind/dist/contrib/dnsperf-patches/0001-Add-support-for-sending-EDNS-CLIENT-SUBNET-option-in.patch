@@ -1,0 +1,230 @@
+From bbbf023b5daddcf355f398286280ab45ce1b8933 Mon Sep 17 00:00:00 2001
+From: Mukund Sivaraman <muks@isc.org>
+Date: Fri, 9 Sep 2016 13:34:13 +0530
+Subject: [PATCH] Add support for sending EDNS CLIENT-SUBNET option in queries
+ to dnsperf and resperf (#42899)
+
+---
+ contrib/dnsperf-2.1.0.0-1/dns.c     | 66 +++++++++++++++++++++++++++++++++++--
+ contrib/dnsperf-2.1.0.0-1/dns.h     |  2 ++
+ contrib/dnsperf-2.1.0.0-1/dnsperf.c | 21 ++++++++++--
+ contrib/dnsperf-2.1.0.0-1/resperf.c | 18 ++++++++--
+ 4 files changed, 100 insertions(+), 7 deletions(-)
+
+diff --git a/contrib/dnsperf-2.1.0.0-1/dns.c b/contrib/dnsperf-2.1.0.0-1/dns.c
+index be16490..c9c2517 100644
+--- a/contrib/dnsperf-2.1.0.0-1/dns.c
++++ b/contrib/dnsperf-2.1.0.0-1/dns.c
+@@ -300,7 +300,10 @@ perf_dns_destroytsigkey(perf_dnstsigkey_t **tsigkeyp)
+  * Appends an OPT record to the packet.
+  */
+ static isc_result_t
+-add_edns(isc_buffer_t *packet, isc_boolean_t dnssec) {
++add_edns(isc_buffer_t *packet, isc_boolean_t dnssec,
++	 isc_boolean_t ecs_zero, isc_boolean_t ecs_fixed,
++	 isc_boolean_t ecs_random)
++{
+ 	unsigned char *base;
+ 
+ 	if (isc_buffer_availablelength(packet) < EDNSLEN) {
+@@ -319,7 +322,62 @@ add_edns(isc_buffer_t *packet, isc_boolean_t dnssec) {
+ 		isc_buffer_putuint16(packet, 0x8000);
+ 	else
+ 		isc_buffer_putuint16(packet, 0);
+-	isc_buffer_putuint16(packet, 0);		/* rdlen */
++	if (!ecs_zero && !ecs_fixed && !ecs_random) {
++		isc_buffer_putuint16(packet, 0);		/* rdlen */
++	} else {
++		if (ecs_zero) {
++			/* rdlen */
++			isc_buffer_putuint16(packet, 8);
++			/* CLIENT-SUBNET option code */
++			isc_buffer_putuint16(packet, 0x0008);
++			/* CLIENT-SUBNET option length */
++			isc_buffer_putuint16(packet, 4);
++			/* FAMILY=IPv4 */
++			isc_buffer_putuint16(packet, 0x0001);
++			/* SOURCE PREFIX-LENGTH=0 */
++			isc_buffer_putuint8(packet, 0);
++			/* SCOPE PREFIX-LENGTH=0 */
++			isc_buffer_putuint8(packet, 0);
++		} else if (ecs_fixed) {
++			/* rdlen */
++			isc_buffer_putuint16(packet, 11);
++			/* CLIENT-SUBNET option code */
++			isc_buffer_putuint16(packet, 0x0008);
++			/* CLIENT-SUBNET option length */
++			isc_buffer_putuint16(packet, 7);
++			/* FAMILY=IPv4 */
++			isc_buffer_putuint16(packet, 0x0001);
++			/* SOURCE PREFIX-LENGTH=24 */
++			isc_buffer_putuint8(packet, 24);
++			/* SCOPE PREFIX-LENGTH=0 */
++			isc_buffer_putuint8(packet, 0);
++			isc_buffer_putuint8(packet, 149);
++			isc_buffer_putuint8(packet, 20);
++			isc_buffer_putuint8(packet, 64);
++		} else {
++			unsigned long r;
++
++			/* rdlen */
++			isc_buffer_putuint16(packet, 11);
++			/* CLIENT-SUBNET option code */
++			isc_buffer_putuint16(packet, 0x0008);
++			/* CLIENT-SUBNET option length */
++			isc_buffer_putuint16(packet, 7);
++			/* FAMILY=IPv4 */
++			isc_buffer_putuint16(packet, 0x0001);
++			/* SOURCE PREFIX-LENGTH=24 */
++			isc_buffer_putuint8(packet, 24);
++			/* SCOPE PREFIX-LENGTH=0 */
++			isc_buffer_putuint8(packet, 0);
++
++			r = (unsigned long) random();
++			isc_buffer_putuint8(packet, r & 0xff);
++			r >>= 8;
++			isc_buffer_putuint8(packet, r & 0xff);
++			r >>= 8;
++			isc_buffer_putuint8(packet, r & 0xff);
++		}
++	}
+ 
+ 	base[11]++;				/* increment record count */
+ 
+@@ -806,6 +864,8 @@ isc_result_t
+ perf_dns_buildrequest(perf_dnsctx_t *ctx, const isc_textregion_t *record,
+ 		      isc_uint16_t qid,
+ 		      isc_boolean_t edns, isc_boolean_t dnssec,
++		      isc_boolean_t ecs_zero, isc_boolean_t ecs_fixed,
++		      isc_boolean_t ecs_random,
+ 		      perf_dnstsigkey_t *tsigkey, isc_buffer_t *msg)
+ {
+ 	unsigned int flags;
+@@ -833,7 +893,7 @@ perf_dns_buildrequest(perf_dnsctx_t *ctx, const isc_textregion_t *record,
+ 		return (result);
+ 
+ 	if (edns) {
+-		result = add_edns(msg, dnssec);
++		result = add_edns(msg, dnssec, ecs_zero, ecs_fixed, ecs_random);
+ 		if (result != ISC_R_SUCCESS)
+ 			return (result);
+ 	}
+diff --git a/contrib/dnsperf-2.1.0.0-1/dns.h b/contrib/dnsperf-2.1.0.0-1/dns.h
+index 3ac98a4..4111d89 100644
+--- a/contrib/dnsperf-2.1.0.0-1/dns.h
++++ b/contrib/dnsperf-2.1.0.0-1/dns.h
+@@ -61,6 +61,8 @@ isc_result_t
+ perf_dns_buildrequest(perf_dnsctx_t *ctx, const isc_textregion_t *record,
+ 		      isc_uint16_t qid,
+ 		      isc_boolean_t edns, isc_boolean_t dnssec,
++		      isc_boolean_t ecs_zero, isc_boolean_t ecs_fixed,
++		      isc_boolean_t ecs_random,
+ 		      perf_dnstsigkey_t *tsigkey, isc_buffer_t *msg);
+ 
+ #endif
+diff --git a/contrib/dnsperf-2.1.0.0-1/dnsperf.c b/contrib/dnsperf-2.1.0.0-1/dnsperf.c
+index d4f2b32..3fbbada 100644
+--- a/contrib/dnsperf-2.1.0.0-1/dnsperf.c
++++ b/contrib/dnsperf-2.1.0.0-1/dnsperf.c
+@@ -103,6 +103,9 @@ typedef struct {
+ 	isc_uint32_t bufsize;
+ 	isc_boolean_t edns;
+ 	isc_boolean_t dnssec;
++	isc_boolean_t ecs_zero;
++	isc_boolean_t ecs_fixed;
++	isc_boolean_t ecs_random;
+ 	perf_dnstsigkey_t *tsigkey;
+ 	isc_uint32_t max_outstanding;
+ 	isc_uint32_t max_qps;
+@@ -446,6 +449,15 @@ setup(int argc, char **argv, config_t *config)
+ 	perf_opt_add('D', perf_opt_boolean, NULL,
+ 		     "set the DNSSEC OK bit (implies EDNS)", NULL,
+ 		     &config->dnssec);
++	perf_opt_add('X', perf_opt_boolean, NULL,
++		     "send 0/0 in EDNS CLIENT-SUBNET option", NULL,
++		     &config->ecs_zero);
++	perf_opt_add('Y', perf_opt_boolean, NULL,
++		     "send 149.20.64.0/24 in EDNS CLIENT-SUBNET option", NULL,
++		     &config->ecs_fixed);
++	perf_opt_add('Z', perf_opt_boolean, NULL,
++		     "send random/24 in EDNS CLIENT-SUBNET option", NULL,
++		     &config->ecs_random);
+ 	perf_opt_add('y', perf_opt_string, "[alg:]name:secret",
+ 		     "the TSIG algorithm, name and secret", NULL,
+ 		     &tsigkey);
+@@ -481,7 +493,8 @@ setup(int argc, char **argv, config_t *config)
+ 		config->maxruns = 1;
+ 	perf_datafile_setmaxruns(input, config->maxruns);
+ 
+-	if (config->dnssec)
++	if (config->dnssec || config->ecs_zero || config->ecs_fixed ||
++	    config->ecs_random)
+ 		config->edns = ISC_TRUE;
+ 
+ 	if (tsigkey != NULL)
+@@ -645,7 +658,11 @@ do_send(void *arg)
+ 		result = perf_dns_buildrequest(tinfo->dnsctx,
+ 					       (isc_textregion_t *) &used,
+ 					       qid, config->edns,
+-					       config->dnssec, config->tsigkey,
++					       config->dnssec,
++					       config->ecs_zero,
++					       config->ecs_fixed,
++					       config->ecs_random,
++					       config->tsigkey,
+ 					       &msg);
+ 		if (result != ISC_R_SUCCESS) {
+ 			LOCK(&tinfo->lock);
+diff --git a/contrib/dnsperf-2.1.0.0-1/resperf.c b/contrib/dnsperf-2.1.0.0-1/resperf.c
+index 4dfbb22..e886bda 100644
+--- a/contrib/dnsperf-2.1.0.0-1/resperf.c
++++ b/contrib/dnsperf-2.1.0.0-1/resperf.c
+@@ -111,6 +111,9 @@ static int *socks;
+ static isc_uint64_t query_timeout;
+ static isc_boolean_t edns;
+ static isc_boolean_t dnssec;
++static isc_boolean_t ecs_zero;
++static isc_boolean_t ecs_fixed;
++static isc_boolean_t ecs_random;
+ 
+ static perf_datafile_t *input;
+ 
+@@ -272,6 +275,15 @@ setup(int argc, char **argv)
+ 		     "enable EDNS 0", NULL, &edns);
+ 	perf_opt_add('D', perf_opt_boolean, NULL,
+ 		     "set the DNSSEC OK bit (implies EDNS)", NULL, &dnssec);
++	perf_opt_add('X', perf_opt_boolean, NULL,
++		     "send 0/0 in EDNS CLIENT-SUBNET option", NULL,
++		     &ecs_zero);
++	perf_opt_add('Y', perf_opt_boolean, NULL,
++		     "send 149.20.64.0/24 in EDNS CLIENT-SUBNET option", NULL,
++		     &ecs_fixed);
++	perf_opt_add('Z', perf_opt_boolean, NULL,
++		     "send random/24 in EDNS CLIENT-SUBNET option", NULL,
++		     &ecs_random);
+ 	perf_opt_add('y', perf_opt_string, "[alg:]name:secret",
+ 		     "the TSIG algorithm, name and secret", NULL,
+ 		     &tsigkey_str);
+@@ -330,7 +342,7 @@ setup(int argc, char **argv)
+ 
+ 	input = perf_datafile_open(mctx, filename);
+ 
+-	if (dnssec)
++	if (dnssec || ecs_zero || ecs_fixed || ecs_random)
+ 		edns = ISC_TRUE;
+ 
+ 	if (tsigkey_str != NULL)
+@@ -477,7 +489,9 @@ do_one_line(isc_buffer_t *lines, isc_buffer_t *msg) {
+ 
+ 	isc_buffer_clear(msg);
+ 	result = perf_dns_buildrequest(NULL, (isc_textregion_t *) &used,
+-				       qid, edns, dnssec, tsigkey, msg);
++				       qid, edns, dnssec,
++				       ecs_zero, ecs_fixed, ecs_random,
++				       tsigkey, msg);
+ 	if (result != ISC_R_SUCCESS)
+ 		return (result);
+ 
+-- 
+2.7.4
+

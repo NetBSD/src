@@ -1,0 +1,1145 @@
+<!--
+ - Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ -
+ - This Source Code Form is subject to the terms of the Mozilla Public
+ - License, v. 2.0. If a copy of the MPL was not distributed with this
+ - file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ -
+ - See the COPYRIGHT file distributed with this work for additional
+ - information regarding copyright ownership.
+-->
+
+<!-- Converted by db4-upgrade version 1.0 -->
+<refentry xmlns:db="http://docbook.org/ns/docbook" version="5.0" xml:id="man.rndc">
+  <info>
+    <date>2014-08-15</date>
+  </info>
+  <refentryinfo>
+    <corpname>ISC</corpname>
+    <corpauthor>Internet Systems Consortium, Inc.</corpauthor>
+  </refentryinfo>
+
+  <refmeta>
+    <refentrytitle><application>rndc</application></refentrytitle>
+    <manvolnum>8</manvolnum>
+    <refmiscinfo>BIND9</refmiscinfo>
+  </refmeta>
+
+  <refnamediv>
+    <refname><application>rndc</application></refname>
+    <refpurpose>name server control utility</refpurpose>
+  </refnamediv>
+
+  <docinfo>
+    <copyright>
+      <year>2000</year>
+      <year>2001</year>
+      <year>2004</year>
+      <year>2005</year>
+      <year>2007</year>
+      <year>2013</year>
+      <year>2014</year>
+      <year>2015</year>
+      <year>2016</year>
+      <year>2017</year>
+      <year>2018</year>
+      <holder>Internet Systems Consortium, Inc. ("ISC")</holder>
+    </copyright>
+  </docinfo>
+
+  <refsynopsisdiv>
+    <cmdsynopsis sepchar=" ">
+      <command>rndc</command>
+      <arg choice="opt" rep="norepeat"><option>-b <replaceable class="parameter">source-address</replaceable></option></arg>
+      <arg choice="opt" rep="norepeat"><option>-c <replaceable class="parameter">config-file</replaceable></option></arg>
+      <arg choice="opt" rep="norepeat"><option>-k <replaceable class="parameter">key-file</replaceable></option></arg>
+      <arg choice="opt" rep="norepeat"><option>-s <replaceable class="parameter">server</replaceable></option></arg>
+      <arg choice="opt" rep="norepeat"><option>-p <replaceable class="parameter">port</replaceable></option></arg>
+      <arg choice="opt" rep="norepeat"><option>-q</option></arg>
+      <arg choice="opt" rep="norepeat"><option>-r</option></arg>
+      <arg choice="opt" rep="norepeat"><option>-V</option></arg>
+      <arg choice="opt" rep="norepeat"><option>-y <replaceable class="parameter">key_id</replaceable></option></arg>
+      <group choice="opt" rep="norepeat">
+	<arg choice="opt" rep="norepeat"><option>-4</option></arg>
+	<arg choice="opt" rep="norepeat"><option>-6</option></arg>
+      </group>
+      <arg choice="req" rep="norepeat">command</arg>
+    </cmdsynopsis>
+  </refsynopsisdiv>
+
+  <refsection><info><title>DESCRIPTION</title></info>
+
+    <para><command>rndc</command>
+      controls the operation of a name
+      server.  It supersedes the <command>ndc</command> utility
+      that was provided in old BIND releases.  If
+      <command>rndc</command> is invoked with no command line
+      options or arguments, it prints a short summary of the
+      supported commands and the available options and their
+      arguments.
+    </para>
+    <para><command>rndc</command>
+      communicates with the name server over a TCP connection, sending
+      commands authenticated with digital signatures.  In the current
+      versions of
+      <command>rndc</command> and <command>named</command>,
+      the only supported authentication algorithms are HMAC-MD5
+      (for compatibility), HMAC-SHA1, HMAC-SHA224, HMAC-SHA256
+      (default), HMAC-SHA384 and HMAC-SHA512.
+      They use a shared secret on each end of the connection.
+      This provides TSIG-style authentication for the command
+      request and the name server's response.  All commands sent
+      over the channel must be signed by a key_id known to the
+      server.
+    </para>
+    <para><command>rndc</command>
+      reads a configuration file to
+      determine how to contact the name server and decide what
+      algorithm and key it should use.
+    </para>
+  </refsection>
+
+  <refsection><info><title>OPTIONS</title></info>
+
+
+    <variablelist>
+      <varlistentry>
+	<term>-4</term>
+	<listitem>
+	  <para>
+	    Use IPv4 only.
+	  </para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term>-6</term>
+	<listitem>
+	  <para>
+	    Use IPv6 only.
+	  </para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term>-b <replaceable class="parameter">source-address</replaceable></term>
+	<listitem>
+	  <para>
+	    Use <replaceable class="parameter">source-address</replaceable>
+	    as the source address for the connection to the server.
+	    Multiple instances are permitted to allow setting of both
+	    the IPv4 and IPv6 source addresses.
+	  </para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term>-c <replaceable class="parameter">config-file</replaceable></term>
+	<listitem>
+	  <para>
+	    Use <replaceable class="parameter">config-file</replaceable>
+	    as the configuration file instead of the default,
+	    <filename>/etc/rndc.conf</filename>.
+	  </para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term>-k <replaceable class="parameter">key-file</replaceable></term>
+	<listitem>
+	  <para>
+	    Use <replaceable class="parameter">key-file</replaceable>
+	    as the key file instead of the default,
+	    <filename>/etc/rndc.key</filename>.  The key in
+	    <filename>/etc/rndc.key</filename> will be used to
+	    authenticate
+	    commands sent to the server if the <replaceable class="parameter">config-file</replaceable>
+	    does not exist.
+	  </para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term>-s <replaceable class="parameter">server</replaceable></term>
+	<listitem>
+	  <para><replaceable class="parameter">server</replaceable> is
+	    the name or address of the server which matches a
+	    server statement in the configuration file for
+	    <command>rndc</command>.  If no server is supplied on the
+	    command line, the host named by the default-server clause
+	    in the options statement of the <command>rndc</command>
+	    configuration file will be used.
+	  </para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term>-p <replaceable class="parameter">port</replaceable></term>
+	<listitem>
+	  <para>
+	    Send commands to TCP port
+	    <replaceable class="parameter">port</replaceable>
+	    instead
+	    of BIND 9's default control channel port, 953.
+	  </para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term>-q</term>
+	<listitem>
+	  <para>
+	    Quiet mode: Message text returned by the server
+	    will not be printed except when there is an error.
+	  </para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term>-r</term>
+	<listitem>
+	  <para>
+	    Instructs <command>rndc</command> to print the result code
+	    returned by <command>named</command> after executing the
+	    requested command (e.g., ISC_R_SUCCESS, ISC_R_FAILURE, etc).
+	  </para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term>-V</term>
+	<listitem>
+	  <para>
+	    Enable verbose logging.
+	  </para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term>-y <replaceable class="parameter">key_id</replaceable></term>
+	<listitem>
+	  <para>
+	    Use the key <replaceable class="parameter">key_id</replaceable>
+	    from the configuration file.
+	    <replaceable class="parameter">key_id</replaceable>
+	    must be
+	    known by <command>named</command> with the same algorithm and secret string
+	    in order for control message validation to succeed.
+	    If no <replaceable class="parameter">key_id</replaceable>
+	    is specified, <command>rndc</command> will first look
+	    for a key clause in the server statement of the server
+	    being used, or if no server statement is present for that
+	    host, then the default-key clause of the options statement.
+	    Note that the configuration file contains shared secrets
+	    which are used to send authenticated control commands
+	    to name servers.  It should therefore not have general read
+	    or write access.
+	  </para>
+	</listitem>
+      </varlistentry>
+
+    </variablelist>
+  </refsection>
+
+  <refsection><info><title>COMMANDS</title></info>
+
+    <para>
+      A list of commands supported by <command>rndc</command> can
+      be seen by running <command>rndc</command> without arguments.
+    </para>
+    <para>
+      Currently supported commands are:
+    </para>
+
+    <variablelist>
+
+      <varlistentry>
+	<term><userinput>addzone <replaceable>zone</replaceable> <optional><replaceable>class</replaceable> <optional><replaceable>view</replaceable></optional></optional> <replaceable>configuration</replaceable> </userinput></term>
+	<listitem>
+	  <para>
+	    Add a zone while the server is running.  This
+	    command requires the
+	    <command>allow-new-zones</command> option to be set
+	    to <userinput>yes</userinput>.  The
+	    <replaceable>configuration</replaceable> string
+	    specified on the command line is the zone
+	    configuration text that would ordinarily be
+	    placed in <filename>named.conf</filename>.
+	  </para>
+	  <para>
+	    The configuration is saved in a file called
+	    <filename><replaceable>viewname</replaceable>.nzf</filename>
+	    (or, if <command>named</command> is compiled with
+	    liblmdb, an LMDB database file called
+	    <filename><replaceable>viewname</replaceable>.nzd</filename>).
+	    <replaceable>viewname</replaceable> is the
+	    name of the view, unless the view name contains characters
+	    that are incompatible with use as a file name, in which case
+	    a cryptographic hash of the view name is used instead.
+	    When <command>named</command> is
+	    restarted, the file will be loaded into the view
+	    configuration, so that zones that were added
+	    can persist after a restart.
+	  </para>
+	  <para>
+	    This sample <command>addzone</command> command
+	    would add the zone <literal>example.com</literal>
+	    to the default view:
+	  </para>
+	  <para>
+<prompt>$ </prompt><userinput>rndc addzone example.com '{ type master; file "example.com.db"; };'</userinput>
+	  </para>
+	  <para>
+	    (Note the brackets and semi-colon around the zone
+	    configuration text.)
+	  </para>
+	  <para>
+	    See also <command>rndc delzone</command> and <command>rndc modzone</command>.
+	  </para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term><userinput>delzone <optional>-clean</optional> <replaceable>zone</replaceable> <optional><replaceable>class</replaceable> <optional><replaceable>view</replaceable></optional></optional> </userinput></term>
+	<listitem>
+	  <para>
+	    Delete a zone while the server is running.
+	  </para>
+	  <para>
+	    If the <option>-clean</option> argument is specified,
+	    the zone's master file (and journal file, if any)
+	    will be deleted along with the zone.  Without the
+	    <option>-clean</option> option, zone files must
+	    be cleaned up by hand.  (If the zone is of
+	    type "slave" or "stub", the files needing to
+	    be cleaned up will be reported in the output
+	    of the <command>rndc delzone</command> command.)
+	  </para>
+	  <para>
+	    If the zone was originally added via
+	    <command>rndc addzone</command>, then it will be
+	    removed permanently. However, if it was originally
+	    configured in <filename>named.conf</filename>, then
+	    that original configuration is still in place; when
+	    the server is restarted or reconfigured, the zone will
+	    come back. To remove it permanently, it must also be
+	    removed from <filename>named.conf</filename>
+	  </para>
+	  <para>
+	    See also <command>rndc addzone</command> and <command>rndc modzone</command>.
+	  </para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term><userinput>dnstap ( -reopen | -roll <optional><replaceable>number</replaceable></optional> )</userinput></term>
+	<listitem>
+	  <para>
+	    Close and re-open DNSTAP output files.
+	    <command>rndc dnstap -reopen</command> allows the output
+	    file to be renamed externally, so
+	    that <command>named</command> can truncate and re-open it.
+	    <command>rndc dnstap -roll</command> causes the output file
+	    to be rolled automatically, similar to log files; the most
+	    recent output file has ".0" appended to its name; the
+	    previous most recent output file is moved to ".1", and so on.
+	    If <replaceable>number</replaceable> is specified, then the
+	    number of backup log files is limited to that number.
+	  </para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term><userinput>dumpdb <optional>-all|-cache|-zones|-adb|-bad|-fail</optional> <optional><replaceable>view ...</replaceable></optional></userinput></term>
+	<listitem>
+	  <para>
+	    Dump the server's caches (default) and/or zones to
+	    the dump file for the specified views.  If no view
+            is specified, all views are dumped.
+	    (See the <command>dump-file</command> option in
+	    the BIND 9 Administrator Reference Manual.)
+	  </para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term><userinput>flush</userinput></term>
+	<listitem>
+	  <para>
+	    Flushes the server's cache.
+	  </para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term><userinput>flushname</userinput> <replaceable>name</replaceable> <optional><replaceable>view</replaceable></optional> </term>
+	<listitem>
+	  <para>
+	    Flushes the given name from the view's DNS cache
+	    and, if applicable, from the view's nameserver address
+	    database, bad server cache and SERVFAIL cache.
+	  </para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term><userinput>flushtree</userinput> <replaceable>name</replaceable> <optional><replaceable>view</replaceable></optional> </term>
+	<listitem>
+	  <para>
+	    Flushes the given name, and all of its subdomains,
+	    from the view's DNS cache, address database,
+	    bad server cache, and SERVFAIL cache.
+	  </para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term><userinput>freeze <optional><replaceable>zone</replaceable> <optional><replaceable>class</replaceable> <optional><replaceable>view</replaceable></optional></optional></optional></userinput></term>
+	<listitem>
+	  <para>
+	    Suspend updates to a dynamic zone.  If no zone is
+	    specified, then all zones are suspended.  This allows
+	    manual edits to be made to a zone normally updated by
+	    dynamic update.  It also causes changes in the
+	    journal file to be synced into the master file.
+	    All dynamic update attempts will be refused while
+	    the zone is frozen.
+	  </para>
+	  <para>
+	    See also <command>rndc thaw</command>.
+	  </para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term><userinput>halt <optional>-p</optional></userinput></term>
+	<listitem>
+	  <para>
+	    Stop the server immediately.  Recent changes
+	    made through dynamic update or IXFR are not saved to
+	    the master files, but will be rolled forward from the
+	    journal files when the server is restarted.
+	    If <option>-p</option> is specified <command>named</command>'s process id is returned.
+	    This allows an external process to determine when <command>named</command>
+	    had completed halting.
+	  </para>
+	  <para>
+	    See also <command>rndc stop</command>.
+	  </para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term><userinput>loadkeys <replaceable>zone</replaceable> <optional><replaceable>class</replaceable> <optional><replaceable>view</replaceable></optional></optional></userinput></term>
+	<listitem>
+	  <para>
+	    Fetch all DNSSEC keys for the given zone
+	    from the key directory.  If they are within
+	    their publication period, merge them into the
+	    zone's DNSKEY RRset.  Unlike <command>rndc
+	    sign</command>, however, the zone is not
+	    immediately re-signed by the new keys, but is
+	    allowed to incrementally re-sign over time.
+	  </para>
+	  <para>
+	    This command requires that the
+	    <command>auto-dnssec</command> zone option
+	    be set to <literal>maintain</literal>,
+	    and also requires the zone to be configured to
+	    allow dynamic DNS.
+	    (See "Dynamic Update Policies" in the Administrator
+	    Reference Manual for more details.)
+	  </para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term><userinput>managed-keys <replaceable>(status | refresh | sync | destroy)</replaceable> <optional><replaceable>class</replaceable> <optional><replaceable>view</replaceable></optional></optional></userinput></term>
+	<listitem>
+	  <para>
+            Inspect and control the "managed-keys" database which
+            handles RFC 5011 DNSSEC trust anchor maintenance. If a view
+            is specified, these commands are applied to that view;
+            otherwise they are applied to all views.
+          </para>
+          <itemizedlist>
+            <listitem>
+              <para>
+                When run with the <literal>status</literal> keyword, prints
+                the current status of the managed-keys database.
+              </para>
+            </listitem>
+            <listitem>
+              <para>
+                When run with the <literal>refresh</literal> keyword,
+                forces an immediate refresh query to be sent for all
+                the managed keys, updating the managed-keys database
+                if any new keys are found, without waiting the normal
+                refresh interval.
+              </para>
+            </listitem>
+            <listitem>
+              <para>
+                When run with the <literal>sync</literal> keyword, forces an
+                immediate dump of the managed-keys database to disk
+                (in the file <filename>managed-keys.bind</filename> or
+                (<filename><replaceable>viewname</replaceable>.mkeys</filename>).
+                This synchronizes the database with its journal file, so
+                that the database's current contents can be inspected
+                visually.
+              </para>
+            </listitem>
+            <listitem>
+              <para>
+                When run with the <literal>destroy</literal> keyword, the
+                managed-keys database is shut down and deleted, and all key
+                maintenance is terminated.  This command should be used only
+                with extreme caution.
+              </para>
+              <para>
+                Existing keys that are already trusted are not deleted
+                from memory; DNSSEC validation can continue after this
+                command is used. However, key maintenance operations will
+                cease until <command>named</command> is restarted or
+                reconfigured, and all existing key maintenance state
+                will be deleted.
+              </para>
+              <para>
+                Running <command>rndc reconfig</command> or restarting
+                <command>named</command> immediately after this command
+                will cause key maintenance to be reinitialized from scratch,
+                just as if the server were being started for the first time.
+                This is primarily intended for testing, but it may also be
+                used, for example, to jumpstart the acquisition of new keys
+                in the event of a trust anchor rollover, or as a
+                brute-force repair for key maintenance problems.
+              </para>
+            </listitem>
+          </itemizedlist>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term><userinput>modzone <replaceable>zone</replaceable> <optional><replaceable>class</replaceable> <optional><replaceable>view</replaceable></optional></optional> <replaceable>configuration</replaceable> </userinput></term>
+	<listitem>
+	  <para>
+	    Modify the configuration of a zone while the server
+	    is running.  This command requires the
+	    <command>allow-new-zones</command> option to be
+	    set to <userinput>yes</userinput>.  As with
+	    <command>addzone</command>, the
+	    <replaceable>configuration</replaceable> string
+	    specified on the command line is the zone
+	    configuration text that would ordinarily be
+	    placed in <filename>named.conf</filename>.
+	  </para>
+	  <para>
+	    If the zone was originally added via
+	    <command>rndc addzone</command>, the configuration
+	    changes will be recorded permanently and will still be
+	    in effect after the server is restarted or reconfigured.
+	    However, if it was originally configured in
+	    <filename>named.conf</filename>, then that original
+	    configuration is still in place; when the server is
+	    restarted or reconfigured, the zone will revert to
+	    its original configuration.  To make the changes
+	    permanent, it must also be modified in
+	    <filename>named.conf</filename>
+	  </para>
+	  <para>
+	    See also <command>rndc addzone</command> and <command>rndc delzone</command>.
+	  </para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term><userinput>notify <replaceable>zone</replaceable> <optional><replaceable>class</replaceable> <optional><replaceable>view</replaceable></optional></optional></userinput></term>
+	<listitem>
+	  <para>
+	    Resend NOTIFY messages for the zone.
+	  </para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term><userinput>notrace</userinput></term>
+	<listitem>
+	  <para>
+	    Sets the server's debugging level to 0.
+	  </para>
+	  <para>
+	    See also <command>rndc trace</command>.
+	  </para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term><userinput>nta
+	<optional>( -d | -f | -r | -l <replaceable>duration</replaceable>)</optional>
+	<replaceable>domain</replaceable>
+	<optional><replaceable>view</replaceable></optional>
+	</userinput></term>
+	<listitem>
+	  <para>
+	    Sets a DNSSEC negative trust anchor (NTA)
+	    for <option>domain</option>, with a lifetime of
+	    <option>duration</option>.  The default lifetime is
+	    configured in <filename>named.conf</filename> via the
+	    <option>nta-lifetime</option> option, and defaults to
+	    one hour.  The lifetime cannot exceed one week.
+	  </para>
+	  <para>
+	    A negative trust anchor selectively disables
+	    DNSSEC validation for zones that are known to be
+	    failing because of misconfiguration rather than
+	    an attack.  When data to be validated is
+	    at or below an active NTA (and above any other
+	    configured trust anchors), <command>named</command> will
+	    abort the DNSSEC validation process and treat the data as
+	    insecure rather than bogus.  This continues until the
+	    NTA's lifetime is elapsed.
+	  </para>
+	  <para>
+	    NTAs persist across restarts of the <command>named</command> server.
+	    The NTAs for a view are saved in a file called
+	    <filename><replaceable>name</replaceable>.nta</filename>,
+	    where <replaceable>name</replaceable> is the
+	    name of the view, or if it contains characters
+	    that are incompatible with use as a file name, a
+	    cryptographic hash generated from the name
+	    of the view.
+	  </para>
+	  <para>
+	    An existing NTA can be removed by using the
+	    <option>-remove</option> option.
+	  </para>
+	  <para>
+	    An NTA's lifetime can be specified with the
+	    <option>-lifetime</option> option.  TTL-style
+	    suffixes can be used to specify the lifetime in
+	    seconds, minutes, or hours.  If the specified NTA
+	    already exists, its lifetime will be updated to the
+	    new value.  Setting <option>lifetime</option> to zero
+	    is equivalent to <option>-remove</option>.
+	  </para>
+	  <para>
+	    If <option>-dump</option> is used, any other arguments
+	    are ignored, and a list of existing NTAs is printed
+	    (note that this may include NTAs that are expired but
+	    have not yet been cleaned up).
+	  </para>
+	  <para>
+	    Normally, <command>named</command> will periodically
+	    test to see whether data below an NTA can now be
+	    validated (see the <option>nta-recheck</option> option
+	    in the Administrator Reference Manual for details).
+	    If data can be validated, then the NTA is regarded as
+	    no longer necessary, and will be allowed to expire
+	    early.  The <option>-force</option> overrides this
+	    behavior and forces an NTA to persist for its entire
+	    lifetime, regardless of whether data could be
+	    validated if the NTA were not present.
+	  </para>
+	  <para>
+	    All of these options can be shortened, i.e., to
+	    <option>-l</option>, <option>-r</option>, <option>-d</option>,
+	    and <option>-f</option>.
+	  </para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term><userinput>querylog</userinput> <optional> on | off </optional> </term>
+	<listitem>
+	  <para>
+	    Enable or disable query logging.  (For backward
+	    compatibility, this command can also be used without
+	    an argument to toggle query logging on and off.)
+	  </para>
+	  <para>
+	    Query logging can also be enabled
+	    by explicitly directing the <command>queries</command>
+	    <command>category</command> to a
+	    <command>channel</command> in the
+	    <command>logging</command> section of
+	    <filename>named.conf</filename> or by specifying
+	    <command>querylog yes;</command> in the
+	    <command>options</command> section of
+	    <filename>named.conf</filename>.
+	  </para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term><userinput>reconfig</userinput></term>
+	<listitem>
+	  <para>
+	    Reload the configuration file and load new zones,
+	    but do not reload existing zone files even if they
+	    have changed.
+	    This is faster than a full <command>reload</command> when there
+	    is a large number of zones because it avoids the need
+	    to examine the
+	    modification times of the zones files.
+	  </para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term><userinput>recursing</userinput></term>
+	<listitem>
+	  <para>
+	    Dump the list of queries <command>named</command> is currently
+	    recursing on, and the list of domains to which iterative
+	    queries are currently being sent.  (The second list includes
+	    the number of fetches currently active for the given domain,
+	    and how many have been passed or dropped because of the
+	    <option>fetches-per-zone</option> option.)
+	  </para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term><userinput>refresh <replaceable>zone</replaceable> <optional><replaceable>class</replaceable> <optional><replaceable>view</replaceable></optional></optional></userinput></term>
+	<listitem>
+	  <para>
+	    Schedule zone maintenance for the given zone.
+	  </para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term><userinput>reload</userinput></term>
+	<listitem>
+	  <para>
+	    Reload configuration file and zones.
+	  </para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term><userinput>reload <replaceable>zone</replaceable> <optional><replaceable>class</replaceable> <optional><replaceable>view</replaceable></optional></optional></userinput></term>
+	<listitem>
+	  <para>
+	    Reload the given zone.
+	  </para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term><userinput>retransfer <replaceable>zone</replaceable> <optional><replaceable>class</replaceable> <optional><replaceable>view</replaceable></optional></optional></userinput></term>
+	<listitem>
+	  <para>
+	    Retransfer the given slave zone from the master server.
+	  </para>
+	  <para>
+	    If the zone is configured to use
+	    <command>inline-signing</command>, the signed
+	    version of the zone is discarded; after the
+	    retransfer of the unsigned version is complete, the
+	    signed version will be regenerated with all new
+	    signatures.
+	  </para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term><userinput>scan</userinput></term>
+	<listitem>
+	  <para>
+	     Scan the list of available network interfaces
+	     for changes, without performing a full
+	     <command>reconfig</command> or waiting for the
+	     <command>interface-interval</command> timer.
+	  </para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term><userinput>secroots <optional>-</optional> <optional><replaceable>view ...</replaceable></optional></userinput></term>
+	<listitem>
+	  <para>
+	    Dump the security roots (i.e., trust anchors
+	    configured via <command>trusted-keys</command>,
+	    <command>managed-keys</command>, or
+	    <command>dnssec-validation auto</command>) and negative trust
+	    anchors for the specified views.  If no view is specified, all
+	    views are dumped.  Security roots will indicate whether
+	    they are configured as trusted keys, managed keys, or
+	    initializing managed keys (managed keys that have not yet
+	    been updated by a successful key refresh query).
+	  </para>
+	  <para>
+	    If the first argument is "-", then the output is
+	    returned via the <command>rndc</command> response channel
+	    and printed to the standard output.
+	    Otherwise, it is written to the secroots dump file, which
+	    defaults to <filename>named.secroots</filename>, but can be
+	    overridden via the <option>secroots-file</option> option in
+	    <filename>named.conf</filename>.
+	  </para>
+	  <para>
+	    See also <command>rndc managed-keys</command>.
+	  </para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term><userinput>serve-stale ( on | off | reset | status ) <optional><replaceable>class</replaceable> <optional><replaceable>view</replaceable></optional></optional></userinput></term>
+	<listitem>
+	  <para>
+	    Enable, disable, reset, or report the current status
+            of the serving of stale answers as configured in
+            <filename>named.conf</filename>.
+	  </para>
+	  <para>
+            If serving of stale answers is disabled by
+            <command>rndc-serve-stale off</command>, then it
+	    will remain disabled even if <command>named</command>
+            is reloaded or reconfigured.
+            <command>rndc serve-stale reset</command> restores
+            the setting as configured in <filename>named.conf</filename>.
+	  </para>
+	  <para>
+	    <command>rndc serve-stale status</command> will report
+            whether serving of stale answers is currently enabled,
+            disabled by the configuration, or disabled by
+            <command>rndc</command>.  It will also report the
+	    values of <command>stale-answer-ttl</command> and
+	    <command>max-stale-ttl</command>.
+	  </para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term><userinput>showzone <replaceable>zone</replaceable> <optional><replaceable>class</replaceable> <optional><replaceable>view</replaceable></optional></optional> </userinput></term>
+	<listitem>
+	  <para>
+	    Print the configuration of a running zone.
+	  </para>
+	  <para>
+	    See also <command>rndc zonestatus</command>.
+	  </para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term><userinput>sign <replaceable>zone</replaceable> <optional><replaceable>class</replaceable> <optional><replaceable>view</replaceable></optional></optional></userinput></term>
+	<listitem>
+	  <para>
+	    Fetch all DNSSEC keys for the given zone
+	    from the key directory (see the
+	    <command>key-directory</command> option in
+	    the BIND 9 Administrator Reference Manual).  If they are within
+	    their publication period, merge them into the
+	    zone's DNSKEY RRset.  If the DNSKEY RRset
+	    is changed, then the zone is automatically
+	    re-signed with the new key set.
+	  </para>
+	  <para>
+	    This command requires that the
+	    <command>auto-dnssec</command> zone option be set
+	    to <literal>allow</literal> or
+	    <literal>maintain</literal>,
+	    and also requires the zone to be configured to
+	    allow dynamic DNS.
+	    (See "Dynamic Update Policies" in the Administrator
+	    Reference Manual for more details.)
+	  </para>
+	  <para>
+	    See also <command>rndc loadkeys</command>.
+	  </para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term><userinput>signing <optional>( -list | -clear <replaceable>keyid/algorithm</replaceable> | -clear <literal>all</literal> | -nsec3param ( <replaceable>parameters</replaceable> | <literal>none</literal> ) | -serial <replaceable>value</replaceable> ) </optional> <replaceable>zone</replaceable> <optional><replaceable>class</replaceable> <optional><replaceable>view</replaceable></optional></optional> </userinput></term>
+	<listitem>
+	  <para>
+	    List, edit, or remove the DNSSEC signing state records
+	    for the specified zone.  The status of ongoing DNSSEC
+	    operations (such as signing or generating
+	    NSEC3 chains) is stored in the zone in the form
+	    of DNS resource records of type
+	    <command>sig-signing-type</command>.
+	    <command>rndc signing -list</command> converts
+	    these records into a human-readable form,
+	    indicating which keys are currently signing
+	    or have finished signing the zone, and which NSEC3
+	    chains are being created or removed.
+	  </para>
+	  <para>
+	    <command>rndc signing -clear</command> can remove
+	    a single key (specified in the same format that
+	    <command>rndc signing -list</command> uses to
+	    display it), or all keys.  In either case, only
+	    completed keys are removed; any record indicating
+	    that a key has not yet finished signing the zone
+	    will be retained.
+	  </para>
+	  <para>
+	    <command>rndc signing -nsec3param</command> sets
+	    the NSEC3 parameters for a zone.  This is the
+	    only supported mechanism for using NSEC3 with
+	    <command>inline-signing</command> zones.
+	    Parameters are specified in the same format as
+	    an NSEC3PARAM resource record: hash algorithm,
+	    flags, iterations, and salt, in that order.
+	  </para>
+	  <para>
+	    Currently, the only defined value for hash algorithm
+	    is <literal>1</literal>, representing SHA-1.
+	    The <option>flags</option> may be set to
+	    <literal>0</literal> or <literal>1</literal>,
+	    depending on whether you wish to set the opt-out
+	    bit in the NSEC3 chain.  <option>iterations</option>
+	    defines the number of additional times to apply
+	    the algorithm when generating an NSEC3 hash.  The
+	    <option>salt</option> is a string of data expressed
+	    in hexadecimal, a hyphen (`-') if no salt is
+	    to be used, or the keyword <literal>auto</literal>,
+	    which causes <command>named</command> to generate a
+	    random 64-bit salt.
+	  </para>
+	  <para>
+	    So, for example, to create an NSEC3 chain using
+	    the SHA-1 hash algorithm, no opt-out flag,
+	    10 iterations, and a salt value of "FFFF", use:
+	    <command>rndc signing -nsec3param 1 0 10 FFFF <replaceable>zone</replaceable></command>.
+	    To set the opt-out flag, 15 iterations, and no
+	    salt, use:
+	    <command>rndc signing -nsec3param 1 1 15 - <replaceable>zone</replaceable></command>.
+	  </para>
+	  <para>
+	    <command>rndc signing -nsec3param none</command>
+	    removes an existing NSEC3 chain and replaces it
+	    with NSEC.
+	  </para>
+	  <para>
+	    <command>rndc signing -serial value</command> sets
+	    the serial number of the zone to value.  If the value
+	    would cause the serial number to go backwards it will
+	    be rejected.  The primary use is to set the serial on
+	    inline signed zones.
+	  </para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term><userinput>stats</userinput></term>
+	<listitem>
+	  <para>
+	    Write server statistics to the statistics file.
+	    (See the <command>statistics-file</command> option in
+	    the BIND 9 Administrator Reference Manual.)
+	  </para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term><userinput>status</userinput></term>
+	<listitem>
+	  <para>
+	    Display status of the server.
+	    Note that the number of zones includes the internal <command>bind/CH</command> zone
+	    and the default <command>./IN</command>
+	    hint zone if there is not an
+	    explicit root zone configured.
+	  </para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term><userinput>stop <optional>-p</optional></userinput></term>
+	<listitem>
+	  <para>
+	    Stop the server, making sure any recent changes
+	    made through dynamic update or IXFR are first saved to
+	    the master files of the updated zones.
+	    If <option>-p</option> is specified <command>named</command>'s process id is returned.
+	    This allows an external process to determine when <command>named</command>
+	    had completed stopping.
+	  </para>
+	  <para>See also <command>rndc halt</command>.</para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term><userinput>sync <optional>-clean</optional> <optional><replaceable>zone</replaceable> <optional><replaceable>class</replaceable> <optional><replaceable>view</replaceable></optional></optional></optional></userinput></term>
+	<listitem>
+	  <para>
+	    Sync changes in the journal file for a dynamic zone
+	    to the master file.  If the "-clean" option is
+	    specified, the journal file is also removed.  If
+	    no zone is specified, then all zones are synced.
+	  </para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term><userinput>tcp-timeouts <optional><replaceable>initial</replaceable> <replaceable>idle</replaceable> <replaceable>keepalive</replaceable> <replaceable>advertised</replaceable></optional></userinput></term>
+	<listitem>
+	  <para>
+	    When called without arguments, display the current
+	    values of the <command>tcp-initial-timeout</command>,
+	    <command>tcp-idle-timeout</command>,
+	    <command>tcp-keepalive-timeout</command> and
+	    <command>tcp-advertised-timeout</command> options.
+	    When called with arguments, update these values. This
+	    allows an administrator to make rapid adjustments when
+	    under a denial of service attack.  See the descriptions of
+	    these options in the BIND 9 Administrator Reference Manual
+	    for details of their use.
+	  </para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term><userinput>thaw <optional><replaceable>zone</replaceable> <optional><replaceable>class</replaceable> <optional><replaceable>view</replaceable></optional></optional></optional></userinput></term>
+	<listitem>
+	  <para>
+	    Enable updates to a frozen dynamic zone.  If no
+	    zone is specified, then all frozen zones are
+	    enabled.  This causes the server to reload the zone
+	    from disk, and re-enables dynamic updates after the
+	    load has completed.  After a zone is thawed,
+	    dynamic updates will no longer be refused.  If
+	    the zone has changed and the
+	    <command>ixfr-from-differences</command> option is
+	    in use, then the journal file will be updated to
+	    reflect changes in the zone.  Otherwise, if the
+	    zone has changed, any existing journal file will be
+	    removed.
+	  </para>
+	  <para>See also <command>rndc freeze</command>.</para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term><userinput>trace</userinput></term>
+	<listitem>
+	  <para>
+	    Increment the servers debugging level by one.
+	  </para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term><userinput>trace <replaceable>level</replaceable></userinput></term>
+	<listitem>
+	  <para>
+	    Sets the server's debugging level to an explicit
+	    value.
+	  </para>
+	  <para>
+	    See also <command>rndc notrace</command>.
+	  </para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term><userinput>tsig-delete</userinput> <replaceable>keyname</replaceable> <optional><replaceable>view</replaceable></optional></term>
+	<listitem>
+	  <para>
+	    Delete a given TKEY-negotiated key from the server.
+	    (This does not apply to statically configured TSIG
+	    keys.)
+	  </para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term><userinput>tsig-list</userinput></term>
+	<listitem>
+	  <para>
+	    List the names of all TSIG keys currently configured
+	    for use by <command>named</command> in each view.  The
+	    list both statically configured keys and dynamic
+	    TKEY-negotiated keys.
+	  </para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term><userinput>validation ( on | off | status ) <optional><replaceable>view ...</replaceable></optional> </userinput></term>
+	<listitem>
+	  <para>
+	    Enable, disable, or check the current status of
+	    DNSSEC validation.
+	    Note <command>dnssec-enable</command> also needs to be
+	    set to <userinput>yes</userinput> or
+	    <userinput>auto</userinput> to be effective.
+	    It defaults to enabled.
+	  </para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term><userinput>zonestatus <replaceable>zone</replaceable> <optional><replaceable>class</replaceable> <optional><replaceable>view</replaceable></optional></optional></userinput></term>
+	<listitem>
+	  <para>
+	    Displays the current status of the given zone,
+	    including the master file name and any include
+	    files from which it was loaded, when it was most
+	    recently loaded, the current serial number, the
+	    number of nodes, whether the zone supports
+	    dynamic updates, whether the zone is DNSSEC
+	    signed, whether it uses automatic DNSSEC key
+	    management or inline signing, and the scheduled
+	    refresh or expiry times for the zone.
+	  </para>
+	  <para>
+	    See also <command>rndc showzone</command>.
+	  </para>
+	</listitem>
+      </varlistentry>
+
+    </variablelist>
+
+    <para>
+      <command>rndc</command> commands that specify zone names,
+      such as <command>reload</command>, <command>retransfer</command>
+      or <command>zonestatus</command>, can be ambiguous when applied
+      to zones of type <option>redirect</option>. Redirect zones are
+      always called ".", and can be confused with zones of type
+      <option>hint</option> or with slaved copies of the root zone.
+      To specify a redirect zone, use the special zone name
+      <userinput>-redirect</userinput>, without a trailing period.
+      (With a trailing period, this would specify a zone called
+      "-redirect".)
+    </para>
+  </refsection>
+
+  <refsection><info><title>LIMITATIONS</title></info>
+
+    <para>
+      There is currently no way to provide the shared secret for a
+      <option>key_id</option> without using the configuration file.
+    </para>
+    <para>
+      Several error messages could be clearer.
+    </para>
+  </refsection>
+
+  <refsection><info><title>SEE ALSO</title></info>
+
+    <para><citerefentry>
+	<refentrytitle>rndc.conf</refentrytitle><manvolnum>5</manvolnum>
+      </citerefentry>,
+      <citerefentry>
+	<refentrytitle>rndc-confgen</refentrytitle><manvolnum>8</manvolnum>
+      </citerefentry>,
+      <citerefentry>
+	<refentrytitle>named</refentrytitle><manvolnum>8</manvolnum>
+      </citerefentry>,
+      <citerefentry>
+	<refentrytitle>named.conf</refentrytitle><manvolnum>5</manvolnum>
+      </citerefentry>,
+      <citerefentry>
+	<refentrytitle>ndc</refentrytitle><manvolnum>8</manvolnum>
+      </citerefentry>,
+      <citetitle>BIND 9 Administrator Reference Manual</citetitle>.
+    </para>
+  </refsection>
+
+</refentry>

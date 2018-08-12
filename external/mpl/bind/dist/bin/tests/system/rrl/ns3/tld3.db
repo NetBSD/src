@@ -1,0 +1,20 @@
+; Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+;
+; This Source Code Form is subject to the terms of the Mozilla Public
+; License, v. 2.0. If a copy of the MPL was not distributed with this
+; file, You can obtain one at http://mozilla.org/MPL/2.0/.
+;
+; See the COPYRIGHT file distributed with this work for additional
+; information regarding copyright ownership.
+
+
+
+; rate limit response from this zone
+
+$TTL	120
+@		SOA	tld3.  hostmaster.ns.tld3. ( 1 3600 1200 604800 60 )
+		NS	ns
+		NS	.
+ns		A	10.53.0.3
+
+*.a3		A	192.0.3.3

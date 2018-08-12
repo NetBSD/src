@@ -1,0 +1,364 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<!--
+ - Copyright (C) 2016-2018 Internet Systems Consortium, Inc. ("ISC")
+ - 
+ - This Source Code Form is subject to the terms of the Mozilla Public
+ - License, v. 2.0. If a copy of the MPL was not distributed with this
+ - file, You can obtain one at http://mozilla.org/MPL/2.0/.
+-->
+<html lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+<title>dnssec-keymgr</title>
+<meta name="generator" content="DocBook XSL Stylesheets V1.78.1">
+</head>
+<body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="refentry">
+<a name="man.dnssec-keymgr"></a><div class="titlepage"></div>
+  
+  
+
+  
+
+  <div class="refnamediv">
+<h2>Name</h2>
+<p>
+    <span class="application">dnssec-keymgr</span>
+     &#8212; Ensures correct DNSKEY coverage for a zone based on a defined policy
+  </p>
+</div>
+
+  
+
+  <div class="refsynopsisdiv">
+<h2>Synopsis</h2>
+    <div class="cmdsynopsis"><p>
+      <code class="command">dnssec-keymgr</code> 
+       [<code class="option">-K <em class="replaceable"><code>directory</code></em></code>]
+       [<code class="option">-c <em class="replaceable"><code>file</code></em></code>]
+       [<code class="option">-f</code>]
+       [<code class="option">-k</code>]
+       [<code class="option">-q</code>]
+       [<code class="option">-v</code>]
+       [<code class="option">-z</code>]
+       [<code class="option">-g <em class="replaceable"><code>path</code></em></code>]
+       [<code class="option">-r <em class="replaceable"><code>path</code></em></code>]
+       [<code class="option">-s <em class="replaceable"><code>path</code></em></code>]
+       [zone...]
+    </p></div>
+  </div>
+
+  <div class="refsection">
+<a name="id-1.7"></a><h2>DESCRIPTION</h2>
+    <p>
+      <span class="command"><strong>dnssec-keymgr</strong></span> is a high level Python wrapper
+      to facilitate the key rollover process for zones handled by
+      BIND. It uses the BIND commands for manipulating DNSSEC key
+      metadata: <span class="command"><strong>dnssec-keygen</strong></span> and
+      <span class="command"><strong>dnssec-settime</strong></span>.
+    </p>
+    <p>
+      DNSSEC policy can be read from a configuration file (default
+      <code class="filename">/etc/dnssec-policy.conf</code>), from which the key
+      parameters, publication and rollover schedule, and desired
+      coverage duration for any given zone can be determined.  This
+      file may be used to define individual DNSSEC policies on a
+      per-zone basis, or to set a default policy used for all zones.
+    </p>
+    <p>
+      When <span class="command"><strong>dnssec-keymgr</strong></span> runs, it examines the DNSSEC
+      keys for one or more zones, comparing their timing metadata against
+      the policies for those zones.  If key settings do not conform to the
+      DNSSEC policy (for example, because the policy has been changed),
+      they are automatically corrected.
+    </p>
+    <p>
+      A zone policy can specify a duration for which we want to
+      ensure the key correctness (<code class="option">coverage</code>).  It can
+      also specify a rollover period (<code class="option">roll-period</code>).
+      If policy indicates that a key should roll over before the
+      coverage period ends, then a successor key will automatically be
+      created and added to the end of the key series.
+    </p>
+    <p>
+      If zones are specified on the command line,
+      <span class="command"><strong>dnssec-keymgr</strong></span> will examine only those zones.
+      If a specified zone does not already have keys in place, then
+      keys will be generated for it according to policy.
+    </p>
+    <p>
+      If zones are <span class="emphasis"><em>not</em></span> specified on the command
+      line, then <span class="command"><strong>dnssec-keymgr</strong></span> will search the
+      key directory (either the current working directory or the directory
+      set by the <code class="option">-K</code> option), and check the keys for
+      all the zones represented in the directory.
+    </p>
+    <p>
+      It is expected that this tool will be run automatically and
+      unattended (for example, by <span class="command"><strong>cron</strong></span>).
+    </p>
+  </div>
+
+  <div class="refsection">
+<a name="id-1.8"></a><h2>OPTIONS</h2>
+    <div class="variablelist"><dl class="variablelist">
+<dt><span class="term">-c <em class="replaceable"><code>file</code></em></span></dt>
+<dd>
+	  <p>
+	    If <code class="option">-c</code> is specified, then the DNSSEC
+	    policy is read from <code class="option">file</code>.  (If not
+	    specified, then the policy is read from
+	    <code class="filename">/etc/dnssec-policy.conf</code>; if that file
+	    doesn't exist, a built-in global default policy is used.)
+	  </p>
+	</dd>
+<dt><span class="term">-f</span></dt>
+<dd>
+	  <p>
+	    Force: allow updating of key events even if they are
+	    already in the past. This is not recommended for use with
+	    zones in which keys have already been published. However,
+	    if a set of keys has been generated all of which have
+	    publication and activation dates in the past, but the
+	    keys have not been published in a zone as yet, then this
+	    option can be used to clean them up and turn them into a
+	    proper series of keys with appropriate rollover intervals.
+	  </p>
+	</dd>
+<dt><span class="term">-g <em class="replaceable"><code>keygen-path</code></em></span></dt>
+<dd>
+	  <p>
+	    Specifies a path to a <span class="command"><strong>dnssec-keygen</strong></span> binary.
+	    Used for testing.
+	    See also the <code class="option">-s</code> option.
+	  </p>
+	</dd>
+<dt><span class="term">-h</span></dt>
+<dd>
+	  <p>
+	    Print the <span class="command"><strong>dnssec-keymgr</strong></span> help summary
+	    and exit.
+	  </p>
+	</dd>
+<dt><span class="term">-K <em class="replaceable"><code>directory</code></em></span></dt>
+<dd>
+	  <p>
+	    Sets the directory in which keys can be found.  Defaults to the
+	    current working directory.
+	  </p>
+	</dd>
+<dt><span class="term">-k</span></dt>
+<dd>
+	  <p>
+	    Only apply policies to KSK keys.
+	    See also the <code class="option">-z</code> option.
+	  </p>
+	</dd>
+<dt><span class="term">-q</span></dt>
+<dd>
+	  <p>
+	    Quiet: suppress printing of <span class="command"><strong>dnssec-keygen</strong></span>
+	    and <span class="command"><strong>dnssec-settime</strong></span>.
+	  </p>
+	</dd>
+<dt><span class="term">-r <em class="replaceable"><code>randomdev</code></em></span></dt>
+<dd>
+	  <p>
+	    Specifies a path to a file containing random data.
+	    This is passed to the <span class="command"><strong>dnssec-keygen</strong></span> binary
+	    using its <code class="option">-r</code> option.
+
+	  </p>
+	</dd>
+<dt><span class="term">-s <em class="replaceable"><code>settime-path</code></em></span></dt>
+<dd>
+	  <p>
+	    Specifies a path to a <span class="command"><strong>dnssec-settime</strong></span> binary.
+	    Used for testing.
+	    See also the <code class="option">-g</code> option.
+	  </p>
+	</dd>
+<dt><span class="term">-v</span></dt>
+<dd>
+	  <p>
+	    Print the <span class="command"><strong>dnssec-keymgr</strong></span> version and exit.
+	  </p>
+	</dd>
+<dt><span class="term">-z</span></dt>
+<dd>
+	  <p>
+	    Only apply policies to ZSK keys.
+	    See also the <code class="option">-k</code> option.
+	  </p>
+	</dd>
+</dl></div>
+  </div>
+
+  <div class="refsection">
+<a name="id-1.9"></a><h2>POLICY CONFIGURATION</h2>
+    <p>
+      The <code class="filename">dnssec-policy.conf</code> file can specify three kinds
+      of policies:
+    </p>
+    <div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; ">
+<li class="listitem">
+	<p>
+	  <span class="emphasis"><em>Policy classes</em></span>
+	  (<code class="option">policy <em class="replaceable"><code>name</code></em> { ... };</code>)
+	  can be inherited by zone policies or other policy classes; these
+	  can be used to create sets of different security profiles. For
+	  example, a policy class <strong class="userinput"><code>normal</code></strong> might specify
+	  1024-bit key sizes, but a class <strong class="userinput"><code>extra</code></strong> might
+	  specify 2048 bits instead; <strong class="userinput"><code>extra</code></strong> would be
+	  used for zones that had unusually high security needs.
+	</p>
+      </li>
+<li class="listitem">
+	<p>
+	  Algorithm policies:
+	  (<code class="option">algorithm-policy <em class="replaceable"><code>algorithm</code></em> { ... };</code> )
+	  override default per-algorithm settings.  For example, by default,
+	  RSASHA256 keys use 2048-bit key sizes for both KSK and ZSK. This
+	  can be modified using <span class="command"><strong>algorithm-policy</strong></span>, and the
+	  new key sizes would then be used for any key of type RSASHA256.
+	</p>
+      </li>
+<li class="listitem">
+	<p>
+	  Zone policies:
+	  (<code class="option">zone <em class="replaceable"><code>name</code></em> { ... };</code> )
+	  set policy for a single zone by name. A zone policy can inherit
+	  a policy class by including a <code class="option">policy</code> option.
+	  Zone names beginning with digits (i.e., 0-9) must be quoted.
+	</p>
+      </li>
+</ul></div>
+    <p>
+      Options that can be specified in policies:
+    </p>
+    <div class="variablelist"><dl class="variablelist">
+<dt><span class="term"><span class="command"><strong>algorithm</strong></span></span></dt>
+<dd>
+	  <p>
+	    The key algorithm. If no policy is defined, the default is
+	    RSASHA256.
+	  </p>
+	</dd>
+<dt><span class="term"><span class="command"><strong>coverage</strong></span></span></dt>
+<dd>
+	  <p>
+	    The length of time to ensure that keys will be correct; no action
+	    will be taken to create new keys to be activated after this time.
+	    This can be represented as a number of seconds, or as a duration using
+	    human-readable units (examples: "1y" or "6 months").
+	    A default value for this option can be set in algorithm policies
+	    as well as in policy classes or zone policies.
+	    If no policy is configured, the default is six months.
+	  </p>
+	</dd>
+<dt><span class="term"><span class="command"><strong>directory</strong></span></span></dt>
+<dd>
+	  <p>
+	    Specifies the directory in which keys should be stored.
+	  </p>
+	</dd>
+<dt><span class="term"><span class="command"><strong>key-size</strong></span></span></dt>
+<dd>
+	  <p>
+	    Specifies the number of bits to use in creating keys.
+	    Takes two arguments: keytype (eihter "zsk" or "ksk") and size.
+	    A default value for this option can be set in algorithm policies
+	    as well as in policy classes or zone policies. If no policy is
+	    configured, the default is 1024 bits for DSA keys and 2048 for
+	    RSA.
+	  </p>
+	</dd>
+<dt><span class="term"><span class="command"><strong>keyttl</strong></span></span></dt>
+<dd>
+	  <p>
+	    The key TTL. If no policy is defined, the default is one hour.
+	  </p>
+	</dd>
+<dt><span class="term"><span class="command"><strong>post-publish</strong></span></span></dt>
+<dd>
+	  <p>
+	    How long after inactivation a key should be deleted from the zone.
+	    Note: If <code class="option">roll-period</code> is not set, this value is
+	    ignored. Takes two arguments: keytype (eihter "zsk" or "ksk") and a
+	    duration. A default value for this option can be set in algorithm
+	    policies as well as in policy classes or zone policies. The default
+	    is one month.
+	  </p>
+	</dd>
+<dt><span class="term"><span class="command"><strong>pre-publish</strong></span></span></dt>
+<dd>
+	  <p>
+	    How long before activation a key should be published.  Note: If
+	    <code class="option">roll-period</code> is not set, this value is ignored.
+	    Takes two arguments: keytype (either "zsk" or "ksk") and a duration.
+	    A default value for this option can be set in algorithm policies
+	    as well as in policy classes or zone policies.  The default is
+	    one month.
+	  </p>
+	</dd>
+<dt><span class="term"><span class="command"><strong>roll-period</strong></span></span></dt>
+<dd>
+	  <p>
+	    How frequently keys should be rolled over.
+	    Takes two arguments: keytype (eihter "zsk" or "ksk") and a duration.
+	    A default value for this option can be set in algorithm policies
+	    as well as in policy classes or zone policies.  If no policy is
+	    configured, the default is one year for ZSK's. KSK's do not
+	    roll over by default.
+	  </p>
+	</dd>
+<dt><span class="term"><span class="command"><strong>standby</strong></span></span></dt>
+<dd>
+	  <p>
+	    Not yet implemented.
+	  </p>
+	</dd>
+</dl></div>
+  </div>
+
+  <div class="refsection">
+<a name="id-1.10"></a><h2>REMAINING WORK</h2>
+  <div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; ">
+<li class="listitem">
+      <p>
+	Enable scheduling of KSK rollovers using the <code class="option">-P sync</code>
+	and <code class="option">-D sync</code> options to
+	<span class="command"><strong>dnssec-keygen</strong></span> and
+	<span class="command"><strong>dnssec-settime</strong></span>.  Check the parent zone
+	(as in <span class="command"><strong>dnssec-checkds</strong></span>) to determine when it's
+	safe for the key to roll.
+      </p>
+    </li>
+<li class="listitem">
+      <p>
+	Allow configuration of standby keys and use of the REVOKE bit,
+	for keys that use RFC 5011 semantics.
+      </p>
+    </li>
+</ul></div>
+  </div>
+
+  <div class="refsection">
+<a name="id-1.11"></a><h2>SEE ALSO</h2>
+    <p>
+      <span class="citerefentry">
+	<span class="refentrytitle">dnssec-coverage</span>(8)
+      </span>,
+      <span class="citerefentry">
+	<span class="refentrytitle">dnssec-keygen</span>(8)
+      </span>,
+      <span class="citerefentry">
+	<span class="refentrytitle">dnssec-settime</span>(8)
+      </span>,
+      <span class="citerefentry">
+	<span class="refentrytitle">dnssec-checkds</span>(8)
+      </span>
+    </p>
+  </div>
+
+</div></body>
+</html>

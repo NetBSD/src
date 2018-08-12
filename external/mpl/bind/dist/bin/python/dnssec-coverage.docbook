@@ -1,0 +1,270 @@
+<!--
+ - Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ -
+ - This Source Code Form is subject to the terms of the Mozilla Public
+ - License, v. 2.0. If a copy of the MPL was not distributed with this
+ - file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ -
+ - See the COPYRIGHT file distributed with this work for additional
+ - information regarding copyright ownership.
+-->
+
+<!-- Converted by db4-upgrade version 1.0 -->
+<refentry xmlns:db="http://docbook.org/ns/docbook" version="5.0" xml:id="man.dnssec-coverage">
+  <info>
+    <date>2014-01-11</date>
+  </info>
+  <refentryinfo>
+    <corpname>ISC</corpname>
+    <corpauthor>Internet Systems Consortium, Inc.</corpauthor>
+  </refentryinfo>
+
+  <refmeta>
+    <refentrytitle><application>dnssec-coverage</application></refentrytitle>
+    <manvolnum>8</manvolnum>
+    <refmiscinfo>BIND9</refmiscinfo>
+  </refmeta>
+
+  <refnamediv>
+    <refname><application>dnssec-coverage</application></refname>
+    <refpurpose>checks future DNSKEY coverage for a zone</refpurpose>
+  </refnamediv>
+
+  <docinfo>
+    <copyright>
+      <year>2013</year>
+      <year>2014</year>
+      <year>2015</year>
+      <year>2016</year>
+      <year>2018</year>
+      <holder>Internet Systems Consortium, Inc. ("ISC")</holder>
+    </copyright>
+  </docinfo>
+
+  <refsynopsisdiv>
+    <cmdsynopsis sepchar=" ">
+      <command>dnssec-coverage</command>
+      <arg choice="opt" rep="norepeat"><option>-K <replaceable class="parameter">directory</replaceable></option></arg>
+      <arg choice="opt" rep="norepeat"><option>-l <replaceable class="parameter">length</replaceable></option></arg>
+      <arg choice="opt" rep="norepeat"><option>-f <replaceable class="parameter">file</replaceable></option></arg>
+      <arg choice="opt" rep="norepeat"><option>-d <replaceable class="parameter">DNSKEY TTL</replaceable></option></arg>
+      <arg choice="opt" rep="norepeat"><option>-m <replaceable class="parameter">max TTL</replaceable></option></arg>
+      <arg choice="opt" rep="norepeat"><option>-r <replaceable class="parameter">interval</replaceable></option></arg>
+      <arg choice="opt" rep="norepeat"><option>-c <replaceable class="parameter">compilezone path</replaceable></option></arg>
+      <arg choice="opt" rep="norepeat"><option>-k</option></arg>
+      <arg choice="opt" rep="norepeat"><option>-z</option></arg>
+      <arg choice="opt" rep="repeat">zone</arg>
+    </cmdsynopsis>
+  </refsynopsisdiv>
+
+  <refsection><info><title>DESCRIPTION</title></info>
+
+    <para><command>dnssec-coverage</command>
+      verifies that the DNSSEC keys for a given zone or a set of zones
+      have timing metadata set properly to ensure no future lapses in DNSSEC
+      coverage.
+    </para>
+    <para>
+      If <option>zone</option> is specified, then keys found in
+      the key repository matching that zone are scanned, and an ordered
+      list is generated of the events scheduled for that key (i.e.,
+      publication, activation, inactivation, deletion).  The list of
+      events is walked in order of occurrence.  Warnings are generated
+      if any event is scheduled which could cause the zone to enter a
+      state in which validation failures might occur: for example, if
+      the number of published or active keys for a given algorithm drops
+      to zero, or if a key is deleted from the zone too soon after a new
+      key is rolled, and cached data signed by the prior key has not had
+      time to expire from resolver caches.
+    </para>
+    <para>
+      If <option>zone</option> is not specified, then all keys in the
+      key repository will be scanned, and all zones for which there are
+      keys will be analyzed.  (Note: This method of reporting is only
+      accurate if all the zones that have keys in a given repository
+      share the same TTL parameters.)
+    </para>
+  </refsection>
+
+  <refsection><info><title>OPTIONS</title></info>
+
+
+    <variablelist>
+      <varlistentry>
+        <term>-K <replaceable class="parameter">directory</replaceable></term>
+        <listitem>
+          <para>
+            Sets the directory in which keys can be found.  Defaults to the
+            current working directory.
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>-f <replaceable class="parameter">file</replaceable></term>
+        <listitem>
+          <para>
+            If a <option>file</option> is specified, then the zone is
+            read from that file; the largest TTL and the DNSKEY TTL are
+            determined directly from the zone data, and the
+            <option>-m</option> and <option>-d</option> options do
+            not need to be specified on the command line.
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>-l <replaceable class="parameter">duration</replaceable></term>
+        <listitem>
+          <para>
+            The length of time to check for DNSSEC coverage.  Key events
+            scheduled further into the future than <option>duration</option>
+            will be ignored, and assumed to be correct.
+          </para>
+          <para>
+            The value of <option>duration</option> can be set in seconds,
+            or in larger units of time by adding a suffix: 'mi' for minutes,
+            'h' for hours, 'd' for days, 'w' for weeks, 'mo' for months,
+            'y' for years.
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>-m <replaceable class="parameter">maximum TTL</replaceable></term>
+        <listitem>
+          <para>
+            Sets the value to be used as the maximum TTL for the zone or
+            zones being analyzed when determining whether there is a
+            possibility of validation failure.  When a zone-signing key is
+            deactivated, there must be enough time for the record in the
+            zone with the longest TTL to have expired from resolver caches
+            before that key can be purged from the DNSKEY RRset.  If that
+            condition does not apply, a warning will be generated.
+          </para>
+          <para>
+            The length of the TTL can be set in seconds, or in larger units
+            of time by adding a suffix: 'mi' for minutes, 'h' for hours,
+            'd' for days, 'w' for weeks, 'mo' for months, 'y' for years.
+          </para>
+          <para>
+            This option is not necessary if the <option>-f</option> has
+            been used to specify a zone file.  If <option>-f</option> has
+            been specified, this option may still be used; it will override
+            the value found in the file.
+          </para>
+          <para>
+            If this option is not used and the maximum TTL cannot be retrieved
+            from a zone file, a warning is generated and a default value of
+            1 week is used.
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>-d <replaceable class="parameter">DNSKEY TTL</replaceable></term>
+        <listitem>
+          <para>
+            Sets the value to be used as the DNSKEY TTL for the zone or
+            zones being analyzed when determining whether there is a
+            possibility of validation failure.  When a key is rolled (that
+            is, replaced with a new key), there must be enough time for the
+            old DNSKEY RRset to have expired from resolver caches before
+            the new key is activated and begins generating signatures.  If
+            that condition does not apply, a warning will be generated.
+          </para>
+          <para>
+            The length of the TTL can be set in seconds, or in larger units
+            of time by adding a suffix: 'mi' for minutes, 'h' for hours,
+            'd' for days, 'w' for weeks, 'mo' for months, 'y' for years.
+          </para>
+          <para>
+            This option is not necessary if <option>-f</option> has
+            been used to specify a zone file from which the TTL
+            of the DNSKEY RRset can be read, or if a default key TTL was
+            set using ith the <option>-L</option> to
+            <command>dnssec-keygen</command>.  If either of those is true,
+            this option may still be used; it will override the values
+            found in the zone file or the key file.
+          </para>
+          <para>
+            If this option is not used and the key TTL cannot be retrieved
+            from the zone file or the key file, then a warning is generated
+            and a default value of 1 day is used.
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>-r <replaceable class="parameter">resign interval</replaceable></term>
+        <listitem>
+          <para>
+            Sets the value to be used as the resign interval for the zone
+            or zones being analyzed when determining whether there is a
+            possibility of validation failure.  This value defaults to
+            22.5 days, which is also the default in
+            <command>named</command>.  However, if it has been changed
+            by the <option>sig-validity-interval</option> option in
+            <filename>named.conf</filename>, then it should also be
+            changed here.
+          </para>
+          <para>
+            The length of the interval can be set in seconds, or in larger
+            units of time by adding a suffix: 'mi' for minutes, 'h' for hours,
+            'd' for days, 'w' for weeks, 'mo' for months, 'y' for years.
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>-k</term>
+        <listitem>
+          <para>
+	    Only check KSK coverage; ignore ZSK events. Cannot be
+            used with <option>-z</option>.
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>-z</term>
+        <listitem>
+          <para>
+	    Only check ZSK coverage; ignore KSK events. Cannot be
+            used with <option>-k</option>.
+          </para>
+        </listitem>
+      </varlistentry>
+
+
+      <varlistentry>
+        <term>-c <replaceable class="parameter">compilezone path</replaceable></term>
+        <listitem>
+          <para>
+            Specifies a path to a <command>named-compilezone</command> binary.
+            Used for testing.
+          </para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+  </refsection>
+
+  <refsection><info><title>SEE ALSO</title></info>
+
+    <para>
+      <citerefentry>
+        <refentrytitle>dnssec-checkds</refentrytitle><manvolnum>8</manvolnum>
+      </citerefentry>,
+      <citerefentry>
+        <refentrytitle>dnssec-dsfromkey</refentrytitle><manvolnum>8</manvolnum>
+      </citerefentry>,
+      <citerefentry>
+        <refentrytitle>dnssec-keygen</refentrytitle><manvolnum>8</manvolnum>
+      </citerefentry>,
+      <citerefentry>
+        <refentrytitle>dnssec-signzone</refentrytitle><manvolnum>8</manvolnum>
+      </citerefentry>
+    </para>
+  </refsection>
+
+</refentry>

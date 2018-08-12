@@ -1,0 +1,40 @@
+/*
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
+ */
+
+// NS5
+
+include "../../common/rndc.key";
+
+controls {
+	inet 10.53.0.5 port @CONTROLPORT@ allow { any; } keys { rndc_key; };
+};
+
+options {
+	query-source address 10.53.0.5;
+	notify-source 10.53.0.5;
+	transfer-source 10.53.0.5;
+	port @PORT@;
+	pid-file "named.pid";
+	listen-on { 10.53.0.5; };
+	listen-on-v6 { none; };
+	recursion no;
+	notify yes;
+	notify-delay 0;
+	servfail-ttl 0;
+};
+
+zone "bits" {
+	type slave;
+	masters { 10.53.0.2; };
+	file "bits.bk";
+	auto-dnssec maintain;
+	inline-signing yes;
+};

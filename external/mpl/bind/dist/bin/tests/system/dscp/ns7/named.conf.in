@@ -1,0 +1,33 @@
+/*
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
+ */
+
+options {
+	dscp 47;
+	query-source dscp 46 address 10.53.0.7;
+	notify-source 10.53.0.7 dscp 47;
+	transfer-source 10.53.0.7 dscp 47;
+	alt-transfer-source 10.53.0.7 dscp 47;
+	port @PORT@;
+	pid-file "named.pid";
+	listen-on dscp 46 { 10.53.0.7; };
+	listen-on-v6 { none; };
+	recursion no;
+	notify yes;
+};
+
+zone "." {
+	type slave;
+	file "root.bk";
+	transfer-source 10.53.0.7 dscp 46;
+	notify-source 10.53.0.7 dscp 46;
+	alt-transfer-source 10.53.0.7 dscp 46;
+	masters { 10.53.0.4; };
+};

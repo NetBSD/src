@@ -1,0 +1,47 @@
+#!/bin/sh
+
+PATH="@ATFBIN@:${PATH}"
+export PATH
+ATFRUN=`command -v atf-run 2>/dev/null`
+KYUA=`command -v kyua 2>/dev/null`
+
+status=0
+if [ -n "@UNITTESTS@" -a -x "$ATFRUN" -a -f Atffile ]
+then
+	echo "S:unit:`date`"
+	echo "T:unit:1:A"
+	echo "I: unit tests (using atf-run)"
+	atf-run > atf.out
+	status=$?
+
+	# | cat is there to force non-fancy output
+	atf-report < atf.out | cat
+
+	if [ $status -eq 0 ]
+	then
+		rm -f atf.out
+		echo R:PASS
+	else
+		echo R:FAIL
+	fi
+	echo "E:unit:`date`"
+elif [ -n "@UNITTESTS@" -a -x "$KYUA" -a -f Kyuafile ]
+then
+	echo "S:unit:`date`"
+	echo "T:unit:1:A"
+	echo "I: unit tests (using kyua)"
+	kyua -v parallelism=${TEST_PARALLEL_JOBS:-1} --logfile kyua.log --loglevel debug test --results-file ${KYUA_RESULT:-NEW}
+	status=$?
+
+	kyua report --results-file ${KYUA_RESULT:-LATEST}
+
+	if [ $status -eq 0 ]
+	then
+		rm -f kyua.log
+		echo R:PASS
+	else
+		echo R:FAIL
+	fi
+	echo "E:unit:`date`"
+fi
+exit $status

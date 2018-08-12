@@ -1,0 +1,216 @@
+<!--
+ - 
+ - This Source Code Form is subject to the terms of the Mozilla Public
+ - License, v. 2.0. If a copy of the MPL was not distributed with this
+ - file, You can obtain one at http://mozilla.org/MPL/2.0/.
+-->
+<!-- Id -->
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+<title></title>
+<meta name="generator" content="DocBook XSL Stylesheets V1.78.1">
+</head>
+<body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="article">
+
+  <div class="section">
+<div class="titlepage"><div><div><h2 class="title" style="clear: both">
+<a name="id-1.2"></a>Release Notes for BIND Version 9.12.2-P1</h2></div></div></div>
+  
+  <div class="section">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="relnotes_intro"></a>Introduction</h3></div></div></div>
+    <p>
+      This document summarizes changes since the last production
+      release on the BIND 9.12 branch. Please see the
+      <code class="filename">CHANGES</code> for a further list of bug fixes
+      and other changes.
+    </p>
+  </div>
+
+  <div class="section">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="relnotes_download"></a>Download</h3></div></div></div>
+    <p>
+      The latest versions of BIND 9 software can always be found at
+      <a class="link" href="http://www.isc.org/downloads/" target="_top">http://www.isc.org/downloads/</a>.
+      There you will find additional information about each release,
+      source code, and pre-compiled versions for Microsoft Windows
+      operating systems.
+    </p>
+  </div>
+
+  <div class="section">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="relnotes_security"></a>Security Fixes</h3></div></div></div>
+    <div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; ">
+<li class="listitem">
+	<p>
+	  <span class="command"><strong>named</strong></span> could crash during recursive processing
+	  of DNAME records when <span class="command"><strong>deny-answer-aliases</strong></span> was
+	  in use. This flaw is disclosed in CVE-2018-5740. [GL #387]
+	</p>
+      </li>
+<li class="listitem">
+	<p>
+	  When recursion is enabled but the <span class="command"><strong>allow-recursion</strong></span>
+	  and <span class="command"><strong>allow-query-cache</strong></span> ACLs are not specified, they
+	  should be limited to local networks, but they were inadvertently set
+	  to match the default <span class="command"><strong>allow-query</strong></span>, thus allowing
+	  remote queries. This flaw is disclosed in CVE-2018-5738. [GL #309]
+	</p>
+      </li>
+<li class="listitem">
+	<p>
+	  The serve-stale feature could cause an assertion failure in
+	  rbtdb.c even when stale-answer-enable was false. The
+	  simultaneous use of stale cache records and NSEC aggressive
+	  negative caching could trigger a recursion loop in the
+	  <span class="command"><strong>named</strong></span> process. This flaw is disclosed in
+	  CVE-2018-5737. [GL #185]
+	</p>
+      </li>
+<li class="listitem">
+	<p>
+	  A bug in zone database reference counting could lead to a crash
+	  when multiple versions of a slave zone were transferred from a
+	  master in close succession. This flaw is disclosed in
+	  CVE-2018-5736. [GL #134]
+	</p>
+      </li>
+</ul></div>
+  </div>
+
+  <div class="section">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="relnotes_features"></a>New Features</h3></div></div></div>
+    <div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; ">
+<li class="listitem">
+	<p>
+	  <span class="command"><strong>update-policy</strong></span> rules that otherwise ignore the
+	  name field now require that it be set to "." to ensure that any
+	  type list present is properly interpreted.  Previously, if the
+	  name field was omitted from the rule declaration but a type list
+	  was present, it wouldn't be interpreted as expected.
+	</p>
+      </li>
+<li class="listitem">
+	<p>
+	  <span class="command"><strong>named</strong></span> now supports the "root key sentinel"
+	  mechanism. This enables validating resolvers to indicate
+	  which trust anchors are configured for the root, so that
+	  information about root key rollover status can be gathered.
+	  To disable this feature, add
+	  <span class="command"><strong>root-key-sentinel no;</strong></span> to
+	  <code class="filename">named.conf</code>. [GL #37]
+	</p>
+      </li>
+<li class="listitem">
+	<p>
+	  Add the ability to not return a DNS COOKIE option when one
+	  is present in the request.  To prevent a cookie being returned
+	  add <span class="command"><strong>answer-cookie no;</strong></span> to
+	  <code class="filename">named.conf</code>. [GL #173]
+	</p>
+	<p>
+	  <span class="command"><strong>answer-cookie no</strong></span> is only intended as a
+	  temporary measure, for use when <span class="command"><strong>named</strong></span>
+	  shares an IP address with other servers that do not yet
+	  support DNS COOKIE.  A mismatch between servers on the
+	  same address is not expected to cause operational problems,
+	  but the option to disable COOKIE responses so that all
+	  servers have the same behavior is provided out of an
+	  abundance of caution. DNS COOKIE is an important security
+	  mechanism, and should not be disabled unless absolutely
+	  necessary.
+	</p>
+      </li>
+</ul></div>
+  </div>
+
+  <div class="section">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="relnotes_changes"></a>Feature Changes</h3></div></div></div>
+    <div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; ">
+<li class="listitem">
+	<p>
+	  BIND now can be compiled against libidn2 library to add
+	  IDNA2008 support.  Previously BIND only supported IDNA2003
+	  using (now obsolete) idnkit-1 library.
+	</p>
+      </li>
+<li class="listitem">
+	<p>
+	  <span class="command"><strong>dig +noidnin</strong></span> can be used to disable IDN
+	  processing on the input domain name, when BIND is compiled
+	  with IDN support.
+	</p>
+      </li>
+</ul></div>
+  </div>
+
+  <div class="section">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="relnotes_bugs"></a>Bug Fixes</h3></div></div></div>
+    <div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem">
+	<p>
+	  <span class="command"><strong>named</strong></span> now rejects excessively large
+	  incremental (IXFR) zone transfers in order to prevent
+	  possible corruption of journal files which could cause
+	  <span class="command"><strong>named</strong></span> to abort when loading zones. [GL #339]
+	</p>
+      </li></ul></div>
+  </div>
+
+  <div class="section">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="relnotes_license"></a>License</h3></div></div></div>
+    <p>
+      BIND is open source software licenced under the terms of the Mozilla
+      Public License, version 2.0 (see the <code class="filename">LICENSE</code>
+      file for the full text).
+    </p>
+    <p>
+      The license requires that if you make changes to BIND and distribute
+      them outside your organization, those changes must be published under
+      the same license. It does not require that you publish or disclose
+      anything other than the changes you have made to our software.  This
+      requirement does not affect anyone who is using BIND, with or without
+      modifications, without redistributing it, nor anyone redistributing
+      BIND without changes.
+    </p>
+    <p>
+      Those wishing to discuss license compliance may contact ISC at
+      <a class="link" href="https://www.isc.org/mission/contact/" target="_top">
+	https://www.isc.org/mission/contact/</a>.
+    </p>
+  </div>
+
+  <div class="section">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="end_of_life"></a>End of Life</h3></div></div></div>
+    <p>
+      The end-of-life date for BIND 9.12 has not yet been determined.
+      However, it is not intended to be an Extended Support Version (ESV)
+      branch; accordingly, support will end after the next stable
+      branch (9.14) becomes available.  Those needing a longer-lived
+      branch are encouraged to use the current ESV, BIND 9.11, which
+      will be supported until December 2021. See
+      <a class="link" href="https://www.isc.org/downloads/software-support-policy/" target="_top">https://www.isc.org/downloads/software-support-policy/</a>
+      for details of ISC's software support policy.
+    </p>
+  </div>
+
+  <div class="section">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="relnotes_thanks"></a>Thank You</h3></div></div></div>
+    <p>
+      Thank you to everyone who assisted us in making this release possible.
+      If you would like to contribute to ISC to assist us in continuing to
+      make quality open source software, please visit our donations page at
+      <a class="link" href="http://www.isc.org/donate/" target="_top">http://www.isc.org/donate/</a>.
+    </p>
+  </div>
+</div>
+</div></body>
+</html>

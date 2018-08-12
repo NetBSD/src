@@ -1,0 +1,14 @@
+; Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+;
+; This Source Code Form is subject to the terms of the Mozilla Public
+; License, v. 2.0. If a copy of the MPL was not distributed with this
+; file, You can obtain one at http://mozilla.org/MPL/2.0/.
+;
+; See the COPYRIGHT file distributed with this work for additional
+; information regarding copyright ownership.
+
+@	SOA	ns2 hostmaster.isc.org. 1 600 600 1200 600
+@ 	NS	ns2
+ns2 	A	10.53.0.2
+foo	A	10.53.1.1
+bar	A	10.53.2.2

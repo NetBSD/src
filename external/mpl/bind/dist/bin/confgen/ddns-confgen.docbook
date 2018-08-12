@@ -1,0 +1,229 @@
+<!--
+ - Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ -
+ - This Source Code Form is subject to the terms of the Mozilla Public
+ - License, v. 2.0. If a copy of the MPL was not distributed with this
+ - file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ -
+ - See the COPYRIGHT file distributed with this work for additional
+ - information regarding copyright ownership.
+-->
+
+<!-- Converted by db4-upgrade version 1.0 -->
+<refentry xmlns:db="http://docbook.org/ns/docbook" version="5.0" xml:id="man.ddns-confgen">
+  <info>
+    <date>2014-03-06</date>
+  </info>
+  <refentryinfo>
+    <corpname>ISC</corpname>
+    <corpauthor>Internet Systems Consortium, Inc.</corpauthor>
+  </refentryinfo>
+
+  <refmeta>
+    <refentrytitle><application>ddns-confgen</application></refentrytitle>
+    <manvolnum>8</manvolnum>
+    <refmiscinfo>BIND9</refmiscinfo>
+  </refmeta>
+
+  <refnamediv>
+    <refname><application>ddns-confgen</application></refname>
+    <refpurpose>ddns key generation tool</refpurpose>
+  </refnamediv>
+
+  <docinfo>
+    <copyright>
+      <year>2009</year>
+      <year>2014</year>
+      <year>2015</year>
+      <year>2016</year>
+      <year>2018</year>
+      <holder>Internet Systems Consortium, Inc. ("ISC")</holder>
+    </copyright>
+  </docinfo>
+
+  <refsynopsisdiv>
+    <cmdsynopsis sepchar=" ">
+      <command>tsig-keygen</command>
+      <arg choice="opt" rep="norepeat"><option>-a <replaceable class="parameter">algorithm</replaceable></option></arg>
+      <arg choice="opt" rep="norepeat"><option>-h</option></arg>
+      <arg choice="opt" rep="norepeat"><option>-r <replaceable class="parameter">randomfile</replaceable></option></arg>
+      <arg choice="opt" rep="norepeat">name</arg>
+    </cmdsynopsis>
+    <cmdsynopsis sepchar=" ">
+      <command>ddns-confgen</command>
+      <arg choice="opt" rep="norepeat"><option>-a <replaceable class="parameter">algorithm</replaceable></option></arg>
+      <arg choice="opt" rep="norepeat"><option>-h</option></arg>
+      <arg choice="opt" rep="norepeat"><option>-k <replaceable class="parameter">keyname</replaceable></option></arg>
+      <arg choice="opt" rep="norepeat"><option>-q</option></arg>
+      <arg choice="opt" rep="norepeat"><option>-r <replaceable class="parameter">randomfile</replaceable></option></arg>
+      <group choice="opt" rep="norepeat">
+        <arg choice="plain" rep="norepeat">-s <replaceable class="parameter">name</replaceable></arg>
+        <arg choice="plain" rep="norepeat">-z <replaceable class="parameter">zone</replaceable></arg>
+      </group>
+    </cmdsynopsis>
+  </refsynopsisdiv>
+
+  <refsection><info><title>DESCRIPTION</title></info>
+
+    <para>
+      <command>tsig-keygen</command> and <command>ddns-confgen</command>
+      are invocation methods for a utility that generates keys for use
+      in TSIG signing.  The resulting keys can be used, for example,
+      to secure dynamic DNS updates to a zone or for the
+      <command>rndc</command> command channel.
+    </para>
+
+    <para>
+      When run as <command>tsig-keygen</command>, a domain name
+      can be specified on the command line which will be used as
+      the name of the generated key.  If no name is specified,
+      the default is <constant>tsig-key</constant>.
+    </para>
+
+    <para>
+      When run as <command>ddns-confgen</command>, the generated
+      key is accompanied by configuration text and instructions
+      that can be used with <command>nsupdate</command> and
+      <command>named</command> when setting up dynamic DNS,
+      including an example <command>update-policy</command>
+      statement.  (This usage similar to the
+      <command>rndc-confgen</command> command for setting
+      up command channel security.)
+    </para>
+
+    <para>
+      Note that <command>named</command> itself can configure a
+      local DDNS key for use with <command>nsupdate -l</command>:
+      it does this when a zone is configured with
+      <command>update-policy local;</command>.
+      <command>ddns-confgen</command> is only needed when a
+      more elaborate configuration is required: for instance,
+      if <command>nsupdate</command> is to be used from a remote
+      system.
+    </para>
+  </refsection>
+
+  <refsection><info><title>OPTIONS</title></info>
+
+
+    <variablelist>
+      <varlistentry>
+	<term>-a <replaceable class="parameter">algorithm</replaceable></term>
+	<listitem>
+	  <para>
+            Specifies the algorithm to use for the TSIG key.  Available
+            choices are: hmac-md5, hmac-sha1, hmac-sha224, hmac-sha256,
+            hmac-sha384 and hmac-sha512.  The default is hmac-sha256.
+            Options are case-insensitive, and the "hmac-" prefix
+            may be omitted.
+	  </para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term>-h</term>
+	<listitem>
+	  <para>
+	    Prints a short summary of options and arguments.
+	  </para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term>-k <replaceable class="parameter">keyname</replaceable></term>
+	<listitem>
+	  <para>
+	    Specifies the key name of the DDNS authentication key.
+	    The default is <constant>ddns-key</constant> when neither
+	    the <option>-s</option> nor <option>-z</option> option is
+	    specified; otherwise, the default
+	    is <constant>ddns-key</constant> as a separate label
+	    followed by the argument of the option, e.g.,
+	    <constant>ddns-key.example.com.</constant>
+	    The key name must have the format of a valid domain name,
+	    consisting of letters, digits, hyphens and periods.
+	  </para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term>-q</term>
+	<listitem>
+	  <para>
+	    (<command>ddns-confgen</command> only.) Quiet mode:  Print
+            only the key, with no explanatory text or usage examples;
+            This is essentially identical to <command>tsig-keygen</command>.
+	  </para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term>-r <replaceable class="parameter">randomfile</replaceable></term>
+	<listitem>
+	  <para>
+            Specifies a source of random data for generating the
+            authorization.  If the operating system does not provide a
+            <filename>/dev/random</filename> or equivalent device, the
+            default source of randomness is keyboard input.
+            <filename>randomdev</filename> specifies the name of a
+            character device or file containing random data to be used
+            instead of the default.  The special value
+            <filename>keyboard</filename> indicates that keyboard input
+            should be used.
+	  </para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term>-s <replaceable class="parameter">name</replaceable></term>
+	<listitem>
+	  <para>
+            (<command>ddns-confgen</command> only.)
+	    Generate configuration example to allow dynamic updates
+            of a single hostname.  The example <command>named.conf</command>
+            text shows how to set an update policy for the specified
+            <replaceable class="parameter">name</replaceable>
+	    using the "name" nametype.  The default key name is
+	    ddns-key.<replaceable class="parameter">name</replaceable>.
+	    Note that the "self" nametype cannot be used, since
+	    the name to be updated may differ from the key name.
+	    This option cannot be used with the <option>-z</option> option.
+	  </para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term>-z <replaceable class="parameter">zone</replaceable></term>
+	<listitem>
+	  <para>
+            (<command>ddns-confgen</command> only.)
+	    Generate configuration example to allow dynamic updates
+            of a zone:  The example <command>named.conf</command> text
+            shows how to set an update policy for the specified
+	    <replaceable class="parameter">zone</replaceable>
+	    using the "zonesub" nametype, allowing updates to
+            all subdomain names within that
+            <replaceable class="parameter">zone</replaceable>.
+	    This option cannot be used with the <option>-s</option> option.
+	  </para>
+	</listitem>
+      </varlistentry>
+    </variablelist>
+  </refsection>
+
+  <refsection><info><title>SEE ALSO</title></info>
+
+    <para><citerefentry>
+	<refentrytitle>nsupdate</refentrytitle><manvolnum>1</manvolnum>
+      </citerefentry>,
+      <citerefentry>
+	<refentrytitle>named.conf</refentrytitle><manvolnum>5</manvolnum>
+      </citerefentry>,
+      <citerefentry>
+	<refentrytitle>named</refentrytitle><manvolnum>8</manvolnum>
+      </citerefentry>,
+      <citetitle>BIND 9 Administrator Reference Manual</citetitle>.
+    </para>
+  </refsection>
+
+</refentry>

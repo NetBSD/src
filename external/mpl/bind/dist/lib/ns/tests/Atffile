@@ -1,0 +1,7 @@
+Content-Type: application/X-atf-atffile; version="1"
+
+prop: test-suite = bind9
+
+tp: listenlist_test
+tp: notify_test
+tp: query_test

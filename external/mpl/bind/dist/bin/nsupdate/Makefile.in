@@ -1,0 +1,97 @@
+# Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+#
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+#
+# See the COPYRIGHT file distributed with this work for additional
+# information regarding copyright ownership.
+
+srcdir =	@srcdir@
+VPATH =		@srcdir@
+top_srcdir =	@top_srcdir@
+
+VERSION=@BIND9_VERSION@
+
+@BIND9_MAKE_INCLUDES@
+
+READLINE_LIB = @READLINE_LIB@
+
+DST_GSSAPI_INC = @DST_GSSAPI_INC@
+
+CINCLUDES =	${DNS_INCLUDES} ${BIND9_INCLUDES} ${ISC_INCLUDES} \
+		${ISCCFG_INCLUDES} ${IRS_INCLUDES} ${DST_GSSAPI_INC} \
+		@DST_OPENSSL_INC@
+
+CDEFINES =	-DVERSION=\"${VERSION}\" @CRYPTO@ @USE_GSSAPI@
+CWARNINGS =
+
+DNSLIBS =	../../lib/dns/libdns.@A@ @DNS_CRYPTO_LIBS@
+BIND9LIBS =	../../lib/bind9/libbind9.@A@
+ISCLIBS =	../../lib/isc/libisc.@A@ @ISC_OPENSSL_LIBS@
+ISCNOSYMLIBS =	../../lib/isc/libisc-nosymtbl.@A@ @ISC_OPENSSL_LIBS@
+ISCCFGLIBS =	../../lib/isccfg/libisccfg.@A@
+IRSLIBS =	../../lib/irs/libirs.@A@
+
+DNSDEPLIBS =	../../lib/dns/libdns.@A@
+BIND9DEPLIBS =	../../lib/bind9/libbind9.@A@
+ISCDEPLIBS =	../../lib/isc/libisc.@A@
+ISCCFGDEPLIBS =	../../lib/isccfg/libisccfg.@A@
+IRSDEPLIBS =	../../lib/irs/libirs.@A@
+
+DEPLIBS =	${DNSDEPLIBS} ${IRSDEPLIBS} ${BIND9DEPLIBS} \
+		${ISCDEPLIBS} ${ISCCFGDEPLIBS}
+
+LIBS =		${DNSLIBS} ${IRSLIBS} ${BIND9LIBS} \
+		${ISCCFGLIBS} ${ISCLIBS} @LIBS@
+
+NOSYMLIBS =	${DNSLIBS} ${IRSLIBS} ${BIND9LIBS} \
+		${ISCCFGLIBS} ${ISCNOSYMLIBS} @LIBS@
+
+SUBDIRS =
+
+TARGETS =	nsupdate@EXEEXT@
+
+OBJS =		nsupdate.@O@
+
+UOBJS =
+
+SRCS =		nsupdate.c
+
+MANPAGES =	nsupdate.1
+
+HTMLPAGES =	nsupdate.html
+
+MANOBJS =	${MANPAGES} ${HTMLPAGES}
+
+@BIND9_MAKE_RULES@
+
+nsupdate.@O@: nsupdate.c
+	${LIBTOOL_MODE_COMPILE} ${CC} ${ALL_CFLAGS} \
+		-DSESSION_KEYFILE=\"${localstatedir}/run/named/session.key\" \
+		-c ${srcdir}/nsupdate.c
+
+nsupdate@EXEEXT@: nsupdate.@O@ ${UOBJS} ${DEPLIBS}
+	export BASEOBJS="nsupdate.@O@ ${READLINE_LIB} ${UOBJS}"; \
+	export LIBS0="${DNSLIBS} ${IRSLIBS}"; \
+	${FINALBUILDCMD}
+
+doc man:: ${MANOBJS}
+
+docclean manclean maintainer-clean::
+	rm -f ${MANOBJS}
+
+clean distclean::
+	rm -f ${TARGETS}
+
+installdirs:
+	$(SHELL) ${top_srcdir}/mkinstalldirs ${DESTDIR}${bindir}
+	$(SHELL) ${top_srcdir}/mkinstalldirs ${DESTDIR}${mandir}/man1
+
+install:: nsupdate@EXEEXT@ installdirs
+	${LIBTOOL_MODE_INSTALL} ${INSTALL_PROGRAM} nsupdate@EXEEXT@ ${DESTDIR}${bindir}
+	${INSTALL_DATA} ${srcdir}/nsupdate.1 ${DESTDIR}${mandir}/man1
+
+uninstall::
+	rm -f ${DESTDIR}${mandir}/man1/nsupdate.1
+	${LIBTOOL_MODE_UNINSTALL} rm -f ${DESTDIR}${bindir}/nsupdate@EXEEXT@

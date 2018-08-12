@@ -1,0 +1,23 @@
+; Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+;
+; This Source Code Form is subject to the terms of the Mozilla Public
+; License, v. 2.0. If a copy of the MPL was not distributed with this
+; file, You can obtain one at http://mozilla.org/MPL/2.0/.
+;
+; See the COPYRIGHT file distributed with this work for additional
+; information regarding copyright ownership.
+
+$TTL	120
+@		SOA	ns.unsigned.  hostmaster.ns.unsigned. ( 1 3600 1200 604800 60 )
+@		NS	ns
+@               MX      10 mx
+
+ns		A	10.53.0.4
+		AAAA	fd92:7065:b8e:ffff::4
+
+a-only		NS	1.0.0.4
+aaaa-only	AAAA	2001:db8::5
+dual		A	1.0.0.6
+dual 		AAAA	2001:db8::6
+mx		A	1.0.0.3
+mx 		AAAA	2001:db8::3

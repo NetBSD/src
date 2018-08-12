@@ -1,0 +1,20 @@
+; Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+;
+; This Source Code Form is subject to the terms of the Mozilla Public
+; License, v. 2.0. If a copy of the MPL was not distributed with this
+; file, You can obtain one at http://mozilla.org/MPL/2.0/.
+;
+; See the COPYRIGHT file distributed with this work for additional
+; information regarding copyright ownership.
+
+$TTL 60
+optout-tld. 60 IN SOA example. . 0 0 0 0 0
+optout-tld. 60 IN NS ns6.optout-tld.
+ns6.optout-tld. 60 IN A 10.53.0.6
+a 60 PTR example.
+b 60 PTR example.
+a.b.c.d 60 NS example.
+e 60 PTR example.
+f 60 PTR example.
+g 60 PTR example.
+h 60 PTR example.
