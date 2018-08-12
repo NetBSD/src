@@ -1,4 +1,4 @@
-/* $NetBSD: rk_cru.c,v 1.5 2018/08/12 16:48:05 jmcneill Exp $ */
+/* $NetBSD: rk_cru.c,v 1.6 2018/08/12 19:48:36 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #include "opt_fdt_arm.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rk_cru.c,v 1.5 2018/08/12 16:48:05 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rk_cru.c,v 1.6 2018/08/12 19:48:36 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -355,13 +355,13 @@ rk_cru_print(struct rk_cru_softc *sc)
 		default:			type = "???"; break;
 		}
 
-        	aprint_normal_dev(sc->sc_dev,
+        	aprint_debug_dev(sc->sc_dev,
 		    "%3d %-14s %2s %-14s %-7s ",
 		    clk->id,
         	    clk->base.name,
         	    clkp_parent ? "<-" : "",
         	    clkp_parent ? clkp_parent->name : "",
         	    type);
-		aprint_normal("%10d Hz\n", clk_get_rate(&clk->base));
+		aprint_debug("%10d Hz\n", clk_get_rate(&clk->base));
 	}
 }
