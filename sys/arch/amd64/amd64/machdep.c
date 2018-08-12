@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.311 2018/08/12 09:05:52 maxv Exp $	*/
+/*	$NetBSD: machdep.c,v 1.312 2018/08/12 10:50:35 maxv Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.311 2018/08/12 09:05:52 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.312 2018/08/12 10:50:35 maxv Exp $");
 
 #include "opt_modular.h"
 #include "opt_user_ldt.h"
@@ -1592,6 +1592,9 @@ init_bootspace(void)
 void
 init_slotspace(void)
 {
+	vaddr_t slotspace_rand(int, size_t, size_t);
+	vaddr_t va;
+
 	memset(&slotspace, 0, sizeof(slotspace));
 
 	/* User. */
@@ -1607,15 +1610,6 @@ init_slotspace(void)
 	slotspace.area[SLAREA_PTE].nslot = 1;
 	slotspace.area[SLAREA_PTE].active = true;
 	slotspace.area[SLAREA_PTE].dropmax = false;
-
-#ifdef XEN
-	/* Main. */
-	slotspace.area[SLAREA_MAIN].sslot = PDIR_SLOT_KERN;
-	slotspace.area[SLAREA_MAIN].mslot = NKL4_MAX_ENTRIES;
-	slotspace.area[SLAREA_MAIN].nslot = 0 /* variable */;
-	slotspace.area[SLAREA_MAIN].active = true;
-	slotspace.area[SLAREA_MAIN].dropmax = false;
-#endif
 
 #ifdef __HAVE_PCPU_AREA
 	/* Per-CPU. */
@@ -1638,8 +1632,8 @@ init_slotspace(void)
 #ifdef XEN
 	/* Hypervisor. */
 	slotspace.area[SLAREA_HYPV].sslot = 256;
-	slotspace.area[SLAREA_HYPV].mslot = 16;
-	slotspace.area[SLAREA_HYPV].nslot = 16;
+	slotspace.area[SLAREA_HYPV].mslot = 17;
+	slotspace.area[SLAREA_HYPV].nslot = 17;
 	slotspace.area[SLAREA_HYPV].active = true;
 	slotspace.area[SLAREA_HYPV].dropmax = false;
 #endif
@@ -1651,19 +1645,13 @@ init_slotspace(void)
 	slotspace.area[SLAREA_KERN].active = true;
 	slotspace.area[SLAREA_KERN].dropmax = false;
 
-#ifndef XEN
-	vaddr_t slotspace_rand(int, size_t, size_t);
-	vaddr_t va;
-
 	/* Main. */
 	slotspace.area[SLAREA_MAIN].mslot = NKL4_MAX_ENTRIES+1;
 	slotspace.area[SLAREA_MAIN].dropmax = false;
 	va = slotspace_rand(SLAREA_MAIN, NKL4_MAX_ENTRIES * NBPD_L4,
 	    NBPD_L4);
-
 	vm_min_kernel_address = va;
 	vm_max_kernel_address = va + NKL4_MAX_ENTRIES * NBPD_L4;
-#endif
 }
 
 void

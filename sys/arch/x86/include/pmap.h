@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.82 2018/08/12 09:05:52 maxv Exp $	*/
+/*	$NetBSD: pmap.h,v 1.83 2018/08/12 10:50:35 maxv Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -173,6 +173,8 @@ struct slotspace {
 		bool dropmax; /* !resizable */
 	} area[SLSPACE_NAREAS];
 };
+
+extern struct slotspace slotspace;
 
 #ifndef MAXGDTSIZ
 #define MAXGDTSIZ 65536 /* XXX */
