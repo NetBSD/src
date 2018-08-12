@@ -1,4 +1,4 @@
-/*	$NetBSD: sanity.h,v 1.1.1.1 2018/08/12 12:08:37 christos Exp $	*/
+/*	$NetBSD: sanity.h,v 1.2 2018/08/12 13:02:42 christos Exp $	*/
 
 /* Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -38,34 +38,34 @@ void atf_sanity_post(const char *, int, const char *);
     do { \
         if (!(x)) \
             atf_sanity_inv(__FILE__, __LINE__, #x); \
-    } while (0)
+    } while (/*CONSTCOND*/0)
 #define PRE(x) \
     do { \
         if (!(x)) \
             atf_sanity_pre(__FILE__, __LINE__, #x); \
-    } while (0)
+    } while (/*CONSTCOND*/0)
 #define POST(x) \
     do { \
         if (!(x)) \
             atf_sanity_post(__FILE__, __LINE__, #x); \
-    } while (0)
+    } while (/*CONSTCOND*/0)
 
 #else /* defined(NDEBUG) */
 
 #define INV(x) \
     do { \
 	(void)(x); \
-    } while (0)
+    } while (/*CONSTCOND*/0)
 
 #define PRE(x) \
     do { \
 	(void)(x); \
-    } while (0)
+    } while (/*CONSTCOND*/0)
 
 #define POST(x) \
     do { \
 	(void)(x); \
-    } while (0)
+    } while (/*CONSTCOND*/0)
 
 #endif /* !defined(NDEBUG) */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: user.h,v 1.1.1.1 2018/08/12 12:08:36 christos Exp $	*/
+/*	$NetBSD: user.h,v 1.2 2018/08/12 13:02:42 christos Exp $	*/
 
 /* Copyright (c) 2007 The NetBSD Foundation, Inc.
  * All rights reserved.

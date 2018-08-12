@@ -1,4 +1,4 @@
-/*	$NetBSD: macros.h,v 1.1.1.1 2018/08/12 12:08:36 christos Exp $	*/
+/*	$NetBSD: macros.h,v 1.2 2018/08/12 13:02:42 christos Exp $	*/
 
 /* Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -127,33 +127,33 @@
         atfu_err = atf_tp_add_tc(tp, &atfu_ ## tc ## _tc); \
         if (atf_is_error(atfu_err)) \
             return atfu_err; \
-    } while (0)
+    } while (/*CONSTCOND*/0)
 
 #define ATF_REQUIRE_MSG(expression, fmt, ...) \
     do { \
         if (!(expression)) \
             atf_tc_fail_requirement(__FILE__, __LINE__, fmt, ##__VA_ARGS__); \
-    } while(0)
+    } while(/*CONSTCOND*/0)
 
 #define ATF_CHECK_MSG(expression, fmt, ...) \
     do { \
         if (!(expression)) \
             atf_tc_fail_check(__FILE__, __LINE__, fmt, ##__VA_ARGS__); \
-    } while(0)
+    } while(/*CONSTCOND*/0)
 
 #define ATF_REQUIRE(expression) \
     do { \
         if (!(expression)) \
             atf_tc_fail_requirement(__FILE__, __LINE__, "%s", \
                                     #expression " not met"); \
-    } while(0)
+    } while(/*CONSTCOND*/0)
 
 #define ATF_CHECK(expression) \
     do { \
         if (!(expression)) \
             atf_tc_fail_check(__FILE__, __LINE__, "%s", \
                               #expression " not met"); \
-    } while(0)
+    } while(/*CONSTCOND*/0)
 
 #define ATF_REQUIRE_EQ(expected, actual) \
     ATF_REQUIRE_MSG((expected) == (actual), "%s != %s", #expected, #actual)
