@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC64,v 1.30 2018/08/12 16:49:25 jmcneill Exp $
+#	$NetBSD: GENERIC64,v 1.31 2018/08/12 18:01:22 jmcneill Exp $
 #
 #	GENERIC ARM (aarch64) kernel
 #
@@ -27,6 +27,7 @@ makeoptions	DTS="
 	rk3399-firefly.dts
 	rk3399-gru-kevin.dts
 	rk3399-puma-haikou.dts
+	rk3399-rockpro64.dts
 	rk3399-sapphire-excavator.dts
 	rk3399-sapphire.dts
 
