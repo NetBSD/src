@@ -1,4 +1,4 @@
-/*	$NetBSD: check-tool.c,v 1.1.1.1 2018/08/12 12:07:13 christos Exp $	*/
+/*	$NetBSD: check-tool.c,v 1.2 2018/08/12 13:02:26 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -75,7 +75,7 @@
 		result = (r); \
 		if (result != ISC_R_SUCCESS) \
 			goto cleanup; \
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 #define ERR_IS_CNAME 1
 #define ERR_NO_ADDRESSES 2

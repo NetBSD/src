@@ -1,4 +1,4 @@
-/*	$NetBSD: base32.c,v 1.1.1.1 2018/08/12 12:08:24 christos Exp $	*/
+/*	$NetBSD: base32.c,v 1.2 2018/08/12 13:02:37 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -27,7 +27,7 @@
 	isc_result_t _r = (x); \
 	if (_r != ISC_R_SUCCESS) \
 		return (_r); \
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 
 /*@{*/

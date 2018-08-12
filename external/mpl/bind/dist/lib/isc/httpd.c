@@ -1,4 +1,4 @@
-/*	$NetBSD: httpd.c,v 1.1.1.1 2018/08/12 12:08:23 christos Exp $	*/
+/*	$NetBSD: httpd.c,v 1.2 2018/08/12 13:02:37 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -47,13 +47,13 @@
 #define MSETSHUTTINGDOWN(cm) (cm->flags |= ISC_HTTPDMGR_FLAGSHUTTINGDOWN)
 
 #ifdef DEBUG_HTTPD
-#define ENTER(x) do { fprintf(stderr, "ENTER %s\n", (x)); } while (0)
-#define EXIT(x) do { fprintf(stderr, "EXIT %s\n", (x)); } while (0)
-#define NOTICE(x) do { fprintf(stderr, "NOTICE %s\n", (x)); } while (0)
+#define ENTER(x) do { fprintf(stderr, "ENTER %s\n", (x)); } while (/*CONSTCOND*/0)
+#define EXIT(x) do { fprintf(stderr, "EXIT %s\n", (x)); } while (/*CONSTCOND*/0)
+#define NOTICE(x) do { fprintf(stderr, "NOTICE %s\n", (x)); } while (/*CONSTCOND*/0)
 #else
-#define ENTER(x) do { } while(0)
-#define EXIT(x) do { } while(0)
-#define NOTICE(x) do { } while(0)
+#define ENTER(x) do { } while(/*CONSTCOND*/0)
+#define EXIT(x) do { } while(/*CONSTCOND*/0)
+#define NOTICE(x) do { } while(/*CONSTCOND*/0)
 #endif
 
 #define HTTP_RECVLEN			1024

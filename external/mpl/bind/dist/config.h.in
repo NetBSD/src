@@ -106,7 +106,7 @@ int sigwait(const unsigned int *set, int *sig);
 		union { const void *konst; long *var; } _u; \
 		_u.konst = &(last); \
 		ap = (va_list)(_u.var + __va_words(__typeof(last))); \
-	} while (0)
+	} while (/*CONSTCOND*/0)
 #endif /** SHUTUP_STDARG_CAST && __GNUC__ */
 
 /** define if the system has a random number generating device */

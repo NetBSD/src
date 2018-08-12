@@ -1,4 +1,4 @@
-/*	$NetBSD: tcldb.c,v 1.1.1.1 2018/08/12 12:07:44 christos Exp $	*/
+/*	$NetBSD: tcldb.c,v 1.2 2018/08/12 13:02:34 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -43,7 +43,7 @@
 #define CHECK(op)						\
 	do { result = (op);					\
 		if (result != ISC_R_SUCCESS) return (result);	\
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 typedef struct tcldb_driver {
 	isc_mem_t *mctx;

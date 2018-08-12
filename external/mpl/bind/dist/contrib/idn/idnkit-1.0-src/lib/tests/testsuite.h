@@ -1,4 +1,4 @@
-/*	$NetBSD: testsuite.h,v 1.1.1.1 2018/08/12 12:07:49 christos Exp $	*/
+/*	$NetBSD: testsuite.h,v 1.2 2018/08/12 13:02:33 christos Exp $	*/
 
 /* Id: testsuite.h,v 1.1 2003/06/04 00:27:03 marka Exp  */
 /*
@@ -163,7 +163,7 @@ idn_testsuite_assert(idn_testsuite_t ctx, const char *msg,
     ASSERT_THRU(msg); \
     if (idn_testsuite_getstatus(ctx__) != idn_teststatus_pass) \
       goto EXIT__; \
-  } while (0)
+  } while (/*CONSTCOND*/0)
 
 /*
  * Assertion function and macro to compare two `int' values.
@@ -178,7 +178,7 @@ idn_testsuite_assertint(idn_testsuite_t ctx, int gotten, int expected,
     idn_testsuite_assertint(ctx__, gotten, expected, __FILE__, __LINE__); \
     if (idn_testsuite_getstatus(ctx__) != idn_teststatus_pass) \
       goto EXIT__; \
-  } while (0)
+  } while (/*CONSTCOND*/0)
 
 /*
  * Assertion function and macro to compare two strings.
@@ -193,7 +193,7 @@ idn_testsuite_assertstring(idn_testsuite_t ctx, const char *gotten,
     idn_testsuite_assertstring(ctx__, gotten, expected, __FILE__, __LINE__); \
     if (idn_testsuite_getstatus(ctx__) != idn_teststatus_pass) \
       goto EXIT__; \
-  } while (0)
+  } while (/*CONSTCOND*/0)
 
 /*
  * Assertion function and macro to compare two pointers.
@@ -208,7 +208,7 @@ idn_testsuite_assertptr(idn_testsuite_t ctx, const void *gotten,
     idn_testsuite_assertptr(ctx__, gotten, expected, __FILE__, __LINE__); \
     if (idn_testsuite_getstatus(ctx__) != idn_teststatus_pass) \
       goto EXIT__; \
-  } while (0)
+  } while (/*CONSTCOND*/0)
 
 /*
  * Assertion function and macro to compare two pointers.
@@ -224,7 +224,7 @@ idn_testsuite_assertptrne(idn_testsuite_t ctx,
     idn_testsuite_assertptrne(ctx__, gotten, unexpected, __FILE__, __LINE__); \
     if (idn_testsuite_getstatus(ctx__) != idn_teststatus_pass) \
       goto EXIT__; \
-  } while (0)
+  } while (/*CONSTCOND*/0)
 
 /*
  * Assertion function and macro to compare two `idn_result_t' values.
@@ -240,7 +240,7 @@ idn_testsuite_assertresult(idn_testsuite_t ctx,
     idn_testsuite_assertresult(ctx__, gotten, expected, __FILE__, __LINE__); \
     if (idn_testsuite_getstatus(ctx__) != idn_teststatus_pass) \
       goto EXIT__; \
-  } while (0)
+  } while (/*CONSTCOND*/0)
 
 /*
  * Assertion function and macro to compare two UCS4 strings.
@@ -260,7 +260,7 @@ idn_testsuite_assertucs4string(idn_testsuite_t ctx,
     ASSERT_UCS4STRING_THRU(gotten, expected); \
     if (idn_testsuite_getstatus(ctx__) != idn_teststatus_pass) \
       goto EXIT__; \
-  } while (0)
+  } while (/*CONSTCOND*/0)
 
 /* 
  * Shorthands.
@@ -269,7 +269,7 @@ idn_testsuite_assertucs4string(idn_testsuite_t ctx,
   do { \
        idn_testsuite_setstatus(ctx__, idn_teststatus_skip); \
        goto EXIT__; \
-  } while (0)
+  } while (/*CONSTCOND*/0)
 
 #ifdef __cplusplus
 }

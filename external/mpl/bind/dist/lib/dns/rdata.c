@@ -1,4 +1,4 @@
-/*	$NetBSD: rdata.c,v 1.1.1.1 2018/08/12 12:08:08 christos Exp $	*/
+/*	$NetBSD: rdata.c,v 1.2 2018/08/12 13:02:35 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -51,7 +51,7 @@
 		isc_result_t _r = (x); \
 		if (_r != ISC_R_SUCCESS) \
 			return (_r); \
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 #define RETTOK(x) \
 	do { \
@@ -60,7 +60,7 @@
 			isc_lex_ungettoken(lexer, &token); \
 			return (_r); \
 		} \
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 #define CHECK(op)						\
 	do { result = (op);					\

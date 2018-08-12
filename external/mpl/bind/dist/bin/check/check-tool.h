@@ -1,4 +1,4 @@
-/*	$NetBSD: check-tool.h,v 1.1.1.1 2018/08/12 12:07:13 christos Exp $	*/
+/*	$NetBSD: check-tool.h,v 1.2 2018/08/12 13:02:26 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")

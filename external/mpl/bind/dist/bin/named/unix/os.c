@@ -1,4 +1,4 @@
-/*	$NetBSD: os.c,v 1.1.1.1 2018/08/12 12:07:44 christos Exp $	*/
+/*	$NetBSD: os.c,v 1.2 2018/08/12 13:02:28 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -213,7 +213,7 @@ linux_setcaps(cap_t caps) {
 				named_main_earlyfatal("cap_set_proc failed: %s", strbuf); \
 			} \
 		} \
-	} while (0)
+	} while (/*CONSTCOND*/0)
 #define INIT_CAP \
 	do { \
 		caps = cap_init(); \
@@ -226,20 +226,20 @@ linux_setcaps(cap_t caps) {
 			isc__strerror(errno, strbuf, sizeof(strbuf)); \
 			named_main_earlyfatal("cap_get_proc failed: %s", strbuf); \
 		} \
-	} while (0)
+	} while (/*CONSTCOND*/0)
 #define FREE_CAP \
 	{ \
 		cap_free(caps); \
 		cap_free(curcaps); \
-	} while (0)
+	} while (/*CONSTCOND*/0)
 #else
 #define SET_CAP(flag) \
 	do { \
 		if (curcaps & (1 << (flag))) { \
 			caps |= (1 << (flag)); \
 		} \
-	} while (0)
-#define INIT_CAP do { caps = 0; } while (0)
+	} while (/*CONSTCOND*/0)
+#define INIT_CAP do { caps = 0; } while (/*CONSTCOND*/0)
 #endif /* HAVE_LIBCAP */
 
 #ifndef HAVE_LIBCAP

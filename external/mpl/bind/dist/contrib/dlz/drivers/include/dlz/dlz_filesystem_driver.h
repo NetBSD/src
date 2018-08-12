@@ -1,4 +1,4 @@
-/*	$NetBSD: dlz_filesystem_driver.h,v 1.1.1.1 2018/08/12 12:07:50 christos Exp $	*/
+/*	$NetBSD: dlz_filesystem_driver.h,v 1.2 2018/08/12 13:02:31 christos Exp $	*/
 
 /*
  * Copyright (C) 2002 Stichting NLnet, Netherlands, stichting@nlnet.nl.

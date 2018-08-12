@@ -1,4 +1,4 @@
-/*	$NetBSD: sdlz.c,v 1.1.1.1 2018/08/12 12:08:17 christos Exp $	*/
+/*	$NetBSD: sdlz.c,v 1.2 2018/08/12 13:02:35 christos Exp $	*/
 
 /*
  * Portions Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -169,14 +169,14 @@ typedef struct sdlz_rdatasetiter {
 		unsigned int flags = imp->flags; \
 		if ((flags & DNS_SDLZFLAG_THREADSAFE) == 0) \
 			LOCK(&imp->driverlock); \
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 #define MAYBE_UNLOCK(imp) \
 	do { \
 		unsigned int flags = imp->flags; \
 		if ((flags & DNS_SDLZFLAG_THREADSAFE) == 0) \
 			UNLOCK(&imp->driverlock); \
-	} while (0)
+	} while (/*CONSTCOND*/0)
 #endif
 
 /*
@@ -467,13 +467,16 @@ static isc_result_t
 createnode(dns_sdlz_db_t *sdlz, dns_sdlznode_t **nodep) {
 	dns_sdlznode_t *node;
 	isc_result_t result;
+	void *sdlzv, *tdlzv;
 
 	node = isc_mem_get(sdlz->common.mctx, sizeof(dns_sdlznode_t));
 	if (node == NULL)
 		return (ISC_R_NOMEMORY);
 
 	node->sdlz = NULL;
-	attach((dns_db_t *)sdlz, (dns_db_t **)&node->sdlz);
+	sdlzv = sdlz;
+	tdlzv = &node->sdlz;
+	attach(sdlzv, tdlzv);
 	ISC_LIST_INIT(node->lists);
 	ISC_LIST_INIT(node->buffers);
 	ISC_LINK_INIT(node, link);

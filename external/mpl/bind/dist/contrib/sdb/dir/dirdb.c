@@ -1,4 +1,4 @@
-/*	$NetBSD: dirdb.c,v 1.1.1.1 2018/08/12 12:07:44 christos Exp $	*/
+/*	$NetBSD: dirdb.c,v 1.2 2018/08/12 13:02:34 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -41,12 +41,12 @@ static dns_sdbimplementation_t *dirdb = NULL;
 #define CHECK(op)						\
 	do { result = (op);					\
 		if (result != ISC_R_SUCCESS) return (result);	\
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 #define CHECKN(op)						\
 	do { n = (op);						\
 		if (n < 0) return (ISC_R_FAILURE);		\
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 
 /*

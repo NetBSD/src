@@ -1,4 +1,4 @@
-/*	$NetBSD: rbtdb.c,v 1.1.1.1 2018/08/12 12:08:12 christos Exp $	*/
+/*	$NetBSD: rbtdb.c,v 1.2 2018/08/12 13:02:35 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -91,7 +91,7 @@
 #define CHECK(op) \
 	do { result = (op); \
 		if (result != ISC_R_SUCCESS) goto failure; \
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 /*
  * This is the map file header for RBTDB images.  It is populated, and then
@@ -2482,7 +2482,7 @@ prune_tree(isc_task_t *task, isc_event_t *event) {
 	NODE_UNLOCK(&rbtdb->node_locks[locknum].lock, isc_rwlocktype_write);
 	RWUNLOCK(&rbtdb->tree_lock, isc_rwlocktype_write);
 
-	detach((dns_db_t **)&rbtdb);
+	detach((dns_db_t **)(void *)&rbtdb);
 }
 
 static inline void

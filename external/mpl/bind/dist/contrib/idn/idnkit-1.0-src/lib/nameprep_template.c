@@ -1,4 +1,4 @@
-/*	$NetBSD: nameprep_template.c,v 1.1.1.1 2018/08/12 12:07:48 christos Exp $	*/
+/*	$NetBSD: nameprep_template.c,v 1.2 2018/08/12 13:02:33 christos Exp $	*/
 
 /* Id: nameprep_template.c,v 1.1 2003/06/04 00:25:57 marka Exp  */
 

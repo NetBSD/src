@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic.h,v 1.1.1.1 2018/08/12 12:08:28 christos Exp $	*/
+/*	$NetBSD: atomic.h,v 1.2 2018/08/12 13:02:40 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -32,7 +32,7 @@
  * intended address or value in the embedded mnemonic.
  */
 
-static isc_int32_t
+static __inline isc_int32_t
 isc_atomic_xadd(isc_int32_t *p, isc_int32_t val) {
 	(void)(p);
 	(void)(val);
@@ -70,7 +70,7 @@ isc_atomic_xaddq(isc_int64_t *p, isc_int64_t val) {
 }
 #endif
 
-static void
+static __inline void
 isc_atomic_store(isc_int32_t *p, isc_int32_t val) {
 	(void)(p);
 	(void)(val);

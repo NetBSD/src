@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.1.1.1 2018/08/12 12:08:26 christos Exp $	*/
+/*	$NetBSD: types.h,v 1.2 2018/08/12 13:02:38 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -78,7 +78,11 @@ typedef struct isc_ratelimiter		isc_ratelimiter_t;	/*%< Rate Limiter */
 typedef struct isc_region		isc_region_t;		/*%< Region */
 typedef isc_uint64_t			isc_resourcevalue_t;	/*%< Resource Value */
 typedef unsigned int			isc_result_t;		/*%< Result */
+#ifndef ISC_PLATFORM_USE_NATIVE_RWLOCKS
 typedef struct isc_rwlock		isc_rwlock_t;		/*%< Read Write Lock */
+#else
+typedef pthread_rwlock_t		isc_rwlock_t;		/*%< Read Write Lock */
+#endif
 typedef struct isc_sockaddr		isc_sockaddr_t;		/*%< Socket Address */
 typedef ISC_LIST(isc_sockaddr_t)	isc_sockaddrlist_t;	/*%< Socket Address List */
 typedef struct isc_socket		isc_socket_t;		/*%< Socket */

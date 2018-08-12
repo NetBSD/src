@@ -1,4 +1,4 @@
-/*	$NetBSD: controlconf.c,v 1.1.1.1 2018/08/12 12:07:43 christos Exp $	*/
+/*	$NetBSD: controlconf.c,v 1.2 2018/08/12 13:02:27 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -846,7 +846,7 @@ register_keys(const cfg_obj_t *control, const cfg_obj_t *keylist,
 		 result = (x); \
 		 if (result != ISC_R_SUCCESS) \
 			goto cleanup; \
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 static isc_result_t
 get_rndckey(isc_mem_t *mctx, controlkeylist_t *keyids) {

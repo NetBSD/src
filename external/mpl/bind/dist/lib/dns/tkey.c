@@ -1,4 +1,4 @@
-/*	$NetBSD: tkey.c,v 1.1.1.1 2018/08/12 12:08:14 christos Exp $	*/
+/*	$NetBSD: tkey.c,v 1.2 2018/08/12 13:02:35 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -54,7 +54,7 @@
 	result = (x); \
 	if (result != ISC_R_SUCCESS) \
 		goto failure; \
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 static void
 tkey_log(const char *fmt, ...) ISC_FORMAT_PRINTF(1, 2);

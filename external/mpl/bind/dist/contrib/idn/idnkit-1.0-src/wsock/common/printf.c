@@ -1,4 +1,4 @@
-/*	$NetBSD: printf.c,v 1.1.1.1 2018/08/12 12:07:45 christos Exp $	*/
+/*	$NetBSD: printf.c,v 1.2 2018/08/12 13:02:33 christos Exp $	*/
 
 /*
  * printf.c - printf like debug print function

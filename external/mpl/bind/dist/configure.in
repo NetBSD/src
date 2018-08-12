@@ -16,7 +16,7 @@ AC_INIT(BIND, [9.12], [info@isc.org], [], [https://www.isc.org/downloads/BIND/])
 AC_PREREQ(2.59)
 
 AC_CONFIG_HEADER(config.h)
-AC_CONFIG_MACRO_DIR([libtool.m4])
+AC_CONFIG_MACRO_DIR([m4])
 
 AC_CANONICAL_HOST
 
@@ -1189,7 +1189,7 @@ case "$use_randomdev" in
 				devrandom=/dev/arandom
 				;;
 			*)
-				devrandom=/dev/random
+				devrandom=/dev/urandom
 				;;
 		esac
 		AC_MSG_RESULT($devrandom)

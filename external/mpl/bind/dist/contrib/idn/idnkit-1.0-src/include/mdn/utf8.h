@@ -1,4 +1,4 @@
-/*	$NetBSD: utf8.h,v 1.1.1.1 2018/08/12 12:07:46 christos Exp $	*/
+/*	$NetBSD: utf8.h,v 1.2 2018/08/12 13:02:33 christos Exp $	*/
 
 /* Id: utf8.h,v 1.1 2003/06/04 00:25:46 marka Exp  */
 /*

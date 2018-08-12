@@ -1,4 +1,4 @@
-/*	$NetBSD: log.h,v 1.1.1.1 2018/08/12 12:07:38 christos Exp $	*/
+/*	$NetBSD: log.h,v 1.2 2018/08/12 13:02:30 christos Exp $	*/
 
 /*
  * Copyright (C) 2009--2015  Red Hat ; see COPYRIGHT for license

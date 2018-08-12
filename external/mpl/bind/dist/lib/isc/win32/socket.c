@@ -1,4 +1,4 @@
-/*	$NetBSD: socket.c,v 1.1.1.1 2018/08/12 12:08:27 christos Exp $	*/
+/*	$NetBSD: socket.c,v 1.2 2018/08/12 13:02:40 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -96,7 +96,7 @@ LPFN_GETACCEPTEXSOCKADDRS ISCGetAcceptExSockaddrs;
 #ifdef ISC_SOCKET_CONSISTENCY_CHECKS
 #define CONSISTENT(sock) consistent(sock)
 #else
-#define CONSISTENT(sock) do {} while (0)
+#define CONSISTENT(sock) do {} while (/*CONSTCOND*/0)
 #endif
 static void consistent(isc_socket_t *sock);
 
@@ -278,7 +278,7 @@ struct isc_socket {
 	int			state_lineno;  /* line which last touched state */
 };
 
-#define _set_state(sock, _state) do { (sock)->state = (_state); (sock)->state_lineno = __LINE__; } while (0)
+#define _set_state(sock, _state) do { (sock)->state = (_state); (sock)->state_lineno = __LINE__; } while (/*CONSTCOND*/0)
 
 /*
  * Buffer structure
@@ -4002,7 +4002,7 @@ _socktype(isc_sockettype_t type) {
 		return ("not-initialized");
 }
 
-#define TRY0(a) do { xmlrc = (a); if (xmlrc < 0) goto error; } while(0)
+#define TRY0(a) do { xmlrc = (a); if (xmlrc < 0) goto error; } while(/*CONSTCOND*/0)
 int
 isc_socketmgr_renderxml(isc_socketmgr_t *mgr, xmlTextWriterPtr writer)
 {

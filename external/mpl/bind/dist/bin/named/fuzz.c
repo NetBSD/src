@@ -1,4 +1,4 @@
-/*	$NetBSD: fuzz.c,v 1.1.1.1 2018/08/12 12:07:42 christos Exp $	*/
+/*	$NetBSD: fuzz.c,v 1.2 2018/08/12 13:02:27 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")

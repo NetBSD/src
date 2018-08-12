@@ -1,4 +1,4 @@
-/*	$NetBSD: perftcpdns.c,v 1.1.1.1 2018/08/12 12:07:51 christos Exp $	*/
+/*	$NetBSD: perftcpdns.c,v 1.2 2018/08/12 13:02:33 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -149,14 +149,14 @@
 #define ISC_INIT(head, headl)		do { \
 	(head) = -1; \
 	(headl) = &(head); \
-} while (0)
+} while (/*CONSTCOND*/0)
 
 #define ISC_INSERT(head, headl, elm)	do { \
 	(elm)->next = -1; \
 	(elm)->prev = (headl); \
 	*(headl) = (elm) - xlist; \
 	(headl) = &((elm)->next); \
-} while (0)
+} while (/*CONSTCOND*/0)
 
 #define ISC_REMOVE(headl, elm)		do { \
 	if ((elm)->next != -1) \
@@ -164,7 +164,7 @@
 	else \
 		(headl) = (elm)->prev; \
 	*(elm)->prev = (elm)->next; \
-} while (0)
+} while (/*CONSTCOND*/0)
 
 /*
  * Data structures

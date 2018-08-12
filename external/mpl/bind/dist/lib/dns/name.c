@@ -1,4 +1,4 @@
-/*	$NetBSD: name.c,v 1.1.1.1 2018/08/12 12:08:10 christos Exp $	*/
+/*	$NetBSD: name.c,v 1.2 2018/08/12 13:02:35 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -133,7 +133,7 @@ do { \
 	name->length = 0; \
 	name->labels = 0; \
 	name->attributes &= ~DNS_NAMEATTR_ABSOLUTE; \
-} while (0);
+} while (/*CONSTCOND*/0);
 
 /*%
  * A name is "bindable" if it can be set to point to a new value, i.e.
@@ -335,7 +335,7 @@ dns_name_ismailbox(const dns_name_t *name) {
 		return (ISC_FALSE);
 
 	/*
-	 * RFC292/RFC1123 hostname.
+	 * RFC952/RFC1123 hostname.
 	 */
 	while (ndata < (name->ndata + name->length)) {
 		n = *ndata++;

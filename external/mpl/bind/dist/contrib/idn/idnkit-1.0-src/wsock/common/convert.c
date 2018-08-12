@@ -1,4 +1,4 @@
-/*	$NetBSD: convert.c,v 1.1.1.1 2018/08/12 12:07:45 christos Exp $	*/
+/*	$NetBSD: convert.c,v 1.2 2018/08/12 13:02:33 christos Exp $	*/
 
 /*
  * convert.c - convert domain name

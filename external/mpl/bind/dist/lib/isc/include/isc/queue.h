@@ -1,4 +1,4 @@
-/*	$NetBSD: queue.h,v 1.1.1.1 2018/08/12 12:08:26 christos Exp $	*/
+/*	$NetBSD: queue.h,v 1.2 2018/08/12 13:02:38 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -38,7 +38,7 @@
 #define ISC_QLINK_INIT(elt, link) \
 	do { \
 		(elt)->link.next = (elt)->link.prev = (void *)(-1); \
-	} while(0)
+	} while(/*CONSTCOND*/0)
 
 #define ISC_QLINK_LINKED(elt, link) ((void*)(elt)->link.next != (void*)(-1))
 
@@ -52,7 +52,7 @@
 		(void) isc_mutex_init(&(queue).taillock); \
 		(void) isc_mutex_init(&(queue).headlock); \
 		(queue).tail = (queue).head = NULL; \
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 #define ISC_QUEUE_EMPTY(queue) ISC_TF((queue).head == NULL)
 
@@ -61,7 +61,7 @@
 		ISC_QLINK_INSIST(ISC_QUEUE_EMPTY(queue)); \
 		(void) isc_mutex_destroy(&(queue).taillock); \
 		(void) isc_mutex_destroy(&(queue).headlock); \
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 /*
  * queues are meant to separate the locks at either end.  For best effect, that
@@ -115,7 +115,7 @@
 				(queue).head = (elt); \
 			UNLOCK(&(queue).headlock); \
 		} \
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 #define ISC_QUEUE_POP(queue, link, ret) \
 	do { \
@@ -138,7 +138,7 @@
 		UNLOCK(&(queue).headlock); \
 		if (ret != NULL) \
 			(ret)->link.next = (ret)->link.prev = (void *)(-1); \
-	} while(0)
+	} while(/*CONSTCOND*/0)
 
 #define ISC_QUEUE_UNLINK(queue, elt, link) \
 	do { \
@@ -156,6 +156,6 @@
 		UNLOCK(&(queue).taillock); \
 		UNLOCK(&(queue).headlock); \
 		(elt)->link.next = (elt)->link.prev = (void *)(-1); \
-	} while(0)
+	} while(/*CONSTCOND*/0)
 
 #endif /* ISC_QUEUE_H */

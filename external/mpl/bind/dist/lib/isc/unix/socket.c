@@ -1,4 +1,4 @@
-/*	$NetBSD: socket.c,v 1.1.1.1 2018/08/12 12:08:25 christos Exp $	*/
+/*	$NetBSD: socket.c,v 1.2 2018/08/12 13:02:39 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -6594,7 +6594,7 @@ _socktype(isc_sockettype_t type)
 #endif
 
 #ifdef HAVE_LIBXML2
-#define TRY0(a) do { xmlrc = (a); if (xmlrc < 0) goto error; } while(0)
+#define TRY0(a) do { xmlrc = (a); if (xmlrc < 0) goto error; } while(/*CONSTCOND*/0)
 int
 isc_socketmgr_renderxml(isc_socketmgr_t *mgr0, xmlTextWriterPtr writer) {
 	isc__socketmgr_t *mgr = (isc__socketmgr_t *)mgr0;
@@ -6710,7 +6710,7 @@ isc_socketmgr_renderxml(isc_socketmgr_t *mgr0, xmlTextWriterPtr writer) {
 		result = ISC_R_NOMEMORY;\
 		goto error;\
 	} \
-} while(0)
+} while(/*CONSTCOND*/0)
 
 isc_result_t
 isc_socketmgr_renderjson(isc_socketmgr_t *mgr0, json_object *stats) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: openssldsa_link.c,v 1.1.1.1 2018/08/12 12:08:13 christos Exp $	*/
+/*	$NetBSD: openssldsa_link.c,v 1.2 2018/08/12 13:02:35 christos Exp $	*/
 
 /*
  * Portions Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -374,7 +374,7 @@ openssldsa_verify(dst_context_t *dctx, const isc_region_t *sig) {
 	DSA_SIG_free(dsasig);
 	switch (status) {
 	case 1:
-		return (ISC_R_SUCCESS);
+	return (ISC_R_SUCCESS);
 	case 0:
 		return (dst__openssl_toresult(DST_R_VERIFYFAILURE));
 	default:

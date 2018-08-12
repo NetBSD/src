@@ -1,4 +1,4 @@
-/*	$NetBSD: dlz_example.c,v 1.1.1.1 2018/08/12 12:07:49 christos Exp $	*/
+/*	$NetBSD: dlz_example.c,v 1.2 2018/08/12 13:02:31 christos Exp $	*/
 
 /*
  * Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
@@ -42,7 +42,7 @@
 		result = (x); \
 		if (result != ISC_R_SUCCESS) \
 			goto failure; \
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 /* For this simple example, use fixed sized strings */
 struct record {

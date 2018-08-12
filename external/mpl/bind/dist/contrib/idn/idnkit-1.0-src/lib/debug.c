@@ -1,4 +1,4 @@
-/*	$NetBSD: debug.c,v 1.1.1.1 2018/08/12 12:07:48 christos Exp $	*/
+/*	$NetBSD: debug.c,v 1.2 2018/08/12 13:02:33 christos Exp $	*/
 
 #ifndef lint
 static char *rcsid = "Id: debug.c,v 1.1 2003/06/04 00:25:51 marka Exp ";

@@ -1,4 +1,4 @@
-/*	$NetBSD: logconf.c,v 1.1.1.1 2018/08/12 12:07:42 christos Exp $	*/
+/*	$NetBSD: logconf.c,v 1.2 2018/08/12 13:02:27 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -33,7 +33,7 @@
 #define CHECK(op) \
 	do { result = (op); 				  	 \
 	       if (result != ISC_R_SUCCESS) goto cleanup; 	 \
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 /*%
  * Set up a logging category according to the named.conf data

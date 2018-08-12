@@ -1,4 +1,4 @@
-/*	$NetBSD: instance.h,v 1.1.1.1 2018/08/12 12:07:38 christos Exp $	*/
+/*	$NetBSD: instance.h,v 1.2 2018/08/12 13:02:29 christos Exp $	*/
 
 /**
  * Driver instance object.
