@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.1186 2018/08/10 17:54:46 sevan Exp $
+# $NetBSD: GENERIC,v 1.1187 2018/08/12 17:59:21 sevan Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.1186 $"
+#ident		"GENERIC-$Revision: 1.1187 $"
 
 maxusers	64		# estimated number of users
 
@@ -195,10 +195,6 @@ options 	NETATALK	# AppleTalk networking protocols
 #options 	PPP_DEFLATE	# Deflate compression support for PPP
 options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
-
-# JIT compiler for bpfilter
-#options 	SLJIT
-#options 	BPFJIT
 
 #options 	ALTQ		# Manipulate network interfaces' output queues
 #options 	ALTQ_BLUE	# Stochastic Fair Blue
