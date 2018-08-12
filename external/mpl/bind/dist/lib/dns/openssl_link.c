@@ -1,4 +1,4 @@
-/*	$NetBSD: openssl_link.c,v 1.1.1.1 2018/08/12 12:08:09 christos Exp $	*/
+/*	$NetBSD: openssl_link.c,v 1.2 2018/08/12 13:02:35 christos Exp $	*/
 
 /*
  * Portions Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -86,16 +86,9 @@ entropy_getpseudo(unsigned char *buf, int num) {
 
 #if OPENSSL_VERSION_NUMBER < 0x10100000L || defined(LIBRESSL_VERSION_NUMBER)
 static void
-entropy_add(const void *buf, int num, double entropy) {
-	/*
-	 * Do nothing.  The only call to this provides no useful data anyway.
-	 */
-	UNUSED(buf);
-	UNUSED(num);
-	UNUSED(entropy);
-}
 #else
 static int
+#endif
 entropy_add(const void *buf, int num, double entropy) {
 	/*
 	 * Do nothing.  The only call to this provides no useful data anyway.
@@ -103,9 +96,10 @@ entropy_add(const void *buf, int num, double entropy) {
 	UNUSED(buf);
 	UNUSED(num);
 	UNUSED(entropy);
-	return (1);
-}
+#if OPENSSL_VERSION_NUMBER >= 0x10100000L
+	return 1;
 #endif
+}
 #endif /* !ISC_PLATFORM_CRYPTORANDOM */
 
 #if OPENSSL_VERSION_NUMBER >= 0x10000000L && OPENSSL_VERSION_NUMBER < 0x10100000L || defined(LIBRESSL_VERSION_NUMBER)

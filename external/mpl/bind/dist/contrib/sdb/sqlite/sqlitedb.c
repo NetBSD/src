@@ -1,4 +1,4 @@
-/*	$NetBSD: sqlitedb.c,v 1.1.1.1 2018/08/12 12:07:44 christos Exp $	*/
+/*	$NetBSD: sqlitedb.c,v 1.2 2018/08/12 13:02:34 christos Exp $	*/
 
 /*
  * Copyright (C) 2007, 2016  Internet Systems Consortium, Inc. ("ISC")
@@ -242,7 +242,7 @@ sqlitedb_destroy(const char *zone, void *driverdata, void **dbdata)
 			result = ISC_R_NOMEMORY;		\
 			goto cleanup;				\
 		}						\
-	} while (0);
+	} while (/*CONSTCOND*/0);
 
 /*
  * Create a connection to the database and save any necessary information

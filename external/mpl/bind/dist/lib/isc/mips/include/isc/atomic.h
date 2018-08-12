@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic.h,v 1.1.1.1 2018/08/12 12:08:26 christos Exp $	*/
+/*	$NetBSD: atomic.h,v 1.2 2018/08/12 13:02:38 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -23,7 +23,7 @@
  * This routine atomically increments the value stored in 'p' by 'val', and
  * returns the previous value.
  */
-static inline isc_int32_t
+static __inline isc_int32_t
 isc_atomic_xadd(isc_int32_t *p, int val) {
 	isc_int32_t orig;
 
@@ -48,7 +48,7 @@ isc_atomic_xadd(isc_int32_t *p, int val) {
 /*
  * This routine atomically stores the value 'val' in 'p'.
  */
-static inline void
+static __inline void
 isc_atomic_store(isc_int32_t *p, isc_int32_t val) {
 	*p = val;
 }
@@ -58,7 +58,7 @@ isc_atomic_store(isc_int32_t *p, isc_int32_t val) {
  * original value is equal to 'cmpval'.  The original value is returned in any
  * case.
  */
-static inline isc_int32_t
+static __inline isc_int32_t
 isc_atomic_cmpxchg(isc_int32_t *p, int cmpval, int val) {
 	isc_int32_t orig;
 	isc_int32_t tmp;

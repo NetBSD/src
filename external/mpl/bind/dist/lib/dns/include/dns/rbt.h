@@ -1,4 +1,4 @@
-/*	$NetBSD: rbt.h,v 1.1.1.1 2018/08/12 12:08:20 christos Exp $	*/
+/*	$NetBSD: rbt.h,v 1.2 2018/08/12 13:02:35 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -1061,25 +1061,25 @@ dns_rbtnodechain_nextflat(dns_rbtnodechain_t *chain, dns_name_t *name);
 #define dns_rbtnode_refinit(node, n)                            \
 	do {                                                    \
 		isc_refcount_init(&(node)->references, (n));    \
-	} while (0)
+	} while (/*CONSTCOND*/0)
 #define dns_rbtnode_refdestroy(node)                            \
 	do {                                                    \
 		isc_refcount_destroy(&(node)->references);      \
-	} while (0)
+	} while (/*CONSTCOND*/0)
 #define dns_rbtnode_refcurrent(node)                            \
 	isc_refcount_current(&(node)->references)
 #define dns_rbtnode_refincrement0(node, refs)                   \
 	do {                                                    \
 		isc_refcount_increment0(&(node)->references, (refs)); \
-	} while (0)
+	} while (/*CONSTCOND*/0)
 #define dns_rbtnode_refincrement(node, refs)                    \
 	do {                                                    \
 		isc_refcount_increment(&(node)->references, (refs)); \
-	} while (0)
+	} while (/*CONSTCOND*/0)
 #define dns_rbtnode_refdecrement(node, refs)                    \
 	do {                                                    \
 		isc_refcount_decrement(&(node)->references, (refs)); \
-	} while (0)
+	} while (/*CONSTCOND*/0)
 #else  /* DNS_RBT_USEISCREFCOUNT */
 #define dns_rbtnode_refinit(node, n)    ((node)->references = (n))
 #define dns_rbtnode_refdestroy(node)    ISC_REQUIRE((node)->references == 0)
@@ -1115,21 +1115,21 @@ dns_rbtnode_refdecrement(dns_rbtnode_t *node, unsigned int *refs) {
 		(node)->references++;                           \
 		if ((_tmp) != NULL)                             \
 			(*_tmp) = (node)->references;           \
-	} while (0)
+	} while (/*CONSTCOND*/0)
 #define dns_rbtnode_refincrement(node, refs)                    \
 	do {                                                    \
 		ISC_REQUIRE((node)->references > 0);                \
 		(node)->references++;                           \
 		if ((refs) != NULL)                             \
 			(*refs) = (node)->references;           \
-	} while (0)
+	} while (/*CONSTCOND*/0)
 #define dns_rbtnode_refdecrement(node, refs)                    \
 	do {                                                    \
 		ISC_REQUIRE((node)->references > 0);                \
 		(node)->references--;                           \
 		if ((refs) != NULL)                             \
 			(*refs) = (node)->references;           \
-	} while (0)
+	} while (/*CONSTCOND*/0)
 #endif
 #endif /* DNS_RBT_USEISCREFCOUNT */
 

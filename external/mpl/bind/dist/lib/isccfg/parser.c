@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.c,v 1.1.1.1 2018/08/12 12:08:28 christos Exp $	*/
+/*	$NetBSD: parser.c,v 1.2 2018/08/12 13:02:40 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -48,11 +48,11 @@
 #define CHECK(op) 						\
 	do { result = (op); 					\
 		if (result != ISC_R_SUCCESS) goto cleanup; 	\
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 /* Clean up a configuration object if non-NULL. */
 #define CLEANUP_OBJ(obj) \
-	do { if ((obj) != NULL) cfg_obj_destroy(pctx, &(obj)); } while (0)
+	do { if ((obj) != NULL) cfg_obj_destroy(pctx, &(obj)); } while (/*CONSTCOND*/0)
 
 
 /*

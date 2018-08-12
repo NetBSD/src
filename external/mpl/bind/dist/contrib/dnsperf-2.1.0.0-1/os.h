@@ -1,4 +1,4 @@
-/*	$NetBSD: os.h,v 1.1.1.1 2018/08/12 12:07:52 christos Exp $	*/
+/*	$NetBSD: os.h,v 1.2 2018/08/12 13:02:32 christos Exp $	*/
 
 /*
  * Copyright (C) 2011 - 2015 Nominum, Inc.
