@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.45 2017/11/13 07:06:49 wiz Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.46 2018/08/12 08:17:50 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -126,11 +126,17 @@
  * MAX = MIN + NKL4_MAX_ENTRIES * NBPD_L4
  */
 #ifndef XEN
-#define VM_MIN_KERNEL_ADDRESS	0xffff800000000000
-#define VM_MAX_KERNEL_ADDRESS	0xffffa00000000000
+#define VM_MIN_KERNEL_ADDRESS_DEFAULT	0xffff800000000000
+#define VM_MAX_KERNEL_ADDRESS_DEFAULT	0xffffa00000000000
+extern vaddr_t vm_min_kernel_address;
+extern vaddr_t vm_max_kernel_address;
+#define VM_MIN_KERNEL_ADDRESS	vm_min_kernel_address
+#define VM_MAX_KERNEL_ADDRESS	vm_max_kernel_address
 #else
-#define VM_MIN_KERNEL_ADDRESS	0xffffa00000000000
-#define VM_MAX_KERNEL_ADDRESS	0xffffc00000000000
+#define VM_MIN_KERNEL_ADDRESS_DEFAULT	0xffffa00000000000
+#define VM_MAX_KERNEL_ADDRESS_DEFAULT	0xffffc00000000000
+#define VM_MIN_KERNEL_ADDRESS	VM_MIN_KERNEL_ADDRESS_DEFAULT
+#define VM_MAX_KERNEL_ADDRESS	VM_MAX_KERNEL_ADDRESS_DEFAULT
 #endif
 
 /*
