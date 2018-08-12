@@ -1,4 +1,4 @@
-/* $NetBSD: gicv3_fdt.c,v 1.1 2018/08/08 19:03:08 jmcneill Exp $ */
+/* $NetBSD: gicv3_fdt.c,v 1.2 2018/08/12 21:44:17 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015-2018 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #define	_INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gicv3_fdt.c,v 1.1 2018/08/08 19:03:08 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gicv3_fdt.c,v 1.2 2018/08/12 21:44:17 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -142,7 +142,7 @@ gicv3_fdt_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	aprint_normal_dev(self, "%d redistributors\n", sc->sc_gic.sc_bsh_r_count);
+	aprint_debug_dev(self, "%d redistributors\n", sc->sc_gic.sc_bsh_r_count);
 
 	error = gicv3_init(&sc->sc_gic);
 	if (error) {
