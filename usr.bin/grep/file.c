@@ -1,4 +1,4 @@
-/*	$NetBSD: file.c,v 1.8 2018/08/11 16:03:37 christos Exp $	*/
+/*	$NetBSD: file.c,v 1.9 2018/08/12 07:53:19 christos Exp $	*/
 /*	$FreeBSD: head/usr.bin/grep/file.c 211496 2010-08-19 09:28:59Z des $	*/
 /*	$OpenBSD: file.c,v 1.11 2010/07/02 20:48:48 nicm Exp $	*/
 
@@ -35,7 +35,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: file.c,v 1.8 2018/08/11 16:03:37 christos Exp $");
+__RCSID("$NetBSD: file.c,v 1.9 2018/08/12 07:53:19 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -57,7 +57,9 @@ __RCSID("$NetBSD: file.c,v 1.8 2018/08/11 16:03:37 christos Exp $");
 #define	LNBUFBUMP	80
 
 static gzFile gzbufdesc;
+#ifndef WITHOUT_BZ2
 static BZFILE* bzbufdesc;
+#endif
 
 static unsigned char buffer[MAXBUFSIZ];
 static unsigned char *bufpos;
@@ -75,9 +77,10 @@ grep_refill(struct file *f)
 	bufpos = buffer;
 	bufrem = 0;
 
-	if (filebehave == FILE_GZIP)
+	if (filebehave == FILE_GZIP) {
 		nr = gzread(gzbufdesc, buffer, MAXBUFSIZ);
-	else if (filebehave == FILE_BZIP && bzbufdesc != NULL) {
+#ifndef WITHOUT_BZ2
+	} else if (filebehave == FILE_BZIP && bzbufdesc != NULL) {
 		nr = BZ2_bzRead(&bzerr, bzbufdesc, buffer, MAXBUFSIZ);
 		switch (bzerr) {
 		case BZ_OK:
@@ -103,6 +106,7 @@ grep_refill(struct file *f)
 			/* Make sure we exit with an error */
 			nr = -1;
 		}
+#endif
 	} else
 		nr = read(f->fd, buffer, MAXBUFSIZ);
 
@@ -196,9 +200,11 @@ grep_file_init(struct file *f)
 	    (gzbufdesc = gzdopen(f->fd, "r")) == NULL)
 		goto error;
 
+#ifndef WITHOUT_BZ2
 	if (filebehave == FILE_BZIP &&
 	    (bzbufdesc = BZ2_bzdopen(f->fd, "r")) == NULL)
 		goto error;
+#endif
 
 	/* Fill read buffer, also catches errors early */
 	if (grep_refill(f) != 0)
