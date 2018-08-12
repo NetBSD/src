@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.310 2018/08/12 08:17:50 maxv Exp $	*/
+/*	$NetBSD: machdep.c,v 1.311 2018/08/12 09:05:52 maxv Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.310 2018/08/12 08:17:50 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.311 2018/08/12 09:05:52 maxv Exp $");
 
 #include "opt_modular.h"
 #include "opt_user_ldt.h"
@@ -1633,6 +1633,15 @@ init_slotspace(void)
 	slotspace.area[SLAREA_DMAP].nslot = 0 /* variable */;
 	slotspace.area[SLAREA_DMAP].active = false;
 	slotspace.area[SLAREA_DMAP].dropmax = true;
+#endif
+
+#ifdef XEN
+	/* Hypervisor. */
+	slotspace.area[SLAREA_HYPV].sslot = 256;
+	slotspace.area[SLAREA_HYPV].mslot = 16;
+	slotspace.area[SLAREA_HYPV].nslot = 16;
+	slotspace.area[SLAREA_HYPV].active = true;
+	slotspace.area[SLAREA_HYPV].dropmax = false;
 #endif
 
 	/* Kernel. */
