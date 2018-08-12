@@ -1,4 +1,4 @@
-/* $NetBSD: usbroothub.c,v 1.5 2018/04/09 15:26:29 jakllsch Exp $ */
+/* $NetBSD: usbroothub.c,v 1.6 2018/08/12 06:02:38 rin Exp $ */
 
 /*-
  * Copyright (c) 1998, 2004, 2011, 2012 The NetBSD Foundation, Inc.
@@ -56,6 +56,9 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: usbroothub.c,v 1.6 2018/08/12 06:02:38 rin Exp $");
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>
