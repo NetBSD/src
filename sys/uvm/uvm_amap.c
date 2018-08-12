@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_amap.c,v 1.108 2017/10/28 00:37:13 pgoyette Exp $	*/
+/*	$NetBSD: uvm_amap.c,v 1.109 2018/08/12 09:29:16 maxv Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_amap.c,v 1.108 2017/10/28 00:37:13 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_amap.c,v 1.109 2018/08/12 09:29:16 maxv Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -317,7 +317,7 @@ amap_extend(struct vm_map_entry *entry, vsize_t addsize, int flags)
 	struct vm_amap *amap = entry->aref.ar_amap;
 	int slotoff = entry->aref.ar_pageoff;
 	int slotmapped, slotadd, slotneed, slotadded, slotalloc;
-	int slotadj, slotspace;
+	int slotadj, slotarea;
 	int oldnslots;
 #ifdef UVM_AMAP_PPREF
 	int *newppref, *oldppref;
@@ -345,12 +345,12 @@ amap_extend(struct vm_map_entry *entry, vsize_t addsize, int flags)
 	if (flags & AMAP_EXTEND_FORWARDS) {
 		slotneed = slotoff + slotmapped + slotadd;
 		slotadj = 0;
-		slotspace = 0;
+		slotarea = 0;
 	}
 	else {
 		slotneed = slotadd + slotmapped;
 		slotadj = slotadd - slotoff;
-		slotspace = amap->am_maxslot - slotmapped;
+		slotarea = amap->am_maxslot - slotmapped;
 	}
 	tofree = NULL;
 
@@ -429,7 +429,7 @@ amap_extend(struct vm_map_entry *entry, vsize_t addsize, int flags)
 				 * Slide up the ref counts on the pages that
 				 * are actually in use.
 				 */
-				memmove(amap->am_ppref + slotspace,
+				memmove(amap->am_ppref + slotarea,
 				    amap->am_ppref + slotoff,
 				    slotmapped * sizeof(int));
 				/*
@@ -437,9 +437,9 @@ amap_extend(struct vm_map_entry *entry, vsize_t addsize, int flags)
 				 * referenced/not referenced.
 				 */
 				pp_setreflen(amap->am_ppref,
-				    0, 0, slotspace - slotadd);
+				    0, 0, slotarea - slotadd);
 				pp_setreflen(amap->am_ppref,
-				    slotspace - slotadd, 1, slotadd);
+				    slotarea - slotadd, 1, slotadd);
 			}
 #endif
 
@@ -447,17 +447,17 @@ amap_extend(struct vm_map_entry *entry, vsize_t addsize, int flags)
 			 * Slide the anon pointers up and clear out
 			 * the space we just made.
 			 */
-			memmove(amap->am_anon + slotspace,
+			memmove(amap->am_anon + slotarea,
 			    amap->am_anon + slotoff,
 			    slotmapped * sizeof(struct vm_anon*));
 			memset(amap->am_anon + slotoff, 0,
-			    (slotspace - slotoff) * sizeof(struct vm_anon *));
+			    (slotarea - slotoff) * sizeof(struct vm_anon *));
 
 			/*
 			 * Slide the backpointers up, but don't bother
 			 * wiping out the old slots.
 			 */
-			memmove(amap->am_bckptr + slotspace,
+			memmove(amap->am_bckptr + slotarea,
 			    amap->am_bckptr + slotoff,
 			    slotmapped * sizeof(int));
 
@@ -465,7 +465,7 @@ amap_extend(struct vm_map_entry *entry, vsize_t addsize, int flags)
 			 * Adjust all the useful active slot numbers.
 			 */
 			for (i = 0; i < amap->am_nused; i++)
-				amap->am_slots[i] += (slotspace - slotoff);
+				amap->am_slots[i] += (slotarea - slotoff);
 
 			/*
 			 * We just filled all the empty space in the
@@ -473,7 +473,7 @@ amap_extend(struct vm_map_entry *entry, vsize_t addsize, int flags)
 			 * slots.
 			 */
 			amap->am_nslot = amap->am_maxslot;
-			entry->aref.ar_pageoff = slotspace - slotadd;
+			entry->aref.ar_pageoff = slotarea - slotadd;
 			amap_unlock(amap);
 
 			UVMHIST_LOG(maphist,"<- done (case 2b), amap = 0x%#jx, "
@@ -534,7 +534,7 @@ amap_extend(struct vm_map_entry *entry, vsize_t addsize, int flags)
 
 	slotadded = slotalloc - amap->am_nslot;
 	if (!(flags & AMAP_EXTEND_FORWARDS))
-		slotspace = slotalloc - slotmapped;
+		slotarea = slotalloc - slotmapped;
 
 	/* do am_slots */
 	oldsl = amap->am_slots;
@@ -542,7 +542,7 @@ amap_extend(struct vm_map_entry *entry, vsize_t addsize, int flags)
 		memcpy(newsl, oldsl, sizeof(int) * amap->am_nused);
 	else
 		for (i = 0; i < amap->am_nused; i++)
-			newsl[i] = oldsl[i] + slotspace - slotoff;
+			newsl[i] = oldsl[i] + slotarea - slotoff;
 	amap->am_slots = newsl;
 
 	/* do am_anon */
@@ -553,10 +553,10 @@ amap_extend(struct vm_map_entry *entry, vsize_t addsize, int flags)
 		memset(newover + amap->am_nslot, 0,
 		    sizeof(struct vm_anon *) * slotadded);
 	} else {
-		memcpy(newover + slotspace, oldover + slotoff,
+		memcpy(newover + slotarea, oldover + slotoff,
 		    sizeof(struct vm_anon *) * slotmapped);
 		memset(newover, 0,
-		    sizeof(struct vm_anon *) * slotspace);
+		    sizeof(struct vm_anon *) * slotarea);
 	}
 	amap->am_anon = newover;
 
@@ -565,7 +565,7 @@ amap_extend(struct vm_map_entry *entry, vsize_t addsize, int flags)
 	if (flags & AMAP_EXTEND_FORWARDS)
 		memcpy(newbck, oldbck, sizeof(int) * amap->am_nslot);
 	else
-		memcpy(newbck + slotspace, oldbck + slotoff,
+		memcpy(newbck + slotarea, oldbck + slotoff,
 		    sizeof(int) * slotmapped);
 	amap->am_bckptr = newbck;
 
@@ -579,7 +579,7 @@ amap_extend(struct vm_map_entry *entry, vsize_t addsize, int flags)
 			memset(newppref + amap->am_nslot, 0,
 			    sizeof(int) * slotadded);
 		} else {
-			memcpy(newppref + slotspace, oldppref + slotoff,
+			memcpy(newppref + slotarea, oldppref + slotoff,
 			    sizeof(int) * slotmapped);
 		}
 		amap->am_ppref = newppref;
@@ -607,7 +607,7 @@ amap_extend(struct vm_map_entry *entry, vsize_t addsize, int flags)
 	if (flags & AMAP_EXTEND_FORWARDS)
 		amap->am_nslot = slotneed;
 	else {
-		entry->aref.ar_pageoff = slotspace - slotadd;
+		entry->aref.ar_pageoff = slotarea - slotadd;
 		amap->am_nslot = slotalloc;
 	}
 	oldnslots = amap->am_maxslot;
