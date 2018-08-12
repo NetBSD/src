@@ -1,4 +1,4 @@
-/*	$NetBSD: x86.c,v 1.2 2018/08/12 15:05:13 christos Exp $	*/
+/*	$NetBSD: x86.c,v 1.3 2018/08/12 15:55:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: x86.c,v 1.2 2018/08/12 15:05:13 christos Exp $");
+__RCSID("$NetBSD: x86.c,v 1.3 2018/08/12 15:55:26 christos Exp $");
 #endif /* not lint */
 
 #include <ddb/ddb.h>
@@ -50,8 +50,8 @@ __RCSID("$NetBSD: x86.c,v 1.2 2018/08/12 15:05:13 christos Exp $");
 vaddr_t vm_min_kernel_address = VM_MIN_KERNEL_ADDRESS_DEFAULT;
 
 static struct nlist nl[] = {
-	{ .n_name = "vm_min_kernel_address" },
 	{ .n_name = "_dumppcb" },
+	{ .n_name = "vm_min_kernel_address" },
 	{ .n_name = NULL },
 };
 
