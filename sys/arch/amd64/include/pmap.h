@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.50 2018/08/12 10:50:35 maxv Exp $	*/
+/*	$NetBSD: pmap.h,v 1.51 2018/08/12 12:23:33 maxv Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -141,6 +141,7 @@
 #define L4_SLOT_KERN		slotspace.area[SLAREA_MAIN].sslot
 #define L4_SLOT_KERNBASE	511 /* pl4_i(KERNBASE) */
 
+#define PDIR_SLOT_USERLIM	255
 #define PDIR_SLOT_KERN	L4_SLOT_KERN
 #define PDIR_SLOT_PTE	L4_SLOT_PTE
 

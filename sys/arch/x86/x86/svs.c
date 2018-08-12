@@ -1,4 +1,4 @@
-/*	$NetBSD: svs.c,v 1.19 2018/07/12 19:48:16 maxv Exp $	*/
+/*	$NetBSD: svs.c,v 1.20 2018/08/12 12:23:33 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svs.c,v 1.19 2018/07/12 19:48:16 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svs.c,v 1.20 2018/08/12 12:23:33 maxv Exp $");
 
 #include "opt_svs.h"
 
@@ -460,7 +460,7 @@ svs_pmap_sync(struct pmap *pmap, int index)
 	KASSERT(pmap != pmap_kernel());
 	KASSERT(mutex_owned(pmap->pm_lock));
 	KASSERT(kpreempt_disabled());
-	KASSERT(index < 255);
+	KASSERT(index < PDIR_SLOT_USERLIM);
 
 	for (CPU_INFO_FOREACH(cii, ci)) {
 		cid = cpu_index(ci);
@@ -558,7 +558,7 @@ svs_pdir_switch(struct pmap *pmap)
 	mutex_enter(&ci->ci_svs_mtx);
 
 	/* User slots. */
-	for (i = 0; i < 255; i++) {
+	for (i = 0; i < PDIR_SLOT_USERLIM; i++) {
 		pte = svs_pte_atomic_read(pmap, i);
 		ci->ci_svs_updir[i] = pte;
 	}
