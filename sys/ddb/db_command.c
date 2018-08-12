@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.c,v 1.154 2018/07/20 08:26:25 msaitoh Exp $	*/
+/*	$NetBSD: db_command.c,v 1.155 2018/08/12 22:05:29 mrg Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 1999, 2002, 2009 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.154 2018/07/20 08:26:25 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.155 2018/08/12 22:05:29 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_aio.h"
@@ -1352,6 +1352,10 @@ db_reboot_cmd(db_expr_t addr, bool have_addr,
 	 * called from cpu_reboot.
 	 */
 	db_recover = 0;
+	/* Avoid all mutex errors */
+#ifdef LOCKDEBUG
+	lockdebug_dismiss();
+#endif
 	panicstr = "reboot forced via kernel debugger";
 	cpu_reboot((int)bootflags, NULL);
 #else	/* _KERNEL */
