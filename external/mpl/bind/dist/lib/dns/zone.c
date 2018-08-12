@@ -1,4 +1,4 @@
-/*	$NetBSD: zone.c,v 1.1.1.1 2018/08/12 12:08:13 christos Exp $	*/
+/*	$NetBSD: zone.c,v 1.2 2018/08/12 13:02:35 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -156,9 +156,9 @@ typedef struct dns_include dns_include_t;
 	 do { LOCK(&(z)->lock); \
 	      INSIST((z)->locked == ISC_FALSE); \
 	     (z)->locked = ISC_TRUE; \
-		} while (0)
+		} while (/*CONSTCOND*/0)
 #define UNLOCK_ZONE(z) \
-	do { (z)->locked = ISC_FALSE; UNLOCK(&(z)->lock); } while (0)
+	do { (z)->locked = ISC_FALSE; UNLOCK(&(z)->lock); } while (/*CONSTCOND*/0)
 #define LOCKED_ZONE(z) ((z)->locked)
 #define TRYLOCK_ZONE(result, z) \
 	do { \
@@ -167,13 +167,13 @@ typedef struct dns_include dns_include_t;
 		     INSIST((z)->locked == ISC_FALSE); \
 		     (z)->locked = ISC_TRUE; \
 	      } \
-	} while (0)
+	} while (/*CONSTCOND*/0)
 #else
 #define LOCK_ZONE(z) LOCK(&(z)->lock)
 #define UNLOCK_ZONE(z) UNLOCK(&(z)->lock)
 #define LOCKED_ZONE(z) ISC_TRUE
 #define TRYLOCK_ZONE(result, z) \
-	do { result = isc_mutex_trylock(&(z)->lock); } while (0)
+	do { result = isc_mutex_trylock(&(z)->lock); } while (/*CONSTCOND*/0)
 #endif
 
 #ifdef ISC_RWLOCK_USEATOMIC
@@ -444,17 +444,17 @@ struct dns_zone {
 		dns__zonediff_t *_z = (z); \
 		(_z)->diff = (d); \
 		(_z)->offline = ISC_FALSE; \
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 #define DNS_ZONE_FLAG(z,f) (ISC_TF(((z)->flags & (f)) != 0))
 #define DNS_ZONE_SETFLAG(z,f) do { \
 		INSIST(LOCKED_ZONE(z)); \
 		(z)->flags |= (f); \
-		} while (0)
+		} while (/*CONSTCOND*/0)
 #define DNS_ZONE_CLRFLAG(z,f) do { \
 		INSIST(LOCKED_ZONE(z)); \
 		(z)->flags &= ~(f); \
-		} while (0)
+		} while (/*CONSTCOND*/0)
 	/* XXX MPA these may need to go back into zone.h */
 #define DNS_ZONEFLG_REFRESH	0x00000001U	/*%< refresh check in progress */
 #define DNS_ZONEFLG_NEEDDUMP	0x00000002U	/*%< zone need consolidation */
@@ -515,7 +515,7 @@ struct dns_zone {
 #define CHECK(op) \
 	do { result = (op); \
 		if (result != ISC_R_SUCCESS) goto failure; \
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 struct dns_unreachable {
 	isc_sockaddr_t	remote;
@@ -846,7 +846,7 @@ static const char *dbargv_default[] = { "rbt" };
 			isc_interval_set(&_i, _j/2, 0); \
 			(void)isc_time_add((a), &_i, (c)); \
 		} \
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 #define DNS_ZONE_TIME_ADD(a, b, c) \
 	do { \
@@ -859,7 +859,7 @@ static const char *dbargv_default[] = { "rbt" };
 			isc_interval_set(&_i, (b)/2, 0); \
 			(void)isc_time_add((a), &_i, (c)); \
 		} \
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 typedef struct nsec3param nsec3param_t;
 struct nsec3param {

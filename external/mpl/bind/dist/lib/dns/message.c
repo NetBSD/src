@@ -1,4 +1,4 @@
-/*	$NetBSD: message.c,v 1.1.1.1 2018/08/12 12:08:08 christos Exp $	*/
+/*	$NetBSD: message.c,v 1.2 2018/08/12 13:02:35 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -984,7 +984,7 @@ getrdata(isc_buffer_t *source, dns_message_t *msg, dns_decompress_t *dctx,
 			result = r;			\
 			goto cleanup;			\
 		}					\
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 static isc_result_t
 getquestions(isc_buffer_t *source, dns_message_t *msg, dns_decompress_t *dctx,
@@ -1227,7 +1227,7 @@ getsection(isc_buffer_t *source, dns_message_t *msg, dns_decompress_t *dctx,
 	dns_name_t *name = NULL;
 	dns_name_t *name2 = NULL;
 	dns_offsets_t *offsets;
-	dns_rdataset_t *rdataset;
+	dns_rdataset_t *rdataset = NULL;
 	dns_rdatalist_t *rdatalist;
 	isc_result_t result;
 	dns_rdatatype_t rdtype, covers;

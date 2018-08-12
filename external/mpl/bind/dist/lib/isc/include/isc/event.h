@@ -1,4 +1,4 @@
-/*	$NetBSD: event.h,v 1.1.1.1 2018/08/12 12:08:26 christos Exp $	*/
+/*	$NetBSD: event.h,v 1.2 2018/08/12 13:02:38 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -68,7 +68,7 @@ do { \
 	(event)->ev_destroy_arg = (da); \
 	ISC_LINK_INIT((event), ev_link); \
 	ISC_LINK_INIT((event), ev_ratelink); \
-} while (0)
+} while (/*CONSTCOND*/0)
 
 /*%
  * This structure is public because "subclassing" it may be useful when

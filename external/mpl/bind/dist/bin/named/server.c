@@ -1,4 +1,4 @@
-/*	$NetBSD: server.c,v 1.1.1.1 2018/08/12 12:07:43 christos Exp $	*/
+/*	$NetBSD: server.c,v 1.2 2018/08/12 13:02:27 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -168,7 +168,7 @@
 #define CHECK(op) \
 	do { result = (op);					 \
 	       if (result != ISC_R_SUCCESS) goto cleanup;	 \
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 #define TCHECK(op) \
 	do { tresult = (op);					 \
@@ -176,7 +176,7 @@
 			isc_buffer_clear(*text);		 \
 			goto cleanup;	 			 \
 		}						 \
-	} while (0)
+	} while (/*CONSTCOND*/ 0)
 
 #define CHECKM(op, msg) \
 	do { result = (op);					  \
@@ -189,7 +189,7 @@
 				      isc_result_totext(result)); \
 			goto cleanup;				  \
 		}						  \
-	} while (0)						  \
+	} while (/*CONSTCOND*/0)				  \
 
 #define CHECKMF(op, msg, file) \
 	do { result = (op);					  \
@@ -202,13 +202,13 @@
 				      isc_result_totext(result)); \
 			goto cleanup;				  \
 		}						  \
-	} while (0)						  \
+	} while (/*CONSTCOND*/0)				  \
 
 #define CHECKFATAL(op, msg) \
 	do { result = (op);					  \
 	       if (result != ISC_R_SUCCESS)			  \
 			fatal(msg, result);			  \
-	} while (0)						  \
+	} while (/*CONSTCOND*/0)				  \
 
 /*%
  * Maximum ADB size for views that share a cache.  Use this limit to suppress
@@ -2978,7 +2978,7 @@ configure_catz(dns_view_t *view, const cfg_obj_t *config,
 			result = ISC_R_RANGE;				\
 			goto cleanup;					\
 		    }							\
-	} while (0)
+	} while (/*CONSTCOND*/ 0)
 
 #define CHECK_RRL_RATE(rate, def, max_rate, name)			\
 	do {								\
@@ -2994,7 +2994,7 @@ configure_catz(dns_view_t *view, const cfg_obj_t *config,
 			rrl->rate.r = def;				\
 		}							\
 		rrl->rate.scaled = rrl->rate.r;				\
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 static isc_result_t
 configure_rrl(dns_view_t *view, const cfg_obj_t *config, const cfg_obj_t *map) {
@@ -8639,6 +8639,7 @@ load_configuration(const char *filename, named_server_t *server,
 		named_os_changeuser();
 	}
 
+#if 0
 	/*
 	 * Check that the working directory is writable.
 	 */
@@ -8649,7 +8650,7 @@ load_configuration(const char *filename, named_server_t *server,
 		result = ISC_R_NOPERM;
 		goto cleanup;
 	}
-
+#endif
 #ifdef HAVE_LMDB
 	/*
 	 * Reopen NZD databases.

@@ -1,4 +1,4 @@
-/*	$NetBSD: rbt.c,v 1.1.1.1 2018/08/12 12:08:17 christos Exp $	*/
+/*	$NetBSD: rbt.c,v 1.2 2018/08/12 13:02:35 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -52,7 +52,7 @@
 		result = (x); \
 		if (result != ISC_R_SUCCESS) \
 			goto cleanup; \
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 #define RBT_MAGIC               ISC_MAGIC('R', 'B', 'T', '+')
 #define VALID_RBT(rbt)          ISC_MAGIC_VALID(rbt, RBT_MAGIC)
@@ -323,12 +323,13 @@ Name(dns_rbtnode_t *node) {
 }
 
 static void
-hexdump(const char *desc, unsigned char *data, size_t size) {
+hexdump(const char *desc, void *blob, size_t size) {
 	char hexdump[BUFSIZ * 2 + 1];
 	isc_buffer_t b;
 	isc_region_t r;
 	isc_result_t result;
 	size_t bytes;
+	isc_uint8_t *data = blob;
 
 	fprintf(stderr, "%s: ", desc);
 	do {
@@ -632,7 +633,7 @@ serialize_node(FILE *file, dns_rbtnode_t *node, uintptr_t left,
 	fprintf(stderr, "serialize ");
 	dns_name_print(&nodename, stderr);
 	fprintf(stderr, "\n");
-	hexdump("node header", (unsigned char*) &temp_node,
+	hexdump("node header", &temp_node,
 		sizeof(dns_rbtnode_t));
 	hexdump("node data", node_data, datasize);
 #endif
@@ -752,7 +753,7 @@ dns_rbt_serialize_tree(FILE *file, dns_rbt_t *rbt,
 
 	isc_crc64_final(&crc);
 #ifdef DEBUG
-	hexdump("serializing CRC", (unsigned char *)&crc, sizeof(crc));
+	hexdump("serializing CRC", &crc, sizeof(crc));
 #endif
 
 	/* Serialize header */
@@ -772,7 +773,7 @@ dns_rbt_serialize_tree(FILE *file, dns_rbt_t *rbt,
 		result = ISC_R_INVALIDFILE; \
 		goto cleanup; \
 	} \
-} while(0);
+} while(/*CONSTCOND*/0);
 
 static isc_result_t
 treefix(dns_rbt_t *rbt, void *base, size_t filesize, dns_rbtnode_t *n,
@@ -873,7 +874,7 @@ treefix(dns_rbt_t *rbt, void *base, size_t filesize, dns_rbtnode_t *n,
 	fprintf(stderr, "deserialize ");
 	dns_name_print(&nodename, stderr);
 	fprintf(stderr, "\n");
-	hexdump("node header", (unsigned char *) &header,
+	hexdump("node header", &header,
 		sizeof(dns_rbtnode_t));
 	hexdump("node data", node_data, datasize);
 #endif
@@ -953,7 +954,7 @@ dns_rbt_deserialize_tree(void *base_address, size_t filesize,
 
 	isc_crc64_final(&crc);
 #ifdef DEBUG
-	hexdump("deserializing CRC", (unsigned char *)&crc, sizeof(crc));
+	hexdump("deserializing CRC", &crc, sizeof(crc));
 #endif
 
 	/* Check file hash */

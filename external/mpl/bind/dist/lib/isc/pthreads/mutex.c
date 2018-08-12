@@ -1,4 +1,4 @@
-/*	$NetBSD: mutex.c,v 1.1.1.1 2018/08/12 12:08:28 christos Exp $	*/
+/*	$NetBSD: mutex.c,v 1.2 2018/08/12 13:02:39 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -40,7 +40,7 @@
 			(vvp)->tv_sec++;				\
 			(vvp)->tv_usec -= 1000000;			\
 		}							\
-	} while (0)
+	} while (/*CONSTCOND*/0)
 #define timevalsub(vvp, uvp)						\
 	do {								\
 		(vvp)->tv_sec -= (uvp)->tv_sec;				\
@@ -49,7 +49,7 @@
 			(vvp)->tv_sec--;				\
 			(vvp)->tv_usec += 1000000;			\
 		}							\
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 /*@}*/
 

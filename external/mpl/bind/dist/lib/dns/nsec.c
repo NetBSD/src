@@ -1,4 +1,4 @@
-/*	$NetBSD: nsec.c,v 1.1.1.1 2018/08/12 12:08:12 christos Exp $	*/
+/*	$NetBSD: nsec.c,v 1.2 2018/08/12 13:02:35 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -35,7 +35,7 @@
 	result = (x); \
 	if (result != ISC_R_SUCCESS) \
 		goto failure; \
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 void
 dns_nsec_setbit(unsigned char *array, unsigned int type, unsigned int bit) {
@@ -229,7 +229,7 @@ dns_nsec_typepresent(dns_rdata_t *nsec, dns_rdatatype_t type) {
 			continue;
 		if (type < (window * 256) + len * 8)
 			present = ISC_TF(dns_nsec_isset(&nsecstruct.typebits[i],
-							type % 256));
+						   type % 256));
 		break;
 	}
 	dns_rdata_freestruct(&nsecstruct);
