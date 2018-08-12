@@ -1,4 +1,4 @@
-/* $NetBSD: armreg.h,v 1.16 2018/08/09 10:27:17 jmcneill Exp $ */
+/* $NetBSD: armreg.h,v 1.17 2018/08/12 17:16:18 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -929,7 +929,6 @@ AARCH64REG_WRITE_INLINE(cntvct_el0)
 #define	CNTCTL_IMASK		__BIT(1)	// Timer Interrupt is Masked
 #define	CNTCTL_ENABLE		__BIT(0)	// Timer Enabled
 
-
 // ID_AA64PFR0_EL1: AArch64 Processor Feature Register 0
 #define	ID_AA64PFR0_EL1_GIC		__BITS(24,27) // GIC CPU IF
 #define	ID_AA64PFR0_EL1_GIC_SHIFT	24
@@ -1087,7 +1086,6 @@ gtmr_cntv_ctl_write(uint32_t val)
 static __inline void
 gtmr_cntp_ctl_write(uint32_t val)
 {
-
 
 	reg_cntp_ctl_el0_write(val);
 }
