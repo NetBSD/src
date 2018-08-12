@@ -1,4 +1,4 @@
-/*	$NetBSD: text_test.c,v 1.1.1.1 2018/08/12 12:08:36 christos Exp $	*/
+/*	$NetBSD: text_test.c,v 1.2 2018/08/12 13:02:42 christos Exp $	*/
 
 /* Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -45,7 +45,7 @@
         atf_error_t err = exp; \
         ATF_REQUIRE(atf_is_error(err)); \
         atf_error_free(err); \
-    } while (0)
+    } while (/*CONSTCOND*/0)
 
 static
 size_t
