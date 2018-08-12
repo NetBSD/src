@@ -1,0 +1,42 @@
+/*
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
+ */
+
+options {
+	query-source address 10.53.0.3;
+	notify-source 10.53.0.3;
+	transfer-source 10.53.0.3;
+	port @PORT@;
+	pid-file "named.pid";
+	listen-on { 10.53.0.3; };
+	listen-on-v6 { none; };
+	recursion no;
+	notify yes;
+	dnssec-enable yes;
+};
+
+zone "." { type hint; file "hints"; };
+zone "dlv.utld" { type master; file "dlv.signed"; };
+zone "child1.utld" { type master; file "child1.signed"; };	// dlv
+zone "child3.utld" { type master; file "child3.signed"; };	// dlv
+zone "child4.utld" { type master; file "child4.signed"; };	// dlv
+zone "child5.utld" { type master; file "child5.signed"; };	// dlv
+zone "child7.utld" { type master; file "child7.signed"; };	// no dlv
+zone "child8.utld" { type master; file "child8.signed"; };	// no dlv
+zone "child9.utld" { type master; file "child9.signed"; };	// dlv
+zone "child10.utld" { type master; file "child.db.in"; }; 	// dlv unsigned
+zone "child1.druz" { type master; file "child1.druz.signed"; };	// dlv
+zone "child3.druz" { type master; file "child3.druz.signed"; };	// dlv
+zone "child4.druz" { type master; file "child4.druz.signed"; };	// dlv
+zone "child5.druz" { type master; file "child5.druz.signed"; };	// dlv
+zone "child7.druz" { type master; file "child7.druz.signed"; };	// no dlv
+zone "child8.druz" { type master; file "child8.druz.signed"; };	// no dlv
+zone "child9.druz" { type master; file "child9.druz.signed"; };	// dlv
+zone "child10.druz" { type master; file "child.db.in"; }; 	// dlv unsigned

@@ -1,0 +1,97 @@
+.\"	$NetBSD: dnstap-read.1,v 1.1.1.1 2018/08/12 12:07:14 christos Exp $
+.\"
+.\" Copyright (C) 2015-2018 Internet Systems Consortium, Inc. ("ISC")
+.\" 
+.\" This Source Code Form is subject to the terms of the Mozilla Public
+.\" License, v. 2.0. If a copy of the MPL was not distributed with this
+.\" file, You can obtain one at http://mozilla.org/MPL/2.0/.
+.\"
+.hy 0
+.ad l
+'\" t
+.\"     Title: dnstap-read
+.\"    Author: 
+.\" Generator: DocBook XSL Stylesheets v1.78.1 <http://docbook.sf.net/>
+.\"      Date: 2015-09-13
+.\"    Manual: BIND9
+.\"    Source: ISC
+.\"  Language: English
+.\"
+.TH "DNSTAP\-READ" "1" "2015\-09\-13" "ISC" "BIND9"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "NAME"
+dnstap-read \- print dnstap data in human\-readable form
+.SH "SYNOPSIS"
+.HP \w'\fBdnstap\-read\fR\ 'u
+\fBdnstap\-read\fR [\fB\-m\fR] [\fB\-p\fR] [\fB\-x\fR] [\fB\-y\fR] {\fIfile\fR}
+.SH "DESCRIPTION"
+.PP
+\fBdnstap\-read\fR
+reads
+\fBdnstap\fR
+data from a specified file and prints it in a human\-readable format\&. By default,
+\fBdnstap\fR
+data is printed in a short summary format, but if the
+\fB\-y\fR
+option is specified, then a longer and more detailed YAML format is used instead\&.
+.SH "OPTIONS"
+.PP
+\-m
+.RS 4
+Trace memory allocations; used for debugging memory leaks\&.
+.RE
+.PP
+\-p
+.RS 4
+After printing the
+\fBdnstap\fR
+data, print the text form of the DNS message that was encapsulated in the
+\fBdnstap\fR
+frame\&.
+.RE
+.PP
+\-x
+.RS 4
+After printing the
+\fBdnstap\fR
+data, print a hex dump of the wire form of the DNS message that was encapsulated in the
+\fBdnstap\fR
+frame\&.
+.RE
+.PP
+\-y
+.RS 4
+Print
+\fBdnstap\fR
+data in a detailed YAML format\&.
+.RE
+.SH "SEE ALSO"
+.PP
+\fBnamed\fR(8),
+\fBrndc\fR(8),
+BIND 9 Administrator Reference Manual\&.
+.SH "AUTHOR"
+.PP
+\fBInternet Systems Consortium, Inc\&.\fR
+.SH "COPYRIGHT"
+.br
+Copyright \(co 2015-2018 Internet Systems Consortium, Inc. ("ISC")
+.br

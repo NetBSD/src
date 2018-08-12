@@ -1,0 +1,2 @@
+# this server only has 127.0.0.1 in its localhost/localnets ACLs
+-m record,size,mctx -c named.conf -d 99 -X named.lock -g -T clienttest -T fixedlocal

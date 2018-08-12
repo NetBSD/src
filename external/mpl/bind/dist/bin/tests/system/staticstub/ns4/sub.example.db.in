@@ -1,0 +1,24 @@
+; Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+;
+; This Source Code Form is subject to the terms of the Mozilla Public
+; License, v. 2.0. If a copy of the MPL was not distributed with this
+; file, You can obtain one at http://mozilla.org/MPL/2.0/.
+;
+; See the COPYRIGHT file distributed with this work for additional
+; information regarding copyright ownership.
+
+$ORIGIN .
+$TTL 300	; 5 minutes
+sub.example.		IN SOA	ns.sub.example. hostmaster.example. (
+				2010080900 ; serial
+				20         ; refresh (20 seconds)
+				20         ; retry (20 seconds)
+				1814400    ; expire (3 weeks)
+				3600       ; minimum (1 hour)
+				)
+sub.example.		NS	ns.sub.example.
+ns.sub.example.		A	10.53.0.4
+
+data1.sub.example.	TXT	"1st sub test data"
+data2.sub.example.	TXT	"2nd sub test data"
+data3.sub.example.	TXT	"3rd sub test data"

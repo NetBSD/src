@@ -1,0 +1,29 @@
+; Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+;
+; This Source Code Form is subject to the terms of the Mozilla Public
+; License, v. 2.0. If a copy of the MPL was not distributed with this
+; file, You can obtain one at http://mozilla.org/MPL/2.0/.
+;
+; See the COPYRIGHT file distributed with this work for additional
+; information regarding copyright ownership.
+
+$TTL 300	; 5 minutes
+@			SOA	mname1. . (
+				2000062101 ; serial
+				20         ; refresh (20 seconds)
+				20         ; retry (20 seconds)
+				1814400    ; expire (3 weeks)
+				3600       ; minimum (1 hour)
+				)
+			NS	ns
+
+a1			A	\# 4 0A000001
+a2		CLASS10	A	\# 4 0A000001
+
+txt1			TXT	\# 6 0568656C6C6F
+txt2			TXT	"hello"
+txt3		CLASS10	TXT	\# 6 0568656C6C6F
+txt4		CLASS10	TXT	"hello"
+
+unk1                    TYPE123 \# 1 00
+unk2            CLASS10 TYPE123 \# 1 00

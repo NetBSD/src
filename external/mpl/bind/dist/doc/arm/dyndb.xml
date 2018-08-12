@@ -1,0 +1,99 @@
+<!--
+ - Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ -
+ - This Source Code Form is subject to the terms of the Mozilla Public
+ - License, v. 2.0. If a copy of the MPL was not distributed with this
+ - file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ -
+ - See the COPYRIGHT file distributed with this work for additional
+ - information regarding copyright ownership.
+-->
+
+<!-- Converted by db4-upgrade version 1.0 -->
+<section xmlns:db="http://docbook.org/ns/docbook" version="5.0" xml:id="dyndb-info"><info><title>DynDB (Dynamic Database)</title></info>
+
+  <para>
+    DynDB is an extension to BIND 9 which, like DLZ
+    (see <xref linkend="dlz-info"/>), allows zone data to be
+    retrieved from an external database.  Unlike DLZ, a DynDB module
+    provides a full-featured BIND zone database interface.  Where
+    DLZ translates DNS queries into real-time database lookups,
+    resulting in relatively poor query performance, and is unable
+    to handle DNSSEC-signed data due to its limited API, a DynDB
+    module can pre-load an in-memory database from the external
+    data source, providing the same performance and functionality
+    as zones served natively by BIND.
+  </para>
+  <para>
+    A DynDB module supporting LDAP has been created by Red Hat
+    and is available from
+    <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://fedorahosted.org/bind-dyndb-ldap/">https://fedorahosted.org/bind-dyndb-ldap/</link>.
+  </para>
+  <para>
+    A sample DynDB module for testing and developer guidance
+    is included with the BIND source code, in the directory
+    <filename>bin/tests/system/dyndb/driver</filename>.
+  </para>
+
+  <section><info><title>Configuring DynDB</title></info>
+
+    <para>
+      A DynDB database is configured with a <command>dyndb</command>
+      statement in <filename>named.conf</filename>:
+    </para>
+    <screen>
+    dyndb example "driver.so" {
+        <replaceable>parameters</replaceable>
+    };
+    </screen>
+    <para>
+      The file <filename>driver.so</filename> is a DynDB module which
+      implements the full DNS database API.  Multiple
+      <command>dyndb</command> statements can be specified, to load
+      different drivers or multiple instances of the same driver.
+      Zones provided by a DynDB module are added to the view's zone
+      table, and are treated as normal authoritative zones when BIND
+      is responding to queries.  Zone configuration is handled internally
+      by the DynDB module.
+    </para>
+    <para>
+      The <replaceable>parameters</replaceable> are passed as an opaque
+      string to the DynDB module's initialization routine. Configuration
+      syntax will differ depending on the driver.
+    </para>
+  </section>
+  <section><info><title>Sample DynDB Module</title></info>
+
+    <para>
+      For guidance in implementation of DynDB modules, the directory
+      <filename>bin/tests/system/dyndb/driver</filename>.
+      contains a basic DynDB module.
+      The example sets up two zones, whose names are passed
+      to the module as arguments in the <command>dyndb</command>
+      statement:
+    </para>
+    <screen>
+    dyndb sample "sample.so" { example.nil. arpa. };
+    </screen>
+    <para>
+      In the above example, the module is configured to create a zone
+      "example.nil", which can answer queries and AXFR requests, and
+      accept DDNS updates.  At runtime, prior to any updates, the zone
+      contains an SOA, NS, and a single A record at the apex:
+    </para>
+    <screen>
+ example.nil.  86400    IN      SOA     example.nil. example.nil. (
+                                               0 28800 7200 604800 86400
+                                       )
+ example.nil.  86400    IN      NS      example.nil.
+ example.nil.  86400    IN      A       127.0.0.1
+    </screen>
+    <para>
+      When the zone is updated dynamically, the DynDB module will determine
+      whether the updated RR is an address (i.e., type A or AAAA) and if
+      so, it will automatically update the corresponding PTR record in a
+      reverse zone.  (Updates are not stored permanently; all updates are
+      lost when the server is restarted.)
+    </para>
+  </section>
+</section>
