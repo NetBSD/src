@@ -1,4 +1,4 @@
-/* $NetBSD: dwcmmc_fdt.c,v 1.6 2018/07/17 00:42:06 christos Exp $ */
+/* $NetBSD: dwcmmc_fdt.c,v 1.7 2018/08/12 16:34:28 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015-2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwcmmc_fdt.c,v 1.6 2018/07/17 00:42:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwcmmc_fdt.c,v 1.7 2018/08/12 16:34:28 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -52,12 +52,12 @@ struct dwcmmc_fdt_config {
 	u_int		ciu_div;
 };
 
-static const struct dwcmmc_fdt_config dwcmmc_rk3328_config = {
+static const struct dwcmmc_fdt_config dwcmmc_rk3288_config = {
 	.ciu_div = 2,
 };
 
 static const struct of_compat_data compat_data[] = {
-	{ "rockchip,rk3328-dw-mshc",	(uintptr_t)&dwcmmc_rk3328_config },
+	{ "rockchip,rk3288-dw-mshc",	(uintptr_t)&dwcmmc_rk3288_config },
 	{ NULL }
 };
 
@@ -101,6 +101,8 @@ dwcmmc_fdt_attach(device_t parent, device_t self, void *aux)
 
 	if (of_getprop_uint32(phandle, "fifo-depth", &fifo_depth))
 		fifo_depth = 0;
+
+	fdtbus_clock_assign(phandle);
 
 	esc->sc_clk_biu = fdtbus_clock_get(phandle, "biu");
 	if (esc->sc_clk_biu == NULL) {
