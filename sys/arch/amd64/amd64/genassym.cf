@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.68 2018/03/30 10:01:36 maxv Exp $
+#	$NetBSD: genassym.cf,v 1.69 2018/08/12 06:11:47 maxv Exp $
 
 #
 # Copyright (c) 1998, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -367,7 +367,7 @@ define	NKL2_KIMG_ENTRIES	NKL2_KIMG_ENTRIES
 define	PGOFSET			PGOFSET
 define	PGSHIFT			PGSHIFT
 
-define	VM_MIN_KERNEL_ADDRESS_HIGH32	(VM_MIN_KERNEL_ADDRESS >> 32)
+define	VM_SPACE_SEP_HIGH32	(0xFFFF800000000000 >> 32)
 
 define	RESCHED_KPREEMPT	RESCHED_KPREEMPT
 
