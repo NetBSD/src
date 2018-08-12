@@ -1,4 +1,4 @@
-/* $NetBSD: psci_fdt.c,v 1.11 2018/08/10 22:34:36 jmcneill Exp $ */
+/* $NetBSD: psci_fdt.c,v 1.12 2018/08/12 17:21:36 skrll Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: psci_fdt.c,v 1.11 2018/08/10 22:34:36 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: psci_fdt.c,v 1.12 2018/08/12 17:21:36 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -154,14 +154,6 @@ psci_fdt_preinit(void)
 }
 
 #ifdef MULTIPROCESSOR
-static bus_addr_t psci_fdt_read_mpidr_aff(void)
-{
-#ifdef __aarch64__
-	return reg_mpidr_el1_read() & (MPIDR_AFF3|MPIDR_AFF2|MPIDR_AFF1|MPIDR_AFF0);
-#else
-	return armreg_mpidr_read() & (MPIDR_AFF2|MPIDR_AFF1|MPIDR_AFF0);
-#endif
-}
 
 static register_t
 psci_fdt_mpstart_pa(void)
@@ -181,7 +173,7 @@ psci_fdt_bootstrap(void)
 {
 #ifdef MULTIPROCESSOR
 	extern void cortex_mpstart(void);
-	bus_addr_t mpidr, bp_mpidr;
+	uint64_t mpidr, bp_mpidr;
 	int child;
 
 	const int cpus = OF_finddevice("/cpus");
@@ -201,7 +193,7 @@ psci_fdt_bootstrap(void)
 		return;
 
 	/* MPIDR affinity levels of boot processor. */
-	bp_mpidr = psci_fdt_read_mpidr_aff();
+	bp_mpidr = cpu_mpidr_aff_read();
 
 	/* Boot APs */
 	uint32_t started = 0;

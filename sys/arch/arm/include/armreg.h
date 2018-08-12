@@ -1,4 +1,4 @@
-/*	$NetBSD: armreg.h,v 1.122 2018/07/15 23:46:57 jmcneill Exp $	*/
+/*	$NetBSD: armreg.h,v 1.123 2018/08/12 17:21:36 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Ben Harris
@@ -908,6 +908,15 @@ ARMREG_WRITE_INLINE(tlbdataop, "p15,3,%0,c15,c4,2") /* TLB Data Read Operation (
 ARMREG_READ_INLINE(sheeva_xctrl, "p15,1,%0,c15,c1,0") /* Sheeva eXtra Control register */
 ARMREG_WRITE_INLINE(sheeva_xctrl, "p15,1,%0,c15,c1,0") /* Sheeva eXtra Control register */
 
+#if defined(_KERNEL)
+
+static inline uint64_t
+cpu_mpidr_aff_read(void)
+{
+
+	return armreg_mpidr_read() & (MPIDR_AFF2|MPIDR_AFF1|MPIDR_AFF0);
+}
+
 /*
  * GENERIC TIMER register access
  */
@@ -1002,7 +1011,8 @@ gtmr_cntv_cval_read(void)
 	return armreg_cntv_cval_read();
 }
 
-#endif /* !__ASSEMBLER__ */
+#endif /* _KERNEL */
+#endif /* !__ASSEMBLER && !_RUMPKERNEL */
 
 #elif defined(__aarch64__)
 
