@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2018/08/12 07:53:19 christos Exp $
+#	$NetBSD: Makefile,v 1.8 2018/08/12 07:59:14 christos Exp $
 #	$FreeBSD: head/usr.bin/grep/Makefile 210389 2010-07-22 19:11:57Z gabor $
 #	$OpenBSD: Makefile,v 1.6 2003/06/25 15:00:04 millert Exp $
 
@@ -20,7 +20,7 @@ MLINKS=	grep.1 egrep.1	\
 LDADD+=	-lz
 DPADD+=	${LIBZ}
 
-.if empty(HOST_CPPFLAGS:M(*-DWITHOUT_BZ2*)
+.if empty(HOST_CPPFLAGS:M*-DWITHOUT_BZ2*)
 LDADD+=	-lz
 DPADD+=	${LIBZ}
 .endif
