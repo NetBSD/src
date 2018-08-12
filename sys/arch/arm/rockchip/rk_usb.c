@@ -1,4 +1,4 @@
-/* $NetBSD: rk_usb.c,v 1.5 2018/08/12 17:46:49 jmcneill Exp $ */
+/* $NetBSD: rk_usb.c,v 1.6 2018/08/12 18:00:32 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: rk_usb.c,v 1.5 2018/08/12 17:46:49 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rk_usb.c,v 1.6 2018/08/12 18:00:32 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -314,7 +314,7 @@ rk_usbphy_otg_enable(device_t dev, void *priv, bool enable)
 		    RK3399_GRF_USB20_PHY0_CON1_REG :
 		    RK3399_GRF_USB20_PHY1_CON1_REG;
 		write_mask = (RK3399_USBPHY_SUSPEND_N|RK3399_USBPHY_UTMI_SEL) << 16;
-		write_val = RK3399_USBPHY_UTMI_SEL;
+		write_val = enable ? 0 : RK3399_USBPHY_UTMI_SEL;
 		break;
 	default:
 		return ENXIO;
@@ -353,7 +353,7 @@ rk_usbphy_host_enable(device_t dev, void *priv, bool enable)
 		    RK3399_GRF_USB20_PHY0_CON2_REG :
 		    RK3399_GRF_USB20_PHY1_CON2_REG;
 		write_mask = (RK3399_USBPHY_SUSPEND_N|RK3399_USBPHY_UTMI_SEL) << 16;
-		write_val = RK3399_USBPHY_UTMI_SEL;
+		write_val = enable ? 0 : RK3399_USBPHY_UTMI_SEL;
 		break;
 	default:
 		return ENXIO;
