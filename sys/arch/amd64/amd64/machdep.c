@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.312 2018/08/12 10:50:35 maxv Exp $	*/
+/*	$NetBSD: machdep.c,v 1.313 2018/08/12 12:42:53 maxv Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.312 2018/08/12 10:50:35 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.313 2018/08/12 12:42:53 maxv Exp $");
 
 #include "opt_modular.h"
 #include "opt_user_ldt.h"
@@ -1597,10 +1597,10 @@ init_slotspace(void)
 
 	memset(&slotspace, 0, sizeof(slotspace));
 
-	/* User. */
+	/* User. [256, because we want to land in >= 256] */
 	slotspace.area[SLAREA_USER].sslot = 0;
-	slotspace.area[SLAREA_USER].mslot = PDIR_SLOT_PTE;
-	slotspace.area[SLAREA_USER].nslot = PDIR_SLOT_PTE;
+	slotspace.area[SLAREA_USER].mslot = PDIR_SLOT_USERLIM+1;
+	slotspace.area[SLAREA_USER].nslot = PDIR_SLOT_USERLIM+1;
 	slotspace.area[SLAREA_USER].active = true;
 	slotspace.area[SLAREA_USER].dropmax = false;
 
