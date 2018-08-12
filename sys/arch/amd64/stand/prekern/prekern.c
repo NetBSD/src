@@ -1,4 +1,4 @@
-/*	$NetBSD: prekern.c,v 1.9 2018/08/02 17:18:00 maxv Exp $	*/
+/*	$NetBSD: prekern.c,v 1.10 2018/08/12 12:42:54 maxv Exp $	*/
 
 /*
  * Copyright (c) 2017 The NetBSD Foundation, Inc. All rights reserved.
@@ -221,7 +221,7 @@ init_idt(void)
 
 /* -------------------------------------------------------------------------- */
 
-#define PREKERN_API_VERSION	1
+#define PREKERN_API_VERSION	2
 
 struct prekern_args {
 	int version;
