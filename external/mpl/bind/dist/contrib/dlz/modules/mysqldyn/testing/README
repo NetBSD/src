@@ -1,0 +1,11 @@
+These files were used for testing on Ubuntu Linux using MySQL
+
+To set up a test server:
+- Install MySQL: sudo apt-get install mysql-server
+- Run "mysql --user=USER --password=PASSWORD < dlz.schema" to set up database
+- Run "mysql --user=USER --password=PASSWORD < dlz.data" to populate it
+- Update named.conf with correct USER and PASSWORD
+- Generate a TSIG key: "ddns-confgen -qz example.com"
+
+To query the database, use "dig -p 5300 @localhost"
+To send dynamic updates, use "nsupdate -p 5300 -k ddns.key"

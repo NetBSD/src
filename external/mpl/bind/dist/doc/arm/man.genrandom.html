@@ -1,0 +1,131 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<!--
+ - Copyright (C) 2000-2018 Internet Systems Consortium, Inc. ("ISC")
+ - 
+ - This Source Code Form is subject to the terms of the Mozilla Public
+ - License, v. 2.0. If a copy of the MPL was not distributed with this
+ - file, You can obtain one at http://mozilla.org/MPL/2.0/.
+-->
+<html lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+<title>genrandom</title>
+<meta name="generator" content="DocBook XSL Stylesheets V1.78.1">
+<link rel="home" href="Bv9ARM.html" title="BIND 9 Administrator Reference Manual">
+<link rel="up" href="Bv9ARM.ch12.html" title="Manual pages">
+<link rel="prev" href="man.dnstap-read.html" title="dnstap-read">
+<link rel="next" href="man.host.html" title="host">
+</head>
+<body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
+<div class="navheader">
+<table width="100%" summary="Navigation header">
+<tr><th colspan="3" align="center"><span class="application">genrandom</span></th></tr>
+<tr>
+<td width="20%" align="left">
+<a accesskey="p" href="man.dnstap-read.html">Prev</a> </td>
+<th width="60%" align="center">Manual pages</th>
+<td width="20%" align="right"> <a accesskey="n" href="man.host.html">Next</a>
+</td>
+</tr>
+</table>
+<hr>
+</div>
+<div class="refentry">
+<a name="man.genrandom"></a><div class="titlepage"></div>
+  
+  
+
+  
+
+  <div class="refnamediv">
+<h2>Name</h2>
+<p>
+    <span class="application">genrandom</span>
+     &#8212; generate a file containing random data
+  </p>
+</div>
+
+  
+
+  <div class="refsynopsisdiv">
+<h2>Synopsis</h2>
+    <div class="cmdsynopsis"><p>
+      <code class="command">genrandom</code> 
+       [<code class="option">-n <em class="replaceable"><code>number</code></em></code>]
+       {<em class="replaceable"><code>size</code></em>}
+       {<em class="replaceable"><code>filename</code></em>}
+    </p></div>
+  </div>
+
+  <div class="refsection">
+<a name="id-1.13.19.7"></a><h2>DESCRIPTION</h2>
+
+    <p>
+      <span class="command"><strong>genrandom</strong></span>
+      generates a file or a set of files containing a specified quantity
+      of pseudo-random data, which can be used as a source of entropy for
+      other commands on systems with no random device.
+    </p>
+  </div>
+
+  <div class="refsection">
+<a name="id-1.13.19.8"></a><h2>ARGUMENTS</h2>
+
+    <div class="variablelist"><dl class="variablelist">
+<dt><span class="term">-n <em class="replaceable"><code>number</code></em></span></dt>
+<dd>
+          <p>
+            In place of generating one file, generates <code class="option">number</code>
+            (from 2 to 9) files, appending <code class="option">number</code> to the name.
+          </p>
+        </dd>
+<dt><span class="term">size</span></dt>
+<dd>
+          <p>
+            The size of the file, in kilobytes, to generate.
+          </p>
+        </dd>
+<dt><span class="term">filename</span></dt>
+<dd>
+          <p>
+            The file name into which random data should be written.
+          </p>
+        </dd>
+</dl></div>
+  </div>
+
+  <div class="refsection">
+<a name="id-1.13.19.9"></a><h2>SEE ALSO</h2>
+
+    <p>
+      <span class="citerefentry">
+        <span class="refentrytitle">rand</span>(3)
+      </span>,
+      <span class="citerefentry">
+        <span class="refentrytitle">arc4random</span>(3)
+      </span>
+    </p>
+  </div>
+
+</div>
+<div class="navfooter">
+<hr>
+<table width="100%" summary="Navigation footer">
+<tr>
+<td width="40%" align="left">
+<a accesskey="p" href="man.dnstap-read.html">Prev</a> </td>
+<td width="20%" align="center"><a accesskey="u" href="Bv9ARM.ch12.html">Up</a></td>
+<td width="40%" align="right"> <a accesskey="n" href="man.host.html">Next</a>
+</td>
+</tr>
+<tr>
+<td width="40%" align="left" valign="top">
+<span class="application">dnstap-read</span> </td>
+<td width="20%" align="center"><a accesskey="h" href="Bv9ARM.html">Home</a></td>
+<td width="40%" align="right" valign="top"> host</td>
+</tr>
+</table>
+</div>
+<p xmlns:db="http://docbook.org/ns/docbook" style="text-align: center;">BIND 9.12.2-P1</p>
+</body>
+</html>

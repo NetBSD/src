@@ -1,0 +1,65 @@
+<!--
+ - Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ -
+ - This Source Code Form is subject to the terms of the Mozilla Public
+ - License, v. 2.0. If a copy of the MPL was not distributed with this
+ - file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ -
+ - See the COPYRIGHT file distributed with this work for additional
+ - information regarding copyright ownership.
+-->
+
+<!-- Converted by db4-upgrade version 1.0 -->
+<refentry xmlns:db="http://docbook.org/ns/docbook" version="5.0" xml:id="man.arpaname">
+  <info>
+    <date>2009-03-03</date>
+  </info>
+  <refentryinfo>
+    <corpname>ISC</corpname>
+    <corpauthor>Internet Systems Consortium, Inc.</corpauthor>
+  </refentryinfo>
+  <refmeta>
+    <refentrytitle><application>arpaname</application></refentrytitle>
+    <manvolnum>1</manvolnum>
+    <refmiscinfo>BIND9</refmiscinfo>
+  </refmeta>
+
+  <refnamediv>
+    <refname><application>arpaname</application></refname>
+    <refpurpose>translate IP addresses to the corresponding ARPA names</refpurpose>
+  </refnamediv>
+
+  <docinfo>
+    <copyright>
+      <year>2009</year>
+      <year>2014</year>
+      <year>2015</year>
+      <year>2016</year>
+      <year>2018</year>
+      <holder>Internet Systems Consortium, Inc. ("ISC")</holder>
+    </copyright>
+  </docinfo>
+
+  <refsynopsisdiv>
+    <cmdsynopsis sepchar=" ">
+      <command>arpaname</command>
+      <arg choice="req" rep="repeat"><replaceable class="parameter">ipaddress </replaceable></arg>
+    </cmdsynopsis>
+  </refsynopsisdiv>
+
+  <refsection><info><title>DESCRIPTION</title></info>
+
+    <para>
+      <command>arpaname</command> translates IP addresses (IPv4 and
+      IPv6) to the corresponding IN-ADDR.ARPA or IP6.ARPA names.
+    </para>
+  </refsection>
+
+  <refsection><info><title>SEE ALSO</title></info>
+
+    <para>
+      <citetitle>BIND 9 Administrator Reference Manual</citetitle>.
+    </para>
+  </refsection>
+
+</refentry>

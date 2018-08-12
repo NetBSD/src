@@ -1,0 +1,95 @@
+<!--
+ - Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ -
+ - This Source Code Form is subject to the terms of the Mozilla Public
+ - License, v. 2.0. If a copy of the MPL was not distributed with this
+ - file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ -
+ - See the COPYRIGHT file distributed with this work for additional
+ - information regarding copyright ownership.
+-->
+
+<!-- Converted by db4-upgrade version 1.0 -->
+<refentry xmlns:db="http://docbook.org/ns/docbook" version="5.0" xml:id="man.named-rrchecker">
+  <info>
+    <date>2013-11-12</date>
+  </info>
+  <refentryinfo>
+    <corpname>ISC</corpname>
+    <corpauthor>Internet Systems Consortium, Inc.</corpauthor>
+  </refentryinfo>
+  <refmeta>
+    <refentrytitle><application>named-rrchecker</application></refentrytitle>
+    <manvolnum>1</manvolnum>
+    <refmiscinfo>BIND9</refmiscinfo>
+  </refmeta>
+  <refnamediv>
+    <refname><application>named-rrchecker</application></refname>
+    <refpurpose>syntax checker for individual DNS resource records</refpurpose>
+  </refnamediv>
+
+  <docinfo>
+    <copyright>
+      <year>2013</year>
+      <year>2014</year>
+      <year>2015</year>
+      <year>2016</year>
+      <year>2018</year>
+      <holder>Internet Systems Consortium, Inc. ("ISC")</holder>
+    </copyright>
+  </docinfo>
+
+  <refsynopsisdiv>
+    <cmdsynopsis sepchar=" ">
+      <command>named-rrchecker</command>
+      <arg choice="opt" rep="norepeat"><option>-h</option></arg>
+      <arg choice="opt" rep="norepeat"><option>-o <replaceable class="parameter">origin</replaceable></option></arg>
+      <arg choice="opt" rep="norepeat"><option>-p</option></arg>
+      <arg choice="opt" rep="norepeat"><option>-u</option></arg>
+      <arg choice="opt" rep="norepeat"><option>-C</option></arg>
+      <arg choice="opt" rep="norepeat"><option>-T</option></arg>
+      <arg choice="opt" rep="norepeat"><option>-P</option></arg>
+    </cmdsynopsis>
+  </refsynopsisdiv>
+
+  <refsection><info><title>DESCRIPTION</title></info>
+
+    <para><command>named-rrchecker</command>
+     read a individual DNS resource record from standard input and checks if it
+     is syntactically correct.
+    </para>
+    <para>
+      The <option>-h</option> prints out the help menu.
+    </para>
+    <para>
+      The <option>-o <replaceable class="parameter">origin</replaceable></option>
+      option specifies a origin to be used when interpreting the record.
+    </para>
+    <para>
+      The <option>-p</option> prints out the resulting record in canonical
+      form.  If there is no canonical form defined then the record will be
+      printed in unknown record format.
+    </para>
+    <para>
+      The <option>-u</option> prints out the resulting record in unknown record
+      form.
+    </para>
+    <para>
+      The <option>-C</option>, <option>-T</option> and <option>-P</option>
+      print out the known class, standard type and private type mnemonics
+      respectively.
+    </para>
+  </refsection>
+
+  <refsection><info><title>SEE ALSO</title></info>
+
+    <para>
+      <citetitle>RFC 1034</citetitle>,
+      <citetitle>RFC 1035</citetitle>,
+      <citerefentry>
+        <refentrytitle>named</refentrytitle><manvolnum>8</manvolnum>
+      </citerefentry>
+    </para>
+  </refsection>
+
+</refentry>

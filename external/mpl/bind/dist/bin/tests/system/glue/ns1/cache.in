@@ -1,0 +1,15 @@
+; Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+;
+; This Source Code Form is subject to the terms of the Mozilla Public
+; License, v. 2.0. If a copy of the MPL was not distributed with this
+; file, You can obtain one at http://mozilla.org/MPL/2.0/.
+;
+; See the COPYRIGHT file distributed with this work for additional
+; information regarding copyright ownership.
+
+; Preloaded cache data for glue test
+
+$TTL 86400
+ns.zz.	  3600	IN	A	10.0.0.1
+ns.zz.		IN	AAAA	10::1
+ns.zz.		IN	A6	0 ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff

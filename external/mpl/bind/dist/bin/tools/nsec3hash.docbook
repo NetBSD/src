@@ -1,0 +1,144 @@
+<!--
+ - Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ -
+ - This Source Code Form is subject to the terms of the Mozilla Public
+ - License, v. 2.0. If a copy of the MPL was not distributed with this
+ - file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ -
+ - See the COPYRIGHT file distributed with this work for additional
+ - information regarding copyright ownership.
+-->
+
+<!-- Converted by db4-upgrade version 1.0 -->
+<refentry xmlns:db="http://docbook.org/ns/docbook" version="5.0" xml:id="man.nsec3hash">
+  <info>
+    <date>2009-03-02</date>
+  </info>
+  <refentryinfo>
+    <corpname>ISC</corpname>
+    <corpauthor>Internet Systems Consortium, Inc.</corpauthor>
+  </refentryinfo>
+
+  <refmeta>
+    <refentrytitle><application>nsec3hash</application></refentrytitle>
+    <manvolnum>8</manvolnum>
+    <refmiscinfo>BIND9</refmiscinfo>
+  </refmeta>
+
+  <refnamediv>
+    <refname><application>nsec3hash</application></refname>
+    <refpurpose>generate NSEC3 hash</refpurpose>
+  </refnamediv>
+
+  <docinfo>
+    <copyright>
+      <year>2009</year>
+      <year>2014</year>
+      <year>2015</year>
+      <year>2016</year>
+      <year>2017</year>
+      <year>2018</year>
+      <holder>Internet Systems Consortium, Inc. ("ISC")</holder>
+    </copyright>
+  </docinfo>
+
+  <refsynopsisdiv>
+    <cmdsynopsis sepchar=" ">
+      <command>nsec3hash</command>
+      <arg choice="req" rep="norepeat"><replaceable class="parameter">salt</replaceable></arg>
+      <arg choice="req" rep="norepeat"><replaceable class="parameter">algorithm</replaceable></arg>
+      <arg choice="req" rep="norepeat"><replaceable class="parameter">iterations</replaceable></arg>
+      <arg choice="req" rep="norepeat"><replaceable class="parameter">domain</replaceable></arg>
+    </cmdsynopsis>
+    <cmdsynopsis sepchar=" ">
+      <command>nsec3hash -r</command>
+      <arg choice="req" rep="norepeat"><replaceable class="parameter">algorithm</replaceable></arg>
+      <arg choice="req" rep="norepeat"><replaceable class="parameter">flags</replaceable></arg>
+      <arg choice="req" rep="norepeat"><replaceable class="parameter">iterations</replaceable></arg>
+      <arg choice="req" rep="norepeat"><replaceable class="parameter">salt</replaceable></arg>
+      <arg choice="req" rep="norepeat"><replaceable class="parameter">domain</replaceable></arg>
+    </cmdsynopsis>
+  </refsynopsisdiv>
+
+  <refsection><info><title>DESCRIPTION</title></info>
+
+    <para>
+      <command>nsec3hash</command> generates an NSEC3 hash based on
+      a set of NSEC3 parameters.  This can be used to check the validity
+      of NSEC3 records in a signed zone.
+    </para>
+
+    <para>
+      If this command is invoked as <command>nsec3hash -r</command>,
+      it takes arguments in an order matching the first four fields
+      of an NSEC3 record, followed by the domain name: algorithm, flags,
+      iterations, salt, domain.  This makes it convenient to copy and
+      paste a portion of an NSEC3 or NSEC3PARAM record into a command
+      line to confirm the correctness of an NSEC3 hash.
+    </para>
+
+  </refsection>
+
+  <refsection><info><title>ARGUMENTS</title></info>
+
+    <variablelist>
+      <varlistentry>
+        <term>salt</term>
+        <listitem>
+          <para>
+            The salt provided to the hash algorithm.
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>algorithm</term>
+        <listitem>
+          <para>
+            A number indicating the hash algorithm.  Currently the
+            only supported hash algorithm for NSEC3 is SHA-1, which is
+            indicated by the number 1; consequently "1" is the only
+            useful value for this argument.
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>flags</term>
+        <listitem>
+          <para>
+            Provided for compatibility with NSEC3 record presentation
+            format, but ignored since the flags do not affect the hash.
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>iterations</term>
+        <listitem>
+          <para>
+            The number of additional times the hash should be performed.
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>domain</term>
+        <listitem>
+          <para>
+            The domain name to be hashed.
+          </para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+  </refsection>
+
+  <refsection><info><title>SEE ALSO</title></info>
+
+    <para>
+      <citetitle>BIND 9 Administrator Reference Manual</citetitle>,
+      <citetitle>RFC 5155</citetitle>.
+    </para>
+  </refsection>
+
+</refentry>
