@@ -1,0 +1,35 @@
+# Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+#
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+#
+# See the COPYRIGHT file distributed with this work for additional
+# information regarding copyright ownership.
+
+srcdir =	@srcdir@
+VPATH =		@srcdir@
+top_srcdir =	@top_srcdir@
+
+VERSION=@BIND9_VERSION@
+
+HEADERS =	dir.h int.h keyboard.h net.h netdb.h offset.h stat.h \
+		stdtime.h strerror.h syslog.h time.h
+
+SUBDIRS =
+TARGETS =
+
+@BIND9_MAKE_RULES@
+
+installdirs:
+	$(SHELL) ${top_srcdir}/mkinstalldirs ${DESTDIR}${includedir}/isc
+
+install:: installdirs
+	for i in ${HEADERS}; do \
+		${INSTALL_DATA} $(srcdir)/$$i ${DESTDIR}${includedir}/isc ; \
+	done
+
+uninstall::
+	for i in ${HEADERS}; do \
+		rm -f ${DESTDIR}${includedir}/isc/$$i ; \
+	done
