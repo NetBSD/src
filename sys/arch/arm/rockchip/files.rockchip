@@ -1,4 +1,4 @@
-#	$NetBSD: files.rockchip,v 1.14 2018/07/01 18:16:58 jmcneill Exp $
+#	$NetBSD: files.rockchip,v 1.15 2018/08/12 16:48:04 jmcneill Exp $
 #
 # Configuration info for Rockchip family SoCs
 #
@@ -19,10 +19,18 @@ file	arch/arm/rockchip/rk_cru_pll.c		rk_cru
 attach	rkcru at fdt with rk3328_cru
 file	arch/arm/rockchip/rk3328_cru.c		rk3328_cru & soc_rk3328
 
+# RK3399 clock and reset unit
+attach	rkcru at fdt with rk3399_cru
+file	arch/arm/rockchip/rk3399_cru.c		rk3399_cru & soc_rk3399
+attach	rkcru at fdt with rk3399_pmucru
+file	arch/arm/rockchip/rk3399_pmucru.c	rk3399_pmucru & soc_rk3399
+
 # IOMUX control
 device	rkiomux { }
-attach	rkiomux at fdt with rk_iomux
-file	arch/arm/rockchip/rk_iomux.c		rk_iomux
+attach	rkiomux at fdt with rk3328_iomux
+file	arch/arm/rockchip/rk3328_iomux.c	rk3328_iomux & soc_rk3328
+attach	rkiomux at fdt with rk3399_iomux
+file	arch/arm/rockchip/rk3399_iomux.c	rk3399_iomux & soc_rk3399
 
 # GPIO
 device	rkgpio: gpiobus
@@ -48,3 +56,4 @@ file	arch/arm/rockchip/rk_gmac.c		rk_gmac
 # SOC parameters
 defflag	opt_soc.h			SOC_ROCKCHIP
 defflag	opt_soc.h			SOC_RK3328: SOC_ROCKCHIP
+defflag	opt_soc.h			SOC_RK3399: SOC_ROCKCHIP

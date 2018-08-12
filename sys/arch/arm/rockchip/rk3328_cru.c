@@ -1,4 +1,4 @@
-/* $NetBSD: rk3328_cru.c,v 1.3 2018/07/01 18:15:19 jmcneill Exp $ */
+/* $NetBSD: rk3328_cru.c,v 1.4 2018/08/12 16:48:04 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: rk3328_cru.c,v 1.3 2018/07/01 18:15:19 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: rk3328_cru.c,v 1.4 2018/08/12 16:48:04 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -44,6 +44,7 @@ __KERNEL_RCSID(1, "$NetBSD: rk3328_cru.c,v 1.3 2018/07/01 18:15:19 jmcneill Exp 
 #define	MISC_CON	0x0084	
 #define	CLKSEL_CON(n)	(0x0100 + (n) * 4)
 #define	CLKGATE_CON(n)	(0x0200 + (n) * 4)
+#define	SOFTRST_CON(n)	(0x0300 + (n) * 4)
 
 #define	GRF_SOC_CON4	0x0410
 #define	GRF_MAC_CON1	0x0904
@@ -131,6 +132,7 @@ static const struct rk_cru_arm_rate armclk_rates[] = {
 	RK_ARM_RATE(  96000000, 1),
 };
 
+static const char * pll_parents[] = { "xin24m" };
 static const char * armclk_parents[] = { "apll", "gpll", "dpll", "npll" };
 static const char * aclk_bus_pre_parents[] = { "cpll", "gpll", "hdmiphy" };
 static const char * hclk_bus_pre_parents[] = { "aclk_bus_pre" };
@@ -151,31 +153,31 @@ static const char * comp_uart_parents[] = { "cpll", "gpll", "usb480m" };
 static const char * pclk_gmac_parents[] = { "aclk_gmac" };
 
 static struct rk_cru_clk rk3328_cru_clks[] = {
-	RK_PLL(RK3328_PLL_APLL, "apll", "xin24m",
+	RK_PLL(RK3328_PLL_APLL, "apll", pll_parents,
 	       PLL_CON(0),		/* con_base */
 	       0x80,			/* mode_reg */
 	       __BIT(0),		/* mode_mask */
 	       __BIT(4),		/* lock_mask */
 	       pll_frac_rates),
-	RK_PLL(RK3328_PLL_DPLL, "dpll", "xin24m",
+	RK_PLL(RK3328_PLL_DPLL, "dpll", pll_parents,
 	       PLL_CON(8),		/* con_base */
 	       0x80,			/* mode_reg */
 	       __BIT(4),		/* mode_mask */
 	       __BIT(3),		/* lock_mask */
 	       pll_norates),
-	RK_PLL(RK3328_PLL_CPLL, "cpll", "xin24m",
+	RK_PLL(RK3328_PLL_CPLL, "cpll", pll_parents,
 	       PLL_CON(16),		/* con_base */
 	       0x80,			/* mode_reg */
 	       __BIT(8),		/* mode_mask */
 	       __BIT(2),		/* lock_mask */
 	       pll_rates),
-	RK_PLL(RK3328_PLL_GPLL, "gpll", "xin24m",
+	RK_PLL(RK3328_PLL_GPLL, "gpll", pll_parents,
 	       PLL_CON(24),		/* con_base */
 	       0x80,			/* mode_reg */
 	       __BIT(12),		/* mode_mask */
 	       __BIT(1),		/* lock_mask */
 	       pll_frac_rates),
-	RK_PLL(RK3328_PLL_NPLL, "npll", "xin24m",
+	RK_PLL(RK3328_PLL_NPLL, "npll", pll_parents,
 	       PLL_CON(40),		/* con_base */
 	       0x80,			/* mode_reg */
 	       __BIT(1),		/* mode_mask */
@@ -397,6 +399,8 @@ rk3328_cru_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_clks = rk3328_cru_clks;
 	sc->sc_nclks = __arraycount(rk3328_cru_clks);
+
+	sc->sc_softrst_base = SOFTRST_CON(0);
 
 	if (rk_cru_attach(sc) != 0)
 		return;

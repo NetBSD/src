@@ -1,4 +1,4 @@
-/* $NetBSD: rk_cru.h,v 1.2 2018/06/30 17:54:07 jmcneill Exp $ */
+/* $NetBSD: rk_cru.h,v 1.3 2018/08/12 16:48:05 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -78,20 +78,22 @@ struct rk_cru_pll {
 	uint32_t	lock_mask;
 	const struct rk_cru_pll_rate *rates;
 	u_int		nrates;
-	const char	*parent;
+	const char	**parents;
+	u_int		nparents;
 };
 
 u_int	rk_cru_pll_get_rate(struct rk_cru_softc *, struct rk_cru_clk *);
 int	rk_cru_pll_set_rate(struct rk_cru_softc *, struct rk_cru_clk *, u_int);
 const char *rk_cru_pll_get_parent(struct rk_cru_softc *, struct rk_cru_clk *);
 
-#define	RK_PLL(_id, _name, _parent, _con_base, _mode_reg, _mode_mask, _lock_mask, _rates) \
+#define	RK_PLL(_id, _name, _parents, _con_base, _mode_reg, _mode_mask, _lock_mask, _rates) \
 	{							\
 		.id = (_id),					\
 		.type = RK_CRU_PLL,				\
 		.base.name = (_name),				\
 		.base.flags = 0,				\
-		.u.pll.parent = (_parent),			\
+		.u.pll.parents = (_parents),			\
+		.u.pll.nparents = __arraycount(_parents),	\
 		.u.pll.con_base = (_con_base),			\
 		.u.pll.mode_reg = (_mode_reg),			\
 		.u.pll.mode_mask = (_mode_mask),		\
@@ -194,6 +196,15 @@ int	rk_cru_composite_set_parent(struct rk_cru_softc *, struct rk_cru_clk *, cons
 		.get_parent = rk_cru_composite_get_parent,	\
 		.set_parent = rk_cru_composite_set_parent,	\
 	}
+
+#define	RK_COMPOSITE_NOMUX(_id, _name, _parent, _div_reg, _div_mask, _gate_reg, _gate_mask, _flags) \
+	RK_COMPOSITE(_id, _name, (const char *[]){ _parent }, _div_reg, 0, _div_mask, _gate_reg, _gate_mask, _flags)
+
+#define	RK_COMPOSITE_NOGATE(_id, _name, _parents, _muxdiv_reg, _mux_mask, _div_mask, _flags) \
+	RK_COMPOSITE(_id, _name, _parents, _muxdiv_reg, _mux_mask, _div_mask, 0, 0, _flags)
+
+#define	RK_DIV(_id, _name, _parent, _div_reg, _div_mask, _flags) \
+	RK_COMPOSITE(_id, _name, (const char *[]){ _parent }, _div_reg, 0, _div_mask, 0, 0, _flags)
 
 /* Gate clocks */
 
@@ -300,6 +311,8 @@ struct rk_cru_softc {
 
 	struct rk_cru_clk	*sc_clks;
 	u_int			sc_nclks;
+
+	bus_size_t		sc_softrst_base;
 };
 
 int	rk_cru_attach(struct rk_cru_softc *);
