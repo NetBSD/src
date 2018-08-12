@@ -1,4 +1,4 @@
-/* $NetBSD: rk_usb.c,v 1.4 2018/08/12 16:48:05 jmcneill Exp $ */
+/* $NetBSD: rk_usb.c,v 1.5 2018/08/12 17:46:49 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: rk_usb.c,v 1.4 2018/08/12 16:48:05 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rk_usb.c,v 1.5 2018/08/12 17:46:49 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -221,7 +221,6 @@ rk_usb_attach(device_t parent, device_t self, void *aux)
 	}
 
 	clk = fdtbus_clock_get(phandle, "phyclk");
-KASSERT(clk != NULL);
 	if (clk && clk_enable(clk) != 0) {
 		aprint_error(": couldn't enable phy clock\n");
 		return;
