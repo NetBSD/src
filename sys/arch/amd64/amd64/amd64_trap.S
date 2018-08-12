@@ -1,4 +1,4 @@
-/*	$NetBSD: amd64_trap.S,v 1.44 2018/07/14 14:29:40 maxv Exp $	*/
+/*	$NetBSD: amd64_trap.S,v 1.45 2018/08/12 06:11:47 maxv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007, 2008, 2017 The NetBSD Foundation, Inc.
@@ -192,7 +192,7 @@ IDTVEC(trap01)
 
 	movl	$MSR_GSBASE,%ecx
 	rdmsr
-	cmpl	$VM_MIN_KERNEL_ADDRESS_HIGH32,%edx
+	cmpl	$VM_SPACE_SEP_HIGH32,%edx
 	jae	.Lkern_dbentry
 
 	/* SS shadow, ignore the exception. */
@@ -265,7 +265,7 @@ IDTVEC(trap02)
 
 	movl	$MSR_GSBASE,%ecx
 	rdmsr
-	cmpl	$VM_MIN_KERNEL_ADDRESS_HIGH32,%edx
+	cmpl	$VM_SPACE_SEP_HIGH32,%edx
 	jae	.Lnoswapgs
 
 	swapgs
