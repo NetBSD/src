@@ -1,4 +1,4 @@
-/*	$NetBSD: if_smsc.c,v 1.36 2018/08/02 06:09:04 riastradh Exp $	*/
+/*	$NetBSD: if_smsc.c,v 1.37 2018/08/12 06:02:38 rin Exp $	*/
 
 /*	$OpenBSD: if_smsc.c,v 1.4 2012/09/27 12:38:11 jsg Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/net/if_smsc.c,v 1.1 2012/08/15 04:03:55 gonzo Exp $ */
@@ -59,6 +59,9 @@
  * hence this is not as optimal and therefore h/w TX checksum is currently not
  * implemented.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_smsc.c,v 1.37 2018/08/12 06:02:38 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
