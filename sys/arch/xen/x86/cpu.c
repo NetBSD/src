@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.125 2018/07/27 09:37:31 maxv Exp $	*/
+/*	$NetBSD: cpu.c,v 1.126 2018/08/12 12:23:33 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.125 2018/07/27 09:37:31 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.126 2018/08/12 12:23:33 maxv Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -1136,7 +1136,7 @@ cpu_load_pmap(struct pmap *pmap, struct pmap *oldpmap)
 	KASSERT(pmap == ci->ci_pmap);
 
 	/* Copy user pmap L4 PDEs (in user addr. range) to per-cpu L4 */
-	for (i = 0; i < PDIR_SLOT_PTE; i++) {
+	for (i = 0; i < PDIR_SLOT_USERLIM; i++) {
 		KASSERT(pmap != pmap_kernel() || new_pgd[i] == 0);
 		if (ci->ci_kpm_pdir[i] != new_pgd[i]) {
 			xpq_queue_pte_update(l4_pd_ma + i * sizeof(pd_entry_t),

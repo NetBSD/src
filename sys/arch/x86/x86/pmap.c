@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.299 2018/08/12 11:51:42 maxv Exp $	*/
+/*	$NetBSD: pmap.c,v 1.300 2018/08/12 12:23:33 maxv Exp $	*/
 
 /*
  * Copyright (c) 2008, 2010, 2016, 2017 The NetBSD Foundation, Inc.
@@ -157,7 +157,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.299 2018/08/12 11:51:42 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.300 2018/08/12 12:23:33 maxv Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -2571,7 +2571,7 @@ pmap_check_inuse(struct pmap *pmap)
 		if (ci->ci_pmap == pmap)
 			panic("destroying pmap being used");
 #if defined(XEN) && defined(__x86_64__)
-		for (int i = 0; i < PDIR_SLOT_PTE; i++) {
+		for (int i = 0; i < PDIR_SLOT_USERLIM; i++) {
 			if (pmap->pm_pdir[i] != 0 &&
 			    ci->ci_kpm_pdir[i] == pmap->pm_pdir[i]) {
 				printf("pmap_destroy(%p) pmap_kernel %p "
