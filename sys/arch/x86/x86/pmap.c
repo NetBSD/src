@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.298 2018/08/12 10:50:35 maxv Exp $	*/
+/*	$NetBSD: pmap.c,v 1.299 2018/08/12 11:51:42 maxv Exp $	*/
 
 /*
  * Copyright (c) 2008, 2010, 2016, 2017 The NetBSD Foundation, Inc.
@@ -157,7 +157,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.298 2018/08/12 10:50:35 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.299 2018/08/12 11:51:42 maxv Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -2318,6 +2318,8 @@ pmap_pdp_ctor(void *arg, void *v, int flags)
 	int s;
 #endif
 
+	memset(pdir, 0, PDP_SIZE * PAGE_SIZE);
+
 	/*
 	 * NOTE: The `pmaps_lock' is held when the PDP is allocated.
 	 */
@@ -2325,9 +2327,6 @@ pmap_pdp_ctor(void *arg, void *v, int flags)
 #if defined(XEN) && defined(__x86_64__)
 	/* Fetch the physical address of the page directory */
 	(void)pmap_extract(pmap_kernel(), (vaddr_t)pdir, &pdirpa);
-
-	/* Zero the area */
-	memset(pdir, 0, PAGE_SIZE); /* Xen wants a clean page */
 
 	/*
 	 * This pdir will NEVER be active in kernel mode, so mark
@@ -2345,9 +2344,6 @@ pmap_pdp_ctor(void *arg, void *v, int flags)
 	pdir[PDIR_SLOT_KERN + nkptp[PTP_LEVELS - 1] - 1] =
 	     (pd_entry_t)-1 & PG_FRAME;
 #else /* XEN && __x86_64__*/
-	/* Zero the area */
-	memset(pdir, 0, PDIR_SLOT_PTE * sizeof(pd_entry_t));
-
 	object = (vaddr_t)v;
 	for (i = 0; i < PDP_SIZE; i++, object += PAGE_SIZE) {
 		/* Fetch the physical address of the page directory */
@@ -2366,10 +2362,6 @@ pmap_pdp_ctor(void *arg, void *v, int flags)
 
 	memcpy(&pdir[PDIR_SLOT_KERN], &PDP_BASE[PDIR_SLOT_KERN],
 	    npde * sizeof(pd_entry_t));
-
-	/* Zero the rest */
-	memset(&pdir[PDIR_SLOT_KERN + npde], 0, (PAGE_SIZE * PDP_SIZE) -
-	    (PDIR_SLOT_KERN + npde) * sizeof(pd_entry_t));
 
 	if (VM_MIN_KERNEL_ADDRESS != KERNBASE) {
 		int idx = pl_i(KERNBASE, PTP_LEVELS);
