@@ -1,4 +1,4 @@
-/* $NetBSD: rk3399_cru.c,v 1.1 2018/08/12 16:48:05 jmcneill Exp $ */
+/* $NetBSD: rk3399_cru.c,v 1.2 2018/08/12 19:28:41 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: rk3399_cru.c,v 1.1 2018/08/12 16:48:05 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: rk3399_cru.c,v 1.2 2018/08/12 19:28:41 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -601,6 +601,58 @@ static struct rk_cru_clk rk3399_cru_clks[] = {
 	RK_GATE(RK3399_ACLK_USB3OTG1, "aclk_usb3otg1", "aclk_usb3", CLKGATE_CON(30), 2),
 	RK_GATE(RK3399_ACLK_USB3_RKSOC_AXI_PERF, "aclk_usb3_rksoc_axi_perf", "aclk_usb3", CLKGATE_CON(30), 3),
 	RK_GATE(RK3399_ACLK_USB3_GRF, "aclk_usb3_grf", "aclk_usb3", CLKGATE_CON(30), 4),
+
+	/*
+	 * I2C
+	 */
+	RK_COMPOSITE(RK3399_SCLK_I2C1, "clk_i2c1", mux_pll_src_cpll_gpll_parents,
+		     CLKSEL_CON(61),	/* muxdiv_reg */
+		     __BIT(7),		/* mux_mask */
+		     __BITS(6,0),	/* div_mask */
+		     CLKGATE_CON(10),	/* gate_reg */
+		     __BIT(0),		/* gate_mask */
+		     0),
+	RK_COMPOSITE(RK3399_SCLK_I2C2, "clk_i2c2", mux_pll_src_cpll_gpll_parents,
+		     CLKSEL_CON(62),	/* muxdiv_reg */
+		     __BIT(7),		/* mux_mask */
+		     __BITS(6,0),	/* div_mask */
+		     CLKGATE_CON(10),	/* gate_reg */
+		     __BIT(2),		/* gate_mask */
+		     0),
+	RK_COMPOSITE(RK3399_SCLK_I2C3, "clk_i2c3", mux_pll_src_cpll_gpll_parents,
+		     CLKSEL_CON(63),	/* muxdiv_reg */
+		     __BIT(7),		/* mux_mask */
+		     __BITS(6,0),	/* div_mask */
+		     CLKGATE_CON(10),	/* gate_reg */
+		     __BIT(4),		/* gate_mask */
+		     0),
+	RK_COMPOSITE(RK3399_SCLK_I2C5, "clk_i2c5", mux_pll_src_cpll_gpll_parents,
+		     CLKSEL_CON(61),	/* muxdiv_reg */
+		     __BIT(15),		/* mux_mask */
+		     __BITS(14,8),	/* div_mask */
+		     CLKGATE_CON(10),	/* gate_reg */
+		     __BIT(1),		/* gate_mask */
+		     0),
+	RK_COMPOSITE(RK3399_SCLK_I2C6, "clk_i2c6", mux_pll_src_cpll_gpll_parents,
+		     CLKSEL_CON(62),	/* muxdiv_reg */
+		     __BIT(15),		/* mux_mask */
+		     __BITS(14,8),	/* div_mask */
+		     CLKGATE_CON(10),	/* gate_reg */
+		     __BIT(3),		/* gate_mask */
+		     0),
+	RK_COMPOSITE(RK3399_SCLK_I2C7, "clk_i2c7", mux_pll_src_cpll_gpll_parents,
+		     CLKSEL_CON(63),	/* muxdiv_reg */
+		     __BIT(15),		/* mux_mask */
+		     __BITS(14,8),	/* div_mask */
+		     CLKGATE_CON(10),	/* gate_reg */
+		     __BIT(5),		/* gate_mask */
+		     0),
+	RK_GATE(RK3399_PCLK_I2C7, "pclk_rki2c7", "pclk_perilp1", CLKGATE_CON(22), 5),
+	RK_GATE(RK3399_PCLK_I2C1, "pclk_rki2c1", "pclk_perilp1", CLKGATE_CON(22), 6),
+	RK_GATE(RK3399_PCLK_I2C5, "pclk_rki2c5", "pclk_perilp1", CLKGATE_CON(22), 7),
+	RK_GATE(RK3399_PCLK_I2C6, "pclk_rki2c6", "pclk_perilp1", CLKGATE_CON(22), 8),
+	RK_GATE(RK3399_PCLK_I2C2, "pclk_rki2c2", "pclk_perilp1", CLKGATE_CON(22), 9),
+	RK_GATE(RK3399_PCLK_I2C3, "pclk_rki2c3", "pclk_perilp1", CLKGATE_CON(22), 10),
 };
 
 static int
