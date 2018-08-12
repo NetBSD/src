@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2419 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2420 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -194,3 +194,4 @@ Changes from NetBSD 8.0 to NetBSD 9.0:
 		[kamil 20180803]
 	lua: Import version 5.3.5. [alnsn 20180804]
 	arm: Add driver for ARM GICv3 interrupt controllers. [jmcneill 20180808]
+ 	bind: Import version 9.12.2-P1. [christos 20170615]
