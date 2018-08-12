@@ -1,4 +1,4 @@
-/* $NetBSD: pmu_fdt.c,v 1.3 2018/07/16 10:49:52 jmcneill Exp $ */
+/* $NetBSD: pmu_fdt.c,v 1.4 2018/08/12 18:39:59 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmu_fdt.c,v 1.3 2018/07/16 10:49:52 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmu_fdt.c,v 1.4 2018/08/12 18:39:59 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -36,6 +36,7 @@ __KERNEL_RCSID(0, "$NetBSD: pmu_fdt.c,v 1.3 2018/07/16 10:49:52 jmcneill Exp $")
 #include <sys/kernel.h>
 #include <sys/cpu.h>
 #include <sys/interrupt.h>
+#include <sys/kmem.h>
 
 #include <dev/fdt/fdtvar.h>
 
@@ -114,38 +115,51 @@ pmu_fdt_init(device_t self)
 	const int phandle = sc->sc_phandle;
 	char intrstr[128];
 	int error, n;
-	void *ih;
-
-	for (n = 0; ; n++) {
-		ih = fdtbus_intr_establish(phandle, n, IPL_HIGH,
-		    FDT_INTR_MPSAFE, arm_pmu_intr, NULL);
-		if (ih == NULL)
-			break;
-		if (!fdtbus_intr_str(phandle, n, intrstr, sizeof(intrstr))) {
-			aprint_error_dev(self,
-			    "couldn't decode interrupt %u\n", n);
-			return;
-		}
-		aprint_normal_dev(self, "interrupting on %s\n", intrstr);
-		error = pmu_fdt_intr_distribute(phandle, n, ih);
-		if (error != 0) {
-			aprint_error_dev(self,
-			    "failed to distribute interrupt %u: %d\n",
-			    n, error);
-			return;
-		}
-	}
-	/* We need either one IRQ (PPI), or one per CPU (SPI) */
-	if (n == 0) {
-		aprint_error_dev(self, "couldn't establish interrupts\n");
-		return;
-	}
+	void **ih;
 
 	error = arm_pmu_init();
 	if (error != 0) {
 		aprint_error_dev(self, "failed to initialize PMU\n");
 		return;
 	}
+
+	ih = kmem_zalloc(sizeof(void *) * ncpu, KM_SLEEP);
+
+	for (n = 0; n < ncpu; n++) {
+		ih[n] = fdtbus_intr_establish(phandle, n, IPL_HIGH,
+		    FDT_INTR_MPSAFE, arm_pmu_intr, NULL);
+		if (ih[n] == NULL)
+			break;
+		if (!fdtbus_intr_str(phandle, n, intrstr, sizeof(intrstr))) {
+			aprint_error_dev(self,
+			    "couldn't decode interrupt %u\n", n);
+			goto cleanup;
+		}
+		aprint_normal_dev(self, "interrupting on %s\n", intrstr);
+	}
+
+	/* We need either one IRQ (PPI), or one per CPU (SPI) */
+	const int nirq = n;
+	if (nirq == 0) {
+		aprint_error_dev(self, "couldn't establish interrupts\n");
+		goto cleanup;
+	}
+
+	/* Set interrupt affinity if we have more than one interrupt */
+	if (nirq > 1) {
+		for (n = 0; n < nirq; n++) {
+			error = pmu_fdt_intr_distribute(phandle, n, ih[n]);
+			if (error != 0) {
+				aprint_error_dev(self,
+				    "failed to distribute interrupt %u: %d\n",
+				    n, error);
+				goto cleanup;
+			}
+		}
+	}
+
+cleanup:
+	kmem_free(ih, sizeof(void *) * ncpu);
 }
 
 static int
