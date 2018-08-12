@@ -1,4 +1,4 @@
-/*	$NetBSD: portlist.c,v 1.1.1.1 2018/08/12 12:08:09 christos Exp $	*/
+/*	$NetBSD: portlist.c,v 1.2 2018/08/12 13:02:35 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")

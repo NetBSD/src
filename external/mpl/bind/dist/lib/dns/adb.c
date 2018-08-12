@@ -1,4 +1,4 @@
-/*	$NetBSD: adb.c,v 1.1.1.1 2018/08/12 12:08:12 christos Exp $	*/
+/*	$NetBSD: adb.c,v 1.2 2018/08/12 13:02:35 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -2641,7 +2641,7 @@ dns_adb_create(isc_mem_t *mem, dns_view_t *view, isc_timermgr_t *timermgr,
 			result = ISC_R_NOMEMORY; \
 			goto fail1; \
 		}\
-	} while (0)
+	} while (/*CONSTCOND*/0)
 	ALLOCENTRY(adb, entries);
 	ALLOCENTRY(adb, deadentries);
 	ALLOCENTRY(adb, entrylocks);
@@ -2657,7 +2657,7 @@ dns_adb_create(isc_mem_t *mem, dns_view_t *view, isc_timermgr_t *timermgr,
 			result = ISC_R_NOMEMORY; \
 			goto fail1; \
 		}\
-	} while (0)
+	} while (/*CONSTCOND*/0)
 	ALLOCNAME(adb, names);
 	ALLOCNAME(adb, deadnames);
 	ALLOCNAME(adb, namelocks);
@@ -2701,7 +2701,7 @@ dns_adb_create(isc_mem_t *mem, dns_view_t *view, isc_timermgr_t *timermgr,
 	isc_mempool_setfillcount((p), FILL_COUNT); \
 	isc_mempool_setname((p), n); \
 	isc_mempool_associatelock((p), &adb->mplock); \
-} while (0)
+} while (/*CONSTCOND*/0)
 
 	MPINIT(dns_adbname_t, adb->nmp, "adbname");
 	MPINIT(dns_adbnamehook_t, adb->nhmp, "adbnamehook");

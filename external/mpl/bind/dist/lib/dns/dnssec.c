@@ -1,4 +1,4 @@
-/*	$NetBSD: dnssec.c,v 1.1.1.1 2018/08/12 12:08:16 christos Exp $	*/
+/*	$NetBSD: dnssec.c,v 1.2 2018/08/12 13:02:35 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -52,7 +52,7 @@ LIBDNS_EXTERNAL_DATA isc_stats_t *dns_dnssec_stats;
 	result = (x); \
 	if (result != ISC_R_SUCCESS) \
 		goto failure; \
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 
 #define TYPE_SIGN 0
@@ -350,7 +350,7 @@ dns_dnssec_sign(const dns_name_t *name, dns_rdataset_t *set, dst_key_t *key,
 	}
 
 	ret = dns_rdata_fromstruct(sigrdata, sig.common.rdclass,
-				   sig.common.rdtype, &sig, buffer);
+				  sig.common.rdtype, &sig, buffer);
 
 cleanup_array:
 	isc_mem_put(mctx, rdatas, nrdatas * sizeof(dns_rdata_t));
