@@ -1,0 +1,125 @@
+; File written on Mon Oct 16 09:16:28 2017
+; dnssec_signzone version 9.11.2
+signed.			120	IN SOA	ns.signed. hostmaster.ns.signed. (
+					1          ; serial
+					3600       ; refresh (1 hour)
+					1200       ; retry (20 minutes)
+					604800     ; expire (1 week)
+					60         ; minimum (1 minute)
+					)
+			120	RRSIG	SOA 3 1 120 (
+					20820519023008 20140501011600 17876 signed.
+					BJDbUrXS4UzBrTeNUMA0sSGYd+h9M5d8qzsE
+					q7RJyDtUNJIwP5vAnSQ= )
+			120	NS	ns.signed.
+			120	RRSIG	NS 3 1 120 (
+					20820519023008 20140501011600 17876 signed.
+					BGoYuOkkcTAYnym27q2BgqkjUgP/0/Tip1yc
+					txRS1D0CipTUZhCNrXc= )
+			120	MX	10 mx.signed.
+			120	RRSIG	MX 3 1 120 (
+					20820519023008 20140501011600 17876 signed.
+					BOUPCSEEJ8dZ0oWeiYEvGIonjagvM1OS+mEY
+					i5VUmysn7kArWqeFERs= )
+			60	NSEC	a-only.signed. NS SOA MX RRSIG NSEC DNSKEY
+			60	RRSIG	NSEC 3 1 60 (
+					20820519023008 20140501011600 17876 signed.
+					BBzvCsFw4EgfrIsFOu5IjP2gncm8dntwHaMD
+					IeJ6g6s7IOwFT5nyrOU= )
+			120	DNSKEY	256 3 3 (
+					BPXo3mJOeCCuorn7Hc7bxR3QDHrJvq9gUpPS
+					s8QYF3eiSpB97c8Br7fFzFYHQCJWWnCtpt1E
+					h7SveJSl1ASNl9W2KE6hDNXfDX+ixDOtFZ/7
+					PCh/obX36VK86EH+ZBNLxxEy9tHHCGO08zy8
+					3lWI3E5bk9a1sks2dy6hbQfMmyXWI5QwYS9D
+					j5Vs5yeUQ5e6SPmIqgqpn6VnDtAIfR2My7/r
+					/Jgf73gpZugZmn6wDbzNCyGIvtOJCHAY2OEg
+					ZfACKVdJrXZ42NKcJCgSTd1xY81UyMI9QAMq
+					64Lx/tENCo1GKBCk/1HMdiO6WKeXCJd1SYzN
+					VM+n4fRzEkmVT9wfyiSmoq6SxjeqrRebDz8G
+					42d4lsm2/0bmOlle+fva7LwtGOaS+tBqtD8K
+					kexFaixL5iY+LB0Q
+					) ; ZSK; alg = DSA ; key id = 17876
+			120	DNSKEY	257 3 3 (
+					BOOhXnn+YV6RQ+jRPdayrnC2cd9x5P77c1/6
+					Ev41qaWl1N7QRDXYh7VDS1UowoPbvQOvgQU0
+					X7+zKWrB8UQcdsUe96IH/wPab1qkJlKanZni
+					uFdB/2sTvQ6yabIC41dItnGeuN9VY1qwCa7T
+					4QFRVYyDPKgxo7MRLq9YoUN8RTcB6lY1BH9Z
+					QgcHZljAFVgU1Zc/6DZlQeBZyJafwIR+I7Eq
+					Oe+rR44ZeD5JRgI1OwGyw/b1wKUxFhM+4XJi
+					i8mQ1mrvzZ27iQbYP4WEzaskU6P5X+nPrTFi
+					tLEaPugt8Oe7+lHLjpHvHzSOJZ5Radfiqgzg
+					GGOzj1qmLfKLdRmp4VuBQ+1kguiz9D3ev89d
+					pzP7dYHuSdCjc9X0fLmPjU1xD6RyLCDEmUm7
+					eeRP55SiTiQCzJFr
+					) ; KSK; alg = DSA ; key id = 3746
+			120	RRSIG	DNSKEY 3 1 120 (
+					20820519023008 20140501011600 3746 signed.
+					BFuLN7ACQrD6/3WaieXRD1JpSXW9s+/xCZ1x
+					0ihUT1iKNvJS8F4Pafc= )
+			120	RRSIG	DNSKEY 3 1 120 (
+					20820519023008 20140501011600 17876 signed.
+					BN+8hbh1FGTNqHds0In57dPr5fVRU/P28dZa
+					zIP19bAwTH/ZvgrqUF0= )
+a-only.signed.		120	IN NS	1.0.0.1.signed.
+			60	NSEC	aaaa-only.signed. NS RRSIG NSEC
+			60	RRSIG	NSEC 3 2 60 (
+					20820519023008 20140501011600 17876 signed.
+					BHpGpjMihpoIykHTpK1XmkVn0jqSST3/K6Fx
+					vTaIb24rpkTriaXxChM= )
+aaaa-only.signed.	120	IN AAAA	2001:db8::2
+			120	RRSIG	AAAA 3 2 120 (
+					20820519023008 20140501011600 17876 signed.
+					BOvYax/3CDnEKTtbc6zoP4hYwhMe5SoXZh0w
+					muzBWw9bEH+Bdt1ZEQ4= )
+			60	NSEC	dual.signed. AAAA RRSIG NSEC
+			60	RRSIG	NSEC 3 2 60 (
+					20820519023008 20140501011600 17876 signed.
+					BIqxE79TUnT2DUuocTitGhTNGnLs0+3sLJdz
+					8haJbyH8pig1h7mqimU= )
+dual.signed.		120	IN A	1.0.0.3
+			120	RRSIG	A 3 2 120 (
+					20820519023008 20140501011600 17876 signed.
+					BIGL70eEIGVDW0gcYpEWgCFv4ne14hutQCMh
+					gQ6kcEbl2qszosJA60E= )
+			120	AAAA	2001:db8::3
+			120	RRSIG	AAAA 3 2 120 (
+					20820519023008 20140501011600 17876 signed.
+					BCmwk+ng/x1O7MhheK8MgAXYFVDDbyiZ76RV
+					iwQrPRm0ThNRtsQU+UY= )
+			60	NSEC	mx.signed. A AAAA RRSIG NSEC
+			60	RRSIG	NSEC 3 2 60 (
+					20820519023008 20140501011600 17876 signed.
+					BLlLAIHF4SX/eWMCkUvj0XTFmaOp3xnifqkL
+					nSWOAqtzJ5fwAdbNBdM= )
+ns.signed.		120	IN A	10.53.0.1
+			120	RRSIG	A 3 2 120 (
+					20820519023008 20140501011600 17876 signed.
+					BJ+Wll7VfNEjM4EfLY2rlx74oIwKRg9pjcJO
+					Zxt6GHQIJ2D6EfyMZ00= )
+			120	AAAA	fd92:7065:b8e:ffff::1
+			120	RRSIG	AAAA 3 2 120 (
+					20820519023008 20140501011600 17876 signed.
+					BGT/agHn4qcHzLV2hYcGeLJ6Tz1to9sTB8LI
+					lMwkV/KUu6UO7yvrnYk= )
+			60	NSEC	signed. A AAAA RRSIG NSEC
+			60	RRSIG	NSEC 3 2 60 (
+					20820519023008 20140501011600 17876 signed.
+					BNe3XmEGd/xxoh8FN3T3V9G1enCzNQJ7l3G+
+					D3QPrp7mYtPAGMxCLlc= )
+mx.signed.		120	IN A	1.0.0.3
+			120	RRSIG	A 3 2 120 (
+					20820519023008 20140501011600 17876 signed.
+					BMlIQp1acUSUvgzV1CWlM0+cS1bGkFsbS6HQ
+					d0S6TbNV+uNw0S1q0Dk= )
+			120	AAAA	2001:db8::3
+			120	RRSIG	AAAA 3 2 120 (
+					20820519023008 20140501011600 17876 signed.
+					BGtSuYQF7sRVT5OdVHPJjm0PERzSp4v+d/DP
+					Vp2UD0vSVSr3Vj2Wi4M= )
+			60	NSEC	ns.signed. A AAAA RRSIG NSEC
+			60	RRSIG	NSEC 3 2 60 (
+					20820519023008 20140501011600 17876 signed.
+					BMzQWws37wYfHvLnqgvjd+j5dkzBb2RYhrQk
+					ykM0GnTAR6ZpmgQO6jc= )

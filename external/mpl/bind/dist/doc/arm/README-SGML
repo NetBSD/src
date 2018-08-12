@@ -1,0 +1,55 @@
+Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+
+See COPYRIGHT in the source root or http://isc.org/copyright.html for terms.
+
+The BIND v9 ARM master document is now kept in DocBook 5 XML format.
+
+Most of the ARM is in the single file "Bv9ARM-book.xml", with certain
+other files included into it:
+
+    - dlz.xml
+    - dnssec.xml
+    - libdns.xml
+    - logging-categories.xml
+    - managed-keys.xml
+    - notes.xml
+    - pkcs11.xml
+    - BIND man pages
+
+All of the published ARM formats - HTML, PDF, etc - are generated from
+this master source.
+
+The file "notes.xml" contains the release notes for the current release. In
+addition to being included in the ARM as an appendix, it is also built into
+a stand-alone document: "notes.pdf" and "notes.html".
+
+Building these these files requires DocBook 5 and dblatex. These are
+available as packages in many OS distributes; in debian, for example:
+
+    $ sudo apt-get install docbook5-xml docbook-xml docbook-xsl-ns \
+                           docbook-utils dblatex
+
+To build all documentation, run "make doc".
+
+When committing changes or submitting patches, it is only necessary to
+edit the XML source (i.e., the files with ".docbook" or ".xml" suffixes);
+the files in HTML and man page format are built from the XML source by a
+cron job.
+
+If you are familiar with SGML or HTML, editing the DocBook XML is quite
+straightforward.  You only need to know what the tags are and how to use
+them.  You can find a good resource either for this either online or in
+printed form:
+
+    DocBook: The Definitive Guide
+    By Norman Walsh and Leonard Muellner
+    ISBN: 156592-580-7
+    1st Edition, October 1999
+    Copyright (C) 1999 by O'Reilly & Associates, Inc. All rights reserved.
+
+The book is available online in HTML format:
+
+    http://docbook.org/
+
+After editing documentation, it is useful to check the correctness of the
+XML; this can be done using the "xmllint" utility.

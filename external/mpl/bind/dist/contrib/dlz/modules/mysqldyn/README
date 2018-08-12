@@ -1,0 +1,60 @@
+BIND 9 DLZ MySQL module with support for dynamic DNS (DDNS)
+
+Adapted from code contributed by Marty Lee, Maui Systems Ltd.
+
+This is a dynamically loadable zone (DLZ) plugin that uses a fixed-
+schema MySQL database for back-end storage. It allows zone data
+to be updated via dynamic DNS updates, and sends DNS NOTIFY packets
+to other name servers when appropriate.
+
+The database for this module uses the following schema:
+
+    CREATE TABLE `Zones` (
+        `id` int(11) NOT NULL AUTO_INCREMENT,
+        `domain` varchar(128) NOT NULL DEFAULT '',
+        `host` varchar(128) NOT NULL DEFAULT '',
+        `admin` varchar(128) NOT NULL DEFAULT '',
+        `serial` int(11) NOT NULL DEFAULT '1',
+        `expire` int(11) NOT NULL DEFAULT '86400',
+        `refresh` int(11) NOT NULL DEFAULT '86400',
+        `retry` int(11) NOT NULL DEFAULT '86400',
+        `minimum` int(11) NOT NULL DEFAULT '86400',
+        `ttl` int(11) NOT NULL DEFAULT '86400',
+        `writeable` tinyint(1) NOT NULL DEFAULT '0',
+        PRIMARY KEY (`id`),
+        KEY `domain_idx` (`domain`)
+    );
+
+    CREATE TABLE `ZoneData` (
+        `id` int(11) NOT NULL AUTO_INCREMENT,
+        `zone_id` int(11) NOT NULL,
+        `name` varchar(128) NOT NULL DEFAULT '',
+        `type` varchar(16) NOT NULL DEFAULT '',
+        `ttl` int(11) NOT NULL DEFAULT '86400',
+        `data` varchar(128) NOT NULL DEFAULT '',
+        PRIMARY KEY (`id`),
+        KEY `zone_idx` (`zone_id`),
+        KEY `name_idx` (`zone_id`, `name`),
+        KEY `type_idx` (`type`)
+    );
+
+'Zones' contains information about specific zones:
+ - domain: the zone name
+ - admin: the zone administrator
+ - serial, expire, reresh, retry, minimum: values in the SOA record
+ - ttl: default zone TTL
+ - writeable: set to true if the zone can be updated via DDNS
+
+'ZoneData' contains the individual records within the zone:
+ - zone_id: the 'id' from the corresponding record in Zones 
+ - name: domain name, relative to the zone apex. (Data at the zone
+   apex itself may use a blank name or "@".)
+ - type: the RR type, expressed as text
+ - ttl: the record's TTL
+ - data: the records rdata, expressed as text.
+
+To configure this module in named.conf:
+
+dlz "mysqldlz" {
+    database "dlopen <path to>/dlz_mysqldyn_mod.so <dbname> [dbhost [dbuser [dbpass]]]";
+};

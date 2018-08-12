@@ -1,0 +1,82 @@
+/*
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
+ */
+
+// NS2
+
+include "../../common/rndc.key";
+
+controls {
+	inet 10.53.0.2 port @CONTROLPORT@ allow { any; } keys { rndc_key; };
+};
+
+options {
+	query-source address 10.53.0.2;
+	notify-source 10.53.0.2;
+	transfer-source 10.53.0.2;
+	port @PORT@;
+	pid-file "named.pid";
+	listen-on { 10.53.0.2; };
+	listen-on-v6 { none; };
+	recursion no;
+	notify yes;
+	notify-delay 0;
+	allow-new-zones yes;
+};
+
+zone "bits" {
+	type master;
+	file "bits.db";
+	allow-update { any; };
+};
+
+zone "retransfer" {
+	type master;
+	file "retransfer.db";
+	allow-update { any; };
+	notify no;
+};
+
+zone "retransfer3" {
+	type master;
+	file "retransfer3.db";
+	allow-update { any; };
+	notify no;
+};
+
+zone "nsec3-loop" {
+	type master;
+	file "nsec3-loop.db";
+	notify no;
+};
+
+zone "inactiveksk" {
+	type master;
+	file "inactiveksk.db";
+	allow-update { any; };
+};
+
+zone "inactivezsk" {
+	type master;
+	file "inactivezsk.db";
+	allow-update { any; };
+};
+
+zone "nokeys" {
+	type master;
+	file "nokeys.db";
+	allow-update { any; };
+};
+
+zone "removedkeys-secondary" {
+	type master;
+	file "removedkeys-secondary.db";
+	allow-update { any; };
+};

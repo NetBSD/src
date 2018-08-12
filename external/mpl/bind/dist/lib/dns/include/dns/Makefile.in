@@ -1,0 +1,60 @@
+# Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+#
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+#
+# See the COPYRIGHT file distributed with this work for additional
+# information regarding copyright ownership.
+
+srcdir =	@srcdir@
+VPATH =		@srcdir@
+top_srcdir =	@top_srcdir@
+
+VERSION=@BIND9_VERSION@
+
+HEADERS =	acl.h adb.h badcache.h bit.h byaddr.h \
+		cache.h callbacks.h catz.h cert.h \
+		client.h clientinfo.h compress.h \
+		db.h dbiterator.h dbtable.h diff.h dispatch.h \
+		dlz.h dlz_dlopen.h dns64.h dnsrps.h dnssec.h ds.h dsdigest.h \
+		dnstap.h dyndb.h ecs.h \
+		edns.h ecdb.h events.h fixedname.h forward.h geoip.h \
+		ipkeylist.h iptable.h \
+		journal.h keydata.h keyflags.h keytable.h keyvalues.h \
+		lib.h librpz.h lookup.h log.h master.h masterdump.h message.h \
+		name.h ncache.h nsec.h nsec3.h nta.h opcode.h order.h \
+		peer.h portlist.h private.h \
+		rbt.h rcode.h rdata.h rdataclass.h rdatalist.h \
+		rdataset.h rdatasetiter.h rdataslab.h rdatatype.h request.h \
+		resolver.h result.h rootns.h rpz.h rriterator.h rrl.h \
+		sdb.h sdlz.h secalg.h secproto.h soa.h ssu.h stats.h \
+		tcpmsg.h time.h timer.h tkey.h tsec.h tsig.h ttl.h types.h \
+		update.h validator.h version.h view.h xfrin.h \
+		zone.h zonekey.h zt.h
+
+GENHEADERS =	@DNSTAP_PB_C_H@ enumclass.h enumtype.h rdatastruct.h
+
+SUBDIRS =
+TARGETS =
+
+@BIND9_MAKE_RULES@
+
+installdirs:
+	$(SHELL) ${top_srcdir}/mkinstalldirs ${DESTDIR}${includedir}/dns
+
+install:: installdirs
+	for i in ${HEADERS}; do \
+		${INSTALL_DATA} ${srcdir}/$$i ${DESTDIR}${includedir}/dns ; \
+	done
+	for i in ${GENHEADERS}; do \
+		${INSTALL_DATA} $$i ${DESTDIR}${includedir}/dns ; \
+	done
+
+uninstall::
+	for i in ${GENHEADERS}; do \
+		rm -f ${DESTDIR}${includedir}/dns/$$i ; \
+	done
+	for i in ${HEADERS}; do \
+		rm -f ${DESTDIR}${includedir}/dns/$$i ; \
+	done
