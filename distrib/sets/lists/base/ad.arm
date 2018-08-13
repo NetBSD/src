@@ -1,4 +1,4 @@
-# $NetBSD: ad.arm,v 1.79 2018/07/12 06:52:48 maxv Exp $
+# $NetBSD: ad.arm,v 1.80 2018/08/13 09:25:22 mrg Exp $
 ./libexec/ld.elf_so-oabi			base-sysutil-bin	compat,pic
 ./sbin/ldconfig					base-sysutil-root	pic,endian=1234
 ./usr/bin/fdformat				base-util-bin
@@ -15,8 +15,8 @@
 ./usr/mdec/BBBB					base-obsolete		obsolete
 ./usr/mdec/boot26				base-obsolete		obsolete
 ./usr/mdec/boot26,ffa				base-obsolete		obsolete
-./usr/mdec/boot32				base-sysutil-bin	endian=1234,!eabi
-./usr/mdec/boot32,ffa				base-sysutil-bin	endian=1234,!eabi
+./usr/mdec/boot32				base-sysutil-bin	endian=1234
+./usr/mdec/boot32,ffa				base-sysutil-bin	endian=1234
 ./usr/mdec/bootimx23				base-sysutil-bin	endian=1234
 ./usr/mdec/bootmini2440				base-sysutil-bin
 ./usr/mdec/gzboot_ADI_BRH_0x00140000.bin	base-sysutil-bin
@@ -27,8 +27,8 @@
 ./usr/mdec/gzboot_SMDK2800_0x00000000.bin	base-sysutil-bin	endian=1234
 ./usr/mdec/gzboot_SMDK2800_0x00100000.bin	base-sysutil-bin	endian=1234
 ./usr/mdec/gzboot_TS7200_0x60660000.bin		base-sysutil-bin	endian=1234
-./usr/mdec/nbfs					base-sysutil-bin	endian=1234,!eabi
-./usr/mdec/nbfs,ffa				base-sysutil-bin	endian=1234,!eabi
+./usr/mdec/nbfs					base-sysutil-bin	endian=1234
+./usr/mdec/nbfs,ffa				base-sysutil-bin	endian=1234
 ./usr/mdec/zboot				base-sysutil-bin	endian=1234
 ./usr/mdec/zbsdmod.o				base-sysutil-bin	endian=1234
 ./usr/sbin/apm					base-sysutil-bin
