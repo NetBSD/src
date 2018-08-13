@@ -1,4 +1,4 @@
-/*	$NetBSD: redir.c,v 1.59 2017/11/15 09:21:48 kre Exp $	*/
+/*	$NetBSD: redir.c,v 1.60 2018/08/13 22:13:02 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)redir.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: redir.c,v 1.59 2017/11/15 09:21:48 kre Exp $");
+__RCSID("$NetBSD: redir.c,v 1.60 2018/08/13 22:13:02 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -148,11 +148,17 @@ free_rl(struct redirtab *rt, int reset)
 		rn = rl->next;
 		if (rl->orig == 0)
 			fd0_redirected--;
+		VTRACE(DBG_REDIR, ("popredir %d%s: %s",
+		    rl->orig, rl->orig==0 ? " (STDIN)" : "",
+		    reset ? "" : "no reset\n"));
 		if (reset) {
-			if (rl->into < 0)
+			if (rl->into < 0) {
+				VTRACE(DBG_REDIR, ("closed\n"));
 				close(rl->orig);
-			else
+			} else {
+				VTRACE(DBG_REDIR, ("from %d\n", rl->into));
 				movefd(rl->into, rl->orig);
+			}
 		}
 		ckfree(rl);
 	}
@@ -162,6 +168,7 @@ free_rl(struct redirtab *rt, int reset)
 STATIC void
 fd_rename(struct redirtab *rt, int from, int to)
 {
+	/* XXX someday keep a short list (8..10) of freed renamelists XXX */
 	struct renamelist *rl = ckmalloc(sizeof(struct renamelist));
 
 	rl->next = rt->renamed;
@@ -188,11 +195,13 @@ redirect(union node *redir, int flags)
 	int fd;
 	char memory[10];	/* file descriptors to write to memory */
 
+	CTRACE(DBG_REDIR, ("redirect(F=0x%x):%s\n", flags, redir?"":" NONE"));
 	for (i = 10 ; --i >= 0 ; )
 		memory[i] = 0;
 	memory[1] = flags & REDIR_BACKQ;
 	if (flags & REDIR_PUSH) {
-		/* We don't have to worry about REDIR_VFORK here, as
+		/*
+		 * We don't have to worry about REDIR_VFORK here, as
 		 * flags & REDIR_PUSH is never true if REDIR_VFORK is set.
 		 */
 		sv = ckmalloc(sizeof (struct redirtab));
@@ -202,6 +211,7 @@ redirect(union node *redir, int flags)
 	}
 	for (n = redir ; n ; n = n->nfile.next) {
 		fd = n->nfile.fd;
+		VTRACE(DBG_REDIR, ("redir %d (max=%d) ", fd, max_user_fd));
 		if (fd > max_user_fd)
 			max_user_fd = fd;
 		renumber_sh_fd(sh_fd(fd));
@@ -211,6 +221,7 @@ redirect(union node *redir, int flags)
 			/* make sure it stays open */
 			if (fcntl(fd, F_SETFD, 0) < 0)
 				error("fd %d: %s", fd, strerror(errno));
+			VTRACE(DBG_REDIR, ("!cloexec\n"));
 			continue;
 		}
 
@@ -240,8 +251,10 @@ redirect(union node *redir, int flags)
 			if (i >= 0)
 				(void)fcntl(i, F_SETFD, FD_CLOEXEC);
 			fd_rename(sv, fd, i);
+			VTRACE(DBG_REDIR, ("saved as %d ", i));
 			INTON;
 		}
+		VTRACE(DBG_REDIR, ("%s\n", fd == 0 ? "STDIN" : ""));
 		if (fd == 0)
 			fd0_redirected++;
 		openredirect(n, memory, flags);
@@ -307,6 +320,8 @@ openredirect(union node *redir, char memory[10], int flags)
 				errno = EEXIST;
 				goto ecreate;
 			}
+			VTRACE(DBG_REDIR, ("openredirect(>| '%s') -> %d",
+			    fname, f));
 			break;
 		}
 		/* FALLTHROUGH */
@@ -343,8 +358,8 @@ openredirect(union node *redir, char memory[10], int flags)
 		return;
 	case NHERE:
 	case NXHERE:
-		f = openhere(redir);
 		VTRACE(DBG_REDIR, ("openredirect: %d<<...", fd));
+		f = openhere(redir);
 		break;
 	default:
 		abort();
@@ -367,10 +382,10 @@ openredirect(union node *redir, char memory[10], int flags)
 
 	INTON;
 	return;
-ecreate:
+ ecreate:
 	exerrno = 1;
 	error("cannot create %s: %s", fname, errmsg(errno, E_CREAT));
-eopen:
+ eopen:
 	exerrno = 1;
 	error("cannot open %s: %s", fname, errmsg(errno, E_OPEN));
 }
@@ -397,6 +412,7 @@ openhere(const union node *redir)
 			goto out;
 		}
 	}
+	VTRACE(DBG_REDIR, (" forking [%d,%d]\n", pip[0], pip[1]));
 	if (forkshell(NULL, NULL, FORK_NOJOB) == 0) {
 		close(pip[0]);
 		signal(SIGINT, SIG_IGN);
@@ -412,8 +428,10 @@ openhere(const union node *redir)
 			expandhere(redir->nhere.doc, pip[1]);
 		_exit(0);
 	}
-out:
+	VTRACE(DBG_REDIR, ("openhere (closing %d)", pip[1]));
+ out:
 	close(pip[1]);
+	VTRACE(DBG_REDIR, (" (pipe fd=%d)", pip[0]));
 	return pip[0];
 }
 
@@ -505,7 +523,7 @@ copyfd(int from, int to, int cloexec)
  * rename fd from to be fd to (closing from).
  * close-on-exec is never set on 'to' (unless
  * from==to and it was set on from) - ie: a no-op
- * returns to (or errors() if an error occurs).  
+ * returns to (or errors() if an error occurs).
  *
  * This is mostly used for rearranging the
  * results from pipe().
@@ -796,7 +814,7 @@ parseflags(char *s, int *p, int *n)
 		default:
 			error("Missing +/- indicator before flag %s", s-1);
 		}
-			
+
 		len = strlen(s);
 		for (fn = nv; fn->name; fn++)
 			if (len >= fn->minch && strncmp(s,fn->name,len) == 0) {
