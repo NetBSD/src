@@ -1,4 +1,4 @@
-.\" $NetBSD: sctp_peeloff.3,v 1.1 2018/08/02 08:40:48 rjs Exp $
+.\" $NetBSD: sctp_peeloff.3,v 1.2 2018/08/13 06:00:21 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -48,18 +48,13 @@ function attempts detach the association specified by
 .Fa id
 into its own separate socket.
 .Sh RETURN VALUES
-The call returns -1 on failure and the new socket descriptor
+The call returns \-1 on failure and the new socket descriptor
 upon success.
 .Sh ERRORS
 The
 .Fn sctp_peeloff
 function can return the following errors:
 .Bl -tag -width Er
-.It Bq Er ENOTCONN
-The
-.Fa id
-given to the call does not map to a valid
-association.
 .It Bq Er E2BIG
 The size of the address list exceeds the amount of
 data provided.
@@ -67,6 +62,11 @@ data provided.
 The argument
 .Fa s
 is not a valid descriptor.
+.It Bq Er ENOTCONN
+The
+.Fa id
+given to the call does not map to a valid
+association.
 .It Bq Er ENOTSOCK
 The argument
 .Fa s
@@ -79,7 +79,7 @@ is not a socket.
 .%N 6458
 .%T "Sockets API Extensions for the Stream Control Transmission Protocol (SCTP)"
 .%D December 2011
-.Re 
+.Re
 .Sh HISTORY
 This function first appeared in
 .Nx 9.0 .
