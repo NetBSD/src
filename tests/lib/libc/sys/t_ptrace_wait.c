@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.65 2018/08/13 21:36:55 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.66 2018/08/13 22:00:45 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.65 2018/08/13 21:36:55 kamil Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.66 2018/08/13 22:00:45 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -1368,14 +1368,8 @@ ATF_TC_BODY(unrelated_tracer_sees_terminaton_before_the_parent, tc)
 
 /// ----------------------------------------------------------------------------
 
-ATF_TC(parent_attach_to_its_child);
-ATF_TC_HEAD(parent_attach_to_its_child, tc)
-{
-	atf_tc_set_md_var(tc, "descr",
-	    "Assert that tracer parent can PT_ATTACH to its child");
-}
-
-ATF_TC_BODY(parent_attach_to_its_child, tc)
+static void
+parent_attach_to_its_child(bool stopped)
 {
 	struct msg_fds parent_tracee;
 	const int exitval_tracee = 5;
@@ -1392,11 +1386,21 @@ ATF_TC_BODY(parent_attach_to_its_child, tc)
 		CHILD_FROM_PARENT("Message 1", parent_tracee, msg);
 		DPRINTF("Parent should now attach to tracee\n");
 
+		if (stopped) {
+			DPRINTF("Stop self PID %d\n", getpid());
+			SYSCALL_REQUIRE(raise(SIGSTOP) != -1);
+		}
+
 		CHILD_FROM_PARENT("Message 2", parent_tracee, msg);
 		/* Wait for message from the parent */
 		_exit(exitval_tracee);
 	}
 	PARENT_TO_CHILD("Message 1", parent_tracee, msg);
+
+	if (stopped) {
+		DPRINTF("Await for a stopped tracee PID %d\n", tracee);
+		await_stopped(tracee);
+	}
 
 	DPRINTF("Before calling PT_ATTACH for tracee %d\n", tracee);
 	SYSCALL_REQUIRE(ptrace(PT_ATTACH, tracee, NULL, 0) != -1);
@@ -1425,6 +1429,32 @@ ATF_TC_BODY(parent_attach_to_its_child, tc)
 	    wpid = TWAIT_GENERIC(tracee, &status, 0));
 
 	msg_close(&parent_tracee);
+}
+
+ATF_TC(parent_attach_to_its_child);
+ATF_TC_HEAD(parent_attach_to_its_child, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Assert that tracer parent can PT_ATTACH to its child");
+}
+
+ATF_TC_BODY(parent_attach_to_its_child, tc)
+{
+
+	parent_attach_to_its_child(false);
+}
+
+ATF_TC(parent_attach_to_its_stopped_child);
+ATF_TC_HEAD(parent_attach_to_its_stopped_child, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Assert that tracer parent can PT_ATTACH to its stopped child");
+}
+
+ATF_TC_BODY(parent_attach_to_its_stopped_child, tc)
+{
+
+	parent_attach_to_its_child(true);
 }
 
 /// ----------------------------------------------------------------------------
@@ -5670,6 +5700,7 @@ ATF_TP_ADD_TCS(tp)
 		unrelated_tracer_sees_terminaton_before_the_parent);
 
 	ATF_TP_ADD_TC(tp, parent_attach_to_its_child);
+	ATF_TP_ADD_TC(tp, parent_attach_to_its_stopped_child);
 
 	ATF_TP_ADD_TC(tp, child_attach_to_its_parent);
 	ATF_TP_ADD_TC(tp, child_attach_to_its_stopped_parent);
