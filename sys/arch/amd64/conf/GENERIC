@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.501 2018/08/12 17:59:21 sevan Exp $
+# $NetBSD: GENERIC,v 1.502 2018/08/13 17:37:52 mrg Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.501 $"
+#ident		"GENERIC-$Revision: 1.502 $"
 
 maxusers	64		# estimated number of users
 
@@ -911,186 +911,7 @@ usb*	at ohci?
 usb*	at uhci?
 usb*	at slhci?
 
-# USB Hubs
-uhub*	at usb?
-uhub*	at uhub? port ?
-
-# USB HID device
-uhidev* at uhub? port ? configuration ? interface ?
-
-# USB Mice
-ums*	at uhidev? reportid ?
-wsmouse* at ums? mux 0
-
-# USB Touchscreens
-uts*	at uhidev? reportid ?
-wsmouse* at uts? mux 0
-
-# USB eGalax touch-panel
-uep*	at uhub? port ?
-wsmouse* at uep? mux 0
-
-# USB Keyboards
-ukbd*	at uhidev? reportid ?
-wskbd*	at ukbd? console ? mux 1
-
-# USB serial adapter
-ucycom* at uhidev? reportid ?
-
-# USB Generic HID devices
-uhid*	at uhidev? reportid ?
-
-# USB LCDs and USB-VGA adaptors
-udl*	at uhub? port ?		# DisplayLink DL-1x0/1x5
-wsdisplay* at udl?
-
-# USB Printer
-ulpt*	at uhub? port ? configuration ? interface ?
-
-# USB Modem
-umodem* at uhub? port ? configuration ?
-ucom*	at umodem?
-
-# Option N.V. Wireless WAN modems
-uhso*	at uhub? port ? configuration ?
-
-# USB Mass Storage
-umass*	at uhub? port ? configuration ? interface ?
-wd* at umass?
-
-# USB audio
-uaudio* at uhub? port ? configuration ?
-uaudio* at usbifif?
-
-# USB MIDI
-umidi*	at uhub? port ? configuration ?
-
-# USB IrDA
-# USB-IrDA bridge spec
-uirda*	at uhub? port ? configuration ? interface ?
-irframe* at uirda?
-
-stuirda* at uhub? port ? configuration ? interface ?
-irframe* at stuirda?
-
-# SigmaTel STIr4200 USB/IrDA Bridge
-ustir*	at uhub? port ?
-irframe* at ustir?
-
-# KingSun/DonShine USB/IrDA Bridge
-udsir*	at uhub? port ?
-irframe* at udsir?
-
-# Windows Media Center IR transceiver
-irmce*	at uhub? port ?
-cir*	at irmce?
-
-# USB Ethernet adapters
-aue*	at uhub? port ?		# ADMtek AN986 Pegasus based adapters
-axe*	at uhub? port ?		# ASIX AX88172 based adapters
-axen*	at uhub? port ?		# ASIX AX88178a/AX88179 based adapters
-cdce*	at uhub? port ?		# CDC, Ethernet Networking Control Model
-cue*	at uhub? port ?		# CATC USB-EL1201A based adapters
-kue*	at uhub? port ?		# Kawasaki LSI KL5KUSB101B based adapters
-#mos*	at uhub? port ?		# Moschip MCS7730/MCS7830/MCS7832 based adapters
-udav*	at uhub? port ?		# Davicom DM9601 based adapters
-#umb*	at uhub? port ?		# Mobile Broadband Interface Model (EXPERIMENTAL)
-url*	at uhub? port ?		# Realtek RTL8150L based adapters
-urndis* at uhub? port ? 	# Microsoft RNDIS specification
-
-# Prolific PL2301/PL2302 host-to-host adapter
-upl*	at uhub? port ?
-
-# Serial adapters
-ubsa*	at uhub? port ?		# Belkin serial adapter
-ucom*	at ubsa? portno ?
-
-uchcom* at uhub? port ? 	# WinChipHead CH341/CH340 serial adapter
-ucom*	at uchcom? portno ?
-
-uftdi*	at uhub? port ?		# FTDI FT8U100AX serial adapter
-ucom*	at uftdi? portno ?
-
-uipaq*	at uhub? port ?		# iPAQ PDAs
-ucom*	at uipaq? portno ?
-
-umct*	at uhub? port ?		# MCT USB-RS232 serial adapter
-ucom*	at umct? portno ?
-
-uplcom* at uhub? port ? 	# I/O DATA USB-RSAQ2 serial adapter
-ucom*	at uplcom? portno ?
-
-uslsa*	at uhub? port ?		# Silicon Labs USB-RS232 serial adapter
-ucom*	at uslsa? portno ?
-
-uvscom* at uhub? port ? 	# SUNTAC Slipper U VS-10U serial adapter
-ucom*	at uvscom? portno ?
-
-# RIM BlackBerry
-uberry* at uhub? port ?
-
-# Apple iPad
-uipad* at uhub? port ?
-
-# Diamond Multimedia Rio 500
-urio*	at uhub? port ?
-
-# USB Handspring Visor
-uvisor* at uhub? port ?
-ucom*	at uvisor?
-
-# Kyocera AIR-EDGE PHONE
-ukyopon* at uhub? port ?
-ucom*	at ukyopon? portno ?
-
-# USB scanners
-#uscanner* at uhub? port ?
-
-# USB 802.11 adapters
-athn*	at uhub? port ?		# Atheros AR9002U
-atu*	at uhub? port ?		# Atmel at76c50x 802.11b
-otus*	at uhub? port ?		# Atheros AR9001U
-ural*	at uhub? port ?		# Ralink Technology RT2500USB 802.11a/b/g
-rum*	at uhub? port ?		# Ralink Technology RT2501/RT2601 802.11a/b/g
-run*	at uhub? port ?		# Ralink Technology RT(2[78]|30)00 802.11a/b/g/n
-urtw*	at uhub? port ?		# Realtek RTL8187/RTL8187B 802.11b/g
-urtwn*	at uhub? port ?		# Realtek RTL8188CU/RTL8192CU 802.11b/g/n
-zyd*	at uhub? port ?		# Zydas ZD1211
-bwfm*	at uhub? port ?		# Broadcom FullMAC
-
-# USB scanners that use SCSI emulation, e.g., HP5300
-usscanner* at uhub? port ?
-
-# Topfield TF5000PVR range of DVB recorders
-utoppy* at uhub? port ?
-
-# Y@P firmware loader
-uyap*	at uhub? port ?
-
-# D-Link DSB-R100 USB radio
-udsbr*	at uhub? port ?
-radio*	at udsbr?
-
-# USB Generic driver
-ugen*	at uhub? port ?
-
-# USB 3G datacards
-umodeswitch* at uhub? port ?
-u3g*	at uhub? port ?
-ucom*	at u3g?
-
-# USB generic serial port (e.g., data over cellular)
-ugensa* at uhub? port ?
-ucom*	at ugensa?
-
-# Araneus Alea I/II TRNG
-#ualea* at uhub? port ? configuration ? interface ?
-
-# IrDA and Consumer Ir devices
-
-# Toshiba Oboe
-#oboe*	at pci? dev ? function ?	# broken -- vtophys
-#irframe* at oboe?
+include "dev/usb/usbdevices.config"
 
 # PCI IEEE1394 controllers
 fwohci* at pci? dev ? function ?	# IEEE1394 Open Host Controller
@@ -1163,13 +984,8 @@ midi*	at pcppi?		# MIDI interface to the PC speaker
 
 # Video capture devices
 
-auvitek* at uhub?			# Auvitek AU0828 USB TV
 coram*	at pci? dev ? function ?	# Conexant CX23885 PCI-E TV
 cxdtv*	at pci? dev ? function ?	# Conexant CX2388[0-3] PCI TV
-emdtv*	at uhub?			# Empia EM28xx USB TV
-cir*	at emdtv?
-pseye*	at uhub?			# Sony PLAYSTATION(R) Eye webcam
-uvideo* at uhub?			# USB Video Class capture devices
 
 video*	at videobus?			# Analog capture interface
 dtv*	at dtvbus?			# Digital capture interface
