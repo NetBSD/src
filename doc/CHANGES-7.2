@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.2,v 1.1.2.103 2018/08/11 13:36:49 martin Exp $
+# $NetBSD: CHANGES-7.2,v 1.1.2.104 2018/08/13 16:15:44 martin Exp $
 
 A complete list of changes from the NetBSD 7.1 release to the NetBSD 7.2
 release:
@@ -5955,4 +5955,45 @@ sys/dev/pci/pcireg.h				patch
 	- Lowercase hexadecimal values.
 	- KNF.
 	[msaitoh, #1628]
+
+sbin/gpt/gpt_private.h                          up to 1.2
+sbin/gpt/header.c                               up to 1.9
+sbin/gpt/main.c                                 up to 1.11
+sbin/gpt/drvctl.c				delete
+sbin/gpt/Makefile				up to 1.18
+sbin/gpt/add.c					up to 1.44
+sbin/gpt/backup.c				up to 1.18
+sbin/gpt/biosboot.c				up to 1.30
+sbin/gpt/create.c				up to 1.23
+sbin/gpt/destroy.c				up to 1.10
+sbin/gpt/gpt.8					up to 1.63
+sbin/gpt/gpt.c					up to 1.75
+sbin/gpt/gpt.h					up to 1.38
+sbin/gpt/gpt_uuid.c				up to 1.15
+sbin/gpt/gpt_uuid.h				up to 1.7
+sbin/gpt/label.c				up to 1.29
+sbin/gpt/map.c					up to 1.14
+sbin/gpt/map.h					up to 1.6
+sbin/gpt/migrate.c				up to 1.33
+sbin/gpt/recover.c				up to 1.18
+sbin/gpt/remove.c				up to 1.22
+sbin/gpt/resize.c				up to 1.23
+sbin/gpt/resizedisk.c				up to 1.17
+sbin/gpt/restore.c				up to 1.18
+sbin/gpt/set.c					up to 1.14
+sbin/gpt/show.c 				up to 1.41
+sbin/gpt/type.c 				up to 1.15
+sbin/gpt/unset.c				up to 1.14
+
+	Many changes including to gpt(8):
+	-  Add the ability to set the active flag in the PMBR
+	- Let individual commands decide if ioctl(DIOCMWEDGES) should be done
+	- Add a "header" subcommand that displays information about the size
+	  of the disk along with information from the GPT header if it exists
+	- Add listing commands for type, set and unset
+	- Add help and formatting for set and unset
+	- Change show to print all the attribute info in one line.
+	- Improve documentation, including booting and exit status
+	- Check device parameter to avoid segfaults
+	[sborrill, #1629]
 
