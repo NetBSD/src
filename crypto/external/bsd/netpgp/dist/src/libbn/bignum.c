@@ -575,7 +575,7 @@ mp_init_size (mp_int * a, int size)
 }
 
 /* creates "a" then copies b into it */
-static int mp_init_copy (mp_int * a, mp_int * b)
+static int mp_init_copy (mp_int * a, const mp_int * b)
 {
   int     res;
 
@@ -587,9 +587,9 @@ static int mp_init_copy (mp_int * a, mp_int * b)
 
 /* low level addition, based on HAC pp.594, Algorithm 14.7 */
 static int
-s_mp_add (mp_int * a, mp_int * b, mp_int * c)
+s_mp_add (const mp_int * a, const mp_int * b, mp_int * c)
 {
-  mp_int *x;
+  const mp_int *x;
   int     olduse, res, min, max;
 
   /* find sizes, we let |a| <= |b| which means we have to sort
@@ -617,7 +617,8 @@ s_mp_add (mp_int * a, mp_int * b, mp_int * c)
   c->used = max + 1;
 
   {
-    mp_digit u, *tmpa, *tmpb, *tmpc;
+    const mp_digit *tmpa, *tmpb;
+    mp_digit u, *tmpc;
     int i;
 
     /* alias for digit pointers */
@@ -675,7 +676,7 @@ s_mp_add (mp_int * a, mp_int * b, mp_int * c)
 
 /* low level subtraction (assumes |a| > |b|), HAC pp.595 Algorithm 14.9 */
 static int
-s_mp_sub (mp_int * a, mp_int * b, mp_int * c)
+s_mp_sub (const mp_int * a, const mp_int * b, mp_int * c)
 {
   int     olduse, res, min, max;
 
@@ -693,7 +694,8 @@ s_mp_sub (mp_int * a, mp_int * b, mp_int * c)
   c->used = max;
 
   {
-    mp_digit u, *tmpa, *tmpb, *tmpc;
+    const mp_digit *tmpa, *tmpb;
+    mp_digit u, *tmpc;
     int i;
 
     /* alias for digit pointers */
@@ -742,7 +744,7 @@ s_mp_sub (mp_int * a, mp_int * b, mp_int * c)
 
 /* high level subtraction (handles signs) */
 static int
-mp_sub (mp_int * a, mp_int * b, mp_int * c)
+mp_sub (const mp_int * a, const mp_int * b, mp_int * c)
 {
   int     sa, sb, res;
 
@@ -831,9 +833,10 @@ static int mp_rshd (mp_int * a, int b)
 
 /* multiply by a digit */
 static int
-mp_mul_d (mp_int * a, mp_digit b, mp_int * c)
+mp_mul_d (const mp_int * a, mp_digit b, mp_int * c)
 {
-  mp_digit u, *tmpa, *tmpc;
+  const mp_digit *tmpa;
+  mp_digit u, *tmpc;
   mp_word  r;
   int      ix, res, olduse;
 
@@ -888,7 +891,7 @@ mp_mul_d (mp_int * a, mp_digit b, mp_int * c)
 }
 
 /* high level addition (handles signs) */
-static int mp_add (mp_int * a, mp_int * b, mp_int * c)
+static int mp_add (const mp_int * a, const mp_int * b, mp_int * c)
 {
   int     sa, sb, res;
 
@@ -933,7 +936,7 @@ mp_exch(mp_int *a, mp_int *b)
 
 /* calc a value mod 2**b */
 static int
-mp_mod_2d (mp_int * a, int b, mp_int * c)
+mp_mod_2d (const mp_int * a, int b, mp_int * c)
 {
   int     x, res;
 
@@ -966,7 +969,7 @@ mp_mod_2d (mp_int * a, int b, mp_int * c)
 }
 
 /* shift right by a certain bit count (store quotient in c, optional remainder in d) */
-static int mp_div_2d (mp_int * a, int b, mp_int * c, mp_int * d)
+static int mp_div_2d (const mp_int * a, int b, mp_int * c, mp_int * d)
 {
   mp_digit D, r, rr;
   int     x, res;
@@ -1055,7 +1058,7 @@ static int mp_div_2d (mp_int * a, int b, mp_int * c, mp_int * d)
  * 14.20 from HAC but fixed to treat these cases.
 */
 static int
-mp_div(mp_int *c, mp_int *d, mp_int *a, mp_int *b)
+mp_div(mp_int *c, mp_int *d, const mp_int *a, const mp_int *b)
 {
   mp_int  q, x, y, t1, t2;
   int     res, n, t, i, norm, neg;
@@ -1240,7 +1243,7 @@ LBL_Q:mp_clear (&q);
 
 /* c = a mod b, 0 <= c < b */
 static int
-mp_mod (mp_int * a, mp_int * b, mp_int * c)
+mp_mod (const mp_int * a, const mp_int * b, mp_int * c)
 {
   mp_int  t;
   int     res;
@@ -1274,7 +1277,7 @@ static void mp_set (mp_int * a, mp_digit b)
 }
 
 /* b = a/2 */
-static int mp_div_2(mp_int * a, mp_int * b)
+static int mp_div_2(const mp_int * a, mp_int * b)
 {
   int     x, res, oldused;
 
@@ -1321,7 +1324,7 @@ static int mp_div_2(mp_int * a, mp_int * b)
 }
 
 /* compare a digit */
-static int mp_cmp_d(mp_int * a, mp_digit b)
+static int mp_cmp_d(const mp_int * a, mp_digit b)
 {
   /* compare based on sign */
   if (a->sign == MP_NEG) {
@@ -1362,7 +1365,7 @@ static void mp_clear_multi(mp_int *mp, ...)
  * odd as per HAC Note 14.64 on pp. 610
  */
 static int
-fast_mp_invmod (mp_int * a, mp_int * b, mp_int * c)
+fast_mp_invmod (const mp_int * a, const mp_int * b, mp_int * c)
 {
   mp_int  x, y, u, v, B, D;
   int     res, neg;
@@ -1485,7 +1488,7 @@ LBL_ERR:mp_clear_multi (&x, &y, &u, &v, &B, &D, NULL);
 
 /* hac 14.61, pp608 */
 static int
-mp_invmod_slow (mp_int * a, mp_int * b, mp_int * c)
+mp_invmod_slow (const mp_int * a, const mp_int * b, mp_int * c)
 {
   mp_int  x, y, u, v, A, B, C, D;
   int     res;
@@ -1639,7 +1642,7 @@ LBL_ERR:mp_clear_multi (&x, &y, &u, &v, &A, &B, &C, &D, NULL);
 }
 
 static int
-mp_invmod(mp_int *c, mp_int *a, mp_int *b)
+mp_invmod(mp_int *c, const mp_int *a, const mp_int *b)
 {
   /* b cannot be negative */
   if (b->sign == MP_NEG || BN_is_zero(b) == 1) {
@@ -1662,7 +1665,7 @@ mp_invmod(mp_int *c, mp_int *a, mp_int *b)
  * Simple function copies the input and fixes the sign to positive
  */
 static int
-mp_abs (mp_int * a, mp_int * b)
+mp_abs (const mp_int * a, mp_int * b)
 {
   int     res;
 
@@ -1680,7 +1683,7 @@ mp_abs (mp_int * a, mp_int * b)
 }
 
 /* determines if reduce_2k_l can be used */
-static int mp_reduce_is_2k_l(mp_int *a)
+static int mp_reduce_is_2k_l(const mp_int *a)
 {
    int ix, iy;
    
@@ -5161,7 +5164,7 @@ getbn(BIGNUM **a, const char *str, int radix)
 
 /* d = a - b (mod c) */
 static int
-mp_submod(mp_int *a, mp_int *b, mp_int *c, mp_int *d)
+mp_submod(const mp_int *a, const mp_int *b, mp_int *c, mp_int *d)
 {
   int     res;
   mp_int  t;
