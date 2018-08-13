@@ -1,4 +1,4 @@
-/* $NetBSD: if_pppoe.c,v 1.141 2018/06/26 06:48:02 msaitoh Exp $ */
+/* $NetBSD: if_pppoe.c,v 1.142 2018/08/13 09:29:13 maxv Exp $ */
 
 /*-
  * Copyright (c) 2002, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.141 2018/06/26 06:48:02 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.142 2018/08/13 09:29:13 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "pppoe.h"
@@ -1329,32 +1329,33 @@ static int
 pppoe_send_padi(struct pppoe_softc *sc)
 {
 	struct mbuf *m0;
-	int len, l1 = 0, l2 = 0; /* XXX: gcc */
+	int len, l1 = 0, l2 = 0;
 	uint8_t *p;
 
-	if (sc->sc_state >PPPOE_STATE_PADI_SENT)
+	if (sc->sc_state > PPPOE_STATE_PADI_SENT)
 		panic("pppoe_send_padi in state %d", sc->sc_state);
 
-	/* calculate length of frame (excluding ethernet header + pppoe header) */
-	len = 2 + 2 + 2 + 2 + sizeof sc;	/* service name tag is required, host unique is send too */
+	/* Compute packet length. */
+	len = sizeof(struct pppoetag);
 	if (sc->sc_service_name != NULL) {
 		l1 = strlen(sc->sc_service_name);
 		len += l1;
 	}
 	if (sc->sc_concentrator_name != NULL) {
 		l2 = strlen(sc->sc_concentrator_name);
-		len += 2 + 2 + l2;
+		len += sizeof(struct pppoetag) + l2;
 	}
+	len += sizeof(struct pppoetag) + sizeof(sc);
 	if (sc->sc_sppp.pp_if.if_mtu > PPPOE_MAXMTU) {
-		len += 2 + 2 + 2;
+		len += sizeof(struct pppoetag) + 2;
 	}
 
-	/* allocate a buffer */
-	m0 = pppoe_get_mbuf(len + PPPOE_HEADERLEN);	/* header len + payload len */
-	if (!m0)
+	/* Allocate packet. */
+	m0 = pppoe_get_mbuf(len + PPPOE_HEADERLEN);
+	if (m0 == NULL)
 		return ENOBUFS;
 
-	/* fill in pkt */
+	/* Fill in packet. */
 	p = mtod(m0, uint8_t *);
 	PPPOE_ADD_HEADER(p, PPPOE_CODE_PADI, 0, len);
 	PPPOE_ADD_16(p, PPPOE_TAG_SNAME);
@@ -1373,7 +1374,7 @@ pppoe_send_padi(struct pppoe_softc *sc)
 	}
 	PPPOE_ADD_16(p, PPPOE_TAG_HUNIQUE);
 	PPPOE_ADD_16(p, sizeof(sc));
-	memcpy(p, &sc, sizeof sc);
+	memcpy(p, &sc, sizeof(sc));
 	p += sizeof(sc);
 
 	if (sc->sc_sppp.pp_if.if_mtu > PPPOE_MAXMTU) {
@@ -1388,7 +1389,7 @@ pppoe_send_padi(struct pppoe_softc *sc)
 		    (long)(len + PPPOE_HEADERLEN), (long)(p - mtod(m0, uint8_t *)));
 #endif
 
-	/* send pkt */
+	/* Send packet. */
 	return pppoe_output(sc, m0);
 }
 
@@ -1598,32 +1599,39 @@ pppoe_abort_connect(struct pppoe_softc *sc)
 	sc->sc_state = PPPOE_STATE_INITIAL;
 }
 
-/* Send a PADR packet */
 static int
 pppoe_send_padr(struct pppoe_softc *sc)
 {
 	struct mbuf *m0;
 	uint8_t *p;
-	size_t len, l1 = 0; /* XXX: gcc */
+	size_t len, l1 = 0;
 
 	if (sc->sc_state != PPPOE_STATE_PADR_SENT)
 		return EIO;
 
-	len = 2 + 2 + 2 + 2 + sizeof(sc);		/* service name, host unique */
-	if (sc->sc_service_name != NULL) {		/* service name tag maybe empty */
+	/* Compute packet length. */
+	len = sizeof(struct pppoetag);
+	if (sc->sc_service_name != NULL) {
 		l1 = strlen(sc->sc_service_name);
 		len += l1;
 	}
-	if (sc->sc_ac_cookie_len > 0)
-		len += 2 + 2 + sc->sc_ac_cookie_len;	/* AC cookie */
-	if (sc->sc_relay_sid_len > 0)
-		len += 2 + 2 + sc->sc_relay_sid_len;	/* Relay SID */
-	if (sc->sc_sppp.pp_if.if_mtu > PPPOE_MAXMTU) {
-		len += 2 + 2 + 2;
+	if (sc->sc_ac_cookie_len > 0) {
+		len += sizeof(struct pppoetag) + sc->sc_ac_cookie_len;
 	}
+	if (sc->sc_relay_sid_len > 0) {
+		len += sizeof(struct pppoetag) + sc->sc_relay_sid_len;
+	}
+	len += sizeof(struct pppoetag) + sizeof(sc);
+	if (sc->sc_sppp.pp_if.if_mtu > PPPOE_MAXMTU) {
+		len += sizeof(struct pppoetag) + 2;
+	}
+
+	/* Allocate packet. */
 	m0 = pppoe_get_mbuf(len + PPPOE_HEADERLEN);
-	if (!m0)
+	if (m0 == NULL)
 		return ENOBUFS;
+
+	/* Fill in packet. */
 	p = mtod(m0, uint8_t *);
 	PPPOE_ADD_HEADER(p, PPPOE_CODE_PADR, 0, len);
 	PPPOE_ADD_16(p, PPPOE_TAG_SNAME);
@@ -1648,7 +1656,7 @@ pppoe_send_padr(struct pppoe_softc *sc)
 	}
 	PPPOE_ADD_16(p, PPPOE_TAG_HUNIQUE);
 	PPPOE_ADD_16(p, sizeof(sc));
-	memcpy(p, &sc, sizeof sc);
+	memcpy(p, &sc, sizeof(sc));
 	p += sizeof(sc);
 
 	if (sc->sc_sppp.pp_if.if_mtu > PPPOE_MAXMTU) {
@@ -1663,6 +1671,7 @@ pppoe_send_padr(struct pppoe_softc *sc)
 			(long)(len + PPPOE_HEADERLEN), (long)(p - mtod(m0, uint8_t *)));
 #endif
 
+	/* Send packet. */
 	return pppoe_output(sc, m0);
 }
 
