@@ -1,4 +1,4 @@
-/*	$NetBSD: biosboot.c,v 1.7.4.1 2015/06/02 19:49:38 snj Exp $ */
+/*	$NetBSD: biosboot.c,v 1.7.4.2 2018/08/13 16:12:12 martin Exp $ */
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -37,17 +37,21 @@
 
 #include <sys/cdefs.h>
 #ifdef __RCSID
-__RCSID("$NetBSD: biosboot.c,v 1.7.4.1 2015/06/02 19:49:38 snj Exp $");
+__RCSID("$NetBSD: biosboot.c,v 1.7.4.2 2018/08/13 16:12:12 martin Exp $");
 #endif
 
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/ioctl.h>
-#ifdef DIOCGWEDGEINFO
-#include <sys/disk.h>
-#endif
 #include <sys/param.h>
 #include <sys/bootblock.h>
+
+#if defined(DIOCGWEDGEINFO) && !defined(HAVE_NBTOOL_CONFIG_H)
+#define USE_WEDGES
+#endif
+#ifdef USE_WEDGES
+#include <sys/disk.h>
+#endif
 
 #include <err.h>
 #include <fcntl.h>
@@ -60,120 +64,128 @@ __RCSID("$NetBSD: biosboot.c,v 1.7.4.1 2015/06/02 19:49:38 snj Exp $");
 
 #include "map.h"
 #include "gpt.h"
+#include "gpt_private.h"
 
 #define DEFAULT_BOOTDIR		"/usr/mdec"
 #define DEFAULT_BOOTCODE	"gptmbr.bin"
 
-static daddr_t start;
-static uint64_t size;
+static int cmd_biosboot(gpt_t, int, char *[]);
 
-static char *bootpath;
-static unsigned int entry;
-static uint8_t *label;
+static const char *biosboothelp[] = {
+	"[-A] [-c bootcode] [-i index] [-L label]",
+#if notyet
+	"[-a alignment] [-b blocknr] [-i index] [-l label]",
+	"[-s size] [-t type]",
+#endif
+};
 
-const char biosbootmsg[] = "biosboot [-c bootcode] [-i index] "
-	"[-L label] device ...";
+struct gpt_cmd c_biosboot = {
+	"biosboot",
+	cmd_biosboot,
+	biosboothelp, __arraycount(biosboothelp),
+	0,
+};
 
-__dead static void
-usage_biosboot(void)
-{
-	fprintf(stderr, "usage: %s %s\n", getprogname(), biosbootmsg);
-	exit(1);
-}
+#define usage() gpt_usage(NULL, &c_biosboot)
 
 static struct mbr*
-read_boot(void)
+read_boot(gpt_t gpt, const char *bootpath)
 {
-	int bfd, ret = 0;
+	int bfd, ret = -1;
 	struct mbr *buf;
 	struct stat st;
+	char *bp;
 
-	/* XXX how to do the following better? */
-	if (bootpath == NULL) {
-		bootpath = strdup(DEFAULT_BOOTDIR "/" DEFAULT_BOOTCODE);
-	} else {
-		if (strchr(bootpath, '/') == 0) {
-			char *p;
-			if ((p = strdup(bootpath)) == NULL)
-				err(1, "Malloc failed");
-			free(bootpath);
-			(void)asprintf(&bootpath, "%s/%s", DEFAULT_BOOTDIR, p);
-			free(p);
-		}
-	}
+	buf = NULL;
+	bfd = -1;
+
 	if (bootpath == NULL)
-		err(1, "Malloc failed");
+		bp = strdup(DEFAULT_BOOTDIR "/" DEFAULT_BOOTCODE);
+	else if (*bootpath == '/')
+		bp = strdup(bootpath);
+	else {
+		if (asprintf(&bp, "%s/%s", DEFAULT_BOOTDIR, bootpath) < 0)
+			bp = NULL;
+	}
 
-	if ((buf = malloc((size_t)secsz)) == NULL)
-		err(1, "Malloc failed");
+	if (bp == NULL) {
+		gpt_warn(gpt, "Can't allocate memory for bootpath");
+		goto fail;
+	}
 
-	if ((bfd = open(bootpath, O_RDONLY)) < 0 || fstat(bfd, &st) == -1) {
-		warn("%s", bootpath);
+	if ((buf = malloc((size_t)gpt->secsz)) == NULL) {
+		gpt_warn(gpt, "Can't allocate memory for sector");
+		goto fail;
+	}
+
+
+	if ((bfd = open(bp, O_RDONLY)) < 0 || fstat(bfd, &st) == -1) {
+		gpt_warn(gpt, "Can't open `%s'", bp);
 		goto fail;
 	}
 
 	if (st.st_size != MBR_DSN_OFFSET) {
-		warnx("%s: the bootcode does not match expected size",
-			bootpath);
+		gpt_warnx(gpt, "The bootcode in `%s' does not match the"
+		    " expected size %u", bp, MBR_DSN_OFFSET);
 		goto fail;
 	}
 
-	if (read(bfd, buf, st.st_size) != st.st_size) {
-		warn("%s", bootpath);
+	if (read(bfd, buf, (size_t)st.st_size) != (ssize_t)st.st_size) {
+		gpt_warn(gpt, "Error reading from `%s'", bp);
 		goto fail;
 	}
 
-	ret++;
-
-    fail:
-	if (bfd >= 0)
+	ret = 0;
+fail:
+	if (bfd != -1)
 		close(bfd);
-	if (ret == 0) {
+	if (ret == -1) {
 		free(buf);
 		buf = NULL;
 	}
+	free(bp);
 	return buf;
 }
 
-static void
-biosboot(int fd)
+static int
+set_bootable(gpt_t gpt, map_t map, map_t tbl, unsigned int i)
 {
-	map_t *gpt, *tpg;
-	map_t *tbl, *lbt;
-	map_t *mbrmap, *m;
-	struct mbr *mbr, *bootcode;
-	struct gpt_hdr *hdr;
+	unsigned int j;
+	struct gpt_hdr *hdr = map->map_data;
 	struct gpt_ent *ent;
-	unsigned int i, j;
+	unsigned int ne = le32toh(hdr->hdr_entries);
+
+	for (j = 0; j < ne; j++) {
+		ent = gpt_ent(map, tbl, j);
+		ent->ent_attr &= ~GPT_ENT_ATTR_LEGACY_BIOS_BOOTABLE;
+	}
+
+	ent = gpt_ent(map, tbl, i);
+	ent->ent_attr |= GPT_ENT_ATTR_LEGACY_BIOS_BOOTABLE;
+
+	return gpt_write_crc(gpt, map, tbl);
+}
+
+static int
+biosboot(gpt_t gpt, daddr_t start, uint64_t size, u_int entry, uint8_t *label,
+    const char *bootpath, int active)
+{
+	map_t mbrmap, m;
+	struct mbr *mbr, *bootcode;
+	unsigned int i;
+	struct gpt_ent *ent;
+	uint8_t utfbuf[__arraycount(ent->ent_name) * 3 + 1];
 
 	/*
 	 * Parse and validate partition maps
 	 */
-	gpt = map_find(MAP_TYPE_PRI_GPT_HDR);
-	if (gpt == NULL) {
-		warnx("%s: error: no primary GPT header; run create or recover",
-		    device_name);
-		return;
-	}
+	if (gpt_hdr(gpt) == NULL)
+		return -1;
 
-	tpg = map_find(MAP_TYPE_SEC_GPT_HDR);
-	if (tpg == NULL) {
-		warnx("%s: error: no secondary GPT header; run recover",
-		    device_name);
-		return;
-	}
-
-	tbl = map_find(MAP_TYPE_PRI_GPT_TBL);
-	lbt = map_find(MAP_TYPE_SEC_GPT_TBL);
-	if (tbl == NULL || lbt == NULL) {
-		warnx("%s: error: run recover -- trust me", device_name);
-		return;
-	}
-
-	mbrmap = map_find(MAP_TYPE_PMBR);
+	mbrmap = map_find(gpt, MAP_TYPE_PMBR);
 	if (mbrmap == NULL || mbrmap->map_start != 0) {
-		warnx("%s: error: no valid Protective MBR found", device_name);
-		return;
+		gpt_warnx(gpt, "No valid Protective MBR found");
+		return -1;
 	}
 
 	mbr = mbrmap->map_data;
@@ -181,18 +193,22 @@ biosboot(int fd)
 	/*
 	 * Update the boot code
 	 */
-	if ((bootcode = read_boot()) == NULL) {
-		warnx("error reading bootcode");
-		return;
+	if ((bootcode = read_boot(gpt, bootpath)) == NULL) {
+		gpt_warnx(gpt, "Error reading bootcode");
+		return -1;
 	}
 	(void)memcpy(&mbr->mbr_code, &bootcode->mbr_code,
 		sizeof(mbr->mbr_code));
 	free(bootcode);
 
+	for (i = 0; i < __arraycount(mbr->mbr_part); i++)
+		if (mbr->mbr_part[i].part_typ == MBR_PTYPE_PMBR)
+			mbr->mbr_part[i].part_flag = active ? 0x80 : 0;
+
 	/*
 	 * Walk through the GPT and see where we can boot from
 	 */
-	for (m = map_first(); m != NULL; m = m->map_next) {
+	for (m = map_first(gpt); m != NULL; m = m->map_next) {
 		if (m->map_type != MAP_TYPE_GPT_PART || m->map_index < 1)
 			continue;
 
@@ -202,10 +218,13 @@ biosboot(int fd)
 		if (entry > 0 && m->map_index == entry)
 			break;
 
-		if (label != NULL)
-			if (strcmp((char *)label,
-			    (char *)utf16_to_utf8(ent->ent_name)) == 0)
+		if (label != NULL) {
+			utf16_to_utf8(ent->ent_name,
+			    __arraycount(ent->ent_name), utfbuf,
+			    __arraycount(utfbuf));
+			if (strcmp((char *)label, (char *)utfbuf) == 0)
 				break;
+		}
 
 		/* next, partition as could be specified by wedge */
 		if (entry < 1 && label == NULL && size > 0 &&
@@ -214,138 +233,93 @@ biosboot(int fd)
 	}
 
 	if (m == NULL) {
-		warnx("error: no bootable partition");
-		return;
+		gpt_warnx(gpt, "No bootable partition");
+		return -1;
 	}
 
 	i = m->map_index - 1;
 
 
-	hdr = gpt->map_data;
+	if (set_bootable(gpt, gpt->gpt, gpt->tbl, i) == -1)
+		return -1;
 
-	for (j = 0; j < le32toh(hdr->hdr_entries); j++) {
-		ent = (void*)((char*)tbl->map_data + j * le32toh(hdr->hdr_entsz));
-		ent->ent_attr &= ~GPT_ENT_ATTR_LEGACY_BIOS_BOOTABLE;
+	if (set_bootable(gpt, gpt->tpg, gpt->lbt, i) == -1)
+		return -1;
+
+	if (gpt_write(gpt, mbrmap) == -1) {
+		gpt_warnx(gpt, "Cannot update Protective MBR");
+		return -1;
 	}
 
-	ent = (void*)((char*)tbl->map_data + i * le32toh(hdr->hdr_entsz));
-	ent->ent_attr |= GPT_ENT_ATTR_LEGACY_BIOS_BOOTABLE;
-
-	hdr->hdr_crc_table = htole32(crc32(tbl->map_data,
-	    le32toh(hdr->hdr_entries) * le32toh(hdr->hdr_entsz)));
-	hdr->hdr_crc_self = 0;
-	hdr->hdr_crc_self = htole32(crc32(hdr, le32toh(hdr->hdr_size)));
-
-	gpt_write(fd, gpt);
-	gpt_write(fd, tbl);
-
-
-	hdr = tpg->map_data;
-
-	for (j = 0; j < le32toh(hdr->hdr_entries); j++) {
-		ent = (void*)((char*)lbt->map_data + j * le32toh(hdr->hdr_entsz));
-		ent->ent_attr &= ~GPT_ENT_ATTR_LEGACY_BIOS_BOOTABLE;
-	}
-
-	ent = (void*)((char*)lbt->map_data + i * le32toh(hdr->hdr_entsz));
-	ent->ent_attr |= GPT_ENT_ATTR_LEGACY_BIOS_BOOTABLE;
-
-	hdr->hdr_crc_table = htole32(crc32(lbt->map_data,
-	    le32toh(hdr->hdr_entries) * le32toh(hdr->hdr_entsz)));
-	hdr->hdr_crc_self = 0;
-	hdr->hdr_crc_self = htole32(crc32(hdr, le32toh(hdr->hdr_size)));
-
-	gpt_write(fd, lbt);
-	gpt_write(fd, tpg);
-
-
-	if (gpt_write(fd, mbrmap) == -1) {
-		warnx("error: cannot update Protective MBR");
-		return;
-	}
-
-	printf("partition %d marked as bootable\n", i + 1);
+	gpt_msg(gpt, "Partition %d marked as bootable", i + 1);
+	return 0;
 }
 
-int
-cmd_biosboot(int argc, char *argv[])
+static int
+cmd_biosboot(gpt_t gpt, int argc, char *argv[])
 {
-#ifdef DIOCGWEDGEINFO
+#ifdef USE_WEDGES
 	struct dkwedge_info dkw;
 #endif
-	struct stat sb;
-	char devpath[MAXPATHLEN];
-	char *dev, *p;
-	int ch, fd;
+	int ch;
+	gpt_t ngpt = gpt;
+	daddr_t start = 0;
+	uint64_t size = 0;
+	int active = 0;
+	unsigned int entry = 0;
+	uint8_t *label = NULL;
+	char *bootpath = NULL;
 
-	while ((ch = getopt(argc, argv, "c:i:L:")) != -1) {
+	while ((ch = getopt(argc, argv, "Ac:i:L:")) != -1) {
 		switch(ch) {
+		case 'A':
+			active = 1;
+			break;
 		case 'c':
-			if (bootpath != NULL)
-				usage_biosboot();
-			if ((bootpath = strdup(optarg)) == NULL)
-				err(1, "Malloc failed");
+			if (gpt_name_get(gpt, &bootpath) == -1)
+				goto usage;
 			break;
 		case 'i':
-			if (entry > 0)
-				usage_biosboot();
-			entry = strtoul(optarg, &p, 10);
-			if (*p != 0 || entry < 1)
-				usage_biosboot();
+			if (gpt_uint_get(gpt, &entry) == -1)
+				goto usage;
 			break;
 		case 'L':
-			if (label != NULL)
-				usage_biosboot();
-			label = (uint8_t *)strdup(optarg);
+			if (gpt_name_get(gpt, &label) == -1)
+				goto usage;
 			break;
 		default:
-			usage_biosboot();
+			goto usage;
 		}
 	}
 
-	if (argc == optind)
-		usage_biosboot();
+	if (argc != optind)
+		return usage();
 
-	while (optind < argc) {
-		dev = argv[optind++];
-		start = 0;
-		size = 0;
-
-		/*
-		 * If a dk wedge was specified, loader should be
-		 * installed onto parent device
-		 */
-		if ((fd = opendisk(dev, O_RDONLY, devpath, sizeof(devpath), 0))
-				== -1)
-			goto next;
-		if (fstat(fd, &sb) == -1)
-			goto close;
-
-#ifdef DIOCGWEDGEINFO
-		if ((sb.st_mode & S_IFMT) != S_IFREG &&
-		    ioctl(fd, DIOCGWEDGEINFO, &dkw) != -1) {
-			if (entry > 0)
-				/* wedges and indexes are mutually exclusive */
-				usage_biosboot();
-			dev = dkw.dkw_parent;
-			start = dkw.dkw_offset;
-			size = dkw.dkw_size;
-		}
+#ifdef USE_WEDGES
+	if ((gpt->sb.st_mode & S_IFMT) != S_IFREG &&
+	    ioctl(gpt->fd, DIOCGWEDGEINFO, &dkw) != -1) {
+		if (entry > 0)
+			/* wedges and indexes are mutually exclusive */
+			goto usage;
+		start = dkw.dkw_offset;
+		size = dkw.dkw_size;
+		ngpt = gpt_open(dkw.dkw_parent, gpt->flags, gpt->verbose,
+		    gpt->mediasz, gpt->secsz, gpt->timestamp);
+		if (ngpt == NULL)
+			goto cleanup;
+	}
 #endif
-	close:
-		close(fd);
-
-		fd = gpt_open(dev);
-	next:
-		if (fd == -1) {
-			warn("unable to open device '%s'", device_name);
-			continue;
-		}
-
-		biosboot(fd);
-
-		gpt_close(fd);
-	}
-
-	return (0);
+	if (biosboot(ngpt, start, size, entry, label, bootpath, active) == -1)
+		goto cleanup;
+	if (ngpt != gpt)
+		gpt_close(ngpt);
+	return 0;
+usage:
+	usage();
+cleanup:
+	if (ngpt != gpt)
+		gpt_close(ngpt);
+	free(bootpath);
+	free(label);
+	return -1;
 }

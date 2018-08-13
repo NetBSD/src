@@ -33,7 +33,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/add.c,v 1.14 2006/06/22 22:05:28 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: resize.c,v 1.8.6.1 2015/06/02 19:49:38 snj Exp $");
+__RCSID("$NetBSD: resize.c,v 1.8.6.2 2018/08/13 16:12:12 martin Exp $");
 #endif
 
 #include <sys/types.h>
@@ -47,222 +47,103 @@ __RCSID("$NetBSD: resize.c,v 1.8.6.1 2015/06/02 19:49:38 snj Exp $");
 
 #include "map.h"
 #include "gpt.h"
+#include "gpt_private.h"
 
-static off_t alignment, sectors, size;
-static unsigned int entry;
+static int cmd_resize(gpt_t, int, char *[]);
 
-const char resizemsg[] = "resize -i index [-a alignment] [-s size] device ...";
+static const char *resizehelp[] = {
+	"-i index [-a alignment] [-s size]",
+};
 
-__dead static void
-usage_resize(void)
+struct gpt_cmd c_resize = {
+	"resize",
+	cmd_resize,
+	resizehelp, __arraycount(resizehelp),
+	GPT_SYNC,
+};
+
+#define usage() gpt_usage(NULL, &c_resize)
+
+static int
+resize(gpt_t gpt, u_int entry, off_t alignment, off_t sectors, off_t size)
 {
-
-	fprintf(stderr,
-	    "usage: %s %s\n", getprogname(), resizemsg);
-	exit(1);
-}
-
-static void
-resize(int fd)
-{
-	map_t *gpt, *tpg;
-	map_t *tbl, *lbt;
-	map_t *map;
+	map_t map;
 	struct gpt_hdr *hdr;
 	struct gpt_ent *ent;
 	unsigned int i;
 	off_t alignsecs, newsize;
+	uint64_t end;
 	
 
-	gpt = map_find(MAP_TYPE_PRI_GPT_HDR);
-	ent = NULL;
-	if (gpt == NULL) {
-		warnx("%s: error: no primary GPT header; run create or recover",
-		    device_name);
-		return;
-	}
-
-	tpg = map_find(MAP_TYPE_SEC_GPT_HDR);
-	if (tpg == NULL) {
-		warnx("%s: error: no secondary GPT header; run recover",
-		    device_name);
-		return;
-	}
-
-	tbl = map_find(MAP_TYPE_PRI_GPT_TBL);
-	lbt = map_find(MAP_TYPE_SEC_GPT_TBL);
-	if (tbl == NULL || lbt == NULL) {
-		warnx("%s: error: run recover -- trust me", device_name);
-		return;
-	}
-
-	hdr = gpt->map_data;
-	if (entry > le32toh(hdr->hdr_entries)) {
-		warnx("%s: error: index %u out of range (%u max)", device_name,
-		    entry, le32toh(hdr->hdr_entries));
-		return;
-	}
+	if ((hdr = gpt_hdr(gpt)) == NULL)
+		return -1;
 
 	i = entry - 1;
-	ent = (void*)((char*)tbl->map_data + i *
-	    le32toh(hdr->hdr_entsz));
+	ent = gpt_ent_primary(gpt, i);
 	if (gpt_uuid_is_nil(ent->ent_type)) {
-		warnx("%s: error: entry at index %u is unused",
-		    device_name, entry);
-		return;
+		gpt_warnx(gpt, "Entry at index %u is unused", entry);
+		return -1;
 	}
 
-	alignsecs = alignment / secsz;
+	alignsecs = alignment / gpt->secsz;
 
-	for (map = map_first(); map != NULL; map = map->map_next) {
+	for (map = map_first(gpt); map != NULL; map = map->map_next) {
 		if (entry == map->map_index)
 			break;
 	}
 	if (map == NULL) {
-		warnx("%s: error: could not find map entry corresponding "
-		      "to index", device_name);
-		return;
+		gpt_warnx(gpt, "Could not find map entry corresponding "
+		    "to index");
+		return -1;
 	}
 
 	if (sectors > 0 && sectors == map->map_size)
 		if (alignment == 0 ||
 		    (alignment > 0 && sectors % alignsecs == 0)) {
 			/* nothing to do */
-			warnx("%s: partition does not need resizing",
-			    device_name);
-			return;
+			gpt_warnx(gpt, "partition does not need resizing");
+			return 0;
 		}
 
-	newsize = map_resize(map, sectors, alignsecs);
-	if (newsize == 0 && alignment > 0) {
-		warnx("%s: could not resize partition with alignment "
-		      "constraint", device_name);
-		return;
-	} else if (newsize == 0) {
-		warnx("%s: could not resize partition", device_name);
-		return;
-	}
+	newsize = map_resize(gpt, map, sectors, alignsecs);
+	if (newsize == -1)
+		return -1;
 
-	ent->ent_lba_end = htole64(map->map_start + newsize - 1LL);
+	end = htole64((uint64_t)(map->map_start + newsize - 1LL));
+	ent->ent_lba_end = end;
 
-	hdr->hdr_crc_table = htole32(crc32(tbl->map_data,
-	    le32toh(hdr->hdr_entries) * le32toh(hdr->hdr_entsz)));
-	hdr->hdr_crc_self = 0;
-	hdr->hdr_crc_self = htole32(crc32(hdr, le32toh(hdr->hdr_size)));
+	if (gpt_write_primary(gpt) == -1)
+		return -1;
 
-	gpt_write(fd, gpt);
-	gpt_write(fd, tbl);
+	ent = gpt_ent(gpt->gpt, gpt->lbt, i);
+	ent->ent_lba_end = end;
 
-	hdr = tpg->map_data;
-	ent = (void*)((char*)lbt->map_data + i * le32toh(hdr->hdr_entsz));
+	if (gpt_write_backup(gpt) == -1)
+		return -1;
 
-	ent->ent_lba_end = htole64(map->map_start + newsize - 1LL);
-
-	hdr->hdr_crc_table = htole32(crc32(lbt->map_data,
-	    le32toh(hdr->hdr_entries) * le32toh(hdr->hdr_entsz)));
-	hdr->hdr_crc_self = 0;
-	hdr->hdr_crc_self = htole32(crc32(hdr, le32toh(hdr->hdr_size)));
-
-	gpt_write(fd, lbt);
-	gpt_write(fd, tpg);
-
-	printf("Partition %d resized, use:\n", entry);
-	printf("\tdkctl %s addwedge <wedgename> %" PRIu64 " %" PRIu64
-	    " <type>\n", device_arg, map->map_start, newsize);
-	printf("to create a wedge for it\n");
-}
-
-int
-cmd_resize(int argc, char *argv[])
-{
-	char *p;
-	int ch, fd;
-	int64_t human_num;
-
-	while ((ch = getopt(argc, argv, "a:i:s:")) != -1) {
-		switch(ch) {
-		case 'a':
-			if (alignment > 0)
-				usage_resize();
-			if (dehumanize_number(optarg, &human_num) < 0)
-				usage_resize();
-			alignment = human_num;
-			if (alignment < 1)
-				usage_resize();
-			break;
-		case 'i':
-			if (entry > 0)
-				usage_resize();
-			entry = strtoul(optarg, &p, 10);
-			if (*p != 0 || entry < 1)
-				usage_resize();
-			break;
-		case 's':
-			if (sectors > 0 || size > 0)
-				usage_resize();
-			sectors = strtoll(optarg, &p, 10);
-			if (sectors < 1)
-				usage_resize();
-			if (*p == '\0')
-				break;
-			if (*p == 's' || *p == 'S') {
-				if (*(p + 1) == '\0')
-					break;
-				else
-					usage_resize();
-			}
-			if (*p == 'b' || *p == 'B') {
-				if (*(p + 1) == '\0') {
-					size = sectors;
-					sectors = 0;
-					break;
-				} else
-					usage_resize();
-			}
-			if (dehumanize_number(optarg, &human_num) < 0)
-				usage_resize();
-			size = human_num;
-			sectors = 0;
-			break;
-		default:
-			usage_resize();
-		}
-	}
-
-	if (argc == optind)
-		usage_resize();
-
-	if (entry == 0)
-		usage_resize();
-
-	while (optind < argc) {
-		fd = gpt_open(argv[optind++]);
-		if (fd == -1) {
-			warn("unable to open device '%s'", device_name);
-			continue;
-		}
-
-		if (alignment % secsz != 0) {
-			warnx("Alignment must be a multiple of sector size;");
-			warnx("the sector size for %s is %d bytes.",
-			    device_name, secsz);
-			continue;
-		}
-
-		if (size % secsz != 0) {
-			warnx("Size in bytes must be a multiple of sector "
-			      "size;");
-			warnx("the sector size for %s is %d bytes.",
-			    device_name, secsz);
-			continue;
-		}
-		if (size > 0)
-			sectors = size / secsz;
-
-		resize(fd);
-
-		gpt_close(fd);
-	}
+	gpt_msg(gpt, "Partition %d resized: %" PRIu64 " %" PRIu64, entry,
+	    map->map_start, newsize);
 
 	return 0;
+}
+
+static int
+cmd_resize(gpt_t gpt, int argc, char *argv[])
+{
+	int ch;
+	off_t alignment = 0, sectors, size = 0;
+	unsigned int entry = 0;
+
+	while ((ch = getopt(argc, argv, GPT_AIS)) != -1) {
+		if (gpt_add_ais(gpt, &alignment, &entry, &size, ch) == -1)
+			return usage();
+	}
+
+	if (argc != optind)
+		return usage();
+
+	if ((sectors = gpt_check_ais(gpt, alignment, entry, size)) == -1)
+		return -1;
+
+	return resize(gpt, entry, alignment, sectors, size);
 }
