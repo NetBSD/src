@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2217 2018/08/13 07:14:47 mrg Exp $
+#	$NetBSD: mi,v 1.2218 2018/08/13 08:26:49 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -3433,8 +3433,8 @@
 ./usr/lib/liblua_p.a				comp-c-proflib		compatfile,profile
 ./usr/lib/liblutok.a				comp-c-lib		compatfile,kyua
 ./usr/lib/liblutok_p.a				comp-c-proflib		compatfile,kyua,profile
-./usr/lib/liblwres.a				comp-bind-lib		compatfile,obsolete
-./usr/lib/liblwres_p.a				comp-bind-proflib	compatfile,profile,obsolete
+./usr/lib/liblwres.a				comp-obsolete		obsolete
+./usr/lib/liblwres_p.a				comp-obsolete		obsolete
 ./usr/lib/liblzf.a				comp-c-lib		compatfile
 ./usr/lib/liblzf_p.a				comp-c-proflib		compatfile,profile
 ./usr/lib/liblzma.a				comp-c-lib		compatfile
@@ -3853,7 +3853,7 @@
 ./usr/libdata/lint/llib-lldap.ln		comp-ldap-lintlib	lint,ldap
 ./usr/libdata/lint/llib-lldap_r.ln		comp-ldap-lintlib	lint,ldap
 ./usr/libdata/lint/llib-llua.ln			comp-c-lintlib		lint
-./usr/libdata/lint/llib-llwres.ln		comp-bind-lintlib	lint
+./usr/libdata/lint/llib-llwres.ln		comp-obsolete		obsolete
 ./usr/libdata/lint/llib-llzf.ln			comp-c-lintlib		lint
 ./usr/libdata/lint/llib-llzma.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lm.ln			comp-c-lintlib		lint
