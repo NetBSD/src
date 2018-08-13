@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.320 2018/08/13 07:14:47 mrg Exp $
+# $NetBSD: shl.mi,v 1.321 2018/08/13 08:26:49 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -86,7 +86,7 @@
 ./usr/lib/liblsan_pic.a				comp-c-piclib		compatfile,picinstall,gcc
 ./usr/lib/liblua_pic.a				comp-c-piclib		compatfile,picinstall
 ./usr/lib/liblutok_pic.a			comp-c-piclib		compatfile,picinstall,kyua
-./usr/lib/liblwres_pic.a			comp-bind-piclib	compatfile,picinstall,obsolete
+./usr/lib/liblwres_pic.a			comp-obsolete		obsolete
 ./usr/lib/liblzf_pic.a				comp-c-piclib		compatfile,picinstall
 ./usr/lib/liblzma_pic.a				comp-c-piclib		compatfile,picinstall
 ./usr/lib/libm_pic.a				comp-c-piclib		compatfile,picinstall
