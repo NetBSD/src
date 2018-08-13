@@ -1,4 +1,4 @@
-.\"	$NetBSD: sctp_send.3,v 1.1 2018/08/02 08:40:48 rjs Exp $
+.\"	$NetBSD: sctp_send.3,v 1.2 2018/08/13 06:00:21 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -57,7 +57,11 @@ system call
 is used to transmit a message to another SCTP endpoint.
 .Fn sctp_send
 may be used to send data to an existing association for both
-one-to-many (SOCK_SEQPACKET) and one-to-one (SOCK_STREAM) socket types.
+one-to-many
+.Dv ( SOCK_SEQPACKET )
+and one-to-one
+.Dv ( SOCK_STREAM )
+socket types.
 The length of the message
 .Fa msg
 is given by
@@ -67,12 +71,12 @@ underlying protocol,
 .Va errno
 is set to
 .Er EMSGSIZE ,
--1 is returned, and
+\-1 is returned, and
 the message is not transmitted.
 .Pp
 No indication of failure to deliver is implicit in a
 .Fn sctp_send .
-Locally detected errors are indicated by a return value of -1.
+Locally detected errors are indicated by a return value of \-1.
 .Pp
 If no space is available at the socket to hold
 the message to be transmitted, then
@@ -82,7 +86,9 @@ non-blocking I/O mode.
 The
 .Xr select 2
 system call may be used to determine when it is possible to
-send more data on one-to-one type (SOCK_STREAM) sockets.
+send more data on one-to-one type
+.Dv ( SOCK_STREAM )
+sockets.
 .Pp
 The
 .Fa sinfo
@@ -105,8 +111,8 @@ struct sctp_sndrcvinfo {
 The
 .Fa sinfo->sinfo_ppid
 argument is an opaque 32 bit value that is passed transparently
-through the stack to the peer endpoint. It will be available on
-reception of a message (see
+through the stack to the peer endpoint.
+It will be available on reception of a message (see
 .Xr sctp_recvmsg 3 ) .
 Note that the stack passes this value without regard to byte
 order.
@@ -162,7 +168,9 @@ this flag, the user is asking the stack to ignore the primary address
 and instead use the specified address not only as a lookup mechanism
 to find the association but also as the actual address to send to.
 .Pp
-For a one-to-many type (SOCK_SEQPACKET) socket the flag
+For a one-to-many type
+.Dv ( SOCK_SEQPACKET )
+socket the flag
 .Dv SCTP_SENDALL
 can be used as a convenient way to make one send call and have
 all associations that are under the socket get a copy of the message.
@@ -284,7 +292,7 @@ If both
 an address and an association id are specified, the association
 id has priority.
 .Sh RETURN VALUES
-The call returns the number of characters sent, or -1
+The call returns the number of characters sent, or \-1
 if an error occurred.
 .Sh ERRORS
 The
@@ -292,38 +300,39 @@ The
 system call
 fails if:
 .Bl -tag -width Er
+.It Bq Er EAGAIN
+The socket is marked non-blocking and the requested operation
+would block.
 .It Bq Er EBADF
 An invalid descriptor was specified.
+.It Bq Er ECONNRESET
+An abort was received by the stack while the user was
+attempting to send data to the peer.
+.It Bq Er EFAULT
+An invalid user space address was specified for an argument.
+.It Bq Er EHOSTUNREACH
+The remote host was unreachable.
+.It Bq Er EMSGSIZE
+The socket requires that message be sent atomically,
+and the size of the message to be sent made this impossible.
+.It Bq Er ENOBUFS
+The system was unable to allocate an internal buffer.
+The operation may succeed when buffers become available.
+This error is also returned when
+the output queue for a network interface was full.
+This generally indicates that the interface has stopped sending,
+but may be caused by transient congestion.
+.It Bq Er ENOENT
+On a one-to-many style socket no address is specified
+so that the association cannot be located or the
+.Dv SCTP_ABORT
+flag was specified on a non-existing association.
+.It Bq Er ENOTCONN
+On a one-to-one style socket no association exists.
 .It Bq Er ENOTSOCK
 The argument
 .Fa s
 is not a socket.
-.It Bq Er EFAULT
-An invalid user space address was specified for an argument.
-.It Bq Er EMSGSIZE
-The socket requires that message be sent atomically,
-and the size of the message to be sent made this impossible.
-.It Bq Er EAGAIN
-The socket is marked non-blocking and the requested operation
-would block.
-.It Bq Er ENOBUFS
-The system was unable to allocate an internal buffer.
-The operation may succeed when buffers become available.
-.It Bq Er ENOBUFS
-The output queue for a network interface was full.
-This generally indicates that the interface has stopped sending,
-but may be caused by transient congestion.
-.It Bq Er EHOSTUNREACH
-The remote host was unreachable.
-.It Bq Er ENOTCONN
-On a one-to-one style socket no association exists.
-.It Bq Er ECONNRESET
-An abort was received by the stack while the user was
-attempting to send data to the peer.
-.It Bq Er ENOENT
-On a one-to-many style socket no address is specified
-so that the association cannot be located or the
-SCTP_ABORT flag was specified on a non-existing association.
 .It Bq Er EPIPE
 The socket is unable to send anymore data
 .Dv ( SBS_CANTSENDMORE
@@ -337,7 +346,7 @@ is not connected and is a one-to-one style socket.
 .Xr select 2 ,
 .Xr sendmsg 2 ,
 .Xr socket 2 ,
-.Xr write 2
+.Xr write 2 ,
 .Xr sctp_connectx 3 ,
 .Xr sctp_recvmsg 3 ,
 .Xr sctp_sendmsg 3 ,
@@ -347,7 +356,7 @@ is not connected and is a one-to-one style socket.
 .%N 6458
 .%T "Sockets API Extensions for the Stream Control Transmission Protocol (SCTP)"
 .%D December 2011
-.Re 
+.Re
 .Sh HISTORY
 These functions first appeared in
 .Nx 9.0 .
