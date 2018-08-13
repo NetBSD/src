@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.h,v 1.11 2018/05/30 17:48:13 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_wait.h,v 1.12 2018/08/13 21:49:37 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -373,6 +373,34 @@ await_zombie(pid_t process)
 {
 
 	await_zombie_raw(process, 1000);
+}
+
+static void __used
+await_stopped(pid_t process)
+{
+	struct kinfo_proc2 p;
+	size_t len = sizeof(p);
+
+	const int name[] = {
+		[0] = CTL_KERN,
+		[1] = KERN_PROC2,
+		[2] = KERN_PROC_PID,
+		[3] = process,
+		[4] = sizeof(p),
+		[5] = 1
+	};
+
+	const size_t namelen = __arraycount(name);
+
+	/* Await the process becoming a zombie */
+	while(1) {
+		ATF_REQUIRE(sysctl(name, namelen, &p, &len, NULL, 0) == 0);
+
+		if (p.p_stat == LSSTOP)
+			break;
+
+		ATF_REQUIRE(usleep(1000) == 0);
+	}
 }
 
 static pid_t __used
