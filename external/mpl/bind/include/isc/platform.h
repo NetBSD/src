@@ -346,7 +346,11 @@
 /*
  * Define with the busy wait nop asm or function call.
  */
+#if defined(__x86_64__) || defined(__i386__)
 #define ISC_PLATFORM_BUSYWAITNOP asm("rep; nop")
+#else
+#undef ISC_PLATFORM_BUSYWAITNOP
+#endif
 
 /*
  * Define if the platform has <strings.h>.
