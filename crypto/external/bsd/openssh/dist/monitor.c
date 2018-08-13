@@ -1,4 +1,4 @@
-/*	$NetBSD: monitor.c,v 1.25 2018/04/06 18:59:00 christos Exp $	*/
+/*	$NetBSD: monitor.c,v 1.26 2018/08/13 09:55:20 christos Exp $	*/
 /* $OpenBSD: monitor.c,v 1.180 2018/03/03 03:15:51 djm Exp $ */
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -27,7 +27,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: monitor.c,v 1.25 2018/04/06 18:59:00 christos Exp $");
+__RCSID("$NetBSD: monitor.c,v 1.26 2018/08/13 09:55:20 christos Exp $");
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <sys/socket.h>
@@ -1383,7 +1383,7 @@ mm_record_login(Session *s, struct passwd *pw)
 		if (getpeername(packet_get_connection_in(),
 		    (struct sockaddr *)&from, &fromlen) < 0) {
 			debug("getpeername: %.100s", strerror(errno));
-			cleanup_exit(255);
+			cleanup_exit(254);
 		}
 	}
 	/* Record that there was a login on that tty from the remote host. */
