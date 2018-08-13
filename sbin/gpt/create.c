@@ -33,10 +33,12 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/create.c,v 1.11 2005/08/31 01:47:19 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: create.c,v 1.7.4.1 2015/06/02 19:49:38 snj Exp $");
+__RCSID("$NetBSD: create.c,v 1.7.4.2 2018/08/13 16:12:12 martin Exp $");
 #endif
 
 #include <sys/types.h>
+#include <sys/param.h>
+#include <sys/stat.h>
 #include <sys/bootblock.h>
 
 #include <err.h>
@@ -48,47 +50,37 @@ __RCSID("$NetBSD: create.c,v 1.7.4.1 2015/06/02 19:49:38 snj Exp $");
 
 #include "map.h"
 #include "gpt.h"
+#include "gpt_private.h"
 
-static int force;
-static int primary_only;
+static int cmd_create(gpt_t, int, char *[]);
 
-const char createmsg[] = "create [-fp] device ...";
+static const char *createhelp[] = {
+	"[-AfP] [-p partitions]",
+};
 
-__dead static void
-usage_create(void)
+struct gpt_cmd c_create = {
+	"create",
+	cmd_create,
+	createhelp, __arraycount(createhelp),
+	0,
+};
+
+#define usage() gpt_usage(NULL, &c_create)
+
+
+static int
+create(gpt_t gpt, u_int parts, int force, int primary_only, int active)
 {
-
-	fprintf(stderr,
-	    "usage: %s %s\n", getprogname(), createmsg);
-	exit(1);
-}
-
-static void
-create(int fd)
-{
-	off_t blocks, last;
-	map_t *gpt, *tpg;
-	map_t *tbl, *lbt;
-	map_t *map;
+	off_t last = gpt_last(gpt);
+	map_t map;
 	struct mbr *mbr;
-	struct gpt_hdr *hdr;
-	struct gpt_ent *ent;
-	unsigned int i;
 
-	last = mediasz / secsz - 1LL;
-
-	if (map_find(MAP_TYPE_PRI_GPT_HDR) != NULL ||
-	    map_find(MAP_TYPE_SEC_GPT_HDR) != NULL) {
-		warnx("%s: error: device already contains a GPT", device_name);
-		return;
-	}
-	map = map_find(MAP_TYPE_MBR);
+	map = map_find(gpt, MAP_TYPE_MBR);
 	if (map != NULL) {
 		if (!force) {
-			warnx("%s: error: device contains a MBR", device_name);
-			return;
+			gpt_warnx(gpt, "Device contains a MBR");
+			return -1;
 		}
-
 		/* Nuke the MBR in our internal map. */
 		map->map_type = MAP_TYPE_UNUSED;
 	}
@@ -96,155 +88,72 @@ create(int fd)
 	/*
 	 * Create PMBR.
 	 */
-	if (map_find(MAP_TYPE_PMBR) == NULL) {
-		if (map_free(0LL, 1LL) == 0) {
-			warnx("%s: error: no room for the PMBR", device_name);
-			return;
+	if (map_find(gpt, MAP_TYPE_PMBR) == NULL) {
+		if (map_free(gpt, 0LL, 1LL) == 0) {
+			gpt_warnx(gpt, "No room for the PMBR");
+			return -1;
 		}
-		mbr = gpt_read(fd, 0LL, 1);
+		mbr = gpt_read(gpt, 0LL, 1);
+		if (mbr == NULL) {
+			gpt_warnx(gpt, "Error reading MBR");
+			return -1;
+		}
 		memset(mbr, 0, sizeof(*mbr));
 		mbr->mbr_sig = htole16(MBR_SIG);
-		mbr->mbr_part[0].part_shd = 0x00;
-		mbr->mbr_part[0].part_ssect = 0x02;
-		mbr->mbr_part[0].part_scyl = 0x00;
-		mbr->mbr_part[0].part_typ = MBR_PTYPE_PMBR;
-		mbr->mbr_part[0].part_ehd = 0xfe;
-		mbr->mbr_part[0].part_esect = 0xff;
-		mbr->mbr_part[0].part_ecyl = 0xff;
-		mbr->mbr_part[0].part_start_lo = htole16(1);
-		if (last > 0xffffffff) {
-			mbr->mbr_part[0].part_size_lo = htole16(0xffff);
-			mbr->mbr_part[0].part_size_hi = htole16(0xffff);
-		} else {
-			mbr->mbr_part[0].part_size_lo = htole16(last);
-			mbr->mbr_part[0].part_size_hi = htole16(last >> 16);
+		gpt_create_pmbr_part(mbr->mbr_part, last, active);
+
+		map = map_add(gpt, 0LL, 1LL, MAP_TYPE_PMBR, mbr, 1);
+		if (gpt_write(gpt, map) == -1) {
+			gpt_warn(gpt, "Can't write PMBR");
+			return -1;
 		}
-		map = map_add(0LL, 1LL, MAP_TYPE_PMBR, mbr);
-		gpt_write(fd, map);
 	}
 
-	/* Get the amount of free space after the MBR */
-	blocks = map_free(1LL, 0LL);
-	if (blocks == 0LL) {
-		warnx("%s: error: no room for the GPT header", device_name);
-		return;
-	}
+	if (gpt_create(gpt, last, parts, primary_only) == -1)
+		return -1;
 
-	/* Don't create more than parts entries. */
-	if ((uint64_t)(blocks - 1) * secsz > parts * sizeof(struct gpt_ent)) {
-		blocks = (parts * sizeof(struct gpt_ent)) / secsz;
-		if ((parts * sizeof(struct gpt_ent)) % secsz)
-			blocks++;
-		blocks++;		/* Don't forget the header itself */
-	}
+	if (gpt_write_primary(gpt) == -1)
+		return -1;
 
-	/* Never cross the median of the device. */
-	if ((blocks + 1LL) > ((last + 1LL) >> 1))
-		blocks = ((last + 1LL) >> 1) - 1LL;
+	if (!primary_only && gpt_write_backup(gpt) == -1)
+		return -1;
 
-	/*
-	 * Get the amount of free space at the end of the device and
-	 * calculate the size for the GPT structures.
-	 */
-	map = map_last();
-	if (map->map_type != MAP_TYPE_UNUSED) {
-		warnx("%s: error: no room for the backup header", device_name);
-		return;
-	}
-
-	if (map->map_size < blocks)
-		blocks = map->map_size;
-	if (blocks == 1LL) {
-		warnx("%s: error: no room for the GPT table", device_name);
-		return;
-	}
-
-	blocks--;		/* Number of blocks in the GPT table. */
-	gpt = map_add(1LL, 1LL, MAP_TYPE_PRI_GPT_HDR, calloc(1, secsz));
-	tbl = map_add(2LL, blocks, MAP_TYPE_PRI_GPT_TBL,
-	    calloc(blocks, secsz));
-	if (gpt == NULL || tbl == NULL)
-		return;
-
-	hdr = gpt->map_data;
-	memcpy(hdr->hdr_sig, GPT_HDR_SIG, sizeof(hdr->hdr_sig));
-	hdr->hdr_revision = htole32(GPT_HDR_REVISION);
-	hdr->hdr_size = htole32(GPT_HDR_SIZE);
-	hdr->hdr_lba_self = htole64(gpt->map_start);
-	hdr->hdr_lba_alt = htole64(last);
-	hdr->hdr_lba_start = htole64(tbl->map_start + blocks);
-	hdr->hdr_lba_end = htole64(last - blocks - 1LL);
-	gpt_uuid_generate(hdr->hdr_guid);
-	hdr->hdr_lba_table = htole64(tbl->map_start);
-	hdr->hdr_entries = htole32((blocks * secsz) / sizeof(struct gpt_ent));
-	if (le32toh(hdr->hdr_entries) > parts)
-		hdr->hdr_entries = htole32(parts);
-	hdr->hdr_entsz = htole32(sizeof(struct gpt_ent));
-
-	ent = tbl->map_data;
-	for (i = 0; i < le32toh(hdr->hdr_entries); i++) {
-		gpt_uuid_generate(ent[i].ent_guid);
-	}
-
-	hdr->hdr_crc_table = htole32(crc32(ent, le32toh(hdr->hdr_entries) *
-	    le32toh(hdr->hdr_entsz)));
-	hdr->hdr_crc_self = htole32(crc32(hdr, le32toh(hdr->hdr_size)));
-
-	gpt_write(fd, gpt);
-	gpt_write(fd, tbl);
-
-	/*
-	 * Create backup GPT if the user didn't suppress it.
-	 */
-	if (!primary_only) {
-		tpg = map_add(last, 1LL, MAP_TYPE_SEC_GPT_HDR,
-		    calloc(1, secsz));
-		lbt = map_add(last - blocks, blocks, MAP_TYPE_SEC_GPT_TBL,
-		    tbl->map_data);
-		memcpy(tpg->map_data, gpt->map_data, secsz);
-		hdr = tpg->map_data;
-		hdr->hdr_lba_self = htole64(tpg->map_start);
-		hdr->hdr_lba_alt = htole64(gpt->map_start);
-		hdr->hdr_lba_table = htole64(lbt->map_start);
-		hdr->hdr_crc_self = 0;		/* Don't ever forget this! */
-		hdr->hdr_crc_self = htole32(crc32(hdr, le32toh(hdr->hdr_size)));
-		gpt_write(fd, lbt);
-		gpt_write(fd, tpg);
-	}
+	return 0;
 }
 
-int
-cmd_create(int argc, char *argv[])
+static int
+cmd_create(gpt_t gpt, int argc, char *argv[])
 {
-	int ch, fd;
+	int ch;
+	int active = 0;
+	int force = 0;
+	int primary_only = 0;
+	u_int parts = 0;
 
-	while ((ch = getopt(argc, argv, "fp")) != -1) {
+	while ((ch = getopt(argc, argv, "AfPp:")) != -1) {
 		switch(ch) {
+		case 'A':
+			active = 1;
+			break;
 		case 'f':
 			force = 1;
 			break;
-		case 'p':
+		case 'P':
 			primary_only = 1;
 			break;
+		case 'p':
+			if (gpt_uint_get(gpt, &parts) == -1)
+				return -1;
+			break;
 		default:
-			usage_create();
+			return usage();
 		}
 	}
+	if (parts == 0)
+		parts = 128;
 
-	if (argc == optind)
-		usage_create();
+	if (argc != optind)
+		return usage();
 
-	while (optind < argc) {
-		fd = gpt_open(argv[optind++]);
-		if (fd == -1) {
-			warn("unable to open device '%s'", device_name);
-			continue;
-		}
-
-		create(fd);
-
-		gpt_close(fd);
-	}
-
-	return (0);
+	return create(gpt, parts, force, primary_only, active);
 }

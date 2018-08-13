@@ -60,48 +60,77 @@ struct mbr {
 #define	MBR_SIG		0xAA55
 };
 
-extern const char *device_arg;
-extern const char *device_name;
-extern off_t mediasz;
-extern u_int parts;
-extern u_int secsz;
-extern int readonly, verbose;
+typedef struct gpt *gpt_t;
+typedef struct map *map_t;
+
+struct gpt_cmd {
+	const char *name;
+	int (*fptr)(gpt_t, int, char *[]);
+	const char **help;
+	size_t hlen;
+	int flags;
+};
 
 uint32_t crc32(const void *, size_t);
-void	gpt_close(int);
-int	gpt_gpt(int, off_t, int);
-int	gpt_open(const char *);
-void*	gpt_read(int, off_t, size_t);
-int	gpt_write(int, map_t *);
+void	gpt_close(gpt_t);
+int	gpt_gpt(gpt_t, off_t, int);
+gpt_t	gpt_open(const char *, int, int, off_t, u_int, time_t);
+#define GPT_READONLY	0x01
+#define GPT_MODIFIED	0x02
+#define GPT_QUIET	0x04
+#define GPT_NOSYNC	0x08
+#define GPT_FILE	0x10
+#define GPT_TIMESTAMP	0x20
+#define GPT_SYNC	0x40
+#define GPT_OPTDEV      0x8000
 
-uint8_t *utf16_to_utf8(uint16_t *);
+void*	gpt_read(gpt_t, off_t, size_t);
+off_t	gpt_last(gpt_t);
+off_t	gpt_create(gpt_t, off_t, u_int, int);
+int	gpt_write(gpt_t, map_t);
+int	gpt_write_crc(gpt_t, map_t, map_t);
+int	gpt_write_primary(gpt_t);
+int	gpt_write_backup(gpt_t);
+struct gpt_hdr *gpt_hdr(gpt_t);
+void	gpt_msg(gpt_t, const char *, ...) __printflike(2, 3);
+void	gpt_warn(gpt_t, const char *, ...) __printflike(2, 3);
+void	gpt_warnx(gpt_t, const char *, ...) __printflike(2, 3);
+void	gpt_create_pmbr_part(struct mbr_part *, off_t, int);
+struct gpt_ent *gpt_ent(map_t, map_t, unsigned int);
+struct gpt_ent *gpt_ent_primary(gpt_t, unsigned int);
+struct gpt_ent *gpt_ent_backup(gpt_t, unsigned int);
+int	gpt_usage(const char *, const struct gpt_cmd *);
+
+void 	utf16_to_utf8(const uint16_t *, size_t, uint8_t *, size_t);
 void	utf8_to_utf16(const uint8_t *, uint16_t *, size_t);
 
-int	cmd_add(int, char *[]);
-int	cmd_backup(int, char *[]);
-int	cmd_biosboot(int, char *[]);
-int	cmd_create(int, char *[]);
-int	cmd_destroy(int, char *[]);
-int	cmd_label(int, char *[]);
-int	cmd_migrate(int, char *[]);
-int	cmd_recover(int, char *[]);
-int	cmd_remove(int, char *[]);
-int	cmd_resize(int, char *[]);
-int	cmd_resizedisk(int, char *[]);
-int	cmd_restore(int, char *[]);
-int	cmd_set(int, char *[]);
-int	cmd_show(int, char *[]);
-int	cmd_type(int, char *[]);
-int	cmd_unset(int, char *[]);
+#define GPT_FIND "ab:i:L:s:t:"
 
-#ifndef HAVE_NBTOOL_CONFIG_H
-# ifdef USE_DRVCTL
-int	getdisksize(const char *, u_int *, off_t *);
-# else
-#  include "partutil.h"
-# endif
-#else
-# define getdisksize(a, b, c) 0
-#endif
+struct gpt_find {
+	int all;
+	gpt_uuid_t type;
+	off_t block, size;
+	unsigned int entry;
+	uint8_t *name, *label;
+	const char *msg;
+};
+int	gpt_change_ent(gpt_t, const struct gpt_find *,
+    void (*)(struct gpt_ent *, void *), void *);
+int	gpt_add_find(gpt_t, struct gpt_find *, int);
+
+#define GPT_AIS "a:i:s:"
+int	gpt_add_ais(gpt_t, off_t *, u_int *, off_t *, int);
+off_t	gpt_check_ais(gpt_t, off_t, u_int, off_t);
+
+int	gpt_attr_get(gpt_t, uint64_t *);
+const char *gpt_attr_list(char *, size_t, uint64_t);
+void	gpt_attr_help(const char *);
+int	gpt_attr_update(gpt_t, u_int, uint64_t, uint64_t);
+int	gpt_uint_get(gpt_t, u_int *);
+int	gpt_human_get(gpt_t, off_t *);
+int	gpt_uuid_get(gpt_t, gpt_uuid_t *);
+int	gpt_name_get(gpt_t, void *);
+int	gpt_add_hdr(gpt_t, int, off_t);
+void	gpt_show_num(const char *, uintmax_t);
 
 #endif /* _GPT_H_ */
