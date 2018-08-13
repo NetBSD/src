@@ -1,4 +1,4 @@
-.\"	$NetBSD: sctp_freepaddrs.3,v 1.1 2018/08/02 08:40:48 rjs Exp $
+.\"	$NetBSD: sctp_freepaddrs.3,v 1.2 2018/08/13 06:00:21 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -53,9 +53,9 @@ and
 .Fn sctp_freeladdrs
 functions are used to release the memory allocated by previous
 calls to
-.Fn sctp_getpaddrs
+.Xr sctp_getpaddrs 3
 or
-.Fn sctp_getladdrs
+.Xr sctp_getladdrs 3
 respectively.
 .Sh RETURN VALUES
 none.
@@ -68,8 +68,7 @@ none.
 .%N 6458
 .%T "Sockets API Extensions for the Stream Control Transmission Protocol (SCTP)"
 .%D December 2011
-.Re 
+.Re
 .Sh HISTORY
 These functions first appeared in
 .Nx 9.0 .
-

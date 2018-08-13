@@ -1,4 +1,4 @@
-.\"	$NetBSD: sctp_connectx.3,v 1.1 2018/08/02 08:40:48 rjs Exp $
+.\"	$NetBSD: sctp_connectx.3,v 1.2 2018/08/13 06:00:21 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -76,15 +76,12 @@ will be
 filled in with the association identification of the newly
 forming association.
 .Sh RETURN VALUES
-The call returns 0 on success and -1 upon failure.
+The call returns 0 on success and \-1 upon failure.
 .Sh ERRORS
 The
 .Fn sctp_connectx
 function can return the following errors:
 .Bl -tag -width Er
-.It Bq Er EINVAL
-An address listed has an invalid family or no
-addresses were provided.
 .It Bq Er E2BIG
 The size of the address list exceeds the amount of
 data provided.
@@ -92,6 +89,9 @@ data provided.
 The argument
 .Fa s
 is not a valid descriptor.
+.It Bq Er EINVAL
+An address listed has an invalid family or no
+addresses were provided.
 .It Bq Er ENOTSOCK
 The argument
 .Fa s
@@ -105,7 +105,7 @@ is not a socket.
 .%N 6458
 .%T "Sockets API Extensions for the Stream Control Transmission Protocol (SCTP)"
 .%D December 2011
-.Re 
+.Re
 .Sh HISTORY
 This function first appeared in
 .Nx 9.0 .

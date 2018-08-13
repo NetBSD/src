@@ -1,4 +1,4 @@
-.\"	$NetBSD: sctp_bindx.3,v 1.1 2018/08/02 08:40:48 rjs Exp $
+.\"	$NetBSD: sctp_bindx.3,v 1.2 2018/08/13 06:00:21 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -34,7 +34,7 @@
 .Os
 .Sh NAME
 .Nm sctp_bindx
-.Nd bind or unbind an SCTP socket to a list of addresses.
+.Nd bind or unbind an SCTP socket to a list of addresses
 .Sh LIBRARY
 .Lb libc
 .Sh SYNOPSIS
@@ -83,12 +83,16 @@ is enabled any associations in the endpoint will attempt to
 have the address(es) added dynamically to the existing
 association.
 .Sh RETURN VALUES
-The call returns 0 on success and -1 upon failure.
+The call returns 0 on success and \-1 upon failure.
 .Sh ERRORS
 The
 .Fn sctp_bindx
 function can return the following errors:
 .Bl -tag -width Er
+.It Bq Er EBADF
+The argument
+.Fa s
+is not a valid descriptor.
 .It Bq Er EINVAL
 This value is returned if the
 .Fa type
@@ -97,10 +101,6 @@ field is not one of the allowed values (see above).
 This value is returned if the number of addresses
 being added causes a memory allocation failure in
 the call.
-.It Bq Er EBADF
-The argument
-.Fa s
-is not a valid descriptor.
 .It Bq Er ENOTSOCK
 The argument
 .Fa s
@@ -114,7 +114,7 @@ is not a socket.
 .%N 6458
 .%T "Sockets API Extensions for the Stream Control Transmission Protocol (SCTP)"
 .%D December 2011
-.Re 
+.Re
 .Sh HISTORY
 This function first appeared in
 .Nx 9.0 .
