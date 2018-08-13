@@ -1,4 +1,4 @@
-/*      $NetBSD: xpci_xenbus.c,v 1.16 2018/06/24 20:28:58 jdolecek Exp $      */
+/*      $NetBSD: xpci_xenbus.c,v 1.17 2018/08/13 15:48:21 maxv Exp $      */
 
 /*
  * Copyright (c) 2009 Manuel Bouyer.
@@ -22,14 +22,12 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xpci_xenbus.c,v 1.16 2018/06/24 20:28:58 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xpci_xenbus.c,v 1.17 2018/08/13 15:48:21 maxv Exp $");
 
 #include "opt_xen.h"
-
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -123,7 +121,7 @@ xpci_xenbus_match(device_t parent, cfdata_t match, void *aux)
 		return 0;
 
 	if (match->cf_loc[XENBUSCF_ID] != XENBUSCF_ID_DEFAULT &&
-	   match->cf_loc[XENBUSCF_ID] != xa->xa_id)
+	    match->cf_loc[XENBUSCF_ID] != xa->xa_id)
 		return 0;
 
 	return 1;
@@ -134,12 +132,6 @@ xpci_xenbus_attach(device_t parent, device_t self, void *aux)
 {
 	struct xpci_xenbus_softc *sc = device_private(self);
 	struct xenbusdev_attach_args *xa = aux;
-#ifdef XBD_DEBUG
-	char **dir, *val;
-	int dir_n = 0;
-	char id_str[20];
-	int err;
-#endif
 
 	if (xpci_sc != NULL) {
 		aprint_error("Xen PCI frontend already attached\n");
@@ -271,9 +263,9 @@ xpci_backend_changed(void *arg, XenbusState new_state)
 		break;
 	case XenbusStateConnected:
 		/*
-		* note that xpci_backend_changed() can only be called by
-		* the xenbus thread.
-		*/
+		 * note that xpci_backend_changed() can only be called by
+		 * the xenbus thread.
+		 */
 
 		if (sc->sc_backend_status == XPCI_STATE_CONNECTED)
 			/* already connected */
@@ -318,8 +310,10 @@ xpci_connect(struct xpci_xenbus_softc *sc)
 		aprint_error_dev(sc->sc_dev, "can't read root_num: %d\n", err);
 		return;
 	}
+
 	aprint_verbose_dev(sc->sc_dev, "%lu bus%s\n", num_roots,
 	    (num_roots > 1) ? "ses" : "");
+
 	for (i = 0; i < num_roots; i++) {
 		snprintf(node, sizeof(node), "root-%d", i);
 		xenbus_read(NULL, sc->sc_xbusd->xbusd_otherend, node,
@@ -344,6 +338,7 @@ xpci_connect(struct xpci_xenbus_softc *sc)
 		}
 		free(string, M_DEVBUF);
 	}
+
 	xenbus_switch_state(sc->sc_xbusd, NULL, XenbusStateConnected);
 }
 
@@ -360,7 +355,7 @@ xpci_attach_pcibus(int domain, int busn)
 	pba.pba_dmat64 = &pci_bus_dma64_tag;
 #else
 	pba.pba_dmat64 = NULL;
-#endif /* _LP64 */
+#endif
 	pba.pba_flags = PCI_FLAGS_MEM_OKAY | PCI_FLAGS_IO_OKAY |
 	    PCI_FLAGS_MRL_OKAY | PCI_FLAGS_MRM_OKAY | PCI_FLAGS_MWI_OKAY;
 	pba.pba_bridgetag = NULL;
@@ -379,7 +374,7 @@ pci_attach_hook(device_t parent, device_t self, struct pcibus_attach_args *pba)
 int
 pci_bus_maxdevs(pci_chipset_tag_t pc, int busno)
 {
-	return (32);
+	return 32;
 }
 
 pcitag_t
@@ -409,29 +404,30 @@ pci_decompose_tag(pci_chipset_tag_t pc, pcitag_t tag,
 static void
 xpci_do_op(struct xen_pci_op *op)
 {
-
 	struct xen_pci_op *active_op = &xpci_sc->sc_shared->op;
-	static 	__cpu_simple_lock_t pci_conf_lock = __SIMPLELOCK_UNLOCKED;
+	static __cpu_simple_lock_t pci_conf_lock = __SIMPLELOCK_UNLOCKED;
 	int s;
 
 	s = splhigh();
 	__cpu_simple_lock(&pci_conf_lock);
+
 	memcpy(active_op, op, sizeof(struct xen_pci_op));
 	x86_sfence();
 	xen_atomic_set_bit(&xpci_sc->sc_shared->flags, _XEN_PCIF_active);
 	hypervisor_notify_via_evtchn(xpci_sc->sc_evtchn);
 	while (xen_atomic_test_bit(&xpci_sc->sc_shared->flags,
-	   _XEN_PCIF_active)) {
+	    _XEN_PCIF_active)) {
 		hypervisor_clear_event(xpci_sc->sc_evtchn);
 		/* HYPERVISOR_yield(); */
 	}
 	memcpy(op, active_op, sizeof(struct xen_pci_op));
+
 	__cpu_simple_unlock(&pci_conf_lock);
 	splx(s);
 }
 
 static int
-xpci_conf_read( pci_chipset_tag_t pc, pcitag_t tag, int reg, int size,
+xpci_conf_read(pci_chipset_tag_t pc, pcitag_t tag, int reg, int size,
     pcireg_t *value)
 {
 	int bus, dev, func;
@@ -439,51 +435,29 @@ xpci_conf_read( pci_chipset_tag_t pc, pcitag_t tag, int reg, int size,
 		.cmd    = XEN_PCI_OP_conf_read,
 		.domain = 0, /* XXX */
 	};
+
 	pci_decompose_tag(pc, tag, &bus, &dev, &func);
 	DPRINTF(("pci_conf_read %d:%d:%d reg 0x%x", bus, dev, func, reg));
+
 	op.bus = bus;
 	op.devfn = (dev << 3) | func;
 	op.offset = reg;
-	op.size   = size;
+	op.size = size;
 	xpci_do_op(&op);
+
 	*value = op.value;
 	DPRINTF((" val 0x%x err %d\n", *value, op.err));
+
 	return op.err;
 }
 
 pcireg_t
-pci_conf_read( pci_chipset_tag_t pc, pcitag_t tag, int reg)
+pci_conf_read(pci_chipset_tag_t pc, pcitag_t tag, int reg)
 {
-	static pcireg_t value, v;
-	/*
-	 * deal with linux stupidity: linux backend doesn't allow
-	 * 4-byte read on some registers :(
-	 */
-	switch(reg) {
-#if 0
-	case 0x0004:
-		xpci_conf_read(pc, tag, reg, 2, &v);
-		value = v;
-		xpci_conf_read(pc, tag, reg + 2, 2, &v);
-		value |= v << 16;
-		return value;
-	case 0x003c:
-	case 0x000c:
-		value = xpci_conf_read(pc, tag, reg, 1, &v);
-		value = v;
-		xpci_conf_read(pc, tag, reg + 1, 1, &v);
-		value |= v << 8;
-		xpci_conf_read(pc, tag, reg + 2, 1, &v);
-		value |= v << 16;
-		xpci_conf_read(pc, tag, reg + 3, 1, &v);
-		value |= v << 24;
-		return value;
-#endif
-	default:
-		xpci_conf_read(pc, tag, reg, 4, &v);
-		value = v;
-		return value;
-	}
+	static pcireg_t v; /* XXXSMP: why static? */
+
+	xpci_conf_read(pc, tag, reg, 4, &v);
+	return v;
 }
 
 static int
@@ -495,39 +469,26 @@ xpci_conf_write(pci_chipset_tag_t pc, pcitag_t tag, int reg, int size,
 		.cmd    = XEN_PCI_OP_conf_write,
 		.domain = 0, /* XXX */
 	};
+
 	pci_decompose_tag(pc, tag, &bus, &dev, &func);
 	DPRINTF(("pci_conf_write %d:%d:%d reg 0x%x val 0x%x", bus, dev, func, reg, data));
+
 	op.bus = bus;
 	op.devfn = (dev << 3) | func;
 	op.offset = reg;
-	op.size   = size;
+	op.size = size;
 	op.value = data;
 	xpci_do_op(&op);
+
 	DPRINTF((" err %d\n", op.err));
+
 	return op.err;
 }
 
 void
 pci_conf_write(pci_chipset_tag_t pc, pcitag_t tag, int reg, pcireg_t data)
 {
-	/* as for read we have to work around linux limitations */
-	switch (reg) {
-#if 0
-	case 0x0004:
-		xpci_conf_write(pc, tag, reg    , 2, data & 0xffff);
-		xpci_conf_write(pc, tag, reg + 2, 2, (data >> 16) & 0xffff);
-		return;
-	case 0x003c:
-	case 0x000c:
-		xpci_conf_write(pc, tag, reg    , 1, data & 0xff);
-		xpci_conf_write(pc, tag, reg + 1, 1, (data >> 8) & 0xff);
-		xpci_conf_write(pc, tag, reg + 2, 1, (data >> 16) & 0xff);
-		xpci_conf_write(pc, tag, reg + 3, 1, (data >> 24) & 0xff);
-		return;
-#endif
-	default:
-		xpci_conf_write(pc, tag, reg, 4, data);
-	}
+	xpci_conf_write(pc, tag, reg, 4, data);
 }
 
 int
