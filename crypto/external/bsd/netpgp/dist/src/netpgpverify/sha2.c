@@ -1,4 +1,4 @@
-/* $NetBSD: sha2.c,v 1.3 2018/07/26 00:31:13 kamil Exp $ */
+/* $NetBSD: sha2.c,v 1.4 2018/08/13 09:54:19 christos Exp $ */
 /*	$KAME: sha2.c,v 1.9 2003/07/20 00:28:38 itojun Exp $	*/
 
 /*
@@ -48,7 +48,9 @@
 #   undef be32toh
 #   undef be64toh
 
+#ifndef __CAST
 #define __CAST(__dt, __st)      ((__dt)(__st)) /* srsly? */
+#endif
 
 static __inline void
 be32encode(void *buf, uint32_t u)
