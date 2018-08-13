@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.213 2018/08/13 20:33:35 alnsn Exp $
+$NetBSD: acronyms.comp,v 1.214 2018/08/13 22:22:59 alnsn Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -484,7 +484,7 @@ FDC	floppy disk controller
 FDD	floppy disk drive
 FDDI	fiber distributed data interface
 FDE	full disk encryption
-FDT	flat device tree
+FDT	flattened device tree
 FEA	finite element analysis
 FEC	forward error correction
 FET	field-effect transistor
