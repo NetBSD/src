@@ -1,4 +1,4 @@
-.\"    $NetBSD: npf.conf.5,v 1.52 2018/08/07 00:22:13 sevan Exp $
+.\"    $NetBSD: npf.conf.5,v 1.53 2018/08/13 06:06:13 wiz Exp $
 .\"
 .\" Copyright (c) 2009-2017 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -59,7 +59,7 @@ packet filtering rules
 map rules for address translation
 .It
 procedure definitions to call on filtered packets.
-
+.El
 .Sh SYNTAX
 .Ss Variables
 Variables are specified using the dollar ($) sign, which is used for both
@@ -128,7 +128,7 @@ A dynamic address list represents both the IPv4 and IPv6 addresses configured on
 an interface.
 The
 .Cd family
-keyword can be used in combination of a filtering rule to be explicit. 
+keyword can be used in combination of a filtering rule to be explicit.
 .Ss Groups
 Groups may have the following options: name, interface, and direction.
 They are defined in the following form:
