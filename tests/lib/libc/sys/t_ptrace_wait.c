@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.64 2018/07/17 06:13:08 martin Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.65 2018/08/13 21:36:55 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.64 2018/07/17 06:13:08 martin Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.65 2018/08/13 21:36:55 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -1429,14 +1429,8 @@ ATF_TC_BODY(parent_attach_to_its_child, tc)
 
 /// ----------------------------------------------------------------------------
 
-ATF_TC(child_attach_to_its_parent);
-ATF_TC_HEAD(child_attach_to_its_parent, tc)
-{
-	atf_tc_set_md_var(tc, "descr",
-	    "Assert that tracer child can PT_ATTACH to its parent");
-}
-
-ATF_TC_BODY(child_attach_to_its_parent, tc)
+static void
+child_attach_to_its_parent(bool stopped)
 {
 	struct msg_fds parent_tracee;
 	const int exitval_tracer = 5;
@@ -1450,9 +1444,14 @@ ATF_TC_BODY(child_attach_to_its_parent, tc)
 	SYSCALL_REQUIRE(msg_open(&parent_tracee) == 0);
 	tracer = atf_utils_fork();
 	if (tracer == 0) {
-
 		/* Wait for message from the parent */
 		CHILD_FROM_PARENT("Message 1", parent_tracee, msg);
+
+		if (stopped) {
+			DPRINTF("Await for a stopped parent PID %d\n",
+			        getppid());
+			await_stopped(getppid());
+		}
 
 		DPRINTF("Attach to parent PID %d with PT_ATTACH from child\n",
 		    getppid());
@@ -1477,6 +1476,12 @@ ATF_TC_BODY(child_attach_to_its_parent, tc)
 
 	DPRINTF("Wait for the tracer to become ready\n");
 	PARENT_TO_CHILD("Message 1", parent_tracee, msg);
+
+	if (stopped) {
+		DPRINTF("Stop self PID %d\n", getpid());
+		SYSCALL_REQUIRE(raise(SIGSTOP) != -1);
+	}
+
 	DPRINTF("Allow the tracer to exit now\n");
 	PARENT_FROM_CHILD("Message 1", parent_tracee, msg);
 
@@ -1491,6 +1496,57 @@ ATF_TC_BODY(child_attach_to_its_parent, tc)
 	    wpid = TWAIT_GENERIC(tracer, &status, 0));
 
 	msg_close(&parent_tracee);
+}
+
+ATF_TC(child_attach_to_its_parent);
+ATF_TC_HEAD(child_attach_to_its_parent, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Assert that tracer child can PT_ATTACH to its parent");
+}
+
+ATF_TC_BODY(child_attach_to_its_parent, tc)
+{
+
+	child_attach_to_its_parent(false);
+}
+
+ATF_TC(child_attach_to_its_stopped_parent);
+ATF_TC_HEAD(child_attach_to_its_stopped_parent, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Assert that tracer child can PT_ATTACH to its stopped parent");
+}
+
+ATF_TC_BODY(child_attach_to_its_stopped_parent, tc)
+{
+	/*
+	 * The ATF framework (atf-run) does not tolerate raise(SIGSTOP), as
+	 * this causes a pipe (established from atf-run) to be broken.
+	 * atf-run uses this mechanism to monitor whether a test is alive.
+	 *
+	 * As a workaround spawn this test as a subprocess.
+	 */
+
+	const int exitval = 15;
+	pid_t child, wpid;
+#if defined(TWAIT_HAVE_STATUS)
+	int status;
+#endif
+
+	SYSCALL_REQUIRE((child = fork()) != -1);
+	if (child == 0) {
+		child_attach_to_its_parent(true);
+		_exit(exitval);
+	} else {
+		DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
+		TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
+
+		validate_status_exited(status, exitval);
+
+		DPRINTF("Before calling %s() for the exited child\n", TWAIT_FNAME);
+		TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
+	}
 }
 
 /// ----------------------------------------------------------------------------
@@ -5616,6 +5672,7 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, parent_attach_to_its_child);
 
 	ATF_TP_ADD_TC(tp, child_attach_to_its_parent);
+	ATF_TP_ADD_TC(tp, child_attach_to_its_stopped_parent);
 
 	ATF_TP_ADD_TC_HAVE_PID(tp,
 		tracee_sees_its_original_parent_getppid);
