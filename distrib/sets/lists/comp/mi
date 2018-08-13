@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2216 2018/08/03 06:07:02 kamil Exp $
+#	$NetBSD: mi,v 1.2217 2018/08/13 07:14:47 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -3433,8 +3433,8 @@
 ./usr/lib/liblua_p.a				comp-c-proflib		compatfile,profile
 ./usr/lib/liblutok.a				comp-c-lib		compatfile,kyua
 ./usr/lib/liblutok_p.a				comp-c-proflib		compatfile,kyua,profile
-./usr/lib/liblwres.a				comp-bind-lib		compatfile
-./usr/lib/liblwres_p.a				comp-bind-proflib	compatfile,profile
+./usr/lib/liblwres.a				comp-bind-lib		compatfile,obsolete
+./usr/lib/liblwres_p.a				comp-bind-proflib	compatfile,profile,obsolete
 ./usr/lib/liblzf.a				comp-c-lib		compatfile
 ./usr/lib/liblzf_p.a				comp-c-proflib		compatfile,profile
 ./usr/lib/liblzma.a				comp-c-lib		compatfile
@@ -3466,6 +3466,8 @@
 ./usr/lib/libnpf_p.a				comp-npf-proflib	compatfile,npf,profile
 ./usr/lib/libntp.a				comp-obsolete		obsolete
 ./usr/lib/libntp_p.a				comp-obsolete		obsolete
+./usr/lib/libns.a				comp-bind-lib		compatfile
+./usr/lib/libns_p.a				comp-bind-proflib	compatfile,profile
 ./usr/lib/libnvpair.a				comp-zfs-lib		compatfile,zfs
 ./usr/lib/libnvpair_p.a				comp-zfs-proflib	compatfile,zfs,profile
 ./usr/lib/libobjc.a				comp-objc-lib		compatfile,gcc
