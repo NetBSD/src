@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: ipsec,v 1.14 2016/10/19 21:27:10 christos Exp $
+# $NetBSD: ipsec,v 1.15 2018/08/13 09:16:06 christos Exp $
 #
 
 # PROVIDE: ipsec
@@ -32,7 +32,11 @@ ipsec_prestart()
 ipsec_getip() {
 	ifconfig $1 | while IFS="${IFS}/" read what address rest; do
 		case "$what" in
-		inet)	echo "$address";;
+		inet)	echo "local v4_addr=$address;";;
+		inet6)	case "$address" in
+			fe80:)	;;
+			*)	echo "local v6_addr=$address;";;
+			esac;;
 		esac
 	done
 }
@@ -41,18 +45,20 @@ ipsec_load() {
 	if [ -z "$1" ]; then
 		/sbin/setkey -f /etc/ipsec.conf
 	else
-		sed -e "s/@LOCAL_ADDR@/$1/" < /etc/ipsec.conf | \
+		sed	-e "s/@LOCAL_ADDR@/$1/" \
+			-e "s/@LOCAL_ADDR_V4@/$1/" \
+			-e "s/@LOCAL_ADDR_V6@/$2/" /etc/ipsec.conf | \
 		    /sbin/setkey -f -
 	fi
 }
 
 ipsec_configure() {
 	while true; do
-		local addr="$(ipsec_getip "$ipsec_flags")"
-		case "$addr" in
+		eval $(ipsec_getip "$ipsec_flags")
+		case "$v4_addr" in
 		'')		sleep 1;;
 		"0.0.0.0")	sleep 1;;
-		*)		ipsec_load "$addr"; return;;
+		*)		ipsec_load "$v4_addr" "$v6_addr"; return;;
 		esac
 	done &
 }
