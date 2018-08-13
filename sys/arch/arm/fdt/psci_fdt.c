@@ -1,4 +1,4 @@
-/* $NetBSD: psci_fdt.c,v 1.12 2018/08/12 17:21:36 skrll Exp $ */
+/* $NetBSD: psci_fdt.c,v 1.13 2018/08/13 12:28:02 skrll Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: psci_fdt.c,v 1.12 2018/08/12 17:21:36 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: psci_fdt.c,v 1.13 2018/08/13 12:28:02 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -200,7 +200,7 @@ psci_fdt_bootstrap(void)
 	for (child = OF_child(cpus); child; child = OF_peer(child)) {
 		if (!fdtbus_status_okay(child))
 			continue;
-		if (fdtbus_get_reg(child, 0, &mpidr, NULL) != 0)
+		if (fdtbus_get_reg64(child, 0, &mpidr, NULL) != 0)
 			continue;
 		if (mpidr == bp_mpidr)
 			continue; 	/* BP already started */
