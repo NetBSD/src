@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_history.c,v 1.16 2017/11/03 22:45:14 pgoyette Exp $	 */
+/*	$NetBSD: kern_history.c,v 1.17 2018/08/13 03:20:19 mrg Exp $	 */
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_history.c,v 1.16 2017/11/03 22:45:14 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_history.c,v 1.17 2018/08/13 03:20:19 mrg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kernhist.h"
@@ -92,12 +92,22 @@ static int sysctl_kernhist_helper(SYSCTLFN_PROTO);
  * prototypes
  */
 
-void kernhist_dump(struct kern_history *,
+void kernhist_dump(struct kern_history *, size_t count,
     void (*)(const char *, ...) __printflike(1, 2));
+static void kernhist_info(struct kern_history *,
+    void (*)(const char *, ...));
 void kernhist_dumpmask(uint32_t);
-static void kernhist_dump_histories(struct kern_history *[],
+static void kernhist_dump_histories(struct kern_history *[], size_t count,
     void (*)(const char *, ...) __printflike(1, 2));
 
+/* display info about one kernhist */
+static void
+kernhist_info(struct kern_history *l, void (*pr)(const char *, ...))
+{
+
+	pr("kernhist '%s': at %p total %u next free %u\n",
+	    l->name, l, l->n, l->f);
+}
 
 /*
  * call this from ddb
@@ -105,11 +115,17 @@ static void kernhist_dump_histories(struct kern_history *[],
  * expects the system to be quiesced, no locking
  */
 void
-kernhist_dump(struct kern_history *l, void (*pr)(const char *, ...))
+kernhist_dump(struct kern_history *l, size_t count,
+    void (*pr)(const char *, ...))
 {
 	int lcv;
 
 	lcv = l->f;
+	if (count > l->n)
+		pr("%s: count %zu > size %u\n", __func__, count, l->n);
+	else if (count)
+		lcv = (lcv - count) % l->n;
+
 	do {
 		if (l->e[lcv].fmt)
 			kernhist_entry_print(&l->e[lcv], pr);
@@ -118,10 +134,11 @@ kernhist_dump(struct kern_history *l, void (*pr)(const char *, ...))
 }
 
 /*
- * print a merged list of kern_history structures
+ * print a merged list of kern_history structures.  count is unused so far.
  */
 static void
-kernhist_dump_histories(struct kern_history *hists[], void (*pr)(const char *, ...))
+kernhist_dump_histories(struct kern_history *hists[], size_t count,
+    void (*pr)(const char *, ...))
 {
 	struct bintime	bt;
 	int	cur[MAXHISTS];
@@ -178,6 +195,7 @@ restart:
 
 		/* print and move to the next entry */
 		kernhist_entry_print(&hists[hi]->e[cur[hi]], pr);
+
 		cur[hi] = (cur[hi] + 1) % (hists[hi]->n);
 		if (cur[hi] == hists[hi]->f)
 			cur[hi] = -1;
@@ -227,14 +245,15 @@ kernhist_dumpmask(uint32_t bitmask)	/* XXX only support 32 hists */
 
 	hists[i] = NULL;
 
-	kernhist_dump_histories(hists, printf);
+	kernhist_dump_histories(hists, 0, printf);
 }
 
 /*
- * kernhist_print: ddb hook to print kern history
+ * kernhist_print: ddb hook to print kern history.
  */
 void
-kernhist_print(void *addr, void (*pr)(const char *, ...) __printflike(1,2))
+kernhist_print(void *addr, size_t count, const char *modif,
+    void (*pr)(const char *, ...) __printflike(1,2))
 {
 	struct kern_history *h;
 
@@ -264,9 +283,19 @@ kernhist_print(void *addr, void (*pr)(const char *, ...) __printflike(1,2))
 #endif
 		hists[i] = NULL;
 
-		kernhist_dump_histories(hists, pr);
+		if (*modif == 'i') {
+			int lcv;
+
+			for (lcv = 0; hists[lcv]; lcv++)
+				kernhist_info(hists[lcv], pr);
+		} else {
+			kernhist_dump_histories(hists, count, pr);
+		}
 	} else {
-		kernhist_dump(h, pr);
+		if (*modif == 'i')
+			kernhist_info(h, pr);
+		else
+			kernhist_dump(h, count, pr);
 	}
 }
 

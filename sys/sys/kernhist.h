@@ -1,4 +1,4 @@
-/*	$NetBSD: kernhist.h,v 1.23 2018/04/19 21:19:07 christos Exp $	*/
+/*	$NetBSD: kernhist.h,v 1.24 2018/08/13 03:20:19 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -270,8 +270,8 @@ kernhist_entry_print(const struct kern_history_ent *e, void (*pr)(const char *, 
 }
 
 #if defined(DDB)
-void	kernhist_dump(struct kern_history *, void (*)(const char *, ...) __printflike(1, 2));
-void	kernhist_print(void *, void (*)(const char *, ...) __printflike(1, 2));
+void	kernhist_dump(struct kern_history *, size_t, void (*)(const char *, ...) __printflike(1, 2));
+void	kernhist_print(void *, size_t, const char *, void (*)(const char *, ...) __printflike(1, 2));
 #endif /* DDB */
 
 void sysctl_kernhist_init(void);

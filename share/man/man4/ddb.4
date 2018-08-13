@@ -1,4 +1,4 @@
-.\"	$NetBSD: ddb.4,v 1.182 2018/07/30 06:18:25 ryo Exp $
+.\"	$NetBSD: ddb.4,v 1.183 2018/08/13 03:20:19 mrg Exp $
 .\"
 .\" Copyright (c) 1997 - 2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -56,7 +56,7 @@
 .\" any improvements or extensions that they make and grant Carnegie Mellon
 .\" the rights to redistribute these changes.
 .\"
-.Dd July 30, 2018
+.Dd August 12, 2018
 .Dt DDB 4
 .Os
 .Sh NAME
@@ -771,9 +771,21 @@ is specified, all sockets are printed.
 .El
 .It Ic show uvmexp
 Print a selection of UVM counters and statistics.
-.It Ic show kernhist Oo Ar addr Oc
+.It Ic show kernhist Ns Oo Cm /i Oc Oo Ar addr Ns Oo , Ns Ar count Oc Oc
 Dumps all the kernel histories if no address is specified, or the history
 at the address.
+If
+.Cm /i
+is specified, display information about the named history or all histories,
+instead of history entries.
+If
+.Ar count
+is specified, only the last
+.Ar count
+entries will be displayed.
+Currently the
+.Ar count
+handling is only performed if a single history is requested.
 This command is available only if a kernel is compiled with one or more
 of the kernel history options
 .Cd KERNHIST ,
