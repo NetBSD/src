@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1542 2018/08/13 11:00:55 sevan Exp $
+#	$NetBSD: 3RDPARTY,v 1.1543 2018/08/13 12:12:30 sevan Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -41,7 +41,7 @@
 
 Package:	acpica
 Version:	20180427
-Current Vers:	20180427
+Current Vers:	20180810
 Maintainer:	Intel
 Archive Site:	http://www.acpica.org/downloads/
 Home Page:	http://www.acpica.org/
@@ -90,10 +90,10 @@ upfront.
 
 Package:	ath-hal
 Version:	FreeBSD SVN revision number 185521
-Current Vers:	FreeBSD SVN revision number 185521
+Current Vers:	FreeBSD SVN revision number 334197
 Maintainer:	Sam Leffler <sam@errno.com>
 Archive Site:	none
-Home Page:	none
+Home Page:	https://svnweb.freebsd.org/base/head/sys/dev/ath/ath_hal/
 Mailing List:	none
 Responsible:	sam, alc
 License:	BSD-like (2-clause), ISC
@@ -102,7 +102,7 @@ Notes:
 
 Package:	bc
 Version:	1.06
-Current Vers:	1.06
+Current Vers:	1.07
 Maintainer:	Phil Nelson <phil@cs.wwu.edu>
 Archive Site:	ftp://ftp.gnu.org/gnu/bc/
 Home Page:	http://www.gnu.org/software/bc/
@@ -133,7 +133,7 @@ The libc and include parts of the resolver are now part of libbind.
 
 Package:	unbound 
 Version:	1.6.8
-Current Vers:	1.6.8
+Current Vers:	1.7.3
 Maintainer:	Christos Zoulas
 Archive Site:	https://www.unbound.net/downloads/unbound-latest.tar.gz
 Home Page:	https://www.unbound.net/
@@ -147,7 +147,7 @@ run configure and update config files in include
 
 Package:	nsd 
 Version:	4.1.19
-Current Vers:	4.1.19
+Current Vers:	4.1.23
 Maintainer:	Christos Zoulas
 Archive Site:	https://www.nlnetlabs.nl/svn/nsd/
 Home Page:	https://www.nlnetlabs.nl/projects/nsd/
@@ -186,7 +186,7 @@ Todo[5]: Reconcile the doc directory.
 
 Package:	binutils
 Version:	2.27
-Current Vers:	2.31
+Current Vers:	2.31.1
 Maintainer:	FSF
 Archive Site:	ftp://ftp.gnu.org/gnu/binutils/
 Home Page:	http://www.gnu.org/software/binutils/
@@ -198,7 +198,7 @@ Notes:
 
 Package:	bozohttpd
 Version:	20100617
-Current Vers:	20100617
+Current Vers:	20170201
 Maintainer:	mrg@eterna.com.au
 Archive Site:	ftp://ftp.NetBSD.org/pub/NetBSD/packages/distfiles/LOCAL_PORTS/
 Home Page:	http://eterna.com.au/bozohttpd/
@@ -211,10 +211,10 @@ Delete "queue.h" from the distribution.
 
 Package:	bsd-family-tree
 Version:	1.151
-Current Vers:	1.156
+Current Vers:	336757
 Maintainer:	The FreeBSD Project
-Archive Site:	http://www.freebsd.org/cgi/cvsweb.cgi/src/share/misc/bsd-family-tree
-Home Page:	http://www.freebsd.org/cgi/cvsweb.cgi/src/share/misc/bsd-family-tree
+Archive Site:	https://svnweb.freebsd.org/base/head/share/misc/bsd-family-tree
+Home Page:	https://svnweb.freebsd.org/base/head/share/misc/bsd-family-tree
 Mailing List:
 Responsible:
 License:	BSD (2-clause) (see http://www.freebsd.org/cgi/cvsweb.cgi/src/COPYRIGHT)
@@ -226,7 +226,7 @@ in the past.
 
 Package:	byacc
 Version:	20170430
-Current Vers:	20170430
+Current Vers:	20180609
 Maintainer:	Thomas Dickey <dickey@invisible-island.net>
 Archive Site:	http://www.invisible-island.net/byacc/byacc.html
 Home Page:	http://www.invisible-island.net/byacc/byacc.html
@@ -375,7 +375,7 @@ them!
 
 Package:	gmake
 Version:	3.81 (Last GPlv2+ version)
-Current Vers:	4.0
+Current Vers:	4.2
 Maintainer:	FSF
 Archive Site:	ftp://ftp.gnu.org/gnu/make/
 Home Page:	http://www.gnu.org/software/make/
@@ -387,7 +387,7 @@ Notes:
 
 Package:	diffutils
 Version:	2.8.1 (Last GPLv2+ version)
-Current Vers:	3.3
+Current Vers:	3.6
 Maintainer:	FSF
 Archive Site:	ftp://ftp.gnu.org/gnu/diffutils/
 Home Page:	http://www.gnu.org/software/diffutils/
@@ -413,7 +413,7 @@ Notes:
 
 Package:	expat
 Version:	2.2.1
-Current Vers:	2.2.4
+Current Vers:	2.2.5
 Maintainer:	Expat Project
 Archive Site:	http://sourceforge.net/projects/expat/files/expat/
 Home Page:	http://www.libexpat.org/
@@ -426,7 +426,7 @@ Please use "expat" as the vendor tag for CVS imports.
 
 Package:	file
 Version:	5.33
-Current Vers:	5.33
+Current Vers:	5.34
 Maintainer:	Christos Zoulas <christos@zoulas.com>
 Archive Site:	ftp://ftp.astron.com/pub/file/
 Home Page:	http://www.darwinsys.com/file/
@@ -439,7 +439,7 @@ use file2netbsd
 
 Package:	flex
 Version:	2.6.3
-Current Vers:	2.6.3
+Current Vers:	2.6.4
 Maintainer:	Will Estes <wlestes@users.sourceforge.net>
 Archive Site:	https://github.com/westes/flex/releases
 Home Page:	https://github.com/westes/flex
@@ -482,7 +482,7 @@ Before importing a new version of external/gpl3/gcc:
 
 Package:	gdb
 Version:	8.0.1
-Current Vers:	8.1
+Current Vers:	8.1.1
 Maintainer:	FSF
 Archive Site:	ftp://ftp.gnu.org/gnu/gdb/
 Home Page:	http://www.gnu.org/software/gdb/
@@ -497,7 +497,7 @@ When updating GDB, it is imperative to test that:
 	  ("options KGDB") works correctly.
 
 Package:	gdtoa
-Version:	2011-03-19
+Version:	2016-02-19
 Current Vers:	$(date)
 Maintainer:	David M. Gay <dmg@acm.org>
 Archive Site:	http://www.netlib.org/fp/
@@ -513,7 +513,7 @@ Only double-precision addressed at this time.
 
 Package:	gettext
 Version:	0.16.1 (Last GPLv2+ version)
-Current Vers:	0.19.7
+Current Vers:	0.19.8
 Maintainer:	FSF
 Archive Site:	ftp://ftp.gnu.org/gnu/gettext/
 Home Page:	http://www.gnu.org/software/gettext/
@@ -528,7 +528,7 @@ we use BSD-licensed implementation from Citrus project (see entry for
 
 Package:	grep
 Version:	2.5.1a (last GPLv2+ version)
-Current Vers:	2.23
+Current Vers:	3.1
 Maintainer:	FSF
 Archive Site:	ftp://ftp.gnu.org/gnu/grep/
 Home Page:	http://www.gnu.org/software/grep/
@@ -563,7 +563,7 @@ Update MDATE in src/external/gpl2/groff/Makefile.inc.
 
 Package:	heimdal
 Version:	7.1.0 (HEAD-2017-01-28)
-Current Vers:	7.1.0
+Current Vers:	7.5.0
 Maintainer:	Heimdal <heimdal@h5l.org>
 Archive Site:	ftp://ftp.h5l.org/pub/heimdal/src/
 Home Page:	http://www.h5l.org/
