@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0.3,v 1.1.2.109 2018/07/12 14:59:58 martin Exp $
+# $NetBSD: CHANGES-7.0.3,v 1.1.2.110 2018/08/14 14:37:05 martin Exp $
 
 A complete list of changes from the NetBSD 7.0.2 release to the NetBSD 7.0.3
 release:
@@ -5478,4 +5478,9 @@ usr.bin/printf/printf.c				1.37-1.39
 	escape sequence (\ sequence) is present in an arg to a %b
 	conversion.
 	[kre, ticket #1619]
+
+sys/netinet6/frag6.c				1.64
+
+	Ignore zero-sized fragments.
+	[maxv, ticket #1630]
 
