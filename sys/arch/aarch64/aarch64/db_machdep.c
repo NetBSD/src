@@ -1,4 +1,4 @@
-/* $NetBSD: db_machdep.c,v 1.6 2018/08/11 04:46:17 ryo Exp $ */
+/* $NetBSD: db_machdep.c,v 1.7 2018/08/14 05:51:54 ryo Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,10 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.6 2018/08/11 04:46:17 ryo Exp $");
-
-#include "opt_kernhist.h"
-#include "opt_uvmhist.h"
+__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.7 2018/08/14 05:51:54 ryo Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,9 +61,6 @@ __KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.6 2018/08/11 04:46:17 ryo Exp $");
 void db_md_cpuinfo_cmd(db_expr_t, bool, db_expr_t, const char *);
 void db_md_frame_cmd(db_expr_t, bool, db_expr_t, const char *);
 void db_md_lwp_cmd(db_expr_t, bool, db_expr_t, const char *);
-#ifdef UVMHIST
-void db_md_pmaphist_cmd(db_expr_t, bool, db_expr_t, const char *);
-#endif
 void db_md_pte_cmd(db_expr_t, bool, db_expr_t, const char *);
 void db_md_tlbi_cmd(db_expr_t, bool, db_expr_t, const char *);
 void db_md_sysreg_cmd(db_expr_t, bool, db_expr_t, const char *);
@@ -104,15 +98,6 @@ const struct db_command db_machine_command_table[] = {
 		    "<address>",
 		    "\taddress:\taddress of lwp to display")
 	},
-#ifdef UVMHIST
-	{
-		DDB_ADD_CMD(
-		    "pmaphist", db_md_pmaphist_cmd, 0,
-		    "Dump the entire contents of the pmap history",
-		    "<param>",
-		    "\tparam: 0=clear")
-	},
-#endif /* UVMHIST */
 	{
 		DDB_ADD_CMD(
 		    "pte", db_md_pte_cmd, 0,
@@ -313,104 +298,6 @@ db_md_lwp_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
 	db_printf("\tl->l_name         =%s\n", SAFESTRPTR(l->l_name));
 	db_printf("\tl->l_wmesg        =%s\n", SAFESTRPTR(l->l_wmesg));
 }
-
-#ifdef UVMHIST
-
-/* XXX: should be implement to kern_history.c */
-static void
-kernhist_entry_snprintf(char *buf, size_t buflen,
-    const struct kern_history_ent *e)
-{
-	struct timeval tv;
-	int len, maxlen;
-	char *p;
-
-	bintime2timeval(&e->bt, &tv);
-
-	maxlen = buflen;
-	p = buf;
-
-	len = snprintf(p, maxlen, "%06" PRIu64 ".%06d ",
-	    tv.tv_sec, tv.tv_usec);
-	p += len;
-	maxlen -= len;
-	if (maxlen <= 0)
-		return;
-
-	len = snprintf(p, maxlen, "%s#%" PRIu32 "@%" PRIu32 ": ",
-	    e->fn, e->call, e->cpunum);
-	p += len;
-	maxlen -= len;
-	if (maxlen <= 0)
-		return;
-
-	len = snprintf(p, maxlen, e->fmt, e->v[0], e->v[1], e->v[2], e->v[3]);
-	p += len;
-	maxlen -= len;
-	if (maxlen <= 0)
-		return;
-
-	snprintf(p, maxlen, "\n");
-}
-
-static void
-kernhist_dump_iterate(struct kern_history *l, void (*func)(const char *))
-{
-	int lcv;
-	static char buf[512];	/* XXX */
-
-	lcv = l->f;
-	do {
-		if (l->e[lcv].fmt) {
-			kernhist_entry_snprintf(buf, sizeof(buf), &l->e[lcv]);
-			func(buf);
-		}
-		lcv = (lcv + 1) % l->n;
-	} while (lcv != l->f);
-}
-
-
-static const char *kernhist_match;
-
-static void
-print_pmaphist_func(const char *msg)
-{
-	if (strstr(msg, kernhist_match) != NULL)
-		db_printf("%s", msg);
-}
-
-void
-db_md_pmaphist_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
-    const char *modif)
-{
-	UVMHIST_DECL(pmaphist);
-
-	if ((modif != NULL) && (*modif != '\0')) {
-		if (strcmp(modif, "h") == 0) {
-			db_printf("machine pmaphist[/<match>]\n");
-			return;
-		}
-
-		kernhist_match = modif;
-		db_printf("show pmaphist matched <%s>\n", kernhist_match);
-
-		kernhist_dump_iterate(&pmaphist, print_pmaphist_func);
-		return;
-	}
-
-
-	if (have_addr && (addr == 0)) {
-		/* XXX */
-		pmaphist.f = 0;
-		memset(pmaphist.e, 0,
-		    sizeof(struct kern_history_ent) * pmaphist.n);
-
-		db_printf("pmap history was cleared\n");
-	}
-
-	kernhist_dump(&pmaphist, db_printf);
-}
-#endif
 
 void
 db_md_pte_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
