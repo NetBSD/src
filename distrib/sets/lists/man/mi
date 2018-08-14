@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1608 2018/08/12 17:11:55 christos Exp $
+# $NetBSD: mi,v 1.1609 2018/08/14 14:49:13 maxv Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1071,7 +1071,7 @@
 ./usr/share/man/cat4/esp.0			man-sys-catman		.cat
 ./usr/share/man/cat4/ess.0			man-sys-catman		.cat
 ./usr/share/man/cat4/et.0			man-sys-catman		.cat
-./usr/share/man/cat4/etherip.0			man-sys-catman		.cat
+./usr/share/man/cat4/etherip.0			man-obsolete		obsolete
 ./usr/share/man/cat4/etphy.0			man-sys-catman		.cat
 ./usr/share/man/cat4/evbarm/bcmgpio.0		man-sys-catman		.cat
 ./usr/share/man/cat4/evbarm/cpsw.0		man-sys-catman		.cat
@@ -4221,7 +4221,7 @@
 ./usr/share/man/html4/esp.html			man-sys-htmlman		html
 ./usr/share/man/html4/ess.html			man-sys-htmlman		html
 ./usr/share/man/html4/et.html			man-sys-htmlman		html
-./usr/share/man/html4/etherip.html		man-sys-htmlman		html
+./usr/share/man/html4/etherip.html		man-obsolete		obsolete
 ./usr/share/man/html4/etphy.html		man-sys-htmlman		html
 ./usr/share/man/html4/evbarm/bcmgpio.html	man-sys-htmlman		html
 ./usr/share/man/html4/evbarm/cpsw.html		man-sys-htmlman		html
@@ -7143,7 +7143,7 @@
 ./usr/share/man/man4/esp.4			man-sys-man		.man
 ./usr/share/man/man4/ess.4			man-sys-man		.man
 ./usr/share/man/man4/et.4			man-sys-man		.man
-./usr/share/man/man4/etherip.4			man-sys-man		.man
+./usr/share/man/man4/etherip.4			man-obsolete		obsolete
 ./usr/share/man/man4/etphy.4			man-sys-man		.man
 ./usr/share/man/man4/evbarm/bcmgpio.4		man-sys-man		.man
 ./usr/share/man/man4/evbarm/cpsw.4		man-sys-man		.man

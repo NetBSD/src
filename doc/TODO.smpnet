@@ -1,4 +1,4 @@
-$NetBSD: TODO.smpnet,v 1.22 2018/08/07 07:19:28 ozaki-r Exp $
+$NetBSD: TODO.smpnet,v 1.23 2018/08/14 14:49:13 maxv Exp $
 
 MP-safe components
 ==================
@@ -75,7 +75,6 @@ Unprotected ones
  - Interfaces
    - agr(4)
    - carp(4)
-   - etherip(4)
    - faith(4)
    - gre(4)
    - ppp(4)

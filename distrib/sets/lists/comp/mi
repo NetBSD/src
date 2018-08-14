@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2218 2018/08/13 08:26:49 christos Exp $
+#	$NetBSD: mi,v 1.2219 2018/08/14 14:49:13 maxv Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -2299,7 +2299,7 @@
 ./usr/include/net/if_bridgevar.h		comp-c-include
 ./usr/include/net/if_dl.h			comp-c-include
 ./usr/include/net/if_ether.h			comp-c-include
-./usr/include/net/if_etherip.h			comp-c-include
+./usr/include/net/if_etherip.h			comp-obsolete		obsolete
 ./usr/include/net/if_fddi.h			comp-c-include
 ./usr/include/net/if_gif.h			comp-c-include
 ./usr/include/net/if_gre.h			comp-c-include
