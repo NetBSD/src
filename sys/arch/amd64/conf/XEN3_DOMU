@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOMU,v 1.86 2018/08/01 16:59:09 maxv Exp $
+# $NetBSD: XEN3_DOMU,v 1.87 2018/08/14 06:04:24 maxv Exp $
 
 include 	"arch/amd64/conf/std.xen"
 
@@ -10,7 +10,7 @@ options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 #options 	UVMHIST_PRINT
 #options 	SYSCALL_DEBUG
 
-#ident		"XEN3_DOMU-$Revision: 1.86 $"
+#ident		"XEN3_DOMU-$Revision: 1.87 $"
 
 maxusers	32		# estimated number of users
 
@@ -217,6 +217,7 @@ pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
 pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	bridge			# simple inter-network bridging
 #options 	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
+pseudo-device	l2tp			# L2TPv3 interface
 pseudo-device	npf			# NPF packet filter
 
 options 	PAX_MPROTECT=1		# PaX mprotect(2) restrictions

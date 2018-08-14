@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.445 2018/08/01 18:36:14 khorben Exp $
+# $NetBSD: ALL,v 1.446 2018/08/14 06:04:24 maxv Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"ALL-$Revision: 1.445 $"
+#ident		"ALL-$Revision: 1.446 $"
 
 maxusers	64		# estimated number of users
 
@@ -1769,6 +1769,7 @@ pseudo-device	pfsync			# PF sync if
 #pseudo-device	npf			# NPF packet filter
 pseudo-device	kttcp
 pseudo-device	etherip			# EtherIP
+pseudo-device	l2tp			# L2TPv3 interface
 # srt is EXPERIMENTAL
 pseudo-device	srt			# source-address-based routing
 
