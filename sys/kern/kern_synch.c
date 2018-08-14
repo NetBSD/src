@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.317 2018/07/24 15:09:37 bouyer Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.318 2018/08/14 01:06:01 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008, 2009
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.317 2018/07/24 15:09:37 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.318 2018/08/14 01:06:01 ozaki-r Exp $");
 
 #include "opt_kstack.h"
 #include "opt_dtrace.h"
@@ -698,6 +698,11 @@ mi_switch(lwp_t *l)
 		if (__predict_false(dtrace_vtime_active)) {
 			(*dtrace_vtime_switch_func)(newl);
 		}
+
+		/*
+		 * We must ensure not to come here from inside a read section.
+		 */
+		KASSERT(pserialize_not_in_read_section());
 
 		/* Switch to the new LWP.. */
 #ifdef MULTIPROCESSOR
