@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2423 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2424 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -175,7 +175,7 @@ Changes from NetBSD 8.0 to NetBSD 9.0:
 	x86: Support for -static -pie binaries. [joerg 20180712]
 	kernel: Remove pmc(9) and X86PMC. [maxv 20180714]
 	tprof(4): Revamped. tpfmt(1) merged into tprof(8). [maxv 20180714]
-	ipkdb(4): Removed. [maxv 20180714]
+	kernel: Remove ipkdb(4). [maxv 20180714]
 	arm: Add support for ARMv8 performance event monitoring with tprof(4).
 		[jmcneill 20180715]
 	arm: Add support for ARMv7 performance event monitoring with tprof(4).
@@ -196,4 +196,7 @@ Changes from NetBSD 8.0 to NetBSD 9.0:
 	arm: Add driver for ARM GICv3 interrupt controllers. [jmcneill 20180808]
  	bind: Import version 9.12.2-P1. [christos 20180812]
 	arm: Add support for Rockchip RK3399 SoC. [jmcneill 20180812]
+	amd64: Randomize by default all the randomizable VM areas in the kernel.
+		[maxv 20180812]
 	mdocml: Import 1.14.4. [christos 20180814]
+	kernel: Remove etherip(4), replaced by l2tp(4). [maxv 20180814]
