@@ -1,4 +1,4 @@
-.\"	Id: man.7,v 1.132 2015/01/29 00:33:57 schwarze Exp 
+.\"	Id: man.7,v 1.137 2018/04/05 22:12:33 schwarze Exp 
 .\"
 .\" Copyright (c) 2009, 2010, 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2011-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd January 29, 2015
+.Dd April 5, 2018
 .Dt MAN 7
 .Os
 .Sh NAME
@@ -266,8 +266,6 @@ in the alphabetical reference below.
 .It Sx TP Ta tagged paragraph: Op Ar width
 .It Sx HP Ta hanged paragraph: Op Ar width
 .It Sx PD Ta set vertical paragraph distance: Op Ar height
-.It Sx \&br Ta force output line break in text mode (no arguments)
-.It Sx \&sp Ta force vertical space: Op Ar height
 .It Sx fi , nf Ta fill mode and no-fill mode (no arguments)
 .It Sx in Ta additional indent: Op Ar width
 .El
@@ -275,7 +273,6 @@ in the alphabetical reference below.
 .Bl -column "PP, LP, P" description
 .It Sx B Ta boldface font
 .It Sx I Ta italic font
-.It Sx R Ta roman (default) font
 .It Sx SB Ta small boldface font
 .It Sx SM Ta small roman font
 .It Sx BI Ta alternate between boldface and italic fonts
@@ -299,9 +296,7 @@ The optional arguments specify which release it is from.
 Text is rendered in bold face.
 .Pp
 See also
-.Sx \&I
-and
-.Sx \&R .
+.Sx \&I .
 .Ss \&BI
 Text is rendered alternately in bold face and italic.
 Thus,
@@ -350,8 +345,12 @@ See also
 and
 .Sx \&IR .
 .Ss \&DT
-Has no effect.
-Included for compatibility.
+Restore the default tabulator positions.
+They are at intervals of 0.5 inches.
+This has no effect unless the tabulator positions were changed with the
+.Xr roff 7
+.Ic \&ta
+request.
 .Ss \&EE
 This is a non-standard GNU extension, included only for compatibility.
 In
@@ -391,9 +390,7 @@ and
 Text is rendered in italics.
 .Pp
 See also
-.Sx \&B
-and
-.Sx \&R .
+.Sx \&B .
 .Ss \&IB
 Text is rendered alternately in italics and bold face.
 Whitespace between arguments is omitted in output.
@@ -464,6 +461,20 @@ See also
 .Sx \&PP ,
 and
 .Sx \&TP .
+.Ss \&ME
+End a mailto block.
+This is a non-standard GNU extension, included only for compatibility.
+See
+.Sx \&MT .
+.Ss \&MT
+Begin a mailto block.
+This is a non-standard GNU extension, included only for compatibility.
+It has the following syntax:
+.Bd -literal -offset indent
+.Pf \. Sx \&MT Ar address
+link description to be shown
+.Pf \. Sx ME
+.Ed
 .Ss \&OP
 Optional command-line argument.
 This is a non-standard GNU extension, included only for compatibility.
@@ -530,13 +541,6 @@ See also
 .Sx \&P ,
 and
 .Sx \&TP .
-.Ss \&R
-Text is rendered in roman (the default font).
-.Pp
-See also
-.Sx \&I
-and
-.Sx \&B .
 .Ss \&RB
 Text is rendered alternately in roman (the default font) and bold face.
 Whitespace between arguments is omitted in output.
@@ -708,12 +712,6 @@ It has the following syntax:
 link description to be shown
 .Pf \. Sx UE
 .Ed
-.Ss \&br
-Breaks the current line.
-Consecutive invocations have no further effect.
-.Pp
-See also
-.Sx \&sp .
 .Ss \&fi
 End literal mode begun by
 .Sx \&nf .
@@ -736,24 +734,6 @@ Literal mode is implicitly ended by
 .Sx \&SH
 or
 .Sx \&SS .
-.Ss \&sp
-Insert vertical spaces into output with the following syntax:
-.Bd -filled -offset indent
-.Pf \. Sx \&sp
-.Op Ar height
-.Ed
-.Pp
-The
-.Ar height
-argument is a scaling width as described in
-.Xr roff 7 .
-If 0, this is equivalent to the
-.Sx \&br
-macro.
-Defaults to 1, if unspecified.
-.Pp
-See also
-.Sx \&br .
 .Sh MACRO SYNTAX
 The
 .Nm
@@ -777,10 +757,7 @@ is equivalent to
 .Sq \&.I foo .
 If next-line macros are invoked consecutively, only the last is used.
 If a next-line macro is followed by a non-next-line macro, an error is
-raised, except for
-.Sx \&br
-and
-.Sx \&sp .
+raised.
 .Pp
 The syntax is as follows:
 .Bd -literal -offset indent
@@ -801,18 +778,15 @@ The syntax is as follows:
 .It Sx \&IR  Ta    n         Ta    current   Ta    \&
 .It Sx \&OP  Ta    0, 1      Ta    current   Ta    compat
 .It Sx \&PD  Ta    1         Ta    current   Ta    \&
-.It Sx \&R   Ta    n         Ta    next-line Ta    \&
 .It Sx \&RB  Ta    n         Ta    current   Ta    \&
 .It Sx \&RI  Ta    n         Ta    current   Ta    \&
 .It Sx \&SB  Ta    n         Ta    next-line Ta    \&
 .It Sx \&SM  Ta    n         Ta    next-line Ta    \&
 .It Sx \&TH  Ta    >1, <6    Ta    current   Ta    \&
 .It Sx \&UC  Ta    <=1       Ta    current   Ta    \&
-.It Sx \&br  Ta    0         Ta    current   Ta    compat
 .It Sx \&fi  Ta    0         Ta    current   Ta    compat
 .It Sx \&in  Ta    1         Ta    current   Ta    compat
 .It Sx \&nf  Ta    0         Ta    current   Ta    compat
-.It Sx \&sp  Ta    1         Ta    current   Ta    compat
 .El
 .Pp
 Macros marked as
