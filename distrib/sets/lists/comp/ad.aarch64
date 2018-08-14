@@ -1,4 +1,4 @@
-# $NetBSD: ad.aarch64,v 1.23 2018/07/17 18:55:24 joerg Exp $
+# $NetBSD: ad.aarch64,v 1.24 2018/08/14 14:48:01 rjs Exp $
 ./usr/include/aarch64				comp-c-include
 ./usr/include/aarch64/ansi.h			comp-c-include
 ./usr/include/aarch64/aout_machdep.h		comp-c-include
@@ -126,10 +126,10 @@
 ./usr/include/evbarm64				comp-obsolete		obsolete
 ./usr/include/evbarm64/disklabel.h		comp-obsolete		obsolete
 ./usr/include/evbarm64/intr.h			comp-obsolete		obsolete
-./usr/include/g++/bits/aarch64			comp-c-include		
-./usr/include/g++/bits/aarch64/c++config.h	comp-c-include		gcccmds,gcc=6
-./usr/include/g++/bits/arm			comp-c-include
-./usr/include/g++/bits/arm/c++config.h		comp-c-include		gcccmds,gcc=6
+./usr/include/g++/bits/aarch64			comp-c-include		compat
+./usr/include/g++/bits/aarch64/c++config.h	comp-c-include		gcccmds,gcc=6,compat
+./usr/include/g++/bits/arm			comp-c-include		compat
+./usr/include/g++/bits/arm/c++config.h		comp-c-include		gcccmds,gcc=6,compat
 ./usr/include/gcc-4.8/arm_neon.h		comp-c-include		gcccmds,gcc=48
 ./usr/include/gcc-4.8/mmintrin.h		comp-c-include		gcccmds,gcc=48
 ./usr/include/gcc-4.8/tgmath.h			comp-c-include		gcccmds,gcc=48
