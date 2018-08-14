@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_proto.c,v 1.125 2018/05/11 09:43:59 roy Exp $	*/
+/*	$NetBSD: in6_proto.c,v 1.126 2018/08/14 14:49:14 maxv Exp $	*/
 /*	$KAME: in6_proto.c,v 1.66 2000/10/10 15:35:47 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_proto.c,v 1.125 2018/05/11 09:43:59 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_proto.c,v 1.126 2018/08/14 14:49:14 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_gateway.h"
@@ -130,11 +130,6 @@ __KERNEL_RCSID(0, "$NetBSD: in6_proto.c,v 1.125 2018/05/11 09:43:59 roy Exp $");
 #include <netinet/ip_carp.h>
 #endif
 
-#include "etherip.h"
-#if NETHERIP > 0
-#include <netinet6/ip6_etherip.h>
-#endif
-
 #include <netinet6/ip6protosw.h>
 
 /*
@@ -194,9 +189,6 @@ PR_WRAP_INPUT6(rip6_input)
 PR_WRAP_INPUT6(dest6_input)
 PR_WRAP_INPUT6(route6_input)
 PR_WRAP_INPUT6(frag6_input)
-#if NETHERIP > 0
-PR_WRAP_INPUT6(ip6_etherip_input)
-#endif
 #if NPFSYNC > 0
 PR_WRAP_INPUT6(pfsync_input)
 #endif
@@ -210,7 +202,6 @@ PR_WRAP_INPUT6(pim6_input)
 #define	dest6_input		dest6_input_wrapper
 #define	route6_input		route6_input_wrapper
 #define	frag6_input		frag6_input_wrapper
-#define	ip6_etherip_input	ip6_etherip_input_wrapper
 #define	pim6_input		pim6_input_wrapper
 #endif
 
@@ -434,17 +425,6 @@ const struct ip6protosw inet6sw[] = {
 	.pr_usrreqs = &rip6_usrreqs,
 	.pr_init = encap_init,
 },
-#if NETHERIP > 0
-{	.pr_type = SOCK_RAW,
-	.pr_domain = &inet6domain,
-	.pr_protocol = IPPROTO_ETHERIP,
-	.pr_flags = PR_ATOMIC|PR_ADDR|PR_LASTHDR,
-	.pr_input = ip6_etherip_input,
-	.pr_ctlinput = rip6_ctlinput,
-	.pr_ctloutput = rip6_ctloutput,
-	.pr_usrreqs = &rip6_usrreqs,
-},
-#endif
 #if NCARP > 0
 {	.pr_type = SOCK_RAW,
 	.pr_domain = &inet6domain,
