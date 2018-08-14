@@ -1,4 +1,4 @@
-#	$NetBSD: LINKITSMART7688,v 1.7 2018/08/01 20:04:11 maxv Exp $
+#	$NetBSD: LINKITSMART7688,v 1.8 2018/08/14 06:37:59 maxv Exp $
 #
 # MediaTek MT7688
 #
@@ -249,7 +249,7 @@ pseudo-device	bridge			# simple inter-network bridging
 #options	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
 pseudo-device	agr			# IEEE 802.3ad link aggregation
 pseudo-device	npf			# NPF packet filter
-#pseudo-device	etherip			# Tunnel Ethernet over IP
+#pseudo-device	l2tp			# L2TPv3 interface
 # srt is EXPERIMENTAL
 #pseudo-device	srt			# source-address-based routing
 
