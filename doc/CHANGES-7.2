@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.2,v 1.1.2.104 2018/08/13 16:15:44 martin Exp $
+# $NetBSD: CHANGES-7.2,v 1.1.2.105 2018/08/14 14:35:23 martin Exp $
 
 A complete list of changes from the NetBSD 7.1 release to the NetBSD 7.2
 release:
@@ -5996,4 +5996,9 @@ sbin/gpt/unset.c				up to 1.14
 	- Improve documentation, including booting and exit status
 	- Check device parameter to avoid segfaults
 	[sborrill, #1629]
+
+sys/netinet6/frag6.c				1.64
+
+	Ignore zero-sized fragments.
+	[maxv, ticket #1630]
 
