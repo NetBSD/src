@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1543 2018/08/13 12:12:30 sevan Exp $
+#	$NetBSD: 3RDPARTY,v 1.1544 2018/08/14 01:10:47 roy Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -116,12 +116,12 @@ bc includes dc, both of which are in the NetBSD tree.
 Package:	bind [named and utils]
 Version:	9.10.7/BSD	9.12.2-P1/MPL
 Current Vers:	9.10.7/BSD	9.12.2-P1/MPL
-Maintainer:	Paul Vixie <vixie@vix.com>
+Maintainer:	ISC
 Archive Site:	ftp://ftp.isc.org/isc/bind9/
 Home Page:	http://www.isc.org/software/bind/
 Mailing List:	https://lists.isc.org/mailman/listinfo/bind-announce
 Mailing List:	https://lists.isc.org/mailman/listinfo/bind-users
-Responsible:	vixie, christos
+Responsible:	christos
 License:	BSD-like (2-clause) / MPL
 Location:	external/bsd/bind/dist
 Notes:
@@ -162,11 +162,11 @@ run configure and update config files in include
 Package:	libbind [libc resolver and includes]
 Version:	libbind-6.0-rc1
 Current Vers:	libbind-6.0
-Maintainer:	Paul Vixie <vixie@vix.com>
+Maintainer:	ISC
 Archive Site:	ftp://ftp.isc.org/isc/libbind/
 Home Page:	http://www.isc.org/software/libbind/
 Mailing List:	https://lists.isc.org/mailman/listinfo/bind-workers
-Responsible:	vixie, christos
+Responsible:	christos
 License:	BSD-like (2-clause)
 Location:	external/bsd/libbind/dist
 Notes:
@@ -274,7 +274,7 @@ main trunc has Citrus code in the following places:
 Package:	cron
 Version:	4.1
 Current Vers:	4.1
-Maintainer:	Paul Vixie <vixie@vix.com>
+Maintainer:	ISC
 Archive Site:	ftp://ftp.isc.org/isc/cron/
 Home Page:
 Mailing List:
