@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_writecomb.c,v 1.4 2015/10/17 21:06:42 jmcneill Exp $	*/
+/*	$NetBSD: linux_writecomb.c,v 1.5 2018/08/14 14:53:11 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_writecomb.c,v 1.4 2015/10/17 21:06:42 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_writecomb.c,v 1.5 2018/08/14 14:53:11 riastradh Exp $");
 
 #if defined(__i386__) || defined(__x86_64__)
 #define HAS_MTRR 1
@@ -136,7 +136,7 @@ arch_phys_wc_del(int id)
 	mutex_spin_enter(&linux_writecomb.lock);
 	mtrr = idr_find(&linux_writecomb.idr, id);
 	idr_remove(&linux_writecomb.idr, id);
-	mutex_spin_enter(&linux_writecomb.lock);
+	mutex_spin_exit(&linux_writecomb.lock);
 
 	if (mtrr != NULL) {
 		mtrr->type = 0;
