@@ -1,4 +1,4 @@
-/*	$NetBSD: kernhist.h,v 1.24 2018/08/13 03:20:19 mrg Exp $	*/
+/*	$NetBSD: kernhist.h,v 1.25 2018/08/14 11:39:10 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -252,7 +252,7 @@ do { \
 	uint32_t _kernhist_call = 0;
 
 #ifdef DDB
-#define KERNHIST_DUMP(NAME)	kernhist_dump(&NAME, printf)
+#define KERNHIST_DUMP(NAME)	kernhist_dump(&NAME, 0, printf)
 #else
 #define KERNHIST_DUMP(NAME)
 #endif
