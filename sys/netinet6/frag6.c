@@ -1,4 +1,4 @@
-/*	$NetBSD: frag6.c,v 1.55.4.2 2018/04/05 11:48:13 martin Exp $	*/
+/*	$NetBSD: frag6.c,v 1.55.4.3 2018/08/14 14:34:42 martin Exp $	*/
 /*	$KAME: frag6.c,v 1.40 2002/05/27 21:40:31 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: frag6.c,v 1.55.4.2 2018/04/05 11:48:13 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: frag6.c,v 1.55.4.3 2018/08/14 14:34:42 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -152,13 +152,14 @@ frag6_input(struct mbuf **mp, int *offp, int proto)
 	}
 
 	/*
-	 * check whether fragment packet's fragment length is
+	 * Check whether fragment packet's fragment length is non-zero and
 	 * multiple of 8 octets.
 	 * sizeof(struct ip6_frag) == 8
 	 * sizeof(struct ip6_hdr) = 40
 	 */
 	if ((ip6f->ip6f_offlg & IP6F_MORE_FRAG) &&
-	    (((ntohs(ip6->ip6_plen) - offset) & 0x7) != 0)) {
+	    (((ntohs(ip6->ip6_plen) - offset) == 0) ||
+	     ((ntohs(ip6->ip6_plen) - offset) & 0x7) != 0)) {
 		icmp6_error(m, ICMP6_PARAM_PROB, ICMP6_PARAMPROB_HEADER,
 		    offsetof(struct ip6_hdr, ip6_plen));
 		in6_ifstat_inc(dstifp, ifs6_reass_fail);
