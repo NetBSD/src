@@ -510,7 +510,6 @@ fi
 
 [ ${HAVE_STRSEP} -eq 0 ] && \
 	echo "extern	char	 *strsep(char **, const char *);"
-fi
 
 [ ${HAVE_STRTONUM} -eq 0 ] && \
 	echo "extern	long long strtonum(const char *, long long, long long, const char **);"
