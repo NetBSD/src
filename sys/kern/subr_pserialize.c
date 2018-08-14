@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pserialize.c,v 1.11 2018/04/16 20:25:21 hannken Exp $	*/
+/*	$NetBSD: subr_pserialize.c,v 1.12 2018/08/14 01:06:01 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pserialize.c,v 1.11 2018/04/16 20:25:21 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pserialize.c,v 1.12 2018/08/14 01:06:01 ozaki-r Exp $");
 
 #include <sys/param.h>
 
@@ -247,9 +247,6 @@ pserialize_switchpoint(void)
 {
 	pserialize_t psz, next;
 	cpuid_t cid;
-
-	/* We must to ensure not to come here from inside a read section. */
-	KASSERT(pserialize_not_in_read_section());
 
 	/*
 	 * If no updates pending, bail out.  No need to lock in order to
