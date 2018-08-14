@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1192.2.11 2018/01/03 21:40:28 snj Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1192.2.12 2018/08/14 14:28:34 martin Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1199.2.11 2018/01/03 21:37:36 snj Exp
+ *	NetBSD: pcidevs,v 1.1199.2.12 2018/08/11 13:34:21 martin Exp
  */
 
 /*
@@ -3061,6 +3061,10 @@
 #define	PCI_PRODUCT_INTEL_I219_LM2	0x15b7		/* I219-LM Ethernet Connection */
 #define	PCI_PRODUCT_INTEL_I219_V2	0x15b8		/* I219-V Ethernet Connection */
 #define	PCI_PRODUCT_INTEL_I219_LM3	0x15b9		/* I219-LM Ethernet Connection */
+#define	PCI_PRODUCT_INTEL_I219_LM7	0x15bb		/* I219-LM Ethernet Connection */
+#define	PCI_PRODUCT_INTEL_I219_V7	0x15bc		/* I219-V Ethernet Connection */
+#define	PCI_PRODUCT_INTEL_I219_LM6	0x15bd		/* I219-LM Ethernet Connection */
+#define	PCI_PRODUCT_INTEL_I219_V6	0x15be		/* I219-V Ethernet Connection */
 #define	PCI_PRODUCT_INTEL_X550T1	0x15d1		/* X550 10G Ethernet */
 #define	PCI_PRODUCT_INTEL_I219_V5	0x15d6		/* I219-V Ethernet Connection */
 #define	PCI_PRODUCT_INTEL_I219_LM4	0x15d7		/* I219-LM Ethernet Connection */

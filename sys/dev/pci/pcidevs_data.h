@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.1191.2.11 2018/01/03 21:40:28 snj Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.1191.2.12 2018/08/14 14:28:35 martin Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1199.2.11 2018/01/03 21:37:36 snj Exp
+ *	NetBSD: pcidevs,v 1.1199.2.12 2018/08/11 13:34:21 martin Exp
  */
 
 /*
@@ -4858,6 +4858,14 @@ static const uint16_t pci_products[] = {
 	    19671, 5555, 18507, 0,
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_I219_LM3, 
 	    19663, 5555, 18507, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_I219_LM7, 
+	    19663, 5555, 18507, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_I219_V7, 
+	    19671, 5555, 18507, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_I219_LM6, 
+	    19663, 5555, 18507, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_I219_V6, 
+	    19671, 5555, 18507, 0,
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_X550T1, 
 	    10326, 18711, 5555, 0,
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_I219_V5, 
@@ -12234,7 +12242,7 @@ static const char pci_words[] = { "."
 	    "ID\0" /* 1 refs @ 5538 */
 	    "3c985\0" /* 1 refs @ 5541 */
 	    "Gigabit\0" /* 119 refs @ 5547 */
-	    "Ethernet\0" /* 463 refs @ 5555 */
+	    "Ethernet\0" /* 467 refs @ 5555 */
 	    "3c996\0" /* 1 refs @ 5564 */
 	    "10/100/1000\0" /* 48 refs @ 5570 */
 	    "3c556\0" /* 2 refs @ 5582 */
@@ -14049,7 +14057,7 @@ static const char pci_words[] = { "."
 	    "(AMT)\0" /* 3 refs @ 18484 */
 	    "(IFE)\0" /* 1 refs @ 18490 */
 	    "82801EB/ER\0" /* 10 refs @ 18496 */
-	    "Connection\0" /* 37 refs @ 18507 */
+	    "Connection\0" /* 41 refs @ 18507 */
 	    "M\0" /* 1 refs @ 18518 */
 	    "i82571EB\0" /* 7 refs @ 18520 */
 	    "82801FB\0" /* 4 refs @ 18529 */
@@ -14198,8 +14206,8 @@ static const char pci_words[] = { "."
 	    "I218-V\0" /* 3 refs @ 19641 */
 	    "I218-LM\0" /* 3 refs @ 19648 */
 	    "Bypass\0" /* 2 refs @ 19656 */
-	    "I219-LM\0" /* 5 refs @ 19663 */
-	    "I219-V\0" /* 4 refs @ 19671 */
+	    "I219-LM\0" /* 7 refs @ 19663 */
+	    "I219-V\0" /* 6 refs @ 19671 */
 	    "SFP+\0" /* 2 refs @ 19678 */
 	    "KX\0" /* 3 refs @ 19683 */
 	    "40GbE\0" /* 3 refs @ 19686 */
