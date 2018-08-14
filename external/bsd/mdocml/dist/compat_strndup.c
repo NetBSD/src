@@ -1,6 +1,15 @@
-/*	Id: lib.c,v 1.14 2017/06/24 14:38:32 schwarze Exp  */
+#include "config.h"
+
+#if HAVE_STRNDUP
+
+int dummy;
+
+#else
+
+/* Id: compat_strndup.c,v 1.1 2018/02/27 11:16:23 schwarze Exp  */
+/* OpenBSD: strndup.c,v 1.2 2015/08/31 02:53:57 guenther Exp */
 /*
- * Copyright (c) 2009 Kristaps Dzonsons <kristaps@bsd.lv>
+ * Copyright (c) 2010 Todd C. Miller <Todd.Miller@courtesan.com>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -14,25 +23,28 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-#include "config.h"
 
 #include <sys/types.h>
 
+#include <stdlib.h>
 #include <string.h>
 
-#include "mandoc.h"
-#include "roff.h"
-#include "mdoc.h"
-#include "libmdoc.h"
-
-#define LINE(x, y) \
-	if (0 == strcmp(p, x)) return(y);
-
-const char *
-mdoc_a2lib(const char *p)
+char *
+strndup(const char *str, size_t maxlen)
 {
+	char *copy;
+	size_t len;
 
-#include "lib.in"
+	for (len = 0; len < maxlen && str[len] != '\0'; len++)
+		continue;
 
-	return NULL;
+	copy = malloc(len + 1);
+	if (copy != NULL) {
+		(void)memcpy(copy, str, len);
+		copy[len] = '\0';
+	}
+
+	return copy;
 }
+
+#endif

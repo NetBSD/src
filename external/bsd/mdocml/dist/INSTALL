@@ -1,22 +1,24 @@
-Id: INSTALL,v 1.18 2017/02/08 12:24:10 schwarze Exp 
+Id: INSTALL,v 1.22 2018/07/31 15:34:00 schwarze Exp 
 
-About mdocml, the portable mandoc distribution
-----------------------------------------------
-The mandoc manpage compiler toolset is a suite of tools compiling
-mdoc(7), the roff(7) macro language of choice for BSD manual pages,
-and man(7), the predominant historical language for UNIX manuals.
+About the portable mandoc distribution
+--------------------------------------
+The mandoc manpage compiler toolset (formerly called "mdocml")
+is a suite of tools compiling mdoc(7), the roff(7) macro language
+of choice for BSD manual pages, and man(7), the predominant
+historical language for UNIX manuals.
+
 It includes a man(1) manual viewer and additional tools.
-For general information, see <http://mdocml.bsd.lv/>.
+For general information, see <http://mandoc.bsd.lv/>.
 
 In case you have questions or want to provide feedback, read
-<http://mdocml.bsd.lv/contact.html>.  Consider subscribing to the
+<http://mandoc.bsd.lv/contact.html>.  Consider subscribing to the
 discuss@ mailing list mentioned on that page.  If you intend to
 help with the development of mandoc, consider subscribing to the
 tech@ mailing list, too.
 
 Enjoy using the mandoc toolset!
 
-Ingo Schwarze, Karlsruhe, February 2017
+Ingo Schwarze, Karlsruhe, August 2018
 
 
 Installation
@@ -25,7 +27,7 @@ Before manually installing mandoc on your system, please check
 whether the newest version of mandoc is already installed by default
 or available via a binary package or a ports system.  A list of the
 latest bundled and ported versions of mandoc for various operating
-systems is maintained at <http://mdocml.bsd.lv/ports.html>.
+systems is maintained at <http://mandoc.bsd.lv/ports.html>.
 
 Regarding how packages and ports are maintained for your operating
 system, please consult your operating system documentation.
@@ -35,7 +37,7 @@ To install mandoc manually, the following steps are needed:
 run the command "echo BUILD_CGI=1 >> configure.local".
 Then run "cp cgi.h.example cgi.h" and edit cgi.h as desired.
 
-2. If you also want to build the new catman(8) utility, run the
+2. If you also want to build the catman(8) utility, run the
 command "echo BUILD_CATMAN=1 >> configure.local".  Note that it
 is unlikely to be a drop-in replacement providing the same
 functionality as your system's "catman", if your operating
@@ -52,8 +54,6 @@ generates.  If anything looks wrong or different from what you
 wish, read the file "configure.local.example", create and edit
 a file "configure.local", and re-run "./configure" until the
 result seems right to you.
-On Solaris 10 and earlier, you may have to run "ksh ./configure"
-because the native /bin/sh lacks some POSIX features.
 
 5. Run "make".
 Any POSIX-compatible make, in particular both BSD make and GNU make,
@@ -75,18 +75,20 @@ command like "make DESTDIR=... install".  Read the *-install targets
 in the "Makefile" to understand how DESTDIR is used.
 
 9. Run the command "sudo makewhatis" to build mandoc.db(5) databases
-in all the directory trees configured in step 6.  Whenever installing
+in all the directory trees configured in step 3.  Whenever installing
 new manual pages, re-run makewhatis(8) to update the databases, or
 apropos(1) will not find the new pages.
 
 10. To set up a man.cgi(8) server, read its manual page.
 
-Note that some man(7) pages may contain low-level roff(7) markup
-that mandoc does not yet understand.  On some BSD systems using
-mandoc, third-party software is vetted on whether it may be formatted
-with mandoc.  If not, groff(1) is pulled in as a dependency and
-used to install a pre-formatted "catpage" instead of directly as
-manual page source.
+Note that a very small number of man(7) pages contain low-level
+roff(7) markup that mandoc does not yet understand.  On some BSD
+systems using mandoc, third-party software is vetted on whether it
+may be formatted with mandoc.  If not, groff(1) is pulled in as a
+dependency and used to install pre-formatted "catpages" instead of
+manual page sources.  This mechanism is used much less frequently
+than in the past.  On OpenBSD, only 25 out of about 10000 ports
+still require formatting with groff(1).
 
 
 Understanding mandoc dependencies
