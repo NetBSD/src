@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_writecomb.c,v 1.5 2018/08/14 14:53:11 riastradh Exp $	*/
+/*	$NetBSD: linux_writecomb.c,v 1.6 2018/08/14 14:53:21 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_writecomb.c,v 1.5 2018/08/14 14:53:11 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_writecomb.c,v 1.6 2018/08/14 14:53:21 riastradh Exp $");
 
 #if defined(__i386__) || defined(__x86_64__)
 #define HAS_MTRR 1
@@ -128,7 +128,7 @@ arch_phys_wc_del(int id)
 {
 #if defined(MTRR)
 	struct mtrr *mtrr;
-	int n;
+	int n = 1;
 	int ret __diagused;
 
 	KASSERT(0 <= id);
