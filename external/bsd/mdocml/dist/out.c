@@ -312,7 +312,7 @@ tblcalc_literal(struct rofftbl *tbl, struct roffcol *col,
 			col->width = lsz;
 	}
 	if (mw)
-		free((void *)str);
+		free(__UNCONST(str));
 }
 
 static void

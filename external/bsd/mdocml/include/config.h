@@ -36,6 +36,7 @@
 #define HAVE_STRINGLIST 0
 #define HAVE_STRLCAT 1
 #define HAVE_STRLCPY 1
+#define HAVE_STRNDUP 1
 #define HAVE_STRPTIME 1
 #define HAVE_STRSEP 1
 #define HAVE_STRTONUM 0
