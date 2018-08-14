@@ -1,4 +1,7 @@
-#	$NetBSD: Makefile.inc,v 1.1 2018/08/12 13:02:24 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.2 2018/08/14 11:52:41 christos Exp $
+
+LDADD+=-lns
+DPADD+=${LIBNS}
 
 .include <bsd.own.mk>
 
@@ -7,8 +10,6 @@
 CPPFLAGS+=-DNAMED_CONFFILE=\"${SYSCONFDIR}/named.conf\"
 BINDIR=/usr/sbin
 CHECK=${IDIST}/bin/check
-LDADD+=-lns
-DPADD+=${LIBNS}
 
 .PATH: ${CHECK}
 
