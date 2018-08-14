@@ -1,4 +1,4 @@
-.\"	$NetBSD: l2tp.4,v 1.2 2017/02/16 14:00:26 wiz Exp $
+.\"	$NetBSD: l2tp.4,v 1.3 2018/08/14 06:18:46 maxv Exp $
 .\"
 .\" Copyright (C) 2017 Internet Initiative Japan Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd January 19, 2017
+.Dd August 14, 2018
 .Dt L2TP 4
 .Os
 .Sh NAME
@@ -38,12 +38,11 @@
 .Sh DESCRIPTION
 The
 .Nm
-interface is a version 3 of the Layer Two Tunneling Protocol (L2TPv3)
-pseudo device.
+interface implements version 3 of the Layer Two Tunneling Protocol (L2TPv3).
 It can tunnel layer 2 protocol traffic over IPv4 or IPv6, as specified in
 .Li RFC3931 .
 .Pp
-The L2TPv3 protocol is comprised of two types of messages, control messages
+The L2TPv3 protocol is comprised of two types of messages: control messages
 and data messages.
 Control messages are used in the establishment,
 maintenace, and clearing of control connections and sessions.
@@ -79,16 +78,24 @@ which may be either an IPv4 or IPv6 packet, with IP protocol number 115.
 .Sh EXAMPLES
 Configuration example:
 .Bd -literal
-Host X--NetBSD A  ----------------tunnel---------- NetBSD B------Host E
-           \\                                          |
-            \\                                        /
-             +-----Router B--------Router C---------+
+wm0 = 192.168.0.1/24                        wm0 = 192.168.0.2/24
+
++------------+                                    +------------+
+|  NetBSD_A  |                                    |  NetBSD_B  |
+|------------|                                    |------------|
+|   [l2tp0] - - - - - - - - (tunnel) - - - - - - - - [l2tp0]   |
+|          [wm0]------------- ... --------------[wm0]          |
+|            |                                    |            |
++---[wm1]----+                                    +----[wm1]---+
+      |                                                  |
+      |                                                  |
++------------+                                    +------------+
+|   Host_X   |                                    |   Host_Y   |
++------------+                                    +------------+
 .Ed
-configuration example without cookies,
+.Ss Configuration example without cookies
 .Pp
-On
-.Nx
-system A
+On NetBSD_A:
 .Bd -literal
 # ifconfig wm0 inet 192.168.0.1/24
 # ifconfig l2tp0 create
@@ -102,9 +109,7 @@ system A
 # ifconfig bridge0 up
 .Ed
 .Pp
-On
-.Nx
-system B
+On NetBSD_B:
 .Bd -literal
 # ifconfig wm0 inet 192.168.0.2/24
 # ifconfig l2tp0 create
@@ -118,11 +123,9 @@ system B
 # ifconfig bridge0 up
 .Ed
 .Pp
-configuration example with cookies,
+.Ss Configuration example with cookies
 .Pp
-On
-.Nx
-system A
+On NetBSD_A:
 .Bd -literal
 # ifconfig wm0 inet 192.168.0.1/24
 # ifconfig l2tp0 create
@@ -137,9 +140,7 @@ system A
 # ifconfig bridge0 up
 .Ed
 .Pp
-On
-.Nx
-system B
+On NetBSD_B:
 .Bd -literal
 # ifconfig wm0 inet 192.168.0.2/24
 # ifconfig l2tp0 create
