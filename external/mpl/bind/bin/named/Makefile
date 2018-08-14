@@ -1,4 +1,7 @@
-#	$NetBSD: Makefile,v 1.1 2018/08/12 13:02:26 christos Exp $
+#	$NetBSD: Makefile,v 1.2 2018/08/14 11:52:56 christos Exp $
+
+LDADD+=-lns
+DPADD+=${LIBNS}
 
 .include <bsd.own.mk>
 
@@ -37,8 +40,6 @@ SRCS=	builtin.c config.c control.c controlconf.c \
 
 main.o: ${VERSIONFILE}
 
-LDADD+=-lns
-DPADD+=${LIBNS}
 LDADD+=-lblacklist
 DPADD+=${LIBBLACKLIST}
 .include <bsd.prog.mk>
