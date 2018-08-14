@@ -1,4 +1,4 @@
-.\"	$NetBSD: l2tp.4,v 1.3 2018/08/14 06:18:46 maxv Exp $
+.\"	$NetBSD: l2tp.4,v 1.4 2018/08/14 06:26:52 wiz Exp $
 .\"
 .\" Copyright (C) 2017 Internet Initiative Japan Inc.
 .\" All rights reserved.
@@ -94,7 +94,6 @@ wm0 = 192.168.0.1/24                        wm0 = 192.168.0.2/24
 +------------+                                    +------------+
 .Ed
 .Ss Configuration example without cookies
-.Pp
 On NetBSD_A:
 .Bd -literal
 # ifconfig wm0 inet 192.168.0.1/24
@@ -122,9 +121,7 @@ On NetBSD_B:
 # ifconfig wm1 up
 # ifconfig bridge0 up
 .Ed
-.Pp
 .Ss Configuration example with cookies
-.Pp
 On NetBSD_A:
 .Bd -literal
 # ifconfig wm0 inet 192.168.0.1/24
