@@ -1,4 +1,4 @@
-/* $NetBSD: pmap_page.S,v 1.2 2017/08/27 00:29:57 ryo Exp $ */
+/* $NetBSD: pmap_page.S,v 1.3 2018/08/15 11:12:38 ryo Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 
 #include "assym.h"
 
-RCSID("$NetBSD: pmap_page.S,v 1.2 2017/08/27 00:29:57 ryo Exp $");
+RCSID("$NetBSD: pmap_page.S,v 1.3 2018/08/15 11:12:38 ryo Exp $");
 
 /* LINTSTUB: void pmap_zero_page(paddr_t pa); */
 ENTRY(pmap_zero_page)
@@ -61,7 +61,7 @@ ENTRY(pmap_zero_page)
 	ret
 END(pmap_zero_page)
 
-/* LINTSTUB: void pmap_zero_page(paddr_t src_pa, paddr_t dst_pa); */
+/* LINTSTUB: void pmap_copy_page(paddr_t src_pa, paddr_t dst_pa); */
 ENTRY(pmap_copy_page)
 	movk	x0, #0xffff, lsl #48	/* convert to direct mapped */
 	movk	x1, #0xffff, lsl #48	/* convert to direct mapped */
