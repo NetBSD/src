@@ -1,4 +1,4 @@
-/*      $NetBSD: xbd_xenbus.c,v 1.80 2018/08/15 15:15:31 jdolecek Exp $      */
+/*      $NetBSD: xbd_xenbus.c,v 1.81 2018/08/15 15:18:34 jdolecek Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.80 2018/08/15 15:15:31 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.81 2018/08/15 15:18:34 jdolecek Exp $");
 
 #include "opt_xen.h"
 
@@ -519,7 +519,8 @@ abort_transaction:
 	return false;
 }
 
-static void xbd_backend_changed(void *arg, XenbusState new_state)
+static void
+xbd_backend_changed(void *arg, XenbusState new_state)
 {
 	struct xbd_xenbus_softc *sc = device_private((device_t)arg);
 	struct disk_geom *dg;
