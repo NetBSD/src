@@ -1,4 +1,4 @@
-.\"	$NetBSD: getsubopt.3,v 1.15 2017/07/03 21:32:50 wiz Exp $
+.\"	$NetBSD: getsubopt.3,v 1.16 2018/08/15 10:49:47 martin Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)getsubopt.3	8.1 (Berkeley) 6/9/93
 .\"
-.Dd November 17, 2009
+.Dd August 15, 2018
 .Dt GETSUBOPT 3
 .Os
 .Sh NAME
@@ -38,7 +38,7 @@
 .Sh LIBRARY
 .Lb libc
 .Sh SYNOPSIS
-.In unistd.h
+.In stdlib.h
 .Vt extern char *suboptarg
 .Ft int
 .Fn getsubopt "char **optionp" "char * const *tokens" "char **valuep"
