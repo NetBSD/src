@@ -1,4 +1,4 @@
-/*      $NetBSD: xbd_xenbus.c,v 1.79 2018/06/24 20:28:58 jdolecek Exp $      */
+/*      $NetBSD: xbd_xenbus.c,v 1.80 2018/08/15 15:15:31 jdolecek Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.79 2018/06/24 20:28:58 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.80 2018/08/15 15:15:31 jdolecek Exp $");
 
 #include "opt_xen.h"
 
@@ -338,7 +338,7 @@ xbd_xenbus_detach(device_t dev, int flags)
 	}
 	if ((flags & DETACH_FORCE) == 0) {
 		/* xbd_xenbus_detach already in progress */
-		wakeup(xbd_xenbus_detach);
+		wakeup(xbd_xenbus_detach); /* XXXSMP */
 		splx(s);
 		return EALREADY;
 	}
@@ -671,7 +671,7 @@ again:
 		if (rep->operation == BLKIF_OP_FLUSH_DISKCACHE) {
 			xbdreq->req_sync.s_error = rep->status;
 			xbdreq->req_sync.s_done = 1;
-			wakeup(xbdreq);
+			wakeup(xbdreq); /* XXXSMP */
 			/* caller will free the req */
 			continue;
 		}
@@ -718,7 +718,7 @@ done:
 		goto again;
 
 	if (sc->sc_xbdreq_wait)
-		wakeup(&sc->sc_xbdreq_wait);
+		wakeup(&sc->sc_xbdreq_wait); /* XXXSMP */
 	else
 		dk_start(&sc->sc_dksc, NULL);
 	return 1;
