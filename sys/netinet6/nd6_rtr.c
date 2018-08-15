@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_rtr.c,v 1.135.6.3 2018/05/22 17:41:12 martin Exp $	*/
+/*	$NetBSD: nd6_rtr.c,v 1.135.6.4 2018/08/15 12:09:58 martin Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.95 2001/02/07 08:09:47 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.135.6.3 2018/05/22 17:41:12 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.135.6.4 2018/08/15 12:09:58 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -1603,6 +1603,7 @@ nd6_pfxlist_onlink_check(void)
 		}
 	}
 
+	int bound = curlwp_bind();
 	/*
 	 * Changes on the prefix status might affect address status as well.
 	 * Make sure that all addresses derived from an attached prefix are
@@ -1613,6 +1614,9 @@ nd6_pfxlist_onlink_check(void)
 	 */
 	s = pserialize_read_enter();
 	IN6_ADDRLIST_READER_FOREACH(ia) {
+		struct psref psref;
+		bool found;
+
 		if (!(ia->ia6_flags & IN6_IFF_AUTOCONF))
 			continue;
 
@@ -1625,14 +1629,19 @@ nd6_pfxlist_onlink_check(void)
 			continue;
 		}
 
-		if (find_pfxlist_reachable_router(ia->ia6_ndpr))
+		ia6_acquire(ia, &psref);
+		pserialize_read_exit(s);
+
+		found = find_pfxlist_reachable_router(ia->ia6_ndpr) != NULL;
+
+		s = pserialize_read_enter();
+		ia6_release(ia, &psref);
+		if (found)
 			break;
 	}
 	pserialize_read_exit(s);
 
 	if (ia) {
-		int bound = curlwp_bind();
-
 		s = pserialize_read_enter();
 		IN6_ADDRLIST_READER_FOREACH(ia) {
 			struct ifaddr *ifa = (struct ifaddr *)ia;
@@ -1669,11 +1678,8 @@ nd6_pfxlist_onlink_check(void)
 			ia6_release(ia, &psref);
 		}
 		pserialize_read_exit(s);
-		curlwp_bindx(bound);
 	}
 	else {
-		int bound = curlwp_bind();
-
 		s = pserialize_read_enter();
 		IN6_ADDRLIST_READER_FOREACH(ia) {
 			if ((ia->ia6_flags & IN6_IFF_AUTOCONF) == 0)
@@ -1697,8 +1703,9 @@ nd6_pfxlist_onlink_check(void)
 			}
 		}
 		pserialize_read_exit(s);
-		curlwp_bindx(bound);
 	}
+
+	curlwp_bindx(bound);
 }
 
 static int
