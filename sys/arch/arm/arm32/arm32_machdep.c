@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_machdep.c,v 1.118 2018/08/05 14:02:35 skrll Exp $	*/
+/*	$NetBSD: arm32_machdep.c,v 1.119 2018/08/15 06:59:29 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.118 2018/08/05 14:02:35 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.119 2018/08/15 06:59:29 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_fdt.h"
@@ -271,11 +271,6 @@ cpu_startup(void)
 	vaddr_t minaddr;
 	vaddr_t maxaddr;
 	char pbuf[9];
-
-	/*
-	 * Until we better locking, we have to live under the kernel lock.
-	 */
-	//KERNEL_LOCK(1, NULL);
 
 	/* Set the CPU control register */
 	cpu_setup(boot_args);
