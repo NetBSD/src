@@ -1,4 +1,4 @@
-/*      $NetBSD: xbd_xenbus.c,v 1.81 2018/08/15 15:18:34 jdolecek Exp $      */
+/*      $NetBSD: xbd_xenbus.c,v 1.82 2018/08/15 15:49:15 jdolecek Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.81 2018/08/15 15:18:34 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.82 2018/08/15 15:49:15 jdolecek Exp $");
 
 #include "opt_xen.h"
 
@@ -882,7 +882,7 @@ xbdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 			    notify);
 			if (notify)
 				hypervisor_notify_via_evtchn(sc->sc_evtchn);
-			/* request sent, no wait for completion */
+			/* request sent, now wait for completion */
 			while (xbdreq->req_sync.s_done == 0) {
 				/* XXXSMP */
 				tsleep(xbdreq, PRIBIO, "xbdsync", 0);
