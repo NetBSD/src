@@ -1,4 +1,4 @@
-/*      $NetBSD: xennetback_xenbus.c,v 1.58.8.2 2018/07/26 23:55:29 snj Exp $      */
+/*      $NetBSD: xennetback_xenbus.c,v 1.58.8.3 2018/08/15 12:04:02 martin Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xennetback_xenbus.c,v 1.58.8.2 2018/07/26 23:55:29 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xennetback_xenbus.c,v 1.58.8.3 2018/08/15 12:04:02 martin Exp $");
 
 #include "opt_xen.h"
 
@@ -386,10 +386,12 @@ xennetback_xenbus_destroy(void *arg)
 
 	aprint_verbose_ifnet(&xneti->xni_if, "disconnecting\n");
 
-	if (xneti->xni_status == CONNECTED) {
+	if (xneti->xni_evtchn != 0) {
 		hypervisor_mask_event(xneti->xni_evtchn);
 		event_remove_handler(xneti->xni_evtchn, xennetback_evthandler,
 		    xneti);
+		xneti->xni_evtchn = 0;
+
 		if (xneti->xni_softintr) {
 			softint_disestablish(xneti->xni_softintr);
 			xneti->xni_softintr = NULL;
