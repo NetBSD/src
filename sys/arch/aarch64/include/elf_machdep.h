@@ -1,4 +1,4 @@
-/* $NetBSD: elf_machdep.h,v 1.2 2017/11/06 03:47:45 christos Exp $ */
+/* $NetBSD: elf_machdep.h,v 1.3 2018/08/15 11:08:18 ryo Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -102,7 +102,7 @@
 #define	R_AARCH64_ADR_PREL_LO21		274	/* S + A - P */
 #define	R_AARCH64_ADR_PREL_PG_HI21	275	/* Page(S + A) - Page(P) */
 #define	R_AARCH64_ADR_PREL_PG_HI21_NC	276	/* Page(S + A) - Page(P) */
-#define	R_AARCH64_ADR_ABS_LO21_NC	277	/* S + A */
+#define R_AARCH64_ADD_ABS_LO12_NC	277	/* S + A */
 #define	R_AARCH64_LDST8_ABS_LO12_NC	278	/* S + A */
 #define R_AARCH_TSTBR14			279	/* S + A - P */
 #define R_AARCH_CONDBR19		281	/* S + A - P */
