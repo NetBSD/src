@@ -1,4 +1,4 @@
-/*	$NetBSD: unistd.h,v 1.149 2018/02/06 20:22:41 christos Exp $	*/
+/*	$NetBSD: unistd.h,v 1.150 2018/08/15 10:21:42 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2008 The NetBSD Foundation, Inc.
@@ -355,7 +355,6 @@ char	*getpassfd(const char *, char *, size_t, int *, int, int);
 
 char	*getpass_r(const char *, char *, size_t);
 int	 getpeereid(int, uid_t *, gid_t *);
-int	 getsubopt(char **, char * const *, char **);
 __aconst char *getusershell(void);
 int	 initgroups(const char *, gid_t);
 int	 iruserok(uint32_t, int, const char *, const char *);
