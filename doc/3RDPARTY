@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1545 2018/08/14 08:54:11 christos Exp $
+#	$NetBSD: 3RDPARTY,v 1.1546 2018/08/15 07:51:44 sevan Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -650,10 +650,10 @@ among KAME/*BSD, *BSD-current and recent *BSD releases.
 
 Package:	kyua-atf-compat
 Version:	0.1
-Current Vers:	0.1
+Current Vers:	0.13
 Maintainer:	Julio Merino <jmmv@NetBSD.org>
-Archive site:	http://code.google.com/p/kyua/downloads/list?can=1
-Home page:	http://code.google.com/p/kyua/
+Archive site:	https://github.com/jmmv/kyua
+Home page:	https://github.com/jmmv/kyua
 Mailing List:	kyua-discuss@googlegroups.com
 Responsible:	jmmv
 License:	BSD 3-clause
@@ -665,10 +665,10 @@ directory.
 
 Package:	kyua-cli
 Version:	0.7
-Current Vers:	0.7
+Current Vers:	0.9
 Maintainer:	Julio Merino <jmmv@NetBSD.org>
-Archive site:	http://code.google.com/p/kyua/downloads/list?can=1
-Home page:	http://code.google.com/p/kyua/
+Archive site:	https://github.com/jmmv/kyua
+Home page:	https://github.com/jmmv/kyua
 Mailing List:	kyua-discuss@googlegroups.com
 Responsible:	jmmv
 License:	BSD 3-clause
@@ -679,10 +679,10 @@ Use external/bsd/kyua-cli/prepare-import.sh to regenerate the dist/ directory.
 
 Package:	kyua-testers
 Version:	0.1
-Current Vers:	0.1
+Current Vers:	0.3
 Maintainer:	Julio Merino <jmmv@NetBSD.org>
-Archive site:	http://code.google.com/p/kyua/downloads/list?can=1
-Home page:	http://code.google.com/p/kyua/
+Archive site:	https://github.com/jmmv/kyua
+Home page:	https://github.com/jmmv/kyua
 Mailing List:	kyua-discuss@googlegroups.com
 Responsible:	jmmv
 License:	BSD 3-clause
@@ -722,7 +722,7 @@ Distribution is stripped down to the relevant part.
 
 Package:	libdevmapper
 Version:	1.02.40
-Current Vers:	2.02.98
+Current Vers:	2.02.181
 Maintainer:	lvm-devel@redhat.com
 Archive Site:	ftp://sources.redhat.com/pub/lvm2/
 Home Page:	http://sources.redhat.com/lvm2/
@@ -762,7 +762,7 @@ All changes should come via import from upstream SVN.
 
 Package:	lvm2tools
 Version:	2.02.56
-Current Vers:	2.02.177
+Current Vers:	2.02.181
 Maintainer:	lvm-devel@redhat.com
 Archive Site:	ftp://sources.redhat.com/pub/lvm2/
 Home Page:	http://sources.redhat.com/lvm2/
@@ -872,7 +872,7 @@ Notes:
 
 Package:	mesa-demos
 Version:	8.1.0
-Current Vers:	8.2.0
+Current Vers:	8.4.0
 Maintainer:	mesa-git@?
 Archive Site:	ftp://ftp.freedesktop.org/pub/mesa/demos/
 Home Page:	http://www.mesa3d.org/
@@ -899,7 +899,7 @@ Notes:
 
 Package:	MesaLib
 Version:	7.11.2
-Current Vers:	13.0.4
+Current Vers:	18.2.0
 Maintainer:	mesa-git@?
 Archive Site:	ftp://ftp.freedesktop.org/pub/mesa/
 Home Page:	http://www.mesa3d.org/
@@ -955,7 +955,7 @@ HAVE_STRICT_ALIGNMENT.  Fix RCS IDs, import.
 
 Package:	ntp
 Version:	4.2.8p11
-Current Vers:	4.2.8p11
+Current Vers:	4.2.8p12
 Maintainer:	David L. Mills <mills@udel.edu>
 Archive Site:	http://www.ntp.org/
 Home Page:	http://www.ntp.org/, http://support.ntp.org/
@@ -981,7 +981,7 @@ We have lots of local fixes.
 
 Package:	OpenLDAP
 Version:	2.4.45
-Current Vers:	2.4.45
+Current Vers:	2.4.46
 Maintainer:	OpenLDAP Foundation
 Archive Site:	http://www.openldap.org/
 Home Page:	http://www.openldap.org/
