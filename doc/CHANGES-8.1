@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.1,v 1.1.2.11 2018/08/13 12:06:17 martin Exp $
+# $NetBSD: CHANGES-8.1,v 1.1.2.12 2018/08/15 12:16:31 martin Exp $
 
 A complete list of changes from the NetBSD 8.0 release to the NetBSD 8.1
 release:
@@ -486,4 +486,26 @@ external/bsd/bind/dist/lib/isc/unix/socket.c	1.23
 
 	Make ENOBUFS a soft error.
 	[christos, ticket #972]
+
+sys/arch/xen/xen/xennetback_xenbus.c		1.68 (patch)
+
+	Disestablish interrupt handler regardless of the state.
+	[dolecek, ticket #973]
+
+sys/net/if_tun.c				1.145,1.146
+
+	tun(4): fix locking against myself and kevent locking.
+	[ozaki-r, ticket #974]
+
+sys/netinet6/nd6_rtr.c				1.144
+
+	Don't call find_pfxlist_reachable_router, which may sleep, in a
+	pserialize read section
+	[ozaki-r, ticket #975]
+
+sbin/route/route.c				1.160
+
+	Resolve every route(4) message type before printing anything more
+	about it other than the type and length.
+	[roy, ticket #976]
 
