@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_ioctl.h,v 1.24.2.4 2018/07/20 20:33:05 phil Exp $ */
+/*	$NetBSD: ieee80211_ioctl.h,v 1.24.2.5 2018/08/15 17:07:03 phil Exp $ */
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -889,6 +889,32 @@ struct ieee80211_clone_params {
 #define	IEEE80211_CLONE_TDMA		0x0010	/* operate in TDMA mode */
 
 #if __NetBSD__
+
+#define	OLD_IEEE80211_IOC_SCAN_REQ	23
+#define	OLD_IEEE80211_IOC_SCAN_RESULTS	24
+
+/*
+ * Scan result data returned for OLD_IEEE80211_IOC_SCAN_RESULTS.
+ */
+struct old_ieee80211req_scan_result {
+	u_int16_t	isr_len;		/* length (mult of 4) */
+	u_int16_t	isr_freq;		/* MHz */
+	u_int16_t	isr_flags;		/* channel flags */
+	u_int8_t	isr_noise;
+	u_int8_t	isr_rssi;
+	u_int8_t	isr_intval;		/* beacon interval */
+	u_int8_t	isr_capinfo;		/* capabilities */
+	u_int8_t	isr_erp;		/* ERP element */
+	u_int8_t	isr_bssid[IEEE80211_ADDR_LEN];
+	u_int8_t	isr_nrates;
+	u_int8_t	isr_rates[IEEE80211_RATE_MAXSIZE];
+	u_int8_t	isr_ssid_len;		/* SSID length */
+	u_int8_t	isr_ie_len;		/* IE length */
+	u_int8_t	isr_pad[5];
+	/* variable length SSID followed by IE data */
+};
+
+
 /* nwid is pointed at by ifr.ifr_data */
 struct ieee80211_nwid {
 	u_int8_t	i_len;

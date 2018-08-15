@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_netbsd.h,v 1.21.2.7 2018/08/03 19:47:25 phil Exp $ */
+/*	$NetBSD: ieee80211_netbsd.h,v 1.21.2.8 2018/08/15 17:07:03 phil Exp $ */
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -138,7 +138,7 @@ void taskqueue_drain_timeout(struct workqueue *queue,
 #define taskqueue_unblock(queue)      /* */
 
 /*  Other stuff that needs to be fixed NNN */
-#define priv_check(x,y) 1
+#define priv_check(x,y) 0
 
 /* Coult it be this simple? NNN */
 #define if_addr_rlock(ifp) IFNET_LOCK(ifp)
@@ -177,7 +177,7 @@ void       if_inc_counter(struct ifnet *, ift_counter, int64_t);
 	(cnt == IFCOUNTER_OERRORS ? ipf->if_oerrors :   \
 	    (cnt == IFCOUNTER_IERRORS ? ipf->if_ierrors : 0 ))
 
-#define IF_LLADDR(ifp)     IFADDR_FIRST(ifp)
+#define IF_LLADDR(ifp)     (((struct ieee80211vap *)ifp->if_softc)->iv_myaddr)
 
 /* Scanners ... needed because no module support; */
 extern const struct ieee80211_scanner sta_default;

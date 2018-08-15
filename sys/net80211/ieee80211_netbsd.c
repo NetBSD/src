@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_netbsd.c,v 1.31.2.6 2018/08/03 19:47:25 phil Exp $ */
+/*	$NetBSD: ieee80211_netbsd.c,v 1.31.2.7 2018/08/15 17:07:03 phil Exp $ */
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 /*  __FBSDID("$FreeBSD$");  */
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_netbsd.c,v 1.31.2.6 2018/08/03 19:47:25 phil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_netbsd.c,v 1.31.2.7 2018/08/15 17:07:03 phil Exp $");
 
 /*
  * IEEE 802.11 support (NetBSD-specific code)
@@ -114,7 +114,6 @@ taskqueue_enqueue(struct workqueue *wq, struct task *task_item)
 {
 	mutex_enter(&task_item->t_mutex);
 	if (!task_item->t_onqueue) {
-		printf ("taskqueue_enqueue function %s\n", task_item->t_func_name);
 		workqueue_enqueue(wq, &task_item->t_work, NULL);
 		task_item->t_onqueue = 1;
 	}
@@ -124,7 +123,6 @@ taskqueue_enqueue(struct workqueue *wq, struct task *task_item)
 void
 taskqueue_drain(struct workqueue *wq, struct task *task_item)
 {
-	printf ("taskqueue_drain called\n");
 	workqueue_wait(wq, &task_item->t_work);
 }
 
@@ -145,8 +143,6 @@ taskqueue_enqueue_timeout(struct workqueue *queue,
 {
 	mutex_enter(&timeout_task->to_task.t_mutex);
 	if (!timeout_task->to_scheduled) {
-		printf ("taskqueue_enqueue_timeout: Scheduling the function %s.\n", 
-			timeout_task->to_task.t_func_name);
 		callout_reset(&timeout_task->to_callout, nticks, 
 		    taskqueue_callout_enqueue, timeout_task);
 		timeout_task->to_scheduled = 1;
@@ -160,7 +156,7 @@ int
 taskqueue_cancel_timeout(struct workqueue *queue, 
     struct timeout_task *timeout_task, u_int *pendp)
 {
-	printf ("taskqueue_cancel_timeout called\n");
+	// printf ("taskqueue_cancel_timeout called\n");
 	return -1;
 }
 
@@ -168,7 +164,7 @@ void
 taskqueue_drain_timeout(struct workqueue *queue, 
     struct timeout_task *timeout_task)
 {
-	printf ("taskqueue_drain_timeout called\n");
+	// printf ("taskqueue_drain_timeout called\n");
 }
 
 
@@ -823,7 +819,7 @@ int
 ieee80211_parent_xmitpkt(struct ieee80211com *ic, struct mbuf *m)
 {
 	int error;
-	printf ("ieee80211_parent_xmitpkt called\n");
+
 	/*
 	 * Assert the IC TX lock is held - this enforces the
 	 * processing -> queuing order is maintained

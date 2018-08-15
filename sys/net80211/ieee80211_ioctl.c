@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_ioctl.c,v 1.60.18.6 2018/08/03 19:47:25 phil Exp $ */
+/*	$NetBSD: ieee80211_ioctl.c,v 1.60.18.7 2018/08/15 17:07:02 phil Exp $ */
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -370,6 +370,119 @@ ieee80211_ioctl_getscanresults(struct ieee80211vap *vap,
 
 	return error;
 }
+
+#ifdef OLD_IEEE80211_IOC_SCAN_RESULTS
+/* Code to get the old version of scan results, for NetBSD 8.0 and earlier. */
+
+static size_t
+old_scan_space(const struct ieee80211_scan_entry *se, int *ielen)
+{
+	size_t len;
+
+	*ielen = se->se_ies.len;
+	/*
+	 * NB: ie's can be no more than 255 bytes and the max 802.11
+	 * packet is <3Kbytes so we are sure this doesn't overflow
+	 * 16-bits; if this is a concern we can drop the ie's.
+	 */
+	len = sizeof(struct old_ieee80211req_scan_result) + se->se_ssid[1] +
+	    se->se_meshid[1] + *ielen;
+	return roundup(len, sizeof(uint32_t));
+}
+
+static void
+old_get_scan_space(void *arg, const struct ieee80211_scan_entry *se)
+{
+	struct scanreq *req = arg;
+	int ielen;
+
+	req->space += old_scan_space(se, &ielen);
+}
+
+static void
+old_get_scan_result(void *arg, const struct ieee80211_scan_entry *se)
+{
+	struct scanreq *req = arg;
+	struct old_ieee80211req_scan_result *sr;
+	int ielen, len, nr, nxr;
+	uint8_t *cp;
+
+	len = old_scan_space(se, &ielen);
+	if (len > req->space)
+		return;
+
+	sr = (struct old_ieee80211req_scan_result *)req->sr;
+	KASSERT(len <= 65535 && ielen <= 65535,
+	    ("len %u ssid %u ie %u", len, se->se_ssid[1], ielen));
+	sr->isr_len = len;
+	sr->isr_ie_len = ielen;
+	sr->isr_freq = se->se_chan->ic_freq;
+	sr->isr_flags = se->se_chan->ic_flags;
+	sr->isr_rssi = se->se_rssi;
+	sr->isr_noise = se->se_noise;
+	sr->isr_intval = se->se_intval;
+	sr->isr_capinfo = se->se_capinfo;
+	sr->isr_erp = se->se_erp;
+	IEEE80211_ADDR_COPY(sr->isr_bssid, se->se_bssid);
+	nr = min(se->se_rates[1], IEEE80211_RATE_MAXSIZE);
+	memcpy(sr->isr_rates, se->se_rates+2, nr);
+	nxr = min(se->se_xrates[1], IEEE80211_RATE_MAXSIZE - nr);
+	memcpy(sr->isr_rates+nr, se->se_xrates+2, nxr);
+	sr->isr_nrates = nr + nxr;
+	if (sr->isr_nrates > 15)
+		sr->isr_nrates = 15;
+
+	printf ("old_get_scan_results: ssid=%.*s\n", se->se_ssid[1], &se->se_ssid[2]);
+
+	/* copy SSID */
+	sr->isr_ssid_len = se->se_ssid[1];
+	cp = ((uint8_t *)sr) + sizeof(struct old_ieee80211req_scan_result);
+	memcpy(cp, se->se_ssid+2, sr->isr_ssid_len);
+
+	if (ielen)
+		memcpy(cp+sr->isr_ssid_len, se->se_ies.data, ielen);
+
+	req->space -= len;
+	req->sr = (struct ieee80211req_scan_result *)(((uint8_t *)sr) + len);
+}
+
+static int
+old_ieee80211_ioctl_getscanresults(struct ieee80211vap *vap,
+	struct ieee80211req *ireq)
+{
+	struct scanreq req;
+	int error;
+
+	if (ireq->i_len < sizeof(struct scanreq))
+		return EFAULT;
+
+	error = 0;
+	req.space = 0;
+	ieee80211_scan_iterate(vap, old_get_scan_space, &req);
+	if (req.space > ireq->i_len)
+		req.space = ireq->i_len;
+	if (req.space > 0) {
+		uint32_t space;
+		void *p;
+
+		space = req.space;
+		/* XXX M_WAITOK after driver lock released */
+		p = IEEE80211_MALLOC(space, M_TEMP,
+		    IEEE80211_M_NOWAIT | IEEE80211_M_ZERO);
+		if (p == NULL)
+			return ENOMEM;
+		req.sr = p;
+		ieee80211_scan_iterate(vap, old_get_scan_result, &req);
+		ireq->i_len = space - req.space;
+		error = copyout(p, ireq->i_data, ireq->i_len);
+		IEEE80211_FREE(p, M_TEMP);
+	} else
+		ireq->i_len = 0;
+
+	return error;
+}
+
+#endif
 
 struct stainforeq {
 	struct ieee80211req_sta_info *si;
@@ -956,6 +1069,11 @@ ieee80211_ioctl_get80211(struct ieee80211vap *vap, u_long cmd,
 	case IEEE80211_IOC_WPAIE2:
 		error = ieee80211_ioctl_getwpaie(vap, ireq, ireq->i_type);
 		break;
+#ifdef OLD_IEEE80211_IOC_SCAN_RESULTS
+	case OLD_IEEE80211_IOC_SCAN_RESULTS:
+		error = old_ieee80211_ioctl_getscanresults(vap, ireq);
+		break;
+#endif
 	case IEEE80211_IOC_SCAN_RESULTS:
 		error = ieee80211_ioctl_getscanresults(vap, ireq);
 		break;
@@ -3015,7 +3133,6 @@ ieee80211_ioctl_set80211(struct ieee80211vap *vap, u_long cmd, struct ieee80211r
 	case IEEE80211_IOC_CHANLIST:
 		error = ieee80211_ioctl_setchanlist(vap, ireq);
 		break;
-#define	OLD_IEEE80211_IOC_SCAN_REQ	23
 #ifdef OLD_IEEE80211_IOC_SCAN_REQ
 	case OLD_IEEE80211_IOC_SCAN_REQ:
 		IEEE80211_DPRINTF(vap, IEEE80211_MSG_SCAN,
@@ -3535,15 +3652,14 @@ ieee80211_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 #if __NetBSD__
 	struct ieee80211_nwid nwid;
 	//	struct ieee80211_nwkey *nwkey;
-	//	struct ieee80211_power *power;
-	//	struct ieee80211chanreq *chanreq;
+	struct ieee80211_power *power;
+	struct ieee80211chanreq *chanreq;
 	struct ieee80211_bssid *bssid;
+	struct ieee80211_channel *chan;
+	struct ieee80211req ireq;
 
 	ifr = (struct ifreq *)data;
 #endif
-
-	printf ("ieee80211_ioctl: cmd is 0x%lx. ('%c', %ld)\n", cmd,
- 		(char) ((cmd>>8) & 0xff), cmd & 0xff );
 
 	switch (cmd) {
 	case SIOCSIFFLAGS:
@@ -3610,9 +3726,13 @@ ieee80211_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			 */
 			if_addr_rlock(ifp);
 			if ((ifp->if_flags & IFF_UP) == 0 &&
-			    !IEEE80211_ADDR_EQ(vap->iv_myaddr, IF_LLADDR(ifp)))
+			    !IEEE80211_ADDR_EQ(vap->iv_myaddr, IF_LLADDR(ifp))) {
 				IEEE80211_ADDR_COPY(vap->iv_myaddr,
 				    IF_LLADDR(ifp));
+				printf ("vap->iv_myaddr changed in ioctl to %s\n",
+					ether_sprintf(vap->iv_myaddr));
+			}
+
 			if_addr_runlock(ifp);
 		}
 		break;
@@ -3620,6 +3740,9 @@ ieee80211_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	case SIOCDELMULTI:
 		ieee80211_runtask(ic, &ic->ic_mcast_task);
 		break;
+#ifdef OSIOCSIFMEDIA
+	case OSIOCSIFMEDIA:
+#endif
 	case SIOCSIFMEDIA:
 	case SIOCGIFMEDIA:
 		ifr = (struct ifreq *)data;
@@ -3635,13 +3758,18 @@ ieee80211_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			error = ieee80211_ioctl_set80211(vap, cmd,
 					(struct ieee80211req *) data);
 		break;
+#ifdef SIOCG80211ZSTATS	
+	case SIOCG80211ZSTATS:
+#endif		
 	case SIOCG80211STATS:
 		ifr = (struct ifreq *)data;
 #if __FreeBSD__
 		copyout(&vap->iv_stats, ifr_data_get_ptr(ifr),
 		    sizeof (vap->iv_stats));
 #elif__NetBSD__
-		copyout(&vap->iv_stats, ifr->ifr_data, sizeof (vap->iv_stats));
+		copyout(&vap->iv_stats, ifr->ifr_buf,
+			sizeof (vap->iv_stats) <= ifr->ifr_buflen
+			? sizeof (vap->iv_stats) : ifr->ifr_buflen);
 #endif
 		break;
 	case SIOCSIFMTU:
@@ -3722,8 +3850,26 @@ ieee80211_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		error = ENOTTY;
 	        break;
 	case SIOCS80211POWER:
-		printf ("NetBSD POWER ioctl\n"); // NNN
-		error = ENOTTY;
+		power = (struct ieee80211_power *)data;
+		ic->ic_lintval = power->i_maxsleep;
+		if (power->i_enabled != 0) {
+			if ((ic->ic_caps & IEEE80211_C_PMGT) == 0)
+				error = EINVAL;
+			else if ((ic->ic_flags & IEEE80211_F_PMGTON) == 0) {
+				ic->ic_flags |= IEEE80211_F_PMGTON;
+				error = ENETRESET;
+			}
+		} else {
+			if (ic->ic_flags & IEEE80211_F_PMGTON) {
+				ic->ic_flags &= ~IEEE80211_F_PMGTON;
+				error = ENETRESET;
+			}
+		}
+		break;
+	case SIOCG80211POWER:
+		power = (struct ieee80211_power *)data;
+		power->i_enabled = (ic->ic_flags & IEEE80211_F_PMGTON) ? 1 : 0;
+		power->i_maxsleep = ic->ic_lintval;
 		break;
 	case SIOCS80211BSSID:
 		bssid = (struct ieee80211_bssid *)data;
@@ -3759,6 +3905,28 @@ ieee80211_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			memset(bssid->i_bssid, 0, IEEE80211_ADDR_LEN);
 		}
 		break;
+	case SIOCS80211CHANNEL:
+		/* Use deprecated ieee80211_ioctl_setchannel code. NNN? */
+		chanreq = (struct ieee80211chanreq *)data;
+		ireq.i_val = chanreq->i_channel;
+		error = ieee80211_ioctl_setchannel(vap, &ireq);
+		break;
+	case SIOCG80211CHANNEL:
+		chanreq = (struct ieee80211chanreq *)data;
+		switch (vap->iv_state) {
+		case IEEE80211_S_INIT:
+		case IEEE80211_S_SCAN:
+			if (vap->iv_opmode == IEEE80211_M_STA)
+				chan = vap->iv_des_chan;
+			else
+				chan = ic->ic_bsschan;  // NNN ibss chan?
+			break;
+		default:
+			chan = ic->ic_curchan;
+			break;
+		}
+		chanreq->i_channel = ieee80211_chan2ieee(ic, chan);
+		break;
 #endif
 	default:
 		/*
@@ -3769,8 +3937,11 @@ ieee80211_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		    (error = ic->ic_ioctl(ic, cmd, data)) != ENOTTY)
 			break;
 		error = ether_ioctl(ifp, cmd, data);
-		if (error == ENOTTY)
+		if (error == ENOTTY) {
+			printf ("ieee80211_ioctl: cmd is 0x%lx. ('%c', %ld)\n",
+				cmd, (char) ((cmd>>8) & 0xff), cmd & 0xff );
 			printf ("Unknown 802.11 IOCTL.\n"); /* NNN */
+		}
 		break;
 	}
 	return (error);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_output.c,v 1.63.2.3 2018/07/16 20:11:11 phil Exp $ */
+/*	$NetBSD: ieee80211_output.c,v 1.63.2.4 2018/08/15 17:07:03 phil Exp $ */
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -1397,7 +1397,7 @@ ieee80211_encap(struct ieee80211vap *vap, struct ieee80211_node *ni,
 	int meshhdrsize, meshae;
 	uint8_t *qos;
 	int is_amsdu = 0;
-	
+
 	IEEE80211_TX_LOCK_ASSERT(ic);
 
 	is_mcast = !! (m->m_flags & (M_MCAST | M_BCAST));

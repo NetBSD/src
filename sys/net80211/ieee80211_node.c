@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_node.c,v 1.75.4.4 2018/08/03 19:47:25 phil Exp $ */
+/*	$NetBSD: ieee80211_node.c,v 1.75.4.5 2018/08/15 17:07:03 phil Exp $ */
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -464,27 +464,18 @@ ieee80211_create_ibss(struct ieee80211vap* vap, struct ieee80211_channel *chan)
 void
 ieee80211_reset_bss(struct ieee80211vap *vap)
 {
-	printf ("reset_bss: vap is 0x%lx\n", (unsigned long) vap);
 	struct ieee80211com *ic = vap->iv_ic;
 	struct ieee80211_node *ni, *obss;
 
-	printf ("reset_bss: ic is 0x%lx\n", (unsigned long) ic);
-
 	ieee80211_node_table_reset(&ic->ic_sta, vap);
 
-	printf ("reset_bss: after table_reset\n");
 	/* XXX multi-bss: wrong */
 	ieee80211_reset_erp(ic);
-
-	printf ("reset_bss: after reset_erp\n");
 
 	ni = ieee80211_alloc_node(&ic->ic_sta, vap, vap->iv_myaddr);
 	KASSERT(ni != NULL, ("unable to setup initial BSS node"));
 
-	printf ("reset_bss: after alloc_node\n");
-
 	obss = vap->iv_bss;
-printf ("reset_bss: obss is 0x%lx\n", (unsigned long int)obss);
 	vap->iv_bss = ieee80211_ref_node(ni);
 	if (obss != NULL) {
 		copy_bss(ni, obss);
@@ -492,6 +483,8 @@ printf ("reset_bss: obss is 0x%lx\n", (unsigned long int)obss);
 		ieee80211_free_node(obss);
 	} else
 		IEEE80211_ADDR_COPY(ni->ni_bssid, vap->iv_myaddr);
+	printf ("reset_bss: macaddr %s, bssid %s\n", 
+		ether_sprintf(ni->ni_macaddr), ether_sprintf(ni->ni_bssid));
 }
 
 static int
@@ -953,6 +946,8 @@ ieee80211_sta_join(struct ieee80211vap *vap, struct ieee80211_channel *chan,
 		return 0;
 	}
 
+	printf ("ieee80211_sta_join called.\n");
+	
 	/*
 	 * Expand scan state into node's format.
 	 * XXX may not need all this stuff
@@ -1076,6 +1071,9 @@ ieee80211_sta_join(struct ieee80211vap *vap, struct ieee80211_channel *chan,
 	ieee80211_node_setuptxparms(ni);
 	ieee80211_ratectl_node_init(ni);
 
+	printf ("At end of ieee80211_sta_join, ni is 0x%lx\n", (long)ni);
+	printf ("   macaddr is %s,  bss is %s\n",
+		ether_sprintf(ni->ni_macaddr), ether_sprintf(ni->ni_bssid));
 	return ieee80211_sta_join1(ieee80211_ref_node(ni));
 }
 

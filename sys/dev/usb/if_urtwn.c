@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urtwn.c,v 1.59.2.5 2018/08/03 19:47:25 phil Exp $	*/
+/*	$NetBSD: if_urtwn.c,v 1.59.2.6 2018/08/15 17:07:02 phil Exp $	*/
 /*	$OpenBSD: if_urtwn.c,v 1.42 2015/02/10 23:25:46 mpi Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.59.2.5 2018/08/03 19:47:25 phil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.59.2.6 2018/08/15 17:07:02 phil Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -111,7 +111,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.59.2.5 2018/08/03 19:47:25 phil Exp $
 #define	DBG_REG		__BIT(6)
 #define	DBG_ALL		0xffffffffU
 /* NNN Reset urtwn_debug to 0 when done debugging. */
-u_int urtwn_debug = DBG_FN;
+u_int urtwn_debug = 0;
 #define DPRINTFN(n, s)	\
 	do { if (urtwn_debug & (n)) printf s; } while (/*CONSTCOND*/0)
 #else
@@ -342,15 +342,15 @@ static struct ieee80211vap *
 static void	urtwn_vap_delete(struct ieee80211vap *);
 static int	urtwn_ioctl(struct ifnet *, u_long, void *);
 static void	urtwn_parent(struct ieee80211com *);
+static void	urtwn_getradiocaps(struct ieee80211com *, int, int *,
+		    struct ieee80211_channel []);
 static void	urtwn_scan_start(struct ieee80211com *);
 static void	urtwn_scan_end(struct ieee80211com *);
 static void	urtwn_set_channel(struct ieee80211com *);
 static int	urtwn_transmit(struct ieee80211com *, struct mbuf *);
-static int	urtwn_send_mgmt(struct ieee80211_node *, int, int);
 static int	urtwn_raw_xmit(struct ieee80211_node *, struct mbuf *,
 		    const struct ieee80211_bpf_params *);
-static void	urtwn_getradiocaps(struct ieee80211com *, int, int *,
-		    struct ieee80211_channel []);
+//static int	urtwn_send_mgmt(struct ieee80211_node *, int, int);
 
 /* Aliases. */
 #define	urtwn_bb_write	urtwn_write_4
@@ -392,6 +392,14 @@ urtwn_attach(device_t parent, device_t self, void *aux)
 
 	/* Name the ic. */
 	ic->ic_name = "urtwn";
+
+	/* Driver Send queue, separate from the if send queue*/
+	sc->sc_sendq.ifq_maxlen = 32;
+	/* NNN how should this be initialized? */
+	sc->sc_sendq.ifq_head = sc->sc_sendq.ifq_tail = NULL;
+	sc->sc_sendq.ifq_len = 0;
+	sc->sc_sendq.ifq_drops = 0;
+	IFQ_LOCK_INIT(&sc->sc_sendq);
 
 	sc->chip = 0;
 	dev = urtwn_lookup(urtwn_devs, uaa->uaa_vendor, uaa->uaa_product);
@@ -554,7 +562,7 @@ urtwn_attach(device_t parent, device_t self, void *aux)
 	}
 
 	/* Debug all! NNN */
-	vap->iv_debug = IEEE80211_MSG_ANY;
+	// vap->iv_debug = IEEE80211_MSG_ANY;
 
 	bpf_attach2(vap->iv_ifp, DLT_IEEE802_11_RADIO,
 	    sizeof(struct ieee80211_frame) + IEEE80211_RADIOTAP_HDRLEN,
@@ -610,6 +618,10 @@ urtwn_detach(device_t self, int flags)
 		/* Close Tx/Rx pipes.  Abort done by urtwn_stop. */
 		urtwn_close_pipes(sc);
 	}
+
+	/* sendq destroy */
+	IFQ_PURGE(&sc->sc_sendq);
+	IFQ_LOCK_DESTROY(&sc->sc_sendq);
 
 	splx(s);
 
@@ -2082,7 +2094,7 @@ urtwn_newstate_cb(struct urtwn_softc *sc, void *arg)
 	case IEEE80211_S_ASSOC:
 		break;
 
-	case IEEE80211_S_RUN:       
+	case IEEE80211_S_RUN:
 		ni = vap->iv_bss;
 
 		/* XXX: Set 20MHz mode */
@@ -2794,6 +2806,7 @@ urtwn_rx_frame(struct urtwn_softc *sc, uint8_t *buf, int pktlen)
 	/* Finalize mbuf. */
 	m_set_rcvif(m, ifp);
 	wh = (struct ieee80211_frame *)((uint8_t *)&stat[1] + infosz);
+		
 	memcpy(mtod(m, uint8_t *), wh, pktlen);
 	m->m_pkthdr.len = m->m_len = pktlen;
 
@@ -2977,7 +2990,7 @@ urtwn_txeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 	}
 
 	ifp->if_opackets++;
-	urtwn_start(ifp);
+	urtwn_start(ifp); 
 	splx(s);
 
 }
@@ -2996,11 +3009,6 @@ urtwn_tx(struct urtwn_softc *sc, struct mbuf *m, struct ieee80211_node *ni,
 	int s, hasqos, error;
 
 	DPRINTFN(DBG_FN, ("%s: %s\n", device_xname(sc->sc_dev), __func__));
-
-	KASSERT(sc != NULL); // NNN
-	KASSERT(m != NULL);
-	KASSERT(ni != NULL);
-	KASSERT(data != NULL);
 
 	wh = mtod(m, struct ieee80211_frame *);
 	type = wh->i_fc[0] & IEEE80211_FC0_TYPE_MASK;
@@ -3177,8 +3185,13 @@ urtwn_tx(struct urtwn_softc *sc, struct mbuf *m, struct ieee80211_node *ni,
 	xferlen = txd_len + m->m_pkthdr.len + padsize;
 	m_copydata(m, 0, m->m_pkthdr.len, (char *)&txd[0] + txd_len + padsize);
 
-	printf ("urtwn_tx just before splnet()\n");
-	KASSERT(data != NULL);
+	if (data->xfer == NULL) {
+		/* NNN Don't crash ... but what is going on! */
+		printf ("urtwn_tx: data->xfer is NULL\n");
+		m_print(m,"", printf);
+		return -1;
+	}
+	
 	s = splnet();
 	usbd_setup_xfer(data->xfer, data, data->buf, xferlen,
 	    USBD_FORCE_SHORT_XFER, URTWN_TX_TIMEOUT,
@@ -3192,7 +3205,6 @@ urtwn_tx(struct urtwn_softc *sc, struct mbuf *m, struct ieee80211_node *ni,
 		return error;
 	}
 	splx(s);
-	printf ("urtwn_tx just before splnet()\n");	
 	return 0;
 }
 
@@ -3252,7 +3264,7 @@ urtwn_start(struct ifnet *ifp)
 			break;
 
 		/* Encapsulate and send data frames. */
-		IFQ_POLL(&ifp->if_snd, m);
+		IFQ_POLL(&sc->sc_sendq, m);
 		if (m == NULL)
 			break;
 
@@ -3275,7 +3287,7 @@ urtwn_start(struct ifnet *ifp)
 				    device_xname(sc->sc_dev)));
 			return;
 		}
-		IFQ_DEQUEUE(&ifp->if_snd, m);
+		IFQ_DEQUEUE(&sc->sc_sendq, m);
 
 		if (m->m_len < (int)sizeof(*eh) &&
 		    (m = m_pullup(m, sizeof(*eh))) == NULL) {
@@ -3292,17 +3304,9 @@ urtwn_start(struct ifnet *ifp)
 			continue;
 		}
 
-		bpf_mtap(ifp, m, BPF_D_OUT);
+		//bpf_mtap(ifp, m, BPF_D_OUT);
 
-		if ((m = ieee80211_encap(vap, ni, m)) == NULL) {
-			ieee80211_free_node(ni);
-			printf("ERROR4\n");
-			ifp->if_oerrors++;
-			continue;
-		}
  sendit:
-		bpf_mtap3(vap->iv_rawbpf, m, BPF_D_OUT);
-
 		if (urtwn_tx(sc, m, ni, data) != 0) {
 			m_freem(m);
 			ieee80211_free_node(ni);
@@ -3317,7 +3321,7 @@ urtwn_start(struct ifnet *ifp)
 	}
 }
 
-static void
+static __unused void
 urtwn_watchdog(struct ifnet *ifp)
 {
 	struct ieee80211vap *vap = ifp->if_softc;
@@ -3368,8 +3372,6 @@ urtwn_vap_create(struct ieee80211com *ic,  const char name[IFNAMSIZ],
 		return NULL;
 	}
 
-	printf ("vap_create:  after vap_setup\n");
-
 	/* Local setup */
 	vap->iv_reset = urtwn_reset;
 
@@ -3377,9 +3379,9 @@ urtwn_vap_create(struct ieee80211com *ic,  const char name[IFNAMSIZ],
 	ifp->if_init = urtwn_init;
 	ifp->if_ioctl = urtwn_ioctl;
 	ifp->if_start = urtwn_start;
-	ifp->if_watchdog = urtwn_watchdog;
+	// ifp->if_watchdog = urtwn_watchdog;  NNN
 	ifp->if_extflags |= IFEF_MPSAFE;
-	IFQ_SET_READY(&ifp->if_snd);
+	// IFQ_SET_READY(&ifp->if_snd);
 	memcpy(ifp->if_xname, device_xname(sc->sc_dev), IFNAMSIZ);
 
 	/* Override state transition machine. */
@@ -3530,7 +3532,6 @@ urtwn_transmit(struct ieee80211com *ic, struct mbuf *m)
 	struct urtwn_softc *sc = ic->ic_softc;
 	struct ieee80211vap *vap = TAILQ_FIRST(&ic->ic_vaps);
 	int s;
-	int error;
 	size_t pktlen = m->m_pkthdr.len;
         bool mcast = (m->m_flags & M_MCAST) != 0;
 
@@ -3538,11 +3539,7 @@ urtwn_transmit(struct ieee80211com *ic, struct mbuf *m)
 
 	s = splnet();
 
-        IFQ_ENQUEUE(&vap->iv_ifp->if_snd, m, error);
-        if (error != 0) {
-                /* mbuf is already freed */
-                goto out;
-        }
+        IF_ENQUEUE(&sc->sc_sendq, m);
 
         vap->iv_ifp->if_obytes += pktlen;
         if (mcast)
@@ -3550,18 +3547,28 @@ urtwn_transmit(struct ieee80211com *ic, struct mbuf *m)
 
         if ((vap->iv_ifp->if_flags & IFF_OACTIVE) == 0)
                 if_start_lock(vap->iv_ifp);
-out:
         splx(s);
 
-        return error;
+	urtwn_start(vap->iv_ifp);
+
+        return 0;
 }
 
-static __unused int urtwn_send_mgmt(struct ieee80211_node *ni, int type, int arg)
-{
-	printf ("urtwn_send_mgmt: type %d, arg %d\n", type, arg);
-	return ENOENT;
-}
+#if 0
+static int
+urtwn_send_mgmt(struct ieee80211_node *ni, int arg1, int arg2) {
+#ifdef URTWN_DEBUG
+	// struct ieee80211vap *vap = ni->ni_vap;
+	struct ieee80211com *ic = ni->ni_ic;
+	struct urtwn_softc *sc = ic->ic_softc;
+#endif
 
+	DPRINTFN(DBG_FN, ("%s: %s\n",device_xname(sc->sc_dev), __func__));
+
+	/* Don't know what to do right now. */
+	return ENOTTY;
+}
+#endif	
 
 
 static int

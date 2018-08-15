@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_proto.c,v 1.34.14.6 2018/08/03 19:47:25 phil Exp $ */
+/*	$NetBSD: ieee80211_proto.c,v 1.34.14.7 2018/08/15 17:07:03 phil Exp $ */
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -1544,7 +1544,9 @@ ieee80211_start_reset_chan(struct ieee80211vap *vap)
 void
 ieee80211_start_locked(struct ieee80211vap *vap)
 {
+#if __FreeBSD__	
 	struct ifnet *ifp = vap->iv_ifp;
+#endif
 	struct ieee80211com *ic = vap->iv_ic;
 
 	IEEE80211_LOCK_ASSERT(ic);
@@ -1552,15 +1554,17 @@ ieee80211_start_locked(struct ieee80211vap *vap)
 	IEEE80211_DPRINTF(vap,
 		IEEE80211_MSG_STATE | IEEE80211_MSG_DEBUG,
 		"start running, %d vaps running\n", ic->ic_nrunning);
-
-        printf ("returning from start_locked too soon.\n");
-        return;
+#if __NetBSD__
+	/* NNN may need to change/upgrade this once more than one vap/device. */
+	if (ic->ic_nrunning++ == 0) {
+		/* reset the channel to a known good channel */
+		if (ieee80211_start_check_reset_chan(vap))
+			ieee80211_start_reset_chan(vap);
+	}
+#endif
 
 #if __FreeBSD__
 	if ((ifp->if_drv_flags & IFF_DRV_RUNNING) == 0) {
-#elif __NetBSD__
-	if ((ifp->if_flags & IFF_RUNNING) == 0) {
-#endif
 		/*
 		 * Mark us running.  Note that it's ok to do this first;
 		 * if we need to bring the parent device up we defer that
@@ -1569,17 +1573,14 @@ ieee80211_start_locked(struct ieee80211vap *vap)
 		 * through ieee80211_start_all at which point we'll come
 		 * back in here and complete the work.
 		 */
-#if __FreeBSD__
+
 		ifp->if_drv_flags |= IFF_DRV_RUNNING;
-#elif __NetBSD__
-		ifp->if_flags |= IFF_RUNNING;
-#endif
+
 		/*
 		 * We are not running; if this we are the first vap
 		 * to be brought up auto-up the parent if necessary.
 		 */
 		if (ic->ic_nrunning++ == 0) {
-			printf ("   calling start_check_reset_chan\n");
 			/* reset the channel to a known good channel */
 			if (ieee80211_start_check_reset_chan(vap))
 				ieee80211_start_reset_chan(vap);
@@ -1632,6 +1633,7 @@ ieee80211_start_locked(struct ieee80211vap *vap)
 				    IEEE80211_S_SCAN, 0);
 		}
 	}
+#endif
 }
 
 /*
@@ -1871,6 +1873,10 @@ ieee80211_swbmiss(void *arg)
 	IEEE80211_LOCK_ASSERT(ic);
 #elif __NetBSD__
 	IEEE80211_LOCK(ic);
+	if (vap->iv_state < IEEE80211_S_RUN) {  /* NNN should stop it */
+		IEEE80211_UNLOCK(ic);
+		return;
+	}
 #endif
 
 	KASSERT(vap->iv_state >= IEEE80211_S_RUN,
