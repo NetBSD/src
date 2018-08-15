@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1548 2018/08/15 15:11:18 sevan Exp $
+#	$NetBSD: 3RDPARTY,v 1.1549 2018/08/15 15:52:09 sevan Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -197,7 +197,7 @@ Location:	external/gpl3/binutils/dist
 Notes:
 
 Package:	bozohttpd
-Version:	20100617
+Version:	20170201
 Current Vers:	20170201
 Maintainer:	mrg@eterna.com.au
 Archive Site:	ftp://ftp.NetBSD.org/pub/NetBSD/packages/distfiles/LOCAL_PORTS/
@@ -210,7 +210,7 @@ Notes:
 Delete "queue.h" from the distribution.
 
 Package:	bsd-family-tree
-Version:	1.151
+Version:	336757
 Current Vers:	336757
 Maintainer:	The FreeBSD Project
 Archive Site:	https://svnweb.freebsd.org/base/head/share/misc/bsd-family-tree
