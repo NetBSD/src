@@ -1,4 +1,4 @@
-/*	$NetBSD: armreg.h,v 1.123 2018/08/12 17:21:36 skrll Exp $	*/
+/*	$NetBSD: armreg.h,v 1.124 2018/08/15 06:13:56 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Ben Harris
@@ -282,6 +282,20 @@
 #define PJ4B_AUXFMC0_DCSLFD	__BIT(2)  /* Disable DC Speculative linefill */
 #define PJ4B_AUXFMC0_FW		__BIT(8)  /* alias of PJ4B_AUXCTL_FW*/
 
+/* Cortex-A5 Auxiliary Control Register (CP15 register 1, opcode 1) */
+#define	CORTEXA5_ACTLR_FW	__BIT(0)
+#define	CORTEXA5_ACTLR_SMP	__BIT(6)  /* Inner Cache Shared is cacheable */
+#define	CORTEXA5_ACTLR_EXCL	__BIT(7)  /* Exclusive L1/L2 cache control */
+
+/* Cortex-A7 Auxiliary Control Register (CP15 register 1, opcode 1) */
+#define	CORTEXA7_ACTLR_L1ALIAS	__BIT(0)  /* Enables L1 cache alias checks */
+#define	CORTEXA7_ACTLR_L2EN	__BIT(1)  /* Enables L2 cache */
+#define	CORTEXA7_ACTLR_SMP	__BIT(6)  /* SMP */
+
+/* Cortex-A8 Auxiliary Control Register (CP15 register 1, opcode 1) */
+#define	CORTEXA8_ACTLR_L1ALIAS	__BIT(0)  /* Enables L1 cache alias checks */
+#define	CORTEXA8_ACTLR_L2EN	__BIT(1)  /* Enables L2 cache */
+
 /* Cortex-A9 Auxiliary Control Register (CP15 register 1, opcode 1) */
 #define	CORTEXA9_AUXCTL_FW	0x00000001 /* Cache and TLB updates broadcast */
 #define	CORTEXA9_AUXCTL_L2PE	0x00000002 /* Prefetch hint enable */
@@ -296,6 +310,7 @@
 #define	CORTEXA15_ACTLR_BTB	__BIT(0)  /* Cache and TLB updates broadcast */
 #define	CORTEXA15_ACTLR_SMP	__BIT(6)  /* SMP */
 #define	CORTEXA15_ACTLR_IOBEU	__BIT(15) /* In order issue in Branch Exec Unit */
+#define	CORTEXA15_ACTLR_SDEH	__BIT(31) /* snoop-delayed exclusive handling */
 
 /* Marvell Feroceon Extra Features Register (CP15 register 1, opcode2 0) */
 #define FC_DCACHE_REPL_LOCK	0x80000000 /* Replace DCache Lock */
