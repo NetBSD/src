@@ -29,6 +29,7 @@
 #define HAVE_PLEDGE 0
 #define HAVE_PROGNAME 1
 #define HAVE_REALLOCARRAY 0
+#define HAVE_RECALLOCARRAY 0
 #define HAVE_REWB_BSD 1
 #define HAVE_REWB_SYSV 0
 #define HAVE_SANDBOX_INIT 0
@@ -54,4 +55,5 @@
 
 extern	int	  getsubopt(char **, char * const *, char **);
 extern	void	 *reallocarray(void *, size_t, size_t);
+extern	void	 *recallocarray(void *, size_t, size_t, size_t);
 extern	long long strtonum(const char *, long long, long long, const char **);
