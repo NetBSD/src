@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1547 2018/08/15 13:54:54 sevan Exp $
+#	$NetBSD: 3RDPARTY,v 1.1548 2018/08/15 15:11:18 sevan Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -109,7 +109,7 @@ Home Page:	http://www.gnu.org/software/bc/
 Mailing List:	bug-bc@gnu.org
 Responsible:	phil, simonb
 License:	GPLv2, LGPGv2.1
-Location:	gnu/dist/bc
+Location:	external/bsd/bc
 Notes:
 bc includes dc, both of which are in the NetBSD tree.
 
