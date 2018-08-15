@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1546 2018/08/15 07:51:44 sevan Exp $
+#	$NetBSD: 3RDPARTY,v 1.1547 2018/08/15 13:54:54 sevan Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -1072,7 +1072,7 @@ markus is very cooperative about it):
 
 Package:	OpenSSL
 Version:	1.0.2o/1.1.0h
-Current Vers:	1.0.2k/1.1.0h
+Current Vers:	1.0.2p/1.1.0i
 Maintainer:	The OpenSSL Project
 Archive Site:	ftp://ftp.openssl.org/source/
 Home Page:	http://www.openssl.org/
@@ -1089,7 +1089,7 @@ Notes:
 
 Package:	pcc
 Version:	1.1.0.DEVEL 20120325
-Current Vers:	1.1.0.DEVEL 20120325
+Current Vers:	1.1.0 20141210
 Maintainer:	Anders Magnusson <ragge@NetBSD.org>
 Archive Site:	ftp://pcc.ludd.ltu.se/pub/pcc/
 Home Page:	http://pcc.ludd.ltu.se/
@@ -1146,7 +1146,7 @@ reachover Makefiles are in src/usr.sbin/pf.
 
 Package:	pkg_install
 Version:	20170419
-Current Vers:	20170419
+Current Vers:	20180425
 Maintainer:	The pkgsrc developers
 Home Page:	http://www.pkgsrc.org/
 Mailing List:	tech-pkg@NetBSD.org
@@ -1174,7 +1174,7 @@ now to do a new import.
 
 Package:	Postfix
 Version:	3.1.4
-Current Vers:	3.1.6/3.2.6/3.3.1
+Current Vers:	3.1.9/3.2.6/3.3.1
 Maintainer:	Wietse Venema <wietse@porcupine.org>
 Archive Site:	ftp://postfix.cloud9.net/official/
 Home Page:	http://www.postfix.org/
@@ -1225,7 +1225,7 @@ Old versions are available from Purdue (ftp.cs.purdue.edu:/pub/RCS).
 
 Package:	root.cache
 Version:	2016102001 (October 20, 2016)
-Current Vers:	2016102001 (October 20, 2016)
+Current Vers:	2018070901 (July 09, 2018)
 Maintainer:	InterNIC
 Archive Site:	ftp://ftp.internic.net/domain/named.root
 Home Page:	ftp://ftp.internic.net/domain/named.root
@@ -1270,7 +1270,7 @@ to be installed and many more changes. It is not worth the hassle.
 
 Package:	SoftFloat
 Version:	2a
-Current Vers:	3c
+Current Vers:	3e
 Maintainer:	John Hauser <jhauser@jhauser.us>
 Archive Site:	http://www.jhauser.us/arithmetic/SoftFloat.html
 Home Page:	http://www.jhauser.us/arithmetic/SoftFloat.html
@@ -1285,7 +1285,7 @@ original.
 
 Package:	sqlite
 Version:	3.17.0
-Current Vers:	3.24
+Current Vers:	3.24.0 (2018-06-04)
 Maintainer:	Richard Hipp <drh@sqlite.org>
 Home Page:	http://www.sqlite.org
 Responsible:	joerg
@@ -1310,7 +1310,7 @@ tree.
 
 Package:	TestFloat
 Version:	2a
-Current Vers:	3c
+Current Vers:	3e
 Maintainer:	John Hauser <jhauser@jhauser.us>
 Archive Site:	http://www.jhauser.us/arithmetic/TestFloat.html
 Home Page:	http://www.jhauser.us/arithmetic/TestFloat.html
@@ -1322,7 +1322,7 @@ Notes:
 
 Package:	texinfo
 Version:	4.8a (Last GPLv2+ version)
-Current Vers:	6.1
+Current Vers:	6.5
 Maintainer:	FSF
 Archive Site:	ftp://ftp.gnu.org/gnu/texinfo/
 Home Page:	http://www.gnu.org/software/texinfo/
@@ -1373,7 +1373,7 @@ purposes.
 
 Package:	tmux
 Version:	2.6
-Current Vers:	2.6
+Current Vers:	2.7
 Maintainer:	Nicholas Marriott <nicholas.marriott@gmail.com>
 Archive site:	https://github.com/tmux/tmux
 Home page:	http://tmux.github.io
@@ -1483,7 +1483,7 @@ Notes:
 
 Package:	pigz
 Version:	2.3.1
-Current Vers:	2.3.1
+Current Vers:	2.4
 Maintainer:	Mark Adler <madler@alumni.caltech.edu>
 Archive Site:	http://zlib.net/pigz/
 Home Page:	http://zlib.net/pigz/
@@ -1495,7 +1495,7 @@ Notes:
 
 Package:	xz
 Version:	5.2.1
-Current Vers:	5.2.1
+Current Vers:	5.2.4
 Maintainer:	Lasse Collin <lasse.collin@tukanni.org>
 Archive Site:	http://tukaani.org/xz/
 Home Page:	http://tukaani.org/xz/
@@ -1509,7 +1509,7 @@ Notes:
 
 Package:	mpc
 Version:	1.0.3
-Current Vers:	1.0.3
+Current Vers:	1.1.0
 Maintainer:	
 Archive Site:	http://www.multiprecision.org/mpc/download/
 Home Page:	http://www.multiprecision.org/mpc/
@@ -1521,7 +1521,7 @@ Notes:
 
 Package:	mpfr
 Version:	3.1.5
-Current Vers:	3.1.5
+Current Vers:	4.0.1
 Maintainer:	
 Archive Site:	http://www.mpfr.org/mpfr-current/
 Home Page:	http://www.mpfr.org/
@@ -1557,7 +1557,7 @@ Notes:
 
 Package:	sljit
 Version:	svn revision 313
-Current Vers:	svn revision 381
+Current Vers:	0.93
 Maintainer:	Zoltán Herczeg <hzmester@freemail.hu
 Archive Site:	http://sourceforge.net/projects/sljit/
 Home Page:	http://sljit.sourceforge.net/
@@ -1583,7 +1583,7 @@ Notes:
 
 Package:	TrouSerS
 Version:	0.3.8
-Current Vers:	0.3.8
+Current Vers:	0.3.14
 Maintainer:	http://trousers.sourceforge.net
 Archive Site:	http://trousers.sourceforge.net
 Home Page:	http://trousers.sourceforge.net
@@ -1596,7 +1596,7 @@ Notes:
 
 Package:	tpm-tools
 Version:	1.3.7.1
-Current Vers:	1.3.7.1
+Current Vers:	1.3.9.1
 Maintainer:	http://trousers.sourceforge.net
 Archive Site:	http://trousers.sourceforge.net
 Home Page:	http://trousers.sourceforge.net
@@ -1622,12 +1622,10 @@ Notes:
 
 Package:	smbfs
 Version:	smbfs-1.4.1.tar.gz + FreeBSD-2003-02-16
-Current Vers:	FreeBSD-XXXX-YY-ZZ
+Current Vers:	smbfs-1.4.5.tar.gz
 Maintainer:	Boris Popov <bp@FreeBSD.org>
-Archive Site:	none
-Home Page:	http://people.freebsd.org/~bp/pub/smbfs/smbfs-1.4.1.tar.gz
-Mailing List:	?
-Responsible:	christos
+Archive Site:	http://people.freebsd.org/~bp/pub/smbfs/smbfs-1.4.1.tar.gz
+Home Page:	http://people.freebsd.org/~bp/pub/smbfs/
 License:	BSD-like (4-clause)
 Location:	external/bsd/smbfs
 Notes:
@@ -1637,10 +1635,10 @@ Notes:
 
 Package:	timeout
 Version:	FreeBSD-2014-08-01
-Current Vers:	FreeBSD-XXXX-YY-ZZ
+Current Vers:	FreeBSD-2016-05-01
 Maintainer:	Baptiste Daroussin <bapt@FreeBSD.org>
 Archive Site:	none
-Home Page:	none
+Home Page:	https://svnweb.freebsd.org/base/head/usr.bin/timeout/
 Mailing List:	none
 Responsible:	christos
 License:	BSD-like (2-clause)
@@ -1648,10 +1646,10 @@ Location:	usr.bin/timeout
 
 Package:        libproc
 Version:        FreeBSD-2015-09-24
-Current Vers:   FreeBSD-XXXX-YY-ZZ
+Current Vers:   FreeBSD-2018-07-27 r336782
 Maintainer:     Rui Paulo <rpaulo@FreeBSD.org>
 Archive Site:   none
-Home Page:      none
+Home Page:      https://svnweb.freebsd.org/base/head/lib/libproc/
 Mailing List:   none
 Responsible:    christos
 License:        BSD-like (2-clause)
@@ -1659,10 +1657,10 @@ Location:       external/bsd/libproc/dist
 
 Package:        librtld_db
 Version:        FreeBSD-2015-09-24
-Current Vers:   FreeBSD-XXXX-YY-ZZ
+Current Vers:   FreeBSD-2017-11-26 r326219
 Maintainer:     Rui Paulo <rpaulo@FreeBSD.org>
 Archive Site:   none
-Home Page:      none
+Home Page:      https://svnweb.freebsd.org/base/head/lib/librtld_db/
 Mailing List:   none
 Responsible:    christos
 License:        BSD-like (2-clause)
@@ -1670,9 +1668,9 @@ Location:       external/bsd/librtld_db/dist
 
 Package:        netcat
 Version:        OpenBSD-2017-02-06
-Current Vers:   OpenBSD-XXXX-YY-ZZ
+Current Vers:   OpenBSD-2018-08-10
 Maintainer:     OpenBSD
-Archive Site:   none
+Archive Site:   http://cvsweb.openbsd.org/cgi-bin/cvsweb/src/usr.bin/nc/
 Home Page:      none
 Mailing List:   none
 Responsible:    christos
@@ -1681,7 +1679,7 @@ Location:       usr.bin/nc
 
 Package:	gnu-efi
 Version:	3.0u
-Current Vers:	3.0.6
+Current Vers:	3.0.8
 Maintainer:	https://sourceforge.net/projects/gnu-efi/
 Archive Site:	https://sourceforge.net/projects/gnu-efi/
 Home Page:	https://sourceforge.net/projects/gnu-efi/
@@ -1692,7 +1690,7 @@ Location:	sys/external/bsd/gnu-efi
 
 Package:	dc
 Version:	20170410
-Current Vers:	20170410
+Current Vers:	20171217
 Maintainer:	The OpenBSD Project
 Archive Site:	http://www.openbsd.org/cgi-bin/cvsweb/src/usr.bin/dc
 Home Page:	http://www.openbsd.org/
@@ -1705,7 +1703,7 @@ Notes:
 
 Package:	dtc,libfdt
 Version:	1.4.4
-Current Vers:	1.4.5
+Current Vers:	1.4.6
 Maintainer:	David Gibson <david@gibson.dropbear.id.au>, Jon Loeliger <jdl@jdl.com>
 Archive Site:	https://git.kernel.org/pub/scm/utils/dtc/dtc.git
 Home Page:	https://git.kernel.org/pub/scm/utils/dtc/dtc.git
@@ -1718,7 +1716,7 @@ external/gpl2/dtc/dtc2netbsd should be used to create directories to import
 
 Package:	dts
 Version:	4.18-rc2
-Current Vers:	4.18-rc2
+Current Vers:	4.18
 Maintainer:	https://www.kernel.org/
 Archive Site:	https://cdn.kernel.org/pub/linux/kernel/v4.x/
 Home Page:	https://www.kernel.org/
