@@ -1,4 +1,4 @@
-/*	$NetBSD: arm_machdep.c,v 1.53 2018/01/24 09:04:44 skrll Exp $	*/
+/*	$NetBSD: arm_machdep.c,v 1.54 2018/08/15 05:57:01 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -71,16 +71,16 @@
  * SUCH DAMAGE.
  */
 
-#include "opt_execfmt.h"
+#include "opt_arm_debug.h"
 #include "opt_cpuoptions.h"
 #include "opt_cputypes.h"
-#include "opt_arm_debug.h"
-#include "opt_multiprocessor.h"
+#include "opt_execfmt.h"
 #include "opt_modular.h"
+#include "opt_multiprocessor.h"
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: arm_machdep.c,v 1.53 2018/01/24 09:04:44 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm_machdep.c,v 1.54 2018/08/15 05:57:01 skrll Exp $");
 
 #include <sys/exec.h>
 #include <sys/proc.h>
