@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_input.c,v 1.114.2.4 2018/07/28 00:49:43 phil Exp $ */
+/*	$NetBSD: ieee80211_input.c,v 1.114.2.5 2018/08/15 17:07:02 phil Exp $ */
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -181,7 +181,6 @@ ieee80211_input_mimo_all(struct ieee80211com *ic, struct mbuf *m)
 			m = NULL;
 		}
 		ni = ieee80211_ref_node(vap->iv_bss);
-		printf ("ieee80211_input_mimo_all on %s, ni=0x%lx\n", vap->iv_ifp->if_xname, (long)ni);
 		type = ieee80211_input_mimo(ni, mcopy);
 		ieee80211_free_node(ni);
 	}

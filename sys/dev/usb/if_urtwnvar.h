@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urtwnvar.h,v 1.10.16.1 2018/07/16 20:11:11 phil Exp $	*/
+/*	$NetBSD: if_urtwnvar.h,v 1.10.16.2 2018/08/15 17:07:02 phil Exp $	*/
 /*	$OpenBSD: if_urtwnreg.h,v 1.3 2010/11/16 18:02:59 damien Exp $	*/
 
 /*-
@@ -111,8 +111,7 @@ struct urtwn_host_cmd_ring {
 struct urtwn_softc {
 	device_t			sc_dev;
 	struct ieee80211com		sc_ic;
-	//	struct ethercom			sc_ec;
-	//#define sc_if   sc_ec.ec_if
+	struct ifqueue			sc_sendq;
 	int				(*sc_newstate)(struct ieee80211vap *,
 					    enum ieee80211_state, int);
 

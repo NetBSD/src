@@ -1,4 +1,4 @@
-# $NetBSD: TESTWIFI,v 1.1.2.2 2018/08/03 19:47:25 phil Exp $
+# $NetBSD: TESTWIFI,v 1.1.2.3 2018/08/15 17:07:02 phil Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.1.2.2 $"
+#ident		"GENERIC-$Revision: 1.1.2.3 $"
 
 maxusers	64		# estimated number of users
 
@@ -194,7 +194,7 @@ options 	NFSSERVER	# Network File System server
 # Networking options
 #options 	GATEWAY		# packet forwarding
 options 	INET		# IP + ICMP + TCP + UDP
-options 	INET6		# IPV6
+#options 	INET6		# IPV6
 options 	IPSEC		# IP security
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MPLS		# MultiProtocol Label Switching (needs mpls)
@@ -1306,7 +1306,7 @@ pseudo-device	gre			# generic L3 over IP tunnel
 pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC1933)
 pseudo-device	ipsecif			# tunnel interface for routing based ipsec
 #pseudo-device	faith			# IPv[46] tcp relay translation i/f
-pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
+#pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
 pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	bridge			# simple inter-network bridging
 #options 	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too

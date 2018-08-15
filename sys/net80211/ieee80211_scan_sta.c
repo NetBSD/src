@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_scan_sta.c,v 1.1.56.6 2018/08/03 19:47:25 phil Exp $ */
+/*	$NetBSD: ieee80211_scan_sta.c,v 1.1.56.7 2018/08/15 17:07:03 phil Exp $ */
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -186,7 +186,6 @@ static int
 sta_attach(struct ieee80211_scan_state *ss)
 {
 	struct sta_table *st;
-	printf ("sta_attach ...\n");
 
 	st = (struct sta_table *) IEEE80211_MALLOC(sizeof(struct sta_table),
 		M_80211_SCAN,
@@ -1025,7 +1024,6 @@ match_bss(struct ieee80211vap *vap,
         uint8_t rate;
         int fail;
 
-	printf ("match_bss, iv_opmode is 0x%x\n", vap->iv_opmode);
 	fail = 0;
 	if (isclr(ic->ic_chan_active, ieee80211_chan2ieee(ic, se->se_chan)))
 		fail |= MATCH_CHANNEL;
@@ -1196,7 +1194,6 @@ match_bss(struct ieee80211vap *vap,
 		printf("%s\n", fail & (MATCH_SSID | MATCH_MESHID) ? "!" : "");
 	}
 #endif
-	printf ("match_bss exit, fail = 0x%x\n", fail);
 	return fail;
 }
 

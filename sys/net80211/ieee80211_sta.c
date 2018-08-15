@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_sta.c,v 1.1.2.4 2018/08/03 19:47:25 phil Exp $ */
+/*	$NetBSD: ieee80211_sta.c,v 1.1.2.5 2018/08/15 17:07:03 phil Exp $ */
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -637,6 +637,7 @@ sta_input(struct ieee80211_node *ni, struct mbuf *m,
 			/* not interested in */
 			IEEE80211_DISCARD_MAC(vap, IEEE80211_MSG_INPUT,
 			    bssid, NULL, "%s", "not to bss");
+
 			vap->iv_stats.is_rx_wrongbss++;
 			goto out;
 		}
@@ -660,6 +661,7 @@ sta_input(struct ieee80211_node *ni, struct mbuf *m,
 			IEEE80211_DISCARD_MAC(vap, IEEE80211_MSG_INPUT,
 			    bssid, NULL, "not to cur sta: lladdr=%6D, addr1=%6D",
 			    IF_LLADDR(ifp), ":", wh->i_addr1, ":");
+
 			vap->iv_stats.is_rx_wrongbss++;
 			goto out;
 		}

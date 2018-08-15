@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211.c,v 1.56.18.5 2018/07/28 00:49:43 phil Exp $ */
+/*	$NetBSD: ieee80211.c,v 1.56.18.6 2018/08/15 17:07:02 phil Exp $ */
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -628,6 +628,7 @@ ieee80211_vap_setup(struct ieee80211com *ic, struct ieee80211vap *vap,
 
 	vap->iv_opmode = opmode;
 	vap->iv_caps |= ieee80211_opcap[opmode];
+	/* NNN Done in vap_attach, where is the correct place? */
 	IEEE80211_ADDR_COPY(vap->iv_myaddr, ic->ic_macaddr);
 	switch (opmode) {
 	case IEEE80211_M_WDS:
@@ -755,7 +756,9 @@ ieee80211_vap_attach(struct ieee80211vap *vap, ifm_change_cb_t media_change,
 		ifp->if_baudrate = IF_Mbps(maxrate);
 
 	ether_ifattach(ifp, macaddr);
+	/* NNN also done in vap_setup, which is correct? */
 	IEEE80211_ADDR_COPY(vap->iv_myaddr, IF_LLADDR(ifp));
+
 	/* hook output method setup by ether_ifattach */
 	vap->iv_output = ifp->if_output;
 	ifp->if_output = ieee80211_output;
