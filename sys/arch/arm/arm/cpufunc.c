@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.171 2018/08/10 16:17:29 maxv Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.172 2018/08/15 06:00:02 skrll Exp $	*/
 
 /*
  * arm7tdmi support code Copyright (c) 2001 John Fremlin
@@ -49,10 +49,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.171 2018/08/10 16:17:29 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.172 2018/08/15 06:00:02 skrll Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_cpuoptions.h"
+#include "opt_cputypes.h"
 
 #include <sys/types.h>
 #include <sys/param.h>

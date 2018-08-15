@@ -28,10 +28,11 @@
  */
 
 #include "locators.h"
+#include "opt_cputypes.h"
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: armperiph.c,v 1.13 2018/06/05 08:03:28 hkenken Exp $");
+__KERNEL_RCSID(1, "$NetBSD: armperiph.c,v 1.14 2018/08/15 06:00:02 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
