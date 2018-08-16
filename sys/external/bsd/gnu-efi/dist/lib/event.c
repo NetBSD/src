@@ -1,4 +1,4 @@
-/*	$NetBSD: event.c,v 1.1.1.1 2014/04/01 16:16:06 jakllsch Exp $	*/
+/*	$NetBSD: event.c,v 1.1.1.2 2018/08/16 18:17:47 jmcneill Exp $	*/
 
 /*++
 
@@ -45,6 +45,7 @@ LibCreateProtocolNotifyEvent (
 		    NotifyContext,
 		    &Event
 		    );
+    if ( EFI_ERROR( Status ) ) return NULL ;
     ASSERT (!EFI_ERROR(Status));
 
     //
@@ -54,11 +55,11 @@ LibCreateProtocolNotifyEvent (
     Status = uefi_call_wrapper(
 		    BS->RegisterProtocolNotify,
 			3,
-                    ProtocolGuid, 
-                    Event, 
+                    ProtocolGuid,
+                    Event,
                     Registration
                     );
-
+    if ( EFI_ERROR( Status ) ) return NULL ;
     ASSERT (!EFI_ERROR(Status));
 
     //
@@ -95,7 +96,7 @@ WaitForSingleEvent (
             //
 
             uefi_call_wrapper(BS->SetTimer, 3, TimerEvent, TimerRelative, Timeout);
-            
+
             //
             // Wait for the original event or the timer
             //
@@ -150,6 +151,6 @@ WaitForEventWithTimeout (
             }
         }
     } while (Timeout > 0);
-    *Key = TimeoutKey;
+    CopyMem(Key, &TimeoutKey, sizeof(EFI_INPUT_KEY));
 }
 

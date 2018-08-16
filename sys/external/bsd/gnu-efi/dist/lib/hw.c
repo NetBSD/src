@@ -1,4 +1,4 @@
-/*	$NetBSD: hw.c,v 1.1.1.1 2014/04/01 16:16:06 jakllsch Exp $	*/
+/*	$NetBSD: hw.c,v 1.1.1.2 2018/08/16 18:17:47 jmcneill Exp $	*/
 
 /*++
 
@@ -25,14 +25,14 @@ EFI_STATUS
 InitializeGlobalIoDevice (
         IN  EFI_DEVICE_PATH             *DevicePath,
         IN  EFI_GUID                    *Protocol,
-        IN  CHAR8                       *ErrorStr,
-        OUT EFI_DEVICE_IO_INTERFACE     **GlobalIoFncs 
+        IN  CHAR8                       *ErrorStr EFI_UNUSED,
+        OUT EFI_DEVICE_IO_INTERFACE     **GlobalIoFncs
         )
 /*++
 
 Routine Description:
 
-    Check to see if DevicePath exists for a given Protocol. Return Error if it 
+    Check to see if DevicePath exists for a given Protocol. Return Error if it
     exists. Return GlobalIoFuncs set match the DevicePath
 
   Arguments:
@@ -70,60 +70,60 @@ Returns:
     return Status;
 }
 
-UINT32 
+UINT32
 ReadPort (
-        IN  EFI_DEVICE_IO_INTERFACE     *GlobalIoFncs, 
+        IN  EFI_DEVICE_IO_INTERFACE     *GlobalIoFncs,
         IN  EFI_IO_WIDTH                Width,
         IN  UINTN                       Port
         )
 {
     UINT32       Data;
-    EFI_STATUS  Status;
+    EFI_STATUS  Status EFI_UNUSED;
 
     Status = uefi_call_wrapper(GlobalIoFncs->Io.Read, 5, GlobalIoFncs, Width, (UINT64)Port, 1, &Data);
     ASSERT(!EFI_ERROR(Status));
     return Data;
 }
 
-UINT32 
+UINT32
 WritePort (
-        IN  EFI_DEVICE_IO_INTERFACE     *GlobalIoFncs, 
+        IN  EFI_DEVICE_IO_INTERFACE     *GlobalIoFncs,
         IN  EFI_IO_WIDTH                Width,
         IN  UINTN                       Port,
         IN  UINTN                       Data
         )
 {
-    EFI_STATUS  Status;
+    EFI_STATUS  Status EFI_UNUSED;
 
     Status = uefi_call_wrapper(GlobalIoFncs->Io.Write, 5, GlobalIoFncs, Width, (UINT64)Port, 1, &Data);
     ASSERT(!EFI_ERROR(Status));
     return (UINT32)Data;
 }
 
-UINT32 
+UINT32
 ReadPciConfig (
-        IN  EFI_DEVICE_IO_INTERFACE     *GlobalIoFncs, 
+        IN  EFI_DEVICE_IO_INTERFACE     *GlobalIoFncs,
         IN  EFI_IO_WIDTH                Width,
         IN  UINTN                       Address
         )
 {
     UINT32       Data;
-    EFI_STATUS  Status;
+    EFI_STATUS  Status EFI_UNUSED;
 
     Status = uefi_call_wrapper(GlobalIoFncs->Pci.Read, 5, GlobalIoFncs, Width, (UINT64)Address, 1, &Data);
     ASSERT(!EFI_ERROR(Status));
     return Data;
 }
 
-UINT32 
+UINT32
 WritePciConfig (
-        IN  EFI_DEVICE_IO_INTERFACE     *GlobalIoFncs, 
+        IN  EFI_DEVICE_IO_INTERFACE     *GlobalIoFncs,
         IN  EFI_IO_WIDTH                Width,
         IN  UINTN                       Address,
         IN  UINTN                       Data
         )
 {
-    EFI_STATUS  Status;
+    EFI_STATUS  Status EFI_UNUSED;
 
     Status = uefi_call_wrapper(GlobalIoFncs->Pci.Write, 5, GlobalIoFncs, Width, (UINT64)Address, 1, &Data);
     ASSERT(!EFI_ERROR(Status));

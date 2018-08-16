@@ -1,4 +1,4 @@
-/*	$NetBSD: reloc_ia32.c,v 1.1.1.1 2014/04/01 16:16:08 jakllsch Exp $	*/
+/*	$NetBSD: reloc_ia32.c,v 1.1.1.2 2018/08/16 18:17:47 jmcneill Exp $	*/
 
 /* reloc_ia32.c - position independent x86 ELF shared object relocator
    Copyright (C) 1999 Hewlett-Packard Co.
@@ -40,7 +40,9 @@
 
 #include <elf.h>
 
-EFI_STATUS _relocate (long ldbase, Elf32_Dyn *dyn, EFI_HANDLE image, EFI_SYSTEM_TABLE *systab)
+EFI_STATUS _relocate (long ldbase, Elf32_Dyn *dyn,
+		      EFI_HANDLE image EFI_UNUSED,
+		      EFI_SYSTEM_TABLE *systab EFI_UNUSED)
 {
 	long relsz = 0, relent = 0;
 	Elf32_Rel *rel = 0;
@@ -82,7 +84,7 @@ EFI_STATUS _relocate (long ldbase, Elf32_Dyn *dyn, EFI_HANDLE image, EFI_SYSTEM_
 		switch (ELF32_R_TYPE (rel->r_info)) {
 			case R_386_NONE:
 				break;
-			
+
 			case R_386_RELATIVE:
 				addr = (unsigned long *)
 					(ldbase + rel->r_offset);

@@ -1,4 +1,4 @@
-/*	$NetBSD: efiapi.h,v 1.1.1.1 2014/04/01 16:16:07 jakllsch Exp $	*/
+/*	$NetBSD: efiapi.h,v 1.1.1.2 2018/08/16 18:17:47 jmcneill Exp $	*/
 
 #ifndef _EFI_API_H
 #define _EFI_API_H
@@ -109,8 +109,6 @@ EFI_STATUS
 // EFI Events
 //
 
-
-
 #define EVT_TIMER                           0x80000000
 #define EVT_RUNTIME                         0x40000000
 #define EVT_RUNTIME_CONTEXT                 0x20000000
@@ -122,7 +120,18 @@ EFI_STATUS
 #define EVT_SIGNAL_VIRTUAL_ADDRESS_CHANGE   0x60000202
 
 #define EVT_EFI_SIGNAL_MASK                 0x000000FF
-#define EVT_EFI_SIGNAL_MAX                  2
+#define EVT_EFI_SIGNAL_MAX                  4
+
+#define EFI_EVENT_TIMER                         EVT_TIMER
+#define EFI_EVENT_RUNTIME                       EVT_RUNTIME
+#define EFI_EVENT_RUNTIME_CONTEXT               EVT_RUNTIME_CONTEXT
+#define EFI_EVENT_NOTIFY_WAIT                   EVT_NOTIFY_WAIT
+#define EFI_EVENT_NOTIFY_SIGNAL                 EVT_NOTIFY_SIGNAL
+#define EFI_EVENT_SIGNAL_EXIT_BOOT_SERVICES     EVT_SIGNAL_EXIT_BOOT_SERVICES
+#define EFI_EVENT_SIGNAL_VIRTUAL_ADDRESS_CHANGE EVT_SIGNAL_VIRTUAL_ADDRESS_CHANGE
+#define EFI_EVENT_EFI_SIGNAL_MASK               EVT_EFI_SIGNAL_MASK
+#define EFI_EVENT_EFI_SIGNAL_MAX                EVT_EFI_SIGNAL_MAX
+
 
 typedef
 VOID
@@ -186,11 +195,14 @@ EFI_STATUS
 // Task priority level
 //
 
-#define TPL_APPLICATION    4
-#define TPL_CALLBACK       8
-#define TPL_NOTIFY        16 
-#define TPL_HIGH_LEVEL    31 
-
+#define TPL_APPLICATION       4
+#define TPL_CALLBACK          8
+#define TPL_NOTIFY           16
+#define TPL_HIGH_LEVEL       31
+#define EFI_TPL_APPLICATION  TPL_APPLICATION
+#define EFI_TPL_CALLBACK     TPL_CALLBACK
+#define EFI_TPL_NOTIFY       TPL_NOTIFY
+#define EFI_TPL_HIGH_LEVEL   TPL_HIGH_LEVEL
 typedef
 EFI_TPL
 (EFIAPI *EFI_RAISE_TPL) (
@@ -212,9 +224,13 @@ VOID
     { 0x8BE4DF61, 0x93CA, 0x11d2, {0xAA, 0x0D, 0x00, 0xE0, 0x98, 0x03, 0x2B, 0x8C} }
 
 // Variable attributes
-#define EFI_VARIABLE_NON_VOLATILE           0x00000001
-#define EFI_VARIABLE_BOOTSERVICE_ACCESS     0x00000002
-#define EFI_VARIABLE_RUNTIME_ACCESS         0x00000004
+#define EFI_VARIABLE_NON_VOLATILE                          0x00000001
+#define EFI_VARIABLE_BOOTSERVICE_ACCESS                    0x00000002
+#define EFI_VARIABLE_RUNTIME_ACCESS                        0x00000004
+#define EFI_VARIABLE_HARDWARE_ERROR_RECORD                 0x00000008
+#define EFI_VARIABLE_AUTHENTICATED_WRITE_ACCESS            0x00000010
+#define EFI_VARIABLE_TIME_BASED_AUTHENTICATED_WRITE_ACCESS 0x00000020
+#define EFI_VARIABLE_APPEND_WRITE                          0x00000040
 
 // Variable size limitation
 #define EFI_MAXIMUM_VARIABLE_SIZE           1024
@@ -312,6 +328,22 @@ EFI_STATUS
 #define EFI_IMAGE_MACHINE_IA64      0x0200
 #endif
 
+#if !defined(EFI_IMAGE_MACHINE_EBC)
+#define EFI_IMAGE_MACHINE_EBC      0x0EBC
+#endif
+
+#if !defined(EFI_IMAGE_MACHINE_X64)
+#define EFI_IMAGE_MACHINE_X64       0x8664
+#endif
+
+#if !defined(EFI_IMAGE_MACHINE_ARMTHUMB_MIXED)
+#define EFI_IMAGE_MACHINE_ARMTHUMB_MIXED 0x01C2
+#endif
+
+#if !defined(EFI_IMAGE_MACHINE_AARCH64)
+#define EFI_IMAGE_MACHINE_AARCH64   0xAA64
+#endif
+
 // Image Entry prototype
 
 typedef 
@@ -349,15 +381,9 @@ EFI_STATUS
     IN CHAR16                       *ExitData OPTIONAL
     );
 
-typedef 
-EFI_STATUS
-(EFIAPI *EFI_IMAGE_UNLOAD) (
-    IN EFI_HANDLE                   ImageHandle
-    );
-
 
 // Image handle
-#define LOADED_IMAGE_PROTOCOL      \
+/*#define LOADED_IMAGE_PROTOCOL      \
     { 0x5B1B31A1, 0x9562, 0x11d2, {0x8E, 0x3F, 0x00, 0xA0, 0xC9, 0x69, 0x72, 0x3B} }
 
 #define EFI_IMAGE_INFORMATION_REVISION      0x1000
@@ -384,7 +410,7 @@ typedef struct {
     // If the driver image supports a dynamic unload request
     EFI_IMAGE_UNLOAD                Unload;
 
-} EFI_LOADED_IMAGE;
+} EFI_LOADED_IMAGE;*/
 
 
 typedef
@@ -583,6 +609,51 @@ EFI_STATUS
     OUT UINT32                  *HighCount
     );
 
+typedef struct {
+    UINT64                      Length;
+    union {
+        EFI_PHYSICAL_ADDRESS    DataBlock;
+       EFI_PHYSICAL_ADDRESS    ContinuationPointer;
+    } Union;
+} EFI_CAPSULE_BLOCK_DESCRIPTOR;
+
+typedef struct {
+    EFI_GUID                    CapsuleGuid;
+    UINT32                      HeaderSize;
+    UINT32                      Flags;
+    UINT32                      CapsuleImageSize;
+} EFI_CAPSULE_HEADER;
+
+#define CAPSULE_FLAGS_PERSIST_ACROSS_RESET    0x00010000
+#define CAPSULE_FLAGS_POPULATE_SYSTEM_TABLE   0x00020000
+#define CAPSULE_FLAGS_INITIATE_RESET          0x00040000
+
+typedef
+EFI_STATUS
+(EFIAPI *EFI_UPDATE_CAPSULE) (
+    IN EFI_CAPSULE_HEADER       **CapsuleHeaderArray,
+    IN UINTN                    CapsuleCount,
+    IN EFI_PHYSICAL_ADDRESS     ScatterGatherList OPTIONAL
+    );
+
+typedef
+EFI_STATUS
+(EFIAPI *EFI_QUERY_CAPSULE_CAPABILITIES) (
+    IN  EFI_CAPSULE_HEADER       **CapsuleHeaderArray,
+    IN  UINTN                    CapsuleCount,
+    OUT UINT64                   *MaximumCapsuleSize,
+    OUT EFI_RESET_TYPE           *ResetType
+    );
+
+typedef
+EFI_STATUS
+(EFIAPI *EFI_QUERY_VARIABLE_INFO) (
+    IN  UINT32                  Attributes,
+    OUT UINT64                  *MaximumVariableStorageSize,
+    OUT UINT64                  *RemainingVariableStorageSize,
+    OUT UINT64                  *MaximumVariableSize
+    );
+
 //
 // Protocol handler functions
 //
@@ -668,7 +739,7 @@ EFI_STATUS
 // Standard EFI table header
 //
 
-typedef struct _EFI_TABLE_HEARDER {
+typedef struct _EFI_TABLE_HEADER {
     UINT64                      Signature;
     UINT32                      Revision;
     UINT32                      HeaderSize;
@@ -718,6 +789,9 @@ typedef struct  {
     EFI_GET_NEXT_HIGH_MONO_COUNT    GetNextHighMonotonicCount;
     EFI_RESET_SYSTEM                ResetSystem;
 
+    EFI_UPDATE_CAPSULE              UpdateCapsule;
+    EFI_QUERY_CAPSULE_CAPABILITIES  QueryCapsuleCapabilities;
+    EFI_QUERY_VARIABLE_INFO         QueryVariableInfo;
 } EFI_RUNTIME_SERVICES;
 
 
@@ -844,6 +918,9 @@ typedef struct _EFI_BOOT_SERVICES {
 
 #define SMBIOS_TABLE_GUID    \
     { 0xeb9d2d31, 0x2d88, 0x11d3, {0x9a, 0x16, 0x0, 0x90, 0x27, 0x3f, 0xc1, 0x4d} }
+
+#define SMBIOS3_TABLE_GUID    \
+    { 0xf2fd1544, 0x9794, 0x4a2c, {0x99, 0x2e, 0xe5, 0xbb, 0xcf, 0x20, 0xe3, 0x94} }
 
 #define SAL_SYSTEM_TABLE_GUID    \
     { 0xeb9d2d32, 0x2d88, 0x11d3, {0x9a, 0x16, 0x0, 0x90, 0x27, 0x3f, 0xc1, 0x4d} }

@@ -1,4 +1,4 @@
-/*	$NetBSD: efistdarg.h,v 1.1.1.1 2014/04/01 16:16:07 jakllsch Exp $	*/
+/*	$NetBSD: efistdarg.h,v 1.1.1.2 2018/08/16 18:17:47 jmcneill Exp $	*/
 
 #ifndef _EFISTDARG_H_
 #define _EFISTDARG_H_
@@ -20,16 +20,16 @@ Abstract:
 Revision History
 
 --*/
-#ifdef __GNUC__
-#include "stdarg.h"
+
+#ifndef GNU_EFI_USE_EXTERNAL_STDARG
+typedef __builtin_va_list va_list;
+
+# define va_start(v,l)	__builtin_va_start(v,l)
+# define va_end(v)	__builtin_va_end(v)
+# define va_arg(v,l)	__builtin_va_arg(v,l)
+# define va_copy(d,s)	__builtin_va_copy(d,s)
 #else
-#define _INTSIZEOF(n)   ( (sizeof(n) + sizeof(UINTN) - 1) & ~(sizeof(UINTN) - 1) )
-
-typedef CHAR8 * va_list;
-
-#define va_start(ap,v)  ( ap = (va_list)&v + _INTSIZEOF(v) )
-#define va_arg(ap,t)    ( *(t *)((ap += _INTSIZEOF(t)) - _INTSIZEOF(t)) )
-#define va_end(ap)  ( ap = (va_list)0 )
+# include <stdarg.h>
 #endif
 
-#endif  /* _INC_STDARG */
+#endif

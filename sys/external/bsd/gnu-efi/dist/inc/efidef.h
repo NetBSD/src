@@ -1,4 +1,4 @@
-/*	$NetBSD: efidef.h,v 1.1.1.1 2014/04/01 16:16:07 jakllsch Exp $	*/
+/*	$NetBSD: efidef.h,v 1.1.1.2 2018/08/16 18:17:47 jmcneill Exp $	*/
 
 #ifndef _EFI_DEF_H
 #define _EFI_DEF_H
@@ -25,7 +25,9 @@ Revision History
 typedef UINT16          CHAR16;
 typedef UINT8           CHAR8;
 typedef UINT8           BOOLEAN;
-
+#ifndef CONST
+   #define CONST const
+#endif
 #ifndef TRUE
     #define TRUE    ((BOOLEAN) 1)
     #define FALSE   ((BOOLEAN) 0)
@@ -207,5 +209,14 @@ typedef UINT8   ISO_639_2;
 
 #define EFI_SIZE_TO_PAGES(a)  \
     ( ((a) >> EFI_PAGE_SHIFT) + ((a) & EFI_PAGE_MASK ? 1 : 0) )
+
+#define EFI_OS_INDICATIONS_BOOT_TO_FW_UI        0x0000000000000001
+#define EFI_OS_INDICATIONS_TIMESTAMP_REVOCATION 0x0000000000000002
+#define EFI_OS_INDICATIONS_FILE_CAPSULE_DELIVERY_SUPPORTED \
+                                                0x0000000000000004
+#define EFI_OS_INDICATIONS_FMP_CAPSULE_SUPPORTED \
+                                                0x0000000000000008
+#define EFI_OS_INDICATIONS_CAPSULE_RESULT_VAR_SUPPORTED \
+                                                0x0000000000000010
 
 #endif
