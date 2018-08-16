@@ -1,4 +1,4 @@
-/*	$NetBSD: guid.c,v 1.1.1.1 2014/04/01 16:16:06 jakllsch Exp $	*/
+/*	$NetBSD: guid.c,v 1.1.1.2 2018/08/16 18:17:47 jmcneill Exp $	*/
 
 /*++
 
@@ -50,52 +50,56 @@ static struct {
     EFI_GUID        *Guid;
     WCHAR           *GuidName;
 } KnownGuids[] = {
-	{  &NullGuid,                  L"G0"},
-	{  &EfiGlobalVariable,         L"Efi"},
+	{  &NullGuid,                                       L"G0" },
+	{  &gEfiGlobalVariableGuid,                         L"EfiVar" },
 
-	{  &VariableStoreProtocol,     L"varstore"},
-	{  &DevicePathProtocol,        L"dpath"},
-	{  &LoadedImageProtocol,       L"image"},
-	{  &TextInProtocol,            L"txtin"},
-	{  &TextOutProtocol,           L"txtout"},
-	{  &BlockIoProtocol,           L"blkio"},
-	{  &DiskIoProtocol,            L"diskio"},
-	{  &FileSystemProtocol,        L"fs"},
-	{  &LoadFileProtocol,          L"load"},
-	{  &DeviceIoProtocol,          L"DevIo"},
+	{  &VariableStoreProtocol,                          L"VarStore" },
+	{  &gEfiDevicePathProtocolGuid,                     L"DevPath" },
+	{  &gEfiLoadedImageProtocolGuid,                    L"LdImg" },
+	{  &gEfiSimpleTextInProtocolGuid,                   L"TxtIn" },
+	{  &gEfiSimpleTextOutProtocolGuid,                  L"TxtOut" },
+	{  &gEfiBlockIoProtocolGuid,                        L"BlkIo" },
+	{  &gEfiBlockIo2ProtocolGuid,                       L"BlkIo2" },
+	{  &gEfiDiskIoProtocolGuid,                         L"DskIo" },
+	{  &gEfiDiskIo2ProtocolGuid,                        L"DskIo2" },
+	{  &gEfiSimpleFileSystemProtocolGuid,               L"Fs" },
+	{  &gEfiLoadFileProtocolGuid,                       L"LdFile" },
+	{  &gEfiDeviceIoProtocolGuid,                       L"DevIo" },
+	{  &gEfiComponentNameProtocolGuid,                  L"CName" },
+	{  &gEfiComponentName2ProtocolGuid,                 L"CName2" },
 
-	{  &GenericFileInfo,           L"GenFileInfo"},
-	{  &FileSystemInfo,            L"FileSysInfo"},
+	{  &gEfiFileInfoGuid,                               L"FileInfo" },
+	{  &gEfiFileSystemInfoGuid,                         L"FsInfo" },
+	{  &gEfiFileSystemVolumeLabelInfoIdGuid,            L"FsVolInfo" },
 
-	{  &UnicodeCollationProtocol,  L"unicode"},
-	{  &LegacyBootProtocol,        L"LegacyBoot"},
-	{  &SerialIoProtocol,          L"serialio"},
-	{  &VgaClassProtocol,          L"vgaclass"},
-	{  &SimpleNetworkProtocol,     L"net"},
-	{  &NetworkInterfaceIdentifierProtocol,    L"nii"},
-	{  &PxeBaseCodeProtocol,       L"pxebc"},
-	{  &PxeCallbackProtocol,       L"pxecb"},
+	{  &gEfiUnicodeCollationProtocolGuid,               L"Unicode" },
+	{  &LegacyBootProtocol,                             L"LegacyBoot" },
+	{  &gEfiSerialIoProtocolGuid,                       L"SerIo" },
+	{  &VgaClassProtocol,                               L"VgaClass"},
+	{  &gEfiSimpleNetworkProtocolGuid,                  L"Net" },
+	{  &gEfiNetworkInterfaceIdentifierProtocolGuid,     L"Nii" },
+	{  &gEfiPxeBaseCodeProtocolGuid,                    L"Pxe" },
+	{  &gEfiPxeBaseCodeCallbackProtocolGuid,            L"PxeCb" },
 
-	{  &VariableStoreProtocol,     L"varstore"},
-	{  &LegacyBootProtocol,        L"LegacyBoot"},
-	{  &VgaClassProtocol,          L"VgaClass"},
-	{  &TextOutSpliterProtocol,    L"TxtOutSplit"},
-	{  &ErrorOutSpliterProtocol,   L"ErrOutSplit"},
-	{  &TextInSpliterProtocol,     L"TxtInSplit"},
-	{  &PcAnsiProtocol,            L"PcAnsi"},
-	{  &Vt100Protocol,             L"Vt100"},
-	{  &UnknownDevice,             L"Unknown Device"},
+	{  &TextOutSpliterProtocol,                         L"TxtOutSplit" },
+	{  &ErrorOutSpliterProtocol,                        L"ErrOutSplit" },
+	{  &TextInSpliterProtocol,                          L"TxtInSplit" },
+	{  &gEfiPcAnsiGuid,                                 L"PcAnsi" },
+	{  &gEfiVT100Guid,                                  L"Vt100" },
+	{  &gEfiVT100PlusGuid,                              L"Vt100Plus" },
+	{  &gEfiVTUTF8Guid,                                 L"VtUtf8" },
+	{  &UnknownDevice,                                  L"UnknownDev" },
 
-	{  &EfiPartTypeSystemPartitionGuid,    L"ESP"},
-	{  &EfiPartTypeLegacyMbrGuid,          L"GPT MBR"},
+	{  &EfiPartTypeSystemPartitionGuid,                 L"ESP" },
+	{  &EfiPartTypeLegacyMbrGuid,                       L"GPT MBR" },
 
-	{  &ShellInterfaceProtocol,    L"ShellInt"},
-	{  &SEnvId,                    L"SEnv"},
-	{  &SProtId,                   L"ShellProtId"},
-	{  &SMapId,                    L"ShellDevPathMap"},
-	{  &SAliasId,                  L"ShellAlias"},
+	{  &ShellInterfaceProtocol,                         L"ShellInt" },
+	{  &SEnvId,                                         L"SEnv" },
+	{  &SProtId,                                        L"ShellProtId" },
+	{  &SMapId,                                         L"ShellDevPathMap" },
+	{  &SAliasId,                                       L"ShellAlias" },
 
-	{  NULL }
+	{  NULL, L"" }
 };
 
 //
@@ -162,7 +166,7 @@ GuidToString (
     //
 
     SPrint (Buffer, 0, L"%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x",
-        Guid->Data1,                    
+        Guid->Data1,
         Guid->Data2,
         Guid->Data3,
         Guid->Data4[0],

@@ -1,4 +1,4 @@
-/*	$NetBSD: initplat.c,v 1.1.1.1 2014/04/01 16:16:07 jakllsch Exp $	*/
+/*	$NetBSD: initplat.c,v 1.1.1.2 2018/08/16 18:17:47 jmcneill Exp $	*/
 
 /*++
 
@@ -21,10 +21,9 @@ Revision History
 
 VOID
 InitializeLibPlatform (
-    IN EFI_HANDLE           ImageHandle,
-    IN EFI_SYSTEM_TABLE     *SystemTable
+    IN EFI_HANDLE           ImageHandle EFI_UNUSED,
+    IN EFI_SYSTEM_TABLE     *SystemTable EFI_UNUSED
     )
-
 {
     PLABEL  SalPlabel;
     UINT64  PalEntry;

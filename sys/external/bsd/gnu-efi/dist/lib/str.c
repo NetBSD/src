@@ -1,4 +1,4 @@
-/*	$NetBSD: str.c,v 1.1.1.1 2014/04/01 16:16:06 jakllsch Exp $	*/
+/*	$NetBSD: str.c,v 1.1.1.2 2018/08/16 18:17:47 jmcneill Exp $	*/
 
 /*++
 
@@ -22,8 +22,8 @@ Revision History
 
 INTN
 StrCmp (
-    IN CHAR16   *s1,
-    IN CHAR16   *s2
+    IN CONST CHAR16   *s1,
+    IN CONST CHAR16   *s2
     )
 // compare strings
 {
@@ -32,8 +32,8 @@ StrCmp (
 
 INTN
 StrnCmp (
-    IN CHAR16   *s1,
-    IN CHAR16   *s2,
+    IN CONST CHAR16   *s1,
+    IN CONST CHAR16   *s2,
     IN UINTN    len
     )
 // compare strings
@@ -54,7 +54,7 @@ StrnCmp (
 
 INTN EFIAPI
 LibStubStriCmp (
-    IN EFI_UNICODE_COLLATION_INTERFACE  *This,
+    IN EFI_UNICODE_COLLATION_INTERFACE  *This EFI_UNUSED,
     IN CHAR16                           *s1,
     IN CHAR16                           *s2
     )
@@ -64,23 +64,23 @@ LibStubStriCmp (
 
 VOID EFIAPI
 LibStubStrLwrUpr (
-    IN EFI_UNICODE_COLLATION_INTERFACE  *This,
-    IN CHAR16                           *Str
+    IN EFI_UNICODE_COLLATION_INTERFACE  *This EFI_UNUSED,
+    IN CHAR16                           *Str EFI_UNUSED
     )
 {
 }
 
 INTN
 StriCmp (
-    IN CHAR16   *s1,
-    IN CHAR16   *s2
+    IN CONST CHAR16   *s1,
+    IN CONST CHAR16   *s2
     )
 // compare strings
 {
     if (UnicodeInterface == &LibStubUnicodeInterface)
-    	return UnicodeInterface->StriColl(UnicodeInterface, s1, s2);
+    	return UnicodeInterface->StriColl(UnicodeInterface, (CHAR16 *)s1, (CHAR16 *)s2);
     else
-	return uefi_call_wrapper(UnicodeInterface->StriColl, 3, UnicodeInterface, s1, s2);
+	return uefi_call_wrapper(UnicodeInterface->StriColl, 3, UnicodeInterface, (CHAR16 *)s1, (CHAR16 *)s2);
 }
 
 VOID
@@ -108,7 +108,7 @@ StrUpr (
 VOID
 StrCpy (
     IN CHAR16   *Dest,
-    IN CHAR16   *Src
+    IN CONST CHAR16   *Src
     )
 // copy strings
 {
@@ -116,17 +116,70 @@ StrCpy (
 }
 
 VOID
+StrnCpy (
+    IN CHAR16   *Dest,
+    IN CONST CHAR16   *Src,
+    IN UINTN     Len
+    )
+// copy strings
+{
+    RtStrnCpy (Dest, Src, Len);
+}
+
+CHAR16 *
+StpCpy (
+    IN CHAR16   *Dest,
+    IN CONST CHAR16   *Src
+    )
+// copy strings
+{
+    return RtStpCpy (Dest, Src);
+}
+
+CHAR16 *
+StpnCpy (
+    IN CHAR16   *Dest,
+    IN CONST CHAR16   *Src,
+    IN UINTN     Len
+    )
+// copy strings
+{
+    return RtStpnCpy (Dest, Src, Len);
+}
+
+VOID
 StrCat (
     IN CHAR16   *Dest,
-    IN CHAR16   *Src
+    IN CONST CHAR16   *Src
     )
-{   
+{
     RtStrCat(Dest, Src);
+}
+
+VOID
+StrnCat (
+    IN CHAR16   *Dest,
+    IN CONST CHAR16   *Src,
+    IN UINTN     Len
+    )
+{
+    RtStrnCat(Dest, Src, Len);
+}
+
+
+UINTN
+StrnLen (
+    IN CONST CHAR16   *s1,
+    IN UINTN           Len
+    )
+// string length
+{
+    return RtStrnLen(s1, Len);
 }
 
 UINTN
 StrLen (
-    IN CHAR16   *s1
+    IN CONST CHAR16   *s1
     )
 // string length
 {
@@ -135,7 +188,7 @@ StrLen (
 
 UINTN
 StrSize (
-    IN CHAR16   *s1
+    IN CONST CHAR16   *s1
     )
 // string size
 {
@@ -144,7 +197,7 @@ StrSize (
 
 CHAR16 *
 StrDuplicate (
-    IN CHAR16   *Src
+    IN CONST CHAR16   *Src
     )
 // duplicate a string
 {
@@ -161,20 +214,20 @@ StrDuplicate (
 
 UINTN
 strlena (
-    IN CHAR8    *s1
+    IN CONST CHAR8    *s1
     )
 // string length
 {
     UINTN        len;
-    
+
     for (len=0; *s1; s1+=1, len+=1) ;
     return len;
 }
 
 UINTN
 strcmpa (
-    IN CHAR8    *s1,
-    IN CHAR8    *s2
+    IN CONST CHAR8    *s1,
+    IN CONST CHAR8    *s2
     )
 // compare strings
 {
@@ -192,8 +245,8 @@ strcmpa (
 
 UINTN
 strncmpa (
-    IN CHAR8    *s1,
-    IN CHAR8    *s2,
+    IN CONST CHAR8    *s1,
+    IN CONST CHAR8    *s2,
     IN UINTN    len
     )
 // compare strings
@@ -215,7 +268,7 @@ strncmpa (
 
 UINTN
 xtoi (
-    CHAR16  *str
+    CONST CHAR16  *str
     )
 // convert hex string to uint
 {
@@ -246,7 +299,7 @@ xtoi (
 
 UINTN
 Atoi (
-    CHAR16  *str
+    CONST CHAR16  *str
     )
 // convert hex string to uint
 {
@@ -271,7 +324,7 @@ Atoi (
     return u;
 }
 
-BOOLEAN 
+BOOLEAN
 MetaMatch (
     IN CHAR16   *String,
     IN CHAR16   *Pattern
@@ -284,11 +337,11 @@ MetaMatch (
         Pattern += 1;
 
         switch (p) {
-        case 0:    
+        case 0:
             // End of pattern.  If end of string, TRUE match
-            return *String ? FALSE : TRUE;     
+            return *String ? FALSE : TRUE;
 
-        case '*':                               
+        case '*':
             // Match zero or more chars
             while (*String) {
                 if (MetaMatch (String, Pattern)) {
@@ -298,7 +351,7 @@ MetaMatch (
             }
             return MetaMatch (String, Pattern);
 
-        case '?':                               
+        case '?':
             // Match any one char
             if (!*String) {
                 return FALSE;
@@ -306,7 +359,7 @@ MetaMatch (
             String += 1;
             break;
 
-        case '[':                               
+        case '[':
             // Match char set
             c = *String;
             if (!c) {
@@ -325,17 +378,17 @@ MetaMatch (
                         return FALSE;               // syntax problem
                     }
 
-                    if (c >= l && c <= p) {         // if in range, 
+                    if (c >= l && c <= p) {         // if in range,
                         break;                      // it's a match
                     }
                 }
-                
+
                 l = p;
                 if (c == p) {                       // if char matches
                     break;                          // move on
                 }
             }
-            
+
             // skip to end of match char set
             while (p && p != ']') {
                 p = *Pattern;
@@ -360,7 +413,7 @@ MetaMatch (
 
 BOOLEAN EFIAPI
 LibStubMetaiMatch (
-    IN EFI_UNICODE_COLLATION_INTERFACE  *This,
+    IN EFI_UNICODE_COLLATION_INTERFACE  *This EFI_UNUSED,
     IN CHAR16                           *String,
     IN CHAR16                           *Pattern
     )
@@ -369,7 +422,7 @@ LibStubMetaiMatch (
 }
 
 
-BOOLEAN 
+BOOLEAN
 MetaiMatch (
     IN CHAR16   *String,
     IN CHAR16   *Pattern

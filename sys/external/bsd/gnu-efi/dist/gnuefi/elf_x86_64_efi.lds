@@ -1,4 +1,4 @@
-/*	$NetBSD: elf_x86_64_efi.lds,v 1.1.1.1 2014/04/01 16:16:08 jakllsch Exp $	*/
+/*	$NetBSD: elf_x86_64_efi.lds,v 1.1.1.2 2018/08/16 18:17:47 jmcneill Exp $	*/
 
 /* Same as elf_x86_64_fbsd_efi.lds, except for OUTPUT_FORMAT below - KEEP IN SYNC */
 OUTPUT_FORMAT("elf64-x86-64", "elf64-x86-64", "elf64-x86-64")
@@ -8,7 +8,9 @@ SECTIONS
 {
   . = 0;
   ImageBase = .;
-  .hash : { *(.hash) }	/* this MUST come first! */
+  /* .hash and/or .gnu.hash MUST come first! */
+  .hash : { *(.hash) }
+  .gnu.hash : { *(.gnu.hash) }
   . = ALIGN(4096);
   .eh_frame : 
   { 
@@ -17,10 +19,14 @@ SECTIONS
   . = ALIGN(4096);
   .text :
   {
+   _text = .;
    *(.text)
    *(.text.*)
    *(.gnu.linkonce.t.*)
+   . = ALIGN(16);
   }
+  _etext = .;
+  _text_size = . - _text;
   . = ALIGN(4096);
   .reloc :
   {
@@ -29,6 +35,7 @@ SECTIONS
   . = ALIGN(4096);
   .data :
   {
+   _data = .;
    *(.rodata*)
    *(.got.plt)
    *(.got)
@@ -43,6 +50,10 @@ SECTIONS
    *(COMMON)
    *(.rel.local)
   }
+  .note.gnu.build-id : { *(.note.gnu.build-id) }
+
+  _edata = .;
+  _data_size = . - _etext;
   . = ALIGN(4096);
   .dynamic  : { *(.dynamic) }
   . = ALIGN(4096);

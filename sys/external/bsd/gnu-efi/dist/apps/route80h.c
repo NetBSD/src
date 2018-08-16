@@ -1,4 +1,4 @@
-/*	$NetBSD: route80h.c,v 1.1.1.1 2014/04/01 16:16:06 jakllsch Exp $	*/
+/*	$NetBSD: route80h.c,v 1.1.1.2 2018/08/16 18:17:47 jmcneill Exp $	*/
 
 #include <efi.h>
 #include <efilib.h>
@@ -42,15 +42,6 @@ static inline void set_bit(volatile uint32_t *flag, int bit, int value)
 	Print(L"new value is 0x%2x\n", val);
 }
 
-static inline int configspace_matches_ids(void *config, uint32_t vendor_id,
-				uint32_t device_id)
-{
-	uint32_t *cfg = config;
-	if (cfg[0] == vendor_id && cfg[1] == device_id)
-		return 1;
-	return 0;
-}
-
 static int is_device(EFI_PCI_IO *pciio, uint16_t vendor_id, uint16_t device_id)
 {
 	lpcif_t lpcif;
@@ -70,8 +61,7 @@ static EFI_STATUS find_pci_device(uint16_t vendor_id, uint16_t device_id,
 {
 	EFI_STATUS rc;
 	EFI_HANDLE *Handles;
-	UINTN NoHandles;
-	int i;
+	UINTN NoHandles, i;
 
 	if (!pciio)
 		return EFI_INVALID_PARAMETER;
@@ -105,7 +95,7 @@ efi_main (EFI_HANDLE image_handle, EFI_SYSTEM_TABLE *systab)
 	InitializeLib(image_handle, systab);
 	EFI_PCI_IO *pciio = NULL;
 	lpcif_t lpcif;
-	EFI_STATUS rc;
+	EFI_STATUS rc = EFI_SUCCESS;
 	struct {
 		uint16_t vendor;
 		uint16_t device;
@@ -141,7 +131,7 @@ efi_main (EFI_HANDLE image_handle, EFI_SYSTEM_TABLE *systab)
 	lpcif.rcba &= ~1UL;
 
 	Print(L"rcba: 0x%8x\n", lpcif.rcba, lpcif.rcba);
-	set_bit((uint32_t *)(uint64_t)(lpcif.rcba + GCS_OFFSET_ADDR),
+	set_bit((uint32_t *)(intptr_t)(lpcif.rcba + GCS_OFFSET_ADDR),
 		     GCS_RPR_SHIFT, GCS_RPR_PCI);
 
 	return EFI_SUCCESS;

@@ -1,4 +1,4 @@
-/*	$NetBSD: debug.c,v 1.1.1.1 2014/04/01 16:16:06 jakllsch Exp $	*/
+/*	$NetBSD: debug.c,v 1.1.1.2 2018/08/16 18:17:47 jmcneill Exp $	*/
 
 /*++
 
@@ -32,9 +32,9 @@ Revision History
 
 INTN
 DbgAssert (
-    IN CHAR8    *FileName,
-    IN INTN     LineNo,
-    IN CHAR8    *Description
+    IN CONST CHAR8    *FileName,
+    IN INTN           LineNo,
+    IN CONST CHAR8    *Description
     )
 {
     DbgPrint (D_ERROR, (CHAR8 *)"%EASSERT FAILED: %a(%d): %a%N\n", FileName, LineNo, Description);

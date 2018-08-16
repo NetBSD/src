@@ -1,4 +1,4 @@
-/*	$NetBSD: efilink.h,v 1.1.1.1 2014/04/01 16:16:07 jakllsch Exp $	*/
+/*	$NetBSD: efilink.h,v 1.1.1.2 2018/08/16 18:17:47 jmcneill Exp $	*/
 
 #ifndef _EFI_LINK_H
 #define _EFI_LINK_H
@@ -144,7 +144,7 @@ typedef struct _LIST_ENTRY {
 //  EFI_FIELD_OFFSET - returns the byte offset to a field within a structure
 //
 
-#define EFI_FIELD_OFFSET(TYPE,Field) ((UINTN)(&(((TYPE *) 0)->Field)))
+#define EFI_FIELD_OFFSET(TYPE,Field) ((UINTN)(intptr_t)(&(((TYPE *) 0)->Field)))
 
 //
 //  CONTAINING_RECORD - returns a pointer to the structure

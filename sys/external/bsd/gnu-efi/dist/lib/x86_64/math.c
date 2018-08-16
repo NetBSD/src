@@ -1,4 +1,4 @@
-/*	$NetBSD: math.c,v 1.1.1.1 2014/04/01 16:16:07 jakllsch Exp $	*/
+/*	$NetBSD: math.c,v 1.1.1.2 2018/08/16 18:17:47 jmcneill Exp $	*/
 
 /*++
 
@@ -44,7 +44,7 @@ LShiftU64 (
     )
 // Left shift 64bit by 32bit and get a 64bit result
 {
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(_MSC_EXTENSIONS)
     return Operand << Count;
 #else
     UINT64      Result;
@@ -79,7 +79,7 @@ RShiftU64 (
     )
 // Right shift 64bit by 32bit and get a 64bit result
 {
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(_MSC_EXTENSIONS)
     return Operand >> Count;
 #else
     UINT64      Result;
@@ -115,7 +115,7 @@ MultU64x32 (
     )
 // Multiple 64bit by 32bit and get a 64bit result
 {
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(_MSC_EXTENSIONS)
     return Multiplicand * Multiplier;
 #else
     UINT64      Result;
@@ -142,7 +142,7 @@ DivU64x32 (
 // divide 64bit by 32bit and get a 64bit result
 // N.B. only works for 31bit divisors!!
 {
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(_MSC_EXTENSIONS)
     if (Remainder)
 	*Remainder = Dividend % Divisor;
     return Dividend / Divisor;
