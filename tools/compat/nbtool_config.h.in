@@ -1,6 +1,6 @@
 /* nbtool_config.h.in.  Generated from configure.ac by autoheader.  */
 
-/*      $NetBSD: nbtool_config.h.in,v 1.45 2018/08/11 16:24:59 christos Exp $    */
+/*      $NetBSD: nbtool_config.h.in,v 1.46 2018/08/16 12:03:36 christos Exp $    */
  
 #ifndef __NETBSD_NBTOOL_CONFIG_H__
 #define __NETBSD_NBTOOL_CONFIG_H__
@@ -325,6 +325,10 @@
 /* Define to 1 if you have the declaration of `strmode', and to 0 if you
    don't. */
 #undef HAVE_DECL_STRMODE
+
+/* Define to 1 if you have the declaration of `strncasecmp', and to 0 if you
+   don't. */
+#undef HAVE_DECL_STRNCASECMP
 
 /* Define to 1 if you have the declaration of `strndup', and to 0 if you
    don't. */
@@ -655,6 +659,9 @@
 
 /* Define to 1 if you have the `strmode' function. */
 #undef HAVE_STRMODE
+
+/* Define to 1 if you have the `strncasecmp' function. */
+#undef HAVE_STRNCASECMP
 
 /* Define to 1 if you have the `strndup' function. */
 #undef HAVE_STRNDUP
