@@ -1,4 +1,4 @@
-/*	$NetBSD: dtrace_subr.c,v 1.10 2018/06/05 12:04:19 christos Exp $	*/
+/*	$NetBSD: dtrace_subr.c,v 1.11 2018/08/16 14:14:51 christos Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -47,8 +47,6 @@
 #include <machine/frame.h>
 #include <machine/cpu_counter.h>
 #include <machine/cpufunc.h>
-
-extern uintptr_t 	kernelbase;
 
 int dtrace_invop(uintptr_t, struct trapframe *, uintptr_t);
 
@@ -117,7 +115,7 @@ dtrace_invop_remove(int (*func)(uintptr_t, struct trapframe *, uintptr_t))
 void
 dtrace_toxic_ranges(void (*func)(uintptr_t base, uintptr_t limit))
 {
-	(*func)(0, kernelbase);
+	(*func)(0, VM_MIN_KERNEL_ADDRESS);
 }
 
 static void
