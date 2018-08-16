@@ -1,4 +1,4 @@
-.\"    $NetBSD: npf.conf.5,v 1.54 2018/08/16 08:37:51 maxv Exp $
+.\"    $NetBSD: npf.conf.5,v 1.55 2018/08/16 08:51:53 maxv Exp $
 .\"
 .\" Copyright (c) 2009-2017 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -250,14 +250,18 @@ auto-loaded by NPF.
 .El
 .Pp
 The available normalization options are:
-.Bl -tag -width Xmin-ttlXvalueXX -offset indent
-.It random-id
+.Bl -tag -width XXmin-ttlXXvalueXX -offset indent
+.It Dq random-id
 Randomize the IPv4 ID parameter.
-.It min-ttl Ar value
+.It Dq min-ttl Xo
+.Ar value
+.Xc
 Enforce a minimum value for the IPv4 Time To Live (TTL) parameter.
-.It max-mss Ar value
+.It Dq max-mss Xo
+.Ar value
+.Xc
 Enforce a maximum value for the MSS on TCP packets.
-.It no-df
+.It Dq no-df
 Remove the Don't Fragment (DF) flag from IPv4 packets.
 .El
 .Pp
