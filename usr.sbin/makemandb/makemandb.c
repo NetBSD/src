@@ -1,4 +1,4 @@
-/*	$NetBSD: makemandb.c,v 1.55 2017/05/10 12:09:52 abhinav Exp $	*/
+/*	$NetBSD: makemandb.c,v 1.56 2018/08/16 05:07:22 kre Exp $	*/
 /*
  * Copyright (c) 2011 Abhinav Upadhyay <er.abhinav.upadhyay@gmail.com>
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: makemandb.c,v 1.55 2017/05/10 12:09:52 abhinav Exp $");
+__RCSID("$NetBSD: makemandb.c,v 1.56 2018/08/16 05:07:22 kre Exp $");
 
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -372,7 +372,7 @@ main(int argc, char *argv[])
 
 	init_secbuffs(&rec);
 	mchars_alloc();
-	mp = mparse_alloc(0, MANDOCLEVEL_BADARG, NULL, NULL);
+	mp = mparse_alloc(0, MANDOCERR_MAX, NULL, MANDOC_OS_OTHER, NULL);
 
 	if (manconf) {
 		char *arg;
