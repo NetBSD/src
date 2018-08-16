@@ -1,4 +1,4 @@
-.\"    $NetBSD: npf.conf.5,v 1.56 2018/08/16 09:21:00 maxv Exp $
+.\"    $NetBSD: npf.conf.5,v 1.57 2018/08/16 09:46:18 maxv Exp $
 .\"
 .\" Copyright (c) 2009-2017 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -201,7 +201,7 @@ block out final pcap-filter "tcp and dst 10.1.1.252"
 Fragments are not selectable since NPF always reassembles packets
 before further processing.
 .Ss Stateful
-Stateful packet inspection is enabled using
+Stateful packet inspection is enabled using the
 .Cd stateful
 or
 .Cd stateful-ends
@@ -213,10 +213,29 @@ precaution.
 In both cases, a full TCP state tracking is performed for TCP connections
 and a limited tracking for message-based protocols (UDP and ICMP).
 .Pp
+The
+.Cd flags
+keyword can be used in conjunction with the
+.Cd stateful
+keyword to match the packets against specific TCP flags, according to
+the following syntax:
+.Bl -tag -offset indent
+.It flags Ar match[/mask]
+.El
+.Pp
+Where
+.Ar match
+is the set of TCP flags present in the
+.Ar mask
+set, both sets being represented as a string combination of: S (SYN),
+A (ACK), F (FIN), R (RST). The flags that are not present in
+.Ar mask
+are ignored.
+.Pp
 By default, a stateful rule implies SYN-only flag check ("flags S/SAFR")
 for the TCP packets.
 It is not advisable to change this behavior; however,
-it can be overridden with the
+it can be overridden with the aforementioned
 .Cd flags
 keyword.
 .Ss Map
@@ -367,6 +386,8 @@ static-rule	= ( "block" [ block-opts ] | "pass" )
 dynamic-ruleset	= "ruleset" group-opts
 rule		= static-rule | dynamic-ruleset
 
+tcp-flag-mask	= tcp-flags
+tcp-flags	= ("S")("A")("F")("R")
 proto		= "proto" protocol [ proto-opts ]
 block-opts	= "return-rst" | "return-icmp" | "return"
 family-opt	= "inet4" | "inet6"
