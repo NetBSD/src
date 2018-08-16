@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.10 2018/08/16 01:08:18 kre Exp $
+# $NetBSD: Makefile,v 1.11 2018/08/16 05:03:17 kre Exp $
 
 LIBISPRIVATE=	yes
 
@@ -7,6 +7,7 @@ SRCS=	\
 att.c \
 chars.c \
 compat_ohash.c \
+compat_recallocarray.c \
 eqn.c \
 lib.c \
 man.c \
@@ -15,6 +16,7 @@ man_validate.c \
 mandoc.c \
 mandoc_aux.c \
 mandoc_ohash.c \
+mandoc_xr.c \
 mdoc.c \
 mdoc_argv.c \
 mdoc_macro.c \
