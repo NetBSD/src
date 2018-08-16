@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1549 2018/08/15 15:52:09 sevan Exp $
+#	$NetBSD: 3RDPARTY,v 1.1550 2018/08/16 11:04:10 sevan Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -537,7 +537,7 @@ Responsible:	simonb
 License:	GPLv2+ (2.5.1a), GPLv3+ (2.5.3 and later)
 Location:	external/gpl2/grep
 Notes:
-Use external/gpl2/grep//grep2netbsd for preparing the source tree
+Use external/gpl2/grep/grep2netbsd for preparing the source tree
 for the import.
 On 2 Jan 2004, a non-GNU grep (FreeGrep, https://github.com/howardjp/freegrep;
 see also http://www.monkey.org/openbsd/archive/tech/0306/msg00129.html)
@@ -879,7 +879,7 @@ Home Page:	http://www.mesa3d.org/
 Mailing List:
 Responsible:	riastradh, mrg
 License:	ISC
-Location:	xsrc/external/mit/MesaDemos/dist
+Location:	xsrc/external/mit/mesa-demos/dist
 Notes:
 We use only glxinfo and glxgears.  Delete all else on import.
 Vendor tag:	xorg
@@ -898,7 +898,7 @@ Location:	sys/external/bsd/drm/dist
 Notes:
 
 Package:	MesaLib
-Version:	7.11.2
+Version:	10.3.5
 Current Vers:	18.2.0
 Maintainer:	mesa-git@?
 Archive Site:	ftp://ftp.freedesktop.org/pub/mesa/
@@ -1088,7 +1088,7 @@ Notes:
   to regen assembly files
 
 Package:	pcc
-Version:	1.1.0.DEVEL 20120325
+Version:	1.1.0.DEVEL 20160208
 Current Vers:	1.1.0 20141210
 Maintainer:	Anders Magnusson <ragge@NetBSD.org>
 Archive Site:	ftp://pcc.ludd.ltu.se/pub/pcc/
@@ -1145,7 +1145,7 @@ definition (files.pf).  userland code is imported into src/dist/pf, and
 reachover Makefiles are in src/usr.sbin/pf.
 
 Package:	pkg_install
-Version:	20170419
+Version:	20180325
 Current Vers:	20180425
 Maintainer:	The pkgsrc developers
 Home Page:	http://www.pkgsrc.org/
@@ -1224,7 +1224,7 @@ Notes:
 Old versions are available from Purdue (ftp.cs.purdue.edu:/pub/RCS).
 
 Package:	root.cache
-Version:	2016102001 (October 20, 2016)
+Version:	2017102400 (October 24, 2017)
 Current Vers:	2018070901 (July 09, 2018)
 Maintainer:	InterNIC
 Archive Site:	ftp://ftp.internic.net/domain/named.root
@@ -1634,8 +1634,8 @@ Notes:
 		external, but this is just make-work.
 
 Package:	timeout
-Version:	FreeBSD-2014-08-01
-Current Vers:	FreeBSD-2016-05-01
+Version:	FreeBSD-2014-07-16 r268763
+Current Vers:	FreeBSD-2016-05-01 r331720
 Maintainer:	Baptiste Daroussin <bapt@FreeBSD.org>
 Archive Site:	none
 Home Page:	https://svnweb.freebsd.org/base/head/usr.bin/timeout/
