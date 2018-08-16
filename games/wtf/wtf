@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$NetBSD: wtf,v 1.24 2018/03/07 08:25:43 eadler Exp $
+#	$NetBSD: wtf,v 1.25 2018/08/16 13:31:04 maya Exp $
 #
 # Public domain
 #
@@ -91,6 +91,13 @@ for i; do
 
 	# Try pkg_info(1) next
 	ans="$(pkg_info -qc "$i" 2> /dev/null)"
+	if [ $? -eq 0 ]; then
+		echo "$i: $ans"
+		continue
+	fi
+
+	# Try pkg-info(1) next
+	ans="$(pkg info -qI "$i" 2> /dev/null)"
 	if [ $? -eq 0 ]; then
 		echo "$i: $ans"
 		continue
