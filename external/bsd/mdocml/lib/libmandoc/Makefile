@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.9 2018/08/14 08:53:06 christos Exp $
+# $NetBSD: Makefile,v 1.10 2018/08/16 01:08:18 kre Exp $
 
 LIBISPRIVATE=	yes
 
@@ -39,5 +39,7 @@ MAN=	mandoc.3
 .if ${MACHINE} == "vax"
 COPTS.mdoc_macro.c+=-O0
 .endif
+
+COPTS.man_validate.c+=-Wno-error=array-bounds
 
 .include <bsd.lib.mk>
