@@ -1,4 +1,4 @@
-/*	$NetBSD: t7.c,v 1.1.1.1 2014/04/01 16:16:06 jakllsch Exp $	*/
+/*	$NetBSD: t7.c,v 1.1.1.2 2018/08/16 18:17:47 jmcneill Exp $	*/
 
 #include <efi.h>
 #include <efilib.h>
@@ -20,8 +20,8 @@ efi_main (EFI_HANDLE image, EFI_SYSTEM_TABLE *systab)
 
 	efi_status = uefi_call_wrapper(ST->ConIn->ReadKeyStroke, 2, ST->ConIn, &efi_input_key);
 
-	Print(L"ScanCode: %xh  UnicodeChar: %xh\n",
-		efi_input_key.ScanCode, efi_input_key.UnicodeChar);
+	Print(L"ScanCode: %xh  UnicodeChar: %xh CallRtStatus: %x\n",
+		efi_input_key.ScanCode, efi_input_key.UnicodeChar, efi_status);
 
 	return EFI_SUCCESS;
 }
