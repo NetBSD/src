@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.15 2018/08/16 03:59:52 kre Exp $
+# $NetBSD: Makefile,v 1.16 2018/08/16 05:03:17 kre Exp $
 
 .include <bsd.own.mk>
 
@@ -31,12 +31,10 @@ tree.c
 DPADD+= 	${MDOCMLLIB.mandoc} ${LIBZ}
 LDADD+= 	-L${MDOCMLOBJDIR.mandoc} -lmandoc -lz
 CPPFLAGS+=	-DUSE_WCHAR
-SRCS+=		compat_recallocarray.c
 .else
 SRCS.libmandoc!=cd ${.PARSEDIR}/../../lib/libmandoc && ${MAKE} -v SRCS
 
-SRCS+=		${SRCS.libmandoc} compat_strtonum.c compat_reallocarray.c \
-		compat_recallocarray.c
+SRCS+=		${SRCS.libmandoc} compat_strtonum.c compat_reallocarray.c
 .endif
 
 COPTS.man_term.c+= -Wno-error=array-bounds
