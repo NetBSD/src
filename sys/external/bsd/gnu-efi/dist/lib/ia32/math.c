@@ -1,4 +1,4 @@
-/*	$NetBSD: math.c,v 1.1.1.1 2014/04/01 16:16:07 jakllsch Exp $	*/
+/*	$NetBSD: math.c,v 1.1.1.2 2018/08/16 18:17:47 jmcneill Exp $	*/
 
 /*++
 
@@ -142,13 +142,13 @@ DivU64x32 (
 // divide 64bit by 32bit and get a 64bit result
 // N.B. only works for 31bit divisors!!
 {
-#ifdef __GNUC__
+#if 0 && defined(__GNUC__) && !defined(__MINGW32__)
     if (Remainder)
-	*Remainder = Dividend % Divisor;
+        *Remainder = Dividend % Divisor;
     return Dividend / Divisor;
 #else
     UINT32      Rem;
-    UINT32      bit;        
+    UINT32      bit;
 
     ASSERT (Divisor != 0);
     ASSERT ((Divisor >> 31) == 0);
@@ -159,19 +159,37 @@ DivU64x32 (
 
     Rem = 0;
     for (bit=0; bit < 64; bit++) {
+#if defined(__GNUC__) || defined(__MINGW32__)
+        asm (
+            "shll	$1, %0\n\t"
+            "rcll	$1, 4%0\n\t"
+            "rcll	$1, %2\n\t"
+            "mov	%2, %%eax\n\t"
+            "cmp	%1, %%eax\n\t"
+            "cmc\n\t"
+            "sbb	%%eax, %%eax\n\t"
+            "sub	%%eax, %0\n\t"
+            "and	%1, %%eax\n\t"
+            "sub	%%eax, %2"
+            : /* no outputs */
+            : "m"(Dividend), "m"(Divisor), "m"(Rem)
+            : "cc","memory","%eax"
+            );
+#else
         _asm {
             shl     dword ptr Dividend[0], 1    ; shift rem:dividend left one
-            rcl     dword ptr Dividend[4], 1    
-            rcl     dword ptr Rem, 1            
+            rcl     dword ptr Dividend[4], 1
+            rcl     dword ptr Rem, 1
 
             mov     eax, Rem
             cmp     eax, Divisor                ; Is Rem >= Divisor?
             cmc                                 ; No - do nothing
-            sbb     eax, eax                    ; Else, 
+            sbb     eax, eax                    ; Else,
             sub     dword ptr Dividend[0], eax  ;   set low bit in dividen
             and     eax, Divisor                ; and
-            sub     Rem, eax                    ;   subtract divisor 
+            sub     Rem, eax                    ;   subtract divisor
         }
+#endif
     }
 
     if (Remainder) {
