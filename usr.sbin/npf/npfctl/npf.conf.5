@@ -1,4 +1,4 @@
-.\"    $NetBSD: npf.conf.5,v 1.53 2018/08/13 06:06:13 wiz Exp $
+.\"    $NetBSD: npf.conf.5,v 1.54 2018/08/16 08:37:51 maxv Exp $
 .\"
 .\" Copyright (c) 2009-2017 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd August 7, 2018
+.Dd August 16, 2018
 .Dt NPF.CONF 5
 .Os
 .Sh NAME
@@ -228,6 +228,39 @@ Every extension call has a name and a list of options in the form of
 key-value pairs.
 Depending on the call, the key might represent the argument and the value
 might be optional.
+Available options:
+.Bl -tag -width Xlog:XinterfaceXX -offset indent
+.It log: Ar interface
+Log events.
+This requires the npf_ext_log kernel module, which would normally get
+auto-loaded by NPF.
+The specified npflog interface would also be auto-created once the
+configuration is loaded.
+The log packets can be written to a file using the
+.Xr npfd 8
+daemon.
+.It normalize: Xo
+.Ar option1
+.Op , Ar option2
+.Ar ...
+.Xc
+Modify packets according to the specified normalization options.
+This requires the npf_ext_normalize kernel module, which would normally get
+auto-loaded by NPF.
+.El
+.Pp
+The available normalization options are:
+.Bl -tag -width Xmin-ttlXvalueXX -offset indent
+.It random-id
+Randomize the IPv4 ID parameter.
+.It min-ttl Ar value
+Enforce a minimum value for the IPv4 Time To Live (TTL) parameter.
+.It max-mss Ar value
+Enforce a maximum value for the MSS on TCP packets.
+.It no-df
+Remove the Don't Fragment (DF) flag from IPv4 packets.
+.El
+.Pp
 For example:
 .Bd -literal
 procedure "someproc" {
@@ -236,19 +269,7 @@ procedure "someproc" {
 }
 .Ed
 .Pp
-In this case, the procedure calls the logging and normalisation modules.
-The logging facility requires the npf_ext_log kernel module which would
-normally get auto-loaded by NPF.
-The specified npflog interface would also be auto-created once the
-configuration is loaded.
-The log packets can be written to a file using the
-.Xr npfd 8
-daemon.
-.Pp
-Traffic normalisation has a set of different mechanisms.
-In the example above, the normalisation procedure has arguments which
-apply the following mechanisms: IPv4 ID randomisation, Don't Fragment (DF)
-flag cleansing, minimum TTL enforcement and TCP MSS "clamping".
+In this case, the procedure calls the logging and normalization modules.
 .Ss Misc
 Text after a hash
 .Pq Sq #
