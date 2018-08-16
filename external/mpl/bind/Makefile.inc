@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.1 2018/08/12 13:02:24 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.2 2018/08/16 16:34:33 christos Exp $
 
 .if !defined(BIND9_MAKEFILE_INC)
 BIND9_MAKEFILE_INC=yes
@@ -62,10 +62,10 @@ DBG=-g3 -gstabs
 .if !defined(LIB) || empty(LIB)
 # NOTE: the order of these libraries is important...
 .if defined(NAMED_DEBUG)
-LDADD+=		-lbind9_g -ldns_g -lirs_g -lisccfg_g -lisccc_g -lisc_g -lz_g
+LDADD+=		-lbind9_g -lisccfg_g -ldns_g -lirs_g -lisccc_g -lisc_g -lz_g
 .else
-LDADD+=		-lbind9 -ldns -lirs -lisccfg
-DPADD+=		${LIBBIND9} ${LIBDNS} ${LIBIRS} ${LIBISCCFG}
+LDADD+=		-lbind9 -lisccfg -ldns -lirs
+DPADD+=		${LIBBIND9} ${LIBISCCFG} ${LIBDNS} ${LIBIRS}
 LDADD+=		-lisccc -lisc -lz
 DPADD+=		${LIBISCCC} ${LIBISC} ${LIBZ}
 .endif
