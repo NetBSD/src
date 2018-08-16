@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.84 2018/08/11 16:24:59 christos Exp $
+#	$NetBSD: Makefile,v 1.85 2018/08/16 12:03:36 christos Exp $
 
 HOSTLIB=	nbcompat
 
@@ -19,7 +19,7 @@ SRCS=		atoll.c basename.c cdbr.c cdbw.c dirname.c \
 		setpassent.c setprogname.c sha1.c sha1hl.c sha2.c \
 		sha256hl.c sha384hl.c sha512hl.c snprintb.c snprintf.c \
 		stat_flags.c strlcat.c strlcpy.c strmode.c \
-		strcasecmp.c strndup.c strnlen.c \
+		strcasecmp.c strncasecmp.c strndup.c strnlen.c \
 		strsep.c strsuftoll.c strtoll.c \
 		strtoi.c strtou.c \
 		unvis.c vis.c err.c errx.c errc.c verr.c verrx.c verrc.c \
