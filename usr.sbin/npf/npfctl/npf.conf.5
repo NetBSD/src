@@ -1,4 +1,4 @@
-.\"    $NetBSD: npf.conf.5,v 1.58 2018/08/16 09:50:37 maxv Exp $
+.\"    $NetBSD: npf.conf.5,v 1.59 2018/08/16 09:58:00 maxv Exp $
 .\"
 .\" Copyright (c) 2009-2017 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -225,7 +225,7 @@ the following syntax:
 .Pp
 Where
 .Ar match
-is the set of TCP flags present in the
+is the set of TCP flags we want to match out of the
 .Ar mask
 set, both sets being represented as a string combination of: S (SYN),
 A (ACK), F (FIN), R (RST). The flags that are not present in
