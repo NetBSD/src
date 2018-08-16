@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.1.1.2 2018/08/16 18:17:47 jmcneill Exp $	*/
+/*	$NetBSD: init.c,v 1.2 2018/08/16 18:25:45 jmcneill Exp $	*/
 
 /*++
 
@@ -185,6 +185,7 @@ EFIDebugVariable (
     }
 }
 
+#if !defined(__NetBSD__)
 /*
  * Calls to memset/memcpy may be emitted implicitly by GCC or MSVC
  * even when -ffreestanding or /NODEFAULTLIB are in effect.
@@ -214,3 +215,4 @@ void *memcpy(void *dest, const void *src, __SIZE_TYPE__ n)
 
     return dest;
 }
+#endif
