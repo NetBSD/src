@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.16 2018/08/16 05:03:17 kre Exp $
+# $NetBSD: Makefile,v 1.17 2018/08/16 06:24:40 kre Exp $
 
 .include <bsd.own.mk>
 
@@ -11,7 +11,6 @@ html.c \
 main.c \
 man_html.c \
 man_term.c \
-mandoc_xr.c \
 manpath.c \
 mdoc_html.c \
 mdoc_markdown.c \
