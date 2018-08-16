@@ -1,4 +1,4 @@
-.\"    $NetBSD: npf.conf.5,v 1.57 2018/08/16 09:46:18 maxv Exp $
+.\"    $NetBSD: npf.conf.5,v 1.58 2018/08/16 09:50:37 maxv Exp $
 .\"
 .\" Copyright (c) 2009-2017 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -240,10 +240,14 @@ it can be overridden with the aforementioned
 keyword.
 .Ss Map
 Network Address Translation (NAT) is expressed in a form of segment mapping.
-The translation may be dynamic (stateful) or static (stateless).
+The translation may be
+.Cd dynamic
+(stateful) or
+.Cd static
+(stateless).
 The following mapping types are available:
 .Pp
-.Bl -tag -width <-> -compact
+.Bl -tag -width <-> -offset indent
 .It Pa ->
 outbound NAT (translation of the source)
 .It Pa <-
@@ -260,7 +264,7 @@ map $ext_if dynamic 10.1.1.0/24 -> $pub_ip
 .Pp
 Translations are implicitly filtered by limiting the operation to the
 network segments specified, that is, translation would be performed only
-on packets originating from 10.1.1.0/24 network.
+on packets originating from the 10.1.1.0/24 network.
 Explicit filter criteria can be specified using "pass <criteria>" as
 an additional option of the mapping.
 .Ss Procedures
