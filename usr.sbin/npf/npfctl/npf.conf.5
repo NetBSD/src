@@ -1,4 +1,4 @@
-.\"    $NetBSD: npf.conf.5,v 1.62 2018/08/17 12:04:20 maxv Exp $
+.\"    $NetBSD: npf.conf.5,v 1.63 2018/08/17 12:20:49 maxv Exp $
 .\"
 .\" Copyright (c) 2009-2017 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -329,52 +329,53 @@ The following is a non-formal BNF-like definition of the grammar.
 The definition is simplified and is intended to be human readable,
 therefore it does not strictly represent the formal grammar.
 .Bd -literal
-; Syntax of a single line.  Lines can be separated by LF (\\n) or
-; a semicolon.  Comments start with a hash (#) character.
+# Syntax of a single line.  Lines can be separated by LF (\\n) or
+# a semicolon.  Comments start with a hash (#) character.
 
 syntax		= var-def | set-param | alg | table-def |
 		  map | group | proc | comment
 
-; Variable definition.  Names can be alpha-numeric, including "_" character.
+# Variable definition.  Names can be alpha-numeric, including "_" character.
 
 var-name	= "$" . string
 interface	= interface-name | var-name
 var-def		= var "=" ( var-value | "{" value *[ "," value ] "}" )
 
-; Parameter setting.
+# Parameter setting.
 set-param	= "set" param-value
 
-; Application level gateway.  The name should be in the double quotes.
+# Application level gateway.  The name should be in the double quotes.
 
 alg		= "alg" alg-name
 
-; Table definition.  Table ID shall be numeric.  Path is in the double quotes.
+# Table definition.  Table ID shall be numeric.  Path is in the double quotes.
 
 table-id	= <table-name>
 table-def	= "table" table-id "type" ( "hash" | "tree" | "cdb" )
 		  ( "dynamic" | "file" path )
 
-; Mapping for address translation.
+# Mapping for address translation.
 
 map		= "map" interface
-		  ( "static" [ "algo" algorithm ] | "dynamic" )
+		  ( "static" [ "algo" map-algo ] | "dynamic" )
 		  [ map-flags ] [ proto ]
 		  net-seg ( "->" | "<-" | "<->" ) net-seg
 		  [ "pass" [ proto ] filt-opts ]
 
+map-algo	= "npt66"
 map-flags	= "no-ports"
 
-; Rule procedure definition.  The name should be in the double quotes.
-;
-; Each call can have its own options in a form of key-value pairs.
-; Both key and values may be strings (either in double quotes or not)
-; and numbers, depending on the extension.
+# Rule procedure definition.  The name should be in the double quotes.
+#
+# Each call can have its own options in a form of key-value pairs.
+# Both key and values may be strings (either in double quotes or not)
+# and numbers, depending on the extension.
 
 proc		= "procedure" proc-name "{" *( proc-call [ new-line ] ) "}"
 proc-opts	= key [ " " val ] [ "," proc-opts ]
 proc-call	= call-name ":" proc-opts new-line
 
-; Group definition and the rule list.
+# Group definition and the rule list.
 
 group		= "group" ( "default" | group-opts ) "{" rule-list "}"
 group-opts	= name-string [ "in" | "out" ] [ "on" interface ]
