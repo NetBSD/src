@@ -1,4 +1,4 @@
-.\"    $NetBSD: npf.conf.5,v 1.61 2018/08/17 10:24:19 maxv Exp $
+.\"    $NetBSD: npf.conf.5,v 1.62 2018/08/17 12:04:20 maxv Exp $
 .\"
 .\" Copyright (c) 2009-2017 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -383,7 +383,7 @@ rule-list	= [ rule new-line ] rule-list
 npf-filter	= [ "family" family-opt ] [ proto ] ( "all" | filt-opts )
 static-rule	= ( "block" [ block-opts ] | "pass" )
 		  [ "stateful" | "stateful-ends" ]
-		  [ "in" | out" ] [ "final" ] [ "on" interface ]
+		  [ "in" | "out" ] [ "final" ] [ "on" interface ]
 		  ( npf-filter | "pcap-filter" pcap-filter-expr )
 		  [ "apply" proc-name ]
 
