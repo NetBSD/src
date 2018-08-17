@@ -1,4 +1,4 @@
-# $NetBSD: files.fdt,v 1.22 2018/08/08 19:03:08 jmcneill Exp $
+# $NetBSD: files.fdt,v 1.23 2018/08/17 14:21:30 skrll Exp $
 
 include	"dev/pckbport/files.pckbport"
 
@@ -23,14 +23,14 @@ file	arch/arm/fdt/gtmr_fdt.c			gtmr_fdt
 
 device  gic: mpcorebus
 attach  gic at fdt with gic_fdt
-file    arch/arm/fdt/gic_fdt.c             	gic_fdt
+file    arch/arm/fdt/gic_fdt.c			gic_fdt
 
 attach	gicvthree at fdt with gicv3_fdt
 file	arch/arm/fdt/gicv3_fdt.c		gicv3_fdt
 
 device  l2cc: mpcorebus
 attach  l2cc at fdt with l2cc_fdt
-file    arch/arm/fdt/l2cc_fdt.c             	l2cc_fdt
+file    arch/arm/fdt/l2cc_fdt.c			l2cc_fdt
 
 attach	plcom at fdt with plcom_fdt
 file	arch/arm/fdt/plcom_fdt.c		plcom_fdt
