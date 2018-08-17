@@ -1,4 +1,4 @@
-/* $NetBSD: ofw_autoconf.c,v 1.21 2018/03/04 00:21:20 macallan Exp $ */
+/* $NetBSD: ofw_autoconf.c,v 1.22 2018/08/17 15:54:35 macallan Exp $ */
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
  * Copyright (C) 1995, 1996 TooLs GmbH.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_autoconf.c,v 1.21 2018/03/04 00:21:20 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_autoconf.c,v 1.22 2018/08/17 15:54:35 macallan Exp $");
 
 #ifdef ofppc
 #include "gtpci.h"
@@ -231,6 +231,11 @@ device_register(device_t dev, void *aux)
 		return;
 	}
 
+	/* skip over CPUs */
+	if (device_is_a(dev, "cpu")) {
+		return;
+	}
+
 	if (device_is_a(dev, "valkyriefb")) {
 		struct confargs *ca = aux;
 		prop_dictionary_t dict;
@@ -306,7 +311,10 @@ device_register(device_t dev, void *aux)
 		    CACHELINESIZE);
 	}
 #endif
-	if (device_is_a(dev, "atapibus") || device_is_a(dev, "pci") ||
+	if (device_is_a(dev, "atapibus") ||
+#ifndef PMAC_G5
+	    device_is_a(dev, "pci") ||
+#endif
 	    device_is_a(dev, "scsibus") || device_is_a(dev, "atabus"))
 		return;
 
@@ -379,13 +387,17 @@ device_register(device_t dev, void *aux)
 	 * Skip over devices that are really just layers of NetBSD
 	 * autoconf(9) we should just skip as they do not have any
 	 * OFW devices.
+	 * XXX except on G5, where we have /ht/pci* instead of /pci*
 	 */
 	if (device_is_a(device_parent(dev), "atapibus") ||
 	    device_is_a(device_parent(dev), "atabus") ||
+#ifndef PMAC_G5
 	    device_is_a(device_parent(dev), "pci") ||
+#endif
 	    device_is_a(device_parent(dev), "scsibus")) {
-		if (device_parent(device_parent(dev)) != parent)
+		if (device_parent(device_parent(dev)) != parent) {
 			return;
+		}
 	} else {
 		if (device_parent(dev) != parent)
 			return;
@@ -416,12 +428,13 @@ device_register(device_t dev, void *aux)
 
 	if (device_is_a(device_parent(dev), "mainbus")) {
 		struct confargs *ca = aux;
-
 		if (strcmp(ca->ca_name, "ofw") == 0)		/* XXX */
 			return;
 		if (strcmp(ca->ca_name, "gt") == 0)
 			parent = dev;
 		if (addr != ca->ca_reg[0])
+			return;
+		if (addr2 != 0 && addr2 != ca->ca_reg[1])
 			return;
 	} else if (device_is_a(device_parent(dev), "gt")) {
 		/*
@@ -477,13 +490,27 @@ device_register(device_t dev, void *aux)
 
 		if (addr != adev->adev_drv_data->drive)
 			return;
+	} else if (device_is_a(dev, "pci")) {
+		if (addr != device_unit(dev))
+			return;
+	} else if (device_is_a(device_parent(dev), "atabus")) {
+		/*
+		 * XXX
+		 * on svwsata this is the channel number and we ignore the
+		 * drive number which is always 0 anyway
+		 * needs to be revisited for other (S)ATA cards
+		 */
+		struct ata_device *adev = aux;
+		if (addr != adev->adev_channel)
+			return;
+		/* we have our match, cut off the rest */
+		if (p) *p = 0;
 	} else
 		return;
 
 	/* If we reach this point, then dev is a match for the current
 	 * path component.
 	 */
-
 	if (p && *p) {
 		parent = dev;
 		cp = p;
