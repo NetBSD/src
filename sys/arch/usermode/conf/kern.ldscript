@@ -1,6 +1,8 @@
-/*	$NetBSD: kern.ldscript,v 1.1 2018/05/18 19:04:10 reinoud Exp $	*/
+/*	$NetBSD: kern.ldscript,v 1.2 2018/08/17 20:16:07 reinoud Exp $	*/
 
 #include "assym.h"
+
+__PAGE_SIZE = 0x1000 ;
 
 ENTRY(_start)
 SECTIONS
@@ -8,13 +10,19 @@ SECTIONS
 	/* Read-only sections, merged into text segment: */
 	.text :
 	{
+		. = ALIGN(__PAGE_SIZE);
+		*(.text.user)
+		. = ALIGN(__PAGE_SIZE);
 		*(.text)
 		*(.text.*)
 		*(.stub)
-	}
+		. = ALIGN(__PAGE_SIZE);
+	} =0xCC
+
 	_etext = . ;
 	PROVIDE (etext = .) ;
 
+	. = ALIGN(__PAGE_SIZE);
 	.rodata :
 	{
 		*(.rodata)
@@ -25,7 +33,7 @@ SECTIONS
 	 * Adjust the address for the data segment.  We want to adjust up to
 	 * the same address within the page on the next page up.
 	 */
-	. = ALIGN(0x100000) + (. & (0x100000 - 1));
+	. = ALIGN(__PAGE_SIZE);
 	__data_start = . ;
 	.data :
 	{
@@ -52,22 +60,17 @@ SECTIONS
 		*(.bss)
 		*(.bss.*)
 		*(COMMON)
-		. = ALIGN(64 / 8);
 	}
-	. = ALIGN(64 / 8);
+
+	. = ALIGN(__PAGE_SIZE);
 	_end = . ;
 	PROVIDE (end = .) ;
-	.note.netbsd.ident :
-	{
-		KEEP(*(.note.netbsd.ident));
-	}
+
+	/*
+	 * .note.netbsd.ident :
+	 * {
+	 * 	KEEP(*(.note.netbsd.ident));
+	 * }
+	 */
 }
 
-SECTIONS
-{
-	.text :
-	AT (ADDR(.text) & 0x0fffffff)
-	{
-		*(.text)
-	} = 0
-}
