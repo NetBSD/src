@@ -1,4 +1,4 @@
-.\"	$NetBSD: pf.os.5,v 1.6 2009/03/22 14:29:35 perry Exp $
+.\"	$NetBSD: pf.os.5,v 1.7 2018/08/17 12:36:53 maxv Exp $
 .\"	$OpenBSD: pf.os.5,v 1.8 2007/05/31 19:19:58 jmc Exp $
 .\"
 .\" Copyright (c) 2003 Mike Frantzen <frantzen@w4g.org>
@@ -14,13 +14,20 @@
 .\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-.Dd May 31, 2007
+.Dd August 17, 2018
 .Dt PF.OS 5
 .Os
 .Sh NAME
 .Nm pf.os
 .Nd format of the operating system fingerprints file
 .Sh DESCRIPTION
+.Bf -symbolic
+The NetBSD version of PF is obsolete, and its use is strongly discouraged.
+Use
+.Xr npf 7
+instead.
+.Pp
+.Ef
 The
 .Xr pf 4
 firewall and the
