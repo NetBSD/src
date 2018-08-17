@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.53 2018/08/12 15:31:01 maxv Exp $	*/
+/*	$NetBSD: pmap.h,v 1.54 2018/08/17 14:39:51 maxv Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -81,60 +81,14 @@
 #ifdef XEN
 #include <xen/xenfunc.h>
 #include <xen/xenpmap.h>
-#endif /* XEN */
-
-/*
- * The x86_64 pmap module closely resembles the i386 one and it 
- * uses the same recursive entry scheme. See the i386 pmap.h
- * for a description. The obvious difference is that 3 extra
- * levels of page table need to be dealt with. The level 1 page
- * table pages are at:
- *
- * l1: 0x00007f8000000000 - 0x00007fffffffffff     (39 bits, needs PML4 entry)
- *
- * The rest is kept as physical pages in 3 UVM objects, and is
- * temporarily mapped for virtual access when needed.
- *
- * Note that address space is signed, so the layout for 48 bits is:
- *
- *  +---------------------------------+ 0xffffffffffffffff
- *  |                                 |
- *  |         Unused                  |
- *  |                                 |
- *  +---------------------------------+ 0xffffff8000000000
- *  ~                                 ~
- *  |                                 |
- *  |         Kernel Space            |
- *  |                                 |
- *  |                                 |
- *  +---------------------------------+ 0xffff800000000000 = 0x0000800000000000
- *  |                                 |
- *  |    alt.L1 table (PTE pages)     |
- *  |                                 |
- *  +---------------------------------+ 0x00007f8000000000
- *  ~                                 ~
- *  |                                 |
- *  |         User Space              |
- *  |                                 |
- *  |                                 |
- *  +---------------------------------+ 0x0000000000000000
- *
- * In other words, there is a 'VA hole' at 0x0000800000000000 -
- * 0xffff800000000000 which will trap, just as on, for example,
- * sparcv9.
- *
- * The unused space can be used if needed, but it adds a little more
- * complexity to the calculations.
- */
+#endif
 
 /*
  * Mask to get rid of the sign-extended part of addresses.
  */
 #define VA_SIGN_MASK		0xffff000000000000
 #define VA_SIGN_NEG(va)		((va) | VA_SIGN_MASK)
-/*
- * XXXfvdl this one's not right.
- */
+/* XXXfvdl this one's not right. */
 #define VA_SIGN_POS(va)		((va) & ~VA_SIGN_MASK)
 
 #ifndef XEN
@@ -154,7 +108,6 @@
  * data structures:
  * PTE_BASE: the base VA of the linear PTE mappings
  * PDP_BASE: the base VA of the recursive mapping of the PTD
- * PDP_PDE: the VA of the PDE that points back to the PDP
  */
 
 #ifndef XEN
@@ -168,8 +121,6 @@ extern pt_entry_t *pte_base;
 #define L2_BASE	((pd_entry_t *)((char *)L1_BASE + L4_SLOT_PTE * NBPD_L3))
 #define L3_BASE	((pd_entry_t *)((char *)L2_BASE + L4_SLOT_PTE * NBPD_L2))
 #define L4_BASE	((pd_entry_t *)((char *)L3_BASE + L4_SLOT_PTE * NBPD_L1))
-
-#define PDP_PDE		(L4_BASE + PDIR_SLOT_PTE)
 
 #define PDP_BASE	L4_BASE
 
@@ -189,11 +140,7 @@ extern pt_entry_t *pte_base;
 #define NKL4_START_ENTRIES	0
 #define NKL3_START_ENTRIES	0
 #define NKL2_START_ENTRIES	0
-#define NKL1_START_ENTRIES	0	/* XXX */
-
-#define NTOPLEVEL_PDES		(PAGE_SIZE / (sizeof (pd_entry_t)))
-
-#define NPDPG			(PAGE_SIZE / sizeof (pd_entry_t))
+#define NKL1_START_ENTRIES	0
 
 #define PTP_MASK_INITIALIZER	{ L1_FRAME, L2_FRAME, L3_FRAME, L4_FRAME }
 #define PTP_SHIFT_INITIALIZER	{ L1_SHIFT, L2_SHIFT, L3_SHIFT, L4_SHIFT }
