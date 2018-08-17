@@ -1,4 +1,4 @@
-.\"    $NetBSD: npf.conf.5,v 1.60 2018/08/17 10:16:24 maxv Exp $
+.\"    $NetBSD: npf.conf.5,v 1.61 2018/08/17 10:24:19 maxv Exp $
 .\"
 .\" Copyright (c) 2009-2017 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -225,7 +225,7 @@ the following syntax:
 .Pp
 Where
 .Ar match
-is the set of TCP flags we want to match out of the
+is the set of TCP flags to be matched, out of the
 .Ar mask
 set, both sets being represented as a string combination of: S (SYN),
 A (ACK), F (FIN), R (RST). The flags that are not present in
@@ -333,7 +333,7 @@ therefore it does not strictly represent the formal grammar.
 ; a semicolon.  Comments start with a hash (#) character.
 
 syntax		= var-def | set-param | alg | table-def |
-		  map | group | rproc | comment
+		  map | group | proc | comment
 
 ; Variable definition.  Names can be alpha-numeric, including "_" character.
 
