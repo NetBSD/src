@@ -752,6 +752,9 @@ OPENSSL_1_1_0 {
         CONF_parse_list;
         CONF_set_default_method;
         CONF_set_nconf;
+        conf_ssl_get;
+        conf_ssl_get_cmd;
+        conf_ssl_name_find;
         CRL_DIST_POINTS_free;
         CRL_DIST_POINTS_new;
         CRYPTO_128_unwrap;
