@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2425 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2426 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -201,3 +201,4 @@ Changes from NetBSD 8.0 to NetBSD 9.0:
 	mdocml: Import 1.14.4. [christos 20180814]
 	kernel: Remove etherip(4), replaced by l2tp(4). [maxv 20180814]
 	gnu-efi: Import version 3.0.8. [jmcneill 20180816]
+	OpenSSL: Imported 1.1.0i. [christos 20180818]
