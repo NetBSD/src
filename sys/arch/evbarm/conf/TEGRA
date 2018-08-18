@@ -1,5 +1,5 @@
 #
-#	$NetBSD: TEGRA,v 1.37 2018/07/14 15:09:41 maxv Exp $
+#	$NetBSD: TEGRA,v 1.38 2018/08/18 09:43:17 skrll Exp $
 #
 #	NVIDIA Tegra family SoCs
 #
@@ -36,7 +36,7 @@ pseudo-device 	openfirm	# /dev/openfirm
 #options 	PMAP_DEBUG	# Enable pmap_debug_level code
 #options 	VERBOSE_INIT_ARM # verbose bootstrapping messages
 # CONSADDR is required for early init messages from VERBOSE_INIT_ARM.
-#options 	CONSADDR=0x70006300
+#options 	EARLYCONS=tegra, CONSADDR=0x70006300
 
 makeoptions	DEBUG="-g"	# compile full symbol table
 makeoptions	COPY_SYMTAB=1
