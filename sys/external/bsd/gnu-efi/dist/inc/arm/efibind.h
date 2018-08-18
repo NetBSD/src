@@ -1,4 +1,4 @@
-/*	$NetBSD: efibind.h,v 1.1.1.1 2018/08/16 18:17:47 jmcneill Exp $	*/
+/*	$NetBSD: efibind.h,v 1.2 2018/08/18 20:17:51 jmcneill Exp $	*/
 
 /*
  * Copright (C) 2014 - 2015 Linaro Ltd.
@@ -30,6 +30,8 @@ typedef short               int16_t;
 typedef unsigned char       uint8_t;
 typedef signed char         int8_t;   // unqualified 'char' is unsigned on ARM
 
+#elif defined(__NetBSD__)
+#include <sys/stdint.h>
 #else
 #include <stdint.h>
 #endif
