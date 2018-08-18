@@ -1,4 +1,4 @@
-/*	$NetBSD: efinet.c,v 1.7 2016/08/04 16:22:40 scole Exp $	*/
+/*	$NetBSD: efinet.c,v 1.8 2018/08/18 15:55:19 kre Exp $	*/
 
 /*-
  * Copyright (c) 2001 Doug Rabson
@@ -231,7 +231,7 @@ efinet_init_driver(void)
 {
 	EFI_STATUS	status;
 	UINTN		sz;
-	static EFI_GUID netid = EFI_SIMPLE_NETWORK_PROTOCOL;
+	static EFI_GUID netid = EFI_SIMPLE_NETWORK_PROTOCOL_GUID;
 	EFI_HANDLE	*handles;
 	int		nifs, i;
 #define MAX_INTERFACES	4
