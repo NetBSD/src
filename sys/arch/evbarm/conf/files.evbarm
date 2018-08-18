@@ -1,4 +1,4 @@
-#	$NetBSD: files.evbarm,v 1.30 2018/04/01 04:35:04 ryo Exp $
+#	$NetBSD: files.evbarm,v 1.31 2018/08/18 09:29:45 rin Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -56,7 +56,7 @@ file	arch/evbarm/dev/plcom.c			plcom needs-flag
 #
 defparam	opt_bootconfig.h		DRAM_BLOCKS
 
-ifdef arm32
+ifndef aarch64
 include "arch/arm/conf/majors.arm32"
 else
 include "arch/aarch64/conf/majors.aarch64"
