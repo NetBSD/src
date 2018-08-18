@@ -412,7 +412,7 @@ AcpiUtUpdateRefCount (
     UINT16                  OriginalCount;
     UINT16                  NewCount = 0;
     ACPI_CPU_FLAGS          LockFlags;
-    char                    *Message;
+    const char              *Message;
 
 
     ACPI_FUNCTION_NAME (UtUpdateRefCount);

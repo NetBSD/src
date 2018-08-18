@@ -414,6 +414,7 @@ AcpiDbWalkAndMatchName (
     }
     else
     {
+        Info.Count = 0;
         Info.OwnerId = ACPI_OWNER_ID_MAX;
         Info.DebugLevel = ACPI_UINT32_MAX;
         Info.DisplayType = ACPI_DISPLAY_SUMMARY | ACPI_DISPLAY_SHORT;
