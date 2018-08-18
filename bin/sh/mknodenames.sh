@@ -1,6 +1,6 @@
 #! /bin/sh
 
-# $NetBSD: mknodenames.sh,v 1.5 2018/08/16 15:02:05 kre Exp $
+# $NetBSD: mknodenames.sh,v 1.6 2018/08/18 03:09:37 kre Exp $
 
 # Use this script however you like, but it would be amazing if
 # it has any purpose other than as part of building the shell...
@@ -56,13 +56,13 @@ echo
 echo '#define NODETYPENAME(type) \'
 echo '	((unsigned)(type) <= '"${MAX}"' ? NodeNames[(type)] : "??OOR??")'
 echo
-echo '#define NODETYPE(type)	(type), NODETYPENAME(type)'
-echo '#define PRIdsNT		"%d(%s)"'
+echo '#define NODETYPE(type)	NODETYPENAME(type), (type)'
+echo '#define PRIdsNT		"s(%d)"'
 echo
 echo '#else /* DEBUG */'
 echo
 echo '#define NODETYPE(type)	(type)'
-echo '#define PRIdsNT		"%d"'
+echo '#define PRIdsNT		"d"'
 echo
 echo '#endif /* DEBUG */'
 echo
