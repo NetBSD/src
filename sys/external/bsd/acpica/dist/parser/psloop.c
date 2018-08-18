@@ -56,6 +56,7 @@
 #include "acdispat.h"
 #include "amlcode.h"
 #include "acconvert.h"
+#include "acnamesp.h"
 
 #define _COMPONENT          ACPI_PARSER
         ACPI_MODULE_NAME    ("psloop")
@@ -537,6 +538,18 @@ AcpiPsParseLoop (
             Status = AcpiPsCreateOp (WalkState, AmlOpStart, &Op);
             if (ACPI_FAILURE (Status))
             {
+                /*
+                 * ACPI_PARSE_MODULE_LEVEL means that we are loading a table by
+                 * executing it as a control method. However, if we encounter
+                 * an error while loading the table, we need to keep trying to
+                 * load the table rather than aborting the table load. Set the
+                 * status to AE_OK to proceed with the table load.
+                 */
+                if ((WalkState->ParseFlags & ACPI_PARSE_MODULE_LEVEL) &&
+                    Status == AE_ALREADY_EXISTS)
+                {
+                    Status = AE_OK;
+                }
                 if (Status == AE_CTRL_PARSE_CONTINUE)
                 {
                     continue;
@@ -556,6 +569,21 @@ AcpiPsParseLoop (
                 if (ACPI_FAILURE (Status))
                 {
                     return_ACPI_STATUS (Status);
+                }
+                if (AcpiNsOpensScope (
+                    AcpiPsGetOpcodeInfo (WalkState->Opcode)->ObjectType))
+                {
+                    /*
+                     * If the scope/device op fails to parse, skip the body of
+                     * the scope op because the parse failure indicates that
+                     * the device may not exist.
+                     */
+                    ACPI_ERROR ((AE_INFO, "Skip parsing opcode %s",
+                        AcpiPsGetOpcodeName (WalkState->Opcode)));
+                    WalkState->ParserState.Aml = WalkState->Aml + 1;
+                    WalkState->ParserState.Aml =
+                        AcpiPsGetNextPackageEnd(&WalkState->ParserState);
+                    WalkState->Aml = WalkState->ParserState.Aml;
                 }
 
                 continue;
@@ -599,7 +627,32 @@ AcpiPsParseLoop (
                 {
                     return_ACPI_STATUS (Status);
                 }
+                if ((WalkState->ControlState) &&
+                    ((WalkState->ControlState->Control.Opcode == AML_IF_OP) ||
+                    (WalkState->ControlState->Control.Opcode == AML_WHILE_OP)))
+                {
+                    /*
+                     * If the if/while op fails to parse, we will skip parsing
+                     * the body of the op.
+                     */
+                    ParserState->Aml =
+                        WalkState->ControlState->Control.AmlPredicateStart + 1;
+                    ParserState->Aml =
+                        AcpiPsGetNextPackageEnd (ParserState);
+                    WalkState->Aml = ParserState->Aml;
 
+                    ACPI_ERROR ((AE_INFO, "Skipping While/If block"));
+                    if (*WalkState->Aml == AML_ELSE_OP)
+                    {
+                        ACPI_ERROR ((AE_INFO, "Skipping Else block"));
+                        WalkState->ParserState.Aml = WalkState->Aml + 1;
+                        WalkState->ParserState.Aml =
+                            AcpiPsGetNextPackageEnd (ParserState);
+                        WalkState->Aml = ParserState->Aml;
+                    }
+                    ACPI_FREE(AcpiUtPopGenericState (&WalkState->ControlState));
+                }
+                Op = NULL;
                 continue;
             }
         }
@@ -686,6 +739,22 @@ AcpiPsParseLoop (
             Status = AcpiPsNextParseState (WalkState, Op, Status);
             if (Status == AE_CTRL_PENDING)
             {
+                Status = AE_OK;
+            }
+            else if ((WalkState->ParseFlags & ACPI_PARSE_MODULE_LEVEL) &&
+                (ACPI_AML_EXCEPTION(Status) || Status == AE_ALREADY_EXISTS ||
+                Status == AE_NOT_FOUND))
+            {
+                /*
+                 * ACPI_PARSE_MODULE_LEVEL flag means that we are currently
+                 * loading a table by executing it as a control method.
+                 * However, if we encounter an error while loading the table,
+                 * we need to keep trying to load the table rather than
+                 * aborting the table load (setting the status to AE_OK
+                 * continues the table load). If we get a failure at this
+                 * point, it means that the dispatcher got an error while
+                 * trying to execute the Op.
+                 */
                 Status = AE_OK;
             }
         }
