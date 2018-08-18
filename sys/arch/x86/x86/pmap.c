@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.302 2018/08/12 15:31:01 maxv Exp $	*/
+/*	$NetBSD: pmap.c,v 1.303 2018/08/18 08:45:55 maxv Exp $	*/
 
 /*
  * Copyright (c) 2008, 2010, 2016, 2017 The NetBSD Foundation, Inc.
@@ -157,7 +157,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.302 2018/08/12 15:31:01 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.303 2018/08/18 08:45:55 maxv Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -1375,8 +1375,7 @@ pmap_init_lapic(void)
 }
 #endif
 
-#if defined(__HAVE_PCPU_AREA) || defined(__HAVE_DIRECT_MAP) || \
-    (defined(XEN) && defined(__x86_64__))
+#ifdef __x86_64__
 static size_t
 pmap_pagetree_nentries_range(vaddr_t startva, vaddr_t endva, size_t pgsz)
 {
@@ -1398,7 +1397,7 @@ slotspace_copy(int type, pd_entry_t *dst, pd_entry_t *src)
 }
 #endif
 
-#if defined(__HAVE_DIRECT_MAP) || (defined(XEN) && defined(__x86_64__))
+#ifdef __x86_64__
 vaddr_t slotspace_rand(int, size_t, size_t);
 
 /*
