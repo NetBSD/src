@@ -1,5 +1,5 @@
 #
-#	$NetBSD: EXYNOS,v 1.31 2018/07/14 15:09:41 maxv Exp $
+#	$NetBSD: EXYNOS,v 1.32 2018/08/19 07:27:33 skrll Exp $
 #
 #	Samsung Exynos SoC kernel
 #
@@ -27,6 +27,10 @@ pseudo-device 	openfirm	# /dev/openfirm
 #options 	LOCKDEBUG
 #options 	PMAP_DEBUG	# Enable pmap_debug_level code
 #options 	VERBOSE_INIT_ARM # verbose bootstrapping messages
+# CONSADDR is required for early init messages from VERBOSE_INIT_ARM.
+
+# ODROID-XU lite
+#options 	EARLYCONS=exynos, CONSADDR=0x12c20000
 
 makeoptions	DEBUG="-g"	# compile full symbol table
 makeoptions	COPY_SYMTAB=1

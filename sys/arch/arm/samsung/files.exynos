@@ -1,4 +1,4 @@
-#	$NetBSD: files.exynos,v 1.30 2018/07/05 13:11:58 jmcneill Exp $
+#	$NetBSD: files.exynos,v 1.31 2018/08/19 07:27:33 skrll Exp $
 #
 # Configuration info for Samsung Exynos SoC ARM Peripherals
 #
@@ -27,7 +27,6 @@ defparam opt_exynos.h				CONMODE
 # Memory size in megabytes
 defparam opt_exynos.h				MEMSIZE
 defparam opt_exynos.h				EXYNOS_WDT_DEFAULT_PERIOD
-defflag opt_exynos.h				EXYNOS_CONSOLE_EARLY
 
 #
 defflag opt_exynos.h				SOC_EXYNOS4: CPU_CORTEXA9
@@ -43,7 +42,7 @@ defflag opt_exynos.h				SOC_EXYNOS5420: SOC_EXYNOS5
 defflag opt_exynos.h				SOC_EXYNOS5440: SOC_EXYNOS5
 defflag opt_exynos.h				SOC_EXYNOS5422: SOC_EXYNOS5
 
-file	arch/arm/samsung/exynos_platform.c	soc_exynos5
+file	arch/arm/samsung/exynos_platform.c
 
 # Interrupt combiner
 device  exyointr
@@ -58,12 +57,12 @@ file    arch/arm/samsung/exynos_rtc.c		exynos_rtc
 # Multi Core timer
 device	mct
 attach	mct at fdt with exyo_mct
-file	arch/arm/samsung/mct.c		exyo_mct
+file	arch/arm/samsung/mct.c			exyo_mct
 
 # Watchdog
 device	exyowdt : sysmon_wdog
 attach	exyowdt at fdt with exynos_wdt
-file	arch/arm/samsung/exynos_wdt.c	exynos_wdt needs-flag
+file	arch/arm/samsung/exynos_wdt.c		exynos_wdt needs-flag
 
 # UARTs
 device	exuart
