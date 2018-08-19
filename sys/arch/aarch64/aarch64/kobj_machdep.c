@@ -1,4 +1,4 @@
-/*	$NetBSD: kobj_machdep.c,v 1.1 2018/08/15 11:10:45 ryo Exp $	*/
+/*	$NetBSD: kobj_machdep.c,v 1.2 2018/08/19 20:02:22 ryo Exp $	*/
 
 /*
  * Copyright (c) 2018 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kobj_machdep.c,v 1.1 2018/08/15 11:10:45 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kobj_machdep.c,v 1.2 2018/08/19 20:02:22 ryo Exp $");
 
 #define ELFSIZE		ARCH_ELFSIZE
 
@@ -260,7 +260,7 @@ kobj_reloc(kobj_t ko, uintptr_t relocbase, const void *data,
 		val = val >> 12;
 		raddr = val << 12;
 		val -= (uintptr_t)where >> 12;
-		if (!nc && checkoverflow(val, 21, val, " x 4k", where, off)) {
+		if (!nc && checkoverflow(val, 21, raddr, " x 4k", where, off)) {
 			error = 1;
 			break;
 		}
@@ -284,7 +284,7 @@ kobj_reloc(kobj_t ko, uintptr_t relocbase, const void *data,
 			break;
 		}
 		val = (intptr_t)val >> 2;
-		if (checkoverflow(val, 26, val, " word", where, off)) {
+		if (checkoverflow(val, 26, raddr, " word", where, off)) {
 			error = 1;
 			break;
 		}
@@ -299,7 +299,7 @@ kobj_reloc(kobj_t ko, uintptr_t relocbase, const void *data,
 		 */
 		raddr = saddr + addend;
 		val = raddr - (uintptr_t)where;
-		if (checkoverflow(val, 64, val, "", where, off)) {
+		if (checkoverflow(val, 64, raddr, "", where, off)) {
 			error = 1;
 			break;
 		}
@@ -312,7 +312,7 @@ kobj_reloc(kobj_t ko, uintptr_t relocbase, const void *data,
 		 */
 		raddr = saddr + addend;
 		val = raddr - (uintptr_t)where;
-		if (checkoverflow(val, 32, val, "", where, off)) {
+		if (checkoverflow(val, 32, raddr, "", where, off)) {
 			error = 1;
 			break;
 		}
@@ -325,7 +325,7 @@ kobj_reloc(kobj_t ko, uintptr_t relocbase, const void *data,
 		 */
 		raddr = saddr + addend;
 		val = raddr - (uintptr_t)where;
-		if (checkoverflow(val, 16, val, "", where, off)) {
+		if (checkoverflow(val, 16, raddr, "", where, off)) {
 			error = 1;
 			break;
 		}
