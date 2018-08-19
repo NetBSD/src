@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_exec.c,v 1.66 2018/08/08 07:50:12 simonb Exp $	*/
+/*	$NetBSD: cpu_exec.c,v 1.67 2018/08/19 10:33:49 mrg Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_exec.c,v 1.66 2018/08/08 07:50:12 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_exec.c,v 1.67 2018/08/19 10:33:49 mrg Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_ultrix.h"
@@ -157,8 +157,8 @@ mips_netbsd_elf32_probe(struct lwp *l, struct exec_package *epp, void *eh0,
 #ifdef DEBUG_EXEC
 		if (old_abi != p->p_md.md_abi)
 			printf("pid %d(%s): ABI set to O32 (e_flags=%#x)\n", p->p_pid, p->p_comm, eh->e_flags);
-		break;
 #endif /* DEBUG_EXEC */
+		break;
 	default:
 		return ENOEXEC;
 	}
