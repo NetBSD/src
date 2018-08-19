@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.1.1.2 2018/08/16 18:17:47 jmcneill Exp $	*/
+/*	$NetBSD: print.c,v 1.2 2018/08/19 14:50:24 jmcneill Exp $	*/
 
 /*++
 
@@ -1182,6 +1182,7 @@ Returns:
                 break;
             }
 
+#ifndef __NetBSD__
             case 'f':
                 FloatToString (
                     Item.Scratch,
@@ -1190,6 +1191,7 @@ Returns:
                     );
                 Item.Item.pw = Item.Scratch;
                 break;
+#endif
 
             case 't':
                 TimeToString (Item.Scratch, va_arg(ps->args, EFI_TIME *));
@@ -1335,6 +1337,7 @@ ValueToString (
     *p2 = 0;
 }
 
+#ifndef __NetBSD__
 VOID
 FloatToString (
     IN CHAR16   *Buffer,
@@ -1387,6 +1390,7 @@ FloatToString (
     ValueToString(Buffer + x, FALSE, (INTN)f);
     return;
 }
+#endif
 
 VOID
 TimeToString (

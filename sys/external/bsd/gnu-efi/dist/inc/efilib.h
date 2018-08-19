@@ -1,4 +1,4 @@
-/*	$NetBSD: efilib.h,v 1.1.1.2 2018/08/16 18:17:47 jmcneill Exp $	*/
+/*	$NetBSD: efilib.h,v 1.2 2018/08/19 14:50:24 jmcneill Exp $	*/
 
 #ifndef _EFILIB_INCLUDE_
 #define _EFILIB_INCLUDE_
@@ -597,12 +597,14 @@ ValueToString (
     IN INT64    v
     );
 
+#ifndef __NetBSD__
 VOID
 FloatToString (
     IN CHAR16   *Buffer,
     IN BOOLEAN  Comma,
     IN double    v
     );
+#endif
 
 VOID
 TimeToString (
