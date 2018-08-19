@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC,v 1.5 2018/07/14 15:09:41 maxv Exp $
+#	$NetBSD: GENERIC,v 1.6 2018/08/19 08:00:41 skrll Exp $
 #
 #	GENERIC ARM (aarch32) kernel
 #
@@ -12,20 +12,143 @@ include	"arch/evbarm/conf/GENERIC.common"
 # FDT files supported by this kernel - add to DTSSUBDIR and DTS as
 # appropriate
 #
-makeoptions 	DTSARCH="arm"
-makeoptions	DTSGNUARCH="arm"
-makeoptions	DTSSUBDIR="allwinner nvidia"
+makeoptions	DTSARCH="arm aarch64"
+makeoptions	DTSGNUARCH="arm arm64"
+makeoptions	DTSSUBDIR="allwinner broadcom nvidia rockchip"
 makeoptions	DTS="
+	exynos4412-odroidx2.dts
+	exynos4412-odroidx.dts
+	exynos4412-odroidu3.dts
+	exynos5410-odroidxu.dts
+	exynos5410-smdk5410.dts
+	exynos5422-odroidxu3-lite.dts
+	exynos5422-odroidxu3.dts
+	exynos5422-odroidxu4.dts
+
+	sun4i-a10-a1000.dts
+	sun4i-a10-ba10-tvbox.dts
+	sun4i-a10-chuwi-v7-cw0825.dts
+	sun4i-a10-cubieboard.dts
+	sun4i-a10-dserve-dsrv9703c.dts
+	sun4i-a10-gemei-g9.dts
+	sun4i-a10-hackberry.dts
+	sun4i-a10-hyundai-a7hd.dts
+	sun4i-a10-inet1.dts
+	sun4i-a10-inet97fv2.dts
+	sun4i-a10-inet9f-rev03.dts
+	sun4i-a10-itead-iteaduino-plus.dts
+	sun4i-a10-jesurun-q5.dts
+	sun4i-a10-marsboard.dts
+	sun4i-a10-mini-xplus.dts
+	sun4i-a10-mk802.dts
+	sun4i-a10-mk802ii.dts
+	sun4i-a10-olinuxino-lime.dts
+	sun4i-a10-pcduino.dts
+	sun4i-a10-pcduino2.dts
+	sun4i-a10-pov-protab2-ips9.dts
+
+	sun5i-a13-difrnce-dit4350.dts
+	sun5i-a13-empire-electronix-d709.dts
+	sun5i-a13-empire-electronix-m712.dts
+	sun5i-a13-hsg-h702.dts
+	sun5i-a13-inet-98v-rev2.dts
+	sun5i-a13-licheepi-one.dts
+	sun5i-a13-olinuxino-micro.dts
+	sun5i-a13-olinuxino.dts
+	sun5i-a13-q8-tablet.dts
+	sun5i-a13-utoo-p66.dts
+
+	sun5i-gr8-evb.dts
+	sun5i-gr8-chip-pro.dts
+
+	sun5i-r8-chip.dts
+	sun5i-r8-pocketchip.dts
+
+	sun6i-a31-app4-evb1.dts
+	sun6i-a31-colombus.dts
+	sun6i-a31-hummingbird.dts
+	sun6i-a31-i7.dts
+	sun6i-a31-m9.dts
+	sun6i-a31-mele-a1000g-quad.dts
+
+	sun7i-a20-bananapi-m1-plus.dts
+	sun7i-a20-bananapi.dts
+	sun7i-a20-bananapro.dts
+	sun7i-a20-cubieboard2.dts
+	sun7i-a20-cubietruck.dts
+	sun7i-a20-hummingbird.dts
+	sun7i-a20-i12-tvbox.dts
+	sun7i-a20-icnova-swac.dts
+	sun7i-a20-itead-ibox.dts
+	sun7i-a20-lamobo-r1.dts
+	sun7i-a20-m3.dts
+	sun7i-a20-mk808c.dts
+	sun7i-a20-olimex-som-evb.dts
+	sun7i-a20-olimex-som204-evb-emmc.dts
+	sun7i-a20-olimex-som204-evb.dts
+	sun7i-a20-olinuxino-lime.dts
+	sun7i-a20-olinuxino-lime2-emmc.dts
+	sun7i-a20-olinuxino-lime2.dts
+	sun7i-a20-olinuxino-micro-emmc.dts
+	sun7i-a20-olinuxino-micro.dts
+	sun7i-a20-orangepi-mini.dts
+	sun7i-a20-orangepi.dts
+	sun7i-a20-pcduino3-nano.dts
+	sun7i-a20-pcduino3.dts
+	sun7i-a20-wexler-tab7200.dts
+	sun7i-a20-wits-pro-a20-dkt.dts
+
+	sun8i-a83t-allwinner-h8homlet-v2.dts
+	sun8i-a83t-bananapi-m3.dts
+	sun8i-a83t-cubietruck-plus.dts
+	sun8i-a83t-tbs-a711.dts
+
+	sun8i-h2-plus-orangepi-zero.dts
+
+	sun8i-h3-bananapi-m2-plus.dts
+	sun8i-h3-beelink-x2.dts
+	sun8i-h3-nanopi-m1.dts
+	sun8i-h3-nanopi-m1-plus.dts
+	sun8i-h3-nanopi-neo.dts
+	sun8i-h3-nanopi-neo-air.dts
+	sun8i-h3-orangepi-2.dts
+	sun8i-h3-orangepi-lite.dts
+	sun8i-h3-orangepi-one.dts
+	sun8i-h3-orangepi-pc-plus.dts
+	sun8i-h3-orangepi-pc.dts
+	sun8i-h3-orangepi-plus.dts
+	sun8i-h3-orangepi-plus2e.dts
+
+	sun9i-a80-cubieboard4.dts
+	sun9i-a80-optimus.dts
+
+	sun50i-h5-nanopi-neo-plus2.dts
+	sun50i-h5-nanopi-neo2.dts
+	sun50i-h5-orangepi-pc2.dts
+	sun50i-h5-orangepi-prime.dts
+	sun50i-h5-orangepi-zero-plus2.dts
+
 	tegra124-apalis-eval.dts
 	tegra124-jetson-tk1.dts
 	tegra124-nyan-big.dts
 	tegra124-nyan-blaze.dts
 	tegra124-venice2.dts
+
+	vexpress-v2p-ca15-tc1.dts
 "
 
+options 	CPU_CORTEXA7
+options 	CPU_CORTEXA9
+options 	CPU_CORTEXA8
 options 	CPU_CORTEXA15
-options 	CPU_CORTEXA57
-options 	SOC_TEGRA124
+
+# Can't add SOC_BCM2835 until interrupt and register issues sorted out
+#options 	SOC_BCM2835
+options 	SOC_BCM2836
+
+options 	SOC_EXYNOS4412
+options 	SOC_EXYNOS5422
+
 options 	SOC_SUN4I_A10
 options 	SOC_SUN5I_A13
 options 	SOC_SUN6I_A31
@@ -33,6 +156,12 @@ options 	SOC_SUN7I_A20
 options 	SOC_SUN8I_A83T
 options 	SOC_SUN8I_H3
 options 	SOC_SUN9I_A80
+options 	SOC_SUN50I_A64
+options 	SOC_SUN50I_H5
+options 	SOC_SUN50I_H6
+
+options 	SOC_TEGRA124
+
 options 	MULTIPROCESSOR
 
 pseudo-device 	openfirm	# /dev/openfirm
@@ -41,10 +170,27 @@ pseudo-device 	openfirm	# /dev/openfirm
 #options 	DEBUG
 #options 	LOCKDEBUG
 #options 	PMAP_DEBUG	# Enable pmap_debug_level code
+
 options 	VERBOSE_INIT_ARM # verbose bootstrapping messages
+
 # EARLYCONS is required for early init messages from VERBOSE_INIT_ARM.
-#options        EARLYCONS=sunxi, CONSADDR=0x01c28000
-#options        EARLYCONS=tegra, CONSADDR=0x70006000
+
+# ODROID-U3
+#options 	EARLYCONS=exynos, CONSADDR=0x13810000
+
+# ODROID-XU lite
+#options 	EARLYCONS=exynos, CONSADDR=0x12c20000
+
+#options 	EARLYCONS=bcm2837, CONSADDR=0x3f215040
+#options 	EARLYCONS=rk3328, CONSADDR=0xff130000
+#options 	EARLYCONS=sunxi, CONSADDR=0x01c28000
+
+# TEGRA TK1
+#options 	EARLYCONS=tegra, CONSADDR=0x70006300
+
+# 
+#options 	EARLYCONS=vexpress, CONSADDR=0x1c090000
+#options 	EARLYCONS=virt
 
 makeoptions	DEBUG="-g"	# compile full symbol table
 makeoptions	COPY_SYMTAB=1
@@ -65,6 +211,27 @@ cpufreqdt*	at cpu?
 # Power State Coordination Interface (PSCI)
 psci*		at fdt?
 
+# Clock and reset controllers
+exy5410clk*	at fdt? pass 3		# Exynos5410 clock controller
+exy5422clk*	at fdt? pass 3		# Exynos5422 clock controller
+sun4ia10ccu*	at fdt? pass 2		# Allwinner A10/A20 CCU
+sun5ia13ccu*	at fdt? pass 2		# Allwinner A13 CCU
+sun6ia31ccu*	at fdt? pass 2		# Allwinner A31 CCU
+sun8ia83tccu*	at fdt? pass 2		# Allwinner A83T CCU
+sun8ih3ccu*	at fdt? pass 2		# Allwinner H3 CCU
+sun8ih3rccu*	at fdt? pass 2		# Allwinner H3 CCU (PRCM)
+sun9ia80ccu*	at fdt? pass 2		# Allwinner A80 CCU
+sun50ia64ccu*	at fdt? pass 2		# Allwinner A64 CCU
+sun50ia64rccu*  at fdt? pass 2          # Allwinner A64 CCU (PRCM)
+sun50ih6ccu*    at fdt? pass 2          # Allwinner H6 CCU
+sun50ih6rccu*   at fdt? pass 2          # Allwinner H6 CCU (PRCM)
+sunxiresets*	at fdt? pass 1		# Allwinner Misc. clock resets
+sunxigates*	at fdt? pass 1		# Allwinner Misc. clock gates
+sunxigmacclk*	at fdt? pass 2		# Allwinner GMAC MII/RGMII clock mux
+sun9immcclk*	at fdt? pass 2		# Allwinner A80 SD/MMC-COMM
+tegra210car*	at fdt? pass 3		# NVIDIA Tegra CAR (T210)
+
+
 fclock*		at fdt? pass 1
 ffclock*	at fdt? pass 1
 fregulator*	at fdt? pass 4
@@ -73,23 +240,42 @@ gpiokeys*	at fdt?
 wskbd*		at gpiokeys? console ? mux 1
 gpioleds*	at fdt?
 
+# ARM Motherboard Express uATX system registers
+vxsysreg*	at fdt?
+
+# SRAM controller
+sunxisramc*     at fdt? pass 4          # SRAM controller
+
 # Timer
 gtmr*		at fdt? pass 1		# ARM Generic Timer
 armgtmr0	at gtmr?
+mct*		at fdt? pass 2		# Exynos Multi Core Timer (MCT)
+sunxitimer*     at fdt?                 # Allwinner async timer
 tegratimer*	at fdt?			# Timers
 
 # Watchdog
 sunxiwdt*	at fdt?			# Allwinner watchdog
+watchdog*	at fdt?			# Broadcom BCM283x watchdog
 
 # Interrupt controller
-tegralic*	at fdt? pass 1		# NVIDIA Tegra LIC
 gic*		at fdt? pass 1		# ARM GIC
 armgic0		at gic?
+bcmicu*		at fdt? pass 1		# Broadcom BCM283x ICU
+exyointr*	at fdt? pass 1		# Samsung Exynos ICU
+tegralic*	at fdt? pass 1		# NVIDIA Tegra LIC
+sunxiintc*	at fdt? pass 1		# Allwinner INTC
+sunxinmi*	at fdt? pass 2		# Allwinner NMI / R_INTC
 
 # Memory controller
 tegramc*	at fdt?	pass 4		# NVIDIA Tegra MC
 
+# Firmware devices
+bcmmbox*	at fdt?			# Broadcom VideoCore IV mailbox
+vcmbox*		at bcmmbox?
+
 # DMA controller
+bcmdmac*	at fdt?			# Broadcom BCM283x DMA controller
+sun4idma*       at fdt?			# Allwinner DMA controller (sun4i)
 sun6idma*	at fdt?			# Allwinner DMA controller (sun6i)
 tegraapbdma*	at fdt? pass 4		# NVIDIA Tegra APB DMA
 
@@ -100,21 +286,24 @@ tegrafuse*	at fdt? pass 4		# NVIDIA Tegra FUSE
 tegrapmc*	at fdt? pass 4		# NVIDIA Tegra PMC
 
 # Clock and Reset controller
-sun8ih3ccu*	at fdt? pass 2		# Allwinner H3/H5 CCU
-sun8ih3rccu*	at fdt? pass 2		# Allwinner H3/H5 CCU (PRCM)
-sun50ia64ccu*	at fdt? pass 2		# Allwinner A64 CCU
-sunxiresets*	at fdt? pass 1		# Allwinner misc. resets
-sunxigates*	at fdt? pass 1		# Allwinner misc. gates
-sunxigmacclk*	at fdt? pass 2		# Allwinner GMAC MII/RGMII clock mux
-tegra210car*	at fdt? pass 3		# NVIDIA Tegra CAR (T210)
+bcmcprman*	at fdt? pass 1		# Broadcom BCM283x Clock Manager
+bcmaux*		at fdt? pass 1		# Broadcom BCM283x Aux Periph Clocks
 
 # GPIO controller
+bcmgpio*	at fdt?			# Broadcom BCM283x GPIO
+exyopctl*	at fdt? pass 2		# Samsung Exynos GPIO
 sunxigpio*	at fdt? pass 3		# Allwinner GPIO
 tegragpio*	at fdt? pass 2		# NVIDIA Tegra GPIO
 gpio*		at gpiobus?
 
 # MPIO / Pinmux
 tegrapinmux*	at fdt?			# NVIDIA Tegra MPIO
+
+# PWM timer
+expwm*		at fdt? pass 4		# PWM
+
+# Fan
+pwmfan*		at fdt?			# PWM Fan controls
 
 # XUSB PADCTL
 tegra210xpad*	at fdt?			# NVIDIA Tegra XUSB PADCTL (T210)
@@ -130,6 +319,8 @@ tegra210xphy*	at tegra210xpad?
 # Ethernet
 emac*		at fdt?			# Allwinner Gigabit Ethernet (EMAC)
 #re*		at pci? dev ? function ?	# Realtek RTL8111GS
+smsh*		at fdt?			# SMSC LAN9118
+
 
 # MII/PHY support
 exphy* 		at mii? phy ?		# 3Com internal PHYs
@@ -165,8 +356,11 @@ ukphy*		at mii? phy ?		# generic unknown PHYs
 # UART
 com*		at fdt?			# UART
 plcom*		at fdt?			# ARM PL011 UART
+exuart*		at fdt?			# SSCOM UART
 
 # I2C controllers
+bsciic*		at fdt?			# Broadcom BCM283x Serial Control
+exyoi2c*	at fdt?			# Samsung Exynos I2C
 sunxirsb*	at fdt?			# Allwinner RSB
 sunxitwi*	at fdt?			# Allwinner TWI
 tegrai2c*	at fdt? pass 4		# NVIDIA Tegra I2C
@@ -180,15 +374,41 @@ as3722reg*	at as3722pmic?
 max77620pmic*	at iic?
 tcagpio*	at iic?
 
+# SPI
+sun6ispi*       at fdt?
+spi*            at spibus?
+
 # Random number generators
+bcmrng*		at fdt?			# Broadcom BCM283x RNG
+
+# Security ID EFUSE
+sunxisid*       at fdt? pass 4          # SID
 
 # RTC
+#exyortc*	at fdt?			# RTC
+plrtc*		at fdt?			# ARM PrimeCell RTC
 sunxirtc*	at fdt?			# Allwinner RTC
 tegrartc*	at fdt?			# NVIDIA Tegra RTC
 
+# Thermal sensor
+sunxithermal*   at fdt?                 # Thermal sensor controller
+
+# Audio
+ausoc*		at fdt?			# Simple SoC audio card
+sunxicodec*	at fdt?			# Audio codec
+sun8icodec*	at fdt?			# Audio codec (sun8i/sun50i)
+h3codec*	at fdt?			# H3 audio codec (analog part)
+a64acodec*	at fdt?			# A64 audio codec (analog part)
+sunxii2s*	at fdt?			# I2S/PCM
+audio*		at audiobus?
+spkr*		at audio?
+
 # SDMMC
+dwcmmc*		at fdt?			# DesignWare SDMMC
 mmcpwrseq*	at fdt?			# Simple MMC power sequence provider
+plmmc*		at fdt?			# ARM PrimeCell MCI
 sdhc*		at fdt?			# SD Host Controller Interface
+sdhost*		at fdt?			# Broadcom BCM283x SD Host Interface
 sunximmc*	at fdt?			# Allwinner SD/MMC
 sdmmc*		at sdmmcbus?
 ld0		at sdmmc0
@@ -196,6 +416,12 @@ ld1		at sdmmc1
 ld2		at sdmmc2
 ld3		at sdmmc3
 ld*		at sdmmc?
+
+# NAND Flash
+sunxinand*      at fdt?                 # NAND flash controller
+nand*           at nandbus?
+flash*          at nand? dynamic 1
+
 
 # SATA
 ahcisata*	at fdt?			# AHCI SATA
@@ -205,9 +431,11 @@ wd*		at atabus? drive ?
 cd*		at atapibus? drive ?
 
 # SPI controllers
-#spi*		at spibus?
+bcmspi*		at fdt?			# Broadcom BCM283x SPI
+spi*		at spibus?
 
 # Audio support
+aaci*		at fdt?			# ARM PrimeCell AACI
 hdaudio*	at fdt?			# Intel HDA
 hdafg*		at hdaudiobus?
 options 	HDAUDIOVERBOSE
@@ -228,7 +456,16 @@ hdmicec*	at hdmicecbus?
 #tegradrm*	at fdt?			# NVIDIA Tegra Display
 #tegrafb*	at tegrafbbus?
 genfb*		at fdt?			# Simple Framebuffer
-wsdisplay*	at wsemuldisplaydev?
+wsdisplay*	at genfb?
+sunxidebe*      at fdt? pass 4  # Display Backend
+genfb*          at sunxidebe?
+sunxitcon*      at fdt? pass 4  # LCD LVDS/RGB controller
+sunxihdmi*      at fdt? pass 4  # HDMI controller
+connector*      at fdt? pass 4
+panel*          at fdt? pass 4
+#sunxidep must be after display pipeline elements but before genfb@fdt
+sunxidep*       at fdt? pass 5  # Display Engine Pipeline
+
 options 	VCONS_DRAW_INTR
 options 	WSEMUL_VT100
 options 	WS_DEFAULT_FG=WSCOL_WHITE
@@ -246,18 +483,41 @@ pseudo-device	wsfont
 # GPU
 #nouveau*	at fdt?			# NVIDIA GPU
 
+# PS/2 keyboard and mouse support
+plkmi*		at fdt?
+pckbd*		at pckbport?
+wskbd*		at pckbd? console ?
+pms*		at pckbport?
+wsmouse*	at pms? mux 0
+
+# Touch Screen controller
+sunxits*        at fdt?                 # Touch Screen controller
+wsmouse*        at sunxits? mux 0
+
 # Thermal throttling controller
 tegrasoctherm*	at fdt?			# NVIDIA Tegra SOC_THERM
 
 # USB
+exusbphy*	at fdt? pass 9		# Samsung Exynos USB2 PHY
+exusbdrdphy*	at fdt? pass 9		# Samsung Exynos USB3 DRD PHY
 sunxiusbphy*	at fdt? pass 9		# Allwinner USB PHY
 tegrausbphy*	at fdt?			# NVIDIA Tegra USB PHY
-#dwctwo*		at fdt?			# Designware USB DRD
+dwctwo*		at fdt?			# Designware USB DRD
 ehci*		at fdt?			# EHCI
 #motg*		at fdt?			# Mentor Graphics USB OTG
 ohci*		at fdt?			# OHCI
 xhci*		at fdt?			# XHCI
 usb*		at usbus?
+
+# Virtio devices
+virtio*	at fdt?				# Virtio MMIO device
+# the baloon driver can not work on machines with non-4k pages
+#viomb*	at virtio?			# Virtio memory balloon device
+ld*	at virtio?			# Virtio disk device
+vioif*	at virtio?			# Virtio network device
+viornd* at virtio?			# Virtio entropy device
+vioscsi* at virtio?			# Virtio SCSI device
+
 
 include "dev/usb/usbdevices.config"
 midi*		at midibus?
