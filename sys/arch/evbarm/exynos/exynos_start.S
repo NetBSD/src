@@ -1,4 +1,4 @@
-/*	$NetBSD: exynos_start.S,v 1.6 2018/07/05 13:11:58 jmcneill Exp $	*/
+/*	$NetBSD: exynos_start.S,v 1.7 2018/08/19 07:27:33 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -36,6 +36,7 @@
 #include "opt_arm_debug.h"
 #include "opt_fdt.h"
 
+#include <sys/cdefs.h>
 #include <arm/asm.h>
 #include <arm/armreg.h>
 #include "assym.h"
@@ -45,16 +46,34 @@
 
 #include <evbarm/exynos/platform.h>
 
-RCSID("$NetBSD: exynos_start.S,v 1.6 2018/07/05 13:11:58 jmcneill Exp $")
+RCSID("$NetBSD: exynos_start.S,v 1.7 2018/08/19 07:27:33 skrll Exp $")
 
-#define XPUTC(n)
-#define XPUTC2(n)
+#if defined(KERNEL_BASES_EQUAL)
+#define CALL(f)		bl	_C_LABEL(f)
+#else
+#define	CALL(f)	\
+	movw	fp, #:lower16:_C_LABEL(f); \
+	movt	fp, #:upper16:_C_LABEL(f); \
+	sub	fp, fp, #KERNEL_BASE_VOFFSET; \
+	blx	fp
+#endif
+
+#define	PLATFORM_EARLY_PUTCHAR	___CONCAT(EARLYCONS, _platform_early_putchar)
+
+#if defined(VERBOSE_INIT_ARM) && defined(EARLYCONS)
+#define	XPUTC(n)	mov r0, n; CALL(PLATFORM_EARLY_PUTCHAR)
+#define	XPUTC2(n)	mov r0, n; bl _C_LABEL(PLATFORM_EARLY_PUTCHAR);
+#else
+#define	XPUTC(n)
+#define	XPUTC2(n)
+#endif
 
 #define INIT_MEMSIZE	128
 
 #define	TEMP_L1_TABLE	(KERNEL_BASE - KERNEL_BASE_VOFFSET + INIT_MEMSIZE * L1_S_SIZE - L1_TABLE_SIZE)
 
 #define	MD_CPU_HATCH	_C_LABEL(arm_fdt_cpu_hatch)
+#define TMPSTKSIZE	8192
 
 /*
  * Kernel start routine for Exynos 5422 boards running on uboot firmware
@@ -73,6 +92,11 @@ _C_LABEL(exynos_start):
 	setend	be			/* force big endian */
 #endif
 
+	ldr	r10, =KERNEL_BASE_VOFFSET
+	ldr	r9, =tmpstk
+	add	r9, #TMPSTKSIZE
+	sub	sp, r9, r10
+
 	/*
 	 * Save any arguments passed to us.  If .start is not at
 	 * 0x80000000 but .text is, we can't directly use the address that
@@ -84,22 +108,41 @@ _C_LABEL(exynos_start):
 	sub	r4, r4, #KERNEL_BASE_VOFFSET
 	stmia	r4, {r0-r3}			// Save the arguments
 
+	mov	r4, r0
+	mov	r5, r1
+	mov	r6, r2
+	mov	r7, r3
+
+	XPUTC(#'e')
+	XPUTC(#'x')
+	XPUTC(#'y')
+	XPUTC(#'n')
+	XPUTC(#'o')
+	XPUTC(#'s')
+
 #ifdef FDT
 	/*
 	 * ARM boot protocol has FDT address in r2
 	 */
+	XPUTC(#',')
+	XPUTC(#'f')
+	XPUTC(#'d')
+	XPUTC(#'t')
+
 	movw	r4, #:lower16:fdt_addr_r
 	movt	r4, #:upper16:fdt_addr_r
 	sub	r4, r4, #KERNEL_BASE_VOFFSET
-	str	r2, [r4]
+	str	r6, [r4]
 #endif
+
+	XPUTC(#':')
 
 	/* Add DTB PA (1MB) from r2 to MMU init table */
 	movw	r3, #:lower16:(L1_S_SIZE - 1)		/* align DTB PA to 1M */
 	movt	r3, #:upper16:(L1_S_SIZE - 1)
-	bic	r0, r2, r3
+	bic	r0, r6, r3
 	orr	r0, r0, #1				/* 1MB mapping */
-	bic	r1, r2, r3
+	bic	r1, r6, r3
 	movw	r3, #:lower16:(L1_S_PROTO_armv7|L1_S_APv7_KRW|L1_S_CACHEABLE)
 	movt	r3, #:upper16:(L1_S_PROTO_armv7|L1_S_APv7_KRW|L1_S_CACHEABLE)
 	orr	r1, r1, r3
@@ -157,6 +200,8 @@ _C_LABEL(exynos_start):
 	.pushsection .text, "ax", %progbits
 1:
 #endif
+
+exynos_startva:
 	XPUTC2(#'Z')
 
 	XPUTC2(#13)
@@ -197,6 +242,7 @@ mmu_init_table:
 		EXYNOS_CORE_SIZE / L1_S_SIZE,
 		L1_S_PROTO_armv7 | L1_S_APv7_KRW | L1_S_V6_XN)
 
+#if 0
 	/* Map EXYNOS AUDIOBASE */
 	MMU_INIT(EXYNOS5_AUDIOCORE_VBASE, EXYNOS5_AUDIOCORE_VBASE,
 	        EXYNOS5_AUDIOCORE_SIZE / L1_S_SIZE,
@@ -216,6 +262,7 @@ mmu_init_table:
 	MMU_INIT(EXYNOS5_SYSRAM_PBASE, EXYNOS5_SYSRAM_PBASE,
 	        EXYNOS5_SYSRAM_SIZE / L1_S_SIZE,
 		L1_S_PROTO_armv7 | L1_S_APv7_KRW | L1_S_V6_XN)
+#endif
 
 	/* Map DTB location in SDRAM, patched in later */
 .Lmmu_init_table_dtb:
@@ -226,3 +273,12 @@ mmu_init_table:
 	MMU_INIT(0, 0, 0, 0)
 
 END(exynos_start)
+
+	.bss
+#ifdef __ARM_EABI__
+	.align	3
+#endif
+
+tmpstk:
+	.space	TMPSTKSIZE
+

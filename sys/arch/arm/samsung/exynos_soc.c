@@ -1,4 +1,4 @@
-/*	$NetBSD: exynos_soc.c,v 1.34 2018/07/31 06:46:25 skrll Exp $	*/
+/*	$NetBSD: exynos_soc.c,v 1.35 2018/08/19 07:27:33 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #include "opt_exynos.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exynos_soc.c,v 1.34 2018/07/31 06:46:25 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exynos_soc.c,v 1.35 2018/08/19 07:27:33 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -76,6 +76,8 @@ struct cpu_freq {
 
 
 #ifdef SOC_EXYNOS4
+int exynos4_l2cc_init(void);
+
 const struct cpu_freq cpu_freq_settings_exynos4[] = {
 	{ 200, 3, 100, 2},
 	{ 300, 4, 200, 2},
@@ -473,7 +475,7 @@ exynos_clocks_bootstrap(void)
 
 
 void
-exynos_bootstrap(vaddr_t iobase, vaddr_t uartbase)
+exynos_bootstrap(vaddr_t iobase)
 {
 	int error;
 	size_t core_size, audiocore_size;
@@ -483,13 +485,6 @@ exynos_bootstrap(vaddr_t iobase, vaddr_t uartbase)
 	bus_addr_t exynos_pmu_offset;
 	bus_addr_t exynos_sysreg_offset;
 	bus_addr_t exynos_cmu_apll_offset;
-
-	/* set up early console so we can use printf() and friends */
-#ifdef EXYNOS_CONSOLE_EARLY
-	uart_base = (volatile uint8_t *) uartbase;
-	cn_tab = &exynos_earlycons;
-	printf("Exynos early console operational\n\n");
-#endif
 
 #ifdef SOC_EXYNOS4
 	core_size = EXYNOS4_CORE_SIZE;
