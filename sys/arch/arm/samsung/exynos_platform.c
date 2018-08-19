@@ -1,4 +1,4 @@
-/* $NetBSD: exynos_platform.c,v 1.12 2018/08/05 14:02:35 skrll Exp $ */
+/* $NetBSD: exynos_platform.c,v 1.13 2018/08/19 07:27:33 skrll Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared D. McNeill <jmcneill@invisible.ca>
@@ -34,7 +34,7 @@
 #include "ukbd.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exynos_platform.c,v 1.12 2018/08/05 14:02:35 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exynos_platform.c,v 1.13 2018/08/19 07:27:33 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -52,28 +52,15 @@ __KERNEL_RCSID(0, "$NetBSD: exynos_platform.c,v 1.12 2018/08/05 14:02:35 skrll E
 #include <arm/samsung/exynos_reg.h>
 #include <arm/samsung/exynos_var.h>
 #include <arm/samsung/mct_var.h>
+#include <arm/samsung/sscom_reg.h>
 
 #include <evbarm/exynos/platform.h>
 
 #include <arm/fdt/arm_fdtvar.h>
 
+void exynos_platform_early_putchar(char);
+
 #define	EXYNOS5_SWRESET_REG	0x10040400
-
-static const struct pmap_devmap *
-exynos_platform_devmap(void)
-{
-	static const struct pmap_devmap devmap[] = {
-		DEVMAP_ENTRY(EXYNOS_CORE_VBASE,
-			     EXYNOS_CORE_PBASE,
-			     EXYNOS5_CORE_SIZE),
-		DEVMAP_ENTRY(EXYNOS5_AUDIOCORE_VBASE,
-			     EXYNOS5_AUDIOCORE_PBASE,
-			     EXYNOS5_AUDIOCORE_SIZE),
-		DEVMAP_ENTRY_END
-	};
-
-	return devmap;
-}
 
 #define EXYNOS_IOPHYSTOVIRT(a) \
     ((vaddr_t)(((a) - EXYNOS_CORE_PBASE) + EXYNOS_CORE_VBASE))
@@ -81,8 +68,8 @@ exynos_platform_devmap(void)
 static void
 exynos_platform_bootstrap(void)
 {
-	paddr_t uart_address = armreg_tpidruro_read();	/* XXX */
-	exynos_bootstrap(EXYNOS_CORE_VBASE, EXYNOS_IOPHYSTOVIRT(uart_address));
+
+	exynos_bootstrap(EXYNOS_CORE_VBASE);
 }
 
 static void
@@ -97,13 +84,21 @@ exynos_platform_init_attach_args(struct fdt_attach_args *faa)
 	faa->faa_dmat = &arm_generic_dma_tag;
 }
 
-static void
+
+void
 exynos_platform_early_putchar(char c)
 {
-#if defined(VERBOSE_INIT_ARM)
-	extern void exynos_putchar(int);	/* XXX from exynos_start.S */
+#ifdef CONSADDR
+#define CONSADDR_VA	(CONSADDR - EXYNOS_CORE_PBASE + EXYNOS_CORE_VBASE)
 
-	exynos_putchar(c);
+	volatile uint32_t *uartaddr = cpu_earlydevice_va_p() ?
+	    (volatile uint32_t *)CONSADDR_VA :
+	    (volatile uint32_t *)CONSADDR;
+	    
+	while ((uartaddr[SSCOM_UFSTAT / 4] & UFSTAT_TXFULL) != 0)
+		;
+
+	uartaddr[SSCOM_UTXH / 4] = c;
 #endif
 }
 
@@ -129,8 +124,58 @@ exynos_platform_uart_freq(void)
 	return EXYNOS_UART_FREQ;
 }
 
+
+#if defined(SOC_EXYNOS4)
+static const struct pmap_devmap *
+exynos4_platform_devmap(void)
+{
+	static const struct pmap_devmap devmap[] = {
+		DEVMAP_ENTRY(EXYNOS_CORE_VBASE,
+			     EXYNOS_CORE_PBASE,
+			     EXYNOS4_CORE_SIZE),
+		DEVMAP_ENTRY(EXYNOS4_AUDIOCORE_VBASE,
+			     EXYNOS4_AUDIOCORE_PBASE,
+			     EXYNOS4_AUDIOCORE_SIZE),
+		DEVMAP_ENTRY_END
+	};
+
+	return devmap;
+}
+
+static const struct arm_platform exynos4_platform = {
+	.ap_devmap = exynos4_platform_devmap,
+	.ap_bootstrap = exynos_platform_bootstrap,
+	.ap_init_attach_args = exynos_platform_init_attach_args,
+	.ap_early_putchar = exynos_platform_early_putchar,
+	.ap_device_register = exynos_platform_device_register,
+	.ap_reset = exynos5_platform_reset,
+	.ap_delay = mct_delay,
+	.ap_uart_freq = exynos_platform_uart_freq,
+};
+
+ARM_PLATFORM(exynos4, "samsung,exynos4", &exynos4_platform);
+#endif
+
+
+#if defined(SOC_EXYNOS5)
+static const struct pmap_devmap *
+exynos5_platform_devmap(void)
+{
+	static const struct pmap_devmap devmap[] = {
+		DEVMAP_ENTRY(EXYNOS_CORE_VBASE,
+			     EXYNOS_CORE_PBASE,
+			     EXYNOS5_CORE_SIZE),
+		DEVMAP_ENTRY(EXYNOS5_AUDIOCORE_VBASE,
+			     EXYNOS5_AUDIOCORE_PBASE,
+			     EXYNOS5_AUDIOCORE_SIZE),
+		DEVMAP_ENTRY_END
+	};
+
+	return devmap;
+}
+
 static const struct arm_platform exynos5_platform = {
-	.ap_devmap = exynos_platform_devmap,
+	.ap_devmap = exynos5_platform_devmap,
 	.ap_bootstrap = exynos_platform_bootstrap,
 	.ap_init_attach_args = exynos_platform_init_attach_args,
 	.ap_early_putchar = exynos_platform_early_putchar,
@@ -141,3 +186,4 @@ static const struct arm_platform exynos5_platform = {
 };
 
 ARM_PLATFORM(exynos5, "samsung,exynos5", &exynos5_platform);
+#endif
