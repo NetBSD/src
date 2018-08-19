@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1553 2018/08/18 14:18:58 christos Exp $
+#	$NetBSD: 3RDPARTY,v 1.1554 2018/08/19 09:21:29 wiz Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -899,7 +899,7 @@ Notes:
 
 Package:	MesaLib
 Version:	10.3.5
-Current Vers:	18.2.0
+Current Vers:	18.1.6
 Maintainer:	mesa-git@?
 Archive Site:	ftp://ftp.freedesktop.org/pub/mesa/
 Home Page:	http://www.mesa3d.org/
