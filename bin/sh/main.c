@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.74 2018/08/19 11:16:13 kre Exp $	*/
+/*	$NetBSD: main.c,v 1.75 2018/08/19 23:50:27 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.7 (Berkeley) 7/19/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.74 2018/08/19 11:16:13 kre Exp $");
+__RCSID("$NetBSD: main.c,v 1.75 2018/08/19 23:50:27 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -150,7 +150,8 @@ main(int argc, char **argv)
 		}
 
 		if (exception != EXSHELLPROC) {
-			if (state == 0 || iflag == 0 || ! rootshell)
+			if (state == 0 || iflag == 0 || ! rootshell ||
+			    exception == EXEXIT)
 				exitshell(exitstatus);
 		}
 		reset();
@@ -234,7 +235,7 @@ state3:
 	}
 
 	if (minusc)
-		evalstring(minusc, 0);
+		evalstring(minusc, sflag ? 0 : EV_EXIT);
 
 	if (sflag || minusc == NULL) {
 state4:	/* XXX ??? - why isn't this before the "if" statement */
