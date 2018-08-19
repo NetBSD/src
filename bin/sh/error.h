@@ -1,4 +1,4 @@
-/*	$NetBSD: error.h,v 1.20 2018/07/22 20:37:52 kre Exp $	*/
+/*	$NetBSD: error.h,v 1.21 2018/08/19 23:50:27 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -70,6 +70,7 @@ extern int exerrno;	/* error for EXEXEC */
 #define EXERROR 1	/* a generic error */
 #define EXSHELLPROC 2	/* execute a shell procedure */
 #define EXEXEC 3	/* command execution failed */
+#define EXEXIT 4	/* shell wants to exit(exitstatus) */
 
 
 /*

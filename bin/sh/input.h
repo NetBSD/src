@@ -1,4 +1,4 @@
-/*	$NetBSD: input.h,v 1.20 2017/06/30 23:02:56 kre Exp $	*/
+/*	$NetBSD: input.h,v 1.21 2018/08/19 23:50:27 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -53,6 +53,7 @@ struct parsefile;
 char *pfgets(char *, int);
 int pgetc(void);
 int preadbuffer(void);
+int at_eof(void);
 void pungetc(void);
 void pushstring(const char *, int, struct alias *);
 void popstring(void);

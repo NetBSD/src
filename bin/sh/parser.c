@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.c,v 1.149 2018/07/22 23:07:48 kre Exp $	*/
+/*	$NetBSD: parser.c,v 1.150 2018/08/19 23:50:27 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)parser.c	8.7 (Berkeley) 5/16/95";
 #else
-__RCSID("$NetBSD: parser.c,v 1.149 2018/07/22 23:07:48 kre Exp $");
+__RCSID("$NetBSD: parser.c,v 1.150 2018/08/19 23:50:27 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -179,7 +179,7 @@ parsecmd(int interact)
 STATIC union node *
 list(int nlflag)
 {
-	union node *n1, *n2, *n3;
+	union node *ntop, *n1, *n2, *n3;
 	int tok;
 
 	CTRACE(DBG_PARSE, ("list(%d): entered @%d\n",nlflag,plinno));
@@ -187,7 +187,7 @@ list(int nlflag)
 	checkkwd = 2;
 	if (nlflag == 0 && tokendlist[peektoken()])
 		return NULL;
-	n1 = NULL;
+	ntop = n1 = NULL;
 	for (;;) {
 		n2 = andor();
 		tok = readtoken();
@@ -205,14 +205,22 @@ list(int nlflag)
 			}
 		}
 
-		if (n1 != NULL) {
+		if (ntop == NULL)
+			ntop = n2;
+		else if (n1 == NULL) {
+			n1 = stalloc(sizeof(struct nbinary));
+			n1->type = NSEMI;
+			n1->nbinary.ch1 = ntop;
+			n1->nbinary.ch2 = n2;
+			ntop = n1;
+		} else {
 			n3 = stalloc(sizeof(struct nbinary));
 			n3->type = NSEMI;
-			n3->nbinary.ch1 = n1;
+			n3->nbinary.ch1 = n1->nbinary.ch2;
 			n3->nbinary.ch2 = n2;
+			n1->nbinary.ch2 = n3;
 			n1 = n3;
-		} else
-			n1 = n2;
+		}
 
 		switch (tok) {
 		case TBACKGND:
@@ -223,24 +231,24 @@ list(int nlflag)
 			if (tok == TNL) {
 				readheredocs();
 				if (nlflag)
-					return n1;
+					return ntop;
 			} else if (tok == TEOF && nlflag)
-				return n1;
+				return ntop;
 			else
 				tokpushback++;
 
 			checkkwd = 2;
 			if (!nlflag && tokendlist[peektoken()])
-				return n1;
+				return ntop;
 			break;
 		case TEOF:
 			pungetc();	/* push back EOF on input */
-			return n1;
+			return ntop;
 		default:
 			if (nlflag)
 				synexpect(-1, 0);
 			tokpushback++;
-			return n1;
+			return ntop;
 		}
 	}
 }
