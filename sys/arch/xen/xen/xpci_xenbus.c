@@ -1,4 +1,4 @@
-/*      $NetBSD: xpci_xenbus.c,v 1.17 2018/08/13 15:48:21 maxv Exp $      */
+/*      $NetBSD: xpci_xenbus.c,v 1.18 2018/08/19 01:33:26 riastradh Exp $      */
 
 /*
  * Copyright (c) 2009 Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xpci_xenbus.c,v 1.17 2018/08/13 15:48:21 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xpci_xenbus.c,v 1.18 2018/08/19 01:33:26 riastradh Exp $");
 
 #include "opt_xen.h"
 
@@ -454,7 +454,7 @@ xpci_conf_read(pci_chipset_tag_t pc, pcitag_t tag, int reg, int size,
 pcireg_t
 pci_conf_read(pci_chipset_tag_t pc, pcitag_t tag, int reg)
 {
-	static pcireg_t v; /* XXXSMP: why static? */
+	pcireg_t v;
 
 	xpci_conf_read(pc, tag, reg, 4, &v);
 	return v;
