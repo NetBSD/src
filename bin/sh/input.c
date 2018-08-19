@@ -1,4 +1,4 @@
-/*	$NetBSD: input.c,v 1.62 2017/08/19 21:13:11 kre Exp $	*/
+/*	$NetBSD: input.c,v 1.63 2018/08/19 23:50:27 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)input.c	8.3 (Berkeley) 6/9/95";
 #else
-__RCSID("$NetBSD: input.c,v 1.62 2017/08/19 21:13:11 kre Exp $");
+__RCSID("$NetBSD: input.c,v 1.63 2018/08/19 23:50:27 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -328,6 +328,45 @@ preadbuffer(void)
 	*q = savec;
 
 	return *parsenextc++;
+}
+
+/*
+ * Test whether we have reached EOF on input stream.
+ * Return true only if certain (without attempting a read).
+ *
+ * Note the similarity to the opening section of preadbuffer()
+ */
+int
+at_eof(void)
+{
+	struct strpush *sp = parsefile->strpush;
+
+	if (parsenleft > 0)	/* more chars are in the buffer */
+		return 0;
+
+	while (sp != NULL) {
+		/*
+		 * If any pushed string has any remaining data,
+		 * then we are not at EOF  (simulating popstring())
+		 */
+		if (sp->prevnleft > 0)
+			return 0;
+		sp = sp->prev;
+	}
+
+	/*
+	 * If we reached real EOF and pushed it back,
+	 * or if we are just processing a string (not reading a file)
+	 * then there is no more.   Note that if a file pushes a
+	 * string, the file's ->buf remains present.
+	 */
+	if (parsenleft == EOF_NLEFT || parsefile->buf == NULL)
+		return 1;
+
+	/*
+	 * In other cases, there might be more
+	 */
+	return 0;
 }
 
 /*
