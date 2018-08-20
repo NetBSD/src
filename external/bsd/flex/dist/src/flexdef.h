@@ -1,4 +1,4 @@
-/*	$NetBSD: flexdef.h,v 1.5 2018/08/20 10:24:17 kre Exp $	*/
+/*	$NetBSD: flexdef.h,v 1.6 2018/08/20 10:26:58 christos Exp $	*/
 
 /* flexdef - definitions file for flex */
 
@@ -36,8 +36,14 @@
 #ifndef FLEXDEF_H
 #define FLEXDEF_H 1
 
-#if !defined(_NETBSD_SOURCE) && HAVE_NBTOOL_CONFIG_H
+#if HAVE_NBTOOL_CONFIG_H
 #include "nbtool_config.h"
+#undef PACKAGE_BUGREPORT
+#undef PACKAGE_NAME
+#undef PACKAGE_STRING
+#undef PACKAGE_TARNAME 
+#undef PACKAGE_URL
+#undef PACKAGE_VERSION
 #endif
 
 #ifdef HAVE_CONFIG_H
