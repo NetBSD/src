@@ -6470,7 +6470,8 @@ zfsdev_ioctl(dev_t dev, int zcmd, intptr_t iarg, int flag, cred_t *cr, int *rval
 				goto out;
 			}
 		}
-	}
+	} else
+		zc_iocparm = NULL;
 
 	if (compat) {
 		if (newioc) {
