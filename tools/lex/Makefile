@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2017/10/02 22:32:04 christos Exp $
+#	$NetBSD: Makefile,v 1.11 2018/08/20 10:27:32 christos Exp $
 
 HOSTPROGNAME=	${_TOOL_PREFIX}lex
 HOST_SRCDIR=	external/bsd/flex/bin
@@ -11,7 +11,8 @@ HOST_CPPFLAGS+=	-DM4=\"${TOOL_M4}\"
 
 
 __BUILD: .USE
-	 echo "#include <init${.TARGET}>" > ${.TARGET}
+	(echo '#include "nbtool_config.h"'; \
+	echo "#include <init${.TARGET}>") > ${.TARGET}
 
 scan.c: __BUILD
 parse.c: __BUILD
