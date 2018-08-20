@@ -240,10 +240,8 @@ if_learnaddrs(struct dhcpcd_ctx *ctx, struct if_head *ifs,
 			addrflags = if_addrflags(ifp, &addr->sin_addr,
 			    ifa->ifa_name);
 			if (addrflags == -1) {
-				if (errno != EEXIST)
-					logerr("%s: if_addrflags: %s",
-					    __func__,
-					    inet_ntoa(addr->sin_addr));
+				if (errno != EEXIST && errno != EADDRNOTAVAIL)
+					logerr("%s: if_addrflags", __func__);
 				continue;
 			}
 #endif
@@ -266,7 +264,7 @@ if_learnaddrs(struct dhcpcd_ctx *ctx, struct if_head *ifs,
 			addrflags = if_addrflags6(ifp, &sin6->sin6_addr,
 			    ifa->ifa_name);
 			if (addrflags == -1) {
-				if (errno != EEXIST)
+				if (errno != EEXIST && errno != EADDRNOTAVAIL)
 					logerr("%s: if_addrflags6", __func__);
 				continue;
 			}

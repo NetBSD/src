@@ -816,9 +816,17 @@ ipv4_handleifa(struct dhcpcd_ctx *ctx,
 	bool ia_is_new;
 
 #if 0
-	logdebugx("%s: %s %s/%d %d", ifname,
-	    cmd == RTM_NEWADDR ? "RTM_NEWADDR" : cmd == RTM_DELADDR ? "RTM_DELADDR" : "???",
-	    inet_ntoa(*addr), inet_ntocidr(*mask), addrflags);
+	char sbrdbuf[INET_ADDRSTRLEN];
+	const char *sbrd;
+
+	if (brd)
+		sbrd = inet_ntop(AF_INET, brd, sbrdbuf, sizeof(sbrdbuf));
+	else
+		sbrd = NULL;
+	logdebugx("%s: %s %s/%d %s %d", ifname,
+	    cmd == RTM_NEWADDR ? "RTM_NEWADDR" :
+	    cmd == RTM_DELADDR ? "RTM_DELADDR" : "???",
+	    inet_ntoa(*addr), inet_ntocidr(*mask), sbrd, addrflags);
 #endif
 
 	if (ifs == NULL)
