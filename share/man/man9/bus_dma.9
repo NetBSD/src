@@ -1,4 +1,4 @@
-.\" $NetBSD: bus_dma.9,v 1.65 2017/11/12 21:14:33 riastradh Exp $
+.\" $NetBSD: bus_dma.9,v 1.66 2018/08/20 14:23:27 riastradh Exp $
 .\"
 .\" Copyright (c) 1996, 1997, 1998, 2001, 2005, 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -533,8 +533,7 @@ Behavior is not defined if invalid arguments are passed to
 If given valid arguments,
 .Fn bus_dmamap_sync
 always succeeds.
-.\" XXX: This does not work with all the arguments.
-.It Fn bus_dmamem_alloc "tag" "size" "alignment" "boundary" "segs" "..."
+.It Fn bus_dmamem_alloc "tag" "size" "alignment" "boundary" "segs" "nsegs" "rsegs" "flags"
 Allocates memory that is "DMA safe" for the bus corresponding to the
 given tag.
 .Pp
@@ -571,6 +570,9 @@ Each segment in the allocated memory must not cross this boundary
 (relative to zero).
 This value must be a power of two.
 A boundary value less than the size of the allocation is invalid.
+If no boundary condition needs to be observed, a
+.Fa boundary
+argument of 0 should be used.
 .It Fa segs
 An array of bus_dma_segment_t's, filled in as memory is allocated,
 representing the opaque addresses of the memory chunks.
