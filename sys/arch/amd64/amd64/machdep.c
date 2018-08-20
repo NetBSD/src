@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.314 2018/08/12 15:31:01 maxv Exp $	*/
+/*	$NetBSD: machdep.c,v 1.315 2018/08/20 15:04:51 maxv Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.314 2018/08/12 15:31:01 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.315 2018/08/20 15:04:51 maxv Exp $");
 
 #include "opt_modular.h"
 #include "opt_user_ldt.h"
@@ -122,6 +122,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.314 2018/08/12 15:31:01 maxv Exp $");
 #include "opt_xen.h"
 #include "opt_svs.h"
 #include "opt_kaslr.h"
+#include "opt_kasan.h"
 #ifndef XEN
 #include "opt_physmem.h"
 #endif
@@ -1656,6 +1657,15 @@ init_slotspace(void)
 	slotspace.area[SLAREA_HYPV].dropmax = false;
 #endif
 
+#ifdef KASAN
+	/* ASAN. */
+	slotspace.area[SLAREA_ASAN].sslot = L4_SLOT_KASAN;
+	slotspace.area[SLAREA_ASAN].mslot = NL4_SLOT_KASAN;
+	slotspace.area[SLAREA_ASAN].nslot = NL4_SLOT_KASAN;
+	slotspace.area[SLAREA_ASAN].active = true;
+	slotspace.area[SLAREA_ASAN].dropmax = false;
+#endif
+
 	/* Kernel. */
 	slotspace.area[SLAREA_KERN].sslot = L4_SLOT_KERNBASE;
 	slotspace.area[SLAREA_KERN].mslot = 1;
@@ -1780,6 +1790,11 @@ init_x86_64(paddr_t first_avail)
 #endif
 
 	init_x86_msgbuf();
+
+#ifdef KASAN
+	void kasan_init(void);
+	kasan_init();
+#endif
 
 	pmap_growkernel(VM_MIN_KERNEL_ADDRESS + 32 * 1024 * 1024);
 
