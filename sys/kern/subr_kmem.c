@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_kmem.c,v 1.66 2018/01/09 01:53:55 christos Exp $	*/
+/*	$NetBSD: subr_kmem.c,v 1.67 2018/08/20 11:35:28 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2009-2015 The NetBSD Foundation, Inc.
@@ -66,26 +66,18 @@
  *	the exact user-requested allocation size in it. When freeing, compare
  *	it with kmem_free's "size" argument.
  *
- * KMEM_REDZONE: detect overrun bugs.
- *	Add a 2-byte pattern (allocate one more memory chunk if needed) at the
- *	end of each allocated buffer. Check this pattern on kmem_free.
+ * This option enabled on DIAGNOSTIC.
  *
- * These options are enabled on DIAGNOSTIC.
- *
- *  |CHUNK|CHUNK|CHUNK|CHUNK|CHUNK|CHUNK|CHUNK|CHUNK|CHUNK|CHUNK|CHUNK|
- *  +-----+-----+-----+-----+-----+-----+-----+-----+-----+---+-+--+--+
- *  |/////|     |     |     |     |     |     |     |     |   |*|**|UU|
- *  |/HSZ/|     |     |     |     |     |     |     |     |   |*|**|UU|
- *  |/////|     |     |     |     |     |     |     |     |   |*|**|UU|
- *  +-----+-----+-----+-----+-----+-----+-----+-----+-----+---+-+--+--+
- *  |Size |    Buffer usable by the caller (requested size)   |RedZ|Unused\
+ *  |CHUNK|CHUNK|CHUNK|CHUNK|CHUNK|CHUNK|CHUNK|CHUNK|CHUNK|CHUNK|
+ *  +-----+-----+-----+-----+-----+-----+-----+-----+-----+---+-+
+ *  |/////|     |     |     |     |     |     |     |     |   |U|
+ *  |/HSZ/|     |     |     |     |     |     |     |     |   |U|
+ *  |/////|     |     |     |     |     |     |     |     |   |U|
+ *  +-----+-----+-----+-----+-----+-----+-----+-----+-----+---+-+
+ *  |Size |    Buffer usable by the caller (requested size)   |Unused\
  */
 
 /*
- * KMEM_POISON: detect modify-after-free bugs.
- *	Fill freed (in the sense of kmem_free) memory with a garbage pattern.
- *	Check the pattern on allocation.
- *
  * KMEM_GUARD
  *	A kernel with "option DEBUG" has "kmem_guard" debugging feature compiled
  *	in. See the comment below for what kind of bugs it tries to detect. Even
@@ -100,7 +92,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_kmem.c,v 1.66 2018/01/09 01:53:55 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_kmem.c,v 1.67 2018/08/20 11:35:28 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_kmem.h"
@@ -181,34 +173,13 @@ static size_t kmem_cache_big_maxidx __read_mostly;
 
 #if defined(DIAGNOSTIC) && defined(_HARDKERNEL)
 #define	KMEM_SIZE
-#define	KMEM_REDZONE
-#endif /* defined(DIAGNOSTIC) */
+#endif
 
 #if defined(DEBUG) && defined(_HARDKERNEL)
 #define	KMEM_SIZE
-#define	KMEM_POISON
 #define	KMEM_GUARD
 static void *kmem_freecheck;
-#endif /* defined(DEBUG) */
-
-#if defined(KMEM_POISON)
-static int kmem_poison_ctor(void *, void *, int);
-static void kmem_poison_fill(void *, size_t);
-static void kmem_poison_check(void *, size_t);
-#else /* defined(KMEM_POISON) */
-#define	kmem_poison_fill(p, sz)		/* nothing */
-#define	kmem_poison_check(p, sz)	/* nothing */
-#endif /* defined(KMEM_POISON) */
-
-#if defined(KMEM_REDZONE)
-#define	REDZONE_SIZE	2
-static void kmem_redzone_fill(void *, size_t);
-static void kmem_redzone_check(void *, size_t);
-#else /* defined(KMEM_REDZONE) */
-#define	REDZONE_SIZE	0
-#define	kmem_redzone_fill(p, sz)		/* nothing */
-#define	kmem_redzone_check(p, sz)	/* nothing */
-#endif /* defined(KMEM_REDZONE) */
+#endif
 
 #if defined(KMEM_SIZE)
 struct kmem_header {
@@ -233,11 +204,9 @@ struct kmem_guard {
 	u_int		kg_rotor;
 	vmem_t *	kg_vmem;
 };
-
-static bool	kmem_guard_init(struct kmem_guard *, u_int, vmem_t *);
+static bool kmem_guard_init(struct kmem_guard *, u_int, vmem_t *);
 static void *kmem_guard_alloc(struct kmem_guard *, size_t, bool);
 static void kmem_guard_free(struct kmem_guard *, size_t, void *);
-
 int kmem_guard_depth = KMEM_GUARD_DEPTH;
 static bool kmem_guard_enabled;
 static struct kmem_guard kmem_guard;
@@ -269,16 +238,9 @@ kmem_intr_alloc(size_t requested_size, km_flag_t kmflags)
 		    (kmflags & KM_SLEEP) != 0);
 	}
 #endif
+
 	size = kmem_roundup_size(requested_size);
 	allocsz = size + SIZE_SIZE;
-
-#ifdef KMEM_REDZONE
-	if (size - requested_size < REDZONE_SIZE) {
-		/* If there isn't enough space in the padding, allocate
-		 * one more memory chunk for the red zone. */
-		allocsz += kmem_roundup_size(REDZONE_SIZE);
-	}
-#endif
 
 	if ((index = ((allocsz -1) >> KMEM_SHIFT))
 	    < kmem_cache_maxidx) {
@@ -301,10 +263,8 @@ kmem_intr_alloc(size_t requested_size, km_flag_t kmflags)
 	p = pool_cache_get(pc, kmflags);
 
 	if (__predict_true(p != NULL)) {
-		kmem_poison_check(p, allocsz);
 		FREECHECK_OUT(&kmem_freecheck, p);
 		kmem_size_set(p, requested_size);
-		kmem_redzone_fill(p, requested_size + SIZE_SIZE);
 
 		return p + SIZE_SIZE;
 	}
@@ -351,12 +311,6 @@ kmem_intr_free(void *p, size_t requested_size)
 	size = kmem_roundup_size(requested_size);
 	allocsz = size + SIZE_SIZE;
 
-#ifdef KMEM_REDZONE
-	if (size - requested_size < REDZONE_SIZE) {
-		allocsz += kmem_roundup_size(REDZONE_SIZE);
-	}
-#endif
-
 	if ((index = ((allocsz -1) >> KMEM_SHIFT))
 	    < kmem_cache_maxidx) {
 		pc = kmem_cache[index];
@@ -372,10 +326,8 @@ kmem_intr_free(void *p, size_t requested_size)
 
 	p = (uint8_t *)p - SIZE_SIZE;
 	kmem_size_check(p, requested_size);
-	kmem_redzone_check(p, requested_size + SIZE_SIZE);
 	FREECHECK_IN(&kmem_freecheck, p);
 	LOCKDEBUG_MEM_CHECK(p, size);
-	kmem_poison_fill(p, allocsz);
 
 	pool_cache_put(pc, p);
 }
@@ -469,14 +421,8 @@ kmem_create_caches(const struct kmem_cache_info *array,
 		}
 
 		pa = &pool_allocator_kmem;
-#if defined(KMEM_POISON)
-		pc = pool_cache_init(cache_size, align, 0, flags,
-		    name, pa, ipl, kmem_poison_ctor,
-		    NULL, (void *)cache_size);
-#else /* defined(KMEM_POISON) */
 		pc = pool_cache_init(cache_size, align, 0, flags,
 		    name, pa, ipl, NULL, NULL, NULL);
-#endif /* defined(KMEM_POISON) */
 
 		while (size <= cache_size) {
 			alloc_table[(size - 1) >> shift] = pc;
@@ -572,66 +518,6 @@ kmem_strfree(char *str)
 
 /* ------------------ DEBUG / DIAGNOSTIC ------------------ */
 
-#if defined(KMEM_POISON) || defined(KMEM_REDZONE)
-#if defined(_LP64)
-#define PRIME 0x9e37fffffffc0000UL
-#else /* defined(_LP64) */
-#define PRIME 0x9e3779b1
-#endif /* defined(_LP64) */
-
-static inline uint8_t
-kmem_pattern_generate(const void *p)
-{
-	return (uint8_t)(((uintptr_t)p) * PRIME
-	   >> ((sizeof(uintptr_t) - sizeof(uint8_t))) * CHAR_BIT);
-}
-#endif /* defined(KMEM_POISON) || defined(KMEM_REDZONE) */
-
-#if defined(KMEM_POISON)
-static int
-kmem_poison_ctor(void *arg, void *obj, int flag)
-{
-	size_t sz = (size_t)arg;
-
-	kmem_poison_fill(obj, sz);
-
-	return 0;
-}
-
-static void
-kmem_poison_fill(void *p, size_t sz)
-{
-	uint8_t *cp;
-	const uint8_t *ep;
-
-	cp = p;
-	ep = cp + sz;
-	while (cp < ep) {
-		*cp = kmem_pattern_generate(cp);
-		cp++;
-	}
-}
-
-static void
-kmem_poison_check(void *p, size_t sz)
-{
-	uint8_t *cp;
-	const uint8_t *ep;
-
-	cp = p;
-	ep = cp + sz;
-	while (cp < ep) {
-		const uint8_t expected = kmem_pattern_generate(cp);
-
-		if (*cp != expected) {
-			panic("%s: %p: 0x%02x != 0x%02x\n",
-			   __func__, cp, *cp, expected);
-		}
-		cp++;
-	}
-}
-#endif /* defined(KMEM_POISON) */
-
 #if defined(KMEM_SIZE)
 static void
 kmem_size_set(void *p, size_t sz)
@@ -656,61 +542,6 @@ kmem_size_check(void *p, size_t sz)
 	}
 }
 #endif /* defined(KMEM_SIZE) */
-
-#if defined(KMEM_REDZONE)
-#define STATIC_BYTE	0xFE
-CTASSERT(REDZONE_SIZE > 1);
-static void
-kmem_redzone_fill(void *p, size_t sz)
-{
-	uint8_t *cp, pat;
-	const uint8_t *ep;
-
-	cp = (uint8_t *)p + sz;
-	ep = cp + REDZONE_SIZE;
-
-	/*
-	 * We really don't want the first byte of the red zone to be '\0';
-	 * an off-by-one in a string may not be properly detected.
-	 */
-	pat = kmem_pattern_generate(cp);
-	*cp = (pat == '\0') ? STATIC_BYTE: pat;
-	cp++;
-
-	while (cp < ep) {
-		*cp = kmem_pattern_generate(cp);
-		cp++;
-	}
-}
-
-static void
-kmem_redzone_check(void *p, size_t sz)
-{
-	uint8_t *cp, pat, expected;
-	const uint8_t *ep;
-
-	cp = (uint8_t *)p + sz;
-	ep = cp + REDZONE_SIZE;
-
-	pat = kmem_pattern_generate(cp);
-	expected = (pat == '\0') ? STATIC_BYTE: pat;
-	if (expected != *cp) {
-		panic("%s: %p: 0x%02x != 0x%02x\n",
-		   __func__, cp, *cp, expected);
-	}
-	cp++;
-
-	while (cp < ep) {
-		expected = kmem_pattern_generate(cp);
-		if (*cp != expected) {
-			panic("%s: %p: 0x%02x != 0x%02x\n",
-			   __func__, cp, *cp, expected);
-		}
-		cp++;
-	}
-}
-#endif /* defined(KMEM_REDZONE) */
-
 
 #if defined(KMEM_GUARD)
 /*
