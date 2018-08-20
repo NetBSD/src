@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_kmem.c,v 1.67 2018/08/20 11:35:28 maxv Exp $	*/
+/*	$NetBSD: subr_kmem.c,v 1.68 2018/08/20 11:46:44 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2009-2015 The NetBSD Foundation, Inc.
@@ -92,7 +92,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_kmem.c,v 1.67 2018/08/20 11:35:28 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_kmem.c,v 1.68 2018/08/20 11:46:44 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_kmem.h"
@@ -265,8 +265,9 @@ kmem_intr_alloc(size_t requested_size, km_flag_t kmflags)
 	if (__predict_true(p != NULL)) {
 		FREECHECK_OUT(&kmem_freecheck, p);
 		kmem_size_set(p, requested_size);
+		p += SIZE_SIZE;
 
-		return p + SIZE_SIZE;
+		return p;
 	}
 	return p;
 }
