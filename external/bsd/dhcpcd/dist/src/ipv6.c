@@ -430,7 +430,7 @@ ipv6_mask(struct in6_addr *mask, int len)
 	bits = len % NBBY;
 	for (i = 0; i < bytes; i++)
 		mask->s6_addr[i] = 0xff;
-	if (bits) {
+	if (bits != 0) {
 		/* Coverify false positive.
 		 * bytelen cannot be 16 if bitlen is non zero */
 		/* coverity[overrun-local] */
@@ -567,7 +567,8 @@ ipv6_checkaddrflags(void *arg)
 	alias = NULL;
 #endif
 	if ((flags = if_addrflags6(ia->iface, &ia->addr, alias)) == -1) {
-		logerr("%s: if_addrflags6", ia->iface->name);
+		if (errno != EEXIST && errno != EADDRNOTAVAIL)
+			logerr("%s: if_addrflags6", __func__);
 		return;
 	}
 
