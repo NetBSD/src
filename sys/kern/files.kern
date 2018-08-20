@@ -1,4 +1,4 @@
-#	$NetBSD: files.kern,v 1.21 2018/08/03 04:35:20 kamil Exp $
+#	$NetBSD: files.kern,v 1.22 2018/08/20 11:35:28 maxv Exp $
 
 #
 # kernel sources
@@ -116,8 +116,6 @@ file	kern/subr_iostat.c		kern
 file	kern/subr_ipi.c			kern
 file	kern/subr_kcpuset.c		kern
 defflag	opt_kmem.h			KMEM_GUARD
-					KMEM_POISON
-					KMEM_REDZONE
 					KMEM_SIZE
 defparam opt_kmem.h			KMEM_GUARD_DEPTH
 file	kern/subr_kmem.c		kern
