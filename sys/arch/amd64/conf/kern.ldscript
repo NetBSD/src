@@ -1,4 +1,4 @@
-/*	$NetBSD: kern.ldscript,v 1.26 2018/01/21 11:21:40 maxv Exp $	*/
+/*	$NetBSD: kern.ldscript,v 1.27 2018/08/20 15:04:51 maxv Exp $	*/
 
 #include "assym.h"
 
@@ -48,6 +48,10 @@ SECTIONS
 	{
 		*(.rodata)
 		*(.rodata.*)
+		. = ALIGN(COHERENCY_UNIT);
+		__CTOR_LIST__ = .;
+		*(.ctors)
+		__CTOR_END__ = .;
 	}
 
 	. = ALIGN(__LARGE_PAGE_SIZE);

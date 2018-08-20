@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1203 2018/08/14 14:49:13 maxv Exp $
+#	$NetBSD: files,v 1.1204 2018/08/20 15:04:52 maxv Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20171118
@@ -29,6 +29,7 @@ defflag				KEYLOCK
 defparam opt_syslimits.h	CHILD_MAX OPEN_MAX
 defflag opt_diagnostic.h	_DIAGNOSTIC
 defflag				GPROF
+defflag				KASAN
 
 defparam opt_copy_symtab.h	makeoptions_COPY_SYMTAB
 

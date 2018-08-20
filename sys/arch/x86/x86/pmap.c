@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.303 2018/08/18 08:45:55 maxv Exp $	*/
+/*	$NetBSD: pmap.c,v 1.304 2018/08/20 15:04:52 maxv Exp $	*/
 
 /*
  * Copyright (c) 2008, 2010, 2016, 2017 The NetBSD Foundation, Inc.
@@ -157,13 +157,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.303 2018/08/18 08:45:55 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.304 2018/08/20 15:04:52 maxv Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
 #include "opt_multiprocessor.h"
 #include "opt_xen.h"
 #include "opt_svs.h"
+#include "opt_kasan.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -570,7 +571,6 @@ static bool pmap_remove_pte(struct pmap *, struct vm_page *, pt_entry_t *,
 static void pmap_remove_ptes(struct pmap *, struct vm_page *, vaddr_t, vaddr_t,
     vaddr_t, struct pv_entry **);
 
-static paddr_t pmap_get_physpage(void);
 static void pmap_alloc_level(struct pmap *, vaddr_t, long *);
 
 static void pmap_reactivate(struct pmap *);
@@ -1386,7 +1386,7 @@ pmap_pagetree_nentries_range(vaddr_t startva, vaddr_t endva, size_t pgsz)
 }
 #endif
 
-#if defined(__HAVE_DIRECT_MAP)
+#if defined(__HAVE_DIRECT_MAP) || defined(KASAN)
 static inline void
 slotspace_copy(int type, pd_entry_t *dst, pd_entry_t *src)
 {
@@ -2376,6 +2376,9 @@ pmap_pdp_ctor(void *arg, void *v, int flags)
 #endif
 #ifdef __HAVE_DIRECT_MAP
 	slotspace_copy(SLAREA_DMAP, pdir, PDP_BASE);
+#endif
+#ifdef KASAN
+	slotspace_copy(SLAREA_ASAN, pdir, PDP_BASE);
 #endif
 #endif /* XEN  && __x86_64__*/
 
@@ -4470,7 +4473,7 @@ out:
 	return error;
 }
 
-static paddr_t
+paddr_t
 pmap_get_physpage(void)
 {
 	struct vm_page *ptp;
@@ -4647,6 +4650,12 @@ pmap_growkernel(vaddr_t maxkvaddr)
 	} else {
 		cpm = kpm;
 	}
+#endif
+
+#ifdef KASAN
+	void kasan_shadow_map(void *, size_t);
+	kasan_shadow_map((void *)pmap_maxkvaddr,
+	    (size_t)(maxkvaddr - pmap_maxkvaddr));
 #endif
 
 	pmap_alloc_level(cpm, pmap_maxkvaddr, needed_kptp);

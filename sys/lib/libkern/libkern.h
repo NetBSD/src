@@ -1,4 +1,4 @@
-/*	$NetBSD: libkern.h,v 1.127 2018/07/08 17:54:42 christos Exp $	*/
+/*	$NetBSD: libkern.h,v 1.128 2018/08/20 15:04:52 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -36,6 +36,7 @@
 
 #ifdef _KERNEL_OPT
 #include "opt_diagnostic.h"
+#include "opt_kasan.h"
 #endif
 
 #include <sys/types.h>
@@ -368,11 +369,18 @@ int	 memcmp(const void *, const void *, size_t);
 void	*memset(void *, int, size_t);
 void	*memmem(const void *, size_t, const void *, size_t);
 #if __GNUC_PREREQ__(2, 95) && !defined(_STANDALONE)
+#if defined(_KERNEL) && defined(KASAN)
+void	*kasan_memset(void *, int, size_t);
+int	kasan_memcmp(const void *, const void *, size_t);
+void	*kasan_memcpy(void *, const void *, size_t);
+#define	memcpy(d, s, l)		kasan_memcpy(d, s, l)
+#define	memcmp(a, b, l)		kasan_memcmp(a, b, l)
+#define	memset(d, v, l)		kasan_memset(d, v, l)
+#else
 #define	memcpy(d, s, l)		__builtin_memcpy(d, s, l)
 #define	memcmp(a, b, l)		__builtin_memcmp(a, b, l)
-#endif
-#if __GNUC_PREREQ__(2, 95) && !defined(_STANDALONE)
 #define	memset(d, v, l)		__builtin_memset(d, v, l)
+#endif /* _KERNEL && KASAN */
 #endif
 
 char	*strcpy(char *, const char *);

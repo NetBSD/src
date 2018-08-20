@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_kmem.c,v 1.68 2018/08/20 11:46:44 maxv Exp $	*/
+/*	$NetBSD: subr_kmem.c,v 1.69 2018/08/20 15:04:52 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2009-2015 The NetBSD Foundation, Inc.
@@ -92,10 +92,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_kmem.c,v 1.68 2018/08/20 11:46:44 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_kmem.c,v 1.69 2018/08/20 15:04:52 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_kmem.h"
+#include "opt_kasan.h"
 #endif
 
 #include <sys/param.h>
@@ -105,6 +106,10 @@ __KERNEL_RCSID(0, "$NetBSD: subr_kmem.c,v 1.68 2018/08/20 11:46:44 maxv Exp $");
 #include <sys/debug.h>
 #include <sys/lockdebug.h>
 #include <sys/cpu.h>
+
+#ifdef KASAN
+#include <sys/asan.h>
+#endif
 
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm_map.h>
@@ -222,6 +227,9 @@ CTASSERT(KM_NOSLEEP == PR_NOWAIT);
 void *
 kmem_intr_alloc(size_t requested_size, km_flag_t kmflags)
 {
+#ifdef KASAN
+	size_t origsize = requested_size;
+#endif
 	size_t allocsz, index;
 	size_t size;
 	pool_cache_t pc;
@@ -237,6 +245,10 @@ kmem_intr_alloc(size_t requested_size, km_flag_t kmflags)
 		return kmem_guard_alloc(&kmem_guard, requested_size,
 		    (kmflags & KM_SLEEP) != 0);
 	}
+#endif
+
+#ifdef KASAN
+	kasan_add_redzone(&requested_size);
 #endif
 
 	size = kmem_roundup_size(requested_size);
@@ -266,7 +278,9 @@ kmem_intr_alloc(size_t requested_size, km_flag_t kmflags)
 		FREECHECK_OUT(&kmem_freecheck, p);
 		kmem_size_set(p, requested_size);
 		p += SIZE_SIZE;
-
+#ifdef KASAN
+		kasan_alloc(p, origsize, size);
+#endif
 		return p;
 	}
 	return p;
@@ -309,8 +323,16 @@ kmem_intr_free(void *p, size_t requested_size)
 	}
 #endif
 
+#ifdef KASAN
+	kasan_add_redzone(&requested_size);
+#endif
+
 	size = kmem_roundup_size(requested_size);
 	allocsz = size + SIZE_SIZE;
+
+#ifdef KASAN
+	kasan_free(p, size);
+#endif
 
 	if ((index = ((allocsz -1) >> KMEM_SHIFT))
 	    < kmem_cache_maxidx) {

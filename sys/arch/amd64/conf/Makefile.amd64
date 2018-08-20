@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.amd64,v 1.71 2018/06/02 15:09:37 christos Exp $
+#	$NetBSD: Makefile.amd64,v 1.72 2018/08/20 15:04:51 maxv Exp $
 
 # Makefile for NetBSD
 #
@@ -47,6 +47,11 @@ CFLAGS+=	-msoft-float
 .if ${SPECTRE_V2_GCC_MITIGATION:U0} > 0 && ${HAVE_GCC:U0} > 0
 CFLAGS+=      -mindirect-branch=thunk-inline
 CFLAGS+=      -mindirect-branch-register
+.endif
+
+.if ${KASAN:U0} > 0 && ${HAVE_GCC:U0} > 0
+CFLAGS+=	-fsanitize=kernel-address --param asan-globals=1
+COPTS.asan.c+=	-fno-sanitize=kernel-address
 .endif
 
 ##
