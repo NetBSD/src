@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.4 2018/07/31 07:00:48 skrll Exp $ */
+/* $NetBSD: cpu.c,v 1.5 2018/08/20 18:13:56 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: cpu.c,v 1.4 2018/07/31 07:00:48 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: cpu.c,v 1.5 2018/08/20 18:13:56 jmcneill Exp $");
 
 #include "locators.h"
 #include "opt_arm_debug.h"
@@ -130,12 +130,12 @@ cpu_attach(device_t dv, cpuid_t id)
 	}
 
 	if (mpidr & MPIDR_MT) {
-		ci->ci_data.cpu_smt_id = mpidr & MPIDR_AFF0;
-		ci->ci_data.cpu_core_id = mpidr & MPIDR_AFF1;
-		ci->ci_data.cpu_package_id = mpidr & MPIDR_AFF2;
+		ci->ci_data.cpu_smt_id = __SHIFTOUT(mpidr, MPIDR_AFF0);
+		ci->ci_data.cpu_core_id = __SHIFTOUT(mpidr, MPIDR_AFF1);
+		ci->ci_data.cpu_package_id = __SHIFTOUT(mpidr, MPIDR_AFF2);
 	} else {
-		ci->ci_data.cpu_core_id = mpidr & MPIDR_AFF0;
-		ci->ci_data.cpu_package_id = mpidr & MPIDR_AFF1;
+		ci->ci_data.cpu_core_id = __SHIFTOUT(mpidr, MPIDR_AFF0);
+		ci->ci_data.cpu_package_id = __SHIFTOUT(mpidr, MPIDR_AFF1);
 	}
 
 	ci->ci_dev = dv;
