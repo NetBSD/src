@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wpi.c,v 1.81 2018/08/20 02:33:17 riastradh Exp $	*/
+/*	$NetBSD: if_wpi.c,v 1.82 2018/08/20 04:50:56 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wpi.c,v 1.81 2018/08/20 02:33:17 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wpi.c,v 1.82 2018/08/20 04:50:56 riastradh Exp $");
 
 /*
  * Driver for Intel PRO/Wireless 3945ABG 802.11 network adapters.
@@ -229,6 +229,8 @@ wpi_attach(device_t parent __unused, device_t self, void *aux)
 	}
 	mutex_init(&sc->sc_rsw_mtx, MUTEX_DEFAULT, IPL_NONE);
 	cv_init(&sc->sc_rsw_cv, "wpirsw");
+	sc->sc_rsw_suspend = false;
+	sc->sc_rsw_suspended = false;
 	if (kthread_create(PRI_NONE, 0, NULL,
 	    wpi_rsw_thread, sc, &sc->sc_rsw_lwp, "%s", device_xname(self))) {
 		aprint_error_dev(self, "couldn't create switch thread\n");
@@ -3268,6 +3270,10 @@ wpi_init(struct ifnet *ifp)
 		error = EBUSY;
 		goto fail1;
 	}
+	sc->sc_rsw_suspend = false;
+	cv_broadcast(&sc->sc_rsw_cv);
+	while (sc->sc_rsw_suspend)
+		cv_wait(&sc->sc_rsw_cv, &sc->sc_rsw_mtx);
 	mutex_exit(&sc->sc_rsw_mtx);
 
 	/* wait for thermal sensors to calibrate */
@@ -3317,6 +3323,14 @@ wpi_stop(struct ifnet *ifp, int disable)
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 
 	ieee80211_new_state(ic, IEEE80211_S_INIT, -1);
+
+	/* suspend rfkill test thread */
+	mutex_enter(&sc->sc_rsw_mtx);
+	sc->sc_rsw_suspend = true;
+	cv_broadcast(&sc->sc_rsw_cv);
+	while (!sc->sc_rsw_suspended)
+		cv_wait(&sc->sc_rsw_cv, &sc->sc_rsw_mtx);
+	mutex_exit(&sc->sc_rsw_mtx);
 
 	/* disable interrupts */
 	WPI_WRITE(sc, WPI_MASK, 0);
@@ -3463,7 +3477,14 @@ wpi_rsw_thread(void *arg)
 			mutex_exit(&sc->sc_rsw_mtx);
 			kthread_exit(0);
 		}
+		if (sc->sc_rsw_suspend) {
+			sc->sc_rsw_suspended = true;
+			cv_broadcast(&sc->sc_rsw_cv);
+			while (sc->sc_rsw_suspend || sc->sc_dying)
+				cv_wait(&sc->sc_rsw_cv, &sc->sc_rsw_mtx);
+			sc->sc_rsw_suspended = false;
+			cv_broadcast(&sc->sc_rsw_cv);
+		}
 		wpi_getrfkill(sc);
 	}
 }
-
