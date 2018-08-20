@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.54 2018/08/17 14:39:51 maxv Exp $	*/
+/*	$NetBSD: pmap.h,v 1.55 2018/08/20 15:04:51 maxv Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -67,6 +67,7 @@
 
 #if defined(_KERNEL_OPT)
 #include "opt_xen.h"
+#include "opt_kasan.h"
 #endif
 
 #include <sys/atomic.h>
@@ -90,6 +91,11 @@
 #define VA_SIGN_NEG(va)		((va) | VA_SIGN_MASK)
 /* XXXfvdl this one's not right. */
 #define VA_SIGN_POS(va)		((va) & ~VA_SIGN_MASK)
+
+#ifdef KASAN
+#define L4_SLOT_KASAN		256
+#define NL4_SLOT_KASAN		32
+#endif
 
 #ifndef XEN
 #define L4_SLOT_PTE		slotspace.area[SLAREA_PTE].sslot

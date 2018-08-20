@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.84 2018/08/12 13:31:16 maxv Exp $	*/
+/*	$NetBSD: pmap.h,v 1.85 2018/08/20 15:04:52 maxv Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -161,8 +161,9 @@ struct bootspace {
 #define SLAREA_PCPU	4
 #define SLAREA_DMAP	5
 #define SLAREA_HYPV	6
-#define SLAREA_KERN	7
-#define SLSPACE_NAREAS	8
+#define SLAREA_ASAN	7
+#define SLAREA_KERN	8
+#define SLSPACE_NAREAS	9
 
 struct slotspace {
 	struct {
@@ -551,6 +552,8 @@ int	pmap_enter_ma(struct pmap *, vaddr_t, paddr_t, paddr_t,
 	    vm_prot_t, u_int, int);
 bool	pmap_extract_ma(pmap_t, vaddr_t, paddr_t *);
 void	pmap_free_ptps(struct vm_page *);
+
+paddr_t pmap_get_physpage(void);
 
 /*
  * Hooks for the pool allocator.
