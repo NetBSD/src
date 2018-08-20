@@ -777,7 +777,6 @@ dhcp6_makemessage(struct interface *ifp)
 		/* FALLTHROUGH */
 	case DH6S_INIT:
 		for (l = 0; l < ifo->ia_len; l++) {
-			ifia = &ifo->ia[l];
 			len += sizeof(o) + sizeof(uint32_t); /* IAID */
 			/* IA_TA does not have T1 or T2 timers */
 			if (ifo->ia[l].ia_type != D6_OPTION_IA_TA)
