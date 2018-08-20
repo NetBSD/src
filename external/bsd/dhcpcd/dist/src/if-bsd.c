@@ -1103,9 +1103,32 @@ if_ifa(struct dhcpcd_ctx *ctx, const struct ifa_msghdr *ifam)
 		sin = (const void *)rti_info[RTAX_NETMASK];
 		mask.s_addr = sin != NULL && sin->sin_family == AF_INET ?
 		    sin->sin_addr.s_addr : INADDR_ANY;
+
+#if defined(__NetBSD_Version__) && __NetBSD_Version__ < 800000000
+		/* NetBSD-7 and older send an invalid broadcast address.
+		 * So we need to query the actual address to get
+		 * the right one. */
+		{
+			struct in_aliasreq ifra;
+
+			memset(&ifra, 0, sizeof(ifra));
+			strlcpy(ifra.ifra_name, ifp->name,
+			    sizeof(ifra.ifra_name));
+			ifra.ifra_addr.sin_family = AF_INET;
+			ifra.ifra_addr.sin_len = sizeof(ifra.ifra_addr);
+			ifra.ifra_addr.sin_addr = addr;
+			if (ioctl(ctx->pf_inet_fd, SIOCGIFALIAS, &ifra) == -1) {
+				if (errno != EADDRNOTAVAIL)
+					logerr("%s: SIOCGIFALIAS", __func__);
+				break;
+			}
+			bcast = ifra.ifra_broadaddr.sin_addr;
+		}
+#else
 		sin = (const void *)rti_info[RTAX_BRD];
 		bcast.s_addr = sin != NULL && sin->sin_family == AF_INET ?
 		    sin->sin_addr.s_addr : INADDR_ANY;
+#endif
 
 #if defined(__FreeBSD__) || defined(__DragonFly__)
 		/* FreeBSD sends RTM_DELADDR for each assigned address
@@ -1134,8 +1157,8 @@ if_ifa(struct dhcpcd_ctx *ctx, const struct ifa_msghdr *ifam)
 		if (ifam->ifam_type == RTM_DELADDR)
 			addrflags = 0 ;
 		else if ((addrflags = if_addrflags(ifp, &addr, NULL)) == -1) {
-			logerr("%s: if_addrflags: %s",
-			    ifp->name, inet_ntoa(addr));
+			if (errno != EADDRNOTAVAIL)
+				logerr("%s: if_addrflags", __func__);
 			break;
 		}
 #endif
@@ -1160,7 +1183,8 @@ if_ifa(struct dhcpcd_ctx *ctx, const struct ifa_msghdr *ifam)
 		if (ifam->ifam_type == RTM_DELADDR)
 		    addrflags = 0;
 		else if ((addrflags = if_addrflags6(ifp, &addr6, NULL)) == -1) {
-			logerr("%s: if_addrflags6", ifp->name);
+			if (errno != EADDRNOTAVAIL)
+				logerr("%s: if_addrflags6", __func__);
 			break;
 		}
 #endif
