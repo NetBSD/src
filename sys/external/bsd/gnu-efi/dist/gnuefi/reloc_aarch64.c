@@ -1,4 +1,4 @@
-/*	$NetBSD: reloc_aarch64.c,v 1.1.1.1 2018/08/16 18:17:47 jmcneill Exp $	*/
+/*	$NetBSD: reloc_aarch64.c,v 1.2 2018/08/20 09:50:18 jmcneill Exp $	*/
 
 /* reloc_aarch64.c - position independent x86 ELF shared object relocator
    Copyright (C) 2014 Linaro Ltd. <ard.biesheuvel@linaro.org>
@@ -39,7 +39,14 @@
 #include <efi.h>
 #include <efilib.h>
 
+#ifdef __NetBSD__
+#include <sys/types.h>
+#include <sys/exec_elf.h>
+#else
 #include <elf.h>
+#endif
+
+EFI_STATUS _relocate (long, Elf64_Dyn *, EFI_HANDLE, EFI_SYSTEM_TABLE *);
 
 EFI_STATUS _relocate (long ldbase, Elf64_Dyn *dyn,
 		      EFI_HANDLE image EFI_UNUSED,
