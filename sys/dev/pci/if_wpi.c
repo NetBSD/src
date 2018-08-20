@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wpi.c,v 1.80 2018/06/26 06:48:01 msaitoh Exp $	*/
+/*	$NetBSD: if_wpi.c,v 1.81 2018/08/20 02:33:17 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wpi.c,v 1.80 2018/06/26 06:48:01 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wpi.c,v 1.81 2018/08/20 02:33:17 riastradh Exp $");
 
 /*
  * Driver for Intel PRO/Wireless 3945ABG 802.11 network adapters.
@@ -657,6 +657,7 @@ wpi_alloc_rpool(struct wpi_softc *sc)
 static void
 wpi_free_rpool(struct wpi_softc *sc)
 {
+	mutex_destroy(&sc->rxq.freelist_mtx);
 	wpi_dma_contig_free(&sc->rxq.buf_dma);
 }
 
