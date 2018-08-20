@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.129 2018/08/07 10:50:12 maxv Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.130 2018/08/20 08:53:48 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -402,13 +402,14 @@
 #define CPUID_SEF_AVX512_4FMAPS	__BIT(3)
 #define CPUID_SEF_IBRS		__BIT(26) /* IBRS / IBPB Speculation Control */
 #define CPUID_SEF_STIBP		__BIT(27) /* STIBP Speculation Control */
+#define CPUID_SEF_L1D_FLUSH	__BIT(28) /* IA32_FLUSH_CMD MSR */
 #define CPUID_SEF_ARCH_CAP	__BIT(29) /* IA32_ARCH_CAPABILITIES */
 #define CPUID_SEF_SSBD		__BIT(31) /* Speculative Store Bypass Disable */
 
 #define CPUID_SEF_FLAGS2	"\20" \
 				"\3" "AVX512_4VNNIW" "\4" "AVX512_4FMAPS" \
 					"\33" "IBRS"	"\34" "STIBP"	\
-			"\36" "ARCH_CAP"		"\40" "SSBD"
+	"\35" "L1D_FLUSH" "\36" "ARCH_CAP"		"\40" "SSBD"
 
 /*
  * CPUID Processor extended state Enumeration Fn0000000d
@@ -661,7 +662,10 @@
 #define 	IA32_ARCH_RDCL_NO	0x01
 #define 	IA32_ARCH_IBRS_ALL	0x02
 #define 	IA32_ARCH_RSBA		0x04
+#define 	IA32_ARCH_SKIP_L1DFL_VMENTRY 0x08
 #define 	IA32_ARCH_SSB_NO	0x10
+#define MSR_IA32_FLUSH_CMD 0x10b
+#define 	IA32_FLUSH_CMD_L1D_FLUSH 0x01
 #define MSR_BBL_CR_ADDR		0x116	/* PII+ only */
 #define MSR_BBL_CR_DECC		0x118	/* PII+ only */
 #define MSR_BBL_CR_CTL		0x119	/* PII+ only */
