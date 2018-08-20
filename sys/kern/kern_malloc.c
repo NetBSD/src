@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_malloc.c,v 1.147 2018/08/20 11:46:44 maxv Exp $	*/
+/*	$NetBSD: kern_malloc.c,v 1.148 2018/08/20 15:04:52 maxv Exp $	*/
 
 /*
  * Copyright (c) 1987, 1991, 1993
@@ -70,11 +70,17 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.147 2018/08/20 11:46:44 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.148 2018/08/20 15:04:52 maxv Exp $");
+
+#include "opt_kasan.h"
 
 #include <sys/param.h>
 #include <sys/malloc.h>
 #include <sys/kmem.h>
+
+#ifdef KASAN
+#include <sys/asan.h>
+#endif
 
 /*
  * Built-in malloc types.  Note: ought to be removed.
@@ -100,9 +106,16 @@ void *
 kern_malloc(unsigned long size, int flags)
 {
 	const int kmflags = (flags & M_NOWAIT) ? KM_NOSLEEP : KM_SLEEP;
+#ifdef KASAN
+	size_t origsize = size;
+#endif
 	size_t allocsize, hdroffset;
 	struct malloc_header *mh;
 	void *p;
+
+#ifdef KASAN
+	kasan_add_redzone(&size);
+#endif
 
 	if (size >= PAGE_SIZE) {
 		if (size > (ULONG_MAX-PAGE_SIZE))
@@ -126,6 +139,10 @@ kern_malloc(unsigned long size, int flags)
 	mh->mh_size = allocsize - hdroffset;
 	mh++;
 
+#ifdef KASAN
+	kasan_alloc(mh, origsize, size);
+#endif
+
 	return mh;
 }
 
@@ -136,6 +153,10 @@ kern_free(void *addr)
 
 	mh = addr;
 	mh--;
+
+#ifdef KASAN
+	kasan_free(addr, mh->mh_size);
+#endif
 
 	if (mh->mh_size >= PAGE_SIZE + sizeof(struct malloc_header))
 		kmem_intr_free((char *)addr - PAGE_SIZE,
