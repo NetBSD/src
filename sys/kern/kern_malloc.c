@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_malloc.c,v 1.146 2017/07/28 12:28:48 martin Exp $	*/
+/*	$NetBSD: kern_malloc.c,v 1.147 2018/08/20 11:46:44 maxv Exp $	*/
 
 /*
  * Copyright (c) 1987, 1991, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.146 2017/07/28 12:28:48 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.147 2018/08/20 11:46:44 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -124,8 +124,9 @@ kern_malloc(unsigned long size, int flags)
 	}
 	mh = (void *)((char *)p + hdroffset);
 	mh->mh_size = allocsize - hdroffset;
+	mh++;
 
-	return mh + 1;
+	return mh;
 }
 
 void
