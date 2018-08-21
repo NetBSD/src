@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_malloc.c,v 1.149 2018/08/21 01:25:57 pgoyette Exp $	*/
+/*	$NetBSD: kern_malloc.c,v 1.150 2018/08/21 07:56:53 maxv Exp $	*/
 
 /*
  * Copyright (c) 1987, 1991, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.149 2018/08/21 01:25:57 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.150 2018/08/21 07:56:53 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_kasan.h"
@@ -101,7 +101,10 @@ MALLOC_DEFINE(M_MRTABLE, "mrt", "multicast routing tables");
  * Header contains total size, including the header itself.
  */
 struct malloc_header {
-	size_t		mh_size;
+	size_t mh_size;
+#ifdef KASAN
+	size_t mh_rqsz;
+#endif
 } __aligned(ALIGNBYTES + 1);
 
 void *
@@ -139,6 +142,9 @@ kern_malloc(unsigned long size, int flags)
 	}
 	mh = (void *)((char *)p + hdroffset);
 	mh->mh_size = allocsize - hdroffset;
+#ifdef KASAN
+	mh->mh_rqsz = origsize;
+#endif
 	mh++;
 
 #ifdef KASAN
@@ -195,7 +201,11 @@ kern_realloc(void *curaddr, unsigned long newsize, int flags)
 	mh = curaddr;
 	mh--;
 
+#ifdef KASAN
+	cursize = mh->mh_rqsz;
+#else
 	cursize = mh->mh_size - sizeof(struct malloc_header);
+#endif
 
 	/*
 	 * If we already actually have as much as they want, we're done.
