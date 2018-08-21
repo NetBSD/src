@@ -8,7 +8,7 @@ echo Generating rumpdefs.h
 rm -f rumpdefs.h
 exec 3>&1 > rumpdefs.h
 
-printf '/*	$NetBSD: makerumpdefs.sh,v 1.29 2016/02/02 01:15:24 pooka Exp $	*/\n\n'
+printf '/*	$NetBSD: makerumpdefs.sh,v 1.30 2018/08/21 08:22:33 msaitoh Exp $	*/\n\n'
 printf '/*\n *\tAUTOMATICALLY GENERATED.  DO NOT EDIT.\n */\n\n'
 printf '#ifndef _RUMP_RUMPDEFS_H_\n'
 printf '#define _RUMP_RUMPDEFS_H_\n\n'
@@ -135,12 +135,12 @@ exec 1>&3
 echo Generating rumperr.h
 rm -f rumperr.h
 exec > rumperr.h
-printf '/*	$NetBSD: makerumpdefs.sh,v 1.29 2016/02/02 01:15:24 pooka Exp $	*/\n\n'
+printf '/*	$NetBSD: makerumpdefs.sh,v 1.30 2018/08/21 08:22:33 msaitoh Exp $	*/\n\n'
 printf '/*\n *\tAUTOMATICALLY GENERATED.  DO NOT EDIT.\n */\n'
 
 fromvers ../../../sys/errno.h
 
-printf "\nstatic inline const char *\nrump_strerror(int error)\n{\n\n"
+printf "\nstatic __inline const char *\nrump_strerror(int error)\n{\n\n"
 printf "\tswitch (error) {\n\tcase 0:\n"
 printf "\t\t return \"No error: zero, zip, zilch, none!\";\n"
 awk '/^#define[ 	]*E.*[0-9]/{
@@ -176,13 +176,13 @@ fi
 echo Generating rumperrno2host.h 1>&3
 rm -f rumperrno2host.h
 exec > rumperrno2host.h
-printf '/*	$NetBSD: makerumpdefs.sh,v 1.29 2016/02/02 01:15:24 pooka Exp $	*/\n\n'
+printf '/*	$NetBSD: makerumpdefs.sh,v 1.30 2018/08/21 08:22:33 msaitoh Exp $	*/\n\n'
 printf '/*\n *\tAUTOMATICALLY GENERATED.  DO NOT EDIT.\n */\n'
 
 fromvers ../../../sys/errno.h
 
 printf "\n#ifndef ERANGE\n#error include ISO C style errno.h first\n#endif\n"
-printf "\nstatic inline int \nrump_errno2host(int rumperrno)\n{\n\n"
+printf "\nstatic __inline int \nrump_errno2host(int rumperrno)\n{\n\n"
 printf "\tswitch (rumperrno) {\n\tcase 0:\n"
 printf "\t\t return 0;\n"
 awk '/^#define[ 	]*E.*[0-9]/{
