@@ -1,4 +1,4 @@
-/*	$NetBSD: t_recvmmsg.c,v 1.3 2018/08/21 10:38:09 christos Exp $	*/
+/*	$NetBSD: t_sendmmsg.c,v 1.1 2018/08/21 10:38:09 christos Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -29,11 +29,12 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_recvmmsg.c,v 1.3 2018/08/21 10:38:09 christos Exp $");
+__RCSID("$NetBSD: t_sendmmsg.c,v 1.1 2018/08/21 10:38:09 christos Exp $");
 
 #include <atf-c.h>
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <sys/ioctl.h>
 #include <sys/wait.h>
 
 #include <string.h>
@@ -47,10 +48,9 @@ __RCSID("$NetBSD: t_recvmmsg.c,v 1.3 2018/08/21 10:38:09 christos Exp $");
 #include <sched.h>
 
 #define BUFSIZE	65536
-#define NPKTS	50
 
 #define min(a, b) ((a) < (b) ? (a) : (b))
-static int debug;
+static int debug = 1;
 static volatile sig_atomic_t rdied;
 
 static void
@@ -60,15 +60,26 @@ handle_sigchld(__unused int pid)
 	rdied = 1;
 }
 
-ATF_TC(recvmmsg_basic);
-ATF_TC_HEAD(recvmmsg_basic, tc)
+ATF_TC(sendmmsg_basic);
+ATF_TC_HEAD(sendmmsg_basic, tc)
 {
-	atf_tc_set_md_var(tc, "descr", "A basic test of recvmmsg(2)");
+	atf_tc_set_md_var(tc, "descr", "A basic test of sendmmsg(2)");
 }
 
-ATF_TC_BODY(recvmmsg_basic, tc)
+static void
+setsock(int fd, int type)
 {
-	int fd[2], error, i, cnt;
+	int buflen = BUFSIZE;
+	socklen_t socklen = sizeof(buflen);
+
+	ATF_REQUIRE_MSG(setsockopt(fd, SOL_SOCKET, type,
+	    &buflen, socklen) != -1, "%s (%s)",
+	    type == SO_RCVBUF ? "rcv" : "snd", strerror(errno));
+}
+
+ATF_TC_BODY(sendmmsg_basic, tc)
+{
+	int fd[2], error, cnt;
 	uint8_t *buf;
 	struct mmsghdr *mmsghdr;
 	struct iovec *iov;
@@ -76,6 +87,7 @@ ATF_TC_BODY(recvmmsg_basic, tc)
 	int status;
 	off_t off;
 	uint8_t DGRAM[1316] = { 0, 2, 3, 4, 5, 6, 7, 8, 9, };
+	uint8_t rgram[sizeof(DGRAM)];
 	struct sigaction sa;
 	ssize_t overf = 0;
 
@@ -85,6 +97,9 @@ ATF_TC_BODY(recvmmsg_basic, tc)
 	buf = malloc(BUFSIZE);
 	ATF_REQUIRE_MSG(buf != NULL, "malloc failed (%s)", strerror(errno));
 
+	setsock(fd[1], SO_SNDBUF);
+//	setsock(fd[0], SO_RCVBUF);
+
 	mmsgcnt = BUFSIZE / sizeof(DGRAM);
 	mmsghdr = malloc(sizeof(*mmsghdr) * mmsgcnt);
 	ATF_REQUIRE_MSG(mmsghdr != NULL, "malloc failed (%s)", strerror(errno));
@@ -93,6 +108,8 @@ ATF_TC_BODY(recvmmsg_basic, tc)
 
 	for (off = 0, n = 0; n < mmsgcnt; n++) {
 		iov[n].iov_base = buf + off;
+		memcpy(iov[n].iov_base, DGRAM, sizeof(DGRAM));
+		*(buf + off) = n;
 		iov[n].iov_len = sizeof(DGRAM);
 		off += iov[n].iov_len;
 		mmsghdr[n].msg_hdr.msg_iov = &iov[n];
@@ -113,56 +130,69 @@ ATF_TC_BODY(recvmmsg_basic, tc)
 	case -1:
 		ATF_REQUIRE_MSG(0, "fork failed (%s)", strerror(errno));
 		break;
-
 	case 0:
-		n = NPKTS;
+		sched_yield();
 		if (debug)
-		    printf("waiting for %u messages (max %u per syscall)\n", n,
+		    printf("sending %u messages (max %u per syscall)\n", n,
 			mmsgcnt);
-		while (n > 0) {
-			struct timespec ts = { 1, 0 };
-			cnt = recvmmsg(fd[1], mmsghdr, min(mmsgcnt, n),
-			    MSG_WAITALL, &ts);
+		for (n = 0; n < mmsgcnt;) {
+			if (debug)
+				printf("sending packet %u/%u...\n", n,
+				    mmsgcnt);
+			// XXX: ENOBUFS bug, on the receive side!!!
+			// in npkt = min(mmsgsize, mmsgcnt - n);
+			int npkt = min(3, mmsgcnt - n), a;
+			do { 
+				a = 0;
+				ATF_REQUIRE(ioctl(fd[1], FIONSPACE, &a) != -1);
+				printf("1 %d\n", a);
+				ATF_REQUIRE(ioctl(fd[0], FIONSPACE, &a) != -1);
+				printf("0 %d\n", a);
+			} while ((size_t)a < sizeof(DGRAM));
+			cnt = sendmmsg(fd[1], mmsghdr + n, npkt, 0);
 			if (cnt == -1 && errno == ENOBUFS) {
 				overf++;
 				if (debug)
-					printf("receive buffer overflowed"
+					printf("send buffer overflowed"
 					    " (%zu)\n",overf);
+				if (overf > 100)
+					exit(1);
+				sched_yield();
+				sched_yield();
+				sched_yield();
 				continue;
 			}
-			ATF_REQUIRE_MSG(cnt != -1, "recvmmsg failed (%s)",
+			ATF_REQUIRE_MSG(cnt != -1, "sendmmsg failed (%s)",
 			    strerror(errno));
-			ATF_REQUIRE_MSG(cnt != 0, "recvmmsg timeout");
 			if (debug)
-				printf("recvmmsg: got %u messages\n", cnt);
-			for (i = 0; i < cnt; i++) {
-				ATF_CHECK_EQ_MSG(mmsghdr[i].msg_len,
-				    sizeof(DGRAM), "packet length");
-				ATF_CHECK_EQ_MSG(
-				    ((uint8_t *)iov[i].iov_base)[0],
-				    NPKTS - n + i, "packet contents");
-			}
-			n -= cnt;
+				printf("sendmmsg: sent %u messages\n", cnt);
+			n += cnt;
+			sched_yield();
+			sched_yield();
+			sched_yield();
 		}
 		if (debug)
 			printf("done!\n");
 		exit(0);
 		/*NOTREACHED*/
 	default:
-		sched_yield();
-
-		for (n = 0; n < NPKTS; n++) {
+		for (n = 0; n < mmsgcnt; n++) {
 			if (debug)
-				printf("sending packet %u/%u...\n", (n+1),
-				    NPKTS);
+				printf("receiving packet %u/%u...\n", n,
+				    mmsgcnt);
 			do {
 				if (rdied)
 					break;
-				DGRAM[0] = n;
-				error = send(fd[0], DGRAM, sizeof(DGRAM), 0);
-			} while (error == -1 && errno == ENOBUFS);
-			ATF_REQUIRE_MSG(error != -1, "send failed (%s)",
-			    strerror(errno));
+				cnt = recv(fd[0], rgram, sizeof(rgram), 0);
+				ATF_REQUIRE_MSG(cnt != -1, "recv failed (%s)",
+				    strerror(errno));
+				ATF_CHECK_EQ_MSG(cnt, sizeof(rgram),
+				    "packet length");
+				ATF_CHECK_EQ_MSG(rgram[0], n, 
+				    "number %u != %u", rgram[0], n);
+				ATF_REQUIRE_MSG(memcmp(rgram + 1, DGRAM + 1,
+				    sizeof(rgram) - 1) == 0, "bad data");
+			} while (cnt == -1 && errno == ENOBUFS);
 		}
 		error = wait(&status);
 		ATF_REQUIRE_MSG(error != -1, "wait failed (%s)",
@@ -176,7 +206,7 @@ ATF_TC_BODY(recvmmsg_basic, tc)
 ATF_TP_ADD_TCS(tp)
 {
 
-	ATF_TP_ADD_TC(tp, recvmmsg_basic);
+	ATF_TP_ADD_TC(tp, sendmmsg_basic);
 
 	return atf_no_error();
 }
