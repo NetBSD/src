@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2221 2018/08/21 06:49:21 kre Exp $
+#	$NetBSD: mi,v 1.2222 2018/08/21 13:00:16 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -2391,8 +2391,8 @@
 ./usr/include/netinet/igmp_var.h		comp-c-include
 ./usr/include/netinet/in.h			comp-c-include
 ./usr/include/netinet/in_gif.h			comp-c-include
-./usr/include/netinet/in_offload.h		comp-c-include
 ./usr/include/netinet/in_l2tp.h			comp-c-include
+./usr/include/netinet/in_offload.h		comp-c-include
 ./usr/include/netinet/in_pcb.h			comp-c-include
 ./usr/include/netinet/in_pcb_hdr.h		comp-c-include
 ./usr/include/netinet/in_route.h		comp-obsolete		obsolete
@@ -3464,10 +3464,10 @@
 ./usr/lib/libnetpgpverify_p.a			comp-c-proflib		compatfile,profile
 ./usr/lib/libnpf.a				comp-npf-lib		compatfile,npf
 ./usr/lib/libnpf_p.a				comp-npf-proflib	compatfile,npf,profile
-./usr/lib/libntp.a				comp-obsolete		obsolete
-./usr/lib/libntp_p.a				comp-obsolete		obsolete
 ./usr/lib/libns.a				comp-bind-lib		compatfile
 ./usr/lib/libns_p.a				comp-bind-proflib	compatfile,profile
+./usr/lib/libntp.a				comp-obsolete		obsolete
+./usr/lib/libntp_p.a				comp-obsolete		obsolete
 ./usr/lib/libnvpair.a				comp-zfs-lib		compatfile,zfs
 ./usr/lib/libnvpair_p.a				comp-zfs-proflib	compatfile,zfs,profile
 ./usr/lib/libobjc.a				comp-objc-lib		compatfile,gcc
@@ -3779,9 +3779,9 @@
 ./usr/lib/libz.a				comp-c-lib		compatfile
 ./usr/lib/libz_p.a				comp-c-proflib		compatfile,profile
 ./usr/lib/libzfs.a				comp-zfs-lib		compatfile,zfs
-./usr/lib/libzfs_p.a				comp-zfs-proflib	compatfile,zfs,profile
 ./usr/lib/libzfs_core.a				comp-zfs-lib		compatfile,zfs
 ./usr/lib/libzfs_core_p.a			comp-zfs-proflib	compatfile,zfs,profile
+./usr/lib/libzfs_p.a				comp-zfs-proflib	compatfile,zfs,profile
 ./usr/lib/libzpool.a				comp-zfs-lib		compatfile,zfs
 ./usr/lib/libzpool_p.a				comp-zfs-proflib	compatfile,zfs,profile
 ./usr/lib/pkgconfig				comp-c-lib
@@ -3866,6 +3866,7 @@
 ./usr/libdata/lint/llib-lnetpgp.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lnetpgpverify.ln	comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lnpf.ln			comp-npf-lintlib	lint,npf
+./usr/libdata/lint/llib-lns.ln			comp-bind-lintlib		lint
 ./usr/libdata/lint/llib-lntp.ln			comp-obsolete		obsolete
 ./usr/libdata/lint/llib-lopenpgpsdk.ln		comp-obsolete		obsolete
 ./usr/libdata/lint/llib-lossaudio.ln		comp-c-lintlib		lint
@@ -9207,6 +9208,9 @@
 ./usr/share/man/cat3/sched_setparam.0		comp-c-catman		.cat
 ./usr/share/man/cat3/sched_setscheduler.0	comp-c-catman		.cat
 ./usr/share/man/cat3/sched_yield.0		comp-c-catman		.cat
+./usr/share/man/cat3/scrl.0			comp-c-catman		.cat
+./usr/share/man/cat3/scroll.0			comp-c-catman		.cat
+./usr/share/man/cat3/scrollok.0			comp-c-catman		.cat
 ./usr/share/man/cat3/sctp_bindx.0		comp-c-catman		.cat
 ./usr/share/man/cat3/sctp_connectx.0		comp-c-catman		.cat
 ./usr/share/man/cat3/sctp_freepaddrs.0		comp-c-catman		.cat
@@ -9218,9 +9222,6 @@
 ./usr/share/man/cat3/sctp_recvmsg.0		comp-c-catman		.cat
 ./usr/share/man/cat3/sctp_send.0		comp-c-catman		.cat
 ./usr/share/man/cat3/sctp_sendmsg.0		comp-c-catman		.cat
-./usr/share/man/cat3/scrl.0			comp-c-catman		.cat
-./usr/share/man/cat3/scroll.0			comp-c-catman		.cat
-./usr/share/man/cat3/scrollok.0			comp-c-catman		.cat
 ./usr/share/man/cat3/sdp.0			comp-c-catman		.cat
 ./usr/share/man/cat3/sdp_attr2desc.0		comp-obsolete		obsolete
 ./usr/share/man/cat3/sdp_change_service.0	comp-obsolete		obsolete
@@ -11145,12 +11146,12 @@
 ./usr/share/man/cat9/module_hold.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/module_init.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/module_init_class.0	comp-sys-catman		.cat
-./usr/share/man/cat9/module_load.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/module_kernel.0		comp-sys-catman		.cat
+./usr/share/man/cat9/module_load.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/module_load_vfs_init.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/module_name.0		comp-sys-catman		.cat
-./usr/share/man/cat9/module_rele.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/module_register_callbacks.0 	comp-sys-catman		.cat
+./usr/share/man/cat9/module_rele.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/module_setspecific.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/module_source.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/module_specific_key_create.0 comp-sys-catman	.cat
@@ -18856,21 +18857,21 @@
 ./usr/share/man/html9/module.html		comp-sys-htmlman	html
 ./usr/share/man/html9/module_autoload.html	comp-sys-htmlman	html
 ./usr/share/man/html9/module_builtin_require_force.html comp-sys-htmlman html
-./usr/share/man/html9/module_specific_key_create.html comp-sys-htmlman	html
-./usr/share/man/html9/module_specific_key_delete.html comp-sys-htmlman	html
 ./usr/share/man/html9/module_find_section.html	comp-sys-htmlman	html
 ./usr/share/man/html9/module_getspecific.html	comp-sys-htmlman	html
 ./usr/share/man/html9/module_hold.html		comp-sys-htmlman	html
 ./usr/share/man/html9/module_init.html		comp-sys-htmlman	html
 ./usr/share/man/html9/module_init_class.html	comp-sys-htmlman	html
-./usr/share/man/html9/module_load.html		comp-sys-htmlman	html
 ./usr/share/man/html9/module_kernel.html	comp-sys-htmlman	html
+./usr/share/man/html9/module_load.html		comp-sys-htmlman	html
 ./usr/share/man/html9/module_load_vfs_init.html comp-sys-htmlman	html
 ./usr/share/man/html9/module_name.html		comp-sys-htmlman	html
-./usr/share/man/html9/module_rele.html		comp-sys-htmlman	html
 ./usr/share/man/html9/module_register_callbacks.html comp-sys-htmlman	html
+./usr/share/man/html9/module_rele.html		comp-sys-htmlman	html
 ./usr/share/man/html9/module_setspecific.html	comp-sys-htmlman	html
 ./usr/share/man/html9/module_source.html	comp-sys-htmlman	html
+./usr/share/man/html9/module_specific_key_create.html comp-sys-htmlman	html
+./usr/share/man/html9/module_specific_key_delete.html comp-sys-htmlman	html
 ./usr/share/man/html9/module_start_unload_thread.html comp-sys-htmlman	html
 ./usr/share/man/html9/module_unload.html	comp-sys-htmlman	html
 ./usr/share/man/html9/module_unregister_callbacks.html comp-sys-htmlman	html
@@ -26731,12 +26732,12 @@
 ./usr/share/man/man9/module_hold.9		comp-sys-man		.man
 ./usr/share/man/man9/module_init.9		comp-sys-man		.man
 ./usr/share/man/man9/module_init_class.9	comp-sys-man		.man
-./usr/share/man/man9/module_load.9		comp-sys-man		.man
 ./usr/share/man/man9/module_kernel.9		comp-sys-man		.man
+./usr/share/man/man9/module_load.9		comp-sys-man		.man
 ./usr/share/man/man9/module_load_vfs_init.9	comp-sys-man		.man
 ./usr/share/man/man9/module_name.9		comp-sys-man		.man
-./usr/share/man/man9/module_rele.9		comp-sys-man		.man
 ./usr/share/man/man9/module_register_callbacks.9 	comp-sys-man		.man
+./usr/share/man/man9/module_rele.9		comp-sys-man		.man
 ./usr/share/man/man9/module_setspecific.9	comp-sys-man		.man
 ./usr/share/man/man9/module_source.9		comp-sys-man		.man
 ./usr/share/man/man9/module_specific_key_create.9 comp-sys-man		.man
