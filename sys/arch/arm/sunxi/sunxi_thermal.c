@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_thermal.c,v 1.5 2018/01/28 18:24:50 jmcneill Exp $ */
+/* $NetBSD: sunxi_thermal.c,v 1.6 2018/08/21 14:09:41 bsiegert Exp $ */
 
 /*-
  * Copyright (c) 2016-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_thermal.c,v 1.5 2018/01/28 18:24:50 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_thermal.c,v 1.6 2018/08/21 14:09:41 bsiegert Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -259,7 +259,7 @@ h5_to_temp(u_int sensor, uint32_t val)
 		mul = H5_TEMP_MUL_L;
 	} else {
 		base = sensor == 0 ? H5_TEMP_BASE_H_0 : H5_TEMP_BASE_H_1;
-		mul = sensor == 0 ? H5_TEMP_MUL_H_1 : H5_TEMP_MUL_H_1;
+		mul = sensor == 0 ? H5_TEMP_MUL_H_0 : H5_TEMP_MUL_H_1;
 	}
 
 	return (base - val * mul) >> H5_TEMP_DIV;
@@ -275,7 +275,7 @@ h5_to_reg(u_int sensor, int val)
 		mul = H5_TEMP_MUL_L;
 	} else {
 		base = sensor == 0 ? H5_TEMP_BASE_H_0 : H5_TEMP_BASE_H_1;
-		mul = sensor == 0 ? H5_TEMP_MUL_H_1 : H5_TEMP_MUL_H_1;
+		mul = sensor == 0 ? H5_TEMP_MUL_H_0 : H5_TEMP_MUL_H_1;
 	}
 
 	return (base - (val << H5_TEMP_DIV)) / mul;
