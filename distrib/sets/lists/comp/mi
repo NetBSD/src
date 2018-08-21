@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2185.2.6 2018/07/28 04:32:59 pgoyette Exp $
+#	$NetBSD: mi,v 1.2185.2.7 2018/08/21 04:10:04 pgoyette Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -2966,6 +2966,7 @@
 ./usr/include/sys/iostat.h			comp-c-include
 ./usr/include/sys/ipc.h				comp-c-include
 ./usr/include/sys/joystick.h			comp-c-include
+./usr/include/sys/kasan.h			comp-c-include
 ./usr/include/sys/kcore.h			comp-c-include
 ./usr/include/sys/kcpuset.h			comp-c-include
 ./usr/include/sys/kernel.h			comp-obsolete		obsolete
