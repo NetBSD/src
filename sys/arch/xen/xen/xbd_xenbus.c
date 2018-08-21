@@ -1,4 +1,4 @@
-/*      $NetBSD: xbd_xenbus.c,v 1.85 2018/08/21 18:45:16 jdolecek Exp $      */
+/*      $NetBSD: xbd_xenbus.c,v 1.86 2018/08/21 18:55:08 jdolecek Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.85 2018/08/21 18:45:16 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.86 2018/08/21 18:55:08 jdolecek Exp $");
 
 #include "opt_xen.h"
 
@@ -693,6 +693,7 @@ again:
 		KASSERT(xbdreq->req_nr_segments == 0);
 
 		bp = xbdreq->req_bp;
+		KASSERT(bp != NULL);
 		xbdreq->req_bp = NULL;
 		DPRINTF(("%s(%p): b_bcount = %ld\n", __func__,
 		    bp, (long)bp->b_bcount));
