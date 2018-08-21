@@ -1,5 +1,9 @@
 
+#if defined(__aarch64__)
+#define BOOT_ELF64
+#else
 #define BOOT_ELF32
+#endif
 
 #define LOAD_KERNEL	(LOAD_ALL & ~LOAD_TEXTA)
 #define COUNT_KERNEL	(COUNT_ALL & ~COUNT_TEXTA)
