@@ -1,4 +1,4 @@
-/*      $NetBSD: xbd_xenbus.c,v 1.84 2018/08/21 18:31:55 jdolecek Exp $      */
+/*      $NetBSD: xbd_xenbus.c,v 1.85 2018/08/21 18:45:16 jdolecek Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.84 2018/08/21 18:31:55 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.85 2018/08/21 18:45:16 jdolecek Exp $");
 
 #include "opt_xen.h"
 
@@ -661,16 +661,23 @@ again:
 	for (i = sc->sc_ring.rsp_cons; i != resp_prod; i++) {
 		blkif_response_t *rep = RING_GET_RESPONSE(&sc->sc_ring, i);
 		struct xbd_req *xbdreq = &sc->sc_reqs[rep->id];
-		bp = xbdreq->req_bp;
-		DPRINTF(("xbd_handler(%p): b_bcount = %ld\n",
-		    xbdreq->req_bp, (long)bp->b_bcount));
+
 		if (rep->operation == BLKIF_OP_FLUSH_DISKCACHE) {
+			KASSERT(xbdreq->req_bp == NULL);
 			xbdreq->req_sync.s_error = rep->status;
 			xbdreq->req_sync.s_done = 1;
 			wakeup(xbdreq); /* XXXSMP */
 			/* caller will free the req */
 			continue;
 		}
+
+		if (rep->operation != BLKIF_OP_READ &&
+		    rep->operation != BLKIF_OP_WRITE) {
+			aprint_error_dev(sc->sc_dksc.sc_dev,
+			    "bad operation %d from backend\n", rep->operation);
+			continue;
+		}
+
 		for (seg = xbdreq->req_nr_segments - 1; seg >= 0; seg--) {
 			if (__predict_false(
 			    xengnt_status(xbdreq->req_gntref[seg]))) {
@@ -683,14 +690,13 @@ again:
 			xengnt_revoke_access(xbdreq->req_gntref[seg]);
 			xbdreq->req_nr_segments--;
 		}
-		if (rep->operation != BLKIF_OP_READ &&
-		    rep->operation != BLKIF_OP_WRITE) {
-			aprint_error_dev(sc->sc_dksc.sc_dev,
-			    "bad operation %d from backend\n", rep->operation);
-			bp->b_error = EIO;
-			bp->b_resid = bp->b_bcount;
-			goto next;
-		}
+		KASSERT(xbdreq->req_nr_segments == 0);
+
+		bp = xbdreq->req_bp;
+		xbdreq->req_bp = NULL;
+		DPRINTF(("%s(%p): b_bcount = %ld\n", __func__,
+		    bp, (long)bp->b_bcount));
+
 		if (rep->status != BLKIF_RSP_OKAY) {
 			bp->b_error = EIO;
 			bp->b_resid = bp->b_bcount;
