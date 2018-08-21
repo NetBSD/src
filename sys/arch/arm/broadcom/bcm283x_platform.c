@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm283x_platform.c,v 1.12 2018/08/10 04:44:15 rin Exp $	*/
+/*	$NetBSD: bcm283x_platform.c,v 1.13 2018/08/21 08:45:17 rin Exp $	*/
 
 /*-
  * Copyright (c) 2017 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm283x_platform.c,v 1.12 2018/08/10 04:44:15 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm283x_platform.c,v 1.13 2018/08/21 08:45:17 rin Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_bcm283x.h"
@@ -663,10 +663,9 @@ bcm283x_bootparams(bus_space_tag_t iot, bus_space_handle_t ioh)
 		curcpu()->ci_data.cpu_cc_freq = vb.vbt_armclockrate.rate;
 
 #ifdef VERBOSE_INIT_ARM
-	if (vcprop_tag_success_p(&vb.vbt_memory.tag)) {
-		printf("%s: memory size  %d\n", __func__,
-		    vb.vbt_armclockrate.rate);
-	}
+	if (vcprop_tag_success_p(&vb.vbt_memory.tag))
+		printf("%s: memory size  %zu\n", __func__,
+		    bcm283x_memorysize);
 	if (vcprop_tag_success_p(&vb.vbt_armclockrate.tag))
 		printf("%s: arm clock    %d\n", __func__,
 		    vb.vbt_armclockrate.rate);
