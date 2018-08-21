@@ -1,4 +1,4 @@
-/*	$NetBSD: l2cap_signal.c,v 1.18 2016/10/04 14:13:46 joerg Exp $	*/
+/*	$NetBSD: l2cap_signal.c,v 1.19 2018/08/21 14:59:13 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: l2cap_signal.c,v 1.18 2016/10/04 14:13:46 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: l2cap_signal.c,v 1.19 2018/08/21 14:59:13 plunky Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -64,7 +64,8 @@ static void l2cap_qos_htob(void *, l2cap_qos_t *);
 
 /*
  * process incoming signal packets (CID 0x0001). Can contain multiple
- * requests/responses.
+ * requests/responses. The signal hander should clear the command from
+ * the mbuf before returning.
  */
 void
 l2cap_recv_signal(struct mbuf *m, struct hci_link *link)
@@ -72,11 +73,8 @@ l2cap_recv_signal(struct mbuf *m, struct hci_link *link)
 	l2cap_cmd_hdr_t cmd;
 
 	for(;;) {
-		if (m->m_pkthdr.len == 0)
-			goto finish;
-
 		if (m->m_pkthdr.len < sizeof(cmd))
-			goto reject;
+			goto finish;
 
 		m_copydata(m, 0, sizeof(cmd), &cmd);
 		cmd.length = le16toh(cmd.length);
@@ -183,32 +181,42 @@ l2cap_recv_command_rej(struct mbuf *m, struct hci_link *link)
 
 	cmd.length = le16toh(cmd.length);
 
+	/* The length here must contain the reason (2 octets) plus
+	 * any data (0 or more octets) but we already know it is not
+	 * bigger than l2cap_cmd_rej_cp
+	 */
 	m_copydata(m, 0, cmd.length, &cp);
 	m_adj(m, cmd.length);
+
+	if (cmd.length < 2)
+		return;
 
 	req = l2cap_request_lookup(link, cmd.ident);
 	if (req == NULL)
 		return;
 
 	switch (le16toh(cp.reason)) {
-	case L2CAP_REJ_NOT_UNDERSTOOD:
+	case L2CAP_REJ_NOT_UNDERSTOOD:	/* data length = 0 octets */
 		/*
 		 * I dont know what to do, just move up the timeout
 		 */
 		callout_schedule(&req->lr_rtx, 0);
 		break;
 
-	case L2CAP_REJ_MTU_EXCEEDED:
+	case L2CAP_REJ_MTU_EXCEEDED:	/* data length = 2 octets */
 		/*
 		 * I didnt send any commands over L2CAP_MTU_MINIMUM size, but..
 		 *
 		 * XXX maybe we should resend this, instead?
 		 */
+		if (cmd.length != 4)
+			return;
+
 		link->hl_mtu = le16toh(cp.data[0]);
 		callout_schedule(&req->lr_rtx, 0);
 		break;
 
-	case L2CAP_REJ_INVALID_CID:
+	case L2CAP_REJ_INVALID_CID:	/* data length = 4 octets */
 		/*
 		 * Well, if they dont have such a channel then our channel is
 		 * most likely closed. Make it so.

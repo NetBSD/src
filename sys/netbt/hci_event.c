@@ -1,4 +1,4 @@
-/*	$NetBSD: hci_event.c,v 1.24 2015/11/28 09:04:34 plunky Exp $	*/
+/*	$NetBSD: hci_event.c,v 1.25 2018/08/21 14:59:13 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hci_event.c,v 1.24 2015/11/28 09:04:34 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hci_event.c,v 1.25 2018/08/21 14:59:13 plunky Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -316,12 +316,14 @@ hci_event_command_compl(struct hci_unit *unit, struct mbuf *m)
 	 * that a command_complete packet will contain the status though most
 	 * do seem to.
 	 */
-	m_copydata(m, 0, sizeof(rp), &rp);
-	if (rp.status > 0)
-		aprint_error_dev(unit->hci_dev,
-		    "CommandComplete opcode (%03x|%04x) failed (status=0x%02x)\n",
-		    HCI_OGF(le16toh(ep.opcode)), HCI_OCF(le16toh(ep.opcode)),
-		    rp.status);
+	if (m->m_pkthdr.len >= sizeof(rp)) {
+		m_copydata(m, 0, sizeof(rp), &rp);
+		if (rp.status > 0)
+			aprint_error_dev(unit->hci_dev,
+			    "CommandComplete opcode (%03x|%04x) failed (status=0x%02x)\n",
+			    HCI_OGF(le16toh(ep.opcode)), HCI_OCF(le16toh(ep.opcode)),
+			    rp.status);
+	}
 
 	/*
 	 * post processing of completed commands
@@ -382,6 +384,9 @@ hci_event_num_compl_pkts(struct hci_unit *unit, struct mbuf *m)
 
 	m_copydata(m, 0, sizeof(ep), &ep);
 	m_adj(m, sizeof(ep));
+
+	if (m->m_pkthdr.len < ep.num_con_handles * (sizeof(handle) + sizeof(num)))
+		return;
 
 	while (ep.num_con_handles--) {
 		m_copydata(m, 0, sizeof(handle), &handle);
