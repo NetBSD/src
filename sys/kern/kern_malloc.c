@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_malloc.c,v 1.148 2018/08/20 15:04:52 maxv Exp $	*/
+/*	$NetBSD: kern_malloc.c,v 1.149 2018/08/21 01:25:57 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1987, 1991, 1993
@@ -70,9 +70,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.148 2018/08/20 15:04:52 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.149 2018/08/21 01:25:57 pgoyette Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_kasan.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/malloc.h>
