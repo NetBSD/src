@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.262 2018/08/12 17:11:55 christos Exp $
+# $NetBSD: mi,v 1.263 2018/08/21 11:09:18 christos Exp $
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib,compatfile
@@ -266,8 +266,8 @@
 ./usr/lib/libwrap_g.a				comp-c-debuglib		debuglib,compatfile
 ./usr/lib/liby_g.a				comp-c-debuglib		debuglib,compatfile
 ./usr/lib/libz_g.a				comp-c-debuglib		debuglib,compatfile
-./usr/lib/libzfs_g.a				comp-c-debuglib		debuglib,compatfile,zfs
 ./usr/lib/libzfs_core_g.a			comp-c-debuglib		debuglib,compatfile,zfs
+./usr/lib/libzfs_g.a				comp-c-debuglib		debuglib,compatfile,zfs
 ./usr/lib/libzpool_g.a				comp-c-debuglib		debuglib,compatfile,zfs
 ./usr/libdata/debug/bin/cat.debug		comp-util-debug		debug
 ./usr/libdata/debug/bin/chio.debug		comp-util-debug		debug
@@ -546,8 +546,8 @@
 ./usr/libdata/debug/usr/bin/g77.debug		comp-obsolete	obsolete
 ./usr/libdata/debug/usr/bin/gcc.debug		comp-c-debug		gcccmds,debug
 ./usr/libdata/debug/usr/bin/gcore.debug		comp-debug-debug	debug
-./usr/libdata/debug/usr/bin/gcov.debug		comp-debug-debug	gcccmds,debug
 ./usr/libdata/debug/usr/bin/gcov-dump.debug	comp-debug-debug	gcccmds,debug,gcc=6
+./usr/libdata/debug/usr/bin/gcov.debug		comp-debug-debug	gcccmds,debug
 ./usr/libdata/debug/usr/bin/gdb.debug		comp-debug-debug	gdb,debug
 ./usr/libdata/debug/usr/bin/gdbtui.debug	comp-debug-debug	gdb,debug
 ./usr/libdata/debug/usr/bin/gencat.debug	comp-locale-debug	debug
@@ -2128,6 +2128,8 @@
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_recvmmsg.debug		tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_revoke.debug		tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_select.debug		tests-lib-debug		debug,atf,compattestfile
+./usr/libdata/debug/usr/tests/lib/libc/sys/t_sendmmsg.debug		tests-lib-debug		debug,atf,compattestfile
+./usr/libdata/debug/usr/tests/lib/libc/sys/t_sendrecv.debug		tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_setrlimit.debug		tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_setuid.debug		tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_sigaction.debug		tests-lib-debug		debug,atf,compattestfile
