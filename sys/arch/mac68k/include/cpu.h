@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.99 2016/12/17 14:36:29 flxd Exp $	*/
+/*	$NetBSD: cpu.h,v 1.100 2018/08/22 01:05:22 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -122,9 +122,6 @@ extern int astpending;		/* need to trap before returning to user mode */
 #define aston() (astpending++)
 
 #endif /* _KERNEL */
-
-#define CPU_CONSDEV	1
-#define CPU_MAXID	2
 
 /* values for machineid --
  * 	These are equivalent to the MacOS Gestalt values. */
