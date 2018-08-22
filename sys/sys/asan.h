@@ -1,4 +1,4 @@
-/*	$NetBSD: asan.h,v 1.2 2018/08/22 09:38:21 maxv Exp $	*/
+/*	$NetBSD: asan.h,v 1.3 2018/08/22 10:09:21 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -39,20 +39,20 @@ void kasan_add_redzone(size_t *);
 void kasan_alloc(const void *, size_t, size_t);
 void kasan_free(const void *, size_t);
 #else
-static void __always_inline
+static void __always_inline __unused
 kasan_add_redzone(size_t *size __unused)
 {
 	/* nothing */
 }
 
-static void __always_inline
+static void __always_inline __unused
 kasan_alloc(const void *addr __unused, size_t size __unused,
     size_t sz_with_redz __unused)
 {
 	/* nothing */
 }
 
-static void __always_inline
+static void __always_inline __unused
 kasan_free(const void *addr __unused, size_t sz_with_redz __unused)
 {
 	/* nothing */
