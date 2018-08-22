@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs.h,v 1.136 2018/08/12 10:43:04 skrll Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.137 2018/08/22 12:07:43 maxv Exp $	*/
 
 /* * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -38,6 +38,7 @@
 
 #ifdef _KERNEL_OPT
 #include "opt_diagnostic.h"
+#include "opt_kasan.h"
 #endif
 
 /*
@@ -304,6 +305,14 @@
 #define	__unreachable()	__builtin_unreachable()
 #else
 #define	__unreachable()	do {} while (/*CONSTCOND*/0)
+#endif
+
+#if defined(_KERNEL)
+#if __GNUC_PREREQ__(4, 9) && defined(KASAN)
+#define	__noasan	__attribute__((no_sanitize_address))
+#else
+#define	__noasan	/* nothing */
+#endif
 #endif
 
 /*

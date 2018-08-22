@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.c,v 1.163 2016/05/22 09:10:37 maxv Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.164 2018/08/22 12:07:43 maxv Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -62,11 +62,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.163 2016/05/22 09:10:37 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.164 2018/08/22 12:07:43 maxv Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_kstack.h"
 #include "opt_uvmhist.h"
+#include "opt_kasan.h"
 
 /*
  * uvm_glue.c: glue functions
@@ -83,6 +84,7 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.163 2016/05/22 09:10:37 maxv Exp $");
 #include <sys/cpu.h>
 #include <sys/atomic.h>
 #include <sys/lwp.h>
+#include <sys/asan.h>
 
 #include <uvm/uvm.h>
 
@@ -384,6 +386,7 @@ void
 uvm_uarea_free(vaddr_t uaddr)
 {
 
+	kasan_free((void *)uaddr, USPACE);
 	pool_cache_put(uvm_uarea_cache, (void *)uaddr);
 }
 
@@ -391,6 +394,7 @@ void
 uvm_uarea_system_free(vaddr_t uaddr)
 {
 
+	kasan_free((void *)uaddr, USPACE);
 	pool_cache_put(uvm_uarea_system_cache, (void *)uaddr);
 }
 

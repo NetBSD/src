@@ -1,4 +1,4 @@
-/*	$NetBSD: asan.c,v 1.2 2018/08/22 09:11:47 maxv Exp $	*/
+/*	$NetBSD: asan.c,v 1.3 2018/08/22 12:07:42 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: asan.c,v 1.2 2018/08/22 09:11:47 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asan.c,v 1.3 2018/08/22 12:07:42 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -60,6 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: asan.c,v 1.2 2018/08/22 09:11:47 maxv Exp $");
 #define __RET_ADDR	(unsigned long)__builtin_return_address(0)
 
 void kasan_shadow_map(void *, size_t);
+void kasan_early_init(void);
 void kasan_init(void);
 
 static bool kasan_enabled __read_mostly = false;
@@ -78,25 +79,59 @@ kasan_unsupported(vaddr_t addr)
 	    addr < ((vaddr_t)PTE_BASE + NBPD_L4));
 }
 
+/* -------------------------------------------------------------------------- */
+
+static bool kasan_early __read_mostly = true;
+static uint8_t earlypages[8 * PAGE_SIZE] __aligned(PAGE_SIZE);
+static size_t earlytaken = 0;
+
+static paddr_t
+kasan_early_palloc(void)
+{
+	paddr_t ret;
+
+	KASSERT(earlytaken < 8);
+
+	ret = (paddr_t)(&earlypages[0] + earlytaken * PAGE_SIZE);
+	earlytaken++;
+
+	ret -= KERNBASE;
+
+	return ret;
+}
+
+static paddr_t
+kasan_palloc(void)
+{
+	paddr_t pa;
+
+	if (__predict_false(kasan_early))
+		pa = kasan_early_palloc();
+	else
+		pa = pmap_get_physpage();
+
+	return pa;
+}
+
 static void
 kasan_shadow_map_page(vaddr_t va)
 {
 	paddr_t pa;
 
 	if (!pmap_valid_entry(L4_BASE[pl4_i(va)])) {
-		pa = pmap_get_physpage();
+		pa = kasan_palloc();
 		L4_BASE[pl4_i(va)] = pa | PG_KW | pmap_pg_nx | PG_V;
 	}
 	if (!pmap_valid_entry(L3_BASE[pl3_i(va)])) {
-		pa = pmap_get_physpage();
+		pa = kasan_palloc();
 		L3_BASE[pl3_i(va)] = pa | PG_KW | pmap_pg_nx | PG_V;
 	}
 	if (!pmap_valid_entry(L2_BASE[pl2_i(va)])) {
-		pa = pmap_get_physpage();
+		pa = kasan_palloc();
 		L2_BASE[pl2_i(va)] = pa | PG_KW | pmap_pg_nx | PG_V;
 	}
 	if (!pmap_valid_entry(L1_BASE[pl1_i(va)])) {
-		pa = pmap_get_physpage();
+		pa = kasan_palloc();
 		L1_BASE[pl1_i(va)] = pa | PG_KW | pmap_pg_g | pmap_pg_nx | PG_V;
 	}
 }
@@ -158,6 +193,18 @@ kasan_ctors(void)
 
 		ptr++;
 	}
+}
+
+/*
+ * Map only the current stack. We will map the rest in kasan_init.
+ */
+void
+kasan_early_init(void)
+{
+	extern vaddr_t lwp0uarea;
+
+	kasan_shadow_map((void *)lwp0uarea, USPACE);
+	kasan_early = false;
 }
 
 /*

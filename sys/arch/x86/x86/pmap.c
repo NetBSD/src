@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.304 2018/08/20 15:04:52 maxv Exp $	*/
+/*	$NetBSD: pmap.c,v 1.305 2018/08/22 12:07:43 maxv Exp $	*/
 
 /*
  * Copyright (c) 2008, 2010, 2016, 2017 The NetBSD Foundation, Inc.
@@ -157,7 +157,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.304 2018/08/20 15:04:52 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.305 2018/08/22 12:07:43 maxv Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -1405,7 +1405,7 @@ vaddr_t slotspace_rand(int, size_t, size_t);
  * randomly select one hole, and then randomly select an area within that hole.
  * Finally we update the associated entry in the slotspace structure.
  */
-vaddr_t
+vaddr_t __noasan
 slotspace_rand(int type, size_t sz, size_t align)
 {
 	struct {
