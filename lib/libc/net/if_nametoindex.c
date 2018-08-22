@@ -1,4 +1,4 @@
-/*	$NetBSD: if_nametoindex.c,v 1.5 2015/09/01 09:54:34 ozaki-r Exp $	*/
+/*	$NetBSD: if_nametoindex.c,v 1.6 2018/08/22 03:12:31 msaitoh Exp $	*/
 /*	$KAME: if_nametoindex.c,v 1.6 2000/11/24 08:18:54 itojun Exp $	*/
 
 /*-
@@ -28,19 +28,21 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: if_nametoindex.c,v 1.5 2015/09/01 09:54:34 ozaki-r Exp $");
+__RCSID("$NetBSD: if_nametoindex.c,v 1.6 2018/08/22 03:12:31 msaitoh Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #ifndef RUMP_ACTION
 #include "namespace.h"
 #endif
 #include <sys/types.h>
+#include <sys/ioctl.h>
 #include <sys/socket.h>
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <ifaddrs.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 #include <errno.h>
 
 #ifndef RUMP_ACTION
@@ -71,11 +73,24 @@ __weak_alias(if_nametoindex,_if_nametoindex)
 unsigned int
 if_nametoindex(const char *ifname)
 {
+	int s;
+	struct ifreq ifr;
 	struct ifaddrs *ifaddrs, *ifa;
 	unsigned int ni;
 
+	s = socket(AF_INET, SOCK_DGRAM | SOCK_CLOEXEC, 0);
+	if (s != -1) {
+		memset(&ifr, 0, sizeof(ifr));
+		strlcpy(ifr.ifr_name, ifname, sizeof(ifr.ifr_name));
+		if (ioctl(s, SIOCGIFINDEX, &ifr) != -1) {
+			close(s);
+			return (ifr.ifr_index);
+		}
+		close(s);
+	}
+
 	if (getifaddrs(&ifaddrs) < 0)
-		return(0);
+		return 0;
 
 	ni = 0;
 
@@ -92,5 +107,5 @@ if_nametoindex(const char *ifname)
 	freeifaddrs(ifaddrs);
 	if (!ni)
 		errno = ENXIO;
-	return(ni);
+	return ni;
 }
