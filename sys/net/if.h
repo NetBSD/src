@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.264 2018/07/03 03:37:03 ozaki-r Exp $	*/
+/*	$NetBSD: if.h,v 1.265 2018/08/22 01:05:24 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -1324,24 +1324,11 @@ int	sysctl_ifq(int *name, u_int namelen, void *oldp,
 		       size_t *oldlenp, void *newp, size_t newlen,
 		       struct ifqueue *ifq);
 /* symbolic names for terminal (per-protocol) CTL_IFQ_ nodes */
-#define IFQCTL_LEN 1
-#define IFQCTL_MAXLEN 2
-#define IFQCTL_PEAK 3
-#define IFQCTL_DROPS 4
-#define IFQCTL_MAXID 5
+#define IFQCTL_LEN	1
+#define IFQCTL_MAXLEN	2
+#define IFQCTL_PEAK	3
+#define IFQCTL_DROPS	4
 
 #endif /* _KERNEL */
 
-#ifdef _NETBSD_SOURCE
-/*
- * sysctl for ifq (per-protocol packet input queue variant of ifqueue)
- */
-#define CTL_IFQ_NAMES  { \
-	{ 0, 0 }, \
-	{ "len", CTLTYPE_INT }, \
-	{ "maxlen", CTLTYPE_INT }, \
-	{ "peak", CTLTYPE_INT }, \
-	{ "drops", CTLTYPE_INT }, \
-}
-#endif /* _NETBSD_SOURCE */
 #endif /* !_NET_IF_H_ */

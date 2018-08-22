@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs.h,v 1.77 2018/01/25 17:14:36 riastradh Exp $	*/
+/*	$NetBSD: nfs.h,v 1.78 2018/08/22 01:05:24 msaitoh Exp $	*/
 /*
  * Copyright (c) 1989, 1993, 1995
  *	The Regents of the University of California.  All rights reserved.
@@ -291,13 +291,6 @@ struct nfsstats {
  */
 #define NFS_NFSSTATS	1		/* struct: struct nfsstats */
 #define NFS_IOTHREADS	2		/* number of io threads */
-#define	NFS_MAXID	3
-
-#define NFS_NAMES { \
-	{ 0, 0 }, \
-	{ "nfsstats", CTLTYPE_STRUCT }, \
-	{ "iothreads", CTLTYPE_INT }, \
-}
 
 /*
  * The set of signals the interrupt an I/O in progress for NFSMNT_INT mounts.

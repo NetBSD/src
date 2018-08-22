@@ -1,5 +1,5 @@
 /*	$KAME: dccp_var.h,v 1.29 2005/11/03 14:59:28 nishida Exp $	*/
-/*	$NetBSD: dccp_var.h,v 1.3 2016/07/07 06:55:43 msaitoh Exp $ */
+/*	$NetBSD: dccp_var.h,v 1.4 2018/08/22 01:05:24 msaitoh Exp $ */
 
 /*
  * Copyright (c) 2003 Joacim Häggmark, Magnus Erixzon, Nils-Erik Mattsson 
@@ -257,14 +257,6 @@ extern const char *dccpstates[];
 #define DCCPCTL_PCBLIST		3
 #define DCCPCTL_SENDSPACE	4
 #define DCCPCTL_RECVSPACE	5
-
-#define DCCPCTL_NAMES { \
-	{ 0, 0 }, \
-	{ "defccid", CTLTYPE_INT }, \
-	{ "stats", CTLTYPE_STRUCT }, \
-	{ "sendspace", CTLTYPE_INT }, \
-	{ "recvspace", CTLTYPE_INT }, \
-}
 
 #ifdef _KERNEL
 

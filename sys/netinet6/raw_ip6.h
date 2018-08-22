@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip6.h,v 1.4 2008/04/15 05:13:37 thorpej Exp $	*/
+/*	$NetBSD: raw_ip6.h,v 1.5 2018/08/22 01:05:24 msaitoh Exp $	*/
 /*	$KAME: raw_ip6.h,v 1.2 2001/05/27 13:28:35 itojun Exp $	*/
 
 /*
@@ -50,12 +50,6 @@
  * Names for Raw IPv6 sysctl objects
  */
 #define RAW6CTL_STATS	1
-#define RAW6CTL_MAXID	2
-
-#define RAW6CTL_NAMES { \
-	{ 0, 0 }, \
-	{ "stats", CTLTYPE_STRUCT }, \
-}
 
 #ifdef _KERNEL
 extern struct rip6stat rip6stat;
