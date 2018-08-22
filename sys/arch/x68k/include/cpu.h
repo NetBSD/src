@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.59 2016/12/17 14:36:30 flxd Exp $	*/
+/*	$NetBSD: cpu.h,v 1.60 2018/08/22 01:05:23 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -111,20 +111,11 @@ struct clockframe {
 extern int astpending;		/* need to trap before returning to user mode */
 #define aston() (astpending++)
 
-#endif /* _KERNEL */
-
-/*
- * CTL_MACHDEP definitions.
- */
-#define	CPU_CONSDEV		1	/* dev_t: console terminal device */
-#define	CPU_MAXID		2	/* number of valid machdep ids */
-
 /*
  * The rest of this should probably be moved to <machine/x68kcpu.h>
  * although some of it could probably be put into generic 68k headers.
  */
 
-#ifdef _KERNEL
 extern uint8_t *intiobase;
 extern uint8_t *intiolimit;
 
