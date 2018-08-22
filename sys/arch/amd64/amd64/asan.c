@@ -1,4 +1,4 @@
-/*	$NetBSD: asan.c,v 1.3 2018/08/22 12:07:42 maxv Exp $	*/
+/*	$NetBSD: asan.c,v 1.4 2018/08/22 17:04:36 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: asan.c,v 1.3 2018/08/22 12:07:42 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asan.c,v 1.4 2018/08/22 17:04:36 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -59,6 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: asan.c,v 1.3 2018/08/22 12:07:42 maxv Exp $");
 
 #define __RET_ADDR	(unsigned long)__builtin_return_address(0)
 
+void kasan_softint(struct lwp *);
 void kasan_shadow_map(void *, size_t);
 void kasan_early_init(void);
 void kasan_init(void);
@@ -320,6 +321,14 @@ kasan_markmem(const void *addr, size_t size, bool valid)
 		KASSERT(size % KASAN_SHADOW_SCALE_SIZE == 0);
 		kasan_shadow_fill(addr, size, KASAN_MEMORY_REDZONE);
 	}
+}
+
+void
+kasan_softint(struct lwp *l)
+{
+	const void *stk = (const void *)uvm_lwp_getuarea(l);
+
+	kasan_shadow_fill(stk, USPACE, 0);
 }
 
 void
