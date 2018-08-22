@@ -1,4 +1,4 @@
-/* $NetBSD: exynos_platform.c,v 1.13 2018/08/19 07:27:33 skrll Exp $ */
+/* $NetBSD: exynos_platform.c,v 1.14 2018/08/22 07:43:02 skrll Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared D. McNeill <jmcneill@invisible.ca>
@@ -34,7 +34,7 @@
 #include "ukbd.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exynos_platform.c,v 1.13 2018/08/19 07:27:33 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exynos_platform.c,v 1.14 2018/08/22 07:43:02 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -94,7 +94,7 @@ exynos_platform_early_putchar(char c)
 	volatile uint32_t *uartaddr = cpu_earlydevice_va_p() ?
 	    (volatile uint32_t *)CONSADDR_VA :
 	    (volatile uint32_t *)CONSADDR;
-	    
+
 	while ((uartaddr[SSCOM_UFSTAT / 4] & UFSTAT_TXFULL) != 0)
 		;
 
