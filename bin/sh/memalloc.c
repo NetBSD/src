@@ -1,4 +1,4 @@
-/*	$NetBSD: memalloc.c,v 1.31 2018/07/22 20:37:57 kre Exp $	*/
+/*	$NetBSD: memalloc.c,v 1.32 2018/08/22 20:08:54 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)memalloc.c	8.3 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: memalloc.c,v 1.31 2018/07/22 20:37:57 kre Exp $");
+__RCSID("$NetBSD: memalloc.c,v 1.32 2018/08/22 20:08:54 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -160,7 +160,7 @@ stunalloc(pointer p)
 }
 
 
-
+/* save the current status of the sh stack */
 void
 setstackmark(struct stackmark *mark)
 {
@@ -172,15 +172,23 @@ setstackmark(struct stackmark *mark)
 	markp = mark;
 }
 
-
+/* reset the stack mark, and remove it from the list of marks */
 void
 popstackmark(struct stackmark *mark)
+{
+	markp = mark->marknext;		/* delete mark from the list */
+	rststackmark(mark);		/* and reset stack */
+}
+
+/* reset the shell stack to its state recorded in the stack mark */
+void
+rststackmark(struct stackmark *mark)
 {
 	struct stack_block *sp;
 
 	INTOFF;
-	markp = mark->marknext;
 	while (stackp != mark->stackp) {
+		/* delete any recently allocated mem blocks */
 		sp = stackp;
 		stackp = sp->prev;
 		ckfree(sp);
