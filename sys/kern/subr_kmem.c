@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_kmem.c,v 1.70 2018/08/22 09:38:21 maxv Exp $	*/
+/*	$NetBSD: subr_kmem.c,v 1.71 2018/08/22 14:12:30 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009-2015 The NetBSD Foundation, Inc.
@@ -92,11 +92,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_kmem.c,v 1.70 2018/08/22 09:38:21 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_kmem.c,v 1.71 2018/08/22 14:12:30 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_kmem.h"
-#include "opt_kasan.h"
 #endif
 
 #include <sys/param.h>
@@ -224,7 +223,9 @@ CTASSERT(KM_NOSLEEP == PR_NOWAIT);
 void *
 kmem_intr_alloc(size_t requested_size, km_flag_t kmflags)
 {
+#ifdef KASAN
 	const size_t origsize = requested_size;
+#endif
 	size_t allocsz, index;
 	size_t size;
 	pool_cache_t pc;
