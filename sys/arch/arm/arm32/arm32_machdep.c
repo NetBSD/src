@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_machdep.c,v 1.119 2018/08/15 06:59:29 skrll Exp $	*/
+/*	$NetBSD: arm32_machdep.c,v 1.120 2018/08/22 07:47:33 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.119 2018/08/15 06:59:29 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.120 2018/08/22 07:47:33 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_fdt.h"
@@ -270,7 +270,6 @@ cpu_startup(void)
 {
 	vaddr_t minaddr;
 	vaddr_t maxaddr;
-	char pbuf[9];
 
 	/* Set the CPU control register */
 	cpu_setup(boot_args);
@@ -302,24 +301,13 @@ cpu_startup(void)
 	initmsgbuf(msgbufaddr, round_page(MSGBUFSIZE));
 
 	/*
-	 * Identify ourselves for the msgbuf (everything printed earlier will
-	 * not be buffered).
-	 */
-	printf("%s%s", copyright, version);
-
-	format_bytes(pbuf, sizeof(pbuf), arm_ptob(physmem));
-	printf("total memory = %s\n", pbuf);
-
-	minaddr = 0;
-
-	/*
 	 * Allocate a submap for physio
 	 */
+	minaddr = 0;
 	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
 				   VM_PHYS_SIZE, 0, false, NULL);
 
-	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
-	printf("avail memory = %s\n", pbuf);
+	banner();
 
 	/*
 	 * This is actually done by initarm_common, but not all ports use it
