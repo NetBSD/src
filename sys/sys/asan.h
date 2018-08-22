@@ -1,4 +1,4 @@
-/*	$NetBSD: asan.h,v 1.5 2018/08/22 12:14:29 kre Exp $	*/
+/*	$NetBSD: asan.h,v 1.6 2018/08/22 12:42:06 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -39,31 +39,24 @@ void kasan_add_redzone(size_t *);
 void kasan_alloc(const void *, size_t, size_t);
 void kasan_free(const void *, size_t);
 #else
-#if 0
-/* there are type issues - kmem_alloc() takes a u_long size not size_t */
-static void __inline __unused
+__inline static void __unused
 kasan_add_redzone(size_t *size __unused)
 {
 	/* nothing */
 }
 
-static void __inline __unused
+__inline static void __unused
 kasan_alloc(const void *addr __unused, size_t size __unused,
     size_t sz_with_redz __unused)
 {
 	/* nothing */
 }
 
-static void __inline __unused
+__inline static void __unused
 kasan_free(const void *addr __unused, size_t sz_with_redz __unused)
 {
 	/* nothing */
 }
-#else
-#define	kasan_add_redzone(SP)	__nothing
-#define	kasan_alloc(P, S1, S2)	__nothing
-#define	kasan_free(P, S)	__nothing
-#endif
 #endif
 
 #endif /* !_SYS_ASAN_H_ */
