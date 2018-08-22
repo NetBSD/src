@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.43 2016/12/17 14:36:30 flxd Exp $	*/
+/*	$NetBSD: cpu.h,v 1.44 2018/08/22 01:05:23 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -129,16 +129,6 @@ extern volatile u_char *ctrl_ast;
 #define aston()		\
 	do { astpending++; *ctrl_ast = 0xff; } while (/* CONSTCOND */0)
 
-#endif /* _KERNEL */
-
-/*
- * CTL_MACHDEP definitions.
- */
-#define CPU_CONSDEV		1	/* dev_t: console terminal device */
-#define CPU_MAXID		2	/* number of valid machdep ids */
-
-#ifdef _KERNEL
-
 #if defined(news1700) || defined(news1200)
 #ifndef M68030
 #define M68030
@@ -150,9 +140,6 @@ extern volatile u_char *ctrl_ast;
 #define CACHE_HAVE_PAC
 #endif
 
-#endif
-
-#ifdef _KERNEL
 extern int systype;
 #define NEWS1700	0
 #define NEWS1200	1
