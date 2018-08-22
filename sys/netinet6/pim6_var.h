@@ -1,4 +1,4 @@
-/*	$NetBSD: pim6_var.h,v 1.14 2008/04/15 05:40:15 thorpej Exp $	*/
+/*	$NetBSD: pim6_var.h,v 1.15 2018/08/22 01:05:24 msaitoh Exp $	*/
 /*	$KAME: pim6_var.h,v 1.8 2000/06/06 08:07:43 jinmei Exp $	*/
 
 /*
@@ -60,10 +60,5 @@ int	pim6_input(struct mbuf **, int*, int);
  * Names for PIM sysctl objects
  */
 #define PIM6CTL_STATS		1	/* statistics (read-only) */
-#define PIM6CTL_MAXID		2
 
-#define PIM6CTL_NAMES { \
-	{ 0, 0 }, \
-	{ "stats", CTLTYPE_STRUCT }, \
-}
 #endif /* !_NETINET6_PIM6_VAR_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.56 2013/10/19 19:20:59 christos Exp $	*/
+/*	$NetBSD: cpu.h,v 1.57 2018/08/22 01:05:23 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -246,7 +246,6 @@ do {									\
  */
 #define	CPU_CONSDEV		1	/* dev_t: console terminal device */
 #define	CPU_LOADANDRESET	2	/* load kernel image and reset */
-#define	CPU_MAXID		3	/* number of valid machdep ids */
 
 #ifdef _KERNEL
 void sh_cpu_init(int, int);

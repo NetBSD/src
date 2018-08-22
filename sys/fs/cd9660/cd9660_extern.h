@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_extern.h,v 1.26 2013/06/23 07:28:36 dholland Exp $	*/
+/*	$NetBSD: cd9660_extern.h,v 1.27 2018/08/22 01:05:23 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -46,12 +46,6 @@
  * Sysctl values for the cd9660 filesystem.
  */
 #define CD9660_UTF8_JOLIET	1	/* UTF-8 encode Joliet file names */
-
-#define CD9660_NAMES { \
-        { 0, 0 }, \
-        { "utf8_joliet", CTLTYPE_INT }, \
-}
-
 
 /* CD-ROM Format type */
 enum ISO_FTYPE  { ISO_FTYPE_DEFAULT, ISO_FTYPE_9660, ISO_FTYPE_RRIP, ISO_FTYPE_ECMA };

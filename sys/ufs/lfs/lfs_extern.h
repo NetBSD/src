@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_extern.h,v 1.113 2017/07/26 16:42:37 maya Exp $	*/
+/*	$NetBSD: lfs_extern.h,v 1.114 2018/08/22 01:05:24 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -83,7 +83,6 @@ MALLOC_DECLARE(M_SEGMENT);
 #define LFS_DO_RFW	 7
 #define LFS_DEBUGLOG	 8
 #define LFS_IGNORE_LAZY_SYNC	9
-#define LFS_MAXID	 10
 
 /* not ours */
 struct fid;

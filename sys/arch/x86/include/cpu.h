@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.96 2018/07/16 07:07:30 pgoyette Exp $	*/
+/*	$NetBSD: cpu.h,v 1.97 2018/08/22 01:05:23 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -562,8 +562,6 @@ void x86_bus_space_mallocok(void);
 					 */
 #define	CPU_FPU_SAVE_SIZE	16	/* int: FPU Instruction layout size */
 #define	CPU_XSAVE_FEATURES	17	/* quad: XSAVE features */
-
-#define	CPU_MAXID		18	/* number of valid machdep ids */
 
 /*
  * Structure for CPU_DISKINFO sysctl call.

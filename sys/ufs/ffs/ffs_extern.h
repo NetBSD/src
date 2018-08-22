@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_extern.h,v 1.84 2017/02/09 04:37:35 kre Exp $	*/
+/*	$NetBSD: ffs_extern.h,v 1.85 2018/08/22 01:05:24 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -43,7 +43,6 @@
 #define FFS_ASYNCFREE		4	/* asynchronous block freeing enabled */
 #define FFS_LOG_CHANGEOPT	5	/* log optimalization strategy change */
 #define FFS_EXTATTR_AUTOCREATE	6	/* size for backing file autocreation */
-#define FFS_MAXID		7	/* number of valid ffs ids */
 
 struct buf;
 struct fid;

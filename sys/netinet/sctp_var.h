@@ -1,5 +1,5 @@
 /*	$KAME: sctp_var.h,v 1.24 2005/03/06 16:04:19 itojun Exp $	*/
-/*	$NetBSD: sctp_var.h,v 1.1 2015/10/13 21:28:35 rjs Exp $ */
+/*	$NetBSD: sctp_var.h,v 1.2 2018/08/22 01:05:24 msaitoh Exp $ */
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Cisco Systems, Inc.
@@ -77,72 +77,8 @@
 #define SCTPCTL_NR_OUTGOING_STREAMS 25
 #ifdef SCTP_DEBUG
 #define SCTPCTL_DEBUG               26
-#define SCTPCTL_MAXID		    27
-#else
-#define SCTPCTL_MAXID		    26
 #endif
 
-#endif
-
-#ifdef SCTP_DEBUG
-#define SCTPCTL_NAMES { \
-	{ 0, 0 }, \
-	{ "maxdgram", CTLTYPE_INT }, \
-	{ "recvspace", CTLTYPE_INT }, \
-	{ "autoasconf", CTLTYPE_INT }, \
-	{ "ecn_enable", CTLTYPE_INT }, \
-	{ "ecn_nonce", CTLTYPE_INT }, \
-	{ "strict_sack", CTLTYPE_INT }, \
-	{ "looback_nocsum", CTLTYPE_INT }, \
-	{ "strict_init", CTLTYPE_INT }, \
-	{ "peer_chkoh", CTLTYPE_INT }, \
-	{ "maxburst", CTLTYPE_INT }, \
-	{ "maxchunks", CTLTYPE_INT }, \
-	{ "delayed_sack_time", CTLTYPE_INT }, \
-	{ "heartbeat_interval", CTLTYPE_INT }, \
-	{ "pmtu_raise_time", CTLTYPE_INT }, \
-	{ "shutdown_guard_time", CTLTYPE_INT }, \
-	{ "secret_lifetime", CTLTYPE_INT }, \
-	{ "rto_max", CTLTYPE_INT }, \
-	{ "rto_min", CTLTYPE_INT }, \
-	{ "rto_initial", CTLTYPE_INT }, \
-	{ "init_rto_max", CTLTYPE_INT }, \
-	{ "valid_cookie_life", CTLTYPE_INT }, \
-	{ "init_rtx_max", CTLTYPE_INT }, \
-	{ "assoc_rtx_max", CTLTYPE_INT }, \
-	{ "path_rtx_max", CTLTYPE_INT }, \
-	{ "nr_outgoing_streams", CTLTYPE_INT }, \
-	{ "debug", CTLTYPE_INT }, \
-}
-#else
-#define SCTPCTL_NAMES { \
-	{ 0, 0 }, \
-	{ "maxdgram", CTLTYPE_INT }, \
-	{ "recvspace", CTLTYPE_INT }, \
-	{ "autoasconf", CTLTYPE_INT }, \
-	{ "ecn_enable", CTLTYPE_INT }, \
-	{ "ecn_nonce", CTLTYPE_INT }, \
-	{ "strict_sack", CTLTYPE_INT }, \
-	{ "looback_nocsum", CTLTYPE_INT }, \
-	{ "strict_init", CTLTYPE_INT }, \
-	{ "peer_chkoh", CTLTYPE_INT }, \
-	{ "maxburst", CTLTYPE_INT }, \
-	{ "maxchunks", CTLTYPE_INT }, \
-	{ "delayed_sack_time", CTLTYPE_INT }, \
-	{ "heartbeat_interval", CTLTYPE_INT }, \
-	{ "pmtu_raise_time", CTLTYPE_INT }, \
-	{ "shutdown_guard_time", CTLTYPE_INT }, \
-	{ "secret_lifetime", CTLTYPE_INT }, \
-	{ "rto_max", CTLTYPE_INT }, \
-	{ "rto_min", CTLTYPE_INT }, \
-	{ "rto_initial", CTLTYPE_INT }, \
-	{ "init_rto_max", CTLTYPE_INT }, \
-	{ "valid_cookie_life", CTLTYPE_INT }, \
-	{ "init_rtx_max", CTLTYPE_INT }, \
-	{ "assoc_rtx_max", CTLTYPE_INT }, \
-	{ "path_rtx_max", CTLTYPE_INT }, \
-	{ "nr_outgoing_streams", CTLTYPE_INT }, \
-}
 #endif
 
 #if defined(_KERNEL)

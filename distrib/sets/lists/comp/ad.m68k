@@ -1,4 +1,4 @@
-# $NetBSD: ad.m68k,v 1.56 2018/07/12 10:46:40 maxv Exp $
+# $NetBSD: ad.m68k,v 1.57 2018/08/22 01:05:21 msaitoh Exp $
 ./usr/bin/elf2aout				comp-sysutil-bin
 ./usr/include/gcc-4.8/math-68881.h		comp-c-include		obsolete
 ./usr/include/gcc-4.8/tgmath.h			comp-c-include		obsolete
@@ -60,7 +60,7 @@
 ./usr/include/m68k/stdarg.h			comp-obsolete		obsolete
 ./usr/include/m68k/svr4_machdep.h		comp-obsolete		obsolete
 ./usr/include/m68k/sync_icache.h		comp-c-include
-./usr/include/m68k/sysctl.h			comp-c-include
+./usr/include/m68k/sysctl.h			comp-c-include		obsolete
 ./usr/include/m68k/trap.h			comp-c-include
 ./usr/include/m68k/types.h			comp-c-include
 ./usr/include/m68k/varargs.h			comp-obsolete		obsolete

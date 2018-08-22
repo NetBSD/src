@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.214 2018/02/04 17:31:51 maxv Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.215 2018/08/22 01:05:23 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 2003, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.214 2018/02/04 17:31:51 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.215 2018/08/22 01:05:23 msaitoh Exp $");
 
 #include "opt_sysv.h"
 #include "opt_compat_netbsd.h"
@@ -632,6 +632,8 @@ struct ctldebug /* debug0, */ /* debug1, */ debug2, debug3, debug4;
 struct ctldebug debug5, debug6, debug7, debug8, debug9;
 struct ctldebug debug10, debug11, debug12, debug13, debug14;
 struct ctldebug debug15, debug16, debug17, debug18, debug19;
+
+#define	CTL_DEBUG_MAXID		20
 static struct ctldebug *debugvars[CTL_DEBUG_MAXID] = {
 	&debug0, &debug1, &debug2, &debug3, &debug4,
 	&debug5, &debug6, &debug7, &debug8, &debug9,

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.15 2011/09/19 19:17:05 rkujawa Exp $	*/
+/*	$NetBSD: cpu.h,v 1.16 2018/08/22 01:05:22 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -161,6 +161,11 @@
 
 #define CACHELINE_SIZE	16
 #define CACHELINE_MASK	(CACHELINE_SIZE - 1)
+
+/* CTL_MACHDEP definitions. (Common to all m68k ports.) */
+#define	CPU_CONSDEV		1	/* dev_t: console terminal device */
+#define	CPU_ROOT_DEVICE		2	/* string: root device name */
+#define	CPU_BOOTED_KERNEL	3	/* string: booted kernel name */
 
 #if defined(_KERNEL) || defined(_KMEMUSER)
 #include <sys/cpu_data.h>

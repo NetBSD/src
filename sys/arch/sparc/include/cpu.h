@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.100 2018/01/16 08:23:17 mrg Exp $ */
+/*	$NetBSD: cpu.h,v 1.101 2018/08/22 01:05:23 msaitoh Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -50,7 +50,6 @@
 #define	CPU_BOOTED_DEVICE	2	/* string: device booted from */
 #define	CPU_BOOT_ARGS		3	/* string: args booted with */
 #define	CPU_ARCH		4	/* integer: cpu architecture version */
-#define	CPU_MAXID		5	/* number of valid machdep ids */
 
 /*
  * Exported definitions unique to SPARC cpu support.

@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.209 2018/08/09 17:43:54 maxv Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.210 2018/08/22 01:05:24 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1999, 2001, 2007 The NetBSD Foundation, Inc.
@@ -748,18 +748,6 @@ struct mbstat_cpu {
 #define	MBUF_MCLLOWAT		5	/* int: mbuf cluster low water mark */
 #define	MBUF_STATS		6	/* struct: mbstat */
 #define	MBUF_MOWNERS		7	/* struct: m_owner[] */
-#define	MBUF_MAXID		8	/* number of valid MBUF ids */
-
-#define	CTL_MBUF_NAMES {						\
-	{ 0, 0 },							\
-	{ "msize", CTLTYPE_INT },					\
-	{ "mclbytes", CTLTYPE_INT },					\
-	{ "nmbclusters", CTLTYPE_INT },					\
-	{ "mblowat", CTLTYPE_INT },					\
-	{ "mcllowat", CTLTYPE_INT },					\
-	{ 0 /* "stats" */, CTLTYPE_STRUCT },				\
-	{ 0 /* "mowners" */, CTLTYPE_STRUCT },				\
-}
 
 #ifdef	_KERNEL
 extern struct mbstat mbstat;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_carp.h,v 1.8 2016/04/28 00:16:56 ozaki-r Exp $	*/
+/*	$NetBSD: ip_carp.h,v 1.9 2018/08/22 01:05:24 msaitoh Exp $	*/
 /*	$OpenBSD: ip_carp.h,v 1.18 2005/04/20 23:00:41 mpf Exp $	*/
 
 /*
@@ -142,14 +142,6 @@ struct carpreq {
 #define	CARPCTL_ARPBALANCE	4	/* balance arp responses */
 #define CARPCTL_STATS		5	/* carp statistics */
 #define	CARPCTL_MAXID		6
-
-#define	CARPCTL_NAMES { \
-	{ 0, 0 }, \
-	{ "allow", CTLTYPE_INT }, \
-	{ "preempt", CTLTYPE_INT }, \
-	{ "log", CTLTYPE_INT }, \
-	{ "arpbalance", CTLTYPE_INT }, \
-}
 
 #ifdef _KERNEL
 void		 carp_init(void);
