@@ -1,4 +1,4 @@
-/*	$NetBSD: t_sendrecv.c,v 1.3 2018/08/21 11:04:49 christos Exp $	*/
+/*	$NetBSD: t_sendrecv.c,v 1.4 2018/08/22 06:31:37 christos Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_sendrecv.c,v 1.3 2018/08/21 11:04:49 christos Exp $");
+__RCSID("$NetBSD: t_sendrecv.c,v 1.4 2018/08/22 06:31:37 christos Exp $");
 
 #include <atf-c.h>
 #include <sys/types.h>
@@ -115,14 +115,14 @@ ATF_TC_BODY(sendrecv_basic, tc)
 	int fd[2], error;
 	struct sigaction sa;
 
-	atf_tc_fail("does not terminate");
+//	atf_tc_fail("does not terminate");
 
 	error = socketpair(AF_UNIX, SOCK_DGRAM, 0, fd);
 //	error = pipe(fd);
 	ATF_REQUIRE_MSG(error != -1, "socketpair failed (%s)", strerror(errno));
 
 	memset(&sa, 0, sizeof(sa));
-	sa.sa_flags = SA_RESTART;
+	sa.sa_flags = 0;
 	sa.sa_handler = &handle_sigchld;
 	sigemptyset(&sa.sa_mask);
 	error = sigaction(SIGCHLD, &sa, 0);
