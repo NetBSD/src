@@ -1,4 +1,4 @@
-# $NetBSD: ad.arm,v 1.87 2018/07/17 18:55:24 joerg Exp $
+# $NetBSD: ad.arm,v 1.88 2018/08/22 17:38:38 christos Exp $
 ./usr/include/acorn26				comp-obsolete		obsolete
 ./usr/include/acorn26/ansi.h			comp-obsolete		obsolete
 ./usr/include/acorn26/aout_machdep.h		comp-obsolete		obsolete
@@ -780,4 +780,4 @@
 ./usr/libdata/ldscripts/armnbsd.xu		-unknown-		binutils
 ./usr/libdata/lint/llib-larm.ln			comp-c-lintlib		lint
 ./usr/libdata/lint/llib-larm32.ln		comp-obsolete		obsolete
-./usr/libdata/lint/llib-lpmc.ln			comp-c-lintlib		lint
+./usr/libdata/lint/llib-lpmc.ln			comp-obsolete		obsolete
