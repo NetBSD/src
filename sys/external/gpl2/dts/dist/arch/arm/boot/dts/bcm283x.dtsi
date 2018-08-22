@@ -434,12 +434,14 @@
 			compatible = "brcm,bcm2835-pixelvalve0";
 			reg = <0x7e206000 0x100>;
 			interrupts = <2 13>; /* pwa0 */
+			status = "disabled";
 		};
 
 		pixelvalve@7e207000 {
 			compatible = "brcm,bcm2835-pixelvalve1";
 			reg = <0x7e207000 0x100>;
 			interrupts = <2 14>; /* pwa1 */
+			status = "disabled";
 		};
 
 		dpi: dpi@7e208000 {
@@ -537,6 +539,7 @@
 			compatible = "brcm,bcm2835-hvs";
 			reg = <0x7e400000 0x6000>;
 			interrupts = <2 1>;
+			status = "disabled";
 		};
 
 		dsi1: dsi@7e700000 {
@@ -591,6 +594,7 @@
 			compatible = "brcm,bcm2835-pixelvalve2";
 			reg = <0x7e807000 0x100>;
 			interrupts = <2 10>; /* pixelvalve */
+			status = "disabled";
 		};
 
 		hdmi: hdmi@7e902000 {
@@ -623,6 +627,7 @@
 			compatible = "brcm,bcm2835-v3d";
 			reg = <0x7ec00000 0x1000>;
 			interrupts = <1 10>;
+			status = "disabled";
 		};
 
 		vc4: gpu {
