@@ -1,4 +1,4 @@
-/*	$NetBSD: asan.c,v 1.4 2018/08/22 17:04:36 maxv Exp $	*/
+/*	$NetBSD: asan.c,v 1.5 2018/08/22 17:25:02 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: asan.c,v 1.4 2018/08/22 17:04:36 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asan.c,v 1.5 2018/08/22 17:25:02 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -40,6 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: asan.c,v 1.4 2018/08/22 17:04:36 maxv Exp $");
 #include <sys/conf.h>
 #include <sys/systm.h>
 #include <sys/types.h>
+#include <sys/ksyms.h>
 #include <sys/asan.h>
 
 #include <uvm/uvm.h>
@@ -248,12 +249,69 @@ kasan_init(void)
 
 /* -------------------------------------------------------------------------- */
 
+static inline bool
+kasan_unwind_end(const char *name)
+{
+	if (!strcmp(name, "syscall") ||
+	    !strcmp(name, "handle_syscall") ||
+	    !strncmp(name, "Xintr", 5) ||
+	    !strncmp(name, "Xhandle", 7) ||
+	    !strncmp(name, "Xresume", 7) ||
+	    !strncmp(name, "Xstray", 6) ||
+	    !strncmp(name, "Xhold", 5) ||
+	    !strncmp(name, "Xrecurse", 8) ||
+	    !strcmp(name, "Xdoreti") ||
+	    !strncmp(name, "Xsoft", 5)) {
+		return true;
+	}
+
+	return false;
+}
+
+static void
+kasan_unwind(void)
+{
+	uint64_t *rbp, rip;
+	const char *mod;
+	const char *sym;
+	size_t nsym;
+	int error;
+
+	rbp = (uint64_t *)__builtin_frame_address(0);
+	nsym = 0;
+
+	while (1) {
+		/* 8(%rbp) contains the saved %rip. */
+		rip = *(rbp + 1);
+
+		if (rip < KERNBASE) {
+			break;
+		}
+		error = ksyms_getname(&mod, &sym, (vaddr_t)rip, KSYMS_PROC);
+		if (error) {
+			break;
+		}
+		printf("#%zu %p in %s <%s>\n", nsym, (void *)rip, sym, mod);
+		if (kasan_unwind_end(sym)) {
+			break;
+		}
+
+		rbp = (uint64_t *)*(rbp);
+		nsym++;
+
+		if (nsym >= 15) {
+			break;
+		}
+	}
+}
+
 static void
 kasan_report(unsigned long addr, size_t size, bool write, unsigned long rip)
 {
 	printf("kASan: Unauthorized Access In %p: Addr %p [%zu byte%s, %s]\n",
 	    (void *)rip, (void *)addr, size, (size > 1 ? "s" : ""),
 	    (write ? "write" : "read"));
+	kasan_unwind();
 }
 
 /* -------------------------------------------------------------------------- */
