@@ -1,4 +1,4 @@
-/*	$NetBSD: asan.c,v 1.1 2018/08/20 15:04:51 maxv Exp $	*/
+/*	$NetBSD: asan.c,v 1.2 2018/08/22 09:11:47 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: asan.c,v 1.1 2018/08/20 15:04:51 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asan.c,v 1.2 2018/08/22 09:11:47 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -109,17 +109,24 @@ void
 kasan_shadow_map(void *addr, size_t size)
 {
 	size_t sz, npages, i;
-	vaddr_t va;
+	vaddr_t sva, eva;
 
-	va = (vaddr_t)kasan_addr_to_shad(addr);
+	KASSERT((vaddr_t)addr % KASAN_SHADOW_SCALE_SIZE == 0);
+
 	sz = roundup(size, KASAN_SHADOW_SCALE_SIZE) / KASAN_SHADOW_SCALE_SIZE;
-	va = rounddown(va, PAGE_SIZE);
-	npages = roundup(sz, PAGE_SIZE) / PAGE_SIZE;
 
-	KASSERT(va >= KASAN_SHADOW_START && va < KASAN_SHADOW_END);
+	sva = (vaddr_t)kasan_addr_to_shad(addr);
+	eva = (vaddr_t)kasan_addr_to_shad(addr) + sz;
+
+	sva = rounddown(sva, PAGE_SIZE);
+	eva = roundup(eva, PAGE_SIZE);
+
+	npages = (eva - sva) / PAGE_SIZE;
+
+	KASSERT(sva >= KASAN_SHADOW_START && eva < KASAN_SHADOW_END);
 
 	for (i = 0; i < npages; i++) {
-		kasan_shadow_map_page(va + i * PAGE_SIZE);
+		kasan_shadow_map_page(sva + i * PAGE_SIZE);
 	}
 }
 
