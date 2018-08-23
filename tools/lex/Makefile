@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2018/08/20 10:27:32 christos Exp $
+#	$NetBSD: Makefile,v 1.12 2018/08/23 06:21:37 christos Exp $
 
 HOSTPROGNAME=	${_TOOL_PREFIX}lex
 HOST_SRCDIR=	external/bsd/flex/bin
@@ -19,5 +19,6 @@ parse.c: __BUILD
 parse.h: __BUILD
 
 scan.c: parse.h
+parse.h: Makefile
 
 CLEANFILES+=scan.c parse.c parse.h
