@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_fence.c,v 1.8 2018/08/23 01:10:28 riastradh Exp $	*/
+/*	$NetBSD: nouveau_fence.c,v 1.9 2018/08/23 01:10:36 riastradh Exp $	*/
 
 /*
  * Copyright (C) 2007 Ben Skeggs.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_fence.c,v 1.8 2018/08/23 01:10:28 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_fence.c,v 1.9 2018/08/23 01:10:36 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/xcall.h>
@@ -136,7 +136,7 @@ nouveau_fence_channel_release(struct nouveau_channel *chan)
 
 	do {
 		old = fctx->refcnt;
-		if (old == 0) {
+		if (old == 1) {
 			spin_lock(&fctx->lock);
 			if (atomic_dec_uint_nv(&fctx->refcnt) == 0)
 				DRM_SPIN_WAKEUP_ALL(&fctx->waitqueue,
@@ -216,8 +216,10 @@ nouveau_fence_context_del(struct nouveau_fence_chan *fctx)
 	/* Wait for nouveau_fence_channel_acquire to complete on all CPUs.  */
 	xc_wait(xc_broadcast(0, nouveau_fence_context_del_xc, NULL, NULL));
 
-	/* Wait for any references to drain.  */
+	/* Release our reference and wait for any others to drain.  */
 	spin_lock(&fctx->lock);
+	KASSERT(fctx->refcnt > 0);
+	atomic_dec_uint(&fctx->refcnt);
 	DRM_SPIN_WAIT_NOINTR_UNTIL(ret, &fctx->waitqueue, &fctx->lock,
 	    fctx->refcnt == 0);
 	BUG_ON(ret);
@@ -247,7 +249,7 @@ nouveau_fence_context_new(struct nouveau_fence_chan *fctx)
 	INIT_LIST_HEAD(&fctx->done);
 	spin_lock_init(&fctx->lock);
 	DRM_INIT_WAITQUEUE(&fctx->waitqueue, "nvfnchan");
-	fctx->refcnt = 0;
+	fctx->refcnt = 1;
 }
 
 /*
