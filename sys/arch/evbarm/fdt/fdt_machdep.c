@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_machdep.c,v 1.32 2018/08/05 14:02:36 skrll Exp $ */
+/* $NetBSD: fdt_machdep.c,v 1.33 2018/08/23 22:34:03 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.32 2018/08/05 14:02:36 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.33 2018/08/23 22:34:03 jmcneill Exp $");
 
 #include "opt_machdep.h"
 #include "opt_bootconfig.h"
@@ -213,7 +213,7 @@ fdt_add_reserved_memory_range(uint64_t addr, uint64_t size)
  * Exclude memory ranges from memory config from the device tree
  */
 static void
-fdt_add_reserved_memory(uint64_t max_addr)
+fdt_add_reserved_memory(uint64_t min_addr, uint64_t max_addr)
 {
 	uint64_t addr, size;
 	int index, error;
@@ -224,8 +224,14 @@ fdt_add_reserved_memory(uint64_t max_addr)
 		    &addr, &size);
 		if (error != 0 || size == 0)
 			continue;
+		if (addr + size <= min_addr)
+			continue;
 		if (addr >= max_addr)
 			continue;
+		if (addr < min_addr) {
+			size -= (min_addr - addr);
+			addr = min_addr;
+		}
 		if (addr + size > max_addr)
 			size = max_addr - addr;
 		fdt_add_reserved_memory_range(addr, size);
@@ -263,7 +269,7 @@ fdt_build_bootconfig(uint64_t mem_start, uint64_t mem_end)
 		VPRINTF("MEM: add %" PRIx64 "-%" PRIx64 "\n", addr, addr + size);
 	}
 
-	fdt_add_reserved_memory(mem_end);
+	fdt_add_reserved_memory(mem_start, mem_end);
 
 	const uint64_t initrd_size = initrd_end - initrd_start;
 	if (initrd_size > 0)
