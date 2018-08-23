@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_fence.c,v 1.5 2018/08/23 01:06:50 riastradh Exp $	*/
+/*	$NetBSD: nouveau_fence.c,v 1.6 2018/08/23 01:10:04 riastradh Exp $	*/
 
 /*
  * Copyright (C) 2007 Ben Skeggs.
@@ -27,7 +27,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_fence.c,v 1.5 2018/08/23 01:06:50 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_fence.c,v 1.6 2018/08/23 01:10:04 riastradh Exp $");
+
+#include <sys/types.h>
+#include <sys/xcall.h>
 
 #include <drm/drmP.h>
 
@@ -53,6 +56,60 @@ struct fence_work {
 	void (*func)(void *);
 	void *data;
 };
+
+/*
+ * nouveau_fence_channel_acquire(fence)
+ *
+ *	Try to return the channel associated with fence.
+ */
+static struct nouveau_channel *
+nouveau_fence_channel_acquire(struct nouveau_fence *fence)
+{
+	struct nouveau_channel *chan;
+	struct nouveau_fence_chan *fctx;
+
+	/*
+	 * Block cross-calls while we examine fence.  If we observe
+	 * that fence->done is false, then the channel cannot be
+	 * destroyed even by another CPU until after kpreempt_enable.
+	 */
+	kpreempt_disable();
+	if (fence->done) {
+		chan = NULL;
+	} else {
+		chan = fence->channel;
+		fctx = chan->fence;
+		atomic_inc_uint(&fctx->refcnt);
+	}
+	kpreempt_enable();
+
+	return chan;
+}
+
+/*
+ * nouveau_fence_channel_release(channel)
+ *
+ *	Release the channel acquired with nouveau_fence_channel_acquire.
+ */
+static void
+nouveau_fence_channel_release(struct nouveau_channel *chan)
+{
+	struct nouveau_fence_chan *fctx = chan->fence;
+	unsigned old, new;
+
+	do {
+		old = fctx->refcnt;
+		if (old == 0) {
+			spin_lock(&fctx->lock);
+			if (atomic_dec_uint_nv(&fctx->refcnt) == 0)
+				DRM_SPIN_WAKEUP_ALL(&fctx->waitqueue,
+				    &fctx->lock);
+			spin_unlock(&fctx->lock);
+			return;
+		}
+		new = old - 1;
+	} while (atomic_cas_uint(&fctx->refcnt, old, new) != old);
+}
 
 /*
  * nouveau_fence_signal(fence)
@@ -82,6 +139,11 @@ nouveau_fence_signal(struct nouveau_fence *fence)
 	list_del(&fence->head);
 }
 
+static void
+nouveau_fence_context_del_xc(void *a, void *b)
+{
+}
+
 /*
  * nouveau_fence_context_del(fctx)
  *
@@ -92,6 +154,7 @@ void
 nouveau_fence_context_del(struct nouveau_fence_chan *fctx)
 {
 	struct nouveau_fence *fence, *fnext;
+	int ret __diagused;
 
 	/* Signal all the fences in fctx.  */
 	spin_lock(&fctx->lock);
@@ -103,6 +166,16 @@ nouveau_fence_context_del(struct nouveau_fence_chan *fctx)
 
 	/* Wait for the workqueue to drain.  */
 	flush_scheduled_work();
+
+	/* Wait for nouveau_fence_channel_acquire to complete on all CPUs.  */
+	xc_wait(xc_broadcast(0, nouveau_fence_context_del_xc, NULL, NULL));
+
+	/* Wait for any references to drain.  */
+	spin_lock(&fctx->lock);
+	DRM_SPIN_WAIT_NOINTR_UNTIL(ret, &fctx->waitqueue, &fctx->lock,
+	    fctx->refcnt == 0);
+	BUG_ON(ret);
+	spin_unlock(&fctx->lock);
 
 	/* Destroy the fence context.  */
 	DRM_DESTROY_WAITQUEUE(&fctx->waitqueue);
@@ -122,6 +195,7 @@ nouveau_fence_context_new(struct nouveau_fence_chan *fctx)
 	INIT_LIST_HEAD(&fctx->pending);
 	spin_lock_init(&fctx->lock);
 	DRM_INIT_WAITQUEUE(&fctx->waitqueue, "nvfnchan");
+	fctx->refcnt = 0;
 }
 
 /*
@@ -149,29 +223,37 @@ void
 nouveau_fence_work(struct nouveau_fence *fence,
 		   void (*func)(void *), void *data)
 {
-	struct nouveau_channel *chan = fence->channel;
-	struct nouveau_fence_chan *fctx = chan->fence;
+	struct nouveau_channel *chan;
+	struct nouveau_fence_chan *fctx;
 	struct fence_work *work = NULL;
+
+	if ((chan = nouveau_fence_channel_acquire(fence)) == NULL)
+		goto now0;
+	fctx = chan->fence;
 
 	work = kmalloc(sizeof(*work), GFP_KERNEL);
 	if (work == NULL) {
 		WARN_ON(nouveau_fence_wait(fence, false, false));
-		func(data);
-		return;
+		goto now1;
 	}
 
 	spin_lock(&fctx->lock);
 	if (fence->done) {
 		spin_unlock(&fctx->lock);
-		kfree(work);
-		func(data);
-		return;
+		goto now2;
 	}
 	INIT_WORK(&work->base, nouveau_fence_work_handler);
 	work->func = func;
 	work->data = data;
 	list_add(&work->head, &fence->work);
+	if (atomic_dec_uint_nv(&fctx->refcnt) == 0)
+		DRM_SPIN_WAKEUP_ALL(&fctx->waitqueue, &fctx->lock);
 	spin_unlock(&fctx->lock);
+	return;
+
+now2:	kfree(work);
+now1:	nouveau_fence_channel_release(chan);
+now0:	func(data);
 }
 
 /*
@@ -265,13 +347,19 @@ nouveau_fence_done_locked(struct nouveau_fence *fence,
 bool
 nouveau_fence_done(struct nouveau_fence *fence)
 {
-	struct nouveau_channel *chan = fence->channel;
-	struct nouveau_fence_chan *fctx = chan->fence;
+	struct nouveau_channel *chan;
+	struct nouveau_fence_chan *fctx;
 	bool done;
 
+	if ((chan = nouveau_fence_channel_acquire(fence)) == NULL)
+		return true;
+
+	fctx = chan->fence;
 	spin_lock(&fctx->lock);
 	done = nouveau_fence_done_locked(fence, chan);
 	spin_unlock(&fctx->lock);
+
+	nouveau_fence_channel_release(chan);
 
 	return done;
 }
@@ -297,19 +385,21 @@ nouveau_fence_wait_uevent_handler(void *data, int index)
 }
 
 /*
- * nouveau_fence_wait_uevent(fence, intr)
+ * nouveau_fence_wait_uevent(fence, chan, intr)
  *
- *	Wait using a nouveau event for completion of fence.  Wait
- *	interruptibly iff intr is true.
+ *	Wait using a nouveau event for completion of fence on chan.
+ *	Wait interruptibly iff intr is true.
  */
 static int
-nouveau_fence_wait_uevent(struct nouveau_fence *fence, bool intr)
+nouveau_fence_wait_uevent(struct nouveau_fence *fence,
+    struct nouveau_channel *chan, bool intr)
 {
-	struct nouveau_channel *chan = fence->channel;
 	struct nouveau_fifo *pfifo = nouveau_fifo(chan->drm->device);
 	struct nouveau_fence_chan *fctx = chan->fence;
 	struct nouveau_eventh *handler;
 	int ret = 0;
+
+	BUG_ON(fence->channel != chan);
 
 	ret = nouveau_event_new(pfifo->uevent, 0,
 				nouveau_fence_wait_uevent_handler,
@@ -374,15 +464,19 @@ nouveau_fence_wait_uevent(struct nouveau_fence *fence, bool intr)
 int
 nouveau_fence_wait(struct nouveau_fence *fence, bool lazy, bool intr)
 {
-	struct nouveau_channel *chan = fence->channel;
-	struct nouveau_fence_priv *priv = chan->drm->fence;
+	struct nouveau_channel *chan;
+	struct nouveau_fence_priv *priv;
 	unsigned long delay_usec = 1;
 	int ret = 0;
 
+	if ((chan = nouveau_fence_channel_acquire(fence)) == NULL)
+		goto out0;
+
+	priv = chan->drm->fence;
 	while (priv && priv->uevent && lazy && !nouveau_fence_done(fence)) {
-		ret = nouveau_fence_wait_uevent(fence, intr);
+		ret = nouveau_fence_wait_uevent(fence, chan, intr);
 		if (ret < 0)
-			return ret;
+			goto out1;
 	}
 
 	while (!nouveau_fence_done(fence)) {
@@ -402,7 +496,8 @@ nouveau_fence_wait(struct nouveau_fence *fence, bool lazy, bool intr)
 		}
 	}
 
-	return ret;
+out1:	nouveau_fence_channel_release(chan);
+out0:	return ret;
 }
 
 int
@@ -412,13 +507,14 @@ nouveau_fence_sync(struct nouveau_fence *fence, struct nouveau_channel *chan)
 	struct nouveau_channel *prev;
 	int ret = 0;
 
-	prev = fence ? fence->channel : NULL;
-	if (prev) {
+	if (fence != NULL &&
+	    (prev = nouveau_fence_channel_acquire(fence)) != NULL) {
 		if (unlikely(prev != chan && !nouveau_fence_done(fence))) {
 			ret = fctx->sync(fence, prev, chan);
 			if (unlikely(ret))
 				ret = nouveau_fence_wait(fence, true, false);
 		}
+		nouveau_fence_channel_release(prev);
 	}
 
 	return ret;
