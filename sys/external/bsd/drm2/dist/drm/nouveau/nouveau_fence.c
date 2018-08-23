@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_fence.c,v 1.7 2018/08/23 01:10:21 riastradh Exp $	*/
+/*	$NetBSD: nouveau_fence.c,v 1.8 2018/08/23 01:10:28 riastradh Exp $	*/
 
 /*
  * Copyright (C) 2007 Ben Skeggs.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_fence.c,v 1.7 2018/08/23 01:10:21 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_fence.c,v 1.8 2018/08/23 01:10:28 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/xcall.h>
@@ -446,6 +446,9 @@ nouveau_fence_wait_uevent_handler(void *data, int index)
  *
  *	Wait using a nouveau event for completion of fence on chan.
  *	Wait interruptibly iff intr is true.
+ *
+ *	Return 0 if fence was signalled, negative error code on
+ *	timeout (-EBUSY) or interrupt (-ERESTARTSYS) or other error.
  */
 static int
 nouveau_fence_wait_uevent(struct nouveau_fence *fence,
@@ -487,12 +490,18 @@ nouveau_fence_wait_uevent(struct nouveau_fence *fence,
 			}
 			nouveau_fence_gc_grab(fctx, &done_list);
 			spin_unlock(&fctx->lock);
-		}
-
-		if (ret >= 0) {
-			fence->timeout = jiffies + ret;
-			if (time_after_eq(jiffies, fence->timeout))
+			if (ret < 0) {
+				/* error */
+			} else if (ret == 0) {
+				/* timeout */
 				ret = -EBUSY;
+			} else {
+				/* success */
+				ret = 0;
+			}
+		} else {
+			/* timeout */
+			ret = -EBUSY;
 		}
 	} else {
 		spin_lock(&fctx->lock);
@@ -525,6 +534,9 @@ nouveau_fence_wait_uevent(struct nouveau_fence *fence,
  *	Wait for fence to complete.  Wait interruptibly iff intr is
  *	true.  If lazy is true, may sleep, either for a single tick or
  *	for an interrupt; otherwise will busy-wait.
+ *
+ *	Return 0 if fence was signalled, negative error code on
+ *	timeout (-EBUSY) or interrupt (-ERESTARTSYS) or other error.
  */
 int
 nouveau_fence_wait(struct nouveau_fence *fence, bool lazy, bool intr)
