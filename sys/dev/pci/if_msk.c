@@ -1,4 +1,4 @@
-/* $NetBSD: if_msk.c,v 1.75 2018/07/10 20:48:54 jdolecek Exp $ */
+/* $NetBSD: if_msk.c,v 1.76 2018/08/23 11:53:15 maxv Exp $ */
 /*	$OpenBSD: if_msk.c,v 1.79 2009/10/15 17:54:56 deraadt Exp $	*/
 
 /*
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_msk.c,v 1.75 2018/07/10 20:48:54 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_msk.c,v 1.76 2018/08/23 11:53:15 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -195,7 +195,8 @@ static const struct msk_product {
 	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKON_C036 },
 	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKON_C042 },
 	{ PCI_VENDOR_SCHNEIDERKOCH,	PCI_PRODUCT_SCHNEIDERKOCH_SK_9SXX },
-	{ PCI_VENDOR_SCHNEIDERKOCH,	PCI_PRODUCT_SCHNEIDERKOCH_SK_9E21 }
+	{ PCI_VENDOR_SCHNEIDERKOCH,	PCI_PRODUCT_SCHNEIDERKOCH_SK_9E21 },
+	{ 0,				0 }
 };
 
 static inline u_int32_t
