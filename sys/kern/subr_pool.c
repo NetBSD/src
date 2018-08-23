@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.223 2018/07/04 02:19:02 kamil Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.224 2018/08/23 12:18:02 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000, 2002, 2007, 2008, 2010, 2014, 2015
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.223 2018/07/04 02:19:02 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.224 2018/08/23 12:18:02 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -55,6 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.223 2018/07/04 02:19:02 kamil Exp $"
 #include <sys/xcall.h>
 #include <sys/cpu.h>
 #include <sys/atomic.h>
+#include <sys/asan.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -85,8 +86,16 @@ static struct pool phpool[PHPOOL_MAX];
 static struct pool psppool;
 #endif
 
+#if defined(DIAGNOSTIC) || defined(KASAN)
+#define POOL_REDZONE
+#endif
+
 #ifdef POOL_REDZONE
-# define POOL_REDZONE_SIZE 2
+# ifdef KASAN
+#  define POOL_REDZONE_SIZE 8
+# else
+#  define POOL_REDZONE_SIZE 2
+# endif
 static void pool_redzone_init(struct pool *, size_t);
 static void pool_redzone_fill(struct pool *, void *);
 static void pool_redzone_check(struct pool *, void *);
@@ -2728,12 +2737,14 @@ pool_page_free_meta(struct pool *pp, void *v)
 #define STATIC_BYTE	0xFE
 CTASSERT(POOL_REDZONE_SIZE > 1);
 
+#ifndef KASAN
 static inline uint8_t
 pool_pattern_generate(const void *p)
 {
 	return (uint8_t)(((uintptr_t)p) * PRIME
 	   >> ((sizeof(uintptr_t) - sizeof(uint8_t))) * CHAR_BIT);
 }
+#endif
 
 static void
 pool_redzone_init(struct pool *pp, size_t requested_size)
@@ -2777,11 +2788,13 @@ pool_redzone_init(struct pool *pp, size_t requested_size)
 static void
 pool_redzone_fill(struct pool *pp, void *p)
 {
-	uint8_t *cp, pat;
-	const uint8_t *ep;
-
 	if (!pp->pr_redzone)
 		return;
+#ifdef KASAN
+	kasan_alloc(p, pp->pr_reqsize, pp->pr_reqsize + POOL_REDZONE_SIZE);
+#else
+	uint8_t *cp, pat;
+	const uint8_t *ep;
 
 	cp = (uint8_t *)p + pp->pr_reqsize;
 	ep = cp + POOL_REDZONE_SIZE;
@@ -2798,16 +2811,19 @@ pool_redzone_fill(struct pool *pp, void *p)
 		*cp = pool_pattern_generate(cp);
 		cp++;
 	}
+#endif
 }
 
 static void
 pool_redzone_check(struct pool *pp, void *p)
 {
-	uint8_t *cp, pat, expected;
-	const uint8_t *ep;
-
 	if (!pp->pr_redzone)
 		return;
+#ifdef KASAN
+	kasan_free(p, pp->pr_reqsize + POOL_REDZONE_SIZE);
+#else
+	uint8_t *cp, pat, expected;
+	const uint8_t *ep;
 
 	cp = (uint8_t *)p + pp->pr_reqsize;
 	ep = cp + POOL_REDZONE_SIZE;
@@ -2828,6 +2844,7 @@ pool_redzone_check(struct pool *pp, void *p)
 		}
 		cp++;
 	}
+#endif
 }
 
 #endif /* POOL_REDZONE */
