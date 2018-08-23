@@ -46,6 +46,7 @@ struct nouveau_fence_chan {
 
 	spinlock_t lock;
 	drm_waitqueue_t waitqueue;
+	volatile unsigned refcnt;
 	u32 sequence;
 };
 
