@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC,v 1.6 2018/08/19 08:00:41 skrll Exp $
+#	$NetBSD: GENERIC,v 1.7 2018/08/23 20:54:43 skrll Exp $
 #
 #	GENERIC ARM (aarch32) kernel
 #
@@ -16,6 +16,10 @@ makeoptions	DTSARCH="arm aarch64"
 makeoptions	DTSGNUARCH="arm arm64"
 makeoptions	DTSSUBDIR="allwinner broadcom nvidia rockchip"
 makeoptions	DTS="
+	bcm2836-rpi-2-b.dts
+	bcm2837-rpi-3-b.dts
+	bcm2837-rpi-3-b-plus.dts
+
 	exynos4412-odroidx2.dts
 	exynos4412-odroidx.dts
 	exynos4412-odroidu3.dts
@@ -166,12 +170,12 @@ options 	MULTIPROCESSOR
 
 pseudo-device 	openfirm	# /dev/openfirm
 
-#options 	DIAGNOSTIC	# internal consistency checks
-#options 	DEBUG
+options 	DIAGNOSTIC	# internal consistency checks
+options 	DEBUG
 #options 	LOCKDEBUG
 #options 	PMAP_DEBUG	# Enable pmap_debug_level code
 
-options 	VERBOSE_INIT_ARM # verbose bootstrapping messages
+#options 	VERBOSE_INIT_ARM # verbose bootstrapping messages
 
 # EARLYCONS is required for early init messages from VERBOSE_INIT_ARM.
 
@@ -206,6 +210,7 @@ cpus*		at fdt? pass 0
 cpu*		at fdt? pass 0
 
 # CPU frequency scaling
+tegra124cpu*	at cpu?
 cpufreqdt*	at cpu?
 
 # Power State Coordination Interface (PSCI)
@@ -229,12 +234,12 @@ sunxiresets*	at fdt? pass 1		# Allwinner Misc. clock resets
 sunxigates*	at fdt? pass 1		# Allwinner Misc. clock gates
 sunxigmacclk*	at fdt? pass 2		# Allwinner GMAC MII/RGMII clock mux
 sun9immcclk*	at fdt? pass 2		# Allwinner A80 SD/MMC-COMM
+tegra124car*	at fdt? pass 3		# NVIDIA Tegra CAR (T124)
 tegra210car*	at fdt? pass 3		# NVIDIA Tegra CAR (T210)
-
 
 fclock*		at fdt? pass 1
 ffclock*	at fdt? pass 1
-fregulator*	at fdt? pass 4
+fregulator*	at fdt? pass 5
 gregulator*	at fdt? pass 4
 gpiokeys*	at fdt?
 wskbd*		at gpiokeys? console ? mux 1
@@ -306,6 +311,7 @@ expwm*		at fdt? pass 4		# PWM
 pwmfan*		at fdt?			# PWM Fan controls
 
 # XUSB PADCTL
+tegra124xpad*	at fdt?			# NVIDIA Tegra XUSB PADCTL (T124)
 tegra210xpad*	at fdt?			# NVIDIA Tegra XUSB PADCTL (T210)
 tegra210xphy*	at tegra210xpad?
 
@@ -318,9 +324,10 @@ tegra210xphy*	at tegra210xpad?
 
 # Ethernet
 emac*		at fdt?			# Allwinner Gigabit Ethernet (EMAC)
-#re*		at pci? dev ? function ?	# Realtek RTL8111GS
 smsh*		at fdt?			# SMSC LAN9118
 
+# PCI Ethernet
+#re*		at pci? dev ? function ?	# Realtek RTL8111GS
 
 # MII/PHY support
 exphy* 		at mii? phy ?		# 3Com internal PHYs
@@ -393,12 +400,23 @@ tegrartc*	at fdt?			# NVIDIA Tegra RTC
 # Thermal sensor
 sunxithermal*   at fdt?                 # Thermal sensor controller
 
+# BCM2835 VCHIQ, etc
+vchiq0		at fdt?
+vcaudio0	at vchiq0
+
 # Audio
-ausoc*		at fdt?			# Simple SoC audio card
-sunxicodec*	at fdt?			# Audio codec
-sun8icodec*	at fdt?			# Audio codec (sun8i/sun50i)
-h3codec*	at fdt?			# H3 audio codec (analog part)
 a64acodec*	at fdt?			# A64 audio codec (analog part)
+aaci*		at fdt?			# ARM PrimeCell AACI
+ausoc*		at fdt?			# Simple SoC audio card
+hdaudio*	at fdt?			# Intel HDA
+hdafg*		at hdaudiobus?
+options 	HDAUDIOVERBOSE
+options 	HDAUDIO_32BIT_ACCESS
+options 	HDAUDIO_ENABLE_HDMI
+options 	HDAUDIO_ENABLE_DISPLAYPORT
+h3codec*	at fdt?			# H3 audio codec (analog part)
+sun8icodec*	at fdt?			# Audio codec (sun8i/sun50i)
+sunxicodec*	at fdt?			# Allwinner audio codec
 sunxii2s*	at fdt?			# I2S/PCM
 audio*		at audiobus?
 spkr*		at audio?
@@ -433,20 +451,6 @@ cd*		at atapibus? drive ?
 # SPI controllers
 bcmspi*		at fdt?			# Broadcom BCM283x SPI
 spi*		at spibus?
-
-# Audio support
-aaci*		at fdt?			# ARM PrimeCell AACI
-hdaudio*	at fdt?			# Intel HDA
-hdafg*		at hdaudiobus?
-options 	HDAUDIOVERBOSE
-options 	HDAUDIO_32BIT_ACCESS
-options 	HDAUDIO_ENABLE_HDMI
-options 	HDAUDIO_ENABLE_DISPLAYPORT
-sunxicodec*	at fdt?			# Allwinner audio codec
-h3codec*	at fdt?			# Allwinner H3 audio codec (analog part)
-audio*		at audiobus?
-
-spkr*		at audio?		# PC speaker (synthesized)
 
 # HDMI CEC
 tegracec0	at fdt?			# NVIDIA Tegra HDMI CEC
