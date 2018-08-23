@@ -36,6 +36,7 @@ int  nouveau_fence_sync(struct nouveau_fence *, struct nouveau_channel *);
 struct nouveau_fence_chan {
 	struct list_head pending;
 	struct list_head flip;
+	struct list_head done;
 
 	int  (*emit)(struct nouveau_fence *);
 	int  (*sync)(struct nouveau_fence *, struct nouveau_channel *,
