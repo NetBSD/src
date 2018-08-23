@@ -1,4 +1,4 @@
-/* $NetBSD: loadfile_elf32.c,v 1.52 2017/12/21 14:28:39 maxv Exp $ */
+/* $NetBSD: loadfile_elf32.c,v 1.53 2018/08/23 17:35:42 jmcneill Exp $ */
 
 /*
  * Copyright (c) 1997, 2008, 2017 The NetBSD Foundation, Inc.
@@ -256,7 +256,7 @@ externalize_shdr(Elf_Byte bo, Elf_Shdr *shdr)
 #endif /* _STANDALONE */
 
 #define IS_TEXT(p)	(p.p_flags & PF_X)
-#define IS_DATA(p)	(p.p_flags & PF_W)
+#define IS_DATA(p)	((p.p_flags & PF_X) == 0)
 #define IS_BSS(p)	(p.p_filesz < p.p_memsz)
 
 #ifndef MD_LOADSEG /* Allow processor ABI specific segment loads */
@@ -708,7 +708,7 @@ ELFNAMEEND(loadfile_static)(int fd, Elf_Ehdr *elf, u_long *marks, int flags)
 			goto loadseg;
 
 		if (phdr[i].p_type != PT_LOAD ||
-		    (phdr[i].p_flags & (PF_W|PF_X)) == 0)
+		    (phdr[i].p_flags & (PF_W|PF_R|PF_X)) == 0)
 			continue;
 
 		if ((IS_TEXT(phdr[i]) && (flags & LOAD_TEXT)) ||
