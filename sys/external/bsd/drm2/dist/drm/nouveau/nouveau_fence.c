@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_fence.c,v 1.6 2018/08/23 01:10:04 riastradh Exp $	*/
+/*	$NetBSD: nouveau_fence.c,v 1.7 2018/08/23 01:10:21 riastradh Exp $	*/
 
 /*
  * Copyright (C) 2007 Ben Skeggs.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_fence.c,v 1.6 2018/08/23 01:10:04 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_fence.c,v 1.7 2018/08/23 01:10:21 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/xcall.h>
@@ -87,6 +87,43 @@ nouveau_fence_channel_acquire(struct nouveau_fence *fence)
 }
 
 /*
+ * nouveau_fence_gc_grab(fctx, list)
+ *
+ *	Move all of channel's done fences to list.
+ *
+ *	Caller must hold channel's fence lock.
+ */
+static void
+nouveau_fence_gc_grab(struct nouveau_fence_chan *fctx, struct list_head *list)
+{
+	struct list_head *node, *next;
+
+	BUG_ON(!spin_is_locked(&fctx->lock));
+
+	list_for_each_safe(node, next, &fctx->done) {
+		list_move_tail(node, list);
+	}
+}
+
+/*
+ * nouveau_fence_gc_free(list)
+ *
+ *	Unreference all of the fences in the list.
+ *
+ *	Caller MUST NOT hold the fences' channel's fence lock.
+ */
+static void
+nouveau_fence_gc_free(struct list_head *list)
+{
+	struct nouveau_fence *fence, *next;
+
+	list_for_each_entry_safe(fence, next, list, head) {
+		list_del(&fence->head);
+		nouveau_fence_unref(&fence);
+	}
+}
+
+/*
  * nouveau_fence_channel_release(channel)
  *
  *	Release the channel acquired with nouveau_fence_channel_acquire.
@@ -114,7 +151,8 @@ nouveau_fence_channel_release(struct nouveau_channel *chan)
 /*
  * nouveau_fence_signal(fence)
  *
- *	Schedule all the work for fence's completion, and mark it done.
+ *	Schedule all the work for fence's completion, mark it done, and
+ *	move it from the pending list to the done list.
  *
  *	Caller must hold fence's channel's fence lock.
  */
@@ -136,7 +174,9 @@ nouveau_fence_signal(struct nouveau_fence *fence)
 
 	/* Note that the fence is done.  */
 	fence->done = true;
-	list_del(&fence->head);
+
+	/* Move it from the pending list to the done list.  */
+	list_move_tail(&fence->head, &fctx->done);
 }
 
 static void
@@ -154,15 +194,21 @@ void
 nouveau_fence_context_del(struct nouveau_fence_chan *fctx)
 {
 	struct nouveau_fence *fence, *fnext;
+	struct list_head done_list;
 	int ret __diagused;
+
+	INIT_LIST_HEAD(&done_list);
 
 	/* Signal all the fences in fctx.  */
 	spin_lock(&fctx->lock);
 	list_for_each_entry_safe(fence, fnext, &fctx->pending, head) {
 		nouveau_fence_signal(fence);
-		/* XXX Doesn't this leak fence?  */
 	}
+	nouveau_fence_gc_grab(fctx, &done_list);
 	spin_unlock(&fctx->lock);
+
+	/* Release any fences that we signalled.  */
+	nouveau_fence_gc_free(&done_list);
 
 	/* Wait for the workqueue to drain.  */
 	flush_scheduled_work();
@@ -176,6 +222,11 @@ nouveau_fence_context_del(struct nouveau_fence_chan *fctx)
 	    fctx->refcnt == 0);
 	BUG_ON(ret);
 	spin_unlock(&fctx->lock);
+
+	/* Make sure there are no more fences on the list.  */
+	BUG_ON(!list_empty(&fctx->done));
+	BUG_ON(!list_empty(&fctx->flip));
+	BUG_ON(!list_empty(&fctx->pending));
 
 	/* Destroy the fence context.  */
 	DRM_DESTROY_WAITQUEUE(&fctx->waitqueue);
@@ -193,6 +244,7 @@ nouveau_fence_context_new(struct nouveau_fence_chan *fctx)
 
 	INIT_LIST_HEAD(&fctx->flip);
 	INIT_LIST_HEAD(&fctx->pending);
+	INIT_LIST_HEAD(&fctx->done);
 	spin_lock_init(&fctx->lock);
 	DRM_INIT_WAITQUEUE(&fctx->waitqueue, "nvfnchan");
 	fctx->refcnt = 0;
@@ -275,7 +327,6 @@ nouveau_fence_update(struct nouveau_channel *chan)
 		if (fctx->read(chan) < fence->sequence)
 			break;
 		nouveau_fence_signal(fence);
-		nouveau_fence_unref(&fence);
 	}
 	BUG_ON(!spin_is_locked(&fctx->lock));
 }
@@ -349,17 +400,23 @@ nouveau_fence_done(struct nouveau_fence *fence)
 {
 	struct nouveau_channel *chan;
 	struct nouveau_fence_chan *fctx;
+	struct list_head done_list;
 	bool done;
 
 	if ((chan = nouveau_fence_channel_acquire(fence)) == NULL)
 		return true;
 
+	INIT_LIST_HEAD(&done_list);
+
 	fctx = chan->fence;
 	spin_lock(&fctx->lock);
 	done = nouveau_fence_done_locked(fence, chan);
+	nouveau_fence_gc_grab(fctx, &done_list);
 	spin_unlock(&fctx->lock);
 
 	nouveau_fence_channel_release(chan);
+
+	nouveau_fence_gc_free(&done_list);
 
 	return done;
 }
@@ -397,6 +454,7 @@ nouveau_fence_wait_uevent(struct nouveau_fence *fence,
 	struct nouveau_fifo *pfifo = nouveau_fifo(chan->drm->device);
 	struct nouveau_fence_chan *fctx = chan->fence;
 	struct nouveau_eventh *handler;
+	struct list_head done_list;
 	int ret = 0;
 
 	BUG_ON(fence->channel != chan);
@@ -408,6 +466,8 @@ nouveau_fence_wait_uevent(struct nouveau_fence *fence,
 		return ret;
 
 	nouveau_event_get(handler);
+
+	INIT_LIST_HEAD(&done_list);
 
 	if (fence->timeout) {
 		unsigned long timeout = fence->timeout - jiffies;
@@ -425,6 +485,7 @@ nouveau_fence_wait_uevent(struct nouveau_fence *fence,
 				    timeout,
 				    nouveau_fence_done_locked(fence, chan));
 			}
+			nouveau_fence_gc_grab(fctx, &done_list);
 			spin_unlock(&fctx->lock);
 		}
 
@@ -444,10 +505,14 @@ nouveau_fence_wait_uevent(struct nouveau_fence *fence,
 			    &fctx->lock,
 			    nouveau_fence_done_locked(fence, chan));
 		}
+		nouveau_fence_gc_grab(fctx, &done_list);
 		spin_unlock(&fctx->lock);
 	}
 
 	nouveau_event_ref(NULL, &handler);
+
+	nouveau_fence_gc_free(&done_list);
+
 	if (unlikely(ret < 0))
 		return ret;
 
