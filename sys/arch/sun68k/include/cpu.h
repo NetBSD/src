@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.23 2013/10/19 19:20:59 christos Exp $	*/
+/*	$NetBSD: cpu.h,v 1.24 2018/08/23 04:04:34 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -167,5 +167,4 @@ void	fb_unblank(void);
 
 #endif	/* _KERNEL */
 
-#include <m68k/sysctl.h>
 #endif /* _CPU_H_ */
