@@ -1,4 +1,4 @@
-/*	$NetBSD: asan.c,v 1.5 2018/08/22 17:25:02 maxv Exp $	*/
+/*	$NetBSD: asan.c,v 1.6 2018/08/23 11:56:10 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: asan.c,v 1.5 2018/08/22 17:25:02 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asan.c,v 1.6 2018/08/23 11:56:10 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -579,28 +579,21 @@ struct __asan_global {
 void __asan_register_globals(struct __asan_global *, size_t);
 void __asan_unregister_globals(struct __asan_global *, size_t);
 
-static void
-kasan_register_global(struct __asan_global *global)
-{
-	size_t aligned_size = roundup(global->size, KASAN_SHADOW_SCALE_SIZE);
-
-	/* Poison the redzone following the var. */
-	kasan_shadow_fill((void *)((uintptr_t)global->beg + aligned_size),
-	    global->size_with_redzone - aligned_size, KASAN_GLOBAL_REDZONE);
-}
-
 void
-__asan_register_globals(struct __asan_global *globals, size_t size)
+__asan_register_globals(struct __asan_global *globals, size_t n)
 {
 	size_t i;
-	for (i = 0; i < size; i++) {
-		kasan_register_global(&globals[i]);
+
+	for (i = 0; i < n; i++) {
+		kasan_alloc(globals[i].beg, globals[i].size,
+		    globals[i].size_with_redzone);
 	}
 }
 
 void
-__asan_unregister_globals(struct __asan_global *globals, size_t size)
+__asan_unregister_globals(struct __asan_global *globals, size_t n)
 {
+	/* never called */
 }
 
 #define ASAN_LOAD_STORE(size)					\
