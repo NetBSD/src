@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.256 2018/07/04 19:20:25 christos Exp $	*/
+/*	$NetBSD: key.c,v 1.257 2018/08/23 01:55:38 ozaki-r Exp $	*/
 /*	$FreeBSD: key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.256 2018/07/04 19:20:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.257 2018/08/23 01:55:38 ozaki-r Exp $");
 
 /*
  * This code is referred to RFC 2367
@@ -3455,7 +3455,6 @@ key_checkspidup(const struct secasindex *saidx, u_int32_t spi)
 {
 	struct secashead *sah;
 	struct secasvar *sav;
-	int s;
 
 	/* check address family */
 	if (saidx->src.sa.sa_family != saidx->dst.sa.sa_family) {
@@ -3466,18 +3465,19 @@ key_checkspidup(const struct secasindex *saidx, u_int32_t spi)
 	}
 
 	/* check all SAD */
-	s = pserialize_read_enter();
-	SAHLIST_READER_FOREACH(sah) {
+	/* key_ismyaddr may sleep, so use mutex, not pserialize, here. */
+	mutex_enter(&key_sad.lock);
+	SAHLIST_WRITER_FOREACH(sah) {
 		if (!key_ismyaddr((struct sockaddr *)&sah->saidx.dst))
 			continue;
 		sav = key_getsavbyspi(sah, spi);
 		if (sav != NULL) {
-			pserialize_read_exit(s);
 			KEY_SA_UNREF(&sav);
+			mutex_exit(&key_sad.lock);
 			return true;
 		}
 	}
-	pserialize_read_exit(s);
+	mutex_exit(&key_sad.lock);
 
 	return false;
 }
