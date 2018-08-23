@@ -1,4 +1,4 @@
-/*	$NetBSD: libfdt_env.h,v 1.3 2017/06/08 15:54:32 skrll Exp $	*/
+/*	$NetBSD: libfdt_env.h,v 1.4 2018/08/23 01:25:22 jmcneill Exp $	*/
 
 #ifndef _LIBFDT_ENV_H
 #define _LIBFDT_ENV_H
@@ -54,9 +54,10 @@
  *     EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#if defined(_KERNEL)
+#if defined(_KERNEL) || defined(_STANDALONE)
 #include <sys/param.h>
 #include <sys/types.h>
+#include <lib/libkern/libkern.h>
 #else
 #include <stddef.h>
 #include <stdint.h>
