@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.345 2018/03/06 00:15:24 pgoyette Exp $
+#	$NetBSD: BRANCHES,v 1.346 2018/08/23 16:25:37 snj Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -247,7 +247,7 @@ Notes:		Commits restricted to Release Engineering.
 
 Branch:		netbsd-6
 Description:	The NetBSD 6 release branch
-Status:		Active
+Status:		Terminated
 Start Date:	15 Feb 2012
 End Date:
 Base Tag:	netbsd-6-base
@@ -258,7 +258,7 @@ Notes:
 
 Branch:		netbsd-6-0
 Description:	Tracking security/critical fixes for NetBSD 6.0
-Status:		Active
+Status:		Terminated
 Start Date:	17 Oct 2012
 End Date:
 Base Tag:	netbsd-6-0-RELEASE
@@ -269,7 +269,7 @@ Notes:
 
 Branch:		netbsd-6-1
 Description:	Tracking security/critical fixes for NetBSD 6.1
-Status:		Active
+Status:		Terminated
 Start Date:	01 Feb 2013
 End Date:
 Base Tag:	netbsd-6-1-RELEASE
