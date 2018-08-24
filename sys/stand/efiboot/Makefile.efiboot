@@ -1,0 +1,148 @@
+# $NetBSD: Makefile.efiboot,v 1.1 2018/08/24 02:01:06 jmcneill Exp $
+
+S=		${.CURDIR}/../../..
+
+NOMAN=		# defined
+NOPIE=		# defined
+NOLIBCSANITIZER=# defined
+NOSANITIZER=	# defined
+NORELRO=	# defined
+PROG?=		boot.efi
+NEWVERSWHAT?=	"EFI Boot"
+
+EFIDIR= ${S}/external/bsd/gnu-efi/dist
+GNUEFIARCH?= ${MACHINE_CPU}
+CPPFLAGS+= -I${EFIDIR}/inc -I${EFIDIR}/inc/${GNUEFIARCH}
+CPPFLAGS+= -I${EFIDIR}/inc/protocol
+
+LDSCRIPT?= ${EFIDIR}/gnuefi/elf_${GNUEFIARCH}_efi.lds
+
+AFLAGS.start.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
+
+.PATH: ${EFIDIR}/gnuefi
+SOURCES=	crt0-efi-${GNUEFIARCH}.S reloc_${GNUEFIARCH}.c
+SOURCES+=	boot.c conf.c console.c devopen.c exec.c panic.c prompt.c
+SOURCES+=	efiboot.c efichar.c efifdt.c efifile.c
+
+.PATH: ${S}/external/bsd/libfdt/dist
+CPPFLAGS+=	-I${S}/external/bsd/libfdt/dist
+SOURCES+=	fdt.c fdt_addresses.c fdt_empty_tree.c
+SOURCES+=	fdt_ro.c fdt_rw.c fdt_strerror.c fdt_sw.c fdt_wip.c
+
+SRCS= ${SOURCES} ${EXTRA_SOURCES}
+
+.include <bsd.init.mk>
+
+STRIPFLAG=	# nothing
+
+LIBCRT0=	# nothing
+LIBCRTI=	# nothing
+LIBCRTBEGIN=	# nothing
+LIBCRTEND=	# nothing
+LIBC=		# nothing
+
+BINDIR=/usr/mdec
+BINMODE=444
+
+.PATH:	${.CURDIR} ${.CURDIR}/..
+.PATH:	${.CURDIR}/../../lib
+
+LDFLAGS+= -nostdlib -T${LDSCRIPT} -Bsymbolic -shared
+CPPFLAGS+= -I$S -I${.CURDIR} -I${.CURDIR}/../common -I$S/lib/libsa
+CPPFLAGS+= -I${.OBJDIR}
+CPPFLAGS+= -I${.CURDIR}/../../lib
+
+COPTS+=	-fpic -g -O2
+COPTS+=	-fshort-wchar -fno-strict-aliasing
+COPTS+=	-ffreestanding -fno-stack-protector
+LDFLAGS+= --defsym=EFI_SUBSYSTEM=0xa
+
+
+COPTS+= ${${ACTIVE_CC} == "gcc":? -Wno-error=unused-but-set-variable :}
+CPPFLAGS+= -nostdinc -D_STANDALONE
+CPPFLAGS+= -DEFIBOOT
+
+CPPFLAGS+= -Wall -Wmissing-prototypes
+CPPFLAGS+= -Wno-pointer-sign
+
+CPPFLAGS+= -DHEAP_VARIABLE
+#CPPFLAGS+= -DSUPPORT_CD9660
+CPPFLAGS+= -D"devb2cdb(bno)=(bno)"
+#CPPFLAGS+= -DSUPPORT_DOSFS
+#CPPFLAGS+= -DSUPPORT_EXT2FS
+#CPPFLAGS+= -DSUPPORT_BOOTP
+#CPPFLAGS+= -DSUPPORT_DHCP
+#CPPFLAGS+= -DSUPPORT_NFS
+#CPPFLAGS+= -DSUPPORT_TFTP
+#CPPFLAGS+= -DLIBSA_ENABLE_LS_OP
+
+#CPPFLAGS+= -DARP_DEBUG
+#CPPFLAGS+= -DBOOTP_DEBUG
+#CPPFLAGS+= -DNET_DEBUG
+#CPPFLAGS+= -DNETIF_DEBUG
+#CPPFLAGS+= -DNFS_DEBUG
+#CPPFLAGS+= -DRARP_DEBUG
+#CPPFLAGS+= -DRPC_DEBUG
+
+SAMISCCPPFLAGS+= -DLIBSA_PRINTF_LONGLONG_SUPPORT
+SAMISCCPPFLAGS+= -DLIBSA_PRINTF_WIDTH_SUPPORT
+SAMISCCPPFLAGS+= -D"cdb2devb(bno)=(bno)"
+
+### find out what to use for libsa
+SA_AS= library
+SAMISCMAKEFLAGS+="SA_USE_LOADFILE=yes"
+SAMISCMAKEFLAGS+="SA_USE_CREAD=yes"
+#SAMISCMAKEFLAGS+="SA_INCLUDE_NET=yes"
+#SAMISCMAKEFLAGS+="SA_ENABLE_LS_OP=yes"
+.include "${S}/lib/libsa/Makefile.inc"
+LIBSA= ${SALIB}
+
+### find out what to use for libkern
+KERN_AS= library
+LIBKERN_ARCH?= ${MACHINE_ARCH}
+KERNMISCMAKEFLAGS+="LIBKERN_ARCH=${LIBKERN_ARCH}"
+.include "${S}/lib/libkern/Makefile.inc"
+LIBKERN= ${KERNLIB}
+
+### find out what to use for libz
+Z_AS= library
+.include "${S}/lib/libz/Makefile.inc"
+LIBZ= ${ZLIB}
+
+### find out what to use for libgnuefi
+GNUEFI_AS= library
+LIBGNUEFI_ARCH?= ${MACHINE_ARCH}
+GNUEFIMISCMAKEFLAGS+="LIBGNUEFI_ARCH=${LIBGNUEFI_ARCH}"
+GNUEFIMISCCPPFLAGS+= -I${EFIDIR}/lib
+.include "${S}/lib/libgnuefi/Makefile.inc"
+LIBGNUEFI= ${GNUEFILIB}
+
+cleandir distclean: .WAIT cleanlibdir
+
+cleanlibdir:
+	-rm -rf lib
+
+LIBLIST= ${LIBGNUEFI} ${LIBSA} ${LIBZ} ${LIBKERN} ${LIBSA}
+
+VERSIONMACHINE=evbarm
+.include "${S}/conf/newvers_stand.mk"
+
+CLEANFILES+=	${PROG}.so ${PROG}.tmp
+
+${PROG}: ${PROG}.so
+	${OBJCOPY} -j .text -j .sdata -j .data -j .dynamic -j .dynsym -j .rel \
+	    -j .rela -j .rel.* -j .rela.* -j .rel* -j .rela* \
+	    -j .reloc -O binary ${PROG}.so ${.TARGET}
+
+.include <bsd.prog.mk>
+
+${PROG}.so: ${OBJS} ${LIBLIST} ${LDSCRIPT} ${.CURDIR}/../Makefile.efiboot
+	${LD} ${LDFLAGS} -o ${.TARGET}.tmp ${OBJS} ${LIBLIST}
+	@if ${OBJDUMP} -t ${.TARGET}.tmp | grep 'UND'; then		\
+	    (echo Undefined symbols; false);				\
+	fi
+	rm -f ${.TARGET}
+	mv ${.TARGET}.tmp ${.TARGET}
+
+KLINK_MACHINE?=	${MACHINE}
+.include <bsd.klinks.mk>
