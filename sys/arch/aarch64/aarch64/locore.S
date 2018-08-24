@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.18 2018/08/10 21:06:42 ryo Exp $	*/
+/*	$NetBSD: locore.S,v 1.19 2018/08/24 19:06:30 ryo Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -35,7 +35,7 @@
 #include <aarch64/hypervisor.h>
 #include "assym.h"
 
-RCSID("$NetBSD: locore.S,v 1.18 2018/08/10 21:06:42 ryo Exp $")
+RCSID("$NetBSD: locore.S,v 1.19 2018/08/24 19:06:30 ryo Exp $")
 
 /* #define DEBUG_LOCORE */
 /* #define DEBUG_MMU */
@@ -917,6 +917,10 @@ mmu_enable:
 	ldr	x0, tcr_setting
 	mrs	x1, id_aa64mmfr0_el1
 	bfi	x0, x1, #32, #3
+#ifdef MULTIPROCESSOR
+	ldr	x1, tcr_setting_inner_shareable
+	orr	x0, x0, x1
+#endif
 	msr	tcr_el1, x0
 
 	/*
@@ -933,10 +937,6 @@ mmu_enable:
 	orr	x0, x0, x1	/* set: BigEndian */
 #else
 	bic	x0, x0, x1	/* clear: LittleEndian */
-#endif
-#ifdef MULTIPROCESSOR
-	ldr	x1, tcr_setting_inner_shareable
-	orr	x0, x0, x1
 #endif
 	msr	sctlr_el1, x0	/* enabling MMU! */
 	isb
