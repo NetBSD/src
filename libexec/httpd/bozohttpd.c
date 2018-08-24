@@ -1,4 +1,4 @@
-/*	$NetBSD: bozohttpd.c,v 1.87 2018/01/28 13:37:39 maya Exp $	*/
+/*	$NetBSD: bozohttpd.c,v 1.88 2018/08/24 11:41:16 martin Exp $	*/
 
 /*	$eterna: bozohttpd.c,v 1.178 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -109,7 +109,7 @@
 #define INDEX_HTML		"index.html"
 #endif
 #ifndef SERVER_SOFTWARE
-#define SERVER_SOFTWARE		"bozohttpd/20170201"
+#define SERVER_SOFTWARE		"bozohttpd/20180824"
 #endif
 #ifndef DIRECT_ACCESS_FILE
 #define DIRECT_ACCESS_FILE	".bzdirect"
@@ -120,6 +120,15 @@
 #ifndef ABSREDIRECT_FILE
 #define ABSREDIRECT_FILE	".bzabsredirect"
 #endif
+#ifndef REMAP_FILE
+#define REMAP_FILE		".bzremap"
+#endif
+
+/*
+ * When you add some .bz* file, make sure to also check it in
+ * bozo_check_special_files()
+ */
+
 #ifndef PUBLIC_HTML
 #define PUBLIC_HTML		"public_html"
 #endif
@@ -149,6 +158,7 @@
 #include <signal.h>
 #include <stdarg.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include <string.h>
 #include <syslog.h>
 #include <time.h>
@@ -1069,6 +1079,154 @@ head:
 }
 
 /*
+ * Like strncmp(), but s_esc may contain characters escaped by \.
+ * The len argument does not include the backslashes used for escaping,
+ * that is: it gives the raw len, after unescaping the string.
+ */
+static int
+esccmp(const char *s_plain, const char *s_esc, size_t len)
+{
+	bool esc = false;
+
+	while (len) {
+		if (!esc && *s_esc == '\\') {
+			esc = true;
+			s_esc++;
+			continue;
+		}
+		esc = false;
+		if (*s_plain == 0 || *s_esc == 0 || *s_plain != *s_esc)
+			return *s_esc - *s_plain;
+		s_esc++;
+		s_plain++; 
+		len--;
+	}
+	return 0;
+}
+
+/*
+ * Check if the request refers to a uri that is mapped via a .bzremap.
+ * We have  /requested/path:/re/mapped/to/this.html lines in there,
+ * and the : separator may be use in the left hand side escaped with
+ * \ to encode a path containig a : character.
+ */
+static void
+check_mapping(bozo_httpreq_t *request)
+{
+	bozohttpd_t *httpd = request->hr_httpd;
+	char *file = request->hr_file, *newfile;
+	void *fmap;
+	const char *replace, *map_to, *p;
+	struct stat st;
+	int mapfile;
+	size_t avail, len, rlen, reqlen, num_esc = 0;
+	bool escaped = false;
+
+	mapfile = open(REMAP_FILE, O_RDONLY, 0);
+	if (mapfile == -1)
+		return;
+	debug((httpd, DEBUG_FAT, "remap file found"));
+	if (fstat(mapfile, &st) == -1) {
+		bozowarn(httpd, "could not stat " REMAP_FILE ", errno: %d",
+		    errno);
+		close(mapfile);
+		return;
+	}
+
+	fmap = mmap(NULL, st.st_size, PROT_READ, 0, mapfile, 0);
+	if (fmap == NULL) {
+		bozowarn(httpd, "could not mmap " REMAP_FILE ", error %d",
+		    errno);
+		close(mapfile);
+		return;
+	}
+	reqlen = strlen(file);
+	for (p = fmap, avail = st.st_size; avail; ) {
+		/*
+		 * We have lines like:
+		 *   /this/url:/replacement/that/url
+		 * If we find a matching left hand side, replace will point
+		 * to it and len will be its length. map_to will point to
+		 * the right hand side and rlen wil be its length.
+		 * If we have no match, both pointers will be NULL.
+		 */
+
+		/* skip empty lines */
+		while ((*p == '\r' || *p == '\n') && avail) {
+			p++;
+			avail--;
+		}
+		replace = p;
+		escaped = false;
+		while (avail) {
+			if (*p == '\r' || *p == '\n')
+				break;
+			if (!escaped && *p == ':')
+				break;
+			if (escaped) {
+				escaped = false;
+				num_esc++;
+			} else if (*p == '\\') {
+				escaped = true;
+			}
+			p++;
+			avail--;
+		}
+		if (!avail || *p != ':') {
+			replace = NULL;
+			map_to = NULL;
+			break;
+		}
+		len = p - replace - num_esc;
+		/*
+		 * reqlen < len: the left hand side is too long, can't be a
+		 *   match
+		 * reqlen == len: full string has to match
+		 * reqlen > len: make sure there is a path separator at 'len'
+		 * avail < 2: we are at eof, missing right hand side
+		 */
+		if (avail < 2 || reqlen < len || 
+		    (reqlen == len && esccmp(file, replace, len) != 0) ||
+		    (reqlen > len && (file[len] != '/' ||
+					esccmp(file, replace, len) != 0))) {
+
+			/* non-match, skip to end of line and continue */
+			while (*p != '\r' && *p != '\n' && avail) {
+				p++;
+				avail--;
+			}
+			replace = NULL;
+			map_to = NULL;
+			continue;
+		}
+		p++;
+		avail--;
+
+		/* found a match, parse the target */
+		map_to = p;
+		while (*p != '\r' && *p != '\n' && avail) {
+			p++;
+			avail--;
+		}
+		rlen = p - map_to;
+		break;
+	}
+
+	if (replace && map_to) {
+		newfile = bozomalloc(httpd, strlen(file) + rlen - len + 1);
+		memcpy(newfile, map_to, rlen);
+		strcpy(newfile+rlen, file + len);
+		debug((httpd, DEBUG_NORMAL, "remapping found ``%s'' ",
+		    newfile));
+		free(request->hr_file);
+		request->hr_file = newfile;
+	}
+
+	munmap(fmap, st.st_size);
+	close(mapfile);
+}
+
+/*
  * deal with virtual host names; we do this:
  *	if we have a virtual path root (httpd->virtbase), and we are given a
  *	virtual host spec (Host: ho.st or http://ho.st/), see if this
@@ -1191,6 +1349,12 @@ use_slashdir:
 	if (chdir(s) < 0)
 		return bozo_http_error(httpd, 404, request,
 					"can't chdir to slashdir");
+
+	/*
+	 * is there a mapping for this request?
+	 */
+	check_mapping(request);
+
 	return 0;
 }
 
@@ -1705,6 +1869,9 @@ bozo_check_special_files(bozo_httpreq_t *request, const char *name)
 		return bozo_http_error(httpd, 403, request,
 		    "no permission to open redirect file");
 	if (strcmp(name, ABSREDIRECT_FILE) == 0)
+		return bozo_http_error(httpd, 403, request,
+		    "no permission to open redirect file");
+	if (strcmp(name, REMAP_FILE) == 0)
 		return bozo_http_error(httpd, 403, request,
 		    "no permission to open redirect file");
 	return bozo_auth_check_special_files(request, name);

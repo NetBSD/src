@@ -1,4 +1,4 @@
-.\"	$NetBSD: bozohttpd.8,v 1.68 2017/11/28 12:22:27 wiz Exp $
+.\"	$NetBSD: bozohttpd.8,v 1.69 2018/08/24 11:41:16 martin Exp $
 .\"
 .\"	$eterna: bozohttpd.8,v 1.101 2011/11/18 01:25:11 mrg Exp $
 .\"
@@ -489,6 +489,37 @@ will redirect to
 Otherwise provided schema will be used i.e. symbolic link to
 .Em ftp://NetBSD.org/
 will redirect to the provided URL.
+If a
+.Pa .bzremap
+file is found at the root of a (virtual) server, it is expected to contain
+rewrite mappings for URLs.
+.Pp
+These remappings are performed internally in the server before authentication
+happens and can be used to hide implementation details, like the CGI handler
+specific suffix for non cgi scripts in authorized directories.
+.Pp
+The map file consists of lines two paths separated by a colon, where the left
+side needs to exactly match a (sub) path of the request and will be replaced
+by the right side.
+.Pp
+The first match always wins.
+.Pp
+A
+.Pa .bzremap
+file could look like this:
+.Bd -literal
+/nic/update:/auth-dir/updipv4.pl
+.Ed
+.Pp
+The remap file should be short, access to it is slow and needs to happen
+on each request.
+If a request path needs to include a colon 
+.Pq Li \&:
+character, it can be escaped
+with a backslash
+.Pq Li \e
+The right hand side of the colon is always used verbatim, no escape sequences
+are interpreted.
 .Sh EXAMPLES
 To configure set of virtual hosts, one would use an
 .Xr inetd.conf 5
@@ -554,7 +585,7 @@ The focus has always been simplicity and security, with minimal features
 and regular code audits.
 This manual documents
 .Nm
-version 20170201.
+version 20180824.
 .Sh AUTHORS
 .An -nosplit
 .Nm
