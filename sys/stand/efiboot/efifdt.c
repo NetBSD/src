@@ -1,4 +1,4 @@
-/* $NetBSD: efifdt.c,v 1.1 2018/08/24 02:01:06 jmcneill Exp $ */
+/* $NetBSD: efifdt.c,v 1.2 2018/08/24 23:20:41 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -79,8 +79,9 @@ void
 efi_fdt_memory_map(void)
 {
 	UINTN nentries = 0, mapkey, descsize;
-	EFI_MEMORY_DESCRIPTOR *md;
+	EFI_MEMORY_DESCRIPTOR *md, *memmap;
 	UINT32 descver;
+	UINT64 phys_start, phys_size;
 	int n, memory;
 
 	memory = fdt_path_offset(fdt_data, FDT_MEMORY_NODE_PATH);
@@ -90,30 +91,49 @@ efi_fdt_memory_map(void)
 		panic("FDT: Failed to create " FDT_MEMORY_NODE_PATH " node");
 
 	fdt_delprop(fdt_data, memory, "reg");
+	while (fdt_num_mem_rsv(fdt_data) > 0) {
+		if (fdt_del_mem_rsv(fdt_data, 0) < 0)
+			panic("FDT: Failed to remove reserved memory map entry");
+	}
 
 	const int address_cells = fdt_address_cells(fdt_data, fdt_path_offset(fdt_data, "/"));
 	const int size_cells = fdt_size_cells(fdt_data, fdt_path_offset(fdt_data, "/"));
 
-	md = LibMemoryMap(&nentries, &mapkey, &descsize, &descver);
-	for (n = 0; n < nentries; n++, md = NextMemoryDescriptor(md, descsize)) {
+	memmap = LibMemoryMap(&nentries, &mapkey, &descsize, &descver);
+	for (n = 0, md = memmap; n < nentries; n++, md = NextMemoryDescriptor(md, descsize)) {
 		if ((md->Attribute & EFI_MEMORY_WB) == 0)
 			continue;
 		if (!FDT_MEMORY_USABLE(md))
 			continue;
+		if ((address_cells == 1 || size_cells == 1) && md->PhysicalStart + (md->NumberOfPages * EFI_PAGE_SIZE) > 0xffffffff)
+			continue;
+		if (md->NumberOfPages <= 1)
+			continue;
+
+		phys_start = md->PhysicalStart;
+		phys_size = md->NumberOfPages * EFI_PAGE_SIZE;
+
+		if (phys_start & EFI_PAGE_MASK) {
+			/* UEFI spec says these should be 4KB aligned, but U-Boot doesn't always.. */
+			phys_start = (phys_start + EFI_PAGE_SIZE) & ~EFI_PAGE_MASK;
+			phys_size -= (EFI_PAGE_SIZE * 2);
+			if (phys_size == 0)
+				continue;
+		}
 
 		if (address_cells == 1)
 			fdt_appendprop_u32(fdt_data, fdt_path_offset(fdt_data, FDT_MEMORY_NODE_PATH),
-			    "reg", (uint32_t)md->PhysicalStart);
+			    "reg", (uint32_t)phys_start);
 		else
 			fdt_appendprop_u64(fdt_data, fdt_path_offset(fdt_data, FDT_MEMORY_NODE_PATH),
-			    "reg", md->PhysicalStart);
+			    "reg", phys_start);
 
 		if (size_cells == 1)
 			fdt_appendprop_u32(fdt_data, fdt_path_offset(fdt_data, FDT_MEMORY_NODE_PATH),
-			    "reg", (uint32_t)md->NumberOfPages * EFI_PAGE_SIZE);
+			    "reg", (uint32_t)phys_size);
 		else
 			fdt_appendprop_u64(fdt_data, fdt_path_offset(fdt_data, FDT_MEMORY_NODE_PATH),
-			    "reg", (uint64_t)md->NumberOfPages * EFI_PAGE_SIZE);
+			    "reg", phys_size);
 	}
 }
 
