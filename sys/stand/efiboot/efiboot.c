@@ -1,4 +1,4 @@
-/* $NetBSD: efiboot.c,v 1.2 2018/08/24 20:51:15 jmcneill Exp $ */
+/* $NetBSD: efiboot.c,v 1.3 2018/08/24 23:21:56 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -62,7 +62,7 @@ efi_main(EFI_HANDLE imageHandle, EFI_SYSTEM_TABLE *systemTable)
 		return status;
 	status = uefi_call_wrapper(BS->HandleProtocol, 3, efi_li->DeviceHandle, &DevicePathProtocol, (void **)&efi_bootdp);
 	if (EFI_ERROR(status))
-		return status;
+		efi_bootdp = NULL;
 
 #ifdef EFIBOOT_DEBUG
 	Print(L"Loaded image      : 0x%lX\n", efi_li);
