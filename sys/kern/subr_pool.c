@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.224 2018/08/23 12:18:02 maxv Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.225 2018/08/24 14:04:27 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000, 2002, 2007, 2008, 2010, 2014, 2015
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.224 2018/08/23 12:18:02 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.225 2018/08/24 14:04:27 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -2830,16 +2830,16 @@ pool_redzone_check(struct pool *pp, void *p)
 
 	pat = pool_pattern_generate(cp);
 	expected = (pat == '\0') ? STATIC_BYTE: pat;
-	if (expected != *cp) {
-		panic("%s: %p: 0x%02x != 0x%02x\n",
+	if (__predict_false(expected != *cp)) {
+		printf("%s: %p: 0x%02x != 0x%02x\n",
 		   __func__, cp, *cp, expected);
 	}
 	cp++;
 
 	while (cp < ep) {
 		expected = pool_pattern_generate(cp);
-		if (*cp != expected) {
-			panic("%s: %p: 0x%02x != 0x%02x\n",
+		if (__predict_false(*cp != expected)) {
+			printf("%s: %p: 0x%02x != 0x%02x\n",
 			   __func__, cp, *cp, expected);
 		}
 		cp++;
