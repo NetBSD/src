@@ -1,4 +1,4 @@
-/* $NetBSD: aarch64_machdep.c,v 1.9 2018/08/15 11:10:45 ryo Exp $ */
+/* $NetBSD: aarch64_machdep.c,v 1.10 2018/08/24 01:59:40 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: aarch64_machdep.c,v 1.9 2018/08/15 11:10:45 ryo Exp $");
+__KERNEL_RCSID(1, "$NetBSD: aarch64_machdep.c,v 1.10 2018/08/24 01:59:40 jmcneill Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_ddb.h"
@@ -164,7 +164,7 @@ initarm_common(vaddr_t kvm_base, vsize_t kvm_size,
 	struct trapframe *tf;
 	psize_t memsize_total;
 	vaddr_t kernstart, kernend;
-	vaddr_t kernstart_l2, kernend_l2;	/* L2 table 2MB aligned */
+	vaddr_t kernstart_l2 __unused, kernend_l2;	/* L2 table 2MB aligned */
 	vaddr_t kernelvmstart;
 	int i;
 
@@ -196,8 +196,8 @@ initarm_common(vaddr_t kvm_base, vsize_t kvm_size,
 	kernelvmstart = module_end;
 #endif /* MODULAR */
 
-	paddr_t kernstart_phys = KERN_VTOPHYS(kernstart);
-	paddr_t kernend_phys = KERN_VTOPHYS(kernend);
+	paddr_t kernstart_phys __unused = KERN_VTOPHYS(kernstart);
+	paddr_t kernend_phys __unused = KERN_VTOPHYS(kernend);
 
 	/* XXX */
 	physical_start = bootconfig.dram[0].address;
