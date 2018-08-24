@@ -1,4 +1,4 @@
-/* $NetBSD: efifile.c,v 1.1 2018/08/24 02:01:06 jmcneill Exp $ */
+/* $NetBSD: efifile.c,v 1.2 2018/08/24 23:19:42 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -62,7 +62,6 @@ efi_file_parse(const char *fname, UINTN *pvol, const char **pfile)
 void
 efi_file_system_probe(void)
 {
-	EFI_FILE_SYSTEM_INFO *fsi;
 	EFI_FILE_HANDLE fh;
 	EFI_STATUS status;
 	int n;
@@ -76,11 +75,9 @@ efi_file_system_probe(void)
 		if (!fh)
 			continue;
 
-		fsi = LibFileSystemInfo(fh);
-		if (!fsi)
-			continue;
-
 		if (efi_bootdp && LibMatchDevicePaths(DevicePathFromHandle(efi_vol[n]), efi_bootdp) == TRUE)
+			efi_bootvol = n;
+		else if (efi_bootdp == NULL && efi_bootvol == -1)
 			efi_bootvol = n;
 	}
 }
