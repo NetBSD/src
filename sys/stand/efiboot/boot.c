@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.1 2018/08/24 02:01:06 jmcneill Exp $	*/
+/*	$NetBSD: boot.c,v 1.2 2018/08/24 23:22:10 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -40,9 +40,9 @@ extern const char bootprog_name[], bootprog_rev[], bootprog_kernrev[];
 extern char twiddle_toggle;
 
 static const char * const names[][2] = {
-	{ "netbsd", "netbsd.gz" },
-	{ "onetbsd", "onetbsd.gz" },
-	{ "netbsd.old", "netbsd.old.gz" },
+	{ "\\netbsd", "\\netbsd.gz" },
+	{ "\\onetbsd", "\\onetbsd.gz" },
+	{ "\\netbsd.old", "\\netbsd.old.gz" },
 };
 
 #define NUMNAMES	__arraycount(names)
