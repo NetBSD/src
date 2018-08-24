@@ -1,4 +1,4 @@
-/*	$NetBSD: prompt.c,v 1.1 2018/08/24 02:01:06 jmcneill Exp $	*/
+/*	$NetBSD: prompt.c,v 1.2 2018/08/24 20:55:20 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997
@@ -80,7 +80,7 @@ awaitkey(int timeout, int tell)
 			char buf[32];
 			int len;
 
-			len = snprintf(buf, sizeof(buf), "%d seconds. ", i / POLL_FREQ);
+			len = snprintf(buf, sizeof(buf), "%d seconds. ", (i + POLL_FREQ - 1) / POLL_FREQ);
 			if (len > 0 && len < sizeof(buf)) {
 				char *p = buf;
 				printf("%s", buf);
