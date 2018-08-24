@@ -15,7 +15,7 @@
    This eases debugging and also prevents leaks if a driver prints
    kernel addresses as debug (I've seen that already).
 
--- PPPoE sends a kernel address as host unique. (What is this shit.)
+[DONE] -- PPPoE sends a kernel address as host unique. (What is this shit.)
 
 -- "netstat -nat" leaks kernel addresses.
 
