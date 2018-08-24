@@ -1,4 +1,4 @@
-/* $NetBSD: efiboot.c,v 1.1 2018/08/24 02:01:06 jmcneill Exp $ */
+/* $NetBSD: efiboot.c,v 1.2 2018/08/24 20:51:15 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -50,9 +50,7 @@ efi_main(EFI_HANDLE imageHandle, EFI_SYSTEM_TABLE *systemTable)
 
 	InitializeLib(imageHandle, systemTable);
 
-	status = uefi_call_wrapper(ST->ConOut->Reset, 2, ST->ConOut, FALSE);
-	if (EFI_ERROR(status))
-		return status;
+	(void)uefi_call_wrapper(ST->ConOut->Reset, 2, ST->ConOut, FALSE);
 
 	status = uefi_call_wrapper(BS->AllocatePages, 4, AllocateAnyPages, EfiLoaderData, sz, &heap_start);
 	if (EFI_ERROR(status))
