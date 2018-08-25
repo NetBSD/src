@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.c,v 1.140.2.6 2018/08/25 14:48:22 martin Exp $	*/
+/*	$NetBSD: eval.c,v 1.140.2.7 2018/08/25 17:14:38 martin Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.9 (Berkeley) 6/8/95";
 #else
-__RCSID("$NetBSD: eval.c,v 1.140.2.6 2018/08/25 14:48:22 martin Exp $");
+__RCSID("$NetBSD: eval.c,v 1.140.2.7 2018/08/25 17:14:38 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -1058,7 +1058,6 @@ evalcommand(union node *cmd, int flgs, struct backcmd *backcmd)
 	switch (cmdentry.cmdtype) {
 	case CMDFUNCTION:
 		VXTRACE(DBG_EVAL, ("Shell function:  "), trargs(argv));
-		redirect(cmd->ncmd.redirect, flags & EV_MORE ? REDIR_PUSH : 0);
 		redirect(cmd->ncmd.redirect, REDIR_PUSH);
 		saveparam = shellparam;
 		shellparam.malloc = 0;
