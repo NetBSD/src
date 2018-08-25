@@ -1,4 +1,4 @@
-/* $NetBSD: kauth.h,v 1.78 2018/07/15 05:16:45 maxv Exp $ */
+/* $NetBSD: kauth.h,v 1.79 2018/08/25 09:54:37 maxv Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>  
@@ -230,6 +230,7 @@ enum kauth_process_req {
 	KAUTH_REQ_PROCESS_RLIMIT_GET,
 	KAUTH_REQ_PROCESS_RLIMIT_SET,
 	KAUTH_REQ_PROCESS_RLIMIT_BYPASS,
+	KAUTH_REQ_PROCESS_CANSEE_EPROC,
 };
 
 /*

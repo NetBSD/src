@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.212 2018/04/14 14:26:20 kamil Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.213 2018/08/25 09:54:37 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.212 2018/04/14 14:26:20 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.213 2018/08/25 09:54:37 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_kstack.h"
@@ -263,8 +263,8 @@ proc_listener_cb(kauth_cred_t cred, kauth_action_t action, void *cookie,
 		case KAUTH_REQ_PROCESS_CANSEE_ARGS:
 		case KAUTH_REQ_PROCESS_CANSEE_ENTRY:
 		case KAUTH_REQ_PROCESS_CANSEE_OPENFILES:
+		case KAUTH_REQ_PROCESS_CANSEE_EPROC:
 			result = KAUTH_RESULT_ALLOW;
-
 			break;
 
 		case KAUTH_REQ_PROCESS_CANSEE_ENV:
@@ -1701,7 +1701,7 @@ sysctl_doeproc(SYSCTLFN_ARGS)
 		mutex_enter(p->p_lock);
 		error = kauth_authorize_process(l->l_cred,
 		    KAUTH_PROCESS_CANSEE, p,
-		    KAUTH_ARG(KAUTH_REQ_PROCESS_CANSEE_ENTRY), NULL, NULL);
+		    KAUTH_ARG(KAUTH_REQ_PROCESS_CANSEE_EPROC), NULL, NULL);
 		if (error != 0) {
 			mutex_exit(p->p_lock);
 			continue;
