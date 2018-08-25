@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1611 2018/08/25 11:10:52 martin Exp $
+# $NetBSD: mi,v 1.1612 2018/08/25 20:12:21 rin Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1455,6 +1455,7 @@
 ./usr/share/man/cat4/mt2131.0			man-sys-catman		.cat
 ./usr/share/man/cat4/mtd.0			man-sys-catman		.cat
 ./usr/share/man/cat4/mtio.0			man-sys-catman		.cat
+./usr/share/man/cat4/mue.0			man-sys-catman		.cat
 ./usr/share/man/cat4/multicast.0		man-sys-catman		.cat
 ./usr/share/man/cat4/music.0			man-sys-catman		.cat
 ./usr/share/man/cat4/mvme68k/autoconf.0		man-sys-catman		.cat
@@ -4566,6 +4567,7 @@
 ./usr/share/man/html4/mt2131.html		man-sys-htmlman		html
 ./usr/share/man/html4/mtd.html			man-sys-htmlman		html
 ./usr/share/man/html4/mtio.html			man-sys-htmlman		html
+./usr/share/man/html4/mue.html			man-sys-htmlman		html
 ./usr/share/man/html4/multicast.html		man-sys-htmlman		html
 ./usr/share/man/html4/music.html		man-sys-htmlman		html
 ./usr/share/man/html4/mvme68k/autoconf.html	man-sys-htmlman		html
@@ -7527,6 +7529,7 @@
 ./usr/share/man/man4/mt2131.4			man-sys-man		.man
 ./usr/share/man/man4/mtd.4			man-sys-man		.man
 ./usr/share/man/man4/mtio.4			man-sys-man		.man
+./usr/share/man/man4/mue.4			man-sys-man		.man
 ./usr/share/man/man4/multicast.4		man-sys-man		.man
 ./usr/share/man/man4/music.4			man-sys-man		.man
 ./usr/share/man/man4/mvme68k/autoconf.4		man-sys-man		.man

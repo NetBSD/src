@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.116 2018/05/20 14:08:33 thorpej Exp $
+# $NetBSD: mi,v 1.117 2018/08/25 20:12:21 rin Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -166,6 +166,8 @@
 ./@MODULEDIR@/if_loop/if_loop.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/if_mpls				base-kernel-modules	kmod
 ./@MODULEDIR@/if_mpls/if_mpls.kmod		base-kernel-modules	kmod
+./@MODULEDIR@/if_mue				base-kernel-modules	kmod
+./@MODULEDIR@/if_mue/if_mue.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/if_npflog				base-kernel-modules	kmod
 ./@MODULEDIR@/if_npflog/if_npflog.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/if_ppp				base-kernel-modules	kmod
