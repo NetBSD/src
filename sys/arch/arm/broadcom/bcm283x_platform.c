@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm283x_platform.c,v 1.13 2018/08/21 08:45:17 rin Exp $	*/
+/*	$NetBSD: bcm283x_platform.c,v 1.14 2018/08/25 20:55:15 rin Exp $	*/
 
 /*-
  * Copyright (c) 2017 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm283x_platform.c,v 1.13 2018/08/21 08:45:17 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm283x_platform.c,v 1.14 2018/08/25 20:55:15 rin Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_bcm283x.h"
@@ -1317,7 +1317,7 @@ bcm283x_platform_device_register(device_t dev, void *aux)
 		booted_device = dev;
 	}
 #endif
-	if (device_is_a(dev, "usmsc") &&
+	if ((device_is_a(dev, "usmsc") || device_is_a(dev, "mue")) &&
 	    vcprop_tag_success_p(&vb.vbt_macaddr.tag)) {
 		const uint8_t enaddr[ETHER_ADDR_LEN] = {
 		     (vb.vbt_macaddr.addr >> 0) & 0xff,
