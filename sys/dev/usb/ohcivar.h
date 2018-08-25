@@ -1,4 +1,4 @@
-/*	$NetBSD: ohcivar.h,v 1.55.4.1 2017/04/05 19:54:19 snj Exp $	*/
+/*	$NetBSD: ohcivar.h,v 1.55.4.2 2018/08/25 14:57:35 martin Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -118,9 +118,6 @@ typedef struct ohci_softc {
 	int sc_flags;
 #define OHCIF_SUPERIO		0x0001
 
-	char sc_softwake;
-	kcondvar_t sc_softwake_cv;
-
 	ohci_soft_ed_t *sc_freeeds;
 	ohci_soft_td_t *sc_freetds;
 	ohci_soft_itd_t *sc_freeitds;
@@ -145,7 +142,6 @@ typedef struct ohci_softc {
 
 struct ohci_xfer {
 	struct usbd_xfer xfer;
-	struct usb_task abort_task;
 	/* ctrl */
 	ohci_soft_td_t *ox_setup;
 	ohci_soft_td_t *ox_stat;
