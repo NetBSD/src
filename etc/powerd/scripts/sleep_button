@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: sleep_button,v 1.10 2011/10/17 23:27:41 jmcneill Exp $
+#	$NetBSD: sleep_button,v 1.10.22.1 2018/08/25 14:54:18 martin Exp $
 #
 # Generic script for sleep button events.
 #
@@ -10,13 +10,6 @@
 
 case "${2}" in
 pressed)
-
-	/etc/rc.d/bluetooth stop
-	/etc/rc.d/ntpd stop
-	/etc/rc.d/dhclient stop
-	/etc/rc.d/network stop
-	/etc/rc.d/wpa_supplicant stop
-
 	if /sbin/sysctl -q hw.acpi.sleep.state; then
 		/sbin/sysctl -w hw.acpi.sleep.state=3
 	elif /sbin/sysctl -q machdep.xen.suspend; then
@@ -31,13 +24,6 @@ pressed)
 		# ... waking up
 		sleep 1
 	fi
-
-	/etc/rc.d/wpa_supplicant start
-	/etc/rc.d/network start
-	/etc/rc.d/dhclient start
-	/etc/rc.d/ntpdate start
-	/etc/rc.d/ntpd start
-	/etc/rc.d/bluetooth start
 	;;
 
 released)
