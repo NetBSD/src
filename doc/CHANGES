@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2430 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2431 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -207,3 +207,4 @@ Changes from NetBSD 8.0 to NetBSD 9.0:
 	amd64: Add support for kASan - Kernel Address Sanitizer.
 		[maxv 20180820]
 	arm: Add UEFI boot loader for ARM64 platforms. [jmcneill 20180824]
+	kernel: Remove NDIS. [maxv 20180825]
