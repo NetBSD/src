@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.c,v 1.140.2.3 2018/07/13 14:29:15 martin Exp $	*/
+/*	$NetBSD: eval.c,v 1.140.2.4 2018/08/25 11:45:40 martin Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.9 (Berkeley) 6/8/95";
 #else
-__RCSID("$NetBSD: eval.c,v 1.140.2.3 2018/07/13 14:29:15 martin Exp $");
+__RCSID("$NetBSD: eval.c,v 1.140.2.4 2018/08/25 11:45:40 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -903,7 +903,7 @@ evalcommand(union node *cmd, int flgs, struct backcmd *backcmd)
 		cmdentry.u.bltin = bltincmd;
 	} else {
 		static const char PATH[] = "PATH=";
-		int cmd_flags = DO_ERR;
+		int cmd_flags = 0;
 
 		/*
 		 * Modify the command lookup path, if a PATH= assignment
@@ -917,11 +917,20 @@ evalcommand(union node *cmd, int flgs, struct backcmd *backcmd)
 			int argsused, use_syspath;
 
 			find_command(argv[0], &cmdentry, cmd_flags, path);
+#if 0
+			/*
+			 * This short circuits all of the processing that
+			 * should be done (including processing the
+			 * redirects), so just don't ...
+			 *
+			 * (eventually this whole #if'd block will vanish)
+			 */
 			if (cmdentry.cmdtype == CMDUNKNOWN) {
 				exitstatus = 127;
 				flushout(&errout);
 				goto out;
 			}
+#endif
 
 			/* implement the 'command' builtin here */
 			if (cmdentry.cmdtype != CMDBUILTIN ||
@@ -947,9 +956,10 @@ evalcommand(union node *cmd, int flgs, struct backcmd *backcmd)
 
 	/* Fork off a child process if necessary. */
 	if (cmd->ncmd.backgnd || (trap[0] && (flags & EV_EXIT) != 0)
-	 || (cmdentry.cmdtype == CMDNORMAL && (flags & EV_EXIT) == 0)
-	 || ((flags & EV_BACKCMD) != 0
-	    && ((cmdentry.cmdtype != CMDBUILTIN && cmdentry.cmdtype != CMDSPLBLTIN)
+	 || ((cmdentry.cmdtype == CMDNORMAL || cmdentry.cmdtype == CMDUNKNOWN)
+	     && (flags & EV_EXIT) == 0)
+	 || ((flags & EV_BACKCMD) != 0 &&
+	    ((cmdentry.cmdtype != CMDBUILTIN && cmdentry.cmdtype != CMDSPLBLTIN)
 		 || cmdentry.u.bltin == dotcmd
 		 || cmdentry.u.bltin == evalcmd))) {
 		INTOFF;
