@@ -1,4 +1,4 @@
-# $NetBSD: CUBOX-I,v 1.17 2018/08/01 20:04:11 maxv Exp $
+# $NetBSD: CUBOX-I,v 1.18 2018/08/25 07:48:56 maxv Exp $
 #
 # CuBox-i
 # - http://www.solid-run.com/products/cubox-i-mini-computer/
@@ -78,7 +78,6 @@ include 	"conf/compat_netbsd60.config"
 options 	COMPAT_NETBSD32	# allow running arm (e.g. non-earm) binaries
 
 options 	COMPAT_OSSAUDIO	# OSS (Voxware) audio driver compatibility
-#options 	COMPAT_NDIS	# NDIS network driver
 
 # Wedge support
 options 	DKWEDGE_AUTODISCOVER	# Automatically add dk(4) instances

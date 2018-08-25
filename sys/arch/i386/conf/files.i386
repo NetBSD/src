@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.395 2018/07/13 09:37:32 maxv Exp $
+#	$NetBSD: files.i386,v 1.396 2018/08/25 07:48:56 maxv Exp $
 #
 # new style config file for i386 architecture
 #
@@ -325,9 +325,6 @@ file	arch/x86/x86/linux_trap.c		compat_linux
 
 # FreeBSD binary compatibility (COMPAT_FREEBSD)
 include	"compat/freebsd/files.freebsd"
-
-# NDIS compatibilty (COMPAT_NDIS)
-include "compat/ndis/files.ndis"
 
 # OSS audio driver compatibility
 include	"compat/ossaudio/files.ossaudio"

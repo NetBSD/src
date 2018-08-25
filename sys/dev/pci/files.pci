@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.399 2018/08/08 21:00:28 maya Exp $
+#	$NetBSD: files.pci,v 1.400 2018/08/25 07:48:57 maxv Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -932,12 +932,6 @@ file	dev/pci/if_dge.c		dge
 # Realtek 8169 Ethernet controllers
 attach	re at pci with re_pci
 file	dev/pci/if_re_pci.c		re_pci
-
-# Windows NDIS drivers (Experimental)
-device 	ndis
-attach 	ndis at pci
-file	dev/if_ndis/if_ndis.c		ndis
-file	dev/if_ndis/if_ndis_pci.c	ndis
 
 # Intel PRO/Wireless 2100
 device	ipw: ifnet, arp, wlan, firmload

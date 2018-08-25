@@ -1,4 +1,4 @@
-# $NetBSD: MPCSA_GENERIC,v 1.61 2018/08/01 20:04:11 maxv Exp $
+# $NetBSD: MPCSA_GENERIC,v 1.62 2018/08/25 07:48:56 maxv Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include		"arch/evbarm/conf/std.mpcsa"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.61 $"
+#ident 		"GENERIC-$Revision: 1.62 $"
 
 maxusers	32		# estimated number of users
 
@@ -95,7 +95,6 @@ options 	COMPAT_NETBSD32	# allow running arm (e.g. non-earm) binaries
 
 #options 	COMPAT_OSSAUDIO	# OSS (Voxware) audio driver compatibility
 #options 	COMPAT_LINUX	# binary compatibility with Linux
-#options 	COMPAT_NDIS	# NDIS network driver
 
 # File systems
 file-system 	FFS		# UFS
