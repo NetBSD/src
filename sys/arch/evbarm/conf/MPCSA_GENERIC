@@ -1,4 +1,4 @@
-# $NetBSD: MPCSA_GENERIC,v 1.62 2018/08/25 07:48:56 maxv Exp $
+# $NetBSD: MPCSA_GENERIC,v 1.63 2018/08/25 20:52:40 rin Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include		"arch/evbarm/conf/std.mpcsa"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.62 $"
+#ident 		"GENERIC-$Revision: 1.63 $"
 
 maxusers	32		# estimated number of users
 
@@ -409,11 +409,7 @@ wi*	at pcmcia? function ?		# Lucent/Intersil WaveLan IEEE (802.11)
 #sqphy*	at mii? phy ?			# Seeq 80220/80221/80223 PHYs
 #tlphy*	at mii? phy ?			# ThunderLAN PHYs
 #tqphy*	at mii? phy ?			# TDK Semiconductor PHYs
-ukphy0	at at91emac0 phy 3
-ukphy*	at aue? phy ?			# generic unknown PHYs
-ukphy*	at axe? phy ?			# generic unknown PHYs
-ukphy*	at udav? phy ?			# generic unknown PHYs
-ukphy*	at url? phy ?			# generic unknown PHYs
+ukphy*	at mii? phy ?			# generic unknown PHYs
 #urlphy* at mii? phy ?			# Realtek RTL8150L internal PHYs
 
 
@@ -482,6 +478,7 @@ axe*	at uhub? port ?		# ASIX AX88172 based adapters
 cdce*	at uhub? port ?		# CDC, Ethernet Networking Control Model
 cue*	at uhub? port ?		# CATC USB-EL1201A based adapters
 kue*	at uhub? port ?		# Kawasaki LSI KL5KUSB101B based adapters
+mue*	at uhub? port ?		# Microchip LAN75xx/LAN78xx based adapters
 udav*	at uhub? port ?		# Davicom DM9601 based adapters
 url*	at uhub? port ?		# Realtek RTL8150L based adapters
 

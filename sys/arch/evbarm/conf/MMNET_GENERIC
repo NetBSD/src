@@ -1,4 +1,4 @@
-# $NetBSD: MMNET_GENERIC,v 1.41 2018/08/25 07:48:56 maxv Exp $
+# $NetBSD: MMNET_GENERIC,v 1.42 2018/08/25 20:52:40 rin Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include		"arch/evbarm/conf/std.mmnet"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.41 $"
+#ident 		"GENERIC-$Revision: 1.42 $"
 
 maxusers	32		# estimated number of users
 
@@ -350,11 +350,7 @@ sd*	at atapibus? drive ? flags 0x0000	# ATAPI disk drives
 #sqphy*	at mii? phy ?			# Seeq 80220/80221/80223 PHYs
 #tlphy*	at mii? phy ?			# ThunderLAN PHYs
 #tqphy*	at mii? phy ?			# TDK Semiconductor PHYs
-ukphy*	at at91emac? phy ?
-ukphy*	at aue? phy ?			# generic unknown PHYs
-ukphy*	at axe? phy ?			# generic unknown PHYs
-ukphy*	at udav? phy ?			# generic unknown PHYs
-ukphy*	at url? phy ?			# generic unknown PHYs
+ukphy*	at mii? phy ?			# generic unknown PHYs
 #urlphy* at mii? phy ?			# Realtek RTL8150L internal PHYs
 
 
@@ -420,6 +416,7 @@ axe*	at uhub? port ?		# ASIX AX88172 based adapters
 cdce*	at uhub? port ?		# CDC, Ethernet Networking Control Model
 cue*	at uhub? port ?		# CATC USB-EL1201A based adapters
 kue*	at uhub? port ?		# Kawasaki LSI KL5KUSB101B based adapters
+mue*	at uhub? port ?		# Microchip LAN75xx/LAN78xx based adapters
 udav*	at uhub? port ?		# Davicom DM9601 based adapters
 url*	at uhub? port ?		# Realtek RTL8150L based adapters
 
