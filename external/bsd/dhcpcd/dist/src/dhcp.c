@@ -86,6 +86,11 @@
 #define IPDEFTTL 64 /* RFC1340 */
 #endif
 
+/* NetBSD-7 has an incomplete IP_PKTINFO implementation. */
+#if defined(__NetBSD_Version__) && __NetBSD_Version__ < 800000000
+#undef IP_PKTINFO
+#endif
+
 /* Assert the correct structure size for on wire */
 __CTASSERT(sizeof(struct ip)		== 20);
 __CTASSERT(sizeof(struct udphdr)	== 8);
@@ -3267,7 +3272,7 @@ get_udp_data(void *udp, size_t *len)
 	struct bootp_pkt *p;
 
 	p = (struct bootp_pkt *)udp;
-	*len = ntohs(p->ip.ip_len) - sizeof(p->ip) - sizeof(p->udp);
+	*len = (size_t)ntohs(p->ip.ip_len) - sizeof(p->ip) - sizeof(p->udp);
 	return (char *)udp + offsetof(struct bootp_pkt, bootp);
 }
 
