@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.c,v 1.132.2.4 2018/05/06 09:32:57 martin Exp $	*/
+/*	$NetBSD: parser.c,v 1.132.2.5 2018/08/25 14:45:37 martin Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)parser.c	8.7 (Berkeley) 5/16/95";
 #else
-__RCSID("$NetBSD: parser.c,v 1.132.2.4 2018/05/06 09:32:57 martin Exp $");
+__RCSID("$NetBSD: parser.c,v 1.132.2.5 2018/08/25 14:45:37 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -1528,7 +1528,7 @@ parseredir(const char *out,  int c)
 	union node *np;
 	int fd;
 
-	fd = (*out == '\0') ? -1 : atoi(out);
+	fd = (*out == '\0') ? -1 : number(out);
 
 	np = stalloc(sizeof(struct nfile));
 	if (c == '>') {
