@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.173.2.1 2017/11/02 21:29:52 snj Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.173.2.2 2018/08/25 11:29:52 martin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012, 2015 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.173.2.1 2017/11/02 21:29:52 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.173.2.2 2018/08/25 11:29:52 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -282,6 +282,7 @@ usbd_transfer(struct usbd_xfer *xfer)
 	USBHIST_LOG(usbdebug,
 	    "xfer = %#jx, flags = %#jx, pipe = %#jx, running = %jd",
 	    (uintptr_t)xfer, xfer->ux_flags, (uintptr_t)pipe, pipe->up_running);
+	KASSERT(xfer->ux_status == USBD_NOT_STARTED);
 
 #ifdef USB_DEBUG
 	if (usbdebug > 5)
@@ -347,7 +348,7 @@ usbd_transfer(struct usbd_xfer *xfer)
 	}
 
 	if (err != USBD_IN_PROGRESS) {
-		USBHIST_LOG(usbdebug, "<- done xfer %#jx, err %jd "
+		USBHIST_LOG(usbdebug, "<- done xfer %#jx, sync (err %jd)"
 		    "(complete/error)", (uintptr_t)xfer, err, 0, 0);
 		return err;
 	}
@@ -476,7 +477,6 @@ usbd_alloc_xfer(struct usbd_device *dev, unsigned int nframes)
 	xfer->ux_bus = dev->ud_bus;
 	callout_init(&xfer->ux_callout, CALLOUT_MPSAFE);
 	cv_init(&xfer->ux_cv, "usbxfer");
-	cv_init(&xfer->ux_hccv, "usbhcxfer");
 
 	USBHIST_LOG(usbdebug, "returns %#jx", (uintptr_t)xfer, 0, 0, 0);
 
@@ -499,7 +499,6 @@ usbd_free_xfer(struct usbd_xfer *xfer)
 	}
 #endif
 	cv_destroy(&xfer->ux_cv);
-	cv_destroy(&xfer->ux_hccv);
 	xfer->ux_bus->ub_methods->ubm_freex(xfer->ux_bus, xfer);
 	return USBD_NORMAL_COMPLETION;
 }
@@ -911,7 +910,8 @@ usb_transfer_complete(struct usbd_xfer *xfer)
 	    xfer->ux_actlen);
 
 	KASSERT(polling || mutex_owned(pipe->up_dev->ud_bus->ub_lock));
-	KASSERT(xfer->ux_state == XFER_ONQU);
+	KASSERTMSG(xfer->ux_state == XFER_ONQU, "xfer %p state is %x", xfer,
+	    xfer->ux_state);
 	KASSERT(pipe != NULL);
 
 	if (!repeat) {

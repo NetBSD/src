@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.275.2.3 2017/11/23 13:29:32 martin Exp $	*/
+/*	$NetBSD: uhci.c,v 1.275.2.4 2018/08/25 11:29:52 martin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2011, 2012 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.275.2.3 2017/11/23 13:29:32 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.275.2.4 2018/08/25 11:29:52 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -574,8 +574,6 @@ uhci_init(uhci_softc_t *sc)
 
 	callout_init(&sc->sc_poll_handle, CALLOUT_MPSAFE);
 
-	cv_init(&sc->sc_softwake_cv, "uhciab");
-
 	/* Set up the bus struct. */
 	sc->sc_bus.ub_methods = &uhci_bus_methods;
 	sc->sc_bus.ub_pipesize = sizeof(struct uhci_pipe);
@@ -639,8 +637,6 @@ uhci_detach(struct uhci_softc *sc, int flags)
 	callout_halt(&sc->sc_poll_handle, NULL);
 	callout_destroy(&sc->sc_poll_handle);
 
-	cv_destroy(&sc->sc_softwake_cv);
-
 	mutex_destroy(&sc->sc_lock);
 	mutex_destroy(&sc->sc_intr_lock);
 
@@ -661,6 +657,9 @@ uhci_allocx(struct usbd_bus *bus, unsigned int nframes)
 	if (xfer != NULL) {
 		memset(xfer, 0, sizeof(struct uhci_xfer));
 
+		/* Initialise this always so we can call remove on it. */
+		usb_init_task(&xfer->ux_aborttask, uhci_timeout_task, xfer,
+		    USB_TASKQ_MPSAFE);
 #ifdef DIAGNOSTIC
 		struct uhci_xfer *uxfer = UHCI_XFER2UXFER(xfer);
 		uxfer->ux_isdone = true;
@@ -1423,10 +1422,7 @@ uhci_softintr(void *v)
 		usb_transfer_complete(&ux->ux_xfer);
 	}
 
-	if (sc->sc_softwake) {
-		sc->sc_softwake = 0;
-		cv_broadcast(&sc->sc_softwake_cv);
-	}
+	KASSERT(sc->sc_bus.ub_usepolling || mutex_owned(&sc->sc_lock));
 }
 
 /* Check for an interrupt. */
@@ -1482,8 +1478,6 @@ uhci_check_intr(uhci_softc_t *sc, struct uhci_xfer *ux, ux_completeq_t *cqp)
 	if (!(status & UHCI_TD_ACTIVE)) {
  done:
 		DPRINTFN(12, "ux=%#jx done", (uintptr_t)ux, 0, 0, 0);
-
-		callout_stop(&xfer->ux_callout);
 		uhci_idone(ux, cqp);
 		return;
 	}
@@ -1555,6 +1549,7 @@ uhci_check_intr(uhci_softc_t *sc, struct uhci_xfer *ux, ux_completeq_t *cqp)
 void
 uhci_idone(struct uhci_xfer *ux, ux_completeq_t *cqp)
 {
+	UHCIHIST_FUNC(); UHCIHIST_CALLED();
 	struct usbd_xfer *xfer = &ux->ux_xfer;
 	uhci_softc_t *sc __diagused = UHCI_XFER2SC(xfer);
 	struct uhci_pipe *upipe = UHCI_PIPE2UPIPE(xfer->ux_pipe);
@@ -1564,8 +1559,27 @@ uhci_idone(struct uhci_xfer *ux, ux_completeq_t *cqp)
 
 	KASSERT(sc->sc_bus.ub_usepolling || mutex_owned(&sc->sc_lock));
 
-	UHCIHIST_FUNC(); UHCIHIST_CALLED();
 	DPRINTFN(12, "ux=%#jx", (uintptr_t)ux, 0, 0, 0);
+
+	/*
+	 * If software has completed it, either by cancellation
+	 * or timeout, drop it on the floor.
+	 */
+	if (xfer->ux_status != USBD_IN_PROGRESS) {
+		KASSERT(xfer->ux_status == USBD_CANCELLED ||
+		    xfer->ux_status == USBD_TIMEOUT);
+		DPRINTF("aborted xfer=%#jx", (uintptr_t)xfer, 0, 0, 0);
+		return;
+	}
+
+	/*
+	 * Cancel the timeout and the task, which have not yet
+	 * run.  If they have already fired, at worst they are
+	 * waiting for the lock.  They will see that the xfer
+	 * is no longer in progress and give up.
+	 */
+	callout_stop(&xfer->ux_callout);
+	usb_rem_task(xfer->ux_pipe->up_dev, &xfer->ux_aborttask);
 
 #ifdef DIAGNOSTIC
 #ifdef UHCI_DEBUG
@@ -1701,26 +1715,17 @@ uhci_idone(struct uhci_xfer *ux, ux_completeq_t *cqp)
 void
 uhci_timeout(void *addr)
 {
-	struct usbd_xfer *xfer = addr;
-	struct uhci_xfer *uxfer = UHCI_XFER2UXFER(xfer);
-	uhci_softc_t *sc = UHCI_XFER2SC(xfer);
-
 	UHCIHIST_FUNC(); UHCIHIST_CALLED();
+	struct usbd_xfer *xfer = addr;
+	uhci_softc_t *sc = UHCI_XFER2SC(xfer);
+	struct usbd_device *dev = xfer->ux_pipe->up_dev;
 
-	DPRINTF("uxfer %#jx", (uintptr_t)uxfer, 0, 0, 0);
+	DPRINTF("xfer %#jx", (uintptr_t)xfer, 0, 0, 0);
 
-	if (sc->sc_dying) {
-		mutex_enter(&sc->sc_lock);
-		uhci_abort_xfer(xfer, USBD_TIMEOUT);
-		mutex_exit(&sc->sc_lock);
-		return;
-	}
-
-	/* Execute the abort in a process context. */
-	usb_init_task(&uxfer->ux_aborttask, uhci_timeout_task, xfer,
-	    USB_TASKQ_MPSAFE);
-	usb_add_task(uxfer->ux_xfer.ux_pipe->up_dev, &uxfer->ux_aborttask,
-	    USB_TASKQ_HC);
+	mutex_enter(&sc->sc_lock);
+	if (!sc->sc_dying && xfer->ux_status == USBD_IN_PROGRESS)
+		usb_add_task(dev, &xfer->ux_aborttask, USB_TASKQ_HC);
+	mutex_exit(&sc->sc_lock);
 }
 
 void
@@ -2329,65 +2334,81 @@ uhci_device_bulk_abort(struct usbd_xfer *xfer)
 }
 
 /*
- * Abort a device request.
- * If this routine is called at splusb() it guarantees that the request
- * will be removed from the hardware scheduling and that the callback
- * for it will be called with USBD_CANCELLED status.
+ * Cancel or timeout a device request.  We have two cases to deal with
+ *
+ * 1) A driver wants to stop scheduled or inflight transfers
+ * 2) A transfer has timed out
+ *
  * It's impossible to guarantee that the requested transfer will not
- * have happened since the hardware runs concurrently.
- * If the transaction has already happened we rely on the ordinary
- * interrupt processing to process it.
- * XXX This is most probably wrong.
- * XXXMRG this doesn't make sense anymore.
+ * have (partially) happened since the hardware runs concurrently.
+ *
+ * Transfer state is protected by the bus lock and we set the transfer status
+ * as soon as either of the above happens (with bus lock held).
+ *
+ * To allow the hardware time to notice we simply wait.
  */
 void
 uhci_abort_xfer(struct usbd_xfer *xfer, usbd_status status)
 {
+	UHCIHIST_FUNC(); UHCIHIST_CALLED();
 	struct uhci_xfer *ux = UHCI_XFER2UXFER(xfer);
 	struct uhci_pipe *upipe = UHCI_PIPE2UPIPE(xfer->ux_pipe);
 	uhci_softc_t *sc = UHCI_XFER2SC(xfer);
 	uhci_soft_td_t *std;
-	int wake;
 
-	UHCIHIST_FUNC(); UHCIHIST_CALLED();
+	KASSERTMSG((status == USBD_CANCELLED || status == USBD_TIMEOUT),
+	    "invalid status for abort: %d", (int)status);
+
 	DPRINTFN(1,"xfer=%#jx, status=%jd", (uintptr_t)xfer, status, 0, 0);
 
 	KASSERT(mutex_owned(&sc->sc_lock));
 	ASSERT_SLEEPABLE();
 
-	if (sc->sc_dying) {
-		/* If we're dying, just do the software part. */
-		xfer->ux_status = status;	/* make software ignore it */
-		callout_stop(&xfer->ux_callout);
-		usb_transfer_complete(xfer);
+	if (status == USBD_CANCELLED) {
+		/*
+		 * We are synchronously aborting.  Try to stop the
+		 * callout and task, but if we can't, wait for them to
+		 * complete.
+		 */
+		callout_halt(&xfer->ux_callout, &sc->sc_lock);
+		usb_rem_task_wait(xfer->ux_pipe->up_dev, &xfer->ux_aborttask,
+		    USB_TASKQ_HC, &sc->sc_lock);
+	} else {
+		/* Otherwise, we are timing out.  */
+		KASSERT(status == USBD_TIMEOUT);
+	}
+
+	/*
+	 * The xfer cannot have been cancelled already.  It is the
+	 * responsibility of the caller of usbd_abort_pipe not to try
+	 * to abort a pipe multiple times, whether concurrently or
+	 * sequentially.
+	 */
+	KASSERT(xfer->ux_status != USBD_CANCELLED);
+
+	/* Only the timeout, which runs only once, can time it out.  */
+	KASSERT(xfer->ux_status != USBD_TIMEOUT);
+
+	/* If anyone else beat us, we're done.  */
+	if (xfer->ux_status != USBD_IN_PROGRESS)
 		return;
+
+	/* We beat everyone else.  Claim the status.  */
+	xfer->ux_status = status;
+
+	/*
+	 * If we're dying, skip the hardware action and just notify the
+	 * software that we're done.
+	 */
+	if (sc->sc_dying) {
+		DPRINTFN(4, "xfer %#jx dying %ju", (uintptr_t)xfer,
+		    xfer->ux_status, 0, 0);
+		goto dying;
 	}
 
 	/*
-	 * If an abort is already in progress then just wait for it to
-	 * complete and return.
+	 * HC Step 1: Make interrupt routine and hardware ignore xfer.
 	 */
-	if (xfer->ux_hcflags & UXFER_ABORTING) {
-		DPRINTFN(2, "already aborting", 0, 0, 0, 0);
-#ifdef DIAGNOSTIC
-		if (status == USBD_TIMEOUT)
-			printf("%s: TIMEOUT while aborting\n", __func__);
-#endif
-		/* Override the status which might be USBD_TIMEOUT. */
-		xfer->ux_status = status;
-		DPRINTFN(2, "waiting for abort to finish", 0, 0, 0, 0);
-		xfer->ux_hcflags |= UXFER_ABORTWAIT;
-		while (xfer->ux_hcflags & UXFER_ABORTING)
-			cv_wait(&xfer->ux_hccv, &sc->sc_lock);
-		goto done;
-	}
-	xfer->ux_hcflags |= UXFER_ABORTING;
-
-	/*
-	 * Step 1: Make interrupt routine and hardware ignore xfer.
-	 */
-	xfer->ux_status = status;	/* make software ignore it */
-	callout_stop(&xfer->ux_callout);
 	uhci_del_intr_list(sc, ux);
 
 	DPRINTF("stop ux=%#jx", (uintptr_t)ux, 0, 0, 0);
@@ -2404,30 +2425,22 @@ uhci_abort_xfer(struct usbd_xfer *xfer, usbd_status status)
 	}
 
 	/*
-	 * Step 2: Wait until we know hardware has finished any possible
-	 * use of the xfer.  Also make sure the soft interrupt routine
-	 * has run.
+	 * HC Step 2: Wait until we know hardware has finished any possible
+	 * use of the xfer.
 	 */
 	/* Hardware finishes in 1ms */
 	usb_delay_ms_locked(upipe->pipe.up_dev->ud_bus, 2, &sc->sc_lock);
-	sc->sc_softwake = 1;
-	usb_schedsoftintr(&sc->sc_bus);
-	DPRINTF("cv_wait", 0, 0, 0, 0);
-	cv_wait(&sc->sc_softwake_cv, &sc->sc_lock);
 
 	/*
-	 * Step 3: Execute callback.
+	 * HC Step 3: Notify completion to waiting xfers.
 	 */
-	DPRINTF("callback", 0, 0, 0, 0);
+dying:
 #ifdef DIAGNOSTIC
 	ux->ux_isdone = true;
 #endif
-	wake = xfer->ux_hcflags & UXFER_ABORTWAIT;
-	xfer->ux_hcflags &= ~(UXFER_ABORTING | UXFER_ABORTWAIT);
 	usb_transfer_complete(xfer);
-	if (wake)
-		cv_broadcast(&xfer->ux_hccv);
-done:
+	DPRINTFN(14, "end", 0, 0, 0, 0);
+
 	KASSERT(mutex_owned(&sc->sc_lock));
 }
 
