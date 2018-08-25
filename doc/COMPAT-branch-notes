@@ -1,4 +1,4 @@
-/* $NetBSD: COMPAT-branch-notes,v 1.1.2.17 2018/05/26 11:48:40 pgoyette Exp $ */
+/* $NetBSD: COMPAT-branch-notes,v 1.1.2.18 2018/08/25 01:02:48 pgoyette Exp $ */
 
 DONE
 ----
@@ -49,8 +49,23 @@ DONE
     compat modules rather than the monolithic modules.
 
 
-TODO
-----
+TODO - Required for branch merge
+--------------------------------
+1.  For compat_60, still need to figure out what to do with BSDPTY and
+    tty_ptm
+
+2.  Also for compat_60, need to fix the building of XEN (and, for i386,
+    XEN-PAE) module variants so that the obj-dir symlinks and the -I
+    include order match those present in a kernel build.  See PR/53130
+    (Currently, this affects the compat_60 module and its implementation
+    of microcode updates for AMD processors - i386 and amd64.)
+
+3.  For compat_50, in addition to rtsock there are some things in dev/vnd,
+    dev/gpio, and dev/wscons/wsmux that I haven't been able to cleanly
+    separate.
+
+TODO - Not required for branch merge
+------------------------------------
 1.  Audit the entire code base for any remaining embedded #ifdef's for
     COMPAT_xx.  When found, move the actual compat code into the compat
     hierarchy and replace originals with indirect (vectored) calls.
@@ -60,26 +75,18 @@ TODO
     macro.  Once rtsock is separated, compat_14 references to rtsock_50
     routines needs to be verified.
 
+    Currently, this entire code is built for the monolithic COMPAT
+    module, but there's no way to reach the entry points.
+
 3.  The compat_60 module still needs some work for XEN systems.  We
     probably need some build infrastructure changes to ensure that
     XEN (and, for i386, XEN-PAE) modules are build with the correct
     macros defined and with -I directories specified in the same order
     as for building kernels.
 
-4.  For compat_60, still need to figure out what to do with BSDPTY and
-    tty_ptm
+    This currently affects cpu microcode loading for amd64 XEN systems.
 
-5.  Also for compat_60, need to fix the building of XEN (and, for i386,
-    XEN-PAE) module variants so that the obj-dir symlinks and the -I
-    include order match those present in a kernel build.  See PR/53130
-    (Currently, this affects the compat_60 module and its implementation
-    of microcode updates for AMD processors - i386 and amd64.)
-
-6.  For compat_50, in addition to rtsock there are some things in dev/vnd,
-    dev/gpio, and dev/wscons/wsmux that I haven't been able to cleanly
-    separate.
-
-7.  There seems to be quite a bit of MD compat_xx code, in the various
+4.  There seems to be quite a bit of MD compat_xx code, in the various
     sys/arch/ directories.  I haven't yet looked at any of this.  But it
     seems to me that the MI compat build infrastructure should have some
     mechanism to "reach over" to the MD code, #include a Makefile.inc file,
