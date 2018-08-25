@@ -1,4 +1,4 @@
-.\"	$NetBSD: sh.1,v 1.206 2018/05/03 05:11:43 wiz Exp $
+.\"	$NetBSD: sh.1,v 1.207 2018/08/25 17:35:31 kre Exp $
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -1903,32 +1903,124 @@ has with
 .\"
 Command substitution allows the output of a command to be substituted in
 place of the command (and surrounding syntax).
-Command substitution occurs when the command is enclosed as follows:
+Command substitution occurs when a word contains
+a command list enclosed as follows:
 .Pp
-.Dl Ic $( Ns Ar command Ns Ic \&)
+.Dl Ic $( Ns Ar list Ns Ic \&)
 .Pp
-or
-.Po
-.Dq backquoted
-version
-.Pc :
+or the older
+.Pq Dq backquoted
+version, which is best avoided:
 .Pp
-.Dl Ic \&` Ns Ar command Ns Ic \&`
+.Dl Ic \&` Ns Ar list Ns Ns Ic \&`
 .Pp
-The shell expands the command substitution by executing command in a
-sub-shell environment and replacing the command substitution with the
-standard output of the command, removing sequences of one or more
+See the section
+.Sx Complex Commands
+above for the definition of
+.Ic list .
+.Pp
+The shell expands the command substitution by executing the
+.Ar list
+in a sub-shell environment and replacing the command substitution with the
+standard output of the
+.Ar list
+after removing any sequence of one or more
 .Ao newline Ac Ns s
-at the end of the substitution.
+from the end of the substitution.
 (Embedded
 .Ao newline Ac Ns s
 before
 the end of the output are not removed; however, during field splitting,
-they may be translated into
-.Ao space Ac Ns s ,
+they may be used to separate fields
+.Pq "as spaces usually are"
 depending on the value of
 .Ev IFS
 and any quoting that is in effect.)
+.Pp
+Note that if a command substitution includes commands
+to be run in the background,
+the sub-shell running those commands
+will only wait for them to complete if an appropriate
+.Ic wait
+command is included in the command list.
+However, the shell in which the result of the command substitution
+will be used will wait for both the sub-shell to exit and for the
+file descriptor that was initially standard output for the command
+substitution sub-shell to be closed.
+In some circumstances this might not happen until all processes
+started by the command substitution have finished.
+.\" While the exit of the sub-shell closes its standard output,
+.\" any background process left running may still
+.\" have that file descriptor open.
+.\" This includes yet another sub-shell which might have been
+.\" (almost invisibly) created to wait for some other command to complete,
+.\" and even where the background command has had its
+.\" standard output redirected or closed,
+.\" the waiting sub-shell may still have it open.
+.\" Thus there is no guarantee that the result of a command substitution
+.\" will be available in the shell which is to use it before all of
+.\" the commands started by the command substitution have completed,
+.\" though careful coding can often avoid delays beyond the termination
+.\" of the command substitution sub-shell.
+.\" .Pp
+.\" For example, assuming a script were to contain the following
+.\" code (which could be done better other ways, attempting
+.\" this kind of trickery is not recommended):
+.\" .Bd -literal -offset indent
+.\" if [ "$( printf "Ready? " >&2; read ans; printf "${ans}";
+.\"    { sleep 120 >/dev/null && kill $$ >/dev/null 2>&1; }& )" = go ]
+.\" then
+.\" 	printf Working...
+.\" 	# more code
+.\" fi
+.\" .Ed
+.\" .Pp
+.\" the
+.\" .Dq Working...
+.\" output will not be printed, and code that follows will never be executed.
+.\" Nor will anything later in the script
+.\" .Po
+.\" unless
+.\" .Dv SIGTERM
+.\" is trapped or ignored
+.\" .Pc .
+.\" .Pp
+.\" The intent is to prompt the user, wait for the user to
+.\" answer, then if the answer was
+.\" .Dq go
+.\" do the appropriate work, but set a 2 minute time limit
+.\" on completing that work.
+.\" If the work is not done by then, kill the shell doing it.
+.\" .Pp
+.\" It will usually not work as written, as while the 2 minute
+.\" .Sq sleep
+.\" has its standard output redirected, as does the
+.\" .Sq kill
+.\" that follows (which also redirects standard error,
+.\" so the user would not see an error if the work were
+.\" completed and there was no parent process left to kill);
+.\" the sub-shell waiting for the
+.\" .Sq sleep
+.\" to finish successfully, so it can start the
+.\" .Sq kill ,
+.\" does not.
+.\" It waits, with standard output still open,
+.\" for the 2 minutes until the sleep is done,
+.\" even though the kill is not going to need that file descriptor,
+.\" and there is nothing else which could.
+.\" The command substitution does not complete until after
+.\" the kill has executed and the background sub-shell
+.\" finishes \(en at which time the shell running it is
+.\" presumably dead.
+.\" .Pp
+.\" Rewriting the background sub-shell part of that as
+.\" .Dl "{ sleep 120 && kill $$ 2>&1; } >/dev/null &"
+.\" would allow this
+.\" .Nm
+.\" to perform as expected, but that is not guaranteed,
+.\" not all shells would behave as planned.
+.\" It is advised to avoid starting background processes
+.\" from within a command substitution.
 .\"
 .\"
 .Ss Arithmetic Expansion
