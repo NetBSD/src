@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2431 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2432 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -47,6 +47,7 @@ Changes from NetBSD 8.0 to NetBSD 9.0:
 	lm(4): Add support for NCT5174D, NCT6775F, NCT6779D and NCT679[1235]D.
 		[msaitoh 20170711]
 	arm: Add support for NVIDIA Tegra X1 SoC. [jmcneill 20170720]
+	i386: Remove vm86. [maxv 20170812]
 	itesio(4): Add support IT8628E. [hauke 20170814]
 	ichsmb(4): Add support for Intel C3000. [msaitoh 20170817]
 	ismt(4): Add support for Intel C3000. [msaitoh 20170817]
@@ -194,6 +195,7 @@ Changes from NetBSD 8.0 to NetBSD 9.0:
 		[kamil 20180803]
 	lua: Import version 5.3.5. [alnsn 20180804]
 	arm: Add driver for ARM GICv3 interrupt controllers. [jmcneill 20180808]
+	kernel: Remove the n8 driver. [maya 20180808]
  	bind: Import version 9.12.2-P1. [christos 20180812]
 	arm: Add support for Rockchip RK3399 SoC. [jmcneill 20180812]
 	amd64: Randomize by default all the randomizable VM areas in the kernel.
