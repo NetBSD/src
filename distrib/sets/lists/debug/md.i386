@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.16 2018/07/13 09:15:55 maxv Exp $
+# $NetBSD: md.i386,v 1.17 2018/08/25 11:10:52 martin Exp $
 ./usr/lib/libi386_g.a				comp-c-debuglib		debuglib
 ./usr/lib/libm387_g.a				comp-c-debuglib		debuglib
 ./usr/lib/libpmc_g.a				comp-obsolete		obsolete
@@ -17,7 +17,7 @@
 ./usr/libdata/debug/usr/sbin/apmd.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/bad144.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/ipwctl.debug	comp-sysutil-debug	debug
-./usr/libdata/debug/usr/sbin/ndiscvt.debug	comp-sysutil-debug	debug
+./usr/libdata/debug/usr/sbin/ndiscvt.debug	comp-sysutil-debug	obsolete
 ./usr/libdata/debug/usr/tests/kernel/arch/x86/t_ptrace_wait.debug	tests-obsolete	obsolete
 ./usr/libdata/debug/usr/tests/kernel/arch/x86/t_ptrace_wait3.debug	tests-obsolete	obsolete
 ./usr/libdata/debug/usr/tests/kernel/arch/x86/t_ptrace_wait4.debug	tests-obsolete	obsolete

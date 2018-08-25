@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1610 2018/08/25 07:48:56 maxv Exp $
+# $NetBSD: mi,v 1.1611 2018/08/25 11:10:52 martin Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2602,7 +2602,7 @@
 ./usr/share/man/cat8/i386/makedev.0		man-obsolete		obsolete
 ./usr/share/man/cat8/i386/mbr.0			man-obsolete		obsolete
 ./usr/share/man/cat8/i386/multiboot.0		man-obsolete		obsolete
-./usr/share/man/cat8/i386/ndiscvt.0		man-netutil-catman	.cat
+./usr/share/man/cat8/i386/ndiscvt.0		man-obsolete		obsolete
 ./usr/share/man/cat8/i386/pxeboot.0		man-obsolete		obsolete
 ./usr/share/man/cat8/i386/reboot.0		man-obsolete		obsolete
 ./usr/share/man/cat8/i386/reboot_i386.0		man-obsolete		obsolete
@@ -5570,7 +5570,7 @@
 ./usr/share/man/html8/i386/dosboot.html		man-obsolete		obsolete
 ./usr/share/man/html8/i386/mbr.html		man-obsolete		obsolete
 ./usr/share/man/html8/i386/multiboot.html	man-obsolete		obsolete
-./usr/share/man/html8/i386/ndiscvt.html		man-netutil-htmlman	html
+./usr/share/man/html8/i386/ndiscvt.html		man-obsolete		obsolete
 ./usr/share/man/html8/i386/pxeboot.html		man-obsolete		obsolete
 ./usr/share/man/html8/i386/w95boot.html		man-obsolete		obsolete
 ./usr/share/man/html8/iasl.html			man-sysutil-htmlman	html
@@ -8673,7 +8673,7 @@
 ./usr/share/man/man8/i386/makedev.8		man-obsolete		obsolete
 ./usr/share/man/man8/i386/mbr.8			man-obsolete		obsolete
 ./usr/share/man/man8/i386/multiboot.8		man-obsolete		obsolete
-./usr/share/man/man8/i386/ndiscvt.8		man-netutil-man		.man
+./usr/share/man/man8/i386/ndiscvt.8		man-obsolete		obsolete
 ./usr/share/man/man8/i386/pxeboot.8		man-obsolete		obsolete
 ./usr/share/man/man8/i386/reboot.8		man-obsolete		obsolete
 ./usr/share/man/man8/i386/reboot_i386.8		man-obsolete		obsolete

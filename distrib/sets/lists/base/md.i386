@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.150 2018/07/13 09:15:55 maxv Exp $
+# $NetBSD: md.i386,v 1.151 2018/08/25 11:10:52 martin Exp $
 ./dev/lms0					base-obsolete		obsolete
 ./dev/mms0					base-obsolete		obsolete
 ./dev/pms0					base-obsolete		obsolete
@@ -103,7 +103,7 @@
 ./usr/sbin/apmd					base-sysutil-bin
 ./usr/sbin/bad144				base-sysutil-bin
 ./usr/sbin/ipwctl				base-sysutil-bin
-./usr/sbin/ndiscvt				base-sysutil-bin
+./usr/sbin/ndiscvt				base-sysutil-bin	obsolete
 ./usr/sbin/zzz					base-sysutil-bin
 ./usr/share/man/cat8/mount_qemufwcfg.0		man-sysutil-catman	.cat
 ./usr/share/man/html8/mount_qemufwcfg.html	man-sysutil-htmlman	html
