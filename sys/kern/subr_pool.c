@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.225 2018/08/24 14:04:27 maxv Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.226 2018/08/25 05:56:24 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000, 2002, 2007, 2008, 2010, 2014, 2015
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.225 2018/08/24 14:04:27 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.226 2018/08/25 05:56:24 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -86,7 +86,7 @@ static struct pool phpool[PHPOOL_MAX];
 static struct pool psppool;
 #endif
 
-#if defined(DIAGNOSTIC) || defined(KASAN)
+#if defined(KASAN)
 #define POOL_REDZONE
 #endif
 
