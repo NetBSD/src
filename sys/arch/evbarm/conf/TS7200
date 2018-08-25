@@ -1,4 +1,4 @@
-#	$NetBSD: TS7200,v 1.70 2018/07/12 10:46:43 maxv Exp $
+#	$NetBSD: TS7200,v 1.71 2018/08/25 20:52:40 rin Exp $
 #
 #	TS7200 - Kernel for Technologic Systems TS7200 ARM hardware
 #
@@ -331,6 +331,7 @@ uhub*	at uhub? port ?
 #axe*	at uhub? port ?		# ASIX AX88172 based adapters
 #cue*	at uhub? port ?		# CATC USB-EL1201A based adapters
 #kue*	at uhub? port ?		# Kawasaki LSI KL5KUSB101B based adapters
+#mue*	at uhub? port ?		# Microchip LAN75xx/LAN78xx based adapters
 #udav*	at uhub? port ?		# Davicom DM9601 based adapters
 #url*	at uhub? port ?		# Realtek RTL8150L based adapters
 

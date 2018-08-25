@@ -1,4 +1,4 @@
-#	$NetBSD: OPENBLOCKS_A6,v 1.32 2018/08/01 20:04:11 maxv Exp $
+#	$NetBSD: OPENBLOCKS_A6,v 1.33 2018/08/25 20:52:40 rin Exp $
 #
 #	OPENBLOCKS_A6 -- Plat'Home. OpenBlockS A6 kernel
 #
@@ -153,7 +153,11 @@ mvsata* at mvsoc? offset ? irq ?
 # On-chip Gigabit Ethernet Controller Interface
 mvgbec* at mvsoc? offset ?
 mvgbe*	at mvgbec? port ? irq ?
+
+# MII/PHY support
 makphy* at mii? phy ?
+ukphy*	at mii? phy ?			# generic unknown PHYs
+urlphy* at mii? phy ?			# Realtek RTL8150L internal PHYs
 
 # On-chip USB 2.0 Interface
 ehci*	at mvsoc? offset ? irq ?
@@ -245,6 +249,7 @@ axe*	at uhub? port ?		# ASIX AX88172 based adapters
 cdce*	at uhub? port ?		# CDC, Ethernet Networking Control Model
 cue*	at uhub? port ?		# CATC USB-EL1201A based adapters
 kue*	at uhub? port ?		# Kawasaki LSI KL5KUSB101B based adapters
+mue*	at uhub? port ?		# Microchip LAN75xx/LAN78xx based adapters
 udav*	at uhub? port ?		# Davicom DM9601 based adapters
 url*	at uhub? port ?		# Realtek RTL8150L based adapters
 
