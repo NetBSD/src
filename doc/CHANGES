@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2429 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2430 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -206,3 +206,4 @@ Changes from NetBSD 8.0 to NetBSD 9.0:
 	dhcpcd: Import 7.0.8. [roy 20180820]
 	amd64: Add support for kASan - Kernel Address Sanitizer.
 		[maxv 20180820]
+	arm: Add UEFI boot loader for ARM64 platforms. [jmcneill 20180824]
