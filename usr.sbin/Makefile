@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.276 2018/01/09 03:31:13 christos Exp $
+#	$NetBSD: Makefile,v 1.277 2018/08/25 11:06:00 martin Exp $
 #	from: @(#)Makefile	5.20 (Berkeley) 6/12/93
 
 .include <bsd.own.mk>
@@ -17,7 +17,7 @@ SUBDIR=	ac accton acpitools altq apm apmd arp autofs \
 	lastlogin ldpd link lmcconfig lockstat lpr \
 	mailwrapper makefs map-mbone mdconfig memswitch mlxctl mmcformat \
 	mopd mountd moused mrinfo mrouted mscdlabel mtrace mtree \
-	ndbootd ndiscvt netgroup_mkdb nfsd \
+	ndbootd netgroup_mkdb nfsd \
 	ofctl \
 	paxctl pcictl perfused psrset pstat pwd_mkdb postinstall \
 	powerd puffs \
