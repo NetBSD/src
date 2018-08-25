@@ -1,4 +1,4 @@
-#	$NetBSD: files.usb,v 1.151 2018/07/31 16:44:29 khorben Exp $
+#	$NetBSD: files.usb,v 1.152 2018/08/25 20:12:22 rin Exp $
 #
 # Config file and device description for machine-independent USB code.
 # Included by ports that need it.  Ports that use it must provide
@@ -368,6 +368,11 @@ file	dev/usb/if_axe.c		axe
 device	axen: arp, ether, ifnet, mii
 attach	axen at usbdevif
 file	dev/usb/if_axen.c		axen
+
+# Microchip LAN750x and LAN85xx
+device	mue: arp, ether, ifnet, mii, mii_phy
+attach	mue at usbdevif
+file	dev/usb/if_mue.c		mue
 
 # DAVICOM DM9601
 device	udav: arp, ether, ifnet, mii, mii_phy

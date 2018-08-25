@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.207 2018/07/24 09:47:35 maxv Exp $
+#	$NetBSD: Makefile,v 1.208 2018/08/25 20:12:22 rin Exp $
 
 .include <bsd.own.mk>
 
@@ -64,6 +64,7 @@ SUBDIR+=	if_gre
 SUBDIR+=	if_l2tp
 SUBDIR+=	if_loop
 SUBDIR+=	if_mpls
+SUBDIR+=	if_mue
 SUBDIR+=	if_npflog
 SUBDIR+=	if_ppp
 SUBDIR+=	if_pppoe
