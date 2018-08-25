@@ -1,4 +1,4 @@
-/*      $NetBSD: xbd_xenbus.c,v 1.76 2017/03/05 23:07:12 mlelstv Exp $      */
+/*      $NetBSD: xbd_xenbus.c,v 1.76.6.1 2018/08/25 14:28:00 martin Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.76 2017/03/05 23:07:12 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.76.6.1 2018/08/25 14:28:00 martin Exp $");
 
 #include "opt_xen.h"
 
@@ -916,6 +916,7 @@ xbd_diskstart(device_t self, struct buf *bp)
 	vaddr_t va;
 	int nsects, nbytes, seg;
 	int notify, error = 0;
+	int s;
 
 	DPRINTF(("xbd_diskstart(%p): b_bcount = %ld\n",
 	    bp, (long)bp->b_bcount));
@@ -930,6 +931,8 @@ xbd_diskstart(device_t self, struct buf *bp)
 		error = EINVAL;
 		goto err;
 	}
+
+	s = splbio();	/* XXX SMP */
 
 	if (__predict_false(
 	    sc->sc_backend_status == BLKIF_STATE_SUSPENDED)) {
@@ -1008,6 +1011,7 @@ out:
 	RING_PUSH_REQUESTS_AND_CHECK_NOTIFY(&sc->sc_ring, notify);
 	if (notify)
 		hypervisor_notify_via_evtchn(sc->sc_evtchn);
+	splx(s);	/* XXXSMP */
 err:
 	return error;
 }
