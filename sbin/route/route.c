@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.155.4.3 2018/04/09 13:34:11 bouyer Exp $	*/
+/*	$NetBSD: route.c,v 1.155.4.4 2018/08/25 07:06:48 martin Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1991, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)route.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: route.c,v 1.155.4.3 2018/04/09 13:34:11 bouyer Exp $");
+__RCSID("$NetBSD: route.c,v 1.155.4.4 2018/08/25 07:06:48 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -1462,11 +1462,14 @@ print_rtmsg(struct rt_msghdr *rtm, int msglen)
 		}
 		printf("\n");
 		break;
-	default:
+	case RTM_ADD:
+	case RTM_DELETE:
+	case RTM_GET:
 		(void)printf("pid %d, seq %d, errno %d, flags: ",
 			rtm->rtm_pid, rtm->rtm_seq, rtm->rtm_errno);
 		bprintf(stdout, rtm->rtm_flags, routeflags);
 		pmsg_common(rtm);
+		break;
 	}
 }
 
