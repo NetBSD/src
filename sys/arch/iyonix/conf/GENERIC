@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.100 2018/08/25 07:48:56 maxv Exp $
+#	$NetBSD: GENERIC,v 1.101 2018/08/25 20:52:41 rin Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/iyonix/conf/std.iyonix"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.100 $"
+#ident 		"GENERIC-$Revision: 1.101 $"
 
 maxusers	32		# estimated number of users
 
@@ -568,6 +568,7 @@ uaudio*	at uhub? port ? configuration ?
 #cdce*	at uhub? port ?		# CDC, Ethernet Networking Control Model
 #cue*	at uhub? port ?		# CATC USB-EL1201A based adapters
 #kue*	at uhub? port ?		# Kawasaki LSI KL5KUSB101B based adapters
+#mue*	at uhub? port ?		# Microchip LAN75xx/LAN78xx based adapters
 #udav*	at uhub? port ?		# Davicom DM9601 based adapters
 #url*	at uhub? port ?		# Realtek RTL8150L based adapters
 
