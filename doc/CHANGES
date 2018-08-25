@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2432 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2433 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -210,3 +210,5 @@ Changes from NetBSD 8.0 to NetBSD 9.0:
 		[maxv 20180820]
 	arm: Add UEFI boot loader for ARM64 platforms. [jmcneill 20180824]
 	kernel: Remove NDIS. [maxv 20180825]
+	mue(4): Add driver for Microchip LAN75xx/LAN78xx (Raspberry Pi 3 B+)
+		from OpenBSD. [rin 20180825]
