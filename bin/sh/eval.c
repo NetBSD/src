@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.c,v 1.160 2018/08/22 20:08:54 kre Exp $	*/
+/*	$NetBSD: eval.c,v 1.161 2018/08/25 02:42:49 kre Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.9 (Berkeley) 6/8/95";
 #else
-__RCSID("$NetBSD: eval.c,v 1.160 2018/08/22 20:08:54 kre Exp $");
+__RCSID("$NetBSD: eval.c,v 1.161 2018/08/25 02:42:49 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -1085,7 +1085,8 @@ evalcommand(union node *cmd, int flgs, struct backcmd *backcmd)
 						vforked = 2;
 						_exit(0);
 					} else {
-						_exit(exerrno);
+						_exit(exception == EXEXIT ?
+						    exitstatus : exerrno);
 					}
 				}
 				savehandler = handler;
