@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.2,v 1.1.2.105 2018/08/14 14:35:23 martin Exp $
+# $NetBSD: CHANGES-7.2,v 1.1.2.106 2018/08/25 15:14:23 martin Exp $
 
 A complete list of changes from the NetBSD 7.1 release to the NetBSD 7.2
 release:
@@ -6002,3 +6002,55 @@ sys/netinet6/frag6.c				1.64
 	Ignore zero-sized fragments.
 	[maxv, ticket #1630]
 
+etc/powerd/scripts/sleep_button			1.11
+
+	Remove the stopping and starting of various network scripts on
+	sleep / resume.
+	[roy, ticket #1631]
+
+sys/dev/usb/ehci.c				1.260,1.261 (patch)
+sys/dev/usb/ehcivar.h				1.45 (patch)
+sys/dev/usb/motg.c				1.22 (patch)
+sys/dev/usb/ohci.c				1.282,1.283 (patch)
+sys/dev/usb/ohcivar.h				1.60 (patch)
+sys/dev/usb/uhci.c				1.281,1.282 (patch)
+sys/dev/usb/uhcivar.h				1.55 (patch)
+sys/dev/usb/usbdi.c				1.177 (patch)
+sys/dev/usb/usbdivar.h				1.117 (patch)
+sys/dev/usb/xhci.c				1.96 (patch)
+sys/dev/usb/xhcivar.h				1.10 (patch)
+sys/external/bsd/dwc2/dwc2.c			1.52 (patch)
+
+	Move the struct usb_task to struct usbd_xfer for everyone to use
+	and various transfer/abort handling fixes.
+	Initialise the usb abort task in the HCI allocx routine, so that it
+	can be safely usb_rem_task()'d.
+	Rework the handling of softintr vs cancellation vs timeout abort.
+	[mrg, ticket #1632]
+
+external/bsd/dhcpcd/dist/src/defs.h             up to 1.1.1.16
+external/bsd/dhcpcd/dist/src/dhcp.c             up to 1.13
+external/bsd/dhcpcd/dist/src/dhcp6.c            up to 1.1.1.13
+external/bsd/dhcpcd/dist/src/if-bsd.c           up to 1.1.1.9
+external/bsd/dhcpcd/dist/src/if.c               up to 1.1.1.9
+external/bsd/dhcpcd/dist/src/ipv4.c             up to 1.1.1.10
+external/bsd/dhcpcd/dist/src/ipv6.c             up to 1.1.1.12
+doc/3RDPARTY					(manually edited)
+
+	Import dhcpcd-7.0.8.
+	[roy, ticket #1633]
+
+external/public-domain/tz/dist/Makefile         up to 1.1.1.21
+external/public-domain/tz/dist/NEWS             up to 1.1.1.22
+external/public-domain/tz/dist/TZDATA_VERSION   up to 1.12
+external/public-domain/tz/dist/africa           up to 1.1.1.15
+external/public-domain/tz/dist/asia             up to 1.1.1.20
+external/public-domain/tz/dist/australasia      up to 1.1.1.15
+external/public-domain/tz/dist/europe           up to 1.1.1.21
+external/public-domain/tz/dist/theory.html      up to 1.1.1.4
+external/public-domain/tz/dist/version          up to 1.1.1.9
+external/public-domain/tz/dist/ziguard.awk      up to 1.1.1.2
+doc/3RDPARTY					1.1520 (patch)
+
+	Import tzdata2018e
+	[kre, ticket #1634]
