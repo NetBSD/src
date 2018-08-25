@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOM0,v 1.155 2018/08/14 06:04:24 maxv Exp $
+# $NetBSD: XEN3_DOM0,v 1.156 2018/08/25 20:52:40 rin Exp $
 
 include 	"arch/amd64/conf/std.xen"
 
@@ -10,7 +10,7 @@ options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 #options 	UVMHIST_PRINT
 #options 	SYSCALL_DEBUG
 
-#ident		"XEN3_DOM0-$Revision: 1.155 $"
+#ident		"XEN3_DOM0-$Revision: 1.156 $"
 
 maxusers	32		# estimated number of users
 
@@ -657,6 +657,7 @@ axe*	at uhub? port ?		# ASIX AX88172 based adapters
 cdce*	at uhub? port ?		# CDC, Ethernet Networking Control Model
 cue*	at uhub? port ?		# CATC USB-EL1201A based adapters
 kue*	at uhub? port ?		# Kawasaki LSI KL5KUSB101B based adapters
+mue*	at uhub? port ?		# Microchip LAN75xx/LAN78xx based adapters
 udav*	at uhub? port ?		# Davicom DM9601 based adapters
 url*	at uhub? port ?		# Realtek RTL8150L based adapters
 urndis* at uhub? port ? 	# Microsoft RNDIS specification

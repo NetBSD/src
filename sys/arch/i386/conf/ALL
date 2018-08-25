@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.448 2018/08/25 07:48:56 maxv Exp $
+# $NetBSD: ALL,v 1.449 2018/08/25 20:52:41 rin Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"ALL-$Revision: 1.448 $"
+#ident		"ALL-$Revision: 1.449 $"
 
 maxusers	64		# estimated number of users
 
@@ -1331,6 +1331,7 @@ axen*	at uhub? port ?		# ASIX AX88178a/AX88179 based adapters
 cdce*	at uhub? port ?		# CDC, Ethernet Networking Control Model
 cue*	at uhub? port ?		# CATC USB-EL1201A based adapters
 kue*	at uhub? port ?		# Kawasaki LSI KL5KUSB101B based adapters
+mue*	at uhub? port ?		# Microchip LAN75xx/LAN78xx based adapters
 udav*	at uhub? port ?		# Davicom DM9601 based adapters
 umb*	at uhub? port ?		# Mobile Broadband Interface Model (EXPERIMENTAL)
 url*	at uhub? port ?		# Realtek RTL8150L based adapters
