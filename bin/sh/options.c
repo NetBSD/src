@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.49 2017/05/29 14:03:23 kre Exp $	*/
+/*	$NetBSD: options.c,v 1.49.2.1 2018/08/25 14:45:37 martin Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)options.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: options.c,v 1.49 2017/05/29 14:03:23 kre Exp $");
+__RCSID("$NetBSD: options.c,v 1.49.2.1 2018/08/25 14:45:37 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -60,6 +60,7 @@ __RCSID("$NetBSD: options.c,v 1.49 2017/05/29 14:03:23 kre Exp $");
 #include "memalloc.h"
 #include "error.h"
 #include "mystring.h"
+#include "syntax.h"
 #ifndef SMALL
 #include "myhistedit.h"
 #endif
@@ -444,7 +445,12 @@ setcmd(int argc, char **argv)
 void
 getoptsreset(const char *value)
 {
-	if (number(value) == 1) {
+	/*
+	 * This is just to detect the case where OPTIND=1
+	 * is executed.   Any other string assigned to OPTIND
+	 * is OK, but is not a reset.   No errors, so cannot use number()
+	 */
+	if (is_digit(*value) && strtol(value, NULL, 10) == 1) {
 		shellparam.optnext = NULL;
 		shellparam.reset = 1;
 	}
