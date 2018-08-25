@@ -1,4 +1,4 @@
-/*	$NetBSD: xhcivar.h,v 1.7 2017/01/19 16:05:00 skrll Exp $	*/
+/*	$NetBSD: xhcivar.h,v 1.7.6.1 2018/08/25 11:29:52 martin Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -35,7 +35,6 @@
 
 struct xhci_xfer {
 	struct usbd_xfer xx_xfer;
-	struct usb_task xx_abort_task;
 	struct xhci_trb xx_trb[XHCI_XFER_NTRB];
 };
 
@@ -85,7 +84,6 @@ struct xhci_softc {
 
 	kmutex_t sc_lock;
 	kmutex_t sc_intr_lock;
-	kcondvar_t sc_softwake_cv;
 
 	char sc_vendor[32];		/* vendor string for root hub */
 	int sc_id_vendor;		/* vendor ID for root hub */
