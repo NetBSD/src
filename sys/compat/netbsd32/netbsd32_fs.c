@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_fs.c,v 1.80 2017/06/01 02:45:08 chs Exp $	*/
+/*	$NetBSD: netbsd32_fs.c,v 1.80.2.1 2018/08/25 11:13:05 martin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_fs.c,v 1.80 2017/06/01 02:45:08 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_fs.c,v 1.80.2.1 2018/08/25 11:13:05 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,6 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_fs.c,v 1.80 2017/06/01 02:45:08 chs Exp $")
 #include <fs/msdosfs/bpb.h>
 #include <fs/msdosfs/msdosfsmount.h>
 #include <ufs/ufs/ufsmount.h>
+#include <miscfs/nullfs/null.h>
 
 #define NFS_ARGS_ONLY
 #include <nfs/nfsmount.h>
@@ -799,6 +800,7 @@ netbsd32___mount50(struct lwp *l, const struct netbsd32___mount50_args *uap,
 		struct netbsd32_nfs_args nfs_args;
 		struct netbsd32_msdosfs_args msdosfs_args;
 		struct netbsd32_tmpfs_args tmpfs_args;
+		struct netbsd32_null_args null_args;
 	} fs_args32;
 	union {
 		struct ufs_args ufs_args;
@@ -807,6 +809,7 @@ netbsd32___mount50(struct lwp *l, const struct netbsd32___mount50_args *uap,
 		struct nfs_args nfs_args;
 		struct msdosfs_args msdosfs_args;
 		struct tmpfs_args tmpfs_args;
+		struct null_args null_args;
 	} fs_args;
 	const char *type = SCARG_P32(uap, type);
 	const char *path = SCARG_P32(uap, path);
@@ -953,6 +956,20 @@ netbsd32___mount50(struct lwp *l, const struct netbsd32___mount50_args *uap,
 		data_seg = UIO_SYSSPACE;
 		data = &fs_args.nfs_args;
 		data_len = sizeof(fs_args.nfs_args);
+	} else if (strcmp(mtype, MOUNT_NULL) == 0) {
+		if (data_len > sizeof(fs_args32.null_args))
+			return EINVAL;
+		if ((flags & MNT_GETARGS) == 0) {
+			error = copyin(data, &fs_args32.null_args, 
+			    sizeof(fs_args32.null_args));
+			if (error)
+				return error;
+			fs_args.null_args.la.target =
+			    NETBSD32PTR64(fs_args32.null_args.la.target);
+		}
+		data_seg = UIO_SYSSPACE;
+		data = &fs_args.null_args;
+		data_len = sizeof(fs_args.null_args);
 	} else {
 		data_seg = UIO_USERSPACE;
 	}
@@ -1032,6 +1049,13 @@ netbsd32___mount50(struct lwp *l, const struct netbsd32___mount50_args *uap,
 			    fs_args.nfs_args.hostname);
 			error = copyout(&fs_args32.nfs_args, data,
 			    sizeof(fs_args32.nfs_args));
+		} else if (strcmp(mtype, MOUNT_NULL) == 0) {
+			if (data_len != sizeof(fs_args.null_args))
+				return EINVAL;
+			NETBSD32PTR32(fs_args32.null_args.la.target,
+			    fs_args.null_args.la.target);
+			error = copyout(&fs_args32.null_args, data, 
+			    sizeof(fs_args32.null_args));
 		}
 	}
 	return error;
