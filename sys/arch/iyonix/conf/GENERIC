@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.99 2018/08/01 20:04:12 maxv Exp $
+#	$NetBSD: GENERIC,v 1.100 2018/08/25 07:48:56 maxv Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/iyonix/conf/std.iyonix"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.99 $"
+#ident 		"GENERIC-$Revision: 1.100 $"
 
 maxusers	32		# estimated number of users
 
@@ -398,7 +398,6 @@ uk*	at atapibus? drive ? flags 0x0000	# ATAPI unknown
 #mskc*	at pci? dev ? function ?	# Marvell Yukon 2 Gigabit Ethernet
 #msk*	at mskc?			# Marvell Yukon 2 Gigabit Ethernet
 #mtd*	at pci? dev ? function ?	# Myson MTD803 3-in-1 Ethernet
-##ndis* 	at pci? dev ? function ?	# Experimental - NDIS Network Driver
 #ne*	at pci? dev ? function ?	# NE2000-compatible Ethernet
 #nfe*	at pci?	dev ? function ?	# NVIDIA nForce Ethernet
 #ntwoc*	at pci? dev ? function ?	# Riscom/N2 PCI Sync Serial
