@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.845 2018/08/12 17:11:55 christos Exp $
+# $NetBSD: shl.mi,v 1.846 2018/08/26 07:53:25 christos Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -812,8 +812,8 @@
 ./usr/lib/libsqlite3.so.1.3			base-sys-shlib		compatfile
 ./usr/lib/libss.so				base-obsolete		obsolete
 ./usr/lib/libssh.so				base-secsh-shlib	compatfile
-./usr/lib/libssh.so.32				base-secsh-shlib	compatfile
-./usr/lib/libssh.so.32.0			base-secsh-shlib	compatfile
+./usr/lib/libssh.so.33				base-secsh-shlib	compatfile
+./usr/lib/libssh.so.33.0			base-secsh-shlib	compatfile
 ./usr/lib/libssl.so				base-crypto-shlib	compatfile
 ./usr/lib/libssl.so.12				base-crypto-shlib	compatfile,openssl=10
 ./usr/lib/libssl.so.12.0			base-crypto-shlib	compatfile,openssl=10
