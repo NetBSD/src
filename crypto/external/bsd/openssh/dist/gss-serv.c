@@ -1,5 +1,5 @@
-/*	$NetBSD: gss-serv.c,v 1.11 2017/10/07 19:39:19 christos Exp $	*/
-/* $OpenBSD: gss-serv.c,v 1.30 2017/06/24 06:34:38 djm Exp $ */
+/*	$NetBSD: gss-serv.c,v 1.12 2018/08/26 07:46:36 christos Exp $	*/
+/* $OpenBSD: gss-serv.c,v 1.31 2018/07/09 21:37:55 markus Exp $ */
 
 /*
  * Copyright (c) 2001-2003 Simon Wilkinson. All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: gss-serv.c,v 1.11 2017/10/07 19:39:19 christos Exp $");
+__RCSID("$NetBSD: gss-serv.c,v 1.12 2018/08/26 07:46:36 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -40,8 +40,7 @@ __RCSID("$NetBSD: gss-serv.c,v 1.11 2017/10/07 19:39:19 christos Exp $");
 #include <limits.h>
 
 #include "xmalloc.h"
-#include "buffer.h"
-#include "key.h"
+#include "sshkey.h"
 #include "hostfile.h"
 #include "auth.h"
 #include "log.h"

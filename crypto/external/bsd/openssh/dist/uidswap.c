@@ -1,5 +1,6 @@
-/*	$NetBSD: uidswap.c,v 1.7 2017/04/18 18:41:46 christos Exp $	*/
-/* $OpenBSD: uidswap.c,v 1.39 2015/06/24 01:49:19 dtucker Exp $ */
+/*	$NetBSD: uidswap.c,v 1.8 2018/08/26 07:46:37 christos Exp $	*/
+/* $OpenBSD: uidswap.c,v 1.41 2018/07/18 11:34:04 dtucker Exp $ */
+
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -14,7 +15,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: uidswap.c,v 1.7 2017/04/18 18:41:46 christos Exp $");
+__RCSID("$NetBSD: uidswap.c,v 1.8 2018/08/26 07:46:37 christos Exp $");
 #include <sys/param.h>
 #include <errno.h>
 #include <pwd.h>
@@ -42,7 +43,7 @@ __RCSID("$NetBSD: uidswap.c,v 1.7 2017/04/18 18:41:46 christos Exp $");
 /* Saved effective uid. */
 static int	privileged = 0;
 static int	temporarily_use_uid_effective = 0;
-static uid_t	saved_euid = 0;
+static uid_t	saved_euid, user_groups_uid;
 static gid_t	saved_egid;
 static gid_t	saved_egroups[NGROUPS_MAX], user_groups[NGROUPS_MAX];
 static int	saved_egroupslen = -1, user_groupslen = -1;
@@ -71,13 +72,14 @@ temporarily_use_uid(struct passwd *pw)
 		fatal("getgroups: %.100s", strerror(errno));
 
 	/* set and save the user's groups */
-	if (user_groupslen == -1) {
+	if (user_groupslen == -1 || user_groups_uid != pw->pw_uid) {
 		if (initgroups(pw->pw_name, pw->pw_gid) < 0)
 			fatal("initgroups: %s: %.100s", pw->pw_name,
 			    strerror(errno));
 		user_groupslen = getgroups(NGROUPS_MAX, user_groups);
 		if (user_groupslen < 0)
 			fatal("getgroups: %.100s", strerror(errno));
+		user_groups_uid = pw->pw_uid;
 	}
 	/* Set the effective uid to the given (unprivileged) uid. */
 	if (setgroups(user_groupslen, user_groups) < 0)
@@ -150,21 +152,5 @@ permanently_set_uid(struct passwd *pw)
 		fatal("%s: euid incorrect uid:%u euid:%u (should be %u)",
 		    __func__, (u_int)getuid(), (u_int)geteuid(),
 		    (u_int)pw->pw_uid);
-	}
-}
-
-void
-permanently_drop_suid(uid_t uid)
-{
-	debug("permanently_drop_suid: %u", (u_int)uid);
-	if (seteuid(uid) < 0)
-		fatal("seteuid %u: %.100s", (u_int)uid, strerror(errno));
-	if (setuid(uid) < 0)
-		fatal("setuid %u: %.100s", (u_int)uid, strerror(errno));
-
-	/* Verify UID drop was successful */
-	if (getuid() != uid || geteuid() != uid) {
-		fatal("%s: euid incorrect uid:%u euid:%u (should be %u)",
-		    __func__, (u_int)getuid(), (u_int)geteuid(), (u_int)uid);
 	}
 }
