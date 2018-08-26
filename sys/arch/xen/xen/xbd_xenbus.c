@@ -1,4 +1,4 @@
-/*      $NetBSD: xbd_xenbus.c,v 1.87 2018/08/26 11:31:56 bouyer Exp $      */
+/*      $NetBSD: xbd_xenbus.c,v 1.88 2018/08/26 21:04:16 jdolecek Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.87 2018/08/26 11:31:56 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.88 2018/08/26 21:04:16 jdolecek Exp $");
 
 #include "opt_xen.h"
 
@@ -151,6 +151,7 @@ struct xbd_xenbus_softc {
 	u_long sc_info; /* VDISK_* */
 	u_long sc_handle; /* from backend */
 	int sc_cache_flush; /* backend supports BLKIF_OP_FLUSH_DISKCACHE */
+	struct evcnt sc_cnt_map_unalign;
 };
 
 #if 0
@@ -301,6 +302,9 @@ xbd_xenbus_attach(device_t parent, device_t self, void *aux)
 		panic("%s: can't alloc ring", device_xname(self));
 	sc->sc_ring.sring = ring;
 
+	evcnt_attach_dynamic(&sc->sc_cnt_map_unalign, EVCNT_TYPE_MISC,
+	    NULL, device_xname(self), "map unaligned");
+
 	/* resume shared structures and tell backend that we are ready */
 	if (xbd_xenbus_resume(self, PMF_Q_NONE) == false) {
 		uvm_km_free(kernel_map, (vaddr_t)ring, PAGE_SIZE,
@@ -383,6 +387,8 @@ xbd_xenbus_detach(device_t dev, int flags)
 	xengnt_revoke_access(sc->sc_ring_gntref);
 	uvm_km_free(kernel_map, (vaddr_t)sc->sc_ring.sring,
 	    PAGE_SIZE, UVM_KMF_WIRED);
+
+	evcnt_detach(&sc->sc_cnt_map_unalign);
 
 	pmf_device_deregister(dev);
 
@@ -982,6 +988,8 @@ xbd_diskstart(device_t self, struct buf *bp)
 	xbdreq->req_bp = bp;
 	xbdreq->req_data = bp->b_data;
 	if (__predict_false((vaddr_t)bp->b_data & (XEN_BSIZE - 1))) {
+		sc->sc_cnt_map_unalign.ev_count++;
+
 		if (__predict_false(xbd_map_align(xbdreq) != 0)) {
 			DPRINTF(("xbd_diskstart: no align\n"));
 			error = EAGAIN;
