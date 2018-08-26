@@ -1,5 +1,5 @@
-/*	$NetBSD: auth-bsdauth.c,v 1.7 2017/04/18 18:41:46 christos Exp $	*/
-/* $OpenBSD: auth-bsdauth.c,v 1.14 2015/10/20 23:24:25 mmcc Exp $ */
+/*	$NetBSD: auth-bsdauth.c,v 1.8 2018/08/26 07:46:36 christos Exp $	*/
+/* $OpenBSD: auth-bsdauth.c,v 1.15 2018/07/09 21:35:50 markus Exp $ */
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -26,18 +26,18 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: auth-bsdauth.c,v 1.7 2017/04/18 18:41:46 christos Exp $");
+__RCSID("$NetBSD: auth-bsdauth.c,v 1.8 2018/08/26 07:46:36 christos Exp $");
 #include <sys/types.h>
 #include <stdarg.h>
 #include <stdio.h>
 
 #ifdef BSD_AUTH
 #include "xmalloc.h"
-#include "key.h"
+#include "sshkey.h"
+#include "sshbuf.h"
 #include "hostfile.h"
 #include "auth.h"
 #include "log.h"
-#include "buffer.h"
 #ifdef GSSAPI
 #include "ssh-gss.h"
 #endif

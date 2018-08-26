@@ -1,5 +1,6 @@
-/*	$NetBSD: auth2-none.c,v 1.9 2018/04/06 18:58:59 christos Exp $	*/
-/* $OpenBSD: auth2-none.c,v 1.21 2018/03/03 03:15:51 djm Exp $ */
+/*	$NetBSD: auth2-none.c,v 1.10 2018/08/26 07:46:36 christos Exp $	*/
+/* $OpenBSD: auth2-none.c,v 1.22 2018/07/09 21:35:50 markus Exp $ */
+
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *
@@ -25,7 +26,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: auth2-none.c,v 1.9 2018/04/06 18:58:59 christos Exp $");
+__RCSID("$NetBSD: auth2-none.c,v 1.10 2018/08/26 07:46:36 christos Exp $");
 #include <sys/types.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -36,7 +37,6 @@ __RCSID("$NetBSD: auth2-none.c,v 1.9 2018/04/06 18:58:59 christos Exp $");
 #include "auth.h"
 #include "packet.h"
 #include "log.h"
-#include "buffer.h"
 #include "misc.h"
 #include "servconf.h"
 #include "compat.h"

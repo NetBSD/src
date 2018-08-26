@@ -1,5 +1,6 @@
-/*	$NetBSD: hostfile.c,v 1.11 2017/10/07 19:39:19 christos Exp $	*/
-/* $OpenBSD: hostfile.c,v 1.71 2017/05/31 09:15:42 deraadt Exp $ */
+/*	$NetBSD: hostfile.c,v 1.12 2018/08/26 07:46:36 christos Exp $	*/
+/* $OpenBSD: hostfile.c,v 1.73 2018/07/16 03:09:13 djm Exp $ */
+
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -38,7 +39,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: hostfile.c,v 1.11 2017/10/07 19:39:19 christos Exp $");
+__RCSID("$NetBSD: hostfile.c,v 1.12 2018/08/26 07:46:36 christos Exp $");
 #include <sys/types.h>
 #include <sys/stat.h>
 
@@ -664,14 +665,14 @@ hostkeys_foreach(const char *path, hostkeys_foreach_fn *callback, void *ctx,
     const char *host, const char *ip, u_int options)
 {
 	FILE *f;
-	char line[8192], oline[8192], ktype[128];
+	char *line = NULL, ktype[128];
 	u_long linenum = 0;
 	char *cp, *cp2;
 	u_int kbits;
 	int hashed;
 	int s, r = 0;
 	struct hostkey_foreach_line lineinfo;
-	size_t l;
+	size_t linesize = 0, l;
 
 	memset(&lineinfo, 0, sizeof(lineinfo));
 	if (host == NULL && (options & HKF_WANT_MATCH) != 0)
@@ -680,15 +681,16 @@ hostkeys_foreach(const char *path, hostkeys_foreach_fn *callback, void *ctx,
 		return SSH_ERR_SYSTEM_ERROR;
 
 	debug3("%s: reading file \"%s\"", __func__, path);
-	while (read_keyfile_line(f, path, line, sizeof(line), &linenum) == 0) {
+	while (getline(&line, &linesize, f) != -1) {
+		linenum++;
 		line[strcspn(line, "\n")] = '\0';
-		strlcpy(oline, line, sizeof(oline));
 
+		free(lineinfo.line);
 		sshkey_free(lineinfo.key);
 		memset(&lineinfo, 0, sizeof(lineinfo));
 		lineinfo.path = path;
 		lineinfo.linenum = linenum;
-		lineinfo.line = oline;
+		lineinfo.line = xstrdup(line);
 		lineinfo.marker = MRK_NONE;
 		lineinfo.status = HKF_STATUS_OK;
 		lineinfo.keytype = KEY_UNSPEC;
@@ -827,6 +829,8 @@ hostkeys_foreach(const char *path, hostkeys_foreach_fn *callback, void *ctx,
 			break;
 	}
 	sshkey_free(lineinfo.key);
+	free(lineinfo.line);
+	free(line);
 	fclose(f);
 	return r;
 }

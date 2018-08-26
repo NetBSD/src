@@ -1,5 +1,5 @@
-/*	$NetBSD: uidswap.h,v 1.6 2017/04/18 18:41:46 christos Exp $	*/
-/* $OpenBSD: uidswap.h,v 1.13 2006/08/03 03:34:42 deraadt Exp $ */
+/*	$NetBSD: uidswap.h,v 1.7 2018/08/26 07:46:37 christos Exp $	*/
+/* $OpenBSD: uidswap.h,v 1.14 2018/07/18 11:34:05 dtucker Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -16,4 +16,3 @@
 void	 temporarily_use_uid(struct passwd *);
 void	 restore_uid(void);
 void	 permanently_set_uid(struct passwd *);
-void	 permanently_drop_suid(uid_t);

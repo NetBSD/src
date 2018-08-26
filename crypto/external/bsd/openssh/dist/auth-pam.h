@@ -1,3 +1,4 @@
+/*	$NetBSD: auth-pam.h,v 1.8 2018/08/26 07:46:36 christos Exp $	*/
 /*
  * Copyright (c) 2000 Damien Miller.  All rights reserved.
  *

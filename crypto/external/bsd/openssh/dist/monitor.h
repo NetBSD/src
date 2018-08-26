@@ -1,5 +1,5 @@
-/*	$NetBSD: monitor.h,v 1.9 2017/04/18 18:41:46 christos Exp $	*/
-/* $OpenBSD: monitor.h,v 1.20 2016/09/28 16:33:07 djm Exp $ */
+/*	$NetBSD: monitor.h,v 1.10 2018/08/26 07:46:36 christos Exp $	*/
+/* $OpenBSD: monitor.h,v 1.21 2018/07/09 21:53:45 markus Exp $ */
 
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -96,8 +96,8 @@ struct mon_table;
 int monitor_read(struct monitor*, struct mon_table *, struct mon_table **);
 
 /* Prototypes for request sending and receiving */
-void mm_request_send(int, enum monitor_reqtype, Buffer *);
-void mm_request_receive(int, Buffer *);
-void mm_request_receive_expect(int, enum monitor_reqtype, Buffer *);
+void mm_request_send(int, enum monitor_reqtype, struct sshbuf *);
+void mm_request_receive(int, struct sshbuf *);
+void mm_request_receive_expect(int, enum monitor_reqtype, struct sshbuf *);
 
 #endif /* _MONITOR_H_ */

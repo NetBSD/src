@@ -1,5 +1,5 @@
-/*	$NetBSD: auth-options.h,v 1.10 2018/04/06 18:58:59 christos Exp $	*/
-/* $OpenBSD: auth-options.h,v 1.26 2018/03/12 00:52:01 djm Exp $ */
+/*	$NetBSD: auth-options.h,v 1.11 2018/08/26 07:46:36 christos Exp $	*/
+/* $OpenBSD: auth-options.h,v 1.27 2018/06/06 18:23:32 djm Exp $ */
 
 /*
  * Copyright (c) 2018 Damien Miller <djm@mindrot.org>
@@ -55,6 +55,10 @@ struct sshauthopt {
 	/* Permitted port forwardings */
 	size_t npermitopen;
 	char **permitopen;
+
+	/* Permitted listens (remote forwarding) */
+	size_t npermitlisten;
+	char **permitlisten;
 
 	/*
 	 * Permitted host/addresses (comma-separated)

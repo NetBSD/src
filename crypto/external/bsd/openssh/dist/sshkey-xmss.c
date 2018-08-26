@@ -1,5 +1,6 @@
-/*	$NetBSD: sshkey-xmss.c,v 1.2 2018/04/06 18:59:00 christos Exp $	*/
-/* $OpenBSD: sshkey-xmss.c,v 1.1 2018/02/23 15:58:38 markus Exp $ */
+/*	$NetBSD: sshkey-xmss.c,v 1.3 2018/08/26 07:46:37 christos Exp $	*/
+/* $OpenBSD: sshkey-xmss.c,v 1.3 2018/07/09 21:59:10 markus Exp $ */
+
 /*
  * Copyright (c) 2017 Markus Friedl.  All rights reserved.
  *
@@ -24,7 +25,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "includes.h"
-__RCSID("$NetBSD: sshkey-xmss.c,v 1.2 2018/04/06 18:59:00 christos Exp $");
+__RCSID("$NetBSD: sshkey-xmss.c,v 1.3 2018/08/26 07:46:37 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/uio.h>
@@ -63,7 +64,7 @@ struct ssh_xmss_state {
 	treehash_inst	*treehash;
 
 	u_int32_t	idx;		/* state read from file */
-	u_int32_t	maxidx;		/* resticted # of signatures */
+	u_int32_t	maxidx;		/* restricted # of signatures */
 	int		have_state;	/* .state file exists */
 	int		lockfd;		/* locked in sshkey_xmss_get_state() */
 	int		allow_update;	/* allow sshkey_xmss_update_state() */
@@ -580,7 +581,7 @@ sshkey_xmss_update_state(const struct sshkey *k, sshkey_printfn *pr)
 	}
 	idx = PEEK_U32(k->xmss_sk);
 	if (idx == state->idx) {
-		/* no signature happend, no need to update */
+		/* no signature happened, no need to update */
 		ret = 0;
 		goto done;
 	} else if (idx != state->idx + 1) {
@@ -622,7 +623,7 @@ sshkey_xmss_update_state(const struct sshkey *k, sshkey_printfn *pr)
 		close(fd);
 		goto done;
 	}
-	if (atomicio(vwrite, fd, __UNCONST(sshbuf_ptr(enc)), sshbuf_len(enc)) !=
+	if (atomicio(vwrite, fd, sshbuf_mutable_ptr(enc), sshbuf_len(enc)) !=
 	    sshbuf_len(enc)) {
 		ret = SSH_ERR_SYSTEM_ERROR;
 		PRINT("%s: write new state file data: %s", __func__, nstatefile);

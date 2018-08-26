@@ -1,5 +1,6 @@
-/*	$NetBSD: utf8.c,v 1.6 2017/10/07 19:39:19 christos Exp $	*/
-/* $OpenBSD: utf8.c,v 1.7 2017/05/31 09:15:42 deraadt Exp $ */
+/*	$NetBSD: utf8.c,v 1.7 2018/08/26 07:46:37 christos Exp $	*/
+/* $OpenBSD: utf8.c,v 1.8 2018/08/21 13:56:27 schwarze Exp $ */
+
 /*
  * Copyright (c) 2016 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -17,7 +18,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: utf8.c,v 1.6 2017/10/07 19:39:19 christos Exp $");
+__RCSID("$NetBSD: utf8.c,v 1.7 2018/08/26 07:46:37 christos Exp $");
 /*
  * Utility functions for multibyte-character handling,
  * in particular to sanitize untrusted strings for terminal output.
@@ -48,6 +49,8 @@ static int	 vasnmprintf(char **, size_t, int *, const char *, va_list)
  * For state-dependent encodings, recovery is impossible.
  * For arbitrary encodings, replacement of non-printable
  * characters would be non-trivial and too fragile.
+ * The comments indicate what nl_langinfo(CODESET)
+ * returns for US-ASCII on various operating systems.
  */
 
 static int
@@ -55,9 +58,12 @@ dangerous_locale(void) {
 	char	*loc;
 
 	loc = nl_langinfo(CODESET);
-	return strcmp(loc, "US-ASCII") != 0 && strcmp(loc, "UTF-8") != 0 &&
-	    strcmp(loc, "ANSI_X3.4-1968") != 0 && strcmp(loc, "646") != 0 &&
-	    strcmp(loc, "") != 0;
+	return strcmp(loc, "UTF-8") != 0 &&
+	    strcmp(loc, "US-ASCII") != 0 &&		/* OpenBSD */
+	    strcmp(loc, "ANSI_X3.4-1968") != 0 &&	/* Linux */
+	    strcmp(loc, "ISO8859-1") != 0 &&		/* AIX */
+	    strcmp(loc, "646") != 0 &&			/* Solaris, NetBSD */
+	    strcmp(loc, "") != 0;			/* Solaris 6 */
 }
 
 static int

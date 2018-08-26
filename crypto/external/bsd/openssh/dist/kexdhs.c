@@ -1,5 +1,6 @@
-/*	$NetBSD: kexdhs.c,v 1.15 2018/04/06 18:59:00 christos Exp $	*/
-/* $OpenBSD: kexdhs.c,v 1.26 2018/02/07 02:06:51 jsing Exp $ */
+/*	$NetBSD: kexdhs.c,v 1.16 2018/08/26 07:46:36 christos Exp $	*/
+/* $OpenBSD: kexdhs.c,v 1.27 2018/04/10 00:10:49 djm Exp $ */
+
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
  *
@@ -25,7 +26,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: kexdhs.c,v 1.15 2018/04/06 18:59:00 christos Exp $");
+__RCSID("$NetBSD: kexdhs.c,v 1.16 2018/08/26 07:46:36 christos Exp $");
 #include <sys/types.h>
 #include <string.h>
 #include <signal.h>
@@ -200,7 +201,7 @@ input_kex_dh_init(int type, u_int32_t seq, struct ssh *ssh)
 
 	/* destroy_sensitive_data(); */
 
-	/* send server hostkey, DH pubkey 'f' and singed H */
+	/* send server hostkey, DH pubkey 'f' and signed H */
 	{
 	const BIGNUM *pub_key;
 	DH_get0_key(kex->dh, &pub_key, NULL);
