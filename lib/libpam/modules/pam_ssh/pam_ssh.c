@@ -1,4 +1,4 @@
-/*	$NetBSD: pam_ssh.c,v 1.25 2018/04/07 19:28:32 christos Exp $	*/
+/*	$NetBSD: pam_ssh.c,v 1.26 2018/08/26 08:54:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003 Networks Associates Technology, Inc.
@@ -38,7 +38,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/lib/libpam/modules/pam_ssh/pam_ssh.c,v 1.40 2004/02/10 10:13:21 des Exp $");
 #else
-__RCSID("$NetBSD: pam_ssh.c,v 1.25 2018/04/07 19:28:32 christos Exp $");
+__RCSID("$NetBSD: pam_ssh.c,v 1.26 2018/08/26 08:54:03 christos Exp $");
 #endif
 
 #include <sys/param.h>
@@ -62,8 +62,8 @@ __RCSID("$NetBSD: pam_ssh.c,v 1.25 2018/04/07 19:28:32 christos Exp $");
 
 #include <openssl/evp.h>
 
-#include "key.h"
-#include "buffer.h"
+#include "sshkey.h"
+#include "sshbuf.h"
 #include "authfd.h"
 #include "authfile.h"
 
@@ -73,7 +73,7 @@ __RCSID("$NetBSD: pam_ssh.c,v 1.25 2018/04/07 19:28:32 christos Exp $");
 extern char **environ;
 
 struct pam_ssh_key {
-	Key	*key;
+	struct sshkey	*key;
 	char	*comment;
 };
 
@@ -103,8 +103,9 @@ pam_ssh_load_key(const char *dir, const char *kfn, const char *passphrase,
 {
 	struct pam_ssh_key *psk;
 	char fn[PATH_MAX];
+	int r;
 	char *comment;
-	Key *key;
+	struct sshkey *key;
 
 	if (snprintf(fn, sizeof(fn), "%s/%s", dir, kfn) > (int)sizeof(fn))
 		return (NULL);
@@ -117,15 +118,15 @@ pam_ssh_load_key(const char *dir, const char *kfn, const char *passphrase,
 	 * with an empty passphrase, and if the key is not encrypted,
 	 * accept only an empty passphrase.
 	 */
-	key = key_load_private(fn, "", &comment);
-	if (key != NULL && !(*passphrase == '\0' && nullok)) {
-		key_free(key);
+	r = sshkey_load_private(fn, "", &key, &comment);
+	if (r && !(*passphrase == '\0' && nullok)) {
+		sshkey_free(key);
 		free(comment);
 		return (NULL);
 	}
-	if (key == NULL)
-		key = key_load_private(fn, passphrase, &comment);
-	if (key == NULL) {
+	if (r)
+		sshkey_load_private(fn, passphrase, &key, &comment);
+	if (r) {
 		openpam_log(PAM_LOG_DEBUG, "failed to load key from %s", fn);
 		if (comment != NULL)
 			free(comment);
@@ -134,7 +135,7 @@ pam_ssh_load_key(const char *dir, const char *kfn, const char *passphrase,
 
 	openpam_log(PAM_LOG_DEBUG, "loaded '%s' from %s", comment, fn);
 	if ((psk = malloc(sizeof(*psk))) == NULL) {
-		key_free(key);
+		sshkey_free(key);
 		free(comment);
 		return (NULL);
 	}
@@ -153,7 +154,7 @@ pam_ssh_free_key(pam_handle_t *pamh __unused,
 	struct pam_ssh_key *psk;
 
 	psk = data;
-	key_free(psk->key);
+	sshkey_free(psk->key);
 	free(psk->comment);
 	free(psk);
 }
