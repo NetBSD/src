@@ -1,5 +1,6 @@
-/*	$NetBSD: auth2-kbdint.c,v 1.8 2017/10/07 19:39:19 christos Exp $	*/
-/* $OpenBSD: auth2-kbdint.c,v 1.8 2017/05/30 14:29:59 markus Exp $ */
+/*	$NetBSD: auth2-kbdint.c,v 1.9 2018/08/26 07:46:36 christos Exp $	*/
+/* $OpenBSD: auth2-kbdint.c,v 1.9 2018/07/09 21:35:50 markus Exp $ */
+
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *
@@ -25,18 +26,17 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: auth2-kbdint.c,v 1.8 2017/10/07 19:39:19 christos Exp $");
+__RCSID("$NetBSD: auth2-kbdint.c,v 1.9 2018/08/26 07:46:36 christos Exp $");
 #include <sys/types.h>
 
 #include "xmalloc.h"
 #include "packet.h"
-#include "key.h"
 #include "hostfile.h"
 #include "auth.h"
 #include "log.h"
-#include "buffer.h"
 #include "misc.h"
 #include "servconf.h"
+#include "ssherr.h"
 
 /* import */
 extern ServerOptions options;
@@ -44,12 +44,13 @@ extern ServerOptions options;
 static int
 userauth_kbdint(struct ssh *ssh)
 {
-	int authenticated = 0;
+	int r, authenticated = 0;
 	char *lang, *devs;
 
-	lang = packet_get_string(NULL);
-	devs = packet_get_string(NULL);
-	packet_check_eom();
+	if ((r = sshpkt_get_cstring(ssh, &lang, NULL)) != 0 ||
+	    (r = sshpkt_get_cstring(ssh, &devs, NULL)) != 0 ||
+	    (r = sshpkt_get_end(ssh)) != 0)
+		fatal("%s: %s", __func__, ssh_err(r));
 
 	debug("keyboard-interactive devs %s", devs);
 
