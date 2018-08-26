@@ -1,4 +1,4 @@
-#	$NetBSD: makesyscalls.sh,v 1.171 2018/08/26 11:48:00 kre Exp $
+#	$NetBSD: makesyscalls.sh,v 1.172 2018/08/26 11:53:28 kre Exp $
 #
 # Copyright (c) 1994, 1996, 2000 Christopher G. Demetriou
 # All rights reserved.
@@ -78,12 +78,18 @@ case $1 in
 *)	. ./$1;;
 esac
 
+errmsg()
+{
+	fail=true;
+	printf '%s: %s\n' "$0" "$*" >&2
+}
+
 fail=false
 case "${nsysent:-0}" in
-*[!0-9]*) fail=true; printf >&2 '%s\n' "Non numeric value for nsysent";;
+*[!0-9]*)	errmsg "Non numeric value for nsysent:" "${nsysent}";;
 esac
 case "${maxsysargs:-0}" in
-*[!0-9]*) fail=true; printf >&2 '%s\n' "Non numeric value for maxsysargs";;
+*[!0-9]*)	errmsg "Non numeric value for maxsysargs:" "${maxsysargs}";;
 esac
 $fail && exit 1
 
