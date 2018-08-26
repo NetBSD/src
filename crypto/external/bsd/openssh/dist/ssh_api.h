@@ -1,5 +1,6 @@
-/*	$NetBSD: ssh_api.h,v 1.4 2017/04/18 18:41:46 christos Exp $	*/
-/* $OpenBSD: ssh_api.h,v 1.1 2015/01/19 20:30:23 markus Exp $ */
+/*	$NetBSD: ssh_api.h,v 1.5 2018/08/26 07:46:36 christos Exp $	*/
+/* $OpenBSD: ssh_api.h,v 1.2 2018/04/10 00:10:49 djm Exp $ */
+
 /*
  * Copyright (c) 2012 Markus Friedl.  All rights reserved.
  *
@@ -81,7 +82,7 @@ int	ssh_set_verify_host_key_callback(struct ssh *ssh,
  * ssh_packet_next() sets typep if there is no new packet available.
  * in this case the caller must fill the input byte-stream by passing
  * the data received over network to ssh_input_append().
- * additinally, the caller needs to send the resulting output
+ * additionally, the caller needs to send the resulting output
  * byte-stream back over the network. otherwise the key exchange
  * would not proceed. the output byte-stream is accessed through
  * ssh_output_ptr().
