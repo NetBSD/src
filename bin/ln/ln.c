@@ -1,4 +1,4 @@
-/*	$NetBSD: ln.c,v 1.39 2017/04/22 12:22:31 kre Exp $	*/
+/*	$NetBSD: ln.c,v 1.40 2018/08/26 23:01:06 sevan Exp $	*/
 
 /*-
  * Copyright (c) 1987, 1993, 1994
@@ -44,7 +44,7 @@ static char sccsid[] = "@(#)ln.c	8.2 (Berkeley) 3/31/94";
 #ifdef __FBSDID
 __FBSDID("$FreeBSD: head/bin/ln/ln.c 251261 2013-06-02 17:55:00Z eadler $");
 #endif
-__RCSID("$NetBSD: ln.c,v 1.39 2017/04/22 12:22:31 kre Exp $");
+__RCSID("$NetBSD: ln.c,v 1.40 2018/08/26 23:01:06 sevan Exp $");
 
 #include <sys/param.h>
 #include <sys/stat.h>
@@ -358,8 +358,8 @@ static __dead void
 usage(void)
 {
 	(void)fprintf(stderr, 
-	    "usage: %s [-s [-F] | -L | -P] [-f | -i] [-hnv] source_file [target_file]\n"
-	    "       %s [-s [-F] | -L | -P] [-f | -i] [-hnv] source_file ... target_dir\n"
+	    "usage: %s [-L | -P | -s [-F]] [-f | -iw] [-hnv] source_file [target_file]\n"
+	    "       %s [-L | -P | -s [-F]] [-f | -iw] [-hnv] source_file ... target_dir\n"
 	    "       link source_file target_file\n", getprogname(), getprogname());
 	exit(1);
 }
