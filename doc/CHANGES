@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2433 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2434 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -212,3 +212,4 @@ Changes from NetBSD 8.0 to NetBSD 9.0:
 	kernel: Remove NDIS. [maxv 20180825]
 	mue(4): Add driver for Microchip LAN75xx/LAN78xx (Raspberry Pi 3 B+)
 		from OpenBSD. [rin 20180825]
+	OpenSSH: Imported 7.8. [christos 20180826]
