@@ -1,5 +1,6 @@
-/*	$NetBSD: opacket.h,v 1.9 2018/04/06 18:59:00 christos Exp $	*/
-/* $OpenBSD: opacket.h,v 1.12 2017/10/20 01:56:39 djm Exp $ */
+/*	$NetBSD: opacket.h,v 1.10 2018/08/26 07:46:36 christos Exp $	*/
+/* $OpenBSD: opacket.h,v 1.13 2018/07/06 09:03:02 sf Exp $ */
+
 #ifndef _OPACKET_H
 /* Written by Markus Friedl. Placed in the public domain.  */
 
@@ -61,8 +62,6 @@ void	 packet_read_expect(int expected_type);
 	ssh_packet_set_protocol_flags(active_state, (protocol_flags))
 #define packet_get_protocol_flags() \
 	ssh_packet_get_protocol_flags(active_state)
-#define packet_start_compression(level) \
-	ssh_packet_start_compression(active_state, (level))
 #define packet_start(type) \
 	ssh_packet_start(active_state, (type))
 #define packet_put_char(value) \

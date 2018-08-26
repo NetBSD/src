@@ -1,5 +1,5 @@
-/*	$NetBSD: auth.h,v 1.17 2018/04/06 18:58:59 christos Exp $	*/
-/* $OpenBSD: auth.h,v 1.95 2018/03/03 03:15:51 djm Exp $ */
+/*	$NetBSD: auth.h,v 1.18 2018/08/26 07:46:36 christos Exp $	*/
+/* $OpenBSD: auth.h,v 1.96 2018/04/10 00:10:49 djm Exp $ */
 
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
@@ -89,7 +89,7 @@ struct Authctxt {
 	struct sshkey	**prev_keys;
 	u_int		 nprev_keys;
 
-	/* Last used key and ancilliary information from active auth method */
+	/* Last used key and ancillary information from active auth method */
 	struct sshkey	*auth_method_key;
 	char		*auth_method_info;
 
