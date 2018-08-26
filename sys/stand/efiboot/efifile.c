@@ -1,4 +1,4 @@
-/* $NetBSD: efifile.c,v 1.2 2018/08/24 23:19:42 jmcneill Exp $ */
+/* $NetBSD: efifile.c,v 1.3 2018/08/26 21:28:18 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,6 @@
 
 static EFI_HANDLE *efi_vol;
 static UINTN efi_nvol;
-static int efi_bootvol = -1;
 
 static int
 efi_file_parse(const char *fname, UINTN *pvol, const char **pfile)
@@ -49,37 +48,20 @@ efi_file_parse(const char *fname, UINTN *pvol, const char **pfile)
 			return ENXIO;
 		*pvol = vol;
 		*pfile = ep + 1;
-	} else if (efi_bootvol != -1) {
-		*pvol = efi_bootvol;
-		*pfile = fname;
-	} else {
-		return EINVAL;
+		return 0;
 	}
 
-	return 0;
+	return EINVAL;
 }
 
 void
 efi_file_system_probe(void)
 {
-	EFI_FILE_HANDLE fh;
 	EFI_STATUS status;
-	int n;
 
 	status = LibLocateHandle(ByProtocol, &FileSystemProtocol, NULL, &efi_nvol, &efi_vol);
 	if (EFI_ERROR(status))
 		return;
-
-	for (n = 0; n < efi_nvol; n++) {
-		fh = LibOpenRoot(efi_vol[n]);
-		if (!fh)
-			continue;
-
-		if (efi_bootdp && LibMatchDevicePaths(DevicePathFromHandle(efi_vol[n]), efi_bootdp) == TRUE)
-			efi_bootvol = n;
-		else if (efi_bootdp == NULL && efi_bootvol == -1)
-			efi_bootvol = n;
-	}
 }
 
 int
@@ -94,7 +76,7 @@ efi_file_open(struct open_file *f, ...)
 	CHAR16 *upath;
 	va_list ap;
 	size_t len;
-	int rv;
+	int rv, n;
 
 	va_start(ap, f);
 	fname = va_arg(ap, const char *);
@@ -121,7 +103,13 @@ efi_file_open(struct open_file *f, ...)
 	if (EFI_ERROR(status))
 		return status == EFI_NOT_FOUND ? ENOENT : EIO;
 
-	f->f_dev = &devsw[0];
+	for (n = 0; n < ndevs; n++)
+		if (strcmp(DEV_NAME(&devsw[n]), "efifile") == 0) {
+			f->f_dev = &devsw[n];
+			break;
+		}
+	if (n == ndevs)
+		return ENXIO;
 	f->f_devdata = f;
 	f->f_fsdata = srf;
 	f->f_flags = F_NODEV | F_READ;

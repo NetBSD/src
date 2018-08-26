@@ -1,4 +1,4 @@
-/* $NetBSD: efiboot.c,v 1.3 2018/08/24 23:21:56 jmcneill Exp $ */
+/* $NetBSD: efiboot.c,v 1.4 2018/08/26 21:28:18 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -28,6 +28,7 @@
 
 #include "efiboot.h"
 #include "efifile.h"
+#include "efiblock.h"
 #include "efifdt.h"
 
 EFI_HANDLE efi_ih;
@@ -74,6 +75,7 @@ efi_main(EFI_HANDLE imageHandle, EFI_SYSTEM_TABLE *systemTable)
 
 	efi_fdt_probe();
 	efi_file_system_probe();
+	efi_block_probe();
 
 	boot();
 

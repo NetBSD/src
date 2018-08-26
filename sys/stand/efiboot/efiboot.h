@@ -1,4 +1,4 @@
-/*	$NetBSD: efiboot.h,v 1.1 2018/08/24 02:01:06 jmcneill Exp $	*/
+/*	$NetBSD: efiboot.h,v 1.2 2018/08/26 21:28:18 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -46,6 +46,8 @@ void clearit(void);
 void print_banner(void);
 extern const struct boot_command commands[];
 void command_help(char *);
+int set_default_device(char *);
+char *get_default_device(void);
 
 /* console.c */
 int ischar(void);
@@ -62,6 +64,10 @@ void efi_delay(int);
 size_t ucs2len(const CHAR16 *);
 int ucs2_to_utf8(const CHAR16 *, char **);
 int utf8_to_ucs2(const char *, CHAR16 **, size_t *);
+
+/* efidev.c */
+int efi_device_path_depth(EFI_DEVICE_PATH *dp, int);
+int efi_device_path_ncmp(EFI_DEVICE_PATH *, EFI_DEVICE_PATH *, int);
 
 /* exec.c */
 int exec_netbsd(const char *, const char *);

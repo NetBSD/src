@@ -1,4 +1,4 @@
-/* $NetBSD: devopen.c,v 1.1 2018/08/24 02:01:06 jmcneill Exp $ */
+/* $NetBSD: devopen.c,v 1.2 2018/08/26 21:28:18 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -28,13 +28,16 @@
 
 #include "efiboot.h"
 #include "efifile.h"
+#include "efiblock.h"
 
 int
 devopen(struct open_file *f, const char *fname, char **file)
 {
 	int error;
 
-	error = efi_file_open(f, fname);
+	error = efi_block_open(f, fname, file);
+	if (error)
+		error = efi_file_open(f, fname);
 
 	return error;
 }

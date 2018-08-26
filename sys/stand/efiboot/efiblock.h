@@ -1,4 +1,4 @@
-/* $NetBSD: conf.c,v 1.2 2018/08/26 21:28:18 jmcneill Exp $ */
+/* $NetBSD: efiblock.h,v 1.1 2018/08/26 21:28:18 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -26,27 +26,46 @@
  * SUCH DAMAGE.
  */
 
-#include "efiboot.h"
-#include "efifile.h"
-#include "efiblock.h"
+#include <sys/queue.h>
+#include <sys/bootblock.h>
+#include <sys/disklabel.h>
 
-#include <lib/libsa/stand.h>
-#include <lib/libsa/ufs.h>
-#include <lib/libsa/dosfs.h>
-
-struct devsw devsw[] = {
-	{ "efifile", efi_file_strategy, efi_file_open, efi_file_close, noioctl },
-	{ "efiblock", efi_block_strategy, efi_block_open, efi_block_close, noioctl },
+enum efi_block_part_type {
+	EFI_BLOCK_PART_DISKLABEL,
+	EFI_BLOCK_PART_GPT
 };
-int ndevs = __arraycount(devsw);
 
-struct netif_driver *netif_drivers[] = {
-};
-int n_netif_drivers = __arraycount(netif_drivers);
+struct efi_block_part;
 
-struct fs_ops file_system[] = {
-	FS_OPS(ffsv1),
-	FS_OPS(ffsv2),
-	FS_OPS(dosfs),
+struct efi_block_dev {
+	uint16_t index;
+	EFI_DEVICE_PATH *path;
+	EFI_BLOCK_IO *bio;
+	UINT32 media_id;
+	TAILQ_HEAD(, efi_block_part) partitions;
+
+	TAILQ_ENTRY(efi_block_dev) entries;
 };
-int nfsys = __arraycount(file_system);
+
+struct efi_block_part_disklabel {
+	uint32_t secsize;
+	struct partition part;
+};
+
+struct efi_block_part {
+	uint32_t index;
+	struct efi_block_dev *bdev;
+	enum efi_block_part_type type;
+	union {
+		struct efi_block_part_disklabel disklabel;
+	};
+
+	TAILQ_ENTRY(efi_block_part) entries;
+};
+
+void efi_block_probe(void);
+void efi_block_show(void);
+
+int efi_block_open(struct open_file *, ...);
+int efi_block_close(struct open_file *);
+int efi_block_strategy(void *, int, daddr_t, size_t, void *, size_t *);
