@@ -1,4 +1,4 @@
-/* $NetBSD: aarch64_machdep.c,v 1.10 2018/08/24 01:59:40 jmcneill Exp $ */
+/* $NetBSD: aarch64_machdep.c,v 1.11 2018/08/26 18:15:49 ryo Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: aarch64_machdep.c,v 1.10 2018/08/24 01:59:40 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: aarch64_machdep.c,v 1.11 2018/08/26 18:15:49 ryo Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_ddb.h"
@@ -167,8 +167,6 @@ initarm_common(vaddr_t kvm_base, vsize_t kvm_size,
 	vaddr_t kernstart_l2 __unused, kernend_l2;	/* L2 table 2MB aligned */
 	vaddr_t kernelvmstart;
 	int i;
-
-	aarch64_getcacheinfo();
 
 	cputype = cpu_idnum();	/* for compatible arm */
 
