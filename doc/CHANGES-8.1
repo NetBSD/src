@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.1,v 1.1.2.13 2018/08/25 14:50:21 martin Exp $
+# $NetBSD: CHANGES-8.1,v 1.1.2.14 2018/08/26 08:06:10 martin Exp $
 
 A complete list of changes from the NetBSD 8.0 release to the NetBSD 8.1
 release:
@@ -610,4 +610,9 @@ bin/sh/exec.c					1.53
 
 	Fix several bugs in the command / type builtin.
 	[kre, ticket #989]
+
+sys/dev/usb/usb_subr.c				1.224
+
+	Add missing KERNEL_LOCK protection around autoconf calls.
+	[mlelstv, ticket #990]
 
