@@ -1,3 +1,5 @@
+/*	$NetBSD: sdt.h,v 1.10 2018/08/26 16:54:38 riastradh Exp $	*/
+
 /*-
  * Copyright 2006-2008 John Birrell <jb@FreeBSD.org>
  *
