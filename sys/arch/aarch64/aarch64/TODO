@@ -1,4 +1,4 @@
-$NetBSD: TODO,v 1.2 2018/07/09 09:58:15 ryo Exp $
+$NetBSD: TODO,v 1.3 2018/08/26 18:57:24 ryo Exp $
 
 TODO list for NetBSD/aarch64
 
@@ -7,7 +7,7 @@ TODO list for NetBSD/aarch64
   - C++ stack unwinding (libunwind?)
 
 - not yet
-  - kernel text/rodata segments are mapped writable. it should be mapped as RX.
+  - kernel preemption
   - ucas(9), and ucas_ras_check() is not implemented yet
   - crash(8), savecore(8) and libkvm (cpu_kcore_hdr_t)
   - pmap should be work even if PID_MAX >= 65536
