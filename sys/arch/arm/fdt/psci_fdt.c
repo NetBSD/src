@@ -1,4 +1,4 @@
-/* $NetBSD: psci_fdt.c,v 1.14 2018/08/24 21:56:13 ryo Exp $ */
+/* $NetBSD: psci_fdt.c,v 1.15 2018/08/26 18:15:49 ryo Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: psci_fdt.c,v 1.14 2018/08/24 21:56:13 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: psci_fdt.c,v 1.15 2018/08/26 18:15:49 ryo Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -42,6 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: psci_fdt.c,v 1.14 2018/08/24 21:56:13 ryo Exp $");
 
 #include <arm/locore.h>
 #include <arm/armreg.h>
+#include <arm/cpufunc.h>
 
 #include <arm/arm/psci.h>
 #include <arm/fdt/psci_fdt.h>
@@ -172,8 +173,8 @@ void
 psci_fdt_bootstrap(void)
 {
 #ifdef MULTIPROCESSOR
-	extern void cortex_mpstart(void);
 	uint64_t mpidr, bp_mpidr;
+	u_int cpuindex;
 	int child;
 	const char *devtype;
 
@@ -199,7 +200,7 @@ psci_fdt_bootstrap(void)
 	bp_mpidr = cpu_mpidr_aff_read();
 
 	/* Boot APs */
-	uint32_t started = 0;
+	cpuindex = 1;
 	for (child = OF_child(cpus); child; child = OF_peer(child)) {
 		if (!fdtbus_status_okay(child))
 			continue;
@@ -208,21 +209,25 @@ psci_fdt_bootstrap(void)
 		if (mpidr == bp_mpidr)
 			continue; 	/* BP already started */
 
-		/* XXX NetBSD requires all CPUs to be in the same cluster */
-		if ((mpidr & ~MPIDR_AFF0) != (bp_mpidr & ~MPIDR_AFF0))
+#ifdef __aarch64__
+		/* argument for mpstart() */
+		arm_cpu_hatch_arg = cpuindex;
+		cpu_dcache_wb_range((vaddr_t)&arm_cpu_hatch_arg,
+		    sizeof(arm_cpu_hatch_arg));
+#endif
+
+		int ret = psci_cpu_on(cpuindex, psci_fdt_mpstart_pa(), 0);
+		if (ret != PSCI_SUCCESS)
 			continue;
 
-		const u_int cpuid = __SHIFTOUT(mpidr, MPIDR_AFF0);
-		int ret = psci_cpu_on(mpidr, psci_fdt_mpstart_pa(), 0);
-		if (ret == PSCI_SUCCESS)
-			started |= __BIT(cpuid);
-	}
+		/* Wait for APs to start */
+		for (u_int i = 0x4000000; i > 0; i--) {
+			membar_consumer();
+			if (arm_cpu_hatched & __BIT(cpuindex))
+				break;
+		}
 
-	/* Wait for APs to start */
-	for (u_int i = 0x10000000; i > 0; i--) {
-		membar_consumer();
-		if (arm_cpu_hatched == started)
-			break;
+		cpuindex++;
 	}
 #endif
 }

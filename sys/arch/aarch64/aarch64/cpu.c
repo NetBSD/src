@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.5 2018/08/20 18:13:56 jmcneill Exp $ */
+/* $NetBSD: cpu.c,v 1.6 2018/08/26 18:15:49 ryo Exp $ */
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: cpu.c,v 1.5 2018/08/20 18:13:56 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: cpu.c,v 1.6 2018/08/26 18:15:49 ryo Exp $");
 
 #include "locators.h"
 #include "opt_arm_debug.h"
@@ -58,27 +58,18 @@ __KERNEL_RCSID(1, "$NetBSD: cpu.c,v 1.5 2018/08/20 18:13:56 jmcneill Exp $");
 
 void cpu_attach(device_t, cpuid_t);
 static void identify_aarch64_model(uint32_t, char *, size_t);
-static void cpu_identify(device_t self, struct cpu_info *, uint32_t, uint64_t);
+static void cpu_identify(device_t self, struct cpu_info *);
 static void cpu_identify1(device_t self, struct cpu_info *);
 static void cpu_identify2(device_t self, struct cpu_info *);
 
 #ifdef MULTIPROCESSOR
 volatile u_int arm_cpu_hatched __cacheline_aligned = 0;
+volatile u_int arm_cpu_hatch_arg __cacheline_aligned;
 volatile uint32_t arm_cpu_mbox __cacheline_aligned = 0;
 u_int arm_cpu_max = 1;
 
-/* stored by secondary processors (available when arm_cpu_hatched) */
-uint32_t cpus_midr[MAXCPUS];
-uint64_t cpus_mpidr[MAXCPUS];
-
 static kmutex_t cpu_hatch_lock;
 #endif /* MULTIPROCESSOR */
-
-/* Our exported CPU info; we can have only one. */
-struct cpu_info cpu_info_store __cacheline_aligned = {
-	.ci_cpl = IPL_HIGH,
-	.ci_curlwp = &lwp0
-};
 
 #ifdef MULTIPROCESSOR
 #define NCPUINFO	MAXCPUS
@@ -86,42 +77,53 @@ struct cpu_info cpu_info_store __cacheline_aligned = {
 #define NCPUINFO	1
 #endif /* MULTIPROCESSOR */
 
-struct cpu_info *cpu_info[NCPUINFO] = {
-	[0] = &cpu_info_store
+/*
+ * Our exported CPU info;
+ * these will be refered from secondary cpus in the middle of hatching.
+ */
+struct cpu_info cpu_info_store[NCPUINFO] = {
+	[0] = {
+		.ci_cpl = IPL_HIGH,
+		.ci_curlwp = &lwp0
+	}
+};
+
+struct cpu_info *cpu_info[NCPUINFO] __read_mostly = {
+	[0] = &cpu_info_store[0]
 };
 
 void
 cpu_attach(device_t dv, cpuid_t id)
 {
 	struct cpu_info *ci;
+	const int unit = device_unit(dv);
 	uint64_t mpidr;
-	uint32_t midr;
 
-	if (id == 0) {
+	if (unit == 0) {
 		ci = curcpu();
-		midr = reg_midr_el1_read();
-		mpidr = reg_mpidr_el1_read();
+		ci->ci_cpuid = id;
+		cpu_info_store[unit].ci_midr = reg_midr_el1_read();
+		cpu_info_store[unit].ci_mpidr = reg_mpidr_el1_read();
 	} else {
 #ifdef MULTIPROCESSOR
-		KASSERT(cpu_info[id] == NULL);
-		ci = kmem_zalloc(sizeof(*ci), KM_SLEEP);
+		KASSERT(unit < MAXCPUS);
+		ci = &cpu_info_store[unit];
+
 		ci->ci_cpl = IPL_HIGH;
 		ci->ci_cpuid = id;
+		ci->ci_data.cpu_cc_freq = cpu_info_store[0].ci_data.cpu_cc_freq;
+		/* ci_{midr,mpidr} are stored by own cpus when hatching */
 
-		ci->ci_data.cpu_cc_freq = cpu_info[0]->ci_data.cpu_cc_freq;
-		cpu_info[ci->ci_cpuid] = ci;
-		if ((arm_cpu_hatched & (1 << id)) == 0) {
+		cpu_info[ncpu] = ci;
+		if ((arm_cpu_hatched & __BIT(unit)) == 0) {
 			ci->ci_dev = dv;
 			dv->dv_private = ci;
+			ci->ci_index = -1;
 
 			aprint_naive(": disabled\n");
 			aprint_normal(": disabled (unresponsive)\n");
 			return;
 		}
-
-		/* cpus_{midr,mpidr}[id] is stored by secondary processor */
-		midr = cpus_midr[id];
-		mpidr = cpus_mpidr[id];
 #else /* MULTIPROCESSOR */
 		aprint_naive(": disabled\n");
 		aprint_normal(": disabled (uniprocessor kernel)\n");
@@ -129,6 +131,7 @@ cpu_attach(device_t dv, cpuid_t id)
 #endif /* MULTIPROCESSOR */
 	}
 
+	mpidr = ci->ci_mpidr;
 	if (mpidr & MPIDR_MT) {
 		ci->ci_data.cpu_smt_id = __SHIFTOUT(mpidr, MPIDR_AFF0);
 		ci->ci_data.cpu_core_id = __SHIFTOUT(mpidr, MPIDR_AFF1);
@@ -141,9 +144,9 @@ cpu_attach(device_t dv, cpuid_t id)
 	ci->ci_dev = dv;
 	dv->dv_private = ci;
 
-	cpu_identify(ci->ci_dev, ci, midr, mpidr);
+	cpu_identify(ci->ci_dev, ci);
 #ifdef MULTIPROCESSOR
-	if (id != 0) {
+	if (unit != 0) {
 		mi_cpu_attach(ci);
 		return;
 	}
@@ -152,6 +155,8 @@ cpu_attach(device_t dv, cpuid_t id)
 	fpu_attach(ci);
 
 	cpu_identify1(dv, ci);
+	aarch64_getcacheinfo();
+	aarch64_printcacheinfo(dv);
 	cpu_identify2(dv, ci);
 }
 
@@ -196,91 +201,13 @@ identify_aarch64_model(uint32_t cpuid, char *buf, size_t len)
 	snprintf(buf, len, "unknown CPU (ID = 0x%08x)", cpuid);
 }
 
-static int
-prt_cache(device_t self, int level)
-{
-	struct aarch64_cache_info *cinfo;
-	struct aarch64_cache_unit *cunit;
-	u_int purging;
-	int i;
-	const char *cacheable, *cachetype;
-
-	cinfo = &aarch64_cache_info[level];
-
-	if (cinfo->cacheable == CACHE_CACHEABLE_NONE)
-		return -1;
-
-	for (i = 0; i < 2; i++) {
-		switch (cinfo->cacheable) {
-		case CACHE_CACHEABLE_ICACHE:
-			cunit = &cinfo->icache;
-			cacheable = "Instruction";
-			break;
-		case CACHE_CACHEABLE_DCACHE:
-			cunit = &cinfo->dcache;
-			cacheable = "Data";
-			break;
-		case CACHE_CACHEABLE_IDCACHE:
-			if (i == 0) {
-				cunit = &cinfo->icache;
-				cacheable = "Instruction";
-			} else {
-				cunit = &cinfo->dcache;
-				cacheable = "Data";
-			}
-			break;
-		case CACHE_CACHEABLE_UNIFIED:
-			cunit = &cinfo->dcache;
-			cacheable = "Unified";
-			break;
-		default:
-			cunit = &cinfo->dcache;
-			cacheable = "*UNK*";
-			break;
-		}
-
-		switch (cunit->cache_type) {
-		case CACHE_TYPE_VIVT:
-			cachetype = "VIVT";
-			break;
-		case CACHE_TYPE_VIPT:
-			cachetype = "VIPT";
-			break;
-		case CACHE_TYPE_PIPT:
-			cachetype = "PIPT";
-			break;
-		default:
-			cachetype = "*UNK*";
-			break;
-		}
-
-		purging = cunit->cache_purging;
-		aprint_normal_dev(self,
-		    "L%d %dKB/%dB %d-way%s%s%s%s %s %s cache\n",
-		    level + 1,
-		    cunit->cache_size / 1024,
-		    cunit->cache_line_size,
-		    cunit->cache_ways,
-		    (purging & CACHE_PURGING_WT) ? " write-through" : "",
-		    (purging & CACHE_PURGING_WB) ? " write-back" : "",
-		    (purging & CACHE_PURGING_RA) ? " read-allocate" : "",
-		    (purging & CACHE_PURGING_WA) ? " write-allocate" : "",
-		    cachetype, cacheable);
-
-		if (cinfo->cacheable != CACHE_CACHEABLE_IDCACHE)
-			break;
-	}
-
-	return 0;
-}
-
 static void
-cpu_identify(device_t self, struct cpu_info *ci, uint32_t midr, uint64_t mpidr)
+cpu_identify(device_t self, struct cpu_info *ci)
 {
 	char model[128];
 
-	identify_aarch64_model(midr, model, sizeof(model));
-	if (ci->ci_cpuid == 0)
+	identify_aarch64_model(ci->ci_midr, model, sizeof(model));
+	if (ci->ci_index == 0)
 		cpu_setmodel("%s", model);
 
 	aprint_naive("\n");
@@ -292,7 +219,6 @@ cpu_identify(device_t self, struct cpu_info *ci, uint32_t midr, uint64_t mpidr)
 static void
 cpu_identify1(device_t self, struct cpu_info *ci)
 {
-	int level;
 	uint32_t ctr, sctlr;	/* for cache */
 
 	/* SCTLR - System Control Register */
@@ -339,11 +265,6 @@ cpu_identify1(device_t self, struct cpu_info *ci)
 	aprint_normal_dev(self, "Dcache line %ld, Icache line %ld\n",
 	    sizeof(int) << __SHIFTOUT(ctr, CTR_EL0_DMIN_LINE),
 	    sizeof(int) << __SHIFTOUT(ctr, CTR_EL0_IMIN_LINE));
-
-	for (level = 0; level < MAX_CACHE_LEVEL; level++) {
-		if (prt_cache(self, level) < 0)
-			break;
-	}
 }
 
 
@@ -508,7 +429,7 @@ cpu_boot_secondary_processors(void)
 	__asm __volatile ("sev; sev; sev");
 
 	/* wait all cpus have done cpu_hatch() */
-	while (arm_cpu_mbox) {
+	while (membar_consumer(), arm_cpu_mbox & arm_cpu_hatched) {
 		__asm __volatile ("wfe");
 	}
 
@@ -531,6 +452,8 @@ cpu_hatch(struct cpu_info *ci)
 	fpu_attach(ci);
 
 	cpu_identify1(ci->ci_dev, ci);
+	aarch64_getcacheinfo();
+	aarch64_printcacheinfo(ci->ci_dev);
 	cpu_identify2(ci->ci_dev, ci);
 
 	mutex_exit(&cpu_hatch_lock);
@@ -544,8 +467,13 @@ cpu_hatch(struct cpu_info *ci)
 	MD_CPU_HATCH(ci);	/* for non-fdt arch? */
 #endif
 
-	/* clear my bit of arm_cpu_mbox to tell cpu_boot_secondary_processors() */
-	atomic_and_32(&arm_cpu_mbox, ~(1 << ci->ci_cpuid));
+	/*
+	 * clear my bit of arm_cpu_mbox to tell cpu_boot_secondary_processors().
+	 * there are cpu0,1,2,3, and if cpu2 is unresponsive,
+	 * ci_index are each cpu0=0, cpu1=1, cpu2=undef, cpu3=2.
+	 * therefore we have to use device_unit instead of ci_index for mbox.
+	 */
+	atomic_and_32(&arm_cpu_mbox, ~__BIT(device_unit(ci->ci_dev)));
 	__asm __volatile ("sev; sev; sev");
 }
 #endif /* MULTIPROCESSOR */

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.19 2018/08/24 19:06:30 ryo Exp $	*/
+/*	$NetBSD: locore.S,v 1.20 2018/08/26 18:15:49 ryo Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -35,7 +35,7 @@
 #include <aarch64/hypervisor.h>
 #include "assym.h"
 
-RCSID("$NetBSD: locore.S,v 1.19 2018/08/24 19:06:30 ryo Exp $")
+RCSID("$NetBSD: locore.S,v 1.20 2018/08/26 18:15:49 ryo Exp $")
 
 /* #define DEBUG_LOCORE */
 /* #define DEBUG_MMU */
@@ -241,14 +241,14 @@ END(aarch64_start)
 
 #if defined(VERBOSE_LOCORE) || defined(DEBUG_LOCORE)
 /*
- * print "[CPU$x27] " (x27 as cpuid)
+ * print "[CPU$x27] " (x27 as cpuindex)
  * XXX: max 4 digit
  */
 printcpu:
 	stp	x0, lr, [sp, #-16]!
 	stp	x25, x26, [sp, #-16]!
 	PRINT("[CPU")
-	mov	x26, x27		/* n = cpuid */
+	mov	x26, x27		/* n = cpuindex */
 	mov	x25, xzr		/* zeropad = 0 */
 	mov	x1, #1000
 	udiv	x0, x26, x1		/* x0 = n / 1000 */
@@ -294,25 +294,21 @@ printcpu:
 
 ENTRY_NP(aarch64_mpstart)
 ENTRY_NP(cortex_mpstart)	/* compat arm */
-	/*
-	 * XXX:
-	 *  cpuid(index) is read from MPIDR_EL1.AFF0. AFF1,2,3 are ignored.
-	 *  cpuid should be passed from primary processor...
-	 */
-	mrs	x27, mpidr_el1
-	and	x27, x27, #MPIDR_AFF0	/* XXX: cpuid = mpidr_el1 & Aff0 */
+	ADDR	x0, arm_cpu_hatch_arg	/* from cpu0 */
+	ldr	w27, [x0]		/* x27 = cpuindex */
 	mov	x0, #1
-	lsl	x28, x0, x27		/* x28 = 1 << cpuid */
-	mov	x0, x28
+	lsl	x28, x0, x27		/* x28 = 1 << cpuindex */
 
-	/* x27 = cpuid, x28 = (1 << cpuid) */
+	/* x27 = cpuindex, x28 = (1 << cpuindex) */
+	cmp	x27, MAXCPUS
+	bge	toomanycpus
 
 	/* set stack pointer for boot */
 #define BOOT_STACKSIZE	256
 	mov	x1, #BOOT_STACKSIZE
 	mul	x1, x1, x27
 	ADDR	x0, bootstk_cpus
-	sub	sp, x0, x1	/* sp = bootstk_cpus - BOOT_STACKSIZE * cpuid */
+	sub	sp, x0, x1	/* sp= bootstk_cpus-(BOOT_STACKSIZE*cpuindex) */
 
 #ifdef DEBUG_LOCORE
 	PRINTCPU()
@@ -384,7 +380,7 @@ mp_vstart:
 	PRINTCPU()
 	PRINT("arm_cpu_hatched  = ")
 	ADDR	x0, _C_LABEL(arm_cpu_hatched)
-	ldr	x0, [x0]
+	ldr	w0, [x0]
 	bl	print_x0
 
 	PRINTCPU()
@@ -393,17 +389,22 @@ mp_vstart:
 	bl	print_x0
 #endif
 
-	ADDR	x0, _C_LABEL(cpus_midr)
+	msr	tpidr_el0, xzr		/* tpidr_el0 (for TLS) = NULL */
+
+	/* set curcpu(), and fill curcpu()->ci_{midr,mpidr} */
+	mov	x0, #CPU_INFO_SIZE
+	mul	x0, x27, x0
+	ADDR	x1, _C_LABEL(cpu_info_store)
+	add	x0, x0, x1		/* x0 = &cpu_info_store[cpuindex] */
+	msr	tpidr_el1, x0		/* tpidr_el1 = curcpu() = x0 */
+
 	mrs	x1, midr_el1
-	str	w1, [x0, x27, lsl #2]	/* cpu_midr[cpuid] = midr_el1 */
-
-	ADDR	x0, _C_LABEL(cpus_mpidr)
+	str	x1, [x0, #CI_MIDR]	/* curcpu()->ci_cpuid = midr_el1 */
 	mrs	x1, mpidr_el1
-	str	x1, [x0, x27, lsl #3]	/* cpu_mpidr[cpuid] = mpidr_el1 */
-
+	str	x1, [x0, #CI_MPIDR]	/* curcpu()->ci_mpidr = mpidr_el1 */
 
 	/*
-	 * atomic_or_32(&arm_cpu_hatched, 1 << cpuid)
+	 * atomic_or_32(&arm_cpu_hatched, (1 << cpuindex))
 	 * to tell my activity to primary processor.
 	 */
 	ADDR	x0, _C_LABEL(arm_cpu_hatched)
@@ -415,7 +416,7 @@ mp_vstart:
 	PRINTCPU()
 	PRINT("arm_cpu_hatched -> ")
 	ADDR	x0, _C_LABEL(arm_cpu_hatched)
-	ldr	x0, [x0]
+	ldr	w0, [x0]
 	bl	print_x0
 #endif
 
@@ -438,7 +439,7 @@ mp_vstart:
 #ifdef DEBUG_LOCORE
 	/* XXX: delay to prevent the mixing of console output */
 	mov	x0, #0x4000000
-	mul	x0, x0, x27	/* delay (cpuid * 0x4000000) */
+	mul	x0, x0, x27	/* delay (cpuindex * 0x4000000) */
 1:	subs	x0, x0, #1
 	bne	1b
 
@@ -452,12 +453,8 @@ mp_vstart:
 	bl	print_x0
 #endif
 
-	msr	tpidr_el0, xzr		/* tpidr_el0 (for TLS) = NULL */
-
 	/* fill my cpu_info */
-	ADDR	x0, _C_LABEL(cpu_info)
-	ldr	x0, [x0, x27, lsl #3]	/* x0 = cpu_info[cpuid] */
-	msr	tpidr_el1, x0		/* tpidr_el1 = my cpu_info */
+	mrs	x0, tpidr_el1		/* curcpu() */
 
 	ldr	x1, [x0, #CI_IDLELWP]	/* x1 = curcpu()->ci_data.cpu_idlelwp */
 	str	x1, [x0, #CI_CURLWP]	/* curlwp is idlelwp */
@@ -472,6 +469,13 @@ mp_vstart:
 	mov	x0, xzr
 	b	_C_LABEL(idle_loop)	/* never to return */
 END(aarch64_mpstart)
+
+toomanycpus:
+	PRINTCPU()
+	PRINT("too many cpus\r\n")
+1:	wfi
+	b	1b
+
 
 #else /* MULTIPROCESSOR */
 

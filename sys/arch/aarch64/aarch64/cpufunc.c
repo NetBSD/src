@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.2 2018/07/17 00:30:34 christos Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.3 2018/08/26 18:15:49 ryo Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,27 +27,31 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.2 2018/07/17 00:30:34 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.3 2018/08/26 18:15:49 ryo Exp $");
 
-#include <sys/types.h>
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <aarch64/armreg.h>
+#include <sys/types.h>
+#include <sys/kmem.h>
+
+#include <aarch64/cpu.h>
 #include <aarch64/cpufunc.h>
 
-u_int cputype;	/* compat arm */
+u_int cputype;			/* compat arm */
+u_int arm_dcache_align;		/* compat arm */
+u_int arm_dcache_align_mask;	/* compat arm */
+u_int arm_dcache_maxline;
 
-/* L1-L8 cache info */
-struct aarch64_cache_info aarch64_cache_info[MAX_CACHE_LEVEL];
 u_int aarch64_cache_vindexsize;
 u_int aarch64_cache_prefer_mask;
 
-u_int arm_dcache_minline;
-u_int arm_dcache_align;
-u_int arm_dcache_align_mask;
+/* cache info per cluster. the same cluster has the same cache configuration? */
+#define MAXCPUPACKAGES	MAXCPUS		/* maximum of ci->ci_package_id */
+static struct aarch64_cache_info *aarch64_cacheinfo[MAXCPUPACKAGES];
+
 
 static void
-extract_cacheunit(int level, bool insn, int cachetype)
+extract_cacheunit(int level, bool insn, int cachetype,
+    struct aarch64_cache_info *cacheinfo)
 {
 	struct aarch64_cache_unit *cunit;
 	uint32_t ccsidr;
@@ -60,9 +64,9 @@ extract_cacheunit(int level, bool insn, int cachetype)
 	ccsidr = reg_ccsidr_el1_read();
 
 	if (insn)
-		cunit = &aarch64_cache_info[level].icache;
+		cunit = &cacheinfo[level].icache;
 	else
-		cunit = &aarch64_cache_info[level].dcache;
+		cunit = &cacheinfo[level].dcache;
 
 	cunit->cache_type = cachetype;
 
@@ -81,13 +85,30 @@ extract_cacheunit(int level, bool insn, int cachetype)
 	cunit->cache_purging |= (ccsidr & CCSIDR_WA) ? CACHE_PURGING_WA : 0;
 }
 
-int
+void
 aarch64_getcacheinfo(void)
 {
 	uint32_t clidr, ctr;
 	int level, cachetype;
+	struct aarch64_cache_info *cinfo;
 
-	cputype = aarch64_cpuid();
+	if (cputype == 0)
+		cputype = aarch64_cpuid();
+
+	/* already extract about this cluster? */
+	KASSERT(curcpu()->ci_package_id < MAXCPUPACKAGES);
+	cinfo = aarch64_cacheinfo[curcpu()->ci_package_id];
+	if (cinfo != NULL) {
+		curcpu()->ci_cacheinfo = cinfo;
+		return;
+	}
+
+	cinfo = aarch64_cacheinfo[curcpu()->ci_package_id] =
+	    kmem_zalloc(sizeof(struct aarch64_cache_info) * MAX_CACHE_LEVEL,
+	    KM_NOSLEEP);
+	KASSERT(cinfo != NULL);
+	curcpu()->ci_cacheinfo = cinfo;
+
 
 	/*
 	 * CTR - Cache Type Register
@@ -108,9 +129,12 @@ aarch64_getcacheinfo(void)
 		break;
 	}
 
-	arm_dcache_minline = __SHIFTOUT(ctr, CTR_EL0_DMIN_LINE);
-	arm_dcache_align = sizeof(int) << arm_dcache_minline;
-	arm_dcache_align_mask = arm_dcache_align - 1;
+	/* remember maximum alignment */
+	if (arm_dcache_maxline < __SHIFTOUT(ctr, CTR_EL0_DMIN_LINE)) {
+		arm_dcache_maxline = __SHIFTOUT(ctr, CTR_EL0_DMIN_LINE);
+		arm_dcache_align = sizeof(int) << arm_dcache_maxline;
+		arm_dcache_align_mask = arm_dcache_align - 1;
+	}
 
 	/*
 	 * CLIDR -  Cache Level ID Register
@@ -130,27 +154,27 @@ aarch64_getcacheinfo(void)
 			break;
 		case CLIDR_TYPE_ICACHE:
 			cacheable = CACHE_CACHEABLE_ICACHE;
-			extract_cacheunit(level, true, cachetype);
+			extract_cacheunit(level, true, cachetype, cinfo);
 			break;
 		case CLIDR_TYPE_DCACHE:
 			cacheable = CACHE_CACHEABLE_DCACHE;
-			extract_cacheunit(level, false, CACHE_TYPE_PIPT);
+			extract_cacheunit(level, false, CACHE_TYPE_PIPT, cinfo);
 			break;
 		case CLIDR_TYPE_IDCACHE:
 			cacheable = CACHE_CACHEABLE_IDCACHE;
-			extract_cacheunit(level, true, cachetype);
-			extract_cacheunit(level, false, CACHE_TYPE_PIPT);
+			extract_cacheunit(level, true, cachetype, cinfo);
+			extract_cacheunit(level, false, CACHE_TYPE_PIPT, cinfo);
 			break;
 		case CLIDR_TYPE_UNIFIEDCACHE:
 			cacheable = CACHE_CACHEABLE_UNIFIED;
-			extract_cacheunit(level, false, CACHE_TYPE_PIPT);
+			extract_cacheunit(level, false, CACHE_TYPE_PIPT, cinfo);
 			break;
 		default:
 			cacheable = CACHE_CACHEABLE_NONE;
 			break;
 		}
 
-		aarch64_cache_info[level].cacheable = cacheable;
+		cinfo[level].cacheable = cacheable;
 		if (cacheable == CACHE_CACHEABLE_NONE) {
 			/* no more level */
 			break;
@@ -164,23 +188,111 @@ aarch64_getcacheinfo(void)
 	}
 
 	/* calculate L1 icache virtual index size */
-	if (((aarch64_cache_info[0].icache.cache_type == CACHE_TYPE_VIVT) ||
-	     (aarch64_cache_info[0].icache.cache_type == CACHE_TYPE_VIPT)) &&
-	    ((aarch64_cache_info[0].cacheable == CACHE_CACHEABLE_ICACHE) ||
-	     (aarch64_cache_info[0].cacheable == CACHE_CACHEABLE_IDCACHE))) {
+	if (((cinfo[0].icache.cache_type == CACHE_TYPE_VIVT) ||
+	     (cinfo[0].icache.cache_type == CACHE_TYPE_VIPT)) &&
+	    ((cinfo[0].cacheable == CACHE_CACHEABLE_ICACHE) ||
+	     (cinfo[0].cacheable == CACHE_CACHEABLE_IDCACHE))) {
 
 		aarch64_cache_vindexsize =
-		    aarch64_cache_info[0].icache.cache_size /
-		    aarch64_cache_info[0].icache.cache_ways;
+		    cinfo[0].icache.cache_size /
+		    cinfo[0].icache.cache_ways;
 
 		KASSERT(aarch64_cache_vindexsize != 0);
 		aarch64_cache_prefer_mask = aarch64_cache_vindexsize - 1;
 	} else {
 		aarch64_cache_vindexsize = 0;
 	}
+}
+
+static int
+prt_cache(device_t self, struct aarch64_cache_info *cinfo, int level)
+{
+	struct aarch64_cache_unit *cunit;
+	u_int purging;
+	int i;
+	const char *cacheable, *cachetype;
+
+	if (cinfo[level].cacheable == CACHE_CACHEABLE_NONE)
+		return -1;
+
+	for (i = 0; i < 2; i++) {
+		switch (cinfo[level].cacheable) {
+		case CACHE_CACHEABLE_ICACHE:
+			cunit = &cinfo[level].icache;
+			cacheable = "Instruction";
+			break;
+		case CACHE_CACHEABLE_DCACHE:
+			cunit = &cinfo[level].dcache;
+			cacheable = "Data";
+			break;
+		case CACHE_CACHEABLE_IDCACHE:
+			if (i == 0) {
+				cunit = &cinfo[level].icache;
+				cacheable = "Instruction";
+			} else {
+				cunit = &cinfo[level].dcache;
+				cacheable = "Data";
+			}
+			break;
+		case CACHE_CACHEABLE_UNIFIED:
+			cunit = &cinfo[level].dcache;
+			cacheable = "Unified";
+			break;
+		default:
+			cunit = &cinfo[level].dcache;
+			cacheable = "*UNK*";
+			break;
+		}
+
+		switch (cunit->cache_type) {
+		case CACHE_TYPE_VIVT:
+			cachetype = "VIVT";
+			break;
+		case CACHE_TYPE_VIPT:
+			cachetype = "VIPT";
+			break;
+		case CACHE_TYPE_PIPT:
+			cachetype = "PIPT";
+			break;
+		default:
+			cachetype = "*UNK*";
+			break;
+		}
+
+		purging = cunit->cache_purging;
+		aprint_normal_dev(self,
+		    "L%d %dKB/%dB %d-way%s%s%s%s %s %s cache\n",
+		    level + 1,
+		    cunit->cache_size / 1024,
+		    cunit->cache_line_size,
+		    cunit->cache_ways,
+		    (purging & CACHE_PURGING_WT) ? " write-through" : "",
+		    (purging & CACHE_PURGING_WB) ? " write-back" : "",
+		    (purging & CACHE_PURGING_RA) ? " read-allocate" : "",
+		    (purging & CACHE_PURGING_WA) ? " write-allocate" : "",
+		    cachetype, cacheable);
+
+		if (cinfo[level].cacheable != CACHE_CACHEABLE_IDCACHE)
+			break;
+	}
 
 	return 0;
 }
+
+void
+aarch64_printcacheinfo(device_t dev)
+{
+	struct aarch64_cache_info *cinfo;
+	int level;
+
+	cinfo = curcpu()->ci_cacheinfo;
+
+	for (level = 0; level < MAX_CACHE_LEVEL; level++)
+		if (prt_cache(dev, cinfo, level) < 0)
+			break;
+}
+
+
 
 static inline void
 ln_dcache_wb_all(int level, struct aarch64_cache_unit *cunit)
@@ -239,14 +351,17 @@ ln_dcache_inv_all(int level, struct aarch64_cache_unit *cunit)
 void
 aarch64_dcache_wbinv_all(void)
 {
+	struct aarch64_cache_info *cinfo;
 	int level;
 
+	cinfo = curcpu()->ci_cacheinfo;
+
 	for (level = 0; level < MAX_CACHE_LEVEL; level++) {
-		if (aarch64_cache_info[level].cacheable == CACHE_CACHEABLE_NONE)
+		if (cinfo[level].cacheable == CACHE_CACHEABLE_NONE)
 			break;
 
 		__asm __volatile ("dsb ish");
-		ln_dcache_wbinv_all(level, &aarch64_cache_info[level].dcache);
+		ln_dcache_wbinv_all(level, &cinfo[level].dcache);
 	}
 	__asm __volatile ("dsb ish");
 }
@@ -254,14 +369,17 @@ aarch64_dcache_wbinv_all(void)
 void
 aarch64_dcache_inv_all(void)
 {
+	struct aarch64_cache_info *cinfo;
 	int level;
 
+	cinfo = curcpu()->ci_cacheinfo;
+
 	for (level = 0; level < MAX_CACHE_LEVEL; level++) {
-		if (aarch64_cache_info[level].cacheable == CACHE_CACHEABLE_NONE)
+		if (cinfo[level].cacheable == CACHE_CACHEABLE_NONE)
 			break;
 
 		__asm __volatile ("dsb ish");
-		ln_dcache_inv_all(level, &aarch64_cache_info[level].dcache);
+		ln_dcache_inv_all(level, &cinfo[level].dcache);
 	}
 	__asm __volatile ("dsb ish");
 }
@@ -269,14 +387,17 @@ aarch64_dcache_inv_all(void)
 void
 aarch64_dcache_wb_all(void)
 {
+	struct aarch64_cache_info *cinfo;
 	int level;
 
+	cinfo = curcpu()->ci_cacheinfo;
+
 	for (level = 0; level < MAX_CACHE_LEVEL; level++) {
-		if (aarch64_cache_info[level].cacheable == CACHE_CACHEABLE_NONE)
+		if (cinfo[level].cacheable == CACHE_CACHEABLE_NONE)
 			break;
 
 		__asm __volatile ("dsb ish");
-		ln_dcache_wb_all(level, &aarch64_cache_info[level].dcache);
+		ln_dcache_wb_all(level, &cinfo[level].dcache);
 	}
 	__asm __volatile ("dsb ish");
 }

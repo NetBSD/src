@@ -1,4 +1,4 @@
-# $NetBSD: genassym.cf,v 1.6 2018/08/03 16:32:55 ryo Exp $
+# $NetBSD: genassym.cf,v 1.7 2018/08/26 18:15:49 ryo Exp $
 #-
 # Copyright (c) 2014 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -299,10 +299,13 @@ define	FPREG_Q31		offsetof(struct fpreg, fp_reg[31])
 define	FPREG_FPCR		offsetof(struct fpreg, fpcr)
 define	FPREG_FPSR		offsetof(struct fpreg, fpsr)
 
+define	CPU_INFO_SIZE		sizeof(struct cpu_info)
 define	CI_CURPRIORITY		offsetof(struct cpu_info, ci_schedstate.spc_curpriority)
 define	CI_CURLWP		offsetof(struct cpu_info, ci_curlwp)
 define	CI_CPL			offsetof(struct cpu_info, ci_cpl)
 define	CI_CPUID		offsetof(struct cpu_info, ci_cpuid)
+define	CI_MIDR			offsetof(struct cpu_info, ci_midr)
+define	CI_MPIDR		offsetof(struct cpu_info, ci_mpidr)
 define	CI_ASTPENDING		offsetof(struct cpu_info, ci_astpending)
 define	CI_WANT_RESCHED		offsetof(struct cpu_info, ci_want_resched)
 define	CI_INTR_DEPTH		offsetof(struct cpu_info, ci_intr_depth)
