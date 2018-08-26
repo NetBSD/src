@@ -1,5 +1,6 @@
-/*	$NetBSD: sftp-server.c,v 1.17 2017/10/07 19:39:19 christos Exp $	*/
-/* $OpenBSD: sftp-server.c,v 1.111 2017/04/04 00:24:56 djm Exp $ */
+/*	$NetBSD: sftp-server.c,v 1.18 2018/08/26 07:46:36 christos Exp $	*/
+/* $OpenBSD: sftp-server.c,v 1.112 2018/06/01 03:33:53 djm Exp $ */
+
 /*
  * Copyright (c) 2000-2004 Markus Friedl.  All rights reserved.
  *
@@ -17,7 +18,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: sftp-server.c,v 1.17 2017/10/07 19:39:19 christos Exp $");
+__RCSID("$NetBSD: sftp-server.c,v 1.18 2018/08/26 07:46:36 christos Exp $");
 
 #include <sys/param.h>	/* MIN */
 #include <sys/types.h>
@@ -1481,7 +1482,7 @@ sftp_server_main(int argc, char **argv, struct passwd *user_pw)
 	int i, r, in, out, max, ch, skipargs = 0, log_stderr = 0;
 	ssize_t len, olen, set_size;
 	SyslogFacility log_facility = SYSLOG_FACILITY_AUTH;
-	char *cp, *homedir = NULL, buf[4*4096];
+	char *cp, *homedir = NULL, uidstr[32], buf[4*4096];
 	long mask;
 
 	extern char *optarg;
@@ -1531,8 +1532,10 @@ sftp_server_main(int argc, char **argv, struct passwd *user_pw)
 			break;
 		case 'd':
 			cp = tilde_expand_filename(optarg, user_pw->pw_uid);
+			snprintf(uidstr, sizeof(uidstr), "%llu",
+			    (unsigned long long)pw->pw_uid);
 			homedir = percent_expand(cp, "d", user_pw->pw_dir,
-			    "u", user_pw->pw_name, (char *)NULL);
+			    "u", user_pw->pw_name, "U", uidstr, (char *)NULL);
 			free(cp);
 			break;
 		case 'p':
