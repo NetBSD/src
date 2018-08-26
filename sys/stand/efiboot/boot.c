@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.2 2018/08/24 23:22:10 jmcneill Exp $	*/
+/*	$NetBSD: boot.c,v 1.3 2018/08/26 21:28:18 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -28,6 +28,7 @@
  */
 
 #include "efiboot.h"
+#include "efiblock.h"
 
 #include <sys/bootblock.h>
 #include <sys/boot_flag.h>
@@ -40,9 +41,9 @@ extern const char bootprog_name[], bootprog_rev[], bootprog_kernrev[];
 extern char twiddle_toggle;
 
 static const char * const names[][2] = {
-	{ "\\netbsd", "\\netbsd.gz" },
-	{ "\\onetbsd", "\\onetbsd.gz" },
-	{ "\\netbsd.old", "\\netbsd.old.gz" },
+	{ "netbsd", "netbsd.gz" },
+	{ "onetbsd", "onetbsd.gz" },
+	{ "netbsd.old", "netbsd.old.gz" },
 };
 
 #define NUMNAMES	__arraycount(names)
@@ -50,13 +51,19 @@ static const char * const names[][2] = {
 
 #define	DEFTIMEOUT	5
 
+static char default_device[32];
+
 void	command_boot(char *);
+void	command_dev(char *);
+void	command_ls(char *);
 void	command_reset(char *);
 void	command_version(char *);
 void	command_quit(char *);
 
 const struct boot_command commands[] = {
 	{ "boot",	command_boot,		"boot [fsN:][filename] [args]\n     (ex. \"fs0:\\netbsd.old -s\"" },
+	{ "dev",	command_dev,		"dev" },
+	{ "ls",		command_ls,		"ls [hdNn:/path]\n" },
 	{ "version",	command_version,	"version" },
 	{ "help",	command_help,		"help|?" },
 	{ "?",		command_help,		NULL },
@@ -86,6 +93,27 @@ command_boot(char *arg)
 }
 
 void
+command_dev(char *arg)
+{
+	if (arg && *arg) {
+		set_default_device(arg);
+	} else {
+		efi_block_show();
+	}
+
+	if (strlen(default_device) > 0) {
+		printf("\n");
+		printf("default: %s\n", default_device);
+	}
+}
+
+void
+command_ls(char *arg)
+{
+	ls(arg);
+}
+
+void
 command_version(char *arg)
 {
 	char *ufirmware;
@@ -107,6 +135,21 @@ void
 command_quit(char *arg)
 {
 	efi_exit();
+}
+
+int
+set_default_device(char *arg)
+{
+	if (strlen(arg) + 1 > sizeof(default_device))
+		return ERANGE;
+	strcpy(default_device, arg);
+	return 0;
+}
+
+char *
+get_default_device(void)
+{
+	return default_device;
 }
 
 void

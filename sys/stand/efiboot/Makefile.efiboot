@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.efiboot,v 1.1 2018/08/24 02:01:06 jmcneill Exp $
+# $NetBSD: Makefile.efiboot,v 1.2 2018/08/26 21:28:18 jmcneill Exp $
 
 S=		${.CURDIR}/../../..
 
@@ -22,7 +22,7 @@ AFLAGS.start.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
 .PATH: ${EFIDIR}/gnuefi
 SOURCES=	crt0-efi-${GNUEFIARCH}.S reloc_${GNUEFIARCH}.c
 SOURCES+=	boot.c conf.c console.c devopen.c exec.c panic.c prompt.c
-SOURCES+=	efiboot.c efichar.c efifdt.c efifile.c
+SOURCES+=	efiboot.c efichar.c efidev.c efifdt.c efifile.c efiblock.c
 
 .PATH: ${S}/external/bsd/libfdt/dist
 CPPFLAGS+=	-I${S}/external/bsd/libfdt/dist
@@ -74,7 +74,7 @@ CPPFLAGS+= -D"devb2cdb(bno)=(bno)"
 #CPPFLAGS+= -DSUPPORT_DHCP
 #CPPFLAGS+= -DSUPPORT_NFS
 #CPPFLAGS+= -DSUPPORT_TFTP
-#CPPFLAGS+= -DLIBSA_ENABLE_LS_OP
+CPPFLAGS+= -DLIBSA_ENABLE_LS_OP
 
 #CPPFLAGS+= -DARP_DEBUG
 #CPPFLAGS+= -DBOOTP_DEBUG
@@ -93,7 +93,7 @@ SA_AS= library
 SAMISCMAKEFLAGS+="SA_USE_LOADFILE=yes"
 SAMISCMAKEFLAGS+="SA_USE_CREAD=yes"
 #SAMISCMAKEFLAGS+="SA_INCLUDE_NET=yes"
-#SAMISCMAKEFLAGS+="SA_ENABLE_LS_OP=yes"
+SAMISCMAKEFLAGS+="SA_ENABLE_LS_OP=yes"
 .include "${S}/lib/libsa/Makefile.inc"
 LIBSA= ${SALIB}
 
