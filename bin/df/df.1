@@ -1,4 +1,4 @@
-.\"	$NetBSD: df.1,v 1.47 2017/07/03 21:33:22 wiz Exp $
+.\"	$NetBSD: df.1,v 1.48 2018/08/26 22:25:37 sevan Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)df.1	8.2 (Berkeley) 1/13/92
 .\"
-.Dd August 10, 2016
+.Dd August 26, 2018
 .Dt DF 1
 .Os
 .Sh NAME
@@ -37,8 +37,8 @@
 .Nd display free disk space
 .Sh SYNOPSIS
 .Nm
-.Op Fl agklmn
-.Op Fl G | Fl i | Fl P
+.Op Fl aGgln
+.Op Fl hkm | Fl ihkm | Fl Pk
 .Op Fl t Ar type
 .Op Ar file | Ar file_system ...
 .Sh DESCRIPTION
