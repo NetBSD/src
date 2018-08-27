@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.h,v 1.32 2018/08/27 13:39:33 riastradh Exp $	*/
+/*	$NetBSD: pci.h,v 1.33 2018/08/27 14:11:46 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -185,7 +185,7 @@ pci_get_drvdata(struct pci_dev *pdev)
 }
 
 static inline void
-linux_pci_dev_init(struct pci_dev *pdev, device_t dev,
+linux_pci_dev_init(struct pci_dev *pdev, device_t dev, device_t parent,
     const struct pci_attach_args *pa, int kludges)
 {
 	const uint32_t subsystem_id = pci_conf_read(pa->pa_pc, pa->pa_tag,
@@ -204,7 +204,7 @@ linux_pci_dev_init(struct pci_dev *pdev, device_t dev,
 #endif
 	pdev->bus = kmem_zalloc(sizeof(struct pci_bus), KM_NOSLEEP);
 	pdev->bus->pb_pc = pa->pa_pc;
-	pdev->bus->pb_dev = dev == NULL ? NULL : device_parent(dev);
+	pdev->bus->pb_dev = parent;
 	pdev->bus->number = pa->pa_bus;
 	pdev->devfn = PCI_DEVFN(pa->pa_device, pa->pa_function);
 	pdev->vendor = PCI_VENDOR(pa->pa_id);
@@ -500,7 +500,7 @@ pci_get_bus_and_slot(int bus, int slot)
 		return NULL;
 
 	struct pci_dev *const pdev = kmem_zalloc(sizeof(*pdev), KM_SLEEP);
-	linux_pci_dev_init(pdev, NULL, &pa, NBPCI_KLUDGE_GET_MUMBLE);
+	linux_pci_dev_init(pdev, NULL, NULL, &pa, NBPCI_KLUDGE_GET_MUMBLE);
 
 	return pdev;
 }
@@ -545,7 +545,7 @@ pci_get_class(uint32_t class_subclass_shifted __unused, struct pci_dev *from)
 		return NULL;
 
 	struct pci_dev *const pdev = kmem_zalloc(sizeof(*pdev), KM_SLEEP);
-	linux_pci_dev_init(pdev, NULL, &pa, NBPCI_KLUDGE_GET_MUMBLE);
+	linux_pci_dev_init(pdev, NULL, NULL, &pa, NBPCI_KLUDGE_GET_MUMBLE);
 
 	return pdev;
 }
