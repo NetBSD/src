@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_gtt.c,v 1.9 2018/08/27 14:48:35 riastradh Exp $	*/
+/*	$NetBSD: intel_gtt.c,v 1.10 2018/08/27 16:15:09 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 /* Intel GTT stubs */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_gtt.c,v 1.9 2018/08/27 14:48:35 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_gtt.c,v 1.10 2018/08/27 16:15:09 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/bus.h>
@@ -54,8 +54,8 @@ static struct {
 } intel_gtt;
 
 void
-intel_gtt_get(size_t *va_size, size_t *stolen_size, bus_addr_t *aper_base,
-    unsigned long *aper_size)
+intel_gtt_get(uint64_t *va_size, size_t *stolen_size, bus_addr_t *aper_base,
+    uint64_t *aper_size)
 {
 	struct agp_softc *const sc = agp_i810_sc;
 
