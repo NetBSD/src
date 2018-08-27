@@ -1,4 +1,4 @@
-/*	$NetBSD: drmP.h,v 1.26 2018/08/27 14:42:43 riastradh Exp $	*/
+/*	$NetBSD: drmP.h,v 1.27 2018/08/27 15:22:54 riastradh Exp $	*/
 
 /*
  * Internal Header for the Direct Rendering Manager
@@ -663,7 +663,11 @@ struct drm_driver {
 				struct sg_table *sgt);
 	void *(*gem_prime_vmap)(struct drm_gem_object *obj);
 	void (*gem_prime_vunmap)(struct drm_gem_object *obj, void *vaddr);
-#ifndef __NetBSD__		/* XXX drm prime */
+#ifdef __NetBSD__
+	int (*gem_prime_mmap)(struct drm_gem_object *obj, off_t *offp,
+	    size_t len, int prot, int *flagsp, int *advicep,
+	    struct uvm_object **uobjp, int *maxprotp);
+#else
 	int (*gem_prime_mmap)(struct drm_gem_object *obj,
 				struct vm_area_struct *vma);
 #endif
@@ -1177,12 +1181,16 @@ extern int drm_gem_prime_fd_to_handle(struct drm_device *dev,
 		struct drm_file *file_priv, int prime_fd, uint32_t *handle);
 extern void drm_gem_dmabuf_release(struct dma_buf *dma_buf);
 
-#ifndef __NetBSD__		/* XXX drm prime */
+#ifdef __NetBSD__
+extern int drm_prime_bus_dmamap_load_sgt(bus_dma_tag_t, bus_dmamap_t, struct sg_table *);
+extern struct sg_table *drm_prime_pglist_to_sg(struct pglist *, unsigned);
+extern void drm_prime_sg_free(struct sg_table *);
+#else
 extern int drm_prime_sg_to_page_addr_arrays(struct sg_table *sgt, struct page **pages,
 					    dma_addr_t *addrs, int max_pages);
+#endif
 extern struct sg_table *drm_prime_pages_to_sg(struct page **pages, unsigned int nr_pages);
 extern void drm_prime_gem_destroy(struct drm_gem_object *obj, struct sg_table *sg);
-#endif
 
 
 extern struct drm_dma_handle *drm_pci_alloc(struct drm_device *dev, size_t size,

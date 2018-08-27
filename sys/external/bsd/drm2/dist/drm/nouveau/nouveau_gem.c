@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_gem.c,v 1.7 2018/08/27 07:37:17 riastradh Exp $	*/
+/*	$NetBSD: nouveau_gem.c,v 1.8 2018/08/27 15:22:54 riastradh Exp $	*/
 
 /*
  * Copyright (C) 2008 Ben Skeggs.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_gem.c,v 1.7 2018/08/27 07:37:17 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_gem.c,v 1.8 2018/08/27 15:22:54 riastradh Exp $");
 
 #include <linux/err.h>		/* XXX */
 
@@ -52,10 +52,8 @@ nouveau_gem_object_del(struct drm_gem_object *gem)
 	if (WARN_ON(ret < 0 && ret != -EACCES))
 		return;
 
-#ifndef __NetBSD__		/* XXX drm prime */
 	if (gem->import_attach)
 		drm_prime_gem_destroy(gem, nvbo->bo.sg);
-#endif
 
 	drm_gem_object_release(gem);
 

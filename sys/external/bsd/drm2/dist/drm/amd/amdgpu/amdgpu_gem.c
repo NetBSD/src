@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_gem.c,v 1.3 2018/08/27 14:04:50 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_gem.c,v 1.4 2018/08/27 15:22:54 riastradh Exp $	*/
 
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
@@ -28,7 +28,7 @@
  *          Jerome Glisse
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_gem.c,v 1.3 2018/08/27 14:04:50 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_gem.c,v 1.4 2018/08/27 15:22:54 riastradh Exp $");
 
 #include <linux/ktime.h>
 #include <drm/drmP.h>
@@ -40,10 +40,8 @@ void amdgpu_gem_object_free(struct drm_gem_object *gobj)
 	struct amdgpu_bo *robj = gem_to_amdgpu_bo(gobj);
 
 	if (robj) {
-#ifndef __NetBSD__		/* XXX drm prime */
 		if (robj->gem_base.import_attach)
 			drm_prime_gem_destroy(&robj->gem_base, robj->tbo.sg);
-#endif
 		amdgpu_mn_unregister(robj);
 		amdgpu_bo_unref(&robj);
 	}

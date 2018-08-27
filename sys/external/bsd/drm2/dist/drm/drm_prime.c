@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_prime.c,v 1.2 2018/08/27 04:58:19 riastradh Exp $	*/
+/*	$NetBSD: drm_prime.c,v 1.3 2018/08/27 15:22:54 riastradh Exp $	*/
 
 /*
  * Copyright © 2012 Red Hat
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_prime.c,v 1.2 2018/08/27 04:58:19 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_prime.c,v 1.3 2018/08/27 15:22:54 riastradh Exp $");
 
 #include <linux/export.h>
 #include <linux/dma-buf.h>
@@ -37,6 +37,72 @@ __KERNEL_RCSID(0, "$NetBSD: drm_prime.c,v 1.2 2018/08/27 04:58:19 riastradh Exp 
 #include <drm/drm_gem.h>
 
 #include "drm_internal.h"
+
+struct sg_table {
+	bus_dma_segment_t	*sgt_segs;
+	int			sgt_nsegs;
+	bus_size_t		sgt_size;
+};
+
+static int
+sg_alloc_table_from_pages(struct sg_table *sgt, struct page **pages,
+    unsigned npages, bus_size_t offset, bus_size_t size, gfp_t gfp)
+{
+	unsigned i;
+
+	KASSERT(offset == 0);
+	KASSERT(size == npages << PAGE_SHIFT);
+
+	sgt->sgt_segs = kcalloc(npages, sizeof(sgt->sgt_segs[0]), gfp);
+	if (sgt->sgt_segs == NULL)
+		return -ENOMEM;
+	sgt->sgt_nsegs = npages;
+	sgt->sgt_size = size;
+
+	for (i = 0; i < npages; i++) {
+		sgt->sgt_segs[i].ds_addr = VM_PAGE_TO_PHYS(&pages[i]->p_vmp);
+		sgt->sgt_segs[i].ds_len = PAGE_SIZE;
+	}
+
+	return 0;
+}
+
+static int
+sg_alloc_table_from_pglist(struct sg_table *sgt, struct pglist *pglist,
+    unsigned npages, bus_size_t offset, bus_size_t size, gfp_t gfp)
+{
+	struct vm_page *pg;
+	unsigned i;
+
+	KASSERT(offset == 0);
+	KASSERT(size == npages << PAGE_SHIFT);
+
+	sgt->sgt_segs = kcalloc(npages, sizeof(sgt->sgt_segs[0]), gfp);
+	if (sgt->sgt_segs == NULL)
+		return -ENOMEM;
+	sgt->sgt_nsegs = npages;
+	sgt->sgt_size = size;
+
+	i = 0;
+	TAILQ_FOREACH(pg, pglist, pageq.queue) {
+		KASSERT(i < npages);
+		sgt->sgt_segs[i].ds_addr = VM_PAGE_TO_PHYS(pg);
+		sgt->sgt_segs[i].ds_len = PAGE_SIZE;
+	}
+	KASSERT(i == npages);
+
+	return 0;
+}
+
+static void
+sg_free_table(struct sg_table *sgt)
+{
+
+	kfree(sgt->sgt_segs);
+	sgt->sgt_segs = NULL;
+	sgt->sgt_nsegs = 0;
+	sgt->sgt_size = 0;
+}
 
 /*
  * DMA-BUF/GEM Object references and lifetime overview:
@@ -157,9 +223,11 @@ static void drm_gem_map_detach(struct dma_buf *dma_buf,
 
 	sgt = prime_attach->sgt;
 	if (sgt) {
+#ifndef __NetBSD__		/* We map/unmap elsewhere.  */
 		if (prime_attach->dir != DMA_NONE)
 			dma_unmap_sg(attach->dev, sgt->sgl, sgt->nents,
 					prime_attach->dir);
+#endif
 		sg_free_table(sgt);
 	}
 
@@ -183,7 +251,7 @@ void drm_prime_remove_buf_handle_locked(struct drm_prime_file_private *prime_fpr
 }
 
 static struct sg_table *drm_gem_map_dma_buf(struct dma_buf_attachment *attach,
-					    enum dma_data_direction dir)
+						enum dma_data_direction dir)
 {
 	struct drm_prime_attachment *prime_attach = attach->priv;
 	struct drm_gem_object *obj = attach->dmabuf->priv;
@@ -204,8 +272,11 @@ static struct sg_table *drm_gem_map_dma_buf(struct dma_buf_attachment *attach,
 		return ERR_PTR(-EBUSY);
 
 	sgt = obj->dev->driver->gem_prime_get_sg_table(obj);
-
 	if (!IS_ERR(sgt)) {
+#ifdef __NetBSD__		/* We map/unmap elsewhere.  */
+		prime_attach->sgt = sgt;
+		prime_attach->dir = dir;
+#else
 		if (!dma_map_sg(attach->dev, sgt->sgl, sgt->nents, dir)) {
 			sg_free_table(sgt);
 			kfree(sgt);
@@ -214,6 +285,7 @@ static struct sg_table *drm_gem_map_dma_buf(struct dma_buf_attachment *attach,
 			prime_attach->sgt = sgt;
 			prime_attach->dir = dir;
 		}
+#endif
 	}
 
 	return sgt;
@@ -281,8 +353,15 @@ static void drm_gem_dmabuf_kunmap(struct dma_buf *dma_buf,
 
 }
 
+#ifdef __NetBSD__
+static int
+drm_gem_dmabuf_mmap(struct dma_buf *dma_buf, off_t *offp, size_t size,
+    int prot, int *flagsp, int *advicep, struct uvm_object **uobjp,
+    int *maxprotp)
+#else
 static int drm_gem_dmabuf_mmap(struct dma_buf *dma_buf,
 			       struct vm_area_struct *vma)
+#endif
 {
 	struct drm_gem_object *obj = dma_buf->priv;
 	struct drm_device *dev = obj->dev;
@@ -290,7 +369,12 @@ static int drm_gem_dmabuf_mmap(struct dma_buf *dma_buf,
 	if (!dev->driver->gem_prime_mmap)
 		return -ENOSYS;
 
+#ifdef __NetBSD__
+	return dev->driver->gem_prime_mmap(obj, offp, size, prot, flagsp,
+	    advicep, uobjp, maxprotp);
+#else
 	return dev->driver->gem_prime_mmap(obj, vma);
+#endif
 }
 
 static const struct dma_buf_ops drm_gem_prime_dmabuf_ops =  {
@@ -348,8 +432,10 @@ struct dma_buf *drm_gem_prime_export(struct drm_device *dev,
 				     int flags)
 {
 	struct dma_buf_export_info exp_info = {
+#ifndef __NetBSD__
 		.exp_name = KBUILD_MODNAME, /* white lie for debug */
 		.owner = dev->driver->fops->owner,
+#endif
 		.ops = &drm_gem_prime_dmabuf_ops,
 		.size = obj->size,
 		.flags = flags,
@@ -706,6 +792,52 @@ out:
 }
 EXPORT_SYMBOL(drm_prime_pages_to_sg);
 
+#ifdef __NetBSD__
+
+struct sg_table *
+drm_prime_pglist_to_sg(struct pglist *pglist, unsigned npages)
+{
+	struct sg_table *sg;
+	int ret;
+
+	sg = kmalloc(sizeof(*sg), GFP_KERNEL);
+	if (sg == NULL) {
+		ret = -ENOMEM;
+		goto out;
+	}
+
+	ret = sg_alloc_table_from_pglist(sg, pglist, 0, npages << PAGE_SHIFT,
+	    npages, GFP_KERNEL);
+	if (ret)
+		goto out;
+
+	return sg;
+
+out:
+	kfree(sg);
+	return ERR_PTR(ret);
+}
+
+void
+drm_prime_sg_free(struct sg_table *sg)
+{
+
+	sg_free_table(sg);
+	kfree(sg);
+}
+
+int
+drm_prime_bus_dmamap_load_sgt(bus_dma_tag_t dmat, bus_dmamap_t map,
+    struct sg_table *sgt)
+{
+
+	/* XXX errno NetBSD->Linux */
+	return -bus_dmamap_load_raw(dmat, map, sgt->sgt_segs, sgt->sgt_nsegs,
+	    sgt->sgt_size, BUS_DMA_NOWAIT);
+}
+
+#else  /* !__NetBSD__ */
+
 /**
  * drm_prime_sg_to_page_addr_arrays - convert an sg table into a page array
  * @sgt: scatter-gather table to convert
@@ -749,6 +881,8 @@ int drm_prime_sg_to_page_addr_arrays(struct sg_table *sgt, struct page **pages,
 }
 EXPORT_SYMBOL(drm_prime_sg_to_page_addr_arrays);
 
+#endif	/* __NetBSD__ */
+
 /**
  * drm_prime_gem_destroy - helper to clean up a PRIME-imported GEM object
  * @obj: GEM object which was created from a dma-buf
@@ -774,11 +908,20 @@ EXPORT_SYMBOL(drm_prime_gem_destroy);
 void drm_prime_init_file_private(struct drm_prime_file_private *prime_fpriv)
 {
 	INIT_LIST_HEAD(&prime_fpriv->head);
+#ifdef __NetBSD__
+	linux_mutex_init(&prime_fpriv->lock);
+#else
 	mutex_init(&prime_fpriv->lock);
+#endif
 }
 
 void drm_prime_destroy_file_private(struct drm_prime_file_private *prime_fpriv)
 {
 	/* by now drm_gem_release should've made sure the list is empty */
 	WARN_ON(!list_empty(&prime_fpriv->head));
+#ifdef __NetBSD__
+	linux_mutex_destroy(&prime_fpriv->lock);
+#else
+	mutex_destroy(&prime_fpriv->lock);
+#endif
 }

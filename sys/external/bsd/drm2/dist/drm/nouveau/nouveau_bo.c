@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_bo.c,v 1.11 2018/08/27 14:51:33 riastradh Exp $	*/
+/*	$NetBSD: nouveau_bo.c,v 1.12 2018/08/27 15:22:54 riastradh Exp $	*/
 
 /*
  * Copyright 2007 Dave Airlied
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_bo.c,v 1.11 2018/08/27 14:51:33 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_bo.c,v 1.12 2018/08/27 15:22:54 riastradh Exp $");
 
 #include <linux/dma-mapping.h>
 #include <linux/swiotlb.h>
@@ -1561,24 +1561,27 @@ nouveau_ttm_tt_populate(struct ttm_tt *ttm)
 	struct drm_device *dev;
 	struct device *pdev;
 	unsigned i;
+#endif
 	int r;
-#endif
-#ifndef __NetBSD__		/* XXX drm prime */
 	bool slave = !!(ttm->page_flags & TTM_PAGE_FLAG_SG);
-#endif
 
 	if (ttm->state != tt_unpopulated)
 		return 0;
 
-#ifndef __NetBSD__		/* XXX drm prime */
 	if (slave && ttm->sg) {
 		/* make userspace faulting work */
+#ifdef __NetBSD__
+		r = drm_prime_bus_dmamap_load_sgt(ttm->bdev->dmat,
+		    ttm_dma->dma_address, ttm->sg);
+		if (r)
+			return r;
+#else
 		drm_prime_sg_to_page_addr_arrays(ttm->sg, ttm->pages,
 						 ttm_dma->dma_address, ttm->num_pages);
+#endif
 		ttm->state = tt_unbound;
 		return 0;
 	}
-#endif
 
 	drm = nouveau_bdev(ttm->bdev);
 #ifndef __NetBSD__

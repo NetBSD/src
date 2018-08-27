@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_ttm.c,v 1.14 2018/08/27 15:10:12 riastradh Exp $	*/
+/*	$NetBSD: radeon_ttm.c,v 1.15 2018/08/27 15:22:54 riastradh Exp $	*/
 
 /*
  * Copyright 2009 Jerome Glisse.
@@ -32,7 +32,7 @@
  *    Dave Airlie
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_ttm.c,v 1.14 2018/08/27 15:10:12 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_ttm.c,v 1.15 2018/08/27 15:22:54 riastradh Exp $");
 
 #include <ttm/ttm_bo_api.h>
 #include <ttm/ttm_bo_driver.h>
@@ -749,8 +749,8 @@ static int radeon_ttm_tt_populate(struct ttm_tt *ttm)
 #endif
 #ifndef __NetBSD__
 	unsigned i;
-	int r;
 #endif
+	int r;
 	bool slave = !!(ttm->page_flags & TTM_PAGE_FLAG_SG);
 
 	if (ttm->state != tt_unpopulated)
@@ -771,14 +771,17 @@ static int radeon_ttm_tt_populate(struct ttm_tt *ttm)
 	}
 
 	if (slave && ttm->sg) {
-#ifdef __NetBSD__		/* XXX drm prime */
-		return -EINVAL;
+#ifdef __NetBSD__
+		r = drm_prime_bus_dmamap_load_sgt(ttm->bdev->dmat,
+		    gtt->ttm.dma_address, ttm->sg);
+		if (r)
+			return r;
 #else
 		drm_prime_sg_to_page_addr_arrays(ttm->sg, ttm->pages,
 						 gtt->ttm.dma_address, ttm->num_pages);
+#endif
 		ttm->state = tt_unbound;
 		return 0;
-#endif
 	}
 
 #if !defined(__NetBSD__) || IS_ENABLED(CONFIG_AGP)
