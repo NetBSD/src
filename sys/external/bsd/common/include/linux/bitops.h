@@ -1,4 +1,4 @@
-/*	$NetBSD: bitops.h,v 1.4 2018/08/27 07:04:32 riastradh Exp $	*/
+/*	$NetBSD: bitops.h,v 1.5 2018/08/27 07:08:37 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -177,20 +177,59 @@ __test_and_change_bit(unsigned int bit, volatile unsigned long *ptr)
 }
 
 static inline unsigned long
-find_first_zero_bit(const unsigned long *ptr, unsigned long nbits)
+find_next_zero_bit(const unsigned long *ptr, unsigned long nbits,
+    unsigned long startbit)
 {
 	const size_t bpl = (CHAR_BIT * sizeof(*ptr));
-	const unsigned long *p;
-	unsigned long result = 0;
+	const unsigned long *p = ptr + startbit/bpl;
+	unsigned long result = rounddown(startbit, bpl);
+	uint64_t word;
 
-	for (p = ptr; bpl < nbits; nbits -= bpl, p++, result += bpl) {
+	/*
+	 * We use ffs64 because NetBSD doesn't have a handy ffsl that
+	 * works on unsigned long.  This is a waste on 32-bit systems
+	 * but I'd rather not maintain multiple copies of this -- the
+	 * first version had enough bugs already.
+	 */
+
+	/* Do we need to examine a partial starting word?  */
+	if (startbit % bpl) {
+		/* Are any of the first startbit%bpl bits zero?  */
+		if (~(*p | (~0UL << (startbit % bpl)))) {
+			/* Invert the bits and convert to 64 bits.  */
+			word = ~(uint64_t)*p;
+
+			/* Clear the low startbit%bpl bits.  */
+			word &= ~(~0UL << (startbit % bpl));
+
+			/* Find the first set bit in this word. */
+			result += ffs64(word);
+
+			/* Clamp down to at most nbits.  */
+			return MIN(result, nbits);
+		}
+	}
+
+	/* Find the first word with zeros in it.  */
+	for (; bpl < nbits; p++, result += bpl) {
 		if (~*p)
 			break;
 	}
 
-	CTASSERT(sizeof(unsigned long) <= sizeof(uint64_t));
-	result += ffs64(~(uint64_t)*p | (~0UL << MIN(nbits, bpl)));
-	return result;
+	/* Invert the bits and convert to 64 bits for ffs64.  */
+	word = ~(uint64_t)*p;
+
+	/* Find the first set bit in this word.  */
+	result += ffs64(word);
+
+	/* Clamp down to at most nbits.  */
+	return MIN(result, nbits);
+}
+
+static inline unsigned long
+find_first_zero_bit(const unsigned long *ptr, unsigned long nbits)
+{
+	return find_next_zero_bit(ptr, nbits, 0);
 }
 
 static inline unsigned
