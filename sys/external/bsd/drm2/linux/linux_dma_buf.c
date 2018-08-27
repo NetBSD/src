@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_dma_buf.c,v 1.2 2018/08/27 15:24:11 riastradh Exp $	*/
+/*	$NetBSD: linux_dma_buf.c,v 1.3 2018/08/27 15:24:40 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_dma_buf.c,v 1.2 2018/08/27 15:24:11 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_dma_buf.c,v 1.3 2018/08/27 15:24:40 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/atomic.h>
@@ -167,9 +167,9 @@ dma_buf_put(struct dma_buf *dmabuf)
 	if (atomic_dec_uint_nv(&dmabuf->db_refcnt) != 0)
 		return;
 
-	if (dmabuf->resv == &dmabuf->db_resv_int[0])
-		reservation_object_fini(dmabuf->resv);
+	mutex_destroy(&dmabuf->db_lock);
 	if (dmabuf->resv == &dmabuf->db_resv_int[0]) {
+		reservation_object_fini(dmabuf->resv);
 		kmem_free(dmabuf, offsetof(struct dma_buf, db_resv_int[1]));
 	} else {
 		kmem_free(dmabuf, sizeof(*dmabuf));
