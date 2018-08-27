@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_pci.c,v 1.3 2018/08/27 14:17:04 riastradh Exp $	*/
+/*	$NetBSD: linux_pci.c,v 1.4 2018/08/27 14:19:59 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_pci.c,v 1.3 2018/08/27 14:17:04 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_pci.c,v 1.4 2018/08/27 14:19:59 riastradh Exp $");
 
 #include <linux/pci.h>
 
@@ -711,6 +711,9 @@ linux_pci_enable_device(struct pci_dev *pdev)
 
 	s = splhigh();
 	csr = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
+	/* If someone else (firmware) already enabled it, credit them.  */
+	if (csr & (PCI_COMMAND_IO_ENABLE|PCI_COMMAND_MEM_ENABLE))
+		pdev->pd_enablecnt++;
 	csr |= PCI_COMMAND_IO_ENABLE;
 	csr |= PCI_COMMAND_MEM_ENABLE;
 	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG, csr);
