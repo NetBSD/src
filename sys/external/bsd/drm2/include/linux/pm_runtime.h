@@ -1,4 +1,4 @@
-/*	$NetBSD: pm_runtime.h,v 1.3 2014/08/23 08:03:33 riastradh Exp $	*/
+/*	$NetBSD: pm_runtime.h,v 1.4 2018/08/27 07:30:00 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -42,6 +42,12 @@ pm_runtime_allow(struct device *dev __unused)
 static inline void
 pm_runtime_disable(struct device *dev __unused)
 {
+}
+
+static inline int
+pm_runtime_get_noresume(struct device *dev __unused)
+{
+	return 0;
 }
 
 static inline int
