@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_dp_mst_topology.c,v 1.2 2018/08/27 04:58:19 riastradh Exp $	*/
+/*	$NetBSD: drm_dp_mst_topology.c,v 1.3 2018/08/27 06:56:02 riastradh Exp $	*/
 
 /*
  * Copyright © 2014 Red Hat
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_dp_mst_topology.c,v 1.2 2018/08/27 04:58:19 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_dp_mst_topology.c,v 1.3 2018/08/27 06:56:02 riastradh Exp $");
 
 #include <linux/kernel.h>
 #include <linux/delay.h>
@@ -32,6 +32,9 @@ __KERNEL_RCSID(0, "$NetBSD: drm_dp_mst_topology.c,v 1.2 2018/08/27 04:58:19 rias
 #include <linux/sched.h>
 #include <linux/seq_file.h>
 #include <linux/i2c.h>
+#include <linux/device.h>
+#include <linux/export.h>
+#include <linux/module.h>
 #include <drm/drm_dp_mst_helper.h>
 #include <drm/drmP.h>
 
@@ -44,8 +47,10 @@ __KERNEL_RCSID(0, "$NetBSD: drm_dp_mst_topology.c,v 1.2 2018/08/27 04:58:19 rias
  * protocol. The helpers contain a topology manager and bandwidth manager.
  * The helpers encapsulate the sending and received of sideband msgs.
  */
+#if IS_ENABLED(CONFIG_DEBUG_FS)
 static bool dump_dp_payload_table(struct drm_dp_mst_topology_mgr *mgr,
 				  char *buf);
+#endif
 static int test_calc_pbn_mode(void);
 
 static void drm_dp_put_port(struct drm_dp_mst_port *port);
@@ -324,7 +329,7 @@ static bool drm_dp_sideband_msg_build(struct drm_dp_sideband_msg_rx *msg,
 				      u8 *replybuf, u8 replybuflen, bool hdr)
 {
 	int ret;
-	u8 crc4;
+	u8 crc4 __unused;	/* XXX Mistake?  */
 
 	if (hdr) {
 		u8 hdrlen;
@@ -762,10 +767,16 @@ static int drm_dp_mst_wait_tx_reply(struct drm_dp_mst_branch *mstb,
 	struct drm_dp_mst_topology_mgr *mgr = mstb->mgr;
 	int ret;
 
+#ifdef __NetBSD__
+	mutex_lock(&mstb->mgr->qlock);
+	DRM_TIMED_WAIT_UNTIL(ret, &mgr->tx_waitq, &mstb->mgr->qlock, 4*HZ,
+	    check_txmsg_state(mgr, txmsg));
+#else
 	ret = wait_event_timeout(mgr->tx_waitq,
 				 check_txmsg_state(mgr, txmsg),
 				 (4 * HZ));
 	mutex_lock(&mstb->mgr->qlock);
+#endif
 	if (ret > 0) {
 		if (txmsg->state == DRM_DP_SIDEBAND_TX_TIMEOUT) {
 			ret = -EIO;
@@ -859,10 +870,16 @@ static void drm_dp_destroy_mst_branch_device(struct kref *kref)
 		mstb->tx_slots[1] = NULL;
 		wake_tx = true;
 	}
+#ifdef __NetBSD__
+	if (wake_tx)
+		DRM_WAKEUP_ONE(&mstb->mgr->tx_waitq, &mstb->mgr->qlock);
+	mutex_unlock(&mstb->mgr->qlock);
+#else
 	mutex_unlock(&mstb->mgr->qlock);
 
 	if (wake_tx)
 		wake_up(&mstb->mgr->tx_waitq);
+#endif
 
 	kref_put(kref, drm_dp_free_mst_branch_device);
 }
@@ -1027,7 +1044,7 @@ static u8 drm_dp_calculate_rad(struct drm_dp_mst_port *port,
  */
 static bool drm_dp_port_setup_pdt(struct drm_dp_mst_port *port)
 {
-	int ret;
+	int ret __unused;
 	u8 rad[6], lct;
 	bool send_link = false;
 	switch (port->pdt) {
@@ -1051,7 +1068,7 @@ static bool drm_dp_port_setup_pdt(struct drm_dp_mst_port *port)
 
 static void drm_dp_check_mstb_guid(struct drm_dp_mst_branch *mstb, u8 *guid)
 {
-	int ret;
+	int ret __unused;
 
 	memcpy(mstb->guid, guid, 16);
 
@@ -1520,7 +1537,11 @@ static void process_single_down_tx_qlock(struct drm_dp_mst_topology_mgr *mgr)
 		if (txmsg->seqno != -1)
 			txmsg->dst->tx_slots[txmsg->seqno] = NULL;
 		txmsg->state = DRM_DP_SIDEBAND_TX_TIMEOUT;
+#ifdef __NetBSD__
+		DRM_WAKEUP_ONE(&mgr->tx_waitq, &mgr->qlock);
+#else
 		wake_up(&mgr->tx_waitq);
+#endif
 	}
 	if (list_empty(&mgr->tx_msg_downq)) {
 		mgr->tx_down_in_progress = false;
@@ -1556,7 +1577,7 @@ static void drm_dp_queue_down_tx(struct drm_dp_mst_topology_mgr *mgr,
 static void drm_dp_send_link_address(struct drm_dp_mst_topology_mgr *mgr,
 				     struct drm_dp_mst_branch *mstb)
 {
-	int len;
+	int len __unused;
 	struct drm_dp_sideband_msg_tx *txmsg;
 	int ret;
 
@@ -1610,7 +1631,7 @@ static int drm_dp_send_enum_path_resources(struct drm_dp_mst_topology_mgr *mgr,
 					   struct drm_dp_mst_branch *mstb,
 					   struct drm_dp_mst_port *port)
 {
-	int len;
+	int len __unused;
 	struct drm_dp_sideband_msg_tx *txmsg;
 	int ret;
 
@@ -1678,7 +1699,7 @@ static int drm_dp_payload_send_msg(struct drm_dp_mst_topology_mgr *mgr,
 {
 	struct drm_dp_sideband_msg_tx *txmsg;
 	struct drm_dp_mst_branch *mstb;
-	int len, ret, port_num;
+	int len __unused, ret, port_num;
 
 	port = drm_dp_get_validated_port_ref(mgr, port);
 	if (!port)
@@ -1925,7 +1946,7 @@ static int drm_dp_send_dpcd_write(struct drm_dp_mst_topology_mgr *mgr,
 				  struct drm_dp_mst_port *port,
 				  int offset, int size, u8 *bytes)
 {
-	int len;
+	int len __unused;
 	int ret;
 	struct drm_dp_sideband_msg_tx *txmsg;
 	struct drm_dp_mst_branch *mstb;
@@ -2181,7 +2202,7 @@ static bool drm_dp_get_one_sb_msg(struct drm_dp_mst_topology_mgr *mgr, bool up)
 {
 	int len;
 	u8 replyblock[32];
-	int replylen, origlen, curreply;
+	int replylen, origlen __unused, curreply;
 	int ret;
 	struct drm_dp_sideband_msg_rx *msg;
 	int basereg = up ? DP_SIDEBAND_MSG_UP_REQ_BASE : DP_SIDEBAND_MSG_DOWN_REP_BASE;
@@ -2280,9 +2301,14 @@ static int drm_dp_mst_handle_down_rep(struct drm_dp_mst_topology_mgr *mgr)
 		mutex_lock(&mgr->qlock);
 		txmsg->state = DRM_DP_SIDEBAND_TX_RX;
 		mstb->tx_slots[slot] = NULL;
+#ifdef __NetBSD__
+		DRM_WAKEUP_ONE(&mstb->mgr->tx_waitq, &mstb->mgr->qlock);
+		mutex_unlock(&mgr->qlock);
+#else
 		mutex_unlock(&mgr->qlock);
 
 		wake_up(&mgr->tx_waitq);
+#endif
 	}
 	return ret;
 }
@@ -2743,6 +2769,7 @@ static void drm_dp_mst_kick_tx(struct drm_dp_mst_topology_mgr *mgr)
 	queue_work(system_long_wq, &mgr->tx_work);
 }
 
+#if IS_ENABLED(CONFIG_DEBUG_FS)
 static void drm_dp_mst_dump_mstb(struct seq_file *m,
 				 struct drm_dp_mst_branch *mstb)
 {
@@ -2863,6 +2890,7 @@ void drm_dp_mst_dump_topology(struct seq_file *m,
 
 }
 EXPORT_SYMBOL(drm_dp_mst_dump_topology);
+#endif	/* IS_ENABLED(CONFIG_DEBUG_FS) */
 
 static void drm_dp_tx_work(struct work_struct *work)
 {
@@ -2938,16 +2966,27 @@ int drm_dp_mst_topology_mgr_init(struct drm_dp_mst_topology_mgr *mgr,
 				 int max_dpcd_transaction_bytes,
 				 int max_payloads, int conn_base_id)
 {
+#ifdef __NetBSD__
+	linux_mutex_init(&mgr->lock);
+	linux_mutex_init(&mgr->qlock);
+	linux_mutex_init(&mgr->payload_lock);
+	linux_mutex_init(&mgr->destroy_connector_lock);
+#else
 	mutex_init(&mgr->lock);
 	mutex_init(&mgr->qlock);
 	mutex_init(&mgr->payload_lock);
 	mutex_init(&mgr->destroy_connector_lock);
+#endif
 	INIT_LIST_HEAD(&mgr->tx_msg_downq);
 	INIT_LIST_HEAD(&mgr->destroy_connector_list);
 	INIT_WORK(&mgr->work, drm_dp_mst_link_probe_work);
 	INIT_WORK(&mgr->tx_work, drm_dp_tx_work);
 	INIT_WORK(&mgr->destroy_connector_work, drm_dp_destroy_connector_work);
+#ifdef __NetBSD__
+	DRM_INIT_WAITQUEUE(&mgr->tx_waitq, "dpmstwait");
+#else
 	init_waitqueue_head(&mgr->tx_waitq);
+#endif
 	mgr->dev = dev;
 	mgr->aux = aux;
 	mgr->max_dpcd_transaction_bytes = max_dpcd_transaction_bytes;
@@ -2981,6 +3020,18 @@ void drm_dp_mst_topology_mgr_destroy(struct drm_dp_mst_topology_mgr *mgr)
 	mutex_unlock(&mgr->payload_lock);
 	mgr->dev = NULL;
 	mgr->aux = NULL;
+#ifdef __NetBSD__
+	DRM_DESTROY_WAITQUEUE(&mgr->tx_waitq);
+	linux_mutex_destroy(&mgr->destroy_connector_lock);
+	linux_mutex_destroy(&mgr->payload_lock);
+	linux_mutex_destroy(&mgr->qlock);
+	linux_mutex_destroy(&mgr->lock);
+#else
+	mutex_destroy(&mgr->destroy_connector_lock);
+	mutex_destroy(&mgr->payload_lock);
+	mutex_destroy(&mgr->qlock);
+	mutex_destroy(&mgr->lock);
+#endif
 }
 EXPORT_SYMBOL(drm_dp_mst_topology_mgr_destroy);
 
@@ -3084,7 +3135,9 @@ static int drm_dp_mst_register_i2c_bus(struct drm_dp_aux *aux)
 	aux->ddc.class = I2C_CLASS_DDC;
 	aux->ddc.owner = THIS_MODULE;
 	aux->ddc.dev.parent = aux->dev;
+#ifndef __NetBSD__		/* XXX of? */
 	aux->ddc.dev.of_node = aux->dev->of_node;
+#endif
 
 	strlcpy(aux->ddc.name, aux->name ? aux->name : dev_name(aux->dev),
 		sizeof(aux->ddc.name));

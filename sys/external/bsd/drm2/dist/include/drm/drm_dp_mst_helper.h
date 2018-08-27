@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_dp_mst_helper.h,v 1.5 2018/08/27 06:44:53 riastradh Exp $	*/
+/*	$NetBSD: drm_dp_mst_helper.h,v 1.6 2018/08/27 06:56:02 riastradh Exp $	*/
 
 /*
  * Copyright © 2014 Red Hat.
@@ -29,6 +29,7 @@
 #include <linux/mutex.h>
 #include <linux/types.h>
 #include <linux/workqueue.h>
+#include <drm/drmP.h>
 #include <drm/drm_dp_helper.h>
 
 struct drm_dp_mst_branch;
@@ -460,7 +461,9 @@ struct drm_dp_mst_topology_mgr {
 	unsigned long payload_mask;
 	unsigned long vcpi_mask;
 
-#ifndef __NetBSD__
+#ifdef __NetBSD__
+	drm_waitqueue_t tx_waitq;
+#else
 	wait_queue_head_t tx_waitq;
 #endif
 	struct work_struct work;
