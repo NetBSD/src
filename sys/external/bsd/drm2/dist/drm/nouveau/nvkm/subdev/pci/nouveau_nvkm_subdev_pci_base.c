@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_subdev_pci_base.c,v 1.2 2018/08/27 04:58:34 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_subdev_pci_base.c,v 1.3 2018/08/27 07:40:40 riastradh Exp $	*/
 
 /*
  * Copyright 2015 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs <bskeggs@redhat.com>
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_pci_base.c,v 1.2 2018/08/27 04:58:34 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_pci_base.c,v 1.3 2018/08/27 07:40:40 riastradh Exp $");
 
 #include "priv.h"
 #include "agp.h"
@@ -70,13 +70,8 @@ nvkm_pci_rom_shadow(struct nvkm_pci *pci, bool shadow)
 	nvkm_pci_wr32(pci, 0x0050, data);
 }
 
-#ifdef __NetBSD__
-static int
-nvkm_pci_intr(void *arg)
-#else
 static irqreturn_t
-nvkm_pci_intr(int irq, void *arg)
-#endif
+nvkm_pci_intr(DRM_IRQ_ARGS)
 {
 	struct nvkm_pci *pci = arg;
 	struct nvkm_mc *mc = pci->subdev.device->mc;
@@ -149,7 +144,7 @@ nvkm_pci_init(struct nvkm_subdev *subdev)
 	const struct pci_attach_args *pa = &pdev->pd_pa;
 
 	/* XXX errno NetBSD->Linux */
-	ret = -pci_intr_alloc(pa, &pci->pci_ih, NULL, 0);
+	ret = -pci_intr_alloc(pa, &pci->pci_ihp, NULL, 0);
 	if (ret)
 		return ret;
 	pci->pci_intrcookie = pci_intr_establish_xname(pa->pa_pc,
@@ -162,9 +157,9 @@ nvkm_pci_init(struct nvkm_subdev *subdev)
 	ret = request_irq(pdev->irq, nvkm_pci_intr, IRQF_SHARED, "nvkm", pci);
 	if (ret)
 		return ret;
-#endif
 
 	pci->irq = pdev->irq;
+#endif
 
 	/* Ensure MSI interrupts are armed, for the case where there are
 	 * already interrupts pending (for whatever reason) at load time.
@@ -204,7 +199,9 @@ nvkm_pci_new_(const struct nvkm_pci_func *func, struct nvkm_device *device,
 	nvkm_subdev_ctor(&nvkm_pci_func, device, index, 0, &pci->subdev);
 	pci->func = func;
 	pci->pdev = device->func->pci(device)->pdev;
+#ifndef __NetBSD__
 	pci->irq = -1;
+#endif
 
 	if (device->type == NVKM_DEVICE_AGP)
 		nvkm_agp_ctor(pci);
