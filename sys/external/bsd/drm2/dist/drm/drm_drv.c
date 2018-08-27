@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_drv.c,v 1.6 2018/08/27 07:54:18 riastradh Exp $	*/
+/*	$NetBSD: drm_drv.c,v 1.7 2018/08/27 13:42:24 riastradh Exp $	*/
 
 /*
  * Created: Fri Jan 19 10:48:35 2001 by faith@acm.org
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_drv.c,v 1.6 2018/08/27 07:54:18 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_drv.c,v 1.7 2018/08/27 13:42:24 riastradh Exp $");
 
 #include <linux/err.h>
 #include <linux/export.h>
@@ -45,7 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: drm_drv.c,v 1.6 2018/08/27 07:54:18 riastradh Exp $"
 #include "drm_legacy.h"
 #include "drm_internal.h"
 
-unsigned int drm_debug = 0;	/* bitmask of DRM_UT_x */
+unsigned int drm_debug = ~(unsigned int)0;	/* bitmask of DRM_UT_x */
 EXPORT_SYMBOL(drm_debug);
 
 MODULE_AUTHOR(CORE_AUTHOR);
