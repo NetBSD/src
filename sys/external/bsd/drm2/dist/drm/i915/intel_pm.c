@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_pm.c,v 1.12 2018/08/27 07:26:59 riastradh Exp $	*/
+/*	$NetBSD: intel_pm.c,v 1.13 2018/08/27 07:27:51 riastradh Exp $	*/
 
 /*
  * Copyright © 2012 Intel Corporation
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_pm.c,v 1.12 2018/08/27 07:26:59 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_pm.c,v 1.13 2018/08/27 07:27:51 riastradh Exp $");
 
 #include <linux/bitops.h>
 #include <linux/cpufreq.h>
@@ -4174,7 +4174,11 @@ void intel_update_sprite_watermarks(struct drm_plane *plane,
 /**
  * Lock protecting IPS related data structures
  */
+#ifdef __NetBSD__
+spinlock_t mchdev_lock;
+#else
 DEFINE_SPINLOCK(mchdev_lock);
+#endif
 
 /* Global for IPS driver to get at the current i915 device. Protected by
  * mchdev_lock. */
