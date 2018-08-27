@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_pci.c,v 1.2 2018/08/27 14:16:52 riastradh Exp $	*/
+/*	$NetBSD: linux_pci.c,v 1.3 2018/08/27 14:17:04 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_pci.c,v 1.2 2018/08/27 14:16:52 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_pci.c,v 1.3 2018/08/27 14:17:04 riastradh Exp $");
 
 #include <linux/pci.h>
 
@@ -56,6 +56,8 @@ linux_pci_dev_init(struct pci_dev *pdev, device_t dev, device_t parent,
 	const uint32_t subsystem_id = pci_conf_read(pa->pa_pc, pa->pa_tag,
 	    PCI_SUBSYS_ID_REG);
 	unsigned i;
+
+	memset(pdev, 0, sizeof(*pdev)); /* paranoia */
 
 	pdev->pd_pa = *pa;
 	pdev->pd_kludges = kludges;
