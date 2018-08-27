@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_sysctl.c,v 1.6 2015/07/30 04:36:48 riastradh Exp $	*/
+/*	$NetBSD: drm_sysctl.c,v 1.7 2018/08/27 13:57:24 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_sysctl.c,v 1.6 2015/07/30 04:36:48 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_sysctl.c,v 1.7 2018/08/27 13:57:24 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -67,6 +67,8 @@ drm_sysctl_get_value(const struct linux_module_param_info *p)
 		return *(bool *)p->ptr;
 	case MTYPE_int:
 		return *(int *)p->ptr;
+	case MTYPE_uint:
+		return *(unsigned *)p->ptr;
 	default:
 		aprint_error("unhandled module param type %d for %s\n",
 		    p->type, p->name);
@@ -82,6 +84,8 @@ drm_sysctl_get_size(const struct linux_module_param_info *p)
 		return sizeof(bool);
 	case MTYPE_int:
 		return sizeof(int);
+	case MTYPE_uint:
+		return sizeof(unsigned);
 	default:
 		aprint_error("unhandled module param type %d for %s\n",
 		    p->type, p->name);
@@ -100,6 +104,8 @@ drm_sysctl_get_type(const struct linux_module_param_info *p)
 		return CTLTYPE_INT;
 	case MTYPE_charp:
 		return CTLTYPE_STRING;
+	case MTYPE_uint:
+		return CTLTYPE_INT; /* XXX */
 	default:
 		aprint_error("unhandled module param type %d for %s\n",
 		    p->type, p->name);
