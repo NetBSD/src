@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_engine_fifo_chan.c,v 1.4 2018/08/27 07:39:56 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_engine_fifo_chan.c,v 1.5 2018/08/27 14:18:43 riastradh Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_fifo_chan.c,v 1.4 2018/08/27 07:39:56 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_fifo_chan.c,v 1.5 2018/08/27 14:18:43 riastradh Exp $");
 
 #include "chan.h"
 
@@ -213,7 +213,7 @@ nvkm_fifo_chan_child_get(struct nvkm_object *object, int index,
 	u64 mask = chan->engines;
 	int ret, i, c;
 
-	for (; c = 0, i = __ffs64(mask), mask; mask &= ~(1ULL << i)) {
+	for (; c = 0, mask && (i = __ffs64(mask), 1); mask &= ~(1ULL << i)) {
 		if (!(engine = nvkm_device_engine(device, i)))
 			continue;
 		oclass->engine = engine;
