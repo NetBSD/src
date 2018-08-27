@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_fb_helper.c,v 1.9 2018/08/27 04:58:19 riastradh Exp $	*/
+/*	$NetBSD: drm_fb_helper.c,v 1.10 2018/08/27 07:54:41 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2006-2009 Red Hat Inc.
@@ -30,7 +30,7 @@
  *      Jesse Barnes <jesse.barnes@intel.com>
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_fb_helper.c,v 1.9 2018/08/27 04:58:19 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_fb_helper.c,v 1.10 2018/08/27 07:54:41 riastradh Exp $");
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
@@ -287,7 +287,6 @@ int
 drm_fb_helper_debug_enter_fb(struct drm_fb_helper *helper)
 {
 	const struct drm_crtc_helper_funcs *funcs;
-	struct drm_crtc_helper_funcs *funcs;
 	int i;
 
 	list_for_each_entry(helper, &kernel_fb_helper_list, kernel_fb_list) {
@@ -762,6 +761,8 @@ out_free:
 }
 EXPORT_SYMBOL(drm_fb_helper_init);
 
+#ifndef __NetBSD__		/* XXX fb info */
+
 /**
  * drm_fb_helper_alloc_fbi - allocate fb_info and some of its members
  * @fb_helper: driver-allocated fbdev helper
@@ -842,6 +843,8 @@ void drm_fb_helper_release_fbi(struct drm_fb_helper *fb_helper)
 }
 EXPORT_SYMBOL(drm_fb_helper_release_fbi);
 
+#endif	/* __NetBSD__ */
+
 void drm_fb_helper_fini(struct drm_fb_helper *fb_helper)
 {
 	if (!drm_fbdev_emulation)
@@ -850,7 +853,9 @@ void drm_fb_helper_fini(struct drm_fb_helper *fb_helper)
 	if (!list_empty(&fb_helper->kernel_fb_list)) {
 		list_del(&fb_helper->kernel_fb_list);
 		if (list_empty(&kernel_fb_helper_list)) {
+#ifndef __NetBSD__		/* XXX drm sysrq */
 			unregister_sysrq_key('v', &sysrq_drm_fb_helper_restore_op);
+#endif
 		}
 	}
 
