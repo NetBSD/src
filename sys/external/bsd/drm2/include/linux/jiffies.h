@@ -1,4 +1,4 @@
-/*	$NetBSD: jiffies.h,v 1.10 2018/08/27 06:55:52 riastradh Exp $	*/
+/*	$NetBSD: jiffies.h,v 1.11 2018/08/27 07:05:13 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -80,6 +80,14 @@ usecs_to_jiffies(unsigned int usec)
 	};
 
 	return tvtohz(&tv);
+}
+
+static inline unsigned int
+jiffies_to_usecs(unsigned int j)
+{
+
+	/* XXX Do better arithmetic.  */
+	return (unsigned int)((unsigned long)j*1000000/hz);
 }
 
 static inline unsigned int
