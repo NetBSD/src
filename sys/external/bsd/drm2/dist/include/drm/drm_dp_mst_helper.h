@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_dp_mst_helper.h,v 1.4 2018/08/27 06:44:41 riastradh Exp $	*/
+/*	$NetBSD: drm_dp_mst_helper.h,v 1.5 2018/08/27 06:44:53 riastradh Exp $	*/
 
 /*
  * Copyright © 2014 Red Hat.
@@ -24,7 +24,11 @@
 #ifndef _DRM_DP_MST_HELPER_H_
 #define _DRM_DP_MST_HELPER_H_
 
+#include <linux/kref.h>
+#include <linux/list.h>
+#include <linux/mutex.h>
 #include <linux/types.h>
+#include <linux/workqueue.h>
 #include <drm/drm_dp_helper.h>
 
 struct drm_dp_mst_branch;
