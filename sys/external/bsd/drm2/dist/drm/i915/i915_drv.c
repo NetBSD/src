@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_drv.c,v 1.7 2018/08/27 04:58:23 riastradh Exp $	*/
+/*	$NetBSD: i915_drv.c,v 1.8 2018/08/27 06:18:30 riastradh Exp $	*/
 
 /* i915_drv.c -- i830,i845,i855,i865,i915 driver -*- linux-c -*-
  */
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_drv.c,v 1.7 2018/08/27 04:58:23 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_drv.c,v 1.8 2018/08/27 06:18:30 riastradh Exp $");
 
 #include <linux/device.h>
 #include <linux/acpi.h>
@@ -1031,6 +1031,7 @@ i915_pci_remove(struct pci_dev *pdev)
 	drm_put_dev(dev);
 }
 
+#ifndef __NetBSD__
 static int i915_pm_suspend(struct device *dev)
 {
 	struct pci_dev *pdev = to_pci_dev(dev);
@@ -1095,6 +1096,7 @@ static int i915_pm_resume(struct device *dev)
 
 	return i915_drm_resume(drm_dev);
 }
+#endif
 
 static int skl_suspend_complete(struct drm_i915_private *dev_priv)
 {

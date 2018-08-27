@@ -1,4 +1,4 @@
-/*	$NetBSD: jiffies.h,v 1.6 2014/07/26 14:24:08 riastradh Exp $	*/
+/*	$NetBSD: jiffies.h,v 1.7 2018/08/27 06:18:30 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -40,6 +40,12 @@
 
 /* XXX Er, what?  */
 #define	MAX_JIFFY_OFFSET	((INT_MAX >> 1) - 1)
+
+static inline uint64_t
+nsecs_to_jiffies64(unsigned int msec)
+{
+	return 1000000*mstohz(msec);
+}
 
 static inline unsigned int
 msecs_to_jiffies(unsigned int msec)
