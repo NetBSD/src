@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_kmap.c,v 1.14 2018/08/27 15:09:58 riastradh Exp $	*/
+/*	$NetBSD: linux_kmap.c,v 1.15 2018/08/27 15:13:17 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_kmap.c,v 1.14 2018/08/27 15:09:58 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_kmap.c,v 1.15 2018/08/27 15:13:17 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/kmem.h>
@@ -45,8 +45,6 @@ __KERNEL_RCSID(0, "$NetBSD: linux_kmap.c,v 1.14 2018/08/27 15:09:58 riastradh Ex
 #include <uvm/uvm_extern.h>
 
 #include <linux/highmem.h>
-
-#undef	linux_kmap		/* symbol vs trace point namespace clash */
 
 SDT_PROBE_DEFINE2(sdt, linux, kmap, map,
     "paddr_t"/*paddr*/, "vaddr_t"/*vaddr*/);
@@ -202,7 +200,7 @@ kunmap_atomic(void *addr)
 }
 
 void *
-linux_kmap(struct page *page)
+kmap(struct page *page)
 {
 	const paddr_t paddr = VM_PAGE_TO_PHYS(&page->p_vmp);
 	vaddr_t vaddr;
