@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_opregion.c,v 1.13 2018/08/27 07:26:30 riastradh Exp $	*/
+/*	$NetBSD: intel_opregion.c,v 1.14 2018/08/27 13:54:48 riastradh Exp $	*/
 
 /*
  * Copyright 2008 Intel Corporation <hong.liu@intel.com>
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_opregion.c,v 1.13 2018/08/27 07:26:30 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_opregion.c,v 1.14 2018/08/27 13:54:48 riastradh Exp $");
 
 #include <linux/printk.h>
 #include <linux/acpi.h>
@@ -999,7 +999,7 @@ int intel_opregion_setup(struct drm_device *dev)
 	err = -bus_space_map(opregion->bst, asls, OPREGION_SIZE,
 	    BUS_SPACE_MAP_LINEAR|BUS_SPACE_MAP_PREFETCHABLE, &opregion->bsh);
 	if (err) {
-		DRM_DEBUG_DRIVER("Failed to map opregion: %d", err);
+		DRM_DEBUG_DRIVER("Failed to map opregion: %d\n", err);
 		return err;
 	}
 	base = bus_space_vaddr(opregion->bst, opregion->bsh);
