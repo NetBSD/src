@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem_fence.c,v 1.4 2018/08/27 07:17:35 riastradh Exp $	*/
+/*	$NetBSD: i915_gem_fence.c,v 1.5 2018/08/27 15:09:35 riastradh Exp $	*/
 
 /*
  * Copyright © 2008-2015 Intel Corporation
@@ -24,11 +24,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gem_fence.c,v 1.4 2018/08/27 07:17:35 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gem_fence.c,v 1.5 2018/08/27 15:09:35 riastradh Exp $");
 
 #include <drm/drmP.h>
 #include <drm/i915_drm.h>
 #include "i915_drv.h"
+#include "intel_drv.h"
 
 /**
  * DOC: fence register handling

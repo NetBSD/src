@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_guc_loader.c,v 1.11 2018/08/27 13:43:01 riastradh Exp $	*/
+/*	$NetBSD: intel_guc_loader.c,v 1.12 2018/08/27 15:09:35 riastradh Exp $	*/
 
 /*
  * Copyright © 2014 Intel Corporation
@@ -29,11 +29,12 @@
  *    Alex Dai <yu.dai@intel.com>
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_guc_loader.c,v 1.11 2018/08/27 13:43:01 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_guc_loader.c,v 1.12 2018/08/27 15:09:35 riastradh Exp $");
 
 #include <linux/firmware.h>
 #include <linux/module.h>
 #include "i915_drv.h"
+#include "intel_drv.h"
 #include "intel_guc.h"
 
 /**
