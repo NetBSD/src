@@ -1,4 +1,4 @@
-/*	$NetBSD: gpu_scheduler.c,v 1.3 2018/08/27 14:03:10 riastradh Exp $	*/
+/*	$NetBSD: gpu_scheduler.c,v 1.4 2018/08/27 14:03:24 riastradh Exp $	*/
 
 /*
  * Copyright 2015 Advanced Micro Devices, Inc.
@@ -24,7 +24,9 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gpu_scheduler.c,v 1.3 2018/08/27 14:03:10 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gpu_scheduler.c,v 1.4 2018/08/27 14:03:24 riastradh Exp $");
+
+#include <sys/kthread.h>
 
 #include <linux/kthread.h>
 #include <linux/wait.h>
@@ -218,7 +220,15 @@ void amd_sched_entity_fini(struct amd_gpu_scheduler *sched,
 	 * The client will not queue more IBs during this fini, consume existing
 	 * queued IBs
 	*/
+#ifdef __NetBSD__
+	int r __unused;
+	spin_lock(&sched->job_lock);
+	DRM_SPIN_WAIT_NOINTR_UNTIL(r, &sched->job_scheduled, &sched->job_lock,
+	    amd_sched_entity_is_idle(entity));
+	spin_unlock(&sched->job_lock);
+#else
 	wait_event(sched->job_scheduled, amd_sched_entity_is_idle(entity));
+#endif
 
 	amd_sched_rq_remove_entity(rq, entity);
 	kfifo_free(&entity->job_queue);
@@ -331,8 +341,17 @@ void amd_sched_entity_push_job(struct amd_sched_job *sched_job)
 	struct amd_sched_entity *entity = sched_job->s_entity;
 
 	trace_amd_sched_job(sched_job);
+#ifdef __NetBSD__
+	int r __unused;
+	spin_lock(&entity->sched->job_lock);
+	DRM_SPIN_WAIT_NOINTR_UNTIL(r, &entity->sched->job_scheduled,
+	    &entity->sched->job_lock,
+	    amd_sched_entity_in(sched_job));
+	spin_unlock(&entity->sched->job_lock);
+#else
 	wait_event(entity->sched->job_scheduled,
 		   amd_sched_entity_in(sched_job));
+#endif
 }
 
 /**
@@ -349,8 +368,15 @@ static bool amd_sched_ready(struct amd_gpu_scheduler *sched)
  */
 static void amd_sched_wakeup(struct amd_gpu_scheduler *sched)
 {
-	if (amd_sched_ready(sched))
+	if (amd_sched_ready(sched)) {
+#ifdef __NetBSD__
+		spin_lock(&sched->job_lock);
+		DRM_SPIN_WAKEUP_ONE(&sched->wake_up_worker, &sched->job_lock);
+		spin_unlock(&sched->job_lock);
+#else
 		wake_up_interruptible(&sched->wake_up_worker);
+#endif
+	}
 }
 
 /**
@@ -389,7 +415,13 @@ static void amd_sched_process_job(struct fence *f, struct fence_cb *cb)
 	}
 	trace_amd_sched_process_job(s_fence);
 	fence_put(&s_fence->base);
+#ifdef __NetBSD__
+	spin_lock(&sched->job_lock);
+	DRM_SPIN_WAKEUP_ONE(&sched->wake_up_worker, &sched->job_lock);
+	spin_unlock(&sched->job_lock);
+#else
 	wake_up_interruptible(&sched->wake_up_worker);
+#endif
 }
 
 static void amd_sched_fence_work_func(struct work_struct *work)
@@ -413,26 +445,54 @@ static void amd_sched_fence_work_func(struct work_struct *work)
 	spin_unlock_irqrestore(&sched->fence_list_lock, flags);
 }
 
+#ifdef __NetBSD__
+static void amd_sched_main(void *param)
+#else
 static int amd_sched_main(void *param)
+#endif
 {
+#ifndef __NetBSD__
 	struct sched_param sparam = {.sched_priority = 1};
+#endif
 	struct amd_gpu_scheduler *sched = (struct amd_gpu_scheduler *)param;
 	int r, count;
 
 	spin_lock_init(&sched->fence_list_lock);
 	INIT_LIST_HEAD(&sched->fence_list);
+#ifdef __NetBSD__
+	lwp_lock(curlwp);
+	curlwp->l_class = SCHED_FIFO;
+	lwp_changepri(curlwp, PRI_KERNEL_RT);
+	lwp_unlock(curlwp);
+#else
 	sched_setscheduler(current, SCHED_FIFO, &sparam);
+#endif
 
-	while (!kthread_should_stop()) {
+#ifdef __NetBSD__
+	while (!sched->dying)
+#else
+	while (!kthread_should_stop())
+#endif
+	{
 		struct amd_sched_entity *entity;
 		struct amd_sched_fence *s_fence;
 		struct amd_sched_job *sched_job;
 		struct fence *fence;
 		unsigned long flags;
 
+#ifdef __NetBSD__
+		int ret __unused;
+		spin_lock(&sched->job_lock);
+		DRM_SPIN_WAIT_UNTIL(ret, &sched->wake_up_worker,
+		    &sched->job_lock,
+		    ((entity = amd_sched_select_entity(sched)) ||
+			sched->dying));
+		spin_unlock(&sched->job_lock);
+#else
 		wait_event_interruptible(sched->wake_up_worker,
 			(entity = amd_sched_select_entity(sched)) ||
 			kthread_should_stop());
+#endif
 
 		if (!entity)
 			continue;
@@ -470,9 +530,19 @@ static int amd_sched_main(void *param)
 		count = kfifo_out(&entity->job_queue, &sched_job,
 				sizeof(sched_job));
 		WARN_ON(count != sizeof(sched_job));
+#ifdef __NetBSD__
+		spin_lock(&sched->job_lock);
+		DRM_SPIN_WAKEUP_ONE(&sched->job_scheduled, &sched->job_lock);
+		spin_unlock(&sched->job_lock);
+#else
 		wake_up(&sched->job_scheduled);
+#endif
 	}
+#ifdef __NetBSD__
+	kthread_exit(0);
+#else
 	return 0;
+#endif
 }
 
 /**
@@ -496,23 +566,52 @@ int amd_sched_init(struct amd_gpu_scheduler *sched,
 	amd_sched_rq_init(&sched->sched_rq);
 	amd_sched_rq_init(&sched->kernel_rq);
 
+#ifdef __NetBSD__
+	spin_lock_init(&sched->job_lock);
+	DRM_INIT_WAITQUEUE(&sched->wake_up_worker, "amdwakew");
+	DRM_INIT_WAITQUEUE(&sched->job_scheduled, "amdsched");
+#else
 	init_waitqueue_head(&sched->wake_up_worker);
 	init_waitqueue_head(&sched->job_scheduled);
+#endif
 	atomic_set(&sched->hw_rq_count, 0);
 	if (atomic_inc_return(&sched_fence_slab_ref) == 1) {
 		sched_fence_slab = kmem_cache_create(
 			"amd_sched_fence", sizeof(struct amd_sched_fence), 0,
 			SLAB_HWCACHE_ALIGN, NULL);
-		if (!sched_fence_slab)
+		if (!sched_fence_slab) {
+#ifdef __NetBSD__
+			DRM_DESTROY_WAITQUEUE(&sched->job_scheduled);
+			DRM_DESTROY_WAITQUEUE(&sched->wake_up_worker);
+			spin_lock_destroy(&sched->job_lock);
+#endif
 			return -ENOMEM;
+		}
 	}
 
 	/* Each scheduler will run on a seperate kernel thread */
+#ifdef __NetBSD__
+	int error;
+	error = kthread_create(PRI_NONE,
+	    KTHREAD_MPSAFE|KTHREAD_MUSTJOIN|KTHREAD_TS, NULL,
+	    amd_sched_main, sched, &sched->thread, "%s", sched->name);
+	if (error) {
+		DRM_ERROR("Failed to create scheduler for %s.\n", name);
+		if (atomic_dec_and_test(&sched_fence_slab_ref))
+			kmem_cache_destroy(sched_fence_slab);
+		DRM_DESTROY_WAITQUEUE(&sched->job_scheduled);
+		DRM_DESTROY_WAITQUEUE(&sched->wake_up_worker);
+		spin_lock_destroy(&sched->job_lock);
+		/* XXX errno NetBSD->Linux */
+		return -error;
+	}
+#else
 	sched->thread = kthread_run(amd_sched_main, sched, sched->name);
 	if (IS_ERR(sched->thread)) {
 		DRM_ERROR("Failed to create scheduler for %s.\n", name);
 		return PTR_ERR(sched->thread);
 	}
+#endif
 
 	return 0;
 }
@@ -524,8 +623,21 @@ int amd_sched_init(struct amd_gpu_scheduler *sched,
  */
 void amd_sched_fini(struct amd_gpu_scheduler *sched)
 {
+#ifdef __NetBSD__
+	spin_lock(&sched->job_lock);
+	sched->dying = true;
+	DRM_SPIN_WAKEUP_ONE(&sched->wake_up_worker, &sched->job_lock);
+	spin_unlock(&sched->job_lock);
+	(void)kthread_join(sched->thread);
+#else
 	if (sched->thread)
 		kthread_stop(sched->thread);
+#endif
+#ifdef __NetBSD__
+	DRM_DESTROY_WAITQUEUE(&sched->job_scheduled);
+	DRM_DESTROY_WAITQUEUE(&sched->wake_up_worker);
+	spin_lock_destroy(&sched->job_lock);
+#endif
 	if (atomic_dec_and_test(&sched_fence_slab_ref))
 		kmem_cache_destroy(sched_fence_slab);
 }
