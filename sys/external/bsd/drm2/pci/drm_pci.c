@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_pci.c,v 1.20 2018/08/27 06:44:15 riastradh Exp $	*/
+/*	$NetBSD: drm_pci.c,v 1.21 2018/08/27 07:03:02 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_pci.c,v 1.20 2018/08/27 06:44:15 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_pci.c,v 1.21 2018/08/27 07:03:02 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/errno.h>
@@ -242,7 +242,7 @@ drm_pci_irq_install(struct drm_device *dev, irqreturn_t (*handler)(void *),
 	irq_cookie = kmem_alloc(sizeof(*irq_cookie), KM_SLEEP);
 
 	if (dev->pdev->msi_enabled) {
-		if (dev->pdev->intr_handles == NULL) {
+		if (dev->pdev->pd_intr_handles == NULL) {
 			if (pci_msi_alloc_exact(pa, &irq_cookie->intr_handles,
 			    1)) {
 				aprint_error_dev(dev->dev,
@@ -250,8 +250,8 @@ drm_pci_irq_install(struct drm_device *dev, irqreturn_t (*handler)(void *),
 				goto error;
 			}
 		} else {
-			irq_cookie->intr_handles = dev->pdev->intr_handles;
-			dev->pdev->intr_handles = NULL;
+			irq_cookie->intr_handles = dev->pdev->pd_intr_handles;
+			dev->pdev->pd_intr_handles = NULL;
 		}
 	} else {
 		if (pci_intx_alloc(pa, &irq_cookie->intr_handles)) {
