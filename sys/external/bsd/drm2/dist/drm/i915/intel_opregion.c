@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_opregion.c,v 1.9 2018/08/27 04:58:24 riastradh Exp $	*/
+/*	$NetBSD: intel_opregion.c,v 1.10 2018/08/27 06:16:50 riastradh Exp $	*/
 
 /*
  * Copyright 2008 Intel Corporation <hong.liu@intel.com>
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_opregion.c,v 1.9 2018/08/27 04:58:24 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_opregion.c,v 1.10 2018/08/27 06:16:50 riastradh Exp $");
 
 #include <linux/printk.h>
 #include <linux/acpi.h>
@@ -446,10 +446,12 @@ static u32 asle_set_backlight(struct drm_device *dev, u32 bclp)
 
 	DRM_DEBUG_DRIVER("bclp = 0x%08x\n", bclp);
 
+#ifndef __NetBSD__ /* XXX backlight */
 	if (acpi_video_get_backlight_type() == acpi_backlight_native) {
 		DRM_DEBUG_KMS("opregion backlight request ignored\n");
 		return 0;
 	}
+#endif
 
 	if (!(bclp & ASLE_BCLP_VALID))
 		return ASLC_BACKLIGHT_FAILED;
@@ -664,6 +666,7 @@ static int intel_opregion_video_event(struct notifier_block *nb,
 
 	return ret;
 }
+#endif
 
 static struct notifier_block intel_opregion_notifier = {
 	.notifier_call = intel_opregion_video_event,
@@ -1007,8 +1010,11 @@ int intel_opregion_setup(struct drm_device *dev)
 #ifdef CONFIG_ACPI
 	INIT_WORK(&opregion->asle_work, asle_work);
 #endif
-
+#ifdef __NetBSD__
+	base = acpi_os_ioremap(asls, OPREGION_SIZE);
+#else
 	base = memremap(asls, OPREGION_SIZE, MEMREMAP_WB);
+#endif
 	if (!base)
 		return -ENOMEM;
 
