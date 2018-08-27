@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_fbc.c,v 1.2 2018/08/27 04:58:24 riastradh Exp $	*/
+/*	$NetBSD: intel_fbc.c,v 1.3 2018/08/27 07:21:33 riastradh Exp $	*/
 
 /*
  * Copyright © 2014 Intel Corporation
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_fbc.c,v 1.2 2018/08/27 04:58:24 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_fbc.c,v 1.3 2018/08/27 07:21:33 riastradh Exp $");
 
 #include "intel_drv.h"
 #include "i915_drv.h"
@@ -530,7 +530,7 @@ static void set_no_fbc_reason(struct drm_i915_private *dev_priv,
 static struct drm_crtc *intel_fbc_find_crtc(struct drm_i915_private *dev_priv)
 {
 	struct drm_crtc *crtc = NULL, *tmp_crtc;
-	enum pipe pipe;
+	enum i915_pipe pipe;
 	bool pipe_a_only = false;
 
 	if (IS_HASWELL(dev_priv) || INTEL_INFO(dev_priv)->gen >= 8)
@@ -555,7 +555,7 @@ static struct drm_crtc *intel_fbc_find_crtc(struct drm_i915_private *dev_priv)
 
 static bool multiple_pipes_ok(struct drm_i915_private *dev_priv)
 {
-	enum pipe pipe;
+	enum i915_pipe pipe;
 	int n_pipes = 0;
 	struct drm_crtc *crtc;
 
@@ -663,7 +663,7 @@ static int intel_fbc_alloc_cfb(struct drm_i915_private *dev_priv, int size,
 
 	dev_priv->fbc.uncompressed_size = size;
 
-	DRM_DEBUG_KMS("reserved %llu bytes of contiguous stolen space for FBC, threshold: %d\n",
+	DRM_DEBUG_KMS("reserved %"PRIu64" bytes of contiguous stolen space for FBC, threshold: %d\n",
 		      dev_priv->fbc.compressed_fb.size,
 		      dev_priv->fbc.threshold);
 
@@ -1087,9 +1087,13 @@ void intel_fbc_flush(struct drm_i915_private *dev_priv,
  */
 void intel_fbc_init(struct drm_i915_private *dev_priv)
 {
-	enum pipe pipe;
+	enum i915_pipe pipe;
 
+#ifdef __NetBSD__
+	linux_mutex_init(&dev_priv->fbc.lock);
+#else
 	mutex_init(&dev_priv->fbc.lock);
+#endif
 
 	if (!HAS_FBC(dev_priv)) {
 		dev_priv->fbc.enabled = false;
