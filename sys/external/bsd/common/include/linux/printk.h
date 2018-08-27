@@ -1,4 +1,4 @@
-/*	$NetBSD: printk.h,v 1.4 2014/08/06 13:52:33 riastradh Exp $	*/
+/*	$NetBSD: printk.h,v 1.1 2018/08/27 06:06:10 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
