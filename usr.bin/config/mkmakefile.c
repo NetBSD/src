@@ -1,4 +1,4 @@
-/*	$NetBSD: mkmakefile.c,v 1.70 2017/06/16 02:01:10 christos Exp $	*/
+/*	$NetBSD: mkmakefile.c,v 1.71 2018/08/27 05:35:00 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: mkmakefile.c,v 1.70 2017/06/16 02:01:10 christos Exp $");
+__RCSID("$NetBSD: mkmakefile.c,v 1.71 2018/08/27 05:35:00 riastradh Exp $");
 
 #include <sys/param.h>
 #include <ctype.h>
@@ -584,6 +584,34 @@ emitincludes(FILE *fp)
 }
 
 /*
+ * Emit all options included in a conditional expression
+ */
+static void
+emitopts(FILE *fp, struct condexpr *cond, int include)
+{
+
+	switch (cond->cx_type) {
+	case CX_ATOM:
+		if (include && selectopt(cond->cx_u.atom, NULL))
+			fprintf(fp, " %s", cond->cx_u.atom);
+		break;
+	case CX_NOT:
+		emitopts(fp, cond->cx_u.not, !include);
+		break;
+	case CX_AND:
+		emitopts(fp, cond->cx_u.and.left, include);
+		emitopts(fp, cond->cx_u.and.right, include);
+		break;
+	case CX_OR:
+		emitopts(fp, cond->cx_u.and.left, include);
+		emitopts(fp, cond->cx_u.and.right, include);
+		break;
+	default:
+		cfgerror("bug");
+	}
+}
+
+/*
  * Emit appending makeoptions.
  */
 static void
@@ -591,6 +619,17 @@ emitappmkoptions(FILE *fp)
 {
 	struct nvlist *nv;
 	struct condexpr *cond;
+	size_t i;
+
+	for (i = 0; i < nselfiles; i++) {
+		struct files *const fi = selfiles[i];
+
+		if (fi->fi_optx) {
+			fprintf(fp, "OPT.%s.c+=", fi->fi_base);
+			emitopts(fp, fi->fi_optx, 1);
+			fprintf(fp, "\n");
+		}
+	}
 
 	for (nv = appmkoptions; nv != NULL; nv = nv->nv_next)
 		fprintf(fp, "%s+=%s\n", nv->nv_name, nv->nv_str);
