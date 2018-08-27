@@ -1,4 +1,4 @@
-/*	$NetBSD: workqueue.h,v 1.1 2016/02/24 22:04:15 skrll Exp $	*/
+/*	$NetBSD: workqueue.h,v 1.2 2018/08/27 06:54:40 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -116,5 +116,12 @@ bool	mod_delayed_work(struct workqueue_struct *, struct delayed_work *,
 	    unsigned long ticks);
 bool	cancel_delayed_work(struct delayed_work *);
 bool	cancel_delayed_work_sync(struct delayed_work *);
+
+#define	INIT_WORK_ONSTACK		INIT_WORK
+
+static inline void
+destroy_work_on_stack(struct work_struct *work)
+{
+}
 
 #endif  /* _LINUX_WORKQUEUE_H_ */
