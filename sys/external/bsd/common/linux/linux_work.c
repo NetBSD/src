@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_work.c,v 1.21 2018/08/27 15:01:13 riastradh Exp $	*/
+/*	$NetBSD: linux_work.c,v 1.22 2018/08/27 15:01:47 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_work.c,v 1.21 2018/08/27 15:01:13 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_work.c,v 1.22 2018/08/27 15:01:47 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/atomic.h>
@@ -286,13 +286,14 @@ linux_workqueue_timeout(void *cookie)
 		callout_destroy(&dw->dw_callout);
 		TAILQ_REMOVE(&wq->wq_delayed, dw, dw_entry);
 		release_work(&dw->work, wq);
-		break;
+		/* Can't touch dw any more.  */
+		goto out;
 	default:
 		panic("delayed work callout in bad state: %p", dw);
 	}
 	KASSERT(dw->dw_state == DELAYED_WORK_IDLE ||
 	    dw->dw_state == DELAYED_WORK_SCHEDULED);
-	mutex_exit(&wq->wq_lock);
+out:	mutex_exit(&wq->wq_lock);
 }
 
 struct work_struct *
