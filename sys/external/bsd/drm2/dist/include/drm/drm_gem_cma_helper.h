@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_gem_cma_helper.h,v 1.4 2018/08/27 06:57:00 riastradh Exp $	*/
+/*	$NetBSD: drm_gem_cma_helper.h,v 1.5 2018/08/27 15:26:15 riastradh Exp $	*/
 
 #ifndef __DRM_GEM_CMA_HELPER_H__
 #define __DRM_GEM_CMA_HELPER_H__
@@ -22,8 +22,8 @@ struct drm_gem_cma_object {
 	bus_dmamap_t dmamap;
 #else
 	dma_addr_t paddr;
-	struct sg_table *sgt;
 #endif
+	struct sg_table *sgt;
 
 	/* For objects with DMA memory allocated by GEM CMA */
 	void *vaddr;
@@ -72,16 +72,19 @@ extern const struct vm_operations_struct drm_gem_cma_vm_ops;
 void drm_gem_cma_describe(struct drm_gem_cma_object *obj, struct seq_file *m);
 #endif
 
-#ifndef __NetBSD__		/* XXX drm prime */
 struct sg_table *drm_gem_cma_prime_get_sg_table(struct drm_gem_object *obj);
 struct drm_gem_object *
 drm_gem_cma_prime_import_sg_table(struct drm_device *dev,
 				  struct dma_buf_attachment *attach,
 				  struct sg_table *sgt);
+#ifdef __NetBSD__
+int drm_gem_cma_prime_mmap(struct drm_gem_object *, off_t *, size_t, int,
+    int *, int *, struct uvm_object **, int *);
+#else
 int drm_gem_cma_prime_mmap(struct drm_gem_object *obj,
 			   struct vm_area_struct *vma);
+#endif
 void *drm_gem_cma_prime_vmap(struct drm_gem_object *obj);
 void drm_gem_cma_prime_vunmap(struct drm_gem_object *obj, void *vaddr);
-#endif
 
 #endif /* __DRM_GEM_CMA_HELPER_H__ */

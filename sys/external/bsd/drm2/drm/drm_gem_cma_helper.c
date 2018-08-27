@@ -1,4 +1,4 @@
-/* $NetBSD: drm_gem_cma_helper.c,v 1.2 2018/08/27 06:57:00 riastradh Exp $ */
+/* $NetBSD: drm_gem_cma_helper.c,v 1.3 2018/08/27 15:26:16 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_gem_cma_helper.c,v 1.2 2018/08/27 06:57:00 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_gem_cma_helper.c,v 1.3 2018/08/27 15:26:16 riastradh Exp $");
 
 #include <drm/drmP.h>
 #include <drm/drm_gem_cma_helper.h>
@@ -82,10 +82,14 @@ failed:
 static void
 drm_gem_cma_obj_free(struct drm_gem_cma_object *obj)
 {
+
 	bus_dmamap_unload(obj->dmat, obj->dmamap);
 	bus_dmamap_destroy(obj->dmat, obj->dmamap);
 	bus_dmamem_unmap(obj->dmat, obj->vaddr, obj->dmasize);
-	bus_dmamem_free(obj->dmat, obj->dmasegs, 1);
+	if (obj->sgt)
+		drm_prime_sg_free(obj->sgt);
+	else
+		bus_dmamem_free(obj->dmat, obj->dmasegs, 1);
 	kmem_free(obj, sizeof(*obj));
 }
 
@@ -219,3 +223,63 @@ const struct uvm_pagerops drm_gem_cma_uvm_ops = {
 	.pgo_detach = drm_gem_pager_detach,
 	.pgo_fault = drm_gem_cma_fault,
 };
+
+struct sg_table *
+drm_gem_cma_prime_get_sg_table(struct drm_gem_object *gem_obj)
+{
+	struct drm_gem_cma_object *obj = to_drm_gem_cma_obj(gem_obj);
+
+	return drm_prime_bus_dmamem_to_sg(obj->dmasegs, 1);
+}
+
+struct drm_gem_object *
+drm_gem_cma_prime_import_sg_table(struct drm_device *ddev,
+    struct dma_buf_attachment *attach, struct sg_table *sgt)
+{
+	struct drm_gem_cma_object *obj;
+	int error;
+
+	obj = kmem_zalloc(sizeof(*obj), KM_SLEEP);
+	obj->dmat = ddev->dmat;
+	obj->dmasize = drm_prime_sg_size(sgt);
+
+	error = bus_dmamap_create(obj->dmat, obj->dmasize, 1, obj->dmasize, 0,
+	    BUS_DMA_WAITOK, &obj->dmamap);
+	if (error)
+		goto failed;
+	/* XXX errno Linux->NetBSD */
+	error = -drm_prime_bus_dmamap_load_sgt(obj->dmat, obj->dmamap, sgt);
+	if (error)
+		goto destroy;
+	error = -drm_prime_bus_dmamem_map(obj->dmat, sgt, &obj->vaddr,
+	    BUS_DMA_WAITOK | BUS_DMA_COHERENT);
+	if (error)
+		goto unload;
+
+	return &obj->base;
+
+unload:
+	bus_dmamap_unload(obj->dmat, obj->dmamap);
+destroy:
+	bus_dmamap_destroy(obj->dmat, obj->dmamap);
+failed:
+	kmem_free(obj, sizeof(*obj));
+	return ERR_PTR(-error);	/* XXX errno NetBSD->Linux */
+}
+
+void *
+drm_gem_cma_prime_vmap(struct drm_gem_object *gem_obj)
+{
+	struct drm_gem_cma_object *obj = to_drm_gem_cma_obj(gem_obj);
+
+	return obj->vaddr;
+}
+
+void
+drm_gem_cma_prime_vunmap(struct drm_gem_object *gem_obj, void *vaddr)
+{
+	struct drm_gem_cma_object *obj __diagused =
+	    to_drm_gem_cma_obj(gem_obj);
+
+	KASSERT(vaddr == obj->vaddr);
+}
