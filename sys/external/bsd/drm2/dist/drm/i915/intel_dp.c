@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_dp.c,v 1.12 2018/08/27 06:16:01 riastradh Exp $	*/
+/*	$NetBSD: intel_dp.c,v 1.13 2018/08/27 07:21:48 riastradh Exp $	*/
 
 /*
  * Copyright © 2008 Intel Corporation
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_dp.c,v 1.12 2018/08/27 06:16:01 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_dp.c,v 1.13 2018/08/27 07:21:48 riastradh Exp $");
 
 #include <linux/i2c.h>
 #include <linux/slab.h>
@@ -137,7 +137,7 @@ static bool edp_panel_vdd_on(struct intel_dp *intel_dp);
 static void edp_panel_vdd_off(struct intel_dp *intel_dp, bool sync);
 static void vlv_init_panel_power_sequencer(struct intel_dp *intel_dp);
 static void vlv_steal_power_sequencer(struct drm_device *dev,
-				      enum pipe pipe);
+				      enum i915_pipe pipe);
 
 static unsigned int intel_dp_unused_lane_mask(int lane_count)
 {
@@ -312,7 +312,7 @@ vlv_power_sequencer_kick(struct intel_dp *intel_dp)
 	struct intel_digital_port *intel_dig_port = dp_to_dig_port(intel_dp);
 	struct drm_device *dev = intel_dig_port->base.base.dev;
 	struct drm_i915_private *dev_priv = dev->dev_private;
-	enum pipe pipe = intel_dp->pps_pipe;
+	enum i915_pipe pipe = intel_dp->pps_pipe;
 	bool pll_enabled, release_cl_override = false;
 	enum dpio_phy phy = DPIO_PHY(pipe);
 	enum dpio_channel ch = vlv_pipe_to_channel(pipe);
@@ -441,32 +441,32 @@ vlv_power_sequencer_pipe(struct intel_dp *intel_dp)
 }
 
 typedef bool (*vlv_pipe_check)(struct drm_i915_private *dev_priv,
-			       enum pipe pipe);
+			       enum i915_pipe pipe);
 
 static bool vlv_pipe_has_pp_on(struct drm_i915_private *dev_priv,
-			       enum pipe pipe)
+			       enum i915_pipe pipe)
 {
 	return I915_READ(VLV_PIPE_PP_STATUS(pipe)) & PP_ON;
 }
 
 static bool vlv_pipe_has_vdd_on(struct drm_i915_private *dev_priv,
-				enum pipe pipe)
+				enum i915_pipe pipe)
 {
 	return I915_READ(VLV_PIPE_PP_CONTROL(pipe)) & EDP_FORCE_VDD;
 }
 
 static bool vlv_pipe_any(struct drm_i915_private *dev_priv,
-			 enum pipe pipe)
+			 enum i915_pipe pipe)
 {
 	return true;
 }
 
-static enum pipe
+static enum i915_pipe
 vlv_initial_pps_pipe(struct drm_i915_private *dev_priv,
 		     enum port port,
 		     vlv_pipe_check pipe_check)
 {
-	enum pipe pipe;
+	enum i915_pipe pipe;
 
 	for (pipe = PIPE_A; pipe <= PIPE_B; pipe++) {
 		u32 port_sel = I915_READ(VLV_PIPE_PP_ON_DELAYS(pipe)) &
@@ -593,7 +593,7 @@ static int edp_notify_handler(struct notifier_block *this, unsigned long code,
 	pps_lock(intel_dp);
 
 	if (IS_VALLEYVIEW(dev)) {
-		enum pipe pipe = vlv_power_sequencer_pipe(intel_dp);
+		enum i915_pipe pipe = vlv_power_sequencer_pipe(intel_dp);
 		u32 pp_ctrl_reg, pp_div_reg;
 		u32 pp_div;
 
@@ -2291,7 +2291,7 @@ static bool intel_dp_get_hw_state(struct intel_encoder *encoder,
 	if (IS_GEN7(dev) && port == PORT_A) {
 		*pipe = PORT_TO_PIPE_CPT(tmp);
 	} else if (HAS_PCH_CPT(dev) && port != PORT_A) {
-		enum pipe p;
+		enum i915_pipe p;
 
 		for_each_pipe(dev_priv, p) {
 			u32 trans_dp = I915_READ(TRANS_DP_CTL(p));
@@ -2447,7 +2447,7 @@ static void chv_data_lane_soft_reset(struct intel_encoder *encoder,
 	struct drm_i915_private *dev_priv = to_i915(encoder->base.dev);
 	enum dpio_channel ch = vlv_dport_to_channel(enc_to_dig_port(&encoder->base));
 	struct intel_crtc *crtc = to_intel_crtc(encoder->base.crtc);
-	enum pipe pipe = crtc->pipe;
+	enum i915_pipe pipe = crtc->pipe;
 	uint32_t val;
 
 	val = vlv_dpio_read(dev_priv, pipe, VLV_PCS01_DW0(ch));
@@ -2688,7 +2688,7 @@ static void vlv_detach_power_sequencer(struct intel_dp *intel_dp)
 {
 	struct intel_digital_port *intel_dig_port = dp_to_dig_port(intel_dp);
 	struct drm_i915_private *dev_priv = intel_dig_port->base.base.dev->dev_private;
-	enum pipe pipe = intel_dp->pps_pipe;
+	enum i915_pipe pipe = intel_dp->pps_pipe;
 	int pp_on_reg = VLV_PIPE_PP_ON_DELAYS(pipe);
 
 	edp_panel_vdd_off_sync(intel_dp);
@@ -2711,7 +2711,7 @@ static void vlv_detach_power_sequencer(struct intel_dp *intel_dp)
 }
 
 static void vlv_steal_power_sequencer(struct drm_device *dev,
-				      enum pipe pipe)
+				      enum i915_pipe pipe)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	struct intel_encoder *encoder;
@@ -2944,7 +2944,7 @@ static void chv_dp_pre_pll_enable(struct intel_encoder *encoder)
 	struct intel_crtc *intel_crtc =
 		to_intel_crtc(encoder->base.crtc);
 	enum dpio_channel ch = vlv_dport_to_channel(dport);
-	enum pipe pipe = intel_crtc->pipe;
+	enum i915_pipe pipe = intel_crtc->pipe;
 	unsigned int lane_mask =
 		intel_dp_unused_lane_mask(intel_crtc->config->lane_count);
 	u32 val;
@@ -3022,7 +3022,7 @@ static void chv_dp_pre_pll_enable(struct intel_encoder *encoder)
 static void chv_dp_post_pll_disable(struct intel_encoder *encoder)
 {
 	struct drm_i915_private *dev_priv = to_i915(encoder->base.dev);
-	enum pipe pipe = to_intel_crtc(encoder->base.crtc)->pipe;
+	enum i915_pipe pipe = to_intel_crtc(encoder->base.crtc)->pipe;
 	u32 val;
 
 	mutex_lock(&dev_priv->sb_lock);
@@ -3303,7 +3303,7 @@ static uint32_t chv_signal_levels(struct intel_dp *intel_dp)
 	u32 deemph_reg_value, margin_reg_value, val;
 	uint8_t train_set = intel_dp->train_set[0];
 	enum dpio_channel ch = vlv_dport_to_channel(dport);
-	enum pipe pipe = intel_crtc->pipe;
+	enum i915_pipe pipe = intel_crtc->pipe;
 	int i;
 
 	switch (train_set & DP_TRAIN_PRE_EMPHASIS_MASK) {
@@ -5734,7 +5734,7 @@ void intel_edp_drrs_invalidate(struct drm_device *dev,
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	struct drm_crtc *crtc;
-	enum pipe pipe;
+	enum i915_pipe pipe;
 
 	if (dev_priv->drrs.type == DRRS_NOT_SUPPORTED)
 		return;
@@ -5779,7 +5779,7 @@ void intel_edp_drrs_flush(struct drm_device *dev,
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	struct drm_crtc *crtc;
-	enum pipe pipe;
+	enum i915_pipe pipe;
 
 	if (dev_priv->drrs.type == DRRS_NOT_SUPPORTED)
 		return;
@@ -5914,7 +5914,7 @@ static bool intel_edp_init_connector(struct intel_dp *intel_dp,
 	bool has_dpcd;
 	struct drm_display_mode *scan;
 	struct edid *edid;
-	enum pipe pipe = INVALID_PIPE;
+	enum i915_pipe pipe = INVALID_PIPE;
 
 	if (!is_edp(intel_dp))
 		return true;
