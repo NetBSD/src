@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_engine_device_pci.c,v 1.7 2018/08/27 07:43:28 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_engine_device_pci.c,v 1.8 2018/08/27 14:17:36 riastradh Exp $	*/
 
 /*
  * Copyright 2015 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs <bskeggs@redhat.com>
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_device_pci.c,v 1.7 2018/08/27 07:43:28 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_device_pci.c,v 1.8 2018/08/27 14:17:36 riastradh Exp $");
 
 #include <core/pci.h>
 #include "priv.h"
@@ -1634,7 +1634,9 @@ static void *
 nvkm_device_pci_dtor(struct nvkm_device *device)
 {
 	struct nvkm_device_pci *pdev = nvkm_device_pci(device);
-	linux_pci_disable_device(pdev->pdev);
+#ifndef __NetBSD__
+	pci_disable_device(pdev->pdev);
+#endif
 	return pdev;
 }
 
@@ -1671,11 +1673,15 @@ nvkm_device_pci_new(struct pci_dev *pci_dev, const char *cfg, const char *dbg,
 	const struct nvkm_device_pci_vendor *pciv;
 	const char *name = NULL;
 	struct nvkm_device_pci *pdev;
+#ifndef __NetBSD__
 	int ret;
+#endif
 
-	ret = linux_pci_enable_device(pci_dev);
+#ifndef __NetBSD__
+	ret = pci_enable_device(pci_dev);
 	if (ret)
 		return ret;
+#endif
 
 	switch (pci_dev->vendor) {
 	case 0x10de: pcid = nvkm_device_pci_10de; break;
