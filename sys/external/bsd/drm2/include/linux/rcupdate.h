@@ -1,4 +1,4 @@
-/*	$NetBSD: rcupdate.h,v 1.5 2018/08/27 13:31:36 riastradh Exp $	*/
+/*	$NetBSD: rcupdate.h,v 1.6 2018/08/27 13:45:08 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -42,7 +42,6 @@
 	membar_producer();						      \
 	(P) = (V);							      \
 } while (0)
-
 
 #define	rcu_dereference(P) ({						      \
 	typeof(*(P)) *__rcu_dereference_tmp = (P);			      \
