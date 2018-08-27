@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_module.c,v 1.5 2014/11/12 03:14:00 christos Exp $	*/
+/*	$NetBSD: i915_module.c,v 1.6 2018/08/27 07:27:51 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_module.c,v 1.5 2014/11/12 03:14:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_module.c,v 1.6 2018/08/27 07:27:51 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/module.h>
@@ -78,6 +78,7 @@ i915drmkms_init(void)
 		return error;
 	}
 	drm_sysctl_init(&i915_def);
+	spin_lock_init(&mchdev_lock);
 
 	return 0;
 }
@@ -99,8 +100,9 @@ static void
 i915drmkms_fini(void)
 {
 
-	drm_pci_exit(i915_drm_driver, NULL);
+	spin_lock_destroy(&mchdev_lock);
 	drm_sysctl_fini(&i915_def);
+	drm_pci_exit(i915_drm_driver, NULL);
 }
 
 static int
