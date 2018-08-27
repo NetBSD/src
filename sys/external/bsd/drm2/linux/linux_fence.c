@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_fence.c,v 1.7 2018/08/27 14:20:41 riastradh Exp $	*/
+/*	$NetBSD: linux_fence.c,v 1.8 2018/08/27 14:40:13 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_fence.c,v 1.7 2018/08/27 14:20:41 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_fence.c,v 1.8 2018/08/27 14:40:13 riastradh Exp $");
 
 #include <sys/atomic.h>
 #include <sys/condvar.h>
@@ -222,6 +222,8 @@ void
 fence_put(struct fence *fence)
 {
 
+	if (fence == NULL)
+		return;
 	KASSERT(fence_referenced_p(fence));
 	kref_put(&fence->refcount, &fence_release);
 }
