@@ -1,3 +1,5 @@
+/*	$NetBSD: qxl_object.h,v 1.1.1.2 2018/08/27 01:34:56 riastradh Exp $	*/
+
 /*
  * Copyright 2013 Red Hat Inc.
  *
@@ -31,7 +33,7 @@ static inline int qxl_bo_reserve(struct qxl_bo *bo, bool no_wait)
 {
 	int r;
 
-	r = ttm_bo_reserve(&bo->tbo, true, no_wait, false, 0);
+	r = ttm_bo_reserve(&bo->tbo, true, no_wait, false, NULL);
 	if (unlikely(r != 0)) {
 		if (r != -ERESTARTSYS) {
 			struct qxl_device *qdev = (struct qxl_device *)bo->gem_base.dev->dev_private;
@@ -67,7 +69,7 @@ static inline int qxl_bo_wait(struct qxl_bo *bo, u32 *mem_type,
 {
 	int r;
 
-	r = ttm_bo_reserve(&bo->tbo, true, no_wait, false, 0);
+	r = ttm_bo_reserve(&bo->tbo, true, no_wait, false, NULL);
 	if (unlikely(r != 0)) {
 		if (r != -ERESTARTSYS) {
 			struct qxl_device *qdev = (struct qxl_device *)bo->gem_base.dev->dev_private;
@@ -76,12 +78,10 @@ static inline int qxl_bo_wait(struct qxl_bo *bo, u32 *mem_type,
 		}
 		return r;
 	}
-	spin_lock(&bo->tbo.bdev->fence_lock);
 	if (mem_type)
 		*mem_type = bo->tbo.mem.mem_type;
-	if (bo->tbo.sync_obj)
-		r = ttm_bo_wait(&bo->tbo, true, true, no_wait);
-	spin_unlock(&bo->tbo.bdev->fence_lock);
+
+	r = ttm_bo_wait(&bo->tbo, true, true, no_wait);
 	ttm_bo_unreserve(&bo->tbo);
 	return r;
 }

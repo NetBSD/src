@@ -1,3 +1,5 @@
+/*	$NetBSD: drm_sysfs.h,v 1.1.1.2 2018/08/27 01:35:00 riastradh Exp $	*/
+
 #ifndef _DRM_SYSFS_H_
 #define _DRM_SYSFS_H_
 
