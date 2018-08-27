@@ -1,4 +1,4 @@
-/*	$NetBSD: clk.h,v 1.1 2018/08/27 06:35:25 riastradh Exp $	*/
+/*	$NetBSD: clk.h,v 1.2 2018/08/27 07:33:27 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -31,5 +31,7 @@
 
 #ifndef	_LINUX_CLK_H_
 #define	_LINUX_CLK_H_
+
+#include <dev/clk/clk.h>
 
 #endif	/* _LINUX_CLK_H_ */
