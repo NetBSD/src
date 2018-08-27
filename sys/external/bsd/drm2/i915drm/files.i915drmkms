@@ -1,4 +1,4 @@
-#	$NetBSD: files.i915drmkms,v 1.19 2018/08/27 07:15:39 riastradh Exp $
+#	$NetBSD: files.i915drmkms,v 1.20 2018/08/27 07:17:21 riastradh Exp $
 
 define	intelfbbus	{ }
 device	i915drmkms: drmkms, drmkms_pci, intelfbbus, agp_i810
@@ -13,6 +13,7 @@ makeoptions	i915drmkms	CPPFLAGS+="-I$S/external/bsd/drm2/i915drm"
 makeoptions 	i915drmkms 	"CWARNFLAGS.i915_drv.c"+="${${ACTIVE_CC} == gcc:? -Wno-override-init :}"
 makeoptions 	i915drmkms 	"CWARNFLAGS.i915_drv.c"+="${${ACTIVE_CC} == clang:? -Wno-initializer-overrides :}"
 makeoptions	i915drmkms	"CWARNFLAGS.i915_gem.c"+="-Wno-shadow"
+makeoptions	i915drmkms	"CWARNFLAGS.i915_gem_gtt.c"+="-Wno-shadow"
 makeoptions	i915drmkms	"CWARNFLAGS.i915_gpu_error.c"+="-Wno-shadow"
 makeoptions 	i915drmkms 	"CWARNFLAGS.i915_vgpu.c"+="-Wno-shadow"
 makeoptions 	i915drmkms 	"CWARNFLAGS.intel_display.c"+="-Wno-shadow -Wno-conversion"
