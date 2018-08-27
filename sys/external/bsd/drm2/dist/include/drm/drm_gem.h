@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_gem.h,v 1.4 2018/08/27 15:10:25 riastradh Exp $	*/
+/*	$NetBSD: drm_gem.h,v 1.5 2018/08/27 15:22:54 riastradh Exp $	*/
 
 #ifndef __DRM_GEM_H__
 #define __DRM_GEM_H__
@@ -106,7 +106,6 @@ struct drm_gem_object {
 	uint32_t pending_read_domains;
 	uint32_t pending_write_domain;
 
-#ifndef __NetBSD__	    /* XXX drm prime */
 	/**
 	 * dma_buf - dma buf associated with this GEM object
 	 *
@@ -134,7 +133,6 @@ struct drm_gem_object {
 	 * simply leave it as NULL.
 	 */
 	struct dma_buf_attachment *import_attach;
-#endif
 };
 
 void drm_gem_object_release(struct drm_gem_object *obj);

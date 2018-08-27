@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_drv.h,v 1.26 2018/08/27 15:09:35 riastradh Exp $	*/
+/*	$NetBSD: i915_drv.h,v 1.27 2018/08/27 15:22:54 riastradh Exp $	*/
 
 /* i915_drv.h -- Private header for the I915 driver -*- linux-c -*-
  */
@@ -2188,6 +2188,7 @@ struct drm_i915_gem_object {
 #ifdef __NetBSD__
 	struct pglist pageq;
 	bus_dmamap_t pages;	/* expedient misnomer */
+	struct sg_table *sg;	/* drm prime */
 #else
 	struct sg_table *pages;
 #endif

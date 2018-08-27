@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem.c,v 1.53 2018/08/27 14:50:04 riastradh Exp $	*/
+/*	$NetBSD: i915_gem.c,v 1.54 2018/08/27 15:22:54 riastradh Exp $	*/
 
 /*
  * Copyright © 2008-2015 Intel Corporation
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gem.c,v 1.53 2018/08/27 14:50:04 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gem.c,v 1.54 2018/08/27 15:22:54 riastradh Exp $");
 
 #ifdef __NetBSD__
 #if 0				/* XXX uvmhist option?  */
@@ -5107,10 +5107,8 @@ void i915_gem_free_object(struct drm_gem_object *gem_obj)
 
 	BUG_ON(obj->pages);
 
-#ifndef __NetBSD__		/* XXX drm prime */
 	if (obj->base.import_attach)
 		drm_prime_gem_destroy(&obj->base, NULL);
-#endif
 
 	if (obj->ops->release)
 		obj->ops->release(obj);

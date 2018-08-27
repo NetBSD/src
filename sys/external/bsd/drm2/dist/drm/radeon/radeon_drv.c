@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_drv.c,v 1.7 2018/08/27 07:03:26 riastradh Exp $	*/
+/*	$NetBSD: radeon_drv.c,v 1.8 2018/08/27 15:22:54 riastradh Exp $	*/
 
 /**
  * \file radeon_drv.c
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_drv.c,v 1.7 2018/08/27 07:03:26 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_drv.c,v 1.8 2018/08/27 15:22:54 riastradh Exp $");
 
 #include <drm/drmP.h>
 #include <drm/radeon_drm.h>
@@ -631,7 +631,6 @@ static struct drm_driver kms_driver = {
 	.fops = &radeon_driver_kms_fops,
 #endif
 
-#ifndef __NetBSD__		/* XXX drm prime */
 	.prime_handle_to_fd = drm_gem_prime_handle_to_fd,
 	.prime_fd_to_handle = drm_gem_prime_fd_to_handle,
 	.gem_prime_export = radeon_gem_prime_export,
@@ -643,7 +642,6 @@ static struct drm_driver kms_driver = {
 	.gem_prime_import_sg_table = radeon_gem_prime_import_sg_table,
 	.gem_prime_vmap = radeon_gem_prime_vmap,
 	.gem_prime_vunmap = radeon_gem_prime_vunmap,
-#endif
 
 	.name = DRIVER_NAME,
 	.desc = DRIVER_DESC,

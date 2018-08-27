@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_drm.c,v 1.14 2018/08/27 14:47:53 riastradh Exp $	*/
+/*	$NetBSD: nouveau_drm.c,v 1.15 2018/08/27 15:22:54 riastradh Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_drm.c,v 1.14 2018/08/27 14:47:53 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_drm.c,v 1.15 2018/08/27 15:22:54 riastradh Exp $");
 
 #include <linux/console.h>
 #include <linux/delay.h>
@@ -1030,7 +1030,6 @@ driver_stub = {
 	.fops = &nouveau_driver_fops,
 #endif
 
-#ifndef __NetBSD__		/* XXX drm prime */
 	.prime_handle_to_fd = drm_gem_prime_handle_to_fd,
 	.prime_fd_to_handle = drm_gem_prime_fd_to_handle,
 	.gem_prime_export = drm_gem_prime_export,
@@ -1042,7 +1041,6 @@ driver_stub = {
 	.gem_prime_import_sg_table = nouveau_gem_prime_import_sg_table,
 	.gem_prime_vmap = nouveau_gem_prime_vmap,
 	.gem_prime_vunmap = nouveau_gem_prime_vunmap,
-#endif
 
 	.gem_free_object = nouveau_gem_object_del,
 	.gem_open_object = nouveau_gem_object_open,

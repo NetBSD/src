@@ -1,4 +1,4 @@
-/*	$NetBSD: drm.h,v 1.7 2018/08/27 04:58:38 riastradh Exp $	*/
+/*	$NetBSD: drm.h,v 1.8 2018/08/27 15:22:54 riastradh Exp $	*/
 
 /**
  * \file drm.h
@@ -55,6 +55,7 @@ typedef unsigned int drm_handle_t;
 #ifdef __NetBSD__
 #include <sys/ioccom.h>
 #include <sys/types.h>
+#include <sys/fcntl.h>
 #ifndef _KERNEL
 typedef int8_t   __s8;
 typedef uint8_t  __u8;
