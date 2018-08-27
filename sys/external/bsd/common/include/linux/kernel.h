@@ -1,4 +1,4 @@
-/*	$NetBSD: kernel.h,v 1.19 2018/08/27 07:45:43 riastradh Exp $	*/
+/*	$NetBSD: kernel.h,v 1.20 2018/08/27 13:37:55 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -195,10 +195,13 @@ kstrtol(const char *s, unsigned base, long *vp)
 static inline char *
 kvasprintf(gfp_t gfp, const char *fmt, va_list va)
 {
+	va_list tva;
 	char *str;
 	int len, len1 __diagused;
 
-	len = vsnprintf(NULL, 0, fmt, va);
+	va_copy(tva, va);
+	len = vsnprintf(NULL, 0, fmt, tva);
+	va_end(tva);
 	str = kmalloc(len + 1, gfp);
 	if (str == NULL)
 		return NULL;
