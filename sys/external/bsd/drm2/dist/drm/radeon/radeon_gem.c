@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_gem.c,v 1.5 2018/08/27 07:47:55 riastradh Exp $	*/
+/*	$NetBSD: radeon_gem.c,v 1.6 2018/08/27 15:22:54 riastradh Exp $	*/
 
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
@@ -28,7 +28,7 @@
  *          Jerome Glisse
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_gem.c,v 1.5 2018/08/27 07:47:55 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_gem.c,v 1.6 2018/08/27 15:22:54 riastradh Exp $");
 
 #include <drm/drmP.h>
 #include <drm/radeon_drm.h>
@@ -39,10 +39,8 @@ void radeon_gem_object_free(struct drm_gem_object *gobj)
 	struct radeon_bo *robj = gem_to_radeon_bo(gobj);
 
 	if (robj) {
-#ifndef __NetBSD__		/* XXX drm prime */
 		if (robj->gem_base.import_attach)
 			drm_prime_gem_destroy(&robj->gem_base, robj->tbo.sg);
-#endif
 		radeon_mn_unregister(robj);
 		radeon_bo_unref(&robj);
 	}

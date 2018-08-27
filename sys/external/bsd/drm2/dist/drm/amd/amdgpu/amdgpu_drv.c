@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_drv.c,v 1.4 2018/08/27 14:04:50 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_drv.c,v 1.5 2018/08/27 15:22:54 riastradh Exp $	*/
 
 /**
  * \file amdgpu_drv.c
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_drv.c,v 1.4 2018/08/27 14:04:50 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_drv.c,v 1.5 2018/08/27 15:22:54 riastradh Exp $");
 
 #include <drm/drmP.h>
 #include <drm/amdgpu_drm.h>
@@ -538,7 +538,6 @@ static struct drm_driver kms_driver = {
 	.fops = &amdgpu_driver_kms_fops,
 #endif
 
-#ifndef __NetBSD__		/* XXX drm prime */
 	.prime_handle_to_fd = drm_gem_prime_handle_to_fd,
 	.prime_fd_to_handle = drm_gem_prime_fd_to_handle,
 	.gem_prime_export = amdgpu_gem_prime_export,
@@ -550,7 +549,6 @@ static struct drm_driver kms_driver = {
 	.gem_prime_import_sg_table = amdgpu_gem_prime_import_sg_table,
 	.gem_prime_vmap = amdgpu_gem_prime_vmap,
 	.gem_prime_vunmap = amdgpu_gem_prime_vunmap,
-#endif
 
 	.name = DRIVER_NAME,
 	.desc = DRIVER_DESC,
