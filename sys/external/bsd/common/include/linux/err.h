@@ -1,4 +1,4 @@
-/*	$NetBSD: err.h,v 1.1 2015/08/18 21:10:56 skrll Exp $	*/
+/*	$NetBSD: err.h,v 1.2 2018/08/27 07:20:25 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -79,9 +79,11 @@ ERR_CAST(void *ptr)		/* XXX Linux declares with const.  */
 }
 
 static inline long
-PTR_RET(const void *ptr)
+PTR_ERR_OR_ZERO(const void *ptr)
 {
 	return (IS_ERR(ptr)? PTR_ERR(ptr) : 0);
 }
+
+#define	PTR_RET	PTR_ERR_OR_ZERO
 
 #endif  /* _LINUX_ERR_H_ */
