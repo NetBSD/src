@@ -1,4 +1,4 @@
-/*	$NetBSD: interval_tree.h,v 1.5 2018/08/27 06:42:28 riastradh Exp $	*/
+/*	$NetBSD: interval_tree.h,v 1.6 2018/08/27 07:51:59 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -37,6 +37,13 @@
 struct rb_root {
 	struct rb_tree	rbr_tree;
 };
+
+static inline bool
+RB_EMPTY_ROOT(struct rb_root *root)
+{
+
+	return RB_TREE_MIN(&root->rbr_tree) == NULL;
+}
 
 struct interval_tree_node {
 	struct rb_node	itn_node;
@@ -79,6 +86,13 @@ static const rb_tree_ops_t interval_tree_ops = {
 	.rbto_compare_key = interval_tree_compare_key,
 	.rbto_node_offset = offsetof(struct interval_tree_node, itn_node),
 };
+
+static inline void
+interval_tree_init(struct rb_root *root)
+{
+
+	rb_tree_init(&root->rbr_tree, &interval_tree_ops);
+}
 
 static inline void
 interval_tree_insert(struct interval_tree_node *node, struct rb_root *root)
@@ -131,5 +145,17 @@ interval_tree_iter_next(struct rb_root *root, struct interval_tree_node *node,
 	if (last < node->start)
 		return NULL;
 }
+
+/*
+ * XXX This is not actually postorder, but I can't fathom why you would
+ * want postorder for an ordered tree; different insertion orders lead
+ * to different traversal orders.
+ */
+#define	rbtree_postorder_for_each_entry_safe(NODE, TMP, ROOT, FIELD)	      \
+	for ((NODE) = RB_TREE_MIN(&(ROOT)->rbr_tree);			      \
+		((NODE) != NULL &&					      \
+		    ((TMP) = rb_tree_iterate(&(ROOT)->rbr_tree, (NODE),	      \
+			RB_DIR_RIGHT)));				      \
+		(NODE) = (TMP))
 
 #endif	/* _LINUX_INTERVAL_TREE_H_ */
