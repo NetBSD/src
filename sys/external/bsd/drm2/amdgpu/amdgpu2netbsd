@@ -1,14 +1,17 @@
 #!/bin/sh
 
-#	$NetBSD: amdgpu2netbsd,v 1.1 2018/08/27 14:02:32 riastradh Exp $
+#	$NetBSD: amdgpu2netbsd,v 1.2 2018/08/27 14:10:42 riastradh Exp $
 #
 # $ /path/to/amdgpu2netbsd > /path/to/files.amdgpu.new
 #
-# Run from the top-level amd/amdgpu source directory.
+# Run from the top-level dist/amd/amdgpu source directory, ideally
+# before import.
 
 set -Ceu
 
-# Location of the amdgpu sources relative to $NETBSDSRCDIR.
+: ${MV:=mv}
+
+# Location of amdgpu sources relative to $NETBSDSOURCEDIR.
 amdgpu_top=external/bsd/drm2/dist/drm/amd/amdgpu
 
 # config(5) flag for the amdgpu driver.
@@ -21,6 +24,41 @@ make -f Makefile -V '$(amdgpu-y)' \
 | grep -v '^$' \
 | sed -e 's,\.o$,.c,' \
 | sort -u \
-| while read f; do
-	printf 'file\t%s\t%s\n' "$amdgpu_top/$f" "$amdgpu_flag"
-done
+| awk '
+	BEGIN {
+		duplicates = 0
+	}
+	{
+		if (index($1, "/")) {
+			dir = $1
+			sub("/[^/]*$", "/", dir)
+			base = $1
+			sub("^.*/", "", base)
+		} else {
+			dir = ""
+			base = $1
+		}
+		fqbase = (base ~ "^amdgpu_" ? "" : "amdgpu_") base
+		if (seen[fqbase]) {
+			printf("Duplicate basename: %s %s\n", fqbase,
+			    seen[fqbase]) >"/dev/stderr"
+			duplicates = 1
+		}
+		if (duplicates)
+			next
+		printf("%s %s\n", $1, dir fqbase)
+	}
+	END {
+		if (duplicates) {
+			printf("Time to rewite me!\n") > "/dev/stderr"
+			exit 1
+		}
+	}
+' \
+| while read from to; do
+	if [ "x$from" != "x$to" ]; then
+		${MV} -f -- "$from" "$to"
+	fi
+	printf 'file\t%s\t%s\n' "$amdgpu_top/$to" "$amdgpu_flag"
+done \
+| sort -u
