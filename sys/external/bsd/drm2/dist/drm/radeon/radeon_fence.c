@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_fence.c,v 1.9 2018/08/27 04:58:36 riastradh Exp $	*/
+/*	$NetBSD: radeon_fence.c,v 1.10 2018/08/27 06:38:36 riastradh Exp $	*/
 
 /*
  * Copyright 2009 Jerome Glisse.
@@ -31,7 +31,7 @@
  *    Dave Airlie
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_fence.c,v 1.9 2018/08/27 04:58:36 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_fence.c,v 1.10 2018/08/27 06:38:36 riastradh Exp $");
 
 #include <linux/seq_file.h>
 #include <linux/atomic.h>
@@ -203,8 +203,8 @@ static int radeon_fence_check_signaled(wait_queue_t *wait, unsigned mode, int fl
 }
 
 #ifdef __NetBSD__
-static void
-radeon_wakeup(struct radeon_device *rdev)
+void
+radeon_fence_wakeup_locked(struct radeon_device *rdev)
 {
 	struct radeon_fence *fence, *next;
 

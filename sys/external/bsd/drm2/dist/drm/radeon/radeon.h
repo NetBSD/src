@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon.h,v 1.4 2018/08/27 04:58:36 riastradh Exp $	*/
+/*	$NetBSD: radeon.h,v 1.5 2018/08/27 06:38:36 riastradh Exp $	*/
 
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
@@ -400,6 +400,7 @@ int radeon_fence_driver_init(struct radeon_device *rdev);
 void radeon_fence_driver_fini(struct radeon_device *rdev);
 void radeon_fence_driver_force_completion(struct radeon_device *rdev, int ring);
 int radeon_fence_emit(struct radeon_device *rdev, struct radeon_fence **fence, int ring);
+void radeon_fence_wakeup_locked(struct radeon_device *rdev);
 void radeon_fence_process(struct radeon_device *rdev, int ring);
 bool radeon_fence_signaled(struct radeon_fence *fence);
 int radeon_fence_wait(struct radeon_fence *fence, bool interruptible);

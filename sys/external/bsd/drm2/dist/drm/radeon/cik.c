@@ -1,4 +1,4 @@
-/*	$NetBSD: cik.c,v 1.4 2018/08/27 04:58:35 riastradh Exp $	*/
+/*	$NetBSD: cik.c,v 1.5 2018/08/27 06:38:36 riastradh Exp $	*/
 
 /*
  * Copyright 2012 Advanced Micro Devices, Inc.
@@ -24,7 +24,7 @@
  * Authors: Alex Deucher
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cik.c,v 1.4 2018/08/27 04:58:35 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cik.c,v 1.5 2018/08/27 06:38:36 riastradh Exp $");
 
 #include <linux/firmware.h>
 #include <linux/slab.h>
@@ -8508,8 +8508,15 @@ restart_ih:
 	if (queue_hotplug)
 		schedule_delayed_work(&rdev->hotplug_work, 0);
 	if (queue_reset) {
+#ifdef __NetBSD__
+		spin_lock(&rdev->fence_lock);
+		rdev->needs_reset = true;
+		radeon_fence_wakeup_locked(rdev);
+		spin_unlock(&rdev->fence_lock);
+#else
 		rdev->needs_reset = true;
 		wake_up_all(&rdev->fence_queue);
+#endif
 	}
 	if (queue_thermal)
 		schedule_work(&rdev->pm.dpm.thermal.work);
