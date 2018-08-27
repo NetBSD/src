@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nv50_display.c,v 1.7 2018/08/27 04:58:24 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nv50_display.c,v 1.8 2018/08/27 07:37:28 riastradh Exp $	*/
 
 /*
  * Copyright 2011 Red Hat Inc.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nv50_display.c,v 1.7 2018/08/27 04:58:24 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nv50_display.c,v 1.8 2018/08/27 07:37:28 riastradh Exp $");
 
 #include <linux/dma-mapping.h>
 #include <linux/err.h>
@@ -271,9 +271,8 @@ nv50_dmac_create(struct nvif_device *device, struct nvif_object *disp,
 
 #ifdef __NetBSD__
     {
-	struct nouveau_device *device = nv_device(core);
-	const bus_dma_tag_t dmat = pci_dma64_available(&device->pdev->pd_pa) ?
-	    device->pdev->pd_pa.pa_dmat64 : device->pdev->pd_pa.pa_dmat;
+	struct nvkm_device *nvkm_device = nvxx_device(device);
+	const bus_dma_tag_t dmat = nvkm_device->func->dma_tag(nvkm_device);
 
 	int rsegs;
 
