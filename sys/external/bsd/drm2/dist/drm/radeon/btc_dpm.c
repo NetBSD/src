@@ -1,4 +1,4 @@
-/*	$NetBSD: btc_dpm.c,v 1.3 2018/08/27 04:58:35 riastradh Exp $	*/
+/*	$NetBSD: btc_dpm.c,v 1.4 2018/08/27 07:57:45 riastradh Exp $	*/
 
 /*
  * Copyright 2011 Advanced Micro Devices, Inc.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btc_dpm.c,v 1.3 2018/08/27 04:58:35 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btc_dpm.c,v 1.4 2018/08/27 07:57:45 riastradh Exp $");
 
 #include "drmP.h"
 #include "radeon.h"
@@ -2761,6 +2761,7 @@ void btc_dpm_debugfs_print_current_performance_level(struct radeon_device *rdev,
 			   current_index, pl->sclk, pl->mclk, pl->vddc, pl->vddci);
 	}
 }
+#endif	/* CONFIG_DEBUG_FS */
 
 u32 btc_dpm_get_current_sclk(struct radeon_device *rdev)
 {
@@ -2807,7 +2808,6 @@ u32 btc_dpm_get_current_mclk(struct radeon_device *rdev)
 		return pl->mclk;
 	}
 }
-#endif
 
 u32 btc_dpm_get_sclk(struct radeon_device *rdev, bool low)
 {
