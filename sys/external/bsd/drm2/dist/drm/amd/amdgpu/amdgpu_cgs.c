@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_cgs.c,v 1.2 2018/08/27 04:58:19 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_cgs.c,v 1.3 2018/08/27 14:04:50 riastradh Exp $	*/
 
 /*
  * Copyright 2015 Advanced Micro Devices, Inc.
@@ -24,8 +24,9 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_cgs.c,v 1.2 2018/08/27 04:58:19 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_cgs.c,v 1.3 2018/08/27 14:04:50 riastradh Exp $");
 
+#include <asm/byteorder.h>
 #include <linux/list.h>
 #include <linux/slab.h>
 #include <linux/pci.h>
@@ -83,6 +84,9 @@ static int amdgpu_cgs_gmap_kmem(void *cgs_device, void *kmem,
 				uint64_t min_offset, uint64_t max_offset,
 				cgs_handle_t *kmem_handle, uint64_t *mcaddr)
 {
+#ifdef __NetBSD__		/* XXX drm prime */
+	return -ENOSYS;
+#else
 	CGS_FUNC_ADEV;
 	int ret;
 	struct amdgpu_bo *bo;
@@ -105,10 +109,14 @@ static int amdgpu_cgs_gmap_kmem(void *cgs_device, void *kmem,
 
 	*kmem_handle = (cgs_handle_t)bo;
 	return ret;
+#endif
 }
 
 static int amdgpu_cgs_gunmap_kmem(void *cgs_device, cgs_handle_t kmem_handle)
 {
+#ifdef __NetBSD__		/* XXX drm prime */
+	panic("not implemented");
+#else
 	struct amdgpu_bo *obj = (struct amdgpu_bo *)kmem_handle;
 
 	if (obj) {
@@ -121,6 +129,7 @@ static int amdgpu_cgs_gunmap_kmem(void *cgs_device, cgs_handle_t kmem_handle)
 
 	}
 	return 0;
+#endif
 }
 
 static int amdgpu_cgs_alloc_gpu_mem(void *cgs_device,
@@ -582,7 +591,7 @@ static int amdgpu_cgs_irq_put(void *cgs_device, unsigned src_id, unsigned type)
 	return amdgpu_irq_put(adev, adev->irq.sources[src_id], type);
 }
 
-int amdgpu_cgs_set_clockgating_state(void *cgs_device,
+static int amdgpu_cgs_set_clockgating_state(void *cgs_device,
 				  enum amd_ip_block_type block_type,
 				  enum amd_clockgating_state state)
 {
@@ -603,7 +612,7 @@ int amdgpu_cgs_set_clockgating_state(void *cgs_device,
 	return r;
 }
 
-int amdgpu_cgs_set_powergating_state(void *cgs_device,
+static int amdgpu_cgs_set_powergating_state(void *cgs_device,
 				  enum amd_ip_block_type block_type,
 				  enum amd_powergating_state state)
 {
@@ -700,7 +709,7 @@ static int amdgpu_cgs_get_firmware_info(void *cgs_device,
 		char fw_name[30] = {0};
 		int err = 0;
 		uint32_t ucode_size;
-		uint32_t ucode_start_address;
+		uint32_t ucode_start_address __unused;
 		const uint8_t *src;
 		const struct smc_firmware_header_v1_0 *hdr;
 
@@ -736,7 +745,7 @@ static int amdgpu_cgs_get_firmware_info(void *cgs_device,
 
 		info->version = adev->pm.fw_version;
 		info->image_size = ucode_size;
-		info->kptr = (void *)src;
+		info->kptr = (void *)__UNCONST(src); /* XXX used for? */
 	}
 	return 0;
 }

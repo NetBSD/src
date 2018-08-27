@@ -1,4 +1,4 @@
-/*	$NetBSD: dce_v10_0.c,v 1.2 2018/08/27 04:58:20 riastradh Exp $	*/
+/*	$NetBSD: dce_v10_0.c,v 1.3 2018/08/27 14:04:50 riastradh Exp $	*/
 
 /*
  * Copyright 2014 Advanced Micro Devices, Inc.
@@ -23,7 +23,7 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dce_v10_0.c,v 1.2 2018/08/27 04:58:20 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dce_v10_0.c,v 1.3 2018/08/27 14:04:50 riastradh Exp $");
 
 #include "drmP.h"
 #include "amdgpu.h"
@@ -1717,7 +1717,7 @@ static void dce_v10_0_afmt_update_avi_infoframe(struct drm_encoder *encoder,
 	struct amdgpu_device *adev = dev->dev_private;
 	struct amdgpu_encoder *amdgpu_encoder = to_amdgpu_encoder(encoder);
 	struct amdgpu_encoder_atom_dig *dig = amdgpu_encoder->enc_priv;
-	uint8_t *frame = buffer + 3;
+	uint8_t *frame = (uint8_t *)buffer + 3;
 	uint8_t *header = buffer;
 
 	WREG32(mmAFMT_AVI_INFO0 + dig->afmt->offset,

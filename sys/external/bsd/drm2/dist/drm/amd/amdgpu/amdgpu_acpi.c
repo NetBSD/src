@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_acpi.c,v 1.2 2018/08/27 04:58:19 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_acpi.c,v 1.3 2018/08/27 14:04:50 riastradh Exp $	*/
 
 /*
  * Copyright 2012 Advanced Micro Devices, Inc.
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_acpi.c,v 1.2 2018/08/27 04:58:19 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_acpi.c,v 1.3 2018/08/27 14:04:50 riastradh Exp $");
 
 #include <linux/pci.h>
 #include <linux/acpi.h>
@@ -35,11 +35,10 @@ __KERNEL_RCSID(0, "$NetBSD: amdgpu_acpi.c,v 1.2 2018/08/27 04:58:19 riastradh Ex
 #include <drm/drm_crtc_helper.h>
 #include "amdgpu.h"
 #include "amdgpu_acpi.h"
+#include "amdgpu_pm.h"
 #include "atom.h"
 
 #define ACPI_AC_CLASS           "ac_adapter"
-
-extern void amdgpu_pm_acpi_event_handler(struct amdgpu_device *adev);
 
 struct atif_verify_interface {
 	u16 size;		/* structure size in bytes (includes size field) */

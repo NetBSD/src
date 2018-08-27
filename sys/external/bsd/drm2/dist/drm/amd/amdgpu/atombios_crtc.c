@@ -1,4 +1,4 @@
-/*	$NetBSD: atombios_crtc.c,v 1.2 2018/08/27 04:58:20 riastradh Exp $	*/
+/*	$NetBSD: atombios_crtc.c,v 1.3 2018/08/27 14:04:50 riastradh Exp $	*/
 
 /*
  * Copyright 2007-8 Advanced Micro Devices, Inc.
@@ -26,12 +26,13 @@
  *          Alex Deucher
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atombios_crtc.c,v 1.2 2018/08/27 04:58:20 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atombios_crtc.c,v 1.3 2018/08/27 14:04:50 riastradh Exp $");
 
 #include <drm/drmP.h>
 #include <drm/drm_crtc_helper.h>
 #include <drm/amdgpu_drm.h>
 #include <drm/drm_fixed.h>
+#include <asm/byteorder.h>
 #include "amdgpu.h"
 #include "atom.h"
 #include "atom-bits.h"
@@ -39,6 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: atombios_crtc.c,v 1.2 2018/08/27 04:58:20 riastradh 
 #include "amdgpu_atombios.h"
 #include "amdgpu_pll.h"
 #include "amdgpu_connectors.h"
+#include "atombios_crtc.h"
 
 void amdgpu_atombios_crtc_overscan_setup(struct drm_crtc *crtc,
 				  struct drm_display_mode *mode,

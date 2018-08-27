@@ -1,4 +1,4 @@
-/*	$NetBSD: atom.c,v 1.2 2018/08/27 04:58:20 riastradh Exp $	*/
+/*	$NetBSD: atom.c,v 1.3 2018/08/27 14:04:50 riastradh Exp $	*/
 
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
@@ -25,12 +25,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atom.c,v 1.2 2018/08/27 04:58:20 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atom.c,v 1.3 2018/08/27 14:04:50 riastradh Exp $");
 
 #include <linux/module.h>
 #include <linux/sched.h>
 #include <linux/slab.h>
 #include <asm/unaligned.h>
+#include <asm/byteorder.h>
 
 #define ATOM_DEBUG
 
@@ -1402,7 +1403,7 @@ bool amdgpu_atom_parse_data_header(struct atom_context *ctx, int index,
 {
 	int offset = index * 2 + 4;
 	int idx = CU16(ctx->data_table + offset);
-	u16 *mdt = (u16 *)(ctx->bios + ctx->data_table + 4);
+	u16 *mdt = (u16 *)((char *)ctx->bios + ctx->data_table + 4);
 
 	if (!mdt[index])
 		return false;
@@ -1422,7 +1423,7 @@ bool amdgpu_atom_parse_cmd_header(struct atom_context *ctx, int index, uint8_t *
 {
 	int offset = index * 2 + 4;
 	int idx = CU16(ctx->cmd_table + offset);
-	u16 *mct = (u16 *)(ctx->bios + ctx->cmd_table + 4);
+	u16 *mct = (u16 *)((char *)ctx->bios + ctx->cmd_table + 4);
 
 	if (!mct[index])
 		return false;
@@ -1442,7 +1443,7 @@ int amdgpu_atom_allocate_fb_scratch(struct atom_context *ctx)
 	struct _ATOM_VRAM_USAGE_BY_FIRMWARE *firmware_usage;
 
 	if (amdgpu_atom_parse_data_header(ctx, index, NULL, NULL, NULL, &data_offset)) {
-		firmware_usage = (struct _ATOM_VRAM_USAGE_BY_FIRMWARE *)(ctx->bios + data_offset);
+		firmware_usage = (struct _ATOM_VRAM_USAGE_BY_FIRMWARE *)((char *)ctx->bios + data_offset);
 
 		DRM_DEBUG("atom firmware requested %08x %dkb\n",
 			  le32_to_cpu(firmware_usage->asFirmwareVramReserveInfo[0].ulStartAddrUsedByFirmware),
