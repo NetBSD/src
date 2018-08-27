@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_work.c,v 1.5 2018/08/27 07:05:39 riastradh Exp $	*/
+/*	$NetBSD: linux_work.c,v 1.6 2018/08/27 07:46:28 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_work.c,v 1.5 2018/08/27 07:05:39 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_work.c,v 1.6 2018/08/27 07:46:28 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -94,6 +94,7 @@ static void	linux_worker_intr(void *);
 
 struct workqueue_struct		*system_wq;
 struct workqueue_struct		*system_long_wq;
+struct workqueue_struct		*system_power_efficient_wq;
 
 static struct {
 	kmutex_t		lock;
@@ -117,10 +118,15 @@ linux_workqueue_init(void)
 	if (system_long_wq == NULL)
 		goto fail1;
 
+	system_power_efficient_wq = alloc_ordered_workqueue("lnxpwrwq", 0);
+	if (system_long_wq == NULL)
+		goto fail2;
+
 	return 0;
 
-fail2: __unused
-	destroy_workqueue(system_long_wq);
+fail3: __unused
+	destroy_workqueue(system_power_efficient_wq);
+fail2:	destroy_workqueue(system_long_wq);
 fail1:	destroy_workqueue(system_wq);
 fail0:	mutex_destroy(&workqueues.lock);
 	return ENOMEM;
