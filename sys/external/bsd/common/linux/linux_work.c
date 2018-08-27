@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_work.c,v 1.35 2018/08/27 15:05:01 riastradh Exp $	*/
+/*	$NetBSD: linux_work.c,v 1.36 2018/08/27 15:05:16 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_work.c,v 1.35 2018/08/27 15:05:01 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_work.c,v 1.36 2018/08/27 15:05:16 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/atomic.h>
@@ -80,6 +80,12 @@ struct workqueue_struct	*system_wq __read_mostly;
 struct workqueue_struct	*system_long_wq __read_mostly;
 struct workqueue_struct	*system_power_efficient_wq __read_mostly;
 
+/*
+ * linux_workqueue_init()
+ *
+ *	Initialize the Linux workqueue subsystem.  Return 0 on success,
+ *	NetBSD error on failure.
+ */
 int
 linux_workqueue_init(void)
 {
@@ -118,6 +124,11 @@ fail0:	KASSERT(error);
 	return error;
 }
 
+/*
+ * linux_workqueue_fini()
+ *
+ *	Destroy the Linux workqueue subsystem.  Never fails.
+ */
 void
 linux_workqueue_fini(void)
 {
@@ -132,6 +143,13 @@ linux_workqueue_fini(void)
  * Workqueues
  */
 
+/*
+ * alloc_ordered_workqueue(name, flags)
+ *
+ *	Create a workqueue of the given name.  No flags are currently
+ *	defined.  Return NULL on failure, pointer to struct
+ *	workqueue_struct object on success.
+ */
 struct workqueue_struct *
 alloc_ordered_workqueue(const char *name, int flags)
 {
@@ -169,6 +187,14 @@ fail0:	KASSERT(TAILQ_EMPTY(&wq->wq_queue));
 	return NULL;
 }
 
+/*
+ * destroy_workqueue(wq)
+ *
+ *	Destroy a workqueue created with wq.  Cancel any pending
+ *	delayed work.  Wait for all queued work to complete.
+ *
+ *	May sleep.
+ */
 void
 destroy_workqueue(struct workqueue_struct *wq)
 {
@@ -237,6 +263,14 @@ destroy_workqueue(struct workqueue_struct *wq)
  * Work thread and callout
  */
 
+/*
+ * linux_workqueue_thread(cookie)
+ *
+ *	Main function for a workqueue's worker thread.  Waits until
+ *	there is work queued, grabs a batch of work off the queue,
+ *	executes it all, bumps the generation number, and repeats,
+ *	until dying.
+ */
 static void __dead
 linux_workqueue_thread(void *cookie)
 {
@@ -295,6 +329,16 @@ linux_workqueue_thread(void *cookie)
 	kthread_exit(0);
 }
 
+/*
+ * linux_workqueue_timeout(cookie)
+ *
+ *	Delayed work timeout callback.
+ *
+ *	- If scheduled, queue it.
+ *	- If rescheduled, callout_schedule ourselves again.
+ *	- If cancelled, destroy the callout and release the work from
+ *        the workqueue.
+ */
 static void
 linux_workqueue_timeout(void *cookie)
 {
@@ -331,6 +375,12 @@ linux_workqueue_timeout(void *cookie)
 out:	mutex_exit(&wq->wq_lock);
 }
 
+/*
+ * current_work()
+ *
+ *	If in a workqueue worker thread, return the work it is
+ *	currently executing.  Otherwise return NULL.
+ */
 struct work_struct *
 current_work(void)
 {
@@ -352,6 +402,12 @@ current_work(void)
  * Work
  */
 
+/*
+ * INIT_WORK(work, fn)
+ *
+ *	Initialize work for use with a workqueue to call fn in a worker
+ *	thread.  There is no corresponding destruction operation.
+ */
 void
 INIT_WORK(struct work_struct *work, void (*fn)(struct work_struct *))
 {
@@ -360,6 +416,16 @@ INIT_WORK(struct work_struct *work, void (*fn)(struct work_struct *))
 	work->func = fn;
 }
 
+/*
+ * acquire_work(work, wq)
+ *
+ *	Try to associate work with wq.  If work is already on a
+ *	workqueue, return that workqueue.  Otherwise, set work's queue
+ *	to wq, issue a memory barrier to match any prior release_work,
+ *	and return NULL.
+ *
+ *	Caller must hold wq's lock.
+ */
 static struct workqueue_struct *
 acquire_work(struct work_struct *work, struct workqueue_struct *wq)
 {
@@ -376,6 +442,14 @@ acquire_work(struct work_struct *work, struct workqueue_struct *wq)
 	return wq0;
 }
 
+/*
+ * release_work(work, wq)
+ *
+ *	Issue a memory barrier to match any subsequent acquire_work and
+ *	dissociate work from wq.
+ *
+ *	Caller must hold wq's lock and work must be associated with wq.
+ */
 static void
 release_work(struct work_struct *work, struct workqueue_struct *wq)
 {
@@ -387,6 +461,17 @@ release_work(struct work_struct *work, struct workqueue_struct *wq)
 	work->work_queue = NULL;
 }
 
+/*
+ * schedule_work(work)
+ *
+ *	If work is not already queued on system_wq, queue it to be run
+ *	by system_wq's worker thread when it next can.  True if it was
+ *	newly queued, false if it was already queued.  If the work was
+ *	already running, queue it to run again.
+ *
+ *	Caller must ensure work is not queued to run on a different
+ *	workqueue.
+ */
 bool
 schedule_work(struct work_struct *work)
 {
@@ -394,6 +479,17 @@ schedule_work(struct work_struct *work)
 	return queue_work(system_wq, work);
 }
 
+/*
+ * queue_work(wq, work)
+ *
+ *	If work is not already queued on wq, queue it to be run by wq's
+ *	worker thread when it next can.  True if it was newly queued,
+ *	false if it was already queued.  If the work was already
+ *	running, queue it to run again.
+ *
+ *	Caller must ensure work is not queued to run on a different
+ *	workqueue.
+ */
 bool
 queue_work(struct workqueue_struct *wq, struct work_struct *work)
 {
@@ -443,6 +539,15 @@ queue_work(struct workqueue_struct *wq, struct work_struct *work)
 	return newly_queued;
 }
 
+/*
+ * cancel_work(work)
+ *
+ *	If work was queued, remove it from the queue and return true.
+ *	If work was not queued, return false.  Note that work may
+ *	already be running; if it hasn't been requeued, then
+ *	cancel_work will return false, and either way, cancel_work will
+ *	NOT wait for the work to complete.
+ */
 bool
 cancel_work(struct work_struct *work)
 {
@@ -480,6 +585,17 @@ cancel_work(struct work_struct *work)
 out:	return cancelled_p;
 }
 
+/*
+ * cancel_work_sync(work)
+ *
+ *	If work was queued, remove it from the queue and return true.
+ *	If work was not queued, return false.  Note that work may
+ *	already be running; if it hasn't been requeued, then
+ *	cancel_work will return false; either way, if work was
+ *	currently running, wait for it to complete.
+ *
+ *	May sleep.
+ */
 bool
 cancel_work_sync(struct work_struct *work)
 {
@@ -543,6 +659,13 @@ wait_for_current_work(struct work_struct *work, struct workqueue_struct *wq)
  * Delayed work
  */
 
+/*
+ * INIT_DELAYED_WORK(dw, fn)
+ *
+ *	Initialize dw for use with a workqueue to call fn in a worker
+ *	thread after a delay.  There is no corresponding destruction
+ *	operation.
+ */
 void
 INIT_DELAYED_WORK(struct delayed_work *dw, void (*fn)(struct work_struct *))
 {
@@ -559,6 +682,17 @@ INIT_DELAYED_WORK(struct delayed_work *dw, void (*fn)(struct work_struct *))
 	 */
 }
 
+/*
+ * schedule_delayed_work(dw, ticks)
+ *
+ *	If it is not currently scheduled, schedule dw to run after
+ *	ticks on system_wq.  If currently executing and not already
+ *	rescheduled, reschedule it.  True if it was newly scheduled,
+ *	false if it was already scheduled.
+ *
+ *	If ticks == 0, queue it to run as soon as the worker can,
+ *	without waiting for the next callout tick to run.
+ */
 bool
 schedule_delayed_work(struct delayed_work *dw, unsigned long ticks)
 {
@@ -631,8 +765,11 @@ cancel_delayed_work_done(struct workqueue_struct *wq, struct delayed_work *dw)
  * queue_delayed_work(wq, dw, ticks)
  *
  *	If it is not currently scheduled, schedule dw to run after
- *	ticks.  If currently executing and not already rescheduled,
- *	reschedule it.  If ticks == 0, run without delay.
+ *	ticks on wq.  If currently executing and not already
+ *	rescheduled, reschedule it.
+ *
+ *	If ticks == 0, queue it to run as soon as the worker can,
+ *	without waiting for the next callout tick to run.
  */
 bool
 queue_delayed_work(struct workqueue_struct *wq, struct delayed_work *dw,
@@ -756,6 +893,9 @@ queue_delayed_work(struct workqueue_struct *wq, struct delayed_work *dw,
  *	Schedule dw to run after ticks.  If currently scheduled,
  *	reschedule it.  If currently executing, reschedule it.  If
  *	ticks == 0, run without delay.
+ *
+ *	True if it modified the timer of an already scheduled work,
+ *	false if it newly scheduled the work.
  */
 bool
 mod_delayed_work(struct workqueue_struct *wq, struct delayed_work *dw,
@@ -950,6 +1090,16 @@ mod_delayed_work(struct workqueue_struct *wq, struct delayed_work *dw,
 	return timer_modified;
 }
 
+/*
+ * cancel_delayed_work(dw)
+ *
+ *	If work was scheduled or queued, remove it from the schedule or
+ *	queue and return true.  If work was not scheduled or queued,
+ *	return false.  Note that work may already be running; if it
+ *	hasn't been rescheduled or requeued, then cancel_delayed_work
+ *	will return false, and either way, cancel_delayed_work will NOT
+ *	wait for the work to complete.
+ */
 bool
 cancel_delayed_work(struct delayed_work *dw)
 {
@@ -1043,6 +1193,15 @@ cancel_delayed_work(struct delayed_work *dw)
 	return cancelled_p;
 }
 
+/*
+ * cancel_delayed_work_sync(dw)
+ *
+ *	If work was scheduled or queued, remove it from the schedule or
+ *	queue and return true.  If work was not scheduled or queued,
+ *	return false.  Note that work may already be running; if it
+ *	hasn't been rescheduled or requeued, then cancel_delayed_work
+ *	will return false; either way, wait for it to complete.
+ */
 bool
 cancel_delayed_work_sync(struct delayed_work *dw)
 {
@@ -1138,6 +1297,12 @@ cancel_delayed_work_sync(struct delayed_work *dw)
  * Flush
  */
 
+/*
+ * flush_scheduled_work()
+ *
+ *	Wait for all work queued on system_wq to complete.  This does
+ *	not include delayed work.
+ */
 void
 flush_scheduled_work(void)
 {
@@ -1145,6 +1310,14 @@ flush_scheduled_work(void)
 	flush_workqueue(system_wq);
 }
 
+/*
+ * flush_workqueue_locked(wq)
+ *
+ *	Wait for all work queued on wq to complete.  This does not
+ *	include delayed work.
+ *
+ *	Caller must hold wq's lock.
+ */
 static void
 flush_workqueue_locked(struct workqueue_struct *wq)
 {
@@ -1175,6 +1348,12 @@ flush_workqueue_locked(struct workqueue_struct *wq)
 		cv_wait(&wq->wq_cv, &wq->wq_lock);
 }
 
+/*
+ * flush_workqueue(wq)
+ *
+ *	Wait for all work queued on wq to complete.  This does not
+ *	include delayed work.
+ */
 void
 flush_workqueue(struct workqueue_struct *wq)
 {
@@ -1184,6 +1363,12 @@ flush_workqueue(struct workqueue_struct *wq)
 	mutex_exit(&wq->wq_lock);
 }
 
+/*
+ * flush_work(work)
+ *
+ *	If work is queued or currently executing, wait for it to
+ *	complete.
+ */
 void
 flush_work(struct work_struct *work)
 {
@@ -1196,6 +1381,12 @@ flush_work(struct work_struct *work)
 	flush_workqueue(wq);
 }
 
+/*
+ * flush_delayed_work(dw)
+ *
+ *	If dw is scheduled to run after a delay, cancel it.  If dw is
+ *	queued or currently executing, wait for it to complete.
+ */
 void
 flush_delayed_work(struct delayed_work *dw)
 {
