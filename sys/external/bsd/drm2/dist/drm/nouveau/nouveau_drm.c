@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_drm.c,v 1.11 2018/08/27 07:38:10 riastradh Exp $	*/
+/*	$NetBSD: nouveau_drm.c,v 1.12 2018/08/27 13:38:15 riastradh Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_drm.c,v 1.11 2018/08/27 07:38:10 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_drm.c,v 1.12 2018/08/27 13:38:15 riastradh Exp $");
 
 #include <linux/console.h>
 #include <linux/delay.h>
@@ -98,13 +98,8 @@ static const struct uvm_pagerops nouveau_gem_uvm_ops;
 static u64
 nouveau_pci_name(struct pci_dev *pdev)
 {
-#ifdef __NetBSD__
-	u64 name = (u64)device_unit(device_parent(pdev->pd_dev)) << 32;
-	name |= (u64)pdev->pd_pa.pa_bus << 16;
-#else
 	u64 name = (u64)pci_domain_nr(pdev->bus) << 32;
 	name |= pdev->bus->number << 16;
-#endif
 	name |= PCI_SLOT(pdev->devfn) << 8;
 	return name | PCI_FUNC(pdev->devfn);
 }
