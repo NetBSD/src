@@ -1,4 +1,4 @@
-/*	$NetBSD: kernel.h,v 1.14 2018/08/27 06:46:55 riastradh Exp $	*/
+/*	$NetBSD: kernel.h,v 1.15 2018/08/27 06:53:55 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -180,26 +180,31 @@ kstrtol(const char *s, unsigned base, long *vp)
 	return 0;
 }
 
+static inline char *
+kvasprintf(gfp_t gfp, const char *fmt, va_list va)
+{
+	char *str;
+	int len, len1 __diagused;
+
+	len = vsnprintf(NULL, 0, fmt, va);
+	str = kmalloc(len + 1, gfp);
+	if (str == NULL)
+		return NULL;
+	len1 = vsnprintf(str, len + 1, fmt, va);
+	KASSERT(len1 == len);
+
+	return str;
+}
+
 static inline char * __printflike(2,3)
 kasprintf(gfp_t gfp, const char *fmt, ...)
 {
 	va_list va;
 	char *str;
-	int len, len1 __diagused;
 
 	va_start(va, fmt);
-	len = vsnprintf(NULL, 0, fmt, va);
+	str = kvasprintf(gfp, fmt, va);
 	va_end(va);
-
-	str = kmalloc(len + 1, gfp);
-	if (str == NULL)
-		return NULL;
-
-	va_start(va, fmt);
-	len1 = vsnprintf(str, len + 1, fmt, va);
-	va_end(va);
-
-	KASSERT(len1 == len);
 
 	return str;
 }
