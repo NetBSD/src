@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_pci.c,v 1.4 2018/08/27 14:12:14 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_pci.c,v 1.5 2018/08/27 14:41:26 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_pci.c,v 1.4 2018/08/27 14:12:14 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_pci.c,v 1.5 2018/08/27 14:41:26 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/queue.h>
@@ -116,7 +116,7 @@ amdgpu_match(device_t parent, cfdata_t match, void *aux)
 	if (!amdgpu_pci_lookup(pa, NULL))
 		return 0;
 
-	return 6;		/* XXX Beat genfb_pci...  */
+	return 7;		/* beat genfb_pci and radeon  */
 }
 
 static void
