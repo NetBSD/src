@@ -1,4 +1,4 @@
-/*	$NetBSD: bitops.h,v 1.2 2018/08/27 06:17:17 riastradh Exp $	*/
+/*	$NetBSD: bitops.h,v 1.3 2018/08/27 06:54:29 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -72,6 +72,12 @@ static inline unsigned int
 hweight32(uint32_t n)
 {
 	return popcount32(n);
+}
+
+static inline unsigned int
+hweight64(uint64_t n)
+{
+	return popcount64(n);
 }
 
 /*
