@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_kmap.c,v 1.12 2015/01/01 01:15:43 mrg Exp $	*/
+/*	$NetBSD: linux_kmap.c,v 1.13 2018/08/27 15:07:11 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,12 +30,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_kmap.c,v 1.12 2015/01/01 01:15:43 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_kmap.c,v 1.13 2018/08/27 15:07:11 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/kmem.h>
 #include <sys/mutex.h>
 #include <sys/rbtree.h>
+#include <sys/sdt.h>
 
 #ifdef __HAVE_MM_MD_DIRECT_MAPPED_PHYS
 #include <dev/mm.h>
@@ -44,6 +45,15 @@ __KERNEL_RCSID(0, "$NetBSD: linux_kmap.c,v 1.12 2015/01/01 01:15:43 mrg Exp $");
 #include <uvm/uvm_extern.h>
 
 #include <linux/highmem.h>
+
+SDT_PROBE_DEFINE2(sdt, linux, kmap, map,
+    "paddr_t"/*paddr*/, "vaddr_t"/*vaddr*/);
+SDT_PROBE_DEFINE2(sdt, linux, kmap, unmap,
+    "paddr_t"/*paddr*/, "vaddr_t"/*vaddr*/);
+SDT_PROBE_DEFINE2(sdt, linux, kmap, map__atomic,
+    "paddr_t"/*paddr*/, "vaddr_t"/*vaddr*/);
+SDT_PROBE_DEFINE2(sdt, linux, kmap, unmap__atomic,
+    "paddr_t"/*paddr*/, "vaddr_t"/*vaddr*/);
 
 /*
  * XXX Kludgerific implementation of Linux kmap_atomic, which is
@@ -146,7 +156,7 @@ kmap_atomic(struct page *page)
 
 #ifdef __HAVE_MM_MD_DIRECT_MAPPED_PHYS
 	if (mm_md_direct_mapped_phys(paddr, &vaddr))
-		return (void *)vaddr;
+		goto out;
 #endif
 
 	mutex_spin_enter(&linux_kmap_atomic_lock);
@@ -156,6 +166,7 @@ kmap_atomic(struct page *page)
 	pmap_kenter_pa(vaddr, paddr, (VM_PROT_READ | VM_PROT_WRITE), 0);
 	pmap_update(pmap_kernel());
 
+out:	SDT_PROBE2(sdt, linux, kmap, map__atomic,  paddr, vaddr);
 	return (void *)vaddr;
 }
 
@@ -163,15 +174,17 @@ void
 kunmap_atomic(void *addr)
 {
 	const vaddr_t vaddr = (vaddr_t)addr;
-
-#ifdef __HAVE_MM_MD_DIRECT_MAPPED_PHYS
-    {
 	paddr_t paddr;
-	vaddr_t vaddr1;
 	bool ok __diagused;
 
 	ok = pmap_extract(pmap_kernel(), vaddr, &paddr);
 	KASSERT(ok);
+
+	SDT_PROBE2(sdt, linux, kmap, unmap__atomic,  paddr, vaddr);
+
+#ifdef __HAVE_MM_MD_DIRECT_MAPPED_PHYS
+    {
+	vaddr_t vaddr1;
 	if (mm_md_direct_mapped_phys(paddr, &vaddr1) && vaddr1 == vaddr)
 		return;
     }
@@ -179,7 +192,6 @@ kunmap_atomic(void *addr)
 
 	KASSERT(mutex_owned(&linux_kmap_atomic_lock));
 	KASSERT(linux_kmap_atomic_vaddr == vaddr);
-	KASSERT(pmap_extract(pmap_kernel(), vaddr, NULL));
 
 	pmap_kremove(vaddr, PAGE_SIZE);
 	pmap_update(pmap_kernel());
@@ -197,7 +209,7 @@ kmap(struct page *page)
 
 #ifdef __HAVE_MM_MD_DIRECT_MAPPED_PHYS
 	if (mm_md_direct_mapped_phys(paddr, &vaddr))
-		return (void *)vaddr;
+		goto out;
 #endif
 
 	vaddr = uvm_km_alloc(kernel_map, PAGE_SIZE, 0,
@@ -219,6 +231,7 @@ kmap(struct page *page)
 	pmap_kenter_pa(vaddr, paddr, (VM_PROT_READ | VM_PROT_WRITE), 0);
 	pmap_update(pmap_kernel());
 
+out:	SDT_PROBE2(sdt, linux, kmap, map,  paddr, vaddr);
 	return (void *)vaddr;
 }
 
@@ -226,16 +239,13 @@ void
 kunmap(struct page *page)
 {
 	const paddr_t paddr = VM_PAGE_TO_PHYS(&page->p_vmp);
+	vaddr_t vaddr;
 
 	ASSERT_SLEEPABLE();
 
 #ifdef __HAVE_MM_MD_DIRECT_MAPPED_PHYS
-    {
-	vaddr_t vaddr1;
-
-	if (mm_md_direct_mapped_phys(paddr, &vaddr1))
-		return;
-    }
+	if (mm_md_direct_mapped_phys(paddr, &vaddr))
+		goto out;
 #endif
 
 	mutex_enter(&linux_kmap_lock);
@@ -245,7 +255,7 @@ kunmap(struct page *page)
 	rb_tree_remove_node(&linux_kmap_entries, lke);
 	mutex_exit(&linux_kmap_lock);
 
-	const vaddr_t vaddr = lke->lke_vaddr;
+	vaddr = lke->lke_vaddr;
 	kmem_free(lke, sizeof(*lke));
 
 	KASSERT(pmap_extract(pmap_kernel(), vaddr, NULL));
@@ -254,4 +264,6 @@ kunmap(struct page *page)
 	pmap_update(pmap_kernel());
 
 	uvm_km_free(kernel_map, vaddr, PAGE_SIZE, UVM_KMF_VAONLY);
+
+out:	SDT_PROBE2(sdt, linux, kmap, unmap,  paddr, vaddr);
 }
