@@ -1,4 +1,4 @@
-/*	$NetBSD: list.h,v 1.12 2018/08/27 06:57:58 riastradh Exp $	*/
+/*	$NetBSD: list.h,v 1.13 2018/08/27 07:03:50 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -307,11 +307,10 @@ hlist_del_init(struct hlist_node *node)
 			hlist_entry(hlist_first(HEAD), typeof(*(VAR)),	      \
 			    FIELD)),					      \
 		    (NEXT) = ((VAR) == NULL ? NULL :			      \
-			hlist_next(&(VAR)->FIELD) == NULL ? NULL :	      \
-			    hlist_entry(hlist_next(&(VAR)->FIELD),	      \
-				typeof(*(VAR)), FIELD));		      \
+			hlist_next(&(VAR)->FIELD));			      \
 		(VAR) != NULL;						      \
-	        (VAR) = (NEXT))
+	        (VAR) = ((NEXT) == NULL ? NULL :			      \
+			    hlist_entry((NEXT), typeof(*(VAR)), FIELD)))
 
 #define	hlist_add_behind_rcu(n, p)	pslist_writer_insert_after(p, n)
 #define	hlist_add_head_rcu(n, h)	pslist_writer_insert_head(h, n)
