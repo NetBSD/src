@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.19 2018/08/11 12:16:34 ryo Exp $	*/
+/*	$NetBSD: pmap.c,v 1.20 2018/08/27 15:43:37 ryo Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.19 2018/08/11 12:16:34 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.20 2018/08/27 15:43:37 ryo Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_ddb.h"
@@ -1062,8 +1062,6 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 {
 	int s;
 
-	KASSERT((prot & VM_PROT_READ) || !(prot & VM_PROT_WRITE));
-
 	s = splvm();
 	_pmap_enter(pmap_kernel(), va, pa, prot, flags | PMAP_WIRED, true);
 	splx(s);
@@ -1489,6 +1487,14 @@ _pmap_enter(struct pmap *pm, vaddr_t va, paddr_t pa, vm_prot_t prot,
 			pm->pm_stats.wired_count--;
 		pm->pm_stats.resident_count--;
 	}
+
+	/*
+	 * read permission is treated as an access permission internally.
+	 * require to add PROT_READ even if only PROT_WRITE or PROT_EXEC
+	 * for wired mapping.
+	 */
+	if ((flags & PMAP_WIRED) && (prot & (VM_PROT_WRITE|VM_PROT_EXECUTE)))
+		prot |= VM_PROT_READ;
 
 	mdattr = VM_PROT_READ | VM_PROT_WRITE;
 	if (pg != NULL) {
