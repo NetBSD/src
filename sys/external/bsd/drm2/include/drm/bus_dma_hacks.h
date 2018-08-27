@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma_hacks.h,v 1.9 2018/04/01 04:35:06 ryo Exp $	*/
+/*	$NetBSD: bus_dma_hacks.h,v 1.10 2018/08/27 07:17:47 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -47,71 +47,6 @@
 #else
 #error DRM GEM/TTM need new MI bus_dma APIs!  Halp!
 #endif
-
-static inline int
-bus_dmamem_wire_uvm_object(bus_dma_tag_t tag, struct uvm_object *uobj,
-    off_t start, bus_size_t size, struct pglist *pages, bus_size_t alignment,
-    bus_size_t boundary, bus_dma_segment_t *segs, int nsegs, int *rsegs,
-    int flags)
-{
-	struct pglist pageq;
-	struct vm_page *page;
-	unsigned i;
-	int error;
-
-	/*
-	 * XXX `#ifdef __x86_64__' is a horrible way to work around a
-	 * completely stupid GCC warning that encourages unsafe,
-	 * nonportable code and has no obvious way to be selectively
-	 * suppressed.
-	 */
-#if __x86_64__
-	KASSERT(size <= __type_max(off_t));
-#endif
-
-	KASSERT(start <= (__type_max(off_t) - size));
-	KASSERT(alignment == PAGE_SIZE); /* XXX */
-	KASSERT(0 < nsegs);
-
-	if (pages == NULL) {
-		TAILQ_INIT(&pageq);
-		pages = &pageq;
-	}
-
-	error = uvm_obj_wirepages(uobj, start, (start + size), pages);
-	if (error)
-		goto fail0;
-
-	page = TAILQ_FIRST(pages);
-	KASSERT(page != NULL);
-
-	for (i = 0; i < nsegs; i++) {
-		if (page == NULL) {
-			error = EFBIG;
-			goto fail1;
-		}
-		segs[i].ds_addr = VM_PAGE_TO_PHYS(page);
-		segs[i].ds_len = MIN(PAGE_SIZE, size);
-		size -= PAGE_SIZE;
-		page = TAILQ_NEXT(page, pageq.queue);
-	}
-	KASSERT(page == NULL);
-
-	/* Success!  */
-	*rsegs = nsegs;
-	return 0;
-
-fail1:	uvm_obj_unwirepages(uobj, start, (start + size));
-fail0:	return error;
-}
-
-static inline void
-bus_dmamem_unwire_uvm_object(bus_dma_tag_t tag __unused,
-    struct uvm_object *uobj, off_t start, bus_size_t size,
-    bus_dma_segment_t *segs __unused, int nsegs __unused)
-{
-	uvm_obj_unwirepages(uobj, start, (start + size));
-}
 
 static inline int
 bus_dmamem_pgfl(bus_dma_tag_t tag)
