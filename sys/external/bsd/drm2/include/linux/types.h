@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.7 2018/08/27 07:25:55 riastradh Exp $	*/
+/*	$NetBSD: types.h,v 1.8 2018/08/27 13:31:36 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -87,10 +87,6 @@ typedef unsigned long long cycles_t;
 
 /* XXX Not sure this is correct.  */
 typedef off_t loff_t;
-
-struct rcu_head {
-
-};
 
 #define DECLARE_BITMAP(NAME, BITS)					      \
 	unsigned long NAME[((BITS) + ((NBBY*sizeof(unsigned long)) - 1)) /    \
