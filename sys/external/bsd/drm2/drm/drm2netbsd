@@ -1,0 +1,26 @@
+#!/bin/sh
+
+#	$NetBSD: drm2netbsd,v 1.1 2018/08/27 00:46:32 riastradh Exp $
+#
+# $ /path/to/drm2netbsd > /path/to/files.drm.new
+#
+# Run from the directory that came from drivers/gpu/drm.
+
+set -Ceu
+
+# Location of the DRMKMS sources relative to $NETBSDSRCDIR.
+drmkms_top=external/bsd/drm2/dist/drm
+
+# config(5) flag for the DRMKMS driver.
+drmkms_flag=drmkms
+
+env CONFIG_PCI=y \
+env CONFIG_AGP=y \
+make -f Makefile -V '$(drm-y)' -V '$(drm_kms_helper-y)' \
+| tr ' ' '\n' \
+| grep -v '^$' \
+| sed -e 's,\.o$,.c,' \
+| sort -u \
+| while read f; do
+	printf 'file\t%s\t%s\n' "$drmkms_top/$f" "$drmkms_flag"
+done
