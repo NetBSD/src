@@ -1,4 +1,4 @@
-/*	$NetBSD: notifier.h,v 1.2 2014/03/18 18:20:43 riastradh Exp $	*/
+/*	$NetBSD: notifier.h,v 1.3 2018/08/27 07:18:18 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -34,7 +34,8 @@
 
 #include <sys/cdefs.h>
 
-#define	NOTIFY_OK	0
+#define	NOTIFY_DONE	0
+#define	NOTIFY_OK	1
 
 struct notifier_block {
 	int	(*notifier_call)(struct notifier_block *, unsigned long,
