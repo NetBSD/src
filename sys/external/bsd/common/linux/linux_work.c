@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_work.c,v 1.2 2018/08/27 06:55:23 riastradh Exp $	*/
+/*	$NetBSD: linux_work.c,v 1.3 2018/08/27 07:00:28 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_work.c,v 1.2 2018/08/27 06:55:23 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_work.c,v 1.3 2018/08/27 07:00:28 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -59,6 +59,9 @@ __KERNEL_RCSID(0, "$NetBSD: linux_work.c,v 1.2 2018/08/27 06:55:23 riastradh Exp
 
 struct workqueue_struct {
 	struct workqueue		*wq_workqueue;
+
+	struct rb_node			wq_node;
+	struct lwp			*wq_lwp;
 
 	/* XXX The following should all be per-CPU.  */
 	kmutex_t			wq_lock;
@@ -92,10 +95,19 @@ static void	linux_worker_intr(void *);
 struct workqueue_struct		*system_wq;
 struct workqueue_struct		*system_long_wq;
 
+static struct {
+	kmutex_t		lock;
+	struct rb_tree		tree;
+} workqueues __cacheline_aligned;
+
+static const rb_tree_ops_t	workqueues_rb_ops;
+
 int
 linux_workqueue_init(void)
 {
-	int error;
+
+	mutex_init(&workqueues.lock, MUTEX_DEFAULT, IPL_VM);
+	rb_tree_init(&workqueues.tree, &workqueues_rb_ops);
 
 	system_wq = alloc_ordered_workqueue("lnxsyswq", 0);
 	if (system_wq == NULL)
@@ -110,7 +122,8 @@ linux_workqueue_init(void)
 fail2: __unused
 	destroy_workqueue(system_long_wq);
 fail1:	destroy_workqueue(system_wq);
-fail0:	return ENOMEM;
+fail0:	mutex_destroy(&workqueues.lock);
+	return ENOMEM;
 }
 
 void
@@ -121,6 +134,109 @@ linux_workqueue_fini(void)
 	system_long_wq = NULL;
 	destroy_workqueue(system_wq);
 	system_wq = NULL;
+	KASSERT(RB_TREE_MIN(&workqueues.tree) == NULL);
+	mutex_destroy(&workqueues.lock);
+}
+
+/*
+ * Table of workqueue LWPs for validation -- assumes there is only one
+ * thread per workqueue.
+ *
+ * XXX Mega-kludgerific!
+ */
+
+static int
+compare_nodes(void *cookie, const void *va, const void *vb)
+{
+	const struct workqueue_struct *wa = va;
+	const struct workqueue_struct *wb = vb;
+
+	if ((uintptr_t)wa->wq_lwp < (uintptr_t)wb->wq_lwp)
+		return -1;
+	if ((uintptr_t)wa->wq_lwp > (uintptr_t)wb->wq_lwp)
+		return +1;
+	return 0;
+}
+
+static int
+compare_key(void *cookie, const void *vn, const void *vk)
+{
+	const struct workqueue_struct *w = vn;
+	const struct lwp *lwp = vk;
+
+	if ((uintptr_t)w->wq_lwp < (uintptr_t)lwp)
+		return -1;
+	if ((uintptr_t)w->wq_lwp > (uintptr_t)lwp)
+		return +1;
+	return 0;
+}
+
+static const rb_tree_ops_t workqueues_rb_ops = {
+	.rbto_compare_nodes = compare_nodes,
+	.rbto_compare_key = compare_key,
+	.rbto_node_offset = offsetof(struct workqueue_struct, wq_lwp),
+};
+
+struct wq_whoami_work {
+	kmutex_t		www_lock;
+	kcondvar_t		www_cv;
+	struct workqueue_struct	*www_wq;
+	struct work_struct	www_work;
+};
+
+static void
+workqueue_whoami_work(struct work_struct *work)
+{
+	struct wq_whoami_work *www = www;
+	struct workqueue_struct *wq = www->www_wq;
+
+	KASSERT(wq->wq_lwp == NULL);
+	wq->wq_lwp = curlwp;
+
+	mutex_enter(&www->www_lock);
+	cv_broadcast(&www->www_cv);
+	mutex_exit(&www->www_lock);
+}
+
+static void
+workqueue_whoami(struct workqueue_struct *wq)
+{
+	struct wq_whoami_work www;
+	struct workqueue_struct *collision __diagused;
+
+	mutex_init(&www.www_lock, MUTEX_DEFAULT, IPL_NONE);
+	cv_init(&www.www_cv, "wqwhoami");
+
+	INIT_WORK(&www.www_work, &workqueue_whoami_work);
+	queue_work(wq, &www.www_work);
+
+	mutex_enter(&www.www_lock);
+	while (wq->wq_lwp == NULL)
+		cv_wait(&www.www_cv, &www.www_lock);
+	mutex_exit(&www.www_lock);
+
+	cv_destroy(&www.www_cv);
+	mutex_destroy(&www.www_lock);
+
+	mutex_enter(&workqueues.lock);
+	collision = rb_tree_insert_node(&workqueues.tree, wq);
+	mutex_exit(&workqueues.lock);
+
+	KASSERT(collision == wq);
+}
+
+struct work_struct *
+current_work(void)
+{
+	struct workqueue_struct *wq;
+	struct work_struct *work;
+
+	mutex_enter(&workqueues.lock);
+	wq = rb_tree_find_node(&workqueues.tree, curlwp);
+	work = (wq == NULL ? NULL : wq->wq_current_work);
+	mutex_exit(&workqueues.lock);
+
+	return work;
 }
 
 /*
@@ -148,6 +264,9 @@ alloc_ordered_workqueue(const char *name, int linux_flags)
 	cv_init(&wq->wq_cv, name);
 	TAILQ_INIT(&wq->wq_delayed);
 	wq->wq_current_work = NULL;
+
+	workqueue_whoami(wq);
+	KASSERT(wq->wq_lwp != NULL);
 
 	return wq;
 }
