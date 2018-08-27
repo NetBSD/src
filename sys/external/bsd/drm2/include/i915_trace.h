@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_trace.h,v 1.8 2018/08/27 07:14:29 riastradh Exp $	*/
+/*	$NetBSD: i915_trace.h,v 1.9 2018/08/27 07:17:11 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -180,6 +180,53 @@ trace_i915_context_create(struct intel_context *ctx __unused)
 
 static inline void
 trace_i915_context_free(struct intel_context *ctx __unused)
+{
+}
+
+static inline void
+trace_i915_page_directory_entry_alloc(struct i915_address_space *vm __unused,
+    uint32_t pdpe __unused, uint64_t start __unused,
+    uint64_t pde_shift __unused)
+{
+}
+
+static inline void
+trace_i915_page_directory_pointer_entry_alloc(
+    struct i915_address_space *vm __unused, uint32_t pml4e __unused,
+    uint64_t start __unused, uint64_t pde_shift __unused)
+{
+}
+
+static inline void
+trace_i915_page_table_entry_alloc(struct i915_address_space *vm __unused,
+    uint32_t pde __unused, uint64_t start __unused,
+    uint64_t pde_shift __unused)
+{
+}
+
+static inline void
+trace_i915_page_table_entry_map(struct i915_address_space *vm __unused,
+    uint32_t pde __unused, struct i915_page_table *pt __unused,
+    uint32_t first __unused, uint32_t count __unused, uint32_t bits __unused)
+{
+}
+
+static inline void
+trace_i915_ppgtt_create(struct i915_address_space *vm __unused)
+{
+}
+
+static inline void
+trace_i915_ppgtt_release(struct i915_address_space *vm __unused)
+{
+}
+
+#define	VM_TO_TRACE_NAME(vm)	""
+
+static inline void
+trace_i915_va_alloc(struct i915_address_space *vm __unused,
+    uint64_t start __unused, uint64_t length __unused,
+    const char *name __unused)
 {
 }
 
