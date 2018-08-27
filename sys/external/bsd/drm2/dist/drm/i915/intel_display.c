@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_display.c,v 1.19 2018/08/27 06:34:15 riastradh Exp $	*/
+/*	$NetBSD: intel_display.c,v 1.20 2018/08/27 07:21:16 riastradh Exp $	*/
 
 /*
  * Copyright © 2006-2007 Intel Corporation
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_display.c,v 1.19 2018/08/27 06:34:15 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_display.c,v 1.20 2018/08/27 07:21:16 riastradh Exp $");
 
 #include <linux/dmi.h>
 #include <linux/module.h>
@@ -36,6 +36,8 @@ __KERNEL_RCSID(0, "$NetBSD: intel_display.c,v 1.19 2018/08/27 06:34:15 riastradh
 #include <linux/kernel.h>
 #include <linux/slab.h>
 #include <linux/vgaarb.h>
+#include <linux/err.h>
+#include <linux/interrupt.h>
 #include <drm/drm_edid.h>
 #include <drm/drmP.h>
 #include "intel_drv.h"
@@ -3989,6 +3991,7 @@ void intel_crtc_wait_for_pending_flips(struct drm_crtc *crtc)
 	bool timedout;
 	if (cold) {
 		unsigned timo = 1000;
+		timedout = false;
 		while (intel_crtc_has_pending_flip(crtc)) {
 			if (WARN_ON(timo-- == 0)) {
 				/* Give up.  */
@@ -7502,7 +7505,7 @@ static void chv_prepare_pll(struct intel_crtc *crtc,
 	int dpll_reg = DPLL(crtc->pipe);
 	enum dpio_channel port = vlv_pipe_to_channel(pipe);
 	u32 loopfilter, tribuf_calcntr;
-	u32 bestn, bestm1, bestm2, bestp1, bestp2, bestm2_frac;
+	u32 bestn __unused, bestm1 __unused, bestm2, bestp1, bestp2, bestm2_frac;
 	u32 dpio_val;
 	int vco;
 
@@ -12771,7 +12774,7 @@ static void
 check_connector_state(struct drm_device *dev,
 		      struct drm_atomic_state *old_state)
 {
-	struct drm_connector_state *old_conn_state;
+	struct drm_connector_state *old_conn_state __unused;
 	struct drm_connector *connector;
 	int i;
 
@@ -13595,7 +13598,7 @@ skl_max_scale(struct intel_crtc *intel_crtc, struct intel_crtc_state *crtc_state
 {
 	int max_scale;
 	struct drm_device *dev;
-	struct drm_i915_private *dev_priv;
+	struct drm_i915_private *dev_priv __unused;
 	int crtc_clock, cdclk;
 
 	if (!intel_crtc || !crtc_state)
@@ -13655,7 +13658,7 @@ intel_commit_primary_plane(struct drm_plane *plane,
 	struct drm_framebuffer *fb = state->base.fb;
 	struct drm_device *dev = plane->dev;
 	struct drm_i915_private *dev_priv = dev->dev_private;
-	struct intel_crtc *intel_crtc;
+	struct intel_crtc *intel_crtc __unused;
 	struct drm_rect *src = &state->src;
 
 	crtc = crtc ? crtc : plane->crtc;
@@ -14443,7 +14446,7 @@ static int intel_framebuffer_init(struct drm_device *dev,
 	case I915_FORMAT_MOD_Y_TILED:
 	case I915_FORMAT_MOD_Yf_TILED:
 		if (INTEL_INFO(dev)->gen < 9) {
-			DRM_DEBUG("Unsupported tiling 0x%llx!\n",
+			DRM_DEBUG("Unsupported tiling 0x%"PRIx64"!\n",
 				  mode_cmd->modifier[0]);
 			return -EINVAL;
 		}
@@ -14451,7 +14454,7 @@ static int intel_framebuffer_init(struct drm_device *dev,
 	case I915_FORMAT_MOD_X_TILED:
 		break;
 	default:
-		DRM_DEBUG("Unsupported fb modifier 0x%llx!\n",
+		DRM_DEBUG("Unsupported fb modifier 0x%"PRIx64"!\n",
 			  mode_cmd->modifier[0]);
 		return -EINVAL;
 	}
@@ -15707,8 +15710,10 @@ void intel_modeset_cleanup(struct drm_device *dev)
 
 #ifdef __NetBSD__
 	linux_mutex_destroy(&dev_priv->pps_mutex);
+	linux_mutex_destroy(&dev_priv->fbc.lock);
 #else
 	mutex_destroy(&dev_priv->pps_mutex);
+	mutex_destroy(&dev_priv->fbc.lock);
 #endif
 }
 
