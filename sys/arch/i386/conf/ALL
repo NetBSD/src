@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.449 2018/08/25 20:52:41 rin Exp $
+# $NetBSD: ALL,v 1.450 2018/08/27 16:29:18 riastradh Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"ALL-$Revision: 1.449 $"
+#ident		"ALL-$Revision: 1.450 $"
 
 maxusers	64		# estimated number of users
 
@@ -599,6 +599,9 @@ intelfb*	at intelfbbus?
 
 radeon* 	at pci? dev ? function ?
 radeondrmkmsfb* at radeonfbbus?
+
+amdgpu* 	at pci? dev ? function ?
+amdgpufb* 	at amdgpufbbus?
 
 nouveau*	at pci? dev ? function ?
 nouveaufb*	at nouveaufbbus?
