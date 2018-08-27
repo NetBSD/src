@@ -1,4 +1,4 @@
-#	$NetBSD: files.drmkms,v 1.22 2018/08/27 06:47:51 riastradh Exp $
+#	$NetBSD: files.drmkms,v 1.23 2018/08/27 06:50:45 riastradh Exp $
 
 include "external/bsd/drm2/linux/files.drmkms_linux"
 
@@ -24,6 +24,7 @@ makeoptions 	drmkms	CPPFLAGS+="-I$S/external/bsd/drm2/dist/uapi"
 # under dist/include/uapi rather than dist/uapi.)
 makeoptions 	drmkms	CPPFLAGS+="-I$S/external/bsd/drm2/dist"
 
+makeoptions 	drmkms 	"CWARNFLAGS.drm_atomic_helper.c"+="-Wno-shadow"
 makeoptions 	drmkms 	"CWARNFLAGS.drm_crtc.c"+="-Wno-shadow"
 makeoptions 	drmkms 	"CWARNFLAGS.drm_crtc.c"+="-Wno-missing-field-initializers"
 makeoptions 	drmkms 	"CWARNFLAGS.drm_edid.c"+="-Wno-shadow"
