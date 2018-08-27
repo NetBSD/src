@@ -1,4 +1,4 @@
-/*	$NetBSD: kref.h,v 1.6 2018/08/27 06:51:52 riastradh Exp $	*/
+/*	$NetBSD: kref.h,v 1.7 2018/08/27 13:44:41 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -36,6 +36,7 @@
 #include <sys/atomic.h>
 #include <sys/systm.h>
 
+#include <linux/atomic.h>
 #include <linux/mutex.h>
 
 struct kref {
@@ -55,6 +56,10 @@ kref_get(struct kref *kref)
 	    atomic_inc_uint_nv(&kref->kr_count);
 
 	KASSERTMSG((count > 1), "getting released kref");
+
+#ifndef __HAVE_ATOMIC_AS_MEMBAR
+	membar_enter();
+#endif
 }
 
 static inline bool
@@ -69,6 +74,10 @@ kref_get_unless_zero(struct kref *kref)
 	} while (atomic_cas_uint(&kref->kr_count, count, (count + 1)) !=
 	    count);
 
+#ifndef __HAVE_ATOMIC_AS_MEMBAR
+	membar_enter();
+#endif
+
 	return true;
 }
 
@@ -76,6 +85,10 @@ static inline int
 kref_sub(struct kref *kref, unsigned int count, void (*release)(struct kref *))
 {
 	unsigned int old, new;
+
+#ifndef __HAVE_ATOMIC_AS_MEMBAR
+	membar_exit();
+#endif
 
 	do {
 		old = kref->kr_count;
@@ -104,6 +117,10 @@ kref_put_mutex(struct kref *kref, void (*release)(struct kref *),
     struct mutex *interlock)
 {
 	unsigned int old, new;
+
+#ifndef __HAVE_ATOMIC_AS_MEMBAR
+	membar_exit();
+#endif
 
 	do {
 		old = kref->kr_count;
