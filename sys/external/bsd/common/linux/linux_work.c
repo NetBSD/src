@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_work.c,v 1.22 2018/08/27 15:01:47 riastradh Exp $	*/
+/*	$NetBSD: linux_work.c,v 1.23 2018/08/27 15:02:08 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_work.c,v 1.22 2018/08/27 15:01:47 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_work.c,v 1.23 2018/08/27 15:02:08 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/atomic.h>
@@ -67,6 +67,8 @@ static void		release_work(struct work_struct *,
 			    struct workqueue_struct *);
 static void		queue_delayed_work_anew(struct workqueue_struct *,
 			    struct delayed_work *, unsigned long);
+static void		cancel_delayed_work_done(struct workqueue_struct *,
+			    struct delayed_work *);
 
 static specificdata_key_t workqueue_key __read_mostly;
 
@@ -282,10 +284,7 @@ linux_workqueue_timeout(void *cookie)
 		dw->dw_state = DELAYED_WORK_SCHEDULED;
 		break;
 	case DELAYED_WORK_CANCELLED:
-		dw->dw_state = DELAYED_WORK_IDLE;
-		callout_destroy(&dw->dw_callout);
-		TAILQ_REMOVE(&wq->wq_delayed, dw, dw_entry);
-		release_work(&dw->work, wq);
+		cancel_delayed_work_done(wq, dw);
 		/* Can't touch dw any more.  */
 		goto out;
 	default:
@@ -489,6 +488,20 @@ queue_delayed_work_anew(struct workqueue_struct *wq, struct delayed_work *dw,
 	}
 }
 
+static void
+cancel_delayed_work_done(struct workqueue_struct *wq, struct delayed_work *dw)
+{
+
+	KASSERT(mutex_owned(&wq->wq_lock));
+	KASSERT(dw->work.work_queue == wq);
+	KASSERT(dw->dw_state == DELAYED_WORK_CANCELLED);
+	dw->dw_state = DELAYED_WORK_IDLE;
+	callout_destroy(&dw->dw_callout);
+	TAILQ_REMOVE(&wq->wq_delayed, dw, dw_entry);
+	release_work(&dw->work, wq);
+	/* Can't touch dw after this point.  */
+}
+
 bool
 queue_delayed_work(struct workqueue_struct *wq, struct delayed_work *dw,
     unsigned long ticks)
@@ -622,20 +635,12 @@ cancel_delayed_work(struct delayed_work *dw)
 			 * If we stopped the callout before it started,
 			 * however, then destroy the callout and
 			 * dissociate it from the workqueue ourselves.
-			 *
-			 * XXX This logic is duplicated in the
-			 * DELAYED_WORK_CANCELLED case of
-			 * linux_workqueue_timeout.
 			 */
 			dw->dw_state = DELAYED_WORK_CANCELLED;
 			cancelled_p = true;
 			if (callout_stop(&dw->dw_callout))
 				break;
-			KASSERT(dw->dw_state == DELAYED_WORK_CANCELLED);
-			dw->dw_state = DELAYED_WORK_IDLE;
-			callout_destroy(&dw->dw_callout);
-			TAILQ_REMOVE(&wq->wq_delayed, dw, dw_entry);
-			release_work(&dw->work, wq);
+			cancel_delayed_work_done(wq, dw);
 			break;
 		default:
 			panic("invalid delayed work state: %d",
@@ -696,20 +701,12 @@ retry:
 			 * If we stopped the callout before it started,
 			 * however, then destroy the callout and
 			 * dissociate it from the workqueue ourselves.
-			 *
-			 * XXX This logic is duplicated in the
-			 * DELAYED_WORK_CANCELLED case of
-			 * linux_workqueue_timeout.
 			 */
 			dw->dw_state = DELAYED_WORK_CANCELLED;
 			cancelled_p = true;
 			if (callout_halt(&dw->dw_callout, &wq->wq_lock))
 				goto retry;
-			KASSERT(dw->dw_state == DELAYED_WORK_CANCELLED);
-			dw->dw_state = DELAYED_WORK_IDLE;
-			callout_destroy(&dw->dw_callout);
-			TAILQ_REMOVE(&wq->wq_delayed, dw, dw_entry);
-			release_work(&dw->work, wq);
+			cancel_delayed_work_done(wq, dw);
 			break;
 		default:
 			panic("invalid delayed work state: %d",
