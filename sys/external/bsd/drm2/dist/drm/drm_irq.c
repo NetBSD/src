@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_irq.c,v 1.13 2018/08/27 14:42:43 riastradh Exp $	*/
+/*	$NetBSD: drm_irq.c,v 1.14 2018/08/27 14:43:15 riastradh Exp $	*/
 
 /*
  * drm_irq.c IRQ and vblank support
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_irq.c,v 1.13 2018/08/27 14:42:43 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_irq.c,v 1.14 2018/08/27 14:43:15 riastradh Exp $");
 
 #include <drm/drmP.h>
 #include "drm_trace.h"
@@ -2092,6 +2092,7 @@ bool drm_handle_vblank(struct drm_device *dev, unsigned int pipe)
 		return false;
 
 	spin_lock_irqsave(&dev->event_lock, irqflags);
+	spin_lock(&dev->vbl_lock);
 
 	/* Need timestamp lock to prevent concurrent execution with
 	 * vblank enable/disable, as this would cause inconsistent
@@ -2102,6 +2103,7 @@ bool drm_handle_vblank(struct drm_device *dev, unsigned int pipe)
 	/* Vblank irq handling disabled. Nothing to do. */
 	if (!vblank->enabled) {
 		spin_unlock(&dev->vblank_time_lock);
+		spin_unlock(&dev->vbl_lock);
 		spin_unlock_irqrestore(&dev->event_lock, irqflags);
 		return false;
 	}
@@ -2111,9 +2113,7 @@ bool drm_handle_vblank(struct drm_device *dev, unsigned int pipe)
 	spin_unlock(&dev->vblank_time_lock);
 
 #ifdef __NetBSD__
-	spin_lock(&dev->vbl_lock);
 	DRM_SPIN_WAKEUP_ONE(&vblank->queue, &dev->vbl_lock);
-	spin_unlock(&dev->vbl_lock);
 #else
 	wake_up(&vblank->queue);
 #endif
@@ -2127,8 +2127,9 @@ bool drm_handle_vblank(struct drm_device *dev, unsigned int pipe)
 	if (dev->vblank_disable_immediate &&
 	    drm_vblank_offdelay > 0 &&
 	    !atomic_read(&vblank->refcount))
-		vblank_disable_fn((unsigned long)vblank);
+		vblank_disable_locked(vblank, dev, pipe);
 
+	spin_unlock(&dev->vbl_lock);
 	spin_unlock_irqrestore(&dev->event_lock, irqflags);
 
 	return true;
