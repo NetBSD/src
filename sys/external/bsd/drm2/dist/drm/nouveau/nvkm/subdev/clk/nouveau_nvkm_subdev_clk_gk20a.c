@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_subdev_clk_gk20a.c,v 1.2 2018/08/27 04:58:33 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_subdev_clk_gk20a.c,v 1.3 2018/08/27 07:41:29 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2014, NVIDIA CORPORATION. All rights reserved.
@@ -25,7 +25,7 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_clk_gk20a.c,v 1.2 2018/08/27 04:58:33 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_clk_gk20a.c,v 1.3 2018/08/27 07:41:29 riastradh Exp $");
 
 #define gk20a_clk(p) container_of((p), struct gk20a_clk, base)
 #include "priv.h"
@@ -141,7 +141,7 @@ gk20a_pllg_read_mnp(struct gk20a_clk *clk)
 static u32
 gk20a_pllg_calc_rate(struct gk20a_clk *clk)
 {
-	u32 rate;
+	u64 rate;
 	u32 divider;
 
 	rate = clk->parent_rate * clk->n;
