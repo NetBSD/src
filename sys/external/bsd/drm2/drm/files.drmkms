@@ -1,4 +1,4 @@
-#	$NetBSD: files.drmkms,v 1.23 2018/08/27 06:50:45 riastradh Exp $
+#	$NetBSD: files.drmkms,v 1.24 2018/08/27 06:50:58 riastradh Exp $
 
 include "external/bsd/drm2/linux/files.drmkms_linux"
 
@@ -28,6 +28,7 @@ makeoptions 	drmkms 	"CWARNFLAGS.drm_atomic_helper.c"+="-Wno-shadow"
 makeoptions 	drmkms 	"CWARNFLAGS.drm_crtc.c"+="-Wno-shadow"
 makeoptions 	drmkms 	"CWARNFLAGS.drm_crtc.c"+="-Wno-missing-field-initializers"
 makeoptions 	drmkms 	"CWARNFLAGS.drm_edid.c"+="-Wno-shadow"
+makeoptions 	drmkms 	"CWARNFLAGS.drm_ioctl.c"+="-Wno-shadow"
 
 # XXX Should probably be in a header file.  opt_drmkms.h?
 makeoptions	drmkms	CPPFLAGS+="-D__KERNEL__"
