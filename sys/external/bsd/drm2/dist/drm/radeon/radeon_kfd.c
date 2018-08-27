@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_kfd.c,v 1.2 2018/08/27 04:58:36 riastradh Exp $	*/
+/*	$NetBSD: radeon_kfd.c,v 1.3 2018/08/27 06:43:35 riastradh Exp $	*/
 
 /*
  * Copyright 2014 Advanced Micro Devices, Inc.
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_kfd.c,v 1.2 2018/08/27 04:58:36 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_kfd.c,v 1.3 2018/08/27 06:43:35 riastradh Exp $");
 
 #include <linux/module.h>
 #include <linux/fdtable.h>
@@ -210,7 +210,7 @@ void radeon_kfd_device_fini(struct radeon_device *rdev)
 	}
 }
 
-void radeon_kfd_interrupt(struct radeon_device *rdev, const void *ih_ring_entry)
+void radeon_kfd_interrupt(struct radeon_device *rdev, const volatile void *ih_ring_entry)
 {
 	if (rdev->kfd)
 		kgd2kfd->interrupt(rdev->kfd, ih_ring_entry);
