@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem_gtt.c,v 1.13 2018/08/27 14:52:40 riastradh Exp $	*/
+/*	$NetBSD: i915_gem_gtt.c,v 1.14 2018/08/27 14:53:30 riastradh Exp $	*/
 
 /*
  * Copyright © 2010 Daniel Vetter
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gem_gtt.c,v 1.13 2018/08/27 14:52:40 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gem_gtt.c,v 1.14 2018/08/27 14:53:30 riastradh Exp $");
 
 #include <linux/bitmap.h>
 #include <linux/err.h>
@@ -817,7 +817,7 @@ static void gen8_ppgtt_clear_pte_range(struct i915_address_space *vm,
 			num_entries--;
 		}
 
-		kunmap_px(ppgtt, pt);
+		kunmap_px(ppgtt, pt_vaddr);
 
 		pte = 0;
 		if (++pde == I915_PDES) {
