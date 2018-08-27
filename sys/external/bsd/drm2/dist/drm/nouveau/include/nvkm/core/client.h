@@ -1,4 +1,4 @@
-/*	$NetBSD: client.h,v 1.2 2018/08/27 04:58:30 riastradh Exp $	*/
+/*	$NetBSD: client.h,v 1.3 2018/08/27 07:35:22 riastradh Exp $	*/
 
 #ifndef __NVKM_CLIENT_H__
 #define __NVKM_CLIENT_H__
@@ -41,7 +41,7 @@ int nvkm_client_notify_put(struct nvkm_client *, int index);
 #define nvif_printk(o,l,p,f,a...) do {                                         \
 	struct nvkm_object *_object = (o);                                     \
 	struct nvkm_client *_client = _object->client;                         \
-	if (_client->debug >= NV_DBG_##l)                                      \
+	if (_client->debug == NV_DBG_##l || _client->debug > NV_DBG_##l)       \
 		printk(KERN_##p "nouveau: %s:%08x:%08x: "f, _client->name,     \
 		       _object->handle, _object->oclass, ##a);                 \
 } while(0)
