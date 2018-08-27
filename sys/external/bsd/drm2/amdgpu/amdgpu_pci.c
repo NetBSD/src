@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_pci.c,v 1.1 2018/08/27 14:02:32 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_pci.c,v 1.2 2018/08/27 14:11:21 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_pci.c,v 1.1 2018/08/27 14:02:32 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_pci.c,v 1.2 2018/08/27 14:11:21 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/queue.h>
@@ -155,6 +155,9 @@ amdgpu_attach_real(device_t self)
 
 	sc->sc_task_state = AMDGPU_TASK_ATTACH;
 	SIMPLEQ_INIT(&sc->sc_task_u.attach);
+
+	/* Initialize the Linux PCI device descriptor.  */
+	linux_pci_dev_init(&sc->sc_pci_dev, self, pa, 0);
 
 	/* XXX errno Linux->NetBSD */
 	error = -drm_pci_attach(self, pa, &sc->sc_pci_dev, amdgpu_drm_driver,

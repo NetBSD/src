@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_pci.c,v 1.15 2018/08/27 13:39:07 riastradh Exp $	*/
+/*	$NetBSD: nouveau_pci.c,v 1.16 2018/08/27 14:11:21 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_pci.c,v 1.15 2018/08/27 13:39:07 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_pci.c,v 1.16 2018/08/27 14:11:21 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/device.h>
@@ -138,6 +138,9 @@ nouveau_pci_attach(device_t parent, device_t self, void *aux)
 	pci_aprint_devinfo(pa, NULL);
 
 	sc->sc_dev = self;
+
+	/* Initialize the Linux PCI device descriptor.  */
+	linux_pci_dev_init(&sc->sc_pci_dev, self, pa, 0);
 
 	if (!pmf_device_register(self, &nouveau_pci_suspend,
 		&nouveau_pci_resume))

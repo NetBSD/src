@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_pci.c,v 1.24 2018/08/27 07:55:59 riastradh Exp $	*/
+/*	$NetBSD: drm_pci.c,v 1.25 2018/08/27 14:11:21 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_pci.c,v 1.24 2018/08/27 07:55:59 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_pci.c,v 1.25 2018/08/27 14:11:21 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/errno.h>
@@ -81,9 +81,6 @@ drm_pci_attach(device_t self, const struct pci_attach_args *pa,
 	ret = -drmkms_pci_agp_guarantee_initialized();
 	if (ret)
 		goto fail0;
-
-	/* Initialize the Linux PCI device descriptor.  */
-	linux_pci_dev_init(pdev, self, pa, 0);
 
 	/* Create a DRM device.  */
 	dev = drm_dev_alloc(driver, self);
