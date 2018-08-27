@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_atomic.c,v 1.5 2018/08/27 06:48:15 riastradh Exp $	*/
+/*	$NetBSD: drm_atomic.c,v 1.6 2018/08/27 06:48:26 riastradh Exp $	*/
 
 /*
  * Copyright (C) 2014 Red Hat
@@ -29,7 +29,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_atomic.c,v 1.5 2018/08/27 06:48:15 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_atomic.c,v 1.6 2018/08/27 06:48:26 riastradh Exp $");
 
 #include <linux/export.h>
 
@@ -1496,7 +1496,7 @@ int drm_mode_atomic_ioctl(struct drm_device *dev,
 	struct drm_atomic_state *state;
 	struct drm_modeset_acquire_ctx ctx;
 	struct drm_plane *plane;
-	struct drm_crtc *crtc;
+	struct drm_crtc *crtc __unused;
 	struct drm_crtc_state *crtc_state;
 	unsigned plane_mask;
 	int ret = 0;
