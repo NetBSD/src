@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_fence.c,v 1.10 2018/08/27 04:58:24 riastradh Exp $	*/
+/*	$NetBSD: nouveau_fence.c,v 1.11 2018/08/27 07:36:58 riastradh Exp $	*/
 
 /*
  * Copyright (C) 2007 Ben Skeggs.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_fence.c,v 1.10 2018/08/27 04:58:24 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_fence.c,v 1.11 2018/08/27 07:36:58 riastradh Exp $");
 
 #include <drm/drmP.h>
 
@@ -164,7 +164,7 @@ nouveau_fence_wait_uevent_handler(struct nvif_notify *notify)
 
 		fence = list_entry(fctx->pending.next, typeof(*fence), head);
 		chan = rcu_dereference_protected(fence->channel, lockdep_is_held(&fctx->lock));
-		if (nouveau_fence_update(fence->channel, fctx))
+		if (nouveau_fence_update(chan, fctx))
 			ret = NVIF_NOTIFY_DROP;
 	}
 	spin_unlock_irqrestore(&fctx->lock, flags);
