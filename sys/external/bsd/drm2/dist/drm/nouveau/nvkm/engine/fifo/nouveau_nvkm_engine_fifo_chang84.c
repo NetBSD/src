@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_engine_fifo_chang84.c,v 1.2 2018/08/27 04:58:31 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_engine_fifo_chang84.c,v 1.3 2018/08/27 07:38:56 riastradh Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_fifo_chang84.c,v 1.2 2018/08/27 04:58:31 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_fifo_chang84.c,v 1.3 2018/08/27 07:38:56 riastradh Exp $");
 
 #include "channv50.h"
 
@@ -134,7 +134,7 @@ g84_fifo_chan_engine_fini(struct nvkm_fifo_chan *base,
 }
 
 
-int
+static int
 g84_fifo_chan_engine_init(struct nvkm_fifo_chan *base,
 			  struct nvkm_engine *engine)
 {
@@ -175,7 +175,7 @@ g84_fifo_chan_engine_ctor(struct nvkm_fifo_chan *base,
 	return nvkm_object_bind(object, NULL, 0, &chan->engn[engn]);
 }
 
-int
+static int
 g84_fifo_chan_object_ctor(struct nvkm_fifo_chan *base,
 			  struct nvkm_object *object)
 {

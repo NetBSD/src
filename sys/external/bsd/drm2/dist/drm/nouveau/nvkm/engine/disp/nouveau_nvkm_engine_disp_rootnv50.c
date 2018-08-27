@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_engine_disp_rootnv50.c,v 1.2 2018/08/27 04:58:31 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_engine_disp_rootnv50.c,v 1.3 2018/08/27 07:38:56 riastradh Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_disp_rootnv50.c,v 1.2 2018/08/27 04:58:31 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_disp_rootnv50.c,v 1.3 2018/08/27 07:38:56 riastradh Exp $");
 
 #include "rootnv50.h"
 #include "dmacnv50.h"
@@ -70,7 +70,7 @@ nv50_disp_root_scanoutpos(NV50_DISP_MTHD_V0)
 	return 0;
 }
 
-int
+static int
 nv50_disp_root_mthd_(struct nvkm_object *object, u32 mthd, void *data, u32 size)
 {
 	union {

@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_subdev_fb_ramgt215.c,v 1.2 2018/08/27 04:58:33 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_subdev_fb_ramgt215.c,v 1.3 2018/08/27 07:38:56 riastradh Exp $	*/
 
 /*
  * Copyright 2013 Red Hat Inc.
@@ -25,7 +25,7 @@
  * 	    Roy Spliet <rspliet@eclipso.eu>
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_fb_ramgt215.c,v 1.2 2018/08/27 04:58:33 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_fb_ramgt215.c,v 1.3 2018/08/27 07:38:56 riastradh Exp $");
 
 #define gt215_ram(p) container_of((p), struct gt215_ram, base)
 #include "ram.h"
@@ -100,7 +100,7 @@ struct gt215_ram {
 	struct gt215_ltrain ltrain;
 };
 
-void
+static void
 gt215_link_train_calc(u32 *vals, struct gt215_ltrain *train)
 {
 	int i, lo, hi;
@@ -154,7 +154,7 @@ gt215_link_train_calc(u32 *vals, struct gt215_ltrain *train)
 /*
  * Link training for (at least) DDR3
  */
-int
+static int
 gt215_link_train(struct gt215_ram *ram)
 {
 	struct gt215_ltrain *train = &ram->ltrain;
@@ -272,7 +272,7 @@ out:
 	return ret;
 }
 
-int
+static int
 gt215_link_train_init(struct gt215_ram *ram)
 {
 	static const u32 pattern[16] = {
@@ -338,7 +338,7 @@ gt215_link_train_init(struct gt215_ram *ram)
 	return 0;
 }
 
-void
+static void
 gt215_link_train_fini(struct gt215_ram *ram)
 {
 	if (ram->ltrain.mem)
