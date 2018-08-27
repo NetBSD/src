@@ -51,7 +51,7 @@
 /*
  * NetBSD local changes
  */
-__RCSID("$NetBSD: auth-pam.c,v 1.16 2018/08/26 07:46:36 christos Exp $");
+__RCSID("$NetBSD: auth-pam.c,v 1.17 2018/08/27 17:47:48 tnn Exp $");
 #define _LIB_PTHREAD_H
 #undef USE_POSIX_THREADS /* Not yet */
 #define HAVE_SECURITY_PAM_APPL_H
@@ -194,7 +194,7 @@ sshpam_sigchld_handler(int sig)
 }
 
 /* ARGSUSED */
-static void
+__dead static void
 pthread_exit(void *value)
 {
 	_exit(0);
