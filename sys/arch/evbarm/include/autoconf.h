@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.8 2014/05/10 20:12:16 reinoud Exp $	*/
+/*	$NetBSD: autoconf.h,v 1.9 2018/08/27 09:52:16 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -40,5 +40,6 @@ struct mainbus_attach_args {
 
 extern void (*evbarm_device_register)(device_t, void *);
 extern void (*evbarm_device_register_post_config)(device_t, void *);
+extern void (*evbarm_cpu_rootconf)(void);
 
 #endif	/* _EVBARM_AUTOCONF_H_ */
