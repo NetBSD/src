@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_subdev_ltc_gf100.c,v 1.2 2018/08/27 04:58:34 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_subdev_ltc_gf100.c,v 1.3 2018/08/27 07:39:20 riastradh Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_ltc_gf100.c,v 1.2 2018/08/27 04:58:34 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_ltc_gf100.c,v 1.3 2018/08/27 07:39:20 riastradh Exp $");
 
 #include "priv.h"
 
@@ -139,7 +139,7 @@ gf100_ltc_invalidate(struct nvkm_ltc *ltc)
 		nvkm_warn(&ltc->subdev, "LTC invalidate timeout\n");
 
 	if (taken > 0)
-		nvkm_debug(&ltc->subdev, "LTC invalidate took %lld ns\n", taken);
+		nvkm_debug(&ltc->subdev, "LTC invalidate took %"PRId64" ns\n", taken);
 }
 
 void
@@ -154,7 +154,7 @@ gf100_ltc_flush(struct nvkm_ltc *ltc)
 		nvkm_warn(&ltc->subdev, "LTC flush timeout\n");
 
 	if (taken > 0)
-		nvkm_debug(&ltc->subdev, "LTC flush took %lld ns\n", taken);
+		nvkm_debug(&ltc->subdev, "LTC flush took %"PRId64" ns\n", taken);
 }
 
 /* TODO: Figure out tag memory details and drop the over-cautious allocation.
