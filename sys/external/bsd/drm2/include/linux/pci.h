@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.h,v 1.31 2018/08/27 13:39:21 riastradh Exp $	*/
+/*	$NetBSD: pci.h,v 1.32 2018/08/27 13:39:33 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -525,6 +525,7 @@ pci_dev_put(struct pci_dev *pdev)
 		return;
 
 	KASSERT(ISSET(pdev->pd_kludges, NBPCI_KLUDGE_GET_MUMBLE));
+	kmem_free(pdev->bus, sizeof(*pdev->bus));
 	kmem_free(pdev, sizeof(*pdev));
 }
 
