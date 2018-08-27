@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_ttm.c,v 1.11 2018/08/27 07:47:55 riastradh Exp $	*/
+/*	$NetBSD: radeon_ttm.c,v 1.12 2018/08/27 07:50:43 riastradh Exp $	*/
 
 /*
  * Copyright 2009 Jerome Glisse.
@@ -32,7 +32,7 @@
  *    Dave Airlie
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_ttm.c,v 1.11 2018/08/27 07:47:55 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_ttm.c,v 1.12 2018/08/27 07:50:43 riastradh Exp $");
 
 #include <ttm/ttm_bo_api.h>
 #include <ttm/ttm_bo_driver.h>
@@ -553,6 +553,9 @@ struct radeon_ttm_tt {
 /* prepare the sg table with the user pages */
 static int radeon_ttm_tt_pin_userptr(struct ttm_tt *ttm)
 {
+#ifdef __NetBSD__
+	panic("we don't handle user pointers round these parts");
+#else
 	struct radeon_device *rdev = radeon_get_rdev(ttm->bdev);
 	struct radeon_ttm_tt *gtt = (void *)ttm;
 	unsigned pinned = 0, nents;
@@ -611,10 +614,14 @@ release_sg:
 release_pages:
 	release_pages(ttm->pages, pinned, 0);
 	return r;
+#endif
 }
 
 static void radeon_ttm_tt_unpin_userptr(struct ttm_tt *ttm)
 {
+#ifdef __NetBSD__
+	panic("some varmint pinned a userptr to my hat");
+#else
 	struct radeon_device *rdev = radeon_get_rdev(ttm->bdev);
 	struct radeon_ttm_tt *gtt = (void *)ttm;
 	struct sg_page_iter sg_iter;
@@ -640,6 +647,7 @@ static void radeon_ttm_tt_unpin_userptr(struct ttm_tt *ttm)
 	}
 
 	sg_free_table(ttm->sg);
+#endif
 }
 
 static int radeon_ttm_backend_bind(struct ttm_tt *ttm,
@@ -747,12 +755,16 @@ static int radeon_ttm_tt_populate(struct ttm_tt *ttm)
 		return 0;
 
 	if (gtt && gtt->userptr) {
+#ifdef __NetBSD__
+		panic("don't point at users, it's not polite");
+#else
 		ttm->sg = kzalloc(sizeof(struct sg_table), GFP_KERNEL);
 		if (!ttm->sg)
 			return -ENOMEM;
 
 		ttm->page_flags |= TTM_PAGE_FLAG_SG;
 		ttm->state = tt_unbound;
+#endif
 		return 0;
 	}
 
