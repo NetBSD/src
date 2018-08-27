@@ -1,4 +1,4 @@
-/* $NetBSD: drm_gem_cma_helper.c,v 1.1 2017/12/26 14:53:12 jmcneill Exp $ */
+/* $NetBSD: drm_gem_cma_helper.c,v 1.2 2018/08/27 06:57:00 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_gem_cma_helper.c,v 1.1 2017/12/26 14:53:12 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_gem_cma_helper.c,v 1.2 2018/08/27 06:57:00 riastradh Exp $");
 
 #include <drm/drmP.h>
 #include <drm/drm_gem_cma_helper.h>
@@ -35,7 +35,7 @@ __KERNEL_RCSID(0, "$NetBSD: drm_gem_cma_helper.c,v 1.1 2017/12/26 14:53:12 jmcne
 #include <uvm/uvm.h>
 
 struct drm_gem_cma_object *
-drm_gem_cma_create(struct drm_device *ddev, unsigned int size)
+drm_gem_cma_create(struct drm_device *ddev, size_t size)
 {
 	struct drm_gem_cma_object *obj;
 	int error, nsegs;
