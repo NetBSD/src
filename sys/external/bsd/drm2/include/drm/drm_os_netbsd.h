@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_os_netbsd.h,v 1.6 2018/08/27 06:18:51 riastradh Exp $	*/
+/*	$NetBSD: drm_os_netbsd.h,v 1.7 2018/08/27 06:19:26 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
 
 #include "pci.h"
 #if NPCI > 0
-#define CONFIG_PCI
+#define	CONFIG_PCI	1
 #endif
 
 #if defined(__i386__)
