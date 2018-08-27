@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_chan.c,v 1.4 2018/08/27 07:31:51 riastradh Exp $	*/
+/*	$NetBSD: nouveau_chan.c,v 1.5 2018/08/27 14:48:21 riastradh Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_chan.c,v 1.4 2018/08/27 07:31:51 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_chan.c,v 1.5 2018/08/27 14:48:21 riastradh Exp $");
 
 #include <nvif/os.h>
 #include <nvif/class.h>
@@ -305,7 +305,11 @@ nouveau_channel_init(struct nouveau_channel *chan, u32 vram, u32 gart)
 	struct nv_dma_v0 args = zero_args;
 	int ret, i;
 
-	nvif_object_map(&chan->user);
+	ret = nvif_object_map(&chan->user);
+	if (ret) {
+		NV_PRINTK(err, cli, "nvif_object_map, %d\n", ret);
+		return ret;
+	}
 
 	/* allocate dma objects to cover all allowed vram, and gart */
 	if (device->info.family < NV_DEVICE_INFO_V0_FERMI) {
