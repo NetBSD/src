@@ -1,4 +1,4 @@
-/*	$NetBSD: fence.h,v 1.10 2018/08/27 07:53:05 riastradh Exp $	*/
+/*	$NetBSD: fence.h,v 1.11 2018/08/27 13:33:59 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -33,9 +33,13 @@
 #define	_LINUX_FENCE_H_
 
 #include <sys/types.h>
+#include <sys/condvar.h>
+#include <sys/kernel.h>
+#include <sys/queue.h>
 
-#include <linux/mutex.h>
+#include <linux/kref.h>
 #include <linux/rcupdate.h>
+#include <linux/spinlock.h>
 
 struct fence_cb;
 
@@ -46,10 +50,15 @@ struct fence {
 	unsigned		context;
 	unsigned		seqno;
 	const struct fence_ops	*ops;
+
+	TAILQ_HEAD(, fence_cb)	f_callbacks;
+	kcondvar_t		f_cv;
+	struct rcu_head		f_rcu;
 };
 
-#define	FENCE_FLAG_SIGNALED_BIT	__BIT(0)
-#define	FENCE_FLAG_USER_BITS	__BIT(1)
+#define	FENCE_FLAG_ENABLE_SIGNAL_BIT	0
+#define	FENCE_FLAG_SIGNALED_BIT		1
+#define	FENCE_FLAG_USER_BITS		2
 
 struct fence_ops {
 	const char	*(*get_driver_name)(struct fence *);
@@ -63,14 +72,19 @@ struct fence_ops {
 typedef void (*fence_func_t)(struct fence *, struct fence_cb *);
 
 struct fence_cb {
-	fence_func_t	fcb_func;
+	fence_func_t		fcb_func;
+	TAILQ_ENTRY(fence_cb)	fcb_entry;
+	bool			fcb_onqueue;
 };
 
 #define	fence_add_callback	linux_fence_add_callback
 #define	fence_context_alloc	linux_fence_context_alloc
+#define	fence_destroy		linux_fence_destroy
 #define	fence_enable_sw_signaling linux_fence_enable_sw_signaling
 #define	fence_get		linux_fence_get
 #define	fence_init		linux_fence_init
+#define	fence_is_signaled	linux_fence_is_signaled
+#define	fence_is_signaled_locked linux_fence_is_signaled_locked
 #define	fence_put		linux_fence_put
 #define	fence_remove_callback	linux_fence_remove_callback
 #define	fence_signal		linux_fence_signal
@@ -80,6 +94,7 @@ struct fence_cb {
 
 void	fence_init(struct fence *, const struct fence_ops *, spinlock_t *,
 	    unsigned, unsigned);
+void	fence_destroy(struct fence *);
 void	fence_free(struct fence *);
 
 unsigned
@@ -87,6 +102,8 @@ unsigned
 
 struct fence *
 	fence_get(struct fence *);
+struct fence *
+	fence_get_rcu(struct fence *);
 void	fence_put(struct fence *);
 
 int	fence_add_callback(struct fence *, struct fence_cb *, fence_func_t);
@@ -99,7 +116,7 @@ int	fence_signal(struct fence *);
 int	fence_signal_locked(struct fence *);
 long	fence_default_wait(struct fence *, bool, long);
 long	fence_wait(struct fence *, bool);
-long	fence_wait_timeout(struct fence *, bool, int);
+long	fence_wait_timeout(struct fence *, bool, long);
 
 static inline void
 FENCE_TRACE(struct fence *f, const char *fmt, ...)
