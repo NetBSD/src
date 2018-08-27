@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_fops.c,v 1.7 2018/08/27 06:57:10 riastradh Exp $	*/
+/*	$NetBSD: drm_fops.c,v 1.8 2018/08/27 06:58:10 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_fops.c,v 1.7 2018/08/27 06:57:10 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_fops.c,v 1.8 2018/08/27 06:58:10 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/select.h>
@@ -169,12 +169,10 @@ drm_close_file(struct drm_file *file)
 	if (dev->driver->preclose)
 		(*dev->driver->preclose)(dev, file);
 
-	if (file->magic)
-		(void)drm_remove_magic(file->master, file->magic);
 	if (minor->master)
 		drm_master_release(file);
 	if (drm_core_check_feature(dev, DRIVER_HAVE_DMA))
-		drm_core_reclaim_buffers(dev, file);
+		drm_legacy_reclaim_buffers(dev, file);
 	drm_events_release(file);
 	if (drm_core_check_feature(dev, DRIVER_MODESET))
 		drm_fb_release(file);
@@ -185,6 +183,8 @@ drm_close_file(struct drm_file *file)
 
 	mutex_lock(&dev->struct_mutex);
 	list_del(&file->lhead);
+	if (file->magic)
+		idr_remove(&file->master->magic_map, file->magic);
 	mutex_unlock(&dev->struct_mutex);
 
 	if (dev->driver->postclose)
@@ -207,10 +207,10 @@ drm_master_release(struct drm_file *file)
 	/*
 	 * XXX I think this locking concept is wrong -- we need to hold
 	 * file->master->lock.spinlock across the two calls to
-	 * drm_i_have_hw_lock and drm_lock_free.
+	 * drm_legacy_i_have_hw_lock and drm_legacy_lock_free.
 	 */
-	if (drm_i_have_hw_lock(file->minor->dev, file))
-		drm_lock_free(&file->master->lock,
+	if (drm_legacy_i_have_hw_lock(file->minor->dev, file))
+		drm_legacy_lock_free(&file->master->lock,
 		    _DRM_LOCKING_CONTEXT(file->master->lock.hw_lock->lock));
 }
 
