@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_dp_helper.c,v 1.5 2018/08/27 04:58:19 riastradh Exp $	*/
+/*	$NetBSD: drm_dp_helper.c,v 1.6 2018/08/27 06:46:32 riastradh Exp $	*/
 
 /*
  * Copyright © 2009 Keith Packard
@@ -23,10 +23,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_dp_helper.c,v 1.5 2018/08/27 04:58:19 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_dp_helper.c,v 1.6 2018/08/27 06:46:32 riastradh Exp $");
 
 #include <linux/kernel.h>
 #include <linux/module.h>
+#include <linux/moduleparam.h>
 #include <linux/delay.h>
 #include <linux/init.h>
 #include <linux/errno.h>
