@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_os_netbsd.h,v 1.11 2018/08/27 15:12:09 riastradh Exp $	*/
+/*	$NetBSD: drm_os_netbsd.h,v 1.12 2018/08/27 16:20:35 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -49,12 +49,14 @@
 #define	CONFIG_PCI	1
 #endif
 
+#ifdef notyet
 #if defined(__i386__)
 #include "pnpbios.h"
 #endif
 
 #if NPNPBIOS > 0
 #define CONFIG_PNP
+#endif
 #endif
 
 #if defined(__i386__) || defined(__x86_64__)
