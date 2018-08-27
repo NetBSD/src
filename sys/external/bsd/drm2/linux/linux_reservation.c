@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_reservation.c,v 1.9 2018/08/27 15:28:16 riastradh Exp $	*/
+/*	$NetBSD: linux_reservation.c,v 1.10 2018/08/27 15:28:27 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_reservation.c,v 1.9 2018/08/27 15:28:16 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_reservation.c,v 1.10 2018/08/27 15:28:27 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/poll.h>
@@ -851,8 +851,15 @@ reservation_poll_cb(struct fence *fence, struct fence_cb *fcb)
 /*
  * reservation_object_poll(robj, events, rpoll)
  *
- *	POLLOUT		wait for all fences shared and exclusive
- *	POLLIN		wait for the exclusive fence
+ *	Poll for reservation object events using the reservation poll
+ *	state in rpoll:
+ *
+ *	- POLLOUT	wait for all fences shared and exclusive
+ *	- POLLIN	wait for the exclusive fence
+ *
+ *	Return the subset of events in events that are ready.  If any
+ *	are requested but not ready, arrange to be notified with
+ *	selnotify when they are.
  */
 int
 reservation_object_poll(struct reservation_object *robj, int events,
