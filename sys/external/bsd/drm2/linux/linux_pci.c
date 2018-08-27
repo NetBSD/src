@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_pci.c,v 1.1 2018/08/27 14:16:38 riastradh Exp $	*/
+/*	$NetBSD: linux_pci.c,v 1.2 2018/08/27 14:16:52 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_pci.c,v 1.1 2018/08/27 14:16:38 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_pci.c,v 1.2 2018/08/27 14:16:52 riastradh Exp $");
 
 #include <linux/pci.h>
 
@@ -97,6 +97,7 @@ linux_pci_dev_init(struct pci_dev *pdev, device_t dev, device_t parent,
 			pdev->pd_resources[i].flags = 0;
 		}
 		pdev->pd_resources[i].kva = NULL;
+		pdev->pd_resources[i].mapped = false;
 	}
 }
 
