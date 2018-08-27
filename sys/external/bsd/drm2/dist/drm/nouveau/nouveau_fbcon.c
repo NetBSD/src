@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_fbcon.c,v 1.4 2018/08/27 07:36:48 riastradh Exp $	*/
+/*	$NetBSD: nouveau_fbcon.c,v 1.5 2018/08/27 07:57:34 riastradh Exp $	*/
 
 /*
  * Copyright © 2007 David Airlie
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_fbcon.c,v 1.4 2018/08/27 07:36:48 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_fbcon.c,v 1.5 2018/08/27 07:57:34 riastradh Exp $");
 
 #include <linux/module.h>
 #include <linux/kernel.h>
@@ -579,9 +579,7 @@ nouveau_fbcon_set_suspend(struct drm_device *dev, int state)
 		console_lock();
 		if (state == FBINFO_STATE_RUNNING)
 			nouveau_fbcon_accel_restore(dev);
-#endif
 		drm_fb_helper_set_suspend(&drm->fbcon->helper, state);
-#ifndef __NetBSD__
 		if (state != FBINFO_STATE_RUNNING)
 			nouveau_fbcon_accel_save_disable(dev);
 		console_unlock();
