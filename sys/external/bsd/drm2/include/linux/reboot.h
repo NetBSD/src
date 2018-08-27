@@ -1,4 +1,4 @@
-/*	$NetBSD: reboot.h,v 1.4 2018/08/27 07:30:47 riastradh Exp $	*/
+/*	$NetBSD: reboot.h,v 1.5 2018/08/27 13:41:24 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -36,6 +36,8 @@
 #include <sys/reboot.h>
 
 struct notifier_block;
+
+#define	SYS_RESTART	0
 
 /* XXX Implement this by posting a CRITICAL-OVER envsys event?  */
 static inline int
