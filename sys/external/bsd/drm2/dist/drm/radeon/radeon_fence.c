@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_fence.c,v 1.13 2018/08/27 13:34:50 riastradh Exp $	*/
+/*	$NetBSD: radeon_fence.c,v 1.14 2018/08/27 14:20:26 riastradh Exp $	*/
 
 /*
  * Copyright 2009 Jerome Glisse.
@@ -31,7 +31,7 @@
  *    Dave Airlie
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_fence.c,v 1.13 2018/08/27 13:34:50 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_fence.c,v 1.14 2018/08/27 14:20:26 riastradh Exp $");
 
 #include <linux/seq_file.h>
 #include <linux/atomic.h>
@@ -1158,12 +1158,27 @@ static inline bool radeon_test_signaled(struct radeon_fence *fence)
 
 #ifdef __NetBSD__
 
+static void
+radeon_fence_wakeup_cb(struct fence *fence, struct fence_cb *cb)
+{
+	struct radeon_fence *rfence = to_radeon_fence(fence);
+	struct radeon_device *rdev = rfence->rdev;
+
+	BUG_ON(!spin_is_locked(&rdev->fence_lock));
+	cv_broadcast(&rdev->fence_queue);
+}
+
 static signed long
 radeon_fence_default_wait(struct fence *f, bool intr, signed long timo)
 {
+	struct fence_cb fcb;
 	struct radeon_fence *fence = to_radeon_fence(f);
 	struct radeon_device *rdev = fence->rdev;
 	int r;
+
+	r = fence_add_callback(f, &fcb, radeon_fence_wakeup_cb);
+	if (r)
+		return r;
 
 	spin_lock(&rdev->fence_lock);
 	if (intr) {
@@ -1176,6 +1191,8 @@ radeon_fence_default_wait(struct fence *f, bool intr, signed long timo)
 		    radeon_test_signaled(fence));
 	}
 	spin_unlock(&rdev->fence_lock);
+
+	(void)fence_remove_callback(f, &fcb);
 
 	return r;
 }
