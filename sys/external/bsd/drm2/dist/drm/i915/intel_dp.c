@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_dp.c,v 1.14 2018/08/27 07:25:18 riastradh Exp $	*/
+/*	$NetBSD: intel_dp.c,v 1.15 2018/08/27 07:25:30 riastradh Exp $	*/
 
 /*
  * Copyright © 2008 Intel Corporation
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_dp.c,v 1.14 2018/08/27 07:25:18 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_dp.c,v 1.15 2018/08/27 07:25:30 riastradh Exp $");
 
 #include <linux/i2c.h>
 #include <linux/slab.h>
@@ -382,7 +382,7 @@ vlv_power_sequencer_pipe(struct intel_dp *intel_dp)
 {
 	struct intel_digital_port *intel_dig_port = dp_to_dig_port(intel_dp);
 	struct drm_device *dev = intel_dig_port->base.base.dev;
-	struct drm_i915_private *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv __lockdep_used = dev->dev_private;
 	struct intel_encoder *encoder;
 	unsigned int pipes = (1 << PIPE_A) | (1 << PIPE_B);
 	enum i915_pipe pipe;
@@ -1951,7 +1951,7 @@ static void edp_panel_vdd_schedule_off(struct intel_dp *intel_dp)
  */
 static void edp_panel_vdd_off(struct intel_dp *intel_dp, bool sync)
 {
-	struct drm_i915_private *dev_priv =
+	struct drm_i915_private *dev_priv __lockdep_used =
 		intel_dp_to_dev(intel_dp)->dev_private;
 
 	lockdep_assert_held(&dev_priv->pps_mutex);
@@ -2714,7 +2714,7 @@ static void vlv_detach_power_sequencer(struct intel_dp *intel_dp)
 static void vlv_steal_power_sequencer(struct drm_device *dev,
 				      enum i915_pipe pipe)
 {
-	struct drm_i915_private *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv __lockdep_used = dev->dev_private;
 	struct intel_encoder *encoder;
 
 	lockdep_assert_held(&dev_priv->pps_mutex);
@@ -2753,7 +2753,7 @@ static void vlv_init_panel_power_sequencer(struct intel_dp *intel_dp)
 	struct intel_digital_port *intel_dig_port = dp_to_dig_port(intel_dp);
 	struct intel_encoder *encoder = &intel_dig_port->base;
 	struct drm_device *dev = encoder->base.dev;
-	struct drm_i915_private *dev_priv = dev->dev_private;
+	struct drm_i915_private *dev_priv __lockdep_used = dev->dev_private;
 	struct intel_crtc *crtc = to_intel_crtc(encoder->base.crtc);
 
 	lockdep_assert_held(&dev_priv->pps_mutex);
@@ -5538,8 +5538,8 @@ static void intel_dp_set_drrs_state(struct drm_device *dev, int refresh_rate)
 	struct intel_encoder *encoder;
 	struct intel_digital_port *dig_port = NULL;
 	struct intel_dp *intel_dp = dev_priv->drrs.dp;
-	struct intel_crtc_state *config = NULL;
-	struct intel_crtc *intel_crtc = NULL;
+	struct intel_crtc_state *config __unused = NULL;
+	struct intel_crtc *intel_crtc __unused = NULL;
 	enum drrs_refresh_rate_type index = DRRS_HIGH_RR;
 
 	if (refresh_rate <= 0) {
