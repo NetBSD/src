@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_gem.c,v 1.6 2018/08/27 07:19:01 riastradh Exp $	*/
+/*	$NetBSD: nouveau_gem.c,v 1.7 2018/08/27 07:37:17 riastradh Exp $	*/
 
 /*
  * Copyright (C) 2008 Ben Skeggs.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_gem.c,v 1.6 2018/08/27 07:19:01 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_gem.c,v 1.7 2018/08/27 07:37:17 riastradh Exp $");
 
 #include <linux/err.h>		/* XXX */
 
@@ -383,9 +383,11 @@ validate_init(struct nouveau_channel *chan, struct drm_file *file_priv,
 	int trycnt = 0;
 	int ret = -EINVAL, i;
 	struct nouveau_bo *res_bo = NULL;
-	LIST_HEAD(gart_list);
-	LIST_HEAD(vram_list);
-	LIST_HEAD(both_list);
+	struct list_head gart_list, vram_list, both_list;
+
+	INIT_LIST_HEAD(&gart_list);
+	INIT_LIST_HEAD(&vram_list);
+	INIT_LIST_HEAD(&both_list);
 
 	ww_acquire_init(&op->ticket, &reservation_ww_class);
 retry:
