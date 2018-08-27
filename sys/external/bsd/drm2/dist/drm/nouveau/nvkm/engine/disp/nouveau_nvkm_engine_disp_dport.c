@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_engine_disp_dport.c,v 1.2 2018/08/27 04:58:31 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_engine_disp_dport.c,v 1.3 2018/08/27 07:43:38 riastradh Exp $	*/
 
 /*
  * Copyright 2013 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_disp_dport.c,v 1.2 2018/08/27 04:58:31 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_disp_dport.c,v 1.3 2018/08/27 07:43:38 riastradh Exp $");
 
 #include "dport.h"
 #include "outpdp.h"
@@ -407,7 +407,14 @@ nvkm_dp_train(struct work_struct *w)
 
 	/* signal completion and enable link interrupt handling */
 	OUTP_DBG(&outp->base, "training complete");
+#ifdef __NetBSD__
+	spin_lock(&outp->lt.lock);
+	atomic_set(&outp->lt.done, 1);
+	DRM_SPIN_WAKEUP_ONE(&outp->lt.wait, &outp->lt.lock);
+	spin_unlock(&outp->lt.lock);
+#else
 	atomic_set(&outp->lt.done, 1);
 	wake_up(&outp->lt.wait);
+#endif
 	nvkm_notify_get(&outp->irq);
 }
