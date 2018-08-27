@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_cmd_parser.c,v 1.7 2018/08/27 07:17:35 riastradh Exp $	*/
+/*	$NetBSD: i915_cmd_parser.c,v 1.8 2018/08/27 07:44:43 riastradh Exp $	*/
 
 /*
  * Copyright © 2013 Intel Corporation
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_cmd_parser.c,v 1.7 2018/08/27 07:17:35 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_cmd_parser.c,v 1.8 2018/08/27 07:44:43 riastradh Exp $");
 
 #include "i915_drv.h"
 
@@ -863,13 +863,22 @@ find_reg(const struct drm_i915_reg_descriptor *table,
 static u32 *vmap_batch(struct drm_i915_gem_object *obj,
 		       unsigned start, unsigned len)
 {
+#ifdef __NetBSD__
+	vaddr_t va = 0;
+	int error;
+
+	/* XXX errno NetBSD->Linux */
+	error = uvm_map(kernel_map, &va, len, obj->base.filp, start,
+	    sizeof(u32), UVM_MAPFLAG(UVM_PROT_RW, UVM_PROT_RW, UVM_INH_NONE,
+		UVM_ADV_SEQUENTIAL, UVM_FLAG_NOWAIT));
+	if (error)
+		return NULL;
+
+	return (void *)va;
+#else
 	int i;
 	void *addr = NULL;
-#ifdef __NetBSD__
-	struct vm_page *page;
-#else
 	struct sg_page_iter sg_iter;
-#endif
 	int first_page = start >> PAGE_SHIFT;
 	int last_page = (len + start + 4095) >> PAGE_SHIFT;
 	int npages = last_page - first_page;
@@ -882,26 +891,11 @@ static u32 *vmap_batch(struct drm_i915_gem_object *obj,
 	}
 
 	i = 0;
-#ifdef __NetBSD__
-	/*
-	 * XXX Why do we work through the page queue instead of just
-	 * using uvm_map?
-	 */
-	TAILQ_FOREACH(page, &obj->pageq, pageq.queue) {
-		if (first_page-- > 0)
-			continue;
-		if (i == npages)
-			break;
-		pages[i] = container_of(page, struct page, p_vmp);
-		i++;
-	}
-#else
 	for_each_sg_page(obj->pages->sgl, &sg_iter, obj->pages->nents, first_page) {
 		pages[i++] = sg_page_iter_page(&sg_iter);
 		if (i == npages)
 			break;
 	}
-#endif
 
 	addr = vmap(pages, i, 0, PAGE_KERNEL);
 	if (addr == NULL) {
@@ -913,6 +907,7 @@ finish:
 	if (pages)
 		drm_free_large(pages);
 	return (u32*)addr;
+#endif	/* __NetBSD__ */
 }
 
 /* Returns a vmap'd pointer to dest_obj, which the caller must unmap */
@@ -967,7 +962,7 @@ static u32 *copy_batch(struct drm_i915_gem_object *dest_obj,
 
 unmap_src:
 #ifdef __NetBSD__
-	vunmap(src_base, batch_len / PAGE_SIZE);
+	uvm_unmap(kernel_map, (vaddr_t)src_base, batch_len);
 #else
 	vunmap(src_base);
 #endif
@@ -1223,7 +1218,7 @@ int i915_parse_cmds(struct intel_engine_cs *ring,
 	}
 
 #ifdef __NetBSD__
-	vunmap(batch_base, batch_obj->base.size / PAGE_SIZE);
+	uvm_unmap(kernel_map, (vaddr_t)batch_base, batch_obj->base.size);
 #else
 	vunmap(batch_base);
 #endif
