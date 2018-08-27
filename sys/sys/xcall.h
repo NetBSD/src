@@ -1,4 +1,4 @@
-/*	$NetBSD: xcall.h,v 1.6 2018/02/01 03:15:29 ozaki-r Exp $	*/
+/*	$NetBSD: xcall.h,v 1.7 2018/08/27 07:10:15 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -33,6 +33,9 @@
 #define	_SYS_XCALL_H_
 
 #ifdef _KERNEL
+
+#include <sys/types.h>
+
 #define XC_HIGHPRI		0x01	/* high priority */
 #define XC_HIGHPRI_IPL(ipl)	(XC_HIGHPRI | xc_encode_ipl(ipl))
 
