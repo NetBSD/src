@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_trace.h,v 1.5 2018/08/27 06:18:17 riastradh Exp $	*/
+/*	$NetBSD: i915_trace.h,v 1.6 2018/08/27 07:06:00 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -119,14 +119,12 @@ trace_i915_gem_request_retire(struct drm_i915_gem_request *request __unused)
 }
 
 static inline void
-trace_i915_gem_request_wait_begin(struct drm_i915_gem_request *request __unused,
-    uint32_t seqno __unused)
+trace_i915_gem_request_wait_begin(struct drm_i915_gem_request *request __unused)
 {
 }
 
 static inline void
-trace_i915_gem_request_wait_end(struct drm_i915_gem_request *request __unused,
-    uint32_t seqno __unused)
+trace_i915_gem_request_wait_end(struct drm_i915_gem_request *request __unused)
 {
 }
 
@@ -143,8 +141,9 @@ trace_i915_gem_ring_flush(struct drm_i915_gem_request *request __unused,
 }
 
 static inline void
-trace_i915_gem_ring_sync_to(struct drm_i915_gem_request *from __unused,
-    struct drm_i915_gem_request *to __unused, u32 seqno __unused)
+trace_i915_gem_ring_sync_to(struct drm_i915_gem_request *to_req __unused,
+    struct intel_engine_cs *from __unused,
+    struct drm_i915_gem_request *from_req __unused)
 {
 }
 
@@ -166,6 +165,22 @@ trace_i915_vma_unbind(struct i915_vma *vma __unused)
 
 static inline void
 trace_intel_gpu_freq_change(unsigned int freq __unused)
+{
+}
+
+static inline void
+trace_i915_context_create(struct intel_context *ctx __unused)
+{
+}
+
+static inline void
+trace_i915_context_free(struct intel_context *ctx __unused)
+{
+}
+
+static inline void
+trace_switch_mm(struct intel_engine_cs *ring __unused,
+    struct intel_context *to __unused)
 {
 }
 
