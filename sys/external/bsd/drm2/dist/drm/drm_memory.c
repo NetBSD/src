@@ -1,3 +1,5 @@
+/*	$NetBSD: drm_memory.c,v 1.1.1.3 2018/08/27 01:34:42 riastradh Exp $	*/
+
 /**
  * \file drm_memory.c
  * Memory management wrappers for DRM
@@ -33,11 +35,26 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: drm_memory.c,v 1.1.1.3 2018/08/27 01:34:42 riastradh Exp $");
+
 #include <linux/highmem.h>
 #include <linux/export.h>
 #include <drm/drmP.h>
+#include "drm_legacy.h"
 
-#if __OS_HAS_AGP
+#if IS_ENABLED(CONFIG_AGP)
+
+#ifdef HAVE_PAGE_AGP
+# include <asm/agp.h>
+#else
+# ifdef __powerpc__
+#  define PAGE_AGP	__pgprot(_PAGE_KERNEL | _PAGE_NO_CACHE)
+# else
+#  define PAGE_AGP	PAGE_KERNEL
+# endif
+#endif
+
 static void *agp_remap(unsigned long offset, unsigned long size,
 		       struct drm_device * dev)
 {
@@ -99,34 +116,34 @@ int drm_unbind_agp(struct agp_memory * handle)
 	return agp_unbind_memory(handle);
 }
 
-#else  /*  __OS_HAS_AGP  */
+#else /*  CONFIG_AGP  */
 static inline void *agp_remap(unsigned long offset, unsigned long size,
 			      struct drm_device * dev)
 {
 	return NULL;
 }
 
-#endif				/* agp */
+#endif /* CONFIG_AGP */
 
-void drm_core_ioremap(struct drm_local_map *map, struct drm_device *dev)
+void drm_legacy_ioremap(struct drm_local_map *map, struct drm_device *dev)
 {
 	if (dev->agp && dev->agp->cant_use_aperture && map->type == _DRM_AGP)
 		map->handle = agp_remap(map->offset, map->size, dev);
 	else
 		map->handle = ioremap(map->offset, map->size);
 }
-EXPORT_SYMBOL(drm_core_ioremap);
+EXPORT_SYMBOL(drm_legacy_ioremap);
 
-void drm_core_ioremap_wc(struct drm_local_map *map, struct drm_device *dev)
+void drm_legacy_ioremap_wc(struct drm_local_map *map, struct drm_device *dev)
 {
 	if (dev->agp && dev->agp->cant_use_aperture && map->type == _DRM_AGP)
 		map->handle = agp_remap(map->offset, map->size, dev);
 	else
 		map->handle = ioremap_wc(map->offset, map->size);
 }
-EXPORT_SYMBOL(drm_core_ioremap_wc);
+EXPORT_SYMBOL(drm_legacy_ioremap_wc);
 
-void drm_core_ioremapfree(struct drm_local_map *map, struct drm_device *dev)
+void drm_legacy_ioremapfree(struct drm_local_map *map, struct drm_device *dev)
 {
 	if (!map->handle || !map->size)
 		return;
@@ -136,4 +153,4 @@ void drm_core_ioremapfree(struct drm_local_map *map, struct drm_device *dev)
 	else
 		iounmap(map->handle);
 }
-EXPORT_SYMBOL(drm_core_ioremapfree);
+EXPORT_SYMBOL(drm_legacy_ioremapfree);

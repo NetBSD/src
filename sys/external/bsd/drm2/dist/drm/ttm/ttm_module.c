@@ -1,3 +1,5 @@
+/*	$NetBSD: ttm_module.c,v 1.1.1.2 2018/08/27 01:34:59 riastradh Exp $	*/
+
 /**************************************************************************
  *
  * Copyright (c) 2006-2009 VMware, Inc., Palo Alto, CA., USA
@@ -28,6 +30,9 @@
  * Authors: Thomas Hellstrom <thellstrom-at-vmware-dot-com>
  * 	    Jerome Glisse
  */
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ttm_module.c,v 1.1.1.2 2018/08/27 01:34:59 riastradh Exp $");
+
 #include <linux/module.h>
 #include <linux/device.h>
 #include <linux/sched.h>
@@ -35,7 +40,7 @@
 #include <drm/drm_sysfs.h>
 
 static DECLARE_WAIT_QUEUE_HEAD(exit_q);
-atomic_t device_released;
+static atomic_t device_released;
 
 static struct device_type ttm_drm_class_type = {
 	.name = "ttm",

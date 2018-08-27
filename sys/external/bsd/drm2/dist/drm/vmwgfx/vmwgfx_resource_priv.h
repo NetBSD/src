@@ -1,6 +1,8 @@
+/*	$NetBSD: vmwgfx_resource_priv.h,v 1.1.1.2 2018/08/27 01:35:00 riastradh Exp $	*/
+
 /**************************************************************************
  *
- * Copyright © 2012 VMware, Inc., Palo Alto, CA., USA
+ * Copyright © 2012-2014 VMware, Inc., Palo Alto, CA., USA
  * All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -30,6 +32,12 @@
 
 #include "vmwgfx_drv.h"
 
+enum vmw_cmdbuf_res_state {
+	VMW_CMDBUF_RES_COMMITTED,
+	VMW_CMDBUF_RES_ADD,
+	VMW_CMDBUF_RES_DEL
+};
+
 /**
  * struct vmw_user_resource_conv - Identify a derived user-exported resource
  * type and provide a function to convert its ttm_base_object pointer to
@@ -55,8 +63,10 @@ struct vmw_user_resource_conv {
  * @bind:              Bind a hardware resource to persistent buffer storage.
  * @unbind:            Unbind a hardware resource from persistent
  *                     buffer storage.
+ * @commit_notify:     If the resource is a command buffer managed resource,
+ *                     callback to notify that a define or remove command
+ *                     has been committed to the device.
  */
-
 struct vmw_res_func {
 	enum vmw_res_type res_type;
 	bool needs_backup;
@@ -71,6 +81,8 @@ struct vmw_res_func {
 	int (*unbind) (struct vmw_resource *res,
 		       bool readback,
 		       struct ttm_validate_buffer *val_buf);
+	void (*commit_notify)(struct vmw_resource *res,
+			      enum vmw_cmdbuf_res_state state);
 };
 
 int vmw_resource_alloc_id(struct vmw_resource *res);

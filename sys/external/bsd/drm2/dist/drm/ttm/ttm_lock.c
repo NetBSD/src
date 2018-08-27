@@ -1,3 +1,5 @@
+/*	$NetBSD: ttm_lock.c,v 1.1.1.3 2018/08/27 01:34:59 riastradh Exp $	*/
+
 /**************************************************************************
  *
  * Copyright (c) 2007-2009 VMware, Inc., Palo Alto, CA., USA
@@ -27,6 +29,9 @@
 /*
  * Authors: Thomas Hellstrom <thellstrom-at-vmware-dot-com>
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ttm_lock.c,v 1.1.1.3 2018/08/27 01:34:59 riastradh Exp $");
 
 #include <drm/ttm/ttm_lock.h>
 #include <drm/ttm/ttm_module.h>
@@ -180,7 +185,7 @@ int ttm_write_lock(struct ttm_lock *lock, bool interruptible)
 			spin_unlock(&lock->lock);
 		}
 	} else
-		wait_event(lock->queue, __ttm_read_lock(lock));
+		wait_event(lock->queue, __ttm_write_lock(lock));
 
 	return ret;
 }
