@@ -1,4 +1,4 @@
-/*	$NetBSD: atom.c,v 1.4 2018/08/27 14:05:40 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_atom.c,v 1.1 2018/08/27 14:10:14 riastradh Exp $	*/
 
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atom.c,v 1.4 2018/08/27 14:05:40 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_atom.c,v 1.1 2018/08/27 14:10:14 riastradh Exp $");
 
 #include <linux/module.h>
 #include <linux/sched.h>
