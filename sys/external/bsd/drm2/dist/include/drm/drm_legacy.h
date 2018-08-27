@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_legacy.h,v 1.4 2018/08/27 06:39:16 riastradh Exp $	*/
+/*	$NetBSD: drm_legacy.h,v 1.5 2018/08/27 06:42:54 riastradh Exp $	*/
 
 #ifndef __DRM_DRM_LEGACY_H__
 #define __DRM_DRM_LEGACY_H__
@@ -268,5 +268,9 @@ static __inline__ struct drm_local_map *drm_legacy_findmap(struct drm_device *de
 		return _entry->map;
 	return NULL;
 }
+
+#ifdef __NetBSD__
+#include <drm/drm_iomap_netbsd.h>
+#endif
 
 #endif /* __DRM_DRM_LEGACY_H__ */
