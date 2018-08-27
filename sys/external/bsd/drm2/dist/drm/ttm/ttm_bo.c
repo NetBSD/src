@@ -1,4 +1,4 @@
-/*	$NetBSD: ttm_bo.c,v 1.12 2018/08/27 07:52:53 riastradh Exp $	*/
+/*	$NetBSD: ttm_bo.c,v 1.13 2018/08/27 07:53:16 riastradh Exp $	*/
 
 /**************************************************************************
  *
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ttm_bo.c,v 1.12 2018/08/27 07:52:53 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ttm_bo.c,v 1.13 2018/08/27 07:53:16 riastradh Exp $");
 
 #define pr_fmt(fmt) "[TTM] " fmt
 
@@ -54,6 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: ttm_bo.c,v 1.12 2018/08/27 07:52:53 riastradh Exp $"
 #include <linux/reservation.h>
 #include <linux/printk.h>
 #include <linux/export.h>
+#include <linux/fence.h>
 
 #define TTM_ASSERT_LOCKED(param)
 #define TTM_DEBUG(fmt, arg...)	do {} while (0)
