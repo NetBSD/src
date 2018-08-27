@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_guc_loader.c,v 1.7 2018/08/27 13:40:28 riastradh Exp $	*/
+/*	$NetBSD: intel_guc_loader.c,v 1.8 2018/08/27 13:41:50 riastradh Exp $	*/
 
 /*
  * Copyright © 2014 Intel Corporation
@@ -29,7 +29,7 @@
  *    Alex Dai <yu.dai@intel.com>
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_guc_loader.c,v 1.7 2018/08/27 13:40:28 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_guc_loader.c,v 1.8 2018/08/27 13:41:50 riastradh Exp $");
 
 #include <linux/firmware.h>
 #include <linux/module.h>
@@ -538,6 +538,35 @@ static void guc_fw_fetch(struct drm_device *dev, struct intel_guc_fw *guc_fw)
 		err = obj ? PTR_ERR(obj) : -ENOMEM;
 		goto fail;
 	}
+
+#ifdef __NetBSD__		/* XXX temporary diagnostic kludge */
+	{
+		void *buf = kmem_alloc(fw->size, KM_SLEEP);
+		struct iovec iov;
+		struct uio uio;
+		iov.iov_base = buf;
+		iov.iov_len = fw->size;
+		uio.uio_iov = &iov;
+		uio.uio_iovcnt = 1;
+		uio.uio_resid = fw->size;
+		uio.uio_rw = UIO_READ;
+		UIO_SETUP_SYSSPACE(&uio);
+		err = -ubc_uiomove(obj->base.filp, &uio, fw->size,
+		    UVM_ADV_NORMAL, UBC_READ);
+		if (err) {
+			DRM_DEBUG_DRIVER("ubc_uiomove failed for test: %d\n",
+			    err);
+			kmem_free(buf, fw->size);
+			goto fail;
+		}
+		if (memcmp(fw->data, buf, fw->size) != 0) {
+			DRM_DEBUG_DRIVER("firmware copy corrupted\n");
+			kmem_free(buf, fw->size);
+			goto fail;
+		}
+		kmem_free(buf, fw->size);
+	}
+#endif
 
 	guc_fw->guc_fw_obj = obj;
 	guc_fw->guc_fw_size = fw->size;
