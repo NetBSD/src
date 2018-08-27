@@ -1,4 +1,4 @@
-/*	$NetBSD: reboot.h,v 1.2 2015/03/06 01:43:07 riastradh Exp $	*/
+/*	$NetBSD: reboot.h,v 1.3 2018/08/27 07:24:36 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -45,5 +45,16 @@ orderly_poweroff(bool force __unused)
 	return 0;
 }
 
+static inline int
+register_reboot_notifier(struct notifier_block *block)
+{
+	return 0;
+}
+
+static inline int
+unregister_reboot_notifier(struct notifier_block *block)
+{
+	return 0;
+}
 
 #endif	/* _LINUX_REBOOT_H_ */
