@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_funcs.h,v 1.3 2014/07/14 12:40:38 nakayama Exp $	*/
+/*	$NetBSD: bus_funcs.h,v 1.4 2018/08/27 16:16:02 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -64,6 +64,17 @@
 
 #ifndef _SPARC64_BUS_FUNCS_H_
 #define _SPARC64_BUS_FUNCS_H_
+
+#include <sys/cdefs.h>
+#include <sys/types.h>
+#include <sys/null.h>
+
+#include <machine/bus_defs.h>
+
+struct mbuf;
+struct openprom_range;
+struct proc;
+struct uio;
 
 /*
  * Debug hooks
