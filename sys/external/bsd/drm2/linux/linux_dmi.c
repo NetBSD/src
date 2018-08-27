@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_dmi.c,v 1.1 2014/04/25 23:54:59 riastradh Exp $	*/
+/*	$NetBSD: linux_dmi.c,v 1.2 2018/08/27 06:45:44 riastradh Exp $	*/
 
 /*-
  * Copyright (C) 2014 NONAKA Kimihiro <nonaka@netbsd.org>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_dmi.c,v 1.1 2014/04/25 23:54:59 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_dmi.c,v 1.2 2018/08/27 06:45:44 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -34,70 +34,80 @@ __KERNEL_RCSID(0, "$NetBSD: linux_dmi.c,v 1.1 2014/04/25 23:54:59 riastradh Exp 
 
 #include <linux/dmi.h>
 
+bool
+dmi_match(enum dmi_field slot, const char *text)
+{
+	const char *p = NULL;
+
+	switch (slot) {
+	case DMI_NONE:
+		aprint_error("%s: dmi_match on none makes no sense", __func__);
+		return false;
+	case DMI_BIOS_VENDOR:
+		p = pmf_get_platform("bios-vendor");
+		break;
+	case DMI_BIOS_VERSION:
+		p = pmf_get_platform("bios-version");
+		break;
+	case DMI_BIOS_DATE:
+		p = pmf_get_platform("bios-date");
+		break;
+	case DMI_SYS_VENDOR:
+		p = pmf_get_platform("system-vendor");
+		break;
+	case DMI_PRODUCT_NAME:
+		p = pmf_get_platform("system-product");
+		break;
+	case DMI_PRODUCT_VERSION:
+		p = pmf_get_platform("system-version");
+		break;
+	case DMI_PRODUCT_SERIAL:
+		p = pmf_get_platform("system-serial");
+		break;
+	case DMI_PRODUCT_UUID:
+		p = pmf_get_platform("system-uuid");
+		break;
+	case DMI_BOARD_VENDOR:
+		p = pmf_get_platform("board-vendor");
+		break;
+	case DMI_BOARD_NAME:
+		p = pmf_get_platform("board-product");
+		break;
+	case DMI_BOARD_VERSION:
+		p = pmf_get_platform("board-version");
+		break;
+	case DMI_BOARD_SERIAL:
+		p = pmf_get_platform("board-serial");
+		break;
+	case DMI_BOARD_ASSET_TAG:
+		p = pmf_get_platform("board-asset-tag");
+		break;
+	case DMI_CHASSIS_VENDOR:
+	case DMI_CHASSIS_TYPE:
+	case DMI_CHASSIS_VERSION:
+	case DMI_CHASSIS_SERIAL:
+	case DMI_CHASSIS_ASSET_TAG:
+		return false;
+	case DMI_STRING_MAX:
+	default:
+		aprint_error("%s: unknown DMI field(%d)\n", __func__, slot);
+		return false;
+	}
+	if (p == NULL || strcmp(p, text))
+		return false;
+
+	return true;
+}
+
 static bool
 dmi_found(const struct dmi_system_id *dsi)
 {
-	const char *p;
-	int i, slot;
+	int i;
 
 	for (i = 0; i < __arraycount(dsi->matches); i++) {
-		p = NULL;
-		slot = dsi->matches[i].slot;
-		switch (slot) {
-		case DMI_NONE:
-			continue;
-		case DMI_BIOS_VENDOR:
-			p = pmf_get_platform("bios-vendor");
+		if (dsi->matches[i].slot == DMI_NONE)
 			break;
-		case DMI_BIOS_VERSION:
-			p = pmf_get_platform("bios-version");
-			break;
-		case DMI_BIOS_DATE:
-			p = pmf_get_platform("bios-date");
-			break;
-		case DMI_SYS_VENDOR:
-			p = pmf_get_platform("system-vendor");
-			break;
-		case DMI_PRODUCT_NAME:
-			p = pmf_get_platform("system-product");
-			break;
-		case DMI_PRODUCT_VERSION:
-			p = pmf_get_platform("system-version");
-			break;
-		case DMI_PRODUCT_SERIAL:
-			p = pmf_get_platform("system-serial");
-			break;
-		case DMI_PRODUCT_UUID:
-			p = pmf_get_platform("system-uuid");
-			break;
-		case DMI_BOARD_VENDOR:
-			p = pmf_get_platform("board-vendor");
-			break;
-		case DMI_BOARD_NAME:
-			p = pmf_get_platform("board-product");
-			break;
-		case DMI_BOARD_VERSION:
-			p = pmf_get_platform("board-version");
-			break;
-		case DMI_BOARD_SERIAL:
-			p = pmf_get_platform("board-serial");
-			break;
-		case DMI_BOARD_ASSET_TAG:
-			p = pmf_get_platform("board-asset-tag");
-			break;
-		case DMI_CHASSIS_VENDOR:
-		case DMI_CHASSIS_TYPE:
-		case DMI_CHASSIS_VERSION:
-		case DMI_CHASSIS_SERIAL:
-		case DMI_CHASSIS_ASSET_TAG:
-			return false;
-		case DMI_STRING_MAX:
-		default:
-			aprint_error("%s: unknown DMI field(%d)\n", __func__,
-			    slot);
-			return false;
-		}
-		if (p == NULL || strcmp(p, dsi->matches[i].substr))
+		if (!dmi_match(dsi->matches[i].slot, dsi->matches[i].substr))
 			return false;
 	}
 	return true;
