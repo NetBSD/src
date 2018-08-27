@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem_stolen.c,v 1.6 2018/08/27 06:08:25 riastradh Exp $	*/
+/*	$NetBSD: i915_gem_stolen.c,v 1.7 2018/08/27 06:08:38 riastradh Exp $	*/
 
 /*
  * Copyright © 2008-2012 Intel Corporation
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gem_stolen.c,v 1.6 2018/08/27 06:08:25 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gem_stolen.c,v 1.7 2018/08/27 06:08:38 riastradh Exp $");
 
 #include <linux/printk.h>
 #include <linux/err.h>
@@ -291,6 +291,12 @@ void i915_gem_cleanup_stolen(struct drm_device *dev)
 
 	if (!drm_mm_initialized(&dev_priv->mm.stolen))
 		return;
+
+#ifdef __NetBSD__
+	linux_mutex_destroy(&dev_priv->mm.stolen_lock);
+#else
+	mutex_destroy(&dev_priv->mm.stolen_lock);
+#endif
 
 	drm_mm_takedown(&dev_priv->mm.stolen);
 }
