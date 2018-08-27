@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_core_object.c,v 1.3 2018/08/27 07:35:56 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_core_object.c,v 1.4 2018/08/27 07:36:07 riastradh Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_core_object.c,v 1.3 2018/08/27 07:35:56 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_core_object.c,v 1.4 2018/08/27 07:36:07 riastradh Exp $");
 
 #include <core/object.h>
 #include <core/client.h>
@@ -238,7 +238,11 @@ nvkm_object_ctor(const struct nvkm_object_func *func,
 	object->handle = oclass->handle;
 	INIT_LIST_HEAD(&object->head);
 	INIT_LIST_HEAD(&object->tree);
+#ifdef __NetBSD__
+	object->on_tree = false;
+#else
 	RB_CLEAR_NODE(&object->node);
+#endif
 	WARN_ON(oclass->engine && !object->engine);
 }
 
