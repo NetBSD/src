@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_fence.c,v 1.1 2018/08/27 13:33:59 riastradh Exp $	*/
+/*	$NetBSD: linux_fence.c,v 1.2 2018/08/27 13:36:53 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,12 +30,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_fence.c,v 1.1 2018/08/27 13:33:59 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_fence.c,v 1.2 2018/08/27 13:36:53 riastradh Exp $");
 
 #include <sys/atomic.h>
 #include <sys/condvar.h>
 #include <sys/queue.h>
 
+#include <linux/atomic.h>
 #include <linux/errno.h>
 #include <linux/kref.h>
 #include <linux/fence.h>
@@ -191,12 +192,14 @@ fence_ensure_signal_enabled(struct fence *fence)
 	if (fence->flags & (1u << FENCE_FLAG_SIGNALED_BIT))
 		return -ENOENT;
 
-	/* If the enable signalling callback has been called, success.  */
-	if (fence->flags & (1u << FENCE_FLAG_ENABLE_SIGNAL_BIT))
+	/*
+	 * If the enable signaling callback has been called, success.
+	 * Otherwise, set the bit indicating it.
+	 */
+	if (test_and_set_bit(FENCE_FLAG_ENABLE_SIGNAL_BIT, &fence->flags))
 		return 0;
 
 	/* Otherwise, note that we've called it and call it.  */
-	fence->flags |= 1u << FENCE_FLAG_ENABLE_SIGNAL_BIT;
 	if (!(*fence->ops->enable_signaling)(fence)) {
 		/* If it failed, signal and return -ENOENT.  */
 		fence_signal_locked(fence);
@@ -377,9 +380,8 @@ fence_signal_locked(struct fence *fence)
 	KASSERT(spin_is_locked(fence->lock));
 
 	/* If it's been signalled, fail; otherwise set the signalled bit.  */
-	if (fence->flags & (1u << FENCE_FLAG_SIGNALED_BIT))
+	if (test_and_set_bit(FENCE_FLAG_SIGNALED_BIT, &fence->flags))
 		return -EINVAL;
-	fence->flags |= 1u << FENCE_FLAG_SIGNALED_BIT;
 
 	/* Wake waiters.  */
 	cv_broadcast(&fence->f_cv);
