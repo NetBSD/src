@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_cmd_parser.c,v 1.12 2018/08/27 14:44:30 riastradh Exp $	*/
+/*	$NetBSD: i915_cmd_parser.c,v 1.13 2018/08/27 14:45:31 riastradh Exp $	*/
 
 /*
  * Copyright © 2013 Intel Corporation
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_cmd_parser.c,v 1.12 2018/08/27 14:44:30 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_cmd_parser.c,v 1.13 2018/08/27 14:45:31 riastradh Exp $");
 
 #include "i915_drv.h"
 
@@ -982,7 +982,7 @@ static u32 *copy_batch(struct drm_i915_gem_object *dest_obj,
 
 unmap_src:
 #ifdef __NetBSD__
-	uvm_unmap(kernel_map, srcva, srclen);
+	uvm_unmap(kernel_map, srcva, srcva + srclen);
 #else
 	vunmap(src_base);
 #endif
@@ -1239,7 +1239,7 @@ int i915_parse_cmds(struct intel_engine_cs *ring,
 
 #ifdef __NetBSD__
 	uvm_unmap(kernel_map, (vaddr_t)batch_base,
-	    roundup(batch_len, PAGE_SIZE));
+	    (vaddr_t)batch_base + roundup(batch_len, PAGE_SIZE));
 #else
 	vunmap(batch_base);
 #endif
