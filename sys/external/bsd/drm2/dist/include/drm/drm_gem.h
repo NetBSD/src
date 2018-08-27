@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_gem.h,v 1.3 2018/08/27 07:19:01 riastradh Exp $	*/
+/*	$NetBSD: drm_gem.h,v 1.4 2018/08/27 15:10:25 riastradh Exp $	*/
 
 #ifndef __DRM_GEM_H__
 #define __DRM_GEM_H__
@@ -35,6 +35,10 @@
  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  */
+
+#ifdef __NetBSD__
+#include <uvm/uvm.h>
+#endif
 
 /**
  * This structure defines the drm_mm memory object, which will be used by the
