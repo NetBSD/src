@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_crtc.c,v 1.5 2018/08/27 04:58:19 riastradh Exp $	*/
+/*	$NetBSD: drm_crtc.c,v 1.6 2018/08/27 06:52:11 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2006-2008 Intel Corporation
@@ -32,7 +32,7 @@
  *      Jesse Barnes <jesse.barnes@intel.com>
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_crtc.c,v 1.5 2018/08/27 04:58:19 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_crtc.c,v 1.6 2018/08/27 06:52:11 riastradh Exp $");
 
 #include <linux/err.h>
 #include <linux/spinlock.h>
@@ -3400,7 +3400,7 @@ int drm_mode_rmfb(struct drm_device *dev,
 	 * so run this in a separate stack as there's no way to correctly
 	 * handle this after the fb is already removed from the lookup table.
 	 */
-	if (atomic_read(&fb->refcount.refcount) > 1) {
+	if (!kref_exclusive_p(&fb->refcount)) {
 		struct drm_mode_rmfb_work arg;
 
 		INIT_WORK_ONSTACK(&arg.work, drm_mode_rmfb_work_fn);
@@ -3598,7 +3598,7 @@ void drm_fb_release(struct drm_file *priv)
 	 * at it any more.
 	 */
 	list_for_each_entry_safe(fb, tfb, &priv->fbs, filp_head) {
-		if (atomic_read(&fb->refcount.refcount) > 1) {
+		if (!kref_exclusive_p(&fb->refcount)) {
 			list_move_tail(&fb->filp_head, &arg.fbs);
 		} else {
 			list_del_init(&fb->filp_head);
