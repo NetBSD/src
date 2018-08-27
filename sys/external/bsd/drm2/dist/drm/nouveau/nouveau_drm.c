@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_drm.c,v 1.9 2018/08/27 04:58:24 riastradh Exp $	*/
+/*	$NetBSD: nouveau_drm.c,v 1.10 2018/08/27 07:03:26 riastradh Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_drm.c,v 1.9 2018/08/27 04:58:24 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_drm.c,v 1.10 2018/08/27 07:03:26 riastradh Exp $");
 
 #include <linux/console.h>
 #include <linux/delay.h>
@@ -1154,8 +1154,15 @@ nouveau_drm_init(void)
 {
 	driver_pci = driver_stub;
 	driver_pci.set_busid = drm_pci_set_busid;
+#ifdef __NetBSD__
+	driver_pci.request_irq = drm_pci_request_irq;
+	driver_pci.free_irq = drm_pci_free_irq;
+#endif
 	driver_platform = driver_stub;
 	driver_platform.set_busid = drm_platform_set_busid;
+#ifdef __NetBSD__
+	/* XXX platform intr establish?  */
+#endif
 
 	nouveau_display_options();
 

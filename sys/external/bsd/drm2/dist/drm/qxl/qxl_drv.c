@@ -1,4 +1,4 @@
-/*	$NetBSD: qxl_drv.c,v 1.2 2018/08/27 04:58:35 riastradh Exp $	*/
+/*	$NetBSD: qxl_drv.c,v 1.3 2018/08/27 07:03:26 riastradh Exp $	*/
 
 /* vim: set ts=8 sw=8 tw=78 ai noexpandtab */
 /* qxl_drv.c -- QXL driver -*- linux-c -*-
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qxl_drv.c,v 1.2 2018/08/27 04:58:35 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qxl_drv.c,v 1.3 2018/08/27 07:03:26 riastradh Exp $");
 
 #include <linux/module.h>
 #include <linux/console.h>
@@ -267,6 +267,10 @@ static struct drm_driver qxl_driver = {
 	.fops = &qxl_fops,
 	.ioctls = qxl_ioctls,
 	.irq_handler = qxl_irq_handler,
+#ifdef __NetBSD__
+	.request_irq = drm_pci_request_irq,
+	.free_irq = drm_pci_free_irq,
+#endif
 	.name = DRIVER_NAME,
 	.desc = DRIVER_DESC,
 	.date = DRIVER_DATE,
