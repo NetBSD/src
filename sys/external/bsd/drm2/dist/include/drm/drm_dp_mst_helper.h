@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_dp_mst_helper.h,v 1.2 2018/08/27 04:58:37 riastradh Exp $	*/
+/*	$NetBSD: drm_dp_mst_helper.h,v 1.3 2018/08/27 06:06:41 riastradh Exp $	*/
 
 /*
  * Copyright © 2014 Red Hat.
@@ -456,7 +456,9 @@ struct drm_dp_mst_topology_mgr {
 	unsigned long payload_mask;
 	unsigned long vcpi_mask;
 
+#ifndef __NetBSD__
 	wait_queue_head_t tx_waitq;
+#endif
 	struct work_struct work;
 
 	struct work_struct tx_work;
