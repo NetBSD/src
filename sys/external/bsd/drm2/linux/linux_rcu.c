@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_rcu.c,v 1.3 2018/08/27 14:14:54 riastradh Exp $	*/
+/*	$NetBSD: linux_rcu.c,v 1.4 2018/08/27 15:07:59 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,15 +30,27 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_rcu.c,v 1.3 2018/08/27 14:14:54 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_rcu.c,v 1.4 2018/08/27 15:07:59 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/condvar.h>
+#include <sys/cpu.h>
 #include <sys/kthread.h>
 #include <sys/mutex.h>
+#include <sys/sdt.h>
 #include <sys/xcall.h>
 
 #include <linux/rcupdate.h>
+
+SDT_PROBE_DEFINE0(sdt, linux, rcu, synchronize__start);
+SDT_PROBE_DEFINE1(sdt, linux, rcu, synchronize__cpu, "unsigned"/*cpu*/);
+SDT_PROBE_DEFINE0(sdt, linux, rcu, synchronize__done);
+SDT_PROBE_DEFINE2(sdt, linux, rcu, call__queue,
+    "struct rcu_head *"/*head*/, "void (*)(struct rcu_head *)"/*callback*/);
+SDT_PROBE_DEFINE2(sdt, linux, rcu, call__run,
+    "struct rcu_head *"/*head*/, "void (*)(struct rcu_head *)"/*callback*/);
+SDT_PROBE_DEFINE2(sdt, linux, rcu, call__done,
+    "struct rcu_head *"/*head*/, "void (*)(struct rcu_head *)"/*callback*/);
 
 static struct {
 	kmutex_t	lock;
@@ -49,15 +61,19 @@ static struct {
 } gc __cacheline_aligned;
 
 static void
-rcu_xc(void *a, void *b)
+synchronize_rcu_xc(void *a, void *b)
 {
+
+	SDT_PROBE1(sdt, linux, rcu, synchronize__cpu,  cpu_index(curcpu()));
 }
 
 void
 synchronize_rcu(void)
 {
 
-	xc_wait(xc_broadcast(0, &rcu_xc, NULL, NULL));
+	SDT_PROBE0(sdt, linux, rcu, synchronize__start);
+	xc_wait(xc_broadcast(0, &synchronize_rcu_xc, NULL, NULL));
+	SDT_PROBE0(sdt, linux, rcu, synchronize__done);
 }
 
 void
@@ -70,6 +86,7 @@ call_rcu(struct rcu_head *head, void (*callback)(struct rcu_head *))
 	head->rcuh_next = gc.first;
 	gc.first = head;
 	cv_signal(&gc.cv);
+	SDT_PROBE2(sdt, linux, rcu, call__queue,  head, callback);
 	mutex_exit(&gc.lock);
 }
 
@@ -77,6 +94,7 @@ static void
 gc_thread(void *cookie)
 {
 	struct rcu_head *head, *next;
+	void (*callback)(struct rcu_head *);
 
 	mutex_enter(&gc.lock);
 	for (;;) {
@@ -95,7 +113,16 @@ gc_thread(void *cookie)
 			/* It is now safe to call the callbacks.  */
 			for (; head != NULL; head = next) {
 				next = head->rcuh_next;
-				(*head->rcuh_callback)(head);
+				callback = head->rcuh_callback;
+				SDT_PROBE2(sdt, linux, rcu, call__run,
+				    head, callback);
+				(*callback)(head);
+				/*
+				 * Can't dereference head or invoke
+				 * callback after this point.
+				 */
+				SDT_PROBE2(sdt, linux, rcu, call__done,
+				    head, callback);
 			}
 
 			mutex_enter(&gc.lock);
