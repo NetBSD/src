@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_pci.c,v 1.25 2018/08/27 14:11:21 riastradh Exp $	*/
+/*	$NetBSD: drm_pci.c,v 1.26 2018/08/27 15:12:35 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_pci.c,v 1.25 2018/08/27 14:11:21 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_pci.c,v 1.26 2018/08/27 15:12:35 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/errno.h>
@@ -299,7 +299,8 @@ drm_pci_set_unique(struct drm_device *dev, struct drm_master *master,
 
 	/* Make sure it matches what we expect.  */
 	snprintf(kbuf, sizeof kbuf, "PCI:%d:%ld:%ld", dev->pdev->bus->number,
-	    PCI_SLOT(dev->pdev->devfn), PCI_FUNC(dev->pdev->devfn));
+	    (long)PCI_SLOT(dev->pdev->devfn),
+	    (long)PCI_FUNC(dev->pdev->devfn));
 	if (strncmp(kbuf, ubuf, sizeof(kbuf)) != 0)
 		return -EINVAL;
 
