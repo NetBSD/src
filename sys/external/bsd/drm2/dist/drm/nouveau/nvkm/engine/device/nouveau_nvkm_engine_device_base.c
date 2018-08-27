@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_engine_device_base.c,v 1.5 2018/08/27 07:39:33 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_engine_device_base.c,v 1.6 2018/08/27 13:43:52 riastradh Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_device_base.c,v 1.5 2018/08/27 07:39:33 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_device_base.c,v 1.6 2018/08/27 13:43:52 riastradh Exp $");
 
 #include "priv.h"
 #include "acpi.h"
@@ -39,14 +39,14 @@ static struct mutex nv_devices_mutex;
 static struct list_head nv_devices = LIST_HEAD_INIT(nv_devices);
 
 void
-nouveau_devices_init(void)
+nvkm_devices_init(void)
 {
 
 	linux_mutex_init(&nv_devices_mutex);
 }
 
 void
-nouveau_devices_fini(void)
+nvkm_devices_fini(void)
 {
 
 	linux_mutex_destroy(&nv_devices_mutex);
