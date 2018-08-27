@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem_render_state.c,v 1.7 2018/08/27 13:43:22 riastradh Exp $	*/
+/*	$NetBSD: i915_gem_render_state.c,v 1.8 2018/08/27 14:44:04 riastradh Exp $	*/
 
 /*
  * Copyright © 2014 Intel Corporation
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gem_render_state.c,v 1.7 2018/08/27 13:43:22 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gem_render_state.c,v 1.8 2018/08/27 14:44:04 riastradh Exp $");
 
 #include "i915_drv.h"
 #include "intel_renderstate.h"
@@ -121,6 +121,8 @@ static int render_state_setup(struct render_state *so)
 		UVM_ADV_NORMAL, 0));
 	if (ret)
 		return ret;
+	/* uvm_map consumes a reference on success.  */
+	uao_reference(so->obj->base.filp);
 	d = (void *)kva;
 #else
 	page = sg_page(so->obj->pages->sgl);
