@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_trace.h,v 1.7 2018/08/27 07:06:59 riastradh Exp $	*/
+/*	$NetBSD: i915_trace.h,v 1.8 2018/08/27 07:14:29 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -125,6 +125,11 @@ trace_i915_gem_request_wait_begin(struct drm_i915_gem_request *request __unused)
 
 static inline void
 trace_i915_gem_request_wait_end(struct drm_i915_gem_request *request __unused)
+{
+}
+
+static inline void
+trace_i915_gem_request_notify(struct intel_engine_cs *ring __unused)
 {
 }
 
