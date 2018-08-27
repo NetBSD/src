@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_irq.c,v 1.14 2018/08/27 07:14:55 riastradh Exp $	*/
+/*	$NetBSD: i915_irq.c,v 1.15 2018/08/27 14:45:11 riastradh Exp $	*/
 
 /* i915_irq.c -- IRQ support for the I915 -*- linux-c -*-
  */
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_irq.c,v 1.14 2018/08/27 07:14:55 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_irq.c,v 1.15 2018/08/27 14:45:11 riastradh Exp $");
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
@@ -1007,7 +1007,6 @@ static void notify_ring(struct intel_engine_cs *ring)
 
 #ifdef __NetBSD__
 	spin_lock_irqsave(&dev_priv->irq_lock, flags);
-	/* XXX Set a flag under the lock or push the lock out to callers.  */
 	DRM_SPIN_WAKEUP_ALL(&ring->irq_queue, &dev_priv->irq_lock);
 	spin_unlock_irqrestore(&dev_priv->irq_lock, flags);
 #else
@@ -1496,7 +1495,6 @@ static void gmbus_irq_handler(struct drm_device *dev)
 
 #ifdef __NetBSD__
 	spin_lock(&dev_priv->gmbus_wait_lock);
-	/* XXX Set a flag here...  */
 	DRM_SPIN_WAKEUP_ALL(&dev_priv->gmbus_wait_queue,
 	    &dev_priv->gmbus_wait_lock);
 	spin_unlock(&dev_priv->gmbus_wait_lock);
@@ -1511,7 +1509,6 @@ static void dp_aux_irq_handler(struct drm_device *dev)
 
 #ifdef __NetBSD__
 	spin_lock(&dev_priv->gmbus_wait_lock);
-	/* XXX Set a flag here...  */
 	DRM_SPIN_WAKEUP_ALL(&dev_priv->gmbus_wait_queue,
 	    &dev_priv->gmbus_wait_lock);
 	spin_unlock(&dev_priv->gmbus_wait_lock);
@@ -2416,10 +2413,12 @@ static void i915_error_wake_up(struct drm_i915_private *dev_priv,
 	 * a gpu reset pending so that i915_error_work_func can acquire them).
 	 */
 
-	assert_spin_locked(&dev_priv->irq_lock);
 #ifdef __NetBSD__
-	for_each_ring(ring, dev_priv, i)
+	for_each_ring(ring, dev_priv, i) {
+		spin_lock(&dev_priv->irq_lock);
 		DRM_SPIN_WAKEUP_ALL(&ring->irq_queue, &dev_priv->irq_lock);
+		spin_unlock(&dev_priv->irq_lock);
+	}
 
 	spin_lock(&dev_priv->pending_flip_lock);
 	DRM_SPIN_WAKEUP_ALL(&dev_priv->pending_flip_queue,
@@ -2537,9 +2536,7 @@ static void i915_reset_and_wakeup(struct drm_device *dev)
 		 * Note: The wake_up also serves as a memory barrier so that
 		 * waiters see the update value of the reset counter atomic_t.
 		 */
-		spin_lock(&dev_priv->irq_lock);
 		i915_error_wake_up(dev_priv, true);
-		spin_unlock(&dev_priv->irq_lock);
 	}
 }
 
@@ -2651,8 +2648,6 @@ void i915_handle_error(struct drm_device *dev, bool wedged,
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	va_list args;
 	char error_msg[80];
-
-	assert_spin_locked(&dev_priv->irq_lock);
 
 	va_start(args, fmt);
 	vscnprintf(error_msg, sizeof(error_msg), fmt, args);
@@ -3047,8 +3042,6 @@ static void i915_hangcheck_elapsed(struct work_struct *work)
 	if (!i915.enable_hangcheck)
 		return;
 
-	spin_lock(&dev_priv->irq_lock);
-
 	for_each_ring(ring, dev_priv, i) {
 		u64 acthd;
 		u32 seqno;
@@ -3063,6 +3056,7 @@ static void i915_hangcheck_elapsed(struct work_struct *work)
 			if (ring_idle(ring, seqno)) {
 				ring->hangcheck.action = HANGCHECK_IDLE;
 #ifdef __NetBSD__
+				spin_lock(&dev_priv->irq_lock);
 				if (DRM_SPIN_WAITERS_P(&ring->irq_queue,
 					&dev_priv->irq_lock)) {
 					if (!test_and_set_bit(ring->id, &dev_priv->gpu_error.missed_irq_rings)) {
@@ -3078,6 +3072,7 @@ static void i915_hangcheck_elapsed(struct work_struct *work)
 				} else {
 					busy = false;
 				}
+				spin_unlock(&dev_priv->irq_lock);
 #else
 				if (waitqueue_active(&ring->irq_queue)) {
 					/* Issue a wake-up to catch stuck h/w. */
@@ -3159,11 +3154,8 @@ static void i915_hangcheck_elapsed(struct work_struct *work)
 
 	if (rings_hung) {
 		i915_handle_error(dev, true, "Ring hung");
-		spin_unlock(&dev_priv->irq_lock);
 		return;
 	}
-
-	spin_unlock(&dev_priv->irq_lock);
 
 	if (busy_count)
 		/* Reset timer case chip hangs without another request
