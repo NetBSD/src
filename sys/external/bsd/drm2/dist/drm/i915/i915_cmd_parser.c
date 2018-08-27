@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_cmd_parser.c,v 1.14 2018/08/27 14:45:57 riastradh Exp $	*/
+/*	$NetBSD: i915_cmd_parser.c,v 1.15 2018/08/27 14:46:10 riastradh Exp $	*/
 
 /*
  * Copyright © 2013 Intel Corporation
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_cmd_parser.c,v 1.14 2018/08/27 14:45:57 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_cmd_parser.c,v 1.15 2018/08/27 14:46:10 riastradh Exp $");
 
 #include "i915_drv.h"
 
@@ -983,7 +983,15 @@ static u32 *copy_batch(struct drm_i915_gem_object *dest_obj,
 	if (needs_clflush)
 		drm_clflush_virt_range(src, batch_len);
 
+#ifdef __NetBSD__
+	ret = -kcopy(dst, src, batch_len);
+	if (ret) {
+		uvm_unmap(kernel_map, dstva, dstva + dstlen);
+		goto unmap_src;
+	}
+#else
 	memcpy(dst, src, batch_len);
+#endif
 
 unmap_src:
 #ifdef __NetBSD__
