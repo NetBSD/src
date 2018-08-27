@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_audio.c,v 1.3 2018/08/27 07:19:23 riastradh Exp $	*/
+/*	$NetBSD: intel_audio.c,v 1.4 2018/08/27 07:56:36 riastradh Exp $	*/
 
 /*
  * Copyright © 2014 Intel Corporation
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_audio.c,v 1.3 2018/08/27 07:19:23 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_audio.c,v 1.4 2018/08/27 07:56:36 riastradh Exp $");
 
 #include <linux/kernel.h>
 #include <linux/component.h>
@@ -243,7 +243,7 @@ static void g4x_audio_codec_enable(struct drm_connector *connector,
 	len = min(drm_eld_size(eld) / 4, len);
 	DRM_DEBUG_DRIVER("ELD size %d\n", len);
 	for (i = 0; i < len; i++)
-		I915_WRITE(G4X_HDMIW_HDMIEDID, *((uint32_t *)eld + i));
+		I915_WRITE(G4X_HDMIW_HDMIEDID, *((const uint32_t *)eld + i));
 
 	tmp = I915_READ(G4X_AUD_CNTL_ST);
 	tmp |= eldv;
@@ -322,7 +322,7 @@ static void hsw_audio_codec_enable(struct drm_connector *connector,
 	/* Up to 84 bytes of hw ELD buffer */
 	len = min(drm_eld_size(eld), 84);
 	for (i = 0; i < len / 4; i++)
-		I915_WRITE(HSW_AUD_EDID_DATA(pipe), *((uint32_t *)eld + i));
+		I915_WRITE(HSW_AUD_EDID_DATA(pipe), *((const uint32_t *)eld + i));
 
 	/* ELD valid */
 	tmp = I915_READ(HSW_AUD_PIN_ELD_CP_VLD);
@@ -471,7 +471,7 @@ static void ilk_audio_codec_enable(struct drm_connector *connector,
 	/* Up to 84 bytes of hw ELD buffer */
 	len = min(drm_eld_size(eld), 84);
 	for (i = 0; i < len / 4; i++)
-		I915_WRITE(hdmiw_hdmiedid, *((uint32_t *)eld + i));
+		I915_WRITE(hdmiw_hdmiedid, *((const uint32_t *)eld + i));
 
 	/* ELD valid */
 	tmp = I915_READ(aud_cntrl_st2);
