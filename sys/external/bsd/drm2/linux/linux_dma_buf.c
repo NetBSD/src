@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_dma_buf.c,v 1.1 2018/08/27 15:22:54 riastradh Exp $	*/
+/*	$NetBSD: linux_dma_buf.c,v 1.2 2018/08/27 15:24:11 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_dma_buf.c,v 1.1 2018/08/27 15:22:54 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_dma_buf.c,v 1.2 2018/08/27 15:24:11 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/atomic.h>
@@ -119,6 +119,7 @@ dma_buf_fd(struct dma_buf *dmabuf, int flags)
 	fd_affix(curproc, file, fd);
 
 	fd_putfile(fd);
+	ret = fd;
 out0:	return ret;
 }
 
