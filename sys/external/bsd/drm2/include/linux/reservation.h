@@ -1,4 +1,4 @@
-/*	$NetBSD: reservation.h,v 1.1 2014/07/16 20:59:58 riastradh Exp $	*/
+/*	$NetBSD: reservation.h,v 1.2 2018/08/27 07:32:11 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -32,13 +32,27 @@
 #ifndef _ASM_RESERVATION_H_
 #define _ASM_RESERVATION_H_
 
+#include <sys/atomic.h>
+
 #include <linux/ww_mutex.h>
+
+struct fence;
 
 extern struct ww_class	reservation_ww_class;
 
 struct reservation_object {
 	struct ww_mutex	lock;
+
+	struct fence *robj_fence_excl;
 };
+
+#define	reservation_object_add_excl_fence	linux_reservation_object_add_excl_fence
+#define	reservation_object_add_shared_fence	linux_reservation_object_add_shared_fence
+
+void	reservation_object_add_excl_fence(struct reservation_object *,
+	    struct fence *);
+void	reservation_object_add_shared_fence(struct reservation_object *,
+	    struct fence *);
 
 static inline void
 reservation_object_init(struct reservation_object *reservation)
@@ -52,6 +66,17 @@ reservation_object_fini(struct reservation_object *reservation)
 {
 
 	ww_mutex_destroy(&reservation->lock);
+}
+
+static inline struct fence *
+reservation_object_get_excl(struct reservation_object *reservation)
+{
+	struct fence *fence;
+
+	fence = reservation->robj_fence_excl;
+	membar_datadep_consumer();
+
+	return fence;
 }
 
 #endif  /* _ASM_RESERVATION_H_ */
