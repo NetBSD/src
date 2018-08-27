@@ -1,4 +1,4 @@
-/*	$NetBSD: bitops.h,v 1.6 2018/08/27 07:16:50 riastradh Exp $	*/
+/*	$NetBSD: bitops.h,v 1.7 2018/08/27 13:54:37 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -70,6 +70,12 @@ static inline int
 fls(int x)
 {
 	return fls32(x);
+}
+
+static inline unsigned int
+hweight8(uint8_t w)
+{
+	return popcount(w & 0xff);
 }
 
 static inline unsigned int
@@ -256,12 +262,5 @@ find_first_zero_bit(const unsigned long *ptr, unsigned long nbits)
 	for ((BIT) = find_first_bit((PTR), (NBITS));			      \
 	     (BIT) < (NBITS);						      \
 	     (BIT) = find_next_bit((PTR), (NBITS), (BIT) + 1))
-
-static inline unsigned
-hweight8(unsigned w)
-{
-
-	return popcount(w & 0xff);
-}
 
 #endif  /* _LINUX_BITOPS_H_ */
