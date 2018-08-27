@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_usif.c,v 1.4 2018/08/27 07:39:07 riastradh Exp $	*/
+/*	$NetBSD: nouveau_usif.c,v 1.5 2018/08/27 07:43:16 riastradh Exp $	*/
 
 /*
  * Copyright 2014 Red Hat Inc.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_usif.c,v 1.4 2018/08/27 07:39:07 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_usif.c,v 1.5 2018/08/27 07:43:16 riastradh Exp $");
 
 #include "nouveau_drm.h"
 #include "nouveau_usif.h"
@@ -117,7 +117,11 @@ usif_notify(const void *header, u32 length, const void *data, u32 size)
 		list_add_tail(&ntfy->p->base.link, &filp->event_list);
 		filp->event_space -= ntfy->p->e.base.length;
 	}
+#ifdef __NetBSD__
+	DRM_SPIN_WAKEUP_ONE(&filp->event_wait, &dev->event_lock);
+#else
 	wake_up_interruptible(&filp->event_wait);
+#endif
 	spin_unlock_irqrestore(&dev->event_lock, flags);
 	atomic_set(&ntfy->enabled, 0);
 	return NVIF_NOTIFY_DROP;
