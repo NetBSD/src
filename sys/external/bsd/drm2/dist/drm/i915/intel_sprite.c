@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_sprite.c,v 1.7 2018/08/27 07:28:26 riastradh Exp $	*/
+/*	$NetBSD: intel_sprite.c,v 1.8 2018/08/27 14:43:00 riastradh Exp $	*/
 
 /*
  * Copyright © 2011 Intel Corporation
@@ -32,7 +32,7 @@
  * support.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_sprite.c,v 1.7 2018/08/27 07:28:26 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_sprite.c,v 1.8 2018/08/27 14:43:00 riastradh Exp $");
 
 #include <drm/drmP.h>
 #include <drm/drm_crtc.h>
@@ -115,7 +115,7 @@ void intel_pipe_update_start(struct intel_crtc *crtc)
 	if (min <= 0 || max <= 0)
 		return;
 
-	if (WARN_ON(drm_crtc_vblank_get(&crtc->base)))
+	if (WARN_ON(drm_crtc_vblank_get_locked(&crtc->base)))
 		return;
 
 	crtc->debug.min_vbl = min;
@@ -126,9 +126,10 @@ void intel_pipe_update_start(struct intel_crtc *crtc)
 	DRM_SPIN_TIMED_WAIT_UNTIL(ret, wq, &dev->vbl_lock, timeout,
 	    (scanline = intel_get_crtc_scanline(crtc),
 		scanline < min || scanline > max));
-	if (ret)
-		DRM_ERROR("Potential atomic update failure on pipe %c\n",
-		    pipe_name(crtc->pipe));
+	if (ret <= 0)
+		DRM_ERROR("Potential atomic update failure on pipe %c: %d\n",
+		    pipe_name(crtc->pipe), ret ? ret : -EWOULDBLOCK);
+	drm_crtc_vblank_put_locked(&crtc->base);
 #else
 	for (;;) {
 		/*
@@ -156,9 +157,9 @@ void intel_pipe_update_start(struct intel_crtc *crtc)
 	}
 
 	finish_wait(wq, &wait);
-#endif
 
 	drm_crtc_vblank_put(&crtc->base);
+#endif
 
 	crtc->debug.scanline_start = scanline;
 	crtc->debug.start_vbl_time = ktime_get();
