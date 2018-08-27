@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.h,v 1.28 2018/08/27 07:20:05 riastradh Exp $	*/
+/*	$NetBSD: pci.h,v 1.29 2018/08/27 07:34:13 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -68,8 +68,12 @@ struct acpi_devnode;
 struct pci_driver;
 
 struct pci_bus {
-	u_int			number;
+	/* NetBSD private members */
 	pci_chipset_tag_t	pb_pc;
+	device_t		pb_dev;
+
+	/* Linux API */
+	u_int			number;
 };
 
 struct pci_device_id {
@@ -82,7 +86,7 @@ struct pci_device_id {
 	unsigned long	driver_data;
 };
 
-#define	PCI_ANY_ID		((pcireg_t)-1)
+#define	PCI_ANY_ID		(~0)
 
 #define	PCI_BASE_CLASS_DISPLAY	PCI_CLASS_DISPLAY
 
@@ -93,6 +97,7 @@ struct pci_device_id {
 CTASSERT(PCI_CLASS_BRIDGE_ISA == 0x0601);
 
 /* XXX This is getting silly...  */
+#define	PCI_VENDOR_ID_APPLE	PCI_VENDOR_APPLE
 #define	PCI_VENDOR_ID_ASUSTEK	PCI_VENDOR_ASUSTEK
 #define	PCI_VENDOR_ID_ATI	PCI_VENDOR_ATI
 #define	PCI_VENDOR_ID_DELL	PCI_VENDOR_DELL
@@ -100,6 +105,7 @@ CTASSERT(PCI_CLASS_BRIDGE_ISA == 0x0601);
 #define	PCI_VENDOR_ID_HP	PCI_VENDOR_HP
 #define	PCI_VENDOR_ID_INTEL	PCI_VENDOR_INTEL
 #define	PCI_VENDOR_ID_NVIDIA	PCI_VENDOR_NVIDIA
+#define	PCI_VENDOR_ID_SI	PCI_VENDOR_SIS
 #define	PCI_VENDOR_ID_SONY	PCI_VENDOR_SONY
 #define	PCI_VENDOR_ID_VIA	PCI_VENDOR_VIATECH
 
@@ -150,6 +156,7 @@ struct pci_dev {
 	struct pci_conf_state	*pd_saved_state;
 	struct acpi_devnode	*pd_ad;
 	pci_intr_handle_t	*pd_intr_handles;
+	unsigned		pd_enablecnt;
 
 	/* Linx API only below */
 	struct pci_bus		*bus;
@@ -195,8 +202,9 @@ linux_pci_dev_init(struct pci_dev *pdev, device_t dev,
 	pdev->pd_ad = NULL;
 #endif
 	pdev->bus = kmem_zalloc(sizeof(struct pci_bus), KM_NOSLEEP);
-	pdev->bus->number = pa->pa_bus;
 	pdev->bus->pb_pc = pa->pa_pc;
+	pdev->bus->pb_dev = device_parent(dev);
+	pdev->bus->number = pa->pa_bus;
 	pdev->devfn = PCI_DEVFN(pa->pa_device, pa->pa_function);
 	pdev->vendor = PCI_VENDOR(pa->pa_id);
 	pdev->device = PCI_PRODUCT(pa->pa_id);
@@ -794,6 +802,59 @@ pci_is_root_bus(struct pci_bus *bus)
 
 	/* XXX Cop-out. */
 	return false;
+}
+
+static inline int
+pci_domain_nr(struct pci_bus *bus)
+{
+
+	return device_unit(bus->pb_dev);
+}
+
+/*
+ * We explicitly rename pci_enable/disable_device so that you have to
+ * review each use of them, since NetBSD's PCI API does _not_ respect
+ * our local enablecnt here, but there are different parts of NetBSD
+ * that automatically enable/disable like PMF, so you have to decide
+ * for each one whether to call it or not.
+ */
+
+static inline int
+linux_pci_enable_device(struct pci_dev *pdev)
+{
+	const struct pci_attach_args *pa = &pdev->pd_pa;
+	pcireg_t csr;
+	int s;
+
+	if (pdev->pd_enablecnt++)
+		return 0;
+
+	s = splhigh();
+	csr = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
+	csr |= PCI_COMMAND_IO_ENABLE;
+	csr |= PCI_COMMAND_MEM_ENABLE;
+	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG, csr);
+	splx(s);
+
+	return 0;
+}
+
+static inline void
+linux_pci_disable_device(struct pci_dev *pdev)
+{
+	const struct pci_attach_args *pa = &pdev->pd_pa;
+	pcireg_t csr;
+	int s;
+
+	if (--pdev->pd_enablecnt)
+		return;
+
+	s = splhigh();
+	csr = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
+	csr &= ~PCI_COMMAND_IO_ENABLE;
+	csr &= ~PCI_COMMAND_MEM_ENABLE;
+	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG, csr);
+	splx(s);
 }
 
 #endif  /* _LINUX_PCI_H_ */
