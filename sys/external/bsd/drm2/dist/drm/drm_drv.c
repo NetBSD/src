@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_drv.c,v 1.3 2018/08/27 06:53:13 riastradh Exp $	*/
+/*	$NetBSD: drm_drv.c,v 1.4 2018/08/27 06:53:46 riastradh Exp $	*/
 
 /*
  * Created: Fri Jan 19 10:48:35 2001 by faith@acm.org
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_drv.c,v 1.3 2018/08/27 06:53:13 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_drv.c,v 1.4 2018/08/27 06:53:46 riastradh Exp $");
 
 #include <linux/err.h>
 #include <linux/export.h>
@@ -723,7 +723,6 @@ err_free:
 	linux_mutex_destroy(&dev->ctxlist_mutex);
 	linux_mutex_destroy(&dev->master_mutex);
 	spin_lock_destroy(&dev->event_lock);
-	spin_lock_destroy(&dev->count_lock);
 #else
 	mutex_destroy(&dev->master_mutex);
 #endif
@@ -752,7 +751,6 @@ static void drm_dev_release(struct kref *ref)
 	linux_mutex_destroy(&dev->ctxlist_mutex);
 	linux_mutex_destroy(&dev->master_mutex);
 	spin_lock_destroy(&dev->event_lock);
-	spin_lock_destroy(&dev->count_lock);
 #else
 	mutex_destroy(&dev->master_mutex);
 #endif
