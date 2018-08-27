@@ -1,4 +1,6 @@
-#	$NetBSD: files.nouveau,v 1.20 2018/08/27 16:04:32 riastradh Exp $
+#	$NetBSD: files.nouveau,v 1.21 2018/08/27 16:06:01 riastradh Exp $
+
+version	20180827
 
 define	nouveaufbbus	{ }
 device	nouveau: drmkms, drmkms_ttm, nouveaufbbus
