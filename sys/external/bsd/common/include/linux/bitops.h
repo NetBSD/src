@@ -1,4 +1,4 @@
-/*	$NetBSD: bitops.h,v 1.7 2018/08/27 13:54:37 riastradh Exp $	*/
+/*	$NetBSD: bitops.h,v 1.8 2018/08/27 14:46:23 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -188,7 +188,8 @@ __find_next_bit(const unsigned long *ptr, unsigned long nbits,
 {
 	const size_t bpl = (CHAR_BIT * sizeof(*ptr));
 	const unsigned long *p = ptr + startbit/bpl;
-	unsigned long result = rounddown(startbit, bpl);
+	size_t n = howmany(nbits, bpl);
+	unsigned long result;
 	uint64_t word;
 
 	/*
@@ -200,35 +201,42 @@ __find_next_bit(const unsigned long *ptr, unsigned long nbits,
 
 	/* Do we need to examine a partial starting word?  */
 	if (startbit % bpl) {
-		/* Are any of the first startbit%bpl bits zero?  */
-		if ((*p ^ toggle) & ~(~0UL << (startbit % bpl))) {
-			/* Toggle the bits and convert to 64 bits.  */
-			word = *p ^ toggle;
+		/* Toggle the bits and convert to 64 bits for ffs64.  */
+		word = *p ^ toggle;
 
-			/* Clear the low startbit%bpl bits.  */
-			word &= ~(~0UL << (startbit % bpl));
+		/* Clear the low startbit%bpl bits.  */
+		word &= (~0UL << (startbit % bpl));
 
-			/* Find the first set bit in this word. */
-			result += ffs64(word);
+		/* Are any of these bits set now?  */
+		if (word)
+			goto out;
 
-			/* Clamp down to at most nbits.  */
-			return MIN(result, nbits);
-		}
+		/* Move past it.  */
+		p++;
+		n--;
 	}
 
-	/* Find the first word matching word.  */
-	for (; bpl < nbits; p++, result += bpl) {
-		if (*p ^ toggle)
-			break;
+	/* Find the first word with any bits set.  */
+	for (; n --> 0; p++) {
+		/* Toggle the bits and convert to 64 bits for ffs64. */
+		word = *p ^ toggle;
+
+		/* Are any of these bits set now?  */
+		if (word)
+			goto out;
 	}
 
-	/* Toggle the bits and convert to 64 bits for ffs64.  */
-	word = *p ^ toggle;
+	/* Nada.  */
+	return nbits;
 
-	/* Find the first set bit in this word.  */
-	result += ffs64(word);
+out:
+	/* Count how many words we've skipped.  */
+	result = bpl*(p - ptr);
 
-	/* Clamp down to at most nbits.  */
+	/* Find the first set bit in this word, zero-based.  */
+	result += ffs64(word) - 1;
+
+	/* We may have overshot, so clamp down to at most nbits.  */
 	return MIN(result, nbits);
 }
 
