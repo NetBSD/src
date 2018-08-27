@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_irq.c,v 1.13 2018/08/27 07:10:05 riastradh Exp $	*/
+/*	$NetBSD: i915_irq.c,v 1.14 2018/08/27 07:14:55 riastradh Exp $	*/
 
 /* i915_irq.c -- IRQ support for the I915 -*- linux-c -*-
  */
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_irq.c,v 1.13 2018/08/27 07:10:05 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_irq.c,v 1.14 2018/08/27 07:14:55 riastradh Exp $");
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
@@ -37,6 +37,7 @@ __KERNEL_RCSID(0, "$NetBSD: i915_irq.c,v 1.13 2018/08/27 07:10:05 riastradh Exp 
 #include <sys/cdefs.h>
 #endif
 
+#include <linux/hardirq.h>
 #include <linux/printk.h>
 #include <linux/sysrq.h>
 #include <linux/slab.h>
@@ -1811,7 +1812,7 @@ out:
 	return ret;
 }
 
-static irqreturn_t cherryview_irq_handler(int irq, void *arg)
+static irqreturn_t cherryview_irq_handler(DRM_IRQ_ARGS)
 {
 	struct drm_device *dev = arg;
 	struct drm_i915_private *dev_priv = dev->dev_private;
@@ -2839,7 +2840,7 @@ semaphore_wait_to_signaller_ring(struct intel_engine_cs *ring, u32 ipehr, u64 of
 		}
 	}
 
-	DRM_ERROR("No signaller ring found for ring %i, ipehr 0x%08x, offset 0x%016llx\n",
+	DRM_ERROR("No signaller ring found for ring %i, ipehr 0x%08x, offset 0x%016"PRIx64"\n",
 		  ring->id, ipehr, offset);
 
 	return NULL;
