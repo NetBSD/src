@@ -1,4 +1,4 @@
-/*	$NetBSD: workqueue.h,v 1.9 2018/08/27 14:57:21 riastradh Exp $	*/
+/*	$NetBSD: workqueue.h,v 1.10 2018/08/27 14:58:40 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013, 2018 The NetBSD Foundation, Inc.
@@ -47,6 +47,7 @@
 #define	current_work			linux_current_work
 #define	destroy_workqueue		linux_destroy_workqueue
 #define	flush_delayed_work		linux_flush_delayed_work
+#define	flush_scheduled_work		linux_flush_scheduled_work
 #define	flush_work			linux_flush_work
 #define	flush_workqueue			linux_flush_workqueue
 #define	queue_delayed_work		linux_queue_delayed_work
