@@ -1,4 +1,4 @@
-/*	$NetBSD: radeondrmkmsfb.c,v 1.7 2017/01/20 12:25:07 maya Exp $	*/
+/*	$NetBSD: radeondrmkmsfb.c,v 1.8 2018/08/27 13:36:14 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeondrmkmsfb.c,v 1.7 2017/01/20 12:25:07 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeondrmkmsfb.c,v 1.8 2018/08/27 13:36:14 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "vga.h"
@@ -367,10 +367,10 @@ static bool
 radeonfb_genfb_setmode(struct genfb_softc *genfb, int mode)
 {
 	struct radeonfb_softc *sc = (struct radeonfb_softc *)genfb;
+	struct drm_fb_helper *fb_helper = sc->sc_rfa.rfa_fb_helper;
 
-	if (mode == WSDISPLAYIO_MODE_EMUL) {
-		drm_fb_helper_set_config(sc->sc_rfa.rfa_fb_helper);
-	}
+	if (mode == WSDISPLAYIO_MODE_EMUL)
+		drm_fb_helper_restore_fbdev_mode_unlocked(fb_helper);
 
 	return true;
 }
