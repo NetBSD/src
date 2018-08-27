@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_engine_device_pci.c,v 1.6 2018/08/27 07:42:46 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_engine_device_pci.c,v 1.7 2018/08/27 07:43:28 riastradh Exp $	*/
 
 /*
  * Copyright 2015 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs <bskeggs@redhat.com>
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_device_pci.c,v 1.6 2018/08/27 07:42:46 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_device_pci.c,v 1.7 2018/08/27 07:43:28 riastradh Exp $");
 
 #include <core/pci.h>
 #include "priv.h"
@@ -1709,7 +1709,8 @@ nvkm_device_pci_new(struct pci_dev *pci_dev, const char *cfg, const char *dbg,
 	*pdevice = &pdev->device;
 	pdev->pdev = pci_dev;
 
-	return nvkm_device_ctor(&nvkm_device_pci_func, quirk, &pci_dev->dev,
+	return nvkm_device_ctor(&nvkm_device_pci_func, quirk,
+				pci_dev_dev(pci_dev),
 				pci_is_pcie(pci_dev) ? NVKM_DEVICE_PCIE :
 				pci_find_capability(pci_dev, PCI_CAP_ID_AGP) ?
 				NVKM_DEVICE_AGP : NVKM_DEVICE_PCI,
