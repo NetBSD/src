@@ -1,4 +1,4 @@
-/*	$NetBSD: fence.h,v 1.7 2018/08/27 07:34:32 riastradh Exp $	*/
+/*	$NetBSD: fence.h,v 1.8 2018/08/27 07:47:21 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -96,5 +96,16 @@ int	fence_signal_locked(struct fence *);
 long	fence_default_wait(struct fence *, bool, long);
 long	fence_wait(struct fence *, bool);
 long	fence_wait_timeout(struct fence *, bool, int);
+
+static inline void
+FENCE_TRACE(struct fence *f, const char *fmt, ...)
+{
+	va_list va;
+
+	va_start(va, fmt);
+	printf("fence %u@%u: ", f->context, f->seqno);
+	vprintf(fmt, va);
+	va_end(va);
+}
 
 #endif	/* _LINUX_FENCE_H_ */
