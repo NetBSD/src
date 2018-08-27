@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_subdev_instmem_nv50.c,v 1.2 2018/08/27 04:58:34 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_subdev_instmem_nv50.c,v 1.3 2018/08/27 06:36:48 riastradh Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_instmem_nv50.c,v 1.2 2018/08/27 04:58:34 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_instmem_nv50.c,v 1.3 2018/08/27 06:36:48 riastradh Exp $");
 
 #define nv50_instmem(p) container_of((p), struct nv50_instmem, base)
 #include "priv.h"
@@ -119,7 +119,7 @@ nv50_instobj_boot(struct nvkm_memory *memory, struct nvkm_vm *vm)
 			nvkm_warn(subdev, "PRAMIN ioremap failed\n");
 			nvkm_vm_put(&iobj->bar);
 		}
-#endf
+#endif
 	} else {
 		nvkm_warn(subdev, "PRAMIN exhausted\n");
 	}
