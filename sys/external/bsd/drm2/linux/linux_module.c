@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_module.c,v 1.8 2018/08/27 13:33:59 riastradh Exp $	*/
+/*	$NetBSD: linux_module.c,v 1.9 2018/08/27 15:08:54 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,13 +30,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_module.c,v 1.8 2018/08/27 13:33:59 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_module.c,v 1.9 2018/08/27 15:08:54 riastradh Exp $");
 
 #include <sys/module.h>
 #ifndef _MODULE
 #include <sys/once.h>
 #endif
 
+#include <linux/atomic.h>
 #include <linux/highmem.h>
 #include <linux/idr.h>
 #include <linux/io.h>
@@ -82,10 +83,17 @@ linux_init(void)
 		goto fail4;
 	}
 
+	error = linux_atomic64_init();
+	if (error) {
+		printf("linux: unable to initialize atomic64: %d\n", error);
+		goto fail5;
+	}
+
 	return 0;
 
-fail5: __unused
-	linux_writecomb_fini();
+fail6: __unused
+	linux_atomic64_fini();
+fail5:	linux_writecomb_fini();
 fail4:	linux_workqueue_fini();
 fail3:	linux_rcu_gc_fini();
 fail2:	linux_kmap_fini();
@@ -110,6 +118,7 @@ static void
 linux_fini(void)
 {
 
+	linux_atomic64_fini();
 	linux_writecomb_fini();
 	linux_workqueue_fini();
 	linux_rcu_gc_fini();
