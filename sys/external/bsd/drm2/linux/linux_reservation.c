@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_reservation.c,v 1.4 2018/08/27 14:01:14 riastradh Exp $	*/
+/*	$NetBSD: linux_reservation.c,v 1.5 2018/08/27 14:13:00 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_reservation.c,v 1.4 2018/08/27 14:01:14 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_reservation.c,v 1.5 2018/08/27 14:13:00 riastradh Exp $");
 
 #include <linux/fence.h>
 #include <linux/reservation.h>
@@ -311,9 +311,9 @@ reservation_object_read_valid(struct reservation_object *robj,
 /*
  * reservation_object_add_excl_fence(robj, fence)
  *
- *	Replace robj's exclusive fence, if any, by fence, and empty its
- *	list of shared fences.  The old exclusive fence and all old
- *	shared fences are released.
+ *	Empty and release all of robj's shared fences, and clear and
+ *	release its exclusive fence.  If fence is nonnull, acquire a
+ *	reference to it and save it as robj's exclusive fence.
  *
  *	Caller must have robj locked.
  */
@@ -327,6 +327,13 @@ reservation_object_add_excl_fence(struct reservation_object *robj,
 	struct reservation_object_write_ticket ticket;
 
 	KASSERT(reservation_object_held(robj));
+
+	/*
+	 * If we are setting rather than just removing a fence, acquire
+	 * a reference for ourselves.
+	 */
+	if (fence)
+		(void)fence_get(fence);
 
 	/* If there are any shared fences, remember how many.  */
 	if (old_list)
@@ -357,9 +364,9 @@ reservation_object_add_excl_fence(struct reservation_object *robj,
 /*
  * reservation_object_add_shared_fence(robj, fence)
  *
- *	Add a shared fence to robj.  If any fence was already added
- *	with the same context number, release it and replace it by this
- *	one.
+ *	Acquire a reference to fence and add it to robj's shared list.
+ *	If any fence was already added with the same context number,
+ *	release it and replace it by this one.
  *
  *	Caller must have robj locked, and must have preceded with a
  *	call to reservation_object_reserve_shared for each shared fence
@@ -376,6 +383,10 @@ reservation_object_add_shared_fence(struct reservation_object *robj,
 	uint32_t i;
 
 	KASSERT(reservation_object_held(robj));
+
+	/* Acquire a reference to the fence.  */
+	KASSERT(fence != NULL);
+	(void)fence_get(fence);
 
 	/* Check for a preallocated replacement list.  */
 	if (prealloc == NULL) {
