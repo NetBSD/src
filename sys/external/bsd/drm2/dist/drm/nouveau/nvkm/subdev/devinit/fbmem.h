@@ -1,4 +1,4 @@
-/*	$NetBSD: fbmem.h,v 1.2 2018/08/27 04:58:33 riastradh Exp $	*/
+/*	$NetBSD: fbmem.h,v 1.3 2018/08/27 14:51:33 riastradh Exp $	*/
 
 /*
  * Copyright (C) 2010 Francisco Jerez.
@@ -76,21 +76,21 @@ fbmem_fini(struct io_mapping *fb)
 #  define	iowrite32	fake_iowrite32
 
 static inline uint32_t
-fake_ioread32(const void __iomem *p)
+ioread32(const void __iomem *p)
 {
 	const uint32_t v = *(const uint32_t __iomem *)p;
 
 	membar_consumer();
 
-	return v;
+	return v;		/* XXX nouveau byte order */
 }
 
 static inline void
-fake_iowrite32(uint32_t v, void __iomem *p)
+iowrite32(uint32_t v, void __iomem *p)
 {
 
 	membar_producer();
-	*(uint32_t __iomem *)p = v;
+	*(uint32_t __iomem *)p = v; /* XXX nouveau byte order */
 }
 #endif
 
