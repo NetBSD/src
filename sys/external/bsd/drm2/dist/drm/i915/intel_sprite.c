@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_sprite.c,v 1.4 2018/08/27 06:16:50 riastradh Exp $	*/
+/*	$NetBSD: intel_sprite.c,v 1.5 2018/08/27 07:28:04 riastradh Exp $	*/
 
 /*
  * Copyright © 2011 Intel Corporation
@@ -32,7 +32,7 @@
  * support.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_sprite.c,v 1.4 2018/08/27 06:16:50 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_sprite.c,v 1.5 2018/08/27 07:28:04 riastradh Exp $");
 
 #include <drm/drmP.h>
 #include <drm/drm_crtc.h>
@@ -87,7 +87,7 @@ void intel_pipe_update_start(struct intel_crtc *crtc)
 {
 	struct drm_device *dev = crtc->base.dev;
 	const struct drm_display_mode *adjusted_mode = &crtc->config->base.adjusted_mode;
-	enum pipe pipe = crtc->pipe;
+	enum i915_pipe pipe = crtc->pipe;
 	long timeout = msecs_to_jiffies_timeout(1);
 	int scanline, min, max, vblank_start;
 #ifdef __NetBSD__
@@ -170,7 +170,7 @@ void intel_pipe_update_start(struct intel_crtc *crtc)
 void intel_pipe_update_end(struct intel_crtc *crtc)
 {
 	struct drm_device *dev = crtc->base.dev;
-	enum pipe pipe = crtc->pipe;
+	enum i915_pipe pipe = crtc->pipe;
 	int scanline_end = intel_get_crtc_scanline(crtc);
 	u32 end_vbl_count = dev->driver->get_vblank_counter(dev, pipe);
 	ktime_t end_vbl_time = ktime_get();
@@ -505,7 +505,7 @@ ivb_update_plane(struct drm_plane *plane, struct drm_crtc *crtc,
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	struct intel_plane *intel_plane = to_intel_plane(plane);
 	struct drm_i915_gem_object *obj = intel_fb_obj(fb);
-	enum pipe pipe = intel_plane->pipe;
+	enum i915_pipe pipe = intel_plane->pipe;
 	u32 sprctl, sprscale = 0;
 	unsigned long sprsurf_offset, linear_offset;
 	int pixel_size = drm_format_plane_cpp(fb->pixel_format, 0);
