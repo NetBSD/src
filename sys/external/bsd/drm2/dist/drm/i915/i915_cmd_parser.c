@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_cmd_parser.c,v 1.9 2018/08/27 14:43:48 riastradh Exp $	*/
+/*	$NetBSD: i915_cmd_parser.c,v 1.10 2018/08/27 14:44:04 riastradh Exp $	*/
 
 /*
  * Copyright © 2013 Intel Corporation
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_cmd_parser.c,v 1.9 2018/08/27 14:43:48 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_cmd_parser.c,v 1.10 2018/08/27 14:44:04 riastradh Exp $");
 
 #include "i915_drv.h"
 
@@ -872,6 +872,9 @@ static u32 *vmap_batch(struct drm_i915_gem_object *obj,
 		UVM_ADV_SEQUENTIAL, UVM_FLAG_NOWAIT));
 	if (error)
 		return NULL;
+
+	/* uvm_map consumes a reference on success.  */
+	uao_reference(obj->base.filp);
 
 	return (void *)va;
 #else
