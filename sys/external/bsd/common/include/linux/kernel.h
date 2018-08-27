@@ -1,4 +1,4 @@
-/*	$NetBSD: kernel.h,v 1.16 2018/08/27 06:55:32 riastradh Exp $	*/
+/*	$NetBSD: kernel.h,v 1.17 2018/08/27 07:02:51 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -85,6 +85,8 @@
 #define	DIV_ROUND_CLOSEST(N, D)						\
 	((0 < (N)) ? (((N) + ((D) / 2)) / (D))				\
 	    : (((N) - ((D) / 2)) / (D)))
+
+#define	DIV_ROUND_CLOSEST_ULL(N, D)	(((N) + (D)/2)/(D))
 
 /*
  * Rounding to what may or may not be powers of two.

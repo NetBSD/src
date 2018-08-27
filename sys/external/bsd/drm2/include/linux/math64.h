@@ -1,4 +1,4 @@
-/*	$NetBSD: math64.h,v 1.5 2018/08/27 06:51:07 riastradh Exp $	*/
+/*	$NetBSD: math64.h,v 1.6 2018/08/27 07:02:51 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -50,6 +50,12 @@ div_u64(int64_t dividend, uint32_t divisor)
 
 static inline int64_t
 div64_s64(int64_t dividend, int64_t divisor)
+{
+	return dividend / divisor;
+}
+
+static inline int64_t
+div_s64(int64_t dividend, int32_t divisor)
 {
 	return dividend / divisor;
 }
