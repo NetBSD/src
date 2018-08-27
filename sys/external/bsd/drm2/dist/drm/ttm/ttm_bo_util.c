@@ -1,4 +1,4 @@
-/*	$NetBSD: ttm_bo_util.c,v 1.7 2018/08/27 04:58:37 riastradh Exp $	*/
+/*	$NetBSD: ttm_bo_util.c,v 1.8 2018/08/27 07:45:02 riastradh Exp $	*/
 
 /**************************************************************************
  *
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ttm_bo_util.c,v 1.7 2018/08/27 04:58:37 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ttm_bo_util.c,v 1.8 2018/08/27 07:45:02 riastradh Exp $");
 
 #include <drm/ttm/ttm_bo_driver.h>
 #include <drm/ttm/ttm_placement.h>
@@ -44,6 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: ttm_bo_util.c,v 1.7 2018/08/27 04:58:37 riastradh Ex
 #include <linux/module.h>
 #include <linux/reservation.h>
 #include <linux/export.h>
+#include <asm/barrier.h>
 
 #ifdef __NetBSD__		/* PMAP_* caching flags for ttm_io_prot */
 #include <uvm/uvm_pmap.h>
