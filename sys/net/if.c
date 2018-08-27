@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.394.2.13 2018/07/13 16:01:12 martin Exp $	*/
+/*	$NetBSD: if.c,v 1.394.2.14 2018/08/27 07:49:11 martin Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.394.2.13 2018/07/13 16:01:12 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.394.2.14 2018/08/27 07:49:11 martin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -2326,6 +2326,7 @@ if_link_state_change_softint(struct ifnet *ifp, int link_state)
 	/* Ensure the change is still valid. */
 	if (ifp->if_link_state == link_state) {
 		IF_LINK_STATE_CHANGE_UNLOCK(ifp);
+		splx(s);
 		return;
 	}
 
