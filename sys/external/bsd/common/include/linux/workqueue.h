@@ -1,4 +1,4 @@
-/*	$NetBSD: workqueue.h,v 1.4 2018/08/27 07:00:28 riastradh Exp $	*/
+/*	$NetBSD: workqueue.h,v 1.5 2018/08/27 07:00:39 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@ struct work_struct {
 		WORK_DELAYED_CANCELLED,
 	}			w_state;
 	struct workqueue_struct	*w_wq;
-	void			(*w_fn)(struct work_struct *);
+	void			(*func)(struct work_struct *);
 };
 
 struct delayed_work {
