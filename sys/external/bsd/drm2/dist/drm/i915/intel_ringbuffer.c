@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_ringbuffer.c,v 1.7 2018/08/27 04:58:24 riastradh Exp $	*/
+/*	$NetBSD: intel_ringbuffer.c,v 1.8 2018/08/27 07:29:50 riastradh Exp $	*/
 
 /*
  * Copyright © 2008-2010 Intel Corporation
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_ringbuffer.c,v 1.7 2018/08/27 04:58:24 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_ringbuffer.c,v 1.8 2018/08/27 07:29:50 riastradh Exp $");
 
 #include <asm/param.h>
 #include <drm/drmP.h>
@@ -670,7 +670,12 @@ intel_fini_pipe_control(struct intel_engine_cs *ring)
 		return;
 
 	if (INTEL_INFO(dev)->gen >= 5) {
+#ifdef __NetBSD__
+		kunmap(container_of(TAILQ_FIRST(&ring->scratch.obj->pageq),
+			struct page, p_vmp));
+#else
 		kunmap(sg_page(ring->scratch.obj->pages->sgl));
+#endif
 		i915_gem_object_ggtt_unpin(ring->scratch.obj);
 	}
 
@@ -703,7 +708,7 @@ intel_init_pipe_control(struct intel_engine_cs *ring)
 	ring->scratch.gtt_offset = i915_gem_obj_ggtt_offset(ring->scratch.obj);
 #ifdef __NetBSD__
 	ring->scratch.cpu_page =
-	    kmap(container_of(TAILQ_FIRST(&ring->scratch.obj->igo_pageq),
+	    kmap(container_of(TAILQ_FIRST(&ring->scratch.obj->pageq),
 		    struct page, p_vmp));
 #else
 	ring->scratch.cpu_page = kmap(sg_page(ring->scratch.obj->pages->sgl));
@@ -1954,7 +1959,7 @@ static void cleanup_status_page(struct intel_engine_cs *ring)
 		return;
 
 #ifdef __NetBSD__
-	kunmap(container_of(TAILQ_FIRST(&obj->igo_pageq), struct page, p_vmp));
+	kunmap(container_of(TAILQ_FIRST(&obj->pageq), struct page, p_vmp));
 #else
 	kunmap(sg_page(obj->pages->sgl));
 #endif
@@ -2007,15 +2012,10 @@ err_unref:
 	ring->status_page.gfx_addr = i915_gem_obj_ggtt_offset(obj);
 #ifdef __NetBSD__
 	ring->status_page.page_addr =
-	    kmap(container_of(TAILQ_FIRST(&obj->igo_pageq), struct page,
-		    p_vmp));
+	    kmap(container_of(TAILQ_FIRST(&obj->pageq), struct page, p_vmp));
 #else
 	ring->status_page.page_addr = kmap(sg_page(obj->pages->sgl));
 #endif
-	if (ring->status_page.page_addr == NULL) {
-		ret = -ENOMEM;
-		goto err_unpin;
-	}
 	memset(ring->status_page.page_addr, 0, PAGE_SIZE);
 
 	DRM_DEBUG_DRIVER("%s hws offset: 0x%08x\n",
@@ -2047,8 +2047,8 @@ void intel_unpin_ringbuffer_obj(struct intel_ringbuffer *ringbuf)
 	bus_space_unmap(ringbuf->bst, ringbuf->bsh, ringbuf->size);
 #else
 	iounmap(ringbuf->virtual_start);
-#endif
 	ringbuf->virtual_start = NULL;
+#endif
 	i915_gem_object_ggtt_unpin(ringbuf->obj);
 }
 
@@ -2072,7 +2072,7 @@ int intel_pin_and_map_ringbuffer_obj(struct drm_device *dev,
 #ifdef __NetBSD__
 	/* XXX errno NetBSD->Linux */
 	ringbuf->bst = dev_priv->dev->pdev->pd_pa.pa_memt;
-	ret = -bus_space_map(ring->bst, (dev_priv->gtt.mappable_base +
+	ret = -bus_space_map(ringbuf->bst, (dev_priv->gtt.mappable_base +
 		i915_gem_obj_ggtt_offset(obj)),
 	    ringbuf->size, BUS_SPACE_MAP_PREFETCHABLE, &ringbuf->bsh);
 	if (ret) {
@@ -2238,6 +2238,7 @@ void intel_cleanup_ring_buffer(struct intel_engine_cs *ring)
 
 	if (ring->cleanup)
 		ring->cleanup(ring);
+
 	if (I915_NEED_GFX_HWS(ring->dev)) {
 		cleanup_status_page(ring);
 	} else {
@@ -2292,8 +2293,8 @@ static void __wrap_ring_buffer(struct intel_ringbuffer *ringbuf)
 	int rem = ringbuf->size - ringbuf->tail;
 
 #ifdef __NetBSD__
-	bus_space_set_region_4(ring->bst, ring->bsh, ring->tail, MI_NOOP,
-	    rem/4);
+	bus_space_set_region_4(ringbuf->bst, ringbuf->bsh, ringbuf->tail,
+	    MI_NOOP, rem/4);
 #else
 	virt = ringbuf->virtual_start + ringbuf->tail;
 	rem /= 4;
@@ -2845,7 +2846,6 @@ int intel_init_render_ring_buffer(struct drm_device *dev)
 		ret = intel_init_pipe_control(ring);
 		if (ret)
 			return ret;
-		}
 	}
 
 	return 0;
