@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_work.c,v 1.28 2018/08/27 15:03:20 riastradh Exp $	*/
+/*	$NetBSD: linux_work.c,v 1.29 2018/08/27 15:03:32 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_work.c,v 1.28 2018/08/27 15:03:20 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_work.c,v 1.29 2018/08/27 15:03:32 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/atomic.h>
@@ -65,8 +65,6 @@ static struct workqueue_struct *
 			    struct workqueue_struct *);
 static void		release_work(struct work_struct *,
 			    struct workqueue_struct *);
-static void		queue_delayed_work_anew(struct workqueue_struct *,
-			    struct delayed_work *, unsigned long);
 static void		cancel_delayed_work_done(struct workqueue_struct *,
 			    struct delayed_work *);
 
@@ -399,11 +397,39 @@ queue_work(struct workqueue_struct *wq, struct work_struct *work)
 
 	mutex_enter(&wq->wq_lock);
 	if (__predict_true((wq0 = acquire_work(work, wq)) == NULL)) {
+		/*
+		 * It wasn't on any workqueue at all.  Put it on this
+		 * one, and signal the worker thread that there is work
+		 * to do.
+		 */
 		TAILQ_INSERT_TAIL(&wq->wq_queue, work, work_entry);
 		newly_queued = true;
+		cv_broadcast(&wq->wq_cv);
 	} else {
+		/*
+		 * It was on a workqueue, which had better be this one.
+		 * Requeue it if it has been taken off the queue to
+		 * execute and hasn't been requeued yet.  The worker
+		 * thread should already be running, so no need to
+		 * signal it.
+		 */
 		KASSERT(wq0 == wq);
-		newly_queued = false;
+		if (wq->wq_current_work == work && !wq->wq_requeued) {
+			/*
+			 * It has been taken off the queue to execute,
+			 * and it hasn't been put back on the queue
+			 * again.  Put it back on the queue.  No need
+			 * to signal the worker thread because it will
+			 * notice when it reacquires the lock after
+			 * doing the work.
+			 */
+			TAILQ_INSERT_TAIL(&wq->wq_queue, work, work_entry);
+			wq->wq_requeued = true;
+			newly_queued = true;
+		} else {
+			/* It is still on the queue; nothing to do.  */
+			newly_queued = false;
+		}
 	}
 	mutex_exit(&wq->wq_lock);
 
@@ -422,10 +448,23 @@ cancel_work(struct work_struct *work)
 
 	mutex_enter(&wq->wq_lock);
 	if (__predict_false(work->work_queue != wq)) {
+		/*
+		 * It has finished execution or been cancelled by
+		 * another thread, and has been moved off the
+		 * workqueue, so it's too to cancel.
+		 */
 		cancelled_p = false;
 	} else if (wq->wq_current_work == work) {
+		/*
+		 * It has already begun execution, so it's too late to
+		 * cancel now.
+		 */
 		cancelled_p = false;
 	} else {
+		/*
+		 * It is still on the queue.  Take it off the queue and
+		 * report successful cancellation.
+		 */
 		TAILQ_REMOVE(&wq->wq_queue, work, work_entry);
 		cancelled_p = true;
 	}
@@ -446,13 +485,28 @@ cancel_work_sync(struct work_struct *work)
 
 	mutex_enter(&wq->wq_lock);
 	if (__predict_false(work->work_queue != wq)) {
+		/*
+		 * It has finished execution or been cancelled by
+		 * another thread, and has been moved off the
+		 * workqueue, so it's too to cancel.
+		 */
 		cancelled_p = false;
 	} else if (wq->wq_current_work == work) {
+		/*
+		 * It has already begun execution, so it's too late to
+		 * cancel now.  Wait for it to complete.  Don't wait
+		 * more than one generation in case it gets requeued.
+		 */
+		uint64_t gen = wq->wq_gen;
 		do {
 			cv_wait(&wq->wq_cv, &wq->wq_lock);
-		} while (wq->wq_current_work == work);
+		} while (wq->wq_current_work == work && wq->wq_gen == gen);
 		cancelled_p = false;
 	} else {
+		/*
+		 * It is still on the queue.  Take it off the queue and
+		 * report successful cancellation.
+		 */
 		TAILQ_REMOVE(&wq->wq_queue, work, work_entry);
 		cancelled_p = true;
 	}
@@ -487,38 +541,13 @@ schedule_delayed_work(struct delayed_work *dw, unsigned long ticks)
 	return queue_delayed_work(system_wq, dw, ticks);
 }
 
-static void
-queue_delayed_work_anew(struct workqueue_struct *wq, struct delayed_work *dw,
-    unsigned long ticks)
-{
-
-	KASSERT(mutex_owned(&wq->wq_lock));
-	KASSERT(dw->work.work_queue == wq);
-	KASSERT((dw->dw_state == DELAYED_WORK_IDLE) ||
-	    (dw->dw_state == DELAYED_WORK_SCHEDULED));
-
-	if (ticks == 0) {
-		if (dw->dw_state == DELAYED_WORK_SCHEDULED) {
-			callout_destroy(&dw->dw_callout);
-			TAILQ_REMOVE(&wq->wq_delayed, dw, dw_entry);
-		} else {
-			KASSERT(dw->dw_state == DELAYED_WORK_IDLE);
-		}
-		TAILQ_INSERT_TAIL(&wq->wq_queue, &dw->work, work_entry);
-		dw->dw_state = DELAYED_WORK_IDLE;
-	} else {
-		if (dw->dw_state == DELAYED_WORK_IDLE) {
-			callout_init(&dw->dw_callout, CALLOUT_MPSAFE);
-			callout_reset(&dw->dw_callout, MIN(INT_MAX, ticks),
-			    &linux_workqueue_timeout, dw);
-			TAILQ_INSERT_HEAD(&wq->wq_delayed, dw, dw_entry);
-		} else {
-			KASSERT(dw->dw_state == DELAYED_WORK_SCHEDULED);
-		}
-		dw->dw_state = DELAYED_WORK_SCHEDULED;
-	}
-}
-
+/*
+ * cancel_delayed_work_done(wq, dw)
+ *
+ *	Complete cancellation of a delayed work: transition from
+ *	DELAYED_WORK_CANCELLED to DELAYED_WORK_IDLE and off the
+ *	workqueue.  Caller must not touch dw after this returns.
+ */
 static void
 cancel_delayed_work_done(struct workqueue_struct *wq, struct delayed_work *dw)
 {
@@ -533,6 +562,13 @@ cancel_delayed_work_done(struct workqueue_struct *wq, struct delayed_work *dw)
 	/* Can't touch dw after this point.  */
 }
 
+/*
+ * queue_delayed_work(wq, dw, ticks)
+ *
+ *	If it is not currently scheduled, schedule dw to run after
+ *	ticks.  If currently executing and not already rescheduled,
+ *	reschedule it.  If ticks == 0, run without delay.
+ */
 bool
 queue_delayed_work(struct workqueue_struct *wq, struct delayed_work *dw,
     unsigned long ticks)
@@ -542,18 +578,130 @@ queue_delayed_work(struct workqueue_struct *wq, struct delayed_work *dw,
 
 	mutex_enter(&wq->wq_lock);
 	if (__predict_true((wq0 = acquire_work(&dw->work, wq)) == NULL)) {
+		/*
+		 * It wasn't on any workqueue at all.  Schedule it to
+		 * run on this one.
+		 */
 		KASSERT(dw->dw_state == DELAYED_WORK_IDLE);
-		queue_delayed_work_anew(wq, dw, ticks);
+		if (ticks == 0) {
+			TAILQ_INSERT_TAIL(&wq->wq_queue, &dw->work,
+			    work_entry);
+			cv_broadcast(&wq->wq_cv);
+		} else {
+			/*
+			 * Initialize a callout and schedule to run
+			 * after a delay.
+			 */
+			callout_init(&dw->dw_callout, CALLOUT_MPSAFE);
+			callout_setfunc(&dw->dw_callout,
+			    &linux_workqueue_timeout, dw);
+			TAILQ_INSERT_HEAD(&wq->wq_delayed, dw, dw_entry);
+			dw->dw_state = DELAYED_WORK_SCHEDULED;
+			callout_schedule(&dw->dw_callout, MIN(INT_MAX, ticks));
+		}
 		newly_queued = true;
 	} else {
+		/*
+		 * It was on a workqueue, which had better be this one.
+		 *
+		 * - If it has already begun to run, and it is not yet
+		 *   scheduled to run again, schedule it again.
+		 *
+		 * - If the callout is cancelled, reschedule it.
+		 *
+		 * - Otherwise, leave it alone.
+		 */
 		KASSERT(wq0 == wq);
-		newly_queued = false;
+		if (wq->wq_current_work != &dw->work || !wq->wq_requeued) {
+			/*
+			 * It is either scheduled, on the queue but not
+			 * in progress, or in progress but not on the
+			 * queue.
+			 */
+			switch (dw->dw_state) {
+			case DELAYED_WORK_IDLE:
+				/*
+				 * It is not scheduled to run, and it
+				 * is not on the queue if it is
+				 * running.
+				 */
+				if (ticks == 0) {
+					/*
+					 * If it's in progress, put it
+					 * on the queue to run as soon
+					 * as the worker thread gets to
+					 * it.  No need for a wakeup
+					 * because either the worker
+					 * thread already knows it is
+					 * on the queue, or will check
+					 * once it is done executing.
+					 */
+					if (wq->wq_current_work == &dw->work) {
+						KASSERT(!wq->wq_requeued);
+						TAILQ_INSERT_TAIL(&wq->wq_queue,
+						    &dw->work, work_entry);
+						wq->wq_requeued = true;
+					}
+				} else {
+					/*
+					 * Initialize a callout and
+					 * schedule it to run after the
+					 * specified delay.
+					 */
+					callout_init(&dw->dw_callout,
+					    CALLOUT_MPSAFE);
+					callout_reset(&dw->dw_callout,
+					    MIN(INT_MAX, ticks),
+					    &linux_workqueue_timeout, dw);
+					TAILQ_INSERT_HEAD(&wq->wq_delayed, dw,
+					    dw_entry);
+					dw->dw_state = DELAYED_WORK_SCHEDULED;
+				}
+				break;
+			case DELAYED_WORK_SCHEDULED:
+			case DELAYED_WORK_RESCHEDULED:
+				/*
+				 * It is already scheduled to run after
+				 * a delay.  Leave it be.
+				 */
+				break;
+			case DELAYED_WORK_CANCELLED:
+				/*
+				 * It was scheduled and the callout has
+				 * begun to execute, but it was
+				 * cancelled.  Reschedule it.
+				 */
+				dw->dw_state = DELAYED_WORK_RESCHEDULED;
+				callout_schedule(&dw->dw_callout,
+				    MIN(INT_MAX, ticks));
+				break;
+			default:
+				panic("invalid delayed work state: %d",
+				    dw->dw_state);
+			}
+		} else {
+			/*
+			 * It is in progress and it has been requeued.
+			 * It cannot be scheduled to run after a delay
+			 * at this point.  We just leave it be.
+			 */
+			KASSERTMSG((dw->dw_state == DELAYED_WORK_IDLE),
+			    "delayed work %p in wrong state: %d",
+			    dw, dw->dw_state);
+		}
 	}
 	mutex_exit(&wq->wq_lock);
 
 	return newly_queued;
 }
 
+/*
+ * mod_delayed_work(wq, dw, ticks)
+ *
+ *	Schedule dw to run after ticks.  If currently scheduled,
+ *	reschedule it.  If currently executing, reschedule it.  If
+ *	ticks == 0, run without delay.
+ */
 bool
 mod_delayed_work(struct workqueue_struct *wq, struct delayed_work *dw,
     unsigned long ticks)
@@ -563,44 +711,177 @@ mod_delayed_work(struct workqueue_struct *wq, struct delayed_work *dw,
 
 	mutex_enter(&wq->wq_lock);
 	if ((wq0 = acquire_work(&dw->work, wq)) == NULL) {
+		/*
+		 * It wasn't on any workqueue at all.  Schedule it to
+		 * run on this one.
+		 */
 		KASSERT(dw->dw_state == DELAYED_WORK_IDLE);
-		queue_delayed_work_anew(wq, dw, ticks);
+		if (ticks == 0) {
+			/*
+			 * Run immediately: put it on the queue and
+			 * signal the worker thread.
+			 */
+			TAILQ_INSERT_TAIL(&wq->wq_queue, &dw->work,
+			    work_entry);
+			cv_broadcast(&wq->wq_cv);
+		} else {
+			/*
+			 * Initialize a callout and schedule to run
+			 * after a delay.
+			 */
+			callout_init(&dw->dw_callout, CALLOUT_MPSAFE);
+			callout_reset(&dw->dw_callout, MIN(INT_MAX, ticks),
+			    &linux_workqueue_timeout, dw);
+			TAILQ_INSERT_HEAD(&wq->wq_delayed, dw, dw_entry);
+			dw->dw_state = DELAYED_WORK_SCHEDULED;
+		}
 		timer_modified = false;
 	} else {
+		/* It was on a workqueue, which had better be this one.  */
 		KASSERT(wq0 == wq);
 		switch (dw->dw_state) {
 		case DELAYED_WORK_IDLE:
-			if (wq->wq_current_work == &dw->work) {
-				/*
-				 * Too late.  Queue it anew.  If that
-				 * would skip the callout because it's
-				 * immediate, notify the workqueue.
-				 */
-				wq->wq_requeued = ticks == 0;
-				queue_delayed_work_anew(wq, dw, ticks);
-				timer_modified = false;
-			} else {
-				/* Work is queued, but hasn't started yet.  */
-				TAILQ_REMOVE(&wq->wq_queue, &dw->work,
-				    work_entry);
-				queue_delayed_work_anew(wq, dw, ticks);
+			/*
+			 * It is not scheduled: it is on the queue or
+			 * it is running or both.
+			 */
+			if (wq->wq_current_work != &dw->work) {
+				/* It is on the queue and not yet running.  */
+				if (ticks == 0) {
+					/*
+					 * We ask it to run
+					 * immediately.  Leave it on
+					 * the queue.
+					 */
+				} else {
+					/*
+					 * Take it off the queue and
+					 * schedule a callout to run it
+					 * after a delay.
+					 */
+					TAILQ_REMOVE(&wq->wq_queue, &dw->work,
+					    work_entry);
+					callout_init(&dw->dw_callout,
+					    CALLOUT_MPSAFE);
+					callout_reset(&dw->dw_callout,
+					    MIN(INT_MAX, ticks),
+					    &linux_workqueue_timeout, dw);
+					TAILQ_INSERT_HEAD(&wq->wq_delayed, dw,
+					    dw_entry);
+					dw->dw_state = DELAYED_WORK_SCHEDULED;
+				}
 				timer_modified = true;
+			} else if (wq->wq_requeued) {
+				/*
+				 * It is currently running _and_ it is
+				 * on the queue again.
+				 */
+				if (ticks == 0) {
+					/*
+					 * We ask it to run
+					 * immediately.  Leave it on
+					 * the queue.
+					 */
+				} else {
+					/*
+					 * Take it off the queue and
+					 * schedule a callout to run it
+					 * after a delay.
+					 */
+					wq->wq_requeued = false;
+					TAILQ_REMOVE(&wq->wq_queue, &dw->work,
+					    work_entry);
+					callout_init(&dw->dw_callout,
+					    CALLOUT_MPSAFE);
+					callout_reset(&dw->dw_callout,
+					    MIN(INT_MAX, ticks),
+					    &linux_workqueue_timeout, dw);
+					TAILQ_INSERT_HEAD(&wq->wq_delayed, dw,
+					    dw_entry);
+					dw->dw_state = DELAYED_WORK_SCHEDULED;
+				}
+				timer_modified = true;
+			} else {
+				/*
+				 * It is currently running and has not
+				 * been requeued.
+				 */
+				if (ticks == 0) {
+					/*
+					 * We ask it to run
+					 * immediately.  Put it on the
+					 * queue again.
+					 */
+					wq->wq_requeued = true;
+					TAILQ_INSERT_TAIL(&wq->wq_queue,
+					    &dw->work, work_entry);
+				} else {
+					/*
+					 * Schedule a callout to run it
+					 * after a delay.
+					 */
+					callout_init(&dw->dw_callout,
+					    CALLOUT_MPSAFE);
+					callout_reset(&dw->dw_callout,
+					    MIN(INT_MAX, ticks),
+					    &linux_workqueue_timeout, dw);
+					TAILQ_INSERT_HEAD(&wq->wq_delayed, dw,
+					    dw_entry);
+					dw->dw_state = DELAYED_WORK_SCHEDULED;
+				}
+				timer_modified = false;
 			}
 			break;
 		case DELAYED_WORK_SCHEDULED:
+			/*
+			 * It is scheduled to run after a delay.  Try
+			 * to stop it and reschedule it; if we can't,
+			 * either reschedule it or cancel it to put it
+			 * on the queue, and inform the callout.
+			 */
 			if (callout_stop(&dw->dw_callout)) {
-				/*
-				 * Too late to stop, but we got in
-				 * before the callout acquired the
-				 * lock.  Reschedule it and tell it
-				 * we've done so.
-				 */
-				dw->dw_state = DELAYED_WORK_RESCHEDULED;
-				callout_schedule(&dw->dw_callout,
-				    MIN(INT_MAX, ticks));
+				/* Can't stop, callout has begun.  */
+				if (ticks == 0) {
+					/*
+					 * We don't actually need to do
+					 * anything.  The callout will
+					 * queue it as soon as it gets
+					 * the lock.
+					 */
+				} else {
+					/*
+					 * Schedule callout and tell
+					 * the instance that's running
+					 * now that it's been
+					 * rescheduled.
+					 */
+					dw->dw_state = DELAYED_WORK_RESCHEDULED;
+					callout_schedule(&dw->dw_callout,
+					    MIN(INT_MAX, ticks));
+				}
 			} else {
-				/* Stopped it.  Queue it anew.  */
-				queue_delayed_work_anew(wq, dw, ticks);
+				if (ticks == 0) {
+					/*
+					 * Run immediately: destroy the
+					 * callout, put it on the
+					 * queue, and signal the worker
+					 * thread.
+					 */
+					dw->dw_state = DELAYED_WORK_IDLE;
+					callout_destroy(&dw->dw_callout);
+					TAILQ_REMOVE(&wq->wq_delayed, dw,
+					    dw_entry);
+					TAILQ_INSERT_TAIL(&wq->wq_queue,
+					    &dw->work, work_entry);
+					cv_broadcast(&wq->wq_cv);
+				} else {
+					/*
+					 * Reschedule the callout.  No
+					 * state change.
+					 */
+					callout_schedule(&dw->dw_callout,
+					    MIN(INT_MAX, ticks));
+				}
 			}
 			timer_modified = true;
 			break;
@@ -610,16 +891,26 @@ mod_delayed_work(struct workqueue_struct *wq, struct delayed_work *dw,
 			 * Someone modified the timer _again_, or
 			 * cancelled it, after the callout started but
 			 * before the poor thing even had a chance to
-			 * acquire the lock.  Just reschedule it once
-			 * more.
+			 * acquire the lock.
 			 */
-			callout_schedule(&dw->dw_callout, MIN(INT_MAX, ticks));
-			dw->dw_state = DELAYED_WORK_RESCHEDULED;
+			if (ticks == 0) {
+				/*
+				 * We can just switch back to
+				 * DELAYED_WORK_SCHEDULED so that the
+				 * callout will queue the work as soon
+				 * as it gets the lock.
+				 */
+				dw->dw_state = DELAYED_WORK_SCHEDULED;
+			} else {
+				/* Reschedule it.  */
+				callout_schedule(&dw->dw_callout,
+				    MIN(INT_MAX, ticks));
+				dw->dw_state = DELAYED_WORK_RESCHEDULED;
+			}
 			timer_modified = true;
 			break;
 		default:
-			panic("invalid delayed work state: %d",
-			    dw->dw_state);
+			panic("invalid delayed work state: %d", dw->dw_state);
 		}
 	}
 	mutex_exit(&wq->wq_lock);
@@ -644,7 +935,11 @@ cancel_delayed_work(struct delayed_work *dw)
 		switch (dw->dw_state) {
 		case DELAYED_WORK_IDLE:
 			if (wq->wq_current_work == &dw->work) {
-				/* Too late, it's already running.  */
+				/*
+				 * Too late, it's already running.  If
+				 * it's been requeued, tough -- it'll
+				 * run again.
+				 */
 				cancelled_p = false;
 			} else {
 				/* Got in before it started.  Remove it.  */
@@ -699,10 +994,22 @@ cancel_delayed_work_sync(struct delayed_work *dw)
 		switch (dw->dw_state) {
 		case DELAYED_WORK_IDLE:
 			if (wq->wq_current_work == &dw->work) {
-				/* Too late, it's already running.  Wait.  */
+				/*
+				 * Too late, it's already running.
+				 * First, make sure it's not requeued.
+				 * Then wait for it to complete, at
+				 * most one generation.
+				 */
+				uint64_t gen = wq->wq_gen;
+				if (wq->wq_requeued) {
+					TAILQ_REMOVE(&wq->wq_queue, &dw->work,
+					    work_entry);
+					wq->wq_requeued = false;
+				}
 				do {
 					cv_wait(&wq->wq_cv, &wq->wq_lock);
-				} while (wq->wq_current_work == &dw->work);
+				} while (wq->wq_current_work == &dw->work &&
+				    wq->wq_gen == gen);
 				cancelled_p = false;
 			} else {
 				/* Got in before it started.  Remove it.  */
