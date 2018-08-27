@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_work.c,v 1.37 2018/08/27 15:05:30 riastradh Exp $	*/
+/*	$NetBSD: linux_work.c,v 1.38 2018/08/27 15:05:44 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_work.c,v 1.37 2018/08/27 15:05:30 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_work.c,v 1.38 2018/08/27 15:05:44 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/atomic.h>
@@ -1384,8 +1384,9 @@ flush_work(struct work_struct *work)
 /*
  * flush_delayed_work(dw)
  *
- *	If dw is scheduled to run after a delay, cancel it.  If dw is
- *	queued or currently executing, wait for it to complete.
+ *	If dw is scheduled to run after a delay, queue it immediately
+ *	instead.  Then, if dw is queued or currently executing, wait
+ *	for it to complete.
  */
 void
 flush_delayed_work(struct delayed_work *dw)
@@ -1397,58 +1398,58 @@ flush_delayed_work(struct delayed_work *dw)
 		return;
 
 	mutex_enter(&wq->wq_lock);
-	if (__predict_true(dw->work.work_queue == wq)) {
+	if (__predict_false(dw->work.work_queue != wq)) {
+		/*
+		 * Moved off the queue already (and possibly to another
+		 * queue, though that would be ill-advised), so it must
+		 * have completed, and we have nothing more to do.
+		 */
+	} else {
 		switch (dw->dw_state) {
 		case DELAYED_WORK_IDLE:
 			/*
 			 * It has a workqueue assigned and the callout
 			 * is idle, so it must be in progress or on the
-			 * queue.  In that case, wait for it to
-			 * complete.  Waiting for the whole queue to
-			 * flush is overkill, but doesn't hurt.
-			 */
-			flush_workqueue_locked(wq);
-			break;
-		case DELAYED_WORK_SCHEDULED:
-			/*
-			 * If it is scheduled, mark it cancelled and
-			 * try to stop the callout before it starts.
-			 *
-			 * If it's too late and the callout has already
-			 * begun to execute, we must wait for it to
-			 * complete.  But we got in soon enough to ask
-			 * the callout not to run.
-			 *
-			 * If we stopped the callout before it started,
-			 * then we must destroy the callout and
-			 * dissociate it from the workqueue ourselves.
-			 */
-			dw->dw_state = DELAYED_WORK_CANCELLED;
-			if (!callout_halt(&dw->dw_callout, &wq->wq_lock))
-				cancel_delayed_work_done(wq, dw);
-			break;
-		case DELAYED_WORK_RESCHEDULED:
-			/*
-			 * If it is being rescheduled, the callout has
-			 * already fired.  We must ask it to cancel and
-			 * wait for it to complete.
-			 */
-			dw->dw_state = DELAYED_WORK_CANCELLED;
-			dw->dw_resched = -1;
-			(void)callout_halt(&dw->dw_callout, &wq->wq_lock);
-			break;
-		case DELAYED_WORK_CANCELLED:
-			/*
-			 * If it is being cancelled, the callout has
-			 * already fired.  We need only wait for it to
+			 * queue.  In that case, we'll wait for it to
 			 * complete.
 			 */
-			(void)callout_halt(&dw->dw_callout, &wq->wq_lock);
+			break;
+		case DELAYED_WORK_SCHEDULED:
+		case DELAYED_WORK_RESCHEDULED:
+		case DELAYED_WORK_CANCELLED:
+			/*
+			 * The callout is scheduled, and may have even
+			 * started.  Mark it as scheduled so that if
+			 * the callout has fired it will queue the work
+			 * itself.  Try to stop the callout -- if we
+			 * can, queue the work now; if we can't, wait
+			 * for the callout to complete, which entails
+			 * queueing it.
+			 */
+			dw->dw_state = DELAYED_WORK_SCHEDULED;
+			if (!callout_halt(&dw->dw_callout, &wq->wq_lock)) {
+				/*
+				 * We stopped it before it ran.  No
+				 * state change in the interim is
+				 * possible.  Destroy the callout and
+				 * queue it ourselves.
+				 */
+				KASSERT(dw->dw_state ==
+				    DELAYED_WORK_SCHEDULED);
+				dw_callout_destroy(wq, dw);
+				TAILQ_INSERT_TAIL(&wq->wq_queue, &dw->work,
+				    work_entry);
+				cv_broadcast(&wq->wq_cv);
+			}
 			break;
 		default:
-			panic("invalid delayed work state: %d",
-			    dw->dw_state);
+			panic("invalid delayed work state: %d", dw->dw_state);
 		}
+		/*
+		 * Waiting for the whole queue to flush is overkill,
+		 * but doesn't hurt.
+		 */
+		flush_workqueue_locked(wq);
 	}
 	mutex_exit(&wq->wq_lock);
 }
