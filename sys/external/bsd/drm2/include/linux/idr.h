@@ -1,4 +1,4 @@
-/*	$NetBSD: idr.h,v 1.3 2014/07/16 20:56:25 riastradh Exp $	*/
+/*	$NetBSD: idr.h,v 1.4 2018/08/27 06:54:51 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -47,16 +47,16 @@ struct idr {
 };
 
 /* XXX Make the nm output a little more greppable...  */
-#define	idr_init		linux_idr_init
-#define	idr_destroy		linux_idr_destroy
-#define	idr_is_empty		linux_idr_is_empty
-#define	idr_find		linux_idr_find
-#define	idr_replace		linux_idr_replace
-#define	idr_remove		linux_idr_remove
-#define	idr_preload		linux_idr_preload
 #define	idr_alloc		linux_idr_alloc
-#define	idr_preload_end		linux_idr_preload_end
+#define	idr_destroy		linux_idr_destroy
+#define	idr_find		linux_idr_find
 #define	idr_for_each		linux_idr_for_each
+#define	idr_init		linux_idr_init
+#define	idr_is_empty		linux_idr_is_empty
+#define	idr_preload		linux_idr_preload
+#define	idr_preload_end		linux_idr_preload_end
+#define	idr_remove		linux_idr_remove
+#define	idr_replace		linux_idr_replace
 
 int	linux_idr_module_init(void);
 void	linux_idr_module_fini(void);
