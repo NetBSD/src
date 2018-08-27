@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic.h,v 1.12 2018/08/27 13:40:53 riastradh Exp $	*/
+/*	$NetBSD: atomic.h,v 1.13 2018/08/27 13:41:08 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -36,6 +36,22 @@
 
 #include <machine/limits.h>
 
+#if defined(MULTIPROCESSOR) && !defined(__HAVE_ATOMIC_AS_MEMBAR)
+#  define	smp_mb__before_atomic()		membar_exit()
+#  define	smp_mb__after_atomic()		membar_enter()
+#else
+#  define	smp_mb__before_atomic()		__insn_barrier()
+#  define	smp_mb__after_atomic()		__insn_barrier()
+#endif
+
+/*
+ * atomic (u)int operations
+ *
+ *	Atomics that return a value, other than atomic_read, imply a
+ *	full memory_sync barrier.  Those that do not return a value
+ *	imply no memory barrier.
+ */
+
 struct atomic {
 	union {
 		volatile int au_int;
@@ -50,78 +66,106 @@ typedef struct atomic atomic_t;
 static inline int
 atomic_read(atomic_t *atomic)
 {
+	/* no membar */
 	return atomic->a_u.au_int;
 }
 
 static inline void
 atomic_set(atomic_t *atomic, int value)
 {
+	/* no membar */
 	atomic->a_u.au_int = value;
 }
 
 static inline void
 atomic_add(int addend, atomic_t *atomic)
 {
+	/* no membar */
 	atomic_add_int(&atomic->a_u.au_uint, addend);
 }
 
 static inline void
 atomic_sub(int subtrahend, atomic_t *atomic)
 {
+	/* no membar */
 	atomic_add_int(&atomic->a_u.au_uint, -subtrahend);
 }
 
 static inline int
 atomic_add_return(int addend, atomic_t *atomic)
 {
-	return (int)atomic_add_int_nv(&atomic->a_u.au_uint, addend);
+	int v;
+
+	smp_mb__before_atomic();
+	v = (int)atomic_add_int_nv(&atomic->a_u.au_uint, addend);
+	smp_mb__after_atomic();
+
+	return v;
 }
 
 static inline void
 atomic_inc(atomic_t *atomic)
 {
+	/* no membar */
 	atomic_inc_uint(&atomic->a_u.au_uint);
 }
 
 static inline void
 atomic_dec(atomic_t *atomic)
 {
+	/* no membar */
 	atomic_dec_uint(&atomic->a_u.au_uint);
 }
 
 static inline int
 atomic_inc_return(atomic_t *atomic)
 {
-	return (int)atomic_inc_uint_nv(&atomic->a_u.au_uint);
+	int v;
+
+	smp_mb__before_atomic();
+	v = (int)atomic_inc_uint_nv(&atomic->a_u.au_uint);
+	smp_mb__after_atomic();
+
+	return v;
 }
 
 static inline int
 atomic_dec_return(atomic_t *atomic)
 {
-	return (int)atomic_dec_uint_nv(&atomic->a_u.au_uint);
+	int v;
+
+	smp_mb__before_atomic();
+	v = (int)atomic_dec_uint_nv(&atomic->a_u.au_uint);
+	smp_mb__after_atomic();
+
+	return v;
 }
 
 static inline int
 atomic_dec_and_test(atomic_t *atomic)
 {
-	return (0 == (int)atomic_dec_uint_nv(&atomic->a_u.au_uint));
+	/* membar implied by atomic_dec_return */
+	return atomic_dec_return(atomic) == 0;
 }
 
 static inline void
 atomic_or(int value, atomic_t *atomic)
 {
+	/* no membar */
 	atomic_or_uint(&atomic->a_u.au_uint, value);
 }
 
 static inline void
 atomic_set_mask(unsigned long mask, atomic_t *atomic)
 {
+	/* no membar */
 	atomic_or_uint(&atomic->a_u.au_uint, mask);
 }
 
 static inline void
 atomic_clear_mask(unsigned long mask, atomic_t *atomic)
 {
+	/* no membar */
 	atomic_and_uint(&atomic->a_u.au_uint, ~mask);
 }
 
@@ -130,33 +174,53 @@ atomic_add_unless(atomic_t *atomic, int addend, int zero)
 {
 	int value;
 
+	smp_mb__before_atomic();
 	do {
 		value = atomic->a_u.au_int;
 		if (value == zero)
-			return 0;
+			break;
 	} while (atomic_cas_uint(&atomic->a_u.au_uint, value, (value + addend))
 	    != value);
+	smp_mb__after_atomic();
 
-	return 1;
+	return value != zero;
 }
 
 static inline int
 atomic_inc_not_zero(atomic_t *atomic)
 {
+	/* membar implied by atomic_add_unless */
 	return atomic_add_unless(atomic, 1, 0);
 }
 
 static inline int
 atomic_xchg(atomic_t *atomic, int new)
 {
-	return (int)atomic_swap_uint(&atomic->a_u.au_uint, (unsigned)new);
+	int old;
+
+	smp_mb__before_atomic();
+	old = (int)atomic_swap_uint(&atomic->a_u.au_uint, (unsigned)new);
+	smp_mb__after_atomic();
+
+	return old;
 }
 
 static inline int
-atomic_cmpxchg(atomic_t *atomic, int old, int new)
+atomic_cmpxchg(atomic_t *atomic, int expect, int new)
 {
-	return (int)atomic_cas_uint(&atomic->a_u.au_uint, (unsigned)old,
+	int old;
+
+	/*
+	 * XXX As an optimization, under Linux's semantics we are
+	 * allowed to skip the memory barrier if the comparison fails,
+	 * but taking advantage of that is not convenient here.
+	 */
+	smp_mb__before_atomic();
+	old = (int)atomic_cas_uint(&atomic->a_u.au_uint, (unsigned)expect,
 	    (unsigned)new);
+	smp_mb__after_atomic();
+
+	return old;
 }
 
 struct atomic64 {
@@ -168,37 +232,58 @@ typedef struct atomic64 atomic64_t;
 static inline uint64_t
 atomic64_read(const struct atomic64 *a)
 {
+	/* no membar */
 	return a->a_v;
 }
 
 static inline void
 atomic64_set(struct atomic64 *a, uint64_t v)
 {
+	/* no membar */
 	a->a_v = v;
 }
 
 static inline void
 atomic64_add(long long d, struct atomic64 *a)
 {
+	/* no membar */
 	atomic_add_64(&a->a_v, d);
 }
 
 static inline void
 atomic64_sub(long long d, struct atomic64 *a)
 {
+	/* no membar */
 	atomic_add_64(&a->a_v, -d);
 }
 
 static inline uint64_t
-atomic64_xchg(struct atomic64 *a, uint64_t v)
+atomic64_xchg(struct atomic64 *a, uint64_t new)
 {
-	return atomic_swap_64(&a->a_v, v);
+	uint64_t old;
+
+	smp_mb__before_atomic();
+	old = atomic_swap_64(&a->a_v, new);
+	smp_mb__after_atomic();
+
+	return old;
 }
 
 static inline uint64_t
-atomic64_cmpxchg(struct atomic64 *atomic, uint64_t old, uint64_t new)
+atomic64_cmpxchg(struct atomic64 *atomic, uint64_t expect, uint64_t new)
 {
-	return atomic_cas_64(&atomic->a_v, old, new);
+	uint64_t old;
+
+	/*
+	 * XXX As an optimization, under Linux's semantics we are
+	 * allowed to skip the memory barrier if the comparison fails,
+	 * but taking advantage of that is not convenient here.
+	 */
+	smp_mb__before_atomic();
+	old = atomic_cas_64(&atomic->a_v, expect, new);
+	smp_mb__after_atomic();
+
+	return old;
 }
 
 static inline void
@@ -206,6 +291,7 @@ set_bit(unsigned int bit, volatile unsigned long *ptr)
 {
 	const unsigned int units = (sizeof(*ptr) * CHAR_BIT);
 
+	/* no memory barrier */
 	atomic_or_ulong(&ptr[bit / units], (1UL << (bit % units)));
 }
 
@@ -214,6 +300,7 @@ clear_bit(unsigned int bit, volatile unsigned long *ptr)
 {
 	const unsigned int units = (sizeof(*ptr) * CHAR_BIT);
 
+	/* no memory barrier */
 	atomic_and_ulong(&ptr[bit / units], ~(1UL << (bit % units)));
 }
 
@@ -225,6 +312,7 @@ change_bit(unsigned int bit, volatile unsigned long *ptr)
 	const unsigned long mask = (1UL << (bit % units));
 	unsigned long v;
 
+	/* no memory barrier */
 	do v = *p; while (atomic_cas_ulong(p, v, (v ^ mask)) != v);
 }
 
@@ -236,7 +324,9 @@ test_and_set_bit(unsigned int bit, volatile unsigned long *ptr)
 	const unsigned long mask = (1UL << (bit % units));
 	unsigned long v;
 
+	smp_mb__before_atomic();
 	do v = *p; while (atomic_cas_ulong(p, v, (v | mask)) != v);
+	smp_mb__after_atomic();
 
 	return ((v & mask) != 0);
 }
@@ -249,7 +339,9 @@ test_and_clear_bit(unsigned int bit, volatile unsigned long *ptr)
 	const unsigned long mask = (1UL << (bit % units));
 	unsigned long v;
 
+	smp_mb__before_atomic();
 	do v = *p; while (atomic_cas_ulong(p, v, (v & ~mask)) != v);
+	smp_mb__after_atomic();
 
 	return ((v & mask) != 0);
 }
@@ -262,24 +354,11 @@ test_and_change_bit(unsigned int bit, volatile unsigned long *ptr)
 	const unsigned long mask = (1UL << (bit % units));
 	unsigned long v;
 
+	smp_mb__before_atomic();
 	do v = *p; while (atomic_cas_ulong(p, v, (v ^ mask)) != v);
+	smp_mb__after_atomic();
 
 	return ((v & mask) != 0);
 }
-
-#if defined(MULTIPROCESSOR) && !defined(__HAVE_ATOMIC_AS_MEMBAR)
-/*
- * XXX These memory barriers are doubtless overkill, but I am having
- * trouble understanding the intent and use of the Linux atomic membar
- * API.  I think that for reference counting purposes, the sequences
- * should be insn/inc/enter and exit/dec/insn, but the use of the
- * before/after memory barriers is not consistent throughout Linux.
- */
-#  define	smp_mb__before_atomic()		membar_sync()
-#  define	smp_mb__after_atomic()		membar_sync()
-#else
-#  define	smp_mb__before_atomic()		__insn_barrier()
-#  define	smp_mb__after_atomic()		__insn_barrier()
-#endif
 
 #endif  /* _LINUX_ATOMIC_H_ */
