@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_module.c,v 1.6 2015/04/13 22:24:34 pgoyette Exp $	*/
+/*	$NetBSD: linux_module.c,v 1.7 2018/08/27 13:31:37 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_module.c,v 1.6 2015/04/13 22:24:34 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_module.c,v 1.7 2018/08/27 13:31:37 riastradh Exp $");
 
 #include <sys/module.h>
 #ifndef _MODULE
@@ -41,6 +41,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_module.c,v 1.6 2015/04/13 22:24:34 pgoyette Ex
 #include <linux/idr.h>
 #include <linux/io.h>
 #include <linux/mutex.h>
+#include <linux/rcupdate.h>
 #include <linux/reservation.h>
 #include <linux/workqueue.h>
 
@@ -65,24 +66,31 @@ linux_init(void)
 		goto fail1;
 	}
 
+	error = linux_rcu_gc_init();
+	if (error) {
+		printf("linux: unable to initialize rcu gc: %d\n", error);
+		goto fail2;
+	}
+
 	error = linux_workqueue_init();
 	if (error) {
 		printf("linux: unable to initialize workqueues: %d\n", error);
-		goto fail2;
+		goto fail3;
 	}
 
 	error = linux_writecomb_init();
 	if (error) {
 		printf("linux: unable to initialize write-combining: %d\n",
 		    error);
-		goto fail3;
+		goto fail4;
 	}
 
 	return 0;
 
-fail4: __unused
+fail5: __unused
 	linux_writecomb_fini();
-fail3:	linux_workqueue_fini();
+fail4:	linux_workqueue_fini();
+fail3:	linux_rcu_gc_fini();
 fail2:	linux_kmap_fini();
 fail1:	linux_idr_module_fini();
 fail0:	return error;
@@ -107,6 +115,7 @@ linux_fini(void)
 
 	linux_writecomb_fini();
 	linux_workqueue_fini();
+	linux_rcu_gc_fini();
 	linux_kmap_fini();
 	linux_idr_module_fini();
 }
