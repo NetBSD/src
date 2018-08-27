@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic.h,v 1.17 2018/08/27 15:10:52 riastradh Exp $	*/
+/*	$NetBSD: atomic.h,v 1.18 2018/08/27 15:11:04 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -295,12 +295,12 @@ atomic64_cmpxchg(struct atomic64 *atomic, uint64_t expect, uint64_t new)
 
 #else  /* !defined(__HAVE_ATOMIC64_OPS) */
 
+#define	atomic64_add		linux_atomic64_add
+#define	atomic64_cmpxchg	linux_atomic64_cmpxchg
 #define	atomic64_read		linux_atomic64_read
 #define	atomic64_set		linux_atomic64_set
-#define	atomic64_add		linux_atomic64_add
 #define	atomic64_sub		linux_atomic64_sub
 #define	atomic64_xchg		linux_atomic64_xchg
-#define	atomic64_cmpxchg	linux_atomic64_cmpxchg
 
 uint64_t	atomic64_read(const struct atomic64 *);
 void		atomic64_set(struct atomic64 *, uint64_t);
