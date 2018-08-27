@@ -1,3 +1,5 @@
+/*	$NetBSD: savage_drv.h,v 1.1.1.3 2018/08/27 01:34:59 riastradh Exp $	*/
+
 /* savage_drv.h -- Private header for the savage driver */
 /*
  * Copyright 2004  Felix Kuehling
@@ -25,6 +27,8 @@
 
 #ifndef __SAVAGE_DRV_H__
 #define __SAVAGE_DRV_H__
+
+#include <drm/drm_legacy.h>
 
 #define DRIVER_AUTHOR	"Felix Kuehling"
 

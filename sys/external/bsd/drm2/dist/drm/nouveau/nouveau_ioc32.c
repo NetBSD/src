@@ -1,3 +1,5 @@
+/*	$NetBSD: nouveau_ioc32.c,v 1.1.1.2 2018/08/27 01:34:55 riastradh Exp $	*/
+
 /**
  * \file mga_ioc32.c
  *
@@ -31,6 +33,9 @@
  * IN THE SOFTWARE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: nouveau_ioc32.c,v 1.1.1.2 2018/08/27 01:34:55 riastradh Exp $");
+
 #include <linux/compat.h>
 
 #include <drm/drmP.h>
@@ -57,7 +62,7 @@ long nouveau_compat_ioctl(struct file *filp, unsigned int cmd,
 		return drm_compat_ioctl(filp, cmd, arg);
 
 #if 0
-	if (nr < DRM_COMMAND_BASE + DRM_ARRAY_SIZE(mga_compat_ioctls))
+	if (nr < DRM_COMMAND_BASE + ARRAY_SIZE(mga_compat_ioctls))
 		fn = nouveau_compat_ioctls[nr - DRM_COMMAND_BASE];
 #endif
 	if (fn != NULL)

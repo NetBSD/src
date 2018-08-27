@@ -1,3 +1,5 @@
+/*	$NetBSD: radeon_kms.c,v 1.1.1.2 2018/08/27 01:34:58 riastradh Exp $	*/
+
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -25,6 +27,9 @@
  *          Alex Deucher
  *          Jerome Glisse
  */
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: radeon_kms.c,v 1.1.1.2 2018/08/27 01:34:58 riastradh Exp $");
+
 #include <drm/drmP.h>
 #include "radeon.h"
 #include <drm/radeon_drm.h>
@@ -33,6 +38,8 @@
 #include <linux/vga_switcheroo.h>
 #include <linux/slab.h>
 #include <linux/pm_runtime.h>
+
+#include "radeon_kfd.h"
 
 #if defined(CONFIG_VGA_SWITCHEROO)
 bool radeon_has_atpx(void);
@@ -62,6 +69,8 @@ int radeon_driver_unload_kms(struct drm_device *dev)
 		goto done_free;
 
 	pm_runtime_get_sync(dev->dev);
+
+	radeon_kfd_device_fini(rdev);
 
 	radeon_acpi_fini(rdev);
 	
@@ -142,6 +151,9 @@ int radeon_driver_load_kms(struct drm_device *dev, unsigned long flags)
 				"Error during ACPI methods call\n");
 	}
 
+	radeon_kfd_device_probe(rdev);
+	radeon_kfd_device_init(rdev);
+
 	if (radeon_is_px(dev)) {
 		pm_runtime_use_autosuspend(dev->dev);
 		pm_runtime_set_autosuspend_delay(dev->dev, 5000);
@@ -174,7 +186,9 @@ static void radeon_set_filp_rights(struct drm_device *dev,
 				   struct drm_file *applier,
 				   uint32_t *value)
 {
-	mutex_lock(&dev->struct_mutex);
+	struct radeon_device *rdev = dev->dev_private;
+
+	mutex_lock(&rdev->gem.mutex);
 	if (*value == 1) {
 		/* wants rights */
 		if (!*owner)
@@ -185,7 +199,7 @@ static void radeon_set_filp_rights(struct drm_device *dev,
 			*owner = NULL;
 	}
 	*value = *owner == applier ? 1 : 0;
-	mutex_unlock(&dev->struct_mutex);
+	mutex_unlock(&rdev->gem.mutex);
 }
 
 /*
@@ -254,7 +268,18 @@ static int radeon_info_ioctl(struct drm_device *dev, void *data, struct drm_file
 		}
 		break;
 	case RADEON_INFO_ACCEL_WORKING2:
-		*value = rdev->accel_working;
+		if (rdev->family == CHIP_HAWAII) {
+			if (rdev->accel_working) {
+				if (rdev->new_fw)
+					*value = 3;
+				else
+					*value = 2;
+			} else {
+				*value = 0;
+			}
+		} else {
+			*value = rdev->accel_working;
+		}
 		break;
 	case RADEON_INFO_TILING_CONFIG:
 		if (rdev->family >= CHIP_BONAIRE)
@@ -513,6 +538,57 @@ static int radeon_info_ioctl(struct drm_device *dev, void *data, struct drm_file
 		value_size = sizeof(uint64_t);
 		value64 = atomic64_read(&rdev->gtt_usage);
 		break;
+	case RADEON_INFO_ACTIVE_CU_COUNT:
+		if (rdev->family >= CHIP_BONAIRE)
+			*value = rdev->config.cik.active_cus;
+		else if (rdev->family >= CHIP_TAHITI)
+			*value = rdev->config.si.active_cus;
+		else if (rdev->family >= CHIP_CAYMAN)
+			*value = rdev->config.cayman.active_simds;
+		else if (rdev->family >= CHIP_CEDAR)
+			*value = rdev->config.evergreen.active_simds;
+		else if (rdev->family >= CHIP_RV770)
+			*value = rdev->config.rv770.active_simds;
+		else if (rdev->family >= CHIP_R600)
+			*value = rdev->config.r600.active_simds;
+		else
+			*value = 1;
+		break;
+	case RADEON_INFO_CURRENT_GPU_TEMP:
+		/* get temperature in millidegrees C */
+		if (rdev->asic->pm.get_temperature)
+			*value = radeon_get_temperature(rdev);
+		else
+			*value = 0;
+		break;
+	case RADEON_INFO_CURRENT_GPU_SCLK:
+		/* get sclk in Mhz */
+		if (rdev->pm.dpm_enabled)
+			*value = radeon_dpm_get_current_sclk(rdev) / 100;
+		else
+			*value = rdev->pm.current_sclk / 100;
+		break;
+	case RADEON_INFO_CURRENT_GPU_MCLK:
+		/* get mclk in Mhz */
+		if (rdev->pm.dpm_enabled)
+			*value = radeon_dpm_get_current_mclk(rdev) / 100;
+		else
+			*value = rdev->pm.current_mclk / 100;
+		break;
+	case RADEON_INFO_READ_REG:
+		if (copy_from_user(value, value_ptr, sizeof(uint32_t))) {
+			DRM_ERROR("copy_from_user %s:%u\n", __func__, __LINE__);
+			return -EFAULT;
+		}
+		if (radeon_get_allowed_info_register(rdev, *value, value))
+			return -EINVAL;
+		break;
+	case RADEON_INFO_VA_UNMAP_WORKING:
+		*value = true;
+		break;
+	case RADEON_INFO_GPU_RESET_COUNTER:
+		*value = atomic_read(&rdev->gpu_reset_counter);
+		break;
 	default:
 		DRM_DEBUG_KMS("Invalid request %d\n", info->request);
 		return -EINVAL;
@@ -529,14 +605,17 @@ static int radeon_info_ioctl(struct drm_device *dev, void *data, struct drm_file
  * Outdated mess for old drm with Xorg being in charge (void function now).
  */
 /**
- * radeon_driver_firstopen_kms - drm callback for last close
+ * radeon_driver_lastclose_kms - drm callback for last close
  *
  * @dev: drm dev pointer
  *
- * Switch vga switcheroo state after last close (all asics).
+ * Switch vga_switcheroo state after last close (all asics).
  */
 void radeon_driver_lastclose_kms(struct drm_device *dev)
 {
+	struct radeon_device *rdev = dev->dev_private;
+
+	radeon_fbdev_restore_mode(rdev);
 	vga_switcheroo_process_delayed_switch();
 }
 
@@ -563,7 +642,7 @@ int radeon_driver_open_kms(struct drm_device *dev, struct drm_file *file_priv)
 	/* new gpu have virtual address space support */
 	if (rdev->family >= CHIP_CAYMAN) {
 		struct radeon_fpriv *fpriv;
-		struct radeon_bo_va *bo_va;
+		struct radeon_vm *vm;
 		int r;
 
 		fpriv = kzalloc(sizeof(*fpriv), GFP_KERNEL);
@@ -571,31 +650,31 @@ int radeon_driver_open_kms(struct drm_device *dev, struct drm_file *file_priv)
 			return -ENOMEM;
 		}
 
-		r = radeon_vm_init(rdev, &fpriv->vm);
-		if (r) {
-			kfree(fpriv);
-			return r;
-		}
-
 		if (rdev->accel_working) {
+			vm = &fpriv->vm;
+			r = radeon_vm_init(rdev, vm);
+			if (r) {
+				kfree(fpriv);
+				return r;
+			}
+
 			r = radeon_bo_reserve(rdev->ring_tmp_bo.bo, false);
 			if (r) {
-				radeon_vm_fini(rdev, &fpriv->vm);
+				radeon_vm_fini(rdev, vm);
 				kfree(fpriv);
 				return r;
 			}
 
 			/* map the ib pool buffer read only into
 			 * virtual address space */
-			bo_va = radeon_vm_bo_add(rdev, &fpriv->vm,
-						 rdev->ring_tmp_bo.bo);
-			r = radeon_vm_bo_set_addr(rdev, bo_va, RADEON_VA_IB_OFFSET,
+			vm->ib_bo_va = radeon_vm_bo_add(rdev, vm,
+							rdev->ring_tmp_bo.bo);
+			r = radeon_vm_bo_set_addr(rdev, vm->ib_bo_va,
+						  RADEON_VA_IB_OFFSET,
 						  RADEON_VM_PAGE_READABLE |
 						  RADEON_VM_PAGE_SNOOPED);
-
-			radeon_bo_unreserve(rdev->ring_tmp_bo.bo);
 			if (r) {
-				radeon_vm_fini(rdev, &fpriv->vm);
+				radeon_vm_fini(rdev, vm);
 				kfree(fpriv);
 				return r;
 			}
@@ -624,21 +703,19 @@ void radeon_driver_postclose_kms(struct drm_device *dev,
 	/* new gpu have virtual address space support */
 	if (rdev->family >= CHIP_CAYMAN && file_priv->driver_priv) {
 		struct radeon_fpriv *fpriv = file_priv->driver_priv;
-		struct radeon_bo_va *bo_va;
+		struct radeon_vm *vm = &fpriv->vm;
 		int r;
 
 		if (rdev->accel_working) {
 			r = radeon_bo_reserve(rdev->ring_tmp_bo.bo, false);
 			if (!r) {
-				bo_va = radeon_vm_bo_find(&fpriv->vm,
-							  rdev->ring_tmp_bo.bo);
-				if (bo_va)
-					radeon_vm_bo_rmv(rdev, bo_va);
+				if (vm->ib_bo_va)
+					radeon_vm_bo_rmv(rdev, vm->ib_bo_va);
 				radeon_bo_unreserve(rdev->ring_tmp_bo.bo);
 			}
+			radeon_vm_fini(rdev, vm);
 		}
 
-		radeon_vm_fini(rdev, &fpriv->vm);
 		kfree(fpriv);
 		file_priv->driver_priv = NULL;
 	}
@@ -657,10 +734,14 @@ void radeon_driver_preclose_kms(struct drm_device *dev,
 				struct drm_file *file_priv)
 {
 	struct radeon_device *rdev = dev->dev_private;
+
+	mutex_lock(&rdev->gem.mutex);
 	if (rdev->hyperz_filp == file_priv)
 		rdev->hyperz_filp = NULL;
 	if (rdev->cmask_filp == file_priv)
 		rdev->cmask_filp = NULL;
+	mutex_unlock(&rdev->gem.mutex);
+
 	radeon_uvd_free_handles(rdev, file_priv);
 	radeon_vce_free_handles(rdev, file_priv);
 }
@@ -679,6 +760,8 @@ void radeon_driver_preclose_kms(struct drm_device *dev,
  */
 u32 radeon_get_vblank_counter_kms(struct drm_device *dev, int crtc)
 {
+	int vpos, hpos, stat;
+	u32 count;
 	struct radeon_device *rdev = dev->dev_private;
 
 	if (crtc < 0 || crtc >= rdev->num_crtc) {
@@ -686,7 +769,53 @@ u32 radeon_get_vblank_counter_kms(struct drm_device *dev, int crtc)
 		return -EINVAL;
 	}
 
-	return radeon_get_vblank_counter(rdev, crtc);
+	/* The hw increments its frame counter at start of vsync, not at start
+	 * of vblank, as is required by DRM core vblank counter handling.
+	 * Cook the hw count here to make it appear to the caller as if it
+	 * incremented at start of vblank. We measure distance to start of
+	 * vblank in vpos. vpos therefore will be >= 0 between start of vblank
+	 * and start of vsync, so vpos >= 0 means to bump the hw frame counter
+	 * result by 1 to give the proper appearance to caller.
+	 */
+	if (rdev->mode_info.crtcs[crtc]) {
+		/* Repeat readout if needed to provide stable result if
+		 * we cross start of vsync during the queries.
+		 */
+		do {
+			count = radeon_get_vblank_counter(rdev, crtc);
+			/* Ask radeon_get_crtc_scanoutpos to return vpos as
+			 * distance to start of vblank, instead of regular
+			 * vertical scanout pos.
+			 */
+			stat = radeon_get_crtc_scanoutpos(
+				dev, crtc, GET_DISTANCE_TO_VBLANKSTART,
+				&vpos, &hpos, NULL, NULL,
+				&rdev->mode_info.crtcs[crtc]->base.hwmode);
+		} while (count != radeon_get_vblank_counter(rdev, crtc));
+
+		if (((stat & (DRM_SCANOUTPOS_VALID | DRM_SCANOUTPOS_ACCURATE)) !=
+		    (DRM_SCANOUTPOS_VALID | DRM_SCANOUTPOS_ACCURATE))) {
+			DRM_DEBUG_VBL("Query failed! stat %d\n", stat);
+		}
+		else {
+			DRM_DEBUG_VBL("crtc %d: dist from vblank start %d\n",
+				      crtc, vpos);
+
+			/* Bump counter if we are at >= leading edge of vblank,
+			 * but before vsync where vpos would turn negative and
+			 * the hw counter really increments.
+			 */
+			if (vpos >= 0)
+				count++;
+		}
+	}
+	else {
+	    /* Fallback to use value as is. */
+	    count = radeon_get_vblank_counter(rdev, crtc);
+	    DRM_DEBUG_VBL("NULL mode info! Returned count may be wrong.\n");
+	}
+
+	return count;
 }
 
 /**
@@ -768,95 +897,58 @@ int radeon_get_vblank_timestamp_kms(struct drm_device *dev, int crtc,
 
 	/* Get associated drm_crtc: */
 	drmcrtc = &rdev->mode_info.crtcs[crtc]->base;
+	if (!drmcrtc)
+		return -EINVAL;
 
 	/* Helper routine in DRM core does all the work: */
 	return drm_calc_vbltimestamp_from_scanoutpos(dev, crtc, max_error,
 						     vblank_time, flags,
-						     drmcrtc, &drmcrtc->hwmode);
+						     &drmcrtc->hwmode);
 }
-
-#define KMS_INVALID_IOCTL(name)						\
-static int name(struct drm_device *dev, void *data, struct drm_file	\
-		*file_priv)						\
-{									\
-	DRM_ERROR("invalid ioctl with kms %s\n", __func__);		\
-	return -EINVAL;							\
-}
-
-/*
- * All these ioctls are invalid in kms world.
- */
-KMS_INVALID_IOCTL(radeon_cp_init_kms)
-KMS_INVALID_IOCTL(radeon_cp_start_kms)
-KMS_INVALID_IOCTL(radeon_cp_stop_kms)
-KMS_INVALID_IOCTL(radeon_cp_reset_kms)
-KMS_INVALID_IOCTL(radeon_cp_idle_kms)
-KMS_INVALID_IOCTL(radeon_cp_resume_kms)
-KMS_INVALID_IOCTL(radeon_engine_reset_kms)
-KMS_INVALID_IOCTL(radeon_fullscreen_kms)
-KMS_INVALID_IOCTL(radeon_cp_swap_kms)
-KMS_INVALID_IOCTL(radeon_cp_clear_kms)
-KMS_INVALID_IOCTL(radeon_cp_vertex_kms)
-KMS_INVALID_IOCTL(radeon_cp_indices_kms)
-KMS_INVALID_IOCTL(radeon_cp_texture_kms)
-KMS_INVALID_IOCTL(radeon_cp_stipple_kms)
-KMS_INVALID_IOCTL(radeon_cp_indirect_kms)
-KMS_INVALID_IOCTL(radeon_cp_vertex2_kms)
-KMS_INVALID_IOCTL(radeon_cp_cmdbuf_kms)
-KMS_INVALID_IOCTL(radeon_cp_getparam_kms)
-KMS_INVALID_IOCTL(radeon_cp_flip_kms)
-KMS_INVALID_IOCTL(radeon_mem_alloc_kms)
-KMS_INVALID_IOCTL(radeon_mem_free_kms)
-KMS_INVALID_IOCTL(radeon_mem_init_heap_kms)
-KMS_INVALID_IOCTL(radeon_irq_emit_kms)
-KMS_INVALID_IOCTL(radeon_irq_wait_kms)
-KMS_INVALID_IOCTL(radeon_cp_setparam_kms)
-KMS_INVALID_IOCTL(radeon_surface_alloc_kms)
-KMS_INVALID_IOCTL(radeon_surface_free_kms)
-
 
 const struct drm_ioctl_desc radeon_ioctls_kms[] = {
-	DRM_IOCTL_DEF_DRV(RADEON_CP_INIT, radeon_cp_init_kms, DRM_AUTH|DRM_MASTER|DRM_ROOT_ONLY),
-	DRM_IOCTL_DEF_DRV(RADEON_CP_START, radeon_cp_start_kms, DRM_AUTH|DRM_MASTER|DRM_ROOT_ONLY),
-	DRM_IOCTL_DEF_DRV(RADEON_CP_STOP, radeon_cp_stop_kms, DRM_AUTH|DRM_MASTER|DRM_ROOT_ONLY),
-	DRM_IOCTL_DEF_DRV(RADEON_CP_RESET, radeon_cp_reset_kms, DRM_AUTH|DRM_MASTER|DRM_ROOT_ONLY),
-	DRM_IOCTL_DEF_DRV(RADEON_CP_IDLE, radeon_cp_idle_kms, DRM_AUTH),
-	DRM_IOCTL_DEF_DRV(RADEON_CP_RESUME, radeon_cp_resume_kms, DRM_AUTH),
-	DRM_IOCTL_DEF_DRV(RADEON_RESET, radeon_engine_reset_kms, DRM_AUTH),
-	DRM_IOCTL_DEF_DRV(RADEON_FULLSCREEN, radeon_fullscreen_kms, DRM_AUTH),
-	DRM_IOCTL_DEF_DRV(RADEON_SWAP, radeon_cp_swap_kms, DRM_AUTH),
-	DRM_IOCTL_DEF_DRV(RADEON_CLEAR, radeon_cp_clear_kms, DRM_AUTH),
-	DRM_IOCTL_DEF_DRV(RADEON_VERTEX, radeon_cp_vertex_kms, DRM_AUTH),
-	DRM_IOCTL_DEF_DRV(RADEON_INDICES, radeon_cp_indices_kms, DRM_AUTH),
-	DRM_IOCTL_DEF_DRV(RADEON_TEXTURE, radeon_cp_texture_kms, DRM_AUTH),
-	DRM_IOCTL_DEF_DRV(RADEON_STIPPLE, radeon_cp_stipple_kms, DRM_AUTH),
-	DRM_IOCTL_DEF_DRV(RADEON_INDIRECT, radeon_cp_indirect_kms, DRM_AUTH|DRM_MASTER|DRM_ROOT_ONLY),
-	DRM_IOCTL_DEF_DRV(RADEON_VERTEX2, radeon_cp_vertex2_kms, DRM_AUTH),
-	DRM_IOCTL_DEF_DRV(RADEON_CMDBUF, radeon_cp_cmdbuf_kms, DRM_AUTH),
-	DRM_IOCTL_DEF_DRV(RADEON_GETPARAM, radeon_cp_getparam_kms, DRM_AUTH),
-	DRM_IOCTL_DEF_DRV(RADEON_FLIP, radeon_cp_flip_kms, DRM_AUTH),
-	DRM_IOCTL_DEF_DRV(RADEON_ALLOC, radeon_mem_alloc_kms, DRM_AUTH),
-	DRM_IOCTL_DEF_DRV(RADEON_FREE, radeon_mem_free_kms, DRM_AUTH),
-	DRM_IOCTL_DEF_DRV(RADEON_INIT_HEAP, radeon_mem_init_heap_kms, DRM_AUTH|DRM_MASTER|DRM_ROOT_ONLY),
-	DRM_IOCTL_DEF_DRV(RADEON_IRQ_EMIT, radeon_irq_emit_kms, DRM_AUTH),
-	DRM_IOCTL_DEF_DRV(RADEON_IRQ_WAIT, radeon_irq_wait_kms, DRM_AUTH),
-	DRM_IOCTL_DEF_DRV(RADEON_SETPARAM, radeon_cp_setparam_kms, DRM_AUTH),
-	DRM_IOCTL_DEF_DRV(RADEON_SURF_ALLOC, radeon_surface_alloc_kms, DRM_AUTH),
-	DRM_IOCTL_DEF_DRV(RADEON_SURF_FREE, radeon_surface_free_kms, DRM_AUTH),
+	DRM_IOCTL_DEF_DRV(RADEON_CP_INIT, drm_invalid_op, DRM_AUTH|DRM_MASTER|DRM_ROOT_ONLY),
+	DRM_IOCTL_DEF_DRV(RADEON_CP_START, drm_invalid_op, DRM_AUTH|DRM_MASTER|DRM_ROOT_ONLY),
+	DRM_IOCTL_DEF_DRV(RADEON_CP_STOP, drm_invalid_op, DRM_AUTH|DRM_MASTER|DRM_ROOT_ONLY),
+	DRM_IOCTL_DEF_DRV(RADEON_CP_RESET, drm_invalid_op, DRM_AUTH|DRM_MASTER|DRM_ROOT_ONLY),
+	DRM_IOCTL_DEF_DRV(RADEON_CP_IDLE, drm_invalid_op, DRM_AUTH),
+	DRM_IOCTL_DEF_DRV(RADEON_CP_RESUME, drm_invalid_op, DRM_AUTH),
+	DRM_IOCTL_DEF_DRV(RADEON_RESET, drm_invalid_op, DRM_AUTH),
+	DRM_IOCTL_DEF_DRV(RADEON_FULLSCREEN, drm_invalid_op, DRM_AUTH),
+	DRM_IOCTL_DEF_DRV(RADEON_SWAP, drm_invalid_op, DRM_AUTH),
+	DRM_IOCTL_DEF_DRV(RADEON_CLEAR, drm_invalid_op, DRM_AUTH),
+	DRM_IOCTL_DEF_DRV(RADEON_VERTEX, drm_invalid_op, DRM_AUTH),
+	DRM_IOCTL_DEF_DRV(RADEON_INDICES, drm_invalid_op, DRM_AUTH),
+	DRM_IOCTL_DEF_DRV(RADEON_TEXTURE, drm_invalid_op, DRM_AUTH),
+	DRM_IOCTL_DEF_DRV(RADEON_STIPPLE, drm_invalid_op, DRM_AUTH),
+	DRM_IOCTL_DEF_DRV(RADEON_INDIRECT, drm_invalid_op, DRM_AUTH|DRM_MASTER|DRM_ROOT_ONLY),
+	DRM_IOCTL_DEF_DRV(RADEON_VERTEX2, drm_invalid_op, DRM_AUTH),
+	DRM_IOCTL_DEF_DRV(RADEON_CMDBUF, drm_invalid_op, DRM_AUTH),
+	DRM_IOCTL_DEF_DRV(RADEON_GETPARAM, drm_invalid_op, DRM_AUTH),
+	DRM_IOCTL_DEF_DRV(RADEON_FLIP, drm_invalid_op, DRM_AUTH),
+	DRM_IOCTL_DEF_DRV(RADEON_ALLOC, drm_invalid_op, DRM_AUTH),
+	DRM_IOCTL_DEF_DRV(RADEON_FREE, drm_invalid_op, DRM_AUTH),
+	DRM_IOCTL_DEF_DRV(RADEON_INIT_HEAP, drm_invalid_op, DRM_AUTH|DRM_MASTER|DRM_ROOT_ONLY),
+	DRM_IOCTL_DEF_DRV(RADEON_IRQ_EMIT, drm_invalid_op, DRM_AUTH),
+	DRM_IOCTL_DEF_DRV(RADEON_IRQ_WAIT, drm_invalid_op, DRM_AUTH),
+	DRM_IOCTL_DEF_DRV(RADEON_SETPARAM, drm_invalid_op, DRM_AUTH),
+	DRM_IOCTL_DEF_DRV(RADEON_SURF_ALLOC, drm_invalid_op, DRM_AUTH),
+	DRM_IOCTL_DEF_DRV(RADEON_SURF_FREE, drm_invalid_op, DRM_AUTH),
 	/* KMS */
-	DRM_IOCTL_DEF_DRV(RADEON_GEM_INFO, radeon_gem_info_ioctl, DRM_AUTH|DRM_UNLOCKED|DRM_RENDER_ALLOW),
-	DRM_IOCTL_DEF_DRV(RADEON_GEM_CREATE, radeon_gem_create_ioctl, DRM_AUTH|DRM_UNLOCKED|DRM_RENDER_ALLOW),
-	DRM_IOCTL_DEF_DRV(RADEON_GEM_MMAP, radeon_gem_mmap_ioctl, DRM_AUTH|DRM_UNLOCKED|DRM_RENDER_ALLOW),
-	DRM_IOCTL_DEF_DRV(RADEON_GEM_SET_DOMAIN, radeon_gem_set_domain_ioctl, DRM_AUTH|DRM_UNLOCKED|DRM_RENDER_ALLOW),
-	DRM_IOCTL_DEF_DRV(RADEON_GEM_PREAD, radeon_gem_pread_ioctl, DRM_AUTH|DRM_UNLOCKED),
-	DRM_IOCTL_DEF_DRV(RADEON_GEM_PWRITE, radeon_gem_pwrite_ioctl, DRM_AUTH|DRM_UNLOCKED),
-	DRM_IOCTL_DEF_DRV(RADEON_GEM_WAIT_IDLE, radeon_gem_wait_idle_ioctl, DRM_AUTH|DRM_UNLOCKED|DRM_RENDER_ALLOW),
-	DRM_IOCTL_DEF_DRV(RADEON_CS, radeon_cs_ioctl, DRM_AUTH|DRM_UNLOCKED|DRM_RENDER_ALLOW),
-	DRM_IOCTL_DEF_DRV(RADEON_INFO, radeon_info_ioctl, DRM_AUTH|DRM_UNLOCKED|DRM_RENDER_ALLOW),
-	DRM_IOCTL_DEF_DRV(RADEON_GEM_SET_TILING, radeon_gem_set_tiling_ioctl, DRM_AUTH|DRM_UNLOCKED|DRM_RENDER_ALLOW),
-	DRM_IOCTL_DEF_DRV(RADEON_GEM_GET_TILING, radeon_gem_get_tiling_ioctl, DRM_AUTH|DRM_UNLOCKED|DRM_RENDER_ALLOW),
-	DRM_IOCTL_DEF_DRV(RADEON_GEM_BUSY, radeon_gem_busy_ioctl, DRM_AUTH|DRM_UNLOCKED|DRM_RENDER_ALLOW),
-	DRM_IOCTL_DEF_DRV(RADEON_GEM_VA, radeon_gem_va_ioctl, DRM_AUTH|DRM_UNLOCKED|DRM_RENDER_ALLOW),
-	DRM_IOCTL_DEF_DRV(RADEON_GEM_OP, radeon_gem_op_ioctl, DRM_AUTH|DRM_UNLOCKED|DRM_RENDER_ALLOW),
+	DRM_IOCTL_DEF_DRV(RADEON_GEM_INFO, radeon_gem_info_ioctl, DRM_AUTH|DRM_RENDER_ALLOW),
+	DRM_IOCTL_DEF_DRV(RADEON_GEM_CREATE, radeon_gem_create_ioctl, DRM_AUTH|DRM_RENDER_ALLOW),
+	DRM_IOCTL_DEF_DRV(RADEON_GEM_MMAP, radeon_gem_mmap_ioctl, DRM_AUTH|DRM_RENDER_ALLOW),
+	DRM_IOCTL_DEF_DRV(RADEON_GEM_SET_DOMAIN, radeon_gem_set_domain_ioctl, DRM_AUTH|DRM_RENDER_ALLOW),
+	DRM_IOCTL_DEF_DRV(RADEON_GEM_PREAD, radeon_gem_pread_ioctl, DRM_AUTH),
+	DRM_IOCTL_DEF_DRV(RADEON_GEM_PWRITE, radeon_gem_pwrite_ioctl, DRM_AUTH),
+	DRM_IOCTL_DEF_DRV(RADEON_GEM_WAIT_IDLE, radeon_gem_wait_idle_ioctl, DRM_AUTH|DRM_RENDER_ALLOW),
+	DRM_IOCTL_DEF_DRV(RADEON_CS, radeon_cs_ioctl, DRM_AUTH|DRM_RENDER_ALLOW),
+	DRM_IOCTL_DEF_DRV(RADEON_INFO, radeon_info_ioctl, DRM_AUTH|DRM_RENDER_ALLOW),
+	DRM_IOCTL_DEF_DRV(RADEON_GEM_SET_TILING, radeon_gem_set_tiling_ioctl, DRM_AUTH|DRM_RENDER_ALLOW),
+	DRM_IOCTL_DEF_DRV(RADEON_GEM_GET_TILING, radeon_gem_get_tiling_ioctl, DRM_AUTH|DRM_RENDER_ALLOW),
+	DRM_IOCTL_DEF_DRV(RADEON_GEM_BUSY, radeon_gem_busy_ioctl, DRM_AUTH|DRM_RENDER_ALLOW),
+	DRM_IOCTL_DEF_DRV(RADEON_GEM_VA, radeon_gem_va_ioctl, DRM_AUTH|DRM_RENDER_ALLOW),
+	DRM_IOCTL_DEF_DRV(RADEON_GEM_OP, radeon_gem_op_ioctl, DRM_AUTH|DRM_RENDER_ALLOW),
+	DRM_IOCTL_DEF_DRV(RADEON_GEM_USERPTR, radeon_gem_userptr_ioctl, DRM_AUTH|DRM_RENDER_ALLOW),
 };
-int radeon_max_kms_ioctl = DRM_ARRAY_SIZE(radeon_ioctls_kms);
+int radeon_max_kms_ioctl = ARRAY_SIZE(radeon_ioctls_kms);

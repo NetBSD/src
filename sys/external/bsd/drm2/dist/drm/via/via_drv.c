@@ -1,3 +1,5 @@
+/*	$NetBSD: via_drv.c,v 1.1.1.3 2018/08/27 01:34:59 riastradh Exp $	*/
+
 /*
  * Copyright 1998-2003 VIA Technologies, Inc. All Rights Reserved.
  * Copyright 2001-2003 S3 Graphics, Inc. All Rights Reserved.
@@ -21,6 +23,9 @@
  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: via_drv.c,v 1.1.1.3 2018/08/27 01:34:59 riastradh Exp $");
 
 #include <linux/module.h>
 
@@ -62,7 +67,7 @@ static const struct file_operations via_driver_fops = {
 	.open = drm_open,
 	.release = drm_release,
 	.unlocked_ioctl = drm_ioctl,
-	.mmap = drm_mmap,
+	.mmap = drm_legacy_mmap,
 	.poll = drm_poll,
 #ifdef CONFIG_COMPAT
 	.compat_ioctl = drm_compat_ioctl,
@@ -79,6 +84,7 @@ static struct drm_driver driver = {
 	.open = via_driver_open,
 	.preclose = via_reclaim_buffers_locked,
 	.postclose = via_driver_postclose,
+	.set_busid = drm_pci_set_busid,
 	.context_dtor = via_final_context,
 	.get_vblank_counter = via_get_vblank_counter,
 	.enable_vblank = via_enable_vblank,

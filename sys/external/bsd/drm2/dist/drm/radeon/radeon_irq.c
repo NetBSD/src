@@ -1,3 +1,5 @@
+/*	$NetBSD: radeon_irq.c,v 1.1.1.2 2018/08/27 01:34:58 riastradh Exp $	*/
+
 /* radeon_irq.c -- IRQ handling for radeon -*- linux-c -*- */
 /*
  * Copyright (C) The Weather Channel, Inc.  2002.  All Rights Reserved.
@@ -32,6 +34,9 @@
  * ------------------------ This file is DEPRECATED! -------------------------
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: radeon_irq.c,v 1.1.1.2 2018/08/27 01:34:58 riastradh Exp $");
+
 #include <drm/drmP.h>
 #include <drm/radeon_drm.h>
 #include "radeon_drv.h"
@@ -62,12 +67,12 @@ static void r500_vbl_irq_set_state(struct drm_device *dev, u32 mask, int state)
 		RADEON_WRITE(R500_DxMODE_INT_MASK, dev_priv->r500_disp_irq_reg);
 }
 
-int radeon_enable_vblank(struct drm_device *dev, int crtc)
+int radeon_enable_vblank(struct drm_device *dev, unsigned int pipe)
 {
 	drm_radeon_private_t *dev_priv = dev->dev_private;
 
 	if ((dev_priv->flags & RADEON_FAMILY_MASK) >= CHIP_RS600) {
-		switch (crtc) {
+		switch (pipe) {
 		case 0:
 			r500_vbl_irq_set_state(dev, R500_D1MODE_INT_MASK, 1);
 			break;
@@ -75,12 +80,12 @@ int radeon_enable_vblank(struct drm_device *dev, int crtc)
 			r500_vbl_irq_set_state(dev, R500_D2MODE_INT_MASK, 1);
 			break;
 		default:
-			DRM_ERROR("tried to enable vblank on non-existent crtc %d\n",
-				  crtc);
+			DRM_ERROR("tried to enable vblank on non-existent crtc %u\n",
+				  pipe);
 			return -EINVAL;
 		}
 	} else {
-		switch (crtc) {
+		switch (pipe) {
 		case 0:
 			radeon_irq_set_state(dev, RADEON_CRTC_VBLANK_MASK, 1);
 			break;
@@ -88,8 +93,8 @@ int radeon_enable_vblank(struct drm_device *dev, int crtc)
 			radeon_irq_set_state(dev, RADEON_CRTC2_VBLANK_MASK, 1);
 			break;
 		default:
-			DRM_ERROR("tried to enable vblank on non-existent crtc %d\n",
-				  crtc);
+			DRM_ERROR("tried to enable vblank on non-existent crtc %u\n",
+				  pipe);
 			return -EINVAL;
 		}
 	}
@@ -97,12 +102,12 @@ int radeon_enable_vblank(struct drm_device *dev, int crtc)
 	return 0;
 }
 
-void radeon_disable_vblank(struct drm_device *dev, int crtc)
+void radeon_disable_vblank(struct drm_device *dev, unsigned int pipe)
 {
 	drm_radeon_private_t *dev_priv = dev->dev_private;
 
 	if ((dev_priv->flags & RADEON_FAMILY_MASK) >= CHIP_RS600) {
-		switch (crtc) {
+		switch (pipe) {
 		case 0:
 			r500_vbl_irq_set_state(dev, R500_D1MODE_INT_MASK, 0);
 			break;
@@ -110,12 +115,12 @@ void radeon_disable_vblank(struct drm_device *dev, int crtc)
 			r500_vbl_irq_set_state(dev, R500_D2MODE_INT_MASK, 0);
 			break;
 		default:
-			DRM_ERROR("tried to enable vblank on non-existent crtc %d\n",
-				  crtc);
+			DRM_ERROR("tried to enable vblank on non-existent crtc %u\n",
+				  pipe);
 			break;
 		}
 	} else {
-		switch (crtc) {
+		switch (pipe) {
 		case 0:
 			radeon_irq_set_state(dev, RADEON_CRTC_VBLANK_MASK, 0);
 			break;
@@ -123,8 +128,8 @@ void radeon_disable_vblank(struct drm_device *dev, int crtc)
 			radeon_irq_set_state(dev, RADEON_CRTC2_VBLANK_MASK, 0);
 			break;
 		default:
-			DRM_ERROR("tried to enable vblank on non-existent crtc %d\n",
-				  crtc);
+			DRM_ERROR("tried to enable vblank on non-existent crtc %u\n",
+				  pipe);
 			break;
 		}
 	}
@@ -255,7 +260,7 @@ static int radeon_wait_irq(struct drm_device * dev, int swi_nr)
 	return ret;
 }
 
-u32 radeon_get_vblank_counter(struct drm_device *dev, int crtc)
+u32 radeon_get_vblank_counter(struct drm_device *dev, unsigned int pipe)
 {
 	drm_radeon_private_t *dev_priv = dev->dev_private;
 
@@ -264,18 +269,18 @@ u32 radeon_get_vblank_counter(struct drm_device *dev, int crtc)
 		return -EINVAL;
 	}
 
-	if (crtc < 0 || crtc > 1) {
-		DRM_ERROR("Invalid crtc %d\n", crtc);
+	if (pipe > 1) {
+		DRM_ERROR("Invalid crtc %u\n", pipe);
 		return -EINVAL;
 	}
 
 	if ((dev_priv->flags & RADEON_FAMILY_MASK) >= CHIP_RS600) {
-		if (crtc == 0)
+		if (pipe == 0)
 			return RADEON_READ(R500_D1CRTC_FRAME_COUNT);
 		else
 			return RADEON_READ(R500_D2CRTC_FRAME_COUNT);
 	} else {
-		if (crtc == 0)
+		if (pipe == 0)
 			return RADEON_READ(RADEON_CRTC_CRNT_FRAME);
 		else
 			return RADEON_READ(RADEON_CRTC2_CRNT_FRAME);

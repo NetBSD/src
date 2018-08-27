@@ -1,3 +1,5 @@
+/*	$NetBSD: drm_hashtab.h,v 1.1.1.2 2018/08/27 01:35:00 riastradh Exp $	*/
+
 /**************************************************************************
  *
  * Copyright 2006 Tungsten Graphics, Inc., Bismack, ND. USA.

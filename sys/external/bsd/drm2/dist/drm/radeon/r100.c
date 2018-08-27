@@ -1,3 +1,5 @@
+/*	$NetBSD: r100.c,v 1.1.1.2 2018/08/27 01:34:58 riastradh Exp $	*/
+
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -25,6 +27,9 @@
  *          Alex Deucher
  *          Jerome Glisse
  */
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: r100.c,v 1.1.1.2 2018/08/27 01:34:58 riastradh Exp $");
+
 #include <linux/seq_file.h>
 #include <linux/slab.h>
 #include <drm/drmP.h>
@@ -142,36 +147,6 @@ void r100_wait_for_vblank(struct radeon_device *rdev, int crtc)
 }
 
 /**
- * r100_pre_page_flip - pre-pageflip callback.
- *
- * @rdev: radeon_device pointer
- * @crtc: crtc to prepare for pageflip on
- *
- * Pre-pageflip callback (r1xx-r4xx).
- * Enables the pageflip irq (vblank irq).
- */
-void r100_pre_page_flip(struct radeon_device *rdev, int crtc)
-{
-	/* enable the pflip int */
-	radeon_irq_kms_pflip_irq_get(rdev, crtc);
-}
-
-/**
- * r100_post_page_flip - pos-pageflip callback.
- *
- * @rdev: radeon_device pointer
- * @crtc: crtc to cleanup pageflip on
- *
- * Post-pageflip callback (r1xx-r4xx).
- * Disables the pageflip irq (vblank irq).
- */
-void r100_post_page_flip(struct radeon_device *rdev, int crtc)
-{
-	/* disable the pflip int */
-	radeon_irq_kms_pflip_irq_put(rdev, crtc);
-}
-
-/**
  * r100_page_flip - pageflip callback.
  *
  * @rdev: radeon_device pointer
@@ -182,9 +157,8 @@ void r100_post_page_flip(struct radeon_device *rdev, int crtc)
  * During vblank we take the crtc lock and wait for the update_pending
  * bit to go high, when it does, we release the lock, and allow the
  * double buffered update to take place.
- * Returns the current update pending status.
  */
-u32 r100_page_flip(struct radeon_device *rdev, int crtc_id, u64 crtc_base)
+void r100_page_flip(struct radeon_device *rdev, int crtc_id, u64 crtc_base)
 {
 	struct radeon_crtc *radeon_crtc = rdev->mode_info.crtcs[crtc_id];
 	u32 tmp = ((u32)crtc_base) | RADEON_CRTC_OFFSET__OFFSET_LOCK;
@@ -206,8 +180,24 @@ u32 r100_page_flip(struct radeon_device *rdev, int crtc_id, u64 crtc_base)
 	tmp &= ~RADEON_CRTC_OFFSET__OFFSET_LOCK;
 	WREG32(RADEON_CRTC_OFFSET + radeon_crtc->crtc_offset, tmp);
 
+}
+
+/**
+ * r100_page_flip_pending - check if page flip is still pending
+ *
+ * @rdev: radeon_device pointer
+ * @crtc_id: crtc to check
+ *
+ * Check if the last pagefilp is still pending (r1xx-r4xx).
+ * Returns the current update pending status.
+ */
+bool r100_page_flip_pending(struct radeon_device *rdev, int crtc_id)
+{
+	struct radeon_crtc *radeon_crtc = rdev->mode_info.crtcs[crtc_id];
+
 	/* Return current update_pending status: */
-	return RREG32(RADEON_CRTC_OFFSET + radeon_crtc->crtc_offset) & RADEON_CRTC_OFFSET__GUI_TRIG_OFFSET;
+	return !!(RREG32(RADEON_CRTC_OFFSET + radeon_crtc->crtc_offset) &
+		RADEON_CRTC_OFFSET__GUI_TRIG_OFFSET);
 }
 
 /**
@@ -659,6 +649,7 @@ int r100_pci_gart_init(struct radeon_device *rdev)
 		return r;
 	rdev->gart.table_size = rdev->gart.num_gpu_pages * 4;
 	rdev->asic->gart.tlb_flush = &r100_pci_gart_tlb_flush;
+	rdev->asic->gart.get_page_entry = &r100_pci_gart_get_page_entry;
 	rdev->asic->gart.set_page = &r100_pci_gart_set_page;
 	return radeon_gart_table_ram_alloc(rdev);
 }
@@ -667,7 +658,6 @@ int r100_pci_gart_enable(struct radeon_device *rdev)
 {
 	uint32_t tmp;
 
-	radeon_gart_restore(rdev);
 	/* discard memory request outside of configured range */
 	tmp = RREG32(RADEON_AIC_CNTL) | RADEON_DIS_OUT_OF_PCI_GART_ACCESS;
 	WREG32(RADEON_AIC_CNTL, tmp);
@@ -697,15 +687,16 @@ void r100_pci_gart_disable(struct radeon_device *rdev)
 	WREG32(RADEON_AIC_HI_ADDR, 0);
 }
 
-int r100_pci_gart_set_page(struct radeon_device *rdev, int i, uint64_t addr)
+uint64_t r100_pci_gart_get_page_entry(uint64_t addr, uint32_t flags)
+{
+	return addr;
+}
+
+void r100_pci_gart_set_page(struct radeon_device *rdev, unsigned i,
+			    uint64_t entry)
 {
 	u32 *gtt = rdev->gart.ptr;
-
-	if (i < 0 || i > rdev->gart.num_gpu_pages) {
-		return -EINVAL;
-	}
-	gtt[i] = cpu_to_le32(lower_32_bits(addr));
-	return 0;
+	gtt[i] = cpu_to_le32(lower_32_bits(entry));
 }
 
 void r100_pci_gart_fini(struct radeon_device *rdev)
@@ -742,6 +733,10 @@ int r100_irq_set(struct radeon_device *rdev)
 		tmp |= RADEON_FP2_DETECT_MASK;
 	}
 	WREG32(RADEON_GEN_INT_CNTL, tmp);
+
+	/* read back to post the write */
+	RREG32(RADEON_GEN_INT_CNTL);
+
 	return 0;
 }
 
@@ -794,7 +789,7 @@ int r100_irq_process(struct radeon_device *rdev)
 				wake_up(&rdev->irq.vblank_queue);
 			}
 			if (atomic_read(&rdev->irq.pflip[0]))
-				radeon_crtc_handle_flip(rdev, 0);
+				radeon_crtc_handle_vblank(rdev, 0);
 		}
 		if (status & RADEON_CRTC2_VBLANK_STAT) {
 			if (rdev->irq.crtc_vblank_int[1]) {
@@ -803,7 +798,7 @@ int r100_irq_process(struct radeon_device *rdev)
 				wake_up(&rdev->irq.vblank_queue);
 			}
 			if (atomic_read(&rdev->irq.pflip[1]))
-				radeon_crtc_handle_flip(rdev, 1);
+				radeon_crtc_handle_vblank(rdev, 1);
 		}
 		if (status & RADEON_FP_DETECT_STAT) {
 			queue_hotplug = true;
@@ -816,7 +811,7 @@ int r100_irq_process(struct radeon_device *rdev)
 		status = r100_irq_ack(rdev);
 	}
 	if (queue_hotplug)
-		schedule_work(&rdev->hotplug_work);
+		schedule_delayed_work(&rdev->hotplug_work, 0);
 	if (rdev->msi_enabled) {
 		switch (rdev->family) {
 		case CHIP_RS400:
@@ -841,6 +836,20 @@ u32 r100_get_vblank_counter(struct radeon_device *rdev, int crtc)
 		return RREG32(RADEON_CRTC2_CRNT_FRAME);
 }
 
+/**
+ * r100_ring_hdp_flush - flush Host Data Path via the ring buffer
+ * rdev: radeon device structure
+ * ring: ring buffer struct for emitting packets
+ */
+static void r100_ring_hdp_flush(struct radeon_device *rdev, struct radeon_ring *ring)
+{
+	radeon_ring_write(ring, PACKET0(RADEON_HOST_PATH_CNTL, 0));
+	radeon_ring_write(ring, rdev->config.r100.hdp_cntl |
+				RADEON_HDP_READ_BUFFER_INVALIDATE);
+	radeon_ring_write(ring, PACKET0(RADEON_HOST_PATH_CNTL, 0));
+	radeon_ring_write(ring, rdev->config.r100.hdp_cntl);
+}
+
 /* Who ever call radeon_fence_emit should call ring_lock and ask
  * for enough space (today caller are ib schedule and buffer move) */
 void r100_fence_ring_emit(struct radeon_device *rdev,
@@ -857,11 +866,7 @@ void r100_fence_ring_emit(struct radeon_device *rdev,
 	/* Wait until IDLE & CLEAN */
 	radeon_ring_write(ring, PACKET0(RADEON_WAIT_UNTIL, 0));
 	radeon_ring_write(ring, RADEON_WAIT_2D_IDLECLEAN | RADEON_WAIT_3D_IDLECLEAN);
-	radeon_ring_write(ring, PACKET0(RADEON_HOST_PATH_CNTL, 0));
-	radeon_ring_write(ring, rdev->config.r100.hdp_cntl |
-				RADEON_HDP_READ_BUFFER_INVALIDATE);
-	radeon_ring_write(ring, PACKET0(RADEON_HOST_PATH_CNTL, 0));
-	radeon_ring_write(ring, rdev->config.r100.hdp_cntl);
+	r100_ring_hdp_flush(rdev, ring);
 	/* Emit fence sequence & fire IRQ */
 	radeon_ring_write(ring, PACKET0(rdev->fence_drv[fence->ring].scratch_reg, 0));
 	radeon_ring_write(ring, fence->seq);
@@ -879,13 +884,14 @@ bool r100_semaphore_ring_emit(struct radeon_device *rdev,
 	return false;
 }
 
-int r100_copy_blit(struct radeon_device *rdev,
-		   uint64_t src_offset,
-		   uint64_t dst_offset,
-		   unsigned num_gpu_pages,
-		   struct radeon_fence **fence)
+struct radeon_fence *r100_copy_blit(struct radeon_device *rdev,
+				    uint64_t src_offset,
+				    uint64_t dst_offset,
+				    unsigned num_gpu_pages,
+				    struct reservation_object *resv)
 {
 	struct radeon_ring *ring = &rdev->ring[RADEON_RING_TYPE_GFX_INDEX];
+	struct radeon_fence *fence;
 	uint32_t cur_pages;
 	uint32_t stride_bytes = RADEON_GPU_PAGE_SIZE;
 	uint32_t pitch;
@@ -906,7 +912,7 @@ int r100_copy_blit(struct radeon_device *rdev,
 	r = radeon_ring_lock(rdev, ring, ndw);
 	if (r) {
 		DRM_ERROR("radeon: moving bo (%d) asking for %u dw.\n", r, ndw);
-		return -EINVAL;
+		return ERR_PTR(-EINVAL);
 	}
 	while (num_gpu_pages > 0) {
 		cur_pages = num_gpu_pages;
@@ -946,11 +952,13 @@ int r100_copy_blit(struct radeon_device *rdev,
 			  RADEON_WAIT_2D_IDLECLEAN |
 			  RADEON_WAIT_HOST_IDLECLEAN |
 			  RADEON_WAIT_DMA_GUI_IDLE);
-	if (fence) {
-		r = radeon_fence_emit(rdev, fence, RADEON_RING_TYPE_GFX_INDEX);
+	r = radeon_fence_emit(rdev, &fence, RADEON_RING_TYPE_GFX_INDEX);
+	if (r) {
+		radeon_ring_unlock_undo(rdev, ring);
+		return ERR_PTR(r);
 	}
-	radeon_ring_unlock_commit(rdev, ring);
-	return r;
+	radeon_ring_unlock_commit(rdev, ring, false);
+	return fence;
 }
 
 static int r100_cp_wait_for_idle(struct radeon_device *rdev)
@@ -982,7 +990,7 @@ void r100_ring_start(struct radeon_device *rdev, struct radeon_ring *ring)
 			  RADEON_ISYNC_ANY3D_IDLE2D |
 			  RADEON_ISYNC_WAIT_IDLEGUI |
 			  RADEON_ISYNC_CPSCRATCH_IDLEGUI);
-	radeon_ring_unlock_commit(rdev, ring);
+	radeon_ring_unlock_commit(rdev, ring, false);
 }
 
 
@@ -1261,7 +1269,7 @@ int r100_reloc_pitch_offset(struct radeon_cs_parser *p,
 	int r;
 	u32 tile_flags = 0;
 	u32 tmp;
-	struct radeon_cs_reloc *reloc;
+	struct radeon_bo_list *reloc;
 	u32 value;
 
 	r = radeon_cs_packet_next_reloc(p, &reloc, 0);
@@ -1300,7 +1308,7 @@ int r100_packet3_load_vbpntr(struct radeon_cs_parser *p,
 			     int idx)
 {
 	unsigned c, i;
-	struct radeon_cs_reloc *reloc;
+	struct radeon_bo_list *reloc;
 	struct r100_cs_track *track;
 	int r = 0;
 	volatile uint32_t *ib;
@@ -1420,7 +1428,6 @@ int r100_cs_parse_packet0(struct radeon_cs_parser *p,
  */
 int r100_cs_packet_parse_vline(struct radeon_cs_parser *p)
 {
-	struct drm_mode_object *obj;
 	struct drm_crtc *crtc;
 	struct radeon_crtc *radeon_crtc;
 	struct radeon_cs_packet p3reloc, waitreloc;
@@ -1460,12 +1467,11 @@ int r100_cs_packet_parse_vline(struct radeon_cs_parser *p)
 	header = radeon_get_ib_value(p, h_idx);
 	crtc_id = radeon_get_ib_value(p, h_idx + 5);
 	reg = R100_CP_PACKET0_GET_REG(header);
-	obj = drm_mode_object_find(p->rdev->ddev, crtc_id, DRM_MODE_OBJECT_CRTC);
-	if (!obj) {
+	crtc = drm_crtc_find(p->rdev->ddev, crtc_id);
+	if (!crtc) {
 		DRM_ERROR("cannot find crtc %d\n", crtc_id);
 		return -ENOENT;
 	}
-	crtc = obj_to_crtc(obj);
 	radeon_crtc = to_radeon_crtc(crtc);
 	crtc_id = radeon_crtc->crtc_id;
 
@@ -1551,7 +1557,7 @@ static int r100_packet0_check(struct radeon_cs_parser *p,
 			      struct radeon_cs_packet *pkt,
 			      unsigned idx, unsigned reg)
 {
-	struct radeon_cs_reloc *reloc;
+	struct radeon_bo_list *reloc;
 	struct r100_cs_track *track;
 	volatile uint32_t *ib;
 	uint32_t tmp;
@@ -1910,7 +1916,7 @@ int r100_cs_track_check_pkt3_indx_buffer(struct radeon_cs_parser *p,
 static int r100_packet3_check(struct radeon_cs_parser *p,
 			      struct radeon_cs_packet *pkt)
 {
-	struct radeon_cs_reloc *reloc;
+	struct radeon_bo_list *reloc;
 	struct r100_cs_track *track;
 	unsigned idx;
 	volatile uint32_t *ib;
@@ -2070,7 +2076,7 @@ int r100_cs_parse(struct radeon_cs_parser *p)
 		}
 		if (r)
 			return r;
-	} while (p->idx < p->chunks[p->chunk_ib_idx].length_dw);
+	} while (p->idx < p->chunk_ib->length_dw);
 	return 0;
 }
 
@@ -3216,6 +3222,12 @@ void r100_bandwidth_update(struct radeon_device *rdev)
 	uint32_t pixel_bytes1 = 0;
 	uint32_t pixel_bytes2 = 0;
 
+	/* Guess line buffer size to be 8192 pixels */
+	u32 lb_size = 8192;
+
+	if (!rdev->mode_info.mode_config_initialized)
+		return;
+
 	radeon_update_display_priority(rdev);
 
 	if (rdev->mode_info.crtcs[0]->base.enabled) {
@@ -3627,6 +3639,13 @@ void r100_bandwidth_update(struct radeon_device *rdev)
 		DRM_DEBUG_KMS("GRPH2_BUFFER_CNTL from to %x\n",
 			  (unsigned int)RREG32(RADEON_GRPH2_BUFFER_CNTL));
 	}
+
+	/* Save number of lines the linebuffer leads before the scanout */
+	if (mode1)
+	    rdev->mode_info.crtcs[0]->lb_vblank_lead_lines = DIV_ROUND_UP(lb_size, mode1->crtc_hdisplay);
+
+	if (mode2)
+	    rdev->mode_info.crtcs[1]->lb_vblank_lead_lines = DIV_ROUND_UP(lb_size, mode2->crtc_hdisplay);
 }
 
 int r100_ring_test(struct radeon_device *rdev, struct radeon_ring *ring)
@@ -3650,7 +3669,7 @@ int r100_ring_test(struct radeon_device *rdev, struct radeon_ring *ring)
 	}
 	radeon_ring_write(ring, PACKET0(scratch, 0));
 	radeon_ring_write(ring, 0xDEADBEEF);
-	radeon_ring_unlock_commit(rdev, ring);
+	radeon_ring_unlock_commit(rdev, ring, false);
 	for (i = 0; i < rdev->usec_timeout; i++) {
 		tmp = RREG32(scratch);
 		if (tmp == 0xDEADBEEF) {
@@ -3712,7 +3731,7 @@ int r100_ib_test(struct radeon_device *rdev, struct radeon_ring *ring)
 	ib.ptr[6] = PACKET2(0);
 	ib.ptr[7] = PACKET2(0);
 	ib.length_dw = 8;
-	r = radeon_ib_schedule(rdev, &ib, NULL);
+	r = radeon_ib_schedule(rdev, &ib, NULL, false);
 	if (r) {
 		DRM_ERROR("radeon: failed to schedule ib (%d).\n", r);
 		goto free_ib;
@@ -4086,37 +4105,26 @@ int r100_init(struct radeon_device *rdev)
 	return 0;
 }
 
-uint32_t r100_mm_rreg(struct radeon_device *rdev, uint32_t reg,
-		      bool always_indirect)
+uint32_t r100_mm_rreg_slow(struct radeon_device *rdev, uint32_t reg)
 {
-	if (reg < rdev->rmmio_size && !always_indirect)
-		return readl(((void __iomem *)rdev->rmmio) + reg);
-	else {
-		unsigned long flags;
-		uint32_t ret;
+	unsigned long flags;
+	uint32_t ret;
 
-		spin_lock_irqsave(&rdev->mmio_idx_lock, flags);
-		writel(reg, ((void __iomem *)rdev->rmmio) + RADEON_MM_INDEX);
-		ret = readl(((void __iomem *)rdev->rmmio) + RADEON_MM_DATA);
-		spin_unlock_irqrestore(&rdev->mmio_idx_lock, flags);
-
-		return ret;
-	}
+	spin_lock_irqsave(&rdev->mmio_idx_lock, flags);
+	writel(reg, ((void __iomem *)rdev->rmmio) + RADEON_MM_INDEX);
+	ret = readl(((void __iomem *)rdev->rmmio) + RADEON_MM_DATA);
+	spin_unlock_irqrestore(&rdev->mmio_idx_lock, flags);
+	return ret;
 }
 
-void r100_mm_wreg(struct radeon_device *rdev, uint32_t reg, uint32_t v,
-		  bool always_indirect)
+void r100_mm_wreg_slow(struct radeon_device *rdev, uint32_t reg, uint32_t v)
 {
-	if (reg < rdev->rmmio_size && !always_indirect)
-		writel(v, ((void __iomem *)rdev->rmmio) + reg);
-	else {
-		unsigned long flags;
+	unsigned long flags;
 
-		spin_lock_irqsave(&rdev->mmio_idx_lock, flags);
-		writel(reg, ((void __iomem *)rdev->rmmio) + RADEON_MM_INDEX);
-		writel(v, ((void __iomem *)rdev->rmmio) + RADEON_MM_DATA);
-		spin_unlock_irqrestore(&rdev->mmio_idx_lock, flags);
-	}
+	spin_lock_irqsave(&rdev->mmio_idx_lock, flags);
+	writel(reg, ((void __iomem *)rdev->rmmio) + RADEON_MM_INDEX);
+	writel(v, ((void __iomem *)rdev->rmmio) + RADEON_MM_DATA);
+	spin_unlock_irqrestore(&rdev->mmio_idx_lock, flags);
 }
 
 u32 r100_io_rreg(struct radeon_device *rdev, u32 reg)

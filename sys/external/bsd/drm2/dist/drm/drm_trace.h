@@ -1,3 +1,5 @@
+/*	$NetBSD: drm_trace.h,v 1.1.1.2 2018/08/27 01:34:43 riastradh Exp $	*/
+
 #if !defined(_DRM_TRACE_H_) || defined(TRACE_HEADER_MULTI_READ)
 #define _DRM_TRACE_H_
 
@@ -7,7 +9,6 @@
 
 #undef TRACE_SYSTEM
 #define TRACE_SYSTEM drm
-#define TRACE_SYSTEM_STRING __stringify(TRACE_SYSTEM)
 #define TRACE_INCLUDE_FILE drm_trace
 
 TRACE_EVENT(drm_vblank_event,

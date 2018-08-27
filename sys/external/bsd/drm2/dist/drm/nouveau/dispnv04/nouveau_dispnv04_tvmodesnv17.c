@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_dispnv04_tvmodesnv17.c,v 1.1.1.1 2014/08/06 12:36:32 riastradh Exp $	*/
+/*	$NetBSD: nouveau_dispnv04_tvmodesnv17.c,v 1.1.1.2 2018/08/27 01:34:55 riastradh Exp $	*/
 
 /*
  * Copyright (C) 2009 Francisco Jerez.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_dispnv04_tvmodesnv17.c,v 1.1.1.1 2014/08/06 12:36:32 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_dispnv04_tvmodesnv17.c,v 1.1.1.2 2018/08/27 01:34:55 riastradh Exp $");
 
 #include <drm/drmP.h>
 #include <drm/drm_crtc_helper.h>
@@ -37,7 +37,7 @@ __KERNEL_RCSID(0, "$NetBSD: nouveau_dispnv04_tvmodesnv17.c,v 1.1.1.1 2014/08/06 
 #include "hw.h"
 #include "tvnv17.h"
 
-char *nv17_tv_norm_names[NUM_TV_NORMS] = {
+const char * const nv17_tv_norm_names[NUM_TV_NORMS] = {
 	[TV_NORM_PAL] = "PAL",
 	[TV_NORM_PAL_M] = "PAL-M",
 	[TV_NORM_PAL_N] = "PAL-N",

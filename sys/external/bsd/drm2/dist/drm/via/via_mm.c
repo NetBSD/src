@@ -1,3 +1,5 @@
+/*	$NetBSD: via_mm.c,v 1.1.1.3 2018/08/27 01:34:59 riastradh Exp $	*/
+
 /*
  * Copyright 2006 Tungsten Graphics Inc., Bismarck, ND., USA.
  * All rights reserved.
@@ -24,6 +26,9 @@
 /*
  * Authors: Thomas Hellström <thomas-at-tungstengraphics-dot-com>
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: via_mm.c,v 1.1.1.3 2018/08/27 01:34:59 riastradh Exp $");
 
 #include <drm/drmP.h>
 #include <drm/via_drm.h>
@@ -79,7 +84,7 @@ int via_final_context(struct drm_device *dev, int context)
 
 	/* Linux specific until context tracking code gets ported to BSD */
 	/* Last context, perform cleanup */
-	if (list_is_singular(&dev->ctxlist) && dev->dev_private) {
+	if (list_is_singular(&dev->ctxlist)) {
 		DRM_DEBUG("Last Context\n");
 		drm_irq_uninstall(dev);
 		via_cleanup_futex(dev_priv);
@@ -211,12 +216,12 @@ void via_reclaim_buffers_locked(struct drm_device *dev,
 	if (!(file->minor->master && file->master->lock.hw_lock))
 		return;
 
-	drm_idlelock_take(&file->master->lock);
+	drm_legacy_idlelock_take(&file->master->lock);
 
 	mutex_lock(&dev->struct_mutex);
 	if (list_empty(&file_priv->obj_list)) {
 		mutex_unlock(&dev->struct_mutex);
-		drm_idlelock_release(&file->master->lock);
+		drm_legacy_idlelock_release(&file->master->lock);
 
 		return;
 	}
@@ -231,7 +236,7 @@ void via_reclaim_buffers_locked(struct drm_device *dev,
 	}
 	mutex_unlock(&dev->struct_mutex);
 
-	drm_idlelock_release(&file->master->lock);
+	drm_legacy_idlelock_release(&file->master->lock);
 
 	return;
 }

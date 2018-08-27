@@ -1,3 +1,5 @@
+/*	$NetBSD: radeon_legacy_encoders.c,v 1.1.1.2 2018/08/27 01:34:58 riastradh Exp $	*/
+
 /*
  * Copyright 2007-8 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -23,6 +25,9 @@
  * Authors: Dave Airlie
  *          Alex Deucher
  */
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: radeon_legacy_encoders.c,v 1.1.1.2 2018/08/27 01:34:58 riastradh Exp $");
+
 #include <drm/drmP.h>
 #include <drm/drm_crtc_helper.h>
 #include <drm/radeon_drm.h>
@@ -36,7 +41,7 @@
 static void radeon_legacy_encoder_disable(struct drm_encoder *encoder)
 {
 	struct radeon_encoder *radeon_encoder = to_radeon_encoder(encoder);
-	struct drm_encoder_helper_funcs *encoder_funcs;
+	const struct drm_encoder_helper_funcs *encoder_funcs;
 
 	encoder_funcs = encoder->helper_private;
 	encoder_funcs->dpms(encoder, DRM_MODE_DPMS_OFF);
@@ -441,6 +446,7 @@ void radeon_legacy_backlight_init(struct radeon_encoder *radeon_encoder,
 	backlight_update_status(bd);
 
 	DRM_INFO("radeon legacy LVDS backlight initialized\n");
+	rdev->mode_info.bl_encoder = radeon_encoder;
 
 	return;
 

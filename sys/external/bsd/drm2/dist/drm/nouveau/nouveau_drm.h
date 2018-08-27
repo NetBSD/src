@@ -1,3 +1,5 @@
+/*	$NetBSD: nouveau_drm.h,v 1.1.1.2 2018/08/27 01:34:55 riastradh Exp $	*/
+
 #ifndef __NOUVEAU_DRMCLI_H__
 #define __NOUVEAU_DRMCLI_H__
 
@@ -9,7 +11,7 @@
 #define DRIVER_DATE		"20120801"
 
 #define DRIVER_MAJOR		1
-#define DRIVER_MINOR		1
+#define DRIVER_MINOR		3
 #define DRIVER_PATCHLEVEL	1
 
 /*
@@ -21,15 +23,27 @@
  *        to control registers on the MPs to enable performance counters,
  *        and to control the warp error enable mask (OpenGL requires out of
  *        bounds access to local memory to be silently ignored / return 0).
+ * 1.1.2:
+ *      - fixes multiple bugs in flip completion events and timestamping
+ * 1.2.0:
+ * 	- object api exposed to userspace
+ * 	- fermi,kepler,maxwell zbc
+ * 1.2.1:
+ *      - allow concurrent access to bo's mapped read/write.
+ * 1.2.2:
+ *      - add NOUVEAU_GEM_DOMAIN_COHERENT flag
+ * 1.3.0:
+ *      - NVIF ABI modified, safe because only (current) users are test
+ *        programs that get directly linked with NVKM.
+ * 1.3.1:
+ *      - implemented limited ABI16/NVIF interop
  */
 
-#include <core/client.h>
-#include <core/event.h>
-
-#include <subdev/vm.h>
+#include <nvif/client.h>
+#include <nvif/device.h>
+#include <nvif/ioctl.h>
 
 #include <drmP.h>
-#include <drm/nouveau_drm.h>
 
 #include <drm/ttm/ttm_bo_api.h>
 #include <drm/ttm/ttm_bo_driver.h>
@@ -38,7 +52,10 @@
 #include <drm/ttm/ttm_module.h>
 #include <drm/ttm/ttm_page_alloc.h>
 
+#include "uapi/drm/nouveau_drm.h"
+
 struct nouveau_channel;
+struct platform_device;
 
 #define DRM_FILE_PAGE_OFFSET (0x100000000ULL >> PAGE_SHIFT)
 
@@ -50,21 +67,33 @@ struct nouveau_drm_tile {
 	bool used;
 };
 
+enum nouveau_drm_object_route {
+	NVDRM_OBJECT_NVIF = NVIF_IOCTL_V0_OWNER_NVIF,
+	NVDRM_OBJECT_USIF,
+	NVDRM_OBJECT_ABI16,
+	NVDRM_OBJECT_ANY = NVIF_IOCTL_V0_OWNER_ANY,
+};
+
+enum nouveau_drm_notify_route {
+	NVDRM_NOTIFY_NVIF = 0,
+	NVDRM_NOTIFY_USIF
+};
+
 enum nouveau_drm_handle {
-	NVDRM_CLIENT  = 0xffffffff,
-	NVDRM_DEVICE  = 0xdddddddd,
-	NVDRM_CONTROL = 0xdddddddc,
-	NVDRM_DISPLAY = 0xd1500000,
-	NVDRM_PUSH    = 0xbbbb0000, /* |= client chid */
 	NVDRM_CHAN    = 0xcccc0000, /* |= client chid */
 	NVDRM_NVSW    = 0x55550000,
 };
 
 struct nouveau_cli {
-	struct nouveau_client base;
+	struct nvif_client base;
+	struct nvkm_vm *vm; /*XXX*/
 	struct list_head head;
 	struct mutex mutex;
 	void *abi16;
+	struct list_head objects;
+	struct list_head notifys;
+	char name[32];
+	struct drm_device *dev;
 };
 
 static inline struct nouveau_cli *
@@ -73,23 +102,23 @@ nouveau_cli(struct drm_file *fpriv)
 	return fpriv ? fpriv->driver_priv : NULL;
 }
 
+#include <nvif/object.h>
+#include <nvif/device.h>
+
 extern int nouveau_runtime_pm;
 
 struct nouveau_drm {
 	struct nouveau_cli client;
 	struct drm_device *dev;
 
-	struct nouveau_object *device;
+	struct nvif_device device;
 	struct list_head clients;
 
 	struct {
-		enum {
-			UNKNOWN = 0,
-			DISABLE = 1,
-			ENABLED = 2
-		} stat;
+		struct agp_bridge_data *bridge;
 		u32 base;
 		u32 size;
+		bool cma;
 	} agp;
 
 	/* TTM interface support */
@@ -102,6 +131,7 @@ struct nouveau_drm {
 			    struct ttm_buffer_object *,
 			    struct ttm_mem_reg *, struct ttm_mem_reg *);
 		struct nouveau_channel *chan;
+		struct nvif_object copy;
 		int mtrr;
 	} ttm;
 
@@ -117,8 +147,11 @@ struct nouveau_drm {
 	/* context for accelerated drm-internal operations */
 	struct nouveau_channel *cechan;
 	struct nouveau_channel *channel;
-	struct nouveau_gpuobj *notify;
+	struct nvkm_gpuobj *notify;
 	struct nouveau_fbdev *fbcon;
+	struct nvif_object nvsw;
+	struct nvif_object ntfy;
+	struct nvif_notify flip;
 
 	/* nv10-nv40 tiling regions */
 	struct {
@@ -148,20 +181,28 @@ nouveau_drm(struct drm_device *dev)
 	return dev->dev_private;
 }
 
-static inline struct nouveau_device *
-nouveau_dev(struct drm_device *dev)
-{
-	return nv_device(nouveau_drm(dev)->device);
-}
-
 int nouveau_pmops_suspend(struct device *);
 int nouveau_pmops_resume(struct device *);
 
-#define NV_FATAL(cli, fmt, args...) nv_fatal((cli), fmt, ##args)
-#define NV_ERROR(cli, fmt, args...) nv_error((cli), fmt, ##args)
-#define NV_WARN(cli, fmt, args...) nv_warn((cli), fmt, ##args)
-#define NV_INFO(cli, fmt, args...) nv_info((cli), fmt, ##args)
-#define NV_DEBUG(cli, fmt, args...) nv_debug((cli), fmt, ##args)
+#include <nvkm/core/tegra.h>
+
+struct drm_device *
+nouveau_platform_device_create(const struct nvkm_device_tegra_func *,
+			       struct platform_device *, struct nvkm_device **);
+void nouveau_drm_device_remove(struct drm_device *dev);
+
+#define NV_PRINTK(l,c,f,a...) do {                                             \
+	struct nouveau_cli *_cli = (c);                                        \
+	dev_##l(_cli->dev->dev, "%s: "f, _cli->name, ##a);                     \
+} while(0)
+#define NV_FATAL(drm,f,a...) NV_PRINTK(crit, &(drm)->client, f, ##a)
+#define NV_ERROR(drm,f,a...) NV_PRINTK(err, &(drm)->client, f, ##a)
+#define NV_WARN(drm,f,a...) NV_PRINTK(warn, &(drm)->client, f, ##a)
+#define NV_INFO(drm,f,a...) NV_PRINTK(info, &(drm)->client, f, ##a)
+#define NV_DEBUG(drm,f,a...) do {                                              \
+	if (unlikely(drm_debug & DRM_UT_DRIVER))                               \
+		NV_PRINTK(info, &(drm)->client, f, ##a);                       \
+} while(0)
 
 extern int nouveau_modeset;
 

@@ -1,3 +1,5 @@
+/*	$NetBSD: ttm_page_alloc.h,v 1.1.1.3 2018/08/27 01:35:00 riastradh Exp $	*/
+
 /*
  * Copyright (c) Red Hat Inc.
 

@@ -1,3 +1,5 @@
+/*	$NetBSD: ttm_bo_manager.c,v 1.1.1.3 2018/08/27 01:34:59 riastradh Exp $	*/
+
 /**************************************************************************
  *
  * Copyright (c) 2007-2010 VMware, Inc., Palo Alto, CA., USA
@@ -28,6 +30,9 @@
  * Authors: Thomas Hellstrom <thellstrom-at-vmware-dot-com>
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ttm_bo_manager.c,v 1.1.1.3 2018/08/27 01:34:59 riastradh Exp $");
+
 #include <drm/ttm/ttm_module.h>
 #include <drm/ttm/ttm_bo_driver.h>
 #include <drm/ttm/ttm_placement.h>
@@ -49,17 +54,18 @@ struct ttm_range_manager {
 
 static int ttm_bo_man_get_node(struct ttm_mem_type_manager *man,
 			       struct ttm_buffer_object *bo,
-			       struct ttm_placement *placement,
+			       const struct ttm_place *place,
 			       struct ttm_mem_reg *mem)
 {
 	struct ttm_range_manager *rman = (struct ttm_range_manager *) man->priv;
 	struct drm_mm *mm = &rman->mm;
 	struct drm_mm_node *node = NULL;
+	enum drm_mm_search_flags sflags = DRM_MM_SEARCH_BEST;
 	enum drm_mm_allocator_flags aflags = DRM_MM_CREATE_DEFAULT;
 	unsigned long lpfn;
 	int ret;
 
-	lpfn = placement->lpfn;
+	lpfn = place->lpfn;
 	if (!lpfn)
 		lpfn = man->size;
 
@@ -67,15 +73,16 @@ static int ttm_bo_man_get_node(struct ttm_mem_type_manager *man,
 	if (!node)
 		return -ENOMEM;
 
-	if (bo->mem.placement & TTM_PL_FLAG_TOPDOWN)
+	if (place->flags & TTM_PL_FLAG_TOPDOWN) {
+		sflags = DRM_MM_SEARCH_BELOW;
 		aflags = DRM_MM_CREATE_TOP;
+	}
 
 	spin_lock(&rman->lock);
 	ret = drm_mm_insert_node_in_range_generic(mm, node, mem->num_pages,
 					  mem->page_alignment, 0,
-					  placement->fpfn, lpfn,
-					  DRM_MM_SEARCH_BEST,
-					  aflags);
+					  place->fpfn, lpfn,
+					  sflags, aflags);
 	spin_unlock(&rman->lock);
 
 	if (unlikely(ret)) {

@@ -1,3 +1,5 @@
+/*	$NetBSD: dvo_tfp410.c,v 1.1.1.3 2018/08/27 01:34:53 riastradh Exp $	*/
+
 /*
  * Copyright © 2007 Dave Mueller
  *
@@ -24,6 +26,9 @@
  *    Dave Mueller <dave.mueller@gmx.ch>
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: dvo_tfp410.c,v 1.1.1.3 2018/08/27 01:34:53 riastradh Exp $");
 
 #include "dvo.h"
 
@@ -118,7 +123,7 @@ static bool tfp410_readb(struct intel_dvo_device *dvo, int addr, uint8_t *ch)
 	if (i2c_transfer(adapter, msgs, 2) == 2) {
 		*ch = in_buf[0];
 		return true;
-	};
+	}
 
 	if (!tfp->quiet) {
 		DRM_DEBUG_KMS("Unable to read register 0x%02x from %s:%02x.\n",
@@ -222,8 +227,8 @@ static enum drm_mode_status tfp410_mode_valid(struct intel_dvo_device *dvo,
 }
 
 static void tfp410_mode_set(struct intel_dvo_device *dvo,
-			    struct drm_display_mode *mode,
-			    struct drm_display_mode *adjusted_mode)
+			    const struct drm_display_mode *mode,
+			    const struct drm_display_mode *adjusted_mode)
 {
 	/* As long as the basics are set up, since we don't have clock dependencies
 	* in the mode setup, we can just leave the registers alone and everything

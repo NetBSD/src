@@ -1,3 +1,5 @@
+/*	$NetBSD: rv730_dpm.c,v 1.1.1.2 2018/08/27 01:34:59 riastradh Exp $	*/
+
 /*
  * Copyright 2011 Advanced Micro Devices, Inc.
  *
@@ -21,6 +23,9 @@
  *
  * Authors: Alex Deucher
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: rv730_dpm.c,v 1.1.1.2 2018/08/27 01:34:59 riastradh Exp $");
 
 #include "drmP.h"
 #include "radeon.h"
@@ -464,7 +469,7 @@ void rv730_stop_dpm(struct radeon_device *rdev)
 	result = rv770_send_msg_to_smc(rdev, PPSMC_MSG_TwoLevelsDisabled);
 
 	if (result != PPSMC_Result_OK)
-		DRM_ERROR("Could not force DPM to low\n");
+		DRM_DEBUG("Could not force DPM to low\n");
 
 	WREG32_P(GENERAL_PWRMGT, 0, ~GLOBAL_PWRMGT_EN);
 

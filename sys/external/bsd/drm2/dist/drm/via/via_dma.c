@@ -1,3 +1,5 @@
+/*	$NetBSD: via_dma.c,v 1.1.1.3 2018/08/27 01:34:59 riastradh Exp $	*/
+
 /* via_dma.c -- DMA support for the VIA Unichrome/Pro
  *
  * Copyright 2003 Tungsten Graphics, Inc., Cedar Park, Texas.
@@ -33,6 +35,9 @@
  *    Erdi Chen,
  *    Thomas Hellstrom.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: via_dma.c,v 1.1.1.3 2018/08/27 01:34:59 riastradh Exp $");
 
 #include <drm/drmP.h>
 #include <drm/via_drm.h>
@@ -161,7 +166,7 @@ int via_dma_cleanup(struct drm_device *dev)
 		if (dev_priv->ring.virtual_start) {
 			via_cmdbuf_reset(dev_priv);
 
-			drm_core_ioremapfree(&dev_priv->ring.map, dev);
+			drm_legacy_ioremapfree(&dev_priv->ring.map, dev);
 			dev_priv->ring.virtual_start = NULL;
 		}
 
@@ -200,7 +205,7 @@ static int via_initialize(struct drm_device *dev,
 	dev_priv->ring.map.flags = 0;
 	dev_priv->ring.map.mtrr = 0;
 
-	drm_core_ioremap(&dev_priv->ring.map, dev);
+	drm_legacy_ioremap(&dev_priv->ring.map, dev);
 
 	if (dev_priv->ring.map.handle == NULL) {
 		via_dma_cleanup(dev);
@@ -737,4 +742,4 @@ const struct drm_ioctl_desc via_ioctls[] = {
 	DRM_IOCTL_DEF_DRV(VIA_BLIT_SYNC, via_dma_blit_sync, DRM_AUTH)
 };
 
-int via_max_ioctl = DRM_ARRAY_SIZE(via_ioctls);
+int via_max_ioctl = ARRAY_SIZE(via_ioctls);

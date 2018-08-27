@@ -1,3 +1,5 @@
+/*	$NetBSD: radeon_object.h,v 1.1.1.2 2018/08/27 01:34:58 riastradh Exp $	*/
+
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -65,7 +67,7 @@ static inline int radeon_bo_reserve(struct radeon_bo *bo, bool no_intr)
 {
 	int r;
 
-	r = ttm_bo_reserve(&bo->tbo, !no_intr, false, false, 0);
+	r = ttm_bo_reserve(&bo->tbo, !no_intr, false, false, NULL);
 	if (unlikely(r != 0)) {
 		if (r != -ERESTARTSYS)
 			dev_err(bo->rdev->dev, "%p reserve failed\n", bo);
@@ -124,11 +126,13 @@ extern int radeon_bo_wait(struct radeon_bo *bo, u32 *mem_type,
 
 extern int radeon_bo_create(struct radeon_device *rdev,
 			    unsigned long size, int byte_align,
-			    bool kernel, u32 domain,
+			    bool kernel, u32 domain, u32 flags,
 			    struct sg_table *sg,
+			    struct reservation_object *resv,
 			    struct radeon_bo **bo_ptr);
 extern int radeon_bo_kmap(struct radeon_bo *bo, void **ptr);
 extern void radeon_bo_kunmap(struct radeon_bo *bo);
+extern struct radeon_bo *radeon_bo_ref(struct radeon_bo *bo);
 extern void radeon_bo_unref(struct radeon_bo **bo);
 extern int radeon_bo_pin(struct radeon_bo *bo, u32 domain, u64 *gpu_addr);
 extern int radeon_bo_pin_restricted(struct radeon_bo *bo, u32 domain,
@@ -141,8 +145,6 @@ extern void radeon_bo_fini(struct radeon_device *rdev);
 extern int radeon_bo_list_validate(struct radeon_device *rdev,
 				   struct ww_acquire_ctx *ticket,
 				   struct list_head *head, int ring);
-extern int radeon_bo_fbdev_mmap(struct radeon_bo *bo,
-				struct vm_area_struct *vma);
 extern int radeon_bo_set_tiling_flags(struct radeon_bo *bo,
 				u32 tiling_flags, u32 pitch);
 extern void radeon_bo_get_tiling_flags(struct radeon_bo *bo,
@@ -153,6 +155,8 @@ extern void radeon_bo_move_notify(struct ttm_buffer_object *bo,
 				  struct ttm_mem_reg *new_mem);
 extern int radeon_bo_fault_reserve_notify(struct ttm_buffer_object *bo);
 extern int radeon_bo_get_surface_reg(struct radeon_bo *bo);
+extern void radeon_bo_fence(struct radeon_bo *bo, struct radeon_fence *fence,
+			    bool shared);
 
 /*
  * sub allocation
@@ -170,7 +174,8 @@ static inline void * radeon_sa_bo_cpu_addr(struct radeon_sa_bo *sa_bo)
 
 extern int radeon_sa_bo_manager_init(struct radeon_device *rdev,
 				     struct radeon_sa_manager *sa_manager,
-				     unsigned size, u32 align, u32 domain);
+				     unsigned size, u32 align, u32 domain,
+				     u32 flags);
 extern void radeon_sa_bo_manager_fini(struct radeon_device *rdev,
 				      struct radeon_sa_manager *sa_manager);
 extern int radeon_sa_bo_manager_start(struct radeon_device *rdev,

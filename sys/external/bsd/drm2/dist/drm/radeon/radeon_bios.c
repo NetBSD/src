@@ -1,3 +1,5 @@
+/*	$NetBSD: radeon_bios.c,v 1.1.1.2 2018/08/27 01:34:58 riastradh Exp $	*/
+
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -25,12 +27,14 @@
  *          Alex Deucher
  *          Jerome Glisse
  */
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: radeon_bios.c,v 1.1.1.2 2018/08/27 01:34:58 riastradh Exp $");
+
 #include <drm/drmP.h>
 #include "radeon_reg.h"
 #include "radeon.h"
 #include "atom.h"
 
-#include <linux/vga_switcheroo.h>
 #include <linux/slab.h>
 #include <linux/acpi.h>
 /*
@@ -76,7 +80,7 @@ static bool igp_read_bios_from_vram(struct radeon_device *rdev)
 
 static bool radeon_read_bios(struct radeon_device *rdev)
 {
-	uint8_t __iomem *bios;
+	uint8_t __iomem *bios, val1, val2;
 	size_t size;
 
 	rdev->bios = NULL;
@@ -86,15 +90,19 @@ static bool radeon_read_bios(struct radeon_device *rdev)
 		return false;
 	}
 
-	if (size == 0 || bios[0] != 0x55 || bios[1] != 0xaa) {
+	val1 = readb(&bios[0]);
+	val2 = readb(&bios[1]);
+
+	if (size == 0 || val1 != 0x55 || val2 != 0xaa) {
 		pci_unmap_rom(rdev->pdev, bios);
 		return false;
 	}
-	rdev->bios = kmemdup(bios, size, GFP_KERNEL);
+	rdev->bios = kzalloc(size, GFP_KERNEL);
 	if (rdev->bios == NULL) {
 		pci_unmap_rom(rdev->pdev, bios);
 		return false;
 	}
+	memcpy_fromio(rdev->bios, bios, size);
 	pci_unmap_rom(rdev->pdev, bios);
 	return true;
 }
@@ -626,7 +634,7 @@ static bool radeon_acpi_vfct_bios(struct radeon_device *rdev)
 	    vhdr->DeviceID != rdev->pdev->device) {
 		DRM_INFO("ACPI VFCT table is not for this card\n");
 		goto out_unmap;
-	};
+	}
 
 	if (vfct->VBIOSImageOffset + sizeof(VFCT_IMAGE_HEADER) + vhdr->ImageLength > tbl_size) {
 		DRM_ERROR("ACPI VFCT image truncated\n");
@@ -658,12 +666,10 @@ bool radeon_get_bios(struct radeon_device *rdev)
 		r = igp_read_bios_from_vram(rdev);
 	if (r == false)
 		r = radeon_read_bios(rdev);
-	if (r == false) {
+	if (r == false)
 		r = radeon_read_disabled_bios(rdev);
-	}
-	if (r == false) {
+	if (r == false)
 		r = radeon_read_platform_bios(rdev);
-	}
 	if (r == false || rdev->bios == NULL) {
 		DRM_ERROR("Unable to locate a BIOS ROM\n");
 		rdev->bios = NULL;
