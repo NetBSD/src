@@ -1,4 +1,4 @@
-/*	$NetBSD: os.h,v 1.3 2018/08/27 07:32:50 riastradh Exp $	*/
+/*	$NetBSD: os.h,v 1.4 2018/08/27 07:35:13 riastradh Exp $	*/
 
 #ifndef __NOUVEAU_OS_H__
 #define __NOUVEAU_OS_H__
@@ -40,13 +40,23 @@
 #include <linux/errno.h>
 #include <linux/workqueue.h>
 #include <linux/device.h>
+#include <linux/ktime.h>
+#include <linux/err.h>
+#include <linux/bitmap.h>
+#include <linux/jiffies.h>
+#include <linux/io.h>
 
+#include <asm/barrier.h>
 #include <asm/byteorder.h>
 #include <asm/io.h>
 #include <asm/unaligned.h>
 
 #include <soc/tegra/fuse.h>
 #include <soc/tegra/pmc.h>
+
+#ifdef __NetBSD__
+#include <drm/drm_os_netbsd.h>	/* drm_waitqueue_t, IRQ_HANDLED */
+#endif
 
 #ifndef __NetBSD__		/* XXX ioread */
 #ifndef ioread32_native
