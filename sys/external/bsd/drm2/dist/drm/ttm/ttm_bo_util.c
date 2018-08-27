@@ -1,4 +1,4 @@
-/*	$NetBSD: ttm_bo_util.c,v 1.10 2018/08/27 07:45:23 riastradh Exp $	*/
+/*	$NetBSD: ttm_bo_util.c,v 1.11 2018/08/27 07:45:33 riastradh Exp $	*/
 
 /**************************************************************************
  *
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ttm_bo_util.c,v 1.10 2018/08/27 07:45:23 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ttm_bo_util.c,v 1.11 2018/08/27 07:45:33 riastradh Exp $");
 
 #include <drm/ttm/ttm_bo_driver.h>
 #include <drm/ttm/ttm_placement.h>
@@ -647,10 +647,6 @@ static int ttm_bo_kmap_ttm(struct ttm_buffer_object *bo,
 	struct ttm_mem_reg *mem = &bo->mem;
 	pgprot_t prot;
 	struct ttm_tt *ttm = bo->ttm;
-#ifdef __NetBSD__
-	unsigned i;
-	vaddr_t vaddr;
-#endif
 	int ret;
 
 	BUG_ON(!ttm);
@@ -661,30 +657,6 @@ static int ttm_bo_kmap_ttm(struct ttm_buffer_object *bo,
 			return ret;
 	}
 
-#ifdef __NetBSD__
-	/*
-	 * Can't use uvm_map here because it provides no way to pass
-	 * along the cacheability flags.  So we'll uvm_km_alloc
-	 * ourselves some KVA and then pmap_kenter_pa directly.
-	 */
-
-	KASSERT(num_pages <= ttm->num_pages);
-	KASSERT(start_page <= (ttm->num_pages - num_pages));
-	prot = ttm_io_prot(mem->placement, (VM_PROT_READ | VM_PROT_WRITE));
-	vaddr = uvm_km_alloc(kernel_map, (num_pages << PAGE_SHIFT), PAGE_SIZE,
-	    UVM_KMF_VAONLY | UVM_KMF_CANFAIL | UVM_KMF_WAITVA);
-	if (vaddr == 0)
-		return -ENOMEM;
-	for (i = 0; i < num_pages; i++)
-		pmap_kenter_pa(vaddr + i*PAGE_SIZE,
-		    page_to_phys(ttm->pages[start_page + i]),
-		    (VM_PROT_READ | VM_PROT_WRITE), prot);
-	pmap_update(pmap_kernel());
-	map->bo_kmap_type = ttm_bo_map_vmap;
-	map->u.uvm.vsize = (num_pages << PAGE_SHIFT);
-	map->virtual = (void *)vaddr;
-	return 0;
-#else
 	if (num_pages == 1 && (mem->placement & TTM_PL_FLAG_CACHED)) {
 		/*
 		 * We're mapping a single page, and the desired
@@ -692,8 +664,13 @@ static int ttm_bo_kmap_ttm(struct ttm_buffer_object *bo,
 		 */
 
 		map->bo_kmap_type = ttm_bo_map_kmap;
+#ifdef __NetBSD__
+		map->u.kmapped.page = ttm->pages[start_page];
+		map->virtual = kmap(map->u.kmapped.page);
+#else
 		map->page = ttm->pages[start_page];
 		map->virtual = kmap(map->page);
+#endif
 	} else {
 		/*
 		 * We need to use vmap to get the desired page protection
@@ -703,9 +680,11 @@ static int ttm_bo_kmap_ttm(struct ttm_buffer_object *bo,
 		map->bo_kmap_type = ttm_bo_map_vmap;
 		map->virtual = vmap(ttm->pages + start_page, num_pages,
 				    0, prot);
+#ifdef __NetBSD__
+		map->u.vmapped.vsize = (vsize_t)num_pages << PAGE_SHIFT;
+#endif
 	}
 	return (!map->virtual) ? -ENOMEM : 0;
-#endif
 }
 
 int ttm_bo_kmap(struct ttm_buffer_object *bo,
@@ -764,17 +743,14 @@ void ttm_bo_kunmap(struct ttm_bo_kmap_obj *map)
 		break;
 	case ttm_bo_map_vmap:
 #ifdef __NetBSD__
-		pmap_kremove((vaddr_t)map->virtual, map->u.uvm.vsize);
-		pmap_update(pmap_kernel());
-		uvm_km_free(kernel_map, (vaddr_t)map->virtual,
-		    map->u.uvm.vsize, UVM_KMF_VAONLY);
+		vunmap(map->virtual, map->u.vmapped.vsize >> PAGE_SHIFT);
 #else
 		vunmap(map->virtual);
 #endif
 		break;
 	case ttm_bo_map_kmap:
 #ifdef __NetBSD__
-		panic("ttm_bo_map_kmap does not exist in NetBSD");
+		kunmap(map->u.kmapped.page);
 #else
 		kunmap(map->page);
 #endif
