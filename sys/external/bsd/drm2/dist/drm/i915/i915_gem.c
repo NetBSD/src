@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem.c,v 1.46 2018/08/27 07:45:55 riastradh Exp $	*/
+/*	$NetBSD: i915_gem.c,v 1.47 2018/08/27 13:40:28 riastradh Exp $	*/
 
 /*
  * Copyright © 2008-2015 Intel Corporation
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gem.c,v 1.46 2018/08/27 07:45:55 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gem.c,v 1.47 2018/08/27 13:40:28 riastradh Exp $");
 
 #ifdef __NetBSD__
 #if 0				/* XXX uvmhist option?  */
@@ -5845,6 +5845,7 @@ i915_gem_object_create_from_data(struct drm_device *dev,
 	struct uio uio = {
 	    .uio_iov = &iov,
 	    .uio_iovcnt = 1,
+	    .uio_offset = 0,
 	    .uio_resid = size,
 	    .uio_rw = UIO_WRITE,
 	};
@@ -5868,6 +5869,7 @@ i915_gem_object_create_from_data(struct drm_device *dev,
 
 	i915_gem_object_pin_pages(obj);
 #ifdef __NetBSD__
+	UIO_SETUP_SYSSPACE(&uio);
 	/* XXX errno NetBSD->Linux */
 	ret = -ubc_uiomove(obj->base.filp, &uio, size, UVM_ADV_NORMAL,
 	    UBC_WRITE);
