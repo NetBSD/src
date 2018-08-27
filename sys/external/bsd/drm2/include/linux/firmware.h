@@ -1,4 +1,4 @@
-/*	$NetBSD: firmware.h,v 1.8 2018/08/27 07:24:54 riastradh Exp $	*/
+/*	$NetBSD: firmware.h,v 1.9 2018/08/27 13:40:15 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -159,7 +159,7 @@ request_firmware_nowait(struct module *module, bool uevent, const char *name,
 	/* Initialize the work.  */
 	work->flw_name = namedup;
 	work->flw_callback = callback;
-	work->flw_cookie = callback;
+	work->flw_cookie = cookie;
 	work->flw_device = device;
 	work->flw_module = module;
 	INIT_WORK(&work->flw_work, request_firmware_work);
