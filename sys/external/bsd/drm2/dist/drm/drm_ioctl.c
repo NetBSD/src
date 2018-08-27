@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_ioctl.c,v 1.7 2018/08/27 07:55:06 riastradh Exp $	*/
+/*	$NetBSD: drm_ioctl.c,v 1.8 2018/08/27 14:45:45 riastradh Exp $	*/
 
 /*
  * Created: Fri Jan  8 09:01:26 1999 by faith@valinux.com
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_ioctl.c,v 1.7 2018/08/27 07:55:06 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_ioctl.c,v 1.8 2018/08/27 14:45:45 riastradh Exp $");
 
 #include <drm/drmP.h>
 #include <drm/drm_core.h>
@@ -721,6 +721,8 @@ static const struct drm_ioctl_desc drm_ioctls[] = {
 int
 drm_ioctl(struct file *fp, unsigned long cmd, void *data)
 {
+	char stackbuf[128];
+	char *buf = stackbuf;
 	struct drm_file *const file = fp->f_data;
 	const unsigned int nr = DRM_IOCTL_NR(cmd);
 	int error;
@@ -767,6 +769,21 @@ drm_ioctl(struct file *fp, unsigned long cmd, void *data)
 	if (error)
 		return error;
 
+	/* If userland passed in too few bytes, zero-pad them.  */
+	if (IOCPARM_LEN(cmd) < IOCPARM_LEN(ioctl->cmd)) {
+		/* 12-bit quantity, according to <sys/ioccom.h> */
+		KASSERT(IOCPARM_LEN(ioctl->cmd) <= 4096);
+		if (IOCPARM_LEN(ioctl->cmd) > sizeof stackbuf) {
+			buf = kmem_alloc(IOCPARM_LEN(ioctl->cmd), KM_NOSLEEP);
+			if (buf == NULL)
+				return ENOMEM;
+		}
+		memcpy(buf, data, IOCPARM_LEN(cmd));
+		memset(buf + IOCPARM_LEN(cmd), 0,
+		    IOCPARM_LEN(ioctl->cmd) - IOCPARM_LEN(cmd));
+		data = buf;
+	}
+
 	if ((drm_core_check_feature(dev, DRIVER_MODESET) && is_driver_ioctl) ||
 	    ISSET(ioctl->flags, DRM_UNLOCKED)) {
 		/* XXX errno Linux->NetBSD */
@@ -777,6 +794,10 @@ drm_ioctl(struct file *fp, unsigned long cmd, void *data)
 		error = -(*ioctl->func)(dev, data, file);
 		mutex_unlock(&drm_global_mutex);
 	}
+
+	/* If we had to allocate a heap buffer, free it.  */
+	if (buf != stackbuf)
+		kmem_free(buf, IOCPARM_LEN(ioctl->cmd));
 
 	return error;
 }
