@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_gtt.c,v 1.10 2018/08/27 16:15:09 riastradh Exp $	*/
+/*	$NetBSD: intel_gtt.c,v 1.11 2018/08/27 16:15:23 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 /* Intel GTT stubs */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_gtt.c,v 1.10 2018/08/27 16:15:09 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_gtt.c,v 1.11 2018/08/27 16:15:23 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/bus.h>
@@ -187,7 +187,7 @@ intel_gtt_insert_sg_entries(bus_dmamap_t dmamap, unsigned va_page,
 		}
 		KASSERTMSG(len == 0,
 		    "segment length not divisible by PAGE_SIZE: %jx",
-		    dmamap->dm_segs[seg].ds_len);
+		    (uintmax_t)dmamap->dm_segs[seg].ds_len);
 	}
 	agp_i810_post_gtt_entry(isc, (va - PAGE_SIZE));
 	intel_gtt_chipset_flush();
