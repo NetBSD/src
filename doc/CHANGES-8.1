@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.1,v 1.1.2.14 2018/08/26 08:06:10 martin Exp $
+# $NetBSD: CHANGES-8.1,v 1.1.2.15 2018/08/27 07:50:41 martin Exp $
 
 A complete list of changes from the NetBSD 8.0 release to the NetBSD 8.1
 release:
@@ -615,4 +615,9 @@ sys/dev/usb/usb_subr.c				1.224
 
 	Add missing KERNEL_LOCK protection around autoconf calls.
 	[mlelstv, ticket #990]
+
+sys/net/if.c					1.434
+
+	Restore splx() removed accidentally in rev 1.406
+	[ozaki-r, ticket #991]
 
