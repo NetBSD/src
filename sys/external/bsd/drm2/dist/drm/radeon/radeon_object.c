@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_object.c,v 1.5 2018/08/27 07:49:47 riastradh Exp $	*/
+/*	$NetBSD: radeon_object.c,v 1.6 2018/08/27 07:49:58 riastradh Exp $	*/
 
 /*
  * Copyright 2009 Jerome Glisse.
@@ -32,7 +32,7 @@
  *    Dave Airlie
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_object.c,v 1.5 2018/08/27 07:49:47 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_object.c,v 1.6 2018/08/27 07:49:58 riastradh Exp $");
 
 #include <linux/list.h>
 #include <linux/slab.h>
@@ -597,6 +597,14 @@ int radeon_bo_list_validate(struct radeon_device *rdev,
 		lobj->gpu_offset = radeon_bo_gpu_offset(bo);
 		lobj->tiling_flags = bo->tiling_flags;
 	}
+
+	list_for_each_entry(lobj, &duplicates, tv.head) {
+		lobj->gpu_offset = radeon_bo_gpu_offset(lobj->robj);
+		lobj->tiling_flags = lobj->robj->tiling_flags;
+	}
+
+	return 0;
+}
 
 int radeon_bo_get_surface_reg(struct radeon_bo *bo)
 {
