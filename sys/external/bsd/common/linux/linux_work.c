@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_work.c,v 1.34 2018/08/27 15:04:45 riastradh Exp $	*/
+/*	$NetBSD: linux_work.c,v 1.35 2018/08/27 15:05:01 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_work.c,v 1.34 2018/08/27 15:04:45 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_work.c,v 1.35 2018/08/27 15:05:01 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/atomic.h>
@@ -314,7 +314,10 @@ linux_workqueue_timeout(void *cookie)
 		cv_broadcast(&wq->wq_cv);
 		break;
 	case DELAYED_WORK_RESCHEDULED:
+		KASSERT(dw->dw_resched >= 0);
+		callout_schedule(&dw->dw_callout, dw->dw_resched);
 		dw->dw_state = DELAYED_WORK_SCHEDULED;
+		dw->dw_resched = -1;
 		break;
 	case DELAYED_WORK_CANCELLED:
 		cancel_delayed_work_done(wq, dw);
@@ -546,6 +549,7 @@ INIT_DELAYED_WORK(struct delayed_work *dw, void (*fn)(struct work_struct *))
 
 	INIT_WORK(&dw->work, fn);
 	dw->dw_state = DELAYED_WORK_IDLE;
+	dw->dw_resched = -1;
 
 	/*
 	 * Defer callout_init until we are going to schedule the
@@ -599,6 +603,7 @@ dw_callout_destroy(struct workqueue_struct *wq, struct delayed_work *dw)
 
 	TAILQ_REMOVE(&wq->wq_delayed, dw, dw_entry);
 	callout_destroy(&dw->dw_callout);
+	dw->dw_resched = -1;
 	dw->dw_state = DELAYED_WORK_IDLE;
 }
 
@@ -723,8 +728,7 @@ queue_delayed_work(struct workqueue_struct *wq, struct delayed_work *dw,
 				 * cancelled.  Reschedule it.
 				 */
 				dw->dw_state = DELAYED_WORK_RESCHEDULED;
-				callout_schedule(&dw->dw_callout,
-				    MIN(INT_MAX, ticks));
+				dw->dw_resched = MIN(INT_MAX, ticks);
 				break;
 			default:
 				panic("invalid delayed work state: %d",
@@ -867,17 +871,12 @@ mod_delayed_work(struct workqueue_struct *wq, struct delayed_work *dw,
 					 * the lock.
 					 */
 				} else {
-					/*
-					 * Schedule callout and tell
-					 * the instance that's running
-					 * now that it's been
-					 * rescheduled.
-					 */
+					/* Ask the callout to reschedule.  */
 					dw->dw_state = DELAYED_WORK_RESCHEDULED;
-					callout_schedule(&dw->dw_callout,
-					    MIN(INT_MAX, ticks));
+					dw->dw_resched = MIN(INT_MAX, ticks);
 				}
 			} else {
+				/* We stopped the callout before it began.  */
 				if (ticks == 0) {
 					/*
 					 * Run immediately: destroy the
@@ -901,12 +900,31 @@ mod_delayed_work(struct workqueue_struct *wq, struct delayed_work *dw,
 			timer_modified = true;
 			break;
 		case DELAYED_WORK_RESCHEDULED:
+			/*
+			 * Someone rescheduled it after the callout
+			 * started but before the poor thing even had a
+			 * chance to acquire the lock.
+			 */
+			if (ticks == 0) {
+				/*
+				 * We can just switch back to
+				 * DELAYED_WORK_SCHEDULED so that the
+				 * callout will queue the work as soon
+				 * as it gets the lock.
+				 */
+				dw->dw_state = DELAYED_WORK_SCHEDULED;
+				dw->dw_resched = -1;
+			} else {
+				/* Change the rescheduled time.  */
+				dw->dw_resched = ticks;
+			}
+			timer_modified = true;
+			break;
 		case DELAYED_WORK_CANCELLED:
 			/*
-			 * Someone modified the timer _again_, or
-			 * cancelled it, after the callout started but
-			 * before the poor thing even had a chance to
-			 * acquire the lock.
+			 * Someone cancelled it after the callout
+			 * started but before the poor thing even had a
+			 * chance to acquire the lock.
 			 */
 			if (ticks == 0) {
 				/*
@@ -918,9 +936,8 @@ mod_delayed_work(struct workqueue_struct *wq, struct delayed_work *dw,
 				dw->dw_state = DELAYED_WORK_SCHEDULED;
 			} else {
 				/* Reschedule it.  */
-				callout_schedule(&dw->dw_callout,
-				    MIN(INT_MAX, ticks));
 				dw->dw_state = DELAYED_WORK_RESCHEDULED;
+				dw->dw_resched = MIN(INT_MAX, ticks);
 			}
 			timer_modified = true;
 			break;
@@ -949,18 +966,36 @@ cancel_delayed_work(struct delayed_work *dw)
 	} else {
 		switch (dw->dw_state) {
 		case DELAYED_WORK_IDLE:
-			if (wq->wq_current_work == &dw->work) {
+			/*
+			 * It is either on the queue or already running
+			 * or both.
+			 */
+			if (wq->wq_current_work != &dw->work ||
+			    wq->wq_requeued) {
 				/*
-				 * Too late, it's already running.  If
-				 * it's been requeued, tough -- it'll
-				 * run again.
+				 * It is on the queue, and it may or
+				 * may not be running.  Remove it from
+				 * the queue.
 				 */
-				cancelled_p = false;
-			} else {
-				/* Got in before it started.  Remove it.  */
 				TAILQ_REMOVE(&wq->wq_queue, &dw->work,
 				    work_entry);
+				if (wq->wq_current_work == &dw->work) {
+					/*
+					 * If it is running, then it
+					 * must have been requeued in
+					 * this case, so mark it no
+					 * longer requeued.
+					 */
+					KASSERT(wq->wq_requeued);
+					wq->wq_requeued = false;
+				}
 				cancelled_p = true;
+			} else {
+				/*
+				 * Too late, it's already running, but
+				 * at least it hasn't been requeued.
+				 */
+				cancelled_p = false;
 			}
 			break;
 		case DELAYED_WORK_SCHEDULED:
@@ -986,6 +1021,7 @@ cancel_delayed_work(struct delayed_work *dw)
 			 * already fired.  We must ask it to cancel.
 			 */
 			dw->dw_state = DELAYED_WORK_CANCELLED;
+			dw->dw_resched = -1;
 			cancelled_p = true;
 			break;
 		case DELAYED_WORK_CANCELLED:
@@ -1023,6 +1059,10 @@ cancel_delayed_work_sync(struct delayed_work *dw)
 	} else {
 		switch (dw->dw_state) {
 		case DELAYED_WORK_IDLE:
+			/*
+			 * It is either on the queue or already running
+			 * or both.
+			 */
 			if (wq->wq_current_work == &dw->work) {
 				/*
 				 * Too late, it's already running.
@@ -1055,7 +1095,7 @@ cancel_delayed_work_sync(struct delayed_work *dw)
 			 * cancelled it in that case.
 			 *
 			 * If we stopped the callout before it started,
-			 * however, then destroy the callout and
+			 * then we must destroy the callout and
 			 * dissociate it from the workqueue ourselves.
 			 */
 			dw->dw_state = DELAYED_WORK_CANCELLED;
@@ -1070,6 +1110,7 @@ cancel_delayed_work_sync(struct delayed_work *dw)
 			 * wait for it to complete.
 			 */
 			dw->dw_state = DELAYED_WORK_CANCELLED;
+			dw->dw_resched = -1;
 			(void)callout_halt(&dw->dw_callout, &wq->wq_lock);
 			cancelled_p = true;
 			break;
@@ -1178,24 +1219,41 @@ flush_delayed_work(struct delayed_work *dw)
 			flush_workqueue_locked(wq);
 			break;
 		case DELAYED_WORK_SCHEDULED:
-		case DELAYED_WORK_RESCHEDULED:
-		case DELAYED_WORK_CANCELLED:
 			/*
-			 * The callout is still scheduled to run.
-			 * Notify it that we are cancelling, and try to
-			 * stop the callout before it runs.
+			 * If it is scheduled, mark it cancelled and
+			 * try to stop the callout before it starts.
 			 *
-			 * If we do stop the callout, we are now
-			 * responsible for dissociating the work from
-			 * the queue.
+			 * If it's too late and the callout has already
+			 * begun to execute, we must wait for it to
+			 * complete.  But we got in soon enough to ask
+			 * the callout not to run.
 			 *
-			 * Otherwise, wait for it to complete and
-			 * dissociate itself -- it will not put itself
-			 * on the workqueue once it is cancelled.
+			 * If we stopped the callout before it started,
+			 * then we must destroy the callout and
+			 * dissociate it from the workqueue ourselves.
 			 */
 			dw->dw_state = DELAYED_WORK_CANCELLED;
 			if (!callout_halt(&dw->dw_callout, &wq->wq_lock))
 				cancel_delayed_work_done(wq, dw);
+			break;
+		case DELAYED_WORK_RESCHEDULED:
+			/*
+			 * If it is being rescheduled, the callout has
+			 * already fired.  We must ask it to cancel and
+			 * wait for it to complete.
+			 */
+			dw->dw_state = DELAYED_WORK_CANCELLED;
+			dw->dw_resched = -1;
+			(void)callout_halt(&dw->dw_callout, &wq->wq_lock);
+			break;
+		case DELAYED_WORK_CANCELLED:
+			/*
+			 * If it is being cancelled, the callout has
+			 * already fired.  We need only wait for it to
+			 * complete.
+			 */
+			(void)callout_halt(&dw->dw_callout, &wq->wq_lock);
+			break;
 		default:
 			panic("invalid delayed work state: %d",
 			    dw->dw_state);
