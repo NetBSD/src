@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_bo.c,v 1.9 2018/08/27 07:19:01 riastradh Exp $	*/
+/*	$NetBSD: nouveau_bo.c,v 1.10 2018/08/27 07:32:40 riastradh Exp $	*/
 
 /*
  * Copyright 2007 Dave Airlied
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_bo.c,v 1.9 2018/08/27 07:19:01 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_bo.c,v 1.10 2018/08/27 07:32:40 riastradh Exp $");
 
 #include <linux/dma-mapping.h>
 #include <linux/swiotlb.h>
@@ -461,7 +461,9 @@ nouveau_bo_sync_for_device(struct nouveau_bo *nvbo)
 	struct nouveau_drm *drm = nouveau_bdev(nvbo->bo.bdev);
 	struct nvkm_device *device = nvxx_device(&drm->device);
 	struct ttm_dma_tt *ttm_dma = (struct ttm_dma_tt *)nvbo->bo.ttm;
+#ifndef __NetBSD__
 	int i;
+#endif
 
 	if (!ttm_dma)
 		return;
@@ -470,9 +472,16 @@ nouveau_bo_sync_for_device(struct nouveau_bo *nvbo)
 	if (nvbo->force_coherent)
 		return;
 
+#ifdef __NetBSD__
+	bus_dma_tag_t dmat = device->func->dma_tag(device);
+	bus_dmamap_sync(dmat, ttm_dma->dma_address, 0,
+	    PAGE_SIZE*ttm_dma->ttm.num_pages,
+	    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+#else
 	for (i = 0; i < ttm_dma->ttm.num_pages; i++)
 		dma_sync_single_for_device(device->dev, ttm_dma->dma_address[i],
 					   PAGE_SIZE, DMA_TO_DEVICE);
+#endif
 }
 
 void
@@ -481,7 +490,9 @@ nouveau_bo_sync_for_cpu(struct nouveau_bo *nvbo)
 	struct nouveau_drm *drm = nouveau_bdev(nvbo->bo.bdev);
 	struct nvkm_device *device = nvxx_device(&drm->device);
 	struct ttm_dma_tt *ttm_dma = (struct ttm_dma_tt *)nvbo->bo.ttm;
+#ifndef __NetBSD__
 	int i;
+#endif
 
 	if (!ttm_dma)
 		return;
@@ -490,9 +501,16 @@ nouveau_bo_sync_for_cpu(struct nouveau_bo *nvbo)
 	if (nvbo->force_coherent)
 		return;
 
+#ifdef __NetBSD__
+	bus_dma_tag_t dmat = device->func->dma_tag(device);
+	bus_dmamap_sync(dmat, ttm_dma->dma_address, 0,
+	    PAGE_SIZE*ttm_dma->ttm.num_pages,
+	    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
+#else
 	for (i = 0; i < ttm_dma->ttm.num_pages; i++)
 		dma_sync_single_for_cpu(device->dev, ttm_dma->dma_address[i],
 					PAGE_SIZE, DMA_FROM_DEVICE);
+#endif
 }
 
 int
@@ -567,7 +585,9 @@ iowrite32_native(uint32_t v, void __iomem *ptr)
 static inline void *
 _nouveau_bo_mem_index(struct nouveau_bo *nvbo, unsigned index, void *mem, u8 sz)
 {
+#ifndef __NetBSD__
 	struct ttm_dma_tt *dma_tt;
+#endif
 	u8 *m = mem;
 
 	index *= sz;
@@ -576,10 +596,14 @@ _nouveau_bo_mem_index(struct nouveau_bo *nvbo, unsigned index, void *mem, u8 sz)
 		/* kmap'd address, return the corresponding offset */
 		m += index;
 	} else {
+#ifdef __NetBSD__
+		panic("buffers of unusual mapping? I don't believe they exist");
+#else
 		/* DMA-API mapping, lookup the right address */
 		dma_tt = (struct ttm_dma_tt *)nvbo->bo.ttm;
 		m = dma_tt->cpu_address[index / PAGE_SIZE];
 		m += index % PAGE_SIZE;
+#endif
 	}
 
 	return m;
@@ -1532,9 +1556,9 @@ nouveau_ttm_tt_populate(struct ttm_tt *ttm)
 {
 	struct ttm_dma_tt *ttm_dma = (void *)ttm;
 	struct nouveau_drm *drm;
+#ifndef __NetBSD__
 	struct nvkm_device *device;
 	struct drm_device *dev;
-#ifndef __NetBSD__
 	struct device *pdev;
 	unsigned i;
 	int r;
@@ -1622,9 +1646,9 @@ nouveau_ttm_tt_unpopulate(struct ttm_tt *ttm)
 {
 	struct ttm_dma_tt *ttm_dma = (void *)ttm;
 	struct nouveau_drm *drm;
+#ifndef __NetBSD__
 	struct nvkm_device *device;
 	struct drm_device *dev;
-#ifndef __NetBSD__
 	struct device *pdev;
 	unsigned i;
 #endif
