@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_engine_dma_user.c,v 1.2 2018/08/27 04:58:31 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_engine_dma_user.c,v 1.3 2018/08/27 07:36:07 riastradh Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_dma_user.c,v 1.2 2018/08/27 04:58:31 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_dma_user.c,v 1.3 2018/08/27 07:36:07 riastradh Exp $");
 
 #include "user.h"
 
@@ -48,8 +48,15 @@ static void *
 nvkm_dmaobj_dtor(struct nvkm_object *base)
 {
 	struct nvkm_dmaobj *dmaobj = nvkm_dmaobj(base);
+#ifdef __NetBSD__
+	if (dmaobj->on_tree) {
+		rb_tree_remove_node(&dmaobj->object.client->dmatree, dmaobj);
+		dmaobj->on_tree = false;
+	}
+#else
 	if (!RB_EMPTY_NODE(&dmaobj->rb))
 		rb_erase(&dmaobj->rb, &dmaobj->object.client->dmaroot);
+#endif
 	return dmaobj;
 }
 
@@ -79,7 +86,9 @@ nvkm_dmaobj_ctor(const struct nvkm_dmaobj_func *func, struct nvkm_dma *dma,
 	nvkm_object_ctor(&nvkm_dmaobj_func, oclass, &dmaobj->object);
 	dmaobj->func = func;
 	dmaobj->dma = dma;
+#ifndef __NetBSD__
 	RB_CLEAR_NODE(&dmaobj->rb);
+#endif
 
 	nvif_ioctl(parent, "create dma size %d\n", *psize);
 	if (nvif_unpack(args->v0, 0, 0, true)) {
