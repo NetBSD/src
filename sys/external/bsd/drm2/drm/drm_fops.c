@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_fops.c,v 1.9 2018/08/27 07:01:15 riastradh Exp $	*/
+/*	$NetBSD: drm_fops.c,v 1.10 2018/08/27 07:53:52 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_fops.c,v 1.9 2018/08/27 07:01:15 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_fops.c,v 1.10 2018/08/27 07:53:52 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/select.h>
@@ -114,49 +114,97 @@ fail0:
 	return ret;
 }
 
+int
+drm_new_set_master(struct drm_device *dev, struct drm_file *file)
+{
+	struct drm_master *old_master;
+	int ret;
+
+	KASSERT(mutex_is_locked(&dev->master_mutex));
+	KASSERT(file->minor->type == DRM_MINOR_LEGACY);
+	KASSERT(file->minor->master == NULL);
+
+	file->minor->master = drm_master_create(file->minor);
+	if (file->minor->master == NULL) {
+		ret = -ENOMEM;
+		goto fail0;
+	}
+
+	/*
+	 * Save the old master, to drop a reference later if all goes
+	 * well, and get a reference to the new one.
+	 */
+	old_master = file->master;
+	file->master = drm_master_get(file->minor->master);
+
+	/* Invoke the driver callbacks master_create and master_set.  */
+	if (dev->driver->master_create) {
+		ret = (*dev->driver->master_create)(dev, file->minor->master);
+		if (ret)
+			goto fail1;
+	}
+
+	if (dev->driver->master_set) {
+		ret = (*dev->driver->master_set)(dev, file, true);
+		if (ret)
+			goto fail1;
+	}
+
+	/*
+	 * Mark ourselves as an authenticated master, and allowed to
+	 * set a new master.
+	 */
+	file->is_master = 1;
+	file->allowed_master = 1;
+	file->authenticated = 1;
+
+	/* If there was an old master, release it now.  */
+	if (old_master)
+		drm_master_put(&old_master);
+
+	/* Success!  */
+	return 0;
+
+fail1:
+	/* Release the master we just created.  */
+	drm_master_put(&file->minor->master);
+	KASSERT(file->minor->master == NULL);
+	/* Release the reference we just added in the file.  */
+	drm_master_put(&file->master);
+	KASSERT(file->master == NULL);
+	/* Restore the old master if there was one.  */
+	file->master = old_master;
+fail0:	KASSERT(ret);
+	return ret;
+}
+
 static int
 drm_open_file_master(struct drm_file *file)
 {
 	struct drm_device *const dev = file->minor->dev;
 	int ret;
 
+	/* If this is not the legacy device, there are no masters.  */
+	if (file->minor->type != DRM_MINOR_LEGACY)
+		return 0;
+
 	mutex_lock(&dev->master_mutex);
 	if (file->minor->master != NULL) {
+		/*
+		 * If the minor already has a master, get a reference
+		 * to it.
+		 */
 		file->master = drm_master_get(file->minor->master);
+		ret = 0;
 	} else {
-		file->minor->master = drm_master_create(file->minor);
-		if (file->minor->master == NULL) {
-			ret = -ENOMEM;
-			goto fail0;
-		}
-
-		file->is_master = 1;
-		file->master = drm_master_get(file->minor->master);
-		file->authenticated = 1;
-
-		if (dev->driver->master_create) {
-			ret = (*dev->driver->master_create)(dev,
-			    file->minor->master);
-			if (ret)
-				goto fail1;
-		}
-
-		if (dev->driver->master_set) {
-			ret = (*dev->driver->master_set)(dev, file, true);
-			if (ret)
-				goto fail1;
-		}
+		/*
+		 * Otherwise, automatically behave as though we had
+		 * just done setmaster.
+		 */
+		ret = drm_new_set_master(dev, file);
 	}
 	mutex_unlock(&dev->master_mutex);
 
-	/* Success!  */
-	return 0;
-
-fail1:	mutex_unlock(&dev->master_mutex);
-	/* drm_master_put handles calling master_destroy for us.  */
-	drm_master_put(&file->minor->master);
-	drm_master_put(&file->master);
-fail0:	KASSERT(ret);
 	return ret;
 }
 
