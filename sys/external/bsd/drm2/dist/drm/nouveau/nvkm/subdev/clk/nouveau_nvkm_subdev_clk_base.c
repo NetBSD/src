@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_subdev_clk_base.c,v 1.2 2018/08/27 04:58:33 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_subdev_clk_base.c,v 1.3 2018/08/27 07:43:06 riastradh Exp $	*/
 
 /*
  * Copyright 2013 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_clk_base.c,v 1.2 2018/08/27 04:58:33 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_clk_base.c,v 1.3 2018/08/27 07:43:06 riastradh Exp $");
 
 #include "priv.h"
 
@@ -212,8 +212,12 @@ nvkm_pstate_work(struct work_struct *work)
 	struct nvkm_subdev *subdev = &clk->subdev;
 	int pstate;
 
-	if (!atomic_xchg(&clk->waiting, 0))
+	spin_lock(&clk->lock);
+	if (!atomic_xchg(&clk->waiting, 0)) {
+		spin_unlock(&clk->lock);
 		return;
+	}
+
 	clk->pwrsrc = power_supply_is_system_supplied();
 
 	nvkm_trace(subdev, "P %d PWR %d U(AC) %d U(DC) %d A %d T %d D %d\n",
@@ -238,7 +242,12 @@ nvkm_pstate_work(struct work_struct *work)
 		}
 	}
 
+#ifdef __NetBSD__
+	DRM_SPIN_WAKEUP_ALL(&clk->wait, &clk->lock);
+#else
 	wake_up_all(&clk->wait);
+#endif
+	spin_unlock(&clk->lock);
 	nvkm_notify_get(&clk->pwrsrc_ntfy);
 }
 
@@ -247,8 +256,18 @@ nvkm_pstate_calc(struct nvkm_clk *clk, bool wait)
 {
 	atomic_set(&clk->waiting, 1);
 	schedule_work(&clk->work);
-	if (wait)
+	if (wait) {
+#ifdef __NetBSD__
+		int ret;
+		spin_lock(&clk->lock);
+		DRM_SPIN_WAIT_NOINTR_UNTIL(ret, &clk->wait, &clk->lock,
+		    !atomic_read(&clk->waiting));
+		spin_unlock(&clk->lock);
+		KASSERT(ret == 0);
+#else
 		wait_event(clk->wait, !atomic_read(&clk->waiting));
+#endif
+	}
 	return 0;
 }
 
@@ -546,6 +565,11 @@ nvkm_clk_dtor(struct nvkm_subdev *subdev)
 		nvkm_pstate_del(pstate);
 	}
 
+#ifdef __NetBSD__
+	DRM_DESTROY_WAITQUEUE(&clk->wait);
+	spin_lock_destroy(&clk->lock);
+#endif
+
 	return clk;
 }
 
@@ -572,7 +596,12 @@ nvkm_clk_ctor(const struct nvkm_clk_func *func, struct nvkm_device *device,
 	clk->allow_reclock = allow_reclock;
 
 	INIT_WORK(&clk->work, nvkm_pstate_work);
+#ifdef __NetBSD__
+	spin_lock_init(&clk->lock);
+	DRM_INIT_WAITQUEUE(&clk->wait, "nvclk");
+#else
 	init_waitqueue_head(&clk->wait);
+#endif
 	atomic_set(&clk->waiting, 0);
 
 	/* If no pstates are provided, try and fetch them from the BIOS */
