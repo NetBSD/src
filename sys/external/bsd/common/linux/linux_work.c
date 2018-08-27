@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_work.c,v 1.32 2018/08/27 15:04:19 riastradh Exp $	*/
+/*	$NetBSD: linux_work.c,v 1.33 2018/08/27 15:04:32 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_work.c,v 1.32 2018/08/27 15:04:19 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_work.c,v 1.33 2018/08/27 15:04:32 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/atomic.h>
@@ -64,6 +64,8 @@ static struct workqueue_struct *
 			acquire_work(struct work_struct *,
 			    struct workqueue_struct *);
 static void		release_work(struct work_struct *,
+			    struct workqueue_struct *);
+static void		wait_for_current_work(struct work_struct *,
 			    struct workqueue_struct *);
 static void		dw_callout_init(struct workqueue_struct *,
 			    struct delayed_work *);
@@ -496,13 +498,9 @@ cancel_work_sync(struct work_struct *work)
 	} else if (wq->wq_current_work == work) {
 		/*
 		 * It has already begun execution, so it's too late to
-		 * cancel now.  Wait for it to complete.  Don't wait
-		 * more than one generation in case it gets requeued.
+		 * cancel now.  Wait for it to complete.
 		 */
-		uint64_t gen = wq->wq_gen;
-		do {
-			cv_wait(&wq->wq_cv, &wq->wq_lock);
-		} while (wq->wq_current_work == work && wq->wq_gen == gen);
+		wait_for_current_work(work, wq);
 		cancelled_p = false;
 	} else {
 		/*
@@ -515,6 +513,27 @@ cancel_work_sync(struct work_struct *work)
 	mutex_exit(&wq->wq_lock);
 
 out:	return cancelled_p;
+}
+
+/*
+ * wait_for_current_work(work, wq)
+ *
+ *	wq must be currently executing work.  Wait for it to finish.
+ */
+static void
+wait_for_current_work(struct work_struct *work, struct workqueue_struct *wq)
+{
+	uint64_t gen;
+
+	KASSERT(mutex_owned(&wq->wq_lock));
+	KASSERT(work->work_queue == wq);
+	KASSERT(wq->wq_current_work == work);
+
+	/* Wait only one generation in case it gets requeued quickly.  */
+	gen = wq->wq_gen;
+	do {
+		cv_wait(&wq->wq_cv, &wq->wq_lock);
+	} while (wq->wq_current_work == work && wq->wq_gen == gen);
 }
 
 /*
@@ -993,19 +1012,14 @@ cancel_delayed_work_sync(struct delayed_work *dw)
 				/*
 				 * Too late, it's already running.
 				 * First, make sure it's not requeued.
-				 * Then wait for it to complete, at
-				 * most one generation.
+				 * Then wait for it to complete.
 				 */
-				uint64_t gen = wq->wq_gen;
 				if (wq->wq_requeued) {
 					TAILQ_REMOVE(&wq->wq_queue, &dw->work,
 					    work_entry);
 					wq->wq_requeued = false;
 				}
-				do {
-					cv_wait(&wq->wq_cv, &wq->wq_lock);
-				} while (wq->wq_current_work == &dw->work &&
-				    wq->wq_gen == gen);
+				wait_for_current_work(&dw->work, wq);
 				cancelled_p = false;
 			} else {
 				/* Got in before it started.  Remove it.  */
