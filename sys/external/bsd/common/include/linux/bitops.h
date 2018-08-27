@@ -1,4 +1,4 @@
-/*	$NetBSD: bitops.h,v 1.5 2018/08/27 07:08:37 riastradh Exp $	*/
+/*	$NetBSD: bitops.h,v 1.6 2018/08/27 07:16:50 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -177,8 +177,8 @@ __test_and_change_bit(unsigned int bit, volatile unsigned long *ptr)
 }
 
 static inline unsigned long
-find_next_zero_bit(const unsigned long *ptr, unsigned long nbits,
-    unsigned long startbit)
+__find_next_bit(const unsigned long *ptr, unsigned long nbits,
+    unsigned long startbit, unsigned long toggle)
 {
 	const size_t bpl = (CHAR_BIT * sizeof(*ptr));
 	const unsigned long *p = ptr + startbit/bpl;
@@ -195,9 +195,9 @@ find_next_zero_bit(const unsigned long *ptr, unsigned long nbits,
 	/* Do we need to examine a partial starting word?  */
 	if (startbit % bpl) {
 		/* Are any of the first startbit%bpl bits zero?  */
-		if (~(*p | (~0UL << (startbit % bpl)))) {
-			/* Invert the bits and convert to 64 bits.  */
-			word = ~(uint64_t)*p;
+		if ((*p ^ toggle) & ~(~0UL << (startbit % bpl))) {
+			/* Toggle the bits and convert to 64 bits.  */
+			word = *p ^ toggle;
 
 			/* Clear the low startbit%bpl bits.  */
 			word &= ~(~0UL << (startbit % bpl));
@@ -210,14 +210,14 @@ find_next_zero_bit(const unsigned long *ptr, unsigned long nbits,
 		}
 	}
 
-	/* Find the first word with zeros in it.  */
+	/* Find the first word matching word.  */
 	for (; bpl < nbits; p++, result += bpl) {
-		if (~*p)
+		if (*p ^ toggle)
 			break;
 	}
 
-	/* Invert the bits and convert to 64 bits for ffs64.  */
-	word = ~(uint64_t)*p;
+	/* Toggle the bits and convert to 64 bits for ffs64.  */
+	word = *p ^ toggle;
 
 	/* Find the first set bit in this word.  */
 	result += ffs64(word);
@@ -227,10 +227,35 @@ find_next_zero_bit(const unsigned long *ptr, unsigned long nbits,
 }
 
 static inline unsigned long
+find_next_bit(const unsigned long *ptr, unsigned long nbits,
+    unsigned long startbit)
+{
+	return __find_next_bit(ptr, nbits, startbit, 0);
+}
+
+static inline unsigned long
+find_first_bit(const unsigned long *ptr, unsigned long nbits)
+{
+	return find_next_bit(ptr, nbits, 0);
+}
+
+static inline unsigned long
+find_next_zero_bit(const unsigned long *ptr, unsigned long nbits,
+    unsigned long startbit)
+{
+	return __find_next_bit(ptr, nbits, startbit, ~0UL);
+}
+
+static inline unsigned long
 find_first_zero_bit(const unsigned long *ptr, unsigned long nbits)
 {
 	return find_next_zero_bit(ptr, nbits, 0);
 }
+
+#define	for_each_set_bit(BIT, PTR, NBITS)				      \
+	for ((BIT) = find_first_bit((PTR), (NBITS));			      \
+	     (BIT) < (NBITS);						      \
+	     (BIT) = find_next_bit((PTR), (NBITS), (BIT) + 1))
 
 static inline unsigned
 hweight8(unsigned w)
