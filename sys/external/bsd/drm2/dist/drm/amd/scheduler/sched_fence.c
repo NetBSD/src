@@ -1,4 +1,4 @@
-/*	$NetBSD: sched_fence.c,v 1.2 2018/08/27 04:58:23 riastradh Exp $	*/
+/*	$NetBSD: sched_fence.c,v 1.3 2018/08/27 14:03:10 riastradh Exp $	*/
 
 /*
  * Copyright 2015 Advanced Micro Devices, Inc.
@@ -24,7 +24,7 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sched_fence.c,v 1.2 2018/08/27 04:58:23 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sched_fence.c,v 1.3 2018/08/27 14:03:10 riastradh Exp $");
 
 #include <linux/kthread.h>
 #include <linux/wait.h>
@@ -64,11 +64,11 @@ void amd_sched_fence_signal(struct amd_sched_fence *fence)
 
 void amd_sched_fence_scheduled(struct amd_sched_fence *s_fence)
 {
-	struct fence_cb *cur, *tmp;
+	struct amd_sched_entity *cur, *tmp;
 
 	set_bit(AMD_SCHED_FENCE_SCHEDULED_BIT, &s_fence->base.flags);
-	list_for_each_entry_safe(cur, tmp, &s_fence->scheduled_cb, node) {
-		list_del_init(&cur->node);
+	list_for_each_entry_safe(cur, tmp, &s_fence->scheduled_cb, entry) {
+		list_del_init(&cur->entry);
 		cur->func(&s_fence->base, cur);
 	}
 }

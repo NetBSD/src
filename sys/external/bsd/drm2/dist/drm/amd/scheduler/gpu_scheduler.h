@@ -1,4 +1,4 @@
-/*	$NetBSD: gpu_scheduler.h,v 1.2 2018/08/27 04:58:23 riastradh Exp $	*/
+/*	$NetBSD: gpu_scheduler.h,v 1.3 2018/08/27 14:03:10 riastradh Exp $	*/
 
 /*
  * Copyright 2015 Advanced Micro Devices, Inc.
@@ -56,6 +56,9 @@ struct amd_sched_entity {
 
 	struct fence			*dependency;
 	struct fence_cb			cb;
+	void				(*func)(struct fence *,
+					    struct amd_sched_entity *);
+	struct list_head		entry;
 };
 
 /**
