@@ -1,4 +1,4 @@
-/*	$NetBSD: drmP.h,v 1.25 2018/08/27 13:42:47 riastradh Exp $	*/
+/*	$NetBSD: drmP.h,v 1.26 2018/08/27 14:42:43 riastradh Exp $	*/
 
 /*
  * Internal Header for the Direct Rendering Manager
@@ -1071,6 +1071,10 @@ extern int drm_vblank_get(struct drm_device *dev, unsigned int pipe);
 extern void drm_vblank_put(struct drm_device *dev, unsigned int pipe);
 extern int drm_crtc_vblank_get(struct drm_crtc *crtc);
 extern void drm_crtc_vblank_put(struct drm_crtc *crtc);
+extern int drm_vblank_get_locked(struct drm_device *dev, unsigned int pipe);
+extern void drm_vblank_put_locked(struct drm_device *dev, unsigned int pipe);
+extern int drm_crtc_vblank_get_locked(struct drm_crtc *crtc);
+extern void drm_crtc_vblank_put_locked(struct drm_crtc *crtc);
 extern void drm_wait_one_vblank(struct drm_device *dev, unsigned int pipe);
 extern void drm_crtc_wait_one_vblank(struct drm_crtc *crtc);
 extern void drm_vblank_off(struct drm_device *dev, unsigned int pipe);
