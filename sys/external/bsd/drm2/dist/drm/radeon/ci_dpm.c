@@ -1,4 +1,4 @@
-/*	$NetBSD: ci_dpm.c,v 1.6 2018/08/27 06:32:32 riastradh Exp $	*/
+/*	$NetBSD: ci_dpm.c,v 1.7 2018/08/27 06:38:10 riastradh Exp $	*/
 
 /*
  * Copyright 2013 Advanced Micro Devices, Inc.
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ci_dpm.c,v 1.6 2018/08/27 06:32:32 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ci_dpm.c,v 1.7 2018/08/27 06:38:10 riastradh Exp $");
 
 #include <linux/firmware.h>
 #include "drmP.h"
@@ -1765,7 +1765,6 @@ static int ci_set_boot_state(struct radeon_device *rdev)
 }
 #endif
 
-#ifdef CONFIG_DEBUG_FS
 static u32 ci_get_average_sclk_freq(struct radeon_device *rdev)
 {
 	u32 sclk_freq;
@@ -1791,7 +1790,6 @@ static u32 ci_get_average_mclk_freq(struct radeon_device *rdev)
 
 	return mclk_freq;
 }
-#endif
 
 static void ci_dpm_start_smc(struct radeon_device *rdev)
 {
