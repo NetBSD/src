@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_engine_device_pci.c,v 1.5 2018/08/27 07:42:35 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_engine_device_pci.c,v 1.6 2018/08/27 07:42:46 riastradh Exp $	*/
 
 /*
  * Copyright 2015 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs <bskeggs@redhat.com>
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_device_pci.c,v 1.5 2018/08/27 07:42:35 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_device_pci.c,v 1.6 2018/08/27 07:42:46 riastradh Exp $");
 
 #include <core/pci.h>
 #include "priv.h"
@@ -1650,7 +1650,15 @@ nvkm_device_pci_func = {
 #endif
 	.resource_addr = nvkm_device_pci_resource_addr,
 	.resource_size = nvkm_device_pci_resource_size,
+#ifdef __NetBSD__
+#  ifdef __arm__
+	.cpu_coherent = false,
+#  else
+	.cpu_coherent = true,
+#  endif
+#else
 	.cpu_coherent = !IS_ENABLED(CONFIG_ARM),
+#endif
 };
 
 int
