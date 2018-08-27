@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem_gtt.c,v 1.10 2018/08/27 07:08:07 riastradh Exp $	*/
+/*	$NetBSD: i915_gem_gtt.c,v 1.11 2018/08/27 07:17:35 riastradh Exp $	*/
 
 /*
  * Copyright © 2010 Daniel Vetter
@@ -26,8 +26,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gem_gtt.c,v 1.10 2018/08/27 07:08:07 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gem_gtt.c,v 1.11 2018/08/27 07:17:35 riastradh Exp $");
 
+#include <linux/bitmap.h>
 #include <linux/err.h>
 #include <linux/seq_file.h>
 #include <drm/drmP.h>
@@ -38,6 +39,7 @@ __KERNEL_RCSID(0, "$NetBSD: i915_gem_gtt.c,v 1.10 2018/08/27 07:08:07 riastradh 
 #include "intel_drv.h"
 
 #ifdef __NetBSD__
+#include <drm/bus_dma_hacks.h>
 #include <x86/machdep.h>
 #include <x86/pte.h>
 #define	_PAGE_PRESENT	PG_V	/* 0x01 PTE is present / valid */
@@ -835,6 +837,45 @@ static void gen8_ppgtt_clear_range(struct i915_address_space *vm,
 	}
 }
 
+#ifdef __NetBSD__
+static void
+gen8_ppgtt_insert_pte_entries(struct i915_address_space *vm,
+    struct i915_page_directory_pointer *pdp, bus_dmamap_t dmamap,
+    unsigned *segp, uint64_t start, enum i915_cache_level cache_level)
+{
+	struct i915_hw_ppgtt *ppgtt =
+	    container_of(vm, struct i915_hw_ppgtt, base);
+	gen8_pte_t *pt_vaddr;
+	unsigned pdpe = gen8_pdpe_index(start);
+	unsigned pde = gen8_pde_index(start);
+	unsigned pte = gen8_pte_index(start);
+
+	pt_vaddr = NULL;
+	for (; *segp < dmamap->dm_nsegs; (*segp)++) {
+		KASSERT(dmamap->dm_segs[*segp].ds_len == PAGE_SIZE);
+		if (pt_vaddr == NULL) {
+			struct i915_page_directory *pd =
+			    pdp->page_directory[pdpe];
+			struct i915_page_table *pt = pd->page_table[pde];
+			pt_vaddr = kmap_px(pt);
+		}
+		pt_vaddr[pte] = gen8_pte_encode(dmamap->dm_segs[*segp].ds_addr,
+		    cache_level, true);
+		if (++pte == GEN8_PTES) {
+			kunmap_px(ppgtt, pt_vaddr);
+			pt_vaddr = NULL;
+			if (++pde == I915_PDES) {
+				if (++pdpe == I915_PDPES_PER_PDP(vm->dev))
+					break;
+				pde = 0;
+			}
+			pte = 0;
+		}
+	}
+	if (pt_vaddr)
+		kunmap_px(ppgtt, pt_vaddr);
+}
+#else
 static void
 gen8_ppgtt_insert_pte_entries(struct i915_address_space *vm,
 			      struct i915_page_directory_pointer *pdp,
@@ -876,7 +917,33 @@ gen8_ppgtt_insert_pte_entries(struct i915_address_space *vm,
 	if (pt_vaddr)
 		kunmap_px(ppgtt, pt_vaddr);
 }
+#endif
 
+#ifdef __NetBSD__
+static void gen8_ppgtt_insert_entries(struct i915_address_space *vm,
+    bus_dmamap_t dmamap, uint64_t start, enum i915_cache_level cache_level,
+    u32 unused)
+{
+	struct i915_hw_ppgtt *ppgtt =
+	    container_of(vm, struct i915_hw_ppgtt, base);
+	unsigned seg = 0;
+
+	if (!USES_FULL_48BIT_PPGTT(vm->dev)) {
+		gen8_ppgtt_insert_pte_entries(vm, &ppgtt->pdp, dmamap, &seg,
+		    start, cache_level);
+	} else {
+		struct i915_page_directory_pointer *pdp;
+		uint64_t templ4, pml4e;
+		uint64_t length = dmamap->dm_mapsize;
+
+		gen8_for_each_pml4e(pdp, &ppgtt->pml4, start, length, templ4,
+		    pml4e) {
+			gen8_ppgtt_insert_pte_entries(vm, pdp, dmamap, &seg,
+			    start, cache_level);
+		}
+	}
+}
+#else
 static void gen8_ppgtt_insert_entries(struct i915_address_space *vm,
 				      struct sg_table *pages,
 				      uint64_t start,
@@ -903,6 +970,7 @@ static void gen8_ppgtt_insert_entries(struct i915_address_space *vm,
 		}
 	}
 }
+#endif
 
 static void gen8_free_page_tables(struct drm_device *dev,
 				  struct i915_page_directory *pd)
@@ -1444,6 +1512,7 @@ static int gen8_alloc_va_range(struct i915_address_space *vm,
 		return gen8_alloc_va_range_3lvl(vm, &ppgtt->pdp, start, length);
 }
 
+#ifndef __NetBSD__		/* XXX debugfs */
 static void gen8_dump_pdp(struct i915_page_directory_pointer *pdp,
 			  uint64_t start, uint64_t length,
 			  gen8_pte_t scratch_pte,
@@ -1526,6 +1595,7 @@ static void gen8_dump_ppgtt(struct i915_hw_ppgtt *ppgtt, struct seq_file *m)
 		}
 	}
 }
+#endif
 
 static int gen8_preallocate_top_level_pdps(struct i915_hw_ppgtt *ppgtt)
 {
@@ -1576,7 +1646,9 @@ static int gen8_ppgtt_init(struct i915_hw_ppgtt *ppgtt)
 	ppgtt->base.clear_range = gen8_ppgtt_clear_range;
 	ppgtt->base.unbind_vma = ppgtt_unbind_vma;
 	ppgtt->base.bind_vma = ppgtt_bind_vma;
+#ifndef __NetBSD__		/* XXX debugfs */
 	ppgtt->debug_dump = gen8_dump_ppgtt;
+#endif
 
 	if (USES_FULL_48BIT_PPGTT(ppgtt->base.dev)) {
 		ret = setup_px(ppgtt->base.dev, &ppgtt->pml4);
@@ -1615,7 +1687,7 @@ free_scratch:
 	return ret;
 }
 
-#ifndef __NetBSD__
+#ifndef __NetBSD__		/* XXX debugfs */
 static void gen6_dump_ppgtt(struct i915_hw_ppgtt *ppgtt, struct seq_file *m)
 {
 	struct i915_address_space *vm = &ppgtt->base;
@@ -1905,16 +1977,15 @@ static void gen6_ppgtt_clear_range(struct i915_address_space *vm,
 #ifdef __NetBSD__
 static void
 gen6_ppgtt_insert_entries(struct i915_address_space *vm, bus_dmamap_t dmamap,
-    uint64_t start, enum i915_cache_level cache_level)
+    uint64_t start, enum i915_cache_level cache_level, uint32_t flags)
 {
 	struct i915_hw_ppgtt *ppgtt =
 		container_of(vm, struct i915_hw_ppgtt, base);
-	gen6_gtt_pte_t *pt_vaddr;
+	gen6_pte_t *pt_vaddr;
 	unsigned first_entry = start >> PAGE_SHIFT;
 	unsigned act_pt = first_entry / GEN6_PTES;
 	unsigned act_pte = first_entry % GEN6_PTES;
 	unsigned seg;
-	int ret;
 
 	pt_vaddr = NULL;
 	KASSERT(0 < dmamap->dm_nsegs);
@@ -1922,11 +1993,9 @@ gen6_ppgtt_insert_entries(struct i915_address_space *vm, bus_dmamap_t dmamap,
 		KASSERT(dmamap->dm_segs[seg].ds_len == PAGE_SIZE);
 		if (pt_vaddr == NULL)
 			pt_vaddr = kmap_px(ppgtt->pd.page_table[act_pt]);
-
 		pt_vaddr[act_pte] =
-			vm->pte_encode(dmamap->dm_segs[seg].ds_addr,
-				       cache_level, true, flags);
-
+		    vm->pte_encode(dmamap->dm_segs[seg].ds_addr, cache_level,
+			true, flags);
 		if (++act_pte == GEN6_PTES) {
 			kunmap_px(ppgtt, pt_vaddr);
 			pt_vaddr = NULL;
@@ -2169,7 +2238,7 @@ static int gen6_ppgtt_alloc(struct i915_hw_ppgtt *ppgtt)
 static void gen6_scratch_va_range(struct i915_hw_ppgtt *ppgtt,
 				  uint64_t start, uint64_t length)
 {
-	struct i915_page_table *unused;
+	struct i915_page_table *unused __unused;
 	uint32_t pde, temp;
 
 	gen6_for_each_pde(unused, &ppgtt->pd, start, length, temp, pde)
@@ -2214,14 +2283,16 @@ static int gen6_ppgtt_init(struct i915_hw_ppgtt *ppgtt)
 	ppgtt->pd.base.ggtt_offset =
 		ppgtt->node.start / PAGE_SIZE * sizeof(gen6_pte_t);
 
+#ifndef __NetBSD__
 	ppgtt->pd_addr = (gen6_pte_t __iomem *)dev_priv->gtt.gsm +
 		ppgtt->pd.base.ggtt_offset / sizeof(gen6_pte_t);
+#endif
 
 	gen6_scratch_va_range(ppgtt, 0, ppgtt->base.total);
 
 	gen6_write_page_range(dev_priv, &ppgtt->pd, 0, ppgtt->base.total);
 
-	DRM_DEBUG_DRIVER("Allocated pde space (%lldM) at GTT entry: %llx\n",
+	DRM_DEBUG_DRIVER("Allocated pde space (%"PRId64"M) at GTT entry: %"PRIx64"\n",
 			 ppgtt->node.size >> 20,
 			 ppgtt->node.start / PAGE_SIZE);
 
@@ -2445,8 +2516,8 @@ int i915_gem_gtt_prepare_object(struct drm_i915_gem_object *obj)
 #ifdef __NetBSD__
 	KASSERT(0 < obj->base.size);
 	/* XXX errno NetBSD->Linux */
-	return -bus_dmamap_load_raw(obj->base.dev->dmat, obj->igo_dmamap,
-	    obj->pages, obj->igo_nsegs, obj->base.size, BUS_DMA_NOWAIT);
+	return -bus_dmamap_load_pglist(obj->base.dev->dmat, obj->pages,
+	    &obj->pageq, obj->base.size, BUS_DMA_NOWAIT);
 #else
 	if (!dma_map_sg(&obj->base.dev->pdev->dev,
 			obj->pages->sgl, obj->pages->nents,
@@ -2458,11 +2529,11 @@ int i915_gem_gtt_prepare_object(struct drm_i915_gem_object *obj)
 }
 
 #ifdef __NetBSD__
-static uint64_t
+static gen8_pte_t
 gen8_get_pte(bus_space_tag_t bst, bus_space_handle_t bsh, unsigned i)
 {
 	CTASSERT(_BYTE_ORDER == _LITTLE_ENDIAN); /* x86 */
-	CTASSERT(sizeof(gen8_gtt_pte_t) == 8);
+	CTASSERT(sizeof(gen8_pte_t) == 8);
 #ifdef _LP64			/* XXX How to detect bus_space_read_8?  */
 	return bus_space_read_8(bst, bsh, 8*i);
 #else
@@ -2477,10 +2548,10 @@ gen8_get_pte(bus_space_tag_t bst, bus_space_handle_t bsh, unsigned i)
 
 static inline void
 gen8_set_pte(bus_space_tag_t bst, bus_space_handle_t bsh, unsigned i,
-    gen8_gtt_pte_t pte)
+    gen8_pte_t pte)
 {
 	CTASSERT(_BYTE_ORDER == _LITTLE_ENDIAN); /* x86 */
-	CTASSERT(sizeof(gen8_gtt_pte_t) == 8);
+	CTASSERT(sizeof(gen8_pte_t) == 8);
 #ifdef _LP64			/* XXX How to detect bus_space_write_8?  */
 	bus_space_write_8(bst, bsh, 8*i, pte);
 #else
@@ -2503,7 +2574,7 @@ static void gen8_set_pte(void __iomem *addr, gen8_pte_t pte)
 #ifdef __NetBSD__
 static void
 gen8_ggtt_insert_entries(struct i915_address_space *vm, bus_dmamap_t dmamap,
-    uint64_t start, enum i915_cache_level level)
+    uint64_t start, enum i915_cache_level level, uint32_t unused_flags)
 {
 	struct drm_i915_private *dev_priv = vm->dev->dev_private;
 	unsigned first_entry = start >> PAGE_SHIFT;
@@ -2577,7 +2648,7 @@ static void gen8_ggtt_insert_entries(struct i915_address_space *vm,
 #ifdef __NetBSD__
 static void
 gen6_ggtt_insert_entries(struct i915_address_space *vm, bus_dmamap_t dmamap,
-    uint64_t start, enum i915_cache_level level)
+    uint64_t start, enum i915_cache_level level, uint32_t flags)
 {
 	struct drm_i915_private *dev_priv = vm->dev->dev_private;
 	unsigned first_entry = start >> PAGE_SHIFT;
@@ -2588,15 +2659,16 @@ gen6_ggtt_insert_entries(struct i915_address_space *vm, bus_dmamap_t dmamap,
 	KASSERT(0 < dmamap->dm_nsegs);
 	for (i = 0; i < dmamap->dm_nsegs; i++) {
 		KASSERT(dmamap->dm_segs[i].ds_len == PAGE_SIZE);
-		CTASSERT(sizeof(gen6_gtt_pte_t) == 4);
+		CTASSERT(sizeof(gen6_pte_t) == 4);
 		bus_space_write_4(bst, bsh, 4*(first_entry + i),
-		    vm->pte_encode(dmamap->dm_segs[i].ds_addr, level, true));
+		    vm->pte_encode(dmamap->dm_segs[i].ds_addr, level, true,
+			flags));
 	}
 	if (0 < i) {
 		/* Posting read.  */
 		WARN_ON(bus_space_read_4(bst, bsh, 4*(first_entry + i - 1))
 		    != vm->pte_encode(dmamap->dm_segs[i - 1].ds_addr, level,
-			true));
+			true, flags));
 	}
 	I915_WRITE(GFX_FLSH_CNTL_GEN6, GFX_FLSH_CNTL_EN);
 	POSTING_READ(GFX_FLSH_CNTL_GEN6);
@@ -2669,7 +2741,6 @@ static void gen8_ggtt_clear_range(struct i915_address_space *vm,
 				      I915_CACHE_LLC,
 				      use_scratch);
 #ifdef __NetBSD__
-	CTASSERT(sizeof(gen8_gtt_pte_t) == 8);
 	for (i = 0; i < num_entries; i++)
 		gen8_set_pte(bst, bsh, first_entry + i, scratch_pte);
 	(void)gen8_get_pte(bst, bsh, first_entry);
@@ -2708,7 +2779,7 @@ static void gen6_ggtt_clear_range(struct i915_address_space *vm,
 				     I915_CACHE_LLC, use_scratch, 0);
 
 #ifdef __NetBSD__
-	CTASSERT(sizeof(gen6_gtt_pte_t) == 4);
+	CTASSERT(sizeof(gen6_pte_t) == 4);
 	for (i = 0; i < num_entries; i++)
 		bus_space_write_4(bst, bsh, 4*(first_entry + i), scratch_pte);
 	(void)bus_space_read_4(bst, bsh, 4*first_entry);
@@ -2850,7 +2921,7 @@ void i915_gem_gtt_finish_object(struct drm_i915_gem_object *obj)
 	interruptible = do_idling(dev_priv);
 
 #ifdef __NetBSD__
-	bus_dmamap_unload(dev->dmat, obj->igo_dmamap);
+	bus_dmamap_unload(dev->dmat, obj->pages);
 #else
 	dma_unmap_sg(&dev->pdev->dev, obj->pages->sgl, obj->pages->nents,
 		     PCI_DMA_BIDIRECTIONAL);
@@ -2920,7 +2991,7 @@ static int i915_gem_setup_global_gtt(struct drm_device *dev,
 	list_for_each_entry(obj, &dev_priv->mm.bound_list, global_list) {
 		struct i915_vma *vma = i915_gem_obj_to_vma(obj, ggtt_vm);
 
-		DRM_DEBUG_KMS("reserving preallocated space: %llx + %zx\n",
+		DRM_DEBUG_KMS("reserving preallocated space: %"PRIx64" + %zx\n",
 			      i915_gem_obj_ggtt_offset(obj), obj->base.size);
 
 		WARN_ON(i915_gem_obj_ggtt_bound(obj));
@@ -3105,10 +3176,11 @@ static int ggtt_probe_common(struct drm_device *dev,
 		(pci_resource_len(dev->pdev, 0) / 2);
 
 #ifdef __NetBSD__
+	int ret;
 	dev_priv->gtt.bst = dev->pdev->pd_pa.pa_memt;
 	/* XXX errno NetBSD->Linux */
 	ret = -bus_space_map(dev_priv->gtt.bst, gtt_phys_addr, gtt_size,
-	    IS_PROXTON(dev) ? 0 : BUS_SPACE_MAP_PREFETCHABLE,
+	    IS_BROXTON(dev) ? 0 : BUS_SPACE_MAP_PREFETCHABLE,
 	    &dev_priv->gtt.bsh);
 	if (ret) {
 		DRM_ERROR("Failed to map the graphics translation table: %d\n",
@@ -3296,7 +3368,7 @@ static int gen6_gmch_probe(struct drm_device *dev,
 	 * a coarse sanity check.
 	 */
 	if ((*mappable_end < (64<<20) || (*mappable_end > (512<<20)))) {
-		DRM_ERROR("Unknown GMADR size (%llx)\n",
+		DRM_ERROR("Unknown GMADR size (%"PRIx64")\n",
 			  dev_priv->gtt.mappable_end);
 		return -ENXIO;
 	}
@@ -3425,9 +3497,9 @@ int i915_gem_gtt_init(struct drm_device *dev)
 #endif
 
 	/* GMADR is the PCI mmio aperture into the global GTT. */
-	DRM_INFO("Memory usable by graphics device = %lluM\n",
+	DRM_INFO("Memory usable by graphics device = %"PRIu64"M\n",
 		 gtt->base.total >> 20);
-	DRM_DEBUG_DRIVER("GMADR size = %lldM\n", gtt->mappable_end >> 20);
+	DRM_DEBUG_DRIVER("GMADR size = %"PRId64"M\n", gtt->mappable_end >> 20);
 	DRM_DEBUG_DRIVER("GTT stolen size = %zdM\n", gtt->stolen_size >> 20);
 #ifdef CONFIG_INTEL_IOMMU
 	if (intel_iommu_gfx_mapped)

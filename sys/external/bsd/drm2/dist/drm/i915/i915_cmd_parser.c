@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_cmd_parser.c,v 1.6 2018/08/27 07:04:02 riastradh Exp $	*/
+/*	$NetBSD: i915_cmd_parser.c,v 1.7 2018/08/27 07:17:35 riastradh Exp $	*/
 
 /*
  * Copyright © 2013 Intel Corporation
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_cmd_parser.c,v 1.6 2018/08/27 07:04:02 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_cmd_parser.c,v 1.7 2018/08/27 07:17:35 riastradh Exp $");
 
 #include "i915_drv.h"
 
@@ -883,7 +883,11 @@ static u32 *vmap_batch(struct drm_i915_gem_object *obj,
 
 	i = 0;
 #ifdef __NetBSD__
-	TAILQ_FOREACH(page, &obj->igo_pageq, pageq.queue) {
+	/*
+	 * XXX Why do we work through the page queue instead of just
+	 * using uvm_map?
+	 */
+	TAILQ_FOREACH(page, &obj->pageq, pageq.queue) {
 		if (first_page-- > 0)
 			continue;
 		if (i == npages)
