@@ -1,4 +1,4 @@
-/*	$NetBSD: kernel.h,v 1.9 2018/08/06 00:30:33 riastradh Exp $	*/
+/*	$NetBSD: kernel.h,v 1.10 2018/08/27 06:06:10 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -38,6 +38,7 @@
 #include <sys/systm.h>
 
 #include <lib/libkern/libkern.h>
+#include <linux/printk.h>
 
 #define	oops_in_progress	(panicstr != NULL)
 
