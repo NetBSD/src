@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_subdev_bios_pll.c,v 1.1.1.1 2018/08/27 01:34:56 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_subdev_bios_pll.c,v 1.2 2018/08/27 04:58:33 riastradh Exp $	*/
 
 /*
  * Copyright 2005-2006 Erik Waling
@@ -24,7 +24,7 @@
  * SOFTWARE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_bios_pll.c,v 1.1.1.1 2018/08/27 01:34:56 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_bios_pll.c,v 1.2 2018/08/27 04:58:33 riastradh Exp $");
 
 #include <subdev/bios.h>
 #include <subdev/bios/bit.h>
@@ -44,7 +44,7 @@ nv04_pll_mapping[] = {
 	{ PLL_MEMORY, 0x680504 },
 	{ PLL_VPLL0 , 0x680508 },
 	{ PLL_VPLL1 , 0x680520 },
-	{}
+	{ }
 };
 
 static struct pll_mapping
@@ -53,7 +53,7 @@ nv40_pll_mapping[] = {
 	{ PLL_MEMORY, 0x004020 },
 	{ PLL_VPLL0 , 0x680508 },
 	{ PLL_VPLL1 , 0x680520 },
-	{}
+	{ }
 };
 
 static struct pll_mapping
@@ -67,7 +67,7 @@ nv50_pll_mapping[] = {
 	{ PLL_UNK42 , 0x00e824 },
 	{ PLL_VPLL0 , 0x614100 },
 	{ PLL_VPLL1 , 0x614900 },
-	{}
+	{ }
 };
 
 static struct pll_mapping
@@ -79,7 +79,7 @@ g84_pll_mapping[] = {
 	{ PLL_UNK41 , 0x00e818 },
 	{ PLL_VPLL0 , 0x614100 },
 	{ PLL_VPLL1 , 0x614900 },
-	{}
+	{ }
 };
 
 static u16

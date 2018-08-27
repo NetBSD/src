@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_buffer.c,v 1.1.1.1 2018/08/27 01:34:57 riastradh Exp $	*/
+/*	$NetBSD: drm_buffer.c,v 1.2 2018/08/27 04:58:35 riastradh Exp $	*/
 
 /**************************************************************************
  *
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_buffer.c,v 1.1.1.1 2018/08/27 01:34:57 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_buffer.c,v 1.2 2018/08/27 04:58:35 riastradh Exp $");
 
 #include <linux/export.h>
 #include "drm_buffer.h"
@@ -115,7 +115,7 @@ int drm_buffer_copy_from_user(struct drm_buffer *buf,
 	for (idx = 0; idx < nr_pages; ++idx) {
 
 		if (copy_from_user(buf->data[idx],
-			user_data + idx * PAGE_SIZE,
+			(const char *)user_data + idx * PAGE_SIZE,
 			min(PAGE_SIZE, size - idx * PAGE_SIZE))) {
 			DRM_ERROR("Failed to copy user data (%p) to drm buffer"
 					" (%p) %dth page.\n",
@@ -171,7 +171,7 @@ void *drm_buffer_read_object(struct drm_buffer *buf,
 		int beginsz = PAGE_SIZE - idx;
 		memcpy(stack_obj, &buf->data[page][idx], beginsz);
 
-		memcpy(stack_obj + beginsz, &buf->data[page + 1][0],
+		memcpy((char *)stack_obj + beginsz, &buf->data[page + 1][0],
 				objsize - beginsz);
 
 		obj = stack_obj;

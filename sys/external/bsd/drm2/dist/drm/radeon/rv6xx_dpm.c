@@ -1,3 +1,5 @@
+/*	$NetBSD: rv6xx_dpm.c,v 1.3 2018/08/27 04:58:36 riastradh Exp $	*/
+
 /*
  * Copyright 2011 Advanced Micro Devices, Inc.
  *
@@ -22,8 +24,12 @@
  * Authors: Alex Deucher
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: rv6xx_dpm.c,v 1.3 2018/08/27 04:58:36 riastradh Exp $");
+
 #include "drmP.h"
 #include "radeon.h"
+#include "radeon_asic.h"
 #include "rv6xxd.h"
 #include "r600_dpm.h"
 #include "rv6xx_dpm.h"
@@ -2050,6 +2056,52 @@ void rv6xx_dpm_debugfs_print_current_performance_level(struct radeon_device *rde
 	}
 }
 #endif
+
+/* get the current sclk in 10 khz units */
+u32 rv6xx_dpm_get_current_sclk(struct radeon_device *rdev)
+{
+	struct radeon_ps *rps = rdev->pm.dpm.current_ps;
+	struct rv6xx_ps *ps = rv6xx_get_ps(rps);
+	struct rv6xx_pl *pl;
+	u32 current_index =
+		(RREG32(TARGET_AND_CURRENT_PROFILE_INDEX) & CURRENT_PROFILE_INDEX_MASK) >>
+		CURRENT_PROFILE_INDEX_SHIFT;
+
+	if (current_index > 2) {
+		return 0;
+	} else {
+		if (current_index == 0)
+			pl = &ps->low;
+		else if (current_index == 1)
+			pl = &ps->medium;
+		else /* current_index == 2 */
+			pl = &ps->high;
+		return pl->sclk;
+	}
+}
+
+/* get the current mclk in 10 khz units */
+u32 rv6xx_dpm_get_current_mclk(struct radeon_device *rdev)
+{
+	struct radeon_ps *rps = rdev->pm.dpm.current_ps;
+	struct rv6xx_ps *ps = rv6xx_get_ps(rps);
+	struct rv6xx_pl *pl;
+	u32 current_index =
+		(RREG32(TARGET_AND_CURRENT_PROFILE_INDEX) & CURRENT_PROFILE_INDEX_MASK) >>
+		CURRENT_PROFILE_INDEX_SHIFT;
+
+	if (current_index > 2) {
+		return 0;
+	} else {
+		if (current_index == 0)
+			pl = &ps->low;
+		else if (current_index == 1)
+			pl = &ps->medium;
+		else /* current_index == 2 */
+			pl = &ps->high;
+		return pl->mclk;
+	}
+}
 
 void rv6xx_dpm_fini(struct radeon_device *rdev)
 {

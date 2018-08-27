@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_semaphore.c,v 1.1.1.2 2018/08/27 01:34:59 riastradh Exp $	*/
+/*	$NetBSD: radeon_semaphore.c,v 1.2 2018/08/27 04:58:36 riastradh Exp $	*/
 
 /*
  * Copyright 2011 Christian König.
@@ -30,7 +30,7 @@
  *    Christian König <deathsimple@vodafone.de>
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_semaphore.c,v 1.1.1.2 2018/08/27 01:34:59 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_semaphore.c,v 1.2 2018/08/27 04:58:36 riastradh Exp $");
 
 #include <drm/drmP.h>
 #include "radeon.h"

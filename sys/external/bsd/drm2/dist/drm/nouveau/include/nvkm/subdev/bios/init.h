@@ -1,4 +1,4 @@
-/*	$NetBSD: init.h,v 1.1.1.1 2018/08/27 01:34:55 riastradh Exp $	*/
+/*	$NetBSD: init.h,v 1.2 2018/08/27 04:58:30 riastradh Exp $	*/
 
 #ifndef __NVBIOS_INIT_H__
 #define __NVBIOS_INIT_H__

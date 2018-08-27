@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_subdev_mmu_nv44.c,v 1.1.1.1 2018/08/27 01:34:56 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_subdev_mmu_nv44.c,v 1.2 2018/08/27 04:58:34 riastradh Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_mmu_nv44.c,v 1.1.1.1 2018/08/27 01:34:56 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_mmu_nv44.c,v 1.2 2018/08/27 04:58:34 riastradh Exp $");
 
 #include "nv04.h"
 
@@ -170,8 +170,48 @@ nv44_mmu_oneinit(struct nvkm_mmu *base)
 	struct nvkm_device *device = mmu->base.subdev.device;
 	int ret;
 
+#ifdef __NetBSD__
+    do {
+	const bus_dma_tag_t dmat = device->func->dma_tag(device);
+	const unsigned nullsz = 16 * 1024;
+	int nsegs;
+
+	/* XXX errno NetBSD->Linux */
+	ret = -bus_dmamem_alloc(dmat, nullsz, PAGE_SIZE, 0,
+	    &mmu->nullseg, 1, &nsegs, BUS_DMA_WAITOK);
+	if (ret)
+fail0:		break;
+	KASSERT(nsegs == 1);
+
+	/* XXX errno NetBSD->Linux */
+	ret = -bus_dmamap_create(dmat, nullsz /* size */, 1 /* maxnseg */,
+	    nullsz /* maxsegsz */, 0, BUS_DMA_WAITOK, &mmu->nullmap);
+	if (ret) {
+fail1:		bus_dmamem_free(dmat, &mmu->nullseg, 1);
+		goto fail0;
+	}
+
+	/* XXX errno NetBSD->Linux */
+	ret = -bus_dmamem_map(dmat, &mmu->nullseg, 1, nullsz,
+	    &mmu->nullp, BUS_DMA_WAITOK);
+	if (ret) {
+fail2:		bus_dmamap_destroy(dmat, mmu->nullmap);
+		goto fail1;
+	}
+
+	/* XXX errno NetBSD->Linux */
+	ret = -bus_dmamap_load(dmat, mmu->nullmap, mmu->nullp, nullsz,
+	    NULL, BUS_DMA_WAITOK);
+	if (ret) {
+fail3: __unused	bus_dmamem_unmap(dmat, mmu->nullp, nullsz);
+		goto fail2;
+	}
+	mmu->null = mmu->nullmap->dm_segs[0].ds_addr;
+    } while (0)
+#else
 	mmu->nullp = dma_alloc_coherent(device->dev, 16 * 1024,
 					&mmu->null, GFP_KERNEL);
+#endif
 	if (!mmu->nullp) {
 		nvkm_warn(&mmu->base.subdev, "unable to allocate dummy pages\n");
 		mmu->null = 0;

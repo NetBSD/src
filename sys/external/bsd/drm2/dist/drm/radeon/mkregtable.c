@@ -1,4 +1,4 @@
-/*	$NetBSD: mkregtable.c,v 1.1.1.2 2018/08/27 01:34:57 riastradh Exp $	*/
+/*	$NetBSD: mkregtable.c,v 1.2 2018/08/27 04:58:36 riastradh Exp $	*/
 
 /* utility to create the register check tables
  * this includes inlined list.h safe for userspace.
@@ -12,7 +12,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mkregtable.c,v 1.1.1.2 2018/08/27 01:34:57 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mkregtable.c,v 1.2 2018/08/27 04:58:36 riastradh Exp $");
 
 #include <sys/types.h>
 #include <stdlib.h>

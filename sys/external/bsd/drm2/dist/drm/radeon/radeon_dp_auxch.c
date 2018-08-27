@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_dp_auxch.c,v 1.1.1.1 2018/08/27 01:34:58 riastradh Exp $	*/
+/*	$NetBSD: radeon_dp_auxch.c,v 1.2 2018/08/27 04:58:36 riastradh Exp $	*/
 
 /*
  * Copyright 2015 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Dave Airlie
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_dp_auxch.c,v 1.1.1.1 2018/08/27 01:34:58 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_dp_auxch.c,v 1.2 2018/08/27 04:58:36 riastradh Exp $");
 
 #include <drm/drmP.h>
 #include <drm/radeon_drm.h>

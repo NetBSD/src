@@ -1,3 +1,8 @@
+/*	$NetBSD: radeon_legacy_tv.c,v 1.3 2018/08/27 04:58:36 riastradh Exp $	*/
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: radeon_legacy_tv.c,v 1.3 2018/08/27 04:58:36 riastradh Exp $");
+
 #include <drm/drmP.h>
 #include <drm/drm_crtc_helper.h>
 #include "radeon.h"

@@ -1,3 +1,5 @@
+/*	$NetBSD: rs780_dpm.c,v 1.3 2018/08/27 04:58:36 riastradh Exp $	*/
+
 /*
  * Copyright 2011 Advanced Micro Devices, Inc.
  *
@@ -22,8 +24,12 @@
  * Authors: Alex Deucher
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: rs780_dpm.c,v 1.3 2018/08/27 04:58:36 riastradh Exp $");
+
 #include "drmP.h"
 #include "radeon.h"
+#include "radeon_asic.h"
 #include "rs780d.h"
 #include "r600_dpm.h"
 #include "rs780_dpm.h"
@@ -1001,6 +1007,28 @@ void rs780_dpm_debugfs_print_current_performance_level(struct radeon_device *rde
 			   ps->sclk_high, ps->max_voltage);
 }
 #endif
+
+/* get the current sclk in 10 khz units */
+u32 rs780_dpm_get_current_sclk(struct radeon_device *rdev)
+{
+	u32 current_fb_div = RREG32(FVTHROT_STATUS_REG0) & CURRENT_FEEDBACK_DIV_MASK;
+	u32 func_cntl = RREG32(CG_SPLL_FUNC_CNTL);
+	u32 ref_div = ((func_cntl & SPLL_REF_DIV_MASK) >> SPLL_REF_DIV_SHIFT) + 1;
+	u32 post_div = ((func_cntl & SPLL_SW_HILEN_MASK) >> SPLL_SW_HILEN_SHIFT) + 1 +
+		((func_cntl & SPLL_SW_LOLEN_MASK) >> SPLL_SW_LOLEN_SHIFT) + 1;
+	u32 sclk = (rdev->clock.spll.reference_freq * current_fb_div) /
+		(post_div * ref_div);
+
+	return sclk;
+}
+
+/* get the current mclk in 10 khz units */
+u32 rs780_dpm_get_current_mclk(struct radeon_device *rdev)
+{
+	struct igp_power_info *pi = rs780_get_pi(rdev);
+
+	return pi->bootup_uma_clk;
+}
 
 int rs780_dpm_force_performance_level(struct radeon_device *rdev,
 				      enum radeon_dpm_forced_level level)

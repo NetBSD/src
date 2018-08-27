@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_subdev_timer_base.c,v 1.1.1.1 2018/08/27 01:34:56 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_subdev_timer_base.c,v 1.2 2018/08/27 04:58:35 riastradh Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_timer_base.c,v 1.1.1.1 2018/08/27 01:34:56 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_timer_base.c,v 1.2 2018/08/27 04:58:35 riastradh Exp $");
 
 #include "priv.h"
 
@@ -39,7 +39,7 @@ nvkm_timer_alarm_trigger(struct nvkm_timer *tmr)
 {
 	struct nvkm_alarm *alarm, *atemp;
 	unsigned long flags;
-	LIST_HEAD(exec);
+	struct list_head exec = LIST_HEAD_INIT(exec);
 
 	/* Process pending alarms. */
 	spin_lock_irqsave(&tmr->lock, flags);

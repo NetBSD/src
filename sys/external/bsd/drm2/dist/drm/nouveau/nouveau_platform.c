@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_platform.c,v 1.1.1.1 2018/08/27 01:34:55 riastradh Exp $	*/
+/*	$NetBSD: nouveau_platform.c,v 1.2 2018/08/27 04:58:24 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2014, NVIDIA CORPORATION. All rights reserved.
@@ -22,7 +22,7 @@
  * DEALINGS IN THE SOFTWARE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_platform.c,v 1.1.1.1 2018/08/27 01:34:55 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_platform.c,v 1.2 2018/08/27 04:58:24 riastradh Exp $");
 
 #include "nouveau_platform.h"
 

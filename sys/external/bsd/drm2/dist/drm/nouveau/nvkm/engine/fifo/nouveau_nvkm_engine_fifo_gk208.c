@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_engine_fifo_gk208.c,v 1.1.1.1 2018/08/27 01:34:56 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_engine_fifo_gk208.c,v 1.2 2018/08/27 04:58:31 riastradh Exp $	*/
 
 /*
  * Copyright 2013 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_fifo_gk208.c,v 1.1.1.1 2018/08/27 01:34:56 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_fifo_gk208.c,v 1.2 2018/08/27 04:58:31 riastradh Exp $");
 
 #include "gk104.h"
 #include "changk104.h"

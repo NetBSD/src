@@ -1,4 +1,4 @@
-/*	$NetBSD: qxl_draw.c,v 1.1.1.2 2018/08/27 01:34:56 riastradh Exp $	*/
+/*	$NetBSD: qxl_draw.c,v 1.2 2018/08/27 04:58:35 riastradh Exp $	*/
 
 /*
  * Copyright 2011 Red Hat, Inc.
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qxl_draw.c,v 1.1.1.2 2018/08/27 01:34:56 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qxl_draw.c,v 1.2 2018/08/27 04:58:35 riastradh Exp $");
 
 #include "qxl_drv.h"
 #include "qxl_object.h"

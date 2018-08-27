@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_engine_device_pci.c,v 1.1.1.1 2018/08/27 01:34:56 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_engine_device_pci.c,v 1.2 2018/08/27 04:58:31 riastradh Exp $	*/
 
 /*
  * Copyright 2015 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs <bskeggs@redhat.com>
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_device_pci.c,v 1.1.1.1 2018/08/27 01:34:56 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_device_pci.c,v 1.2 2018/08/27 04:58:31 riastradh Exp $");
 
 #include <core/pci.h>
 #include "priv.h"
@@ -1565,6 +1565,28 @@ nvkm_device_pci(struct nvkm_device *device)
 	return container_of(device, struct nvkm_device_pci, device);
 }
 
+#ifdef __NetBSD__
+static bus_dma_tag_t
+nvkm_device_pci_dma_tag(struct nvkm_device *device)
+{
+	struct nvkm_device_pci *pdev = nvkm_device_pci(device);
+	const struct pci_attach_args *pa = &pdev->pd_pa;
+
+	return pci_dma64_avaliable(pa) ? pa->pa_dmat64 : pa->pa_dmat;
+}
+
+static bus_space_tag_t
+nvkm_device_pci_resource_tag(struct nvkm_device *device, unsigned bar)
+{
+	struct nvkm_device_pci *pdev = nvkm_device_pci(device);
+
+	/* XXX What about I/O BARs?  */
+	KASSERT(PCI_MAPREG_TYPE(pdev->pdev->pd_resources[bar].type) ==
+	    PCI_MAPREG_TYPE_MEM);
+	return pdev->pdev->pd_pa.pa_memt;
+}
+#endif
+
 static resource_size_t
 nvkm_device_pci_resource_addr(struct nvkm_device *device, unsigned bar)
 {
@@ -1617,6 +1639,10 @@ nvkm_device_pci_func = {
 	.dtor = nvkm_device_pci_dtor,
 	.preinit = nvkm_device_pci_preinit,
 	.fini = nvkm_device_pci_fini,
+#ifdef __NetBSD__
+	.dma_tag = nvkm_device_pci_dma_tag,
+	.resource_tag = nvkm_device_pci_resource_tag,
+#endif
 	.resource_addr = nvkm_device_pci_resource_addr,
 	.resource_size = nvkm_device_pci_resource_size,
 	.cpu_coherent = !IS_ENABLED(CONFIG_ARM),
