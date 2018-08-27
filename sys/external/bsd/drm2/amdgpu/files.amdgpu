@@ -1,8 +1,10 @@
-#	$NetBSD: files.amdgpu,v 1.2 2018/08/27 14:10:14 riastradh Exp $
+#	$NetBSD: files.amdgpu,v 1.3 2018/08/27 14:22:31 riastradh Exp $
 
 define	amdgpufbbus	{ }
 device	amdgpu: drmkms, drmkms_pci, drmkms_ttm, amdgpufbbus, firmload
 attach	amdgpu at pci
+
+defflag	opt_amdgpu_cik.h AMDGPU_CIK
 
 device	amdgpufb: amdgpufbbus, drmfb, drmfb_pci, wsemuldisplaydev
 attach	amdgpufb at amdgpufbbus
@@ -29,6 +31,7 @@ file	external/bsd/drm2/dist/drm/amd/amdgpu/../scheduler/amdgpu_sched_fence.c	amd
 #file	external/bsd/drm2/dist/drm/amd/amdgpu/amdgpu_acpi.c	amdgpu
 file	external/bsd/drm2/dist/drm/amd/amdgpu/amdgpu_afmt.c	amdgpu
 file	external/bsd/drm2/dist/drm/amd/amdgpu/amdgpu_amdkfd.c	amdgpu
+file	external/bsd/drm2/dist/drm/amd/amdgpu/amdgpu_amdkfd_gfx_v7.c	amdgpu & AMDGPU_CIK
 file	external/bsd/drm2/dist/drm/amd/amdgpu/amdgpu_amdkfd_gfx_v8.c	amdgpu
 file	external/bsd/drm2/dist/drm/amd/amdgpu/amdgpu_atom.c	amdgpu
 file	external/bsd/drm2/dist/drm/amd/amdgpu/amdgpu_atombios.c	amdgpu
@@ -40,6 +43,11 @@ file	external/bsd/drm2/dist/drm/amd/amdgpu/amdgpu_benchmark.c	amdgpu
 file	external/bsd/drm2/dist/drm/amd/amdgpu/amdgpu_bios.c	amdgpu
 file	external/bsd/drm2/dist/drm/amd/amdgpu/amdgpu_bo_list.c	amdgpu
 file	external/bsd/drm2/dist/drm/amd/amdgpu/amdgpu_cgs.c	amdgpu
+file	external/bsd/drm2/dist/drm/amd/amdgpu/amdgpu_ci_dpm.c	amdgpu & AMDGPU_CIK
+file	external/bsd/drm2/dist/drm/amd/amdgpu/amdgpu_ci_smc.c	amdgpu & AMDGPU_CIK
+file	external/bsd/drm2/dist/drm/amd/amdgpu/amdgpu_cik.c	amdgpu & AMDGPU_CIK
+file	external/bsd/drm2/dist/drm/amd/amdgpu/amdgpu_cik_ih.c	amdgpu & AMDGPU_CIK
+file	external/bsd/drm2/dist/drm/amd/amdgpu/amdgpu_cik_sdma.c	amdgpu & AMDGPU_CIK
 file	external/bsd/drm2/dist/drm/amd/amdgpu/amdgpu_connectors.c	amdgpu
 file	external/bsd/drm2/dist/drm/amd/amdgpu/amdgpu_cs.c	amdgpu
 file	external/bsd/drm2/dist/drm/amd/amdgpu/amdgpu_ctx.c	amdgpu
@@ -48,6 +56,7 @@ file	external/bsd/drm2/dist/drm/amd/amdgpu/amdgpu_cz_ih.c	amdgpu
 file	external/bsd/drm2/dist/drm/amd/amdgpu/amdgpu_cz_smc.c	amdgpu
 file	external/bsd/drm2/dist/drm/amd/amdgpu/amdgpu_dce_v10_0.c	amdgpu
 file	external/bsd/drm2/dist/drm/amd/amdgpu/amdgpu_dce_v11_0.c	amdgpu
+file	external/bsd/drm2/dist/drm/amd/amdgpu/amdgpu_dce_v8_0.c	amdgpu & AMDGPU_CIK
 file	external/bsd/drm2/dist/drm/amd/amdgpu/amdgpu_device.c	amdgpu
 file	external/bsd/drm2/dist/drm/amd/amdgpu/amdgpu_display.c	amdgpu
 file	external/bsd/drm2/dist/drm/amd/amdgpu/amdgpu_dpm.c	amdgpu
@@ -60,6 +69,7 @@ file	external/bsd/drm2/dist/drm/amd/amdgpu/amdgpu_fiji_smc.c	amdgpu
 file	external/bsd/drm2/dist/drm/amd/amdgpu/amdgpu_gart.c	amdgpu
 file	external/bsd/drm2/dist/drm/amd/amdgpu/amdgpu_gem.c	amdgpu
 file	external/bsd/drm2/dist/drm/amd/amdgpu/amdgpu_gfx.c	amdgpu
+file	external/bsd/drm2/dist/drm/amd/amdgpu/amdgpu_gfx_v7_0.c	amdgpu & AMDGPU_CIK
 file	external/bsd/drm2/dist/drm/amd/amdgpu/amdgpu_gfx_v8_0.c	amdgpu
 file	external/bsd/drm2/dist/drm/amd/amdgpu/amdgpu_gmc_v7_0.c	amdgpu
 file	external/bsd/drm2/dist/drm/amd/amdgpu/amdgpu_gmc_v8_0.c	amdgpu
@@ -71,6 +81,8 @@ file	external/bsd/drm2/dist/drm/amd/amdgpu/amdgpu_iceland_smc.c	amdgpu
 file	external/bsd/drm2/dist/drm/amd/amdgpu/amdgpu_ih.c	amdgpu
 file	external/bsd/drm2/dist/drm/amd/amdgpu/amdgpu_irq.c	amdgpu
 file	external/bsd/drm2/dist/drm/amd/amdgpu/amdgpu_kms.c	amdgpu
+file	external/bsd/drm2/dist/drm/amd/amdgpu/amdgpu_kv_dpm.c	amdgpu & AMDGPU_CIK
+file	external/bsd/drm2/dist/drm/amd/amdgpu/amdgpu_kv_smc.c	amdgpu & AMDGPU_CIK
 file	external/bsd/drm2/dist/drm/amd/amdgpu/amdgpu_object.c	amdgpu
 file	external/bsd/drm2/dist/drm/amd/amdgpu/amdgpu_pll.c	amdgpu
 file	external/bsd/drm2/dist/drm/amd/amdgpu/amdgpu_pm.c	amdgpu
@@ -90,9 +102,11 @@ file	external/bsd/drm2/dist/drm/amd/amdgpu/amdgpu_trace_points.c	amdgpu
 file	external/bsd/drm2/dist/drm/amd/amdgpu/amdgpu_ttm.c	amdgpu
 file	external/bsd/drm2/dist/drm/amd/amdgpu/amdgpu_ucode.c	amdgpu
 file	external/bsd/drm2/dist/drm/amd/amdgpu/amdgpu_uvd.c	amdgpu
+file	external/bsd/drm2/dist/drm/amd/amdgpu/amdgpu_uvd_v4_2.c	amdgpu & AMDGPU_CIK
 file	external/bsd/drm2/dist/drm/amd/amdgpu/amdgpu_uvd_v5_0.c	amdgpu
 file	external/bsd/drm2/dist/drm/amd/amdgpu/amdgpu_uvd_v6_0.c	amdgpu
 file	external/bsd/drm2/dist/drm/amd/amdgpu/amdgpu_vce.c	amdgpu
+file	external/bsd/drm2/dist/drm/amd/amdgpu/amdgpu_vce_v2_0.c	amdgpu & AMDGPU_CIK
 file	external/bsd/drm2/dist/drm/amd/amdgpu/amdgpu_vce_v3_0.c	amdgpu
 file	external/bsd/drm2/dist/drm/amd/amdgpu/amdgpu_vi.c	amdgpu
 file	external/bsd/drm2/dist/drm/amd/amdgpu/amdgpu_vm.c	amdgpu

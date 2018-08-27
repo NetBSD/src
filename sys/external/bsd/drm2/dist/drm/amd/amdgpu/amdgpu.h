@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu.h,v 1.3 2018/08/27 14:04:50 riastradh Exp $	*/
+/*	$NetBSD: amdgpu.h,v 1.4 2018/08/27 14:22:31 riastradh Exp $	*/
 
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
@@ -29,6 +29,14 @@
  */
 #ifndef __AMDGPU_H__
 #define __AMDGPU_H__
+
+#ifdef _KERNEL_OPT
+#include "opt_amdgpu_cik.h"
+#endif
+
+#ifdef AMDGPU_CIK
+#define	CONFIG_DRM_AMDGPU_CIK	1
+#endif
 
 #include <linux/atomic.h>
 #include <linux/wait.h>
