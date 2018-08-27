@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_pci_module.c,v 1.4 2015/03/06 01:24:24 riastradh Exp $	*/
+/*	$NetBSD: drm_pci_module.c,v 1.5 2018/08/27 15:10:12 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_pci_module.c,v 1.4 2015/03/06 01:24:24 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_pci_module.c,v 1.5 2018/08/27 15:10:12 riastradh Exp $");
 
 #include <sys/module.h>
 #include <sys/once.h>
@@ -39,6 +39,7 @@ __KERNEL_RCSID(0, "$NetBSD: drm_pci_module.c,v 1.4 2015/03/06 01:24:24 riastradh
 
 MODULE(MODULE_CLASS_MISC, drmkms_pci, "drmkms,pci");
 
+#ifdef CONFIG_AGP
 const struct drm_agp_hooks drmkms_pci_agp_hooks = {
 	.agph_acquire_ioctl = &drm_agp_acquire_ioctl,
 	.agph_release_ioctl = &drm_agp_release_ioctl,
@@ -51,15 +52,18 @@ const struct drm_agp_hooks drmkms_pci_agp_hooks = {
 	.agph_release = &drm_agp_release,
 	.agph_clear = &drm_agp_clear,
 };
+#endif
 
 static int
 drmkms_pci_agp_init(void)
 {
+#ifdef CONFIG_AGP
 	int error;
 
 	error = drm_agp_register(&drmkms_pci_agp_hooks);
 	if (error)
 		return error;
+#endif
 
 	return 0;
 }
@@ -80,7 +84,9 @@ static void
 drmkms_pci_agp_fini(void)
 {
 
+#ifdef CONFIG_AGP
 	drm_agp_deregister(&drmkms_pci_agp_hooks);
+#endif
 }
 
 static int

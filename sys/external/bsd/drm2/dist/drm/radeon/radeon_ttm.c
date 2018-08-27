@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_ttm.c,v 1.13 2018/08/27 07:50:54 riastradh Exp $	*/
+/*	$NetBSD: radeon_ttm.c,v 1.14 2018/08/27 15:10:12 riastradh Exp $	*/
 
 /*
  * Copyright 2009 Jerome Glisse.
@@ -32,7 +32,7 @@
  *    Dave Airlie
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_ttm.c,v 1.13 2018/08/27 07:50:54 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_ttm.c,v 1.14 2018/08/27 15:10:12 riastradh Exp $");
 
 #include <ttm/ttm_bo_api.h>
 #include <ttm/ttm_bo_driver.h>
@@ -744,7 +744,9 @@ static struct radeon_ttm_tt *radeon_ttm_tt_to_gtt(struct ttm_tt *ttm)
 static int radeon_ttm_tt_populate(struct ttm_tt *ttm)
 {
 	struct radeon_ttm_tt *gtt = radeon_ttm_tt_to_gtt(ttm);
+#if !defined(__NetBSD__) || IS_ENABLED(CONFIG_AGP)
 	struct radeon_device *rdev;
+#endif
 #ifndef __NetBSD__
 	unsigned i;
 	int r;
@@ -779,7 +781,9 @@ static int radeon_ttm_tt_populate(struct ttm_tt *ttm)
 #endif
 	}
 
+#if !defined(__NetBSD__) || IS_ENABLED(CONFIG_AGP)
 	rdev = radeon_get_rdev(ttm->bdev);
+#endif
 #if IS_ENABLED(CONFIG_AGP)
 	if (rdev->flags & RADEON_IS_AGP) {
 		return ttm_agp_tt_populate(ttm);
@@ -822,7 +826,9 @@ static int radeon_ttm_tt_populate(struct ttm_tt *ttm)
 
 static void radeon_ttm_tt_unpopulate(struct ttm_tt *ttm)
 {
+#if !defined(__NetBSD__) || IS_ENABLED(CONFIG_AGP)
 	struct radeon_device *rdev;
+#endif
 	struct radeon_ttm_tt *gtt = radeon_ttm_tt_to_gtt(ttm);
 #ifndef __NetBSD__
 	unsigned i;
@@ -838,7 +844,9 @@ static void radeon_ttm_tt_unpopulate(struct ttm_tt *ttm)
 	if (slave)
 		return;
 
+#if !defined(__NetBSD__) || IS_ENABLED(CONFIG_AGP)
 	rdev = radeon_get_rdev(ttm->bdev);
+#endif
 #if IS_ENABLED(CONFIG_AGP)
 	if (rdev->flags & RADEON_IS_AGP) {
 		ttm_agp_tt_unpopulate(ttm);
