@@ -1,3 +1,5 @@
+/*	$NetBSD: rv515.c,v 1.1.1.2 2018/08/27 01:34:59 riastradh Exp $	*/
+
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -25,6 +27,9 @@
  *          Alex Deucher
  *          Jerome Glisse
  */
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: rv515.c,v 1.1.1.2 2018/08/27 01:34:59 riastradh Exp $");
+
 #include <linux/seq_file.h>
 #include <linux/slab.h>
 #include <drm/drmP.h>
@@ -124,7 +129,7 @@ void rv515_ring_start(struct radeon_device *rdev, struct radeon_ring *ring)
 	radeon_ring_write(ring, GEOMETRY_ROUND_NEAREST | COLOR_ROUND_NEAREST);
 	radeon_ring_write(ring, PACKET0(0x20C8, 0));
 	radeon_ring_write(ring, 0);
-	radeon_ring_unlock_commit(rdev, ring);
+	radeon_ring_unlock_commit(rdev, ring, false);
 }
 
 int rv515_mc_wait_for_idle(struct radeon_device *rdev)
@@ -406,8 +411,9 @@ void rv515_mc_resume(struct radeon_device *rdev, struct rv515_mc_save *save)
 	for (i = 0; i < rdev->num_crtc; i++) {
 		if (save->crtc_enabled[i]) {
 			tmp = RREG32(AVIVO_D1MODE_MASTER_UPDATE_MODE + crtc_offsets[i]);
-			if ((tmp & 0x3) != 0) {
-				tmp &= ~0x3;
+			if ((tmp & 0x7) != 3) {
+				tmp &= ~0x7;
+				tmp |= 0x3;
 				WREG32(AVIVO_D1MODE_MASTER_UPDATE_MODE + crtc_offsets[i], tmp);
 			}
 			tmp = RREG32(AVIVO_D1GRPH_UPDATE + crtc_offsets[i]);
@@ -1275,6 +1281,9 @@ void rv515_bandwidth_update(struct radeon_device *rdev)
 	uint32_t tmp;
 	struct drm_display_mode *mode0 = NULL;
 	struct drm_display_mode *mode1 = NULL;
+
+	if (!rdev->mode_info.mode_config_initialized)
+		return;
 
 	radeon_update_display_priority(rdev);
 

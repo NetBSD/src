@@ -1,3 +1,5 @@
+/*	$NetBSD: r100_track.h,v 1.1.1.2 2018/08/27 01:34:58 riastradh Exp $	*/
+
 
 #define R100_TRACK_MAX_TEXTURE 3
 #define R200_TRACK_MAX_TEXTURE 6

@@ -1,3 +1,5 @@
+/*	$NetBSD: nouveau_backlight.c,v 1.1.1.2 2018/08/27 01:34:55 riastradh Exp $	*/
+
 /*
  * Copyright (C) 2009 Red Hat <mjg@redhat.com>
  *
@@ -30,8 +32,10 @@
  * Register locations derived from NVClock by Roderick Colenbrander
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: nouveau_backlight.c,v 1.1.1.2 2018/08/27 01:34:55 riastradh Exp $");
+
 #include <linux/backlight.h>
-#include <linux/acpi.h>
 
 #include "nouveau_drm.h"
 #include "nouveau_reg.h"
@@ -41,8 +45,8 @@ static int
 nv40_get_intensity(struct backlight_device *bd)
 {
 	struct nouveau_drm *drm = bl_get_data(bd);
-	struct nouveau_device *device = nv_device(drm->device);
-	int val = (nv_rd32(device, NV40_PMC_BACKLIGHT) &
+	struct nvif_object *device = &drm->device.object;
+	int val = (nvif_rd32(device, NV40_PMC_BACKLIGHT) &
 				   NV40_PMC_BACKLIGHT_MASK) >> 16;
 
 	return val;
@@ -52,11 +56,11 @@ static int
 nv40_set_intensity(struct backlight_device *bd)
 {
 	struct nouveau_drm *drm = bl_get_data(bd);
-	struct nouveau_device *device = nv_device(drm->device);
+	struct nvif_object *device = &drm->device.object;
 	int val = bd->props.brightness;
-	int reg = nv_rd32(device, NV40_PMC_BACKLIGHT);
+	int reg = nvif_rd32(device, NV40_PMC_BACKLIGHT);
 
-	nv_wr32(device, NV40_PMC_BACKLIGHT,
+	nvif_wr32(device, NV40_PMC_BACKLIGHT,
 		 (val << 16) | (reg & ~NV40_PMC_BACKLIGHT_MASK));
 
 	return 0;
@@ -72,11 +76,11 @@ static int
 nv40_backlight_init(struct drm_connector *connector)
 {
 	struct nouveau_drm *drm = nouveau_drm(connector->dev);
-	struct nouveau_device *device = nv_device(drm->device);
+	struct nvif_object *device = &drm->device.object;
 	struct backlight_properties props;
 	struct backlight_device *bd;
 
-	if (!(nv_rd32(device, NV40_PMC_BACKLIGHT) & NV40_PMC_BACKLIGHT_MASK))
+	if (!(nvif_rd32(device, NV40_PMC_BACKLIGHT) & NV40_PMC_BACKLIGHT_MASK))
 		return 0;
 
 	memset(&props, 0, sizeof(struct backlight_properties));
@@ -98,12 +102,12 @@ nv50_get_intensity(struct backlight_device *bd)
 {
 	struct nouveau_encoder *nv_encoder = bl_get_data(bd);
 	struct nouveau_drm *drm = nouveau_drm(nv_encoder->base.base.dev);
-	struct nouveau_device *device = nv_device(drm->device);
+	struct nvif_object *device = &drm->device.object;
 	int or = nv_encoder->or;
 	u32 div = 1025;
 	u32 val;
 
-	val  = nv_rd32(device, NV50_PDISP_SOR_PWM_CTL(or));
+	val  = nvif_rd32(device, NV50_PDISP_SOR_PWM_CTL(or));
 	val &= NV50_PDISP_SOR_PWM_CTL_VAL;
 	return ((val * 100) + (div / 2)) / div;
 }
@@ -113,12 +117,12 @@ nv50_set_intensity(struct backlight_device *bd)
 {
 	struct nouveau_encoder *nv_encoder = bl_get_data(bd);
 	struct nouveau_drm *drm = nouveau_drm(nv_encoder->base.base.dev);
-	struct nouveau_device *device = nv_device(drm->device);
+	struct nvif_object *device = &drm->device.object;
 	int or = nv_encoder->or;
 	u32 div = 1025;
 	u32 val = (bd->props.brightness * div) / 100;
 
-	nv_wr32(device, NV50_PDISP_SOR_PWM_CTL(or),
+	nvif_wr32(device, NV50_PDISP_SOR_PWM_CTL(or),
 			NV50_PDISP_SOR_PWM_CTL_NEW | val);
 	return 0;
 }
@@ -134,12 +138,12 @@ nva3_get_intensity(struct backlight_device *bd)
 {
 	struct nouveau_encoder *nv_encoder = bl_get_data(bd);
 	struct nouveau_drm *drm = nouveau_drm(nv_encoder->base.base.dev);
-	struct nouveau_device *device = nv_device(drm->device);
+	struct nvif_object *device = &drm->device.object;
 	int or = nv_encoder->or;
 	u32 div, val;
 
-	div  = nv_rd32(device, NV50_PDISP_SOR_PWM_DIV(or));
-	val  = nv_rd32(device, NV50_PDISP_SOR_PWM_CTL(or));
+	div  = nvif_rd32(device, NV50_PDISP_SOR_PWM_DIV(or));
+	val  = nvif_rd32(device, NV50_PDISP_SOR_PWM_CTL(or));
 	val &= NVA3_PDISP_SOR_PWM_CTL_VAL;
 	if (div && div >= val)
 		return ((val * 100) + (div / 2)) / div;
@@ -152,14 +156,14 @@ nva3_set_intensity(struct backlight_device *bd)
 {
 	struct nouveau_encoder *nv_encoder = bl_get_data(bd);
 	struct nouveau_drm *drm = nouveau_drm(nv_encoder->base.base.dev);
-	struct nouveau_device *device = nv_device(drm->device);
+	struct nvif_object *device = &drm->device.object;
 	int or = nv_encoder->or;
 	u32 div, val;
 
-	div = nv_rd32(device, NV50_PDISP_SOR_PWM_DIV(or));
+	div = nvif_rd32(device, NV50_PDISP_SOR_PWM_DIV(or));
 	val = (bd->props.brightness * div) / 100;
 	if (div) {
-		nv_wr32(device, NV50_PDISP_SOR_PWM_CTL(or), val |
+		nvif_wr32(device, NV50_PDISP_SOR_PWM_CTL(or), val |
 				NV50_PDISP_SOR_PWM_CTL_NEW |
 				NVA3_PDISP_SOR_PWM_CTL_UNK);
 		return 0;
@@ -178,7 +182,7 @@ static int
 nv50_backlight_init(struct drm_connector *connector)
 {
 	struct nouveau_drm *drm = nouveau_drm(connector->dev);
-	struct nouveau_device *device = nv_device(drm->device);
+	struct nvif_object *device = &drm->device.object;
 	struct nouveau_encoder *nv_encoder;
 	struct backlight_properties props;
 	struct backlight_device *bd;
@@ -191,12 +195,12 @@ nv50_backlight_init(struct drm_connector *connector)
 			return -ENODEV;
 	}
 
-	if (!nv_rd32(device, NV50_PDISP_SOR_PWM_CTL(nv_encoder->or)))
+	if (!nvif_rd32(device, NV50_PDISP_SOR_PWM_CTL(nv_encoder->or)))
 		return 0;
 
-	if (device->chipset <= 0xa0 ||
-	    device->chipset == 0xaa ||
-	    device->chipset == 0xac)
+	if (drm->device.info.chipset <= 0xa0 ||
+	    drm->device.info.chipset == 0xaa ||
+	    drm->device.info.chipset == 0xac)
 		ops = &nv50_bl_ops;
 	else
 		ops = &nva3_bl_ops;
@@ -219,29 +223,20 @@ int
 nouveau_backlight_init(struct drm_device *dev)
 {
 	struct nouveau_drm *drm = nouveau_drm(dev);
-	struct nouveau_device *device = nv_device(drm->device);
+	struct nvif_device *device = &drm->device;
 	struct drm_connector *connector;
-
-#ifdef CONFIG_ACPI
-	if (acpi_video_backlight_support()) {
-		NV_INFO(drm, "ACPI backlight interface available, "
-			     "not registering our own\n");
-		return 0;
-	}
-#endif
 
 	list_for_each_entry(connector, &dev->mode_config.connector_list, head) {
 		if (connector->connector_type != DRM_MODE_CONNECTOR_LVDS &&
 		    connector->connector_type != DRM_MODE_CONNECTOR_eDP)
 			continue;
 
-		switch (device->card_type) {
-		case NV_40:
+		switch (device->info.family) {
+		case NV_DEVICE_INFO_V0_CURIE:
 			return nv40_backlight_init(connector);
-		case NV_50:
-		case NV_C0:
-		case NV_D0:
-		case NV_E0:
+		case NV_DEVICE_INFO_V0_TESLA:
+		case NV_DEVICE_INFO_V0_FERMI:
+		case NV_DEVICE_INFO_V0_KEPLER:
 			return nv50_backlight_init(connector);
 		default:
 			break;

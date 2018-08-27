@@ -1,3 +1,5 @@
+/*	$NetBSD: uvd_v4_2.c,v 1.1.1.2 2018/08/27 01:34:59 riastradh Exp $	*/
+
 /*
  * Copyright 2013 Advanced Micro Devices, Inc.
  *
@@ -21,6 +23,9 @@
  *
  * Authors: Christian König <christian.koenig@amd.com>
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: uvd_v4_2.c,v 1.1.1.2 2018/08/27 01:34:59 riastradh Exp $");
 
 #include <linux/firmware.h>
 #include <drm/drmP.h>

@@ -1,3 +1,5 @@
+/*	$NetBSD: radeon_mem.c,v 1.1.1.2 2018/08/27 01:34:58 riastradh Exp $	*/
+
 /* radeon_mem.c -- Simple GART/fb memory manager for radeon -*- linux-c -*- */
 /*
  * Copyright (C) The Weather Channel, Inc.  2002.  All Rights Reserved.
@@ -30,6 +32,9 @@
  *
  * ------------------------ This file is DEPRECATED! -------------------------
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: radeon_mem.c,v 1.1.1.2 2018/08/27 01:34:58 riastradh Exp $");
 
 #include <drm/drmP.h>
 #include <drm/radeon_drm.h>
