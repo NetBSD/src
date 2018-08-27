@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_gart.c,v 1.9 2018/08/27 13:56:09 riastradh Exp $	*/
+/*	$NetBSD: radeon_gart.c,v 1.10 2018/08/27 13:56:22 riastradh Exp $	*/
 
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
@@ -28,7 +28,7 @@
  *          Jerome Glisse
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_gart.c,v 1.9 2018/08/27 13:56:09 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_gart.c,v 1.10 2018/08/27 13:56:22 riastradh Exp $");
 
 #include <drm/drmP.h>
 #include <drm/radeon_drm.h>
@@ -286,7 +286,7 @@ radeon_gart_pre_update(struct radeon_device *rdev, unsigned gpu_pgstart,
 
 		bus_dmamap_sync(rdev->ddev->dmat, rdev->gart.rg_table_map,
 		    gpu_pgstart*entsize, gpu_npages*entsize,
-		    BUS_DMASYNC_PREWRITE);
+		    BUS_DMASYNC_POSTWRITE);
 	}
 }
 
@@ -301,7 +301,7 @@ radeon_gart_post_update(struct radeon_device *rdev, unsigned gpu_pgstart,
 
 		bus_dmamap_sync(rdev->ddev->dmat, rdev->gart.rg_table_map,
 		    gpu_pgstart*entsize, gpu_npages*entsize,
-		    BUS_DMASYNC_POSTWRITE);
+		    BUS_DMASYNC_PREWRITE);
 	}
 	if (rdev->gart.ptr != NULL) {
 		membar_sync();		/* XXX overkill */
