@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_work.c,v 1.8 2018/08/27 13:38:32 riastradh Exp $	*/
+/*	$NetBSD: linux_work.c,v 1.9 2018/08/27 13:38:51 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_work.c,v 1.8 2018/08/27 13:38:32 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_work.c,v 1.9 2018/08/27 13:38:51 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -49,13 +49,6 @@ __KERNEL_RCSID(0, "$NetBSD: linux_work.c,v 1.8 2018/08/27 13:38:32 riastradh Exp
 #include <machine/lock.h>
 
 #include <linux/workqueue.h>
-
-/* XXX Kludge until we sync with HEAD.  */
-#if DIAGNOSTIC
-#define	__diagused
-#else
-#define	__diagused	__unused
-#endif
 
 struct workqueue_struct {
 	struct workqueue		*wq_workqueue;
