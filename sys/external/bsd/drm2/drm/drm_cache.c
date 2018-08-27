@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_cache.c,v 1.8 2015/10/17 21:11:56 jmcneill Exp $	*/
+/*	$NetBSD: drm_cache.c,v 1.9 2018/08/27 15:11:46 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_cache.c,v 1.8 2015/10/17 21:11:56 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_cache.c,v 1.9 2018/08/27 15:11:46 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -167,4 +167,48 @@ drm_md_clflush_virt_range(const void *vaddr, size_t nbytes)
 	x86_mfence();
 }
 
-#endif	/* defined(__i386__) || defined(__x86_64__) */
+#elif defined(__powerpc__)
+
+static void
+drm_ppc_dcbf(vaddr_t va, vsize_t off)
+{
+	asm volatile ("dcbf\t%0,%1" : : "b"(va), "r"(off));
+}
+
+static bool
+drm_md_clflush_finegrained_p(void)
+{
+	return true;
+}
+
+static void
+drm_md_clflush_all(void)
+{
+	panic("don't know how to flush entire cache on powerpc");
+}
+
+static void
+drm_md_clflush_page(struct page *page)
+{
+	void *const vaddr = kmap_atomic(page);
+
+	drm_md_clflush_virt_range(vaddr, PAGE_SIZE);
+
+	kunmap_atomic(vaddr);
+}
+
+static void
+drm_md_clflush_virt_range(const void *ptr, size_t nbytes)
+{
+	const unsigned dcsize = curcpu()->ci_ci.dcache_line_size;
+	vaddr_t va = (vaddr_t)ptr;
+	vaddr_t start = rounddown(va, dcsize);
+	vaddr_t end = roundup(va + nbytes, dcsize);
+	vsize_t len = end - start;
+	vsize_t off;
+
+	for (off = 0; off < len; off += dcsize)
+		drm_ppc_dcbf(start, off);
+}
+
+#endif
