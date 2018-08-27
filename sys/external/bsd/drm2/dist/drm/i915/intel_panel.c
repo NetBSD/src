@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_panel.c,v 1.9 2018/08/27 07:26:59 riastradh Exp $	*/
+/*	$NetBSD: intel_panel.c,v 1.10 2018/08/27 07:27:16 riastradh Exp $	*/
 
 /*
  * Copyright © 2006-2010 Intel Corporation
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_panel.c,v 1.9 2018/08/27 07:26:59 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_panel.c,v 1.10 2018/08/27 07:27:16 riastradh Exp $");
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
@@ -550,6 +550,7 @@ static u32 bxt_get_backlight(struct intel_connector *connector)
 	return I915_READ(BXT_BLC_PWM_DUTY(panel->backlight.controller));
 }
 
+#ifndef __NetBSD__		/* XXX mipi */
 static u32 pwm_get_backlight(struct intel_connector *connector)
 {
 	struct intel_panel *panel = &connector->panel;
@@ -558,6 +559,7 @@ static u32 pwm_get_backlight(struct intel_connector *connector)
 	duty_ns = pwm_get_duty_cycle(panel->backlight.pwm);
 	return DIV_ROUND_UP(duty_ns * 100, CRC_PMIC_PWM_PERIOD_NS);
 }
+#endif
 
 #if IS_ENABLED(CONFIG_BACKLIGHT_CLASS_DEVICE)
 static u32 intel_panel_get_backlight(struct intel_connector *connector)
@@ -650,6 +652,7 @@ static void bxt_set_backlight(struct intel_connector *connector, u32 level)
 	I915_WRITE(BXT_BLC_PWM_DUTY(panel->backlight.controller), level);
 }
 
+#ifndef __NetBSD__		/* XXX mipi */
 static void pwm_set_backlight(struct intel_connector *connector, u32 level)
 {
 	struct intel_panel *panel = &connector->panel;
@@ -657,6 +660,7 @@ static void pwm_set_backlight(struct intel_connector *connector, u32 level)
 
 	pwm_config(panel->backlight.pwm, duty_ns, CRC_PMIC_PWM_PERIOD_NS);
 }
+#endif
 
 static void
 intel_panel_actually_set_backlight(struct intel_connector *connector, u32 level)
@@ -669,6 +673,7 @@ intel_panel_actually_set_backlight(struct intel_connector *connector, u32 level)
 	panel->backlight.set(connector, level);
 }
 
+#if IS_ENABLED(CONFIG_BACKLIGHT_CLASS_DEVICE)
 /* set backlight brightness to level in range [0..max], scaling wrt hw min */
 static void intel_panel_set_backlight(struct intel_connector *connector,
 				      u32 user_level, u32 user_max)
@@ -693,6 +698,7 @@ static void intel_panel_set_backlight(struct intel_connector *connector,
 
 	mutex_unlock(&dev_priv->backlight_lock);
 }
+#endif
 
 /* set backlight brightness to level in range [0..max], assuming hw min is
  * respected.
@@ -830,6 +836,7 @@ static void bxt_disable_backlight(struct intel_connector *connector)
 	}
 }
 
+#ifndef __NetBSD__		/* XXX mipi */
 static void pwm_disable_backlight(struct intel_connector *connector)
 {
 	struct intel_panel *panel = &connector->panel;
@@ -839,6 +846,7 @@ static void pwm_disable_backlight(struct intel_connector *connector)
 	usleep_range(2000, 3000);
 	pwm_disable(panel->backlight.pwm);
 }
+#endif
 
 void intel_panel_disable_backlight(struct intel_connector *connector)
 {
@@ -1106,6 +1114,7 @@ static void bxt_enable_backlight(struct intel_connector *connector)
 			pwm_ctl | BXT_BLC_PWM_ENABLE);
 }
 
+#ifndef __NetBSD__		/* XXX mipi */
 static void pwm_enable_backlight(struct intel_connector *connector)
 {
 	struct intel_panel *panel = &connector->panel;
@@ -1113,6 +1122,7 @@ static void pwm_enable_backlight(struct intel_connector *connector)
 	pwm_enable(panel->backlight.pwm);
 	intel_panel_actually_set_backlight(connector, panel->backlight.level);
 }
+#endif
 
 void intel_panel_enable_backlight(struct intel_connector *connector)
 {
@@ -1665,6 +1675,7 @@ bxt_setup_backlight(struct intel_connector *connector, enum i915_pipe unused)
 	return 0;
 }
 
+#ifndef __NetBSD__		/* XXX mipi */
 static int pwm_setup_backlight(struct intel_connector *connector,
 			       enum i915_pipe pipe)
 {
@@ -1747,9 +1758,11 @@ void intel_panel_destroy_backlight(struct drm_connector *connector)
 	struct intel_connector *intel_connector = to_intel_connector(connector);
 	struct intel_panel *panel = &intel_connector->panel;
 
+#ifndef __NetBSD__		/* XXX mipi */
 	/* dispose of the pwm */
 	if (panel->backlight.pwm)
 		pwm_put(panel->backlight.pwm);
+#endif
 
 	panel->backlight.present = false;
 }
@@ -1788,11 +1801,15 @@ intel_panel_init_backlight_funcs(struct intel_panel *panel)
 		panel->backlight.hz_to_pwm = pch_hz_to_pwm;
 	} else if (IS_VALLEYVIEW(dev)) {
 		if (dev_priv->vbt.has_mipi) {
+#ifdef __NetBSD__
+			panic("no muppets supported, sorry");
+#else
 			panel->backlight.setup = pwm_setup_backlight;
 			panel->backlight.enable = pwm_enable_backlight;
 			panel->backlight.disable = pwm_disable_backlight;
 			panel->backlight.set = pwm_set_backlight;
 			panel->backlight.get = pwm_get_backlight;
+#endif
 		} else {
 			panel->backlight.setup = vlv_setup_backlight;
 			panel->backlight.enable = vlv_enable_backlight;
