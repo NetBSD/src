@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_drv.h,v 1.21 2018/08/27 07:26:43 riastradh Exp $	*/
+/*	$NetBSD: i915_drv.h,v 1.22 2018/08/27 07:57:12 riastradh Exp $	*/
 
 /* i915_drv.h -- Private header for the I915 driver -*- linux-c -*-
  */
@@ -2712,9 +2712,9 @@ extern int i915_max_ioctl;
 extern int i915_suspend_switcheroo(struct drm_device *dev, pm_message_t state);
 extern int i915_resume_switcheroo(struct drm_device *dev);
 
-extern int i915_drm_freeze(struct drm_device *dev);
-extern int i915_drm_thaw_early(struct drm_device *dev);
-extern int i915_drm_thaw(struct drm_device *dev);
+extern int i915_drm_suspend(struct drm_device *dev);
+extern int i915_drm_resume_early(struct drm_device *dev);
+extern int i915_drm_resume(struct drm_device *dev);
 
 /* i915_params.c */
 struct i915_params {
