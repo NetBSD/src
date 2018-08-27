@@ -1,4 +1,4 @@
-/*	$NetBSD: ttm_bo_util.c,v 1.9 2018/08/27 07:45:12 riastradh Exp $	*/
+/*	$NetBSD: ttm_bo_util.c,v 1.10 2018/08/27 07:45:23 riastradh Exp $	*/
 
 /**************************************************************************
  *
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ttm_bo_util.c,v 1.9 2018/08/27 07:45:12 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ttm_bo_util.c,v 1.10 2018/08/27 07:45:23 riastradh Exp $");
 
 #include <drm/ttm/ttm_bo_driver.h>
 #include <drm/ttm/ttm_placement.h>
@@ -536,7 +536,7 @@ static int ttm_buffer_object_transfer(struct ttm_buffer_object *bo,
 #ifdef __NetBSD__
 	linux_mutex_init(&fbo->wu_mutex);
 	drm_vma_node_init(&fbo->vma_node);
-	uvm_obj_init(&fbo->uvmobj, bdev->driver->ttm_uvm_ops, true, 1);
+	uvm_obj_init(&fbo->uvmobj, bo->bdev->driver->ttm_uvm_ops, true, 1);
 	mutex_obj_hold(bo->uvmobj.vmobjlock);
 	uvm_obj_setlock(&fbo->uvmobj, bo->uvmobj.vmobjlock);
 #else
