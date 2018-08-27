@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_agpsupport.h,v 1.6 2018/08/27 04:58:37 riastradh Exp $	*/
+/*	$NetBSD: drm_agpsupport.h,v 1.7 2018/08/27 07:44:52 riastradh Exp $	*/
 
 #ifndef _DRM_AGPSUPPORT_H_
 #define _DRM_AGPSUPPORT_H_
@@ -10,6 +10,10 @@
 #include <linux/mutex.h>
 #include <linux/types.h>
 #include <uapi/drm/drm.h>
+
+#ifdef __NetBSD__
+#include <drm/drm_agp_netbsd.h>
+#endif
 
 struct drm_device;
 struct drm_file;
