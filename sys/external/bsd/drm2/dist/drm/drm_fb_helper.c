@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_fb_helper.c,v 1.10 2018/08/27 07:54:41 riastradh Exp $	*/
+/*	$NetBSD: drm_fb_helper.c,v 1.11 2018/08/27 13:36:13 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2006-2009 Red Hat Inc.
@@ -30,7 +30,7 @@
  *      Jesse Barnes <jesse.barnes@intel.com>
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_fb_helper.c,v 1.10 2018/08/27 07:54:41 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_fb_helper.c,v 1.11 2018/08/27 13:36:13 riastradh Exp $");
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
@@ -1262,18 +1262,7 @@ int drm_fb_helper_set_par(struct fb_info *info)
 	return 0;
 }
 EXPORT_SYMBOL(drm_fb_helper_set_par);
-#endif
 
-/* XXX Temporary -- just use drm_fb_helper_restore_fbdev_mode_unlocked.  */
-int
-drm_fb_helper_set_config(struct drm_fb_helper *fb_helper)
-{
-
-	drm_fb_helper_restore_fbdev_mode_unlocked(fb_helper);
-	return 0;
-}
-
-#ifndef __NetBSD__		/* XXX fb info */
 static int pan_display_atomic(struct fb_var_screeninfo *var,
 			      struct fb_info *info)
 {
