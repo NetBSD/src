@@ -1,4 +1,4 @@
-/*	$NetBSD: r128_drv.c,v 1.1.1.3 2018/08/27 01:34:56 riastradh Exp $	*/
+/*	$NetBSD: r128_drv.c,v 1.2 2018/08/27 04:58:35 riastradh Exp $	*/
 
 /* r128_drv.c -- ATI Rage 128 driver -*- linux-c -*-
  * Created: Mon Dec 13 09:47:27 1999 by faith@precisioninsight.com
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: r128_drv.c,v 1.1.1.3 2018/08/27 01:34:56 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: r128_drv.c,v 1.2 2018/08/27 04:58:35 riastradh Exp $");
 
 #include <linux/module.h>
 

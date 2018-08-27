@@ -1,4 +1,4 @@
-/*	$NetBSD: intel-gtt.h,v 1.1.1.2 2018/08/27 01:35:00 riastradh Exp $	*/
+/*	$NetBSD: intel-gtt.h,v 1.2 2018/08/27 04:58:38 riastradh Exp $	*/
 
 /* Common header for intel-gtt.ko and i915.ko */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_subdev_instmem_base.c,v 1.1.1.1 2018/08/27 01:34:56 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_subdev_instmem_base.c,v 1.2 2018/08/27 04:58:34 riastradh Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_instmem_base.c,v 1.1.1.1 2018/08/27 01:34:56 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_instmem_base.c,v 1.2 2018/08/27 04:58:34 riastradh Exp $");
 
 #include "priv.h"
 
@@ -79,6 +79,39 @@ nvkm_instobj_acquire(struct nvkm_memory *memory)
 	return nvkm_instobj(memory)->map;
 }
 
+#ifdef __NetBSD__
+
+/*
+ * XXX I think this should be done with bus_space, but the depth of
+ * abstractions is dizzying and I'm not actually sure where these
+ * pointers come from.
+ */
+
+#  define	__iomem
+#  define	ioread32_native		fake_ioread32_native
+#  define	iowrite32_native	fake_iowrite32_native
+
+static inline uint32_t
+fake_ioread32_native(const void __iomem *ptr)
+{
+	uint32_t v;
+
+	v = *(const uint32_t __iomem *)ptr;
+	membar_consumer();
+
+	return v;
+}
+
+static inline void
+fake_iowrite32_native(uint32_t v, void __iomem *ptr)
+{
+
+	membar_producer();
+	*(uint32_t __iomem *)ptr = v;
+}
+
+#endif
+
 static u32
 nvkm_instobj_rd32(struct nvkm_memory *memory, u64 offset)
 {
@@ -90,6 +123,11 @@ nvkm_instobj_wr32(struct nvkm_memory *memory, u64 offset, u32 data)
 {
 	iowrite32_native(data, nvkm_instobj(memory)->map + offset);
 }
+
+#ifdef __NetBSD__
+#  undef	ioread32_native
+#  undef	iowrite32_native
+#endif
 
 static void
 nvkm_instobj_map(struct nvkm_memory *memory, struct nvkm_vma *vma, u64 offset)

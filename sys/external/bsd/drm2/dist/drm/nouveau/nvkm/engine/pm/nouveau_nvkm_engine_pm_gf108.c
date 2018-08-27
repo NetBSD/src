@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_engine_pm_gf108.c,v 1.1.1.1 2018/08/27 01:34:56 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_engine_pm_gf108.c,v 1.2 2018/08/27 04:58:32 riastradh Exp $	*/
 
 /*
  * Copyright 2015 Samuel Pitoiset
@@ -24,7 +24,7 @@
  * Authors: Samuel Pitoiset
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_pm_gf108.c,v 1.1.1.1 2018/08/27 01:34:56 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_pm_gf108.c,v 1.2 2018/08/27 04:58:32 riastradh Exp $");
 
 #include "gf100.h"
 

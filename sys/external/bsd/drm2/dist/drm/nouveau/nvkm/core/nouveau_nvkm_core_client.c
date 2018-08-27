@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_core_client.c,v 1.1.1.1 2018/08/27 01:36:13 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_core_client.c,v 1.2 2018/08/27 04:58:30 riastradh Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_core_client.c,v 1.1.1.1 2018/08/27 01:36:13 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_core_client.c,v 1.2 2018/08/27 04:58:30 riastradh Exp $");
 
 #include <core/client.h>
 #include <core/device.h>
@@ -118,7 +118,7 @@ nvkm_client_notify_new(struct nvkm_object *object,
 	nvif_ioctl(object, "notify new size %d\n", size);
 	if (nvif_unpack(req->v0, 0, 0, true)) {
 		nvif_ioctl(object, "notify new vers %d reply %d route %02x "
-				   "token %llx\n", req->v0.version,
+				   "token %"PRIx64"", req->v0.version,
 			   req->v0.reply, req->v0.route, req->v0.token);
 		notify->version = req->v0.version;
 		notify->size = sizeof(notify->rep.v0);

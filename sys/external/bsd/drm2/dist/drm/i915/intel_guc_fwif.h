@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_guc_fwif.h,v 1.1.1.1 2018/08/27 01:34:55 riastradh Exp $	*/
+/*	$NetBSD: intel_guc_fwif.h,v 1.2 2018/08/27 04:58:24 riastradh Exp $	*/
 
 /*
  * Copyright © 2014 Intel Corporation

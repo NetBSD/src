@@ -1,3 +1,5 @@
+/*	$NetBSD: btc_dpm.c,v 1.3 2018/08/27 04:58:35 riastradh Exp $	*/
+
 /*
  * Copyright 2011 Advanced Micro Devices, Inc.
  *
@@ -21,6 +23,9 @@
  *
  * Authors: Alex Deucher
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: btc_dpm.c,v 1.3 2018/08/27 04:58:35 riastradh Exp $");
 
 #include "drmP.h"
 #include "radeon.h"
@@ -2100,7 +2105,6 @@ static void btc_apply_state_adjust_rules(struct radeon_device *rdev,
 	bool disable_mclk_switching;
 	u32 mclk, sclk;
 	u16 vddc, vddci;
-	u32 max_sclk_vddc, max_mclk_vddci, max_mclk_vddc;
 
 	if ((rdev->pm.dpm.new_active_crtc_count > 1) ||
 	    btc_dpm_vblank_too_short(rdev))
@@ -2140,39 +2144,6 @@ static void btc_apply_state_adjust_rules(struct radeon_device *rdev,
 			ps->low.vddc = max_limits->vddc;
 		if (ps->low.vddci > max_limits->vddci)
 			ps->low.vddci = max_limits->vddci;
-	}
-
-	/* limit clocks to max supported clocks based on voltage dependency tables */
-	btc_get_max_clock_from_voltage_dependency_table(&rdev->pm.dpm.dyn_state.vddc_dependency_on_sclk,
-							&max_sclk_vddc);
-	btc_get_max_clock_from_voltage_dependency_table(&rdev->pm.dpm.dyn_state.vddci_dependency_on_mclk,
-							&max_mclk_vddci);
-	btc_get_max_clock_from_voltage_dependency_table(&rdev->pm.dpm.dyn_state.vddc_dependency_on_mclk,
-							&max_mclk_vddc);
-
-	if (max_sclk_vddc) {
-		if (ps->low.sclk > max_sclk_vddc)
-			ps->low.sclk = max_sclk_vddc;
-		if (ps->medium.sclk > max_sclk_vddc)
-			ps->medium.sclk = max_sclk_vddc;
-		if (ps->high.sclk > max_sclk_vddc)
-			ps->high.sclk = max_sclk_vddc;
-	}
-	if (max_mclk_vddci) {
-		if (ps->low.mclk > max_mclk_vddci)
-			ps->low.mclk = max_mclk_vddci;
-		if (ps->medium.mclk > max_mclk_vddci)
-			ps->medium.mclk = max_mclk_vddci;
-		if (ps->high.mclk > max_mclk_vddci)
-			ps->high.mclk = max_mclk_vddci;
-	}
-	if (max_mclk_vddc) {
-		if (ps->low.mclk > max_mclk_vddc)
-			ps->low.mclk = max_mclk_vddc;
-		if (ps->medium.mclk > max_mclk_vddc)
-			ps->medium.mclk = max_mclk_vddc;
-		if (ps->high.mclk > max_mclk_vddc)
-			ps->high.mclk = max_mclk_vddc;
 	}
 
 	/* XXX validate the min clocks required for display */
@@ -2311,6 +2282,7 @@ static void btc_update_requested_ps(struct radeon_device *rdev,
 	eg_pi->requested_rps.ps_priv = &eg_pi->requested_ps;
 }
 
+#if 0
 void btc_dpm_reset_asic(struct radeon_device *rdev)
 {
 	rv770_restrict_performance_levels_before_switch(rdev);
@@ -2318,6 +2290,7 @@ void btc_dpm_reset_asic(struct radeon_device *rdev)
 	btc_set_boot_state_timing(rdev);
 	rv770_set_boot_state(rdev);
 }
+#endif
 
 int btc_dpm_pre_set_power_state(struct radeon_device *rdev)
 {
@@ -2784,13 +2757,54 @@ void btc_dpm_debugfs_print_current_performance_level(struct radeon_device *rdev,
 		else /* current_index == 2 */
 			pl = &ps->high;
 		seq_printf(m, "uvd    vclk: %d dclk: %d\n", rps->vclk, rps->dclk);
-		if (rdev->family >= CHIP_CEDAR) {
-			seq_printf(m, "power level %d    sclk: %u mclk: %u vddc: %u vddci: %u\n",
-				   current_index, pl->sclk, pl->mclk, pl->vddc, pl->vddci);
-		} else {
-			seq_printf(m, "power level %d    sclk: %u mclk: %u vddc: %u\n",
-				   current_index, pl->sclk, pl->mclk, pl->vddc);
-		}
+		seq_printf(m, "power level %d    sclk: %u mclk: %u vddc: %u vddci: %u\n",
+			   current_index, pl->sclk, pl->mclk, pl->vddc, pl->vddci);
+	}
+}
+
+u32 btc_dpm_get_current_sclk(struct radeon_device *rdev)
+{
+	struct evergreen_power_info *eg_pi = evergreen_get_pi(rdev);
+	struct radeon_ps *rps = &eg_pi->current_rps;
+	struct rv7xx_ps *ps = rv770_get_ps(rps);
+	struct rv7xx_pl *pl;
+	u32 current_index =
+		(RREG32(TARGET_AND_CURRENT_PROFILE_INDEX) & CURRENT_PROFILE_INDEX_MASK) >>
+		CURRENT_PROFILE_INDEX_SHIFT;
+
+	if (current_index > 2) {
+		return 0;
+	} else {
+		if (current_index == 0)
+			pl = &ps->low;
+		else if (current_index == 1)
+			pl = &ps->medium;
+		else /* current_index == 2 */
+			pl = &ps->high;
+		return pl->sclk;
+	}
+}
+
+u32 btc_dpm_get_current_mclk(struct radeon_device *rdev)
+{
+	struct evergreen_power_info *eg_pi = evergreen_get_pi(rdev);
+	struct radeon_ps *rps = &eg_pi->current_rps;
+	struct rv7xx_ps *ps = rv770_get_ps(rps);
+	struct rv7xx_pl *pl;
+	u32 current_index =
+		(RREG32(TARGET_AND_CURRENT_PROFILE_INDEX) & CURRENT_PROFILE_INDEX_MASK) >>
+		CURRENT_PROFILE_INDEX_SHIFT;
+
+	if (current_index > 2) {
+		return 0;
+	} else {
+		if (current_index == 0)
+			pl = &ps->low;
+		else if (current_index == 1)
+			pl = &ps->medium;
+		else /* current_index == 2 */
+			pl = &ps->high;
+		return pl->mclk;
 	}
 }
 #endif

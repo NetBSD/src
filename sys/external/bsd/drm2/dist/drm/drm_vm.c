@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_vm.c,v 1.1.1.3 2018/08/27 01:34:43 riastradh Exp $	*/
+/*	$NetBSD: drm_vm.c,v 1.2 2018/08/27 04:58:19 riastradh Exp $	*/
 
 /**
  * \file drm_vm.c
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_vm.c,v 1.1.1.3 2018/08/27 01:34:43 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_vm.c,v 1.2 2018/08/27 04:58:19 riastradh Exp $");
 
 #include <drm/drmP.h>
 #include <linux/export.h>

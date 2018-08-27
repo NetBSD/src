@@ -1,4 +1,4 @@
-/*	$NetBSD: savage_state.c,v 1.1.1.3 2018/08/27 01:34:59 riastradh Exp $	*/
+/*	$NetBSD: savage_state.c,v 1.2 2018/08/27 04:58:36 riastradh Exp $	*/
 
 /* savage_state.c -- State and drawing support for Savage
  *
@@ -25,7 +25,7 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: savage_state.c,v 1.1.1.3 2018/08/27 01:34:59 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: savage_state.c,v 1.2 2018/08/27 04:58:36 riastradh Exp $");
 
 #include <drm/drmP.h>
 #include <drm/savage_drm.h>

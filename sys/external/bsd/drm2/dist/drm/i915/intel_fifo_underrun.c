@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_fifo_underrun.c,v 1.1.1.1 2018/08/27 01:34:55 riastradh Exp $	*/
+/*	$NetBSD: intel_fifo_underrun.c,v 1.2 2018/08/27 04:58:24 riastradh Exp $	*/
 
 /*
  * Copyright © 2014 Intel Corporation
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_fifo_underrun.c,v 1.1.1.1 2018/08/27 01:34:55 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_fifo_underrun.c,v 1.2 2018/08/27 04:58:24 riastradh Exp $");
 
 #include "i915_drv.h"
 #include "intel_drv.h"
@@ -57,7 +57,7 @@ static bool ivb_can_enable_err_int(struct drm_device *dev)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	struct intel_crtc *crtc;
-	enum pipe pipe;
+	enum i915_pipe pipe;
 
 	assert_spin_locked(&dev_priv->irq_lock);
 
@@ -74,7 +74,7 @@ static bool ivb_can_enable_err_int(struct drm_device *dev)
 static bool cpt_can_enable_serr_int(struct drm_device *dev)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
-	enum pipe pipe;
+	enum i915_pipe pipe;
 	struct intel_crtc *crtc;
 
 	assert_spin_locked(&dev_priv->irq_lock);
@@ -124,7 +124,7 @@ void i9xx_check_fifo_underruns(struct drm_i915_private *dev_priv)
 }
 
 static void i9xx_set_fifo_underrun_reporting(struct drm_device *dev,
-					     enum pipe pipe,
+					     enum i915_pipe pipe,
 					     bool enable, bool old)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
@@ -143,7 +143,7 @@ static void i9xx_set_fifo_underrun_reporting(struct drm_device *dev,
 }
 
 static void ironlake_set_fifo_underrun_reporting(struct drm_device *dev,
-						 enum pipe pipe, bool enable)
+						 enum i915_pipe pipe, bool enable)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	uint32_t bit = (pipe == PIPE_A) ? DE_PIPEA_FIFO_UNDERRUN :
@@ -156,7 +156,7 @@ static void ironlake_set_fifo_underrun_reporting(struct drm_device *dev,
 }
 
 static void ivybridge_set_fifo_underrun_reporting(struct drm_device *dev,
-						  enum pipe pipe,
+						  enum i915_pipe pipe,
 						  bool enable, bool old)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
@@ -179,7 +179,7 @@ static void ivybridge_set_fifo_underrun_reporting(struct drm_device *dev,
 }
 
 static void broadwell_set_fifo_underrun_reporting(struct drm_device *dev,
-						  enum pipe pipe, bool enable)
+						  enum i915_pipe pipe, bool enable)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
 
@@ -233,7 +233,7 @@ static void cpt_set_fifo_underrun_reporting(struct drm_device *dev,
 }
 
 static bool __intel_set_cpu_fifo_underrun_reporting(struct drm_device *dev,
-						    enum pipe pipe, bool enable)
+						    enum i915_pipe pipe, bool enable)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	struct drm_crtc *crtc = dev_priv->pipe_to_crtc_mapping[pipe];
@@ -274,7 +274,7 @@ static bool __intel_set_cpu_fifo_underrun_reporting(struct drm_device *dev,
  * Returns the previous state of underrun reporting.
  */
 bool intel_set_cpu_fifo_underrun_reporting(struct drm_i915_private *dev_priv,
-					   enum pipe pipe, bool enable)
+					   enum i915_pipe pipe, bool enable)
 {
 	unsigned long flags;
 	bool ret;
@@ -345,7 +345,7 @@ bool intel_set_pch_fifo_underrun_reporting(struct drm_i915_private *dev_priv,
  * interrupt to avoid an irq storm.
  */
 void intel_cpu_fifo_underrun_irq_handler(struct drm_i915_private *dev_priv,
-					 enum pipe pipe)
+					 enum i915_pipe pipe)
 {
 	struct drm_crtc *crtc = dev_priv->pipe_to_crtc_mapping[pipe];
 

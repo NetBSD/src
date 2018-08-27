@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_sdvo_regs.h,v 1.1.1.3 2018/08/27 01:34:55 riastradh Exp $	*/
+/*	$NetBSD: intel_sdvo_regs.h,v 1.2 2018/08/27 04:58:24 riastradh Exp $	*/
 
 /*
  * Copyright © 2006-2007 Intel Corporation
