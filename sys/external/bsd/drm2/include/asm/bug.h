@@ -1,4 +1,4 @@
-/*	$NetBSD: bug.h,v 1.3 2018/08/27 06:18:30 riastradh Exp $	*/
+/*	$NetBSD: bug.h,v 1.4 2018/08/27 06:19:16 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -40,6 +40,8 @@
 
 #define	BUILD_BUG()		do {} while (0)
 #define	BUILD_BUG_ON(CONDITION)	CTASSERT(!(CONDITION))
+#define	BUILD_BUG_ON_MSG(CONDITION,MSG)	CTASSERT(!(CONDITION))
+
 
 /* XXX Rate limit?  */
 #define WARN(CONDITION, FMT, ...)					\
