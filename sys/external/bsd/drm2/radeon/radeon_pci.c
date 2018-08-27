@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_pci.c,v 1.12 2018/08/27 14:11:46 riastradh Exp $	*/
+/*	$NetBSD: radeon_pci.c,v 1.13 2018/08/27 14:12:14 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_pci.c,v 1.12 2018/08/27 14:11:46 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_pci.c,v 1.13 2018/08/27 14:12:14 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "vga.h"
@@ -291,7 +291,8 @@ radeon_detach(device_t self, int flags)
 		return error;
 	sc->sc_drm_dev = NULL;
 
-out:	pmf_device_deregister(self);
+out:	linux_pci_dev_destroy(&sc->sc_pci_dev);
+	pmf_device_deregister(self);
 
 	return 0;
 }
