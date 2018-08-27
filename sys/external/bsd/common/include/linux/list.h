@@ -1,4 +1,4 @@
-/*	$NetBSD: list.h,v 1.16 2018/08/27 07:51:49 riastradh Exp $	*/
+/*	$NetBSD: list.h,v 1.17 2018/08/27 13:56:46 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -281,7 +281,14 @@ list_del_init(struct list_head *node)
 #define	hlist_empty(h)	(pslist_writer_first(h) == NULL)
 #define	hlist_first	pslist_writer_first
 #define	hlist_next	pslist_writer_next
-#define	hlist_add_head(n, h)	pslist_writer_insert_head(h, n)
+
+static inline void
+hlist_add_head(struct hlist_node *node, struct hlist_head *head)
+{
+
+	pslist_entry_init(node);
+	pslist_writer_insert_head(head, node);
+}
 
 static inline void
 hlist_del(struct hlist_node *node)
@@ -325,9 +332,23 @@ hlist_del_init(struct hlist_node *node)
 		    ((NEXT) = hlist_next(&(VAR)->FIELD), 1));		      \
 	        (VAR) = hlist_entry((NEXT), typeof(*(VAR)), FIELD))
 
-#define	hlist_add_behind_rcu(n, p)	pslist_writer_insert_after(p, n)
-#define	hlist_add_head_rcu(n, h)	pslist_writer_insert_head(h, n)
-#define	hlist_del_init_rcu		hlist_del_init /* no special needs */
+static inline void
+hlist_add_behind_rcu(struct hlist_node *node, struct hlist_node *prev)
+{
+
+	pslist_entry_init(node);
+	pslist_writer_insert_after(prev, node);
+}
+
+static inline void
+hlist_add_head_rcu(struct hlist_node *node, struct hlist_head *head)
+{
+
+	pslist_entry_init(node);
+	pslist_writer_insert_head(head, node);
+}
+
+#define	hlist_del_init_rcu	hlist_del_init /* no special needs */
 
 #define	hlist_first_rcu		pslist_reader_first
 #define	hlist_next_rcu		pslist_reader_next
