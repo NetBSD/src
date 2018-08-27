@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma_hacks.h,v 1.12 2018/08/27 15:26:50 riastradh Exp $	*/
+/*	$NetBSD: bus_dma_hacks.h,v 1.13 2018/08/27 15:27:28 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -112,48 +112,6 @@ fail1: __unused
 	bus_dmamap_unload(tag, map);
 fail0:	KASSERT(error);
 out:	kmem_free(segs, (nsegs * sizeof(segs[0])));
-	return error;
-}
-
-static inline int
-bus_dmamap_load_pgarray(bus_dma_tag_t tag, bus_dmamap_t map,
-    struct vm_page **pgs, unsigned npgs, bus_size_t size, int flags)
-{
-	km_flag_t kmflags;
-	bus_dma_segment_t *segs;
-	unsigned i;
-	int error;
-
-	KASSERT((int)npgs <= (SIZE_MAX / sizeof(segs[0])));
-	switch (flags & (BUS_DMA_WAITOK|BUS_DMA_NOWAIT)) {
-	case BUS_DMA_WAITOK:	kmflags = KM_SLEEP;	break;
-	case BUS_DMA_NOWAIT:	kmflags = KM_NOSLEEP;	break;
-	default:		panic("invalid flags: %d", flags);
-	}
-	segs = kmem_alloc((npgs * sizeof(segs[0])), kmflags);
-	if (segs == NULL)
-		return ENOMEM;
-
-	for (i = 0; i < npgs; i++) {
-		paddr_t paddr = VM_PAGE_TO_PHYS(pgs[i]);
-		bus_addr_t baddr = PHYS_TO_BUS_MEM(tag, paddr);
-
-		segs[i].ds_addr = baddr;
-		segs[i].ds_len = PAGE_SIZE;
-	}
-
-	error = bus_dmamap_load_raw(tag, map, segs, npgs, size, flags);
-	if (error)
-		goto fail0;
-
-	/* Success!  */
-	error = 0;
-	goto out;
-
-fail1: __unused
-	bus_dmamap_unload(tag, map);
-fail0:	KASSERT(error);
-out:	kmem_free(segs, (npgs * sizeof(segs[0])));
 	return error;
 }
 
