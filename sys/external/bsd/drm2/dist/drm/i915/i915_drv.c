@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_drv.c,v 1.10 2018/08/27 07:04:22 riastradh Exp $	*/
+/*	$NetBSD: i915_drv.c,v 1.11 2018/08/27 07:04:44 riastradh Exp $	*/
 
 /* i915_drv.c -- i830,i845,i855,i865,i915 driver -*- linux-c -*-
  */
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_drv.c,v 1.10 2018/08/27 07:04:22 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_drv.c,v 1.11 2018/08/27 07:04:44 riastradh Exp $");
 
 #include <linux/device.h>
 #include <linux/acpi.h>
@@ -1032,6 +1032,7 @@ i915_pci_remove(struct pci_dev *pdev)
 
 	drm_put_dev(dev);
 }
+#endif
 
 #ifndef __NetBSD__
 static int i915_pm_suspend(struct device *dev)
@@ -1514,6 +1515,7 @@ static int vlv_resume_prepare(struct drm_i915_private *dev_priv,
 	return ret;
 }
 
+#ifndef __NetBSD__		/* XXX runtime pm */
 static int intel_runtime_suspend(struct device *device)
 {
 	struct pci_dev *pdev = to_pci_dev(device);
@@ -1654,8 +1656,7 @@ static int intel_runtime_resume(struct device *device)
 
 	return ret;
 }
-
-#endif	/* __NetBSD__ */
+#endif
 
 /*
  * This function implements common functionality of runtime and system
