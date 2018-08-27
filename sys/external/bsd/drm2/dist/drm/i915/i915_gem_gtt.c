@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem_gtt.c,v 1.7 2018/08/27 06:33:21 riastradh Exp $	*/
+/*	$NetBSD: i915_gem_gtt.c,v 1.8 2018/08/27 06:33:34 riastradh Exp $	*/
 
 /*
  * Copyright © 2010 Daniel Vetter
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gem_gtt.c,v 1.7 2018/08/27 06:33:21 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gem_gtt.c,v 1.8 2018/08/27 06:33:34 riastradh Exp $");
 
 #include <linux/err.h>
 #include <linux/seq_file.h>
@@ -1606,7 +1606,6 @@ free_scratch:
 	gen8_free_scratch(&ppgtt->base);
 	return ret;
 }
-#endif
 
 #ifndef __NetBSD__
 static void gen6_dump_ppgtt(struct i915_hw_ppgtt *ppgtt, struct seq_file *m)
