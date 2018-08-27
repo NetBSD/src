@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_atomic64.c,v 1.1 2018/08/27 15:08:54 riastradh Exp $	*/
+/*	$NetBSD: linux_atomic64.c,v 1.2 2018/08/27 15:10:53 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_atomic64.c,v 1.1 2018/08/27 15:08:54 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_atomic64.c,v 1.2 2018/08/27 15:10:53 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/bitops.h>
@@ -147,7 +147,7 @@ atomic64_set(struct atomic64 *a, uint64_t value)
 }
 
 void
-atomic64_add(long long delta, struct atomic64 *a)
+atomic64_add(int64_t delta, struct atomic64 *a)
 {
 
 	atomic64_lock(a);
@@ -156,7 +156,7 @@ atomic64_add(long long delta, struct atomic64 *a)
 }
 
 void
-atomic64_sub(long long delta, struct atomic64 *a)
+atomic64_sub(int64_t delta, struct atomic64 *a)
 {
 
 	atomic64_lock(a);
