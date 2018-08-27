@@ -1,4 +1,4 @@
-/*	$NetBSD: fiji_dpm.c,v 1.3 2018/08/27 14:04:50 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_tonga_dpm.c,v 1.1 2018/08/27 14:10:14 riastradh Exp $	*/
 
 /*
  * Copyright 2014 Advanced Micro Devices, Inc.
@@ -24,32 +24,31 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fiji_dpm.c,v 1.3 2018/08/27 14:04:50 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_tonga_dpm.c,v 1.1 2018/08/27 14:10:14 riastradh Exp $");
 
 #include <linux/firmware.h>
 #include <linux/module.h>
 #include "drmP.h"
 #include "amdgpu.h"
-#include "fiji_smumgr.h"
+#include "tonga_smumgr.h"
 
-MODULE_FIRMWARE("amdgpu/fiji_smc.bin");
+MODULE_FIRMWARE("amdgpu/tonga_smc.bin");
 
-static void fiji_dpm_set_funcs(struct amdgpu_device *adev);
+static void tonga_dpm_set_funcs(struct amdgpu_device *adev);
 
-static int fiji_dpm_early_init(void *handle)
+static int tonga_dpm_early_init(void *handle)
 {
 	struct amdgpu_device *adev = (struct amdgpu_device *)handle;
 
-	fiji_dpm_set_funcs(adev);
+	tonga_dpm_set_funcs(adev);
 
 	return 0;
 }
 
-static int fiji_dpm_init_microcode(struct amdgpu_device *adev)
+static int tonga_dpm_init_microcode(struct amdgpu_device *adev)
 {
-	char fw_name[30] = "amdgpu/fiji_smc.bin";
+	char fw_name[30] = "amdgpu/tonga_smc.bin";
 	int err;
-
 	err = request_firmware(&adev->pm.fw, fw_name, adev->dev);
 	if (err)
 		goto out;
@@ -64,37 +63,41 @@ out:
 	return err;
 }
 
-static int fiji_dpm_sw_init(void *handle)
+static int tonga_dpm_sw_init(void *handle)
 {
 	int ret;
 	struct amdgpu_device *adev = (struct amdgpu_device *)handle;
 
-	ret = fiji_dpm_init_microcode(adev);
+	ret = tonga_dpm_init_microcode(adev);
 	if (ret)
 		return ret;
 
 	return 0;
 }
 
-static int fiji_dpm_sw_fini(void *handle)
+static int tonga_dpm_sw_fini(void *handle)
 {
 	return 0;
 }
 
-static int fiji_dpm_hw_init(void *handle)
+static int tonga_dpm_hw_init(void *handle)
 {
 	int ret;
 	struct amdgpu_device *adev = (struct amdgpu_device *)handle;
 
 	mutex_lock(&adev->pm.mutex);
 
-	ret = fiji_smu_init(adev);
+	/* smu init only needs to be called at startup, not resume.
+	 * It should be in sw_init, but requires the fw info gathered
+	 * in sw_init from other IP modules.
+	 */
+	ret = tonga_smu_init(adev);
 	if (ret) {
 		DRM_ERROR("SMU initialization failed\n");
 		goto fail;
 	}
 
-	ret = fiji_smu_start(adev);
+	ret = tonga_smu_start(adev);
 	if (ret) {
 		DRM_ERROR("SMU start failed\n");
 		goto fail;
@@ -109,63 +112,60 @@ fail:
 	return -EINVAL;
 }
 
-static int fiji_dpm_hw_fini(void *handle)
+static int tonga_dpm_hw_fini(void *handle)
 {
 	struct amdgpu_device *adev = (struct amdgpu_device *)handle;
+
 	mutex_lock(&adev->pm.mutex);
-	fiji_smu_fini(adev);
+	/* smu fini only needs to be called at teardown, not suspend.
+	 * It should be in sw_fini, but we put it here for symmetry
+	 * with smu init.
+	 */
+	tonga_smu_fini(adev);
 	mutex_unlock(&adev->pm.mutex);
 	return 0;
 }
 
-static int fiji_dpm_suspend(void *handle)
+static int tonga_dpm_suspend(void *handle)
 {
-	struct amdgpu_device *adev = (struct amdgpu_device *)handle;
-
-	fiji_dpm_hw_fini(adev);
-
-	return 0;
+	return tonga_dpm_hw_fini(handle);
 }
 
-static int fiji_dpm_resume(void *handle)
+static int tonga_dpm_resume(void *handle)
 {
-	struct amdgpu_device *adev = (struct amdgpu_device *)handle;
-
-	fiji_dpm_hw_init(adev);
-
-	return 0;
+	return tonga_dpm_hw_init(handle);
 }
 
-static int fiji_dpm_set_clockgating_state(void *handle,
+static int tonga_dpm_set_clockgating_state(void *handle,
 			enum amd_clockgating_state state)
 {
 	return 0;
 }
 
-static int fiji_dpm_set_powergating_state(void *handle,
+static int tonga_dpm_set_powergating_state(void *handle,
 			enum amd_powergating_state state)
 {
 	return 0;
 }
 
-const struct amd_ip_funcs fiji_dpm_ip_funcs = {
-	.early_init = fiji_dpm_early_init,
+const struct amd_ip_funcs tonga_dpm_ip_funcs = {
+	.early_init = tonga_dpm_early_init,
 	.late_init = NULL,
-	.sw_init = fiji_dpm_sw_init,
-	.sw_fini = fiji_dpm_sw_fini,
-	.hw_init = fiji_dpm_hw_init,
-	.hw_fini = fiji_dpm_hw_fini,
-	.suspend = fiji_dpm_suspend,
-	.resume = fiji_dpm_resume,
+	.sw_init = tonga_dpm_sw_init,
+	.sw_fini = tonga_dpm_sw_fini,
+	.hw_init = tonga_dpm_hw_init,
+	.hw_fini = tonga_dpm_hw_fini,
+	.suspend = tonga_dpm_suspend,
+	.resume = tonga_dpm_resume,
 	.is_idle = NULL,
 	.wait_for_idle = NULL,
 	.soft_reset = NULL,
 	.print_status = NULL,
-	.set_clockgating_state = fiji_dpm_set_clockgating_state,
-	.set_powergating_state = fiji_dpm_set_powergating_state,
+	.set_clockgating_state = tonga_dpm_set_clockgating_state,
+	.set_powergating_state = tonga_dpm_set_powergating_state,
 };
 
-static const struct amdgpu_dpm_funcs fiji_dpm_funcs = {
+static const struct amdgpu_dpm_funcs tonga_dpm_funcs = {
 	.get_temperature = NULL,
 	.pre_set_power_state = NULL,
 	.set_power_state = NULL,
@@ -180,8 +180,8 @@ static const struct amdgpu_dpm_funcs fiji_dpm_funcs = {
 	.powergate_uvd = NULL,
 };
 
-static void fiji_dpm_set_funcs(struct amdgpu_device *adev)
+static void tonga_dpm_set_funcs(struct amdgpu_device *adev)
 {
 	if (NULL == adev->pm.funcs)
-		adev->pm.funcs = &fiji_dpm_funcs;
+		adev->pm.funcs = &tonga_dpm_funcs;
 }
