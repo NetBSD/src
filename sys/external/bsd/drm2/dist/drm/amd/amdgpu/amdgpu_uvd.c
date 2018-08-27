@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_uvd.c,v 1.2 2018/08/27 04:58:20 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_uvd.c,v 1.3 2018/08/27 14:04:50 riastradh Exp $	*/
 
 /*
  * Copyright 2011 Advanced Micro Devices, Inc.
@@ -31,10 +31,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_uvd.c,v 1.2 2018/08/27 04:58:20 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_uvd.c,v 1.3 2018/08/27 14:04:50 riastradh Exp $");
 
 #include <linux/firmware.h>
 #include <linux/module.h>
+#include <asm/byteorder.h>
 #include <drm/drmP.h>
 #include <drm/drm.h>
 
@@ -286,7 +287,7 @@ int amdgpu_uvd_resume(struct amdgpu_device *adev)
 	size = amdgpu_bo_size(adev->uvd.vcpu_bo);
 	size -= le32_to_cpu(hdr->ucode_size_bytes);
 	ptr = adev->uvd.cpu_addr;
-	ptr += le32_to_cpu(hdr->ucode_size_bytes);
+	ptr = (char *)ptr + le32_to_cpu(hdr->ucode_size_bytes);
 
 	memset(ptr, 0, size);
 
@@ -351,7 +352,7 @@ static int amdgpu_uvd_cs_pass1(struct amdgpu_uvd_cs_ctx *ctx)
 
 	mapping = amdgpu_cs_find_mapping(ctx->parser, addr, &bo);
 	if (mapping == NULL) {
-		DRM_ERROR("Can't find BO for addr 0x%08Lx\n", addr);
+		DRM_ERROR("Can't find BO for addr 0x%08"PRIx64"\n", addr);
 		return -EINVAL;
 	}
 
@@ -389,7 +390,11 @@ static int amdgpu_uvd_cs_msg_decode(uint32_t *msg, unsigned buf_sizes[])
 	unsigned level = msg[57];
 
 	unsigned width_in_mb = width / 16;
+#ifdef __NetBSD__		/* XXX ALIGN means something else */
+	unsigned height_in_mb = round_up(height / 16, 2);
+#else
 	unsigned height_in_mb = ALIGN(height / 16, 2);
+#endif
 	unsigned fs_in_mb = width_in_mb * height_in_mb;
 
 	unsigned image_size, tmp, min_dpb_size, num_dpb_buffer;
@@ -397,7 +402,11 @@ static int amdgpu_uvd_cs_msg_decode(uint32_t *msg, unsigned buf_sizes[])
 
 	image_size = width * height;
 	image_size += image_size / 2;
+#ifdef __NetBSD__		/* XXX ALIGN means something else */
+	image_size = round_up(image_size, 1024);
+#else
 	image_size = ALIGN(image_size, 1024);
+#endif
 
 	switch (stream_type) {
 	case 0: /* H264 */
@@ -458,7 +467,11 @@ static int amdgpu_uvd_cs_msg_decode(uint32_t *msg, unsigned buf_sizes[])
 
 		/* BP */
 		tmp = max(width_in_mb, height_in_mb);
+#ifdef __NetBSD__		/* XXX ALIGN means something else */
+		min_dpb_size += round_up(tmp * 7 * 16, 64);
+#else
 		min_dpb_size += ALIGN(tmp * 7 * 16, 64);
+#endif
 		break;
 
 	case 3: /* MPEG2 */
@@ -476,12 +489,21 @@ static int amdgpu_uvd_cs_msg_decode(uint32_t *msg, unsigned buf_sizes[])
 		min_dpb_size += width_in_mb * height_in_mb * 64;
 
 		/* IT surface buffer */
+#ifdef __NetBSD__		/* XXX ALIGN means something else */
+		min_dpb_size += round_up(width_in_mb * height_in_mb * 32, 64);
+#else
 		min_dpb_size += ALIGN(width_in_mb * height_in_mb * 32, 64);
+#endif
 		break;
 
 	case 16: /* H265 */
+#ifdef __NetBSD__		/* XXX ALIGN means something else */
+		image_size = (round_up(width, 16) * round_up(height, 16) * 3) / 2;
+		image_size = round_up(image_size, 256);
+#else
 		image_size = (ALIGN(width, 16) * ALIGN(height, 16) * 3) / 2;
 		image_size = ALIGN(image_size, 256);
+#endif
 
 		num_dpb_buffer = (le32_to_cpu(msg[59]) & 0xff) + 2;
 		min_dpb_size = image_size * num_dpb_buffer;
@@ -548,7 +570,7 @@ static int amdgpu_uvd_cs_msg(struct amdgpu_uvd_cs_ctx *ctx,
 		return r;
 	}
 
-	msg = ptr + offset;
+	msg = (void *)((char *)ptr + offset);
 
 	msg_type = msg[1];
 	handle = msg[2];
@@ -675,14 +697,14 @@ static int amdgpu_uvd_cs_pass2(struct amdgpu_uvd_cs_ctx *ctx)
 
 	if (!ctx->parser->adev->uvd.address_64_bit) {
 		if ((start >> 28) != ((end - 1) >> 28)) {
-			DRM_ERROR("reloc %LX-%LX crossing 256MB boundary!\n",
+			DRM_ERROR("reloc %"PRIX64"-%"PRIX64" crossing 256MB boundary!\n",
 				  start, end);
 			return -EINVAL;
 		}
 
 		if ((cmd == 0 || cmd == 0x3) &&
 		    (start >> 28) != (ctx->parser->adev->uvd.gpu_addr >> 28)) {
-			DRM_ERROR("msg/fb buffer %LX-%LX out of 256MB segment!\n",
+			DRM_ERROR("msg/fb buffer %"PRIX64"-%"PRIX64" out of 256MB segment!\n",
 				  start, end);
 			return -EINVAL;
 		}
