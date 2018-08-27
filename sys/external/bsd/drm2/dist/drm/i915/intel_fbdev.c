@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_fbdev.c,v 1.7 2018/08/27 06:16:37 riastradh Exp $	*/
+/*	$NetBSD: intel_fbdev.c,v 1.8 2018/08/27 07:55:28 riastradh Exp $	*/
 
 /*
  * Copyright © 2007 David Airlie
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_fbdev.c,v 1.7 2018/08/27 06:16:37 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_fbdev.c,v 1.8 2018/08/27 07:55:28 riastradh Exp $");
 
 #include <linux/async.h>
 #include <linux/module.h>
@@ -317,7 +317,7 @@ static int intelfb_create(struct drm_fb_helper *helper,
 
 	/* Use default scratch pixmap (info->pixmap.flags = FB_PIXMAP_SYSTEM) */
 
-	DRM_DEBUG_KMS("allocated %dx%d fb: 0x%08llx, bo %p\n",
+	DRM_DEBUG_KMS("allocated %dx%d fb: 0x%08"PRIx64", bo %p\n",
 		      fb->width, fb->height,
 		      i915_gem_obj_ggtt_offset(obj), obj);
 
