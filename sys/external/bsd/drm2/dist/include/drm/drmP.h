@@ -1,4 +1,4 @@
-/*	$NetBSD: drmP.h,v 1.28 2018/08/27 15:26:00 riastradh Exp $	*/
+/*	$NetBSD: drmP.h,v 1.29 2018/08/27 15:26:50 riastradh Exp $	*/
 
 /*
  * Internal Header for the Direct Rendering Manager
@@ -1182,10 +1182,10 @@ extern int drm_gem_prime_fd_to_handle(struct drm_device *dev,
 extern void drm_gem_dmabuf_release(struct dma_buf *dma_buf);
 
 #ifdef __NetBSD__
-extern int drm_prime_bus_dmamap_load_sgt(bus_dma_tag_t, bus_dmamap_t, struct sg_table *);
-extern int drm_prime_bus_dmamem_map(bus_dma_tag_t, struct sg_table *, void **, int);
-extern struct sg_table *drm_prime_bus_dmamem_to_sg(bus_dma_segment_t *, int);
+extern struct sg_table *drm_prime_bus_dmamem_to_sg(bus_dma_tag_t, const bus_dma_segment_t *, int);
 extern struct sg_table *drm_prime_pglist_to_sg(struct pglist *, unsigned);
+extern int drm_prime_sg_to_bus_dmamem(bus_dma_tag_t, bus_dma_segment_t *, int, int *, const struct sg_table *);
+extern int drm_prime_bus_dmamap_load_sgt(bus_dma_tag_t, bus_dmamap_t, struct sg_table *);
 extern bus_size_t drm_prime_sg_size(struct sg_table *);
 extern void drm_prime_sg_free(struct sg_table *);
 #else
