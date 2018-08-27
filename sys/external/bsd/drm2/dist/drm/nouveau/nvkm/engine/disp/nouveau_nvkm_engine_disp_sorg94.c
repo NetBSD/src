@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_engine_disp_sorg94.c,v 1.2 2018/08/27 04:58:31 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_engine_disp_sorg94.c,v 1.3 2018/08/27 07:39:44 riastradh Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_disp_sorg94.c,v 1.2 2018/08/27 04:58:31 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_disp_sorg94.c,v 1.3 2018/08/27 07:39:44 riastradh Exp $");
 
 #include "nv50.h"
 #include "outpdp.h"
@@ -43,6 +43,7 @@ g94_sor_loff(struct nvkm_output_dp *outp)
 	return g94_sor_soff(outp) + !(outp->base.info.sorconf.link & 1) * 0x80;
 }
 
+#ifndef __NetBSD__		/* XXX unused? */
 /*******************************************************************************
  * TMDS/LVDS
  ******************************************************************************/
@@ -57,6 +58,7 @@ g94_sor_output_new(struct nvkm_disp *disp, int index,
 	return nvkm_output_new_(&g94_sor_output_func, disp,
 				index, dcbE, poutp);
 }
+#endif
 
 /*******************************************************************************
  * DisplayPort
