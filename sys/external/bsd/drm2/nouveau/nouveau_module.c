@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_module.c,v 1.4 2015/10/17 12:02:44 jmcneill Exp $	*/
+/*	$NetBSD: nouveau_module.c,v 1.5 2018/08/27 06:41:25 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_module.c,v 1.4 2015/10/17 12:02:44 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_module.c,v 1.5 2018/08/27 06:41:25 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/module.h>
@@ -39,8 +39,7 @@ __KERNEL_RCSID(0, "$NetBSD: nouveau_module.c,v 1.4 2015/10/17 12:02:44 jmcneill 
 #include <drm/drmP.h>
 #include <drm/drm_sysctl.h>
 
-#include <core/object.h>
-#include <engine/device.h>
+#include <core/device.h>
 
 MODULE(MODULE_CLASS_DRIVER, nouveau, "drmkms"); /* XXX drmkms_i2c, drmkms_ttm */
 
@@ -55,7 +54,6 @@ extern struct drm_driver *const nouveau_drm_driver; /* XXX */
 static int
 nouveau_init(void)
 {
-	nouveau_objects_init();
 	nouveau_devices_init();
 	drm_sysctl_init(&nouveau_def);
 
@@ -68,7 +66,6 @@ nouveau_fini(void)
 
 	drm_sysctl_fini(&nouveau_def);
 	nouveau_devices_fini();
-	nouveau_objects_fini();
 }
 
 static int
