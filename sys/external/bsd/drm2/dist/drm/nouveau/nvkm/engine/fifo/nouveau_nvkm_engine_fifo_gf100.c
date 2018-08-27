@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_engine_fifo_gf100.c,v 1.2 2018/08/27 04:58:31 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_engine_fifo_gf100.c,v 1.3 2018/08/27 07:40:11 riastradh Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_fifo_gf100.c,v 1.2 2018/08/27 04:58:31 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_fifo_gf100.c,v 1.3 2018/08/27 07:40:11 riastradh Exp $");
 
 #include "gf100.h"
 #include "changf100.h"
@@ -80,7 +80,7 @@ gf100_fifo_runlist_update(struct gf100_fifo *fifo)
 	if (cold) {
 		uint count = 2000;
 		while (count-- > 0) {
-			if (!(nvkm_rd32(priv, 0x00227c) & 0x00100000))
+			if (!(nvkm_rd32(device, 0x00227c) & 0x00100000))
 				break;
 			delay(1000);
 		}
@@ -92,7 +92,7 @@ gf100_fifo_runlist_update(struct gf100_fifo *fifo)
 		spin_lock(&fifo->runlist.lock);
 		DRM_SPIN_TIMED_WAIT_NOINTR_UNTIL(ret, &fifo->runlist.wait,
 		    &fifo->runlist.lock, msecs_to_jiffies(2000),
-		    !(nvkm_rd32(priv, 0x00227c) & 0x00100000));
+		    !(nvkm_rd32(device, 0x00227c) & 0x00100000));
 		if (ret == 0)
 			nvkm_error(subdev, "runlist update timeout\n");
 		spin_unlock(&fifo->runlist.lock);
