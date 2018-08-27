@@ -1,4 +1,4 @@
-/*	$NetBSD: fence.h,v 1.11 2018/08/27 13:33:59 riastradh Exp $	*/
+/*	$NetBSD: fence.h,v 1.12 2018/08/27 13:36:53 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@ struct fence_cb;
 struct fence {
 	struct kref		refcount;
 	spinlock_t		*lock;
-	unsigned long		flags;
+	volatile unsigned long	flags;
 	unsigned		context;
 	unsigned		seqno;
 	const struct fence_ops	*ops;
