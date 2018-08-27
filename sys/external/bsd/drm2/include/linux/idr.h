@@ -1,4 +1,4 @@
-/*	$NetBSD: idr.h,v 1.5 2018/08/27 06:55:01 riastradh Exp $	*/
+/*	$NetBSD: idr.h,v 1.6 2018/08/27 07:15:06 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -115,6 +115,14 @@ ida_simple_get(struct ida *ida, unsigned start, unsigned end, gfp_t gfp)
 	idr_preload_end();
 
 	return id;
+}
+
+static inline void
+ida_simple_remove(struct ida *ida, unsigned int id)
+{
+
+	KASSERT((int)id >= 0);
+	ida_remove(ida, id);
 }
 
 #endif  /* _LINUX_IDR_H_ */
