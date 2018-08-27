@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_mode.h,v 1.3 2018/08/27 04:58:36 riastradh Exp $	*/
+/*	$NetBSD: radeon_mode.h,v 1.4 2018/08/27 15:13:05 riastradh Exp $	*/
 
 /*
  * Copyright 2000 ATI Technologies Inc., Markham, Ontario, and
@@ -1014,12 +1014,4 @@ void radeon_setup_mst_connector(struct drm_device *dev);
 
 int radeon_atom_pick_dig_encoder(struct drm_encoder *encoder, int fe_idx);
 void radeon_atom_release_dig_encoder(struct radeon_device *rdev, int enc_idx);
-
-#ifdef __NetBSD__
-struct drm_fb_helper;
-struct drm_fb_helper_surface_size;
-int	radeon_genfb_attach(struct drm_device *, struct drm_fb_helper *,
-	    const struct drm_fb_helper_surface_size *, struct radeon_bo *);
-#endif
-
 #endif
