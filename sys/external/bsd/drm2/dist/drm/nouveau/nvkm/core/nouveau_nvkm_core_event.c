@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_core_event.c,v 1.2 2018/08/27 04:58:30 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_core_event.c,v 1.3 2018/08/27 14:16:17 riastradh Exp $	*/
 
 /*
  * Copyright 2013-2014 Red Hat Inc.
@@ -22,7 +22,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_core_event.c,v 1.2 2018/08/27 04:58:30 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_core_event.c,v 1.3 2018/08/27 14:16:17 riastradh Exp $");
 
 #include <core/event.h>
 #include <core/notify.h>
@@ -83,6 +83,8 @@ nvkm_event_fini(struct nvkm_event *event)
 		kfree(event->refs);
 		event->refs = NULL;
 	}
+	spin_lock_destroy(&event->list_lock);
+	spin_lock_destroy(&event->refs_lock);
 }
 
 int
