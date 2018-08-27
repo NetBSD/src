@@ -1,4 +1,4 @@
-/*	$NetBSD: sched.h,v 1.9 2018/08/27 07:29:09 riastradh Exp $	*/
+/*	$NetBSD: sched.h,v 1.10 2018/08/27 07:47:11 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -42,6 +42,8 @@
 #include <linux/errno.h>
 
 #define	TASK_COMM_LEN	MAXCOMLEN
+
+#define	MAX_SCHEDULE_TIMEOUT	(INT_MAX/2)	/* paranoia */
 
 #define	current	curproc
 
