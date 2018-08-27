@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_guc_submission.c,v 1.5 2018/08/27 07:16:20 riastradh Exp $	*/
+/*	$NetBSD: i915_guc_submission.c,v 1.6 2018/08/27 07:16:31 riastradh Exp $	*/
 
 /*
  * Copyright © 2014 Intel Corporation
@@ -24,7 +24,7 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_guc_submission.c,v 1.5 2018/08/27 07:16:20 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_guc_submission.c,v 1.6 2018/08/27 07:16:31 riastradh Exp $");
 
 #include <linux/bitmap.h>
 #include <linux/firmware.h>
@@ -381,6 +381,90 @@ static void guc_init_proc_desc(struct intel_guc *guc,
 	kunmap_atomic(base);
 }
 
+#ifdef __NetBSD__
+/*
+ * bus_dmamem_move_atomic(dmat, seg, nseg, buf, nbytes, rw)
+ *
+ *	Transfer nbytes of data between the bus_dma segments seg[0],
+ *	seg[1], ..., seg[nseg-1] and buf, in the direction specified by
+ *	rw: reading from or writing to the DMA segments.
+ *
+ *	Cannot fail.
+ */
+static void
+bus_dmamem_move(bus_dma_tag_t dmat, bus_dma_segment_t *seg, int nseg,
+    bus_size_t skip, void *buf, size_t nbytes, enum uio_rw rw)
+{
+	char *ptr = buf;
+	void *kva;
+	int i;
+
+	/* Find the first segment that we need to copy from.  */
+	for (i = 0; skip < seg[i].ds_len; skip -= seg[i].ds_len, i++)
+		KASSERT(i < nseg);
+
+	/* Copy as much as we requested from the segments.  */
+	do {
+		paddr_t pa;
+		bus_size_t seglen;
+
+		KASSERT(i < nseg);
+		KASSERT(skip < seg[i].ds_len);
+		pa = seg[i].ds_addr;
+		seglen = MIN(seg[i].ds_len, nbytes);
+		i++;
+
+		while (seglen) {
+			struct vm_page *vm_page = PHYS_TO_VM_PAGE(pa);
+			struct page *page = container_of(vm_page, struct page,
+			    p_vmp);
+			size_t copy = MIN(PAGE_SIZE - skip, seglen);
+			const char *src;
+			char *dst;
+
+			kva = kmap_atomic(page);
+			switch (rw) {
+			case UIO_READ:
+				src = kva;
+				src += skip;
+				dst = ptr;
+			case UIO_WRITE:
+				src = ptr;
+				dst = kva;
+				dst += skip;
+			}
+			memcpy(dst, src, copy);
+			kunmap_atomic(kva);
+
+			pa += PAGE_SIZE;
+			seglen -= copy;
+			ptr += copy;
+			nbytes -= copy;
+			skip = 0; /* after the first, we're page-aligned */
+		}
+	} while (nbytes);
+}
+
+static void
+bus_dmamem_write(bus_dma_tag_t dmat, bus_dma_segment_t *seg, int nseg,
+    bus_size_t skip, const void *buf, size_t nbytes)
+{
+
+	bus_dmamem_move(dmat, seg, nseg, skip, __UNCONST(buf), nbytes,
+	    UIO_WRITE);
+}
+
+#if 0
+static void
+bus_dmamem_read(bus_dma_tag_t dmat, bus_dma_segment_t *seg, int nseg,
+    bus_size_t skip, void *buf, size_t nbytes)
+{
+
+	bus_dmamem_move(dmat, seg, nseg, skip, buf, nbytes, UIO_READ);
+}
+#endif
+#endif
+
 /*
  * Initialise/clear the context descriptor shared with the GuC firmware.
  *
@@ -394,7 +478,9 @@ static void guc_init_ctx_desc(struct intel_guc *guc,
 {
 	struct intel_context *ctx = client->owner;
 	struct guc_context_desc desc;
+#ifndef __NetBSD__
 	struct sg_table *sg;
+#endif
 	int i;
 
 	memset(&desc, 0, sizeof(desc));
@@ -452,8 +538,13 @@ static void guc_init_ctx_desc(struct intel_guc *guc,
 	desc.db_trigger_cpu = 0;
 	desc.db_trigger_uk = client->doorbell_offset +
 		i915_gem_obj_ggtt_offset(client->client_obj);
+#ifdef __NetBSD__
+	desc.db_trigger_phy = client->doorbell_offset +
+	    client->client_obj->igo_dmamap->dm_segs[0].ds_addr;
+#else
 	desc.db_trigger_phy = client->doorbell_offset +
 		sg_dma_address(client->client_obj->pages->sgl);
+#endif
 
 	desc.process_desc = client->proc_desc_offset +
 		i915_gem_obj_ggtt_offset(client->client_obj);
@@ -470,14 +561,36 @@ static void guc_init_ctx_desc(struct intel_guc *guc,
 	desc.desc_private = (uintptr_t)client;
 
 	/* Pool context is pinned already */
+#ifdef __NetBSD__
+	bus_dma_tag_t dmat = guc->ctx_pool_obj->base.dev->dmat;
+	bus_dma_segment_t *seg = guc->ctx_pool_obj->pages;
+	int nseg = guc->ctx_pool_obj->igo_nsegs;
+	bus_size_t skip = sizeof(desc) * client->ctx_index;
+	size_t nbytes = sizeof(desc);
+
+	bus_dmamem_write(dmat, seg, nseg, skip, &desc, nbytes);
+#else
 	sg = guc->ctx_pool_obj->pages;
 	sg_pcopy_from_buffer(sg->sgl, sg->nents, &desc, sizeof(desc),
 			     sizeof(desc) * client->ctx_index);
+#endif
 }
 
 static void guc_fini_ctx_desc(struct intel_guc *guc,
 			      struct i915_guc_client *client)
 {
+#ifdef __NetBSD__
+	struct guc_context_desc desc;
+	bus_dma_tag_t dmat = guc->ctx_pool_obj->base.dev->dmat;
+	bus_dma_segment_t *seg = guc->ctx_pool_obj->pages;
+	int nseg = guc->ctx_pool_obj->igo_nsegs;
+	bus_size_t skip = sizeof(desc) * client->ctx_index;
+	size_t nbytes = sizeof(desc);
+
+	memset(&desc, 0, sizeof(desc));
+
+	bus_dmamem_write(dmat, seg, nseg, skip, &desc, nbytes);
+#else
 	struct guc_context_desc desc;
 	struct sg_table *sg;
 
@@ -486,6 +599,7 @@ static void guc_fini_ctx_desc(struct intel_guc *guc,
 	sg = guc->ctx_pool_obj->pages;
 	sg_pcopy_from_buffer(sg->sgl, sg->nents, &desc, sizeof(desc),
 			     sizeof(desc) * client->ctx_index);
+#endif
 }
 
 /* Get valid workqueue item and return it back to offset */
