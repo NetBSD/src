@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_fops.c,v 1.8 2018/08/27 06:58:10 riastradh Exp $	*/
+/*	$NetBSD: drm_fops.c,v 1.9 2018/08/27 07:01:15 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_fops.c,v 1.8 2018/08/27 06:58:10 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_fops.c,v 1.9 2018/08/27 07:01:15 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/select.h>
@@ -38,12 +38,12 @@ __KERNEL_RCSID(0, "$NetBSD: drm_fops.c,v 1.8 2018/08/27 06:58:10 riastradh Exp $
 #include <drm/drmP.h>
 #include <drm/drm_internal.h>
 #include <drm/drm_legacy.h>
+#include "../dist/drm/drm_legacy.h"
 
 static int	drm_open_file_master(struct drm_file *);
 
 static void	drm_master_release(struct drm_file *);
 static void	drm_events_release(struct drm_file *);
-static void	drm_close_file_contexts(struct drm_file *);
 static void	drm_close_file_master(struct drm_file *);
 
 int
@@ -178,7 +178,7 @@ drm_close_file(struct drm_file *file)
 		drm_fb_release(file);
 	if (drm_core_check_feature(dev, DRIVER_GEM))
 		drm_gem_release(dev, file);
-	drm_close_file_contexts(file);
+	drm_legacy_ctxbitmap_flush(dev, file);
 	drm_close_file_master(file);
 
 	mutex_lock(&dev->struct_mutex);
@@ -240,45 +240,12 @@ drm_events_release(struct drm_file *file)
 }
 
 static void
-drm_close_file_contexts(struct drm_file *file)
-{
-	struct drm_device *const dev = file->minor->dev;
-	struct drm_ctx_list *node, *next;
-
-	mutex_lock(&dev->ctxlist_mutex);
-	if (!list_empty(&dev->ctxlist)) {
-		list_for_each_entry_safe(node, next, &dev->ctxlist, head) {
-			if (node->tag != file)
-				continue;
-			if (node->handle == DRM_KERNEL_CONTEXT)
-				continue;
-			if (dev->driver->context_dtor)
-				(*dev->driver->context_dtor)(dev,
-				    node->handle);
-			drm_ctxbitmap_free(dev, node->handle);
-			list_del(&node->head);
-			kfree(node);
-		}
-	}
-	mutex_unlock(&dev->ctxlist_mutex);
-}
-
-static void
 drm_close_file_master(struct drm_file *file)
 {
 	struct drm_device *const dev = file->minor->dev;
 
 	mutex_lock(&dev->master_mutex);
 	if (file->is_master) {
-		struct drm_file *other_file;
-
-		list_for_each_entry(other_file, &dev->filelist, lhead) {
-			if (other_file == file)
-				continue;
-			if (other_file->master != file->master)
-				continue;
-			other_file->authenticated = 0;
-		}
 		if (file->minor->master == file->master) {
 			if (dev->driver->master_drop)
 				(*dev->driver->master_drop)(dev, file, true);
