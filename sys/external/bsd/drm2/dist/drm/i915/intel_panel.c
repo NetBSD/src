@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_panel.c,v 1.8 2018/08/27 06:16:50 riastradh Exp $	*/
+/*	$NetBSD: intel_panel.c,v 1.9 2018/08/27 07:26:59 riastradh Exp $	*/
 
 /*
  * Copyright © 2006-2010 Intel Corporation
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_panel.c,v 1.8 2018/08/27 06:16:50 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_panel.c,v 1.9 2018/08/27 07:26:59 riastradh Exp $");
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
@@ -1061,7 +1061,7 @@ static void bxt_enable_backlight(struct intel_connector *connector)
 	struct drm_device *dev = connector->base.dev;
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	struct intel_panel *panel = &connector->panel;
-	enum pipe pipe = intel_get_pipe_from_connector(connector);
+	enum i915_pipe pipe = intel_get_pipe_from_connector(connector);
 	u32 pwm_ctl, val;
 
 	/* To use 2nd set of backlight registers, utility pin has to be
@@ -1453,7 +1453,7 @@ static u32 get_backlight_min_vbt(struct intel_connector *connector)
 	return scale(min, 0, 255, 0, panel->backlight.max);
 }
 
-static int lpt_setup_backlight(struct intel_connector *connector, enum pipe unused)
+static int lpt_setup_backlight(struct intel_connector *connector, enum i915_pipe unused)
 {
 	struct drm_device *dev = connector->base.dev;
 	struct drm_i915_private *dev_priv = dev->dev_private;
@@ -1483,7 +1483,7 @@ static int lpt_setup_backlight(struct intel_connector *connector, enum pipe unus
 	return 0;
 }
 
-static int pch_setup_backlight(struct intel_connector *connector, enum pipe unused)
+static int pch_setup_backlight(struct intel_connector *connector, enum i915_pipe unused)
 {
 	struct drm_device *dev = connector->base.dev;
 	struct drm_i915_private *dev_priv = dev->dev_private;
@@ -1514,7 +1514,7 @@ static int pch_setup_backlight(struct intel_connector *connector, enum pipe unus
 	return 0;
 }
 
-static int i9xx_setup_backlight(struct intel_connector *connector, enum pipe unused)
+static int i9xx_setup_backlight(struct intel_connector *connector, enum i915_pipe unused)
 {
 	struct drm_device *dev = connector->base.dev;
 	struct drm_i915_private *dev_priv = dev->dev_private;
@@ -1552,7 +1552,7 @@ static int i9xx_setup_backlight(struct intel_connector *connector, enum pipe unu
 	return 0;
 }
 
-static int i965_setup_backlight(struct intel_connector *connector, enum pipe unused)
+static int i965_setup_backlight(struct intel_connector *connector, enum i915_pipe unused)
 {
 	struct drm_device *dev = connector->base.dev;
 	struct drm_i915_private *dev_priv = dev->dev_private;
@@ -1586,7 +1586,7 @@ static int i965_setup_backlight(struct intel_connector *connector, enum pipe unu
 	return 0;
 }
 
-static int vlv_setup_backlight(struct intel_connector *connector, enum pipe pipe)
+static int vlv_setup_backlight(struct intel_connector *connector, enum i915_pipe pipe)
 {
 	struct drm_device *dev = connector->base.dev;
 	struct drm_i915_private *dev_priv = dev->dev_private;
@@ -1620,7 +1620,7 @@ static int vlv_setup_backlight(struct intel_connector *connector, enum pipe pipe
 }
 
 static int
-bxt_setup_backlight(struct intel_connector *connector, enum pipe unused)
+bxt_setup_backlight(struct intel_connector *connector, enum i915_pipe unused)
 {
 	struct drm_device *dev = connector->base.dev;
 	struct drm_i915_private *dev_priv = dev->dev_private;
@@ -1666,7 +1666,7 @@ bxt_setup_backlight(struct intel_connector *connector, enum pipe unused)
 }
 
 static int pwm_setup_backlight(struct intel_connector *connector,
-			       enum pipe pipe)
+			       enum i915_pipe pipe)
 {
 	struct drm_device *dev = connector->base.dev;
 	struct intel_panel *panel = &connector->panel;
@@ -1698,8 +1698,9 @@ static int pwm_setup_backlight(struct intel_connector *connector,
 
 	return 0;
 }
+#endif
 
-int intel_panel_setup_backlight(struct drm_connector *connector, enum pipe pipe)
+int intel_panel_setup_backlight(struct drm_connector *connector, enum i915_pipe pipe)
 {
 	struct drm_device *dev = connector->dev;
 	struct drm_i915_private *dev_priv = dev->dev_private;
