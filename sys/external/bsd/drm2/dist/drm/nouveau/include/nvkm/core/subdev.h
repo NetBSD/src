@@ -1,4 +1,4 @@
-/*	$NetBSD: subdev.h,v 1.2 2018/08/27 04:58:30 riastradh Exp $	*/
+/*	$NetBSD: subdev.h,v 1.3 2018/08/27 07:35:22 riastradh Exp $	*/
 
 #ifndef __NVKM_SUBDEV_H__
 #define __NVKM_SUBDEV_H__
@@ -36,7 +36,7 @@ void nvkm_subdev_intr(struct nvkm_subdev *);
 /* subdev logging */
 #define nvkm_printk_(s,l,p,f,a...) do {                                        \
 	struct nvkm_subdev *_subdev = (s);                                     \
-	if (_subdev->debug >= (l)) {                                           \
+	if (_subdev->debug == (l) || _subdev->debug > (l)) {                   \
 		dev_##p(_subdev->device->dev, "%s: "f,                         \
 			nvkm_subdev_name[_subdev->index], ##a);                \
 	}                                                                      \
