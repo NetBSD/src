@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem.c,v 1.50 2018/08/27 14:14:29 riastradh Exp $	*/
+/*	$NetBSD: i915_gem.c,v 1.51 2018/08/27 14:44:46 riastradh Exp $	*/
 
 /*
  * Copyright © 2008-2015 Intel Corporation
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gem.c,v 1.50 2018/08/27 14:14:29 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gem.c,v 1.51 2018/08/27 14:44:46 riastradh Exp $");
 
 #ifdef __NetBSD__
 #if 0				/* XXX uvmhist option?  */
@@ -1448,6 +1448,7 @@ int __i915_wait_request(struct drm_i915_gem_request *req,
 	((wedged = (reset_counter !=					      \
 		atomic_read(&dev_priv->gpu_error.reset_counter))) ||	      \
 	    i915_gem_request_completed(req, false))
+	spin_lock(&dev_priv->irq_lock);
 	if (timeout) {
 		int ticks = missed_irq(dev_priv, ring) ? 1 :
 		    nsecs_to_jiffies_timeout(*timeout);
@@ -1474,6 +1475,7 @@ int __i915_wait_request(struct drm_i915_gem_request *req,
 		}
 		/* ret is negative on failure or zero on success.  */
 	}
+	spin_unlock(&dev_priv->irq_lock);
 	if (wedged) {
 		ret = i915_gem_check_wedge(&dev_priv->gpu_error, interruptible);
 		if (ret == 0)
