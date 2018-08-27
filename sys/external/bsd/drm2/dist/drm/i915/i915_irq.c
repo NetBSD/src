@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_irq.c,v 1.12 2018/08/27 07:03:25 riastradh Exp $	*/
+/*	$NetBSD: i915_irq.c,v 1.13 2018/08/27 07:10:05 riastradh Exp $	*/
 
 /* i915_irq.c -- IRQ support for the I915 -*- linux-c -*-
  */
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_irq.c,v 1.12 2018/08/27 07:03:25 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_irq.c,v 1.13 2018/08/27 07:10:05 riastradh Exp $");
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
@@ -1642,7 +1642,7 @@ static void gen6_rps_irq_handler(struct drm_i915_private *dev_priv, u32 pm_iir)
 	}
 }
 
-static bool intel_pipe_handle_vblank(struct drm_device *dev, enum pipe pipe)
+static bool intel_pipe_handle_vblank(struct drm_device *dev, enum i915_pipe pipe)
 {
 	if (!drm_handle_vblank(dev, pipe))
 		return false;
@@ -3247,7 +3247,7 @@ static void ironlake_irq_reset(struct drm_device *dev)
 
 static void vlv_display_irq_reset(struct drm_i915_private *dev_priv)
 {
-	enum pipe pipe;
+	enum i915_pipe pipe;
 
 	i915_hotplug_interrupt_update(dev_priv, 0xFFFFFFFF, 0);
 	I915_WRITE(PORT_HOTPLUG_STAT, I915_READ(PORT_HOTPLUG_STAT));
@@ -3571,7 +3571,7 @@ static void valleyview_display_irqs_install(struct drm_i915_private *dev_priv)
 {
 	u32 pipestat_mask;
 	u32 iir_mask;
-	enum pipe pipe;
+	enum i915_pipe pipe;
 
 	pipestat_mask = PIPESTAT_INT_STATUS_MASK |
 			PIPE_FIFO_UNDERRUN_STATUS;
@@ -3605,7 +3605,7 @@ static void valleyview_display_irqs_uninstall(struct drm_i915_private *dev_priv)
 {
 	u32 pipestat_mask;
 	u32 iir_mask;
-	enum pipe pipe;
+	enum i915_pipe pipe;
 
 	iir_mask = I915_DISPLAY_PORT_INTERRUPT |
 		   I915_DISPLAY_PIPE_A_EVENT_INTERRUPT |
@@ -3736,7 +3736,7 @@ static void gen8_de_irq_postinstall(struct drm_i915_private *dev_priv)
 	uint32_t de_pipe_enables;
 	u32 de_port_masked = GEN8_AUX_CHANNEL_A;
 	u32 de_port_enables;
-	enum pipe pipe;
+	enum i915_pipe pipe;
 
 	if (INTEL_INFO(dev_priv)->gen >= 9) {
 		de_pipe_masked |= GEN9_PIPE_PLANE1_FLIP_DONE |
