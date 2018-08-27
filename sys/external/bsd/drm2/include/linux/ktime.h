@@ -1,4 +1,4 @@
-/*	$NetBSD: ktime.h,v 1.5 2018/08/27 07:05:00 riastradh Exp $	*/
+/*	$NetBSD: ktime.h,v 1.6 2018/08/27 07:27:27 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -40,24 +40,9 @@
 
 union ktime {
 	int64_t kt_nsec;
-	struct {
-#if _BYTE_ORDER == _BIG_ENDIAN
-		int32_t ktsn_sec;
-		int32_t ktsn_nsec;
-#else
-		int32_t ktsn_nsec;
-		int32_t ktsn_sec;
-#endif
-	} kt_sec_nsec;
 };
 
 typedef union ktime ktime_t;
-
-static inline ktime_t
-ktime_add_ns(ktime_t kt, int64_t nsec)
-{
-	return (ktime_t) { .kt_nsec = (kt.kt_nsec + nsec) };
-}
 
 static inline int64_t
 ktime_to_ns(ktime_t kt)
@@ -65,14 +50,22 @@ ktime_to_ns(ktime_t kt)
 	return kt.kt_nsec;
 }
 
+static inline int64_t
+ktime_to_us(ktime_t kt)
+{
+	return ktime_to_ns(kt)/1000;
+}
+
 static inline ktime_t
 ns_to_ktime(int64_t nsec)
 {
-	ktime_t kt;
+	return (ktime_t) { .kt_nsec = nsec };
+}
 
-	kt.kt_nsec = nsec;
-
-	return kt;
+static inline ktime_t
+ktime_add_ns(ktime_t kt, int64_t nsec)
+{
+	return ns_to_ktime(ktime_to_ns(kt) + nsec);
 }
 
 static inline ktime_t
@@ -102,37 +95,28 @@ ktime_to_timeval(ktime_t kt)
 static inline ktime_t
 timespec_to_ktime(struct timespec ts)
 {
-	return ns_to_ktime(1000000000*ts.tv_sec + ts.tv_nsec);
+	/* XXX Silently truncate?  */
+	return ns_to_ktime(1000000000*(int64_t)ts.tv_sec + ts.tv_nsec);
 }
 
 static inline ktime_t
 ktime_get(void)
 {
 	struct timespec ts;
-	ktime_t kt;
 
 	nanouptime(&ts);
 
-	/* XXX Silently truncate?  */
-	kt.kt_sec_nsec.ktsn_sec = ts.tv_sec & 0xffffffffUL;
-	kt.kt_sec_nsec.ktsn_nsec = ts.tv_nsec;
-
-	return kt;
+	return timespec_to_ktime(ts);
 }
 
 static inline ktime_t
 ktime_get_real(void)
 {
 	struct timespec ts;
-	ktime_t kt;
 
 	nanotime(&ts);
 
-	/* XXX Silently truncate?  */
-	kt.kt_sec_nsec.ktsn_sec = ts.tv_sec & 0xffffffffUL;
-	kt.kt_sec_nsec.ktsn_nsec = ts.tv_nsec;
-
-	return kt;
+	return timespec_to_ktime(ts);
 }
 
 static inline uint64_t
@@ -157,6 +141,12 @@ ktime_mono_to_real(ktime_t kt)
 	timespecadd(&ts, &boottime, &ts);
 
 	return timespec_to_ktime(ts);
+}
+
+static inline int64_t
+ktime_us_delta(ktime_t a, ktime_t b)
+{
+	return ktime_to_us(ktime_sub(a, b));
 }
 
 static inline bool
