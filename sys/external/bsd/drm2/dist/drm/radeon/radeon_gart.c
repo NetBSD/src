@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_gart.c,v 1.8 2018/08/27 06:37:00 riastradh Exp $	*/
+/*	$NetBSD: radeon_gart.c,v 1.9 2018/08/27 13:56:09 riastradh Exp $	*/
 
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
@@ -28,7 +28,7 @@
  *          Jerome Glisse
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_gart.c,v 1.8 2018/08/27 06:37:00 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_gart.c,v 1.9 2018/08/27 13:56:09 riastradh Exp $");
 
 #include <drm/drmP.h>
 #include <drm/radeon_drm.h>
@@ -280,11 +280,10 @@ radeon_gart_pre_update(struct radeon_device *rdev, unsigned gpu_pgstart,
     unsigned gpu_npages)
 {
 
-	if (rdev->gart.ptr != NULL) {
+	if (rdev->gart.rg_table_map != NULL) {
 		const unsigned entsize =
 		    rdev->gart.table_size / rdev->gart.num_gpu_pages;
 
-		KASSERT(rdev->gart.rg_table_map != NULL);
 		bus_dmamap_sync(rdev->ddev->dmat, rdev->gart.rg_table_map,
 		    gpu_pgstart*entsize, gpu_npages*entsize,
 		    BUS_DMASYNC_PREWRITE);
@@ -296,15 +295,16 @@ radeon_gart_post_update(struct radeon_device *rdev, unsigned gpu_pgstart,
     unsigned gpu_npages)
 {
 
-	if (rdev->gart.ptr != NULL) {
+	if (rdev->gart.rg_table_map != NULL) {
 		const unsigned entsize =
 		    rdev->gart.table_size / rdev->gart.num_gpu_pages;
 
-		KASSERT(rdev->gart.rg_table_map != NULL);
-		membar_sync();		/* XXX overkill */
 		bus_dmamap_sync(rdev->ddev->dmat, rdev->gart.rg_table_map,
 		    gpu_pgstart*entsize, gpu_npages*entsize,
 		    BUS_DMASYNC_POSTWRITE);
+	}
+	if (rdev->gart.ptr != NULL) {
+		membar_sync();		/* XXX overkill */
 		radeon_gart_tlb_flush(rdev);
 	}
 }
