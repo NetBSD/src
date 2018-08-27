@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_lock.c,v 1.4 2016/04/02 22:40:43 riastradh Exp $	*/
+/*	$NetBSD: drm_lock.c,v 1.5 2018/08/27 06:06:31 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -46,13 +46,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_lock.c,v 1.4 2016/04/02 22:40:43 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_lock.c,v 1.5 2018/08/27 06:06:31 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/errno.h>
 #include <sys/systm.h>
 
 #include <drm/drmP.h>
+#include "../dist/drm/drm_legacy.h"
 
 static bool	drm_lock_acquire(struct drm_lock_data *, int);
 static void	drm_lock_release(struct drm_lock_data *, int);

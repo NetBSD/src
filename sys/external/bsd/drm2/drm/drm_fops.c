@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_fops.c,v 1.4 2014/07/16 20:56:25 riastradh Exp $	*/
+/*	$NetBSD: drm_fops.c,v 1.5 2018/08/27 06:06:31 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,12 +30,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_fops.c,v 1.4 2014/07/16 20:56:25 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_fops.c,v 1.5 2018/08/27 06:06:31 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/select.h>
 
 #include <drm/drmP.h>
+#include "../dist/drm/drm_legacy.h"
 
 static int	drm_open_file_master(struct drm_file *);
 
