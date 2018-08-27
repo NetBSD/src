@@ -1,4 +1,4 @@
-/*	$NetBSD: mm.h,v 1.8 2018/08/27 07:23:22 riastradh Exp $	*/
+/*	$NetBSD: mm.h,v 1.9 2018/08/27 13:44:54 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -31,6 +31,8 @@
 
 #ifndef _LINUX_MM_H_
 #define _LINUX_MM_H_
+
+#include <sys/malloc.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -77,10 +79,17 @@ get_num_physpages(void)
 	return uvmexp.npages;
 }
 
+/*
+ * XXX Requires that kmalloc in <linux/slab.h> and vmalloc in
+ * <linux/vmalloc.h> both use malloc(9).  If you change either of
+ * those, be sure to update this.
+ */
 static inline void
-kvfree(void * ptr)
+kvfree(void *ptr)
 {
-	panic("Unimplemented");
+
+	if (ptr != NULL)
+		free(ptr, M_TEMP);
 }
 
 static inline void

@@ -1,4 +1,4 @@
-/*	$NetBSD: slab.h,v 1.5 2015/03/02 02:26:37 riastradh Exp $	*/
+/*	$NetBSD: slab.h,v 1.6 2018/08/27 13:44:54 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -80,6 +80,12 @@ linux_gfp_to_malloc(gfp_t gfp)
 
 	return flags;
 }
+
+/*
+ * XXX vmalloc and kmalloc both use malloc(9).  If you change this, be
+ * sure to update vmalloc in <linux/vmalloc.h> and kvfree in
+ * <linux/mm.h>.
+ */
 
 static inline void *
 kmalloc(size_t size, gfp_t gfp)
