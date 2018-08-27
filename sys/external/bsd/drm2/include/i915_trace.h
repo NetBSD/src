@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_trace.h,v 1.13 2018/08/27 15:09:35 riastradh Exp $	*/
+/*	$NetBSD: i915_trace.h,v 1.14 2018/08/27 15:25:28 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -259,10 +259,11 @@ trace_i915_reg_rw(bool write, uint32_t reg, uint64_t value, size_t len,
 {
 	if (!trace)
 		return;
-	if (write)
+	if (write) {
 		TRACE3(i915,, register__read,  reg, value, len);
-	else
+	} else {
 		TRACE3(i915,, register__write,  reg, value, len);
+	}
 }
 
 DEFINE_TRACE5(i915,, vma__bind,
