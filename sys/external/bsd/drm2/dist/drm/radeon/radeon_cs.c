@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_cs.c,v 1.3 2018/08/27 07:48:30 riastradh Exp $	*/
+/*	$NetBSD: radeon_cs.c,v 1.4 2018/08/27 13:58:04 riastradh Exp $	*/
 
 /*
  * Copyright 2008 Jerome Glisse.
@@ -27,7 +27,7 @@
  *    Jerome Glisse <glisse@freedesktop.org>
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_cs.c,v 1.3 2018/08/27 07:48:30 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_cs.c,v 1.4 2018/08/27 13:58:04 riastradh Exp $");
 
 #include <linux/list_sort.h>
 #include <drm/drmP.h>
@@ -83,7 +83,7 @@ static int radeon_cs_parser_relocs(struct radeon_cs_parser *p)
 	struct radeon_cs_chunk *chunk;
 	struct radeon_cs_buckets buckets;
 	unsigned i;
-	bool need_mmap_lock = false;
+	bool need_mmap_lock __diagused = false;
 	int r;
 
 	if (p->chunk_relocs == NULL) {
