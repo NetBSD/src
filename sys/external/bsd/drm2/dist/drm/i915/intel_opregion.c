@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_opregion.c,v 1.11 2018/08/27 06:34:32 riastradh Exp $	*/
+/*	$NetBSD: intel_opregion.c,v 1.12 2018/08/27 06:34:44 riastradh Exp $	*/
 
 /*
  * Copyright 2008 Intel Corporation <hong.liu@intel.com>
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_opregion.c,v 1.11 2018/08/27 06:34:32 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_opregion.c,v 1.12 2018/08/27 06:34:44 riastradh Exp $");
 
 #include <linux/printk.h>
 #include <linux/acpi.h>
@@ -650,7 +650,6 @@ static int intel_opregion_video_event(struct notifier_block *nb,
 static struct notifier_block intel_opregion_notifier = {
 	.notifier_call = intel_opregion_video_event,
 };
-#endif	/* __NetBSD__ */
 
 /*
  * Initialise the DIDL field in opregion. This passes a list of devices to
