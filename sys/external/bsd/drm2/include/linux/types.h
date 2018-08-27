@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.8 2018/08/27 13:31:36 riastradh Exp $	*/
+/*	$NetBSD: types.h,v 1.9 2018/08/27 13:57:11 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -91,5 +91,8 @@ typedef off_t loff_t;
 #define DECLARE_BITMAP(NAME, BITS)					      \
 	unsigned long NAME[((BITS) + ((NBBY*sizeof(unsigned long)) - 1)) /    \
 		(NBBY*sizeof(unsigned long))]
+
+/* Definition copied in <linux/kernel.h> for convenience.  */
+#define	__user
 
 #endif  /* _LINUX_TYPES_H_ */
