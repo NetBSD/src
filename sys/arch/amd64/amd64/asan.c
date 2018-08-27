@@ -1,4 +1,4 @@
-/*	$NetBSD: asan.c,v 1.6 2018/08/23 11:56:10 maxv Exp $	*/
+/*	$NetBSD: asan.c,v 1.7 2018/08/27 08:53:19 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: asan.c,v 1.6 2018/08/23 11:56:10 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asan.c,v 1.7 2018/08/27 08:53:19 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -541,6 +541,55 @@ kasan_memset(void *b, int c, size_t len)
 {
 	kasan_shadow_check((unsigned long)b, len, true, __RET_ADDR);
 	return __builtin_memset(b, c, len);
+}
+
+char *
+kasan_strcpy(char *dst, const char *src)
+{
+	char *save = dst;
+
+	while (1) {
+		kasan_shadow_check((unsigned long)src, 1, false, __RET_ADDR);
+		kasan_shadow_check((unsigned long)dst, 1, true, __RET_ADDR);
+		*dst = *src;
+		if (*src == '\0')
+			break;
+		src++, dst++;
+	}
+
+	return save;
+}
+
+int
+kasan_strcmp(const char *s1, const char *s2)
+{
+	while (1) {
+		kasan_shadow_check((unsigned long)s1, 1, false, __RET_ADDR);
+		kasan_shadow_check((unsigned long)s2, 1, false, __RET_ADDR);
+		if (*s1 != *s2)
+			break;
+		if (*s1 == '\0')
+			return 0;
+		s1++, s2++;
+	}
+
+	return (*(const unsigned char *)s1 - *(const unsigned char *)s2);
+}
+
+size_t
+kasan_strlen(const char *str)
+{
+	const char *s;
+
+	s = str;
+	while (1) {
+		kasan_shadow_check((unsigned long)s, 1, false, __RET_ADDR);
+		if (*s == '\0')
+			break;
+		s++;
+	}
+
+	return (s - str);
 }
 
 /* -------------------------------------------------------------------------- */
