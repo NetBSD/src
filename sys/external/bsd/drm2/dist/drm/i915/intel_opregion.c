@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_opregion.c,v 1.12 2018/08/27 06:34:44 riastradh Exp $	*/
+/*	$NetBSD: intel_opregion.c,v 1.13 2018/08/27 07:26:30 riastradh Exp $	*/
 
 /*
  * Copyright 2008 Intel Corporation <hong.liu@intel.com>
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_opregion.c,v 1.12 2018/08/27 06:34:44 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_opregion.c,v 1.13 2018/08/27 07:26:30 riastradh Exp $");
 
 #include <linux/printk.h>
 #include <linux/acpi.h>
@@ -600,7 +600,7 @@ static void
 intel_opregion_video_event(ACPI_HANDLE hdl, uint32_t notify, void *opaque)
 {
 	device_t self = opaque;
-	struct opregion_acpi __iomem *acpi;
+	struct opregion_acpi *acpi;
 
 	DRM_DEBUG_DRIVER("notify=0x%08x\n", notify);
 
@@ -647,9 +647,11 @@ static int intel_opregion_video_event(struct notifier_block *nb,
 }
 #endif
 
+#ifndef __NetBSD__
 static struct notifier_block intel_opregion_notifier = {
 	.notifier_call = intel_opregion_video_event,
 };
+#endif
 
 /*
  * Initialise the DIDL field in opregion. This passes a list of devices to
@@ -895,7 +897,11 @@ void intel_opregion_fini(struct drm_device *dev)
 	}
 
 	/* just clear all opregion memory pointers now */
+#ifdef __NetBSD__
+	bus_space_unmap(opregion->bst, opregion->bsh, OPREGION_SIZE);
+#else
 	memunmap(opregion->header);
+#endif
 	opregion->header = NULL;
 	opregion->acpi = NULL;
 	opregion->swsci = NULL;
@@ -989,7 +995,14 @@ int intel_opregion_setup(struct drm_device *dev)
 	INIT_WORK(&opregion->asle_work, asle_work);
 #endif
 #ifdef __NetBSD__
-	base = acpi_os_ioremap(asls, OPREGION_SIZE);
+	opregion->bst = dev->pdev->pd_pa.pa_memt;
+	err = -bus_space_map(opregion->bst, asls, OPREGION_SIZE,
+	    BUS_SPACE_MAP_LINEAR|BUS_SPACE_MAP_PREFETCHABLE, &opregion->bsh);
+	if (err) {
+		DRM_DEBUG_DRIVER("Failed to map opregion: %d", err);
+		return err;
+	}
+	base = bus_space_vaddr(opregion->bst, opregion->bsh);
 #else
 	base = memremap(asls, OPREGION_SIZE, MEMREMAP_WB);
 #endif
@@ -1029,7 +1042,11 @@ int intel_opregion_setup(struct drm_device *dev)
 	return 0;
 
 err_out:
+#ifdef __NetBSD__
+	bus_space_unmap(opregion->bst, opregion->bsh, OPREGION_SIZE);
+#else
 	memunmap(base);
+#endif
 	return err;
 }
 

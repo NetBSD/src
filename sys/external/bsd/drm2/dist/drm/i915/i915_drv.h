@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_drv.h,v 1.19 2018/08/27 07:19:01 riastradh Exp $	*/
+/*	$NetBSD: i915_drv.h,v 1.20 2018/08/27 07:26:30 riastradh Exp $	*/
 
 /* i915_drv.h -- Private header for the I915 driver -*- linux-c -*-
  */
@@ -475,6 +475,10 @@ struct opregion_asle;
 #endif
 
 struct intel_opregion {
+#ifdef __NetBSD__
+	bus_space_tag_t bst;
+	bus_space_handle_t bsh;
+#endif
 	struct opregion_header *header;
 	struct opregion_acpi *acpi;
 	struct opregion_swsci *swsci;
