@@ -1,3 +1,5 @@
+/*	$NetBSD: r300_cmdbuf.c,v 1.1.1.2 2018/08/27 01:34:58 riastradh Exp $	*/
+
 /* r300_cmdbuf.c -- Command buffer emission for R300 -*- linux-c -*-
  *
  * Copyright (C) The Weather Channel, Inc.  2002.
@@ -33,11 +35,14 @@
  * ------------------------ This file is DEPRECATED! -------------------------
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: r300_cmdbuf.c,v 1.1.1.2 2018/08/27 01:34:58 riastradh Exp $");
+
 #include <drm/drmP.h>
-#include <drm/drm_buffer.h>
 #include <drm/radeon_drm.h>
 #include "radeon_drv.h"
 #include "r300_reg.h"
+#include "drm_buffer.h"
 
 #include <asm/unaligned.h>
 

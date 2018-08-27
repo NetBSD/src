@@ -1,3 +1,5 @@
+/*	$NetBSD: r600_dpm.h,v 1.1.1.2 2018/08/27 01:34:58 riastradh Exp $	*/
+
 /*
  * Copyright 2011 Advanced Micro Devices, Inc.
  *
@@ -95,6 +97,9 @@
 /* XXX are these ok? */
 #define R600_TEMP_RANGE_MIN (90 * 1000)
 #define R600_TEMP_RANGE_MAX (120 * 1000)
+
+#define FDO_PWM_MODE_STATIC  1
+#define FDO_PWM_MODE_STATIC_RPM 5
 
 enum r600_power_level {
 	R600_POWER_LEVEL_LOW = 0,
