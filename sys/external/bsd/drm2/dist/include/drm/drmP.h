@@ -1,4 +1,4 @@
-/*	$NetBSD: drmP.h,v 1.14 2018/08/27 04:58:37 riastradh Exp $	*/
+/*	$NetBSD: drmP.h,v 1.15 2018/08/27 06:17:30 riastradh Exp $	*/
 
 /*
  * Internal Header for the Direct Rendering Manager
@@ -96,6 +96,7 @@ struct drm_local_map;
 struct drm_device_dma;
 struct drm_dma_handle;
 struct drm_gem_object;
+struct drm_bus_irq_cookie;
 
 struct device_node;
 struct videomode;
