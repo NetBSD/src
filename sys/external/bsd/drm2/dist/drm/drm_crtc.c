@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_crtc.c,v 1.6 2018/08/27 06:52:11 riastradh Exp $	*/
+/*	$NetBSD: drm_crtc.c,v 1.7 2018/08/27 06:52:24 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2006-2008 Intel Corporation
@@ -32,7 +32,7 @@
  *      Jesse Barnes <jesse.barnes@intel.com>
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_crtc.c,v 1.6 2018/08/27 06:52:11 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_crtc.c,v 1.7 2018/08/27 06:52:24 riastradh Exp $");
 
 #include <linux/err.h>
 #include <linux/spinlock.h>
@@ -519,7 +519,7 @@ EXPORT_SYMBOL(drm_framebuffer_lookup);
  */
 void drm_framebuffer_unreference(struct drm_framebuffer *fb)
 {
-	DRM_DEBUG("%p: FB ID: %d (%d)\n", fb, fb->base.id, atomic_read(&fb->refcount.refcount));
+	DRM_DEBUG("%p: FB ID: %d (%d)\n", fb, fb->base.id, fb->refcount.kr_count);
 	kref_put(&fb->refcount, drm_framebuffer_free);
 }
 EXPORT_SYMBOL(drm_framebuffer_unreference);
@@ -532,7 +532,7 @@ EXPORT_SYMBOL(drm_framebuffer_unreference);
  */
 void drm_framebuffer_reference(struct drm_framebuffer *fb)
 {
-	DRM_DEBUG("%p: FB ID: %d (%d)\n", fb, fb->base.id, atomic_read(&fb->refcount.refcount));
+	DRM_DEBUG("%p: FB ID: %d (%d)\n", fb, fb->base.id, fb->refcount.kr_count);
 	kref_get(&fb->refcount);
 }
 EXPORT_SYMBOL(drm_framebuffer_reference);
@@ -4284,7 +4284,7 @@ void drm_property_unreference_blob(struct drm_property_blob *blob)
 
 	dev = blob->dev;
 
-	DRM_DEBUG("%p: blob ID: %d (%d)\n", blob, blob->base.id, atomic_read(&blob->refcount.refcount));
+	DRM_DEBUG("%p: blob ID: %d (%d)\n", blob, blob->base.id, blob->refcount.kr_count);
 
 	if (kref_put_mutex(&blob->refcount, drm_property_free_blob,
 			   &dev->mode_config.blob_lock))
@@ -4307,7 +4307,7 @@ static void drm_property_unreference_blob_locked(struct drm_property_blob *blob)
 	if (!blob)
 		return;
 
-	DRM_DEBUG("%p: blob ID: %d (%d)\n", blob, blob->base.id, atomic_read(&blob->refcount.refcount));
+	DRM_DEBUG("%p: blob ID: %d (%d)\n", blob, blob->base.id, blob->refcount.kr_count);
 
 	kref_put(&blob->refcount, drm_property_free_blob);
 }
@@ -4341,7 +4341,7 @@ void drm_property_destroy_user_blobs(struct drm_device *dev,
  */
 struct drm_property_blob *drm_property_reference_blob(struct drm_property_blob *blob)
 {
-	DRM_DEBUG("%p: blob ID: %d (%d)\n", blob, blob->base.id, atomic_read(&blob->refcount.refcount));
+	DRM_DEBUG("%p: blob ID: %d (%d)\n", blob, blob->base.id, blob->refcount.kr_count);
 	kref_get(&blob->refcount);
 	return blob;
 }
