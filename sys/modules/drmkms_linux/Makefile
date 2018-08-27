@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.9 2018/08/27 13:52:58 riastradh Exp $
+# $NetBSD: Makefile,v 1.10 2018/08/27 14:16:38 riastradh Exp $
 
 #
 # At some point this needs to turn into linux.kmod and a proper home for it
@@ -26,6 +26,7 @@ SRCS+=	linux_idr.c
 SRCS+=	linux_kmap.c
 SRCS+=	linux_list_sort.c
 SRCS+=	linux_module.c
+SRCS+=	linux_pci.c
 SRCS+=	linux_rcu.c
 SRCS+=	linux_reservation.c
 SRCS+=	linux_work.c		# XXX Move me to linux.kmod.
