@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_vgpu.h,v 1.2 2018/08/27 04:58:24 riastradh Exp $	*/
+/*	$NetBSD: i915_vgpu.h,v 1.3 2018/08/27 16:15:48 riastradh Exp $	*/
 
 /*
  * Copyright(c) 2011-2015 Intel Corporation. All rights reserved.
@@ -110,7 +110,7 @@ struct vgt_if {
 } __packed;
 
 #define vgtif_reg(x) \
-	(VGT_PVINFO_PAGE + (long)&((struct vgt_if *)NULL)->x)
+	(VGT_PVINFO_PAGE + offsetof(struct vgt_if, x))
 
 /* vGPU display status to be used by the host side */
 #define VGT_DRV_DISPLAY_NOT_READY 0
