@@ -1,4 +1,4 @@
-/*	$NetBSD: mm.h,v 1.6 2015/10/18 14:03:20 jmcneill Exp $	*/
+/*	$NetBSD: mm.h,v 1.7 2018/08/27 06:06:41 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -35,6 +35,8 @@
 #include <uvm/uvm_extern.h>
 
 #include <asm/page.h>
+#include <linux/shrinker.h>
+
 
 struct file;
 
@@ -74,6 +76,12 @@ static inline unsigned long
 get_num_physpages(void)
 {
 	return uvmexp.npages;
+}
+
+static inline void
+kvfree(void * ptr)
+{
+	panic("Unimplemented");
 }
 
 #endif  /* _LINUX_MM_H_ */
