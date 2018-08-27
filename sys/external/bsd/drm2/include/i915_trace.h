@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_trace.h,v 1.9 2018/08/27 07:17:11 riastradh Exp $	*/
+/*	$NetBSD: i915_trace.h,v 1.10 2018/08/27 07:18:08 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -227,6 +227,12 @@ static inline void
 trace_i915_va_alloc(struct i915_address_space *vm __unused,
     uint64_t start __unused, uint64_t length __unused,
     const char *name __unused)
+{
+}
+
+static inline void
+trace_i915_gem_shrink(struct drm_i915_private *dev_priv, unsigned long target,
+    unsigned flagss)
 {
 }
 
