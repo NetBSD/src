@@ -1,7 +1,7 @@
-/*	$NetBSD: workqueue.h,v 1.8 2018/08/27 07:46:28 riastradh Exp $	*/
+/*	$NetBSD: workqueue.h,v 1.9 2018/08/27 14:57:21 riastradh Exp $	*/
 
 /*-
- * Copyright (c) 2013 The NetBSD Foundation, Inc.
+ * Copyright (c) 2013, 2018 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -32,12 +32,10 @@
 #ifndef _LINUX_WORKQUEUE_H_
 #define _LINUX_WORKQUEUE_H_
 
-#include <sys/types.h>
-#include <sys/callout.h>
 #include <sys/queue.h>
-#include <sys/workqueue.h>
+#include <sys/stdbool.h>
 
-#include <linux/kernel.h>
+#include <linux/kernel.h>	/* container_of */
 
 #define	INIT_DELAYED_WORK		linux_INIT_DELAYED_WORK
 #define	INIT_WORK			linux_INIT_WORK
@@ -64,25 +62,21 @@
 struct workqueue_struct;
 
 struct work_struct {
-	struct work		w_wk;
-	__cpu_simple_lock_t	w_lock; /* XXX */
-	enum {
-		WORK_IDLE,
-		WORK_DELAYED,
-		WORK_PENDING,
-		WORK_INVOKED,
-		WORK_CANCELLED,
-		WORK_DELAYED_CANCELLED,
-	}			w_state;
-	struct workqueue_struct	*w_wq;
-	void			(*func)(struct work_struct *);
+	struct workqueue_struct	*volatile work_queue;
+	TAILQ_ENTRY(work_struct)	work_entry;
+	void	(*func)(struct work_struct *); /* Linux API name */
 };
 
 struct delayed_work {
-	/* Not dw_work; name must match Linux.  */
-	struct work_struct		work;
+	struct work_struct		work; /* Linux API name */
 	struct callout			dw_callout;
 	TAILQ_ENTRY(delayed_work)	dw_entry;
+	enum {
+		DELAYED_WORK_IDLE,
+		DELAYED_WORK_SCHEDULED,
+		DELAYED_WORK_RESCHEDULED,
+		DELAYED_WORK_CANCELLED,
+	}				dw_state;
 };
 
 static inline struct delayed_work *
@@ -110,8 +104,9 @@ void	flush_scheduled_work(void);
 void	INIT_WORK(struct work_struct *, void (*)(struct work_struct *));
 bool	schedule_work(struct work_struct *);
 bool	queue_work(struct workqueue_struct *, struct work_struct *);
+bool	cancel_work(struct work_struct *);
 bool	cancel_work_sync(struct work_struct *);
-void	flush_work(struct work_struct *);
+bool	flush_work(struct work_struct *);
 
 void	INIT_DELAYED_WORK(struct delayed_work *,
 	    void (*)(struct work_struct *));
@@ -122,7 +117,7 @@ bool	mod_delayed_work(struct workqueue_struct *, struct delayed_work *,
 	    unsigned long ticks);
 bool	cancel_delayed_work(struct delayed_work *);
 bool	cancel_delayed_work_sync(struct delayed_work *);
-void	flush_delayed_work(struct delayed_work *);
+bool	flush_delayed_work(struct delayed_work *);
 
 struct work_struct *
 	current_work(void);
