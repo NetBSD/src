@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_gtt.c,v 1.6 2018/08/06 00:30:15 riastradh Exp $	*/
+/*	$NetBSD: intel_gtt.c,v 1.7 2018/08/27 00:51:37 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 /* Intel GTT stubs */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_gtt.c,v 1.6 2018/08/06 00:30:15 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_gtt.c,v 1.7 2018/08/27 00:51:37 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/bus.h>
@@ -125,8 +125,14 @@ intel_gmch_remove(void)
 bool
 intel_enable_gtt(void)
 {
+	struct agp_softc *sc = agp_i810_sc;
+	struct agp_i810_softc *isc;
 
-	return (agp_i810_sc != NULL);
+	if (sc == NULL)
+		return false;
+	isc = sc->as_chipc;
+	agp_i810_reset(isc);
+	return true;
 }
 
 void
