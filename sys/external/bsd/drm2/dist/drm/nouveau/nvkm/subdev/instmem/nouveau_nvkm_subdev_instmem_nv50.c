@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_subdev_instmem_nv50.c,v 1.4 2018/08/27 07:36:28 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_subdev_instmem_nv50.c,v 1.5 2018/08/27 14:18:18 riastradh Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_instmem_nv50.c,v 1.4 2018/08/27 07:36:28 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_instmem_nv50.c,v 1.5 2018/08/27 14:18:18 riastradh Exp $");
 
 #define nv50_instmem(p) container_of((p), struct nv50_instmem, base)
 #include "priv.h"
@@ -98,12 +98,13 @@ nv50_instobj_boot(struct nvkm_memory *memory, struct nvkm_vm *vm)
 	if (ret == 0) {
 #ifdef __NetBSD__
 		bus_space_tag_t bst = device->func->resource_tag(device, 3);
+		bus_addr_t base = device->func->resource_addr(device, 3);
 		bus_space_handle_t bsh;
 		int ret;
 
 		/* Yes, truncation is really intended here.  */
 		/* XXX errno NetBSD->Linux */
-		ret = -bus_space_map(bst, (u32)iobj->bar.offset, size,
+		ret = -bus_space_map(bst, base + (u32)iobj->bar.offset, size,
 		    BUS_SPACE_MAP_LINEAR, &bsh);
 		if (ret == 0) {
 			nvkm_memory_map(memory, &iobj->bar, 0);
