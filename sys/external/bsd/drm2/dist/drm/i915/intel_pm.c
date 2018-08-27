@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_pm.c,v 1.14 2018/08/27 07:29:37 riastradh Exp $	*/
+/*	$NetBSD: intel_pm.c,v 1.15 2018/08/27 15:09:35 riastradh Exp $	*/
 
 /*
  * Copyright © 2012 Intel Corporation
@@ -28,12 +28,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_pm.c,v 1.14 2018/08/27 07:29:37 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_pm.c,v 1.15 2018/08/27 15:09:35 riastradh Exp $");
 
 #include <linux/bitops.h>
 #include <linux/cpufreq.h>
 #include <linux/export.h>
 #include "i915_drv.h"
+#include "i915_trace.h"
 #include "intel_drv.h"
 #ifndef __NetBSD__
 #include "../../../platform/x86/intel_ips.h"
