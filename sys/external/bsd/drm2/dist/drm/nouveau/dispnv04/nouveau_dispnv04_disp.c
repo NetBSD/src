@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_dispnv04_disp.c,v 1.3 2018/08/27 04:58:29 riastradh Exp $	*/
+/*	$NetBSD: nouveau_dispnv04_disp.c,v 1.4 2018/08/27 14:48:21 riastradh Exp $	*/
 
 /*
  * Copyright 2009 Red Hat Inc.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_dispnv04_disp.c,v 1.3 2018/08/27 04:58:29 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_dispnv04_disp.c,v 1.4 2018/08/27 14:48:21 riastradh Exp $");
 
 #include <linux/err.h>
 
@@ -54,7 +54,11 @@ nv04_display_create(struct drm_device *dev)
 	if (!disp)
 		return -ENOMEM;
 
-	nvif_object_map(&drm->device.object);
+	ret = nvif_object_map(&drm->device.object);
+	if (ret) {
+		NV_ERROR(drm, "nvif_object_map, %d\n", ret);
+		return ret;
+	}
 
 	nouveau_display(dev)->priv = disp;
 	nouveau_display(dev)->dtor = nv04_display_destroy;
