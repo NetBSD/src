@@ -1,4 +1,4 @@
-/*	$NetBSD: hardirq.h,v 1.1 2018/08/27 07:14:42 riastradh Exp $	*/
+/*	$NetBSD: hardirq.h,v 1.2 2018/08/27 13:37:37 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -33,6 +33,7 @@
 #define	_LINUX_HARDIRQ_H_
 
 #include <sys/types.h>
+#include <sys/kernel.h>
 #include <sys/null.h>
 #include <sys/xcall.h>
 
@@ -53,7 +54,8 @@ static inline void
 synchronize_irq(int irq)
 {
 
-	xc_wait(xc_broadcast(0, synchronize_irq_xc, NULL, NULL));
+	if (!cold)
+		xc_wait(xc_broadcast(0, synchronize_irq_xc, NULL, NULL));
 }
 
 #endif	/* _LINUX_HARDIRQ_H_ */
