@@ -1,4 +1,4 @@
-/*	$NetBSD: workqueue.h,v 1.6 2018/08/27 07:05:39 riastradh Exp $	*/
+/*	$NetBSD: workqueue.h,v 1.7 2018/08/27 07:46:17 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -56,6 +56,7 @@
 #define	queue_work			linux_queue_work
 #define	schedule_delayed_work		linux_schedule_delayed_work
 #define	schedule_work			linux_schedule_work
+#define	system_long_wq			linux_system_long_wq
 #define	system_wq			linux_system_wq
 #define	to_delayed_work			linux_to_delayed_work
 
