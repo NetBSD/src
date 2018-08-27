@@ -1,4 +1,4 @@
-/*	$NetBSD: gpu_scheduler.h,v 1.3 2018/08/27 14:03:10 riastradh Exp $	*/
+/*	$NetBSD: gpu_scheduler.h,v 1.4 2018/08/27 14:03:24 riastradh Exp $	*/
 
 /*
  * Copyright 2015 Advanced Micro Devices, Inc.
@@ -28,6 +28,10 @@
 
 #include <linux/kfifo.h>
 #include <linux/fence.h>
+
+#ifdef __NetBSD__
+#include <drm/drm_wait_netbsd.h>
+#endif
 
 #define AMD_SCHED_FENCE_SCHEDULED_BIT	FENCE_FLAG_USER_BITS
 
@@ -119,12 +123,23 @@ struct amd_gpu_scheduler {
 	const char			*name;
 	struct amd_sched_rq		sched_rq;
 	struct amd_sched_rq		kernel_rq;
+#ifdef __NetBSD__
+	spinlock_t			job_lock;
+	drm_waitqueue_t			wake_up_worker;
+	drm_waitqueue_t			job_scheduled;
+#else
 	wait_queue_head_t		wake_up_worker;
 	wait_queue_head_t		job_scheduled;
+#endif
 	atomic_t			hw_rq_count;
 	struct list_head		fence_list;
 	spinlock_t			fence_list_lock;
+#ifdef __NetBSD__
+	bool				dying;
+	struct lwp			*thread;
+#else
 	struct task_struct		*thread;
+#endif
 };
 
 int amd_sched_init(struct amd_gpu_scheduler *sched,
