@@ -1,4 +1,4 @@
-/*	$NetBSD: shrinker.h,v 1.3 2014/07/16 20:56:25 riastradh Exp $	*/
+/*	$NetBSD: shrinker.h,v 1.4 2018/08/27 07:18:18 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -44,6 +44,8 @@ struct shrinker {
 			    struct shrink_control *);
 	int		seeks;
 };
+
+#define	SHRINK_STOP	(~0UL)
 
 #define	DEFAULT_SEEKS	2	/* XXX cargo-culted from Linux */
 
