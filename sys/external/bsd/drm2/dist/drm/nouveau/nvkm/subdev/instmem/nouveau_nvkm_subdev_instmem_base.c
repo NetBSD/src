@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_subdev_instmem_base.c,v 1.2 2018/08/27 04:58:34 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_subdev_instmem_base.c,v 1.3 2018/08/27 07:36:28 riastradh Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -24,12 +24,16 @@
  * Authors: Ben Skeggs
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_instmem_base.c,v 1.2 2018/08/27 04:58:34 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_instmem_base.c,v 1.3 2018/08/27 07:36:28 riastradh Exp $");
 
 #include "priv.h"
 
 #include <core/memory.h>
 #include <subdev/bar.h>
+
+#ifdef __NetBSD__
+#  define	__iomem	__nvkm_memory_iomem
+#endif
 
 /******************************************************************************
  * instmem object base implementation
@@ -87,7 +91,6 @@ nvkm_instobj_acquire(struct nvkm_memory *memory)
  * pointers come from.
  */
 
-#  define	__iomem
 #  define	ioread32_native		fake_ioread32_native
 #  define	iowrite32_native	fake_iowrite32_native
 
@@ -115,13 +118,13 @@ fake_iowrite32_native(uint32_t v, void __iomem *ptr)
 static u32
 nvkm_instobj_rd32(struct nvkm_memory *memory, u64 offset)
 {
-	return ioread32_native(nvkm_instobj(memory)->map + offset);
+	return ioread32_native((const char *)nvkm_instobj(memory)->map + offset);
 }
 
 static void
 nvkm_instobj_wr32(struct nvkm_memory *memory, u64 offset, u32 data)
 {
-	iowrite32_native(data, nvkm_instobj(memory)->map + offset);
+	iowrite32_native(data, (char *)nvkm_instobj(memory)->map + offset);
 }
 
 #ifdef __NetBSD__

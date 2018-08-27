@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_subdev_instmem_nv50.c,v 1.3 2018/08/27 06:36:48 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_subdev_instmem_nv50.c,v 1.4 2018/08/27 07:36:28 riastradh Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_instmem_nv50.c,v 1.3 2018/08/27 06:36:48 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_instmem_nv50.c,v 1.4 2018/08/27 07:36:28 riastradh Exp $");
 
 #define nv50_instmem(p) container_of((p), struct nv50_instmem, base)
 #include "priv.h"
@@ -33,6 +33,10 @@ __KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_instmem_nv50.c,v 1.3 2018/08/27 
 #include <subdev/bar.h>
 #include <subdev/fb.h>
 #include <subdev/mmu.h>
+
+#ifdef __NetBSD__
+#  define	__iomem	__nvkm_memory_iomem
+#endif
 
 struct nv50_instmem {
 	struct nvkm_instmem base;
@@ -83,7 +87,9 @@ nv50_instobj_boot(struct nvkm_memory *memory, struct nvkm_vm *vm)
 	struct nvkm_subdev *subdev = &iobj->imem->base.subdev;
 	struct nvkm_device *device = subdev->device;
 	u64 size = nvkm_memory_size(memory);
+#ifndef __NetBSD__
 	void __iomem *map;
+#endif
 	int ret;
 
 	iobj->map = ERR_PTR(-ENOMEM);
@@ -201,7 +207,7 @@ nv50_instobj_dtor(struct nvkm_memory *memory)
 		nvkm_vm_put(&iobj->bar);
 #ifdef __NetBSD__
 		bus_space_unmap(iobj->bst, iobj->bsh,
-		    nvkm_memory_size(iobj->memory));
+		    nvkm_memory_size(&iobj->memory));
 		iobj->map = NULL;
 #else
 		iounmap(iobj->map);
