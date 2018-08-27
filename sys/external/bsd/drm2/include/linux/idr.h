@@ -1,4 +1,4 @@
-/*	$NetBSD: idr.h,v 1.6 2018/08/27 07:15:06 riastradh Exp $	*/
+/*	$NetBSD: idr.h,v 1.7 2018/08/27 14:14:42 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -33,9 +33,7 @@
 #define _LINUX_IDR_H_
 
 #include <sys/types.h>
-#include <sys/rwlock.h>
 #include <sys/rbtree.h>
-#include <sys/queue.h>
 
 #include <linux/gfp.h>
 
