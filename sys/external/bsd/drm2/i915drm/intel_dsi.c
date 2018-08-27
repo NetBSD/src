@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_dsi.c,v 1.1 2018/08/27 13:35:15 riastradh Exp $	*/
+/*	$NetBSD: intel_dsi.c,v 1.2 2018/08/27 15:09:35 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,9 +30,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_dsi.c,v 1.1 2018/08/27 13:35:15 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_dsi.c,v 1.2 2018/08/27 15:09:35 riastradh Exp $");
 
-#include "i915_drv.h"
+#include "intel_drv.h"
 
 void
 intel_dsi_init(struct drm_device *dev)

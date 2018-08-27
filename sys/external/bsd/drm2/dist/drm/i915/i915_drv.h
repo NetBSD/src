@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_drv.h,v 1.25 2018/08/27 14:49:22 riastradh Exp $	*/
+/*	$NetBSD: i915_drv.h,v 1.26 2018/08/27 15:09:35 riastradh Exp $	*/
 
 /* i915_drv.h -- Private header for the I915 driver -*- linux-c -*-
  */
@@ -2708,8 +2708,6 @@ struct drm_i915_cmd_table {
 
 #define GT_FREQUENCY_MULTIPLIER 50
 #define GEN9_FREQ_SCALER 3
-
-#include "i915_trace.h"
 
 extern const struct drm_ioctl_desc i915_ioctls[];
 extern int i915_max_ioctl;

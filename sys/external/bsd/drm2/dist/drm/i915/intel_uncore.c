@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_uncore.c,v 1.9 2018/08/27 13:43:39 riastradh Exp $	*/
+/*	$NetBSD: intel_uncore.c,v 1.10 2018/08/27 15:09:35 riastradh Exp $	*/
 
 /*
  * Copyright © 2013 Intel Corporation
@@ -24,11 +24,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_uncore.c,v 1.9 2018/08/27 13:43:39 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_uncore.c,v 1.10 2018/08/27 15:09:35 riastradh Exp $");
 
 #include "i915_drv.h"
 #include "intel_drv.h"
 #include "i915_vgpu.h"
+#include "i915_trace.h"
 
 #include <linux/err.h>
 #include <linux/pm_runtime.h>

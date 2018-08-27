@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_sprite.c,v 1.8 2018/08/27 14:43:00 riastradh Exp $	*/
+/*	$NetBSD: intel_sprite.c,v 1.9 2018/08/27 15:09:35 riastradh Exp $	*/
 
 /*
  * Copyright © 2011 Intel Corporation
@@ -32,7 +32,7 @@
  * support.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_sprite.c,v 1.8 2018/08/27 14:43:00 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_sprite.c,v 1.9 2018/08/27 15:09:35 riastradh Exp $");
 
 #include <drm/drmP.h>
 #include <drm/drm_crtc.h>
@@ -43,6 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: intel_sprite.c,v 1.8 2018/08/27 14:43:00 riastradh E
 #include "intel_drv.h"
 #include <drm/i915_drm.h>
 #include "i915_drv.h"
+#include "i915_trace.h"
 
 static bool
 format_is_yuv(uint32_t format)

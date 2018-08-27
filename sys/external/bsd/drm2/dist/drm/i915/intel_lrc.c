@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_lrc.c,v 1.8 2018/08/27 14:53:12 riastradh Exp $	*/
+/*	$NetBSD: intel_lrc.c,v 1.9 2018/08/27 15:09:35 riastradh Exp $	*/
 
 /*
  * Copyright © 2014 Intel Corporation
@@ -135,11 +135,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_lrc.c,v 1.8 2018/08/27 14:53:12 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_lrc.c,v 1.9 2018/08/27 15:09:35 riastradh Exp $");
 
 #include <drm/drmP.h>
 #include <drm/i915_drm.h>
 #include "i915_drv.h"
+#include "i915_trace.h"
+#include "intel_drv.h"
 #include "intel_mocs.h"
 
 #define GEN9_LR_CONTEXT_RENDER_SIZE (22 * PAGE_SIZE)
