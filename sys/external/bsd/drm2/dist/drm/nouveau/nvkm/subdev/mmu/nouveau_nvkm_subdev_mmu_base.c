@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_subdev_mmu_base.c,v 1.2 2018/08/27 04:58:34 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_subdev_mmu_base.c,v 1.3 2018/08/27 07:41:19 riastradh Exp $	*/
 
 /*
  * Copyright 2010 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_mmu_base.c,v 1.2 2018/08/27 04:58:34 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_mmu_base.c,v 1.3 2018/08/27 07:41:19 riastradh Exp $");
 
 #include "priv.h"
 
@@ -78,7 +78,7 @@ nvkm_vm_map_at(struct nvkm_vma *vma, u64 delta, struct nvkm_mem *node)
 #ifdef __NetBSD__
 
 static void
-nvkm_vm_map_dma(struct nvkm_vma *vma, u64 delta, u64 length,
+nvkm_vm_map_sg(struct nvkm_vma *vma, u64 delta, u64 length,
     struct nvkm_mem *mem)
 {
 	struct nvkm_vm *vm = vma->vm;
@@ -93,7 +93,7 @@ nvkm_vm_map_dma(struct nvkm_vma *vma, u64 delta, u64 length,
 	unsigned seg, pgoff;
 
 	for (seg = 0; seg < mem->pages->dm_nsegs; seg++) {
-		struct nvkm_memory *pgt = vm->pgt[pde].obj[big];
+		struct nvkm_memory *pgt = vm->pgt[pde].mem[big];
 		dma_addr_t addr = mem->pages->dm_segs[seg].ds_addr;
 
 		KASSERT((mem->pages->dm_segs[seg].ds_len & NOUVEAU_GPU_PAGE_MASK) == 0);
@@ -220,20 +220,15 @@ nvkm_vm_map_sg(struct nvkm_vma *vma, u64 delta, u64 length,
 void
 nvkm_vm_map(struct nvkm_vma *vma, struct nvkm_mem *node)
 {
-#ifdef __NetBSD__
-	if (node->pages)
-		nvkm_vm_map_dma(vma, 0, node->size << 12, node);
-	else
-		nvkm_vm_map_at(vma, 0, node);
-#else
+#ifndef __NetBSD__
 	if (node->sg)
 		nvkm_vm_map_sg_table(vma, 0, node->size << 12, node);
 	else
+#endif
 	if (node->pages)
 		nvkm_vm_map_sg(vma, 0, node->size << 12, node);
 	else
 		nvkm_vm_map_at(vma, 0, node);
-#endif
 }
 
 void
