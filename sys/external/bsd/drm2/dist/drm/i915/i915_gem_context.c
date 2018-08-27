@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem_context.c,v 1.8 2018/08/27 06:07:58 riastradh Exp $	*/
+/*	$NetBSD: i915_gem_context.c,v 1.9 2018/08/27 14:14:29 riastradh Exp $	*/
 
 /*
  * Copyright © 2011-2012 Intel Corporation
@@ -88,7 +88,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gem_context.c,v 1.8 2018/08/27 06:07:58 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gem_context.c,v 1.9 2018/08/27 14:14:29 riastradh Exp $");
 
 #include <linux/err.h>
 #include <drm/drmP.h>
@@ -236,10 +236,8 @@ __create_hw_context(struct drm_device *dev,
 
 	/* Default context will never have a file_priv */
 	if (file_priv != NULL) {
-		idr_preload(GFP_KERNEL);
 		ret = idr_alloc(&file_priv->context_idr, ctx,
 				DEFAULT_CONTEXT_HANDLE, 0, GFP_KERNEL);
-		idr_preload_end();
 		if (ret < 0)
 			goto err_out;
 	} else
@@ -485,9 +483,11 @@ int i915_gem_context_open(struct drm_device *dev, struct drm_file *file)
 
 	idr_init(&file_priv->context_idr);
 
+	idr_preload(GFP_KERNEL);
 	mutex_lock(&dev->struct_mutex);
 	ctx = i915_gem_create_context(dev, file_priv);
 	mutex_unlock(&dev->struct_mutex);
+	idr_preload_end();
 
 	if (IS_ERR(ctx)) {
 		idr_destroy(&file_priv->context_idr);
@@ -865,12 +865,16 @@ int i915_gem_context_create_ioctl(struct drm_device *dev, void *data,
 	if (!contexts_enabled(dev))
 		return -ENODEV;
 
+	idr_preload(GFP_KERNEL);
 	ret = i915_mutex_lock_interruptible(dev);
-	if (ret)
+	if (ret) {
+		idr_preload_end();
 		return ret;
+	}
 
 	ctx = i915_gem_create_context(dev, file_priv);
 	mutex_unlock(&dev->struct_mutex);
+	idr_preload_end();
 	if (IS_ERR(ctx))
 		return PTR_ERR(ctx);
 
