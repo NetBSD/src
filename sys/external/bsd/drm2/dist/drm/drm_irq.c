@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_irq.c,v 1.11 2018/08/27 07:03:25 riastradh Exp $	*/
+/*	$NetBSD: drm_irq.c,v 1.12 2018/08/27 07:03:39 riastradh Exp $	*/
 
 /*
  * drm_irq.c IRQ and vblank support
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_irq.c,v 1.11 2018/08/27 07:03:25 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_irq.c,v 1.12 2018/08/27 07:03:39 riastradh Exp $");
 
 #include <drm/drmP.h>
 #include "drm_trace.h"
@@ -1397,11 +1397,20 @@ void drm_wait_one_vblank(struct drm_device *dev, unsigned int pipe)
 	if (WARN(ret, "vblank not available on crtc %i, ret=%i\n", pipe, ret))
 		return;
 
+#ifdef __NetBSD__
+	spin_lock(&dev->vbl_lock);
+	last = drm_vblank_count(dev, pipe);
+	DRM_SPIN_TIMED_WAIT_UNTIL(ret, &vblank->queue, &dev->vbl_lock,
+	    msecs_to_jiffies(100),
+	    last != drm_vblank_count(dev, pipe));
+	spin_unlock(&dev->vbl_lock);
+#else
 	last = drm_vblank_count(dev, pipe);
 
 	ret = wait_event_timeout(vblank->queue,
 				 last != drm_vblank_count(dev, pipe),
 				 msecs_to_jiffies(100));
+#endif
 
 	WARN(ret == 0, "vblank wait timed out on crtc %i\n", pipe);
 
