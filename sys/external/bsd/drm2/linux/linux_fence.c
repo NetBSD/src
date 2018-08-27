@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_fence.c,v 1.6 2018/08/27 14:13:16 riastradh Exp $	*/
+/*	$NetBSD: linux_fence.c,v 1.7 2018/08/27 14:20:41 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_fence.c,v 1.6 2018/08/27 14:13:16 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_fence.c,v 1.7 2018/08/27 14:20:41 riastradh Exp $");
 
 #include <sys/atomic.h>
 #include <sys/condvar.h>
@@ -42,6 +42,15 @@ __KERNEL_RCSID(0, "$NetBSD: linux_fence.c,v 1.6 2018/08/27 14:13:16 riastradh Ex
 #include <linux/fence.h>
 #include <linux/sched.h>
 #include <linux/spinlock.h>
+
+/*
+ * linux_fence_trace
+ *
+ *	True if we print FENCE_TRACE messages, false if not.  These are
+ *	extremely noisy, too much even for AB_VERBOSE and AB_DEBUG in
+ *	boothowto.
+ */
+int	linux_fence_trace = 0;
 
 /*
  * fence_referenced_p(fence)
