@@ -1,6 +1,6 @@
 #!/bin/sh
 
-#	$NetBSD: drm2netbsd,v 1.1 2018/08/27 00:46:32 riastradh Exp $
+#	$NetBSD: drm2netbsd,v 1.2 2018/08/27 07:54:28 riastradh Exp $
 #
 # $ /path/to/drm2netbsd > /path/to/files.drm.new
 #
@@ -16,6 +16,7 @@ drmkms_flag=drmkms
 
 env CONFIG_PCI=y \
 env CONFIG_AGP=y \
+env CONFIG_DRM_FBDEV_EMULATION=y \
 make -f Makefile -V '$(drm-y)' -V '$(drm_kms_helper-y)' \
 | tr ' ' '\n' \
 | grep -v '^$' \
