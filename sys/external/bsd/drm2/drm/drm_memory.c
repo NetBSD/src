@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_memory.c,v 1.10 2016/03/06 10:59:56 mlelstv Exp $	*/
+/*	$NetBSD: drm_memory.c,v 1.11 2018/08/27 06:44:15 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_memory.c,v 1.10 2016/03/06 10:59:56 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_memory.c,v 1.11 2018/08/27 06:44:15 riastradh Exp $");
 
 #if defined(__i386__) || defined(__x86_64__)
 
@@ -94,7 +94,7 @@ drm_bus_borrow(bus_addr_t base, bus_size_t size, bus_space_handle_t *handlep)
 }
 
 void
-drm_core_ioremap(struct drm_local_map *map, struct drm_device *dev)
+drm_legacy_ioremap(struct drm_local_map *map, struct drm_device *dev)
 {
 	const bus_space_tag_t bst = dev->bst;
 	unsigned int unit;
@@ -151,7 +151,7 @@ win:	map->lm_data.bus_space.bst = bst;
 }
 
 void
-drm_core_ioremapfree(struct drm_local_map *map, struct drm_device *dev)
+drm_legacy_ioremapfree(struct drm_local_map *map, struct drm_device *dev)
 {
 	if (map->lm_data.bus_space.bus_map != NULL) {
 		bus_space_unmap(map->lm_data.bus_space.bst,
