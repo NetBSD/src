@@ -1,4 +1,4 @@
-/*	$NetBSD: jiffies.h,v 1.7 2018/08/27 06:18:30 riastradh Exp $	*/
+/*	$NetBSD: jiffies.h,v 1.8 2018/08/27 06:18:41 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -42,9 +42,14 @@
 #define	MAX_JIFFY_OFFSET	((INT_MAX >> 1) - 1)
 
 static inline uint64_t
-nsecs_to_jiffies64(unsigned int msec)
+nsecs_to_jiffies64(uint64_t nsec)
 {
-	return 1000000*mstohz(msec);
+
+	/* XXX Arbitrary cutoff, should review the arithmetic.  */
+	if (((1000000000 % hz) == 0) || (ns >= 20000000000ul))
+		return (nsec/1000000000)*hz;
+	else
+		return (nsec*hz)/1000000000;
 }
 
 static inline unsigned int
