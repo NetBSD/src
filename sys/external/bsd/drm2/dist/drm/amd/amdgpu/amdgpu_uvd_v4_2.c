@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_uvd_v4_2.c,v 1.1 2018/08/27 14:22:31 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_uvd_v4_2.c,v 1.2 2018/08/27 14:24:03 riastradh Exp $	*/
 
 /*
  * Copyright 2013 Advanced Micro Devices, Inc.
@@ -25,9 +25,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_uvd_v4_2.c,v 1.1 2018/08/27 14:22:31 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_uvd_v4_2.c,v 1.2 2018/08/27 14:24:03 riastradh Exp $");
 
 #include <linux/firmware.h>
+#include <linux/log2.h>
 #include <drm/drmP.h>
 #include "amdgpu.h"
 #include "amdgpu_uvd.h"
@@ -118,7 +119,7 @@ static int uvd_v4_2_sw_init(void *handle)
 		return r;
 
 	ring = &adev->uvd.ring;
-	sprintf(ring->name, "uvd");
+	snprintf(ring->name, sizeof ring->name, "uvd");
 	r = amdgpu_ring_init(adev, ring, 4096, CP_PACKET2, 0xf,
 			     &adev->uvd.irq, 0, AMDGPU_RING_TYPE_UVD);
 

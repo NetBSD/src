@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_ci_dpm.c,v 1.1 2018/08/27 14:22:31 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_ci_dpm.c,v 1.2 2018/08/27 14:24:03 riastradh Exp $	*/
 
 /*
  * Copyright 2013 Advanced Micro Devices, Inc.
@@ -24,9 +24,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_ci_dpm.c,v 1.1 2018/08/27 14:22:31 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_ci_dpm.c,v 1.2 2018/08/27 14:24:03 riastradh Exp $");
 
 #include <linux/firmware.h>
+#include <linux/module.h>
+#include <asm/byteorder.h>
 #include "drmP.h"
 #include "amdgpu.h"
 #include "amdgpu_pm.h"
@@ -88,12 +90,14 @@ static const struct ci_pt_defaults defaults_bonaire_xt =
 	{ 0x17C, 0x172, 0x180, 0x1BC, 0x1B3, 0x1BD, 0x206, 0x200, 0x203, 0x25D, 0x25A, 0x255, 0x2C3, 0x2C5, 0x2B4 }
 };
 
+#if 0				/* XXX unused? */
 static const struct ci_pt_defaults defaults_bonaire_pro =
 {
 	1, 0xF, 0xFD, 0x19, 5, 45, 0, 0x65062,
 	{ 0x8C,  0x23F, 0x244, 0xA6,  0x83,  0x85,  0x86,  0x86,  0x83,  0xDB,  0xDB,  0xDA,  0x67,  0x60,  0x5F  },
 	{ 0x187, 0x193, 0x193, 0x1C7, 0x1D1, 0x1D1, 0x210, 0x219, 0x219, 0x266, 0x26C, 0x26C, 0x2C9, 0x2CB, 0x2CB }
 };
+#endif
 
 static const struct ci_pt_defaults defaults_saturn_xt =
 {
@@ -102,12 +106,14 @@ static const struct ci_pt_defaults defaults_saturn_xt =
 	{ 0x187, 0x187, 0x187, 0x1C7, 0x1C7, 0x1C7, 0x210, 0x210, 0x210, 0x266, 0x266, 0x266, 0x2C9, 0x2C9, 0x2C9 }
 };
 
+#ifndef __NetBSD__		/* XXX unused? */
 static const struct ci_pt_defaults defaults_saturn_pro =
 {
 	1, 0xF, 0xFD, 0x19, 5, 55, 0, 0x30000,
 	{ 0x96,  0x21D, 0x23B, 0xA1,  0x85,  0x87,  0x83,  0x84,  0x81,  0xE6,  0xE6,  0xE6,  0x71,  0x6A,  0x6A  },
 	{ 0x193, 0x19E, 0x19E, 0x1D2, 0x1DC, 0x1DC, 0x21A, 0x223, 0x223, 0x26E, 0x27E, 0x274, 0x2CF, 0x2D2, 0x2D2 }
 };
+#endif
 
 static const struct ci_pt_config_reg didt_config_ci[] =
 {
@@ -1510,7 +1516,7 @@ static void ci_set_dpm_event_sources(struct amdgpu_device *adev, u32 sources)
 {
 	struct ci_power_info *pi = ci_get_pi(adev);
 	bool want_thermal_protection;
-	enum amdgpu_dpm_event_src dpm_event_src;
+	enum amdgpu_dpm_event_src dpm_event_src __unused;
 	u32 tmp;
 
 	switch (sources) {
@@ -1791,6 +1797,7 @@ static PPSMC_Result amdgpu_ci_send_msg_to_smc_with_parameter(struct amdgpu_devic
 	return amdgpu_ci_send_msg_to_smc(adev, msg);
 }
 
+#ifdef CONFIG_DEBUG_FS
 static PPSMC_Result amdgpu_ci_send_msg_to_smc_return_parameter(struct amdgpu_device *adev,
 							PPSMC_Msg msg, u32 *parameter)
 {
@@ -1803,6 +1810,7 @@ static PPSMC_Result amdgpu_ci_send_msg_to_smc_return_parameter(struct amdgpu_dev
 
 	return smc_result;
 }
+#endif
 
 static int ci_dpm_force_state_sclk(struct amdgpu_device *adev, u32 n)
 {
@@ -1877,6 +1885,7 @@ static int ci_set_boot_state(struct amdgpu_device *adev)
 }
 #endif
 
+#ifdef CONFIG_DEBUG_FS
 static u32 ci_get_average_sclk_freq(struct amdgpu_device *adev)
 {
 	u32 sclk_freq;
@@ -1902,6 +1911,7 @@ static u32 ci_get_average_mclk_freq(struct amdgpu_device *adev)
 
 	return mclk_freq;
 }
+#endif
 
 static void ci_dpm_start_smc(struct amdgpu_device *adev)
 {
@@ -5682,18 +5692,18 @@ static int ci_parse_power_table(struct amdgpu_device *adev)
 	if (!amdgpu_atom_parse_data_header(mode_info->atom_context, index, NULL,
 				   &frev, &crev, &data_offset))
 		return -EINVAL;
-	power_info = (union power_info *)(mode_info->atom_context->bios + data_offset);
+	power_info = (union power_info *)((char *)mode_info->atom_context->bios + data_offset);
 
 	amdgpu_add_thermal_controller(adev);
 
 	state_array = (struct _StateArray *)
-		(mode_info->atom_context->bios + data_offset +
+		((char *)mode_info->atom_context->bios + data_offset +
 		 le16_to_cpu(power_info->pplib.usStateArrayOffset));
 	clock_info_array = (struct _ClockInfoArray *)
-		(mode_info->atom_context->bios + data_offset +
+		((char *)mode_info->atom_context->bios + data_offset +
 		 le16_to_cpu(power_info->pplib.usClockInfoArrayOffset));
 	non_clock_info_array = (struct _NonClockInfoArray *)
-		(mode_info->atom_context->bios + data_offset +
+		((char *)mode_info->atom_context->bios + data_offset +
 		 le16_to_cpu(power_info->pplib.usNonClockInfoArrayOffset));
 
 	adev->pm.dpm.ps = kzalloc(sizeof(struct amdgpu_ps) *
@@ -5765,7 +5775,7 @@ static int ci_get_vbios_boot_values(struct amdgpu_device *adev,
 	if (amdgpu_atom_parse_data_header(mode_info->atom_context, index, NULL,
 				   &frev, &crev, &data_offset)) {
 		firmware_info =
-			(ATOM_FIRMWARE_INFO_V2_2 *)(mode_info->atom_context->bios +
+			(ATOM_FIRMWARE_INFO_V2_2 *)((char *)mode_info->atom_context->bios +
 						    data_offset);
 		boot_state->mvdd_bootup_value = le16_to_cpu(firmware_info->usBootUpMVDDCVoltage);
 		boot_state->vddc_bootup_value = le16_to_cpu(firmware_info->usBootUpVDDCVoltage);
@@ -6091,6 +6101,7 @@ static int ci_dpm_init(struct amdgpu_device *adev)
 	return 0;
 }
 
+#ifdef CONFIG_DEBUG_FS
 static void
 ci_dpm_debugfs_print_current_performance_level(struct amdgpu_device *adev,
 					       struct seq_file *m)
@@ -6105,6 +6116,7 @@ ci_dpm_debugfs_print_current_performance_level(struct amdgpu_device *adev,
 	seq_printf(m, "power level avg    sclk: %u mclk: %u\n",
 		   sclk, mclk);
 }
+#endif
 
 static void ci_dpm_print_power_state(struct amdgpu_device *adev,
 				     struct amdgpu_ps *rps)
@@ -6688,7 +6700,9 @@ static const struct amdgpu_dpm_funcs ci_dpm_funcs = {
 	.get_sclk = &ci_dpm_get_sclk,
 	.get_mclk = &ci_dpm_get_mclk,
 	.print_power_state = &ci_dpm_print_power_state,
+#ifdef CONFIG_DEBUG_FS
 	.debugfs_print_current_performance_level = &ci_dpm_debugfs_print_current_performance_level,
+#endif
 	.force_performance_level = &ci_dpm_force_performance_level,
 	.vblank_too_short = &ci_dpm_vblank_too_short,
 	.powergate_uvd = &ci_dpm_powergate_uvd,
