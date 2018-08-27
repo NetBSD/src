@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_work.c,v 1.4 2018/08/27 07:00:39 riastradh Exp $	*/
+/*	$NetBSD: linux_work.c,v 1.5 2018/08/27 07:05:39 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_work.c,v 1.4 2018/08/27 07:00:39 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_work.c,v 1.5 2018/08/27 07:05:39 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -887,6 +887,15 @@ cancel_delayed_work_sync(struct delayed_work *dw)
 	linux_work_unlock(&dw->work);
 
 	return cancelled_p;
+}
+
+void
+flush_delayed_work(struct delayed_work *dw)
+{
+	struct workqueue_struct *wq = dw->work.w_wq;
+
+	if (wq != NULL)
+		flush_workqueue(wq);
 }
 
 static void
