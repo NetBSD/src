@@ -1,4 +1,4 @@
-/*	$NetBSD: workqueue.h,v 1.11 2018/08/27 15:03:20 riastradh Exp $	*/
+/*	$NetBSD: workqueue.h,v 1.12 2018/08/27 15:05:01 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013, 2018 The NetBSD Foundation, Inc.
@@ -72,6 +72,7 @@ struct delayed_work {
 	struct work_struct		work; /* Linux API name */
 	struct callout			dw_callout;
 	TAILQ_ENTRY(delayed_work)	dw_entry;
+	int				dw_resched;
 	enum {
 		DELAYED_WORK_IDLE,
 		DELAYED_WORK_SCHEDULED,
