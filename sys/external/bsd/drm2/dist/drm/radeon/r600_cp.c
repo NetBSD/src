@@ -1,3 +1,5 @@
+/*	$NetBSD: r600_cp.c,v 1.1.1.2 2018/08/27 01:34:58 riastradh Exp $	*/
+
 /*
  * Copyright 2008-2009 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -27,6 +29,9 @@
  *
  * ------------------------ This file is DEPRECATED! -------------------------
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: r600_cp.c,v 1.1.1.2 2018/08/27 01:34:58 riastradh Exp $");
 
 #include <linux/module.h>
 
@@ -1837,7 +1842,7 @@ static void r600_cp_init_ring_buffer(struct drm_device *dev,
 	SET_RING_HEAD(dev_priv, 0);
 	dev_priv->ring.tail = 0;
 
-#if __OS_HAS_AGP
+#if IS_ENABLED(CONFIG_AGP)
 	if (dev_priv->flags & RADEON_IS_AGP) {
 		rptr_addr = dev_priv->ring_rptr->offset
 			- dev->agp->base +
@@ -1863,7 +1868,7 @@ static void r600_cp_init_ring_buffer(struct drm_device *dev,
 		     dev_priv->ring.size_l2qw);
 #endif
 
-#if __OS_HAS_AGP
+#if IS_ENABLED(CONFIG_AGP)
 	if (dev_priv->flags & RADEON_IS_AGP) {
 		/* XXX */
 		radeon_write_agp_base(dev_priv, dev->agp->base);
@@ -1946,18 +1951,18 @@ int r600_do_cleanup_cp(struct drm_device *dev)
 	if (dev->irq_enabled)
 		drm_irq_uninstall(dev);
 
-#if __OS_HAS_AGP
+#if IS_ENABLED(CONFIG_AGP)
 	if (dev_priv->flags & RADEON_IS_AGP) {
 		if (dev_priv->cp_ring != NULL) {
-			drm_core_ioremapfree(dev_priv->cp_ring, dev);
+			drm_legacy_ioremapfree(dev_priv->cp_ring, dev);
 			dev_priv->cp_ring = NULL;
 		}
 		if (dev_priv->ring_rptr != NULL) {
-			drm_core_ioremapfree(dev_priv->ring_rptr, dev);
+			drm_legacy_ioremapfree(dev_priv->ring_rptr, dev);
 			dev_priv->ring_rptr = NULL;
 		}
 		if (dev->agp_buffer_map != NULL) {
-			drm_core_ioremapfree(dev->agp_buffer_map, dev);
+			drm_legacy_ioremapfree(dev->agp_buffer_map, dev);
 			dev->agp_buffer_map = NULL;
 		}
 	} else
@@ -1968,7 +1973,7 @@ int r600_do_cleanup_cp(struct drm_device *dev)
 			r600_page_table_cleanup(dev, &dev_priv->gart_info);
 
 		if (dev_priv->gart_info.gart_table_location == DRM_ATI_GART_FB) {
-			drm_core_ioremapfree(&dev_priv->gart_info.mapping, dev);
+			drm_legacy_ioremapfree(&dev_priv->gart_info.mapping, dev);
 			dev_priv->gart_info.addr = NULL;
 		}
 	}
@@ -2052,27 +2057,27 @@ int r600_do_init_cp(struct drm_device *dev, drm_radeon_init_t *init,
 	dev_priv->buffers_offset = init->buffers_offset;
 	dev_priv->gart_textures_offset = init->gart_textures_offset;
 
-	master_priv->sarea = drm_getsarea(dev);
+	master_priv->sarea = drm_legacy_getsarea(dev);
 	if (!master_priv->sarea) {
 		DRM_ERROR("could not find sarea!\n");
 		r600_do_cleanup_cp(dev);
 		return -EINVAL;
 	}
 
-	dev_priv->cp_ring = drm_core_findmap(dev, init->ring_offset);
+	dev_priv->cp_ring = drm_legacy_findmap(dev, init->ring_offset);
 	if (!dev_priv->cp_ring) {
 		DRM_ERROR("could not find cp ring region!\n");
 		r600_do_cleanup_cp(dev);
 		return -EINVAL;
 	}
-	dev_priv->ring_rptr = drm_core_findmap(dev, init->ring_rptr_offset);
+	dev_priv->ring_rptr = drm_legacy_findmap(dev, init->ring_rptr_offset);
 	if (!dev_priv->ring_rptr) {
 		DRM_ERROR("could not find ring read pointer!\n");
 		r600_do_cleanup_cp(dev);
 		return -EINVAL;
 	}
 	dev->agp_buffer_token = init->buffers_offset;
-	dev->agp_buffer_map = drm_core_findmap(dev, init->buffers_offset);
+	dev->agp_buffer_map = drm_legacy_findmap(dev, init->buffers_offset);
 	if (!dev->agp_buffer_map) {
 		DRM_ERROR("could not find dma buffer region!\n");
 		r600_do_cleanup_cp(dev);
@@ -2081,7 +2086,7 @@ int r600_do_init_cp(struct drm_device *dev, drm_radeon_init_t *init,
 
 	if (init->gart_textures_offset) {
 		dev_priv->gart_textures =
-		    drm_core_findmap(dev, init->gart_textures_offset);
+		    drm_legacy_findmap(dev, init->gart_textures_offset);
 		if (!dev_priv->gart_textures) {
 			DRM_ERROR("could not find GART texture region!\n");
 			r600_do_cleanup_cp(dev);
@@ -2089,12 +2094,12 @@ int r600_do_init_cp(struct drm_device *dev, drm_radeon_init_t *init,
 		}
 	}
 
-#if __OS_HAS_AGP
+#if IS_ENABLED(CONFIG_AGP)
 	/* XXX */
 	if (dev_priv->flags & RADEON_IS_AGP) {
-		drm_core_ioremap_wc(dev_priv->cp_ring, dev);
-		drm_core_ioremap_wc(dev_priv->ring_rptr, dev);
-		drm_core_ioremap_wc(dev->agp_buffer_map, dev);
+		drm_legacy_ioremap_wc(dev_priv->cp_ring, dev);
+		drm_legacy_ioremap_wc(dev_priv->ring_rptr, dev);
+		drm_legacy_ioremap_wc(dev->agp_buffer_map, dev);
 		if (!dev_priv->cp_ring->handle ||
 		    !dev_priv->ring_rptr->handle ||
 		    !dev->agp_buffer_map->handle) {
@@ -2148,7 +2153,7 @@ int r600_do_init_cp(struct drm_device *dev, drm_radeon_init_t *init,
 		 * location in the card and on the bus, though we have to
 		 * align it down.
 		 */
-#if __OS_HAS_AGP
+#if IS_ENABLED(CONFIG_AGP)
 		/* XXX */
 		if (dev_priv->flags & RADEON_IS_AGP) {
 			base = dev->agp->base;
@@ -2175,7 +2180,7 @@ int r600_do_init_cp(struct drm_device *dev, drm_radeon_init_t *init,
 				 base, dev_priv->gart_vm_start);
 	}
 
-#if __OS_HAS_AGP
+#if IS_ENABLED(CONFIG_AGP)
 	/* XXX */
 	if (dev_priv->flags & RADEON_IS_AGP)
 		dev_priv->gart_buffers_offset = (dev->agp_buffer_map->offset
@@ -2212,7 +2217,7 @@ int r600_do_init_cp(struct drm_device *dev, drm_radeon_init_t *init,
 
 	dev_priv->ring.high_mark = RADEON_RING_HIGH_MARK;
 
-#if __OS_HAS_AGP
+#if IS_ENABLED(CONFIG_AGP)
 	if (dev_priv->flags & RADEON_IS_AGP) {
 		/* XXX turn off pcie gart */
 	} else
@@ -2235,7 +2240,7 @@ int r600_do_init_cp(struct drm_device *dev, drm_radeon_init_t *init,
 		dev_priv->gart_info.mapping.size =
 			dev_priv->gart_info.table_size;
 
-		drm_core_ioremap_wc(&dev_priv->gart_info.mapping, dev);
+		drm_legacy_ioremap_wc(&dev_priv->gart_info.mapping, dev);
 		if (!dev_priv->gart_info.mapping.handle) {
 			DRM_ERROR("ioremap failed.\n");
 			r600_do_cleanup_cp(dev);
@@ -2483,7 +2488,7 @@ int r600_cp_dispatch_texture(struct drm_device *dev,
 	struct drm_buf *buf;
 	u32 *buffer;
 	const u8 __user *data;
-	int size, pass_size;
+	unsigned int size, pass_size;
 	u64 src_offset, dst_offset;
 
 	if (!radeon_check_offset(dev_priv, tex->offset)) {

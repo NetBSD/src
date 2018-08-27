@@ -1,3 +1,5 @@
+/*	$NetBSD: pptable.h,v 1.1.1.2 2018/08/27 01:34:57 riastradh Exp $	*/
+
 /*
  * Copyright 2013 Advanced Micro Devices, Inc.
  *
@@ -95,6 +97,14 @@ typedef struct _ATOM_PPLIB_FANTABLE2
     ATOM_PPLIB_FANTABLE basicTable;
     USHORT  usTMax;                          // The max temperature
 } ATOM_PPLIB_FANTABLE2;
+
+typedef struct _ATOM_PPLIB_FANTABLE3
+{
+	ATOM_PPLIB_FANTABLE2 basicTable2;
+	UCHAR ucFanControlMode;
+	USHORT usFanPWMMax;
+	USHORT usFanOutputSensitivity;
+} ATOM_PPLIB_FANTABLE3;
 
 typedef struct _ATOM_PPLIB_EXTENDEDHEADER
 {

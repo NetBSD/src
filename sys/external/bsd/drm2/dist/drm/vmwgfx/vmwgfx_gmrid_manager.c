@@ -1,3 +1,5 @@
+/*	$NetBSD: vmwgfx_gmrid_manager.c,v 1.1.1.3 2018/08/27 01:35:00 riastradh Exp $	*/
+
 /**************************************************************************
  *
  * Copyright (c) 2007-2010 VMware, Inc., Palo Alto, CA., USA
@@ -28,6 +30,9 @@
  * Authors: Thomas Hellstrom <thellstrom-at-vmware-dot-com>
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: vmwgfx_gmrid_manager.c,v 1.1.1.3 2018/08/27 01:35:00 riastradh Exp $");
+
 #include "vmwgfx_drv.h"
 #include <drm/ttm/ttm_module.h>
 #include <drm/ttm/ttm_bo_driver.h>
@@ -46,7 +51,7 @@ struct vmwgfx_gmrid_man {
 
 static int vmw_gmrid_man_get_node(struct ttm_mem_type_manager *man,
 				  struct ttm_buffer_object *bo,
-				  struct ttm_placement *placement,
+				  const struct ttm_place *place,
 				  struct ttm_mem_reg *mem)
 {
 	struct vmwgfx_gmrid_man *gman =

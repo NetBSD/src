@@ -1,3 +1,5 @@
+/*	$NetBSD: ast_drv.c,v 1.1.1.3 2018/08/27 01:34:53 riastradh Exp $	*/
+
 /*
  * Copyright 2012 Red Hat Inc.
  *
@@ -25,6 +27,9 @@
 /*
  * Authors: Dave Airlie <airlied@redhat.com>
  */
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ast_drv.c,v 1.1.1.3 2018/08/27 01:34:53 riastradh Exp $");
+
 #include <linux/module.h>
 #include <linux/console.h>
 
@@ -51,7 +56,7 @@ static struct drm_driver driver;
 	.subdevice = PCI_ANY_ID,		\
 	.driver_data = (unsigned long) info }
 
-static DEFINE_PCI_DEVICE_TABLE(pciidlist) = {
+static const struct pci_device_id pciidlist[] = {
 	AST_VGA_DEVICE(PCI_CHIP_AST2000, NULL),
 	AST_VGA_DEVICE(PCI_CHIP_AST2100, NULL),
 	/*	AST_VGA_DEVICE(PCI_CHIP_AST1180, NULL), - don't bind to 1180 for now */
@@ -94,9 +99,7 @@ static int ast_drm_thaw(struct drm_device *dev)
 	ast_post_gpu(dev);
 
 	drm_mode_config_reset(dev);
-	drm_modeset_lock_all(dev);
 	drm_helper_resume_force_mode(dev);
-	drm_modeset_unlock_all(dev);
 
 	console_lock();
 	ast_fbdev_set_suspend(dev, 0);
@@ -198,10 +201,10 @@ static const struct file_operations ast_fops = {
 
 static struct drm_driver driver = {
 	.driver_features = DRIVER_MODESET | DRIVER_GEM,
-	.dev_priv_size = 0,
 
 	.load = ast_driver_load,
 	.unload = ast_driver_unload,
+	.set_busid = drm_pci_set_busid,
 
 	.fops = &ast_fops,
 	.name = DRIVER_NAME,

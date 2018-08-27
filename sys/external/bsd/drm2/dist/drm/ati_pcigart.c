@@ -1,3 +1,5 @@
+/*	$NetBSD: ati_pcigart.c,v 1.1.1.2 2018/08/27 01:34:39 riastradh Exp $	*/
+
 /**
  * \file ati_pcigart.c
  * ATI PCI GART support
@@ -31,8 +33,13 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ati_pcigart.c,v 1.1.1.2 2018/08/27 01:34:39 riastradh Exp $");
+
 #include <linux/export.h>
 #include <drm/drmP.h>
+
+#include <drm/ati_pcigart.h>
 
 # define ATI_PCIGART_PAGE_SIZE		4096	/**< PCI GART page size */
 

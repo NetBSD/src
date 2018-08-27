@@ -1,3 +1,5 @@
+/*	$NetBSD: ast_ttm.c,v 1.1.1.3 2018/08/27 01:34:53 riastradh Exp $	*/
+
 /*
  * Copyright 2012 Red Hat Inc.
  *
@@ -25,6 +27,9 @@
 /*
  * Authors: Dave Airlie <airlied@redhat.com>
  */
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ast_ttm.c,v 1.1.1.3 2018/08/27 01:34:53 riastradh Exp $");
+
 #include <drm/drmP.h>
 #include "ast_drv.h"
 #include <ttm/ttm_page_alloc.h>
@@ -293,18 +298,22 @@ void ast_mm_fini(struct ast_private *ast)
 void ast_ttm_placement(struct ast_bo *bo, int domain)
 {
 	u32 c = 0;
-	bo->placement.fpfn = 0;
-	bo->placement.lpfn = 0;
+	unsigned i;
+
 	bo->placement.placement = bo->placements;
 	bo->placement.busy_placement = bo->placements;
 	if (domain & TTM_PL_FLAG_VRAM)
-		bo->placements[c++] = TTM_PL_FLAG_WC | TTM_PL_FLAG_UNCACHED | TTM_PL_FLAG_VRAM;
+		bo->placements[c++].flags = TTM_PL_FLAG_WC | TTM_PL_FLAG_UNCACHED | TTM_PL_FLAG_VRAM;
 	if (domain & TTM_PL_FLAG_SYSTEM)
-		bo->placements[c++] = TTM_PL_MASK_CACHING | TTM_PL_FLAG_SYSTEM;
+		bo->placements[c++].flags = TTM_PL_FLAG_CACHED | TTM_PL_FLAG_SYSTEM;
 	if (!c)
-		bo->placements[c++] = TTM_PL_MASK_CACHING | TTM_PL_FLAG_SYSTEM;
+		bo->placements[c++].flags = TTM_PL_FLAG_CACHED | TTM_PL_FLAG_SYSTEM;
 	bo->placement.num_placement = c;
 	bo->placement.num_busy_placement = c;
+	for (i = 0; i < c; ++i) {
+		bo->placements[i].fpfn = 0;
+		bo->placements[i].lpfn = 0;
+	}
 }
 
 int ast_bo_create(struct drm_device *dev, int size, int align,
@@ -335,7 +344,7 @@ int ast_bo_create(struct drm_device *dev, int size, int align,
 	ret = ttm_bo_init(&ast->ttm.bdev, &astbo->bo, size,
 			  ttm_bo_type_device, &astbo->placement,
 			  align >> PAGE_SHIFT, false, NULL, acc_size,
-			  NULL, ast_bo_ttm_destroy);
+			  NULL, NULL, ast_bo_ttm_destroy);
 	if (ret)
 		return ret;
 
@@ -360,7 +369,7 @@ int ast_bo_pin(struct ast_bo *bo, u32 pl_flag, u64 *gpu_addr)
 
 	ast_ttm_placement(bo, pl_flag);
 	for (i = 0; i < bo->placement.num_placement; i++)
-		bo->placements[i] |= TTM_PL_FLAG_NO_EVICT;
+		bo->placements[i].flags |= TTM_PL_FLAG_NO_EVICT;
 	ret = ttm_bo_validate(&bo->bo, &bo->placement, false, false);
 	if (ret)
 		return ret;
@@ -383,7 +392,7 @@ int ast_bo_unpin(struct ast_bo *bo)
 		return 0;
 
 	for (i = 0; i < bo->placement.num_placement ; i++)
-		bo->placements[i] &= ~TTM_PL_FLAG_NO_EVICT;
+		bo->placements[i].flags &= ~TTM_PL_FLAG_NO_EVICT;
 	ret = ttm_bo_validate(&bo->bo, &bo->placement, false, false);
 	if (ret)
 		return ret;
@@ -407,7 +416,7 @@ int ast_bo_push_sysram(struct ast_bo *bo)
 
 	ast_ttm_placement(bo, TTM_PL_FLAG_SYSTEM);
 	for (i = 0; i < bo->placement.num_placement ; i++)
-		bo->placements[i] |= TTM_PL_FLAG_NO_EVICT;
+		bo->placements[i].flags |= TTM_PL_FLAG_NO_EVICT;
 
 	ret = ttm_bo_validate(&bo->bo, &bo->placement, false, false);
 	if (ret) {
@@ -423,7 +432,7 @@ int ast_mmap(struct file *filp, struct vm_area_struct *vma)
 	struct ast_private *ast;
 
 	if (unlikely(vma->vm_pgoff < DRM_FILE_PAGE_OFFSET))
-		return drm_mmap(filp, vma);
+		return -EINVAL;
 
 	file_priv = filp->private_data;
 	ast = file_priv->minor->dev->dev_private;

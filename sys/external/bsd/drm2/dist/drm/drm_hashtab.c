@@ -1,3 +1,5 @@
+/*	$NetBSD: drm_hashtab.c,v 1.1.1.3 2018/08/27 01:34:42 riastradh Exp $	*/
+
 /**************************************************************************
  *
  * Copyright 2006 Tungsten Graphics, Inc., Bismarck, ND. USA.
@@ -31,6 +33,9 @@
  * Authors:
  * Thomas Hellström <thomas-at-tungstengraphics-dot-com>
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: drm_hashtab.c,v 1.1.1.3 2018/08/27 01:34:42 riastradh Exp $");
 
 #include <drm/drmP.h>
 #include <drm/drm_hashtab.h>
@@ -125,7 +130,7 @@ int drm_ht_insert_item(struct drm_open_hash *ht, struct drm_hash_item *item)
 		parent = &entry->head;
 	}
 	if (parent) {
-		hlist_add_after_rcu(parent, &item->head);
+		hlist_add_behind_rcu(&item->head, parent);
 	} else {
 		hlist_add_head_rcu(&item->head, h_list);
 	}

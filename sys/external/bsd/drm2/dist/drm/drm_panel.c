@@ -1,3 +1,5 @@
+/*	$NetBSD: drm_panel.c,v 1.1.1.2 2018/08/27 01:34:42 riastradh Exp $	*/
+
 /*
  * Copyright (C) 2013, NVIDIA Corporation.  All rights reserved.
  *
@@ -20,6 +22,9 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: drm_panel.c,v 1.1.1.2 2018/08/27 01:34:42 riastradh Exp $");
 
 #include <linux/err.h>
 #include <linux/module.h>

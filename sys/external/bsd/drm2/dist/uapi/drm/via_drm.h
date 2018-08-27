@@ -1,3 +1,5 @@
+/*	$NetBSD: via_drm.h,v 1.1.1.2 2018/08/27 01:35:00 riastradh Exp $	*/
+
 /*
  * Copyright 1998-2003 VIA Technologies, Inc. All Rights Reserved.
  * Copyright 2001-2003 S3 Graphics, Inc. All Rights Reserved.
@@ -273,9 +275,5 @@ typedef struct drm_via_dmablit {
 
 	drm_via_blitsync_t sync;
 } drm_via_dmablit_t;
-
-struct via_file_private {
-	struct list_head obj_list;
-};
 
 #endif				/* _VIA_DRM_H_ */

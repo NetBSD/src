@@ -1,3 +1,5 @@
+/*	$NetBSD: savage_drv.c,v 1.1.1.3 2018/08/27 01:34:59 riastradh Exp $	*/
+
 /* savage_drv.c -- Savage driver for Linux
  *
  * Copyright 2004  Felix Kuehling
@@ -23,6 +25,9 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: savage_drv.c,v 1.1.1.3 2018/08/27 01:34:59 riastradh Exp $");
+
 #include <linux/module.h>
 
 #include <drm/drmP.h>
@@ -40,7 +45,7 @@ static const struct file_operations savage_driver_fops = {
 	.open = drm_open,
 	.release = drm_release,
 	.unlocked_ioctl = drm_ioctl,
-	.mmap = drm_mmap,
+	.mmap = drm_legacy_mmap,
 	.poll = drm_poll,
 #ifdef CONFIG_COMPAT
 	.compat_ioctl = drm_compat_ioctl,
@@ -57,6 +62,7 @@ static struct drm_driver driver = {
 	.preclose = savage_reclaim_buffers,
 	.lastclose = savage_driver_lastclose,
 	.unload = savage_driver_unload,
+	.set_busid = drm_pci_set_busid,
 	.ioctls = savage_ioctls,
 	.dma_ioctl = savage_bci_buffers,
 	.fops = &savage_driver_fops,

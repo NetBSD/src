@@ -1,3 +1,5 @@
+/*	$NetBSD: sis_drm.h,v 1.1.1.2 2018/08/27 01:35:00 riastradh Exp $	*/
+
 /* sis_drv.h -- Private header for sis driver -*- linux-c -*- */
 /*
  * Copyright 2005 Eric Anholt
@@ -63,9 +65,5 @@ typedef struct {
 typedef struct {
 	unsigned long offset, size;
 } drm_sis_fb_t;
-
-struct sis_file_private {
-	struct list_head obj_list;
-};
 
 #endif				/* __SIS_DRM_H__ */

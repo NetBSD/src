@@ -1,3 +1,5 @@
+/*	$NetBSD: qxl_gem.c,v 1.1.1.2 2018/08/27 01:34:56 riastradh Exp $	*/
+
 /*
  * Copyright 2013 Red Hat Inc.
  *
@@ -23,6 +25,9 @@
  *          Alon Levy
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: qxl_gem.c,v 1.1.1.2 2018/08/27 01:34:56 riastradh Exp $");
+
 #include "drmP.h"
 #include "drm/drm.h"
 #include "qxl_drv.h"
@@ -31,9 +36,15 @@
 void qxl_gem_object_free(struct drm_gem_object *gobj)
 {
 	struct qxl_bo *qobj = gem_to_qxl_bo(gobj);
+	struct qxl_device *qdev;
+	struct ttm_buffer_object *tbo;
 
-	if (qobj)
-		qxl_bo_unref(&qobj);
+	qdev = (struct qxl_device *)gobj->dev->dev_private;
+
+	qxl_surface_evict(qdev, qobj, false);
+
+	tbo = &qobj->tbo;
+	ttm_bo_unref(&tbo);
 }
 
 int qxl_gem_object_create(struct qxl_device *qdev, int size,

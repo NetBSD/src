@@ -1,3 +1,5 @@
+/*	$NetBSD: qxl_image.c,v 1.1.1.2 2018/08/27 01:34:56 riastradh Exp $	*/
+
 /*
  * Copyright 2013 Red Hat Inc.
  *
@@ -22,6 +24,9 @@
  * Authors: Dave Airlie
  *          Alon Levy
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: qxl_image.c,v 1.1.1.2 2018/08/27 01:34:56 riastradh Exp $");
 
 #include <linux/gfp.h>
 #include <linux/slab.h>

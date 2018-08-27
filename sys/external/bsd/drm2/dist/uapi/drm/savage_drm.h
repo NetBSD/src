@@ -1,3 +1,5 @@
+/*	$NetBSD: savage_drm.h,v 1.1.1.2 2018/08/27 01:35:00 riastradh Exp $	*/
+
 /* savage_drm.h -- Public header for the savage driver
  *
  * Copyright 2004  Felix Kuehling
@@ -25,6 +27,8 @@
 
 #ifndef __SAVAGE_DRM_H__
 #define __SAVAGE_DRM_H__
+
+#include <drm/drm.h>
 
 #ifndef __SAVAGE_SAREA_DEFINES__
 #define __SAVAGE_SAREA_DEFINES__

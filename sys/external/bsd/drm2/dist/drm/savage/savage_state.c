@@ -1,3 +1,5 @@
+/*	$NetBSD: savage_state.c,v 1.1.1.3 2018/08/27 01:34:59 riastradh Exp $	*/
+
 /* savage_state.c -- State and drawing support for Savage
  *
  * Copyright 2004  Felix Kuehling
@@ -22,6 +24,9 @@
  * CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: savage_state.c,v 1.1.1.3 2018/08/27 01:34:59 riastradh Exp $");
+
 #include <drm/drmP.h>
 #include <drm/savage_drm.h>
 #include "savage_drv.h"

@@ -1,3 +1,5 @@
+/*	$NetBSD: ttm_placement.h,v 1.1.1.3 2018/08/27 01:35:00 riastradh Exp $	*/
+
 /**************************************************************************
  *
  * Copyright (c) 2006-2009 VMware, Inc., Palo Alto, CA., USA

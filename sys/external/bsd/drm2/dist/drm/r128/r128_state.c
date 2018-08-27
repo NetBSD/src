@@ -1,3 +1,5 @@
+/*	$NetBSD: r128_state.c,v 1.1.1.3 2018/08/27 01:34:56 riastradh Exp $	*/
+
 /* r128_state.c -- State support for r128 -*- linux-c -*-
  * Created: Thu Jan 27 02:53:43 2000 by gareth@valinux.com
  */
@@ -27,6 +29,9 @@
  * Authors:
  *    Gareth Hughes <gareth@valinux.com>
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: r128_state.c,v 1.1.1.3 2018/08/27 01:34:56 riastradh Exp $");
 
 #include <drm/drmP.h>
 #include <drm/r128_drm.h>
@@ -905,7 +910,7 @@ static int r128_cce_dispatch_write_span(struct drm_device *dev,
 	if (IS_ERR(buffer))
 		return PTR_ERR(buffer);
 
-	mask_size = depth->n * sizeof(u8);
+	mask_size = depth->n;
 	if (depth->mask) {
 		mask = memdup_user(depth->mask, mask_size);
 		if (IS_ERR(mask)) {
@@ -1010,7 +1015,7 @@ static int r128_cce_dispatch_write_pixels(struct drm_device *dev,
 	}
 
 	if (depth->mask) {
-		mask_size = depth->n * sizeof(u8);
+		mask_size = depth->n;
 		mask = memdup_user(depth->mask, mask_size);
 		if (IS_ERR(mask)) {
 			kfree(x);
@@ -1594,7 +1599,7 @@ static int r128_getparam(struct drm_device *dev, void *data, struct drm_file *fi
 
 	switch (param->param) {
 	case R128_PARAM_IRQ_NR:
-		value = drm_dev_to_irq(dev);
+		value = dev->pdev->irq;
 		break;
 	default:
 		return -EINVAL;
@@ -1641,4 +1646,4 @@ const struct drm_ioctl_desc r128_ioctls[] = {
 	DRM_IOCTL_DEF_DRV(R128_GETPARAM, r128_getparam, DRM_AUTH),
 };
 
-int r128_max_ioctl = DRM_ARRAY_SIZE(r128_ioctls);
+int r128_max_ioctl = ARRAY_SIZE(r128_ioctls);

@@ -1,12 +1,15 @@
+/*	$NetBSD: nv10_fence.h,v 1.1.1.2 2018/08/27 01:34:55 riastradh Exp $	*/
+
 #ifndef __NV10_FENCE_H_
 #define __NV10_FENCE_H_
 
-#include <core/os.h>
 #include "nouveau_fence.h"
 #include "nouveau_bo.h"
 
 struct nv10_fence_chan {
 	struct nouveau_fence_chan base;
+	struct nvif_object sema;
+	struct nvif_object head[4];
 };
 
 struct nv10_fence_priv {

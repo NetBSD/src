@@ -1,3 +1,5 @@
+/*	$NetBSD: r600_blit_shaders.c,v 1.1.1.2 2018/08/27 01:34:58 riastradh Exp $	*/
+
 /*
  * Copyright 2009 Advanced Micro Devices, Inc.
  *
@@ -24,6 +26,9 @@
  *     Alex Deucher <alexander.deucher@amd.com>
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: r600_blit_shaders.c,v 1.1.1.2 2018/08/27 01:34:58 riastradh Exp $");
+
 #include <linux/bug.h>
 #include <linux/types.h>
 #include <linux/kernel.h>
@@ -32,7 +37,7 @@
  * R6xx+ cards need to use the 3D engine to blit data which requires
  * quite a bit of hw state setup.  Rather than pull the whole 3D driver
  * (which normally generates the 3D state) into the DRM, we opt to use
- * statically generated state tables.  The regsiter state and shaders
+ * statically generated state tables.  The register state and shaders
  * were hand generated to support blitting functionality.  See the 3D
  * driver or documentation for descriptions of the registers and
  * shader instructions.

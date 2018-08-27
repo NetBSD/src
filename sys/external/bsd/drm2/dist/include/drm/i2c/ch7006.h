@@ -1,3 +1,5 @@
+/*	$NetBSD: ch7006.h,v 1.1.1.2 2018/08/27 01:35:00 riastradh Exp $	*/
+
 /*
  * Copyright (C) 2009 Francisco Jerez.
  * All Rights Reserved.

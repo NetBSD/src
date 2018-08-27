@@ -1,3 +1,5 @@
+/*	$NetBSD: qxl_draw.c,v 1.1.1.2 2018/08/27 01:34:56 riastradh Exp $	*/
+
 /*
  * Copyright 2011 Red Hat, Inc.
  *
@@ -19,6 +21,9 @@
  * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: qxl_draw.c,v 1.1.1.2 2018/08/27 01:34:56 riastradh Exp $");
 
 #include "qxl_drv.h"
 #include "qxl_object.h"
@@ -136,6 +141,8 @@ static int qxl_palette_create_1bit(struct qxl_bo *palette_bo,
 				 * correctly globaly, since that would require
 				 * tracking all of our palettes. */
 	ret = qxl_bo_kmap(palette_bo, (void **)&pal);
+	if (ret)
+		return ret;
 	pal->num_ents = 2;
 	pal->unique = unique++;
 	if (visual == FB_VISUAL_TRUECOLOR || visual == FB_VISUAL_DIRECTCOLOR) {

@@ -1,3 +1,5 @@
+/*	$NetBSD: drm_vma_manager.c,v 1.1.1.2 2018/08/27 01:34:43 riastradh Exp $	*/
+
 /*
  * Copyright (c) 2006-2009 VMware, Inc., Palo Alto, CA., USA
  * Copyright (c) 2012 David Airlie <airlied@linux.ie>
@@ -21,6 +23,9 @@
  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: drm_vma_manager.c,v 1.1.1.2 2018/08/27 01:34:43 riastradh Exp $");
 
 #include <drm/drmP.h>
 #include <drm/drm_mm.h>
@@ -50,8 +55,7 @@
  *
  * You must not use multiple offset managers on a single address_space.
  * Otherwise, mm-core will be unable to tear down memory mappings as the VM will
- * no longer be linear. Please use VM_NONLINEAR in that case and implement your
- * own offset managers.
+ * no longer be linear.
  *
  * This offset manager works on page-based addresses. That is, every argument
  * and return code (with the exception of drm_vma_node_offset_addr()) is given
@@ -113,7 +117,7 @@ void drm_vma_offset_manager_destroy(struct drm_vma_offset_manager *mgr)
 EXPORT_SYMBOL(drm_vma_offset_manager_destroy);
 
 /**
- * drm_vma_offset_lookup() - Find node in offset space
+ * drm_vma_offset_lookup_locked() - Find node in offset space
  * @mgr: Manager object
  * @start: Start address for object (page-based)
  * @pages: Size of object (page-based)
@@ -123,37 +127,21 @@ EXPORT_SYMBOL(drm_vma_offset_manager_destroy);
  * region and the given node will be returned, as long as the node spans the
  * whole requested area (given the size in number of pages as @pages).
  *
+ * Note that before lookup the vma offset manager lookup lock must be acquired
+ * with drm_vma_offset_lock_lookup(). See there for an example. This can then be
+ * used to implement weakly referenced lookups using kref_get_unless_zero().
+ *
+ * Example:
+ *     drm_vma_offset_lock_lookup(mgr);
+ *     node = drm_vma_offset_lookup_locked(mgr);
+ *     if (node)
+ *         kref_get_unless_zero(container_of(node, sth, entr));
+ *     drm_vma_offset_unlock_lookup(mgr);
+ *
  * RETURNS:
  * Returns NULL if no suitable node can be found. Otherwise, the best match
  * is returned. It's the caller's responsibility to make sure the node doesn't
  * get destroyed before the caller can access it.
- */
-struct drm_vma_offset_node *drm_vma_offset_lookup(struct drm_vma_offset_manager *mgr,
-						  unsigned long start,
-						  unsigned long pages)
-{
-	struct drm_vma_offset_node *node;
-
-	read_lock(&mgr->vm_lock);
-	node = drm_vma_offset_lookup_locked(mgr, start, pages);
-	read_unlock(&mgr->vm_lock);
-
-	return node;
-}
-EXPORT_SYMBOL(drm_vma_offset_lookup);
-
-/**
- * drm_vma_offset_lookup_locked() - Find node in offset space
- * @mgr: Manager object
- * @start: Start address for object (page-based)
- * @pages: Size of object (page-based)
- *
- * Same as drm_vma_offset_lookup() but requires the caller to lock offset lookup
- * manually. See drm_vma_offset_lock_lookup() for an example.
- *
- * RETURNS:
- * Returns NULL if no suitable node can be found. Otherwise, the best match
- * is returned.
  */
 struct drm_vma_offset_node *drm_vma_offset_lookup_locked(struct drm_vma_offset_manager *mgr,
 							 unsigned long start,

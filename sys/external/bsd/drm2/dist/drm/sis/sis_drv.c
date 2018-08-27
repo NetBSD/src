@@ -1,3 +1,5 @@
+/*	$NetBSD: sis_drv.c,v 1.1.1.3 2018/08/27 01:34:59 riastradh Exp $	*/
+
 /* sis.c -- sis driver -*- linux-c -*-
  *
  * Copyright 1999 Precision Insight, Inc., Cedar Park, Texas.
@@ -24,6 +26,9 @@
  * DEALINGS IN THE SOFTWARE.
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: sis_drv.c,v 1.1.1.3 2018/08/27 01:34:59 riastradh Exp $");
 
 #include <linux/module.h>
 
@@ -70,7 +75,7 @@ static const struct file_operations sis_driver_fops = {
 	.open = drm_open,
 	.release = drm_release,
 	.unlocked_ioctl = drm_ioctl,
-	.mmap = drm_mmap,
+	.mmap = drm_legacy_mmap,
 	.poll = drm_poll,
 #ifdef CONFIG_COMPAT
 	.compat_ioctl = drm_compat_ioctl,
@@ -108,6 +113,7 @@ static struct drm_driver driver = {
 	.open = sis_driver_open,
 	.preclose = sis_reclaim_buffers_locked,
 	.postclose = sis_driver_postclose,
+	.set_busid = drm_pci_set_busid,
 	.dma_quiescent = sis_idle,
 	.lastclose = sis_lastclose,
 	.ioctls = sis_ioctls,

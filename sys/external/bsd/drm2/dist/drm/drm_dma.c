@@ -1,3 +1,5 @@
+/*	$NetBSD: drm_dma.c,v 1.1.1.3 2018/08/27 01:34:41 riastradh Exp $	*/
+
 /**
  * \file drm_dma.c
  * DMA IOCTL and function support
@@ -33,8 +35,12 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: drm_dma.c,v 1.1.1.3 2018/08/27 01:34:41 riastradh Exp $");
+
 #include <linux/export.h>
 #include <drm/drmP.h>
+#include "drm_legacy.h"
 
 /**
  * Initialize the DMA data.
@@ -124,7 +130,7 @@ void drm_legacy_dma_takedown(struct drm_device *dev)
  *
  * Resets the fields of \p buf.
  */
-void drm_free_buffer(struct drm_device *dev, struct drm_buf * buf)
+void drm_legacy_free_buffer(struct drm_device *dev, struct drm_buf * buf)
 {
 	if (!buf)
 		return;
@@ -142,8 +148,8 @@ void drm_free_buffer(struct drm_device *dev, struct drm_buf * buf)
  *
  * Frees each buffer associated with \p file_priv not already on the hardware.
  */
-void drm_core_reclaim_buffers(struct drm_device *dev,
-			      struct drm_file *file_priv)
+void drm_legacy_reclaim_buffers(struct drm_device *dev,
+				struct drm_file *file_priv)
 {
 	struct drm_device_dma *dma = dev->dma;
 	int i;
@@ -154,7 +160,7 @@ void drm_core_reclaim_buffers(struct drm_device *dev,
 		if (dma->buflist[i]->file_priv == file_priv) {
 			switch (dma->buflist[i]->list) {
 			case DRM_LIST_NONE:
-				drm_free_buffer(dev, dma->buflist[i]);
+				drm_legacy_free_buffer(dev, dma->buflist[i]);
 				break;
 			case DRM_LIST_WAIT:
 				dma->buflist[i]->list = DRM_LIST_RECLAIM;
@@ -166,5 +172,3 @@ void drm_core_reclaim_buffers(struct drm_device *dev,
 		}
 	}
 }
-
-EXPORT_SYMBOL(drm_core_reclaim_buffers);

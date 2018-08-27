@@ -1,3 +1,5 @@
+/*	$NetBSD: radeon_drv.h,v 1.1.1.2 2018/08/27 01:34:58 riastradh Exp $	*/
+
 /* radeon_drv.h -- Private header for radeon driver -*- linux-c -*-
  *
  * Copyright 1999 Precision Insight, Inc., Cedar Park, Texas.
@@ -33,7 +35,9 @@
 
 #include <linux/firmware.h>
 #include <linux/platform_device.h>
+#include <drm/drm_legacy.h>
 
+#include <drm/ati_pcigart.h>
 #include "radeon_family.h"
 
 /* General customization:
@@ -402,9 +406,9 @@ extern int radeon_irq_emit(struct drm_device *dev, void *data, struct drm_file *
 extern int radeon_irq_wait(struct drm_device *dev, void *data, struct drm_file *file_priv);
 
 extern void radeon_do_release(struct drm_device * dev);
-extern u32 radeon_get_vblank_counter(struct drm_device *dev, int crtc);
-extern int radeon_enable_vblank(struct drm_device *dev, int crtc);
-extern void radeon_disable_vblank(struct drm_device *dev, int crtc);
+extern u32 radeon_get_vblank_counter(struct drm_device *dev, unsigned int pipe);
+extern int radeon_enable_vblank(struct drm_device *dev, unsigned int pipe);
+extern void radeon_disable_vblank(struct drm_device *dev, unsigned int pipe);
 extern irqreturn_t radeon_driver_irq_handler(int irq, void *arg);
 extern void radeon_driver_irq_preinstall(struct drm_device * dev);
 extern int radeon_driver_irq_postinstall(struct drm_device *dev);

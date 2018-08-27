@@ -1,3 +1,5 @@
+/*	$NetBSD: nv50_display.h,v 1.1.1.2 2018/08/27 01:34:55 riastradh Exp $	*/
+
 /*
  * Copyright (C) 2008 Maarten Maathuis.
  * All Rights Reserved.

@@ -1,3 +1,5 @@
+/*	$NetBSD: mga_drv.h,v 1.1.1.3 2018/08/27 01:34:55 riastradh Exp $	*/
+
 /* mga_drv.h -- Private header for the Matrox G200/G400 driver -*- linux-c -*-
  * Created: Mon Dec 13 01:50:01 1999 by jhartmann@precisioninsight.com
  *
@@ -30,6 +32,8 @@
 
 #ifndef __MGA_DRV_H__
 #define __MGA_DRV_H__
+
+#include <drm/drm_legacy.h>
 
 /* General customization:
  */
@@ -181,9 +185,9 @@ extern int mga_warp_install_microcode(drm_mga_private_t *dev_priv);
 extern int mga_warp_init(drm_mga_private_t *dev_priv);
 
 				/* mga_irq.c */
-extern int mga_enable_vblank(struct drm_device *dev, int crtc);
-extern void mga_disable_vblank(struct drm_device *dev, int crtc);
-extern u32 mga_get_vblank_counter(struct drm_device *dev, int crtc);
+extern int mga_enable_vblank(struct drm_device *dev, unsigned int pipe);
+extern void mga_disable_vblank(struct drm_device *dev, unsigned int pipe);
+extern u32 mga_get_vblank_counter(struct drm_device *dev, unsigned int pipe);
 extern int mga_driver_fence_wait(struct drm_device *dev, unsigned int *sequence);
 extern int mga_driver_vblank_wait(struct drm_device *dev, unsigned int *sequence);
 extern irqreturn_t mga_driver_irq_handler(int irq, void *arg);
