@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_pci.c,v 1.22 2018/08/27 07:03:26 riastradh Exp $	*/
+/*	$NetBSD: drm_pci.c,v 1.23 2018/08/27 07:54:54 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_pci.c,v 1.22 2018/08/27 07:03:26 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_pci.c,v 1.23 2018/08/27 07:54:54 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/errno.h>
@@ -40,6 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: drm_pci.c,v 1.22 2018/08/27 07:03:26 riastradh Exp $
 
 #include <drm/drmP.h>
 #include <drm/drm_legacy.h>
+#include <drm/drm_internal.h>
 
 struct drm_bus_irq_cookie {
 	pci_intr_handle_t *intr_handles;
@@ -273,4 +274,11 @@ drm_pci_set_busid(struct drm_device *dev, struct drm_master *master)
 	master->unique_len = strlen(master->unique);
 
 	return 0;
+}
+
+int
+drm_irq_by_busid(struct drm_device *dev, void *data, struct drm_file *file)
+{
+
+	return -ENOSYS;
 }
