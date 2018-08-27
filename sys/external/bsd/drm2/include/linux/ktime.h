@@ -1,4 +1,4 @@
-/*	$NetBSD: ktime.h,v 1.3 2014/07/16 20:56:25 riastradh Exp $	*/
+/*	$NetBSD: ktime.h,v 1.4 2018/08/27 07:03:11 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -100,13 +100,33 @@ ktime_to_timeval(ktime_t kt)
 }
 
 static inline ktime_t
+timespec_to_ktime(struct timespec ts)
+{
+	return ns_to_ktime(1000000000*ts.tv_sec + ts.tv_nsec);
+}
+
+static inline ktime_t
 ktime_get(void)
 {
 	struct timespec ts;
 	ktime_t kt;
 
-	/* XXX nanotime or nanouptime?  */
 	nanouptime(&ts);
+
+	/* XXX Silently truncate?  */
+	kt.kt_sec_nsec.ktsn_sec = ts.tv_sec & 0xffffffffUL;
+	kt.kt_sec_nsec.ktsn_nsec = ts.tv_nsec;
+
+	return kt;
+}
+
+static inline ktime_t
+ktime_get_real(void)
+{
+	struct timespec ts;
+	ktime_t kt;
+
+	nanotime(&ts);
 
 	/* XXX Silently truncate?  */
 	kt.kt_sec_nsec.ktsn_sec = ts.tv_sec & 0xffffffffUL;
@@ -118,7 +138,17 @@ ktime_get(void)
 static inline ktime_t
 ktime_get_monotonic_offset(void)
 {
-	return ns_to_ktime(0);	/* XXX Obviously wrong!  Revisit.  */
+	return timespec_to_ktime(boottime);
+}
+
+static inline ktime_t
+ktime_mono_to_real(ktime_t kt)
+{
+	struct timespec ts = ktime_to_timespec(kt);
+
+	timespecadd(&ts, &boottime, &ts);
+
+	return timespec_to_ktime(ts);
 }
 
 static inline bool
