@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_drm_mode.c,v 1.16 2017/12/26 14:54:52 jmcneill Exp $ */
+/* $NetBSD: tegra_drm_mode.c,v 1.17 2018/08/27 15:31:51 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,12 +27,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_drm_mode.c,v 1.16 2017/12/26 14:54:52 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_drm_mode.c,v 1.17 2018/08/27 15:31:51 riastradh Exp $");
 
 #include <drm/drmP.h>
 #include <drm/drm_crtc.h>
 #include <drm/drm_crtc_helper.h>
 #include <drm/drm_edid.h>
+#include <drm/drm_plane_helper.h>
 
 #include <dev/i2c/ddcvar.h>
 
@@ -45,6 +46,8 @@ __KERNEL_RCSID(0, "$NetBSD: tegra_drm_mode.c,v 1.16 2017/12/26 14:54:52 jmcneill
 #include <arm/nvidia/tegra_drm.h>
 
 #include <dev/fdt/fdtvar.h>
+
+#include <external/bsd/drm2/dist/drm/drm_internal.h>
 
 static struct drm_framebuffer *tegra_fb_create(struct drm_device *,
 		    struct drm_file *, struct drm_mode_fb_cmd2 *);
@@ -1321,7 +1324,7 @@ tegra_crtc_intr(void *priv)
 }
 
 u32
-tegra_drm_get_vblank_counter(struct drm_device *ddev, int crtc)
+tegra_drm_get_vblank_counter(struct drm_device *ddev, unsigned int crtc)
 {
 	struct tegra_drm_softc * const sc = tegra_drm_private(ddev);
 
@@ -1332,7 +1335,7 @@ tegra_drm_get_vblank_counter(struct drm_device *ddev, int crtc)
 }
 
 int
-tegra_drm_enable_vblank(struct drm_device *ddev, int crtc)
+tegra_drm_enable_vblank(struct drm_device *ddev, unsigned int crtc)
 {
 	struct tegra_crtc *tegra_crtc = NULL;
 	struct drm_crtc *iter;
@@ -1352,7 +1355,7 @@ tegra_drm_enable_vblank(struct drm_device *ddev, int crtc)
 }
 
 void
-tegra_drm_disable_vblank(struct drm_device *ddev, int crtc)
+tegra_drm_disable_vblank(struct drm_device *ddev, unsigned int crtc)
 {
 	struct tegra_crtc *tegra_crtc = NULL;
 	struct drm_crtc *iter;
