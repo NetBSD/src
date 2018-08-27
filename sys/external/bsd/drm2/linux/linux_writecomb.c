@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_writecomb.c,v 1.6 2018/08/14 14:53:21 riastradh Exp $	*/
+/*	$NetBSD: linux_writecomb.c,v 1.7 2018/08/27 06:49:52 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_writecomb.c,v 1.6 2018/08/14 14:53:21 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_writecomb.c,v 1.7 2018/08/27 06:49:52 riastradh Exp $");
 
 #if defined(__i386__) || defined(__x86_64__)
 #define HAS_MTRR 1
@@ -151,7 +151,7 @@ arch_phys_wc_del(int id)
 }
 
 int
-phys_wc_to_mtrr_index(int handle)
+arch_phys_wc_index(int handle)
 {
 
 	/* XXX Actually implement this...requires changes to our MTRR API.  */
