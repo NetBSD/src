@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_display.c,v 1.20 2018/08/27 07:21:16 riastradh Exp $	*/
+/*	$NetBSD: intel_display.c,v 1.21 2018/08/27 07:28:41 riastradh Exp $	*/
 
 /*
  * Copyright © 2006-2007 Intel Corporation
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_display.c,v 1.20 2018/08/27 07:21:16 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_display.c,v 1.21 2018/08/27 07:28:41 riastradh Exp $");
 
 #include <linux/dmi.h>
 #include <linux/module.h>
@@ -15709,9 +15709,11 @@ void intel_modeset_cleanup(struct drm_device *dev)
 	intel_teardown_gmbus(dev);
 
 #ifdef __NetBSD__
+	linux_mutex_destroy(&dev_priv->psr.lock);
 	linux_mutex_destroy(&dev_priv->pps_mutex);
 	linux_mutex_destroy(&dev_priv->fbc.lock);
 #else
+	mutex_destroy(&dev_priv->psr.lock);
 	mutex_destroy(&dev_priv->pps_mutex);
 	mutex_destroy(&dev_priv->fbc.lock);
 #endif
