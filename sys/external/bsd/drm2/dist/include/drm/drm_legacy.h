@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_legacy.h,v 1.2 2018/08/27 04:58:37 riastradh Exp $	*/
+/*	$NetBSD: drm_legacy.h,v 1.3 2018/08/27 06:18:05 riastradh Exp $	*/
 
 #ifndef __DRM_DRM_LEGACY_H__
 #define __DRM_DRM_LEGACY_H__
@@ -36,6 +36,9 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#include <drm/drm_hashtab.h>
+
+struct drm_lock_data;
 
 /*
  * Legacy Support for palateontologic DRM drivers
