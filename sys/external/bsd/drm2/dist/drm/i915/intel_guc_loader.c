@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_guc_loader.c,v 1.9 2018/08/27 13:42:12 riastradh Exp $	*/
+/*	$NetBSD: intel_guc_loader.c,v 1.10 2018/08/27 13:42:35 riastradh Exp $	*/
 
 /*
  * Copyright © 2014 Intel Corporation
@@ -29,7 +29,7 @@
  *    Alex Dai <yu.dai@intel.com>
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_guc_loader.c,v 1.9 2018/08/27 13:42:12 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_guc_loader.c,v 1.10 2018/08/27 13:42:35 riastradh Exp $");
 
 #include <linux/firmware.h>
 #include <linux/module.h>
@@ -548,6 +548,7 @@ static void guc_fw_fetch(struct drm_device *dev, struct intel_guc_fw *guc_fw)
 		iov.iov_len = fw->size;
 		uio.uio_iov = &iov;
 		uio.uio_iovcnt = 1;
+		uio.uio_offset = 0;
 		uio.uio_resid = fw->size;
 		uio.uio_rw = UIO_READ;
 		UIO_SETUP_SYSSPACE(&uio);
