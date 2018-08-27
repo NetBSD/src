@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_agp_netbsd.h,v 1.6 2015/10/17 21:27:02 jmcneill Exp $	*/
+/*	$NetBSD: drm_agp_netbsd.h,v 1.7 2018/08/27 13:55:24 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
 #define NAGP 1
 #endif
 #if NAGP > 0
-#define	__OS_HAS_AGP	1
+#define	CONFIG_AGP	1
 #endif
 __CTASSERT(PAGE_SIZE == AGP_PAGE_SIZE);
 __CTASSERT(PAGE_SHIFT == AGP_PAGE_SHIFT);
