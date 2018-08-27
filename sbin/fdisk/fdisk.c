@@ -1,4 +1,4 @@
-/*	$NetBSD: fdisk.c,v 1.154 2017/10/02 22:02:05 joerg Exp $ */
+/*	$NetBSD: fdisk.c,v 1.155 2018/08/27 14:55:46 sevan Exp $ */
 
 /*
  * Mach Operating System
@@ -39,7 +39,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: fdisk.c,v 1.154 2017/10/02 22:02:05 joerg Exp $");
+__RCSID("$NetBSD: fdisk.c,v 1.155 2018/08/27 14:55:46 sevan Exp $");
 #endif /* not lint */
 
 #define MBRPTYPENAMES
@@ -668,7 +668,7 @@ usage(void)
 		"[-s [id][/[start][/[size][/bootmenu]]]] \\\n"
 		"%*s[-t disktab] [-T disktype] \\\n"
 		"%*s[-c bootcode] "
-		"[-r|-w file] [device]\n"
+		"[-r|-w file] [-z sectorsize] [device]\n"
 		"\t-a change active partition\n"
 		"\t-f force - not interactive\n"
 		"\t-i initialise MBR code\n"
