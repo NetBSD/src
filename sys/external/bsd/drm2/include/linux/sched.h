@@ -1,4 +1,4 @@
-/*	$NetBSD: sched.h,v 1.8 2018/08/27 06:19:05 riastradh Exp $	*/
+/*	$NetBSD: sched.h,v 1.9 2018/08/27 07:29:09 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -69,6 +69,14 @@ schedule_timeout_uninterruptible(long timeout)
 
 	remain = timeout - (end - start);
 	return remain > 0 ? remain : 0;
+}
+
+static inline void
+cond_resched(void)
+{
+
+	if (curcpu()->ci_schedstate.spc_flags & SPCF_SHOULDYIELD)
+		preempt();
 }
 
 #endif  /* _LINUX_SCHED_H_ */
