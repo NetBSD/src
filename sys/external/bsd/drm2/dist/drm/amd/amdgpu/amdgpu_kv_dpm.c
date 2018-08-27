@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_kv_dpm.c,v 1.1 2018/08/27 14:22:31 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_kv_dpm.c,v 1.2 2018/08/27 14:24:03 riastradh Exp $	*/
 
 /*
  * Copyright 2013 Advanced Micro Devices, Inc.
@@ -24,8 +24,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_kv_dpm.c,v 1.1 2018/08/27 14:22:31 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_kv_dpm.c,v 1.2 2018/08/27 14:24:03 riastradh Exp $");
 
+#include <asm/byteorder.h>
 #include "drmP.h"
 #include "amdgpu.h"
 #include "amdgpu_pm.h"
@@ -201,6 +202,7 @@ static void sumo_construct_vid_mapping_table(struct amdgpu_device *adev,
 	vid_mapping_table->num_entries = i;
 }
 
+#if 0
 static const struct kv_lcac_config_values sx_local_cac_cfg_kv[] =
 {
 	{  0,       4,        1    },
@@ -299,6 +301,7 @@ static const struct kv_lcac_config_reg cpl_cac_config_reg[] =
 {
 	{ 0xc0400d80, 0x003e0000, 17, 0x3fc00000, 22, 0x0001fffe, 1, 0x00000001, 0 }
 };
+#endif
 
 static const struct kv_pt_config_reg didt_config_kv[] =
 {
@@ -1632,7 +1635,8 @@ static u8 kv_get_acp_boot_level(struct amdgpu_device *adev)
 		&adev->pm.dpm.dyn_state.acp_clock_voltage_dependency_table;
 
 	for (i = 0; i < table->count; i++) {
-		if (table->entries[i].clk >= 0) /* XXX */
+		/* XXX Fake out -Wtype-limits.  */
+		if (table->entries[i].clk == 0 || table->entries[i].clk > 0) /* XXX */
 			break;
 	}
 
@@ -1692,7 +1696,7 @@ static int kv_update_acp_dpm(struct amdgpu_device *adev, bool gate)
 static void kv_dpm_powergate_uvd(struct amdgpu_device *adev, bool gate)
 {
 	struct kv_power_info *pi = kv_get_pi(adev);
-	int ret;
+	int ret __unused;
 
 	if (pi->uvd_power_gated == gate)
 		return;
@@ -1732,7 +1736,7 @@ static void kv_dpm_powergate_uvd(struct amdgpu_device *adev, bool gate)
 static void kv_dpm_powergate_vce(struct amdgpu_device *adev, bool gate)
 {
 	struct kv_power_info *pi = kv_get_pi(adev);
-	int ret;
+	int ret __unused;
 
 	if (pi->vce_power_gated == gate)
 		return;
@@ -2599,7 +2603,7 @@ static int kv_parse_sys_info_table(struct amdgpu_device *adev)
 
 	if (amdgpu_atom_parse_data_header(mode_info->atom_context, index, NULL,
 				   &frev, &crev, &data_offset)) {
-		igp_info = (union igp_info *)(mode_info->atom_context->bios +
+		igp_info = (union igp_info *)((char *)mode_info->atom_context->bios +
 					      data_offset);
 
 		if (crev != 8) {
@@ -2750,18 +2754,18 @@ static int kv_parse_power_table(struct amdgpu_device *adev)
 	if (!amdgpu_atom_parse_data_header(mode_info->atom_context, index, NULL,
 				   &frev, &crev, &data_offset))
 		return -EINVAL;
-	power_info = (union power_info *)(mode_info->atom_context->bios + data_offset);
+	power_info = (union power_info *)((char *)mode_info->atom_context->bios + data_offset);
 
 	amdgpu_add_thermal_controller(adev);
 
 	state_array = (struct _StateArray *)
-		(mode_info->atom_context->bios + data_offset +
+		((char *)mode_info->atom_context->bios + data_offset +
 		 le16_to_cpu(power_info->pplib.usStateArrayOffset));
 	clock_info_array = (struct _ClockInfoArray *)
-		(mode_info->atom_context->bios + data_offset +
+		((char *)mode_info->atom_context->bios + data_offset +
 		 le16_to_cpu(power_info->pplib.usClockInfoArrayOffset));
 	non_clock_info_array = (struct _NonClockInfoArray *)
-		(mode_info->atom_context->bios + data_offset +
+		((char *)mode_info->atom_context->bios + data_offset +
 		 le16_to_cpu(power_info->pplib.usNonClockInfoArrayOffset));
 
 	adev->pm.dpm.ps = kzalloc(sizeof(struct amdgpu_ps) *
@@ -2887,6 +2891,7 @@ static int kv_dpm_init(struct amdgpu_device *adev)
 	return 0;
 }
 
+#ifdef CONFIG_DEBUG_FS
 static void
 kv_dpm_debugfs_print_current_performance_level(struct amdgpu_device *adev,
 					       struct seq_file *m)
@@ -2913,6 +2918,7 @@ kv_dpm_debugfs_print_current_performance_level(struct amdgpu_device *adev,
 			   current_index, sclk, vddc);
 	}
 }
+#endif
 
 static void
 kv_dpm_print_power_state(struct amdgpu_device *adev,
@@ -3330,7 +3336,9 @@ static const struct amdgpu_dpm_funcs kv_dpm_funcs = {
 	.get_sclk = &kv_dpm_get_sclk,
 	.get_mclk = &kv_dpm_get_mclk,
 	.print_power_state = &kv_dpm_print_power_state,
+#ifdef CONFIG_DEBUG_FS
 	.debugfs_print_current_performance_level = &kv_dpm_debugfs_print_current_performance_level,
+#endif
 	.force_performance_level = &kv_dpm_force_performance_level,
 	.powergate_uvd = &kv_dpm_powergate_uvd,
 	.enable_bapm = &kv_dpm_enable_bapm,
