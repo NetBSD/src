@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_cmd_parser.c,v 1.8 2018/08/27 07:44:43 riastradh Exp $	*/
+/*	$NetBSD: i915_cmd_parser.c,v 1.9 2018/08/27 14:43:48 riastradh Exp $	*/
 
 /*
  * Copyright © 2013 Intel Corporation
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_cmd_parser.c,v 1.8 2018/08/27 07:44:43 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_cmd_parser.c,v 1.9 2018/08/27 14:43:48 riastradh Exp $");
 
 #include "i915_drv.h"
 
@@ -867,7 +867,6 @@ static u32 *vmap_batch(struct drm_i915_gem_object *obj,
 	vaddr_t va = 0;
 	int error;
 
-	/* XXX errno NetBSD->Linux */
 	error = uvm_map(kernel_map, &va, len, obj->base.filp, start,
 	    sizeof(u32), UVM_MAPFLAG(UVM_PROT_RW, UVM_PROT_RW, UVM_INH_NONE,
 		UVM_ADV_SEQUENTIAL, UVM_FLAG_NOWAIT));
