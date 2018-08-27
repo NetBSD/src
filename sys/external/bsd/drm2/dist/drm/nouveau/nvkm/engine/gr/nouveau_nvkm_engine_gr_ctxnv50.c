@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_engine_gr_ctxnv50.c,v 1.2 2018/08/27 04:58:32 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_engine_gr_ctxnv50.c,v 1.3 2018/08/27 07:41:41 riastradh Exp $	*/
 
 /*
  * Copyright 2009 Marcin Kościelnicki
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_gr_ctxnv50.c,v 1.2 2018/08/27 04:58:32 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_gr_ctxnv50.c,v 1.3 2018/08/27 07:41:41 riastradh Exp $");
 
 #define CP_FLAG_CLEAR                 0
 #define CP_FLAG_SET                   1
@@ -111,6 +111,7 @@ __KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_gr_ctxnv50.c,v 1.2 2018/08/27 04
 #define CP_SEEK_2      0x00c800ff
 
 #include "ctxnv40.h"
+#include "nv50.h"
 
 #include <subdev/fb.h>
 
