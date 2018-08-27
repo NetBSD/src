@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_cmd_parser.c,v 1.10 2018/08/27 14:44:04 riastradh Exp $	*/
+/*	$NetBSD: i915_cmd_parser.c,v 1.11 2018/08/27 14:44:16 riastradh Exp $	*/
 
 /*
  * Copyright © 2013 Intel Corporation
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_cmd_parser.c,v 1.10 2018/08/27 14:44:04 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_cmd_parser.c,v 1.11 2018/08/27 14:44:16 riastradh Exp $");
 
 #include "i915_drv.h"
 
@@ -864,11 +864,14 @@ static u32 *vmap_batch(struct drm_i915_gem_object *obj,
 		       unsigned start, unsigned len)
 {
 #ifdef __NetBSD__
+	/* Round to an integral number of pages starting on page boundary.  */
+	unsigned start0 = rounddown(start, PAGE_SIZE);
+	unsigned len0 = roundup(start + len, PAGE_SIZE) - start0;
 	vaddr_t va = 0;
 	int error;
 
-	error = uvm_map(kernel_map, &va, len, obj->base.filp, start,
-	    sizeof(u32), UVM_MAPFLAG(UVM_PROT_RW, UVM_PROT_RW, UVM_INH_NONE,
+	error = uvm_map(kernel_map, &va, len0, obj->base.filp, start0,
+	    PAGE_SIZE, UVM_MAPFLAG(UVM_PROT_RW, UVM_PROT_RW, UVM_INH_NONE,
 		UVM_ADV_SEQUENTIAL, UVM_FLAG_NOWAIT));
 	if (error)
 		return NULL;
@@ -876,6 +879,7 @@ static u32 *vmap_batch(struct drm_i915_gem_object *obj,
 	/* uvm_map consumes a reference on success.  */
 	uao_reference(obj->base.filp);
 
+	/* Caller will take care of finding the offset in the page.  */
 	return (void *)va;
 #else
 	int i;
