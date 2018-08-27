@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_bios.c,v 1.5 2018/08/27 04:58:36 riastradh Exp $	*/
+/*	$NetBSD: radeon_bios.c,v 1.6 2018/08/27 13:55:59 riastradh Exp $	*/
 
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
@@ -28,7 +28,7 @@
  *          Jerome Glisse
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_bios.c,v 1.5 2018/08/27 04:58:36 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_bios.c,v 1.6 2018/08/27 13:55:59 riastradh Exp $");
 
 #include <drm/drmP.h>
 #include "radeon_reg.h"
@@ -110,10 +110,6 @@ static bool igp_read_bios_from_vram(struct radeon_device *rdev)
 
 static bool radeon_read_bios(struct radeon_device *rdev)
 {
-#ifdef __NetBSD__
-	const bus_space_tag_t bst = rdev->pdev->pd_rom_bst;
-	const bus_space_handle_t bsh = rdev->pdev->pd_rom_found_bsh;
-#endif
 	uint8_t __iomem *bios, val1, val2;
 	size_t size;
 
@@ -125,6 +121,9 @@ static bool radeon_read_bios(struct radeon_device *rdev)
 	}
 
 #ifdef __NetBSD__
+	const bus_space_tag_t bst = rdev->pdev->pd_rom_bst;
+	const bus_space_handle_t bsh = rdev->pdev->pd_rom_found_bsh;
+
 	val1 = bus_space_read_1(bst, bsh, 0);
 	val2 = bus_space_read_1(bst, bsh, 1);
 #else
