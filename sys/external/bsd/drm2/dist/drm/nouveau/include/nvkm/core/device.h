@@ -1,4 +1,4 @@
-/*	$NetBSD: device.h,v 1.4 2018/08/27 07:32:31 riastradh Exp $	*/
+/*	$NetBSD: device.h,v 1.5 2018/08/27 13:43:52 riastradh Exp $	*/
 
 #ifndef __NVKM_DEVICE_H__
 #define __NVKM_DEVICE_H__
@@ -223,8 +223,8 @@ struct nvkm_device *nvkm_device_find(u64 name);
 int nvkm_device_list(u64 *name, int size);
 
 #ifdef __NetBSD__
-void	nouveau_devices_init(void);
-void	nouveau_devices_fini(void);
+void	nvkm_devices_init(void);
+void	nvkm_devices_fini(void);
 #endif
 
 /* privileged register interface accessor macros */
