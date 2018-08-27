@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_module.c,v 1.6 2018/08/27 13:43:52 riastradh Exp $	*/
+/*	$NetBSD: nouveau_module.c,v 1.7 2018/08/27 14:17:21 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_module.c,v 1.6 2018/08/27 13:43:52 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_module.c,v 1.7 2018/08/27 14:17:21 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/module.h>
@@ -49,11 +49,23 @@ MODULE(MODULE_CLASS_DRIVER, nouveau, "drmkms"); /* XXX drmkms_i2c, drmkms_ttm */
 
 struct drm_sysctl_def nouveau_def = DRM_SYSCTL_INIT();
 
-extern struct drm_driver *const nouveau_drm_driver; /* XXX */
+extern struct drm_driver *const nouveau_drm_driver_stub; /* XXX */
+extern struct drm_driver *const nouveau_drm_driver_pci;	 /* XXX */
 
 static int
 nouveau_init(void)
 {
+	int error;
+
+	*nouveau_drm_driver_pci = *nouveau_drm_driver_stub;
+	nouveau_drm_driver_pci->set_busid = drm_pci_set_busid;
+	nouveau_drm_driver_pci->request_irq = drm_pci_request_irq;
+	nouveau_drm_driver_pci->free_irq = drm_pci_free_irq;
+
+	error = drm_pci_init(nouveau_drm_driver_pci, NULL);
+	if (error)
+		return error;
+
 	nvkm_devices_init();
 	drm_sysctl_init(&nouveau_def);
 
@@ -66,6 +78,7 @@ nouveau_fini(void)
 
 	drm_sysctl_fini(&nouveau_def);
 	nvkm_devices_fini();
+	drm_pci_exit(nouveau_drm_driver_pci, NULL);
 }
 
 static int
