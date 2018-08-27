@@ -1,4 +1,4 @@
-/*	$NetBSD: sis_mm.c,v 1.2 2018/08/27 04:58:36 riastradh Exp $	*/
+/*	$NetBSD: sis_mm.c,v 1.3 2018/08/27 14:14:29 riastradh Exp $	*/
 
 /**************************************************************************
  *
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sis_mm.c,v 1.2 2018/08/27 04:58:36 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sis_mm.c,v 1.3 2018/08/27 14:14:29 riastradh Exp $");
 
 #include <drm/drmP.h>
 #include <drm/sis_drm.h>
@@ -94,6 +94,7 @@ static int sis_drm_alloc(struct drm_device *dev, struct drm_file *file,
 	struct sis_file_private *file_priv = file->driver_priv;
 	unsigned long offset;
 
+	idr_preload(GFP_KERNEL);
 	mutex_lock(&dev->struct_mutex);
 
 	if (0 == ((pool == 0) ? dev_priv->vram_initialized :
@@ -101,6 +102,7 @@ static int sis_drm_alloc(struct drm_device *dev, struct drm_file *file,
 		DRM_ERROR
 		    ("Attempt to allocate from uninitialized memory manager.\n");
 		mutex_unlock(&dev->struct_mutex);
+		idr_preload_end();
 		return -EINVAL;
 	}
 
@@ -142,6 +144,7 @@ static int sis_drm_alloc(struct drm_device *dev, struct drm_file *file,
 
 	list_add(&item->owner_list, &file_priv->obj_list);
 	mutex_unlock(&dev->struct_mutex);
+	idr_preload_end();
 
 	mem->offset = ((pool == 0) ?
 		      dev_priv->vram_offset : dev_priv->agp_offset) +
@@ -156,6 +159,7 @@ fail_idr:
 fail_alloc:
 	kfree(item);
 	mutex_unlock(&dev->struct_mutex);
+	idr_preload_end();
 
 	mem->offset = 0;
 	mem->size = 0;
