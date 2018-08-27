@@ -1,4 +1,4 @@
-/*	$NetBSD: ttm_bo_api.h,v 1.3 2018/08/27 04:58:38 riastradh Exp $	*/
+/*	$NetBSD: ttm_bo_api.h,v 1.4 2018/08/27 07:45:33 riastradh Exp $	*/
 
 /**************************************************************************
  *
@@ -301,7 +301,10 @@ struct ttm_bo_kmap_obj {
 		} io;
 		struct {
 			vsize_t			vsize;
-		} uvm;
+		} vmapped;
+		struct {
+			struct page		*page;
+		} kmapped;
 	} u;
 #else
 	struct page *page;
