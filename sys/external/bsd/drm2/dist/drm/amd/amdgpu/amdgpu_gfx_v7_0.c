@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_gfx_v7_0.c,v 1.1 2018/08/27 14:22:31 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_gfx_v7_0.c,v 1.2 2018/08/27 14:24:03 riastradh Exp $	*/
 
 /*
  * Copyright 2014 Advanced Micro Devices, Inc.
@@ -23,9 +23,12 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_gfx_v7_0.c,v 1.1 2018/08/27 14:22:31 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_gfx_v7_0.c,v 1.2 2018/08/27 14:24:03 riastradh Exp $");
 
 #include <linux/firmware.h>
+#include <linux/module.h>
+#include <linux/log2.h>
+#include <asm/byteorder.h>
 #include "drmP.h"
 #include "amdgpu.h"
 #include "amdgpu_ih.h"
@@ -35,6 +38,7 @@ __KERNEL_RCSID(0, "$NetBSD: amdgpu_gfx_v7_0.c,v 1.1 2018/08/27 14:22:31 riastrad
 #include "atom.h"
 #include "amdgpu_ucode.h"
 #include "clearstate_ci.h"
+#include "gfx_v7_0.h"
 
 #include "uvd/uvd_4_2_d.h"
 
@@ -2065,7 +2069,7 @@ static void gmc_v7_0_init_compute_vmid(struct amdgpu_device *adev)
 static void gfx_v7_0_gpu_init(struct amdgpu_device *adev)
 {
 	u32 gb_addr_config;
-	u32 mc_shared_chmap, mc_arb_ramcfg;
+	u32 mc_shared_chmap __unused, mc_arb_ramcfg;
 	u32 dimm00_addr_map, dimm01_addr_map, dimm10_addr_map, dimm11_addr_map;
 	u32 sh_mem_cfg;
 	u32 tmp;
@@ -3205,7 +3209,7 @@ static int gfx_v7_0_mec_init(struct amdgpu_device *adev)
 		gfx_v7_0_mec_fini(adev);
 		return r;
 	}
-	r = amdgpu_bo_kmap(adev->gfx.mec.hpd_eop_obj, (void **)&hpd);
+	r = amdgpu_bo_kmap(adev->gfx.mec.hpd_eop_obj, (void **)__UNVOLATILE(&hpd));
 	if (r) {
 		dev_warn(adev->dev, "(%d) map HDP EOP bo failed\n", r);
 		gfx_v7_0_mec_fini(adev);
@@ -3372,7 +3376,7 @@ static int gfx_v7_0_cp_compute_resume(struct amdgpu_device *adev)
 			gfx_v7_0_cp_compute_fini(adev);
 			return r;
 		}
-		r = amdgpu_bo_kmap(ring->mqd_obj, (void **)&buf);
+		r = amdgpu_bo_kmap(ring->mqd_obj, (void **)__UNVOLATILE(&buf));
 		if (r) {
 			dev_warn(adev->dev, "(%d) map MQD bo failed\n", r);
 			gfx_v7_0_cp_compute_fini(adev);
@@ -3777,7 +3781,7 @@ static int gfx_v7_0_rlc_init(struct amdgpu_device *adev)
 			return r;
 		}
 
-		r = amdgpu_bo_kmap(adev->gfx.rlc.save_restore_obj, (void **)&adev->gfx.rlc.sr_ptr);
+		r = amdgpu_bo_kmap(adev->gfx.rlc.save_restore_obj, (void **)__UNVOLATILE(&adev->gfx.rlc.sr_ptr));
 		if (r) {
 			dev_warn(adev->dev, "(%d) map RLC sr bo failed\n", r);
 			gfx_v7_0_rlc_fini(adev);
@@ -3821,7 +3825,7 @@ static int gfx_v7_0_rlc_init(struct amdgpu_device *adev)
 			return r;
 		}
 
-		r = amdgpu_bo_kmap(adev->gfx.rlc.clear_state_obj, (void **)&adev->gfx.rlc.cs_ptr);
+		r = amdgpu_bo_kmap(adev->gfx.rlc.clear_state_obj, (void **)__UNVOLATILE(&adev->gfx.rlc.cs_ptr));
 		if (r) {
 			dev_warn(adev->dev, "(%d) map RLC c bo failed\n", r);
 			gfx_v7_0_rlc_fini(adev);
@@ -3862,7 +3866,7 @@ static int gfx_v7_0_rlc_init(struct amdgpu_device *adev)
 			gfx_v7_0_rlc_fini(adev);
 			return r;
 		}
-		r = amdgpu_bo_kmap(adev->gfx.rlc.cp_table_obj, (void **)&adev->gfx.rlc.cp_table_ptr);
+		r = amdgpu_bo_kmap(adev->gfx.rlc.cp_table_obj, (void **)__UNVOLATILE(&adev->gfx.rlc.cp_table_ptr));
 		if (r) {
 			dev_warn(adev->dev, "(%d) map RLC cp table bo failed\n", r);
 			gfx_v7_0_rlc_fini(adev);
@@ -4775,7 +4779,7 @@ static int gfx_v7_0_sw_init(void *handle)
 	for (i = 0; i < adev->gfx.num_gfx_rings; i++) {
 		ring = &adev->gfx.gfx_ring[i];
 		ring->ring_obj = NULL;
-		sprintf(ring->name, "gfx");
+		snprintf(ring->name, sizeof ring->name, "gfx");
 		r = amdgpu_ring_init(adev, ring, 1024 * 1024,
 				     PACKET3(PACKET3_NOP, 0x3FFF), 0xf,
 				     &adev->gfx.eop_irq, AMDGPU_CP_IRQ_GFX_EOP,
@@ -4800,7 +4804,7 @@ static int gfx_v7_0_sw_init(void *handle)
 		ring->me = 1; /* first MEC */
 		ring->pipe = i / 8;
 		ring->queue = i % 8;
-		sprintf(ring->name, "comp %d.%d.%d", ring->me, ring->pipe, ring->queue);
+		snprintf(ring->name, sizeof ring->name, "comp %d.%d.%d", ring->me, ring->pipe, ring->queue);
 		irq_type = AMDGPU_CP_IRQ_COMPUTE_MEC1_PIPE0_EOP + ring->pipe;
 		/* type-2 packets are deprecated on MEC, use type-3 instead */
 		r = amdgpu_ring_init(adev, ring, 1024 * 1024,

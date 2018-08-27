@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_cik_sdma.c,v 1.1 2018/08/27 14:22:31 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_cik_sdma.c,v 1.2 2018/08/27 14:24:03 riastradh Exp $	*/
 
 /*
  * Copyright 2013 Advanced Micro Devices, Inc.
@@ -24,9 +24,12 @@
  * Authors: Alex Deucher
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_cik_sdma.c,v 1.1 2018/08/27 14:22:31 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_cik_sdma.c,v 1.2 2018/08/27 14:24:03 riastradh Exp $");
 
 #include <linux/firmware.h>
+#include <linux/module.h>
+#include <linux/log2.h>
+#include <asm/byteorder.h>
 #include <drm/drmP.h>
 #include "amdgpu.h"
 #include "amdgpu_ucode.h"
@@ -979,7 +982,7 @@ static int cik_sdma_sw_init(void *handle)
 	for (i = 0; i < adev->sdma.num_instances; i++) {
 		ring = &adev->sdma.instance[i].ring;
 		ring->ring_obj = NULL;
-		sprintf(ring->name, "sdma%d", i);
+		snprintf(ring->name, sizeof ring->name, "sdma%d", i);
 		r = amdgpu_ring_init(adev, ring, 256 * 1024,
 				     SDMA_PACKET(SDMA_OPCODE_NOP, 0, 0), 0xf,
 				     &adev->sdma.trap_irq,
