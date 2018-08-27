@@ -1,4 +1,4 @@
-/*	$NetBSD: timer.h,v 1.5 2014/08/26 17:26:05 riastradh Exp $	*/
+/*	$NetBSD: timer.h,v 1.6 2018/08/27 06:16:50 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -89,11 +89,12 @@ del_timer(struct timer_list *timer)
 	callout_stop(&timer->tl_callout);
 }
 
-static inline void
+static inline bool
 del_timer_sync(struct timer_list *timer)
 {
 
-	callout_halt(&timer->tl_callout, NULL);
+	/* XXX return values? */
+	return callout_halt(&timer->tl_callout, NULL);
 }
 
 static inline bool
