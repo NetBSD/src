@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_funcs.h,v 1.4 2018/08/27 16:16:02 riastradh Exp $	*/
+/*	$NetBSD: bus_funcs.h,v 1.5 2018/08/27 16:16:16 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -404,7 +404,7 @@ struct uio;
 	(*(t)->_dmamem_mmap)((t), (sg), (n), (o), (p), (f))
 
 #define bus_dmatag_subregion(t, mna, mxa, nt, f) EOPNOTSUPP
-#define bus_dmatag_destroy(t)
+#define bus_dmatag_destroy(t) __nothing
 
 #ifdef _SPARC_BUS_DMA_PRIVATE
 int	_bus_dmamap_create(bus_dma_tag_t, bus_size_t, int, bus_size_t,
