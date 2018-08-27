@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_irq.c,v 1.9 2018/08/27 04:58:19 riastradh Exp $	*/
+/*	$NetBSD: drm_irq.c,v 1.10 2018/08/27 06:53:36 riastradh Exp $	*/
 
 /*
  * drm_irq.c IRQ and vblank support
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_irq.c,v 1.9 2018/08/27 04:58:19 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_irq.c,v 1.10 2018/08/27 06:53:36 riastradh Exp $");
 
 #include <drm/drmP.h>
 #include "drm_trace.h"
@@ -46,6 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: drm_irq.c,v 1.9 2018/08/27 04:58:19 riastradh Exp $"
 
 #include <linux/vgaarb.h>
 #include <linux/export.h>
+#include <linux/moduleparam.h>
 
 #include <linux/atomic.h>
 #include <linux/ktime.h>
