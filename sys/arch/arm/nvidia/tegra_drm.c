@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_drm.c,v 1.9 2017/12/28 14:02:08 jmcneill Exp $ */
+/* $NetBSD: tegra_drm.c,v 1.10 2018/08/27 15:31:51 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_drm.c,v 1.9 2017/12/28 14:02:08 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_drm.c,v 1.10 2018/08/27 15:31:51 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -51,7 +51,6 @@ __KERNEL_RCSID(0, "$NetBSD: tegra_drm.c,v 1.9 2017/12/28 14:02:08 jmcneill Exp $
 static int	tegra_drm_match(device_t, cfdata_t, void *);
 static void	tegra_drm_attach(device_t, device_t, void *);
 
-static const char *tegra_drm_get_name(struct drm_device *);
 static int	tegra_drm_set_busid(struct drm_device *, struct drm_master *);
 
 static int	tegra_drm_load(struct drm_device *, unsigned long);
@@ -80,13 +79,9 @@ static struct drm_driver tegra_drm_driver = {
 	.date = DRIVER_DATE,
 	.major = DRIVER_MAJOR,
 	.minor = DRIVER_MINOR,
-	.patchlevel = DRIVER_PATCHLEVEL 
-};
+	.patchlevel = DRIVER_PATCHLEVEL,
 
-static const struct drm_bus tegra_drm_bus = {
-	.bus_type = DRIVER_BUS_PLATFORM,
-	.get_name = tegra_drm_get_name,
-	.set_busid = tegra_drm_set_busid
+	.set_busid = tegra_drm_set_busid,
 };
 
 CFATTACH_DECL_NEW(tegra_drm, sizeof(struct tegra_drm_softc),
@@ -191,8 +186,6 @@ tegra_drm_attach(device_t parent, device_t self, void *aux)
 
 	prop_dictionary_get_bool(prop, "force-dvi", &sc->sc_force_dvi);
 
-	driver->bus = &tegra_drm_bus;
-
 	sc->sc_ddev = drm_dev_alloc(driver, sc->sc_dev);
 	if (sc->sc_ddev == NULL) {
 		aprint_error_dev(self, "couldn't allocate DRM device\n");
@@ -219,12 +212,6 @@ tegra_drm_attach(device_t parent, device_t self, void *aux)
 	return;
 }
 
-static const char *
-tegra_drm_get_name(struct drm_device *ddev)
-{
-	return DRIVER_NAME;
-}
-
 static int
 tegra_drm_set_busid(struct drm_device *ddev, struct drm_master *master)
 {
@@ -243,15 +230,7 @@ tegra_drm_set_busid(struct drm_device *ddev, struct drm_master *master)
 static int
 tegra_drm_load(struct drm_device *ddev, unsigned long flags)
 {
-	char *devname;
 	int error;
-
-	devname = kzalloc(strlen(DRIVER_NAME) + 1, GFP_KERNEL);
-	if (devname == NULL) {
-		return -ENOMEM;
-	}
-	strcpy(devname, DRIVER_NAME);
-	ddev->devname = devname;
 
 	error = tegra_drm_mode_init(ddev);
 	if (error)
