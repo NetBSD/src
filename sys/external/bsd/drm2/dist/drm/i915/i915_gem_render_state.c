@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem_render_state.c,v 1.2 2018/08/27 04:58:23 riastradh Exp $	*/
+/*	$NetBSD: i915_gem_render_state.c,v 1.3 2018/08/27 07:16:40 riastradh Exp $	*/
 
 /*
  * Copyright © 2014 Intel Corporation
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gem_render_state.c,v 1.2 2018/08/27 04:58:23 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gem_render_state.c,v 1.3 2018/08/27 07:16:40 riastradh Exp $");
 
 #include "i915_drv.h"
 #include "intel_renderstate.h"
@@ -100,7 +100,11 @@ static int render_state_setup(struct render_state *so)
 {
 	const struct intel_renderstate_rodata *rodata = so->rodata;
 	unsigned int i = 0, reloc_index = 0;
+#ifdef __NetBSD__
+	void *kva;
+#else
 	struct page *page;
+#endif
 	u32 *d;
 	int ret;
 
@@ -108,8 +112,17 @@ static int render_state_setup(struct render_state *so)
 	if (ret)
 		return ret;
 
+#ifdef __NetBSD__
+	/* XXX errno NetBSD->Linux */
+	ret = -bus_dmamem_map(so->obj->base.dev->dmat, so->obj->pages,
+	    so->obj->igo_nsegs, PAGE_SIZE, &kva, BUS_DMA_WAITOK);
+	if (ret)
+		return ret;
+	d = kva;
+#else
 	page = sg_page(so->obj->pages->sgl);
 	d = kmap(page);
+#endif
 
 	while (i < rodata->batch_items) {
 		u32 s = rodata->batch[i];
@@ -146,9 +159,17 @@ static int render_state_setup(struct render_state *so)
 	 * Since we are sending length, we need to strictly conform to
 	 * all requirements. For Gen2 this must be a multiple of 8.
 	 */
+#ifdef __NetBSD__		/* XXX ALIGN means something else.  */
+	so->aux_batch_size = round_up(so->aux_batch_size, 8);
+#else
 	so->aux_batch_size = ALIGN(so->aux_batch_size, 8);
+#endif
 
+#ifdef __NetBSD__
+	bus_dmamem_unmap(so->obj->base.dev->dmat, kva, PAGE_SIZE);
+#else
 	kunmap(page);
+#endif
 
 	ret = i915_gem_object_set_to_gtt_domain(so->obj, false);
 	if (ret)
@@ -162,7 +183,11 @@ static int render_state_setup(struct render_state *so)
 	return 0;
 
 err_out:
+#ifdef __NetBSD__
+	bus_dmamem_unmap(so->obj->base.dev->dmat, kva, PAGE_SIZE);
+#else
 	kunmap(page);
+#endif
 	return ret;
 }
 
