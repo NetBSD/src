@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem_gtt.c,v 1.11 2018/08/27 07:17:35 riastradh Exp $	*/
+/*	$NetBSD: i915_gem_gtt.c,v 1.12 2018/08/27 14:49:39 riastradh Exp $	*/
 
 /*
  * Copyright © 2010 Daniel Vetter
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gem_gtt.c,v 1.11 2018/08/27 07:17:35 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gem_gtt.c,v 1.12 2018/08/27 14:49:39 riastradh Exp $");
 
 #include <linux/bitmap.h>
 #include <linux/err.h>
@@ -325,24 +325,30 @@ static int __setup_page_dma(struct drm_device *dev,
 			    struct i915_page_dma *p, gfp_t flags)
 {
 #ifdef __NetBSD__
+	int busdmaflags = 0;
 	int error;
 	int nseg = 1;
 
-	error = bus_dmamem_alloc(dev->dmat, PAGE_SIZE, PAGE_SIZE, PAGE_SIZE,
-	    &p->seg, nseg, &nseg, BUS_DMA_WAITOK);
+	if (flags & __GFP_WAIT)
+		busdmaflags |= BUS_DMA_WAITOK;
+	else
+		busdmaflags |= BUS_DMA_NOWAIT;
+
+	error = bus_dmamem_alloc(dev->dmat, PAGE_SIZE, PAGE_SIZE, 0, &p->seg,
+	    nseg, &nseg, busdmaflags);
 	if (error) {
 fail0:		p->map = NULL;
 		return -error;	/* XXX errno NetBSD->Linux */
 	}
 	KASSERT(nseg == 1);
-	error = bus_dmamap_create(dev->dmat, PAGE_SIZE, 1, PAGE_SIZE,
-	    PAGE_SIZE, BUS_DMA_WAITOK, &p->map);
+	error = bus_dmamap_create(dev->dmat, PAGE_SIZE, 1, PAGE_SIZE, 0,
+	    busdmaflags, &p->map);
 	if (error) {
 fail1:		bus_dmamem_free(dev->dmat, &p->seg, 1);
 		goto fail0;
 	}
 	error = bus_dmamap_load_raw(dev->dmat, p->map, &p->seg, 1, PAGE_SIZE,
-	    BUS_DMA_WAITOK);
+	    busdmaflags);
 	if (error) {
 fail2: __unused
 		bus_dmamap_destroy(dev->dmat, p->map);
