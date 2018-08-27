@@ -1,4 +1,4 @@
-#	$NetBSD: files.drmkms,v 1.28 2018/08/27 15:22:54 riastradh Exp $
+#	$NetBSD: files.drmkms,v 1.29 2018/08/27 15:29:42 riastradh Exp $
 
 include "external/bsd/drm2/linux/files.drmkms_linux"
 
@@ -88,7 +88,7 @@ file	external/bsd/drm2/drm/drm_memory.c	drmkms
 file	external/bsd/drm2/dist/drm/drm_mm.c	drmkms
 file	external/bsd/drm2/dist/drm/drm_modes.c	drmkms
 file	external/bsd/drm2/dist/drm/drm_modeset_lock.c	drmkms
-file	external/bsd/drm2/dist/drm/drm_pci.c	drmkms
+#file	external/bsd/drm2/dist/drm/drm_pci.c	drmkms	# drmkms_pci
 file	external/bsd/drm2/dist/drm/drm_plane_helper.c	drmkms
 #file	external/bsd/drm2/dist/drm/drm_platform.c	drmkms
 file	external/bsd/drm2/dist/drm/drm_prime.c	drmkms
