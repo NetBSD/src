@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_work.c,v 1.16 2018/08/27 14:58:57 riastradh Exp $	*/
+/*	$NetBSD: linux_work.c,v 1.17 2018/08/27 14:59:20 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_work.c,v 1.16 2018/08/27 14:58:57 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_work.c,v 1.17 2018/08/27 14:59:20 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/atomic.h>
@@ -60,6 +60,11 @@ struct workqueue_struct {
 
 static void __dead	linux_workqueue_thread(void *);
 static void		linux_workqueue_timeout(void *);
+static struct workqueue_struct *
+			acquire_work(struct work_struct *,
+			    struct workqueue_struct *);
+static void		release_work(struct work_struct *,
+			    struct workqueue_struct *);
 static void		queue_delayed_work_anew(struct workqueue_struct *,
 			    struct delayed_work *, unsigned long);
 
@@ -238,7 +243,7 @@ linux_workqueue_thread(void *cookie)
 			if (wq->wq_requeued)
 				wq->wq_requeued = false;
 			else
-				work->work_queue = NULL;
+				release_work(work, wq);
 			wq->wq_current_work = NULL;
 			cv_broadcast(&wq->wq_cv);
 		}
@@ -278,6 +283,7 @@ linux_workqueue_timeout(void *cookie)
 		dw->dw_state = DELAYED_WORK_IDLE;
 		callout_destroy(&dw->dw_callout);
 		TAILQ_REMOVE(&wq->wq_delayed, dw, dw_entry);
+		release_work(&dw->work, wq);
 		break;
 	default:
 		panic("delayed work callout in bad state: %p", dw);
@@ -316,6 +322,33 @@ INIT_WORK(struct work_struct *work, void (*fn)(struct work_struct *))
 	work->func = fn;
 }
 
+static struct workqueue_struct *
+acquire_work(struct work_struct *work, struct workqueue_struct *wq)
+{
+	struct workqueue_struct *wq0;
+
+	KASSERT(mutex_owned(&wq->wq_lock));
+
+	wq0 = atomic_cas_ptr(&work->work_queue, NULL, wq);
+	if (wq0 == NULL) {
+		membar_enter();
+		KASSERT(work->work_queue == wq);
+	}
+
+	return wq0;
+}
+
+static void
+release_work(struct work_struct *work, struct workqueue_struct *wq)
+{
+
+	KASSERT(work->work_queue == wq);
+	KASSERT(mutex_owned(&wq->wq_lock));
+
+	membar_exit();
+	work->work_queue = NULL;
+}
+
 bool
 schedule_work(struct work_struct *work)
 {
@@ -332,8 +365,7 @@ queue_work(struct workqueue_struct *wq, struct work_struct *work)
 	KASSERT(wq != NULL);
 
 	mutex_enter(&wq->wq_lock);
-	if (__predict_true((wq0 = atomic_cas_ptr(&work->work_queue, NULL, wq))
-		== NULL)) {
+	if (__predict_true((wq0 = acquire_work(work, wq)) == NULL)) {
 		TAILQ_INSERT_TAIL(&wq->wq_queue, work, work_entry);
 		newly_queued = true;
 	} else {
@@ -462,8 +494,7 @@ queue_delayed_work(struct workqueue_struct *wq, struct delayed_work *dw,
 	bool newly_queued;
 
 	mutex_enter(&wq->wq_lock);
-	if (__predict_true((wq0 = atomic_cas_ptr(&dw->work.work_queue, NULL,
-			wq)) == NULL)) {
+	if (__predict_true((wq0 = acquire_work(&dw->work, wq)) == NULL)) {
 		KASSERT(dw->dw_state == DELAYED_WORK_IDLE);
 		queue_delayed_work_anew(wq, dw, ticks);
 		newly_queued = true;
@@ -484,7 +515,7 @@ mod_delayed_work(struct workqueue_struct *wq, struct delayed_work *dw,
 	bool timer_modified;
 
 	mutex_enter(&wq->wq_lock);
-	if ((wq0 = atomic_cas_ptr(&dw->work.work_queue, NULL, wq)) == NULL) {
+	if ((wq0 = acquire_work(&dw->work, wq)) == NULL) {
 		KASSERT(dw->dw_state == DELAYED_WORK_IDLE);
 		queue_delayed_work_anew(wq, dw, ticks);
 		timer_modified = false;
