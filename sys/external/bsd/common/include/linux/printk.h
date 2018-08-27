@@ -1,4 +1,4 @@
-/*	$NetBSD: printk.h,v 1.1 2018/08/27 06:06:10 riastradh Exp $	*/
+/*	$NetBSD: printk.h,v 1.2 2018/08/27 06:19:05 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -43,6 +43,7 @@
 #define	pr_info		printf	/* XXX */
 #define	pr_info_once	printf	/* XXX */
 #define	pr_warn_once	printf	/* XXX */
+#define	pr_notice	printf	/* XXX */
 #define	KERN_DEBUG	"drm kern debug: "
 #define	KERN_INFO	"drm kern info: "
 #define	KERN_WARNING	"drm kern warning: "
