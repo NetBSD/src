@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_agpsupport.c,v 1.7 2018/08/27 04:58:19 riastradh Exp $	*/
+/*	$NetBSD: drm_agpsupport.c,v 1.8 2018/08/27 06:32:57 riastradh Exp $	*/
 
 /**
  * \file drm_agpsupport.c
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_agpsupport.c,v 1.7 2018/08/27 04:58:19 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_agpsupport.c,v 1.8 2018/08/27 06:32:57 riastradh Exp $");
 
 #include <drm/drmP.h>
 #include <linux/errno.h>
@@ -565,3 +565,4 @@ drm_agp_bind_pages(struct drm_device *dev,
 	return mem;
 }
 EXPORT_SYMBOL(drm_agp_bind_pages);
+#endif
