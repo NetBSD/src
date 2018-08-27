@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_dispnv04_tvnv04.c,v 1.3 2018/08/27 04:58:29 riastradh Exp $	*/
+/*	$NetBSD: nouveau_dispnv04_tvnv04.c,v 1.4 2018/08/27 07:35:03 riastradh Exp $	*/
 
 /*
  * Copyright (C) 2009 Francisco Jerez.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_dispnv04_tvnv04.c,v 1.3 2018/08/27 04:58:29 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_dispnv04_tvnv04.c,v 1.4 2018/08/27 07:35:03 riastradh Exp $");
 
 #include <linux/err.h>
 
@@ -189,7 +189,9 @@ static void nv04_tv_destroy(struct drm_encoder *encoder)
 	get_slave_funcs(encoder)->destroy(encoder);
 	drm_encoder_cleanup(encoder);
 
+#ifndef __NetBSD__		/* XXX How can this possibly be right?  */
 	kfree(encoder->helper_private);
+#endif
 	kfree(nouveau_encoder(encoder));
 }
 
