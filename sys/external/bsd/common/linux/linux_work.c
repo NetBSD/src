@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_work.c,v 1.13 2018/08/27 14:57:55 riastradh Exp $	*/
+/*	$NetBSD: linux_work.c,v 1.14 2018/08/27 14:58:09 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_work.c,v 1.13 2018/08/27 14:57:55 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_work.c,v 1.14 2018/08/27 14:58:09 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/atomic.h>
@@ -259,6 +259,7 @@ linux_workqueue_timeout(void *cookie)
 	struct workqueue_struct *const wq = dw->work.work_queue;
 
 	KASSERT(wq != NULL);
+
 	mutex_enter(&wq->wq_lock);
 	switch (dw->dw_state) {
 	case DELAYED_WORK_IDLE:
@@ -552,7 +553,10 @@ cancel_delayed_work(struct delayed_work *dw)
 	struct workqueue_struct *wq;
 	bool cancelled_p;
 
-	wq = dw->work.work_queue;
+	/* If there's no workqueue, nothing to cancel.   */
+	if ((wq = dw->work.work_queue) == NULL)
+		return false;
+
 	mutex_enter(&wq->wq_lock);
 	if (__predict_false(dw->work.work_queue != wq)) {
 		cancelled_p = false;
@@ -602,7 +606,10 @@ cancel_delayed_work_sync(struct delayed_work *dw)
 	struct workqueue_struct *wq;
 	bool cancelled_p;
 
-	wq = dw->work.work_queue;
+	/* If there's no workqueue, nothing to cancel.   */
+	if ((wq = dw->work.work_queue) == NULL)
+		return false;
+
 	mutex_enter(&wq->wq_lock);
 	if (__predict_false(dw->work.work_queue != wq)) {
 		cancelled_p = false;
@@ -671,9 +678,10 @@ flush_workqueue(struct workqueue_struct *wq)
 bool
 flush_work(struct work_struct *work)
 {
-	struct workqueue_struct *const wq = work->work_queue;
+	struct workqueue_struct *wq;
 
-	if (wq == NULL)
+	/* If there's no workqueue, nothing to flush.  */
+	if ((wq = work->work_queue) == NULL)
 		return false;
 
 	flush_workqueue(wq);
@@ -683,10 +691,11 @@ flush_work(struct work_struct *work)
 bool
 flush_delayed_work(struct delayed_work *dw)
 {
-	struct workqueue_struct *const wq = dw->work.work_queue;
+	struct workqueue_struct *wq;
 	bool do_flush = false;
 
-	if (wq == NULL)
+	/* If there's no workqueue, nothing to flush.  */
+	if ((wq = dw->work.work_queue) == NULL)
 		return false;
 
 	mutex_enter(&wq->wq_lock);
