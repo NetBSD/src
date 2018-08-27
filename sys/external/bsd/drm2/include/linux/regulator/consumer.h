@@ -1,4 +1,4 @@
-/*	$NetBSD: consumer.h,v 1.3 2018/08/27 07:49:36 riastradh Exp $	*/
+/*	$NetBSD: consumer.h,v 1.4 2018/08/27 15:29:54 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -38,6 +38,8 @@
 
 #ifdef FDT
 
+#include <dev/fdt/fdtvar.h>
+
 struct regulator {
 	struct fdtbus_regulator	regulator;
 };
@@ -56,13 +58,12 @@ regulator_get_voltage(struct regulator *reg)
 	}
 
 	KASSERTMSG(uvolt <= INT_MAX, "high voltage: %u uV", uvolt);
-	return (int)uvol;
+	return (int)uvolt;
 }
 
 static inline int
 regulator_set_voltage(struct regulator *reg, int min_uvolt, int max_uvolt)
 {
-	unsigned v;
 
 	if (min_uvolt < 0 || max_uvolt < 0)
 		return -EINVAL;
