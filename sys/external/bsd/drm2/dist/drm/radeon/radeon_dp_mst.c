@@ -1,8 +1,8 @@
-/*	$NetBSD: radeon_dp_mst.c,v 1.2 2018/08/27 04:58:36 riastradh Exp $	*/
+/*	$NetBSD: radeon_dp_mst.c,v 1.3 2018/08/27 07:49:04 riastradh Exp $	*/
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_dp_mst.c,v 1.2 2018/08/27 04:58:36 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_dp_mst.c,v 1.3 2018/08/27 07:49:04 riastradh Exp $");
 
 #include <drm/drmP.h>
 #include <drm/drm_dp_mst_helper.h>
@@ -398,7 +398,7 @@ radeon_mst_encoder_dpms(struct drm_encoder *encoder, int mode)
 	struct radeon_connector *radeon_connector;
 	struct drm_crtc *crtc;
 	struct radeon_crtc *radeon_crtc;
-	int ret, slots;
+	int ret __unused, slots;
 
 	if (!ASIC_IS_DCE5(rdev)) {
 		DRM_ERROR("got mst dpms on non-DCE5\n");
