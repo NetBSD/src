@@ -1,3 +1,5 @@
+/*	$NetBSD: drm_core.h,v 1.1.1.2 2018/08/27 01:35:00 riastradh Exp $	*/
+
 /*
  * Copyright 2004 Jon Smirl <jonsmirl@gmail.com>
  *

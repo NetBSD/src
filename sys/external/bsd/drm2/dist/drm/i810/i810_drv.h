@@ -1,3 +1,5 @@
+/*	$NetBSD: i810_drv.h,v 1.1.1.3 2018/08/27 01:34:53 riastradh Exp $	*/
+
 /* i810_drv.h -- Private header for the Matrox g200/g400 driver -*- linux-c -*-
  * Created: Mon Dec 13 01:50:01 1999 by jhartmann@precisioninsight.com
  *
@@ -31,6 +33,8 @@
 
 #ifndef _I810_DRV_H_
 #define _I810_DRV_H_
+
+#include <drm/drm_legacy.h>
 
 /* General customization:
  */

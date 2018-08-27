@@ -1,3 +1,5 @@
+/*	$NetBSD: r600_dpm.c,v 1.1.1.2 2018/08/27 01:34:58 riastradh Exp $	*/
+
 /*
  * Copyright 2011 Advanced Micro Devices, Inc.
  *
@@ -22,8 +24,12 @@
  * Authors: Alex Deucher
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: r600_dpm.c,v 1.1.1.2 2018/08/27 01:34:58 riastradh Exp $");
+
 #include "drmP.h"
 #include "radeon.h"
+#include "radeon_asic.h"
 #include "r600d.h"
 #include "r600_dpm.h"
 #include "atom.h"
@@ -155,19 +161,20 @@ u32 r600_dpm_get_vblank_time(struct radeon_device *rdev)
 	struct drm_device *dev = rdev->ddev;
 	struct drm_crtc *crtc;
 	struct radeon_crtc *radeon_crtc;
-	u32 line_time_us, vblank_lines;
+	u32 vblank_in_pixels;
 	u32 vblank_time_us = 0xffffffff; /* if the displays are off, vblank time is max */
 
 	if (rdev->num_crtc && rdev->mode_info.mode_config_initialized) {
 		list_for_each_entry(crtc, &dev->mode_config.crtc_list, head) {
 			radeon_crtc = to_radeon_crtc(crtc);
 			if (crtc->enabled && radeon_crtc->enabled && radeon_crtc->hw_mode.clock) {
-				line_time_us = (radeon_crtc->hw_mode.crtc_htotal * 1000) /
-					radeon_crtc->hw_mode.clock;
-				vblank_lines = radeon_crtc->hw_mode.crtc_vblank_end -
-					radeon_crtc->hw_mode.crtc_vdisplay +
-					(radeon_crtc->v_border * 2);
-				vblank_time_us = vblank_lines * line_time_us;
+				vblank_in_pixels =
+					radeon_crtc->hw_mode.crtc_htotal *
+					(radeon_crtc->hw_mode.crtc_vblank_end -
+					 radeon_crtc->hw_mode.crtc_vdisplay +
+					 (radeon_crtc->v_border * 2));
+
+				vblank_time_us = vblank_in_pixels * 1000 / radeon_crtc->hw_mode.clock;
 				break;
 			}
 		}
@@ -187,7 +194,7 @@ u32 r600_dpm_get_vrefresh(struct radeon_device *rdev)
 		list_for_each_entry(crtc, &dev->mode_config.crtc_list, head) {
 			radeon_crtc = to_radeon_crtc(crtc);
 			if (crtc->enabled && radeon_crtc->enabled && radeon_crtc->hw_mode.clock) {
-				vrefresh = radeon_crtc->hw_mode.vrefresh;
+				vrefresh = drm_mode_vrefresh(&radeon_crtc->hw_mode);
 				break;
 			}
 		}
@@ -810,6 +817,7 @@ union power_info {
 union fan_info {
 	struct _ATOM_PPLIB_FANTABLE fan;
 	struct _ATOM_PPLIB_FANTABLE2 fan2;
+	struct _ATOM_PPLIB_FANTABLE3 fan3;
 };
 
 static int r600_parse_clk_voltage_dep_table(struct radeon_clock_voltage_dependency_table *radeon_table,
@@ -899,6 +907,14 @@ int r600_parse_extended_power_table(struct radeon_device *rdev)
 			else
 				rdev->pm.dpm.fan.t_max = 10900;
 			rdev->pm.dpm.fan.cycle_delay = 100000;
+			if (fan_info->fan.ucFanTableFormat >= 3) {
+				rdev->pm.dpm.fan.control_mode = fan_info->fan3.ucFanControlMode;
+				rdev->pm.dpm.fan.default_max_fan_pwm =
+					le16_to_cpu(fan_info->fan3.usFanPWMMax);
+				rdev->pm.dpm.fan.default_fan_output_sensitivity = 4836;
+				rdev->pm.dpm.fan.fan_output_sensitivity =
+					le16_to_cpu(fan_info->fan3.usFanOutputSensitivity);
+			}
 			rdev->pm.dpm.fan.ucode_fan_control = true;
 		}
 	}
@@ -1255,7 +1271,7 @@ int r600_parse_extended_power_table(struct radeon_device *rdev)
 					(mode_info->atom_context->bios + data_offset +
 					 le16_to_cpu(ext_hdr->usPowerTuneTableOffset));
 				rdev->pm.dpm.dyn_state.cac_tdp_table->maximum_power_delivery_limit =
-					ppt->usMaximumPowerDeliveryLimit;
+					le16_to_cpu(ppt->usMaximumPowerDeliveryLimit);
 				pt = &ppt->power_tune_table;
 			} else {
 				ATOM_PPLIB_POWERTUNE_Table *ppt = (ATOM_PPLIB_POWERTUNE_Table *)

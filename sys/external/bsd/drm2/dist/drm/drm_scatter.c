@@ -1,3 +1,5 @@
+/*	$NetBSD: drm_scatter.c,v 1.1.1.3 2018/08/27 01:34:43 riastradh Exp $	*/
+
 /**
  * \file drm_scatter.c
  * IOCTLs to manage scatter/gather memory
@@ -31,9 +33,13 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: drm_scatter.c,v 1.1.1.3 2018/08/27 01:34:43 riastradh Exp $");
+
 #include <linux/vmalloc.h>
 #include <linux/slab.h>
 #include <drm/drmP.h>
+#include "drm_legacy.h"
 
 #define DEBUG_SCATTER 0
 
@@ -78,8 +84,8 @@ void drm_legacy_sg_cleanup(struct drm_device *dev)
 # define ScatterHandle(x) (unsigned int)(x)
 #endif
 
-int drm_sg_alloc(struct drm_device *dev, void *data,
-		 struct drm_file *file_priv)
+int drm_legacy_sg_alloc(struct drm_device *dev, void *data,
+			struct drm_file *file_priv)
 {
 	struct drm_scatter_gather *request = data;
 	struct drm_sg_mem *entry;
@@ -194,8 +200,8 @@ int drm_sg_alloc(struct drm_device *dev, void *data,
 	return -ENOMEM;
 }
 
-int drm_sg_free(struct drm_device *dev, void *data,
-		struct drm_file *file_priv)
+int drm_legacy_sg_free(struct drm_device *dev, void *data,
+		       struct drm_file *file_priv)
 {
 	struct drm_scatter_gather *request = data;
 	struct drm_sg_mem *entry;

@@ -1,3 +1,5 @@
+/*	$NetBSD: radeon_state.c,v 1.1.1.2 2018/08/27 01:34:59 riastradh Exp $	*/
+
 /* radeon_state.c -- State support for Radeon -*- linux-c -*- */
 /*
  * Copyright 2000 VA Linux Systems, Inc., Fremont, California.
@@ -29,10 +31,13 @@
  * ------------------------ This file is DEPRECATED! -------------------------
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: radeon_state.c,v 1.1.1.2 2018/08/27 01:34:59 riastradh Exp $");
+
 #include <drm/drmP.h>
-#include <drm/drm_buffer.h>
 #include <drm/radeon_drm.h>
 #include "radeon_drv.h"
+#include "drm_buffer.h"
 
 /* ================================================================
  * Helper functions for client state checking and fixup
@@ -1703,7 +1708,7 @@ static int radeon_cp_dispatch_texture(struct drm_device * dev,
 	u32 format;
 	u32 *buffer;
 	const u8 __user *data;
-	int size, dwords, tex_width, blit_width, spitch;
+	unsigned int size, dwords, tex_width, blit_width, spitch;
 	u32 height;
 	int i;
 	u32 texpitch, microtile;
@@ -3054,7 +3059,7 @@ static int radeon_cp_getparam(struct drm_device *dev, void *data, struct drm_fil
 		if ((dev_priv->flags & RADEON_FAMILY_MASK) >= CHIP_R600)
 			value = 0;
 		else
-			value = drm_dev_to_irq(dev);
+			value = dev->pdev->irq;
 		break;
 	case RADEON_PARAM_GART_BASE:
 		value = dev_priv->gart_vm_start;
@@ -3258,4 +3263,4 @@ struct drm_ioctl_desc radeon_ioctls[] = {
 	DRM_IOCTL_DEF_DRV(RADEON_CS, r600_cs_legacy_ioctl, DRM_AUTH)
 };
 
-int radeon_max_ioctl = DRM_ARRAY_SIZE(radeon_ioctls);
+int radeon_max_ioctl = ARRAY_SIZE(radeon_ioctls);
