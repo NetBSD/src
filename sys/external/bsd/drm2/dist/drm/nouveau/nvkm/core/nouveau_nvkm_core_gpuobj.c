@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_core_gpuobj.c,v 1.2 2018/08/27 04:58:30 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_core_gpuobj.c,v 1.3 2018/08/27 07:36:18 riastradh Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_core_gpuobj.c,v 1.2 2018/08/27 04:58:30 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_core_gpuobj.c,v 1.3 2018/08/27 07:36:18 riastradh Exp $");
 
 #include <core/gpuobj.h>
 #include <core/engine.h>
@@ -33,18 +33,56 @@ __KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_core_gpuobj.c,v 1.2 2018/08/27 04:58:30
 #include <subdev/bar.h>
 #include <subdev/mmu.h>
 
+#ifdef __NetBSD__
+
+/*
+ * XXX I think this should be done with bus_space, but the depth of
+ * abstractions is dizzying and I'm not actually sure where these
+ * pointers come from.
+ */
+
+#  define	__iomem			__nvkm_gpuobj_iomem
+#  define	ioread32_native		fake_ioread32_native
+#  define	iowrite32_native	fake_iowrite32_native
+
+static inline uint32_t
+fake_ioread32_native(const void __iomem *ptr)
+{
+	uint32_t v;
+
+	v = *(const uint32_t __iomem *)ptr;
+	membar_consumer();
+
+	return v;
+}
+
+static inline void
+fake_iowrite32_native(uint32_t v, void __iomem *ptr)
+{
+
+	membar_producer();
+	*(uint32_t __iomem *)ptr = v;
+}
+
+#endif
+
 /* fast-path, where backend is able to provide direct pointer to memory */
 static u32
 nvkm_gpuobj_rd32_fast(struct nvkm_gpuobj *gpuobj, u32 offset)
 {
-	return ioread32_native(gpuobj->map + offset);
+	return ioread32_native((const char __iomem *)gpuobj->map + offset);
 }
 
 static void
 nvkm_gpuobj_wr32_fast(struct nvkm_gpuobj *gpuobj, u32 offset, u32 data)
 {
-	iowrite32_native(data, gpuobj->map + offset);
+	iowrite32_native(data, (char __iomem *)gpuobj->map + offset);
 }
+
+#ifdef __NetBSD__
+#  undef	ioread32_native
+#  undef	iowrite32_native
+#endif
 
 /* accessor functions for gpuobjs allocated directly from instmem */
 static u32
