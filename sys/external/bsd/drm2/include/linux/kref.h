@@ -1,4 +1,4 @@
-/*	$NetBSD: kref.h,v 1.4 2014/07/16 20:59:58 riastradh Exp $	*/
+/*	$NetBSD: kref.h,v 1.5 2018/08/27 06:46:17 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -39,20 +39,20 @@
 #include <linux/mutex.h>
 
 struct kref {
-	unsigned int kr_count;
+	unsigned int refcount;
 };
 
 static inline void
 kref_init(struct kref *kref)
 {
-	kref->kr_count = 1;
+	kref->refcount = 1;
 }
 
 static inline void
 kref_get(struct kref *kref)
 {
 	const unsigned int count __unused =
-	    atomic_inc_uint_nv(&kref->kr_count);
+	    atomic_inc_uint_nv(&kref->refcount);
 
 	KASSERTMSG((count > 1), "getting released kref");
 }
@@ -63,10 +63,10 @@ kref_get_unless_zero(struct kref *kref)
 	unsigned count;
 
 	do {
-		count = kref->kr_count;
+		count = kref->refcount;
 		if ((count == 0) || (count == UINT_MAX))
 			return false;
-	} while (atomic_cas_uint(&kref->kr_count, count, (count + 1)) !=
+	} while (atomic_cas_uint(&kref->refcount, count, (count + 1)) !=
 	    count);
 
 	return true;
@@ -78,11 +78,11 @@ kref_sub(struct kref *kref, unsigned int count, void (*release)(struct kref *))
 	unsigned int old, new;
 
 	do {
-		old = kref->kr_count;
+		old = kref->refcount;
 		KASSERTMSG((count <= old), "overreleasing kref: %u - %u",
 		    old, count);
 		new = (old - count);
-	} while (atomic_cas_uint(&kref->kr_count, old, new) != old);
+	} while (atomic_cas_uint(&kref->refcount, old, new) != old);
 
 	if (new == 0) {
 		(*release)(kref);
@@ -106,11 +106,11 @@ kref_put_mutex(struct kref *kref, void (*release)(struct kref *),
 	unsigned int old, new;
 
 	do {
-		old = kref->kr_count;
+		old = kref->refcount;
 		KASSERT(old > 0);
 		if (old == 1) {
 			mutex_lock(interlock);
-			if (atomic_add_int_nv(&kref->kr_count, -1) == 0) {
+			if (atomic_add_int_nv(&kref->refcount, -1) == 0) {
 				(*release)(kref);
 				return 1;
 			}
@@ -118,7 +118,7 @@ kref_put_mutex(struct kref *kref, void (*release)(struct kref *),
 			return 0;
 		}
 		new = (old - 1);
-	} while (atomic_cas_uint(&kref->kr_count, old, new) != old);
+	} while (atomic_cas_uint(&kref->refcount, old, new) != old);
 
 	return 0;
 }
@@ -131,15 +131,15 @@ static inline bool
 kref_referenced_p(struct kref *kref)
 {
 
-	return (0 < kref->kr_count);
+	return (0 < kref->refcount);
 }
 
 static inline bool
 kref_exclusive_p(struct kref *kref)
 {
 
-	KASSERT(0 < kref->kr_count);
-	return (kref->kr_count == 1);
+	KASSERT(0 < kref->refcount);
+	return (kref->refcount == 1);
 }
 
 #endif  /* _LINUX_KREF_H_ */
