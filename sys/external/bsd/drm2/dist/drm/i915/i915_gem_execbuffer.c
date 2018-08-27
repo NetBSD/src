@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem_execbuffer.c,v 1.6 2018/08/27 04:58:23 riastradh Exp $	*/
+/*	$NetBSD: i915_gem_execbuffer.c,v 1.7 2018/08/27 07:07:56 riastradh Exp $	*/
 
 /*
  * Copyright © 2008,2010 Intel Corporation
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gem_execbuffer.c,v 1.6 2018/08/27 04:58:23 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gem_execbuffer.c,v 1.7 2018/08/27 07:07:56 riastradh Exp $");
 
 #include <drm/drmP.h>
 #include <drm/i915_drm.h>
@@ -41,6 +41,7 @@ __KERNEL_RCSID(0, "$NetBSD: i915_gem_execbuffer.c,v 1.6 2018/08/27 04:58:23 rias
 #include <linux/log2.h>
 #include <linux/pagemap.h>
 #include <linux/err.h>
+#include <asm/cpufeature.h>
 
 #define  __EXEC_OBJECT_HAS_PIN (1<<31)
 #define  __EXEC_OBJECT_HAS_FENCE (1<<30)
@@ -332,7 +333,8 @@ relocate_entry_gtt(struct drm_i915_gem_object *obj,
 	offset += reloc->offset;
 	reloc_page = io_mapping_map_atomic_wc(dev_priv->gtt.mappable,
 					      offset & PAGE_MASK);
-	iowrite32(lower_32_bits(delta), (char __iomem *)reloc_page + offset_in_page(offset));
+	iowrite32(lower_32_bits(delta), (uint32_t __iomem *)
+	    ((char __iomem *)reloc_page + offset_in_page(offset)));
 
 	if (INTEL_INFO(dev)->gen >= 8) {
 		offset += sizeof(uint32_t);
