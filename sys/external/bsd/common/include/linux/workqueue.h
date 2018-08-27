@@ -1,4 +1,4 @@
-/*	$NetBSD: workqueue.h,v 1.3 2018/08/27 06:55:23 riastradh Exp $	*/
+/*	$NetBSD: workqueue.h,v 1.4 2018/08/27 07:00:28 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -46,6 +46,7 @@
 #define	cancel_delayed_work_sync	linux_cancel_delayed_work_sync
 #define	cancel_work			linux_cancel_work
 #define	cancel_work_sync		linux_cancel_work_sync
+#define	current_work			linux_current_work
 #define	destroy_workqueue		linux_destroy_workqueue
 #define	flush_work			linux_flush_work
 #define	flush_workqueue			linux_flush_workqueue
@@ -117,6 +118,9 @@ bool	mod_delayed_work(struct workqueue_struct *, struct delayed_work *,
 	    unsigned long ticks);
 bool	cancel_delayed_work(struct delayed_work *);
 bool	cancel_delayed_work_sync(struct delayed_work *);
+
+struct work_struct *
+	current_work(void);
 
 #define	INIT_WORK_ONSTACK		INIT_WORK
 
