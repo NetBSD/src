@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_os_netbsd.h,v 1.3 2014/07/26 18:13:44 riastradh Exp $	*/
+/*	$NetBSD: drm_os_netbsd.h,v 1.4 2018/08/27 05:34:49 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -47,6 +47,7 @@
 #include <drm/drm_agp_netbsd.h>
 #include <drm/drm_auth_netbsd.h>
 #include <drm/drm_copy_netbsd.h>
+#include <drm/drm_iomap_netbsd.h>
 #include <drm/drm_irq_netbsd.h>
 #include <drm/drm_wait_netbsd.h>
 
