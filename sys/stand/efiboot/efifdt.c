@@ -1,4 +1,4 @@
-/* $NetBSD: efifdt.c,v 1.3 2018/08/27 09:51:32 jmcneill Exp $ */
+/* $NetBSD: efifdt.c,v 1.4 2018/08/27 22:51:55 alnsn Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -149,7 +149,7 @@ efi_fdt_bootargs(const char *bootargs)
 	if (chosen < 0)
 		chosen = fdt_add_subnode(fdt_data, fdt_path_offset(fdt_data, "/"), FDT_CHOSEN_NODE_NAME);
 	if (chosen < 0)
-		panic("FDT: Failed to craete " FDT_CHOSEN_NODE_PATH " node");
+		panic("FDT: Failed to create " FDT_CHOSEN_NODE_PATH " node");
 
 	if (*bootargs)
 		fdt_setprop_string(fdt_data, chosen, "bootargs", bootargs);
