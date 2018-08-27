@@ -1,4 +1,4 @@
-/*	$NetBSD: bitmap.h,v 1.3 2018/08/27 07:13:45 riastradh Exp $	*/
+/*	$NetBSD: bitmap.h,v 1.4 2018/08/27 14:50:24 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -96,44 +96,47 @@ bitmap_weight(const unsigned long *bitmap, size_t nbits)
 /*
  * bitmap_set(bitmap, startbit, nbits)
  *
- *	Set bits at startbit, startbit+1, ..., nbits-2, nbits-1 to 1.
+ *	Set bits at startbit, startbit+1, ..., startbit+nbits-2,
+ *	startbit+nbits-1 to 1.
  */
 static inline void
 bitmap_set(unsigned long *bitmap, size_t startbit, size_t nbits)
 {
 	const size_t bpl = NBBY * sizeof(*bitmap);
-	unsigned long *p;
+	unsigned long *p = bitmap + startbit/bpl;
 	unsigned long mask;
+	unsigned sz;
 
-	for (p = bitmap + startbit/bpl, mask = ~(~0UL << (startbit%bpl));
-	     nbits >= bpl;
-	     p++, nbits -= bpl, mask = ~0UL)
-		*p |= mask;
+	for (sz = bpl - (startbit%bpl), mask = ~0UL << (startbit%bpl);
+	     nbits >= sz;
+	     nbits -= sz, sz = bpl, mask = ~0UL)
+		*p++ |= mask;
 
 	if (nbits)
-		*p |= mask & (~0UL << nbits);
+		*p |= mask & ~(~0UL << (nbits + bpl - sz));
 }
 
 /*
- * bitmap_set(bitmap, startbit, nbits)
+ * bitmap_clear(bitmap, startbit, nbits)
  *
- *	Clear bits at startbit, startbit+1, ..., nbits-2, nbits-1,
- *	replacing them by 0.
+ *	Clear bits at startbit, startbit+1, ..., startbit+nbits-2,
+ *	startbit+nbits-1, replacing them by 0.
  */
 static inline void
 bitmap_clear(unsigned long *bitmap, size_t startbit, size_t nbits)
 {
 	const size_t bpl = NBBY * sizeof(*bitmap);
-	unsigned long *p;
+	unsigned long *p = bitmap + startbit/bpl;
 	unsigned long mask;
+	unsigned sz;
 
-	for (p = bitmap + startbit/bpl, mask = ~0UL << (startbit%bpl);
-	     nbits >= bpl;
-	     p++, nbits -= bpl, mask = 0UL)
-		*p &= mask;
+	for (sz = bpl - (startbit%bpl), mask = ~(~0UL << (startbit%bpl));
+	     nbits >= sz;
+	     nbits -= sz, sz = bpl, mask = 0UL)
+		*p++ &= mask;
 
 	if (nbits)
-		*p &= mask | ~(~0UL << nbits);
+		*p &= mask | (~0UL << (nbits + bpl - sz));
 }
 
 /*
