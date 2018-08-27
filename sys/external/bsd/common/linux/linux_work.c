@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_work.c,v 1.6 2018/08/27 07:46:28 riastradh Exp $	*/
+/*	$NetBSD: linux_work.c,v 1.7 2018/08/27 13:35:55 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_work.c,v 1.6 2018/08/27 07:46:28 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_work.c,v 1.7 2018/08/27 13:35:55 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -180,7 +180,7 @@ compare_key(void *cookie, const void *vn, const void *vk)
 static const rb_tree_ops_t workqueues_rb_ops = {
 	.rbto_compare_nodes = compare_nodes,
 	.rbto_compare_key = compare_key,
-	.rbto_node_offset = offsetof(struct workqueue_struct, wq_lwp),
+	.rbto_node_offset = offsetof(struct workqueue_struct, wq_node),
 };
 
 struct wq_whoami_work {
