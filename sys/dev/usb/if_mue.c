@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mue.c,v 1.1 2018/08/25 20:12:22 rin Exp $	*/
+/*	$NetBSD: if_mue.c,v 1.2 2018/08/27 14:59:04 rin Exp $	*/
 /*	$OpenBSD: if_mue.c,v 1.3 2018/08/04 16:42:46 jsg Exp $	*/
 
 /*
@@ -20,7 +20,7 @@
 /* Driver for Microchip LAN7500/LAN7800 chipsets. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mue.c,v 1.1 2018/08/25 20:12:22 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mue.c,v 1.2 2018/08/27 14:59:04 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1325,7 +1325,7 @@ mue_sethwcsum(struct mue_softc *sc)
 	reg = (sc->mue_flags & LAN7500) ? MUE_7500_RFE_CTL : MUE_7800_RFE_CTL;
 	val = mue_csr_read(sc, reg);
 
-	if (ifp->if_capabilities & (IFCAP_CSUM_TCPv4_Rx|IFCAP_CSUM_UDPv4_Rx)) {
+	if (ifp->if_capenable & (IFCAP_CSUM_TCPv4_Rx|IFCAP_CSUM_UDPv4_Rx)) {
 		DPRINTF(sc, "enabled\n");;
 		val |= MUE_RFE_CTL_IGMP_COE | MUE_RFE_CTL_ICMP_COE;
 		val |= MUE_RFE_CTL_TCPUDP_COE | MUE_RFE_CTL_IP_COE;
