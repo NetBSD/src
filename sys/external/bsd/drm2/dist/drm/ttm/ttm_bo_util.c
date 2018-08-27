@@ -1,4 +1,4 @@
-/*	$NetBSD: ttm_bo_util.c,v 1.11 2018/08/27 07:45:33 riastradh Exp $	*/
+/*	$NetBSD: ttm_bo_util.c,v 1.12 2018/08/27 14:51:33 riastradh Exp $	*/
 
 /**************************************************************************
  *
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ttm_bo_util.c,v 1.11 2018/08/27 07:45:33 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ttm_bo_util.c,v 1.12 2018/08/27 14:51:33 riastradh Exp $");
 
 #include <drm/ttm/ttm_bo_driver.h>
 #include <drm/ttm/ttm_placement.h>
@@ -273,22 +273,22 @@ static void ttm_mem_reg_iounmap(struct ttm_bo_device *bdev, struct ttm_mem_reg *
 #  define	iowrite32	fake_iowrite32
 
 static inline uint32_t
-fake_ioread32(const volatile uint32_t *p)
+ioread32(const volatile uint32_t *p)
 {
 	uint32_t v;
 
 	v = *p;
-	__insn_barrier();	/* XXX */
+	__insn_barrier();	/* XXX ttm io barrier */
 
-	return v;
+	return v;		/* XXX ttm byte order */
 }
 
 static inline void
 iowrite32(uint32_t v, volatile uint32_t *p)
 {
 
-	__insn_barrier();	/* XXX */
-	*p = v;
+	__insn_barrier();	/* XXX ttm io barrier */
+	*p = v;			/* XXX ttm byte order */
 }
 #endif
 

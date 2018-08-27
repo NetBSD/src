@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_engine_device_base.c,v 1.7 2018/08/27 14:47:53 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_engine_device_base.c,v 1.8 2018/08/27 14:51:33 riastradh Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_device_base.c,v 1.7 2018/08/27 14:47:53 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_device_base.c,v 1.8 2018/08/27 14:51:33 riastradh Exp $");
 
 #include "priv.h"
 #include "acpi.h"
@@ -2386,19 +2386,19 @@ nvkm_device_ctor(const struct nvkm_device_func *func,
 		ret = -bus_space_map(mmiot, mmio_base, 0x102000, 0, &mmioh);
 		if (ret)
 			goto done;
-#ifndef __BIG_ENDIAN		/* XXX bus_space_read/write_4_stream?  */
-		if (bus_space_read_4(mmiot, mmioh, 4) != 0)
+#ifndef __BIG_ENDIAN
+		if (bus_space_read_stream_4(mmiot, mmioh, 4) != 0)
 #else
-		if (bus_space_read_4(mmiot, mmioh, 4) != 1)
+		if (bus_space_read_stream_4(mmiot, mmioh, 4) != 1)
 #endif
 		{
-			bus_space_write_4(mmiot, mmioh, 4, 0x01000001);
-			bus_space_read_4(mmiot, mmioh, 0);
+			bus_space_write_stream_4(mmiot, mmioh, 4, 0x01000001);
+			bus_space_read_stream_4(mmiot, mmioh, 0);
 		}
 
 		/* read boot0 and strapping information */
-		boot0 = bus_space_read_4(mmiot, mmioh, 0x000000);
-		strap = bus_space_read_4(mmiot, mmioh, 0x101000);
+		boot0 = bus_space_read_stream_4(mmiot, mmioh, 0x000000);
+		strap = bus_space_read_stream_4(mmiot, mmioh, 0x101000);
 		bus_space_unmap(mmiot, mmioh, 0x102000);
 #else
 		map = ioremap(mmio_base, 0x102000);
