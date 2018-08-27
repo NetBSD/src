@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_cik.c,v 1.2 2018/08/27 14:23:31 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_cik.c,v 1.3 2018/08/27 14:24:03 riastradh Exp $	*/
 
 /*
  * Copyright 2012 Advanced Micro Devices, Inc.
@@ -24,7 +24,7 @@
  * Authors: Alex Deucher
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_cik.c,v 1.2 2018/08/27 14:23:31 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_cik.c,v 1.3 2018/08/27 14:24:03 riastradh Exp $");
 
 #include <linux/firmware.h>
 #include <linux/slab.h>
@@ -1080,6 +1080,7 @@ static void cik_print_gpu_status_regs(struct amdgpu_device *adev)
  * mask to be used by cik_gpu_soft_reset().
  * Returns a mask of the blocks to be reset.
  */
+u32 amdgpu_cik_gpu_check_soft_reset(struct amdgpu_device *adev); /* XXX put this in a header file */
 u32 amdgpu_cik_gpu_check_soft_reset(struct amdgpu_device *adev)
 {
 	u32 reset_mask = 0;

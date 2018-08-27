@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_amdkfd_gfx_v7.c,v 1.2 2018/08/27 04:58:19 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_amdkfd_gfx_v7.c,v 1.3 2018/08/27 14:24:03 riastradh Exp $	*/
 
 /*
  * Copyright 2014 Advanced Micro Devices, Inc.
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_amdkfd_gfx_v7.c,v 1.2 2018/08/27 04:58:19 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_amdkfd_gfx_v7.c,v 1.3 2018/08/27 14:24:03 riastradh Exp $");
 
 #include <linux/fdtable.h>
 #include <linux/uaccess.h>
@@ -159,9 +159,9 @@ static const struct kfd2kgd_calls kfd2kgd = {
 	.get_fw_version = get_fw_version
 };
 
-struct kfd2kgd_calls *amdgpu_amdkfd_gfx_7_get_functions()
+struct kfd2kgd_calls *amdgpu_amdkfd_gfx_7_get_functions(void)
 {
-	return (struct kfd2kgd_calls *)&kfd2kgd;
+	return (struct kfd2kgd_calls *)__UNCONST(&kfd2kgd); /* XXX */
 }
 
 static inline struct amdgpu_device *get_amdgpu_device(struct kgd_dev *kgd)
