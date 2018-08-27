@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_subdev_fb_ramgk104.c,v 1.2 2018/08/27 04:58:33 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_subdev_fb_ramgk104.c,v 1.3 2018/08/27 07:38:26 riastradh Exp $	*/
 
 /*
  * Copyright 2013 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_fb_ramgk104.c,v 1.2 2018/08/27 04:58:33 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_fb_ramgk104.c,v 1.3 2018/08/27 07:38:26 riastradh Exp $");
 
 #define gk104_ram(p) container_of((p), struct gk104_ram, base)
 #include "ram.h"
@@ -986,7 +986,7 @@ gk104_pll_calc_hiclk(int target_khz, int crystal,
 		int *N1, int *fN1, int *M1, int *P1,
 		int *N2, int *M2, int *P2)
 {
-	int best_clk = 0, best_err = target_khz, p_ref, n_ref;
+	int best_clk __unused = 0, best_err = target_khz, p_ref, n_ref;
 	bool upper = false;
 
 	*M1 = 1;
