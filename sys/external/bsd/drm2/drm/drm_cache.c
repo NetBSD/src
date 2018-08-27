@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_cache.c,v 1.9 2018/08/27 15:11:46 riastradh Exp $	*/
+/*	$NetBSD: drm_cache.c,v 1.10 2018/08/27 15:23:57 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_cache.c,v 1.9 2018/08/27 15:11:46 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_cache.c,v 1.10 2018/08/27 15:23:57 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -49,6 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: drm_cache.c,v 1.9 2018/08/27 15:11:46 riastradh Exp 
 #if defined(DRM_CLFLUSH)
 static bool		drm_md_clflush_finegrained_p(void);
 static void		drm_md_clflush_all(void);
+static void		drm_md_clflush_commit(void);
 static void		drm_md_clflush_page(struct page *);
 static void		drm_md_clflush_virt_range(const void *, size_t);
 #endif
@@ -60,6 +61,7 @@ drm_clflush_pages(struct page **pages, unsigned long npages)
 	if (drm_md_clflush_finegrained_p()) {
 		while (npages--)
 			drm_md_clflush_page(pages[npages]);
+		drm_md_clflush_commit();
 	} else {
 		drm_md_clflush_all();
 	}
@@ -76,6 +78,7 @@ drm_clflush_pglist(struct pglist *list)
 		TAILQ_FOREACH(page, list, pageq.queue)
 			drm_md_clflush_page(container_of(page, struct page,
 				p_vmp));
+		drm_md_clflush_commit();
 	} else {
 		drm_md_clflush_all();
 	}
@@ -86,10 +89,12 @@ void
 drm_clflush_page(struct page *page)
 {
 #if defined(DRM_CLFLUSH)
-	if (drm_md_clflush_finegrained_p())
+	if (drm_md_clflush_finegrained_p()) {
 		drm_md_clflush_page(page);
-	else
+		drm_md_clflush_commit();
+	} else {
 		drm_md_clflush_all();
+	}
 #endif
 }
 
@@ -97,10 +102,12 @@ void
 drm_clflush_virt_range(const void *vaddr, size_t nbytes)
 {
 #if defined(DRM_CLFLUSH)
-	if (drm_md_clflush_finegrained_p())
+	if (drm_md_clflush_finegrained_p()) {
 		drm_md_clflush_virt_range(vaddr, nbytes);
-	else
+		drm_md_clflush_commit();
+	} else {
 		drm_md_clflush_all();
+	}
 #endif
 }
 
@@ -140,6 +147,11 @@ drm_md_clflush_all(void)
 }
 
 static void
+drm_md_clflush_commit(void)
+{
+}
+
+static void
 drm_md_clflush_page(struct page *page)
 {
 	void *const vaddr = kmap_atomic(page);
@@ -175,6 +187,12 @@ drm_ppc_dcbf(vaddr_t va, vsize_t off)
 	asm volatile ("dcbf\t%0,%1" : : "b"(va), "r"(off));
 }
 
+static void
+drm_ppc_sync(void)
+{
+	asm volatile ("sync" ::: "memory");
+}
+
 static bool
 drm_md_clflush_finegrained_p(void)
 {
@@ -185,6 +203,12 @@ static void
 drm_md_clflush_all(void)
 {
 	panic("don't know how to flush entire cache on powerpc");
+}
+
+static void
+drm_md_clflush_commit(void)
+{
+	drm_ppc_sync();
 }
 
 static void
