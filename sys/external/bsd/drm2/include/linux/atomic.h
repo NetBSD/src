@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic.h,v 1.18 2018/08/27 15:11:04 riastradh Exp $	*/
+/*	$NetBSD: atomic.h,v 1.19 2018/08/27 15:11:17 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -264,6 +264,18 @@ atomic64_sub(int64_t d, struct atomic64 *a)
 	atomic_add_64(&a->a_v, -d);
 }
 
+static inline int64_t
+atomic64_add_return(int64_t d, struct atomic64 *a)
+{
+	int64_t v;
+
+	smp_mb__before_atomic();
+	v = (int64_t)atomic_add_64_nv(&a->a_v, d);
+	smp_mb__after_atomic();
+
+	return v;
+}
+
 static inline uint64_t
 atomic64_xchg(struct atomic64 *a, uint64_t new)
 {
@@ -296,6 +308,7 @@ atomic64_cmpxchg(struct atomic64 *atomic, uint64_t expect, uint64_t new)
 #else  /* !defined(__HAVE_ATOMIC64_OPS) */
 
 #define	atomic64_add		linux_atomic64_add
+#define	atomic64_add_return	linux_atomic64_add_return
 #define	atomic64_cmpxchg	linux_atomic64_cmpxchg
 #define	atomic64_read		linux_atomic64_read
 #define	atomic64_set		linux_atomic64_set
@@ -306,10 +319,17 @@ uint64_t	atomic64_read(const struct atomic64 *);
 void		atomic64_set(struct atomic64 *, uint64_t);
 void		atomic64_add(int64_t, struct atomic64 *);
 void		atomic64_sub(int64_t, struct atomic64 *);
+int64_t		atomic64_add_return(int64_t, struct atomic64 *);
 uint64_t	atomic64_xchg(struct atomic64 *, uint64_t);
 uint64_t	atomic64_cmpxchg(struct atomic64 *, uint64_t, uint64_t);
 
 #endif
+
+static inline int64_t
+atomic64_inc_return(struct atomic64 *a)
+{
+	return atomic64_add_return(1, a);
+}
 
 struct atomic_long {
 	volatile unsigned long	al_v;
