@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_dvo.c,v 1.3 2018/08/27 04:58:24 riastradh Exp $	*/
+/*	$NetBSD: intel_dvo.c,v 1.4 2018/08/27 07:22:18 riastradh Exp $	*/
 
 /*
  * Copyright 2006 Dave Airlie <airlied@linux.ie>
@@ -27,7 +27,7 @@
  *	Eric Anholt <eric@anholt.net>
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_dvo.c,v 1.3 2018/08/27 04:58:24 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_dvo.c,v 1.4 2018/08/27 07:22:18 riastradh Exp $");
 
 #include <linux/i2c.h>
 #include <linux/slab.h>
@@ -457,7 +457,7 @@ void intel_dvo_init(struct drm_device *dev)
 		struct i2c_adapter *i2c;
 		int gpio;
 		bool dvoinit;
-		enum pipe pipe;
+		enum i915_pipe pipe;
 		uint32_t dpll[I915_MAX_PIPES];
 
 		/* Allow the I2C driver info to specify the GPIO to be used in
