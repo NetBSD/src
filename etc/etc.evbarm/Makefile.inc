@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.93 2018/04/01 04:35:02 ryo Exp $
+#	$NetBSD: Makefile.inc,v 1.94 2018/08/27 22:41:56 jmcneill Exp $
 #
 #	etc.evbarm/Makefile.inc -- evbarm-specific etc Makefile targets
 #
@@ -167,6 +167,13 @@ BUILD_KERNELS+=		${board}_INSTALL
 .endfor
 KERNEL_SETS+=		${KERNEL_SETS.${arch}}
 .endfor
+
+.if !empty(MACHINE_ARCH:Maarch64)
+smp_efibootaa64:
+	cd ${KERNSRCDIR}/stand/efiboot/bootaa64 && ${MAKE} release
+SNAP_MD_POST_DEPS+=	smp_efibootaa64
+INSTALLATION_DIRS+=	installation/misc
+.endif
 
 .if !empty(MACHINE_ARCH:M*armv7*) && empty(ALL_KERNELS)
 smp_armv7: __mkimage
