@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_engine_disp_gf119.c,v 1.1.1.1 2018/08/27 01:34:56 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_engine_disp_gf119.c,v 1.2 2018/08/27 04:58:31 riastradh Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_disp_gf119.c,v 1.1.1.1 2018/08/27 01:34:56 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_disp_gf119.c,v 1.2 2018/08/27 04:58:31 riastradh Exp $");
 
 #include "nv50.h"
 #include "rootnv50.h"
@@ -34,6 +34,8 @@ __KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_disp_gf119.c,v 1.1.1.1 2018/08/2
 #include <subdev/bios/init.h>
 #include <subdev/bios/pll.h>
 #include <subdev/devinit.h>
+
+#include <asm/div64.h>		/* XXX */
 
 void
 gf119_disp_vblank_init(struct nv50_disp *disp, int head)
@@ -179,7 +181,8 @@ exec_clkcmp(struct nv50_disp *disp, int head, int id, u32 pclk, u32 *conf)
 	}
 
 	data = nvbios_ocfg_match(bios, data, *conf, &ver, &hdr, &cnt, &len, &info2);
-	if (data && id < 0xff) {
+	CTASSERT(__arraycount(info2.clkcmp) <= 0xff);
+	if (data && id < __arraycount(info2.clkcmp)) {
 		data = nvbios_oclk_match(bios, info2.clkcmp[id], pclk);
 		if (data) {
 			struct nvbios_init init = {

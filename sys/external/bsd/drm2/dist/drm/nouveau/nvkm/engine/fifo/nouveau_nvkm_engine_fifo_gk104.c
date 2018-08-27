@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_engine_fifo_gk104.c,v 1.1.1.1 2018/08/27 01:34:56 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_engine_fifo_gk104.c,v 1.2 2018/08/27 04:58:31 riastradh Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_fifo_gk104.c,v 1.1.1.1 2018/08/27 01:34:56 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_fifo_gk104.c,v 1.2 2018/08/27 04:58:31 riastradh Exp $");
 
 #include "gk104.h"
 #include "changk104.h"
@@ -76,10 +76,38 @@ gk104_fifo_runlist_update(struct gk104_fifo *fifo, u32 engine)
 	nvkm_wr32(device, 0x002270, nvkm_memory_addr(cur) >> 12);
 	nvkm_wr32(device, 0x002274, (engine << 20) | nr);
 
+#ifdef __NetBSD__
+	/* XXX it is wrong to wait under mutex */
+	if (cold) {
+		uint count = 2000;
+		while (count-- > 0) {
+			if (!(nvkm_rd32(priv, 0x002284 +
+			    (engine * 0x08)) & 0x00100000))
+				break;
+			delay(1000);
+		}
+		if (count == 0)
+			nvkm_error(subdev, "runlist %d update timeout\n",
+			    engine);
+	} else {
+		int ret;
+
+		spin_lock(&engn->lock);
+		DRM_SPIN_TIMED_WAIT_NOINTR_UNTIL(ret, &engn->wait, &engn->lock,
+		    msecs_to_jiffies(2000),
+		    !(nvkm_rd32(priv, 0x002284 +
+			    (engine * 0x08)) & 0x00100000));
+		if (ret == 0)
+			nvkm_error(subdev, "runlist %d update timeout\n",
+			    engine);
+		spin_unlock(&engn->lock);
+	}
+#else
 	if (wait_event_timeout(engn->wait, !(nvkm_rd32(device, 0x002284 +
 			       (engine * 0x08)) & 0x00100000),
 				msecs_to_jiffies(2000)) == 0)
 		nvkm_error(subdev, "runlist %d update timeout\n", engine);
+#endif
 	mutex_unlock(&subdev->mutex);
 }
 
@@ -108,11 +136,15 @@ gk104_fifo_recover_work(struct work_struct *work)
 	fifo->mask = 0ULL;
 	spin_unlock_irqrestore(&fifo->base.lock, flags);
 
-	for (todo = mask; engn = __ffs64(todo), todo; todo &= ~(1 << engn))
+	for (todo = mask;
+	     todo && (engn = __ffs64(todo), 1);
+	     todo &= ~(1 << engn))
 		engm |= 1 << gk104_fifo_subdev_engine(engn);
 	nvkm_mask(device, 0x002630, engm, engm);
 
-	for (todo = mask; engn = __ffs64(todo), todo; todo &= ~(1 << engn)) {
+	for (todo = mask;
+	     todo && (engn = __ffs64(todo), 1);
+	     todo &= ~(1 << engn)) {
 		if ((engine = nvkm_device_engine(device, engn))) {
 			nvkm_subdev_fini(&engine->subdev, false);
 			WARN_ON(nvkm_subdev_init(&engine->subdev));
@@ -404,8 +436,8 @@ gk104_fifo_intr_fault(struct gk104_fifo *fifo, int unit)
 	chan = nvkm_fifo_chan_inst(&fifo->base, (u64)inst << 12, &flags);
 
 	nvkm_error(subdev,
-		   "%s fault at %010llx engine %02x [%s] client %02x [%s%s] "
-		   "reason %02x [%s] on channel %d [%010llx %s]\n",
+		   "%s fault at %010"PRIx64" engine %02x [%s] client %02x [%s%s] "
+		   "reason %02x [%s] on channel %d [%010"PRIx64" %s]\n",
 		   write ? "write" : "read", (u64)vahi << 32 | valo,
 		   unit, eu ? eu->name : "", client, gpcid, ec ? ec->name : "",
 		   reason, er ? er->name : "", chan ? chan->chid : -1,
@@ -479,7 +511,7 @@ gk104_fifo_intr_pbdma_0(struct gk104_fifo *fifo, int unit)
 	if (show) {
 		nvkm_snprintbf(msg, sizeof(msg), gk104_fifo_pbdma_intr_0, show);
 		chan = nvkm_fifo_chan_chid(&fifo->base, chid, &flags);
-		nvkm_error(subdev, "PBDMA%d: %08x [%s] ch %d [%010llx %s] "
+		nvkm_error(subdev, "PBDMA%d: %08x [%s] ch %d [%010"PRIx64" %s] "
 				   "subc %d mthd %04x data %08x\n",
 			   unit, show, msg, chid, chan ? chan->inst->addr : 0,
 			   chan ? chan->object.client->name : "unknown",
@@ -527,7 +559,14 @@ gk104_fifo_intr_runlist(struct gk104_fifo *fifo)
 	u32 mask = nvkm_rd32(device, 0x002a00);
 	while (mask) {
 		u32 engn = __ffs(mask);
+#ifdef __NetBSD__
+		spin_lock(&fifo->engine[engn].lock);
+		DRM_SPIN_WAKEUP_ONE(&fifo->engine[engn].wait,
+		    &fifo->engine[engn].lock);
+		spin_unlock(&fifo->engine[engn].lock);
+#else
 		wake_up(&fifo->engine[engn].wait);
+#endif
 		nvkm_wr32(device, 0x002a00, 1 << engn);
 		mask &= ~(1 << engn);
 	}
@@ -661,7 +700,12 @@ gk104_fifo_oneinit(struct nvkm_fifo *base)
 		if (ret)
 			return ret;
 
+#ifdef __NetBSD__
+		spin_lock_init(&fifo->engine[i].lock);
+		DRM_INIT_WAITQUEUE(&fifo->engine[i].wait, "gk104fifo");
+#else
 		init_waitqueue_head(&fifo->engine[i].wait);
+#endif
 		INIT_LIST_HEAD(&fifo->engine[i].chan);
 	}
 
@@ -722,6 +766,10 @@ gk104_fifo_dtor(struct nvkm_fifo *base)
 	nvkm_memory_del(&fifo->user.mem);
 
 	for (i = 0; i < ARRAY_SIZE(fifo->engine); i++) {
+#ifdef __NetBSD__
+		DRM_DESTROY_WAITQUEUE(&fifo->engine[i].wait);
+		spin_lock_destroy(&fifo->engine[i].lock);
+#endif
 		nvkm_memory_del(&fifo->engine[i].runlist[1]);
 		nvkm_memory_del(&fifo->engine[i].runlist[0]);
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_engine_device_base.c,v 1.1.1.1 2018/08/27 01:34:55 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_engine_device_base.c,v 1.2 2018/08/27 04:58:31 riastradh Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_device_base.c,v 1.1.1.1 2018/08/27 01:34:55 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_device_base.c,v 1.2 2018/08/27 04:58:31 riastradh Exp $");
 
 #include "priv.h"
 #include "acpi.h"
@@ -34,8 +34,27 @@ __KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_device_base.c,v 1.1.1.1 2018/08/
 
 #include <subdev/bios.h>
 
+#ifdef __NetBSD__
+static struct mutex nv_devices_mutex;
+static struct list_head nv_devices = LIST_HEAD_INIT(nv_devices);
+
+void
+nouveau_devices_init(void)
+{
+
+	linux_mutex_init(&nv_devices_mutex);
+}
+
+void
+nouveau_devices_fini(void)
+{
+
+	linux_mutex_destroy(&nv_devices_mutex);
+}
+#else
 static DEFINE_MUTEX(nv_devices_mutex);
 static LIST_HEAD(nv_devices);
+#endif
 
 static struct nvkm_device *
 nvkm_device_find_locked(u64 handle)
@@ -2286,8 +2305,14 @@ nvkm_device_del(struct nvkm_device **pdevice)
 
 		nvkm_event_fini(&device->event);
 
+#ifdef __NetBSD__
+		if (device->mmiosz)
+			bus_space_unmap(device->mmiot, device->mmioh,
+			    device->mmiosz);
+#else
 		if (device->pri)
 			iounmap(device->pri);
+#endif
 		list_del(&device->head);
 
 		if (device->func->dtor)
@@ -2310,7 +2335,12 @@ nvkm_device_ctor(const struct nvkm_device_func *func,
 	struct nvkm_subdev *subdev;
 	u64 mmio_base, mmio_size;
 	u32 boot0, strap;
+#ifdef __NetBSD__
+	bus_space_tag_t mmiot;
+	bus_space_handle_t mmioh;
+#else
 	void __iomem *map;
+#endif
 	int ret = -EEXIST;
 	int i;
 
@@ -2333,11 +2363,38 @@ nvkm_device_ctor(const struct nvkm_device_func *func,
 	if (ret)
 		goto done;
 
+#ifdef __NetBSD__
+	mmiot = device->func->resource_tag(device, 0);
+#endif
 	mmio_base = device->func->resource_addr(device, 0);
 	mmio_size = device->func->resource_size(device, 0);
 
 	/* identify the chipset, and determine classes of subdev/engines */
 	if (detect) {
+#ifdef __NetBSD__
+		if (mmio_size < 0x102000) {
+			ret = -ENOMEM;
+			goto done;
+		}
+		/* XXX errno NetBSD->Linux */
+		ret = -bus_space_map(mmiot, mmio_base, 0x102000, 0, &mmioh);
+		if (ret)
+			goto done;
+#ifndef __BIG_ENDIAN		/* XXX bus_space_read/write_4_stream?  */
+		if (bus_space_read_4(mmiot, mmioh, 4) != 0)
+#else
+		if (bus_space_read_4(mmiot, mmioh, 4) != 1)
+#endif
+		{
+			bus_space_write_4(mmiot, mmioh, 4, 0x01000001);
+			bus_space_read_4(mmiot, mmioh, 0);
+		}
+
+		/* read boot0 and strapping information */
+		boot0 = bus_space_read_4(mmiot, mmioh, 0x000000);
+		strap = bus_space_read_4(mmiot, mmioh, 0x101000);
+		bus_space_unmap(mmiot, mmioh, 0x102000);
+#else
 		map = ioremap(mmio_base, 0x102000);
 		if (ret = -ENOMEM, map == NULL)
 			goto done;
@@ -2356,6 +2413,7 @@ nvkm_device_ctor(const struct nvkm_device_func *func,
 		boot0 = ioread32_native(map + 0x000000);
 		strap = ioread32_native(map + 0x101000);
 		iounmap(map);
+#endif
 
 		/* determine chipset and derive architecture from it */
 		if ((boot0 & 0x1f000000) > 0) {
@@ -2496,11 +2554,23 @@ nvkm_device_ctor(const struct nvkm_device_func *func,
 		device->name = device->chip->name;
 
 	if (mmio) {
+#ifdef __NetBSD__
+		/* XXX errno NetBSD->Linux */
+		ret = -bus_space_map(mmiot, mmio_base, mmio_size, 0, &mmioh);
+		if (ret) {
+			nvdev_error(device, "unable to map device registers\n");
+			goto done; /* XXX Linux leaks mutex */
+		}
+		device->mmiot = mmiot;
+		device->mmioh = mmioh;
+		device->mmiosz = mmiosz;
+#else
 		device->pri = ioremap(mmio_base, mmio_size);
 		if (!device->pri) {
 			nvdev_error(device, "unable to map PRI\n");
 			return -ENOMEM;
 		}
+#endif
 	}
 
 	mutex_init(&device->mutex);

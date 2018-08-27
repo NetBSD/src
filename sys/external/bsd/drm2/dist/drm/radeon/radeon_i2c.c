@@ -1,3 +1,5 @@
+/*	$NetBSD: radeon_i2c.c,v 1.4 2018/08/27 04:58:36 riastradh Exp $	*/
+
 /*
  * Copyright 2007-8 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -23,6 +25,9 @@
  * Authors: Dave Airlie
  *          Alex Deucher
  */
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: radeon_i2c.c,v 1.4 2018/08/27 04:58:36 riastradh Exp $");
+
 #include <linux/export.h>
 #include <linux/module.h>
 
@@ -94,6 +99,8 @@ static int pre_xfer(struct i2c_adapter *i2c_adap)
 	struct radeon_device *rdev = i2c->dev->dev_private;
 	struct radeon_i2c_bus_rec *rec = &i2c->rec;
 	uint32_t temp;
+
+	mutex_lock(&i2c->mutex);
 
 	/* RV410 appears to have a bug where the hw i2c in reset
 	 * holds the i2c port in a bad state - switch hw i2c away before
@@ -171,6 +178,8 @@ static void post_xfer(struct i2c_adapter *i2c_adap)
 	temp = RREG32(rec->mask_data_reg) & ~rec->mask_data_mask;
 	WREG32(rec->mask_data_reg, temp);
 	temp = RREG32(rec->mask_data_reg);
+
+	mutex_unlock(&i2c->mutex);
 }
 
 static int get_clock(void *i2c_priv)
@@ -814,6 +823,8 @@ static int radeon_hw_i2c_xfer(struct i2c_adapter *i2c_adap,
 	struct radeon_i2c_bus_rec *rec = &i2c->rec;
 	int ret = 0;
 
+	mutex_lock(&i2c->mutex);
+
 	switch (rdev->family) {
 	case CHIP_R100:
 	case CHIP_RV100:
@@ -880,6 +891,8 @@ static int radeon_hw_i2c_xfer(struct i2c_adapter *i2c_adap,
 		break;
 	}
 
+	mutex_unlock(&i2c->mutex);
+
 	return ret;
 }
 
@@ -920,6 +933,7 @@ struct radeon_i2c_chan *radeon_i2c_create(struct drm_device *dev,
 	i2c->adapter.dev.parent = dev->dev;
 	i2c->dev = dev;
 	i2c_set_adapdata(&i2c->adapter, i2c);
+	mutex_init(&i2c->mutex);
 	if (rec->mm_i2c ||
 	    (rec->hw_capable &&
 	     radeon_hw_i2c &&
@@ -980,7 +994,7 @@ void radeon_i2c_destroy(struct radeon_i2c_chan *i2c)
 		return;
 	i2c_del_adapter(&i2c->adapter);
 	if (i2c->has_aux)
-		drm_dp_aux_unregister_i2c_bus(&i2c->aux);
+		drm_dp_aux_unregister(&i2c->aux);
 	kfree(i2c);
 }
 
@@ -1037,11 +1051,6 @@ struct radeon_i2c_chan *radeon_i2c_lookup(struct radeon_device *rdev,
 			return rdev->i2c_bus[i];
 		}
 	}
-	return NULL;
-}
-
-struct drm_encoder *radeon_best_encoder(struct drm_connector *connector)
-{
 	return NULL;
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_runtime_pm.c,v 1.1.1.1 2018/08/27 01:34:55 riastradh Exp $	*/
+/*	$NetBSD: intel_runtime_pm.c,v 1.2 2018/08/27 04:58:24 riastradh Exp $	*/
 
 /*
  * Copyright © 2012-2014 Intel Corporation
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_runtime_pm.c,v 1.1.1.1 2018/08/27 01:34:55 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_runtime_pm.c,v 1.2 2018/08/27 04:58:24 riastradh Exp $");
 
 #include <linux/pm_runtime.h>
 #include <linux/vgaarb.h>
@@ -1854,7 +1854,11 @@ int intel_power_domains_init(struct drm_i915_private *dev_priv)
 
 	BUILD_BUG_ON(POWER_DOMAIN_NUM > 31);
 
+#ifdef __NetBSD__
+	linux_mutex_init(&power_domains->lock);
+#else
 	mutex_init(&power_domains->lock);
+#endif
 
 	/*
 	 * The enabling order will be from lower to higher indexed wells,
@@ -1882,7 +1886,7 @@ int intel_power_domains_init(struct drm_i915_private *dev_priv)
 static void intel_runtime_pm_disable(struct drm_i915_private *dev_priv)
 {
 	struct drm_device *dev = dev_priv->dev;
-	struct device *device = &dev->pdev->dev;
+	struct device *device = dev->dev;
 
 	if (!HAS_RUNTIME_PM(dev))
 		return;
@@ -1910,6 +1914,12 @@ void intel_power_domains_fini(struct drm_i915_private *dev_priv)
 	 * the power well is not enabled, so just enable it in case
 	 * we're going to unload/reload. */
 	intel_display_set_init_power(dev_priv, true);
+
+#ifdef __NetBSD__
+	linux_mutex_destroy(&dev_priv->power_domains->lock);
+#else
+	mutex_destroy(&dev_priv->power_domains->lock);
+#endif
 }
 
 static void intel_power_domains_resume(struct drm_i915_private *dev_priv)
@@ -2085,7 +2095,7 @@ void intel_power_domains_init_hw(struct drm_i915_private *dev_priv)
 void intel_runtime_pm_get(struct drm_i915_private *dev_priv)
 {
 	struct drm_device *dev = dev_priv->dev;
-	struct device *device = &dev->pdev->dev;
+	struct device *device = dev->dev;
 
 	if (!HAS_RUNTIME_PM(dev))
 		return;
@@ -2114,7 +2124,7 @@ void intel_runtime_pm_get(struct drm_i915_private *dev_priv)
 void intel_runtime_pm_get_noresume(struct drm_i915_private *dev_priv)
 {
 	struct drm_device *dev = dev_priv->dev;
-	struct device *device = &dev->pdev->dev;
+	struct device *device = dev->dev;
 
 	if (!HAS_RUNTIME_PM(dev))
 		return;
@@ -2134,7 +2144,7 @@ void intel_runtime_pm_get_noresume(struct drm_i915_private *dev_priv)
 void intel_runtime_pm_put(struct drm_i915_private *dev_priv)
 {
 	struct drm_device *dev = dev_priv->dev;
-	struct device *device = &dev->pdev->dev;
+	struct device *device = dev->dev;
 
 	if (!HAS_RUNTIME_PM(dev))
 		return;
@@ -2156,7 +2166,7 @@ void intel_runtime_pm_put(struct drm_i915_private *dev_priv)
 void intel_runtime_pm_enable(struct drm_i915_private *dev_priv)
 {
 	struct drm_device *dev = dev_priv->dev;
-	struct device *device = &dev->pdev->dev;
+	struct device *device = dev->dev;
 
 	if (!HAS_RUNTIME_PM(dev))
 		return;

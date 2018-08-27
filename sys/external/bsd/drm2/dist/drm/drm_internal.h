@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_internal.h,v 1.1.1.1 2018/08/27 01:34:42 riastradh Exp $	*/
+/*	$NetBSD: drm_internal.h,v 1.2 2018/08/27 04:58:19 riastradh Exp $	*/
 
 /*
  * Copyright © 2014 Intel Corporation
@@ -38,9 +38,11 @@ int drm_irq_by_busid(struct drm_device *dev, void *data,
 		     struct drm_file *file_priv);
 
 /* drm_vm.c */
+#ifndef __NetBSD__
 int drm_vma_info(struct seq_file *m, void *data);
 void drm_vm_open_locked(struct drm_device *dev, struct vm_area_struct *vma);
 void drm_vm_close_locked(struct drm_device *dev, struct vm_area_struct *vma);
+#endif
 
 /* drm_prime.c */
 int drm_prime_handle_to_fd_ioctl(struct drm_device *dev, void *data,
@@ -48,17 +50,21 @@ int drm_prime_handle_to_fd_ioctl(struct drm_device *dev, void *data,
 int drm_prime_fd_to_handle_ioctl(struct drm_device *dev, void *data,
 				 struct drm_file *file_priv);
 
+#ifndef __NetBSD__		/* XXX drm prime */
 void drm_prime_init_file_private(struct drm_prime_file_private *prime_fpriv);
 void drm_prime_destroy_file_private(struct drm_prime_file_private *prime_fpriv);
 void drm_prime_remove_buf_handle_locked(struct drm_prime_file_private *prime_fpriv,
 					struct dma_buf *dma_buf);
+#endif
 
+#ifndef __NetBSD__
 /* drm_info.c */
 int drm_name_info(struct seq_file *m, void *data);
 int drm_vm_info(struct seq_file *m, void *data);
 int drm_bufs_info(struct seq_file *m, void *data);
 int drm_clients_info(struct seq_file *m, void* data);
 int drm_gem_name_info(struct seq_file *m, void *data);
+#endif
 
 /* drm_irq.c */
 int drm_control(struct drm_device *dev, void *data,

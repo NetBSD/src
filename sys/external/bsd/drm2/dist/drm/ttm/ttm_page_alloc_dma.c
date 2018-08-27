@@ -1,4 +1,4 @@
-/*	$NetBSD: ttm_page_alloc_dma.c,v 1.1.1.3 2018/08/27 01:34:59 riastradh Exp $	*/
+/*	$NetBSD: ttm_page_alloc_dma.c,v 1.2 2018/08/27 04:58:37 riastradh Exp $	*/
 
 /*
  * Copyright 2011 (c) Oracle Corp.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ttm_page_alloc_dma.c,v 1.1.1.3 2018/08/27 01:34:59 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ttm_page_alloc_dma.c,v 1.2 2018/08/27 04:58:37 riastradh Exp $");
 
 #if defined(CONFIG_SWIOTLB) || defined(CONFIG_INTEL_IOMMU)
 #define pr_fmt(fmt) "[TTM] " fmt

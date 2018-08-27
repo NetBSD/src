@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_engine_fifo_chan.c,v 1.1.1.1 2018/08/27 01:34:56 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_engine_fifo_chan.c,v 1.2 2018/08/27 04:58:31 riastradh Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_fifo_chan.c,v 1.1.1.1 2018/08/27 01:34:56 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_fifo_chan.c,v 1.2 2018/08/27 04:58:31 riastradh Exp $");
 
 #include "chan.h"
 
@@ -266,18 +266,49 @@ nvkm_fifo_chan_map(struct nvkm_object *object, u64 *addr, u32 *size)
 	return 0;
 }
 
+#ifdef __NetBSD__
+static int
+nvkm_fifo_chan_ensure_mapped(struct nvkm_fifo_chan *chan)
+{
+	int ret;
+
+	if (likely(chan->mapped))
+		goto out;
+
+	/* XXX errno NetBSD->Linux */
+	int ret = -bus_space_map(chan->bst, chan->addr, chan->size, 0,
+	    &chan->bsh);
+	if (ret)
+		return ret;
+	chan->mapped = true;
+
+out:	KASSERT(chan->mapped);
+	return 0;
+}
+#endif
+
 static int
 nvkm_fifo_chan_rd32(struct nvkm_object *object, u64 addr, u32 *data)
 {
 	struct nvkm_fifo_chan *chan = nvkm_fifo_chan(object);
+#ifdef __NetBSD__
+	int ret = nvkm_fifo_chan_ensure_mapped(object);
+	if (ret)
+		return ret;
+#else
 	if (unlikely(!chan->user)) {
 		chan->user = ioremap(chan->addr, chan->size);
 		if (!chan->user)
 			return -ENOMEM;
 	}
+#endif
 	if (unlikely(addr + 4 > chan->size))
 		return -EINVAL;
+#ifdef __NetBSD__
+	*data = bus_space_read_4(chan->bst, chan->bsh, addr);
+#else
 	*data = ioread32_native(chan->user + addr);
+#endif
 	return 0;
 }
 
@@ -285,14 +316,24 @@ static int
 nvkm_fifo_chan_wr32(struct nvkm_object *object, u64 addr, u32 data)
 {
 	struct nvkm_fifo_chan *chan = nvkm_fifo_chan(object);
+#ifdef __NetBSD__
+	int ret = nvkm_fifo_chan_ensure_mapped(object);
+	if (ret)
+		return ret;
+#else
 	if (unlikely(!chan->user)) {
 		chan->user = ioremap(chan->addr, chan->size);
 		if (!chan->user)
 			return -ENOMEM;
 	}
+#endif
 	if (unlikely(addr + 4 > chan->size))
 		return -EINVAL;
+#ifdef __NetBSD__
+	bus_space_write_4(chan->bst, chan->bsh, addr, data);
+#else
 	iowrite32_native(data, chan->user + addr);
+#endif
 	return 0;
 }
 
@@ -327,8 +368,15 @@ nvkm_fifo_chan_dtor(struct nvkm_object *object)
 	}
 	spin_unlock_irqrestore(&fifo->lock, flags);
 
+#ifdef __NetBSD__
+	if (!chan->subregion && chan->mapped) {
+		bus_space_unmap(chan->bst, chan->bsh, chan->size);
+		chan->mapped = false;
+	}
+#else
 	if (chan->user)
 		iounmap(chan->user);
+#endif
 
 	nvkm_vm_ref(NULL, &chan->vm, NULL);
 
@@ -414,6 +462,50 @@ nvkm_fifo_chan_ctor(const struct nvkm_fifo_chan_func *func,
 	chan->addr = device->func->resource_addr(device, bar) +
 		     base + user * chan->chid;
 	chan->size = user;
+#ifdef __NetBSD__
+	if (bar == 0) {
+		/*
+		 * We already map BAR 0 in the engine device base, so
+		 * grab a subregion of that.
+		 */
+		bus_space_tag_t mmiot = device->mmiot;
+		bus_space_handle_t mmioh = device->mmioh;
+		bus_size_t mmiosz = device->mmiosz;
+		bus_addr_t mmioaddr = device->func->resource_addr(device, bar);
+
+		/* Check whether it lies inside the region.  */
+		if (mmiosz < base ||
+		    mmiosz - base < user * chan->chid ||
+		    mmiosz - base - user * chan->chid < user) {
+			nvif_error(&chan->object, "fifo channel out of range:"
+			    " base 0x%jx chid 0x%jx user 0x%jx mmiosz 0x%jx\n",
+			    (uintmax_t)base,
+			    (uintmax_t)chan->chid, (uintmax_t)user,
+			    (uintmax_t)mmiosz);
+			return -EIO;
+		}
+		KASSERT(mmioaddr <= chan->addr);
+		KASSERT(base + user * chan->chid <= mmiosz - user);
+		KASSERT(chan->addr <= mmioaddr + (mmiosz - user));
+		KASSERT(chan->addr - mmioaddr == base + user * chan->chid);
+		/* XXX errno NetBSD->Linux */
+		ret = -bus_space_subregion(mmiot, mmioh,
+		    base + user * chan->chid, user, &chan->bsh);
+		if (ret) {
+			nvif_error(&chan->object, "bus_space_subregion failed:"
+			    " %d\n", ret);
+			return ret;
+		}
+		chan->bst = mmiot;
+		chan->mapped = true;
+		chan->subregion = true;
+	} else {
+		/* XXX Why does nouveau map this lazily?  */
+		chan->bst = device->func->resource_tag(device, bar);
+		chan->mapped = false;
+		chan->subregion = false;
+	}
+#endif
 
 	nvkm_event_send(&fifo->cevent, 1, 0, NULL, 0);
 	return 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_gem.h,v 1.1.1.1 2018/08/27 01:35:00 riastradh Exp $	*/
+/*	$NetBSD: drm_gem.h,v 1.2 2018/08/27 04:58:37 riastradh Exp $	*/
 
 #ifndef __DRM_GEM_H__
 #define __DRM_GEM_H__
@@ -58,8 +58,16 @@ struct drm_gem_object {
 	/** Related drm device */
 	struct drm_device *dev;
 
+#ifdef __NetBSD__
+	/* UVM anonymous object for shared memory mappings.  */
+	struct uvm_object *gemo_shm_uao;
+
+	/* UVM object with custom pager ops for device memory mappings.  */
+	struct uvm_object gemo_uvmobj;
+#else
 	/** File representing the shmem storage */
 	struct file *filp;
+#endif
 
 	/* Mapping info for this object */
 	struct drm_vma_offset_node vma_node;
@@ -94,6 +102,7 @@ struct drm_gem_object {
 	uint32_t pending_read_domains;
 	uint32_t pending_write_domain;
 
+#ifndef __NetBSD__	    /* XXX drm prime */
 	/**
 	 * dma_buf - dma buf associated with this GEM object
 	 *
@@ -121,6 +130,7 @@ struct drm_gem_object {
 	 * simply leave it as NULL.
 	 */
 	struct dma_buf_attachment *import_attach;
+#endif
 };
 
 void drm_gem_object_release(struct drm_gem_object *obj);
@@ -129,11 +139,20 @@ int drm_gem_object_init(struct drm_device *dev,
 			struct drm_gem_object *obj, size_t size);
 void drm_gem_private_object_init(struct drm_device *dev,
 				 struct drm_gem_object *obj, size_t size);
+#ifdef __NetBSD__
+void drm_gem_pager_reference(struct uvm_object *);
+void drm_gem_pager_detach(struct uvm_object *);
+int drm_gem_mmap_object(struct drm_device *, off_t, size_t, int,
+    struct uvm_object **, voff_t *, struct file *);
+int drm_gem_or_legacy_mmap_object(struct drm_device *, off_t, size_t, int,
+    struct uvm_object **, voff_t *, struct file *);
+#else
 void drm_gem_vm_open(struct vm_area_struct *vma);
 void drm_gem_vm_close(struct vm_area_struct *vma);
 int drm_gem_mmap_obj(struct drm_gem_object *obj, unsigned long obj_size,
 		     struct vm_area_struct *vma);
 int drm_gem_mmap(struct file *filp, struct vm_area_struct *vma);
+#endif
 
 static inline void
 drm_gem_object_reference(struct drm_gem_object *obj)

@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_subdev_mxm_base.c,v 1.1.1.1 2018/08/27 01:34:56 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_subdev_mxm_base.c,v 1.2 2018/08/27 04:58:34 riastradh Exp $	*/
 
 /*
  * Copyright 2011 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_mxm_base.c,v 1.1.1.1 2018/08/27 01:34:56 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_mxm_base.c,v 1.2 2018/08/27 04:58:34 riastradh Exp $");
 
 #include "mxms.h"
 
@@ -120,7 +120,7 @@ mxm_shadow_dsm(struct nvkm_mxm *mxm, u8 version)
 		mxm->mxms = kmemdup(obj->buffer.pointer,
 					 obj->buffer.length, GFP_KERNEL);
 	} else if (obj->type == ACPI_TYPE_INTEGER) {
-		nvkm_debug(subdev, "DSM MXMS returned 0x%llx\n",
+		nvkm_debug(subdev, "DSM MXMS returned 0x%"PRIx64"\n",
 			   obj->integer.value);
 	}
 

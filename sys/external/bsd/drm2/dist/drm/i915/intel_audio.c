@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_audio.c,v 1.1.1.1 2018/08/27 01:34:54 riastradh Exp $	*/
+/*	$NetBSD: intel_audio.c,v 1.2 2018/08/27 04:58:24 riastradh Exp $	*/
 
 /*
  * Copyright © 2014 Intel Corporation
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_audio.c,v 1.1.1.1 2018/08/27 01:34:54 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_audio.c,v 1.2 2018/08/27 04:58:24 riastradh Exp $");
 
 #include <linux/kernel.h>
 #include <linux/component.h>

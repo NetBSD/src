@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem_gtt.h,v 1.1.1.1 2018/08/27 01:34:54 riastradh Exp $	*/
+/*	$NetBSD: i915_gem_gtt.h,v 1.2 2018/08/27 04:58:23 riastradh Exp $	*/
 
 /*
  * Copyright © 2014 Intel Corporation
@@ -160,7 +160,11 @@ struct i915_ggtt_view {
 		} partial;
 	} params;
 
+#ifdef __NetBSD__
+	bus_dmamap_t pages;
+#else
 	struct sg_table *pages;
+#endif
 
 	union {
 		struct intel_rotation_info rotation_info;
@@ -228,6 +232,13 @@ struct i915_vma {
 };
 
 struct i915_page_dma {
+#ifdef __NetBSD__
+	union {
+		bus_dma_segment_t seg;
+		uint32_t ggtt_offset;
+	};
+	bus_dmamap_t map;
+#else
 	struct page *page;
 	union {
 		dma_addr_t daddr;
@@ -237,6 +248,7 @@ struct i915_page_dma {
 		 */
 		uint32_t ggtt_offset;
 	};
+#endif
 };
 
 #define px_base(px) (&(px)->base)
@@ -323,7 +335,11 @@ struct i915_address_space {
 			    uint64_t length,
 			    bool use_scratch);
 	void (*insert_entries)(struct i915_address_space *vm,
+#ifdef __NetBSD__
+			       bus_dmamap_t dmamap,
+#else
 			       struct sg_table *st,
+#endif
 			       uint64_t start,
 			       enum i915_cache_level cache_level, u32 flags);
 	void (*cleanup)(struct i915_address_space *vm);
@@ -353,7 +369,26 @@ struct i915_gtt {
 	phys_addr_t mappable_base;	/* PA of our GMADR */
 
 	/** "Graphics Stolen Memory" holds the global PTEs */
+#ifdef __NetBSD__
+	/*
+	 * This is not actually the `Graphics Stolen Memory'; it is the
+	 * graphics translation table, which we write to through the
+	 * GTTADR/GTTMMADR PCI BAR, and which is backed by `Graphics
+	 * GTT Stolen Memory'.  That isn't the `Graphics Stolen Memory'
+	 * either, although it is stolen from main memory.
+	 */
+	bus_space_tag_t		bst;
+	bus_space_handle_t	bsh;
+	bus_size_t		size;
+
+	/* Maximum physical address that can be wired into a GTT entry.  */
+	uint64_t		max_paddr;
+
+	/* Page freelist for pages limited to the above maximum address.  */
+	int			pgfl;
+#else
 	void __iomem *gsm;
+#endif
 
 	bool do_idle_maps;
 
@@ -378,7 +413,9 @@ struct i915_hw_ppgtt {
 
 	struct drm_i915_file_private *file_priv;
 
+#ifndef __NetBSD__
 	gen6_pte_t __iomem *pd_addr;
+#endif
 
 	int (*enable)(struct i915_hw_ppgtt *ppgtt);
 	int (*switch_mm)(struct i915_hw_ppgtt *ppgtt,
