@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_atomic_plane.c,v 1.2 2018/08/27 04:58:24 riastradh Exp $	*/
+/*	$NetBSD: intel_atomic_plane.c,v 1.3 2018/08/27 07:19:44 riastradh Exp $	*/
 
 /*
  * Copyright © 2014 Intel Corporation
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_atomic_plane.c,v 1.2 2018/08/27 04:58:24 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_atomic_plane.c,v 1.3 2018/08/27 07:19:44 riastradh Exp $");
 
 #include <drm/drmP.h>
 #include <drm/drm_atomic_helper.h>
@@ -112,7 +112,7 @@ static int intel_plane_atomic_check(struct drm_plane *plane,
 				    struct drm_plane_state *state)
 {
 	struct drm_crtc *crtc = state->crtc;
-	struct intel_crtc *intel_crtc;
+	struct intel_crtc *intel_crtc __unused;
 	struct intel_crtc_state *crtc_state;
 	struct intel_plane *intel_plane = to_intel_plane(plane);
 	struct intel_plane_state *intel_state = to_intel_plane_state(state);
