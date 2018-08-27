@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_lock.c,v 1.5 2018/08/27 06:06:31 riastradh Exp $	*/
+/*	$NetBSD: drm_lock.c,v 1.6 2018/08/27 06:57:32 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_lock.c,v 1.5 2018/08/27 06:06:31 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_lock.c,v 1.6 2018/08/27 06:57:32 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/errno.h>
@@ -66,7 +66,7 @@ static void	drm_lock_unblock_signals(struct drm_device *,
  * Take the lock on behalf of userland.
  */
 int
-drm_lock(struct drm_device *dev, void *data, struct drm_file *file)
+drm_legacy_lock(struct drm_device *dev, void *data, struct drm_file *file)
 {
 	struct drm_lock *lock_request = data;
 	struct drm_master *master = file->master;
@@ -158,7 +158,7 @@ out0:	mutex_lock(&drm_global_mutex);
  * userland's request.  Fail if it doesn't actually hold the lock.
  */
 int
-drm_unlock(struct drm_device *dev, void *data, struct drm_file *file)
+drm_legacy_unlock(struct drm_device *dev, void *data, struct drm_file *file)
 {
 	struct drm_lock *lock_request = data;
 	struct drm_master *master = file->master;
@@ -222,7 +222,7 @@ out0:	mutex_lock(&drm_global_mutex);
  * XXX Should we also unblock signals like drm_unlock does?
  */
 int
-drm_lock_free(struct drm_lock_data *lock_data, unsigned int context)
+drm_legacy_lock_free(struct drm_lock_data *lock_data, unsigned int context)
 {
 
 	spin_lock(&lock_data->spinlock);
@@ -238,7 +238,7 @@ drm_lock_free(struct drm_lock_data *lock_data, unsigned int context)
  * anyone else.
  */
 void
-drm_idlelock_take(struct drm_lock_data *lock_data)
+drm_legacy_idlelock_take(struct drm_lock_data *lock_data)
 {
 
 	spin_lock(&lock_data->spinlock);
@@ -262,7 +262,7 @@ drm_idlelock_take(struct drm_lock_data *lock_data)
  * Release whatever drm_idlelock_take managed to acquire.
  */
 void
-drm_idlelock_release(struct drm_lock_data *lock_data)
+drm_legacy_idlelock_release(struct drm_lock_data *lock_data)
 {
 
 	spin_lock(&lock_data->spinlock);
@@ -287,7 +287,7 @@ drm_idlelock_release(struct drm_lock_data *lock_data)
  * think we can know what the correct answer is in that case.
  */
 int
-drm_i_have_hw_lock(struct drm_device *dev, struct drm_file *file)
+drm_legacy_i_have_hw_lock(struct drm_device *dev, struct drm_file *file)
 {
 	struct drm_lock_data *const lock_data = &file->master->lock;
 	int answer = 0;
