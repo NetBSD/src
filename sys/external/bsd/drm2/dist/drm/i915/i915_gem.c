@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem.c,v 1.37 2018/08/27 06:07:58 riastradh Exp $	*/
+/*	$NetBSD: i915_gem.c,v 1.38 2018/08/27 06:33:34 riastradh Exp $	*/
 
 /*
  * Copyright © 2008-2015 Intel Corporation
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gem.c,v 1.37 2018/08/27 06:07:58 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gem.c,v 1.38 2018/08/27 06:33:34 riastradh Exp $");
 
 #ifdef __NetBSD__
 #if 0				/* XXX uvmhist option?  */
@@ -5740,7 +5740,6 @@ void i915_gem_track_fb(struct drm_i915_gem_object *old,
 		new->frontbuffer_bits |= frontbuffer_bits;
 	}
 }
-#endif
 
 /* All the new VM stuff */
 u64 i915_gem_obj_offset(struct drm_i915_gem_object *o,
