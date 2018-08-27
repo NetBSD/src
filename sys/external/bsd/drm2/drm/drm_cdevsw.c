@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_cdevsw.c,v 1.7 2018/08/27 06:52:34 riastradh Exp $	*/
+/*	$NetBSD: drm_cdevsw.c,v 1.8 2018/08/27 07:51:06 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_cdevsw.c,v 1.7 2018/08/27 06:52:34 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_cdevsw.c,v 1.8 2018/08/27 07:51:06 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -75,7 +75,7 @@ static int	drm_kqfilter(struct file *, struct knote *);
 static int	drm_stat(struct file *, struct stat *);
 static int	drm_fop_mmap(struct file *, off_t *, size_t, int, int *, int *,
 			     struct uvm_object **, int *);
-static paddr_t	drm_mmap(dev_t, off_t, int);
+static paddr_t	drm_legacy_mmap(dev_t, off_t, int);
 
 const struct cdevsw drm_cdevsw = {
 	.d_open = drm_open,
@@ -86,7 +86,7 @@ const struct cdevsw drm_cdevsw = {
 	.d_stop = nostop,
 	.d_tty = notty,
 	.d_poll = nopoll,
-	.d_mmap = drm_mmap,
+	.d_mmap = drm_legacy_mmap,
 	.d_kqfilter = nokqfilter,
 	.d_discard = nodiscard,
 	/* XXX was D_TTY | D_NEGOFFSAFE */
@@ -472,7 +472,7 @@ drm_fop_mmap(struct file *fp, off_t *offp, size_t len, int prot, int *flagsp,
 }
 
 static paddr_t
-drm_mmap(dev_t d, off_t offset, int prot)
+drm_legacy_mmap(dev_t d, off_t offset, int prot)
 {
 	struct drm_minor *dminor;
 	paddr_t paddr;
@@ -481,7 +481,7 @@ drm_mmap(dev_t d, off_t offset, int prot)
 	if (IS_ERR(dminor))
 		return (paddr_t)-1;
 
-	paddr = drm_mmap_paddr(dminor->dev, offset, prot);
+	paddr = drm_legacy_mmap_paddr(dminor->dev, offset, prot);
 
 	drm_minor_release(dminor);
 	return paddr;

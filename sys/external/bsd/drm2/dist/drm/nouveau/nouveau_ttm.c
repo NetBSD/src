@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_ttm.c,v 1.6 2018/08/27 07:37:38 riastradh Exp $	*/
+/*	$NetBSD: nouveau_ttm.c,v 1.7 2018/08/27 07:51:06 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2007-2008 Tungsten Graphics, Inc., Cedar Park, TX., USA,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_ttm.c,v 1.6 2018/08/27 07:37:38 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_ttm.c,v 1.7 2018/08/27 07:51:06 riastradh Exp $");
 
 #include <sys/param.h>
 #include <uvm/uvm_extern.h>	/* pmap_pv_track/untrack */
@@ -283,7 +283,7 @@ nouveau_ttm_mmap_object(struct drm_device *dev, off_t offset, size_t size,
 	KASSERT(0 == (offset & (PAGE_SIZE - 1)));
 
 	if (__predict_false((offset >> PAGE_SHIFT) < DRM_FILE_PAGE_OFFSET))
-		return drm_mmap_object(dev, offset, size, prot, uobjp,
+		return drm_legacy_mmap_object(dev, offset, size, prot, uobjp,
 		    uoffsetp, file);
 	else
 		return ttm_bo_mmap_object(&drm->ttm.bdev, offset, size, prot,

@@ -1,4 +1,4 @@
-/*	$NetBSD: via_drv.c,v 1.5 2018/08/27 07:03:26 riastradh Exp $	*/
+/*	$NetBSD: via_drv.c,v 1.6 2018/08/27 07:51:06 riastradh Exp $	*/
 
 /*
  * Copyright 1998-2003 VIA Technologies, Inc. All Rights Reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: via_drv.c,v 1.5 2018/08/27 07:03:26 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: via_drv.c,v 1.6 2018/08/27 07:51:06 riastradh Exp $");
 
 #include <linux/module.h>
 
@@ -105,7 +105,7 @@ static struct drm_driver driver = {
 #ifndef __NetBSD__
 	.fops = &via_driver_fops,
 #else
-	.mmap_object = drm_mmap_object,
+	.mmap_object = drm_legacy_mmap_object,
 #endif
 	.name = DRIVER_NAME,
 	.desc = DRIVER_DESC,

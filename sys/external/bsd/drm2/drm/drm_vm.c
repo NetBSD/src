@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_vm.c,v 1.8 2018/08/27 06:58:20 riastradh Exp $	*/
+/*	$NetBSD: drm_vm.c,v 1.9 2018/08/27 07:51:06 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_vm.c,v 1.8 2018/08/27 06:58:20 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_vm.c,v 1.9 2018/08/27 07:51:06 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/conf.h>
@@ -41,14 +41,15 @@ __KERNEL_RCSID(0, "$NetBSD: drm_vm.c,v 1.8 2018/08/27 06:58:20 riastradh Exp $")
 #include <drm/drmP.h>
 #include <drm/drm_legacy.h>
 
-static paddr_t	drm_mmap_paddr_locked(struct drm_device *, off_t, int);
-static paddr_t	drm_mmap_dma_paddr(struct drm_device *, off_t, int);
-static paddr_t	drm_mmap_map_paddr(struct drm_device *, struct drm_local_map *,
-		    off_t, int);
+static paddr_t	drm_legacy_mmap_paddr_locked(struct drm_device *, off_t, int);
+static paddr_t	drm_legacy_mmap_dma_paddr(struct drm_device *, off_t, int);
+static paddr_t	drm_legacy_mmap_map_paddr(struct drm_device *,
+		    struct drm_local_map *, off_t, int);
 
 int
-drm_mmap_object(struct drm_device *dev, off_t offset, size_t size, int prot,
-    struct uvm_object **uobjp, voff_t *uoffsetp, struct file *file __unused)
+drm_legacy_mmap_object(struct drm_device *dev, off_t offset, size_t size,
+    int prot, struct uvm_object **uobjp, voff_t *uoffsetp,
+    struct file *file __unused)
 {
 	devmajor_t maj = cdevsw_lookup_major(&drm_cdevsw);
 	dev_t devno = makedev(maj, dev->primary->index);
@@ -71,7 +72,7 @@ drm_mmap_object(struct drm_device *dev, off_t offset, size_t size, int prot,
 }
 
 paddr_t
-drm_mmap_paddr(struct drm_device *dev, off_t byte_offset, int prot)
+drm_legacy_mmap_paddr(struct drm_device *dev, off_t byte_offset, int prot)
 {
 	paddr_t paddr;
 
@@ -79,14 +80,15 @@ drm_mmap_paddr(struct drm_device *dev, off_t byte_offset, int prot)
 		return -1;
 
 	mutex_lock(&dev->struct_mutex);
-	paddr = drm_mmap_paddr_locked(dev, byte_offset, prot);
+	paddr = drm_legacy_mmap_paddr_locked(dev, byte_offset, prot);
 	mutex_unlock(&dev->struct_mutex);
 
 	return paddr;
 }
 
 static paddr_t
-drm_mmap_paddr_locked(struct drm_device *dev, off_t byte_offset, int prot)
+drm_legacy_mmap_paddr_locked(struct drm_device *dev, off_t byte_offset,
+    int prot)
 {
 	const off_t page_offset = (byte_offset >> PAGE_SHIFT);
 	struct drm_hash_item *hash;
@@ -97,7 +99,7 @@ drm_mmap_paddr_locked(struct drm_device *dev, off_t byte_offset, int prot)
 	if ((dev->dma != NULL) &&
 	    (0 <= byte_offset) &&
 	    (page_offset <= dev->dma->page_count))
-		return drm_mmap_dma_paddr(dev, byte_offset, prot);
+		return drm_legacy_mmap_dma_paddr(dev, byte_offset, prot);
 
 	if (drm_ht_find_item(&dev->map_hash, page_offset, &hash))
 		return -1;
@@ -121,11 +123,12 @@ drm_mmap_paddr_locked(struct drm_device *dev, off_t byte_offset, int prot)
 	if (map->size < (map->offset - byte_offset))
 		return -1;
 
-	return drm_mmap_map_paddr(dev, map, (byte_offset - map->offset), prot);
+	return drm_legacy_mmap_map_paddr(dev, map, (byte_offset - map->offset),
+	    prot);
 }
 
 static paddr_t
-drm_mmap_dma_paddr(struct drm_device *dev, off_t byte_offset, int prot)
+drm_legacy_mmap_dma_paddr(struct drm_device *dev, off_t byte_offset, int prot)
 {
 	const off_t page_offset = (byte_offset >> PAGE_SHIFT);
 
@@ -140,7 +143,7 @@ drm_mmap_dma_paddr(struct drm_device *dev, off_t byte_offset, int prot)
 }
 
 static paddr_t
-drm_mmap_map_paddr(struct drm_device *dev, struct drm_local_map *map,
+drm_legacy_mmap_map_paddr(struct drm_device *dev, struct drm_local_map *map,
     off_t byte_offset, int prot)
 {
 	int flags = 0;
