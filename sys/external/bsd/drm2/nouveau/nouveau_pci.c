@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_pci.c,v 1.14 2018/08/27 07:56:25 riastradh Exp $	*/
+/*	$NetBSD: nouveau_pci.c,v 1.15 2018/08/27 13:39:07 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_pci.c,v 1.14 2018/08/27 07:56:25 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_pci.c,v 1.15 2018/08/27 13:39:07 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/device.h>
@@ -133,7 +133,6 @@ nouveau_pci_attach(device_t parent, device_t self, void *aux)
 {
 	struct nouveau_pci_softc *const sc = device_private(self);
 	const struct pci_attach_args *const pa = aux;
-	uint64_t devname;
 	int error;
 
 	pci_aprint_devinfo(pa, NULL);
@@ -147,8 +146,6 @@ nouveau_pci_attach(device_t parent, device_t self, void *aux)
 	sc->sc_task_state = NOUVEAU_TASK_ATTACH;
 	SIMPLEQ_INIT(&sc->sc_task_u.attach);
 
-	devname = (uint64_t)device_unit(device_parent(self)) << 32;
-	devname |= pa->pa_bus << 16;
 	/* XXX errno Linux->NetBSD */
 	error = -nvkm_device_pci_new(&sc->sc_pci_dev,
 	    nouveau_config, nouveau_debug, true, true, ~0ULL,
