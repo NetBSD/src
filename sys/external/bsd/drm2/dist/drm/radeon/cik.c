@@ -1,4 +1,4 @@
-/*	$NetBSD: cik.c,v 1.7 2018/08/27 06:44:00 riastradh Exp $	*/
+/*	$NetBSD: cik.c,v 1.8 2018/08/27 06:45:22 riastradh Exp $	*/
 
 /*
  * Copyright 2012 Advanced Micro Devices, Inc.
@@ -24,7 +24,7 @@
  * Authors: Alex Deucher
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cik.c,v 1.7 2018/08/27 06:44:00 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cik.c,v 1.8 2018/08/27 06:45:22 riastradh Exp $");
 
 #include <linux/firmware.h>
 #include <linux/slab.h>
@@ -7946,7 +7946,7 @@ restart_ih:
 		ring_index = rptr / 4;
 
 		radeon_kfd_interrupt(rdev,
-				(const void *) &rdev->ih.ring[ring_index]);
+		    (const void *)__UNVOLATILE(&rdev->ih.ring[ring_index]));
 
 		src_id =  le32_to_cpu(rdev->ih.ring[ring_index]) & 0xff;
 		src_data = le32_to_cpu(rdev->ih.ring[ring_index + 1]) & 0xfffffff;
