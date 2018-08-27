@@ -1,4 +1,4 @@
-#	$NetBSD: files.amdgpu,v 1.4 2018/08/27 14:23:00 riastradh Exp $
+#	$NetBSD: files.amdgpu,v 1.5 2018/08/27 14:23:14 riastradh Exp $
 
 define	amdgpufbbus	{ }
 device	amdgpu: drmkms, drmkms_pci, drmkms_ttm, amdgpufbbus, firmload
@@ -15,10 +15,8 @@ makeoptions	amdgpu	CPPFLAGS+="-I$S/external/bsd/drm2/dist/drm/amd/include"
 makeoptions	amdgpu	CPPFLAGS+="-I$S/external/bsd/drm2/dist/drm/amd/amdgpu"
 makeoptions	amdgpu	CPPFLAGS+="-I$S/external/bsd/drm2/dist/drm/amd/scheduler"
 
-makeoptions	amdgpu	"CWARNFLAGS.amdgpu_drv.c"+="-Wno-missing-field-initializers"
-makeoptions	amdgpu	"CWARNFLAGS.amdgpu_dce_v10_0.c"+="-Wno-shadow"
-makeoptions	amdgpu	"CWARNFLAGS.amdgpu_dce_v11_0.c"+="-Wno-shadow"
-makeoptions	amdgpu	"CWARNFLAGS.amdgpu_vi.c"+="-Wno-missing-field-initializers"
+makeoptions	amdgpu	"CWARNFLAGS.amdgpu"+="-Wno-missing-field-initializers"
+makeoptions	amdgpu	"CWARNFLAGS.amdgpu"+="-Wno-shadow"
 
 # Local additions.
 file	external/bsd/drm2/amdgpu/amdgpu_module.c	amdgpu
