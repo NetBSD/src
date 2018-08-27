@@ -1,4 +1,4 @@
-.\"    $NetBSD: npf.conf.5,v 1.63 2018/08/17 12:20:49 maxv Exp $
+.\"    $NetBSD: npf.conf.5,v 1.64 2018/08/27 12:46:03 maxv Exp $
 .\"
 .\" Copyright (c) 2009-2017 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd August 17, 2018
+.Dd August 27, 2018
 .Dt NPF.CONF 5
 .Os
 .Sh NAME
@@ -57,6 +57,8 @@ abstraction groups
 packet filtering rules
 .It
 map rules for address translation
+.It
+application level gateways
 .It
 procedure definitions to call on filtered packets.
 .El
@@ -267,6 +269,35 @@ network segments specified, that is, translation would be performed only
 on packets originating from the 10.1.1.0/24 network.
 Explicit filter criteria can be specified using "pass <criteria>" as
 an additional option of the mapping.
+.Ss Application Level Gateways
+Certain application layer protocols are not compatible with NAT and require
+translation outside layers 3 and 4.
+Such translation is performed by packet filter extensions called
+Application Level Gateways (ALGs).
+.Pp
+NPF supports the following ALGs:
+.Bl -tag -width XicmpXX -offset indent
+.It icmp
+ICMP ALG.
+Allows to find an active connection by looking at the ICMP payload, and to
+perform NAT translation of the ICMP payload.
+Applies to IPv4 and IPv6.
+.El
+.Pp
+The ALGs are built-in, unless NPF is used as kernel module, in which case
+they come as kernel modules too.
+In that case, the ALG kernel modules can be autoloaded through the
+configuration, using the
+.Cd alg
+keyword.
+.Pp
+For example:
+.Bd -literal
+alg "icmp"
+.Ed
+.Pp
+Alternatively, the ALG kernel modules can be loaded manually, using
+.Xr modload 8 .
 .Ss Procedures
 A rule procedure is defined as a collection of extension calls (it
 may have none).
@@ -344,9 +375,10 @@ var-def		= var "=" ( var-value | "{" value *[ "," value ] "}" )
 # Parameter setting.
 set-param	= "set" param-value
 
-# Application level gateway.  The name should be in the double quotes.
+# Application level gateway.  The name should be in double quotes.
 
 alg		= "alg" alg-name
+alg-name	= "icmp"
 
 # Table definition.  Table ID shall be numeric.  Path is in the double quotes.
 
