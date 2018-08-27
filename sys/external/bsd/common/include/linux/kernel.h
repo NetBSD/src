@@ -1,4 +1,4 @@
-/*	$NetBSD: kernel.h,v 1.12 2018/08/27 06:08:25 riastradh Exp $	*/
+/*	$NetBSD: kernel.h,v 1.13 2018/08/27 06:15:32 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -38,6 +38,7 @@
 #include <sys/systm.h>
 
 #include <lib/libkern/libkern.h>
+#include <linux/bitops.h>
 #include <linux/printk.h>
 
 #define U16_MAX UINT16_MAX

@@ -1,4 +1,4 @@
-/*	$NetBSD: bitops.h,v 1.13 2018/08/06 00:29:57 riastradh Exp $	*/
+/*	$NetBSD: bitops.h,v 1.1 2018/08/27 06:15:32 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
