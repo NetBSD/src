@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_vm.c,v 1.7 2014/12/31 08:55:18 mrg Exp $	*/
+/*	$NetBSD: drm_vm.c,v 1.8 2018/08/27 06:58:20 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_vm.c,v 1.7 2014/12/31 08:55:18 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_vm.c,v 1.8 2018/08/27 06:58:20 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/conf.h>
@@ -39,6 +39,7 @@ __KERNEL_RCSID(0, "$NetBSD: drm_vm.c,v 1.7 2014/12/31 08:55:18 mrg Exp $");
 #include <uvm/uvm_device.h>
 
 #include <drm/drmP.h>
+#include <drm/drm_legacy.h>
 
 static paddr_t	drm_mmap_paddr_locked(struct drm_device *, off_t, int);
 static paddr_t	drm_mmap_dma_paddr(struct drm_device *, off_t, int);
