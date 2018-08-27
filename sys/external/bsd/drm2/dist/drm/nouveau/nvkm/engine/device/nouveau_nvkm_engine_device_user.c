@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_engine_device_user.c,v 1.3 2018/08/27 07:35:56 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_engine_device_user.c,v 1.4 2018/08/27 07:38:56 riastradh Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_device_user.c,v 1.3 2018/08/27 07:35:56 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_device_user.c,v 1.4 2018/08/27 07:38:56 riastradh Exp $");
 
 #define nvkm_udevice(p) container_of((p), struct nvkm_udevice, object)
 #include "priv.h"
@@ -327,7 +327,7 @@ nvkm_udevice = {
 	.sclass = nvkm_udevice_child_get,
 };
 
-int
+static int
 nvkm_udevice_new(const struct nvkm_oclass *oclass, void *data, u32 size,
 		 struct nvkm_object **pobject)
 {

@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_subdev_volt_gk104.c,v 1.2 2018/08/27 04:58:35 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_subdev_volt_gk104.c,v 1.3 2018/08/27 07:38:57 riastradh Exp $	*/
 
 /*
  * Copyright 2015 Martin Peres
@@ -24,7 +24,7 @@
  * Authors: Martin Peres
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_volt_gk104.c,v 1.2 2018/08/27 04:58:35 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_volt_gk104.c,v 1.3 2018/08/27 07:38:57 riastradh Exp $");
 
 #include "priv.h"
 
@@ -39,7 +39,7 @@ struct gk104_volt {
 	struct nvbios_volt bios;
 };
 
-int
+static int
 gk104_volt_get(struct nvkm_volt *base)
 {
 	struct nvbios_volt *bios = &gk104_volt(base)->bios;
@@ -52,7 +52,7 @@ gk104_volt_get(struct nvkm_volt *base)
 	return bios->base + bios->pwm_range * duty / div;
 }
 
-int
+static int
 gk104_volt_set(struct nvkm_volt *base, u32 uv)
 {
 	struct nvbios_volt *bios = &gk104_volt(base)->bios;
