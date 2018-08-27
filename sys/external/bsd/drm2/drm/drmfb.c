@@ -1,4 +1,4 @@
-/*	$NetBSD: drmfb.c,v 1.3 2016/12/12 19:45:56 maya Exp $	*/
+/*	$NetBSD: drmfb.c,v 1.4 2018/08/27 13:36:14 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drmfb.c,v 1.3 2016/12/12 19:45:56 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drmfb.c,v 1.4 2018/08/27 13:36:14 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "vga.h"
@@ -280,9 +280,10 @@ drmfb_genfb_setmode(struct genfb_softc *genfb, int mode)
 {
 	struct drmfb_softc *sc = container_of(genfb, struct drmfb_softc,
 	    sc_genfb);
+	struct drm_fb_helper *fb_helper = sc->sc_da.da_fb_helper;
 
 	if (mode == WSDISPLAYIO_MODE_EMUL)
-		drm_fb_helper_set_config(sc->sc_da.da_fb_helper);
+		drm_fb_helper_restore_fbdev_mode_unlocked(fb_helper);
 
 	return true;
 }
