@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_engine_device_base.c,v 1.6 2018/08/27 13:43:52 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_engine_device_base.c,v 1.7 2018/08/27 14:47:53 riastradh Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_device_base.c,v 1.6 2018/08/27 13:43:52 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_device_base.c,v 1.7 2018/08/27 14:47:53 riastradh Exp $");
 
 #include "priv.h"
 #include "acpi.h"
@@ -2570,6 +2570,7 @@ nvkm_device_ctor(const struct nvkm_device_func *func,
 		}
 		device->mmiot = mmiot;
 		device->mmioh = mmioh;
+		device->mmioaddr = mmio_base;
 		device->mmiosz = mmio_size;
 #else
 		device->pri = ioremap(mmio_base, mmio_size);
