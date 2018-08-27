@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_fb_helper.c,v 1.11 2018/08/27 13:36:13 riastradh Exp $	*/
+/*	$NetBSD: drm_fb_helper.c,v 1.12 2018/08/27 13:37:21 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2006-2009 Red Hat Inc.
@@ -30,7 +30,7 @@
  *      Jesse Barnes <jesse.barnes@intel.com>
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_fb_helper.c,v 1.11 2018/08/27 13:36:13 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_fb_helper.c,v 1.12 2018/08/27 13:37:21 riastradh Exp $");
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
@@ -2216,7 +2216,7 @@ int drm_fb_helper_hotplug_event(struct drm_fb_helper *fb_helper)
 	drm_setup_crtcs(fb_helper);
 	drm_modeset_unlock_all(dev);
 #ifdef __NetBSD__
-	drm_fb_helper_set_config(fb_helper);
+	drm_fb_helper_restore_fbdev_mode_unlocked(fb_helper);
 #else
 	drm_fb_helper_set_par(fb_helper->fbdev);
 #endif
