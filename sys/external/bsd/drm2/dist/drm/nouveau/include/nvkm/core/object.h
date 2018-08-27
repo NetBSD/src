@@ -1,4 +1,4 @@
-/*	$NetBSD: object.h,v 1.4 2018/08/27 07:36:07 riastradh Exp $	*/
+/*	$NetBSD: object.h,v 1.5 2018/08/27 14:54:32 riastradh Exp $	*/
 
 #ifndef __NVKM_OBJECT_H__
 #define __NVKM_OBJECT_H__
@@ -21,7 +21,9 @@ struct nvkm_object {
 	u64 token;
 	u64 object;
 	struct rb_node node;
+#ifdef __NetBSD__
 	bool on_tree;
+#endif
 };
 
 struct nvkm_object_func {
@@ -60,8 +62,12 @@ int nvkm_object_init(struct nvkm_object *);
 int nvkm_object_fini(struct nvkm_object *, bool suspend);
 int nvkm_object_mthd(struct nvkm_object *, u32 mthd, void *data, u32 size);
 int nvkm_object_ntfy(struct nvkm_object *, u32 mthd, struct nvkm_event **);
+#ifdef __NetBSD__
 int nvkm_object_map(struct nvkm_object *, bus_space_tag_t *, u64 *addr,
     u32 *size);
+#else
+int nvkm_object_map(struct nvkm_object *, u64 *addr, u32 *size);
+#endif
 int nvkm_object_rd08(struct nvkm_object *, u64 addr, u8  *data);
 int nvkm_object_rd16(struct nvkm_object *, u64 addr, u16 *data);
 int nvkm_object_rd32(struct nvkm_object *, u64 addr, u32 *data);
