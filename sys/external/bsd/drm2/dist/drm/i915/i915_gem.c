@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem.c,v 1.42 2018/08/27 07:17:58 riastradh Exp $	*/
+/*	$NetBSD: i915_gem.c,v 1.43 2018/08/27 07:19:01 riastradh Exp $	*/
 
 /*
  * Copyright © 2008-2015 Intel Corporation
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gem.c,v 1.42 2018/08/27 07:17:58 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gem.c,v 1.43 2018/08/27 07:19:01 riastradh Exp $");
 
 #ifdef __NetBSD__
 #if 0				/* XXX uvmhist option?  */
@@ -213,8 +213,8 @@ i915_gem_object_get_pages_phys(struct drm_i915_gem_object *obj)
 		struct pglist pages = TAILQ_HEAD_INITIALIZER(pages);
 		int ret;
 		/* XXX errno NetBSD->Linux */
-		ret = -uvm_obj_wirepages(obj->base.gemo_shm_uao,
-		    i*PAGE_SIZE, (i + 1)*PAGE_SIZE, &pages);
+		ret = -uvm_obj_wirepages(obj->base.filp, i*PAGE_SIZE,
+		    (i + 1)*PAGE_SIZE, &pages);
 		if (ret)
 			return ret;
 		page = container_of(TAILQ_FIRST(&pages), struct page, p_vmp);
@@ -230,8 +230,8 @@ i915_gem_object_get_pages_phys(struct drm_i915_gem_object *obj)
 		kunmap_atomic(src);
 
 #ifdef __NetBSD__
-		uvm_obj_unwirepages(obj->base.gemo_shm_uao,
-		    i*PAGE_SIZE, (i + 1)*PAGE_SIZE);
+		uvm_obj_unwirepages(obj->base.filp, i*PAGE_SIZE,
+		    (i + 1)*PAGE_SIZE);
 #else
 		page_cache_release(page);
 #endif
@@ -297,7 +297,7 @@ i915_gem_object_put_pages_phys(struct drm_i915_gem_object *obj)
 #ifdef __NetBSD__
 			struct pglist pages = TAILQ_HEAD_INITIALIZER(pages);
 			/* XXX errno NetBSD->Linux */
-			ret = -uvm_obj_wirepages(obj->base.gemo_shm_uao,
+			ret = -uvm_obj_wirepages(obj->base.filp,
 			    i*PAGE_SIZE, (i + 1)*PAGE_SIZE, &pages);
 			if (ret)
 				continue;
@@ -313,8 +313,8 @@ i915_gem_object_put_pages_phys(struct drm_i915_gem_object *obj)
 #ifdef __NetBSD__
 			page->p_vmp.flags &= ~PG_CLEAN;
 			/* XXX mark page accessed */
-			uvm_obj_unwirepages(obj->base.gemo_shm_uao,
-			    i*PAGE_SIZE, (i+1)*PAGE_SIZE);
+			uvm_obj_unwirepages(obj->base.filp, i*PAGE_SIZE,
+			    (i+1)*PAGE_SIZE);
 #else
 			set_page_dirty(page);
 			if (obj->madv == I915_MADV_WILLNEED)
@@ -380,13 +380,8 @@ i915_gem_object_attach_phys(struct drm_i915_gem_object *obj,
 	if (obj->madv != I915_MADV_WILLNEED)
 		return -EFAULT;
 
-#ifdef __NetBSD__
-	if (obj->base.gemo_shm_uao == NULL)
-		return -EINVAL;
-#else
 	if (obj->base.filp == NULL)
 		return -EINVAL;
-#endif
 
 	ret = drop_pages(obj);
 	if (ret)
@@ -587,13 +582,8 @@ int i915_gem_obj_prepare_shmem_read(struct drm_i915_gem_object *obj,
 
 	*needs_clflush = 0;
 
-#ifdef __NetBSD__
-	if (obj->base.gemo_shm_uao == NULL)
-		return -EINVAL;
-#else
 	if (!obj->base.filp)
 		return -EINVAL;
-#endif
 
 	if (!(obj->base.read_domains & I915_GEM_DOMAIN_CPU)) {
 		/* If we're not in the cpu read domain, set ourself into the gtt
@@ -839,18 +829,10 @@ i915_gem_pread_ioctl(struct drm_device *dev, void *data,
 	/* prime objects have no backing filp to GEM pread/pwrite
 	 * pages from.
 	 */
-#ifdef __NetBSD__
-	/* Also stolen objects.  */
-	if (obj->base.gemo_shm_uao == NULL) {
-		ret = -EINVAL;
-		goto out;
-	}
-#else
 	if (!obj->base.filp) {
 		ret = -EINVAL;
 		goto out;
 	}
-#endif
 
 	trace_i915_gem_object_pread(obj, args->offset, args->size);
 
@@ -1225,18 +1207,10 @@ i915_gem_pwrite_ioctl(struct drm_device *dev, void *data,
 	/* prime objects have no backing filp to GEM pread/pwrite
 	 * pages from.
 	 */
-#ifdef __NetBSD__
-	/* Also stolen objects.  */
-	if (obj->base.gemo_shm_uao == NULL) {
-		ret = -EINVAL;
-		goto out;
-	}
-#else
 	if (!obj->base.filp) {
 		ret = -EINVAL;
 		goto out;
 	}
-#endif
 
 	trace_i915_gem_object_pwrite(obj, args->offset, args->size);
 
@@ -1975,18 +1949,10 @@ i915_gem_mmap_ioctl(struct drm_device *dev, void *data,
 	/* prime objects have no backing filp to GEM mmap
 	 * pages from.
 	 */
-#ifdef __NetBSD__
-	/* Also stolen objects (XXX can we get them here?)  */
-	if (obj->gemo_shm_uao == NULL) {
-		drm_gem_object_unreference_unlocked(obj);
-		return -EINVAL;
-	}
-#else
 	if (!obj->filp) {
 		drm_gem_object_unreference_unlocked(obj);
 		return -EINVAL;
 	}
-#endif
 
 #ifdef __NetBSD__
 	addr = (*curproc->p_emul->e_vm_default_addr)(curproc,
@@ -1994,7 +1960,7 @@ i915_gem_mmap_ioctl(struct drm_device *dev, void *data,
 	    curproc->p_vmspace->vm_map.flags & VM_MAP_TOPDOWN);
 	/* XXX errno NetBSD->Linux */
 	ret = -uvm_map(&curproc->p_vmspace->vm_map, &addr, args->size,
-	    obj->gemo_shm_uao, args->offset, 0,
+	    obj->filp, args->offset, 0,
 	    UVM_MAPFLAG((VM_PROT_READ | VM_PROT_WRITE),
 		(VM_PROT_READ | VM_PROT_WRITE), UVM_INH_COPY, UVM_ADV_NORMAL,
 		0));
@@ -2002,7 +1968,7 @@ i915_gem_mmap_ioctl(struct drm_device *dev, void *data,
 		drm_gem_object_unreference_unlocked(obj);
 		return ret;
 	}
-	uao_reference(obj->gemo_shm_uao);
+	uao_reference(obj->filp);
 	drm_gem_object_unreference_unlocked(obj);
 #else
 	addr = vm_mmap(obj->filp, 0, args->size,
@@ -2590,12 +2556,12 @@ i915_gem_object_truncate(struct drm_i915_gem_object *obj)
 {
 	i915_gem_object_free_mmap_offset(obj);
 
-#ifdef __NetBSD__
-	if (obj->base.gemo_shm_uao == NULL)
+	if (obj->base.filp == NULL)
 		return;
 
+#ifdef __NetBSD__
 	{
-		struct uvm_object *const uobj = obj->base.gemo_shm_uao;
+		struct uvm_object *const uobj = obj->base.filp;
 
 		if (uobj != NULL) {
 			/* XXX Calling pgo_put like this is bogus.  */
@@ -2605,9 +2571,6 @@ i915_gem_object_truncate(struct drm_i915_gem_object *obj)
 		}
 	}
 #else
-	if (obj->base.filp == NULL)
-		return;
-
 	/* Our goal here is to return as much of the memory as
 	 * is possible back to the system as we are called from OOM.
 	 * To do this we must instruct the shmfs to drop all of its
@@ -2677,7 +2640,7 @@ i915_gem_object_put_pages_gtt(struct drm_i915_gem_object *obj)
 	}
 	obj->dirty = 0;
 
-	uvm_obj_unwirepages(obj->base.gemo_shm_uao, 0, obj->base.size);
+	uvm_obj_unwirepages(obj->base.filp, 0, obj->base.size);
 	bus_dmamap_destroy(dev->dmat, obj->pages);
 #else
 	struct sg_page_iter sg_iter;
@@ -2770,7 +2733,7 @@ i915_gem_object_get_pages_gtt(struct drm_i915_gem_object *obj)
 		goto fail0;
 
 	/* XXX errno NetBSD->Linux */
-	ret = -uvm_obj_wirepages(obj->base.gemo_shm_uao, 0, obj->base.size,
+	ret = -uvm_obj_wirepages(obj->base.filp, 0, obj->base.size,
 	    &obj->pageq);
 	if (ret)		/* XXX Try purge, shrink.  */
 		goto fail1;
@@ -2813,7 +2776,7 @@ i915_gem_object_get_pages_gtt(struct drm_i915_gem_object *obj)
 
 fail3: __unused
 	i915_gem_gtt_finish_object(obj);
-fail2:	uvm_obj_unwirepages(obj->base.gemo_shm_uao, 0, obj->base.size);
+fail2:	uvm_obj_unwirepages(obj->base.filp, 0, obj->base.size);
 fail1:	bus_dmamap_destroy(dev->dmat, obj->pages);
 	obj->pages = NULL;
 fail0:	KASSERT(ret);
@@ -5016,7 +4979,7 @@ struct drm_i915_gem_object *i915_gem_alloc_object(struct drm_device *dev,
 	}
 
 #ifdef __NetBSD__
-	uao_set_pgfl(obj->base.gemo_shm_uao, dev_priv->gtt.pgfl);
+	uao_set_pgfl(obj->base.filp, dev_priv->gtt.pgfl);
 #else
 	mask = GFP_HIGHUSER | __GFP_RECLAIMABLE;
 	if (IS_CRESTLINE(dev) || IS_BROADWATER(dev)) {
@@ -5902,7 +5865,7 @@ i915_gem_object_create_from_data(struct drm_device *dev,
 	i915_gem_object_pin_pages(obj);
 #ifdef __NetBSD__
 	/* XXX errno NetBSD->Linux */
-	ret = -ubc_uiomove(obj->base.gemo_shm_uao, &uio, size, UVM_ADV_NORMAL,
+	ret = -ubc_uiomove(obj->base.filp, &uio, size, UVM_ADV_NORMAL,
 	    UBC_WRITE);
 	if (ret)
 		goto fail;

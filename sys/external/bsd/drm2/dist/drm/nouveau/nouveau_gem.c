@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_gem.c,v 1.5 2018/08/27 04:58:24 riastradh Exp $	*/
+/*	$NetBSD: nouveau_gem.c,v 1.6 2018/08/27 07:19:01 riastradh Exp $	*/
 
 /*
  * Copyright (C) 2008 Ben Skeggs.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_gem.c,v 1.5 2018/08/27 04:58:24 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_gem.c,v 1.6 2018/08/27 07:19:01 riastradh Exp $");
 
 #include <linux/err.h>		/* XXX */
 
@@ -60,12 +60,7 @@ nouveau_gem_object_del(struct drm_gem_object *gem)
 	drm_gem_object_release(gem);
 
 	/* reset filp so nouveau_bo_del_ttm() can test for it */
-#ifdef __NetBSD__
-	/* XXX Whattakludge!  */
-	gem->gemo_shm_uao = NULL;
-#else
 	gem->filp = NULL;
-#endif
 	ttm_bo_unref(&bo);
 
 	pm_runtime_mark_last_busy(dev);

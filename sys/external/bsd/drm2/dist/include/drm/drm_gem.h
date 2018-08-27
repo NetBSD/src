@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_gem.h,v 1.2 2018/08/27 04:58:37 riastradh Exp $	*/
+/*	$NetBSD: drm_gem.h,v 1.3 2018/08/27 07:19:01 riastradh Exp $	*/
 
 #ifndef __DRM_GEM_H__
 #define __DRM_GEM_H__
@@ -60,7 +60,7 @@ struct drm_gem_object {
 
 #ifdef __NetBSD__
 	/* UVM anonymous object for shared memory mappings.  */
-	struct uvm_object *gemo_shm_uao;
+	struct uvm_object *filp;
 
 	/* UVM object with custom pager ops for device memory mappings.  */
 	struct uvm_object gemo_uvmobj;

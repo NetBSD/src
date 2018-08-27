@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem_render_state.c,v 1.4 2018/08/27 07:17:35 riastradh Exp $	*/
+/*	$NetBSD: i915_gem_render_state.c,v 1.5 2018/08/27 07:19:01 riastradh Exp $	*/
 
 /*
  * Copyright © 2014 Intel Corporation
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gem_render_state.c,v 1.4 2018/08/27 07:17:35 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gem_render_state.c,v 1.5 2018/08/27 07:19:01 riastradh Exp $");
 
 #include "i915_drv.h"
 #include "intel_renderstate.h"
@@ -114,8 +114,8 @@ static int render_state_setup(struct render_state *so)
 
 #ifdef __NetBSD__
 	/* XXX errno NetBSD->Linux */
-	ret = -uvm_map(kernel_map, &kva, PAGE_SIZE, so->obj->base.gemo_shm_uao,
-	    0, sizeof(*d), UVM_MAPFLAG(UVM_PROT_W, UVM_PROT_W, UVM_INH_NONE,
+	ret = -uvm_map(kernel_map, &kva, PAGE_SIZE, so->obj->base.filp, 0,
+	    sizeof(*d), UVM_MAPFLAG(UVM_PROT_W, UVM_PROT_W, UVM_INH_NONE,
 		UVM_ADV_NORMAL, 0));
 	if (ret)
 		return ret;
