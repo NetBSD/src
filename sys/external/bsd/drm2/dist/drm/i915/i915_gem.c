@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem.c,v 1.44 2018/08/27 07:23:22 riastradh Exp $	*/
+/*	$NetBSD: i915_gem.c,v 1.45 2018/08/27 07:23:37 riastradh Exp $	*/
 
 /*
  * Copyright © 2008-2015 Intel Corporation
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gem.c,v 1.44 2018/08/27 07:23:22 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gem.c,v 1.45 2018/08/27 07:23:37 riastradh Exp $");
 
 #ifdef __NetBSD__
 #if 0				/* XXX uvmhist option?  */
@@ -2585,9 +2585,10 @@ static void
 i915_gem_object_invalidate(struct drm_i915_gem_object *obj)
 {
 #ifdef __NetBSD__
-	panic("XXX");
+	struct uvm_object *uobj;
 #else
 	struct address_space *mapping;
+#endif
 
 	switch (obj->madv) {
 	case I915_MADV_DONTNEED:
@@ -2599,6 +2600,12 @@ i915_gem_object_invalidate(struct drm_i915_gem_object *obj)
 	if (obj->base.filp == NULL)
 		return;
 
+#ifdef __NetBSD__
+	uobj = obj->base.filp;
+	mutex_enter(uobj->vmobjlock);
+	(*uobj->pgops->pgo_put)(uobj, 0, obj->base.size,
+	    PGO_ALLPAGES|PGO_DEACTIVATE|PGO_CLEANIT);
+#else
 	mapping = file_inode(obj->base.filp)->i_mapping,
 	invalidate_mapping_pages(mapping, 0, (loff_t)-1);
 #endif
