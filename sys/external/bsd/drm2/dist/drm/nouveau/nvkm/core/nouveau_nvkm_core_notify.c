@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_core_notify.c,v 1.2 2018/08/27 04:58:30 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_core_notify.c,v 1.3 2018/08/27 07:37:47 riastradh Exp $	*/
 
 /*
  * Copyright 2014 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs <bskeggs@redhat.com>
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_core_notify.c,v 1.2 2018/08/27 04:58:30 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_core_notify.c,v 1.3 2018/08/27 07:37:47 riastradh Exp $");
 
 #include <core/notify.h>
 #include <core/event.h>
@@ -110,7 +110,7 @@ nvkm_notify_send(struct nvkm_notify *notify, void *data, u32 size)
 	spin_unlock_irqrestore(&event->refs_lock, flags);
 
 	if (test_bit(NVKM_NOTIFY_WORK, &notify->flags)) {
-		memcpy((void *)notify->data, data, size);
+		memcpy(__UNCONST(notify->data), data, size);
 		schedule_work(&notify->work);
 	} else {
 		notify->data = data;
@@ -128,7 +128,7 @@ nvkm_notify_fini(struct nvkm_notify *notify)
 		spin_lock_irqsave(&notify->event->list_lock, flags);
 		list_del(&notify->head);
 		spin_unlock_irqrestore(&notify->event->list_lock, flags);
-		kfree((void *)notify->data);
+		kfree(__UNCONST(notify->data));
 		notify->event = NULL;
 	}
 }
