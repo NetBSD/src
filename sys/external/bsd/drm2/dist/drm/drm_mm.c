@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_mm.c,v 1.4 2018/08/27 04:58:19 riastradh Exp $	*/
+/*	$NetBSD: drm_mm.c,v 1.5 2018/08/27 06:56:50 riastradh Exp $	*/
 
 /**************************************************************************
  *
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_mm.c,v 1.4 2018/08/27 04:58:19 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_mm.c,v 1.5 2018/08/27 06:56:50 riastradh Exp $");
 
 #include <drm/drmP.h>
 #include <drm/drm_mm.h>
@@ -53,6 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: drm_mm.c,v 1.4 2018/08/27 04:58:19 riastradh Exp $")
 #include <linux/export.h>
 #include <linux/printk.h>
 #include <asm/bug.h>
+#include <asm/div64.h>
 
 /**
  * DOC: Overview
@@ -786,7 +787,7 @@ static u64 drm_mm_debug_hole(struct drm_mm_node *entry,
 		hole_start = drm_mm_hole_node_start(entry);
 		hole_end = drm_mm_hole_node_end(entry);
 		hole_size = hole_end - hole_start;
-		pr_debug("%s %#llx-%#llx: %llu: free\n", prefix, hole_start,
+		pr_debug("%s %#"PRIx64"-%#"PRIx64": %"PRIu64": free\n", prefix, hole_start,
 			 hole_end, hole_size);
 		return hole_size;
 	}
@@ -807,14 +808,14 @@ void drm_mm_debug_table(struct drm_mm *mm, const char *prefix)
 	total_free += drm_mm_debug_hole(&mm->head_node, prefix);
 
 	drm_mm_for_each_node(entry, mm) {
-		pr_debug("%s %#llx-%#llx: %llu: used\n", prefix, entry->start,
+		pr_debug("%s %#"PRIx64"-%#"PRIx64": %"PRIu64": used\n", prefix, entry->start,
 			 entry->start + entry->size, entry->size);
 		total_used += entry->size;
 		total_free += drm_mm_debug_hole(entry, prefix);
 	}
 	total = total_free + total_used;
 
-	pr_debug("%s total: %llu, used %llu free %llu\n", prefix, total,
+	pr_debug("%s total: %"PRIu64", used %"PRIu64" free %"PRIu64"\n", prefix, total,
 		 total_used, total_free);
 }
 EXPORT_SYMBOL(drm_mm_debug_table);
