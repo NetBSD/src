@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_fence.c,v 1.2 2018/08/27 13:36:53 riastradh Exp $	*/
+/*	$NetBSD: linux_fence.c,v 1.3 2018/08/27 13:56:34 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_fence.c,v 1.2 2018/08/27 13:36:53 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_fence.c,v 1.3 2018/08/27 13:56:34 riastradh Exp $");
 
 #include <sys/atomic.h>
 #include <sys/condvar.h>
@@ -155,7 +155,10 @@ fence_release(struct kref *refcount)
 {
 	struct fence *fence = container_of(refcount, struct fence, refcount);
 
-	(*fence->ops->release)(fence);
+	if (fence->ops->release)
+		(*fence->ops->release)(fence);
+	else
+		fence_free(fence);
 }
 
 /*
