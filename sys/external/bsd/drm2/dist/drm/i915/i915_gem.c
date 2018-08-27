@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem.c,v 1.45 2018/08/27 07:23:37 riastradh Exp $	*/
+/*	$NetBSD: i915_gem.c,v 1.46 2018/08/27 07:45:55 riastradh Exp $	*/
 
 /*
  * Copyright © 2008-2015 Intel Corporation
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gem.c,v 1.45 2018/08/27 07:23:37 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gem.c,v 1.46 2018/08/27 07:45:55 riastradh Exp $");
 
 #ifdef __NetBSD__
 #if 0				/* XXX uvmhist option?  */
@@ -1392,7 +1392,7 @@ int __i915_wait_request(struct drm_i915_gem_request *req,
 	struct drm_device *dev = ring->dev;
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	const bool irq_test_in_progress =
-	    dev_priv->gpu_error.test_irq_rings & intel_ring_flag(ring);
+		ACCESS_ONCE(dev_priv->gpu_error.test_irq_rings) & intel_ring_flag(ring);
 #ifdef __NetBSD__
 	int state = 0;
 	bool wedged;
@@ -1403,8 +1403,6 @@ int __i915_wait_request(struct drm_i915_gem_request *req,
 #endif
 	s64 before, now;
 	int ret;
-
-	__insn_barrier();	/* ACCESS_ONCE for irq_test_in_progress */
 
 	WARN(!intel_irqs_enabled(dev_priv), "IRQs disabled");
 
