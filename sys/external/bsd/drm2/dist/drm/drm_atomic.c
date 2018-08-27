@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_atomic.c,v 1.3 2018/08/27 06:47:35 riastradh Exp $	*/
+/*	$NetBSD: drm_atomic.c,v 1.4 2018/08/27 06:48:01 riastradh Exp $	*/
 
 /*
  * Copyright (C) 2014 Red Hat
@@ -29,7 +29,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_atomic.c,v 1.3 2018/08/27 06:47:35 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_atomic.c,v 1.4 2018/08/27 06:48:01 riastradh Exp $");
 
 #include <linux/export.h>
 
@@ -72,7 +72,8 @@ drm_atomic_state_init(struct drm_device *dev, struct drm_atomic_state *state)
 	 */
 	state->allow_modeset = true;
 
-	state->num_connector = ACCESS_ONCE(dev->mode_config.num_connector);
+	state->num_connector = dev->mode_config.num_connector;
+	__insn_barrier();
 
 	state->crtcs = kcalloc(dev->mode_config.num_crtc,
 			       sizeof(*state->crtcs), GFP_KERNEL);
