@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_trace.h,v 1.10 2018/08/27 07:18:08 riastradh Exp $	*/
+/*	$NetBSD: i915_trace.h,v 1.11 2018/08/27 07:20:51 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -38,6 +38,12 @@
 
 static inline void
 trace_i915_flip_request(enum plane plane __unused,
+    struct drm_i915_gem_object *obj __unused)
+{
+}
+
+static inline void
+trace_i915_flip_complete(enum plane plane __unused,
     struct drm_i915_gem_object *obj __unused)
 {
 }
