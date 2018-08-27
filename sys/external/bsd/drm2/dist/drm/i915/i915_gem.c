@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem.c,v 1.38 2018/08/27 06:33:34 riastradh Exp $	*/
+/*	$NetBSD: i915_gem.c,v 1.39 2018/08/27 07:05:50 riastradh Exp $	*/
 
 /*
  * Copyright © 2008-2015 Intel Corporation
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gem.c,v 1.38 2018/08/27 06:33:34 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gem.c,v 1.39 2018/08/27 07:05:50 riastradh Exp $");
 
 #ifdef __NetBSD__
 #if 0				/* XXX uvmhist option?  */
@@ -301,7 +301,6 @@ i915_gem_object_put_pages_phys(struct drm_i915_gem_object *obj)
 
 #ifdef __NetBSD__
 			struct pglist pages = TAILQ_HEAD_INITIALIZER(pages);
-			int ret;
 			/* XXX errno NetBSD->Linux */
 			ret = -uvm_obj_wirepages(obj->base.gemo_shm_uao,
 			    i*PAGE_SIZE, (i + 1)*PAGE_SIZE, &pages);
@@ -317,7 +316,7 @@ i915_gem_object_put_pages_phys(struct drm_i915_gem_object *obj)
 			kunmap_atomic(dst);
 
 #ifdef __NetBSD__
-			vm_page->flags &= ~PG_CLEAN;
+			page->p_vmp.flags &= ~PG_CLEAN;
 			/* XXX mark page accessed */
 			uvm_obj_unwirepages(obj->base.gemo_shm_uao,
 			    i*PAGE_SIZE, (i+1)*PAGE_SIZE);
@@ -332,8 +331,12 @@ i915_gem_object_put_pages_phys(struct drm_i915_gem_object *obj)
 		obj->dirty = 0;
 	}
 
+#ifdef __NetBSD__
+	obj->pages = NULL;
+#else
 	sg_free_table(obj->pages);
 	kfree(obj->pages);
+#endif
 }
 
 static void
@@ -1314,6 +1317,7 @@ static bool missed_irq(struct drm_i915_private *dev_priv,
 	return test_bit(ring->id, &dev_priv->gpu_error.missed_irq_rings);
 }
 
+#ifndef __NetBSD__
 static unsigned long local_clock_us(unsigned *cpu)
 {
 	unsigned long t;
@@ -1345,6 +1349,7 @@ static bool busywait_stop(unsigned long timeout, unsigned cpu)
 
 	return this_cpu != cpu;
 }
+#endif
 
 static int __i915_spin_request(struct drm_i915_gem_request *req, int state)
 {
@@ -1419,14 +1424,19 @@ int __i915_wait_request(struct drm_i915_gem_request *req,
 	struct drm_device *dev = ring->dev;
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	const bool irq_test_in_progress =
-		ACCESS_ONCE(dev_priv->gpu_error.test_irq_rings) & intel_ring_flag(ring);
+	    dev_priv->gpu_error.test_irq_rings & intel_ring_flag(ring);
+#ifdef __NetBSD__
+	int state = 0;
+	bool wedged;
+#else
 	int state = interruptible ? TASK_INTERRUPTIBLE : TASK_UNINTERRUPTIBLE;
-#ifndef __NetBSD__
 	DEFINE_WAIT(wait);
-#endif
 	unsigned long timeout_expire;
+#endif
 	s64 before, now;
 	int ret;
+
+	__insn_barrier();	/* ACCESS_ONCE for irq_test_in_progress */
 
 	WARN(!intel_irqs_enabled(dev_priv), "IRQs disabled");
 
@@ -1436,6 +1446,7 @@ int __i915_wait_request(struct drm_i915_gem_request *req,
 	if (i915_gem_request_completed(req, true))
 		return 0;
 
+#ifndef __NetBSD__
 	timeout_expire = 0;
 	if (timeout) {
 		if (WARN_ON(*timeout < 0))
@@ -1446,6 +1457,7 @@ int __i915_wait_request(struct drm_i915_gem_request *req,
 
 		timeout_expire = jiffies + nsecs_to_jiffies_timeout(*timeout);
 	}
+#endif
 
 	if (INTEL_INFO(dev_priv)->gen >= 6)
 		gen6_rps_boost(dev_priv, rps, req->emitted_jiffies);
@@ -1468,7 +1480,7 @@ int __i915_wait_request(struct drm_i915_gem_request *req,
 #  define	EXIT_COND						      \
 	((wedged = (reset_counter !=					      \
 		atomic_read(&dev_priv->gpu_error.reset_counter))) ||	      \
-	    i915_request_completed(req, false))
+	    i915_gem_request_completed(req, false))
 	if (timeout) {
 		int ticks = nsecs_to_jiffies_timeout(*timeout);
 		if (interruptible) {
@@ -1493,6 +1505,11 @@ int __i915_wait_request(struct drm_i915_gem_request *req,
 			    &dev_priv->irq_lock, EXIT_COND);
 		}
 		/* ret is negative on failure or zero on success.  */
+	}
+	if (wedged) {
+		ret = i915_gem_check_wedge(&dev_priv->gpu_error, interruptible);
+		if (ret == 0)
+			ret = -EAGAIN;
 	}
 #else
 	for (;;) {
@@ -1576,7 +1593,7 @@ out:
 int i915_gem_request_add_to_client(struct drm_i915_gem_request *req,
 				   struct drm_file *file)
 {
-	struct drm_i915_private *dev_private;
+	struct drm_i915_private *dev_private __unused;
 	struct drm_i915_file_private *file_priv;
 
 	WARN_ON(!req || !file || req->file_priv);
@@ -1595,7 +1612,9 @@ int i915_gem_request_add_to_client(struct drm_i915_gem_request *req,
 	list_add_tail(&req->client_list, &file_priv->mm.request_list);
 	spin_unlock(&file_priv->mm.lock);
 
+#ifndef __NetBSD__
 	req->pid = get_pid(task_pid(current));
+#endif
 
 	return 0;
 }
@@ -1613,8 +1632,10 @@ i915_gem_request_remove_from_client(struct drm_i915_gem_request *request)
 	request->file_priv = NULL;
 	spin_unlock(&file_priv->mm.lock);
 
+#ifndef __NetBSD__
 	put_pid(request->pid);
 	request->pid = NULL;
+#endif
 }
 
 static void i915_gem_request_retire(struct drm_i915_gem_request *request)
@@ -2963,8 +2984,10 @@ i915_gem_object_get_pages(struct drm_i915_gem_object *obj)
 
 	list_add_tail(&obj->global_list, &dev_priv->mm.unbound_list);
 
+#ifndef __NetBSD__
 	obj->get_page.sg = obj->pages->sgl;
 	obj->get_page.last = 0;
+#endif
 
 	return 0;
 }
@@ -3885,8 +3908,12 @@ static int __i915_vma_unbind(struct i915_vma *vma, bool wait)
 		if (vma->ggtt_view.type == I915_GGTT_VIEW_NORMAL) {
 			obj->map_and_fenceable = false;
 		} else if (vma->ggtt_view.pages) {
+#ifdef __NetBSD__
+			panic("rotated/partial views can't happen");
+#else
 			sg_free_table(vma->ggtt_view.pages);
 			kfree(vma->ggtt_view.pages);
+#endif
 		}
 		vma->ggtt_view.pages = NULL;
 	}
@@ -4062,7 +4089,7 @@ i915_gem_object_bind_to_vm(struct drm_i915_gem_object *obj,
 	 * attempt to find space.
 	 */
 	if (size > end) {
-		DRM_DEBUG("Attempting to bind an object (view type=%u) larger than the aperture: size=%llu > %s aperture=%llu\n",
+		DRM_DEBUG("Attempting to bind an object (view type=%u) larger than the aperture: size=%"PRIx64" > %s aperture=%"PRIx64"\n",
 			  ggtt_view ? ggtt_view->type : 0,
 			  size,
 			  flags & PIN_MAPPABLE ? "mappable" : "total",
@@ -4498,6 +4525,9 @@ unlock:
 	mutex_unlock(&dev->struct_mutex);
 rpm_put:
 	intel_runtime_pm_put(dev_priv);
+
+	return ret;
+}
 
 /*
  * Prepare buffer for display plane (scanout, cursors, etc).
