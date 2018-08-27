@@ -1,4 +1,4 @@
-#	$NetBSD: files.nouveau,v 1.16 2018/08/27 05:45:14 riastradh Exp $
+#	$NetBSD: files.nouveau,v 1.17 2018/08/27 06:35:09 riastradh Exp $
 
 define	nouveaufbbus	{ }
 device	nouveau: drmkms, drmkms_ttm, nouveaufbbus
@@ -15,8 +15,9 @@ file	external/bsd/drm2/nouveau/nouveau_vga.c			nouveau
 file	external/bsd/drm2/nouveau/nouveaufb.c			nouveaufb
 
 makeoptions	nouveau	CPPFLAGS+="-I$S/external/bsd/drm2/dist/drm/nouveau"
-makeoptions	nouveau	CPPFLAGS+="-I$S/external/bsd/drm2/dist/drm/nouveau/core"
-makeoptions	nouveau	CPPFLAGS+="-I$S/external/bsd/drm2/dist/drm/nouveau/core/include"
+makeoptions	nouveau	CPPFLAGS+="-I$S/external/bsd/drm2/dist/drm/nouveau/include"
+makeoptions	nouveau	CPPFLAGS+="-I$S/external/bsd/drm2/dist/drm/nouveau/include/nvkm"
+makeoptions	nouveau	CPPFLAGS+="-I$S/external/bsd/drm2/dist/drm/nouveau/nvkm"
 makeoptions	nouveau	CPPFLAGS+="-I$S/external/bsd/drm2/nouveau"
 
 makeoptions	nouveau	CPPFLAGS+="-DCONFIG_NOUVEAU_DEBUG=5"
