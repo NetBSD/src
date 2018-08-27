@@ -1,4 +1,4 @@
-/*	$NetBSD: ttm_execbuf_util.c,v 1.3 2018/08/27 04:58:37 riastradh Exp $	*/
+/*	$NetBSD: ttm_execbuf_util.c,v 1.4 2018/08/27 07:53:39 riastradh Exp $	*/
 
 /**************************************************************************
  *
@@ -28,7 +28,7 @@
  **************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ttm_execbuf_util.c,v 1.3 2018/08/27 04:58:37 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ttm_execbuf_util.c,v 1.4 2018/08/27 07:53:39 riastradh Exp $");
 
 #include <drm/ttm/ttm_execbuf_util.h>
 #include <drm/ttm/ttm_bo_driver.h>
@@ -192,7 +192,7 @@ void ttm_eu_fence_buffer_objects(struct ww_acquire_ctx *ticket,
 	struct ttm_buffer_object *bo;
 	struct ttm_bo_global *glob;
 	struct ttm_bo_device *bdev;
-	struct ttm_bo_driver *driver;
+	struct ttm_bo_driver *driver __unused;
 
 	if (list_empty(list))
 		return;
