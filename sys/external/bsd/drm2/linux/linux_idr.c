@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_idr.c,v 1.8 2018/08/27 14:14:42 riastradh Exp $	*/
+/*	$NetBSD: linux_idr.c,v 1.9 2018/08/27 14:15:45 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_idr.c,v 1.8 2018/08/27 14:14:42 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_idr.c,v 1.9 2018/08/27 14:15:45 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -265,7 +265,7 @@ idr_preload(gfp_t gfp)
 		/* lwp_setspecific must be sleepable.  */
 		if (!ISSET(gfp, __GFP_WAIT))
 			return;
-		cache = kmem_alloc(sizeof(*cache), kmflag);
+		cache = kmem_zalloc(sizeof(*cache), kmflag);
 		if (cache == NULL)
 			return;
 		lwp_setspecific(idr_cache_key, cache);
