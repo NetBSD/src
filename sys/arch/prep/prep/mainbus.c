@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.33 2012/01/27 18:53:00 para Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.34 2018/08/27 17:17:25 martin Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.33 2012/01/27 18:53:00 para Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.34 2018/08/27 17:17:25 martin Exp $");
 
 #include "opt_pci.h"
 #include "opt_residual.h"
@@ -139,6 +139,9 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 
 	SIMPLEQ_INIT(&genppc_pct->pc_pbi);
 	SIMPLEQ_INSERT_TAIL(&genppc_pct->pc_pbi, pbi, next);
+
+	/* fix pci interrupt routings on some models */
+	setup_pciroutinginfo();
 
 	/* find the primary host bridge */
 	setup_pciintr_map(pbi, 0, 0, 0);
