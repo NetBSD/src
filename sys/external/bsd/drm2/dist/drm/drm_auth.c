@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_auth.c,v 1.3 2018/08/27 04:58:19 riastradh Exp $	*/
+/*	$NetBSD: drm_auth.c,v 1.4 2018/08/27 14:14:29 riastradh Exp $	*/
 
 /*
  * Created: Tue Feb  2 08:37:54 1999 by faith@valinux.com
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_auth.c,v 1.3 2018/08/27 04:58:19 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_auth.c,v 1.4 2018/08/27 14:14:29 riastradh Exp $");
 
 #include <drm/drmP.h>
 #include "drm_internal.h"
@@ -53,6 +53,7 @@ int drm_getmagic(struct drm_device *dev, void *data, struct drm_file *file_priv)
 	struct drm_auth *auth = data;
 	int ret = 0;
 
+	idr_preload(GFP_KERNEL);
 	mutex_lock(&dev->struct_mutex);
 	if (!file_priv->magic) {
 		ret = idr_alloc(&file_priv->master->magic_map, file_priv,
@@ -62,6 +63,7 @@ int drm_getmagic(struct drm_device *dev, void *data, struct drm_file *file_priv)
 	}
 	auth->magic = file_priv->magic;
 	mutex_unlock(&dev->struct_mutex);
+	idr_preload_end();
 
 	DRM_DEBUG("%u\n", auth->magic);
 
