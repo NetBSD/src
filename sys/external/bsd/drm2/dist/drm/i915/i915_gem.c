@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem.c,v 1.51 2018/08/27 14:44:46 riastradh Exp $	*/
+/*	$NetBSD: i915_gem.c,v 1.52 2018/08/27 14:47:02 riastradh Exp $	*/
 
 /*
  * Copyright © 2008-2015 Intel Corporation
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gem.c,v 1.51 2018/08/27 14:44:46 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gem.c,v 1.52 2018/08/27 14:47:02 riastradh Exp $");
 
 #ifdef __NetBSD__
 #if 0				/* XXX uvmhist option?  */
@@ -1930,7 +1930,11 @@ i915_gem_mmap_ioctl(struct drm_device *dev, void *data,
 	struct drm_gem_object *obj;
 	unsigned long addr;
 #ifdef __NetBSD__
+	struct drm_i915_private *dev_priv = dev->dev_private;
 	int ret;
+
+	if ((dev_priv->quirks & QUIRK_NETBSD_VERSION_CALLED) == 0)
+		args->flags = 0;
 #endif
 
 	if (args->flags & ~(I915_MMAP_WC))
