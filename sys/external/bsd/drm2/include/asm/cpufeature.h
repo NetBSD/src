@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufeature.h,v 1.1 2018/08/27 07:07:45 riastradh Exp $	*/
+/*	$NetBSD: cpufeature.h,v 1.2 2018/08/27 07:08:47 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -36,6 +36,11 @@
 
 #if defined(__i386__) || defined(__x86_64__)
 #define	cpu_has_clflush	ISSET(cpu_info_primary.ci_feat_val[0], CPUID_CFLUSH)
+static inline size_t
+cache_line_size(void)
+{
+	return cpu_info_primary.ci_cflush_lsize;
+}
 #endif
 
 #endif	/* _LINUX_ASM_CPUFEATURE_H_ */
