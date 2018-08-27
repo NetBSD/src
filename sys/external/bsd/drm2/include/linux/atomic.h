@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic.h,v 1.10 2018/08/27 07:14:19 riastradh Exp $	*/
+/*	$NetBSD: atomic.h,v 1.11 2018/08/27 13:40:41 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -228,7 +228,7 @@ change_bit(unsigned int bit, volatile unsigned long *ptr)
 	do v = *p; while (atomic_cas_ulong(p, v, (v ^ mask)) != v);
 }
 
-static inline unsigned long
+static inline int
 test_and_set_bit(unsigned int bit, volatile unsigned long *ptr)
 {
 	const unsigned int units = (sizeof(*ptr) * CHAR_BIT);
@@ -241,7 +241,7 @@ test_and_set_bit(unsigned int bit, volatile unsigned long *ptr)
 	return ((v & mask) != 0);
 }
 
-static inline unsigned long
+static inline int
 test_and_clear_bit(unsigned int bit, volatile unsigned long *ptr)
 {
 	const unsigned int units = (sizeof(*ptr) * CHAR_BIT);
@@ -254,7 +254,7 @@ test_and_clear_bit(unsigned int bit, volatile unsigned long *ptr)
 	return ((v & mask) != 0);
 }
 
-static inline unsigned long
+static inline int
 test_and_change_bit(unsigned int bit, volatile unsigned long *ptr)
 {
 	const unsigned int units = (sizeof(*ptr) * CHAR_BIT);
