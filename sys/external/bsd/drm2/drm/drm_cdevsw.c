@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_cdevsw.c,v 1.6 2018/08/27 06:51:29 riastradh Exp $	*/
+/*	$NetBSD: drm_cdevsw.c,v 1.7 2018/08/27 06:52:34 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_cdevsw.c,v 1.6 2018/08/27 06:51:29 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_cdevsw.c,v 1.7 2018/08/27 06:52:34 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -258,7 +258,13 @@ drm_lastclose(struct drm_device *dev)
 	drm_legacy_dma_takedown(dev);
 	mutex_unlock(&dev->struct_mutex);
 
-	drm_legacy_dev_reinit(dev);
+	/* XXX Synchronize with drm_legacy_dev_reinit.  */
+	if (!drm_core_check_feature(dev, DRIVER_MODESET)) {
+		dev->sigdata.lock = NULL;
+		dev->context_flag = 0;
+		dev->last_context = 0;
+		dev->if_version = 0;
+	}
 
 	return 0;
 }
