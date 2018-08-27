@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.h,v 1.24 2017/08/31 23:47:50 maya Exp $	*/
+/*	$NetBSD: pci.h,v 1.25 2018/08/27 06:37:53 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -64,6 +64,8 @@ struct acpi_devnode;
 #include <linux/dma-mapping.h>
 #include <linux/ioport.h>
 #include <linux/kernel.h>
+
+struct pci_driver;
 
 struct pci_bus {
 	u_int		number;
