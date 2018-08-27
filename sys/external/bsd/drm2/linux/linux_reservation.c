@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_reservation.c,v 1.8 2018/08/27 15:25:14 riastradh Exp $	*/
+/*	$NetBSD: linux_reservation.c,v 1.9 2018/08/27 15:28:16 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_reservation.c,v 1.8 2018/08/27 15:25:14 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_reservation.c,v 1.9 2018/08/27 15:28:16 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/poll.h>
@@ -1035,7 +1035,7 @@ record:
 	rcu_read_unlock();
 	mutex_enter(&rpoll->rp_lock);
 	selrecord(curlwp, &rpoll->rp_selq);
-	if (rpoll->rp_claimed)
+	if (!rpoll->rp_claimed)
 		claimed = rpoll->rp_claimed = true;
 	mutex_exit(&rpoll->rp_lock);
 	recorded = true;
