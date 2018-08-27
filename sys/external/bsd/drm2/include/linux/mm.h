@@ -1,4 +1,4 @@
-/*	$NetBSD: mm.h,v 1.7 2018/08/27 06:06:41 riastradh Exp $	*/
+/*	$NetBSD: mm.h,v 1.8 2018/08/27 07:23:22 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -36,7 +36,6 @@
 
 #include <asm/page.h>
 #include <linux/shrinker.h>
-
 
 struct file;
 
@@ -82,6 +81,13 @@ static inline void
 kvfree(void * ptr)
 {
 	panic("Unimplemented");
+}
+
+static inline void
+set_page_dirty(struct page *page)
+{
+
+	page->p_vmp.flags &= ~PG_CLEAN;
 }
 
 #endif  /* _LINUX_MM_H_ */
