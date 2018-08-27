@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_engine_device_pci.c,v 1.4 2018/08/27 07:42:24 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_engine_device_pci.c,v 1.5 2018/08/27 07:42:35 riastradh Exp $	*/
 
 /*
  * Copyright 2015 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs <bskeggs@redhat.com>
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_device_pci.c,v 1.4 2018/08/27 07:42:24 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_device_pci.c,v 1.5 2018/08/27 07:42:35 riastradh Exp $");
 
 #include <core/pci.h>
 #include "priv.h"
@@ -1634,7 +1634,7 @@ static void *
 nvkm_device_pci_dtor(struct nvkm_device *device)
 {
 	struct nvkm_device_pci *pdev = nvkm_device_pci(device);
-	pci_disable_device(pdev->pdev);
+	linux_pci_disable_device(pdev->pdev);
 	return pdev;
 }
 
@@ -1665,7 +1665,7 @@ nvkm_device_pci_new(struct pci_dev *pci_dev, const char *cfg, const char *dbg,
 	struct nvkm_device_pci *pdev;
 	int ret;
 
-	ret = pci_enable_device(pci_dev);
+	ret = linux_pci_enable_device(pci_dev);
 	if (ret)
 		return ret;
 
@@ -1695,7 +1695,7 @@ nvkm_device_pci_new(struct pci_dev *pci_dev, const char *cfg, const char *dbg,
 	}
 
 	if (!(pdev = kzalloc(sizeof(*pdev), GFP_KERNEL))) {
-		pci_disable_device(pci_dev);
+		linux_pci_disable_device(pci_dev);
 		return -ENOMEM;
 	}
 	*pdevice = &pdev->device;
