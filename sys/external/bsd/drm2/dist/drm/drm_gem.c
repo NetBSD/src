@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_gem.c,v 1.7 2018/08/27 04:58:19 riastradh Exp $	*/
+/*	$NetBSD: drm_gem.c,v 1.8 2018/08/27 07:19:01 riastradh Exp $	*/
 
 /*
  * Copyright © 2008 Intel Corporation
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_gem.c,v 1.7 2018/08/27 04:58:19 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_gem.c,v 1.8 2018/08/27 07:19:01 riastradh Exp $");
 
 #include <linux/types.h>
 #include <linux/slab.h>
@@ -165,14 +165,14 @@ int drm_gem_object_init(struct drm_device *dev,
 	 * A uao may not have size 0, but a gem object may.  Allocate a
 	 * spurious page so we needn't teach uao how to have size 0.
 	 */
-	obj->gemo_shm_uao = uao_create(MAX(size, PAGE_SIZE), 0);
+	obj->filp = uao_create(MAX(size, PAGE_SIZE), 0);
 	/*
 	 * XXX This is gross.  We ought to do it the other way around:
 	 * set the uao to have the main uvm object's lock.  However,
 	 * uvm_obj_setlock is not safe on uvm_aobjs.
 	 */
-	mutex_obj_hold(obj->gemo_shm_uao->vmobjlock);
-	uvm_obj_setlock(&obj->gemo_uvmobj, obj->gemo_shm_uao->vmobjlock);
+	mutex_obj_hold(obj->filp->vmobjlock);
+	uvm_obj_setlock(&obj->gemo_uvmobj, obj->filp->vmobjlock);
 #else
 	filp = shmem_file_setup("drm mm object", size, VM_NORESERVE);
 	if (IS_ERR(filp))
@@ -202,7 +202,7 @@ void drm_gem_private_object_init(struct drm_device *dev,
 
 	obj->dev = dev;
 #ifdef __NetBSD__
-	obj->gemo_shm_uao = NULL;
+	obj->filp = NULL;
 	KASSERT(drm_core_check_feature(dev, DRIVER_GEM));
 	KASSERT(dev->driver->gem_uvm_ops != NULL);
 	uvm_obj_init(&obj->gemo_uvmobj, dev->driver->gem_uvm_ops, true, 1);
@@ -537,7 +537,7 @@ drm_gem_get_pages(struct drm_gem_object *obj)
 
 	TAILQ_INIT(&pglist);
 	/* XXX errno NetBSD->Linux */
-	ret = -uvm_obj_wirepages(obj->gemo_shm_uao, 0, obj->size, &pglist);
+	ret = -uvm_obj_wirepages(obj->filp, 0, obj->size, &pglist);
 	if (ret)
 		goto fail1;
 
@@ -618,7 +618,7 @@ drm_gem_put_pages(struct drm_gem_object *obj, struct page **pages, bool dirty,
 			pages[i]->p_vmp.flags &= ~PG_CLEAN;
 	}
 
-	uvm_obj_unwirepages(obj->gemo_shm_uao, 0, obj->size);
+	uvm_obj_unwirepages(obj->filp, 0, obj->size);
 }
 #else
 void drm_gem_put_pages(struct drm_gem_object *obj, struct page **pages,
@@ -862,8 +862,8 @@ drm_gem_object_release(struct drm_gem_object *obj)
 
 #ifdef __NetBSD__
 	drm_vma_node_destroy(&obj->vma_node);
-	if (obj->gemo_shm_uao)
-		uao_detach(obj->gemo_shm_uao);
+	if (obj->filp)
+		uao_detach(obj->filp);
 	uvm_obj_destroy(&obj->gemo_uvmobj, true);
 #else
 	if (obj->filp)
