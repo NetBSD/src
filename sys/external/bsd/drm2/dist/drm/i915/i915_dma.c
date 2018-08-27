@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_dma.c,v 1.23 2018/08/27 13:43:39 riastradh Exp $	*/
+/*	$NetBSD: i915_dma.c,v 1.24 2018/08/27 14:47:02 riastradh Exp $	*/
 
 /* i915_dma.c -- DMA support for the I915 -*- linux-c -*-
  */
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_dma.c,v 1.23 2018/08/27 13:43:39 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_dma.c,v 1.24 2018/08/27 14:47:02 riastradh Exp $");
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
@@ -160,6 +160,9 @@ static int i915_getparam(struct drm_device *dev, void *data,
 		value = 1;
 		break;
 	case I915_PARAM_MMAP_VERSION:
+#ifdef __NetBSD__
+		dev_priv->quirks |= QUIRK_NETBSD_VERSION_CALLED;
+#endif
 		value = 1;
 		break;
 	case I915_PARAM_SUBSLICE_TOTAL:
