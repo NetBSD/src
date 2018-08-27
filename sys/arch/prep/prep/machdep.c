@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.75 2014/04/03 23:49:47 mrg Exp $	*/
+/*	$NetBSD: machdep.c,v 1.76 2018/08/27 17:17:25 martin Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.75 2014/04/03 23:49:47 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.76 2018/08/27 17:17:25 martin Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_openpic.h"
@@ -207,12 +207,6 @@ cpu_startup(void)
 	 * Now safe for bus space allocation to use malloc.
 	 */
 	bus_space_mallocok();
-
-	/*
-	 * Gather the pci interrupt routings.
-         */
-	setup_pciroutinginfo();
-
 }
 
 /*
