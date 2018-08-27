@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_dp.c,v 1.16 2018/08/27 07:25:43 riastradh Exp $	*/
+/*	$NetBSD: intel_dp.c,v 1.17 2018/08/27 13:41:23 riastradh Exp $	*/
 
 /*
  * Copyright © 2008 Intel Corporation
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_dp.c,v 1.16 2018/08/27 07:25:43 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_dp.c,v 1.17 2018/08/27 13:41:23 riastradh Exp $");
 
 #include <linux/i2c.h>
 #include <linux/slab.h>
@@ -580,9 +580,6 @@ static u32 _pp_stat_reg(struct intel_dp *intel_dp)
 static int edp_notify_handler(struct notifier_block *this, unsigned long code,
 			      void *unused)
 {
-#ifdef __NetBSD__
-	panic("XXX");
-#else
 	struct intel_dp *intel_dp = container_of(this, typeof(* intel_dp),
 						 edp_notifier);
 	struct drm_device *dev = intel_dp_to_dev(intel_dp);
@@ -612,7 +609,6 @@ static int edp_notify_handler(struct notifier_block *this, unsigned long code,
 	pps_unlock(intel_dp);
 
 	return 0;
-#endif
 }
 
 static bool edp_have_panel_power(struct intel_dp *intel_dp)
