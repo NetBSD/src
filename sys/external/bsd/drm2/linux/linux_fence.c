@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_fence.c,v 1.5 2018/08/27 14:01:01 riastradh Exp $	*/
+/*	$NetBSD: linux_fence.c,v 1.6 2018/08/27 14:13:16 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_fence.c,v 1.5 2018/08/27 14:01:01 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_fence.c,v 1.6 2018/08/27 14:13:16 riastradh Exp $");
 
 #include <sys/atomic.h>
 #include <sys/condvar.h>
@@ -42,6 +42,19 @@ __KERNEL_RCSID(0, "$NetBSD: linux_fence.c,v 1.5 2018/08/27 14:01:01 riastradh Ex
 #include <linux/fence.h>
 #include <linux/sched.h>
 #include <linux/spinlock.h>
+
+/*
+ * fence_referenced_p(fence)
+ *
+ *	True if fence has a positive reference count.  True after
+ *	fence_init; after the last fence_put, this becomes false.
+ */
+static inline bool
+fence_referenced_p(struct fence *fence)
+{
+
+	return kref_referenced_p(&fence->refcount);
+}
 
 /*
  * fence_init(fence, ops, lock, context, seqno)
@@ -74,6 +87,8 @@ void
 fence_destroy(struct fence *fence)
 {
 
+	KASSERT(!fence_referenced_p(fence));
+
 	KASSERT(TAILQ_EMPTY(&fence->f_callbacks));
 	cv_destroy(&fence->f_cv);
 }
@@ -82,6 +97,8 @@ static void
 fence_free_cb(struct rcu_head *rcu)
 {
 	struct fence *fence = container_of(rcu, struct fence, f_rcu);
+
+	KASSERT(!fence_referenced_p(fence));
 
 	fence_destroy(fence);
 	kfree(fence);
@@ -102,6 +119,8 @@ fence_free_cb(struct rcu_head *rcu)
 void
 fence_free(struct fence *fence)
 {
+
+	KASSERT(!fence_referenced_p(fence));
 
 	call_rcu(&fence->f_rcu, &fence_free_cb);
 }
@@ -176,6 +195,8 @@ fence_release(struct kref *refcount)
 {
 	struct fence *fence = container_of(refcount, struct fence, refcount);
 
+	KASSERT(!fence_referenced_p(fence));
+
 	if (fence->ops->release)
 		(*fence->ops->release)(fence);
 	else
@@ -192,6 +213,7 @@ void
 fence_put(struct fence *fence)
 {
 
+	KASSERT(fence_referenced_p(fence));
 	kref_put(&fence->refcount, &fence_release);
 }
 
@@ -210,6 +232,7 @@ static int
 fence_ensure_signal_enabled(struct fence *fence)
 {
 
+	KASSERT(fence_referenced_p(fence));
 	KASSERT(spin_is_locked(fence->lock));
 
 	/* If the fence was already signalled, fail with -ENOENT.  */
@@ -251,6 +274,8 @@ fence_add_callback(struct fence *fence, struct fence_cb *fcb, fence_func_t fn)
 {
 	int ret;
 
+	KASSERT(fence_referenced_p(fence));
+
 	/* Optimistically try to skip the lock if it's already signalled.  */
 	if (fence->flags & (1u << FENCE_FLAG_SIGNALED_BIT)) {
 		ret = -ENOENT;
@@ -288,6 +313,8 @@ fence_remove_callback(struct fence *fence, struct fence_cb *fcb)
 {
 	bool onqueue;
 
+	KASSERT(fence_referenced_p(fence));
+
 	spin_lock(fence->lock);
 	onqueue = fcb->fcb_onqueue;
 	if (onqueue) {
@@ -311,6 +338,8 @@ void
 fence_enable_sw_signaling(struct fence *fence)
 {
 
+	KASSERT(fence_referenced_p(fence));
+
 	spin_lock(fence->lock);
 	(void)fence_ensure_signal_enabled(fence);
 	spin_unlock(fence->lock);
@@ -330,6 +359,8 @@ fence_is_signaled(struct fence *fence)
 {
 	bool signaled;
 
+	KASSERT(fence_referenced_p(fence));
+
 	spin_lock(fence->lock);
 	signaled = fence_is_signaled_locked(fence);
 	spin_unlock(fence->lock);
@@ -347,6 +378,7 @@ bool
 fence_is_signaled_locked(struct fence *fence)
 {
 
+	KASSERT(fence_referenced_p(fence));
 	KASSERT(spin_is_locked(fence->lock));
 
 	/* Check whether we already set the signalled bit.  */
@@ -383,6 +415,8 @@ fence_signal(struct fence *fence)
 {
 	int ret;
 
+	KASSERT(fence_referenced_p(fence));
+
 	spin_lock(fence->lock);
 	ret = fence_signal_locked(fence);
 	spin_unlock(fence->lock);
@@ -401,6 +435,7 @@ fence_signal_locked(struct fence *fence)
 {
 	struct fence_cb *fcb, *next;
 
+	KASSERT(fence_referenced_p(fence));
 	KASSERT(spin_is_locked(fence->lock));
 
 	/* If it's been signalled, fail; otherwise set the signalled bit.  */
@@ -434,6 +469,8 @@ static void
 wait_any_cb(struct fence *fence, struct fence_cb *fcb)
 {
 	struct wait_any *cb = container_of(fcb, struct wait_any, fcb);
+
+	KASSERT(fence_referenced_p(fence));
 
 	mutex_enter(&cb->common->lock);
 	cb->common->done = true;
@@ -472,6 +509,7 @@ fence_wait_any_timeout(struct fence **fences, uint32_t nfences, bool intr,
 	/* Add a callback to each of the fences, or stop here if we can't.  */
 	for (i = 0; i < nfences; i++) {
 		cb[i].common = &common;
+		KASSERT(fence_referenced_p(fences[i]));
 		ret = fence_add_callback(fences[i], &cb[i].fcb, &wait_any_cb);
 		if (ret)
 			goto out1;
@@ -559,8 +597,10 @@ long
 fence_wait_timeout(struct fence *fence, bool intr, long timeout)
 {
 
+	KASSERT(fence_referenced_p(fence));
 	KASSERT(timeout >= 0);
 	KASSERT(timeout < MAX_SCHEDULE_TIMEOUT);
+
 	return (*fence->ops->wait)(fence, intr, timeout);
 }
 
@@ -576,6 +616,8 @@ long
 fence_wait(struct fence *fence, bool intr)
 {
 	long ret;
+
+	KASSERT(fence_referenced_p(fence));
 
 	ret = (*fence->ops->wait)(fence, intr, MAX_SCHEDULE_TIMEOUT);
 	KASSERT(ret != 0);
@@ -600,6 +642,7 @@ fence_default_wait(struct fence *fence, bool intr, long timeout)
 	kmutex_t *lock = &fence->lock->sl_lock;
 	long ret = 0;
 
+	KASSERT(fence_referenced_p(fence));
 	KASSERT(timeout >= 0);
 	KASSERT(timeout <= MAX_SCHEDULE_TIMEOUT);
 
