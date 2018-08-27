@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_lrc.c,v 1.5 2018/08/27 07:24:12 riastradh Exp $	*/
+/*	$NetBSD: intel_lrc.c,v 1.6 2018/08/27 07:24:25 riastradh Exp $	*/
 
 /*
  * Copyright © 2014 Intel Corporation
@@ -135,7 +135,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_lrc.c,v 1.5 2018/08/27 07:24:12 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_lrc.c,v 1.6 2018/08/27 07:24:25 riastradh Exp $");
 
 #include <drm/drmP.h>
 #include <drm/i915_drm.h>
@@ -1928,6 +1928,10 @@ void intel_logical_ring_cleanup(struct intel_engine_cs *ring)
 	}
 
 	lrc_destroy_wa_ctx_obj(ring);
+
+#ifdef __NetBSD__
+	DRM_DESTROY_WAITQUEUE(&ring->irq_queue);
+#endif
 }
 
 static int logical_ring_init(struct drm_device *dev, struct intel_engine_cs *ring)
@@ -1941,7 +1945,11 @@ static int logical_ring_init(struct drm_device *dev, struct intel_engine_cs *rin
 	INIT_LIST_HEAD(&ring->active_list);
 	INIT_LIST_HEAD(&ring->request_list);
 	i915_gem_batch_pool_init(dev, &ring->batch_pool);
+#ifdef __NetBSD__
+	DRM_INIT_WAITQUEUE(&ring->irq_queue, "i915lrc");
+#else
 	init_waitqueue_head(&ring->irq_queue);
+#endif
 
 	INIT_LIST_HEAD(&ring->execlist_queue);
 	INIT_LIST_HEAD(&ring->execlist_retired_req_list);
