@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_dp_helper.c,v 1.7 2018/08/27 06:47:19 riastradh Exp $	*/
+/*	$NetBSD: drm_dp_helper.c,v 1.8 2018/08/27 06:52:45 riastradh Exp $	*/
 
 /*
  * Copyright © 2009 Keith Packard
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_dp_helper.c,v 1.7 2018/08/27 06:47:19 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_dp_helper.c,v 1.8 2018/08/27 06:52:45 riastradh Exp $");
 
 #include <linux/kernel.h>
 #include <linux/module.h>
@@ -769,7 +769,11 @@ static const struct i2c_algorithm drm_dp_i2c_algo = {
  */
 int drm_dp_aux_register(struct drm_dp_aux *aux)
 {
+#ifdef __NetBSD__
+	linux_mutex_init(&aux->hw_mutex);
+#else
 	mutex_init(&aux->hw_mutex);
+#endif
 
 	aux->ddc.algo = &drm_dp_i2c_algo;
 	aux->ddc.algo_data = aux;
@@ -796,5 +800,10 @@ EXPORT_SYMBOL(drm_dp_aux_register);
 void drm_dp_aux_unregister(struct drm_dp_aux *aux)
 {
 	i2c_del_adapter(&aux->ddc);
+#ifdef __NetBSD__
+	linux_mutex_destroy(&aux->hw_mutex);
+#else
+	mutex_destroy(&aux->hw_mutex);
+#endif
 }
 EXPORT_SYMBOL(drm_dp_aux_unregister);
