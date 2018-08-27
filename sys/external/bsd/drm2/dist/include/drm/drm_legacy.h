@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_legacy.h,v 1.6 2018/08/27 07:46:07 riastradh Exp $	*/
+/*	$NetBSD: drm_legacy.h,v 1.7 2018/08/27 07:51:06 riastradh Exp $	*/
 
 #ifndef __DRM_DRM_LEGACY_H__
 #define __DRM_DRM_LEGACY_H__
@@ -218,9 +218,9 @@ int drm_legacy_rmmap(struct drm_device *d, struct drm_local_map *map);
 int drm_legacy_rmmap_locked(struct drm_device *d, struct drm_local_map *map);
 struct drm_local_map *drm_legacy_getsarea(struct drm_device *dev);
 #ifdef __NetBSD__
-int drm_mmap_object(struct drm_device *, off_t, size_t, int,
+int drm_legacy_mmap_object(struct drm_device *, off_t, size_t, int,
     struct uvm_object **, voff_t *, struct file *);
-paddr_t drm_mmap_paddr(struct drm_device *, off_t, int);
+paddr_t drm_legacy_mmap_paddr(struct drm_device *, off_t, int);
 #else
 int drm_legacy_mmap(struct file *filp, struct vm_area_struct *vma);
 #endif
