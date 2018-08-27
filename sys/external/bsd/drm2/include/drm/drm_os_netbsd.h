@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_os_netbsd.h,v 1.9 2018/08/27 07:50:08 riastradh Exp $	*/
+/*	$NetBSD: drm_os_netbsd.h,v 1.10 2018/08/27 13:53:09 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -41,7 +41,10 @@
 #define	CONFIG_X86_PAT	1
 #endif
 
+#if defined(_KERNEL_OPT)
 #include "pci.h"
+#endif
+
 #if NPCI > 0
 #define	CONFIG_PCI	1
 #endif
