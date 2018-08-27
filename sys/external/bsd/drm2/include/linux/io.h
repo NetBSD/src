@@ -1,4 +1,4 @@
-/*	$NetBSD: io.h,v 1.5 2018/08/27 06:49:52 riastradh Exp $	*/
+/*	$NetBSD: io.h,v 1.6 2018/08/27 07:33:45 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 
 #define	arch_phys_wc_add	linux_arch_phys_wc_add
 #define	arch_phys_wc_del	linux_arch_phys_wc_del
-#define	phys_wc_to_mtrr_index	linux_phys_wc_to_mtrr_index
+#define	arch_phys_wc_index	linux_arch_phys_wc_index
 
 int	linux_writecomb_init(void);
 void	linux_writecomb_fini(void);
