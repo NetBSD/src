@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_kfd.c,v 1.4 2018/08/27 06:45:07 riastradh Exp $	*/
+/*	$NetBSD: radeon_kfd.c,v 1.5 2018/08/27 07:48:07 riastradh Exp $	*/
 
 /*
  * Copyright 2014 Advanced Micro Devices, Inc.
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_kfd.c,v 1.4 2018/08/27 06:45:07 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_kfd.c,v 1.5 2018/08/27 07:48:07 riastradh Exp $");
 
 #include <linux/module.h>
 #include <linux/fdtable.h>
@@ -172,7 +172,9 @@ void radeon_kfd_fini(void)
 {
 	if (kgd2kfd) {
 		kgd2kfd->exit();
+#ifdef CONFIG_HSA_AMD_MODULE
 		symbol_put(kgd2kfd_init);
+#endif
 	}
 }
 
