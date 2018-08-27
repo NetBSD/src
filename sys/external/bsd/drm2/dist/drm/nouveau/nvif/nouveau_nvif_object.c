@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvif_object.c,v 1.3 2018/08/27 07:35:56 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvif_object.c,v 1.4 2018/08/27 14:47:53 riastradh Exp $	*/
 
 /*
  * Copyright 2014 Red Hat Inc.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvif_object.c,v 1.3 2018/08/27 07:35:56 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvif_object.c,v 1.4 2018/08/27 14:47:53 riastradh Exp $");
 
 #include <nvif/object.h>
 #include <nvif/client.h>
@@ -185,6 +185,8 @@ nvif_object_unmap(struct nvif_object *object)
 		if (object->map.ptr) {
 			client->driver->unmap(client, object->map.tag,
 						      object->map.handle,
+						      object->map.addr,
+						      object->map.ptr,
 						      object->map.size);
 			object->map.ptr = NULL;
 		}
@@ -216,6 +218,8 @@ nvif_object_map(struct nvif_object *object)
 	if (ret == 0) {
 		object->map.size = args.map.length;
 #ifdef __NetBSD__
+		object->map.tag = args.map.tag;
+		object->map.addr = args.map.handle;
 		ret = client->driver->map(client, args.map.tag,
 		    args.map.handle, object->map.size, &object->map.handle,
 		    &object->map.ptr);

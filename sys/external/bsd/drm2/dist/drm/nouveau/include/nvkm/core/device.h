@@ -1,4 +1,4 @@
-/*	$NetBSD: device.h,v 1.5 2018/08/27 13:43:52 riastradh Exp $	*/
+/*	$NetBSD: device.h,v 1.6 2018/08/27 14:47:53 riastradh Exp $	*/
 
 #ifndef __NVKM_DEVICE_H__
 #define __NVKM_DEVICE_H__
@@ -77,6 +77,7 @@ struct nvkm_device {
 #ifdef __NetBSD__
 	bus_space_tag_t mmiot;
 	bus_space_handle_t mmioh;
+	bus_addr_t mmioaddr;
 	bus_size_t mmiosz;
 #else
 	void __iomem *pri;
