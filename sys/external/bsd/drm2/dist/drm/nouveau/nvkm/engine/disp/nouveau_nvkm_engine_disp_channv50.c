@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_engine_disp_channv50.c,v 1.2 2018/08/27 04:58:31 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_engine_disp_channv50.c,v 1.3 2018/08/27 07:35:56 riastradh Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_disp_channv50.c,v 1.2 2018/08/27 04:58:31 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_disp_channv50.c,v 1.3 2018/08/27 07:35:56 riastradh Exp $");
 
 #include "channv50.h"
 #include "rootnv50.h"
@@ -194,12 +194,14 @@ nv50_disp_chan_ntfy(struct nvkm_object *object, u32 type,
 	return -EINVAL;
 }
 
-int
-nv50_disp_chan_map(struct nvkm_object *object, u64 *addr, u32 *size)
+static int
+nv50_disp_chan_map(struct nvkm_object *object, bus_space_tag_t *tagp,
+    u64 *addr, u32 *size)
 {
 	struct nv50_disp_chan *chan = nv50_disp_chan(object);
 	struct nv50_disp *disp = chan->root->disp;
 	struct nvkm_device *device = disp->base.engine.subdev.device;
+	*tagp = device->func->resource_tag(device, 0);
 	*addr = device->func->resource_addr(device, 0) +
 		0x640000 + (chan->chid * 0x1000);
 	*size = 0x001000;

@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_usif.c,v 1.2 2018/08/27 04:58:24 riastradh Exp $	*/
+/*	$NetBSD: nouveau_usif.c,v 1.3 2018/08/27 07:35:56 riastradh Exp $	*/
 
 /*
  * Copyright 2014 Red Hat Inc.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_usif.c,v 1.2 2018/08/27 04:58:24 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_usif.c,v 1.3 2018/08/27 07:35:56 riastradh Exp $");
 
 #include "nouveau_drm.h"
 #include "nouveau_usif.h"
@@ -355,6 +355,9 @@ usif_ioctl(struct drm_file *filp, void __user *user, u32 argc)
 	case NVIF_IOCTL_V0_NTFY_PUT:
 		ret = usif_notify_put(filp, data, size, argv, argc);
 		break;
+	case NVIF_IOCTL_V0_MAP_NETBSD:
+		/* Kernel-only kludge.  */
+		ret = -EINVAL;
 	default:
 		ret = nvif_client_ioctl(client, argv, argc);
 		break;

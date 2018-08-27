@@ -1,4 +1,4 @@
-/*	$NetBSD: object.h,v 1.3 2018/08/27 07:32:59 riastradh Exp $	*/
+/*	$NetBSD: object.h,v 1.4 2018/08/27 07:35:56 riastradh Exp $	*/
 
 #ifndef __NVIF_OBJECT_H__
 #define __NVIF_OBJECT_H__
@@ -67,6 +67,10 @@ struct nvif_object {
 	s32 oclass;
 	void *priv; /*XXX: hack */
 	struct {
+#ifdef __NetBSD__
+		bus_space_tag_t tag;
+		bus_space_handle_t handle;
+#endif
 		void __iomem *ptr;
 		u32 size;
 	} map;
