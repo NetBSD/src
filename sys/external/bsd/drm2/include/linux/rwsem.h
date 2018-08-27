@@ -1,4 +1,4 @@
-/*	$NetBSD: rwsem.h,v 1.1 2014/07/16 20:59:58 riastradh Exp $	*/
+/*	$NetBSD: rwsem.h,v 1.2 2018/08/27 07:47:01 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -70,6 +70,13 @@ down_read(struct rw_semaphore *rwsem)
 	rw_enter(&rwsem->rws_lock, RW_READER);
 }
 
+static inline bool
+down_read_trylock(struct rw_semaphore *rwsem)
+{
+
+	return rw_tryenter(&rwsem->rws_lock, RW_READER);
+}
+
 static inline void
 down_write(struct rw_semaphore *rwsem)
 {
@@ -89,6 +96,13 @@ up_write(struct rw_semaphore *rwsem)
 {
 
 	rw_exit(&rwsem->rws_lock);
+}
+
+static inline void
+downgrade_write(struct rw_semaphore *rwsem)
+{
+
+	rw_downgrade(&rwsem->rws_lock);
 }
 
 #endif  /* _LINUX_RWSEM_H_ */
