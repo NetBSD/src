@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_ucode.c,v 1.2 2018/08/27 04:58:20 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_ucode.c,v 1.3 2018/08/27 14:04:50 riastradh Exp $	*/
 
 /*
  * Copyright 2014 Advanced Micro Devices, Inc.
@@ -24,11 +24,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_ucode.c,v 1.2 2018/08/27 04:58:20 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_ucode.c,v 1.3 2018/08/27 14:04:50 riastradh Exp $");
 
 #include <linux/firmware.h>
 #include <linux/slab.h>
 #include <linux/module.h>
+#include <asm/byteorder.h>
 #include <drm/drmP.h>
 #include "amdgpu.h"
 #include "amdgpu_ucode.h"
@@ -58,7 +59,7 @@ void amdgpu_ucode_print_mc_hdr(const struct common_firmware_header *hdr)
 
 	if (version_major == 1) {
 		const struct mc_firmware_header_v1_0 *mc_hdr =
-			container_of(hdr, struct mc_firmware_header_v1_0, header);
+			const_container_of(hdr, struct mc_firmware_header_v1_0, header);
 
 		DRM_DEBUG("io_debug_size_bytes: %u\n",
 			  le32_to_cpu(mc_hdr->io_debug_size_bytes));
@@ -79,7 +80,7 @@ void amdgpu_ucode_print_smc_hdr(const struct common_firmware_header *hdr)
 
 	if (version_major == 1) {
 		const struct smc_firmware_header_v1_0 *smc_hdr =
-			container_of(hdr, struct smc_firmware_header_v1_0, header);
+			const_container_of(hdr, struct smc_firmware_header_v1_0, header);
 
 		DRM_DEBUG("ucode_start_addr: %u\n", le32_to_cpu(smc_hdr->ucode_start_addr));
 	} else {
@@ -97,7 +98,7 @@ void amdgpu_ucode_print_gfx_hdr(const struct common_firmware_header *hdr)
 
 	if (version_major == 1) {
 		const struct gfx_firmware_header_v1_0 *gfx_hdr =
-			container_of(hdr, struct gfx_firmware_header_v1_0, header);
+			const_container_of(hdr, struct gfx_firmware_header_v1_0, header);
 
 		DRM_DEBUG("ucode_feature_version: %u\n",
 			  le32_to_cpu(gfx_hdr->ucode_feature_version));
@@ -118,7 +119,7 @@ void amdgpu_ucode_print_rlc_hdr(const struct common_firmware_header *hdr)
 
 	if (version_major == 1) {
 		const struct rlc_firmware_header_v1_0 *rlc_hdr =
-			container_of(hdr, struct rlc_firmware_header_v1_0, header);
+			const_container_of(hdr, struct rlc_firmware_header_v1_0, header);
 
 		DRM_DEBUG("ucode_feature_version: %u\n",
 			  le32_to_cpu(rlc_hdr->ucode_feature_version));
@@ -132,7 +133,7 @@ void amdgpu_ucode_print_rlc_hdr(const struct common_firmware_header *hdr)
 			  le32_to_cpu(rlc_hdr->master_pkt_description_offset));
 	} else if (version_major == 2) {
 		const struct rlc_firmware_header_v2_0 *rlc_hdr =
-			container_of(hdr, struct rlc_firmware_header_v2_0, header);
+			const_container_of(hdr, struct rlc_firmware_header_v2_0, header);
 
 		DRM_DEBUG("ucode_feature_version: %u\n",
 			  le32_to_cpu(rlc_hdr->ucode_feature_version));
@@ -183,7 +184,7 @@ void amdgpu_ucode_print_sdma_hdr(const struct common_firmware_header *hdr)
 
 	if (version_major == 1) {
 		const struct sdma_firmware_header_v1_0 *sdma_hdr =
-			container_of(hdr, struct sdma_firmware_header_v1_0, header);
+			const_container_of(hdr, struct sdma_firmware_header_v1_0, header);
 
 		DRM_DEBUG("ucode_feature_version: %u\n",
 			  le32_to_cpu(sdma_hdr->ucode_feature_version));
@@ -193,7 +194,7 @@ void amdgpu_ucode_print_sdma_hdr(const struct common_firmware_header *hdr)
 		DRM_DEBUG("jt_size: %u\n", le32_to_cpu(sdma_hdr->jt_size));
 		if (version_minor >= 1) {
 			const struct sdma_firmware_header_v1_1 *sdma_v1_1_hdr =
-				container_of(sdma_hdr, struct sdma_firmware_header_v1_1, v1_0);
+				const_container_of(sdma_hdr, struct sdma_firmware_header_v1_1, v1_0);
 			DRM_DEBUG("digest_size: %u\n", le32_to_cpu(sdma_v1_1_hdr->digest_size));
 		}
 	} else {
@@ -291,8 +292,12 @@ int amdgpu_ucode_init_bo(struct amdgpu_device *adev)
 		if (ucode->fw) {
 			header = (const struct common_firmware_header *)ucode->fw->data;
 			amdgpu_ucode_init_single_fw(ucode, fw_mc_addr + fw_offset,
-						    fw_buf_ptr + fw_offset);
+						    (char *)fw_buf_ptr + fw_offset);
+#ifdef __NetBSD__		/* XXX ALIGN means something else */
+			fw_offset += round_up(le32_to_cpu(header->ucode_size_bytes), PAGE_SIZE);
+#else
 			fw_offset += ALIGN(le32_to_cpu(header->ucode_size_bytes), PAGE_SIZE);
+#endif
 		}
 	}
 

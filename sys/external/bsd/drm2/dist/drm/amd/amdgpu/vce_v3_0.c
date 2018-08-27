@@ -1,4 +1,4 @@
-/*	$NetBSD: vce_v3_0.c,v 1.2 2018/08/27 04:58:20 riastradh Exp $	*/
+/*	$NetBSD: vce_v3_0.c,v 1.3 2018/08/27 14:04:50 riastradh Exp $	*/
 
 /*
  * Copyright 2014 Advanced Micro Devices, Inc.
@@ -28,9 +28,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vce_v3_0.c,v 1.2 2018/08/27 04:58:20 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vce_v3_0.c,v 1.3 2018/08/27 14:04:50 riastradh Exp $");
 
 #include <linux/firmware.h>
+#include <asm/byteorder.h>
 #include <drm/drmP.h>
 #include "amdgpu.h"
 #include "amdgpu_vce.h"
@@ -287,14 +288,14 @@ static int vce_v3_0_sw_init(void *handle)
 		return r;
 
 	ring = &adev->vce.ring[0];
-	sprintf(ring->name, "vce0");
+	snprintf(ring->name, sizeof ring->name, "vce0");
 	r = amdgpu_ring_init(adev, ring, 4096, VCE_CMD_NO_OP, 0xf,
 			     &adev->vce.irq, 0, AMDGPU_RING_TYPE_VCE);
 	if (r)
 		return r;
 
 	ring = &adev->vce.ring[1];
-	sprintf(ring->name, "vce1");
+	snprintf(ring->name, sizeof ring->name, "vce1");
 	r = amdgpu_ring_init(adev, ring, 4096, VCE_CMD_NO_OP, 0xf,
 			     &adev->vce.irq, 0, AMDGPU_RING_TYPE_VCE);
 	if (r)

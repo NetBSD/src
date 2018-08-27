@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_kms.c,v 1.2 2018/08/27 04:58:19 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_kms.c,v 1.3 2018/08/27 14:04:50 riastradh Exp $	*/
 
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
@@ -28,7 +28,7 @@
  *          Jerome Glisse
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_kms.c,v 1.2 2018/08/27 04:58:19 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_kms.c,v 1.3 2018/08/27 14:04:50 riastradh Exp $");
 
 #include <drm/drmP.h>
 #include "amdgpu.h"
@@ -62,7 +62,7 @@ int amdgpu_driver_unload_kms(struct drm_device *dev)
 	if (adev == NULL)
 		return 0;
 
-	if (adev->rmmio == NULL)
+	if (adev->rmmio_size == 0)
 		goto done_free;
 
 	pm_runtime_get_sync(dev->dev);
@@ -112,7 +112,7 @@ int amdgpu_driver_load_kms(struct drm_device *dev, unsigned long flags)
 	 */
 	r = amdgpu_device_init(adev, dev, dev->pdev, flags);
 	if (r) {
-		dev_err(&dev->pdev->dev, "Fatal error during GPU init\n");
+		dev_err(pci_dev_dev(dev->pdev), "Fatal error during GPU init\n");
 		goto out;
 	}
 
@@ -122,7 +122,7 @@ int amdgpu_driver_load_kms(struct drm_device *dev, unsigned long flags)
 	if (!r) {
 		acpi_status = amdgpu_acpi_init(adev);
 		if (acpi_status)
-		dev_dbg(&dev->pdev->dev,
+		dev_dbg(pci_dev_dev(dev->pdev),
 				"Error during ACPI methods call\n");
 	}
 
@@ -501,7 +501,9 @@ void amdgpu_driver_lastclose_kms(struct drm_device *dev)
 	struct amdgpu_device *adev = dev->dev_private;
 
 	amdgpu_fbdev_restore_mode(adev);
+#ifndef __NetBSD__		/* XXX radeon vga */
 	vga_switcheroo_process_delayed_switch();
+#endif
 }
 
 /**
@@ -533,7 +535,11 @@ int amdgpu_driver_open_kms(struct drm_device *dev, struct drm_file *file_priv)
 	if (r)
 		goto error_free;
 
+#ifdef __NetBSD__
+	linux_mutex_init(&fpriv->bo_list_lock);
+#else
 	mutex_init(&fpriv->bo_list_lock);
+#endif
 	idr_init(&fpriv->bo_list_handles);
 
 	amdgpu_ctx_mgr_init(&fpriv->ctx_mgr);
@@ -577,7 +583,11 @@ void amdgpu_driver_postclose_kms(struct drm_device *dev,
 		amdgpu_bo_list_free(list);
 
 	idr_destroy(&fpriv->bo_list_handles);
+#ifdef __NetBSD__
+	linux_mutex_destroy(&fpriv->bo_list_lock);
+#else
 	mutex_destroy(&fpriv->bo_list_lock);
+#endif
 
 	kfree(fpriv);
 	file_priv->driver_priv = NULL;

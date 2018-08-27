@@ -1,4 +1,4 @@
-/*	$NetBSD: ci_dpm.c,v 1.2 2018/08/27 04:58:20 riastradh Exp $	*/
+/*	$NetBSD: ci_dpm.c,v 1.3 2018/08/27 14:04:50 riastradh Exp $	*/
 
 /*
  * Copyright 2013 Advanced Micro Devices, Inc.
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ci_dpm.c,v 1.2 2018/08/27 04:58:20 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ci_dpm.c,v 1.3 2018/08/27 14:04:50 riastradh Exp $");
 
 #include <linux/firmware.h>
 #include "drmP.h"
@@ -5848,18 +5848,22 @@ static int ci_dpm_init(struct amdgpu_device *adev)
 	u8 frev, crev;
 	struct ci_power_info *pi;
 	int ret;
+#ifndef __NetBSD__		/* XXX amdgpu pcie */
 	u32 mask;
+#endif
 
 	pi = kzalloc(sizeof(struct ci_power_info), GFP_KERNEL);
 	if (pi == NULL)
 		return -ENOMEM;
 	adev->pm.dpm.priv = pi;
 
+#ifndef __NetBSD__		/* XXX amdgpu pcie */
 	ret = drm_pcie_get_speed_cap_mask(adev->ddev, &mask);
 	if (ret)
 		pi->sys_pcie_mask = 0;
 	else
 		pi->sys_pcie_mask = mask;
+#endif
 	pi->force_pcie_gen = AMDGPU_PCIE_GEN_INVALID;
 
 	pi->pcie_gen_performance.max = AMDGPU_PCIE_GEN1;

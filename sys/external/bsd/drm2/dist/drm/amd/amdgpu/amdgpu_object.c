@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_object.c,v 1.2 2018/08/27 04:58:19 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_object.c,v 1.3 2018/08/27 14:04:50 riastradh Exp $	*/
 
 /*
  * Copyright 2009 Jerome Glisse.
@@ -32,7 +32,7 @@
  *    Dave Airlie
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_object.c,v 1.2 2018/08/27 04:58:19 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_object.c,v 1.3 2018/08/27 14:04:50 riastradh Exp $");
 
 #include <linux/list.h>
 #include <linux/slab.h>
@@ -41,10 +41,6 @@ __KERNEL_RCSID(0, "$NetBSD: amdgpu_object.c,v 1.2 2018/08/27 04:58:19 riastradh 
 #include <drm/drm_cache.h>
 #include "amdgpu.h"
 #include "amdgpu_trace.h"
-
-
-int amdgpu_ttm_init(struct amdgpu_device *adev);
-void amdgpu_ttm_fini(struct amdgpu_device *adev);
 
 static u64 amdgpu_get_vis_part_size(struct amdgpu_device *adev,
 						struct ttm_mem_reg *mem)
@@ -234,7 +230,11 @@ int amdgpu_bo_create_restricted(struct amdgpu_device *adev,
 	int r;
 
 	page_align = roundup(byte_align, PAGE_SIZE) >> PAGE_SHIFT;
+#ifdef __NetBSD__		/* XXX ALIGN means something else.  */
+	size = round_up(size, PAGE_SIZE);
+#else
 	size = ALIGN(size, PAGE_SIZE);
+#endif
 
 	if (kernel) {
 		type = ttm_bo_type_kernel;
@@ -500,7 +500,7 @@ int amdgpu_bo_init(struct amdgpu_device *adev)
 	/* Add an MTRR for the VRAM */
 	adev->mc.vram_mtrr = arch_phys_wc_add(adev->mc.aper_base,
 					      adev->mc.aper_size);
-	DRM_INFO("Detected VRAM RAM=%lluM, BAR=%lluM\n",
+	DRM_INFO("Detected VRAM RAM=%"PRIu64"M, BAR=%lluM\n",
 		adev->mc.mc_vram_size >> 20,
 		(unsigned long long)adev->mc.aper_size >> 20);
 	DRM_INFO("RAM width %dbits DDR\n",
@@ -514,11 +514,13 @@ void amdgpu_bo_fini(struct amdgpu_device *adev)
 	arch_phys_wc_del(adev->mc.vram_mtrr);
 }
 
+#ifndef __NetBSD__		/* XXX unused? */
 int amdgpu_bo_fbdev_mmap(struct amdgpu_bo *bo,
 			     struct vm_area_struct *vma)
 {
 	return ttm_fbdev_mmap(vma, &bo->tbo);
 }
+#endif
 
 int amdgpu_bo_set_tiling_flags(struct amdgpu_bo *bo, u64 tiling_flags)
 {
