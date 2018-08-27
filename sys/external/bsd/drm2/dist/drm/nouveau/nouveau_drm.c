@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_drm.c,v 1.10 2018/08/27 07:03:26 riastradh Exp $	*/
+/*	$NetBSD: nouveau_drm.c,v 1.11 2018/08/27 07:38:10 riastradh Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_drm.c,v 1.10 2018/08/27 07:03:26 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_drm.c,v 1.11 2018/08/27 07:38:10 riastradh Exp $");
 
 #include <linux/console.h>
 #include <linux/delay.h>
@@ -711,8 +711,8 @@ nouveau_pmops_resume(struct device *dev)
 #ifndef __NetBSD__
 	struct pci_dev *pdev = to_pci_dev(dev);
 	struct drm_device *drm_dev = pci_get_drvdata(pdev);
-#endif
 	int ret;
+#endif
 
 	if (drm_dev->switch_power_state == DRM_SWITCH_POWER_OFF ||
 	    drm_dev->switch_power_state == DRM_SWITCH_POWER_DYNAMIC_OFF)
@@ -1074,6 +1074,7 @@ nouveau_drm_pci_table[] = {
 };
 #endif
 
+#ifndef __NetBSD__
 static void nouveau_display_options(void)
 {
 	DRM_DEBUG_DRIVER("Loading Nouveau with parameters:\n");
@@ -1090,6 +1091,7 @@ static void nouveau_display_options(void)
 	DRM_DEBUG_DRIVER("... vram_pushbuf : %d\n", nouveau_vram_pushbuf);
 	DRM_DEBUG_DRIVER("... pstate       : %d\n", nouveau_pstate);
 }
+#endif
 
 #ifndef __NetBSD__		/* XXX nouveau pm */
 static const struct dev_pm_ops nouveau_pm_ops = {
