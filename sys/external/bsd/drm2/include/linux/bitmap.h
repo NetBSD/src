@@ -1,4 +1,4 @@
-/*	$NetBSD: bitmap.h,v 1.6 2018/08/27 14:50:52 riastradh Exp $	*/
+/*	$NetBSD: bitmap.h,v 1.7 2018/08/27 14:51:05 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -46,8 +46,9 @@ static inline void
 bitmap_zero(unsigned long *bitmap, size_t nbits)
 {
 	const size_t bpl = NBBY * sizeof(*bitmap);
+	size_t n = howmany(nbits, bpl);
 
-	memset(bitmap, 0, howmany(nbits, bpl) * sizeof(*bitmap));
+	memset(bitmap, 0, n * sizeof(*bitmap));
 }
 
 /*
