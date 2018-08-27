@@ -1,4 +1,4 @@
-/*	$NetBSD: list.h,v 1.5 2014/08/20 15:26:52 riastradh Exp $	*/
+/*	$NetBSD: list.h,v 1.6 2018/08/27 06:23:19 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -259,6 +259,25 @@ struct hlist_node {
 	LIST_ENTRY(hlist_node) hln_entry;
 };
 
+/*
+ * XXX This works only because LIST_HEAD_INITIALIZER doesn't actually
+ * use the name.  Really, this is just initialization to a null
+ * pointer.
+ */
+#define	HLIST_HEAD_INIT	LIST_HEAD_INITIALIZER(dummy)
+
+static inline void
+INIT_HLIST_HEAD(struct hlist_head *head)
+{
+	LIST_INIT(head);
+}
+
+static inline bool
+hlist_empty(struct hlist_head *head)
+{
+	return LIST_EMPTY(head);
+}
+
 static inline struct hlist_node *
 hlist_first(struct hlist_head *head)
 {
@@ -305,6 +324,14 @@ hlist_del_init(struct hlist_node *node)
 		&(VAR)->FIELD != NULL;					      \
 	        (VAR) = hlist_entry(LIST_NEXT(&(VAR)->FIELD, hln_entry),      \
 		    typeof(*(VAR)), FIELD))
+
+#define	hlist_for_each_entry_safe(VAR, NEXT, HEAD, FIELD)		      \
+	for ((VAR) = hlist_entry(LIST_FIRST((HEAD)), typeof(*(VAR)), FIELD),  \
+		(NEXT) = (&(VAR)->FIELD == NULL ? NULL :		      \
+		    hlist_entry(LIST_NEXT(&(VAR)->FIELD, hln_entry),	      \
+			typeof(*(VAR)), FIELD));			      \
+	     &(VAR)->FIELD != NULL;					      \
+	        (VAR) = (NEXT))
 
 /*
  * XXX The nominally RCU-safe APIs below lack dependent read barriers,
