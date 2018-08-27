@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_drv.c,v 1.11 2018/08/27 07:04:44 riastradh Exp $	*/
+/*	$NetBSD: i915_drv.c,v 1.12 2018/08/27 07:51:16 riastradh Exp $	*/
 
 /* i915_drv.c -- i830,i845,i855,i865,i915 driver -*- linux-c -*-
  */
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_drv.c,v 1.11 2018/08/27 07:04:44 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_drv.c,v 1.12 2018/08/27 07:51:16 riastradh Exp $");
 
 #include <linux/device.h>
 #include <linux/acpi.h>
@@ -1769,7 +1769,7 @@ static struct drm_driver driver = {
 	.gem_free_object = i915_gem_free_object,
 #ifdef __NetBSD__
 	/* XXX Not clear the `or legacy' part is important here.  */
-	.mmap_object = &drm_gem_or_legacy_mmap_object,
+	.mmap_object = &drm_gem_mmap_object,
 	.gem_uvm_ops = &i915_gem_uvm_ops,
 #else
 	.gem_vm_ops = &i915_gem_vm_ops,
