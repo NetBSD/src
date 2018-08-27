@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_core_gpuobj.c,v 1.3 2018/08/27 07:36:18 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_core_gpuobj.c,v 1.4 2018/08/27 14:51:33 riastradh Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_core_gpuobj.c,v 1.3 2018/08/27 07:36:18 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_core_gpuobj.c,v 1.4 2018/08/27 14:51:33 riastradh Exp $");
 
 #include <core/gpuobj.h>
 #include <core/engine.h>
@@ -46,7 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_core_gpuobj.c,v 1.3 2018/08/27 07:36:18
 #  define	iowrite32_native	fake_iowrite32_native
 
 static inline uint32_t
-fake_ioread32_native(const void __iomem *ptr)
+ioread32_native(const void __iomem *ptr)
 {
 	uint32_t v;
 
@@ -57,7 +57,7 @@ fake_ioread32_native(const void __iomem *ptr)
 }
 
 static inline void
-fake_iowrite32_native(uint32_t v, void __iomem *ptr)
+iowrite32_native(uint32_t v, void __iomem *ptr)
 {
 
 	membar_producer();

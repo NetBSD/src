@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_subdev_instmem_nv40.c,v 1.3 2018/08/27 07:36:28 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_subdev_instmem_nv40.c,v 1.4 2018/08/27 14:51:33 riastradh Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_instmem_nv40.c,v 1.3 2018/08/27 07:36:28 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_instmem_nv40.c,v 1.4 2018/08/27 14:51:33 riastradh Exp $");
 
 #define nv40_instmem(p) container_of((p), struct nv40_instmem, base)
 #include "priv.h"
@@ -95,7 +95,8 @@ nv40_instobj_rd32(struct nvkm_memory *memory, u64 offset)
 	struct nv40_instobj *iobj = nv40_instobj(memory);
 #ifdef __NetBSD__
 	offset += iobj->node->offset;
-	return bus_space_read_4(iobj->imem->iomemt, iobj->imem->iomemh, offset);
+	return bus_space_read_stream_4(iobj->imem->iomemt, iobj->imem->iomemh,
+	    offset);
 #else
 	return ioread32_native(iobj->imem->iomem + iobj->node->offset + offset);
 #endif
@@ -107,7 +108,8 @@ nv40_instobj_wr32(struct nvkm_memory *memory, u64 offset, u32 data)
 	struct nv40_instobj *iobj = nv40_instobj(memory);
 #ifdef __NetBSD__
 	offset += iobj->node->offset;
-	bus_space_write_4(iobj->imem->iomemt, iobj->imem->iomemh, offset, data);
+	bus_space_write_stream_4(iobj->imem->iomemt, iobj->imem->iomemh,
+	    offset, data);
 #else
 	iowrite32_native(data, iobj->imem->iomem + iobj->node->offset + offset);
 #endif

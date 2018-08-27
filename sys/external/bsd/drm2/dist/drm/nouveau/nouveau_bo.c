@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_bo.c,v 1.10 2018/08/27 07:32:40 riastradh Exp $	*/
+/*	$NetBSD: nouveau_bo.c,v 1.11 2018/08/27 14:51:33 riastradh Exp $	*/
 
 /*
  * Copyright 2007 Dave Airlied
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_bo.c,v 1.10 2018/08/27 07:32:40 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_bo.c,v 1.11 2018/08/27 14:51:33 riastradh Exp $");
 
 #include <linux/dma-mapping.h>
 #include <linux/swiotlb.h>
@@ -551,7 +551,7 @@ ioread16_native(const void __iomem *ptr)
 	v = *(const uint16_t __iomem *)ptr;
 	membar_consumer();
 
-	return htole16(v);
+	return v;
 }
 
 static inline uint32_t
@@ -562,7 +562,7 @@ ioread32_native(const void __iomem *ptr)
 	v = *(const uint32_t __iomem *)ptr;
 	membar_consumer();
 
-	return htole32(v);
+	return v;
 }
 
 static inline void
@@ -570,7 +570,7 @@ iowrite16_native(uint16_t v, void __iomem *ptr)
 {
 
 	membar_producer();
-	*(uint16_t __iomem *)ptr = le16toh(v);
+	*(uint16_t __iomem *)ptr = v;
 }
 
 static inline void
@@ -578,7 +578,7 @@ iowrite32_native(uint32_t v, void __iomem *ptr)
 {
 
 	membar_producer();
-	*(uint32_t __iomem *)ptr = le32toh(v);
+	*(uint32_t __iomem *)ptr = v;
 }
 #endif
 
