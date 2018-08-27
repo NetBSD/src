@@ -1,4 +1,4 @@
-/*	$NetBSD: reservation.h,v 1.7 2018/08/27 14:01:14 riastradh Exp $	*/
+/*	$NetBSD: reservation.h,v 1.8 2018/08/27 15:25:13 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -32,10 +32,9 @@
 #ifndef	_LINUX_RESERVATION_H_
 #define	_LINUX_RESERVATION_H_
 
+#include <linux/fence.h>
 #include <linux/rcupdate.h>
 #include <linux/ww_mutex.h>
-
-struct fence;
 
 struct reservation_object {
 	struct ww_mutex		lock;
@@ -54,6 +53,14 @@ struct reservation_object_list {
 	struct fence __rcu	*shared[];
 };
 
+/* NetBSD addition */
+struct reservation_poll {
+	kmutex_t		rp_lock;
+	struct selinfo		rp_selq;
+	struct fence_cb		rp_fcb;
+	bool			rp_claimed;
+};
+
 #define	reservation_object_add_excl_fence	linux_reservation_object_add_excl_fence
 #define	reservation_object_add_shared_fence	linux_reservation_object_add_shared_fence
 #define	reservation_object_fini			linux_reservation_object_fini
@@ -62,9 +69,13 @@ struct reservation_object_list {
 #define	reservation_object_get_list		linux_reservation_object_get_list
 #define	reservation_object_held			linux_reservation_object_held
 #define	reservation_object_init			linux_reservation_object_init
+#define	reservation_object_kqfilter		linux_reservation_object_kqfilter
+#define	reservation_object_poll			linux_reservation_object_poll
 #define	reservation_object_reserve_shared	linux_reservation_object_reserve_shared
 #define	reservation_object_test_signaled_rcu	linux_reservation_object_test_signaled_rcu
 #define	reservation_object_wait_timeout_rcu	linux_reservation_object_wait_timeout_rcu
+#define	reservation_poll_fini			linux_reservation_poll_fini
+#define	reservation_poll_init			linux_reservation_poll_init
 #define	reservation_ww_class			linux_reservation_ww_class
 
 extern struct ww_class	reservation_ww_class;
@@ -89,5 +100,13 @@ bool	reservation_object_test_signaled_rcu(struct reservation_object *,
 	    bool);
 long	reservation_object_wait_timeout_rcu(struct reservation_object *,
 	    bool, bool, unsigned long);
+
+/* NetBSD additions */
+void	reservation_poll_init(struct reservation_poll *);
+void	reservation_poll_fini(struct reservation_poll *);
+int	reservation_object_poll(struct reservation_object *, int,
+	    struct reservation_poll *);
+int	reservation_object_kqfilter(struct reservation_object *,
+	    struct knote *, struct reservation_poll *);
 
 #endif	/* _LINUX_RESERVATION_H_ */
