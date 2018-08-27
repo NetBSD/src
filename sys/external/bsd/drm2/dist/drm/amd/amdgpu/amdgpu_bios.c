@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_bios.c,v 1.2 2018/08/27 04:58:19 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_bios.c,v 1.3 2018/08/27 14:04:50 riastradh Exp $	*/
 
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
@@ -28,7 +28,7 @@
  *          Jerome Glisse
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_bios.c,v 1.2 2018/08/27 04:58:19 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_bios.c,v 1.3 2018/08/27 14:04:50 riastradh Exp $");
 
 #include <drm/drmP.h>
 #include "amdgpu.h"
@@ -48,15 +48,39 @@ __KERNEL_RCSID(0, "$NetBSD: amdgpu_bios.c,v 1.2 2018/08/27 04:58:19 riastradh Ex
  */
 static bool igp_read_bios_from_vram(struct amdgpu_device *adev)
 {
+#ifdef __NetBSD__
+	bus_space_tag_t bst;
+	bus_space_handle_t bsh;
+	bus_size_t size;
+#else
 	uint8_t __iomem *bios;
 	resource_size_t vram_base;
 	resource_size_t size = 256 * 1024; /* ??? */
+#endif
 
 	if (!(adev->flags & AMD_IS_APU))
 		if (!amdgpu_card_posted(adev))
 			return false;
 
 	adev->bios = NULL;
+#ifdef __NetBSD__
+	if (pci_mapreg_map(&adev->pdev->pd_pa, PCI_BAR(0),
+		/* XXX Dunno what type to expect here; fill me in...  */
+		pci_mapreg_type(adev->pdev->pd_pa.pa_pc,
+		    adev->pdev->pd_pa.pa_tag, PCI_BAR(0)),
+		0, &bst, &bsh, NULL, &size))
+		return false;
+	if ((size == 0) ||
+	    (size < 256 * 1024) ||
+	    (bus_space_read_1(bst, bsh, 0) != 0x55) ||
+	    (bus_space_read_1(bst, bsh, 1) != 0xaa) ||
+	    ((adev->bios = kmalloc(size, GFP_KERNEL)) == NULL)) {
+		bus_space_unmap(bst, bsh, size);
+		return false;
+	}
+	bus_space_read_region_1(bst, bsh, 0, adev->bios, size);
+	bus_space_unmap(bst, bsh, size);
+#else
 	vram_base = pci_resource_start(adev->pdev, 0);
 	bios = ioremap(vram_base, size);
 	if (!bios) {
@@ -74,8 +98,13 @@ static bool igp_read_bios_from_vram(struct amdgpu_device *adev)
 	}
 	memcpy_fromio(adev->bios, bios, size);
 	iounmap(bios);
+#endif
 	return true;
 }
+
+#ifdef __NetBSD__
+#  define	__iomem	__pci_rom_iomem
+#endif
 
 bool amdgpu_read_bios(struct amdgpu_device *adev)
 {
@@ -89,8 +118,16 @@ bool amdgpu_read_bios(struct amdgpu_device *adev)
 		return false;
 	}
 
+#ifdef __NetBSD__
+	const bus_space_tag_t bst = adev->pdev->pd_rom_bst;
+	const bus_space_handle_t bsh = adev->pdev->pd_rom_found_bsh;
+
+	val1 = bus_space_read_1(bst, bsh, 0);
+	val2 = bus_space_read_1(bst, bsh, 1);
+#else
 	val1 = readb(&bios[0]);
 	val2 = readb(&bios[1]);
+#endif
 
 	if (size == 0 || val1 != 0x55 || val2 != 0xaa) {
 		pci_unmap_rom(adev->pdev, bios);
@@ -106,8 +143,15 @@ bool amdgpu_read_bios(struct amdgpu_device *adev)
 	return true;
 }
 
+#ifdef __NetBSD__
+#  undef	__iomem
+#endif
+
 static bool amdgpu_read_platform_bios(struct amdgpu_device *adev)
 {
+#ifdef __NetBSD__		/* XXX amdgpu platform bios */
+	return false;
+#else
 	uint8_t __iomem *bios;
 	size_t size;
 
@@ -127,8 +171,10 @@ static bool amdgpu_read_platform_bios(struct amdgpu_device *adev)
 	}
 
 	return true;
+#endif	/* __NetBSD__ */
 }
 
+/* XXX amdgpu acpi */
 #ifdef CONFIG_ACPI
 /* ATRM is used to get the BIOS on the discrete cards in
  * dual-gpu systems.

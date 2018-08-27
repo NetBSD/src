@@ -1,4 +1,4 @@
-/*	$NetBSD: gfx_v8_0.c,v 1.2 2018/08/27 04:58:20 riastradh Exp $	*/
+/*	$NetBSD: gfx_v8_0.c,v 1.3 2018/08/27 14:04:50 riastradh Exp $	*/
 
 /*
  * Copyright 2014 Advanced Micro Devices, Inc.
@@ -23,9 +23,12 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gfx_v8_0.c,v 1.2 2018/08/27 04:58:20 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gfx_v8_0.c,v 1.3 2018/08/27 14:04:50 riastradh Exp $");
 
 #include <linux/firmware.h>
+#include <linux/module.h>
+#include <linux/log2.h>
+#include <asm/byteorder.h>
 #include "drmP.h"
 #include "amdgpu.h"
 #include "amdgpu_gfx.h"
@@ -33,6 +36,7 @@ __KERNEL_RCSID(0, "$NetBSD: gfx_v8_0.c,v 1.2 2018/08/27 04:58:20 riastradh Exp $
 #include "vid.h"
 #include "amdgpu_ucode.h"
 #include "clearstate_vi.h"
+#include "gfx_v8_0.h"
 
 #include "gmc/gmc_8_2_d.h"
 #include "gmc/gmc_8_2_sh_mask.h"
@@ -837,35 +841,55 @@ static int gfx_v8_0_init_microcode(struct amdgpu_device *adev)
 		info->fw = adev->gfx.pfp_fw;
 		header = (const struct common_firmware_header *)info->fw->data;
 		adev->firmware.fw_size +=
+#ifdef __NetBSD__		/* XXX ALIGN means something else.  */
+			round_up(le32_to_cpu(header->ucode_size_bytes), PAGE_SIZE);
+#else
 			ALIGN(le32_to_cpu(header->ucode_size_bytes), PAGE_SIZE);
+#endif
 
 		info = &adev->firmware.ucode[AMDGPU_UCODE_ID_CP_ME];
 		info->ucode_id = AMDGPU_UCODE_ID_CP_ME;
 		info->fw = adev->gfx.me_fw;
 		header = (const struct common_firmware_header *)info->fw->data;
 		adev->firmware.fw_size +=
+#ifdef __NetBSD__		/* XXX ALIGN means something else.  */
+			round_up(le32_to_cpu(header->ucode_size_bytes), PAGE_SIZE);
+#else
 			ALIGN(le32_to_cpu(header->ucode_size_bytes), PAGE_SIZE);
+#endif
 
 		info = &adev->firmware.ucode[AMDGPU_UCODE_ID_CP_CE];
 		info->ucode_id = AMDGPU_UCODE_ID_CP_CE;
 		info->fw = adev->gfx.ce_fw;
 		header = (const struct common_firmware_header *)info->fw->data;
 		adev->firmware.fw_size +=
+#ifdef __NetBSD__		/* XXX ALIGN means something else.  */
+			round_up(le32_to_cpu(header->ucode_size_bytes), PAGE_SIZE);
+#else
 			ALIGN(le32_to_cpu(header->ucode_size_bytes), PAGE_SIZE);
+#endif
 
 		info = &adev->firmware.ucode[AMDGPU_UCODE_ID_RLC_G];
 		info->ucode_id = AMDGPU_UCODE_ID_RLC_G;
 		info->fw = adev->gfx.rlc_fw;
 		header = (const struct common_firmware_header *)info->fw->data;
 		adev->firmware.fw_size +=
+#ifdef __NetBSD__		/* XXX ALIGN means something else.  */
+			round_up(le32_to_cpu(header->ucode_size_bytes), PAGE_SIZE);
+#else
 			ALIGN(le32_to_cpu(header->ucode_size_bytes), PAGE_SIZE);
+#endif
 
 		info = &adev->firmware.ucode[AMDGPU_UCODE_ID_CP_MEC1];
 		info->ucode_id = AMDGPU_UCODE_ID_CP_MEC1;
 		info->fw = adev->gfx.mec_fw;
 		header = (const struct common_firmware_header *)info->fw->data;
 		adev->firmware.fw_size +=
+#ifdef __NetBSD__		/* XXX ALIGN means something else.  */
+			round_up(le32_to_cpu(header->ucode_size_bytes), PAGE_SIZE);
+#else
 			ALIGN(le32_to_cpu(header->ucode_size_bytes), PAGE_SIZE);
+#endif
 
 		if (adev->gfx.mec2_fw) {
 			info = &adev->firmware.ucode[AMDGPU_UCODE_ID_CP_MEC2];
@@ -873,7 +897,11 @@ static int gfx_v8_0_init_microcode(struct amdgpu_device *adev)
 			info->fw = adev->gfx.mec2_fw;
 			header = (const struct common_firmware_header *)info->fw->data;
 			adev->firmware.fw_size +=
+#ifdef __NetBSD__		/* XXX ALIGN means something else.  */
+				round_up(le32_to_cpu(header->ucode_size_bytes), PAGE_SIZE);
+#else
 				ALIGN(le32_to_cpu(header->ucode_size_bytes), PAGE_SIZE);
+#endif
 		}
 
 	}
@@ -972,7 +1000,7 @@ static int gfx_v8_0_mec_init(struct amdgpu_device *adev)
 static void gfx_v8_0_gpu_early_init(struct amdgpu_device *adev)
 {
 	u32 gb_addr_config;
-	u32 mc_shared_chmap, mc_arb_ramcfg;
+	u32 mc_shared_chmap __unused, mc_arb_ramcfg;
 	u32 dimm00_addr_map, dimm01_addr_map, dimm10_addr_map, dimm11_addr_map;
 	u32 tmp;
 
@@ -1236,7 +1264,7 @@ static int gfx_v8_0_sw_init(void *handle)
 	for (i = 0; i < adev->gfx.num_gfx_rings; i++) {
 		ring = &adev->gfx.gfx_ring[i];
 		ring->ring_obj = NULL;
-		sprintf(ring->name, "gfx");
+		snprintf(ring->name, sizeof ring->name, "gfx");
 		/* no gfx doorbells on iceland */
 		if (adev->asic_type != CHIP_TOPAZ) {
 			ring->use_doorbell = true;
@@ -1267,7 +1295,7 @@ static int gfx_v8_0_sw_init(void *handle)
 		ring->me = 1; /* first MEC */
 		ring->pipe = i / 8;
 		ring->queue = i % 8;
-		sprintf(ring->name, "comp %d.%d.%d", ring->me, ring->pipe, ring->queue);
+		snprintf(ring->name, sizeof ring->name, "comp %d.%d.%d", ring->me, ring->pipe, ring->queue);
 		irq_type = AMDGPU_CP_IRQ_COMPUTE_MEC1_PIPE0_EOP + ring->pipe;
 		/* type-2 packets are deprecated on MEC, use type-3 instead */
 		r = amdgpu_ring_init(adev, ring, 1024 * 1024,
@@ -1330,7 +1358,7 @@ static void gfx_v8_0_tiling_mode_table_init(struct amdgpu_device *adev)
 {
 	const u32 num_tile_mode_states = 32;
 	const u32 num_secondary_tile_mode_states = 16;
-	u32 reg_offset, gb_tile_moden, split_equal_to_row_size;
+	u32 reg_offset, gb_tile_moden, split_equal_to_row_size __unused;
 
 	switch (adev->gfx.config.mem_row_size_in_kb) {
 	case 1:
@@ -3016,6 +3044,7 @@ static void gfx_v8_0_enable_gui_idle_interrupt(struct amdgpu_device *adev,
 	WREG32(mmCP_INT_CNTL_RING0, tmp);
 }
 
+static
 void gfx_v8_0_rlc_stop(struct amdgpu_device *adev)
 {
 	u32 tmp = RREG32(mmRLC_CNTL);

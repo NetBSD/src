@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_object.h,v 1.2 2018/08/27 04:58:19 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_object.h,v 1.3 2018/08/27 14:04:50 riastradh Exp $	*/
 
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
@@ -30,6 +30,7 @@
 #ifndef __AMDGPU_OBJECT_H__
 #define __AMDGPU_OBJECT_H__
 
+#include <linux/device.h>
 #include <drm/amdgpu_drm.h>
 #include "amdgpu.h"
 
@@ -153,8 +154,10 @@ int amdgpu_bo_evict_vram(struct amdgpu_device *adev);
 void amdgpu_bo_force_delete(struct amdgpu_device *adev);
 int amdgpu_bo_init(struct amdgpu_device *adev);
 void amdgpu_bo_fini(struct amdgpu_device *adev);
+#ifndef __NetBSD__
 int amdgpu_bo_fbdev_mmap(struct amdgpu_bo *bo,
 				struct vm_area_struct *vma);
+#endif
 int amdgpu_bo_set_tiling_flags(struct amdgpu_bo *bo, u64 tiling_flags);
 void amdgpu_bo_get_tiling_flags(struct amdgpu_bo *bo, u64 *tiling_flags);
 int amdgpu_bo_set_metadata (struct amdgpu_bo *bo, void *metadata,
@@ -179,7 +182,7 @@ static inline uint64_t amdgpu_sa_bo_gpu_addr(struct amdgpu_sa_bo *sa_bo)
 
 static inline void * amdgpu_sa_bo_cpu_addr(struct amdgpu_sa_bo *sa_bo)
 {
-	return sa_bo->manager->cpu_ptr + sa_bo->soffset;
+	return (char *)sa_bo->manager->cpu_ptr + sa_bo->soffset;
 }
 
 int amdgpu_sa_bo_manager_init(struct amdgpu_device *adev,

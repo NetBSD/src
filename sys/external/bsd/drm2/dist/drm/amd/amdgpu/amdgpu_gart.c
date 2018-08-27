@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_gart.c,v 1.2 2018/08/27 04:58:19 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_gart.c,v 1.3 2018/08/27 14:04:50 riastradh Exp $	*/
 
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
@@ -28,7 +28,7 @@
  *          Jerome Glisse
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_gart.c,v 1.2 2018/08/27 04:58:19 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_gart.c,v 1.3 2018/08/27 14:04:50 riastradh Exp $");
 
 #include <drm/drmP.h>
 #include <drm/amdgpu_drm.h>
@@ -69,6 +69,44 @@ __KERNEL_RCSID(0, "$NetBSD: amdgpu_gart.c,v 1.2 2018/08/27 04:58:19 riastradh Ex
  */
 int amdgpu_gart_table_ram_alloc(struct amdgpu_device *adev)
 {
+#ifdef __NetBSD__
+	int rsegs;
+	int error;
+
+	error = bus_dmamem_alloc(adev->ddev->dmat, adev->gart.table_size,
+	    PAGE_SIZE, 0, &adev->gart.ag_table_seg, 1, &rsegs, BUS_DMA_WAITOK);
+	if (error)
+		goto fail0;
+	KASSERT(rsegs == 1);
+	error = bus_dmamap_create(adev->ddev->dmat, adev->gart.table_size, 1,
+	    adev->gart.table_size, 0, BUS_DMA_WAITOK,
+	    &adev->gart.ag_table_map);
+	if (error)
+		goto fail1;
+	error = bus_dmamem_map(adev->ddev->dmat, &adev->gart.ag_table_seg, 1,
+	    adev->gart.table_size, &adev->gart.ptr,
+	    BUS_DMA_WAITOK|BUS_DMA_NOCACHE);
+	if (error)
+		goto fail2;
+	error = bus_dmamap_load(adev->ddev->dmat, adev->gart.ag_table_map,
+	    adev->gart.ptr, adev->gart.table_size, NULL, BUS_DMA_WAITOK);
+	if (error)
+		goto fail3;
+
+	/* Success!  */
+	adev->gart.table_addr = adev->gart.ag_table_map->dm_segs[0].ds_addr;
+	return 0;
+
+fail4: __unused
+	bus_dmamap_unload(adev->ddev->dmat, adev->gart.ag_table_map);
+fail3:	bus_dmamem_unmap(adev->ddev->dmat, adev->gart.ptr,
+	    adev->gart.table_size);
+fail2:	bus_dmamap_destroy(adev->ddev->dmat, adev->gart.ag_table_map);
+fail1:	bus_dmamem_free(adev->ddev->dmat, &adev->gart.ag_table_seg, 1);
+fail0:	KASSERT(error);
+	/* XXX errno NetBSD->Linux */
+	return -error;
+#else  /* __NetBSD__ */
 	void *ptr;
 
 	ptr = pci_alloc_consistent(adev->pdev, adev->gart.table_size,
@@ -85,6 +123,7 @@ int amdgpu_gart_table_ram_alloc(struct amdgpu_device *adev)
 	adev->gart.ptr = ptr;
 	memset((void *)adev->gart.ptr, 0, adev->gart.table_size);
 	return 0;
+#endif	/* __NetBSD__ */
 }
 
 /**
@@ -101,6 +140,13 @@ void amdgpu_gart_table_ram_free(struct amdgpu_device *adev)
 	if (adev->gart.ptr == NULL) {
 		return;
 	}
+#ifdef __NetBSD__
+	bus_dmamap_unload(adev->ddev->dmat, adev->gart.ag_table_map);
+	bus_dmamem_unmap(adev->ddev->dmat, adev->gart.ptr,
+	    adev->gart.table_size);
+	bus_dmamap_destroy(adev->ddev->dmat, adev->gart.ag_table_map);
+	bus_dmamem_free(adev->ddev->dmat, &adev->gart.ag_table_seg, 1);
+#else
 #ifdef CONFIG_X86
 	if (0) {
 		set_memory_wb((unsigned long)adev->gart.ptr,
@@ -112,6 +158,7 @@ void amdgpu_gart_table_ram_free(struct amdgpu_device *adev)
 			    adev->gart.table_addr);
 	adev->gart.ptr = NULL;
 	adev->gart.table_addr = 0;
+#endif
 }
 
 /**
@@ -213,9 +260,82 @@ void amdgpu_gart_table_vram_free(struct amdgpu_device *adev)
 	amdgpu_bo_unref(&adev->gart.robj);
 }
 
+#ifdef __NetBSD__
+static void
+amdgpu_gart_pre_update(struct amdgpu_device *adev, unsigned gpu_pgstart,
+    unsigned gpu_npages)
+{
+
+	if (adev->gart.ag_table_map != NULL) {
+		const unsigned entsize =
+		    adev->gart.table_size / adev->gart.num_gpu_pages;
+
+		bus_dmamap_sync(adev->ddev->dmat, adev->gart.ag_table_map,
+		    gpu_pgstart*entsize, gpu_npages*entsize,
+		    BUS_DMASYNC_POSTWRITE);
+	}
+}
+
+static void
+amdgpu_gart_post_update(struct amdgpu_device *adev, unsigned gpu_pgstart,
+    unsigned gpu_npages)
+{
+
+	if (adev->gart.ag_table_map != NULL) {
+		const unsigned entsize =
+		    adev->gart.table_size / adev->gart.num_gpu_pages;
+
+		bus_dmamap_sync(adev->ddev->dmat, adev->gart.ag_table_map,
+		    gpu_pgstart*entsize, gpu_npages*entsize,
+		    BUS_DMASYNC_PREWRITE);
+	}
+	membar_sync();		/* XXX overkill */
+	amdgpu_gart_flush_gpu_tlb(adev, 0);
+}
+#endif
+
 /*
  * Common gart functions.
  */
+#ifdef __NetBSD__
+void
+amdgpu_gart_unbind(struct amdgpu_device *adev, uint64_t gpu_start,
+    unsigned npages)
+{
+	const unsigned gpu_per_cpu = (PAGE_SIZE / AMDGPU_GPU_PAGE_SIZE);
+	const unsigned gpu_npages = (npages * gpu_per_cpu);
+	const uint64_t gpu_pgstart = (gpu_start / AMDGPU_GPU_PAGE_SIZE);
+	const uint64_t pgstart = (gpu_pgstart / gpu_per_cpu);
+	uint64_t pgno, gpu_pgno;
+	uint32_t flags = AMDGPU_PTE_SYSTEM;
+
+	KASSERT(pgstart == (gpu_start / PAGE_SIZE));
+	KASSERT(npages <= adev->gart.num_cpu_pages);
+	KASSERT(gpu_npages <= adev->gart.num_cpu_pages);
+
+	if (!adev->gart.ready) {
+		WARN(1, "trying to bind memory to uninitialized GART !\n");
+		return;
+	}
+
+	amdgpu_gart_pre_update(adev, gpu_pgstart, gpu_npages);
+	for (pgno = 0; pgno < npages; pgno++) {
+		if (adev->gart.pages[pgstart + pgno] == NULL)
+			continue;
+		adev->gart.pages[pgstart + pgno] = NULL;
+		adev->gart.pages_addr[pgstart + pgno] = adev->dummy_page.addr;
+
+		if (adev->gart.ptr == NULL)
+			continue;
+		for (gpu_pgno = 0; gpu_pgno < gpu_per_cpu; gpu_pgno++) {
+			amdgpu_gart_set_pte_pde(adev, adev->gart.ptr,
+			    gpu_pgstart + gpu_per_cpu*pgno + gpu_pgno,
+			    adev->dummy_page.addr, flags);
+		}
+	}
+	amdgpu_gart_post_update(adev, gpu_pgstart, gpu_npages);
+}
+#else  /* __NetBSD__ */
 /**
  * amdgpu_gart_unbind - unbind pages from the gart page table
  *
@@ -260,7 +380,51 @@ void amdgpu_gart_unbind(struct amdgpu_device *adev, uint64_t offset,
 	mb();
 	amdgpu_gart_flush_gpu_tlb(adev, 0);
 }
+#endif	/* __NetBSD__ */
 
+#ifdef __NetBSD__
+int
+amdgpu_gart_bind(struct amdgpu_device *adev, uint64_t gpu_start,
+    unsigned npages, struct page **pages, bus_dmamap_t dmamap, uint32_t flags)
+{
+	const unsigned gpu_per_cpu = (PAGE_SIZE / AMDGPU_GPU_PAGE_SIZE);
+	const unsigned gpu_npages = (npages * gpu_per_cpu);
+	const uint64_t gpu_pgstart = (gpu_start / AMDGPU_GPU_PAGE_SIZE);
+	const uint64_t pgstart = (gpu_pgstart / gpu_per_cpu);
+	uint64_t pgno, gpu_pgno;
+
+	KASSERT(pgstart == (gpu_start / PAGE_SIZE));
+	KASSERT(npages == dmamap->dm_nsegs);
+	KASSERT(npages <= adev->gart.num_cpu_pages);
+	KASSERT(gpu_npages <= adev->gart.num_cpu_pages);
+
+	if (!adev->gart.ready) {
+		WARN(1, "trying to bind memory to uninitialized GART !\n");
+		return -EINVAL;
+	}
+
+	amdgpu_gart_pre_update(adev, gpu_pgstart, gpu_npages);
+	for (pgno = 0; pgno < npages; pgno++) {
+		const bus_addr_t addr = dmamap->dm_segs[pgno].ds_addr;
+
+		KASSERT(dmamap->dm_segs[pgno].ds_len == PAGE_SIZE);
+		adev->gart.pages[pgstart + pgno] = pages[pgno];
+		adev->gart.pages_addr[pgstart + pgno] = addr;
+
+		if (adev->gart.ptr == NULL)
+			continue;
+
+		for (gpu_pgno = 0; gpu_pgno < gpu_per_cpu; gpu_pgno++) {
+			amdgpu_gart_set_pte_pde(adev, adev->gart.ptr,
+			    gpu_pgstart + gpu_per_cpu*pgno + gpu_pgno,
+			    addr + gpu_pgno*AMDGPU_GPU_PAGE_SIZE, flags);
+		}
+	}
+	amdgpu_gart_post_update(adev, gpu_pgstart, gpu_npages);
+
+	return 0;
+}
+#else  /* __NetBSD__ */
 /**
  * amdgpu_gart_bind - bind pages into the gart page table
  *
@@ -306,6 +470,7 @@ int amdgpu_gart_bind(struct amdgpu_device *adev, uint64_t offset,
 	amdgpu_gart_flush_gpu_tlb(adev, 0);
 	return 0;
 }
+#endif
 
 /**
  * amdgpu_gart_init - init the driver info for managing the gart

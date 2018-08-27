@@ -1,4 +1,4 @@
-/*	$NetBSD: cz_smc.c,v 1.2 2018/08/27 04:58:20 riastradh Exp $	*/
+/*	$NetBSD: cz_smc.c,v 1.3 2018/08/27 14:04:50 riastradh Exp $	*/
 
 /*
  * Copyright 2014 Advanced Micro Devices, Inc.
@@ -23,9 +23,10 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cz_smc.c,v 1.2 2018/08/27 04:58:20 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cz_smc.c,v 1.3 2018/08/27 14:04:50 riastradh Exp $");
 
 #include <linux/firmware.h>
+#include <asm/byteorder.h>
 #include "drmP.h"
 #include "amdgpu.h"
 #include "smu8.h"
@@ -35,6 +36,8 @@ __KERNEL_RCSID(0, "$NetBSD: cz_smc.c,v 1.2 2018/08/27 04:58:20 riastradh Exp $")
 #include "smu_ucode_xfer_cz.h"
 #include "amdgpu_ucode.h"
 
+#include "cz_dpm.h"
+#include "vi_dpm.h"
 #include "smu/smu_8_0_d.h"
 #include "smu/smu_8_0_sh_mask.h"
 #include "gca/gfx_8_0_d.h"
@@ -53,7 +56,7 @@ static struct cz_smu_private_data *cz_smu_get_priv(struct amdgpu_device *adev)
 	return priv;
 }
 
-int cz_send_msg_to_smc_async(struct amdgpu_device *adev, u16 msg)
+static int cz_send_msg_to_smc_async(struct amdgpu_device *adev, u16 msg)
 {
 	int i;
 	u32 content = 0, tmp;
@@ -104,12 +107,14 @@ int cz_send_msg_to_smc(struct amdgpu_device *adev, u16 msg)
 	return 0;
 }
 
+#ifndef __NetBSD__		/* XXX unused? */
 int cz_send_msg_to_smc_with_parameter_async(struct amdgpu_device *adev,
 						u16 msg, u32 parameter)
 {
 	WREG32(mmSMU_MP1_SRBM2P_ARG_0, parameter);
 	return cz_send_msg_to_smc_async(adev, msg);
 }
+#endif
 
 int cz_send_msg_to_smc_with_parameter(struct amdgpu_device *adev,
 						u16 msg, u32 parameter)
@@ -145,7 +150,7 @@ int cz_read_smc_sram_dword(struct amdgpu_device *adev, u32 smc_address,
 	return 0;
 }
 
-int cz_write_smc_sram_dword(struct amdgpu_device *adev, u32 smc_address,
+static int cz_write_smc_sram_dword(struct amdgpu_device *adev, u32 smc_address,
 						u32 value, u32 limit)
 {
 	int ret;
@@ -495,7 +500,7 @@ static int cz_smu_populate_single_scratch_entry(struct amdgpu_device *adev,
 
 	priv->smu_buffer_used_bytes += size_in_byte;
 	entry->data_size = size_in_byte;
-	entry->kaddr = priv->smu_buffer.kaddr + priv->smu_buffer_used_bytes;
+	entry->kaddr = (char *)priv->smu_buffer.kaddr + priv->smu_buffer_used_bytes;
 	entry->mc_addr_low = lower_32_bits(mc_addr);
 	entry->mc_addr_high = upper_32_bits(mc_addr);
 	entry->firmware_ID = scratch_type;
@@ -827,12 +832,21 @@ int cz_smu_init(struct amdgpu_device *adev)
 	adev->smu.fw_flags = 0;
 	priv->toc_buffer.data_size = 4096;
 
+#ifdef __NetBSD__		/* XXX ALIGN means something else */
+	priv->smu_buffer.data_size =
+				round_up(UCODE_ID_RLC_SCRATCH_SIZE_BYTE, 32) +
+				round_up(UCODE_ID_RLC_SRM_ARAM_SIZE_BYTE, 32) +
+				round_up(UCODE_ID_RLC_SRM_DRAM_SIZE_BYTE, 32) +
+				round_up(sizeof(struct SMU8_MultimediaPowerLogData), 32) +
+				round_up(sizeof(struct SMU8_Fusion_ClkTable), 32);
+#else
 	priv->smu_buffer.data_size =
 				ALIGN(UCODE_ID_RLC_SCRATCH_SIZE_BYTE, 32) +
 				ALIGN(UCODE_ID_RLC_SRM_ARAM_SIZE_BYTE, 32) +
 				ALIGN(UCODE_ID_RLC_SRM_DRAM_SIZE_BYTE, 32) +
 				ALIGN(sizeof(struct SMU8_MultimediaPowerLogData), 32) +
 				ALIGN(sizeof(struct SMU8_Fusion_ClkTable), 32);
+#endif
 
 	/* prepare toc buffer and smu buffer:
 	* 1. create amdgpu_bo for toc buffer and smu buffer
