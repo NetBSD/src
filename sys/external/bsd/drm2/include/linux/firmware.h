@@ -1,4 +1,4 @@
-/*	$NetBSD: firmware.h,v 1.7 2018/08/27 06:43:24 riastradh Exp $	*/
+/*	$NetBSD: firmware.h,v 1.8 2018/08/27 07:24:54 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -35,15 +35,29 @@
 #include <sys/types.h>
 #include <sys/device.h>
 #include <sys/kmem.h>
+#include <sys/module.h>
 #include <sys/systm.h>
 
 #include <dev/firmload.h>
+
+#include <linux/slab.h>
+#include <linux/string.h>
+#include <linux/workqueue.h>
 
 struct device;
 
 struct firmware {
 	char			*data;
 	size_t			size;
+};
+
+struct firmload_work {
+	char		*flw_name;
+	void		(*flw_callback)(const struct firmware *, void *);
+	void		*flw_cookie;
+	struct device	*flw_device;
+	struct module	*flw_module;
+	struct work_struct flw_work;
 };
 
 static inline int
@@ -89,6 +103,75 @@ fail0:	KASSERT(ret);
 	kmem_free(fw, sizeof(*fw));
 	*fwp = NULL;
 	return ret;
+}
+
+static inline void
+request_firmware_work(struct work_struct *wk)
+{
+	struct firmload_work *work = container_of(wk, struct firmload_work,
+	    flw_work);
+	const struct firmware *fw;
+	int ret;
+
+	/* Reqeust the firmware.  If it failed, set it to NULL.  */
+	ret = request_firmware(&fw, work->flw_name, work->flw_device);
+	if (ret)
+		fw = NULL;
+
+	/* Call the callback. */
+	(*work->flw_callback)(fw, work->flw_cookie);
+
+	/*
+	 * Release the device and module references now that we're
+	 * done.
+	 *
+	 * XXX Heh. What if the module gets unloaded _during_
+	 * module_rele because it went to zero?
+	 */
+	/* XXX device_release */
+	if (work->flw_module)
+		module_rele(work->flw_module);
+}
+
+static inline int
+request_firmware_nowait(struct module *module, bool uevent, const char *name,
+    struct device *device, gfp_t gfp, void *cookie,
+    void (*callback)(const struct firmware *, void *))
+{
+	char *namedup;
+	struct firmload_work *work;
+
+	/* Allocate memory for it, or fail if we can't.  */
+	work = kzalloc(sizeof(*work), gfp);
+	if (work == NULL)
+		goto fail0;
+
+	/* Copy the name just in case.  */
+	namedup = kstrdup(name, gfp);
+	if (namedup == NULL)
+		goto fail1;
+
+	/* Hold the module and device so they don't go away before callback. */
+	if (module)
+		module_hold(module);
+	/* XXX device_acquire(device) */
+
+	/* Initialize the work.  */
+	work->flw_name = namedup;
+	work->flw_callback = callback;
+	work->flw_cookie = callback;
+	work->flw_device = device;
+	work->flw_module = module;
+	INIT_WORK(&work->flw_work, request_firmware_work);
+
+	/* Kick it off.  */
+	schedule_work(&work->flw_work);
+
+	/* Success!  */
+	return 0;
+
+fail1:	kfree(work);
+fail0:	return -ENOMEM;
 }
 
 static inline void
