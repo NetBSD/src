@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_work.c,v 1.10 2018/08/27 14:10:54 riastradh Exp $	*/
+/*	$NetBSD: linux_work.c,v 1.11 2018/08/27 14:48:47 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_work.c,v 1.10 2018/08/27 14:10:54 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_work.c,v 1.11 2018/08/27 14:48:47 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -894,10 +894,19 @@ cancel_delayed_work_sync(struct delayed_work *dw)
 void
 flush_delayed_work(struct delayed_work *dw)
 {
-	struct workqueue_struct *wq = dw->work.w_wq;
 
-	if (wq != NULL)
-		flush_workqueue(wq);
+	if (cancel_delayed_work_sync(dw)) {
+		/*
+		 * Cancelled it.  Run it now.
+		 *
+		 * XXX What if it's supposed to run on a different
+		 * workqueue?  Let's just hope it's not...
+		 */
+		mod_delayed_work(system_wq, dw, 0);
+		flush_workqueue(system_wq);
+	} else {
+		/* Work ran to completion already.  We're done.  */
+	}
 }
 
 static void
