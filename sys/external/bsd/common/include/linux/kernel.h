@@ -1,4 +1,4 @@
-/*	$NetBSD: kernel.h,v 1.10 2018/08/27 06:06:10 riastradh Exp $	*/
+/*	$NetBSD: kernel.h,v 1.11 2018/08/27 06:07:20 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -43,6 +43,7 @@
 #define	oops_in_progress	(panicstr != NULL)
 
 #define	IS_ENABLED(option)	(option)
+#define	IS_BUILTIN(option)	(1) /* Probably... */
 
 #define	__printf	__printflike
 #define	__user
