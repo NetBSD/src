@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_cdevsw.c,v 1.1 2018/08/27 06:31:41 riastradh Exp $	*/
+/*	$NetBSD: drm_cdevsw.c,v 1.2 2018/08/27 06:48:50 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_cdevsw.c,v 1.1 2018/08/27 06:31:41 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_cdevsw.c,v 1.2 2018/08/27 06:48:50 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -387,7 +387,6 @@ fail0:	KASSERT(ret);
 int
 drm_lastclose(struct drm_device *dev)
 {
-	struct drm_vma_entry *vma, *vma_temp;
 
 	/* XXX Order is sketchy here...  */
 	if (dev->driver->lastclose)
@@ -399,19 +398,12 @@ drm_lastclose(struct drm_device *dev)
 	if (dev->agp)
 		drm_agp_clear_hook(dev);
 	drm_legacy_sg_cleanup(dev);
-	list_for_each_entry_safe(vma, vma_temp, &dev->vmalist, head) {
-		list_del(&vma->head);
-		kfree(vma);
-	}
+	drm_legacy_vma_flush(dev);
 	drm_legacy_dma_takedown(dev);
+
 	mutex_unlock(&dev->struct_mutex);
 
-	if (!drm_core_check_feature(dev, DRIVER_MODESET)) {
-		dev->sigdata.lock = NULL;
-		dev->context_flag = 0;
-		dev->last_context = 0;
-		dev->if_version = 0;
-	}
+	drm_legacy_dev_reinit(dev);
 
 	return 0;
 }
