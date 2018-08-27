@@ -1,4 +1,4 @@
-/*	$NetBSD: idr.h,v 1.4 2018/08/27 06:54:51 riastradh Exp $	*/
+/*	$NetBSD: idr.h,v 1.5 2018/08/27 06:55:01 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -51,6 +51,7 @@ struct idr {
 #define	idr_destroy		linux_idr_destroy
 #define	idr_find		linux_idr_find
 #define	idr_for_each		linux_idr_for_each
+#define	idr_get_next		linux_idr_get_next
 #define	idr_init		linux_idr_init
 #define	idr_is_empty		linux_idr_is_empty
 #define	idr_preload		linux_idr_preload
@@ -65,12 +66,16 @@ void	idr_init(struct idr *);
 void	idr_destroy(struct idr *);
 bool	idr_is_empty(struct idr *);
 void	*idr_find(struct idr *, int);
+void	*idr_get_next(struct idr *, int *);
 void	*idr_replace(struct idr *, void *, int);
 void	idr_remove(struct idr *, int);
 void	idr_preload(gfp_t);
 int	idr_alloc(struct idr *, void *, int, int, gfp_t);
 void	idr_preload_end(void);
 int	idr_for_each(struct idr *, int (*)(int, void *, void *), void *);
+
+#define	idr_for_each_entry(IDR, ENTRY, ID)				      \
+	for ((ID) = 0; ((ENTRY) = idr_get_next((IDR), &(ID))) != NULL; (ID)++)
 
 struct ida {
 	struct idr	ida_idr;

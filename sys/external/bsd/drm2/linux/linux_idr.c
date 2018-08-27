@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_idr.c,v 1.6 2017/07/26 03:40:39 riastradh Exp $	*/
+/*	$NetBSD: linux_idr.c,v 1.7 2018/08/27 06:55:01 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_idr.c,v 1.6 2017/07/26 03:40:39 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_idr.c,v 1.7 2018/08/27 06:55:01 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -145,6 +145,25 @@ idr_find(struct idr *idr, int id)
 	mutex_spin_enter(&idr->idr_lock);
 	node = rb_tree_find_node(&idr->idr_tree, &id);
 	data = (node == NULL? NULL : node->in_data);
+	mutex_spin_exit(&idr->idr_lock);
+
+	return data;
+}
+
+void *
+idr_get_next(struct idr *idr, int *idp)
+{
+	const struct idr_node *node;
+	void *data;
+
+	mutex_spin_enter(&idr->idr_lock);
+	node = rb_tree_find_node_geq(&idr->idr_tree, idp);
+	if (node == NULL) {
+		data = NULL;
+	} else {
+		data = node->in_data;
+		*idp = node->in_index;
+	}
 	mutex_spin_exit(&idr->idr_lock);
 
 	return data;
