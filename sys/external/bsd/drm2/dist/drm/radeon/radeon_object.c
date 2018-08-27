@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_object.c,v 1.4 2018/08/27 04:58:36 riastradh Exp $	*/
+/*	$NetBSD: radeon_object.c,v 1.5 2018/08/27 07:49:47 riastradh Exp $	*/
 
 /*
  * Copyright 2009 Jerome Glisse.
@@ -32,7 +32,7 @@
  *    Dave Airlie
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_object.c,v 1.4 2018/08/27 04:58:36 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_object.c,v 1.5 2018/08/27 07:49:47 riastradh Exp $");
 
 #include <linux/list.h>
 #include <linux/slab.h>
@@ -325,7 +325,7 @@ struct radeon_bo *radeon_bo_ref(struct radeon_bo *bo)
 void radeon_bo_unref(struct radeon_bo **bo)
 {
 	struct ttm_buffer_object *tbo;
-	struct radeon_device *rdev;
+	struct radeon_device *rdev __unused;
 
 	if ((*bo) == NULL)
 		return;
