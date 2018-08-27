@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_display.c,v 1.16 2018/08/27 04:58:24 riastradh Exp $	*/
+/*	$NetBSD: intel_display.c,v 1.17 2018/08/27 06:16:01 riastradh Exp $	*/
 
 /*
  * Copyright © 2006-2007 Intel Corporation
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_display.c,v 1.16 2018/08/27 04:58:24 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_display.c,v 1.17 2018/08/27 06:16:01 riastradh Exp $");
 
 #include <linux/dmi.h>
 #include <linux/module.h>
@@ -14770,7 +14770,11 @@ static void intel_init_display(struct drm_device *dev)
 		dev_priv->display.queue_flip = intel_default_queue_flip;
 	}
 
+#ifdef __NetBSD__
+	linux_mutex_init(&dev_priv->pps_mutex);
+#else
 	mutex_init(&dev_priv->pps_mutex);
+#endif
 }
 
 /*
@@ -14978,6 +14982,7 @@ void i915_disable_vga(struct drm_device *dev)
 	vga_put(dev->pdev, VGA_RSRC_LEGACY_IO);
 #endif
 	udelay(300);
+#endif
 
 	I915_WRITE(vga_reg, VGA_DISP_DISABLE);
 	POSTING_READ(vga_reg);
