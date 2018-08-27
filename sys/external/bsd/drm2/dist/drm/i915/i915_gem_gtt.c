@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem_gtt.c,v 1.8 2018/08/27 06:33:34 riastradh Exp $	*/
+/*	$NetBSD: i915_gem_gtt.c,v 1.9 2018/08/27 07:07:23 riastradh Exp $	*/
 
 /*
  * Copyright © 2010 Daniel Vetter
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gem_gtt.c,v 1.8 2018/08/27 06:33:34 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gem_gtt.c,v 1.9 2018/08/27 07:07:23 riastradh Exp $");
 
 #include <linux/err.h>
 #include <linux/seq_file.h>
@@ -3565,14 +3565,12 @@ i915_gem_obj_lookup_or_create_ggtt_vma(struct drm_i915_gem_object *obj,
 
 }
 
+#ifndef __NetBSD__
 static struct scatterlist *
 rotate_pages(dma_addr_t *in, unsigned int offset,
 	     unsigned int width, unsigned int height,
 	     struct sg_table *st, struct scatterlist *sg)
 {
-#ifdef __NetBSD__
-	panic("XXX");
-#else
 	unsigned int column, row;
 	unsigned int src_idx;
 
@@ -3598,16 +3596,12 @@ rotate_pages(dma_addr_t *in, unsigned int offset,
 	}
 
 	return sg;
-#endif
 }
 
 static struct sg_table *
 intel_rotate_fb_obj_pages(struct i915_ggtt_view *ggtt_view,
 			  struct drm_i915_gem_object *obj)
 {
-#ifdef __NetBSD__
-	panic("XXX");
-#else
 	struct intel_rotation_info *rot_info = &ggtt_view->rotation_info;
 	unsigned int size_pages = rot_info->size >> PAGE_SHIFT;
 	unsigned int size_pages_uv;
@@ -3691,16 +3685,12 @@ err_st_alloc:
 		      rot_info->height_pages, size_pages + size_pages_uv,
 		      size_pages);
 	return ERR_PTR(ret);
-#endif
 }
 
 static struct sg_table *
 intel_partial_pages(const struct i915_ggtt_view *view,
 		    struct drm_i915_gem_object *obj)
 {
-#ifdef __NetBSD__
-	panic("XXX");
-#else
 	struct sg_table *st;
 	struct scatterlist *sg;
 	struct sg_page_iter obj_sg_iter;
@@ -3736,8 +3726,8 @@ err_sg_alloc:
 	kfree(st);
 err_st_alloc:
 	return ERR_PTR(ret);
-#endif
 }
+#endif
 
 static int
 i915_get_ggtt_vma_pages(struct i915_vma *vma)
@@ -3749,12 +3739,14 @@ i915_get_ggtt_vma_pages(struct i915_vma *vma)
 
 	if (vma->ggtt_view.type == I915_GGTT_VIEW_NORMAL)
 		vma->ggtt_view.pages = vma->obj->pages;
+#ifndef __NetBSD__
 	else if (vma->ggtt_view.type == I915_GGTT_VIEW_ROTATED)
 		vma->ggtt_view.pages =
 			intel_rotate_fb_obj_pages(&vma->ggtt_view, vma->obj);
 	else if (vma->ggtt_view.type == I915_GGTT_VIEW_PARTIAL)
 		vma->ggtt_view.pages =
 			intel_partial_pages(&vma->ggtt_view, vma->obj);
+#endif
 	else
 		WARN_ONCE(1, "GGTT view %u not implemented!\n",
 			  vma->ggtt_view.type);
