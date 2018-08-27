@@ -1,4 +1,4 @@
-/*	$NetBSD: highmem.h,v 1.3 2014/07/16 20:59:58 riastradh Exp $	*/
+/*	$NetBSD: highmem.h,v 1.4 2018/08/27 07:44:32 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -41,10 +41,10 @@
 #include <linux/mm_types.h>
 
 /* XXX Make the nm output a little more greppable...  */
-#define	kmap_atomic	linux_kmap_atomic
-#define	kunmap_atomic	linux_kunmap_atomic
-#define	kmap		linux_kmap
-#define	kunmap		linux_kunmap
+#define	kmap			linux_kmap
+#define	kmap_atomic		linux_kmap_atomic
+#define	kunmap			linux_kunmap
+#define	kunmap_atomic		linux_kunmap_atomic
 
 /* XXX Kludge!  */
 #define	kmap_atomic_prot(page, prot)	kmap_atomic(page)
