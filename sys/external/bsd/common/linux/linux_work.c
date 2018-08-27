@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_work.c,v 1.40 2018/08/27 15:06:20 riastradh Exp $	*/
+/*	$NetBSD: linux_work.c,v 1.41 2018/08/27 15:06:37 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_work.c,v 1.40 2018/08/27 15:06:20 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_work.c,v 1.41 2018/08/27 15:06:37 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/atomic.h>
@@ -42,6 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_work.c,v 1.40 2018/08/27 15:06:20 riastradh Ex
 #include <sys/lwp.h>
 #include <sys/mutex.h>
 #include <sys/queue.h>
+#include <sys/sdt.h>
 
 #include <linux/workqueue.h>
 
@@ -79,6 +80,36 @@ static void		dw_callout_destroy(struct workqueue_struct *,
 			    struct delayed_work *);
 static void		cancel_delayed_work_done(struct workqueue_struct *,
 			    struct delayed_work *);
+
+SDT_PROBE_DEFINE2(sdt, linux, work, acquire,
+    "struct work_struct *"/*work*/, "struct workqueue_struct *"/*wq*/);
+SDT_PROBE_DEFINE2(sdt, linux, work, release,
+    "struct work_struct *"/*work*/, "struct workqueue_struct *"/*wq*/);
+SDT_PROBE_DEFINE2(sdt, linux, work, queue,
+    "struct work_struct *"/*work*/, "struct workqueue_struct *"/*wq*/);
+SDT_PROBE_DEFINE2(sdt, linux, work, cancel,
+    "struct work_struct *"/*work*/, "struct workqueue_struct *"/*wq*/);
+SDT_PROBE_DEFINE3(sdt, linux, work, schedule,
+    "struct delayed_work *"/*dw*/, "struct workqueue_struct *"/*wq*/,
+    "unsigned long"/*ticks*/);
+SDT_PROBE_DEFINE2(sdt, linux, work, timer,
+    "struct delayed_work *"/*dw*/, "struct workqueue_struct *"/*wq*/);
+SDT_PROBE_DEFINE2(sdt, linux, work, wait__start,
+    "struct delayed_work *"/*dw*/, "struct workqueue_struct *"/*wq*/);
+SDT_PROBE_DEFINE2(sdt, linux, work, wait__done,
+    "struct delayed_work *"/*dw*/, "struct workqueue_struct *"/*wq*/);
+SDT_PROBE_DEFINE2(sdt, linux, work, run,
+    "struct work_struct *"/*work*/, "struct workqueue_struct *"/*wq*/);
+SDT_PROBE_DEFINE2(sdt, linux, work, done,
+    "struct work_struct *"/*work*/, "struct workqueue_struct *"/*wq*/);
+SDT_PROBE_DEFINE1(sdt, linux, work, batch__start,
+    "struct workqueue_struct *"/*wq*/);
+SDT_PROBE_DEFINE1(sdt, linux, work, batch__done,
+    "struct workqueue_struct *"/*wq*/);
+SDT_PROBE_DEFINE1(sdt, linux, work, flush__start,
+    "struct workqueue_struct *"/*wq*/);
+SDT_PROBE_DEFINE1(sdt, linux, work, flush__done,
+    "struct workqueue_struct *"/*wq*/);
 
 static specificdata_key_t workqueue_key __read_mostly;
 
@@ -242,6 +273,7 @@ destroy_workqueue(struct workqueue_struct *wq)
 		 * however, then we can safely destroy the callout and
 		 * dissociate it from the workqueue ourselves.
 		 */
+		SDT_PROBE2(sdt, linux, work, cancel,  &dw->work, wq);
 		dw->dw_state = DELAYED_WORK_CANCELLED;
 		if (!callout_halt(&dw->dw_callout, &wq->wq_lock))
 			cancel_delayed_work_done(wq, dw);
@@ -312,6 +344,7 @@ linux_workqueue_thread(void *cookie)
 		}
 
 		/* Grab a batch of work off the queue.  */
+		SDT_PROBE1(sdt, linux, work, batch__start,  wq);
 		TAILQ_INIT(&queue);
 		TAILQ_INIT(&dqueue);
 		TAILQ_CONCAT(&queue, &wq->wq_queue, work_entry);
@@ -340,7 +373,9 @@ linux_workqueue_thread(void *cookie)
 				/* Can't dereference work after this point.  */
 
 				mutex_exit(&wq->wq_lock);
+				SDT_PROBE2(sdt, linux, work, run,  work, wq);
 				(*func)(work);
+				SDT_PROBE2(sdt, linux, work, done,  work, wq);
 				mutex_enter(&wq->wq_lock);
 
 				KASSERT(wq->wq_current_work == work);
@@ -352,6 +387,7 @@ linux_workqueue_thread(void *cookie)
 		/* Notify flush that we've completed a batch of work.  */
 		wq->wq_gen++;
 		cv_broadcast(&wq->wq_cv);
+		SDT_PROBE1(sdt, linux, work, batch__done,  wq);
 	}
 	mutex_exit(&wq->wq_lock);
 
@@ -378,6 +414,8 @@ linux_workqueue_timeout(void *cookie)
 	    "delayed work %p state %d resched %d",
 	    dw, dw->dw_state, dw->dw_resched);
 
+	SDT_PROBE2(sdt, linux, work, timer,  dw, wq);
+
 	mutex_enter(&wq->wq_lock);
 	KASSERT(work_queue(&dw->work) == wq);
 	switch (dw->dw_state) {
@@ -387,6 +425,7 @@ linux_workqueue_timeout(void *cookie)
 		dw_callout_destroy(wq, dw);
 		TAILQ_INSERT_TAIL(&wq->wq_dqueue, &dw->work, work_entry);
 		cv_broadcast(&wq->wq_cv);
+		SDT_PROBE2(sdt, linux, work, queue,  &dw->work, wq);
 		break;
 	case DELAYED_WORK_RESCHEDULED:
 		KASSERT(dw->dw_resched >= 0);
@@ -508,6 +547,7 @@ acquire_work(struct work_struct *work, struct workqueue_struct *wq)
 
 	KASSERT(work_queue(work) == wq);
 	membar_enter();
+	SDT_PROBE2(sdt, linux, work, acquire,  work, wq);
 	return true;
 }
 
@@ -526,6 +566,7 @@ release_work(struct work_struct *work, struct workqueue_struct *wq)
 	KASSERT(work_queue(work) == wq);
 	KASSERT(mutex_owned(&wq->wq_lock));
 
+	SDT_PROBE2(sdt, linux, work, release,  work, wq);
 	membar_exit();
 
 	/*
@@ -581,6 +622,7 @@ queue_work(struct workqueue_struct *wq, struct work_struct *work)
 		 */
 		TAILQ_INSERT_TAIL(&wq->wq_queue, work, work_entry);
 		cv_broadcast(&wq->wq_cv);
+		SDT_PROBE2(sdt, linux, work, queue,  work, wq);
 		newly_queued = true;
 	} else {
 		/*
@@ -627,6 +669,7 @@ cancel_work(struct work_struct *work)
 			 * queue and report successful cancellation.
 			 */
 			TAILQ_REMOVE(&wq->wq_queue, work, work_entry);
+			SDT_PROBE2(sdt, linux, work, cancel,  work, wq);
 			release_work(work, wq);
 			/* Can't dereference work after this point.  */
 			cancelled_p = true;
@@ -675,6 +718,7 @@ cancel_work_sync(struct work_struct *work)
 			 * queue and report successful cancellation.
 			 */
 			TAILQ_REMOVE(&wq->wq_queue, work, work_entry);
+			SDT_PROBE2(sdt, linux, work, cancel,  work, wq);
 			release_work(work, wq);
 			/* Can't dereference work after this point.  */
 			cancelled_p = true;
@@ -707,10 +751,12 @@ wait_for_current_work(struct work_struct *work, struct workqueue_struct *wq)
 	KASSERT(wq->wq_current_work == work);
 
 	/* Wait only one generation in case it gets requeued quickly.  */
+	SDT_PROBE2(sdt, linux, work, wait__start,  work, wq);
 	gen = wq->wq_gen;
 	do {
 		cv_wait(&wq->wq_cv, &wq->wq_lock);
 	} while (wq->wq_current_work == work && wq->wq_gen == gen);
+	SDT_PROBE2(sdt, linux, work, wait__done,  work, wq);
 }
 
 /*
@@ -846,6 +892,7 @@ queue_delayed_work(struct workqueue_struct *wq, struct delayed_work *dw,
 			TAILQ_INSERT_TAIL(&wq->wq_dqueue, &dw->work,
 			    work_entry);
 			cv_broadcast(&wq->wq_cv);
+			SDT_PROBE2(sdt, linux, work, queue,  &dw->work, wq);
 		} else {
 			/*
 			 * Initialize a callout and schedule to run
@@ -853,6 +900,7 @@ queue_delayed_work(struct workqueue_struct *wq, struct delayed_work *dw,
 			 */
 			dw_callout_init(wq, dw);
 			callout_schedule(&dw->dw_callout, MIN(INT_MAX, ticks));
+			SDT_PROBE3(sdt, linux, work, schedule,  dw, wq, ticks);
 		}
 		newly_queued = true;
 	} else {
@@ -871,9 +919,13 @@ queue_delayed_work(struct workqueue_struct *wq, struct delayed_work *dw,
 			 */
 			if (ticks == 0) {
 				dw->dw_state = DELAYED_WORK_SCHEDULED;
+				SDT_PROBE2(sdt, linux, work, queue,
+				    &dw->work, wq);
 			} else {
 				dw->dw_state = DELAYED_WORK_RESCHEDULED;
 				dw->dw_resched = MIN(INT_MAX, ticks);
+				SDT_PROBE3(sdt, linux, work, schedule,
+				    dw, wq, ticks);
 			}
 			newly_queued = true;
 			break;
@@ -917,6 +969,7 @@ mod_delayed_work(struct workqueue_struct *wq, struct delayed_work *dw,
 			TAILQ_INSERT_TAIL(&wq->wq_dqueue, &dw->work,
 			    work_entry);
 			cv_broadcast(&wq->wq_cv);
+			SDT_PROBE2(sdt, linux, work, queue,  &dw->work, wq);
 		} else {
 			/*
 			 * Initialize a callout and schedule to run
@@ -924,6 +977,7 @@ mod_delayed_work(struct workqueue_struct *wq, struct delayed_work *dw,
 			 */
 			dw_callout_init(wq, dw);
 			callout_schedule(&dw->dw_callout, MIN(INT_MAX, ticks));
+			SDT_PROBE3(sdt, linux, work, schedule,  dw, wq, ticks);
 		}
 		timer_modified = false;
 	} else {
@@ -933,6 +987,10 @@ mod_delayed_work(struct workqueue_struct *wq, struct delayed_work *dw,
 			/* On the queue.  */
 			if (ticks == 0) {
 				/* Leave it be.  */
+				SDT_PROBE2(sdt, linux, work, cancel,
+				    &dw->work, wq);
+				SDT_PROBE2(sdt, linux, work, queue,
+				    &dw->work, wq);
 			} else {
 				/* Remove from the queue and schedule.  */
 				TAILQ_REMOVE(&wq->wq_dqueue, &dw->work,
@@ -940,6 +998,10 @@ mod_delayed_work(struct workqueue_struct *wq, struct delayed_work *dw,
 				dw_callout_init(wq, dw);
 				callout_schedule(&dw->dw_callout,
 				    MIN(INT_MAX, ticks));
+				SDT_PROBE2(sdt, linux, work, cancel,
+				    &dw->work, wq);
+				SDT_PROBE3(sdt, linux, work, schedule,
+				    dw, wq, ticks);
 			}
 			timer_modified = true;
 			break;
@@ -959,10 +1021,18 @@ mod_delayed_work(struct workqueue_struct *wq, struct delayed_work *dw,
 					 * queue it as soon as it gets
 					 * the lock.
 					 */
+					SDT_PROBE2(sdt, linux, work, cancel,
+					    &dw->work, wq);
+					SDT_PROBE2(sdt, linux, work, queue,
+					    &dw->work, wq);
 				} else {
 					/* Ask the callout to reschedule.  */
 					dw->dw_state = DELAYED_WORK_RESCHEDULED;
 					dw->dw_resched = MIN(INT_MAX, ticks);
+					SDT_PROBE2(sdt, linux, work, cancel,
+					    &dw->work, wq);
+					SDT_PROBE3(sdt, linux, work, schedule,
+					    dw, wq, ticks);
 				}
 			} else {
 				/* We stopped the callout before it began.  */
@@ -977,6 +1047,10 @@ mod_delayed_work(struct workqueue_struct *wq, struct delayed_work *dw,
 					TAILQ_INSERT_TAIL(&wq->wq_dqueue,
 					    &dw->work, work_entry);
 					cv_broadcast(&wq->wq_cv);
+					SDT_PROBE2(sdt, linux, work, cancel,
+					    &dw->work, wq);
+					SDT_PROBE2(sdt, linux, work, queue,
+					    &dw->work, wq);
 				} else {
 					/*
 					 * Reschedule the callout.  No
@@ -984,6 +1058,10 @@ mod_delayed_work(struct workqueue_struct *wq, struct delayed_work *dw,
 					 */
 					callout_schedule(&dw->dw_callout,
 					    MIN(INT_MAX, ticks));
+					SDT_PROBE2(sdt, linux, work, cancel,
+					    &dw->work, wq);
+					SDT_PROBE3(sdt, linux, work, schedule,
+					    dw, wq, ticks);
 				}
 			}
 			timer_modified = true;
@@ -1003,9 +1081,17 @@ mod_delayed_work(struct workqueue_struct *wq, struct delayed_work *dw,
 				 */
 				dw->dw_state = DELAYED_WORK_SCHEDULED;
 				dw->dw_resched = -1;
+				SDT_PROBE2(sdt, linux, work, cancel,
+				    &dw->work, wq);
+				SDT_PROBE2(sdt, linux, work, queue,
+				    &dw->work, wq);
 			} else {
 				/* Change the rescheduled time.  */
 				dw->dw_resched = ticks;
+				SDT_PROBE2(sdt, linux, work, cancel,
+				    &dw->work, wq);
+				SDT_PROBE3(sdt, linux, work, schedule,
+				    dw, wq, ticks);
 			}
 			timer_modified = true;
 			break;
@@ -1023,10 +1109,14 @@ mod_delayed_work(struct workqueue_struct *wq, struct delayed_work *dw,
 				 * as it gets the lock.
 				 */
 				dw->dw_state = DELAYED_WORK_SCHEDULED;
+				SDT_PROBE2(sdt, linux, work, queue,
+				    &dw->work, wq);
 			} else {
 				/* Ask it to reschedule.  */
 				dw->dw_state = DELAYED_WORK_RESCHEDULED;
 				dw->dw_resched = MIN(INT_MAX, ticks);
+				SDT_PROBE3(sdt, linux, work, schedule,
+				    dw, wq, ticks);
 			}
 			timer_modified = false;
 			break;
@@ -1073,6 +1163,8 @@ cancel_delayed_work(struct delayed_work *dw)
 				/* On the queue.  Remove and release.  */
 				TAILQ_REMOVE(&wq->wq_dqueue, &dw->work,
 				    work_entry);
+				SDT_PROBE2(sdt, linux, work, cancel,
+				    &dw->work, wq);
 				release_work(&dw->work, wq);
 				/* Can't dereference dw after this point.  */
 				cancelled_p = true;
@@ -1095,6 +1187,7 @@ cancel_delayed_work(struct delayed_work *dw)
 			 */
 			dw->dw_state = DELAYED_WORK_CANCELLED;
 			cancelled_p = true;
+			SDT_PROBE2(sdt, linux, work, cancel,  &dw->work, wq);
 			if (!callout_stop(&dw->dw_callout))
 				cancel_delayed_work_done(wq, dw);
 			break;
@@ -1106,6 +1199,7 @@ cancel_delayed_work(struct delayed_work *dw)
 			dw->dw_state = DELAYED_WORK_CANCELLED;
 			dw->dw_resched = -1;
 			cancelled_p = true;
+			SDT_PROBE2(sdt, linux, work, cancel,  &dw->work, wq);
 			break;
 		case DELAYED_WORK_CANCELLED:
 			/*
@@ -1159,6 +1253,8 @@ cancel_delayed_work_sync(struct delayed_work *dw)
 				/* On the queue.  Remove and release.  */
 				TAILQ_REMOVE(&wq->wq_dqueue, &dw->work,
 				    work_entry);
+				SDT_PROBE2(sdt, linux, work, cancel,
+				    &dw->work, wq);
 				release_work(&dw->work, wq);
 				/* Can't dereference dw after this point.  */
 				cancelled_p = true;
@@ -1186,6 +1282,7 @@ cancel_delayed_work_sync(struct delayed_work *dw)
 			 * dissociate it from the workqueue ourselves.
 			 */
 			dw->dw_state = DELAYED_WORK_CANCELLED;
+			SDT_PROBE2(sdt, linux, work, cancel,  &dw->work, wq);
 			if (!callout_halt(&dw->dw_callout, &wq->wq_lock))
 				cancel_delayed_work_done(wq, dw);
 			cancelled_p = true;
@@ -1198,6 +1295,7 @@ cancel_delayed_work_sync(struct delayed_work *dw)
 			 */
 			dw->dw_state = DELAYED_WORK_CANCELLED;
 			dw->dw_resched = -1;
+			SDT_PROBE2(sdt, linux, work, cancel,  &dw->work, wq);
 			(void)callout_halt(&dw->dw_callout, &wq->wq_lock);
 			cancelled_p = true;
 			break;
@@ -1272,8 +1370,10 @@ flush_workqueue_locked(struct workqueue_struct *wq)
 		gen++;
 
 	/* Wait until the generation number has caught up.  */
+	SDT_PROBE1(sdt, linux, work, flush__start,  wq);
 	while (wq->wq_gen < gen)
 		cv_wait(&wq->wq_cv, &wq->wq_lock);
+	SDT_PROBE1(sdt, linux, work, flush__done,  wq);
 }
 
 /*
@@ -1368,6 +1468,8 @@ flush_delayed_work(struct delayed_work *dw)
 				TAILQ_INSERT_TAIL(&wq->wq_dqueue, &dw->work,
 				    work_entry);
 				cv_broadcast(&wq->wq_cv);
+				SDT_PROBE2(sdt, linux, work, queue,
+				    &dw->work, wq);
 			}
 			break;
 		default:
