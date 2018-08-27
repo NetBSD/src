@@ -1,4 +1,4 @@
-/*	$NetBSD: ci_dpm.c,v 1.8 2018/08/27 06:40:56 riastradh Exp $	*/
+/*	$NetBSD: ci_dpm.c,v 1.9 2018/08/27 06:43:10 riastradh Exp $	*/
 
 /*
  * Copyright 2013 Advanced Micro Devices, Inc.
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ci_dpm.c,v 1.8 2018/08/27 06:40:56 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ci_dpm.c,v 1.9 2018/08/27 06:43:10 riastradh Exp $");
 
 #include <linux/firmware.h>
 #include "drmP.h"
@@ -1671,7 +1671,6 @@ static PPSMC_Result ci_send_msg_to_smc_with_parameter(struct radeon_device *rdev
 	return ci_send_msg_to_smc(rdev, msg);
 }
 
-#ifndef __NetBSD__		/* XXX unused? */
 static PPSMC_Result ci_send_msg_to_smc_return_parameter(struct radeon_device *rdev,
 							PPSMC_Msg msg, u32 *parameter)
 {
@@ -1684,7 +1683,6 @@ static PPSMC_Result ci_send_msg_to_smc_return_parameter(struct radeon_device *rd
 
 	return smc_result;
 }
-#endif
 
 static int ci_dpm_force_state_sclk(struct radeon_device *rdev, u32 n)
 {
