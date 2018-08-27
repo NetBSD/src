@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem_execbuffer.c,v 1.7 2018/08/27 07:07:56 riastradh Exp $	*/
+/*	$NetBSD: i915_gem_execbuffer.c,v 1.8 2018/08/27 07:08:20 riastradh Exp $	*/
 
 /*
  * Copyright © 2008,2010 Intel Corporation
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gem_execbuffer.c,v 1.7 2018/08/27 07:07:56 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gem_execbuffer.c,v 1.8 2018/08/27 07:08:20 riastradh Exp $");
 
 #include <drm/drmP.h>
 #include <drm/i915_drm.h>
@@ -352,7 +352,8 @@ relocate_entry_gtt(struct drm_i915_gem_object *obj,
 		}
 
 		iowrite32(upper_32_bits(delta),
-			  reloc_page + offset_in_page(offset));
+		    (uint32_t __iomem *)
+		    ((char __iomem *)reloc_page + offset_in_page(offset)));
 	}
 
 #ifdef __NetBSD__
