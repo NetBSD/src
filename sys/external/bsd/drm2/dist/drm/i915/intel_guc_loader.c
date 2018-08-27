@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_guc_loader.c,v 1.3 2018/08/27 07:22:27 riastradh Exp $	*/
+/*	$NetBSD: intel_guc_loader.c,v 1.4 2018/08/27 07:22:38 riastradh Exp $	*/
 
 /*
  * Copyright © 2014 Intel Corporation
@@ -29,7 +29,7 @@
  *    Alex Dai <yu.dai@intel.com>
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_guc_loader.c,v 1.3 2018/08/27 07:22:27 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_guc_loader.c,v 1.4 2018/08/27 07:22:38 riastradh Exp $");
 
 #include <linux/firmware.h>
 #include <linux/module.h>
@@ -243,7 +243,12 @@ static int guc_ucode_xfer_dma(struct drm_i915_private *dev_priv)
 	struct intel_guc_fw *guc_fw = &dev_priv->guc.guc_fw;
 	struct drm_i915_gem_object *fw_obj = guc_fw->guc_fw_obj;
 	unsigned long offset;
+#ifdef __NetBSD__
+	struct iovec iov;
+	struct uio uio;
+#else
 	struct sg_table *sg = fw_obj->pages;
+#endif
 	u32 status, ucode_size, rsa[UOS_RSA_SIG_SIZE / sizeof(u32)];
 	int i, ret = 0;
 
@@ -252,7 +257,21 @@ static int guc_ucode_xfer_dma(struct drm_i915_private *dev_priv)
 	I915_WRITE(DMA_COPY_SIZE, ucode_size);
 
 	/* Copy RSA signature from the fw image to HW for verification */
+#ifdef __NetBSD__
+	iov.iov_base = rsa;
+	iov.iov_len = UOS_RSA_SIG_SIZE;
+	uio.uio_iov = &iov;
+	uio.uio_iovcnt = 1;
+	uio.uio_resid = UOS_RSA_SIG_SIZE;
+	uio.uio_rw = UIO_READ;
+	/* XXX errno NetBSD->Linux */
+	ret = -ubc_uiomove(fw_obj->base.filp, &uio, UOS_RSA_SIG_SIZE,
+	    UVM_ADV_NORMAL, UBC_READ);
+	if (ret)
+		return ret;
+#else
 	sg_pcopy_to_buffer(sg->sgl, sg->nents, rsa, UOS_RSA_SIG_SIZE, offset);
+#endif
 	for (i = 0; i < UOS_RSA_SIG_SIZE / sizeof(u32); i++)
 		I915_WRITE(UOS_RSA_SCRATCH(i), rsa[i]);
 
