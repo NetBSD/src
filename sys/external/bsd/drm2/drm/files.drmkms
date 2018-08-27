@@ -1,4 +1,4 @@
-#	$NetBSD: files.drmkms,v 1.18 2018/08/27 06:25:59 riastradh Exp $
+#	$NetBSD: files.drmkms,v 1.19 2018/08/27 06:31:41 riastradh Exp $
 
 include "external/bsd/drm2/linux/files.drmkms_linux"
 
@@ -30,6 +30,7 @@ makeoptions	drmkms	CPPFLAGS+="-DCONFIG_FB=0"
 makeoptions	drmkms	CPPFLAGS+="-DCONFIG_BACKLIGHT_CLASS_DEVICE=0"
 makeoptions	drmkms	CPPFLAGS+="-DCONFIG_BACKLIGHT_CLASS_DEVICE_MODULE=0"
 
+file	external/bsd/drm2/drm/drm_cdevsw.c		drmkms
 file	external/bsd/drm2/drm/drm_gem_vm.c		drmkms
 file	external/bsd/drm2/drm/drm_gem_cma_helper.c	drmkms
 file	external/bsd/drm2/drm/drm_module.c		drmkms
