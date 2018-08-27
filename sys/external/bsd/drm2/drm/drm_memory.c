@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_memory.c,v 1.12 2018/08/27 06:58:20 riastradh Exp $	*/
+/*	$NetBSD: drm_memory.c,v 1.13 2018/08/27 15:32:06 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_memory.c,v 1.12 2018/08/27 06:58:20 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_memory.c,v 1.13 2018/08/27 15:32:06 riastradh Exp $");
 
 #if defined(__i386__) || defined(__x86_64__)
 
@@ -290,6 +290,21 @@ drm_limit_dma_space(struct drm_device *dev, resource_size_t min_addr,
 	}
 
 	/*
+	 * If our limit contains the 32-bit space but for some reason
+	 * we can't use a subregion, either because the bus doesn't
+	 * support >32-bit DMA or because bus_dma(9) on this platform
+	 * lacks bus_dmatag_subregion, just use the 32-bit space.
+	 */
+	if (min_addr == 0 && max_addr >= UINT32_C(0xffffffff) &&
+	    dev->bus_dmat == dev->bus_dmat32) {
+dma32:		dev->dmat = dev->bus_dmat32;
+		dev->dmat_subregion_p = false;
+		dev->dmat_subregion_min = 0;
+		dev->dmat_subregion_max = UINT32_C(0xffffffff);
+		return 0;
+	}
+
+	/*
 	 * Create a DMA tag for a subregion from the bus's DMA tag.  If
 	 * that fails, restore dev->dmat to the whole region so that we
 	 * need not worry about dev->dmat being uninitialized (not that
@@ -300,8 +315,19 @@ drm_limit_dma_space(struct drm_device *dev, resource_size_t min_addr,
 	ret = -bus_dmatag_subregion(dev->bus_dmat, min_addr, max_addr,
 	    &dev->dmat, BUS_DMA_WAITOK);
 	if (ret) {
+		/*
+		 * bus_dmatag_subregion may fail.  If so, and if the
+		 * subregion contains the 32-bit space, just use the
+		 * 32-bit DMA tag.
+		 */
+		if (ret == -EOPNOTSUPP && dev->bus_dmat32 &&
+		    min_addr == 0 && max_addr >= UINT32_C(0xffffffff))
+			goto dma32;
+		/* XXX Back out?  */
 		dev->dmat = dev->bus_dmat;
 		dev->dmat_subregion_p = false;
+		dev->dmat_subregion_min = 0;
+		dev->dmat_subregion_max = __type_max(bus_addr_t);
 		return ret;
 	}
 
