@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_rcu.c,v 1.2 2018/08/27 13:39:48 riastradh Exp $	*/
+/*	$NetBSD: linux_rcu.c,v 1.3 2018/08/27 14:14:54 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_rcu.c,v 1.2 2018/08/27 13:39:48 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_rcu.c,v 1.3 2018/08/27 14:14:54 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/condvar.h>
@@ -40,7 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_rcu.c,v 1.2 2018/08/27 13:39:48 riastradh Exp 
 
 #include <linux/rcupdate.h>
 
-struct {
+static struct {
 	kmutex_t	lock;
 	kcondvar_t	cv;
 	struct rcu_head	*first;
