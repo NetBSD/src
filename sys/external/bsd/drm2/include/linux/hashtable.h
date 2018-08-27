@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.h,v 1.89 2018/06/25 22:29:16 kettenis Exp $	*/
+/*	$OpenBSD$	*/
 /*
  * Copyright (c) 2013, 2014, 2015 Mark Kettenis
  * Copyright (c) 2017 Martin Pieuchot
@@ -57,9 +57,5 @@ __hash_empty(struct list_head *table, u_int size)
 #define hash_for_each_safe(table, i, tmp, obj, member) 	\
 	for (i = 0; i < nitems(table); i++)		\
 	       list_for_each_entry_safe(obj, tmp, &table[i], member)
-
-#define DECLARE_HASHTABLE(__a,__b) \
-	uint64_t __a /* XXX */
-
 
 #endif /*_LINUX_HASHTABLE_H_*/
