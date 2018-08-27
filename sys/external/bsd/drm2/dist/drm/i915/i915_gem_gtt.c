@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem_gtt.c,v 1.12 2018/08/27 14:49:39 riastradh Exp $	*/
+/*	$NetBSD: i915_gem_gtt.c,v 1.13 2018/08/27 14:52:40 riastradh Exp $	*/
 
 /*
  * Copyright © 2010 Daniel Vetter
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gem_gtt.c,v 1.12 2018/08/27 14:49:39 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gem_gtt.c,v 1.13 2018/08/27 14:52:40 riastradh Exp $");
 
 #include <linux/bitmap.h>
 #include <linux/err.h>
@@ -321,6 +321,9 @@ static gen6_pte_t iris_pte_encode(dma_addr_t addr,
 	return pte;
 }
 
+static void *kmap_page_dma(struct i915_page_dma *);
+static void kunmap_page_dma(struct drm_device *, void *);
+
 static int __setup_page_dma(struct drm_device *dev,
 			    struct i915_page_dma *p, gfp_t flags)
 {
@@ -353,6 +356,12 @@ fail1:		bus_dmamem_free(dev->dmat, &p->seg, 1);
 fail2: __unused
 		bus_dmamap_destroy(dev->dmat, p->map);
 		goto fail1;
+	}
+
+	if (flags & __GFP_ZERO) {
+		void *va = kmap_page_dma(p);
+		memset(va, 0, PAGE_SIZE);
+		kunmap_page_dma(dev, va);
 	}
 #else
 	struct device *device = &dev->pdev->dev;
