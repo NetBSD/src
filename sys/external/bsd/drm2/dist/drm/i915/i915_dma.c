@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_dma.c,v 1.20 2018/08/27 06:19:05 riastradh Exp $	*/
+/*	$NetBSD: i915_dma.c,v 1.21 2018/08/27 07:04:11 riastradh Exp $	*/
 
 /* i915_dma.c -- DMA support for the I915 -*- linux-c -*-
  */
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_dma.c,v 1.20 2018/08/27 06:19:05 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_dma.c,v 1.21 2018/08/27 07:04:11 riastradh Exp $");
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
@@ -1192,7 +1192,7 @@ put_bridge:
 free_priv:
 	/* XXX intel_pm_fini */
 #ifdef __NetBSD__
-	spin_lock_destroy(&dev_prv->rps.client_lock);
+	spin_lock_destroy(&dev_priv->rps.client_lock);
 	linux_mutex_destroy(&dev_priv->rps.hw_lock);
 #endif
 	/* XXX end intel_pm_fini */
@@ -1316,7 +1316,7 @@ int i915_driver_unload(struct drm_device *dev)
 	kmem_cache_destroy(dev_priv->objects);
 	/* XXX intel_pm_fini */
 #ifdef __NetBSD__
-	spin_lock_destroy(&dev_prv->rps.client_lock);
+	spin_lock_destroy(&dev_priv->rps.client_lock);
 	linux_mutex_destroy(&dev_priv->rps.hw_lock);
 #endif
 	/* XXX end intel_pm_fini */
