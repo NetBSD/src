@@ -1,4 +1,4 @@
-/*	$NetBSD: ktime.h,v 1.6 2018/08/27 07:27:27 riastradh Exp $	*/
+/*	$NetBSD: ktime.h,v 1.7 2018/08/27 13:57:38 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -34,6 +34,7 @@
 
 #include <sys/types.h>
 #include <sys/endian.h>
+#include <sys/kernel.h>
 #include <sys/time.h>
 
 #include <linux/time.h>
