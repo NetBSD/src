@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_subdev_clk_base.c,v 1.3 2018/08/27 07:43:06 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_subdev_clk_base.c,v 1.4 2018/08/27 14:17:50 riastradh Exp $	*/
 
 /*
  * Copyright 2013 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_clk_base.c,v 1.3 2018/08/27 07:43:06 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_clk_base.c,v 1.4 2018/08/27 14:17:50 riastradh Exp $");
 
 #include "priv.h"
 
@@ -258,6 +258,15 @@ nvkm_pstate_calc(struct nvkm_clk *clk, bool wait)
 	schedule_work(&clk->work);
 	if (wait) {
 #ifdef __NetBSD__
+		if (cold) {
+			unsigned timo = 1000;
+			while (timo --> 0) {
+				if (atomic_read(&clk->waiting))
+					return 0;
+				DELAY(100);
+			}
+			return -ETIMEDOUT;
+		}
 		int ret;
 		spin_lock(&clk->lock);
 		DRM_SPIN_WAIT_NOINTR_UNTIL(ret, &clk->wait, &clk->lock,
