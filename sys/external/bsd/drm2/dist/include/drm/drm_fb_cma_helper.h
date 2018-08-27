@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_fb_cma_helper.h,v 1.1.1.2 2018/08/27 01:35:00 riastradh Exp $	*/
+/*	$NetBSD: drm_fb_cma_helper.h,v 1.2 2018/08/27 04:58:37 riastradh Exp $	*/
 
 #ifndef __DRM_FB_CMA_HELPER_H__
 #define __DRM_FB_CMA_HELPER_H__

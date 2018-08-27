@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_subdev_pmu_base.c,v 1.1.1.1 2018/08/27 01:34:56 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_subdev_pmu_base.c,v 1.2 2018/08/27 04:58:35 riastradh Exp $	*/
 
 /*
  * Copyright 2013 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_pmu_base.c,v 1.1.1.1 2018/08/27 01:34:56 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_pmu_base.c,v 1.2 2018/08/27 04:58:35 riastradh Exp $");
 
 #include "priv.h"
 
@@ -83,7 +83,15 @@ nvkm_pmu_send(struct nvkm_pmu *pmu, u32 reply[2],
 
 	/* wait for reply, if requested */
 	if (reply) {
+#ifdef __NetBSD__
+		int ret;
+
+		DRM_WAIT_NOINTR_UNTIL(ret, &pmu->recv.wait, &subdev->mutex,
+		    (pmu->recv.process == 0));
+		KASSERT(ret == 0);
+#else
 		wait_event(pmu->recv.wait, (pmu->recv.process == 0));
+#endif
 		reply[0] = pmu->recv.data[0];
 		reply[1] = pmu->recv.data[1];
 		mutex_unlock(&subdev->mutex);
@@ -124,14 +132,20 @@ nvkm_pmu_recv(struct work_struct *work)
 
 	/* wake process if it's waiting on a synchronous reply */
 	if (pmu->recv.process) {
+		mutex_lock(&subdev->mutex);
 		if (process == pmu->recv.process &&
 		    message == pmu->recv.message) {
 			pmu->recv.data[0] = data0;
 			pmu->recv.data[1] = data1;
 			pmu->recv.process = 0;
+#ifdef __NetBSD__
+			DRM_WAKEUP_ONE(&pmu->recv.wait, &subdev->mutex);
+#else
 			wake_up(&pmu->recv.wait);
+#endif
 			return;
 		}
+		mutex_unlock(&subdev->mutex);
 	}
 
 	/* right now there's no other expected responses from the engine,
@@ -259,7 +273,13 @@ nvkm_pmu_init(struct nvkm_subdev *subdev)
 static void *
 nvkm_pmu_dtor(struct nvkm_subdev *subdev)
 {
-	return nvkm_pmu(subdev);
+	struct nvkm_pmu *pmu = nvkm_pmu(subdev);
+
+#ifdef __NetBSD__
+	DRM_DESTROY_WAITQUEUE(&pmu->recv.wait);
+#endif
+
+	return pmu;
 }
 
 static const struct nvkm_subdev_func
@@ -280,6 +300,10 @@ nvkm_pmu_new_(const struct nvkm_pmu_func *func, struct nvkm_device *device,
 	nvkm_subdev_ctor(&nvkm_pmu, device, index, 0, &pmu->subdev);
 	pmu->func = func;
 	INIT_WORK(&pmu->recv.work, nvkm_pmu_recv);
+#ifdef __NetBSD__
+	DRM_INIT_WAITQUEUE(&pmu->recv.wait, "nvpmu");
+#else
 	init_waitqueue_head(&pmu->recv.wait);
+#endif
 	return 0;
 }

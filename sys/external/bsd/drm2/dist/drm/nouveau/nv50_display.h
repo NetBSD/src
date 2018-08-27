@@ -1,4 +1,4 @@
-/*	$NetBSD: nv50_display.h,v 1.1.1.2 2018/08/27 01:34:55 riastradh Exp $	*/
+/*	$NetBSD: nv50_display.h,v 1.2 2018/08/27 04:58:24 riastradh Exp $	*/
 
 /*
  * Copyright (C) 2008 Maarten Maathuis.

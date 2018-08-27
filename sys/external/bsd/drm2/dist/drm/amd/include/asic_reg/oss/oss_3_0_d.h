@@ -1,4 +1,4 @@
-/*	$NetBSD: oss_3_0_d.h,v 1.1.1.1 2018/08/27 01:34:52 riastradh Exp $	*/
+/*	$NetBSD: oss_3_0_d.h,v 1.2 2018/08/27 04:58:22 riastradh Exp $	*/
 
 /*
  * OSS_3_0 Register documentation

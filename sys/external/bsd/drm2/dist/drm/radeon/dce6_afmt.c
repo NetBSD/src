@@ -1,4 +1,4 @@
-/*	$NetBSD: dce6_afmt.c,v 1.1.1.2 2018/08/27 01:34:57 riastradh Exp $	*/
+/*	$NetBSD: dce6_afmt.c,v 1.2 2018/08/27 04:58:35 riastradh Exp $	*/
 
 /*
  * Copyright 2013 Advanced Micro Devices, Inc.
@@ -23,7 +23,7 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dce6_afmt.c,v 1.1.1.2 2018/08/27 01:34:57 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dce6_afmt.c,v 1.2 2018/08/27 04:58:35 riastradh Exp $");
 
 #include <linux/hdmi.h>
 #include <drm/drmP.h>

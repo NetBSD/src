@@ -1,4 +1,4 @@
-/*	$NetBSD: savage_drv.c,v 1.1.1.3 2018/08/27 01:34:59 riastradh Exp $	*/
+/*	$NetBSD: savage_drv.c,v 1.2 2018/08/27 04:58:36 riastradh Exp $	*/
 
 /* savage_drv.c -- Savage driver for Linux
  *
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: savage_drv.c,v 1.1.1.3 2018/08/27 01:34:59 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: savage_drv.c,v 1.2 2018/08/27 04:58:36 riastradh Exp $");
 
 #include <linux/module.h>
 

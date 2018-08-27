@@ -1,4 +1,4 @@
-/*	$NetBSD: mga_irq.c,v 1.1.1.3 2018/08/27 01:34:55 riastradh Exp $	*/
+/*	$NetBSD: mga_irq.c,v 1.2 2018/08/27 04:58:24 riastradh Exp $	*/
 
 /* mga_irq.c -- IRQ handling for radeon -*- linux-c -*-
  */
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mga_irq.c,v 1.1.1.3 2018/08/27 01:34:55 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mga_irq.c,v 1.2 2018/08/27 04:58:24 riastradh Exp $");
 
 #include <drm/drmP.h>
 #include <drm/mga_drm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_engine_pm_base.c,v 1.1.1.1 2018/08/27 01:34:56 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_engine_pm_base.c,v 1.2 2018/08/27 04:58:32 riastradh Exp $	*/
 
 /*
  * Copyright 2013 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_pm_base.c,v 1.1.1.1 2018/08/27 01:34:56 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_pm_base.c,v 1.2 2018/08/27 04:58:32 riastradh Exp $");
 
 #include "priv.h"
 
@@ -74,7 +74,7 @@ nvkm_perfdom_find(struct nvkm_pm *pm, int di)
 	return NULL;
 }
 
-struct nvkm_perfsig *
+static struct nvkm_perfsig *
 nvkm_perfsig_find(struct nvkm_pm *pm, u8 di, u8 si, struct nvkm_perfdom **pdom)
 {
 	struct nvkm_perfdom *dom = *pdom;

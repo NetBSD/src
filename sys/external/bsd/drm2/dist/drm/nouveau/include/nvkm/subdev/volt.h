@@ -1,4 +1,4 @@
-/*	$NetBSD: volt.h,v 1.1.1.1 2018/08/27 01:34:55 riastradh Exp $	*/
+/*	$NetBSD: volt.h,v 1.2 2018/08/27 04:58:30 riastradh Exp $	*/
 
 #ifndef __NVKM_VOLT_H__
 #define __NVKM_VOLT_H__

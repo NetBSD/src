@@ -1,4 +1,4 @@
-/*	$NetBSD: regsnv04.h,v 1.1.1.1 2018/08/27 01:34:56 riastradh Exp $	*/
+/*	$NetBSD: regsnv04.h,v 1.2 2018/08/27 04:58:35 riastradh Exp $	*/
 
 #define NV04_PTIMER_INTR_0      0x009100
 #define NV04_PTIMER_INTR_EN_0   0x009140

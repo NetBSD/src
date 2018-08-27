@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_subdev_instmem_nv50.c,v 1.1.1.1 2018/08/27 01:34:56 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_subdev_instmem_nv50.c,v 1.2 2018/08/27 04:58:34 riastradh Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_instmem_nv50.c,v 1.1.1.1 2018/08/27 01:34:56 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_instmem_nv50.c,v 1.2 2018/08/27 04:58:34 riastradh Exp $");
 
 #define nv50_instmem(p) container_of((p), struct nv50_instmem, base)
 #include "priv.h"
@@ -51,6 +51,10 @@ struct nv50_instobj {
 	struct nv50_instmem *imem;
 	struct nvkm_mem *mem;
 	struct nvkm_vma bar;
+#ifdef __NetBSD__
+	bus_space_tag_t bst;
+	bus_space_handle_t bsh;
+#endif
 	void *map;
 };
 
@@ -86,6 +90,26 @@ nv50_instobj_boot(struct nvkm_memory *memory, struct nvkm_vm *vm)
 
 	ret = nvkm_vm_get(vm, size, 12, NV_MEM_ACCESS_RW, &iobj->bar);
 	if (ret == 0) {
+#ifdef __NetBSD__
+		bus_space_tag_t bst = device->func->resource_tag(device, 3);
+		bus_space_handle_t bsh;
+		int ret;
+
+		/* Yes, truncation is really intended here.  */
+		/* XXX errno NetBSD->Linux */
+		ret = -bus_space_map(bst, (u32)iobj->bar.offset, size,
+		    BUS_SPACE_MAP_LINEAR, &bsh);
+		if (ret == 0) {
+			nvkm_memory_map(memory, &iobj->bar, 0);
+			iobj->bst = bst;
+			iobj->bsh = bsh;
+			iobj->map = bus_space_vaddr(bst, bsh);
+		} else {
+			nvkm_warn(subdev, "PRAMIN bus_space_map failed: %d\n",
+			    ret);
+			nvkm_vm_put(&iobj->bar);
+		}
+#else
 		map = ioremap(device->func->resource_addr(device, 3) +
 			      (u32)iobj->bar.offset, size);
 		if (map) {
@@ -95,6 +119,7 @@ nv50_instobj_boot(struct nvkm_memory *memory, struct nvkm_vm *vm)
 			nvkm_warn(subdev, "PRAMIN ioremap failed\n");
 			nvkm_vm_put(&iobj->bar);
 		}
+#endf
 	} else {
 		nvkm_warn(subdev, "PRAMIN exhausted\n");
 	}
@@ -174,7 +199,13 @@ nv50_instobj_dtor(struct nvkm_memory *memory)
 	struct nvkm_ram *ram = iobj->imem->base.subdev.device->fb->ram;
 	if (!IS_ERR_OR_NULL(iobj->map)) {
 		nvkm_vm_put(&iobj->bar);
+#ifdef __NetBSD__
+		bus_space_unmap(iobj->bst, iobj->bsh,
+		    nvkm_memory_size(iobj->memory));
+		iobj->map = NULL;
+#else
 		iounmap(iobj->map);
+#endif
 	}
 	ram->func->put(ram, &iobj->mem);
 	return iobj;

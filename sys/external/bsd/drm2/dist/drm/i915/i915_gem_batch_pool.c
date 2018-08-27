@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem_batch_pool.c,v 1.1.1.1 2018/08/27 01:34:53 riastradh Exp $	*/
+/*	$NetBSD: i915_gem_batch_pool.c,v 1.2 2018/08/27 04:58:23 riastradh Exp $	*/
 
 /*
  * Copyright © 2014 Intel Corporation
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gem_batch_pool.c,v 1.1.1.1 2018/08/27 01:34:53 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gem_batch_pool.c,v 1.2 2018/08/27 04:58:23 riastradh Exp $");
 
 #include "i915_drv.h"
 #include "i915_gem_batch_pool.h"

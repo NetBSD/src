@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_engine_device_user.c,v 1.1.1.1 2018/08/27 01:34:56 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_engine_device_user.c,v 1.2 2018/08/27 04:58:31 riastradh Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_device_user.c,v 1.1.1.1 2018/08/27 01:34:56 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_device_user.c,v 1.2 2018/08/27 04:58:31 riastradh Exp $");
 
 #define nvkm_udevice(p) container_of((p), struct nvkm_udevice, object)
 #include "priv.h"
@@ -340,7 +340,7 @@ nvkm_udevice_new(const struct nvkm_oclass *oclass, void *data, u32 size,
 
 	nvif_ioctl(parent, "create device size %d\n", size);
 	if (nvif_unpack(args->v0, 0, 0, false)) {
-		nvif_ioctl(parent, "create device v%d device %016llx\n",
+		nvif_ioctl(parent, "create device v%d device %016"PRIx64"\n",
 			   args->v0.version, args->v0.device);
 	} else
 		return ret;

@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_core_ioctl.c,v 1.1.1.1 2018/08/27 01:36:13 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_core_ioctl.c,v 1.2 2018/08/27 04:58:30 riastradh Exp $	*/
 
 /*
  * Copyright 2014 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs <bskeggs@redhat.com>
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_core_ioctl.c,v 1.1.1.1 2018/08/27 01:36:13 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_core_ioctl.c,v 1.2 2018/08/27 04:58:30 riastradh Exp $");
 
 #include <core/ioctl.h>
 #include <core/client.h>
@@ -96,7 +96,7 @@ nvkm_ioctl_new(struct nvkm_object *parent, void *data, u32 size)
 	nvif_ioctl(parent, "new size %d\n", size);
 	if (nvif_unpack(args->v0, 0, 0, true)) {
 		nvif_ioctl(parent, "new vers %d handle %08x class %08x "
-				   "route %02x token %llx object %016llx\n",
+				   "route %02x token %"PRIx64" object %016"PRIx64"\n",
 			   args->v0.version, args->v0.handle, args->v0.oclass,
 			   args->v0.route, args->v0.token, args->v0.object);
 	} else
@@ -198,7 +198,7 @@ nvkm_ioctl_rd(struct nvkm_object *object, void *data, u32 size)
 
 	nvif_ioctl(object, "rd size %d\n", size);
 	if (nvif_unpack(args->v0, 0, 0, false)) {
-		nvif_ioctl(object, "rd vers %d size %d addr %016llx\n",
+		nvif_ioctl(object, "rd vers %d size %d addr %016"PRIx64"\n",
 			   args->v0.version, args->v0.size, args->v0.addr);
 		switch (args->v0.size) {
 		case 1:
@@ -233,7 +233,7 @@ nvkm_ioctl_wr(struct nvkm_object *object, void *data, u32 size)
 	nvif_ioctl(object, "wr size %d\n", size);
 	if (nvif_unpack(args->v0, 0, 0, false)) {
 		nvif_ioctl(object,
-			   "wr vers %d size %d addr %016llx data %08x\n",
+			   "wr vers %d size %d addr %016"PRIx64" data %08x\n",
 			   args->v0.version, args->v0.size, args->v0.addr,
 			   args->v0.data);
 	} else
@@ -433,7 +433,7 @@ nvkm_ioctl(struct nvkm_client *client, bool supervisor,
 
 	if (nvif_unpack(args->v0, 0, 0, true)) {
 		nvif_ioctl(object,
-			   "vers %d type %02x object %016llx owner %02x\n",
+			   "vers %d type %02x object %016"PRIx64" owner %02x\n",
 			   args->v0.version, args->v0.type, args->v0.object,
 			   args->v0.owner);
 		ret = nvkm_ioctl_path(client, args->v0.object, args->v0.type,

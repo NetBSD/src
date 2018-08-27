@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_ioc32.c,v 1.1.1.2 2018/08/27 01:34:54 riastradh Exp $	*/
+/*	$NetBSD: i915_ioc32.c,v 1.2 2018/08/27 04:58:23 riastradh Exp $	*/
 
 /**
  * \file i915_ioc32.c
@@ -32,7 +32,7 @@
  * IN THE SOFTWARE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_ioc32.c,v 1.1.1.2 2018/08/27 01:34:54 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_ioc32.c,v 1.2 2018/08/27 04:58:23 riastradh Exp $");
 
 #include <linux/compat.h>
 
