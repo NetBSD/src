@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_engine_fifo_chan.c,v 1.7 2018/08/27 14:51:55 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_engine_fifo_chan.c,v 1.8 2018/08/27 14:54:33 riastradh Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_fifo_chan.c,v 1.7 2018/08/27 14:51:55 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_fifo_chan.c,v 1.8 2018/08/27 14:54:33 riastradh Exp $");
 
 #include "chan.h"
 
@@ -258,12 +258,18 @@ nvkm_fifo_chan_ntfy(struct nvkm_object *object, u32 type,
 }
 
 static int
+#ifdef __NetBSD__
 nvkm_fifo_chan_map(struct nvkm_object *object, bus_space_tag_t *tagp,
     u64 *addr, u32 *size)
+#else
+nvkm_fifo_chan_map(struct nvkm_object *object, u64 *addr, u32 *size)
+#endif
 {
 	struct nvkm_fifo_chan *chan = nvkm_fifo_chan(object);
+#ifdef __NetBSD__
 	/* XXX Uh oh.  Can't map this more than once.  OK?  */
 	*tagp = chan->bst;
+#endif
 	*addr = chan->addr;
 	*size = chan->size;
 	return 0;

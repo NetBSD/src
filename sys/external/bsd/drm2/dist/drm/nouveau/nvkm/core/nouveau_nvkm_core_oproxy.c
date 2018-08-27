@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_core_oproxy.c,v 1.3 2018/08/27 07:35:56 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_core_oproxy.c,v 1.4 2018/08/27 14:54:33 riastradh Exp $	*/
 
 /*
  * Copyright 2015 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs <bskeggs@redhat.com>
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_core_oproxy.c,v 1.3 2018/08/27 07:35:56 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_core_oproxy.c,v 1.4 2018/08/27 14:54:33 riastradh Exp $");
 
 #include <core/oproxy.h>
 
@@ -41,12 +41,20 @@ nvkm_oproxy_ntfy(struct nvkm_object *object, u32 mthd,
 	return nvkm_object_ntfy(nvkm_oproxy(object)->object, mthd, pevent);
 }
 
+#ifdef __NetBSD__
 static int
 nvkm_oproxy_map(struct nvkm_object *object, bus_space_tag_t *tagp, u64 *addr,
     u32 *size)
 {
 	return nvkm_object_map(nvkm_oproxy(object)->object, tagp, addr, size);
 }
+#else
+static int
+nvkm_oproxy_map(struct nvkm_object *object, u64 *addr, u32 *size)
+{
+	return nvkm_object_map(nvkm_oproxy(object)->object, addr, size);
+}
+#endif
 
 static int
 nvkm_oproxy_rd08(struct nvkm_object *object, u64 addr, u8 *data)

@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_core_object.c,v 1.5 2018/08/27 07:39:20 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_core_object.c,v 1.6 2018/08/27 14:54:33 riastradh Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_core_object.c,v 1.5 2018/08/27 07:39:20 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_core_object.c,v 1.6 2018/08/27 14:54:33 riastradh Exp $");
 
 #include <core/object.h>
 #include <core/client.h>
@@ -47,6 +47,7 @@ nvkm_object_ntfy(struct nvkm_object *object, u32 mthd,
 	return -ENODEV;
 }
 
+#ifdef __NetBSD__
 int
 nvkm_object_map(struct nvkm_object *object, bus_space_tag_t *tagp, u64 *addr,
     u32 *size)
@@ -55,6 +56,15 @@ nvkm_object_map(struct nvkm_object *object, bus_space_tag_t *tagp, u64 *addr,
 		return object->func->map(object, tagp, addr, size);
 	return -ENODEV;
 }
+#else
+int
+nvkm_object_map(struct nvkm_object *object, u64 *addr, u32 *size)
+{
+	if (likely(object->func->map))
+		return object->func->map(object, addr, size);
+	return -ENODEV;
+}
+#endif
 
 int
 nvkm_object_rd08(struct nvkm_object *object, u64 addr, u8 *data)
