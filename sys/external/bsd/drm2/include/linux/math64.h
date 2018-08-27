@@ -1,4 +1,4 @@
-/*	$NetBSD: math64.h,v 1.4 2018/08/27 06:43:10 riastradh Exp $	*/
+/*	$NetBSD: math64.h,v 1.5 2018/08/27 06:51:07 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -37,28 +37,28 @@
 #include <asm/div64.h>
 
 static inline int64_t
-div64_u64(int64_t divisor, uint64_t dividend)
+div64_u64(int64_t dividend, uint64_t divisor)
 {
-	return divisor / dividend;
+	return dividend / divisor;
 }
 
 static inline int64_t
-div_u64(int64_t divisor, uint32_t dividend)
+div_u64(int64_t dividend, uint32_t divisor)
 {
-	return divisor / dividend;
+	return dividend / divisor;
 }
 
 static inline int64_t
-div64_s64(int64_t divisor, int64_t dividend)
+div64_s64(int64_t dividend, int64_t divisor)
 {
-	return divisor / dividend;
+	return dividend / divisor;
 }
 
 static inline uint64_t
-div64_u64_rem(uint64_t divisor, uint64_t dividend, uint64_t *rem)
+div64_u64_rem(uint64_t dividend, uint64_t divisor, uint64_t *rem)
 {
-	*rem = divisor % dividend;
-	return divisor / dividend;
+	*rem = dividend % divisor;
+	return dividend / divisor;
 }
 
 #endif  /* _LINUX_MATH64_H_ */
