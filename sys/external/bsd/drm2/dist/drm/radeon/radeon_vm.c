@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_vm.c,v 1.5 2018/08/27 07:52:20 riastradh Exp $	*/
+/*	$NetBSD: radeon_vm.c,v 1.6 2018/08/27 07:52:32 riastradh Exp $	*/
 
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
@@ -28,7 +28,7 @@
  *          Jerome Glisse
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_vm.c,v 1.5 2018/08/27 07:52:20 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_vm.c,v 1.6 2018/08/27 07:52:32 riastradh Exp $");
 
 #include <drm/drmP.h>
 #include <drm/radeon_drm.h>
@@ -1197,7 +1197,11 @@ int radeon_vm_init(struct radeon_device *rdev, struct radeon_vm *vm)
 #else
 	mutex_init(&vm->mutex);
 #endif
+#ifdef __NetBSD__
+	interval_tree_init(&vm->va);
+#else
 	vm->va = RB_ROOT;
+#endif
 	spin_lock_init(&vm->status_lock);
 	INIT_LIST_HEAD(&vm->invalidated);
 	INIT_LIST_HEAD(&vm->freed);
