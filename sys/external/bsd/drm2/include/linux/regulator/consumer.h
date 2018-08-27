@@ -1,4 +1,4 @@
-/*	$NetBSD: consumer.h,v 1.2 2018/08/27 07:33:18 riastradh Exp $	*/
+/*	$NetBSD: consumer.h,v 1.3 2018/08/27 07:49:36 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -32,7 +32,9 @@
 #ifndef	_LINUX_REGULATOR_CONSUMER_H_
 #define	_LINUX_REGULATOR_CONSUMER_H_
 
+#ifdef _KERNEL_OPT
 #include "opt_fdt.h"
+#endif
 
 #ifdef FDT
 
