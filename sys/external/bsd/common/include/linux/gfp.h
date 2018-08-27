@@ -1,4 +1,4 @@
-/*	$NetBSD: gfp.h,v 1.6 2018/08/27 06:56:31 riastradh Exp $	*/
+/*	$NetBSD: gfp.h,v 1.1 2018/08/27 15:45:06 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
