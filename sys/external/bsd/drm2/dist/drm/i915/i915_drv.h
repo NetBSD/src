@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_drv.h,v 1.20 2018/08/27 07:26:30 riastradh Exp $	*/
+/*	$NetBSD: i915_drv.h,v 1.21 2018/08/27 07:26:43 riastradh Exp $	*/
 
 /* i915_drv.h -- Private header for the I915 driver -*- linux-c -*-
  */
@@ -2504,9 +2504,9 @@ struct drm_i915_cmd_table {
 #define __I915__(p) ({ \
 	struct drm_i915_private *__p; \
 	if (__builtin_types_compatible_p(typeof(*p), struct drm_i915_private)) \
-		__p = (struct drm_i915_private *)p; \
+		__p = (struct drm_i915_private *)__UNCONST(p); \
 	else if (__builtin_types_compatible_p(typeof(*p), struct drm_device)) \
-		__p = to_i915((struct drm_device *)p); \
+		__p = to_i915((struct drm_device *)__UNCONST(p)); \
 	else \
 		BUILD_BUG(); \
 	__p; \
