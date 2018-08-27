@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_work.c,v 1.14 2018/08/27 14:58:09 riastradh Exp $	*/
+/*	$NetBSD: linux_work.c,v 1.15 2018/08/27 14:58:24 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_work.c,v 1.14 2018/08/27 14:58:09 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_work.c,v 1.15 2018/08/27 14:58:24 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/atomic.h>
@@ -282,6 +282,8 @@ linux_workqueue_timeout(void *cookie)
 	default:
 		panic("delayed work callout in bad state: %p", dw);
 	}
+	KASSERT(dw->dw_state == DELAYED_WORK_IDLE ||
+	    dw->dw_state == DELAYED_WORK_SCHEDULED);
 	mutex_exit(&wq->wq_lock);
 }
 
