@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_drv.h,v 1.9 2018/08/27 04:58:24 riastradh Exp $	*/
+/*	$NetBSD: intel_drv.h,v 1.10 2018/08/27 06:18:30 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2006 Dave Airlie <airlied@linux.ie>
@@ -28,6 +28,7 @@
 #define __INTEL_DRV_H__
 
 #include <linux/async.h>
+#include <linux/err.h>
 #include <linux/i2c.h>
 #include <linux/hdmi.h>
 #include <asm/processor.h>
