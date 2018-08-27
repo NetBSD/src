@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_drv.h,v 1.23 2018/08/27 13:43:39 riastradh Exp $	*/
+/*	$NetBSD: i915_drv.h,v 1.24 2018/08/27 14:47:02 riastradh Exp $	*/
 
 /* i915_drv.h -- Private header for the I915 driver -*- linux-c -*-
  */
@@ -1041,6 +1041,11 @@ enum intel_sbi_destination {
 #define QUIRK_BACKLIGHT_PRESENT (1<<3)
 #define QUIRK_PIPEB_FORCE (1<<4)
 #define QUIRK_PIN_SWIZZLED_PAGES (1<<5)
+
+#ifdef __NetBSD__
+/* NetBSD hack to note version was called and thus mmap flags valid. */
+#define QUIRK_NETBSD_VERSION_CALLED (1ul<<31)
+#endif
 
 struct intel_fbdev;
 struct intel_fbc_work;
