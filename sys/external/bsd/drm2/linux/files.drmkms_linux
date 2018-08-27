@@ -1,4 +1,4 @@
-#       $NetBSD: files.drmkms_linux,v 1.11 2018/08/27 07:57:56 riastradh Exp $
+#       $NetBSD: files.drmkms_linux,v 1.12 2018/08/27 13:31:37 riastradh Exp $
 
 define	drmkms_linux: i2cexec, i2c_bitbang
 
@@ -11,5 +11,6 @@ file	external/bsd/drm2/linux/linux_idr.c		drmkms_linux
 file	external/bsd/drm2/linux/linux_kmap.c		drmkms_linux
 file	external/bsd/drm2/linux/linux_list_sort.c	drmkms_linux
 file	external/bsd/drm2/linux/linux_module.c		drmkms_linux
+file	external/bsd/drm2/linux/linux_rcu.c		drmkms_linux
 file	external/bsd/drm2/linux/linux_writecomb.c	drmkms_linux
 file	external/bsd/drm2/linux/linux_ww_mutex.c	drmkms_linux
