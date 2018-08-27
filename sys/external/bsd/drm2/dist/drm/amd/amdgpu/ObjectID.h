@@ -1,4 +1,4 @@
-/*	$NetBSD: ObjectID.h,v 1.1.1.1 2018/08/27 01:34:43 riastradh Exp $	*/
+/*	$NetBSD: ObjectID.h,v 1.2 2018/08/27 04:58:19 riastradh Exp $	*/
 
 /*
 * Copyright 2006-2007 Advanced Micro Devices, Inc.  

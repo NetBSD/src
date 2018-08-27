@@ -1,4 +1,4 @@
-/*	$NetBSD: cgs_linux.h,v 1.1.1.1 2018/08/27 01:34:47 riastradh Exp $	*/
+/*	$NetBSD: cgs_linux.h,v 1.2 2018/08/27 04:58:20 riastradh Exp $	*/
 
 /*
  * Copyright 2015 Advanced Micro Devices, Inc.

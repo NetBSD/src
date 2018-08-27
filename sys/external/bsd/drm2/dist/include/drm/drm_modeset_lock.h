@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_modeset_lock.h,v 1.1.1.1 2018/08/27 01:35:00 riastradh Exp $	*/
+/*	$NetBSD: drm_modeset_lock.h,v 1.2 2018/08/27 04:58:38 riastradh Exp $	*/
 
 /*
  * Copyright (C) 2014 Red Hat

@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_i2c.c,v 1.1.1.1 2018/08/27 01:34:44 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_i2c.c,v 1.2 2018/08/27 04:58:19 riastradh Exp $	*/
 
 /*
  * Copyright 2007-8 Advanced Micro Devices, Inc.
@@ -26,7 +26,7 @@
  *          Alex Deucher
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_i2c.c,v 1.1.1.1 2018/08/27 01:34:44 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_i2c.c,v 1.2 2018/08/27 04:58:19 riastradh Exp $");
 
 #include <linux/export.h>
 

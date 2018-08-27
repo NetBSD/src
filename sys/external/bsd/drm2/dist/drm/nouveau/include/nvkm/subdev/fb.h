@@ -1,4 +1,4 @@
-/*	$NetBSD: fb.h,v 1.1.1.1 2018/08/27 01:34:55 riastradh Exp $	*/
+/*	$NetBSD: fb.h,v 1.2 2018/08/27 04:58:30 riastradh Exp $	*/
 
 #ifndef __NVKM_FB_H__
 #define __NVKM_FB_H__
@@ -32,7 +32,11 @@ struct nvkm_mem {
 
 	struct nvkm_mm_node *tag;
 	struct list_head regions;
+#ifdef __NetBSD__
+	bus_dmamap_t pages;
+#else
 	dma_addr_t *pages;
+#endif
 	u32 memtype;
 	u64 offset;
 	u64 size;

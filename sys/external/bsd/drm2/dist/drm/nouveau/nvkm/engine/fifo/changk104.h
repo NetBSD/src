@@ -1,4 +1,4 @@
-/*	$NetBSD: changk104.h,v 1.1.1.1 2018/08/27 01:34:56 riastradh Exp $	*/
+/*	$NetBSD: changk104.h,v 1.2 2018/08/27 04:58:31 riastradh Exp $	*/
 
 #ifndef __GK104_FIFO_CHAN_H__
 #define __GK104_FIFO_CHAN_H__

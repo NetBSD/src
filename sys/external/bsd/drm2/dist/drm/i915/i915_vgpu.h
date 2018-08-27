@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_vgpu.h,v 1.1.1.1 2018/08/27 01:34:54 riastradh Exp $	*/
+/*	$NetBSD: i915_vgpu.h,v 1.2 2018/08/27 04:58:24 riastradh Exp $	*/
 
 /*
  * Copyright(c) 2011-2015 Intel Corporation. All rights reserved.

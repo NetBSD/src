@@ -1,3 +1,5 @@
+/*	$NetBSD: radeon_bios.c,v 1.5 2018/08/27 04:58:36 riastradh Exp $	*/
+
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
@@ -25,12 +27,14 @@
  *          Alex Deucher
  *          Jerome Glisse
  */
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: radeon_bios.c,v 1.5 2018/08/27 04:58:36 riastradh Exp $");
+
 #include <drm/drmP.h>
 #include "radeon_reg.h"
 #include "radeon.h"
 #include "atom.h"
 
-#include <linux/vga_switcheroo.h>
 #include <linux/slab.h>
 #include <linux/acpi.h>
 #include <linux/string.h>
@@ -106,7 +110,11 @@ static bool igp_read_bios_from_vram(struct radeon_device *rdev)
 
 static bool radeon_read_bios(struct radeon_device *rdev)
 {
-	uint8_t __iomem *bios;
+#ifdef __NetBSD__
+	const bus_space_tag_t bst = rdev->pdev->pd_rom_bst;
+	const bus_space_handle_t bsh = rdev->pdev->pd_rom_found_bsh;
+#endif
+	uint8_t __iomem *bios, val1, val2;
 	size_t size;
 
 	rdev->bios = NULL;
@@ -117,39 +125,26 @@ static bool radeon_read_bios(struct radeon_device *rdev)
 	}
 
 #ifdef __NetBSD__
-	/*
-	 * Using kmemdup results in >4-byte memory access on 64-bit
-	 * systems, which yields bogus answers on some devices.  So we
-	 * use bus_space(9) to do guaranteed byte access with
-	 * bus_space_read_region_1 which seems to work better.
-	 */
-    {
-	const bus_space_tag_t bst = rdev->pdev->pd_rom_bst;
-	const bus_space_handle_t bsh = rdev->pdev->pd_rom_found_bsh;
-
-	if (size == 0 ||
-	    bus_space_read_1(bst, bsh, 0) != 0x55 ||
-	    bus_space_read_1(bst, bsh, 1) != 0xaa) {
-		pci_unmap_rom(rdev->pdev, bios);
-		return false;
-	}
-	rdev->bios = kmalloc(size, GFP_KERNEL);
-	if (rdev->bios == NULL) {
-		pci_unmap_rom(rdev->pdev, bios);
-		return false;
-	}
-	bus_space_read_region_1(bst, bsh, 0, rdev->bios, size);
-    }
+	val1 = bus_space_read_1(bst, bsh, 0);
+	val2 = bus_space_read_1(bst, bsh, 1);
 #else
-	if (size == 0 || bios[0] != 0x55 || bios[1] != 0xaa) {
+	val1 = readb(&bios[0]);
+	val2 = readb(&bios[1]);
+#endif
+
+	if (size == 0 || val1 != 0x55 || val2 != 0xaa) {
 		pci_unmap_rom(rdev->pdev, bios);
 		return false;
 	}
-	rdev->bios = kmemdup(bios, size, GFP_KERNEL);
+	rdev->bios = kzalloc(size, GFP_KERNEL);
 	if (rdev->bios == NULL) {
 		pci_unmap_rom(rdev->pdev, bios);
 		return false;
 	}
+#ifdef __NetBSD__
+	bus_space_read_region_1(bst, bsh, 0, rdev->bios, size);
+#else
+	memcpy_fromio(rdev->bios, bios, size);
 #endif
 	pci_unmap_rom(rdev->pdev, bios);
 	return true;
@@ -691,7 +686,7 @@ static bool radeon_acpi_vfct_bios(struct radeon_device *rdev)
 	    vhdr->DeviceID != rdev->pdev->device) {
 		DRM_INFO("ACPI VFCT table is not for this card\n");
 		goto out_unmap;
-	};
+	}
 
 	if (vfct->VBIOSImageOffset + sizeof(VFCT_IMAGE_HEADER) + vhdr->ImageLength > tbl_size) {
 		DRM_ERROR("ACPI VFCT image truncated\n");
@@ -723,12 +718,10 @@ bool radeon_get_bios(struct radeon_device *rdev)
 		r = igp_read_bios_from_vram(rdev);
 	if (r == false)
 		r = radeon_read_bios(rdev);
-	if (r == false) {
+	if (r == false)
 		r = radeon_read_disabled_bios(rdev);
-	}
-	if (r == false) {
+	if (r == false)
 		r = radeon_read_platform_bios(rdev);
-	}
 	if (r == false || rdev->bios == NULL) {
 		DRM_ERROR("Unable to locate a BIOS ROM\n");
 		rdev->bios = NULL;

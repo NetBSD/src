@@ -1,4 +1,4 @@
-/*	$NetBSD: evergreen_dma.c,v 1.1.1.2 2018/08/27 01:34:57 riastradh Exp $	*/
+/*	$NetBSD: evergreen_dma.c,v 1.2 2018/08/27 04:58:35 riastradh Exp $	*/
 
 /*
  * Copyright 2010 Advanced Micro Devices, Inc.
@@ -24,7 +24,7 @@
  * Authors: Alex Deucher
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: evergreen_dma.c,v 1.1.1.2 2018/08/27 01:34:57 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: evergreen_dma.c,v 1.2 2018/08/27 04:58:35 riastradh Exp $");
 
 #include <drm/drmP.h>
 #include "radeon.h"

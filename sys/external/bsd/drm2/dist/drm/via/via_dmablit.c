@@ -1,3 +1,5 @@
+/*	$NetBSD: via_dmablit.c,v 1.6 2018/08/27 04:58:37 riastradh Exp $	*/
+
 /* via_dmablit.c -- PCI DMA BitBlt support for the VIA Unichrome/Pro
  *
  * Copyright (C) 2005 Thomas Hellstrom, All Rights Reserved.
@@ -33,6 +35,9 @@
  * FIXME: What happens if this one is called and a pending blit has previously done
  * the same DMA mappings?
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: via_dmablit.c,v 1.6 2018/08/27 04:58:37 riastradh Exp $");
 
 #include <drm/drmP.h>
 #include <drm/via_drm.h>
@@ -343,7 +348,7 @@ via_lock_all_dma_pages(struct drm_device *dev, drm_via_sg_info_t *vsg,
 /*
  * Allocate DMA capable memory for the blit descriptor chain, and an array that keeps track of the
  * pages we allocate. We don't want to use kmalloc for the descriptor chain because it may be
- * quite large for some blits, and pages don't need to be contingous.
+ * quite large for some blits, and pages don't need to be contiguous.
  */
 
 static int

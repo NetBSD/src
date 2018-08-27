@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_dp_mst_topology.c,v 1.1.1.1 2018/08/27 01:34:41 riastradh Exp $	*/
+/*	$NetBSD: drm_dp_mst_topology.c,v 1.2 2018/08/27 04:58:19 riastradh Exp $	*/
 
 /*
  * Copyright © 2014 Red Hat
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_dp_mst_topology.c,v 1.1.1.1 2018/08/27 01:34:41 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_dp_mst_topology.c,v 1.2 2018/08/27 04:58:19 riastradh Exp $");
 
 #include <linux/kernel.h>
 #include <linux/delay.h>

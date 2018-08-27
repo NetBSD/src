@@ -1,4 +1,4 @@
-/*	$NetBSD: si_reg.h,v 1.1.1.2 2018/08/27 01:34:59 riastradh Exp $	*/
+/*	$NetBSD: si_reg.h,v 1.2 2018/08/27 04:58:36 riastradh Exp $	*/
 
 /*
  * Copyright 2010 Advanced Micro Devices, Inc.

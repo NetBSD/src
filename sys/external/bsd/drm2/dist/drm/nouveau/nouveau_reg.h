@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_reg.h,v 1.1.1.2 2018/08/27 01:34:55 riastradh Exp $	*/
+/*	$NetBSD: nouveau_reg.h,v 1.2 2018/08/27 04:58:24 riastradh Exp $	*/
 
 
 #define NV04_PFB_BOOT_0						0x00100000

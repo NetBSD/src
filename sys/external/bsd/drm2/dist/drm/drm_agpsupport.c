@@ -1,3 +1,5 @@
+/*	$NetBSD: drm_agpsupport.c,v 1.7 2018/08/27 04:58:19 riastradh Exp $	*/
+
 /**
  * \file drm_agpsupport.c
  * DRM support for AGP/GART backend
@@ -31,13 +33,15 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: drm_agpsupport.c,v 1.7 2018/08/27 04:58:19 riastradh Exp $");
+
 #include <drm/drmP.h>
 #include <linux/errno.h>
 #include <linux/export.h>
 #include <linux/module.h>
 #include <linux/slab.h>
-
-#if __OS_HAS_AGP
+#include "drm_legacy.h"
 
 #include <asm/agp.h>
 
@@ -561,7 +565,3 @@ drm_agp_bind_pages(struct drm_device *dev,
 	return mem;
 }
 EXPORT_SYMBOL(drm_agp_bind_pages);
-
-#endif
-
-#endif /* __OS_HAS_AGP */

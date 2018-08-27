@@ -1,4 +1,4 @@
-/*	$NetBSD: fifo.h,v 1.1.1.1 2018/08/27 01:34:55 riastradh Exp $	*/
+/*	$NetBSD: fifo.h,v 1.2 2018/08/27 04:58:30 riastradh Exp $	*/
 
 #ifndef __NVKM_FIFO_H__
 #define __NVKM_FIFO_H__
@@ -24,7 +24,14 @@ struct nvkm_fifo_chan {
 	struct nvkm_gpuobj *inst;
 	struct nvkm_gpuobj *push;
 	struct nvkm_vm *vm;
+#ifdef __NetBSD__
+	bus_space_tag_t bst;
+	bus_space_handle_t bsh;
+	bool mapped;
+	bool subregion;
+#else
 	void __iomem *user;
+#endif
 	u64 addr;
 	u32 size;
 

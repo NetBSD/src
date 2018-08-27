@@ -1,4 +1,4 @@
-/*	$NetBSD: client.h,v 1.1.1.1 2018/08/27 01:36:13 riastradh Exp $	*/
+/*	$NetBSD: client.h,v 1.2 2018/08/27 04:58:30 riastradh Exp $	*/
 
 #ifndef __NVKM_CLIENT_H__
 #define __NVKM_CLIENT_H__

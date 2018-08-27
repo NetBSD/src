@@ -1,4 +1,4 @@
-/*	$NetBSD: nv50.h,v 1.1.1.1 2018/08/27 01:34:56 riastradh Exp $	*/
+/*	$NetBSD: nv50.h,v 1.2 2018/08/27 04:58:33 riastradh Exp $	*/
 
 #ifndef __NVKM_FB_NV50_H__
 #define __NVKM_FB_NV50_H__
@@ -8,8 +8,14 @@
 struct nv50_fb {
 	const struct nv50_fb_func *func;
 	struct nvkm_fb base;
+#ifdef __NetBSD__
+	bus_dma_segment_t r100c08_seg;
+	bus_dmamap_t r100c08_map;
+	void *r100c08_kva;
+#else
 	struct page *r100c08_page;
 	dma_addr_t r100c08;
+#endif
 };
 
 struct nv50_fb_func {

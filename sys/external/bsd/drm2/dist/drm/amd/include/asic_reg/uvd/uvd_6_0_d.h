@@ -1,4 +1,4 @@
-/*	$NetBSD: uvd_6_0_d.h,v 1.1.1.1 2018/08/27 01:34:53 riastradh Exp $	*/
+/*	$NetBSD: uvd_6_0_d.h,v 1.2 2018/08/27 04:58:23 riastradh Exp $	*/
 
 /*
  * UVD_6_0 Register documentation

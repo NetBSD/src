@@ -1,4 +1,4 @@
-/*	$NetBSD: os.h,v 1.1.1.1 2018/08/27 01:34:55 riastradh Exp $	*/
+/*	$NetBSD: os.h,v 1.2 2018/08/27 04:58:30 riastradh Exp $	*/
 
 #ifndef __NOUVEAU_OS_H__
 #define __NOUVEAU_OS_H__
@@ -30,12 +30,24 @@
 #include <linux/reset.h>
 #include <linux/iommu.h>
 #include <linux/of_device.h>
+#include <linux/atomic.h>
+#include <linux/bug.h>
+#include <linux/kernel.h>
+#include <linux/kref.h>
+#include <linux/list.h>
+#include <linux/spinlock.h>
+#include <linux/math64.h>
+#include <linux/errno.h>
+#include <linux/workqueue.h>
 
+#include <asm/byteorder.h>
+#include <asm/io.h>
 #include <asm/unaligned.h>
 
 #include <soc/tegra/fuse.h>
 #include <soc/tegra/pmc.h>
 
+#ifndef __NetBSD__		/* XXX ioread */
 #ifndef ioread32_native
 #ifdef __BIG_ENDIAN
 #define ioread16_native ioread16be
@@ -49,4 +61,6 @@
 #define iowrite32_native iowrite32
 #endif /* def __BIG_ENDIAN else */
 #endif /* !ioread32_native */
+#endif
+
 #endif

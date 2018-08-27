@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_subdev_clk_base.c,v 1.1.1.1 2018/08/27 01:34:56 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_subdev_clk_base.c,v 1.2 2018/08/27 04:58:33 riastradh Exp $	*/
 
 /*
  * Copyright 2013 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_clk_base.c,v 1.1.1.1 2018/08/27 01:34:56 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_clk_base.c,v 1.2 2018/08/27 04:58:33 riastradh Exp $");
 
 #include "priv.h"
 
@@ -410,16 +410,15 @@ nvkm_clk_nstate(struct nvkm_clk *clk, const char *mode, int arglen)
 		return -2;
 
 	if (strncasecmpz(mode, "disabled", arglen)) {
-		char save = mode[arglen];
+		char *m = kstrndup(mode, arglen, GFP_KERNEL);
 		long v;
 
-		((char *)mode)[arglen] = '\0';
-		if (!kstrtol(mode, 0, &v)) {
+		if (!kstrtol(m, 0, &v)) {
 			ret = nvkm_clk_ustate_update(clk, v);
 			if (ret < 0)
 				ret = 1;
 		}
-		((char *)mode)[arglen] = save;
+		kfree(m);
 	}
 
 	return ret - 2;

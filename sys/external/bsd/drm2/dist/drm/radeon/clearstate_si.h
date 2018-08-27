@@ -1,4 +1,4 @@
-/*	$NetBSD: clearstate_si.h,v 1.1.1.2 2018/08/27 01:34:57 riastradh Exp $	*/
+/*	$NetBSD: clearstate_si.h,v 1.2 2018/08/27 04:58:35 riastradh Exp $	*/
 
 /*
  * Copyright 2013 Advanced Micro Devices, Inc.

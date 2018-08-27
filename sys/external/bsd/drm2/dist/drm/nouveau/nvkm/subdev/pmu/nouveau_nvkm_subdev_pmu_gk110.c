@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_subdev_pmu_gk110.c,v 1.1.1.1 2018/08/27 01:34:56 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_subdev_pmu_gk110.c,v 1.2 2018/08/27 04:58:35 riastradh Exp $	*/
 
 /*
  * Copyright 2015 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_pmu_gk110.c,v 1.1.1.1 2018/08/27 01:34:56 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_pmu_gk110.c,v 1.2 2018/08/27 04:58:35 riastradh Exp $");
 
 #define gf119_pmu_code gk110_pmu_code
 #define gf119_pmu_data gk110_pmu_data

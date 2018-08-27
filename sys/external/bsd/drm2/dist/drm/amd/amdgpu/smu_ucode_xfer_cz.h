@@ -1,4 +1,4 @@
-/*	$NetBSD: smu_ucode_xfer_cz.h,v 1.1.1.1 2018/08/27 01:34:46 riastradh Exp $	*/
+/*	$NetBSD: smu_ucode_xfer_cz.h,v 1.2 2018/08/27 04:58:20 riastradh Exp $	*/
 
 // CZ Ucode Loading Definitions
 #ifndef SMU_UCODE_XFER_CZ_H

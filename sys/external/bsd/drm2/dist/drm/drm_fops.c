@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_fops.c,v 1.1.1.3 2018/08/27 01:34:42 riastradh Exp $	*/
+/*	$NetBSD: drm_fops.c,v 1.2 2018/08/27 04:58:19 riastradh Exp $	*/
 
 /**
  * \file drm_fops.c
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_fops.c,v 1.1.1.3 2018/08/27 01:34:42 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_fops.c,v 1.2 2018/08/27 04:58:19 riastradh Exp $");
 
 #include <drm/drmP.h>
 #include <linux/poll.h>

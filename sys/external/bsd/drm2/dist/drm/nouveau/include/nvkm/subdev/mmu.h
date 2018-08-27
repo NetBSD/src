@@ -1,4 +1,4 @@
-/*	$NetBSD: mmu.h,v 1.1.1.1 2018/08/27 01:34:55 riastradh Exp $	*/
+/*	$NetBSD: mmu.h,v 1.2 2018/08/27 04:58:30 riastradh Exp $	*/
 
 #ifndef __NVKM_MMU_H__
 #define __NVKM_MMU_H__
@@ -6,6 +6,11 @@
 #include <core/mm.h>
 struct nvkm_device;
 struct nvkm_mem;
+
+#define	NOUVEAU_GPU_PAGE_SIZE		4096
+#define	NOUVEAU_GPU_PAGE_MASK		(NOUVEAU_GPU_PAGE_SIZE - 1)
+#define	NOUVEAU_GPU_PAGE_SHIFT		12
+#define	NOUVEAU_GPU_PAGE_ALIGN(a)	(((a) + NOUVEAU_GPU_PAGE_MASK) & ~NOUVEAU_GPU_PAGE_MASK)
 
 struct nvkm_vm_pgt {
 	struct nvkm_memory *mem[2];

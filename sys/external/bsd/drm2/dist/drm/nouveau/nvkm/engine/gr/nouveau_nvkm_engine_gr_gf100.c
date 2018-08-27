@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_engine_gr_gf100.c,v 1.1.1.1 2018/08/27 01:34:56 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_engine_gr_gf100.c,v 1.2 2018/08/27 04:58:32 riastradh Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -24,7 +24,9 @@
  * Authors: Ben Skeggs
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_gr_gf100.c,v 1.1.1.1 2018/08/27 01:34:56 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_gr_gf100.c,v 1.2 2018/08/27 04:58:32 riastradh Exp $");
+
+#include <linux/string.h>	/* XXX */
 
 #include "gf100.h"
 #include "ctxgf100.h"
@@ -1239,7 +1241,7 @@ gf100_gr_intr(struct nvkm_gr *base)
 
 	if (stat & 0x00000010) {
 		if (!gf100_gr_mthd_sw(device, class, mthd, data)) {
-			nvkm_error(subdev, "ILLEGAL_MTHD ch %d [%010llx %s] "
+			nvkm_error(subdev, "ILLEGAL_MTHD ch %d [%010"PRIx64" %s] "
 				   "subc %d class %04x mthd %04x data %08x\n",
 				   chid, inst << 12, name, subc,
 				   class, mthd, data);
@@ -1249,7 +1251,7 @@ gf100_gr_intr(struct nvkm_gr *base)
 	}
 
 	if (stat & 0x00000020) {
-		nvkm_error(subdev, "ILLEGAL_CLASS ch %d [%010llx %s] "
+		nvkm_error(subdev, "ILLEGAL_CLASS ch %d [%010"PRIx64" %s] "
 			   "subc %d class %04x mthd %04x data %08x\n",
 			   chid, inst << 12, name, subc, class, mthd, data);
 		nvkm_wr32(device, 0x400100, 0x00000020);
@@ -1259,7 +1261,7 @@ gf100_gr_intr(struct nvkm_gr *base)
 	if (stat & 0x00100000) {
 		const struct nvkm_enum *en =
 			nvkm_enum_find(nv50_data_error_names, code);
-		nvkm_error(subdev, "DATA_ERROR %08x [%s] ch %d [%010llx %s] "
+		nvkm_error(subdev, "DATA_ERROR %08x [%s] ch %d [%010"PRIx64" %s] "
 				   "subc %d class %04x mthd %04x data %08x\n",
 			   code, en ? en->name : "", chid, inst << 12,
 			   name, subc, class, mthd, data);
@@ -1268,7 +1270,7 @@ gf100_gr_intr(struct nvkm_gr *base)
 	}
 
 	if (stat & 0x00200000) {
-		nvkm_error(subdev, "TRAP ch %d [%010llx %s]\n",
+		nvkm_error(subdev, "TRAP ch %d [%010"PRIx64" %s]\n",
 			   chid, inst << 12, name);
 		gf100_gr_trap_intr(gr);
 		nvkm_wr32(device, 0x400100, 0x00200000);
@@ -1290,7 +1292,7 @@ gf100_gr_intr(struct nvkm_gr *base)
 	nvkm_fifo_chan_put(device->fifo, flags, &chan);
 }
 
-void
+static void
 gf100_gr_init_fw(struct gf100_gr *gr, u32 fuc_base,
 		 struct gf100_gr_fuc *code, struct gf100_gr_fuc *data)
 {

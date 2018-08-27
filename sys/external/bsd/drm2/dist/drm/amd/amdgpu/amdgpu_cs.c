@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_cs.c,v 1.1.1.1 2018/08/27 01:34:43 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_cs.c,v 1.2 2018/08/27 04:58:19 riastradh Exp $	*/
 
 /*
  * Copyright 2008 Jerome Glisse.
@@ -27,7 +27,7 @@
  *    Jerome Glisse <glisse@freedesktop.org>
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_cs.c,v 1.1.1.1 2018/08/27 01:34:43 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_cs.c,v 1.2 2018/08/27 04:58:19 riastradh Exp $");
 
 #include <linux/list_sort.h>
 #include <drm/drmP.h>

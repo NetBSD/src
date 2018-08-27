@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_ttm.c,v 1.1.1.1 2018/08/27 01:34:44 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_ttm.c,v 1.2 2018/08/27 04:58:20 riastradh Exp $	*/
 
 /*
  * Copyright 2009 Jerome Glisse.
@@ -32,7 +32,7 @@
  *    Dave Airlie
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_ttm.c,v 1.1.1.1 2018/08/27 01:34:44 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_ttm.c,v 1.2 2018/08/27 04:58:20 riastradh Exp $");
 
 #include <ttm/ttm_bo_api.h>
 #include <ttm/ttm_bo_driver.h>

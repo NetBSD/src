@@ -1,4 +1,4 @@
-/*	$NetBSD: i810_drm.h,v 1.1.1.2 2018/08/27 01:35:00 riastradh Exp $	*/
+/*	$NetBSD: i810_drm.h,v 1.2 2018/08/27 04:58:38 riastradh Exp $	*/
 
 #ifndef _I810_DRM_H_
 #define _I810_DRM_H_

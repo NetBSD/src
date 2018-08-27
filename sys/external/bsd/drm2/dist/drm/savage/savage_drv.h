@@ -1,4 +1,4 @@
-/*	$NetBSD: savage_drv.h,v 1.1.1.3 2018/08/27 01:34:59 riastradh Exp $	*/
+/*	$NetBSD: savage_drv.h,v 1.2 2018/08/27 04:58:36 riastradh Exp $	*/
 
 /* savage_drv.h -- Private header for the savage driver */
 /*

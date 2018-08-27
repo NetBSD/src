@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_bo_list.c,v 1.1.1.1 2018/08/27 01:34:43 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_bo_list.c,v 1.2 2018/08/27 04:58:19 riastradh Exp $	*/
 
 /*
  * Copyright 2015 Advanced Micro Devices, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_bo_list.c,v 1.1.1.1 2018/08/27 01:34:43 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_bo_list.c,v 1.2 2018/08/27 04:58:19 riastradh Exp $");
 
 #include <drm/drmP.h>
 #include "amdgpu.h"

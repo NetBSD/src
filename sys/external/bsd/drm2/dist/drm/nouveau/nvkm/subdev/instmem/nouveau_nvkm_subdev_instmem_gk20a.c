@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_subdev_instmem_gk20a.c,v 1.1.1.1 2018/08/27 01:34:56 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_subdev_instmem_gk20a.c,v 1.2 2018/08/27 04:58:34 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2015, NVIDIA CORPORATION. All rights reserved.
@@ -44,7 +44,7 @@
  * goes beyond a certain threshold. At the moment this limit is 1MB.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_instmem_gk20a.c,v 1.1.1.1 2018/08/27 01:34:56 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_instmem_gk20a.c,v 1.2 2018/08/27 04:58:34 riastradh Exp $");
 
 #include "priv.h"
 
@@ -561,7 +561,7 @@ gk20a_instobj_new(struct nvkm_instmem *base, u32 size, u32 align, bool zero,
 	node->mem.memtype = 0;
 	node->mem.page_shift = 12;
 
-	nvkm_debug(subdev, "alloc size: 0x%x, align: 0x%x, gaddr: 0x%llx\n",
+	nvkm_debug(subdev, "alloc size: 0x%x, align: 0x%x, gaddr: 0x%"PRIx64"\n",
 		   size, align, node->mem.offset);
 
 	return 0;

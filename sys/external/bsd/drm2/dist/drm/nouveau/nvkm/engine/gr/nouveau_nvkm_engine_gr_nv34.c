@@ -1,7 +1,7 @@
-/*	$NetBSD: nouveau_nvkm_engine_gr_nv34.c,v 1.1.1.1 2018/08/27 01:34:56 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_engine_gr_nv34.c,v 1.2 2018/08/27 04:58:32 riastradh Exp $	*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_gr_nv34.c,v 1.1.1.1 2018/08/27 01:34:56 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_gr_nv34.c,v 1.2 2018/08/27 04:58:32 riastradh Exp $");
 
 #include "nv20.h"
 #include "regs.h"

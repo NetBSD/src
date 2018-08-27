@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_subdev_clk_nv50.c,v 1.1.1.1 2018/08/27 01:34:56 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_subdev_clk_nv50.c,v 1.2 2018/08/27 04:58:33 riastradh Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_clk_nv50.c,v 1.1.1.1 2018/08/27 01:34:56 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_clk_nv50.c,v 1.2 2018/08/27 04:58:33 riastradh Exp $");
 
 #include "nv50.h"
 #include "pll.h"
@@ -118,6 +118,9 @@ read_pll_src(struct nv50_clk *clk, u32 base)
 		break;
 	default:
 		BUG_ON(1);
+		M = 0;		/* XXX GCC is stupid */
+		N = 0;		/* XXX GCC is stupid */
+		P = 0;		/* XXX GCC is stupid */
 	}
 
 	if (M)

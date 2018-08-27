@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_subdev_clk_gk20a.c,v 1.1.1.1 2018/08/27 01:34:56 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_subdev_clk_gk20a.c,v 1.2 2018/08/27 04:58:33 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2014, NVIDIA CORPORATION. All rights reserved.
@@ -25,7 +25,7 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_clk_gk20a.c,v 1.1.1.1 2018/08/27 01:34:56 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_clk_gk20a.c,v 1.2 2018/08/27 04:58:33 riastradh Exp $");
 
 #define gk20a_clk(p) container_of((p), struct gk20a_clk, base)
 #include "priv.h"

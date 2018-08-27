@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_engine_cipher_g84.c,v 1.1.1.1 2018/08/27 01:34:55 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_engine_cipher_g84.c,v 1.2 2018/08/27 04:58:31 riastradh Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_cipher_g84.c,v 1.1.1.1 2018/08/27 01:34:55 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_cipher_g84.c,v 1.2 2018/08/27 04:58:31 riastradh Exp $");
 
 #include <engine/cipher.h>
 #include <engine/fifo.h>
@@ -98,7 +98,7 @@ g84_cipher_intr(struct nvkm_engine *cipher)
 	chan = nvkm_fifo_chan_inst(fifo, (u64)inst << 12, &flags);
 	if (stat) {
 		nvkm_snprintbf(msg, sizeof(msg), g84_cipher_intr_mask, stat);
-		nvkm_error(subdev,  "%08x [%s] ch %d [%010llx %s] "
+		nvkm_error(subdev,  "%08x [%s] ch %d [%010"PRIx64" %s] "
 				    "mthd %04x data %08x\n", stat, msg,
 			   chan ? chan->chid : -1, (u64)inst << 12,
 			   chan ? chan->object.client->name : "unknown",

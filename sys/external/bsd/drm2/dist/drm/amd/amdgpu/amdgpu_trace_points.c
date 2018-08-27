@@ -1,10 +1,10 @@
-/*	$NetBSD: amdgpu_trace_points.c,v 1.1.1.1 2018/08/27 01:34:44 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_trace_points.c,v 1.2 2018/08/27 04:58:20 riastradh Exp $	*/
 
 /* Copyright Red Hat Inc 2010.
  * Author : Dave Airlie <airlied@redhat.com>
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_trace_points.c,v 1.1.1.1 2018/08/27 01:34:44 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_trace_points.c,v 1.2 2018/08/27 04:58:20 riastradh Exp $");
 
 #include <drm/drmP.h>
 #include <drm/amdgpu_drm.h>

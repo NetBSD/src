@@ -1,4 +1,4 @@
-/*	$NetBSD: ci_smc.c,v 1.1.1.2 2018/08/27 01:34:57 riastradh Exp $	*/
+/*	$NetBSD: ci_smc.c,v 1.2 2018/08/27 04:58:35 riastradh Exp $	*/
 
 /*
  * Copyright 2011 Advanced Micro Devices, Inc.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ci_smc.c,v 1.1.1.2 2018/08/27 01:34:57 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ci_smc.c,v 1.2 2018/08/27 04:58:35 riastradh Exp $");
 
 #include <linux/firmware.h>
 #include "drmP.h"

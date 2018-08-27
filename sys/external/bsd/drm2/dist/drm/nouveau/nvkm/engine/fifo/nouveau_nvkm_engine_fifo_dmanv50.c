@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_engine_fifo_dmanv50.c,v 1.1.1.1 2018/08/27 01:34:56 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_engine_fifo_dmanv50.c,v 1.2 2018/08/27 04:58:31 riastradh Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_fifo_dmanv50.c,v 1.1.1.1 2018/08/27 01:34:56 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_fifo_dmanv50.c,v 1.2 2018/08/27 04:58:31 riastradh Exp $");
 
 #include "channv50.h"
 
@@ -48,8 +48,8 @@ nv50_fifo_dma_new(struct nvkm_fifo *base, const struct nvkm_oclass *oclass,
 
 	nvif_ioctl(parent, "create channel dma size %d\n", size);
 	if (nvif_unpack(args->v0, 0, 0, false)) {
-		nvif_ioctl(parent, "create channel dma vers %d vm %llx "
-				   "pushbuf %llx offset %016llx\n",
+		nvif_ioctl(parent, "create channel dma vers %d vm %"PRIx64" "
+				   "pushbuf %"PRIx64" offset %016"PRIx64"\n",
 			   args->v0.version, args->v0.vm, args->v0.pushbuf,
 			   args->v0.offset);
 		if (!args->v0.pushbuf)

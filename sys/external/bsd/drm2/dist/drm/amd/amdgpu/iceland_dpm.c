@@ -1,4 +1,4 @@
-/*	$NetBSD: iceland_dpm.c,v 1.1.1.1 2018/08/27 01:34:45 riastradh Exp $	*/
+/*	$NetBSD: iceland_dpm.c,v 1.2 2018/08/27 04:58:20 riastradh Exp $	*/
 
 /*
  * Copyright 2014 Advanced Micro Devices, Inc.
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iceland_dpm.c,v 1.1.1.1 2018/08/27 01:34:45 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iceland_dpm.c,v 1.2 2018/08/27 04:58:20 riastradh Exp $");
 
 #include <linux/firmware.h>
 #include "drmP.h"

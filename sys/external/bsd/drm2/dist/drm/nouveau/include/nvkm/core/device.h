@@ -1,4 +1,4 @@
-/*	$NetBSD: device.h,v 1.1.1.1 2018/08/27 01:36:13 riastradh Exp $	*/
+/*	$NetBSD: device.h,v 1.2 2018/08/27 04:58:30 riastradh Exp $	*/
 
 #ifndef __NVKM_DEVICE_H__
 #define __NVKM_DEVICE_H__
@@ -73,7 +73,13 @@ struct nvkm_device {
 	struct mutex mutex;
 	int refcount;
 
+#ifdef __NetBSD__
+	bus_space_tag_t mmiot;
+	bus_space_handle_t mmioh;
+	bus_size_t mmiosz;
+#else
 	void __iomem *pri;
+#endif
 
 	struct nvkm_event event;
 
@@ -153,6 +159,10 @@ struct nvkm_device_func {
 	int (*preinit)(struct nvkm_device *);
 	int (*init)(struct nvkm_device *);
 	void (*fini)(struct nvkm_device *, bool suspend);
+#ifdef __NetBSD__
+	bus_dma_tag_t (*dma_tag)(struct nvkm_device *);
+	bus_space_tag_t (*resource_tag)(struct nvkm_device *, unsigned bar);
+#endif
 	resource_size_t (*resource_addr)(struct nvkm_device *, unsigned bar);
 	resource_size_t (*resource_size)(struct nvkm_device *, unsigned bar);
 	bool cpu_coherent;
@@ -211,13 +221,51 @@ struct nvkm_device_chip {
 struct nvkm_device *nvkm_device_find(u64 name);
 int nvkm_device_list(u64 *name, int size);
 
+#ifdef __NetBSD__
+void	nouveau_devices_init(void);
+void	nouveau_devices_fini(void);
+#endif
+
 /* privileged register interface accessor macros */
+#ifdef __NetBSD__
+static inline uint8_t
+nvkm_rd08(struct nvkm_device *d, bus_size_t a)
+{
+	return bus_space_read_1(d->mmiot, d->mmioh, a);
+}
+static inline uint16_t
+nvkm_rd16(struct nvkm_device *d, bus_size_t a)
+{
+	return bus_space_read_stream_2(d->mmiot, d->mmioh, a);
+}
+static inline uint32_t
+nvkm_rd32(struct nvkm_device *d, bus_size_t a)
+{
+	return bus_space_read_stream_4(d->mmiot, d->mmioh, a);
+}
+static inline void
+nvkm_wr08(struct nvkm_device *d, bus_size_t a, uint8_t v)
+{
+	return bus_space_write_1(d->mmiot, d->mmioh, a, v);
+}
+static inline void
+nvkm_wr16(struct nvkm_device *d, bus_size_t a, uint16_t v)
+{
+	return bus_space_write_stream_2(d->mmiot, d->mmioh, a, v);
+}
+static inline void
+nvkm_wr16(struct nvkm_device *d, bus_size_t a, uint32_t v)
+{
+	return bus_space_write_stream_4(d->mmiot, d->mmioh, a, v);
+}
+#else
 #define nvkm_rd08(d,a) ioread8((d)->pri + (a))
 #define nvkm_rd16(d,a) ioread16_native((d)->pri + (a))
 #define nvkm_rd32(d,a) ioread32_native((d)->pri + (a))
 #define nvkm_wr08(d,a,v) iowrite8((v), (d)->pri + (a))
 #define nvkm_wr16(d,a,v) iowrite16_native((v), (d)->pri + (a))
 #define nvkm_wr32(d,a,v) iowrite32_native((v), (d)->pri + (a))
+#endif
 #define nvkm_mask(d,a,m,v) ({                                                  \
 	struct nvkm_device *_device = (d);                                     \
 	u32 _addr = (a), _temp = nvkm_rd32(_device, _addr);                    \

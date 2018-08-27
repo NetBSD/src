@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_subdev_fb_nv50.c,v 1.1.1.1 2018/08/27 01:34:56 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_subdev_fb_nv50.c,v 1.2 2018/08/27 04:58:33 riastradh Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_fb_nv50.c,v 1.1.1.1 2018/08/27 01:34:56 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_fb_nv50.c,v 1.2 2018/08/27 04:58:33 riastradh Exp $");
 
 #include "nv50.h"
 #include "ram.h"
@@ -238,11 +238,23 @@ nv50_fb_dtor(struct nvkm_fb *base)
 	struct nv50_fb *fb = nv50_fb(base);
 	struct nvkm_device *device = fb->base.subdev.device;
 
+#ifdef __NetBSD__
+	if (fb->r100c08_map) {
+		const bus_dma_tag_t dmat = device->func->dma_tag(device);
+
+		bus_dmamap_unload(dmat, fb->r100c08_map);
+		bus_dmamem_unmap(dmat, fb->r100c08_kva, PAGE_SIZE);
+		bus_dmamap_destroy(dmat, fb->r100c08_map);
+		bus_dmamem_free(dmat, &fb->r100c08_seg, 1);
+		fb->r100c08_map = NULL;
+	}
+#else
 	if (fb->r100c08_page) {
 		dma_unmap_page(device->dev, fb->r100c08, PAGE_SIZE,
 			       DMA_BIDIRECTIONAL);
 		__free_page(fb->r100c08_page);
 	}
+#endif
 
 	return fb;
 }
@@ -268,6 +280,49 @@ nv50_fb_new_(const struct nv50_fb_func *func, struct nvkm_device *device,
 	fb->func = func;
 	*pfb = &fb->base;
 
+#ifdef __NetBSD__
+    {
+	const bus_dma_tag_t dmat = device->func->dma_tag(device);
+	int nsegs;
+
+	fb->r100c08_map = NULL; /* paranoia */
+	fb->r100c08_kva = NULL;
+
+	/* XXX errno NetBSD->Linux */
+	ret = -bus_dmamem_alloc(dmat, PAGE_SIZE, PAGE_SIZE, 0,
+	    &fb->r100c08_seg, 1, &nsegs, BUS_DMA_WAITOK);
+	if (ret)
+fail0:		return ret;
+	KASSERT(nsegs == 1);
+
+	/* XXX errno NetBSD->Linux */
+	ret = -bus_dmamap_create(dmat, PAGE_SIZE, 1, PAGE_SIZE, 0,
+	    BUS_DMA_WAITOK, &fb->r100c08_map);
+	if (ret) {
+fail1:		bus_dmamem_free(dmat, &fb->r100c08_seg, 1);
+		goto fail0;
+	}
+
+	/* XXX errno NetBSD->Linux */
+	ret = -bus_dmamem_map(dmat, &fb->r100c08_seg, 1, PAGE_SIZE,
+	    &fb->r100c08_kva, BUS_DMA_WAITOK);
+	if (ret) {
+fail2:		bus_dmamap_destroy(dmat, fb->r100c08_map);
+		goto fail1;
+	}
+	(void)memset(fb->r100c08_kva, 0, PAGE_SIZE);
+
+	/* XXX errno NetBSD->Linux */
+	ret = -bus_dmamap_load(dmat, fb->r100c08_map, fb->r100c08_kva,
+	    PAGE_SIZE, NULL, BUS_DMA_WAITOK);
+	if (ret) {
+fail3: __unused	bus_dmamem_unmap(dmat, fb->r100c08_kva, PAGE_SIZE);
+		goto fail2;
+	}
+
+	fb->r100c08 = fb->r100c08_map->dm_segs[0].ds_addr;
+    }
+#else
 	fb->r100c08_page = alloc_page(GFP_KERNEL | __GFP_ZERO);
 	if (fb->r100c08_page) {
 		fb->r100c08 = dma_map_page(device->dev, fb->r100c08_page, 0,
@@ -277,6 +332,7 @@ nv50_fb_new_(const struct nv50_fb_func *func, struct nvkm_device *device,
 	} else {
 		nvkm_warn(&fb->base.subdev, "failed 100c08 page alloc\n");
 	}
+#endif
 
 	return 0;
 }

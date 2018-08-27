@@ -1,3 +1,5 @@
+/*	$NetBSD: radeon_sa.c,v 1.3 2018/08/27 04:58:36 riastradh Exp $	*/
+
 /*
  * Copyright 2011 Red Hat Inc.
  * All Rights Reserved.
@@ -41,6 +43,9 @@
  * If we are asked to block we wait on all the oldest fence of all
  * rings. We just wait for any of those fence to complete.
  */
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: radeon_sa.c,v 1.3 2018/08/27 04:58:36 riastradh Exp $");
+
 #include <drm/drmP.h>
 #include "radeon.h"
 
@@ -49,7 +54,7 @@ static void radeon_sa_bo_try_free(struct radeon_sa_manager *sa_manager);
 
 int radeon_sa_bo_manager_init(struct radeon_device *rdev,
 			      struct radeon_sa_manager *sa_manager,
-			      unsigned size, u32 align, u32 domain)
+			      unsigned size, u32 align, u32 domain, u32 flags)
 {
 	int i, r;
 
@@ -70,7 +75,7 @@ int radeon_sa_bo_manager_init(struct radeon_device *rdev,
 	}
 
 	r = radeon_bo_create(rdev, size, align, true,
-			     domain, NULL, &sa_manager->bo);
+			     domain, flags, NULL, NULL, &sa_manager->bo);
 	if (r) {
 		dev_err(rdev->dev, "(%d) failed to allocate bo for manager\n", r);
 		return r;
@@ -366,9 +371,14 @@ int radeon_sa_bo_new(struct radeon_device *rdev,
 			/* see if we can skip over some allocations */
 		} while (radeon_sa_bo_next_hole(sa_manager, fences, tries));
 
+		for (i = 0; i < RADEON_NUM_RINGS; ++i)
+			radeon_fence_ref(fences[i]);
+
 #ifdef __NetBSD__
 		spin_unlock(&sa_manager->wq_lock);
 		r = radeon_fence_wait_any(rdev, fences, false);
+		for (i = 0; i < RADEON_NUM_RINGS; ++i)
+			radeon_fence_unref(&fences[i]);
 		spin_lock(&sa_manager->wq_lock);
 		/* if we have nothing to wait for block */
 		if (r == -ENOENT)
@@ -378,6 +388,8 @@ int radeon_sa_bo_new(struct radeon_device *rdev,
 #else
 		spin_unlock(&sa_manager->wq.lock);
 		r = radeon_fence_wait_any(rdev, fences, false);
+		for (i = 0; i < RADEON_NUM_RINGS; ++i)
+			radeon_fence_unref(&fences[i]);
 		spin_lock(&sa_manager->wq.lock);
 		/* if we have nothing to wait for block */
 		if (r == -ENOENT) {

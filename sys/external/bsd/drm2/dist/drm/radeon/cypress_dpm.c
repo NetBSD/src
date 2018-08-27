@@ -1,3 +1,5 @@
+/*	$NetBSD: cypress_dpm.c,v 1.3 2018/08/27 04:58:35 riastradh Exp $	*/
+
 /*
  * Copyright 2011 Advanced Micro Devices, Inc.
  *
@@ -21,6 +23,9 @@
  *
  * Authors: Alex Deucher
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: cypress_dpm.c,v 1.3 2018/08/27 04:58:35 riastradh Exp $");
 
 #include "drmP.h"
 #include "radeon.h"
@@ -1552,7 +1557,7 @@ int cypress_populate_smc_voltage_tables(struct radeon_device *rdev,
 
 		table->voltageMaskTable.highMask[RV770_SMC_VOLTAGEMASK_VDDCI] = 0;
 		table->voltageMaskTable.lowMask[RV770_SMC_VOLTAGEMASK_VDDCI] =
-			cpu_to_be32(eg_pi->vddc_voltage_table.mask_low);
+			cpu_to_be32(eg_pi->vddci_voltage_table.mask_low);
 	}
 
 	return 0;
@@ -2005,7 +2010,7 @@ int cypress_dpm_set_power_state(struct radeon_device *rdev)
 	return 0;
 }
 
-#ifndef __NetBSD__		/* XXX unused? */
+#if 0
 void cypress_dpm_reset_asic(struct radeon_device *rdev)
 {
 	rv770_restrict_performance_levels_before_switch(rdev);

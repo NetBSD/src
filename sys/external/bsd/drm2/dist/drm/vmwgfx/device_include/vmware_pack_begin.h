@@ -1,4 +1,4 @@
-/*	$NetBSD: vmware_pack_begin.h,v 1.1.1.1 2018/08/27 01:35:00 riastradh Exp $	*/
+/*	$NetBSD: vmware_pack_begin.h,v 1.2 2018/08/27 04:58:37 riastradh Exp $	*/
 
 /**********************************************************
  * Copyright 2015 VMware, Inc.  All rights reserved.

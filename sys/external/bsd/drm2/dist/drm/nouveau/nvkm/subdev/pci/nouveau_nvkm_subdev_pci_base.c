@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_subdev_pci_base.c,v 1.1.1.1 2018/08/27 01:34:56 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_subdev_pci_base.c,v 1.2 2018/08/27 04:58:34 riastradh Exp $	*/
 
 /*
  * Copyright 2015 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs <bskeggs@redhat.com>
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_pci_base.c,v 1.1.1.1 2018/08/27 01:34:56 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_pci_base.c,v 1.2 2018/08/27 04:58:34 riastradh Exp $");
 
 #include "priv.h"
 #include "agp.h"
@@ -70,8 +70,13 @@ nvkm_pci_rom_shadow(struct nvkm_pci *pci, bool shadow)
 	nvkm_pci_wr32(pci, 0x0050, data);
 }
 
+#ifdef __NetBSD__
+static int
+nvkm_pci_intr(void *arg)
+#else
 static irqreturn_t
 nvkm_pci_intr(int irq, void *arg)
+#endif
 {
 	struct nvkm_pci *pci = arg;
 	struct nvkm_mc *mc = pci->subdev.device->mc;
@@ -91,10 +96,22 @@ nvkm_pci_fini(struct nvkm_subdev *subdev, bool suspend)
 {
 	struct nvkm_pci *pci = nvkm_pci(subdev);
 
+#ifdef __NetBSD__
+	const struct pci_attach_args *pa = &pci->pdev->pd_pa;
+	if (pci->pci_intrcookie != NULL) {
+		pci_intr_disestablish(pa->pa_pc, pci->pci_intrcookie);
+		pci->pci_intrcookie = NULL;
+	}
+	if (pci->pci_ihp != NULL) {
+		pci_intr_release(pa->pa_pc, pci->pci_ihp, 1);
+		pci->pci_ihp = NULL;
+	}
+#else
 	if (pci->irq >= 0) {
 		free_irq(pci->irq, pci);
 		pci->irq = -1;
 	};
+#endif
 
 	if (pci->agp.bridge)
 		nvkm_agp_fini(pci);
@@ -127,9 +144,25 @@ nvkm_pci_init(struct nvkm_subdev *subdev)
 	if (pci->func->init)
 		pci->func->init(pci);
 
+#ifdef __NetBSD__
+    {
+	const struct pci_attach_args *pa = &pdev->pd_pa;
+
+	/* XXX errno NetBSD->Linux */
+	ret = -pci_intr_alloc(pa, &pci->pci_ih, NULL, 0);
+	if (ret)
+		return ret;
+	pci->pci_intrcookie = pci_intr_establish_xname(pa->pa_pc,
+	    pci->pci_ihp[0], IPL_DRM, nvkm_pci_intr, pci,
+	    device_xname(pci_dev_dev(pdev)));
+	if (pci->pci_intrcookie == NULL)
+		return -EIO;	/* XXX er? */
+    }
+#else
 	ret = request_irq(pdev->irq, nvkm_pci_intr, IRQF_SHARED, "nvkm", pci);
 	if (ret)
 		return ret;
+#endif
 
 	pci->irq = pdev->irq;
 

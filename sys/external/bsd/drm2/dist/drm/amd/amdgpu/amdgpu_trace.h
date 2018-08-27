@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_trace.h,v 1.1.1.1 2018/08/27 01:34:44 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_trace.h,v 1.2 2018/08/27 04:58:20 riastradh Exp $	*/
 
 #if !defined(_AMDGPU_TRACE_H) || defined(TRACE_HEADER_MULTI_READ)
 #define _AMDGPU_TRACE_H_

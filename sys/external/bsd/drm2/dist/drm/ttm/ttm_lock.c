@@ -1,4 +1,4 @@
-/*	$NetBSD: ttm_lock.c,v 1.1.1.3 2018/08/27 01:34:59 riastradh Exp $	*/
+/*	$NetBSD: ttm_lock.c,v 1.2 2018/08/27 04:58:37 riastradh Exp $	*/
 
 /**************************************************************************
  *
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ttm_lock.c,v 1.1.1.3 2018/08/27 01:34:59 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ttm_lock.c,v 1.2 2018/08/27 04:58:37 riastradh Exp $");
 
 #include <drm/ttm/ttm_lock.h>
 #include <drm/ttm/ttm_module.h>

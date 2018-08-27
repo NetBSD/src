@@ -1,4 +1,4 @@
-/*	$NetBSD: via_3d_reg.h,v 1.1.1.2 2018/08/27 01:34:59 riastradh Exp $	*/
+/*	$NetBSD: via_3d_reg.h,v 1.2 2018/08/27 04:58:37 riastradh Exp $	*/
 
 /*
  * Copyright 1998-2003 VIA Technologies, Inc. All Rights Reserved.

@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_subdev_mmu_nv04.c,v 1.1.1.1 2018/08/27 01:34:56 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_subdev_mmu_nv04.c,v 1.2 2018/08/27 04:58:34 riastradh Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_mmu_nv04.c,v 1.1.1.1 2018/08/27 01:34:56 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_mmu_nv04.c,v 1.2 2018/08/27 04:58:34 riastradh Exp $");
 
 #include "nv04.h"
 
@@ -115,8 +115,16 @@ nv04_mmu_dtor(struct nvkm_mmu *base)
 		nvkm_vm_ref(NULL, &mmu->vm, NULL);
 	}
 	if (mmu->nullp) {
+#ifdef __NetBSD__
+		const bus_dma_tag_t dmat = device->func->dma_tag(device);
+		bus_dmamap_unload(dmat, mmu->nullmap);
+		bus_dmamem_unmap(dmat, mmu->nullp, 16 * 1024);
+		bus_dmamap_destroy(dmat, mmu->nullmap);
+		bus_dmamem_free(dmat, &mmu->nullseg, 1);
+#else
 		dma_free_coherent(device->dev, 16 * 1024,
 				  mmu->nullp, mmu->null);
+#endif
 	}
 	return mmu;
 }

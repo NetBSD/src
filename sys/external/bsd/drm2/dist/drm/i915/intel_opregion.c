@@ -1,3 +1,5 @@
+/*	$NetBSD: intel_opregion.c,v 1.9 2018/08/27 04:58:24 riastradh Exp $	*/
+
 /*
  * Copyright 2008 Intel Corporation <hong.liu@intel.com>
  * Copyright 2008 Red Hat <mjg@redhat.com>
@@ -25,7 +27,8 @@
  *
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: intel_opregion.c,v 1.9 2018/08/27 04:58:24 riastradh Exp $");
 
 #include <linux/printk.h>
 #include <linux/acpi.h>
@@ -57,6 +60,7 @@
 #define MBOX_ACPI      (1<<0)
 #define MBOX_SWSCI     (1<<1)
 #define MBOX_ASLE      (1<<2)
+#define MBOX_ASLE_EXT  (1<<4)
 
 #ifdef __NetBSD__		/* XXX acpi iomem */
 #  define	__iomem	__acpi_iomem
@@ -87,7 +91,10 @@ struct opregion_header {
 	u8 vbios_ver[16];
 	u8 driver_ver[16];
 	u32 mboxes;
-	u8 reserved[164];
+	u32 driver_model;
+	u32 pcon;
+	u8 dver[32];
+	u8 rsvd[124];
 } __packed;
 
 /* OpRegion mailbox #1: public ACPI methods */
@@ -109,7 +116,9 @@ struct opregion_acpi {
 	u32 evts;       /* ASL supported events */
 	u32 cnot;       /* current OS notification */
 	u32 nrdy;       /* driver status */
-	u8 rsvd2[60];
+	u32 did2[7];	/* extended supported display devices ID list */
+	u32 cpd2[7];	/* extended attached display devices list */
+	u8 rsvd2[4];
 } __packed;
 
 /* OpRegion mailbox #2: SWSCI */
@@ -138,7 +147,10 @@ struct opregion_asle {
 	u32 pcft;       /* power conservation features */
 	u32 srot;       /* supported rotation angles */
 	u32 iuer;       /* IUER events */
-	u8 rsvd[86];
+	u64 fdss;
+	u32 fdsp;
+	u32 stat;
+	u8 rsvd[70];
 } __packed;
 
 /* Driver readiness indicator */
@@ -257,7 +269,7 @@ struct opregion_asle {
 static int swsci(struct drm_device *dev, u32 function, u32 parm, u32 *parm_out)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
-	struct opregion_swsci __iomem *region_swsci = dev_priv->opregion.swsci;
+	struct opregion_swsci *region_swsci = dev_priv->opregion.swsci;
 	u32 main_function, sub_function, scic;
 	u16 pci_swsci;
 	u32 dslp;
@@ -282,7 +294,7 @@ static int swsci(struct drm_device *dev, u32 function, u32 parm, u32 *parm_out)
 	}
 
 	/* Driver sleep timeout in ms. */
-	dslp = ioread32(&region_swsci->dslp);
+	dslp = region_swsci->dslp;
 	if (!dslp) {
 		/* The spec says 2ms should be the default, but it's too small
 		 * for some machines. */
@@ -295,7 +307,7 @@ static int swsci(struct drm_device *dev, u32 function, u32 parm, u32 *parm_out)
 	}
 
 	/* The spec tells us to do this, but we are the only user... */
-	scic = ioread32(&region_swsci->scic);
+	scic = region_swsci->scic;
 	if (scic & SWSCI_SCIC_INDICATOR) {
 		DRM_DEBUG_DRIVER("SWSCI request already in progress\n");
 		return -EBUSY;
@@ -303,8 +315,8 @@ static int swsci(struct drm_device *dev, u32 function, u32 parm, u32 *parm_out)
 
 	scic = function | SWSCI_SCIC_INDICATOR;
 
-	iowrite32(parm, &region_swsci->parm);
-	iowrite32(scic, &region_swsci->scic);
+	region_swsci->parm = parm;
+	region_swsci->scic = scic;
 
 	/* Ensure SCI event is selected and event trigger is cleared. */
 	pci_read_config_word(dev->pdev, PCI_SWSCI, &pci_swsci);
@@ -319,7 +331,7 @@ static int swsci(struct drm_device *dev, u32 function, u32 parm, u32 *parm_out)
 	pci_write_config_word(dev->pdev, PCI_SWSCI, pci_swsci);
 
 	/* Poll for the result. */
-#define C (((scic = ioread32(&region_swsci->scic)) & SWSCI_SCIC_INDICATOR) == 0)
+#define C (((scic = region_swsci->scic) & SWSCI_SCIC_INDICATOR) == 0)
 	if (wait_for(C, dslp)) {
 		DRM_DEBUG_DRIVER("SWSCI request timed out\n");
 		return -ETIMEDOUT;
@@ -335,7 +347,7 @@ static int swsci(struct drm_device *dev, u32 function, u32 parm, u32 *parm_out)
 	}
 
 	if (parm_out)
-		*parm_out = ioread32(&region_swsci->parm);
+		*parm_out = region_swsci->parm;
 
 	return 0;
 
@@ -359,8 +371,12 @@ int intel_opregion_notify_encoder(struct intel_encoder *intel_encoder,
 	if (!HAS_DDI(dev))
 		return 0;
 
-	port = intel_ddi_get_encoder_port(intel_encoder);
-	if (port == PORT_E) {
+	if (intel_encoder->type == INTEL_OUTPUT_DSI)
+		port = 0;
+	else
+		port = intel_ddi_get_encoder_port(intel_encoder);
+
+	if (port == PORT_E)  {
 		port = 0;
 	} else {
 		parm |= 1 << port;
@@ -377,9 +393,11 @@ int intel_opregion_notify_encoder(struct intel_encoder *intel_encoder,
 	case INTEL_OUTPUT_UNKNOWN:
 	case INTEL_OUTPUT_DISPLAYPORT:
 	case INTEL_OUTPUT_HDMI:
+	case INTEL_OUTPUT_DP_MST:
 		type = DISPLAY_TYPE_EXTERNAL_FLAT_PANEL;
 		break;
 	case INTEL_OUTPUT_EDP:
+	case INTEL_OUTPUT_DSI:
 		type = DISPLAY_TYPE_INTERNAL_FLAT_PANEL;
 		break;
 	default:
@@ -424,9 +442,14 @@ static u32 asle_set_backlight(struct drm_device *dev, u32 bclp)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	struct intel_connector *intel_connector;
-	struct opregion_asle __iomem *asle = dev_priv->opregion.asle;
+	struct opregion_asle *asle = dev_priv->opregion.asle;
 
 	DRM_DEBUG_DRIVER("bclp = 0x%08x\n", bclp);
+
+	if (acpi_video_get_backlight_type() == acpi_backlight_native) {
+		DRM_DEBUG_KMS("opregion backlight request ignored\n");
+		return 0;
+	}
 
 	if (!(bclp & ASLE_BCLP_VALID))
 		return ASLC_BACKLIGHT_FAILED;
@@ -435,7 +458,7 @@ static u32 asle_set_backlight(struct drm_device *dev, u32 bclp)
 	if (bclp > 255)
 		return ASLC_BACKLIGHT_FAILED;
 
-	mutex_lock(&dev->mode_config.mutex);
+	drm_modeset_lock(&dev->mode_config.connection_mutex, NULL);
 
 	/*
 	 * Update backlight on all connectors that support backlight (usually
@@ -443,10 +466,10 @@ static u32 asle_set_backlight(struct drm_device *dev, u32 bclp)
 	 */
 	DRM_DEBUG_KMS("updating opregion backlight %d/255\n", bclp);
 	list_for_each_entry(intel_connector, &dev->mode_config.connector_list, base.head)
-		intel_panel_set_backlight(intel_connector, bclp, 255);
-	iowrite32(DIV_ROUND_UP(bclp * 100, 255) | ASLE_CBLV_VALID, &asle->cblv);
+		intel_panel_set_backlight_acpi(intel_connector, bclp, 255);
+	asle->cblv = DIV_ROUND_UP(bclp * 100, 255) | ASLE_CBLV_VALID;
 
-	mutex_unlock(&dev->mode_config.mutex);
+	drm_modeset_unlock(&dev->mode_config.connection_mutex);
 
 
 	return 0;
@@ -531,14 +554,14 @@ static void asle_work(struct work_struct *work)
 	struct drm_i915_private *dev_priv =
 		container_of(opregion, struct drm_i915_private, opregion);
 	struct drm_device *dev = dev_priv->dev;
-	struct opregion_asle __iomem *asle = dev_priv->opregion.asle;
+	struct opregion_asle *asle = dev_priv->opregion.asle;
 	u32 aslc_stat = 0;
 	u32 aslc_req;
 
 	if (!asle)
 		return;
 
-	aslc_req = ioread32(&asle->aslc);
+	aslc_req = asle->aslc;
 
 	if (!(aslc_req & ASLC_REQ_MSK)) {
 		DRM_DEBUG_DRIVER("No request on ASLC interrupt 0x%08x\n",
@@ -547,34 +570,34 @@ static void asle_work(struct work_struct *work)
 	}
 
 	if (aslc_req & ASLC_SET_ALS_ILLUM)
-		aslc_stat |= asle_set_als_illum(dev, ioread32(&asle->alsi));
+		aslc_stat |= asle_set_als_illum(dev, asle->alsi);
 
 	if (aslc_req & ASLC_SET_BACKLIGHT)
-		aslc_stat |= asle_set_backlight(dev, ioread32(&asle->bclp));
+		aslc_stat |= asle_set_backlight(dev, asle->bclp);
 
 	if (aslc_req & ASLC_SET_PFIT)
-		aslc_stat |= asle_set_pfit(dev, ioread32(&asle->pfit));
+		aslc_stat |= asle_set_pfit(dev, asle->pfit);
 
 	if (aslc_req & ASLC_SET_PWM_FREQ)
-		aslc_stat |= asle_set_pwm_freq(dev, ioread32(&asle->pfmb));
+		aslc_stat |= asle_set_pwm_freq(dev, asle->pfmb);
 
 	if (aslc_req & ASLC_SUPPORTED_ROTATION_ANGLES)
 		aslc_stat |= asle_set_supported_rotation_angles(dev,
-							ioread32(&asle->srot));
+							asle->srot);
 
 	if (aslc_req & ASLC_BUTTON_ARRAY)
-		aslc_stat |= asle_set_button_array(dev, ioread32(&asle->iuer));
+		aslc_stat |= asle_set_button_array(dev, asle->iuer);
 
 	if (aslc_req & ASLC_CONVERTIBLE_INDICATOR)
-		aslc_stat |= asle_set_convertible(dev, ioread32(&asle->iuer));
+		aslc_stat |= asle_set_convertible(dev, asle->iuer);
 
 	if (aslc_req & ASLC_DOCKING_INDICATOR)
-		aslc_stat |= asle_set_docking(dev, ioread32(&asle->iuer));
+		aslc_stat |= asle_set_docking(dev, asle->iuer);
 
 	if (aslc_req & ASLC_ISCT_STATE_CHANGE)
 		aslc_stat |= asle_isct_state(dev);
 
-	iowrite32(aslc_stat, &asle->aslc);
+	asle->aslc = aslc_stat;
 }
 
 void intel_opregion_asle_intr(struct drm_device *dev)
@@ -622,8 +645,8 @@ static int intel_opregion_video_event(struct notifier_block *nb,
 	   Linux, these are handled by the dock, button and video drivers.
 	*/
 
-	struct opregion_acpi __iomem *acpi;
 	struct acpi_bus_event *event = data;
+	struct opregion_acpi *acpi;
 	int ret = NOTIFY_OK;
 
 	if (strcmp(event->device_class, ACPI_VIDEO_CLASS) != 0)
@@ -634,11 +657,10 @@ static int intel_opregion_video_event(struct notifier_block *nb,
 
 	acpi = system_opregion->acpi;
 
-	if (event->type == 0x80 &&
-	    (ioread32(&acpi->cevt) & 1) == 0)
+	if (event->type == 0x80 && ((acpi->cevt & 1) == 0))
 		ret = NOTIFY_BAD;
 
-	iowrite32(0, &acpi->csts);
+	acpi->csts = 0;
 
 	return ret;
 }
@@ -653,6 +675,38 @@ static struct notifier_block intel_opregion_notifier = {
  * the firmware. Values are defined by section B.4.2 of the ACPI specification
  * (version 3)
  */
+
+static u32 get_did(struct intel_opregion *opregion, int i)
+{
+	u32 did;
+
+	if (i < ARRAY_SIZE(opregion->acpi->didl)) {
+		did = opregion->acpi->didl[i];
+	} else {
+		i -= ARRAY_SIZE(opregion->acpi->didl);
+
+		if (WARN_ON(i >= ARRAY_SIZE(opregion->acpi->did2)))
+			return 0;
+
+		did = opregion->acpi->did2[i];
+	}
+
+	return did;
+}
+
+static void set_did(struct intel_opregion *opregion, int i, u32 val)
+{
+	if (i < ARRAY_SIZE(opregion->acpi->didl)) {
+		opregion->acpi->didl[i] = val;
+	} else {
+		i -= ARRAY_SIZE(opregion->acpi->didl);
+
+		if (WARN_ON(i >= ARRAY_SIZE(opregion->acpi->did2)))
+			return;
+
+		opregion->acpi->did2[i] = val;
+	}
+}
 
 static void intel_didl_outputs(struct drm_device *dev)
 {
@@ -669,7 +723,7 @@ static void intel_didl_outputs(struct drm_device *dev)
 	unsigned long long device_id;
 	acpi_status status;
 #endif
-	u32 temp;
+	u32 temp, max_outputs;
 	int i = 0;
 
 #ifdef __NetBSD__
@@ -695,58 +749,61 @@ static void intel_didl_outputs(struct drm_device *dev)
 	}
 
 	if (!acpi_video_bus) {
-		pr_warn("No ACPI video bus found\n");
+		DRM_DEBUG_KMS("No ACPI video bus found\n");
 		return;
 	}
 #endif
 
+	/*
+	 * In theory, did2, the extended didl, gets added at opregion version
+	 * 3.0. In practice, however, we're supposed to set it for earlier
+	 * versions as well, since a BIOS that doesn't understand did2 should
+	 * not look at it anyway. Use a variable so we can tweak this if a need
+	 * arises later.
+	 */
+	max_outputs = ARRAY_SIZE(opregion->acpi->didl) +
+		ARRAY_SIZE(opregion->acpi->did2);
+
 #ifdef __NetBSD__
-	SIMPLEQ_FOREACH(child, &ad->ad_child_head, ad_child_list) {
+	SIMPLEQ_FOREACH(child, &ad->ad_child_head, ad_child_list)
 #else
-	list_for_each_entry(acpi_cdev, &acpi_video_bus->children, node) {
+	list_for_each_entry(acpi_cdev, &acpi_video_bus->children, node)
 #endif
-		if (i >= 8) {
-#ifdef __NetBSD__
-			aprint_error_dev(dev->pdev->pd_dev,
-#else
-			dev_dbg(&dev->pdev->dev,
-#endif
-				"More than 8 outputs detected via ACPI\n");
+	{
+		if (i >= max_outputs) {
+			DRM_DEBUG_KMS("More than %u outputs detected via ACPI\n",
+				      max_outputs);
 			return;
 		}
-		status =
 #ifdef __NetBSD__
-			acpi_eval_integer(child->ad_handle, "_ADR", &device_id);
+		status = acpi_eval_integer(child->ad_handle, "_ADR",
+		    &device_id);
 #else
-			acpi_evaluate_integer(acpi_cdev->handle, "_ADR",
-						NULL, &device_id);
+		status = acpi_evaluate_integer(acpi_cdev->handle, "_ADR",
+					       NULL, &device_id);
 #endif
 		if (ACPI_SUCCESS(status)) {
 			if (!device_id)
 				goto blind_set;
-			iowrite32((u32)(device_id & 0x0f0f),
-				  &opregion->acpi->didl[i]);
-			i++;
+			set_did(opregion, i++, (u32)(device_id & 0x0f0f));
 		}
 	}
 
 end:
-	/* If fewer than 8 outputs, the list must be null terminated */
-	if (i < 8)
-		iowrite32(0, &opregion->acpi->didl[i]);
+	DRM_DEBUG_KMS("%d outputs detected\n", i);
+
+	/* If fewer than max outputs, the list must be null terminated */
+	if (i < max_outputs)
+		set_did(opregion, i, 0);
 	return;
 
 blind_set:
 	i = 0;
 	list_for_each_entry(connector, &dev->mode_config.connector_list, head) {
 		int output_type = ACPI_OTHER_OUTPUT;
-		if (i >= 8) {
-#ifdef __NetBSD__
-			aprint_error_dev(dev->pdev->pd_dev,
-#else
-			dev_dbg(&dev->pdev->dev,
-#endif
-				"More than 8 outputs in connector list\n");
+		if (i >= max_outputs) {
+			DRM_DEBUG_KMS("More than %u outputs in connector list\n",
+				      max_outputs);
 			return;
 		}
 		switch (connector->connector_type) {
@@ -771,9 +828,8 @@ blind_set:
 			output_type = ACPI_LVDS_OUTPUT;
 			break;
 		}
-		temp = ioread32(&opregion->acpi->didl[i]);
-		iowrite32(temp | (1<<31) | output_type | i,
-			  &opregion->acpi->didl[i]);
+		temp = get_did(opregion, i);
+		set_did(opregion, i, temp | (1 << 31) | output_type | i);
 		i++;
 	}
 	goto end;
@@ -793,8 +849,8 @@ static void intel_setup_cadls(struct drm_device *dev)
 	 * display switching hotkeys. Just like DIDL, CADL is NULL-terminated if
 	 * there are less than eight devices. */
 	do {
-		disp_id = ioread32(&opregion->acpi->didl[i]);
-		iowrite32(disp_id, &opregion->acpi->cadl[i]);
+		disp_id = get_did(opregion, i);
+		opregion->acpi->cadl[i] = disp_id;
 	} while (++i < 8 && disp_id != 0);
 }
 
@@ -807,16 +863,14 @@ void intel_opregion_init(struct drm_device *dev)
 		return;
 
 	if (opregion->acpi) {
-		if (drm_core_check_feature(dev, DRIVER_MODESET)) {
-			intel_didl_outputs(dev);
-			intel_setup_cadls(dev);
-		}
+		intel_didl_outputs(dev);
+		intel_setup_cadls(dev);
 
 		/* Notify BIOS we are ready to handle ACPI video ext notifs.
 		 * Right now, all the events are handled by the ACPI video module.
 		 * We don't actually need to do anything with them. */
-		iowrite32(0, &opregion->acpi->csts);
-		iowrite32(1, &opregion->acpi->drdy);
+		opregion->acpi->csts = 0;
+		opregion->acpi->drdy = 1;
 
 		system_opregion = opregion;
 #ifdef __NetBSD__
@@ -829,8 +883,8 @@ void intel_opregion_init(struct drm_device *dev)
 	}
 
 	if (opregion->asle) {
-		iowrite32(ASLE_TCHE_BLC_EN, &opregion->asle->tche);
-		iowrite32(ASLE_ARDY_READY, &opregion->asle->ardy);
+		opregion->asle->tche = ASLE_TCHE_BLC_EN;
+		opregion->asle->ardy = ASLE_ARDY_READY;
 	}
 }
 
@@ -843,12 +897,12 @@ void intel_opregion_fini(struct drm_device *dev)
 		return;
 
 	if (opregion->asle)
-		iowrite32(ASLE_ARDY_NOT_READY, &opregion->asle->ardy);
+		opregion->asle->ardy = ASLE_ARDY_NOT_READY;
 
 	cancel_work_sync(&dev_priv->opregion.asle_work);
 
 	if (opregion->acpi) {
-		iowrite32(0, &opregion->acpi->drdy);
+		opregion->acpi->drdy = 0;
 
 		system_opregion = NULL;
 #ifdef __NetBSD__
@@ -860,11 +914,7 @@ void intel_opregion_fini(struct drm_device *dev)
 	}
 
 	/* just clear all opregion memory pointers now */
-#ifdef __NetBSD__
-	acpi_os_iounmap(opregion->header, OPREGION_SIZE);
-#else
-	iounmap(opregion->header);
-#endif
+	memunmap(opregion->header);
 	opregion->header = NULL;
 	opregion->acpi = NULL;
 	opregion->swsci = NULL;
@@ -937,10 +987,15 @@ int intel_opregion_setup(struct drm_device *dev)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	struct intel_opregion *opregion = &dev_priv->opregion;
-	void __iomem *base;
 	u32 asls, mboxes;
 	char buf[sizeof(OPREGION_SIGNATURE)];
 	int err = 0;
+	void *base;
+
+	BUILD_BUG_ON(sizeof(struct opregion_header) != 0x100);
+	BUILD_BUG_ON(sizeof(struct opregion_acpi) != 0x100);
+	BUILD_BUG_ON(sizeof(struct opregion_swsci) != 0x100);
+	BUILD_BUG_ON(sizeof(struct opregion_asle) != 0x100);
 
 	pci_read_config_dword(dev->pdev, PCI_ASLS, &asls);
 	DRM_DEBUG_DRIVER("graphic opregion physical addr: 0x%x\n", asls);
@@ -953,11 +1008,11 @@ int intel_opregion_setup(struct drm_device *dev)
 	INIT_WORK(&opregion->asle_work, asle_work);
 #endif
 
-	base = acpi_os_ioremap(asls, OPREGION_SIZE);
+	base = memremap(asls, OPREGION_SIZE, MEMREMAP_WB);
 	if (!base)
 		return -ENOMEM;
 
-	memcpy_fromio(buf, base, sizeof(buf));
+	memcpy(buf, base, sizeof(buf));
 
 	if (memcmp(buf, OPREGION_SIGNATURE, 16)) {
 		DRM_DEBUG_DRIVER("opregion signature mismatch\n");
@@ -969,7 +1024,7 @@ int intel_opregion_setup(struct drm_device *dev)
 
 	opregion->lid_state = (void *)((char *)base + ACPI_CLID);
 
-	mboxes = ioread32(&opregion->header->mboxes);
+	mboxes = opregion->header->mboxes;
 	if (mboxes & MBOX_ACPI) {
 		DRM_DEBUG_DRIVER("Public ACPI methods supported\n");
 		opregion->acpi = (void *)((char *)base + OPREGION_ACPI_OFFSET);
@@ -984,17 +1039,13 @@ int intel_opregion_setup(struct drm_device *dev)
 		DRM_DEBUG_DRIVER("ASLE supported\n");
 		opregion->asle = (void *)((char *)base + OPREGION_ASLE_OFFSET);
 
-		iowrite32(ASLE_ARDY_NOT_READY, &opregion->asle->ardy);
+		opregion->asle->ardy = ASLE_ARDY_NOT_READY;
 	}
 
 	return 0;
 
 err_out:
-#ifdef __NetBSD__
-	acpi_os_iounmap(base, OPREGION_SIZE);
-#else
-	iounmap(base);
-#endif
+	memunmap(base);
 	return err;
 }
 

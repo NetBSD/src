@@ -1,4 +1,4 @@
-/*	$NetBSD: r128_state.c,v 1.1.1.3 2018/08/27 01:34:56 riastradh Exp $	*/
+/*	$NetBSD: r128_state.c,v 1.2 2018/08/27 04:58:35 riastradh Exp $	*/
 
 /* r128_state.c -- State support for r128 -*- linux-c -*-
  * Created: Thu Jan 27 02:53:43 2000 by gareth@valinux.com
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: r128_state.c,v 1.1.1.3 2018/08/27 01:34:56 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: r128_state.c,v 1.2 2018/08/27 04:58:35 riastradh Exp $");
 
 #include <drm/drmP.h>
 #include <drm/r128_drm.h>

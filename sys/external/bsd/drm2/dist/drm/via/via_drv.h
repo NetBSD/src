@@ -1,3 +1,5 @@
+/*	$NetBSD: via_drv.h,v 1.5 2018/08/27 04:58:37 riastradh Exp $	*/
+
 /*
  * Copyright 1998-2003 VIA Technologies, Inc. All Rights Reserved.
  * Copyright 2001-2003 S3 Graphics, Inc. All Rights Reserved.
@@ -25,6 +27,8 @@
 #define _VIA_DRV_H_
 
 #include <drm/drm_mm.h>
+#include <drm/drm_legacy.h>
+
 #define DRIVER_AUTHOR	"Various"
 
 #define DRIVER_NAME		"via"
@@ -114,6 +118,10 @@ typedef struct drm_via_private {
 	uint32_t dma_diff;
 } drm_via_private_t;
 
+struct via_file_private {
+	struct list_head obj_list;
+};
+
 enum via_family {
   VIA_OTHER = 0,     /* Baseline */
   VIA_PRO_GROUP_A,   /* Another video engine and DMA commands */
@@ -148,9 +156,9 @@ extern int via_init_context(struct drm_device *dev, int context);
 extern int via_final_context(struct drm_device *dev, int context);
 
 extern int via_do_cleanup_map(struct drm_device *dev);
-extern u32 via_get_vblank_counter(struct drm_device *dev, int crtc);
-extern int via_enable_vblank(struct drm_device *dev, int crtc);
-extern void via_disable_vblank(struct drm_device *dev, int crtc);
+extern u32 via_get_vblank_counter(struct drm_device *dev, unsigned int pipe);
+extern int via_enable_vblank(struct drm_device *dev, unsigned int pipe);
+extern void via_disable_vblank(struct drm_device *dev, unsigned int pipe);
 
 extern irqreturn_t via_driver_irq_handler(DRM_IRQ_ARGS);
 extern void via_driver_irq_preinstall(struct drm_device *dev);

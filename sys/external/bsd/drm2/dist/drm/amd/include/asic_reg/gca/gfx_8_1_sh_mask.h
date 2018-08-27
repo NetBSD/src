@@ -1,4 +1,4 @@
-/*	$NetBSD: gfx_8_1_sh_mask.h,v 1.1.1.1 2018/08/27 01:34:51 riastradh Exp $	*/
+/*	$NetBSD: gfx_8_1_sh_mask.h,v 1.2 2018/08/27 04:58:22 riastradh Exp $	*/
 
 /*
  * GFX_8_1 Register documentation

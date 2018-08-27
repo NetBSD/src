@@ -1,4 +1,4 @@
-/*	$NetBSD: vgem_drv.c,v 1.1.1.1 2018/08/27 01:34:59 riastradh Exp $	*/
+/*	$NetBSD: vgem_drv.c,v 1.2 2018/08/27 04:58:37 riastradh Exp $	*/
 
 /*
  * Copyright 2011 Red Hat, Inc.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vgem_drv.c,v 1.1.1.1 2018/08/27 01:34:59 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vgem_drv.c,v 1.2 2018/08/27 04:58:37 riastradh Exp $");
 
 #include <linux/module.h>
 #include <linux/ramfs.h>

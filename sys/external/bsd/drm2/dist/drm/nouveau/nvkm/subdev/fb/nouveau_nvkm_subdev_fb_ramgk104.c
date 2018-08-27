@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_subdev_fb_ramgk104.c,v 1.1.1.1 2018/08/27 01:34:56 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_subdev_fb_ramgk104.c,v 1.2 2018/08/27 04:58:33 riastradh Exp $	*/
 
 /*
  * Copyright 2013 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_fb_ramgk104.c,v 1.1.1.1 2018/08/27 01:34:56 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_fb_ramgk104.c,v 1.2 2018/08/27 04:58:33 riastradh Exp $");
 
 #define gk104_ram(p) container_of((p), struct gk104_ram, base)
 #include "ram.h"

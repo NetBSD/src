@@ -1,4 +1,4 @@
-/*	$NetBSD: rv770_dma.c,v 1.1.1.2 2018/08/27 01:34:59 riastradh Exp $	*/
+/*	$NetBSD: rv770_dma.c,v 1.2 2018/08/27 04:58:36 riastradh Exp $	*/
 
 /*
  * Copyright 2013 Advanced Micro Devices, Inc.
@@ -24,7 +24,7 @@
  * Authors: Alex Deucher
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rv770_dma.c,v 1.1.1.2 2018/08/27 01:34:59 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rv770_dma.c,v 1.2 2018/08/27 04:58:36 riastradh Exp $");
 
 #include <drm/drmP.h>
 #include "radeon.h"

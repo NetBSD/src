@@ -1,4 +1,4 @@
-/*	$NetBSD: sis_drv.h,v 1.1.1.3 2018/08/27 01:34:59 riastradh Exp $	*/
+/*	$NetBSD: sis_drv.h,v 1.2 2018/08/27 04:58:36 riastradh Exp $	*/
 
 /* sis_drv.h -- Private header for sis driver -*- linux-c -*- */
 /*

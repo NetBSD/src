@@ -1,4 +1,4 @@
-/*	$NetBSD: hw.h,v 1.1.1.2 2018/08/27 01:34:55 riastradh Exp $	*/
+/*	$NetBSD: hw.h,v 1.2 2018/08/27 04:58:29 riastradh Exp $	*/
 
 /*
  * Copyright 2008 Stuart Bennett

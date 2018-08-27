@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_engine_device_tegra.c,v 1.1.1.1 2018/08/27 01:34:56 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_engine_device_tegra.c,v 1.2 2018/08/27 04:58:31 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2014, NVIDIA CORPORATION. All rights reserved.
@@ -22,7 +22,7 @@
  * DEALINGS IN THE SOFTWARE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_device_tegra.c,v 1.1.1.1 2018/08/27 01:34:56 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_device_tegra.c,v 1.2 2018/08/27 04:58:31 riastradh Exp $");
 
 #include <core/tegra.h>
 #ifdef CONFIG_NOUVEAU_PLATFORM_DRIVER
@@ -168,6 +168,14 @@ nvkm_device_tegra_resource(struct nvkm_device *device, unsigned bar)
 	return platform_get_resource(tdev->pdev, IORESOURCE_MEM, bar);
 }
 
+#ifdef __NetBSD__
+static bus_space_tag_t
+nvkm_device_tegra_resource_tag(struct nvkm_device *device, unsigned bar)
+{
+	XXX FIXME!
+}
+#endif
+
 static resource_size_t
 nvkm_device_tegra_resource_addr(struct nvkm_device *device, unsigned bar)
 {
@@ -240,6 +248,9 @@ nvkm_device_tegra_func = {
 	.dtor = nvkm_device_tegra_dtor,
 	.init = nvkm_device_tegra_init,
 	.fini = nvkm_device_tegra_fini,
+#ifdef __NetBSD__
+	.resource_tag = nvkm_device_tegra_resource_tag,
+#endif
 	.resource_addr = nvkm_device_tegra_resource_addr,
 	.resource_size = nvkm_device_tegra_resource_size,
 	.cpu_coherent = false,

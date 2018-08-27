@@ -1,4 +1,4 @@
-/*	$NetBSD: qxl_drv.c,v 1.1.1.2 2018/08/27 01:34:56 riastradh Exp $	*/
+/*	$NetBSD: qxl_drv.c,v 1.2 2018/08/27 04:58:35 riastradh Exp $	*/
 
 /* vim: set ts=8 sw=8 tw=78 ai noexpandtab */
 /* qxl_drv.c -- QXL driver -*- linux-c -*-
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qxl_drv.c,v 1.1.1.2 2018/08/27 01:34:56 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qxl_drv.c,v 1.2 2018/08/27 04:58:35 riastradh Exp $");
 
 #include <linux/module.h>
 #include <linux/console.h>

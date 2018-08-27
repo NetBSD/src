@@ -1,4 +1,4 @@
-/*	$NetBSD: r128_drv.h,v 1.1.1.3 2018/08/27 01:34:56 riastradh Exp $	*/
+/*	$NetBSD: r128_drv.h,v 1.2 2018/08/27 04:58:35 riastradh Exp $	*/
 
 /* r128_drv.h -- Private header for r128 driver -*- linux-c -*-
  * Created: Mon Dec 13 09:51:11 1999 by faith@precisioninsight.com

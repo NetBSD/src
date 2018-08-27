@@ -1,11 +1,15 @@
+/*	$NetBSD: intel_acpi.c,v 1.6 2018/08/27 04:58:24 riastradh Exp $	*/
+
 /*
  * Intel ACPI functions
  *
  * _DSM related code stolen from nouveau_acpi.c.
  */
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: intel_acpi.c,v 1.6 2018/08/27 04:58:24 riastradh Exp $");
+
 #include <linux/pci.h>
 #include <linux/acpi.h>
-#include <linux/vga_switcheroo.h>
 #include <drm/drmP.h>
 #include "i915_drv.h"
 
@@ -319,7 +323,7 @@ static bool intel_dsm_detect(void)
 
 	if (vga_count == 2 && has_dsm) {
 		acpi_get_name(intel_dsm_priv.dhandle, ACPI_FULL_PATHNAME, &buffer);
-		DRM_DEBUG_DRIVER("VGA switcheroo: detected DSM switching method %s handle\n",
+		DRM_DEBUG_DRIVER("vga_switcheroo: detected DSM switching method %s handle\n",
 				 acpi_method_name);
 		return true;
 	}

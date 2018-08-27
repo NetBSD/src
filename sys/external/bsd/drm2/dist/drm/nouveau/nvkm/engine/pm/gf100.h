@@ -1,4 +1,4 @@
-/*	$NetBSD: gf100.h,v 1.1.1.1 2018/08/27 01:34:56 riastradh Exp $	*/
+/*	$NetBSD: gf100.h,v 1.2 2018/08/27 04:58:32 riastradh Exp $	*/
 
 #ifndef __NVKM_PM_NVC0_H__
 #define __NVKM_PM_NVC0_H__

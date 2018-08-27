@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_fb.c,v 1.1.1.1 2018/08/27 01:34:43 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_fb.c,v 1.2 2018/08/27 04:58:19 riastradh Exp $	*/
 
 /*
  * Copyright © 2007 David Airlie
@@ -26,7 +26,7 @@
  *     David Airlie
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_fb.c,v 1.1.1.1 2018/08/27 01:34:43 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_fb.c,v 1.2 2018/08/27 04:58:19 riastradh Exp $");
 
 #include <linux/module.h>
 #include <linux/slab.h>

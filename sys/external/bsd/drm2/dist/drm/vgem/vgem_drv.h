@@ -1,4 +1,4 @@
-/*	$NetBSD: vgem_drv.h,v 1.1.1.1 2018/08/27 01:34:59 riastradh Exp $	*/
+/*	$NetBSD: vgem_drv.h,v 1.2 2018/08/27 04:58:37 riastradh Exp $	*/
 
 /*
  * Copyright © 2012 Intel Corporation

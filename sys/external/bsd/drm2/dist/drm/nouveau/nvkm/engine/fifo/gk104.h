@@ -1,4 +1,4 @@
-/*	$NetBSD: gk104.h,v 1.1.1.1 2018/08/27 01:34:56 riastradh Exp $	*/
+/*	$NetBSD: gk104.h,v 1.2 2018/08/27 04:58:31 riastradh Exp $	*/
 
 #ifndef __GK104_FIFO_H__
 #define __GK104_FIFO_H__
@@ -10,7 +10,12 @@
 struct gk104_fifo_engn {
 	struct nvkm_memory *runlist[2];
 	int cur_runlist;
+#ifdef __NetBSD__
+	spin_lock_t lock;
+	drm_waitqueue_t wait;
+#else
 	wait_queue_head_t wait;
+#endif
 	struct list_head chan;
 };
 
