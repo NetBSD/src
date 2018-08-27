@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gpu_error.c,v 1.8 2018/08/27 07:09:28 riastradh Exp $	*/
+/*	$NetBSD: i915_gpu_error.c,v 1.9 2018/08/27 14:49:05 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2008 Intel Corporation
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gpu_error.c,v 1.8 2018/08/27 07:09:28 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gpu_error.c,v 1.9 2018/08/27 14:49:05 riastradh Exp $");
 
 #include <sys/param.h>
 
@@ -929,8 +929,10 @@ static void i915_record_ring_state(struct drm_device *dev,
 	}
 
 #ifdef __NetBSD__
+	spin_lock(&dev_priv->irq_lock);
 	ering->waiting = DRM_SPIN_WAITERS_P(&ring->irq_queue,
 	    &dev_priv->irq_lock);
+	spin_unlock(&dev_priv->irq_lock);
 #else
 	ering->waiting = waitqueue_active(&ring->irq_queue);
 #endif
