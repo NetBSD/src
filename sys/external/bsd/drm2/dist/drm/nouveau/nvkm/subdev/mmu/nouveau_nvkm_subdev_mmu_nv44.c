@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_subdev_mmu_nv44.c,v 1.2 2018/08/27 04:58:34 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_subdev_mmu_nv44.c,v 1.3 2018/08/27 07:41:09 riastradh Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_mmu_nv44.c,v 1.2 2018/08/27 04:58:34 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_mmu_nv44.c,v 1.3 2018/08/27 07:41:09 riastradh Exp $");
 
 #include "nv04.h"
 
@@ -207,7 +207,7 @@ fail3: __unused	bus_dmamem_unmap(dmat, mmu->nullp, nullsz);
 		goto fail2;
 	}
 	mmu->null = mmu->nullmap->dm_segs[0].ds_addr;
-    } while (0)
+    } while (0);
 #else
 	mmu->nullp = dma_alloc_coherent(device->dev, 16 * 1024,
 					&mmu->null, GFP_KERNEL);
