@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_modeset_lock.h,v 1.2 2018/08/27 04:58:38 riastradh Exp $	*/
+/*	$NetBSD: drm_modeset_lock.h,v 1.3 2018/08/27 06:17:52 riastradh Exp $	*/
 
 /*
  * Copyright (C) 2014 Red Hat
@@ -27,6 +27,7 @@
 #define DRM_MODESET_LOCK_H_
 
 #include <linux/ww_mutex.h>
+#include <asm/bug.h>
 
 struct drm_modeset_lock;
 

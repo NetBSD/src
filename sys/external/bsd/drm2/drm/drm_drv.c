@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_drv.c,v 1.20 2017/12/05 19:13:52 jmcneill Exp $	*/
+/*	$NetBSD: drm_drv.c,v 1.21 2018/08/27 06:17:52 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_drv.c,v 1.20 2017/12/05 19:13:52 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_drv.c,v 1.21 2018/08/27 06:17:52 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -58,6 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: drm_drv.c,v 1.20 2017/12/05 19:13:52 jmcneill Exp $"
 #include <linux/pm.h>
 
 #include <drm/drmP.h>
+#include "../dist/drm/drm_legacy.h"
 
 static dev_type_open(drm_open);
 
