@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_cache.c,v 1.11 2018/08/27 15:24:27 riastradh Exp $	*/
+/*	$NetBSD: drm_cache.c,v 1.12 2018/08/27 15:29:19 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_cache.c,v 1.11 2018/08/27 15:24:27 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_cache.c,v 1.12 2018/08/27 15:29:19 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -172,6 +172,65 @@ drm_md_clflush_virt_range(const void *ptr, size_t nbytes)
 
 	for (va = start; va < end; va += clflush_size)
 		asm volatile ("clflush %0" : : "m" (*(const char *)va));
+}
+
+#elif defined(__sparc__) || defined(__sparc64__)
+
+#ifdef __sparc64__
+#include <sparc64/sparc64/cache.h>
+#else
+#include <sparc/sparc/cache.h>
+#endif
+
+static bool
+drm_md_clflush_finegrained_p(void)
+{
+	return true;
+}
+
+static void
+drm_md_clflush_all(void)
+{
+	panic("don't know how to flush entire cache on sparc64");
+}
+
+static void
+drm_md_clflush_begin(void)
+{
+	membar_Sync();		/* unsure if needed */
+}
+
+static void
+drm_md_clflush_commit(void)
+{
+	membar_Sync();		/* unsure if needed */
+}
+
+static void
+drm_md_clflush_page(struct page *page)
+{
+#ifdef __sparc64__
+	paddr_t pa = VM_PAGE_TO_PHYS(&page->p_vmp);
+
+	cache_flush_phys(pa, PAGE_SIZE, 0);
+#else
+	void *const vaddr = kmap_atomic(page);
+
+	cache_flush(vaddr, PAGE_SIZE);
+
+	kunmap_atomic(vaddr);
+#endif
+}
+
+static void
+drm_md_clflush_virt_range(const void *ptr, size_t nbytes)
+{
+#ifdef __sparc64__
+	/* XXX Mega-kludge -- doesn't seem to be a way to flush by vaddr.  */
+	blast_dcache();
+#else
+	cache_flush(ptr, nbytes);
+#endif
 }
 
 #elif defined(__powerpc__)
