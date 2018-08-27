@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_dp_mst_helper.h,v 1.3 2018/08/27 06:06:41 riastradh Exp $	*/
+/*	$NetBSD: drm_dp_mst_helper.h,v 1.4 2018/08/27 06:44:41 riastradh Exp $	*/
 
 /*
  * Copyright © 2014 Red Hat.
@@ -510,8 +510,10 @@ int drm_dp_update_payload_part2(struct drm_dp_mst_topology_mgr *mgr);
 
 int drm_dp_check_act_status(struct drm_dp_mst_topology_mgr *mgr);
 
+#ifdef CONFIG_DEBUG_FS
 void drm_dp_mst_dump_topology(struct seq_file *m,
 			      struct drm_dp_mst_topology_mgr *mgr);
+#endif
 
 void drm_dp_mst_topology_mgr_suspend(struct drm_dp_mst_topology_mgr *mgr);
 int drm_dp_mst_topology_mgr_resume(struct drm_dp_mst_topology_mgr *mgr);
