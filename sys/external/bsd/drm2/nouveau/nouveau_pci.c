@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_pci.c,v 1.12 2018/08/27 06:41:35 riastradh Exp $	*/
+/*	$NetBSD: nouveau_pci.c,v 1.13 2018/08/27 07:35:41 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_pci.c,v 1.12 2018/08/27 06:41:35 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_pci.c,v 1.13 2018/08/27 07:35:41 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/device.h>
@@ -41,6 +41,7 @@ __KERNEL_RCSID(0, "$NetBSD: nouveau_pci.c,v 1.12 2018/08/27 06:41:35 riastradh E
 #include <drm/drmP.h>
 
 #include <core/device.h>
+#include <core/pci.h>
 
 #include "nouveau_drm.h"
 #include "nouveau_pci.h"
@@ -215,7 +216,7 @@ nouveau_pci_detach(device_t self, int flags)
 		return error;
 	sc->sc_drm_dev = NULL;
 
-out1:	nouveau_object_ref(NULL, (void *)&sc->sc_nv_dev);
+out1:	nvkm_device_del(&sc->sc_nv_dev);
 out0:	pmf_device_deregister(self);
 	return 0;
 }
