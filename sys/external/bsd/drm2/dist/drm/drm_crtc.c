@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_crtc.c,v 1.10 2018/08/27 14:39:46 riastradh Exp $	*/
+/*	$NetBSD: drm_crtc.c,v 1.11 2018/08/27 14:40:30 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2006-2008 Intel Corporation
@@ -32,7 +32,7 @@
  *      Jesse Barnes <jesse.barnes@intel.com>
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_crtc.c,v 1.10 2018/08/27 14:39:46 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_crtc.c,v 1.11 2018/08/27 14:40:30 riastradh Exp $");
 
 #include <linux/err.h>
 #include <linux/spinlock.h>
@@ -1295,6 +1295,7 @@ void drm_plane_cleanup(struct drm_plane *plane)
 	WARN_ON(plane->state && !plane->funcs->atomic_destroy_state);
 	if (plane->state && plane->funcs->atomic_destroy_state)
 		plane->funcs->atomic_destroy_state(plane, plane->state);
+	drm_modeset_lock_fini(&plane->mutex);
 
 	memset(plane, 0, sizeof(*plane));
 }
