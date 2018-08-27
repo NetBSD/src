@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_lrc.h,v 1.2 2018/08/27 04:58:24 riastradh Exp $	*/
+/*	$NetBSD: intel_lrc.h,v 1.3 2018/08/27 07:01:02 riastradh Exp $	*/
 
 /*
  * Copyright © 2014 Intel Corporation
@@ -69,7 +69,11 @@ static inline void intel_logical_ring_advance(struct intel_ringbuffer *ringbuf)
 static inline void intel_logical_ring_emit(struct intel_ringbuffer *ringbuf,
 					   u32 data)
 {
+#ifdef __NetBSD__
+	bus_space_write_4(ringbuf->bst, ringbuf->bsh, ringbuf->tail, data);
+#else
 	iowrite32(data, ringbuf->virtual_start + ringbuf->tail);
+#endif
 	ringbuf->tail += 4;
 }
 
