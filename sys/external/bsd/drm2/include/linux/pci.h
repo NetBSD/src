@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.h,v 1.27 2018/08/27 07:03:02 riastradh Exp $	*/
+/*	$NetBSD: pci.h,v 1.28 2018/08/27 07:20:05 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -68,7 +68,8 @@ struct acpi_devnode;
 struct pci_driver;
 
 struct pci_bus {
-	u_int		number;
+	u_int			number;
+	pci_chipset_tag_t	pb_pc;
 };
 
 struct pci_device_id {
@@ -195,6 +196,7 @@ linux_pci_dev_init(struct pci_dev *pdev, device_t dev,
 #endif
 	pdev->bus = kmem_zalloc(sizeof(struct pci_bus), KM_NOSLEEP);
 	pdev->bus->number = pa->pa_bus;
+	pdev->bus->pb_pc = pa->pa_pc;
 	pdev->devfn = PCI_DEVFN(pa->pa_device, pa->pa_function);
 	pdev->vendor = PCI_VENDOR(pa->pa_id);
 	pdev->device = PCI_PRODUCT(pa->pa_id);
@@ -262,8 +264,53 @@ pci_write_config_dword(struct pci_dev *pdev, int reg, uint32_t value)
 	return 0;
 }
 
+static inline int
+pci_bus_read_config_dword(struct pci_bus *bus, unsigned devfn, int reg,
+    uint32_t *valuep)
+{
+	pcitag_t tag = pci_make_tag(bus->pb_pc, bus->number, PCI_SLOT(devfn),
+	    PCI_FUNC(devfn));
+
+	KASSERT(!ISSET(reg, 1));
+	*valuep = pci_conf_read(bus->pb_pc, tag, reg & ~3) >> (8 * (reg & 3));
+
+	return 0;
+}
+
+static inline int
+pci_bus_read_config_word(struct pci_bus *bus, unsigned devfn, int reg,
+    uint16_t *valuep)
+{
+	pcitag_t tag = pci_make_tag(bus->pb_pc, bus->number, PCI_SLOT(devfn),
+	    PCI_FUNC(devfn));
+	KASSERT(!ISSET(reg, 1));
+	*valuep = pci_conf_read(bus->pb_pc, tag, reg &~ 2) >> (8 * (reg & 2));
+	return 0;
+}
+
+static inline int
+pci_bus_read_config_byte(struct pci_bus *bus, unsigned devfn, int reg,
+    uint8_t *valuep)
+{
+	pcitag_t tag = pci_make_tag(bus->pb_pc, bus->number, PCI_SLOT(devfn),
+	    PCI_FUNC(devfn));
+	*valuep = pci_conf_read(bus->pb_pc, tag, reg &~ 3) >> (8 * (reg & 3));
+	return 0;
+}
+
+static inline int
+pci_bus_write_config_dword(struct pci_bus *bus, unsigned devfn, int reg,
+    uint32_t value)
+{
+	pcitag_t tag = pci_make_tag(bus->pb_pc, bus->number, PCI_SLOT(devfn),
+	    PCI_FUNC(devfn));
+	KASSERT(!ISSET(reg, 3));
+	pci_conf_write(bus->pb_pc, tag, reg, value);
+	return 0;
+}
+
 static inline void
-pci_rmw_config(struct pci_dev *pdev, int reg, unsigned int bytes,
+pci_rmw_config(pci_chipset_tag_t pc, pcitag_t tag, int reg, unsigned int bytes,
     uint32_t value)
 {
 	const uint32_t mask = ~((~0UL) << (8 * bytes));
@@ -273,24 +320,45 @@ pci_rmw_config(struct pci_dev *pdev, int reg, unsigned int bytes,
 
 	KASSERT(bytes <= 4);
 	KASSERT(!ISSET(value, ~mask));
-	pci_read_config_dword(pdev, reg32, &value32);
+	value32 = pci_conf_read(pc, tag, reg32);
 	value32 &=~ (mask << shift);
 	value32 |= (value << shift);
-	pci_write_config_dword(pdev, reg32, value32);
+	pci_conf_write(pc, tag, reg32, value32);
 }
 
 static inline int
 pci_write_config_word(struct pci_dev *pdev, int reg, uint16_t value)
 {
 	KASSERT(!ISSET(reg, 1));
-	pci_rmw_config(pdev, reg, 2, value);
+	pci_rmw_config(pdev->pd_pa.pa_pc, pdev->pd_pa.pa_tag, reg, 2, value);
 	return 0;
 }
 
 static inline int
 pci_write_config_byte(struct pci_dev *pdev, int reg, uint8_t value)
 {
-	pci_rmw_config(pdev, reg, 1, value);
+	pci_rmw_config(pdev->pd_pa.pa_pc, pdev->pd_pa.pa_tag, reg, 1, value);
+	return 0;
+}
+
+static inline int
+pci_bus_write_config_word(struct pci_bus *bus, unsigned devfn, int reg,
+    uint16_t value)
+{
+	pcitag_t tag = pci_make_tag(bus->pb_pc, bus->number, PCI_SLOT(devfn),
+	    PCI_FUNC(devfn));
+	KASSERT(!ISSET(reg, 1));
+	pci_rmw_config(bus->pb_pc, tag, reg, 2, value);
+	return 0;
+}
+
+static inline int
+pci_bus_write_config_byte(struct pci_bus *bus, unsigned devfn, int reg,
+    uint8_t value)
+{
+	pcitag_t tag = pci_make_tag(bus->pb_pc, bus->number, PCI_SLOT(devfn),
+	    PCI_FUNC(devfn));
+	pci_rmw_config(bus->pb_pc, tag, reg, 1, value);
 	return 0;
 }
 
