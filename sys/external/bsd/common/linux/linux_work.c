@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_work.c,v 1.27 2018/08/27 15:03:07 riastradh Exp $	*/
+/*	$NetBSD: linux_work.c,v 1.28 2018/08/27 15:03:20 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_work.c,v 1.27 2018/08/27 15:03:07 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_work.c,v 1.28 2018/08/27 15:03:20 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/atomic.h>
@@ -754,72 +754,102 @@ flush_scheduled_work(void)
 	flush_workqueue(system_wq);
 }
 
-void
-flush_workqueue(struct workqueue_struct *wq)
+static void
+flush_workqueue_locked(struct workqueue_struct *wq)
 {
 	uint64_t gen;
 
+	KASSERT(mutex_owned(&wq->wq_lock));
+
+	/* Get the current generation number.  */
+	gen = wq->wq_gen;
+
+	/*
+	 * If there's a batch of work in progress, we must wait for the
+	 * worker thread to finish that batch.
+	 */
+	if (wq->wq_current_work != NULL)
+		gen++;
+
+	/*
+	 * If there's any work yet to be claimed from the queue by the
+	 * worker thread, we must wait for it to finish one more batch
+	 * too.
+	 */
+	if (!TAILQ_EMPTY(&wq->wq_queue))
+		gen++;
+
+	/* Wait until the generation number has caught up.  */
+	while (wq->wq_gen < gen)
+		cv_wait(&wq->wq_cv, &wq->wq_lock);
+}
+
+void
+flush_workqueue(struct workqueue_struct *wq)
+{
+
 	mutex_enter(&wq->wq_lock);
-	if (wq->wq_current_work || !TAILQ_EMPTY(&wq->wq_queue)) {
-		gen = wq->wq_gen;
-		do {
-			cv_wait(&wq->wq_cv, &wq->wq_lock);
-		} while (gen == wq->wq_gen);
-	}
+	flush_workqueue_locked(wq);
 	mutex_exit(&wq->wq_lock);
 }
 
-bool
+void
 flush_work(struct work_struct *work)
 {
 	struct workqueue_struct *wq;
 
 	/* If there's no workqueue, nothing to flush.  */
 	if ((wq = work->work_queue) == NULL)
-		return false;
+		return;
 
 	flush_workqueue(wq);
-	return true;
 }
 
-bool
+void
 flush_delayed_work(struct delayed_work *dw)
 {
 	struct workqueue_struct *wq;
-	bool do_flush = false;
 
 	/* If there's no workqueue, nothing to flush.  */
 	if ((wq = dw->work.work_queue) == NULL)
-		return false;
+		return;
 
 	mutex_enter(&wq->wq_lock);
-	if (__predict_false(dw->work.work_queue != wq)) {
-		do_flush = true;
-	} else {
-retry:		switch (dw->dw_state) {
+	if (__predict_true(dw->work.work_queue == wq)) {
+		switch (dw->dw_state) {
 		case DELAYED_WORK_IDLE:
-			if (wq->wq_current_work != &dw->work) {
-				TAILQ_REMOVE(&wq->wq_queue, &dw->work,
-				    work_entry);
-			} else {
-				do_flush = true;
-			}
+			/*
+			 * It has a workqueue assigned and the callout
+			 * is idle, so it must be in progress or on the
+			 * queue.  In that case, wait for it to
+			 * complete.  Waiting for the whole queue to
+			 * flush is overkill, but doesn't hurt.
+			 */
+			flush_workqueue_locked(wq);
 			break;
 		case DELAYED_WORK_SCHEDULED:
 		case DELAYED_WORK_RESCHEDULED:
 		case DELAYED_WORK_CANCELLED:
+			/*
+			 * The callout is still scheduled to run.
+			 * Notify it that we are cancelling, and try to
+			 * stop the callout before it runs.
+			 *
+			 * If we do stop the callout, we are now
+			 * responsible for dissociating the work from
+			 * the queue.
+			 *
+			 * Otherwise, wait for it to complete and
+			 * dissociate itself -- it will not put itself
+			 * on the workqueue once it is cancelled.
+			 */
 			dw->dw_state = DELAYED_WORK_CANCELLED;
-			callout_halt(&dw->dw_callout, &wq->wq_lock);
-			goto retry;
+			if (!callout_halt(&dw->dw_callout, &wq->wq_lock))
+				cancel_delayed_work_done(wq, dw);
 		default:
 			panic("invalid delayed work state: %d",
 			    dw->dw_state);
 		}
 	}
 	mutex_exit(&wq->wq_lock);
-
-	if (do_flush)
-		flush_workqueue(wq);
-
-	return true;
 }
