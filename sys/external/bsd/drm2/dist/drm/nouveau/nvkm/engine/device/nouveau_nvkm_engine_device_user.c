@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_engine_device_user.c,v 1.2 2018/08/27 04:58:31 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_engine_device_user.c,v 1.3 2018/08/27 07:35:56 riastradh Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_device_user.c,v 1.2 2018/08/27 04:58:31 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_device_user.c,v 1.3 2018/08/27 07:35:56 riastradh Exp $");
 
 #define nvkm_udevice(p) container_of((p), struct nvkm_udevice, object)
 #include "priv.h"
@@ -205,10 +205,12 @@ nvkm_udevice_wr32(struct nvkm_object *object, u64 addr, u32 data)
 }
 
 static int
-nvkm_udevice_map(struct nvkm_object *object, u64 *addr, u32 *size)
+nvkm_udevice_map(struct nvkm_object *object, bus_space_tag_t *tagp, u64 *addr,
+    u32 *size)
 {
 	struct nvkm_udevice *udev = nvkm_udevice(object);
 	struct nvkm_device *device = udev->device;
+	*tagp = device->func->resource_tag(device, 0);
 	*addr = device->func->resource_addr(device, 0);
 	*size = device->func->resource_size(device, 0);
 	return 0;
