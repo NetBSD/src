@@ -1,4 +1,4 @@
-#	$NetBSD: files.i915drmkms,v 1.12 2018/08/27 05:36:26 riastradh Exp $
+#	$NetBSD: files.i915drmkms,v 1.13 2018/08/27 05:44:57 riastradh Exp $
 
 define	intelfbbus	{ }
 device	i915drmkms: drmkms, drmkms_pci, intelfbbus, agp_i810
@@ -33,45 +33,67 @@ file	external/bsd/drm2/dist/drm/i915/dvo_ns2501.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/dvo_sil164.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/dvo_tfp410.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/i915_cmd_parser.c	i915drmkms
-#file	external/bsd/drm2/dist/drm/i915/i915_debugfs.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/i915_dma.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/i915_drv.c	i915drmkms
-file	external/bsd/drm2/dist/drm/i915/i915_gem.c		i915drmkms
+file	external/bsd/drm2/dist/drm/i915/i915_gem.c	i915drmkms
+file	external/bsd/drm2/dist/drm/i915/i915_gem_batch_pool.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/i915_gem_context.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/i915_gem_debug.c	i915drmkms
-#file	external/bsd/drm2/dist/drm/i915/i915_gem_dmabuf.c	i915drmkms
+#file	external/bsd/drm2/dist/drm/i915/i915_gem_dmabuf.c	i915drmkms	# XXX i915 prime
 file	external/bsd/drm2/dist/drm/i915/i915_gem_evict.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/i915_gem_execbuffer.c	i915drmkms
-file	external/bsd/drm2/dist/drm/i915/i915_gem_gtt.c		i915drmkms
+file	external/bsd/drm2/dist/drm/i915/i915_gem_fence.c	i915drmkms
+file	external/bsd/drm2/dist/drm/i915/i915_gem_gtt.c	i915drmkms
+file	external/bsd/drm2/dist/drm/i915/i915_gem_render_state.c	i915drmkms
+file	external/bsd/drm2/dist/drm/i915/i915_gem_shrinker.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/i915_gem_stolen.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/i915_gem_tiling.c	i915drmkms
+file	external/bsd/drm2/dist/drm/i915/i915_gem_userptr.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/i915_gpu_error.c	i915drmkms
-#file	external/bsd/drm2/dist/drm/i915/i915_ioc32.c	i915drmkms
+file	external/bsd/drm2/dist/drm/i915/i915_guc_submission.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/i915_irq.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/i915_params.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/i915_suspend.c	i915drmkms
-file	external/bsd/drm2/i915drm/i915_sysfs.c		i915drmkms
-file	external/bsd/drm2/dist/drm/i915/i915_ums.c	i915drmkms
+file	external/bsd/drm2/dist/drm/i915/i915_sysfs.c	i915drmkms
+file	external/bsd/drm2/dist/drm/i915/i915_trace_points.c	i915drmkms
+file	external/bsd/drm2/dist/drm/i915/i915_vgpu.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/intel_acpi.c	i915drmkms
+file	external/bsd/drm2/dist/drm/i915/intel_atomic.c	i915drmkms
+file	external/bsd/drm2/dist/drm/i915/intel_atomic_plane.c	i915drmkms
+file	external/bsd/drm2/dist/drm/i915/intel_audio.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/intel_bios.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/intel_crt.c	i915drmkms
+file	external/bsd/drm2/dist/drm/i915/intel_csr.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/intel_ddi.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/intel_display.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/intel_dp.c	i915drmkms
+file	external/bsd/drm2/dist/drm/i915/intel_dp_mst.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/intel_dsi.c	i915drmkms
-file	external/bsd/drm2/dist/drm/i915/intel_dsi_cmd.c	i915drmkms
+file	external/bsd/drm2/dist/drm/i915/intel_dsi_panel_vbt.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/intel_dsi_pll.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/intel_dvo.c	i915drmkms
-file	external/bsd/drm2/dist/drm/i915/intel_fbdev.c	i915drmkms
+file	external/bsd/drm2/dist/drm/i915/intel_fbc.c	i915drmkms
+file	external/bsd/drm2/dist/drm/i915/intel_fifo_underrun.c	i915drmkms
+file	external/bsd/drm2/dist/drm/i915/intel_frontbuffer.c	i915drmkms
+file	external/bsd/drm2/dist/drm/i915/intel_guc_loader.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/intel_hdmi.c	i915drmkms
+file	external/bsd/drm2/dist/drm/i915/intel_hotplug.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/intel_i2c.c	i915drmkms
+file	external/bsd/drm2/dist/drm/i915/intel_lrc.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/intel_lvds.c	i915drmkms
+file	external/bsd/drm2/dist/drm/i915/intel_mocs.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/intel_modes.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/intel_opregion.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/intel_overlay.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/intel_panel.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/intel_pm.c	i915drmkms
+file	external/bsd/drm2/dist/drm/i915/intel_psr.c	i915drmkms
+file	external/bsd/drm2/dist/drm/i915/intel_renderstate_gen6.c	i915drmkms
+file	external/bsd/drm2/dist/drm/i915/intel_renderstate_gen7.c	i915drmkms
+file	external/bsd/drm2/dist/drm/i915/intel_renderstate_gen8.c	i915drmkms
+file	external/bsd/drm2/dist/drm/i915/intel_renderstate_gen9.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/intel_ringbuffer.c	i915drmkms
+file	external/bsd/drm2/dist/drm/i915/intel_runtime_pm.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/intel_sdvo.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/intel_sideband.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/intel_sprite.c	i915drmkms
