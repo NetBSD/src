@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.h,v 1.29 2018/08/27 07:34:13 riastradh Exp $	*/
+/*	$NetBSD: pci.h,v 1.30 2018/08/27 07:47:32 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -168,6 +168,7 @@ struct pci_dev {
 	uint8_t			revision;
 	uint32_t		class;
 	bool			msi_enabled;
+	bool			no_64bit_msi;
 };
 
 static inline device_t
