@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_i2c.c,v 1.15 2018/08/27 04:58:24 riastradh Exp $	*/
+/*	$NetBSD: intel_i2c.c,v 1.16 2018/08/27 06:16:37 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2006 Dave Airlie <airlied@linux.ie>
@@ -29,7 +29,7 @@
  *	Chris Wilson <chris@chris-wilson.co.uk>
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_i2c.c,v 1.15 2018/08/27 04:58:24 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_i2c.c,v 1.16 2018/08/27 06:16:37 riastradh Exp $");
 
 #include <linux/i2c.h>
 #include <linux/i2c-algo-bit.h>
@@ -289,7 +289,7 @@ gmbus_wait_hw_status(struct drm_i915_private *dev_priv,
 	if (cold) {
 		i = 50;
 		do {
-			gmbus2 = I915_READ_NOTRACE(GMBUS2 + reg_offset);
+			gmbus2 = I915_READ_NOTRACE(GMBUS2);
 			if (ISSET(gmbus2, (GMBUS_SATOER | gmbus2_status)))
 				break;
 			DELAY(1000);
@@ -304,7 +304,7 @@ gmbus_wait_hw_status(struct drm_i915_private *dev_priv,
 			    &dev_priv->gmbus_wait_queue,
 			    &dev_priv->gmbus_wait_lock,
 			    1,
-			    (gmbus2 = I915_READ_NOTRACE(GMBUS2 + reg_offset),
+			    (gmbus2 = I915_READ_NOTRACE(GMBUS2),
 				ISSET(gmbus2,
 				    (GMBUS_SATOER | gmbus2_status))));
 			spin_unlock(&dev_priv->gmbus_wait_lock);
@@ -718,7 +718,11 @@ int intel_setup_gmbus(struct drm_device *dev)
 			 "i915 gmbus %s",
 			 get_gmbus_pin(dev_priv, pin)->name);
 
+#ifdef __NetBSD__
 		bus->adapter.dev.parent = dev->dev;
+#else
+		bus->adapter.dev.parent = &dev->pdev->dev;
+#endif
 		bus->dev_priv = dev_priv;
 
 		bus->adapter.algo = &gmbus_algorithm;
