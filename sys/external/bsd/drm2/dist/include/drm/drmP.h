@@ -1,4 +1,4 @@
-/*	$NetBSD: drmP.h,v 1.23 2018/08/27 07:46:07 riastradh Exp $	*/
+/*	$NetBSD: drmP.h,v 1.24 2018/08/27 13:36:32 riastradh Exp $	*/
 
 /*
  * Internal Header for the Direct Rendering Manager
@@ -1173,7 +1173,7 @@ extern int drm_gem_prime_fd_to_handle(struct drm_device *dev,
 		struct drm_file *file_priv, int prime_fd, uint32_t *handle);
 extern void drm_gem_dmabuf_release(struct dma_buf *dma_buf);
 
-#ifndef __NetBSD__		/* XXX temporary measure 20130212 */
+#ifndef __NetBSD__		/* XXX drm prime */
 extern int drm_prime_sg_to_page_addr_arrays(struct sg_table *sgt, struct page **pages,
 					    dma_addr_t *addrs, int max_pages);
 extern struct sg_table *drm_prime_pages_to_sg(struct page **pages, unsigned int nr_pages);
