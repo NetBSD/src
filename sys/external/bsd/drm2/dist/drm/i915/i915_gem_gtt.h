@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem_gtt.h,v 1.5 2018/08/27 07:00:52 riastradh Exp $	*/
+/*	$NetBSD: i915_gem_gtt.h,v 1.6 2018/08/27 07:01:42 riastradh Exp $	*/
 
 /*
  * Copyright © 2014 Intel Corporation
@@ -254,7 +254,7 @@ struct i915_page_dma {
 #define px_base(px) (&(px)->base)
 #define px_page(px) (px_base(px)->page)
 #ifdef __NetBSD__
-#define px_dma(px) (px_base(px)->map->dm_seg[0].ds_addr)
+#define px_dma(px) (px_base(px)->map->dm_segs[0].ds_addr)
 #else
 #define px_dma(px) (px_base(px)->daddr)
 #endif
