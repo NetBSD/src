@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.h,v 1.26 2018/08/27 06:40:43 riastradh Exp $	*/
+/*	$NetBSD: pci.h,v 1.27 2018/08/27 07:03:02 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -148,6 +148,9 @@ struct pci_dev {
 	}			pd_resources[PCI_NUM_RESOURCES];
 	struct pci_conf_state	*pd_saved_state;
 	struct acpi_devnode	*pd_ad;
+	pci_intr_handle_t	*pd_intr_handles;
+
+	/* Linx API only below */
 	struct pci_bus		*bus;
 	uint32_t		devfn;
 	uint16_t		vendor;
@@ -157,7 +160,6 @@ struct pci_dev {
 	uint8_t			revision;
 	uint32_t		class;
 	bool			msi_enabled;
-	pci_intr_handle_t	*intr_handles;
 };
 
 static inline device_t
@@ -298,7 +300,7 @@ pci_enable_msi(struct pci_dev *pdev)
 #ifdef notyet
 	const struct pci_attach_args *const pa = &pdev->pd_pa;
 
-	if (pci_msi_alloc_exact(pa, &pdev->intr_handles, 1))
+	if (pci_msi_alloc_exact(pa, &pdev->pd_intr_handles, 1))
 		return -EINVAL;
 
 	pdev->msi_enabled = 1;
@@ -313,9 +315,9 @@ pci_disable_msi(struct pci_dev *pdev __unused)
 {
 	const struct pci_attach_args *const pa = &pdev->pd_pa;
 
-	if (pdev->intr_handles != NULL) {
-		pci_intr_release(pa->pa_pc, pdev->intr_handles, 1);
-		pdev->intr_handles = NULL;
+	if (pdev->pd_intr_handles != NULL) {
+		pci_intr_release(pa->pa_pc, pdev->pd_intr_handles, 1);
+		pdev->pd_intr_handles = NULL;
 	}
 	pdev->msi_enabled = 0;
 }
