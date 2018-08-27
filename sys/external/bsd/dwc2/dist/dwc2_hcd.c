@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2_hcd.c,v 1.21 2018/08/08 07:20:44 simonb Exp $	*/
+/*	$NetBSD: dwc2_hcd.c,v 1.22 2018/08/27 17:13:07 riastradh Exp $	*/
 
 /*
  * hcd.c - DesignWare HS OTG Controller host-mode routines
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc2_hcd.c,v 1.21 2018/08/08 07:20:44 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc2_hcd.c,v 1.22 2018/08/27 17:13:07 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/kmem.h>
@@ -1907,8 +1907,14 @@ dwc2_hcd_urb_alloc(struct dwc2_hsotg *hsotg, int iso_desc_count,
 	struct dwc2_hcd_urb *urb;
 	u32 size = sizeof(*urb) + iso_desc_count *
 		   sizeof(struct dwc2_hcd_iso_packet_desc);
+	int kmem_flag;
 
-	urb = kmem_zalloc(size, mem_flags);
+	if ((mem_flags & __GFP_WAIT) == __GFP_WAIT)
+		kmem_flag = KM_SLEEP;
+	else
+		kmem_flag = KM_NOSLEEP;
+
+	urb = kmem_zalloc(size, kmem_flag);
 	if (urb)
 		urb->packet_count = iso_desc_count;
 	return urb;
