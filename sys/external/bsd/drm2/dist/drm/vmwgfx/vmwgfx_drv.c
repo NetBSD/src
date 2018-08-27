@@ -1,4 +1,4 @@
-/*	$NetBSD: vmwgfx_drv.c,v 1.2 2018/08/27 04:58:37 riastradh Exp $	*/
+/*	$NetBSD: vmwgfx_drv.c,v 1.3 2018/08/27 07:03:26 riastradh Exp $	*/
 
 /**************************************************************************
  *
@@ -27,7 +27,7 @@
  *
  **************************************************************************/
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vmwgfx_drv.c,v 1.2 2018/08/27 04:58:37 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vmwgfx_drv.c,v 1.3 2018/08/27 07:03:26 riastradh Exp $");
 
 #include <linux/module.h>
 #include <linux/console.h>
@@ -816,7 +816,11 @@ static int vmw_driver_load(struct drm_device *dev, unsigned long chipset)
 	}
 
 	if (dev_priv->capabilities & SVGA_CAP_IRQMASK) {
+#ifdef __NetBSD__
+		ret = drm_irq_install(dev);
+#else
 		ret = drm_irq_install(dev, dev->pdev->irq);
+#endif
 		if (ret != 0) {
 			DRM_ERROR("Failed installing irq: %d\n", ret);
 			goto out_no_irq;
@@ -1508,6 +1512,10 @@ static struct drm_driver driver = {
 	.irq_postinstall = vmw_irq_postinstall,
 	.irq_uninstall = vmw_irq_uninstall,
 	.irq_handler = vmw_irq_handler,
+#ifdef __NetBSD__
+	.request_irq = drm_pci_request_irq,
+	.free_irq = drm_pci_free_irq,
+#endif
 	.get_vblank_counter = vmw_get_vblank_counter,
 	.enable_vblank = vmw_enable_vblank,
 	.disable_vblank = vmw_disable_vblank,

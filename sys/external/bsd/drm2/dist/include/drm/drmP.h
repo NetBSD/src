@@ -1,4 +1,4 @@
-/*	$NetBSD: drmP.h,v 1.21 2018/08/27 06:54:08 riastradh Exp $	*/
+/*	$NetBSD: drmP.h,v 1.22 2018/08/27 07:03:26 riastradh Exp $	*/
 
 /*
  * Internal Header for the Direct Rendering Manager
@@ -607,6 +607,11 @@ struct drm_driver {
 	int (*irq_postinstall) (struct drm_device *dev);
 	void (*irq_uninstall) (struct drm_device *dev);
 
+#ifdef __NetBSD__
+	int (*request_irq)(struct drm_device *, int);
+	void (*free_irq)(struct drm_device *);
+#endif
+
 	/* Master routines */
 	int (*master_create)(struct drm_device *dev, struct drm_master *master);
 	void (*master_destroy)(struct drm_device *dev, struct drm_master *master);
@@ -1036,7 +1041,11 @@ void drm_clflush_virt_range(void *addr, unsigned long length);
  */
 
 				/* IRQ support (drm_irq.h) */
+#ifdef __NetBSD__
+extern int drm_irq_install(struct drm_device *dev);
+#else
 extern int drm_irq_install(struct drm_device *dev, int irq);
+#endif
 extern int drm_irq_uninstall(struct drm_device *dev);
 
 extern int drm_vblank_init(struct drm_device *dev, unsigned int num_crtcs);
@@ -1217,6 +1226,10 @@ void drm_pci_agp_destroy(struct drm_device *dev);
 
 extern int drm_pci_init(struct drm_driver *driver, struct pci_driver *pdriver);
 extern void drm_pci_exit(struct drm_driver *driver, struct pci_driver *pdriver);
+#ifdef __NetBSD__
+int drm_pci_request_irq(struct drm_device *, int);
+void drm_pci_free_irq(struct drm_device *);
+#endif
 #ifdef CONFIG_PCI
 extern int drm_get_pci_dev(struct pci_dev *pdev,
 			   const struct pci_device_id *ent,
