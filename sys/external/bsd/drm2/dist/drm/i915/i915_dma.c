@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_dma.c,v 1.21 2018/08/27 07:04:11 riastradh Exp $	*/
+/*	$NetBSD: i915_dma.c,v 1.22 2018/08/27 07:18:18 riastradh Exp $	*/
 
 /* i915_dma.c -- DMA support for the I915 -*- linux-c -*-
  */
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_dma.c,v 1.21 2018/08/27 07:04:11 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_dma.c,v 1.22 2018/08/27 07:18:18 riastradh Exp $");
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
@@ -1145,9 +1145,7 @@ out_power_well:
 	intel_power_domains_fini(dev_priv);
 	drm_vblank_cleanup(dev);
 out_gem_unload:
-#ifndef __NetBSD__
 	WARN_ON(unregister_oom_notifier(&dev_priv->mm.oom_notifier));
-#endif
 	unregister_shrinker(&dev_priv->mm.shrinker);
 	/* XXX i915_gem_unload */
 #ifdef __NetBSD__
@@ -1231,9 +1229,7 @@ int i915_driver_unload(struct drm_device *dev)
 
 	i915_teardown_sysfs(dev);
 
-#ifndef __NetBSD__
 	WARN_ON(unregister_oom_notifier(&dev_priv->mm.oom_notifier));
-#endif
 	unregister_shrinker(&dev_priv->mm.shrinker);
 
 	io_mapping_free(dev_priv->gtt.mappable);
