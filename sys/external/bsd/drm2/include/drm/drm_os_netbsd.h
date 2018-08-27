@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_os_netbsd.h,v 1.5 2018/08/27 05:57:42 riastradh Exp $	*/
+/*	$NetBSD: drm_os_netbsd.h,v 1.6 2018/08/27 06:18:51 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -47,6 +47,14 @@
 #include "pci.h"
 #if NPCI > 0
 #define CONFIG_PCI
+#endif
+
+#if defined(__i386__)
+#include "pnpbios.h"
+#endif
+
+#if NPNPBIOS > 0
+#define CONFIG_PNP
 #endif
 
 #include <drm/drm_agp_netbsd.h>
