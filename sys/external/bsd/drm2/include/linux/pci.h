@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.h,v 1.25 2018/08/27 06:37:53 riastradh Exp $	*/
+/*	$NetBSD: pci.h,v 1.26 2018/08/27 06:40:43 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -716,6 +716,14 @@ pci_dma_supported(struct pci_dev *pdev, uintmax_t mask)
 		return pci_dma64_available(&pdev->pd_pa);
 	else
 		return true;
+}
+
+static inline bool
+pci_is_root_bus(struct pci_bus *bus)
+{
+
+	/* XXX Cop-out. */
+	return false;
 }
 
 #endif  /* _LINUX_PCI_H_ */
