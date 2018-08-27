@@ -1,4 +1,4 @@
-/*	$NetBSD: list.h,v 1.15 2018/08/27 07:33:09 riastradh Exp $	*/
+/*	$NetBSD: list.h,v 1.16 2018/08/27 07:51:49 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -305,9 +305,8 @@ hlist_del_init(struct hlist_node *node)
 #define	hlist_for_each(VAR, HEAD)					      \
 	for ((VAR) = hlist_first(HEAD); (VAR) != NULL; (VAR) = hlist_next(VAR))
 #define	hlist_for_each_safe(VAR, NEXT, HEAD)				      \
-	for ((VAR) = hlist_first(HEAD),					      \
-		    (NEXT) = ((VAR) == NULL ? NULL : hlist_next(HEAD));	      \
-		(VAR) != NULL;						      \
+	for ((VAR) = hlist_first(HEAD);					      \
+		(VAR) != NULL && ((NEXT) = hlist_next(HEAD), 1);	      \
 		(VAR) = (NEXT))
 #define	hlist_for_each_entry(VAR, HEAD, FIELD)				      \
 	for ((VAR) = (hlist_first(HEAD) == NULL ? NULL :		      \
@@ -321,12 +320,10 @@ hlist_del_init(struct hlist_node *node)
 #define	hlist_for_each_entry_safe(VAR, NEXT, HEAD, FIELD)		      \
 	for ((VAR) = (hlist_first(HEAD) == NULL ? NULL :		      \
 			hlist_entry(hlist_first(HEAD), typeof(*(VAR)),	      \
-			    FIELD)),					      \
-		    (NEXT) = ((VAR) == NULL ? NULL :			      \
-			hlist_next(&(VAR)->FIELD));			      \
-		(VAR) != NULL;						      \
-	        (VAR) = ((NEXT) == NULL ? NULL :			      \
-			    hlist_entry((NEXT), typeof(*(VAR)), FIELD)))
+			    FIELD));					      \
+		((VAR) != NULL &&					      \
+		    ((NEXT) = hlist_next(&(VAR)->FIELD), 1));		      \
+	        (VAR) = hlist_entry((NEXT), typeof(*(VAR)), FIELD))
 
 #define	hlist_add_behind_rcu(n, p)	pslist_writer_insert_after(p, n)
 #define	hlist_add_head_rcu(n, h)	pslist_writer_insert_head(h, n)
