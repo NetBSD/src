@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_pci.c,v 1.3 2018/08/27 14:11:46 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_pci.c,v 1.4 2018/08/27 14:12:14 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_pci.c,v 1.3 2018/08/27 14:11:46 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_pci.c,v 1.4 2018/08/27 14:12:14 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/queue.h>
@@ -219,7 +219,8 @@ amdgpu_detach(device_t self, int flags)
 		return error;
 	sc->sc_drm_dev = NULL;
 
-out:	pmf_device_deregister(self);
+out:	linux_pci_dev_destroy(&sc->sc_pci_dev);
+	pmf_device_deregister(self);
 
 	return 0;
 }
