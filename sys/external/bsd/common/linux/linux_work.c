@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_work.c,v 1.7 2018/08/27 13:35:55 riastradh Exp $	*/
+/*	$NetBSD: linux_work.c,v 1.8 2018/08/27 13:38:32 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_work.c,v 1.7 2018/08/27 13:35:55 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_work.c,v 1.8 2018/08/27 13:38:32 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -193,7 +193,8 @@ struct wq_whoami_work {
 static void
 workqueue_whoami_work(struct work_struct *work)
 {
-	struct wq_whoami_work *www = www;
+	struct wq_whoami_work *www = container_of(work, struct wq_whoami_work,
+	    www_work);
 	struct workqueue_struct *wq = www->www_wq;
 
 	KASSERT(wq->wq_lwp == NULL);
