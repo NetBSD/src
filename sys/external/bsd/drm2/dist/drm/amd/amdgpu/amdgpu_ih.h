@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_ih.h,v 1.2 2018/08/27 04:58:19 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_ih.h,v 1.3 2018/08/27 14:04:50 riastradh Exp $	*/
 
 /*
  * Copyright 2014 Advanced Micro Devices, Inc.
@@ -33,6 +33,10 @@ struct amdgpu_device;
  */
 struct amdgpu_ih_ring {
 	struct amdgpu_bo	*ring_obj;
+#ifdef __NetBSD__
+	bus_dma_segment_t	ring_seg;
+	bus_dmamap_t		ring_map;
+#endif
 	volatile uint32_t	*ring;
 	unsigned		rptr;
 	unsigned		ring_size;

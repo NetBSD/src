@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_fence.c,v 1.2 2018/08/27 04:58:19 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_fence.c,v 1.3 2018/08/27 14:04:50 riastradh Exp $	*/
 
 /*
  * Copyright 2009 Jerome Glisse.
@@ -31,8 +31,9 @@
  *    Dave Airlie
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_fence.c,v 1.2 2018/08/27 04:58:19 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_fence.c,v 1.3 2018/08/27 14:04:50 riastradh Exp $");
 
+#include <asm/byteorder.h>
 #include <linux/seq_file.h>
 #include <linux/atomic.h>
 #include <linux/wait.h>
@@ -116,7 +117,11 @@ int amdgpu_fence_emit(struct amdgpu_ring *ring, void *owner,
 	(*fence)->ring = ring;
 	(*fence)->owner = owner;
 	fence_init(&(*fence)->base, &amdgpu_fence_ops,
+#ifdef __NetBSD__
+		&ring->fence_drv.fence_lock,
+#else
 		&ring->fence_drv.fence_queue.lock,
+#endif
 		adev->fence_context + ring->idx,
 		(*fence)->seq);
 	amdgpu_ring_emit_fence(ring, ring->fence_drv.gpu_addr,
@@ -152,6 +157,8 @@ static bool amdgpu_fence_activity(struct amdgpu_ring *ring)
 	uint64_t seq, last_seq, last_emitted;
 	unsigned count_loop = 0;
 	bool wake = false;
+
+	BUG_ON(!spin_is_locked(&ring->fence_drv.fence_lock));
 
 	/* Note there is a scenario here for an infinite loop but it's
 	 * very unlikely to happen. For it to happen, the current polling
@@ -209,6 +216,24 @@ static bool amdgpu_fence_activity(struct amdgpu_ring *ring)
 	return wake;
 }
 
+#ifdef __NetBSD__
+static int amdgpu_fence_check_signaled(struct amdgpu_fence *);
+
+static void
+amdgpu_fence_wakeup_locked(struct amdgpu_ring *ring)
+{
+	struct amdgpu_fence *fence, *next;
+
+	BUG_ON(!spin_is_locked(&ring->fence_drv.fence_lock));
+	DRM_SPIN_WAKEUP_ALL(&ring->fence_drv.fence_queue,
+	    &ring->fence_drv.fence_lock);
+	TAILQ_FOREACH_SAFE(fence, &ring->fence_drv.fence_check, fence_check,
+	    next) {
+		amdgpu_fence_check_signaled(fence);
+	}
+}
+#endif
+
 /**
  * amdgpu_fence_process - process a fence
  *
@@ -218,10 +243,22 @@ static bool amdgpu_fence_activity(struct amdgpu_ring *ring)
  * Checks the current fence value and wakes the fence queue
  * if the sequence number has increased (all asics).
  */
-void amdgpu_fence_process(struct amdgpu_ring *ring)
+static void amdgpu_fence_process_locked(struct amdgpu_ring *ring)
 {
 	if (amdgpu_fence_activity(ring))
+#ifdef __NetBSD__
+		amdgpu_fence_wakeup_locked(ring);
+#else
 		wake_up_all(&ring->fence_drv.fence_queue);
+#endif
+}
+
+void amdgpu_fence_process(struct amdgpu_ring *ring)
+{
+
+	spin_lock(&ring->fence_drv.fence_lock);
+	amdgpu_fence_process_locked(ring);
+	spin_unlock(&ring->fence_drv.fence_lock);
 }
 
 /**
@@ -279,6 +316,7 @@ static int amdgpu_fence_ring_wait_seq(struct amdgpu_ring *ring, uint64_t seq)
 	bool signaled = false;
 
 	BUG_ON(!ring);
+	BUG_ON(!spin_is_locked(&ring->fence_drv.fence_lock));
 	if (seq > ring->fence_drv.sync_seq[ring->idx])
 		return -EINVAL;
 
@@ -286,8 +324,16 @@ static int amdgpu_fence_ring_wait_seq(struct amdgpu_ring *ring, uint64_t seq)
 		return 0;
 
 	amdgpu_fence_schedule_fallback(ring);
+#ifdef __NetBSD__
+	/* XXX How is this ever supposed to wake up in the EDEADLK case?  */
+	int r __unused;
+	DRM_SPIN_WAIT_NOINTR_UNTIL(r, &ring->fence_drv.fence_queue,
+	    &ring->fence_drv.fence_lock,
+	    (signaled = amdgpu_fence_seq_signaled(ring, seq)));
+#else
 	wait_event(ring->fence_drv.fence_queue, (
 		   (signaled = amdgpu_fence_seq_signaled(ring, seq))));
+#endif
 
 	if (signaled)
 		return 0;
@@ -448,8 +494,12 @@ int amdgpu_fence_driver_start_ring(struct amdgpu_ring *ring,
 		ring->fence_drv.gpu_addr = adev->wb.gpu_addr + (ring->fence_offs * 4);
 	} else {
 		/* put fence directly behind firmware */
+#ifdef __NetBSD__		/* XXX ALIGN means something else.  */
+		index = round_up(adev->uvd.fw->size, 8);
+#else
 		index = ALIGN(adev->uvd.fw->size, 8);
-		ring->fence_drv.cpu_addr = adev->uvd.cpu_addr + index;
+#endif
+		ring->fence_drv.cpu_addr = (void *)((char *)adev->uvd.cpu_addr + index);
 		ring->fence_drv.gpu_addr = adev->uvd.gpu_addr + index;
 	}
 	amdgpu_fence_write(ring, atomic64_read(&ring->fence_drv.last_seq));
@@ -459,7 +509,7 @@ int amdgpu_fence_driver_start_ring(struct amdgpu_ring *ring,
 	ring->fence_drv.irq_type = irq_type;
 	ring->fence_drv.initialized = true;
 
-	dev_info(adev->dev, "fence driver on ring %d use gpu addr 0x%016llx, "
+	dev_info(adev->dev, "fence driver on ring %d use gpu addr 0x%016"PRIx64", "
 		 "cpu addr 0x%p\n", ring->idx,
 		 ring->fence_drv.gpu_addr, ring->fence_drv.cpu_addr);
 	return 0;
@@ -489,7 +539,13 @@ int amdgpu_fence_driver_init_ring(struct amdgpu_ring *ring)
 	setup_timer(&ring->fence_drv.fallback_timer, amdgpu_fence_fallback,
 		    (unsigned long)ring);
 
+#ifdef __NetBSD__
+	spin_lock_init(&ring->fence_drv.fence_lock);
+	DRM_INIT_WAITQUEUE(&ring->fence_drv.fence_queue, "amdfence");
+	TAILQ_INIT(&ring->fence_drv.fence_check);
+#else
 	init_waitqueue_head(&ring->fence_drv.fence_queue);
+#endif
 
 	if (amdgpu_enable_scheduler) {
 		long timeout = msecs_to_jiffies(amdgpu_lockup_timeout);
@@ -568,12 +624,23 @@ void amdgpu_fence_driver_fini(struct amdgpu_device *adev)
 			/* no need to trigger GPU reset as we are unloading */
 			amdgpu_fence_driver_force_completion(adev);
 		}
+#ifdef __NetBSD__
+		spin_lock(&ring->fence_drv.fence_lock);
+		amdgpu_fence_wakeup_locked(ring);
+		spin_unlock(&ring->fence_drv.fence_lock);
+#else
 		wake_up_all(&ring->fence_drv.fence_queue);
+#endif
 		amdgpu_irq_put(adev, ring->fence_drv.irq_src,
 			       ring->fence_drv.irq_type);
 		amd_sched_fini(&ring->sched);
 		del_timer_sync(&ring->fence_drv.fallback_timer);
 		ring->fence_drv.initialized = false;
+#ifdef __NetBSD__
+		BUG_ON(!TAILQ_EMPTY(&ring->fence_drv.fence_check));
+		DRM_DESTROY_WAITQUEUE(&ring->fence_drv.fence_queue);
+		spin_lock_destroy(&ring->fence_drv.fence_lock);
+#endif
 	}
 	mutex_unlock(&adev->ring_lock);
 }
@@ -706,15 +773,22 @@ static bool amdgpu_fence_is_signaled(struct fence *f)
  * for the fence locking itself, so unlocked variants are used for
  * fence_signal, and remove_wait_queue.
  */
+#ifdef __NetBSD__
+static int amdgpu_fence_check_signaled(struct amdgpu_fence *fence)
+#else
 static int amdgpu_fence_check_signaled(wait_queue_t *wait, unsigned mode, int flags, void *key)
+#endif
 {
+#ifndef __NetBSD__
 	struct amdgpu_fence *fence;
-	struct amdgpu_device *adev;
+#endif
 	u64 seq;
 	int ret;
 
+#ifndef __NetBSD__
 	fence = container_of(wait, struct amdgpu_fence, fence_wake);
-	adev = fence->ring->adev;
+#endif
+	BUG_ON(!spin_is_locked(&fence->ring->fence_drv.fence_lock));
 
 	/*
 	 * We cannot use amdgpu_fence_process here because we're already
@@ -728,7 +802,12 @@ static int amdgpu_fence_check_signaled(wait_queue_t *wait, unsigned mode, int fl
 		else
 			FENCE_TRACE(&fence->base, "was already signaled\n");
 
+#ifdef __NetBSD__
+		TAILQ_REMOVE(&fence->ring->fence_drv.fence_check, fence,
+		    fence_check);
+#else
 		__remove_wait_queue(&fence->ring->fence_drv.fence_queue, &fence->fence_wake);
+#endif
 		fence_put(&fence->base);
 	} else
 		FENCE_TRACE(&fence->base, "pending\n");
@@ -751,10 +830,14 @@ static bool amdgpu_fence_enable_signaling(struct fence *f)
 	if (atomic64_read(&ring->fence_drv.last_seq) >= fence->seq)
 		return false;
 
+#ifdef __NetBSD__
+	TAILQ_INSERT_TAIL(&ring->fence_drv.fence_check, fence, fence_check);
+#else
 	fence->fence_wake.flags = 0;
 	fence->fence_wake.private = NULL;
 	fence->fence_wake.func = amdgpu_fence_check_signaled;
 	__add_wait_queue(&ring->fence_drv.fence_queue, &fence->fence_wake);
+#endif
 	fence_get(f);
 	if (!timer_pending(&ring->fence_drv.fallback_timer))
 		amdgpu_fence_schedule_fallback(ring);
@@ -798,14 +881,14 @@ static int amdgpu_debugfs_fence_info(struct seq_file *m, void *data)
 		seq_printf(m, "--- ring %d (%s) ---\n", i, ring->name);
 		seq_printf(m, "Last signaled fence 0x%016llx\n",
 			   (unsigned long long)atomic64_read(&ring->fence_drv.last_seq));
-		seq_printf(m, "Last emitted        0x%016llx\n",
+		seq_printf(m, "Last emitted        0x%016"PRIx64"\n",
 			   ring->fence_drv.sync_seq[i]);
 
 		for (j = 0; j < AMDGPU_MAX_RINGS; ++j) {
 			struct amdgpu_ring *other = adev->rings[j];
 			if (i != j && other && other->fence_drv.initialized &&
 			    ring->fence_drv.sync_seq[j])
-				seq_printf(m, "Last sync to ring %d 0x%016llx\n",
+				seq_printf(m, "Last sync to ring %d 0x%016"PRIx64"\n",
 					   j, ring->fence_drv.sync_seq[j]);
 		}
 	}

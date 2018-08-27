@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_pm.c,v 1.2 2018/08/27 04:58:19 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_pm.c,v 1.3 2018/08/27 14:04:50 riastradh Exp $	*/
 
 /*
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -23,7 +23,7 @@
  *          Alex Deucher <alexdeucher@gmail.com>
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_pm.c,v 1.2 2018/08/27 04:58:19 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_pm.c,v 1.3 2018/08/27 14:04:50 riastradh Exp $");
 
 #include <drm/drmP.h>
 #include "amdgpu.h"
@@ -35,7 +35,9 @@ __KERNEL_RCSID(0, "$NetBSD: amdgpu_pm.c,v 1.2 2018/08/27 04:58:19 riastradh Exp 
 #include <linux/hwmon.h>
 #include <linux/hwmon-sysfs.h>
 
+#ifndef __NetBSD__		/* XXX sysfs */
 static int amdgpu_debugfs_pm_init(struct amdgpu_device *adev);
+#endif
 
 void amdgpu_pm_acpi_event_handler(struct amdgpu_device *adev)
 {
@@ -50,6 +52,8 @@ void amdgpu_pm_acpi_event_handler(struct amdgpu_device *adev)
 		mutex_unlock(&adev->pm.mutex);
 	}
 }
+
+#ifndef __NetBSD__		/* XXX sysfs */
 
 static ssize_t amdgpu_get_dpm_state(struct device *dev,
 				    struct device_attribute *attr,
@@ -349,6 +353,8 @@ static const struct attribute_group *hwmon_groups[] = {
 	&hwmon_attrgroup,
 	NULL
 };
+
+#endif	/* __NetBSD__ */
 
 void amdgpu_dpm_thermal_work_handler(struct work_struct *work)
 {
@@ -699,6 +705,9 @@ void amdgpu_pm_print_power_states(struct amdgpu_device *adev)
 
 int amdgpu_pm_sysfs_init(struct amdgpu_device *adev)
 {
+#ifdef __NetBSD__		/* XXX sysfs */
+	return 0;
+#else
 	int ret;
 
 	if (adev->pm.sysfs_initialized)
@@ -735,14 +744,17 @@ int amdgpu_pm_sysfs_init(struct amdgpu_device *adev)
 	adev->pm.sysfs_initialized = true;
 
 	return 0;
+#endif
 }
 
 void amdgpu_pm_sysfs_fini(struct amdgpu_device *adev)
 {
+#ifndef __NetBSD__
 	if (adev->pm.int_hwmon_dev)
 		hwmon_device_unregister(adev->pm.int_hwmon_dev);
 	device_remove_file(adev->dev, &dev_attr_power_dpm_state);
 	device_remove_file(adev->dev, &dev_attr_power_dpm_force_performance_level);
+#endif
 }
 
 void amdgpu_pm_compute_clocks(struct amdgpu_device *adev)
@@ -810,6 +822,7 @@ static struct drm_info_list amdgpu_pm_info_list[] = {
 };
 #endif
 
+#ifndef __NetBSD__		/* XXX sysfs */
 static int amdgpu_debugfs_pm_init(struct amdgpu_device *adev)
 {
 #if defined(CONFIG_DEBUG_FS)
@@ -818,3 +831,4 @@ static int amdgpu_debugfs_pm_init(struct amdgpu_device *adev)
 	return 0;
 #endif
 }
+#endif

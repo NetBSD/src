@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_vm.c,v 1.2 2018/08/27 04:58:20 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_vm.c,v 1.3 2018/08/27 14:04:50 riastradh Exp $	*/
 
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
@@ -28,7 +28,7 @@
  *          Jerome Glisse
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_vm.c,v 1.2 2018/08/27 04:58:20 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_vm.c,v 1.3 2018/08/27 14:04:50 riastradh Exp $");
 
 #include <drm/drmP.h>
 #include <drm/amdgpu_drm.h>
@@ -571,7 +571,11 @@ static void amdgpu_vm_frag_ptes(struct amdgpu_device *adev,
 	uint64_t frag_flags = AMDGPU_PTE_FRAG_64KB;
 	uint64_t frag_align = 0x80;
 
+#ifdef __NetBSD__		/* XXX ALIGN means something else */
+	uint64_t frag_start = round_up(pe_start, frag_align);
+#else
 	uint64_t frag_start = ALIGN(pe_start, frag_align);
+#endif
 	uint64_t frag_end = pe_end & ~(frag_align - 1);
 
 	unsigned count;
@@ -977,7 +981,11 @@ struct amdgpu_bo_va *amdgpu_vm_bo_add(struct amdgpu_device *adev,
 	INIT_LIST_HEAD(&bo_va->valids);
 	INIT_LIST_HEAD(&bo_va->invalids);
 	INIT_LIST_HEAD(&bo_va->vm_status);
+#ifdef __NetBSD__
+	linux_mutex_init(&bo_va->mutex);
+#else
 	mutex_init(&bo_va->mutex);
+#endif
 	list_add_tail(&bo_va->bo_list, &bo->va);
 
 	return bo_va;
@@ -1036,7 +1044,7 @@ int amdgpu_vm_bo_map(struct amdgpu_device *adev,
 		struct amdgpu_bo_va_mapping *tmp;
 		tmp = container_of(it, struct amdgpu_bo_va_mapping, it);
 		/* bo and tmp overlap, invalid addr */
-		dev_err(adev->dev, "bo %p va 0x%010Lx-0x%010Lx conflict with "
+		dev_err(adev->dev, "bo %p va 0x%010"PRIx64"-0x%010"PRIx64" conflict with "
 			"0x%010lx-0x%010lx\n", bo_va->bo, saddr, eaddr,
 			tmp->it.start, tmp->it.last + 1);
 		r = -EINVAL;
@@ -1215,7 +1223,11 @@ void amdgpu_vm_bo_rmv(struct amdgpu_device *adev,
 		kfree(mapping);
 	}
 	fence_put(bo_va->last_pt_update);
+#ifdef __NetBSD__
+	linux_mutex_destroy(&bo_va->mutex);
+#else
 	mutex_destroy(&bo_va->mutex);
+#endif
 	kfree(bo_va);
 }
 
@@ -1260,7 +1272,11 @@ int amdgpu_vm_init(struct amdgpu_device *adev, struct amdgpu_vm *vm)
 		vm->ids[i].id = 0;
 		vm->ids[i].flushed_updates = NULL;
 	}
+#ifdef __NetBSD__
+	interval_tree_init(&vm->va);
+#else
 	vm->va = RB_ROOT;
+#endif
 	spin_lock_init(&vm->status_lock);
 	INIT_LIST_HEAD(&vm->invalidated);
 	INIT_LIST_HEAD(&vm->cleared);

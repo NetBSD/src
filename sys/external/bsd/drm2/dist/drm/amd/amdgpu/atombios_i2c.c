@@ -1,4 +1,4 @@
-/*	$NetBSD: atombios_i2c.c,v 1.2 2018/08/27 04:58:20 riastradh Exp $	*/
+/*	$NetBSD: atombios_i2c.c,v 1.3 2018/08/27 14:04:50 riastradh Exp $	*/
 
 /*
  * Copyright 2011 Advanced Micro Devices, Inc.
@@ -25,13 +25,15 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atombios_i2c.c,v 1.2 2018/08/27 04:58:20 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atombios_i2c.c,v 1.3 2018/08/27 14:04:50 riastradh Exp $");
 
 #include <drm/drmP.h>
 #include <drm/amdgpu_drm.h>
+#include <asm/byteorder.h>
 #include "amdgpu.h"
 #include "atom.h"
 #include "amdgpu_atombios.h"
+#include "atombios_i2c.h"
 
 #define TARGET_HW_I2C_CLOCK 50
 
@@ -73,11 +75,8 @@ static int amdgpu_atombios_i2c_process_i2c_ch(struct amdgpu_i2c_chan *chan,
 			memcpy(&out, &buf[1], num);
 		args.lpI2CDataOut = cpu_to_le16(out);
 	} else {
-		if (num > ATOM_MAX_HW_I2C_READ) {
-			DRM_ERROR("hw i2c: tried to read too many bytes (%d vs 255)\n", num);
-			r = -EINVAL;
-			goto done;
-		}
+		CTASSERT(ATOM_MAX_HW_I2C_READ <
+		    (uintmax_t)1 << (CHAR_BIT*sizeof(num)));
 		args.ucRegIndex = 0;
 		args.lpI2CDataOut = 0;
 	}

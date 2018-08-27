@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_ih.c,v 1.2 2018/08/27 04:58:19 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_ih.c,v 1.3 2018/08/27 14:04:50 riastradh Exp $	*/
 
 /*
  * Copyright 2014 Advanced Micro Devices, Inc.
@@ -24,8 +24,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_ih.c,v 1.2 2018/08/27 04:58:19 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_ih.c,v 1.3 2018/08/27 14:04:50 riastradh Exp $");
 
+#include <linux/log2.h>
 #include <drm/drmP.h>
 #include "amdgpu.h"
 #include "amdgpu_ih.h"
@@ -65,7 +66,7 @@ static int amdgpu_ih_ring_alloc(struct amdgpu_device *adev)
 			return r;
 		}
 		r = amdgpu_bo_kmap(adev->irq.ih.ring_obj,
-				   (void **)&adev->irq.ih.ring);
+				   (void **)__UNVOLATILE(&adev->irq.ih.ring));
 		amdgpu_bo_unreserve(adev->irq.ih.ring_obj);
 		if (r) {
 			DRM_ERROR("amdgpu: failed to map ih ring buffer (%d).\n", r);
@@ -103,12 +104,53 @@ int amdgpu_ih_ring_init(struct amdgpu_device *adev, unsigned ring_size,
 			/* add 8 bytes for the rptr/wptr shadows and
 			 * add them to the end of the ring allocation.
 			 */
+#ifdef __NetBSD__
+			const bus_size_t size = adev->irq.ih.ring_size + 8;
+			int rseg __diagused;
+			void *kva;
+			r = -bus_dmamem_alloc(adev->ddev->dmat, size,
+			    PAGE_SIZE, 0, &adev->irq.ih.ring_seg, 1, &rseg,
+			    BUS_DMA_WAITOK);
+			if (r) {
+fail0:				KASSERT(r);
+				return r;
+			}
+			KASSERT(rseg == 0);
+			r = -bus_dmamap_create(adev->ddev->dmat, size, 1,
+			    PAGE_SIZE, 0, BUS_DMA_WAITOK,
+			    &adev->irq.ih.ring_map);
+			if (r) {
+fail1:				bus_dmamem_free(adev->ddev->dmat,
+				    &adev->irq.ih.ring_seg, 1);
+				goto fail0;
+			}
+			r = -bus_dmamem_map(adev->ddev->dmat,
+			    &adev->irq.ih.ring_seg, 1, size, &kva,
+			    BUS_DMA_WAITOK);
+			if (r) {
+fail2:				bus_dmamap_destroy(adev->ddev->dmat,
+				    adev->irq.ih.ring_map);
+				adev->irq.ih.ring_map = NULL;
+				goto fail1;
+			}
+			r = -bus_dmamap_load(adev->ddev->dmat,
+			    adev->irq.ih.ring_map, kva, size, NULL,
+			    BUS_DMA_WAITOK);
+			if (r) {
+fail3: __unused			bus_dmamem_unmap(adev->ddev->dmat, kva, size);
+				goto fail2;
+			}
+			adev->irq.ih.ring = kva;
+			adev->irq.ih.rb_dma_addr =
+			    adev->irq.ih.ring_map->dm_segs[0].ds_addr;
+#else
 			adev->irq.ih.ring = pci_alloc_consistent(adev->pdev,
 								 adev->irq.ih.ring_size + 8,
 								 &adev->irq.ih.rb_dma_addr);
 			if (adev->irq.ih.ring == NULL)
 				return -ENOMEM;
-			memset((void *)adev->irq.ih.ring, 0, adev->irq.ih.ring_size + 8);
+#endif
+			memset(__UNVOLATILE(adev->irq.ih.ring), 0, adev->irq.ih.ring_size + 8);
 			adev->irq.ih.wptr_offs = (adev->irq.ih.ring_size / 4) + 0;
 			adev->irq.ih.rptr_offs = (adev->irq.ih.ring_size / 4) + 1;
 		}
@@ -148,9 +190,21 @@ void amdgpu_ih_ring_fini(struct amdgpu_device *adev)
 			/* add 8 bytes for the rptr/wptr shadows and
 			 * add them to the end of the ring allocation.
 			 */
+#ifdef __NetBSD__
+			const bus_size_t size = adev->irq.ih.ring_size + 8;
+			void *kva = __UNVOLATILE(adev->irq.ih.ring);
+			bus_dmamap_unload(adev->ddev->dmat,
+			    adev->irq.ih.ring_map);
+			bus_dmamem_unmap(adev->ddev->dmat, kva, size);
+			bus_dmamap_destroy(adev->ddev->dmat,
+			    adev->irq.ih.ring_map);
+			bus_dmamem_free(adev->ddev->dmat,
+			    &adev->irq.ih.ring_seg, 1);
+#else
 			pci_free_consistent(adev->pdev, adev->irq.ih.ring_size + 8,
 					    (void *)adev->irq.ih.ring,
 					    adev->irq.ih.rb_dma_addr);
+#endif
 			adev->irq.ih.ring = NULL;
 		}
 	} else {
@@ -203,10 +257,10 @@ restart_ih:
 
 		/* Before dispatching irq to IP blocks, send it to amdkfd */
 		amdgpu_amdkfd_interrupt(adev,
-				(const void *) &adev->irq.ih.ring[ring_index]);
+				(const void *)__UNVOLATILE(&adev->irq.ih.ring[ring_index]));
 
 		entry.iv_entry = (const uint32_t *)
-			&adev->irq.ih.ring[ring_index];
+			__UNVOLATILE(&adev->irq.ih.ring[ring_index]);
 		amdgpu_ih_decode_iv(adev, &entry);
 		adev->irq.ih.rptr &= adev->irq.ih.ptr_mask;
 
