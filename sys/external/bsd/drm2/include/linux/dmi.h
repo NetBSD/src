@@ -1,4 +1,4 @@
-/*	$NetBSD: dmi.h,v 1.5 2018/08/27 06:49:42 riastradh Exp $	*/
+/*	$NetBSD: dmi.h,v 1.6 2018/08/27 07:19:13 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -31,6 +31,8 @@
 
 #ifndef _LINUX_DMI_H_
 #define _LINUX_DMI_H_
+
+#include <sys/types.h>
 
 enum dmi_field {
 	DMI_NONE,
