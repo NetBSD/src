@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_dp_helper.h,v 1.2 2018/08/27 04:58:37 riastradh Exp $	*/
+/*	$NetBSD: drm_dp_helper.h,v 1.3 2018/08/27 06:44:53 riastradh Exp $	*/
 
 /*
  * Copyright © 2008 Keith Packard
@@ -28,6 +28,7 @@
 #include <linux/types.h>
 #include <linux/i2c.h>
 #include <linux/delay.h>
+#include <linux/mutex.h>
 
 /*
  * Unless otherwise noted, all values are from the DP 1.1a spec.  Note that
