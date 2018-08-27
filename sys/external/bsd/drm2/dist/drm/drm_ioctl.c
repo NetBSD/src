@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_ioctl.c,v 1.5 2018/08/27 04:58:19 riastradh Exp $	*/
+/*	$NetBSD: drm_ioctl.c,v 1.6 2018/08/27 06:50:58 riastradh Exp $	*/
 
 /*
  * Created: Fri Jan  8 09:01:26 1999 by faith@valinux.com
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_ioctl.c,v 1.5 2018/08/27 04:58:19 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_ioctl.c,v 1.6 2018/08/27 06:50:58 riastradh Exp $");
 
 #include <drm/drmP.h>
 #include <drm/drm_core.h>
@@ -44,6 +44,27 @@ __KERNEL_RCSID(0, "$NetBSD: drm_ioctl.c,v 1.5 2018/08/27 04:58:19 riastradh Exp 
 
 static int drm_version(struct drm_device *dev, void *data,
 		       struct drm_file *file_priv);
+
+#if IS_ENABLED(CONFIG_AGP)
+/* XXX Kludge for AGP.  */
+static drm_ioctl_t	drm_agp_acquire_hook_ioctl;
+static drm_ioctl_t	drm_agp_release_hook_ioctl;
+static drm_ioctl_t	drm_agp_enable_hook_ioctl;
+static drm_ioctl_t	drm_agp_info_hook_ioctl;
+static drm_ioctl_t	drm_agp_alloc_hook_ioctl;
+static drm_ioctl_t	drm_agp_free_hook_ioctl;
+static drm_ioctl_t	drm_agp_bind_hook_ioctl;
+static drm_ioctl_t	drm_agp_unbind_hook_ioctl;
+
+#define	drm_agp_acquire_ioctl	drm_agp_acquire_hook_ioctl
+#define	drm_agp_release_ioctl	drm_agp_release_hook_ioctl
+#define	drm_agp_enable_ioctl	drm_agp_enable_hook_ioctl
+#define	drm_agp_info_ioctl	drm_agp_info_hook_ioctl
+#define	drm_agp_alloc_ioctl	drm_agp_alloc_hook_ioctl
+#define	drm_agp_free_ioctl	drm_agp_free_hook_ioctl
+#define	drm_agp_bind_ioctl	drm_agp_bind_hook_ioctl
+#define	drm_agp_unbind_ioctl	drm_agp_unbind_hook_ioctl
+#endif
 
 /*
  * Get the bus id.
@@ -526,7 +547,11 @@ static int drm_version(struct drm_device *dev, void *data,
 int drm_ioctl_permit(u32 flags, struct drm_file *file_priv)
 {
 	/* ROOT_ONLY is only for CAP_SYS_ADMIN */
+#ifdef __NetBSD__
+	if (unlikely((flags & DRM_ROOT_ONLY) && !DRM_SUSER()))
+#else
 	if (unlikely((flags & DRM_ROOT_ONLY) && !capable(CAP_SYS_ADMIN)))
+#endif
 		return -EACCES;
 
 	/* AUTH is only for authenticated or render client */
@@ -689,6 +714,71 @@ static const struct drm_ioctl_desc drm_ioctls[] = {
  * Returns:
  * Zero on success, negative error code on failure.
  */
+#ifdef __NetBSD__
+#include <sys/file.h>
+int
+drm_ioctl(struct file *fp, unsigned long cmd, void *data)
+{
+	struct drm_file *const file = fp->f_data;
+	const unsigned int nr = DRM_IOCTL_NR(cmd);
+	int error;
+
+	switch (cmd) {
+	case FIONBIO:
+	case FIOASYNC:
+		return 0;
+	default:
+		break;
+	}
+
+	if (IOCGROUP(cmd) != DRM_IOCTL_BASE)
+		return EINVAL;
+
+	KASSERT(file != NULL);
+	KASSERT(file->minor != NULL);
+	KASSERT(file->minor->dev != NULL);
+	struct drm_device *const dev = file->minor->dev;
+	const struct drm_ioctl_desc *ioctl;
+
+	if (drm_device_is_unplugged(dev))
+		return ENXIO;
+
+	const bool is_driver_ioctl =
+	    (DRM_COMMAND_BASE <= nr) && (nr < DRM_COMMAND_END);
+
+	if (is_driver_ioctl) {
+		const unsigned int driver_nr = nr - DRM_COMMAND_BASE;
+		if (driver_nr >= dev->driver->num_ioctls)
+			return EINVAL;
+		ioctl = &dev->driver->ioctls[driver_nr];
+	} else if (nr < __arraycount(drm_ioctls)) {
+		ioctl = &drm_ioctls[nr];
+	} else {
+		ioctl = NULL;
+	}
+
+	if ((ioctl == NULL) || (ioctl->func == NULL))
+		return EINVAL;
+
+	/* XXX errno Linux->NetBSD */
+	error = -drm_ioctl_permit(ioctl->flags, file);
+	if (error)
+		return error;
+
+	if ((drm_core_check_feature(dev, DRIVER_MODESET) && is_driver_ioctl) ||
+	    ISSET(ioctl->flags, DRM_UNLOCKED)) {
+		/* XXX errno Linux->NetBSD */
+		error = -(*ioctl->func)(dev, data, file);
+	} else {
+		mutex_lock(&drm_global_mutex);
+		/* XXX errno Linux->NetBSD */
+		error = -(*ioctl->func)(dev, data, file);
+		mutex_unlock(&drm_global_mutex);
+	}
+
+	return error;
+}
+#else
 long drm_ioctl(struct file *filp,
 	      unsigned int cmd, unsigned long arg)
 {
@@ -799,6 +889,7 @@ long drm_ioctl(struct file *filp,
 		DRM_DEBUG("ret = %d\n", retcode);
 	return retcode;
 }
+#endif
 EXPORT_SYMBOL(drm_ioctl);
 
 /**
@@ -825,3 +916,92 @@ bool drm_ioctl_flags(unsigned int nr, unsigned int *flags)
 	return true;
 }
 EXPORT_SYMBOL(drm_ioctl_flags);
+
+/* XXX Kludge to allow agp to be implemented in another kernel module.  */
+#ifdef __NetBSD__
+
+#include <sys/atomic.h>
+
+static const struct drm_agp_hooks *volatile drm_current_agp_hooks;
+
+int
+drm_agp_register(const struct drm_agp_hooks *hooks)
+{
+
+	membar_producer();
+	if (atomic_cas_ptr(&drm_current_agp_hooks, NULL, __UNCONST(hooks))
+	    != NULL)
+		return EBUSY;
+
+	return 0;
+}
+
+void
+drm_agp_deregister(const struct drm_agp_hooks *hooks)
+{
+
+	if (atomic_cas_ptr(&drm_current_agp_hooks, __UNCONST(hooks), NULL)
+	    != hooks)
+		panic("%s: wrong hooks: %p != %p", __func__,
+		    hooks, drm_current_agp_hooks);
+}
+
+static void __dead
+drm_noagp_panic(struct drm_device *dev)
+{
+	if ((dev != NULL) &&
+	    (dev->control != NULL) &&
+	    (dev->control->kdev != NULL))
+		panic("%s: no agp loaded", device_xname(dev->control->kdev));
+	else
+		panic("drm_device %p: no agp loaded", dev);
+}
+
+int
+drm_agp_release_hook(struct drm_device *dev)
+{
+	const struct drm_agp_hooks *const hooks = drm_current_agp_hooks;
+
+	if (hooks == NULL)
+		drm_noagp_panic(dev);
+	membar_consumer();
+	return (*hooks->agph_release)(dev);
+}
+
+void
+drm_agp_clear_hook(struct drm_device *dev)
+{
+	const struct drm_agp_hooks *const hooks = drm_current_agp_hooks;
+
+	if (hooks == NULL)
+		drm_noagp_panic(dev);
+	membar_consumer();
+	(*hooks->agph_clear)(dev);
+}
+
+#if IS_ENABLED(CONFIG_AGP)
+
+#define	DEFINE_AGP_HOOK_IOCTL(NAME, HOOK)				      \
+static int								      \
+NAME(struct drm_device *dev, void *data, struct drm_file *file)		      \
+{									      \
+	const struct drm_agp_hooks *const hooks = drm_current_agp_hooks;      \
+									      \
+	if (hooks == NULL)						      \
+		return -ENODEV;						      \
+	membar_consumer();						      \
+	return (*hooks->HOOK)(dev, data, file);				      \
+}
+
+DEFINE_AGP_HOOK_IOCTL(drm_agp_acquire_hook_ioctl, agph_acquire_ioctl)
+DEFINE_AGP_HOOK_IOCTL(drm_agp_release_hook_ioctl, agph_release_ioctl)
+DEFINE_AGP_HOOK_IOCTL(drm_agp_enable_hook_ioctl, agph_enable_ioctl)
+DEFINE_AGP_HOOK_IOCTL(drm_agp_info_hook_ioctl, agph_info_ioctl)
+DEFINE_AGP_HOOK_IOCTL(drm_agp_alloc_hook_ioctl, agph_alloc_ioctl)
+DEFINE_AGP_HOOK_IOCTL(drm_agp_free_hook_ioctl, agph_free_ioctl)
+DEFINE_AGP_HOOK_IOCTL(drm_agp_bind_hook_ioctl, agph_bind_ioctl)
+DEFINE_AGP_HOOK_IOCTL(drm_agp_unbind_hook_ioctl, agph_unbind_ioctl)
+
+#endif
+
+#endif
