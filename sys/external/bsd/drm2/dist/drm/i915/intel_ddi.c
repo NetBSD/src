@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_ddi.c,v 1.6 2018/08/27 04:58:24 riastradh Exp $	*/
+/*	$NetBSD: intel_ddi.c,v 1.7 2018/08/27 07:26:08 riastradh Exp $	*/
 
 /*
  * Copyright © 2012 Intel Corporation
@@ -28,7 +28,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_ddi.c,v 1.6 2018/08/27 04:58:24 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_ddi.c,v 1.7 2018/08/27 07:26:08 riastradh Exp $");
+
+#include <linux/math64.h>
 
 #include "i915_drv.h"
 #include "intel_drv.h"
