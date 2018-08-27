@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_fops.c,v 1.10 2018/08/27 07:53:52 riastradh Exp $	*/
+/*	$NetBSD: drm_fops.c,v 1.11 2018/08/27 14:15:12 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_fops.c,v 1.10 2018/08/27 07:53:52 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_fops.c,v 1.11 2018/08/27 14:15:12 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/select.h>
@@ -214,6 +214,12 @@ drm_close_file(struct drm_file *file)
 	struct drm_minor *const minor = file->minor;
 	struct drm_device *const dev = minor->dev;
 
+	mutex_lock(&dev->struct_mutex);
+	list_del(&file->lhead);
+	if (file->magic)
+		idr_remove(&file->master->magic_map, file->magic);
+	mutex_unlock(&dev->struct_mutex);
+
 	if (dev->driver->preclose)
 		(*dev->driver->preclose)(dev, file);
 
@@ -228,12 +234,6 @@ drm_close_file(struct drm_file *file)
 		drm_gem_release(dev, file);
 	drm_legacy_ctxbitmap_flush(dev, file);
 	drm_close_file_master(file);
-
-	mutex_lock(&dev->struct_mutex);
-	list_del(&file->lhead);
-	if (file->magic)
-		idr_remove(&file->master->magic_map, file->magic);
-	mutex_unlock(&dev->struct_mutex);
 
 	if (dev->driver->postclose)
 		(*dev->driver->postclose)(dev, file);
