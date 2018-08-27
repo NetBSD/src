@@ -1,6 +1,6 @@
 #!/bin/sh
 
-#	$NetBSD: i915drmkms2netbsd,v 1.1 2018/08/27 05:36:15 riastradh Exp $
+#	$NetBSD: i915drmkms2netbsd,v 1.2 2018/08/27 07:55:17 riastradh Exp $
 #
 # $ /path/to/i915drmkms2netbsd > /path/to/files.i915drmkms.new
 #
@@ -15,6 +15,7 @@ i915drmkms_top=external/bsd/drm2/dist/drm/i915
 i915drmkms_flag=i915drmkms
 
 env CONFIG_ACPI=y \
+env CONFIG_DRM_FBDEV_EMULATION=y \
 env src=. \
 make -f Makefile -V '$(i915-y)' \
 | tr ' ' '\n' \
