@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_module.c,v 1.11 2015/04/13 22:24:34 pgoyette Exp $	*/
+/*	$NetBSD: drm_module.c,v 1.12 2018/08/27 15:31:27 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,12 +30,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_module.c,v 1.11 2015/04/13 22:24:34 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_module.c,v 1.12 2018/08/27 15:31:27 riastradh Exp $");
 
 #include <sys/types.h>
+#include <sys/condvar.h>
 #include <sys/conf.h>
 #include <sys/device.h>
 #include <sys/module.h>
+#include <sys/mutex.h>
 #ifndef _MODULE
 #include <sys/once.h>
 #endif
@@ -46,6 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: drm_module.c,v 1.11 2015/04/13 22:24:34 pgoyette Exp
 
 #include <drm/drmP.h>
 #include <drm/drm_encoder_slave.h>
+#include <drm/drm_internal.h>
 #include <drm/drm_sysctl.h>
 
 /*
@@ -56,6 +59,14 @@ MODULE(MODULE_CLASS_DRIVER, drmkms, "drmkms_linux");
 struct mutex	drm_global_mutex;
 
 struct drm_sysctl_def drm_def = DRM_SYSCTL_INIT();
+
+static struct {
+	kmutex_t		lock;
+	kcondvar_t		cv;
+	unsigned		refcnt;
+	int			(*hook)(struct drm_device *,
+				    struct drm_master *, struct drm_unique *);
+} set_unique_hook __cacheline_aligned;
 
 static int
 drm_init(void)
@@ -105,6 +116,57 @@ drm_fini(void)
 	linux_mutex_destroy(&drm_global_mutex);
 	idr_destroy(&drm_minors_idr);
 	spin_lock_destroy(&drm_minor_lock);
+}
+
+int
+drm_irq_by_busid(struct drm_device *dev, void *data, struct drm_file *file)
+{
+
+	return -ENODEV;
+}
+
+/* XXX Stupid kludge...  */
+
+void
+drm_pci_set_unique_hook(int (**hook)(struct drm_device *, struct drm_master *,
+	struct drm_unique *))
+{
+	int (*old)(struct drm_device *, struct drm_master *,
+	    struct drm_unique *);
+
+	mutex_enter(&set_unique_hook.lock);
+	while (set_unique_hook.refcnt)
+		cv_wait(&set_unique_hook.cv, &set_unique_hook.lock);
+	old = set_unique_hook.hook;
+	set_unique_hook.hook = *hook;
+	*hook = old;
+	mutex_exit(&set_unique_hook.lock);
+}
+
+int
+drm_pci_set_unique(struct drm_device *dev, struct drm_master *master,
+    struct drm_unique *unique)
+{
+	int ret;
+
+	mutex_enter(&set_unique_hook.lock);
+	while (set_unique_hook.refcnt == UINT_MAX)
+		cv_wait(&set_unique_hook.cv, &set_unique_hook.lock);
+	set_unique_hook.refcnt++;
+	mutex_exit(&set_unique_hook.lock);
+
+	if (set_unique_hook.hook)
+		ret = set_unique_hook.hook(dev, master, unique);
+	else
+		ret = -ENODEV;
+
+	mutex_enter(&set_unique_hook.lock);
+	if (set_unique_hook.refcnt-- == UINT_MAX ||
+	    set_unique_hook.refcnt == 0)
+		cv_broadcast(&set_unique_hook.cv);
+	mutex_exit(&set_unique_hook.lock);
+
+	return ret;
 }
 
 static int
