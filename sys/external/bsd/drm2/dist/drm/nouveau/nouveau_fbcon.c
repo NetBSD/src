@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_fbcon.c,v 1.3 2018/08/27 04:58:24 riastradh Exp $	*/
+/*	$NetBSD: nouveau_fbcon.c,v 1.4 2018/08/27 07:36:48 riastradh Exp $	*/
 
 /*
  * Copyright © 2007 David Airlie
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_fbcon.c,v 1.3 2018/08/27 04:58:24 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_fbcon.c,v 1.4 2018/08/27 07:36:48 riastradh Exp $");
 
 #include <linux/module.h>
 #include <linux/kernel.h>
@@ -61,7 +61,7 @@ __KERNEL_RCSID(0, "$NetBSD: nouveau_fbcon.c,v 1.3 2018/08/27 04:58:24 riastradh 
 #endif
 
 #ifdef __NetBSD__		/* XXX nouveau fbaccel */
-static const int nouveau_nofbaccel = 1;
+int nouveau_nofbaccel = 1;
 #else
 MODULE_PARM_DESC(nofbaccel, "Disable fbcon acceleration");
 int nouveau_nofbaccel = 0;
@@ -247,20 +247,24 @@ static struct fb_ops nouveau_fbcon_sw_ops = {
 void
 nouveau_fbcon_accel_save_disable(struct drm_device *dev)
 {
+#ifndef __NetBSD__		/* XXX nouveau fbaccel */
 	struct nouveau_drm *drm = nouveau_drm(dev);
 	if (drm->fbcon) {
 		drm->fbcon->saved_flags = drm->fbcon->helper.fbdev->flags;
 		drm->fbcon->helper.fbdev->flags |= FBINFO_HWACCEL_DISABLED;
 	}
+#endif
 }
 
 void
 nouveau_fbcon_accel_restore(struct drm_device *dev)
 {
+#ifndef __NetBSD__		/* XXX nouveau fbaccel */
 	struct nouveau_drm *drm = nouveau_drm(dev);
 	if (drm->fbcon) {
 		drm->fbcon->helper.fbdev->flags = drm->fbcon->saved_flags;
 	}
+#endif
 }
 
 static void
@@ -269,9 +273,11 @@ nouveau_fbcon_accel_fini(struct drm_device *dev)
 	struct nouveau_drm *drm = nouveau_drm(dev);
 	struct nouveau_fbdev *fbcon = drm->fbcon;
 	if (fbcon && drm->channel) {
+#ifndef __NetBSD__		/* XXX nouveau fbaccel */
 		console_lock();
 		fbcon->helper.fbdev->flags |= FBINFO_HWACCEL_DISABLED;
 		console_unlock();
+#endif
 		nouveau_channel_idle(drm->channel);
 		nvif_object_fini(&fbcon->twod);
 		nvif_object_fini(&fbcon->blit);
@@ -283,6 +289,7 @@ nouveau_fbcon_accel_fini(struct drm_device *dev)
 	}
 }
 
+#ifndef __NetBSD__		/* XXX nouveau fbaccel */
 static void
 nouveau_fbcon_accel_init(struct drm_device *dev)
 {
@@ -302,6 +309,7 @@ nouveau_fbcon_accel_init(struct drm_device *dev)
 	if (ret == 0)
 		info->fbops = &nouveau_fbcon_ops;
 }
+#endif
 
 static void nouveau_fbcon_gamma_set(struct drm_crtc *crtc, u16 red, u16 green,
 				    u16 blue, int regno)
@@ -567,13 +575,17 @@ nouveau_fbcon_set_suspend(struct drm_device *dev, int state)
 {
 	struct nouveau_drm *drm = nouveau_drm(dev);
 	if (drm->fbcon) {
+#ifndef __NetBSD__
 		console_lock();
 		if (state == FBINFO_STATE_RUNNING)
 			nouveau_fbcon_accel_restore(dev);
+#endif
 		drm_fb_helper_set_suspend(&drm->fbcon->helper, state);
+#ifndef __NetBSD__
 		if (state != FBINFO_STATE_RUNNING)
 			nouveau_fbcon_accel_save_disable(dev);
 		console_unlock();
+#endif
 	}
 }
 
@@ -622,8 +634,10 @@ nouveau_fbcon_init(struct drm_device *dev)
 	if (ret)
 		goto fini;
 
+#ifndef __NetBSD__
 	if (fbcon->helper.fbdev)
 		fbcon->helper.fbdev->pixmap.buf_align = 4;
+#endif
 	return 0;
 
 fini:
