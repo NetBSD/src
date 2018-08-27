@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_cmd_parser.c,v 1.15 2018/08/27 14:46:10 riastradh Exp $	*/
+/*	$NetBSD: i915_cmd_parser.c,v 1.16 2018/08/27 14:46:38 riastradh Exp $	*/
 
 /*
  * Copyright © 2013 Intel Corporation
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_cmd_parser.c,v 1.15 2018/08/27 14:46:10 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_cmd_parser.c,v 1.16 2018/08/27 14:46:38 riastradh Exp $");
 
 #include "i915_drv.h"
 
@@ -905,7 +905,7 @@ static u32 *copy_batch(struct drm_i915_gem_object *dest_obj,
 		       u32 batch_len)
 {
 	int needs_clflush = 0;
-	void *src_base, *src;
+	const void *src_base, *src;
 	void *dst = NULL;
 	int ret;
 
@@ -938,7 +938,7 @@ static u32 *copy_batch(struct drm_i915_gem_object *dest_obj,
 	}
 	/* uvm_map consumes caller's reference on success.  */
 	uao_reference(src_obj->base.filp);
-	src_base = (void *)srcva;
+	src_base = (const void *)srcva;
 #else
 	src_base = vmap_batch(src_obj, batch_start_offset, batch_len);
 	if (!src_base) {
@@ -979,12 +979,12 @@ static u32 *copy_batch(struct drm_i915_gem_object *dest_obj,
 	}
 #endif
 
-	src = (char *)src_base + offset_in_page(batch_start_offset);
+	src = (const char *)src_base + offset_in_page(batch_start_offset);
 	if (needs_clflush)
 		drm_clflush_virt_range(src, batch_len);
 
 #ifdef __NetBSD__
-	ret = -kcopy(dst, src, batch_len);
+	ret = -kcopy(src, dst, batch_len);
 	if (ret) {
 		uvm_unmap(kernel_map, dstva, dstva + dstlen);
 		goto unmap_src;
