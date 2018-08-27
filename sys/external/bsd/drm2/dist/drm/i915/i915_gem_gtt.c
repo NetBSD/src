@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem_gtt.c,v 1.9 2018/08/27 07:07:23 riastradh Exp $	*/
+/*	$NetBSD: i915_gem_gtt.c,v 1.10 2018/08/27 07:08:07 riastradh Exp $	*/
 
 /*
  * Copyright © 2010 Daniel Vetter
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gem_gtt.c,v 1.9 2018/08/27 07:07:23 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gem_gtt.c,v 1.10 2018/08/27 07:08:07 riastradh Exp $");
 
 #include <linux/err.h>
 #include <linux/seq_file.h>
@@ -328,8 +328,10 @@ static int __setup_page_dma(struct drm_device *dev,
 
 	error = bus_dmamem_alloc(dev->dmat, PAGE_SIZE, PAGE_SIZE, PAGE_SIZE,
 	    &p->seg, nseg, &nseg, BUS_DMA_WAITOK);
-	if (error)
-fail0:		return -error;	/* XXX errno NetBSD->Linux */
+	if (error) {
+fail0:		p->map = NULL;
+		return -error;	/* XXX errno NetBSD->Linux */
+	}
 	KASSERT(nseg == 1);
 	error = bus_dmamap_create(dev->dmat, PAGE_SIZE, 1, PAGE_SIZE,
 	    PAGE_SIZE, BUS_DMA_WAITOK, &p->map);
@@ -375,8 +377,9 @@ static void cleanup_page_dma(struct drm_device *dev, struct i915_page_dma *p)
 		return;
 
 	bus_dmamap_unload(dev->dmat, p->map);
-	bus_dmamap_destroy(dev->dmat, p->dmap);
+	bus_dmamap_destroy(dev->dmat, p->map);
 	bus_dmamem_free(dev->dmat, &p->seg, 1);
+	p->map = NULL;
 #else
 	if (WARN_ON(!p->page))
 		return;
@@ -390,7 +393,8 @@ static void cleanup_page_dma(struct drm_device *dev, struct i915_page_dma *p)
 static void *kmap_page_dma(struct i915_page_dma *p)
 {
 #ifdef __NetBSD__
-	return kmap_atomic(PHYS_TO_VM_PAGE(p->seg.ds_addr));
+	return kmap_atomic(container_of(PHYS_TO_VM_PAGE(p->seg.ds_addr),
+		struct page, p_vmp));
 #else
 	return kmap_atomic(p->page);
 #endif
@@ -455,7 +459,9 @@ static struct i915_page_scratch *alloc_scratch_page(struct drm_device *dev)
 		return ERR_PTR(ret);
 	}
 
+#ifndef __NetBSD__		/* XXX ??? */
 	set_pages_uc(px_page(sp), 1);
+#endif
 
 	return sp;
 }
@@ -463,7 +469,9 @@ static struct i915_page_scratch *alloc_scratch_page(struct drm_device *dev)
 static void free_scratch_page(struct drm_device *dev,
 			      struct i915_page_scratch *sp)
 {
+#ifndef __NetBSD__		/* XXX ??? */
 	set_pages_wb(px_page(sp), 1);
+#endif
 
 	cleanup_px(dev, sp);
 	kfree(sp);
