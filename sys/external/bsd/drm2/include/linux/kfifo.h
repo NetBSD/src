@@ -1,4 +1,4 @@
-/*	$NetBSD: kfifo.h,v 1.2 2018/08/27 14:00:26 riastradh Exp $	*/
+/*	$NetBSD: kfifo.h,v 1.3 2018/08/27 14:41:53 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@ _kfifo_alloc(struct kfifo_meta *meta, void *bufp, size_t nbytes, gfp_t gfp)
 	/* Type pun!  Hope void * == struct whatever *.  */
 	memcpy(bufp, &buf, sizeof(void *));
 
-	mutex_init(&meta->kfm_lock, MUTEX_DEFAULT, IPL_NONE);
+	mutex_init(&meta->kfm_lock, MUTEX_DEFAULT, IPL_VM);
 	meta->kfm_head = 0;
 	meta->kfm_tail = 0;
 	meta->kfm_nbytes = nbytes;
@@ -120,7 +120,7 @@ _kfifo_out_peek(struct kfifo_meta *meta, void *buf, void *ptr, size_t size)
 	char *dst = ptr;
 	size_t copied = 0;
 
-	mutex_enter(&meta->kfm_lock);
+	mutex_spin_enter(&meta->kfm_lock);
 	const size_t head = meta->kfm_head;
 	const size_t tail = meta->kfm_tail;
 	const size_t nbytes = meta->kfm_nbytes;
@@ -140,7 +140,7 @@ _kfifo_out_peek(struct kfifo_meta *meta, void *buf, void *ptr, size_t size)
 			copied = size;
 		}
 	}
-	mutex_exit(&meta->kfm_lock);
+	mutex_spin_exit(&meta->kfm_lock);
 
 	return copied;
 }
@@ -155,7 +155,7 @@ _kfifo_out(struct kfifo_meta *meta, const void *buf, void *ptr, size_t size)
 	char *dst = ptr;
 	size_t copied = 0;
 
-	mutex_enter(&meta->kfm_lock);
+	mutex_spin_enter(&meta->kfm_lock);
 	const size_t head = meta->kfm_head;
 	const size_t tail = meta->kfm_tail;
 	const size_t nbytes = meta->kfm_nbytes;
@@ -178,7 +178,7 @@ _kfifo_out(struct kfifo_meta *meta, const void *buf, void *ptr, size_t size)
 			copied = size;
 		}
 	}
-	mutex_exit(&meta->kfm_lock);
+	mutex_spin_exit(&meta->kfm_lock);
 
 	return copied;
 }
@@ -193,7 +193,7 @@ _kfifo_in(struct kfifo_meta *meta, void *buf, const void *ptr, size_t size)
 	char *dst = buf;
 	size_t copied = 0;
 
-	mutex_enter(&meta->kfm_lock);
+	mutex_spin_enter(&meta->kfm_lock);
 	const size_t head = meta->kfm_head;
 	const size_t tail = meta->kfm_tail;
 	const size_t nbytes = meta->kfm_nbytes;
@@ -215,7 +215,7 @@ _kfifo_in(struct kfifo_meta *meta, void *buf, const void *ptr, size_t size)
 			copied = size;
 		}
 	}
-	mutex_exit(&meta->kfm_lock);
+	mutex_spin_exit(&meta->kfm_lock);
 
 	return copied;
 }
