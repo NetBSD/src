@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_nouveau.c,v 1.10 2017/05/30 22:00:25 jmcneill Exp $ */
+/* $NetBSD: tegra_nouveau.c,v 1.11 2018/08/27 15:31:51 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_nouveau.c,v 1.10 2017/05/30 22:00:25 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_nouveau.c,v 1.11 2018/08/27 15:31:51 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -45,11 +45,15 @@ __KERNEL_RCSID(0, "$NetBSD: tegra_nouveau.c,v 1.10 2017/05/30 22:00:25 jmcneill 
 #include <dev/fdt/fdtvar.h>
 
 #include <drm/drmP.h>
-#include <engine/device.h>
+#include <core/tegra.h>
+#include <nvkm/engine/device/priv.h>
+#include <nvkm/subdev/mc/priv.h>
 
 extern char *nouveau_config;
 extern char *nouveau_debug;
-extern struct drm_driver *const nouveau_drm_driver;
+extern struct drm_driver *const nouveau_drm_driver_stub;     /* XXX */
+extern struct drm_driver *const nouveau_drm_driver_platform; /* XXX */
+static bool nouveau_driver_initialized = false;		     /* XXX */
 
 static int	tegra_nouveau_match(device_t, cfdata_t, void *);
 static void	tegra_nouveau_attach(device_t, device_t, void *);
@@ -57,48 +61,67 @@ static void	tegra_nouveau_attach(device_t, device_t, void *);
 struct tegra_nouveau_softc {
 	device_t		sc_dev;
 	bus_space_tag_t		sc_bst;
+	struct {
+		bus_addr_t		addr;
+		bus_size_t		size;
+	}			sc_resources[2];
 	bus_dma_tag_t		sc_dmat;
 	int			sc_phandle;
+	void			*sc_ih;
 	struct clk		*sc_clk_gpu;
 	struct clk		*sc_clk_pwr;
 	struct fdtbus_reset	*sc_rst_gpu;
 	struct drm_device	*sc_drm_dev;
-	struct platform_device	sc_platform_dev;
-	struct nouveau_device	*sc_nv_dev;
+	struct nvkm_device	sc_nv_dev;
 };
 
 static void	tegra_nouveau_init(device_t);
 
-static int	tegra_nouveau_get_irq(struct drm_device *);
-static const char *tegra_nouveau_get_name(struct drm_device *);
 static int	tegra_nouveau_set_busid(struct drm_device *,
 					struct drm_master *);
-static int	tegra_nouveau_irq_install(struct drm_device *,
-					  irqreturn_t (*)(void *),
-					  int, const char *, void *,
-					  struct drm_bus_irq_cookie **);
-static void	tegra_nouveau_irq_uninstall(struct drm_device *,
-					    struct drm_bus_irq_cookie *);
 
-static struct drm_bus drm_tegra_nouveau_bus = {
-	.bus_type = DRIVER_BUS_PLATFORM,
-	.get_irq = tegra_nouveau_get_irq,
-	.get_name = tegra_nouveau_get_name,
-	.set_busid = tegra_nouveau_set_busid,
-	.irq_install = tegra_nouveau_irq_install,
-	.irq_uninstall = tegra_nouveau_irq_uninstall
-};
+static int	tegra_nouveau_intr(void *);
+
+static int	nvkm_device_tegra_init(struct nvkm_device *);
+static void	nvkm_device_tegra_fini(struct nvkm_device *, bool);
+
+static bus_space_tag_t
+		nvkm_device_tegra_resource_tag(struct nvkm_device *, unsigned);
+static bus_addr_t
+		nvkm_device_tegra_resource_addr(struct nvkm_device *, unsigned);
+static bus_size_t
+		nvkm_device_tegra_resource_size(struct nvkm_device *, unsigned);
 
 CFATTACH_DECL_NEW(tegra_nouveau, sizeof(struct tegra_nouveau_softc),
 	tegra_nouveau_match, tegra_nouveau_attach, NULL, NULL);
 
+static const struct nvkm_device_func nvkm_device_tegra_func = {
+	.tegra = NULL,		/* XXX */
+	.dtor = NULL,
+	.init = nvkm_device_tegra_init,
+	.fini = nvkm_device_tegra_fini,
+	.resource_tag = nvkm_device_tegra_resource_tag,
+	.resource_addr = nvkm_device_tegra_resource_addr,
+	.resource_size = nvkm_device_tegra_resource_size,
+	.cpu_coherent = false,
+};
+
+static const struct nvkm_device_tegra_func gk20a_platform_data = {
+	.iommu_bit = 34,
+};
+
+static const struct of_compat_data compat_data[] = {
+	{ "nvidia,gk20a", (uintptr_t)&gk20a_platform_data },
+	{ "nvidia,gm20b", (uintptr_t)&gk20a_platform_data },
+	{ NULL, 0 },
+};
+
 static int
 tegra_nouveau_match(device_t parent, cfdata_t cf, void *aux)
 {
-	const char * const compatible[] = { "nvidia,gk20a", NULL };
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compatible(faa->faa_phandle, compatible);
+	return of_match_compat_data(faa->faa_phandle, compat_data);
 }
 
 static void
@@ -107,7 +130,20 @@ tegra_nouveau_attach(device_t parent, device_t self, void *aux)
 	struct tegra_nouveau_softc * const sc = device_private(self);
 	struct fdt_attach_args * const faa = aux;
 	prop_dictionary_t prop = device_properties(self);
+	const struct of_compat_data *data =
+	    of_search_compatible(faa->faa_phandle, compat_data);
+	const struct nvkm_device_tegra_func *tegra_func =
+	    (const void *)data->data;
 	int error;
+
+	KASSERT(tegra_func != NULL);
+
+	if (!nouveau_driver_initialized) {
+		*nouveau_drm_driver_platform = *nouveau_drm_driver_stub;
+		nouveau_drm_driver_platform->set_busid =
+		    tegra_nouveau_set_busid;
+		nouveau_driver_initialized = true;
+	}
 
 	sc->sc_dev = self;
 	sc->sc_bst = faa->faa_bst;
@@ -158,9 +194,9 @@ tegra_nouveau_attach(device_t parent, device_t self, void *aux)
 	tegra_pmc_remove_clamping(PMC_PARTID_TD);
 	fdtbus_reset_deassert(sc->sc_rst_gpu);
 
-	error = -nouveau_device_create(&sc->sc_platform_dev,
-	    NOUVEAU_BUS_PLATFORM, -1, device_xname(self),
-	    nouveau_config, nouveau_debug, &sc->sc_nv_dev);
+	error = -nvkm_device_ctor(&nvkm_device_tegra_func, NULL, self,
+	    NVKM_DEVICE_TEGRA, -1, device_xname(self),
+	    nouveau_config, nouveau_debug, true, true, ~0ULL, &sc->sc_nv_dev);
 	if (error) {
 		aprint_error_dev(self, "couldn't create nouveau device: %d\n",
 		    error);
@@ -174,7 +210,7 @@ static void
 tegra_nouveau_init(device_t self)
 {
 	struct tegra_nouveau_softc * const sc = device_private(self);
-	struct drm_driver * const driver = nouveau_drm_driver;
+	struct drm_driver * const driver = nouveau_drm_driver_platform;
 	struct drm_device *dev;
 	bus_addr_t addr[2], size[2];
 	int error;
@@ -185,9 +221,6 @@ tegra_nouveau_init(device_t self)
 		return;
 	}
 
-	driver->kdriver.platform_device = &sc->sc_platform_dev;
-	driver->bus = &drm_tegra_nouveau_bus;
-
 	dev = drm_dev_alloc(driver, sc->sc_dev);
 	if (dev == NULL) {
 		aprint_error_dev(self, "couldn't allocate DRM device\n");
@@ -197,18 +230,11 @@ tegra_nouveau_init(device_t self)
 	dev->bus_dmat = sc->sc_dmat;
 	dev->dmat = dev->bus_dmat;
 	dev->dmat_subregion_p = false;
-	dev->platformdev = &sc->sc_platform_dev;
 
-	dev->platformdev->id = -1;
-	dev->platformdev->pd_dev = sc->sc_dev;
-	dev->platformdev->dmat = sc->sc_dmat;
-	dev->platformdev->nresource = 2;
-	dev->platformdev->resource[0].tag = sc->sc_bst;
-	dev->platformdev->resource[0].start = addr[0];
-	dev->platformdev->resource[0].len = size[0];
-	dev->platformdev->resource[1].tag = sc->sc_bst;
-	dev->platformdev->resource[1].start = addr[1];
-	dev->platformdev->resource[1].len = size[1];
+	sc->sc_resources[0].addr = addr[0];
+	sc->sc_resources[0].size = size[0];
+	sc->sc_resources[1].addr = addr[1];
+	sc->sc_resources[1].size = size[1];
 
 	error = -drm_dev_register(dev, 0);
 	if (error) {
@@ -224,24 +250,9 @@ tegra_nouveau_init(device_t self)
 }
 
 static int
-tegra_nouveau_get_irq(struct drm_device *dev)
-{
-	return TEGRA_INTR_GPU;
-}
-
-static const char *tegra_nouveau_get_name(struct drm_device *dev)
-{
-	return "tegra_nouveau";
-}
-
-static int
 tegra_nouveau_set_busid(struct drm_device *dev, struct drm_master *master)
 {
-	int id;
-
-	id = dev->platformdev->id;
-	if (id < 0)
-		id = 0;
+	int id = 0;		/* XXX device_unit(self)? */
 
 	master->unique = kmem_asprintf("platform:tegra_nouveau:%02d", id);
 	if (master->unique == NULL)
@@ -252,71 +263,81 @@ tegra_nouveau_set_busid(struct drm_device *dev, struct drm_master *master)
 }
 
 static int
-tegra_nouveau_irq_install(struct drm_device *dev,
-    irqreturn_t (*handler)(void *), int flags, const char *name, void *arg,
-    struct drm_bus_irq_cookie **cookiep)
+tegra_nouveau_intr(void *cookie)
 {
-	struct tegra_nouveau_softc * const sc = device_private(dev->dev);
+	struct tegra_nouveau_softc *sc = cookie;
+	struct nvkm_mc *mc = sc->sc_nv_dev.mc;
+	bool handled = false;
+
+	if (__predict_true(mc)) {
+		nvkm_mc_intr_unarm(mc);
+		nvkm_mc_intr(mc, &handled);
+		nvkm_mc_intr_rearm(mc);
+	}
+
+	return handled;
+}
+
+static int
+nvkm_device_tegra_init(struct nvkm_device *nvdev)
+{
+	struct tegra_nouveau_softc *sc =
+	    container_of(nvdev, struct tegra_nouveau_softc, sc_nv_dev);
+	device_t self = sc->sc_dev;
 	char intrstr[128];
-	char *inames, *p;
-	u_int index;
-	void *ih;
-	int len, resid;
 
-	len = OF_getproplen(sc->sc_phandle, "interrupt-names");
-	if (len <= 0) {
-		aprint_error_dev(dev->dev, "no interrupt-names property\n");
+	if (!fdtbus_intr_str(sc->sc_phandle, 0, intrstr, sizeof(intrstr))) {
+		aprint_error_dev(self, "failed to decode interrupt\n");
 		return -EIO;
 	}
 
-	inames = kmem_alloc(len, KM_SLEEP);
-	if (OF_getprop(sc->sc_phandle, "interrupt-names", inames, len) != len) {
-		aprint_error_dev(dev->dev, "failed to get interrupt-names\n");
-		kmem_free(inames, len);
+	sc->sc_ih = fdtbus_intr_establish(sc->sc_phandle, 0, IPL_VM,
+	    FDT_INTR_MPSAFE, tegra_nouveau_intr, sc);
+	if (sc->sc_ih == NULL) {
+		aprint_error_dev(self, "couldn't establish interrupt on %s\n",
+		    intrstr);
 		return -EIO;
 	}
-	p = inames;
-	resid = len;
-	index = 0;
-	while (resid > 0) {
-		if (strcmp(name, p) == 0)
-			break;
-		const int slen = strlen(p) + 1;
-		p += slen;
-		len -= slen;
-		++index;
-	}
-	kmem_free(inames, len);
-	if (len == 0) {
-		aprint_error_dev(dev->dev, "unknown interrupt name '%s'\n",
-		    name);
-		return -EINVAL;
-	}
 
-	if (!fdtbus_intr_str(sc->sc_phandle, index, intrstr, sizeof(intrstr))) {
-		aprint_error_dev(dev->dev, "failed to decode interrupt\n");
-		return -ENXIO;
-	}
-
-	ih = fdtbus_intr_establish(sc->sc_phandle, index, IPL_DRM,
-	    FDT_INTR_MPSAFE, handler, arg);
-	if (ih == NULL) {
-		aprint_error_dev(dev->dev,
-		    "failed to establish interrupt on %s\n", intrstr);
-		return -ENOENT;
-	}
-
-	aprint_normal_dev(dev->dev, "interrupting on %s\n", intrstr);
-
-	*cookiep = (struct drm_bus_irq_cookie *)ih;
+	aprint_normal_dev(self, "interrupting on %s\n", intrstr);
 	return 0;
 }
 
 static void
-tegra_nouveau_irq_uninstall(struct drm_device *dev,
-    struct drm_bus_irq_cookie *cookie)
+nvkm_device_tegra_fini(struct nvkm_device *nvdev, bool suspend)
 {
-	struct tegra_nouveau_softc * const sc = device_private(dev->dev);
+	struct tegra_nouveau_softc *sc =
+	    container_of(nvdev, struct tegra_nouveau_softc, sc_nv_dev);
 
-	fdtbus_intr_disestablish(sc->sc_phandle, cookie);
+	fdtbus_intr_disestablish(sc->sc_phandle, sc->sc_ih);
+}
+
+static bus_space_tag_t
+nvkm_device_tegra_resource_tag(struct nvkm_device *dev, unsigned bar)
+{
+	struct tegra_nouveau_softc *sc =
+	    container_of(dev, struct tegra_nouveau_softc, sc_nv_dev);
+
+	KASSERT(bar < 2);
+	return sc->sc_bst;
+}
+
+static bus_addr_t
+nvkm_device_tegra_resource_addr(struct nvkm_device *dev, unsigned bar)
+{
+	struct tegra_nouveau_softc *sc =
+	    container_of(dev, struct tegra_nouveau_softc, sc_nv_dev);
+
+	KASSERT(bar < 2);
+	return sc->sc_resources[bar].addr;
+}
+
+static bus_size_t
+nvkm_device_tegra_resource_size(struct nvkm_device *dev, unsigned bar)
+{
+	struct tegra_nouveau_softc *sc =
+	    container_of(dev, struct tegra_nouveau_softc, sc_nv_dev);
+
+	KASSERT(bar < 2);
+	return sc->sc_resources[bar].size;
 }
