@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_drv.h,v 1.24 2018/08/27 14:47:02 riastradh Exp $	*/
+/*	$NetBSD: i915_drv.h,v 1.25 2018/08/27 14:49:22 riastradh Exp $	*/
 
 /* i915_drv.h -- Private header for the I915 driver -*- linux-c -*-
  */
@@ -2718,6 +2718,7 @@ extern int i915_suspend_switcheroo(struct drm_device *dev, pm_message_t state);
 extern int i915_resume_switcheroo(struct drm_device *dev);
 
 extern int i915_drm_suspend(struct drm_device *dev);
+extern int i915_drm_suspend_late(struct drm_device *dev, bool hibernation);
 extern int i915_drm_resume_early(struct drm_device *dev);
 extern int i915_drm_resume(struct drm_device *dev);
 
