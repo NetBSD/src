@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_work.c,v 1.15 2018/08/27 14:58:24 riastradh Exp $	*/
+/*	$NetBSD: linux_work.c,v 1.16 2018/08/27 14:58:57 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_work.c,v 1.15 2018/08/27 14:58:24 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_work.c,v 1.16 2018/08/27 14:58:57 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/atomic.h>
@@ -592,6 +592,7 @@ cancel_delayed_work(struct delayed_work *dw)
 				dw->dw_state = DELAYED_WORK_IDLE;
 			}
 			cancelled_p = true;
+			break;
 		default:
 			panic("invalid delayed work state: %d",
 			    dw->dw_state);
