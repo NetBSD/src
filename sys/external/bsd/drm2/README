@@ -1,0 +1,10 @@
+Linux DRM/KMS graphics driver subsystem.
+
+To import a new version, follow the instructions at the top of
+prepare-import.sh.  TODO(riastradh): Elaborate.
+
+prepare-import.sh       script to add RCS tags and stuff
+drm/
+  drm2netbsd            script to generate files.drmkms draft
+nouveau/
+  nouveau2netbsd        script to uniquify nouveau files and emit files.nouveau
