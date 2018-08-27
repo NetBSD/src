@@ -1,4 +1,4 @@
-/*	$NetBSD: rcupdate.h,v 1.3 2018/08/27 07:31:06 riastradh Exp $	*/
+/*	$NetBSD: rcupdate.h,v 1.4 2018/08/27 07:34:23 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -32,6 +32,52 @@
 #ifndef _LINUX_RCUPDATE_H_
 #define _LINUX_RCUPDATE_H_
 
+#include <sys/atomic.h>
+#include <sys/null.h>
+#include <sys/xcall.h>
+
 #define	__rcu
+
+#define	rcu_assign_pointer(P, V) do {					      \
+	membar_producer();						      \
+	(P) = (V);							      \
+} while (0)
+
+
+#define	rcu_dereference(P)	rcu_dereference_protected((P), 1)
+
+#define	rcu_dereference_protected(P, C) ({				      \
+	WARN_ON(!(C));							      \
+	typeof(*(P)) *__rcu_dereference_protected_tmp = (P);		      \
+	membar_datadep_consumer();					      \
+	__rcu_dereference_protected_tmp;				      \
+})
+
+static inline void
+rcu_read_lock(void)
+{
+
+	kpreempt_disable();
+	__insn_barrier();
+}
+
+static inline void
+rcu_read_unlock(void)
+{
+
+	__insn_barrier();
+	kpreempt_enable();
+}
+
+static inline void
+synchronize_rcu_xc(void *a, void *b)
+{
+}
+
+static inline void
+synchronize_rcu(void)
+{
+	xc_wait(xc_broadcast(0, &synchronize_rcu_xc, NULL, NULL));
+}
 
 #endif  /* _LINUX_RCUPDATE_H_ */
