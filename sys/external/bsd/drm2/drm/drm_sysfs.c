@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_sysfs.c,v 1.3 2014/07/16 20:56:25 riastradh Exp $	*/
+/*	$NetBSD: drm_sysfs.c,v 1.4 2018/08/27 07:00:09 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,9 +30,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_sysfs.c,v 1.3 2014/07/16 20:56:25 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_sysfs.c,v 1.4 2018/08/27 07:00:09 riastradh Exp $");
 
 #include <drm/drmP.h>
+#include <drm/drm_internal.h>
 
 int
 drm_sysfs_connector_add(struct drm_connector *connector __unused)
@@ -42,17 +43,6 @@ drm_sysfs_connector_add(struct drm_connector *connector __unused)
 
 void
 drm_sysfs_connector_remove(struct drm_connector *connector __unused)
-{
-}
-
-int
-drm_sysfs_device_add(struct drm_minor *minor __unused)
-{
-	return 0;
-}
-
-void
-drm_sysfs_device_remove(struct drm_minor *minor __unused)
 {
 }
 
