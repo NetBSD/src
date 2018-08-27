@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvif.c,v 1.3 2018/08/27 07:35:56 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvif.c,v 1.4 2018/08/27 14:47:53 riastradh Exp $	*/
 
 /*
  * Copyright 2014 Red Hat Inc.
@@ -29,7 +29,7 @@
  ******************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvif.c,v 1.3 2018/08/27 07:35:56 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvif.c,v 1.4 2018/08/27 14:47:53 riastradh Exp $");
 
 #include <core/client.h>
 #include <core/notify.h>
@@ -50,7 +50,24 @@ static int
 nvkm_client_map(void *priv, bus_space_tag_t tag, u64 busaddr, u32 size,
     bus_space_handle_t *handlep, void __iomem **ptrp)
 {
+	struct nvkm_client *client = nvxx_client(priv);
 	int ret;
+
+	if (tag == client->mmiot &&
+	    client->mmioaddr <= busaddr &&
+	    busaddr - client->mmioaddr <= client->mmiosz) {
+		const bus_size_t offset = busaddr - client->mmioaddr;
+		if (size > client->mmiosz - offset) {
+			DRM_ERROR("Invalid register access\n");
+			return -EFAULT;
+		}
+		ret = -bus_space_subregion(client->mmiot, client->mmioh,
+		    offset, size, handlep);
+		if (ret)
+			return ret;
+		*ptrp = bus_space_vaddr(tag, *handlep);
+		return 0;
+	}
 
 	ret = -bus_space_map(tag, busaddr, size, BUS_SPACE_MAP_LINEAR,
 	    handlep);
@@ -62,8 +79,22 @@ nvkm_client_map(void *priv, bus_space_tag_t tag, u64 busaddr, u32 size,
 
 static void
 nvkm_client_unmap(void *priv, bus_space_tag_t tag, bus_space_handle_t handle,
-    u32 size)
+    bus_addr_t busaddr, void __iomem *ptr, u32 size)
 {
+	struct nvkm_client *client = nvxx_client(priv);
+
+	KASSERTMSG(ptr == bus_space_vaddr(tag, handle),
+	    "nvkm_client ptr %p != %p [bus_space_vaddr(%p, %"PRIxVADDR")]",
+	    ptr, bus_space_vaddr(tag, handle), tag, handle);
+
+	if (tag == client->mmiot &&
+	    client->mmioaddr <= busaddr &&
+	    busaddr - client->mmioaddr <= client->mmiosz) {
+		const bus_size_t offset = busaddr - client->mmioaddr;
+		KASSERT(size <= client->mmiosz - offset);
+		/* Nothing to do to release a subregion.  */
+		return;
+	}
 
 	bus_space_unmap(tag, handle, size);
 }
