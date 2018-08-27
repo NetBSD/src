@@ -1,4 +1,4 @@
-#	$NetBSD: files.drmkms,v 1.17 2018/08/27 06:25:48 riastradh Exp $
+#	$NetBSD: files.drmkms,v 1.18 2018/08/27 06:25:59 riastradh Exp $
 
 include "external/bsd/drm2/linux/files.drmkms_linux"
 
@@ -48,7 +48,7 @@ file	external/bsd/drm2/dist/drm/drm_atomic_helper.c	drmkms
 file	external/bsd/drm2/dist/drm/drm_auth.c	drmkms
 file	external/bsd/drm2/dist/drm/drm_bridge.c	drmkms
 file	external/bsd/drm2/dist/drm/drm_bufs.c	drmkms
-file	external/bsd/drm2/dist/drm/drm_cache.c	drmkms
+file	external/bsd/drm2/drm/drm_cache.c	drmkms
 file	external/bsd/drm2/dist/drm/drm_context.c	drmkms
 file	external/bsd/drm2/dist/drm/drm_crtc.c	drmkms
 file	external/bsd/drm2/dist/drm/drm_crtc_helper.c	drmkms
@@ -79,7 +79,7 @@ file	external/bsd/drm2/dist/drm/drm_plane_helper.c	drmkms
 file	external/bsd/drm2/dist/drm/drm_probe_helper.c	drmkms
 file	external/bsd/drm2/dist/drm/drm_rect.c	drmkms
 file	external/bsd/drm2/dist/drm/drm_scatter.c	drmkms
-file	external/bsd/drm2/dist/drm/drm_sysfs.c	drmkms
+file	external/bsd/drm2/drm/drm_sysfs.c	drmkms
 file	external/bsd/drm2/dist/drm/drm_trace_points.c	drmkms
 file	external/bsd/drm2/dist/drm/drm_vm.c	drmkms
 file	external/bsd/drm2/dist/drm/drm_vma_manager.c	drmkms
