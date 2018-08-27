@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic.h,v 1.16 2018/08/27 15:10:41 riastradh Exp $	*/
+/*	$NetBSD: atomic.h,v 1.17 2018/08/27 15:10:52 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -251,14 +251,14 @@ atomic64_set(struct atomic64 *a, uint64_t v)
 }
 
 static inline void
-atomic64_add(long long d, struct atomic64 *a)
+atomic64_add(int64_t d, struct atomic64 *a)
 {
 	/* no membar */
 	atomic_add_64(&a->a_v, d);
 }
 
 static inline void
-atomic64_sub(long long d, struct atomic64 *a)
+atomic64_sub(int64_t d, struct atomic64 *a)
 {
 	/* no membar */
 	atomic_add_64(&a->a_v, -d);
@@ -304,8 +304,8 @@ atomic64_cmpxchg(struct atomic64 *atomic, uint64_t expect, uint64_t new)
 
 uint64_t	atomic64_read(const struct atomic64 *);
 void		atomic64_set(struct atomic64 *, uint64_t);
-void		atomic64_add(long long, struct atomic64 *);
-void		atomic64_sub(long long, struct atomic64 *);
+void		atomic64_add(int64_t, struct atomic64 *);
+void		atomic64_sub(int64_t, struct atomic64 *);
 uint64_t	atomic64_xchg(struct atomic64 *, uint64_t);
 uint64_t	atomic64_cmpxchg(struct atomic64 *, uint64_t, uint64_t);
 
