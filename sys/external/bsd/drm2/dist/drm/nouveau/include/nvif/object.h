@@ -1,4 +1,4 @@
-/*	$NetBSD: object.h,v 1.6 2018/08/27 14:47:29 riastradh Exp $	*/
+/*	$NetBSD: object.h,v 1.7 2018/08/27 14:47:53 riastradh Exp $	*/
 
 #ifndef __NVIF_OBJECT_H__
 #define __NVIF_OBJECT_H__
@@ -25,6 +25,7 @@ struct nvif_object {
 #ifdef __NetBSD__
 		bus_space_tag_t tag;
 		bus_space_handle_t handle;
+		bus_addr_t addr;
 #endif
 		void __iomem *ptr;
 		u32 size;

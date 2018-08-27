@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_drm.c,v 1.13 2018/08/27 14:19:08 riastradh Exp $	*/
+/*	$NetBSD: nouveau_drm.c,v 1.14 2018/08/27 14:47:53 riastradh Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_drm.c,v 1.13 2018/08/27 14:19:08 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_drm.c,v 1.14 2018/08/27 14:47:53 riastradh Exp $");
 
 #include <linux/console.h>
 #include <linux/delay.h>
@@ -466,6 +466,18 @@ nouveau_drm_load(struct drm_device *dev, unsigned long flags)
 
 		nvxx_client(&drm->client.base)->vm = drm->client.vm;
 	}
+
+#ifdef __NetBSD__
+    {
+	/* XXX Kludge to make register subregion mapping work.  */
+	struct nvkm_client *client = nvxx_client(&drm->client.base);
+	struct nvkm_device *device = nvxx_device(&drm->device);
+	client->mmiot = device->mmiot;
+	client->mmioh = device->mmioh;
+	client->mmioaddr = device->mmioaddr;
+	client->mmiosz = device->mmiosz;
+    }
+#endif
 
 	ret = nouveau_ttm_init(drm);
 	if (ret)
