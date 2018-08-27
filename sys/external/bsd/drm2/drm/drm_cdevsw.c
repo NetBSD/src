@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_cdevsw.c,v 1.2 2018/08/27 06:48:50 riastradh Exp $	*/
+/*	$NetBSD: drm_cdevsw.c,v 1.3 2018/08/27 06:49:01 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_cdevsw.c,v 1.2 2018/08/27 06:48:50 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_cdevsw.c,v 1.3 2018/08/27 06:49:01 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -85,7 +85,7 @@ static drm_ioctl_t	drm_version;
 		.cmd = (IOCTL),						\
 		.flags = (FLAGS),					\
 		.func = (FUNC),						\
-		.cmd_drv = 0,						\
+		.name = #IOCTL,						\
 	}
 
 #if __OS_HAS_AGP
