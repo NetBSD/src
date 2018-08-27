@@ -1,4 +1,4 @@
-/*	$NetBSD: cik.c,v 1.6 2018/08/27 06:41:13 riastradh Exp $	*/
+/*	$NetBSD: cik.c,v 1.7 2018/08/27 06:44:00 riastradh Exp $	*/
 
 /*
  * Copyright 2012 Advanced Micro Devices, Inc.
@@ -24,7 +24,7 @@
  * Authors: Alex Deucher
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cik.c,v 1.6 2018/08/27 06:41:13 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cik.c,v 1.7 2018/08/27 06:44:00 riastradh Exp $");
 
 #include <linux/firmware.h>
 #include <linux/slab.h>
@@ -6373,7 +6373,7 @@ static int cik_rlc_resume(struct radeon_device *rdev)
 		const struct rlc_firmware_header_v1_0 *hdr =
 			(const struct rlc_firmware_header_v1_0 *)rdev->rlc_fw->data;
 		const __le32 *fw_data = (const __le32 *)
-			((const char *)rdev->rlc_fw->data + le32_to_cpu(hdr->header.ucode_array_offset_bytes));
+			(rdev->rlc_fw->data + le32_to_cpu(hdr->header.ucode_array_offset_bytes));
 
 		radeon_ucode_print_rlc_hdr(&hdr->header);
 
@@ -6869,31 +6869,31 @@ void cik_init_cp_pg_table(struct radeon_device *rdev)
 			if (me == 0) {
 				hdr = (const struct gfx_firmware_header_v1_0 *)rdev->ce_fw->data;
 				fw_data = (const __le32 *)
-					((const char *)rdev->ce_fw->data + le32_to_cpu(hdr->header.ucode_array_offset_bytes));
+					(rdev->ce_fw->data + le32_to_cpu(hdr->header.ucode_array_offset_bytes));
 				table_offset = le32_to_cpu(hdr->jt_offset);
 				table_size = le32_to_cpu(hdr->jt_size);
 			} else if (me == 1) {
 				hdr = (const struct gfx_firmware_header_v1_0 *)rdev->pfp_fw->data;
 				fw_data = (const __le32 *)
-					((const char *)rdev->pfp_fw->data + le32_to_cpu(hdr->header.ucode_array_offset_bytes));
+					(rdev->pfp_fw->data + le32_to_cpu(hdr->header.ucode_array_offset_bytes));
 				table_offset = le32_to_cpu(hdr->jt_offset);
 				table_size = le32_to_cpu(hdr->jt_size);
 			} else if (me == 2) {
 				hdr = (const struct gfx_firmware_header_v1_0 *)rdev->me_fw->data;
 				fw_data = (const __le32 *)
-					((const char *)rdev->me_fw->data + le32_to_cpu(hdr->header.ucode_array_offset_bytes));
+					(rdev->me_fw->data + le32_to_cpu(hdr->header.ucode_array_offset_bytes));
 				table_offset = le32_to_cpu(hdr->jt_offset);
 				table_size = le32_to_cpu(hdr->jt_size);
 			} else if (me == 3) {
 				hdr = (const struct gfx_firmware_header_v1_0 *)rdev->mec_fw->data;
 				fw_data = (const __le32 *)
-					((const char *)rdev->mec_fw->data + le32_to_cpu(hdr->header.ucode_array_offset_bytes));
+					(rdev->mec_fw->data + le32_to_cpu(hdr->header.ucode_array_offset_bytes));
 				table_offset = le32_to_cpu(hdr->jt_offset);
 				table_size = le32_to_cpu(hdr->jt_size);
 			} else {
 				hdr = (const struct gfx_firmware_header_v1_0 *)rdev->mec2_fw->data;
 				fw_data = (const __le32 *)
-					((const char *)rdev->mec2_fw->data + le32_to_cpu(hdr->header.ucode_array_offset_bytes));
+					(rdev->mec2_fw->data + le32_to_cpu(hdr->header.ucode_array_offset_bytes));
 				table_offset = le32_to_cpu(hdr->jt_offset);
 				table_size = le32_to_cpu(hdr->jt_size);
 			}
@@ -7946,7 +7946,7 @@ restart_ih:
 		ring_index = rptr / 4;
 
 		radeon_kfd_interrupt(rdev,
-				(const volatile void *) &rdev->ih.ring[ring_index]);
+				(const void *) &rdev->ih.ring[ring_index]);
 
 		src_id =  le32_to_cpu(rdev->ih.ring[ring_index]) & 0xff;
 		src_data = le32_to_cpu(rdev->ih.ring[ring_index + 1]) & 0xfffffff;
