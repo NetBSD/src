@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_guc_loader.c,v 1.8 2018/08/27 13:41:50 riastradh Exp $	*/
+/*	$NetBSD: intel_guc_loader.c,v 1.9 2018/08/27 13:42:12 riastradh Exp $	*/
 
 /*
  * Copyright © 2014 Intel Corporation
@@ -29,7 +29,7 @@
  *    Alex Dai <yu.dai@intel.com>
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_guc_loader.c,v 1.8 2018/08/27 13:41:50 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_guc_loader.c,v 1.9 2018/08/27 13:42:12 riastradh Exp $");
 
 #include <linux/firmware.h>
 #include <linux/module.h>
@@ -262,7 +262,7 @@ static int guc_ucode_xfer_dma(struct drm_i915_private *dev_priv)
 	iov.iov_len = UOS_RSA_SIG_SIZE;
 	uio.uio_iov = &iov;
 	uio.uio_iovcnt = 1;
-	uio.uio_offset = 0;
+	uio.uio_offset = offset;
 	uio.uio_resid = UOS_RSA_SIG_SIZE;
 	uio.uio_rw = UIO_READ;
 	UIO_SETUP_SYSSPACE(&uio);
