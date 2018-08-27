@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_crtc.c,v 1.8 2018/08/27 06:55:13 riastradh Exp $	*/
+/*	$NetBSD: drm_crtc.c,v 1.9 2018/08/27 14:14:29 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2006-2008 Intel Corporation
@@ -32,7 +32,7 @@
  *      Jesse Barnes <jesse.barnes@intel.com>
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_crtc.c,v 1.8 2018/08/27 06:55:13 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_crtc.c,v 1.9 2018/08/27 14:14:29 riastradh Exp $");
 
 #include <linux/err.h>
 #include <linux/spinlock.h>
@@ -5987,6 +5987,7 @@ struct drm_tile_group *drm_mode_create_tile_group(struct drm_device *dev,
 	memcpy(tg->group_data, topology, 8);
 	tg->dev = dev;
 
+	idr_preload(GFP_KERNEL);
 	mutex_lock(&dev->mode_config.idr_mutex);
 	ret = idr_alloc(&dev->mode_config.tile_idr, tg, 1, 0, GFP_KERNEL);
 	if (ret >= 0) {
@@ -5997,6 +5998,7 @@ struct drm_tile_group *drm_mode_create_tile_group(struct drm_device *dev,
 	}
 
 	mutex_unlock(&dev->mode_config.idr_mutex);
+	idr_preload_end();
 	return tg;
 }
 EXPORT_SYMBOL(drm_mode_create_tile_group);

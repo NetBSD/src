@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem.c,v 1.49 2018/08/27 13:44:29 riastradh Exp $	*/
+/*	$NetBSD: i915_gem.c,v 1.50 2018/08/27 14:14:29 riastradh Exp $	*/
 
 /*
  * Copyright © 2008-2015 Intel Corporation
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gem.c,v 1.49 2018/08/27 13:44:29 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gem.c,v 1.50 2018/08/27 14:14:29 riastradh Exp $");
 
 #ifdef __NetBSD__
 #if 0				/* XXX uvmhist option?  */
@@ -5472,6 +5472,7 @@ int i915_gem_init(struct drm_device *dev)
 	i915.enable_execlists = intel_sanitize_enable_execlists(dev,
 			i915.enable_execlists);
 
+	idr_preload(GFP_KERNEL);	/* gem context */
 	mutex_lock(&dev->struct_mutex);
 
 	if (IS_VALLEYVIEW(dev)) {
@@ -5530,6 +5531,7 @@ int i915_gem_init(struct drm_device *dev)
 out_unlock:
 	intel_uncore_forcewake_put(dev_priv, FORCEWAKE_ALL);
 	mutex_unlock(&dev->struct_mutex);
+	idr_preload_end();
 
 	return ret;
 }

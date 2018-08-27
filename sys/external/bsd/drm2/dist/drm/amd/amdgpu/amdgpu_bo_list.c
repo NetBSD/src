@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_bo_list.c,v 1.3 2018/08/27 14:04:50 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_bo_list.c,v 1.4 2018/08/27 14:14:28 riastradh Exp $	*/
 
 /*
  * Copyright 2015 Advanced Micro Devices, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_bo_list.c,v 1.3 2018/08/27 14:04:50 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_bo_list.c,v 1.4 2018/08/27 14:14:28 riastradh Exp $");
 
 #include <drm/drmP.h>
 #include "amdgpu.h"
@@ -47,14 +47,17 @@ static int amdgpu_bo_list_create(struct amdgpu_fpriv *fpriv,
 	if (!*result)
 		return -ENOMEM;
 
+	idr_preload(GFP_KERNEL);
 	mutex_lock(&fpriv->bo_list_lock);
 	r = idr_alloc(&fpriv->bo_list_handles, *result,
 		      1, 0, GFP_KERNEL);
 	if (r < 0) {
 		mutex_unlock(&fpriv->bo_list_lock);
+		idr_preload_end();
 		kfree(*result);
 		return r;
 	}
+	idr_preload_end();
 	*id = r;
 
 #ifdef __NetBSD__

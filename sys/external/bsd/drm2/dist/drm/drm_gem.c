@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_gem.c,v 1.8 2018/08/27 07:19:01 riastradh Exp $	*/
+/*	$NetBSD: drm_gem.c,v 1.9 2018/08/27 14:14:29 riastradh Exp $	*/
 
 /*
  * Copyright © 2008 Intel Corporation
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_gem.c,v 1.8 2018/08/27 07:19:01 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_gem.c,v 1.9 2018/08/27 14:14:29 riastradh Exp $");
 
 #include <linux/types.h>
 #include <linux/slab.h>
@@ -723,8 +723,8 @@ drm_gem_flink_ioctl(struct drm_device *dev, void *data,
 	if (obj == NULL)
 		return -ENOENT;
 
-	mutex_lock(&dev->object_name_lock);
 	idr_preload(GFP_KERNEL);
+	mutex_lock(&dev->object_name_lock);
 	/* prevent races with concurrent gem_close. */
 	if (obj->handle_count == 0) {
 		ret = -ENOENT;
@@ -743,8 +743,8 @@ drm_gem_flink_ioctl(struct drm_device *dev, void *data,
 	ret = 0;
 
 err:
-	idr_preload_end();
 	mutex_unlock(&dev->object_name_lock);
+	idr_preload_end();
 	drm_gem_object_unreference_unlocked(obj);
 	return ret;
 }

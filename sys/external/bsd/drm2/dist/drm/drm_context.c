@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_context.c,v 1.4 2018/08/27 04:58:19 riastradh Exp $	*/
+/*	$NetBSD: drm_context.c,v 1.5 2018/08/27 14:14:29 riastradh Exp $	*/
 
 /*
  * Legacy: Generic DRM Contexts
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_context.c,v 1.4 2018/08/27 04:58:19 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_context.c,v 1.5 2018/08/27 14:14:29 riastradh Exp $");
 
 #include <linux/err.h>
 
@@ -82,10 +82,12 @@ static int drm_legacy_ctxbitmap_next(struct drm_device * dev)
 {
 	int ret;
 
+	idr_preload(GFP_KERNEL);
 	mutex_lock(&dev->struct_mutex);
 	ret = idr_alloc(&dev->ctx_idr, NULL, DRM_RESERVED_CONTEXTS, 0,
 			GFP_KERNEL);
 	mutex_unlock(&dev->struct_mutex);
+	idr_preload_end();
 	return ret;
 }
 
