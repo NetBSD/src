@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_pci.c,v 1.20 2018/08/27 14:12:14 riastradh Exp $	*/
+/*	$NetBSD: i915_pci.c,v 1.21 2018/08/27 14:49:22 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_pci.c,v 1.20 2018/08/27 14:12:14 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_pci.c,v 1.21 2018/08/27 14:49:22 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/queue.h>
@@ -247,6 +247,9 @@ i915drmkms_suspend(device_t self, const pmf_qual_t *qual)
 		return true;
 
 	ret = i915_drm_suspend(dev);
+	if (ret)
+		return false;
+	ret = i915_drm_suspend_late(dev, false);
 	if (ret)
 		return false;
 
