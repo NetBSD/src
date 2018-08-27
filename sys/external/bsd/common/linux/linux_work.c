@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_work.c,v 1.26 2018/08/27 15:02:52 riastradh Exp $	*/
+/*	$NetBSD: linux_work.c,v 1.27 2018/08/27 15:03:07 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_work.c,v 1.26 2018/08/27 15:02:52 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_work.c,v 1.27 2018/08/27 15:03:07 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/atomic.h>
@@ -570,13 +570,7 @@ mod_delayed_work(struct workqueue_struct *wq, struct delayed_work *dw,
 		KASSERT(wq0 == wq);
 		switch (dw->dw_state) {
 		case DELAYED_WORK_IDLE:
-			if (wq->wq_current_work != &dw->work) {
-				/* Work is queued, but hasn't started yet.  */
-				TAILQ_REMOVE(&wq->wq_queue, &dw->work,
-				    work_entry);
-				queue_delayed_work_anew(wq, dw, ticks);
-				timer_modified = true;
-			} else {
+			if (wq->wq_current_work == &dw->work) {
 				/*
 				 * Too late.  Queue it anew.  If that
 				 * would skip the callout because it's
@@ -585,6 +579,12 @@ mod_delayed_work(struct workqueue_struct *wq, struct delayed_work *dw,
 				wq->wq_requeued = ticks == 0;
 				queue_delayed_work_anew(wq, dw, ticks);
 				timer_modified = false;
+			} else {
+				/* Work is queued, but hasn't started yet.  */
+				TAILQ_REMOVE(&wq->wq_queue, &dw->work,
+				    work_entry);
+				queue_delayed_work_anew(wq, dw, ticks);
+				timer_modified = true;
 			}
 			break;
 		case DELAYED_WORK_SCHEDULED:
@@ -669,9 +669,8 @@ cancel_delayed_work(struct delayed_work *dw)
 			 */
 			dw->dw_state = DELAYED_WORK_CANCELLED;
 			cancelled_p = true;
-			if (callout_stop(&dw->dw_callout))
-				break;
-			cancel_delayed_work_done(wq, dw);
+			if (!callout_stop(&dw->dw_callout))
+				cancel_delayed_work_done(wq, dw);
 			break;
 		default:
 			panic("invalid delayed work state: %d",
@@ -731,9 +730,8 @@ cancel_delayed_work_sync(struct delayed_work *dw)
 			 */
 			dw->dw_state = DELAYED_WORK_CANCELLED;
 			cancelled_p = true;
-			if (callout_halt(&dw->dw_callout, &wq->wq_lock))
-				break;
-			cancel_delayed_work_done(wq, dw);
+			if (!callout_halt(&dw->dw_callout, &wq->wq_lock))
+				cancel_delayed_work_done(wq, dw);
 			break;
 		default:
 			panic("invalid delayed work state: %d",
