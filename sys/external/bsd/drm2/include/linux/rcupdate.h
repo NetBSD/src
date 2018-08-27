@@ -1,4 +1,4 @@
-/*	$NetBSD: rcupdate.h,v 1.2 2014/03/18 18:20:43 riastradh Exp $	*/
+/*	$NetBSD: rcupdate.h,v 1.3 2018/08/27 07:31:06 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -31,5 +31,7 @@
 
 #ifndef _LINUX_RCUPDATE_H_
 #define _LINUX_RCUPDATE_H_
+
+#define	__rcu
 
 #endif  /* _LINUX_RCUPDATE_H_ */
