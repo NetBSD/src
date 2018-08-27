@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_fence.c,v 1.11 2018/08/27 07:36:58 riastradh Exp $	*/
+/*	$NetBSD: nouveau_fence.c,v 1.12 2018/08/27 07:37:07 riastradh Exp $	*/
 
 /*
  * Copyright (C) 2007 Ben Skeggs.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_fence.c,v 1.11 2018/08/27 07:36:58 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_fence.c,v 1.12 2018/08/27 07:37:07 riastradh Exp $");
 
 #include <drm/drmP.h>
 
@@ -557,7 +557,8 @@ static bool nouveau_fence_no_signaling(struct fence *f)
 	 * caller should have a reference on the fence,
 	 * else fence could get freed here
 	 */
-	WARN_ON(atomic_read(&fence->base.refcount.refcount) <= 1);
+	WARN_ON(!kref_referenced_p(&fence->base.refcount));
+	WARN_ON(kref_exclusive_p(&fence->base.refcount));
 
 	/*
 	 * This needs uevents to work correctly, but fence_add_callback relies on
