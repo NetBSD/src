@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_cgs.c,v 1.3 2018/08/27 14:04:50 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_cgs.c,v 1.4 2018/08/27 15:26:33 riastradh Exp $	*/
 
 /*
  * Copyright 2015 Advanced Micro Devices, Inc.
@@ -24,7 +24,7 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_cgs.c,v 1.3 2018/08/27 14:04:50 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_cgs.c,v 1.4 2018/08/27 15:26:33 riastradh Exp $");
 
 #include <asm/byteorder.h>
 #include <linux/list.h>
@@ -84,7 +84,7 @@ static int amdgpu_cgs_gmap_kmem(void *cgs_device, void *kmem,
 				uint64_t min_offset, uint64_t max_offset,
 				cgs_handle_t *kmem_handle, uint64_t *mcaddr)
 {
-#ifdef __NetBSD__		/* XXX drm prime */
+#ifdef __NetBSD__		/* XXX unused */
 	return -ENOSYS;
 #else
 	CGS_FUNC_ADEV;
@@ -114,7 +114,7 @@ static int amdgpu_cgs_gmap_kmem(void *cgs_device, void *kmem,
 
 static int amdgpu_cgs_gunmap_kmem(void *cgs_device, cgs_handle_t kmem_handle)
 {
-#ifdef __NetBSD__		/* XXX drm prime */
+#ifdef __NetBSD__		/* XXX unused */
 	panic("not implemented");
 #else
 	struct amdgpu_bo *obj = (struct amdgpu_bo *)kmem_handle;
