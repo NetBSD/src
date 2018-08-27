@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_fb.c,v 1.6 2018/08/27 04:58:36 riastradh Exp $	*/
+/*	$NetBSD: radeon_fb.c,v 1.7 2018/08/27 07:44:22 riastradh Exp $	*/
 
 /*
  * Copyright © 2007 David Airlie
@@ -26,7 +26,7 @@
  *     David Airlie
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_fb.c,v 1.6 2018/08/27 04:58:36 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_fb.c,v 1.7 2018/08/27 07:44:22 riastradh Exp $");
 
 #include <linux/module.h>
 #include <linux/slab.h>
@@ -327,8 +327,10 @@ static int radeonfb_create(struct drm_fb_helper *helper,
 #endif
 	return 0;
 
+#ifndef __NetBSD__
 out_destroy_fbi:
 	drm_fb_helper_release_fbi(helper);
+#endif
 out_unref:
 	if (rbo) {
 
