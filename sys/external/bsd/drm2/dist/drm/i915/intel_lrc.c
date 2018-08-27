@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_lrc.c,v 1.3 2018/08/27 07:23:50 riastradh Exp $	*/
+/*	$NetBSD: intel_lrc.c,v 1.4 2018/08/27 07:24:01 riastradh Exp $	*/
 
 /*
  * Copyright © 2014 Intel Corporation
@@ -135,7 +135,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_lrc.c,v 1.3 2018/08/27 07:23:50 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_lrc.c,v 1.4 2018/08/27 07:24:01 riastradh Exp $");
 
 #include <drm/drmP.h>
 #include <drm/i915_drm.h>
@@ -1198,7 +1198,11 @@ static inline uint32_t wa_ctx_start(struct i915_wa_ctx_bb *wa_ctx,
 				    uint32_t offset,
 				    uint32_t start_alignment)
 {
+#ifdef __NetBSD__		/* XXX ALIGN means something else */
+	return wa_ctx->offset = round_up(offset, start_alignment);
+#else
 	return wa_ctx->offset = ALIGN(offset, start_alignment);
+#endif
 }
 
 static inline int wa_ctx_end(struct i915_wa_ctx_bb *wa_ctx,
