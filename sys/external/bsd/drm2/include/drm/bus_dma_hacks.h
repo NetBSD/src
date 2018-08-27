@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma_hacks.h,v 1.13 2018/08/27 15:27:28 riastradh Exp $	*/
+/*	$NetBSD: bus_dma_hacks.h,v 1.14 2018/08/27 15:29:08 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -46,6 +46,9 @@
 #  define	PHYS_TO_BUS_MEM(dmat, paddr)	((bus_addr_t)(paddr))
 #  define	BUS_MEM_TO_PHYS(dmat, baddr)	((paddr_t)(baddr))
 #elif defined(__arm__) || defined(__aarch64__)
+#  define	PHYS_TO_BUS_MEM(dmat, paddr)	((bus_addr_t)(paddr))
+#  define	BUS_MEM_TO_PHYS(dmat, baddr)	((paddr_t)(baddr))
+#elif defined(__sparc__) || defined(__sparc64__)
 #  define	PHYS_TO_BUS_MEM(dmat, paddr)	((bus_addr_t)(paddr))
 #  define	BUS_MEM_TO_PHYS(dmat, baddr)	((paddr_t)(baddr))
 #elif defined(__powerpc__)
