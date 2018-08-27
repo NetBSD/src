@@ -1,4 +1,4 @@
-/*	$NetBSD: evergreen_cs.c,v 1.5 2018/08/27 04:58:35 riastradh Exp $	*/
+/*	$NetBSD: evergreen_cs.c,v 1.6 2018/08/27 07:07:12 riastradh Exp $	*/
 
 /*
  * Copyright 2010 Advanced Micro Devices, Inc.
@@ -28,7 +28,7 @@
  *          Jerome Glisse
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: evergreen_cs.c,v 1.5 2018/08/27 04:58:35 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: evergreen_cs.c,v 1.6 2018/08/27 07:07:12 riastradh Exp $");
 
 #include <drm/drmP.h>
 #include "radeon.h"
@@ -2078,7 +2078,7 @@ static int evergreen_packet3_check(struct radeon_cs_parser *p,
 		}
 
 		if (idx_value + size > track->indirect_draw_buffer_size) {
-			dev_warn(p->dev, "DRAW_INDIRECT buffer too small %u + %llu > %lu\n",
+			dev_warn(p->dev, "DRAW_INDIRECT buffer too small %u + %"PRIx64" > %lu\n",
 				idx_value, size, track->indirect_draw_buffer_size);
 			return -EINVAL;
 		}
