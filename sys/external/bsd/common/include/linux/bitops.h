@@ -1,4 +1,4 @@
-/*	$NetBSD: bitops.h,v 1.3 2018/08/27 06:54:29 riastradh Exp $	*/
+/*	$NetBSD: bitops.h,v 1.4 2018/08/27 07:04:32 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -60,6 +60,16 @@ __ffs64(uint64_t x)
 
 	KASSERT(x != 0);
 	return ffs64(x) - 1;
+}
+
+/*
+ * Linux fls(0) = 0, fls(1) = 1, fls(0x80000000) = 32, so it matches
+ * our fls semantics.
+ */
+static inline int
+fls(int x)
+{
+	return fls32(x);
 }
 
 static inline unsigned int
