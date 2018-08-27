@@ -1,4 +1,4 @@
-#	$NetBSD: files.drmkms,v 1.15 2018/08/27 06:25:28 riastradh Exp $
+#	$NetBSD: files.drmkms,v 1.16 2018/08/27 06:25:37 riastradh Exp $
 
 include "external/bsd/drm2/linux/files.drmkms_linux"
 
@@ -41,39 +41,45 @@ file	external/bsd/drm2/drm/drmfb.c			drmfb
 
 include "external/bsd/drm2/ttm/files.ttm"
 
-file	external/bsd/drm2/dist/drm/drm_auth.c		drmkms
-file	external/bsd/drm2/dist/drm/drm_buffer.c		drmkms
-file	external/bsd/drm2/dist/drm/drm_bufs.c		drmkms
-file	external/bsd/drm2/drm/drm_cache.c		drmkms
+file	external/bsd/drm2/dist/drm/ati_pcigart.c	drmkms
+file	external/bsd/drm2/dist/drm/drm_agpsupport.c	drmkms
+file	external/bsd/drm2/dist/drm/drm_atomic.c	drmkms
+file	external/bsd/drm2/dist/drm/drm_atomic_helper.c	drmkms
+file	external/bsd/drm2/dist/drm/drm_auth.c	drmkms
+file	external/bsd/drm2/dist/drm/drm_bridge.c	drmkms
+file	external/bsd/drm2/dist/drm/drm_bufs.c	drmkms
+file	external/bsd/drm2/dist/drm/drm_cache.c	drmkms
 file	external/bsd/drm2/dist/drm/drm_context.c	drmkms
-file	external/bsd/drm2/dist/drm/drm_crtc.c		drmkms
+file	external/bsd/drm2/dist/drm/drm_crtc.c	drmkms
 file	external/bsd/drm2/dist/drm/drm_crtc_helper.c	drmkms
-file	external/bsd/drm2/dist/drm/drm_dma.c		drmkms
-file	external/bsd/drm2/dist/drm/drm_dp_helper.c	drmkms_i2c
-file	external/bsd/drm2/drm/drm_drv.c			drmkms
-file	external/bsd/drm2/dist/drm/drm_edid.c		drmkms_i2c
-file	external/bsd/drm2/i2c/drm_encoder_slave.c	drmkms_i2c
-file	external/bsd/drm2/dist/drm/drm_fb_helper.c	drmkms
+file	external/bsd/drm2/dist/drm/drm_debugfs.c	drmkms
+file	external/bsd/drm2/dist/drm/drm_dma.c	drmkms
+file	external/bsd/drm2/dist/drm/drm_dp_helper.c	drmkms
+file	external/bsd/drm2/dist/drm/drm_dp_mst_topology.c	drmkms
+file	external/bsd/drm2/dist/drm/drm_drv.c	drmkms
+file	external/bsd/drm2/dist/drm/drm_edid.c	drmkms
+file	external/bsd/drm2/dist/drm/drm_encoder_slave.c	drmkms
 file	external/bsd/drm2/dist/drm/drm_flip_work.c	drmkms
-file	external/bsd/drm2/drm/drm_fops.c		drmkms
-file	external/bsd/drm2/dist/drm/drm_gem.c		drmkms
-file	external/bsd/drm2/dist/drm/drm_global.c		drmkms
+file	external/bsd/drm2/dist/drm/drm_fops.c	drmkms
+file	external/bsd/drm2/dist/drm/drm_gem.c	drmkms
+file	external/bsd/drm2/dist/drm/drm_global.c	drmkms
 file	external/bsd/drm2/dist/drm/drm_hashtab.c	drmkms
-#file	external/bsd/drm2/dist/drm/drm_info.c		drmkms
-#file	external/bsd/drm2/dist/drm/drm_ioc32.c		drmkms
-file	external/bsd/drm2/dist/drm/drm_ioctl.c		drmkms
-file	external/bsd/drm2/dist/drm/drm_irq.c		drmkms
-file	external/bsd/drm2/drm/drm_lock.c		drmkms
-file	external/bsd/drm2/drm/drm_memory.c		drmkms
-file	external/bsd/drm2/dist/drm/drm_mm.c		drmkms
-file	external/bsd/drm2/dist/drm/drm_modes.c		drmkms
+#file	external/bsd/drm2/dist/drm/drm_info.c	drmkms
+file	external/bsd/drm2/dist/drm/drm_ioctl.c	drmkms
+file	external/bsd/drm2/dist/drm/drm_irq.c	drmkms
+file	external/bsd/drm2/dist/drm/drm_lock.c	drmkms
+file	external/bsd/drm2/dist/drm/drm_memory.c	drmkms
+file	external/bsd/drm2/dist/drm/drm_mm.c	drmkms
+file	external/bsd/drm2/dist/drm/drm_modes.c	drmkms
+file	external/bsd/drm2/dist/drm/drm_modeset_lock.c	drmkms
+file	external/bsd/drm2/dist/drm/drm_pci.c	drmkms
 file	external/bsd/drm2/dist/drm/drm_plane_helper.c	drmkms
 #file	external/bsd/drm2/dist/drm/drm_platform.c	drmkms
-#file	external/bsd/drm2/dist/drm/drm_prime.c		drmkms
+#file	external/bsd/drm2/dist/drm/drm_prime.c	drmkms  # XXX drm prime
 file	external/bsd/drm2/dist/drm/drm_probe_helper.c	drmkms
-file	external/bsd/drm2/dist/drm/drm_rect.c		drmkms
-file	external/bsd/drm2/drm/drm_scatter.c		drmkms
-file	external/bsd/drm2/dist/drm/drm_stub.c		drmkms
-file	external/bsd/drm2/drm/drm_sysfs.c		drmkms
-file	external/bsd/drm2/drm/drm_vm.c			drmkms
-file	external/bsd/drm2/drm/drm_vma_manager.c		drmkms
+file	external/bsd/drm2/dist/drm/drm_rect.c	drmkms
+file	external/bsd/drm2/dist/drm/drm_scatter.c	drmkms
+file	external/bsd/drm2/dist/drm/drm_sysfs.c	drmkms
+file	external/bsd/drm2/dist/drm/drm_trace_points.c	drmkms
+file	external/bsd/drm2/dist/drm/drm_vm.c	drmkms
+file	external/bsd/drm2/dist/drm/drm_vma_manager.c	drmkms
