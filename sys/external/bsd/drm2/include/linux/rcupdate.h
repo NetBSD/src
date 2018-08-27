@@ -1,7 +1,7 @@
-/*	$NetBSD: rcupdate.h,v 1.4 2018/08/27 07:34:23 riastradh Exp $	*/
+/*	$NetBSD: rcupdate.h,v 1.5 2018/08/27 13:31:36 riastradh Exp $	*/
 
 /*-
- * Copyright (c) 2013 The NetBSD Foundation, Inc.
+ * Copyright (c) 2018 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -33,8 +33,8 @@
 #define _LINUX_RCUPDATE_H_
 
 #include <sys/atomic.h>
-#include <sys/null.h>
-#include <sys/xcall.h>
+#include <sys/cdefs.h>
+#include <sys/systm.h>
 
 #define	__rcu
 
@@ -44,14 +44,30 @@
 } while (0)
 
 
-#define	rcu_dereference(P)	rcu_dereference_protected((P), 1)
+#define	rcu_dereference(P) ({						      \
+	typeof(*(P)) *__rcu_dereference_tmp = (P);			      \
+	membar_datadep_consumer();					      \
+	__rcu_dereference_tmp;						      \
+})
 
 #define	rcu_dereference_protected(P, C) ({				      \
 	WARN_ON(!(C));							      \
-	typeof(*(P)) *__rcu_dereference_protected_tmp = (P);		      \
-	membar_datadep_consumer();					      \
-	__rcu_dereference_protected_tmp;				      \
+	(P);								      \
 })
+
+struct rcu_head {
+	void		(*rcuh_callback)(struct rcu_head *);
+	struct rcu_head	*rcuh_next;
+};
+
+#define	linux_call_rcu		call_rcu
+#define	linux_synchronize_rcu	synchronize_rcu
+
+int	linux_rcu_gc_init(void);
+void	linux_rcu_gc_fini(void);
+
+void	call_rcu(struct rcu_head *, void (*)(struct rcu_head *));
+void	synchronize_rcu(void);
 
 static inline void
 rcu_read_lock(void)
@@ -67,17 +83,6 @@ rcu_read_unlock(void)
 
 	__insn_barrier();
 	kpreempt_enable();
-}
-
-static inline void
-synchronize_rcu_xc(void *a, void *b)
-{
-}
-
-static inline void
-synchronize_rcu(void)
-{
-	xc_wait(xc_broadcast(0, &synchronize_rcu_xc, NULL, NULL));
 }
 
 #endif  /* _LINUX_RCUPDATE_H_ */
