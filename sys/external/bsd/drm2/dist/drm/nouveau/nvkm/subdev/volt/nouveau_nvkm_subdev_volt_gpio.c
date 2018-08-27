@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_subdev_volt_gpio.c,v 1.2 2018/08/27 04:58:35 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_subdev_volt_gpio.c,v 1.3 2018/08/27 07:41:41 riastradh Exp $	*/
 
 /*
  * Copyright 2013 Red Hat Inc.
@@ -24,12 +24,14 @@
  * Authors: Ben Skeggs
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_volt_gpio.c,v 1.2 2018/08/27 04:58:35 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_volt_gpio.c,v 1.3 2018/08/27 07:41:41 riastradh Exp $");
 
 #include <subdev/volt.h>
 #include <subdev/bios.h>
 #include <subdev/bios/gpio.h>
 #include <subdev/gpio.h>
+
+#include "priv.h"
 
 static const u8 tags[] = {
 	DCB_GPIO_VID0, DCB_GPIO_VID1, DCB_GPIO_VID2, DCB_GPIO_VID3,
