@@ -1,4 +1,4 @@
-/*	$NetBSD: list.h,v 1.13 2018/08/27 07:03:50 riastradh Exp $	*/
+/*	$NetBSD: list.h,v 1.14 2018/08/27 07:21:59 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -187,6 +187,13 @@ list_replace(struct list_head *old, struct list_head *new)
 	old->prev->next = new;
 	new->next = old->next;
 	old->next->prev = new;
+}
+
+static inline void
+list_replace_init(struct list_head *old, struct list_head *new)
+{
+	list_replace(old, new);
+	INIT_LIST_HEAD(old);
 }
 
 static inline void
