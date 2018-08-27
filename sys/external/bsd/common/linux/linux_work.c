@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_work.c,v 1.19 2018/08/27 15:00:27 riastradh Exp $	*/
+/*	$NetBSD: linux_work.c,v 1.20 2018/08/27 15:00:57 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_work.c,v 1.19 2018/08/27 15:00:27 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_work.c,v 1.20 2018/08/27 15:00:57 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/atomic.h>
@@ -640,17 +640,21 @@ bool
 cancel_delayed_work_sync(struct delayed_work *dw)
 {
 	struct workqueue_struct *wq;
-	bool cancelled_p;
+	bool cancelled_p = false;
 
-	/* If there's no workqueue, nothing to cancel.   */
+retry:
+	/*
+	 * If there's no workqueue, nothing to cancel, unless we've
+	 * started over from cancelling the callout.
+	 */
 	if ((wq = dw->work.work_queue) == NULL)
-		return false;
+		return cancelled_p;
 
 	mutex_enter(&wq->wq_lock);
 	if (__predict_false(dw->work.work_queue != wq)) {
 		cancelled_p = false;
 	} else {
-retry:		switch (dw->dw_state) {
+		switch (dw->dw_state) {
 		case DELAYED_WORK_IDLE:
 			if (wq->wq_current_work == &dw->work) {
 				/* Too late, it's already running.  Wait.  */
@@ -669,14 +673,33 @@ retry:		switch (dw->dw_state) {
 		case DELAYED_WORK_RESCHEDULED:
 		case DELAYED_WORK_CANCELLED:
 			/*
-			 * If it has started, tell it to stop, and wait
-			 * for it to complete.  We drop the lock, so by
-			 * the time the callout has completed, we must
-			 * review the state again.
+			 * If it is scheduled, mark it cancelled and
+			 * try to stop the callout before it starts.
+			 *
+			 * If it's too late and the callout has already
+			 * begun to execute, we must wait for it to
+			 * complete.  In that case, the work has been
+			 * dissociated from the queue, so we must start
+			 * over from the top.
+			 *
+			 * If we stopped the callout before it started,
+			 * however, then destroy the callout and
+			 * dissociate it from the workqueue ourselves.
+			 *
+			 * XXX This logic is duplicated in the
+			 * DELAYED_WORK_CANCELLED case of
+			 * linux_workqueue_timeout.
 			 */
 			dw->dw_state = DELAYED_WORK_CANCELLED;
-			callout_halt(&dw->dw_callout, &wq->wq_lock);
-			goto retry;
+			cancelled_p = true;
+			if (callout_halt(&dw->dw_callout, &wq->wq_lock))
+				goto retry;
+			KASSERT(dw->dw_state == DELAYED_WORK_CANCELLED);
+			dw->dw_state = DELAYED_WORK_IDLE;
+			callout_destroy(&dw->dw_callout);
+			TAILQ_REMOVE(&wq->wq_delayed, dw, dw_entry);
+			release_work(&dw->work, wq);
+			break;
 		default:
 			panic("invalid delayed work state: %d",
 			    dw->dw_state);
