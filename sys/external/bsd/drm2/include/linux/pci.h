@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.h,v 1.34 2018/08/27 14:12:00 riastradh Exp $	*/
+/*	$NetBSD: pci.h,v 1.35 2018/08/27 14:15:35 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -203,6 +203,8 @@ linux_pci_dev_init(struct pci_dev *pdev, device_t dev, device_t parent,
 #else
 	pdev->pd_ad = NULL;
 #endif
+	pdev->pd_saved_state = NULL;
+	pdev->pd_intr_handles = NULL;
 	pdev->bus = kmem_zalloc(sizeof(*pdev->bus), KM_NOSLEEP);
 	pdev->bus->pb_pc = pa->pa_pc;
 	pdev->bus->pb_dev = parent;
