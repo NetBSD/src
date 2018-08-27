@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_panel.c,v 1.7 2018/08/27 04:58:24 riastradh Exp $	*/
+/*	$NetBSD: intel_panel.c,v 1.8 2018/08/27 06:16:50 riastradh Exp $	*/
 
 /*
  * Copyright © 2006-2010 Intel Corporation
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_panel.c,v 1.7 2018/08/27 04:58:24 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_panel.c,v 1.8 2018/08/27 06:16:50 riastradh Exp $");
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
@@ -862,8 +862,10 @@ void intel_panel_disable_backlight(struct intel_connector *connector)
 
 	mutex_lock(&dev_priv->backlight_lock);
 
+#ifndef __NetBSD__		/* XXX backlight */
 	if (panel->backlight.device)
 		panel->backlight.device->props.power = FB_BLANK_POWERDOWN;
+#endif
 	panel->backlight.enabled = false;
 	panel->backlight.disable(connector);
 
@@ -1141,8 +1143,10 @@ void intel_panel_enable_backlight(struct intel_connector *connector)
 
 	panel->backlight.enable(connector);
 	panel->backlight.enabled = true;
+#ifndef __NetBSD__		/* XXX backlight */
 	if (panel->backlight.device)
 		panel->backlight.device->props.power = FB_BLANK_UNBLANK;
+#endif
 
 	mutex_unlock(&dev_priv->backlight_lock);
 }
