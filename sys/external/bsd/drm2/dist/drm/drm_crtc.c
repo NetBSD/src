@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_crtc.c,v 1.9 2018/08/27 14:14:29 riastradh Exp $	*/
+/*	$NetBSD: drm_crtc.c,v 1.10 2018/08/27 14:39:46 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2006-2008 Intel Corporation
@@ -32,7 +32,7 @@
  *      Jesse Barnes <jesse.barnes@intel.com>
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_crtc.c,v 1.9 2018/08/27 14:14:29 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_crtc.c,v 1.10 2018/08/27 14:39:46 riastradh Exp $");
 
 #include <linux/err.h>
 #include <linux/spinlock.h>
@@ -903,6 +903,7 @@ int drm_connector_init(struct drm_device *dev,
 
 	connector->base.properties = &connector->properties;
 	connector->dev = dev;
+	connector->kdev = dev->dev;
 	connector->funcs = funcs;
 	connector->connector_type = connector_type;
 	connector->connector_type_id =
