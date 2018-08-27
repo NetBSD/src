@@ -1,4 +1,4 @@
-/*	$NetBSD: device.h,v 1.5 2018/08/27 07:33:35 riastradh Exp $	*/
+/*	$NetBSD: device.h,v 1.6 2018/08/27 14:19:25 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -35,23 +35,47 @@
 #include <sys/types.h>
 #include <sys/systm.h>
 
-#define	dev_crit(DEV, FMT, ...)					\
-	aprint_error_dev((DEV), "critical: " FMT, ##__VA_ARGS__)
+#define	dev_crit(DEV, FMT, ...)	do {					      \
+	if (DEV)							      \
+		aprint_error_dev((DEV), "critical: " FMT, ##__VA_ARGS__);     \
+	else								      \
+		aprint_error("critical: " FMT, ##__VA_ARGS__);		      \
+} while (0)
 
-#define	dev_err(DEV, FMT, ...)					\
-	aprint_error_dev((DEV), "error: " FMT, ##__VA_ARGS__)
+#define	dev_err(DEV, FMT, ...)	do {					      \
+	if (DEV)							      \
+		aprint_error_dev((DEV), "error: " FMT, ##__VA_ARGS__);	      \
+	else								      \
+		aprint_error("error: " FMT, ##__VA_ARGS__);		      \
+} while (0)
 
-#define	dev_warn(DEV, FMT, ...)					\
-	aprint_error_dev((DEV), "warning: " FMT, ##__VA_ARGS__)
+#define	dev_warn(DEV, FMT, ...)	do {					      \
+	if (DEV)							      \
+		aprint_error_dev((DEV), "warn: " FMT, ##__VA_ARGS__);	      \
+	else								      \
+		aprint_error("warn: " FMT, ##__VA_ARGS__);		      \
+} while (0)
 
-#define	dev_notice(DEV, FMT, ...)					\
-	aprint_normal_dev((DEV), "notice: " FMT, ##__VA_ARGS__)
+#define	dev_notice(DEV, FMT, ...)	do {				      \
+	if (DEV)							      \
+		aprint_normal_dev((DEV), "notice: " FMT, ##__VA_ARGS__);      \
+	else								      \
+		aprint_normal("notice: " FMT, ##__VA_ARGS__);		      \
+} while (0)
 
-#define	dev_info(DEV, FMT, ...)					\
-	aprint_normal_dev((DEV), "info: " FMT, ##__VA_ARGS__)
+#define	dev_info(DEV, FMT, ...)	do {					      \
+	if (DEV)							      \
+		aprint_normal_dev((DEV), "info: " FMT, ##__VA_ARGS__);	      \
+	else								      \
+		aprint_normal("info: " FMT, ##__VA_ARGS__);		      \
+} while (0)
 
-#define	dev_dbg(DEV, FMT, ...)					\
-	aprint_debug_dev((DEV), "debug: " FMT, ##__VA_ARGS__)
+#define	dev_dbg(DEV, FMT, ...)	do {					      \
+	if (DEV)							      \
+		aprint_debug_dev((DEV), "debug: " FMT, ##__VA_ARGS__);	      \
+	else								      \
+		aprint_debug("debug: " FMT, ##__VA_ARGS__);		      \
+} while (0)
 
 #define	dev_name	device_xname
 
