@@ -1,4 +1,4 @@
-#	$NetBSD: files.drmkms,v 1.26 2018/08/27 13:53:20 riastradh Exp $
+#	$NetBSD: files.drmkms,v 1.27 2018/08/27 13:53:32 riastradh Exp $
 
 include "external/bsd/drm2/linux/files.drmkms_linux"
 
@@ -34,6 +34,7 @@ makeoptions	drmkms	CPPFLAGS+="-D__KERNEL__"
 
 makeoptions	drmkms	CPPFLAGS+="-DCONFIG_BACKLIGHT_CLASS_DEVICE=0"
 makeoptions	drmkms	CPPFLAGS+="-DCONFIG_BACKLIGHT_CLASS_DEVICE_MODULE=0"
+makeoptions	drmkms	CPPFLAGS+="-DCONFIG_DRM_FBDEV_EMULATION=1"
 makeoptions	drmkms	CPPFLAGS+="-DCONFIG_FB=0"
 
 # NetBSD additions.
