@@ -1,4 +1,4 @@
-/*	$NetBSD: rs600.c,v 1.3 2018/08/27 04:58:36 riastradh Exp $	*/
+/*	$NetBSD: rs600.c,v 1.4 2018/08/27 07:52:42 riastradh Exp $	*/
 
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
@@ -38,7 +38,7 @@
  * of the RS600 GART block).
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rs600.c,v 1.3 2018/08/27 04:58:36 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rs600.c,v 1.4 2018/08/27 07:52:42 riastradh Exp $");
 
 #include <drm/drmP.h>
 #include "radeon.h"
@@ -663,7 +663,7 @@ void rs600_gart_set_page(struct radeon_device *rdev, unsigned i,
 			 uint64_t entry)
 {
 	void __iomem *ptr = (void *)rdev->gart.ptr;
-	writeq(entry, ptr + (i * 8));
+	writeq(entry, (char __iomem *)ptr + (i * 8));
 }
 
 #ifdef __NetBSD__
