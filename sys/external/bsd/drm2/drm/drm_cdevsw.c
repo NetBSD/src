@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_cdevsw.c,v 1.9 2018/08/27 07:54:07 riastradh Exp $	*/
+/*	$NetBSD: drm_cdevsw.c,v 1.10 2018/08/27 14:11:04 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_cdevsw.c,v 1.9 2018/08/27 07:54:07 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_cdevsw.c,v 1.10 2018/08/27 14:11:04 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -148,7 +148,7 @@ drm_open(dev_t d, int flags, int fmt, struct lwp *l)
 	}
 	firstopen = (dev->open_count == 0);
 	dev->open_count++;
-	mutex_lock(&drm_global_mutex);
+	mutex_unlock(&drm_global_mutex);
 
 	if (firstopen) {
 		/* XXX errno Linux->NetBSD */
