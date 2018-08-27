@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_work.c,v 1.20 2018/08/27 15:00:57 riastradh Exp $	*/
+/*	$NetBSD: linux_work.c,v 1.21 2018/08/27 15:01:13 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_work.c,v 1.20 2018/08/27 15:00:57 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_work.c,v 1.21 2018/08/27 15:01:13 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/atomic.h>
@@ -611,20 +611,30 @@ cancel_delayed_work(struct delayed_work *dw)
 		case DELAYED_WORK_SCHEDULED:
 		case DELAYED_WORK_RESCHEDULED:
 		case DELAYED_WORK_CANCELLED:
-			if (callout_stop(&dw->dw_callout)) {
-				/*
-				 * Too late to stop, but we got in
-				 * before the callout acquired the
-				 * lock.  Tell it to give up.
-				 */
-				dw->dw_state = DELAYED_WORK_CANCELLED;
-			} else {
-				/* Stopped it.  Kill it.  */
-				callout_destroy(&dw->dw_callout);
-				TAILQ_REMOVE(&wq->wq_delayed, dw, dw_entry);
-				dw->dw_state = DELAYED_WORK_IDLE;
-			}
+			/*
+			 * If it is scheduled, mark it cancelled and
+			 * try to stop the callout before it starts.
+			 *
+			 * If it's too late and the callout has already
+			 * begun to execute, tough.
+			 *
+			 * If we stopped the callout before it started,
+			 * however, then destroy the callout and
+			 * dissociate it from the workqueue ourselves.
+			 *
+			 * XXX This logic is duplicated in the
+			 * DELAYED_WORK_CANCELLED case of
+			 * linux_workqueue_timeout.
+			 */
+			dw->dw_state = DELAYED_WORK_CANCELLED;
 			cancelled_p = true;
+			if (callout_stop(&dw->dw_callout))
+				break;
+			KASSERT(dw->dw_state == DELAYED_WORK_CANCELLED);
+			dw->dw_state = DELAYED_WORK_IDLE;
+			callout_destroy(&dw->dw_callout);
+			TAILQ_REMOVE(&wq->wq_delayed, dw, dw_entry);
+			release_work(&dw->work, wq);
 			break;
 		default:
 			panic("invalid delayed work state: %d",
