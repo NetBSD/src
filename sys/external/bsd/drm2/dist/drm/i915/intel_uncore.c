@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_uncore.c,v 1.7 2018/08/27 04:58:24 riastradh Exp $	*/
+/*	$NetBSD: intel_uncore.c,v 1.8 2018/08/27 07:29:20 riastradh Exp $	*/
 
 /*
  * Copyright © 2013 Intel Corporation
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_uncore.c,v 1.7 2018/08/27 04:58:24 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_uncore.c,v 1.8 2018/08/27 07:29:20 riastradh Exp $");
 
 #include "i915_drv.h"
 #include "intel_drv.h"
@@ -1299,9 +1299,9 @@ void intel_uncore_destroy(struct drm_device *dev)
 	struct drm_i915_private *const dev_priv = dev->dev_private;
 	unsigned i;
 
-	for (i = 0; i < FW_DOMAIN_ID_COUNT) {
+	for (i = 0; i < FW_DOMAIN_ID_COUNT; i++) {
 		if (dev_priv->uncore.fw_domains & (1u << i))
-			teardown_timer(&dev_priv->uncore.fw_domwin[i].timer);
+			teardown_timer(&dev_priv->uncore.fw_domain[i].timer);
 	}
 #endif
 }
