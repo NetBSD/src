@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_ttm.c,v 1.3 2018/08/27 14:04:50 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_ttm.c,v 1.4 2018/08/27 15:22:54 riastradh Exp $	*/
 
 /*
  * Copyright 2009 Jerome Glisse.
@@ -32,7 +32,7 @@
  *    Dave Airlie
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_ttm.c,v 1.3 2018/08/27 14:04:50 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_ttm.c,v 1.4 2018/08/27 15:22:54 riastradh Exp $");
 
 #include <ttm/ttm_bo_api.h>
 #include <ttm/ttm_bo_driver.h>
@@ -687,8 +687,8 @@ static int amdgpu_ttm_tt_populate(struct ttm_tt *ttm)
 	struct amdgpu_ttm_tt *gtt = (void *)ttm;
 #ifndef __NetBSD__
 	unsigned i;
-	int r;
 #endif
+	int r;
 	bool slave = !!(ttm->page_flags & TTM_PAGE_FLAG_SG);
 
 	if (ttm->state != tt_unpopulated)
@@ -709,14 +709,17 @@ static int amdgpu_ttm_tt_populate(struct ttm_tt *ttm)
 	}
 
 	if (slave && ttm->sg) {
-#ifdef __NetBSD__		/* XXX drm prime */
-		return -EINVAL;
+#ifdef __NetBSD__
+		r = drm_prime_bus_dmamap_load_sgt(ttm->bdev->dmat,
+		    gtt->ttm.dma_address, ttm->sg);
+		if (r)
+			return r;
 #else
 		drm_prime_sg_to_page_addr_arrays(ttm->sg, ttm->pages,
 						 gtt->ttm.dma_address, ttm->num_pages);
+#endif
 		ttm->state = tt_unbound;
 		return 0;
-#endif
 	}
 
 #ifdef __NetBSD__

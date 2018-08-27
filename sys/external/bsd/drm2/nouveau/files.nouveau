@@ -1,4 +1,4 @@
-#	$NetBSD: files.nouveau,v 1.17 2018/08/27 06:35:09 riastradh Exp $
+#	$NetBSD: files.nouveau,v 1.18 2018/08/27 15:22:55 riastradh Exp $
 
 define	nouveaufbbus	{ }
 device	nouveau: drmkms, drmkms_ttm, nouveaufbbus
@@ -64,7 +64,7 @@ file	external/bsd/drm2/dist/drm/nouveau/nouveau_nv84_fence.c	nouveau
 #file	external/bsd/drm2/dist/drm/nouveau/nouveau_nvc0_fbcon.c	nouveau
 file	external/bsd/drm2/dist/drm/nouveau/nouveau_nvc0_fence.c	nouveau
 file	external/bsd/drm2/dist/drm/nouveau/nouveau_nvif.c	nouveau
-#file	external/bsd/drm2/dist/drm/nouveau/nouveau_prime.c	nouveau # XXX nouveau prime
+file	external/bsd/drm2/dist/drm/nouveau/nouveau_prime.c	nouveau
 file	external/bsd/drm2/dist/drm/nouveau/nouveau_sgdma.c	nouveau
 #file	external/bsd/drm2/dist/drm/nouveau/nouveau_sysfs.c	nouveau
 file	external/bsd/drm2/dist/drm/nouveau/nouveau_ttm.c	nouveau

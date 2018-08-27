@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_fops.c,v 1.13 2018/08/27 14:20:11 riastradh Exp $	*/
+/*	$NetBSD: drm_fops.c,v 1.14 2018/08/27 15:22:54 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_fops.c,v 1.13 2018/08/27 14:20:11 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_fops.c,v 1.14 2018/08/27 15:22:54 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/select.h>
@@ -78,10 +78,8 @@ drm_open_file(struct drm_file *file, void *fp, struct drm_minor *minor)
 
 	if (drm_core_check_feature(dev, DRIVER_GEM))
 		drm_gem_open(dev, file);
-#ifndef __NetBSD__		/* XXX drm prime */
 	if (drm_core_check_feature(dev, DRIVER_PRIME))
 		drm_prime_init_file_private(&file->prime);
-#endif
 
 	if (dev->driver->open) {
 		ret = (*dev->driver->open)(dev, file);
@@ -109,10 +107,8 @@ fail1:	/*
 	if (dev->driver->postclose)
 		(*dev->driver->postclose)(dev, file);
 fail0:
-#ifndef __NetBSD__		/* XXX drm prime */
 	if (drm_core_check_feature(dev, DRIVER_PRIME))
 		drm_prime_destroy_file_private(&file->prime);
-#endif
 	if (drm_core_check_feature(dev, DRIVER_GEM))
 		drm_gem_release(dev, file);
 	return ret;
@@ -244,10 +240,8 @@ drm_close_file(struct drm_file *file)
 	if (dev->driver->postclose)
 		(*dev->driver->postclose)(dev, file);
 
-#ifndef __NetBSD__		/* XXX drm prime */
 	if (drm_core_check_feature(dev, DRIVER_PRIME))
 		drm_prime_destroy_file_private(&file->prime);
-#endif
 
 	seldestroy(&file->event_selq);
 	DRM_DESTROY_WAITQUEUE(&file->event_wait);
