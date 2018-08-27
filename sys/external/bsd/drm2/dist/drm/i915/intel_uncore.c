@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_uncore.c,v 1.8 2018/08/27 07:29:20 riastradh Exp $	*/
+/*	$NetBSD: intel_uncore.c,v 1.9 2018/08/27 13:43:39 riastradh Exp $	*/
 
 /*
  * Copyright © 2013 Intel Corporation
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_uncore.c,v 1.8 2018/08/27 07:29:20 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_uncore.c,v 1.9 2018/08/27 13:43:39 riastradh Exp $");
 
 #include "i915_drv.h"
 #include "intel_drv.h"
@@ -1288,17 +1288,16 @@ void intel_uncore_init(struct drm_device *dev)
 
 void intel_uncore_fini(struct drm_device *dev)
 {
-	/* Paranoia: make sure we have disabled everything before we exit. */
-	intel_uncore_sanitize(dev);
-	intel_uncore_forcewake_reset(dev, false);
-}
-
-void intel_uncore_destroy(struct drm_device *dev)
-{
 #ifdef __NetBSD__
 	struct drm_i915_private *const dev_priv = dev->dev_private;
 	unsigned i;
+#endif
 
+	/* Paranoia: make sure we have disabled everything before we exit. */
+	intel_uncore_sanitize(dev);
+	intel_uncore_forcewake_reset(dev, false);
+
+#ifdef __NetBSD__
 	for (i = 0; i < FW_DOMAIN_ID_COUNT; i++) {
 		if (dev_priv->uncore.fw_domains & (1u << i))
 			teardown_timer(&dev_priv->uncore.fw_domain[i].timer);
