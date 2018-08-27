@@ -1,4 +1,4 @@
-/*	$NetBSD: module.h,v 1.5 2014/11/12 02:24:40 christos Exp $	*/
+/*	$NetBSD: module.h,v 1.6 2018/08/27 07:33:53 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -31,6 +31,9 @@
 
 #ifndef _LINUX_MODULE_H_
 #define _LINUX_MODULE_H_
+
+/* XXX Get this first so we don't nuke the module_init declaration.  */
+#include <sys/module.h>
 
 #include <linux/export.h>
 #include <linux/moduleparam.h>
