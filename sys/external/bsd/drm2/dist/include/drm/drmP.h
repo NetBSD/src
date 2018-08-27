@@ -1,4 +1,4 @@
-/*	$NetBSD: drmP.h,v 1.18 2018/08/27 06:42:41 riastradh Exp $	*/
+/*	$NetBSD: drmP.h,v 1.19 2018/08/27 06:43:24 riastradh Exp $	*/
 
 /*
  * Internal Header for the Direct Rendering Manager
@@ -40,6 +40,7 @@
 #include <linux/dma-mapping.h>
 #include <linux/file.h>
 #include <linux/fs.h>
+#include <linux/err.h>
 #include <linux/highmem.h>
 #include <linux/idr.h>
 #include <linux/init.h>

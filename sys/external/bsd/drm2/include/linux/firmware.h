@@ -1,4 +1,4 @@
-/*	$NetBSD: firmware.h,v 1.6 2014/08/06 13:51:12 riastradh Exp $	*/
+/*	$NetBSD: firmware.h,v 1.7 2018/08/27 06:43:24 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 struct device;
 
 struct firmware {
-	void			*data;
+	char			*data;
 	size_t			size;
 };
 
