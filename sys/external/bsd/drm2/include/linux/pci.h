@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.h,v 1.30 2018/08/27 07:47:32 riastradh Exp $	*/
+/*	$NetBSD: pci.h,v 1.31 2018/08/27 13:39:21 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -204,7 +204,7 @@ linux_pci_dev_init(struct pci_dev *pdev, device_t dev,
 #endif
 	pdev->bus = kmem_zalloc(sizeof(struct pci_bus), KM_NOSLEEP);
 	pdev->bus->pb_pc = pa->pa_pc;
-	pdev->bus->pb_dev = device_parent(dev);
+	pdev->bus->pb_dev = dev == NULL ? NULL : device_parent(dev);
 	pdev->bus->number = pa->pa_bus;
 	pdev->devfn = PCI_DEVFN(pa->pa_device, pa->pa_function);
 	pdev->vendor = PCI_VENDOR(pa->pa_id);
