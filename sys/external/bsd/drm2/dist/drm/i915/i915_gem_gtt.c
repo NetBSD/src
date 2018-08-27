@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem_gtt.c,v 1.6 2018/08/27 06:08:25 riastradh Exp $	*/
+/*	$NetBSD: i915_gem_gtt.c,v 1.7 2018/08/27 06:33:21 riastradh Exp $	*/
 
 /*
  * Copyright © 2010 Daniel Vetter
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gem_gtt.c,v 1.6 2018/08/27 06:08:25 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gem_gtt.c,v 1.7 2018/08/27 06:33:21 riastradh Exp $");
 
 #include <linux/err.h>
 #include <linux/seq_file.h>
@@ -2168,7 +2168,6 @@ static void gen6_scratch_va_range(struct i915_hw_ppgtt *ppgtt,
 	gen6_for_each_pde(unused, &ppgtt->pd, start, length, temp, pde)
 		ppgtt->pd.page_table[pde] = ppgtt->base.scratch_pt;
 }
-#endif
 
 static int gen6_ppgtt_init(struct i915_hw_ppgtt *ppgtt)
 {
