@@ -1,4 +1,4 @@
-/*	$NetBSD: device.h,v 1.4 2014/07/16 20:59:58 riastradh Exp $	*/
+/*	$NetBSD: device.h,v 1.5 2018/08/27 07:33:35 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -35,11 +35,17 @@
 #include <sys/types.h>
 #include <sys/systm.h>
 
+#define	dev_crit(DEV, FMT, ...)					\
+	aprint_error_dev((DEV), "critical: " FMT, ##__VA_ARGS__)
+
 #define	dev_err(DEV, FMT, ...)					\
 	aprint_error_dev((DEV), "error: " FMT, ##__VA_ARGS__)
 
 #define	dev_warn(DEV, FMT, ...)					\
 	aprint_error_dev((DEV), "warning: " FMT, ##__VA_ARGS__)
+
+#define	dev_notice(DEV, FMT, ...)					\
+	aprint_normal_dev((DEV), "notice: " FMT, ##__VA_ARGS__)
 
 #define	dev_info(DEV, FMT, ...)					\
 	aprint_normal_dev((DEV), "info: " FMT, ##__VA_ARGS__)
