@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_fbdev.c,v 1.8 2018/08/27 07:55:28 riastradh Exp $	*/
+/*	$NetBSD: intel_fbdev.c,v 1.9 2018/08/27 07:55:39 riastradh Exp $	*/
 
 /*
  * Copyright © 2007 David Airlie
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_fbdev.c,v 1.8 2018/08/27 07:55:28 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_fbdev.c,v 1.9 2018/08/27 07:55:39 riastradh Exp $");
 
 #include <linux/async.h>
 #include <linux/module.h>
@@ -327,8 +327,10 @@ static int intelfb_create(struct drm_fb_helper *helper,
 #endif
 	return 0;
 
+#ifndef __NetBSD__
 out_destroy_fbi:
 	drm_fb_helper_release_fbi(helper);
+#endif
 out_unpin:
 	i915_gem_object_ggtt_unpin(obj);
 	drm_gem_object_unreference(&obj->base);
