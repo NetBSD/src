@@ -1,4 +1,4 @@
-#	$NetBSD: files.drmkms,v 1.19 2018/08/27 06:31:41 riastradh Exp $
+#	$NetBSD: files.drmkms,v 1.20 2018/08/27 06:33:08 riastradh Exp $
 
 include "external/bsd/drm2/linux/files.drmkms_linux"
 
@@ -61,15 +61,15 @@ file	external/bsd/drm2/dist/drm/drm_drv.c	drmkms
 file	external/bsd/drm2/dist/drm/drm_edid.c	drmkms
 file	external/bsd/drm2/dist/drm/drm_encoder_slave.c	drmkms
 file	external/bsd/drm2/dist/drm/drm_flip_work.c	drmkms
-file	external/bsd/drm2/dist/drm/drm_fops.c	drmkms
+file	external/bsd/drm2/drm/drm_fops.c	drmkms
 file	external/bsd/drm2/dist/drm/drm_gem.c	drmkms
 file	external/bsd/drm2/dist/drm/drm_global.c	drmkms
 file	external/bsd/drm2/dist/drm/drm_hashtab.c	drmkms
 #file	external/bsd/drm2/dist/drm/drm_info.c	drmkms
 file	external/bsd/drm2/dist/drm/drm_ioctl.c	drmkms
 file	external/bsd/drm2/dist/drm/drm_irq.c	drmkms
-file	external/bsd/drm2/dist/drm/drm_lock.c	drmkms
-file	external/bsd/drm2/dist/drm/drm_memory.c	drmkms
+file	external/bsd/drm2/drm/drm_lock.c	drmkms
+file	external/bsd/drm2/drm/drm_memory.c	drmkms
 file	external/bsd/drm2/dist/drm/drm_mm.c	drmkms
 file	external/bsd/drm2/dist/drm/drm_modes.c	drmkms
 file	external/bsd/drm2/dist/drm/drm_modeset_lock.c	drmkms
@@ -79,8 +79,8 @@ file	external/bsd/drm2/dist/drm/drm_plane_helper.c	drmkms
 #file	external/bsd/drm2/dist/drm/drm_prime.c	drmkms  # XXX drm prime
 file	external/bsd/drm2/dist/drm/drm_probe_helper.c	drmkms
 file	external/bsd/drm2/dist/drm/drm_rect.c	drmkms
-file	external/bsd/drm2/dist/drm/drm_scatter.c	drmkms
+file	external/bsd/drm2/drm/drm_scatter.c	drmkms
 file	external/bsd/drm2/drm/drm_sysfs.c	drmkms
 file	external/bsd/drm2/dist/drm/drm_trace_points.c	drmkms
-file	external/bsd/drm2/dist/drm/drm_vm.c	drmkms
-file	external/bsd/drm2/dist/drm/drm_vma_manager.c	drmkms
+file	external/bsd/drm2/drm/drm_vm.c	drmkms
+file	external/bsd/drm2/drm/drm_vma_manager.c	drmkms
