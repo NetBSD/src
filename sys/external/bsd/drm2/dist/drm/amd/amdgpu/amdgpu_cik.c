@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_cik.c,v 1.1 2018/08/27 14:22:31 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_cik.c,v 1.2 2018/08/27 14:23:31 riastradh Exp $	*/
 
 /*
  * Copyright 2012 Advanced Micro Devices, Inc.
@@ -24,7 +24,7 @@
  * Authors: Alex Deucher
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_cik.c,v 1.1 2018/08/27 14:22:31 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_cik.c,v 1.2 2018/08/27 14:23:31 riastradh Exp $");
 
 #include <linux/firmware.h>
 #include <linux/slab.h>
@@ -1566,6 +1566,7 @@ static int cik_set_vce_clocks(struct amdgpu_device *adev, u32 evclk, u32 ecclk)
 
 static void cik_pcie_gen3_enable(struct amdgpu_device *adev)
 {
+#ifndef __NetBSD__		/* XXX amdgpu pcie */
 	struct pci_dev *root = adev->pdev->bus->self;
 	int bridge_pos, gpu_pos;
 	u32 speed_cntl, mask, current_data_rate;
@@ -1726,6 +1727,7 @@ static void cik_pcie_gen3_enable(struct amdgpu_device *adev)
 			break;
 		udelay(1);
 	}
+#endif
 }
 
 static void cik_program_aspm(struct amdgpu_device *adev)
@@ -1813,6 +1815,9 @@ static void cik_program_aspm(struct amdgpu_device *adev)
 				WREG32_PCIE(ixPCIE_LC_LINK_WIDTH_CNTL, data);
 
 			if (!disable_clkreq) {
+#ifdef __NetBSD__		/* XXX amdgpu pcie */
+				clk_req_support = false;
+#else
 				struct pci_dev *root = adev->pdev->bus->self;
 				u32 lnkcap;
 
@@ -1820,6 +1825,7 @@ static void cik_program_aspm(struct amdgpu_device *adev)
 				pcie_capability_read_dword(root, PCI_EXP_LNKCAP, &lnkcap);
 				if (lnkcap & PCI_EXP_LNKCAP_CLKPM)
 					clk_req_support = true;
+#endif
 			} else {
 				clk_req_support = false;
 			}
