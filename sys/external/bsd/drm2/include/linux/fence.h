@@ -1,4 +1,4 @@
-/*	$NetBSD: fence.h,v 1.13 2018/08/27 13:54:59 riastradh Exp $	*/
+/*	$NetBSD: fence.h,v 1.14 2018/08/27 14:01:01 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -86,6 +86,7 @@ struct fence_cb {
 #define	fence_get		linux_fence_get
 #define	fence_get_rcu		linux_fence_get_rcu
 #define	fence_init		linux_fence_init
+#define	fence_is_later		linux_fence_is_later
 #define	fence_is_signaled	linux_fence_is_signaled
 #define	fence_is_signaled_locked linux_fence_is_signaled_locked
 #define	fence_put		linux_fence_put
@@ -93,6 +94,7 @@ struct fence_cb {
 #define	fence_signal		linux_fence_signal
 #define	fence_signal_locked	linux_fence_signal_locked
 #define	fence_wait		linux_fence_wait
+#define	fence_wait_any_timeout	linux_fence_wait_any_timeout
 #define	fence_wait_timeout	linux_fence_wait_timeout
 
 void	fence_init(struct fence *, const struct fence_ops *, spinlock_t *,
@@ -102,6 +104,7 @@ void	fence_free(struct fence *);
 
 unsigned
 	fence_context_alloc(unsigned);
+bool	fence_is_later(struct fence *, struct fence *);
 
 struct fence *
 	fence_get(struct fence *);
@@ -119,6 +122,7 @@ int	fence_signal(struct fence *);
 int	fence_signal_locked(struct fence *);
 long	fence_default_wait(struct fence *, bool, long);
 long	fence_wait(struct fence *, bool);
+long	fence_wait_any_timeout(struct fence **, uint32_t, bool, long);
 long	fence_wait_timeout(struct fence *, bool, long);
 
 static inline void
