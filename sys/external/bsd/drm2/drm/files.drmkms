@@ -1,4 +1,4 @@
-#	$NetBSD: files.drmkms,v 1.14 2017/12/26 14:53:12 jmcneill Exp $
+#	$NetBSD: files.drmkms,v 1.15 2018/08/27 06:25:28 riastradh Exp $
 
 include "external/bsd/drm2/linux/files.drmkms_linux"
 
@@ -29,6 +29,17 @@ makeoptions	drmkms	CPPFLAGS+="-D__KERNEL__"
 makeoptions	drmkms	CPPFLAGS+="-DCONFIG_FB=0"
 makeoptions	drmkms	CPPFLAGS+="-DCONFIG_BACKLIGHT_CLASS_DEVICE=0"
 makeoptions	drmkms	CPPFLAGS+="-DCONFIG_BACKLIGHT_CLASS_DEVICE_MODULE=0"
+
+file	external/bsd/drm2/drm/drm_gem_vm.c		drmkms
+file	external/bsd/drm2/drm/drm_gem_cma_helper.c	drmkms
+file	external/bsd/drm2/drm/drm_module.c		drmkms
+file	external/bsd/drm2/drm/drm_sysctl.c		drmkms
+
+# Generic, unaccelerated drm-based framebuffer.
+define	drmfb: genfb
+file	external/bsd/drm2/drm/drmfb.c			drmfb
+
+include "external/bsd/drm2/ttm/files.ttm"
 
 file	external/bsd/drm2/dist/drm/drm_auth.c		drmkms
 file	external/bsd/drm2/dist/drm/drm_buffer.c		drmkms
@@ -66,14 +77,3 @@ file	external/bsd/drm2/dist/drm/drm_stub.c		drmkms
 file	external/bsd/drm2/drm/drm_sysfs.c		drmkms
 file	external/bsd/drm2/drm/drm_vm.c			drmkms
 file	external/bsd/drm2/drm/drm_vma_manager.c		drmkms
-
-file	external/bsd/drm2/drm/drm_gem_vm.c		drmkms
-file	external/bsd/drm2/drm/drm_gem_cma_helper.c	drmkms
-file	external/bsd/drm2/drm/drm_module.c		drmkms
-file	external/bsd/drm2/drm/drm_sysctl.c		drmkms
-
-# Generic, unaccelerated drm-based framebuffer.
-define	drmfb: genfb
-file	external/bsd/drm2/drm/drmfb.c			drmfb
-
-include "external/bsd/drm2/ttm/files.ttm"	
