@@ -1,4 +1,4 @@
-/*	$NetBSD: libkern.h,v 1.128 2018/08/20 15:04:52 maxv Exp $	*/
+/*	$NetBSD: libkern.h,v 1.129 2018/08/27 08:53:19 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -371,7 +371,7 @@ void	*memmem(const void *, size_t, const void *, size_t);
 #if __GNUC_PREREQ__(2, 95) && !defined(_STANDALONE)
 #if defined(_KERNEL) && defined(KASAN)
 void	*kasan_memset(void *, int, size_t);
-int	kasan_memcmp(const void *, const void *, size_t);
+int	 kasan_memcmp(const void *, const void *, size_t);
 void	*kasan_memcpy(void *, const void *, size_t);
 #define	memcpy(d, s, l)		kasan_memcpy(d, s, l)
 #define	memcmp(a, b, l)		kasan_memcmp(a, b, l)
@@ -389,9 +389,18 @@ size_t	 strlen(const char *);
 size_t	 strnlen(const char *, size_t);
 char	*strsep(char **, const char *);
 #if __GNUC_PREREQ__(2, 95) && !defined(_STANDALONE)
+#if defined(_KERNEL) && defined(KASAN)
+char	*kasan_strcpy(char *, const char *);
+int	 kasan_strcmp(const char *, const char *);
+size_t	 kasan_strlen(const char *);
+#define	strcpy(d, s)		kasan_strcpy(d, s)
+#define	strcmp(a, b)		kasan_strcmp(a, b)
+#define	strlen(a)		kasan_strlen(a)
+#else
 #define	strcpy(d, s)		__builtin_strcpy(d, s)
 #define	strcmp(a, b)		__builtin_strcmp(a, b)
 #define	strlen(a)		__builtin_strlen(a)
+#endif /* _KERNEL && KASAN */
 #endif
 
 /* Functions for which we always use built-ins. */
