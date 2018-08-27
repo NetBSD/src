@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_cache.c,v 1.10 2018/08/27 15:23:57 riastradh Exp $	*/
+/*	$NetBSD: drm_cache.c,v 1.11 2018/08/27 15:24:27 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_cache.c,v 1.10 2018/08/27 15:23:57 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_cache.c,v 1.11 2018/08/27 15:24:27 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -49,6 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: drm_cache.c,v 1.10 2018/08/27 15:23:57 riastradh Exp
 #if defined(DRM_CLFLUSH)
 static bool		drm_md_clflush_finegrained_p(void);
 static void		drm_md_clflush_all(void);
+static void		drm_md_clflush_begin(void);
 static void		drm_md_clflush_commit(void);
 static void		drm_md_clflush_page(struct page *);
 static void		drm_md_clflush_virt_range(const void *, size_t);
@@ -59,6 +60,7 @@ drm_clflush_pages(struct page **pages, unsigned long npages)
 {
 #if defined(DRM_CLFLUSH)
 	if (drm_md_clflush_finegrained_p()) {
+		drm_md_clflush_begin();
 		while (npages--)
 			drm_md_clflush_page(pages[npages]);
 		drm_md_clflush_commit();
@@ -75,6 +77,7 @@ drm_clflush_pglist(struct pglist *list)
 	if (drm_md_clflush_finegrained_p()) {
 		struct vm_page *page;
 
+		drm_md_clflush_begin();
 		TAILQ_FOREACH(page, list, pageq.queue)
 			drm_md_clflush_page(container_of(page, struct page,
 				p_vmp));
@@ -90,6 +93,7 @@ drm_clflush_page(struct page *page)
 {
 #if defined(DRM_CLFLUSH)
 	if (drm_md_clflush_finegrained_p()) {
+		drm_md_clflush_begin();
 		drm_md_clflush_page(page);
 		drm_md_clflush_commit();
 	} else {
@@ -103,6 +107,7 @@ drm_clflush_virt_range(const void *vaddr, size_t nbytes)
 {
 #if defined(DRM_CLFLUSH)
 	if (drm_md_clflush_finegrained_p()) {
+		drm_md_clflush_begin();
 		drm_md_clflush_virt_range(vaddr, nbytes);
 		drm_md_clflush_commit();
 	} else {
@@ -122,19 +127,6 @@ drm_md_clflush_finegrained_p(void)
 }
 
 static void
-drm_x86_clflush(const void *vaddr)
-{
-	asm volatile ("clflush %0" : : "m" (*(const char *)vaddr));
-}
-
-static size_t
-drm_x86_clflush_size(void)
-{
-	KASSERT(drm_md_clflush_finegrained_p());
-	return cpu_info_primary.ci_cflush_lsize;
-}
-
-static void
 drm_x86_clflush_xc(void *arg0 __unused, void *arg1 __unused)
 {
 	wbinvd();
@@ -147,8 +139,16 @@ drm_md_clflush_all(void)
 }
 
 static void
+drm_md_clflush_begin(void)
+{
+	/* Support for CLFLUSH implies support for MFENCE.  */
+	x86_mfence();
+}
+
+static void
 drm_md_clflush_commit(void)
 {
+	x86_mfence();
 }
 
 static void
@@ -162,36 +162,19 @@ drm_md_clflush_page(struct page *page)
 }
 
 static void
-drm_md_clflush_virt_range(const void *vaddr, size_t nbytes)
+drm_md_clflush_virt_range(const void *ptr, size_t nbytes)
 {
-	const unsigned clflush_size = drm_x86_clflush_size();
-	const vaddr_t va = (vaddr_t)vaddr;
-	const char *const start = (const void *)rounddown(va, clflush_size);
-	const char *const end = (const void *)roundup(va + nbytes,
-	    clflush_size);
-	const char *p;
+	const unsigned clflush_size = cpu_info_primary.ci_cflush_lsize;
+	const vaddr_t vaddr = (vaddr_t)ptr;
+	const vaddr_t start = rounddown(vaddr, clflush_size);
+	const vaddr_t end = roundup(vaddr + nbytes, clflush_size);
+	vaddr_t va;
 
-	/* Support for CLFLUSH implies support for MFENCE.  */
-	KASSERT(drm_md_clflush_finegrained_p());
-	x86_mfence();
-	for (p = start; p < end; p += clflush_size)
-		drm_x86_clflush(p);
-	x86_mfence();
+	for (va = start; va < end; va += clflush_size)
+		asm volatile ("clflush %0" : : "m" (*(const char *)va));
 }
 
 #elif defined(__powerpc__)
-
-static void
-drm_ppc_dcbf(vaddr_t va, vsize_t off)
-{
-	asm volatile ("dcbf\t%0,%1" : : "b"(va), "r"(off));
-}
-
-static void
-drm_ppc_sync(void)
-{
-	asm volatile ("sync" ::: "memory");
-}
 
 static bool
 drm_md_clflush_finegrained_p(void)
@@ -206,9 +189,14 @@ drm_md_clflush_all(void)
 }
 
 static void
+drm_md_clflush_begin(void)
+{
+}
+
+static void
 drm_md_clflush_commit(void)
 {
-	drm_ppc_sync();
+	asm volatile ("sync" ::: "memory");
 }
 
 static void
@@ -232,7 +220,7 @@ drm_md_clflush_virt_range(const void *ptr, size_t nbytes)
 	vsize_t off;
 
 	for (off = 0; off < len; off += dcsize)
-		drm_ppc_dcbf(start, off);
+		asm volatile ("dcbf\t%0,%1" : : "b"(start), "r"(off));
 }
 
 #endif
