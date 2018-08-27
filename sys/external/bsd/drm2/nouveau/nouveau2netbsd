@@ -1,6 +1,6 @@
 #!/bin/sh
 
-#	$NetBSD: nouveau2netbsd,v 1.4 2018/08/27 00:46:10 riastradh Exp $
+#	$NetBSD: nouveau2netbsd,v 1.5 2018/08/27 00:46:21 riastradh Exp $
 #
 # $ /path/to/nouveau2netbsd > /path/to/files.nouveau.new
 #
@@ -82,35 +82,6 @@ while read from to; do
 	if [ "x$from" != "x$to" ]; then
 		${MV} -f -- "$from" "$to"
 	fi
-        # Probably not necessary -- Linux tends not to have RCS ids --
-        # but a precaution out of paranoia.
-        cleantags "$to"
-	case $to in
-	*.c)
-		# Heuristically apply NetBSD RCS ids: a comment at the
-		# top of the file, and a __KERNEL_RCSID before the
-		# first cpp line, which, with any luck, should be the
-		# first non-comment line and lie between the copyright
-		# notice and the header.
-		awk '
-			BEGIN {
-				done = 0
-				printf("/*\t%c%s%c\t*/\n\n", "$","NetBSD","$")
-			}
-			/^#/ && !done {
-				printf("#include <sys/cdefs.h>\n")
-				printf("__KERNEL_RCSID(0, \"%c%s%c\");\n",
-				    "$","NetBSD","$")
-				printf("\n")
-				done = 1
-			}
-			{
-				print
-			}
-		' < "$to" > "$to".tmp
-		;;
-	esac
-	mv -f -- "$to".tmp "$to"
 	printf 'file\t%s\t%s\n' "$nouveau_top/$to" "$nouveau_flag"
 done < "$filemap" | sort
 
