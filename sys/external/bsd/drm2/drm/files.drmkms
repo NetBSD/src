@@ -1,4 +1,4 @@
-#	$NetBSD: files.drmkms,v 1.20 2018/08/27 06:33:08 riastradh Exp $
+#	$NetBSD: files.drmkms,v 1.21 2018/08/27 06:37:41 riastradh Exp $
 
 include "external/bsd/drm2/linux/files.drmkms_linux"
 
@@ -13,11 +13,16 @@ define	drmkms: drmkms_linux, drmkms_i2c, linux
 defflag		opt_drmkms.h	DRMKMS_DEBUG
 makeoptions 	drmkms	CPPFLAGS+="-I$S/external/bsd/drm2/include"
 makeoptions	drmkms_ttm	CPPFLAGS+="-I$S/external/bsd/drm2/include/drm"
-makeoptions 	drmkms	CPPFLAGS+="-I$S/external/bsd/drm2/dist"
+makeoptions 	drmkms	CPPFLAGS+="-I$S/external/bsd/common/include"
 makeoptions 	drmkms	CPPFLAGS+="-I$S/external/bsd/drm2/dist/include"
 makeoptions 	drmkms	CPPFLAGS+="-I$S/external/bsd/drm2/dist/include/drm"
 makeoptions 	drmkms	CPPFLAGS+="-I$S/external/bsd/drm2/dist/uapi"
-makeoptions 	drmkms	CPPFLAGS+="-I$S/external/bsd/common/include"
+
+# Must come last because some header file names are repeated in
+# dist/drm (I'm looking ta you, drm_legacy.h), while others sometimes
+# explicitly write <uapi/...>.  (Maybe that should have been imported
+# under dist/include/uapi rather than dist/uapi.)
+makeoptions 	drmkms	CPPFLAGS+="-I$S/external/bsd/drm2/dist"
 
 makeoptions 	drmkms 	"CWARNFLAGS.drm_crtc.c"+="-Wno-shadow"
 makeoptions 	drmkms 	"CWARNFLAGS.drm_crtc.c"+="-Wno-missing-field-initializers"
