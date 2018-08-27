@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_module.c,v 1.12 2018/08/27 15:31:27 riastradh Exp $	*/
+/*	$NetBSD: drm_module.c,v 1.13 2018/08/27 15:32:51 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_module.c,v 1.12 2018/08/27 15:31:27 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_module.c,v 1.13 2018/08/27 15:32:51 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/condvar.h>
@@ -84,6 +84,7 @@ drm_init(void)
 	spin_lock_init(&drm_minor_lock);
 	idr_init(&drm_minors_idr);
 	linux_mutex_init(&drm_global_mutex);
+	mutex_init(&set_unique_hook.lock, MUTEX_DEFAULT, IPL_NONE);
 	drm_connector_ida_init();
 	drm_global_init();
 	drm_sysctl_init(&drm_def);
@@ -113,6 +114,7 @@ drm_fini(void)
 	drm_sysctl_fini(&drm_def);
 	drm_global_release();
 	drm_connector_ida_destroy();
+	mutex_destroy(&set_unique_hook.lock);
 	linux_mutex_destroy(&drm_global_mutex);
 	idr_destroy(&drm_minors_idr);
 	spin_lock_destroy(&drm_minor_lock);
