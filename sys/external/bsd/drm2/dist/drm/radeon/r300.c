@@ -1,4 +1,4 @@
-/*	$NetBSD: r300.c,v 1.3 2018/08/27 04:58:36 riastradh Exp $	*/
+/*	$NetBSD: r300.c,v 1.4 2018/08/27 07:43:50 riastradh Exp $	*/
 
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
@@ -28,7 +28,7 @@
  *          Jerome Glisse
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: r300.c,v 1.3 2018/08/27 04:58:36 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: r300.c,v 1.4 2018/08/27 07:43:50 riastradh Exp $");
 
 #include <linux/seq_file.h>
 #include <linux/slab.h>
@@ -143,7 +143,7 @@ void rv370_pcie_gart_set_page(struct radeon_device *rdev, unsigned i,
 	/* on x86 we want this to be CPU endian, on powerpc
 	 * on powerpc without HW swappers, it'll get swapped on way
 	 * into VRAM - so no need for cpu_to_le32 on VRAM tables */
-	writel(addr, (uint8_t __iomem *)ptr + (i * 4));
+	writel(entry, (uint8_t __iomem *)ptr + (i * 4));
 }
 
 #ifdef __NetBSD__
