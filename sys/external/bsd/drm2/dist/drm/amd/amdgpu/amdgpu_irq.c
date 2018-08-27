@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_irq.c,v 1.3 2018/08/27 07:03:25 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_irq.c,v 1.4 2018/08/27 14:04:50 riastradh Exp $	*/
 
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
@@ -28,7 +28,7 @@
  *          Jerome Glisse
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_irq.c,v 1.3 2018/08/27 07:03:25 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_irq.c,v 1.4 2018/08/27 14:04:50 riastradh Exp $");
 
 #include <linux/irq.h>
 #include <drm/drmP.h>
@@ -174,7 +174,7 @@ void amdgpu_irq_uninstall(struct drm_device *dev)
  *
  * This is the irq handler for the amdgpu driver (all asics).
  */
-irqreturn_t amdgpu_irq_handler(int irq, void *arg)
+irqreturn_t amdgpu_irq_handler(DRM_IRQ_ARGS)
 {
 	struct drm_device *dev = (struct drm_device *) arg;
 	struct amdgpu_device *adev = dev->dev_private;

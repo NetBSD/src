@@ -1,4 +1,4 @@
-/*	$NetBSD: sdma_v3_0.c,v 1.2 2018/08/27 04:58:20 riastradh Exp $	*/
+/*	$NetBSD: sdma_v3_0.c,v 1.3 2018/08/27 14:04:50 riastradh Exp $	*/
 
 /*
  * Copyright 2014 Advanced Micro Devices, Inc.
@@ -24,9 +24,12 @@
  * Authors: Alex Deucher
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdma_v3_0.c,v 1.2 2018/08/27 04:58:20 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdma_v3_0.c,v 1.3 2018/08/27 14:04:50 riastradh Exp $");
 
 #include <linux/firmware.h>
+#include <linux/module.h>
+#include <linux/log2.h>
+#include <asm/byteorder.h>
 #include <drm/drmP.h>
 #include "amdgpu.h"
 #include "amdgpu_ucode.h"
@@ -257,7 +260,11 @@ static int sdma_v3_0_init_microcode(struct amdgpu_device *adev)
 			info->fw = adev->sdma.instance[i].fw;
 			header = (const struct common_firmware_header *)info->fw->data;
 			adev->firmware.fw_size +=
+#ifdef __NetBSD__		/* XXX ALIGN means something else.  */
+				round_up(le32_to_cpu(header->ucode_size_bytes), PAGE_SIZE);
+#else
 				ALIGN(le32_to_cpu(header->ucode_size_bytes), PAGE_SIZE);
+#endif
 		}
 	}
 out:
@@ -1151,7 +1158,7 @@ static int sdma_v3_0_sw_init(void *handle)
 		ring->doorbell_index = (i == 0) ?
 			AMDGPU_DOORBELL_sDMA_ENGINE0 : AMDGPU_DOORBELL_sDMA_ENGINE1;
 
-		sprintf(ring->name, "sdma%d", i);
+		snprintf(ring->name, sizeof ring->name, "sdma%d", i);
 		r = amdgpu_ring_init(adev, ring, 256 * 1024,
 				     SDMA_PKT_NOP_HEADER_OP(SDMA_OP_NOP), 0xf,
 				     &adev->sdma.trap_irq,

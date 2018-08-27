@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_cs.c,v 1.2 2018/08/27 04:58:19 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_cs.c,v 1.3 2018/08/27 14:04:50 riastradh Exp $	*/
 
 /*
  * Copyright 2008 Jerome Glisse.
@@ -27,7 +27,7 @@
  *    Jerome Glisse <glisse@freedesktop.org>
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_cs.c,v 1.2 2018/08/27 04:58:19 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_cs.c,v 1.3 2018/08/27 14:04:50 riastradh Exp $");
 
 #include <linux/list_sort.h>
 #include <drm/drmP.h>
@@ -143,7 +143,7 @@ static int amdgpu_cs_user_fence_chunk(struct amdgpu_cs_parser *p,
 				      struct drm_amdgpu_cs_chunk_fence *fence_data)
 {
 	struct drm_gem_object *gobj;
-	uint32_t handle;
+	uint32_t handle __unused;
 
 	handle = fence_data->handle;
 	gobj = drm_gem_object_lookup(p->adev->ddev, p->filp,
@@ -348,6 +348,7 @@ static u64 amdgpu_cs_get_threshold_for_moves(struct amdgpu_device *adev)
 	return max(bytes_moved_threshold, 1024*1024ull);
 }
 
+static
 int amdgpu_cs_list_validate(struct amdgpu_device *adev,
 			    struct amdgpu_vm *vm,
 			    struct list_head *validated)
@@ -405,7 +406,7 @@ static int amdgpu_cs_parser_relocs(struct amdgpu_cs_parser *p)
 	struct amdgpu_fpriv *fpriv = p->filp->driver_priv;
 	struct amdgpu_cs_buckets buckets;
 	struct list_head duplicates;
-	bool need_mmap_lock = false;
+	bool need_mmap_lock __diagused = false;
 	int i, r;
 
 	if (p->bo_list) {
@@ -424,8 +425,14 @@ static int amdgpu_cs_parser_relocs(struct amdgpu_cs_parser *p)
 	if (p->uf.bo)
 		list_add(&p->uf_entry.tv.head, &p->validated);
 
+#ifdef __NetBSD__
+	KASSERTMSG(!need_mmap_lock,
+	    "someone didn't finish adding support for userptr"
+	    " and it wasn't me");
+#else
 	if (need_mmap_lock)
 		down_read(&current->mm->mmap_sem);
+#endif
 
 	INIT_LIST_HEAD(&duplicates);
 	r = ttm_eu_reserve_buffers(&p->ticket, &p->validated, true, &duplicates);
@@ -443,8 +450,10 @@ error_validate:
 		ttm_eu_backoff_reservation(&p->ticket, &p->validated);
 
 error_reserve:
+#ifndef __NetBSD__
 	if (need_mmap_lock)
 		up_read(&current->mm->mmap_sem);
+#endif
 
 	return r;
 }

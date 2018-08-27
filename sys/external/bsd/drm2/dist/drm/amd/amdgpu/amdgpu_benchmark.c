@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_benchmark.c,v 1.2 2018/08/27 04:58:19 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_benchmark.c,v 1.3 2018/08/27 14:04:50 riastradh Exp $	*/
 
 /*
  * Copyright 2009 Jerome Glisse.
@@ -24,7 +24,7 @@
  * Authors: Jerome Glisse
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_benchmark.c,v 1.2 2018/08/27 04:58:19 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_benchmark.c,v 1.3 2018/08/27 14:04:50 riastradh Exp $");
 
 #include <drm/drmP.h>
 #include <drm/amdgpu_drm.h>
@@ -65,7 +65,7 @@ exit_do_move:
 static void amdgpu_benchmark_log_results(int n, unsigned size,
 					 unsigned int time,
 					 unsigned sdomain, unsigned ddomain,
-					 char *kind)
+					 const char *kind)
 {
 	unsigned int throughput = (n * (size >> 10)) / time;
 	DRM_INFO("amdgpu: %s %u bo moves of %u kB from"

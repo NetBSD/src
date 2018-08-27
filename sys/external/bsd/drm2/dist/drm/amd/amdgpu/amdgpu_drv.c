@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_drv.c,v 1.3 2018/08/27 07:03:25 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_drv.c,v 1.4 2018/08/27 14:04:50 riastradh Exp $	*/
 
 /**
  * \file amdgpu_drv.c
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_drv.c,v 1.3 2018/08/27 07:03:25 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_drv.c,v 1.4 2018/08/27 14:04:50 riastradh Exp $");
 
 #include <drm/drmP.h>
 #include <drm/amdgpu_drm.h>
@@ -288,6 +288,7 @@ MODULE_DEVICE_TABLE(pci, pciidlist);
 
 static struct drm_driver kms_driver;
 
+#if IS_ENABLED(CONFIG_FB)
 static int amdgpu_kick_out_firmware_fb(struct pci_dev *pdev)
 {
 	struct apertures_struct *ap;
@@ -308,6 +309,9 @@ static int amdgpu_kick_out_firmware_fb(struct pci_dev *pdev)
 
 	return 0;
 }
+#endif
+
+#ifndef __NetBSD__
 
 static int amdgpu_pci_probe(struct pci_dev *pdev,
 			    const struct pci_device_id *ent)
@@ -482,6 +486,13 @@ static const struct file_operations amdgpu_driver_kms_fops = {
 #endif
 };
 
+#endif	/* __NetBSD__ */
+
+#ifdef __NetBSD__
+/* XXX Kludge for the non-GEM GEM that amdgpu uses.  */
+static const struct uvm_pagerops amdgpu_gem_uvm_ops;
+#endif
+
 static struct drm_driver kms_driver = {
 	.driver_features =
 	    DRIVER_USE_AGP |
@@ -519,8 +530,15 @@ static struct drm_driver kms_driver = {
 	.dumb_create = amdgpu_mode_dumb_create,
 	.dumb_map_offset = amdgpu_mode_dumb_mmap,
 	.dumb_destroy = drm_gem_dumb_destroy,
+#ifdef __NetBSD__
+	.fops = NULL,
+	.mmap_object = &amdgpu_mmap_object,
+	.gem_uvm_ops = &amdgpu_gem_uvm_ops,
+#else
 	.fops = &amdgpu_driver_kms_fops,
+#endif
 
+#ifndef __NetBSD__		/* XXX drm prime */
 	.prime_handle_to_fd = drm_gem_prime_handle_to_fd,
 	.prime_fd_to_handle = drm_gem_prime_fd_to_handle,
 	.gem_prime_export = amdgpu_gem_prime_export,
@@ -532,6 +550,7 @@ static struct drm_driver kms_driver = {
 	.gem_prime_import_sg_table = amdgpu_gem_prime_import_sg_table,
 	.gem_prime_vmap = amdgpu_gem_prime_vmap,
 	.gem_prime_vunmap = amdgpu_gem_prime_vunmap,
+#endif
 
 	.name = DRIVER_NAME,
 	.desc = DRIVER_DESC,
@@ -540,6 +559,14 @@ static struct drm_driver kms_driver = {
 	.minor = KMS_DRIVER_MINOR,
 	.patchlevel = KMS_DRIVER_PATCHLEVEL,
 };
+
+#ifdef __NetBSD__
+
+struct drm_driver *const amdgpu_drm_driver = &kms_driver;
+const struct pci_device_id *const amdgpu_device_ids = pciidlist;
+const size_t amdgpu_n_device_ids = __arraycount(pciidlist);
+
+#else  /* __NetBSD__ */
 
 static struct drm_driver *driver;
 static struct pci_driver *pdriver;
@@ -586,3 +613,5 @@ module_exit(amdgpu_exit);
 MODULE_AUTHOR(DRIVER_AUTHOR);
 MODULE_DESCRIPTION(DRIVER_DESC);
 MODULE_LICENSE("GPL and additional rights");
+
+#endif	/* __NetBSD__ */

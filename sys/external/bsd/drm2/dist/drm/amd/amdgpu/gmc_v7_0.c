@@ -1,4 +1,4 @@
-/*	$NetBSD: gmc_v7_0.c,v 1.2 2018/08/27 04:58:20 riastradh Exp $	*/
+/*	$NetBSD: gmc_v7_0.c,v 1.3 2018/08/27 14:04:50 riastradh Exp $	*/
 
 /*
  * Copyright 2014 Advanced Micro Devices, Inc.
@@ -23,9 +23,11 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gmc_v7_0.c,v 1.2 2018/08/27 04:58:20 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gmc_v7_0.c,v 1.3 2018/08/27 14:04:50 riastradh Exp $");
 
 #include <linux/firmware.h>
+#include <linux/module.h>
+#include <asm/byteorder.h>
 #include "drmP.h"
 #include "amdgpu.h"
 #include "cikd.h"
@@ -451,6 +453,21 @@ static void gmc_v7_0_gart_flush_gpu_tlb(struct amdgpu_device *adev,
 	WREG32(mmVM_INVALIDATE_REQUEST, 1 << vmid);
 }
 
+#ifdef __NetBSD__
+#  define	__amdgpu_gart_iomem
+#  define	__iomem			__amdgpu_gart_iomem
+#  define	writeq			fake_writeq
+
+static void
+fake_writeq(uint64_t v, void __iomem *ptr)
+{
+
+	membar_producer();
+	*(uint64_t __iomem *)ptr = v;
+}
+
+#endif
+
 /**
  * gmc_v7_0_gart_set_pte_pde - update the page tables using MMIO
  *
@@ -473,10 +490,15 @@ static int gmc_v7_0_gart_set_pte_pde(struct amdgpu_device *adev,
 
 	value = addr & 0xFFFFFFFFFFFFF000ULL;
 	value |= flags;
-	writeq(value, ptr + (gpu_page_idx * 8));
+	writeq(value, (char __iomem *)ptr + (gpu_page_idx * 8));
 
 	return 0;
 }
+
+#ifdef __NetBSD__
+#  undef	__iomem
+#  undef	writeq
+#endif
 
 /**
  * gmc_v8_0_set_fault_enable_default - update VM fault handling
@@ -959,6 +981,11 @@ static int gmc_v7_0_sw_init(void *handle)
 	 */
 	adev->need_dma32 = false;
 	dma_bits = adev->need_dma32 ? 32 : 40;
+#ifdef __NetBSD__
+	r = drm_limit_dma_space(adev->ddev, 0, __BITS(dma_bits - 1, 0));
+	if (r)
+		DRM_ERROR("No suitable DMA available.\n");
+#else
 	r = pci_set_dma_mask(adev->pdev, DMA_BIT_MASK(dma_bits));
 	if (r) {
 		adev->need_dma32 = true;
@@ -970,6 +997,7 @@ static int gmc_v7_0_sw_init(void *handle)
 		pci_set_consistent_dma_mask(adev->pdev, DMA_BIT_MASK(32));
 		printk(KERN_WARNING "amdgpu: No coherent DMA available.\n");
 	}
+#endif	/* __NetBSD__ */
 
 	r = gmc_v7_0_init_microcode(adev);
 	if (r) {

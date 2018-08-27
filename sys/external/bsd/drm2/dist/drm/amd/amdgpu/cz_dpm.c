@@ -1,4 +1,4 @@
-/*	$NetBSD: cz_dpm.c,v 1.2 2018/08/27 04:58:20 riastradh Exp $	*/
+/*	$NetBSD: cz_dpm.c,v 1.3 2018/08/27 14:04:50 riastradh Exp $	*/
 
 /*
  * Copyright 2014 Advanced Micro Devices, Inc.
@@ -24,10 +24,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cz_dpm.c,v 1.2 2018/08/27 04:58:20 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cz_dpm.c,v 1.3 2018/08/27 14:04:50 riastradh Exp $");
 
 #include <linux/firmware.h>
 #include <linux/seq_file.h>
+#include <asm/byteorder.h>
 #include "drmP.h"
 #include "amdgpu.h"
 #include "amdgpu_pm.h"
@@ -108,7 +109,7 @@ static int cz_parse_sys_info_table(struct amdgpu_device *adev)
 
 	if (amdgpu_atom_parse_data_header(mode_info->atom_context, index, NULL,
 				   &frev, &crev, &data_offset)) {
-		igp_info = (union igp_info *)(mode_info->atom_context->bios +
+		igp_info = (union igp_info *)((char *)mode_info->atom_context->bios +
 					      data_offset);
 
 		if (crev != 9) {
@@ -321,16 +322,16 @@ static int cz_parse_power_table(struct amdgpu_device *adev)
 	if (!amdgpu_atom_parse_data_header(mode_info->atom_context, index, NULL,
 				    &frev, &crev, &data_offset))
 		return -EINVAL;
-	power_info = (union power_info *)(mode_info->atom_context->bios + data_offset);
+	power_info = (union power_info *)((char *)mode_info->atom_context->bios + data_offset);
 
 	state_array = (struct _StateArray *)
-		(mode_info->atom_context->bios + data_offset +
+		((char *)mode_info->atom_context->bios + data_offset +
 		le16_to_cpu(power_info->pplib.usStateArrayOffset));
 	clock_info_array = (struct _ClockInfoArray *)
-		(mode_info->atom_context->bios + data_offset +
+		((char *)mode_info->atom_context->bios + data_offset +
 		le16_to_cpu(power_info->pplib.usClockInfoArrayOffset));
 	non_clock_info_array = (struct _NonClockInfoArray *)
-		(mode_info->atom_context->bios + data_offset +
+		((char *)mode_info->atom_context->bios + data_offset +
 		le16_to_cpu(power_info->pplib.usNonClockInfoArrayOffset));
 
 	adev->pm.dpm.ps = kzalloc(sizeof(struct amdgpu_ps) *
@@ -510,6 +511,7 @@ static void
 cz_dpm_debugfs_print_current_performance_level(struct amdgpu_device *adev,
 					       struct seq_file *m)
 {
+#if IS_ENABLED(CONFIG_DEBUGFS)
 	struct cz_power_info *pi = cz_get_pi(adev);
 	struct amdgpu_clock_voltage_dependency_table *table =
 		&adev->pm.dpm.dyn_state.vddc_dependency_on_sclk;
@@ -561,6 +563,7 @@ cz_dpm_debugfs_print_current_performance_level(struct amdgpu_device *adev,
 			seq_printf(m, "%u vce ecclk: %u\n", vce_index, ecclk);
 		}
 	}
+#endif	/* IS_ENABLED(CONFIG_DEBUGFS) */
 }
 
 static void cz_dpm_print_power_state(struct amdgpu_device *adev,
@@ -1836,7 +1839,7 @@ static int cz_update_uvd_dpm(struct amdgpu_device *adev, bool gate)
 static void cz_dpm_powergate_uvd(struct amdgpu_device *adev, bool gate)
 {
 	struct cz_power_info *pi = cz_get_pi(adev);
-	int ret;
+	int ret __unused;
 
 	if (pi->uvd_power_gated == gate)
 		return;

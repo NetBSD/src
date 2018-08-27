@@ -1,4 +1,4 @@
-/*	$NetBSD: fiji_smc.c,v 1.2 2018/08/27 04:58:20 riastradh Exp $	*/
+/*	$NetBSD: fiji_smc.c,v 1.3 2018/08/27 14:04:50 riastradh Exp $	*/
 
 /*
  * Copyright 2014 Advanced Micro Devices, Inc.
@@ -24,9 +24,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fiji_smc.c,v 1.2 2018/08/27 04:58:20 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fiji_smc.c,v 1.3 2018/08/27 14:04:50 riastradh Exp $");
 
 #include <linux/firmware.h>
+#include <asm/byteorder.h>
 #include "drmP.h"
 #include "amdgpu.h"
 #include "fiji_ppsmc.h"
@@ -271,7 +272,7 @@ static int fiji_smu_upload_firmware_image(struct amdgpu_device *adev)
 	const uint8_t *src;
 	uint32_t val;
 	uint32_t byte_count;
-	uint32_t *data;
+	const uint32_t *data;
 	unsigned long flags;
 
 	if (!adev->pm.fw)
@@ -304,7 +305,7 @@ static int fiji_smu_upload_firmware_image(struct amdgpu_device *adev)
 	WREG32(mmSMC_IND_ACCESS_CNTL, val);
 
 	byte_count = ucode_size;
-	data = (uint32_t *)src;
+	data = (const uint32_t *)src;
 	for (; byte_count >= 4; data++, byte_count -= 4)
 		WREG32(mmSMC_IND_DATA_0, data[0]);
 

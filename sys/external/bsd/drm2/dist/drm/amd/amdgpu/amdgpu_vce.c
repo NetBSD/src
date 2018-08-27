@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_vce.c,v 1.2 2018/08/27 04:58:20 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_vce.c,v 1.3 2018/08/27 14:04:50 riastradh Exp $	*/
 
 /*
  * Copyright 2013 Advanced Micro Devices, Inc.
@@ -28,10 +28,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_vce.c,v 1.2 2018/08/27 04:58:20 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_vce.c,v 1.3 2018/08/27 14:04:50 riastradh Exp $");
 
 #include <linux/firmware.h>
 #include <linux/module.h>
+#include <asm/byteorder.h>
 #include <drm/drmP.h>
 #include <drm/drm.h>
 
@@ -549,14 +550,14 @@ static int amdgpu_vce_cs_reloc(struct amdgpu_cs_parser *p, uint32_t ib_idx,
 
 	mapping = amdgpu_cs_find_mapping(p, addr, &bo);
 	if (mapping == NULL) {
-		DRM_ERROR("Can't find BO for addr 0x%010Lx %d %d %d %d\n",
+		DRM_ERROR("Can't find BO for addr 0x%010"PRIx64" %d %d %d %d\n",
 			  addr, lo, hi, size, index);
 		return -EINVAL;
 	}
 
 	if ((addr + (uint64_t)size) >
 	    ((uint64_t)mapping->it.last + 1) * AMDGPU_GPU_PAGE_SIZE) {
-		DRM_ERROR("BO to small for addr 0x%010Lx %d %d\n",
+		DRM_ERROR("BO to small for addr 0x%010"PRIx64" %d %d\n",
 			  addr, lo, hi);
 		return -EINVAL;
 	}

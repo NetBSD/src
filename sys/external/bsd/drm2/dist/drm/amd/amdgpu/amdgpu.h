@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu.h,v 1.2 2018/08/27 04:58:19 riastradh Exp $	*/
+/*	$NetBSD: amdgpu.h,v 1.3 2018/08/27 14:04:50 riastradh Exp $	*/
 
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
@@ -361,7 +361,12 @@ bool amdgpu_read_bios(struct amdgpu_device *adev);
  * Dummy page
  */
 struct amdgpu_dummy_page {
+#ifdef __NetBSD__
+	bus_dma_segment_t	adp_seg;
+	bus_dmamap_t		adp_map;
+#else
 	struct page	*page;
+#endif
 	dma_addr_t	addr;
 };
 int amdgpu_dummy_page_init(struct amdgpu_device *adev);
@@ -400,7 +405,13 @@ struct amdgpu_fence_driver {
 	struct amdgpu_irq_src		*irq_src;
 	unsigned			irq_type;
 	struct timer_list		fallback_timer;
+#ifdef __NetBSD__
+	spinlock_t			fence_lock;
+	drm_waitqueue_t			fence_queue;
+	TAILQ_HEAD(, amdgpu_fence)	fence_check;
+#else
 	wait_queue_head_t		fence_queue;
+#endif
 };
 
 /* some special values for the owner field */
@@ -420,7 +431,11 @@ struct amdgpu_fence {
 	/* filp or special value for fence creator */
 	void				*owner;
 
+#ifdef __NetBSD__
+	TAILQ_ENTRY(amdgpu_fence)	fence_check;
+#else
 	wait_queue_t			fence_wake;
+#endif
 };
 
 struct amdgpu_user_fence {
@@ -478,7 +493,12 @@ int amdgpu_copy_buffer(struct amdgpu_ring *ring,
 		       uint32_t byte_count,
 		       struct reservation_object *resv,
 		       struct fence **fence);
+#ifdef __NetBSD__
+int amdgpu_mmap_object(struct drm_device *, off_t, size_t, vm_prot_t,
+    struct uvm_object **, voff_t *, struct file *);
+#else
 int amdgpu_mmap(struct file *filp, struct vm_area_struct *vma);
+#endif
 
 struct amdgpu_bo_list_entry {
 	struct amdgpu_bo		*robj;
@@ -595,7 +615,12 @@ int amdgpu_gem_debugfs_init(struct amdgpu_device *adev);
  * alignment).
  */
 struct amdgpu_sa_manager {
+#ifdef __NetBSD__
+	spinlock_t		wq_lock;
+	drm_waitqueue_t		wq;
+#else
 	wait_queue_head_t	wq;
+#endif
 	struct amdgpu_bo	*bo;
 	struct list_head	*hole;
 	struct list_head	flist[AMDGPU_MAX_RINGS];
@@ -693,6 +718,10 @@ struct amdgpu_mc;
 #define AMDGPU_GPU_PAGE_ALIGN(a) (((a) + AMDGPU_GPU_PAGE_MASK) & ~AMDGPU_GPU_PAGE_MASK)
 
 struct amdgpu_gart {
+#ifdef __NetBSD__
+	bus_dma_segment_t		ag_table_seg;
+	bus_dmamap_t			ag_table_map;
+#endif
 	dma_addr_t			table_addr;
 	struct amdgpu_bo		*robj;
 	void				*ptr;
@@ -713,11 +742,19 @@ int amdgpu_gart_table_vram_pin(struct amdgpu_device *adev);
 void amdgpu_gart_table_vram_unpin(struct amdgpu_device *adev);
 int amdgpu_gart_init(struct amdgpu_device *adev);
 void amdgpu_gart_fini(struct amdgpu_device *adev);
+#ifdef __NetBSD__
+void amdgpu_gart_unbind(struct amdgpu_device *adev, uint64_t gpu_start,
+    unsigned npages);
+int amdgpu_gart_bind(struct amdgpu_device *adev, uint64_t gpu_start,
+    unsigned npages, struct page **pagelist, bus_dmamap_t dmamap,
+    uint32_t flags);
+#else
 void amdgpu_gart_unbind(struct amdgpu_device *adev, uint64_t offset,
 			int pages);
 int amdgpu_gart_bind(struct amdgpu_device *adev, uint64_t offset,
 		     int pages, struct page **pagelist,
 		     dma_addr_t *dma_addr, uint32_t flags);
+#endif
 
 /*
  * GPU MC structures, functions & helpers
@@ -774,7 +811,12 @@ struct amdgpu_doorbell {
 	/* doorbell mmio */
 	resource_size_t		base;
 	resource_size_t		size;
+#ifdef __NetBSD__
+	bus_space_tag_t		bst;
+	bus_space_handle_t	bsh;
+#else
 	u32 __iomem		*ptr;
+#endif
 	u32			num_doorbells;	/* Number of doorbells actually reserved for amdgpu. */
 };
 
@@ -1296,7 +1338,7 @@ struct amdgpu_wb {
 	volatile uint32_t	*wb;
 	uint64_t		gpu_addr;
 	u32			num_wb;	/* Number of wb slots actually reserved for amdgpu. */
-	unsigned long		used[DIV_ROUND_UP(AMDGPU_MAX_WB, BITS_PER_LONG)];
+	unsigned long		used[DIV_ROUND_UP(AMDGPU_MAX_WB, NBBY*sizeof(unsigned long))];
 };
 
 int amdgpu_wb_get(struct amdgpu_device *adev, u32 *wb);
@@ -1995,9 +2037,16 @@ struct amdgpu_device {
 	uint32_t			bios_scratch[AMDGPU_BIOS_NUM_SCRATCH];
 
 	/* Register/doorbell mmio */
+#ifdef __NetBSD__
+	bus_space_tag_t			rmmiot;
+	bus_space_handle_t		rmmioh;
+	bus_addr_t			rmmio_base;
+	bus_size_t			rmmio_size;
+#else
 	resource_size_t			rmmio_base;
 	resource_size_t			rmmio_size;
 	void __iomem			*rmmio;
+#endif
 	/* protects concurrent MM_INDEX/DATA based register access */
 	spinlock_t mmio_idx_lock;
 	/* protects concurrent SMC based register access */
@@ -2020,8 +2069,14 @@ struct amdgpu_device {
 	spinlock_t audio_endpt_idx_lock;
 	amdgpu_block_rreg_t		audio_endpt_rreg;
 	amdgpu_block_wreg_t		audio_endpt_wreg;
+#ifdef __NetBSD__
+	bus_space_tag_t			rio_memt;
+	bus_space_handle_t		rio_memh;
+	bus_size_t			rio_mem_size;
+#else
 	void __iomem                    *rio_mem;
 	resource_size_t			rio_mem_size;
+#endif
 	struct amdgpu_doorbell		doorbell;
 
 	/* clock/pll info */
@@ -2327,6 +2382,8 @@ void amdgpu_ttm_set_active_vram_size(struct amdgpu_device *adev, u64 size);
 void amdgpu_program_register_sequence(struct amdgpu_device *adev,
 					     const u32 *registers,
 					     const u32 array_size);
+int amdgpu_ttm_init(struct amdgpu_device *adev);
+void amdgpu_ttm_fini(struct amdgpu_device *adev);
 
 bool amdgpu_device_is_px(struct drm_device *dev);
 /* atpx handler */

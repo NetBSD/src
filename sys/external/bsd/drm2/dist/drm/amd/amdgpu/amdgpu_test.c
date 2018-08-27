@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_test.c,v 1.2 2018/08/27 04:58:20 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_test.c,v 1.3 2018/08/27 14:04:50 riastradh Exp $	*/
 
 /*
  * Copyright 2009 VMware, Inc.
@@ -24,7 +24,7 @@
  * Authors: Michel Dänzer
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_test.c,v 1.2 2018/08/27 04:58:20 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_test.c,v 1.3 2018/08/27 14:04:50 riastradh Exp $");
 
 #include <drm/drmP.h>
 #include <drm/amdgpu_drm.h>
@@ -108,7 +108,7 @@ static void amdgpu_do_test_moves(struct amdgpu_device *adev)
 			goto out_lclean_unpin;
 		}
 
-		for (gtt_start = gtt_map, gtt_end = gtt_map + size;
+		for (gtt_start = gtt_map, gtt_end = (void **)((char *)gtt_map + size);
 		     gtt_start < gtt_end;
 		     gtt_start++)
 			*gtt_start = gtt_start;
@@ -137,8 +137,8 @@ static void amdgpu_do_test_moves(struct amdgpu_device *adev)
 			goto out_lclean_unpin;
 		}
 
-		for (gtt_start = gtt_map, gtt_end = gtt_map + size,
-		     vram_start = vram_map, vram_end = vram_map + size;
+		for (gtt_start = gtt_map, gtt_end = (void **)((char *)gtt_map + size),
+		     vram_start = vram_map, vram_end = (void **)((char *)vram_map + size);
 		     vram_start < vram_end;
 		     gtt_start++, vram_start++) {
 			if (*vram_start != gtt_start) {
@@ -148,10 +148,10 @@ static void amdgpu_do_test_moves(struct amdgpu_device *adev)
 					  i, *vram_start, gtt_start,
 					  (unsigned long long)
 					  (gtt_addr - adev->mc.gtt_start +
-					   (void*)gtt_start - gtt_map),
+					   (char *)gtt_start - (char *)gtt_map),
 					  (unsigned long long)
 					  (vram_addr - adev->mc.vram_start +
-					   (void*)gtt_start - gtt_map));
+					   (char *)gtt_start - (char *)gtt_map));
 				amdgpu_bo_kunmap(vram_obj);
 				goto out_lclean_unpin;
 			}
@@ -182,8 +182,8 @@ static void amdgpu_do_test_moves(struct amdgpu_device *adev)
 			goto out_lclean_unpin;
 		}
 
-		for (gtt_start = gtt_map, gtt_end = gtt_map + size,
-		     vram_start = vram_map, vram_end = vram_map + size;
+		for (gtt_start = gtt_map, gtt_end = (void **)((char *)gtt_map + size),
+		     vram_start = vram_map, vram_end = (void **)((char *)vram_map + size);
 		     gtt_start < gtt_end;
 		     gtt_start++, vram_start++) {
 			if (*gtt_start != vram_start) {
@@ -193,10 +193,10 @@ static void amdgpu_do_test_moves(struct amdgpu_device *adev)
 					  i, *gtt_start, vram_start,
 					  (unsigned long long)
 					  (vram_addr - adev->mc.vram_start +
-					   (void*)vram_start - vram_map),
+					   (char *)vram_start - (char *)vram_map),
 					  (unsigned long long)
 					  (gtt_addr - adev->mc.gtt_start +
-					   (void*)vram_start - vram_map));
+					   (char *)vram_start - (char *)vram_map));
 				amdgpu_bo_kunmap(gtt_obj[i]);
 				goto out_lclean_unpin;
 			}
@@ -204,7 +204,7 @@ static void amdgpu_do_test_moves(struct amdgpu_device *adev)
 
 		amdgpu_bo_kunmap(gtt_obj[i]);
 
-		DRM_INFO("Tested GTT->VRAM and VRAM->GTT copy for GTT offset 0x%llx\n",
+		DRM_INFO("Tested GTT->VRAM and VRAM->GTT copy for GTT offset 0x%"PRIx64"\n",
 			 gtt_addr - adev->mc.gtt_start);
 		continue;
 

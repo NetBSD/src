@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_fb.c,v 1.2 2018/08/27 04:58:19 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_fb.c,v 1.3 2018/08/27 14:04:50 riastradh Exp $	*/
 
 /*
  * Copyright © 2007 David Airlie
@@ -26,7 +26,7 @@
  *     David Airlie
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_fb.c,v 1.2 2018/08/27 04:58:19 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_fb.c,v 1.3 2018/08/27 14:04:50 riastradh Exp $");
 
 #include <linux/module.h>
 #include <linux/slab.h>
@@ -43,6 +43,10 @@ __KERNEL_RCSID(0, "$NetBSD: amdgpu_fb.c,v 1.2 2018/08/27 04:58:19 riastradh Exp 
 
 #include <linux/vga_switcheroo.h>
 
+#ifdef __NetBSD__
+#include "amdgpufb.h"
+#endif
+
 /* object hierarchy -
    this contains a helper + a amdgpu fb
    the helper contains a pointer to amdgpu framebuffer baseclass.
@@ -54,6 +58,7 @@ struct amdgpu_fbdev {
 	struct amdgpu_device *adev;
 };
 
+#ifndef __NetBSD__
 static struct fb_ops amdgpufb_ops = {
 	.owner = THIS_MODULE,
 	.fb_check_var = drm_fb_helper_check_var,
@@ -67,6 +72,7 @@ static struct fb_ops amdgpufb_ops = {
 	.fb_debug_enter = drm_fb_helper_debug_enter,
 	.fb_debug_leave = drm_fb_helper_debug_leave,
 };
+#endif
 
 
 int amdgpu_align_pitch(struct amdgpu_device *adev, int width, int bpp, bool tiled)
@@ -126,9 +132,17 @@ static int amdgpufb_create_pinned_object(struct amdgpu_fbdev *rfbdev,
 	mode_cmd->pitches[0] = amdgpu_align_pitch(adev, mode_cmd->width, bpp,
 						  fb_tiled) * ((bpp + 1) / 8);
 
+#ifdef __NetBSD__		/* XXX ALIGN means something else.  */
+	height = round_up(mode_cmd->height, 8);
+#else
 	height = ALIGN(mode_cmd->height, 8);
+#endif
 	size = mode_cmd->pitches[0] * height;
+#ifdef __NetBSD__		/* XXX ALIGN means something else.  */
+	aligned_size = round_up(size, PAGE_SIZE);
+#else
 	aligned_size = ALIGN(size, PAGE_SIZE);
+#endif
 	ret = amdgpu_gem_object_create(adev, aligned_size, 0,
 				       AMDGPU_GEM_DOMAIN_VRAM,
 				       AMDGPU_GEM_CREATE_CPU_ACCESS_REQUIRED,
@@ -179,13 +193,17 @@ static int amdgpufb_create(struct drm_fb_helper *helper,
 {
 	struct amdgpu_fbdev *rfbdev = (struct amdgpu_fbdev *)helper;
 	struct amdgpu_device *adev = rfbdev->adev;
+#ifndef __NetBSD__
 	struct fb_info *info;
+#endif
 	struct drm_framebuffer *fb = NULL;
 	struct drm_mode_fb_cmd2 mode_cmd;
 	struct drm_gem_object *gobj = NULL;
 	struct amdgpu_bo *rbo = NULL;
 	int ret;
+#ifndef __NetBSD__
 	unsigned long tmp;
+#endif
 
 	mode_cmd.width = sizes->surface_width;
 	mode_cmd.height = sizes->surface_height;
@@ -204,6 +222,34 @@ static int amdgpufb_create(struct drm_fb_helper *helper,
 
 	rbo = gem_to_amdgpu_bo(gobj);
 
+#ifdef __NetBSD__
+	ret = amdgpu_framebuffer_init(adev->ddev, &rfbdev->rfb, &mode_cmd, gobj);
+	if (ret) {
+		DRM_ERROR("failed to initialize framebuffer %d\n", ret);
+		goto out_unref;
+	}
+
+	(void)memset(rbo->kptr, 0, amdgpu_bo_size(rbo));
+
+    {
+	static const struct amdgpufb_attach_args zero_afa;
+	struct amdgpufb_attach_args afa = zero_afa;
+
+	afa.afa_fb_helper = helper;
+	afa.afa_fb_sizes = *sizes;
+	afa.afa_fb_ptr = rbo->kptr;
+	afa.afa_fb_linebytes = mode_cmd.pitches[0];
+
+	helper->fbdev = config_found_ia(adev->ddev->dev, "amdgpufbbus", &afa,
+	    NULL);
+	if (helper->fbdev == NULL) {
+		DRM_ERROR("failed to attach amdgpufb\n");
+		goto out_unref;
+	}
+    }
+	fb = &rfbdev->rfb.base;
+	rfbdev->helper.fb = fb;
+#else  /* __NetBSD__ */
 	/* okay we have an object now allocate the framebuffer */
 	info = drm_fb_helper_alloc_fbi(helper);
 	if (IS_ERR(info)) {
@@ -260,10 +306,13 @@ static int amdgpufb_create(struct drm_fb_helper *helper,
 	DRM_INFO("   pitch is %d\n", fb->pitches[0]);
 
 	vga_switcheroo_client_fb_set(adev->ddev->pdev, info);
+#endif
 	return 0;
 
+#ifndef __NetBSD__
 out_destroy_fbi:
 	drm_fb_helper_release_fbi(helper);
+#endif
 out_unref:
 	if (rbo) {
 
@@ -286,9 +335,22 @@ void amdgpu_fb_output_poll_changed(struct amdgpu_device *adev)
 static int amdgpu_fbdev_destroy(struct drm_device *dev, struct amdgpu_fbdev *rfbdev)
 {
 	struct amdgpu_framebuffer *rfb = &rfbdev->rfb;
+#ifdef __NetBSD__
+	int ret;
+#endif
 
+#ifdef __NetBSD__
+	/* XXX errno NetBSD->Linux */
+	ret = -config_detach(rfbdev->helper.fbdev, DETACH_FORCE);
+	if (ret) {
+		DRM_ERROR("failed to detach amdgpufb: %d\n", ret);
+		return ret;
+	}
+	rfbdev->helper.fbdev = NULL;
+#else
 	drm_fb_helper_unregister_fbi(&rfbdev->helper);
 	drm_fb_helper_release_fbi(&rfbdev->helper);
+#endif
 
 	if (rfb->obj) {
 		amdgpufb_destroy_pinned_object(rfb->obj);
@@ -382,9 +444,11 @@ void amdgpu_fbdev_fini(struct amdgpu_device *adev)
 
 void amdgpu_fbdev_set_suspend(struct amdgpu_device *adev, int state)
 {
+#ifndef __NetBSD__		/* XXX amdgpu fb suspend */
 	if (adev->mode_info.rfbdev)
 		drm_fb_helper_set_suspend(&adev->mode_info.rfbdev->helper,
 			state);
+#endif
 }
 
 int amdgpu_fbdev_total_size(struct amdgpu_device *adev)

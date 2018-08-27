@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_sa.c,v 1.2 2018/08/27 04:58:19 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_sa.c,v 1.3 2018/08/27 14:04:50 riastradh Exp $	*/
 
 /*
  * Copyright 2011 Red Hat Inc.
@@ -44,7 +44,7 @@
  * rings. We just wait for any of those fence to complete.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_sa.c,v 1.2 2018/08/27 04:58:19 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_sa.c,v 1.3 2018/08/27 14:04:50 riastradh Exp $");
 
 #include <drm/drmP.h>
 #include "amdgpu.h"
@@ -58,7 +58,12 @@ int amdgpu_sa_bo_manager_init(struct amdgpu_device *adev,
 {
 	int i, r;
 
+#ifdef __NetBSD__
+	spin_lock_init(&sa_manager->wq_lock);
+	DRM_INIT_WAITQUEUE(&sa_manager->wq, "amdsabom");
+#else
 	init_waitqueue_head(&sa_manager->wq);
+#endif
 	sa_manager->bo = NULL;
 	sa_manager->size = size;
 	sa_manager->domain = domain;
@@ -96,6 +101,10 @@ void amdgpu_sa_bo_manager_fini(struct amdgpu_device *adev,
 	}
 	amdgpu_bo_unref(&sa_manager->bo);
 	sa_manager->size = 0;
+#ifdef __NetBSD__
+	DRM_DESTROY_WAITQUEUE(&sa_manager->wq);
+	spin_lock_destroy(&sa_manager->wq_lock);
+#endif
 }
 
 int amdgpu_sa_bo_manager_start(struct amdgpu_device *adev,
@@ -338,7 +347,11 @@ int amdgpu_sa_bo_new(struct amdgpu_sa_manager *sa_manager,
 	INIT_LIST_HEAD(&(*sa_bo)->olist);
 	INIT_LIST_HEAD(&(*sa_bo)->flist);
 
+#ifdef __NetBSD__
+	spin_lock(&sa_manager->wq_lock);
+#else
 	spin_lock(&sa_manager->wq.lock);
+#endif
 	do {
 		for (i = 0; i < AMDGPU_MAX_RINGS; ++i) {
 			fences[i] = NULL;
@@ -350,7 +363,11 @@ int amdgpu_sa_bo_new(struct amdgpu_sa_manager *sa_manager,
 
 			if (amdgpu_sa_bo_try_alloc(sa_manager, *sa_bo,
 						   size, align)) {
+#ifdef __NetBSD__
+				spin_unlock(&sa_manager->wq_lock);
+#else
 				spin_unlock(&sa_manager->wq.lock);
+#endif
 				return 0;
 			}
 
@@ -362,25 +379,43 @@ int amdgpu_sa_bo_new(struct amdgpu_sa_manager *sa_manager,
 				fences[count++] = fence_get(fences[i]);
 
 		if (count) {
+#ifdef __NetBSD__
+			spin_unlock(&sa_manager->wq_lock);
+#else
 			spin_unlock(&sa_manager->wq.lock);
+#endif
 			t = fence_wait_any_timeout(fences, count, false,
 						   MAX_SCHEDULE_TIMEOUT);
 			for (i = 0; i < count; ++i)
 				fence_put(fences[i]);
 
 			r = (t > 0) ? 0 : t;
+#ifdef __NetBSD__
+			spin_lock(&sa_manager->wq_lock);
+#else
 			spin_lock(&sa_manager->wq.lock);
+#endif
 		} else {
 			/* if we have nothing to wait for block */
+#ifdef __NetBSD__
+			DRM_SPIN_WAIT_UNTIL(r, &sa_manager->wq,
+			    &sa_manager->wq_lock,
+			    amdgpu_sa_event(sa_manager, size, align));
+#else
 			r = wait_event_interruptible_locked(
 				sa_manager->wq,
 				amdgpu_sa_event(sa_manager, size, align)
 			);
+#endif
 		}
 
 	} while (!r);
 
+#ifdef __NetBSD__
+	spin_unlock(&sa_manager->wq_lock);
+#else
 	spin_unlock(&sa_manager->wq.lock);
+#endif
 	kfree(*sa_bo);
 	*sa_bo = NULL;
 	return r;
@@ -396,7 +431,11 @@ void amdgpu_sa_bo_free(struct amdgpu_device *adev, struct amdgpu_sa_bo **sa_bo,
 	}
 
 	sa_manager = (*sa_bo)->manager;
+#ifdef __NetBSD__
+	spin_lock(&sa_manager->wq_lock);
+#else
 	spin_lock(&sa_manager->wq.lock);
+#endif
 	if (fence && !fence_is_signaled(fence)) {
 		uint32_t idx;
 		(*sa_bo)->fence = fence_get(fence);
@@ -405,8 +444,13 @@ void amdgpu_sa_bo_free(struct amdgpu_device *adev, struct amdgpu_sa_bo **sa_bo,
 	} else {
 		amdgpu_sa_bo_remove_locked(*sa_bo);
 	}
+#ifdef __NetBSD__
+	DRM_SPIN_WAKEUP_ALL(&sa_manager->wq, &sa_manager->wq_lock);
+	spin_unlock(&sa_manager->wq_lock);
+#else
 	wake_up_all_locked(&sa_manager->wq);
 	spin_unlock(&sa_manager->wq.lock);
+#endif
 	*sa_bo = NULL;
 }
 

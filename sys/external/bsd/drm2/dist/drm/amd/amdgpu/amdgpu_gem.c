@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_gem.c,v 1.2 2018/08/27 04:58:19 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_gem.c,v 1.3 2018/08/27 14:04:50 riastradh Exp $	*/
 
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
@@ -28,7 +28,7 @@
  *          Jerome Glisse
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_gem.c,v 1.2 2018/08/27 04:58:19 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_gem.c,v 1.3 2018/08/27 14:04:50 riastradh Exp $");
 
 #include <linux/ktime.h>
 #include <drm/drmP.h>
@@ -40,8 +40,10 @@ void amdgpu_gem_object_free(struct drm_gem_object *gobj)
 	struct amdgpu_bo *robj = gem_to_amdgpu_bo(gobj);
 
 	if (robj) {
+#ifndef __NetBSD__		/* XXX drm prime */
 		if (robj->gem_base.import_attach)
 			drm_prime_gem_destroy(&robj->gem_base, robj->tbo.sg);
+#endif
 		amdgpu_mn_unregister(robj);
 		amdgpu_bo_unref(&robj);
 	}
@@ -88,7 +90,9 @@ retry:
 		return r;
 	}
 	*obj = &robj->gem_base;
+#ifndef __NetBSD__
 	robj->pid = task_pid_nr(current);
+#endif
 
 	mutex_lock(&adev->gem.mutex);
 	list_add_tail(&robj->list, &adev->gem.objects);
@@ -224,6 +228,15 @@ error_unlock:
 int amdgpu_gem_userptr_ioctl(struct drm_device *dev, void *data,
 			     struct drm_file *filp)
 {
+#ifdef __NetBSD__
+	/*
+	 * XXX Too painful to contemplate for now.  If you add this,
+	 * make sure to update amdgpu_cs.c amdgpu_cs_parser_relocs
+	 * (need_mmap_lock), and anything else using
+	 * amdgpu_ttm_tt_has_userptr.
+	 */
+	return -ENODEV;
+#else
 	struct amdgpu_device *adev = dev->dev_private;
 	struct drm_amdgpu_gem_userptr *args = data;
 	struct drm_gem_object *gobj;
@@ -299,6 +312,7 @@ handle_lockup:
 	r = amdgpu_gem_handle_lockup(adev, r);
 
 	return r;
+#endif
 }
 
 int amdgpu_mode_dumb_mmap(struct drm_file *filp,
@@ -532,7 +546,7 @@ int amdgpu_gem_va_ioctl(struct drm_device *dev, void *data,
 		return -ENOTTY;
 
 	if (args->va_address < AMDGPU_VA_RESERVED_SIZE) {
-		dev_err(&dev->pdev->dev,
+		dev_err(pci_dev_dev(dev->pdev),
 			"va_address 0x%lX is in reserved area 0x%X\n",
 			(unsigned long)args->va_address,
 			AMDGPU_VA_RESERVED_SIZE);
@@ -542,7 +556,7 @@ int amdgpu_gem_va_ioctl(struct drm_device *dev, void *data,
 	invalid_flags = ~(AMDGPU_VM_DELAY_UPDATE | AMDGPU_VM_PAGE_READABLE |
 			AMDGPU_VM_PAGE_WRITEABLE | AMDGPU_VM_PAGE_EXECUTABLE);
 	if ((args->flags & invalid_flags)) {
-		dev_err(&dev->pdev->dev, "invalid flags 0x%08X vs 0x%08X\n",
+		dev_err(pci_dev_dev(dev->pdev), "invalid flags 0x%08X vs 0x%08X\n",
 			args->flags, invalid_flags);
 		return -EINVAL;
 	}
@@ -552,7 +566,7 @@ int amdgpu_gem_va_ioctl(struct drm_device *dev, void *data,
 	case AMDGPU_VA_OP_UNMAP:
 		break;
 	default:
-		dev_err(&dev->pdev->dev, "unsupported operation %d\n",
+		dev_err(pci_dev_dev(dev->pdev), "unsupported operation %d\n",
 			args->operation);
 		return -EINVAL;
 	}
@@ -675,7 +689,11 @@ int amdgpu_mode_dumb_create(struct drm_file *file_priv,
 
 	args->pitch = amdgpu_align_pitch(adev, args->width, args->bpp, 0) * ((args->bpp + 1) / 8);
 	args->size = (u64)args->pitch * args->height;
+#ifdef __NetBSD__		/* XXX ALIGN means something else.  */
+	args->size = round_up(args->size, PAGE_SIZE);
+#else
 	args->size = ALIGN(args->size, PAGE_SIZE);
+#endif
 
 	r = amdgpu_gem_object_create(adev, args->size, 0,
 				     AMDGPU_GEM_DOMAIN_VRAM,

@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_bo_list.c,v 1.2 2018/08/27 04:58:19 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_bo_list.c,v 1.3 2018/08/27 14:04:50 riastradh Exp $	*/
 
 /*
  * Copyright 2015 Advanced Micro Devices, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_bo_list.c,v 1.2 2018/08/27 04:58:19 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_bo_list.c,v 1.3 2018/08/27 14:04:50 riastradh Exp $");
 
 #include <drm/drmP.h>
 #include "amdgpu.h"
@@ -57,7 +57,11 @@ static int amdgpu_bo_list_create(struct amdgpu_fpriv *fpriv,
 	}
 	*id = r;
 
+#ifdef __NetBSD__
+	linux_mutex_init(&(*result)->lock);
+#else
 	mutex_init(&(*result)->lock);
+#endif
 	(*result)->num_entries = 0;
 	(*result)->array = NULL;
 
@@ -178,7 +182,11 @@ void amdgpu_bo_list_free(struct amdgpu_bo_list *list)
 	for (i = 0; i < list->num_entries; ++i)
 		amdgpu_bo_unref(&list->array[i].robj);
 
+#ifdef __NetBSD__
+	linux_mutex_destroy(&list->lock);
+#else
 	mutex_destroy(&list->lock);
+#endif
 	drm_free_large(list->array);
 	kfree(list);
 }
@@ -222,7 +230,7 @@ int amdgpu_bo_list_ioctl(struct drm_device *dev, void *data,
 			if (copy_from_user(&info[i], uptr, bytes))
 				goto error_free;
 			
-			uptr += args->in.bo_info_size;
+			uptr = ((const char *)uptr + args->in.bo_info_size);
 		}
 	}
 
