@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_reservation.c,v 1.7 2018/08/27 14:14:13 riastradh Exp $	*/
+/*	$NetBSD: linux_reservation.c,v 1.8 2018/08/27 15:25:14 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,10 +30,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_reservation.c,v 1.7 2018/08/27 14:14:13 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_reservation.c,v 1.8 2018/08/27 15:25:14 riastradh Exp $");
+
+#include <sys/param.h>
+#include <sys/poll.h>
+#include <sys/select.h>
 
 #include <linux/fence.h>
 #include <linux/reservation.h>
+#include <linux/ww_mutex.h>
 
 DEFINE_WW_CLASS(reservation_ww_class __cacheline_aligned);
 
@@ -791,4 +796,264 @@ wait:
 	if (timeout <= 0)
 		return timeout;
 	goto top;
+}
+
+/*
+ * reservation_poll_init(rpoll, lock)
+ *
+ *	Initialize reservation poll state.
+ */
+void
+reservation_poll_init(struct reservation_poll *rpoll)
+{
+
+	mutex_init(&rpoll->rp_lock, MUTEX_DEFAULT, IPL_VM);
+	selinit(&rpoll->rp_selq);
+	rpoll->rp_claimed = 0;
+}
+
+/*
+ * reservation_poll_fini(rpoll)
+ *
+ *	Release any resource associated with reservation poll state.
+ */
+void
+reservation_poll_fini(struct reservation_poll *rpoll)
+{
+
+	KASSERT(rpoll->rp_claimed == 0);
+	seldestroy(&rpoll->rp_selq);
+	mutex_destroy(&rpoll->rp_lock);
+}
+
+/*
+ * reservation_poll_cb(fence, fcb)
+ *
+ *	Callback to notify a reservation poll that a fence has
+ *	completed.  Notify any waiters and allow the next poller to
+ *	claim the callback.
+ *
+ *	If one thread is waiting for the exclusive fence only, and we
+ *	spuriously notify them about a shared fence, tough.
+ */
+static void
+reservation_poll_cb(struct fence *fence, struct fence_cb *fcb)
+{
+	struct reservation_poll *rpoll = container_of(fcb,
+	    struct reservation_poll, rp_fcb);
+
+	mutex_enter(&rpoll->rp_lock);
+	selnotify(&rpoll->rp_selq, 0, NOTE_SUBMIT);
+	rpoll->rp_claimed = 0;
+	mutex_exit(&rpoll->rp_lock);
+}
+
+/*
+ * reservation_object_poll(robj, events, rpoll)
+ *
+ *	POLLOUT		wait for all fences shared and exclusive
+ *	POLLIN		wait for the exclusive fence
+ */
+int
+reservation_object_poll(struct reservation_object *robj, int events,
+    struct reservation_poll *rpoll)
+{
+	struct reservation_object_read_ticket ticket;
+	struct reservation_object_list *list;
+	struct fence *fence;
+	uint32_t i, shared_count;
+	int revents;
+	bool recorded = false;	/* curlwp is on the selq */
+	bool claimed = false;	/* we claimed the callback */
+	bool callback = false;	/* we requested a callback */
+
+	/*
+	 * Start with the maximal set of events that could be ready.
+	 * We will eliminate the events that are definitely not ready
+	 * as we go at the same time as we add callbacks to notify us
+	 * that they may be ready.
+	 */
+	revents = events & (POLLIN|POLLOUT);
+	if (revents == 0)
+		return 0;
+
+top:
+	/* Enter an RCU read section and get a read ticket.  */
+	rcu_read_lock();
+	reservation_object_read_begin(robj, &ticket);
+
+	/* If we want to wait for all fences, get the shared list.  */
+	if ((events & POLLOUT) && (list = robj->robj_list) != NULL) do {
+		/* Make sure the content of the list has been published.  */
+		membar_datadep_consumer();
+
+		/* Find out how long it is.  */
+		shared_count = list->shared_count;
+
+		/*
+		 * Make sure we saw a consistent snapshot of the list
+		 * pointer and length.
+		 */
+		if (!reservation_object_read_valid(robj, &ticket))
+			goto restart;
+
+		/*
+		 * For each fence, if it is going away, restart.
+		 * Otherwise, acquire a reference to it to test whether
+		 * it is signalled.  Stop and request a callback if we
+		 * find any that is not signalled.
+		 */
+		for (i = 0; i < shared_count; i++) {
+			fence = fence_get_rcu(list->shared[i]);
+			if (fence == NULL)
+				goto restart;
+			if (!fence_is_signaled(fence)) {
+				fence_put(fence);
+				break;
+			}
+			fence_put(fence);
+		}
+
+		/* If all shared fences have been signalled, move on.  */
+		if (i == shared_count)
+			break;
+
+		/* Put ourselves on the selq if we haven't already.  */
+		if (!recorded)
+			goto record;
+
+		/*
+		 * If someone else claimed the callback, or we already
+		 * requested it, we're guaranteed to be notified, so
+		 * assume the event is not ready.
+		 */
+		if (!claimed || callback) {
+			revents &= ~POLLOUT;
+			break;
+		}
+
+		/*
+		 * Otherwise, find the first fence that is not
+		 * signalled, request the callback, and clear POLLOUT
+		 * from the possible ready events.  If they are all
+		 * signalled, leave POLLOUT set; we will simulate the
+		 * callback later.
+		 */
+		for (i = 0; i < shared_count; i++) {
+			fence = fence_get_rcu(list->shared[i]);
+			if (fence == NULL)
+				goto restart;
+			if (!fence_add_callback(fence, &rpoll->rp_fcb,
+				reservation_poll_cb)) {
+				fence_put(fence);
+				revents &= ~POLLOUT;
+				callback = true;
+				break;
+			}
+			fence_put(fence);
+		}
+	} while (0);
+
+	/* We always wait for at least the exclusive fence, so get it.  */
+	if ((fence = robj->robj_fence) != NULL) do {
+		/* Make sure the content of the fence has been published.  */
+		membar_datadep_consumer();
+
+		/*
+		 * Make sure we saw a consistent snapshot of the fence.
+		 *
+		 * XXX I'm not actually sure this is necessary since
+		 * pointer writes are supposed to be atomic.
+		 */
+		if (!reservation_object_read_valid(robj, &ticket))
+			goto restart;
+
+		/*
+		 * If it is going away, restart.  Otherwise, acquire a
+		 * reference to it to test whether it is signalled.  If
+		 * not, stop and request a callback.
+		 */
+		if ((fence = fence_get_rcu(fence)) == NULL)
+			goto restart;
+		if (fence_is_signaled(fence)) {
+			fence_put(fence);
+			break;
+		}
+
+		/* Put ourselves on the selq if we haven't already.  */
+		if (!recorded) {
+			fence_put(fence);
+			goto record;
+		}
+
+		/*
+		 * If someone else claimed the callback, or we already
+		 * requested it, we're guaranteed to be notified, so
+		 * assume the event is not ready.
+		 */
+		if (!claimed || callback) {
+			revents = 0;
+			break;
+		}
+
+		/*
+		 * Otherwise, try to request the callback, and clear
+		 * all possible ready events.  If the fence has been
+		 * signalled in the interim, leave the events set; we
+		 * will simulate the callback later.
+		 */
+		if (!fence_add_callback(fence, &rpoll->rp_fcb,
+			reservation_poll_cb)) {
+			fence_put(fence);
+			revents = 0;
+			callback = true;
+			break;
+		}
+		fence_put(fence);
+	} while (0);
+
+	/* All done reading the fences.  */
+	rcu_read_unlock();
+
+	if (claimed && !callback) {
+		/*
+		 * We claimed the callback but we didn't actually
+		 * request it because a fence was signalled while we
+		 * were claiming it.  Call it ourselves now.  The
+		 * callback doesn't use the fence nor rely on holding
+		 * any of the fence locks, so this is safe.
+		 */
+		reservation_poll_cb(NULL, &rpoll->rp_fcb);
+	}
+	return revents;
+
+restart:
+	rcu_read_unlock();
+	goto top;
+
+record:
+	rcu_read_unlock();
+	mutex_enter(&rpoll->rp_lock);
+	selrecord(curlwp, &rpoll->rp_selq);
+	if (rpoll->rp_claimed)
+		claimed = rpoll->rp_claimed = true;
+	mutex_exit(&rpoll->rp_lock);
+	recorded = true;
+	goto top;
+}
+
+/*
+ * reservation_object_kqfilter(robj, kn, rpoll)
+ *
+ *	Kqueue filter for reservation objects.  Currently not
+ *	implemented because the logic to implement it is nontrivial,
+ *	and userland will presumably never use it, so it would be
+ *	dangerous to add never-tested complex code paths to the kernel.
+ */
+int
+reservation_object_kqfilter(struct reservation_object *robj, struct knote *kn,
+    struct reservation_poll *rpoll)
+{
+
+	return EINVAL;
 }
