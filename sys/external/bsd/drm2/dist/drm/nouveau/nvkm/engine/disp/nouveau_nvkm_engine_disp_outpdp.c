@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_engine_disp_outpdp.c,v 1.2 2018/08/27 04:58:31 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_engine_disp_outpdp.c,v 1.3 2018/08/27 07:43:38 riastradh Exp $	*/
 
 /*
  * Copyright 2014 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_disp_outpdp.c,v 1.2 2018/08/27 04:58:31 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_disp_outpdp.c,v 1.3 2018/08/27 07:43:38 riastradh Exp $");
 
 #include "outpdp.h"
 #include "conn.h"
@@ -100,10 +100,22 @@ done:
 	}
 
 	if (wait) {
+#ifdef __NetBSD__
+		spin_lock(&outp->lt.lock);
+		DRM_SPIN_TIMED_WAIT_UNTIL(ret, &outp->lt.wait, &outp->lt.lock,
+		    msecs_to_jiffies(2000),
+		    atomic_read(&outp->lt.done));
+		spin_unlock(&outp->lt.lock);
+		if (ret == 0)	/* timeout */
+			ret = -ETIMEDOUT;
+		else if (ret > 0) /* success */
+			ret = 0;
+#else
 		if (!wait_event_timeout(outp->lt.wait,
 					atomic_read(&outp->lt.done),
 					msecs_to_jiffies(2000)))
 			ret = -ETIMEDOUT;
+#endif
 	}
 
 	return ret;
@@ -201,6 +213,10 @@ nvkm_output_dp_dtor(struct nvkm_output *base)
 	struct nvkm_output_dp *outp = nvkm_output_dp(base);
 	nvkm_notify_fini(&outp->hpd);
 	nvkm_notify_fini(&outp->irq);
+#ifndef __NetBSD__
+	spin_lock_destroy(&outp->lt.lock);
+	DRM_DESTROY_WAITQUEUE(&outp->lt.wait);
+#endif
 	return outp;
 }
 
@@ -245,7 +261,12 @@ nvkm_output_dp_ctor(const struct nvkm_output_dp_func *func,
 
 	/* link training */
 	INIT_WORK(&outp->lt.work, nvkm_dp_train);
+#ifdef __NetBSD__
+	DRM_INIT_WAITQUEUE(&outp->lt.wait, "nvoutpdp");
+	spin_lock_init(&outp->lt.lock);
+#else
 	init_waitqueue_head(&outp->lt.wait);
+#endif
 	atomic_set(&outp->lt.done, 0);
 
 	/* link maintenance */
