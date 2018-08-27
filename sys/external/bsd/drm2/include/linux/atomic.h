@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic.h,v 1.8 2018/08/27 06:19:05 riastradh Exp $	*/
+/*	$NetBSD: atomic.h,v 1.9 2018/08/27 07:08:58 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -193,6 +193,12 @@ static inline uint64_t
 atomic64_xchg(struct atomic64 *a, uint64_t v)
 {
 	return atomic_swap_64(&a->a_v, v);
+}
+
+static inline uint64_t
+atomic64_cmpxchg(struct atomic64 *atomic, uint64_t old, uint64_t new)
+{
+	return atomic_cas_64(&atomic->a_v, old, new);
 }
 
 static inline void
