@@ -1,4 +1,4 @@
-/*	$NetBSD: fence.h,v 1.5 2018/08/27 07:31:40 riastradh Exp $	*/
+/*	$NetBSD: fence.h,v 1.6 2018/08/27 07:32:00 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -41,6 +41,7 @@ struct fence {
 	const struct fence_ops	*ops;
 };
 
+#define	fence_get		linux_fence_get
 #define	fence_put		linux_fence_put
 #define	fence_wait		linux_fence_wait
 
