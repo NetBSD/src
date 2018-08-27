@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_crtc.h,v 1.6 2018/08/27 04:58:37 riastradh Exp $	*/
+/*	$NetBSD: drm_crtc.h,v 1.7 2018/08/27 06:46:02 riastradh Exp $	*/
 
 /*
  * Copyright © 2006 Keith Packard
@@ -146,7 +146,7 @@ struct drm_display_info {
 	enum subpixel_order subpixel_order;
 	u32 color_formats;
 
-	const u32 *bus_formats;
+	u32 *bus_formats;
 	unsigned int num_bus_formats;
 
 	/* Mask of supported hdmi deep color modes */
