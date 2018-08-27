@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem_stolen.c,v 1.9 2018/08/27 07:17:35 riastradh Exp $	*/
+/*	$NetBSD: i915_gem_stolen.c,v 1.10 2018/08/27 07:20:39 riastradh Exp $	*/
 
 /*
  * Copyright © 2008-2012 Intel Corporation
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gem_stolen.c,v 1.9 2018/08/27 07:17:35 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gem_stolen.c,v 1.10 2018/08/27 07:20:39 riastradh Exp $");
 
 #include <linux/printk.h>
 #include <linux/err.h>
@@ -112,7 +112,6 @@ static unsigned long i915_stolen_to_physical(struct drm_device *dev)
 	 *
 	 */
 	base = 0;
-#ifndef __NetBSD__		/* XXX i915 gem gsm stolen memory base */
 	if (INTEL_INFO(dev)->gen >= 3) {
 		/* Read Graphics Base of Stolen Memory directly */
 		pci_read_config_dword(dev->pdev, 0x5c, &base);
@@ -201,7 +200,6 @@ static unsigned long i915_stolen_to_physical(struct drm_device *dev)
 
 		base = tom - tseg_size - dev_priv->gtt.stolen_size;
 	}
-#endif
 
 	if (base == 0)
 		return 0;
