@@ -1,4 +1,4 @@
-.\"    $NetBSD: npf.conf.5,v 1.64 2018/08/27 12:46:03 maxv Exp $
+.\"    $NetBSD: npf.conf.5,v 1.65 2018/08/27 13:09:16 maxv Exp $
 .\"
 .\" Copyright (c) 2009-2017 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -258,11 +258,21 @@ inbound NAT (translation of the destination)
 bi-directional NAT (combination of inbound and outbound NAT)
 .El
 .Pp
-The following would translate the source to the IP address specified
-by the $pub_ip for the packets on the interface $ext_if.
+The following would translate the source (10.1.1.0/24) to the IP address
+specified by $pub_ip for the packets on the interface $ext_if.
 .Bd -literal
 map $ext_if dynamic 10.1.1.0/24 -> $pub_ip
 .Ed
+.Pp
+Several NAT algorithms are available, and can be chosen using the
+.Cd algo
+keyword.
+By default, NPF will use the NAPT algorithm.
+The other available algorithms are:
+.Bl -tag -width Xnpt66XX -offset indent
+.It npt66
+IPv6-to-IPv6 network prefix translation (NPTv6).
+.El
 .Pp
 Translations are implicitly filtered by limiting the operation to the
 network segments specified, that is, translation would be performed only
