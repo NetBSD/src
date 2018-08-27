@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_bridge.c,v 1.2 2018/08/27 04:58:19 riastradh Exp $	*/
+/*	$NetBSD: drm_bridge.c,v 1.3 2018/08/27 06:43:47 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2014 Samsung Electronics Co., Ltd
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_bridge.c,v 1.2 2018/08/27 04:58:19 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_bridge.c,v 1.3 2018/08/27 06:43:47 riastradh Exp $");
 
 #include <linux/err.h>
 #include <linux/module.h>
@@ -58,8 +58,13 @@ __KERNEL_RCSID(0, "$NetBSD: drm_bridge.c,v 1.2 2018/08/27 04:58:19 riastradh Exp
  * desired output at the end of the encoder chain.
  */
 
+#ifdef __NetBSD__
+static struct mutex bridge_lock;
+static struct list_head bridge_list = LIST_HEAD_INIT(bridge_list);
+#else
 static DEFINE_MUTEX(bridge_lock);
 static LIST_HEAD(bridge_list);
+#endif
 
 /**
  * drm_bridge_add - add the given bridge to the global bridge list
