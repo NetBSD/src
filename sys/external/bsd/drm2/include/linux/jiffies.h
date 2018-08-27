@@ -1,4 +1,4 @@
-/*	$NetBSD: jiffies.h,v 1.9 2018/08/27 06:42:17 riastradh Exp $	*/
+/*	$NetBSD: jiffies.h,v 1.10 2018/08/27 06:55:52 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -40,6 +40,13 @@
 
 /* XXX Er, what?  */
 #define	MAX_JIFFY_OFFSET	((INT_MAX >> 1) - 1)
+
+static inline uint64_t
+get_jiffies_64(void)
+{
+
+	return (uint64_t)(unsigned)hardclock_ticks;
+}
 
 static inline uint64_t
 nsecs_to_jiffies64(uint64_t nsec)
