@@ -1,4 +1,4 @@
-/*	$NetBSD: list.h,v 1.14 2018/08/27 07:21:59 riastradh Exp $	*/
+/*	$NetBSD: list.h,v 1.15 2018/08/27 07:33:09 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -164,6 +164,15 @@ list_splice_tail(const struct list_head *list, struct list_head *head)
 {
 	if (!list_empty(list))
 		__list_splice_between(head->prev, list, head);
+}
+
+static inline void
+list_splice_tail_init(struct list_head *list, struct list_head *head)
+{
+	if (!list_empty(list)) {
+		__list_splice_between(head->prev, list, head);
+		INIT_LIST_HEAD(list);
+	}
 }
 
 static inline void
