@@ -1,4 +1,4 @@
-/*	$NetBSD: ttm_memory.c,v 1.3 2018/08/27 04:58:37 riastradh Exp $	*/
+/*	$NetBSD: ttm_memory.c,v 1.4 2018/08/27 14:41:10 riastradh Exp $	*/
 
 /**************************************************************************
  *
@@ -28,7 +28,7 @@
  **************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ttm_memory.c,v 1.3 2018/08/27 04:58:37 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ttm_memory.c,v 1.4 2018/08/27 14:41:10 riastradh Exp $");
 
 #define pr_fmt(fmt) "[TTM] " fmt
 
@@ -454,6 +454,7 @@ void ttm_mem_global_release(struct ttm_mem_global *glob)
 		kobject_put(&zone->kobj);
 #endif
 			}
+	spin_lock_destroy(&glob->lock);
 #ifdef __NetBSD__
 	kfree(glob);
 #else
