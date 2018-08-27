@@ -1,4 +1,4 @@
-/*	$NetBSD: dma.h,v 1.2 2018/08/27 04:58:30 riastradh Exp $	*/
+/*	$NetBSD: dma.h,v 1.3 2018/08/27 07:36:07 riastradh Exp $	*/
 
 #ifndef __NVKM_DMA_H__
 #define __NVKM_DMA_H__
@@ -16,6 +16,7 @@ struct nvkm_dmaobj {
 	u64 limit;
 
 	struct rb_node rb;
+	bool on_tree;
 	u64 handle; /*XXX HANDLE MERGE */
 };
 

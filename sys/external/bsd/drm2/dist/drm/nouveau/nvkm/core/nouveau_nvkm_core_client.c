@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_core_client.c,v 1.2 2018/08/27 04:58:30 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_core_client.c,v 1.3 2018/08/27 07:36:07 riastradh Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_core_client.c,v 1.2 2018/08/27 04:58:30 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_core_client.c,v 1.3 2018/08/27 07:36:07 riastradh Exp $");
 
 #include <core/client.h>
 #include <core/device.h>
@@ -213,13 +213,29 @@ nvkm_client_object_func = {
 void
 nvkm_client_remove(struct nvkm_client *client, struct nvkm_object *object)
 {
+#ifdef __NetBSD__
+	if (object->on_tree) {
+		rb_tree_remove_node(&client->objtree, object);
+		object->on_tree = false;
+	}
+#else
 	if (!RB_EMPTY_NODE(&object->node))
 		rb_erase(&object->node, &client->objroot);
+#endif
 }
 
 bool
 nvkm_client_insert(struct nvkm_client *client, struct nvkm_object *object)
 {
+#ifdef __NetBSD__
+	struct nvkm_object *collision;
+
+	collision = rb_tree_insert_node(&client->objtree, object);
+	if (collision != object)
+		return false;
+	object->on_tree = true;
+	return true;
+#else
 	struct rb_node **ptr = &client->objroot.rb_node;
 	struct rb_node *parent = NULL;
 
@@ -239,11 +255,15 @@ nvkm_client_insert(struct nvkm_client *client, struct nvkm_object *object)
 	rb_link_node(&object->node, parent, ptr);
 	rb_insert_color(&object->node, &client->objroot);
 	return true;
+#endif
 }
 
 struct nvkm_object *
 nvkm_client_search(struct nvkm_client *client, u64 handle)
 {
+#ifdef __NetBSD__
+	return rb_tree_find_node(&client->objtree, &handle);
+#else
 	struct rb_node *node = client->objroot.rb_node;
 	while (node) {
 		struct nvkm_object *object =
@@ -257,6 +277,7 @@ nvkm_client_search(struct nvkm_client *client, u64 handle)
 			return object;
 	}
 	return NULL;
+#endif
 }
 
 int
@@ -292,6 +313,40 @@ nvkm_client_del(struct nvkm_client **pclient)
 	}
 }
 
+#ifdef __NetBSD__
+static int
+compare_object_nodes(void *cookie, const void *va, const void *vb)
+{
+	const struct nvkm_object *oa = va;
+	const struct nvkm_object *ob = vb;
+
+	if (oa->object < ob->object)
+		return -1;
+	if (oa->object > ob->object)
+		return +1;
+	return 0;
+}
+
+static int
+compare_object_key(void *cookie, const void *vo, const void *vk)
+{
+	const struct nvkm_object *o = vo;
+	const u64 *k = vk;
+
+	if (o->object < *k)
+		return -1;
+	if (o->object > *k)
+		return +1;
+	return 0;
+}
+
+static const rb_tree_ops_t nvkm_client_objtree_ops = {
+	.rbto_compare_nodes = compare_object_nodes,
+	.rbto_compare_key = compare_object_key,
+	.rbto_node_offset = offsetof(struct nvkm_object, node),
+};
+#endif
+
 int
 nvkm_client_new(const char *name, u64 device, const char *cfg,
 		const char *dbg, struct nvkm_client **pclient)
@@ -307,7 +362,12 @@ nvkm_client_new(const char *name, u64 device, const char *cfg,
 	snprintf(client->name, sizeof(client->name), "%s", name);
 	client->device = device;
 	client->debug = nvkm_dbgopt(dbg, "CLIENT");
+#ifdef __NetBSD__
+	rb_tree_init(&client->objtree, &nvkm_client_objtree_ops);
+	rb_tree_init(&client->dmatree, &nvkm_client_dmatree_ops);
+#else
 	client->objroot = RB_ROOT;
 	client->dmaroot = RB_ROOT;
+#endif
 	return 0;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: object.h,v 1.3 2018/08/27 07:35:56 riastradh Exp $	*/
+/*	$NetBSD: object.h,v 1.4 2018/08/27 07:36:07 riastradh Exp $	*/
 
 #ifndef __NVKM_OBJECT_H__
 #define __NVKM_OBJECT_H__
@@ -21,6 +21,7 @@ struct nvkm_object {
 	u64 token;
 	u64 object;
 	struct rb_node node;
+	bool on_tree;
 };
 
 struct nvkm_object_func {
