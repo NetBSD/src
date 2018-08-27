@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_display.c,v 1.8 2018/08/27 07:49:04 riastradh Exp $	*/
+/*	$NetBSD: radeon_display.c,v 1.9 2018/08/27 15:22:54 riastradh Exp $	*/
 
 /*
  * Copyright 2007-8 Advanced Micro Devices, Inc.
@@ -26,7 +26,7 @@
  *          Alex Deucher
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_display.c,v 1.8 2018/08/27 07:49:04 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_display.c,v 1.9 2018/08/27 15:22:54 riastradh Exp $");
 
 #include <drm/drmP.h>
 #include <drm/radeon_drm.h>
@@ -1404,13 +1404,11 @@ radeon_user_framebuffer_create(struct drm_device *dev,
 		return ERR_PTR(-ENOENT);
 	}
 
-#ifndef __NetBSD__		/* XXX radeon prime */
 	/* Handle is imported dma-buf, so cannot be migrated to VRAM for scanout */
 	if (obj->import_attach) {
 		DRM_DEBUG_KMS("Cannot create framebuffer from imported dma_buf\n");
 		return ERR_PTR(-EINVAL);
 	}
-#endif
 
 	radeon_fb = kzalloc(sizeof(*radeon_fb), GFP_KERNEL);
 	if (radeon_fb == NULL) {
