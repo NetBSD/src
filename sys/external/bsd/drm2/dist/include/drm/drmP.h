@@ -1,4 +1,4 @@
-/*	$NetBSD: drmP.h,v 1.16 2018/08/27 06:39:05 riastradh Exp $	*/
+/*	$NetBSD: drmP.h,v 1.17 2018/08/27 06:42:00 riastradh Exp $	*/
 
 /*
  * Internal Header for the Direct Rendering Manager
@@ -656,8 +656,10 @@ struct drm_driver {
 				struct sg_table *sgt);
 	void *(*gem_prime_vmap)(struct drm_gem_object *obj);
 	void (*gem_prime_vunmap)(struct drm_gem_object *obj, void *vaddr);
+#ifndef __NetBSD__		/* XXX drm prime */
 	int (*gem_prime_mmap)(struct drm_gem_object *obj,
 				struct vm_area_struct *vma);
+#endif
 
 	/* vga arb irq handler */
 	void (*vgaarb_irq)(struct drm_device *dev, bool state);
