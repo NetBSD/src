@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_cmd_parser.c,v 1.11 2018/08/27 14:44:16 riastradh Exp $	*/
+/*	$NetBSD: i915_cmd_parser.c,v 1.12 2018/08/27 14:44:30 riastradh Exp $	*/
 
 /*
  * Copyright © 2013 Intel Corporation
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_cmd_parser.c,v 1.11 2018/08/27 14:44:16 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_cmd_parser.c,v 1.12 2018/08/27 14:44:30 riastradh Exp $");
 
 #include "i915_drv.h"
 
@@ -860,28 +860,10 @@ find_reg(const struct drm_i915_reg_descriptor *table,
 	return NULL;
 }
 
+#ifndef __NetBSD__
 static u32 *vmap_batch(struct drm_i915_gem_object *obj,
 		       unsigned start, unsigned len)
 {
-#ifdef __NetBSD__
-	/* Round to an integral number of pages starting on page boundary.  */
-	unsigned start0 = rounddown(start, PAGE_SIZE);
-	unsigned len0 = roundup(start + len, PAGE_SIZE) - start0;
-	vaddr_t va = 0;
-	int error;
-
-	error = uvm_map(kernel_map, &va, len0, obj->base.filp, start0,
-	    PAGE_SIZE, UVM_MAPFLAG(UVM_PROT_RW, UVM_PROT_RW, UVM_INH_NONE,
-		UVM_ADV_SEQUENTIAL, UVM_FLAG_NOWAIT));
-	if (error)
-		return NULL;
-
-	/* uvm_map consumes a reference on success.  */
-	uao_reference(obj->base.filp);
-
-	/* Caller will take care of finding the offset in the page.  */
-	return (void *)va;
-#else
 	int i;
 	void *addr = NULL;
 	struct sg_page_iter sg_iter;
@@ -913,8 +895,8 @@ finish:
 	if (pages)
 		drm_free_large(pages);
 	return (u32*)addr;
-#endif	/* __NetBSD__ */
 }
+#endif	/* __NetBSD__ */
 
 /* Returns a vmap'd pointer to dest_obj, which the caller must unmap */
 static u32 *copy_batch(struct drm_i915_gem_object *dest_obj,
@@ -940,12 +922,29 @@ static u32 *copy_batch(struct drm_i915_gem_object *dest_obj,
 		return ERR_PTR(ret);
 	}
 
+#ifdef __NetBSD__
+	const u32 srcstart = rounddown(batch_start_offset, PAGE_SIZE);
+	const u32 srclen = roundup(batch_start_offset + batch_len, PAGE_SIZE)
+	    - srcstart;
+	vaddr_t srcva = 0;	/* hint */
+
+	/* XXX errno NetBSD->Linux */
+	ret = -uvm_map(kernel_map, &srcva, srclen, src_obj->base.filp,
+	    srcstart, PAGE_SIZE, UVM_MAPFLAG(UVM_PROT_RW, UVM_PROT_RW,
+		UVM_INH_NONE, UVM_ADV_SEQUENTIAL, UVM_FLAG_NOWAIT));
+	if (ret) {
+		DRM_DEBUG_DRIVER("CMD: Failed to vmap batch: %d\n", ret);
+		goto unpin_src;
+	}
+	src_base = (void *)srcva;
+#else
 	src_base = vmap_batch(src_obj, batch_start_offset, batch_len);
 	if (!src_base) {
 		DRM_DEBUG_DRIVER("CMD: Failed to vmap batch\n");
 		ret = -ENOMEM;
 		goto unpin_src;
 	}
+#endif
 
 	ret = i915_gem_object_set_to_cpu_domain(dest_obj, true);
 	if (ret) {
@@ -953,12 +952,27 @@ static u32 *copy_batch(struct drm_i915_gem_object *dest_obj,
 		goto unmap_src;
 	}
 
+#ifdef __NetBSD__
+	const u32 dststart = rounddown(0, PAGE_SIZE);
+	const u32 dstlen = roundup(0 + batch_len, PAGE_SIZE) - dststart;
+	vaddr_t dstva = 0;	/* hint */
+
+	ret = -uvm_map(kernel_map, &dstva, dstlen, dest_obj->base.filp,
+	    dststart, PAGE_SIZE, UVM_MAPFLAG(UVM_PROT_RW, UVM_PROT_RW,
+		UVM_INH_NONE, UVM_ADV_SEQUENTIAL, UVM_FLAG_NOWAIT));
+	if (ret) {
+		DRM_DEBUG_DRIVER("CMD: Failed to vmap shadow batch: %d\n", ret);
+		goto unmap_src;
+	}
+	dst = (void *)dstva;
+#else
 	dst = vmap_batch(dest_obj, 0, batch_len);
 	if (!dst) {
 		DRM_DEBUG_DRIVER("CMD: Failed to vmap shadow batch\n");
 		ret = -ENOMEM;
 		goto unmap_src;
 	}
+#endif
 
 	src = (char *)src_base + offset_in_page(batch_start_offset);
 	if (needs_clflush)
@@ -968,7 +982,7 @@ static u32 *copy_batch(struct drm_i915_gem_object *dest_obj,
 
 unmap_src:
 #ifdef __NetBSD__
-	uvm_unmap(kernel_map, (vaddr_t)src_base, batch_len);
+	uvm_unmap(kernel_map, srcva, srclen);
 #else
 	vunmap(src_base);
 #endif
@@ -1224,7 +1238,8 @@ int i915_parse_cmds(struct intel_engine_cs *ring,
 	}
 
 #ifdef __NetBSD__
-	uvm_unmap(kernel_map, (vaddr_t)batch_base, batch_obj->base.size);
+	uvm_unmap(kernel_map, (vaddr_t)batch_base,
+	    roundup(batch_len, PAGE_SIZE));
 #else
 	vunmap(batch_base);
 #endif
