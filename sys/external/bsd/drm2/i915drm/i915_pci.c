@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_pci.c,v 1.16 2018/08/27 07:57:12 riastradh Exp $	*/
+/*	$NetBSD: i915_pci.c,v 1.17 2018/08/27 13:40:03 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_pci.c,v 1.16 2018/08/27 07:57:12 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_pci.c,v 1.17 2018/08/27 13:40:03 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/queue.h>
@@ -47,6 +47,7 @@ SIMPLEQ_HEAD(i915drmkms_task_head, i915drmkms_task);
 
 struct i915drmkms_softc {
 	device_t			sc_dev;
+	struct pci_attach_args		sc_pa;
 	enum {
 		I915DRMKMS_TASK_ATTACH,
 		I915DRMKMS_TASK_WORKQUEUE,
@@ -64,6 +65,7 @@ static const struct intel_device_info *
 
 static int	i915drmkms_match(device_t, cfdata_t, void *);
 static void	i915drmkms_attach(device_t, device_t, void *);
+static void	i915drmkms_attach_real(device_t);
 static int	i915drmkms_detach(device_t, int);
 
 static bool	i915drmkms_suspend(device_t, const pmf_qual_t *);
@@ -139,20 +141,35 @@ i915drmkms_attach(device_t parent, device_t self, void *aux)
 {
 	struct i915drmkms_softc *const sc = device_private(self);
 	const struct pci_attach_args *const pa = aux;
-	const struct intel_device_info *const info = i915drmkms_pci_lookup(pa);
-	const unsigned long cookie =
-	    (unsigned long)(uintptr_t)(const void *)info;
-	int error;
-
-	KASSERT(info != NULL);
-
-	sc->sc_dev = self;
 
 	pci_aprint_devinfo(pa, NULL);
 
 	if (!pmf_device_register(self, &i915drmkms_suspend,
 		&i915drmkms_resume))
 		aprint_error_dev(self, "unable to establish power handler\n");
+
+	/*
+	 * Trivial initialization first; the rest will come after we
+	 * have mounted the root file system and can load firmware
+	 * images.
+	 */
+	sc->sc_dev = self;
+	sc->sc_pa = *pa;
+
+	config_mountroot(self, &i915drmkms_attach_real);
+}
+
+static void
+i915drmkms_attach_real(device_t self)
+{
+	struct i915drmkms_softc *const sc = device_private(self);
+	struct pci_attach_args *const pa = &sc->sc_pa;
+	const struct intel_device_info *const info = i915drmkms_pci_lookup(pa);
+	const unsigned long cookie =
+	    (unsigned long)(uintptr_t)(const void *)info;
+	int error;
+
+	KASSERT(info != NULL);
 
 	sc->sc_task_state = I915DRMKMS_TASK_ATTACH;
 	SIMPLEQ_INIT(&sc->sc_task_u.attach);
