@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_reservation.c,v 1.2 2018/08/27 13:35:35 riastradh Exp $	*/
+/*	$NetBSD: linux_reservation.c,v 1.3 2018/08/27 13:55:46 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_reservation.c,v 1.2 2018/08/27 13:35:35 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_reservation.c,v 1.3 2018/08/27 13:55:46 riastradh Exp $");
 
 #include <linux/fence.h>
 #include <linux/reservation.h>
@@ -89,7 +89,6 @@ reservation_object_init(struct reservation_object *robj)
 	robj->robj_fence = NULL;
 	robj->robj_list = NULL;
 	robj->robj_prealloc = NULL;
-	robj->robj_nreserved = 0;
 }
 
 /*
@@ -162,12 +161,13 @@ reservation_object_get_list(struct reservation_object *robj)
 /*
  * reservation_object_reserve_shared(robj)
  *
- *	Reserve space in robj to add a shared fence.
+ *	Reserve space in robj to add a shared fence.  To be used only
+ *	once before calling reservation_object_add_shared_fence.
  *
  *	Caller must have robj locked.
  *
- *	Internally, we start with room for four entries and double
- *	whenever we run out.  This is not guaranteed.
+ *	Internally, we start with room for four entries and double if
+ *	we don't have enough.  This is not guaranteed.
  */
 int
 reservation_object_reserve_shared(struct reservation_object *robj)
@@ -180,21 +180,27 @@ reservation_object_reserve_shared(struct reservation_object *robj)
 	list = robj->robj_list;
 	prealloc = robj->robj_prealloc;
 
-	/* If there's too many objects reserved already, fail.  */
-	if (robj->robj_nreserved == UINT32_MAX)
-		return -ENOMEM;
+	/* If there's an existing list, check it for space.  */
+	if (list != NULL) {
+		/* If there's too many already, give up.  */
+		if (list->shared_count == UINT32_MAX)
+			return -ENOMEM;
 
-	/* Bump the number of objects reserved.  */
-	n = ++robj->robj_nreserved;
+		/* Add one more. */
+		n = list->shared_count + 1;
 
-	/* If there's enough room in the existing list, stop here.  */
-	if (list != NULL && n < list->shared_max)
-		return 0;
+		/* If there's enough for one more, we're done.  */
+		if (n <= list->shared_max)
+			return 0;
+	} else {
+		/* No list already.  We need space for 1.  */
+		n = 1;
+	}
 
 	/* If not, maybe there's a preallocated list ready.  */
 	if (prealloc != NULL) {
 		/* If there's enough room in it, stop here.  */
-		if (n < prealloc->shared_max)
+		if (n <= prealloc->shared_max)
 			return 0;
 
 		/* Try to double its capacity.  */

@@ -1,4 +1,4 @@
-/*	$NetBSD: reservation.h,v 1.5 2018/08/27 13:33:59 riastradh Exp $	*/
+/*	$NetBSD: reservation.h,v 1.6 2018/08/27 13:55:46 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -44,7 +44,6 @@ struct reservation_object {
 	struct fence __rcu			*robj_fence;
 	struct reservation_object_list __rcu	*robj_list;
 	struct reservation_object_list __rcu	*robj_prealloc;
-	uint32_t				robj_nreserved;
 };
 
 struct reservation_object_list {
