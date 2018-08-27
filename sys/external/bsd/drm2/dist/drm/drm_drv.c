@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_drv.c,v 1.4 2018/08/27 06:53:46 riastradh Exp $	*/
+/*	$NetBSD: drm_drv.c,v 1.5 2018/08/27 06:54:08 riastradh Exp $	*/
 
 /*
  * Created: Fri Jan 19 10:48:35 2001 by faith@acm.org
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_drv.c,v 1.4 2018/08/27 06:53:46 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_drv.c,v 1.5 2018/08/27 06:54:08 riastradh Exp $");
 
 #include <linux/err.h>
 #include <linux/export.h>
@@ -59,11 +59,12 @@ MODULE_PARM_DESC(timestamp_monotonic, "Use monotonic timestamps");
 module_param_named(debug, drm_debug, int, 0600);
 
 #ifdef __NetBSD__
-static spinlock_t drm_minor_lock;
+spinlock_t drm_minor_lock;
+struct idr drm_minors_idr;
 #else
 static DEFINE_SPINLOCK(drm_minor_lock);
-#endif
 static struct idr drm_minors_idr;
+#endif
 
 #ifndef __NetBSD__
 static struct dentry *drm_debugfs_root;
@@ -329,7 +330,9 @@ static void drm_minor_free(struct drm_device *dev, unsigned int type)
 	if (!minor)
 		return;
 
+#ifndef __NetBSD__
 	put_device(minor->kdev);
+#endif
 
 	spin_lock_irqsave(&drm_minor_lock, flags);
 	idr_remove(&drm_minors_idr, minor->index);
@@ -386,7 +389,11 @@ static void drm_minor_unregister(struct drm_device *dev, unsigned int type)
 	unsigned long flags;
 
 	minor = *drm_minor_get_slot(dev, type);
+#ifdef __NetBSD__
+	if (!minor)
+#else
 	if (!minor || !device_is_registered(minor->kdev))
+#endif
 		return;
 
 	/* replace @minor with NULL so lookups will fail from now on */
@@ -394,9 +401,11 @@ static void drm_minor_unregister(struct drm_device *dev, unsigned int type)
 	idr_replace(&drm_minors_idr, NULL, minor->index);
 	spin_unlock_irqrestore(&drm_minor_lock, flags);
 
+#ifndef __NetBSD__
 	device_del(minor->kdev);
 	dev_set_drvdata(minor->kdev, NULL); /* safety belt */
 	drm_debugfs_cleanup(minor);
+#endif
 }
 
 /**
@@ -913,6 +922,8 @@ int drm_dev_set_unique(struct drm_device *dev, const char *fmt, ...)
 }
 EXPORT_SYMBOL(drm_dev_set_unique);
 
+#ifndef __NetBSD__
+
 /*
  * DRM Core
  * The DRM core module initializes all global DRM objects and makes them
@@ -1023,3 +1034,5 @@ static void __exit drm_core_exit(void)
 
 module_init(drm_core_init);
 module_exit(drm_core_exit);
+
+#endif
