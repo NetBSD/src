@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_drv.h,v 1.12 2018/08/27 04:58:23 riastradh Exp $	*/
+/*	$NetBSD: i915_drv.h,v 1.13 2018/08/27 06:17:05 riastradh Exp $	*/
 
 /* i915_drv.h -- Private header for the I915 driver -*- linux-c -*-
  */
@@ -3479,6 +3479,7 @@ extern void intel_modeset_cleanup(struct drm_device *dev);
 extern void intel_connector_unregister(struct intel_connector *);
 extern int intel_modeset_vga_set_state(struct drm_device *dev, bool state);
 extern void intel_display_resume(struct drm_device *dev);
+extern void i915_disable_vga(struct drm_device *dev);
 extern void i915_redisable_vga(struct drm_device *dev);
 extern void i915_redisable_vga_power_on(struct drm_device *dev);
 extern bool ironlake_set_drps(struct drm_device *dev, u8 val);
