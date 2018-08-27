@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic.h,v 1.11 2018/08/27 13:40:41 riastradh Exp $	*/
+/*	$NetBSD: atomic.h,v 1.12 2018/08/27 13:40:53 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -276,16 +276,10 @@ test_and_change_bit(unsigned int bit, volatile unsigned long *ptr)
  * before/after memory barriers is not consistent throughout Linux.
  */
 #  define	smp_mb__before_atomic()		membar_sync()
-#  define	smp_mb__before_atomic_inc()	membar_sync()
-#  define	smp_mb__after_atomic_inc()	membar_sync()
-#  define	smp_mb__before_atomic_dec()	membar_sync()
-#  define	smp_mb__after_atomic_dec()	membar_sync()
+#  define	smp_mb__after_atomic()		membar_sync()
 #else
 #  define	smp_mb__before_atomic()		__insn_barrier()
-#  define	smp_mb__before_atomic_inc()	__insn_barrier()
-#  define	smp_mb__after_atomic_inc()	__insn_barrier()
-#  define	smp_mb__before_atomic_dec()	__insn_barrier()
-#  define	smp_mb__after_atomic_dec()	__insn_barrier()
+#  define	smp_mb__after_atomic()		__insn_barrier()
 #endif
 
 #endif  /* _LINUX_ATOMIC_H_ */
