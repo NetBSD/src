@@ -1,4 +1,4 @@
-/*	$NetBSD: reservation.h,v 1.6 2018/08/27 13:55:46 riastradh Exp $	*/
+/*	$NetBSD: reservation.h,v 1.7 2018/08/27 14:01:14 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -58,6 +58,7 @@ struct reservation_object_list {
 #define	reservation_object_add_shared_fence	linux_reservation_object_add_shared_fence
 #define	reservation_object_fini			linux_reservation_object_fini
 #define	reservation_object_get_excl		linux_reservation_object_get_excl
+#define	reservation_object_get_fences_rcu	linux_reservation_object_get_fences_rcu
 #define	reservation_object_get_list		linux_reservation_object_get_list
 #define	reservation_object_held			linux_reservation_object_held
 #define	reservation_object_init			linux_reservation_object_init
@@ -80,6 +81,10 @@ void	reservation_object_add_excl_fence(struct reservation_object *,
 	    struct fence *);
 void	reservation_object_add_shared_fence(struct reservation_object *,
 	    struct fence *);
+
+int	reservation_object_get_fences_rcu(struct reservation_object *,
+	    struct fence **, unsigned *, struct fence ***);
+
 bool	reservation_object_test_signaled_rcu(struct reservation_object *,
 	    bool);
 long	reservation_object_wait_timeout_rcu(struct reservation_object *,

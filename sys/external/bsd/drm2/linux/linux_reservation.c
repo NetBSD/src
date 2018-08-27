@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_reservation.c,v 1.3 2018/08/27 13:55:46 riastradh Exp $	*/
+/*	$NetBSD: linux_reservation.c,v 1.4 2018/08/27 14:01:14 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_reservation.c,v 1.3 2018/08/27 13:55:46 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_reservation.c,v 1.4 2018/08/27 14:01:14 riastradh Exp $");
 
 #include <linux/fence.h>
 #include <linux/reservation.h>
@@ -442,6 +442,130 @@ reservation_object_add_shared_fence(struct reservation_object *robj,
 	/* Release a fence if we replaced it.  */
 	if (replace)
 		fence_put(replace);
+}
+
+int
+reservation_object_get_fences_rcu(struct reservation_object *robj,
+    struct fence **fencep, unsigned *nsharedp, struct fence ***sharedp)
+{
+	struct reservation_object_list *list;
+	struct fence *fence;
+	struct fence **shared = NULL;
+	unsigned shared_alloc, shared_count, i;
+	struct reservation_object_read_ticket ticket;
+
+top:
+	/* Enter an RCU read section and get a read ticket.  */
+	rcu_read_lock();
+	reservation_object_read_begin(robj, &ticket);
+
+	/* If there is a shared list, grab it.  */
+	if ((list = robj->robj_list) != NULL) {
+		/* Make sure the content of the list has been published.  */
+		membar_datadep_consumer();
+
+		/* Check whether we have a buffer.  */
+		if (shared == NULL) {
+			/*
+			 * We don't have a buffer yet.  Try to allocate
+			 * one without waiting.
+			 */
+			shared_alloc = list->shared_max;
+			__insn_barrier();
+			shared = kcalloc(shared_alloc, sizeof(shared[0]),
+			    GFP_NOWAIT);
+			if (shared == NULL) {
+				/*
+				 * Couldn't do it immediately.  Back
+				 * out of RCU and allocate one with
+				 * waiting.
+				 */
+				rcu_read_unlock();
+				shared = kcalloc(shared_alloc,
+				    sizeof(shared[0]), GFP_KERNEL);
+				if (shared == NULL)
+					return -ENOMEM;
+				goto top;
+			}
+		} else if (shared_alloc < list->shared_max) {
+			/*
+			 * We have a buffer but it's too small.  We're
+			 * already racing in this case, so just back
+			 * out and wait to allocate a bigger one.
+			 */
+			shared_alloc = list->shared_max;
+			__insn_barrier();
+			rcu_read_unlock();
+			kfree(shared);
+			shared = kcalloc(shared_alloc, sizeof(shared[0]),
+			    GFP_KERNEL);
+			if (shared == NULL)
+				return -ENOMEM;
+		}
+
+		/*
+		 * We got a buffer large enough.  Copy into the buffer
+		 * and record the number of elements.
+		 */
+		memcpy(shared, list->shared, shared_alloc * sizeof(shared[0]));
+		shared_count = list->shared_count;
+	} else {
+		/* No shared list: shared count is zero.  */
+		shared_count = 0;
+	}
+
+	/* If there is an exclusive fence, grab it.  */
+	if ((fence = robj->robj_fence) != NULL) {
+		/* Make sure the content of the fence has been published.  */
+		membar_datadep_consumer();
+	}
+
+	/*
+	 * We are done reading from robj and list.  Validate our
+	 * parking ticket.  If it's invalid, do not pass go and do not
+	 * collect $200.
+	 */
+	if (!reservation_object_read_valid(robj, &ticket))
+		goto restart;
+
+	/*
+	 * Try to get a reference to the exclusive fence, if there is
+	 * one.  If we can't, start over.
+	 */
+	if (fence) {
+		if (fence_get_rcu(fence) == NULL)
+			goto restart;
+	}
+
+	/*
+	 * Try to get a reference to all of the shared fences.
+	 */
+	for (i = 0; i < shared_count; i++) {
+		if (fence_get_rcu(shared[i]) == NULL)
+			goto put_restart;
+	}
+
+	/* Success!  */
+	rcu_read_unlock();
+	*fencep = fence;
+	*nsharedp = shared_count;
+	*sharedp = shared;
+	return 0;
+
+put_restart:
+	/* Back out.  */
+	while (i --> 0) {
+		fence_put(shared[i]);
+		shared[i] = NULL; /* paranoia */
+	}
+	if (fence) {
+		fence_put(fence);
+		fence = NULL;	/* paranoia */
+	}
+
+restart:
+	rcu_read_unlock();
+	goto top;
 }
 
 /*
