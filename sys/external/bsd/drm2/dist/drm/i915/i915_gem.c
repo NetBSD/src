@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem.c,v 1.47 2018/08/27 13:40:28 riastradh Exp $	*/
+/*	$NetBSD: i915_gem.c,v 1.48 2018/08/27 13:41:37 riastradh Exp $	*/
 
 /*
  * Copyright © 2008-2015 Intel Corporation
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gem.c,v 1.47 2018/08/27 13:40:28 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gem.c,v 1.48 2018/08/27 13:41:37 riastradh Exp $");
 
 #ifdef __NetBSD__
 #if 0				/* XXX uvmhist option?  */
@@ -5025,9 +5025,6 @@ struct drm_i915_gem_object *i915_gem_alloc_object(struct drm_device *dev,
 
 static bool discard_backing_storage(struct drm_i915_gem_object *obj)
 {
-#ifdef __NetBSD__
-	panic("XXX");
-#else
 	/* If we are the last user of the backing storage (be it shmemfs
 	 * pages or stolen etc), we know that the pages are going to be
 	 * immediately released. In this case, we can then skip copying
@@ -5047,6 +5044,10 @@ static bool discard_backing_storage(struct drm_i915_gem_object *obj)
 	 * acquiring such a reference whilst we are in the middle of
 	 * freeing the object.
 	 */
+#ifdef __NetBSD__
+	/* XXX This number might be a fencepost.  */
+	return obj->base.filp->uo_refs == 1;
+#else
 	return atomic_long_read(&obj->base.filp->f_count) == 1;
 #endif
 }
