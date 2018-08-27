@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_drm.h,v 1.8 2017/12/26 14:54:52 jmcneill Exp $ */
+/* $NetBSD: tegra_drm.h,v 1.9 2018/08/27 15:31:51 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -148,9 +148,9 @@ struct tegra_fbdev {
 
 int	tegra_drm_mode_init(struct drm_device *);
 int	tegra_drm_fb_init(struct drm_device *);
-u32	tegra_drm_get_vblank_counter(struct drm_device *, int);
-int	tegra_drm_enable_vblank(struct drm_device *, int);
-void	tegra_drm_disable_vblank(struct drm_device *, int);
+u32	tegra_drm_get_vblank_counter(struct drm_device *, unsigned int);
+int	tegra_drm_enable_vblank(struct drm_device *, unsigned int);
+void	tegra_drm_disable_vblank(struct drm_device *, unsigned int);
 int	tegra_drm_framebuffer_init(struct drm_device *,
 	    struct tegra_framebuffer *);
 
