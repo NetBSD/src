@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_modeset_lock.h,v 1.3 2018/08/27 06:17:52 riastradh Exp $	*/
+/*	$NetBSD: drm_modeset_lock.h,v 1.4 2018/08/27 14:39:59 riastradh Exp $	*/
 
 /*
  * Copyright (C) 2014 Red Hat
@@ -111,6 +111,7 @@ static inline void drm_modeset_lock_init(struct drm_modeset_lock *lock)
 static inline void drm_modeset_lock_fini(struct drm_modeset_lock *lock)
 {
 	WARN_ON(!list_empty(&lock->head));
+	ww_mutex_destroy(&lock->mutex);
 }
 
 /**
