@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma_hacks.h,v 1.10 2018/08/27 07:17:47 riastradh Exp $	*/
+/*	$NetBSD: bus_dma_hacks.h,v 1.11 2018/08/27 15:11:58 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -41,11 +41,14 @@
 #include <uvm/uvm_extern.h>
 
 #if defined(__i386__) || defined(__x86_64__)
-#include <x86/bus_private.h>
-#include <x86/machdep.h>
+#  include <x86/bus_private.h>
+#  include <x86/machdep.h>
+#  define	PHYS_TO_BUS_MEM(dmat, paddr)	(paddr)
 #elif defined(__arm__) || defined(__aarch64__)
+#  define	PHYS_TO_BUS_MEM(dmat, paddr)	(paddr)
+#elif defined(__powerpc__)
 #else
-#error DRM GEM/TTM need new MI bus_dma APIs!  Halp!
+#  error DRM GEM/TTM need new MI bus_dma APIs!  Halp!
 #endif
 
 static inline int
@@ -87,7 +90,10 @@ bus_dmamap_load_pglist(bus_dma_tag_t tag, bus_dmamap_t map,
 
 	seg = 0;
 	TAILQ_FOREACH(page, pglist, pageq.queue) {
-		segs[seg].ds_addr = VM_PAGE_TO_PHYS(page);
+		paddr_t paddr = VM_PAGE_TO_PHYS(page);
+		bus_addr_t baddr = PHYS_TO_BUS_MEM(tag, paddr);
+
+		segs[seg].ds_addr = baddr;
 		segs[seg].ds_len = PAGE_SIZE;
 		seg++;
 	}
