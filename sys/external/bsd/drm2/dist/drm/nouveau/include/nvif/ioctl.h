@@ -1,4 +1,4 @@
-/*	$NetBSD: ioctl.h,v 1.2 2018/08/27 04:58:30 riastradh Exp $	*/
+/*	$NetBSD: ioctl.h,v 1.3 2018/08/27 07:35:56 riastradh Exp $	*/
 
 #ifndef __NVIF_IOCTL_H__
 #define __NVIF_IOCTL_H__
@@ -20,6 +20,7 @@ struct nvif_ioctl_v0 {
 #define NVIF_IOCTL_V0_NTFY_DEL                                             0x0a
 #define NVIF_IOCTL_V0_NTFY_GET                                             0x0b
 #define NVIF_IOCTL_V0_NTFY_PUT                                             0x0c
+#define NVIF_IOCTL_V0_MAP_NETBSD					   0x0d
 	__u8  type;
 	__u8  pad02[4];
 #define NVIF_IOCTL_V0_OWNER_NVIF                                           0x00
@@ -97,6 +98,19 @@ struct nvif_ioctl_map_v0 {
 	__u32 length;
 	__u64 handle;
 };
+
+#ifdef __NetBSD__
+/* XXX Kludge for NetBSD kernel-only use.  */
+#include <sys/bus.h>
+struct nvif_ioctl_map_netbsd_v0 {
+	/* nvif_ioctl ... */
+	__u8  version;
+	__u8  pad01[3];
+	bus_space_tag_t tag;
+	__u32 length;
+	__u64 handle;
+};
+#endif
 
 struct nvif_ioctl_unmap {
 };
