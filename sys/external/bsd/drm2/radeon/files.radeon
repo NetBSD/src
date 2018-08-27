@@ -1,4 +1,4 @@
-#	$NetBSD: files.radeon,v 1.12 2014/10/02 12:25:14 riastradh Exp $
+#	$NetBSD: files.radeon,v 1.13 2018/08/27 05:35:31 riastradh Exp $
 
 define	radeonfbbus	{ }
 device	radeon: drmkms, drmkms_pci, drmkms_ttm, radeonfbbus, firmload
@@ -60,6 +60,11 @@ makeoptions	radeon    "CWARNFLAGS.sumo_dpm.c"+="-Wno-missing-prototypes"
 makeoptions	radeon    "CWARNFLAGS.trinity_dpm.c"+="-Wno-missing-prototypes"
 makeoptions	radeon    "CWARNFLAGS.trinity_dpm.c"+="-Wno-unused-const-variable"
 makeoptions	radeon    "CWARNFLAGS.vce_v2_0.c"+="-Wno-missing-prototypes"
+
+file	external/bsd/drm2/radeon/radeon_module.c		radeon
+file	external/bsd/drm2/radeon/radeon_pci.c			radeon
+
+file	external/bsd/drm2/radeon/radeondrmkmsfb.c		radeondrmkmsfb
 
 file	external/bsd/drm2/dist/drm/radeon/atom.c		radeon
 file	external/bsd/drm2/dist/drm/radeon/atombios_crtc.c	radeon
@@ -160,8 +165,3 @@ file	external/bsd/drm2/dist/drm/radeon/uvd_v3_1.c		radeon
 file	external/bsd/drm2/dist/drm/radeon/uvd_v4_2.c		radeon
 file	external/bsd/drm2/dist/drm/radeon/vce_v1_0.c		radeon
 file	external/bsd/drm2/dist/drm/radeon/vce_v2_0.c		radeon
-
-file	external/bsd/drm2/radeon/radeon_module.c		radeon
-file	external/bsd/drm2/radeon/radeon_pci.c			radeon
-
-file	external/bsd/drm2/radeon/radeondrmkmsfb.c		radeondrmkmsfb
