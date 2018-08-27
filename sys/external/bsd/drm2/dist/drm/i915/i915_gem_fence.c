@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem_fence.c,v 1.2 2018/08/27 04:58:23 riastradh Exp $	*/
+/*	$NetBSD: i915_gem_fence.c,v 1.3 2018/08/27 07:07:33 riastradh Exp $	*/
 
 /*
  * Copyright © 2008-2015 Intel Corporation
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gem_fence.c,v 1.2 2018/08/27 04:58:23 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gem_fence.c,v 1.3 2018/08/27 07:07:33 riastradh Exp $");
 
 #include <drm/drmP.h>
 #include <drm/i915_drm.h>
@@ -133,7 +133,7 @@ static void i915_write_fence_reg(struct drm_device *dev, int reg,
 		WARN((i915_gem_obj_ggtt_offset(obj) & ~I915_FENCE_START_MASK) ||
 		     (size & -size) != size ||
 		     (i915_gem_obj_ggtt_offset(obj) & (size - 1)),
-		     "object 0x%08llx [fenceable? %d] not 1M or pot-size (0x%08x) aligned\n",
+		     "object 0x%08"PRIx64" [fenceable? %d] not 1M or pot-size (0x%08x) aligned\n",
 		     i915_gem_obj_ggtt_offset(obj), obj->map_and_fenceable, size);
 
 		if (obj->tiling_mode == I915_TILING_Y && HAS_128_BYTE_Y_TILING(dev))
@@ -171,7 +171,7 @@ static void i830_write_fence_reg(struct drm_device *dev, int reg,
 		WARN((i915_gem_obj_ggtt_offset(obj) & ~I830_FENCE_START_MASK) ||
 		     (size & -size) != size ||
 		     (i915_gem_obj_ggtt_offset(obj) & (size - 1)),
-		     "object 0x%08llx not 512K or pot-size 0x%08x aligned\n",
+		     "object 0x%08"PRIx64" not 512K or pot-size 0x%08x aligned\n",
 		     i915_gem_obj_ggtt_offset(obj), size);
 
 		pitch_val = obj->stride / 128;
