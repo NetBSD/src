@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem_render_state.c,v 1.5 2018/08/27 07:19:01 riastradh Exp $	*/
+/*	$NetBSD: i915_gem_render_state.c,v 1.6 2018/08/27 13:43:12 riastradh Exp $	*/
 
 /*
  * Copyright © 2014 Intel Corporation
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gem_render_state.c,v 1.5 2018/08/27 07:19:01 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gem_render_state.c,v 1.6 2018/08/27 13:43:12 riastradh Exp $");
 
 #include "i915_drv.h"
 #include "intel_renderstate.h"
@@ -101,7 +101,7 @@ static int render_state_setup(struct render_state *so)
 	const struct intel_renderstate_rodata *rodata = so->rodata;
 	unsigned int i = 0, reloc_index = 0;
 #ifdef __NetBSD__
-	vaddr_t kva;
+	vaddr_t kva = 0;	/* hint */
 #else
 	struct page *page;
 #endif
