@@ -1,4 +1,4 @@
-#	$NetBSD: files.amdgpu,v 1.5 2018/08/27 14:23:14 riastradh Exp $
+#	$NetBSD: files.amdgpu,v 1.6 2018/08/27 15:27:04 riastradh Exp $
 
 define	amdgpufbbus	{ }
 device	amdgpu: drmkms, drmkms_pci, drmkms_ttm, amdgpufbbus, firmload
@@ -84,7 +84,7 @@ file	external/bsd/drm2/dist/drm/amd/amdgpu/amdgpu_kv_smc.c	amdgpu & amdgpu_cik
 file	external/bsd/drm2/dist/drm/amd/amdgpu/amdgpu_object.c	amdgpu
 file	external/bsd/drm2/dist/drm/amd/amdgpu/amdgpu_pll.c	amdgpu
 file	external/bsd/drm2/dist/drm/amd/amdgpu/amdgpu_pm.c	amdgpu
-#file	external/bsd/drm2/dist/drm/amd/amdgpu/amdgpu_prime.c	amdgpu  # XXX amdgpu prime
+file	external/bsd/drm2/dist/drm/amd/amdgpu/amdgpu_prime.c	amdgpu
 file	external/bsd/drm2/dist/drm/amd/amdgpu/amdgpu_ring.c	amdgpu
 file	external/bsd/drm2/dist/drm/amd/amdgpu/amdgpu_sa.c	amdgpu
 file	external/bsd/drm2/dist/drm/amd/amdgpu/amdgpu_sched.c	amdgpu
