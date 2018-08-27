@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.37 2011/06/09 19:57:51 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.38 2018/08/27 15:16:49 sevan Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -63,7 +63,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.2 (Berkeley) 1/23/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.37 2011/06/09 19:57:51 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.38 2018/08/27 15:16:49 sevan Exp $");
 #endif
 #endif /* not lint */
 
@@ -349,7 +349,7 @@ usage(void)
 {
 
 	(void) fprintf(stderr,
-	    "usage: %s [-dfnpUy] [-b block] [-c level] [-m mode] filesystem ...\n",
+	    "usage: %s [-dfnpUy] [-b block] [-m mode] filesystem ...\n",
 	    getprogname());
 	exit(FSCK_EXIT_USAGE);
 }
