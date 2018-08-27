@@ -1,4 +1,4 @@
-#	$NetBSD: files.i915drmkms,v 1.28 2018/08/27 13:53:52 riastradh Exp $
+#	$NetBSD: files.i915drmkms,v 1.29 2018/08/27 13:54:04 riastradh Exp $
 
 define	intelfbbus	{ }
 device	i915drmkms: drmkms, drmkms_pci, intelfbbus, agp_i810
@@ -10,15 +10,14 @@ attach	intelfb at intelfbbus
 makeoptions	i915drmkms	CPPFLAGS+="-I$S/external/bsd/drm2/dist/drm/i915"
 makeoptions	i915drmkms	CPPFLAGS+="-I$S/external/bsd/drm2/i915drm"
 
+makeoptions	i915drmkms	CPPFLAGS+="-DCONFIG_DRM_I915_FBDEV=1"
+makeoptions	i915drmkms	CPPFLAGS+="-DCONFIG_DRM_I915_PRELIMINARY_HW_SUPPORT=0"
+makeoptions	i915drmkms	CPPFLAGS+="-DCONFIG_DRM_FBDEV_EMULATION=1"
+
 makeoptions	i915drmkms	"CWARNFLAGS.i915drmkms"+="-Wno-shadow"
 
 makeoptions 	i915drmkms 	"CWARNFLAGS.i915_drv.c"+="${${ACTIVE_CC} == gcc:? -Wno-override-init :}"
 makeoptions 	i915drmkms 	"CWARNFLAGS.i915_drv.c"+="${${ACTIVE_CC} == clang:? -Wno-initializer-overrides :}"
-
-# XXX x86 kludge.
-makeoptions	i915drmkms	CPPFLAGS+="-DCONFIG_DRM_I915_FBDEV=1"
-makeoptions	i915drmkms	CPPFLAGS+="-DCONFIG_DRM_I915_PRELIMINARY_HW_SUPPORT=0"
-makeoptions	i915drmkms	CPPFLAGS+="-DCONFIG_DRM_FBDEV_EMULATION=1"
 
 file	external/bsd/drm2/i915drm/i915_module.c		i915drmkms
 file	external/bsd/drm2/i915drm/i915_pci.c		i915drmkms
