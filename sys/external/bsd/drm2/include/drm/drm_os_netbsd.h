@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_os_netbsd.h,v 1.8 2018/08/27 06:42:54 riastradh Exp $	*/
+/*	$NetBSD: drm_os_netbsd.h,v 1.9 2018/08/27 07:50:08 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -36,12 +36,9 @@
 #include "opt_drmkms.h"
 #endif
 
-/*
- * XXX Better to get rid of CONFIG_X86, but that's not convenient at
- * the moment.
- */
 #if defined(__i386__) || defined(__x86_64__)
 #define	CONFIG_X86	1
+#define	CONFIG_X86_PAT	1
 #endif
 
 #include "pci.h"
@@ -55,6 +52,14 @@
 
 #if NPNPBIOS > 0
 #define CONFIG_PNP
+#endif
+
+#if defined(_KERNEL_OPT)
+#include "opt_mtrr.h"
+#endif
+
+#ifdef MTRR
+#define	CONFIG_MTRR	1
 #endif
 
 #include <drm/drm_agp_netbsd.h>
