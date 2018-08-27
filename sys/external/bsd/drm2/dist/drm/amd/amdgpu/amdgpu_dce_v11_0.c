@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_dce_v11_0.c,v 1.1 2018/08/27 14:10:14 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_dce_v11_0.c,v 1.2 2018/08/27 14:39:20 riastradh Exp $	*/
 
 /*
  * Copyright 2014 Advanced Micro Devices, Inc.
@@ -23,7 +23,7 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_dce_v11_0.c,v 1.1 2018/08/27 14:10:14 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_dce_v11_0.c,v 1.2 2018/08/27 14:39:20 riastradh Exp $");
 
 #include "drmP.h"
 #include "amdgpu.h"
@@ -2874,7 +2874,7 @@ static int dce_v11_0_crtc_init(struct amdgpu_device *adev, int index)
 
 	drm_mode_crtc_set_gamma_size(&amdgpu_crtc->base, 256);
 	amdgpu_crtc->crtc_id = index;
-	amdgpu_crtc->pflip_queue = create_singlethread_workqueue("amdgpu-pageflip-queue");
+	amdgpu_crtc->pflip_queue = create_singlethread_workqueue("amdgpu-pageflip");
 	adev->mode_info.crtcs[index] = amdgpu_crtc;
 
 	amdgpu_crtc->max_cursor_width = 128;
