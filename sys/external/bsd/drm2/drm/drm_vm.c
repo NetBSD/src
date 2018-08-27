@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_vm.c,v 1.9 2018/08/27 07:51:06 riastradh Exp $	*/
+/*	$NetBSD: drm_vm.c,v 1.10 2018/08/27 15:10:26 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,11 +30,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_vm.c,v 1.9 2018/08/27 07:51:06 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_vm.c,v 1.10 2018/08/27 15:10:26 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/conf.h>
 
+#include <uvm/uvm.h>
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm_device.h>
 
