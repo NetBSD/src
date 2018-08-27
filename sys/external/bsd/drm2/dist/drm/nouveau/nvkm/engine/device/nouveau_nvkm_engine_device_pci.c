@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_engine_device_pci.c,v 1.2 2018/08/27 04:58:31 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_engine_device_pci.c,v 1.3 2018/08/27 07:42:13 riastradh Exp $	*/
 
 /*
  * Copyright 2015 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs <bskeggs@redhat.com>
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_device_pci.c,v 1.2 2018/08/27 04:58:31 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_device_pci.c,v 1.3 2018/08/27 07:42:13 riastradh Exp $");
 
 #include <core/pci.h>
 #include "priv.h"
@@ -1566,13 +1566,14 @@ nvkm_device_pci(struct nvkm_device *device)
 }
 
 #ifdef __NetBSD__
+#include <dev/pci/pcivar.h>
 static bus_dma_tag_t
 nvkm_device_pci_dma_tag(struct nvkm_device *device)
 {
 	struct nvkm_device_pci *pdev = nvkm_device_pci(device);
-	const struct pci_attach_args *pa = &pdev->pd_pa;
+	const struct pci_attach_args *pa = &pdev->pdev->pd_pa;
 
-	return pci_dma64_avaliable(pa) ? pa->pa_dmat64 : pa->pa_dmat;
+	return pci_dma64_available(pa) ? pa->pa_dmat64 : pa->pa_dmat;
 }
 
 static bus_space_tag_t
