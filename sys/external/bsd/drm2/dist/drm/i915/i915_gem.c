@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem.c,v 1.48 2018/08/27 13:41:37 riastradh Exp $	*/
+/*	$NetBSD: i915_gem.c,v 1.49 2018/08/27 13:44:29 riastradh Exp $	*/
 
 /*
  * Copyright © 2008-2015 Intel Corporation
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gem.c,v 1.48 2018/08/27 13:41:37 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gem.c,v 1.49 2018/08/27 13:44:29 riastradh Exp $");
 
 #ifdef __NetBSD__
 #if 0				/* XXX uvmhist option?  */
@@ -67,6 +67,7 @@ __KERNEL_RCSID(0, "$NetBSD: i915_gem.c,v 1.48 2018/08/27 13:41:37 riastradh Exp 
 #include <linux/printk.h>
 #include <asm/param.h>
 #include <asm/page.h>
+#include <asm/cpufeature.h>
 
 #define RQ_BUG_ON(expr)
 
@@ -1933,11 +1934,8 @@ i915_gem_mmap_ioctl(struct drm_device *dev, void *data,
 	if (args->flags & ~(I915_MMAP_WC))
 		return -EINVAL;
 
-#if 0
-	/* XXX cpu_has_pat == CPUID_PAT, do we care to do this check */
 	if (args->flags & I915_MMAP_WC && !cpu_has_pat)
 		return -ENODEV;
-#endif
 
 	obj = drm_gem_object_lookup(dev, file, args->handle);
 	if (obj == NULL)
