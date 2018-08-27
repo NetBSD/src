@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_dma.c,v 1.22 2018/08/27 07:18:18 riastradh Exp $	*/
+/*	$NetBSD: i915_dma.c,v 1.23 2018/08/27 13:43:39 riastradh Exp $	*/
 
 /* i915_dma.c -- DMA support for the I915 -*- linux-c -*-
  */
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_dma.c,v 1.22 2018/08/27 07:18:18 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_dma.c,v 1.23 2018/08/27 13:43:39 riastradh Exp $");
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
@@ -1183,7 +1183,6 @@ out_gtt:
 out_freecsr:
 	intel_csr_ucode_fini(dev);
 	intel_uncore_fini(dev);
-	intel_uncore_destroy(dev);
 	pci_iounmap(dev->pdev, dev_priv->regs);
 put_bridge:
 	pci_dev_put(dev_priv->bridge_dev);
@@ -1294,7 +1293,6 @@ int i915_driver_unload(struct drm_device *dev)
 	i915_global_gtt_cleanup(dev);
 
 	intel_uncore_fini(dev);
-	intel_uncore_destroy(dev);
 	if (dev_priv->regs != NULL)
 		pci_iounmap(dev->pdev, dev_priv->regs);
 
