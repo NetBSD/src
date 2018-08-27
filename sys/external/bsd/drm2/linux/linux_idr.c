@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_idr.c,v 1.9 2018/08/27 14:15:45 riastradh Exp $	*/
+/*	$NetBSD: linux_idr.c,v 1.10 2018/08/27 15:06:54 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,11 +30,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_idr.c,v 1.9 2018/08/27 14:15:45 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_idr.c,v 1.10 2018/08/27 15:06:54 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
 #include <sys/rbtree.h>
+#include <sys/sdt.h>
 
 #include <linux/err.h>
 #include <linux/idr.h>
@@ -58,6 +59,18 @@ struct idr_cache {
 	struct idr_node		*ic_node;
 	void			*ic_where;
 };
+
+SDT_PROBE_DEFINE0(sdt, linux, idr, leak);
+SDT_PROBE_DEFINE1(sdt, linux, idr, init, "struct idr *"/*idr*/);
+SDT_PROBE_DEFINE1(sdt, linux, idr, destroy, "struct idr *"/*idr*/);
+SDT_PROBE_DEFINE4(sdt, linux, idr, replace,
+    "struct idr *"/*idr*/, "int"/*id*/, "void *"/*odata*/, "void *"/*ndata*/);
+SDT_PROBE_DEFINE3(sdt, linux, idr, remove,
+    "struct idr *"/*idr*/, "int"/*id*/, "void *"/*data*/);
+SDT_PROBE_DEFINE0(sdt, linux, idr, preload);
+SDT_PROBE_DEFINE0(sdt, linux, idr, preload_end);
+SDT_PROBE_DEFINE3(sdt, linux, idr, alloc,
+    "struct idr *"/*idr*/, "int"/*id*/, "void *"/*data*/);
 
 static specificdata_key_t idr_cache_key __read_mostly;
 
@@ -92,6 +105,7 @@ idr_cache_dtor(void *cookie)
 	struct idr_cache *cache = cookie;
 
 	if (cache->ic_node) {
+		SDT_PROBE0(sdt, linux, idr, leak);
 		idr_cache_warning(cache);
 		kmem_free(cache->ic_node, sizeof(*cache->ic_node));
 	}
@@ -161,12 +175,14 @@ idr_init(struct idr *idr)
 
 	mutex_init(&idr->idr_lock, MUTEX_DEFAULT, IPL_VM);
 	rb_tree_init(&idr->idr_tree, &idr_rb_ops);
+	SDT_PROBE1(sdt, linux, idr, init,  idr);
 }
 
 void
 idr_destroy(struct idr *idr)
 {
 
+	SDT_PROBE1(sdt, linux, idr, destroy,  idr);
 #if 0				/* XXX No rb_tree_destroy?  */
 	rb_tree_destroy(&idr->idr_tree);
 #endif
@@ -226,6 +242,8 @@ idr_replace(struct idr *idr, void *replacement, int id)
 	} else {
 		result = node->in_data;
 		node->in_data = replacement;
+		SDT_PROBE4(sdt, linux, idr, replace,
+		    idr, id, result, replacement);
 	}
 	mutex_spin_exit(&idr->idr_lock);
 
@@ -240,6 +258,7 @@ idr_remove(struct idr *idr, int id)
 	mutex_spin_enter(&idr->idr_lock);
 	node = rb_tree_find_node(&idr->idr_tree, &id);
 	KASSERTMSG((node != NULL), "idr %p has no entry for id %d", idr, id);
+	SDT_PROBE3(sdt, linux, idr, remove,  idr, id, node->in_data);
 	rb_tree_remove_node(&idr->idr_tree, node);
 	mutex_spin_exit(&idr->idr_lock);
 
@@ -252,6 +271,8 @@ idr_preload(gfp_t gfp)
 	struct idr_cache *cache;
 	struct idr_node *node;
 	km_flag_t kmflag = ISSET(gfp, __GFP_WAIT) ? KM_SLEEP : KM_NOSLEEP;
+
+	SDT_PROBE0(sdt, linux, idr, preload);
 
 	/* If caller asked to wait, we had better be sleepable.  */
 	if (ISSET(gfp, __GFP_WAIT))
@@ -342,6 +363,8 @@ out:	mutex_spin_exit(&idr->idr_lock);
 	/* Discard the node on failure.  */
 	if (id < 0)
 		cache->ic_node = node;
+	else
+		SDT_PROBE3(sdt, linux, idr, alloc,  idr, id, data);
 	return id;
 }
 
@@ -349,6 +372,8 @@ void
 idr_preload_end(void)
 {
 	struct idr_cache *cache;
+
+	SDT_PROBE0(sdt, linux, idr, preload_end);
 
 	/* Get the cache, or bail if it's not there.  */
 	cache = lwp_getspecific(idr_cache_key);
