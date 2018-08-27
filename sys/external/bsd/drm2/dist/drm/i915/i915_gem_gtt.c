@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem_gtt.c,v 1.14 2018/08/27 14:53:30 riastradh Exp $	*/
+/*	$NetBSD: i915_gem_gtt.c,v 1.15 2018/08/27 14:53:54 riastradh Exp $	*/
 
 /*
  * Copyright © 2010 Daniel Vetter
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gem_gtt.c,v 1.14 2018/08/27 14:53:30 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gem_gtt.c,v 1.15 2018/08/27 14:53:54 riastradh Exp $");
 
 #include <linux/bitmap.h>
 #include <linux/err.h>
@@ -1776,7 +1776,8 @@ static void gen6_write_pde(struct i915_page_directory *pd,
 	pd_entry |= GEN6_PDE_VALID;
 
 #ifdef __NetBSD__
-	bus_space_write_4(bst, bsh, pd_base + pde, pd_entry);
+	CTASSERT(sizeof(gen6_pte_t) == 4);
+	bus_space_write_4(bst, bsh, pd_base + 4*pde, pd_entry);
 #else
 	writel(pd_entry, ppgtt->pd_addr + pde);
 #endif
