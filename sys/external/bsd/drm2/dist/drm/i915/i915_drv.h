@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_drv.h,v 1.16 2018/08/27 07:02:41 riastradh Exp $	*/
+/*	$NetBSD: i915_drv.h,v 1.17 2018/08/27 07:15:50 riastradh Exp $	*/
 
 /* i915_drv.h -- Private header for the I915 driver -*- linux-c -*-
  */
@@ -3579,8 +3579,13 @@ int intel_freq_opcode(struct drm_i915_private *dev_priv, int val);
  * Note: Should only be used between intel_uncore_forcewake_irqlock() and
  * intel_uncore_forcewake_irqunlock().
  */
+#ifdef __NetBSD__
+#define I915_READ_FW(reg__) bus_space_read_4(dev_priv->regs_bst, dev_priv->regs_bsh, (reg__))
+#define I915_WRITE_FW(reg__, val__) bus_space_write_4(dev_priv->regs_bst, dev_priv->regs_bsh, (reg__), (val__))
+#else
 #define I915_READ_FW(reg__) readl(dev_priv->regs + (reg__))
 #define I915_WRITE_FW(reg__, val__) writel(val__, dev_priv->regs + (reg__))
+#endif
 #define POSTING_READ_FW(reg__) (void)I915_READ_FW(reg__)
 
 /* "Broadcast RGB" property */
