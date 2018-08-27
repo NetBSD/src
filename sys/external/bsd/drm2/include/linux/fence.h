@@ -1,4 +1,4 @@
-/*	$NetBSD: fence.h,v 1.3 2018/08/27 06:50:20 riastradh Exp $	*/
+/*	$NetBSD: fence.h,v 1.4 2018/08/27 07:31:17 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -32,8 +32,9 @@
 #ifndef	_LINUX_FENCE_H_
 #define	_LINUX_FENCE_H_
 
-struct fence_ops {
+#include <linux/rcupdate.h>
 
+struct fence_ops {
 };
 
 struct fence {
