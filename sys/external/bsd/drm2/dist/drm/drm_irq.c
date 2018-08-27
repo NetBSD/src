@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_irq.c,v 1.14 2018/08/27 14:43:15 riastradh Exp $	*/
+/*	$NetBSD: drm_irq.c,v 1.15 2018/08/27 14:43:32 riastradh Exp $	*/
 
 /*
  * drm_irq.c IRQ and vblank support
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_irq.c,v 1.14 2018/08/27 14:43:15 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_irq.c,v 1.15 2018/08/27 14:43:32 riastradh Exp $");
 
 #include <drm/drmP.h>
 #include "drm_trace.h"
@@ -205,6 +205,7 @@ static void drm_update_vblank_count(struct drm_device *dev, unsigned int pipe,
 	int framedur_ns = vblank->framedur_ns;
 
 	assert_spin_locked(&dev->vbl_lock);
+	assert_spin_locked(&dev->vblank_time_lock);
 
 	/*
 	 * Interrupts were disabled prior to this call, so deal with counter
