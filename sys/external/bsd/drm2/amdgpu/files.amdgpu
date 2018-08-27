@@ -1,4 +1,6 @@
-#	$NetBSD: files.amdgpu,v 1.6 2018/08/27 15:27:04 riastradh Exp $
+#	$NetBSD: files.amdgpu,v 1.7 2018/08/27 16:06:01 riastradh Exp $
+
+version	20180827
 
 define	amdgpufbbus	{ }
 device	amdgpu: drmkms, drmkms_pci, drmkms_ttm, amdgpufbbus, firmload
