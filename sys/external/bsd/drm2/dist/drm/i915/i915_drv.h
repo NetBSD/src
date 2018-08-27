@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_drv.h,v 1.15 2018/08/27 07:02:30 riastradh Exp $	*/
+/*	$NetBSD: i915_drv.h,v 1.16 2018/08/27 07:02:41 riastradh Exp $	*/
 
 /* i915_drv.h -- Private header for the I915 driver -*- linux-c -*-
  */
@@ -2945,7 +2945,7 @@ i915_gem_object_get_page(struct drm_i915_gem_object *obj, int n)
 	struct vm_page *page;
 
 	if (obj->phys_handle) {
-		char *va = obj->phys_handle->vaddr;
+		vaddr_t va = (vaddr_t)obj->phys_handle->vaddr;
 		paddr_t pa;
 		if (!pmap_extract(pmap_kernel(), va + n*PAGE_SIZE, &pa))
 			panic("i915 gem object phys-attached but not mapped:"
