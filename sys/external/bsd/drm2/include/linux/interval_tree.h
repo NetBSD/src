@@ -1,4 +1,4 @@
-/*	$NetBSD: interval_tree.h,v 1.3 2018/08/27 06:38:22 riastradh Exp $	*/
+/*	$NetBSD: interval_tree.h,v 1.4 2018/08/27 06:41:49 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -67,9 +67,9 @@ interval_tree_compare_key(void *cookie, const void *vn, const void *vk)
 	const struct interval_tree_node *n = vn;
 	const unsigned long *k = vk;
 
-	if (n->last < k)
+	if (n->last < *k)
 		return -1;
-	if (k < n->first)
+	if (*k < n->first)
 		return +1;
 	return 0;
 }
