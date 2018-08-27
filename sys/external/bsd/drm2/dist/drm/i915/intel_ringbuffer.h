@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_ringbuffer.h,v 1.5 2018/08/27 04:58:24 riastradh Exp $	*/
+/*	$NetBSD: intel_ringbuffer.h,v 1.6 2018/08/27 07:24:12 riastradh Exp $	*/
 
 #ifndef _INTEL_RINGBUFFER_H_
 #define _INTEL_RINGBUFFER_H_
@@ -29,6 +29,7 @@
 #define I915_RING_FREE_SPACE 64
 
 struct  intel_hw_status_page {
+	struct page	*page;
 	u32		*page_addr;
 	unsigned int	gfx_addr;
 	struct		drm_i915_gem_object *obj;
