@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_runtime_pm.c,v 1.4 2018/08/27 07:30:25 riastradh Exp $	*/
+/*	$NetBSD: intel_runtime_pm.c,v 1.5 2018/08/27 07:30:37 riastradh Exp $	*/
 
 /*
  * Copyright © 2012-2014 Intel Corporation
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_runtime_pm.c,v 1.4 2018/08/27 07:30:25 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_runtime_pm.c,v 1.5 2018/08/27 07:30:37 riastradh Exp $");
 
 #include <linux/pm_runtime.h>
 #include <linux/vgaarb.h>
@@ -1939,9 +1939,9 @@ void intel_power_domains_fini(struct drm_i915_private *dev_priv)
 	intel_display_set_init_power(dev_priv, true);
 
 #ifdef __NetBSD__
-	linux_mutex_destroy(&dev_priv->power_domains->lock);
+	linux_mutex_destroy(&dev_priv->power_domains.lock);
 #else
-	mutex_destroy(&dev_priv->power_domains->lock);
+	mutex_destroy(&dev_priv->power_domains.lock);
 #endif
 }
 
