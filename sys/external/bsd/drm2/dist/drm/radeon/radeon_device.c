@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_device.c,v 1.5 2018/08/27 07:44:12 riastradh Exp $	*/
+/*	$NetBSD: radeon_device.c,v 1.6 2018/08/27 07:48:40 riastradh Exp $	*/
 
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
@@ -28,7 +28,7 @@
  *          Jerome Glisse
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_device.c,v 1.5 2018/08/27 07:44:12 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_device.c,v 1.6 2018/08/27 07:48:40 riastradh Exp $");
 
 #include <linux/console.h>
 #include <linux/slab.h>
@@ -1697,8 +1697,10 @@ int radeon_device_init(struct radeon_device *rdev,
 	return 0;
 
 failed:
+#ifndef __NetBSD__		/* XXX radeon vga */
 	if (runtime)
 		vga_switcheroo_fini_domain_pm_ops(rdev->dev);
+#endif
 	return r;
 }
 
