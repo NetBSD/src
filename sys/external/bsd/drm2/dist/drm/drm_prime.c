@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_prime.c,v 1.3 2018/08/27 15:22:54 riastradh Exp $	*/
+/*	$NetBSD: drm_prime.c,v 1.4 2018/08/27 15:26:00 riastradh Exp $	*/
 
 /*
  * Copyright © 2012 Red Hat
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_prime.c,v 1.3 2018/08/27 15:22:54 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_prime.c,v 1.4 2018/08/27 15:26:00 riastradh Exp $");
 
 #include <linux/export.h>
 #include <linux/dma-buf.h>
@@ -37,6 +37,20 @@ __KERNEL_RCSID(0, "$NetBSD: drm_prime.c,v 1.3 2018/08/27 15:22:54 riastradh Exp 
 #include <drm/drm_gem.h>
 
 #include "drm_internal.h"
+
+#ifdef __NetBSD__
+
+/*
+ * We use struct sg_table just to pass around an array of
+ * bus_dma_segment_t from one device to another in drm prime.  Since
+ * this is _not_ a complete implementation of Linux's sg table
+ * abstraction (e.g., it does not remember DMA addresses and RAM pages
+ * separately, and it doesn't support the nested chained iteration of
+ * Linux scatterlists), we isolate it to this file and make all callers
+ * go through a few extra subroutines (drm_prime_sg_size,
+ * drm_prime_sg_free, &c.) to use it.  Don't use this outside drm
+ * prime!
+ */
 
 struct sg_table {
 	bus_dma_segment_t	*sgt_segs;
@@ -94,6 +108,30 @@ sg_alloc_table_from_pglist(struct sg_table *sgt, struct pglist *pglist,
 	return 0;
 }
 
+static int
+sg_alloc_table_from_bus_dmamem(struct sg_table *sgt, bus_dma_segment_t *segs,
+    int nsegs, gfp_t gfp)
+{
+	int seg;
+
+	KASSERT(nsegs > 0);
+	sgt->sgt_segs = kcalloc(nsegs, sizeof(sgt->sgt_segs[0]), gfp);
+	if (sgt->sgt_segs == NULL)
+		return -ENOMEM;
+	sgt->sgt_nsegs = nsegs;
+	sgt->sgt_size = 0;
+
+	for (seg = 0; seg < nsegs; seg++) {
+		sgt->sgt_segs[seg].ds_addr = segs[seg].ds_addr;
+		sgt->sgt_segs[seg].ds_len = segs[seg].ds_len;
+		KASSERT(segs[seg].ds_len <= __type_max(bus_size_t) -
+		    sgt->sgt_size);
+		sgt->sgt_size += segs[seg].ds_len;
+	}
+
+	return 0;
+}
+
 static void
 sg_free_table(struct sg_table *sgt)
 {
@@ -103,6 +141,8 @@ sg_free_table(struct sg_table *sgt)
 	sgt->sgt_nsegs = 0;
 	sgt->sgt_size = 0;
 }
+
+#endif	/* __NetBSD__ */
 
 /*
  * DMA-BUF/GEM Object references and lifetime overview:
@@ -795,6 +835,28 @@ EXPORT_SYMBOL(drm_prime_pages_to_sg);
 #ifdef __NetBSD__
 
 struct sg_table *
+drm_prime_bus_dmamem_to_sg(bus_dma_segment_t *segs, int nsegs)
+{
+	struct sg_table *sg;
+	int ret;
+
+	sg = kmalloc(sizeof(*sg), GFP_KERNEL);
+	if (sg == NULL) {
+		ret = -ENOMEM;
+		goto out;
+	}
+
+	ret = sg_alloc_table_from_bus_dmamem(sg, segs, nsegs, GFP_KERNEL);
+	if (ret)
+		goto out;
+
+	return sg;
+out:
+	kfree(sg);
+	return ERR_PTR(ret);
+}
+
+struct sg_table *
 drm_prime_pglist_to_sg(struct pglist *pglist, unsigned npages)
 {
 	struct sg_table *sg;
@@ -818,6 +880,13 @@ out:
 	return ERR_PTR(ret);
 }
 
+bus_size_t
+drm_prime_sg_size(struct sg_table *sg)
+{
+
+	return sg->sgt_size;
+}
+
 void
 drm_prime_sg_free(struct sg_table *sg)
 {
@@ -834,6 +903,15 @@ drm_prime_bus_dmamap_load_sgt(bus_dma_tag_t dmat, bus_dmamap_t map,
 	/* XXX errno NetBSD->Linux */
 	return -bus_dmamap_load_raw(dmat, map, sgt->sgt_segs, sgt->sgt_nsegs,
 	    sgt->sgt_size, BUS_DMA_NOWAIT);
+}
+
+int
+drm_prime_bus_dmamem_map(bus_dma_tag_t dmat, struct sg_table *sgt, void **kvap,
+    int flags)
+{
+
+	return -bus_dmamem_map(dmat, sgt->sgt_segs, sgt->sgt_nsegs,
+	    sgt->sgt_size, kvap, flags);
 }
 
 #else  /* !__NetBSD__ */
