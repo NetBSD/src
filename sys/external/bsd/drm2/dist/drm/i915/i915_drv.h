@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_drv.h,v 1.13 2018/08/27 06:17:05 riastradh Exp $	*/
+/*	$NetBSD: i915_drv.h,v 1.14 2018/08/27 06:18:30 riastradh Exp $	*/
 
 /* i915_drv.h -- Private header for the I915 driver -*- linux-c -*-
  */
@@ -2026,10 +2026,12 @@ static inline struct drm_i915_private *to_i915(const struct drm_device *dev)
 	return dev->dev_private;
 }
 
+#ifndef __NetBSD__
 static inline struct drm_i915_private *dev_to_i915(struct device *dev)
 {
 	return to_i915(dev_get_drvdata(dev));
 }
+#endif
 
 static inline struct drm_i915_private *guc_to_i915(struct intel_guc *guc)
 {
