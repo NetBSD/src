@@ -1,4 +1,4 @@
-/*	$NetBSD: cz_ih.c,v 1.3 2018/08/27 14:04:50 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_iceland_ih.c,v 1.1 2018/08/27 14:10:14 riastradh Exp $	*/
 
 /*
  * Copyright 2014 Advanced Micro Devices, Inc.
@@ -23,17 +23,18 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cz_ih.c,v 1.3 2018/08/27 14:04:50 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_iceland_ih.c,v 1.1 2018/08/27 14:10:14 riastradh Exp $");
 
-#include <asm/byteorder.h>
+#include <linux/module.h>
 #include <linux/log2.h>
+#include <asm/byteorder.h>
 #include "drmP.h"
 #include "amdgpu.h"
 #include "amdgpu_ih.h"
 #include "vid.h"
 
-#include "oss/oss_3_0_1_d.h"
-#include "oss/oss_3_0_1_sh_mask.h"
+#include "oss/oss_2_4_d.h"
+#include "oss/oss_2_4_sh_mask.h"
 
 #include "bif/bif_5_1_d.h"
 #include "bif/bif_5_1_sh_mask.h"
@@ -53,16 +54,16 @@ __KERNEL_RCSID(0, "$NetBSD: cz_ih.c,v 1.3 2018/08/27 14:04:50 riastradh Exp $");
  * equal again at which point it updates the rptr.
  */
 
-static void cz_ih_set_interrupt_funcs(struct amdgpu_device *adev);
+static void iceland_ih_set_interrupt_funcs(struct amdgpu_device *adev);
 
 /**
- * cz_ih_enable_interrupts - Enable the interrupt ring buffer
+ * iceland_ih_enable_interrupts - Enable the interrupt ring buffer
  *
  * @adev: amdgpu_device pointer
  *
  * Enable the interrupt ring buffer (VI).
  */
-static void cz_ih_enable_interrupts(struct amdgpu_device *adev)
+static void iceland_ih_enable_interrupts(struct amdgpu_device *adev)
 {
 	u32 ih_cntl = RREG32(mmIH_CNTL);
 	u32 ih_rb_cntl = RREG32(mmIH_RB_CNTL);
@@ -75,13 +76,13 @@ static void cz_ih_enable_interrupts(struct amdgpu_device *adev)
 }
 
 /**
- * cz_ih_disable_interrupts - Disable the interrupt ring buffer
+ * iceland_ih_disable_interrupts - Disable the interrupt ring buffer
  *
  * @adev: amdgpu_device pointer
  *
  * Disable the interrupt ring buffer (VI).
  */
-static void cz_ih_disable_interrupts(struct amdgpu_device *adev)
+static void iceland_ih_disable_interrupts(struct amdgpu_device *adev)
 {
 	u32 ih_rb_cntl = RREG32(mmIH_RB_CNTL);
 	u32 ih_cntl = RREG32(mmIH_CNTL);
@@ -98,7 +99,7 @@ static void cz_ih_disable_interrupts(struct amdgpu_device *adev)
 }
 
 /**
- * cz_ih_irq_init - init and enable the interrupt ring
+ * iceland_ih_irq_init - init and enable the interrupt ring
  *
  * @adev: amdgpu_device pointer
  *
@@ -108,7 +109,7 @@ static void cz_ih_disable_interrupts(struct amdgpu_device *adev)
  * Called at device load and reume.
  * Returns 0 for success, errors for failure.
  */
-static int cz_ih_irq_init(struct amdgpu_device *adev)
+static int iceland_ih_irq_init(struct amdgpu_device *adev)
 {
 	int ret = 0;
 	int rb_bufsz;
@@ -116,7 +117,7 @@ static int cz_ih_irq_init(struct amdgpu_device *adev)
 	u64 wptr_off;
 
 	/* disable irqs */
-	cz_ih_disable_interrupts(adev);
+	iceland_ih_disable_interrupts(adev);
 
 	/* setup interrupt control */
 	WREG32(mmINTERRUPT_CNTL2, adev->dummy_page.addr >> 8);
@@ -162,28 +163,28 @@ static int cz_ih_irq_init(struct amdgpu_device *adev)
 	pci_set_master(adev->pdev);
 
 	/* enable interrupts */
-	cz_ih_enable_interrupts(adev);
+	iceland_ih_enable_interrupts(adev);
 
 	return ret;
 }
 
 /**
- * cz_ih_irq_disable - disable interrupts
+ * iceland_ih_irq_disable - disable interrupts
  *
  * @adev: amdgpu_device pointer
  *
  * Disable interrupts on the hw (VI).
  */
-static void cz_ih_irq_disable(struct amdgpu_device *adev)
+static void iceland_ih_irq_disable(struct amdgpu_device *adev)
 {
-	cz_ih_disable_interrupts(adev);
+	iceland_ih_disable_interrupts(adev);
 
 	/* Wait and acknowledge irq */
 	mdelay(1);
 }
 
 /**
- * cz_ih_get_wptr - get the IH ring buffer wptr
+ * iceland_ih_get_wptr - get the IH ring buffer wptr
  *
  * @adev: amdgpu_device pointer
  *
@@ -193,7 +194,7 @@ static void cz_ih_irq_disable(struct amdgpu_device *adev)
  * Used by cz_irq_process(VI).
  * Returns the value of the wptr.
  */
-static u32 cz_ih_get_wptr(struct amdgpu_device *adev)
+static u32 iceland_ih_get_wptr(struct amdgpu_device *adev)
 {
 	u32 wptr, tmp;
 
@@ -216,20 +217,20 @@ static u32 cz_ih_get_wptr(struct amdgpu_device *adev)
 }
 
 /**
- * cz_ih_decode_iv - decode an interrupt vector
+ * iceland_ih_decode_iv - decode an interrupt vector
  *
  * @adev: amdgpu_device pointer
  *
  * Decodes the interrupt vector at the current rptr
  * position and also advance the position.
  */
-static void cz_ih_decode_iv(struct amdgpu_device *adev,
+static void iceland_ih_decode_iv(struct amdgpu_device *adev,
 				 struct amdgpu_iv_entry *entry)
 {
 	/* wptr/rptr are in bytes! */
 	u32 ring_index = adev->irq.ih.rptr >> 2;
 	uint32_t dw[4];
-	
+
 	dw[0] = le32_to_cpu(adev->irq.ih.ring[ring_index + 0]);
 	dw[1] = le32_to_cpu(adev->irq.ih.ring[ring_index + 1]);
 	dw[2] = le32_to_cpu(adev->irq.ih.ring[ring_index + 2]);
@@ -246,26 +247,26 @@ static void cz_ih_decode_iv(struct amdgpu_device *adev,
 }
 
 /**
- * cz_ih_set_rptr - set the IH ring buffer rptr
+ * iceland_ih_set_rptr - set the IH ring buffer rptr
  *
  * @adev: amdgpu_device pointer
  *
  * Set the IH ring buffer rptr.
  */
-static void cz_ih_set_rptr(struct amdgpu_device *adev)
+static void iceland_ih_set_rptr(struct amdgpu_device *adev)
 {
 	WREG32(mmIH_RB_RPTR, adev->irq.ih.rptr);
 }
 
-static int cz_ih_early_init(void *handle)
+static int iceland_ih_early_init(void *handle)
 {
 	struct amdgpu_device *adev = (struct amdgpu_device *)handle;
 
-	cz_ih_set_interrupt_funcs(adev);
+	iceland_ih_set_interrupt_funcs(adev);
 	return 0;
 }
 
-static int cz_ih_sw_init(void *handle)
+static int iceland_ih_sw_init(void *handle)
 {
 	int r;
 	struct amdgpu_device *adev = (struct amdgpu_device *)handle;
@@ -279,7 +280,7 @@ static int cz_ih_sw_init(void *handle)
 	return r;
 }
 
-static int cz_ih_sw_fini(void *handle)
+static int iceland_ih_sw_fini(void *handle)
 {
 	struct amdgpu_device *adev = (struct amdgpu_device *)handle;
 
@@ -289,42 +290,42 @@ static int cz_ih_sw_fini(void *handle)
 	return 0;
 }
 
-static int cz_ih_hw_init(void *handle)
+static int iceland_ih_hw_init(void *handle)
 {
 	int r;
 	struct amdgpu_device *adev = (struct amdgpu_device *)handle;
 
-	r = cz_ih_irq_init(adev);
+	r = iceland_ih_irq_init(adev);
 	if (r)
 		return r;
 
 	return 0;
 }
 
-static int cz_ih_hw_fini(void *handle)
+static int iceland_ih_hw_fini(void *handle)
 {
 	struct amdgpu_device *adev = (struct amdgpu_device *)handle;
 
-	cz_ih_irq_disable(adev);
+	iceland_ih_irq_disable(adev);
 
 	return 0;
 }
 
-static int cz_ih_suspend(void *handle)
+static int iceland_ih_suspend(void *handle)
 {
 	struct amdgpu_device *adev = (struct amdgpu_device *)handle;
 
-	return cz_ih_hw_fini(adev);
+	return iceland_ih_hw_fini(adev);
 }
 
-static int cz_ih_resume(void *handle)
+static int iceland_ih_resume(void *handle)
 {
 	struct amdgpu_device *adev = (struct amdgpu_device *)handle;
 
-	return cz_ih_hw_init(adev);
+	return iceland_ih_hw_init(adev);
 }
 
-static bool cz_ih_is_idle(void *handle)
+static bool iceland_ih_is_idle(void *handle)
 {
 	struct amdgpu_device *adev = (struct amdgpu_device *)handle;
 	u32 tmp = RREG32(mmSRBM_STATUS);
@@ -335,7 +336,7 @@ static bool cz_ih_is_idle(void *handle)
 	return true;
 }
 
-static int cz_ih_wait_for_idle(void *handle)
+static int iceland_ih_wait_for_idle(void *handle)
 {
 	unsigned i;
 	u32 tmp;
@@ -351,11 +352,11 @@ static int cz_ih_wait_for_idle(void *handle)
 	return -ETIMEDOUT;
 }
 
-static void cz_ih_print_status(void *handle)
+static void iceland_ih_print_status(void *handle)
 {
 	struct amdgpu_device *adev = (struct amdgpu_device *)handle;
 
-	dev_info(adev->dev, "CZ IH registers\n");
+	dev_info(adev->dev, "ICELAND IH registers\n");
 	dev_info(adev->dev, "  SRBM_STATUS=0x%08X\n",
 		RREG32(mmSRBM_STATUS));
 	dev_info(adev->dev, "  SRBM_STATUS2=0x%08X\n",
@@ -380,7 +381,7 @@ static void cz_ih_print_status(void *handle)
 		 RREG32(mmIH_RB_WPTR));
 }
 
-static int cz_ih_soft_reset(void *handle)
+static int iceland_ih_soft_reset(void *handle)
 {
 	u32 srbm_soft_reset = 0;
 	struct amdgpu_device *adev = (struct amdgpu_device *)handle;
@@ -391,7 +392,7 @@ static int cz_ih_soft_reset(void *handle)
 						SOFT_RESET_IH, 1);
 
 	if (srbm_soft_reset) {
-		cz_ih_print_status((void *)adev);
+		iceland_ih_print_status((void *)adev);
 
 		tmp = RREG32(mmSRBM_SOFT_RESET);
 		tmp |= srbm_soft_reset;
@@ -408,52 +409,50 @@ static int cz_ih_soft_reset(void *handle)
 		/* Wait a little for things to settle down */
 		udelay(50);
 
-		cz_ih_print_status((void *)adev);
+		iceland_ih_print_status((void *)adev);
 	}
 
 	return 0;
 }
 
-static int cz_ih_set_clockgating_state(void *handle,
+static int iceland_ih_set_clockgating_state(void *handle,
 					  enum amd_clockgating_state state)
 {
-	// TODO
 	return 0;
 }
 
-static int cz_ih_set_powergating_state(void *handle,
+static int iceland_ih_set_powergating_state(void *handle,
 					  enum amd_powergating_state state)
 {
-	// TODO
 	return 0;
 }
 
-const struct amd_ip_funcs cz_ih_ip_funcs = {
-	.early_init = cz_ih_early_init,
+const struct amd_ip_funcs iceland_ih_ip_funcs = {
+	.early_init = iceland_ih_early_init,
 	.late_init = NULL,
-	.sw_init = cz_ih_sw_init,
-	.sw_fini = cz_ih_sw_fini,
-	.hw_init = cz_ih_hw_init,
-	.hw_fini = cz_ih_hw_fini,
-	.suspend = cz_ih_suspend,
-	.resume = cz_ih_resume,
-	.is_idle = cz_ih_is_idle,
-	.wait_for_idle = cz_ih_wait_for_idle,
-	.soft_reset = cz_ih_soft_reset,
-	.print_status = cz_ih_print_status,
-	.set_clockgating_state = cz_ih_set_clockgating_state,
-	.set_powergating_state = cz_ih_set_powergating_state,
+	.sw_init = iceland_ih_sw_init,
+	.sw_fini = iceland_ih_sw_fini,
+	.hw_init = iceland_ih_hw_init,
+	.hw_fini = iceland_ih_hw_fini,
+	.suspend = iceland_ih_suspend,
+	.resume = iceland_ih_resume,
+	.is_idle = iceland_ih_is_idle,
+	.wait_for_idle = iceland_ih_wait_for_idle,
+	.soft_reset = iceland_ih_soft_reset,
+	.print_status = iceland_ih_print_status,
+	.set_clockgating_state = iceland_ih_set_clockgating_state,
+	.set_powergating_state = iceland_ih_set_powergating_state,
 };
 
-static const struct amdgpu_ih_funcs cz_ih_funcs = {
-	.get_wptr = cz_ih_get_wptr,
-	.decode_iv = cz_ih_decode_iv,
-	.set_rptr = cz_ih_set_rptr
+static const struct amdgpu_ih_funcs iceland_ih_funcs = {
+	.get_wptr = iceland_ih_get_wptr,
+	.decode_iv = iceland_ih_decode_iv,
+	.set_rptr = iceland_ih_set_rptr
 };
 
-static void cz_ih_set_interrupt_funcs(struct amdgpu_device *adev)
+static void iceland_ih_set_interrupt_funcs(struct amdgpu_device *adev)
 {
 	if (adev->irq.ih_funcs == NULL)
-		adev->irq.ih_funcs = &cz_ih_funcs;
+		adev->irq.ih_funcs = &iceland_ih_funcs;
 }
 
