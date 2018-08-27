@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_work.c,v 1.42 2018/08/27 15:07:44 riastradh Exp $	*/
+/*	$NetBSD: linux_work.c,v 1.43 2018/08/27 15:25:43 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_work.c,v 1.42 2018/08/27 15:07:44 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_work.c,v 1.43 2018/08/27 15:25:43 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/atomic.h>
@@ -204,7 +204,7 @@ alloc_ordered_workqueue(const char *name, int flags)
 
 	wq = kmem_zalloc(sizeof(*wq), KM_SLEEP);
 
-	mutex_init(&wq->wq_lock, MUTEX_DEFAULT, IPL_NONE);
+	mutex_init(&wq->wq_lock, MUTEX_DEFAULT, IPL_VM);
 	cv_init(&wq->wq_cv, name);
 	TAILQ_INIT(&wq->wq_delayed);
 	TAILQ_INIT(&wq->wq_queue);
