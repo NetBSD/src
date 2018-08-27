@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_gpu_scheduler.c,v 1.1 2018/08/27 14:10:14 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_gpu_scheduler.c,v 1.2 2018/08/27 14:42:07 riastradh Exp $	*/
 
 /*
  * Copyright 2015 Advanced Micro Devices, Inc.
@@ -24,7 +24,7 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_gpu_scheduler.c,v 1.1 2018/08/27 14:10:14 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_gpu_scheduler.c,v 1.2 2018/08/27 14:42:07 riastradh Exp $");
 
 #include <sys/kthread.h>
 
@@ -239,7 +239,9 @@ static void amd_sched_entity_wakeup_cb(struct fence *f,
 {
 	entity->dependency = NULL;
 	fence_put(f);
+	spin_lock(&entity->sched->job_lock);
 	amd_sched_wakeup(entity->sched);
+	spin_unlock(&entity->sched->job_lock);
 }
 
 static void amd_sched_entity_wakeup(struct fence *f, struct fence_cb *cb)
@@ -313,14 +315,13 @@ static bool amd_sched_entity_in(struct amd_sched_job *sched_job)
 	struct amd_sched_entity *entity = sched_job->s_entity;
 	bool added, first = false;
 
-	spin_lock(&entity->queue_lock);
+	BUG_ON(!spin_is_locked(&sched->job_lock));
+
 	added = kfifo_in(&entity->job_queue, &sched_job,
 			sizeof(sched_job)) == sizeof(sched_job);
 
 	if (added && kfifo_len(&entity->job_queue) == sizeof(sched_job))
 		first = true;
-
-	spin_unlock(&entity->queue_lock);
 
 	/* first job wakes up scheduler */
 	if (first)
@@ -368,11 +369,11 @@ static bool amd_sched_ready(struct amd_gpu_scheduler *sched)
  */
 static void amd_sched_wakeup(struct amd_gpu_scheduler *sched)
 {
+
+	BUG_ON(!spin_is_locked(&sched->job_lock));
 	if (amd_sched_ready(sched)) {
 #ifdef __NetBSD__
-		spin_lock(&sched->job_lock);
 		DRM_SPIN_WAKEUP_ONE(&sched->wake_up_worker, &sched->job_lock);
-		spin_unlock(&sched->job_lock);
 #else
 		wake_up_interruptible(&sched->wake_up_worker);
 #endif
