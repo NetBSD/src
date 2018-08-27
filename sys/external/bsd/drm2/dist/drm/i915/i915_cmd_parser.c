@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_cmd_parser.c,v 1.16 2018/08/27 14:46:38 riastradh Exp $	*/
+/*	$NetBSD: i915_cmd_parser.c,v 1.17 2018/08/27 14:50:04 riastradh Exp $	*/
 
 /*
  * Copyright © 2013 Intel Corporation
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_cmd_parser.c,v 1.16 2018/08/27 14:46:38 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_cmd_parser.c,v 1.17 2018/08/27 14:50:04 riastradh Exp $");
 
 #include "i915_drv.h"
 
@@ -928,16 +928,18 @@ static u32 *copy_batch(struct drm_i915_gem_object *dest_obj,
 	    - srcstart;
 	vaddr_t srcva = 0;	/* hint */
 
+	/* Acquire a reference for uvm_map to consume.  */
+	uao_reference(src_obj->base.filp);
+
 	/* XXX errno NetBSD->Linux */
 	ret = -uvm_map(kernel_map, &srcva, srclen, src_obj->base.filp,
 	    srcstart, PAGE_SIZE, UVM_MAPFLAG(UVM_PROT_RW, UVM_PROT_RW,
 		UVM_INH_NONE, UVM_ADV_SEQUENTIAL, UVM_FLAG_NOWAIT));
 	if (ret) {
+		uao_detach(src_obj->base.filp);
 		DRM_DEBUG_DRIVER("CMD: Failed to vmap batch: %d\n", ret);
 		goto unpin_src;
 	}
-	/* uvm_map consumes caller's reference on success.  */
-	uao_reference(src_obj->base.filp);
 	src_base = (const void *)srcva;
 #else
 	src_base = vmap_batch(src_obj, batch_start_offset, batch_len);
@@ -959,16 +961,18 @@ static u32 *copy_batch(struct drm_i915_gem_object *dest_obj,
 	const u32 dstlen = roundup(0 + batch_len, PAGE_SIZE) - dststart;
 	vaddr_t dstva = 0;	/* hint */
 
+	/* Acquire a reference for uvm_map to consume.  */
+	uao_reference(dest_obj->base.filp);
+
 	/* XXX errno NetBSD->Linux */
 	ret = -uvm_map(kernel_map, &dstva, dstlen, dest_obj->base.filp,
 	    dststart, PAGE_SIZE, UVM_MAPFLAG(UVM_PROT_RW, UVM_PROT_RW,
 		UVM_INH_NONE, UVM_ADV_SEQUENTIAL, UVM_FLAG_NOWAIT));
 	if (ret) {
+		uao_detach(dest_obj->base.filp);
 		DRM_DEBUG_DRIVER("CMD: Failed to vmap shadow batch: %d\n", ret);
 		goto unmap_src;
 	}
-	/* uvm_map consumes caller's reference on success.  */
-	uao_reference(dest_obj->base.filp);
 	dst = (void *)dstva;
 #else
 	dst = vmap_batch(dest_obj, 0, batch_len);
