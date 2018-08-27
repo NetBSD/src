@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_work.c,v 1.9 2018/08/27 13:38:51 riastradh Exp $	*/
+/*	$NetBSD: linux_work.c,v 1.10 2018/08/27 14:10:54 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_work.c,v 1.9 2018/08/27 13:38:51 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_work.c,v 1.10 2018/08/27 14:10:54 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -265,8 +265,10 @@ alloc_ordered_workqueue(const char *name, int linux_flags)
 	TAILQ_INIT(&wq->wq_delayed);
 	wq->wq_current_work = NULL;
 
-	workqueue_whoami(wq);
-	KASSERT(wq->wq_lwp != NULL);
+	if (0) {		/* XXX broken garbage */
+		workqueue_whoami(wq);
+		KASSERT(wq->wq_lwp != NULL);
+	}
 
 	return wq;
 }
