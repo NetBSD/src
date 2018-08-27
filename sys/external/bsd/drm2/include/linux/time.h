@@ -1,4 +1,4 @@
-/*	$NetBSD: time.h,v 1.4 2018/08/27 06:16:50 riastradh Exp $	*/
+/*	$NetBSD: time.h,v 1.5 2018/08/27 07:02:16 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -106,7 +106,7 @@ ns_to_timeval(int64_t nsec)
 }
 
 static inline int64_t
-timeval_to_ns(struct timeval *tv)
+timeval_to_ns(const struct timeval *tv)
 {
 	return (((int64_t)tv->tv_sec * 1000000000UL) + (tv->tv_usec * 1000ul));
 }
