@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_cmd_parser.c,v 1.13 2018/08/27 14:45:31 riastradh Exp $	*/
+/*	$NetBSD: i915_cmd_parser.c,v 1.14 2018/08/27 14:45:57 riastradh Exp $	*/
 
 /*
  * Copyright © 2013 Intel Corporation
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_cmd_parser.c,v 1.13 2018/08/27 14:45:31 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_cmd_parser.c,v 1.14 2018/08/27 14:45:57 riastradh Exp $");
 
 #include "i915_drv.h"
 
@@ -936,6 +936,8 @@ static u32 *copy_batch(struct drm_i915_gem_object *dest_obj,
 		DRM_DEBUG_DRIVER("CMD: Failed to vmap batch: %d\n", ret);
 		goto unpin_src;
 	}
+	/* uvm_map consumes caller's reference on success.  */
+	uao_reference(src_obj->base.filp);
 	src_base = (void *)srcva;
 #else
 	src_base = vmap_batch(src_obj, batch_start_offset, batch_len);
@@ -957,6 +959,7 @@ static u32 *copy_batch(struct drm_i915_gem_object *dest_obj,
 	const u32 dstlen = roundup(0 + batch_len, PAGE_SIZE) - dststart;
 	vaddr_t dstva = 0;	/* hint */
 
+	/* XXX errno NetBSD->Linux */
 	ret = -uvm_map(kernel_map, &dstva, dstlen, dest_obj->base.filp,
 	    dststart, PAGE_SIZE, UVM_MAPFLAG(UVM_PROT_RW, UVM_PROT_RW,
 		UVM_INH_NONE, UVM_ADV_SEQUENTIAL, UVM_FLAG_NOWAIT));
@@ -964,6 +967,8 @@ static u32 *copy_batch(struct drm_i915_gem_object *dest_obj,
 		DRM_DEBUG_DRIVER("CMD: Failed to vmap shadow batch: %d\n", ret);
 		goto unmap_src;
 	}
+	/* uvm_map consumes caller's reference on success.  */
+	uao_reference(dest_obj->base.filp);
 	dst = (void *)dstva;
 #else
 	dst = vmap_batch(dest_obj, 0, batch_len);
