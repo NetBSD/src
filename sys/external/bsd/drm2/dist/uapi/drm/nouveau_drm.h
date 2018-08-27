@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_drm.h,v 1.1.1.2 2018/08/27 01:35:00 riastradh Exp $	*/
+/*	$NetBSD: nouveau_drm.h,v 1.2 2018/08/27 04:58:38 riastradh Exp $	*/
 
 /*
  * Copyright 2005 Stephane Marchesin.

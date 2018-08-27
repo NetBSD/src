@@ -1,4 +1,4 @@
-/*	$NetBSD: mga_drv.c,v 1.1.1.3 2018/08/27 01:34:55 riastradh Exp $	*/
+/*	$NetBSD: mga_drv.c,v 1.2 2018/08/27 04:58:24 riastradh Exp $	*/
 
 /* mga_drv.c -- Matrox G200/G400 driver -*- linux-c -*-
  * Created: Mon Dec 13 01:56:22 1999 by jhartmann@precisioninsight.com
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mga_drv.c,v 1.1.1.3 2018/08/27 01:34:55 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mga_drv.c,v 1.2 2018/08/27 04:58:24 riastradh Exp $");
 
 #include <linux/module.h>
 

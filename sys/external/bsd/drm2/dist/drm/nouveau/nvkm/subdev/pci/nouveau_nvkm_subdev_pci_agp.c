@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_subdev_pci_agp.c,v 1.1.1.1 2018/08/27 01:34:56 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_subdev_pci_agp.c,v 1.2 2018/08/27 04:58:34 riastradh Exp $	*/
 
 /*
  * Copyright 2015 Nouveau Project
@@ -22,7 +22,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_pci_agp.c,v 1.1.1.1 2018/08/27 01:34:56 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_pci_agp.c,v 1.2 2018/08/27 04:58:34 riastradh Exp $");
 
 #include "agp.h"
 #ifdef __NVKM_PCI_AGP_H__
@@ -103,6 +103,9 @@ void
 nvkm_agp_dtor(struct nvkm_pci *pci)
 {
 	arch_phys_wc_del(pci->agp.mtrr);
+#ifdef __NetBSD__
+	pmap_pv_untrack(pci->agp.base, pci->agp.size);
+#endif
 }
 
 void
@@ -175,6 +178,9 @@ nvkm_agp_ctor(struct nvkm_pci *pci)
 	if (device->chipset == 0x18)
 		pci->agp.mode &= ~PCI_AGP_COMMAND_FW;
 
+#ifdef __NetBSD__
+	pmap_pv_track(pci->agp.base, pci->agp.size);
+#endif
 	pci->agp.mtrr = arch_phys_wc_add(pci->agp.base, pci->agp.size);
 }
 #endif

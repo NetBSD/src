@@ -1,4 +1,4 @@
-/*	$NetBSD: cik_int.h,v 1.1.1.1 2018/08/27 01:34:46 riastradh Exp $	*/
+/*	$NetBSD: cik_int.h,v 1.2 2018/08/27 04:58:20 riastradh Exp $	*/
 
 /*
  * Copyright 2014 Advanced Micro Devices, Inc.

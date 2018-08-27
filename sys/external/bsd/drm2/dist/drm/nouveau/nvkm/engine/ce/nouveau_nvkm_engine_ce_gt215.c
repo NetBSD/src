@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_engine_ce_gt215.c,v 1.1.1.1 2018/08/27 01:34:55 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_engine_ce_gt215.c,v 1.2 2018/08/27 04:58:31 riastradh Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_ce_gt215.c,v 1.1.1.1 2018/08/27 01:34:55 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_ce_gt215.c,v 1.2 2018/08/27 04:58:31 riastradh Exp $");
 
 #include "priv.h"
 #include "fuc/gt215.fuc3.h"
@@ -58,7 +58,7 @@ gt215_ce_intr(struct nvkm_falcon *ce, struct nvkm_fifo_chan *chan)
 	const struct nvkm_enum *en =
 		nvkm_enum_find(gt215_ce_isr_error_name, ssta);
 
-	nvkm_error(subdev, "DISPATCH_ERROR %04x [%s] ch %d [%010llx %s] "
+	nvkm_error(subdev, "DISPATCH_ERROR %04x [%s] ch %d [%010"PRIx64" %s] "
 			   "subc %d mthd %04x data %08x\n", ssta,
 		   en ? en->name : "", chan ? chan->chid : -1,
 		   chan ? chan->inst->addr : 0,

@@ -1,4 +1,4 @@
-/*	$NetBSD: bif_5_1_sh_mask.h,v 1.1.1.1 2018/08/27 01:34:48 riastradh Exp $	*/
+/*	$NetBSD: bif_5_1_sh_mask.h,v 1.2 2018/08/27 04:58:20 riastradh Exp $	*/
 
 /*
  * BIF_5_1 Register documentation

@@ -1,3 +1,5 @@
+/*	$NetBSD: ttm_tt.c,v 1.11 2018/08/27 04:58:37 riastradh Exp $	*/
+
 /**************************************************************************
  *
  * Copyright (c) 2006-2009 VMware, Inc., Palo Alto, CA., USA
@@ -28,6 +30,9 @@
  * Authors: Thomas Hellstrom <thellstrom-at-vmware-dot-com>
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ttm_tt.c,v 1.11 2018/08/27 04:58:37 riastradh Exp $");
+
 #define pr_fmt(fmt) "[TTM] " fmt
 
 #include <linux/sched.h>
@@ -57,10 +62,16 @@ static void ttm_tt_alloc_page_directory(struct ttm_tt *ttm)
 
 static void ttm_dma_tt_alloc_page_directory(struct ttm_dma_tt *ttm)
 {
-	ttm->ttm.pages = drm_calloc_large(ttm->ttm.num_pages, sizeof(void*));
-#ifndef __NetBSD__
-	ttm->dma_address = drm_calloc_large(ttm->ttm.num_pages,
-					    sizeof(*ttm->dma_address));
+#ifdef __NetBSD__		/* cpu/dma addrs handled by bus_dma */
+	ttm->ttm.pages = drm_calloc_large(ttm->ttm.num_pages,
+	    sizeof(*ttm->ttm.pages));
+#else
+	ttm->ttm.pages = drm_calloc_large(ttm->ttm.num_pages,
+					  sizeof(*ttm->ttm.pages) +
+					  sizeof(*ttm->dma_address) +
+					  sizeof(*ttm->cpu_address));
+	ttm->cpu_address = (void *) (ttm->ttm.pages + ttm->ttm.num_pages);
+	ttm->dma_address = (void *) (ttm->cpu_address + ttm->ttm.num_pages);
 #endif
 }
 
@@ -290,7 +301,7 @@ fail0:	KASSERT(error);
 	return -error;
     }
 #else
-	if (!ttm->pages || !ttm_dma->dma_address) {
+	if (!ttm->pages) {
 		ttm_tt_destroy(ttm);
 		pr_err("Failed allocating page table\n");
 		return -ENOMEM;
@@ -315,7 +326,7 @@ void ttm_dma_tt_fini(struct ttm_dma_tt *ttm_dma)
 	kmem_free(ttm_dma->dma_segs, (ttm->num_pages *
 		sizeof(ttm_dma->dma_segs[0])));
 #else
-	drm_free_large(ttm_dma->dma_address);
+	ttm_dma->cpu_address = NULL;
 	ttm_dma->dma_address = NULL;
 #endif
 }
@@ -494,7 +505,7 @@ int ttm_tt_swapout(struct ttm_tt *ttm, struct file *persistent_swap_storage)
 		swap_storage = shmem_file_setup("ttm swap",
 						ttm->num_pages << PAGE_SHIFT,
 						0);
-		if (unlikely(IS_ERR(swap_storage))) {
+		if (IS_ERR(swap_storage)) {
 			pr_err("Failed allocating swap storage\n");
 			return PTR_ERR(swap_storage);
 		}
@@ -508,7 +519,7 @@ int ttm_tt_swapout(struct ttm_tt *ttm, struct file *persistent_swap_storage)
 		if (unlikely(from_page == NULL))
 			continue;
 		to_page = shmem_read_mapping_page(swap_space, i);
-		if (unlikely(IS_ERR(to_page))) {
+		if (IS_ERR(to_page)) {
 			ret = PTR_ERR(to_page);
 			goto out_err;
 		}

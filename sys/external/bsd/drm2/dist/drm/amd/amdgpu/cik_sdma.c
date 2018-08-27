@@ -1,4 +1,4 @@
-/*	$NetBSD: cik_sdma.c,v 1.1.1.1 2018/08/27 01:34:44 riastradh Exp $	*/
+/*	$NetBSD: cik_sdma.c,v 1.2 2018/08/27 04:58:20 riastradh Exp $	*/
 
 /*
  * Copyright 2013 Advanced Micro Devices, Inc.
@@ -24,7 +24,7 @@
  * Authors: Alex Deucher
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cik_sdma.c,v 1.1.1.1 2018/08/27 01:34:44 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cik_sdma.c,v 1.2 2018/08/27 04:58:20 riastradh Exp $");
 
 #include <linux/firmware.h>
 #include <drm/drmP.h>

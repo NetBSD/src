@@ -1,8 +1,10 @@
-/*	$NetBSD: pmu.h,v 1.1.1.1 2018/08/27 01:34:55 riastradh Exp $	*/
+/*	$NetBSD: pmu.h,v 1.2 2018/08/27 04:58:30 riastradh Exp $	*/
 
 #ifndef __NVKM_PMU_H__
 #define __NVKM_PMU_H__
 #include <core/subdev.h>
+#include <linux/workqueue.h>
+#include <drm/drmP.h>
 
 struct nvkm_pmu {
 	const struct nvkm_pmu_func *func;
@@ -18,7 +20,11 @@ struct nvkm_pmu {
 		u32 size;
 
 		struct work_struct work;
+#ifdef __NetBSD__
+		drm_waitqueue_t wait;
+#else
 		wait_queue_head_t wait;
+#endif
 		u32 process;
 		u32 message;
 		u32 data[2];

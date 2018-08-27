@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.h,v 1.1.1.1 2018/08/27 01:34:55 riastradh Exp $	*/
+/*	$NetBSD: pci.h,v 1.2 2018/08/27 04:58:30 riastradh Exp $	*/
 
 #ifndef __NVKM_PCI_H__
 #define __NVKM_PCI_H__
@@ -8,7 +8,12 @@ struct nvkm_pci {
 	const struct nvkm_pci_func *func;
 	struct nvkm_subdev subdev;
 	struct pci_dev *pdev;
+#ifdef __NetBSD__
+	pci_intr_handle_t *pci_ihp;
+	void *pci_intrcookie;
+#else
 	int irq;
+#endif
 
 	struct {
 		struct agp_bridge_data *bridge;
