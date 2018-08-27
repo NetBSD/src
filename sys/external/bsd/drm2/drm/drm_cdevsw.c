@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_drv.c,v 1.21 2018/08/27 06:17:52 riastradh Exp $	*/
+/*	$NetBSD: drm_cdevsw.c,v 1.1 2018/08/27 06:31:41 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_drv.c,v 1.21 2018/08/27 06:17:52 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_cdevsw.c,v 1.1 2018/08/27 06:31:41 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
