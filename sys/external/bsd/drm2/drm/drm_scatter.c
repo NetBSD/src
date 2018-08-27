@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_scatter.c,v 1.4 2018/02/07 06:18:46 mrg Exp $	*/
+/*	$NetBSD: drm_scatter.c,v 1.5 2018/08/27 07:02:06 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_scatter.c,v 1.4 2018/02/07 06:18:46 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_scatter.c,v 1.5 2018/08/27 07:02:06 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/bus.h>
@@ -40,13 +40,15 @@ __KERNEL_RCSID(0, "$NetBSD: drm_scatter.c,v 1.4 2018/02/07 06:18:46 mrg Exp $");
 #include <linux/slab.h>
 
 #include <drm/drmP.h>
+#include <drm/drm_internal.h>
+#include "../dist/drm/drm_legacy.h"
 
 static int	drm_sg_alloc_mem(struct drm_device *, size_t,
 		    struct drm_sg_mem **);
 static void	drm_sg_free_mem(struct drm_device *, struct drm_sg_mem *);
 
 int
-drm_sg_alloc(struct drm_device *dev, void *data,
+drm_legacy_sg_alloc(struct drm_device *dev, void *data,
     struct drm_file *file __unused)
 {
 	struct drm_scatter_gather *const request = data;
@@ -88,7 +90,7 @@ drm_sg_alloc(struct drm_device *dev, void *data,
 }
 
 int
-drm_sg_free(struct drm_device *dev, void *data, struct drm_file *file)
+drm_legacy_sg_free(struct drm_device *dev, void *data, struct drm_file *file)
 {
 	struct drm_scatter_gather *const request = data;
 	struct drm_sg_mem *sg;
