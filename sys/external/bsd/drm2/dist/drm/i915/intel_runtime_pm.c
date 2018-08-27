@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_runtime_pm.c,v 1.3 2018/08/27 07:30:13 riastradh Exp $	*/
+/*	$NetBSD: intel_runtime_pm.c,v 1.4 2018/08/27 07:30:25 riastradh Exp $	*/
 
 /*
  * Copyright © 2012-2014 Intel Corporation
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_runtime_pm.c,v 1.3 2018/08/27 07:30:13 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_runtime_pm.c,v 1.4 2018/08/27 07:30:25 riastradh Exp $");
 
 #include <linux/pm_runtime.h>
 #include <linux/vgaarb.h>
@@ -197,6 +197,33 @@ void intel_display_set_init_power(struct drm_i915_private *dev_priv,
 	dev_priv->power_domains.init_power_on = enable;
 }
 
+static inline void
+touch_vga_msr(struct drm_device *dev)
+{
+#ifdef __NetBSD__
+	const bus_addr_t vgabase = 0x3c0;
+	const bus_space_tag_t iot = dev->pdev->pd_pa.pa_iot;
+	bus_space_handle_t ioh;
+	uint8_t msr;
+	int error;
+
+	error = bus_space_map(iot, vgabase, 0x10, 0, &ioh);
+	if (error) {
+		device_printf(dev->pdev->pd_dev,
+		    "unable to map VGA registers: %d\n", error);
+	} else {
+		CTASSERT(vgabase <= VGA_MSR_READ);
+		msr = bus_space_read_1(iot, ioh, VGA_MSR_READ - vgabase);
+		bus_space_write_1(iot, ioh, VGA_MSR_READ - vgabase, msr);
+		bus_space_unmap(iot, ioh, 0x10);
+	}
+#else
+	vga_get_uninterruptible(dev->pdev, VGA_RSRC_LEGACY_IO);
+	outb(inb(VGA_MSR_READ), VGA_MSR_WRITE);
+	vga_put(dev->pdev, VGA_RSRC_LEGACY_IO);
+#endif
+}
+
 /*
  * Starting with Haswell, we have a "Power Down Well" that can be turned off
  * when not needed anymore. We have 4 registers that can request the power well
@@ -217,9 +244,7 @@ static void hsw_power_well_post_enable(struct drm_i915_private *dev_priv)
 	 * sure vgacon can keep working normally without triggering interrupts
 	 * and error messages.
 	 */
-	vga_get_uninterruptible(dev->pdev, VGA_RSRC_LEGACY_IO);
-	outb(inb(VGA_MSR_READ), VGA_MSR_WRITE);
-	vga_put(dev->pdev, VGA_RSRC_LEGACY_IO);
+	touch_vga_msr(dev);
 
 	if (IS_BROADWELL(dev))
 		gen8_irq_power_well_post_enable(dev_priv,
@@ -242,9 +267,7 @@ static void skl_power_well_post_enable(struct drm_i915_private *dev_priv,
 	 * and error messages.
 	 */
 	if (power_well->data == SKL_DISP_PW_2) {
-		vga_get_uninterruptible(dev->pdev, VGA_RSRC_LEGACY_IO);
-		outb(inb(VGA_MSR_READ), VGA_MSR_WRITE);
-		vga_put(dev->pdev, VGA_RSRC_LEGACY_IO);
+		touch_vga_msr(dev);
 
 		gen8_irq_power_well_post_enable(dev_priv,
 						1 << PIPE_C | 1 << PIPE_B);
