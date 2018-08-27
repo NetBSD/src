@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_drv.c,v 1.6 2018/08/27 04:58:36 riastradh Exp $	*/
+/*	$NetBSD: radeon_drv.c,v 1.7 2018/08/27 07:03:26 riastradh Exp $	*/
 
 /**
  * \file radeon_drv.c
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_drv.c,v 1.6 2018/08/27 04:58:36 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_drv.c,v 1.7 2018/08/27 07:03:26 riastradh Exp $");
 
 #include <drm/drmP.h>
 #include <drm/radeon_drm.h>
@@ -612,6 +612,10 @@ static struct drm_driver kms_driver = {
 	.irq_postinstall = radeon_driver_irq_postinstall_kms,
 	.irq_uninstall = radeon_driver_irq_uninstall_kms,
 	.irq_handler = radeon_driver_irq_handler_kms,
+#ifdef __NetBSD__
+	.request_irq = drm_pci_request_irq,
+	.free_irq = drm_pci_free_irq,
+#endif
 	.ioctls = radeon_ioctls_kms,
 	.gem_free_object = radeon_gem_object_free,
 	.gem_open_object = radeon_gem_object_open,
