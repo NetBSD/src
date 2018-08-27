@@ -1,4 +1,4 @@
-/*	$NetBSD: vce_v2_0.c,v 1.2 2018/08/27 04:58:20 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_vce_v2_0.c,v 1.1 2018/08/27 14:22:31 riastradh Exp $	*/
 
 /*
  * Copyright 2013 Advanced Micro Devices, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vce_v2_0.c,v 1.2 2018/08/27 04:58:20 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_vce_v2_0.c,v 1.1 2018/08/27 14:22:31 riastradh Exp $");
 
 #include <linux/firmware.h>
 #include <drm/drmP.h>
