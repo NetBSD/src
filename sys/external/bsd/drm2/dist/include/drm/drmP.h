@@ -1,4 +1,4 @@
-/*	$NetBSD: drmP.h,v 1.20 2018/08/27 06:50:58 riastradh Exp $	*/
+/*	$NetBSD: drmP.h,v 1.21 2018/08/27 06:54:08 riastradh Exp $	*/
 
 /*
  * Internal Header for the Direct Rendering Manager
@@ -986,6 +986,8 @@ static inline bool drm_is_primary_client(const struct drm_file *file_priv)
 extern int drm_ioctl_permit(u32 flags, struct drm_file *file_priv);
 #ifdef __NetBSD__
 extern int drm_ioctl(struct file *, unsigned long, void *);
+extern struct spinlock drm_minor_lock;
+extern struct idr drm_minors_idr;
 #else
 extern long drm_ioctl(struct file *filp,
 		      unsigned int cmd, unsigned long arg);
