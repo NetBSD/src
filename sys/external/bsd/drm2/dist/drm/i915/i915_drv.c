@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_drv.c,v 1.12 2018/08/27 07:51:16 riastradh Exp $	*/
+/*	$NetBSD: i915_drv.c,v 1.13 2018/08/27 07:57:12 riastradh Exp $	*/
 
 /* i915_drv.c -- i830,i845,i855,i865,i915 driver -*- linux-c -*-
  */
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_drv.c,v 1.12 2018/08/27 07:51:16 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_drv.c,v 1.13 2018/08/27 07:57:12 riastradh Exp $");
 
 #include <linux/device.h>
 #include <linux/acpi.h>
@@ -633,7 +633,7 @@ static int skl_resume_prepare(struct drm_i915_private *dev_priv);
 static int bxt_resume_prepare(struct drm_i915_private *dev_priv);
 
 
-static int i915_drm_suspend(struct drm_device *dev)
+int i915_drm_suspend(struct drm_device *dev)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	pci_power_t opregion_target_state;
@@ -770,7 +770,7 @@ int i915_suspend_switcheroo(struct drm_device *dev, pm_message_t state)
 	return i915_drm_suspend_late(dev, false);
 }
 
-static int i915_drm_resume(struct drm_device *dev)
+int i915_drm_resume(struct drm_device *dev)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
 
@@ -843,7 +843,7 @@ static int i915_drm_resume(struct drm_device *dev)
 	return 0;
 }
 
-static int i915_drm_resume_early(struct drm_device *dev)
+int i915_drm_resume_early(struct drm_device *dev)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	int ret = 0;
