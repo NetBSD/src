@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_fence.c,v 1.4 2018/08/27 14:00:46 riastradh Exp $	*/
+/*	$NetBSD: linux_fence.c,v 1.5 2018/08/27 14:01:01 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_fence.c,v 1.4 2018/08/27 14:00:46 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_fence.c,v 1.5 2018/08/27 14:01:01 riastradh Exp $");
 
 #include <sys/atomic.h>
 #include <sys/condvar.h>
@@ -118,6 +118,27 @@ fence_context_alloc(unsigned n)
 	static volatile unsigned next_context = 0;
 
 	return atomic_add_int_nv(&next_context, n) - n;
+}
+
+/*
+ * fence_is_later(a, b)
+ *
+ *	True if the sequence number of fence a is later than the
+ *	sequence number of fence b.  Since sequence numbers wrap
+ *	around, we define this to mean that the sequence number of
+ *	fence a is no more than INT_MAX past the sequence number of
+ *	fence b.
+ *
+ *	The two fences must have the same context.
+ */
+bool
+fence_is_later(struct fence *a, struct fence *b)
+{
+
+	KASSERTMSG(a->context == b->context, "incommensurate fences"
+	    ": %u @ %p =/= %u @ %p", a->context, a, b->context, b);
+
+	return a->seqno - b->seqno < INT_MAX;
 }
 
 /*
@@ -398,6 +419,127 @@ fence_signal_locked(struct fence *fence)
 
 	/* Success! */
 	return 0;
+}
+
+struct wait_any {
+	struct fence_cb	fcb;
+	struct wait_any1 {
+		kmutex_t	lock;
+		kcondvar_t	cv;
+		bool		done;
+	}		*common;
+};
+
+static void
+wait_any_cb(struct fence *fence, struct fence_cb *fcb)
+{
+	struct wait_any *cb = container_of(fcb, struct wait_any, fcb);
+
+	mutex_enter(&cb->common->lock);
+	cb->common->done = true;
+	cv_broadcast(&cb->common->cv);
+	mutex_exit(&cb->common->lock);
+}
+
+/*
+ * fence_wait_any_timeout(fence, nfences, intr, timeout)
+ *
+ *	Wait for any of fences[0], fences[1], fences[2], ...,
+ *	fences[nfences-1] to be signaled.
+ */
+long
+fence_wait_any_timeout(struct fence **fences, uint32_t nfences, bool intr,
+    long timeout)
+{
+	struct wait_any1 common;
+	struct wait_any *cb;
+	uint32_t i, j;
+	int start, end;
+	long ret = 0;
+
+	/* Allocate an array of callback records.  */
+	cb = kcalloc(nfences, sizeof(cb[0]), GFP_KERNEL);
+	if (cb == NULL) {
+		ret = -ENOMEM;
+		goto out0;
+	}
+
+	/* Initialize a mutex and condvar for the common wait.  */
+	mutex_init(&common.lock, MUTEX_DEFAULT, IPL_VM);
+	cv_init(&common.cv, "fence");
+	common.done = false;
+
+	/* Add a callback to each of the fences, or stop here if we can't.  */
+	for (i = 0; i < nfences; i++) {
+		cb[i].common = &common;
+		ret = fence_add_callback(fences[i], &cb[i].fcb, &wait_any_cb);
+		if (ret)
+			goto out1;
+	}
+
+	/*
+	 * Test whether any of the fences has been signalled.  If they
+	 * have, stop here.  If the haven't, we are guaranteed to be
+	 * notified by one of the callbacks when they have.
+	 */
+	for (j = 0; j < nfences; j++) {
+		if (test_bit(FENCE_FLAG_SIGNALED_BIT, &fences[j]->flags))
+			goto out1;
+	}
+
+	/*
+	 * None of them was ready immediately.  Wait for one of the
+	 * callbacks to notify us when it is done.
+	 */
+	mutex_enter(&common.lock);
+	while (timeout > 0 && !common.done) {
+		start = hardclock_ticks;
+		if (intr) {
+			if (timeout != MAX_SCHEDULE_TIMEOUT) {
+				ret = -cv_timedwait_sig(&common.cv,
+				    &common.lock, MIN(timeout, /* paranoia */
+					MAX_SCHEDULE_TIMEOUT));
+			} else {
+				ret = -cv_wait_sig(&common.cv, &common.lock);
+			}
+		} else {
+			if (timeout != MAX_SCHEDULE_TIMEOUT) {
+				ret = -cv_timedwait(&common.cv,
+				    &common.lock, MIN(timeout, /* paranoia */
+					MAX_SCHEDULE_TIMEOUT));
+			} else {
+				cv_wait(&common.cv, &common.lock);
+				ret = 0;
+			}
+		}
+		end = hardclock_ticks;
+		if (ret)
+			break;
+		timeout -= MIN(timeout, (unsigned)end - (unsigned)start);
+	}
+	mutex_exit(&common.lock);
+
+	/*
+	 * Massage the return code: if we were interrupted, return
+	 * ERESTARTSYS; if cv_timedwait timed out, return 0; otherwise
+	 * return the remaining time.
+	 */
+	if (ret < 0) {
+		if (ret == -EINTR || ret == -ERESTART)
+			ret = -ERESTARTSYS;
+		if (ret == -EWOULDBLOCK)
+			ret = 0;
+	} else {
+		KASSERT(ret == 0);
+		ret = timeout;
+	}
+
+out1:	while (i --> 0)
+		(void)fence_remove_callback(fences[i], &cb[i].fcb);
+	cv_destroy(&common.cv);
+	mutex_destroy(&common.lock);
+	kfree(cb);
+out0:	return ret;
 }
 
 /*
