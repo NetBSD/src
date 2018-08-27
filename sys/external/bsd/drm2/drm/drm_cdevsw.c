@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_cdevsw.c,v 1.4 2018/08/27 06:50:58 riastradh Exp $	*/
+/*	$NetBSD: drm_cdevsw.c,v 1.5 2018/08/27 06:51:17 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_cdevsw.c,v 1.4 2018/08/27 06:50:58 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_cdevsw.c,v 1.5 2018/08/27 06:51:17 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -151,7 +151,7 @@ drm_open(dev_t d, int flags, int fmt, struct lwp *l)
 
 	if (firstopen) {
 		/* XXX errno Linux->NetBSD */
-		error = drm_firstopen(dev);
+		error = -drm_firstopen(dev);
 		if (error)
 			goto fail2;
 	}
