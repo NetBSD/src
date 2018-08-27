@@ -1,4 +1,4 @@
-/*	$NetBSD: atom.c,v 1.3 2018/08/27 14:04:50 riastradh Exp $	*/
+/*	$NetBSD: atom.c,v 1.4 2018/08/27 14:05:40 riastradh Exp $	*/
 
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atom.c,v 1.3 2018/08/27 14:04:50 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atom.c,v 1.4 2018/08/27 14:05:40 riastradh Exp $");
 
 #include <linux/module.h>
 #include <linux/sched.h>
@@ -91,6 +91,7 @@ static int atom_dst_to_src[8][4] = {
 static int atom_def_dst[8] = { 0, 0, 1, 2, 0, 1, 2, 3 };
 
 static int debug_depth = 0;
+#undef DEBUG			/* XXX NetBSD kludge */
 #ifdef ATOM_DEBUG
 static void debug_print_spaces(int n)
 {
