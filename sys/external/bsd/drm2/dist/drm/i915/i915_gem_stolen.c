@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem_stolen.c,v 1.5 2018/08/27 04:58:23 riastradh Exp $	*/
+/*	$NetBSD: i915_gem_stolen.c,v 1.6 2018/08/27 06:08:25 riastradh Exp $	*/
 
 /*
  * Copyright © 2008-2012 Intel Corporation
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gem_stolen.c,v 1.5 2018/08/27 04:58:23 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gem_stolen.c,v 1.6 2018/08/27 06:08:25 riastradh Exp $");
 
 #include <linux/printk.h>
 #include <linux/err.h>
@@ -416,7 +416,11 @@ int i915_gem_init_stolen(struct drm_device *dev)
 	unsigned long reserved_total, reserved_base = 0, reserved_size;
 	unsigned long stolen_top;
 
+#ifdef __NetBSD__
+	linux_mutex_init(&dev_priv->mm.stolen_lock);
+#else
 	mutex_init(&dev_priv->mm.stolen_lock);
+#endif
 
 #ifdef CONFIG_INTEL_IOMMU
 	if (intel_iommu_gfx_mapped && INTEL_INFO(dev)->gen < 8) {
@@ -513,6 +517,9 @@ static struct sg_table *
 i915_pages_create_for_stolen(struct drm_device *dev,
 			     u32 offset, u32 size)
 {
+#ifdef __NetBSD__
+	panic("XXX");
+#else
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	struct sg_table *st;
 	struct scatterlist *sg;
@@ -542,6 +549,7 @@ i915_pages_create_for_stolen(struct drm_device *dev,
 	sg_dma_len(sg) = size;
 
 	return st;
+#endif
 }
 #endif
 
