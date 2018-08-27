@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_machdep.c,v 1.33 2018/08/23 22:34:03 jmcneill Exp $ */
+/* $NetBSD: fdt_machdep.c,v 1.34 2018/08/27 09:54:16 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.33 2018/08/23 22:34:03 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.34 2018/08/27 09:54:16 jmcneill Exp $");
 
 #include "opt_machdep.h"
 #include "opt_bootconfig.h"
@@ -54,6 +54,12 @@ __KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.33 2018/08/23 22:34:03 jmcneill Ex
 #include <sys/reboot.h>
 #include <sys/termios.h>
 #include <sys/extent.h>
+#include <sys/bootblock.h>
+#include <sys/disklabel.h>
+#include <sys/vnode.h>
+#include <sys/kauth.h>
+#include <sys/fcntl.h>
+#include <sys/md5.h>
 
 #include <dev/cons.h>
 #include <uvm/uvm_extern.h>
@@ -110,6 +116,7 @@ extern char KERNEL_BASE_phys[];
 
 static void fdt_update_stdout_path(void);
 static void fdt_device_register(device_t, void *);
+static void fdt_cpu_rootconf(void);
 static void fdt_reset(void);
 static void fdt_powerdown(void);
 
@@ -416,6 +423,7 @@ initarm(void *arg)
 	cpu_reset_address = fdt_reset;
 	cpu_powerdown_address = fdt_powerdown;
 	evbarm_device_register = fdt_device_register;
+	evbarm_cpu_rootconf = fdt_cpu_rootconf;
 
 	/* Talk to the user */
 	VPRINTF("\nNetBSD/evbarm (fdt) booting ...\n");
@@ -544,6 +552,63 @@ delay(u_int us)
 }
 
 static void
+fdt_detect_root_device(device_t dev)
+{
+	struct mbr_sector mbr;
+	uint8_t buf[DEV_BSIZE];
+	uint8_t hash[16];
+	const uint8_t *rhash;
+	char rootarg[32];
+	struct vnode *vp;
+	MD5_CTX md5ctx;
+	int error, len;
+	size_t resid;
+	u_int part;
+
+	const int chosen = OF_finddevice("/chosen");
+	if (chosen < 0)
+		return;
+
+	if (of_hasprop(chosen, "netbsd,mbr") &&
+	    of_hasprop(chosen, "netbsd,partition")) {
+
+		/*
+		 * The bootloader has passed in a partition index and MD5 hash
+		 * of the MBR sector. Read the MBR of this device, calculate the
+		 * hash, and compare it with the value passed in.
+		 */
+		rhash = fdtbus_get_prop(chosen, "netbsd,mbr", &len);
+		if (rhash == NULL || len != 16)
+			return;
+		of_getprop_uint32(chosen, "netbsd,partition", &part);
+		if (part >= MAXPARTITIONS)
+			return;
+
+		vp = opendisk(dev);
+		if (!vp)
+			return;
+		error = vn_rdwr(UIO_READ, vp, buf, sizeof(buf), 0, UIO_SYSSPACE,
+		    0, NOCRED, &resid, NULL);
+		VOP_CLOSE(vp, FREAD, NOCRED);
+		vput(vp);
+
+		if (error != 0)
+			return;
+
+		memcpy(&mbr, buf, sizeof(mbr));
+		MD5Init(&md5ctx);
+		MD5Update(&md5ctx, (void *)&mbr, sizeof(mbr));
+		MD5Final(hash, &md5ctx);
+
+		if (memcmp(rhash, hash, 16) != 0)
+			return;
+
+		snprintf(rootarg, sizeof(rootarg), " root=%s%c", device_xname(dev), part + 'a');
+		strcat(boot_args, rootarg);
+	}
+}
+
+static void
 fdt_device_register(device_t self, void *aux)
 {
 	const struct arm_platform *plat = arm_fdt_platform();
@@ -553,6 +618,26 @@ fdt_device_register(device_t self, void *aux)
 
 	if (plat && plat->ap_device_register)
 		plat->ap_device_register(self, aux);
+}
+
+static void
+fdt_cpu_rootconf(void)
+{
+	device_t dev;
+	deviter_t di;
+	char *ptr;
+
+	for (dev = deviter_first(&di, 0); dev; dev = deviter_next(&di)) {
+		if (device_class(dev) != DV_DISK)
+			continue;
+
+		if (get_bootconf_option(boot_args, "root", BOOTOPT_TYPE_STRING, &ptr) != 0)
+			break;
+
+		if (device_is_a(dev, "ld") || device_is_a(dev, "sd") || device_is_a(dev, "ld"))
+			fdt_detect_root_device(dev);
+	}
+	deviter_release(&di);
 }
 
 static void
