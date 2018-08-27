@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma_hacks.h,v 1.14 2018/08/27 15:29:08 riastradh Exp $	*/
+/*	$NetBSD: bus_dma_hacks.h,v 1.15 2018/08/27 15:29:31 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -120,7 +120,7 @@ out:	kmem_free(segs, (nsegs * sizeof(segs[0])));
 
 static inline int
 bus_dmamem_export_pages(bus_dma_tag_t dmat, const bus_dma_segment_t *segs,
-    int nsegs, struct vm_page **pgs, unsigned npgs)
+    int nsegs, paddr_t *pgs, unsigned npgs)
 {
 	int seg;
 	unsigned i;
@@ -134,7 +134,7 @@ bus_dmamem_export_pages(bus_dma_tag_t dmat, const bus_dma_segment_t *segs,
 			paddr_t paddr = BUS_MEM_TO_PHYS(dmat, baddr);
 
 			KASSERT(i < npgs);
-			pgs[i++] = PHYS_TO_VM_PAGE(paddr);
+			pgs[i++] = paddr;
 
 			baddr += PAGE_SIZE;
 			len -= PAGE_SIZE;
@@ -148,14 +148,14 @@ bus_dmamem_export_pages(bus_dma_tag_t dmat, const bus_dma_segment_t *segs,
 
 static inline int
 bus_dmamem_import_pages(bus_dma_tag_t dmat, bus_dma_segment_t *segs,
-    int nsegs, int *rsegs, struct vm_page *const *pgs, unsigned npgs)
+    int nsegs, int *rsegs, const paddr_t *pgs, unsigned npgs)
 {
 	int seg;
 	unsigned i;
 
 	seg = 0;
 	for (i = 0; i < npgs; i++) {
-		paddr_t paddr = VM_PAGE_TO_PHYS(pgs[i]);
+		paddr_t paddr = pgs[i];
 		bus_addr_t baddr = PHYS_TO_BUS_MEM(dmat, paddr);
 
 		if (seg > 0 && segs[seg - 1].ds_addr + PAGE_SIZE == baddr) {
