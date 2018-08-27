@@ -1,4 +1,4 @@
-#	$NetBSD: files.radeon,v 1.17 2018/08/27 06:39:51 riastradh Exp $
+#	$NetBSD: files.radeon,v 1.18 2018/08/27 07:46:48 riastradh Exp $
 
 define	radeonfbbus	{ }
 device	radeon: drmkms, drmkms_pci, drmkms_ttm, radeonfbbus, firmload
@@ -62,7 +62,7 @@ file	external/bsd/drm2/dist/drm/radeon/r600_cs.c	radeon
 file	external/bsd/drm2/dist/drm/radeon/r600_dma.c	radeon
 file	external/bsd/drm2/dist/drm/radeon/r600_dpm.c	radeon
 file	external/bsd/drm2/dist/drm/radeon/r600_hdmi.c	radeon
-file	external/bsd/drm2/dist/drm/radeon/radeon_acpi.c	radeon
+#file	external/bsd/drm2/dist/drm/radeon/radeon_acpi.c	radeon
 file	external/bsd/drm2/dist/drm/radeon/radeon_agp.c	radeon
 file	external/bsd/drm2/dist/drm/radeon/radeon_asic.c	radeon
 file	external/bsd/drm2/dist/drm/radeon/radeon_atombios.c	radeon
