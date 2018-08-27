@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_gtt.c,v 1.7 2018/08/27 00:51:37 riastradh Exp $	*/
+/*	$NetBSD: intel_gtt.c,v 1.8 2018/08/27 07:17:01 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 /* Intel GTT stubs */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_gtt.c,v 1.7 2018/08/27 00:51:37 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_gtt.c,v 1.8 2018/08/27 07:17:01 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/bus.h>
@@ -144,7 +144,8 @@ intel_gtt_chipset_flush(void)
 }
 
 void
-intel_gtt_insert_entries(bus_dmamap_t dmamap, unsigned va_page, unsigned flags)
+intel_gtt_insert_sg_entries(bus_dmamap_t dmamap, unsigned va_page,
+    unsigned flags)
 {
 	struct agp_i810_softc *const isc = agp_i810_sc->as_chipc;
 	off_t va = (va_page << PAGE_SHIFT);
