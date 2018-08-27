@@ -1,4 +1,4 @@
-/*	$NetBSD: list.h,v 1.6 2018/08/27 06:23:19 riastradh Exp $	*/
+/*	$NetBSD: list.h,v 1.7 2018/08/27 06:50:03 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -45,6 +45,7 @@
 #define _LINUX_LIST_H_
 
 #include <sys/null.h>
+#include <sys/pslist.h>
 #include <sys/queue.h>
 
 #include <linux/kernel.h>
@@ -254,94 +255,74 @@ list_del_init(struct list_head *node)
  * `H'ead-only/`H'ash-table doubly-linked lists.
  */
 
-LIST_HEAD(hlist_head, hlist_node);
-struct hlist_node {
-	LIST_ENTRY(hlist_node) hln_entry;
-};
+#define	hlist_head	pslist_head
+#define	hlist_node	pslist_entry
 
-/*
- * XXX This works only because LIST_HEAD_INITIALIZER doesn't actually
- * use the name.  Really, this is just initialization to a null
- * pointer.
- */
-#define	HLIST_HEAD_INIT	LIST_HEAD_INITIALIZER(dummy)
-
-static inline void
-INIT_HLIST_HEAD(struct hlist_head *head)
-{
-	LIST_INIT(head);
-}
-
-static inline bool
-hlist_empty(struct hlist_head *head)
-{
-	return LIST_EMPTY(head);
-}
-
-static inline struct hlist_node *
-hlist_first(struct hlist_head *head)
-{
-	return LIST_FIRST(head);
-}
-
-static inline struct hlist_node *
-hlist_next(struct hlist_node *node)
-{
-	return LIST_NEXT(node, hln_entry);
-}
-
-static inline void
-hlist_add_head(struct hlist_node *node, struct hlist_head *head)
-{
-	LIST_INSERT_HEAD(head, node, hln_entry);
-}
-
-static inline void
-hlist_add_after(struct hlist_node *node, struct hlist_node *next)
-{
-	LIST_INSERT_AFTER(node, next, hln_entry);
-}
+#define	HLIST_HEAD_INIT	PSLIST_INITIALIZER
+#define	INIT_HLIST_HEAD	PSLIST_INIT
+#define	hlist_empty(h)	(pslist_writer_first(h) == NULL)
+#define	hlist_first	pslist_writer_first
+#define	hlist_next	pslist_writer_next
+#define	hlist_add_head(n, h)	pslist_writer_insert_head(h, n)
 
 static inline void
 hlist_del(struct hlist_node *node)
 {
-	LIST_REMOVE(node, hln_entry);
+
+	pslist_writer_remove(node);
+	/* XXX abstraction violation */
+	node->ple_prevp = _PSLIST_POISON;
 }
 
 static inline void
 hlist_del_init(struct hlist_node *node)
 {
-	LIST_REMOVE(node, hln_entry);
+
+	/* XXX abstraction violation */
+	if (node->ple_prevp != NULL)
+		pslist_writer_remove(node);
 }
 
 #define	hlist_entry(PTR, TYPE, FIELD)	container_of(PTR, TYPE, FIELD)
-#define	hlist_for_each(VAR, HEAD)	LIST_FOREACH(VAR, HEAD, hln_entry)
-#define	hlist_for_each_safe(VAR, NEXT, HEAD)				\
-	LIST_FOREACH_SAFE(VAR, HEAD, hln_entry, NEXT)
-
-#define	hlist_for_each_entry(VAR, HEAD, FIELD)				\
-	for ((VAR) = hlist_entry(LIST_FIRST((HEAD)), typeof(*(VAR)), FIELD);  \
-		&(VAR)->FIELD != NULL;					      \
-	        (VAR) = hlist_entry(LIST_NEXT(&(VAR)->FIELD, hln_entry),      \
-		    typeof(*(VAR)), FIELD))
+#define	hlist_for_each(VAR, HEAD)					      \
+	for ((VAR) = hlist_first(HEAD); (VAR) != NULL; (VAR) = hlist_next(VAR))
+#define	hlist_for_each_safe(VAR, NEXT, HEAD)				      \
+	for ((VAR) = hlist_first(HEAD),					      \
+		    (NEXT) = ((VAR) == NULL ? NULL : hlist_next(HEAD));	      \
+		(VAR) != NULL;						      \
+		(VAR) = (NEXT))
+#define	hlist_for_each_entry(VAR, HEAD, FIELD)				      \
+	for ((VAR) = (hlist_first(HEAD) == NULL ? NULL :		      \
+			hlist_entry(hlist_first(HEAD), typeof(*(VAR)),	      \
+			    FIELD));					      \
+		(VAR) != NULL;						      \
+		(VAR) = (hlist_next(VAR) == NULL ? NULL :		      \
+			hlist_entry(hlist_next(VAR), typeof(*(VAR)), FIELD)))
 
 #define	hlist_for_each_entry_safe(VAR, NEXT, HEAD, FIELD)		      \
-	for ((VAR) = hlist_entry(LIST_FIRST((HEAD)), typeof(*(VAR)), FIELD),  \
-		(NEXT) = (&(VAR)->FIELD == NULL ? NULL :		      \
-		    hlist_entry(LIST_NEXT(&(VAR)->FIELD, hln_entry),	      \
-			typeof(*(VAR)), FIELD));			      \
-	     &(VAR)->FIELD != NULL;					      \
+	for ((VAR) = (hlist_first(HEAD) == NULL ? NULL :		      \
+			hlist_entry(hlist_first(HEAD), typeof(*(VAR)),	      \
+			    FIELD)),					      \
+		    (NEXT) = ((VAR) == NULL ? NULL :			      \
+			hlist_entry(hlist_next(&(VAR)->FIELD), typeof(*(VAR)),\
+			    FIELD));					      \
+		(VAR) != NULL;						      \
 	        (VAR) = (NEXT))
 
-/*
- * XXX The nominally RCU-safe APIs below lack dependent read barriers,
- * so they're not actually RCU-safe...on the alpha, anyway.  Someone^TM
- * should fix this.
- */
+#define	hlist_add_behind_rcu(n, p)	pslist_writer_insert_after(p, n)
+#define	hlist_add_head_rcu		pslist_writer_insert_head
+#define	hlist_del_init_rcu		hlist_del_init /* no special needs */
 
-#define	hlist_add_after_rcu		hlist_add_after
-#define	hlist_add_head_rcu		hlist_add_head
-#define	hlist_del_init_rcu		hlist_del_init
-#define	hlist_for_each_entry_rcu	hlist_for_each_entry
+#define	hlist_first_rcu		pslist_reader_first
+#define	hlist_next_rcu		pslist_reader_next
+
+#define	hlist_for_each_entry_rcu(VAR, HEAD, FIELD)			      \
+	for ((VAR) = (hlist_first_rcu(HEAD) == NULL ? NULL :		      \
+			hlist_entry(hlist_first_rcu(HEAD), typeof(*(VAR)),    \
+			    FIELD));					      \
+		(VAR) != NULL;						      \
+		(VAR) = (hlist_next_rcu(VAR) == NULL ? NULL :		      \
+			hlist_entry(hlist_next_rcu(VAR), typeof(*(VAR)),      \
+			    FIELD)))
 
 #endif  /* _LINUX_LIST_H_ */
