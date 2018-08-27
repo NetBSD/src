@@ -1,4 +1,4 @@
-/* $NetBSD: efiblock.h,v 1.1 2018/08/26 21:28:18 jmcneill Exp $ */
+/* $NetBSD: efiblock.h,v 1.2 2018/08/27 09:51:32 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -59,12 +59,14 @@ struct efi_block_part {
 	union {
 		struct efi_block_part_disklabel disklabel;
 	};
+	uint8_t hash[16];
 
 	TAILQ_ENTRY(efi_block_part) entries;
 };
 
 void efi_block_probe(void);
 void efi_block_show(void);
+struct efi_block_part *efi_block_boot_part(void);
 
 int efi_block_open(struct open_file *, ...);
 int efi_block_close(struct open_file *);
