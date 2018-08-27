@@ -1,4 +1,4 @@
-#	$NetBSD: files.drmkms,v 1.16 2018/08/27 06:25:37 riastradh Exp $
+#	$NetBSD: files.drmkms,v 1.17 2018/08/27 06:25:48 riastradh Exp $
 
 include "external/bsd/drm2/linux/files.drmkms_linux"
 
@@ -41,8 +41,8 @@ file	external/bsd/drm2/drm/drmfb.c			drmfb
 
 include "external/bsd/drm2/ttm/files.ttm"
 
-file	external/bsd/drm2/dist/drm/ati_pcigart.c	drmkms
-file	external/bsd/drm2/dist/drm/drm_agpsupport.c	drmkms
+#file	external/bsd/drm2/dist/drm/ati_pcigart.c	drmkms  # drmkms_pci
+#file	external/bsd/drm2/dist/drm/drm_agpsupport.c	drmkms  # drmkms_pci
 file	external/bsd/drm2/dist/drm/drm_atomic.c	drmkms
 file	external/bsd/drm2/dist/drm/drm_atomic_helper.c	drmkms
 file	external/bsd/drm2/dist/drm/drm_auth.c	drmkms
