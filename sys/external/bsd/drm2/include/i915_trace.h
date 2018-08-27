@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_trace.h,v 1.4 2018/08/27 06:07:44 riastradh Exp $	*/
+/*	$NetBSD: i915_trace.h,v 1.5 2018/08/27 06:18:17 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -35,12 +35,6 @@
 #include <sys/types.h>
 
 #include "intel_drv.h"
-
-static inline void
-trace_i915_flip_complete(enum plane plane __unused,
-    struct drm_i915_gem_object *obj __unused)
-{
-}
 
 static inline void
 trace_i915_flip_request(enum plane plane __unused,
@@ -120,58 +114,43 @@ trace_i915_gem_request_add(struct drm_i915_gem_request *request)
 }
 
 static inline void
-trace_i915_gem_request_complete(struct intel_ring_buffer *ring __unused)
-{
-}
-
-static inline void
 trace_i915_gem_request_retire(struct drm_i915_gem_request *request __unused)
 {
 }
 
 static inline void
-trace_i915_gem_request_wait_begin(struct intel_ring_buffer *ring __unused,
+trace_i915_gem_request_wait_begin(struct drm_i915_gem_request *request __unused,
     uint32_t seqno __unused)
 {
 }
 
 static inline void
-trace_i915_gem_request_wait_end(struct intel_ring_buffer *ring __unused,
+trace_i915_gem_request_wait_end(struct drm_i915_gem_request *request __unused,
     uint32_t seqno __unused)
 {
 }
 
 static inline void
-trace_i915_gem_ring_dispatch(struct intel_ring_buffer *ring __unused,
+trace_i915_gem_ring_dispatch(struct drm_i915_gem_request *request __unused,
     uint32_t seqno __unused, uint32_t flags __unused)
 {
 }
 
 static inline void
-trace_i915_gem_ring_flush(struct intel_ring_buffer *ring __unused,
+trace_i915_gem_ring_flush(struct drm_i915_gem_request *request __unused,
     uint32_t invalidate __unused, uint32_t flags __unused)
 {
 }
 
 static inline void
-trace_i915_gem_ring_sync_to(struct intel_ring_buffer *from __unused,
-    struct intel_ring_buffer *to __unused, u32 seqno __unused)
+trace_i915_gem_ring_sync_to(struct drm_i915_gem_request *from __unused,
+    struct drm_i915_gem_request *to __unused, u32 seqno __unused)
 {
 }
 
 static inline void
 trace_i915_reg_rw(bool write __unused, uint32_t reg __unused,
     uint64_t value __unused, size_t len __unused, bool trace __unused)
-{
-}
-
-static inline void
-trace_i915_ring_wait_begin(struct intel_ring_buffer *ring __unused)
-{
-}
-
-static inline void
-trace_i915_ring_wait_end(struct intel_ring_buffer *ring __unused)
 {
 }
 
