@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_drv.c,v 1.9 2018/08/27 07:03:25 riastradh Exp $	*/
+/*	$NetBSD: i915_drv.c,v 1.10 2018/08/27 07:04:22 riastradh Exp $	*/
 
 /* i915_drv.c -- i830,i845,i855,i865,i915 driver -*- linux-c -*-
  */
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_drv.c,v 1.9 2018/08/27 07:03:25 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_drv.c,v 1.10 2018/08/27 07:04:22 riastradh Exp $");
 
 #include <linux/device.h>
 #include <linux/acpi.h>
@@ -725,6 +725,7 @@ static int i915_drm_suspend_late(struct drm_device *drm_dev, bool hibernation)
 		return ret;
 	}
 
+#ifndef __NetBSD__		/* pmf handles this for us.  */
 	pci_disable_device(drm_dev->pdev);
 	/*
 	 * During hibernation on some platforms the BIOS may try to access
@@ -740,6 +741,7 @@ static int i915_drm_suspend_late(struct drm_device *drm_dev, bool hibernation)
 	 */
 	if (!(hibernation && INTEL_INFO(dev_priv)->gen < 6))
 		pci_set_power_state(drm_dev->pdev, PCI_D3hot);
+#endif
 
 	return 0;
 }
@@ -1653,6 +1655,8 @@ static int intel_runtime_resume(struct device *device)
 	return ret;
 }
 
+#endif	/* __NetBSD__ */
+
 /*
  * This function implements common functionality of runtime and system
  * suspend sequence.
@@ -1674,6 +1678,8 @@ static int intel_suspend_complete(struct drm_i915_private *dev_priv)
 
 	return ret;
 }
+
+#ifndef __NetBSD__
 
 static const struct dev_pm_ops i915_pm_ops = {
 	/*
