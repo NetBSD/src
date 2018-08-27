@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_subdev_instmem_gk20a.c,v 1.2 2018/08/27 04:58:34 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_subdev_instmem_gk20a.c,v 1.3 2018/08/27 07:36:28 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2015, NVIDIA CORPORATION. All rights reserved.
@@ -44,7 +44,7 @@
  * goes beyond a certain threshold. At the moment this limit is 1MB.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_instmem_gk20a.c,v 1.2 2018/08/27 04:58:34 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_instmem_gk20a.c,v 1.3 2018/08/27 07:36:28 riastradh Exp $");
 
 #include "priv.h"
 
@@ -53,6 +53,10 @@ __KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_instmem_gk20a.c,v 1.2 2018/08/27
 #include <core/tegra.h>
 #include <subdev/fb.h>
 #include <subdev/ltc.h>
+
+#ifdef __NetBSD__
+#  define	__iomem	__nvkm_memory_iomem
+#endif
 
 struct gk20a_instobj {
 	struct nvkm_memory memory;

@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_subdev_instmem_nv40.c,v 1.2 2018/08/27 04:58:34 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_subdev_instmem_nv40.c,v 1.3 2018/08/27 07:36:28 riastradh Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_instmem_nv40.c,v 1.2 2018/08/27 04:58:34 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_instmem_nv40.c,v 1.3 2018/08/27 07:36:28 riastradh Exp $");
 
 #define nv40_instmem(p) container_of((p), struct nv40_instmem, base)
 #include "priv.h"
@@ -33,6 +33,10 @@ __KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_instmem_nv40.c,v 1.2 2018/08/27 
 #include <core/ramht.h>
 #include <engine/gr/nv40.h>
 
+#ifdef __NetBSD__
+#  define	__iomem	__nvkm_memory_iomem
+#endif
+
 struct nv40_instmem {
 	struct nvkm_instmem base;
 	struct nvkm_mm heap;
@@ -40,9 +44,8 @@ struct nv40_instmem {
 	bus_space_tag_t iomemt;
 	bus_space_handle_t iomemh;
 	bus_size_t iomemsz;
-#else
-	void __iomem *iomem;
 #endif
+	void __iomem *iomem;
 };
 
 /******************************************************************************
@@ -78,7 +81,7 @@ static void __iomem *
 nv40_instobj_acquire(struct nvkm_memory *memory)
 {
 	struct nv40_instobj *iobj = nv40_instobj(memory);
-	return iobj->imem->iomem + iobj->node->offset;
+	return (char __iomem *)iobj->imem->iomem + iobj->node->offset;
 }
 
 static void
@@ -162,7 +165,7 @@ static u32
 nv40_instmem_rd32(struct nvkm_instmem *base, u32 addr)
 {
 #ifdef __NetBSD__
-	struct nv40_instmem *imem = nv40_instmem(base)
+	struct nv40_instmem *imem = nv40_instmem(base);
 	return bus_space_read_4(imem->iomemt, imem->iomemh, addr);
 #else
 	return ioread32_native(nv40_instmem(base)->iomem + addr);
@@ -173,7 +176,7 @@ static void
 nv40_instmem_wr32(struct nvkm_instmem *base, u32 addr, u32 data)
 {
 #ifdef __NetBSD__
-	struct nv40_instmem *imem = nv40_instmem(base)
+	struct nv40_instmem *imem = nv40_instmem(base);
 	bus_space_write_4(imem->iomemt, imem->iomemh, addr, data);
 #else
 	iowrite32_native(data, nv40_instmem(base)->iomem + addr);
@@ -246,7 +249,11 @@ nv40_instmem_dtor(struct nvkm_instmem *base)
 	nvkm_memory_del(&imem->base.vbios);
 	nvkm_mm_fini(&imem->heap);
 	if (imem->iomem)
+#ifdef __NetBSD__
+		bus_space_unmap(imem->iomemt, imem->iomemh, imem->iomemsz);
+#else
 		iounmap(imem->iomem);
+#endif
 	return imem;
 }
 
@@ -290,14 +297,15 @@ nv40_instmem_new(struct nvkm_device *device, int index,
 	iomembase = device->func->resource_addr(device, bar);
 	iomemsz = device->func->resource_size(device, bar);
 	/* XXX errno NetBSD->Linux */
-	ret = -bus_space_map(imem->iomemt, iomemaddr, imem->iomemsz, 0,
-	    &imem->iomemh);
+	ret = -bus_space_map(imem->iomemt, iomembase, imem->iomemsz,
+	    BUS_SPACE_MAP_LINEAR, &imem->iomemh);
 	if (ret) {
 		nvkm_error(&imem->base.subdev, "unable to map PRAMIN BAR %d"
 		    ": %d\n", bar, ret);
 		return ret;
 	}
 	imem->iomemsz = iomemsz;
+	imem->iomem = bus_space_vaddr(imem->iomemt, imem->iomemh);
     }
 #else
 	imem->iomem = ioremap(device->func->resource_addr(device, bar),
