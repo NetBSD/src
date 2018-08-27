@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem_shrinker.c,v 1.5 2018/08/27 07:18:47 riastradh Exp $	*/
+/*	$NetBSD: i915_gem_shrinker.c,v 1.6 2018/08/27 07:19:01 riastradh Exp $	*/
 
 /*
  * Copyright © 2008-2015 Intel Corporation
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gem_shrinker.c,v 1.5 2018/08/27 07:18:47 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gem_shrinker.c,v 1.6 2018/08/27 07:19:01 riastradh Exp $");
 
 #include <linux/oom.h>
 #include <linux/shmem_fs.h>
@@ -317,11 +317,7 @@ i915_gem_shrinker_oom(struct notifier_block *nb, unsigned long event, void *ptr)
 	 */
 	unbound = bound = pinned = 0;
 	list_for_each_entry(obj, &dev_priv->mm.unbound_list, global_list) {
-#ifdef __NetBSD__
-		if (!obj->base.gemo_shm_uao)
-#else
 		if (!obj->base.filp) /* not backed by a freeable object */
-#endif
 			continue;
 
 		if (obj->pages_pin_count)
@@ -330,11 +326,7 @@ i915_gem_shrinker_oom(struct notifier_block *nb, unsigned long event, void *ptr)
 			unbound += obj->base.size;
 	}
 	list_for_each_entry(obj, &dev_priv->mm.bound_list, global_list) {
-#ifdef __NetBSD__
-		if (!obj->base.gemo_shm_uao)
-#else
 		if (!obj->base.filp)
-#endif
 			continue;
 
 		if (obj->pages_pin_count)
