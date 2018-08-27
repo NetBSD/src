@@ -1771,6 +1771,8 @@ i915_gem_mmap_ioctl(struct drm_device *dev, void *data,
 #endif
 
 #ifdef __NetBSD__
+	/* Acquire a reference for uvm_map to consume.  */
+	uao_reference(obj->gemo_shm_uao);
 	addr = (*curproc->p_emul->e_vm_default_addr)(curproc,
 	    (vaddr_t)curproc->p_vmspace->vm_daddr, args->size,
 	    curproc->p_vmspace->vm_map.flags & VM_MAP_TOPDOWN);
@@ -1781,10 +1783,10 @@ i915_gem_mmap_ioctl(struct drm_device *dev, void *data,
 		(VM_PROT_READ | VM_PROT_WRITE), UVM_INH_COPY, UVM_ADV_NORMAL,
 		0));
 	if (ret) {
+		uao_detach(obj->gemo_shm_uao);
 		drm_gem_object_unreference_unlocked(obj);
 		return ret;
 	}
-	uao_reference(obj->gemo_shm_uao);
 	drm_gem_object_unreference_unlocked(obj);
 #else
 	addr = vm_mmap(obj->filp, 0, args->size,
