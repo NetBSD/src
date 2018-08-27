@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem_tiling.c,v 1.5 2018/08/27 04:58:23 riastradh Exp $	*/
+/*	$NetBSD: i915_gem_tiling.c,v 1.6 2018/08/27 06:25:06 riastradh Exp $	*/
 
 /*
  * Copyright © 2008 Intel Corporation
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gem_tiling.c,v 1.5 2018/08/27 04:58:23 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gem_tiling.c,v 1.6 2018/08/27 06:25:06 riastradh Exp $");
 
 #include <linux/string.h>
 #include <linux/bitops.h>
@@ -337,109 +337,4 @@ i915_gem_get_tiling(struct drm_device *dev, void *data,
 	mutex_unlock(&dev->struct_mutex);
 
 	return 0;
-}
-<<<<<<< HEAD
-
-/**
- * Swap every 64 bytes of this page around, to account for it having a new
- * bit 17 of its physical address and therefore being interpreted differently
- * by the GPU.
- */
-static void
-i915_gem_swizzle_page(struct page *page)
-{
-	char temp[64];
-	char *vaddr;
-	int i;
-
-	vaddr = kmap(page);
-
-	for (i = 0; i < PAGE_SIZE; i += 128) {
-		memcpy(temp, &vaddr[i], 64);
-		memcpy(&vaddr[i], &vaddr[i + 64], 64);
-		memcpy(&vaddr[i + 64], temp, 64);
-	}
-
-	kunmap(page);
-}
-
-void
-i915_gem_object_do_bit_17_swizzle(struct drm_i915_gem_object *obj)
-{
-#ifdef __NetBSD__
-	struct vm_page *page;
-#else
-	struct sg_page_iter sg_iter;
-#endif
-	int i;
-
-	if (obj->bit_17 == NULL)
-		return;
-
-#ifdef __NetBSD__
-	i = 0;
-	TAILQ_FOREACH(page, &obj->igo_pageq, pageq.queue) {
-		unsigned char new_bit_17 = VM_PAGE_TO_PHYS(page) >> 17;
-		if ((new_bit_17 & 0x1) !=
-		    (test_bit(i, obj->bit_17) != 0)) {
-			i915_gem_swizzle_page(container_of(page, struct page,
-				p_vmp));
-			page->flags &= ~PG_CLEAN;
-		}
-		i += 1;
-	}
-#else
-	i = 0;
-	for_each_sg_page(obj->pages->sgl, &sg_iter, obj->pages->nents, 0) {
-		struct page *page = sg_page_iter_page(&sg_iter);
-		char new_bit_17 = page_to_phys(page) >> 17;
-		if ((new_bit_17 & 0x1) !=
-		    (test_bit(i, obj->bit_17) != 0)) {
-			i915_gem_swizzle_page(page);
-			set_page_dirty(page);
-		}
-		i++;
-	}
-#endif
-}
-
-void
-i915_gem_object_save_bit_17_swizzle(struct drm_i915_gem_object *obj)
-{
-#ifdef __NetBSD__
-	struct vm_page *page;
-#else
-	struct sg_page_iter sg_iter;
-#endif
-	int page_count = obj->base.size >> PAGE_SHIFT;
-	int i;
-
-	if (obj->bit_17 == NULL) {
-		obj->bit_17 = kcalloc(BITS_TO_LONGS(page_count),
-				      sizeof(long), GFP_KERNEL);
-		if (obj->bit_17 == NULL) {
-			DRM_ERROR("Failed to allocate memory for bit 17 "
-				  "record\n");
-			return;
-		}
-	}
-
-	i = 0;
-#ifdef __NetBSD__
-	TAILQ_FOREACH(page, &obj->igo_pageq, pageq.queue) {
-		if (ISSET(VM_PAGE_TO_PHYS(page), __BIT(17)))
-			__set_bit(i, obj->bit_17);
-		else
-			__clear_bit(i, obj->bit_17);
-		i += 1;
-	}
-#else
-	for_each_sg_page(obj->pages->sgl, &sg_iter, obj->pages->nents, 0) {
-		if (page_to_phys(sg_page_iter_page(&sg_iter)) & (1 << 17))
-			__set_bit(i, obj->bit_17);
-		else
-			__clear_bit(i, obj->bit_17);
-		i++;
-	}
-#endif
 }
