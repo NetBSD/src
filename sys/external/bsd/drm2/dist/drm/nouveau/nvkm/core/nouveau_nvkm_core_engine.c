@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_core_engine.c,v 1.2 2018/08/27 04:58:30 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_core_engine.c,v 1.3 2018/08/27 07:39:20 riastradh Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_core_engine.c,v 1.2 2018/08/27 04:58:30 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_core_engine.c,v 1.3 2018/08/27 07:39:20 riastradh Exp $");
 
 #include <core/engine.h>
 #include <core/device.h>
@@ -112,7 +112,7 @@ nvkm_engine_init(struct nvkm_subdev *subdev)
 
 		engine->subdev.oneinit = true;
 		time = ktime_to_us(ktime_get()) - time;
-		nvkm_trace(subdev, "one-time init completed in %lldus\n", time);
+		nvkm_trace(subdev, "one-time init completed in %"PRId64"us\n", time);
 	}
 
 	if (engine->func->init)

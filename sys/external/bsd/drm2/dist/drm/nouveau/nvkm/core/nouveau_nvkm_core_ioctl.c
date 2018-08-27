@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_core_ioctl.c,v 1.3 2018/08/27 07:35:56 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_core_ioctl.c,v 1.4 2018/08/27 07:39:20 riastradh Exp $	*/
 
 /*
  * Copyright 2014 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs <bskeggs@redhat.com>
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_core_ioctl.c,v 1.3 2018/08/27 07:35:56 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_core_ioctl.c,v 1.4 2018/08/27 07:39:20 riastradh Exp $");
 
 #include <core/ioctl.h>
 #include <core/client.h>
@@ -43,7 +43,7 @@ nvkm_ioctl_nop(struct nvkm_object *object, void *data, u32 size)
 
 	nvif_ioctl(object, "nop size %d\n", size);
 	if (nvif_unpack(args->v0, 0, 0, false)) {
-		nvif_ioctl(object, "nop vers %lld\n", args->v0.version);
+		nvif_ioctl(object, "nop vers %"PRId64"\n", args->v0.version);
 		args->v0.version = NVIF_VERSION_LATEST;
 	}
 
