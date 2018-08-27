@@ -1,4 +1,4 @@
-/*	$NetBSD: gfp.h,v 1.5 2014/07/17 14:07:44 riastradh Exp $	*/
+/*	$NetBSD: gfp.h,v 1.6 2018/08/27 06:56:31 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -62,6 +62,12 @@ typedef int gfp_t;
 #define	__GFP_RECLAIMABLE	__BIT(10)
 #define	__GFP_WAIT		__BIT(11)
 #define	__GFP_ZERO		__BIT(12)
+
+/*
+ * XXX Linux sez nobody should be using this in new code.  We never
+ * fail in the wait case anyway, so the point is moot.
+ */
+#define	__GFP_NOFAIL		0
 
 struct page;
 
