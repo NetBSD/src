@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_kfd.c,v 1.5 2018/08/27 07:48:07 riastradh Exp $	*/
+/*	$NetBSD: radeon_kfd.c,v 1.6 2018/08/27 07:48:20 riastradh Exp $	*/
 
 /*
  * Copyright 2014 Advanced Micro Devices, Inc.
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_kfd.c,v 1.5 2018/08/27 07:48:07 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_kfd.c,v 1.6 2018/08/27 07:48:20 riastradh Exp $");
 
 #include <linux/module.h>
 #include <linux/fdtable.h>
@@ -342,14 +342,22 @@ static void write_register(struct kgd_dev *kgd, uint32_t offset, uint32_t value)
 {
 	struct radeon_device *rdev = get_radeon_device(kgd);
 
+#ifdef __NetBSD__
+	bus_space_write_4(rdev->rmmio_bst, rdev->rmmio_bsh, offset, value);
+#else
 	writel(value, (void __iomem *)(rdev->rmmio + offset));
+#endif
 }
 
 static uint32_t read_register(struct kgd_dev *kgd, uint32_t offset)
 {
 	struct radeon_device *rdev = get_radeon_device(kgd);
 
+#ifdef __NetBSD__
+	return bus_space_read_4(rdev->rmmio_bst, rdev->rmmio_bsh, offset);
+#else
 	return readl((void __iomem *)(rdev->rmmio + offset));
+#endif
 }
 
 static void lock_srbm(struct kgd_dev *kgd, uint32_t mec, uint32_t pipe,
