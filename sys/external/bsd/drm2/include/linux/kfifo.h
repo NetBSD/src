@@ -1,7 +1,7 @@
-/*	$NetBSD: kfifo.h,v 1.1 2014/07/16 20:56:25 riastradh Exp $	*/
+/*	$NetBSD: kfifo.h,v 1.2 2018/08/27 14:00:26 riastradh Exp $	*/
 
 /*-
- * Copyright (c) 2014 The NetBSD Foundation, Inc.
+ * Copyright (c) 2018 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -32,30 +32,192 @@
 #ifndef	_LINUX_KFIFO_H_
 #define	_LINUX_KFIFO_H_
 
-#include <sys/pcq.h>
+#include <sys/types.h>
+#include <sys/errno.h>
+#include <sys/mutex.h>
 
-#define	DECLARE_KFIFO_PTR(fifo, type)					      \
-	struct {							      \
-		pcq_t	*pcq;						      \
-		type	*dummy;						      \
-	} fifo
+#include <linux/gfp.h>
+#include <linux/slab.h>
 
-#define	kfifo_put(fifo, item)						      \
-	pcq_put((fifo)->pcq, __UNCONST((const char *)(item) +		      \
-		0*sizeof((item) == *(fifo)->dummy)))
-#define	kfifo_get(fifo, itemp)						      \
-	((*((itemp) + 0*sizeof((itemp) - (fifo)->dummy)) =		      \
-	    pcq_get((fifo)->pcq)) != NULL)
+struct kfifo_meta {
+	kmutex_t	kfm_lock;
+	size_t		kfm_head;
+	size_t		kfm_tail;
+	size_t		kfm_nbytes;
+};
 
-#define	kfifo_is_empty(fifo)						      \
-	(pcq_peek((fifo)->pcq) == NULL)
+#define	_KFIFO_PTR_TYPE(TAG, TYPE)					      \
+	struct TAG {							      \
+		struct kfifo_meta	kf_meta;			      \
+		TYPE			*kf_buf;			      \
+	}
 
-#define	kfifo_alloc(fifo, size, gfp)					      \
-	(((fifo)->pcq = pcq_create((size),				      \
-		ISSET((gfp), __GFP_WAIT)? KM_SLEEP : KM_NOSLEEP))	      \
-	    == NULL? -ENOMEM : 0)
+#define	DECLARE_KFIFO_PTR(FIFO, TYPE)	_KFIFO_PTR_TYPE(, TYPE) FIFO
 
-#define	kfifo_free(fifo)						      \
-	pcq_destroy((fifo)->pcq)
+_KFIFO_PTR_TYPE(kfifo, void);
+
+#define	kfifo_alloc(FIFO, SIZE, GFP)					      \
+	_kfifo_alloc(&(FIFO)->kf_meta, &(FIFO)->kf_buf, (SIZE), (GFP))
+
+static inline int
+_kfifo_alloc(struct kfifo_meta *meta, void *bufp, size_t nbytes, gfp_t gfp)
+{
+	void *buf;
+
+	buf = kmalloc(nbytes, gfp);
+	if (buf == NULL)
+		return -ENOMEM;
+
+	/* Type pun!  Hope void * == struct whatever *.  */
+	memcpy(bufp, &buf, sizeof(void *));
+
+	mutex_init(&meta->kfm_lock, MUTEX_DEFAULT, IPL_NONE);
+	meta->kfm_head = 0;
+	meta->kfm_tail = 0;
+	meta->kfm_nbytes = nbytes;
+
+	return 0;
+}
+
+#define	kfifo_free(FIFO)						      \
+	_kfifo_free(&(FIFO)->kf_meta, &(FIFO)->kf_buf)
+
+static inline void
+_kfifo_free(struct kfifo_meta *meta, void *bufp)
+{
+	void *buf;
+
+	mutex_destroy(&meta->kfm_lock);
+
+	memcpy(&buf, bufp, sizeof(void *));
+	kfree(buf);
+
+	/* Paranoia.  */
+	buf = NULL;
+	memcpy(bufp, &buf, sizeof(void *));
+}
+
+#define	kfifo_is_empty(FIFO)	(kfifo_len(FIFO) == 0)
+#define	kfifo_len(FIFO)		_kfifo_len(&(FIFO)->kf_meta)
+
+static inline size_t
+_kfifo_len(struct kfifo_meta *meta)
+{
+	const size_t head = meta->kfm_head;
+	const size_t tail = meta->kfm_tail;
+	const size_t nbytes = meta->kfm_nbytes;
+
+	return (head <= tail ? tail - head : nbytes + tail - head);
+}
+
+#define	kfifo_out_peek(FIFO, PTR, SIZE)					      \
+	_kfifo_out_peek(&(FIFO)->kf_meta, (FIFO)->kf_buf, (PTR), (SIZE))
+
+static inline size_t
+_kfifo_out_peek(struct kfifo_meta *meta, void *buf, void *ptr, size_t size)
+{
+	const char *src = buf;
+	char *dst = ptr;
+	size_t copied = 0;
+
+	mutex_enter(&meta->kfm_lock);
+	const size_t head = meta->kfm_head;
+	const size_t tail = meta->kfm_tail;
+	const size_t nbytes = meta->kfm_nbytes;
+	if (head <= tail) {
+		if (size <= tail - head) {
+			memcpy(dst, src + head, size);
+			copied = size;
+		}
+	} else {
+		if (size <= nbytes - head) {
+			memcpy(dst, src + head, size);
+			copied = size;
+		} else if (size <= nbytes + tail - head) {
+			memcpy(dst, src + head, nbytes - head);
+			memcpy(dst + nbytes - head, src,
+			    size - (nbytes - head));
+			copied = size;
+		}
+	}
+	mutex_exit(&meta->kfm_lock);
+
+	return copied;
+}
+
+#define	kfifo_out(FIFO, PTR, SIZE)					      \
+	_kfifo_out(&(FIFO)->kf_meta, (FIFO)->kf_buf, (PTR), (SIZE))
+
+static inline size_t
+_kfifo_out(struct kfifo_meta *meta, const void *buf, void *ptr, size_t size)
+{
+	const char *src = buf;
+	char *dst = ptr;
+	size_t copied = 0;
+
+	mutex_enter(&meta->kfm_lock);
+	const size_t head = meta->kfm_head;
+	const size_t tail = meta->kfm_tail;
+	const size_t nbytes = meta->kfm_nbytes;
+	if (head <= tail) {
+		if (size <= tail - head) {
+			memcpy(dst, src + head, size);
+			meta->kfm_head = head + size;
+			copied = size;
+		}
+	} else {
+		if (size <= nbytes - head) {
+			memcpy(dst, src + head, size);
+			meta->kfm_head = head + size;
+			copied = size;
+		} else if (size <= nbytes + tail - head) {
+			memcpy(dst, src + head, nbytes - head);
+			memcpy(dst + nbytes - head, src,
+			    size - (nbytes - head));
+			meta->kfm_head = size - (nbytes - head);
+			copied = size;
+		}
+	}
+	mutex_exit(&meta->kfm_lock);
+
+	return copied;
+}
+
+#define	kfifo_in(FIFO, PTR, SIZE)					      \
+	_kfifo_in(&(FIFO)->kf_meta, (FIFO)->kf_buf, (PTR), (SIZE))
+
+static inline size_t
+_kfifo_in(struct kfifo_meta *meta, void *buf, const void *ptr, size_t size)
+{
+	const char *src = ptr;
+	char *dst = buf;
+	size_t copied = 0;
+
+	mutex_enter(&meta->kfm_lock);
+	const size_t head = meta->kfm_head;
+	const size_t tail = meta->kfm_tail;
+	const size_t nbytes = meta->kfm_nbytes;
+	if (tail <= head) {
+		if (size <= head - tail) {
+			memcpy(dst + tail, src, size);
+			meta->kfm_tail = tail + size;
+			copied = size;
+		}
+	} else {
+		if (size <= nbytes - tail) {
+			memcpy(dst + tail, src, size);
+			meta->kfm_tail = tail + size;
+		} else if (size <= nbytes + tail - head) {
+			memcpy(dst + tail, src, nbytes - tail);
+			memcpy(dst, src + nbytes - tail,
+			    size - (nbytes - tail));
+			meta->kfm_tail = size - (nbytes - tail);
+			copied = size;
+		}
+	}
+	mutex_exit(&meta->kfm_lock);
+
+	return copied;
+}
 
 #endif	/* _LINUX_KFIFO_H_ */
