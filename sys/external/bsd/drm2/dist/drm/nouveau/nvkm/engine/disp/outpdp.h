@@ -1,4 +1,4 @@
-/*	$NetBSD: outpdp.h,v 1.2 2018/08/27 04:58:31 riastradh Exp $	*/
+/*	$NetBSD: outpdp.h,v 1.3 2018/08/27 07:43:38 riastradh Exp $	*/
 
 #ifndef __NVKM_DISP_OUTP_DP_H__
 #define __NVKM_DISP_OUTP_DP_H__
@@ -33,7 +33,12 @@ struct nvkm_output_dp {
 
 	struct {
 		struct work_struct work;
+#ifdef __NetBSD__
+		drm_waitqueue_t wait;
+		spinlock_t lock;
+#else
 		wait_queue_head_t wait;
+#endif
 		atomic_t done;
 	} lt;
 };
