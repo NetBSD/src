@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_gem_vm.c,v 1.7 2018/08/27 06:56:22 riastradh Exp $	*/
+/*	$NetBSD: drm_gem_vm.c,v 1.8 2018/08/27 06:57:20 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_gem_vm.c,v 1.7 2018/08/27 06:56:22 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_gem_vm.c,v 1.8 2018/08/27 06:57:20 riastradh Exp $");
 
 #include <sys/types.h>
 
@@ -38,6 +38,7 @@ __KERNEL_RCSID(0, "$NetBSD: drm_gem_vm.c,v 1.7 2018/08/27 06:56:22 riastradh Exp
 
 #include <drm/drmP.h>
 #include <drm/drm_gem.h>
+#include <drm/drm_legacy.h>
 #include <drm/drm_vma_manager.h>
 
 static int	drm_gem_mmap_object_locked(struct drm_device *, off_t, size_t,
