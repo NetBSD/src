@@ -1,4 +1,4 @@
-/*	$NetBSD: ci_dpm.c,v 1.7 2018/08/27 06:38:10 riastradh Exp $	*/
+/*	$NetBSD: ci_dpm.c,v 1.8 2018/08/27 06:40:56 riastradh Exp $	*/
 
 /*
  * Copyright 2013 Advanced Micro Devices, Inc.
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ci_dpm.c,v 1.7 2018/08/27 06:38:10 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ci_dpm.c,v 1.8 2018/08/27 06:40:56 riastradh Exp $");
 
 #include <linux/firmware.h>
 #include "drmP.h"
@@ -185,10 +185,8 @@ static int ci_get_std_voltage_value_sidd(struct radeon_device *rdev,
 					 struct atom_voltage_table_entry *voltage_table,
 					 u16 *std_voltage_hi_sidd, u16 *std_voltage_lo_sidd);
 static int ci_set_power_limit(struct radeon_device *rdev, u32 n);
-#ifndef __NetBSD__		/* XXX unused? */
 static int ci_set_overdrive_target_tdp(struct radeon_device *rdev,
 				       u32 target_tdp);
-#endif
 static int ci_update_uvd_dpm(struct radeon_device *rdev, bool gate);
 
 static PPSMC_Result ci_send_msg_to_smc_with_parameter(struct radeon_device *rdev,
@@ -743,7 +741,6 @@ static int ci_enable_thermal_based_sclk_dpm(struct radeon_device *rdev,
 		return -EINVAL;
 }
 
-#ifndef __NetBSD__		/* XXX unused? */
 static int ci_power_control_set_level(struct radeon_device *rdev)
 {
 	struct ci_power_info *pi = ci_get_pi(rdev);
@@ -765,7 +762,6 @@ static int ci_power_control_set_level(struct radeon_device *rdev)
 
 	return ret;
 }
-#endif
 
 void ci_dpm_powergate_uvd(struct radeon_device *rdev, bool gate)
 {
@@ -1746,7 +1742,6 @@ static int ci_set_power_limit(struct radeon_device *rdev, u32 n)
 	return 0;
 }
 
-#ifndef __NetBSD__		/* XXX unused? */
 static int ci_set_overdrive_target_tdp(struct radeon_device *rdev,
 				       u32 target_tdp)
 {
@@ -1756,7 +1751,6 @@ static int ci_set_overdrive_target_tdp(struct radeon_device *rdev,
 		return -EINVAL;
 	return 0;
 }
-#endif
 
 #if 0
 static int ci_set_boot_state(struct radeon_device *rdev)
