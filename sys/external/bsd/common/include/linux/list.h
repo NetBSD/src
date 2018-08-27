@@ -1,4 +1,4 @@
-/*	$NetBSD: list.h,v 1.9 2018/08/27 06:54:19 riastradh Exp $	*/
+/*	$NetBSD: list.h,v 1.10 2018/08/27 06:55:43 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -199,6 +199,8 @@ list_del_init(struct list_head *node)
 #define	list_entry(PTR, TYPE, FIELD)	container_of(PTR, TYPE, FIELD)
 #define	list_first_entry(PTR, TYPE, FIELD)				\
 	list_entry(list_first((PTR)), TYPE, FIELD)
+#define	list_first_entry_or_null(PTR, TYPE, FIELD)			\
+	(list_empty((PTR)) ? NULL : list_entry(list_first((PTR)), TYPE, FIELD))
 #define	list_last_entry(PTR, TYPE, FIELD)				\
 	list_entry(list_last((PTR)), TYPE, FIELD)
 #define	list_next_entry(ENTRY, FIELD)					\
