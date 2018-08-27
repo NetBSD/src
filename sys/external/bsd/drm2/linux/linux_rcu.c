@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_rcu.c,v 1.1 2018/08/27 13:31:37 riastradh Exp $	*/
+/*	$NetBSD: linux_rcu.c,v 1.2 2018/08/27 13:39:48 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_rcu.c,v 1.1 2018/08/27 13:31:37 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_rcu.c,v 1.2 2018/08/27 13:39:48 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/condvar.h>
@@ -106,6 +106,8 @@ gc_thread(void *cookie)
 			break;
 	}
 	mutex_exit(&gc.lock);
+
+	kthread_exit(0);
 }
 
 int
