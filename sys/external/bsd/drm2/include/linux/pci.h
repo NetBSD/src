@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.h,v 1.33 2018/08/27 14:11:46 riastradh Exp $	*/
+/*	$NetBSD: pci.h,v 1.34 2018/08/27 14:12:00 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -152,6 +152,7 @@ struct pci_dev {
 		bus_space_tag_t		bst;
 		bus_space_handle_t	bsh;
 		void __pci_iomem	*kva;
+		bool			mapped;
 	}			pd_resources[PCI_NUM_RESOURCES];
 	struct pci_conf_state	*pd_saved_state;
 	struct acpi_devnode	*pd_ad;
@@ -202,7 +203,7 @@ linux_pci_dev_init(struct pci_dev *pdev, device_t dev, device_t parent,
 #else
 	pdev->pd_ad = NULL;
 #endif
-	pdev->bus = kmem_zalloc(sizeof(struct pci_bus), KM_NOSLEEP);
+	pdev->bus = kmem_zalloc(sizeof(*pdev->bus), KM_NOSLEEP);
 	pdev->bus->pb_pc = pa->pa_pc;
 	pdev->bus->pb_dev = parent;
 	pdev->bus->number = pa->pa_bus;
@@ -737,6 +738,7 @@ pci_iomap(struct pci_dev *pdev, unsigned i, bus_size_t size)
 	pdev->pd_resources[i].bst = pdev->pd_pa.pa_memt;
 	pdev->pd_resources[i].kva = bus_space_vaddr(pdev->pd_resources[i].bst,
 	    pdev->pd_resources[i].bsh);
+	pdev->pd_resources[i].mapped = true;
 
 	return pdev->pd_resources[i].kva;
 }
@@ -857,6 +859,31 @@ linux_pci_disable_device(struct pci_dev *pdev)
 	csr &= ~PCI_COMMAND_MEM_ENABLE;
 	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG, csr);
 	splx(s);
+}
+
+static inline void
+linux_pci_dev_destroy(struct pci_dev *pdev)
+{
+	unsigned i;
+
+	if (pdev->bus != NULL) {
+		kmem_free(pdev->bus, sizeof(*pdev->bus));
+		pdev->bus = NULL;
+	}
+	if (ISSET(pdev->pd_kludges, NBPCI_KLUDGE_MAP_ROM)) {
+		pci_unmap_rom(pdev, pdev->pd_rom_vaddr);
+		pdev->pd_rom_vaddr = 0;
+	}
+	for (i = 0; i < __arraycount(pdev->pd_resources); i++) {
+		if (pdev->pd_resources[i].mapped)
+			continue;
+		bus_space_unmap(pdev->pd_resources[i].bst,
+		    pdev->pd_resources[i].bsh, pdev->pd_resources[i].size);
+	}
+
+	/* There is no way these should be still in use.  */
+	KASSERT(pdev->pd_saved_state == NULL);
+	KASSERT(pdev->pd_intr_handles == NULL);
 }
 
 #endif  /* _LINUX_PCI_H_ */
