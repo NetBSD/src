@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_irq.c,v 1.10 2018/08/27 06:53:36 riastradh Exp $	*/
+/*	$NetBSD: drm_irq.c,v 1.11 2018/08/27 07:03:25 riastradh Exp $	*/
 
 /*
  * drm_irq.c IRQ and vblank support
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_irq.c,v 1.10 2018/08/27 06:53:36 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_irq.c,v 1.11 2018/08/27 07:03:25 riastradh Exp $");
 
 #include <drm/drmP.h>
 #include "drm_trace.h"
@@ -524,7 +524,11 @@ static void drm_irq_vgaarb_nokms(void *cookie, bool state)
  * Returns:
  * Zero on success or a negative error code on failure.
  */
+#ifdef __NetBSD__
+int drm_irq_install(struct drm_device *dev)
+#else
 int drm_irq_install(struct drm_device *dev, int irq)
+#endif
 {
 	int ret;
 	unsigned long sh_flags = 0;
@@ -532,8 +536,10 @@ int drm_irq_install(struct drm_device *dev, int irq)
 	if (!drm_core_check_feature(dev, DRIVER_HAVE_IRQ))
 		return -EINVAL;
 
+#ifndef __NetBSD__
 	if (irq == 0)
 		return -EINVAL;
+#endif
 
 	/* Driver must have been initialized */
 	if (!dev->dev_private)
@@ -543,7 +549,9 @@ int drm_irq_install(struct drm_device *dev, int irq)
 		return -EBUSY;
 	dev->irq_enabled = true;
 
+#ifndef __NetBSD__
 	DRM_DEBUG("irq=%d\n", irq);
+#endif
 
 	/* Before installing handler */
 	if (dev->driver->irq_preinstall)
@@ -554,9 +562,7 @@ int drm_irq_install(struct drm_device *dev, int irq)
 		sh_flags = IRQF_SHARED;
 
 #ifdef __NetBSD__
-	ret = (*dev->driver->bus->irq_install)(dev, dev->driver->irq_handler,
-	    sh_flags, dev->devname ? dev->devname : dev->driver->name, dev,
-	    &dev->irq_cookie);
+	ret = (*dev->driver->request_irq)(dev, sh_flags);
 #else
 	ret = request_irq(irq, dev->driver->irq_handler,
 			  sh_flags, dev->driver->name, dev);
@@ -579,12 +585,14 @@ int drm_irq_install(struct drm_device *dev, int irq)
 		if (!drm_core_check_feature(dev, DRIVER_MODESET))
 			vga_client_register(dev->pdev, NULL, NULL, NULL);
 #ifdef __NetBSD__
-		(*dev->driver->bus->irq_uninstall)(dev, dev->irq_cookie);
+		(*dev->driver->free_irq)(dev);
 #else
 		free_irq(irq, dev);
 #endif
 	} else {
+#ifndef __NetBSD__
 		dev->irq = irq;
+#endif
 	}
 
 	return ret;
@@ -657,7 +665,7 @@ int drm_irq_uninstall(struct drm_device *dev)
 		dev->driver->irq_uninstall(dev);
 
 #ifdef __NetBSD__
-	(*dev->driver->bus->irq_uninstall)(dev, dev->irq_cookie);
+	(*dev->driver->free_irq)(dev);
 #else
 	free_irq(dev->irq, dev);
 #endif
@@ -697,13 +705,21 @@ int drm_control(struct drm_device *dev, void *data,
 
 	switch (ctl->func) {
 	case DRM_INST_HANDLER:
+#ifdef __NetBSD__
+		irq = ctl->irq;
+#else
 		irq = dev->pdev->irq;
+#endif
 
 		if (dev->if_version < DRM_IF_VERSION(1, 2) &&
 		    ctl->irq != irq)
 			return -EINVAL;
 		mutex_lock(&dev->struct_mutex);
+#ifdef __NetBSD__
+		ret = drm_irq_install(dev);
+#else
 		ret = drm_irq_install(dev, irq);
+#endif
 		mutex_unlock(&dev->struct_mutex);
 
 		return ret;

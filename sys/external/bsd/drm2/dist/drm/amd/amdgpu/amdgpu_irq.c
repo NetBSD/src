@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_irq.c,v 1.2 2018/08/27 04:58:19 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_irq.c,v 1.3 2018/08/27 07:03:25 riastradh Exp $	*/
 
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
@@ -28,7 +28,7 @@
  *          Jerome Glisse
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_irq.c,v 1.2 2018/08/27 04:58:19 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_irq.c,v 1.3 2018/08/27 07:03:25 riastradh Exp $");
 
 #include <linux/irq.h>
 #include <drm/drmP.h>
@@ -239,7 +239,11 @@ int amdgpu_irq_init(struct amdgpu_device *adev)
 	INIT_WORK(&adev->reset_work, amdgpu_irq_reset_work_func);
 
 	adev->irq.installed = true;
+#ifdef __NetBSD__
+	r = drm_irq_install(adev->ddev);
+#else
 	r = drm_irq_install(adev->ddev, adev->ddev->pdev->irq);
+#endif
 	if (r) {
 		adev->irq.installed = false;
 		flush_work(&adev->hotplug_work);

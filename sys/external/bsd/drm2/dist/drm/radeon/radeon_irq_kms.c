@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_irq_kms.c,v 1.3 2018/08/27 04:58:36 riastradh Exp $	*/
+/*	$NetBSD: radeon_irq_kms.c,v 1.4 2018/08/27 07:03:26 riastradh Exp $	*/
 
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
@@ -28,7 +28,7 @@
  *          Jerome Glisse
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_irq_kms.c,v 1.3 2018/08/27 04:58:36 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_irq_kms.c,v 1.4 2018/08/27 07:03:26 riastradh Exp $");
 
 #include <drm/drmP.h>
 #include <drm/drm_crtc_helper.h>
@@ -312,7 +312,11 @@ int radeon_irq_kms_init(struct radeon_device *rdev)
 	INIT_WORK(&rdev->audio_work, r600_audio_update_hdmi);
 
 	rdev->irq.installed = true;
+#ifdef __NetBSD__
+	r = drm_irq_install(rdev->ddev);
+#else
 	r = drm_irq_install(rdev->ddev, rdev->ddev->pdev->irq);
+#endif
 	if (r) {
 		rdev->irq.installed = false;
 		flush_delayed_work(&rdev->hotplug_work);

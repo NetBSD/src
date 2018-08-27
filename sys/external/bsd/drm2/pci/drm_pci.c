@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_pci.c,v 1.21 2018/08/27 07:03:02 riastradh Exp $	*/
+/*	$NetBSD: drm_pci.c,v 1.22 2018/08/27 07:03:26 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_pci.c,v 1.21 2018/08/27 07:03:02 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_pci.c,v 1.22 2018/08/27 07:03:26 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/errno.h>
@@ -39,34 +39,11 @@ __KERNEL_RCSID(0, "$NetBSD: drm_pci.c,v 1.21 2018/08/27 07:03:02 riastradh Exp $
 #include <dev/pci/pcivar.h>
 
 #include <drm/drmP.h>
+#include <drm/drm_legacy.h>
 
 struct drm_bus_irq_cookie {
 	pci_intr_handle_t *intr_handles;
 	void *ih_cookie;
-};
-
-static int	drm_pci_get_irq(struct drm_device *);
-static int	drm_pci_irq_install(struct drm_device *,
-		    irqreturn_t (*)(void *), int, const char *, void *,
-		    struct drm_bus_irq_cookie **);
-static void	drm_pci_irq_uninstall(struct drm_device *,
-		    struct drm_bus_irq_cookie *);
-static const char *
-		drm_pci_get_name(struct drm_device *);
-static int	drm_pci_set_unique(struct drm_device *, struct drm_master *,
-		    struct drm_unique *);
-static int	drm_pci_irq_by_busid(struct drm_device *,
-		    struct drm_irq_busid *);
-
-const struct drm_bus drm_pci_bus = {
-	.bus_type = DRIVER_BUS_PCI,
-	.get_irq = drm_pci_get_irq,
-	.irq_install = drm_pci_irq_install,
-	.irq_uninstall = drm_pci_irq_uninstall,
-	.get_name = drm_pci_get_name,
-	.set_busid = drm_pci_set_busid,
-	.set_unique = drm_pci_set_unique,
-	.irq_by_busid = drm_pci_irq_by_busid,
 };
 
 static const struct pci_attach_args *
@@ -76,10 +53,10 @@ drm_pci_attach_args(struct drm_device *dev)
 }
 
 int
-drm_pci_init(struct drm_driver *driver, struct pci_driver *pdriver __unused)
+drm_pci_init(struct drm_driver *driver __unused,
+    struct pci_driver *pdriver __unused)
 {
 
-	driver->bus = &drm_pci_bus;
 	return 0;
 }
 
@@ -219,21 +196,11 @@ drm_pci_agp_destroy(struct drm_device *dev)
 	}
 }
 
-static int
-drm_pci_get_irq(struct drm_device *dev)
+int
+drm_pci_request_irq(struct drm_device *dev, int flags)
 {
-
-	/*
-	 * Caller expects a nonzero int, and doesn't really use it for
-	 * anything, so no need to pci_intr_map here.
-	 */
-	return dev->pdev->pd_pa.pa_intrpin;
-}
-
-static int
-drm_pci_irq_install(struct drm_device *dev, irqreturn_t (*handler)(void *),
-    int flags, const char *name, void *arg, struct drm_bus_irq_cookie **cookiep)
-{
+	const char *const name = device_xname(dev->dev);
+	int (*const handler)(void *) = dev->driver->irq_handler;
 	const struct pci_attach_args *const pa = drm_pci_attach_args(dev);
 	const char *intrstr;
 	char intrbuf[PCI_INTRSTR_LEN];
@@ -264,7 +231,7 @@ drm_pci_irq_install(struct drm_device *dev, irqreturn_t (*handler)(void *),
 	intrstr = pci_intr_string(pa->pa_pc, irq_cookie->intr_handles[0],
 	    intrbuf, sizeof(intrbuf));
 	irq_cookie->ih_cookie = pci_intr_establish_xname(pa->pa_pc,
-	    irq_cookie->intr_handles[0], IPL_DRM, handler, arg, name);
+	    irq_cookie->intr_handles[0], IPL_DRM, handler, dev, name);
 	if (irq_cookie->ih_cookie == NULL) {
 		aprint_error_dev(dev->dev,
 		    "couldn't establish interrupt at %s (%s)\n", intrstr, name);
@@ -273,7 +240,7 @@ drm_pci_irq_install(struct drm_device *dev, irqreturn_t (*handler)(void *),
 	}
 
 	aprint_normal_dev(dev->dev, "interrupting at %s (%s)\n", intrstr, name);
-	*cookiep = irq_cookie;
+	dev->irq_cookie = irq_cookie;
 	return 0;
 
 error:
@@ -281,97 +248,29 @@ error:
 	return -ENOENT;
 }
 
-static void
-drm_pci_irq_uninstall(struct drm_device *dev, struct drm_bus_irq_cookie *cookie)
+void
+drm_pci_free_irq(struct drm_device *dev)
 {
+	struct drm_bus_irq_cookie *const cookie = dev->irq_cookie;
 	const struct pci_attach_args *pa = drm_pci_attach_args(dev);
 
 	pci_intr_disestablish(pa->pa_pc, cookie->ih_cookie);
 	pci_intr_release(pa->pa_pc, cookie->intr_handles, 1);
 	kmem_free(cookie, sizeof(*cookie));
-}
-
-static const char *
-drm_pci_get_name(struct drm_device *dev)
-{
-	return "pci";		/* XXX PCI bus names?  */
-}
-
-static int
-drm_pci_format_unique(struct drm_device *dev, char *buf, size_t size)
-{
-	const unsigned int domain = device_unit(device_parent(dev->dev));
-	const unsigned int bus = dev->pdev->pd_pa.pa_bus;
-	const unsigned int device = dev->pdev->pd_pa.pa_device;
-	const unsigned int function = dev->pdev->pd_pa.pa_function;
-
-	return snprintf(buf, size, "pci:%04x:%02x:%02x.%d",
-	    domain, bus, device, function);
-}
-
-static int
-drm_pci_format_devname(struct drm_device *dev, const char *unique,
-    char *buf, size_t size)
-{
-
-	return snprintf(buf, size, "%s@%s",
-	    device_xname(device_parent(dev->dev)),
-	    unique);
+	dev->irq_cookie = NULL;
 }
 
 int
 drm_pci_set_busid(struct drm_device *dev, struct drm_master *master)
 {
-	int n;
-	char *buf;
+	const struct pci_attach_args *const pa = &dev->pdev->pd_pa;
 
-	n = drm_pci_format_unique(dev, NULL, 0);
-	if (n < 0)
-		return -ENOSPC;	/* XXX */
-	if (0xff < n)
-		n = 0xff;
-
-	buf = kzalloc(n + 1, GFP_KERNEL);
-	(void)drm_pci_format_unique(dev, buf, n + 1);
-
-	if (master->unique)
-		kfree(master->unique);
-	master->unique = buf;
-	master->unique_len = n;
-	master->unique_size = n + 1;
-
-	n = drm_pci_format_devname(dev, master->unique, NULL, 0);
-	if (n < 0)
-		return -ENOSPC;	/* XXX back out? */
-	if (0xff < n)
-		n = 0xff;
-
-	buf = kzalloc(n + 1, GFP_KERNEL);
-	(void)drm_pci_format_devname(dev, master->unique, buf, n + 1);
-
-	if (dev->devname)
-		kfree(dev->devname);
-	dev->devname = buf;
+	master->unique = kasprintf(GFP_KERNEL, "pci:%04x:%02x:%02x.%d",
+	    device_unit(device_parent(dev->dev)),
+	    pa->pa_bus, pa->pa_device, pa->pa_function);
+	if (master->unique == NULL)
+		return -ENOMEM;
+	master->unique_len = strlen(master->unique);
 
 	return 0;
-}
-
-static int
-drm_pci_set_unique(struct drm_device *dev, struct drm_master *master,
-    struct drm_unique *unique __unused)
-{
-
-	/*
-	 * XXX This is silly.  We're supposed to reject unique names
-	 * that don't match the ones we would generate anyway.  For
-	 * expedience, we'll just generate the one we would and ignore
-	 * whatever userland threw at us...
-	 */
-	return drm_pci_set_busid(dev, master);
-}
-
-static int
-drm_pci_irq_by_busid(struct drm_device *dev, struct drm_irq_busid *busid)
-{
-	return -ENOSYS;		/* XXX */
 }
