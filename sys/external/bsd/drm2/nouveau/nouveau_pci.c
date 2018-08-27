@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_pci.c,v 1.19 2018/08/27 14:12:29 riastradh Exp $	*/
+/*	$NetBSD: nouveau_pci.c,v 1.20 2018/08/27 14:18:54 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_pci.c,v 1.19 2018/08/27 14:12:29 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_pci.c,v 1.20 2018/08/27 14:18:54 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/device.h>
@@ -125,9 +125,9 @@ nouveau_pci_match(device_t parent, cfdata_t match, void *aux)
 		return 0;
 #undef IS_BETWEEN
 
-	linux_pci_dev_init(&pdev, NULL, parent, pa, 0);
-	ret = nvkm_device_pci_new(&pdev, NULL, "error", true, false, 0,
-	    &device);
+	linux_pci_dev_init(&pdev, parent /* XXX bogus */, parent, pa, 0);
+	ret = nvkm_device_pci_new(&pdev, NULL, "error",
+	    /* detect */ true, /* mmio */ false, /* subdev_mask */ 0, &device);
 	if (ret == 0)		/* don't want to hang onto it */
 		nvkm_device_del(&device);
 	linux_pci_dev_destroy(&pdev);
@@ -163,7 +163,8 @@ nouveau_pci_attach(device_t parent, device_t self, void *aux)
 
 	/* XXX errno Linux->NetBSD */
 	error = -nvkm_device_pci_new(&sc->sc_pci_dev,
-	    nouveau_config, nouveau_debug, true, true, ~0ULL,
+	    nouveau_config, nouveau_debug,
+	    /* detect */ true, /* mmio */ true, /* subdev_mask */ ~0ULL,
 	    &sc->sc_nv_dev);
 	if (error) {
 		aprint_error_dev(self, "unable to create nouveau device: %d\n",
