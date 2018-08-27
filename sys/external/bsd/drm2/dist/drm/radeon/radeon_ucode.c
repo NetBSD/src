@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_ucode.c,v 1.2 2018/08/27 04:58:36 riastradh Exp $	*/
+/*	$NetBSD: radeon_ucode.c,v 1.3 2018/08/27 07:51:27 riastradh Exp $	*/
 
 /*
  * Copyright 2014 Advanced Micro Devices, Inc.
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_ucode.c,v 1.2 2018/08/27 04:58:36 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_ucode.c,v 1.3 2018/08/27 07:51:27 riastradh Exp $");
 
 #include <linux/firmware.h>
 #include <linux/slab.h>
@@ -58,7 +58,7 @@ void radeon_ucode_print_mc_hdr(const struct common_firmware_header *hdr)
 
 	if (version_major == 1) {
 		const struct mc_firmware_header_v1_0 *mc_hdr =
-			container_of(hdr, struct mc_firmware_header_v1_0, header);
+			const_container_of(hdr, struct mc_firmware_header_v1_0, header);
 
 		DRM_DEBUG("io_debug_size_bytes: %u\n",
 			  le32_to_cpu(mc_hdr->io_debug_size_bytes));
@@ -79,7 +79,7 @@ void radeon_ucode_print_smc_hdr(const struct common_firmware_header *hdr)
 
 	if (version_major == 1) {
 		const struct smc_firmware_header_v1_0 *smc_hdr =
-			container_of(hdr, struct smc_firmware_header_v1_0, header);
+			const_container_of(hdr, struct smc_firmware_header_v1_0, header);
 
 		DRM_DEBUG("ucode_start_addr: %u\n", le32_to_cpu(smc_hdr->ucode_start_addr));
 	} else {
@@ -97,7 +97,7 @@ void radeon_ucode_print_gfx_hdr(const struct common_firmware_header *hdr)
 
 	if (version_major == 1) {
 		const struct gfx_firmware_header_v1_0 *gfx_hdr =
-			container_of(hdr, struct gfx_firmware_header_v1_0, header);
+			const_container_of(hdr, struct gfx_firmware_header_v1_0, header);
 
 		DRM_DEBUG("ucode_feature_version: %u\n",
 			  le32_to_cpu(gfx_hdr->ucode_feature_version));
@@ -118,7 +118,7 @@ void radeon_ucode_print_rlc_hdr(const struct common_firmware_header *hdr)
 
 	if (version_major == 1) {
 		const struct rlc_firmware_header_v1_0 *rlc_hdr =
-			container_of(hdr, struct rlc_firmware_header_v1_0, header);
+			const_container_of(hdr, struct rlc_firmware_header_v1_0, header);
 
 		DRM_DEBUG("ucode_feature_version: %u\n",
 			  le32_to_cpu(rlc_hdr->ucode_feature_version));
@@ -145,7 +145,7 @@ void radeon_ucode_print_sdma_hdr(const struct common_firmware_header *hdr)
 
 	if (version_major == 1) {
 		const struct sdma_firmware_header_v1_0 *sdma_hdr =
-			container_of(hdr, struct sdma_firmware_header_v1_0, header);
+			const_container_of(hdr, struct sdma_firmware_header_v1_0, header);
 
 		DRM_DEBUG("ucode_feature_version: %u\n",
 			  le32_to_cpu(sdma_hdr->ucode_feature_version));
