@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma_hacks.h,v 1.16 2018/08/27 15:32:20 riastradh Exp $	*/
+/*	$NetBSD: bus_dma_hacks.h,v 1.17 2018/08/27 15:32:39 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -88,6 +88,27 @@ bus_dmamem_pgfl(bus_dma_tag_t tag)
 	return x86_select_freelist(tag->_bounce_alloc_hi - 1);
 #else
 	return VM_FREELIST_DEFAULT;
+#endif
+}
+
+static inline bool
+bus_dmatag_bounces_paddr(bus_dma_tag_t dmat, paddr_t pa)
+{
+#if defined(__i386__) || defined(__x86_64__)
+	return pa < dmat->_bounce_alloc_lo || dmat->_bounce_alloc_hi <= pa;
+#elif defined(__arm__) || defined(__aarch64__)
+	unsigned i;
+
+	for (i = 0; i < dmat->_nranges; i++) {
+		const struct arm32_dma_range *dr = &dmat->_ranges[i];
+		if (dr->dr_sysbase <= pa && pa - dr->dr_sysbase <= dr->dr_len)
+			return false;
+	}
+	return true;
+#elif defined(__powerpc__)
+	return dmat->_bounce_thresh && pa >= dmat->_bounce_thresh;
+#elif defined(__sparc__) || defined(__sparc64__)
+	return false;		/* no bounce buffers ever */
 #endif
 }
 
