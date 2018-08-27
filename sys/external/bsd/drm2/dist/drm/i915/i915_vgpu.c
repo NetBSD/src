@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_vgpu.c,v 1.2 2018/08/27 04:58:24 riastradh Exp $	*/
+/*	$NetBSD: i915_vgpu.c,v 1.3 2018/08/27 07:16:10 riastradh Exp $	*/
 
 /*
  * Copyright(c) 2011-2015 Intel Corporation. All rights reserved.
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_vgpu.c,v 1.2 2018/08/27 04:58:24 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_vgpu.c,v 1.3 2018/08/27 07:16:10 riastradh Exp $");
 
 #include "intel_drv.h"
 #include "i915_vgpu.h"
@@ -74,13 +74,26 @@ void i915_check_vgpu(struct drm_device *dev)
 	if (!IS_HASWELL(dev))
 		return;
 
+#ifdef __NetBSD__
+	magic = bus_space_read_8(dev_priv->regs_bst, dev_priv->regs_bsh,
+	    vgtif_reg(magic));
+#else
 	magic = readq(dev_priv->regs + vgtif_reg(magic));
+#endif
 	if (magic != VGT_MAGIC)
 		return;
 
+#ifdef __NetBSD__
+	version = INTEL_VGT_IF_VERSION_ENCODE(
+		bus_space_read_2(dev_priv->regs_bst, dev_priv->regs_bsh,
+		    vgtif_reg(version_major)),
+		bus_space_read_2(dev_priv->regs_bst, dev_priv->regs_bsh,
+		    vgtif_reg(version_minor)));
+#else
 	version = INTEL_VGT_IF_VERSION_ENCODE(
 		readw(dev_priv->regs + vgtif_reg(version_major)),
 		readw(dev_priv->regs + vgtif_reg(version_minor)));
+#endif
 	if (version != INTEL_VGT_IF_VERSION) {
 		DRM_INFO("VGT interface version mismatch!\n");
 		return;
