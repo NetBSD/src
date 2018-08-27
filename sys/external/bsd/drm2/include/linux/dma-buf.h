@@ -1,4 +1,4 @@
-/*	$NetBSD: dma-buf.h,v 1.3 2018/08/27 15:22:54 riastradh Exp $	*/
+/*	$NetBSD: dma-buf.h,v 1.4 2018/08/27 15:25:13 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@ struct dma_buf {
 
 	kmutex_t			db_lock;
 	volatile unsigned		db_refcnt;
-	struct selinfo			db_selq;
+	struct reservation_poll		db_resv_poll;
 	struct reservation_object	db_resv_int[];
 };
 
