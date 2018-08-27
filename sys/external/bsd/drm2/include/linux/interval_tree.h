@@ -1,4 +1,4 @@
-/*	$NetBSD: interval_tree.h,v 1.1 2018/08/27 06:32:17 riastradh Exp $	*/
+/*	$NetBSD: interval_tree.h,v 1.2 2018/08/27 06:37:29 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@ interval_tree_compare_nodes(void *cookie, const void *va, const void *vb)
 static inline int
 interval_tree_compare_key(void *cookie, const void *vn, const void *vk)
 {
-	const struct interval_tree_node *n = va;
+	const struct interval_tree_node *n = vn;
 	const unsigned long *k = vk;
 
 	if (n->last < k)
@@ -74,7 +74,7 @@ interval_tree_compare_key(void *cookie, const void *vn, const void *vk)
 	return 0;
 }
 
-static const struct rb_tree_ops interval_tree_ops = {
+static const rb_tree_ops_t interval_tree_ops = {
 	.rbto_compare_nodes_fn = interval_tree_compare_nodes,
 	.rbto_compare_key_fn = interval_tree_compare_key,
 	.rbto_node_offset = offsetof(struct interval_tree_node, itn_node),
@@ -96,11 +96,11 @@ interval_tree_remove(struct interval_tree_node *node, struct rb_root *root)
 	rb_tree_remove_node(&root->rbr_tree, node);
 }
 
-static inline struct interval_node *
+static inline struct interval_tree_node *
 interval_tree_iter_first(struct rb_root *root, unsigned long start,
     unsigned long last)
 {
-	struct interval_node *node;
+	struct interval_tree_node *node;
 
 	node = rb_tree_find_node_geq(&root->rbr_tree, &start);
 	if (node == NULL)
@@ -117,11 +117,11 @@ interval_tree_iter_first(struct rb_root *root, unsigned long start,
  * argument, which makes this difficult.  So we'll just patch those
  * uses.
  */
-static inline struct interval_node *
-interval_tree_iter_next(struct rb_root *root, struct interval_node *node,
+static inline struct interval_tree_node *
+interval_tree_iter_next(struct rb_root *root, struct interval_tree_node *node,
     unsigned long start, unsigned long last)
 {
-	struct interval_node *next;
+	struct interval_tree_node *next;
 
 	KASSERT(node != NULL);
 	next = rb_tree_iterate(&root->rbr_tree, node, RB_DIR_RIGHT);
