@@ -1,4 +1,4 @@
-/* $NetBSD: efiblock.c,v 1.1 2018/08/26 21:28:18 jmcneill Exp $ */
+/* $NetBSD: efiblock.c,v 1.2 2018/08/27 09:51:32 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -30,12 +30,14 @@
 #define FSTYPENAMES
 
 #include <sys/param.h>
+#include <sys/md5.h>
 
 #include "efiboot.h"
 #include "efiblock.h"
 
 static EFI_HANDLE *efi_block;
 static UINTN efi_nblock;
+static struct efi_block_part *efi_block_booted = NULL;
 
 static TAILQ_HEAD(, efi_block_dev) efi_block_devs = TAILQ_HEAD_INITIALIZER(efi_block_devs);
 
@@ -85,8 +87,18 @@ efi_block_parse(const char *fname, struct efi_block_part **pbpart, char **pfile)
 	return ENOENT;
 }
 
+static void
+efi_block_generate_hash_mbr(struct efi_block_part *bpart, struct mbr_sector *mbr)
+{
+	MD5_CTX md5ctx;
+
+	MD5Init(&md5ctx);
+	MD5Update(&md5ctx, (void *)mbr, sizeof(*mbr));
+	MD5Final(bpart->hash, &md5ctx);
+}
+
 static int
-efi_block_find_partitions_disklabel(struct efi_block_dev *bdev, uint32_t start, uint32_t size)
+efi_block_find_partitions_disklabel(struct efi_block_dev *bdev, struct mbr_sector *mbr, uint32_t start, uint32_t size)
 {
 	struct efi_block_part *bpart;
 	struct disklabel d;
@@ -133,6 +145,7 @@ efi_block_find_partitions_disklabel(struct efi_block_dev *bdev, uint32_t start, 
 		bpart->type = EFI_BLOCK_PART_DISKLABEL;
 		bpart->disklabel.secsize = le32toh(d.d_secsize);
 		bpart->disklabel.part = *p;
+		efi_block_generate_hash_mbr(bpart, mbr);
 		TAILQ_INSERT_TAIL(&bdev->partitions, bpart, entries);
 	}
 
@@ -171,7 +184,7 @@ efi_block_find_partitions_mbr(struct efi_block_dev *bdev)
 		if (le32toh(mbr_part->mbrp_size) == 0)
 			continue;
 		if (mbr_part->mbrp_type == MBR_PTYPE_NETBSD) {
-			efi_block_find_partitions_disklabel(bdev, le32toh(mbr_part->mbrp_start), le32toh(mbr_part->mbrp_size));
+			efi_block_find_partitions_disklabel(bdev, &mbr, le32toh(mbr_part->mbrp_start), le32toh(mbr_part->mbrp_size));
 			break;
 		}
 	}
@@ -278,6 +291,12 @@ efi_block_show(void)
 	}
 }
 
+struct efi_block_part *
+efi_block_boot_part(void)
+{
+	return efi_block_booted;
+}
+
 int
 efi_block_open(struct open_file *f, ...)
 {
@@ -308,6 +327,8 @@ efi_block_open(struct open_file *f, ...)
 	f->f_devdata = bpart;
 
 	*file = path;
+
+	efi_block_booted = bpart;
 
 	return 0;
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: efifdt.c,v 1.2 2018/08/24 23:20:41 jmcneill Exp $ */
+/* $NetBSD: efifdt.c,v 1.3 2018/08/27 09:51:32 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -28,6 +28,7 @@
 
 #include "efiboot.h"
 #include "efifdt.h"
+#include "efiblock.h"
 
 #include <libfdt.h>
 
@@ -38,6 +39,7 @@ static EFI_GUID FdtTableGuid = FDT_TABLE_GUID;
 #define	FDT_MEMORY_NODE_PATH	"/memory"
 #define	FDT_MEMORY_NODE_NAME	"memory"
 #define	FDT_CHOSEN_NODE_PATH	"/chosen"
+#define	FDT_CHOSEN_NODE_NAME	"chosen"
 
 #define	FDT_MEMORY_USABLE(_md)	\
 	((_md)->Type == EfiLoaderCode || (_md)->Type == EfiLoaderData || \
@@ -140,5 +142,30 @@ efi_fdt_memory_map(void)
 void
 efi_fdt_bootargs(const char *bootargs)
 {
-	fdt_setprop_string(fdt_data, fdt_path_offset(fdt_data, FDT_CHOSEN_NODE_PATH), "bootargs", bootargs);
+	struct efi_block_part *bpart = efi_block_boot_part();
+	int chosen;
+
+	chosen = fdt_path_offset(fdt_data, FDT_CHOSEN_NODE_PATH);
+	if (chosen < 0)
+		chosen = fdt_add_subnode(fdt_data, fdt_path_offset(fdt_data, "/"), FDT_CHOSEN_NODE_NAME);
+	if (chosen < 0)
+		panic("FDT: Failed to craete " FDT_CHOSEN_NODE_PATH " node");
+
+	if (*bootargs)
+		fdt_setprop_string(fdt_data, chosen, "bootargs", bootargs);
+
+	if (bpart) {
+		switch (bpart->type) {
+		case EFI_BLOCK_PART_DISKLABEL:
+			fdt_setprop(fdt_data, chosen, "netbsd,mbr",
+			    bpart->hash, sizeof(bpart->hash));
+			fdt_setprop_u32(fdt_data, chosen, "netbsd,partition",
+			    bpart->index);
+			break;
+		default:
+			break;
+		}
+	}
+
+	fdt_pack(fdt_data);
 }

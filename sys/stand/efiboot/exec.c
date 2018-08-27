@@ -1,4 +1,4 @@
-/* $NetBSD: exec.c,v 1.1 2018/08/24 02:01:06 jmcneill Exp $ */
+/* $NetBSD: exec.c,v 1.2 2018/08/27 09:51:32 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -74,8 +74,7 @@ exec_netbsd(const char *fname, const char *args)
 	close(fd);
 
 	if (efi_fdt_size() > 0) {
-		if (args && *args)
-			efi_fdt_bootargs(args);
+		efi_fdt_bootargs(args);
 		efi_fdt_memory_map();	
 	}
 
