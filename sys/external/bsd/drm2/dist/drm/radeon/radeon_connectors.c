@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_connectors.c,v 1.4 2018/08/27 04:58:36 riastradh Exp $	*/
+/*	$NetBSD: radeon_connectors.c,v 1.5 2018/08/27 07:44:01 riastradh Exp $	*/
 
 /*
  * Copyright 2007-8 Advanced Micro Devices, Inc.
@@ -26,7 +26,7 @@
  *          Alex Deucher
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_connectors.c,v 1.4 2018/08/27 04:58:36 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_connectors.c,v 1.5 2018/08/27 07:44:01 riastradh Exp $");
 
 #include <drm/drmP.h>
 #include <drm/drm_edid.h>
@@ -2517,7 +2517,7 @@ void radeon_setup_mst_connector(struct drm_device *dev)
 		return;
 
 	list_for_each_entry(connector, &dev->mode_config.connector_list, head) {
-		int ret;
+		int ret __unused;
 
 		radeon_connector = to_radeon_connector(connector);
 
