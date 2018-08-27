@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_bufs.c,v 1.8 2018/08/27 04:58:19 riastradh Exp $	*/
+/*	$NetBSD: drm_bufs.c,v 1.9 2018/08/27 06:44:14 riastradh Exp $	*/
 
 /*
  * Legacy: Generic DRM Buffer Management
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_bufs.c,v 1.8 2018/08/27 04:58:19 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_bufs.c,v 1.9 2018/08/27 06:44:14 riastradh Exp $");
 
 #include <linux/vmalloc.h>
 #include <linux/slab.h>
@@ -214,7 +214,7 @@ static int drm_addmap_core(struct drm_device * dev, resource_size_t offset,
 		}
 		if (map->type == _DRM_REGISTERS) {
 #ifdef __NetBSD__
-			drm_core_ioremap(map, dev);
+			drm_legacy_ioremap(map, dev);
 #else
 			if (map->flags & _DRM_WRITE_COMBINING)
 				map->handle = ioremap_wc(map->offset,
@@ -352,7 +352,7 @@ static int drm_addmap_core(struct drm_device * dev, resource_size_t offset,
 	if (!list) {
 		if (map->type == _DRM_REGISTERS)
 #ifdef __NetBSD__
-			drm_core_ioremapfree(map, dev);
+			drm_legacy_ioremapfree(map, dev);
 #else
 			iounmap(map->handle);
 #endif
@@ -373,7 +373,7 @@ static int drm_addmap_core(struct drm_device * dev, resource_size_t offset,
 	if (ret) {
 		if (map->type == _DRM_REGISTERS)
 #ifdef __NetBSD__		/* XXX What about other map types...?  */
-			drm_core_ioremapfree(map, dev);
+			drm_legacy_ioremapfree(map, dev);
 #else
 			iounmap(map->handle);
 #endif
@@ -494,7 +494,7 @@ int drm_legacy_rmmap_locked(struct drm_device *dev, struct drm_local_map *map)
 	switch (map->type) {
 	case _DRM_REGISTERS:
 #ifdef __NetBSD__
-		drm_core_ioremapfree(map, dev);
+		drm_legacy_ioremapfree(map, dev);
 #else
 		iounmap(map->handle);
 #endif
