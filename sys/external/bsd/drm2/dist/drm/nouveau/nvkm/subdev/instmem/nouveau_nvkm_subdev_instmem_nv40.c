@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_subdev_instmem_nv40.c,v 1.4 2018/08/27 14:51:33 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_subdev_instmem_nv40.c,v 1.5 2018/08/27 14:51:55 riastradh Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_instmem_nv40.c,v 1.4 2018/08/27 14:51:33 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_instmem_nv40.c,v 1.5 2018/08/27 14:51:55 riastradh Exp $");
 
 #define nv40_instmem(p) container_of((p), struct nv40_instmem, base)
 #include "priv.h"
@@ -168,7 +168,7 @@ nv40_instmem_rd32(struct nvkm_instmem *base, u32 addr)
 {
 #ifdef __NetBSD__
 	struct nv40_instmem *imem = nv40_instmem(base);
-	return bus_space_read_4(imem->iomemt, imem->iomemh, addr);
+	return bus_space_read_stream_4(imem->iomemt, imem->iomemh, addr);
 #else
 	return ioread32_native(nv40_instmem(base)->iomem + addr);
 #endif
@@ -179,7 +179,7 @@ nv40_instmem_wr32(struct nvkm_instmem *base, u32 addr, u32 data)
 {
 #ifdef __NetBSD__
 	struct nv40_instmem *imem = nv40_instmem(base);
-	bus_space_write_4(imem->iomemt, imem->iomemh, addr, data);
+	bus_space_write_stream_4(imem->iomemt, imem->iomemh, addr, data);
 #else
 	iowrite32_native(data, nv40_instmem(base)->iomem + addr);
 #endif
