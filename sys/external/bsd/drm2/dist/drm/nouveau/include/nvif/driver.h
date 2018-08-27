@@ -1,7 +1,12 @@
-/*	$NetBSD: driver.h,v 1.2 2018/08/27 04:58:30 riastradh Exp $	*/
+/*	$NetBSD: driver.h,v 1.3 2018/08/27 07:32:59 riastradh Exp $	*/
 
 #ifndef __NVIF_DRIVER_H__
 #define __NVIF_DRIVER_H__
+
+#ifdef __NetBSD__
+#  define	__nvif_iomem	volatile
+#  define	__iomem		__nvif_iomem
+#endif
 
 struct nvif_driver {
 	const char *name;
@@ -15,6 +20,10 @@ struct nvif_driver {
 	void (*unmap)(void *priv, void __iomem *ptr, u32 size);
 	bool keep;
 };
+
+#ifdef __NetBSD__
+#  undef	__iomem
+#endif
 
 extern const struct nvif_driver nvif_driver_nvkm;
 extern const struct nvif_driver nvif_driver_drm;
