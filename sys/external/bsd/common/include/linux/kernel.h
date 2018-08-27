@@ -1,4 +1,4 @@
-/*	$NetBSD: kernel.h,v 1.17 2018/08/27 07:02:51 riastradh Exp $	*/
+/*	$NetBSD: kernel.h,v 1.18 2018/08/27 07:42:55 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -55,6 +55,7 @@
 #define	__user
 #define	__must_check	/* __attribute__((warn_unused_result)), if GCC */
 #define	__always_unused	__unused
+#define	noinline	__noinline
 
 #define	barrier()	__insn_barrier()
 #define	likely(X)	__predict_true(X)
