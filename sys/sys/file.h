@@ -1,4 +1,4 @@
-/*	$NetBSD: file.h,v 1.83 2017/11/30 20:25:56 christos Exp $	*/
+/*	$NetBSD: file.h,v 1.84 2018/08/27 22:22:16 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -118,8 +118,12 @@ union file_data {
  * Kernel file descriptor.  One entry for each open kernel vnode and
  * socket.
  *
- * This structure is exported via the KERN_FILE and KERN_FILE2 sysctl
- * calls.  Only add members to the end, do not delete them.
+ * This structure is exported via the KERN_FILE sysctl.
+ * Only add members to the end, do not delete them.
+ *
+ * Note: new code should not use KERN_FILE; use KERN_FILE2 instead,
+ * which exports struct kinfo_file instead; struct kinfo_file is
+ * declared in sys/sysctl.h and is meant to be ABI-stable.
  */
 struct file {
 	off_t		f_offset;	/* first, is 64-bit */
