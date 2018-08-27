@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_idr.c,v 1.10 2018/08/27 15:06:54 riastradh Exp $	*/
+/*	$NetBSD: linux_idr.c,v 1.11 2018/08/27 15:07:29 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_idr.c,v 1.10 2018/08/27 15:06:54 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_idr.c,v 1.11 2018/08/27 15:07:29 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -361,10 +361,11 @@ idr_alloc(struct idr *idr, void *data, int start, int end, gfp_t gfp)
 out:	mutex_spin_exit(&idr->idr_lock);
 
 	/* Discard the node on failure.  */
-	if (id < 0)
+	if (id < 0) {
 		cache->ic_node = node;
-	else
+	} else {
 		SDT_PROBE3(sdt, linux, idr, alloc,  idr, id, data);
+	}
 	return id;
 }
 
