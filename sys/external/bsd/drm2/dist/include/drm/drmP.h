@@ -1,4 +1,4 @@
-/*	$NetBSD: drmP.h,v 1.30 2018/08/27 15:28:03 riastradh Exp $	*/
+/*	$NetBSD: drmP.h,v 1.31 2018/08/27 15:32:06 riastradh Exp $	*/
 
 /*
  * Internal Header for the Direct Rendering Manager
@@ -920,6 +920,7 @@ struct drm_device {
 	struct drm_bus_map *bus_maps;
 	unsigned bus_nmaps;
 	bus_dma_tag_t bus_dmat;	/* bus's full DMA tag, for internal use */
+	bus_dma_tag_t bus_dmat32;	/* bus's 32-bit DMA tag */
 	bus_dma_tag_t dmat;	/* DMA tag for driver, may be subregion */
 	bool dmat_subregion_p;
 	bus_addr_t dmat_subregion_min;
