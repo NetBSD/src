@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_prime.c,v 1.6 2018/08/27 15:29:31 riastradh Exp $	*/
+/*	$NetBSD: drm_prime.c,v 1.7 2018/08/27 15:32:39 riastradh Exp $	*/
 
 /*
  * Copyright © 2012 Red Hat
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_prime.c,v 1.6 2018/08/27 15:29:31 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_prime.c,v 1.7 2018/08/27 15:32:39 riastradh Exp $");
 
 #include <linux/export.h>
 #include <linux/dma-buf.h>
@@ -926,6 +926,18 @@ drm_prime_bus_dmamap_load_sgt(bus_dma_tag_t dmat, bus_dmamap_t map,
 
 out1:	kfree(segs);
 out0:	return ret;
+}
+
+bool
+drm_prime_sg_importable(bus_dma_tag_t dmat, struct sg_table *sgt)
+{
+	unsigned i;
+
+	for (i = 0; i < sgt->sgt_npgs; i++) {
+		if (bus_dmatag_bounces_paddr(dmat, sgt->sgt_pgs[i]))
+			return false;
+	}
+	return true;
 }
 
 #else  /* !__NetBSD__ */
