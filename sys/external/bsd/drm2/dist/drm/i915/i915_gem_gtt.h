@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem_gtt.h,v 1.3 2018/08/27 05:35:11 riastradh Exp $	*/
+/*	$NetBSD: i915_gem_gtt.h,v 1.4 2018/08/27 06:08:25 riastradh Exp $	*/
 
 /*
  * Copyright © 2014 Intel Corporation
@@ -435,6 +435,16 @@ struct i915_hw_ppgtt {
  *
  * XXX: temp is not actually needed, but it saves doing the ALIGN operation.
  */
+#ifdef __NetBSD__ /* ALIGN means something else */
+#define gen6_for_each_pde(pt, pd, start, length, temp, iter) \
+	for (iter = gen6_pde_index(start); \
+	     length > 0 && iter < I915_PDES ? \
+			(pt = (pd)->page_table[iter]), 1 : 0; \
+	     iter++, \
+	     temp = round_up(start+1, 1 << GEN6_PDE_SHIFT) - start, \
+	     temp = min_t(unsigned, temp, length), \
+	     start += temp, length -= temp)
+#else
 #define gen6_for_each_pde(pt, pd, start, length, temp, iter) \
 	for (iter = gen6_pde_index(start); \
 	     length > 0 && iter < I915_PDES ? \
@@ -443,6 +453,7 @@ struct i915_hw_ppgtt {
 	     temp = ALIGN(start+1, 1 << GEN6_PDE_SHIFT) - start, \
 	     temp = min_t(unsigned, temp, length), \
 	     start += temp, length -= temp)
+#endif
 
 #define gen6_for_all_pdes(pt, ppgtt, iter)  \
 	for (iter = 0;		\
@@ -501,6 +512,36 @@ static inline uint32_t gen6_pde_index(uint32_t addr)
  * between from start until start + length. On gen8+ it simply iterates
  * over every page directory entry in a page directory.
  */
+#ifdef __NetBSD__ /* ALIGN means something else */
+
+#define gen8_for_each_pde(pt, pd, start, length, temp, iter)		\
+	for (iter = gen8_pde_index(start); \
+	     length > 0 && iter < I915_PDES ? \
+			(pt = (pd)->page_table[iter]), 1 : 0; \
+	     iter++,				\
+	     temp = round_up(start+1, 1 << GEN8_PDE_SHIFT) - start,	\
+	     temp = min(temp, length),					\
+	     start += temp, length -= temp)
+#define gen8_for_each_pdpe(pd, pdp, start, length, temp, iter)	\
+	for (iter = gen8_pdpe_index(start); \
+	     length > 0 && (iter < I915_PDPES_PER_PDP(dev)) ? \
+			(pd = (pdp)->page_directory[iter]), 1 : 0; \
+	     iter++,				\
+	     temp = round_up(start+1, 1 << GEN8_PDPE_SHIFT) - start,	\
+	     temp = min(temp, length),					\
+	     start += temp, length -= temp)
+
+#define gen8_for_each_pml4e(pdp, pml4, start, length, temp, iter)	\
+	for (iter = gen8_pml4e_index(start);	\
+	     length > 0 && iter < GEN8_PML4ES_PER_PML4 ? \
+			(pdp = (pml4)->pdps[iter]), 1 : 0; \
+	     iter++,				\
+	     temp = round_up(start+1, 1ULL << GEN8_PML4E_SHIFT) - start,	\
+	     temp = min(temp, length),					\
+	     start += temp, length -= temp)
+
+#else
+
 #define gen8_for_each_pde(pt, pd, start, length, temp, iter)		\
 	for (iter = gen8_pde_index(start); \
 	     length > 0 && iter < I915_PDES ? \
@@ -527,6 +568,7 @@ static inline uint32_t gen6_pde_index(uint32_t addr)
 	     temp = ALIGN(start+1, 1ULL << GEN8_PML4E_SHIFT) - start,	\
 	     temp = min(temp, length),					\
 	     start += temp, length -= temp)
+#endif
 
 static inline uint32_t gen8_pte_index(uint64_t address)
 {
