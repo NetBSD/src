@@ -1,61 +1,76 @@
-/*	$OpenBSD$	*/
-/*
- * Copyright (c) 2013, 2014, 2015 Mark Kettenis
- * Copyright (c) 2017 Martin Pieuchot
+/*	$NetBSD: hashtable.h,v 1.4 2018/08/27 06:23:19 riastradh Exp $	*/
+
+/*-
+ * Copyright (c) 2018 The NetBSD Foundation, Inc.
+ * All rights reserved.
  *
- * Permission to use, copy, modify, and distribute this software for any
- * purpose with or without fee is hereby granted, provided that the above
- * copyright notice and this permission notice appear in all copies.
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Taylor R. Campbell.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
- * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
- * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
- * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
- * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
- * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
  */
 
 #ifndef _LINUX_HASHTABLE_H_
 #define _LINUX_HASHTABLE_H_
 
+#include <sys/cdefs.h>
+
 #include <linux/list.h>
 
-#define DECLARE_HASHTABLE(name, bits) struct list_head name[1 << (bits)]
+/*
+ * XXX This assumes that HLIST_HEAD_INIT is just initialization to a
+ * null pointer.
+ */
+#define DECLARE_HASHTABLE(name, bits)					      \
+	struct hlist_head name[1u << (bits)] = { HLIST_HEAD_INIT }
 
 static inline void
-__hash_init(struct list_head *table, u_int size)
+__hash_init(struct hlist_head *hash, unsigned n)
 {
-	u_int i;
 
-	for (i = 0; i < size; i++)
-		INIT_LIST_HEAD(&table[i]);
+	while (n --> 0)
+		INIT_HLIST_HEAD(&hash[n]);
 }
 
 static inline bool
-__hash_empty(struct list_head *table, u_int size)
+__hash_empty(struct hlist_head *hash, unsigned n)
 {
-	u_int i;
 
-	for (i = 0; i < size; i++) {
-		if (!list_empty(&table[i]))
+	while (n --> 0) {
+		if (!hlist_empty(&hash[n]))
 			return false;
 	}
 
 	return true;
 }
 
-#define __hash(table, key)	&table[key % (nitems(table) - 1)]
-
-#define hash_init(table)	__hash_init(table, nitems(table))
-#define hash_add(table, node, key) \
-	hlist_add_head(node, __hash(table, key))
-#define hash_del(node)		hlist_del_init(node)
-#define hash_empty(table)	__hash_empty(table, nitems(table))
-#define hash_for_each_possible(table, obj, member, key) \
-	hlist_for_each_entry(obj, __hash(table, key), member)
-#define hash_for_each_safe(table, i, tmp, obj, member) 	\
-	for (i = 0; i < nitems(table); i++)		\
-	       list_for_each_entry_safe(obj, tmp, &table[i], member)
+#define	hash_init(h)		__hash_init((h), __arraycount(h))
+#define	hash_add(h, n, k)	hlist_add_head(n, &(h)[(k) % __arraycount(h)])
+#define	hash_del(n)		hlist_del_init(n)
+#define	hash_empty(h)		__hash_empty((h), __arraycount(h))
+#define	hash_for_each_possible(h, n, f, k)				      \
+	hlist_for_each_entry(n, &(h)[(k) % __arraycount(h)], f)
+#define	hash_for_each_safe(h, i, t, n, f)				      \
+	for ((i) = 0; (i) < __arraycount(h); (i)++)			      \
+		hlist_for_each_entry_safe(n, t, &(h)[i], f)
 
 #endif /*_LINUX_HASHTABLE_H_*/
