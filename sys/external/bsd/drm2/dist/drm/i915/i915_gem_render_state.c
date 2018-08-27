@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem_render_state.c,v 1.6 2018/08/27 13:43:12 riastradh Exp $	*/
+/*	$NetBSD: i915_gem_render_state.c,v 1.7 2018/08/27 13:43:22 riastradh Exp $	*/
 
 /*
  * Copyright © 2014 Intel Corporation
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gem_render_state.c,v 1.6 2018/08/27 13:43:12 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gem_render_state.c,v 1.7 2018/08/27 13:43:22 riastradh Exp $");
 
 #include "i915_drv.h"
 #include "intel_renderstate.h"
@@ -101,7 +101,7 @@ static int render_state_setup(struct render_state *so)
 	const struct intel_renderstate_rodata *rodata = so->rodata;
 	unsigned int i = 0, reloc_index = 0;
 #ifdef __NetBSD__
-	vaddr_t kva = 0;	/* hint */
+	vaddr_t kva;
 #else
 	struct page *page;
 #endif
@@ -113,6 +113,8 @@ static int render_state_setup(struct render_state *so)
 		return ret;
 
 #ifdef __NetBSD__
+	CTASSERT(PAGE_SIZE == 4096);
+	kva = 0;		/* hint */
 	/* XXX errno NetBSD->Linux */
 	ret = -uvm_map(kernel_map, &kva, PAGE_SIZE, so->obj->base.filp, 0,
 	    sizeof(*d), UVM_MAPFLAG(UVM_PROT_W, UVM_PROT_W, UVM_INH_NONE,
