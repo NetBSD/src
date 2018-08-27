@@ -1,4 +1,4 @@
-#	$NetBSD: files.i915drmkms,v 1.26 2018/08/27 07:56:59 riastradh Exp $
+#	$NetBSD: files.i915drmkms,v 1.27 2018/08/27 13:35:15 riastradh Exp $
 
 define	intelfbbus	{ }
 device	i915drmkms: drmkms, drmkms_pci, intelfbbus, agp_i810
@@ -69,7 +69,7 @@ file	external/bsd/drm2/dist/drm/i915/intel_ddi.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/intel_display.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/intel_dp.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/intel_dp_mst.c	i915drmkms
-#file	external/bsd/drm2/dist/drm/i915/intel_dsi.c	i915drmkms
+file	external/bsd/drm2/i915drm/intel_dsi.c	i915drmkms
 #file	external/bsd/drm2/dist/drm/i915/intel_dsi_panel_vbt.c	i915drmkms
 #file	external/bsd/drm2/dist/drm/i915/intel_dsi_pll.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/intel_dvo.c	i915drmkms
