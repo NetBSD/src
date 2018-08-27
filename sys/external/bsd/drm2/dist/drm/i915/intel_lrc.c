@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_lrc.c,v 1.6 2018/08/27 07:24:25 riastradh Exp $	*/
+/*	$NetBSD: intel_lrc.c,v 1.7 2018/08/27 14:52:56 riastradh Exp $	*/
 
 /*
  * Copyright © 2014 Intel Corporation
@@ -135,7 +135,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_lrc.c,v 1.6 2018/08/27 07:24:25 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_lrc.c,v 1.7 2018/08/27 14:52:56 riastradh Exp $");
 
 #include <drm/drmP.h>
 #include <drm/i915_drm.h>
@@ -751,8 +751,8 @@ static void __wrap_ring_buffer(struct intel_ringbuffer *ringbuf)
 
 	tail = ringbuf->tail;
 	rem /= 4;
-	while (rem--)
-		bus_space_write_4(ringbuf->bst, ringbuf->bsh, tail++, MI_NOOP);
+	for (; rem --> 0; tail += 4)
+		bus_space_write_4(ringbuf->bst, ringbuf->bsh, tail, MI_NOOP);
 #else
 	uint32_t __iomem *virt;
 	int rem = ringbuf->size - ringbuf->tail;
