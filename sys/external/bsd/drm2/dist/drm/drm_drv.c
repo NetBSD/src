@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_drv.c,v 1.5 2018/08/27 06:54:08 riastradh Exp $	*/
+/*	$NetBSD: drm_drv.c,v 1.6 2018/08/27 07:54:18 riastradh Exp $	*/
 
 /*
  * Created: Fri Jan 19 10:48:35 2001 by faith@acm.org
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_drv.c,v 1.5 2018/08/27 06:54:08 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_drv.c,v 1.6 2018/08/27 07:54:18 riastradh Exp $");
 
 #include <linux/err.h>
 #include <linux/export.h>
@@ -302,16 +302,18 @@ static int drm_minor_alloc(struct drm_device *dev, unsigned int type)
 
 	minor->index = r;
 
+#ifndef __NetBSD__		/* XXX drm sysfs */
 	minor->kdev = drm_sysfs_minor_alloc(minor);
 	if (IS_ERR(minor->kdev)) {
 		r = PTR_ERR(minor->kdev);
 		goto err_index;
 	}
+#endif
 
 	*drm_minor_get_slot(dev, type) = minor;
 	return 0;
 
-err_index:
+err_index: __unused
 	spin_lock_irqsave(&drm_minor_lock, flags);
 	idr_remove(&drm_minors_idr, minor->index);
 	spin_unlock_irqrestore(&drm_minor_lock, flags);
@@ -330,7 +332,7 @@ static void drm_minor_free(struct drm_device *dev, unsigned int type)
 	if (!minor)
 		return;
 
-#ifndef __NetBSD__
+#ifndef __NetBSD__		/* XXX drm sysfs */
 	put_device(minor->kdev);
 #endif
 
