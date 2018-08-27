@@ -1,7 +1,8 @@
-/*	$NetBSD: device.h,v 1.3 2018/08/27 07:30:56 riastradh Exp $	*/
+/*	$NetBSD: device.h,v 1.4 2018/08/27 07:32:31 riastradh Exp $	*/
 
 #ifndef __NVKM_DEVICE_H__
 #define __NVKM_DEVICE_H__
+#include <linux/notifier.h>
 #include <core/event.h>
 #include <core/object.h>
 
