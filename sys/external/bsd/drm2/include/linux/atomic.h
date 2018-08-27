@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic.h,v 1.15 2018/08/27 15:08:54 riastradh Exp $	*/
+/*	$NetBSD: atomic.h,v 1.16 2018/08/27 15:10:41 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -228,6 +228,8 @@ struct atomic64 {
 };
 
 typedef struct atomic64 atomic64_t;
+
+#define	ATOMIC64_INIT(v)	{ .a_v = (v) }
 
 int		linux_atomic64_init(void);
 void		linux_atomic64_fini(void);
