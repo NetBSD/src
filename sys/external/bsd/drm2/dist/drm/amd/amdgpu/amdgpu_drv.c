@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_drv.c,v 1.2 2018/08/27 04:58:19 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_drv.c,v 1.3 2018/08/27 07:03:25 riastradh Exp $	*/
 
 /**
  * \file amdgpu_drv.c
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_drv.c,v 1.2 2018/08/27 04:58:19 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_drv.c,v 1.3 2018/08/27 07:03:25 riastradh Exp $");
 
 #include <drm/drmP.h>
 #include <drm/amdgpu_drm.h>
@@ -508,6 +508,10 @@ static struct drm_driver kms_driver = {
 	.irq_postinstall = amdgpu_irq_postinstall,
 	.irq_uninstall = amdgpu_irq_uninstall,
 	.irq_handler = amdgpu_irq_handler,
+#ifdef __NetBSD__
+	.request_irq = drm_pci_request_irq,
+	.free_irq = drm_pci_free_irq,
+#endif
 	.ioctls = amdgpu_ioctls_kms,
 	.gem_free_object = amdgpu_gem_object_free,
 	.gem_open_object = amdgpu_gem_object_open,
