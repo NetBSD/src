@@ -1,4 +1,4 @@
-/*	$NetBSD: ttm_bo.c,v 1.11 2018/08/27 04:58:37 riastradh Exp $	*/
+/*	$NetBSD: ttm_bo.c,v 1.12 2018/08/27 07:52:53 riastradh Exp $	*/
 
 /**************************************************************************
  *
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ttm_bo.c,v 1.11 2018/08/27 04:58:37 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ttm_bo.c,v 1.12 2018/08/27 07:52:53 riastradh Exp $");
 
 #define pr_fmt(fmt) "[TTM] " fmt
 
@@ -501,7 +501,7 @@ static void ttm_bo_cleanup_refs_or_queue(struct ttm_buffer_object *bo)
 	spin_unlock(&glob->lru_lock);
 
 	schedule_delayed_work(&bdev->wq,
-			      ((DRM_HZ / 100) < 1) ? 1 : DRM_HZ / 100);
+			      ((HZ / 100) < 1) ? 1 : HZ / 100);
 }
 
 /**
@@ -651,7 +651,7 @@ static void ttm_bo_delayed_workqueue(struct work_struct *work)
 
 	if (ttm_bo_delayed_delete(bdev, false)) {
 		schedule_delayed_work(&bdev->wq,
-				      ((DRM_HZ / 100) < 1) ? 1 : DRM_HZ / 100);
+				      ((HZ / 100) < 1) ? 1 : HZ / 100);
 	}
 }
 
@@ -695,7 +695,7 @@ void ttm_bo_unlock_delayed_workqueue(struct ttm_bo_device *bdev, int resched)
 {
 	if (resched)
 		schedule_delayed_work(&bdev->wq,
-				      ((DRM_HZ / 100) < 1) ? 1 : DRM_HZ / 100);
+				      ((HZ / 100) < 1) ? 1 : HZ / 100);
 }
 EXPORT_SYMBOL(ttm_bo_unlock_delayed_workqueue);
 
