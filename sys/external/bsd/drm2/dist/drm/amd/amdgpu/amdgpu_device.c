@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_device.c,v 1.3 2018/08/27 14:04:50 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_device.c,v 1.4 2018/08/27 14:54:08 riastradh Exp $	*/
 
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
@@ -28,7 +28,7 @@
  *          Jerome Glisse
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_device.c,v 1.3 2018/08/27 14:04:50 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_device.c,v 1.4 2018/08/27 14:54:08 riastradh Exp $");
 
 #include <linux/console.h>
 #include <linux/slab.h>
@@ -96,7 +96,7 @@ uint32_t amdgpu_mm_rreg(struct amdgpu_device *adev, uint32_t reg,
 		bus_space_write_4(adev->rmmiot, adev->rmmioh, 4*mmMM_INDEX,
 		    4*reg);
 		ret = bus_space_read_4(adev->rmmiot, adev->rmmioh,
-		    4*mmMM_INDEX);
+		    4*mmMM_DATA);
 #else
 		writel((reg * 4), ((void __iomem *)adev->rmmio) + (mmMM_INDEX * 4));
 		ret = readl(((void __iomem *)adev->rmmio) + (mmMM_DATA * 4));
