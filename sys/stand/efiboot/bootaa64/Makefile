@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2018/08/24 02:01:06 jmcneill Exp $
+# $NetBSD: Makefile,v 1.2 2018/08/27 22:40:51 jmcneill Exp $
 
 PROG=		bootaa64.efi
 OBJFMT=		binary
@@ -12,3 +12,6 @@ CFLAGS+=	-DEFIBOOT_ALIGN=0x200000
 
 .include "${.CURDIR}/../Makefile.efiboot"
 
+release: check_RELEASEDIR
+	${HOST_INSTALL_FILE} -m ${BINMODE} ${PROG} \
+		${RELEASEDIR}/${MACHINE}/installation/misc
