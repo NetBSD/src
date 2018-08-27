@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem_context.c,v 1.7 2018/08/27 04:58:23 riastradh Exp $	*/
+/*	$NetBSD: i915_gem_context.c,v 1.8 2018/08/27 06:07:58 riastradh Exp $	*/
 
 /*
  * Copyright © 2011-2012 Intel Corporation
@@ -88,7 +88,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gem_context.c,v 1.7 2018/08/27 04:58:23 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gem_context.c,v 1.8 2018/08/27 06:07:58 riastradh Exp $");
 
 #include <linux/err.h>
 #include <drm/drmP.h>
@@ -966,9 +966,15 @@ int i915_gem_context_setparam_ioctl(struct drm_device *dev, void *data,
 	case I915_CONTEXT_PARAM_BAN_PERIOD:
 		if (args->size)
 			ret = -EINVAL;
+#ifdef __NetBSD__
+		else if (args->value < ctx->hang_stats.ban_period_seconds &&
+			 !DRM_SUSER())
+			ret = -EPERM;
+#else
 		else if (args->value < ctx->hang_stats.ban_period_seconds &&
 			 !capable(CAP_SYS_ADMIN))
 			ret = -EPERM;
+#endif
 		else
 			ctx->hang_stats.ban_period_seconds = args->value;
 		break;
