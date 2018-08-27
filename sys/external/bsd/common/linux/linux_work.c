@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_work.c,v 1.3 2018/08/27 07:00:28 riastradh Exp $	*/
+/*	$NetBSD: linux_work.c,v 1.4 2018/08/27 07:00:39 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_work.c,v 1.3 2018/08/27 07:00:28 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_work.c,v 1.4 2018/08/27 07:00:39 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -477,7 +477,7 @@ INIT_WORK(struct work_struct *work, void (*fn)(struct work_struct *))
 	linux_work_lock_init(work);
 	work->w_state = WORK_IDLE;
 	work->w_wq = NULL;
-	work->w_fn = fn;
+	work->func = fn;
 }
 
 bool
@@ -635,7 +635,7 @@ linux_worker(struct work *wk, void *arg)
 
 		/* Unlock it and do it.  Can't use work after this.  */
 		linux_work_unlock(work);
-		(*work->w_fn)(work);
+		(*work->func)(work);
 
 		/* All done.  Notify anyone waiting for completion.  */
 		mutex_enter(&wq->wq_lock);
