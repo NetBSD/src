@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic.h,v 1.7 2014/07/17 14:30:33 riastradh Exp $	*/
+/*	$NetBSD: atomic.h,v 1.8 2018/08/27 06:19:05 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -105,6 +105,12 @@ static inline int
 atomic_dec_and_test(atomic_t *atomic)
 {
 	return (0 == (int)atomic_dec_uint_nv(&atomic->a_u.au_uint));
+}
+
+static inline void
+atomic_or(int value, atomic_t *atomic)
+{
+	atomic_or_uint(&atomic->a_u.au_uint, value);
 }
 
 static inline void
