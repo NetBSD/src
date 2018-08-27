@@ -1,4 +1,4 @@
-/*	$NetBSD: client.h,v 1.3 2018/08/27 07:35:22 riastradh Exp $	*/
+/*	$NetBSD: client.h,v 1.4 2018/08/27 07:36:07 riastradh Exp $	*/
 
 #ifndef __NVKM_CLIENT_H__
 #define __NVKM_CLIENT_H__
@@ -11,8 +11,13 @@ struct nvkm_client {
 	u32 debug;
 
 	struct nvkm_client_notify *notify[16];
+#ifdef __NetBSD__
+	struct rb_tree objtree;
+	struct rb_tree dmatree;
+#else
 	struct rb_root objroot;
 	struct rb_root dmaroot;
+#endif
 
 	bool super;
 	void *data;
@@ -20,6 +25,8 @@ struct nvkm_client {
 
 	struct nvkm_vm *vm;
 };
+
+extern const rb_tree_ops_t nvkm_client_dmatree_ops;
 
 bool nvkm_client_insert(struct nvkm_client *, struct nvkm_object *);
 void nvkm_client_remove(struct nvkm_client *, struct nvkm_object *);
