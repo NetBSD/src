@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_work.c,v 1.18 2018/08/27 14:59:58 riastradh Exp $	*/
+/*	$NetBSD: linux_work.c,v 1.19 2018/08/27 15:00:27 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_work.c,v 1.18 2018/08/27 14:59:58 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_work.c,v 1.19 2018/08/27 15:00:27 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/atomic.h>
@@ -704,10 +704,12 @@ flush_workqueue(struct workqueue_struct *wq)
 	uint64_t gen;
 
 	mutex_enter(&wq->wq_lock);
-	gen = wq->wq_gen;
-	do {
-		cv_wait(&wq->wq_cv, &wq->wq_lock);
-	} while (gen == wq->wq_gen);
+	if (wq->wq_current_work || !TAILQ_EMPTY(&wq->wq_queue)) {
+		gen = wq->wq_gen;
+		do {
+			cv_wait(&wq->wq_cv, &wq->wq_lock);
+		} while (gen == wq->wq_gen);
+	}
 	mutex_exit(&wq->wq_lock);
 }
 
