@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem.c,v 1.43 2018/08/27 07:19:01 riastradh Exp $	*/
+/*	$NetBSD: i915_gem.c,v 1.44 2018/08/27 07:23:22 riastradh Exp $	*/
 
 /*
  * Copyright © 2008-2015 Intel Corporation
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gem.c,v 1.43 2018/08/27 07:19:01 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gem.c,v 1.44 2018/08/27 07:23:22 riastradh Exp $");
 
 #ifdef __NetBSD__
 #if 0				/* XXX uvmhist option?  */
@@ -310,13 +310,12 @@ i915_gem_object_put_pages_phys(struct drm_i915_gem_object *obj)
 			memcpy(dst, vaddr, PAGE_SIZE);
 			kunmap_atomic(dst);
 
+			set_page_dirty(page);
 #ifdef __NetBSD__
-			page->p_vmp.flags &= ~PG_CLEAN;
 			/* XXX mark page accessed */
 			uvm_obj_unwirepages(obj->base.filp, i*PAGE_SIZE,
 			    (i+1)*PAGE_SIZE);
 #else
-			set_page_dirty(page);
 			if (obj->madv == I915_MADV_WILLNEED)
 				mark_page_accessed(page);
 			page_cache_release(page);
