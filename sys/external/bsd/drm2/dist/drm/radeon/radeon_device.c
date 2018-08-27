@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_device.c,v 1.4 2018/08/27 04:58:36 riastradh Exp $	*/
+/*	$NetBSD: radeon_device.c,v 1.5 2018/08/27 07:44:12 riastradh Exp $	*/
 
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
@@ -28,7 +28,7 @@
  *          Jerome Glisse
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_device.c,v 1.4 2018/08/27 04:58:36 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_device.c,v 1.5 2018/08/27 07:44:12 riastradh Exp $");
 
 #include <linux/console.h>
 #include <linux/slab.h>
@@ -670,7 +670,11 @@ void radeon_gtt_location(struct radeon_device *rdev, struct radeon_mc *mc)
 static bool radeon_device_is_virtual(void)
 {
 #ifdef CONFIG_X86
+#ifdef __NetBSD__		/* XXX virtualization */
+	return false;
+#else
 	return boot_cpu_has(X86_FEATURE_HYPERVISOR);
+#endif
 #else
 	return false;
 #endif
