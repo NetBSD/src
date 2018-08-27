@@ -1,4 +1,4 @@
-/*	$NetBSD: drmP.h,v 1.31 2018/08/27 15:32:06 riastradh Exp $	*/
+/*	$NetBSD: drmP.h,v 1.32 2018/08/27 15:32:39 riastradh Exp $	*/
 
 /*
  * Internal Header for the Direct Rendering Manager
@@ -1189,6 +1189,7 @@ extern int drm_prime_sg_to_bus_dmamem(bus_dma_tag_t, bus_dma_segment_t *, int, i
 extern int drm_prime_bus_dmamap_load_sgt(bus_dma_tag_t, bus_dmamap_t, struct sg_table *);
 extern bus_size_t drm_prime_sg_size(struct sg_table *);
 extern void drm_prime_sg_free(struct sg_table *);
+extern bool drm_prime_sg_importable(bus_dma_tag_t, struct sg_table *);
 #else
 extern int drm_prime_sg_to_page_addr_arrays(struct sg_table *sgt, struct page **pages,
 					    dma_addr_t *addrs, int max_pages);
