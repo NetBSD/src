@@ -1,4 +1,4 @@
-/*	$NetBSD: atom-names.h,v 1.2 2018/08/27 04:58:20 riastradh Exp $	*/
+/*	$NetBSD: atom-names.h,v 1.3 2018/08/27 14:03:38 riastradh Exp $	*/
 
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
@@ -32,7 +32,7 @@
 #ifdef ATOM_DEBUG
 
 #define ATOM_OP_NAMES_CNT 123
-static char *atom_op_names[ATOM_OP_NAMES_CNT] = {
+static const char *const atom_op_names[ATOM_OP_NAMES_CNT] = {
 "RESERVED", "MOVE_REG", "MOVE_PS", "MOVE_WS", "MOVE_FB", "MOVE_PLL",
 "MOVE_MC", "AND_REG", "AND_PS", "AND_WS", "AND_FB", "AND_PLL", "AND_MC",
 "OR_REG", "OR_PS", "OR_WS", "OR_FB", "OR_PLL", "OR_MC", "SHIFT_LEFT_REG",
@@ -58,7 +58,7 @@ static char *atom_op_names[ATOM_OP_NAMES_CNT] = {
 };
 
 #define ATOM_TABLE_NAMES_CNT 74
-static char *atom_table_names[ATOM_TABLE_NAMES_CNT] = {
+static const char *const atom_table_names[ATOM_TABLE_NAMES_CNT] = {
 "ASIC_Init", "GetDisplaySurfaceSize", "ASIC_RegistersInit",
 "VRAM_BlockVenderDetection", "SetClocksRatio", "MemoryControllerInit",
 "GPIO_PinInit", "MemoryParamAdjust", "DVOEncoderControl",
@@ -87,7 +87,7 @@ static char *atom_table_names[ATOM_TABLE_NAMES_CNT] = {
 };
 
 #define ATOM_IO_NAMES_CNT 5
-static char *atom_io_names[ATOM_IO_NAMES_CNT] = {
+static const char *const atom_io_names[ATOM_IO_NAMES_CNT] = {
 "MM", "PLL", "MC", "PCIE", "PCIE PORT",
 };
 
