@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem_stolen.c,v 1.7 2018/08/27 06:08:38 riastradh Exp $	*/
+/*	$NetBSD: i915_gem_stolen.c,v 1.8 2018/08/27 07:16:00 riastradh Exp $	*/
 
 /*
  * Copyright © 2008-2012 Intel Corporation
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gem_stolen.c,v 1.7 2018/08/27 06:08:38 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gem_stolen.c,v 1.8 2018/08/27 07:16:00 riastradh Exp $");
 
 #include <linux/printk.h>
 #include <linux/err.h>
@@ -94,8 +94,8 @@ void i915_gem_stolen_remove_node(struct drm_i915_private *dev_priv,
 
 static unsigned long i915_stolen_to_physical(struct drm_device *dev)
 {
-#ifndef __NetBSD__
 	struct drm_i915_private *dev_priv = dev->dev_private;
+#ifndef __NetBSD__
 	struct resource *r;
 #endif
 	u32 base;
@@ -112,12 +112,11 @@ static unsigned long i915_stolen_to_physical(struct drm_device *dev)
 	 *
 	 */
 	base = 0;
+#ifndef __NetBSD__		/* XXX i915 gem gsm stolen memory base */
 	if (INTEL_INFO(dev)->gen >= 3) {
-#ifndef __NetBSD__		/* XXX disable this for now */
 		/* Read Graphics Base of Stolen Memory directly */
 		pci_read_config_dword(dev->pdev, 0x5c, &base);
 		base &= ~((1<<20) - 1);
-#endif
 	} else if (IS_I865G(dev)) {
 		u32 tseg_size = 0;
 		u16 toud = 0;
@@ -202,6 +201,7 @@ static unsigned long i915_stolen_to_physical(struct drm_device *dev)
 
 		base = tom - tseg_size - dev_priv->gtt.stolen_size;
 	}
+#endif
 
 	if (base == 0)
 		return 0;
