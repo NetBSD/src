@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_reservation.c,v 1.1 2018/08/27 13:33:59 riastradh Exp $	*/
+/*	$NetBSD: linux_reservation.c,v 1.2 2018/08/27 13:35:35 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_reservation.c,v 1.1 2018/08/27 13:33:59 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_reservation.c,v 1.2 2018/08/27 13:35:35 riastradh Exp $");
 
 #include <linux/fence.h>
 #include <linux/reservation.h>
@@ -281,7 +281,8 @@ reservation_object_read_begin(struct reservation_object *robj,
     struct reservation_object_read_ticket *ticket)
 {
 
-	ticket->version = robj->robj_version;
+	while ((ticket->version = robj->robj_version) & 1)
+		SPINLOCK_BACKOFF_HOOK;
 	membar_consumer();
 }
 
