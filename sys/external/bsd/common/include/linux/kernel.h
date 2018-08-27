@@ -1,4 +1,4 @@
-/*	$NetBSD: kernel.h,v 1.11 2018/08/27 06:07:20 riastradh Exp $	*/
+/*	$NetBSD: kernel.h,v 1.12 2018/08/27 06:08:25 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -39,6 +39,10 @@
 
 #include <lib/libkern/libkern.h>
 #include <linux/printk.h>
+
+#define U16_MAX UINT16_MAX
+#define U32_MAX UINT32_MAX
+#define U64_MAX UINT64_MAX
 
 #define	oops_in_progress	(panicstr != NULL)
 

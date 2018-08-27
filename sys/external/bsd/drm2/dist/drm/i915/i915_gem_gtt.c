@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem_gtt.c,v 1.5 2018/08/27 04:58:23 riastradh Exp $	*/
+/*	$NetBSD: i915_gem_gtt.c,v 1.6 2018/08/27 06:08:25 riastradh Exp $	*/
 
 /*
  * Copyright © 2010 Daniel Vetter
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gem_gtt.c,v 1.5 2018/08/27 04:58:23 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gem_gtt.c,v 1.6 2018/08/27 06:08:25 riastradh Exp $");
 
 #include <linux/err.h>
 #include <linux/seq_file.h>
@@ -1686,7 +1686,6 @@ static void gen6_write_pde(struct i915_page_directory *pd,
 #else
 	writel(pd_entry, ppgtt->pd_addr + pde);
 #endif
-
 }
 
 /* Write all the page tables found in the ppgtt structure to incrementing page
@@ -3321,7 +3320,6 @@ static int gen6_gmch_probe(struct drm_device *dev,
 
 static void gen6_gmch_remove(struct i915_address_space *vm)
 {
-
 	struct i915_gtt *gtt = container_of(vm, struct i915_gtt, base);
 
 #ifdef __NetBSD__
@@ -3574,6 +3572,9 @@ rotate_pages(dma_addr_t *in, unsigned int offset,
 	     unsigned int width, unsigned int height,
 	     struct sg_table *st, struct scatterlist *sg)
 {
+#ifdef __NetBSD__
+	panic("XXX");
+#else
 	unsigned int column, row;
 	unsigned int src_idx;
 
@@ -3599,12 +3600,16 @@ rotate_pages(dma_addr_t *in, unsigned int offset,
 	}
 
 	return sg;
+#endif
 }
 
 static struct sg_table *
 intel_rotate_fb_obj_pages(struct i915_ggtt_view *ggtt_view,
 			  struct drm_i915_gem_object *obj)
 {
+#ifdef __NetBSD__
+	panic("XXX");
+#else
 	struct intel_rotation_info *rot_info = &ggtt_view->rotation_info;
 	unsigned int size_pages = rot_info->size >> PAGE_SHIFT;
 	unsigned int size_pages_uv;
@@ -3688,12 +3693,16 @@ err_st_alloc:
 		      rot_info->height_pages, size_pages + size_pages_uv,
 		      size_pages);
 	return ERR_PTR(ret);
+#endif
 }
 
 static struct sg_table *
 intel_partial_pages(const struct i915_ggtt_view *view,
 		    struct drm_i915_gem_object *obj)
 {
+#ifdef __NetBSD__
+	panic("XXX");
+#else
 	struct sg_table *st;
 	struct scatterlist *sg;
 	struct sg_page_iter obj_sg_iter;
@@ -3729,6 +3738,7 @@ err_sg_alloc:
 	kfree(st);
 err_st_alloc:
 	return ERR_PTR(ret);
+#endif
 }
 
 static int
