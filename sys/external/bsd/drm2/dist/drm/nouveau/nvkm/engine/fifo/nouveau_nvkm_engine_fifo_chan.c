@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_engine_fifo_chan.c,v 1.3 2018/08/27 07:35:56 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_engine_fifo_chan.c,v 1.4 2018/08/27 07:39:56 riastradh Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_fifo_chan.c,v 1.3 2018/08/27 07:35:56 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_fifo_chan.c,v 1.4 2018/08/27 07:39:56 riastradh Exp $");
 
 #include "chan.h"
 
@@ -279,7 +279,7 @@ nvkm_fifo_chan_ensure_mapped(struct nvkm_fifo_chan *chan)
 		goto out;
 
 	/* XXX errno NetBSD->Linux */
-	int ret = -bus_space_map(chan->bst, chan->addr, chan->size, 0,
+	ret = -bus_space_map(chan->bst, chan->addr, chan->size, 0,
 	    &chan->bsh);
 	if (ret)
 		return ret;
@@ -295,7 +295,7 @@ nvkm_fifo_chan_rd32(struct nvkm_object *object, u64 addr, u32 *data)
 {
 	struct nvkm_fifo_chan *chan = nvkm_fifo_chan(object);
 #ifdef __NetBSD__
-	int ret = nvkm_fifo_chan_ensure_mapped(object);
+	int ret = nvkm_fifo_chan_ensure_mapped(chan);
 	if (ret)
 		return ret;
 #else
@@ -320,7 +320,7 @@ nvkm_fifo_chan_wr32(struct nvkm_object *object, u64 addr, u32 data)
 {
 	struct nvkm_fifo_chan *chan = nvkm_fifo_chan(object);
 #ifdef __NetBSD__
-	int ret = nvkm_fifo_chan_ensure_mapped(object);
+	int ret = nvkm_fifo_chan_ensure_mapped(chan);
 	if (ret)
 		return ret;
 #else
