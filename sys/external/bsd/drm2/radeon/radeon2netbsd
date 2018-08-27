@@ -1,0 +1,26 @@
+#!/bin/sh
+
+#	$NetBSD: radeon2netbsd,v 1.1 2018/08/27 05:36:15 riastradh Exp $
+#
+# $ /path/to/radeon2netbsd > /path/to/files.radeon.new
+#
+# Run from the top-level Radeon source directory.
+
+set -Ceu
+
+# Location of the Radeon sources relative to $NETBSDSRCDIR.
+radeon_top=external/bsd/drm2/dist/drm/radeon
+
+# config(5) flag for the Radeon driver.
+radeon_flag=radeon
+
+env CONFIG_ACPI=y \
+env src=. \
+make -f Makefile -V '$(radeon-y)' \
+| tr ' ' '\n' \
+| grep -v '^$' \
+| sed -e 's,\.o$,.c,' \
+| sort -u \
+| while read f; do
+	printf 'file\t%s\t%s\n' "$radeon_top/$f" "$radeon_flag"
+done

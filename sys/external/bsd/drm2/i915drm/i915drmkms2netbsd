@@ -1,0 +1,26 @@
+#!/bin/sh
+
+#	$NetBSD: i915drmkms2netbsd,v 1.1 2018/08/27 05:36:15 riastradh Exp $
+#
+# $ /path/to/i915drmkms2netbsd > /path/to/files.i915drmkms.new
+#
+# Run from the top-level i915drmkms source directory.
+
+set -Ceu
+
+# Location of the i915drmkms sources relative to $NETBSDSRCDIR.
+i915drmkms_top=external/bsd/drm2/dist/drm/i915
+
+# config(5) flag for the i915drmkms driver.
+i915drmkms_flag=i915drmkms
+
+env CONFIG_ACPI=y \
+env src=. \
+make -f Makefile -V '$(i915-y)' \
+| tr ' ' '\n' \
+| grep -v '^$' \
+| sed -e 's,\.o$,.c,' \
+| sort -u \
+| while read f; do
+	printf 'file\t%s\t%s\n' "$i915drmkms_top/$f" "$i915drmkms_flag"
+done
