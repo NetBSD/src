@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_dp.c,v 1.13 2018/08/27 07:21:48 riastradh Exp $	*/
+/*	$NetBSD: intel_dp.c,v 1.14 2018/08/27 07:25:18 riastradh Exp $	*/
 
 /*
  * Copyright © 2008 Intel Corporation
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_dp.c,v 1.13 2018/08/27 07:21:48 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_dp.c,v 1.14 2018/08/27 07:25:18 riastradh Exp $");
 
 #include <linux/i2c.h>
 #include <linux/slab.h>
@@ -39,6 +39,7 @@ __KERNEL_RCSID(0, "$NetBSD: intel_dp.c,v 1.13 2018/08/27 07:21:48 riastradh Exp 
 #include <linux/module.h>
 #include <linux/printk.h>
 #include <linux/pm_qos.h>
+#include <asm/byteorder.h>
 #include <drm/drmP.h>
 #include <drm/drm_atomic_helper.h>
 #include <drm/drm_crtc.h>
