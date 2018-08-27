@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nv50_display.c,v 1.9 2018/08/27 07:38:26 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nv50_display.c,v 1.10 2018/08/27 14:48:21 riastradh Exp $	*/
 
 /*
  * Copyright 2011 Red Hat Inc.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nv50_display.c,v 1.9 2018/08/27 07:38:26 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nv50_display.c,v 1.10 2018/08/27 14:48:21 riastradh Exp $");
 
 #include <linux/dma-mapping.h>
 #include <linux/err.h>
@@ -107,8 +107,15 @@ nv50_chan_create(struct nvif_device *device, struct nvif_object *disp,
 			if (sclass[i].oclass == oclass[0]) {
 				ret = nvif_object_init(disp, 0, oclass[0],
 						       data, size, &chan->user);
-				if (ret == 0)
-					nvif_object_map(&chan->user);
+				if (ret == 0) {
+					ret = nvif_object_map(&chan->user);
+					if (ret) {
+						printk(KERN_ERR "%s:%d"
+						    ": nvif_object_map, %d\n",
+						    __func__, __LINE__, ret);
+						nvif_object_fini(&chan->user);
+					}
+				}
 				nvif_object_sclass_put(&sclass);
 				return ret;
 			}

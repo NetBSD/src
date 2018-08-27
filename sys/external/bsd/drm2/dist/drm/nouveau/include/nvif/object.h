@@ -1,4 +1,4 @@
-/*	$NetBSD: object.h,v 1.7 2018/08/27 14:47:53 riastradh Exp $	*/
+/*	$NetBSD: object.h,v 1.8 2018/08/27 14:48:21 riastradh Exp $	*/
 
 #ifndef __NVIF_OBJECT_H__
 #define __NVIF_OBJECT_H__
@@ -45,7 +45,7 @@ void nvif_object_sclass_put(struct nvif_sclass **);
 u32  nvif_object_rd(struct nvif_object *, int, u64);
 void nvif_object_wr(struct nvif_object *, int, u64, u32);
 int  nvif_object_mthd(struct nvif_object *, u32, void *, u32);
-int  nvif_object_map(struct nvif_object *);
+int  nvif_object_map(struct nvif_object *) __must_check;
 void nvif_object_unmap(struct nvif_object *);
 
 #define nvif_handle(a) (unsigned long)(void *)(a)
