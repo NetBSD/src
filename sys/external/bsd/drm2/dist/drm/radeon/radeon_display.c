@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_display.c,v 1.7 2018/08/27 07:48:51 riastradh Exp $	*/
+/*	$NetBSD: radeon_display.c,v 1.8 2018/08/27 07:49:04 riastradh Exp $	*/
 
 /*
  * Copyright 2007-8 Advanced Micro Devices, Inc.
@@ -26,7 +26,7 @@
  *          Alex Deucher
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_display.c,v 1.7 2018/08/27 07:48:51 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_display.c,v 1.8 2018/08/27 07:49:04 riastradh Exp $");
 
 #include <drm/drmP.h>
 #include <drm/radeon_drm.h>
@@ -1768,7 +1768,7 @@ bool radeon_crtc_scaling_mode_fixup(struct drm_crtc *crtc,
 	struct radeon_crtc *radeon_crtc = to_radeon_crtc(crtc);
 	struct radeon_encoder *radeon_encoder;
 	struct drm_connector *connector;
-	struct radeon_connector *radeon_connector;
+	struct radeon_connector *radeon_connector __unused;
 	bool first = true;
 	u32 src_v = 1, dst_v = 1;
 	u32 src_h = 1, dst_h = 1;
