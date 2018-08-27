@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_legacy.h,v 1.5 2018/08/27 06:42:54 riastradh Exp $	*/
+/*	$NetBSD: drm_legacy.h,v 1.6 2018/08/27 07:46:07 riastradh Exp $	*/
 
 #ifndef __DRM_DRM_LEGACY_H__
 #define __DRM_DRM_LEGACY_H__
@@ -252,9 +252,6 @@ void drm_legacy_idlelock_release(struct drm_lock_data *lock);
 void __drm_legacy_pci_free(struct drm_device *dev, drm_dma_handle_t * dmah);
 
 /* drm_memory.c */
-#ifdef __NetBSD__
-int drm_limit_dma_space(struct drm_device *, resource_size_t, resource_size_t);
-#endif
 void drm_legacy_ioremap(struct drm_local_map *map, struct drm_device *dev);
 void drm_legacy_ioremap_wc(struct drm_local_map *map, struct drm_device *dev);
 void drm_legacy_ioremapfree(struct drm_local_map *map, struct drm_device *dev);
