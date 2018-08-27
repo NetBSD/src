@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_os_netbsd.h,v 1.10 2018/08/27 13:53:09 riastradh Exp $	*/
+/*	$NetBSD: drm_os_netbsd.h,v 1.11 2018/08/27 15:12:09 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -57,8 +57,10 @@
 #define CONFIG_PNP
 #endif
 
+#if defined(__i386__) || defined(__x86_64__)
 #if defined(_KERNEL_OPT)
 #include "opt_mtrr.h"
+#endif
 #endif
 
 #ifdef MTRR
