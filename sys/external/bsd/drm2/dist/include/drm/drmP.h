@@ -1,4 +1,4 @@
-/*	$NetBSD: drmP.h,v 1.17 2018/08/27 06:42:00 riastradh Exp $	*/
+/*	$NetBSD: drmP.h,v 1.18 2018/08/27 06:42:41 riastradh Exp $	*/
 
 /*
  * Internal Header for the Direct Rendering Manager
@@ -72,6 +72,12 @@
 #include <uapi/drm/drm.h>
 #include <uapi/drm/drm_mode.h>
 
+#ifdef __NetBSD__
+#include <drm/drm_os_netbsd.h>
+#else
+#include <drm/drm_os_linux.h>
+#endif
+
 #include <drm/drm.h>
 #include <drm/drm_agpsupport.h>
 #include <drm/drm_crtc.h>
@@ -79,11 +85,6 @@
 #include <drm/drm_hashtab.h>
 #include <drm/drm_mem_util.h>
 #include <drm/drm_mm.h>
-#ifdef __NetBSD__
-#include <drm/drm_os_netbsd.h>
-#else
-#include <drm/drm_os_linux.h>
-#endif
 #include <drm/drm_sarea.h>
 #include <drm/drm_vma_manager.h>
 
