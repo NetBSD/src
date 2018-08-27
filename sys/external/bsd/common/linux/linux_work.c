@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_work.c,v 1.31 2018/08/27 15:03:59 riastradh Exp $	*/
+/*	$NetBSD: linux_work.c,v 1.32 2018/08/27 15:04:19 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_work.c,v 1.31 2018/08/27 15:03:59 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_work.c,v 1.32 2018/08/27 15:04:19 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/atomic.h>
@@ -774,31 +774,11 @@ mod_delayed_work(struct workqueue_struct *wq, struct delayed_work *dw,
 			 * It is not scheduled: it is on the queue or
 			 * it is running or both.
 			 */
-			if (wq->wq_current_work != &dw->work) {
-				/* It is on the queue and not yet running.  */
-				if (ticks == 0) {
-					/*
-					 * We ask it to run
-					 * immediately.  Leave it on
-					 * the queue.
-					 */
-				} else {
-					/*
-					 * Take it off the queue and
-					 * schedule a callout to run it
-					 * after a delay.
-					 */
-					TAILQ_REMOVE(&wq->wq_queue, &dw->work,
-					    work_entry);
-					dw_callout_init(wq, dw);
-					callout_schedule(&dw->dw_callout,
-					    MIN(INT_MAX, ticks));
-				}
-				timer_modified = true;
-			} else if (wq->wq_requeued) {
+			if (wq->wq_current_work != &dw->work ||
+			    wq->wq_requeued) {
 				/*
-				 * It is currently running _and_ it is
-				 * on the queue again.
+				 * It is on the queue, and it may or
+				 * may not be running.
 				 */
 				if (ticks == 0) {
 					/*
@@ -812,7 +792,12 @@ mod_delayed_work(struct workqueue_struct *wq, struct delayed_work *dw,
 					 * schedule a callout to run it
 					 * after a delay.
 					 */
-					wq->wq_requeued = false;
+					if (wq->wq_requeued) {
+						wq->wq_requeued = false;
+					} else {
+						KASSERT(wq->wq_current_work !=
+						    &dw->work);
+					}
 					TAILQ_REMOVE(&wq->wq_queue, &dw->work,
 					    work_entry);
 					dw_callout_init(wq, dw);
