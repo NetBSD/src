@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_work.c,v 1.29 2018/08/27 15:03:32 riastradh Exp $	*/
+/*	$NetBSD: linux_work.c,v 1.30 2018/08/27 15:03:45 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_work.c,v 1.29 2018/08/27 15:03:32 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_work.c,v 1.30 2018/08/27 15:03:45 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/atomic.h>
@@ -65,6 +65,8 @@ static struct workqueue_struct *
 			    struct workqueue_struct *);
 static void		release_work(struct work_struct *,
 			    struct workqueue_struct *);
+static void		dw_callout_init(struct workqueue_struct *,
+			    struct delayed_work *);
 static void		cancel_delayed_work_done(struct workqueue_struct *,
 			    struct delayed_work *);
 
@@ -542,6 +544,26 @@ schedule_delayed_work(struct delayed_work *dw, unsigned long ticks)
 }
 
 /*
+ * dw_callout_init(wq, dw)
+ *
+ *	Initialize the callout of dw and transition to
+ *	DELAYED_WORK_SCHEDULED.  Caller must use callout_schedule.
+ */
+static void
+dw_callout_init(struct workqueue_struct *wq, struct delayed_work *dw)
+{
+
+	KASSERT(mutex_owned(&wq->wq_lock));
+	KASSERT(dw->work.work_queue == wq);
+	KASSERT(dw->dw_state == DELAYED_WORK_IDLE);
+
+	callout_init(&dw->dw_callout, CALLOUT_MPSAFE);
+	callout_setfunc(&dw->dw_callout, &linux_workqueue_timeout, dw);
+	TAILQ_INSERT_HEAD(&wq->wq_delayed, dw, dw_entry);
+	dw->dw_state = DELAYED_WORK_SCHEDULED;
+}
+
+/*
  * cancel_delayed_work_done(wq, dw)
  *
  *	Complete cancellation of a delayed work: transition from
@@ -592,11 +614,7 @@ queue_delayed_work(struct workqueue_struct *wq, struct delayed_work *dw,
 			 * Initialize a callout and schedule to run
 			 * after a delay.
 			 */
-			callout_init(&dw->dw_callout, CALLOUT_MPSAFE);
-			callout_setfunc(&dw->dw_callout,
-			    &linux_workqueue_timeout, dw);
-			TAILQ_INSERT_HEAD(&wq->wq_delayed, dw, dw_entry);
-			dw->dw_state = DELAYED_WORK_SCHEDULED;
+			dw_callout_init(wq, dw);
 			callout_schedule(&dw->dw_callout, MIN(INT_MAX, ticks));
 		}
 		newly_queued = true;
@@ -648,14 +666,9 @@ queue_delayed_work(struct workqueue_struct *wq, struct delayed_work *dw,
 					 * schedule it to run after the
 					 * specified delay.
 					 */
-					callout_init(&dw->dw_callout,
-					    CALLOUT_MPSAFE);
-					callout_reset(&dw->dw_callout,
-					    MIN(INT_MAX, ticks),
-					    &linux_workqueue_timeout, dw);
-					TAILQ_INSERT_HEAD(&wq->wq_delayed, dw,
-					    dw_entry);
-					dw->dw_state = DELAYED_WORK_SCHEDULED;
+					dw_callout_init(wq, dw);
+					callout_schedule(&dw->dw_callout,
+					    MIN(INT_MAX, ticks));
 				}
 				break;
 			case DELAYED_WORK_SCHEDULED:
@@ -729,11 +742,8 @@ mod_delayed_work(struct workqueue_struct *wq, struct delayed_work *dw,
 			 * Initialize a callout and schedule to run
 			 * after a delay.
 			 */
-			callout_init(&dw->dw_callout, CALLOUT_MPSAFE);
-			callout_reset(&dw->dw_callout, MIN(INT_MAX, ticks),
-			    &linux_workqueue_timeout, dw);
-			TAILQ_INSERT_HEAD(&wq->wq_delayed, dw, dw_entry);
-			dw->dw_state = DELAYED_WORK_SCHEDULED;
+			dw_callout_init(wq, dw);
+			callout_schedule(&dw->dw_callout, MIN(INT_MAX, ticks));
 		}
 		timer_modified = false;
 	} else {
@@ -761,14 +771,9 @@ mod_delayed_work(struct workqueue_struct *wq, struct delayed_work *dw,
 					 */
 					TAILQ_REMOVE(&wq->wq_queue, &dw->work,
 					    work_entry);
-					callout_init(&dw->dw_callout,
-					    CALLOUT_MPSAFE);
-					callout_reset(&dw->dw_callout,
-					    MIN(INT_MAX, ticks),
-					    &linux_workqueue_timeout, dw);
-					TAILQ_INSERT_HEAD(&wq->wq_delayed, dw,
-					    dw_entry);
-					dw->dw_state = DELAYED_WORK_SCHEDULED;
+					dw_callout_init(wq, dw);
+					callout_schedule(&dw->dw_callout,
+					    MIN(INT_MAX, ticks));
 				}
 				timer_modified = true;
 			} else if (wq->wq_requeued) {
@@ -791,14 +796,9 @@ mod_delayed_work(struct workqueue_struct *wq, struct delayed_work *dw,
 					wq->wq_requeued = false;
 					TAILQ_REMOVE(&wq->wq_queue, &dw->work,
 					    work_entry);
-					callout_init(&dw->dw_callout,
-					    CALLOUT_MPSAFE);
-					callout_reset(&dw->dw_callout,
-					    MIN(INT_MAX, ticks),
-					    &linux_workqueue_timeout, dw);
-					TAILQ_INSERT_HEAD(&wq->wq_delayed, dw,
-					    dw_entry);
-					dw->dw_state = DELAYED_WORK_SCHEDULED;
+					dw_callout_init(wq, dw);
+					callout_schedule(&dw->dw_callout,
+					    MIN(INT_MAX, ticks));
 				}
 				timer_modified = true;
 			} else {
@@ -820,14 +820,9 @@ mod_delayed_work(struct workqueue_struct *wq, struct delayed_work *dw,
 					 * Schedule a callout to run it
 					 * after a delay.
 					 */
-					callout_init(&dw->dw_callout,
-					    CALLOUT_MPSAFE);
-					callout_reset(&dw->dw_callout,
-					    MIN(INT_MAX, ticks),
-					    &linux_workqueue_timeout, dw);
-					TAILQ_INSERT_HEAD(&wq->wq_delayed, dw,
-					    dw_entry);
-					dw->dw_state = DELAYED_WORK_SCHEDULED;
+					dw_callout_init(wq, dw);
+					callout_schedule(&dw->dw_callout,
+					    MIN(INT_MAX, ticks));
 				}
 				timer_modified = false;
 			}
