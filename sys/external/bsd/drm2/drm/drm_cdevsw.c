@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_cdevsw.c,v 1.3 2018/08/27 06:49:01 riastradh Exp $	*/
+/*	$NetBSD: drm_cdevsw.c,v 1.4 2018/08/27 06:50:58 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_cdevsw.c,v 1.3 2018/08/27 06:49:01 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_cdevsw.c,v 1.4 2018/08/27 06:50:58 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -72,154 +72,9 @@ static int	drm_dequeue_event(struct drm_file *, size_t,
 static int	drm_poll(struct file *, int);
 static int	drm_kqfilter(struct file *, struct knote *);
 static int	drm_stat(struct file *, struct stat *);
-static int	drm_ioctl(struct file *, unsigned long, void *);
 static int	drm_fop_mmap(struct file *, off_t *, size_t, int, int *, int *,
 			     struct uvm_object **, int *);
-static int	drm_version_string(char *, size_t *, const char *);
 static paddr_t	drm_mmap(dev_t, off_t, int);
-
-static drm_ioctl_t	drm_version;
-
-#define	DRM_IOCTL_DEF(IOCTL, FUNC, FLAGS)				\
-	[DRM_IOCTL_NR(IOCTL)] = {					\
-		.cmd = (IOCTL),						\
-		.flags = (FLAGS),					\
-		.func = (FUNC),						\
-		.name = #IOCTL,						\
-	}
-
-#if __OS_HAS_AGP
-/* XXX Kludge for AGP.  */
-static drm_ioctl_t	drm_agp_acquire_hook_ioctl;
-static drm_ioctl_t	drm_agp_release_hook_ioctl;
-static drm_ioctl_t	drm_agp_enable_hook_ioctl;
-static drm_ioctl_t	drm_agp_info_hook_ioctl;
-static drm_ioctl_t	drm_agp_alloc_hook_ioctl;
-static drm_ioctl_t	drm_agp_free_hook_ioctl;
-static drm_ioctl_t	drm_agp_bind_hook_ioctl;
-static drm_ioctl_t	drm_agp_unbind_hook_ioctl;
-
-#define	drm_agp_acquire_ioctl	drm_agp_acquire_hook_ioctl
-#define	drm_agp_release_ioctl	drm_agp_release_hook_ioctl
-#define	drm_agp_enable_ioctl	drm_agp_enable_hook_ioctl
-#define	drm_agp_info_ioctl	drm_agp_info_hook_ioctl
-#define	drm_agp_alloc_ioctl	drm_agp_alloc_hook_ioctl
-#define	drm_agp_free_ioctl	drm_agp_free_hook_ioctl
-#define	drm_agp_bind_ioctl	drm_agp_bind_hook_ioctl
-#define	drm_agp_unbind_ioctl	drm_agp_unbind_hook_ioctl
-#endif
-
-/* Table copied verbatim from dist/drm/drm_drv.c.  */
-static const struct drm_ioctl_desc drm_ioctls[] = {
-	DRM_IOCTL_DEF(DRM_IOCTL_VERSION, drm_version, DRM_UNLOCKED|DRM_RENDER_ALLOW),
-	DRM_IOCTL_DEF(DRM_IOCTL_GET_UNIQUE, drm_getunique, 0),
-	DRM_IOCTL_DEF(DRM_IOCTL_GET_MAGIC, drm_getmagic, 0),
-	DRM_IOCTL_DEF(DRM_IOCTL_IRQ_BUSID, drm_irq_by_busid, DRM_MASTER|DRM_ROOT_ONLY),
-	DRM_IOCTL_DEF(DRM_IOCTL_GET_MAP, drm_getmap, DRM_UNLOCKED),
-	DRM_IOCTL_DEF(DRM_IOCTL_GET_CLIENT, drm_getclient, DRM_UNLOCKED),
-	DRM_IOCTL_DEF(DRM_IOCTL_GET_STATS, drm_getstats, DRM_UNLOCKED),
-	DRM_IOCTL_DEF(DRM_IOCTL_GET_CAP, drm_getcap, DRM_UNLOCKED|DRM_RENDER_ALLOW),
-	DRM_IOCTL_DEF(DRM_IOCTL_SET_CLIENT_CAP, drm_setclientcap, 0),
-	DRM_IOCTL_DEF(DRM_IOCTL_SET_VERSION, drm_setversion, DRM_MASTER),
-
-	DRM_IOCTL_DEF(DRM_IOCTL_SET_UNIQUE, drm_setunique, DRM_AUTH|DRM_MASTER|DRM_ROOT_ONLY),
-	DRM_IOCTL_DEF(DRM_IOCTL_BLOCK, drm_noop, DRM_AUTH|DRM_MASTER|DRM_ROOT_ONLY),
-	DRM_IOCTL_DEF(DRM_IOCTL_UNBLOCK, drm_noop, DRM_AUTH|DRM_MASTER|DRM_ROOT_ONLY),
-	DRM_IOCTL_DEF(DRM_IOCTL_AUTH_MAGIC, drm_authmagic, DRM_AUTH|DRM_MASTER),
-
-	DRM_IOCTL_DEF(DRM_IOCTL_ADD_MAP, drm_addmap_ioctl, DRM_AUTH|DRM_MASTER|DRM_ROOT_ONLY),
-	DRM_IOCTL_DEF(DRM_IOCTL_RM_MAP, drm_rmmap_ioctl, DRM_AUTH),
-
-	DRM_IOCTL_DEF(DRM_IOCTL_SET_SAREA_CTX, drm_setsareactx, DRM_AUTH|DRM_MASTER|DRM_ROOT_ONLY),
-	DRM_IOCTL_DEF(DRM_IOCTL_GET_SAREA_CTX, drm_getsareactx, DRM_AUTH),
-
-	DRM_IOCTL_DEF(DRM_IOCTL_SET_MASTER, drm_setmaster_ioctl, DRM_ROOT_ONLY),
-	DRM_IOCTL_DEF(DRM_IOCTL_DROP_MASTER, drm_dropmaster_ioctl, DRM_ROOT_ONLY),
-
-	DRM_IOCTL_DEF(DRM_IOCTL_ADD_CTX, drm_addctx, DRM_AUTH|DRM_ROOT_ONLY),
-	DRM_IOCTL_DEF(DRM_IOCTL_RM_CTX, drm_rmctx, DRM_AUTH|DRM_MASTER|DRM_ROOT_ONLY),
-	DRM_IOCTL_DEF(DRM_IOCTL_MOD_CTX, drm_noop, DRM_AUTH|DRM_MASTER|DRM_ROOT_ONLY),
-	DRM_IOCTL_DEF(DRM_IOCTL_GET_CTX, drm_getctx, DRM_AUTH),
-	DRM_IOCTL_DEF(DRM_IOCTL_SWITCH_CTX, drm_switchctx, DRM_AUTH|DRM_MASTER|DRM_ROOT_ONLY),
-	DRM_IOCTL_DEF(DRM_IOCTL_NEW_CTX, drm_newctx, DRM_AUTH|DRM_MASTER|DRM_ROOT_ONLY),
-	DRM_IOCTL_DEF(DRM_IOCTL_RES_CTX, drm_resctx, DRM_AUTH),
-
-	DRM_IOCTL_DEF(DRM_IOCTL_ADD_DRAW, drm_noop, DRM_AUTH|DRM_MASTER|DRM_ROOT_ONLY),
-	DRM_IOCTL_DEF(DRM_IOCTL_RM_DRAW, drm_noop, DRM_AUTH|DRM_MASTER|DRM_ROOT_ONLY),
-
-	DRM_IOCTL_DEF(DRM_IOCTL_LOCK, drm_lock, DRM_AUTH),
-	DRM_IOCTL_DEF(DRM_IOCTL_UNLOCK, drm_unlock, DRM_AUTH),
-
-	DRM_IOCTL_DEF(DRM_IOCTL_FINISH, drm_noop, DRM_AUTH),
-
-	DRM_IOCTL_DEF(DRM_IOCTL_ADD_BUFS, drm_addbufs, DRM_AUTH|DRM_MASTER|DRM_ROOT_ONLY),
-	DRM_IOCTL_DEF(DRM_IOCTL_MARK_BUFS, drm_markbufs, DRM_AUTH|DRM_MASTER|DRM_ROOT_ONLY),
-	DRM_IOCTL_DEF(DRM_IOCTL_INFO_BUFS, drm_infobufs, DRM_AUTH),
-	DRM_IOCTL_DEF(DRM_IOCTL_MAP_BUFS, drm_mapbufs, DRM_AUTH),
-	DRM_IOCTL_DEF(DRM_IOCTL_FREE_BUFS, drm_freebufs, DRM_AUTH),
-	DRM_IOCTL_DEF(DRM_IOCTL_DMA, drm_dma_ioctl, DRM_AUTH),
-
-	DRM_IOCTL_DEF(DRM_IOCTL_CONTROL, drm_control, DRM_AUTH|DRM_MASTER|DRM_ROOT_ONLY),
-
-#if __OS_HAS_AGP
-	DRM_IOCTL_DEF(DRM_IOCTL_AGP_ACQUIRE, drm_agp_acquire_ioctl, DRM_AUTH|DRM_MASTER|DRM_ROOT_ONLY),
-	DRM_IOCTL_DEF(DRM_IOCTL_AGP_RELEASE, drm_agp_release_ioctl, DRM_AUTH|DRM_MASTER|DRM_ROOT_ONLY),
-	DRM_IOCTL_DEF(DRM_IOCTL_AGP_ENABLE, drm_agp_enable_ioctl, DRM_AUTH|DRM_MASTER|DRM_ROOT_ONLY),
-	DRM_IOCTL_DEF(DRM_IOCTL_AGP_INFO, drm_agp_info_ioctl, DRM_AUTH),
-	DRM_IOCTL_DEF(DRM_IOCTL_AGP_ALLOC, drm_agp_alloc_ioctl, DRM_AUTH|DRM_MASTER|DRM_ROOT_ONLY),
-	DRM_IOCTL_DEF(DRM_IOCTL_AGP_FREE, drm_agp_free_ioctl, DRM_AUTH|DRM_MASTER|DRM_ROOT_ONLY),
-	DRM_IOCTL_DEF(DRM_IOCTL_AGP_BIND, drm_agp_bind_ioctl, DRM_AUTH|DRM_MASTER|DRM_ROOT_ONLY),
-	DRM_IOCTL_DEF(DRM_IOCTL_AGP_UNBIND, drm_agp_unbind_ioctl, DRM_AUTH|DRM_MASTER|DRM_ROOT_ONLY),
-#endif
-
-	DRM_IOCTL_DEF(DRM_IOCTL_SG_ALLOC, drm_sg_alloc, DRM_AUTH|DRM_MASTER|DRM_ROOT_ONLY),
-	DRM_IOCTL_DEF(DRM_IOCTL_SG_FREE, drm_sg_free, DRM_AUTH|DRM_MASTER|DRM_ROOT_ONLY),
-
-	DRM_IOCTL_DEF(DRM_IOCTL_WAIT_VBLANK, drm_wait_vblank, DRM_UNLOCKED),
-
-	DRM_IOCTL_DEF(DRM_IOCTL_MODESET_CTL, drm_modeset_ctl, 0),
-
-	DRM_IOCTL_DEF(DRM_IOCTL_UPDATE_DRAW, drm_noop, DRM_AUTH|DRM_MASTER|DRM_ROOT_ONLY),
-
-	DRM_IOCTL_DEF(DRM_IOCTL_GEM_CLOSE, drm_gem_close_ioctl, DRM_UNLOCKED|DRM_RENDER_ALLOW),
-	DRM_IOCTL_DEF(DRM_IOCTL_GEM_FLINK, drm_gem_flink_ioctl, DRM_AUTH|DRM_UNLOCKED),
-	DRM_IOCTL_DEF(DRM_IOCTL_GEM_OPEN, drm_gem_open_ioctl, DRM_AUTH|DRM_UNLOCKED),
-
-	DRM_IOCTL_DEF(DRM_IOCTL_MODE_GETRESOURCES, drm_mode_getresources, DRM_CONTROL_ALLOW|DRM_UNLOCKED),
-
-#ifndef __NetBSD__		/* XXX drm prime */
-	DRM_IOCTL_DEF(DRM_IOCTL_PRIME_HANDLE_TO_FD, drm_prime_handle_to_fd_ioctl, DRM_AUTH|DRM_UNLOCKED|DRM_RENDER_ALLOW),
-	DRM_IOCTL_DEF(DRM_IOCTL_PRIME_FD_TO_HANDLE, drm_prime_fd_to_handle_ioctl, DRM_AUTH|DRM_UNLOCKED|DRM_RENDER_ALLOW),
-#endif
-
-	DRM_IOCTL_DEF(DRM_IOCTL_MODE_GETPLANERESOURCES, drm_mode_getplane_res, DRM_CONTROL_ALLOW|DRM_UNLOCKED),
-	DRM_IOCTL_DEF(DRM_IOCTL_MODE_GETCRTC, drm_mode_getcrtc, DRM_CONTROL_ALLOW|DRM_UNLOCKED),
-	DRM_IOCTL_DEF(DRM_IOCTL_MODE_SETCRTC, drm_mode_setcrtc, DRM_MASTER|DRM_CONTROL_ALLOW|DRM_UNLOCKED),
-	DRM_IOCTL_DEF(DRM_IOCTL_MODE_GETPLANE, drm_mode_getplane, DRM_CONTROL_ALLOW|DRM_UNLOCKED),
-	DRM_IOCTL_DEF(DRM_IOCTL_MODE_SETPLANE, drm_mode_setplane, DRM_MASTER|DRM_CONTROL_ALLOW|DRM_UNLOCKED),
-	DRM_IOCTL_DEF(DRM_IOCTL_MODE_CURSOR, drm_mode_cursor_ioctl, DRM_MASTER|DRM_CONTROL_ALLOW|DRM_UNLOCKED),
-	DRM_IOCTL_DEF(DRM_IOCTL_MODE_GETGAMMA, drm_mode_gamma_get_ioctl, DRM_UNLOCKED),
-	DRM_IOCTL_DEF(DRM_IOCTL_MODE_SETGAMMA, drm_mode_gamma_set_ioctl, DRM_MASTER|DRM_UNLOCKED),
-	DRM_IOCTL_DEF(DRM_IOCTL_MODE_GETENCODER, drm_mode_getencoder, DRM_CONTROL_ALLOW|DRM_UNLOCKED),
-	DRM_IOCTL_DEF(DRM_IOCTL_MODE_GETCONNECTOR, drm_mode_getconnector, DRM_CONTROL_ALLOW|DRM_UNLOCKED),
-	DRM_IOCTL_DEF(DRM_IOCTL_MODE_ATTACHMODE, drm_noop, DRM_MASTER|DRM_CONTROL_ALLOW|DRM_UNLOCKED),
-	DRM_IOCTL_DEF(DRM_IOCTL_MODE_DETACHMODE, drm_noop, DRM_MASTER|DRM_CONTROL_ALLOW|DRM_UNLOCKED),
-	DRM_IOCTL_DEF(DRM_IOCTL_MODE_GETPROPERTY, drm_mode_getproperty_ioctl, DRM_CONTROL_ALLOW|DRM_UNLOCKED),
-	DRM_IOCTL_DEF(DRM_IOCTL_MODE_SETPROPERTY, drm_mode_connector_property_set_ioctl, DRM_MASTER|DRM_CONTROL_ALLOW|DRM_UNLOCKED),
-	DRM_IOCTL_DEF(DRM_IOCTL_MODE_GETPROPBLOB, drm_mode_getblob_ioctl, DRM_CONTROL_ALLOW|DRM_UNLOCKED),
-	DRM_IOCTL_DEF(DRM_IOCTL_MODE_GETFB, drm_mode_getfb, DRM_CONTROL_ALLOW|DRM_UNLOCKED),
-	DRM_IOCTL_DEF(DRM_IOCTL_MODE_ADDFB, drm_mode_addfb, DRM_CONTROL_ALLOW|DRM_UNLOCKED),
-	DRM_IOCTL_DEF(DRM_IOCTL_MODE_ADDFB2, drm_mode_addfb2, DRM_CONTROL_ALLOW|DRM_UNLOCKED),
-	DRM_IOCTL_DEF(DRM_IOCTL_MODE_RMFB, drm_mode_rmfb, DRM_CONTROL_ALLOW|DRM_UNLOCKED),
-	DRM_IOCTL_DEF(DRM_IOCTL_MODE_PAGE_FLIP, drm_mode_page_flip_ioctl, DRM_MASTER|DRM_CONTROL_ALLOW|DRM_UNLOCKED),
-	DRM_IOCTL_DEF(DRM_IOCTL_MODE_DIRTYFB, drm_mode_dirtyfb_ioctl, DRM_MASTER|DRM_CONTROL_ALLOW|DRM_UNLOCKED),
-	DRM_IOCTL_DEF(DRM_IOCTL_MODE_CREATE_DUMB, drm_mode_create_dumb_ioctl, DRM_CONTROL_ALLOW|DRM_UNLOCKED),
-	DRM_IOCTL_DEF(DRM_IOCTL_MODE_MAP_DUMB, drm_mode_mmap_dumb_ioctl, DRM_CONTROL_ALLOW|DRM_UNLOCKED),
-	DRM_IOCTL_DEF(DRM_IOCTL_MODE_DESTROY_DUMB, drm_mode_destroy_dumb_ioctl, DRM_CONTROL_ALLOW|DRM_UNLOCKED),
-	DRM_IOCTL_DEF(DRM_IOCTL_MODE_OBJ_GETPROPERTIES, drm_mode_obj_get_properties_ioctl, DRM_CONTROL_ALLOW|DRM_UNLOCKED),
-	DRM_IOCTL_DEF(DRM_IOCTL_MODE_OBJ_SETPROPERTY, drm_mode_obj_set_property_ioctl, DRM_MASTER|DRM_CONTROL_ALLOW|DRM_UNLOCKED),
-	DRM_IOCTL_DEF(DRM_IOCTL_MODE_CURSOR2, drm_mode_cursor2_ioctl, DRM_MASTER|DRM_CONTROL_ALLOW|DRM_UNLOCKED),
-};
 
 const struct cdevsw drm_cdevsw = {
 	.d_open = drm_open,
@@ -595,91 +450,6 @@ drm_stat(struct file *fp, struct stat *st)
 }
 
 static int
-drm_ioctl(struct file *fp, unsigned long cmd, void *data)
-{
-	struct drm_file *const file = fp->f_data;
-	const unsigned int nr = DRM_IOCTL_NR(cmd);
-	int error;
-
-	switch (cmd) {
-	case FIONBIO:
-	case FIOASYNC:
-		return 0;
-
-#if 0				/* XXX why? */
-	case SIOCSPGRP:
-	case TIOCSPGRP:
-	case FIOSETOWN:
-		return fsetown(&dev->buf_pgid, cmd, data);
-
-	case SIOCGPGRP:
-	case TIOCGPGRP:
-	case FIOGETOWN:
-		return fgetown(&dev->buf_pgid, cmd, data);
-#endif
-
-	default:
-		break;
-	}
-
-	if (IOCGROUP(cmd) != DRM_IOCTL_BASE)
-		return EINVAL;
-
-	KASSERT(file != NULL);
-	KASSERT(file->minor != NULL);
-	KASSERT(file->minor->dev != NULL);
-	struct drm_device *const dev = file->minor->dev;
-	const struct drm_ioctl_desc *ioctl;
-
-	if ((DRM_COMMAND_BASE <= nr) && (nr < DRM_COMMAND_END)) {
-		const unsigned int driver_nr = nr - DRM_COMMAND_BASE;
-		if (driver_nr >= dev->driver->num_ioctls)
-			return EINVAL;
-		ioctl = &dev->driver->ioctls[driver_nr];
-	} else if (nr < __arraycount(drm_ioctls)) {
-		ioctl = &drm_ioctls[nr];
-	} else {
-		ioctl = NULL;
-	}
-
-	if ((ioctl == NULL) || (ioctl->func == NULL))
-		return EINVAL;
-
-	/* XXX Synchronize with drm_ioctl_permit in upstream drm_drv.c.  */
-	if (ISSET(ioctl->flags, DRM_ROOT_ONLY) && !DRM_SUSER())
-		return EACCES;
-
-	if (ISSET(ioctl->flags, DRM_AUTH) &&
-	    (file->minor->type != DRM_MINOR_RENDER) &&
-	    !file->authenticated)
-		return EACCES;
-
-	if (ISSET(ioctl->flags, DRM_MASTER) &&
-	    (file->master == NULL) &&
-	    (file->minor->type != DRM_MINOR_CONTROL))
-		return EACCES;
-
-	if (!ISSET(ioctl->flags, DRM_CONTROL_ALLOW) &&
-	    (file->minor->type == DRM_MINOR_CONTROL))
-		return EACCES;
-
-	if (!ISSET(ioctl->flags, DRM_RENDER_ALLOW) &&
-	    (file->minor->type == DRM_MINOR_RENDER))
-		return EACCES;
-
-	if (!ISSET(ioctl->flags, DRM_UNLOCKED))
-		mutex_lock(&drm_global_mutex);
-
-	/* XXX errno Linux->NetBSD */
-	error = -(*ioctl->func)(dev, data, file);
-
-	if (!ISSET(ioctl->flags, DRM_UNLOCKED))
-		mutex_unlock(&drm_global_mutex);
-
-	return error;
-}
-
-static int
 drm_fop_mmap(struct file *fp, off_t *offp, size_t len, int prot, int *flagsp,
 	     int *advicep, struct uvm_object **uobjp, int *maxprotp)
 {
@@ -693,44 +463,6 @@ drm_fop_mmap(struct file *fp, off_t *offp, size_t len, int prot, int *flagsp,
 	*maxprotp = prot;
 	*advicep = UVM_ADV_RANDOM;
 	return -error;
-}
-
-static int
-drm_version_string(char *target, size_t *lenp, const char *source)
-{
-	const size_t len = strlen(source);
-	const size_t trunc_len = MIN(len, *lenp);
-
-	*lenp = len;
-	if ((trunc_len > 0) && (target != NULL))
-		/* copyoutstr takes a buffer size, not a string length.  */
-		/* XXX errno NetBSD->Linux */
-		return -copyoutstr(source, target, trunc_len+1, NULL);
-
-	return 0;
-}
-
-static int
-drm_version(struct drm_device *dev, void *data, struct drm_file *file)
-{
-	struct drm_version *v = data;
-	int error;
-
-	v->version_major = dev->driver->major;
-	v->version_minor = dev->driver->minor;
-	v->version_patchlevel = dev->driver->patchlevel;
-
-	error = drm_version_string(v->name, &v->name_len, dev->driver->name);
-	if (error)
-		goto out;
-	error = drm_version_string(v->date, &v->date_len, dev->driver->date);
-	if (error)
-		goto out;
-	error = drm_version_string(v->desc, &v->desc_len, dev->driver->desc);
-	if (error)
-		goto out;
-
-out:	return error;
 }
 
 static paddr_t
@@ -748,85 +480,3 @@ drm_mmap(dev_t d, off_t offset, int prot)
 	drm_minor_release(dminor);
 	return paddr;
 }
-
-static const struct drm_agp_hooks *volatile drm_current_agp_hooks;
-
-int
-drm_agp_register(const struct drm_agp_hooks *hooks)
-{
-
-	membar_producer();
-	if (atomic_cas_ptr(&drm_current_agp_hooks, NULL, __UNCONST(hooks))
-	    != NULL)
-		return EBUSY;
-
-	return 0;
-}
-
-void
-drm_agp_deregister(const struct drm_agp_hooks *hooks)
-{
-
-	if (atomic_cas_ptr(&drm_current_agp_hooks, __UNCONST(hooks), NULL)
-	    != hooks)
-		panic("%s: wrong hooks: %p != %p", __func__,
-		    hooks, drm_current_agp_hooks);
-}
-
-static void __dead
-drm_noagp_panic(struct drm_device *dev)
-{
-	if ((dev != NULL) &&
-	    (dev->control != NULL) &&
-	    (dev->control->kdev != NULL))
-		panic("%s: no agp loaded", device_xname(dev->control->kdev));
-	else
-		panic("drm_device %p: no agp loaded", dev);
-}
-
-int
-drm_agp_release_hook(struct drm_device *dev)
-{
-	const struct drm_agp_hooks *const hooks = drm_current_agp_hooks;
-
-	if (hooks == NULL)
-		drm_noagp_panic(dev);
-	membar_consumer();
-	return (*hooks->agph_release)(dev);
-}
-
-void
-drm_agp_clear_hook(struct drm_device *dev)
-{
-	const struct drm_agp_hooks *const hooks = drm_current_agp_hooks;
-
-	if (hooks == NULL)
-		drm_noagp_panic(dev);
-	membar_consumer();
-	(*hooks->agph_clear)(dev);
-}
-
-#if __OS_HAS_AGP
-
-#define	DEFINE_AGP_HOOK_IOCTL(NAME, HOOK)				      \
-static int								      \
-NAME(struct drm_device *dev, void *data, struct drm_file *file)		      \
-{									      \
-	const struct drm_agp_hooks *const hooks = drm_current_agp_hooks;      \
-									      \
-	if (hooks == NULL)						      \
-		return -ENODEV;						      \
-	membar_consumer();						      \
-	return (*hooks->HOOK)(dev, data, file);				      \
-}
-
-DEFINE_AGP_HOOK_IOCTL(drm_agp_acquire_hook_ioctl, agph_acquire_ioctl)
-DEFINE_AGP_HOOK_IOCTL(drm_agp_release_hook_ioctl, agph_release_ioctl)
-DEFINE_AGP_HOOK_IOCTL(drm_agp_enable_hook_ioctl, agph_enable_ioctl)
-DEFINE_AGP_HOOK_IOCTL(drm_agp_info_hook_ioctl, agph_info_ioctl)
-DEFINE_AGP_HOOK_IOCTL(drm_agp_alloc_hook_ioctl, agph_alloc_ioctl)
-DEFINE_AGP_HOOK_IOCTL(drm_agp_free_hook_ioctl, agph_free_ioctl)
-DEFINE_AGP_HOOK_IOCTL(drm_agp_bind_hook_ioctl, agph_bind_ioctl)
-DEFINE_AGP_HOOK_IOCTL(drm_agp_unbind_hook_ioctl, agph_unbind_ioctl)
-
-#endif
