@@ -1,4 +1,4 @@
-/*	$NetBSD: kernel.h,v 1.20 2018/08/27 13:37:55 riastradh Exp $	*/
+/*	$NetBSD: kernel.h,v 1.21 2018/08/27 14:48:07 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -53,7 +53,11 @@
 
 #define	__printf	__printflike
 #define	__user
-#define	__must_check	/* __attribute__((warn_unused_result)), if GCC */
+#if __GNUC_PREREQ__(4,0)	/* not sure when but this will work */
+#define	__must_check	__attribute__((warn_unused_result))
+#else
+#define	__must_check	/* nothing */
+#endif
 #define	__always_unused	__unused
 #define	noinline	__noinline
 
