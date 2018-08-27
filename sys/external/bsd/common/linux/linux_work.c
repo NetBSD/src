@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_work.c,v 1.25 2018/08/27 15:02:38 riastradh Exp $	*/
+/*	$NetBSD: linux_work.c,v 1.26 2018/08/27 15:02:52 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_work.c,v 1.25 2018/08/27 15:02:38 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_work.c,v 1.26 2018/08/27 15:02:52 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/atomic.h>
@@ -174,21 +174,39 @@ destroy_workqueue(struct workqueue_struct *wq)
 	 * delayed work that that has already timed out, which we can't
 	 * cancel, may have queued new work.
 	 */
-	for (;;) {
-		struct delayed_work *dw = NULL;
+	mutex_enter(&wq->wq_lock);
+	while (!TAILQ_EMPTY(&wq->wq_delayed)) {
+		struct delayed_work *const dw = TAILQ_FIRST(&wq->wq_delayed);
 
-		mutex_enter(&wq->wq_lock);
-		if (!TAILQ_EMPTY(&wq->wq_delayed)) {
-			dw = TAILQ_FIRST(&wq->wq_delayed);
-			if (!callout_halt(&dw->dw_callout, &wq->wq_lock))
-				TAILQ_REMOVE(&wq->wq_delayed, dw, dw_entry);
-		}
-		mutex_exit(&wq->wq_lock);
+		KASSERT(dw->work.work_queue == wq);
+		KASSERTMSG((dw->dw_state == DELAYED_WORK_SCHEDULED ||
+			dw->dw_state == DELAYED_WORK_RESCHEDULED ||
+			dw->dw_state == DELAYED_WORK_CANCELLED),
+		    "delayed work %p in bad state: %d",
+		    dw, dw->dw_state);
 
-		if (dw == NULL)
-			break;
-		cancel_delayed_work_sync(dw);
+		/*
+		 * Mark it cancelled and try to stop the callout before
+		 * it starts.
+		 *
+		 * If it's too late and the callout has already begun
+		 * to execute, then it will notice that we asked to
+		 * cancel it and remove itself from the queue before
+		 * returning.
+		 *
+		 * If we stopped the callout before it started,
+		 * however, then we can safely destroy the callout and
+		 * dissociate it from the workqueue ourselves.
+		 */
+		dw->dw_state = DELAYED_WORK_CANCELLED;
+		if (!callout_halt(&dw->dw_callout, &wq->wq_lock))
+			cancel_delayed_work_done(wq, dw);
 	}
+	mutex_exit(&wq->wq_lock);
+
+	/*
+	 * At this point, no new work can be put on the queue.
+	 */
 
 	/* Tell the thread to exit.  */
 	mutex_enter(&wq->wq_lock);
@@ -225,11 +243,16 @@ linux_workqueue_thread(void *cookie)
 
 	mutex_enter(&wq->wq_lock);
 	for (;;) {
-		/* Wait until there's activity.  If we're dying, stop.  */
+		/*
+		 * Wait until there's activity.  If there's no work and
+		 * we're dying, stop here.
+		 */
 		while (TAILQ_EMPTY(&wq->wq_queue) && !wq->wq_dying)
 			cv_wait(&wq->wq_cv, &wq->wq_lock);
-		if (wq->wq_dying)
+		if (TAILQ_EMPTY(&wq->wq_queue)) {
+			KASSERT(wq->wq_dying);
 			break;
+		}
 
 		/* Grab a batch of work off the queue.  */
 		KASSERT(!TAILQ_EMPTY(&wq->wq_queue));
