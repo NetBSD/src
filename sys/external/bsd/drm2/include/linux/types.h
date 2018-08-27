@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.6 2018/08/27 07:09:07 riastradh Exp $	*/
+/*	$NetBSD: types.h,v 1.7 2018/08/27 07:25:55 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -34,6 +34,7 @@
 
 #include <sys/types.h>
 #include <sys/bus.h>
+#include <sys/stdint.h>
 
 typedef uint8_t u8;
 typedef uint16_t u16;
@@ -62,6 +63,16 @@ typedef uint64_t __le64;
 typedef uint16_t __be16;
 typedef uint32_t __be32;
 typedef uint64_t __be64;
+
+#define	S8_C	INT8_C
+#define	S16_C	INT16_C
+#define	S32_C	INT32_C
+#define	S64_C	INT64_C
+
+#define	U8_C	UINT8_C
+#define	U16_C	UINT16_C
+#define	U32_C	UINT32_C
+#define	U64_C	UINT64_C
 
 /*
  * This is used for absolute bus addresses, so it has to be bus_addr_t
