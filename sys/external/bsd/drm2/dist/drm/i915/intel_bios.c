@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_bios.c,v 1.6 2018/08/27 04:58:24 riastradh Exp $	*/
+/*	$NetBSD: intel_bios.c,v 1.7 2018/08/27 07:19:55 riastradh Exp $	*/
 
 /*
  * Copyright © 2006 Intel Corporation
@@ -27,7 +27,7 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_bios.c,v 1.6 2018/08/27 04:58:24 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_bios.c,v 1.7 2018/08/27 07:19:55 riastradh Exp $");
 
 #include <linux/dmi.h>
 #include <drm/drm_dp_helper.h>
@@ -81,9 +81,10 @@ find_section(const void *_bdb, int section_id)
 static u16
 get_blocksize(const void *p)
 {
-	u16 *block_ptr, block_size;
+	const u16 *block_ptr;
+	u16 block_size;
 
-	block_ptr = (u16 *)((char *)p - 2);
+	block_ptr = (const u16 *)((const char *)p - 2);
 	block_size = *block_ptr;
 	return block_size;
 }
@@ -838,7 +839,7 @@ parse_mipi(struct drm_i915_private *dev_priv, const struct bdb_header *bdb)
 	 */
 	for (i = 0; i < MAX_MIPI_CONFIGURATIONS; i++) {
 		panel_id = *seq_data;
-		seq_size = *((u16 *) (seq_data + 1));
+		seq_size = *((const u16 *) (seq_data + 1));
 		if (panel_id == panel_type)
 			break;
 
@@ -1255,7 +1256,7 @@ static const struct bdb_header *validate_vbt(const void *base,
 					     const void *_vbt,
 					     const char *source)
 {
-	size_t offset = _vbt - base;
+	size_t offset = (const char *)_vbt - (const char *)base;
 	const struct vbt_header *vbt = _vbt;
 	const struct bdb_header *bdb;
 
@@ -1275,7 +1276,7 @@ static const struct bdb_header *validate_vbt(const void *base,
 		return NULL;
 	}
 
-	bdb = base + offset;
+	bdb = (const void *)((const char *)base + offset);
 	if (offset + bdb->bdb_size > size) {
 		DRM_DEBUG_DRIVER("BDB incomplete\n");
 		return NULL;
@@ -1286,6 +1287,21 @@ static const struct bdb_header *validate_vbt(const void *base,
 	return bdb;
 }
 
+#ifdef __NetBSD__
+#  define	__iomem	__pci_rom_iomem
+#  define	ioread32	fake_ioread32
+static inline uint32_t
+fake_ioread32(const void __iomem *p)
+{
+	uint32_t v;
+
+	v = *(const uint32_t __iomem *)p;
+	__insn_barrier();
+
+	return v;
+}
+#endif
+
 static const struct bdb_header *find_vbt(void __iomem *bios, size_t size)
 {
 	const struct bdb_header *bdb = NULL;
@@ -1293,7 +1309,7 @@ static const struct bdb_header *find_vbt(void __iomem *bios, size_t size)
 
 	/* Scour memory looking for the VBT signature. */
 	for (i = 0; i + 4 < size; i++) {
-		if (ioread32(bios + i) == *((const u32 *) "$VBT")) {
+		if (ioread32((char __iomem *)bios + i) == *((const u32 *) "$VBT")) {
 			/*
 			 * This is the one place where we explicitly discard the
 			 * address space (__iomem) of the BIOS/VBT. From now on
@@ -1302,7 +1318,7 @@ static const struct bdb_header *find_vbt(void __iomem *bios, size_t size)
 			 */
 			void *_bios = (void __force *) bios;
 
-			bdb = validate_vbt(_bios, size, _bios + i, "PCI ROM");
+			bdb = validate_vbt(_bios, size, (char *)_bios + i, "PCI ROM");
 			break;
 		}
 	}
@@ -1319,9 +1335,6 @@ static const struct bdb_header *find_vbt(void __iomem *bios, size_t size)
  *
  * Returns 0 on success, nonzero on failure.
  */
-#ifdef __NetBSD__
-#  define	__iomem	__pci_rom_iomem
-#endif
 int
 intel_parse_bios(struct drm_device *dev)
 {
@@ -1373,8 +1386,10 @@ intel_parse_bios(struct drm_device *dev)
 
 	return 0;
 }
+
 #ifdef __NetBSD__
 #  undef	__iomem
+#  undef	ioread32
 #endif
 
 /**
