@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_guc_loader.c,v 1.5 2018/08/27 07:22:49 riastradh Exp $	*/
+/*	$NetBSD: intel_guc_loader.c,v 1.6 2018/08/27 07:22:59 riastradh Exp $	*/
 
 /*
  * Copyright © 2014 Intel Corporation
@@ -29,7 +29,7 @@
  *    Alex Dai <yu.dai@intel.com>
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_guc_loader.c,v 1.5 2018/08/27 07:22:49 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_guc_loader.c,v 1.6 2018/08/27 07:22:59 riastradh Exp $");
 
 #include <linux/firmware.h>
 #include <linux/module.h>
@@ -513,8 +513,8 @@ static void guc_fw_fetch(struct drm_device *dev, struct intel_guc_fw *guc_fw)
 	 * in terms of bytes (u8).
 	 */
 	css_header = fw->data + UOS_CSS_HEADER_OFFSET;
-	guc_fw->guc_fw_major_found = *(u16 *)(css_header + UOS_VER_MAJOR_OFFSET);
-	guc_fw->guc_fw_minor_found = *(u16 *)(css_header + UOS_VER_MINOR_OFFSET);
+	guc_fw->guc_fw_major_found = *(const u16 *)(css_header + UOS_VER_MAJOR_OFFSET);
+	guc_fw->guc_fw_minor_found = *(const u16 *)(css_header + UOS_VER_MINOR_OFFSET);
 
 	if (guc_fw->guc_fw_major_found != guc_fw->guc_fw_major_wanted ||
 	    guc_fw->guc_fw_minor_found < guc_fw->guc_fw_minor_wanted) {
