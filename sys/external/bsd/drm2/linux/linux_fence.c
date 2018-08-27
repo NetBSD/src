@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_fence.c,v 1.3 2018/08/27 13:56:34 riastradh Exp $	*/
+/*	$NetBSD: linux_fence.c,v 1.4 2018/08/27 14:00:46 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_fence.c,v 1.3 2018/08/27 13:56:34 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_fence.c,v 1.4 2018/08/27 14:00:46 riastradh Exp $");
 
 #include <sys/atomic.h>
 #include <sys/condvar.h>
@@ -423,7 +423,7 @@ fence_wait_timeout(struct fence *fence, bool intr, long timeout)
 }
 
 /*
- * fence_wait_timeout(fence, intr, timeout)
+ * fence_wait(fence, intr)
  *
  *	Wait until fence is signalled; or until interrupt, if intr is
  *	true.  Return -ERESTARTSYS if interrupted, negative error code
