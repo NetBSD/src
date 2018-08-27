@@ -1,4 +1,4 @@
-/*	$NetBSD: vmalloc.h,v 1.6 2018/08/27 13:44:54 riastradh Exp $	*/
+/*	$NetBSD: vmalloc.h,v 1.7 2018/08/27 14:40:56 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013, 2018 The NetBSD Foundation, Inc.
@@ -72,6 +72,8 @@ vzalloc(unsigned long size)
 static inline void
 vfree(void *ptr)
 {
+	if (ptr == NULL)
+		return;
 	return free(ptr, M_TEMP);
 }
 
