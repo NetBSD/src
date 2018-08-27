@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_core_object.c,v 1.4 2018/08/27 07:36:07 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_core_object.c,v 1.5 2018/08/27 07:39:20 riastradh Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_core_object.c,v 1.4 2018/08/27 07:36:07 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_core_object.c,v 1.5 2018/08/27 07:39:20 riastradh Exp $");
 
 #include <core/object.h>
 #include <core/client.h>
@@ -140,7 +140,7 @@ nvkm_object_fini(struct nvkm_object *object, bool suspend)
 	}
 
 	time = ktime_to_us(ktime_get()) - time;
-	nvif_debug(object, "%s completed in %lldus\n", action, time);
+	nvif_debug(object, "%s completed in %"PRId64"us\n", action, time);
 	return 0;
 
 fail:
@@ -179,7 +179,7 @@ nvkm_object_init(struct nvkm_object *object)
 	}
 
 	time = ktime_to_us(ktime_get()) - time;
-	nvif_debug(object, "init completed in %lldus\n", time);
+	nvif_debug(object, "init completed in %"PRId64"us\n", time);
 	return 0;
 
 fail_child:
@@ -210,7 +210,7 @@ nvkm_object_dtor(struct nvkm_object *object)
 		data = object->func->dtor(object);
 	nvkm_engine_unref(&object->engine);
 	time = ktime_to_us(ktime_get()) - time;
-	nvif_debug(object, "destroy completed in %lldus...\n", time);
+	nvif_debug(object, "destroy completed in %"PRId64"us...\n", time);
 	return data;
 }
 

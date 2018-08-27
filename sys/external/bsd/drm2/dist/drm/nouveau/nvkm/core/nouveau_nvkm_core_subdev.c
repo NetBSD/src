@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_core_subdev.c,v 1.2 2018/08/27 04:58:30 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_core_subdev.c,v 1.3 2018/08/27 07:39:20 riastradh Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_core_subdev.c,v 1.2 2018/08/27 04:58:30 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_core_subdev.c,v 1.3 2018/08/27 07:39:20 riastradh Exp $");
 
 #include <core/subdev.h>
 #include <core/device.h>
@@ -111,7 +111,7 @@ nvkm_subdev_fini(struct nvkm_subdev *subdev, bool suspend)
 	}
 
 	time = ktime_to_us(ktime_get()) - time;
-	nvkm_trace(subdev, "%s completed in %lldus\n", action, time);
+	nvkm_trace(subdev, "%s completed in %"PRId64"us\n", action, time);
 	return 0;
 }
 
@@ -132,7 +132,7 @@ nvkm_subdev_preinit(struct nvkm_subdev *subdev)
 	}
 
 	time = ktime_to_us(ktime_get()) - time;
-	nvkm_trace(subdev, "preinit completed in %lldus\n", time);
+	nvkm_trace(subdev, "preinit completed in %"PRId64"us\n", time);
 	return 0;
 }
 
@@ -157,7 +157,7 @@ nvkm_subdev_init(struct nvkm_subdev *subdev)
 
 		subdev->oneinit = true;
 		time = ktime_to_us(ktime_get()) - time;
-		nvkm_trace(subdev, "one-time init completed in %lldus\n", time);
+		nvkm_trace(subdev, "one-time init completed in %"PRId64"us\n", time);
 	}
 
 	if (subdev->func->init) {
@@ -169,7 +169,7 @@ nvkm_subdev_init(struct nvkm_subdev *subdev)
 	}
 
 	time = ktime_to_us(ktime_get()) - time;
-	nvkm_trace(subdev, "init completed in %lldus\n", time);
+	nvkm_trace(subdev, "init completed in %"PRId64"us\n", time);
 	return 0;
 }
 
@@ -185,7 +185,7 @@ nvkm_subdev_del(struct nvkm_subdev **psubdev)
 		if (subdev->func->dtor)
 			*psubdev = subdev->func->dtor(subdev);
 		time = ktime_to_us(ktime_get()) - time;
-		nvkm_trace(subdev, "destroy completed in %lldus\n", time);
+		nvkm_trace(subdev, "destroy completed in %"PRId64"us\n", time);
 		kfree(*psubdev);
 		*psubdev = NULL;
 	}
