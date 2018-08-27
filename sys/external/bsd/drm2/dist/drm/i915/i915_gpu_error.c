@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gpu_error.c,v 1.9 2018/08/27 14:49:05 riastradh Exp $	*/
+/*	$NetBSD: i915_gpu_error.c,v 1.10 2018/08/27 16:14:55 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2008 Intel Corporation
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gpu_error.c,v 1.9 2018/08/27 14:49:05 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gpu_error.c,v 1.10 2018/08/27 16:14:55 riastradh Exp $");
 
 #include <sys/param.h>
 
@@ -356,8 +356,6 @@ int i915_error_state_to_str(struct drm_i915_error_state_buf *m,
 	err_printf(m, "Time: %"PRIdMAX" s %ld us\n", (intmax_t)error->time.tv_sec,
 		   (long)error->time.tv_usec);
 	err_printf(m, "Kernel: %d\n", __NetBSD_Version__);
-	err_printf(m, "Time: %ld s %ld us\n", error->time.tv_sec,
-		   (long)error->time.tv_usec);
 	max_hangcheck_score = 0;
 	for (i = 0; i < ARRAY_SIZE(error->ring); i++) {
 		if (error->ring[i].hangcheck_score > max_hangcheck_score)
