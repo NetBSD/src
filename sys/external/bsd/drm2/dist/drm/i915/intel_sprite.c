@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_sprite.c,v 1.5 2018/08/27 07:28:04 riastradh Exp $	*/
+/*	$NetBSD: intel_sprite.c,v 1.6 2018/08/27 07:28:15 riastradh Exp $	*/
 
 /*
  * Copyright © 2011 Intel Corporation
@@ -32,7 +32,7 @@
  * support.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_sprite.c,v 1.5 2018/08/27 07:28:04 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_sprite.c,v 1.6 2018/08/27 07:28:15 riastradh Exp $");
 
 #include <drm/drmP.h>
 #include <drm/drm_crtc.h>
@@ -92,6 +92,7 @@ void intel_pipe_update_start(struct intel_crtc *crtc)
 	int scanline, min, max, vblank_start;
 #ifdef __NetBSD__
 	drm_waitqueue_t *wq = drm_crtc_vblank_waitqueue(&crtc->base);
+	int ret;
 #else
 	wait_queue_head_t *wq = drm_crtc_vblank_waitqueue(&crtc->base);
 	DEFINE_WAIT(wait);
@@ -105,7 +106,11 @@ void intel_pipe_update_start(struct intel_crtc *crtc)
 	min = vblank_start - usecs_to_scanlines(adjusted_mode, 100);
 	max = vblank_start - 1;
 
+#ifdef __NetBSD__
+	spin_lock(&dev->vbl_lock);
+#else
 	local_irq_disable();
+#endif
 
 	if (min <= 0 || max <= 0)
 		return;
@@ -118,7 +123,12 @@ void intel_pipe_update_start(struct intel_crtc *crtc)
 	trace_i915_pipe_update_start(crtc);
 
 #ifdef __NetBSD__
-	panic("XXX");
+	DRM_SPIN_TIMED_WAIT_UNTIL(ret, wq, &dev->vbl_lock, timeout,
+	    (scanline = intel_get_crtc_scanline(crtc),
+		scanline < min || scanline > max));
+	if (ret)
+		DRM_ERROR("Potential atomic update failure on pipe %c\n",
+		    pipe_name(crtc->pipe));
 #else
 	for (;;) {
 		/*
@@ -177,7 +187,11 @@ void intel_pipe_update_end(struct intel_crtc *crtc)
 
 	trace_i915_pipe_update_end(crtc, end_vbl_count, scanline_end);
 
+#ifdef __NetBSD__
+	spin_unlock(&dev->vbl_lock);
+#else
 	local_irq_enable();
+#endif
 
 	if (crtc->debug.start_vbl_count &&
 	    crtc->debug.start_vbl_count != end_vbl_count) {
