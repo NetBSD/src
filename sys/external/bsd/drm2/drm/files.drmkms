@@ -1,4 +1,4 @@
-#	$NetBSD: files.drmkms,v 1.25 2018/08/27 07:54:28 riastradh Exp $
+#	$NetBSD: files.drmkms,v 1.26 2018/08/27 13:53:20 riastradh Exp $
 
 include "external/bsd/drm2/linux/files.drmkms_linux"
 
@@ -11,9 +11,14 @@ define	drmkms_i2c: drmkms_linux
 define	drmkms: drmkms_linux, drmkms_i2c, linux
 
 defflag		opt_drmkms.h	DRMKMS_DEBUG
+
+# Overrides first.
 makeoptions 	drmkms	CPPFLAGS+="-I$S/external/bsd/drm2/include"
 makeoptions	drmkms_ttm	CPPFLAGS+="-I$S/external/bsd/drm2/include/drm"
+
 makeoptions 	drmkms	CPPFLAGS+="-I$S/external/bsd/common/include"
+
+# Then upstream.
 makeoptions 	drmkms	CPPFLAGS+="-I$S/external/bsd/drm2/dist/include"
 makeoptions 	drmkms	CPPFLAGS+="-I$S/external/bsd/drm2/dist/include/drm"
 makeoptions 	drmkms	CPPFLAGS+="-I$S/external/bsd/drm2/dist/uapi"
@@ -24,30 +29,31 @@ makeoptions 	drmkms	CPPFLAGS+="-I$S/external/bsd/drm2/dist/uapi"
 # under dist/include/uapi rather than dist/uapi.)
 makeoptions 	drmkms	CPPFLAGS+="-I$S/external/bsd/drm2/dist"
 
-makeoptions 	drmkms 	"CWARNFLAGS.drm_atomic_helper.c"+="-Wno-shadow"
-makeoptions 	drmkms 	"CWARNFLAGS.drm_crtc.c"+="-Wno-shadow"
-makeoptions 	drmkms 	"CWARNFLAGS.drm_crtc.c"+="-Wno-missing-field-initializers"
-makeoptions 	drmkms 	"CWARNFLAGS.drm_edid.c"+="-Wno-shadow"
-makeoptions 	drmkms 	"CWARNFLAGS.drm_ioctl.c"+="-Wno-shadow"
-
 # XXX Should probably be in a header file.  opt_drmkms.h?
 makeoptions	drmkms	CPPFLAGS+="-D__KERNEL__"
 
-makeoptions	drmkms	CPPFLAGS+="-DCONFIG_FB=0"
 makeoptions	drmkms	CPPFLAGS+="-DCONFIG_BACKLIGHT_CLASS_DEVICE=0"
 makeoptions	drmkms	CPPFLAGS+="-DCONFIG_BACKLIGHT_CLASS_DEVICE_MODULE=0"
+makeoptions	drmkms	CPPFLAGS+="-DCONFIG_FB=0"
 
+# NetBSD additions.
 file	external/bsd/drm2/drm/drm_cdevsw.c		drmkms
-file	external/bsd/drm2/drm/drm_gem_vm.c		drmkms
 file	external/bsd/drm2/drm/drm_gem_cma_helper.c	drmkms
+file	external/bsd/drm2/drm/drm_gem_vm.c		drmkms
 file	external/bsd/drm2/drm/drm_module.c		drmkms
 file	external/bsd/drm2/drm/drm_sysctl.c		drmkms
 
-# Generic, unaccelerated drm-based framebuffer.
+# Generic, unaccelerated kms framebuffer.
 define	drmfb: genfb
 file	external/bsd/drm2/drm/drmfb.c			drmfb
 
 include "external/bsd/drm2/ttm/files.ttm"
+
+makeoptions 	drmkms 	"CWARNFLAGS.drm_atomic_helper.c"+="-Wno-shadow"
+makeoptions 	drmkms 	"CWARNFLAGS.drm_crtc.c"+="-Wno-missing-field-initializers"
+makeoptions 	drmkms 	"CWARNFLAGS.drm_crtc.c"+="-Wno-shadow"
+makeoptions 	drmkms 	"CWARNFLAGS.drm_edid.c"+="-Wno-shadow"
+makeoptions 	drmkms 	"CWARNFLAGS.drm_ioctl.c"+="-Wno-shadow"
 
 #file	external/bsd/drm2/dist/drm/ati_pcigart.c	drmkms  # drmkms_pci
 #file	external/bsd/drm2/dist/drm/drm_agpsupport.c	drmkms  # drmkms_pci
