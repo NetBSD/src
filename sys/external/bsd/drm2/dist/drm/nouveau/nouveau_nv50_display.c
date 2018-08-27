@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nv50_display.c,v 1.8 2018/08/27 07:37:28 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nv50_display.c,v 1.9 2018/08/27 07:38:26 riastradh Exp $	*/
 
 /*
  * Copyright 2011 Red Hat Inc.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nv50_display.c,v 1.8 2018/08/27 07:37:28 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nv50_display.c,v 1.9 2018/08/27 07:38:26 riastradh Exp $");
 
 #include <linux/dma-mapping.h>
 #include <linux/err.h>
@@ -1220,7 +1220,7 @@ nv50_crtc_mode_set(struct drm_crtc *crtc, struct drm_display_mode *umode,
 {
 	struct nv50_mast *mast = nv50_mast(crtc->dev);
 	struct nouveau_crtc *nv_crtc = nouveau_crtc(crtc);
-	struct nouveau_connector *nv_connector;
+	struct nouveau_connector *nv_connector __unused;
 	u32 ilace = (mode->flags & DRM_MODE_FLAG_INTERLACE) ? 2 : 1;
 	u32 vscan = (mode->flags & DRM_MODE_FLAG_DBLSCAN) ? 2 : 1;
 	u32 hactive, hsynce, hbackp, hfrontp, hblanke, hblanks;
