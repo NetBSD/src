@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem.c,v 1.36 2018/08/27 04:58:23 riastradh Exp $	*/
+/*	$NetBSD: i915_gem.c,v 1.37 2018/08/27 06:07:58 riastradh Exp $	*/
 
 /*
  * Copyright © 2008-2015 Intel Corporation
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gem.c,v 1.36 2018/08/27 04:58:23 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gem.c,v 1.37 2018/08/27 06:07:58 riastradh Exp $");
 
 #ifdef __NetBSD__
 #if 0				/* XXX uvmhist option?  */
@@ -1945,8 +1945,11 @@ i915_gem_mmap_ioctl(struct drm_device *dev, void *data,
 	if (args->flags & ~(I915_MMAP_WC))
 		return -EINVAL;
 
+#if 0
+	/* XXX cpu_has_pat == CPUID_PAT, do we care to do this check */
 	if (args->flags & I915_MMAP_WC && !cpu_has_pat)
 		return -ENODEV;
+#endif
 
 	obj = drm_gem_object_lookup(dev, file, args->handle);
 	if (obj == NULL)
@@ -2602,6 +2605,9 @@ i915_gem_object_truncate(struct drm_i915_gem_object *obj)
 static void
 i915_gem_object_invalidate(struct drm_i915_gem_object *obj)
 {
+#ifdef __NetBSD__
+	panic("XXX");
+#else
 	struct address_space *mapping;
 
 	switch (obj->madv) {
@@ -2616,6 +2622,7 @@ i915_gem_object_invalidate(struct drm_i915_gem_object *obj)
 
 	mapping = file_inode(obj->base.filp)->i_mapping,
 	invalidate_mapping_pages(mapping, 0, (loff_t)-1);
+#endif
 }
 
 #ifdef __NetBSD__
@@ -5034,6 +5041,9 @@ struct drm_i915_gem_object *i915_gem_alloc_object(struct drm_device *dev,
 
 static bool discard_backing_storage(struct drm_i915_gem_object *obj)
 {
+#ifdef __NetBSD__
+	panic("XXX");
+#else
 	/* If we are the last user of the backing storage (be it shmemfs
 	 * pages or stolen etc), we know that the pages are going to be
 	 * immediately released. In this case, we can then skip copying
@@ -5054,6 +5064,7 @@ static bool discard_backing_storage(struct drm_i915_gem_object *obj)
 	 * freeing the object.
 	 */
 	return atomic_long_read(&obj->base.filp->f_count) == 1;
+#endif
 }
 
 void i915_gem_free_object(struct drm_gem_object *gem_obj)
@@ -5644,8 +5655,11 @@ i915_gem_load(struct drm_device *dev)
 	dev_priv->mm.interruptible = true;
 
 	i915_gem_shrinker_init(dev_priv);
-
+#ifdef __NetBSD__
+	linux_mutex_init(&dev_priv->fb_tracking.lock);
+#else
 	mutex_init(&dev_priv->fb_tracking.lock);
+#endif
 }
 
 void i915_gem_release(struct drm_device *dev, struct drm_file *file)
@@ -5842,6 +5856,9 @@ struct drm_i915_gem_object *
 i915_gem_object_create_from_data(struct drm_device *dev,
 			         const void *data, size_t size)
 {
+#ifdef __NetBSD__
+	panic("XXX");
+#else
 	struct drm_i915_gem_object *obj;
 	struct sg_table *sg;
 	size_t bytes;
@@ -5875,4 +5892,5 @@ i915_gem_object_create_from_data(struct drm_device *dev,
 fail:
 	drm_gem_object_unreference(&obj->base);
 	return ERR_PTR(ret);
+#endif
 }
