@@ -1,4 +1,4 @@
-/*	$NetBSD: os.h,v 1.2 2018/08/27 04:58:30 riastradh Exp $	*/
+/*	$NetBSD: os.h,v 1.3 2018/08/27 07:32:50 riastradh Exp $	*/
 
 #ifndef __NOUVEAU_OS_H__
 #define __NOUVEAU_OS_H__
@@ -39,6 +39,7 @@
 #include <linux/math64.h>
 #include <linux/errno.h>
 #include <linux/workqueue.h>
+#include <linux/device.h>
 
 #include <asm/byteorder.h>
 #include <asm/io.h>
