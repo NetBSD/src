@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem_render_state.c,v 1.3 2018/08/27 07:16:40 riastradh Exp $	*/
+/*	$NetBSD: i915_gem_render_state.c,v 1.4 2018/08/27 07:17:35 riastradh Exp $	*/
 
 /*
  * Copyright © 2014 Intel Corporation
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gem_render_state.c,v 1.3 2018/08/27 07:16:40 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gem_render_state.c,v 1.4 2018/08/27 07:17:35 riastradh Exp $");
 
 #include "i915_drv.h"
 #include "intel_renderstate.h"
@@ -101,7 +101,7 @@ static int render_state_setup(struct render_state *so)
 	const struct intel_renderstate_rodata *rodata = so->rodata;
 	unsigned int i = 0, reloc_index = 0;
 #ifdef __NetBSD__
-	void *kva;
+	vaddr_t kva;
 #else
 	struct page *page;
 #endif
@@ -114,11 +114,12 @@ static int render_state_setup(struct render_state *so)
 
 #ifdef __NetBSD__
 	/* XXX errno NetBSD->Linux */
-	ret = -bus_dmamem_map(so->obj->base.dev->dmat, so->obj->pages,
-	    so->obj->igo_nsegs, PAGE_SIZE, &kva, BUS_DMA_WAITOK);
+	ret = -uvm_map(kernel_map, &kva, PAGE_SIZE, so->obj->base.gemo_shm_uao,
+	    0, sizeof(*d), UVM_MAPFLAG(UVM_PROT_W, UVM_PROT_W, UVM_INH_NONE,
+		UVM_ADV_NORMAL, 0));
 	if (ret)
 		return ret;
-	d = kva;
+	d = (void *)kva;
 #else
 	page = sg_page(so->obj->pages->sgl);
 	d = kmap(page);
@@ -166,7 +167,7 @@ static int render_state_setup(struct render_state *so)
 #endif
 
 #ifdef __NetBSD__
-	bus_dmamem_unmap(so->obj->base.dev->dmat, kva, PAGE_SIZE);
+	uvm_unmap(kernel_map, kva, kva + PAGE_SIZE);
 #else
 	kunmap(page);
 #endif
@@ -184,7 +185,7 @@ static int render_state_setup(struct render_state *so)
 
 err_out:
 #ifdef __NetBSD__
-	bus_dmamem_unmap(so->obj->base.dev->dmat, kva, PAGE_SIZE);
+	uvm_unmap(kernel_map, kva, kva + PAGE_SIZE);
 #else
 	kunmap(page);
 #endif

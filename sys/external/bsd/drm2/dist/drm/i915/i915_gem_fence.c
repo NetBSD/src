@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem_fence.c,v 1.3 2018/08/27 07:07:33 riastradh Exp $	*/
+/*	$NetBSD: i915_gem_fence.c,v 1.4 2018/08/27 07:17:35 riastradh Exp $	*/
 
 /*
  * Copyright © 2008-2015 Intel Corporation
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gem_fence.c,v 1.3 2018/08/27 07:07:33 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gem_fence.c,v 1.4 2018/08/27 07:17:35 riastradh Exp $");
 
 #include <drm/drmP.h>
 #include <drm/i915_drm.h>
@@ -762,7 +762,7 @@ i915_gem_object_do_bit_17_swizzle(struct drm_i915_gem_object *obj)
 
 #ifdef __NetBSD__
 	i = 0;
-	TAILQ_FOREACH(page, &obj->igo_pageq, pageq.queue) {
+	TAILQ_FOREACH(page, &obj->pageq, pageq.queue) {
 		unsigned char new_bit_17 = VM_PAGE_TO_PHYS(page) >> 17;
 		if ((new_bit_17 & 0x1) !=
 		    (test_bit(i, obj->bit_17) != 0)) {
@@ -818,7 +818,7 @@ i915_gem_object_save_bit_17_swizzle(struct drm_i915_gem_object *obj)
 
 	i = 0;
 #ifdef __NetBSD__
-	TAILQ_FOREACH(page, &obj->igo_pageq, pageq.queue) {
+	TAILQ_FOREACH(page, &obj->pageq, pageq.queue) {
 		if (ISSET(VM_PAGE_TO_PHYS(page), __BIT(17)))
 			__set_bit(i, obj->bit_17);
 		else
