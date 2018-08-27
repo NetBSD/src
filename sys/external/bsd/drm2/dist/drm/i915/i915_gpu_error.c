@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gpu_error.c,v 1.7 2018/08/27 06:08:25 riastradh Exp $	*/
+/*	$NetBSD: i915_gpu_error.c,v 1.8 2018/08/27 07:09:28 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2008 Intel Corporation
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gpu_error.c,v 1.7 2018/08/27 06:08:25 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gpu_error.c,v 1.8 2018/08/27 07:09:28 riastradh Exp $");
 
 #include <sys/param.h>
 
@@ -357,7 +357,7 @@ int i915_error_state_to_str(struct drm_i915_error_state_buf *m,
 		   (long)error->time.tv_usec);
 	err_printf(m, "Kernel: %d\n", __NetBSD_Version__);
 	err_printf(m, "Time: %ld s %ld us\n", error->time.tv_sec,
-		   error->time.tv_usec);
+		   (long)error->time.tv_usec);
 	max_hangcheck_score = 0;
 	for (i = 0; i < ARRAY_SIZE(error->ring); i++) {
 		if (error->ring[i].hangcheck_score > max_hangcheck_score)
@@ -474,7 +474,7 @@ int i915_error_state_to_str(struct drm_i915_error_state_buf *m,
 				hws_offset += LRC_PPHWSP_PN * PAGE_SIZE;
 				hws_page = &obj->pages[LRC_PPHWSP_PN][0];
 			}
-			err_printf(m, "%s --- HW Status = 0x%08llx\n",
+			err_printf(m, "%s --- HW Status = 0x%08"PRIx64"\n",
 				   dev_priv->ring[i].name, hws_offset);
 			offset = 0;
 			for (elt = 0; elt < PAGE_SIZE/16; elt += 4) {
