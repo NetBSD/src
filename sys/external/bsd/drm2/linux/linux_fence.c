@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_fence.c,v 1.8 2018/08/27 14:40:13 riastradh Exp $	*/
+/*	$NetBSD: linux_fence.c,v 1.9 2018/08/27 14:40:44 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_fence.c,v 1.8 2018/08/27 14:40:13 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_fence.c,v 1.9 2018/08/27 14:40:44 riastradh Exp $");
 
 #include <sys/atomic.h>
 #include <sys/condvar.h>
@@ -654,8 +654,8 @@ fence_default_wait(struct fence *fence, bool intr, long timeout)
 	long ret = 0;
 
 	KASSERT(fence_referenced_p(fence));
-	KASSERT(timeout >= 0);
-	KASSERT(timeout <= MAX_SCHEDULE_TIMEOUT);
+	KASSERTMSG(timeout >= 0, "timeout %ld", timeout);
+	KASSERTMSG(timeout <= MAX_SCHEDULE_TIMEOUT, "timeout %ld", timeout);
 
 	/* Optimistically try to skip the lock if it's already signalled.  */
 	if (fence->flags & (1u << FENCE_FLAG_SIGNALED_BIT))
