@@ -1,4 +1,6 @@
-#	$NetBSD: files.radeon,v 1.20 2018/08/27 15:22:55 riastradh Exp $
+#	$NetBSD: files.radeon,v 1.21 2018/08/27 16:06:01 riastradh Exp $
+
+version	20180827
 
 define	radeonfbbus	{ }
 device	radeon: drmkms, drmkms_pci, drmkms_ttm, radeonfbbus, firmload
