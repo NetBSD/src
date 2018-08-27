@@ -1,4 +1,4 @@
-/*	$NetBSD: jiffies.h,v 1.8 2018/08/27 06:18:41 riastradh Exp $	*/
+/*	$NetBSD: jiffies.h,v 1.9 2018/08/27 06:42:17 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@ nsecs_to_jiffies64(uint64_t nsec)
 {
 
 	/* XXX Arbitrary cutoff, should review the arithmetic.  */
-	if (((1000000000 % hz) == 0) || (ns >= 20000000000ul))
+	if (((1000000000 % hz) == 0) || (nsec >= 20000000000ul))
 		return (nsec/1000000000)*hz;
 	else
 		return (nsec*hz)/1000000000;
