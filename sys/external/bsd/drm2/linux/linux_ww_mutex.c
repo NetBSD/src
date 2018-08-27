@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ww_mutex.c,v 1.4 2017/09/16 23:56:42 christos Exp $	*/
+/*	$NetBSD: linux_ww_mutex.c,v 1.5 2018/08/27 15:11:32 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_ww_mutex.c,v 1.4 2017/09/16 23:56:42 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_ww_mutex.c,v 1.5 2018/08/27 15:11:32 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/atomic.h>
@@ -92,7 +92,7 @@ ww_acquire_init(struct ww_acquire_ctx *ctx, struct ww_class *class)
 
 	ctx->wwx_class = class;
 	ctx->wwx_owner = curlwp;
-	ctx->wwx_ticket = atomic_inc_64_nv(&class->wwc_ticket);
+	ctx->wwx_ticket = atomic64_inc_return(&class->wwc_ticket);
 	ctx->wwx_acquired = 0;
 	ctx->wwx_acquire_done = false;
 }
