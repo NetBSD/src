@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_pci.c,v 1.11 2018/05/31 23:46:59 mrg Exp $	*/
+/*	$NetBSD: nouveau_pci.c,v 1.12 2018/08/27 06:41:35 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_pci.c,v 1.11 2018/05/31 23:46:59 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_pci.c,v 1.12 2018/08/27 06:41:35 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/device.h>
@@ -40,7 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: nouveau_pci.c,v 1.11 2018/05/31 23:46:59 mrg Exp $")
 
 #include <drm/drmP.h>
 
-#include <engine/device.h>
+#include <core/device.h>
 
 #include "nouveau_drm.h"
 #include "nouveau_pci.h"
@@ -61,7 +61,7 @@ struct nouveau_pci_softc {
 	}			sc_task_u;
 	struct drm_device	*sc_drm_dev;
 	struct pci_dev		sc_pci_dev;
-	struct nouveau_device	*sc_nv_dev;
+	struct nvkm_device	*sc_nv_dev;
 };
 
 static int	nouveau_pci_match(device_t, cfdata_t, void *);
@@ -149,8 +149,8 @@ nouveau_pci_attach(device_t parent, device_t self, void *aux)
 	devname = (uint64_t)device_unit(device_parent(self)) << 32;
 	devname |= pa->pa_bus << 16;
 	/* XXX errno Linux->NetBSD */
-	error = -nouveau_device_create(&sc->sc_pci_dev, NOUVEAU_BUS_PCI,
-	    devname, device_xname(self), nouveau_config, nouveau_debug,
+	error = -nvkm_device_pci_new(&sc->sc_pci_dev,
+	    nouveau_config, nouveau_debug, true, true, ~0ULL,
 	    &sc->sc_nv_dev);
 	if (error) {
 		aprint_error_dev(self, "unable to create nouveau device: %d\n",
