@@ -1,12 +1,14 @@
 #!/bin/sh
 
-#	$NetBSD: radeon2netbsd,v 1.1 2018/08/27 05:36:15 riastradh Exp $
+#	$NetBSD: radeon2netbsd,v 1.2 2018/08/27 14:38:20 riastradh Exp $
 #
 # $ /path/to/radeon2netbsd > /path/to/files.radeon.new
 #
 # Run from the top-level Radeon source directory.
 
 set -Ceu
+
+: ${MV:=mv}
 
 # Location of the Radeon sources relative to $NETBSDSRCDIR.
 radeon_top=external/bsd/drm2/dist/drm/radeon
@@ -21,6 +23,43 @@ make -f Makefile -V '$(radeon-y)' \
 | grep -v '^$' \
 | sed -e 's,\.o$,.c,' \
 | sort -u \
-| while read f; do
-	printf 'file\t%s\t%s\n' "$radeon_top/$f" "$radeon_flag"
-done
+| awk '
+	BEGIN {
+		duplicates = 0
+	}
+	{
+		if (index($1, "/")) {
+			dir = $1
+			sub("/[^/]*$", "/", dir)
+			base = $1
+			sub("^.*/", "", base)
+		} else {
+			dir = ""
+			base = $1
+		}
+		fqbase = (base ~ "^radeon_" ? "" : "radeon_") base
+		if (seen[fqbase]) {
+			printf("Duplicate basename: %s %s\n", fqbase,
+			    seen[fqbase]) >"/dev/stderr"
+			duplicates = 1
+		}
+		if (duplicates)
+			next
+		printf("%s %s\n", $1, dir fqbase)
+	}
+	END {
+		if (duplicates) {
+			printf("Time to rewite me!\n") > "/dev/stderr"
+			exit 1
+		}
+	}
+' \
+| while read from to; do
+	# If the move already happened, that's fine: the makefile
+	# detects duplicates.
+	if [ "x$from" != "x$to" -a \! -f "$to" ]; then
+		${MV} -f -- "$from" "$to"
+	fi
+	printf 'file\t%s\t%s\n' "$radeon_top/$to" "$radeon_flag"
+done \
+| sort -u
