@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_vgpu.c,v 1.3 2018/08/27 07:16:10 riastradh Exp $	*/
+/*	$NetBSD: i915_vgpu.c,v 1.4 2018/08/27 16:15:34 riastradh Exp $	*/
 
 /*
  * Copyright(c) 2011-2015 Intel Corporation. All rights reserved.
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_vgpu.c,v 1.3 2018/08/27 07:16:10 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_vgpu.c,v 1.4 2018/08/27 16:15:34 riastradh Exp $");
 
 #include "intel_drv.h"
 #include "i915_vgpu.h"
@@ -75,8 +75,15 @@ void i915_check_vgpu(struct drm_device *dev)
 		return;
 
 #ifdef __NetBSD__
+#  ifdef _LP64
 	magic = bus_space_read_8(dev_priv->regs_bst, dev_priv->regs_bsh,
 	    vgtif_reg(magic));
+#  else
+	magic = bus_space_read_4(dev_priv->regs_bst, dev_priv->regs_bsh,
+	    vgtif_reg(magic));
+	magic |= (uint64_t)bus_space_read_4(dev_priv->regs_bst,
+	    dev_priv->regs_bsh, vgtif_reg(magic) + 4) << 32;
+#  endif
 #else
 	magic = readq(dev_priv->regs + vgtif_reg(magic));
 #endif
