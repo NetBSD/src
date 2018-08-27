@@ -1,4 +1,4 @@
-/*	$NetBSD: bitops.h,v 1.1 2018/08/27 06:15:32 riastradh Exp $	*/
+/*	$NetBSD: bitops.h,v 1.2 2018/08/27 06:17:17 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -84,6 +84,7 @@ hweight32(uint32_t n)
 	roundup2((n), (sizeof(unsigned long) * CHAR_BIT))
 
 #define	BIT(n)	((uintmax_t)1 << (n))
+#define	GENMASK(h,l)	__BITS(h,l)
 
 static inline int
 test_bit(unsigned int n, const volatile unsigned long *p)
