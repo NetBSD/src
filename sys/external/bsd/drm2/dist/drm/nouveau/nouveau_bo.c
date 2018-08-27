@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_bo.c,v 1.8 2018/08/27 04:58:24 riastradh Exp $	*/
+/*	$NetBSD: nouveau_bo.c,v 1.9 2018/08/27 07:19:01 riastradh Exp $	*/
 
 /*
  * Copyright 2007 Dave Airlied
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_bo.c,v 1.8 2018/08/27 04:58:24 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_bo.c,v 1.9 2018/08/27 07:19:01 riastradh Exp $");
 
 #include <linux/dma-mapping.h>
 #include <linux/swiotlb.h>
@@ -137,11 +137,7 @@ nouveau_bo_del_ttm(struct ttm_buffer_object *bo)
 	struct drm_device *dev = drm->dev;
 	struct nouveau_bo *nvbo = nouveau_bo(bo);
 
-#ifdef __NetBSD__
-	if (unlikely(nvbo->gem.gemo_shm_uao))
-#else
 	if (unlikely(nvbo->gem.filp))
-#endif
 		DRM_ERROR("bo %p still attached to GEM object\n", bo);
 	WARN_ON(nvbo->pin_refcnt > 0);
 	nv10_bo_put_tile_region(dev, nvbo->tile, NULL);
