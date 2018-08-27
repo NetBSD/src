@@ -1,4 +1,4 @@
-/*	$NetBSD: gpuobj.h,v 1.2 2018/08/27 04:58:30 riastradh Exp $	*/
+/*	$NetBSD: gpuobj.h,v 1.3 2018/08/27 07:36:18 riastradh Exp $	*/
 
 #ifndef __NVKM_GPUOBJ_H__
 #define __NVKM_GPUOBJ_H__
@@ -10,6 +10,11 @@ struct nvkm_vm;
 
 #define NVOBJ_FLAG_ZERO_ALLOC 0x00000001
 #define NVOBJ_FLAG_HEAP       0x00000004
+
+#ifdef __NetBSD__
+#  define	__nvkm_gpuobj_iomem
+#  define	__iomem			__nvkm_gpuobj_iomem
+#endif
 
 struct nvkm_gpuobj {
 	struct nvkm_object object;
@@ -24,6 +29,10 @@ struct nvkm_gpuobj {
 
 	void __iomem *map;
 };
+
+#ifdef __NetBSD__
+#  undef	__iomem
+#endif
 
 struct nvkm_gpuobj_func {
 	void *(*acquire)(struct nvkm_gpuobj *);
