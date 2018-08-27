@@ -1,4 +1,4 @@
-/*	$NetBSD: module.h,v 1.6 2018/08/27 07:33:53 riastradh Exp $	*/
+/*	$NetBSD: module.h,v 1.7 2018/08/27 15:22:54 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -59,5 +59,6 @@ const struct linux_module_param_desc PARAMETER ## _desc = { \
 __link_set_add_rodata(linux_module_param_desc, PARAMETER ## _desc)
 
 #define	THIS_MODULE	0
+#define	KBUILD_MODNAME	__file__
 
 #endif  /* _LINUX_MODULE_H_ */
