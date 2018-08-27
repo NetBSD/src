@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem_stolen.c,v 1.8 2018/08/27 07:16:00 riastradh Exp $	*/
+/*	$NetBSD: i915_gem_stolen.c,v 1.9 2018/08/27 07:17:35 riastradh Exp $	*/
 
 /*
  * Copyright © 2008-2012 Intel Corporation
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gem_stolen.c,v 1.8 2018/08/27 07:16:00 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gem_stolen.c,v 1.9 2018/08/27 07:17:35 riastradh Exp $");
 
 #include <linux/printk.h>
 #include <linux/err.h>
@@ -518,14 +518,60 @@ int i915_gem_init_stolen(struct drm_device *dev)
 	return 0;
 }
 
-#ifndef __NetBSD__
+#ifdef __NetBSD__
+static bus_dmamap_t
+i915_pages_create_for_stolen(struct drm_device *dev, u32 offset, u32 size)
+{
+	struct drm_i915_private *const dev_priv = dev->dev_private;
+	bus_dmamap_t dmamap = NULL;
+	bus_dma_segment_t *seg;
+	int nseg, i;
+	int ret;
+
+	KASSERT((size % PAGE_SIZE) == 0);
+	nseg = size / PAGE_SIZE;
+	seg = kmem_alloc(nseg * sizeof(seg[0]), KM_SLEEP);
+
+	/*
+	 * x86 bus_dmamap_load_raw fails to respect the maxsegsz we
+	 * pass to bus_dmamap_create, so we have to create page-sized
+	 * segments to begin with.
+	 */
+	for (i = 0; i < nseg; i++) {
+		seg[i].ds_addr = (bus_addr_t)dev_priv->mm.stolen_base +
+		    offset + i*PAGE_SIZE;
+		seg[i].ds_len = PAGE_SIZE;
+	}
+
+	/* XXX errno NetBSD->Linux */
+	ret = -bus_dmamap_create(dev->dmat, size, nseg, PAGE_SIZE,
+	    0, BUS_DMA_WAITOK, &dmamap);
+	if (ret) {
+		DRM_ERROR("failed to create DMA map for stolen object: %d\n",
+		    ret);
+fail0:		dmamap = NULL;	/* paranoia */
+		goto out;
+	}
+
+	/* XXX errno NetBSD->Liux */
+	ret = -bus_dmamap_load_raw(dev->dmat, dmamap, seg, nseg, size,
+	    BUS_DMA_WAITOK);
+	if (ret) {
+		DRM_ERROR("failed to load DMA map for stolen object: %d\n",
+		    ret);
+fail1: __unused
+		bus_dmamap_destroy(dev->dmat, dmamap);
+		goto fail0;
+	}
+
+out:	kmem_free(seg, nseg*sizeof(seg[0]));
+	return dmamap;
+}
+#else
 static struct sg_table *
 i915_pages_create_for_stolen(struct drm_device *dev,
 			     u32 offset, u32 size)
 {
-#ifdef __NetBSD__
-	panic("XXX");
-#else
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	struct sg_table *st;
 	struct scatterlist *sg;
@@ -555,7 +601,6 @@ i915_pages_create_for_stolen(struct drm_device *dev,
 	sg_dma_len(sg) = size;
 
 	return st;
-#endif
 }
 #endif
 
@@ -569,9 +614,8 @@ static void i915_gem_object_put_pages_stolen(struct drm_i915_gem_object *obj)
 {
 	/* Should only be called during free */
 #ifdef __NetBSD__
-	bus_dmamap_unload(obj->base.dev->dmat, obj->igo_dmamap);
-	bus_dmamap_destroy(obj->base.dev->dmat, obj->igo_dmamap);
-	kmem_free(obj->pages, (obj->igo_nsegs * sizeof(obj->pages[0])));
+	bus_dmamap_unload(obj->base.dev->dmat, obj->pages);
+	bus_dmamap_destroy(obj->base.dev->dmat, obj->pages);
 #else
 	sg_free_table(obj->pages);
 	kfree(obj->pages);
@@ -601,11 +645,6 @@ _i915_gem_object_create_stolen(struct drm_device *dev,
 			       struct drm_mm_node *stolen)
 {
 	struct drm_i915_gem_object *obj;
-#ifdef __NetBSD__
-	struct drm_i915_private *const dev_priv = dev->dev_private;
-	unsigned i;
-	int error;
-#endif
 
 	obj = i915_gem_object_alloc(dev);
 	if (obj == NULL)
@@ -614,47 +653,10 @@ _i915_gem_object_create_stolen(struct drm_device *dev,
 	drm_gem_private_object_init(dev, &obj->base, stolen->size);
 	i915_gem_object_init(obj, &i915_gem_object_stolen_ops);
 
-#ifdef __NetBSD__
-	TAILQ_INIT(&obj->igo_pageq); /* XXX Need to fill this...  */
-	KASSERT((stolen->size % PAGE_SIZE) == 0);
-	obj->igo_nsegs = (stolen->size / PAGE_SIZE);
-	obj->pages = kmem_alloc((obj->igo_nsegs * sizeof(obj->pages[0])),
-	    KM_SLEEP);
-	/*
-	 * x86 bus_dmamap_load_raw fails to respect the maxsegsz we
-	 * pass to bus_dmamap_create, so we have to create page-sized
-	 * segments to begin with.
-	 */
-	for (i = 0; i < obj->igo_nsegs; i++) {
-		obj->pages[i].ds_addr = (bus_addr_t)dev_priv->mm.stolen_base +
-		    stolen->start + (i*PAGE_SIZE);
-		obj->pages[i].ds_len = PAGE_SIZE;
-	}
-	error = bus_dmamap_create(dev->dmat, obj->base.size, obj->igo_nsegs,
-	    PAGE_SIZE, 0, BUS_DMA_WAITOK, &obj->igo_dmamap);
-	if (error) {
-		DRM_ERROR("failed to create DMA map for stolen object: %d\n",
-		    error);
-		kmem_free(obj->pages, sizeof(obj->pages[0]));
-		obj->pages = NULL;
-		goto cleanup;
-	}
-	error = bus_dmamap_load_raw(dev->dmat, obj->igo_dmamap, obj->pages,
-	    obj->igo_nsegs, stolen->size, BUS_DMA_WAITOK);
-	if (error) {
-		DRM_ERROR("failed to load DMA map for stolen object: %d\n",
-		    error);
-		bus_dmamap_destroy(dev->dmat, obj->igo_dmamap);
-		kmem_free(obj->pages, sizeof(obj->pages[0]));
-		obj->pages = NULL;
-		goto cleanup;
-	}
-#else
 	obj->pages = i915_pages_create_for_stolen(dev,
 						  stolen->start, stolen->size);
 	if (obj->pages == NULL)
 		goto cleanup;
-#endif
 
 	i915_gem_object_pin_pages(obj);
 	obj->stolen = stolen;
