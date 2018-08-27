@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_drv.c,v 1.7 2018/08/27 13:42:24 riastradh Exp $	*/
+/*	$NetBSD: drm_drv.c,v 1.8 2018/08/27 13:42:47 riastradh Exp $	*/
 
 /*
  * Created: Fri Jan 19 10:48:35 2001 by faith@acm.org
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_drv.c,v 1.7 2018/08/27 13:42:24 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_drv.c,v 1.8 2018/08/27 13:42:47 riastradh Exp $");
 
 #include <linux/err.h>
 #include <linux/export.h>
@@ -70,18 +70,20 @@ static struct idr drm_minors_idr;
 static struct dentry *drm_debugfs_root;
 #endif
 
-void drm_err(const char *format, ...)
-{
 #ifdef __NetBSD__
+void
+drm_err(const char *file, int line, const char *func, const char *format, ...)
+{
 	va_list args;
 
 	va_start(args, format);
-	/* XXX Convert this to a symbol name...  */
-	printf(KERN_ERR "[" DRM_NAME ":%p] *ERROR* ",
-	    __builtin_return_address(0));
+	printf(KERN_ERR "[" DRM_NAME ":(%s:%d)%s] *ERROR* ", file, line, func);
 	vprintf(format, args);
 	va_end(args);
+}
 #else
+void drm_err(const char *format, ...)
+{
 	struct va_format vaf;
 	va_list args;
 
@@ -94,8 +96,8 @@ void drm_err(const char *format, ...)
 	       __builtin_return_address(0), &vaf);
 
 	va_end(args);
-#endif
 }
+#endif
 EXPORT_SYMBOL(drm_err);
 
 void drm_ut_debug_printk(const char *function_name, const char *format, ...)
