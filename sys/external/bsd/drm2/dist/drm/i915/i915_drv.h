@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_drv.h,v 1.22 2018/08/27 07:57:12 riastradh Exp $	*/
+/*	$NetBSD: i915_drv.h,v 1.23 2018/08/27 13:43:39 riastradh Exp $	*/
 
 /* i915_drv.h -- Private header for the I915 driver -*- linux-c -*-
  */
@@ -2798,7 +2798,6 @@ extern void intel_uncore_early_sanitize(struct drm_device *dev,
 extern void intel_uncore_init(struct drm_device *dev);
 extern void intel_uncore_check_errors(struct drm_device *dev);
 extern void intel_uncore_fini(struct drm_device *dev);
-extern void intel_uncore_destroy(struct drm_device *dev);
 extern void intel_uncore_forcewake_reset(struct drm_device *dev, bool restore);
 const char *intel_uncore_forcewake_domain_to_str(const enum forcewake_domain_id id);
 void intel_uncore_forcewake_get(struct drm_i915_private *dev_priv,
