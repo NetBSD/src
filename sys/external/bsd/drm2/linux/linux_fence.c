@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_fence.c,v 1.11 2018/08/28 15:03:39 riastradh Exp $	*/
+/*	$NetBSD: linux_fence.c,v 1.12 2018/08/28 15:04:02 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_fence.c,v 1.11 2018/08/28 15:03:39 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_fence.c,v 1.12 2018/08/28 15:04:02 riastradh Exp $");
 
 #include <sys/atomic.h>
 #include <sys/condvar.h>
@@ -543,6 +543,7 @@ fence_wait_any_timeout(struct fence **fences, uint32_t nfences, bool intr,
 	mutex_enter(&common.lock);
 	while (timeout > 0 && !common.done) {
 		start = hardclock_ticks;
+		__insn_barrier();
 		if (intr) {
 			if (timeout != MAX_SCHEDULE_TIMEOUT) {
 				ret = -cv_timedwait_sig(&common.cv,
@@ -562,6 +563,7 @@ fence_wait_any_timeout(struct fence **fences, uint32_t nfences, bool intr,
 			}
 		}
 		end = hardclock_ticks;
+		__insn_barrier();
 		if (ret)
 			break;
 		timeout -= MIN(timeout, (unsigned)end - (unsigned)start);
@@ -672,6 +674,7 @@ fence_default_wait(struct fence *fence, bool intr, long timeout)
 	/* Find out what our deadline is so we can handle spurious wakeup.  */
 	if (timeout < MAX_SCHEDULE_TIMEOUT) {
 		now = hardclock_ticks;
+		__insn_barrier();
 		starttime = now;
 		deadline = starttime + timeout;
 	}
@@ -684,6 +687,7 @@ fence_default_wait(struct fence *fence, bool intr, long timeout)
 		 */
 		if (timeout < MAX_SCHEDULE_TIMEOUT) {
 			now = hardclock_ticks;
+			__insn_barrier();
 			if (deadline <= now)
 				break;
 		}
