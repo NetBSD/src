@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_fence.c,v 1.9 2018/08/27 14:40:44 riastradh Exp $	*/
+/*	$NetBSD: linux_fence.c,v 1.10 2018/08/28 14:23:02 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_fence.c,v 1.9 2018/08/27 14:40:44 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_fence.c,v 1.10 2018/08/28 14:23:02 riastradh Exp $");
 
 #include <sys/atomic.h>
 #include <sys/condvar.h>
@@ -641,7 +641,7 @@ fence_wait(struct fence *fence, bool intr)
  *
  *	Default implementation of fence wait callback using a condition
  *	variable.  If the fence is already signalled, return timeout,
- *	or 0 if no timeout.  If the enable signalling callback hasn't
+ *	or 1 if no timeout.  If the enable signalling callback hasn't
  *	been called, call it, and if it fails, act as if the fence had
  *	been signalled.  Otherwise, wait on the internal condvar.  If
  *	timeout is MAX_SCHEDULE_TIMEOUT, treat it as no timeout.
@@ -659,7 +659,7 @@ fence_default_wait(struct fence *fence, bool intr, long timeout)
 
 	/* Optimistically try to skip the lock if it's already signalled.  */
 	if (fence->flags & (1u << FENCE_FLAG_SIGNALED_BIT))
-		return (timeout < MAX_SCHEDULE_TIMEOUT ? timeout : 0);
+		return (timeout < MAX_SCHEDULE_TIMEOUT ? timeout : 1);
 
 	/* Acquire the lock.  */
 	spin_lock(fence->lock);
@@ -731,8 +731,8 @@ out:
 		return ret;
 
 	/*
-	 * Success!  Return the number of ticks left, at least 1, or 0
+	 * Success!  Return the number of ticks left, at least 1, or 1
 	 * if no timeout.
 	 */
-	return (timeout < MAX_SCHEDULE_TIMEOUT ? MIN(deadline - now, 1) : 0);
+	return (timeout < MAX_SCHEDULE_TIMEOUT ? MIN(deadline - now, 1) : 1);
 }
