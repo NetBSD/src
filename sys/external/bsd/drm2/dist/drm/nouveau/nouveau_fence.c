@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_fence.c,v 1.12 2018/08/27 07:37:07 riastradh Exp $	*/
+/*	$NetBSD: nouveau_fence.c,v 1.13 2018/08/28 20:59:21 mrg Exp $	*/
 
 /*
  * Copyright (C) 2007 Ben Skeggs.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_fence.c,v 1.12 2018/08/27 07:37:07 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_fence.c,v 1.13 2018/08/28 20:59:21 mrg Exp $");
 
 #include <drm/drmP.h>
 
@@ -106,7 +106,6 @@ nouveau_fence_context_del(struct nouveau_fence_chan *fctx)
 			nvif_notify_put(&fctx->notify);
 	}
 	spin_unlock_irq(&fctx->lock);
-	spin_lock_destroy(&fctx->lock);
 
 	nvif_notify_fini(&fctx->notify);
 	fctx->dead = 1;
@@ -121,7 +120,11 @@ nouveau_fence_context_del(struct nouveau_fence_chan *fctx)
 static void
 nouveau_fence_context_put(struct kref *fence_ref)
 {
-	kfree(container_of(fence_ref, struct nouveau_fence_chan, fence_ref));
+	struct nouveau_fence_chan *fctx =
+	    container_of(fence_ref, struct nouveau_fence_chan, fence_ref);
+
+	spin_lock_destroy(&fctx->lock);
+	kfree(fctx);
 }
 
 void
