@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.10 2018/08/28 03:41:40 riastradh Exp $
+# $NetBSD: Makefile,v 1.11 2018/08/28 03:48:38 riastradh Exp $
 
 .include "../Makefile.inc"
 .include "../drmkms/Makefile.inc"
@@ -11,7 +11,6 @@ MKLDSCRIPT=yes
 
 .PATH:	${S}/external/bsd/drm2/dist/drm/i915
 
-CPPFLAGS+=	-I.
 CPPFLAGS+=	-I${S}/sys/modules/drmkms
 
 CPPFLAGS+=	-I${S}/external/bsd/drm2/i915drm
