@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.366 2018/07/31 07:00:48 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.367 2018/08/28 14:45:33 skrll Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -217,7 +217,7 @@
 
 #include <arm/locore.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.366 2018/07/31 07:00:48 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.367 2018/08/28 14:45:33 skrll Exp $");
 
 //#define PMAP_DEBUG
 #ifdef PMAP_DEBUG
@@ -6359,8 +6359,8 @@ pmap_bootstrap(vaddr_t vstart, vaddr_t vend)
 	/*
 	 * Initialise the L2 descriptor table pool and cache
 	 */
-	pool_cache_bootstrap(&pmap_l2ptp_cache, L2_TABLE_SIZE_REAL, 0,
-	    L2_TABLE_SIZE_REAL, 0, "l2ptppl", NULL, IPL_NONE,
+	pool_cache_bootstrap(&pmap_l2ptp_cache, L2_TABLE_SIZE_REAL,
+	    L2_TABLE_SIZE_REAL, 0, 0, "l2ptppl", NULL, IPL_NONE,
 	    pmap_l2ptp_ctor, NULL, NULL);
 
 	mutex_init(&memlock, MUTEX_DEFAULT, IPL_NONE);
