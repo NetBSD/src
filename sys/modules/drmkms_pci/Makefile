@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.7 2018/08/28 03:41:40 riastradh Exp $
+# $NetBSD: Makefile,v 1.8 2018/08/28 03:48:38 riastradh Exp $
 
 .include "../Makefile.inc"
 .include "../drmkms/Makefile.inc"
@@ -9,8 +9,6 @@
 .PATH:	${S}/external/bsd/drm2/dist/drm
 
 KMOD=	drmkms_pci
-
-CPPFLAGS+=	-I.
 
 SRCS+=	drmfb_pci.c
 SRCS+=	linux_pci.c
