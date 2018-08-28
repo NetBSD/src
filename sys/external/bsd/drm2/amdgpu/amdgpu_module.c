@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_module.c,v 1.3 2018/08/28 03:34:39 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_module.c,v 1.4 2018/08/28 03:35:08 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_module.c,v 1.3 2018/08/28 03:34:39 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_module.c,v 1.4 2018/08/28 03:35:08 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/module.h>
@@ -60,7 +60,6 @@ struct drm_sysctl_def amdgpu_def = DRM_SYSCTL_INIT();
 static int
 amdgpu_init(void)
 {
-	extern int drm_guarantee_initialized(void);
 	int error;
 
 	error = drm_guarantee_initialized();

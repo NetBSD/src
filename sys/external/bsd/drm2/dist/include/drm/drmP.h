@@ -1,4 +1,4 @@
-/*	$NetBSD: drmP.h,v 1.32 2018/08/27 15:32:39 riastradh Exp $	*/
+/*	$NetBSD: drmP.h,v 1.33 2018/08/28 03:35:08 riastradh Exp $	*/
 
 /*
  * Internal Header for the Direct Rendering Manager
@@ -1226,6 +1226,7 @@ void drm_minor_release(struct drm_minor *minor);
 
 #ifdef __NetBSD__
 int drm_limit_dma_space(struct drm_device *, resource_size_t, resource_size_t);
+int drm_guarantee_initialized(void);
 #endif
 
 /*@}*/

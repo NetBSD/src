@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_module.c,v 1.7 2018/08/28 03:34:39 riastradh Exp $	*/
+/*	$NetBSD: i915_module.c,v 1.8 2018/08/28 03:35:08 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_module.c,v 1.7 2018/08/28 03:34:39 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_module.c,v 1.8 2018/08/28 03:35:08 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/module.h>
@@ -60,7 +60,6 @@ struct drm_sysctl_def i915_def = DRM_SYSCTL_INIT();
 static int
 i915drmkms_init(void)
 {
-	extern int drm_guarantee_initialized(void);
 	int error;
 
 	error = drm_guarantee_initialized();

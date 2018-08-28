@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_cdevsw.c,v 1.10 2018/08/27 14:11:04 riastradh Exp $	*/
+/*	$NetBSD: drm_cdevsw.c,v 1.11 2018/08/28 03:35:08 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_cdevsw.c,v 1.10 2018/08/27 14:11:04 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_cdevsw.c,v 1.11 2018/08/28 03:35:08 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -117,7 +117,6 @@ drm_open(dev_t d, int flags, int fmt, struct lwp *l)
 	int fd;
 	struct file *fp;
 	int error;
-	extern int drm_guarantee_initialized(void);
 
 	error = drm_guarantee_initialized();
 	if (error)
