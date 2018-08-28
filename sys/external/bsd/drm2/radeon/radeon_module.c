@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_module.c,v 1.4 2018/08/28 03:34:40 riastradh Exp $	*/
+/*	$NetBSD: radeon_module.c,v 1.5 2018/08/28 03:35:08 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_module.c,v 1.4 2018/08/28 03:34:40 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_module.c,v 1.5 2018/08/28 03:35:08 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/module.h>
@@ -59,7 +59,6 @@ struct drm_sysctl_def radeon_def = DRM_SYSCTL_INIT();
 static int
 radeon_init(void)
 {
-	extern int drm_guarantee_initialized(void);
 	int error;
 
 	error = drm_guarantee_initialized();

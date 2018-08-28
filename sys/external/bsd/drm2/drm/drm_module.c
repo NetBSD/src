@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_module.c,v 1.13 2018/08/27 15:32:51 riastradh Exp $	*/
+/*	$NetBSD: drm_module.c,v 1.14 2018/08/28 03:35:08 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_module.c,v 1.13 2018/08/27 15:32:51 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_module.c,v 1.14 2018/08/28 03:35:08 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/condvar.h>
@@ -93,7 +93,6 @@ drm_init(void)
 	return 0;
 }
 
-int	drm_guarantee_initialized(void); /* XXX */
 int
 drm_guarantee_initialized(void)
 {

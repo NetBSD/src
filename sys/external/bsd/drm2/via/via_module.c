@@ -1,4 +1,4 @@
-/*	$NetBSD: via_module.c,v 1.3 2018/08/28 03:34:40 riastradh Exp $	*/
+/*	$NetBSD: via_module.c,v 1.4 2018/08/28 03:35:08 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: via_module.c,v 1.3 2018/08/28 03:34:40 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: via_module.c,v 1.4 2018/08/28 03:35:08 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/module.h>
@@ -52,7 +52,6 @@ extern struct drm_driver *const via_drm_driver; /* XXX */
 static int
 viadrm_init(void)
 {
-	extern int drm_guarantee_initialized(void);
 	int error;
 
 	via_init_command_verifier(); /* idempotent, no unwind needed */
