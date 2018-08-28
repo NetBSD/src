@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_pci.c,v 1.29 2018/08/27 15:32:06 riastradh Exp $	*/
+/*	$NetBSD: drm_pci.c,v 1.30 2018/08/28 03:34:39 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_pci.c,v 1.29 2018/08/27 15:32:06 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_pci.c,v 1.30 2018/08/28 03:34:39 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/errno.h>
@@ -51,20 +51,6 @@ static const struct pci_attach_args *
 drm_pci_attach_args(struct drm_device *dev)
 {
 	return &dev->pdev->pd_pa;
-}
-
-int
-drm_pci_init(struct drm_driver *driver __unused,
-    struct pci_driver *pdriver __unused)
-{
-
-	return 0;
-}
-
-void
-drm_pci_exit(struct drm_driver *driver __unused,
-    struct pci_driver *pdriver __unused)
-{
 }
 
 int
