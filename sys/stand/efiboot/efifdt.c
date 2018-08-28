@@ -1,4 +1,4 @@
-/* $NetBSD: efifdt.c,v 1.4 2018/08/27 22:51:55 alnsn Exp $ */
+/* $NetBSD: efifdt.c,v 1.5 2018/08/28 01:24:39 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -166,6 +166,4 @@ efi_fdt_bootargs(const char *bootargs)
 			break;
 		}
 	}
-
-	fdt_pack(fdt_data);
 }
