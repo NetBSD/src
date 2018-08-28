@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_pci.c,v 1.20 2018/08/27 14:18:54 riastradh Exp $	*/
+/*	$NetBSD: nouveau_pci.c,v 1.21 2018/08/28 03:34:07 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_pci.c,v 1.20 2018/08/27 14:18:54 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_pci.c,v 1.21 2018/08/28 03:34:07 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/device.h>
@@ -286,19 +286,19 @@ nouveau_pci_task_schedule(device_t self, struct nouveau_pci_task *task)
 	}
 }
 
+extern struct drm_driver *const nouveau_drm_driver_stub; /* XXX */
+extern struct drm_driver *const nouveau_drm_driver_pci;	 /* XXX */
+
 static int
 nouveau_pci_modcmd(modcmd_t cmd, void *arg __unused)
 {
-	int error;
 
 	switch (cmd) {
 	case MODULE_CMD_INIT:
-		error = drm_pci_init(nouveau_drm_driver_pci, NULL);
-		if (error) {
-			aprint_error("nouveau_pci: failed to init: %d\n",
-			    error);
-			return error;
-		}
+		*nouveau_drm_driver_pci = *nouveau_drm_driver_stub;
+		nouveau_drm_driver_pci->set_busid = drm_pci_set_busid;
+		nouveau_drm_driver_pci->request_irq = drm_pci_request_irq;
+		nouveau_drm_driver_pci->free_irq = drm_pci_free_irq;
 #if 0		/* XXX nouveau acpi */
 		nouveau_register_dsm_handler();
 #endif
@@ -307,7 +307,6 @@ nouveau_pci_modcmd(modcmd_t cmd, void *arg __unused)
 #if 0		/* XXX nouveau acpi */
 		nouveau_unregister_dsm_handler();
 #endif
-		drm_pci_exit(nouveau_drm_driver_pci, NULL);
 		break;
 	default:
 		return ENOTTY;
