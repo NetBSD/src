@@ -1,4 +1,4 @@
-#	$NetBSD: files.drmkms,v 1.29 2018/08/27 15:29:42 riastradh Exp $
+#	$NetBSD: files.drmkms,v 1.30 2018/08/28 03:41:39 riastradh Exp $
 
 include "external/bsd/drm2/linux/files.drmkms_linux"
 
@@ -38,6 +38,7 @@ makeoptions	drmkms	CPPFLAGS+="-DCONFIG_DRM_FBDEV_EMULATION=1"
 makeoptions	drmkms	CPPFLAGS+="-DCONFIG_FB=0"
 
 # NetBSD additions.
+file	external/bsd/drm2/drm/drm_agp_hook.c		drmkms
 file	external/bsd/drm2/drm/drm_cdevsw.c		drmkms
 file	external/bsd/drm2/drm/drm_gem_cma_helper.c	drmkms
 file	external/bsd/drm2/drm/drm_gem_vm.c		drmkms

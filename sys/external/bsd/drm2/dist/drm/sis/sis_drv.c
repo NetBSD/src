@@ -1,4 +1,4 @@
-/*	$NetBSD: sis_drv.c,v 1.2 2018/08/27 04:58:36 riastradh Exp $	*/
+/*	$NetBSD: sis_drv.c,v 1.3 2018/08/28 03:41:39 riastradh Exp $	*/
 
 /* sis.c -- sis driver -*- linux-c -*-
  *
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sis_drv.c,v 1.2 2018/08/27 04:58:36 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sis_drv.c,v 1.3 2018/08/28 03:41:39 riastradh Exp $");
 
 #include <linux/module.h>
 
@@ -114,6 +114,7 @@ static struct drm_driver driver = {
 	.preclose = sis_reclaim_buffers_locked,
 	.postclose = sis_driver_postclose,
 	.set_busid = drm_pci_set_busid,
+	.set_unique = drm_pci_set_unique,
 	.dma_quiescent = sis_idle,
 	.lastclose = sis_lastclose,
 	.ioctls = sis_ioctls,
