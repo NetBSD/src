@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_pci.c,v 1.10 2015/05/29 05:48:46 mrg Exp $	*/
+/*	$NetBSD: radeon_pci.c,v 1.13 2018/08/27 14:12:14 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_pci.c,v 1.10 2015/05/29 05:48:46 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_pci.c,v 1.13 2018/08/27 14:12:14 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "vga.h"
@@ -228,6 +228,9 @@ radeon_attach_real(device_t self)
 	sc->sc_task_state = RADEON_TASK_ATTACH;
 	SIMPLEQ_INIT(&sc->sc_task_u.attach);
 
+	/* Initialize the Linux PCI device descriptor.  */
+	linux_pci_dev_init(&sc->sc_pci_dev, self, device_parent(self), pa, 0);
+
 	/* XXX errno Linux->NetBSD */
 	error = -drm_pci_attach(self, pa, &sc->sc_pci_dev, radeon_drm_driver,
 	    flags, &sc->sc_drm_dev);
@@ -288,7 +291,8 @@ radeon_detach(device_t self, int flags)
 		return error;
 	sc->sc_drm_dev = NULL;
 
-out:	pmf_device_deregister(self);
+out:	linux_pci_dev_destroy(&sc->sc_pci_dev);
+	pmf_device_deregister(self);
 
 	return 0;
 }

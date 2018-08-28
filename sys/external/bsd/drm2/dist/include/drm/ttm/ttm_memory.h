@@ -1,3 +1,5 @@
+/*	$NetBSD: ttm_memory.h,v 1.3 2018/08/27 04:58:38 riastradh Exp $	*/
+
 /**************************************************************************
  *
  * Copyright (c) 2006-2009 VMware, Inc., Palo Alto, CA., USA

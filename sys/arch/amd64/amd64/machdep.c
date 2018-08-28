@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.315 2018/08/20 15:04:51 maxv Exp $	*/
+/*	$NetBSD: machdep.c,v 1.316 2018/08/22 12:07:42 maxv Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.315 2018/08/20 15:04:51 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.316 2018/08/22 12:07:42 maxv Exp $");
 
 #include "opt_modular.h"
 #include "opt_user_ldt.h"
@@ -1543,7 +1543,7 @@ init_x86_64_ksyms(void)
 #endif
 }
 
-void
+void __noasan
 init_bootspace(void)
 {
 	extern char __rodata_start;
@@ -1591,7 +1591,8 @@ init_bootspace(void)
 	bootspace.emodule = KERNBASE + NKL2_KIMG_ENTRIES * NBPD_L2;
 }
 
-static void init_pte(void)
+static void __noasan
+init_pte(void)
 {
 #ifndef XEN
 	extern uint32_t nox_flag;
@@ -1606,7 +1607,7 @@ static void init_pte(void)
 	normal_pdes[2] = L4_BASE;
 }
 
-void
+void __noasan
 init_slotspace(void)
 {
 	vaddr_t slotspace_rand(int, size_t, size_t);
@@ -1690,7 +1691,7 @@ init_slotspace(void)
 #endif
 }
 
-void
+void __noasan
 init_x86_64(paddr_t first_avail)
 {
 	extern void consinit(void);
@@ -1712,6 +1713,11 @@ init_x86_64(paddr_t first_avail)
 #endif
 
 	init_pte();
+
+#ifdef KASAN
+	void kasan_early_init(void);
+	kasan_early_init();
+#endif
 
 	uvm_lwp_setuarea(&lwp0, lwp0uarea);
 

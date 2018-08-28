@@ -1,3 +1,5 @@
+/*	$NetBSD: ttm_memory.c,v 1.4 2018/08/27 14:41:10 riastradh Exp $	*/
+
 /**************************************************************************
  *
  * Copyright (c) 2006-2009 VMware, Inc., Palo Alto, CA., USA
@@ -24,6 +26,9 @@
  * USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
  **************************************************************************/
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ttm_memory.c,v 1.4 2018/08/27 14:41:10 riastradh Exp $");
 
 #define pr_fmt(fmt) "[TTM] " fmt
 
@@ -318,7 +323,8 @@ static int ttm_mem_init_highmem_zone(struct ttm_mem_global *glob,
 	glob->zone_highmem = zone;
 #ifndef __NetBSD__
 	ret = kobject_init_and_add(
-		&zone->kobj, &ttm_mem_zone_kobj_type, &glob->kobj, zone->name);
+		&zone->kobj, &ttm_mem_zone_kobj_type, &glob->kobj, "%s",
+		zone->name);
 	if (unlikely(ret != 0)) {
 		kobject_put(&zone->kobj);
 		return ret;
@@ -448,6 +454,7 @@ void ttm_mem_global_release(struct ttm_mem_global *glob)
 		kobject_put(&zone->kobj);
 #endif
 			}
+	spin_lock_destroy(&glob->lock);
 #ifdef __NetBSD__
 	kfree(glob);
 #else

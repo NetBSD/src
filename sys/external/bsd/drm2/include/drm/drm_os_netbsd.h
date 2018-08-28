@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_os_netbsd.h,v 1.3 2014/07/26 18:13:44 riastradh Exp $	*/
+/*	$NetBSD: drm_os_netbsd.h,v 1.13 2018/08/28 03:41:39 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -36,12 +36,35 @@
 #include "opt_drmkms.h"
 #endif
 
-/*
- * XXX Better to get rid of CONFIG_X86, but that's not convenient at
- * the moment.
- */
 #if defined(__i386__) || defined(__x86_64__)
 #define	CONFIG_X86	1
+#define	CONFIG_X86_PAT	1
+#endif
+
+/*
+ * Nothing meaningfully depends on this; defining this avoids patching
+ * away some conditionalization in drmP.h.
+ */
+#define	CONFIG_PCI	1
+
+#ifdef notyet
+#if defined(__i386__)
+#include "pnpbios.h"
+#endif
+
+#if NPNPBIOS > 0
+#define CONFIG_PNP
+#endif
+#endif
+
+#if defined(__i386__) || defined(__x86_64__)
+#if defined(_KERNEL_OPT)
+#include "opt_mtrr.h"
+#endif
+#endif
+
+#ifdef MTRR
+#define	CONFIG_MTRR	1
 #endif
 
 #include <drm/drm_agp_netbsd.h>

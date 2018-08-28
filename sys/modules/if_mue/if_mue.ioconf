@@ -1,0 +1,10 @@
+# $NetBSD: if_mue.ioconf,v 1.1 2018/08/25 20:12:22 rin Exp $
+
+ioconf mue
+
+include "conf/files"
+include "dev/usb/files.usb"
+
+pseudo-root usbdevif*
+
+mue* at usbdevif?

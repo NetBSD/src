@@ -1,5 +1,5 @@
-/*	$NetBSD: readconf.h,v 1.20 2018/04/06 18:59:00 christos Exp $	*/
-/* $OpenBSD: readconf.h,v 1.125 2018/02/23 02:34:33 djm Exp $ */
+/*	$NetBSD: readconf.h,v 1.21 2018/08/26 07:46:36 christos Exp $	*/
+/* $OpenBSD: readconf.h,v 1.127 2018/07/19 10:28:47 dtucker Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -19,7 +19,6 @@
 
 /* Data structure for representing option data. */
 
-#define MAX_SEND_ENV		256
 #define SSH_MAX_HOSTS_FILES	32
 #define MAX_CANON_DOMAINS	32
 #define PATH_MAX_SUN		(sizeof((struct sockaddr_un *)0)->sun_path)
@@ -37,7 +36,6 @@ typedef struct {
 	int     exit_on_forward_failure;	/* Exit if bind(2) fails for -L/-R */
 	char   *xauth_location;	/* Location for xauth program */
 	struct ForwardOptions fwd_opts;	/* forwarding options */
-	int     use_privileged_port;	/* Don't use privileged port if false. */
 	int     pubkey_authentication;	/* Try ssh2 pubkey authentication. */
 	int     hostbased_authentication;	/* ssh2's rhosts_rsa */
 	int     challenge_response_authentication;
@@ -137,7 +135,9 @@ typedef struct {
 	int	server_alive_count_max;
 
 	int     num_send_env;
-	char   *send_env[MAX_SEND_ENV];
+	char   **send_env;
+	int     num_setenv;
+	char   **setenv;
 
 	char	*control_path;
 	int	control_master;

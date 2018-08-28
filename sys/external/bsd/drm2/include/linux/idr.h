@@ -1,4 +1,4 @@
-/*	$NetBSD: idr.h,v 1.3 2014/07/16 20:56:25 riastradh Exp $	*/
+/*	$NetBSD: idr.h,v 1.7 2018/08/27 14:14:42 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -33,9 +33,7 @@
 #define _LINUX_IDR_H_
 
 #include <sys/types.h>
-#include <sys/rwlock.h>
 #include <sys/rbtree.h>
-#include <sys/queue.h>
 
 #include <linux/gfp.h>
 
@@ -47,16 +45,17 @@ struct idr {
 };
 
 /* XXX Make the nm output a little more greppable...  */
-#define	idr_init		linux_idr_init
-#define	idr_destroy		linux_idr_destroy
-#define	idr_is_empty		linux_idr_is_empty
-#define	idr_find		linux_idr_find
-#define	idr_replace		linux_idr_replace
-#define	idr_remove		linux_idr_remove
-#define	idr_preload		linux_idr_preload
 #define	idr_alloc		linux_idr_alloc
-#define	idr_preload_end		linux_idr_preload_end
+#define	idr_destroy		linux_idr_destroy
+#define	idr_find		linux_idr_find
 #define	idr_for_each		linux_idr_for_each
+#define	idr_get_next		linux_idr_get_next
+#define	idr_init		linux_idr_init
+#define	idr_is_empty		linux_idr_is_empty
+#define	idr_preload		linux_idr_preload
+#define	idr_preload_end		linux_idr_preload_end
+#define	idr_remove		linux_idr_remove
+#define	idr_replace		linux_idr_replace
 
 int	linux_idr_module_init(void);
 void	linux_idr_module_fini(void);
@@ -65,12 +64,16 @@ void	idr_init(struct idr *);
 void	idr_destroy(struct idr *);
 bool	idr_is_empty(struct idr *);
 void	*idr_find(struct idr *, int);
+void	*idr_get_next(struct idr *, int *);
 void	*idr_replace(struct idr *, void *, int);
 void	idr_remove(struct idr *, int);
 void	idr_preload(gfp_t);
 int	idr_alloc(struct idr *, void *, int, int, gfp_t);
 void	idr_preload_end(void);
 int	idr_for_each(struct idr *, int (*)(int, void *, void *), void *);
+
+#define	idr_for_each_entry(IDR, ENTRY, ID)				      \
+	for ((ID) = 0; ((ENTRY) = idr_get_next((IDR), &(ID))) != NULL; (ID)++)
 
 struct ida {
 	struct idr	ida_idr;
@@ -110,6 +113,14 @@ ida_simple_get(struct ida *ida, unsigned start, unsigned end, gfp_t gfp)
 	idr_preload_end();
 
 	return id;
+}
+
+static inline void
+ida_simple_remove(struct ida *ida, unsigned int id)
+{
+
+	KASSERT((int)id >= 0);
+	ida_remove(ida, id);
 }
 
 #endif  /* _LINUX_IDR_H_ */

@@ -1,4 +1,4 @@
-# $NetBSD: NITROGEN6X,v 1.19 2018/08/01 20:04:11 maxv Exp $
+# $NetBSD: NITROGEN6X,v 1.20 2018/08/25 07:48:56 maxv Exp $
 #
 # Nitrogen6X
 # - http://boundarydevices.com/products/nitrogen6x-board-imx6-arm-cortex-a9-sbc/
@@ -78,7 +78,6 @@ include 	"conf/compat_netbsd60.config"
 options 	COMPAT_NETBSD32	# allow running arm (e.g. non-earm) binaries
 
 options 	COMPAT_OSSAUDIO	# OSS (Voxware) audio driver compatibility
-#options 	COMPAT_NDIS	# NDIS network driver
 
 # Wedge support
 options 	DKWEDGE_AUTODISCOVER	# Automatically add dk(4) instances

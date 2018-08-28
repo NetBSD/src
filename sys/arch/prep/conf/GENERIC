@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.186 2018/08/01 20:04:13 maxv Exp $
+# $NetBSD: GENERIC,v 1.187 2018/08/25 20:52:41 rin Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/prep/conf/std.prep"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.186 $"
+#ident		"GENERIC-$Revision: 1.187 $"
 
 maxusers	32
 
@@ -437,6 +437,7 @@ ukphy*	at mii? phy ?			# generic unknown PHYs
 #axe*	at uhub? port ?		# ASIX AX88172 based adapters
 #cue*	at uhub? port ?		# CATC USB-EL1201A based adapters
 #kue*	at uhub? port ?		# Kawasaki LSI KL5KUSB101B based adapters
+#mue*	at uhub? port ?		# Microchip LAN75xx/LAN78xx based adapters
 #url*	at uhub? port ?		# Realtek RTL8150L based adapters
 #udav*	at uhub? port ?		# Davicom DM9601 based adapters
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: makemandb.c,v 1.56 2018/08/16 05:07:22 kre Exp $	*/
+/*	$NetBSD: makemandb.c,v 1.57 2018/08/24 16:01:57 abhinav Exp $	*/
 /*
  * Copyright (c) 2011 Abhinav Upadhyay <er.abhinav.upadhyay@gmail.com>
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: makemandb.c,v 1.56 2018/08/16 05:07:22 kre Exp $");
+__RCSID("$NetBSD: makemandb.c,v 1.57 2018/08/24 16:01:57 abhinav Exp $");
 
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -103,7 +103,8 @@ static void set_machine(const struct roff_man *, mandb_rec *);
 static int insert_into_db(sqlite3 *, mandb_rec *);
 static	void begin_parse(const char *, struct mparse *, mandb_rec *,
 			 const void *, size_t len);
-static void proff_node(const struct roff_node *, mandb_rec *, const proff_nf *);
+static void proff_node(const struct roff_node *, mandb_rec *, struct roff_man *,
+		     const proff_nf *);
 static void pmdoc_Nm(const struct roff_node *, mandb_rec *);
 static void pmdoc_Nd(const struct roff_node *, mandb_rec *);
 static void pmdoc_Sh(const struct roff_node *, mandb_rec *);
@@ -127,165 +128,130 @@ static char *parse_escape(const char *);
 static void replace_hyph(char *);
 static makemandb_flags mflags = { .verbosity = 1 };
 
-static	const proff_nf mdocs[MDOC_MAX + 1] = {
-	NULL, /* Ap */
+static	const proff_nf mdocs[MDOC_MAX - MDOC_Dd] = {
 	NULL, /* Dd */
 	NULL, /* Dt */
 	NULL, /* Os */
-
 	pmdoc_Sh, /* Sh */
 	NULL, /* Ss */
 	pmdoc_Pp, /* Pp */
 	NULL, /* D1 */
-
 	NULL, /* Dl */
 	NULL, /* Bd */
 	NULL, /* Ed */
 	NULL, /* Bl */
-
 	NULL, /* El */
 	NULL, /* It */
 	NULL, /* Ad */
 	NULL, /* An */
-
+	NULL, /* Ap */
 	NULL, /* Ar */
 	NULL, /* Cd */
 	NULL, /* Cm */
 	NULL, /* Dv */
-
 	NULL, /* Er */
 	NULL, /* Ev */
 	NULL, /* Ex */
 	NULL, /* Fa */
-
 	NULL, /* Fd */
 	NULL, /* Fl */
 	NULL, /* Fn */
 	NULL, /* Ft */
-
 	NULL, /* Ic */
 	NULL, /* In */
 	NULL, /* Li */
 	pmdoc_Nd, /* Nd */
-
 	pmdoc_Nm, /* Nm */
 	NULL, /* Op */
 	NULL, /* Ot */
 	NULL, /* Pa */
-
 	NULL, /* Rv */
 	NULL, /* St */
 	NULL, /* Va */
 	NULL, /* Vt */
-
 	pmdoc_Xr, /* Xr */
 	NULL, /* %A */
 	NULL, /* %B */
 	NULL, /* %D */
-
 	NULL, /* %I */
 	NULL, /* %J */
 	NULL, /* %N */
 	NULL, /* %O */
-
 	NULL, /* %P */
 	NULL, /* %R */
 	NULL, /* %T */
 	NULL, /* %V */
-
 	NULL, /* Ac */
 	NULL, /* Ao */
 	NULL, /* Aq */
 	NULL, /* At */
-
 	NULL, /* Bc */
 	NULL, /* Bf */
 	NULL, /* Bo */
 	NULL, /* Bq */
-
 	NULL, /* Bsx */
 	NULL, /* Bx */
 	NULL, /* Db */
 	NULL, /* Dc */
-
 	NULL, /* Do */
 	NULL, /* Dq */
 	NULL, /* Ec */
 	NULL, /* Ef */
-
 	NULL, /* Em */
 	NULL, /* Eo */
 	NULL, /* Fx */
 	NULL, /* Ms */
-
 	NULL, /* No */
 	NULL, /* Ns */
 	NULL, /* Nx */
 	NULL, /* Ox */
-
 	NULL, /* Pc */
 	NULL, /* Pf */
 	NULL, /* Po */
 	NULL, /* Pq */
-
 	NULL, /* Qc */
 	NULL, /* Ql */
 	NULL, /* Qo */
 	NULL, /* Qq */
-
 	NULL, /* Re */
 	NULL, /* Rs */
 	NULL, /* Sc */
 	NULL, /* So */
-
 	NULL, /* Sq */
 	NULL, /* Sm */
 	NULL, /* Sx */
 	NULL, /* Sy */
-
 	NULL, /* Tn */
 	NULL, /* Ux */
 	NULL, /* Xc */
 	NULL, /* Xo */
-
 	NULL, /* Fo */
 	NULL, /* Fc */
 	NULL, /* Oo */
 	NULL, /* Oc */
-
 	NULL, /* Bk */
 	NULL, /* Ek */
 	NULL, /* Bt */
 	NULL, /* Hf */
-
 	NULL, /* Fr */
 	NULL, /* Ud */
 	NULL, /* Lb */
 	NULL, /* Lp */
-
 	NULL, /* Lk */
 	NULL, /* Mt */
 	NULL, /* Brq */
 	NULL, /* Bro */
-
 	NULL, /* Brc */
 	NULL, /* %C */
 	NULL, /* Es */
 	NULL, /* En */
-
 	NULL, /* Dx */
 	NULL, /* %Q */
-	NULL, /* br */
-	NULL, /* sp */
-
 	NULL, /* %U */
-	NULL, /* Ta */
-	NULL, /* ll */
-	NULL, /* text */
+	NULL /* Ta */
 };
 
-static	const proff_nf mans[MAN_MAX] = {
-	NULL,	//br
+static	const proff_nf mans[MAN_MAX - MAN_TH] = {
 	NULL,	//TH
 	pman_sh, //SH
 	NULL,	//SS
@@ -306,7 +272,6 @@ static	const proff_nf mans[MAN_MAX] = {
 	NULL,	//I
 	NULL,	//IR
 	NULL,	//RI
-	NULL,	//sp
 	NULL,	//nf
 	NULL,	//fi
 	NULL,	//RE
@@ -316,15 +281,14 @@ static	const proff_nf mans[MAN_MAX] = {
 	NULL,	//PD
 	NULL,	//AT
 	NULL,	//in
-	NULL,	//ft
 	NULL,	//OP
 	NULL,	//EX
 	NULL,	//EE
 	NULL,	//UR
 	NULL,	//UE
-	NULL,	//ll
+	NULL,	//MT
+	NULL   //ME
 };
-
 
 int
 main(int argc, char *argv[])
@@ -923,11 +887,11 @@ begin_parse(const char *file, struct mparse *mp, mandb_rec *rec,
 	if (roff->macroset == MACROSET_MDOC) {
 		mdoc_validate(roff);
 		rec->page_type = MDOC;
-		proff_node(roff->first->child, rec, mdocs);
+		proff_node(roff->first->child, rec, roff, mdocs);
 	} else if (roff->macroset == MACROSET_MAN) {
 		man_validate(roff);
 		rec->page_type = MAN;
-		proff_node(roff->first->child, rec, mans);
+		proff_node(roff->first->child, rec, roff, mans);
 	} else
 		warnx("Unknown macroset %d", roff->macroset);
 	set_machine(roff, rec);
@@ -1182,10 +1146,13 @@ mdoc_parse_section(enum roff_sec sec, const char *string, mandb_rec *rec)
 }
 
 static void
-proff_node(const struct roff_node *n, mandb_rec *rec, const proff_nf *func)
+proff_node(const struct roff_node * n, mandb_rec * rec,
+    struct roff_man * roff, const proff_nf * func)
 {
 	if (n == NULL)
 		return;
+
+	int tok_idx;
 
 	switch (n->type) {
 	case (ROFFT_BODY):
@@ -1193,15 +1160,21 @@ proff_node(const struct roff_node *n, mandb_rec *rec, const proff_nf *func)
 	case (ROFFT_BLOCK):
 		/* FALLTHROUGH */
 	case (ROFFT_ELEM):
-		if (func[n->tok] != NULL)
-			(*func[n->tok])(n, rec);
+		if (roff->macroset == MACROSET_MAN)
+			tok_idx = n->tok - MAN_TH;
+		else if (roff->macroset == MACROSET_MDOC)
+			tok_idx = n->tok - MDOC_Dd;
+		else
+			tok_idx = -1;
+		if (tok_idx >= 0 && func[tok_idx] != NULL)
+			(*func[tok_idx]) (n, rec);
 		break;
 	default:
 		break;
 	}
 
-	proff_node(n->child, rec, func);
-	proff_node(n->next, rec, func);
+	proff_node(n->child, rec, roff, func);
+	proff_node(n->next, rec, roff, func);
 }
 
 /*

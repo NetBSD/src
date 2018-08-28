@@ -1,5 +1,5 @@
-/*	$NetBSD: sshlogin.c,v 1.9 2017/04/18 18:41:46 christos Exp $	*/
-/* $OpenBSD: sshlogin.c,v 1.32 2015/12/26 20:51:35 guenther Exp $ */
+/*	$NetBSD: sshlogin.c,v 1.10 2018/08/26 07:46:37 christos Exp $	*/
+/* $OpenBSD: sshlogin.c,v 1.33 2018/07/09 21:26:02 markus Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -42,7 +42,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: sshlogin.c,v 1.9 2017/04/18 18:41:46 christos Exp $");
+__RCSID("$NetBSD: sshlogin.c,v 1.10 2018/08/26 07:46:37 christos Exp $");
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -64,8 +64,9 @@ __RCSID("$NetBSD: sshlogin.c,v 1.9 2017/04/18 18:41:46 christos Exp $");
 #include <limits.h>
 
 #include "sshlogin.h"
+#include "ssherr.h"
 #include "log.h"
-#include "buffer.h"
+#include "sshbuf.h"
 #include "misc.h"
 #include "servconf.h"
 
@@ -73,7 +74,7 @@ __RCSID("$NetBSD: sshlogin.c,v 1.9 2017/04/18 18:41:46 christos Exp $");
 #define HOST_NAME_MAX MAXHOSTNAMELEN
 #endif
 
-extern Buffer loginmsg;
+extern struct sshbuf *loginmsg;
 extern ServerOptions options;
 
 /*
@@ -143,8 +144,9 @@ get_last_login_time(uid_t uid, const char *logname,
 static void
 store_lastlog_message(const char *user, uid_t uid)
 {
-	char *time_string, hostname[HOST_NAME_MAX+1] = "", buf[512];
+	char *time_string, hostname[HOST_NAME_MAX+1] = "";
 	time_t last_login_time;
+	int r;
 
 	if (!options.print_lastlog)
 		return;
@@ -156,12 +158,13 @@ store_lastlog_message(const char *user, uid_t uid)
 		if ((time_string = ctime(&last_login_time)) != NULL)
 			time_string[strcspn(time_string, "\n")] = '\0';
 		if (strcmp(hostname, "") == 0)
-			snprintf(buf, sizeof(buf), "Last login: %s\r\n",
+			r = sshbuf_putf(loginmsg, "Last login: %s\r\n",
 			    time_string);
 		else
-			snprintf(buf, sizeof(buf), "Last login: %s from %s\r\n",
+			r = sshbuf_putf(loginmsg, "Last login: %s from %s\r\n",
 			    time_string, hostname);
-		buffer_append(&loginmsg, buf, strlen(buf));
+		if (r != 0)
+			fatal("%s: buffer error: %s", __func__, ssh_err(r));
 	}
 }
 

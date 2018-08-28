@@ -1,3 +1,5 @@
+/*	$NetBSD: i915_gem_dmabuf.c,v 1.3 2018/08/27 15:22:54 riastradh Exp $	*/
+
 /*
  * Copyright 2012 Red Hat Inc
  *
@@ -23,13 +25,18 @@
  * Authors:
  *	Dave Airlie <airlied@redhat.com>
  */
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: i915_gem_dmabuf.c,v 1.3 2018/08/27 15:22:54 riastradh Exp $");
+
 #include <drm/drmP.h>
 #include "i915_drv.h"
 #include <linux/dma-buf.h>
 
 static struct drm_i915_gem_object *dma_buf_to_obj(struct dma_buf *buf)
 {
-	return to_intel_bo(buf->priv);
+	struct drm_gem_object *obj = buf->priv;
+
+	return to_intel_bo(obj);
 }
 
 static struct sg_table *i915_gem_map_dma_buf(struct dma_buf_attachment *attachment,
@@ -37,8 +44,12 @@ static struct sg_table *i915_gem_map_dma_buf(struct dma_buf_attachment *attachme
 {
 	struct drm_i915_gem_object *obj = dma_buf_to_obj(attachment->dmabuf);
 	struct sg_table *st;
+#ifdef __NetBSD__
+	int ret;
+#else
 	struct scatterlist *src, *dst;
 	int ret, i;
+#endif
 
 	ret = i915_mutex_lock_interruptible(obj->base.dev);
 	if (ret)
@@ -50,6 +61,11 @@ static struct sg_table *i915_gem_map_dma_buf(struct dma_buf_attachment *attachme
 
 	i915_gem_object_pin_pages(obj);
 
+#ifdef __NetBSD__
+	st = drm_prime_pglist_to_sg(&obj->pageq, obj->base.size >> PAGE_SHIFT);
+	if (IS_ERR(st))
+		goto err_unpin;
+#else
 	/* Copy sg so that we make an independent mapping */
 	st = kmalloc(sizeof(struct sg_table), GFP_KERNEL);
 	if (st == NULL) {
@@ -73,14 +89,17 @@ static struct sg_table *i915_gem_map_dma_buf(struct dma_buf_attachment *attachme
 		ret =-ENOMEM;
 		goto err_free_sg;
 	}
+#endif
 
 	mutex_unlock(&obj->base.dev->struct_mutex);
 	return st;
 
+#ifndef __NetBSD__
 err_free_sg:
 	sg_free_table(st);
 err_free:
 	kfree(st);
+#endif
 err_unpin:
 	i915_gem_object_unpin_pages(obj);
 err_unlock:
@@ -97,9 +116,13 @@ static void i915_gem_unmap_dma_buf(struct dma_buf_attachment *attachment,
 
 	mutex_lock(&obj->base.dev->struct_mutex);
 
+#ifdef __NetBSD__
+	drm_prime_sg_free(sg);
+#else
 	dma_unmap_sg(attachment->dev, sg->sgl, sg->nents, dir);
 	sg_free_table(sg);
 	kfree(sg);
+#endif
 
 	i915_gem_object_unpin_pages(obj);
 
@@ -110,7 +133,11 @@ static void *i915_gem_dmabuf_vmap(struct dma_buf *dma_buf)
 {
 	struct drm_i915_gem_object *obj = dma_buf_to_obj(dma_buf);
 	struct drm_device *dev = obj->base.dev;
+#ifdef __NetBSD__
+	struct vm_page *pg;
+#else
 	struct sg_page_iter sg_iter;
+#endif
 	struct page **pages;
 	int ret, i;
 
@@ -136,8 +163,14 @@ static void *i915_gem_dmabuf_vmap(struct dma_buf *dma_buf)
 		goto err_unpin;
 
 	i = 0;
+#ifdef __NetBSD__
+	TAILQ_FOREACH(pg, &obj->pageq, pageq.queue)
+		pages[i++] = container_of(pg, struct page, p_vmp);
+	KASSERT(i == obj->base.size >> PAGE_SHIFT);
+#else
 	for_each_sg_page(obj->pages->sgl, &sg_iter, obj->pages->nents, 0)
 		pages[i++] = sg_page_iter_page(&sg_iter);
+#endif
 
 	obj->dma_buf_vmapping = vmap(pages, i, 0, PAGE_KERNEL);
 	drm_free_large(pages);
@@ -161,14 +194,14 @@ static void i915_gem_dmabuf_vunmap(struct dma_buf *dma_buf, void *vaddr)
 {
 	struct drm_i915_gem_object *obj = dma_buf_to_obj(dma_buf);
 	struct drm_device *dev = obj->base.dev;
-	int ret;
 
-	ret = i915_mutex_lock_interruptible(dev);
-	if (ret)
-		return;
-
+	mutex_lock(&dev->struct_mutex);
 	if (--obj->vmapping_count == 0) {
+#ifdef __NetBSD__
+		vunmap(obj->dma_buf_vmapping, obj->base.size >> PAGE_SHIFT);
+#else
 		vunmap(obj->dma_buf_vmapping);
+#endif
 		obj->dma_buf_vmapping = NULL;
 
 		i915_gem_object_unpin_pages(obj);
@@ -195,7 +228,14 @@ static void i915_gem_dmabuf_kunmap(struct dma_buf *dma_buf, unsigned long page_n
 
 }
 
+#ifdef __NetBSD__
+static int
+i915_gem_dmabuf_mmap(struct dma_buf *dma_buf, off_t *offp, size_t size,
+    int prot, int *flagsp, int *advicep, struct uvm_object **uobjp,
+    int *maxprotp)
+#else
 static int i915_gem_dmabuf_mmap(struct dma_buf *dma_buf, struct vm_area_struct *vma)
+#endif
 {
 	return -EINVAL;
 }
@@ -233,27 +273,73 @@ static const struct dma_buf_ops i915_dmabuf_ops =  {
 struct dma_buf *i915_gem_prime_export(struct drm_device *dev,
 				      struct drm_gem_object *gem_obj, int flags)
 {
-	return dma_buf_export(gem_obj, &i915_dmabuf_ops, gem_obj->size, flags);
+	struct drm_i915_gem_object *obj = to_intel_bo(gem_obj);
+	DEFINE_DMA_BUF_EXPORT_INFO(exp_info);
+
+	exp_info.ops = &i915_dmabuf_ops;
+	exp_info.size = gem_obj->size;
+	exp_info.flags = flags;
+	exp_info.priv = gem_obj;
+
+
+	if (obj->ops->dmabuf_export) {
+		int ret = obj->ops->dmabuf_export(obj);
+		if (ret)
+			return ERR_PTR(ret);
+	}
+
+	return dma_buf_export(&exp_info);
 }
 
 static int i915_gem_object_get_pages_dmabuf(struct drm_i915_gem_object *obj)
 {
 	struct sg_table *sg;
+#ifdef __NetBSD__
+	struct drm_device *dev = obj->base.dev;
+	bus_dmamap_t map;
+	int ret;
+#endif
 
 	sg = dma_buf_map_attachment(obj->base.import_attach, DMA_BIDIRECTIONAL);
 	if (IS_ERR(sg))
 		return PTR_ERR(sg);
 
+#ifdef __NetBSD__
+	ret = -bus_dmamap_create(dev->dmat, obj->base.size,
+	    obj->base.size >> PAGE_SHIFT, obj->base.size, 0, BUS_DMA_NOWAIT,
+	    &map);
+	if (ret) {
+fail0:		dma_buf_unmap_attachment(obj->base.import_attach, sg,
+		    DMA_BIDIRECTIONAL);
+		return ret;
+	}
+	ret = drm_prime_bus_dmamap_load_sgt(dev->dmat, map, sg);
+	if (ret) {
+fail1: __unused
+		bus_dmamap_destroy(dev->dmat, map);
+		goto fail0;
+	}
+	obj->pages = map;
+	obj->sg = sg;
+#else
 	obj->pages = sg;
-	obj->has_dma_mapping = true;
+#endif
 	return 0;
 }
 
 static void i915_gem_object_put_pages_dmabuf(struct drm_i915_gem_object *obj)
 {
+#ifdef __NetBSD__
+	bus_dmamap_unload(obj->base.dev->dmat, obj->pages);
+	bus_dmamap_destroy(obj->base.dev->dmat, obj->pages);
+	obj->pages = NULL;
+	dma_buf_unmap_attachment(obj->base.import_attach,
+				 obj->sg, DMA_BIDIRECTIONAL);
+	obj->sg = NULL;		/* paranoia */
+#else
 	dma_buf_unmap_attachment(obj->base.import_attach,
 				 obj->pages, DMA_BIDIRECTIONAL);
-	obj->has_dma_mapping = false;
+#endif
 }
 
 static const struct drm_i915_gem_object_ops i915_gem_object_dmabuf_ops = {

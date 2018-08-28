@@ -1,3 +1,5 @@
+/*	$NetBSD: ttm_module.h,v 1.2 2018/08/27 04:58:38 riastradh Exp $	*/
+
 /**************************************************************************
  *
  * Copyright 2008-2009 VMware, Inc., Palo Alto, CA., USA

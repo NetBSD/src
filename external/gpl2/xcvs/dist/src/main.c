@@ -17,7 +17,7 @@
  *
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: main.c,v 1.6 2016/05/17 14:00:09 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.7 2018/08/21 15:37:33 christos Exp $");
 
 #include "cvs.h"
 
@@ -498,6 +498,32 @@ divide_by (unsigned char buf[COMMITID_RAW_SIZE], unsigned int d)
     return carry;
 }
 
+#ifdef SIGINFO
+#include <paths.h>
+
+static void
+show_status (int n)
+{
+	char wd[PATH_MAX];
+	char buf[2048];
+	static int ttyfd = -2;
+
+	if (ttyfd == -2)
+		ttyfd = open(_PATH_TTY, O_RDWR, O_CLOEXEC);
+
+	if (ttyfd == -1)
+		return;
+
+	if (getcwd(wd, sizeof(wd)) == NULL)
+		return;
+	n = snprintf(buf, sizeof(buf), "%s[%d]: working in %s\n", getprogname(),
+	    (int)getpid(), wd);
+	if (n <= 0)
+		return;
+	write(ttyfd, buf, (size_t)n);
+}
+#endif
+
 static void
 convert (char const input[COMMITID_RAW_SIZE], char *output)
 {
@@ -967,6 +993,9 @@ cause intermittent sandbox corruption.");
 
 	/* make sure we clean up on error */
 	signals_register (main_cleanup);
+#ifdef SIGINFO
+	signal (SIGINFO, show_status);
+#endif
 
 #ifdef KLUDGE_FOR_WNT_TESTSUITE
 	/* Probably the need for this will go away at some point once

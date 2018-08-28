@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.69 2016/12/17 14:36:29 flxd Exp $	*/
+/*	$NetBSD: cpu.h,v 1.70 2018/08/22 01:05:22 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -111,20 +111,11 @@ struct clockframe {
 extern int astpending;		/* need to trap before returning to user mode */
 #define aston() (astpending++)
 
-#endif /* _KERNEL */
-
-/*
- * CTL_MACHDEP definitions.
- */
-#define	CPU_CONSDEV		1	/* dev_t: console terminal device */
-#define	CPU_MAXID		2	/* number of valid machdep ids */
-
 /*
  * The rest of this should probably be moved to <machine/hp300spu.h>,
  * although some of it could probably be put into generic 68k headers.
  */
 
-#ifdef _KERNEL
 extern	uint8_t *intiobase, *intiolimit, *extiobase;
 extern	void (*vectab[])(void);
 

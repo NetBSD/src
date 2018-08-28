@@ -1,4 +1,4 @@
-/*	$NetBSD: moduleparam.h,v 1.5 2015/02/25 14:00:52 riastradh Exp $	*/
+/*	$NetBSD: moduleparam.h,v 1.8 2018/08/27 13:57:24 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -45,6 +45,7 @@ struct linux_module_param_info {
 #define MTYPE_int	0
 #define MTYPE_bool	1
 #define MTYPE_charp	2
+#define MTYPE_uint	3
 
 #define	module_param_named(NAME, VAR, TYPE, MODE) \
 static __attribute__((__used__)) struct linux_module_param_info info_ ## NAME = { \
@@ -55,5 +56,9 @@ static __attribute__((__used__)) struct linux_module_param_info info_ ## NAME = 
 	.mode = MODE, \
 }; \
 __link_set_add_data(linux_module_param_info, info_ ## NAME)
+
+#define	module_param(VAR, TYPE, MODE)	module_param_named(VAR, VAR, TYPE, MODE)
+#define	module_param_unsafe		module_param
+#define	module_param_named_unsafe	module_param_named
 
 #endif  /* _LINUX_MODULEPARAM_H_ */

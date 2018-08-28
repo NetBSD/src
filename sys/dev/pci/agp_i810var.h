@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_i810var.h,v 1.6 2015/03/06 22:03:06 riastradh Exp $	*/
+/*	$NetBSD: agp_i810var.h,v 1.7 2018/08/27 00:51:37 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -58,11 +58,8 @@ struct agp_i810_softc {
 	struct agp_gatt *gatt;		/* i810-only OS-allocated GTT */
 	uint32_t dcache_size;		/* i810-only on-chip memory size */
 
-	/* XXX Kludge to work around broken X servers.  */
+	/* Cached pgtblctl register for resume.  */
 	pcireg_t pgtblctl;
-
-	/* XXX Vestige of unfinished powerhook?  */
-	uint32_t pgtblctl_resume_hack;
 };
 
 extern struct agp_softc	*agp_i810_sc;
@@ -75,3 +72,4 @@ int	agp_i810_write_gtt_entry(struct agp_i810_softc *, off_t, bus_addr_t,
 	    int);
 void	agp_i810_post_gtt_entry(struct agp_i810_softc *, off_t);
 void	agp_i810_chipset_flush(struct agp_i810_softc *);
+void	agp_i810_reset(struct agp_i810_softc *);

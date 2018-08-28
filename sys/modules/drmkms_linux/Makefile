@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.7 2016/02/24 22:04:15 skrll Exp $
+# $NetBSD: Makefile,v 1.11 2018/08/28 03:41:40 riastradh Exp $
 
 #
 # At some point this needs to turn into linux.kmod and a proper home for it
@@ -8,8 +8,8 @@
 
 .include "../Makefile.inc"
 
-.PATH: ${S}/external/bsd/drm2/linux
 .PATH: ${S}/external/bsd/common/linux
+.PATH: ${S}/external/bsd/drm2/linux
 
 CPPFLAGS+=	-I${S}/external/bsd/common/include
 CPPFLAGS+=	-I${S}/external/bsd/drm2/include
@@ -19,13 +19,18 @@ CPPFLAGS+=	-DDIAGNOSTIC
 
 KMOD=	drmkms_linux
 
+SRCS+=	linux_atomic64.c
+SRCS+=	linux_dma_buf.c
 SRCS+=	linux_dmi.c
-SRCS+=	linux_kmap.c
+SRCS+=	linux_fence.c
 SRCS+=	linux_i2c.c
 SRCS+=	linux_idr.c
+SRCS+=	linux_kmap.c
 SRCS+=	linux_list_sort.c
 SRCS+=	linux_module.c
-SRCS+=	linux_work.c
+SRCS+=	linux_rcu.c
+SRCS+=	linux_reservation.c
+SRCS+=	linux_work.c		# XXX Move me to linux.kmod.
 SRCS+=	linux_writecomb.c
 SRCS+=	linux_ww_mutex.c
 

@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.104 2018/08/01 20:04:10 maxv Exp $
+#	$NetBSD: INSTALL,v 1.105 2018/08/25 20:52:40 rin Exp $
 #
 #	CATSINST -- CHALTECH CATS Install kernel
 #
@@ -318,6 +318,7 @@ ukphy*	at mii? phy ?			# generic unknown PHYs
 #axe*	at uhub? port ?		# ASIX AX88172 based adapters
 #cue*	at uhub? port ?		# CATC USB-EL1201A based adapters
 #kue*	at uhub? port ?		# Kawasaki LSI KL5KUSB101B based adapters
+#mue*	at uhub? port ?		# Microchip LAN75xx/LAN78xx based adapters
 #url*	at uhub? port ?		# Realtek RTL8150L based adapters
 
 # USB Generic driver

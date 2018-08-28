@@ -1,7 +1,7 @@
-/*	$NetBSD: bitmap.h,v 1.2 2014/03/18 18:20:43 riastradh Exp $	*/
+/*	$NetBSD: bitmap.h,v 1.8 2018/08/27 14:52:16 riastradh Exp $	*/
 
 /*-
- * Copyright (c) 2013 The NetBSD Foundation, Inc.
+ * Copyright (c) 2018 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -31,5 +31,173 @@
 
 #ifndef _LINUX_BITMAP_H_
 #define _LINUX_BITMAP_H_
+
+#include <sys/param.h>
+#include <sys/types.h>
+#include <sys/systm.h>
+
+/*
+ * bitmap_zero(bitmap, nbits)
+ *
+ *	Zero a bitmap that was allocated to have nbits bits.  Yes, this
+ *	zeros bits past nbits.
+ */
+static inline void
+bitmap_zero(unsigned long *bitmap, size_t nbits)
+{
+	const size_t bpl = NBBY * sizeof(*bitmap);
+	size_t n = howmany(nbits, bpl);
+
+	memset(bitmap, 0, n * sizeof(*bitmap));
+}
+
+/*
+ * bitmap_empty(bitmap, nbits)
+ *
+ *	Return true if all bits at 0, 1, 2, ..., nbits-2, nbits-1 are
+ *	0, or false if any of them is 1.
+ */
+static inline bool
+bitmap_empty(const unsigned long *bitmap, size_t nbits)
+{
+	const size_t bpl = NBBY * sizeof(*bitmap);
+
+	for (; nbits >= bpl; nbits -= bpl) {
+		if (*bitmap++)
+			return false;
+	}
+
+	if (nbits) {
+		if (*bitmap & ~(~0UL << nbits))
+			return false;
+	}
+
+	return true;
+}
+
+/*
+ * bitmap_weight(bitmap, nbits)
+ *
+ *	Compute the number of 1 bits at 0, 1, 2, ..., nbits-2, nbits-1.
+ */
+static inline int
+bitmap_weight(const unsigned long *bitmap, size_t nbits)
+{
+	const size_t bpl = NBBY * sizeof(*bitmap);
+	int weight = 0;
+
+	for (; nbits >= bpl; nbits -= bpl)
+		weight += popcountl(*bitmap++);
+	if (nbits)
+		weight += popcountl(*bitmap & ~(~0UL << nbits));
+
+	return weight;
+}
+
+/*
+ * bitmap_set(bitmap, startbit, nbits)
+ *
+ *	Set bits at startbit, startbit+1, ..., startbit+nbits-2,
+ *	startbit+nbits-1 to 1.
+ */
+static inline void
+bitmap_set(unsigned long *bitmap, size_t startbit, size_t nbits)
+{
+	const size_t bpl = NBBY * sizeof(*bitmap);
+	unsigned long *p = bitmap + startbit/bpl;
+	unsigned initial = startbit%bpl;
+
+	/* Handle an initial odd word if any.  */
+	if (initial) {
+		/* Does the whole thing fit in a single word?  */
+		if (nbits <= bpl - initial) {
+			/* Yes: just set nbits starting at initial.  */
+			*p |= ~(~0ULL << nbits) << initial;
+			return;
+		}
+		/* Nope: set all bits above initial, and advance.  */
+		*p++ |= ~0ULL << initial;
+		nbits -= bpl - initial;
+	}
+
+	/* Set the middle part to all bits 1.  */
+	for (; nbits >= bpl; nbits -= bpl)
+		*p++ = ~0UL;
+
+	/* Handle a final odd word if any by setting its low nbits.  */
+	if (nbits)
+		*p |= ~(~0ULL << nbits);
+}
+
+/*
+ * bitmap_clear(bitmap, startbit, nbits)
+ *
+ *	Clear bits at startbit, startbit+1, ..., startbit+nbits-2,
+ *	startbit+nbits-1, replacing them by 0.
+ */
+static inline void
+bitmap_clear(unsigned long *bitmap, size_t startbit, size_t nbits)
+{
+	const size_t bpl = NBBY * sizeof(*bitmap);
+	unsigned long *p = bitmap + startbit/bpl;
+	unsigned initial = startbit%bpl;
+
+	/* Handle an initial odd word if any.  */
+	if (initial) {
+		/* Does the whole thing fit in a single word?  */
+		if (nbits <= bpl - initial) {
+			/* Yes: just clear nbits starting at initial.  */
+			*p &= ~(~(~0ULL << nbits) << initial);
+			return;
+		}
+		/* Nope: clear all bits above initial, and advance.  */
+		*p++ &= ~(~0ULL << initial);
+		nbits -= bpl - initial;
+	}
+
+	/* Zero the middle part.  */
+	for (; nbits >= bpl; nbits -= bpl)
+		*p++ = 0UL;
+
+	/* Handle a final odd word if any by clearing its low nbits.  */
+	if (nbits)
+		*p &= ~0ULL << nbits;
+}
+
+/*
+ * bitmap_and(dst, src1, src2, nbits)
+ *
+ *	Set dst to be the bitwise AND of src1 and src2, all bitmaps
+ *	allocated to have nbits bits.  Yes, this modifies bits past
+ *	nbits.  Any pair of {dst, src1, src2} may be aliases.
+ */
+static inline void
+bitmap_and(unsigned long *dst, const unsigned long *src1,
+    const unsigned long *src2, size_t nbits)
+{
+	const size_t bpl = NBBY * sizeof(unsigned long);
+	size_t n = howmany(nbits, bpl);
+
+	while (n --> 0)
+		*dst++ = *src1++ & *src2++;
+}
+
+/*
+ * bitmap_or(dst, src1, src2, nbits)
+ *
+ *	Set dst to be the bitwise inclusive-OR of src1 and src2, all
+ *	bitmaps allocated to have nbits bits.  Yes, this modifies bits
+ *	past nbits.  Any pair of {dst, src1, src2} may be aliases.
+ */
+static inline void
+bitmap_or(unsigned long *dst, const unsigned long *src1,
+    const unsigned long *src2, size_t nbits)
+{
+	const size_t bpl = NBBY * sizeof(unsigned long);
+	size_t n = howmany(nbits, bpl);
+
+	while (n --> 0)
+		*dst++ = *src1++ | *src2++;
+}
 
 #endif  /* _LINUX_BITMAP_H_ */

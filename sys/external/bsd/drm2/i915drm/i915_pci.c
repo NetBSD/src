@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_pci.c,v 1.15 2014/07/24 22:13:23 riastradh Exp $	*/
+/*	$NetBSD: i915_pci.c,v 1.21 2018/08/27 14:49:22 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_pci.c,v 1.15 2014/07/24 22:13:23 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_pci.c,v 1.21 2018/08/27 14:49:22 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/queue.h>
@@ -47,6 +47,7 @@ SIMPLEQ_HEAD(i915drmkms_task_head, i915drmkms_task);
 
 struct i915drmkms_softc {
 	device_t			sc_dev;
+	struct pci_attach_args		sc_pa;
 	enum {
 		I915DRMKMS_TASK_ATTACH,
 		I915DRMKMS_TASK_WORKQUEUE,
@@ -64,6 +65,7 @@ static const struct intel_device_info *
 
 static int	i915drmkms_match(device_t, cfdata_t, void *);
 static void	i915drmkms_attach(device_t, device_t, void *);
+static void	i915drmkms_attach_real(device_t);
 static int	i915drmkms_detach(device_t, int);
 
 static bool	i915drmkms_suspend(device_t, const pmf_qual_t *);
@@ -139,14 +141,6 @@ i915drmkms_attach(device_t parent, device_t self, void *aux)
 {
 	struct i915drmkms_softc *const sc = device_private(self);
 	const struct pci_attach_args *const pa = aux;
-	const struct intel_device_info *const info = i915drmkms_pci_lookup(pa);
-	const unsigned long cookie =
-	    (unsigned long)(uintptr_t)(const void *)info;
-	int error;
-
-	KASSERT(info != NULL);
-
-	sc->sc_dev = self;
 
 	pci_aprint_devinfo(pa, NULL);
 
@@ -154,8 +148,34 @@ i915drmkms_attach(device_t parent, device_t self, void *aux)
 		&i915drmkms_resume))
 		aprint_error_dev(self, "unable to establish power handler\n");
 
+	/*
+	 * Trivial initialization first; the rest will come after we
+	 * have mounted the root file system and can load firmware
+	 * images.
+	 */
+	sc->sc_dev = self;
+	sc->sc_pa = *pa;
+
+	config_mountroot(self, &i915drmkms_attach_real);
+}
+
+static void
+i915drmkms_attach_real(device_t self)
+{
+	struct i915drmkms_softc *const sc = device_private(self);
+	struct pci_attach_args *const pa = &sc->sc_pa;
+	const struct intel_device_info *const info = i915drmkms_pci_lookup(pa);
+	const unsigned long cookie =
+	    (unsigned long)(uintptr_t)(const void *)info;
+	int error;
+
+	KASSERT(info != NULL);
+
 	sc->sc_task_state = I915DRMKMS_TASK_ATTACH;
 	SIMPLEQ_INIT(&sc->sc_task_u.attach);
+
+	/* Initialize the Linux PCI device descriptor.  */
+	linux_pci_dev_init(&sc->sc_pci_dev, self, device_parent(self), pa, 0);
 
 	/* XXX errno Linux->NetBSD */
 	error = -drm_pci_attach(self, pa, &sc->sc_pci_dev, i915_drm_driver,
@@ -211,7 +231,8 @@ i915drmkms_detach(device_t self, int flags)
 		return error;
 	sc->sc_drm_dev = NULL;
 
-out:	pmf_device_deregister(self);
+out:	linux_pci_dev_destroy(&sc->sc_pci_dev);
+	pmf_device_deregister(self);
 	return 0;
 }
 
@@ -225,7 +246,10 @@ i915drmkms_suspend(device_t self, const pmf_qual_t *qual)
 	if (dev == NULL)
 		return true;
 
-	ret = i915_drm_freeze(dev);
+	ret = i915_drm_suspend(dev);
+	if (ret)
+		return false;
+	ret = i915_drm_suspend_late(dev, false);
 	if (ret)
 		return false;
 
@@ -242,10 +266,10 @@ i915drmkms_resume(device_t self, const pmf_qual_t *qual)
 	if (dev == NULL)
 		return true;
 
-	ret = i915_drm_thaw_early(dev);
+	ret = i915_drm_resume_early(dev);
 	if (ret)
 		return false;
-	ret = i915_drm_thaw(dev);
+	ret = i915_drm_resume(dev);
 	if (ret)
 		return false;
 

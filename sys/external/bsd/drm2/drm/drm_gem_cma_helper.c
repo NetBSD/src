@@ -1,4 +1,4 @@
-/* $NetBSD: drm_gem_cma_helper.c,v 1.1 2017/12/26 14:53:12 jmcneill Exp $ */
+/* $NetBSD: drm_gem_cma_helper.c,v 1.6 2018/08/27 15:27:43 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,25 +27,31 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_gem_cma_helper.c,v 1.1 2017/12/26 14:53:12 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_gem_cma_helper.c,v 1.6 2018/08/27 15:27:43 riastradh Exp $");
 
 #include <drm/drmP.h>
 #include <drm/drm_gem_cma_helper.h>
 
 #include <uvm/uvm.h>
 
-struct drm_gem_cma_object *
-drm_gem_cma_create(struct drm_device *ddev, unsigned int size)
+static struct drm_gem_cma_object *
+drm_gem_cma_create_internal(struct drm_device *ddev, size_t size,
+    struct sg_table *sgt)
 {
 	struct drm_gem_cma_object *obj;
 	int error, nsegs;
 
 	obj = kmem_zalloc(sizeof(*obj), KM_SLEEP);
-	obj->dmat = ddev->bus_dmat;
+	obj->dmat = ddev->dmat;
 	obj->dmasize = size;
 
-        error = bus_dmamem_alloc(obj->dmat, obj->dmasize, PAGE_SIZE, 0,
-	    obj->dmasegs, 1, &nsegs, BUS_DMA_WAITOK);
+	if (sgt) {
+		error = -drm_prime_sg_to_bus_dmamem(obj->dmat, obj->dmasegs, 1,
+		    &nsegs, sgt);
+	} else {
+		error = bus_dmamem_alloc(obj->dmat, obj->dmasize, PAGE_SIZE, 0,
+		    obj->dmasegs, 1, &nsegs, BUS_DMA_WAITOK);
+	}
 	if (error)
 		goto failed;
 	error = bus_dmamem_map(obj->dmat, obj->dmasegs, nsegs,
@@ -61,7 +67,8 @@ drm_gem_cma_create(struct drm_device *ddev, unsigned int size)
 	if (error)
 		goto destroy;
 
-	memset(obj->vaddr, 0, obj->dmasize);
+	if (!sgt)
+		memset(obj->vaddr, 0, obj->dmasize);
 
 	drm_gem_private_object_init(ddev, &obj->base, size);
 
@@ -79,13 +86,24 @@ failed:
 	return NULL;
 }
 
+struct drm_gem_cma_object *
+drm_gem_cma_create(struct drm_device *ddev, size_t size)
+{
+
+	return drm_gem_cma_create_internal(ddev, size, NULL);
+}
+
 static void
 drm_gem_cma_obj_free(struct drm_gem_cma_object *obj)
 {
+
 	bus_dmamap_unload(obj->dmat, obj->dmamap);
 	bus_dmamap_destroy(obj->dmat, obj->dmamap);
 	bus_dmamem_unmap(obj->dmat, obj->vaddr, obj->dmasize);
-	bus_dmamem_free(obj->dmat, obj->dmasegs, 1);
+	if (obj->sgt)
+		drm_prime_sg_free(obj->sgt);
+	else
+		bus_dmamem_free(obj->dmat, obj->dmasegs, 1);
 	kmem_free(obj, sizeof(*obj));
 }
 
@@ -219,3 +237,42 @@ const struct uvm_pagerops drm_gem_cma_uvm_ops = {
 	.pgo_detach = drm_gem_pager_detach,
 	.pgo_fault = drm_gem_cma_fault,
 };
+
+struct sg_table *
+drm_gem_cma_prime_get_sg_table(struct drm_gem_object *gem_obj)
+{
+	struct drm_gem_cma_object *obj = to_drm_gem_cma_obj(gem_obj);
+
+	return drm_prime_bus_dmamem_to_sg(obj->dmat, obj->dmasegs, 1);
+}
+
+struct drm_gem_object *
+drm_gem_cma_prime_import_sg_table(struct drm_device *ddev,
+    struct dma_buf_attachment *attach, struct sg_table *sgt)
+{
+	size_t size = drm_prime_sg_size(sgt);
+	struct drm_gem_cma_object *obj;
+
+	obj = drm_gem_cma_create_internal(ddev, size, sgt);
+	if (obj == NULL)
+		return ERR_PTR(-ENOMEM);
+
+	return &obj->base;
+}
+
+void *
+drm_gem_cma_prime_vmap(struct drm_gem_object *gem_obj)
+{
+	struct drm_gem_cma_object *obj = to_drm_gem_cma_obj(gem_obj);
+
+	return obj->vaddr;
+}
+
+void
+drm_gem_cma_prime_vunmap(struct drm_gem_object *gem_obj, void *vaddr)
+{
+	struct drm_gem_cma_object *obj __diagused =
+	    to_drm_gem_cma_obj(gem_obj);
+
+	KASSERT(vaddr == obj->vaddr);
+}

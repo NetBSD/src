@@ -1,3 +1,5 @@
+/*	$NetBSD: via_drv.c,v 1.7 2018/08/28 03:41:39 riastradh Exp $	*/
+
 /*
  * Copyright 1998-2003 VIA Technologies, Inc. All Rights Reserved.
  * Copyright 2001-2003 S3 Graphics, Inc. All Rights Reserved.
@@ -21,6 +23,9 @@
  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: via_drv.c,v 1.7 2018/08/28 03:41:39 riastradh Exp $");
 
 #include <linux/module.h>
 
@@ -63,7 +68,7 @@ static const struct file_operations via_driver_fops = {
 	.open = drm_open,
 	.release = drm_release,
 	.unlocked_ioctl = drm_ioctl,
-	.mmap = drm_mmap,
+	.mmap = drm_legacy_mmap,
 	.poll = drm_poll,
 #ifdef CONFIG_COMPAT
 	.compat_ioctl = drm_compat_ioctl,
@@ -81,6 +86,8 @@ static struct drm_driver driver = {
 	.open = via_driver_open,
 	.preclose = via_reclaim_buffers_locked,
 	.postclose = via_driver_postclose,
+	.set_busid = drm_pci_set_busid,
+	.set_unique = drm_pci_set_unique,
 	.context_dtor = via_final_context,
 	.get_vblank_counter = via_get_vblank_counter,
 	.enable_vblank = via_enable_vblank,
@@ -89,13 +96,17 @@ static struct drm_driver driver = {
 	.irq_postinstall = via_driver_irq_postinstall,
 	.irq_uninstall = via_driver_irq_uninstall,
 	.irq_handler = via_driver_irq_handler,
+#ifdef __NetBSD__
+	.request_irq = drm_pci_request_irq,
+	.free_irq = drm_pci_free_irq,
+#endif
 	.dma_quiescent = via_driver_dma_quiescent,
 	.lastclose = via_lastclose,
 	.ioctls = via_ioctls,
 #ifndef __NetBSD__
 	.fops = &via_driver_fops,
 #else
-	.mmap_object = drm_mmap_object,
+	.mmap_object = drm_legacy_mmap_object,
 #endif
 	.name = DRIVER_NAME,
 	.desc = DRIVER_DESC,

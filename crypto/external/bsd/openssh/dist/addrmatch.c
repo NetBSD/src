@@ -1,5 +1,5 @@
-/*	$NetBSD: addrmatch.c,v 1.11 2017/04/18 18:41:46 christos Exp $	*/
-/*	$OpenBSD: addrmatch.c,v 1.13 2016/09/21 16:55:42 djm Exp $ */
+/*	$NetBSD: addrmatch.c,v 1.12 2018/08/26 07:46:36 christos Exp $	*/
+/*	$OpenBSD: addrmatch.c,v 1.14 2018/07/31 03:07:24 djm Exp $ */
 
 /*
  * Copyright (c) 2004-2008 Damien Miller <djm@mindrot.org>
@@ -18,7 +18,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: addrmatch.c,v 1.11 2017/04/18 18:41:46 christos Exp $");
+__RCSID("$NetBSD: addrmatch.c,v 1.12 2018/08/26 07:46:36 christos Exp $");
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -204,25 +204,24 @@ addr_cmp(const struct xaddr *a, const struct xaddr *b)
 static int
 addr_pton(const char *p, struct xaddr *n)
 {
-	struct addrinfo hints, *ai;
+	struct addrinfo hints, *ai = NULL;
+	int ret = -1;
 
 	memset(&hints, '\0', sizeof(hints));
 	hints.ai_flags = AI_NUMERICHOST;
 
 	if (p == NULL || getaddrinfo(p, NULL, &hints, &ai) != 0)
-		return -1;
-
+		goto out;
 	if (ai == NULL || ai->ai_addr == NULL)
-		return -1;
-
-	if (n != NULL &&
-	    addr_sa_to_xaddr(ai->ai_addr, ai->ai_addrlen, n) == -1) {
+		goto out;
+	if (n != NULL && addr_sa_to_xaddr(ai->ai_addr, ai->ai_addrlen, n) == -1)
+		goto out;
+	/* success */
+	ret = 0;
+ out:
+	if (ai != NULL)
 		freeaddrinfo(ai);
-		return -1;
-	}
-
-	freeaddrinfo(ai);
-	return 0;
+	return ret;
 }
 
 /*

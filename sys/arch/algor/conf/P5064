@@ -1,4 +1,4 @@
-#	$NetBSD: P5064,v 1.86 2018/08/01 20:04:09 maxv Exp $
+#	$NetBSD: P5064,v 1.87 2018/08/25 20:52:40 rin Exp $
 #
 # Algorithmics P-5064 kernel.
 #
@@ -7,7 +7,7 @@ include	"arch/algor/conf/std.algor"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"P5064-$Revision: 1.86 $"
+#ident 		"P5064-$Revision: 1.87 $"
 
 maxusers 32
 
@@ -341,6 +341,7 @@ fd*	at	fdc? drive ?
 #axe*	at uhub? port ?		# ASIX AX88172 based adapters
 #cue*	at uhub? port ?		# CATC USB-EL1201A based adapters
 #kue*	at uhub? port ?		# Kawasaki LSI KL5KUSB101B based adapters
+#mue*	at uhub? port ?		# Microchip LAN75xx/LAN78xx based adapters
 #url*	at uhub? port ?		# Realtek RTL8150L based adapters
 
 # Serial adapters

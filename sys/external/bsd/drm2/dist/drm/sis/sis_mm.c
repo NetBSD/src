@@ -1,3 +1,5 @@
+/*	$NetBSD: sis_mm.c,v 1.3 2018/08/27 14:14:29 riastradh Exp $	*/
+
 /**************************************************************************
  *
  * Copyright 2006 Tungsten Graphics, Inc., Bismarck, ND., USA.
@@ -30,6 +32,9 @@
  * Authors:
  *    Thomas Hellström <thomas-at-tungstengraphics-dot-com>
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: sis_mm.c,v 1.3 2018/08/27 14:14:29 riastradh Exp $");
 
 #include <drm/drmP.h>
 #include <drm/sis_drm.h>
@@ -89,6 +94,7 @@ static int sis_drm_alloc(struct drm_device *dev, struct drm_file *file,
 	struct sis_file_private *file_priv = file->driver_priv;
 	unsigned long offset;
 
+	idr_preload(GFP_KERNEL);
 	mutex_lock(&dev->struct_mutex);
 
 	if (0 == ((pool == 0) ? dev_priv->vram_initialized :
@@ -96,6 +102,7 @@ static int sis_drm_alloc(struct drm_device *dev, struct drm_file *file,
 		DRM_ERROR
 		    ("Attempt to allocate from uninitialized memory manager.\n");
 		mutex_unlock(&dev->struct_mutex);
+		idr_preload_end();
 		return -EINVAL;
 	}
 
@@ -137,6 +144,7 @@ static int sis_drm_alloc(struct drm_device *dev, struct drm_file *file,
 
 	list_add(&item->owner_list, &file_priv->obj_list);
 	mutex_unlock(&dev->struct_mutex);
+	idr_preload_end();
 
 	mem->offset = ((pool == 0) ?
 		      dev_priv->vram_offset : dev_priv->agp_offset) +
@@ -151,6 +159,7 @@ fail_idr:
 fail_alloc:
 	kfree(item);
 	mutex_unlock(&dev->struct_mutex);
+	idr_preload_end();
 
 	mem->offset = 0;
 	mem->size = 0;
@@ -319,12 +328,12 @@ void sis_reclaim_buffers_locked(struct drm_device *dev,
 	if (!(file->minor->master && file->master->lock.hw_lock))
 		return;
 
-	drm_idlelock_take(&file->master->lock);
+	drm_legacy_idlelock_take(&file->master->lock);
 
 	mutex_lock(&dev->struct_mutex);
 	if (list_empty(&file_priv->obj_list)) {
 		mutex_unlock(&dev->struct_mutex);
-		drm_idlelock_release(&file->master->lock);
+		drm_legacy_idlelock_release(&file->master->lock);
 
 		return;
 	}
@@ -345,7 +354,7 @@ void sis_reclaim_buffers_locked(struct drm_device *dev,
 	}
 	mutex_unlock(&dev->struct_mutex);
 
-	drm_idlelock_release(&file->master->lock);
+	drm_legacy_idlelock_release(&file->master->lock);
 
 	return;
 }
@@ -359,4 +368,4 @@ const struct drm_ioctl_desc sis_ioctls[] = {
 	DRM_IOCTL_DEF_DRV(SIS_FB_INIT, sis_fb_init, DRM_AUTH | DRM_MASTER | DRM_ROOT_ONLY),
 };
 
-int sis_max_ioctl = DRM_ARRAY_SIZE(sis_ioctls);
+int sis_max_ioctl = ARRAY_SIZE(sis_ioctls);

@@ -1,4 +1,4 @@
-/*	$NetBSD: amrctl.c,v 1.10 2014/03/23 05:09:56 dholland Exp $	*/
+/*	$NetBSD: amrctl.c,v 1.11 2018/08/27 00:36:03 sevan Exp $	*/
 
 /*-
  * Copyright (c) 2002, Pierre David <Pierre.David@crc.u-strasbg.fr>
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: amrctl.c,v 1.10 2014/03/23 05:09:56 dholland Exp $");
+__RCSID("$NetBSD: amrctl.c,v 1.11 2018/08/27 00:36:03 sevan Exp $");
 #endif
 
 #include <stdio.h>
@@ -192,11 +192,10 @@ static void
 usage(const char *prog)
 {
 	fprintf(stderr, "usage: %s stat [-a num] [-b] "
-		"[-c ctlr|-f dev] [-g] [-l vol]\n\t\t"
+		"[-f dev] [-g] [-l vol]\n\t\t"
 		"[-p drive|-s bus[:target]] [-t usec] [-v]\n\n\t"
 		"-a num\t\tnumber of retries\n\t"
 		"-b\t\tbattery status\n\t"
-		"-c ctrl\t\tcontroller ID\n\t"
 		"-f dev\t\tdevice path\n\t"
 		"-g\t\tprint global parameters\n\t"
 		"-l vol\t\tlogical volume ID\n\t"
@@ -603,7 +602,7 @@ main(int argc, char *argv[])
 		usage(argv[0]);
 
 	optind = 2;
-	while ((i = getopt(argc, argv, "a:bc:f:gl:p:s:t:v")) != -1)
+	while ((i = getopt(argc, argv, "a:b:f:gl:p:s:t:v")) != -1)
 		switch (i) {
 		case 'a':
 			nattempts = atoi(optarg);

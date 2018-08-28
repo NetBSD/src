@@ -1,3 +1,5 @@
+/*	$NetBSD: nouveau_hwmon.h,v 1.2 2018/08/27 04:58:24 riastradh Exp $	*/
+
 /*
  * Copyright 2010 Red Hat Inc.
  *

@@ -1,4 +1,4 @@
-/*	$NetBSD: ktime.h,v 1.3 2014/07/16 20:56:25 riastradh Exp $	*/
+/*	$NetBSD: ktime.h,v 1.7 2018/08/27 13:57:38 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -34,30 +34,16 @@
 
 #include <sys/types.h>
 #include <sys/endian.h>
+#include <sys/kernel.h>
 #include <sys/time.h>
 
 #include <linux/time.h>
 
 union ktime {
 	int64_t kt_nsec;
-	struct {
-#if _BYTE_ORDER == _BIG_ENDIAN
-		int32_t ktsn_sec;
-		int32_t ktsn_nsec;
-#else
-		int32_t ktsn_nsec;
-		int32_t ktsn_sec;
-#endif
-	} kt_sec_nsec;
 };
 
 typedef union ktime ktime_t;
-
-static inline ktime_t
-ktime_add_ns(ktime_t kt, int64_t nsec)
-{
-	return (ktime_t) { .kt_nsec = (kt.kt_nsec + nsec) };
-}
 
 static inline int64_t
 ktime_to_ns(ktime_t kt)
@@ -65,14 +51,22 @@ ktime_to_ns(ktime_t kt)
 	return kt.kt_nsec;
 }
 
+static inline int64_t
+ktime_to_us(ktime_t kt)
+{
+	return ktime_to_ns(kt)/1000;
+}
+
 static inline ktime_t
 ns_to_ktime(int64_t nsec)
 {
-	ktime_t kt;
+	return (ktime_t) { .kt_nsec = nsec };
+}
 
-	kt.kt_nsec = nsec;
-
-	return kt;
+static inline ktime_t
+ktime_add_ns(ktime_t kt, int64_t nsec)
+{
+	return ns_to_ktime(ktime_to_ns(kt) + nsec);
 }
 
 static inline ktime_t
@@ -100,25 +94,60 @@ ktime_to_timeval(ktime_t kt)
 }
 
 static inline ktime_t
+timespec_to_ktime(struct timespec ts)
+{
+	/* XXX Silently truncate?  */
+	return ns_to_ktime(1000000000*(int64_t)ts.tv_sec + ts.tv_nsec);
+}
+
+static inline ktime_t
 ktime_get(void)
 {
 	struct timespec ts;
-	ktime_t kt;
 
-	/* XXX nanotime or nanouptime?  */
 	nanouptime(&ts);
 
-	/* XXX Silently truncate?  */
-	kt.kt_sec_nsec.ktsn_sec = ts.tv_sec & 0xffffffffUL;
-	kt.kt_sec_nsec.ktsn_nsec = ts.tv_nsec;
+	return timespec_to_ktime(ts);
+}
 
-	return kt;
+static inline ktime_t
+ktime_get_real(void)
+{
+	struct timespec ts;
+
+	nanotime(&ts);
+
+	return timespec_to_ktime(ts);
+}
+
+static inline uint64_t
+ktime_get_raw_ns(void)
+{
+
+	/* XXX */
+	return ktime_to_ns(ktime_get());
 }
 
 static inline ktime_t
 ktime_get_monotonic_offset(void)
 {
-	return ns_to_ktime(0);	/* XXX Obviously wrong!  Revisit.  */
+	return timespec_to_ktime(boottime);
+}
+
+static inline ktime_t
+ktime_mono_to_real(ktime_t kt)
+{
+	struct timespec ts = ktime_to_timespec(kt);
+
+	timespecadd(&ts, &boottime, &ts);
+
+	return timespec_to_ktime(ts);
+}
+
+static inline int64_t
+ktime_us_delta(ktime_t a, ktime_t b)
+{
+	return ktime_to_us(ktime_sub(a, b));
 }
 
 static inline bool

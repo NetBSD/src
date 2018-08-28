@@ -1,3 +1,5 @@
+/*	$NetBSD: drm_os_linux.h,v 1.2 2018/08/27 04:58:38 riastradh Exp $	*/
+
 /**
  * \file drm_os_linux.h
  * OS abstraction macros.

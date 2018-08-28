@@ -1,4 +1,4 @@
-#	$NetBSD: PMPPC,v 1.43 2018/08/01 20:04:11 maxv Exp $
+#	$NetBSD: PMPPC,v 1.44 2018/08/25 20:52:41 rin Exp $
 #
 #	PMPPC
 #
@@ -345,6 +345,7 @@ aue*	at uhub? port ?		# ADMtek AN986 Pegasus based adapters
 axe*	at uhub? port ?		# ASIX AX88172 based adapters
 cue*	at uhub? port ?		# CATC USB-EL1201A based adapters
 kue*	at uhub? port ?		# Kawasaki LSI KL5KUSB101B based adapters
+mue*	at uhub? port ?		# Microchip LAN75xx/LAN78xx based adapters
 url*	at uhub? port ?		# Realtek RTL8150L based adapters
 
 # Prolific PL2301/PL2302 host-to-host adapter

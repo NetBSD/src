@@ -1,3 +1,5 @@
+/*	$NetBSD: r300_reg.h,v 1.2 2018/08/27 04:58:36 riastradh Exp $	*/
+
 /*
  * Copyright 2005 Nicolai Haehnle et al.
  * Copyright 2008 Advanced Micro Devices, Inc.

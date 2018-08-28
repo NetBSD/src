@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_gem_vm.c,v 1.6 2015/03/09 01:29:40 riastradh Exp $	*/
+/*	$NetBSD: drm_gem_vm.c,v 1.9 2018/08/27 07:51:06 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,13 +30,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_gem_vm.c,v 1.6 2015/03/09 01:29:40 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_gem_vm.c,v 1.9 2018/08/27 07:51:06 riastradh Exp $");
 
 #include <sys/types.h>
 
 #include <uvm/uvm_extern.h>
 
 #include <drm/drmP.h>
+#include <drm/drm_gem.h>
+#include <drm/drm_legacy.h>
 #include <drm/drm_vma_manager.h>
 
 static int	drm_gem_mmap_object_locked(struct drm_device *, off_t, size_t,
@@ -74,7 +76,7 @@ drm_gem_or_legacy_mmap_object(struct drm_device *dev, off_t byte_offset,
 	if (*uobjp != NULL)
 		return 0;
 
-	return drm_mmap_object(dev, byte_offset, nbytes, prot, uobjp,
+	return drm_legacy_mmap_object(dev, byte_offset, nbytes, prot, uobjp,
 	    uoffsetp, file);
 }
 

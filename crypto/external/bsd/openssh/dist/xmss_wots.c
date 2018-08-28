@@ -1,5 +1,6 @@
-/*	$NetBSD: xmss_wots.c,v 1.2 2018/04/06 18:59:00 christos Exp $	*/
-/* $OpenBSD: xmss_wots.c,v 1.2 2018/02/26 03:56:44 dtucker Exp $ */
+/*	$NetBSD: xmss_wots.c,v 1.3 2018/08/26 07:46:37 christos Exp $	*/
+/* $OpenBSD: xmss_wots.c,v 1.3 2018/04/10 00:10:49 djm Exp $ */
+
 /*
 wots.c version 20160722
 Andreas Hülsing
@@ -7,7 +8,7 @@ Joost Rijneveld
 Public domain.
 */
 #include "includes.h"
-__RCSID("$NetBSD: xmss_wots.c,v 1.2 2018/04/06 18:59:00 christos Exp $");
+__RCSID("$NetBSD: xmss_wots.c,v 1.3 2018/08/26 07:46:37 christos Exp $");
 
 #include <stdlib.h>
 #include <stdint.h>
@@ -63,7 +64,7 @@ static void expand_seed(unsigned char *outseeds, const unsigned char *inseed, co
  * Computes the chaining function.
  * out and in have to be n-byte arrays
  *
- * interpretes in as start-th value of the chain
+ * interprets in as start-th value of the chain
  * addr has to contain the address of the chain
  */
 static void gen_chain(unsigned char *out, const unsigned char *in, unsigned int start, unsigned int steps, const wots_params *params, const unsigned char *pub_seed, uint32_t addr[8])

@@ -1,4 +1,4 @@
-/*	$NetBSD: agp.c,v 1.84 2017/02/27 14:13:56 msaitoh Exp $	*/
+/*	$NetBSD: agp.c,v 1.85 2018/08/27 07:34:54 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -65,7 +65,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp.c,v 1.84 2017/02/27 14:13:56 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp.c,v 1.85 2018/08/27 07:34:54 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1155,6 +1155,7 @@ agp_get_info(void *devcookie, struct agp_info *info)
 	info->ai_aperture_size = sc->as_apsize;	/* XXXfvdl inconsistent */
 	info->ai_memory_allowed = sc->as_maxmem;
 	info->ai_memory_used = sc->as_allocated;
+	info->ai_devid = sc->as_id;
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.75 2018/08/19 23:50:27 kre Exp $	*/
+/*	$NetBSD: main.c,v 1.76 2018/08/22 20:08:54 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.7 (Berkeley) 7/19/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.75 2018/08/19 23:50:27 kre Exp $");
+__RCSID("$NetBSD: main.c,v 1.76 2018/08/22 20:08:54 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -294,8 +294,7 @@ cmdloop(int top)
 			numeof = 0;
 			evaltree(n, 0);
 		}
-		popstackmark(&smark);
-		setstackmark(&smark);
+		rststackmark(&smark);
 
 		/*
 		 * Any SKIP* can occur here!  SKIP(FUNC|BREAK|CONT) occur when

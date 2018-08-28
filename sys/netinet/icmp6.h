@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.h,v 1.51 2018/04/24 07:22:33 maxv Exp $	*/
+/*	$NetBSD: icmp6.h,v 1.52 2018/08/22 01:05:24 msaitoh Exp $	*/
 /*	$KAME: icmp6.h,v 1.84 2003/04/23 10:26:51 itojun Exp $	*/
 
 
@@ -636,35 +636,6 @@ struct icmp6_filter {
 #define ICMPV6CTL_ND6_DRLIST	19
 #define ICMPV6CTL_ND6_PRLIST	20
 #define	ICMPV6CTL_ND6_MAXQLEN	24
-#define ICMPV6CTL_MAXID		25
-
-#define ICMPV6CTL_NAMES { \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ "rediraccept", CTLTYPE_INT }, \
-	{ "redirtimeout", CTLTYPE_INT }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ "nd6_prune", CTLTYPE_INT }, \
-	{ 0, 0 }, \
-	{ "nd6_delay", CTLTYPE_INT }, \
-	{ "nd6_umaxtries", CTLTYPE_INT }, \
-	{ "nd6_mmaxtries", CTLTYPE_INT }, \
-	{ "nd6_useloopback", CTLTYPE_INT }, \
-	{ 0, 0 }, \
-	{ "nodeinfo", CTLTYPE_INT }, \
-	{ "errppslimit", CTLTYPE_INT }, \
-	{ "nd6_maxnudhint", CTLTYPE_INT }, \
-	{ "mtudisc_hiwat", CTLTYPE_INT }, \
-	{ "mtudisc_lowat", CTLTYPE_INT }, \
-	{ "nd6_debug", CTLTYPE_INT }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ "nd6_maxqueuelen", CTLTYPE_INT }, \
-}
 
 #ifdef _KERNEL
 struct	rtentry;

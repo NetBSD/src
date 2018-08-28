@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.227 2018/08/11 11:33:10 kamil Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.228 2018/08/22 01:05:24 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -180,7 +180,6 @@ struct ctlname {
 #define	CTL_VENDOR	11		/* vendor-specific data */
 #define	CTL_EMUL	12		/* emulation-specific data */
 #define	CTL_SECURITY	13		/* security */
-#define	CTL_MAXID	14		/* number of valid top-level ids */
 
 /*
  * The "vendor" toplevel name is to be used by vendors who wish to
@@ -275,96 +274,6 @@ struct ctlname {
 #define	KERN_SYSVIPC		82	/* node: SysV IPC parameters */
 #define	KERN_BOOTTIME		83	/* struct: time kernel was booted */
 #define	KERN_EVCNT		84	/* struct: evcnts */
-#define	KERN_MAXID		85	/* number of valid kern ids */
-
-
-#define	CTL_KERN_NAMES { \
-	{ 0, 0 }, \
-	{ "ostype", CTLTYPE_STRING }, \
-	{ "osrelease", CTLTYPE_STRING }, \
-	{ "osrevision", CTLTYPE_INT }, \
-	{ "version", CTLTYPE_STRING }, \
-	{ "maxvnodes", CTLTYPE_INT }, \
-	{ "maxproc", CTLTYPE_INT }, \
-	{ "maxfiles", CTLTYPE_INT }, \
-	{ "argmax", CTLTYPE_INT }, \
-	{ "securelevel", CTLTYPE_INT }, \
-	{ "hostname", CTLTYPE_STRING }, \
-	{ "hostid", CTLTYPE_INT }, \
-	{ "clockrate", CTLTYPE_STRUCT }, \
-	{ "vnode", CTLTYPE_STRUCT }, \
-	{ "proc", CTLTYPE_STRUCT }, \
-	{ "file", CTLTYPE_STRUCT }, \
-	{ "profiling", CTLTYPE_NODE }, \
-	{ "posix1version", CTLTYPE_INT }, \
-	{ "ngroups", CTLTYPE_INT }, \
-	{ "job_control", CTLTYPE_INT }, \
-	{ "saved_ids", CTLTYPE_INT }, \
-	{ 0, 0 }, \
-	{ "domainname", CTLTYPE_STRING }, \
-	{ "maxpartitions", CTLTYPE_INT }, \
-	{ "rawpartition", CTLTYPE_INT }, \
-	{ "ntptime", CTLTYPE_STRUCT }, \
-	{ "timex", CTLTYPE_STRUCT }, \
-	{ "autonicetime", CTLTYPE_INT }, \
-	{ "autoniceval", CTLTYPE_INT }, \
-	{ "rtc_offset", CTLTYPE_INT }, \
-	{ "root_device", CTLTYPE_STRING }, \
-	{ "msgbufsize", CTLTYPE_INT }, \
-	{ "fsync", CTLTYPE_INT }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ "synchronized_io", CTLTYPE_INT }, \
-	{ "iov_max", CTLTYPE_INT }, \
-	{ "mbuf", CTLTYPE_NODE }, \
-	{ "mapped_files", CTLTYPE_INT }, \
-	{ "memlock", CTLTYPE_INT }, \
-	{ "memlock_range", CTLTYPE_INT }, \
-	{ "memory_protection", CTLTYPE_INT }, \
-	{ "login_name_max", CTLTYPE_INT }, \
-	{ "defcorename", CTLTYPE_STRING }, \
-	{ "logsigexit", CTLTYPE_INT }, \
-	{ "proc2", CTLTYPE_STRUCT }, \
-	{ "proc_args", CTLTYPE_STRING }, \
-	{ "fscale", CTLTYPE_INT }, \
-	{ 0, 0 }, \
-	{ "cp_time", CTLTYPE_STRUCT }, \
-	{ 0, 0 }, \
-	{ "msgbuf", CTLTYPE_STRUCT }, \
-	{ "consdev", CTLTYPE_STRUCT }, \
-	{ "maxptys", CTLTYPE_INT }, \
-	{ "pipe", CTLTYPE_NODE }, \
-	{ "maxphys", CTLTYPE_INT }, \
-	{ "sbmax", CTLTYPE_INT }, \
-	{ "tkstat", CTLTYPE_NODE }, \
-	{ "monotonic_clock", CTLTYPE_INT }, \
-	{ "urandom", CTLTYPE_INT }, \
-	{ "labelsector", CTLTYPE_INT }, \
-	{ "labeloffset", CTLTYPE_INT }, \
-	{ "lwp", CTLTYPE_STRUCT }, \
-	{ "forkfsleep", CTLTYPE_INT }, \
-	{ "posix_threads", CTLTYPE_INT }, \
-	{ "posix_semaphores", CTLTYPE_INT }, \
-	{ "posix_barriers", CTLTYPE_INT }, \
-	{ "posix_timers", CTLTYPE_INT }, \
-	{ "posix_spin_locks", CTLTYPE_INT }, \
-	{ "posix_reader_writer_locks", CTLTYPE_INT }, \
-	{ "dump_on_panic", CTLTYPE_INT}, \
-	{ "somaxkva", CTLTYPE_INT}, \
-	{ "root_partition", CTLTYPE_INT}, \
-	{ "drivers", CTLTYPE_STRUCT }, \
-	{ "buf", CTLTYPE_NODE }, \
-	{ "file2", CTLTYPE_STRUCT }, \
-	{ "veriexec", CTLTYPE_NODE }, \
-	{ "cp_id", CTLTYPE_STRUCT }, \
-	{ "hardclock_ticks", CTLTYPE_INT }, \
-	{ "arandom", CTLTYPE_STRUCT }, \
-	{ "sysvipc", CTLTYPE_STRUCT }, \
-	{ "boottime", CTLTYPE_STRUCT }, \
-	{ "evcnt", CTLTYPE_STRUCT }, \
-}
 
 /*
  *  KERN_CLOCKRATE structure
@@ -707,15 +616,6 @@ struct kinfo_lwp {
 #define	KERN_TKSTAT_NOUT		2	/* total output character */
 #define	KERN_TKSTAT_CANCC		3	/* canonical input character */
 #define	KERN_TKSTAT_RAWCC		4	/* raw input character */
-#define	KERN_TKSTAT_MAXID		5	/* number of valid TKSTAT ids */
-
-#define	KERN_TKSTAT_NAMES { \
-	{ 0, 0 }, \
-	{ "nin", CTLTYPE_QUAD }, \
-	{ "nout", CTLTYPE_QUAD }, \
-	{ "cancc", CTLTYPE_QUAD }, \
-	{ "rawcc", CTLTYPE_QUAD }, \
-}
 
 /*
  * kern.drivers returns an array of these.
@@ -902,27 +802,7 @@ struct kinfo_vmentry {
 #define	HW_PHYSMEM64	13		/* quad: total memory (bytes) */
 #define	HW_USERMEM64	14		/* quad: non-kernel memory (bytes) */
 #define	HW_IOSTATNAMES	15		/* string: iostat names */
-#define	HW_MAXID	15		/* number of valid hw ids */
 #define	HW_NCPUONLINE	16		/* number CPUs online */
-
-#define	CTL_HW_NAMES { \
-	{ 0, 0 }, \
-	{ "machine", CTLTYPE_STRING }, \
-	{ "model", CTLTYPE_STRING }, \
-	{ "ncpu", CTLTYPE_INT }, \
-	{ "byteorder", CTLTYPE_INT }, \
-	{ "physmem", CTLTYPE_INT }, \
-	{ "usermem", CTLTYPE_INT }, \
-	{ "pagesize", CTLTYPE_INT }, \
-	{ "drivenames", CTLTYPE_STRING }, \
-	{ "drivestats", CTLTYPE_STRUCT }, \
-	{ "machine_arch", CTLTYPE_STRING }, \
-	{ "alignbytes", CTLTYPE_INT }, \
-	{ "cnmagic", CTLTYPE_STRING }, \
-	{ "physmem64", CTLTYPE_QUAD }, \
-	{ "usermem64", CTLTYPE_QUAD }, \
-	{ "ncpuonline", CTLTYPE_INT }, \
-}
 
 /*
  * CTL_USER definitions
@@ -948,32 +828,6 @@ struct kinfo_vmentry {
 #define	USER_STREAM_MAX		19	/* int: POSIX2_STREAM_MAX */
 #define	USER_TZNAME_MAX		20	/* int: _POSIX_TZNAME_MAX */
 #define	USER_ATEXIT_MAX		21	/* int: {ATEXIT_MAX} */
-#define	USER_MAXID		22	/* number of valid user ids */
-
-#define	CTL_USER_NAMES { \
-	{ 0, 0 }, \
-	{ "cs_path", CTLTYPE_STRING }, \
-	{ "bc_base_max", CTLTYPE_INT }, \
-	{ "bc_dim_max", CTLTYPE_INT }, \
-	{ "bc_scale_max", CTLTYPE_INT }, \
-	{ "bc_string_max", CTLTYPE_INT }, \
-	{ "coll_weights_max", CTLTYPE_INT }, \
-	{ "expr_nest_max", CTLTYPE_INT }, \
-	{ "line_max", CTLTYPE_INT }, \
-	{ "re_dup_max", CTLTYPE_INT }, \
-	{ "posix2_version", CTLTYPE_INT }, \
-	{ "posix2_c_bind", CTLTYPE_INT }, \
-	{ "posix2_c_dev", CTLTYPE_INT }, \
-	{ "posix2_char_term", CTLTYPE_INT }, \
-	{ "posix2_fort_dev", CTLTYPE_INT }, \
-	{ "posix2_fort_run", CTLTYPE_INT }, \
-	{ "posix2_localedef", CTLTYPE_INT }, \
-	{ "posix2_sw_dev", CTLTYPE_INT }, \
-	{ "posix2_upe", CTLTYPE_INT }, \
-	{ "stream_max", CTLTYPE_INT }, \
-	{ "tzname_max", CTLTYPE_INT }, \
-	{ "atexit_max", CTLTYPE_INT }, \
-}
 
 /*
  * CTL_DDB definitions
@@ -985,18 +839,6 @@ struct kinfo_vmentry {
 #define	DDBCTL_TABSTOPS		5	/* int: tab width */
 #define	DDBCTL_ONPANIC		6	/* int: DDB on panic if non-zero */
 #define	DDBCTL_FROMCONSOLE	7	/* int: DDB via console if non-zero */
-#define	DDBCTL_MAXID		8	/* number of valid DDB ids */
-
-#define	CTL_DDB_NAMES { \
-	{ 0, 0 }, \
-	{ "radix", CTLTYPE_INT }, \
-	{ "maxoff", CTLTYPE_INT }, \
-	{ "maxwidth", CTLTYPE_INT }, \
-	{ "lines", CTLTYPE_INT }, \
-	{ "tabstops", CTLTYPE_INT }, \
-	{ "onpanic", CTLTYPE_INT }, \
-	{ "fromconsole", CTLTYPE_INT }, \
-}
 
 /*
  * CTL_DEBUG definitions
@@ -1006,7 +848,6 @@ struct kinfo_vmentry {
  */
 #define	CTL_DEBUG_NAME		0	/* string: variable name */
 #define	CTL_DEBUG_VALUE		1	/* int: variable value */
-#define	CTL_DEBUG_MAXID		20
 
 /*
  * CTL_PROC subtype. Either a PID, or a magic value for the current proc.
@@ -1025,17 +866,6 @@ struct kinfo_vmentry {
 #define	PROC_PID_STOPEXEC	4
 #define	PROC_PID_STOPEXIT	5
 #define	PROC_PID_PAXFLAGS	6
-#define	PROC_PID_MAXID		7
-
-#define	PROC_PID_NAMES { \
-	{ 0, 0 }, \
-	{ "corename", CTLTYPE_STRING }, \
-	{ "rlimit", CTLTYPE_NODE }, \
-	{ "stopfork", CTLTYPE_INT }, \
-	{ "stopexec", CTLTYPE_INT }, \
-	{ "stopexit", CTLTYPE_INT }, \
-	{ "paxflags", CTLTYPE_INT }, \
-}
 
 /* Limit types from <sys/resources.h> */
 #define	PROC_PID_LIMIT_CPU	(RLIMIT_CPU+1)
@@ -1050,33 +880,10 @@ struct kinfo_vmentry {
 #define	PROC_PID_LIMIT_SBSIZE	(RLIMIT_SBSIZE+1)
 #define	PROC_PID_LIMIT_AS	(RLIMIT_AS+1)
 #define	PROC_PID_LIMIT_NTHR	(RLIMIT_NTHR+1)
-#define	PROC_PID_LIMIT_MAXID 	(RLIM_NLIMITS+1)
 
-#define	PROC_PID_LIMIT_NAMES { \
-	{ 0, 0 }, \
-	{ "cputime", CTLTYPE_NODE }, \
-	{ "filesize", CTLTYPE_NODE }, \
-	{ "datasize", CTLTYPE_NODE }, \
-	{ "stacksize", CTLTYPE_NODE }, \
-	{ "coredumpsize", CTLTYPE_NODE }, \
-	{ "memoryuse", CTLTYPE_NODE }, \
-	{ "memorylocked", CTLTYPE_NODE }, \
-	{ "maxproc", CTLTYPE_NODE }, \
-	{ "descriptors", CTLTYPE_NODE }, \
-	{ "sbsize", CTLTYPE_NODE }, \
-	{ "vmemoryuse", CTLTYPE_NODE }, \
-	{ "maxlwp", CTLTYPE_NODE }, \
-}
 /* for each type, either hard or soft value */
 #define	PROC_PID_LIMIT_TYPE_SOFT	1
 #define	PROC_PID_LIMIT_TYPE_HARD	2
-#define	PROC_PID_LIMIT_TYPE_MAXID	3
-
-#define	PROC_PID_LIMIT_TYPE_NAMES { \
-	{0, 0}, \
-	{ "soft", CTLTYPE_QUAD }, \
-	{ "hard", CTLTYPE_QUAD }, \
-}
 
 /*
  * Export PAX flag definitions to userland.
@@ -1096,8 +903,6 @@ struct kinfo_vmentry {
  */
 #define	EMUL_LINUX	1
 #define	EMUL_LINUX32	5
-
-#define	EMUL_MAXID	6
 
 #ifdef _KERNEL
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: time.h,v 1.3 2014/07/16 20:56:25 riastradh Exp $	*/
+/*	$NetBSD: time.h,v 1.5 2018/08/27 07:02:16 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -33,6 +33,8 @@
 #define _LINUX_TIME_H_
 
 #include <sys/time.h>
+
+#define NSEC_PER_MSEC	1000000L
 
 /*
  * XXX get_seconds as implemented by Linux is a Y2038 bug waiting to
@@ -104,7 +106,7 @@ ns_to_timeval(int64_t nsec)
 }
 
 static inline int64_t
-timeval_to_ns(struct timeval *tv)
+timeval_to_ns(const struct timeval *tv)
 {
 	return (((int64_t)tv->tv_sec * 1000000000UL) + (tv->tv_usec * 1000ul));
 }

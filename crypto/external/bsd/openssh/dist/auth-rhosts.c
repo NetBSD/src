@@ -1,5 +1,5 @@
-/*	$NetBSD: auth-rhosts.c,v 1.8 2017/04/18 18:41:46 christos Exp $	*/
-/* $OpenBSD: auth-rhosts.c,v 1.48 2016/08/13 17:47:41 markus Exp $ */
+/*	$NetBSD: auth-rhosts.c,v 1.9 2018/08/26 07:46:36 christos Exp $	*/
+/* $OpenBSD: auth-rhosts.c,v 1.49 2018/07/09 21:35:50 markus Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -17,7 +17,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: auth-rhosts.c,v 1.8 2017/04/18 18:41:46 christos Exp $");
+__RCSID("$NetBSD: auth-rhosts.c,v 1.9 2018/08/26 07:46:36 christos Exp $");
 #include <sys/types.h>
 #include <sys/stat.h>
 
@@ -34,8 +34,8 @@ __RCSID("$NetBSD: auth-rhosts.c,v 1.8 2017/04/18 18:41:46 christos Exp $");
 #include "pathnames.h"
 #include "log.h"
 #include "misc.h"
-#include "buffer.h" /* XXX */
-#include "key.h" /* XXX */
+#include "sshbuf.h"
+#include "sshkey.h"
 #include "servconf.h"
 #include "canohost.h"
 #include "sshkey.h"

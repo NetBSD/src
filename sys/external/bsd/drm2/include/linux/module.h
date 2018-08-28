@@ -1,4 +1,4 @@
-/*	$NetBSD: module.h,v 1.5 2014/11/12 02:24:40 christos Exp $	*/
+/*	$NetBSD: module.h,v 1.7 2018/08/27 15:22:54 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -32,6 +32,9 @@
 #ifndef _LINUX_MODULE_H_
 #define _LINUX_MODULE_H_
 
+/* XXX Get this first so we don't nuke the module_init declaration.  */
+#include <sys/module.h>
+
 #include <linux/export.h>
 #include <linux/moduleparam.h>
 
@@ -56,5 +59,6 @@ const struct linux_module_param_desc PARAMETER ## _desc = { \
 __link_set_add_rodata(linux_module_param_desc, PARAMETER ## _desc)
 
 #define	THIS_MODULE	0
+#define	KBUILD_MODNAME	__file__
 
 #endif  /* _LINUX_MODULE_H_ */

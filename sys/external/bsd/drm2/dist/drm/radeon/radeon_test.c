@@ -1,3 +1,5 @@
+/*	$NetBSD: radeon_test.c,v 1.3 2018/08/27 04:58:36 riastradh Exp $	*/
+
 /*
  * Copyright 2009 VMware, Inc.
  *
@@ -21,6 +23,9 @@
  *
  * Authors: Michel Dänzer
  */
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: radeon_test.c,v 1.3 2018/08/27 04:58:36 riastradh Exp $");
+
 #include <drm/drmP.h>
 #include <drm/radeon_drm.h>
 #include "radeon_reg.h"
@@ -56,13 +61,7 @@ static void radeon_do_test_moves(struct radeon_device *rdev, int flag)
 	/* Number of tests =
 	 * (Total GTT - IB pool - writeback page - ring buffers) / test size
 	 */
-	n = rdev->mc.gtt_size - RADEON_IB_POOL_SIZE*64*1024;
-	for (i = 0; i < RADEON_NUM_RINGS; ++i)
-		n -= rdev->ring[i].ring_size;
-	if (rdev->wb.wb_obj)
-		n -= RADEON_GPU_PAGE_SIZE;
-	if (rdev->ih.ring_obj)
-		n -= rdev->ih.ring_size;
+	n = rdev->mc.gtt_size - rdev->gart_pin_size;
 	n /= size;
 
 	gtt_obj = kzalloc(n * sizeof(*gtt_obj), GFP_KERNEL);
@@ -73,7 +72,7 @@ static void radeon_do_test_moves(struct radeon_device *rdev, int flag)
 	}
 
 	r = radeon_bo_create(rdev, size, PAGE_SIZE, true, RADEON_GEM_DOMAIN_VRAM,
-			     NULL, &vram_obj);
+			     0, NULL, NULL, &vram_obj);
 	if (r) {
 		DRM_ERROR("Failed to create VRAM object\n");
 		goto out_cleanup;
@@ -93,7 +92,8 @@ static void radeon_do_test_moves(struct radeon_device *rdev, int flag)
 		struct radeon_fence *fence = NULL;
 
 		r = radeon_bo_create(rdev, size, PAGE_SIZE, true,
-				     RADEON_GEM_DOMAIN_GTT, NULL, gtt_obj + i);
+				     RADEON_GEM_DOMAIN_GTT, 0, NULL, NULL,
+				     gtt_obj + i);
 		if (r) {
 			DRM_ERROR("Failed to create GTT object %d\n", i);
 			goto out_lclean;
@@ -122,11 +122,16 @@ static void radeon_do_test_moves(struct radeon_device *rdev, int flag)
 		radeon_bo_kunmap(gtt_obj[i]);
 
 		if (ring == R600_RING_TYPE_DMA_INDEX)
-			r = radeon_copy_dma(rdev, gtt_addr, vram_addr, size / RADEON_GPU_PAGE_SIZE, &fence);
+			fence = radeon_copy_dma(rdev, gtt_addr, vram_addr,
+						size / RADEON_GPU_PAGE_SIZE,
+						vram_obj->tbo.resv);
 		else
-			r = radeon_copy_blit(rdev, gtt_addr, vram_addr, size / RADEON_GPU_PAGE_SIZE, &fence);
-		if (r) {
+			fence = radeon_copy_blit(rdev, gtt_addr, vram_addr,
+						 size / RADEON_GPU_PAGE_SIZE,
+						 vram_obj->tbo.resv);
+		if (IS_ERR(fence)) {
 			DRM_ERROR("Failed GTT->VRAM copy %d\n", i);
+			r = PTR_ERR(fence);
 			goto out_lclean_unpin;
 		}
 
@@ -168,11 +173,16 @@ static void radeon_do_test_moves(struct radeon_device *rdev, int flag)
 		radeon_bo_kunmap(vram_obj);
 
 		if (ring == R600_RING_TYPE_DMA_INDEX)
-			r = radeon_copy_dma(rdev, vram_addr, gtt_addr, size / RADEON_GPU_PAGE_SIZE, &fence);
+			fence = radeon_copy_dma(rdev, vram_addr, gtt_addr,
+						size / RADEON_GPU_PAGE_SIZE,
+						vram_obj->tbo.resv);
 		else
-			r = radeon_copy_blit(rdev, vram_addr, gtt_addr, size / RADEON_GPU_PAGE_SIZE, &fence);
-		if (r) {
+			fence = radeon_copy_blit(rdev, vram_addr, gtt_addr,
+						 size / RADEON_GPU_PAGE_SIZE,
+						 vram_obj->tbo.resv);
+		if (IS_ERR(fence)) {
 			DRM_ERROR("Failed VRAM->GTT copy %d\n", i);
+			r = PTR_ERR(fence);
 			goto out_lclean_unpin;
 		}
 
@@ -228,7 +238,7 @@ out_lclean:
 			radeon_bo_unreserve(gtt_obj[i]);
 			radeon_bo_unref(&gtt_obj[i]);
 		}
-		if (fence)
+		if (fence && !IS_ERR(fence))
 			radeon_fence_unref(&fence);
 		break;
 	}
@@ -294,7 +304,7 @@ static int radeon_test_create_and_emit_fence(struct radeon_device *rdev,
 			return r;
 		}
 		radeon_fence_emit(rdev, fence, ring->idx);
-		radeon_ring_unlock_commit(rdev, ring);
+		radeon_ring_unlock_commit(rdev, ring, false);
 	}
 	return 0;
 }
@@ -319,7 +329,7 @@ void radeon_test_ring_sync(struct radeon_device *rdev,
 		goto out_cleanup;
 	}
 	radeon_semaphore_emit_wait(rdev, ringA->idx, semaphore);
-	radeon_ring_unlock_commit(rdev, ringA);
+	radeon_ring_unlock_commit(rdev, ringA, false);
 
 	r = radeon_test_create_and_emit_fence(rdev, ringA, &fence1);
 	if (r)
@@ -331,7 +341,7 @@ void radeon_test_ring_sync(struct radeon_device *rdev,
 		goto out_cleanup;
 	}
 	radeon_semaphore_emit_wait(rdev, ringA->idx, semaphore);
-	radeon_ring_unlock_commit(rdev, ringA);
+	radeon_ring_unlock_commit(rdev, ringA, false);
 
 	r = radeon_test_create_and_emit_fence(rdev, ringA, &fence2);
 	if (r)
@@ -350,7 +360,7 @@ void radeon_test_ring_sync(struct radeon_device *rdev,
 		goto out_cleanup;
 	}
 	radeon_semaphore_emit_signal(rdev, ringB->idx, semaphore);
-	radeon_ring_unlock_commit(rdev, ringB);
+	radeon_ring_unlock_commit(rdev, ringB, false);
 
 	r = radeon_fence_wait(fence1, false);
 	if (r) {
@@ -371,7 +381,7 @@ void radeon_test_ring_sync(struct radeon_device *rdev,
 		goto out_cleanup;
 	}
 	radeon_semaphore_emit_signal(rdev, ringB->idx, semaphore);
-	radeon_ring_unlock_commit(rdev, ringB);
+	radeon_ring_unlock_commit(rdev, ringB, false);
 
 	r = radeon_fence_wait(fence2, false);
 	if (r) {
@@ -414,7 +424,7 @@ static void radeon_test_ring_sync2(struct radeon_device *rdev,
 		goto out_cleanup;
 	}
 	radeon_semaphore_emit_wait(rdev, ringA->idx, semaphore);
-	radeon_ring_unlock_commit(rdev, ringA);
+	radeon_ring_unlock_commit(rdev, ringA, false);
 
 	r = radeon_test_create_and_emit_fence(rdev, ringA, &fenceA);
 	if (r)
@@ -426,7 +436,7 @@ static void radeon_test_ring_sync2(struct radeon_device *rdev,
 		goto out_cleanup;
 	}
 	radeon_semaphore_emit_wait(rdev, ringB->idx, semaphore);
-	radeon_ring_unlock_commit(rdev, ringB);
+	radeon_ring_unlock_commit(rdev, ringB, false);
 	r = radeon_test_create_and_emit_fence(rdev, ringB, &fenceB);
 	if (r)
 		goto out_cleanup;
@@ -448,7 +458,7 @@ static void radeon_test_ring_sync2(struct radeon_device *rdev,
 		goto out_cleanup;
 	}
 	radeon_semaphore_emit_signal(rdev, ringC->idx, semaphore);
-	radeon_ring_unlock_commit(rdev, ringC);
+	radeon_ring_unlock_commit(rdev, ringC, false);
 
 	for (i = 0; i < 30; ++i) {
 		mdelay(100);
@@ -474,7 +484,7 @@ static void radeon_test_ring_sync2(struct radeon_device *rdev,
 		goto out_cleanup;
 	}
 	radeon_semaphore_emit_signal(rdev, ringC->idx, semaphore);
-	radeon_ring_unlock_commit(rdev, ringC);
+	radeon_ring_unlock_commit(rdev, ringC, false);
 
 	mdelay(1000);
 

@@ -1,3 +1,5 @@
+/*	$NetBSD: drm.h,v 1.8 2018/08/27 15:22:54 riastradh Exp $	*/
+
 /**
  * \file drm.h
  * Header for the Direct Rendering Manager
@@ -53,6 +55,7 @@ typedef unsigned int drm_handle_t;
 #ifdef __NetBSD__
 #include <sys/ioccom.h>
 #include <sys/types.h>
+#include <sys/fcntl.h>
 #ifndef _KERNEL
 typedef int8_t   __s8;
 typedef uint8_t  __u8;
@@ -640,6 +643,7 @@ struct drm_gem_open {
  */
 #define DRM_CAP_CURSOR_WIDTH		0x8
 #define DRM_CAP_CURSOR_HEIGHT		0x9
+#define DRM_CAP_ADDFB2_MODIFIERS	0x10
 
 /** DRM_IOCTL_GET_CAP ioctl argument type */
 struct drm_get_cap {
@@ -663,6 +667,13 @@ struct drm_get_cap {
  * cursor) to userspace.
  */
 #define DRM_CLIENT_CAP_UNIVERSAL_PLANES  2
+
+/**
+ * DRM_CLIENT_CAP_ATOMIC
+ *
+ * If set to 1, the DRM core will expose atomic properties to userspace
+ */
+#define DRM_CLIENT_CAP_ATOMIC	3
 
 /** DRM_IOCTL_SET_CLIENT_CAP ioctl argument type */
 struct drm_set_client_cap {
@@ -787,6 +798,9 @@ struct drm_prime_handle {
 #define DRM_IOCTL_MODE_OBJ_GETPROPERTIES	DRM_IOWR(0xB9, struct drm_mode_obj_get_properties)
 #define DRM_IOCTL_MODE_OBJ_SETPROPERTY	DRM_IOWR(0xBA, struct drm_mode_obj_set_property)
 #define DRM_IOCTL_MODE_CURSOR2		DRM_IOWR(0xBB, struct drm_mode_cursor2)
+#define DRM_IOCTL_MODE_ATOMIC		DRM_IOWR(0xBC, struct drm_mode_atomic)
+#define DRM_IOCTL_MODE_CREATEPROPBLOB	DRM_IOWR(0xBD, struct drm_mode_create_blob)
+#define DRM_IOCTL_MODE_DESTROYPROPBLOB	DRM_IOWR(0xBE, struct drm_mode_destroy_blob)
 
 #ifdef __NetBSD__
 /*
@@ -804,7 +818,7 @@ struct drm_mmap {
 
 /**
  * Device specific ioctls should only be in their respective headers
- * The device specific ioctl range is from 0x40 to 0x99.
+ * The device specific ioctl range is from 0x40 to 0x9f.
  * Generic IOCTLS restart at 0xA0.
  *
  * \sa drmCommandNone(), drmCommandRead(), drmCommandWrite(), and

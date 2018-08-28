@@ -1,3 +1,5 @@
+/*	$NetBSD: mga_drv.c,v 1.4 2018/08/28 03:41:38 riastradh Exp $	*/
+
 /* mga_drv.c -- Matrox G200/G400 driver -*- linux-c -*-
  * Created: Mon Dec 13 01:56:22 1999 by jhartmann@precisioninsight.com
  *
@@ -29,6 +31,9 @@
  *    Gareth Hughes <gareth@valinux.com>
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: mga_drv.c,v 1.4 2018/08/28 03:41:38 riastradh Exp $");
+
 #include <linux/module.h>
 
 #include <drm/drmP.h>
@@ -48,7 +53,7 @@ static const struct file_operations mga_driver_fops = {
 	.open = drm_open,
 	.release = drm_release,
 	.unlocked_ioctl = drm_ioctl,
-	.mmap = drm_mmap,
+	.mmap = drm_legacy_mmap,
 	.poll = drm_poll,
 #ifdef CONFIG_COMPAT
 	.compat_ioctl = mga_compat_ioctl,
@@ -64,6 +69,8 @@ static struct drm_driver driver = {
 	.load = mga_driver_load,
 	.unload = mga_driver_unload,
 	.lastclose = mga_driver_lastclose,
+	.set_busid = drm_pci_set_busid,
+	.set_unique = drm_pci_set_unique,
 	.dma_quiescent = mga_driver_dma_quiescent,
 	.device_is_agp = mga_driver_device_is_agp,
 	.get_vblank_counter = mga_get_vblank_counter,
@@ -73,6 +80,10 @@ static struct drm_driver driver = {
 	.irq_postinstall = mga_driver_irq_postinstall,
 	.irq_uninstall = mga_driver_irq_uninstall,
 	.irq_handler = mga_driver_irq_handler,
+#ifdef __NetBSD__
+	.request_irq = drm_pci_request_irq,
+	.free_irq = drm_pci_free_irq,
+#endif
 	.ioctls = mga_ioctls,
 	.dma_ioctl = mga_dma_buffers,
 	.fops = &mga_driver_fops,

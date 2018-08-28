@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.230 2018/01/09 03:31:13 christos Exp $	*/
+/*	$NetBSD: mount.h,v 1.231 2018/08/22 01:05:24 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -115,7 +115,6 @@
 					   as next argument */
 #define VFS_USERMOUNT	3		/* enable/disable fs mnt by non-root */
 #define	VFS_MAGICLINKS  4		/* expand 'magic' symlinks */
-#define	VFSGEN_MAXID	5		/* number of valid vfs.generic ids */
 
 /* vfsquery flags for kqueue(2) */
 #define VQ_MOUNT	0x0001	/* new filesystem arrived */
@@ -162,45 +161,6 @@ struct mount {
 #endif /* defined(_KERNEL) || defined(__EXPOSE_MOUNT) */
 
 #ifdef _KERNEL
-
-/*
- * USE THE SAME NAMES AS MOUNT_*!
- *
- * Only need to add new entry here if the filesystem actually supports
- * sysctl(2).
- */
-#define	CTL_VFS_NAMES { \
-	{ "generic", CTLTYPE_NODE }, \
-	{ MOUNT_FFS, CTLTYPE_NODE }, \
-	{ MOUNT_NFS, CTLTYPE_NODE }, \
-	{ MOUNT_MFS, CTLTYPE_NODE }, \
-	{ MOUNT_MSDOS, CTLTYPE_NODE }, \
-	{ MOUNT_LFS, CTLTYPE_NODE }, \
-	{ 0, 0 }, 			/* MOUNT_LOFS */ \
-	{ MOUNT_FDESC, CTLTYPE_NODE }, \
-	{ MOUNT_NULL, CTLTYPE_NODE }, \
-	{ MOUNT_UMAP, CTLTYPE_NODE }, \
-	{ MOUNT_KERNFS, CTLTYPE_NODE }, \
-	{ MOUNT_PROCFS, CTLTYPE_NODE }, \
-	{ MOUNT_AFS, CTLTYPE_NODE }, \
-	{ MOUNT_CD9660, CTLTYPE_NODE }, \
-	{ MOUNT_UNION, CTLTYPE_NODE }, \
-	{ MOUNT_ADOSFS, CTLTYPE_NODE }, \
-	{ MOUNT_EXT2FS, CTLTYPE_NODE }, \
-	{ MOUNT_CODA, CTLTYPE_NODE }, \
-	{ MOUNT_FILECORE, CTLTYPE_NODE }, \
-	{ MOUNT_NTFS, CTLTYPE_NODE }, \
-}
-
-#define	VFS_MAXID	20		/* number of valid vfs ids */
-
-#define	CTL_VFSGENCTL_NAMES { \
-	{ 0, 0 }, \
-	{ "maxtypenum", CTLTYPE_INT }, \
-	{ "conf", CTLTYPE_NODE }, 	/* Special */ \
-	{ "usermount", CTLTYPE_INT }, \
-	{ "magiclinks", CTLTYPE_INT }, \
-}
 
 struct quotactl_args;		/* in sys/quotactl.h */
 struct quotastat;		/* in sys/quotactl.h */

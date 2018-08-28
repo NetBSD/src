@@ -1,4 +1,4 @@
-/*	$NetBSD: jiffies.h,v 1.6 2014/07/26 14:24:08 riastradh Exp $	*/
+/*	$NetBSD: jiffies.h,v 1.12 2018/08/27 13:57:50 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -41,6 +41,32 @@
 /* XXX Er, what?  */
 #define	MAX_JIFFY_OFFSET	((INT_MAX >> 1) - 1)
 
+static inline uint64_t
+get_jiffies_64(void)
+{
+
+	return (uint64_t)(unsigned)hardclock_ticks;
+}
+
+static inline uint64_t
+nsecs_to_jiffies64(uint64_t nsec)
+{
+
+	/* XXX Arbitrary cutoff, should review the arithmetic.  */
+	if (((1000000000 % hz) == 0) || (nsec >= 20000000000ul))
+		return (nsec/1000000000)*hz;
+	else
+		return (nsec*hz)/1000000000;
+}
+
+static inline uint32_t
+nsecs_to_jiffies(uint64_t nsec)
+{
+
+	/* XXX Not sure what else to do but truncate...  */
+	return (uint32_t)nsecs_to_jiffies64(nsec);
+}
+
 static inline unsigned int
 msecs_to_jiffies(unsigned int msec)
 {
@@ -62,6 +88,14 @@ usecs_to_jiffies(unsigned int usec)
 	};
 
 	return tvtohz(&tv);
+}
+
+static inline unsigned int
+jiffies_to_usecs(unsigned int j)
+{
+
+	/* XXX Do better arithmetic.  */
+	return (unsigned int)((unsigned long)j*1000000/hz);
 }
 
 static inline unsigned int

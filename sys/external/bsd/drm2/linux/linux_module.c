@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_module.c,v 1.6 2015/04/13 22:24:34 pgoyette Exp $	*/
+/*	$NetBSD: linux_module.c,v 1.9 2018/08/27 15:08:54 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,23 +30,22 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_module.c,v 1.6 2015/04/13 22:24:34 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_module.c,v 1.9 2018/08/27 15:08:54 riastradh Exp $");
 
 #include <sys/module.h>
 #ifndef _MODULE
 #include <sys/once.h>
 #endif
 
+#include <linux/atomic.h>
 #include <linux/highmem.h>
 #include <linux/idr.h>
 #include <linux/io.h>
 #include <linux/mutex.h>
-#include <linux/reservation.h>
+#include <linux/rcupdate.h>
 #include <linux/workqueue.h>
 
 MODULE(MODULE_CLASS_MISC, drmkms_linux, "i2cexec");
-
-DEFINE_WW_CLASS(reservation_ww_class __cacheline_aligned);
 
 static int
 linux_init(void)
@@ -65,24 +64,38 @@ linux_init(void)
 		goto fail1;
 	}
 
+	error = linux_rcu_gc_init();
+	if (error) {
+		printf("linux: unable to initialize rcu gc: %d\n", error);
+		goto fail2;
+	}
+
 	error = linux_workqueue_init();
 	if (error) {
 		printf("linux: unable to initialize workqueues: %d\n", error);
-		goto fail2;
+		goto fail3;
 	}
 
 	error = linux_writecomb_init();
 	if (error) {
 		printf("linux: unable to initialize write-combining: %d\n",
 		    error);
-		goto fail3;
+		goto fail4;
+	}
+
+	error = linux_atomic64_init();
+	if (error) {
+		printf("linux: unable to initialize atomic64: %d\n", error);
+		goto fail5;
 	}
 
 	return 0;
 
-fail4: __unused
-	linux_writecomb_fini();
-fail3:	linux_workqueue_fini();
+fail6: __unused
+	linux_atomic64_fini();
+fail5:	linux_writecomb_fini();
+fail4:	linux_workqueue_fini();
+fail3:	linux_rcu_gc_fini();
 fail2:	linux_kmap_fini();
 fail1:	linux_idr_module_fini();
 fail0:	return error;
@@ -105,8 +118,10 @@ static void
 linux_fini(void)
 {
 
+	linux_atomic64_fini();
 	linux_writecomb_fini();
 	linux_workqueue_fini();
+	linux_rcu_gc_fini();
 	linux_kmap_fini();
 	linux_idr_module_fini();
 }

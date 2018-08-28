@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC32_IP3x,v 1.117 2018/08/01 20:04:14 maxv Exp $
+#	$NetBSD: GENERIC32_IP3x,v 1.118 2018/08/25 20:52:42 rin Exp $
 #
 # GENERIC32_IP3x machine description file
 # 
@@ -28,7 +28,7 @@ makeoptions	TEXTADDR="0x80069000"	# entry point
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC32_IP3x-$Revision: 1.117 $"
+#ident		"GENERIC32_IP3x-$Revision: 1.118 $"
 
 maxusers	32
 
@@ -344,6 +344,7 @@ aue*    at uhub? port ?         # ADMtek AN986 Pegasus based adapters
 axe*    at uhub? port ?         # ASIX AX88172 based adapters
 cue*    at uhub? port ?         # CATC USB-EL1201A based adapters
 kue*    at uhub? port ?         # Kawasaki LSI KL5KUSB101B based adapters
+mue*	at uhub? port ?		# Microchip LAN75xx/LAN78xx based adapters
 url*    at uhub? port ?         # Realtek RTL8150L based adapters
 udav*   at uhub? port ?         # Davicom DM9601 based adapters
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_pci.c,v 1.18 2017/07/27 02:11:24 nonaka Exp $	*/
+/*	$NetBSD: drm_pci.c,v 1.31 2018/08/28 03:41:39 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_pci.c,v 1.18 2017/07/27 02:11:24 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_pci.c,v 1.31 2018/08/28 03:41:39 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/errno.h>
@@ -39,55 +39,17 @@ __KERNEL_RCSID(0, "$NetBSD: drm_pci.c,v 1.18 2017/07/27 02:11:24 nonaka Exp $");
 #include <dev/pci/pcivar.h>
 
 #include <drm/drmP.h>
+#include <drm/drm_legacy.h>
 
 struct drm_bus_irq_cookie {
 	pci_intr_handle_t *intr_handles;
 	void *ih_cookie;
 };
 
-static int	drm_pci_get_irq(struct drm_device *);
-static int	drm_pci_irq_install(struct drm_device *,
-		    irqreturn_t (*)(void *), int, const char *, void *,
-		    struct drm_bus_irq_cookie **);
-static void	drm_pci_irq_uninstall(struct drm_device *,
-		    struct drm_bus_irq_cookie *);
-static const char *
-		drm_pci_get_name(struct drm_device *);
-static int	drm_pci_set_busid(struct drm_device *, struct drm_master *);
-static int	drm_pci_set_unique(struct drm_device *, struct drm_master *,
-		    struct drm_unique *);
-static int	drm_pci_irq_by_busid(struct drm_device *,
-		    struct drm_irq_busid *);
-
-const struct drm_bus drm_pci_bus = {
-	.bus_type = DRIVER_BUS_PCI,
-	.get_irq = drm_pci_get_irq,
-	.irq_install = drm_pci_irq_install,
-	.irq_uninstall = drm_pci_irq_uninstall,
-	.get_name = drm_pci_get_name,
-	.set_busid = drm_pci_set_busid,
-	.set_unique = drm_pci_set_unique,
-	.irq_by_busid = drm_pci_irq_by_busid,
-};
-
 static const struct pci_attach_args *
 drm_pci_attach_args(struct drm_device *dev)
 {
 	return &dev->pdev->pd_pa;
-}
-
-int
-drm_pci_init(struct drm_driver *driver, struct pci_driver *pdriver __unused)
-{
-
-	driver->bus = &drm_pci_bus;
-	return 0;
-}
-
-void
-drm_pci_exit(struct drm_driver *driver __unused,
-    struct pci_driver *pdriver __unused)
-{
 }
 
 int
@@ -99,14 +61,11 @@ drm_pci_attach(device_t self, const struct pci_attach_args *pa,
 	unsigned int unit;
 	int ret;
 
-	/* Ensure the drm agp hooks are installed.  */
+	/* Ensure the drm agp hooks are initialized.  */
 	/* XXX errno NetBSD->Linux */
-	ret = -drmkms_pci_agp_guarantee_initialized();
+	ret = -drm_guarantee_initialized();
 	if (ret)
 		goto fail0;
-
-	/* Initialize the Linux PCI device descriptor.  */
-	linux_pci_dev_init(pdev, self, pa, 0);
 
 	/* Create a DRM device.  */
 	dev = drm_dev_alloc(driver, self);
@@ -122,10 +81,12 @@ drm_pci_attach(device_t self, const struct pci_attach_args *pa,
 
 	/* Set up the bus space and bus DMA tags.  */
 	dev->bst = pa->pa_memt;
-	/* XXX Let the driver say something about 32-bit vs 64-bit DMA?  */
 	dev->bus_dmat = (pci_dma64_available(pa)? pa->pa_dmat64 : pa->pa_dmat);
+	dev->bus_dmat32 = pa->pa_dmat;
 	dev->dmat = dev->bus_dmat;
 	dev->dmat_subregion_p = false;
+	dev->dmat_subregion_min = 0;
+	dev->dmat_subregion_max = __type_max(bus_addr_t);
 
 	/* Find all the memory maps.  */
 	CTASSERT(PCI_NUM_RESOURCES < (SIZE_MAX / sizeof(dev->bus_maps[0])));
@@ -145,7 +106,7 @@ drm_pci_attach(device_t self, const struct pci_attach_args *pa,
 			continue;
 		}
 
-		/* Inquire about it.  We'll map it in drm_core_ioremap.  */
+		/* Inquire about it.  We'll map it in drm_legacy_ioremap.  */
 		if (pci_mapreg_info(pa->pa_pc, pa->pa_tag, reg, type,
 			&bm->bm_base, &bm->bm_size, &bm->bm_flags) != 0) {
 			aprint_debug_dev(self, "map %u failed\n", unit);
@@ -179,8 +140,9 @@ fail2: __unused
 fail1:	drm_pci_agp_destroy(dev);
 	dev->bus_nmaps = 0;
 	kmem_free(dev->bus_maps, PCI_NUM_RESOURCES * sizeof(dev->bus_maps[0]));
-	if (dev->dmat_subregion_p)
+	if (dev->dmat_subregion_p) {
 		bus_dmatag_destroy(dev->dmat);
+	}
 	drm_dev_unref(dev);
 fail0:	return ret;
 }
@@ -200,8 +162,9 @@ drm_pci_detach(struct drm_device *dev, int flags __unused)
 	kmem_free(dev->bus_maps, PCI_NUM_RESOURCES * sizeof(dev->bus_maps[0]));
 
 	/* Tear down bus space and bus DMA tags.  */
-	if (dev->dmat_subregion_p)
+	if (dev->dmat_subregion_p) {
 		bus_dmatag_destroy(dev->dmat);
+	}
 
 	drm_dev_unref(dev);
 
@@ -214,27 +177,16 @@ drm_pci_agp_destroy(struct drm_device *dev)
 
 	if (dev->agp) {
 		arch_phys_wc_del(dev->agp->agp_mtrr);
-		drm_agp_clear(dev);
-		kfree(dev->agp); /* XXX Should go in drm_agp_clear...  */
-		dev->agp = NULL;
+		drm_agp_fini(dev);
+		KASSERT(dev->agp == NULL);
 	}
 }
 
-static int
-drm_pci_get_irq(struct drm_device *dev)
+int
+drm_pci_request_irq(struct drm_device *dev, int flags)
 {
-
-	/*
-	 * Caller expects a nonzero int, and doesn't really use it for
-	 * anything, so no need to pci_intr_map here.
-	 */
-	return dev->pdev->pd_pa.pa_intrpin;
-}
-
-static int
-drm_pci_irq_install(struct drm_device *dev, irqreturn_t (*handler)(void *),
-    int flags, const char *name, void *arg, struct drm_bus_irq_cookie **cookiep)
-{
+	const char *const name = device_xname(dev->dev);
+	int (*const handler)(void *) = dev->driver->irq_handler;
 	const struct pci_attach_args *const pa = drm_pci_attach_args(dev);
 	const char *intrstr;
 	char intrbuf[PCI_INTRSTR_LEN];
@@ -243,7 +195,7 @@ drm_pci_irq_install(struct drm_device *dev, irqreturn_t (*handler)(void *),
 	irq_cookie = kmem_alloc(sizeof(*irq_cookie), KM_SLEEP);
 
 	if (dev->pdev->msi_enabled) {
-		if (dev->pdev->intr_handles == NULL) {
+		if (dev->pdev->pd_intr_handles == NULL) {
 			if (pci_msi_alloc_exact(pa, &irq_cookie->intr_handles,
 			    1)) {
 				aprint_error_dev(dev->dev,
@@ -251,8 +203,8 @@ drm_pci_irq_install(struct drm_device *dev, irqreturn_t (*handler)(void *),
 				goto error;
 			}
 		} else {
-			irq_cookie->intr_handles = dev->pdev->intr_handles;
-			dev->pdev->intr_handles = NULL;
+			irq_cookie->intr_handles = dev->pdev->pd_intr_handles;
+			dev->pdev->pd_intr_handles = NULL;
 		}
 	} else {
 		if (pci_intx_alloc(pa, &irq_cookie->intr_handles)) {
@@ -265,7 +217,7 @@ drm_pci_irq_install(struct drm_device *dev, irqreturn_t (*handler)(void *),
 	intrstr = pci_intr_string(pa->pa_pc, irq_cookie->intr_handles[0],
 	    intrbuf, sizeof(intrbuf));
 	irq_cookie->ih_cookie = pci_intr_establish_xname(pa->pa_pc,
-	    irq_cookie->intr_handles[0], IPL_DRM, handler, arg, name);
+	    irq_cookie->intr_handles[0], IPL_DRM, handler, dev, name);
 	if (irq_cookie->ih_cookie == NULL) {
 		aprint_error_dev(dev->dev,
 		    "couldn't establish interrupt at %s (%s)\n", intrstr, name);
@@ -274,7 +226,7 @@ drm_pci_irq_install(struct drm_device *dev, irqreturn_t (*handler)(void *),
 	}
 
 	aprint_normal_dev(dev->dev, "interrupting at %s (%s)\n", intrstr, name);
-	*cookiep = irq_cookie;
+	dev->irq_cookie = irq_cookie;
 	return 0;
 
 error:
@@ -282,97 +234,61 @@ error:
 	return -ENOENT;
 }
 
-static void
-drm_pci_irq_uninstall(struct drm_device *dev, struct drm_bus_irq_cookie *cookie)
+void
+drm_pci_free_irq(struct drm_device *dev)
 {
+	struct drm_bus_irq_cookie *const cookie = dev->irq_cookie;
 	const struct pci_attach_args *pa = drm_pci_attach_args(dev);
 
 	pci_intr_disestablish(pa->pa_pc, cookie->ih_cookie);
 	pci_intr_release(pa->pa_pc, cookie->intr_handles, 1);
 	kmem_free(cookie, sizeof(*cookie));
+	dev->irq_cookie = NULL;
 }
 
-static const char *
-drm_pci_get_name(struct drm_device *dev)
-{
-	return "pci";		/* XXX PCI bus names?  */
-}
-
-static int
-drm_pci_format_unique(struct drm_device *dev, char *buf, size_t size)
-{
-	const unsigned int domain = device_unit(device_parent(dev->dev));
-	const unsigned int bus = dev->pdev->pd_pa.pa_bus;
-	const unsigned int device = dev->pdev->pd_pa.pa_device;
-	const unsigned int function = dev->pdev->pd_pa.pa_function;
-
-	return snprintf(buf, size, "pci:%04x:%02x:%02x.%d",
-	    domain, bus, device, function);
-}
-
-static int
-drm_pci_format_devname(struct drm_device *dev, const char *unique,
-    char *buf, size_t size)
-{
-
-	return snprintf(buf, size, "%s@%s",
-	    device_xname(device_parent(dev->dev)),
-	    unique);
-}
-
-static int
+int
 drm_pci_set_busid(struct drm_device *dev, struct drm_master *master)
 {
-	int n;
-	char *buf;
+	const struct pci_attach_args *const pa = &dev->pdev->pd_pa;
 
-	n = drm_pci_format_unique(dev, NULL, 0);
-	if (n < 0)
-		return -ENOSPC;	/* XXX */
-	if (0xff < n)
-		n = 0xff;
-
-	buf = kzalloc(n + 1, GFP_KERNEL);
-	(void)drm_pci_format_unique(dev, buf, n + 1);
-
-	if (master->unique)
-		kfree(master->unique);
-	master->unique = buf;
-	master->unique_len = n;
-	master->unique_size = n + 1;
-
-	n = drm_pci_format_devname(dev, master->unique, NULL, 0);
-	if (n < 0)
-		return -ENOSPC;	/* XXX back out? */
-	if (0xff < n)
-		n = 0xff;
-
-	buf = kzalloc(n + 1, GFP_KERNEL);
-	(void)drm_pci_format_devname(dev, master->unique, buf, n + 1);
-
-	if (dev->devname)
-		kfree(dev->devname);
-	dev->devname = buf;
+	master->unique = kasprintf(GFP_KERNEL, "pci:%04x:%02x:%02x.%d",
+	    device_unit(device_parent(dev->dev)),
+	    pa->pa_bus, pa->pa_device, pa->pa_function);
+	if (master->unique == NULL)
+		return -ENOMEM;
+	master->unique_len = strlen(master->unique);
 
 	return 0;
 }
 
-static int
+int
 drm_pci_set_unique(struct drm_device *dev, struct drm_master *master,
-    struct drm_unique *unique __unused)
+    struct drm_unique *unique)
 {
+	char kbuf[64], ubuf[64];
+	int ret;
 
-	/*
-	 * XXX This is silly.  We're supposed to reject unique names
-	 * that don't match the ones we would generate anyway.  For
-	 * expedience, we'll just generate the one we would and ignore
-	 * whatever userland threw at us...
-	 */
-	return drm_pci_set_busid(dev, master);
-}
+	/* Reject excessively long unique strings.  */
+	if (unique->unique_len > sizeof(ubuf) - 1)
+		return -EINVAL;
 
-static int
-drm_pci_irq_by_busid(struct drm_device *dev, struct drm_irq_busid *busid)
-{
-	return -ENOSYS;		/* XXX */
+	/* Copy in the alleged unique string, NUL-terminated.  */
+	ret = -copyin(unique->unique, ubuf, unique->unique_len);
+	if (ret)
+		return ret;
+	ubuf[unique->unique_len] = '\0';
+
+	/* Make sure it matches what we expect.  */
+	snprintf(kbuf, sizeof kbuf, "PCI:%d:%ld:%ld", dev->pdev->bus->number,
+	    (long)PCI_SLOT(dev->pdev->devfn),
+	    (long)PCI_FUNC(dev->pdev->devfn));
+	if (strncmp(kbuf, ubuf, sizeof(kbuf)) != 0)
+		return -EINVAL;
+
+	/* Remember it.  */
+	master->unique = kstrdup(ubuf, GFP_KERNEL);
+	master->unique_len = strlen(master->unique);
+
+	/* Success!  */
+	return 0;
 }

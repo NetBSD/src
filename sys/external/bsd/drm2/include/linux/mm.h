@@ -1,4 +1,4 @@
-/*	$NetBSD: mm.h,v 1.6 2015/10/18 14:03:20 jmcneill Exp $	*/
+/*	$NetBSD: mm.h,v 1.9 2018/08/27 13:44:54 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -32,9 +32,12 @@
 #ifndef _LINUX_MM_H_
 #define _LINUX_MM_H_
 
+#include <sys/malloc.h>
+
 #include <uvm/uvm_extern.h>
 
 #include <asm/page.h>
+#include <linux/shrinker.h>
 
 struct file;
 
@@ -74,6 +77,26 @@ static inline unsigned long
 get_num_physpages(void)
 {
 	return uvmexp.npages;
+}
+
+/*
+ * XXX Requires that kmalloc in <linux/slab.h> and vmalloc in
+ * <linux/vmalloc.h> both use malloc(9).  If you change either of
+ * those, be sure to update this.
+ */
+static inline void
+kvfree(void *ptr)
+{
+
+	if (ptr != NULL)
+		free(ptr, M_TEMP);
+}
+
+static inline void
+set_page_dirty(struct page *page)
+{
+
+	page->p_vmp.flags &= ~PG_CLEAN;
 }
 
 #endif  /* _LINUX_MM_H_ */

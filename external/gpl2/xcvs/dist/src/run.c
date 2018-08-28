@@ -12,7 +12,7 @@
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
    GNU General Public License for more details.  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: run.c,v 1.3 2016/05/17 14:00:09 christos Exp $");
+__RCSID("$NetBSD: run.c,v 1.4 2018/08/21 15:37:33 christos Exp $");
 
 #include "cvs.h"
 
@@ -239,6 +239,9 @@ run_exec (const char *stin, const char *stout, const char *sterr, int flags)
 #endif
     if (pid == 0)
     {
+#ifdef SIGINFO
+       signal (SIGINFO, SIG_DFL);
+#endif
 #ifdef SETXID_SUPPORT
 	if (flags & RUN_UNSETXID) {
 	    (void) setgid (getgid ());
@@ -570,6 +573,9 @@ piped_child (char *const *command, int *tofdp, int *fromfdp, bool fix_stderr)
 	error (1, errno, "cannot fork");
     if (pid == 0)
     {
+#ifdef SIGINFO
+	signal (SIGINFO, SIG_DFL);
+#endif
 	if (dup2 (to_child_pipe[0], STDIN_FILENO) < 0)
 	    error (1, errno, "cannot dup2 pipe");
 	if (close (to_child_pipe[1]) < 0)

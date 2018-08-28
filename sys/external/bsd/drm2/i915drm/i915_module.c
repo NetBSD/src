@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_module.c,v 1.5 2014/11/12 03:14:00 christos Exp $	*/
+/*	$NetBSD: i915_module.c,v 1.8 2018/08/28 03:35:08 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_module.c,v 1.5 2014/11/12 03:14:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_module.c,v 1.8 2018/08/28 03:35:08 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/module.h>
@@ -60,7 +60,6 @@ struct drm_sysctl_def i915_def = DRM_SYSCTL_INIT();
 static int
 i915drmkms_init(void)
 {
-	extern int drm_guarantee_initialized(void);
 	int error;
 
 	error = drm_guarantee_initialized();
@@ -71,13 +70,8 @@ i915drmkms_init(void)
 	i915_drm_driver->driver_features |= DRIVER_MODESET;
 	i915_drm_driver->driver_features &= ~DRIVER_USE_AGP;
 
-	error = drm_pci_init(i915_drm_driver, NULL);
-	if (error) {
-		aprint_error("i915drmkms: failed to init pci: %d\n",
-		    error);
-		return error;
-	}
 	drm_sysctl_init(&i915_def);
+	spin_lock_init(&mchdev_lock);
 
 	return 0;
 }
@@ -99,7 +93,7 @@ static void
 i915drmkms_fini(void)
 {
 
-	drm_pci_exit(i915_drm_driver, NULL);
+	spin_lock_destroy(&mchdev_lock);
 	drm_sysctl_fini(&i915_def);
 }
 

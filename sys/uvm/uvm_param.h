@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_param.h,v 1.37 2017/07/02 16:41:33 joerg Exp $	*/
+/*	$NetBSD: uvm_param.h,v 1.38 2018/08/22 01:05:24 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -181,31 +181,7 @@ extern const int *const uvmexp_pageshift;
 #define	VM_GUARD_SIZE	17		/* guard size for main thread */
 #define	VM_THREAD_GUARD_SIZE	18	/* default guard size for new threads */
 
-#define	VM_MAXID	17		/* number of valid vm ids */
-
 #define VM_PROC_MAP	1		/* struct kinfo_vmentry */
-
-#define	CTL_VM_NAMES { \
-	{ 0, 0 }, \
-	{ "vmmeter", CTLTYPE_STRUCT }, \
-	{ "loadavg", CTLTYPE_STRUCT }, \
-	{ "uvmexp", CTLTYPE_STRUCT }, \
-	{ "nkmempages", CTLTYPE_INT }, \
-	{ "uvmexp2", CTLTYPE_STRUCT }, \
-	{ "anonmin", CTLTYPE_INT }, \
-	{ "execmin", CTLTYPE_INT }, \
-	{ "filemin", CTLTYPE_INT }, \
-	{ "maxslp", CTLTYPE_INT }, \
-	{ "uspace", CTLTYPE_INT }, \
-	{ "anonmax", CTLTYPE_INT }, \
-	{ "execmax", CTLTYPE_INT }, \
-	{ "filemax", CTLTYPE_INT }, \
-	{ "minaddress", CTLTYPE_LONG }, \
-	{ "maxaddress", CTLTYPE_LONG }, \
-	{ "proc", CTLTYPE_STRUCT }, \
-	{ "guard_size", CTLTYPE_INT }, \
-	{ "thread_guard_size", CTLTYPE_INT }, \
-}
 
 #ifndef ASSEMBLER
 /*

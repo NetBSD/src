@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.4 2014/07/16 20:59:58 riastradh Exp $	*/
+/*	$NetBSD: types.h,v 1.9 2018/08/27 13:57:11 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -34,6 +34,7 @@
 
 #include <sys/types.h>
 #include <sys/bus.h>
+#include <sys/stdint.h>
 
 typedef uint8_t u8;
 typedef uint16_t u16;
@@ -63,6 +64,16 @@ typedef uint16_t __be16;
 typedef uint32_t __be32;
 typedef uint64_t __be64;
 
+#define	S8_C	INT8_C
+#define	S16_C	INT16_C
+#define	S32_C	INT32_C
+#define	S64_C	INT64_C
+
+#define	U8_C	UINT8_C
+#define	U16_C	UINT16_C
+#define	U32_C	UINT32_C
+#define	U64_C	UINT64_C
+
 /*
  * This is used for absolute bus addresses, so it has to be bus_addr_t
  * and not bus_size_t; bus_addr_t is sometimes wider than bus_size_t.
@@ -76,5 +87,12 @@ typedef unsigned long long cycles_t;
 
 /* XXX Not sure this is correct.  */
 typedef off_t loff_t;
+
+#define DECLARE_BITMAP(NAME, BITS)					      \
+	unsigned long NAME[((BITS) + ((NBBY*sizeof(unsigned long)) - 1)) /    \
+		(NBBY*sizeof(unsigned long))]
+
+/* Definition copied in <linux/kernel.h> for convenience.  */
+#define	__user
 
 #endif  /* _LINUX_TYPES_H_ */

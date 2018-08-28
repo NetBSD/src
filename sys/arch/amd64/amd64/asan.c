@@ -1,4 +1,4 @@
-/*	$NetBSD: asan.c,v 1.1 2018/08/20 15:04:51 maxv Exp $	*/
+/*	$NetBSD: asan.c,v 1.7 2018/08/27 08:53:19 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: asan.c,v 1.1 2018/08/20 15:04:51 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asan.c,v 1.7 2018/08/27 08:53:19 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -40,6 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: asan.c,v 1.1 2018/08/20 15:04:51 maxv Exp $");
 #include <sys/conf.h>
 #include <sys/systm.h>
 #include <sys/types.h>
+#include <sys/ksyms.h>
 #include <sys/asan.h>
 
 #include <uvm/uvm.h>
@@ -59,7 +60,9 @@ __KERNEL_RCSID(0, "$NetBSD: asan.c,v 1.1 2018/08/20 15:04:51 maxv Exp $");
 
 #define __RET_ADDR	(unsigned long)__builtin_return_address(0)
 
+void kasan_softint(struct lwp *);
 void kasan_shadow_map(void *, size_t);
+void kasan_early_init(void);
 void kasan_init(void);
 
 static bool kasan_enabled __read_mostly = false;
@@ -78,25 +81,59 @@ kasan_unsupported(vaddr_t addr)
 	    addr < ((vaddr_t)PTE_BASE + NBPD_L4));
 }
 
+/* -------------------------------------------------------------------------- */
+
+static bool kasan_early __read_mostly = true;
+static uint8_t earlypages[8 * PAGE_SIZE] __aligned(PAGE_SIZE);
+static size_t earlytaken = 0;
+
+static paddr_t
+kasan_early_palloc(void)
+{
+	paddr_t ret;
+
+	KASSERT(earlytaken < 8);
+
+	ret = (paddr_t)(&earlypages[0] + earlytaken * PAGE_SIZE);
+	earlytaken++;
+
+	ret -= KERNBASE;
+
+	return ret;
+}
+
+static paddr_t
+kasan_palloc(void)
+{
+	paddr_t pa;
+
+	if (__predict_false(kasan_early))
+		pa = kasan_early_palloc();
+	else
+		pa = pmap_get_physpage();
+
+	return pa;
+}
+
 static void
 kasan_shadow_map_page(vaddr_t va)
 {
 	paddr_t pa;
 
 	if (!pmap_valid_entry(L4_BASE[pl4_i(va)])) {
-		pa = pmap_get_physpage();
+		pa = kasan_palloc();
 		L4_BASE[pl4_i(va)] = pa | PG_KW | pmap_pg_nx | PG_V;
 	}
 	if (!pmap_valid_entry(L3_BASE[pl3_i(va)])) {
-		pa = pmap_get_physpage();
+		pa = kasan_palloc();
 		L3_BASE[pl3_i(va)] = pa | PG_KW | pmap_pg_nx | PG_V;
 	}
 	if (!pmap_valid_entry(L2_BASE[pl2_i(va)])) {
-		pa = pmap_get_physpage();
+		pa = kasan_palloc();
 		L2_BASE[pl2_i(va)] = pa | PG_KW | pmap_pg_nx | PG_V;
 	}
 	if (!pmap_valid_entry(L1_BASE[pl1_i(va)])) {
-		pa = pmap_get_physpage();
+		pa = kasan_palloc();
 		L1_BASE[pl1_i(va)] = pa | PG_KW | pmap_pg_g | pmap_pg_nx | PG_V;
 	}
 }
@@ -109,17 +146,24 @@ void
 kasan_shadow_map(void *addr, size_t size)
 {
 	size_t sz, npages, i;
-	vaddr_t va;
+	vaddr_t sva, eva;
 
-	va = (vaddr_t)kasan_addr_to_shad(addr);
+	KASSERT((vaddr_t)addr % KASAN_SHADOW_SCALE_SIZE == 0);
+
 	sz = roundup(size, KASAN_SHADOW_SCALE_SIZE) / KASAN_SHADOW_SCALE_SIZE;
-	va = rounddown(va, PAGE_SIZE);
-	npages = roundup(sz, PAGE_SIZE) / PAGE_SIZE;
 
-	KASSERT(va >= KASAN_SHADOW_START && va < KASAN_SHADOW_END);
+	sva = (vaddr_t)kasan_addr_to_shad(addr);
+	eva = (vaddr_t)kasan_addr_to_shad(addr) + sz;
+
+	sva = rounddown(sva, PAGE_SIZE);
+	eva = roundup(eva, PAGE_SIZE);
+
+	npages = (eva - sva) / PAGE_SIZE;
+
+	KASSERT(sva >= KASAN_SHADOW_START && eva < KASAN_SHADOW_END);
 
 	for (i = 0; i < npages; i++) {
-		kasan_shadow_map_page(va + i * PAGE_SIZE);
+		kasan_shadow_map_page(sva + i * PAGE_SIZE);
 	}
 }
 
@@ -151,6 +195,18 @@ kasan_ctors(void)
 
 		ptr++;
 	}
+}
+
+/*
+ * Map only the current stack. We will map the rest in kasan_init.
+ */
+void
+kasan_early_init(void)
+{
+	extern vaddr_t lwp0uarea;
+
+	kasan_shadow_map((void *)lwp0uarea, USPACE);
+	kasan_early = false;
 }
 
 /*
@@ -193,12 +249,69 @@ kasan_init(void)
 
 /* -------------------------------------------------------------------------- */
 
+static inline bool
+kasan_unwind_end(const char *name)
+{
+	if (!strcmp(name, "syscall") ||
+	    !strcmp(name, "handle_syscall") ||
+	    !strncmp(name, "Xintr", 5) ||
+	    !strncmp(name, "Xhandle", 7) ||
+	    !strncmp(name, "Xresume", 7) ||
+	    !strncmp(name, "Xstray", 6) ||
+	    !strncmp(name, "Xhold", 5) ||
+	    !strncmp(name, "Xrecurse", 8) ||
+	    !strcmp(name, "Xdoreti") ||
+	    !strncmp(name, "Xsoft", 5)) {
+		return true;
+	}
+
+	return false;
+}
+
+static void
+kasan_unwind(void)
+{
+	uint64_t *rbp, rip;
+	const char *mod;
+	const char *sym;
+	size_t nsym;
+	int error;
+
+	rbp = (uint64_t *)__builtin_frame_address(0);
+	nsym = 0;
+
+	while (1) {
+		/* 8(%rbp) contains the saved %rip. */
+		rip = *(rbp + 1);
+
+		if (rip < KERNBASE) {
+			break;
+		}
+		error = ksyms_getname(&mod, &sym, (vaddr_t)rip, KSYMS_PROC);
+		if (error) {
+			break;
+		}
+		printf("#%zu %p in %s <%s>\n", nsym, (void *)rip, sym, mod);
+		if (kasan_unwind_end(sym)) {
+			break;
+		}
+
+		rbp = (uint64_t *)*(rbp);
+		nsym++;
+
+		if (nsym >= 15) {
+			break;
+		}
+	}
+}
+
 static void
 kasan_report(unsigned long addr, size_t size, bool write, unsigned long rip)
 {
 	printf("kASan: Unauthorized Access In %p: Addr %p [%zu byte%s, %s]\n",
 	    (void *)rip, (void *)addr, size, (size > 1 ? "s" : ""),
 	    (write ? "write" : "read"));
+	kasan_unwind();
 }
 
 /* -------------------------------------------------------------------------- */
@@ -266,6 +379,14 @@ kasan_markmem(const void *addr, size_t size, bool valid)
 		KASSERT(size % KASAN_SHADOW_SCALE_SIZE == 0);
 		kasan_shadow_fill(addr, size, KASAN_MEMORY_REDZONE);
 	}
+}
+
+void
+kasan_softint(struct lwp *l)
+{
+	const void *stk = (const void *)uvm_lwp_getuarea(l);
+
+	kasan_shadow_fill(stk, USPACE, 0);
 }
 
 void
@@ -422,6 +543,55 @@ kasan_memset(void *b, int c, size_t len)
 	return __builtin_memset(b, c, len);
 }
 
+char *
+kasan_strcpy(char *dst, const char *src)
+{
+	char *save = dst;
+
+	while (1) {
+		kasan_shadow_check((unsigned long)src, 1, false, __RET_ADDR);
+		kasan_shadow_check((unsigned long)dst, 1, true, __RET_ADDR);
+		*dst = *src;
+		if (*src == '\0')
+			break;
+		src++, dst++;
+	}
+
+	return save;
+}
+
+int
+kasan_strcmp(const char *s1, const char *s2)
+{
+	while (1) {
+		kasan_shadow_check((unsigned long)s1, 1, false, __RET_ADDR);
+		kasan_shadow_check((unsigned long)s2, 1, false, __RET_ADDR);
+		if (*s1 != *s2)
+			break;
+		if (*s1 == '\0')
+			return 0;
+		s1++, s2++;
+	}
+
+	return (*(const unsigned char *)s1 - *(const unsigned char *)s2);
+}
+
+size_t
+kasan_strlen(const char *str)
+{
+	const char *s;
+
+	s = str;
+	while (1) {
+		kasan_shadow_check((unsigned long)s, 1, false, __RET_ADDR);
+		if (*s == '\0')
+			break;
+		s++;
+	}
+
+	return (s - str);
+}
+
 /* -------------------------------------------------------------------------- */
 
 #if defined(__clang__) && (__clang_major__ - 0 >= 6)
@@ -458,28 +628,21 @@ struct __asan_global {
 void __asan_register_globals(struct __asan_global *, size_t);
 void __asan_unregister_globals(struct __asan_global *, size_t);
 
-static void
-kasan_register_global(struct __asan_global *global)
-{
-	size_t aligned_size = roundup(global->size, KASAN_SHADOW_SCALE_SIZE);
-
-	/* Poison the redzone following the var. */
-	kasan_shadow_fill((void *)((uintptr_t)global->beg + aligned_size),
-	    global->size_with_redzone - aligned_size, KASAN_GLOBAL_REDZONE);
-}
-
 void
-__asan_register_globals(struct __asan_global *globals, size_t size)
+__asan_register_globals(struct __asan_global *globals, size_t n)
 {
 	size_t i;
-	for (i = 0; i < size; i++) {
-		kasan_register_global(&globals[i]);
+
+	for (i = 0; i < n; i++) {
+		kasan_alloc(globals[i].beg, globals[i].size,
+		    globals[i].size_with_redzone);
 	}
 }
 
 void
-__asan_unregister_globals(struct __asan_global *globals, size_t size)
+__asan_unregister_globals(struct __asan_global *globals, size_t n)
 {
+	/* never called */
 }
 
 #define ASAN_LOAD_STORE(size)					\

@@ -1,4 +1,4 @@
-/* $NetBSD: pipe.h,v 1.35 2018/06/10 17:54:51 jdolecek Exp $ */
+/* $NetBSD: pipe.h,v 1.36 2018/08/22 01:05:24 msaitoh Exp $ */
 
 /*
  * Copyright (c) 1996 John S. Dyson
@@ -128,16 +128,6 @@ struct pipe {
 #define	KERN_PIPE_MAXBIGPIPES		3	/* maximum # of "big" pipes */
 #define	KERN_PIPE_NBIGPIPES		4	/* current number of "big" p. */
 #define	KERN_PIPE_KVASIZE		5	/* current pipe kva size */
-#define	KERN_PIPE_MAXID			6
-
-#define	CTL_PIPE_NAMES { \
-	{ 0, 0 }, \
-	{ "maxkvasz", CTLTYPE_INT }, \
-	{ "maxloankvasz", CTLTYPE_INT }, \
-	{ "maxbigpipes", CTLTYPE_INT }, \
-	{ "nbigpipes", CTLTYPE_INT }, \
-	{ "kvasize", CTLTYPE_INT }, \
-}
 
 #ifdef _KERNEL
 int	sysctl_dopipe(int *, u_int, void *, size_t *, void *, size_t);

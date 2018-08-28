@@ -1,4 +1,4 @@
-/*	$NetBSD: dma-mapping.h,v 1.3 2014/08/06 13:50:53 riastradh Exp $	*/
+/*	$NetBSD: dma-mapping.h,v 1.5 2018/08/27 06:17:40 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.

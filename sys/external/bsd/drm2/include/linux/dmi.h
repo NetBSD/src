@@ -1,4 +1,4 @@
-/*	$NetBSD: dmi.h,v 1.3 2014/04/25 23:54:59 riastradh Exp $	*/
+/*	$NetBSD: dmi.h,v 1.6 2018/08/27 07:19:13 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -31,6 +31,8 @@
 
 #ifndef _LINUX_DMI_H_
 #define _LINUX_DMI_H_
+
+#include <sys/types.h>
 
 enum dmi_field {
 	DMI_NONE,
@@ -68,6 +70,10 @@ struct dmi_system_id {
 #define DMI_MATCH(a, b)		{(a), (b)}
 #define DMI_EXACT_MATCH(a, b)	{(a), (b)}
 
+#define	dmi_check_system	linux_dmi_check_system
+#define	dmi_match		linux_dmi_match
+
 int dmi_check_system(const struct dmi_system_id *list);
+bool dmi_match(enum dmi_field, const char[]);
 
 #endif  /* _LINUX_DMI_H_ */

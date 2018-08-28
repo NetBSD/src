@@ -1,8 +1,18 @@
+/*	$NetBSD: drm_gem_cma_helper.h,v 1.5 2018/08/27 15:26:15 riastradh Exp $	*/
+
 #ifndef __DRM_GEM_CMA_HELPER_H__
 #define __DRM_GEM_CMA_HELPER_H__
 
 #include <drm/drmP.h>
+#include <drm/drm_gem.h>
 
+/**
+ * struct drm_gem_cma_object - GEM object backed by CMA memory allocations
+ * @base: base GEM object
+ * @paddr: physical address of the backing memory
+ * @sgt: scatter/gather table for imported PRIME buffers
+ * @vaddr: kernel virtual address of the backing memory
+ */
 struct drm_gem_cma_object {
 	struct drm_gem_object base;
 #ifdef __NetBSD__
@@ -12,8 +22,8 @@ struct drm_gem_cma_object {
 	bus_dmamap_t dmamap;
 #else
 	dma_addr_t paddr;
-	struct sg_table *sgt;
 #endif
+	struct sg_table *sgt;
 
 	/* For objects with DMA memory allocated by GEM CMA */
 	void *vaddr;
@@ -25,23 +35,32 @@ to_drm_gem_cma_obj(struct drm_gem_object *gem_obj)
 	return container_of(gem_obj, struct drm_gem_cma_object, base);
 }
 
-/* free gem object. */
+/* free GEM object */
 void drm_gem_cma_free_object(struct drm_gem_object *gem_obj);
 
-/* create memory region for drm framebuffer. */
+/* create memory region for DRM framebuffer */
+int drm_gem_cma_dumb_create_internal(struct drm_file *file_priv,
+				     struct drm_device *drm,
+				     struct drm_mode_create_dumb *args);
+
+/* create memory region for DRM framebuffer */
 int drm_gem_cma_dumb_create(struct drm_file *file_priv,
-		struct drm_device *drm, struct drm_mode_create_dumb *args);
+			    struct drm_device *drm,
+			    struct drm_mode_create_dumb *args);
 
-/* map memory region for drm framebuffer to user space. */
+/* map memory region for DRM framebuffer to user space */
 int drm_gem_cma_dumb_map_offset(struct drm_file *file_priv,
-		struct drm_device *drm, uint32_t handle, uint64_t *offset);
+				struct drm_device *drm, u32 handle,
+				u64 *offset);
 
-/* set vm_flags and we can change the vm attribute to other one at here. */
+/* set vm_flags and we can change the VM attribute to other one at here */
+#ifndef __NetBSD__
 int drm_gem_cma_mmap(struct file *filp, struct vm_area_struct *vma);
+#endif
 
-/* allocate physical memory. */
+/* allocate physical memory */
 struct drm_gem_cma_object *drm_gem_cma_create(struct drm_device *drm,
-		unsigned int size);
+					      size_t size);
 
 #ifdef __NetBSD__
 extern const struct uvm_pagerops drm_gem_cma_uvm_ops;
@@ -55,10 +74,16 @@ void drm_gem_cma_describe(struct drm_gem_cma_object *obj, struct seq_file *m);
 
 struct sg_table *drm_gem_cma_prime_get_sg_table(struct drm_gem_object *obj);
 struct drm_gem_object *
-drm_gem_cma_prime_import_sg_table(struct drm_device *dev, size_t size,
+drm_gem_cma_prime_import_sg_table(struct drm_device *dev,
+				  struct dma_buf_attachment *attach,
 				  struct sg_table *sgt);
+#ifdef __NetBSD__
+int drm_gem_cma_prime_mmap(struct drm_gem_object *, off_t *, size_t, int,
+    int *, int *, struct uvm_object **, int *);
+#else
 int drm_gem_cma_prime_mmap(struct drm_gem_object *obj,
 			   struct vm_area_struct *vma);
+#endif
 void *drm_gem_cma_prime_vmap(struct drm_gem_object *obj);
 void drm_gem_cma_prime_vunmap(struct drm_gem_object *obj, void *vaddr);
 

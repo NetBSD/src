@@ -1,4 +1,4 @@
-/*	$NetBSD: asan.h,v 1.1 2018/08/20 15:04:52 maxv Exp $	*/
+/*	$NetBSD: asan.h,v 1.7 2018/08/22 14:11:26 christos Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -32,10 +32,20 @@
 #ifndef _SYS_ASAN_H_
 #define _SYS_ASAN_H_
 
+#ifdef _KERNEL_OPT
+#include "opt_kasan.h"
+#endif
+
 #include <sys/types.h>
 
+#ifdef KASAN
 void kasan_add_redzone(size_t *);
 void kasan_alloc(const void *, size_t, size_t);
 void kasan_free(const void *, size_t);
+#else
+#define kasan_add_redzone(s)	__nothing
+#define kasan_alloc(p, s, l)	__nothing
+#define kasan_free(p, s)	__nothing
+#endif
 
 #endif /* !_SYS_ASAN_H_ */

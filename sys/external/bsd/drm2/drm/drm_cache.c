@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_cache.c,v 1.8 2015/10/17 21:11:56 jmcneill Exp $	*/
+/*	$NetBSD: drm_cache.c,v 1.12 2018/08/27 15:29:19 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_cache.c,v 1.8 2015/10/17 21:11:56 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_cache.c,v 1.12 2018/08/27 15:29:19 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -49,6 +49,8 @@ __KERNEL_RCSID(0, "$NetBSD: drm_cache.c,v 1.8 2015/10/17 21:11:56 jmcneill Exp $
 #if defined(DRM_CLFLUSH)
 static bool		drm_md_clflush_finegrained_p(void);
 static void		drm_md_clflush_all(void);
+static void		drm_md_clflush_begin(void);
+static void		drm_md_clflush_commit(void);
 static void		drm_md_clflush_page(struct page *);
 static void		drm_md_clflush_virt_range(const void *, size_t);
 #endif
@@ -58,8 +60,10 @@ drm_clflush_pages(struct page **pages, unsigned long npages)
 {
 #if defined(DRM_CLFLUSH)
 	if (drm_md_clflush_finegrained_p()) {
+		drm_md_clflush_begin();
 		while (npages--)
 			drm_md_clflush_page(pages[npages]);
+		drm_md_clflush_commit();
 	} else {
 		drm_md_clflush_all();
 	}
@@ -73,9 +77,11 @@ drm_clflush_pglist(struct pglist *list)
 	if (drm_md_clflush_finegrained_p()) {
 		struct vm_page *page;
 
+		drm_md_clflush_begin();
 		TAILQ_FOREACH(page, list, pageq.queue)
 			drm_md_clflush_page(container_of(page, struct page,
 				p_vmp));
+		drm_md_clflush_commit();
 	} else {
 		drm_md_clflush_all();
 	}
@@ -86,10 +92,13 @@ void
 drm_clflush_page(struct page *page)
 {
 #if defined(DRM_CLFLUSH)
-	if (drm_md_clflush_finegrained_p())
+	if (drm_md_clflush_finegrained_p()) {
+		drm_md_clflush_begin();
 		drm_md_clflush_page(page);
-	else
+		drm_md_clflush_commit();
+	} else {
 		drm_md_clflush_all();
+	}
 #endif
 }
 
@@ -97,10 +106,13 @@ void
 drm_clflush_virt_range(const void *vaddr, size_t nbytes)
 {
 #if defined(DRM_CLFLUSH)
-	if (drm_md_clflush_finegrained_p())
+	if (drm_md_clflush_finegrained_p()) {
+		drm_md_clflush_begin();
 		drm_md_clflush_virt_range(vaddr, nbytes);
-	else
+		drm_md_clflush_commit();
+	} else {
 		drm_md_clflush_all();
+	}
 #endif
 }
 
@@ -112,19 +124,6 @@ static bool
 drm_md_clflush_finegrained_p(void)
 {
 	return ISSET(cpu_info_primary.ci_feat_val[0], CPUID_CFLUSH);
-}
-
-static void
-drm_x86_clflush(const void *vaddr)
-{
-	asm volatile ("clflush %0" : : "m" (*(const char *)vaddr));
-}
-
-static size_t
-drm_x86_clflush_size(void)
-{
-	KASSERT(drm_md_clflush_finegrained_p());
-	return cpu_info_primary.ci_cflush_lsize;
 }
 
 static void
@@ -140,6 +139,19 @@ drm_md_clflush_all(void)
 }
 
 static void
+drm_md_clflush_begin(void)
+{
+	/* Support for CLFLUSH implies support for MFENCE.  */
+	x86_mfence();
+}
+
+static void
+drm_md_clflush_commit(void)
+{
+	x86_mfence();
+}
+
+static void
 drm_md_clflush_page(struct page *page)
 {
 	void *const vaddr = kmap_atomic(page);
@@ -150,21 +162,124 @@ drm_md_clflush_page(struct page *page)
 }
 
 static void
-drm_md_clflush_virt_range(const void *vaddr, size_t nbytes)
+drm_md_clflush_virt_range(const void *ptr, size_t nbytes)
 {
-	const unsigned clflush_size = drm_x86_clflush_size();
-	const vaddr_t va = (vaddr_t)vaddr;
-	const char *const start = (const void *)rounddown(va, clflush_size);
-	const char *const end = (const void *)roundup(va + nbytes,
-	    clflush_size);
-	const char *p;
+	const unsigned clflush_size = cpu_info_primary.ci_cflush_lsize;
+	const vaddr_t vaddr = (vaddr_t)ptr;
+	const vaddr_t start = rounddown(vaddr, clflush_size);
+	const vaddr_t end = roundup(vaddr + nbytes, clflush_size);
+	vaddr_t va;
 
-	/* Support for CLFLUSH implies support for MFENCE.  */
-	KASSERT(drm_md_clflush_finegrained_p());
-	x86_mfence();
-	for (p = start; p < end; p += clflush_size)
-		drm_x86_clflush(p);
-	x86_mfence();
+	for (va = start; va < end; va += clflush_size)
+		asm volatile ("clflush %0" : : "m" (*(const char *)va));
 }
 
-#endif	/* defined(__i386__) || defined(__x86_64__) */
+#elif defined(__sparc__) || defined(__sparc64__)
+
+#ifdef __sparc64__
+#include <sparc64/sparc64/cache.h>
+#else
+#include <sparc/sparc/cache.h>
+#endif
+
+static bool
+drm_md_clflush_finegrained_p(void)
+{
+	return true;
+}
+
+static void
+drm_md_clflush_all(void)
+{
+	panic("don't know how to flush entire cache on sparc64");
+}
+
+static void
+drm_md_clflush_begin(void)
+{
+	membar_Sync();		/* unsure if needed */
+}
+
+static void
+drm_md_clflush_commit(void)
+{
+	membar_Sync();		/* unsure if needed */
+}
+
+static void
+drm_md_clflush_page(struct page *page)
+{
+#ifdef __sparc64__
+	paddr_t pa = VM_PAGE_TO_PHYS(&page->p_vmp);
+
+	cache_flush_phys(pa, PAGE_SIZE, 0);
+#else
+	void *const vaddr = kmap_atomic(page);
+
+	cache_flush(vaddr, PAGE_SIZE);
+
+	kunmap_atomic(vaddr);
+#endif
+}
+
+static void
+drm_md_clflush_virt_range(const void *ptr, size_t nbytes)
+{
+#ifdef __sparc64__
+	/* XXX Mega-kludge -- doesn't seem to be a way to flush by vaddr.  */
+	blast_dcache();
+#else
+	cache_flush(ptr, nbytes);
+#endif
+}
+
+#elif defined(__powerpc__)
+
+static bool
+drm_md_clflush_finegrained_p(void)
+{
+	return true;
+}
+
+static void
+drm_md_clflush_all(void)
+{
+	panic("don't know how to flush entire cache on powerpc");
+}
+
+static void
+drm_md_clflush_begin(void)
+{
+}
+
+static void
+drm_md_clflush_commit(void)
+{
+	asm volatile ("sync" ::: "memory");
+}
+
+static void
+drm_md_clflush_page(struct page *page)
+{
+	void *const vaddr = kmap_atomic(page);
+
+	drm_md_clflush_virt_range(vaddr, PAGE_SIZE);
+
+	kunmap_atomic(vaddr);
+}
+
+static void
+drm_md_clflush_virt_range(const void *ptr, size_t nbytes)
+{
+	const unsigned dcsize = curcpu()->ci_ci.dcache_line_size;
+	vaddr_t va = (vaddr_t)ptr;
+	vaddr_t start = rounddown(va, dcsize);
+	vaddr_t end = roundup(va + nbytes, dcsize);
+	vsize_t len = end - start;
+	vsize_t off;
+
+	for (off = 0; off < len; off += dcsize)
+		asm volatile ("dcbf\t%0,%1" : : "b"(start), "r"(off));
+}
+
+#endif

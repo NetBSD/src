@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_idr.c,v 1.6 2017/07/26 03:40:39 riastradh Exp $	*/
+/*	$NetBSD: linux_idr.c,v 1.12 2018/08/27 15:24:53 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,37 +30,97 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_idr.c,v 1.6 2017/07/26 03:40:39 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_idr.c,v 1.12 2018/08/27 15:24:53 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
 #include <sys/rbtree.h>
+#include <sys/sdt.h>
 
 #include <linux/err.h>
 #include <linux/idr.h>
 #include <linux/slab.h>
 
+#ifdef _KERNEL_OPT
+#include "opt_ddb.h"
+#endif
+
+#ifdef DDB
+#include <ddb/ddb.h>
+#endif
+
 struct idr_node {
 	rb_node_t		in_rb_node;
 	int			in_index;
 	void			*in_data;
-	SIMPLEQ_ENTRY(idr_node)	in_list;
 };
-SIMPLEQ_HEAD(idr_head, idr_node);
 
-static struct {
-	kmutex_t	lock;
-	struct idr_head	preloaded_nodes;
-	struct idr_head	discarded_nodes;
-} idr_cache __cacheline_aligned;
+struct idr_cache {
+	struct idr_node		*ic_node;
+	void			*ic_where;
+};
+
+SDT_PROBE_DEFINE0(sdt, linux, idr, leak);
+SDT_PROBE_DEFINE1(sdt, linux, idr, init, "struct idr *"/*idr*/);
+SDT_PROBE_DEFINE1(sdt, linux, idr, destroy, "struct idr *"/*idr*/);
+SDT_PROBE_DEFINE4(sdt, linux, idr, replace,
+    "struct idr *"/*idr*/, "int"/*id*/, "void *"/*odata*/, "void *"/*ndata*/);
+SDT_PROBE_DEFINE3(sdt, linux, idr, remove,
+    "struct idr *"/*idr*/, "int"/*id*/, "void *"/*data*/);
+SDT_PROBE_DEFINE0(sdt, linux, idr, preload);
+SDT_PROBE_DEFINE0(sdt, linux, idr, preload__end);
+SDT_PROBE_DEFINE3(sdt, linux, idr, alloc,
+    "struct idr *"/*idr*/, "int"/*id*/, "void *"/*data*/);
+
+static specificdata_key_t idr_cache_key __read_mostly;
+
+static void
+idr_cache_warning(struct idr_cache *cache)
+{
+#ifdef DDB
+	const char *name;
+	db_expr_t offset;
+#endif
+
+	KASSERT(cache->ic_node != NULL);
+
+#ifdef DDB
+	db_find_sym_and_offset((db_addr_t)(uintptr_t)cache->ic_where,
+	    &name, &offset);
+	if (name) {
+		printf("WARNING: idr preload at %s+%#"DDB_EXPR_FMT"x"
+		    " leaked in lwp %s @ %p\n",
+		    name, offset, curlwp->l_name, curlwp);
+	} else
+#endif
+	{
+		printf("WARNING: idr preload at %p leaked in lwp %s @ %p\n",
+		    cache->ic_where, curlwp->l_name, curlwp);
+	}
+}
+
+static void
+idr_cache_dtor(void *cookie)
+{
+	struct idr_cache *cache = cookie;
+
+	if (cache->ic_node) {
+		SDT_PROBE0(sdt, linux, idr, leak);
+		idr_cache_warning(cache);
+		kmem_free(cache->ic_node, sizeof(*cache->ic_node));
+	}
+	kmem_free(cache, sizeof(*cache));
+}
 
 int
 linux_idr_module_init(void)
 {
+	int error;
 
-	mutex_init(&idr_cache.lock, MUTEX_DEFAULT, IPL_VM);
-	SIMPLEQ_INIT(&idr_cache.preloaded_nodes);
-	SIMPLEQ_INIT(&idr_cache.discarded_nodes);
+	error = lwp_specific_key_create(&idr_cache_key, &idr_cache_dtor);
+	if (error)
+		return error;
+
 	return 0;
 }
 
@@ -68,9 +128,7 @@ void
 linux_idr_module_fini(void)
 {
 
-	KASSERT(SIMPLEQ_EMPTY(&idr_cache.discarded_nodes));
-	KASSERT(SIMPLEQ_EMPTY(&idr_cache.preloaded_nodes));
-	mutex_destroy(&idr_cache.lock);
+	lwp_specific_key_delete(idr_cache_key);
 }
 
 static signed int idr_tree_compare_nodes(void *, const void *, const void *);
@@ -117,12 +175,14 @@ idr_init(struct idr *idr)
 
 	mutex_init(&idr->idr_lock, MUTEX_DEFAULT, IPL_VM);
 	rb_tree_init(&idr->idr_tree, &idr_rb_ops);
+	SDT_PROBE1(sdt, linux, idr, init,  idr);
 }
 
 void
 idr_destroy(struct idr *idr)
 {
 
+	SDT_PROBE1(sdt, linux, idr, destroy,  idr);
 #if 0				/* XXX No rb_tree_destroy?  */
 	rb_tree_destroy(&idr->idr_tree);
 #endif
@@ -151,6 +211,25 @@ idr_find(struct idr *idr, int id)
 }
 
 void *
+idr_get_next(struct idr *idr, int *idp)
+{
+	const struct idr_node *node;
+	void *data;
+
+	mutex_spin_enter(&idr->idr_lock);
+	node = rb_tree_find_node_geq(&idr->idr_tree, idp);
+	if (node == NULL) {
+		data = NULL;
+	} else {
+		data = node->in_data;
+		*idp = node->in_index;
+	}
+	mutex_spin_exit(&idr->idr_lock);
+
+	return data;
+}
+
+void *
 idr_replace(struct idr *idr, void *replacement, int id)
 {
 	struct idr_node *node;
@@ -163,6 +242,8 @@ idr_replace(struct idr *idr, void *replacement, int id)
 	} else {
 		result = node->in_data;
 		node->in_data = replacement;
+		SDT_PROBE4(sdt, linux, idr, replace,
+		    idr, id, result, replacement);
 	}
 	mutex_spin_exit(&idr->idr_lock);
 
@@ -177,33 +258,70 @@ idr_remove(struct idr *idr, int id)
 	mutex_spin_enter(&idr->idr_lock);
 	node = rb_tree_find_node(&idr->idr_tree, &id);
 	KASSERTMSG((node != NULL), "idr %p has no entry for id %d", idr, id);
+	SDT_PROBE3(sdt, linux, idr, remove,  idr, id, node->in_data);
 	rb_tree_remove_node(&idr->idr_tree, node);
 	mutex_spin_exit(&idr->idr_lock);
-	kfree(node);
+
+	kmem_free(node, sizeof(*node));
 }
 
 void
 idr_preload(gfp_t gfp)
 {
+	struct idr_cache *cache;
 	struct idr_node *node;
+	km_flag_t kmflag = ISSET(gfp, __GFP_WAIT) ? KM_SLEEP : KM_NOSLEEP;
 
+	SDT_PROBE0(sdt, linux, idr, preload);
+
+	/* If caller asked to wait, we had better be sleepable.  */
 	if (ISSET(gfp, __GFP_WAIT))
 		ASSERT_SLEEPABLE();
 
-	node = kmalloc(sizeof(*node), gfp);
+	/*
+	 * Get the current lwp's private idr cache.
+	 */
+	cache = lwp_getspecific(idr_cache_key);
+	if (cache == NULL) {
+		/* lwp_setspecific must be sleepable.  */
+		if (!ISSET(gfp, __GFP_WAIT))
+			return;
+		cache = kmem_zalloc(sizeof(*cache), kmflag);
+		if (cache == NULL)
+			return;
+		lwp_setspecific(idr_cache_key, cache);
+	}
+
+	/*
+	 * If there already is a node, a prior call to idr_preload must
+	 * not have been matched by idr_preload_end.  Print a warning,
+	 * claim the node, and record our return address for where this
+	 * node came from so the next leak is attributed to us.
+	 */
+	if (cache->ic_node) {
+		idr_cache_warning(cache);
+		goto out;
+	}
+
+	/*
+	 * No cached node.  Allocate a new one, store it in the cache,
+	 * and record our return address for where this node came from
+	 * so the next leak is attributed to us.
+	 */
+	node = kmem_alloc(sizeof(*node), kmflag);
 	KASSERT(node != NULL || !ISSET(gfp, __GFP_WAIT));
 	if (node == NULL)
 		return;
 
-	mutex_spin_enter(&idr_cache.lock);
-	SIMPLEQ_INSERT_TAIL(&idr_cache.preloaded_nodes, node, in_list);
-	mutex_spin_exit(&idr_cache.lock);
+	cache->ic_node = node;
+out:	cache->ic_where = __builtin_return_address(0);
 }
 
 int
 idr_alloc(struct idr *idr, void *data, int start, int end, gfp_t gfp)
 {
 	int maximum = (end <= 0? INT_MAX : (end - 1));
+	struct idr_cache *cache;
 	struct idr_node *node, *search, *collision __diagused;
 	int id = start;
 
@@ -215,15 +333,15 @@ idr_alloc(struct idr *idr, void *data, int start, int end, gfp_t gfp)
 	if (__predict_false(maximum < start))
 		return -ENOSPC;
 
-	/* Grab a node allocated by idr_preload.  */
-	mutex_spin_enter(&idr_cache.lock);
-	if (SIMPLEQ_EMPTY(&idr_cache.preloaded_nodes)) {
-		mutex_spin_exit(&idr_cache.lock);
+	/*
+	 * Grab a node allocated by idr_preload, if we have a cache and
+	 * it is populated.
+	 */
+	cache = lwp_getspecific(idr_cache_key);
+	if (cache == NULL || cache->ic_node == NULL)
 		return -ENOMEM;
-	}
-	node = SIMPLEQ_FIRST(&idr_cache.preloaded_nodes);
-	SIMPLEQ_REMOVE_HEAD(&idr_cache.preloaded_nodes, in_list);
-	mutex_spin_exit(&idr_cache.lock);
+	node = cache->ic_node;
+	cache->ic_node = NULL;
 
 	/* Find an id.  */
 	mutex_spin_enter(&idr->idr_lock);
@@ -242,11 +360,11 @@ idr_alloc(struct idr *idr, void *data, int start, int end, gfp_t gfp)
 	KASSERT(collision == node);
 out:	mutex_spin_exit(&idr->idr_lock);
 
+	/* Discard the node on failure.  */
 	if (id < 0) {
-		/* Discard the node on failure.  */
-		mutex_spin_enter(&idr_cache.lock);
-		SIMPLEQ_INSERT_HEAD(&idr_cache.discarded_nodes, node, in_list);
-		mutex_spin_exit(&idr_cache.lock);
+		cache->ic_node = node;
+	} else {
+		SDT_PROBE3(sdt, linux, idr, alloc,  idr, id, data);
 	}
 	return id;
 }
@@ -254,19 +372,31 @@ out:	mutex_spin_exit(&idr->idr_lock);
 void
 idr_preload_end(void)
 {
-	struct idr_head temp = SIMPLEQ_HEAD_INITIALIZER(temp);
-	struct idr_node *node, *next;
+	struct idr_cache *cache;
 
-	mutex_spin_enter(&idr_cache.lock);
-	SIMPLEQ_FOREACH_SAFE(node, &idr_cache.discarded_nodes, in_list, next) {
-		SIMPLEQ_REMOVE_HEAD(&idr_cache.discarded_nodes, in_list);
-		SIMPLEQ_INSERT_HEAD(&temp, node, in_list);
-	}
-	mutex_spin_exit(&idr_cache.lock);
+	SDT_PROBE0(sdt, linux, idr, preload__end);
 
-	SIMPLEQ_FOREACH_SAFE(node, &temp, in_list, next) {
-		SIMPLEQ_REMOVE_HEAD(&temp, in_list);
-		kfree(node);
+	/* Get the cache, or bail if it's not there.  */
+	cache = lwp_getspecific(idr_cache_key);
+	if (cache == NULL)
+		return;
+
+	/*
+	 * If there is a node, either because we didn't idr_alloc or
+	 * because idr_alloc failed, chuck it.
+	 *
+	 * XXX If we are not sleepable, then while the caller may have
+	 * used idr_preload(GFP_ATOMIC), kmem_free may still sleep.
+	 * What to do?
+	 */
+	if (cache->ic_node) {
+		struct idr_node *node;
+
+		node = cache->ic_node;
+		cache->ic_node = NULL;
+		cache->ic_where = NULL;
+
+		kmem_free(node, sizeof(*node));
 	}
 }
 

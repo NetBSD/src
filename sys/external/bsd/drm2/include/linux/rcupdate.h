@@ -1,7 +1,7 @@
-/*	$NetBSD: rcupdate.h,v 1.2 2014/03/18 18:20:43 riastradh Exp $	*/
+/*	$NetBSD: rcupdate.h,v 1.7 2018/08/27 13:55:12 riastradh Exp $	*/
 
 /*-
- * Copyright (c) 2013 The NetBSD Foundation, Inc.
+ * Copyright (c) 2018 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -31,5 +31,57 @@
 
 #ifndef _LINUX_RCUPDATE_H_
 #define _LINUX_RCUPDATE_H_
+
+#include <sys/atomic.h>
+#include <sys/cdefs.h>
+#include <sys/systm.h>
+
+#define	__rcu
+
+#define	rcu_assign_pointer(P, V) do {					      \
+	membar_producer();						      \
+	(P) = (V);							      \
+} while (0)
+
+#define	rcu_dereference(P) ({						      \
+	typeof(*(P)) *__rcu_dereference_tmp = (P);			      \
+	membar_datadep_consumer();					      \
+	__rcu_dereference_tmp;						      \
+})
+
+#define	rcu_dereference_protected(P, C) ({				      \
+	WARN_ON(!(C));							      \
+	(P);								      \
+})
+
+struct rcu_head {
+	void		(*rcuh_callback)(struct rcu_head *);
+	struct rcu_head	*rcuh_next;
+};
+
+#define	call_rcu		linux_call_rcu
+#define	synchronize_rcu		linux_synchronize_rcu
+
+int	linux_rcu_gc_init(void);
+void	linux_rcu_gc_fini(void);
+
+void	call_rcu(struct rcu_head *, void (*)(struct rcu_head *));
+void	synchronize_rcu(void);
+
+static inline void
+rcu_read_lock(void)
+{
+
+	kpreempt_disable();
+	__insn_barrier();
+}
+
+static inline void
+rcu_read_unlock(void)
+{
+
+	__insn_barrier();
+	kpreempt_enable();
+}
 
 #endif  /* _LINUX_RCUPDATE_H_ */

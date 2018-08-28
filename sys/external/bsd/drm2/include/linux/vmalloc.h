@@ -1,4 +1,4 @@
-/*	$NetBSD: vmalloc.h,v 1.5 2018/08/06 00:30:07 riastradh Exp $	*/
+/*	$NetBSD: vmalloc.h,v 1.7 2018/08/27 14:40:56 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013, 2018 The NetBSD Foundation, Inc.
@@ -40,10 +40,14 @@
 
 #include <asm/page.h>
 
+/*
+ * XXX vmalloc and kmalloc both use malloc(9).  If you change this, be
+ * sure to update kmalloc in <linux/slab.h> and kvfree in <linux/mm.h>.
+ */
+
 static inline bool
 is_vmalloc_addr(void *addr)
 {
-	/* XXX Assumes vmalloc and kmalloc both use malloc(9).  */
 	return true;
 }
 
@@ -68,6 +72,8 @@ vzalloc(unsigned long size)
 static inline void
 vfree(void *ptr)
 {
+	if (ptr == NULL)
+		return;
 	return free(ptr, M_TEMP);
 }
 

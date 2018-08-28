@@ -1,4 +1,4 @@
-#	$NetBSD: P6032,v 1.77 2018/08/01 20:04:09 maxv Exp $
+#	$NetBSD: P6032,v 1.78 2018/08/25 20:52:40 rin Exp $
 #
 # Algorithmics P-6032 kernel.
 #
@@ -7,7 +7,7 @@ include	"arch/algor/conf/std.algor"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"P6032-$Revision: 1.77 $"
+#ident 		"P6032-$Revision: 1.78 $"
 
 maxusers 32
 
@@ -346,6 +346,7 @@ fd*	at	fdc? drive ?
 #axe*	at uhub? port ?		# ASIX AX88172 based adapters
 #cue*	at uhub? port ?		# CATC USB-EL1201A based adapters
 #kue*	at uhub? port ?		# Kawasaki LSI KL5KUSB101B based adapters
+#mue*	at uhub? port ?		# Microchip LAN75xx/LAN78xx based adapters
 #url*	at uhub? port ?		# Realtek RTL8150L based adapters
 
 # Serial adapters

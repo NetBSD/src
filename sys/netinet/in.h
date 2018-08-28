@@ -1,4 +1,4 @@
-/*	$NetBSD: in.h,v 1.106 2018/07/11 05:25:45 maxv Exp $	*/
+/*	$NetBSD: in.h,v 1.107 2018/08/22 01:05:24 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -335,114 +335,6 @@ struct ip_mreq {
  * Third level is protocol number.
  * Fourth level is desired variable within that protocol.
  */
-#define	IPPROTO_MAXID	(IPPROTO_AH + 1)	/* don't list to IPPROTO_MAX */
-
-#define	CTL_IPPROTO_NAMES { \
-	{ "ip", CTLTYPE_NODE }, \
-	{ "icmp", CTLTYPE_NODE }, \
-	{ "igmp", CTLTYPE_NODE }, \
-	{ "ggp", CTLTYPE_NODE }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ "tcp", CTLTYPE_NODE }, \
-	{ 0, 0 }, \
-	{ "egp", CTLTYPE_NODE }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ "pup", CTLTYPE_NODE }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ "udp", CTLTYPE_NODE }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ "idp", CTLTYPE_NODE }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ "ipsec", CTLTYPE_NODE }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ "pim", CTLTYPE_NODE }, \
-}
 
 /*
  * Names for IP sysctl objects
@@ -472,36 +364,7 @@ struct ip_mreq {
 #define	IPCTL_LOOPBACKCKSUM    23	/* do IP checksum on loopback */
 #define	IPCTL_STATS		24	/* IP statistics */
 #define	IPCTL_DAD_COUNT        25	/* DAD packets to send */
-#define	IPCTL_MAXID	       26
 
-#define	IPCTL_NAMES { \
-	{ 0, 0 }, \
-	{ "forwarding", CTLTYPE_INT }, \
-	{ "redirect", CTLTYPE_INT }, \
-	{ "ttl", CTLTYPE_INT }, \
-	{ "mtu", CTLTYPE_INT }, \
-	{ "forwsrcrt", CTLTYPE_INT }, \
-	{ "directed-broadcast", CTLTYPE_INT }, \
-	{ "allowsrcrt", CTLTYPE_INT }, \
-	{ "subnetsarelocal", CTLTYPE_INT }, \
-	{ "mtudisc", CTLTYPE_INT }, \
-	{ "anonportmin", CTLTYPE_INT }, \
-	{ "anonportmax", CTLTYPE_INT }, \
-	{ "mtudisctimeout", CTLTYPE_INT }, \
-	{ "maxflows", CTLTYPE_INT }, \
-	{ "hostzerobroadcast", CTLTYPE_INT }, \
-	{ "gifttl", CTLTYPE_INT }, \
-	{ "lowportmin", CTLTYPE_INT }, \
-	{ "lowportmax", CTLTYPE_INT }, \
-	{ "maxfragpackets", CTLTYPE_INT }, \
-	{ "grettl", CTLTYPE_INT }, \
-	{ "checkinterface", CTLTYPE_INT }, \
-	{ "ifq", CTLTYPE_NODE }, \
-	{ "random_id", CTLTYPE_INT }, \
-	{ "do_loopback_cksum", CTLTYPE_INT }, \
-	{ "stats", CTLTYPE_STRUCT }, \
-	{ "dad_count", CTLTYPE_INT }, \
-}
 #endif /* _NETBSD_SOURCE */
 
 /* INET6 stuff */

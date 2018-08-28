@@ -1,5 +1,6 @@
-/*	$NetBSD: sftp.c,v 1.23 2018/04/06 18:59:00 christos Exp $	*/
-/* $OpenBSD: sftp.c,v 1.182 2017/11/03 03:46:52 djm Exp $ */
+/*	$NetBSD: sftp.c,v 1.24 2018/08/26 07:46:36 christos Exp $	*/
+/* $OpenBSD: sftp.c,v 1.185 2018/04/26 14:47:03 bluhm Exp $ */
+
 /*
  * Copyright (c) 2001-2004 Damien Miller <djm@openbsd.org>
  *
@@ -17,7 +18,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: sftp.c,v 1.23 2018/04/06 18:59:00 christos Exp $");
+__RCSID("$NetBSD: sftp.c,v 1.24 2018/08/26 07:46:36 christos Exp $");
 
 #include <sys/param.h>	/* MIN MAX */
 #include <sys/types.h>
@@ -67,7 +68,7 @@ FILE* infile;
 int batchmode = 0;
 
 /* PID of ssh transport process */
-static pid_t sshpid = -1;
+static volatile pid_t sshpid = -1;
 
 /* Suppress diagnositic messages */
 int quiet = 0;
@@ -235,6 +236,25 @@ cmd_interrupt(int signo)
 	(void)write(STDERR_FILENO, msg, sizeof(msg) - 1);
 	interrupted = 1;
 	errno = olderrno;
+}
+
+/*ARGSUSED*/
+static void
+sigchld_handler(int sig)
+{
+	int save_errno = errno;
+	pid_t pid;
+	const char msg[] = "\rConnection closed.  \n";
+
+	/* Report if ssh transport process dies. */
+	while ((pid = waitpid(sshpid, NULL, WNOHANG)) == -1 && errno == EINTR)
+		continue;
+	if (pid == sshpid) {
+		(void)write(STDERR_FILENO, msg, sizeof(msg) - 1);
+		sshpid = -1;
+	}
+
+	errno = save_errno;
 }
 
 static void
@@ -1856,7 +1876,7 @@ complete_cmd_parse(EditLine *el, char *cmd, int lastarg, char quote,
 		return 0;
 	}
 
-	/* Complete ambigious command */
+	/* Complete ambiguous command */
 	tmp = complete_ambiguous(cmd, list, count);
 	if (count > 1)
 		complete_display(list, 0);
@@ -2233,6 +2253,7 @@ interactive_loop(struct sftp_conn *conn, const char *file1, const char *file2)
 		if (err != 0)
 			break;
 	}
+	signal(SIGCHLD, SIG_DFL);
 	free(remote_path);
 	free(startdir);
 	free(conn);
@@ -2289,6 +2310,7 @@ connect_to_server(const char *path, char **args, int *in, int *out)
 	signal(SIGTSTP, suspchild);
 	signal(SIGTTIN, suspchild);
 	signal(SIGTTOU, suspchild);
+	signal(SIGCHLD, sigchld_handler);
 	close(c_in);
 	close(c_out);
 }
@@ -2522,7 +2544,7 @@ main(int argc, char **argv)
 	if (batchmode)
 		fclose(infile);
 
-	while (waitpid(sshpid, NULL, 0) == -1)
+	while (waitpid(sshpid, NULL, 0) == -1 && sshpid > 1)
 		if (errno != EINTR)
 			fatal("Couldn't wait for ssh process: %s",
 			    strerror(errno));

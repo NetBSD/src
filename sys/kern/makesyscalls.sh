@@ -1,4 +1,4 @@
-#	$NetBSD: makesyscalls.sh,v 1.170 2018/08/10 21:44:59 pgoyette Exp $
+#	$NetBSD: makesyscalls.sh,v 1.172 2018/08/26 11:53:28 kre Exp $
 #
 # Copyright (c) 1994, 1996, 2000 Christopher G. Demetriou
 # All rights reserved.
@@ -77,6 +77,21 @@ case $1 in
 /*)	. $1;;
 *)	. ./$1;;
 esac
+
+errmsg()
+{
+	fail=true;
+	printf '%s: %s\n' "$0" "$*" >&2
+}
+
+fail=false
+case "${nsysent:-0}" in
+*[!0-9]*)	errmsg "Non numeric value for nsysent:" "${nsysent}";;
+esac
+case "${maxsysargs:-0}" in
+*[!0-9]*)	errmsg "Non numeric value for maxsysargs:" "${maxsysargs}";;
+esac
+$fail && exit 1
 
 # tmp files:
 sysdcl="sysent.dcl"
@@ -172,7 +187,7 @@ BEGIN {
 	if (!registertype) {
 	    registertype = \"register_t\"
 	}
-	nsysent = \"$nsysent\"
+	nsysent = ${nsysent:-0}
 
 	sysdcl = \"$sysdcl\"
 	syscompat_pref = \"$syscompat_pref\"
@@ -182,7 +197,7 @@ BEGIN {
 	rumpprotos = \"$rumpprotos\"
 	rumptypes = \"$rumptypes\"
 	sys_nosys = \"$sys_nosys\"
-	maxsysargs = \"$maxsysargs\"
+	maxsysargs = ${maxsysargs:-8}
 	rumpnoflags=\"$rumpnoflags\"
 	rumpnosys=\"$rumpnosys\"
 	rumpnomodule=\"$rumpnomodule\"
@@ -1130,12 +1145,6 @@ END {
 
 	maxsyscall = syscall
 
-	# XXX
-	# XXX The following comparisons with nsysent will produce
-	# XXX unexpected results if (for example) syscall has a
-	# XXX value of 900 and nsysent has a value of "1024".  We
-	# XXX probably ought to make nsysent a numeric variable.
-	# XXX
 	if (nsysent) {
 		if (syscall > nsysent) {
 			printf("%s: line %d: too many syscalls [%d > %d]\n", infile, NR, syscall, nsysent)

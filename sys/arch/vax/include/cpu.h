@@ -1,4 +1,4 @@
-/*      $NetBSD: cpu.h,v 1.101 2017/06/16 18:17:42 jdolecek Exp $      */
+/*      $NetBSD: cpu.h,v 1.102 2018/08/22 01:05:23 msaitoh Exp $      */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden
@@ -37,7 +37,6 @@
 #define	CPU_CONSDEV		2
 #define	CPU_BOOTED_DEVICE	3
 #define	CPU_BOOTED_KERNEL	4
-#define CPU_MAXID		5
 
 #ifdef _KERNEL
 

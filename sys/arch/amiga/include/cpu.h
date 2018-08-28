@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.81 2016/12/17 14:36:29 flxd Exp $	*/
+/*	$NetBSD: cpu.h,v 1.82 2018/08/22 01:05:21 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -116,15 +116,6 @@ extern int astpending;		/* need trap before returning to user mode */
 
 extern int machineid;
 
-#endif /* _KERNEL */
-
-/*
- * CTL_MACHDEP definitions.
- */
-#define CPU_CONSDEV	1	/* dev_t: console terminal device */
-#define CPU_MAXID	2	/* number of valid machdep ids */
-
-#ifdef _KERNEL
 /*
  * Prototypes from amiga_init.c
  */

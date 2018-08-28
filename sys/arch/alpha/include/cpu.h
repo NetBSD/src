@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.83 2016/12/17 14:36:29 flxd Exp $ */
+/* $NetBSD: cpu.h,v 1.84 2018/08/22 01:05:21 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -238,7 +238,6 @@ do {									\
 #define	CPU_UNALIGNED_SIGBUS	5	/* int: SIGBUS unaligned accesses */
 #define	CPU_BOOTED_KERNEL	6	/* string: booted kernel name */
 #define	CPU_FP_SYNC_COMPLETE	7	/* int: always fixup sync fp traps */
-#define	CPU_MAXID		8	/* 7 valid machdep IDs */
 
 #ifdef _KERNEL
 

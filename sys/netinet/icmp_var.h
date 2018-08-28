@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp_var.h,v 1.30 2015/02/18 17:00:15 christos Exp $	*/
+/*	$NetBSD: icmp_var.h,v 1.31 2018/08/22 01:05:24 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -72,19 +72,6 @@
 #define ICMPCTL_REDIRTIMEOUT	6	/* Remove routes added via redirects */
 #define	ICMPCTL_STATS		7	/* ICMP statistics */
 #define ICMPCTL_BMCASTECHO	8	/* allow broad/mult-cast echo */
-#define ICMPCTL_MAXID		9
-
-#define ICMPCTL_NAMES { \
-	{ 0, 0 }, \
-	{ "maskrepl", CTLTYPE_INT }, \
-	{ 0, 0 }, \
-	{ "returndatabytes", CTLTYPE_INT }, \
-	{ "errppslimit", CTLTYPE_INT }, \
-	{ "rediraccept", CTLTYPE_INT }, \
-	{ "redirtimeout", CTLTYPE_INT }, \
-	{ "stats", CTLTYPE_STRUCT }, \
-	{ "bmcastecho", CTLTYPE_INT }, \
-}
 
 #ifdef _KERNEL
 

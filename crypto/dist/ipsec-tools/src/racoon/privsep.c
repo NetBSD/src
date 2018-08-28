@@ -1,4 +1,4 @@
-/*	$NetBSD: privsep.c,v 1.24 2018/05/19 19:23:15 maxv Exp $	*/
+/*	$NetBSD: privsep.c,v 1.25 2018/08/28 09:10:28 christos Exp $	*/
 
 /* Id: privsep.c,v 1.15 2005/08/08 11:23:44 vanhu Exp */
 
@@ -917,7 +917,7 @@ privsep_eay_get_pkcs1privkey(path)
 	memcpy(msg + 1, path, msg->bufs.buflen[0]);
 
 	if (privsep_send(privsep_sock[1], msg, len) != 0)
-	        goto out;
+		goto out;
 
 	if (privsep_recv(privsep_sock[1], &msg, &len) != 0)
 	        goto out;
@@ -1033,10 +1033,9 @@ privsep_script_exec(script, name, envp)
 	/*
 	 * And send it!
 	 */
-	if (privsep_send(privsep_sock[1], msg, msg->hdr.ac_len) != 0) {
-	        racoon_free(msg);
-		return -1;
-	}
+
+	if (privsep_send(privsep_sock[1], msg, msg->hdr.ac_len) != 0)
+		goto out;
 
 	if (privsep_recv(privsep_sock[1], &msg, &len) != 0) {
 	        racoon_free(msg);
@@ -1045,6 +1044,7 @@ privsep_script_exec(script, name, envp)
 
 	if (msg->hdr.ac_errno != 0) {
 		errno = msg->hdr.ac_errno;
+out:
 		racoon_free(msg);
 		return -1;
 	}
@@ -1085,7 +1085,7 @@ privsep_getpsk(str, keylen)
 	memcpy(data, &keylen, sizeof(keylen));
 
 	if (privsep_send(privsep_sock[1], msg, len) != 0)
-	        goto out;
+		goto out;
 
 	if (privsep_recv(privsep_sock[1], &msg, &len) != 0)
 	        goto out;
@@ -1357,10 +1357,9 @@ privsep_xauth_login_system(usr, pwd)
 	memcpy(data, pwd, msg->bufs.buflen[1]);
 	
 	/* frees msg */
-	if (privsep_send(privsep_sock[1], msg, len) != 0) {
-	        racoon_free(msg);
-		return -1;
-	}
+
+	if (privsep_send(privsep_sock[1], msg, len) != 0)
+		goto out;
 
 	if (privsep_recv(privsep_sock[1], &msg, &len) != 0) {
 	        racoon_free(msg);
@@ -1368,6 +1367,7 @@ privsep_xauth_login_system(usr, pwd)
 	}
 
 	if (msg->hdr.ac_errno != 0) {
+out:
 		racoon_free(msg);
 		return -1;
 	}
@@ -1424,7 +1424,7 @@ privsep_accounting_system(port, raddr, usr, inout)
 
 	/* frees msg */
 	if (privsep_send(privsep_sock[1], msg, len) != 0)
-	        goto out;
+		goto out;
 
 	if (privsep_recv(privsep_sock[1], &msg, &len) != 0)
 	        goto out;
@@ -1672,7 +1672,7 @@ privsep_accounting_pam(port, inout)
 
 	/* frees msg */
 	if (privsep_send(privsep_sock[1], msg, len) != 0)
-	        goto out;
+		goto out;
 
 	if (privsep_recv(privsep_sock[1], &msg, &len) != 0)
 	        goto out;
@@ -1793,10 +1793,8 @@ privsep_cleanup_pam(port)
 	memcpy(data, &isakmp_cfg_config.pool_size, msg->bufs.buflen[1]);
 
 	/* frees msg */
-	if (privsep_send(privsep_sock[1], msg, len) != 0) {
-	        racoon_free(msg);
-		return;
-	}
+	if (privsep_send(privsep_sock[1], msg, len) != 0)
+		goto out;
 
 	if (privsep_recv(privsep_sock[1], &msg, &len) != 0) {
 	        racoon_free(msg);
@@ -1806,6 +1804,7 @@ privsep_cleanup_pam(port)
 	if (msg->hdr.ac_errno != 0)
 		errno = msg->hdr.ac_errno;
 
+out:
 	racoon_free(msg);
 	return;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: mutex.h,v 1.7 2014/08/23 08:03:33 riastradh Exp $	*/
+/*	$NetBSD: mutex.h,v 1.11 2018/08/27 07:34:03 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -35,9 +35,11 @@
 #include <sys/mutex.h>
 
 #include <lib/libkern/libkern.h> /* KASSERT */
+#include <linux/list.h>
 
-#define	__acquires(lock)	/* XXX lockdep stuff */
-#define	__releases(lock)	/* XXX lockdep stuff */
+#define	__acquires(lock)			/* XXX lockdep stuff */
+#define	__releases(lock)			/* XXX lockdep stuff */
+#define might_lock(lock) do {} while(0) 	/* XXX lockdep stuff */
 
 struct mutex {
 	kmutex_t mtx_lock;
@@ -107,7 +109,9 @@ mutex_lock_nest_lock(struct mutex *mutex, struct mutex *already)
 	mutex_lock(mutex);
 }
 
+#define	__lockdep_used		__unused
 #define	lockdep_assert_held(m)	do {} while (0)
+#define	lockdep_is_held(m)	1
 
 #define	SINGLE_DEPTH_NESTING	0
 

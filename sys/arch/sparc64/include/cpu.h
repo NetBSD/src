@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.124 2018/01/16 08:23:17 mrg Exp $ */
+/*	$NetBSD: cpu.h,v 1.125 2018/08/22 01:05:23 msaitoh Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -51,7 +51,6 @@
 #define	CPU_BOOT_ARGS		3	/* string: args booted with */
 #define	CPU_ARCH		4	/* integer: cpu architecture version */
 #define CPU_VIS			5	/* 0 - no VIS, 1 - VIS 1.0, etc. */
-#define	CPU_MAXID		6	/* number of valid machdep ids */
 
 /*
  * This is exported via sysctl for cpuctl(8).

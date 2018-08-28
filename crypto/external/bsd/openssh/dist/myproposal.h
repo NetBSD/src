@@ -1,5 +1,5 @@
-/*	$NetBSD: myproposal.h,v 1.17 2017/10/07 19:39:19 christos Exp $	*/
-/* $OpenBSD: myproposal.h,v 1.55 2017/05/07 23:13:42 djm Exp $ */
+/*	$NetBSD: myproposal.h,v 1.18 2018/08/26 07:46:36 christos Exp $	*/
+/* $OpenBSD: myproposal.h,v 1.56 2018/07/03 11:39:54 djm Exp $ */
 
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
@@ -51,6 +51,8 @@
 	"ecdsa-sha2-nistp384-cert-v01@openssh.com," \
 	"ecdsa-sha2-nistp521-cert-v01@openssh.com," \
 	"ssh-ed25519-cert-v01@openssh.com," \
+	"rsa-sha2-512-cert-v01@openssh.com," \
+	"rsa-sha2-256-cert-v01@openssh.com," \
 	"ssh-rsa-cert-v01@openssh.com," \
 	"ecdsa-sha2-nistp256," \
 	"ecdsa-sha2-nistp384," \

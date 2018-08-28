@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_var.h,v 1.43 2018/02/08 10:30:30 maxv Exp $	*/
+/*	$NetBSD: udp_var.h,v 1.44 2018/08/22 01:05:24 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -75,16 +75,6 @@ struct	udpiphdr {
 #define	UDPCTL_RECVSPACE	3	/* default recv buffer */
 #define	UDPCTL_LOOPBACKCKSUM	4	/* do UDP checksum on loopback */
 #define	UDPCTL_STATS		5	/* UDP statistics */
-#define	UDPCTL_MAXID		7
-
-#define UDPCTL_NAMES { \
-	{ 0, 0 }, \
-	{ "checksum", CTLTYPE_INT }, \
-	{ "sendspace", CTLTYPE_INT }, \
-	{ "recvspace", CTLTYPE_INT }, \
-	{ "do_loopback_cksum", CTLTYPE_INT }, \
-	{ "stats", CTLTYPE_STRUCT }, \
-}
 
 #ifdef _KERNEL
 
