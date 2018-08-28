@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_agpsupport.c,v 1.8 2018/08/27 06:32:57 riastradh Exp $	*/
+/*	$NetBSD: drm_agpsupport.c,v 1.9 2018/08/28 03:33:54 riastradh Exp $	*/
 
 /**
  * \file drm_agpsupport.c
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_agpsupport.c,v 1.8 2018/08/27 06:32:57 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_agpsupport.c,v 1.9 2018/08/28 03:33:54 riastradh Exp $");
 
 #include <drm/drmP.h>
 #include <linux/errno.h>
@@ -225,7 +225,7 @@ int drm_agp_alloc(struct drm_device *dev, struct drm_agp_buffer *request)
 	if (!(entry = kzalloc(sizeof(*entry), GFP_KERNEL)))
 		return -ENOMEM;
 
-	pages = (request->size + PAGE_SIZE - 1) / PAGE_SIZE;
+	pages = (request->size + AGP_PAGE_SIZE - 1) / AGP_PAGE_SIZE;
 	type = (u32) request->type;
 	if (!(memory = agp_allocate_memory(dev->agp->bridge, pages, type))) {
 		kfree(entry);
@@ -356,7 +356,7 @@ int drm_agp_bind(struct drm_device *dev, struct drm_agp_binding *request)
 		return -EINVAL;
 	if (entry->bound)
 		return -EINVAL;
-	page = (request->offset + PAGE_SIZE - 1) / PAGE_SIZE;
+	page = (request->offset + AGP_PAGE_SIZE - 1) / AGP_PAGE_SIZE;
 #ifdef __NetBSD__
 	if ((retcode = drm_bind_agp(dev->agp->bridge, entry->memory, page)))
 		return retcode;
@@ -555,7 +555,7 @@ drm_agp_bind_pages(struct drm_device *dev,
 	mem->page_count = num_pages;
 
 	mem->is_flushed = true;
-	ret = agp_bind_memory(mem, gtt_offset / PAGE_SIZE);
+	ret = agp_bind_memory(mem, gtt_offset / AGP_PAGE_SIZE);
 	if (ret != 0) {
 		DRM_ERROR("Failed to bind AGP memory: %d\n", ret);
 		agp_free_memory(mem);
