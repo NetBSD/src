@@ -920,7 +920,7 @@ privsep_eay_get_pkcs1privkey(path)
 		goto out;
 
 	if (privsep_recv(privsep_sock[1], &msg, &len) != 0)
-		return NULL;
+	        goto out;
 
 	if (msg->hdr.ac_errno != 0) {
 		errno = msg->hdr.ac_errno;
@@ -1033,11 +1033,14 @@ privsep_script_exec(script, name, envp)
 	/*
 	 * And send it!
 	 */
+
 	if (privsep_send(privsep_sock[1], msg, msg->hdr.ac_len) != 0)
 		goto out;
 
-	if (privsep_recv(privsep_sock[1], &msg, &len) != 0)
+	if (privsep_recv(privsep_sock[1], &msg, &len) != 0) {
+	        racoon_free(msg);
 		return -1;
+	}
 
 	if (msg->hdr.ac_errno != 0) {
 		errno = msg->hdr.ac_errno;
@@ -1085,7 +1088,7 @@ privsep_getpsk(str, keylen)
 		goto out;
 
 	if (privsep_recv(privsep_sock[1], &msg, &len) != 0)
-		return NULL;
+	        goto out;
 
 	if (msg->hdr.ac_errno != 0) {
 		errno = msg->hdr.ac_errno;
@@ -1149,7 +1152,7 @@ privsep_socket(domain, type, protocol)
 
 	/* Get the privileged socket descriptor from the privileged process. */
 	if ((s = rec_fd(privsep_sock[1])) == -1)
-		return -1;
+	        goto out;
 
 	if (privsep_recv(privsep_sock[1], &msg, &len) != 0)
 		goto out;
@@ -1222,7 +1225,7 @@ privsep_bind(s, addr, addrlen)
 
 	/* Send the socket descriptor to the privileged process. */
 	if (send_fd(privsep_sock[1], s) < 0)
-		return -1;
+	        goto out;
 
 	if (privsep_recv(privsep_sock[1], &msg, &len) != 0)
 		goto out;
@@ -1301,7 +1304,7 @@ privsep_setsockopt(s, level, optname, optval, optlen)
 		goto out;
 
 	if (send_fd(privsep_sock[1], s) < 0)
-		return -1;
+	        goto out;
 
 	if (privsep_recv(privsep_sock[1], &msg, &len) != 0) {
 	    plog(LLV_ERROR, LOCATION, NULL,
@@ -1354,11 +1357,14 @@ privsep_xauth_login_system(usr, pwd)
 	memcpy(data, pwd, msg->bufs.buflen[1]);
 	
 	/* frees msg */
+
 	if (privsep_send(privsep_sock[1], msg, len) != 0)
 		goto out;
 
-	if (privsep_recv(privsep_sock[1], &msg, &len) != 0)
+	if (privsep_recv(privsep_sock[1], &msg, &len) != 0) {
+	        racoon_free(msg);
 		return -1;
+	}
 
 	if (msg->hdr.ac_errno != 0) {
 out:
@@ -1421,7 +1427,7 @@ privsep_accounting_system(port, raddr, usr, inout)
 		goto out;
 
 	if (privsep_recv(privsep_sock[1], &msg, &len) != 0)
-		return -1;
+	        goto out;
 
 	if (msg->hdr.ac_errno != 0) {
 		errno = msg->hdr.ac_errno;
@@ -1669,7 +1675,7 @@ privsep_accounting_pam(port, inout)
 		goto out;
 
 	if (privsep_recv(privsep_sock[1], &msg, &len) != 0)
-		return -1;
+	        goto out;
 
 	if (msg->hdr.ac_errno != 0) {
 		errno = msg->hdr.ac_errno;
@@ -1736,10 +1742,10 @@ privsep_xauth_login_pam(port, raddr, usr, pwd)
 
 	/* frees msg */
 	if (privsep_send(privsep_sock[1], msg, len) != 0)
-		goto out;
+	        goto out;
 
 	if (privsep_recv(privsep_sock[1], &msg, &len) != 0)
-		return -1;
+	        goto out;
 
 	if (msg->hdr.ac_errno != 0) {
 		errno = msg->hdr.ac_errno;
@@ -1790,8 +1796,10 @@ privsep_cleanup_pam(port)
 	if (privsep_send(privsep_sock[1], msg, len) != 0)
 		goto out;
 
-	if (privsep_recv(privsep_sock[1], &msg, &len) != 0)
+	if (privsep_recv(privsep_sock[1], &msg, &len) != 0) {
+	        racoon_free(msg);
 		return;
+	}
 
 	if (msg->hdr.ac_errno != 0)
 		errno = msg->hdr.ac_errno;
