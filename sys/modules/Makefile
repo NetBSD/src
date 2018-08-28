@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.208 2018/08/25 20:12:22 rin Exp $
+#	$NetBSD: Makefile,v 1.209 2018/08/28 03:41:38 riastradh Exp $
 
 .include <bsd.own.mk>
 
@@ -293,6 +293,7 @@ SUBDIR+=	azalia
 SUBDIR+=	compat_linux
 SUBDIR+=	drm
 SUBDIR+=	drmkms
+SUBDIR+=	drmkms_agp
 SUBDIR+=	drmkms_linux
 SUBDIR+=	drmkms_pci
 SUBDIR+=	i915drm

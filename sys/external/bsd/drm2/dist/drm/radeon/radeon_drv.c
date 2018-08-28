@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_drv.c,v 1.8 2018/08/27 15:22:54 riastradh Exp $	*/
+/*	$NetBSD: radeon_drv.c,v 1.9 2018/08/28 03:41:39 riastradh Exp $	*/
 
 /**
  * \file radeon_drv.c
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_drv.c,v 1.8 2018/08/27 15:22:54 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_drv.c,v 1.9 2018/08/28 03:41:39 riastradh Exp $");
 
 #include <drm/drmP.h>
 #include <drm/radeon_drm.h>
@@ -361,6 +361,7 @@ static struct drm_driver driver_old = {
 	.postclose = radeon_driver_postclose,
 	.lastclose = radeon_driver_lastclose,
 	.set_busid = drm_pci_set_busid,
+	.set_unique = drm_pci_set_unique,
 	.unload = radeon_driver_unload,
 	.suspend = radeon_suspend,
 	.resume = radeon_resume,

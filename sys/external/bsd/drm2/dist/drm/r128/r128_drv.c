@@ -1,4 +1,4 @@
-/*	$NetBSD: r128_drv.c,v 1.3 2018/08/27 07:03:26 riastradh Exp $	*/
+/*	$NetBSD: r128_drv.c,v 1.4 2018/08/28 03:41:39 riastradh Exp $	*/
 
 /* r128_drv.c -- ATI Rage 128 driver -*- linux-c -*-
  * Created: Mon Dec 13 09:47:27 1999 by faith@precisioninsight.com
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: r128_drv.c,v 1.3 2018/08/27 07:03:26 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: r128_drv.c,v 1.4 2018/08/28 03:41:39 riastradh Exp $");
 
 #include <linux/module.h>
 
@@ -68,6 +68,7 @@ static struct drm_driver driver = {
 	.preclose = r128_driver_preclose,
 	.lastclose = r128_driver_lastclose,
 	.set_busid = drm_pci_set_busid,
+	.set_unique = drm_pci_set_unique,
 	.get_vblank_counter = r128_get_vblank_counter,
 	.enable_vblank = r128_enable_vblank,
 	.disable_vblank = r128_disable_vblank,
