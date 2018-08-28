@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_module.c,v 1.2 2018/08/27 14:13:29 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_module.c,v 1.3 2018/08/28 03:34:39 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_module.c,v 1.2 2018/08/27 14:13:29 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_module.c,v 1.3 2018/08/28 03:34:39 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/module.h>
@@ -75,13 +75,6 @@ amdgpu_init(void)
 #endif
 
 	amdgpu_amdkfd_init();
-
-	error = drm_pci_init(amdgpu_drm_driver, NULL);
-	if (error) {
-		aprint_error("amdgpu: failed to init pci: %d\n",
-		    error);
-		return error;
-	}
 	drm_sysctl_init(&amdgpu_def);
 
 	return 0;
@@ -105,7 +98,6 @@ amdgpu_fini(void)
 {
 
 	drm_sysctl_fini(&amdgpu_def);
-	drm_pci_exit(amdgpu_drm_driver, NULL);
 	amdgpu_amdkfd_fini();
 #if notyet			/* XXX amdgpu acpi */
 	amdgpu_unregister_atpx_handler();
