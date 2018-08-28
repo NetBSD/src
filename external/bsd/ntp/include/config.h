@@ -330,6 +330,8 @@
 /* Define to 1 if you have `alloca', as a function or macro. */
 #define HAVE_ALLOCA 1
 
+#define HAVE_SETPROCTITLE 1
+
 /* Define to 1 if you have <alloca.h> and it should be used (not on Ultrix).
    */
 /* #undef HAVE_ALLOCA_H */
