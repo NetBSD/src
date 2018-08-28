@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm283x_platform.c,v 1.15 2018/08/26 18:15:49 ryo Exp $	*/
+/*	$NetBSD: bcm283x_platform.c,v 1.16 2018/08/28 14:57:03 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2017 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm283x_platform.c,v 1.15 2018/08/26 18:15:49 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm283x_platform.c,v 1.16 2018/08/28 14:57:03 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_bcm283x.h"
@@ -799,6 +799,7 @@ bcm2836_bootstrap(void)
 		/* Wake up AP in case firmware has placed it in WFE state */
 		__asm __volatile("sev" ::: "memory");
 
+#ifdef MULTIPROCESSOR
 		/* Wait for APs to start */
 		for (int loop = 0; loop < 16; loop++) {
 			membar_consumer();
@@ -806,6 +807,7 @@ bcm2836_bootstrap(void)
 				break;
 			gtmr_delay(10000);
 		}
+#endif
 	}
 #endif
 
