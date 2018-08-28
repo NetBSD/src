@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_in_cksum.c,v 1.1 2008/01/25 21:12:14 joerg Exp $	*/
+/*	$NetBSD: cpu_in_cksum.c,v 1.2 2018/08/28 07:28:01 rin Exp $	*/
 /*-
  * Copyright (c) 2008 Joerg Sonnenberger <joerg@NetBSD.org>.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_in_cksum.c,v 1.1 2008/01/25 21:12:14 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_in_cksum.c,v 1.2 2018/08/28 07:28:01 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/endian.h>
@@ -162,6 +162,10 @@ cpu_in_cksum(struct mbuf *m, int len, int off, uint32_t initial_sum)
 				partial = 0;
 			}
 		}
+		/*
+		 * mlen is not updated below as the remaining tests
+		 * are using bit masks, which are not affected.
+		 */
 		if (mlen & 16) {
 			partial += *(uint16_t *)data;
 			partial += *(uint16_t *)(data + 2);
@@ -172,12 +176,7 @@ cpu_in_cksum(struct mbuf *m, int len, int off, uint32_t initial_sum)
 			partial += *(uint16_t *)(data + 12);
 			partial += *(uint16_t *)(data + 14);
 			data += 16;
-			mlen -= 16;
 		}
-		/*
-		 * mlen is not updated below as the remaining tests
-		 * are using bit masks, which are not affected.
-		 */
 		if (mlen & 8) {
 			partial += *(uint16_t *)data;
 			partial += *(uint16_t *)(data + 2);
