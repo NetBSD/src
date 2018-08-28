@@ -1,4 +1,4 @@
-/*	$NetBSD: via_drv.c,v 1.6 2018/08/27 07:51:06 riastradh Exp $	*/
+/*	$NetBSD: via_drv.c,v 1.7 2018/08/28 03:41:39 riastradh Exp $	*/
 
 /*
  * Copyright 1998-2003 VIA Technologies, Inc. All Rights Reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: via_drv.c,v 1.6 2018/08/27 07:51:06 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: via_drv.c,v 1.7 2018/08/28 03:41:39 riastradh Exp $");
 
 #include <linux/module.h>
 
@@ -87,6 +87,7 @@ static struct drm_driver driver = {
 	.preclose = via_reclaim_buffers_locked,
 	.postclose = via_driver_postclose,
 	.set_busid = drm_pci_set_busid,
+	.set_unique = drm_pci_set_unique,
 	.context_dtor = via_final_context,
 	.get_vblank_counter = via_get_vblank_counter,
 	.enable_vblank = via_enable_vblank,

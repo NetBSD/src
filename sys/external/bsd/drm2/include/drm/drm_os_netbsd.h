@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_os_netbsd.h,v 1.12 2018/08/27 16:20:35 riastradh Exp $	*/
+/*	$NetBSD: drm_os_netbsd.h,v 1.13 2018/08/28 03:41:39 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -41,13 +41,11 @@
 #define	CONFIG_X86_PAT	1
 #endif
 
-#if defined(_KERNEL_OPT)
-#include "pci.h"
-#endif
-
-#if NPCI > 0
+/*
+ * Nothing meaningfully depends on this; defining this avoids patching
+ * away some conditionalization in drmP.h.
+ */
 #define	CONFIG_PCI	1
-#endif
 
 #ifdef notyet
 #if defined(__i386__)

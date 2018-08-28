@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_internal.h,v 1.4 2018/08/27 15:31:27 riastradh Exp $	*/
+/*	$NetBSD: drm_internal.h,v 1.5 2018/08/28 03:41:38 riastradh Exp $	*/
 
 /*
  * Copyright © 2014 Intel Corporation
@@ -36,13 +36,6 @@ int drm_pci_set_unique(struct drm_device *dev,
 		       struct drm_unique *u);
 int drm_irq_by_busid(struct drm_device *dev, void *data,
 		     struct drm_file *file_priv);
-
-#ifdef __NetBSD__
-int drm_pci_set_unique_impl(struct drm_device *, struct drm_master *,
-    struct drm_unique *);
-void drm_pci_set_unique_hook(int (**)(struct drm_device *, struct drm_master *,
-	struct drm_unique *));
-#endif
 
 /* drm_vm.c */
 #ifndef __NetBSD__

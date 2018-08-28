@@ -1,7 +1,7 @@
-/*	$NetBSD: agp.h,v 1.2 2018/08/27 04:58:34 riastradh Exp $	*/
+/*	$NetBSD: agp.h,v 1.3 2018/08/28 03:41:38 riastradh Exp $	*/
 
 #include "priv.h"
-#if defined(CONFIG_AGP) || (defined(CONFIG_AGP_MODULE) && defined(MODULE))
+#if 0 && (defined(CONFIG_AGP) || (defined(CONFIG_AGP_MODULE) && defined(MODULE))) /* XXX nouveau agp */
 #ifndef __NVKM_PCI_AGP_H__
 #define __NVKM_PCI_AGP_H__
 

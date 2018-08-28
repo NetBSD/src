@@ -1,11 +1,6 @@
-#	$NetBSD: files.drmkms_pci,v 1.12 2018/08/27 15:31:27 riastradh Exp $
+#	$NetBSD: files.drmkms_pci,v 1.13 2018/08/28 03:41:39 riastradh Exp $
 
-# Attribute for kernel components supporting PCI-based real graphics
-# drivers, a.k.a. `KMS' (kernel mode-setting), as opposed to the legacy
-# `drm' interface attribute, which is where PCI-based fake graphics
-# drivers, a.k.a. `UMS' (user mode-setting), attach.
 define	drmkms_pci: drmkms
-defflag	opt_drmkms_pci.h	DRMKMS_PCI
 
 #file	external/bsd/drm2/dist/drm/ati_pcigart.c	drmkms_pci
 file	external/bsd/drm2/dist/drm/drm_agpsupport.c	drmkms_pci & agp

@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_module.c,v 1.14 2018/08/28 03:35:08 riastradh Exp $	*/
+/*	$NetBSD: drm_module.c,v 1.15 2018/08/28 03:41:39 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_module.c,v 1.14 2018/08/28 03:35:08 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_module.c,v 1.15 2018/08/28 03:41:39 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/condvar.h>
@@ -38,9 +38,7 @@ __KERNEL_RCSID(0, "$NetBSD: drm_module.c,v 1.14 2018/08/28 03:35:08 riastradh Ex
 #include <sys/device.h>
 #include <sys/module.h>
 #include <sys/mutex.h>
-#ifndef _MODULE
 #include <sys/once.h>
-#endif
 #include <sys/reboot.h>
 #include <sys/systm.h>
 
@@ -52,6 +50,42 @@ __KERNEL_RCSID(0, "$NetBSD: drm_module.c,v 1.14 2018/08/28 03:35:08 riastradh Ex
 #include <drm/drm_sysctl.h>
 
 /*
+ * XXX This is stupid.
+ *
+ * 1. Builtin modules are broken: they don't get initialized before
+ *    autoconf matches devices, but we need the initialization to be
+ *    run in order to match and attach drmkms drivers.
+ *
+ * 2. The following dependencies are _not_ correct:
+ *    - drmkms can't depend on agp because not all drmkms drivers run
+ *      on platforms guaranteed to have pci, let alone agp
+ *    - drmkms_pci can't depend on agp because not all _pci_ has agp
+ *      (e.g., tegra)
+ *    - radeon (e.g.) can't depend on agp because not all radeon
+ *      devices are on platforms guaranteed to have agp
+ *
+ * 3. We need to register the agp hooks before we try to attach a
+ *    device.
+ *
+ * 4. The only mechanism we have to force this is the
+ *    mumblefrotz_guarantee_initialized kludge.
+ *
+ * 5. We don't know if we even _can_ call
+ *    drmkms_agp_guarantee_initialized unless we know NAGP.
+ *
+ * 6. We don't know NAGP unless we include "agp.h".
+ *
+ * 7. We can't include "agp.h" if the platform has agp.
+ *
+ * 8. The way we determine whether we have agp is NAGP.
+ *
+ * 9. @!*#&^@&*@!&^#@
+ */
+#if defined(__powerpc__) || defined(__i386__) || defined(__x86_64__)
+#include "agp.h"
+#endif
+
+/*
  * XXX I2C stuff should be moved to a separate drmkms_i2c module.
  */
 MODULE(MODULE_CLASS_DRIVER, drmkms, "drmkms_linux");
@@ -59,14 +93,6 @@ MODULE(MODULE_CLASS_DRIVER, drmkms, "drmkms_linux");
 struct mutex	drm_global_mutex;
 
 struct drm_sysctl_def drm_def = DRM_SYSCTL_INIT();
-
-static struct {
-	kmutex_t		lock;
-	kcondvar_t		cv;
-	unsigned		refcnt;
-	int			(*hook)(struct drm_device *,
-				    struct drm_master *, struct drm_unique *);
-} set_unique_hook __cacheline_aligned;
 
 static int
 drm_init(void)
@@ -78,13 +104,22 @@ drm_init(void)
 	if (error)
 		return error;
 
+	drm_agp_hooks_init();
+#if NAGP > 0
+	extern int drmkms_agp_guarantee_initialized(void);
+	error = drmkms_agp_guarantee_initialized();
+	if (error) {
+		drm_agp_hooks_fini();
+		return error;
+	}
+#endif
+
 	if (ISSET(boothowto, AB_DEBUG))
 		drm_debug = ~(unsigned int)0;
 
 	spin_lock_init(&drm_minor_lock);
 	idr_init(&drm_minors_idr);
 	linux_mutex_init(&drm_global_mutex);
-	mutex_init(&set_unique_hook.lock, MUTEX_DEFAULT, IPL_NONE);
 	drm_connector_ida_init();
 	drm_global_init();
 	drm_sysctl_init(&drm_def);
@@ -113,10 +148,10 @@ drm_fini(void)
 	drm_sysctl_fini(&drm_def);
 	drm_global_release();
 	drm_connector_ida_destroy();
-	mutex_destroy(&set_unique_hook.lock);
 	linux_mutex_destroy(&drm_global_mutex);
 	idr_destroy(&drm_minors_idr);
 	spin_lock_destroy(&drm_minor_lock);
+	drm_agp_hooks_fini();
 }
 
 int
@@ -124,50 +159,6 @@ drm_irq_by_busid(struct drm_device *dev, void *data, struct drm_file *file)
 {
 
 	return -ENODEV;
-}
-
-/* XXX Stupid kludge...  */
-
-void
-drm_pci_set_unique_hook(int (**hook)(struct drm_device *, struct drm_master *,
-	struct drm_unique *))
-{
-	int (*old)(struct drm_device *, struct drm_master *,
-	    struct drm_unique *);
-
-	mutex_enter(&set_unique_hook.lock);
-	while (set_unique_hook.refcnt)
-		cv_wait(&set_unique_hook.cv, &set_unique_hook.lock);
-	old = set_unique_hook.hook;
-	set_unique_hook.hook = *hook;
-	*hook = old;
-	mutex_exit(&set_unique_hook.lock);
-}
-
-int
-drm_pci_set_unique(struct drm_device *dev, struct drm_master *master,
-    struct drm_unique *unique)
-{
-	int ret;
-
-	mutex_enter(&set_unique_hook.lock);
-	while (set_unique_hook.refcnt == UINT_MAX)
-		cv_wait(&set_unique_hook.cv, &set_unique_hook.lock);
-	set_unique_hook.refcnt++;
-	mutex_exit(&set_unique_hook.lock);
-
-	if (set_unique_hook.hook)
-		ret = set_unique_hook.hook(dev, master, unique);
-	else
-		ret = -ENODEV;
-
-	mutex_enter(&set_unique_hook.lock);
-	if (set_unique_hook.refcnt-- == UINT_MAX ||
-	    set_unique_hook.refcnt == 0)
-		cv_broadcast(&set_unique_hook.cv);
-	mutex_exit(&set_unique_hook.lock);
-
-	return ret;
 }
 
 static int

@@ -1,4 +1,4 @@
-/*	$NetBSD: drmP.h,v 1.33 2018/08/28 03:35:08 riastradh Exp $	*/
+/*	$NetBSD: drmP.h,v 1.34 2018/08/28 03:41:39 riastradh Exp $	*/
 
 /*
  * Internal Header for the Direct Rendering Manager
@@ -470,6 +470,8 @@ struct drm_driver {
 	int (*dma_quiescent) (struct drm_device *);
 	int (*context_dtor) (struct drm_device *dev, int context);
 	int (*set_busid)(struct drm_device *dev, struct drm_master *master);
+	int (*set_unique)(struct drm_device *dev, struct drm_master *master,
+	    struct drm_unique *);
 
 	/**
 	 * get_vblank_counter - get raw hardware vblank counter
@@ -1118,27 +1120,6 @@ static inline wait_queue_head_t *drm_crtc_vblank_waitqueue(struct drm_crtc *crtc
 extern void drm_vblank_pre_modeset(struct drm_device *dev, unsigned int pipe);
 extern void drm_vblank_post_modeset(struct drm_device *dev, unsigned int pipe);
 
-#ifdef __NetBSD__
-struct drm_agp_hooks {
-	drm_ioctl_t	*agph_acquire_ioctl;
-	drm_ioctl_t	*agph_release_ioctl;
-	drm_ioctl_t	*agph_enable_ioctl;
-	drm_ioctl_t	*agph_info_ioctl;
-	drm_ioctl_t	*agph_alloc_ioctl;
-	drm_ioctl_t	*agph_free_ioctl;
-	drm_ioctl_t	*agph_bind_ioctl;
-	drm_ioctl_t	*agph_unbind_ioctl;
-	int		(*agph_release)(struct drm_device *);
-	void		(*agph_clear)(struct drm_device *);
-};
-
-extern int drm_agp_release_hook(struct drm_device *);
-extern void drm_agp_clear_hook(struct drm_device *);
-
-extern int drm_agp_register(const struct drm_agp_hooks *);
-extern void drm_agp_deregister(const struct drm_agp_hooks *);
-#endif
-
 				/* Stub support (drm_stub.h) */
 extern struct drm_master *drm_master_get(struct drm_master *master);
 extern void drm_master_put(struct drm_master **master);
@@ -1198,16 +1179,12 @@ extern struct sg_table *drm_prime_pages_to_sg(struct page **pages, unsigned int 
 extern void drm_prime_gem_destroy(struct drm_gem_object *obj, struct sg_table *sg);
 
 
+int drm_pci_set_unique(struct drm_device *dev,
+		       struct drm_master *master,
+		       struct drm_unique *u);
 extern struct drm_dma_handle *drm_pci_alloc(struct drm_device *dev, size_t size,
 					    size_t align);
 extern void drm_pci_free(struct drm_device *dev, struct drm_dma_handle * dmah);
-#ifdef __NetBSD__
-extern int drmkms_pci_agp_guarantee_initialized(void);
-extern int drm_pci_attach(device_t, const struct pci_attach_args *,
-    struct pci_dev *, struct drm_driver *, unsigned long,
-    struct drm_device **);
-extern int drm_pci_detach(struct drm_device *, int);
-#endif
 
 			       /* sysfs support (drm_sysfs.c) */
 extern void drm_sysfs_hotplug_event(struct drm_device *dev);
@@ -1251,6 +1228,10 @@ extern void drm_pci_exit(struct drm_driver *driver, struct pci_driver *pdriver);
 #ifdef __NetBSD__
 int drm_pci_request_irq(struct drm_device *, int);
 void drm_pci_free_irq(struct drm_device *);
+extern int drm_pci_attach(device_t, const struct pci_attach_args *,
+    struct pci_dev *, struct drm_driver *, unsigned long,
+    struct drm_device **);
+extern int drm_pci_detach(struct drm_device *, int);
 #endif
 #ifdef CONFIG_PCI
 extern int drm_get_pci_dev(struct pci_dev *pdev,

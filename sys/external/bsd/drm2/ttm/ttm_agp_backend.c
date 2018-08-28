@@ -1,4 +1,4 @@
-/*	$NetBSD: ttm_agp_backend.c,v 1.7 2018/08/27 13:55:24 riastradh Exp $	*/
+/*	$NetBSD: ttm_agp_backend.c,v 1.8 2018/08/28 03:41:40 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ttm_agp_backend.c,v 1.7 2018/08/27 13:55:24 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ttm_agp_backend.c,v 1.8 2018/08/28 03:41:40 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/kmem.h>
@@ -116,7 +116,7 @@ ttm_agp_bind(struct ttm_tt *ttm, struct ttm_mem_reg *bo_mem)
 		if (ret)
 			goto fail;
 	}
-	agp_flush_cache();
+	drm_agp_flush();
 	AGP_FLUSH_TLB(sc);
 
 	/* Success!  */

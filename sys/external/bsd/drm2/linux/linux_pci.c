@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_pci.c,v 1.5 2018/08/27 15:12:21 riastradh Exp $	*/
+/*	$NetBSD: linux_pci.c,v 1.6 2018/08/28 03:41:39 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_pci.c,v 1.5 2018/08/27 15:12:21 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_pci.c,v 1.6 2018/08/28 03:41:39 riastradh Exp $");
 
 #include <linux/pci.h>
 
@@ -607,16 +607,9 @@ pci_iomap(struct pci_dev *pdev, unsigned i, bus_size_t size)
 	error = bus_space_map(pdev->pd_pa.pa_memt, pdev->pd_resources[i].addr,
 	    size, BUS_SPACE_MAP_LINEAR | pdev->pd_resources[i].flags,
 	    &pdev->pd_resources[i].bsh);
-	if (error) {
-#ifdef CONFIG_AGP
-		/* Horrible hack: try asking the fake AGP device.  */
-		if (!agp_i810_borrow(pdev->pd_resources[i].addr, size,
-			&pdev->pd_resources[i].bsh))
-			return NULL;
-#else
+	if (error)
 		return NULL;
-#endif
-	}
+	/* XXX Synchronize with drm_agp_borrow_hook in drm_agpsupport.c.  */
 	pdev->pd_resources[i].bst = pdev->pd_pa.pa_memt;
 	pdev->pd_resources[i].kva = bus_space_vaddr(pdev->pd_resources[i].bst,
 	    pdev->pd_resources[i].bsh);
