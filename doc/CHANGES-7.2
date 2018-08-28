@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.2,v 1.1.2.107 2018/08/25 17:07:03 martin Exp $
+# $NetBSD: CHANGES-7.2,v 1.1.2.108 2018/08/28 13:17:03 martin Exp $
 
 A complete list of changes from the NetBSD 7.1 release to the NetBSD 7.2
 release:
@@ -6055,3 +6055,17 @@ doc/3RDPARTY					1.1520 (patch)
 
 	Import tzdata2018e
 	[kre, ticket #1634]
+
+xsrc/external/mit/libX11/dist/src/FontNames.	(patch)
+xsrc/external/mit/libX11/dist/src/GetFPath.c	(patch)
+xsrc/external/mit/libX11/dist/src/LiHosts.c	(patch)
+xsrc/external/mit/libX11/dist/src/ListExt.c	(patch)
+
+	Apply fixes from libX11 1.6.5 for the following vulnerabilities:
+	Fixed off-by-one writes (CVE-2018-14599)
+	Validation of server response in XListHosts
+	Fixed out of boundary write (CVE-2018-14600)
+	Fixed crash on invalid reply (CVE-2018-14598)
+	[mrg, ticket #1635]
+
+
