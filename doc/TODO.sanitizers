@@ -4,7 +4,6 @@ Short term:
  - compiler-rt import and integration with base
  - merge TSan, MSan and libFuzzer ATF tests
  - prepare MKSANITIZER readme
- - switch syscall(2)/__syscall(2) to libc calls
  - upstream local patches, mostly to compiler-rt
  - develop fts(3) interceptors (MSan, for ls(1), find(1), mtree(8)
  - investigate and address the libcxx failing tests on NetBSD
