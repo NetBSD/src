@@ -1,4 +1,4 @@
-/*	$NetBSD: interval_tree.h,v 1.6 2018/08/27 07:51:59 riastradh Exp $	*/
+/*	$NetBSD: interval_tree.h,v 1.7 2018/08/28 03:34:53 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -144,6 +144,8 @@ interval_tree_iter_next(struct rb_root *root, struct interval_tree_node *node,
 	KASSERT(node->start <= start);
 	if (last < node->start)
 		return NULL;
+
+	return next;
 }
 
 /*
