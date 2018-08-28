@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.1,v 1.1.2.16 2018/08/28 13:29:22 martin Exp $
+# $NetBSD: CHANGES-8.1,v 1.1.2.17 2018/08/28 16:25:19 snj Exp $
 
 A complete list of changes from the NetBSD 8.0 release to the NetBSD 8.1
 release:
@@ -650,3 +650,11 @@ xsrc/external/mit/libX11/dist/src/ListExt.c	(patch)
 	Fixed out of boundary write (CVE-2018-14600)
 	Fixed crash on invalid reply (CVE-2018-14598)
 	[mrg, ticket #995]
+
+sys/arch/prep/prep/machdep.c			1.76
+sys/arch/prep/prep/mainbus.c			1.34
+
+	Fix initialization order so we can boot again on IBM PPS
+	Model 6015.
+	[martin, ticket #994]
+
