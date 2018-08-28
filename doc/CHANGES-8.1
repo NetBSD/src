@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.1,v 1.1.2.15 2018/08/27 07:50:41 martin Exp $
+# $NetBSD: CHANGES-8.1,v 1.1.2.16 2018/08/28 13:29:22 martin Exp $
 
 A complete list of changes from the NetBSD 8.0 release to the NetBSD 8.1
 release:
@@ -621,3 +621,32 @@ sys/net/if.c					1.434
 	Restore splx() removed accidentally in rev 1.406
 	[ozaki-r, ticket #991]
 
+bin/df/df.1					1.48,1.49
+bin/df/df.c					1.93
+bin/ksh/ksh.Man					1.26
+bin/ln/ln.c					1.40
+external/bsd/top/dist/top.1.in			1.11
+sbin/amrctl/amrctl.c				1.11
+sbin/fsck_ext2fs/fsck_ext2fs.8			1.21
+sbin/fsck_ext2fs/main.c				1.38
+sbin/gpt/main.c					1.12
+
+	Various minor man / usage fixes.
+	[sevan, ticket #992]
+
+sbin/fdisk/fdisk.c				1.155
+
+	Add missing -z flag to usage().
+	[sevan, ticket #993]
+
+xsrc/external/mit/libX11/dist/src/FontNames.c	(patch)
+xsrc/external/mit/libX11/dist/src/GetFPath.c	(patch)
+xsrc/external/mit/libX11/dist/src/LiHosts.c	(patch)
+xsrc/external/mit/libX11/dist/src/ListExt.c	(patch)
+
+	Apply fixes from libX11 1.6.5 for the following vulnerabilities:
+	Fixed off-by-one writes (CVE-2018-14599)
+	Validation of server response in XListHosts
+	Fixed out of boundary write (CVE-2018-14600)
+	Fixed crash on invalid reply (CVE-2018-14598)
+	[mrg, ticket #995]
