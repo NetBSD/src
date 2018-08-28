@@ -1,4 +1,4 @@
-/*	$NetBSD: i810_drv.c,v 1.2 2018/08/27 04:58:23 riastradh Exp $	*/
+/*	$NetBSD: i810_drv.c,v 1.3 2018/08/28 03:41:38 riastradh Exp $	*/
 
 /* i810_drv.c -- I810 driver -*- linux-c -*-
  * Created: Mon Dec 13 01:56:22 1999 by jhartmann@precisioninsight.com
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i810_drv.c,v 1.2 2018/08/27 04:58:23 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i810_drv.c,v 1.3 2018/08/28 03:41:38 riastradh Exp $");
 
 #include <linux/module.h>
 
@@ -69,6 +69,7 @@ static struct drm_driver driver = {
 	.lastclose = i810_driver_lastclose,
 	.preclose = i810_driver_preclose,
 	.set_busid = drm_pci_set_busid,
+	.set_unique = drm_pci_set_unique,
 	.device_is_agp = i810_driver_device_is_agp,
 	.dma_quiescent = i810_driver_dma_quiescent,
 	.ioctls = i810_ioctls,
