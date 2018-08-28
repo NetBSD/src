@@ -1,4 +1,4 @@
-/*	$NetBSD: mga_drv.c,v 1.3 2018/08/27 07:03:25 riastradh Exp $	*/
+/*	$NetBSD: mga_drv.c,v 1.4 2018/08/28 03:41:38 riastradh Exp $	*/
 
 /* mga_drv.c -- Matrox G200/G400 driver -*- linux-c -*-
  * Created: Mon Dec 13 01:56:22 1999 by jhartmann@precisioninsight.com
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mga_drv.c,v 1.3 2018/08/27 07:03:25 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mga_drv.c,v 1.4 2018/08/28 03:41:38 riastradh Exp $");
 
 #include <linux/module.h>
 
@@ -70,6 +70,7 @@ static struct drm_driver driver = {
 	.unload = mga_driver_unload,
 	.lastclose = mga_driver_lastclose,
 	.set_busid = drm_pci_set_busid,
+	.set_unique = drm_pci_set_unique,
 	.dma_quiescent = mga_driver_dma_quiescent,
 	.device_is_agp = mga_driver_device_is_agp,
 	.get_vblank_counter = mga_get_vblank_counter,

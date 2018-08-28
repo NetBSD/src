@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_pci.c,v 1.30 2018/08/28 03:34:39 riastradh Exp $	*/
+/*	$NetBSD: drm_pci.c,v 1.31 2018/08/28 03:41:39 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_pci.c,v 1.30 2018/08/28 03:34:39 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_pci.c,v 1.31 2018/08/28 03:41:39 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/errno.h>
@@ -39,7 +39,6 @@ __KERNEL_RCSID(0, "$NetBSD: drm_pci.c,v 1.30 2018/08/28 03:34:39 riastradh Exp $
 #include <dev/pci/pcivar.h>
 
 #include <drm/drmP.h>
-#include <drm/drm_internal.h>
 #include <drm/drm_legacy.h>
 
 struct drm_bus_irq_cookie {
@@ -62,9 +61,9 @@ drm_pci_attach(device_t self, const struct pci_attach_args *pa,
 	unsigned int unit;
 	int ret;
 
-	/* Ensure the drm agp hooks are installed.  */
+	/* Ensure the drm agp hooks are initialized.  */
 	/* XXX errno NetBSD->Linux */
-	ret = -drmkms_pci_agp_guarantee_initialized();
+	ret = -drm_guarantee_initialized();
 	if (ret)
 		goto fail0;
 
@@ -178,9 +177,8 @@ drm_pci_agp_destroy(struct drm_device *dev)
 
 	if (dev->agp) {
 		arch_phys_wc_del(dev->agp->agp_mtrr);
-		drm_agp_clear(dev);
-		kfree(dev->agp); /* XXX Should go in drm_agp_clear...  */
-		dev->agp = NULL;
+		drm_agp_fini(dev);
+		KASSERT(dev->agp == NULL);
 	}
 }
 
@@ -264,7 +262,7 @@ drm_pci_set_busid(struct drm_device *dev, struct drm_master *master)
 }
 
 int
-drm_pci_set_unique_impl(struct drm_device *dev, struct drm_master *master,
+drm_pci_set_unique(struct drm_device *dev, struct drm_master *master,
     struct drm_unique *unique)
 {
 	char kbuf[64], ubuf[64];

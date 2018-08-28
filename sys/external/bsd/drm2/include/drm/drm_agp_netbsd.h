@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_agp_netbsd.h,v 1.7 2018/08/27 13:55:24 riastradh Exp $	*/
+/*	$NetBSD: drm_agp_netbsd.h,v 1.8 2018/08/28 03:41:39 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -49,18 +49,7 @@
 
 #define	PCI_AGP_COMMAND_FW	AGPCMD_FWEN
 
-#if defined(__i386__) || defined(__x86_64__)
-#if defined(_KERNEL_OPT)
-#include "agp.h"
-#else
-#define NAGP 1
-#endif
-#if NAGP > 0
 #define	CONFIG_AGP	1
-#endif
-__CTASSERT(PAGE_SIZE == AGP_PAGE_SIZE);
-__CTASSERT(PAGE_SHIFT == AGP_PAGE_SHIFT);
-#endif
 
 struct agp_kern_info {
 	struct agp_info aki_info;

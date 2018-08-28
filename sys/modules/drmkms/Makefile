@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.10 2018/08/27 13:53:42 riastradh Exp $
+# $NetBSD: Makefile,v 1.11 2018/08/28 03:41:40 riastradh Exp $
 
 .include "../Makefile.inc"
 .include "Makefile.inc"
@@ -13,6 +13,7 @@ MKLDSCRIPT=yes
 .PATH:	${S}/external/bsd/drm2/dist/drm
 
 # NetBSD additions.
+SRCS+=	drm_agp_hook.c
 SRCS+=	drm_cdevsw.c
 SRCS+=	drm_gem_cma_helper.c
 SRCS+=	drm_gem_vm.c
@@ -23,6 +24,8 @@ SRCS+=	drm_sysctl.c
 SRCS+=	drmfb.c
 
 # XXX ttm
+
+CPPFLAGS+=	-I.
 
 # XXX CWARNFLAGS.foo.c doesn't work.
 COPTS.drm_atomic_helper.c+=	-Wno-shadow
