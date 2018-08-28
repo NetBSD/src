@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_fence.c,v 1.10 2018/08/28 14:23:02 riastradh Exp $	*/
+/*	$NetBSD: linux_fence.c,v 1.11 2018/08/28 15:03:39 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_fence.c,v 1.10 2018/08/28 14:23:02 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_fence.c,v 1.11 2018/08/28 15:03:39 riastradh Exp $");
 
 #include <sys/atomic.h>
 #include <sys/condvar.h>
@@ -713,8 +713,11 @@ out:
 	spin_unlock(fence->lock);
 
 	/* If cv_timedwait gave up, return 0 meaning timeout.  */
-	if (ret == -EWOULDBLOCK)
+	if (ret == -EWOULDBLOCK) {
+		/* Only cv_timedwait and cv_timedwait_sig can return this.  */
+		KASSERT(timeout < MAX_SCHEDULE_TIMEOUT);
 		return 0;
+	}
 
 	/* If there was a timeout and the deadline passed, return 0.  */
 	if (timeout < MAX_SCHEDULE_TIMEOUT) {
