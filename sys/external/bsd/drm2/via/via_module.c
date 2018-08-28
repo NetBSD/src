@@ -1,4 +1,4 @@
-/*	$NetBSD: via_module.c,v 1.2 2015/09/05 23:04:01 dholland Exp $	*/
+/*	$NetBSD: via_module.c,v 1.3 2018/08/28 03:34:40 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: via_module.c,v 1.2 2015/09/05 23:04:01 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: via_module.c,v 1.3 2018/08/28 03:34:40 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/module.h>
@@ -61,13 +61,6 @@ viadrm_init(void)
 	if (error)
 		return error;
 
-	error = drm_pci_init(via_drm_driver, NULL);
-	if (error) {
-		aprint_error("viadrmkms: failed to init pci: %d\n",
-		    error);
-		return error;
-	}
-
 	return 0;
 }
 
@@ -87,8 +80,6 @@ viadrm_guarantee_initialized(void)
 static void
 viadrm_fini(void)
 {
-
-	drm_pci_exit(via_drm_driver, NULL);
 }
 
 static int
