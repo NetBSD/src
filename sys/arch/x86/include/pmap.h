@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.85 2018/08/20 15:04:52 maxv Exp $	*/
+/*	$NetBSD: pmap.h,v 1.86 2018/08/29 06:17:26 maxv Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -169,9 +169,7 @@ struct slotspace {
 	struct {
 		size_t sslot; /* start slot */
 		size_t nslot; /* # of slots */
-		size_t mslot; /* max # of slots */
 		bool active;  /* area is active */
-		bool dropmax; /* !resizable */
 	} area[SLSPACE_NAREAS];
 };
 
