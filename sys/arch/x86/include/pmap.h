@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.86 2018/08/29 06:17:26 maxv Exp $	*/
+/*	$NetBSD: pmap.h,v 1.87 2018/08/29 06:28:50 maxv Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -568,13 +568,6 @@ extern struct pcpu_area *pcpuarea;
 
 extern vaddr_t pmap_direct_base;
 extern vaddr_t pmap_direct_end;
-
-#define L4_SLOT_DIRECT		456
-#define PDIR_SLOT_DIRECT	L4_SLOT_DIRECT
-
-#define NL4_SLOT_DIRECT		32
-
-#define PMAP_DIRECT_DEFAULT_BASE (VA_SIGN_NEG((L4_SLOT_DIRECT * NBPD_L4)))
 
 #define PMAP_DIRECT_BASE	pmap_direct_base
 #define PMAP_DIRECT_END		pmap_direct_end
