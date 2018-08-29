@@ -1,4 +1,4 @@
-/*	$NetBSD: device.h,v 1.6 2018/08/27 14:47:53 riastradh Exp $	*/
+/*	$NetBSD: device.h,v 1.7 2018/08/29 19:31:35 mrg Exp $	*/
 
 #ifndef __NVKM_DEVICE_H__
 #define __NVKM_DEVICE_H__
@@ -248,17 +248,17 @@ nvkm_rd32(struct nvkm_device *d, bus_size_t a)
 static inline void
 nvkm_wr08(struct nvkm_device *d, bus_size_t a, uint8_t v)
 {
-	return bus_space_write_1(d->mmiot, d->mmioh, a, v);
+	bus_space_write_1(d->mmiot, d->mmioh, a, v);
 }
 static inline void
 nvkm_wr16(struct nvkm_device *d, bus_size_t a, uint16_t v)
 {
-	return bus_space_write_stream_2(d->mmiot, d->mmioh, a, v);
+	bus_space_write_stream_2(d->mmiot, d->mmioh, a, v);
 }
 static inline void
 nvkm_wr32(struct nvkm_device *d, bus_size_t a, uint32_t v)
 {
-	return bus_space_write_stream_4(d->mmiot, d->mmioh, a, v);
+	bus_space_write_stream_4(d->mmiot, d->mmioh, a, v);
 }
 #else
 #define nvkm_rd08(d,a) ioread8((d)->pri + (a))
