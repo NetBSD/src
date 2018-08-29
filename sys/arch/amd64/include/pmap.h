@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.55 2018/08/20 15:04:51 maxv Exp $	*/
+/*	$NetBSD: pmap.h,v 1.56 2018/08/29 06:28:50 maxv Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -97,6 +97,8 @@
 #define NL4_SLOT_KASAN		32
 #endif
 
+#define NL4_SLOT_DIRECT		32
+
 #ifndef XEN
 #define L4_SLOT_PTE		slotspace.area[SLAREA_PTE].sslot
 #else
@@ -167,7 +169,7 @@ extern pt_entry_t *pte_base;
 #define PG_PVLIST	PG_AVAIL2	/* mapping has entry on pvlist */
 /* PG_AVAIL3 not used */
 
-#define	PG_X		0		/* XXX dummy */
+#define	PG_X		0		/* dummy */
 
 void svs_pmap_sync(struct pmap *, int);
 void svs_lwp_switch(struct lwp *, struct lwp *);
