@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.87 2018/08/29 06:28:50 maxv Exp $	*/
+/*	$NetBSD: pmap.h,v 1.88 2018/08/29 16:26:25 maxv Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -357,6 +357,7 @@ bool		pmap_is_curpmap(struct pmap *);
 #ifndef __HAVE_DIRECT_MAP
 void		pmap_vpage_cpu_init(struct cpu_info *);
 #endif
+vaddr_t		slotspace_rand(int, size_t, size_t);
 
 vaddr_t reserve_dumppages(vaddr_t); /* XXX: not a pmap fn */
 
