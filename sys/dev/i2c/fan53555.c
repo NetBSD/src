@@ -1,4 +1,4 @@
-/* $NetBSD: fan53555.c,v 1.1 2018/08/29 01:57:38 jmcneill Exp $ */
+/* $NetBSD: fan53555.c,v 1.2 2018/08/29 11:08:30 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fan53555.c,v 1.1 2018/08/29 01:57:38 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fan53555.c,v 1.2 2018/08/29 11:08:30 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,6 +78,14 @@ struct fan53555_softc {
 enum fan53555_vendor {
 	FAN_VENDOR_FAIRCHILD = 1,
 	FAN_VENDOR_SILERGY,
+};
+
+/*
+ * Transition slew rates.
+ * Array index is reg value, value is slew rate in uV / us
+ */
+static const int fan53555_slew_rates[] = {
+	64000, 32000, 16000, 8000, 4000, 2000, 1000, 500
 };
 
 static const struct device_compatible_entry compat_data[] = {
@@ -205,7 +213,8 @@ static struct fdtbus_regulator_controller_func fan53555_funcs = {
 static int
 fan53555_init(struct fan53555_softc *sc, enum fan53555_vendor vendor)
 {
-	uint8_t id1;
+	uint8_t id1, control;
+	int n;
 
 	I2C_LOCK(sc);
 	id1 = I2C_READ(sc, ID1_REG);
@@ -232,6 +241,8 @@ fan53555_init(struct fan53555_softc *sc, enum fan53555_vendor vendor)
 		return ENXIO;
 	}
 
+	of_getprop_uint32(sc->sc_phandle, "suspend_voltage_selector",
+	    &sc->sc_suspend_voltage_selector);
 	switch (sc->sc_suspend_voltage_selector) {
 	case 0:
 		sc->sc_suspend_reg = VSEL0_REG;
@@ -242,8 +253,26 @@ fan53555_init(struct fan53555_softc *sc, enum fan53555_vendor vendor)
 		sc->sc_runtime_reg = VSEL0_REG;
 		break;
 	default:
-		aprint_error(": Unsupported 'fcs,suspend-voltage-selector' value %u\n", sc->sc_suspend_voltage_selector);
+		aprint_error_dev(sc->sc_dev, "unsupported 'fcs,suspend-voltage-selector' value %u\n", sc->sc_suspend_voltage_selector);
 		return EINVAL;
+	}
+
+	of_getprop_uint32(sc->sc_phandle, "regulator-ramp-delay",
+	    &sc->sc_ramp_delay);
+	if (sc->sc_ramp_delay) {
+		for (n = 0; n < __arraycount(fan53555_slew_rates); n++)
+			if (sc->sc_ramp_delay > fan53555_slew_rates[n])
+				break;
+		if (n == __arraycount(fan53555_slew_rates)) {
+			aprint_error_dev(sc->sc_dev, "unsupported 'regulator-ramp-delay' value %u\n", sc->sc_ramp_delay);
+			return EINVAL;
+		}
+		I2C_LOCK(sc);
+		control = I2C_READ(sc, CONTROL_REG);
+		control &= ~CONTROL_SLEW;
+		control |= __SHIFTIN(fan53555_slew_rates[n], CONTROL_SLEW);
+		I2C_WRITE(sc, CONTROL_REG, control);
+		I2C_UNLOCK(sc);
 	}
 
 	return 0;
@@ -267,7 +296,6 @@ fan53555_attach(device_t parent, device_t self, void *aux)
 	struct fan53555_softc * const sc = device_private(self);
 	const struct device_compatible_entry *compat;
 	struct i2c_attach_args *ia = aux;
-	enum fan53555_vendor vendor;
 
 	sc->sc_dev = self;
 	sc->sc_i2c = ia->ia_tag;
@@ -275,14 +303,8 @@ fan53555_attach(device_t parent, device_t self, void *aux)
 	sc->sc_phandle = ia->ia_cookie;
 
 	iic_compatible_match(ia, compat_data, &compat);
-	vendor = compat->data;
 
-	of_getprop_uint32(sc->sc_phandle, "regulator-ramp-delay",
-	    &sc->sc_ramp_delay);
-	of_getprop_uint32(sc->sc_phandle, "suspend_voltage_selector",
-	    &sc->sc_suspend_voltage_selector);
-
-	if (fan53555_init(sc, vendor) != 0)
+	if (fan53555_init(sc, compat->data) != 0)
 		return;
 
 	fdtbus_register_regulator_controller(self, sc->sc_phandle,
