@@ -1,4 +1,4 @@
-/*	$NetBSD: fss.c,v 1.105 2018/08/29 09:04:03 hannken Exp $	*/
+/*	$NetBSD: fss.c,v 1.106 2018/08/29 09:04:40 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.105 2018/08/29 09:04:03 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.106 2018/08/29 09:04:40 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,6 +93,8 @@ static int fss_bs_io(struct fss_softc *, fss_io_type,
 static u_int32_t *fss_bs_indir(struct fss_softc *, u_int32_t);
 
 static kmutex_t fss_device_lock;	/* Protect all units. */
+static kcondvar_t fss_device_cv;	/* Serialize snapshot creation. */
+static bool fss_creating = false;	/* Currently creating a snapshot. */
 static int fss_num_attached = 0;	/* Number of attached devices. */
 static struct vfs_hooks fss_vfs_hooks = {
 	.vh_unmount = fss_unmount_hook
@@ -136,6 +138,7 @@ fssattach(int num)
 {
 
 	mutex_init(&fss_device_lock, MUTEX_DEFAULT, IPL_NONE);
+	cv_init(&fss_device_cv, "snapwait");
 	if (config_cfattach_attach(fss_cd.cd_name, &fss_ca))
 		aprint_error("%s: unable to register\n", fss_cd.cd_name);
 }
@@ -154,7 +157,6 @@ fss_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dev = self;
 	sc->sc_bdev = NODEV;
 	mutex_init(&sc->sc_slock, MUTEX_DEFAULT, IPL_NONE);
-	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
 	cv_init(&sc->sc_work_cv, "fssbs");
 	cv_init(&sc->sc_cache_cv, "cowwait");
 	bufq_alloc(&sc->sc_bufq, "fcfs", 0);
@@ -185,7 +187,6 @@ fss_detach(device_t self, int flags)
 
 	pmf_device_deregister(self);
 	mutex_destroy(&sc->sc_slock);
-	mutex_destroy(&sc->sc_lock);
 	cv_destroy(&sc->sc_work_cv);
 	cv_destroy(&sc->sc_cache_cv);
 	bufq_drain(sc->sc_bufq);
@@ -341,36 +342,83 @@ fss_ioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		fss->fss_flags = 0;
 		/* Fall through */
 	case FSSIOCSET:
-		mutex_enter(&sc->sc_lock);
+		mutex_enter(&sc->sc_slock);
 		if ((flag & FWRITE) == 0)
 			error = EPERM;
-		mutex_enter(&sc->sc_slock);
-		if (error == 0 && sc->sc_state != FSS_IDLE)
+		if (error == 0 && sc->sc_state != FSS_IDLE) {
 			error = EBUSY;
+		} else {
+			sc->sc_state = FSS_CREATING;
+			copyinstr(fss->fss_mount, sc->sc_mntname,
+			    sizeof(sc->sc_mntname), NULL);
+			memset(&sc->sc_time, 0, sizeof(sc->sc_time));
+			sc->sc_clshift = 0;
+		}
 		mutex_exit(&sc->sc_slock);
-		if (error == 0)
-			error = fss_create_snapshot(sc, fss, l);
-		if (error == 0)
+		if (error)
+			break;
+
+		/*
+		 * Serialize snapshot creation.
+		 */
+		mutex_enter(&fss_device_lock);
+		while (fss_creating) {
+			error = cv_wait_sig(&fss_device_cv, &fss_device_lock);
+			if (error) {
+				mutex_enter(&sc->sc_slock);
+				KASSERT(sc->sc_state == FSS_CREATING);
+				sc->sc_state = FSS_IDLE;
+				mutex_exit(&sc->sc_slock);
+				mutex_exit(&fss_device_lock);
+				break;
+			}
+		}
+		fss_creating = true;
+		mutex_exit(&fss_device_lock);
+
+		error = fss_create_snapshot(sc, fss, l);
+		mutex_enter(&sc->sc_slock);
+		if (error == 0) {
+			KASSERT(sc->sc_state == FSS_ACTIVE);
 			sc->sc_uflags = fss->fss_flags;
-		mutex_exit(&sc->sc_lock);
+		} else {
+			KASSERT(sc->sc_state == FSS_CREATING);
+			sc->sc_state = FSS_IDLE;
+		}
+		mutex_exit(&sc->sc_slock);
+
+		mutex_enter(&fss_device_lock);
+		fss_creating = false;
+		cv_broadcast(&fss_device_cv);
+		mutex_exit(&fss_device_lock);
+
 		break;
 
 	case FSSIOCCLR:
-		mutex_enter(&sc->sc_lock);
-		if ((flag & FWRITE) == 0)
-			error = EPERM;
 		mutex_enter(&sc->sc_slock);
-		if (error == 0 && sc->sc_state == FSS_IDLE)
-			error = ENXIO;
+		if ((flag & FWRITE) == 0) {
+			error = EPERM;
+		} else if (sc->sc_state != FSS_ACTIVE &&
+		    sc->sc_state != FSS_ERROR) {
+			error = EBUSY;
+		} else {
+			sc->sc_state = FSS_DESTROYING;
+		}
 		mutex_exit(&sc->sc_slock);
-		if (error == 0)
-			error = fss_delete_snapshot(sc, l);
-		mutex_exit(&sc->sc_lock);
+		if (error)
+			break;
+
+		error = fss_delete_snapshot(sc, l);
+		mutex_enter(&sc->sc_slock);
+		if (error)
+			fss_error(sc, "Failed to delete snapshot");
+		else
+			KASSERT(sc->sc_state == FSS_IDLE);
+		mutex_exit(&sc->sc_slock);
 		break;
 
 #ifndef _LP64
 	case FSSIOCGET50:
-		mutex_enter(&sc->sc_lock);
 		mutex_enter(&sc->sc_slock);
 		if (sc->sc_state == FSS_IDLE) {
 			error = ENXIO;
@@ -390,12 +438,10 @@ fss_ioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 			error = 0;
 		}
 		mutex_exit(&sc->sc_slock);
-		mutex_exit(&sc->sc_lock);
 		break;
 #endif /* _LP64 */
 
 	case FSSIOCGET:
-		mutex_enter(&sc->sc_lock);
 		mutex_enter(&sc->sc_slock);
 		if (sc->sc_state == FSS_IDLE) {
 			error = ENXIO;
@@ -415,7 +461,6 @@ fss_ioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 			error = 0;
 		}
 		mutex_exit(&sc->sc_slock);
-		mutex_exit(&sc->sc_lock);
 		break;
 
 	case FSSIOFSET:
@@ -902,20 +947,23 @@ fss_delete_snapshot(struct fss_softc *sc, struct lwp *l)
 	if ((sc->sc_flags & FSS_PERSISTENT) == 0 && sc->sc_state != FSS_ERROR) {
 		mutex_exit(&sc->sc_slock);
 		fscow_disestablish(sc->sc_mount, fss_copy_on_write, sc);
-		mutex_enter(&sc->sc_slock);
+	} else {
+		mutex_exit(&sc->sc_slock);
 	}
-	sc->sc_state = FSS_IDLE;
-	sc->sc_mount = NULL;
-	sc->sc_bdev = NODEV;
-	mutex_exit(&sc->sc_slock);
 
 	fss_softc_free(sc);
 	if (sc->sc_flags & FSS_PERSISTENT)
 		vrele(sc->sc_bs_vp);
 	else
 		vn_close(sc->sc_bs_vp, FREAD|FWRITE, l->l_cred);
+
+	mutex_enter(&sc->sc_slock);
+	sc->sc_state = FSS_IDLE;
+	sc->sc_mount = NULL;
+	sc->sc_bdev = NODEV;
 	sc->sc_bs_vp = NULL;
 	sc->sc_flags &= ~FSS_PERSISTENT;
+	mutex_exit(&sc->sc_slock);
 
 	return 0;
 }
@@ -1323,6 +1371,7 @@ fss_modcmd(modcmd_t cmd, void *arg)
 	switch (cmd) {
 	case MODULE_CMD_INIT:
 		mutex_init(&fss_device_lock, MUTEX_DEFAULT, IPL_NONE);
+		cv_init(&fss_device_cv, "snapwait");
 		error = config_cfdriver_attach(&fss_cd);
 		if (error) {
 			mutex_destroy(&fss_device_lock);
@@ -1361,6 +1410,7 @@ fss_modcmd(modcmd_t cmd, void *arg)
 			    &fss_cdevsw, &fss_cmajor);
 			break;
 		}
+		cv_destroy(&fss_device_cv);
 		mutex_destroy(&fss_device_lock);
 		break;
 
