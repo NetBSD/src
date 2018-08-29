@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.3 2018/08/26 18:15:49 ryo Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.4 2018/08/29 06:16:40 ryo Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.3 2018/08/26 18:15:49 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.4 2018/08/29 06:16:40 ryo Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -135,6 +135,9 @@ aarch64_getcacheinfo(void)
 		arm_dcache_align = sizeof(int) << arm_dcache_maxline;
 		arm_dcache_align_mask = arm_dcache_align - 1;
 	}
+	/* update coherency_unit (in param.h) */
+	if (coherency_unit < arm_dcache_align)
+		coherency_unit = arm_dcache_align;
 
 	/*
 	 * CLIDR -  Cache Level ID Register
