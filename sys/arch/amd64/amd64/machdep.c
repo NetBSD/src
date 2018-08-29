@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.316 2018/08/22 12:07:42 maxv Exp $	*/
+/*	$NetBSD: machdep.c,v 1.317 2018/08/29 06:17:26 maxv Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.316 2018/08/22 12:07:42 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.317 2018/08/29 06:17:26 maxv Exp $");
 
 #include "opt_modular.h"
 #include "opt_user_ldt.h"
@@ -1617,75 +1617,55 @@ init_slotspace(void)
 
 	/* User. [256, because we want to land in >= 256] */
 	slotspace.area[SLAREA_USER].sslot = 0;
-	slotspace.area[SLAREA_USER].mslot = PDIR_SLOT_USERLIM+1;
 	slotspace.area[SLAREA_USER].nslot = PDIR_SLOT_USERLIM+1;
 	slotspace.area[SLAREA_USER].active = true;
-	slotspace.area[SLAREA_USER].dropmax = false;
 
 #ifdef XEN
 	/* PTE. */
 	slotspace.area[SLAREA_PTE].sslot = PDIR_SLOT_PTE;
-	slotspace.area[SLAREA_PTE].mslot = 1;
 	slotspace.area[SLAREA_PTE].nslot = 1;
 	slotspace.area[SLAREA_PTE].active = true;
-	slotspace.area[SLAREA_PTE].dropmax = false;
 #endif
 
 #ifdef __HAVE_PCPU_AREA
 	/* Per-CPU. */
 	slotspace.area[SLAREA_PCPU].sslot = PDIR_SLOT_PCPU;
-	slotspace.area[SLAREA_PCPU].mslot = 1;
 	slotspace.area[SLAREA_PCPU].nslot = 1;
 	slotspace.area[SLAREA_PCPU].active = true;
-	slotspace.area[SLAREA_PCPU].dropmax = false;
 #endif
 
 #ifdef __HAVE_DIRECT_MAP
-	/* Direct Map. */
-	slotspace.area[SLAREA_DMAP].sslot = PDIR_SLOT_DIRECT;
-	slotspace.area[SLAREA_DMAP].mslot = NL4_SLOT_DIRECT+1;
-	slotspace.area[SLAREA_DMAP].nslot = 0 /* variable */;
+	/* Direct Map. [Randomized later] */
 	slotspace.area[SLAREA_DMAP].active = false;
-	slotspace.area[SLAREA_DMAP].dropmax = true;
 #endif
 
 #ifdef XEN
 	/* Hypervisor. */
 	slotspace.area[SLAREA_HYPV].sslot = 256;
-	slotspace.area[SLAREA_HYPV].mslot = 17;
 	slotspace.area[SLAREA_HYPV].nslot = 17;
 	slotspace.area[SLAREA_HYPV].active = true;
-	slotspace.area[SLAREA_HYPV].dropmax = false;
 #endif
 
 #ifdef KASAN
 	/* ASAN. */
 	slotspace.area[SLAREA_ASAN].sslot = L4_SLOT_KASAN;
-	slotspace.area[SLAREA_ASAN].mslot = NL4_SLOT_KASAN;
 	slotspace.area[SLAREA_ASAN].nslot = NL4_SLOT_KASAN;
 	slotspace.area[SLAREA_ASAN].active = true;
-	slotspace.area[SLAREA_ASAN].dropmax = false;
 #endif
 
 	/* Kernel. */
 	slotspace.area[SLAREA_KERN].sslot = L4_SLOT_KERNBASE;
-	slotspace.area[SLAREA_KERN].mslot = 1;
 	slotspace.area[SLAREA_KERN].nslot = 1;
 	slotspace.area[SLAREA_KERN].active = true;
-	slotspace.area[SLAREA_KERN].dropmax = false;
 
 	/* Main. */
-	slotspace.area[SLAREA_MAIN].mslot = NKL4_MAX_ENTRIES+1;
-	slotspace.area[SLAREA_MAIN].dropmax = false;
 	va = slotspace_rand(SLAREA_MAIN, NKL4_MAX_ENTRIES * NBPD_L4,
-	    NBPD_L4);
+	    NBPD_L4); /* TODO: NBPD_L1 */
 	vm_min_kernel_address = va;
 	vm_max_kernel_address = va + NKL4_MAX_ENTRIES * NBPD_L4;
 
 #ifndef XEN
 	/* PTE. */
-	slotspace.area[SLAREA_PTE].mslot = 1;
-	slotspace.area[SLAREA_PTE].dropmax = false;
 	va = slotspace_rand(SLAREA_PTE, NBPD_L4, NBPD_L4);
 	pte_base = (pd_entry_t *)va;
 #endif
