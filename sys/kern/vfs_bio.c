@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.276 2017/10/28 00:37:11 pgoyette Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.277 2018/08/29 09:05:17 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -123,7 +123,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.276 2017/10/28 00:37:11 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.277 2018/08/29 09:05:17 hannken Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_bufcache.h"
@@ -1360,11 +1360,12 @@ allocbuf(buf_t *bp, int size, int preserve)
  * Called with the buffer queues locked.
  * Return buffer locked.
  */
-buf_t *
+static buf_t *
 getnewbuf(int slpflag, int slptimeo, int from_bufq)
 {
 	buf_t *bp;
 	struct vnode *vp;
+	struct mount *transmp = NULL;
 
  start:
 	KASSERT(mutex_owned(&bufcache_lock));
@@ -1389,8 +1390,21 @@ getnewbuf(int slpflag, int slptimeo, int from_bufq)
 	}
 
 	KASSERT(mutex_owned(&bufcache_lock));
-	if ((bp = TAILQ_FIRST(&bufqueues[BQ_AGE].bq_queue)) != NULL ||
-	    (bp = TAILQ_FIRST(&bufqueues[BQ_LRU].bq_queue)) != NULL) {
+	if ((bp = TAILQ_FIRST(&bufqueues[BQ_AGE].bq_queue)) != NULL) {
+		KASSERT(!ISSET(bp->b_oflags, BO_DELWRI));
+	} else {
+		TAILQ_FOREACH(bp, &bufqueues[BQ_LRU].bq_queue, b_freelist) {
+			if (ISSET(bp->b_cflags, BC_VFLUSH) ||
+			    !ISSET(bp->b_oflags, BO_DELWRI))
+				break;
+			if (fstrans_start_nowait(bp->b_vp->v_mount) == 0) {
+				KASSERT(transmp == NULL);
+				transmp = bp->b_vp->v_mount;
+				break;
+			}
+		}
+	}
+	if (bp != NULL) {
 	    	KASSERT(!ISSET(bp->b_cflags, BC_BUSY) || ISSET(bp->b_cflags, BC_VFLUSH));
 		bremfree(bp);
 
@@ -1444,9 +1458,13 @@ getnewbuf(int slpflag, int slptimeo, int from_bufq)
 		SET(bp->b_cflags, BC_AGE);
 		mutex_exit(&bufcache_lock);
 		bawrite(bp);
+		KASSERT(transmp != NULL);
+		fstrans_done(transmp);
 		mutex_enter(&bufcache_lock);
 		return (NULL);
 	}
+
+	KASSERT(transmp == NULL);
 
 	vp = bp->b_vp;
 
