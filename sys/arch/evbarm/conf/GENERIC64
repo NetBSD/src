@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC64,v 1.32 2018/08/29 01:58:17 jmcneill Exp $
+#	$NetBSD: GENERIC64,v 1.33 2018/08/29 01:58:54 jmcneill Exp $
 #
 #	GENERIC ARM (aarch64) kernel
 #
@@ -78,6 +78,7 @@ options 	VERBOSE_INIT_ARM # verbose bootstrapping messages
 # EARLYCONS is required for early init messages from VERBOSE_INIT_ARM.
 #options 	EARLYCONS=bcm2837
 #options 	EARLYCONS=rk3328, CONSADDR=0xff130000
+#options 	EARLYCONS=rk3399, CONSADDR=0xff1a0000
 #options 	EARLYCONS=sunxi, CONSADDR=0x01c28000
 #options 	EARLYCONS=tegra, CONSADDR=0x70006000
 #options 	EARLYCONS=virt
