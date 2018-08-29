@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.1.3,v 1.1.2.17 2018/08/14 14:36:09 martin Exp $
+# $NetBSD: CHANGES-7.1.3,v 1.1.2.18 2018/08/29 07:57:13 martin Exp $
 
 A complete list of changes from the NetBSD 7.1.2 release to the NetBSD 7.1.3
 release:
@@ -175,4 +175,16 @@ sys/netinet6/frag6.c				1.64
 
 	Ignore zero-sized fragments.
 	[maxv, ticket #1630]
+
+xsrc/external/mit/libX11/dist/src/FontNames.	(patch)
+xsrc/external/mit/libX11/dist/src/GetFPath.c	(patch)
+xsrc/external/mit/libX11/dist/src/LiHosts.c	(patch)
+xsrc/external/mit/libX11/dist/src/ListExt.c	(patch)
+
+	Apply fixes from libX11 1.6.5 for the following vulnerabilities:
+	Fixed off-by-one writes (CVE-2018-14599)
+	Validation of server response in XListHosts
+	Fixed out of boundary write (CVE-2018-14600)
+	Fixed crash on invalid reply (CVE-2018-14598)
+	[mrg, ticket #1635]
 
