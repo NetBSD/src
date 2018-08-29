@@ -1,4 +1,4 @@
-/*	$NetBSD: adv.c,v 1.47 2016/07/14 04:19:26 msaitoh Exp $	*/
+/*	$NetBSD: adv.c,v 1.48 2018/08/29 16:51:51 rin Exp $	*/
 
 /*
  * Generic driver for the Advanced Systems Inc. Narrow SCSI controllers
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adv.c,v 1.47 2016/07/14 04:19:26 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adv.c,v 1.48 2018/08/29 16:51:51 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -899,6 +899,14 @@ adv_narrow_isr_callback(ASC_SOFTC *sc, ASC_QDONE_INFO *qdonep)
 		switch (qdonep->d3.host_stat) {
 		case ASC_QHSTA_NO_ERROR:
 			xs->error = XS_NOERROR;
+			/*
+			 * XXX
+			 * According to the original Linux driver, xs->resid
+			 * should be qdonep->remain_bytes. However, its value
+			 * is bogus, which seems like a H/W bug. The best thing
+			 * we can do would be to ignore it, assuming that all
+			 * data has been successfully transferred...
+			 */
 			xs->resid = 0;
 			break;
 
