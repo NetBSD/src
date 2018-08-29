@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.317 2018/08/29 06:17:26 maxv Exp $	*/
+/*	$NetBSD: machdep.c,v 1.318 2018/08/29 16:26:25 maxv Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.317 2018/08/29 06:17:26 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.318 2018/08/29 16:26:25 maxv Exp $");
 
 #include "opt_modular.h"
 #include "opt_user_ldt.h"
@@ -1610,7 +1610,6 @@ init_pte(void)
 void __noasan
 init_slotspace(void)
 {
-	vaddr_t slotspace_rand(int, size_t, size_t);
 	vaddr_t va;
 
 	memset(&slotspace, 0, sizeof(slotspace));
