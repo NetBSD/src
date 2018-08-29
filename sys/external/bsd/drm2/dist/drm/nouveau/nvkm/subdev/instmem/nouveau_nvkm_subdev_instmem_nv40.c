@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_subdev_instmem_nv40.c,v 1.6 2018/08/29 15:46:31 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_subdev_instmem_nv40.c,v 1.7 2018/08/29 15:52:27 riastradh Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_instmem_nv40.c,v 1.6 2018/08/29 15:46:31 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_instmem_nv40.c,v 1.7 2018/08/29 15:52:27 riastradh Exp $");
 
 #define nv40_instmem(p) container_of((p), struct nv40_instmem, base)
 #include "priv.h"
@@ -294,7 +294,6 @@ nv40_instmem_new(struct nvkm_device *device, int index,
 	bus_size_t iomemsz;
 	int ret;
 
-	/* XXX Can this be BAR 0, for which we need a subregion?  */
 	imem->iomemt = device->func->resource_tag(device, bar);
 	iomembase = device->func->resource_addr(device, bar);
 	iomemsz = device->func->resource_size(device, bar);
