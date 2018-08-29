@@ -1,4 +1,4 @@
-/*	$NetBSD: fssvar.h,v 1.29 2015/09/06 06:00:59 dholland Exp $	*/
+/*	$NetBSD: fssvar.h,v 1.30 2018/08/29 09:04:03 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -83,10 +83,6 @@ struct fss_get50 {
 					   sc_copied map uses up to
 					   FSS_CLUSTER_MAX/NBBY bytes */
 
-/* Check if still valid */
-#define FSS_ISVALID(sc) \
-	(((sc)->sc_flags & (FSS_ACTIVE|FSS_ERROR)) == FSS_ACTIVE)
-
 /* Offset to cluster */
 #define FSS_BTOCL(sc, off) \
 	((off) >> (sc)->sc_clshift)
@@ -137,15 +133,20 @@ struct fss_cache {
 	void *		fc_data;	/* Data */
 };
 
+typedef enum {
+	FSS_IDLE,			/* Device is unconfigured */
+	FSS_ACTIVE,			/* Device is configured */
+	FSS_ERROR			/* Device had errors */
+} fss_state_t;
+
 struct fss_softc {
 	device_t	sc_dev;		/* Self */
 	kmutex_t	sc_slock;	/* Protect this softc */
 	kmutex_t	sc_lock;	/* Sleep lock for fss_ioctl */
 	kcondvar_t	sc_work_cv;	/* Signals work for the kernel thread */
 	kcondvar_t	sc_cache_cv;	/* Signals free cache slot */
+	fss_state_t	sc_state;	/* Current state */
 	volatile int	sc_flags;	/* Flags */
-#define FSS_ACTIVE	0x01		/* Snapshot is active */
-#define FSS_ERROR	0x02		/* I/O error occurred */
 #define FSS_BS_THREAD	0x04		/* Kernel thread is running */
 #define FSS_PERSISTENT	0x20		/* File system internal snapshot */
 #define FSS_CDEV_OPEN	0x40		/* character device open */
