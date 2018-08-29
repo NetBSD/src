@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_fence.c,v 1.14 2018/08/27 14:20:26 riastradh Exp $	*/
+/*	$NetBSD: radeon_fence.c,v 1.15 2018/08/29 14:53:46 riastradh Exp $	*/
 
 /*
  * Copyright 2009 Jerome Glisse.
@@ -31,7 +31,7 @@
  *    Dave Airlie
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_fence.c,v 1.14 2018/08/27 14:20:26 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_fence.c,v 1.15 2018/08/29 14:53:46 riastradh Exp $");
 
 #include <linux/seq_file.h>
 #include <linux/atomic.h>
@@ -1177,8 +1177,8 @@ radeon_fence_default_wait(struct fence *f, bool intr, signed long timo)
 	int r;
 
 	r = fence_add_callback(f, &fcb, radeon_fence_wakeup_cb);
-	if (r)
-		return r;
+	if (r)			/* fence is done already */
+		return timo;
 
 	spin_lock(&rdev->fence_lock);
 	if (intr) {
