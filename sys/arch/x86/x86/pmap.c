@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.306 2018/08/29 06:17:26 maxv Exp $	*/
+/*	$NetBSD: pmap.c,v 1.307 2018/08/29 16:26:25 maxv Exp $	*/
 
 /*
  * Copyright (c) 2008, 2010, 2016, 2017 The NetBSD Foundation, Inc.
@@ -70,31 +70,6 @@
  */
 
 /*
- * Copyright (c) 1997 Charles D. Cranor and Washington University.
- * All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
- * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
- * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
- * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
- * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
- * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
- * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- */
-
-/*
  * Copyright 2001 (c) Wasabi Systems, Inc.
  * All rights reserved.
  *
@@ -130,34 +105,32 @@
  */
 
 /*
- * pmap.c: i386 pmap module rewrite
- * Chuck Cranor <chuck@netbsd>
- * 11-Aug-97
+ * Copyright (c) 1997 Charles D. Cranor and Washington University.
+ * All rights reserved.
  *
- * history of this pmap module: in addition to my own input, i used
- *    the following references for this rewrite of the i386 pmap:
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
  *
- * [1] the NetBSD i386 pmap.   this pmap appears to be based on the
- *     BSD hp300 pmap done by Mike Hibler at University of Utah.
- *     it was then ported to the i386 by William Jolitz of UUNET
- *     Technologies, Inc.   Then Charles M. Hannum of the NetBSD
- *     project fixed some bugs and provided some speed ups.
- *
- * [2] the FreeBSD i386 pmap.   this pmap seems to be the
- *     Hibler/Jolitz pmap, as modified for FreeBSD by John S. Dyson
- *     and David Greenman.
- *
- * [3] the Mach pmap.   this pmap, from CMU, seems to have migrated
- *     between several processors.   the VAX version was done by
- *     Avadis Tevanian, Jr., and Michael Wayne Young.    the i386
- *     version was done by Lance Berc, Mike Kupfer, Bob Baron,
- *     David Golub, and Richard Draves.    the alpha version was
- *     done by Alessandro Forin (CMU/Mach) and Chris Demetriou
- *     (NetBSD/alpha).
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.306 2018/08/29 06:17:26 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.307 2018/08/29 16:26:25 maxv Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -203,7 +176,7 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.306 2018/08/29 06:17:26 maxv Exp $");
 /*
  * general info:
  *
- *  - for an explanation of how the i386 MMU hardware works see
+ *  - for an explanation of how the x86 MMU hardware works see
  *    the comments in <machine/pte.h>.
  *
  *  - for an explanation of the general memory structure used by
@@ -236,69 +209,33 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.306 2018/08/29 06:17:26 maxv Exp $");
  *
  *  - struct pmap: describes the address space of one thread
  *  - struct pmap_page: describes one pv-tracked page, without
- *	necessarily a corresponding vm_page
+ *    necessarily a corresponding vm_page
  *  - struct pv_entry: describes one <PMAP,VA> mapping of a PA
  *  - struct pv_head: there is one pv_head per pv-tracked page of
- *	physical memory.   the pv_head points to a list of pv_entry
- *	structures which describe all the <PMAP,VA> pairs that this
- *      page is mapped in.    this is critical for page based operations
- *      such as pmap_page_protect() [change protection on _all_ mappings
- *      of a page]
+ *    physical memory.   the pv_head points to a list of pv_entry
+ *    structures which describe all the <PMAP,VA> pairs that this
+ *    page is mapped in.    this is critical for page based operations
+ *    such as pmap_page_protect() [change protection on _all_ mappings
+ *    of a page]
  */
 
 /*
- * memory allocation
+ * Locking
  *
- *  - there are three data structures that we must dynamically allocate:
- *
- * [A] new process' page directory page (PDP)
- *	- plan 1: done at pmap_create() we use
- *	  uvm_km_alloc(kernel_map, PAGE_SIZE)  [fka kmem_alloc] to do this
- *	  allocation.
- *
- * if we are low in free physical memory then we sleep in
- * uvm_km_alloc -- in this case this is ok since we are creating
- * a new pmap and should not be holding any locks.
- *
- * if the kernel is totally out of virtual space
- * (i.e. uvm_km_alloc returns NULL), then we panic.
- *
- * [B] new page tables pages (PTP)
- * 	- call uvm_pagealloc()
- * 		=> success: zero page, add to pm_pdir
- * 		=> failure: we are out of free vm_pages, let pmap_enter()
- *		   tell UVM about it.
- *
- * note: for kernel PTPs, we start with NKPTP of them.   as we map
- * kernel memory (at uvm_map time) we check to see if we've grown
- * the kernel pmap.   if so, we call the optional function
- * pmap_growkernel() to grow the kernel PTPs in advance.
- *
- * [C] pv_entry structures
- */
-
-/*
- * locking
- *
- * we have the following locks that we must contend with:
- *
- * mutexes:
+ * We have the following locks that we must contend with:
  *
  * - pmap lock (per pmap, part of uvm_object)
- *   this lock protects the fields in the pmap structure including
- *   the non-kernel PDEs in the PDP, and the PTEs.  it also locks
- *   in the alternate PTE space (since that is determined by the
- *   entry in the PDP).
+ *   This lock protects the fields in the pmap structure including the
+ *   non-kernel PDEs in the PDP, and the PTEs.
  *
  * - pvh_lock (per pv_head)
- *   this lock protects the pv_entry list which is chained off the
- *   pv_head structure for a specific pv-tracked PA.   it is locked
- *   when traversing the list (e.g. adding/removing mappings,
- *   syncing R/M bits, etc.)
+ *   This lock protects the pv_entry list which is chained off the pv_head
+ *   structure for a specific pv-tracked PA. It is locked when traversing
+ *   the list (e.g. adding/removing mappings, syncing R/M bits, etc).
  *
  * - pmaps_lock
- *   this lock protects the list of active pmaps (headed by "pmaps").
- *   we lock it when adding or removing pmaps from this list.
+ *   This lock protects the list of active pmaps (headed by "pmaps"). We
+ *   lock it when adding or removing pmaps from this list.
  */
 
 const vaddr_t ptp_masks[] = PTP_MASK_INITIALIZER;
@@ -367,30 +304,15 @@ struct pmap *const kernel_pmap_ptr = &kernel_pmap_store;
 struct bootspace bootspace __read_mostly;
 struct slotspace slotspace __read_mostly;
 
-/*
- * pmap_pg_nx: if our processor supports PG_NX in the PTE then we
- * set pmap_pg_nx to PG_NX (otherwise it is zero).
- */
+/* Set to PG_NX if supported. */
 pd_entry_t pmap_pg_nx __read_mostly = 0;
 
-/*
- * pmap_pg_g: if our processor supports PG_G in the PTE then we
- * set pmap_pg_g to PG_G (otherwise it is zero).
- */
+/* Set to PG_G if supported. */
 pd_entry_t pmap_pg_g __read_mostly = 0;
 
-/*
- * pmap_largepages: if our processor supports PG_PS and we are
- * using it, this is set to true.
- */
+/* Set to true if large pages are supported. */
 int pmap_largepages __read_mostly = 0;
 
-/*
- * i386 physical memory comes in a big contig chunk with a small
- * hole toward the front of it...  the following two paddr_t's
- * (shared with machdep.c) describe the physical address space
- * of this machine.
- */
 paddr_t lowmem_rsvd __read_mostly;
 paddr_t avail_start __read_mostly; /* PA of first available physical page */
 paddr_t avail_end __read_mostly; /* PA of last available physical page */
@@ -535,8 +457,6 @@ extern paddr_t gdt_paddr;
 extern vaddr_t ldt_vaddr;
 extern paddr_t ldt_paddr;
 
-extern int end;
-
 #ifdef i386
 /* stuff to fix the pentium f00f bug */
 extern vaddr_t pentium_idt_vaddr;
@@ -608,7 +528,6 @@ pmap_stats_update_bypte(struct pmap *pmap, pt_entry_t npte, pt_entry_t opte)
 /*
  * ptp_to_pmap: lookup pmap by ptp
  */
-
 static struct pmap *
 ptp_to_pmap(struct vm_page *ptp)
 {
@@ -643,7 +562,6 @@ pvpte_to_pve(struct pv_pte *pvpte)
 /*
  * pv_pte_first, pv_pte_next: PV list iterator.
  */
-
 static struct pv_pte *
 pv_pte_first(struct pmap_page *pp)
 {
@@ -669,19 +587,13 @@ pv_pte_next(struct pmap_page *pp, struct pv_pte *pvpte)
 
 /*
  * pmap_is_curpmap: is this pmap the one currently loaded [in %cr3]?
- *		of course the kernel is always loaded
+ * of course the kernel is always loaded
  */
-
 bool
 pmap_is_curpmap(struct pmap *pmap)
 {
-	return((pmap == pmap_kernel()) ||
-	       (pmap == curcpu()->ci_pmap));
+	return ((pmap == pmap_kernel()) || (pmap == curcpu()->ci_pmap));
 }
-
-/*
- *	Add a reference to the specified pmap.
- */
 
 void
 pmap_reference(struct pmap *pmap)
@@ -712,10 +624,9 @@ pmap_reference(struct pmap *pmap)
  * => we lock enough pmaps to keep things locked in
  * => must be undone with pmap_unmap_ptes before returning
  */
-
 void
-pmap_map_ptes(struct pmap *pmap, struct pmap **pmap2,
-	      pd_entry_t **ptepp, pd_entry_t * const **pdeppp)
+pmap_map_ptes(struct pmap *pmap, struct pmap **pmap2, pd_entry_t **ptepp,
+    pd_entry_t * const **pdeppp)
 {
 	struct pmap *curpmap;
 	struct cpu_info *ci;
@@ -782,7 +693,6 @@ pmap_map_ptes(struct pmap *pmap, struct pmap **pmap2,
 /*
  * pmap_unmap_ptes: unlock the PTE mapping of "pmap"
  */
-
 void
 pmap_unmap_ptes(struct pmap *pmap, struct pmap *pmap2)
 {
@@ -833,7 +743,6 @@ pmap_unmap_ptes(struct pmap *pmap, struct pmap *pmap2)
 	pmap_destroy(pmap2);
 }
 
-
 inline static void
 pmap_exec_account(struct pmap *pm, vaddr_t va, pt_entry_t opte, pt_entry_t npte)
 {
@@ -867,7 +776,6 @@ pmap_exec_account(struct pmap *pm, vaddr_t va, pt_entry_t opte, pt_entry_t npte)
  * Fixup the code segment to cover all potential executable mappings.
  * returns 0 if no changes to the code segment were made.
  */
-
 int
 pmap_exec_fixup(struct vm_map *map, struct trapframe *tf, struct pcb *pcb)
 {
@@ -877,27 +785,25 @@ pmap_exec_fixup(struct vm_map *map, struct trapframe *tf, struct pcb *pcb)
 
 	vm_map_lock_read(map);
 	for (ent = (&map->header)->next; ent != &map->header; ent = ent->next) {
-
 		/*
 		 * This entry has greater va than the entries before.
 		 * We need to make it point to the last page, not past it.
 		 */
-
 		if (ent->protection & VM_PROT_EXECUTE)
 			va = trunc_page(ent->end) - PAGE_SIZE;
 	}
 	vm_map_unlock_read(map);
 	if (va == pm->pm_hiexec && tf->tf_cs == GSEL(GUCODEBIG_SEL, SEL_UPL))
-		return (0);
+		return 0;
 
 	pm->pm_hiexec = va;
 	if (pm->pm_hiexec > I386_MAX_EXE_ADDR) {
 		tf->tf_cs = GSEL(GUCODEBIG_SEL, SEL_UPL);
 	} else {
 		tf->tf_cs = GSEL(GUCODE_SEL, SEL_UPL);
-		return (0);
+		return 0;
 	}
-	return (1);
+	return 1;
 }
 #endif /* !defined(__x86_64__) */
 
@@ -966,7 +872,6 @@ pmap_pat_flags(u_int flags)
  * => no need to lock anything, assume va is already allocated
  * => should be faster than normal pmap enter function
  */
-
 void
 pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 {
@@ -1055,7 +960,6 @@ pmap_changeprot_local(vaddr_t va, vm_prot_t prot)
  *    checking the valid bit before doing TLB flushing
  * => must be followed by call to pmap_update() before reuse of page
  */
-
 static inline void
 pmap_kremove1(vaddr_t sva, vsize_t len, bool localonly)
 {
@@ -1096,7 +1000,6 @@ pmap_kremove(vaddr_t sva, vsize_t len)
  * for use while writing kernel crash dumps, either after panic
  * or via reboot -d.
  */
-
 void
 pmap_kremove_local(vaddr_t sva, vsize_t len)
 {
@@ -1336,8 +1239,8 @@ pmap_bootstrap(vaddr_t kva_start)
 	 * Init the static-global locks and global lists.
 	 *
 	 * => pventry::pvh_lock (initialized elsewhere) must also be
-	 *      a spin lock, again at IPL_VM to prevent deadlock, and
-	 *	again is never taken from interrupt context.
+	 *    a spin lock, again at IPL_VM to prevent deadlock, and
+	 *    again is never taken from interrupt context.
 	 */
 	mutex_init(&pmaps_lock, MUTEX_DEFAULT, IPL_NONE);
 	LIST_INIT(&pmaps);
@@ -1398,8 +1301,6 @@ slotspace_copy(int type, pd_entry_t *dst, pd_entry_t *src)
 #endif
 
 #ifdef __x86_64__
-vaddr_t slotspace_rand(int, size_t, size_t);
-
 /*
  * Randomize the location of an area. We count the holes in the VM space. We
  * randomly select one hole, and then randomly select an area within that hole.
@@ -1793,10 +1694,9 @@ pmap_remap_largepages(void)
 #endif /* !XEN */
 
 /*
- * pmap_init: called from uvm_init, our job is to get the pmap
- * system ready to manage mappings...
+ * pmap_init: called from uvm_init, our job is to get the pmap system ready
+ * to manage mappings.
  */
-
 void
 pmap_init(void)
 {
@@ -1855,11 +1755,10 @@ pmap_init(void)
 	pmap_initialized = true;
 }
 
+#ifndef XEN
 /*
  * pmap_cpu_init_late: perform late per-CPU initialization.
  */
-
-#ifndef XEN
 void
 pmap_cpu_init_late(struct cpu_info *ci)
 {
@@ -1869,7 +1768,6 @@ pmap_cpu_init_late(struct cpu_info *ci)
 	 */
 	if (ci == &cpu_info_primary)
 		return;
-
 #ifdef PAE
 	cpu_alloc_l3_page(ci);
 #endif
@@ -1945,10 +1843,6 @@ pmap_pp_needs_pve(struct pmap_page *pp)
 	    !LIST_EMPTY(&pp->pp_head.pvh_list));
 }
 
-/*
- * pmap_free_pvs: free a list of pv_entrys
- */
-
 static void
 pmap_free_pvs(struct pv_entry *pve)
 {
@@ -1972,7 +1866,6 @@ pmap_free_pvs(struct pv_entry *pve)
 /*
  * insert_pv: a helper of pmap_enter_pv
  */
-
 static void
 insert_pv(struct pmap_page *pp, struct pv_entry *pve)
 {
@@ -1996,7 +1889,6 @@ insert_pv(struct pmap_page *pp, struct pv_entry *pve)
  * => caller should adjust ptp's wire_count before calling
  * => caller has preallocated pve and *sparepve for us
  */
-
 static struct pv_entry *
 pmap_enter_pv(struct pmap_page *pp, struct pv_entry *pve,
     struct pv_entry **sparepve, struct vm_page *ptp, vaddr_t va)
@@ -2039,7 +1931,6 @@ pmap_enter_pv(struct pmap_page *pp, struct pv_entry *pve,
  * => caller should adjust ptp's wire_count and free PTP if needed
  * => we return the removed pve
  */
-
 static struct pv_entry *
 pmap_remove_pv(struct pmap_page *pp, struct vm_page *ptp, vaddr_t va)
 {
@@ -2183,7 +2074,6 @@ pmap_free_ptp(struct pmap *pmap, struct vm_page *ptp, vaddr_t va,
  * => pmap should be locked
  * => preemption should be disabled
  */
-
 static struct vm_page *
 pmap_get_ptp(struct pmap *pmap, vaddr_t va, pd_entry_t * const *pdes, int flags)
 {
@@ -2410,13 +2300,12 @@ pmap_pdp_ctor(void *arg, void *v, int flags)
 	splx(s);
 #endif /* XEN */
 
-	return (0);
+	return 0;
 }
 
 /*
  * pmap_pdp_dtor: destructor for the PDP cache.
  */
-
 static void
 pmap_pdp_dtor(void *arg, void *v)
 {
@@ -2445,21 +2334,14 @@ pmap_pdp_dtor(void *arg, void *v)
 }
 
 #ifdef PAE
-
-/* pmap_pdp_alloc: Allocate a page for the pdp memory pool. */
-
 static void *
 pmap_pdp_alloc(struct pool *pp, int flags)
 {
 	return (void *)uvm_km_alloc(kernel_map,
 	    PAGE_SIZE * PDP_SIZE, PAGE_SIZE * PDP_SIZE,
-	    ((flags & PR_WAITOK) ? 0 : UVM_KMF_NOWAIT | UVM_KMF_TRYLOCK)
-	    | UVM_KMF_WIRED);
+	    ((flags & PR_WAITOK) ? 0 : UVM_KMF_NOWAIT | UVM_KMF_TRYLOCK) |
+	    UVM_KMF_WIRED);
 }
-
-/*
- * pmap_pdp_free: free a PDP
- */
 
 static void
 pmap_pdp_free(struct pool *pp, void *v)
@@ -2492,7 +2374,7 @@ pmap_create(void)
 	pmap->pm_stats.resident_count = PDP_SIZE;
 #if !defined(__x86_64__)
 	pmap->pm_hiexec = 0;
-#endif /* !defined(__x86_64__) */
+#endif
 	pmap->pm_flags = 0;
 	pmap->pm_gc_ptp = NULL;
 
@@ -2532,7 +2414,6 @@ pmap_create(void)
 /*
  * pmap_free_ptps: put a list of ptps back to the freelist.
  */
-
 void
 pmap_free_ptps(struct vm_page *empty_ptps)
 {
@@ -2551,7 +2432,6 @@ pmap_free_ptps(struct vm_page *empty_ptps)
  * pmap_check_ptps: verify that none of the pmap's page table objects
  * have any pages allocated to them.
  */
-
 static inline void
 pmap_check_ptps(struct pmap *pmap)
 {
@@ -2595,9 +2475,8 @@ pmap_check_inuse(struct pmap *pmap)
 
 /*
  * pmap_destroy: drop reference count on pmap.   free pmap if
- *	reference count goes to zero.
+ * reference count goes to zero.
  */
-
 void
 pmap_destroy(struct pmap *pmap)
 {
@@ -2686,7 +2565,6 @@ pmap_destroy(struct pmap *pmap)
  * pmap_remove_all: pmap is being torn down by the current thread.
  * avoid unnecessary invalidations.
  */
-
 void
 pmap_remove_all(struct pmap *pmap)
 {
@@ -2702,7 +2580,6 @@ pmap_remove_all(struct pmap *pmap)
  * pmap_fork: perform any necessary data structure manipulation when
  * a VM space is forked.
  */
-
 void
 pmap_fork(struct pmap *pmap1, struct pmap *pmap2)
 {
@@ -2827,7 +2704,6 @@ pmap_ldt_sync(struct pmap *pm)
  * pmap_ldt_cleanup: if the pmap has a local LDT, deallocate it, and
  * restore the default.
  */
-
 void
 pmap_ldt_cleanup(struct lwp *l)
 {
@@ -2863,7 +2739,6 @@ pmap_ldt_cleanup(struct lwp *l)
  * => if lwp is the curlwp, then set ci_want_pmapload so that
  *    actual MMU context switch will be done by pmap_load() later
  */
-
 void
 pmap_activate(struct lwp *l)
 {
@@ -2912,7 +2787,6 @@ pmap_activate(struct lwp *l)
  *
  * => Must be called with kernel preemption disabled.
  */
-
 static void
 pmap_reactivate(struct pmap *pmap)
 {
@@ -3127,10 +3001,6 @@ pmap_deactivate(struct lwp *l)
 }
 
 /*
- * end of lifecycle functions
- */
-
-/*
  * some misc. functions
  */
 
@@ -3155,7 +3025,6 @@ pmap_pdes_invalid(vaddr_t va, pd_entry_t * const *pdes, pd_entry_t *lastpde)
 /*
  * pmap_extract: extract a PA for the given VA
  */
-
 bool
 pmap_extract(struct pmap *pmap, vaddr_t va, paddr_t *pap)
 {
@@ -3221,58 +3090,48 @@ pmap_extract(struct pmap *pmap, vaddr_t va, paddr_t *pap)
 	return rv;
 }
 
-
 /*
  * vtophys: virtual address to physical address.  For use by
  * machine-dependent code only.
  */
-
 paddr_t
 vtophys(vaddr_t va)
 {
 	paddr_t pa;
 
 	if (pmap_extract(pmap_kernel(), va, &pa) == true)
-		return (pa);
-	return (0);
+		return pa;
+	return 0;
 }
 
 __strict_weak_alias(pmap_extract_ma, pmap_extract);
 
 #ifdef XEN
-
 /*
  * vtomach: virtual address to machine address.  For use by
  * machine-dependent code only.
  */
-
 paddr_t
 vtomach(vaddr_t va)
 {
 	paddr_t pa;
 
 	if (pmap_extract_ma(pmap_kernel(), va, &pa) == true)
-		return (pa);
-	return (0);
+		return pa;
+	return 0;
 }
-
-#endif /* XEN */
+#endif
 
 /*
  * pmap_virtual_space: used during bootup [pmap_steal_memory] to
- *	determine the bounds of the kernel virtual addess space.
+ * determine the bounds of the kernel virtual addess space.
  */
-
 void
 pmap_virtual_space(vaddr_t *startp, vaddr_t *endp)
 {
 	*startp = virtual_avail;
 	*endp = virtual_end;
 }
-
-/*
- * pmap_zero_page: zero a page
- */
 
 void
 pmap_zero_page(paddr_t pa)
@@ -3318,7 +3177,6 @@ pmap_zero_page(paddr_t pa)
  * Returns true if the page was zero'd, false if we aborted for
  * some reason.
  */
-
 bool
 pmap_pageidlezero(paddr_t pa)
 {
@@ -3354,10 +3212,6 @@ pmap_pageidlezero(paddr_t pa)
 	return rv;
 #endif
 }
-
-/*
- * pmap_copy_page: copy a page
- */
 
 void
 pmap_copy_page(paddr_t srcpa, paddr_t dstpa)
@@ -3496,10 +3350,9 @@ pmap_unmap_pte(void)
  * => must be called with kernel preemption disabled
  * => returns composite pte if at least one page should be shot down
  */
-
 static void
 pmap_remove_ptes(struct pmap *pmap, struct vm_page *ptp, vaddr_t ptpva,
-		 vaddr_t startva, vaddr_t endva, struct pv_entry **pv_tofree)
+    vaddr_t startva, vaddr_t endva, struct pv_entry **pv_tofree)
 {
 	pt_entry_t *pte = (pt_entry_t *)ptpva;
 
@@ -3521,7 +3374,6 @@ pmap_remove_ptes(struct pmap *pmap, struct vm_page *ptp, vaddr_t ptpva,
 	}
 }
 
-
 /*
  * pmap_remove_pte: remove a single PTE from a PTP.
  *
@@ -3533,7 +3385,7 @@ pmap_remove_ptes(struct pmap *pmap, struct vm_page *ptp, vaddr_t ptpva,
  */
 static bool
 pmap_remove_pte(struct pmap *pmap, struct vm_page *ptp, pt_entry_t *pte,
-		vaddr_t va, struct pv_entry **pv_tofree)
+    vaddr_t va, struct pv_entry **pv_tofree)
 {
 	struct pv_entry *pve;
 	struct vm_page *pg;
@@ -3610,7 +3462,6 @@ pmap_remove_pte(struct pmap *pmap, struct vm_page *ptp, pt_entry_t *pte,
  *
  * => caller should not be holding any pmap locks
  */
-
 void
 pmap_remove(struct pmap *pmap, vaddr_t sva, vaddr_t eva)
 {
@@ -3725,7 +3576,6 @@ pmap_remove(struct pmap *pmap, vaddr_t sva, vaddr_t eva)
  * => Caller should disable kernel preemption.
  * => issues tlb shootdowns if necessary.
  */
-
 static int
 pmap_sync_pv(struct pv_pte *pvpte, pt_entry_t expect, int clearbits,
     pt_entry_t *optep)
@@ -3903,7 +3753,6 @@ startover:
  *
  * => R/M bits are sync'd back to attrs
  */
-
 void
 pmap_page_remove(struct vm_page *pg)
 {
@@ -3919,9 +3768,8 @@ pmap_page_remove(struct vm_page *pg)
 
 /*
  * pmap_pv_remove: remove an unmanaged pv-tracked page from all pmaps
- *	that map it
+ * that map it
  */
-
 void
 pmap_pv_remove(paddr_t pa)
 {
@@ -3943,7 +3791,6 @@ pmap_pv_remove(paddr_t pa)
 /*
  * pmap_test_attrs: test a page's attributes
  */
-
 bool
 pmap_test_attrs(struct vm_page *pg, unsigned testbits)
 {
@@ -4022,7 +3869,6 @@ startover:
  *
  * => we return true if we cleared one of the bits we were asked to
  */
-
 bool
 pmap_clear_attrs(struct vm_page *pg, unsigned clearbits)
 {
@@ -4039,9 +3885,8 @@ pmap_clear_attrs(struct vm_page *pg, unsigned clearbits)
 
 /*
  * pmap_pv_clear_attrs: clear the specified attributes for an unmanaged
- *	pv-tracked page.
+ * pv-tracked page.
  */
-
 bool
 pmap_pv_clear_attrs(paddr_t pa, unsigned clearbits)
 {
@@ -4060,7 +3905,7 @@ pmap_pv_clear_attrs(paddr_t pa, unsigned clearbits)
 
 /*
  * pmap_page_protect: change the protection of all recorded mappings
- *	of a managed page
+ * of a managed page
  *
  * => NOTE: this is an inline function in pmap.h
  */
@@ -4069,7 +3914,7 @@ pmap_pv_clear_attrs(paddr_t pa, unsigned clearbits)
 
 /*
  * pmap_pv_protect: change the protection of all recorded mappings
- *	of an unmanaged pv-tracked page
+ * of an unmanaged pv-tracked page
  *
  * => NOTE: this is an inline function in pmap.h
  */
@@ -4268,7 +4113,7 @@ pmap_enter_ma(struct pmap *pmap, vaddr_t va, paddr_t ma, paddr_t pa,
 
 #ifdef XEN
 	KASSERT(domid == DOMID_SELF || pa == 0);
-#endif /* XEN */
+#endif
 
 	npte = ma | protection_codes[prot] | PG_V;
 	npte |= pmap_pat_flags(flags);
@@ -4598,7 +4443,6 @@ pmap_alloc_level(struct pmap *cpm, vaddr_t kva, long *needed_ptps)
  * => we allocate new PTPs for the kernel and install them in all
  *    the pmaps on the system.
  */
-
 vaddr_t
 pmap_growkernel(vaddr_t maxkvaddr)
 {
@@ -4692,7 +4536,7 @@ pmap_growkernel(vaddr_t maxkvaddr)
 		LIST_FOREACH(pm, &pmaps, pm_list) {
 			memcpy(&pm->pm_pdir[PDIR_SLOT_KERN + old],
 			    &kpm->pm_pdir[PDIR_SLOT_KERN + old],
-			    newpdes * sizeof (pd_entry_t));
+			    newpdes * sizeof(pd_entry_t));
 		}
 		mutex_exit(&pmaps_lock);
 #endif
@@ -4718,7 +4562,6 @@ void pmap_dump(struct pmap *, vaddr_t, vaddr_t);
  *
  * => caller should not be holding any pmap locks
  */
-
 void
 pmap_dump(struct pmap *pmap, vaddr_t sva, vaddr_t eva)
 {
@@ -4774,7 +4617,6 @@ pmap_dump(struct pmap *pmap, vaddr_t sva, vaddr_t eva)
 /*
  * pmap_update: process deferred invalidations and frees.
  */
-
 void
 pmap_update(struct pmap *pmap)
 {
