@@ -436,6 +436,18 @@
 .ds doc-operating-system-NetBSD-2.0.1 2.0.1
 .ds doc-operating-system-NetBSD-2.0.2 2.0.2
 .ds doc-operating-system-NetBSD-2.1   2.1
+.ds doc-operating-system-NetBSD-3.0    3.0
+.ds doc-operating-system-NetBSD-3.0.1  3.0.1
+.ds doc-operating-system-NetBSD-3.1    3.1
+.ds doc-operating-system-NetBSD-4.0    4.0
+.ds doc-operating-system-NetBSD-5.0    5.0
+.ds doc-operating-system-NetBSD-5.1    5.1
+.ds doc-operating-system-NetBSD-6.0    6.0
+.ds doc-operating-system-NetBSD-6.1    6.1
+.ds doc-operating-system-NetBSD-7.0    7.0
+.ds doc-operating-system-NetBSD-7.1    7.1
+.ds doc-operating-system-NetBSD-7.2    7.2
+.ds doc-operating-system-NetBSD-8.0    8.0
 .
 .ds doc-operating-system-FreeBSD-1.0     1.0
 .ds doc-operating-system-FreeBSD-1.1     1.1
