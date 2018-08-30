@@ -1,4 +1,4 @@
-/*	$NetBSD: if_muevar.h,v 1.1 2018/08/25 20:12:22 rin Exp $	*/
+/*	$NetBSD: if_muevar.h,v 1.2 2018/08/30 09:00:08 rin Exp $	*/
 /*	$OpenBSD: if_muereg.h,v 1.1 2018/08/03 01:50:15 kevlo Exp $	*/
 
 /*
@@ -55,8 +55,15 @@ struct mue_txbuf_hdr {
 	uint32_t		tx_cmd_a;
 #define MUE_TX_CMD_A_LEN_MASK	0x000fffff
 #define MUE_TX_CMD_A_FCS	0x00400000
+#define MUE_TX_CMD_A_TPE	0x02000000
+#define MUE_TX_CMD_A_IPE	0x04000000
+#define MUE_TX_CMD_A_LSO	0x08000000
 
 	uint32_t		tx_cmd_b;
+#define MUE_TX_MSS_MIN		8
+#define MUE_TX_CMD_B_MSS_SHIFT	16
+#define MUE_TX_CMD_B_MSS_MASK	0x3fff0000
+
 } __packed;
 
 struct mue_softc {
@@ -99,7 +106,8 @@ struct mue_softc {
 	krndsource_t		mue_rnd_source;
 
 	int			mue_phyno;
-	uint32_t		mue_bufsz;
+	uint32_t		mue_rxbufsz;
+	uint32_t		mue_txbufsz;
 	int			mue_link;
 };
 
