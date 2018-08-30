@@ -1,4 +1,4 @@
-/*	$NetBSD: ttm_bo_util.c,v 1.13 2018/08/29 19:30:46 mrg Exp $	*/
+/*	$NetBSD: ttm_bo_util.c,v 1.14 2018/08/30 01:19:49 riastradh Exp $	*/
 
 /**************************************************************************
  *
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ttm_bo_util.c,v 1.13 2018/08/29 19:30:46 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ttm_bo_util.c,v 1.14 2018/08/30 01:19:49 riastradh Exp $");
 
 #include <drm/ttm/ttm_bo_driver.h>
 #include <drm/ttm/ttm_placement.h>
@@ -703,7 +703,7 @@ int ttm_bo_kmap(struct ttm_buffer_object *bo,
 		return -EINVAL;
 	if (start_page > bo->num_pages)
 		return -EINVAL;
-#ifndef __NetBSD__
+#if 0
 	if (num_pages > 1 && !capable(CAP_SYS_ADMIN))
 		return -EPERM;
 #endif
