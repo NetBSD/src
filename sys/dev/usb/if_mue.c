@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mue.c,v 1.3 2018/08/30 09:00:08 rin Exp $	*/
+/*	$NetBSD: if_mue.c,v 1.4 2018/08/30 09:59:12 rin Exp $	*/
 /*	$OpenBSD: if_mue.c,v 1.3 2018/08/04 16:42:46 jsg Exp $	*/
 
 /*
@@ -20,7 +20,7 @@
 /* Driver for Microchip LAN7500/LAN7800 chipsets. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mue.c,v 1.3 2018/08/30 09:00:08 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mue.c,v 1.4 2018/08/30 09:59:12 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1229,10 +1229,10 @@ mue_encap(struct mue_softc *sc, struct mbuf *m, int idx)
 	memcpy(c->mue_buf, &hdr, sizeof(hdr)); 
 	len = sizeof(hdr);
 
+	KASSERT(len + m->m_pkthdr.len <= sc->mue_txbufsz);
+
 	m_copydata(m, 0, m->m_pkthdr.len, c->mue_buf + len);
 	len += m->m_pkthdr.len;
-
-	KASSERT(len <= sc->mue_txbufsz);
 
 	usbd_setup_xfer(c->mue_xfer, c, c->mue_buf, len,
 	    USBD_FORCE_SHORT_XFER, 10000, mue_txeof);
