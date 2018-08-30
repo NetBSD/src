@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2017/08/29 15:50:57 maya Exp $
+#	$NetBSD: Makefile,v 1.6 2018/08/30 05:39:21 maya Exp $
 
 .include <bsd.own.mk>
 
@@ -18,7 +18,6 @@ FONTCONFIG_LINKS= \
 	65-fonts-persian.conf \
 	65-nonlatin.conf \
 	69-unifont.conf \
-	70-no-bitmaps.conf \
 	80-delicious.conf \
 	90-synthetic.conf
 
