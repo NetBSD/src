@@ -1,4 +1,4 @@
-/*	$NetBSD: if_muereg.h,v 1.1 2018/08/25 20:12:22 rin Exp $	*/
+/*	$NetBSD: if_muereg.h,v 1.2 2018/08/30 09:00:08 rin Exp $	*/
 /*	$OpenBSD: if_muereg.h,v 1.1 2018/08/03 01:50:15 kevlo Exp $	*/
 
 /*
@@ -19,6 +19,15 @@
 
 #ifndef _IF_MUEREG_H_
 #define _IF_MUEREG_H_
+
+/* XXX for ETHER_HDR_LEN and ETHER_VLAN_ENCAP_LEN */
+#include <net/if_ether.h>
+
+/* XXX for IP_MAXPACKET */
+#include <netinet/ip.h>
+
+/* XXX for struct mue_txbuf_hdr */
+#include <dev/usb/if_muevar.h>
 
 /* USB vendor requests */
 #define MUE_UR_WRITEREG         0xa0
@@ -104,15 +113,17 @@
 #define MUE_SS_USB_PKT_SIZE		1024
 #define MUE_HS_USB_PKT_SIZE		512
 #define MUE_FS_USB_PKT_SIZE		64
-#define MUE_7500_HS_BUFSIZE		\
+#define MUE_7500_HS_RX_BUFSIZE		\
 	(16 * 1024 + 5 * MUE_HS_USB_PKT_SIZE)
-#define MUE_7500_FS_BUFSIZE		\
+#define MUE_7500_FS_RX_BUFSIZE		\
 	(6 * 1024 + 33 * MUE_FS_USB_PKT_SIZE)
 #define MUE_7500_MAX_RX_FIFO_SIZE	(20 * 1024)
 #define MUE_7500_MAX_TX_FIFO_SIZE	(12 * 1024)
-#define MUE_7800_BUFSIZE		(12 * 1024)
-#define MUE_7800_MAX_RX_FIFO_SIZE	MUE_7800_BUFSIZE
-#define MUE_7800_MAX_TX_FIFO_SIZE	MUE_7800_BUFSIZE
+#define MUE_7800_RX_BUFSIZE		(12 * 1024)
+#define MUE_7800_MAX_RX_FIFO_SIZE	MUE_7800_RX_BUFSIZE
+#define MUE_7800_MAX_TX_FIFO_SIZE	MUE_7800_RX_BUFSIZE
+#define MUE_TX_BUFSIZE			(sizeof(struct mue_txbuf_hdr) + \
+	ETHER_HDR_LEN + ETHER_VLAN_ENCAP_LEN + IP_MAXPACKET)
 
 /* interrupt endpoint control register */
 #define MUE_INT_EP_CTL_PHY_INT		0x20000
