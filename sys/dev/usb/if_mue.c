@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mue.c,v 1.2 2018/08/27 14:59:04 rin Exp $	*/
+/*	$NetBSD: if_mue.c,v 1.3 2018/08/30 09:00:08 rin Exp $	*/
 /*	$OpenBSD: if_mue.c,v 1.3 2018/08/04 16:42:46 jsg Exp $	*/
 
 /*
@@ -20,7 +20,7 @@
 /* Driver for Microchip LAN7500/LAN7800 chipsets. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mue.c,v 1.2 2018/08/27 14:59:04 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mue.c,v 1.3 2018/08/30 09:00:08 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -49,8 +49,11 @@ __KERNEL_RCSID(0, "$NetBSD: if_mue.c,v 1.2 2018/08/27 14:59:04 rin Exp $");
 
 #include <net/bpf.h>
 
-#include <netinet/in.h>
 #include <netinet/if_inarp.h>
+#include <netinet/in.h>
+#include <netinet/ip.h>		/* XXX for struct ip */
+#include <netinet/ip6.h>	/* XXX for struct ip6_hdr */
+#include <netinet/tcp.h>	/* XXX for struct tcphdr */
 
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
@@ -145,6 +148,7 @@ static int	mue_open_pipes(struct mue_softc *);
 static void	mue_start_rx(struct mue_softc *);
 
 static int	mue_encap(struct mue_softc *, struct mbuf *, int);
+static void	mue_tx_offload(struct mue_softc *, struct mbuf *);
 
 static void	mue_setmulti(struct mue_softc *);
 static void	mue_sethwcsum(struct mue_softc *);
@@ -689,10 +693,10 @@ mue_chip_init(struct mue_softc *sc)
 
 	if (sc->mue_flags & LAN7500) {
 		if (sc->mue_udev->ud_speed == USB_SPEED_HIGH)
-			val = MUE_7500_HS_BUFSIZE /
+			val = MUE_7500_HS_RX_BUFSIZE /
 			    MUE_HS_USB_PKT_SIZE;
 		else
-			val = MUE_7500_FS_BUFSIZE /
+			val = MUE_7500_FS_RX_BUFSIZE /
 			    MUE_FS_USB_PKT_SIZE;
 		mue_csr_write(sc, MUE_7500_BURST_CAP, val);
 		mue_csr_write(sc, MUE_7500_BULKIN_DELAY,
@@ -709,7 +713,7 @@ mue_chip_init(struct mue_softc *sc)
 		/* Init LTM. */
 		mue_init_ltm(sc);
 
-		val = MUE_7800_BUFSIZE;
+		val = MUE_7800_RX_BUFSIZE;
 		switch (sc->mue_udev->ud_speed) {
 		case USB_SPEED_SUPER:
 			val /= MUE_SS_USB_PKT_SIZE;
@@ -936,10 +940,11 @@ mue_attach(device_t parent, device_t self, void *aux)
 
 	/* Decide on what our bufsize will be. */
 	if (sc->mue_flags & LAN7500)
-		sc->mue_bufsz = (sc->mue_udev->ud_speed == USB_SPEED_HIGH) ?
-		    MUE_7500_HS_BUFSIZE : MUE_7500_FS_BUFSIZE;
+		sc->mue_rxbufsz = (sc->mue_udev->ud_speed == USB_SPEED_HIGH) ?
+		    MUE_7500_HS_RX_BUFSIZE : MUE_7500_FS_RX_BUFSIZE;
 	else
-		sc->mue_bufsz = MUE_7800_BUFSIZE;
+		sc->mue_rxbufsz = MUE_7800_RX_BUFSIZE;
+	sc->mue_txbufsz = MUE_TX_BUFSIZE;
 
 	/* Find endpoints. */
 	id = usbd_get_interface_descriptor(sc->mue_iface);
@@ -1002,6 +1007,8 @@ mue_attach(device_t parent, device_t self, void *aux)
 	ifp->if_watchdog = mue_watchdog;
 
 	IFQ_SET_READY(&ifp->if_snd);
+
+	ifp->if_capabilities = IFCAP_TSOv4 | IFCAP_TSOv6;
 
 	sc->mue_ec.ec_capabilities = ETHERCAP_VLAN_MTU;
 
@@ -1120,7 +1127,7 @@ mue_rx_list_init(struct mue_softc *sc)
 		c->mue_idx = i;
 		if (c->mue_xfer == NULL) {
 			err = usbd_create_xfer(sc->mue_ep[MUE_ENDPT_RX],
-			    sc->mue_bufsz, 0, 0, &c->mue_xfer);
+			    sc->mue_rxbufsz, 0, 0, &c->mue_xfer);
 			if (err)
 				return err;
 			c->mue_buf = usbd_get_buffer(c->mue_xfer);
@@ -1145,7 +1152,7 @@ mue_tx_list_init(struct mue_softc *sc)
 		c->mue_idx = i;
 		if (c->mue_xfer == NULL) {
 			err = usbd_create_xfer(sc->mue_ep[MUE_ENDPT_TX],
-			    sc->mue_bufsz, USBD_FORCE_SHORT_XFER, 0,
+			    sc->mue_txbufsz, USBD_FORCE_SHORT_XFER, 0,
 			    &c->mue_xfer);
 			if (err)
 				return err;
@@ -1186,7 +1193,7 @@ mue_start_rx(struct mue_softc *sc)
 	/* Start up the receive pipe. */
 	for (i = 0; i < __arraycount(sc->mue_cdata.mue_rx_chain); i++) {
 		c = &sc->mue_cdata.mue_rx_chain[i];
-		usbd_setup_xfer(c->mue_xfer, c, c->mue_buf, sc->mue_bufsz,
+		usbd_setup_xfer(c->mue_xfer, c, c->mue_buf, sc->mue_rxbufsz,
 		    USBD_SHORT_XFER_OK, USBD_NO_TIMEOUT, mue_rxeof);
 		usbd_transfer(c->mue_xfer);
 	}
@@ -1205,13 +1212,27 @@ mue_encap(struct mue_softc *sc, struct mbuf *m, int idx)
 
 	hdr.tx_cmd_a = htole32((m->m_pkthdr.len & MUE_TX_CMD_A_LEN_MASK) |
 	    MUE_TX_CMD_A_FCS);
-	/* Disable segmentation offload. */
-	hdr.tx_cmd_b = htole32(0);
+
+	if (m->m_pkthdr.csum_flags & (M_CSUM_TSOv4 | M_CSUM_TSOv6)) {
+		hdr.tx_cmd_a |= htole32(MUE_TX_CMD_A_LSO);
+		if (__predict_true(m->m_pkthdr.segsz > MUE_TX_MSS_MIN))
+			hdr.tx_cmd_b = htole32(m->m_pkthdr.segsz <<
+			    MUE_TX_CMD_B_MSS_SHIFT);
+		else
+			hdr.tx_cmd_b = htole32(MUE_TX_MSS_MIN <<
+			    MUE_TX_CMD_B_MSS_SHIFT);
+		hdr.tx_cmd_b &= htole32(MUE_TX_CMD_B_MSS_MASK);
+		mue_tx_offload(sc, m);
+	} else
+		hdr.tx_cmd_b = 0;
+
 	memcpy(c->mue_buf, &hdr, sizeof(hdr)); 
 	len = sizeof(hdr);
 
 	m_copydata(m, 0, m->m_pkthdr.len, c->mue_buf + len);
 	len += m->m_pkthdr.len;
+
+	KASSERT(len <= sc->mue_txbufsz);
 
 	usbd_setup_xfer(c->mue_xfer, c, c->mue_buf, len,
 	    USBD_FORCE_SHORT_XFER, 10000, mue_txeof);
@@ -1227,6 +1248,52 @@ mue_encap(struct mue_softc *sc, struct mbuf *m, int idx)
 	sc->mue_cdata.mue_tx_cnt++;
 
 	return 0;
+}
+
+static void
+mue_tx_offload(struct mue_softc *sc, struct mbuf *m)
+{
+	struct ether_header *eh;
+	struct ip *ip;
+	struct ip6_hdr *ip6;
+	int offset;
+	bool v4;
+
+	eh = mtod(m, struct ether_header *);
+	switch (htons(eh->ether_type)) {
+	case ETHERTYPE_IP:
+	case ETHERTYPE_IPV6:
+		offset = ETHER_HDR_LEN;
+		break;
+	case ETHERTYPE_VLAN:
+		/* XXX not yet supported */
+		offset = ETHER_HDR_LEN + ETHER_VLAN_ENCAP_LEN;
+		break;
+	default:
+		/* XXX */
+		panic("%s: unsupported ethertype\n", __func__);
+		/* NOTREACHED */
+	}
+
+	v4 = (m->m_pkthdr.csum_flags & M_CSUM_TSOv4) != 0;
+
+#ifdef DIAGNOSTIC /* XXX */
+	int hlen = offset;
+	if (v4)
+		hlen += M_CSUM_DATA_IPv4_IPHL(m->m_pkthdr.csum_data);
+	else
+		hlen += M_CSUM_DATA_IPv6_IPHL(m->m_pkthdr.csum_data);
+	KASSERT(m->m_len >= hlen + sizeof(struct tcphdr));
+#endif
+
+	/* Packet length should be cleared. */
+	if (v4) {
+		ip = (void *)(mtod(m, char *) + offset);
+		ip->ip_len = 0;
+	} else {
+		ip6 = (void *)(mtod(m, char *) + offset);
+		ip6->ip6_plen = 0;
+	}
 }
 
 static void
@@ -1380,7 +1447,7 @@ mue_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 
 	usbd_get_xfer_status(xfer, NULL, NULL, &total_len, NULL);
 
-	if (__predict_false(total_len > sc->mue_bufsz)) {
+	if (__predict_false(total_len > sc->mue_rxbufsz)) {
 		DPRINTF(sc, "too large transfer\n");
 		goto done;
 	}
@@ -1442,7 +1509,7 @@ mue_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 
 done:
 	/* Setup new transfer. */
-	usbd_setup_xfer(xfer, c, c->mue_buf, sc->mue_bufsz,
+	usbd_setup_xfer(xfer, c, c->mue_buf, sc->mue_rxbufsz,
 	    USBD_SHORT_XFER_OK, USBD_NO_TIMEOUT, mue_rxeof);
 	usbd_transfer(xfer);
 }
