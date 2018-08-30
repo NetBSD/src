@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_agp_hook.c,v 1.2 2018/08/30 19:03:14 tnn Exp $	*/
+/*	$NetBSD: drm_agp_hook.c,v 1.3 2018/08/30 22:39:54 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_agp_hook.c,v 1.2 2018/08/30 19:03:14 tnn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_agp_hook.c,v 1.3 2018/08/30 22:39:54 mrg Exp $");
 
 #include <sys/types.h>
 #include <sys/condvar.h>
@@ -145,6 +145,8 @@ drm_agp_init(struct drm_device *dev)
 	agp = hooks->agph_init(dev);
 	if (agp == NULL)
 		drm_agp_hooks_release(hooks);
+	else
+		agp->hooks = hooks;
 
 	return agp;
 }
