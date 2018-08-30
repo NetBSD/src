@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_agp_hook.c,v 1.1 2018/08/28 03:41:39 riastradh Exp $	*/
+/*	$NetBSD: drm_agp_hook.c,v 1.2 2018/08/30 19:03:14 tnn Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_agp_hook.c,v 1.1 2018/08/28 03:41:39 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_agp_hook.c,v 1.2 2018/08/30 19:03:14 tnn Exp $");
 
 #include <sys/types.h>
 #include <sys/condvar.h>
@@ -89,7 +89,7 @@ drm_agp_register(const struct drm_agp_hooks *hooks)
 int
 drm_agp_deregister(const struct drm_agp_hooks *hooks)
 {
-	int error;
+	int error = 0;
 
 	mutex_enter(&agp_hooks.lock);
 	KASSERT(agp_hooks.hooks == hooks);
