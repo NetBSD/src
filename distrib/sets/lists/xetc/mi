@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.30 2018/03/29 04:43:55 snj Exp $
+# $NetBSD: mi,v 1.31 2018/08/30 05:39:21 maya Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -74,7 +74,7 @@
 ./etc/fonts/conf.d/65-fonts-persian.conf		-unknown-	xorg
 ./etc/fonts/conf.d/65-nonlatin.conf			-unknown-	xorg
 ./etc/fonts/conf.d/69-unifont.conf			-unknown-	xorg
-./etc/fonts/conf.d/70-no-bitmaps.conf			-unknown-	xorg
+./etc/fonts/conf.d/70-no-bitmaps.conf			-unknown-	obsolete
 ./etc/fonts/conf.d/80-delicious.conf			-unknown-	xorg
 ./etc/fonts/conf.d/90-synthetic.conf			-unknown-	xorg
 ./etc/fonts/fonts.conf					-unknown-	xorg
