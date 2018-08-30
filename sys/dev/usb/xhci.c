@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.96 2018/08/09 06:26:47 mrg Exp $	*/
+/*	$NetBSD: xhci.c,v 1.97 2018/08/30 13:13:24 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.96 2018/08/09 06:26:47 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.97 2018/08/30 13:13:24 jakllsch Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -938,7 +938,7 @@ xhci_init(struct xhci_softc *sc)
 	hciversion = XHCI_CAP_HCIVERSION(cap);
 
 	if (hciversion < XHCI_HCIVERSION_0_96 ||
-	    hciversion > XHCI_HCIVERSION_1_0) {
+	    hciversion >= 0x0200) {
 		aprint_normal_dev(sc->sc_dev,
 		    "xHCI version %x.%x not known to be supported\n",
 		    (hciversion >> 8) & 0xff, (hciversion >> 0) & 0xff);
