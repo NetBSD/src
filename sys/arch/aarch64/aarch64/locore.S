@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.20 2018/08/26 18:15:49 ryo Exp $	*/
+/*	$NetBSD: locore.S,v 1.21 2018/08/30 10:38:01 maxv Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -35,7 +35,7 @@
 #include <aarch64/hypervisor.h>
 #include "assym.h"
 
-RCSID("$NetBSD: locore.S,v 1.20 2018/08/26 18:15:49 ryo Exp $")
+RCSID("$NetBSD: locore.S,v 1.21 2018/08/30 10:38:01 maxv Exp $")
 
 /* #define DEBUG_LOCORE */
 /* #define DEBUG_MMU */
@@ -244,7 +244,7 @@ END(aarch64_start)
  * print "[CPU$x27] " (x27 as cpuindex)
  * XXX: max 4 digit
  */
-printcpu:
+ENTRY_NP(printcpu)
 	stp	x0, lr, [sp, #-16]!
 	stp	x25, x26, [sp, #-16]!
 	PRINT("[CPU")
@@ -281,6 +281,7 @@ printcpu:
 	ldp	x25, x26, [sp], #16
 	ldp	x0, lr, [sp], #16
 	ret
+END(printcpu)
 #define PRINTCPU()	bl	printcpu
 #else
 #define PRINTCPU()
@@ -496,8 +497,7 @@ END(aarch64_mpstart)
  *    .align    2
  *    nop                     <- return to here
  */
-	.global xprint
-xprint:
+ENTRY_NP(xprint)
 	mov	x11, lr
 	mov	x12, x0
 	ldrb	w0, [x11], #1
@@ -515,8 +515,7 @@ xprint:
 	ret
 END(xprint)
 
-	.global _C_LABEL(uartputs)
-_C_LABEL(uartputs):
+ENTRY_NP(uartputs)
 	mov	x11, x0
 	ldrb	w0, [x11], #1
 	cbz	w0, 9f
@@ -526,10 +525,9 @@ _C_LABEL(uartputs):
 9:
 	mov	x0, x11
 	ret
-END(_C_LABEL(uartputs))
+END(uartputs)
 
-	.global _print_x0
-_print_x0:
+ENTRY_NP(_print_x0)
 	stp	x0, lr, [sp, #-16]!
 	stp	x4, x5, [sp, #-16]!
 	stp	x6, x7, [sp, #-16]!
@@ -554,31 +552,32 @@ _print_x0:
 	ret
 END(_print_x0)
 
-	.global _C_LABEL(print_x0)
-_C_LABEL(print_x0):
+ENTRY_NP(print_x0)
 	stp	x0, lr, [sp, #-16]!
 	bl	_print_x0
 	PRINT("\r\n")
 	ldp	x0, lr, [sp], #16
 	ret
-END(_C_LABEL(print_x0))
+END(print_x0)
 
-printn_x1:
+ENTRY_NP(printn_x1)
 	stp	x0, lr, [sp, #-16]!
 	mov	x0, x1
 	bl	_print_x0
 	ldp	x0, lr, [sp], #16
 	ret
+END(printn_x1)
 
-print_x2:
+ENTRY_NP(print_x2)
 	stp	x0, lr, [sp, #-16]!
 	mov	x0, x2
 	bl	_print_x0
 	PRINT("\r\n")
 	ldp	x0, lr, [sp], #16
 	ret
+END(print_x2)
 
-arm_boot_l0pt_init:
+ENTRY_NP(arm_boot_l0pt_init)
 	stp	x0, lr, [sp, #-16]!
 
 	/* Clean the page table */
@@ -732,6 +731,7 @@ arm_boot_l0pt_init:
 
 	ldp	x0, lr, [sp], #16
 	ret
+END(arm_boot_l0pt_init)
 
 	.align 3
 .L_devmap_addr:
@@ -742,7 +742,7 @@ arm_boot_l0pt_init:
  *	x1 = vaddr
  *	x2 = l1table
  */
-l0_settable:
+ENTRY_NP(l0_settable)
 	stp	x0, lr, [sp, #-16]!
 
 	and	x2, x2, #~PAGE_MASK
@@ -761,6 +761,7 @@ l0_settable:
 
 	ldp	x0, lr, [sp], #16
 	ret
+END(l0_settable)
 
 /*
  *	x0 = l1table
@@ -769,7 +770,7 @@ l0_settable:
  *	x3 = attr
  *	x4 = N entries
  */
-l1_setblocks:
+ENTRY_NP(l1_setblocks)
 	stp	x0, lr, [sp, #-16]!
 
 	and	x2, x2, #L1_ADDR_BITS
@@ -799,13 +800,14 @@ l1_setblocks:
 
 	ldp	x0, lr, [sp], #16
 	ret
+END(l1_setblocks)
 
 /*
  *	x0 = l1table
  *	x1 = vaddr
  *	x2 = l2table
  */
-l1_settable:
+ENTRY_NP(l1_settable)
 	stp	x0, lr, [sp, #-16]!
 
 	and	x2, x2, #~PAGE_MASK
@@ -824,6 +826,7 @@ l1_settable:
 
 	ldp	x0, lr, [sp], #16
 	ret
+END(l1_settable)
 
 /*
  *	x0 = l2table
@@ -832,7 +835,7 @@ l1_settable:
  *	x3 = attr
  *	x4 = N entries
  */
-l2_setblocks:
+ENTRY_NP(l2_setblocks)
 	stp	x0, lr, [sp, #-16]!
 
 	and	x2, x2, #L2_BLOCK_MASK
@@ -862,8 +865,9 @@ l2_setblocks:
 
 	ldp	x0, lr, [sp], #16
 	ret
+END(l2_setblocks)
 
-init_sysregs:
+ENTRY_NP(init_sysregs)
 	stp	x0, lr, [sp, #-16]!
 
 	/* Disable debug event */
@@ -885,16 +889,18 @@ init_sysregs:
 
 	ldp	x0, lr, [sp], #16
 	ret
+END(init_sysregs)
 
-mmu_disable:
+ENTRY_NP(mmu_disable)
 	dsb	sy
 	mrs	x0, sctlr_el1
 	bic	x0, x0, SCTLR_M		/* clear MMU enable bit */
 	msr	sctlr_el1, x0
 	isb
 	ret
+END(mmu_disable)
 
-mmu_enable:
+ENTRY_NP(mmu_enable)
 	dsb	sy
 
 	ADDR	x0, ttbr0_l0table
@@ -946,6 +952,7 @@ mmu_enable:
 	isb
 
 	ret
+END(mmu_enable)
 
 	.align 3
 mair_setting:
