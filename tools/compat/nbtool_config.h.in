@@ -1,6 +1,6 @@
 /* nbtool_config.h.in.  Generated from configure.ac by autoheader.  */
 
-/*      $NetBSD: nbtool_config.h.in,v 1.46 2018/08/16 12:03:36 christos Exp $    */
+/*      $NetBSD: nbtool_config.h.in,v 1.47 2018/08/30 12:05:34 christos Exp $    */
  
 #ifndef __NETBSD_NBTOOL_CONFIG_H__
 #define __NETBSD_NBTOOL_CONFIG_H__
@@ -153,6 +153,10 @@
 /* Define to 1 if you have the declaration of `getprogname', and to 0 if you
    don't. */
 #undef HAVE_DECL_GETPROGNAME
+
+/* Define to 1 if you have the declaration of `getsubopt', and to 0 if you
+   don't. */
+#undef HAVE_DECL_GETSUBOPT
 
 /* Define to 1 if you have the declaration of `gid_from_group', and to 0 if
    you don't. */
