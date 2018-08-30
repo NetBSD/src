@@ -4717,6 +4717,19 @@ fi
 cat >>confdefs.h <<_ACEOF
 #define HAVE_DECL_REALLOCARR $ac_have_decl
 _ACEOF
+ac_fn_c_check_decl "$LINENO" "getsubopt" "ac_cv_have_decl_getsubopt" "
+#include <stdlib.h>
+
+"
+if test "x$ac_cv_have_decl_getsubopt" = xyes; then :
+  ac_have_decl=1
+else
+  ac_have_decl=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL_GETSUBOPT $ac_have_decl
+_ACEOF
 ac_fn_c_check_decl "$LINENO" "setenv" "ac_cv_have_decl_setenv" "
 #include <stdlib.h>
 
