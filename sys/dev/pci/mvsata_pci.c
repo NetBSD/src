@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsata_pci.c,v 1.9 2017/06/21 22:48:05 jdolecek Exp $	*/
+/*	$NetBSD: mvsata_pci.c,v 1.10 2018/08/31 18:43:29 jdolecek Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvsata_pci.c,v 1.9 2017/06/21 22:48:05 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvsata_pci.c,v 1.10 2018/08/31 18:43:29 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -108,7 +108,7 @@ static void mvsata_pci_enable_intr(struct mvsata_port *, int);
 CFATTACH_DECL_NEW(mvsata_pci, sizeof(struct mvsata_pci_softc),
     mvsata_pci_match, mvsata_pci_attach, mvsata_pci_detach, NULL);
 
-struct mvsata_product mvsata_pci_products[] = {
+static const struct mvsata_product mvsata_pci_products[] = {
 #define PCI_VP(v, p)	PCI_VENDOR_ ## v, PCI_PRODUCT_ ## v ## _ ## p
 	{ PCI_VP(MARVELL, 88SX5040),		1, 4, gen1, 0 },
 	{ PCI_VP(MARVELL, 88SX5041),		1, 4, gen1, 0 },
