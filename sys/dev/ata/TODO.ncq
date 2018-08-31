@@ -32,8 +32,7 @@ implement DIOCGCACHE/DIOCCACHESYNC for ld@ataraid? just passthrough, like ccd
 
 MSI/MSI-X support for AHCI and mvsata(4)
 
-mvsata - constify mvsata_pci_products and move pci-specific code to
-the pci attach code
+mvsata - move pci-specific code to the pci attach code
 
 mvsata(4) 64-bit DMA
 - at least with AHA1430SA does not really work, crash in mvsata_intr() on boot
