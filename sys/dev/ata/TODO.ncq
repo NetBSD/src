@@ -1,3 +1,16 @@
+jdolecek-ncqfixes goals:
+- make ata_xfer dynamically allocated per-drive using a pool
+  - fixes: queue is allocated regardless if there are any drives, fix? 
+- remove limit of queued ata_xfers, allow any number of pending xfers;
+  this should fix kern/52614 AKA wdc-attached ATAPI cd(4)
+- remove the wd(4) flush condition, just allocate a dynamic ata_xfer
+- change wd(4) dump code to use on-stack ata_xfer to not rely on pool having
+  memory
+- re-fix QEMU ahci(4) bug workaround (no READ LOG EXT support) - now it
+  triggers KASSERT()
+- fix ahci(4) error handling under paralles - invalid bio via WD_CHAOS_MONKEY
+  ends up being handled as NOERROR, triggering KASSERT() in wd(4)
+
 Bugs
 ----
 test wd* at umass?, confirm the ata_channel kludge works
@@ -14,8 +27,6 @@ xfers for several different drives
 
 maybe do device error handling in not-interrupt-context (maybe this should be
 done on a mpata branch?)
-
-queue is allocated regardless if there are any drives, fix? 
 
 dump to unopened disk fails (e.g. dump do wd1b when wd1a not mounted), due
 to the open path executing ata_get_params(), which eventually tsleeps()
