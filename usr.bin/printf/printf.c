@@ -1,4 +1,4 @@
-/*	$NetBSD: printf.c,v 1.42 2018/07/25 15:35:27 kre Exp $	*/
+/*	$NetBSD: printf.c,v 1.43 2018/08/31 17:27:35 kre Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\
 #if 0
 static char sccsid[] = "@(#)printf.c	8.2 (Berkeley) 3/22/95";
 #else
-__RCSID("$NetBSD: printf.c,v 1.42 2018/07/25 15:35:27 kre Exp $");
+__RCSID("$NetBSD: printf.c,v 1.43 2018/08/31 17:27:35 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -72,7 +72,6 @@ static char	 getchr(void);
 static double	 getdouble(void);
 static int	 getwidth(void);
 static intmax_t	 getintmax(void);
-static uintmax_t getuintmax(void);
 static char	*getstr(void);
 static char	*mklong(const char *, char);
 static void      check_conversion(const char *, const char *);
@@ -301,7 +300,7 @@ int main(int argc, char *argv[])
 			case 'u':
 			case 'x':
 			case 'X': {
-				uintmax_t p = getuintmax();
+				uintmax_t p = (uintmax_t)getintmax();
 				char *f = mklong(start, ch);
 
 				PF(f, p);
@@ -651,35 +650,6 @@ getintmax(void)
 
 	errno = 0;
 	val = strtoimax(cp, &ep, 0);
-	check_conversion(cp, ep);
-	return val;
-}
-
-static uintmax_t
-getuintmax(void)
-{
-	uintmax_t val;
-	char *cp, *ep;
-
-	cp = *gargv;
-	if (cp == NULL)
-		return 0;
-	gargv++;
-
-	if (*cp == '\"' || *cp == '\'')
-		return (uintmax_t)*(cp + 1);
-
-	/* strtoumax won't error -ve values */
-	while (isspace(*(unsigned char *)cp))
-		cp++;
-	if (*cp == '-') {
-		warnx("%s: expected positive numeric value", cp);
-		rval = 1;
-		return 0;
-	}
-
-	errno = 0;
-	val = strtoumax(cp, &ep, 0);
 	check_conversion(cp, ep);
 	return val;
 }
