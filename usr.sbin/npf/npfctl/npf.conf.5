@@ -1,4 +1,4 @@
-.\"    $NetBSD: npf.conf.5,v 1.69 2018/08/31 11:11:21 maxv Exp $
+.\"    $NetBSD: npf.conf.5,v 1.70 2018/08/31 11:18:35 maxv Exp $
 .\"
 .\" Copyright (c) 2009-2017 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -408,11 +408,12 @@ table-def	= "table" table-id "type" ( "hash" | "tree" | "cdb" )
 map		= "map" interface
 		  ( "static" [ "algo" map-algo ] | "dynamic" )
 		  [ map-flags ] [ proto ]
-		  net-seg ( "->" | "<-" | "<->" ) net-seg
+		  map-seg ( "->" | "<-" | "<->" ) map-seg
 		  [ "pass" [ proto ] filt-opts ]
 
 map-algo	= "npt66"
 map-flags	= "no-ports"
+map-seg		= ( addr-mask | interface ) [ port-opts ]
 
 # Rule procedure definition.  The name should be in the double quotes.
 #
@@ -448,11 +449,11 @@ family-opt	= "inet4" | "inet6"
 proto-opts	= "flags" tcp-flags [ "/" tcp-flag-mask ] |
 		  "icmp-type" type [ "code" icmp-code ]
 
-addr-mask	= addr [ "/" mask ]
 filt-opts	= "from" filt-addr [ port-opts ] "to" filt-addr [ port-opts ]
 filt-addr	= [ "!" ] [ interface | addr-mask | table-id | "any" ]
 
 port-opts	= "port" ( port-num | port-from "-" port-to | var-name )
+addr-mask	= addr [ "/" mask ]
 .Ed
 .\" -----
 .Sh FILES
