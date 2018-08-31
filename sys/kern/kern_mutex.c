@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_mutex.c,v 1.74 2018/08/14 01:09:53 ozaki-r Exp $	*/
+/*	$NetBSD: kern_mutex.c,v 1.75 2018/08/31 01:23:57 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 #define	__MUTEX_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.74 2018/08/14 01:09:53 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.75 2018/08/31 01:23:57 ozaki-r Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -96,7 +96,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.74 2018/08/14 01:09:53 ozaki-r Exp 
 
 #define	MUTEX_DASSERT(mtx, cond)				\
 do {								\
-	if (!(cond))						\
+	if (__predict_false(!(cond)))				\
 		MUTEX_ABORT(mtx, "assertion failed: " #cond);	\
 } while (/* CONSTCOND */ 0);
 
@@ -110,7 +110,7 @@ do {								\
 
 #define	MUTEX_ASSERT(mtx, cond)					\
 do {								\
-	if (!(cond))						\
+	if (__predict_false(!(cond)))				\
 		MUTEX_ABORT(mtx, "assertion failed: " #cond);	\
 } while (/* CONSTCOND */ 0)
 
