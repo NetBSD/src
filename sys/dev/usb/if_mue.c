@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mue.c,v 1.4 2018/08/30 09:59:12 rin Exp $	*/
+/*	$NetBSD: if_mue.c,v 1.5 2018/08/31 11:21:00 rin Exp $	*/
 /*	$OpenBSD: if_mue.c,v 1.3 2018/08/04 16:42:46 jsg Exp $	*/
 
 /*
@@ -20,7 +20,7 @@
 /* Driver for Microchip LAN7500/LAN7800 chipsets. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mue.c,v 1.4 2018/08/30 09:59:12 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mue.c,v 1.5 2018/08/31 11:21:00 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1229,7 +1229,8 @@ mue_encap(struct mue_softc *sc, struct mbuf *m, int idx)
 	memcpy(c->mue_buf, &hdr, sizeof(hdr)); 
 	len = sizeof(hdr);
 
-	KASSERT(len + m->m_pkthdr.len <= sc->mue_txbufsz);
+	KASSERTMSG(len + m->m_pkthdr.len <= sc->mue_txbufsz, "%d <= %u",
+	    len + m->m_pkthdr.len, sc->mue_txbufsz);
 
 	m_copydata(m, 0, m->m_pkthdr.len, c->mue_buf + len);
 	len += m->m_pkthdr.len;
@@ -1447,10 +1448,8 @@ mue_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 
 	usbd_get_xfer_status(xfer, NULL, NULL, &total_len, NULL);
 
-	if (__predict_false(total_len > sc->mue_rxbufsz)) {
-		DPRINTF(sc, "too large transfer\n");
-		goto done;
-	}
+	KASSERTMSG(total_len <= sc->mue_rxbufsz, "%d <= %u",
+	    total_len, sc->mue_rxbufsz);
 
 	do {
 		if (__predict_false(total_len < sizeof(*hdrp))) {
