@@ -1,4 +1,4 @@
-.\"    $NetBSD: npf.conf.5,v 1.68 2018/08/31 11:01:09 maxv Exp $
+.\"    $NetBSD: npf.conf.5,v 1.69 2018/08/31 11:11:21 maxv Exp $
 .\"
 .\" Copyright (c) 2009-2017 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -450,8 +450,7 @@ proto-opts	= "flags" tcp-flags [ "/" tcp-flag-mask ] |
 
 addr-mask	= addr [ "/" mask ]
 filt-opts	= "from" filt-addr [ port-opts ] "to" filt-addr [ port-opts ]
-filt-addr	= [ "!" ] [ interface | var-name |
-                  addr-mask | table-id | "any" ]
+filt-addr	= [ "!" ] [ interface | addr-mask | table-id | "any" ]
 
 port-opts	= "port" ( port-num | port-from "-" port-to | var-name )
 .Ed
