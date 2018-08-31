@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_inet.c,v 1.50 2018/04/08 05:51:45 maxv Exp $	*/
+/*	$NetBSD: npf_inet.c,v 1.51 2018/08/31 14:16:06 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2009-2014 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_inet.c,v 1.50 2018/04/08 05:51:45 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_inet.c,v 1.51 2018/08/31 14:16:06 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -230,7 +230,6 @@ npf_fetch_tcpopts(npf_cache_t *npc, uint16_t *mss, int *wscale)
 	nbuf_t *nbuf = npc->npc_nbuf;
 	const struct tcphdr *th = npc->npc_l4.tcp;
 	int cnt, optlen = 0;
-	bool setmss = false;
 	uint8_t *cp, opt;
 	uint8_t val;
 	bool ok;
@@ -245,11 +244,6 @@ npf_fetch_tcpopts(npf_cache_t *npc, uint16_t *mss, int *wscale)
 		return false;
 	}
 	KASSERT(cnt <= MAX_TCPOPTLEN);
-
-	/* Determine if we want to set or get the mss. */
-	if (mss) {
-		setmss = (*mss != 0);
-	}
 
 	/* Fetch all the options at once. */
 	nbuf_reset(nbuf);
@@ -279,11 +273,7 @@ npf_fetch_tcpopts(npf_cache_t *npc, uint16_t *mss, int *wscale)
 			if (optlen != TCPOLEN_MAXSEG)
 				continue;
 			if (mss) {
-				if (setmss) {
-					memcpy(cp + 2, mss, sizeof(uint16_t));
-				} else {
-					memcpy(mss, cp + 2, sizeof(uint16_t));
-				}
+				memcpy(mss, cp + 2, sizeof(uint16_t));
 			}
 			break;
 		case TCPOPT_WINDOW:
@@ -291,6 +281,82 @@ npf_fetch_tcpopts(npf_cache_t *npc, uint16_t *mss, int *wscale)
 				continue;
 			val = *(cp + 2);
 			*wscale = (val > TCP_MAX_WINSHIFT) ? TCP_MAX_WINSHIFT : val;
+			break;
+		default:
+			break;
+		}
+	}
+
+	ok = true;
+done:
+	if (nbuf_flag_p(nbuf, NBUF_DATAREF_RESET)) {
+		npf_recache(npc);
+	}
+	return ok;
+}
+
+/*
+ * npf_set_mss: set the MSS.
+ */
+bool
+npf_set_mss(npf_cache_t *npc, uint16_t mss, uint16_t *old, uint16_t *new,
+    bool *mid)
+{
+	nbuf_t *nbuf = npc->npc_nbuf;
+	const struct tcphdr *th = npc->npc_l4.tcp;
+	int cnt, optlen = 0;
+	uint8_t *cp, *base, opt;
+	bool ok;
+
+	KASSERT(npf_iscached(npc, NPC_IP46));
+	KASSERT(npf_iscached(npc, NPC_TCP));
+
+	/* Determine if there are any TCP options, get their length. */
+	cnt = (th->th_off << 2) - sizeof(struct tcphdr);
+	if (cnt <= 0) {
+		/* No options. */
+		return false;
+	}
+	KASSERT(cnt <= MAX_TCPOPTLEN);
+
+	/* Fetch all the options at once. */
+	nbuf_reset(nbuf);
+	const int step = npc->npc_hlen + sizeof(struct tcphdr);
+	if ((base = nbuf_advance(nbuf, step, cnt)) == NULL) {
+		ok = false;
+		goto done;
+	}
+
+	/* Scan the options. */
+	for (cp = base; cnt > 0; cnt -= optlen, cp += optlen) {
+		opt = cp[0];
+		if (opt == TCPOPT_EOL)
+			break;
+		if (opt == TCPOPT_NOP)
+			optlen = 1;
+		else {
+			if (cnt < 2)
+				break;
+			optlen = cp[1];
+			if (optlen < 2 || optlen > cnt)
+				break;
+		}
+
+		switch (opt) {
+		case TCPOPT_MAXSEG:
+			if (optlen != TCPOLEN_MAXSEG)
+				continue;
+			if (((cp + 2) - base) % sizeof(uint16_t) != 0) {
+				*mid = true;
+				memcpy(&old[0], cp + 1, sizeof(uint16_t));
+				memcpy(&old[1], cp + 3, sizeof(uint16_t));
+				memcpy(cp + 2, &mss, sizeof(uint16_t));
+				memcpy(&new[0], cp + 1, sizeof(uint16_t));
+				memcpy(&new[1], cp + 3, sizeof(uint16_t));
+			} else {
+				*mid = false;
+				memcpy(cp + 2, &mss, sizeof(uint16_t));
+			}
 			break;
 		default:
 			break;

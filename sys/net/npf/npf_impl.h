@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_impl.h,v 1.70 2017/12/10 01:18:21 rmind Exp $	*/
+/*	$NetBSD: npf_impl.h,v 1.71 2018/08/31 14:16:06 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2009-2014 The NetBSD Foundation, Inc.
@@ -283,6 +283,8 @@ void		npf_addr_mask(const npf_addr_t *, const npf_netmask_t,
 int		npf_tcpsaw(const npf_cache_t *, tcp_seq *, tcp_seq *,
 		    uint32_t *);
 bool		npf_fetch_tcpopts(npf_cache_t *, uint16_t *, int *);
+bool		npf_set_mss(npf_cache_t *, uint16_t, uint16_t *, uint16_t *,
+		    bool *);
 bool		npf_return_block(npf_cache_t *, const int);
 
 /* BPF interface. */
