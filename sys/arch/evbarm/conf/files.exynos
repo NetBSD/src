@@ -1,8 +1,0 @@
-#	$NetBSD: files.exynos,v 1.4 2018/08/17 14:47:21 skrll Exp $
-#
-# EXYNOS board configuration info
-#
-
-include	"arch/arm/samsung/files.exynos"
-
-include	"arch/evbarm/conf/files.fdt"

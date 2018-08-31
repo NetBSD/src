@@ -1,4 +1,4 @@
-/* $NetBSD: siisata.c,v 1.35 2017/10/20 07:06:07 jdolecek Exp $ */
+/* $NetBSD: siisata.c,v 1.35.6.1 2018/08/31 19:08:03 jdolecek Exp $ */
 
 /* from ahcisata_core.c */
 
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siisata.c,v 1.35 2017/10/20 07:06:07 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siisata.c,v 1.35.6.1 2018/08/31 19:08:03 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1005,16 +1005,7 @@ siisata_exec_command(struct ata_drive_datas *drvp, struct ata_xfer *xfer)
 		ret = ATACMD_COMPLETE;
 	} else {
 		if (ata_c->flags & AT_WAIT) {
-			ata_channel_lock(chp);
-			if ((ata_c->flags & AT_DONE) == 0) {
-				SIISATA_DEBUG_PRINT(("%s: %s: sleeping\n",
-				    SIISATANAME(
-				    (struct siisata_softc *)chp->ch_atac),
-				    __func__), DEBUG_FUNCS);
-				ata_wait_xfer(chp, xfer);
-				KASSERT((ata_c->flags & AT_DONE) != 0);
-			}
-			ata_channel_unlock(chp);
+			ata_wait_cmd(chp, xfer);
 			ret = ATACMD_COMPLETE;
 		} else {
 			ret = ATACMD_QUEUED;
@@ -1071,8 +1062,8 @@ siisata_cmd_start(struct ata_channel *chp, struct ata_xfer *xfer)
 	siisata_activate_prb(schp, xfer->c_slot);
 
 	if ((ata_c->flags & AT_POLL) == 0) {
-		callout_reset(&xfer->c_timo_callout, mstohz(ata_c->timeout),
-		    ata_timeout, xfer);
+		callout_reset(&chp->c_timo_callout, mstohz(ata_c->timeout),
+		    ata_timeout, chp);
 		return ATASTART_STARTED;
 	} else
 		return ATASTART_POLL;
@@ -1137,12 +1128,12 @@ siisata_cmd_kill_xfer(struct ata_channel *chp, struct ata_xfer *xfer,
 		   __func__, chp->ch_channel, reason);
 	}
 
+	siisata_cmd_done_end(chp, xfer);
+
 	if (deactivate) {
 		siisata_deactivate_prb(schp, xfer->c_slot);
 		ata_deactivate_xfer(chp, xfer);
 	}
-	
-	siisata_cmd_done_end(chp, xfer);
 }
 
 int
@@ -1164,7 +1155,6 @@ siisata_cmd_complete(struct ata_channel *chp, struct ata_xfer *xfer, int tfd)
 		return 0;
 
 	siisata_deactivate_prb(schp, xfer->c_slot);
-	ata_deactivate_xfer(chp, xfer);
 
 	if (xfer->c_flags & C_TIMEOU)
 		ata_c->flags |= AT_TIMEOU;
@@ -1177,6 +1167,8 @@ siisata_cmd_complete(struct ata_channel *chp, struct ata_xfer *xfer, int tfd)
 	}
 
 	siisata_cmd_done(chp, xfer, tfd);
+
+	ata_deactivate_xfer(chp, xfer);
 
 	return 0;
 }
@@ -1229,15 +1221,7 @@ siisata_cmd_done_end(struct ata_channel *chp, struct ata_xfer *xfer)
 {
 	struct ata_command *ata_c = &xfer->c_ata_c;
 
-	ata_channel_lock(chp);
-
 	ata_c->flags |= AT_DONE;
-
-	if (ata_c->flags & AT_WAIT)
-		ata_wake_xfer(chp, xfer);
-
-	ata_channel_unlock(chp);
-	return;
 }
 
 int
@@ -1303,8 +1287,8 @@ siisata_bio_start(struct ata_channel *chp, struct ata_xfer *xfer)
 	siisata_activate_prb(schp, xfer->c_slot);
 
 	if ((ata_bio->flags & ATA_POLL) == 0) {
-		callout_reset(&xfer->c_timo_callout, mstohz(ATA_DELAY),
-		    ata_timeout, xfer);
+		callout_reset(&chp->c_timo_callout, mstohz(ATA_DELAY),
+		    ata_timeout, chp);
 		return ATASTART_STARTED;
 	} else
 		return ATASTART_POLL;
@@ -1913,8 +1897,8 @@ siisata_atapi_start(struct ata_channel *chp, struct ata_xfer *xfer)
 	siisata_activate_prb(schp, xfer->c_slot);
 
 	if ((xfer->c_flags & C_POLL) == 0) {
-		callout_reset(&xfer->c_timo_callout, mstohz(sc_xfer->timeout),
-		    ata_timeout, xfer);
+		callout_reset(&chp->c_timo_callout, mstohz(sc_xfer->timeout),
+		    ata_timeout, chp);
 		return ATASTART_STARTED;
 	} else
 		return ATASTART_POLL;

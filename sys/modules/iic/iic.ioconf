@@ -1,8 +1,0 @@
-#	$NetBSD: iic.ioconf,v 1.2 2014/03/04 00:54:55 ozaki-r Exp $
-
-ioconf		iic
-
-include		"conf/files"
-
-pseudo-root	i2cbus*
-iic*		at i2cbus?

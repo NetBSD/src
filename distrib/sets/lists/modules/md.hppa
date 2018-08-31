@@ -1,8 +1,0 @@
-# $NetBSD: md.hppa,v 1.6 2016/12/15 12:56:52 kre Exp $
-
-./@MODULEDIR@/cac_eisa				base-obsolete		obsolete
-./@MODULEDIR@/cac_eisa/cac_eisa.kmod		base-obsolete		obsolete
-./@MODULEDIR@/exec_elf32			base-kernel-modules	kmod
-./@MODULEDIR@/exec_elf32/exec_elf32.kmod	base-kernel-modules	kmod
-./@MODULEDIR@/mlx_eisa				base-obsolete		obsolete
-./@MODULEDIR@/mlx_eisa/mlx_eisa.kmod		base-obsolete		obsolete

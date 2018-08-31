@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_wdc.c,v 1.110 2018/06/01 18:13:30 macallan Exp $	*/
+/*	$NetBSD: ata_wdc.c,v 1.110.4.1 2018/08/31 19:08:03 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata_wdc.c,v 1.110 2018/06/01 18:13:30 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata_wdc.c,v 1.110.4.1 2018/08/31 19:08:03 jdolecek Exp $");
 
 #include "opt_ata.h"
 #include "opt_wdc.h"
@@ -479,8 +479,8 @@ _wdc_ata_bio_start(struct ata_channel *chp, struct ata_xfer *xfer)
 			chp->ch_flags |= ATACH_DMA_WAIT;
 			/* start timeout machinery */
 			if ((xfer->c_flags & C_POLL) == 0)
-				callout_reset(&xfer->c_timo_callout,
-				    ATA_DELAY / 1000 * hz, wdctimeout, xfer);
+				callout_reset(&chp->c_timo_callout,
+				    ATA_DELAY / 1000 * hz, wdctimeout, chp);
 			/* wait for irq */
 			goto intr;
 		} /* else not DMA */
@@ -550,8 +550,8 @@ _wdc_ata_bio_start(struct ata_channel *chp, struct ata_xfer *xfer)
 		}
 		/* start timeout machinery */
 		if ((xfer->c_flags & C_POLL) == 0)
-			callout_reset(&xfer->c_timo_callout,
-			    ATA_DELAY / 1000 * hz, wdctimeout, xfer);
+			callout_reset(&chp->c_timo_callout,
+			    ATA_DELAY / 1000 * hz, wdctimeout, chp);
 	} else if (ata_bio->nblks > 1) {
 		/* The number of blocks in the last stretch may be smaller. */
 		nblks = xfer->c_bcount / drvp->lp->d_secsize;

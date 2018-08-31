@@ -1,6 +1,0 @@
-# $NetBSD: files.bsd44,v 1.4 2011/12/04 19:25:00 jym Exp $
-
-defflag secmodel_bsd44_logic
-defflag secmodel_bsd44 : secmodel_bsd44_logic, secmodel_suser, secmodel_securelevel, secmodel_extensions
-
-file	secmodel/bsd44/secmodel_bsd44.c			secmodel_bsd44

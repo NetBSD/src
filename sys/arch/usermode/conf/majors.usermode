@@ -1,2 +1,0 @@
-# $NetBSD: majors.usermode,v 1.5 2011/12/20 21:01:39 jmcneill Exp $
-device-major	ttycons		char 159		ttycons

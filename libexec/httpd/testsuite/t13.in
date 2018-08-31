@@ -1,2 +1,0 @@
-get /update:all HTTP/1.1
-Host:

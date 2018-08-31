@@ -1,4 +1,4 @@
-/*	$NetBSD: ata.c,v 1.141 2017/10/28 04:53:54 riastradh Exp $	*/
+/*	$NetBSD: ata.c,v 1.141.6.1 2018/08/31 19:08:03 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.141 2017/10/28 04:53:54 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.141.6.1 2018/08/31 19:08:03 jdolecek Exp $");
 
 #include "opt_ata.h"
 
@@ -1075,19 +1075,19 @@ ata_exec_xfer(struct ata_channel *chp, struct ata_xfer *xfer)
 		while (chp->ch_queue->queue_active > 0 ||
 		    TAILQ_FIRST(&chp->ch_queue->queue_xfer) != xfer) {
 			xfer->c_flags |= C_WAITACT;
-			cv_wait(&xfer->c_active, &chp->ch_lock);
+			cv_wait(&chp->ch_queue->c_active, &chp->ch_lock);
 			xfer->c_flags &= ~C_WAITACT;
+		}
 
-			/*
-			 * Free xfer now if it there was attempt to free it
-			 * while we were waiting.
-			 */
-			if ((xfer->c_flags & (C_FREE|C_WAITTIMO)) == C_FREE) {
-				ata_channel_unlock(chp);
+		/*
+		 * Free xfer now if it there was attempt to free it
+		 * while we were waiting.
+		 */
+		if ((xfer->c_flags & (C_FREE|C_WAITTIMO)) == C_FREE) {
+			ata_channel_unlock(chp);
 
-				ata_free_xfer(chp, xfer);
-				return;
-			}
+			ata_free_xfer(chp, xfer);
+			return;
 		}
 	}
 
@@ -1187,7 +1187,7 @@ again:
 		ATADEBUG_PRINT(("atastart: xfer %p channel %d drive %d "
 		    "wait active\n", xfer, chp->ch_channel, xfer->c_drive),
 		    DEBUG_XFERS);
-		cv_signal(&xfer->c_active);
+		cv_broadcast(&chp->ch_queue->c_active);
 		goto out;
 	}
 
@@ -1300,14 +1300,19 @@ ata_deactivate_xfer(struct ata_channel *chp, struct ata_xfer *xfer)
 	KASSERT(chq->queue_active > 0);
 	KASSERT((chq->active_xfers_used & __BIT(xfer->c_slot)) != 0);
 
-	callout_stop(&xfer->c_timo_callout);
+	/* Stop only when this is last active xfer */
+	if (chq->queue_active == 1)
+		callout_stop(&chp->c_timo_callout);
 
-	if (callout_invoking(&xfer->c_timo_callout))
+	if (callout_invoking(&chp->c_timo_callout))
 		xfer->c_flags |= C_WAITTIMO;
 
 	TAILQ_REMOVE(&chq->active_xfers, xfer, c_activechain);
 	chq->active_xfers_used &= ~__BIT(xfer->c_slot);
 	chq->queue_active--;
+
+	if (xfer->c_flags & C_WAIT)
+		cv_broadcast(&chq->c_cmd_finish);
 
 	ata_channel_unlock(chp);
 }
@@ -1356,8 +1361,6 @@ ata_timo_xfer_check(struct ata_xfer *xfer)
 
 	ata_channel_lock(chp);
 
-	callout_ack(&xfer->c_timo_callout);
-
 	if (xfer->c_flags & C_WAITTIMO) {
 		xfer->c_flags &= ~C_WAITTIMO;
 
@@ -1387,30 +1390,6 @@ ata_timo_xfer_check(struct ata_xfer *xfer)
 
 	/* No race, proceed with timeout handling */
 	return false;
-}
-
-void
-ata_timeout(void *v)
-{
-	struct ata_xfer *xfer = v;
-	int s;
-
-	ATADEBUG_PRINT(("%s: slot %d\n", __func__, xfer->c_slot),
-	    DEBUG_FUNCS|DEBUG_XFERS);
-
-	s = splbio();				/* XXX MPSAFE */
-
-	if (ata_timo_xfer_check(xfer)) {
-		/* Already logged */
-		goto out;
-	}
-
-	/* Mark as timed out. Do not print anything, wd(4) will. */
-	xfer->c_flags |= C_TIMEOU;
-	xfer->c_intr(xfer->c_chp, xfer, 0);
-
-out:
-	splx(s);
 }
 
 /*
@@ -2304,17 +2283,17 @@ atacmd_toncq(struct ata_xfer *xfer, uint8_t *cmd, uint16_t *count,
 }
 
 void
-ata_wait_xfer(struct ata_channel *chp, struct ata_xfer *xfer)
+ata_wait_cmd(struct ata_channel *chp, struct ata_xfer *xfer)
 {
-	KASSERT(mutex_owned(&chp->ch_lock));
+	struct ata_queue *chq = chp->ch_queue;
+	struct ata_command *ata_c = &xfer->c_ata_c;
 
-	cv_wait(&xfer->c_finish, &chp->ch_lock);
-}
+	ata_channel_lock(chp);
 
-void
-ata_wake_xfer(struct ata_channel *chp, struct ata_xfer *xfer)
-{
-	KASSERT(mutex_owned(&chp->ch_lock));
+	while ((ata_c->flags & AT_DONE) == 0)
+		cv_wait(&chq->c_cmd_finish, &chp->ch_lock);
 
-	cv_signal(&xfer->c_finish);
+	ata_channel_unlock(chp);
+
+	KASSERT((ata_c->flags & AT_DONE) != 0);
 }

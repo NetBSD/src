@@ -1,8 +1,0 @@
-# $NetBSD: files.sljit,v 1.2 2012/10/21 21:23:38 alnsn Exp $
-
-defflag		SLJIT
-
-makeoptions	sljit	CPPFLAGS+="-I$S/external/bsd/sljit/dist/sljit_src"
-
-file	external/bsd/sljit/sljit/sljit_mod.c		sljit
-file	external/bsd/sljit/dist/sljit_src/sljitLir.c	sljit

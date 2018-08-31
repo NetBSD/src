@@ -1,9 +1,0 @@
-#	$NetBSD: files.gemini,v 1.2 2018/03/19 17:11:24 ryo Exp $
-#
-# GEMINI evaluation board configuration info
-#
-
-file	arch/evbarm/gemini/gemini_machdep.c
-
-# CPU support and integrated peripherals
-include "arch/arm/gemini/files.gemini"

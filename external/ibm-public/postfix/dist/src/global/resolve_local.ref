@@ -1,6 +1,0 @@
-mydestination=example.com destination=example.com YES
-mydestination=example.net destination=example.com NO
-unknown: warning: mydestination: fail:1_resolve_local: table lookup problem
-mydestination=fail:1_resolve_local destination=example.com ERROR
-mydestination=fail:1_resolve_local destination=example.com.. NO
-mydestination=fail:1_resolve_local destination= NO

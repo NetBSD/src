@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.288 2017/10/20 07:06:07 jdolecek Exp $ */
+/*	$NetBSD: wdc.c,v 1.288.6.1 2018/08/31 19:08:03 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.288 2017/10/20 07:06:07 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.288.6.1 2018/08/31 19:08:03 jdolecek Exp $");
 
 #include "opt_ata.h"
 #include "opt_wdc.h"
@@ -1324,8 +1324,8 @@ wdc_dmawait(struct ata_channel *chp, struct ata_xfer *xfer, int timeout)
 void
 wdctimeout(void *arg)
 {
-	struct ata_xfer *xfer = arg;
-	struct ata_channel *chp = xfer->c_chp;
+	struct ata_xfer *xfer;
+	struct ata_channel *chp = arg;
 #if NATA_DMA || NATA_PIOBM
 	struct wdc_softc *wdc = CHAN_TO_WDC(chp);
 #endif
@@ -1334,6 +1334,10 @@ wdctimeout(void *arg)
 	ATADEBUG_PRINT(("wdctimeout\n"), DEBUG_FUNCS);
 
 	s = splbio();
+
+	callout_ack(&chp->c_timo_callout);
+
+	xfer = ata_queue_get_active_xfer(chp);
 	KASSERT(xfer != NULL);
 
 	if (ata_timo_xfer_check(xfer)) {
@@ -1361,7 +1365,7 @@ wdctimeout(void *arg)
 	 * in case it will miss another irq while in this transfer
 	 * We arbitray chose it to be 1s
 	 */
-	callout_reset(&xfer->c_timo_callout, hz, wdctimeout, xfer);
+	callout_reset(&chp->c_timo_callout, hz, wdctimeout, chp);
 	xfer->c_flags |= C_TIMEOU;
 	KASSERT(xfer->c_intr != NULL);
 	xfer->c_intr(chp, xfer, 1);
@@ -1408,12 +1412,7 @@ wdc_exec_command(struct ata_drive_datas *drvp, struct ata_xfer *xfer)
 		ret = ATACMD_COMPLETE;
 	} else {
 		if (ata_c->flags & AT_WAIT) {
-			ata_channel_lock(chp);
-			if ((ata_c->flags & AT_DONE) == 0) {
-				ata_wait_xfer(chp, xfer);
-				KASSERT((ata_c->flags & AT_DONE) != 0);
-			}
-			ata_channel_unlock(chp);
+			ata_wait_cmd(chp, xfer);
 			ret = ATACMD_COMPLETE;
 		} else {
 			ret = ATACMD_QUEUED;
@@ -1474,8 +1473,8 @@ __wdccommand_start(struct ata_channel *chp, struct ata_xfer *xfer)
 
 	if ((ata_c->flags & AT_POLL) == 0) {
 		chp->ch_flags |= ATACH_IRQ_WAIT; /* wait for interrupt */
-		callout_reset(&xfer->c_timo_callout, ata_c->timeout / 1000 * hz,
-		    wdctimeout, xfer);
+		callout_reset(&chp->c_timo_callout, ata_c->timeout / 1000 * hz,
+		    wdctimeout, chp);
 		return ATASTART_STARTED;
 	}
 
@@ -1597,8 +1596,8 @@ again:
 		ata_c->flags |= AT_XFDONE;
 		if ((ata_c->flags & AT_POLL) == 0) {
 			chp->ch_flags |= ATACH_IRQ_WAIT; /* wait for interrupt */
-			callout_reset(&xfer->c_timo_callout,
-			    mstohz(ata_c->timeout), wdctimeout, xfer);
+			callout_reset(&chp->c_timo_callout,
+			    mstohz(ata_c->timeout), wdctimeout, chp);
 			ata_channel_unlock(chp);
 			return 1;
 		} else {
@@ -1691,9 +1690,9 @@ __wdccommand_done(struct ata_channel *chp, struct ata_xfer *xfer)
 		ata_c->r_device &= 0xf0;
 	}
 
-	ata_deactivate_xfer(chp, xfer);
-
 	__wdccommand_done_end(chp, xfer);
+
+	ata_deactivate_xfer(chp, xfer);
 
 out:
 	if (ata_c->flags & AT_POLL) {
@@ -1713,11 +1712,7 @@ __wdccommand_done_end(struct ata_channel *chp, struct ata_xfer *xfer)
 {
 	struct ata_command *ata_c = &xfer->c_ata_c;
 
-	ata_channel_lock(chp);
 	ata_c->flags |= AT_DONE;
-	if (ata_c->flags & AT_WAIT)
-		ata_wake_xfer(chp, xfer);
-	ata_channel_unlock(chp);
 }
 
 static void
@@ -1743,10 +1738,10 @@ __wdccommand_kill_xfer(struct ata_channel *chp, struct ata_xfer *xfer,
 		panic("__wdccommand_kill_xfer");
 	}
 
+	__wdccommand_done_end(chp, xfer);
+
 	if (deactivate)
 		ata_deactivate_xfer(chp, xfer);
-
-	__wdccommand_done_end(chp, xfer);
 }
 
 /*

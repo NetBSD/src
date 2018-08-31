@@ -1,7 +1,0 @@
-$NetBSD: version,v 1.1 2006/09/01 21:26:18 uwe Exp $
-
-NOTE ANY CHANGES YOU MAKE TO THE BOOTBLOCKS HERE.  The format of this
-file is important - make sure the entries are appended on end, last item
-is taken as the current.
-
-1.0:	Initial version.

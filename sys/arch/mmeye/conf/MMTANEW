@@ -1,7 +1,0 @@
-#	$NetBSD: MMTANEW,v 1.20 2018/06/23 01:23:27 maya Exp $
-#
-
-include "arch/mmeye/conf/MMTA"
-
-options 	MMEYE_NEW_INT=0xb000000e
-#options 	MMEYE_NO_CACHE

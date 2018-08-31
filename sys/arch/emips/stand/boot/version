@@ -1,7 +1,0 @@
-$NetBSD: version,v 1.1 2011/01/26 01:18:53 pooka Exp $
-
-NOTE ANY CHANGES YOU MAKE TO THE BOOTBLOCKS HERE.  The format of this
-file is important - make sure the entries are appended on end, last item
-is taken as the current.
-
-1.0:	Initial FLASH based booter for eMIPS

@@ -1,6 +1,0 @@
-# $NetBSD: ad.arm.shl,v 1.8 2018/07/12 06:52:49 maxv Exp $
-./usr/lib/libarm32_pic.a			comp-obsolete		obsolete
-./usr/lib/libarm_pic.a				comp-c-piclib		picinstall,compatfile
-./usr/lib/libc_vfp_pic.a			comp-c-piclib		softfloat,picinstall
-./usr/lib/libpmc_pic.a				comp-obsolete		obsolete
-./usr/lib/oabi/libc_vfp_pic.a			comp-c-piclib		picinstall,compat

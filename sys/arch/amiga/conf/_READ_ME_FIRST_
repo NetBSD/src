@@ -1,9 +1,0 @@
-For those who don't read the start of the file they are changing...
-
-Do NOT change DRACO, GENERIC, INSTALL!
-Edit GENERIC.in instead, then "make all"!
-
-Sun Aug 19 19:16:29 CEST 2007
-
-	-is
-
