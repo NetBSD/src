@@ -9,6 +9,7 @@ struct nouveau_fence {
 	struct kref kref;
 
 	bool sysmem;
+	bool done;
 
 	struct nouveau_channel *channel;
 	unsigned long timeout;
@@ -27,9 +28,15 @@ void nouveau_fence_work(struct nouveau_fence *, void (*)(void *), void *);
 int  nouveau_fence_wait(struct nouveau_fence *, bool lazy, bool intr);
 int  nouveau_fence_sync(struct nouveau_fence *, struct nouveau_channel *);
 
+/*
+ * struct nouveau_fence_chan:
+ *
+ *	State common to all fences in a single nouveau_channel.
+ */
 struct nouveau_fence_chan {
 	struct list_head pending;
 	struct list_head flip;
+	struct list_head done;
 
 	int  (*emit)(struct nouveau_fence *);
 	int  (*sync)(struct nouveau_fence *, struct nouveau_channel *,
@@ -39,9 +46,16 @@ struct nouveau_fence_chan {
 	int  (*sync32)(struct nouveau_channel *, u64, u32);
 
 	spinlock_t lock;
+	drm_waitqueue_t waitqueue;
+	volatile unsigned refcnt;
 	u32 sequence;
 };
 
+/*
+ * struct nouveau_fence_priv:
+ *
+ *	Device-specific operations on fences.
+ */
 struct nouveau_fence_priv {
 	void (*dtor)(struct nouveau_drm *);
 	bool (*suspend)(struct nouveau_drm *);
@@ -49,12 +63,6 @@ struct nouveau_fence_priv {
 	int  (*context_new)(struct nouveau_channel *);
 	void (*context_del)(struct nouveau_channel *);
 
-#ifdef __NetBSD__
-	spinlock_t waitlock;
-	drm_waitqueue_t waitqueue;
-#else
-	wait_queue_head_t waiting;
-#endif
 	bool uevent;
 };
 
