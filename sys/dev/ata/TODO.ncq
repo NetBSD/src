@@ -1,5 +1,5 @@
 jdolecek-ncqfixes goals:
-- make ata_xfer dynamically allocated per-drive using a pool
+- make ata_xfer dynamically allocated using a pool
   - fixes: queue is allocated regardless if there are any drives, fix? 
 - remove limit of queued ata_xfers, allow any number of pending xfers;
   this should fix kern/52614 AKA wdc-attached ATAPI cd(4)
