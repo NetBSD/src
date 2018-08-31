@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsata.c,v 1.40 2018/04/08 11:57:43 mlelstv Exp $	*/
+/*	$NetBSD: mvsata.c,v 1.41 2018/08/31 18:43:29 jdolecek Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.40 2018/04/08 11:57:43 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.41 2018/08/31 18:43:29 jdolecek Exp $");
 
 #include "opt_mvsata.h"
 
@@ -255,7 +255,7 @@ mvsata_pmp_select(struct mvsata_port *mvport, int pmpport)
 }
 
 int
-mvsata_attach(struct mvsata_softc *sc, struct mvsata_product *product,
+mvsata_attach(struct mvsata_softc *sc, const struct mvsata_product *product,
 	      int (*mvsata_sreset)(struct mvsata_softc *),
 	      int (*mvsata_misc_reset)(struct mvsata_softc *),
 	      int read_pre_amps)
