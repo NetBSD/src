@@ -1,4 +1,4 @@
-.\" $NetBSD: cgd.4,v 1.21 2016/12/12 10:13:00 wiz Exp $
+.\" $NetBSD: cgd.4,v 1.22 2018/08/31 18:20:10 sevan Exp $
 .\"
 .\" Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd December 11, 2016
+.Dd August 31, 2018
 .Dt CGD 4
 .Os
 .Sh NAME
@@ -189,8 +189,8 @@ possible to change every second block on a disk encrypted in the
 .Tn CBC
 mode to plaintext blocks of their choice.
 The
-.Tn
-XTS mode isn't vulnerable to this particular attack but a lack of
+.Tn XTS
+mode isn't vulnerable to this particular attack but a lack of
 integrity should be taken into account when evaluating security risks.
 .Sh FILES
 .Bl -tag -width indentxxxxxxxxxxx
