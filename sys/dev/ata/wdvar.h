@@ -1,4 +1,4 @@
-/*	$NetBSD: wdvar.h,v 1.46 2017/11/03 13:01:26 mlelstv Exp $	*/
+/*	$NetBSD: wdvar.h,v 1.46.6.1 2018/08/31 19:08:03 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -64,6 +64,13 @@ struct wd_softc {
 	SLIST_HEAD(, disk_badsectors)	sc_bslist;
 	u_int sc_bscount;
 #endif
+
+	/* Retry/requeue failed transfers */
+	SLIST_HEAD(, ata_xfer) sc_retry_list;
+	struct callout sc_retry_callout;	/* retry callout handle */
+
+	SLIST_HEAD(, ata_xfer) sc_requeue_list;
+	struct callout sc_requeue_callout;	/* requeue callout handle */
 
 	/* Sysctl nodes specific for the disk */
 	struct sysctllog *nodelog;

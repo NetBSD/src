@@ -1,6 +1,0 @@
-
-ioconf		pppoe
-
-include		"conf/files"
-
-pseudo-device	pppoe

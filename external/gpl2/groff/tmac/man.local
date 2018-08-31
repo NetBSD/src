@@ -1,4 +1,0 @@
-.\" $NetBSD: man.local,v 1.1 2016/01/13 19:02:01 christos Exp $
-.ds Lt <
-.ds Gt >
-.ds Am \&&

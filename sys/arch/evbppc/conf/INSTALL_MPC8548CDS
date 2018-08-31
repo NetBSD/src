@@ -1,9 +1,0 @@
-# 	$NetBSD: INSTALL_MPC8548CDS,v 1.1 2011/06/08 05:03:43 matt Exp $
-
-include "arch/evbppc/conf/MPC8548CDS"
-
-#ident 		"INSTALL_MPC8548CDS-$Revision: 1.1 $"
-
-include "arch/evbppc/conf/INSTALL.inc"
-
-no config nfsnetbsd

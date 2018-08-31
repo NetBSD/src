@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_wdc.c,v 1.129 2017/10/17 18:52:51 jdolecek Exp $	*/
+/*	$NetBSD: atapi_wdc.c,v 1.129.6.1 2018/08/31 19:08:03 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.129 2017/10/17 18:52:51 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.129.6.1 2018/08/31 19:08:03 jdolecek Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -595,8 +595,8 @@ ready:
 	}
 	/* start timeout machinery */
 	if ((sc_xfer->xs_control & XS_CTL_POLL) == 0)
-		callout_reset(&xfer->c_timo_callout, mstohz(sc_xfer->timeout),
-		    wdctimeout, xfer);
+		callout_reset(&chp->c_timo_callout, mstohz(sc_xfer->timeout),
+		    wdctimeout, chp);
 
 	if (wdc->select)
 		wdc->select(chp, xfer->c_drive);
@@ -1087,8 +1087,8 @@ wdc_atapi_phase_complete(struct ata_xfer *xfer)
 				sc_xfer->error = XS_TIMEOUT;
 				wdc_atapi_reset(chp, xfer);
 			} else {
-				callout_reset(&xfer->c_timo_callout, 1,
-				    wdc_atapi_polldsc, xfer);
+				callout_reset(&chp->c_timo_callout, 1,
+				    wdc_atapi_polldsc, chp);
 				ata_channel_unlock(chp);
 			}
 			return;
@@ -1192,8 +1192,10 @@ wdc_atapi_reset(struct ata_channel *chp, struct ata_xfer *xfer)
 static void
 wdc_atapi_polldsc(void *arg)
 {
-	struct ata_xfer *xfer = arg;
-	struct ata_channel *chp = xfer->c_chp;
+	struct ata_channel *chp = arg;
+	struct ata_xfer *xfer = ata_queue_get_active_xfer(chp);
+
+	KASSERT(xfer != NULL);
 
 	ata_channel_lock(chp);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsata.c,v 1.41 2018/08/31 18:43:29 jdolecek Exp $	*/
+/*	$NetBSD: mvsata.c,v 1.41.2.1 2018/08/31 19:08:03 jdolecek Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.41 2018/08/31 18:43:29 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.41.2.1 2018/08/31 19:08:03 jdolecek Exp $");
 
 #include "opt_mvsata.h"
 
@@ -159,7 +159,6 @@ static void mvsata_atapi_polldsc(void *);
 static int mvsata_edma_enqueue(struct mvsata_port *, struct ata_xfer *);
 static int mvsata_edma_handle(struct mvsata_port *, struct ata_xfer *);
 static int mvsata_edma_wait(struct mvsata_port *, struct ata_xfer *, int);
-static void mvsata_edma_timeout(void *);
 static void mvsata_edma_rqq_remove(struct mvsata_port *, struct ata_xfer *);
 #if NATAPIBUS > 0
 static int mvsata_bdma_init(struct mvsata_port *, struct ata_xfer *);
@@ -1214,9 +1213,8 @@ mvsata_bio_start(struct ata_channel *chp, struct ata_xfer *xfer)
 			chp->ch_flags |= ATACH_DMA_WAIT;
 			/* start timeout machinery */
 			if ((xfer->c_flags & C_POLL) == 0)
-				callout_reset(&xfer->c_timo_callout,
-				    mstohz(ATA_DELAY),
-				    mvsata_edma_timeout, xfer);
+				callout_reset(&chp->c_timo_callout,
+				    mstohz(ATA_DELAY), ata_timeout, chp);
 			/* wait for irq */
 			goto intr;
 		} /* else not DMA */
@@ -1300,8 +1298,8 @@ do_pio:
 
 		/* start timeout machinery */
 		if ((xfer->c_flags & C_POLL) == 0)
-			callout_reset(&xfer->c_timo_callout,
-			    mstohz(ATA_DELAY), wdctimeout, xfer);
+			callout_reset(&chp->c_timo_callout,
+			    mstohz(ATA_DELAY), wdctimeout, chp);
 	} else if (ata_bio->nblks > 1) {
 		/* The number of blocks in the last stretch may be smaller. */
 		nblks = xfer->c_bcount / drvp->lp->d_secsize;
@@ -1381,6 +1379,11 @@ mvsata_bio_intr(struct ata_channel *chp, struct ata_xfer *xfer, int irq)
 	DPRINTF(DEBUG_FUNCS|DEBUG_XFERS, ("%s:%d: %s: drive=%d\n",
 	    device_xname(atac->atac_dev), chp->ch_channel, __func__,
 	    xfer->c_drive));
+
+	if (xfer->c_flags & C_TIMEOU && !irq) {
+		/* Cleanup EDMA if invoked from timeout handler */
+		mvsata_edma_rqq_remove((struct mvsata_port *)chp, xfer);
+	}
 
 	ata_channel_lock(chp);
 
@@ -1712,12 +1715,7 @@ mvsata_exec_command(struct ata_drive_datas *drvp, struct ata_xfer *xfer)
 		rv = ATACMD_COMPLETE;
 	else {
 		if (ata_c->flags & AT_WAIT) {
-			ata_channel_lock(chp);
-			if ((ata_c->flags & AT_DONE) == 0) {
-				ata_wait_xfer(chp, xfer);
-				KASSERT((ata_c->flags & AT_DONE) != 0);
-			}
-			ata_channel_unlock(chp);
+			ata_wait_cmd(chp, xfer);
 			rv = ATACMD_COMPLETE;
 		} else
 			rv = ATACMD_QUEUED;
@@ -1779,8 +1777,8 @@ mvsata_wdc_cmd_start(struct ata_channel *chp, struct ata_xfer *xfer)
 	}
 
 	if ((ata_c->flags & AT_POLL) == 0) {
-		callout_reset(&xfer->c_timo_callout, ata_c->timeout / 1000 * hz,
-		    wdctimeout, xfer);
+		callout_reset(&chp->c_timo_callout, ata_c->timeout / 1000 * hz,
+		    wdctimeout, chp);
 		return ATASTART_STARTED;
 	}
 
@@ -1895,8 +1893,8 @@ again:
 		wdc->dataout_pio(chp, drive_flags, data, bcount);
 		ata_c->flags |= AT_XFDONE;
 		if ((ata_c->flags & AT_POLL) == 0) {
-			callout_reset(&xfer->c_timo_callout,
-			    mstohz(ata_c->timeout), wdctimeout, xfer);
+			callout_reset(&chp->c_timo_callout,
+			    mstohz(ata_c->timeout), wdctimeout, chp);
 			ata_channel_unlock(chp);
 			return 1;
 		} else
@@ -1949,12 +1947,12 @@ mvsata_wdc_cmd_kill_xfer(struct ata_channel *chp, struct ata_xfer *xfer,
 		panic("mvsata_cmd_kill_xfer");
 	}
 
+	mvsata_wdc_cmd_done_end(chp, xfer);
+
 	if (deactivate) {
 		mvsata_quetag_put(mvport, xfer->c_slot);
 		ata_deactivate_xfer(chp, xfer);
 	}
-
-	mvsata_wdc_cmd_done_end(chp, xfer);
 }
 
 static void
@@ -2015,7 +2013,6 @@ mvsata_wdc_cmd_done(struct ata_channel *chp, struct ata_xfer *xfer)
 	}
 
 	mvsata_quetag_put(mvport, xfer->c_slot);
-	ata_deactivate_xfer(chp, xfer);
 
 	if (ata_c->flags & AT_POLL) {
 		/* enable interrupts */
@@ -2024,6 +2021,8 @@ mvsata_wdc_cmd_done(struct ata_channel *chp, struct ata_xfer *xfer)
 	}
 
 	mvsata_wdc_cmd_done_end(chp, xfer);
+
+	ata_deactivate_xfer(chp, xfer);
 }
 
 static void
@@ -2038,11 +2037,7 @@ mvsata_wdc_cmd_done_end(struct ata_channel *chp, struct ata_xfer *xfer)
 		mvsata_edma_enable(mvport);
 	}
 
-	ata_channel_lock(chp);
 	ata_c->flags |= AT_DONE;
-	if (ata_c->flags & AT_WAIT)
-		ata_wake_xfer(chp, xfer);
-	ata_channel_unlock(chp);
 }
 
 #if NATAPIBUS > 0
@@ -2224,8 +2219,8 @@ ready:
 	}
 	/* start timeout machinery */
 	if ((sc_xfer->xs_control & XS_CTL_POLL) == 0)
-		callout_reset(&xfer->c_timo_callout, mstohz(sc_xfer->timeout),
-		    wdctimeout, xfer);
+		callout_reset(&chp->c_timo_callout, mstohz(sc_xfer->timeout),
+		    wdctimeout, chp);
 
 	MVSATA_WDC_WRITE_1(mvport, SRB_H, WDSD_IBM);
 	if (wdc_wait_for_unbusy(chp, ATAPI_DELAY, wait_flags, &tfd) != 0) {
@@ -2633,8 +2628,8 @@ mvsata_atapi_phase_complete(struct ata_xfer *xfer)
 				sc_xfer->error = XS_TIMEOUT;
 				mvsata_atapi_reset(chp, xfer);
 			} else {
-				callout_reset(&xfer->c_timo_callout, 1,
-				    mvsata_atapi_polldsc, xfer);
+				callout_reset(&chp->c_timo_callout, 1,
+				    mvsata_atapi_polldsc, chp);
 				ata_channel_unlock(chp);
 			}
 			return;
@@ -2727,8 +2722,10 @@ mvsata_atapi_done(struct ata_channel *chp, struct ata_xfer *xfer)
 static void
 mvsata_atapi_polldsc(void *arg)
 {
-	struct ata_xfer *xfer = arg;
-	struct ata_channel *chp = xfer->c_chp;
+	struct ata_channel *chp = arg;
+	struct ata_xfer *xfer = ata_queue_get_active_xfer(chp);
+
+	KASSERT(xfer != NULL);
 
 	ata_channel_lock(chp);
 
@@ -2964,30 +2961,6 @@ mvsata_edma_wait(struct mvsata_port *mvport, struct ata_xfer *xfer, int timeout)
 	mvsata_edma_rqq_remove(mvport, xfer);
 	xfer->c_flags |= C_TIMEOU;
 	return 1;
-}
-
-static void
-mvsata_edma_timeout(void *arg)
-{
-	struct ata_xfer *xfer = (struct ata_xfer *)arg;
-	struct ata_channel *chp = xfer->c_chp;
-	struct mvsata_port *mvport = (struct mvsata_port *)chp;
-	int s;
-
-	s = splbio();
-	DPRINTF(DEBUG_FUNCS, ("%s: %p\n", __func__, xfer));
-
-	if (ata_timo_xfer_check(xfer)) {
-		/* Already logged */
-		goto out;
-	}
-
-	mvsata_edma_rqq_remove(mvport, xfer);
-	xfer->c_flags |= C_TIMEOU;
-	mvsata_bio_intr(chp, xfer, 0);
-
-out:
-	splx(s);
 }
 
 static void

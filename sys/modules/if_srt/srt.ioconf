@@ -1,7 +1,0 @@
-#	$NetBSD: srt.ioconf,v 1.1 2016/08/07 17:33:04 christos Exp $
-
-ioconf		srt
-
-include		"conf/files"
-
-pseudo-device   srt

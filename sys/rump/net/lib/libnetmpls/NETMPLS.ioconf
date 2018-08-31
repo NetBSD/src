@@ -1,7 +1,0 @@
-#	$NetBSD: NETMPLS.ioconf,v 1.2 2016/08/07 17:42:18 christos Exp $
-
-ioconf		netmpls
-
-include		"conf/files"
-
-pseudo-device   mpls

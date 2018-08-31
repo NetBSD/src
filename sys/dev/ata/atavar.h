@@ -1,4 +1,4 @@
-/*	$NetBSD: atavar.h,v 1.99 2018/08/10 22:43:22 jdolecek Exp $	*/
+/*	$NetBSD: atavar.h,v 1.99.2.1 2018/08/31 19:08:03 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -131,10 +131,6 @@ struct scsipi_xfer;
  * commands are queued in a list.
  */
 struct ata_xfer {
-	struct callout c_timo_callout;	/* timeout callout handle */
-	struct callout c_retry_callout;	/* retry callout handle */
-	kcondvar_t c_active;		/* somebody actively waiting for xfer */
-	kcondvar_t c_finish;		/* somebody waiting for xfer finish */
 	int8_t c_slot;			/* queue slot # */
 
 #define c_startzero	c_chp
@@ -165,6 +161,9 @@ struct ata_xfer {
 	/* Link on the command queue. */
 	TAILQ_ENTRY(ata_xfer) c_xferchain;
 	TAILQ_ENTRY(ata_xfer) c_activechain;
+
+	/* Links for error handling */
+	SLIST_ENTRY(ata_xfer) c_retrychain;
 
 	/* Low-level protocol handlers. */
 	int	(*c_start)(struct ata_channel *, struct ata_xfer *);
@@ -227,6 +226,8 @@ struct ata_queue {
 	TAILQ_HEAD(, ata_xfer) active_xfers; 	/* active commands */
 	uint32_t active_xfers_used;		/* mask of active commands */
 	uint32_t queue_xfers_avail;		/* available xfers mask */
+	kcondvar_t c_active;		/* somebody actively waiting for xfer */
+	kcondvar_t c_cmd_finish;	/* somebody waiting for cmd finish */
 	struct ata_xfer queue_xfers[0];		/* xfers */
 };
 #endif
@@ -412,6 +413,9 @@ struct ata_channel {
 	/* for the reset callback */
 	int ch_reset_flags;
 
+	/* for the timeout callout */
+	struct callout c_timo_callout;	/* timeout callout handle */
+
 	/* per-drive info */
 	int ch_ndrives; /* number of entries in ch_drive[] */
 	struct ata_drive_datas *ch_drive; /* array of ata_drive_datas */
@@ -528,8 +532,7 @@ void	ata_free_xfer(struct ata_channel *, struct ata_xfer *);
 void	ata_deactivate_xfer(struct ata_channel *, struct ata_xfer *);
 void	ata_exec_xfer(struct ata_channel *, struct ata_xfer *);
 int	ata_xfer_start(struct ata_xfer *xfer);
-void	ata_wait_xfer(struct ata_channel *, struct ata_xfer *xfer);
-void	ata_wake_xfer(struct ata_channel *, struct ata_xfer *xfer);
+void	ata_wait_cmd(struct ata_channel *, struct ata_xfer *xfer);
 
 void	ata_timeout(void *);
 bool	ata_timo_xfer_check(struct ata_xfer *);

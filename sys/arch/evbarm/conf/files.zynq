@@ -1,9 +1,0 @@
-#	$NetBSD: files.zynq,v 1.2 2018/03/19 17:11:24 ryo Exp $
-#
-# ZYNQ evaluation board configuration info
-#
-
-file	arch/evbarm/zynq/zynq_machdep.c
-
-# CPU support and integrated peripherals
-include "arch/arm/zynq/files.zynq"

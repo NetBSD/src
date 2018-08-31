@@ -1,6 +1,0 @@
-ioconf mainbus
-
-include "conf/files"
-include "rump/dev/files.rump"
-
-mainbus0 at root

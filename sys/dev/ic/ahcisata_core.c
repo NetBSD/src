@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata_core.c,v 1.62 2018/07/09 10:44:44 kamil Exp $	*/
+/*	$NetBSD: ahcisata_core.c,v 1.62.2.1 2018/08/31 19:08:03 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.62 2018/07/09 10:44:44 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.62.2.1 2018/08/31 19:08:03 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -1038,12 +1038,7 @@ ahci_exec_command(struct ata_drive_datas *drvp, struct ata_xfer *xfer)
 		ret = ATACMD_COMPLETE;
 	} else {
 		if (ata_c->flags & AT_WAIT) {
-			ata_channel_lock(chp);
-			if ((ata_c->flags & AT_DONE) == 0) {
-				ata_wait_xfer(chp, xfer);
-				KASSERT((ata_c->flags & AT_DONE) != 0);
-			}
-			ata_channel_unlock(chp);
+			ata_wait_cmd(chp, xfer);
 			ret = ATACMD_COMPLETE;
 		} else {
 			ret = ATACMD_QUEUED;
@@ -1107,8 +1102,8 @@ ahci_cmd_start(struct ata_channel *chp, struct ata_xfer *xfer)
 	achp->ahcic_cmds_active |= 1U << slot;
 
 	if ((ata_c->flags & AT_POLL) == 0) {
-		callout_reset(&xfer->c_timo_callout, mstohz(ata_c->timeout),
-		    ata_timeout, xfer);
+		callout_reset(&chp->c_timo_callout, mstohz(ata_c->timeout),
+		    ata_timeout, chp);
 		return ATASTART_STARTED;
 	} else
 		return ATASTART_POLL;
@@ -1187,13 +1182,13 @@ ahci_cmd_kill_xfer(struct ata_channel *chp, struct ata_xfer *xfer, int reason)
 		panic("ahci_cmd_kill_xfer");
 	}
 
+	ahci_cmd_done_end(chp, xfer);
+
 	if (deactivate) {
 		KASSERT((achp->ahcic_cmds_active & (1U << xfer->c_slot)) != 0);
 		achp->ahcic_cmds_active &= ~(1U << xfer->c_slot);
 		ata_deactivate_xfer(chp, xfer);
 	}
-
-	ahci_cmd_done_end(chp, xfer);
 }
 
 static int
@@ -1213,7 +1208,6 @@ ahci_cmd_complete(struct ata_channel *chp, struct ata_xfer *xfer, int tfd)
 
 	KASSERT((achp->ahcic_cmds_active & (1U << xfer->c_slot)) != 0);
 	achp->ahcic_cmds_active &= ~(1U << xfer->c_slot);
-	ata_deactivate_xfer(chp, xfer);
 
 	if (xfer->c_flags & C_TIMEOU) {
 		ata_c->flags |= AT_TIMEOU;
@@ -1230,6 +1224,9 @@ ahci_cmd_complete(struct ata_channel *chp, struct ata_xfer *xfer, int tfd)
 		satafis_rdh_cmd_readreg(ata_c, achp->ahcic_rfis->rfis_rfis);
 
 	ahci_cmd_done(chp, xfer);
+
+	ata_deactivate_xfer(chp, xfer);
+
 	return 0;
 }
 
@@ -1268,7 +1265,9 @@ ahci_cmd_done(struct ata_channel *chp, struct ata_xfer *xfer)
 
 	if (achp->ahcic_cmdh[xfer->c_slot].cmdh_prdbc)
 		ata_c->flags |= AT_XFDONE;
+
 	ahci_cmd_done_end(chp, xfer);
+
 	if ((flags & (AT_TIMEOU|AT_ERROR)) == 0)
 		atastart(chp);
 }
@@ -1278,15 +1277,7 @@ ahci_cmd_done_end(struct ata_channel *chp, struct ata_xfer *xfer)
 {
 	struct ata_command *ata_c = &xfer->c_ata_c;
 
-	ata_channel_lock(chp);
-
 	ata_c->flags |= AT_DONE;
-
-	if (ata_c->flags & AT_WAIT)
-		ata_wake_xfer(chp, xfer);
-
-	ata_channel_unlock(chp);
-	return;
 }
 
 static int
@@ -1363,8 +1354,8 @@ ahci_bio_start(struct ata_channel *chp, struct ata_xfer *xfer)
 	achp->ahcic_cmds_active |= 1U << xfer->c_slot;
 
 	if ((xfer->c_flags & C_POLL) == 0) {
-		callout_reset(&xfer->c_timo_callout, mstohz(ATA_DELAY),
-		    ata_timeout, xfer);
+		callout_reset(&chp->c_timo_callout, mstohz(ATA_DELAY),
+		    ata_timeout, chp);
 		return ATASTART_STARTED;
 	} else
 		return ATASTART_POLL;
@@ -1948,8 +1939,8 @@ ahci_atapi_start(struct ata_channel *chp, struct ata_xfer *xfer)
 	achp->ahcic_cmds_active |= 1U << xfer->c_slot;
 
 	if ((xfer->c_flags & C_POLL) == 0) {
-		callout_reset(&xfer->c_timo_callout, mstohz(sc_xfer->timeout),
-		    ata_timeout, xfer);
+		callout_reset(&chp->c_timo_callout, mstohz(sc_xfer->timeout),
+		    ata_timeout, chp);
 		return ATASTART_STARTED;
 	} else
 		return ATASTART_POLL;

@@ -1,7 +1,0 @@
-#	$NetBSD: ppp.ioconf,v 1.1 2016/08/06 06:06:54 christos Exp $
-
-ioconf		ppp
-
-include		"conf/files"
-
-pseudo-device   ppp

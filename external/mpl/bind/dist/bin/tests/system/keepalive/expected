@@ -1,4 +1,0 @@
-tcp-initial-timeout=300
-tcp-idle-timeout=300
-tcp-keepalive-timeout=300
-tcp-advertised-timeout=200

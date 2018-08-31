@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_subr.c,v 1.6 2018/08/10 22:43:22 jdolecek Exp $	*/
+/*	$NetBSD: ata_subr.c,v 1.6.2.1 2018/08/31 19:08:03 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata_subr.c,v 1.6 2018/08/10 22:43:22 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata_subr.c,v 1.6.2.1 2018/08/31 19:08:03 jdolecek Exp $");
 
 #include "opt_ata.h"
 
@@ -158,30 +158,6 @@ ata_queue_drive_active_xfer(struct ata_channel *chp, int drive)
 	return xfer;
 }
 
-static void
-ata_xfer_init(struct ata_xfer *xfer, uint8_t slot)
-{
-	memset(xfer, 0, sizeof(*xfer));
-
-	xfer->c_slot = slot;
-
-	cv_init(&xfer->c_active, "ataact");
-	cv_init(&xfer->c_finish, "atafin");
-	callout_init(&xfer->c_timo_callout, 0); 	/* XXX MPSAFE */
-	callout_init(&xfer->c_retry_callout, 0); 	/* XXX MPSAFE */
-}
-
-static void
-ata_xfer_destroy(struct ata_xfer *xfer)
-{
-	callout_halt(&xfer->c_timo_callout, NULL);	/* XXX MPSAFE */
-	callout_destroy(&xfer->c_timo_callout);
-	callout_halt(&xfer->c_retry_callout, NULL);	/* XXX MPSAFE */
-	callout_destroy(&xfer->c_retry_callout);
-	cv_destroy(&xfer->c_active);
-	cv_destroy(&xfer->c_finish);
-}
-
 struct ata_queue *
 ata_queue_alloc(uint8_t openings)
 {
@@ -201,8 +177,11 @@ ata_queue_alloc(uint8_t openings)
 	cv_init(&chq->queue_drain, "atdrn");
 	cv_init(&chq->queue_idle, "qidl");
 
+	cv_init(&chq->c_active, "ataact");
+	cv_init(&chq->c_cmd_finish, "atafin");
+
 	for (uint8_t i = 0; i < openings; i++)
-		ata_xfer_init(&chq->queue_xfers[i], i);
+		chq->queue_xfers[i].c_slot = i;
 
 	return chq;
 }
@@ -210,12 +189,12 @@ ata_queue_alloc(uint8_t openings)
 void
 ata_queue_free(struct ata_queue *chq)
 {
-	for (uint8_t i = 0; i < chq->queue_openings; i++)
-		ata_xfer_destroy(&chq->queue_xfers[i]);
-
 	cv_destroy(&chq->queue_busy);
 	cv_destroy(&chq->queue_drain);
 	cv_destroy(&chq->queue_idle);
+
+	cv_destroy(&chq->c_active);
+	cv_destroy(&chq->c_cmd_finish);
 
 	free(chq, M_DEVBUF);
 }
@@ -225,6 +204,8 @@ ata_channel_init(struct ata_channel *chp)
 {
 	mutex_init(&chp->ch_lock, MUTEX_DEFAULT, IPL_BIO);
 	cv_init(&chp->ch_thr_idle, "atath");
+
+	callout_init(&chp->c_timo_callout, 0); 	/* XXX MPSAFE */
 
 	/* Optionally setup the queue, too */
 	if (chp->ch_queue == NULL) {
@@ -239,6 +220,11 @@ ata_channel_destroy(struct ata_channel *chp)
 		ata_queue_free(chp->ch_queue);
 		chp->ch_queue = NULL;
 	}
+
+	mutex_enter(&chp->ch_lock);
+	callout_halt(&chp->c_timo_callout, &chp->ch_lock);
+	callout_destroy(&chp->c_timo_callout);
+	mutex_exit(&chp->ch_lock);
 
 	mutex_destroy(&chp->ch_lock);
 	cv_destroy(&chp->ch_thr_idle);
@@ -336,7 +322,7 @@ ata_free_xfer(struct ata_channel *chp, struct ata_xfer *xfer)
 	if (xfer->c_flags & (C_WAITACT|C_WAITTIMO)) {
 		/* Someone is waiting for this xfer, so we can't free now */
 		xfer->c_flags |= C_FREE;
-		cv_signal(&xfer->c_active);
+		cv_broadcast(&chq->c_active);
 		goto out;
 	}
 
@@ -370,6 +356,40 @@ out:
 	    __func__, chp->ch_channel, xfer, chq->queue_xfers_avail,
 	    chq->queue_active),
 	    DEBUG_XFERS);
+}
+
+void
+ata_timeout(void *v)
+{
+	struct ata_channel *chp = v;
+	struct ata_queue *chq = chp->ch_queue;
+	struct ata_xfer *xfer, *nxfer;
+	int s;
+
+	s = splbio();				/* XXX MPSAFE */
+
+	callout_ack(&chp->c_timo_callout);
+
+	/*
+	 * If there is a timeout, means the last enqueued command
+	 * timed out, and thus all commands timed out.
+	 * XXX locking 
+	 */
+	TAILQ_FOREACH_SAFE(xfer, &chq->active_xfers, c_activechain, nxfer) {
+		ATADEBUG_PRINT(("%s: slot %d\n", __func__, xfer->c_slot),
+		    DEBUG_FUNCS|DEBUG_XFERS);
+
+		if (ata_timo_xfer_check(xfer)) {
+			/* Already logged */
+			continue;
+		}
+
+		/* Mark as timed out. Do not print anything, wd(4) will. */
+		xfer->c_flags |= C_TIMEOU;
+		xfer->c_intr(xfer->c_chp, xfer, 0);
+	}
+
+	splx(s);
 }
 
 /*

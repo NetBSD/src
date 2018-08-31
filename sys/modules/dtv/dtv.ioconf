@@ -1,8 +1,0 @@
-# $NetBSD: dtv.ioconf,v 1.2 2011/07/14 18:19:49 matt Exp $
-
-ioconf dtv
-
-include "conf/files"
-
-pseudo-root dtvbus*
-dtv* at dtvbus?

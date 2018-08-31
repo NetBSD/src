@@ -1,5 +1,0 @@
-@set UPDATED 5 April 2002
-@c $NetBSD: version.texi,v 1.1.1.1 2016/01/13 03:15:29 christos Exp $
-@set UPDATED-MONTH April 2002
-@set EDITION 2.8.1
-@set VERSION 2.8.1

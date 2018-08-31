@@ -1,9 +1,0 @@
-#	$NetBSD: files.ofw,v 1.6 2007/10/17 19:56:39 garbled Exp $
-
-defflag opt_ofwoea.h OFWOEA_DEBUG
-file	arch/powerpc/powerpc/ofw_machdep.c
-file	arch/powerpc/powerpc/ofwmagic.S
-file	arch/powerpc/powerpc/openfirm.c
-
-# Firmworks OpenFirmware Bug Workarounds
-file	arch/powerpc/powerpc/ofwreal.S		firmworksbugs

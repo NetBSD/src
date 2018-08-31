@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.441 2018/08/10 22:43:22 jdolecek Exp $ */
+/*	$NetBSD: wd.c,v 1.441.2.1 2018/08/31 19:08:03 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.441 2018/08/10 22:43:22 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.441.2.1 2018/08/31 19:08:03 jdolecek Exp $");
 
 #include "opt_ata.h"
 #include "opt_wd.h"
@@ -199,7 +199,8 @@ static int	wd_diskstart(device_t, struct buf *);
 static int	wd_dumpblocks(device_t, void *, daddr_t, int);
 static void	wd_iosize(device_t, int *);
 static int	wd_discard(device_t, off_t, off_t);
-static void	wdbiorestart(void *);
+static void	wdbioretry(void *);
+static void	wdbiorequeue(void *);
 static void	wddone(device_t, struct ata_xfer *);
 static int	wd_get_params(struct wd_softc *, uint8_t, struct ataparams *);
 static void	wd_set_geometry(struct wd_softc *);
@@ -328,6 +329,11 @@ wdattach(device_t parent, device_t self, void *aux)
 	wd->drvp->drv_done = wddone;
 	wd->drvp->drv_softc = dksc->sc_dev; /* done in atabusconfig_thread()
 					     but too late */
+
+	SLIST_INIT(&wd->sc_retry_list);
+	SLIST_INIT(&wd->sc_requeue_list);
+	callout_init(&wd->sc_retry_callout, 0);		/* XXX MPSAFE */
+	callout_init(&wd->sc_requeue_callout, 0);	/* XXX MPSAFE */
 
 	aprint_naive("\n");
 	aprint_normal("\n");
@@ -517,6 +523,12 @@ wddetach(device_t self, int flags)
 	/* Kill off any pending commands. */
 	mutex_enter(&wd->sc_lock);
 	wd->atabus->ata_killpending(wd->drvp);
+
+	callout_halt(&wd->sc_retry_callout, &wd->sc_lock);
+	callout_destroy(&wd->sc_retry_callout);
+	callout_halt(&wd->sc_requeue_callout, &wd->sc_lock);
+	callout_destroy(&wd->sc_requeue_callout);
+
 	mutex_exit(&wd->sc_lock);
 
 	bufq_free(dksc->sc_bufq);
@@ -850,9 +862,17 @@ retry2:
 			xfer->c_retries++;
 
 			/* Rerun ASAP if just requeued */
-			callout_reset(&xfer->c_retry_callout,
-			    (xfer->c_bio.error == REQUEUE) ? 1 : RECOVERYTIME,
-			    wdbiorestart, xfer);
+			if (xfer->c_bio.error == REQUEUE) {
+				SLIST_INSERT_HEAD(&wd->sc_requeue_list, xfer,
+				    c_retrychain);
+				callout_reset(&wd->sc_requeue_callout,
+				    1, wdbiorequeue, wd);
+			} else {
+				SLIST_INSERT_HEAD(&wd->sc_retry_list, xfer,
+				    c_retrychain);
+				callout_reset(&wd->sc_retry_callout,
+				    RECOVERYTIME, wdbioretry, wd);
+			}
 
 			mutex_exit(&wd->sc_lock);
 			return;
@@ -921,20 +941,36 @@ noerror:	if ((xfer->c_bio.flags & ATA_CORR) || xfer->c_retries > 0)
 }
 
 static void
-wdbiorestart(void *v)
+wdbioretry(void *v)
 {
-	struct ata_xfer *xfer = v;
-	struct buf *bp = xfer->c_bio.bp;
-	struct wd_softc *wd = device_lookup_private(&wd_cd, WDUNIT(bp->b_dev));
-#ifdef ATADEBUG
-	struct dk_softc *dksc = &wd->sc_dksc;
-#endif
+	struct wd_softc *wd = v;
+	struct ata_xfer *xfer;
 
-	ATADEBUG_PRINT(("wdbiorestart %s\n", dksc->sc_xname),
+	ATADEBUG_PRINT(("%s %s\n", __func__, wd->sc_dksc.sc_xname),
 	    DEBUG_XFERS);
 
 	mutex_enter(&wd->sc_lock);
-	wdstart1(wd, bp, xfer);
+	while ((xfer = SLIST_FIRST(&wd->sc_retry_list))) {
+		SLIST_REMOVE_HEAD(&wd->sc_retry_list, c_retrychain);
+		wdstart1(wd, xfer->c_bio.bp, xfer);
+	}
+	mutex_exit(&wd->sc_lock);
+}
+
+static void
+wdbiorequeue(void *v)
+{
+	struct wd_softc *wd = v;
+	struct ata_xfer *xfer;
+
+	ATADEBUG_PRINT(("%s %s\n", __func__, wd->sc_dksc.sc_xname),
+	    DEBUG_XFERS);
+
+	mutex_enter(&wd->sc_lock);
+	while ((xfer = SLIST_FIRST(&wd->sc_requeue_list))) {
+		SLIST_REMOVE_HEAD(&wd->sc_requeue_list, c_retrychain);
+		wdstart1(wd, xfer->c_bio.bp, xfer);
+	}
 	mutex_exit(&wd->sc_lock);
 }
 

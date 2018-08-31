@@ -1,8 +1,0 @@
-#	$NetBSD: files.obs200,v 1.8 2010/03/18 13:47:04 kiyohara Exp $
-#	Original Tag: files.obs405,v 1.9 2005/01/24 18:47:37 shige Exp
-#
-# obs200-specific configuration info
-
-file	arch/evbppc/obs405/dev/century_bios.c
-file	arch/evbppc/obs405/obs200_autoconf.c
-file	arch/evbppc/obs405/obs200_machdep.c
