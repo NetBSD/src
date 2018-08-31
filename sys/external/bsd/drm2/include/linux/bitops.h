@@ -1,4 +1,4 @@
-/*	$NetBSD: bitops.h,v 1.11 2015/10/13 00:42:59 riastradh Exp $	*/
+/*	$NetBSD: bitops.h,v 1.11.10.1 2018/08/31 17:43:03 martin Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@ hweight16(uint16_t n)
 }
 
 static inline unsigned int
-hweight32(uint16_t n)
+hweight32(uint32_t n)
 {
 	return popcount32(n);
 }
@@ -171,7 +171,8 @@ find_first_zero_bit(const unsigned long *ptr, unsigned long nbits)
 			break;
 	}
 
-	result += ffs(~*p | (~0UL << MIN(nbits, bpl)));
+	CTASSERT(sizeof(unsigned long) <= sizeof(uint64_t));
+	result += ffs64(~(uint64_t)*p | (~0UL << MIN(nbits, bpl)));
 	return result;
 }
 
