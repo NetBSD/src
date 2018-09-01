@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.441.2.1 2018/08/31 19:08:03 jdolecek Exp $ */
+/*	$NetBSD: wd.c,v 1.441.2.2 2018/09/01 09:48:32 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.441.2.1 2018/08/31 19:08:03 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.441.2.2 2018/09/01 09:48:32 jdolecek Exp $");
 
 #include "opt_ata.h"
 #include "opt_wd.h"
@@ -660,8 +660,8 @@ wdstart1(struct wd_softc *wd, struct buf *bp, struct ata_xfer *xfer)
 	 */
 	if (BUF_ISREAD(bp) && xfer->c_retries == 0 && wd->drv_chaos_freq > 0 &&
 	    (++wd->drv_chaos_cnt % wd->drv_chaos_freq) == 0) {
-		aprint_normal_dev(dksc->sc_dev, "%s: chaos xfer %d\n",
-		    __func__, xfer->c_slot);
+		aprint_normal_dev(dksc->sc_dev, "%s: chaos xfer %p\n",
+		    __func__, xfer);
 		xfer->c_bio.blkno = 7777777 + wd->sc_capacity;
 		xfer->c_flags |= C_CHAOS;
 	}
@@ -852,7 +852,7 @@ retry2:
 		diskerr(bp, "wd", errmsg, LOG_PRINTF,
 		    xfer->c_bio.blkdone, dksc->sc_dkdev.dk_label);
 		if (xfer->c_retries < WDIORETRIES)
-			printf(", slot %d, retry %d", xfer->c_slot,
+			printf(", xfer %p, retry %d", xfer,
 			    xfer->c_retries + 1);
 		printf("\n");
 		if (do_perror)
@@ -916,7 +916,7 @@ out:
 	case NOERROR:
 noerror:	if ((xfer->c_bio.flags & ATA_CORR) || xfer->c_retries > 0)
 			aprint_error_dev(dksc->sc_dev,
-			    "soft error (corrected) slot %d\n", xfer->c_slot);
+			    "soft error (corrected) xfer %p\n", xfer);
 #ifdef WD_CHAOS_MONKEY
 		KASSERT((xfer->c_flags & C_CHAOS) == 0);
 #endif

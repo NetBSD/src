@@ -1,4 +1,4 @@
-/*	$NetBSD: ata.c,v 1.141.6.1 2018/08/31 19:08:03 jdolecek Exp $	*/
+/*	$NetBSD: ata.c,v 1.141.6.2 2018/09/01 09:48:32 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.141.6.1 2018/08/31 19:08:03 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.141.6.2 2018/09/01 09:48:32 jdolecek Exp $");
 
 #include "opt_ata.h"
 
@@ -1370,8 +1370,7 @@ ata_timo_xfer_check(struct ata_xfer *xfer)
 			ata_channel_unlock(chp);
 
 	    		aprint_normal_dev(drvp->drv_softc,
-			    "xfer %d freed while invoking timeout\n",
-			    xfer->c_slot); 
+			    "xfer %p freed while invoking timeout\n", xfer); 
 
 			ata_free_xfer(chp, xfer);
 			return true;
@@ -1381,8 +1380,7 @@ ata_timo_xfer_check(struct ata_xfer *xfer)
 		ata_channel_unlock(chp);
 
 	    	aprint_normal_dev(drvp->drv_softc,
-		    "xfer %d deactivated while invoking timeout\n",
-		    xfer->c_slot); 
+		    "xfer %p deactivated while invoking timeout\n", xfer); 
 		return true;
 	}
 
