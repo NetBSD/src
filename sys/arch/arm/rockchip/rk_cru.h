@@ -1,4 +1,4 @@
-/* $NetBSD: rk_cru.h,v 1.3 2018/08/12 16:48:05 jmcneill Exp $ */
+/* $NetBSD: rk_cru.h,v 1.4 2018/09/01 19:35:53 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -118,6 +118,19 @@ struct rk_cru_arm_rate {
 		.div = (_div),					\
 	}
 
+struct rk_cru_cpu_rate {
+	u_int		rate;
+	u_int		reg1, reg1_mask, reg1_val;
+	u_int		reg2, reg2_mask, reg2_val;
+};
+
+#define	RK_CPU_RATE(_rate, _reg1, _reg1_mask, _reg1_val, _reg2, _reg2_mask, _reg2_val)	\
+	{										\
+		.rate = (_rate),							\
+		.reg1 = (_reg1), .reg1_mask = (_reg1_mask), .reg1_val = (_reg1_val),	\
+		.reg2 = (_reg2), .reg2_mask = (_reg2_mask), .reg2_val = (_reg2_val),	\
+	}
+
 struct rk_cru_arm {
 	bus_size_t	reg;
 	uint32_t	mux_mask;
@@ -127,10 +140,12 @@ struct rk_cru_arm {
 	const char	**parents;
 	u_int		nparents;
 	const struct rk_cru_arm_rate *rates;
+	const struct rk_cru_cpu_rate *cpurates;
 	u_int		nrates;
 };
 
 u_int	rk_cru_arm_get_rate(struct rk_cru_softc *, struct rk_cru_clk *);
+int	rk_cru_arm_set_rate(struct rk_cru_softc *, struct rk_cru_clk *, u_int);
 int	rk_cru_arm_set_rate(struct rk_cru_softc *, struct rk_cru_clk *, u_int);
 const char *rk_cru_arm_get_parent(struct rk_cru_softc *, struct rk_cru_clk *);
 int	rk_cru_arm_set_parent(struct rk_cru_softc *, struct rk_cru_clk *, const char *);
@@ -150,6 +165,27 @@ int	rk_cru_arm_set_parent(struct rk_cru_softc *, struct rk_cru_clk *, const char
 		.u.arm.div_mask = (_div_mask),			\
 		.u.arm.rates = (_rates),			\
 		.u.arm.nrates = __arraycount(_rates),		\
+		.get_rate = rk_cru_arm_get_rate,		\
+		.set_rate = rk_cru_arm_set_rate,		\
+		.get_parent = rk_cru_arm_get_parent,		\
+		.set_parent = rk_cru_arm_set_parent,		\
+	}
+
+#define	RK_CPU(_id, _name, _parents, _reg, _mux_mask, _mux_main, _mux_alt, _div_mask, _cpurates) \
+	{							\
+		.id = (_id),					\
+		.type = RK_CRU_ARM,				\
+		.base.name = (_name),				\
+		.base.flags = 0,				\
+		.u.arm.parents = (_parents),			\
+		.u.arm.nparents = __arraycount(_parents),	\
+		.u.arm.reg = (_reg),				\
+		.u.arm.mux_mask = (_mux_mask),			\
+		.u.arm.mux_main = (_mux_main),			\
+		.u.arm.mux_alt = (_mux_alt),			\
+		.u.arm.div_mask = (_div_mask),			\
+		.u.arm.cpurates = (_cpurates),			\
+		.u.arm.nrates = __arraycount(_cpurates),	\
 		.get_rate = rk_cru_arm_get_rate,		\
 		.set_rate = rk_cru_arm_set_rate,		\
 		.get_parent = rk_cru_arm_get_parent,		\
