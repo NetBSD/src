@@ -1,4 +1,4 @@
-.\"    $NetBSD: npf.conf.5,v 1.70 2018/08/31 11:18:35 maxv Exp $
+.\"    $NetBSD: npf.conf.5,v 1.71 2018/09/01 16:28:57 rmind Exp $
 .\"
 .\" Copyright (c) 2009-2017 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd August 31, 2018
+.Dd September 1, 2018
 .Dt NPF.CONF 5
 .Os
 .Sh NAME
@@ -87,8 +87,8 @@ table <black> type hash dynamic
 .Pp
 .Ed
 Currently, tables support three data storage types: "hash", "tree", or "cdb".
-Tables can also be set as containing "dynamic" or "static" data i.e. loaded from
- a specified file.
+Tables can also be set as containing "dynamic" or "static" data i.e. loaded
+from a specified file.
 Tables of type "hash" and "cdb" can only contain IP addresses.
 Only static data can be used with a storage type of "cdb".
 .Pp
@@ -166,9 +166,31 @@ option set, this rule is considered the last matching rule, and
 evaluation of subsequent rules is skipped.
 Otherwise, the last matching rule is used.
 .Pp
-A rule can also instruct NPF to create an entry in the state table
-when passing the packet, to notify the sender when blocking it, and
-to apply a procedure to the packet (e.g. "log") in either case.
+The
+.Cd proto
+keyword can be used to filter packets by layer 4 protocol (TCP, UDP, ICMP
+or other).
+Its parameter should be a protocol number or its symbolic name,
+as specified in the
+.Pa /etc/protocols
+file.
+The protocol keyword can additionally have protocol-specific options.
+The
+.Cd flags
+keyword can be used to match the packets against specific TCP flags,
+according to the following syntax:
+.Bl -tag -width protoXX -offset indent
+.It proto tcp flags Ar match[/mask]
+.El
+.Pp
+Where
+.Ar match
+is the set of TCP flags to be matched, out of the
+.Ar mask
+set, both sets being represented as a string combination of: S (SYN),
+A (ACK), F (FIN), R (RST). The flags that are not present in
+.Ar mask
+are ignored.
 .Pp
 To notify the sender of a blocking decision, three
 .Cd return
@@ -187,19 +209,18 @@ Return an ICMP UNREACHABLE message, when the packet being blocked is a UDP packe
 Applies to IPv4 and IPv6.
 .El
 .Pp
+Further packet specification at present is limited to TCP and UDP
+understanding source and destination ports, and ICMP and IPv6-ICMP
+understanding icmp-type.
+.Pp
+A rule can also instruct NPF to create an entry in the state table when
+passing the packet or to apply a procedure to the packet (e.g. "log").
+.Pp
 A "fully-featured" rule would for example be:
 .Bd -literal
 pass stateful in final family inet4 proto tcp flags S/SA \\
 	from $source port $sport to $dest port $dport apply "someproc"
 .Ed
-.Pp
-Any protocol in
-.Pa /etc/protocols
-can be specified.
-Further packet
-specification at present is limited to protocol TCP understanding flags,
-TCP and UDP understanding source and destination ports, and ICMP and
-IPv6-ICMP understanding icmp-type.
 .Pp
 Alternatively, NPF supports
 .Xr pcap-filter 7
@@ -222,25 +243,6 @@ The latter excludes the interface identifier and must be used with
 precaution.
 In both cases, a full TCP state tracking is performed for TCP connections
 and a limited tracking for message-based protocols (UDP and ICMP).
-.Pp
-The
-.Cd flags
-keyword can be used in conjunction with the
-.Cd stateful
-keyword to match the packets against specific TCP flags, according to
-the following syntax:
-.Bl -tag -width flagsXX -offset indent
-.It flags Ar match[/mask]
-.El
-.Pp
-Where
-.Ar match
-is the set of TCP flags to be matched, out of the
-.Ar mask
-set, both sets being represented as a string combination of: S (SYN),
-A (ACK), F (FIN), R (RST). The flags that are not present in
-.Ar mask
-are ignored.
 .Pp
 By default, a stateful rule implies SYN-only flag check ("flags S/SAFR")
 for the TCP packets.
@@ -271,21 +273,32 @@ specified by $pub_ip for the packets on the interface $ext_if.
 map $ext_if dynamic 10.1.1.0/24 -> $pub_ip
 .Ed
 .Pp
-Several NAT algorithms are available, and can be chosen using the
-.Cd algo
-keyword.
-By default, NPF will use the NAPT algorithm.
-The other available algorithms are:
-.Bl -tag -width Xnpt66XX -offset indent
-.It npt66
-IPv6-to-IPv6 network prefix translation (NPTv6).
-.El
-.Pp
 Translations are implicitly filtered by limiting the operation to the
 network segments specified, that is, translation would be performed only
 on packets originating from the 10.1.1.0/24 network.
 Explicit filter criteria can be specified using "pass <criteria>" as
 an additional option of the mapping.
+.Pp
+The dynamic NAT implies network address and port translation (NAPT).
+The port translation can be controlled explicitly.
+For example, the following provides "port forwarding", redirecting the
+public port 9022 to the port 22 of an internal host:
+.Bd -literal
+map $ext_if dynamic proto tcp 10.1.1.2 port 22 <- $ext_if port 9022
+.Ed
+.Pp
+The static NAT can have different address translation algorithms, which
+can be chosen using the
+.Cd algo
+keyword.
+The currently available algorithms are:
+.Bl -tag -width Xnpt66XX -offset indent
+.It npt66
+IPv6-to-IPv6 network prefix translation (NPTv6).
+.El
+.Pp
+Currently, the static NAT algorithms do not perform port translation.
+.Pp
 .Ss Application Level Gateways
 Certain application layer protocols are not compatible with NAT and require
 translation outside layers 3 and 4.
@@ -296,14 +309,16 @@ NPF supports the following ALGs:
 .Bl -tag -width XicmpXX -offset indent
 .It icmp
 ICMP ALG.
+Applies to IPv4 and IPv6.
 Allows to find an active connection by looking at the ICMP payload, and to
 perform NAT translation of the ICMP payload.
-Applies to IPv4 and IPv6.
+Generally, this ALG is necessary to support "traceroute" behind the NAT,
+when using the UDP or TCP probes.
 .El
 .Pp
-The ALGs are built-in, unless NPF is used as kernel module, in which case
-they come as kernel modules too.
-In that case, the ALG kernel modules can be autoloaded through the
+The ALGs are built-in.
+If NPF is used as kernel module, then they come as kernel modules too.
+In such case, the ALG kernel modules can be autoloaded through the
 configuration, using the
 .Cd alg
 keyword.
@@ -351,6 +366,7 @@ Randomize the IPv4 ID parameter.
 Enforce a minimum value for the IPv4 Time To Live (TTL) parameter.
 .It Do max-mss Dc Ar value
 Enforce a maximum value for the MSS on TCP packets.
+Typically, for "MSS clamping".
 .It Dq no-df
 Remove the Don't Fragment (DF) flag from IPv4 packets.
 .El
@@ -443,11 +459,12 @@ rule		= static-rule | dynamic-ruleset
 
 tcp-flag-mask	= tcp-flags
 tcp-flags	= [ "S" ] [ "A" ] [ "F" ] [ "R" ]
-proto		= "proto" protocol [ proto-opts ]
 block-opts	= "return-rst" | "return-icmp" | "return"
+
 family-opt	= "inet4" | "inet6"
 proto-opts	= "flags" tcp-flags [ "/" tcp-flag-mask ] |
 		  "icmp-type" type [ "code" icmp-code ]
+proto		= "proto" protocol [ proto-opts ]
 
 filt-opts	= "from" filt-addr [ port-opts ] "to" filt-addr [ port-opts ]
 filt-addr	= [ "!" ] [ interface | addr-mask | table-id | "any" ]
@@ -486,33 +503,33 @@ map $ext_if dynamic 10.1.1.0/24 -> $ext_if
 map $ext_if dynamic proto tcp 10.1.1.2 port 22 <- $ext_if port 9022
 
 procedure "log" {
-	# The logging facility can be used together with npfd(8).
-	log: npflog0
+  # The logging facility can be used together with npfd(8).
+  log: npflog0
 }
 
 group "external" on $ext_if {
-	pass stateful out final all
+  pass stateful out final all
 
-	block in final from <blacklist>
-	pass stateful in final family inet4 proto tcp to $ext_if port ssh apply "log"
-	pass stateful in final proto tcp to $ext_if port $services_tcp
-	pass stateful in final proto udp to $ext_if port $services_udp
-	pass stateful in final proto tcp to $ext_if port 49151-65535	# Passive FTP
-	pass stateful in final proto udp to $ext_if port 33434-33600	# Traceroute
+  block in final from <blacklist>
+  pass stateful in final family inet4 proto tcp to $ext_if port ssh apply "log"
+  pass stateful in final proto tcp to $ext_if port $services_tcp
+  pass stateful in final proto udp to $ext_if port $services_udp
+  pass stateful in final proto tcp to $ext_if port 49151-65535  # passive FTP
+  pass stateful in final proto udp to $ext_if port 33434-33600  # traceroute
 }
 
 group "internal" on $int_if {
-	block in all
-	block in final from <limited>
+  block in all
+  block in final from <limited>
 
-	# Ingress filtering as per BCP 38 / RFC 2827.
-	pass in final from $localnet
-	pass out final all
+  # Ingress filtering as per BCP 38 / RFC 2827.
+  pass in final from $localnet
+  pass out final all
 }
 
 group default {
-	pass final on lo0 all
-	block all
+  pass final on lo0 all
+  block all
 }
 .Ed
 .\" -----
