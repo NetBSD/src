@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.280 2017/06/17 22:35:50 mlelstv Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.281 2018/09/01 07:20:29 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.280 2017/06/17 22:35:50 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.281 2018/09/01 07:20:29 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -270,7 +270,7 @@ scsibusattach(device_t parent, device_t self, void *aux)
          * Create the discover thread
          */
         if (kthread_create(PRI_NONE, 0, NULL, scsibus_discover_thread, sc,
-            NULL, "%s-d", chan->chan_name)) {
+            &chan->chan_dthread, "%s-d", chan->chan_name)) {
                 aprint_error_dev(sc->sc_dev, "unable to create discovery "
 		    "thread for channel %d\n", chan->chan_channel);
                 return;
@@ -283,6 +283,7 @@ scsibus_discover_thread(void *arg)
 	struct scsibus_softc *sc = arg;
 
 	scsibus_config(sc);
+	sc->sc_channel->chan_dthread = NULL;
 	kthread_exit(0);
 }
 
@@ -334,6 +335,12 @@ scsibusdetach(device_t self, int flags)
 	struct scsibus_softc *sc = device_private(self);
 	struct scsipi_channel *chan = sc->sc_channel;
 	int error;
+
+	/*
+	 * Defer while discovery thread is running
+	 */
+	while (chan->chan_dthread != NULL)
+		kpause("scsibusdet", false, hz, NULL);
 
 	/*
 	 * Detach all of the periphs.
@@ -415,6 +422,7 @@ scsi_probe_bus(struct scsibus_softc *sc, int target, int lun)
 		 */
 		scsipi_set_xfer_mode(chan, target, 1);
 	}
+
 	scsipi_adapter_delref(chan->chan_adapter);
 ret:
 	return (error);
