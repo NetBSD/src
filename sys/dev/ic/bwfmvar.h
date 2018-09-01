@@ -1,4 +1,4 @@
-/* $NetBSD: bwfmvar.h,v 1.2 2018/05/11 07:41:11 maya Exp $ */
+/* $NetBSD: bwfmvar.h,v 1.3 2018/09/01 22:01:03 riastradh Exp $ */
 /* $OpenBSD: bwfmvar.h,v 1.1 2017/10/11 17:19:50 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
@@ -93,7 +93,7 @@ struct bwfm_bus_ops {
 	void (*bs_init)(struct bwfm_softc *);
 	void (*bs_stop)(struct bwfm_softc *);
 	int (*bs_txcheck)(struct bwfm_softc *);
-	int (*bs_txdata)(struct bwfm_softc *, struct mbuf *);
+	int (*bs_txdata)(struct bwfm_softc *, struct mbuf **);
 	int (*bs_txctl)(struct bwfm_softc *, char *, size_t);
 	int (*bs_rxctl)(struct bwfm_softc *, char *, size_t *);
 };
