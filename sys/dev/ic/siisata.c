@@ -1,4 +1,4 @@
-/* $NetBSD: siisata.c,v 1.35.6.1 2018/08/31 19:08:03 jdolecek Exp $ */
+/* $NetBSD: siisata.c,v 1.35.6.2 2018/09/01 10:13:41 jdolecek Exp $ */
 
 /* from ahcisata_core.c */
 
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siisata.c,v 1.35.6.1 2018/08/31 19:08:03 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siisata.c,v 1.35.6.2 2018/09/01 10:13:41 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1154,8 +1154,6 @@ siisata_cmd_complete(struct ata_channel *chp, struct ata_xfer *xfer, int tfd)
 	if (ata_waitdrain_xfer_check(chp, xfer))
 		return 0;
 
-	siisata_deactivate_prb(schp, xfer->c_slot);
-
 	if (xfer->c_flags & C_TIMEOU)
 		ata_c->flags |= AT_TIMEOU;
 
@@ -1168,6 +1166,7 @@ siisata_cmd_complete(struct ata_channel *chp, struct ata_xfer *xfer, int tfd)
 
 	siisata_cmd_done(chp, xfer, tfd);
 
+	siisata_deactivate_prb(schp, xfer->c_slot);
 	ata_deactivate_xfer(chp, xfer);
 
 	return 0;
@@ -1382,9 +1381,6 @@ siisata_bio_complete(struct ata_channel *chp, struct ata_xfer *xfer, int tfd)
 	if (ata_waitdrain_xfer_check(chp, xfer))
 		return 0;
 
-	siisata_deactivate_prb(schp, xfer->c_slot);
-	ata_deactivate_xfer(chp, xfer);
-
 	if (xfer->c_flags & C_TIMEOU) {
 		ata_bio->error = TIMEOUT;
 	}
@@ -1414,6 +1410,10 @@ siisata_bio_complete(struct ata_channel *chp, struct ata_xfer *xfer, int tfd)
 			ata_bio->bcount = 0;
 	}
 	SIISATA_DEBUG_PRINT((" now %ld\n", ata_bio->bcount), DEBUG_XFERS);
+
+	siisata_deactivate_prb(schp, xfer->c_slot);
+	ata_deactivate_xfer(chp, xfer);
+
 	(*chp->ch_drive[drive].drv_done)(chp->ch_drive[drive].drv_softc, xfer);
 	if ((ATACH_ST(tfd) & WDCS_ERR) == 0)
 		atastart(chp);
@@ -1949,10 +1949,6 @@ siisata_atapi_complete(struct ata_channel *chp, struct ata_xfer *xfer,
 	if (ata_waitdrain_xfer_check(chp, xfer))
 		return 0;
 
-	/* this command is not active any more */
-	siisata_deactivate_prb(schp, xfer->c_slot);
-	ata_deactivate_xfer(chp, xfer);
-
 	if (xfer->c_flags & C_TIMEOU) {
 		sc_xfer->error = XS_TIMEOUT;
 	}
@@ -1980,6 +1976,10 @@ siisata_atapi_complete(struct ata_channel *chp, struct ata_xfer *xfer,
 			sc_xfer->status = SCSI_CHECK;
 		}
 	}
+
+	siisata_deactivate_prb(schp, xfer->c_slot);
+	ata_deactivate_xfer(chp, xfer);
+
 	ata_free_xfer(chp, xfer);
 	scsipi_done(sc_xfer);
 	if ((ATACH_ST(tfd) & WDCS_ERR) == 0)
