@@ -1,4 +1,4 @@
-/* $NetBSD: rk3399_cru.c,v 1.2 2018/08/12 19:28:41 jmcneill Exp $ */
+/* $NetBSD: rk3399_cru.c,v 1.3 2018/09/01 19:35:53 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: rk3399_cru.c,v 1.2 2018/08/12 19:28:41 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: rk3399_cru.c,v 1.3 2018/09/01 19:35:53 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -139,6 +139,67 @@ static const struct rk_cru_pll_rate pll_rates[] = {
 static const struct rk_cru_pll_rate pll_norates[] = {
 };
 
+#define	RK3399_ACLKM_MASK	__BITS(12,8)
+#define	RK3399_ATCLK_MASK	__BITS(4,0)
+#define	RK3399_PDBG_MASK	__BITS(12,8)
+
+#define	RK3399_CPUL_RATE(_rate, _aclkm, _atclk, _pdbg)			\
+	RK_CPU_RATE(_rate,						\
+		    CLKSEL_CON(0), RK3399_ACLKM_MASK,			\
+		    __SHIFTIN((_aclkm), RK3399_ACLKM_MASK),		\
+		    CLKSEL_CON(1), RK3399_ATCLK_MASK|RK3399_PDBG_MASK,	\
+		    __SHIFTIN((_atclk), RK3399_ATCLK_MASK)|__SHIFTIN((_pdbg), RK3399_PDBG_MASK))
+
+#define	RK3399_CPUB_RATE(_rate, _aclkm, _atclk, _pdbg)			\
+	RK_CPU_RATE(_rate,						\
+		    CLKSEL_CON(2), RK3399_ACLKM_MASK,			\
+		    __SHIFTIN((_aclkm), RK3399_ACLKM_MASK),		\
+		    CLKSEL_CON(3), RK3399_ATCLK_MASK|RK3399_PDBG_MASK,	\
+		    __SHIFTIN((_atclk), RK3399_ATCLK_MASK)|__SHIFTIN((_pdbg), RK3399_PDBG_MASK))
+
+static const struct rk_cru_cpu_rate armclkl_rates[] = {
+        RK3399_CPUL_RATE(1800000000, 1, 8, 8),
+        RK3399_CPUL_RATE(1704000000, 1, 8, 8),
+        RK3399_CPUL_RATE(1608000000, 1, 7, 7),
+        RK3399_CPUL_RATE(1512000000, 1, 7, 7),
+        RK3399_CPUL_RATE(1488000000, 1, 6, 6),
+        RK3399_CPUL_RATE(1416000000, 1, 6, 6),
+        RK3399_CPUL_RATE(1200000000, 1, 5, 5),
+        RK3399_CPUL_RATE(1008000000, 1, 4, 4),
+        RK3399_CPUL_RATE( 816000000, 1, 3, 3),
+        RK3399_CPUL_RATE( 696000000, 1, 3, 3),
+        RK3399_CPUL_RATE( 600000000, 1, 2, 2),
+        RK3399_CPUL_RATE( 408000000, 1, 1, 1),
+        RK3399_CPUL_RATE( 312000000, 1, 1, 1),
+        RK3399_CPUL_RATE( 216000000, 1, 1, 1),
+        RK3399_CPUL_RATE(  96000000, 1, 1, 1),
+};
+
+static const struct rk_cru_cpu_rate armclkb_rates[] = {
+        RK3399_CPUB_RATE(2208000000, 1, 11, 11),
+        RK3399_CPUB_RATE(2184000000, 1, 11, 11),
+        RK3399_CPUB_RATE(2088000000, 1, 10, 10),
+        RK3399_CPUB_RATE(2040000000, 1, 10, 10),
+        RK3399_CPUB_RATE(2016000000, 1, 9, 9),
+        RK3399_CPUB_RATE(1992000000, 1, 9, 9),
+        RK3399_CPUB_RATE(1896000000, 1, 9, 9),
+        RK3399_CPUB_RATE(1800000000, 1, 8, 8),
+        RK3399_CPUB_RATE(1704000000, 1, 8, 8),
+        RK3399_CPUB_RATE(1608000000, 1, 7, 7),
+        RK3399_CPUB_RATE(1512000000, 1, 7, 7),
+        RK3399_CPUB_RATE(1488000000, 1, 6, 6),
+        RK3399_CPUB_RATE(1416000000, 1, 6, 6),
+        RK3399_CPUB_RATE(1200000000, 1, 5, 5),
+        RK3399_CPUB_RATE(1008000000, 1, 5, 5),
+        RK3399_CPUB_RATE( 816000000, 1, 4, 4),
+        RK3399_CPUB_RATE( 696000000, 1, 3, 3),
+        RK3399_CPUB_RATE( 600000000, 1, 3, 3),
+        RK3399_CPUB_RATE( 408000000, 1, 2, 2),
+        RK3399_CPUB_RATE( 312000000, 1, 1, 1),
+        RK3399_CPUB_RATE( 216000000, 1, 1, 1),
+        RK3399_CPUB_RATE(  96000000, 1, 1, 1),
+};
+
 #define	PLL_CON0	0x00
 #define	 PLL_FBDIV	__BITS(11,0)
 
@@ -229,14 +290,13 @@ rk3399_cru_pll_set_rate(struct rk_cru_softc *sc,
 	CRU_WRITE(sc, pll->con_base + PLL_CON3, val);
 
 	CRU_WRITE(sc, pll->con_base + PLL_CON0,
-	    __SHIFTIN(pll_rate->fbdiv, PLL_FBDIV) |
-	    PLL_WRITE_MASK);
+	    __SHIFTIN(pll_rate->fbdiv, PLL_FBDIV) | (PLL_FBDIV << 16));
 
 	CRU_WRITE(sc, pll->con_base + PLL_CON1,
 	    __SHIFTIN(pll_rate->postdiv2, PLL_POSTDIV2) |
 	    __SHIFTIN(pll_rate->postdiv1, PLL_POSTDIV1) |
 	    __SHIFTIN(pll_rate->refdiv, PLL_REFDIV) |
-	    PLL_WRITE_MASK);
+	    ((PLL_POSTDIV2 | PLL_POSTDIV1 | PLL_REFDIV) << 16));
 
 	val = CRU_READ(sc, pll->con_base + PLL_CON2);
 	val &= ~PLL_FRACDIV;
@@ -245,11 +305,6 @@ rk3399_cru_pll_set_rate(struct rk_cru_softc *sc,
 
 	val = __SHIFTIN(pll_rate->dsmpd, PLL_DSMPD) | (PLL_DSMPD << 16);
 	CRU_WRITE(sc, pll->con_base + PLL_CON3, val);
-
-	/* Set PLL work mode to normal */
-	const uint32_t write_mask = pll->mode_mask << 16;
-	const uint32_t write_val = pll->mode_mask;
-	CRU_WRITE(sc, pll->mode_reg, write_mask | write_val);
 
 	for (retry = 1000; retry > 0; retry--) {
 		if (CRU_READ(sc, pll->con_base + PLL_CON2) & pll->lock_mask)
@@ -261,6 +316,7 @@ rk3399_cru_pll_set_rate(struct rk_cru_softc *sc,
 		device_printf(sc->sc_dev, "WARNING: %s failed to lock\n",
 		    clk->base.name);
 
+	/* Set PLL work mode to normal */
 	val = __SHIFTIN(PLL_WORK_MODE_NORMAL, PLL_WORK_MODE) | (PLL_WORK_MODE << 16);
 	CRU_WRITE(sc, pll->con_base + PLL_CON3, val);
 
@@ -287,6 +343,8 @@ rk3399_cru_pll_set_rate(struct rk_cru_softc *sc,
         }
 
 static const char * pll_parents[] = { "xin24m", "xin32k" };
+static const char * armclkl_parents[] = { "clk_core_l_lpll_src", "clk_core_l_bpll_src", "clk_core_l_dpll_src", "clk_core_l_gpll_src" };
+static const char * armclkb_parents[] = { "clk_core_b_lpll_src", "clk_core_b_bpll_src", "clk_core_b_dpll_src", "clk_core_b_gpll_src" };
 static const char * mux_pll_src_cpll_gpll_parents[] = { "cpll", "gpll" };
 static const char * mux_pll_src_cpll_gpll_npll_parents[] = { "cpll", "gpll", "npll" };
 static const char * mux_pll_src_cpll_gpll_upll_parents[] = { "cpll", "gpll", "upll" };
@@ -345,6 +403,28 @@ static struct rk_cru_clk rk3399_cru_clks[] = {
 		   __BIT(8),		/* mode_mask */
 		   __BIT(31),		/* lock_mask */
 		   pll_rates),
+
+	RK_GATE(0, "clk_core_l_lpll_src", "lpll", CLKGATE_CON(0), 0),
+	RK_GATE(0, "clk_core_l_bpll_src", "bpll", CLKGATE_CON(0), 1),
+	RK_GATE(0, "clk_core_l_dpll_src", "dpll", CLKGATE_CON(0), 2),
+	RK_GATE(0, "clk_core_l_gpll_src", "gpll", CLKGATE_CON(0), 3),
+
+	RK_CPU(RK3399_ARMCLKL, "armclkl", armclkl_parents,
+	       CLKSEL_CON(0),		/* reg */
+	       __BITS(7,6), 0, 3,	/* mux_mask, mux_main, mux_alt */
+	       __BITS(4,0),		/* div_mask */
+	       armclkl_rates),
+
+	RK_GATE(0, "clk_core_b_lpll_src", "lpll", CLKGATE_CON(1), 0),
+	RK_GATE(0, "clk_core_b_bpll_src", "bpll", CLKGATE_CON(1), 1),
+	RK_GATE(0, "clk_core_b_dpll_src", "dpll", CLKGATE_CON(1), 2),
+	RK_GATE(0, "clk_core_b_gpll_src", "gpll", CLKGATE_CON(1), 3),
+
+	RK_CPU(RK3399_ARMCLKB, "armclkb", armclkb_parents,
+	       CLKSEL_CON(2),		/* reg */
+	       __BITS(7,6), 1, 3,	/* mux_mask, mux_main, mux_alt */
+	       __BITS(4,0),		/* div_mask */
+	       armclkb_rates),
 
 	/*
 	 * perilp0

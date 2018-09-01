@@ -1,4 +1,4 @@
-/* $NetBSD: rk_cru_arm.c,v 1.1 2018/06/16 00:19:04 jmcneill Exp $ */
+/* $NetBSD: rk_cru_arm.c,v 1.2 2018/09/01 19:35:53 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rk_cru_arm.c,v 1.1 2018/06/16 00:19:04 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rk_cru_arm.c,v 1.2 2018/09/01 19:35:53 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -60,13 +60,13 @@ rk_cru_arm_get_rate(struct rk_cru_softc *sc,
 	return fref / div;
 }
 
-int
-rk_cru_arm_set_rate(struct rk_cru_softc *sc,
+static int
+rk_cru_arm_set_rate_rates(struct rk_cru_softc *sc,
     struct rk_cru_clk *clk, u_int rate)
 {
 	struct rk_cru_arm *arm = &clk->u.arm;
+	struct rk_cru_clk *main_parent, *alt_parent;
 	const struct rk_cru_arm_rate *arm_rate = NULL;
-	struct clk *clkp_parent;
 	int error;
 
 	KASSERT(clk->type == RK_CRU_ARM);
@@ -82,26 +82,101 @@ rk_cru_arm_set_rate(struct rk_cru_softc *sc,
 	if (arm_rate == NULL)
 		return EINVAL;
 
-	error = rk_cru_arm_set_parent(sc, clk, arm->parents[arm->mux_main]);
+	main_parent = rk_cru_clock_find(sc, arm->parents[arm->mux_main]);
+	alt_parent = rk_cru_clock_find(sc, arm->parents[arm->mux_alt]);
+	if (main_parent == NULL || alt_parent == NULL) {
+		device_printf(sc->sc_dev, "couldn't get clock parents\n");
+		return ENXIO;
+	}
+
+	error = rk_cru_arm_set_parent(sc, clk, arm->parents[arm->mux_alt]);
 	if (error != 0)
 		return error;
-
-	clkp_parent = clk_get_parent(&clk->base);
-	if (clkp_parent == NULL)
-		return ENXIO;
 
 	const u_int parent_rate = arm_rate->rate / arm_rate->div;
 
-	error = clk_set_rate(clkp_parent, parent_rate);
+	error = clk_set_rate(&main_parent->base, parent_rate);
 	if (error != 0)
-		return error;
+		goto done;
 
 	const uint32_t write_mask = arm->div_mask << 16;
 	const uint32_t write_val = __SHIFTIN(arm_rate->div - 1, arm->div_mask);
 
 	CRU_WRITE(sc, arm->reg, write_mask | write_val);
 
-	return 0;
+done:
+	rk_cru_arm_set_parent(sc, clk, arm->parents[arm->mux_main]);
+	return error;
+}
+
+static int
+rk_cru_arm_set_rate_cpurates(struct rk_cru_softc *sc,
+    struct rk_cru_clk *clk, u_int rate)
+{
+	struct rk_cru_arm *arm = &clk->u.arm;
+	struct rk_cru_clk *main_parent, *alt_parent;
+	const struct rk_cru_cpu_rate *cpu_rate = NULL;
+	uint32_t write_mask, write_val;
+	int error;
+
+	KASSERT(clk->type == RK_CRU_ARM);
+
+	if (arm->cpurates == NULL || rate == 0)
+		return EIO;
+
+	for (int i = 0; i < arm->nrates; i++)
+		if (arm->cpurates[i].rate == rate) {
+			cpu_rate = &arm->cpurates[i];
+			break;
+		}
+	if (cpu_rate == NULL)
+		return EINVAL;
+
+	main_parent = rk_cru_clock_find(sc, arm->parents[arm->mux_main]);
+	alt_parent = rk_cru_clock_find(sc, arm->parents[arm->mux_alt]);
+	if (main_parent == NULL || alt_parent == NULL) {
+		device_printf(sc->sc_dev, "couldn't get clock parents\n");
+		return ENXIO;
+	}
+
+	error = rk_cru_arm_set_parent(sc, clk, arm->parents[arm->mux_alt]);
+	if (error != 0)
+		return error;
+
+	error = clk_set_rate(&main_parent->base, rate);
+	if (error != 0)
+		goto done;
+
+	write_mask = cpu_rate->reg1_mask << 16;
+	write_val = cpu_rate->reg1_val;
+	CRU_WRITE(sc, cpu_rate->reg1, write_mask | write_val);
+
+	write_mask = cpu_rate->reg2_mask << 16;
+	write_val = cpu_rate->reg2_val;
+	CRU_WRITE(sc, cpu_rate->reg2, write_mask | write_val);
+
+	write_mask = arm->div_mask << 16;
+	write_val = __SHIFTIN(0, arm->div_mask);
+	CRU_WRITE(sc, arm->reg, write_mask | write_val);
+
+done:
+	rk_cru_arm_set_parent(sc, clk, arm->parents[arm->mux_main]);
+	return error;
+}
+
+
+int
+rk_cru_arm_set_rate(struct rk_cru_softc *sc,
+    struct rk_cru_clk *clk, u_int rate)
+{
+	struct rk_cru_arm *arm = &clk->u.arm;
+
+	if (arm->rates)
+		return rk_cru_arm_set_rate_rates(sc, clk, rate);
+	else if (arm->cpurates)
+		return rk_cru_arm_set_rate_cpurates(sc, clk, rate);
+	else
+		return EIO;
 }
 
 const char *
