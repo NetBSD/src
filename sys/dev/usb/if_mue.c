@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mue.c,v 1.5 2018/08/31 11:21:00 rin Exp $	*/
+/*	$NetBSD: if_mue.c,v 1.6 2018/09/01 09:57:12 mlelstv Exp $	*/
 /*	$OpenBSD: if_mue.c,v 1.3 2018/08/04 16:42:46 jsg Exp $	*/
 
 /*
@@ -20,7 +20,7 @@
 /* Driver for Microchip LAN7500/LAN7800 chipsets. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mue.c,v 1.5 2018/08/31 11:21:00 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mue.c,v 1.6 2018/09/01 09:57:12 mlelstv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1229,8 +1229,8 @@ mue_encap(struct mue_softc *sc, struct mbuf *m, int idx)
 	memcpy(c->mue_buf, &hdr, sizeof(hdr)); 
 	len = sizeof(hdr);
 
-	KASSERTMSG(len + m->m_pkthdr.len <= sc->mue_txbufsz, "%d <= %u",
-	    len + m->m_pkthdr.len, sc->mue_txbufsz);
+	KASSERTMSG((unsigned)(len + m->m_pkthdr.len) <= sc->mue_txbufsz,
+	    "%d <= %u", len + m->m_pkthdr.len, sc->mue_txbufsz);
 
 	m_copydata(m, 0, m->m_pkthdr.len, c->mue_buf + len);
 	len += m->m_pkthdr.len;
@@ -1284,7 +1284,7 @@ mue_tx_offload(struct mue_softc *sc, struct mbuf *m)
 		hlen += M_CSUM_DATA_IPv4_IPHL(m->m_pkthdr.csum_data);
 	else
 		hlen += M_CSUM_DATA_IPv6_IPHL(m->m_pkthdr.csum_data);
-	KASSERT(m->m_len >= hlen + sizeof(struct tcphdr));
+	KASSERT(m->m_len >= (int)(hlen + sizeof(struct tcphdr)));
 #endif
 
 	/* Packet length should be cleared. */
