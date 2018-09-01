@@ -5426,10 +5426,10 @@ enum punit_power_well {
 #define  PORT_CLK_SEL_LCPLL_1350	(1<<29)
 #define  PORT_CLK_SEL_LCPLL_810		(2<<29)
 #define  PORT_CLK_SEL_SPLL		(3<<29)
-#define  PORT_CLK_SEL_WRPLL1		(4<<29)
-#define  PORT_CLK_SEL_WRPLL2		(5<<29)
-#define  PORT_CLK_SEL_NONE		(7<<29)
-#define  PORT_CLK_SEL_MASK		(7<<29)
+#define  PORT_CLK_SEL_WRPLL1		(4U<<29)
+#define  PORT_CLK_SEL_WRPLL2		(5U<<29)
+#define  PORT_CLK_SEL_NONE		(7U<<29)
+#define  PORT_CLK_SEL_MASK		(7U<<29)
 
 /* Transcoder clock selection */
 #define TRANS_CLK_SEL_A			0x46140

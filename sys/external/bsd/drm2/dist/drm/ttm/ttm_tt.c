@@ -284,7 +284,8 @@ fail2: __unused
 fail1:	kmem_free(ttm_dma->dma_segs, (ttm->num_pages *
 		sizeof(ttm_dma->dma_segs[0])));
 fail0:	KASSERT(error);
-	ttm_tt_destroy(ttm);
+	drm_free_large(ttm->pages);
+	uao_detach(ttm->swap_storage);
 	/* XXX errno NetBSD->Linux */
 	return -error;
     }
