@@ -1,4 +1,4 @@
-/* $NetBSD: bwfm.c,v 1.12 2018/06/26 06:48:00 msaitoh Exp $ */
+/* $NetBSD: bwfm.c,v 1.13 2018/09/01 22:01:03 riastradh Exp $ */
 /* $OpenBSD: bwfm.c,v 1.5 2017/10/16 22:27:16 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
@@ -337,7 +337,7 @@ bwfm_start(struct ifnet *ifp)
 			continue;
 		}
 
-		error = sc->sc_bus_ops->bs_txdata(sc, m);
+		error = sc->sc_bus_ops->bs_txdata(sc, &m);
 		if (error == ENOBUFS) {
 			IF_PREPEND(&ifp->if_snd, m);
 			ifp->if_flags |= IFF_OACTIVE;
