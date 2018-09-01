@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.1,v 1.1.2.17 2018/08/28 16:25:19 snj Exp $
+# $NetBSD: CHANGES-8.1,v 1.1.2.18 2018/09/01 06:35:20 martin Exp $
 
 A complete list of changes from the NetBSD 8.0 release to the NetBSD 8.1
 release:
@@ -657,4 +657,73 @@ sys/arch/prep/prep/mainbus.c			1.34
 	Fix initialization order so we can boot again on IBM PPS
 	Model 6015.
 	[martin, ticket #994]
+
+sys/external/bsd/drm2/dist/drm/nouveau/nouveau_fence.c 1.5-1.9
+sys/external/bsd/drm2/dist/drm/nouveau/nouveau_fence.h 1.3-1.5
+sys/external/bsd/drm2/dist/drm/nouveau/nouveau_nv84_fence.c 1.3
+
+	Rewrite nouveau_fence in an attempt to make it make sense.
+	Fences may last longer than their channels.
+	Fix return values.
+	[riastradh, ticket #996]
+
+sys/external/bsd/common/include/linux/kernel.h	1.9
+sys/external/bsd/drm2/i915drm/intel_gtt.c	1.6
+sys/external/bsd/drm2/include/linux/bitops.h	1.12
+sys/external/bsd/drm2/include/linux/bitops.h	1.13
+sys/external/bsd/drm2/include/linux/delay.h	1.5
+sys/external/bsd/drm2/include/linux/vmalloc.h	1.5
+
+	Change hweight32 to take a uint32_t arg.
+	Fix find_first_zero_bit to find the high bits of 64-bit words.
+	Use uvm_km_alloc(kernel_map) and pmap_kenter, not uvm_pagermapin.
+	Flush chipset writes after GGTT update.
+	Round nsec up for usec delay.
+	libkern min/max is 32-bit.  Linux min/max is generic.
+	[riastradh, ticket #997]
+
+sys/dev/pci/agp_i810.c				1.123
+sys/dev/pci/agp_i810var.h			1.7
+sys/external/bsd/drm2/i915drm/intel_gtt.c	1.7
+
+	Restore gtt page table control register on resume.
+	[riastradh, ticket #998]
+
+sys/dev/fss.c					1.105,1.106
+sys/dev/fssvar.h				1.30,1.31
+
+	Change fss ioctl to no longer block while a snapshot gets
+	created or destroyed.
+	[hannken, ticket #999]
+
+sys/kern/vfs_bio.c				1.277
+
+	Fix deadlock with getnewbuf().
+	[hannken, ticket #1000]
+
+usr.sbin/npf/npfctl/npf.conf.5			1.49,1.50(partly),
+						1.51-1.70 (patch)
+
+	Various improvements to the npf.conf(5) man page.
+	[maxv, ticket #1001]
+
+usr.bin/printf/printf.1				1.31 (patch)
+usr.bin/printf/printf.c				1.43
+
+	Allow signed numbers as inputs for all integer formats, including
+	those which treat the data as unsigned.
+	[kre, ticket #1002]
+
+sys/external/bsd/drm2/dist/drm/i915/i915_reg.h	1.2
+sys/external/bsd/drm2/dist/drm/i915/intel_sdvo.c 1.8
+sys/external/bsd/drm2/dist/drm/ttm/ttm_tt.c	1.10
+sys/external/bsd/drm2/drm/drm_scatter.c		1.4
+sys/external/bsd/drm2/linux/linux_idr.c		1.6
+sys/external/bsd/drm2/linux/linux_ww_mutex.c	1.3,1.4
+
+	Miscelaneous minor improvements to DRM/KMS.
+	The state in netbsd-8 now matches HEAD before the
+	Linux 4.4 drm import, with the exception of Tegra (arm)
+	specific code.
+	[riastradh, ticket #1003]
 
