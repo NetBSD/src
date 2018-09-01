@@ -1,4 +1,4 @@
-/*	$NetBSD: fss.c,v 1.98.2.2 2018/01/13 05:38:54 snj Exp $	*/
+/*	$NetBSD: fss.c,v 1.98.2.3 2018/09/01 06:02:13 martin Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.98.2.2 2018/01/13 05:38:54 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.98.2.3 2018/09/01 06:02:13 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,6 +93,8 @@ static int fss_bs_io(struct fss_softc *, fss_io_type,
 static u_int32_t *fss_bs_indir(struct fss_softc *, u_int32_t);
 
 static kmutex_t fss_device_lock;	/* Protect all units. */
+static kcondvar_t fss_device_cv;	/* Serialize snapshot creation. */
+static bool fss_creating = false;	/* Currently creating a snapshot. */
 static int fss_num_attached = 0;	/* Number of attached devices. */
 static struct vfs_hooks fss_vfs_hooks = {
 	.vh_unmount = fss_unmount_hook
@@ -137,6 +139,7 @@ fssattach(int num)
 {
 
 	mutex_init(&fss_device_lock, MUTEX_DEFAULT, IPL_NONE);
+	cv_init(&fss_device_cv, "snapwait");
 	if (config_cfattach_attach(fss_cd.cd_name, &fss_ca))
 		aprint_error("%s: unable to register\n", fss_cd.cd_name);
 }
@@ -155,7 +158,6 @@ fss_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dev = self;
 	sc->sc_bdev = NODEV;
 	mutex_init(&sc->sc_slock, MUTEX_DEFAULT, IPL_NONE);
-	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
 	cv_init(&sc->sc_work_cv, "fssbs");
 	cv_init(&sc->sc_cache_cv, "cowwait");
 	bufq_alloc(&sc->sc_bufq, "fcfs", 0);
@@ -174,15 +176,18 @@ fss_detach(device_t self, int flags)
 {
 	struct fss_softc *sc = device_private(self);
 
-	if (sc->sc_flags & FSS_ACTIVE)
+	mutex_enter(&sc->sc_slock);
+	if (sc->sc_state != FSS_IDLE) {
+		mutex_exit(&sc->sc_slock);
 		return EBUSY;
+	}
+	mutex_exit(&sc->sc_slock);
 
 	if (--fss_num_attached == 0)
 		vfs_hooks_detach(&fss_vfs_hooks);
 
 	pmf_device_deregister(self);
 	mutex_destroy(&sc->sc_slock);
-	mutex_destroy(&sc->sc_lock);
 	cv_destroy(&sc->sc_work_cv);
 	cv_destroy(&sc->sc_cache_cv);
 	bufq_drain(sc->sc_bufq);
@@ -216,6 +221,7 @@ fss_open(dev_t dev, int flags, int mode, struct lwp *l)
 			mutex_exit(&fss_device_lock);
 			return ENOMEM;
 		}
+		sc->sc_state = FSS_IDLE;
 	}
 
 	mutex_enter(&sc->sc_slock);
@@ -247,20 +253,20 @@ restart:
 		mutex_exit(&fss_device_lock);
 		return 0;
 	}
-	if ((sc->sc_flags & FSS_ACTIVE) != 0 &&
+	if (sc->sc_state != FSS_IDLE &&
 	    (sc->sc_uflags & FSS_UNCONFIG_ON_CLOSE) != 0) {
 		sc->sc_uflags &= ~FSS_UNCONFIG_ON_CLOSE;
 		mutex_exit(&sc->sc_slock);
 		error = fss_ioctl(dev, FSSIOCCLR, NULL, FWRITE, l);
 		goto restart;
 	}
-	if ((sc->sc_flags & FSS_ACTIVE) != 0) {
+	if (sc->sc_state != FSS_IDLE) {
 		mutex_exit(&sc->sc_slock);
 		mutex_exit(&fss_device_lock);
 		return error;
 	}
 
-	KASSERT((sc->sc_flags & FSS_ACTIVE) == 0);
+	KASSERT(sc->sc_state == FSS_IDLE);
 	KASSERT((sc->sc_flags & (FSS_CDEV_OPEN|FSS_BDEV_OPEN)) == mflag);
 	mutex_exit(&sc->sc_slock);
 	cf = device_cfdata(sc->sc_dev);
@@ -280,7 +286,7 @@ fss_strategy(struct buf *bp)
 
 	mutex_enter(&sc->sc_slock);
 
-	if (write || !FSS_ISVALID(sc)) {
+	if (write || sc->sc_state != FSS_ACTIVE) {
 		bp->b_error = (write ? EROFS : ENXIO);
 		goto done;
 	}
@@ -318,7 +324,7 @@ fss_write(dev_t dev, struct uio *uio, int flags)
 int
 fss_ioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
-	int error;
+	int error = 0;
 	struct fss_softc *sc = device_lookup_private(&fss_cd, minor(dev));
 	struct fss_set _fss;
 	struct fss_set *fss = (struct fss_set *)data;
@@ -337,81 +343,125 @@ fss_ioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		fss->fss_flags = 0;
 		/* Fall through */
 	case FSSIOCSET:
-		mutex_enter(&sc->sc_lock);
+		mutex_enter(&sc->sc_slock);
 		if ((flag & FWRITE) == 0)
 			error = EPERM;
-		else if ((sc->sc_flags & FSS_ACTIVE) != 0)
+		if (error == 0 && sc->sc_state != FSS_IDLE) {
 			error = EBUSY;
-		else
-			error = fss_create_snapshot(sc, fss, l);
-		if (error == 0)
+		} else {
+			sc->sc_state = FSS_CREATING;
+			copyinstr(fss->fss_mount, sc->sc_mntname,
+			    sizeof(sc->sc_mntname), NULL);
+			memset(&sc->sc_time, 0, sizeof(sc->sc_time));
+			sc->sc_clshift = 0;
+		}
+		mutex_exit(&sc->sc_slock);
+		if (error)
+			break;
+
+		/*
+		 * Serialize snapshot creation.
+		 */
+		mutex_enter(&fss_device_lock);
+		while (fss_creating) {
+			error = cv_wait_sig(&fss_device_cv, &fss_device_lock);
+			if (error) {
+				mutex_enter(&sc->sc_slock);
+				KASSERT(sc->sc_state == FSS_CREATING);
+				sc->sc_state = FSS_IDLE;
+				mutex_exit(&sc->sc_slock);
+				mutex_exit(&fss_device_lock);
+				break;
+			}
+		}
+		fss_creating = true;
+		mutex_exit(&fss_device_lock);
+
+		error = fss_create_snapshot(sc, fss, l);
+		mutex_enter(&sc->sc_slock);
+		if (error == 0) {
+			KASSERT(sc->sc_state == FSS_ACTIVE);
 			sc->sc_uflags = fss->fss_flags;
-		mutex_exit(&sc->sc_lock);
+		} else {
+			KASSERT(sc->sc_state == FSS_CREATING);
+			sc->sc_state = FSS_IDLE;
+		}
+		mutex_exit(&sc->sc_slock);
+
+		mutex_enter(&fss_device_lock);
+		fss_creating = false;
+		cv_broadcast(&fss_device_cv);
+		mutex_exit(&fss_device_lock);
+
 		break;
 
 	case FSSIOCCLR:
-		mutex_enter(&sc->sc_lock);
-		if ((flag & FWRITE) == 0)
+		mutex_enter(&sc->sc_slock);
+		if ((flag & FWRITE) == 0) {
 			error = EPERM;
-		else if ((sc->sc_flags & FSS_ACTIVE) == 0)
-			error = ENXIO;
+		} else if (sc->sc_state != FSS_ACTIVE &&
+		    sc->sc_state != FSS_ERROR) {
+			error = EBUSY;
+		} else {
+			sc->sc_state = FSS_DESTROYING;
+		}
+		mutex_exit(&sc->sc_slock);
+		if (error)
+			break;
+
+		error = fss_delete_snapshot(sc, l);
+		mutex_enter(&sc->sc_slock);
+		if (error)
+			fss_error(sc, "Failed to delete snapshot");
 		else
-			error = fss_delete_snapshot(sc, l);
-		mutex_exit(&sc->sc_lock);
+			KASSERT(sc->sc_state == FSS_IDLE);
+		mutex_exit(&sc->sc_slock);
 		break;
 
 #ifndef _LP64
 	case FSSIOCGET50:
-		mutex_enter(&sc->sc_lock);
-		switch (sc->sc_flags & (FSS_PERSISTENT | FSS_ACTIVE)) {
-		case FSS_ACTIVE:
+		mutex_enter(&sc->sc_slock);
+		if (sc->sc_state == FSS_IDLE) {
+			error = ENXIO;
+		} else if ((sc->sc_flags & FSS_PERSISTENT) == 0) {
 			memcpy(fsg50->fsg_mount, sc->sc_mntname, MNAMELEN);
 			fsg50->fsg_csize = FSS_CLSIZE(sc);
 			timeval_to_timeval50(&sc->sc_time, &fsg50->fsg_time);
 			fsg50->fsg_mount_size = sc->sc_clcount;
 			fsg50->fsg_bs_size = sc->sc_clnext;
 			error = 0;
-			break;
-		case FSS_PERSISTENT | FSS_ACTIVE:
+		} else {
 			memcpy(fsg50->fsg_mount, sc->sc_mntname, MNAMELEN);
 			fsg50->fsg_csize = 0;
 			timeval_to_timeval50(&sc->sc_time, &fsg50->fsg_time);
 			fsg50->fsg_mount_size = 0;
 			fsg50->fsg_bs_size = 0;
 			error = 0;
-			break;
-		default:
-			error = ENXIO;
-			break;
 		}
-		mutex_exit(&sc->sc_lock);
+		mutex_exit(&sc->sc_slock);
 		break;
 #endif /* _LP64 */
 
 	case FSSIOCGET:
-		mutex_enter(&sc->sc_lock);
-		switch (sc->sc_flags & (FSS_PERSISTENT | FSS_ACTIVE)) {
-		case FSS_ACTIVE:
+		mutex_enter(&sc->sc_slock);
+		if (sc->sc_state == FSS_IDLE) {
+			error = ENXIO;
+		} else if ((sc->sc_flags & FSS_PERSISTENT) == 0) {
 			memcpy(fsg->fsg_mount, sc->sc_mntname, MNAMELEN);
 			fsg->fsg_csize = FSS_CLSIZE(sc);
 			fsg->fsg_time = sc->sc_time;
 			fsg->fsg_mount_size = sc->sc_clcount;
 			fsg->fsg_bs_size = sc->sc_clnext;
 			error = 0;
-			break;
-		case FSS_PERSISTENT | FSS_ACTIVE:
+		} else {
 			memcpy(fsg->fsg_mount, sc->sc_mntname, MNAMELEN);
 			fsg->fsg_csize = 0;
 			fsg->fsg_time = sc->sc_time;
 			fsg->fsg_mount_size = 0;
 			fsg->fsg_bs_size = 0;
 			error = 0;
-			break;
-		default:
-			error = ENXIO;
-			break;
 		}
-		mutex_exit(&sc->sc_lock);
+		mutex_exit(&sc->sc_slock);
 		break;
 
 	case FSSIOFSET:
@@ -458,13 +508,18 @@ static inline void
 fss_error(struct fss_softc *sc, const char *msg)
 {
 
-	if ((sc->sc_flags & (FSS_ACTIVE | FSS_ERROR)) != FSS_ACTIVE)
+	KASSERT(mutex_owned(&sc->sc_slock));
+
+	if (sc->sc_state == FSS_ERROR)
 		return;
 
 	aprint_error_dev(sc->sc_dev, "snapshot invalid: %s\n", msg);
-	if ((sc->sc_flags & FSS_PERSISTENT) == 0)
+	if ((sc->sc_flags & FSS_PERSISTENT) == 0) {
+		mutex_exit(&sc->sc_slock);
 		fscow_disestablish(sc->sc_mount, fss_copy_on_write, sc);
-	sc->sc_flags |= FSS_ERROR;
+		mutex_enter(&sc->sc_slock);
+	}
+	sc->sc_state = FSS_ERROR;
 }
 
 /*
@@ -571,7 +626,7 @@ fss_unmount_hook(struct mount *mp)
 		if ((sc = device_lookup_private(&fss_cd, i)) == NULL)
 			continue;
 		mutex_enter(&sc->sc_slock);
-		if ((sc->sc_flags & FSS_ACTIVE) != 0 && sc->sc_mount == mp)
+		if (sc->sc_state != FSS_IDLE && sc->sc_mount == mp)
 			fss_error(sc, "forced by unmount");
 		mutex_exit(&sc->sc_slock);
 	}
@@ -590,7 +645,7 @@ fss_copy_on_write(void *v, struct buf *bp, bool data_valid)
 	struct fss_softc *sc = v;
 
 	mutex_enter(&sc->sc_slock);
-	if (!FSS_ISVALID(sc)) {
+	if (sc->sc_state != FSS_ACTIVE) {
 		mutex_exit(&sc->sc_slock);
 		return 0;
 	}
@@ -783,7 +838,9 @@ fss_create_snapshot(struct fss_softc *sc, struct fss_set *fss, struct lwp *l)
 
 	if (sc->sc_flags & FSS_PERSISTENT) {
 		fss_softc_alloc(sc);
-		sc->sc_flags |= FSS_ACTIVE;
+		mutex_enter(&sc->sc_slock);
+		sc->sc_state = FSS_ACTIVE;
+		mutex_exit(&sc->sc_slock);
 		return 0;
 	}
 
@@ -848,8 +905,11 @@ fss_create_snapshot(struct fss_softc *sc, struct fss_set *fss, struct lwp *l)
 	error = VFS_SYNC(sc->sc_mount, MNT_WAIT, curlwp->l_cred);
 	if (error == 0)
 		error = fscow_establish(sc->sc_mount, fss_copy_on_write, sc);
-	if (error == 0)
-		sc->sc_flags |= FSS_ACTIVE;
+	if (error == 0) {
+		mutex_enter(&sc->sc_slock);
+		sc->sc_state = FSS_ACTIVE;
+		mutex_exit(&sc->sc_slock);
+	}
 
 	vfs_resume(sc->sc_mount);
 
@@ -884,22 +944,27 @@ static int
 fss_delete_snapshot(struct fss_softc *sc, struct lwp *l)
 {
 
-	if ((sc->sc_flags & (FSS_PERSISTENT | FSS_ERROR)) == 0)
-		fscow_disestablish(sc->sc_mount, fss_copy_on_write, sc);
-
 	mutex_enter(&sc->sc_slock);
-	sc->sc_flags &= ~(FSS_ACTIVE|FSS_ERROR);
-	sc->sc_mount = NULL;
-	sc->sc_bdev = NODEV;
-	mutex_exit(&sc->sc_slock);
+	if ((sc->sc_flags & FSS_PERSISTENT) == 0 && sc->sc_state != FSS_ERROR) {
+		mutex_exit(&sc->sc_slock);
+		fscow_disestablish(sc->sc_mount, fss_copy_on_write, sc);
+	} else {
+		mutex_exit(&sc->sc_slock);
+	}
 
 	fss_softc_free(sc);
 	if (sc->sc_flags & FSS_PERSISTENT)
 		vrele(sc->sc_bs_vp);
 	else
 		vn_close(sc->sc_bs_vp, FREAD|FWRITE, l->l_cred);
+
+	mutex_enter(&sc->sc_slock);
+	sc->sc_state = FSS_IDLE;
+	sc->sc_mount = NULL;
+	sc->sc_bdev = NODEV;
 	sc->sc_bs_vp = NULL;
 	sc->sc_flags &= ~FSS_PERSISTENT;
+	mutex_exit(&sc->sc_slock);
 
 	return 0;
 }
@@ -923,7 +988,7 @@ fss_read_cluster(struct fss_softc *sc, u_int32_t cl)
 	mutex_enter(&sc->sc_slock);
 
 restart:
-	if (isset(sc->sc_copied, cl) || !FSS_ISVALID(sc)) {
+	if (isset(sc->sc_copied, cl) || sc->sc_state != FSS_ACTIVE) {
 		mutex_exit(&sc->sc_slock);
 		return 0;
 	}
@@ -1109,7 +1174,7 @@ fss_bs_thread(void *arg)
 		if (sc->sc_flags & FSS_PERSISTENT) {
 			if ((bp = bufq_get(sc->sc_bufq)) == NULL)
 				continue;
-			is_valid = FSS_ISVALID(sc);
+			is_valid = (sc->sc_state == FSS_ACTIVE);
 			is_read = (bp->b_flags & B_READ);
 			thread_idle = false;
 			mutex_exit(&sc->sc_slock);
@@ -1171,7 +1236,7 @@ fss_bs_thread(void *arg)
 		 */
 		if ((bp = bufq_get(sc->sc_bufq)) == NULL)
 			continue;
-		is_valid = FSS_ISVALID(sc);
+		is_valid = (sc->sc_state == FSS_ACTIVE);
 		is_read = (bp->b_flags & B_READ);
 		thread_idle = false;
 
@@ -1307,6 +1372,7 @@ fss_modcmd(modcmd_t cmd, void *arg)
 	switch (cmd) {
 	case MODULE_CMD_INIT:
 		mutex_init(&fss_device_lock, MUTEX_DEFAULT, IPL_NONE);
+		cv_init(&fss_device_cv, "snapwait");
 		error = config_cfdriver_attach(&fss_cd);
 		if (error) {
 			mutex_destroy(&fss_device_lock);
@@ -1345,6 +1411,7 @@ fss_modcmd(modcmd_t cmd, void *arg)
 			    &fss_cdevsw, &fss_cmajor);
 			break;
 		}
+		cv_destroy(&fss_device_cv);
 		mutex_destroy(&fss_device_lock);
 		break;
 
