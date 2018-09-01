@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_subdev_mmu_base.c,v 1.3 2018/08/27 07:41:19 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_subdev_mmu_base.c,v 1.4 2018/09/01 04:38:22 riastradh Exp $	*/
 
 /*
  * Copyright 2010 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_mmu_base.c,v 1.3 2018/08/27 07:41:19 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_mmu_base.c,v 1.4 2018/09/01 04:38:22 riastradh Exp $");
 
 #include "priv.h"
 
@@ -436,6 +436,11 @@ nvkm_vm_create(struct nvkm_mmu *mmu, u64 offset, u64 length, u64 mm_offset,
 
 	vm->pgt  = vzalloc((vm->lpde - vm->fpde + 1) * sizeof(*vm->pgt));
 	if (!vm->pgt) {
+#ifdef __NetBSD__
+		linux_mutex_destroy(&vm->mutex);
+#else
+		mutex_destroy(&vm->mutex);
+#endif
 		kfree(vm);
 		return -ENOMEM;
 	}
@@ -444,6 +449,11 @@ nvkm_vm_create(struct nvkm_mmu *mmu, u64 offset, u64 length, u64 mm_offset,
 			   block >> 12);
 	if (ret) {
 		vfree(vm->pgt);
+#ifdef __NetBSD__
+		linux_mutex_destroy(&vm->mutex);
+#else
+		mutex_destroy(&vm->mutex);
+#endif
 		kfree(vm);
 		return ret;
 	}
