@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_fence.c,v 1.12 2018/08/28 15:04:02 riastradh Exp $	*/
+/*	$NetBSD: linux_fence.c,v 1.13 2018/09/01 22:28:04 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_fence.c,v 1.12 2018/08/28 15:04:02 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_fence.c,v 1.13 2018/09/01 22:28:04 riastradh Exp $");
 
 #include <sys/atomic.h>
 #include <sys/condvar.h>
@@ -179,7 +179,8 @@ struct fence *
 fence_get(struct fence *fence)
 {
 
-	kref_get(&fence->refcount);
+	if (fence)
+		kref_get(&fence->refcount);
 	return fence;
 }
 
