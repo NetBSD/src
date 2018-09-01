@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata_core.c,v 1.62.2.1 2018/08/31 19:08:03 jdolecek Exp $	*/
+/*	$NetBSD: ahcisata_core.c,v 1.62.2.2 2018/09/01 10:13:41 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.62.2.1 2018/08/31 19:08:03 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.62.2.2 2018/09/01 10:13:41 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -1206,9 +1206,6 @@ ahci_cmd_complete(struct ata_channel *chp, struct ata_xfer *xfer, int tfd)
 	if (ata_waitdrain_xfer_check(chp, xfer))
 		return 0;
 
-	KASSERT((achp->ahcic_cmds_active & (1U << xfer->c_slot)) != 0);
-	achp->ahcic_cmds_active &= ~(1U << xfer->c_slot);
-
 	if (xfer->c_flags & C_TIMEOU) {
 		ata_c->flags |= AT_TIMEOU;
 	}
@@ -1225,6 +1222,8 @@ ahci_cmd_complete(struct ata_channel *chp, struct ata_xfer *xfer, int tfd)
 
 	ahci_cmd_done(chp, xfer);
 
+	KASSERT((achp->ahcic_cmds_active & (1U << xfer->c_slot)) != 0);
+	achp->ahcic_cmds_active &= ~(1U << xfer->c_slot);
 	ata_deactivate_xfer(chp, xfer);
 
 	return 0;
@@ -1453,10 +1452,6 @@ ahci_bio_complete(struct ata_channel *chp, struct ata_xfer *xfer, int tfd)
 	if (ata_waitdrain_xfer_check(chp, xfer))
 		return 0;
 
-	KASSERT((achp->ahcic_cmds_active & (1U << xfer->c_slot)) != 0);
-	achp->ahcic_cmds_active &= ~(1U << xfer->c_slot);
-	ata_deactivate_xfer(chp, xfer);
-
 	if (xfer->c_flags & C_TIMEOU) {
 		ata_bio->error = TIMEOUT;
 	}
@@ -1497,6 +1492,11 @@ ahci_bio_complete(struct ata_channel *chp, struct ata_xfer *xfer, int tfd)
 			    le32toh(achp->ahcic_cmdh[xfer->c_slot].cmdh_prdbc);
 	}
 	AHCIDEBUG_PRINT((" now %ld\n", ata_bio->bcount), DEBUG_XFERS);
+
+	KASSERT((achp->ahcic_cmds_active & (1U << xfer->c_slot)) != 0);
+	achp->ahcic_cmds_active &= ~(1U << xfer->c_slot);
+	ata_deactivate_xfer(chp, xfer);
+
 	(*chp->ch_drive[drive].drv_done)(chp->ch_drive[drive].drv_softc, xfer);
 	if ((AHCI_TFD_ST(tfd) & WDCS_ERR) == 0)
 		atastart(chp);
@@ -1997,10 +1997,6 @@ ahci_atapi_complete(struct ata_channel *chp, struct ata_xfer *xfer, int tfd)
 	if (ata_waitdrain_xfer_check(chp, xfer))
 		return 0;
 
-	KASSERT((achp->ahcic_cmds_active & (1U << xfer->c_slot)) != 0);
-	achp->ahcic_cmds_active &= ~(1U << xfer->c_slot);
-	ata_deactivate_xfer(chp, xfer);
-
 	if (xfer->c_flags & C_TIMEOU) {
 		sc_xfer->error = XS_TIMEOUT;
 	}
@@ -2030,7 +2026,12 @@ ahci_atapi_complete(struct ata_channel *chp, struct ata_xfer *xfer, int tfd)
 			sc_xfer->error = XS_BUSY;
 			sc_xfer->status = SCSI_CHECK;
 		}
-	} 
+	}
+
+	KASSERT((achp->ahcic_cmds_active & (1U << xfer->c_slot)) != 0);
+	achp->ahcic_cmds_active &= ~(1U << xfer->c_slot);
+	ata_deactivate_xfer(chp, xfer);
+
 	ata_free_xfer(chp, xfer);
 	scsipi_done(sc_xfer);
 	if ((AHCI_TFD_ST(tfd) & WDCS_ERR) == 0)
