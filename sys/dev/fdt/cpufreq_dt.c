@@ -1,4 +1,4 @@
-/* $NetBSD: cpufreq_dt.c,v 1.4 2018/09/01 19:36:53 jmcneill Exp $ */
+/* $NetBSD: cpufreq_dt.c,v 1.5 2018/09/01 23:41:16 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufreq_dt.c,v 1.4 2018/09/01 19:36:53 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufreq_dt.c,v 1.5 2018/09/01 23:41:16 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -428,8 +428,9 @@ cpufreq_dt_parse(struct cpufreq_dt_softc *sc)
 	mutex_exit(&cpufreq_dt_tables_lock);
 
 	if (error) {
-		aprint_error_dev(sc->sc_dev,
-		    "couldn't parse operating points: %d\n", error);
+		if (error != EEXIST)
+			aprint_error_dev(sc->sc_dev,
+			    "couldn't parse operating points: %d\n", error);
 		return error;
 	}
 
