@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC64,v 1.33 2018/08/29 01:58:54 jmcneill Exp $
+#	$NetBSD: GENERIC64,v 1.34 2018/09/02 01:17:23 jmcneill Exp $
 #
 #	GENERIC ARM (aarch64) kernel
 #
@@ -250,6 +250,8 @@ axpreg*		at axppmic?
 fan53555reg*	at iic?			# FAN53555 / SY82x regulator
 max77620pmic*	at iic?
 pcf8563rtc*	at iic?			# PCF8563 RTC
+rkpmic*		at iic?			# Rockchip Power Management IC
+rkreg*		at rkpmic?
 tcagpio*	at iic?
 
 # Random number generators
