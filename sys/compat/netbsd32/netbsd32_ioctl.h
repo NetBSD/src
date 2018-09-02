@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.h,v 1.59 2018/03/06 07:59:59 mlelstv Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.h,v 1.60 2018/09/02 16:13:42 maxv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -217,36 +217,6 @@ net/if_atm.h:88:#define SIOCATMENA	_IOWR('a', 123, struct atm_pseudoioctl) /* en
 net/if_atm.h:89:#define SIOCATMDIS	_IOWR('a', 124, struct atm_pseudoioctl) /* disable */
 
 net/if_ppp.h:105:#define PPPIOCSCOMPRESS	_IOW('t', 77, struct ppp_option_data)
-
-netccitt/x25.h:157:#define	SIOCSIFCONF_X25	_IOW('i', 12, struct ifreq_x25)	/* set ifnet config */
-netccitt/x25.h:158:#define	SIOCGIFCONF_X25	_IOWR('i',13, struct ifreq_x25)	/* get ifnet config */
-
-netinet/ip_fil.h:46:#define	SIOCGETFS	_IOR('r', 64, struct friostat)
-netinet/ip_fil.h:56:#define	SIOCFRZST	_IOWR('r', 74, struct friostat)
-
-netinet/ip_fil.h:42:#define	SIOCADAFR	_IOW('r', 60, struct frentry)
-netinet/ip_fil.h:43:#define	SIOCRMAFR	_IOW('r', 61, struct frentry)
-netinet/ip_fil.h:49:#define	SIOCADIFR	_IOW('r', 67, struct frentry)
-netinet/ip_fil.h:50:#define	SIOCRMIFR	_IOW('r', 68, struct frentry)
-netinet/ip_fil.h:52:#define	SIOCINAFR	_IOW('r', 70, struct frentry)
-netinet/ip_fil.h:53:#define	SIOCINIFR	_IOW('r', 71, struct frentry)
-netinet/ip_fil.h:57:#define	SIOCZRLST	_IOWR('r', 75, struct frentry)
-
-netinet/ip_fil.h:78:#define	SIOCAUTHW	_IOWR(r, 76, struct fr_info)
-netinet/ip_fil.h:79:#define	SIOCAUTHR	_IOWR(r, 77, struct fr_info)
-
-netinet/ip_fil.h:60:#define	SIOCATHST	_IOWR('r', 78, struct fr_authstat)
-
-netinet/ip_nat.h:22:#define	SIOCADNAT	_IOW('r', 80, struct ipnat)
-netinet/ip_nat.h:23:#define	SIOCRMNAT	_IOW('r', 81, struct ipnat)
-
-netinet/ip_nat.h:24:#define	SIOCGNATS	_IOR('r', 82, struct natstat)
-
-netinet/ip_nat.h:25:#define	SIOCGNATL	_IOWR('r', 83, struct natlookup)
-
-netinet/ip_nat.h:26:#define SIOCGFRST	_IOR('r', 84, struct ipfrstat)
-
-netinet/ip_nat.h:27:#define SIOCGIPST	_IOR('r', 85, struct ips_stat)
 
 sys/module.h?
 
