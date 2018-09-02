@@ -1,4 +1,4 @@
-.\"    $NetBSD: npf.conf.5,v 1.73 2018/09/02 17:45:18 maxv Exp $
+.\"    $NetBSD: npf.conf.5,v 1.74 2018/09/02 18:03:23 wiz Exp $
 .\"
 .\" Copyright (c) 2009-2017 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -103,7 +103,8 @@ In the context of NPF, an interface is seen as a list of IP addresses,
 that can be IPv4 or IPv6, which are configured on the actual associated
 interface.
 .Pp
-Such list can be either static or dynamic. With a static list, NPF will
+Such list can be either static or dynamic.
+With a static list, NPF will
 capture the interface addresses on configuration load, whereas with a dynamic
 list NPF will capture the runtime list of addresses, reflecting any changes
 to the interface, including the attach and detach.
@@ -114,11 +115,11 @@ all addresses will remain present.
 Three functions exist, to extract addresses from an interface with a chosen
 list type and IP address type:
 .Bl -tag -width Xifaddrs()XX -offset indent
-.It inet4()
+.It Fn inet4
 Static list, IPv4 addresses.
-.It inet6()
+.It Fn inet6
 Static list, IPv6 addresses.
-.It ifaddrs()
+.It Fn ifaddrs
 Dynamic list, both IPv4 and IPv6.
 The
 .Cd family
@@ -126,7 +127,9 @@ keyword can be used in combination of a filtering rule to explicitly select
 an IP address type.
 .El
 .Pp
-By default, when no extraction function is used, ifaddrs() is assumed.
+By default, when no extraction function is used,
+.Fn ifaddrs
+is assumed.
 .Pp
 Example of configuration with static interface lists:
 .Bd -literal
