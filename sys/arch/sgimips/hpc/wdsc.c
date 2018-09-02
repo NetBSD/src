@@ -1,4 +1,4 @@
-/*	$NetBSD: wdsc.c,v 1.34 2015/02/18 16:47:58 macallan Exp $	*/
+/*	$NetBSD: wdsc.c,v 1.35 2018/09/02 16:18:50 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2001 Wayne Knowles
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdsc.c,v 1.34 2015/02/18 16:47:58 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdsc.c,v 1.35 2018/09/02 16:18:50 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -104,6 +104,9 @@ wdsc_match(device_t parent, cfdata_t cf, void *aux)
 		reset = MIPS_PHYS_TO_KSEG1(haa->ha_sh + haa->ha_dmaoff +
 		    haa->hpc_regs->scsi0_ctl);
 		asr = MIPS_PHYS_TO_KSEG1(haa->ha_sh + haa->ha_devoff);
+
+		/* XXX: hpc1 offset due to SGIMIPS_BUS_SPACE_HPC brain damage */
+		asr = (asr + 3) & ~0x3;
 
 		if (platform.badaddr((void *)reset, sizeof(reset)))
 			return 0;
