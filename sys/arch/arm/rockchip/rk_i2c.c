@@ -1,4 +1,4 @@
-/* $NetBSD: rk_i2c.c,v 1.1 2018/07/01 18:16:58 jmcneill Exp $ */
+/* $NetBSD: rk_i2c.c,v 1.2 2018/09/02 00:48:12 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: rk_i2c.c,v 1.1 2018/07/01 18:16:58 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rk_i2c.c,v 1.2 2018/09/02 00:48:12 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -294,7 +294,7 @@ rk_i2c_read(struct rk_i2c_softc *sc, i2c_addr_t addr,
 		return EINVAL;
 
 	mode = RKI2C_CON_I2C_MODE_RTX;
-	con = RKI2C_CON_I2C_EN | __SHIFTIN(mode, RKI2C_CON_I2C_MODE);
+	con = RKI2C_CON_I2C_EN | RKI2C_CON_ACK | __SHIFTIN(mode, RKI2C_CON_I2C_MODE);
 	WR4(sc, RKI2C_CON, con);
 
 	if (send_start && (error = rk_i2c_start(sc)) != 0)
