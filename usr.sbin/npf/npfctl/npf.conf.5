@@ -1,4 +1,4 @@
-.\"    $NetBSD: npf.conf.5,v 1.72 2018/09/01 19:26:46 wiz Exp $
+.\"    $NetBSD: npf.conf.5,v 1.73 2018/09/02 17:45:18 maxv Exp $
 .\"
 .\" Copyright (c) 2009-2017 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd September 1, 2018
+.Dd September 2, 2018
 .Dt NPF.CONF 5
 .Os
 .Sh NAME
@@ -99,38 +99,52 @@ form of:
 10.1.1.1
 .Ed
 .Ss Interfaces
-Interfaces can be specified as the values of the variables:
-.Bd -literal
-$pub_if_list = { inet4(wm0), inet4(wm1) }
-.Ed
+In the context of NPF, an interface is seen as a list of IP addresses,
+that can be IPv4 or IPv6, which are configured on the actual associated
+interface.
 .Pp
-In the context of filtering, an interface provides a list of all its IP
-addresses, both IPv4 and IPv6.
-Specific addresses configured on an interface can also be selected by family,
-e.g.:
+Such list can be either static or dynamic. With a static list, NPF will
+capture the interface addresses on configuration load, whereas with a dynamic
+list NPF will capture the runtime list of addresses, reflecting any changes
+to the interface, including the attach and detach.
+.Pp
+Note that with a dynamic list, marking the interface as ``down'' has no effect,
+all addresses will remain present.
+.Pp
+Three functions exist, to extract addresses from an interface with a chosen
+list type and IP address type:
+.Bl -tag -width Xifaddrs()XX -offset indent
+.It inet4()
+Static list, IPv4 addresses.
+.It inet6()
+Static list, IPv6 addresses.
+.It ifaddrs()
+Dynamic list, both IPv4 and IPv6.
+The
+.Cd family
+keyword can be used in combination of a filtering rule to explicitly select
+an IP address type.
+.El
+.Pp
+By default, when no extraction function is used, ifaddrs() is assumed.
+.Pp
+Example of configuration with static interface lists:
 .Bd -literal
 $pub_if4 = inet4(wm0)
 $pub_if46 = { inet4(wm0), inet6(wm0) }
 .Ed
 .Pp
-In the above examples, NPF will statically capture the interface
-addresses on configuration load.
+In the above example, $pub_if4 is the list of IPv4 addresses configured
+on wm0, and $pub_if46 is the list of IPv4 and IPv6 addresses configured
+on wm0.
 .Pp
-The following can be used for dynamic handling of the interface addresses:
+Example of configuration with dynamic interface lists:
 .Bd -literal
-$pub_if = ifaddrs(wm0)
+$pub_if_1 = ifaddrs(wm0)
+$pub_if_2 = wm0
 .Ed
 .Pp
-In this case, the expression will represent the runtime list of addresses,
-reflecting any changes to the interface, including the attach and detach.
-Marking the interface as ``down'' has no effect, i.e. all addresses will
-remain present.
-.Pp
-A dynamic address list represents both the IPv4 and IPv6 addresses configured on
-an interface.
-The
-.Cd family
-keyword can be used in combination of a filtering rule to be explicit.
+In the above example, $pub_if_1 and $pub_if_2 are equal.
 .Ss Groups
 NPF requires that all rules be defined within groups.
 Groups can be thought of as higher level rules which can contain subrules.
@@ -174,7 +188,9 @@ Its parameter should be a protocol number or its symbolic name,
 as specified in the
 .Pa /etc/protocols
 file.
-The protocol keyword can additionally have protocol-specific options.
+This keyword can additionally have protocol-specific options, such as
+.Cd flags .
+.Pp
 The
 .Cd flags
 keyword can be used to match the packets against specific TCP flags,
@@ -279,7 +295,9 @@ on packets originating from the 10.1.1.0/24 network.
 Explicit filter criteria can be specified using "pass <criteria>" as
 an additional option of the mapping.
 .Pp
-The dynamic NAT implies network address and port translation (NAPT).
+The
+.Cd dynamic
+NAT implies network address and port translation (NAPT).
 The port translation can be controlled explicitly.
 For example, the following provides "port forwarding", redirecting the
 public port 9022 to the port 22 of an internal host:
@@ -287,7 +305,9 @@ public port 9022 to the port 22 of an internal host:
 map $ext_if dynamic proto tcp 10.1.1.2 port 22 <- $ext_if port 9022
 .Ed
 .Pp
-The static NAT can have different address translation algorithms, which
+The
+.Cd static
+NAT can have different address translation algorithms, which
 can be chosen using the
 .Cd algo
 keyword.
