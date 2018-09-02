@@ -1,4 +1,4 @@
-/* $NetBSD: rk_i2c.c,v 1.2 2018/09/02 00:48:12 jmcneill Exp $ */
+/* $NetBSD: rk_i2c.c,v 1.3 2018/09/02 01:16:03 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: rk_i2c.c,v 1.2 2018/09/02 00:48:12 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rk_i2c.c,v 1.3 2018/09/02 01:16:03 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -137,7 +137,7 @@ rk_i2c_init(struct rk_i2c_softc *sc)
 	 * SCL = PCLK / SCLK Divisor
 	 */
 
-	rate = clk_get_rate(sc->sc_pclk);
+	rate = clk_get_rate(sc->sc_sclk);
 	div = howmany(rate, sc->sc_clkfreq * 8) - 2;
 	if (div >= 0) {
 		divl = div / 2;
