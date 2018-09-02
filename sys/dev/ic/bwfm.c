@@ -1,4 +1,4 @@
-/* $NetBSD: bwfm.c,v 1.13 2018/09/01 22:01:03 riastradh Exp $ */
+/* $NetBSD: bwfm.c,v 1.14 2018/09/02 19:46:53 maya Exp $ */
 /* $OpenBSD: bwfm.c,v 1.5 2017/10/16 22:27:16 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
@@ -237,6 +237,7 @@ bwfm_attach(struct bwfm_softc *sc)
 	ifp->if_init = bwfm_init;
 	ifp->if_ioctl = bwfm_ioctl;
 	ifp->if_start = bwfm_start;
+	ifp->if_stop = bwfm_stop;
 	ifp->if_watchdog = bwfm_watchdog;
 	IFQ_SET_READY(&ifp->if_snd);
 	memcpy(ifp->if_xname, DEVNAME(sc), IFNAMSIZ);
