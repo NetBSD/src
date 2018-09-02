@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_display.c,v 1.21 2018/08/27 07:28:41 riastradh Exp $	*/
+/*	$NetBSD: intel_display.c,v 1.22 2018/09/02 17:36:57 riastradh Exp $	*/
 
 /*
  * Copyright © 2006-2007 Intel Corporation
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_display.c,v 1.21 2018/08/27 07:28:41 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_display.c,v 1.22 2018/09/02 17:36:57 riastradh Exp $");
 
 #include <linux/dmi.h>
 #include <linux/module.h>
@@ -14775,8 +14775,10 @@ static void intel_init_display(struct drm_device *dev)
 
 #ifdef __NetBSD__
 	linux_mutex_init(&dev_priv->pps_mutex);
+	linux_mutex_init(&dev_priv->drrs.mutex);
 #else
 	mutex_init(&dev_priv->pps_mutex);
+	mutex_init(&dev_priv->drrs.mutex);
 #endif
 }
 
@@ -15710,10 +15712,12 @@ void intel_modeset_cleanup(struct drm_device *dev)
 
 #ifdef __NetBSD__
 	linux_mutex_destroy(&dev_priv->psr.lock);
+	linux_mutex_destroy(&dev_priv->drrs.mutex);
 	linux_mutex_destroy(&dev_priv->pps_mutex);
 	linux_mutex_destroy(&dev_priv->fbc.lock);
 #else
 	mutex_destroy(&dev_priv->psr.lock);
+	mutex_destroy(&dev_priv->drrs.mutex);
 	mutex_destroy(&dev_priv->pps_mutex);
 	mutex_destroy(&dev_priv->fbc.lock);
 #endif

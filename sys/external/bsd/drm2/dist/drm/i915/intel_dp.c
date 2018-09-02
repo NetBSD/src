@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_dp.c,v 1.17 2018/08/27 13:41:23 riastradh Exp $	*/
+/*	$NetBSD: intel_dp.c,v 1.18 2018/09/02 17:36:57 riastradh Exp $	*/
 
 /*
  * Copyright © 2008 Intel Corporation
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_dp.c,v 1.17 2018/08/27 13:41:23 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_dp.c,v 1.18 2018/09/02 17:36:57 riastradh Exp $");
 
 #include <linux/i2c.h>
 #include <linux/slab.h>
@@ -5014,8 +5014,6 @@ static void
 intel_dp_connector_destroy(struct drm_connector *connector)
 {
 	struct intel_connector *intel_connector = to_intel_connector(connector);
-	struct drm_device *dev = intel_connector->base.dev;
-	struct drm_i915_private *dev_priv = dev->dev_private;
 
 	kfree(intel_connector->detect_edid);
 
@@ -5028,11 +5026,6 @@ intel_dp_connector_destroy(struct drm_connector *connector)
 		intel_panel_fini(&intel_connector->panel);
 
 	drm_connector_cleanup(connector);
-#ifdef __NetBSD__
-	linux_mutex_destroy(&dev_priv->drrs.mutex);
-#else
-	mutex_destroy(&dev_priv->drrs.mutex);
-#endif
 	kfree(connector);
 }
 
@@ -6024,12 +6017,6 @@ intel_dp_init_connector(struct intel_digital_port *intel_dig_port,
 	int type;
 
 	intel_dp->pps_pipe = INVALID_PIPE;
-
-#ifdef __NetBSD__
-	linux_mutex_init(&dev_priv->drrs.mutex);
-#else
-	mutex_init(&dev_priv->drrs.mutex);
-#endif
 
 	/* intel_dp vfuncs */
 	if (INTEL_INFO(dev)->gen >= 9)
