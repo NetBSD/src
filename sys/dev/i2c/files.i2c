@@ -1,4 +1,4 @@
-#	$NetBSD: files.i2c,v 1.95 2018/08/29 01:57:38 jmcneill Exp $
+#	$NetBSD: files.i2c,v 1.96 2018/09/02 01:16:58 jmcneill Exp $
 
 obsolete defflag	opt_i2cbus.h		I2C_SCAN
 define	i2cbus { }
@@ -349,3 +349,10 @@ file dev/i2c/tea5767.c				tea5767radio
 device	fan53555reg
 attach	fan53555reg at iic
 file	dev/i2c/fan53555.c			fan53555reg
+
+# Rockchip Power Management IC
+device	rkpmic { }
+device	rkreg: rkpmic
+attach	rkpmic at iic
+attach	rkreg at rkpmic
+file	dev/i2c/rkpmic.c			rkpmic
