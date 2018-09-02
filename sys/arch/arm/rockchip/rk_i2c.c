@@ -1,4 +1,4 @@
-/* $NetBSD: rk_i2c.c,v 1.3 2018/09/02 01:16:03 jmcneill Exp $ */
+/* $NetBSD: rk_i2c.c,v 1.4 2018/09/02 10:07:17 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: rk_i2c.c,v 1.3 2018/09/02 01:16:03 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rk_i2c.c,v 1.4 2018/09/02 10:07:17 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -418,6 +418,8 @@ rk_i2c_attach(device_t parent, device_t self, void *aux)
 
 	aprint_naive("\n");
 	aprint_normal(": Rockchip I2C (%u Hz)\n", sc->sc_clkfreq);
+
+	fdtbus_clock_assign(phandle);
 
 	rk_i2c_init(sc);
 
