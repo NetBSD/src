@@ -9,7 +9,8 @@
 #define COUNT_KERNEL	(COUNT_ALL & ~COUNT_TEXTA)
 
 #if defined(__aarch64__)
-#define LOADADDR(a)		((((u_long)(a)) + offset) & 0x3fffffffff)
+extern u_long			load_offset;
+#define LOADADDR(a)		(((((u_long)(a)) + offset) & 0x3fffffffff) + load_offset)
 #else
 #define LOADADDR(a)		(((u_long)(a)))
 #endif

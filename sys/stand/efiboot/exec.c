@@ -1,4 +1,4 @@
-/* $NetBSD: exec.c,v 1.2 2018/08/27 09:51:32 jmcneill Exp $ */
+/* $NetBSD: exec.c,v 1.3 2018/09/02 23:50:23 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -30,6 +30,8 @@
 #include "efifdt.h"
 
 #include <loadfile.h>
+
+u_long load_offset = 0;
 
 int
 exec_netbsd(const char *fname, const char *args)
@@ -65,13 +67,14 @@ exec_netbsd(const char *fname, const char *args)
 	}
 
 	memset(marks, 0, sizeof(marks));
-	marks[MARK_START] = (addr + EFIBOOT_ALIGN) & ~(EFIBOOT_ALIGN - 1);
+	load_offset = (addr + EFIBOOT_ALIGN) & ~(EFIBOOT_ALIGN - 1);
 	fd = loadfile(fname, marks, LOAD_KERNEL);
 	if (fd < 0) {
 		printf("boot: %s: %s\n", fname, strerror(errno));
 		goto cleanup;
 	}
 	close(fd);
+	load_offset = 0;
 
 	if (efi_fdt_size() > 0) {
 		efi_fdt_bootargs(args);
