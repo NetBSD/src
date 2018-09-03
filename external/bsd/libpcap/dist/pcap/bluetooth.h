@@ -1,4 +1,4 @@
-/*	$NetBSD: bluetooth.h,v 1.4 2017/01/24 22:29:29 christos Exp $	*/
+/*	$NetBSD: bluetooth.h,v 1.5 2018/09/03 15:26:44 christos Exp $	*/
 
 /*
  * Copyright (c) 2006 Paolo Abeni (Italy)
@@ -36,12 +36,14 @@
 #ifndef lib_pcap_bluetooth_h
 #define lib_pcap_bluetooth_h
 
+#include <pcap/pcap-inttypes.h>
+
 /*
  * Header prepended libpcap to each bluetooth h4 frame,
  * fields are in network byte order
  */
 typedef struct _pcap_bluetooth_h4_header {
-	u_int32_t direction; /* if first bit is set direction is incoming */
+	uint32_t direction; /* if first bit is set direction is incoming */
 } pcap_bluetooth_h4_header;
 
 /*
@@ -49,9 +51,8 @@ typedef struct _pcap_bluetooth_h4_header {
  * fields are in network byte order
  */
 typedef struct _pcap_bluetooth_linux_monitor_header {
-	u_int16_t adapter_id;
-	u_int16_t opcode;
+	uint16_t adapter_id;
+	uint16_t opcode;
 } pcap_bluetooth_linux_monitor_header;
-
 
 #endif
