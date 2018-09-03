@@ -1,4 +1,4 @@
-/* $NetBSD: ieee80211_netbsd.c,v 1.31 2018/04/27 06:56:21 maxv Exp $ */
+/* $NetBSD: ieee80211_netbsd.c,v 1.32 2018/09/03 16:29:36 riastradh Exp $ */
 
 /*
  * Copyright (c) 2003-2005 Sam Leffler, Errno Consulting
@@ -31,7 +31,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_freebsd.c,v 1.8 2005/08/08 18:46:35 sam Exp $");
 #else
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_netbsd.c,v 1.31 2018/04/27 06:56:21 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_netbsd.c,v 1.32 2018/09/03 16:29:36 riastradh Exp $");
 #endif
 
 /*
@@ -781,7 +781,7 @@ m_append(struct mbuf *m0, int len, const void *cpv)
 		n = m_get(M_DONTWAIT, m->m_type);
 		if (n == NULL)
 			break;
-		n->m_len = min(MLEN, remainder);
+		n->m_len = uimin(MLEN, remainder);
 		memmove(mtod(n, void *), cp, n->m_len);
 		cp += n->m_len, remainder -= n->m_len;
 		m->m_next = n;

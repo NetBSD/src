@@ -1,4 +1,4 @@
-/*	$NetBSD: ugenhc.c,v 1.26 2017/04/17 07:13:30 riastradh Exp $	*/
+/*	$NetBSD: ugenhc.c,v 1.27 2018/09/03 16:29:37 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Antti Kantee.  All Rights Reserved.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugenhc.c,v 1.26 2017/04/17 07:13:30 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugenhc.c,v 1.27 2018/09/03 16:29:37 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -150,7 +150,7 @@ ugenhc_roothub_ctrl(struct usbd_bus *bus, usb_device_request_t *req,
 		case C(0, UDESC_DEVICE): {
 			usb_device_descriptor_t devd;
 
-			totlen = min(buflen, sizeof(devd));
+			totlen = uimin(buflen, sizeof(devd));
 			memcpy(&devd, buf, totlen);
 			USETW(devd.idVendor, 0x7275);
 			USETW(devd.idProduct, 0x6d72);
@@ -204,7 +204,7 @@ ugenhc_roothub_ctrl(struct usbd_bus *bus, usb_device_request_t *req,
 
 		USETW(ps.wPortStatus, sc->sc_port_status);
 		USETW(ps.wPortChange, sc->sc_port_change);
-		totlen = min(len, sizeof(ps));
+		totlen = uimin(len, sizeof(ps));
 		memcpy(buf, &ps, totlen);
 		break;
 	}
@@ -239,7 +239,7 @@ rumpusb_device_ctrl_start(struct usbd_xfer *xfer)
 		case UDESC_DEVICE:
 			{
 			usb_device_descriptor_t uddesc;
-			totlen = min(len, USB_DEVICE_DESCRIPTOR_SIZE);
+			totlen = uimin(len, USB_DEVICE_DESCRIPTOR_SIZE);
 			memset(buf, 0, totlen);
 			if (rumpcomp_ugenhc_ioctl(sc->sc_ugenfd[UGEN_EPT_CTRL],
 			    USB_GET_DEVICE_DESC, &uddesc, &ru_error) == -1) {

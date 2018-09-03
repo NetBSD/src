@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_crypto_tkip.c,v 1.14 2018/01/19 07:57:50 maxv Exp $	*/
+/*	$NetBSD: ieee80211_crypto_tkip.c,v 1.15 2018/09/03 16:29:36 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_crypto_tkip.c,v 1.10 2005/08/08 18:46:35 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_crypto_tkip.c,v 1.14 2018/01/19 07:57:50 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_crypto_tkip.c,v 1.15 2018/09/03 16:29:36 riastradh Exp $");
 #endif
 
 /*
@@ -821,7 +821,7 @@ michael_mic(struct tkip_ctx *ctx, const u8 *key,
 		if (space > data_len)
 			space = data_len;
 		if (nspill) {
-			int n = min(4 - nspill, space);
+			int n = uimin(4 - nspill, space);
 			memcpy(spill + nspill, data, n);
 			nspill += n;
 			data += n;

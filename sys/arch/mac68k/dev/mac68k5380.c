@@ -1,4 +1,4 @@
-/*	$NetBSD: mac68k5380.c,v 1.49 2013/10/25 21:48:48 martin Exp $	*/
+/*	$NetBSD: mac68k5380.c,v 1.50 2018/09/03 16:29:25 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mac68k5380.c,v 1.49 2013/10/25 21:48:48 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mac68k5380.c,v 1.50 2018/09/03 16:29:25 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -402,7 +402,7 @@ extern	int			*nofault, m68k_fault_addr;
 		/*
 		 * Get the dest address aligned.
 		 */
-		resid = count = min(pending_5380_count,
+		resid = count = uimin(pending_5380_count,
 				    4 - (((int) pending_5380_data) & 0x3));
 		if (count && (count < 4)) {
 			data = (u_int8_t *) pending_5380_data;
@@ -421,7 +421,7 @@ extern	int			*nofault, m68k_fault_addr;
 		while (pending_5380_count) {
 		int dcount;
 
-		dcount = count = min(pending_5380_count, MIN_PHYS);
+		dcount = count = uimin(pending_5380_count, MIN_PHYS);
 		long_drq = (volatile u_int32_t *) ncr_5380_with_drq;
 		long_data = (u_int32_t *) pending_5380_data;
 
@@ -450,7 +450,7 @@ extern	int			*nofault, m68k_fault_addr;
 		/*
 		 * Get the source address aligned.
 		 */
-		resid = count = min(pending_5380_count,
+		resid = count = uimin(pending_5380_count,
 				    4 - (((int) pending_5380_data) & 0x3));
 		if (count && (count < 4)) {
 			data = (u_int8_t *) pending_5380_data;
@@ -470,7 +470,7 @@ extern	int			*nofault, m68k_fault_addr;
 		while (pending_5380_count) {
 		int dcount;
 
-		dcount = count = min(pending_5380_count, MIN_PHYS);
+		dcount = count = uimin(pending_5380_count, MIN_PHYS);
 		long_drq = (volatile u_int32_t *) ncr_5380_with_drq;
 		long_data = (u_int32_t *) pending_5380_data;
 

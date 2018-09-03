@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.310 2017/04/26 03:02:49 riastradh Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.311 2018/09/03 16:29:36 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.310 2017/04/26 03:02:49 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.311 2018/09/03 16:29:36 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs.h"
@@ -1308,7 +1308,7 @@ retry:
 		bool stalewriteverf = false;
 
 		nfsstats.rpccnt[NFSPROC_WRITE]++;
-		len = min(tsiz, nmp->nm_wsize);
+		len = uimin(tsiz, nmp->nm_wsize);
 		datalen = pageprotected ? 0 : nfsm_rndup(len);
 		nfsm_reqhead(np, NFSPROC_WRITE,
 			NFSX_FH(v3) + 5 * NFSX_UNSIGNED + datalen);

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_30.c,v 1.36 2014/10/20 11:58:01 christos Exp $	*/
+/*	$NetBSD: vfs_syscalls_30.c,v 1.37 2018/09/03 16:29:29 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_30.c,v 1.36 2014/10/20 11:58:01 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_30.c,v 1.37 2018/09/03 16:29:29 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -233,7 +233,7 @@ compat_30_sys_getdents(struct lwp *l, const struct compat_30_sys_getdents_args *
 		goto out1;
 	}
 
-	buflen = min(MAXBSIZE, SCARG(uap, count));
+	buflen = uimin(MAXBSIZE, SCARG(uap, count));
 	tbuf = malloc(buflen, M_TEMP, M_WAITOK);
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	off = fp->f_offset;

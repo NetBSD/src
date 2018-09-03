@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tun.c,v 1.146 2018/08/06 03:58:59 ozaki-r Exp $	*/
+/*	$NetBSD: if_tun.c,v 1.147 2018/09/03 16:29:35 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.146 2018/08/06 03:58:59 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.147 2018/09/03 16:29:35 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -808,7 +808,7 @@ tunread(dev_t dev, struct uio *uio, int ioflag)
 
 	/* Copy the mbuf chain */
 	while (m0 && uio->uio_resid > 0 && error == 0) {
-		len = min(uio->uio_resid, m0->m_len);
+		len = uimin(uio->uio_resid, m0->m_len);
 		if (len != 0)
 			error = uiomove(mtod(m0, void *), len, uio);
 		m0 = m = m_free(m0);
@@ -921,7 +921,7 @@ tunwrite(dev_t dev, struct uio *uio, int ioflag)
 	top = NULL;
 	mp = &top;
 	while (error == 0 && uio->uio_resid > 0) {
-		m->m_len = min(mlen, uio->uio_resid);
+		m->m_len = uimin(mlen, uio->uio_resid);
 		error = uiomove(mtod(m, void *), m->m_len, uio);
 		*mp = m;
 		mp = &m->m_next;

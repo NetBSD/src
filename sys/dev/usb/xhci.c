@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.97 2018/08/30 13:13:24 jakllsch Exp $	*/
+/*	$NetBSD: xhci.c,v 1.98 2018/09/03 16:29:34 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.97 2018/08/30 13:13:24 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.98 2018/09/03 16:29:34 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1281,7 +1281,7 @@ xhci_intr1(struct xhci_softc * const sc)
 	if ((usbsts & (XHCI_STS_HSE | XHCI_STS_EINT | XHCI_STS_PCD |
 	    XHCI_STS_HCE)) == 0) {
 		DPRINTFN(16, "ignored intr not for %s",
-		    device_xname(sc->sc_dev), 0, 0, 0);
+		    (uintptr_t)device_xname(sc->sc_dev), 0, 0, 0);
 		return 0;
 	}
 
@@ -3523,7 +3523,7 @@ xhci_roothub_ctrl(struct usbd_bus *bus, usb_device_request_t *req,
 		}
 		usb_hub_descriptor_t hubd;
 
-		totlen = min(buflen, sizeof(hubd));
+		totlen = uimin(buflen, sizeof(hubd));
 		memcpy(&hubd, buf, totlen);
 		hubd.bNbrPorts = sc->sc_rhportcount[bn];
 		USETW(hubd.wHubCharacteristics, UHD_PWR_NO_SWITCH);
@@ -3533,7 +3533,7 @@ xhci_roothub_ctrl(struct usbd_bus *bus, usb_device_request_t *req,
 			hubd.DeviceRemovable[i++] = 0;
 		}
 		hubd.bDescLength = USB_HUB_DESCRIPTOR_SIZE + i;
-		totlen = min(totlen, hubd.bDescLength);
+		totlen = uimin(totlen, hubd.bDescLength);
 		memcpy(buf, &hubd, totlen);
 		break;
 	case C(UR_GET_STATUS, UT_READ_CLASS_DEVICE):
@@ -3583,7 +3583,7 @@ xhci_roothub_ctrl(struct usbd_bus *bus, usb_device_request_t *req,
 		if (v & XHCI_PS_PLC)	i |= UPS_C_PORT_LINK_STATE;
 		if (v & XHCI_PS_CEC)	i |= UPS_C_PORT_CONFIG_ERROR;
 		USETW(ps.wPortChange, i);
-		totlen = min(len, sizeof(ps));
+		totlen = uimin(len, sizeof(ps));
 		memcpy(buf, &ps, totlen);
 		break;
 	}

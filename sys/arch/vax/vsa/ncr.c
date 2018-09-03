@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr.c,v 1.48 2010/12/14 23:31:16 matt Exp $	*/
+/*	$NetBSD: ncr.c,v 1.49 2018/09/03 16:29:28 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ncr.c,v 1.48 2010/12/14 23:31:16 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ncr.c,v 1.49 2018/09/03 16:29:28 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -156,7 +156,7 @@ si_vsbus_attach(device_t parent, device_t self, void *aux)
 		sc->onlyscsi = 1;
 	}
 	sc->ncr_addr = (void *)va->va_dmaaddr;
-	ncr_dmasize = min(va->va_dmasize, MAXPHYS);
+	ncr_dmasize = uimin(va->va_dmasize, MAXPHYS);
 
 	/*
 	 * MD function pointers used by the MI code.

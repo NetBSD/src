@@ -1,4 +1,4 @@
-/* $NetBSD: ddc.c,v 1.7 2018/06/16 21:22:13 thorpej Exp $ */
+/* $NetBSD: ddc.c,v 1.8 2018/09/03 16:29:31 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */ 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ddc.c,v 1.7 2018/06/16 21:22:13 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ddc.c,v 1.8 2018/09/03 16:29:31 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -115,9 +115,9 @@ ddc_read_edid_block(i2c_tag_t tag, uint8_t *dest, size_t len, uint8_t block)
 	iic_release_bus(tag, I2C_F_POLL);
 
 	if (block & 1) {
-		memcpy(dest, &edid[128], min(len, 128));
+		memcpy(dest, &edid[128], uimin(len, 128));
 	} else {
-		memcpy(dest, &edid[0], min(len, 128));
+		memcpy(dest, &edid[0], uimin(len, 128));
 	}
 
 	return 0;

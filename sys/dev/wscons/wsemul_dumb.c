@@ -1,4 +1,4 @@
-/* $NetBSD: wsemul_dumb.c,v 1.17 2017/11/03 18:42:35 maya Exp $ */
+/* $NetBSD: wsemul_dumb.c,v 1.18 2018/09/03 16:29:34 riastradh Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsemul_dumb.c,v 1.17 2017/11/03 18:42:35 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsemul_dumb.c,v 1.18 2018/09/03 16:29:34 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -149,7 +149,7 @@ wsemul_dumb_output(void *cookie, const u_char *data, u_int count,
 			break;
 
 		case ASCII_HT:
-			n = min(8 - (edp->ccol & 7),
+			n = uimin(8 - (edp->ccol & 7),
 			    edp->ncols - edp->ccol - 1);
 			(*edp->emulops->erasecols)(edp->emulcookie,
 			    edp->crow, edp->ccol, n, edp->defattr);

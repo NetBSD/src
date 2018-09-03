@@ -272,7 +272,7 @@ static const int debug_flags = DBG_RX;
 #define test_and_clear_bit(bit, p) atomic_cmpset_int((p), ((*(p)) | bit), ((*(p)) & ~bit))
 
 
-#define max_t(type, a, b) (type)max((a), (b))
+#define max_t(type, a, b) (type)uimax((a), (b))
 #define net_device ifnet
 #define cpu_to_be32            htobe32
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: sbp.c,v 1.36 2014/02/25 18:30:09 pooka Exp $	*/
+/*	$NetBSD: sbp.c,v 1.37 2018/09/03 16:29:31 riastradh Exp $	*/
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
  * Copyright (c) 1998-2002 Katsushi Kobayashi and Hidetoshi Shimokawa
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbp.c,v 1.36 2014/02/25 18:30:09 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbp.c,v 1.37 2018/09/03 16:29:31 riastradh Exp $");
 
 
 #include <sys/param.h>
@@ -1432,7 +1432,7 @@ END_DEBUG
 
 	if (new) {
 		xfer->recv.pay_len = 0;
-		xfer->send.spd = min(target->fwdev->speed, max_speed);
+		xfer->send.spd = uimin(target->fwdev->speed, max_speed);
 		xfer->fc = target->sbp->sc_fd.fc;
 	}
 
@@ -1989,7 +1989,7 @@ done0:
 	sfp = (struct fw_pkt *)xfer->send.buf;
 	sfp->mode.wres.dst = rfp->mode.wreqb.src;
 	xfer->dst = sfp->mode.wres.dst;
-	xfer->spd = min(sdev->target->fwdev->speed, max_speed);
+	xfer->spd = uimin(sdev->target->fwdev->speed, max_speed);
 	xfer->hand = sbp_loginres_callback;
 
 	sfp->mode.wres.tlrt = rfp->mode.wreqb.tlrt;
@@ -2293,7 +2293,7 @@ END_DEBUG
 	ocb->orb[1] = 0;
 	ocb->orb[2] = htonl(((sc->sc_fd.fc->nodeid | FWLOCALBUS) << 16));
 	ocb->orb[3] = htonl(ocb->bus_addr + IND_PTR_OFFSET);
-	speed = min(target->fwdev->speed, max_speed);
+	speed = uimin(target->fwdev->speed, max_speed);
 	ocb->orb[4] =
 	    htonl(ORB_NOTIFY | ORB_CMD_SPD(speed) | ORB_CMD_MAXP(speed + 7));
 	if ((xs->xs_control & (XS_CTL_DATA_IN | XS_CTL_DATA_OUT)) ==

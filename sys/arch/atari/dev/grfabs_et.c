@@ -1,4 +1,4 @@
-/*	$NetBSD: grfabs_et.c,v 1.34 2010/04/13 11:31:11 tsutsui Exp $	*/
+/*	$NetBSD: grfabs_et.c,v 1.35 2018/09/03 16:29:24 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grfabs_et.c,v 1.34 2010/04/13 11:31:11 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grfabs_et.c,v 1.35 2018/09/03 16:29:24 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/queue.h>
@@ -263,7 +263,7 @@ et_save_view(view_t *v)
 	 */
 	font_height = RCrt(ba, CRT_ID_MAX_ROW_ADDRESS) & 0x1f;
 	sv_size = bm->bytes_per_row * (bm->rows / (font_height + 1));
-	sv_size = min(SAVEBUF_SIZE, sv_size);
+	sv_size = uimin(SAVEBUF_SIZE, sv_size);
 
 	/*
 	 * Save all we need to know....

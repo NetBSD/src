@@ -1,4 +1,4 @@
-/*	$NetBSD: ffb_mainbus.c,v 1.14 2016/11/04 18:11:15 macallan Exp $	*/
+/*	$NetBSD: ffb_mainbus.c,v 1.15 2018/09/03 16:29:27 riastradh Exp $	*/
 /*	$OpenBSD: creator_mainbus.c,v 1.4 2002/07/26 16:39:04 jason Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffb_mainbus.c,v 1.14 2016/11/04 18:11:15 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffb_mainbus.c,v 1.15 2018/09/03 16:29:27 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -82,7 +82,7 @@ ffb_mainbus_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dev = self;
 	sc->sc_bt = ma->ma_bustag;
 
-	nregs = min(ma->ma_nreg, FFB_NREGS);
+	nregs = uimin(ma->ma_nreg, FFB_NREGS);
 
 	if (nregs < FFB_REG_DFB24) {
 		printf(": no dfb24 regs found\n");

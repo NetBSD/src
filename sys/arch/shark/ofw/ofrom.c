@@ -1,4 +1,4 @@
-/*	$NetBSD: ofrom.c,v 1.27 2017/09/08 08:16:09 skrll Exp $	*/
+/*	$NetBSD: ofrom.c,v 1.28 2018/09/03 16:29:27 riastradh Exp $	*/
 
 /*
  * Copyright 1998
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofrom.c,v 1.27 2017/09/08 08:16:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofrom.c,v 1.28 2018/09/03 16:29:27 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -173,7 +173,7 @@ ofromrw(dev_t dev, struct uio *uio, int flags)
 		    0);
 		pmap_update(kpm);
 		o = uio->uio_offset & PGOFSET;
-		c = min(uio->uio_resid, (int)(PAGE_SIZE - o));
+		c = uimin(uio->uio_resid, (int)(PAGE_SIZE - o));
 		error = uiomove((char *)memhook + o, c, uio);
 		pmap_kremove((vaddr_t)memhook, (vaddr_t)memhook + PAGE_SIZE);
 		pmap_update(kpm);

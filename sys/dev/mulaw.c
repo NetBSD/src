@@ -1,4 +1,4 @@
-/*	$NetBSD: mulaw.c,v 1.33 2017/12/27 00:12:06 nat Exp $	*/
+/*	$NetBSD: mulaw.c,v 1.34 2018/09/03 16:29:30 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mulaw.c,v 1.33 2017/12/27 00:12:06 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mulaw.c,v 1.34 2018/09/03 16:29:30 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -282,7 +282,7 @@ DEFINE_FILTER(mulaw_to_linear8)
 	if ((err = this->prev->fetch_to(sc, this->prev, this->src, max_used)))
 		return err;
 	m = dst->end - dst->start;
-	m = min(m, max_used);
+	m = uimin(m, max_used);
 	if (dst->param.encoding == AUDIO_ENCODING_ULINEAR_LE) {
 		FILTER_LOOP_PROLOGUE(this->src, 1, dst, 1, m) {
 			*d = mulawtolin16[*s][0];
@@ -306,7 +306,7 @@ DEFINE_FILTER(mulaw_to_linear16)
 		this->src, max_used / 2)))
 		return err;
 	m = (dst->end - dst->start) & ~1;
-	m = min(m, max_used);
+	m = uimin(m, max_used);
 	switch (dst->param.encoding) {
 	case AUDIO_ENCODING_ULINEAR_LE:
 		FILTER_LOOP_PROLOGUE(this->src, 1, dst, 2, m) {
@@ -352,7 +352,7 @@ DEFINE_FILTER(mulaw_to_linear24)
 		this->src, max_used / 3)))
 		return err;
 	m = (dst->end - dst->start) & ~1;
-	m = min(m, max_used);
+	m = uimin(m, max_used);
 	switch (dst->param.encoding) {
 	case AUDIO_ENCODING_ULINEAR_LE:
 		FILTER_LOOP_PROLOGUE(this->src, 1, dst, 3, m) {
@@ -402,7 +402,7 @@ DEFINE_FILTER(mulaw_to_linear32)
 		this->src, max_used / 4)))
 		return err;
 	m = (dst->end - dst->start) & ~1;
-	m = min(m, max_used);
+	m = uimin(m, max_used);
 	switch (dst->param.encoding) {
 	case AUDIO_ENCODING_ULINEAR_LE:
 		FILTER_LOOP_PROLOGUE(this->src, 1, dst, 4, m) {
@@ -456,7 +456,7 @@ DEFINE_FILTER(linearN_to_mulaw)
 		 max_used * hw)))
 		return err;
 	m = dst->end - dst->start;
-	m = min(m, max_used);
+	m = uimin(m, max_used);
 	switch (this->src->param.encoding) {
 	case AUDIO_ENCODING_SLINEAR_LE:
 		FILTER_LOOP_PROLOGUE(this->src, hw, dst, 1, m) {
@@ -496,7 +496,7 @@ DEFINE_FILTER(alaw_to_linear8)
 	if ((err = this->prev->fetch_to(sc, this->prev, this->src, max_used)))
 		return err;
 	m = dst->end - dst->start;
-	m = min(m, max_used);
+	m = uimin(m, max_used);
 	if (dst->param.encoding == AUDIO_ENCODING_ULINEAR_LE) {
 		FILTER_LOOP_PROLOGUE(this->src, 1, dst, 1, m) {
 			*d = alawtolin16[*s][0];
@@ -520,7 +520,7 @@ DEFINE_FILTER(alaw_to_linear16)
 		 max_used / 2)))
 		return err;
 	m = (dst->end - dst->start) & ~1;
-	m = min(m, max_used);
+	m = uimin(m, max_used);
 	switch (dst->param.encoding) {
 	case AUDIO_ENCODING_ULINEAR_LE:
 		FILTER_LOOP_PROLOGUE(this->src, 1, dst, 2, m) {
@@ -566,7 +566,7 @@ DEFINE_FILTER(alaw_to_linear24)
 		 max_used / 3)))
 		return err;
 	m = (dst->end - dst->start) & ~1;
-	m = min(m, max_used);
+	m = uimin(m, max_used);
 	switch (dst->param.encoding) {
 	case AUDIO_ENCODING_ULINEAR_LE:
 		FILTER_LOOP_PROLOGUE(this->src, 1, dst, 3, m) {
@@ -616,7 +616,7 @@ DEFINE_FILTER(alaw_to_linear32)
 		 max_used / 4)))
 		return err;
 	m = (dst->end - dst->start) & ~1;
-	m = min(m, max_used);
+	m = uimin(m, max_used);
 	switch (dst->param.encoding) {
 	case AUDIO_ENCODING_ULINEAR_LE:
 		FILTER_LOOP_PROLOGUE(this->src, 1, dst, 4, m) {
@@ -670,7 +670,7 @@ DEFINE_FILTER(linearN_to_alaw)
 			max_used * hw)))
 		return err;
 	m = dst->end - dst->start;
-	m = min(m, max_used);
+	m = uimin(m, max_used);
 	switch (this->src->param.encoding) {
 	case AUDIO_ENCODING_SLINEAR_LE:
 		FILTER_LOOP_PROLOGUE(this->src, hw, dst, 1, m) {

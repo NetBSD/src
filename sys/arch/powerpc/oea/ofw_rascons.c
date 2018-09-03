@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_rascons.c,v 1.12 2018/03/02 14:45:23 macallan Exp $	*/
+/*	$NetBSD: ofw_rascons.c,v 1.13 2018/09/03 16:29:26 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_rascons.c,v 1.12 2018/03/02 14:45:23 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_rascons.c,v 1.13 2018/09/03 16:29:26 riastradh Exp $");
 
 #include "wsdisplay.h"
 
@@ -131,8 +131,8 @@ rascons_cnattach(void)
 		needs_finalize = 1;
 	} else {
 		ri->ri_ops.allocattr(ri, 0, 0, 0, &defattr);
-		wsdisplay_preattach(&rascons_stdscreen, ri, 0, max(0,
-		    min(crow, ri->ri_rows - 1)), defattr);
+		wsdisplay_preattach(&rascons_stdscreen, ri, 0, uimax(0,
+		    uimin(crow, ri->ri_rows - 1)), defattr);
 	}
 #if notyet
 	rascons_init_cmap(NULL);

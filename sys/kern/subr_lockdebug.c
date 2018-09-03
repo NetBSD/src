@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_lockdebug.c,v 1.65 2018/08/12 22:05:29 mrg Exp $	*/
+/*	$NetBSD: subr_lockdebug.c,v 1.66 2018/09/03 16:29:35 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.65 2018/08/12 22:05:29 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.66 2018/09/03 16:29:35 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -396,7 +396,7 @@ lockdebug_more(int s)
 		ld_nfree += LD_BATCH;
 		ld = block;
 		base <<= LD_BATCH_SHIFT;
-		m = min(LD_MAX_LOCKS, base + LD_BATCH);
+		m = uimin(LD_MAX_LOCKS, base + LD_BATCH);
 
 		if (m == LD_MAX_LOCKS)
 			ld_nomore = true;

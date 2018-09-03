@@ -1,4 +1,4 @@
-/*	$NetBSD: criov.c,v 1.8 2011/02/24 19:28:03 drochner Exp $ */
+/*	$NetBSD: criov.c,v 1.9 2018/09/03 16:29:37 riastradh Exp $ */
 /*      $OpenBSD: criov.c,v 1.11 2002/06/10 19:36:43 espie Exp $	*/
 
 /*
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: criov.c,v 1.8 2011/02/24 19:28:03 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: criov.c,v 1.9 2018/09/03 16:29:37 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,7 +68,7 @@ cuio_copydata(struct uio *uio, int off, int len, void *cp)
 	while (len > 0) {
 		if (iol == 0)
 			panic("cuio_copydata: empty");
-		count = min(iov->iov_len - off, len);
+		count = uimin(iov->iov_len - off, len);
 		memcpy(cp, (char *)iov->iov_base + off, count);
 		len -= count;
 		cp = (char *)cp + count;
@@ -109,7 +109,7 @@ cuio_copyback(struct uio *uio, int off, int len, void *cp)
 #endif
 			return;
 		}
-		count = min(iov->iov_len - off, len);
+		count = uimin(iov->iov_len - off, len);
 		memcpy((char *)iov->iov_base + off, cp, count);
 		len -= count;
 		cp = (char *)cp + count;
@@ -173,7 +173,7 @@ cuio_apply(struct uio *uio, int off, int len,
 	while (len > 0) {
 		if (ind >= uio->uio_iovcnt)
 			panic("cuio_apply: out of ivecs when processing uio");
-		count = min(uio->uio_iov[ind].iov_len - off, len);
+		count = uimin(uio->uio_iov[ind].iov_len - off, len);
 
 		rval = f(fstate,
 			 ((char *)uio->uio_iov[ind].iov_base + off), count);

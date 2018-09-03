@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.160 2018/07/26 08:22:19 maxv Exp $	*/
+/*	$NetBSD: cpu.c,v 1.161 2018/09/03 16:29:29 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2000-2012 NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.160 2018/07/26 08:22:19 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.161 2018/09/03 16:29:29 riastradh Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -273,7 +273,7 @@ cpu_vm_init(struct cpu_info *ci)
 		default:
 			tcolors /= cai->cai_associativity;
 		}
-		ncolors = max(ncolors, tcolors);
+		ncolors = uimax(ncolors, tcolors);
 		/*
 		 * If the desired number of colors is not a power of
 		 * two, it won't be good.  Find the greatest power of

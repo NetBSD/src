@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_misc.c,v 1.115 2017/08/09 18:55:21 maxv Exp $	*/
+/*	$NetBSD: ibcs2_misc.c,v 1.116 2018/09/03 16:29:29 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_misc.c,v 1.115 2017/08/09 18:55:21 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_misc.c,v 1.116 2018/09/03 16:29:29 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -381,7 +381,7 @@ ibcs2_sys_getdents(struct lwp *l, const struct ibcs2_sys_getdents_args *uap, reg
 		error = EINVAL;
 		goto out1;
 	}
-	buflen = min(MAXBSIZE, (size_t)SCARG(uap, nbytes));
+	buflen = uimin(MAXBSIZE, (size_t)SCARG(uap, nbytes));
 	tbuf = malloc(buflen, M_TEMP, M_WAITOK);
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	off = fp->f_offset;
@@ -521,7 +521,7 @@ ibcs2_sys_read(struct lwp *l, const struct ibcs2_sys_read_args *uap, register_t 
 		fd_putfile(SCARG(uap, fd));
 		return sys_read(l, (const void *)uap, retval);
 	}
-	buflen = min(MAXBSIZE, max(DEV_BSIZE, (size_t)SCARG(uap, nbytes)));
+	buflen = uimin(MAXBSIZE, uimax(DEV_BSIZE, (size_t)SCARG(uap, nbytes)));
 	tbuf = malloc(buflen, M_TEMP, M_WAITOK);
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	off = fp->f_offset;

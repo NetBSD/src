@@ -1,4 +1,4 @@
-/* $NetBSD: video.c,v 1.34 2017/10/28 03:47:24 riastradh Exp $ */
+/* $NetBSD: video.c,v 1.35 2018/09/03 16:29:30 riastradh Exp $ */
 
 /*
  * Copyright (c) 2008 Patrick Mahoney <pat@polycrystal.org>
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: video.c,v 1.34 2017/10/28 03:47:24 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: video.c,v 1.35 2018/09/03 16:29:30 riastradh Exp $");
 
 #include "video.h"
 #if NVIDEO > 0
@@ -1757,7 +1757,7 @@ retry:
 
 	mutex_exit(&vs->vs_lock);
 	
-	len = min(uio->uio_resid, vb->vb_buf->bytesused - vs->vs_bytesread);
+	len = uimin(uio->uio_resid, vb->vb_buf->bytesused - vs->vs_bytesread);
 	offset = vb->vb_buf->m.offset + vs->vs_bytesread;
 
 	if (scatter_io_init(&vs->vs_data, offset, len, &sio)) {
@@ -2426,7 +2426,7 @@ video_stream_realloc_bufs(struct video_stream *vs, uint8_t nbufs)
 		vs->vs_buf = NULL;
 	}
 
-	minnbufs = min(vs->vs_nbufs, oldnbufs);
+	minnbufs = uimin(vs->vs_nbufs, oldnbufs);
 	/* copy any bufs that will be reused */
 	for (i = 0; i < minnbufs; ++i)
 		vs->vs_buf[i] = oldbuf[i];
@@ -2649,7 +2649,7 @@ scatter_buf_set_size(struct scatter_buf *sb, size_t sz)
 		sb->sb_page_ary = NULL;
 	}
 
-	minpages = min(npages, oldnpages);
+	minpages = uimin(npages, oldnpages);
 	/* copy any pages that will be reused */
 	for (i = 0; i < minpages; ++i)
 		sb->sb_page_ary[i] = old_ary[i];
@@ -2720,7 +2720,7 @@ scatter_io_next(struct scatter_io *sio, void **p, size_t *sz)
 	pg = sio->sio_offset >> PAGE_SHIFT;
 	pgo = sio->sio_offset & PAGE_MASK;
 
-	*sz = min(PAGE_SIZE - pgo, sio->sio_resid);
+	*sz = uimin(PAGE_SIZE - pgo, sio->sio_resid);
 	*p = sio->sio_buf->sb_page_ary[pg] + pgo;
 
 	sio->sio_offset += *sz;

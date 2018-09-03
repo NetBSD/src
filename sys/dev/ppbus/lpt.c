@@ -1,4 +1,4 @@
-/* $NetBSD: lpt.c,v 1.30 2014/07/25 08:10:38 dholland Exp $ */
+/* $NetBSD: lpt.c,v 1.31 2018/09/03 16:29:33 riastradh Exp $ */
 
 /*
  * Copyright (c) 1990 William F. Jolitz, TeleMuse
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpt.c,v 1.30 2014/07/25 08:10:38 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt.c,v 1.31 2018/09/03 16:29:33 riastradh Exp $");
 
 #include "opt_ppbus_lpt.h"
 
@@ -551,7 +551,7 @@ lptread(dev_t dev_id, struct uio *uio, int ioflag)
 	sc->sc_state &= ~INTERRUPTED;
 	while (uio->uio_resid) {
 		error = ppbus_read(device_parent(dev), sc->sc_outbuf,
-			min(BUFSIZE, uio->uio_resid), 0, &len);
+			uimin(BUFSIZE, uio->uio_resid), 0, &len);
 
 		/* If error or no more data, stop */
 		if (error) {

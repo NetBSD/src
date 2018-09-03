@@ -1,4 +1,4 @@
-/* $NetBSD: pseye.c,v 1.24 2018/01/21 13:57:12 skrll Exp $ */
+/* $NetBSD: pseye.c,v 1.25 2018/09/03 16:29:33 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2008 Jared D. McNeill <jmcneill@invisible.ca>
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pseye.c,v 1.24 2018/01/21 13:57:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pseye.c,v 1.25 2018/09/03 16:29:33 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -669,7 +669,7 @@ pseye_submit_payload(struct pseye_softc *sc, uint32_t tlen)
 	uint32_t brem = (640*480*2);
 
 	while (brem > 0 && tlen > 0) {
-		len = min(tlen, PSEYE_BULKIN_BLKLEN);
+		len = uimin(tlen, PSEYE_BULKIN_BLKLEN);
 		if (len < UVIDEO_PAYLOAD_HEADER_SIZE) {
 			printf("pseye_submit_payload: len=%u\n", len);
 			return;
@@ -687,7 +687,7 @@ pseye_submit_payload(struct pseye_softc *sc, uint32_t tlen)
 			goto next;
 
 		payload.data = buf + uvchdr->bHeaderLength;
-		payload.size = min(brem, len - uvchdr->bHeaderLength);
+		payload.size = uimin(brem, len - uvchdr->bHeaderLength);
 		payload.frameno = UGETDW(&buf[2]);
 		payload.end_of_frame = uvchdr->bmHeaderInfo & UV_END_OF_FRAME;
 		video_submit_payload(sc->sc_videodev, &payload);

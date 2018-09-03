@@ -1,4 +1,4 @@
-/*	$NetBSD: cgfourteen.c,v 1.85 2018/01/25 14:45:58 macallan Exp $ */
+/*	$NetBSD: cgfourteen.c,v 1.86 2018/09/03 16:29:27 riastradh Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -1125,7 +1125,7 @@ cg14_do_cursor(struct cgfourteen_softc *sc, struct wsdisplay_cursor *cur)
 		    (cur->cmap.index + cur->cmap.count > 3))
 			return EINVAL;
 
-		for (i = 0; i < min(cur->cmap.count, 3); i++) {
+		for (i = 0; i < uimin(cur->cmap.count, 3); i++) {
 			val = (cur->cmap.red[i] ) |
 			      (cur->cmap.green[i] << 8) |
 			      (cur->cmap.blue[i] << 16);
@@ -1222,7 +1222,7 @@ cg14_rectfill(struct cgfourteen_softc *sc, int x, int y, int wi, int he,
 		}
 		/* now do the aligned pixels in 32bit chunks */
 		while(cnt > 3) {
-			words = min(32, cnt >> 2);
+			words = uimin(32, cnt >> 2);
 			sta(pptr & ~7, ASI_SX, SX_STS(8, words - 1, pptr & 7));
 			pptr += words << 2;
 			cnt -= words << 2;
@@ -1274,7 +1274,7 @@ cg14_invert(struct cgfourteen_softc *sc, int x, int y, int wi, int he)
 		}
 		/* now do the aligned pixels in 32bit chunks */
 		while(cnt > 15) {
-			words = min(16, cnt >> 2);
+			words = uimin(16, cnt >> 2);
 			sta(pptr & ~7, ASI_SX, SX_LD(8, words - 1, pptr & 7));
 			sx_write(sc->sc_sx, SX_INSTRUCTIONS,
 			    SX_ROP(8, 8, 32, words - 1));
@@ -1297,7 +1297,7 @@ cg14_slurp(int reg, uint32_t addr, int cnt)
 {
 	int num;
 	while (cnt > 0) {
-		num = min(32, cnt);
+		num = uimin(32, cnt);
 		sta(addr & ~7, ASI_SX, SX_LD(reg, num - 1, addr & 7));
 		cnt -= num;
 		reg += num;
@@ -1310,7 +1310,7 @@ cg14_spit(int reg, uint32_t addr, int cnt)
 {
 	int num;
 	while (cnt > 0) {
-		num = min(32, cnt);
+		num = uimin(32, cnt);
 		sta(addr & ~7, ASI_SX, SX_ST(reg, num - 1, addr & 7));
 		cnt -= num;
 		reg += num;
@@ -1356,7 +1356,7 @@ cg14_bitblt(void *cookie, int xs, int ys, int xd, int yd,
 			}
 			words = cnt >> 2;
 			while(cnt > 3) {
-				num = min(120, words);
+				num = uimin(120, words);
 				cg14_slurp(8, sptr, num);
 				cg14_spit(8, dptr, num);
 				sptr += num << 2;

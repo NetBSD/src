@@ -1,4 +1,4 @@
-/* $NetBSD: cardbus_exrom.c,v 1.12 2010/02/24 19:52:51 dyoung Exp $ */
+/* $NetBSD: cardbus_exrom.c,v 1.13 2018/09/03 16:29:30 riastradh Exp $ */
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cardbus_exrom.c,v 1.12 2010/02/24 19:52:51 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cardbus_exrom.c,v 1.13 2018/09/03 16:29:30 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -178,7 +178,7 @@ pci_exrom_parse_data_structure(bus_space_tag_t tag,
 	header->data_revision = LEINT16(hdr, PCI_EXROM_DATA_DATA_REV);
 	header->code_type = hdr[PCI_EXROM_DATA_CODE_TYPE];
 	header->indicator = hdr[PCI_EXROM_DATA_INDICATOR];
-	length = min(length, header->image_length - 0x18 - offset);
+	length = uimin(length, header->image_length - 0x18 - offset);
 	bus_space_read_region_1(tag, handle, dataptr + 0x18 + offset,
 	    buf, length);
 	ret = length;

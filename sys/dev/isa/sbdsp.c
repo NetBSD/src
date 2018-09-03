@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdsp.c,v 1.137 2017/11/04 01:46:56 nat Exp $	*/
+/*	$NetBSD: sbdsp.c,v 1.138 2018/09/03 16:29:31 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2008 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbdsp.c,v 1.137 2017/11/04 01:46:56 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbdsp.c,v 1.138 2018/09/03 16:29:31 riastradh Exp $");
 
 #include "midi.h"
 #include "mpu.h"
@@ -588,7 +588,7 @@ sbdsp_set_params(
 		return EBUSY;
 
 	/* Later models work like SB16. */
-	model = min(sc->sc_model, SB_16);
+	model = uimin(sc->sc_model, SB_16);
 
 	/*
 	 * Prior to the SB16, we have only one clock, so make the sample

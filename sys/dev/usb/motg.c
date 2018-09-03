@@ -1,4 +1,4 @@
-/*	$NetBSD: motg.c,v 1.22 2018/08/09 06:26:47 mrg Exp $	*/
+/*	$NetBSD: motg.c,v 1.23 2018/09/03 16:29:33 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2011, 2012, 2014 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: motg.c,v 1.22 2018/08/09 06:26:47 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: motg.c,v 1.23 2018/09/03 16:29:33 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -916,7 +916,7 @@ motg_roothub_ctrl(struct usbd_bus *bus, usb_device_request_t *req,
 			change |= UPS_C_PORT_RESET;
 		USETW(ps.wPortStatus, status);
 		USETW(ps.wPortChange, change);
-		totlen = min(len, sizeof(ps));
+		totlen = uimin(len, sizeof(ps));
 		memcpy(buf, &ps, totlen);
 		break;
 	case C(UR_SET_DESCRIPTOR, UT_WRITE_CLASS_DEVICE):
@@ -1428,7 +1428,7 @@ motg_device_ctrl_intr_rx(struct motg_softc *sc)
 	datalen = UREAD2(sc, MUSB2_REG_RXCOUNT);
 	DPRINTFN(MD_CTRL, "phase %jd datalen %jd", ep->phase, datalen, 0, 0);
 	KASSERT(UGETW(xfer->ux_pipe->up_endpoint->ue_edesc->wMaxPacketSize) > 0);
-	max_datalen = min(UGETW(xfer->ux_pipe->up_endpoint->ue_edesc->wMaxPacketSize),
+	max_datalen = uimin(UGETW(xfer->ux_pipe->up_endpoint->ue_edesc->wMaxPacketSize),
 	    ep->datalen);
 	if (datalen > max_datalen) {
 		new_status = USBD_IOERROR;
@@ -1588,7 +1588,7 @@ motg_device_ctrl_intr_tx(struct motg_softc *sc)
 		return;
 	}
 	/* setup a dataout phase */
-	datalen = min(ep->datalen,
+	datalen = uimin(ep->datalen,
 	    UGETW(xfer->ux_pipe->up_endpoint->ue_edesc->wMaxPacketSize));
 	ep->phase = DATA_OUT;
 	DPRINTFN(MD_CTRL, "xfer %#jx to DATA_OUT, csrh 0x%jx", (uintptr_t)xfer,
@@ -1847,7 +1847,7 @@ motg_device_data_write(struct usbd_xfer *xfer)
 	KASSERT(xfer!=NULL);
 	KASSERT(mutex_owned(&sc->sc_lock));
 
-	datalen = min(ep->datalen,
+	datalen = uimin(ep->datalen,
 	    UGETW(xfer->ux_pipe->up_endpoint->ue_edesc->wMaxPacketSize));
 	ep->phase = DATA_OUT;
 	DPRINTFN(MD_BULK, "%#jx to DATA_OUT on ep %jd, len %jd csrh 0x%jx",
@@ -1950,7 +1950,7 @@ motg_device_intr_rx(struct motg_softc *sc, int epnumber)
 	datalen = UREAD2(sc, MUSB2_REG_RXCOUNT);
 	DPRINTFN(MD_BULK, "phase %jd datalen %jd", ep->phase, datalen ,0 ,0);
 	KASSERT(UE_GET_SIZE(UGETW(xfer->ux_pipe->up_endpoint->ue_edesc->wMaxPacketSize)) > 0);
-	max_datalen = min(
+	max_datalen = uimin(
 	    UE_GET_SIZE(UGETW(xfer->ux_pipe->up_endpoint->ue_edesc->wMaxPacketSize)),
 	    ep->datalen);
 	if (datalen > max_datalen) {

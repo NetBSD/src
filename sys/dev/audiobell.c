@@ -1,4 +1,4 @@
-/*	$NetBSD: audiobell.c,v 1.25 2017/07/01 05:32:24 nat Exp $	*/
+/*	$NetBSD: audiobell.c,v 1.26 2018/09/03 16:29:30 riastradh Exp $	*/
 
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/types.h>
-__KERNEL_RCSID(0, "$NetBSD: audiobell.c,v 1.25 2017/07/01 05:32:24 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audiobell.c,v 1.26 2018/09/03 16:29:30 riastradh Exp $");
 
 #include <sys/audioio.h>
 #include <sys/conf.h>
@@ -147,7 +147,7 @@ audiobell(void *v, u_int pitch, u_int period, u_int volume, int poll)
 		ai.blocksize = BELL_SAMPLE_RATE;
 
 	len = period * BELL_SAMPLE_RATE / 1000 * 2;
-	size = min(len, ai.blocksize);
+	size = uimin(len, ai.blocksize);
 	if (size == 0)
 		goto out;
 
@@ -157,7 +157,7 @@ audiobell(void *v, u_int pitch, u_int period, u_int volume, int poll)
  
 	phase = 0;
 	while (len > 0) {
-		size = min(len, ai.blocksize);
+		size = uimin(len, ai.blocksize);
 		if (audiobell_synthesize(buf, pitch, size *
 				1000 / BELL_SAMPLE_RATE, volume, &phase) != 0)
 			goto out;

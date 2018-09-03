@@ -1,4 +1,4 @@
-/*	$NetBSD: rt2661.c,v 1.39 2018/06/26 06:48:00 msaitoh Exp $	*/
+/*	$NetBSD: rt2661.c,v 1.40 2018/09/03 16:29:31 riastradh Exp $	*/
 /*	$OpenBSD: rt2661.c,v 1.17 2006/05/01 08:41:11 damien Exp $	*/
 /*	$FreeBSD: rt2560.c,v 1.5 2006/06/02 19:59:31 csjp Exp $	*/
 
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rt2661.c,v 1.39 2018/06/26 06:48:00 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rt2661.c,v 1.40 2018/09/03 16:29:31 riastradh Exp $");
 
 
 #include <sys/param.h>
@@ -2874,9 +2874,9 @@ rt2661_rx_tune(struct rt2661_softc *sc)
 		if (bbp17 > hi)
 			bbp17 = hi;
 		else if (cca > 512)
-			bbp17 = min(bbp17 + 1, hi);
+			bbp17 = uimin(bbp17 + 1, hi);
 		else if (cca < 100)
-			bbp17 = max(bbp17 - 1, lo);
+			bbp17 = uimax(bbp17 - 1, lo);
 
 	} else if (dbm < -66) {
 		bbp17 = lo + 0x08;
@@ -2994,7 +2994,7 @@ rt2661_prepare_beacon(struct rt2661_softc *sc)
 		    RT2661_HW_BEACON_BASE0 + 24 +
 		    sizeof (struct ieee80211_frame) +
 		    8 + 2 + 2 + 2 + ni->ni_esslen +
-		    2 + min(ni->ni_rates.rs_nrates, IEEE80211_RATE_SIZE) +
+		    2 + uimin(ni->ni_rates.rs_nrates, IEEE80211_RATE_SIZE) +
 		    2 + 1 +
 		    ((ic->ic_opmode == IEEE80211_M_IBSS) ? 4 : 6) +
 		    2;

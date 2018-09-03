@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xi.c,v 1.82 2018/06/26 06:48:01 msaitoh Exp $ */
+/*	$NetBSD: if_xi.c,v 1.83 2018/09/03 16:29:33 riastradh Exp $ */
 /*	OpenBSD: if_xe.c,v 1.9 1999/09/16 11:28:42 niklas Exp 	*/
 
 /*
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xi.c,v 1.82 2018/06/26 06:48:01 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xi.c,v 1.83 2018/09/03 16:29:33 riastradh Exp $");
 
 #include "opt_inet.h"
 
@@ -446,7 +446,7 @@ xi_get(struct xi_softc *sc)
 			len -= newdata - m->m_data;
 			m->m_data = newdata;
 		}
-		len = min(pktlen, len);
+		len = uimin(pktlen, len);
 		data = mtod(m, u_int8_t *);
 		if (len > 1) {
 		        len &= ~1;

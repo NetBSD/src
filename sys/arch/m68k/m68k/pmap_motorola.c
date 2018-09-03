@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_motorola.c,v 1.70 2018/01/27 23:07:36 chs Exp $        */
+/*	$NetBSD: pmap_motorola.c,v 1.71 2018/09/03 16:29:25 riastradh Exp $        */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -119,7 +119,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.70 2018/01/27 23:07:36 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.71 2018/09/03 16:29:25 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -478,7 +478,7 @@ pmap_init(void)
 	 * Allocate physical memory for kernel PT pages and their management.
 	 * We need 1 PT page per possible task plus some slop.
 	 */
-	npages = min(atop(M68K_MAX_KPTSIZE), maxproc+16);
+	npages = uimin(atop(M68K_MAX_KPTSIZE), maxproc+16);
 	s = ptoa(npages) + round_page(npages * sizeof(struct kpt_page));
 
 	/*

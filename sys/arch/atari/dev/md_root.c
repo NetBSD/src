@@ -1,4 +1,4 @@
-/*	$NetBSD: md_root.c,v 1.33 2009/10/20 19:10:10 snj Exp $	*/
+/*	$NetBSD: md_root.c,v 1.34 2018/09/03 16:29:24 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: md_root.c,v 1.33 2009/10/20 19:10:10 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: md_root.c,v 1.34 2018/09/03 16:29:24 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -219,7 +219,7 @@ ramd_norm_read(struct read_info *rsp)
 		bp->b_flags  = B_PHYS | B_READ;
 		bp->b_oflags &= ~BO_DONE;
 		bp->b_blkno  = btodb(rsp->offset);
-		bp->b_bcount = min(rsp->chunk, bytes_left);
+		bp->b_bcount = uimin(rsp->chunk, bytes_left);
 		bp->b_data   = rsp->bufp;
 		bp->b_error  = 0;
 
@@ -294,7 +294,7 @@ md_compressed(void * buf, int nbyte, struct read_info *rsp)
 		bp->b_flags  = B_PHYS | B_READ;
 		bp->b_oflags &= ~BO_DONE;
 		bp->b_blkno  = btodb(rsp->offset);
-		bp->b_bcount = min(rsp->chunk, nbyte);
+		bp->b_bcount = uimin(rsp->chunk, nbyte);
 		bp->b_data   = buf;
 		bp->b_error  = 0;
 

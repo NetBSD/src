@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_cc.c,v 1.38 2012/10/27 17:17:42 chs Exp $	*/
+/*	$NetBSD: ite_cc.c,v 1.39 2018/09/03 16:29:24 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite_cc.c,v 1.38 2012/10/27 17:17:42 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite_cc.c,v 1.39 2018/09/03 16:29:24 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -546,7 +546,7 @@ cursor32(struct ite_softc *ip, int flag)
 	/* 
 	 * draw the cursor
 	 */
-	cend = min(ip->curx, ip->cols - 1);
+	cend = uimin(ip->curx, ip->cols - 1);
 	if (flag == DRAW_CURSOR
 		&& ip->cursorx == cend && ip->cursory == ip->cury)
 		return;
