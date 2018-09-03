@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.efiboot,v 1.2 2018/08/26 21:28:18 jmcneill Exp $
+# $NetBSD: Makefile.efiboot,v 1.3 2018/09/03 00:04:02 jmcneill Exp $
 
 S=		${.CURDIR}/../../..
 
@@ -21,8 +21,8 @@ AFLAGS.start.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
 
 .PATH: ${EFIDIR}/gnuefi
 SOURCES=	crt0-efi-${GNUEFIARCH}.S reloc_${GNUEFIARCH}.c
-SOURCES+=	boot.c conf.c console.c devopen.c exec.c panic.c prompt.c
-SOURCES+=	efiboot.c efichar.c efidev.c efifdt.c efifile.c efiblock.c
+SOURCES+=	boot.c conf.c console.c dev_net.c devopen.c exec.c panic.c prompt.c
+SOURCES+=	efiboot.c efichar.c efidev.c efigetsecs.c efifdt.c efifile.c efiblock.c efinet.c efipxe.c
 
 .PATH: ${S}/external/bsd/libfdt/dist
 CPPFLAGS+=	-I${S}/external/bsd/libfdt/dist
@@ -68,12 +68,12 @@ CPPFLAGS+= -Wno-pointer-sign
 CPPFLAGS+= -DHEAP_VARIABLE
 #CPPFLAGS+= -DSUPPORT_CD9660
 CPPFLAGS+= -D"devb2cdb(bno)=(bno)"
-#CPPFLAGS+= -DSUPPORT_DOSFS
+CPPFLAGS+= -DSUPPORT_DOSFS
 #CPPFLAGS+= -DSUPPORT_EXT2FS
-#CPPFLAGS+= -DSUPPORT_BOOTP
-#CPPFLAGS+= -DSUPPORT_DHCP
+CPPFLAGS+= -DSUPPORT_BOOTP
+CPPFLAGS+= -DSUPPORT_DHCP
 #CPPFLAGS+= -DSUPPORT_NFS
-#CPPFLAGS+= -DSUPPORT_TFTP
+CPPFLAGS+= -DSUPPORT_TFTP
 CPPFLAGS+= -DLIBSA_ENABLE_LS_OP
 
 #CPPFLAGS+= -DARP_DEBUG
@@ -92,7 +92,7 @@ SAMISCCPPFLAGS+= -D"cdb2devb(bno)=(bno)"
 SA_AS= library
 SAMISCMAKEFLAGS+="SA_USE_LOADFILE=yes"
 SAMISCMAKEFLAGS+="SA_USE_CREAD=yes"
-#SAMISCMAKEFLAGS+="SA_INCLUDE_NET=yes"
+SAMISCMAKEFLAGS+="SA_INCLUDE_NET=yes"
 SAMISCMAKEFLAGS+="SA_ENABLE_LS_OP=yes"
 .include "${S}/lib/libsa/Makefile.inc"
 LIBSA= ${SALIB}
