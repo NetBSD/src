@@ -1,0 +1,6 @@
+[Socket]
+ListenDatagram=127.0.0.1:1153
+ListenStream=127.0.0.1:1153
+# ListenStream=/usr/local/etc/nsd/control
+[Install]
+WantedBy=sockets.target
