@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.16 2018/05/31 09:08:25 mrg Exp $	
+# $NetBSD: Makefile,v 1.17 2018/09/03 15:26:44 christos Exp $	
 
 USE_SHLIBDIR=yes
 .include <bsd.own.mk>
@@ -128,16 +128,29 @@ YPREFIX=	pcap_
 YHEADER=	1
 
 CPPFLAGS+=	-DHAVE_CONFIG_H
-CPPFLAGS+=	-D_U_="__attribute__((__unused__))"
+#CPPFLAGS+=	-D_U_="__attribute__((__unused__))"
 
 .if (${USE_INET6} != "no")
 CPPFLAGS+=	-DINET6
 .endif
 
-SRCS=	scanner.l savefile.c pcap.c pcap-bpf.c optimize.c nametoaddr.c \
-	inet.c grammar.y gencode.c fad-getad.c etherent.c bpf_image.c \
-	bpf_dump.c pcap_version.c sf-pcap-ng.c sf-pcap.c pcap-common.c \
-	fad-getad.c fad-helpers.c
+SRCS= \
+bpf_dump.c \
+bpf_image.c \
+etherent.c \
+fad-getad.c \
+fmtutils.c \
+gencode.c \
+grammar.y \
+nametoaddr.c \
+optimize.c \
+pcap-bpf.c \
+pcap-common.c \
+pcap.c \
+savefile.c \
+scanner.l \
+sf-pcap.c \
+sf-pcapng.c
 
 .PATH:	${NETBSDSRCDIR}/sys/net
 SRCS+=	bpf_filter.c

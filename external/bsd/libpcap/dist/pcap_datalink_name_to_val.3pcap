@@ -1,4 +1,4 @@
-.\"	$NetBSD: pcap_datalink_name_to_val.3pcap,v 1.4 2017/01/24 22:29:28 christos Exp $
+.\"	$NetBSD: pcap_datalink_name_to_val.3pcap,v 1.5 2018/09/03 15:26:43 christos Exp $
 .\"
 .\" Copyright (c) 1994, 1996, 1997
 .\"	The Regents of the University of California.  All rights reserved.
@@ -19,7 +19,7 @@
 .\" WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
 .\" MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 .\"
-.TH PCAP_DATALINK_NAME_TO_VAL 3PCAP "5 December 2014"
+.TH PCAP_DATALINK_NAME_TO_VAL 3PCAP "12 October 2016"
 .SH NAME
 pcap_datalink_name_to_val \- get the link-layer header type value
 corresponding to a header type name

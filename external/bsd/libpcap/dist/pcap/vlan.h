@@ -1,4 +1,4 @@
-/*	$NetBSD: vlan.h,v 1.2 2014/11/19 19:33:31 christos Exp $	*/
+/*	$NetBSD: vlan.h,v 1.3 2018/09/03 15:26:44 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -36,9 +36,11 @@
 #ifndef lib_pcap_vlan_h
 #define lib_pcap_vlan_h
 
+#include <pcap/pcap-inttypes.h>
+
 struct vlan_tag {
-	u_int16_t	vlan_tpid;		/* ETH_P_8021Q */
-	u_int16_t	vlan_tci;		/* VLAN TCI */
+	uint16_t	vlan_tpid;		/* ETH_P_8021Q */
+	uint16_t	vlan_tci;		/* VLAN TCI */
 };
 
 #define VLAN_TAG_LEN	4

@@ -51,7 +51,7 @@
 #include <sys/time.h>
 #endif /* _WIN32 */
 
-#include <pcap/bpf.h>
+#include <net/bpf.h>
 
 #include <stdlib.h>
 
@@ -77,18 +77,18 @@
 #include <netinet/in.h>
 #endif
 
-#define EXTRACT_SHORT(p)	((u_short)ntohs(*(u_short *)p))
-#define EXTRACT_LONG(p)		(ntohl(*(u_int32 *)p))
+#define EXTRACT_SHORT(p)	((u_short)ntohs(*(const u_short *)p))
+#define EXTRACT_LONG(p)		(ntohl(*(const u_int32 *)p))
 #else
 #define EXTRACT_SHORT(p)\
 	((u_short)\
-		((u_short)*((u_char *)p+0)<<8|\
-		 (u_short)*((u_char *)p+1)<<0))
+		((u_short)*((const u_char *)p+0)<<8|\
+		 (u_short)*((const u_char *)p+1)<<0))
 #define EXTRACT_LONG(p)\
-		((u_int32)*((u_char *)p+0)<<24|\
-		 (u_int32)*((u_char *)p+1)<<16|\
-		 (u_int32)*((u_char *)p+2)<<8|\
-		 (u_int32)*((u_char *)p+3)<<0)
+		((u_int32)*((const u_char *)p+0)<<24|\
+		 (u_int32)*((const u_char *)p+1)<<16|\
+		 (u_int32)*((const u_char *)p+2)<<8|\
+		 (u_int32)*((const u_char *)p+3)<<0)
 #endif
 
 #ifdef __linux__

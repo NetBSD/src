@@ -1,4 +1,4 @@
-/*	$NetBSD: pcap-bt-monitor-linux.h,v 1.2 2014/11/19 19:33:30 christos Exp $	*/
+/*	$NetBSD: pcap-bt-monitor-linux.h,v 1.3 2018/09/03 15:26:43 christos Exp $	*/
 
 /*
  * Copyright (c) 2014 Michal Labedzki for Tieto Corporation
@@ -30,5 +30,5 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-int bt_monitor_findalldevs(pcap_if_t **alldevsp, char *err_str);
+int bt_monitor_findalldevs(pcap_if_list_t *devlistp, char *err_str);
 pcap_t *bt_monitor_create(const char *device, char *ebuf, int *is_ours);

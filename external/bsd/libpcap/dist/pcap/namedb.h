@@ -1,4 +1,4 @@
-/*	$NetBSD: namedb.h,v 1.3 2017/01/24 22:29:29 christos Exp $	*/
+/*	$NetBSD: namedb.h,v 1.4 2018/09/03 15:26:44 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1996
@@ -62,9 +62,7 @@ PCAP_API u_char *pcap_ether_hostton(const char*);
 PCAP_API u_char *pcap_ether_aton(const char *);
 
 PCAP_API bpf_u_int32 **pcap_nametoaddr(const char *);
-#ifdef INET6
 PCAP_API struct addrinfo *pcap_nametoaddrinfo(const char *);
-#endif
 PCAP_API bpf_u_int32 pcap_nametonetaddr(const char *);
 
 PCAP_API int	pcap_nametoport(const char *, int *, int *);
