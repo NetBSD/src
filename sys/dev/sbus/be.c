@@ -1,4 +1,4 @@
-/*	$NetBSD: be.c,v 1.88 2018/06/26 06:48:02 msaitoh Exp $	*/
+/*	$NetBSD: be.c,v 1.89 2018/09/03 16:29:33 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: be.c,v 1.88 2018/06/26 06:48:02 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: be.c,v 1.89 2018/09/03 16:29:33 riastradh Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -524,7 +524,7 @@ be_get(struct be_softc *sc, int idx, int totlen)
 			if (m->m_flags & M_EXT)
 				len = MCLBYTES;
 		}
-		m->m_len = len = min(totlen, len);
+		m->m_len = len = uimin(totlen, len);
 		memcpy(mtod(m, void *), bp + boff, len);
 		boff += len;
 		totlen -= len;

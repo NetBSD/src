@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.1 2014/02/24 07:23:43 skrll Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.2 2018/09/03 16:29:24 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.1 2014/02/24 07:23:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.2 2018/09/03 16:29:24 riastradh Exp $");
 
 #include "locators.h"
 #include "power.h"
@@ -204,7 +204,7 @@ mbus_add_mapping(bus_addr_t bpa, bus_size_t size, int flags,
 		spa = pa & HPPA_FLEX_MASK;
 		epa = spa + HPPA_FLEX_SIZE; /* may wrap to 0... */
 
-		size -= min(size, HPPA_FLEX_SIZE - (pa - spa));
+		size -= uimin(size, HPPA_FLEX_SIZE - (pa - spa));
 
 		/* do need a new mapping? */
 		if (bmm[flex / 32] & (1 << (flex % 32))) {

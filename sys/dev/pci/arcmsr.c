@@ -1,4 +1,4 @@
-/*	$NetBSD: arcmsr.c,v 1.37 2017/08/12 11:03:47 mlelstv Exp $ */
+/*	$NetBSD: arcmsr.c,v 1.38 2018/09/03 16:29:32 riastradh Exp $ */
 /*	$OpenBSD: arc.c,v 1.68 2007/10/27 03:28:27 dlg Exp $ */
 
 /*
@@ -21,7 +21,7 @@
 #include "bio.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arcmsr.c,v 1.37 2017/08/12 11:03:47 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arcmsr.c,v 1.38 2018/09/03 16:29:32 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -545,7 +545,7 @@ arc_scsi_cmd_done(struct arc_softc *sc, struct arc_ccb *ccb, uint32_t reg)
 		case SCSI_CHECK:
 			memset(&xs->sense, 0, sizeof(xs->sense));
 			memcpy(&xs->sense, cmd->sense_data,
-			    min(ARC_MSG_SENSELEN, sizeof(xs->sense)));
+			    uimin(ARC_MSG_SENSELEN, sizeof(xs->sense)));
 			xs->sense.scsi_sense.response_code =
 			    SSD_RCODE_VALID | 0x70;
 			xs->status = SCSI_CHECK;

@@ -1,4 +1,4 @@
-/*	$NetBSD: flsc.c,v 1.45 2010/12/20 00:25:25 matt Exp $ */
+/*	$NetBSD: flsc.c,v 1.46 2018/09/03 16:29:22 riastradh Exp $ */
 
 /*
  * Copyright (c) 1997 Michael L. Hitch
@@ -47,7 +47,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: flsc.c,v 1.45 2010/12/20 00:25:25 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: flsc.c,v 1.46 2018/09/03 16:29:22 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -524,7 +524,7 @@ flsc_dma_setup(struct ncr53c9x_softc *sc, uint8_t **addr, size_t *len,
 		fsc->sc_dmasize = flsc_max_dma;
 	ptr = *addr;			/* Kernel virtual address */
 	pa = kvtop(ptr);		/* Physical address of DMA */
-	xfer = min(fsc->sc_dmasize, PAGE_SIZE - (pa & (PAGE_SIZE - 1)));
+	xfer = uimin(fsc->sc_dmasize, PAGE_SIZE - (pa & (PAGE_SIZE - 1)));
 	fsc->sc_xfr_align = 0;
 	fsc->sc_piomode = 0;
 	fsc->sc_portbits &= ~FLSC_PB_DMA_BITS;
@@ -564,7 +564,7 @@ flsc_dma_setup(struct ncr53c9x_softc *sc, uint8_t **addr, size_t *len,
 	 */
 	else if ((int)ptr & 3 || xfer & 3) {
 		pa = kvtop((void *)fsc->sc_alignbuf);
-		xfer = fsc->sc_dmasize = min(xfer, sizeof(fsc->sc_unalignbuf));
+		xfer = fsc->sc_dmasize = uimin(xfer, sizeof(fsc->sc_unalignbuf));
 		NCR_DMA(("flsc_dma_setup: align read by %d bytes\n", xfer));
 		fsc->sc_xfr_align = 1;
 	}

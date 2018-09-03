@@ -1,4 +1,4 @@
-/* $NetBSD: aubtfwl.c,v 1.6 2016/04/23 10:15:31 skrll Exp $ */
+/* $NetBSD: aubtfwl.c,v 1.7 2018/09/03 16:29:33 riastradh Exp $ */
 
 /*
  * Copyright (c) 2011 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aubtfwl.c,v 1.6 2016/04/23 10:15:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aubtfwl.c,v 1.7 2018/09/03 16:29:33 riastradh Exp $");
 
 #include <sys/param.h>
 #include <dev/usb/usb.h>
@@ -179,7 +179,7 @@ aubtfwl_firmware_load(device_t self, const char *name) {
 	fwo = AR3K_FIRMWARE_HEADER_SIZE;
 
 	while (fwo < fws) {
-		n = min(AR3K_FIRMWARE_CHUNK_SIZE, fws - fwo);
+		n = uimin(AR3K_FIRMWARE_CHUNK_SIZE, fws - fwo);
 		error = firmware_read(fwh, fwo, buf, n);
 		if (error != 0) {
 			break;

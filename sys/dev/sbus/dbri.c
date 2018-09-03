@@ -1,4 +1,4 @@
-/*	$NetBSD: dbri.c,v 1.38 2018/01/12 05:59:20 mrg Exp $	*/
+/*	$NetBSD: dbri.c,v 1.39 2018/09/03 16:29:33 riastradh Exp $	*/
 
 /*
  * Copyright (C) 1997 Rudolf Koenig (rfkoenig@immd4.informatik.uni-erlangen.de)
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbri.c,v 1.38 2018/01/12 05:59:20 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbri.c,v 1.39 2018/09/03 16:29:33 riastradh Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -1815,9 +1815,9 @@ dbri_set_port(void *hdl, mixer_ctrl_t *mc)
 	switch (mc->dev) {
 	    case DBRI_VOL_OUTPUT:	/* master volume */
 		latt = (latt & 0xc0) | (63 -
-		    min(mc->un.value.level[AUDIO_MIXER_LEVEL_LEFT] >> 2, 63));
+		    uimin(mc->un.value.level[AUDIO_MIXER_LEVEL_LEFT] >> 2, 63));
 		ratt = (ratt & 0xc0) | (63 -
-		    min(mc->un.value.level[AUDIO_MIXER_LEVEL_RIGHT] >> 2, 63));
+		    uimin(mc->un.value.level[AUDIO_MIXER_LEVEL_RIGHT] >> 2, 63));
 		break;
 	    case DBRI_ENABLE_MONO:	/* built-in speaker */
 	    	if (mc->un.ord == 1) {

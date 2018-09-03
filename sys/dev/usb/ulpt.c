@@ -1,4 +1,4 @@
-/*	$NetBSD: ulpt.c,v 1.99 2018/01/21 13:57:12 skrll Exp $	*/
+/*	$NetBSD: ulpt.c,v 1.100 2018/09/03 16:29:34 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulpt.c,v 1.99 2018/01/21 13:57:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulpt.c,v 1.100 2018/09/03 16:29:34 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -615,7 +615,7 @@ ulpt_do_write(struct ulpt_softc *sc, struct uio *uio, int flags)
 	DPRINTFN(3, ("ulptwrite\n"));
 	xfer = sc->sc_out_xfer;
 	bufp = sc->sc_out_buf;
-	while ((n = min(ULPT_BSIZE, uio->uio_resid)) != 0) {
+	while ((n = uimin(ULPT_BSIZE, uio->uio_resid)) != 0) {
 		ulpt_statusmsg(ulpt_status(sc), sc);
 		error = uiomove(bufp, n, uio);
 		if (error)
@@ -696,7 +696,7 @@ ulpt_do_read(struct ulpt_softc *sc, struct uio *uio, int flags)
 	xfer = sc->sc_in_xfer;
 	bufp = sc->sc_in_buf;
 	nread = 0;
-	while ((nreq = min(ULPT_BSIZE, uio->uio_resid)) != 0) {
+	while ((nreq = uimin(ULPT_BSIZE, uio->uio_resid)) != 0) {
 		KASSERT(error == 0);
 		if (error != 0) {
 			printf("ulptread: pre-switch error %d != 0", error);

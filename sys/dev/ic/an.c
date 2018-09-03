@@ -1,4 +1,4 @@
-/*	$NetBSD: an.c,v 1.68 2018/06/26 06:48:00 msaitoh Exp $	*/
+/*	$NetBSD: an.c,v 1.69 2018/09/03 16:29:31 riastradh Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: an.c,v 1.68 2018/06/26 06:48:00 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: an.c,v 1.69 2018/09/03 16:29:31 riastradh Exp $");
 
 
 #include <sys/param.h>
@@ -1761,7 +1761,7 @@ an_mwrite_bap(struct an_softc *sc, int id, int off, struct mbuf *m, int totlen)
 	for (len = 0; m != NULL; m = m->m_next) {
 		if (m->m_len == 0)
 			continue;
-		len = min(m->m_len, totlen);
+		len = uimin(m->m_len, totlen);
 
 		if ((mtod(m, u_long) & 0x1) || (len & 0x1)) {
 			m_copydata(m, 0, totlen, (void *)&sc->sc_buf.sc_txbuf);

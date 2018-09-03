@@ -1,4 +1,4 @@
-/*	$NetBSD: clmpcc.c,v 1.52 2017/10/28 04:53:55 riastradh Exp $ */
+/*	$NetBSD: clmpcc.c,v 1.53 2018/09/03 16:29:31 riastradh Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clmpcc.c,v 1.52 2017/10/28 04:53:55 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clmpcc.c,v 1.53 2018/09/03 16:29:31 riastradh Exp $");
 
 #include "opt_ddb.h"
 
@@ -1233,7 +1233,7 @@ clmpcc_txintr(void *arg)
 	}
 
 	if ( ch->ch_obuf_size > 0 ) {
-		u_int n = min(ch->ch_obuf_size, ftc);
+		u_int n = uimin(ch->ch_obuf_size, ftc);
 
 		clmpcc_wrtx_multi(sc, ch->ch_obuf_addr, n);
 

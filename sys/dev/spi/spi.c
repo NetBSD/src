@@ -1,4 +1,4 @@
-/* $NetBSD: spi.c,v 1.8 2013/02/15 17:44:40 rkujawa Exp $ */
+/* $NetBSD: spi.c,v 1.9 2018/09/03 16:29:33 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spi.c,v 1.8 2013/02/15 17:44:40 rkujawa Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spi.c,v 1.9 2018/09/03 16:29:33 riastradh Exp $");
 
 #include "locators.h"
 
@@ -194,7 +194,7 @@ spi_configure(struct spi_handle *sh, int mode, int speed)
 	if (speed == 0)
 		speed = sc->sc_speed;
 	if (sc->sc_speed)
-		speed = min(sc->sc_speed, speed);
+		speed = uimin(sc->sc_speed, speed);
 
 	rv = (*tag->sct_configure)(tag->sct_cookie, sh->sh_slave,
 	    mode, speed);

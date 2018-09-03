@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.287 2016/11/04 18:09:14 macallan Exp $ */
+/*	$NetBSD: machdep.c,v 1.288 2018/09/03 16:29:28 riastradh Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.287 2016/11/04 18:09:14 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.288 2018/09/03 16:29:28 riastradh Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -1018,7 +1018,7 @@ _bus_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *sbuf,
 	while (sgsize > 0) {
 		paddr_t pa;
 	
-		incr = min(sgsize, incr);
+		incr = uimin(sgsize, incr);
 
 		(void) pmap_extract(pmap_kernel(), vaddr, &pa);
 		if (map->dm_segs[i].ds_len == 0)
@@ -1079,7 +1079,7 @@ _bus_dmamap_load_mbuf(bus_dma_tag_t t, bus_dmamap_t map, struct mbuf *m,
 			long incr;
 
 			incr = PAGE_SIZE - (vaddr & PGOFSET);
-			incr = min(buflen, incr);
+			incr = uimin(buflen, incr);
 
 			if (pmap_extract(pmap_kernel(), vaddr, &pa) == FALSE) {
 #ifdef DIAGNOSTIC
@@ -1207,7 +1207,7 @@ _bus_dmamap_load_uio(bus_dma_tag_t t, bus_dmamap_t map, struct uio *uio,
 			paddr_t pa;
 			long incr;
 
-			incr = min(buflen, PAGE_SIZE);
+			incr = uimin(buflen, PAGE_SIZE);
 			(void) pmap_extract(pm, vaddr, &pa);
 			buflen -= incr;
 			vaddr += incr;

@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm283x_platform.c,v 1.16 2018/08/28 14:57:03 skrll Exp $	*/
+/*	$NetBSD: bcm283x_platform.c,v 1.17 2018/09/03 16:29:23 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2017 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm283x_platform.c,v 1.16 2018/08/28 14:57:03 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm283x_platform.c,v 1.17 2018/09/03 16:29:23 riastradh Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_bcm283x.h"
@@ -1054,7 +1054,7 @@ rpi_fb_do_cursor(struct wsdisplay_cursor *cur)
 		int i;
 		uint32_t val;
 
-		for (i = 0; i < min(cur->cmap.count, 3); i++) {
+		for (i = 0; i < uimin(cur->cmap.count, 3); i++) {
 			val = (cur->cmap.red[i] << 16 ) |
 			      (cur->cmap.green[i] << 8) |
 			      (cur->cmap.blue[i] ) |

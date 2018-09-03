@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_meter.c,v 1.67 2017/12/02 08:15:43 mrg Exp $	*/
+/*	$NetBSD: uvm_meter.c,v 1.68 2018/09/03 16:29:37 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_meter.c,v 1.67 2017/12/02 08:15:43 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_meter.c,v 1.68 2018/09/03 16:29:37 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -83,7 +83,7 @@ sysctl_vm_uvmexp(SYSCTLFN_ARGS)
 
 	node = *rnode;
 	if (oldlenp)
-		node.sysctl_size = min(*oldlenp, node.sysctl_size);
+		node.sysctl_size = uimin(*oldlenp, node.sysctl_size);
 
 	return (sysctl_lookup(SYSCTLFN_CALL(&node)));
 }
@@ -184,7 +184,7 @@ sysctl_vm_uvmexp2(SYSCTLFN_ARGS)
 	node.sysctl_data = &u;
 	node.sysctl_size = sizeof(u);
 	if (oldlenp)
-		node.sysctl_size = min(*oldlenp, node.sysctl_size);
+		node.sysctl_size = uimin(*oldlenp, node.sysctl_size);
 	return (sysctl_lookup(SYSCTLFN_CALL(&node)));
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: booke_pmap.c,v 1.25 2016/12/24 18:34:31 cherry Exp $	*/
+/*	$NetBSD: booke_pmap.c,v 1.26 2018/09/03 16:29:26 riastradh Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: booke_pmap.c,v 1.25 2016/12/24 18:34:31 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: booke_pmap.c,v 1.26 2018/09/03 16:29:26 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/kcore.h>
@@ -66,7 +66,7 @@ pmap_procwr(struct proc *p, vaddr_t va, size_t len)
 
 	kpreempt_disable();
 	for (const vaddr_t eva = va + len; va < eva; off = 0) {
-		const vaddr_t segeva = min(va + len, va - off + PAGE_SIZE);
+		const vaddr_t segeva = uimin(va + len, va - off + PAGE_SIZE);
 		pt_entry_t * const ptep = pmap_pte_lookup(pmap, va);
 		if (ptep == NULL) {
 			va = segeva;

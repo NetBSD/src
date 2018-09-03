@@ -1,4 +1,4 @@
-/*	$NetBSD: ahci.c,v 1.15 2018/04/09 16:21:10 jakllsch Exp $	*/
+/*	$NetBSD: ahci.c,v 1.16 2018/09/03 16:29:25 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2007 Ruslan Ermilov and Vsevolod Lobko.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahci.c,v 1.15 2018/04/09 16:21:10 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahci.c,v 1.16 2018/09/03 16:29:25 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -614,7 +614,7 @@ ahci_roothub_ctrl(struct usbd_bus *bus, usb_device_request_t *req,
 		}
 		usb_hub_descriptor_t hubd;
 
-		totlen = min(buflen, sizeof(hubd));
+		totlen = uimin(buflen, sizeof(hubd));
 		memcpy(&hubd, buf, totlen);
 		hubd.bNbrPorts = 2;
 		USETW(hubd.wHubCharacteristics, 0);
@@ -642,7 +642,7 @@ ahci_roothub_ctrl(struct usbd_bus *bus, usb_device_request_t *req,
 		//DPRINTF(D_XFER, ("ST=%04x,CH=%04x ", status, sc->sc_change));
 		USETW(ps.wPortStatus, status  & (UPS_CURRENT_CONNECT_STATUS|UPS_PORT_ENABLED|UPS_SUSPEND|UPS_OVERCURRENT_INDICATOR|UPS_RESET|UPS_PORT_POWER|UPS_LOW_SPEED));
 		USETW(ps.wPortChange, (status>>16) & (UPS_C_CONNECT_STATUS|UPS_C_PORT_ENABLED|UPS_C_SUSPEND|UPS_C_OVERCURRENT_INDICATOR|UPS_C_PORT_RESET));
-		totlen = min(len, sizeof(ps));
+		totlen = uimin(len, sizeof(ps));
 		memcpy(buf, &ps, totlen);
 		break;
 	case C(UR_SET_DESCRIPTOR, UT_WRITE_CLASS_DEVICE):
@@ -1156,7 +1156,7 @@ ahci_device_bulk_start(struct usbd_xfer *xfer)
 	i = 0;
 	offset = 0;
 	while ((len>0) || (i==0)) {
-		tlen = min(len,4096);
+		tlen = uimin(len,4096);
 		td[i]->buffer = DMAADDR(&xfer->ux_dmabuf,offset) | 0xa0000000;
 		td[i]->buflen=tlen;
 		td[i]->control=(isread?ADMHCD_TD_IN:ADMHCD_TD_OUT) | toggle | ADMHCD_TD_OWN | short_ok;

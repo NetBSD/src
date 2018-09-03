@@ -1,4 +1,4 @@
-/*	$NetBSD: imx51_ccm.c,v 1.6 2014/07/25 07:49:56 hkenken Exp $	*/
+/*	$NetBSD: imx51_ccm.c,v 1.7 2018/09/03 16:29:23 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2010-2012, 2014  Genetec Corporation.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx51_ccm.c,v 1.6 2014/07/25 07:49:56 hkenken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx51_ccm.c,v 1.7 2018/09/03 16:29:23 riastradh Exp $");
 
 #include "opt_imx.h"
 #include "opt_imx51clk.h"
@@ -514,7 +514,7 @@ imx51_get_pll_freq(u_int pll_no)
 	}
 
 	pdf = dp_op & DP_OP_PDF;
-	mfi = max(5, __SHIFTOUT(dp_op, DP_OP_MFI));
+	mfi = uimax(5, __SHIFTOUT(dp_op, DP_OP_MFI));
 	mfd = dp_mfd;
 	if (dp_mfn & __BIT(26))
 		/* 27bit signed value */
@@ -644,7 +644,7 @@ imx51_clk_rate(int clk_src, int clk_base, int rate)
 			break;
 		}
 
-		div = max(1, freq / rate);
+		div = uimax(1, freq / rate);
 
 		reg = bus_space_read_4(iot, ioh, CCMC_EPDC_AXI);
 		reg &= ~EPDC_AXI_DIV;

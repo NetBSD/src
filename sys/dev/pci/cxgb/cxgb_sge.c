@@ -28,7 +28,7 @@ POSSIBILITY OF SUCH DAMAGE.
 ***************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cxgb_sge.c,v 1.5 2017/09/26 07:42:06 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cxgb_sge.c,v 1.6 2018/09/03 16:29:32 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -190,8 +190,8 @@ reclaim_completed_tx(struct sge_txq *q, int nbufs, struct mbuf **mvec)
 
     mtx_assert(&q->lock, MA_OWNED);
     if (reclaim > 0) {
-        n = free_tx_desc(q, min(reclaim, nbufs), mvec);
-        reclaimed = min(reclaim, nbufs);
+        n = free_tx_desc(q, uimin(reclaim, nbufs), mvec);
+        reclaimed = uimin(reclaim, nbufs);
         q->cleaned += reclaimed;
         q->in_use -= reclaimed;
     }
@@ -443,7 +443,7 @@ void
 t3_update_qset_coalesce(struct sge_qset *qs, const struct qset_params *p)
 {
 
-    qs->rspq.holdoff_tmr = max(p->coalesce_nsecs/100, 1U);
+    qs->rspq.holdoff_tmr = uimax(p->coalesce_nsecs/100, 1U);
     qs->rspq.polling = 0 /* p->polling */;
 }
 
@@ -549,7 +549,7 @@ free_rx_bufs(adapter_t *sc, struct sge_fl *q)
 static __inline void
 __refill_fl(adapter_t *adap, struct sge_fl *fl)
 {
-    refill_fl(adap, fl, min(16U, fl->size - fl->credits));
+    refill_fl(adap, fl, uimin(16U, fl->size - fl->credits));
 }
 
 #ifndef DISABLE_MBUF_IOVEC
@@ -1133,7 +1133,7 @@ write_wr_hdr_sgl(unsigned int ndesc, struct tx_desc *txd, struct txq_state *txqs
             wrp = (struct work_request_hdr *)txd;
             wrp->wr_hi = htonl(V_WR_DATATYPE(1) |
                 V_WR_SGLSFLT(1)) | wr_hi;
-            wrp->wr_lo = htonl(V_WR_LEN(min(WR_FLITS,
+            wrp->wr_lo = htonl(V_WR_LEN(uimin(WR_FLITS,
                     sgl_flits + 1)) |
                 V_WR_GEN(txqs->gen)) | wr_lo;
             wr_gen2(txd, txqs->gen);

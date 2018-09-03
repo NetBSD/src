@@ -1,4 +1,4 @@
-/*	$NetBSD: mappedcopy.c,v 1.26 2011/02/08 20:20:16 rmind Exp $	*/
+/*	$NetBSD: mappedcopy.c,v 1.27 2018/09/03 16:29:25 riastradh Exp $	*/
 
 /*
  * XXX This doesn't work yet.  Soon.  --thorpej@NetBSD.org
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mappedcopy.c,v 1.26 2011/02/08 20:20:16 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mappedcopy.c,v 1.27 2018/09/03 16:29:25 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -109,7 +109,7 @@ mappedcopyin(void *f, void *t, size_t count)
 		if (pmap_extract(upmap, trunc_page((vaddr_t)fromp), &upa)
 		    == false)
 			panic("mappedcopyin: null page frame");
-		len = min(count, (PAGE_SIZE - off));
+		len = uimin(count, (PAGE_SIZE - off));
 		pmap_enter(pmap_kernel(), kva, upa,
 		    VM_PROT_READ, VM_PROT_READ | PMAP_WIRED);
 		pmap_update(pmap_kernel());
@@ -167,7 +167,7 @@ mappedcopyout(void *f, void *t, size_t count)
 		if (pmap_extract(upmap, trunc_page((vaddr_t)top), &upa)
 		    == false)
 			panic("mappedcopyout: null page frame");
-		len = min(count, (PAGE_SIZE - off));
+		len = uimin(count, (PAGE_SIZE - off));
 		pmap_enter(pmap_kernel(), kva, upa,
 		    VM_PROT_READ|VM_PROT_WRITE,
 		    VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);

@@ -1,4 +1,4 @@
-/* $NetBSD: dtv_buffer.c,v 1.8 2017/06/01 02:45:10 chs Exp $ */
+/* $NetBSD: dtv_buffer.c,v 1.9 2018/09/03 16:29:30 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dtv_buffer.c,v 1.8 2017/06/01 02:45:10 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dtv_buffer.c,v 1.9 2018/09/03 16:29:30 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -73,7 +73,7 @@ dtv_buffer_write(struct dtv_softc *sc, const uint8_t *buf, size_t buflen)
 		db = SIMPLEQ_FIRST(&ds->ds_ingress);
 		mutex_exit(&ds->ds_ingress_lock);
 
-		avail = min(db->db_length - db->db_bytesused, resid);
+		avail = uimin(db->db_length - db->db_bytesused, resid);
 		if (dtv_scatter_io_init(&ds->ds_data,
 		    db->db_offset + db->db_bytesused, avail, &sio)) {
 			dtv_scatter_io_copyin(&sio, buf + offset);
@@ -154,7 +154,7 @@ dtv_buffer_realloc(struct dtv_softc *sc, size_t bufsize)
 		ds->ds_buf = NULL;
 	}
 
-	minnbufs = min(nbufs, oldnbufs);
+	minnbufs = uimin(nbufs, oldnbufs);
 	for (i = 0; i < minnbufs; i++)
 		ds->ds_buf[i] = oldbuf[i];
 	for (; i < nbufs; i++)
@@ -269,7 +269,7 @@ retry:
 			goto retry;
 		}
 
-		len = min(uio->uio_resid, db->db_bytesused - ds->ds_bytesread);
+		len = uimin(uio->uio_resid, db->db_bytesused - ds->ds_bytesread);
 		offset = db->db_offset + ds->ds_bytesread;
 
 		if (dtv_scatter_io_init(&ds->ds_data, offset, len, &sio)) {

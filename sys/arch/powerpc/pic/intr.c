@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.25 2016/10/19 00:08:42 nonaka Exp $ */
+/*	$NetBSD: intr.c,v 1.26 2018/09/03 16:29:26 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.25 2016/10/19 00:08:42 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.26 2018/09/03 16:29:26 riastradh Exp $");
 
 #include "opt_interrupt.h"
 #include "opt_multiprocessor.h"
@@ -202,7 +202,7 @@ intr_establish_xname(int hwirq, int type, int ipl, int (*ih_fun)(void *),
 	 * generally small.
 	 */
 	for (p = &is->is_hand; (q = *p) != NULL; p = &q->ih_next) {
-		maxipl = max(maxipl, q->ih_ipl);
+		maxipl = uimax(maxipl, q->ih_ipl);
 	}
 
 	/*
@@ -273,7 +273,7 @@ intr_disestablish(void *arg)
 		if (tmp_ih == ih) {
 			q = p;
 		} else {
-			maxipl = max(maxipl, tmp_ih->ih_ipl);
+			maxipl = uimax(maxipl, tmp_ih->ih_ipl);
 		}
 	}
 	if (q)
@@ -611,7 +611,7 @@ splraise(int ncpl)
 	__asm volatile("sync; eieio");	/* don't reorder.... */
 	ocpl = ci->ci_cpl;
 	KASSERT(ncpl < NIPL);
-	ci->ci_cpl = max(ncpl, ocpl);
+	ci->ci_cpl = uimax(ncpl, ocpl);
 	__asm volatile("sync; eieio");	/* reorder protect */
 	__insn_barrier();
 	return ocpl;

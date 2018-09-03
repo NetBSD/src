@@ -1,4 +1,4 @@
-/*	$NetBSD: libkern.h,v 1.129 2018/08/27 08:53:19 maxv Exp $	*/
+/*	$NetBSD: libkern.h,v 1.130 2018/09/03 16:29:35 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -50,8 +50,8 @@
 
 LIBKERN_INLINE int imax(int, int) __unused;
 LIBKERN_INLINE int imin(int, int) __unused;
-LIBKERN_INLINE u_int max(u_int, u_int) __unused;
-LIBKERN_INLINE u_int min(u_int, u_int) __unused;
+LIBKERN_INLINE u_int uimax(u_int, u_int) __unused;
+LIBKERN_INLINE u_int uimin(u_int, u_int) __unused;
 LIBKERN_INLINE long lmax(long, long) __unused;
 LIBKERN_INLINE long lmin(long, long) __unused;
 LIBKERN_INLINE u_long ulmax(u_long, u_long) __unused;
@@ -98,12 +98,12 @@ lmin(long a, long b)
 	return (a < b ? a : b);
 }
 LIBKERN_INLINE u_int
-max(u_int a, u_int b)
+uimax(u_int a, u_int b)
 {
 	return (a > b ? a : b);
 }
 LIBKERN_INLINE u_int
-min(u_int a, u_int b)
+uimin(u_int a, u_int b)
 {
 	return (a < b ? a : b);
 }

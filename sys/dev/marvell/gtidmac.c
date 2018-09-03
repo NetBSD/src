@@ -1,4 +1,4 @@
-/*	$NetBSD: gtidmac.c,v 1.15 2017/06/01 02:45:10 chs Exp $	*/
+/*	$NetBSD: gtidmac.c,v 1.16 2018/09/03 16:29:31 riastradh Exp $	*/
 /*
  * Copyright (c) 2008, 2012, 2016 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtidmac.c,v 1.15 2017/06/01 02:45:10 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtidmac.c,v 1.16 2018/09/03 16:29:31 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -1061,7 +1061,7 @@ gtidmac_setup(void *tag, int chan, int ninputs, bus_dmamap_t *dmamap_in,
 		} else if (ccl & GTIDMAC_CCLR_DESTHOLD)
 			bcnt = (*dmamap_in)->dm_segs[iidx].ds_len;
 		else
-			bcnt = min((*dmamap_in)->dm_segs[iidx].ds_len - ires,
+			bcnt = uimin((*dmamap_in)->dm_segs[iidx].ds_len - ires,
 			    (*dmamap_out)->dm_segs[oidx].ds_len - ores);
 
 		desc = dd->dd_idmac_vaddr;
@@ -1357,7 +1357,7 @@ mvxore_setup(void *tag, int chan, int ninputs, bus_dmamap_t *dmamap_in,
 		for (i = 0; i < ninputs; i++) {
 			desc->srcaddr[i] =
 			    (*dmamap_in[i]).dm_segs[iidx[i]].ds_addr + ires[i];
-			bcnt = min(bcnt,
+			bcnt = uimin(bcnt,
 			    (*dmamap_in[i]).dm_segs[iidx[i]].ds_len - ires[i]);
 		}
 		desc->bcnt = bcnt;

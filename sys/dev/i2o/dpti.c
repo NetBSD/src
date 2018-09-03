@@ -1,4 +1,4 @@
-/*	$NetBSD: dpti.c,v 1.49 2017/10/28 04:53:55 riastradh Exp $	*/
+/*	$NetBSD: dpti.c,v 1.50 2018/09/03 16:29:31 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2007 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dpti.c,v 1.49 2017/10/28 04:53:55 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dpti.c,v 1.50 2018/09/03 16:29:31 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -353,7 +353,7 @@ dpti_ctlrinfo(struct dpti_softc *sc, int size, void *data)
 	info.Interrupt = 10;			/* XXX */
 
 	if (size > sizeof(char)) {
-		memcpy(data, &info, min(sizeof(info), size));
+		memcpy(data, &info, uimin(sizeof(info), size));
 		rv = 0;
 	} else
 		rv = copyout(&info, *(void **)data, sizeof(info));
@@ -438,7 +438,7 @@ dpti_sysinfo(struct dpti_softc *sc, int size, void *data)
 	 * Copy out the info structure to the user.
 	 */
 	if (size > sizeof(char)) {
-		memcpy(data, &info, min(sizeof(info), size));
+		memcpy(data, &info, uimin(sizeof(info), size));
 		rv = 0;
 	} else
 		rv = copyout(&info, *(void **)data, sizeof(info));

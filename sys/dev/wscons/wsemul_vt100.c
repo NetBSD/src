@@ -1,4 +1,4 @@
-/* $NetBSD: wsemul_vt100.c,v 1.44 2018/01/21 10:30:51 martin Exp $ */
+/* $NetBSD: wsemul_vt100.c,v 1.45 2018/09/03 16:29:34 riastradh Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsemul_vt100.c,v 1.44 2018/01/21 10:30:51 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsemul_vt100.c,v 1.45 2018/09/03 16:29:34 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_wsmsgattrs.h"
@@ -449,7 +449,7 @@ wsemul_vt100_output_c0c1(struct wsemul_vt100_emuldata *edp, u_char c,
 				if (vd->tabs[n])
 					break;
 		} else {
-			n = vd->ccol + min(8 - (vd->ccol & 7), COLS_LEFT(vd));
+			n = vd->ccol + uimin(8 - (vd->ccol & 7), COLS_LEFT(vd));
 		}
 		vd->ccol = n;
 		break;

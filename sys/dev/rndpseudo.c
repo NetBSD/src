@@ -1,4 +1,4 @@
-/*	$NetBSD: rndpseudo.c,v 1.36 2017/11/30 20:25:54 christos Exp $	*/
+/*	$NetBSD: rndpseudo.c,v 1.37 2018/09/03 16:29:30 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1997-2013 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rndpseudo.c,v 1.36 2017/11/30 20:25:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rndpseudo.c,v 1.37 2018/09/03 16:29:30 riastradh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -459,7 +459,7 @@ rnd_write(struct file *fp, off_t *offp, struct uio *uio,
 #endif
 			break;
 		}
-		n = min(RND_TEMP_BUFFER_SIZE, uio->uio_resid);
+		n = uimin(RND_TEMP_BUFFER_SIZE, uio->uio_resid);
 
 		ret = uiomove((void *)bf, n, uio);
 		if (ret != 0)

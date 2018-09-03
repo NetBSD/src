@@ -1,4 +1,4 @@
-/*	$NetBSD: hid.c,v 1.1 2017/12/10 17:03:07 bouyer Exp $	*/
+/*	$NetBSD: hid.c,v 1.2 2018/09/03 16:29:31 riastradh Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/hid.c,v 1.11 1999/11/17 22:33:39 n_hibma Exp $ */
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hid.c,v 1.1 2017/12/10 17:03:07 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hid.c,v 1.2 2018/09/03 16:29:31 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -132,7 +132,7 @@ hid_get_item(struct hid_data *s, struct hid_item *h)
 		    s->multi, s->multimax));
 	if (s->multimax != 0) {
 		if (s->multi < s->multimax) {
-			c->usage = s->usages[min(s->multi, s->nu-1)];
+			c->usage = s->usages[uimin(s->multi, s->nu-1)];
 			s->multi++;
 			*h = *c;
 			c->loc.pos += c->loc.size;

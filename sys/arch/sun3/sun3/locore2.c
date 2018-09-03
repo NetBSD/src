@@ -1,4 +1,4 @@
-/*	$NetBSD: locore2.c,v 1.101 2013/09/07 15:56:11 tsutsui Exp $	*/
+/*	$NetBSD: locore2.c,v 1.102 2018/09/03 16:29:28 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: locore2.c,v 1.101 2013/09/07 15:56:11 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore2.c,v 1.102 2018/09/03 16:29:28 riastradh Exp $");
 
 #include "opt_ddb.h"
 #include "opt_modular.h"
@@ -142,8 +142,8 @@ _save_symtab(void)
 		    shp[i].sh_type != SHT_STRTAB) {
 			continue;
 		}
-		minsym = min(minsym, (vaddr_t)end + shp[i].sh_offset);
-		maxsym = max(maxsym, (vaddr_t)end + shp[i].sh_offset +
+		minsym = uimin(minsym, (vaddr_t)end + shp[i].sh_offset);
+		maxsym = uimax(maxsym, (vaddr_t)end + shp[i].sh_offset +
 			     shp[i].sh_size);
 	}
 

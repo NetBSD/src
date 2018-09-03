@@ -1,4 +1,4 @@
-/*	$NetBSD: rfcomm_dlc.c,v 1.8 2014/07/09 04:54:03 rtr Exp $	*/
+/*	$NetBSD: rfcomm_dlc.c,v 1.9 2018/09/03 16:29:36 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rfcomm_dlc.c,v 1.8 2014/07/09 04:54:03 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rfcomm_dlc.c,v 1.9 2018/09/03 16:29:36 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -276,7 +276,7 @@ rfcomm_dlc_connect(struct rfcomm_dlc *dlc)
 
 	pn.flow_control = 0xf0;
 	dlc->rd_rxcred = (dlc->rd_rxsize / dlc->rd_mtu);
-	dlc->rd_rxcred = min(dlc->rd_rxcred, RFCOMM_CREDITS_DEFAULT);
+	dlc->rd_rxcred = uimin(dlc->rd_rxcred, RFCOMM_CREDITS_DEFAULT);
 	pn.credits = dlc->rd_rxcred;
 
 	err = rfcomm_session_send_mcc(dlc->rd_session, 1,
@@ -349,7 +349,7 @@ rfcomm_dlc_start(struct rfcomm_dlc *dlc)
 		if (rs->rs_flags & RFCOMM_SESSION_CFC) {
 			credits = (dlc->rd_rxsize / dlc->rd_mtu);
 			credits -= dlc->rd_rxcred;
-			credits = min(credits, RFCOMM_CREDITS_MAX);
+			credits = uimin(credits, RFCOMM_CREDITS_MAX);
 
 			if (credits > 0)
 				len--;

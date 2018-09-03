@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.253 2018/02/01 22:58:44 mrg Exp $ */
+/*	$NetBSD: cpu.c,v 1.254 2018/09/03 16:29:27 riastradh Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.253 2018/02/01 22:58:44 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.254 2018/09/03 16:29:27 riastradh Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -1418,9 +1418,9 @@ getcacheinfo_obp(struct cpu_info *sc, int node)
 			prom_getpropint(node, "dcache-associativity", 1);
 		ci->dc_totalsize = l * ci->dc_nlines * ci->dc_associativity;
 
-		ci->c_l2linesize = min(ci->ic_l2linesize, ci->dc_l2linesize);
-		ci->c_linesize = min(ci->ic_linesize, ci->dc_linesize);
-		ci->c_totalsize = max(ci->ic_totalsize, ci->dc_totalsize);
+		ci->c_l2linesize = uimin(ci->ic_l2linesize, ci->dc_l2linesize);
+		ci->c_linesize = uimin(ci->ic_linesize, ci->dc_linesize);
+		ci->c_totalsize = uimax(ci->ic_totalsize, ci->dc_totalsize);
 		ci->c_nlines = ci->c_totalsize >> ci->c_l2linesize;
 	} else {
 		/* unified I/D cache */
@@ -1929,9 +1929,9 @@ getcacheinfo_sun4d(struct cpu_info *sc, int node)
 	ci->dc_totalsize = ci->dc_linesize * ci->dc_nlines *
 	    ci->dc_associativity;
 
-	ci->c_l2linesize = min(ci->ic_l2linesize, ci->dc_l2linesize);
-	ci->c_linesize = min(ci->ic_linesize, ci->dc_linesize);
-	ci->c_totalsize = max(ci->ic_totalsize, ci->dc_totalsize);
+	ci->c_l2linesize = uimin(ci->ic_l2linesize, ci->dc_l2linesize);
+	ci->c_linesize = uimin(ci->ic_linesize, ci->dc_linesize);
+	ci->c_totalsize = uimax(ci->ic_totalsize, ci->dc_totalsize);
 	ci->c_nlines = ci->c_totalsize >> ci->c_l2linesize;
 
 	if (node_has_property(node, "ecache-nlines")) {

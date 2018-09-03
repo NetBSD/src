@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.59 2018/03/03 15:47:49 flxd Exp $	*/
+/*	$NetBSD: cache.c,v 1.60 2018/09/03 16:29:26 riastradh Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.59 2018/03/03 15:47:49 flxd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.60 2018/09/03 16:29:26 riastradh Exp $");
 
 #include "opt_cputype.h"
 #include "opt_mips_cache.h"
@@ -1043,7 +1043,7 @@ mips4_get_cache_config(int csizebase)
 	mci->mci_cache_alias_mask =
 	    ((mci->mci_pdcache_size / mci->mci_pdcache_ways) - 1) & ~PAGE_MASK;
 	mci->mci_cache_prefer_mask =
-	    max(mci->mci_pdcache_size, mci->mci_picache_size) - 1;
+	    uimax(mci->mci_pdcache_size, mci->mci_picache_size) - 1;
 }
 #endif /* ENABLE_MIPS4_CACHE_R10K */
 #endif /* MIPS3 || MIPS4 */

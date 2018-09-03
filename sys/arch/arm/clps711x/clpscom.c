@@ -1,4 +1,4 @@
-/*      $NetBSD: clpscom.c,v 1.6 2015/04/13 21:18:41 riastradh Exp $      */
+/*      $NetBSD: clpscom.c,v 1.7 2018/09/03 16:29:23 riastradh Exp $      */
 /*
  * Copyright (c) 2013 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clpscom.c,v 1.6 2015/04/13 21:18:41 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clpscom.c,v 1.7 2018/09/03 16:29:23 riastradh Exp $");
 
 #include "rnd.h"
 
@@ -461,7 +461,7 @@ clpscom_start(struct tty *tp)
 			    device_xname(sc->sc_dev));
 
 		/* Output the first chunk of the contiguous buffer. */
-		n = min(sc->sc_tbc, UART_FIFO_SIZE);
+		n = uimin(sc->sc_tbc, UART_FIFO_SIZE);
 		CLPSCOM_WRITE_MULTI(sc, sc->sc_tba, n);
 		sc->sc_tba += n;
 		sc->sc_tbc -= n;

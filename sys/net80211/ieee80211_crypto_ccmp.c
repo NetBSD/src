@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_crypto_ccmp.c,v 1.14 2018/05/03 17:14:37 maxv Exp $	*/
+/*	$NetBSD: ieee80211_crypto_ccmp.c,v 1.15 2018/09/03 16:29:36 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_crypto_ccmp.c,v 1.7 2005/07/11 03:06:23 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_crypto_ccmp.c,v 1.14 2018/05/03 17:14:37 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_crypto_ccmp.c,v 1.15 2018/09/03 16:29:36 riastradh Exp $");
 #endif
 
 /*
@@ -462,7 +462,7 @@ ccmp_encrypt(struct ieee80211_key *key, struct mbuf *m0, int hdrlen)
 			sp = space;
 			for (;;) {
 				pos_next = mtod(n, uint8_t *);
-				len = min(dl, AES_BLOCK_LEN);
+				len = uimin(dl, AES_BLOCK_LEN);
 				space_next = len > sp ? len - sp : 0;
 				if (n->m_len >= space_next) {
 					/*
@@ -491,7 +491,7 @@ ccmp_encrypt(struct ieee80211_key *key, struct mbuf *m0, int hdrlen)
 			sp = space;
 			for (;;) {
 				pos_next = mtod(m, uint8_t *);
-				len = min(dl, AES_BLOCK_LEN);
+				len = uimin(dl, AES_BLOCK_LEN);
 				space_next = len > sp ? len - sp : 0;
 				if (m->m_len >= space_next) {
 					xor_block(pos_next, e+sp, space_next);
@@ -599,7 +599,7 @@ ccmp_decrypt(struct ieee80211_key *key, u_int64_t pn, struct mbuf *m,
 			 * because drivers typically recv in clusters.
 			 */
 			pos_next = mtod(m, uint8_t *);
-			len = min(data_len, AES_BLOCK_LEN);
+			len = uimin(data_len, AES_BLOCK_LEN);
 			space_next = len > space ? len - space : 0;
 			IASSERT(m->m_len >= space_next,
 				("not enough data in following buffer, "

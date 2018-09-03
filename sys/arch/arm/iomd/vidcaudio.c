@@ -1,4 +1,4 @@
-/*	$NetBSD: vidcaudio.c,v 1.55 2016/12/13 20:18:06 christos Exp $	*/
+/*	$NetBSD: vidcaudio.c,v 1.56 2018/09/03 16:29:23 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson
@@ -65,7 +65,7 @@
 
 #include <sys/param.h>	/* proc.h */
 
-__KERNEL_RCSID(0, "$NetBSD: vidcaudio.c,v 1.55 2016/12/13 20:18:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vidcaudio.c,v 1.56 2018/09/03 16:29:23 riastradh Exp $");
 
 #include <sys/audioio.h>
 #include <sys/conf.h>   /* autoconfig functions */
@@ -346,7 +346,7 @@ mulaw_to_vidc_fetch_to(struct audio_softc *sc, stream_fetcher_t *self,
 	if ((err = this->prev->fetch_to(sc, this->prev, this->src, max_used)))
 		return err;
 	m = dst->end - dst->start;
-	m = min(m, max_used);
+	m = uimin(m, max_used);
 	FILTER_LOOP_PROLOGUE(this->src, 1, dst, 1, m) {
 		*d = MULAW_TO_VIDC(*s);
 	} FILTER_LOOP_EPILOGUE(this->src, dst);
@@ -373,7 +373,7 @@ mulaw_to_vidc_stereo_fetch_to(struct audio_softc *sc, stream_fetcher_t *self,
 	if ((err = this->prev->fetch_to(sc, this->prev, this->src, max_used / 2)))
 		return err;
 	m = (dst->end - dst->start) & ~1;
-	m = min(m, max_used);
+	m = uimin(m, max_used);
 	FILTER_LOOP_PROLOGUE(this->src, 1, dst, 2, m) {
 		d[0] = d[1] = MULAW_TO_VIDC(*s);
 	} FILTER_LOOP_EPILOGUE(this->src, dst);

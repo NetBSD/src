@@ -1,4 +1,4 @@
-/*	$NetBSD: omap3_sdhc.c,v 1.29 2016/10/05 16:27:15 christos Exp $	*/
+/*	$NetBSD: omap3_sdhc.c,v 1.30 2018/09/03 16:29:23 riastradh Exp $	*/
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap3_sdhc.c,v 1.29 2016/10/05 16:27:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap3_sdhc.c,v 1.30 2018/09/03 16:29:23 riastradh Exp $");
 
 #include "opt_omap.h"
 #include "edma.h"
@@ -775,7 +775,7 @@ mmchs_edma_transfer(struct sdhc_softc *sdhc_sc, struct sdmmc_command *cmd)
 
 	for (seg = 0; seg < cmd->c_dmamap->dm_nsegs; seg++) {
 		KASSERT(resid > 0);
-		const int xferlen = min(resid,
+		const int xferlen = uimin(resid,
 		    cmd->c_dmamap->dm_segs[seg].ds_len);
 		KASSERT(xferlen == cmd->c_dmamap->dm_segs[seg].ds_len ||
 			seg == cmd->c_dmamap->dm_nsegs - 1);
@@ -815,8 +815,8 @@ mmchs_edma_transfer(struct sdhc_softc *sdhc_sc, struct sdmmc_command *cmd)
 		 */
 		ep.ep_bcntrld = 0;	/* not used for AB-synchronous mode */
 		ep.ep_opt |= EDMA_PARAM_OPT_SYNCDIM;
-		ep.ep_acnt = min(xferlen, 64);
-		ep.ep_bcnt = min(xferlen, blksize) / ep.ep_acnt;
+		ep.ep_acnt = uimin(xferlen, 64);
+		ep.ep_bcnt = uimin(xferlen, blksize) / ep.ep_acnt;
 		ep.ep_ccnt = xferlen / (ep.ep_acnt * ep.ep_bcnt);
 		ep.ep_srcbidx = ep.ep_dstbidx = 0;
 		ep.ep_srccidx = ep.ep_dstcidx = 0;

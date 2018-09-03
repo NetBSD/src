@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.211 2017/05/10 02:46:33 msaitoh Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.212 2018/09/03 16:29:32 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.211 2017/05/10 02:46:33 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.212 2018/09/03 16:29:32 riastradh Exp $");
 
 /*
 #define CBB_DEBUG
@@ -2266,7 +2266,7 @@ pccbb_pcmcia_delay(struct pccbb_softc *sc, int timo, const char *wmesg)
 		panic("pccbb_pcmcia_delay: called in interrupt context");
 #endif
 	DPRINTF(("pccbb_pcmcia_delay: \"%s\", sleep %d ms\n", wmesg, timo));
-	kpause(wmesg, false, max(mstohz(timo), 1), NULL);
+	kpause(wmesg, false, uimax(mstohz(timo), 1), NULL);
 }
 
 /*

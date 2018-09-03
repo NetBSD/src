@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_fat.c,v 1.33 2018/07/25 22:07:59 kamil Exp $	*/
+/*	$NetBSD: msdosfs_fat.c,v 1.34 2018/09/03 16:29:34 riastradh Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -52,7 +52,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_fat.c,v 1.33 2018/07/25 22:07:59 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_fat.c,v 1.34 2018/09/03 16:29:34 riastradh Exp $");
 
 /*
  * kernel include files.
@@ -144,7 +144,7 @@ fatblock(struct msdosfsmount *pmp, u_long ofs, u_long *bnp, u_long *sizep, u_lon
 	u_long bn, size;
 
 	bn = ofs / pmp->pm_fatblocksize * pmp->pm_fatblocksec;
-	size = min(pmp->pm_fatblocksec, pmp->pm_FATsecs - bn)
+	size = uimin(pmp->pm_fatblocksec, pmp->pm_FATsecs - bn)
 	    * pmp->pm_BytesPerSec;
 	bn += pmp->pm_fatblk + pmp->pm_curfat * pmp->pm_FATsecs;
 
@@ -228,7 +228,7 @@ pcbmap(struct denode *dep, u_long findcn, daddr_t *bnp, u_long *cnp, int *sp)
 			if (cnp)
 				*cnp = MSDOSFSROOT;
 			if (sp)
-				*sp = min(pmp->pm_bpcluster,
+				*sp = uimin(pmp->pm_bpcluster,
 				    dep->de_FileSize - de_cn2off(pmp, findcn));
 			DPRINTF(("%s(root, bn=%lu, cn=%u)\n", __func__,
 			    pmp->pm_rootdirblk + de_cn2bn(pmp, findcn),

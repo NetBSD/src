@@ -1,4 +1,4 @@
-/*	$NetBSD: lsi64854.c,v 1.38 2012/10/27 17:18:21 chs Exp $ */
+/*	$NetBSD: lsi64854.c,v 1.39 2018/09/03 16:29:31 riastradh Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lsi64854.c,v 1.38 2012/10/27 17:18:21 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lsi64854.c,v 1.39 2018/09/03 16:29:31 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -300,7 +300,7 @@ lsi64854_setup(struct lsi64854_softc *sc, uint8_t **addr, size_t *len,
 	 * and we cannot cross a 16Mb boundary.
 	 */
 	*dmasize = sc->sc_dmasize =
-	    min(*dmasize, DMAMAX((size_t)*sc->sc_dmaaddr));
+	    uimin(*dmasize, DMAMAX((size_t)*sc->sc_dmaaddr));
 
 	DPRINTF(LDB_ANY, ("%s: dmasize = %ld\n",
 	    __func__, (long)sc->sc_dmasize));
@@ -558,7 +558,7 @@ lsi64854_setup_pp(struct lsi64854_softc *sc, uint8_t **addr, size_t *len,
 	 * and we cannot cross a 16Mb boundary.
 	 */
 	*dmasize = sc->sc_dmasize =
-	    min(*dmasize, DMAMAX((size_t) *sc->sc_dmaaddr));
+	    uimin(*dmasize, DMAMAX((size_t) *sc->sc_dmaaddr));
 
 	DPRINTF(LDB_PP, ("%s: dmasize = %ld\n",
 	    __func__, (long)sc->sc_dmasize));

@@ -1,4 +1,4 @@
-/*	$NetBSD: zx.c,v 1.41 2016/04/21 18:10:57 macallan Exp $	*/
+/*	$NetBSD: zx.c,v 1.42 2018/09/03 16:29:33 riastradh Exp $	*/
 
 /*
  *  Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zx.c,v 1.41 2016/04/21 18:10:57 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zx.c,v 1.42 2018/09/03 16:29:33 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -678,13 +678,13 @@ zx_cursor_move(struct zx_softc *sc)
 	y = sc->sc_curpos.y - sc->sc_curhot.y;
 
 	if (x < 0) {
-		sx = min(-x, 32);
+		sx = uimin(-x, 32);
 		x = 0;
 	} else
 		sx = 0;
 
 	if (y < 0) {
-		sy = min(-y, 32);
+		sy = uimin(-y, 32);
 		y = 0;
 	} else
 		sy = 0;

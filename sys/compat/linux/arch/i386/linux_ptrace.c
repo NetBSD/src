@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ptrace.c,v 1.32 2017/08/28 00:46:07 kamil Exp $	*/
+/*	$NetBSD: linux_ptrace.c,v 1.33 2018/09/03 16:29:29 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_ptrace.c,v 1.32 2017/08/28 00:46:07 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_ptrace.c,v 1.33 2018/09/03 16:29:29 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -275,7 +275,7 @@ linux_sys_ptrace_arch(struct lwp *l, const struct linux_sys_ptrace_args *uap,
 			memset(linux_fpregs, '\0', sizeof(struct linux_fpctx));
 		}
 		memcpy(linux_fpregs, fpregs,
-		    min(sizeof(struct linux_fpctx), fp_size));
+		    uimin(sizeof(struct linux_fpctx), fp_size));
 		error = copyout(linux_fpregs, (void *)SCARG(uap, data),
 		    sizeof(struct linux_fpctx));
 		break;
@@ -283,7 +283,7 @@ linux_sys_ptrace_arch(struct lwp *l, const struct linux_sys_ptrace_args *uap,
 	case LINUX_PTRACE_SETFPREGS:
 		memset(fpregs, '\0', sizeof(struct fpreg));
 		memcpy(fpregs, linux_fpregs,
-		    min(sizeof(struct linux_fpctx), sizeof(struct fpreg)));
+		    uimin(sizeof(struct linux_fpctx), sizeof(struct fpreg)));
 		error = process_write_regs(lt, regs);
 		mutex_exit(t->p_lock);
 		break;

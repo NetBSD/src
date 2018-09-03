@@ -1,4 +1,4 @@
-/*	$NetBSD: if_el.c,v 1.96 2018/06/26 06:48:01 msaitoh Exp $	*/
+/*	$NetBSD: if_el.c,v 1.97 2018/09/03 16:29:31 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1994, Matthew E. Kimmel.  Permission is hereby granted
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_el.c,v 1.96 2018/06/26 06:48:01 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_el.c,v 1.97 2018/09/03 16:29:31 riastradh Exp $");
 
 #include "opt_inet.h"
 
@@ -389,7 +389,7 @@ elstart(struct ifnet *ifp)
 
 		/* Transfer datagram to board. */
 		DPRINTF(("el: xfr pkt length=%d...\n", m0->m_pkthdr.len));
-		off = EL_BUFSIZ - max(m0->m_pkthdr.len,
+		off = EL_BUFSIZ - uimax(m0->m_pkthdr.len,
 		    ETHER_MIN_LEN - ETHER_CRC_LEN);
 #ifdef DIAGNOSTIC
 		if ((off & 0xffff) != off)
@@ -616,7 +616,7 @@ elget(struct el_softc *sc, int totlen)
 			len = MCLBYTES;
 		}
 
-		m->m_len = len = min(totlen, len);
+		m->m_len = len = uimin(totlen, len);
 		bus_space_read_multi_1(iot, ioh, EL_BUF, mtod(m, u_int8_t *), len);
 
 		totlen -= len;

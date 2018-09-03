@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_clbio.c,v 1.4 2016/11/18 22:58:08 pgoyette Exp $	*/
+/*	$NetBSD: nfs_clbio.c,v 1.5 2018/09/03 16:29:34 riastradh Exp $	*/
 /*-
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("FreeBSD: head/sys/fs/nfsclient/nfs_clbio.c 304026 2016-08-12 22:44:59Z rmacklem "); */
-__RCSID("$NetBSD: nfs_clbio.c,v 1.4 2016/11/18 22:58:08 pgoyette Exp $");
+__RCSID("$NetBSD: nfs_clbio.c,v 1.5 2018/09/03 16:29:34 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1192,8 +1192,8 @@ again:
 		 */
 		if (n > 0) {
 			if (bp->b_dirtyend > 0) {
-				bp->b_dirtyoff = min(on, bp->b_dirtyoff);
-				bp->b_dirtyend = max((on + n), bp->b_dirtyend);
+				bp->b_dirtyoff = uimin(on, bp->b_dirtyoff);
+				bp->b_dirtyend = uimax((on + n), bp->b_dirtyend);
 			} else {
 				bp->b_dirtyoff = on;
 				bp->b_dirtyend = on + n;

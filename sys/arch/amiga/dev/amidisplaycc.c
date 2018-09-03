@@ -1,4 +1,4 @@
-/*	$NetBSD: amidisplaycc.c,v 1.31 2018/01/28 10:00:31 jandberg Exp $ */
+/*	$NetBSD: amidisplaycc.c,v 1.32 2018/09/03 16:29:22 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2000 Jukka Andberg.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amidisplaycc.c,v 1.31 2018/01/28 10:00:31 jandberg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amidisplaycc.c,v 1.32 2018/09/03 16:29:22 riastradh Exp $");
 
 /*
  * wscons interface to amiga custom chips. Contains the necessary functions
@@ -605,7 +605,7 @@ amidisplaycc_putchar(void *screen, int row, int col, u_int ch, long attr)
 	fontlow  = scr->wsfont->firstchar;
 	fonthigh = fontlow + scr->wsfont->numchars - 1;
 
-	fontheight = min(scr->fontheight, scr->wsfont->fontheight);
+	fontheight = uimin(scr->fontheight, scr->wsfont->fontheight);
 	depth      = scr->depth;
 	linebytes  = scr->linebytes;
 

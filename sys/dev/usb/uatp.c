@@ -1,4 +1,4 @@
-/*	$NetBSD: uatp.c,v 1.17 2018/08/02 06:09:04 riastradh Exp $	*/
+/*	$NetBSD: uatp.c,v 1.18 2018/09/03 16:29:33 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2011-2014 The NetBSD Foundation, Inc.
@@ -146,7 +146,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uatp.c,v 1.17 2018/08/02 06:09:04 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uatp.c,v 1.18 2018/09/03 16:29:33 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1744,7 +1744,7 @@ interpret_input(struct uatp_softc *sc, int *dx, int *dy, int *dz, int *dw,
 		    ("pressure in only one dimension; ignoring\n"));
 		return true;
 	} else if ((x_pressure == 1) && (y_pressure == 1)) {
-		fingers = max(x_fingers, y_fingers);
+		fingers = uimax(x_fingers, y_fingers);
 		CHECK((0 < fingers), return false);
 		if (*buttons == 0)
 			tap_touched(sc, fingers);

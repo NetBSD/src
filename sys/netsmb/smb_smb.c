@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_smb.c,v 1.33 2012/11/24 19:48:25 nakayama Exp $	*/
+/*	$NetBSD: smb_smb.c,v 1.34 2018/09/03 16:29:36 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_smb.c,v 1.33 2012/11/24 19:48:25 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_smb.c,v 1.34 2018/09/03 16:29:36 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -237,13 +237,13 @@ smb_smb_negotiate(struct smb_vc *vcp, struct smb_cred *scred)
 		if (sp->sv_maxtx <= 0 || sp->sv_maxtx > 0xffff)
 			sp->sv_maxtx = 1024;
 		else
-			sp->sv_maxtx = min(sp->sv_maxtx,
+			sp->sv_maxtx = uimin(sp->sv_maxtx,
 					   63*1024 + SMB_HDRLEN + 16);
 		SMB_TRAN_GETPARAM(vcp, SMBTP_RCVSZ, &maxqsz);
-		vcp->vc_rxmax = min(smb_vc_maxread(vcp), maxqsz - 1024);
+		vcp->vc_rxmax = uimin(smb_vc_maxread(vcp), maxqsz - 1024);
 		SMB_TRAN_GETPARAM(vcp, SMBTP_SNDSZ, &maxqsz);
-		vcp->vc_wxmax = min(smb_vc_maxwrite(vcp), maxqsz - 1024);
-		vcp->vc_txmax = min(sp->sv_maxtx, maxqsz);
+		vcp->vc_wxmax = uimin(smb_vc_maxwrite(vcp), maxqsz - 1024);
+		vcp->vc_txmax = uimin(sp->sv_maxtx, maxqsz);
 		SMBSDEBUG(("TZ = %d\n", sp->sv_tz));
 		SMBSDEBUG(("CAPS = %x\n", sp->sv_caps));
 		SMBSDEBUG(("MAXMUX = %d\n", sp->sv_maxmux));
@@ -607,7 +607,7 @@ smb_smb_readx(struct smb_share *ssp, u_int16_t fid, size_t *len, size_t *rresid,
 		if (blksz > 0xffff)
 			blksz = 0xffff;
 
-		*len = min(blksz, *len);
+		*len = uimin(blksz, *len);
 	}
 
 	error = smb_rq_alloc(SSTOCP(ssp), SMB_COM_READ_ANDX, scred, &rqp);
@@ -620,7 +620,7 @@ smb_smb_readx(struct smb_share *ssp, u_int16_t fid, size_t *len, size_t *rresid,
 	mb_put_uint16le(mbp, 0);	/* offset to secondary */
 	mb_put_mem(mbp, (void *)&fid, sizeof(fid), MB_MSYSTEM);
 	mb_put_uint32le(mbp, uio->uio_offset);
-	*len = min(SSTOVC(ssp)->vc_rxmax, *len);
+	*len = uimin(SSTOVC(ssp)->vc_rxmax, *len);
 	mb_put_uint16le(mbp, *len);	/* MaxCount */
 	mb_put_uint16le(mbp, *len);	/* MinCount (only indicates blocking) */
 	mb_put_uint32le(mbp, *len >> 16);	/* MaxCountHigh */
@@ -697,7 +697,7 @@ smb_smb_writex(struct smb_share *ssp, u_int16_t fid, size_t *len, size_t *rresid
 	}
 
 	if (SMB_CAPS(SSTOVC(ssp)) & SMB_CAP_LARGE_WRITEX) {
-		*len = min(SSTOVC(ssp)->vc_wxmax, *len);
+		*len = uimin(SSTOVC(ssp)->vc_wxmax, *len);
 	} else {
 		size_t blksz;
 
@@ -705,7 +705,7 @@ smb_smb_writex(struct smb_share *ssp, u_int16_t fid, size_t *len, size_t *rresid
 		if (blksz > 0xffff)
 			blksz = 0xffff;
 
-		*len = min(blksz, *len);
+		*len = uimin(blksz, *len);
 	}
 
 	error = smb_rq_alloc(SSTOCP(ssp), SMB_COM_WRITE_ANDX, scred, &rqp);
@@ -773,14 +773,14 @@ smb_smb_read(struct smb_share *ssp, u_int16_t fid,
 		return error;
 
 	blksz = SSTOVC(ssp)->vc_txmax - SMB_HDRLEN - 16;
-	rlen = *len = min(blksz, *len);
+	rlen = *len = uimin(blksz, *len);
 
 	smb_rq_getrequest(rqp, &mbp);
 	smb_rq_wstart(rqp);
 	mb_put_mem(mbp, (void *)&fid, sizeof(fid), MB_MSYSTEM);
 	mb_put_uint16le(mbp, rlen);
 	mb_put_uint32le(mbp, uio->uio_offset);
-	mb_put_uint16le(mbp, min(uio->uio_resid, 0xffff));
+	mb_put_uint16le(mbp, uimin(uio->uio_resid, 0xffff));
 	smb_rq_wend(rqp);
 	smb_rq_bstart(rqp);
 	smb_rq_bend(rqp);
@@ -858,7 +858,7 @@ smb_smb_write(struct smb_share *ssp, u_int16_t fid, size_t *len, size_t *rresid,
 	if (blksz > 0xffff)
 		blksz = 0xffff;
 
-	resid = *len = min(blksz, *len);
+	resid = *len = uimin(blksz, *len);
 
 	error = smb_rq_alloc(SSTOCP(ssp), SMB_COM_WRITE, scred, &rqp);
 	if (error)
@@ -868,7 +868,7 @@ smb_smb_write(struct smb_share *ssp, u_int16_t fid, size_t *len, size_t *rresid,
 	mb_put_mem(mbp, (void *)&fid, sizeof(fid), MB_MSYSTEM);
 	mb_put_uint16le(mbp, resid);
 	mb_put_uint32le(mbp, uio->uio_offset);
-	mb_put_uint16le(mbp, min(uio->uio_resid, 0xffff));
+	mb_put_uint16le(mbp, uimin(uio->uio_resid, 0xffff));
 	smb_rq_wend(rqp);
 	smb_rq_bstart(rqp);
 	mb_put_uint8(mbp, SMB_DT_DATA);

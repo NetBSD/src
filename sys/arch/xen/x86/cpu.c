@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.126 2018/08/12 12:23:33 maxv Exp $	*/
+/*	$NetBSD: cpu.c,v 1.127 2018/09/03 16:29:29 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.126 2018/08/12 12:23:33 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.127 2018/09/03 16:29:29 riastradh Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -342,7 +342,7 @@ cpu_vm_init(struct cpu_info *ci)
 		default:
 			tcolors /= cai->cai_associativity;
 		}
-		ncolors = max(ncolors, tcolors);
+		ncolors = uimax(ncolors, tcolors);
 	}
 
 	/*

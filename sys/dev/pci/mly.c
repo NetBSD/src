@@ -1,4 +1,4 @@
-/*	$NetBSD: mly.c,v 1.50 2016/07/07 06:55:41 msaitoh Exp $	*/
+/*	$NetBSD: mly.c,v 1.51 2018/09/03 16:29:32 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mly.c,v 1.50 2016/07/07 06:55:41 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mly.c,v 1.51 2018/09/03 16:29:32 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1616,7 +1616,7 @@ mly_alloc_ccbs(struct mly_softc *mly)
 		mly->mly_ncmds = MLY_CCBS_RESV;
 	else {
 		i = le16toh(mly->mly_controllerinfo->maximum_parallel_commands);
-		mly->mly_ncmds = min(MLY_MAX_CCBS, i);
+		mly->mly_ncmds = uimin(MLY_MAX_CCBS, i);
 	}
 
 	/*
@@ -2382,14 +2382,14 @@ mly_user_command(struct mly_softc *mly, struct mly_user_command *uc)
 	/* Return the sense buffer to userspace. */
 	if (uc->RequestSenseLength > 0 && mc->mc_sense > 0) {
 		rv = copyout(mc->mc_packet, uc->RequestSenseBuffer,
-		    min(uc->RequestSenseLength, mc->mc_sense));
+		    uimin(uc->RequestSenseLength, mc->mc_sense));
 		if (rv != 0)
 			goto out;
 	}
 
 	/* Return command results to userspace (caller will copy out). */
 	uc->DataTransferLength = mc->mc_resid;
-	uc->RequestSenseLength = min(uc->RequestSenseLength, mc->mc_sense);
+	uc->RequestSenseLength = uimin(uc->RequestSenseLength, mc->mc_sense);
 	uc->CommandStatus = mc->mc_status;
 	rv = 0;
 

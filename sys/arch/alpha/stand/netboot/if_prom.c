@@ -1,4 +1,4 @@
-/* $NetBSD: if_prom.c,v 1.20 2009/01/12 11:32:43 tsutsui Exp $ */
+/* $NetBSD: if_prom.c,v 1.21 2018/09/03 16:29:22 riastradh Exp $ */
 
 /*
  * Copyright (c) 1997 Christopher G. Demetriou.  All rights reserved.
@@ -111,7 +111,7 @@ prom_get(struct iodesc *desc, void *pkt, size_t len, saseconds_t timeout)
 			cc = ret.u.retval;
 	}
 	if (broken_firmware)
-		cc = min(cc, len);
+		cc = uimin(cc, len);
 	else
 		cc = len;
 	memcpy(pkt, hate, cc);

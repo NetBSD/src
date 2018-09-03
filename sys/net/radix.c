@@ -1,4 +1,4 @@
-/*	$NetBSD: radix.c,v 1.47 2016/12/12 03:55:57 ozaki-r Exp $	*/
+/*	$NetBSD: radix.c,v 1.48 2018/09/03 16:29:35 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radix.c,v 1.47 2016/12/12 03:55:57 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radix.c,v 1.48 2018/09/03 16:29:35 riastradh Exp $");
 
 #ifndef _NET_RADIX_H_
 #include <sys/param.h>
@@ -221,12 +221,12 @@ rn_satisfies_leaf(
 	const char *cp2 = leaf->rn_key;
 	const char *cp3 = leaf->rn_mask;
 	const char *cplim;
-	int length = min(*(const u_char *)cp, *(const u_char *)cp2);
+	int length = uimin(*(const u_char *)cp, *(const u_char *)cp2);
 
 	if (cp3 == 0)
 		cp3 = rn_ones;
 	else
-		length = min(length, *(const u_char *)cp3);
+		length = uimin(length, *(const u_char *)cp3);
 	cplim = cp + length; cp3 += skip; cp2 += skip;
 	for (cp += skip; cp < cplim; cp++, cp2++, cp3++)
 		if ((*cp ^ *cp2) & *cp3)
@@ -327,7 +327,7 @@ on1:
 					if (rn_b <= m->rm_b)
 						return m->rm_leaf;
 				} else {
-					off = min(t->rn_off, matched_off);
+					off = uimin(t->rn_off, matched_off);
 					x = rn_search_m(v, t, m->rm_mask);
 					while (x && x->rn_mask != m->rm_mask)
 						x = x->rn_dupedkey;

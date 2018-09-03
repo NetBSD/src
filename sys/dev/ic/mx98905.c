@@ -1,4 +1,4 @@
-/*	$NetBSD: mx98905.c,v 1.15 2009/03/14 21:04:20 dsl Exp $	*/
+/*	$NetBSD: mx98905.c,v 1.16 2018/09/03 16:29:31 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: mx98905.c,v 1.15 2009/03/14 21:04:20 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mx98905.c,v 1.16 2018/09/03 16:29:31 riastradh Exp $");
 
 #include <sys/device.h>
 #include <sys/mbuf.h>
@@ -181,7 +181,7 @@ mx98905_write_mbuf(struct dp8390_softc *sc, struct mbuf *m, int buf)
 
 	resid = savelen = m->m_pkthdr.len;
 
-	dmalen = min(resid, 254);
+	dmalen = uimin(resid, 254);
 
 	mx98905_write_setup(sc, dmalen, buf);
 
@@ -233,7 +233,7 @@ mx98905_write_mbuf(struct dp8390_softc *sc, struct mbuf *m, int buf)
 				 * words as much as we can, then
 				 * buffer the remaining byte, if any.
 				 */
-				len = min(l, dmalen);
+				len = uimin(l, dmalen);
 				leftover = len & 1;
 				len &= ~1;
 				bus_space_write_multi_stream_2(asict,
@@ -247,7 +247,7 @@ mx98905_write_mbuf(struct dp8390_softc *sc, struct mbuf *m, int buf)
 			}
 			if (dmalen == 0 && resid > 0) {
 				mx98905_write_wait(sc);
-				dmalen = min(resid, 254);
+				dmalen = uimin(resid, 254);
 
 				mx98905_write_setup(sc, dmalen, buf);
 
@@ -372,7 +372,7 @@ mx98905_readmem(bus_space_tag_t nict, bus_space_handle_t nich, bus_space_tag_t a
 		++resid;
 
 	while (resid > 0) {
-		len = min(resid, 254);
+		len = uimin(resid, 254);
 		mx98905_read_setup(nict, nich, len, src);
 		if (useword)
 			bus_space_read_multi_stream_2(asict, asich,

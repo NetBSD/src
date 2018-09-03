@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cnw.c,v 1.63 2018/06/26 06:48:01 msaitoh Exp $	*/
+/*	$NetBSD: if_cnw.c,v 1.64 2018/09/03 16:29:33 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cnw.c,v 1.63 2018/06/26 06:48:01 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cnw.c,v 1.64 2018/09/03 16:29:33 riastradh Exp $");
 
 #include "opt_inet.h"
 
@@ -789,7 +789,7 @@ cnw_read(struct cnw_softc *sc)
 			mbytes -= pad;
 		}
 		mptr = mtod(m, u_int8_t *);
-		mbytes = m->m_len = min(totbytes, mbytes);
+		mbytes = m->m_len = uimin(totbytes, mbytes);
 		totbytes -= mbytes;
 		while (mbytes > 0) {
 			if (bufbytes == 0) {

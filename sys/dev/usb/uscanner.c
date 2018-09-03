@@ -1,4 +1,4 @@
-/*	$NetBSD: uscanner.c,v 1.82 2018/01/21 13:57:12 skrll Exp $	*/
+/*	$NetBSD: uscanner.c,v 1.83 2018/09/03 16:29:34 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uscanner.c,v 1.82 2018/01/21 13:57:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uscanner.c,v 1.83 2018/09/03 16:29:34 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -506,7 +506,7 @@ uscanner_do_read(struct uscanner_softc *sc, struct uio *uio, int flag)
 	if (sc->sc_dying)
 		return EIO;
 
-	while ((n = min(sc->sc_bulkin_bufferlen, uio->uio_resid)) != 0) {
+	while ((n = uimin(sc->sc_bulkin_bufferlen, uio->uio_resid)) != 0) {
 		DPRINTFN(1, ("uscannerread: start transfer %d bytes\n",n));
 		tn = n;
 
@@ -559,7 +559,7 @@ uscanner_do_write(struct uscanner_softc *sc, struct uio *uio, int flag)
 	if (sc->sc_dying)
 		return EIO;
 
-	while ((n = min(sc->sc_bulkout_bufferlen, uio->uio_resid)) != 0) {
+	while ((n = uimin(sc->sc_bulkout_bufferlen, uio->uio_resid)) != 0) {
 		error = uiomove(sc->sc_bulkout_buffer, n, uio);
 		if (error)
 			break;

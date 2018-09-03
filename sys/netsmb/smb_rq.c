@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_rq.c,v 1.35 2016/08/15 08:17:35 maxv Exp $	*/
+/*	$NetBSD: smb_rq.c,v 1.36 2018/09/03 16:29:36 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_rq.c,v 1.35 2016/08/15 08:17:35 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_rq.c,v 1.36 2018/09/03 16:29:36 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -628,7 +628,7 @@ smb_t2_request_int(struct smb_t2rq *t2p)
 	nmlen = t2p->t_name ? strlen(t2p->t_name) : 0;
 	len = ALIGN4(len + 5 * 2 + t2p->t2_setupcount * 2 + 2 + nmlen + 1);
 	if (len + leftpcount > txmax) {
-		txpcount = min(leftpcount, txmax - len);
+		txpcount = uimin(leftpcount, txmax - len);
 		poff = len;
 		txdcount = 0;
 		doff = 0;
@@ -636,7 +636,7 @@ smb_t2_request_int(struct smb_t2rq *t2p)
 		txpcount = leftpcount;
 		poff = txpcount ? len : 0;
 		len = ALIGN4(len + txpcount);
-		txdcount = min(leftdcount, txmax - len);
+		txdcount = uimin(leftdcount, txmax - len);
 		doff = txdcount ? len : 0;
 	}
 	leftpcount -= txpcount;
@@ -700,7 +700,7 @@ smb_t2_request_int(struct smb_t2rq *t2p)
 		if (t2p->t_name == NULL)
 			len += 2;
 		if (len + leftpcount > txmax) {
-			txpcount = min(leftpcount, txmax - len);
+			txpcount = uimin(leftpcount, txmax - len);
 			poff = len;
 			txdcount = 0;
 			doff = 0;
@@ -708,7 +708,7 @@ smb_t2_request_int(struct smb_t2rq *t2p)
 			txpcount = leftpcount;
 			poff = txpcount ? len : 0;
 			len = ALIGN4(len + txpcount);
-			txdcount = min(leftdcount, txmax - len);
+			txdcount = uimin(leftdcount, txmax - len);
 			doff = txdcount ? len : 0;
 		}
 		mb_put_uint16le(mbp, txpcount);

@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.249 2018/05/29 04:38:29 ozaki-r Exp $	*/
+/*	$NetBSD: nd6.c,v 1.250 2018/09/03 16:29:36 riastradh Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.249 2018/05/29 04:38:29 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.250 2018/09/03 16:29:36 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -2510,7 +2510,7 @@ nd6_sysctl(
 		return 0;
 	}
 
-	ol = *oldlenp = min(ol, *oldlenp);
+	ol = *oldlenp = uimin(ol, *oldlenp);
 	if (ol == 0)
 		return 0;
 

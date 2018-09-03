@@ -1,4 +1,4 @@
-/*	$NetBSD: igsfb_subr.c,v 1.14 2017/04/03 17:40:07 christos Exp $ */
+/*	$NetBSD: igsfb_subr.c,v 1.15 2018/09/03 16:29:31 riastradh Exp $ */
 
 /*
  * Copyright (c) 2002 Valeriy E. Ushakov
@@ -32,7 +32,7 @@
  * Integraphics Systems IGA 168x and CyberPro series.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: igsfb_subr.c,v 1.14 2017/04/03 17:40:07 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: igsfb_subr.c,v 1.15 2018/09/03 16:29:31 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -542,7 +542,7 @@ igsfb_set_mode(struct igsfb_devconfig *dc, const struct videomode *mode,
 	hsync_start = mode->hsync_start;
 	hsync_end = mode->hsync_end;
 
-	hblank_start = min(mode->hsync_start, mode->hdisplay);
+	hblank_start = uimin(mode->hsync_start, mode->hdisplay);
 	hblank_end = hsync_end;
 	if ((hblank_end - hblank_start) >= 63 * 8) {
 
@@ -552,7 +552,7 @@ igsfb_set_mode(struct igsfb_devconfig *dc, const struct videomode *mode,
 		hblank_start = hblank_end - 63 * 8;
 	}
 
-	vblank_start = min(mode->vsync_start, mode->vdisplay);
+	vblank_start = uimin(mode->vsync_start, mode->vdisplay);
 	vblank_end = mode->vsync_end;
 
 	vsync_start = mode->vsync_start;

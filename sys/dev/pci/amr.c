@@ -1,4 +1,4 @@
-/*	$NetBSD: amr.c,v 1.62 2016/09/27 03:33:32 pgoyette Exp $	*/
+/*	$NetBSD: amr.c,v 1.63 2018/09/03 16:29:32 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amr.c,v 1.62 2016/09/27 03:33:32 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amr.c,v 1.63 2018/09/03 16:29:32 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -418,7 +418,7 @@ amr_attach(device_t parent, device_t self, void *aux)
 	amr->amr_flags |= AMRF_CCBS;
 
 	if (amr_max_xfer == 0) {
-		amr_max_xfer = min(((AMR_MAX_SEGS - 1) * PAGE_SIZE), MAXPHYS);
+		amr_max_xfer = uimin(((AMR_MAX_SEGS - 1) * PAGE_SIZE), MAXPHYS);
 		amr_max_segs = (amr_max_xfer + (PAGE_SIZE * 2) - 1) / PAGE_SIZE;
 	}
 
@@ -477,7 +477,7 @@ amr_attach(device_t parent, device_t self, void *aux)
 	 * driver doesn't trust the controller's reported value, and lockups
 	 * have been seen when we do.
 	 */
-	amr->amr_maxqueuecnt = min(amr->amr_maxqueuecnt, AMR_MAX_CMDS);
+	amr->amr_maxqueuecnt = uimin(amr->amr_maxqueuecnt, AMR_MAX_CMDS);
 	if (amr->amr_maxqueuecnt > i)
 		amr->amr_maxqueuecnt = i;
 

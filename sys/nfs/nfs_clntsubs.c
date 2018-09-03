@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_clntsubs.c,v 1.2 2011/06/12 03:35:59 rmind Exp $	*/
+/*	$NetBSD: nfs_clntsubs.c,v 1.3 2018/09/03 16:29:36 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_clntsubs.c,v 1.2 2011/06/12 03:35:59 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_clntsubs.c,v 1.3 2018/09/03 16:29:36 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs.h"
@@ -540,7 +540,7 @@ nfs_attrtimeo(struct nfsmount *nmp, struct nfsnode *np)
 		return NFS_MINATTRTIMO;
 
 	timeo = (time_second - np->n_mtime.tv_sec) / 10;
-	timeo = max(timeo, NFS_MINATTRTIMO);
-	timeo = min(timeo, NFS_MAXATTRTIMO);
+	timeo = uimax(timeo, NFS_MINATTRTIMO);
+	timeo = uimin(timeo, NFS_MAXATTRTIMO);
 	return timeo;
 }

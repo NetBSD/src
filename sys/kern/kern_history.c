@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_history.c,v 1.17 2018/08/13 03:20:19 mrg Exp $	 */
+/*	$NetBSD: kern_history.c,v 1.18 2018/09/03 16:29:35 riastradh Exp $	 */
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_history.c,v 1.17 2018/08/13 03:20:19 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_history.c,v 1.18 2018/09/03 16:29:35 riastradh Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kernhist.h"
@@ -543,7 +543,7 @@ sysctl_kernhist_helper(SYSCTLFN_ARGS)
 	}
 
 	/* Copy data to userland */
-	error = copyout(buf, oldp, min(bufsize, *oldlenp));
+	error = copyout(buf, oldp, uimin(bufsize, *oldlenp));
 
 	/* If copyout was successful but only partial, report ENOMEM */
 	if (error == 0 && *oldlenp < bufsize)

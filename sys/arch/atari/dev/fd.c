@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.86 2018/02/08 09:05:17 dholland Exp $	*/
+/*	$NetBSD: fd.c,v 1.87 2018/09/03 16:29:24 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.86 2018/02/08 09:05:17 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.87 2018/09/03 16:29:24 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1216,7 +1216,7 @@ fdminphys(struct buf *bp)
 	printf("fdminphys: before %ld", bp->b_bcount);
 #endif
 
-	bp->b_bcount = min(bp->b_bcount, tsz - toff);
+	bp->b_bcount = uimin(bp->b_bcount, tsz - toff);
 
 #ifdef FLP_DEBUG
 	printf(" after %ld\n", bp->b_bcount);

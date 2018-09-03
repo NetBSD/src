@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.282 2018/08/09 21:16:43 prlw1 Exp $	*/
+/*	$NetBSD: uhci.c,v 1.283 2018/09/03 16:29:34 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2011, 2012 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.282 2018/08/09 21:16:43 prlw1 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.283 2018/09/03 16:29:34 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -3766,7 +3766,7 @@ uhci_roothub_ctrl(struct usbd_bus *bus, usb_device_request_t *req,
 		}
 		usb_hub_descriptor_t hubd;
 
-		totlen = min(buflen, sizeof(hubd));
+		totlen = uimin(buflen, sizeof(hubd));
 		memcpy(&hubd, buf, totlen);
 		hubd.bNbrPorts = 2;
 		memcpy(buf, &hubd, totlen);
@@ -3812,7 +3812,7 @@ uhci_roothub_ctrl(struct usbd_bus *bus, usb_device_request_t *req,
 			change |= UPS_C_PORT_RESET;
 		USETW(ps.wPortStatus, status);
 		USETW(ps.wPortChange, change);
-		totlen = min(len, sizeof(ps));
+		totlen = uimin(len, sizeof(ps));
 		memcpy(buf, &ps, totlen);
 		break;
 	case C(UR_SET_DESCRIPTOR, UT_WRITE_CLASS_DEVICE):

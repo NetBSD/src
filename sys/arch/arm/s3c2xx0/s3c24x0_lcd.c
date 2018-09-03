@@ -1,4 +1,4 @@
-/* $NetBSD: s3c24x0_lcd.c,v 1.12 2014/08/21 06:40:35 maxv Exp $ */
+/* $NetBSD: s3c24x0_lcd.c,v 1.13 2018/09/03 16:29:23 riastradh Exp $ */
 
 /*
  * Copyright (c) 2004  Genetec Corporation.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: s3c24x0_lcd.c,v 1.12 2014/08/21 06:40:35 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: s3c24x0_lcd.c,v 1.13 2018/09/03 16:29:23 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -107,7 +107,7 @@ s3c24x0_set_lcd_panel_info(struct s3c24x0_lcd_softc *sc,
 		clkval = (hclk / info->pixel_clock  / 2) - 1;
 	else {
 		/* STN display */
-		clkval = max(2, hclk / info->pixel_clock / 2);
+		clkval = uimax(2, hclk / info->pixel_clock / 2);
 	}
 
 	reg =  (info->lcdcon1 & ~LCDCON1_CLKVAL_MASK) |

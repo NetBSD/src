@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_ioasic.c,v 1.33 2009/04/18 14:58:04 tsutsui Exp $	*/
+/*	$NetBSD: if_le_ioasic.c,v 1.34 2018/09/03 16:29:33 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le_ioasic.c,v 1.33 2009/04/18 14:58:04 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le_ioasic.c,v 1.34 2018/09/03 16:29:33 riastradh Exp $");
 
 #include "opt_inet.h"
 
@@ -263,7 +263,7 @@ le_ioasic_copytobuf_gap16(struct lance_softc *sc, void *fromv, int boff,
 	 */
 	if (boff) {
 		int xfer;
-		xfer = min(len, 16 - boff);
+		xfer = uimin(len, 16 - boff);
 		memcpy(bptr + boff, from, xfer);
 		from += xfer;
 		bptr += 32;
@@ -342,7 +342,7 @@ le_ioasic_copyfrombuf_gap16(struct lance_softc *sc, void *tov, int boff,
 	/* Dispose of boff. source of copy is subsequently 16-byte aligned. */
 	if (boff) {
 		int xfer;
-		xfer = min(len, 16 - boff);
+		xfer = uimin(len, 16 - boff);
 		memcpy(to, bptr + boff, xfer);
 		to += xfer;
 		bptr += 32;
@@ -411,12 +411,12 @@ le_ioasic_zerobuf_gap16(struct lance_softc *sc, int boff, int len)
 
 	bptr = buf + ((boff << 1) & ~0x1f);
 	boff &= 0xf;
-	xfer = min(len, 16 - boff);
+	xfer = uimin(len, 16 - boff);
 	while (len > 0) {
 		memset(bptr + boff, 0, xfer);
 		bptr += 32;
 		boff = 0;
 		len -= xfer;
-		xfer = min(len, 16);
+		xfer = uimin(len, 16);
 	}
 }

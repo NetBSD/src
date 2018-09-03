@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mvxpe.c,v 1.19 2018/06/26 06:48:01 msaitoh Exp $	*/
+/*	$NetBSD: if_mvxpe.c,v 1.20 2018/09/03 16:29:31 riastradh Exp $	*/
 /*
  * Copyright (c) 2015 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mvxpe.c,v 1.19 2018/06/26 06:48:01 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mvxpe.c,v 1.20 2018/09/03 16:29:31 riastradh Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -445,7 +445,7 @@ mvxpe_attach(device_t parent, device_t self, void *aux)
 	/*
 	 * Initialize struct ifnet
 	 */
-	IFQ_SET_MAXLEN(&ifp->if_snd, max(MVXPE_TX_RING_CNT - 1, IFQ_MAXLEN));
+	IFQ_SET_MAXLEN(&ifp->if_snd, uimax(MVXPE_TX_RING_CNT - 1, IFQ_MAXLEN));
 	IFQ_SET_READY(&ifp->if_snd);
 	strlcpy(ifp->if_xname, device_xname(sc->sc_dev), sizeof(ifp->if_xname));
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: mvmebus.c,v 1.19 2012/10/27 17:18:27 chs Exp $	*/
+/*	$NetBSD: mvmebus.c,v 1.20 2018/09/03 16:29:32 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvmebus.c,v 1.19 2012/10/27 17:18:27 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvmebus.c,v 1.20 2018/09/03 16:29:32 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -736,7 +736,7 @@ mvmebus_dmamem_alloc(void *vsc, vme_size_t len, vme_am_t am, vme_datasize_t data
 	 * Set up the constraints so we can allocate physical memory which
 	 * is visible in the requested address space
 	 */
-	low = max(vr->vr_locstart, avail_start);
+	low = uimax(vr->vr_locstart, avail_start);
 	high = vr->vr_locstart + (vr->vr_vmeend - vr->vr_vmestart) + 1;
 	bound = (bus_size_t) vr->vr_mask + 1;
 

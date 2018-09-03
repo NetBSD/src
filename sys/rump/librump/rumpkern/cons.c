@@ -1,4 +1,4 @@
-/*	$NetBSD: cons.c,v 1.7 2017/11/30 20:25:56 christos Exp $	*/
+/*	$NetBSD: cons.c,v 1.8 2018/09/03 16:29:37 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2013 Antti Kantee.  All Rights Reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cons.c,v 1.7 2017/11/30 20:25:56 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cons.c,v 1.8 2018/09/03 16:29:37 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/file.h>
@@ -110,7 +110,7 @@ rumpcons_write(struct file *fp, off_t *off, struct uio *uio,
 
 	buf = kmem_alloc(PAGE_SIZE, KM_SLEEP);
 	while (uio->uio_resid > 0) {
-		len = min(PAGE_SIZE, uio->uio_resid);
+		len = uimin(PAGE_SIZE, uio->uio_resid);
 		error = uiomove(buf, len, uio);
 		if (error)
 			break;

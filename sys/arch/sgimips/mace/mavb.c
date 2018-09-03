@@ -1,4 +1,4 @@
-/* $NetBSD: mavb.c,v 1.10 2015/02/17 11:25:43 macallan Exp $ */
+/* $NetBSD: mavb.c,v 1.11 2018/09/03 16:29:27 riastradh Exp $ */
 /* $OpenBSD: mavb.c,v 1.6 2005/04/15 13:05:14 mickey Exp $ */
 
 /*
@@ -184,7 +184,7 @@ DEFINE_FILTER(mavb_16to24)
 	if ((err = this->prev->fetch_to(asc, this->prev, this->src, max_used)))
 		return err;
 	m = (dst->end - dst->start) & ~1;
-	m = min(m, max_used);
+	m = uimin(m, max_used);
 	FILTER_LOOP_PROLOGUE(this->src, 2, dst, 4, m) {
 		d[3] = 0;
 		d[2] = s[1];
@@ -205,7 +205,7 @@ DEFINE_FILTER(mavb_mts)
 	if ((err = this->prev->fetch_to(asc, this->prev, this->src, max_used)))
 		return err;
 	m = (dst->end - dst->start) & ~1;
-	m = min(m, max_used);
+	m = uimin(m, max_used);
 	FILTER_LOOP_PROLOGUE(this->src, 4, dst, 8, m) {
 		d[3] = d[7] = s[3];
 		d[2] = d[6] = s[2];

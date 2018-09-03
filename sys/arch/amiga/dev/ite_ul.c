@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_ul.c,v 1.14 2009/03/14 15:36:01 dsl Exp $ */
+/*	$NetBSD: ite_ul.c,v 1.15 2018/09/03 16:29:22 riastradh Exp $ */
 
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite_ul.c,v 1.14 2009/03/14 15:36:01 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite_ul.c,v 1.15 2018/09/03 16:29:22 riastradh Exp $");
 
 #include "grful.h"
 #if NGRFUL > 0
@@ -272,7 +272,7 @@ void ulowell_cursor(struct ite_softc *ip, int flag)
 
 	/* draw cursor */
 
-	ip->cursorx = min(ip->curx, ip->cols-1);
+	ip->cursorx = uimin(ip->curx, ip->cols-1);
 	ip->cursory = ip->cury;
 #if 0
 	cmd[0] = GCMD_PIXBLT;

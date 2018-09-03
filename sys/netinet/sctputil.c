@@ -1,5 +1,5 @@
 /*	$KAME: sctputil.c,v 1.39 2005/06/16 20:54:06 jinmei Exp $	*/
-/*	$NetBSD: sctputil.c,v 1.12 2017/01/16 15:44:47 christos Exp $	*/
+/*	$NetBSD: sctputil.c,v 1.13 2018/09/03 16:29:36 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Cisco Systems, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sctputil.c,v 1.12 2017/01/16 15:44:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sctputil.c,v 1.13 2018/09/03 16:29:36 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -773,7 +773,7 @@ sctp_init_asoc(struct sctp_inpcb *m, struct sctp_association *asoc,
 	}
 
 
-	asoc->my_rwnd = max(m->sctp_socket->so_rcv.sb_hiwat, SCTP_MINIMAL_RWND);
+	asoc->my_rwnd = uimax(m->sctp_socket->so_rcv.sb_hiwat, SCTP_MINIMAL_RWND);
 	asoc->peers_rwnd = m->sctp_socket->so_rcv.sb_hiwat;
 
 	asoc->smallest_mtu = m->sctp_frag_point;
@@ -1931,7 +1931,7 @@ sctp_m_getptr(struct mbuf *m, int off, int len, u_int8_t *in_ptr)
 	} else {
 		/* else, it spans more than one mbuf, so save a temp copy... */
 		while ((m != NULL) && (len > 0)) {
-			count = min(m->m_len - off, len);
+			count = uimin(m->m_len - off, len);
 			memcpy(ptr, (void *)(mtod(m, vaddr_t) + off), count);
 			len -= count;
 			ptr += count;

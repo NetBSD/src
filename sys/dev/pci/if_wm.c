@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.584 2018/08/09 16:27:23 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.585 2018/09/03 16:29:32 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.584 2018/08/09 16:27:23 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.585 2018/09/03 16:29:32 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -2722,7 +2722,7 @@ alloc_retry:
 	/* wm(4) doest not use ifp->if_watchdog, use wm_tick as watchdog. */
 	ifp->if_init = wm_init;
 	ifp->if_stop = wm_stop;
-	IFQ_SET_MAXLEN(&ifp->if_snd, max(WM_IFQUEUELEN, IFQ_MAXLEN));
+	IFQ_SET_MAXLEN(&ifp->if_snd, uimax(WM_IFQUEUELEN, IFQ_MAXLEN));
 	IFQ_SET_READY(&ifp->if_snd);
 
 	/* Check for jumbo frame */
@@ -5012,7 +5012,7 @@ wm_adjust_qnum(struct wm_softc *sc, int nvectors)
 		break;
 	}
 
-	hw_nqueues = min(hw_ntxqueues, hw_nrxqueues);
+	hw_nqueues = uimin(hw_ntxqueues, hw_nrxqueues);
 
 	/*
 	 * As queues more than MSI-X vectors cannot improve scaling, we limit
@@ -5339,7 +5339,7 @@ wm_itrs_calculate(struct wm_softc *sc, struct wm_queue *wmq)
 	if (rxq->rxq_packets)
 		avg_size =  rxq->rxq_bytes / rxq->rxq_packets;
 	if (txq->txq_packets)
-		avg_size = max(avg_size, txq->txq_bytes / txq->txq_packets);
+		avg_size = uimax(avg_size, txq->txq_bytes / txq->txq_packets);
 
 	if (avg_size == 0) {
 		new_itr = 450; /* restore default value */
@@ -5350,7 +5350,7 @@ wm_itrs_calculate(struct wm_softc *sc, struct wm_queue *wmq)
 	avg_size += 24;
 
 	/* Don't starve jumbo frames */
-	avg_size = min(avg_size, 3000);
+	avg_size = uimin(avg_size, 3000);
 
 	/* Give a little boost to mid-size frames */
 	if ((avg_size > 300) && (avg_size < 1200))

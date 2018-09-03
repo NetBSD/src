@@ -1,4 +1,4 @@
-/*	$NetBSD: rfcomm_upper.c,v 1.22 2014/11/16 21:34:27 plunky Exp $	*/
+/*	$NetBSD: rfcomm_upper.c,v 1.23 2018/09/03 16:29:36 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rfcomm_upper.c,v 1.22 2014/11/16 21:34:27 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rfcomm_upper.c,v 1.23 2018/09/03 16:29:36 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -506,8 +506,8 @@ rfcomm_getopt(struct rfcomm_dlc *dlc, struct sockopt *sopt)
 		memset(&fc, 0, sizeof(fc));
 		fc.lmodem = dlc->rd_lmodem;
 		fc.rmodem = dlc->rd_rmodem;
-		fc.tx_cred = max(dlc->rd_txcred, 0xff);
-		fc.rx_cred = max(dlc->rd_rxcred, 0xff);
+		fc.tx_cred = uimax(dlc->rd_txcred, 0xff);
+		fc.rx_cred = uimax(dlc->rd_rxcred, 0xff);
 		if (dlc->rd_session
 		    && (dlc->rd_session->rs_flags & RFCOMM_SESSION_CFC))
 			fc.cfc = 1;

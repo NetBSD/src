@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.96 2015/04/26 15:15:19 mlelstv Exp $ */
+/*	$NetBSD: fd.c,v 1.97 2018/09/03 16:29:22 riastradh Exp $ */
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.96 2015/04/26 15:15:19 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.97 2018/09/03 16:29:22 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1564,7 +1564,7 @@ fddone(struct fd_softc *sc)
 		data += (dp->b_blkno % sc->nsectors) * FDSECSIZE;
 		sz = sc->nsectors - dp->b_blkno % sc->nsectors;
 		sz *= FDSECSIZE;
-		sz = min(dp->b_bcount, sz);
+		sz = uimin(dp->b_bcount, sz);
 		if (bp->b_flags & B_READ)
 			memcpy(dp->b_data, data, sz);
 		else {
@@ -1677,7 +1677,7 @@ fdminphys(struct buf *bp)
 #ifdef FDDEBUG
 	printf("fdminphys: before %ld", bp->b_bcount);
 #endif
-	bp->b_bcount = min(bp->b_bcount, tsz - toff);
+	bp->b_bcount = uimin(bp->b_bcount, tsz - toff);
 #ifdef FDDEBUG
 	printf(" after %ld\n", bp->b_bcount);
 #endif

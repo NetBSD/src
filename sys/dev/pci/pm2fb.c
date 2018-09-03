@@ -1,4 +1,4 @@
-/*	$NetBSD: pm2fb.c,v 1.29 2016/12/16 23:34:46 macallan Exp $	*/
+/*	$NetBSD: pm2fb.c,v 1.30 2018/09/03 16:29:32 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2009, 2012 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pm2fb.c,v 1.29 2016/12/16 23:34:46 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pm2fb.c,v 1.30 2018/09/03 16:29:32 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -429,7 +429,7 @@ pm2fb_attach(device_t parent, device_t self, void *aux)
 		sc->sc_defaultscreen_descr.ncols = ri->ri_cols;
 
 		glyphcache_init(&sc->sc_gc, sc->sc_height + 5,
-			min(2047, (sc->sc_fbsize / sc->sc_stride))
+			uimin(2047, (sc->sc_fbsize / sc->sc_stride))
 			 - sc->sc_height - 5,
 			sc->sc_width,
 			ri->ri_font->fontwidth,
@@ -446,7 +446,7 @@ pm2fb_attach(device_t parent, device_t self, void *aux)
 		} else
 			(*ri->ri_ops.allocattr)(ri, 0, 0, 0, &defattr);
 		glyphcache_init(&sc->sc_gc, sc->sc_height + 5,
-			   min(2047, (sc->sc_fbsize / sc->sc_stride))
+			   uimin(2047, (sc->sc_fbsize / sc->sc_stride))
 			    - sc->sc_height - 5,
 			   sc->sc_width,
 			   ri->ri_font->fontwidth,
@@ -1217,7 +1217,7 @@ pm2fb_putchar_aa(void *cookie, int row, int col, u_int c, long attr)
 			    PM2RE_RECTANGLE | PM2RE_SYNC_ON_HOST |
 			    PM2RE_INC_X | PM2RE_INC_Y);
 
-	pm2fb_wait(sc, min(200, ri->ri_fontscale));
+	pm2fb_wait(sc, uimin(200, ri->ri_fontscale));
 
 	/*
 	 * and now we just hammer the forground colour and alpha values into

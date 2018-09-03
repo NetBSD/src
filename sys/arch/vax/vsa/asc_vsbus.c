@@ -1,4 +1,4 @@
-/*	$NetBSD: asc_vsbus.c,v 1.44 2016/07/07 06:55:39 msaitoh Exp $	*/
+/*	$NetBSD: asc_vsbus.c,v 1.45 2018/09/03 16:29:28 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: asc_vsbus.c,v 1.44 2016/07/07 06:55:39 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asc_vsbus.c,v 1.45 2018/09/03 16:29:28 riastradh Exp $");
 
 #include "locators.h"
 #include "opt_cputype.h"
@@ -413,7 +413,7 @@ asc_vsbus_dma_setup(struct ncr53c9x_softc *sc, uint8_t **addr, size_t *len,
         NCR_DMA(("%s: start %d@%p,%d\n", device_xname(sc->sc_dev),
             (int)*asc->sc_dmalen, *asc->sc_dmaaddr,
 	    (asc->sc_flags & ASC_FROMMEMORY)));
-	*dmasize = asc->sc_dmasize = min(*dmasize, ASC_MAXXFERSIZE);
+	*dmasize = asc->sc_dmasize = uimin(*dmasize, ASC_MAXXFERSIZE);
 
 	if (asc->sc_dmasize) {
 		if (bus_dmamap_load(asc->sc_dmat, asc->sc_dmamap,

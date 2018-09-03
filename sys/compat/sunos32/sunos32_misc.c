@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos32_misc.c,v 1.78 2017/07/28 15:34:06 riastradh Exp $	*/
+/*	$NetBSD: sunos32_misc.c,v 1.79 2018/09/03 16:29:30 riastradh Exp $	*/
 /* from :NetBSD: sunos_misc.c,v 1.107 2000/12/01 19:25:10 jdolecek Exp	*/
 
 /*
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos32_misc.c,v 1.78 2017/07/28 15:34:06 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos32_misc.c,v 1.79 2018/09/03 16:29:30 riastradh Exp $");
 
 #define COMPAT_SUNOS 1
 
@@ -628,7 +628,7 @@ sunos32_sys_getdents(struct lwp *l, const struct sunos32_sys_getdents_args *uap,
 		goto out1;
 	}
 
-	buflen = min(MAXBSIZE, SCARG(uap, nbytes));
+	buflen = uimin(MAXBSIZE, SCARG(uap, nbytes));
 	sbuf = malloc(buflen, M_TEMP, M_WAITOK);
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	off = fp->f_offset;

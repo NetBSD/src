@@ -1,4 +1,4 @@
-/*	$NetBSD: sbc.c,v 1.56 2014/06/29 12:18:42 martin Exp $	*/
+/*	$NetBSD: sbc.c,v 1.57 2018/09/03 16:29:25 riastradh Exp $	*/
 
 /*
  * Copyright (C) 1996 Scott Reynolds.  All rights reserved.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbc.c,v 1.56 2014/06/29 12:18:42 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbc.c,v 1.57 2018/09/03 16:29:25 riastradh Exp $");
 
 #include "opt_ddb.h"
 
@@ -481,7 +481,7 @@ sbc_drq_intr(void *p)
 		 * Get the source address aligned.
 		 */
 		resid =
-		    count = min(dh->dh_len, 4 - (((int)dh->dh_addr) & 0x3));
+		    count = uimin(dh->dh_len, 4 - (((int)dh->dh_addr) & 0x3));
 		if (count && count < 4) {
 			drq = (volatile u_int8_t *)sc->sc_drq_addr;
 			data = (u_int8_t *)dh->dh_addr;
@@ -499,7 +499,7 @@ sbc_drq_intr(void *p)
 		 * Start the transfer.
 		 */
 		while (dh->dh_len) {
-			dcount = count = min(dh->dh_len, MAX_DMA_LEN);
+			dcount = count = uimin(dh->dh_len, MAX_DMA_LEN);
 			long_drq = (volatile u_int32_t *)sc->sc_drq_addr;
 			long_data = (u_int32_t *)dh->dh_addr;
 
@@ -539,7 +539,7 @@ sbc_drq_intr(void *p)
 		 * Get the dest address aligned.
 		 */
 		resid =
-		    count = min(dh->dh_len, 4 - (((int)dh->dh_addr) & 0x3));
+		    count = uimin(dh->dh_len, 4 - (((int)dh->dh_addr) & 0x3));
 		if (count && count < 4) {
 			data = (u_int8_t *)dh->dh_addr;
 			drq = (volatile u_int8_t *)sc->sc_drq_addr;
@@ -555,7 +555,7 @@ sbc_drq_intr(void *p)
 		 * Start the transfer.
 		 */
 		while (dh->dh_len) {
-			dcount = count = min(dh->dh_len, MAX_DMA_LEN);
+			dcount = count = uimin(dh->dh_len, MAX_DMA_LEN);
 			long_data = (u_int32_t *)dh->dh_addr;
 			long_drq = (volatile u_int32_t *)sc->sc_drq_addr;
 

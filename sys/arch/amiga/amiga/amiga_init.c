@@ -1,4 +1,4 @@
-/*	$NetBSD: amiga_init.c,v 1.129 2012/11/26 22:58:24 rkujawa Exp $	*/
+/*	$NetBSD: amiga_init.c,v 1.130 2018/09/03 16:29:22 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -39,7 +39,7 @@
 #include "ser.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amiga_init.c,v 1.129 2012/11/26 22:58:24 rkujawa Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amiga_init.c,v 1.130 2018/09/03 16:29:22 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1060,8 +1060,8 @@ kernel_reload_write(struct uio *uio)
 	/*
 	 * Continue loading in the kernel image.
 	 */
-	c = min(iov->iov_len, kernel_load_endseg - kernel_load_ofs);
-	c = min(c, MAXPHYS);
+	c = uimin(iov->iov_len, kernel_load_endseg - kernel_load_ofs);
+	c = uimin(c, MAXPHYS);
 	if ((error = uiomove(kernel_image + kernel_load_ofs, (int)c, uio)) != 0)
 		return(error);
 	kernel_load_ofs += c;

@@ -1,5 +1,5 @@
 /*	$OpenBSD: if_zyd.c,v 1.52 2007/02/11 00:08:04 jsg Exp $	*/
-/*	$NetBSD: if_zyd.c,v 1.50 2018/08/02 06:09:04 riastradh Exp $	*/
+/*	$NetBSD: if_zyd.c,v 1.51 2018/09/03 16:29:33 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2006 by Damien Bergamini <damien.bergamini@free.fr>
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_zyd.c,v 1.50 2018/08/02 06:09:04 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_zyd.c,v 1.51 2018/09/03 16:29:33 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -2574,14 +2574,14 @@ zyd_loadfirmware(struct zyd_softc *sc, u_char *fw, size_t size)
 	addr = ZYD_FIRMWARE_START_ADDR;
 	while (size > 0) {
 #if 0
-		const int mlen = min(size, 4096);
+		const int mlen = uimin(size, 4096);
 #else
 		/*
 		 * XXXX: When the transfer size is 4096 bytes, it is not
 		 * likely to be able to transfer it.
 		 * The cause is port or machine or chip?
 		 */
-		const int mlen = min(size, 64);
+		const int mlen = uimin(size, 64);
 #endif
 
 		DPRINTF(("loading firmware block: len=%d, addr=0x%x\n", mlen,

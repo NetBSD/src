@@ -1,4 +1,4 @@
-/* $NetBSD: emdtv.c,v 1.12 2016/12/04 10:12:35 skrll Exp $ */
+/* $NetBSD: emdtv.c,v 1.13 2018/09/03 16:29:33 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2008, 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emdtv.c,v 1.12 2016/12/04 10:12:35 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emdtv.c,v 1.13 2018/09/03 16:29:33 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -223,7 +223,7 @@ emdtv_read_eeprom(struct emdtv_softc *sc)
 	    NULL, 0, 0))
 		return false;
 	while (size > 0) {
-		block = min(size, 16);
+		block = uimin(size, 16);
 		if (iic_exec(&sc->sc_i2c, I2C_OP_READ, ee, NULL, 0,
 		    p, block, 0))
 			return false;

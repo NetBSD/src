@@ -1,4 +1,4 @@
-/*	$NetBSD: openfirm.c,v 1.25 2014/08/07 09:08:09 joerg Exp $	*/
+/*	$NetBSD: openfirm.c,v 1.26 2018/09/03 16:29:26 riastradh Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -34,7 +34,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: openfirm.c,v 1.25 2014/08/07 09:08:09 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: openfirm.c,v 1.26 2018/09/03 16:29:26 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -491,7 +491,7 @@ OF_read(int handle, void *addr, int len)
 	args.ihandle = handle;
 	args.addr = OF_buf;
 	for (; len > 0; len -= l, p += l) {
-		l = min(PAGE_SIZE, len);
+		l = uimin(PAGE_SIZE, len);
 		args.len = l;
 		if (openfirmware(&args) == -1)
 			return -1;
@@ -532,7 +532,7 @@ OF_write(int handle, const void *addr, int len)
 	args.ihandle = handle;
 	args.addr = OF_buf;
 	for (; len > 0; len -= l, p += l) {
-		l = min(PAGE_SIZE, len);
+		l = uimin(PAGE_SIZE, len);
 		ofbcopy(p, OF_buf, l);
 		args.len = l;
 		args.actual = l;	/* work around a PIBS bug */

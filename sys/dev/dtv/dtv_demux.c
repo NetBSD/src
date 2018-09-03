@@ -1,4 +1,4 @@
-/* $NetBSD: dtv_demux.c,v 1.8 2017/11/30 20:25:55 christos Exp $ */
+/* $NetBSD: dtv_demux.c,v 1.9 2018/09/03 16:29:30 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -52,7 +52,7 @@
  */ 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dtv_demux.c,v 1.8 2017/11/30 20:25:55 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dtv_demux.c,v 1.9 2018/09/03 16:29:30 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -668,7 +668,7 @@ dtv_demux_process(struct dtv_demux *demux, const uint8_t *tspkt,
 		sec->sec_bytesused = sec->sec_length = 0;
 
 	/* Copy data into section buffer */
-	avail = min(sec->sec_length - sec->sec_bytesused, brem);
+	avail = uimin(sec->sec_length - sec->sec_bytesused, brem);
 	if (avail < 0)
 		goto done;
 	memcpy(&sec->sec_buf[sec->sec_bytesused], p, avail);

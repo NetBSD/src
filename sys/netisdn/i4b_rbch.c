@@ -27,7 +27,7 @@
  *	i4b_rbch.c - device driver for raw B channel data
  *	---------------------------------------------------
  *
- *	$Id: i4b_rbch.c,v 1.29 2017/10/25 08:12:40 maya Exp $
+ *	$Id: i4b_rbch.c,v 1.30 2018/09/03 16:29:36 riastradh Exp $
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_rbch.c,v 1.29 2017/10/25 08:12:40 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_rbch.c,v 1.30 2018/09/03 16:29:36 riastradh Exp $");
 
 #include "isdnbchan.h"
 
@@ -631,7 +631,7 @@ isdnbchanwrite(dev_t dev, struct uio * uio, int ioflag)
 
 	if((m = i4b_Bgetmbuf(BCH_MAX_DATALEN)) != NULL)
 	{
-		m->m_len = min(BCH_MAX_DATALEN, uio->uio_resid);
+		m->m_len = uimin(BCH_MAX_DATALEN, uio->uio_resid);
 
 		NDBGL4(L4_RBCHDBG, "unit %d, write %d bytes", unit, m->m_len);
 

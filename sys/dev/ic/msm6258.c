@@ -1,4 +1,4 @@
-/*	$NetBSD: msm6258.c,v 1.24 2017/09/02 12:57:35 isaki Exp $	*/
+/*	$NetBSD: msm6258.c,v 1.25 2018/09/03 16:29:31 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2001 Tetsuya Isaki. All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msm6258.c,v 1.24 2017/09/02 12:57:35 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msm6258.c,v 1.25 2018/09/03 16:29:31 riastradh Exp $");
 
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -159,7 +159,7 @@ DEFINE_FILTER(msm6258_slinear16_to_adpcm)
 	if ((err = this->prev->fetch_to(asc, this->prev, this->src, max_used * 4)))
 		return err;
 	m = dst->end - dst->start;
-	m = min(m, max_used);
+	m = uimin(m, max_used);
 	d = dst->inp;
 	s = this->src->outp;
 	enc_src = this->src->param.encoding;
@@ -219,7 +219,7 @@ DEFINE_FILTER(msm6258_linear8_to_adpcm)
 	if ((err = this->prev->fetch_to(asc, this->prev, this->src, max_used * 2)))
 		return err;
 	m = dst->end - dst->start;
-	m = min(m, max_used);
+	m = uimin(m, max_used);
 	d = dst->inp;
 	s = this->src->outp;
 	enc_src = this->src->param.encoding;
@@ -303,7 +303,7 @@ DEFINE_FILTER(msm6258_adpcm_to_slinear16)
 	if ((err = this->prev->fetch_to(asc, this->prev, this->src, max_used / 4)))
 		return err;
 	m = (dst->end - dst->start) & ~3;
-	m = min(m, max_used);
+	m = uimin(m, max_used);
 	d = dst->inp;
 	s = this->src->outp;
 	enc_dst = dst->param.encoding;
@@ -365,7 +365,7 @@ DEFINE_FILTER(msm6258_adpcm_to_linear8)
 	if ((err = this->prev->fetch_to(asc, this->prev, this->src, max_used / 2)))
 		return err;
 	m = (dst->end - dst->start) & ~1;
-	m = min(m, max_used);
+	m = uimin(m, max_used);
 	d = dst->inp;
 	s = this->src->outp;
 	enc_dst = dst->param.encoding;

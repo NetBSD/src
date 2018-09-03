@@ -1,4 +1,4 @@
-/*	$NetBSD: lom.c,v 1.15 2015/04/27 11:55:29 martin Exp $	*/
+/*	$NetBSD: lom.c,v 1.16 2018/09/03 16:29:27 riastradh Exp $	*/
 /*	$OpenBSD: lom.c,v 1.21 2010/02/28 20:44:39 kettenis Exp $	*/
 /*
  * Copyright (c) 2009 Mark Kettenis
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lom.c,v 1.15 2015/04/27 11:55:29 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lom.c,v 1.16 2018/09/03 16:29:27 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -323,9 +323,9 @@ lom_attach(device_t parent, device_t self, void *aux)
 	}
 
 	sc->sc_num_alarm = LOM_MAX_ALARM;
-	sc->sc_num_fan = min((config >> 5) & 0x7, LOM_MAX_FAN);
-	sc->sc_num_psu = min((config >> 3) & 0x3, LOM_MAX_PSU);
-	sc->sc_num_temp = min((config2 >> 4) & 0xf, LOM_MAX_TEMP);
+	sc->sc_num_fan = uimin((config >> 5) & 0x7, LOM_MAX_FAN);
+	sc->sc_num_psu = uimin((config >> 3) & 0x3, LOM_MAX_PSU);
+	sc->sc_num_temp = uimin((config2 >> 4) & 0xf, LOM_MAX_TEMP);
 
 	aprint_verbose_dev(self, "%d fan(s), %d PSU(s), %d temp sensor(s)\n",
 	    sc->sc_num_fan, sc->sc_num_psu, sc->sc_num_temp);

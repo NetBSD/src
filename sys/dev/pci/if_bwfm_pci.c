@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bwfm_pci.c,v 1.2 2018/09/01 22:01:03 riastradh Exp $	*/
+/*	$NetBSD: if_bwfm_pci.c,v 1.3 2018/09/03 16:29:32 riastradh Exp $	*/
 /*	$OpenBSD: if_bwfm_pci.c,v 1.18 2018/02/08 05:00:38 patrick Exp $	*/
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
@@ -1260,7 +1260,7 @@ bwfm_pci_ring_write_reserve_multi(struct bwfm_pci_softc *sc,
 		return NULL;
 
 	ret = BWFM_PCI_DMA_KVA(ring->ring) + (ring->w_ptr * ring->itemsz);
-	*avail = min(count, available - 1);
+	*avail = uimin(count, available - 1);
 	if (*avail + ring->w_ptr > ring->nitem)
 		*avail = ring->nitem - ring->w_ptr;
 	ring->w_ptr += *avail;
@@ -2038,7 +2038,7 @@ bwfm_pci_msgbuf_query_dcmd(struct bwfm_softc *bwfm, int ifidx,
 	req->output_buf_len = htole16(*len);
 	req->trans_id = htole16(sc->sc_ioctl_reqid++);
 
-	buflen = min(*len, BWFM_DMA_H2D_IOCTL_BUF_LEN);
+	buflen = uimin(*len, BWFM_DMA_H2D_IOCTL_BUF_LEN);
 	req->input_buf_len = htole16(buflen);
 	req->req_buf_addr.high_addr =
 	    htole32((uint64_t)BWFM_PCI_DMA_DVA(sc->sc_ioctl_buf) >> 32);
@@ -2062,7 +2062,7 @@ bwfm_pci_msgbuf_query_dcmd(struct bwfm_softc *bwfm, int ifidx,
 	if (m == NULL)
 		return 1;
 
-	*len = min(buflen, sc->sc_ioctl_resp_ret_len);
+	*len = uimin(buflen, sc->sc_ioctl_resp_ret_len);
 	if (buf)
 		memcpy(buf, mtod(m, char *), *len);
 	m_freem(m);

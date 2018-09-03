@@ -1,4 +1,4 @@
-/* $NetBSD: mfi.c,v 1.58 2017/10/28 04:53:55 riastradh Exp $ */
+/* $NetBSD: mfi.c,v 1.59 2018/09/03 16:29:31 riastradh Exp $ */
 /* $OpenBSD: mfi.c,v 1.66 2006/11/28 23:59:45 dlg Exp $ */
 
 /*
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfi.c,v 1.58 2017/10/28 04:53:55 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfi.c,v 1.59 2018/09/03 16:29:31 riastradh Exp $");
 
 #include "bio.h"
 
@@ -1053,10 +1053,10 @@ mfi_attach(struct mfi_softc *sc, enum mfi_iop iop)
 	sc->sc_max_cmds = status & MFI_STATE_MAXCMD_MASK;
 	max_sgl = (status & MFI_STATE_MAXSGL_MASK) >> 16;
 	if (sc->sc_ioptype == MFI_IOP_TBOLT) {
-		sc->sc_max_sgl = min(max_sgl, (128 * 1024) / PAGE_SIZE + 1);
+		sc->sc_max_sgl = uimin(max_sgl, (128 * 1024) / PAGE_SIZE + 1);
 		sc->sc_sgl_size = sizeof(struct mfi_sg_ieee);
 	} else if (sc->sc_64bit_dma) {
-		sc->sc_max_sgl = min(max_sgl, (128 * 1024) / PAGE_SIZE + 1);
+		sc->sc_max_sgl = uimin(max_sgl, (128 * 1024) / PAGE_SIZE + 1);
 		sc->sc_sgl_size = sizeof(struct mfi_sg64);
 	} else {
 		sc->sc_max_sgl = max_sgl;

@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.215 2018/08/22 01:05:23 msaitoh Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.216 2018/09/03 16:29:35 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2003, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.215 2018/08/22 01:05:23 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.216 2018/09/03 16:29:35 riastradh Exp $");
 
 #include "opt_sysv.h"
 #include "opt_compat_netbsd.h"
@@ -1115,7 +1115,7 @@ sysctl_kern_lwp(SYSCTLFN_ARGS)
 					 * struct kinfo_proc2.
 					 */
 					error = dcopyout(l, &klwp, dp,
-					    min(sizeof(klwp), elem_size));
+					    uimin(sizeof(klwp), elem_size));
 					if (error) {
 						rw_exit(&p->p_reflock);
 						goto cleanup;
@@ -1173,7 +1173,7 @@ sysctl_kern_lwp(SYSCTLFN_ARGS)
 				 * the size of a struct kinfo_proc2.
 				 */
 				error = dcopyout(l, &klwp, dp,
-				    min(sizeof(klwp), elem_size));
+				    uimin(sizeof(klwp), elem_size));
 				if (error) {
 					rw_exit(&p->p_reflock);
 					goto cleanup;

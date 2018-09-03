@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.124 2017/11/06 03:47:46 christos Exp $	*/
+/*	$NetBSD: machdep.c,v 1.125 2018/09/03 16:29:24 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura, All rights reserved.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.124 2017/11/06 03:47:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.125 2018/09/03 16:29:24 riastradh Exp $");
 
 #include "opt_vr41xx.h"
 #include "opt_tx39xx.h"
@@ -255,7 +255,7 @@ mach_init(int argc, char *argv[], struct bootinfo *bi)
 	 */
 	if (bi && bi->magic == BOOTINFO_MAGIC) {
 		memset(&bi_copy, 0, sizeof(struct bootinfo));
-		memcpy(&bi_copy, bi, min(bi->length, sizeof(struct bootinfo)));
+		memcpy(&bi_copy, bi, uimin(bi->length, sizeof(struct bootinfo)));
 		bootinfo = &bi_copy;
 		if (bootinfo->platid_cpu != 0) {
 			platid.dw.dw0 = bootinfo->platid_cpu;

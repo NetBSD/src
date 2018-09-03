@@ -1,4 +1,4 @@
-/*	$NetBSD: rrunnerreg.h,v 1.9 2008/04/28 20:23:51 martin Exp $	*/
+/*	$NetBSD: rrunnerreg.h,v 1.10 2018/09/03 16:29:31 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -536,6 +536,6 @@ struct rr_gen_info {
 #define RR2_SEND_RING_SIZE	16	/* firmware restriction! */
 #define RR2_SNAP_RECV_RING_SIZE	16	/* firmware restriction! */
 
-#define RR_MAX_SEND_RING_SIZE	max(RR_SEND_RING_SIZE, RR2_SEND_RING_SIZE)
+#define RR_MAX_SEND_RING_SIZE	uimax(RR_SEND_RING_SIZE, RR2_SEND_RING_SIZE)
 #define RR_MAX_SNAP_RECV_RING_SIZE	\
-		max(RR_SNAP_RECV_RING_SIZE, RR_SNAP_RECV_RING_SIZE)
+		uimax(RR_SNAP_RECV_RING_SIZE, RR_SNAP_RECV_RING_SIZE)

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwi.c,v 1.107 2018/06/26 06:48:01 msaitoh Exp $  */
+/*	$NetBSD: if_iwi.c,v 1.108 2018/09/03 16:29:32 riastradh Exp $  */
 /*	$OpenBSD: if_iwi.c,v 1.111 2010/11/15 19:11:57 damien Exp $	*/
 
 /*-
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.107 2018/06/26 06:48:01 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.108 2018/09/03 16:29:32 riastradh Exp $");
 
 /*-
  * Intel(R) PRO/Wireless 2200BG/2225BG/2915ABG driver
@@ -1879,7 +1879,7 @@ iwi_get_table0(struct iwi_softc *sc, uint32_t *tbl)
 		return copyout(buf, tbl, sizeof buf);
 	}
 
-	size = min(CSR_READ_4(sc, IWI_CSR_TABLE0_SIZE), 128 - 1);
+	size = uimin(CSR_READ_4(sc, IWI_CSR_TABLE0_SIZE), 128 - 1);
 	CSR_READ_REGION_4(sc, IWI_CSR_TABLE0_BASE, &buf[1], size);
 
 	return copyout(buf, tbl, sizeof buf);
@@ -2146,14 +2146,14 @@ iwi_load_firmware(struct iwi_softc *sc, void *fw, int size)
 			cl = GETLE32(p); p += 4; cs += 4; sl -= 4;
 		}
 		while (sl > 0 && cl > 0) {
-			int len = min(cl, sl);
+			int len = uimin(cl, sl);
 
 			sl -= len;
 			cl -= len;
 			p += len;
 
 			while (len > 0) {
-				int mlen = min(len, IWI_CB_MAXDATALEN);
+				int mlen = uimin(len, IWI_CB_MAXDATALEN);
 
 				ctl = IWI_CB_DEFAULT_CTL | mlen;
 				sum = ctl ^ cs ^ cd;

@@ -1,4 +1,4 @@
-/* $NetBSD: qemufwcfg.c,v 1.1 2017/11/25 16:31:03 jmcneill Exp $ */
+/* $NetBSD: qemufwcfg.c,v 1.2 2018/09/03 16:29:31 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qemufwcfg.c,v 1.1 2017/11/25 16:31:03 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qemufwcfg.c,v 1.2 2018/09/03 16:29:31 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -121,7 +121,7 @@ fwcfg_read(dev_t dev, struct uio *uio, int flags)
 		return ENXIO;
 
 	while (uio->uio_resid > 0) {
-		count = min(sizeof(buf), uio->uio_resid);
+		count = uimin(sizeof(buf), uio->uio_resid);
 		bus_space_read_multi_1(sc->sc_bst, sc->sc_bsh, FWCFG_DATA_REG, buf, count);
 		error = uiomove(buf, count, uio);
 		if (error != 0)

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ural.c,v 1.57 2018/08/02 06:09:04 riastradh Exp $ */
+/*	$NetBSD: if_ural.c,v 1.58 2018/09/03 16:29:33 riastradh Exp $ */
 /*	$FreeBSD: /repoman/r/ncvs/src/sys/dev/usb/if_ural.c,v 1.40 2006/06/02 23:14:40 sam Exp $	*/
 
 /*-
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ural.c,v 1.57 2018/08/02 06:09:04 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ural.c,v 1.58 2018/09/03 16:29:33 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1695,7 +1695,7 @@ ural_set_chan(struct ural_softc *sc, struct ieee80211_channel *c)
 		return;
 
 	if (IEEE80211_IS_CHAN_2GHZ(c))
-		power = min(sc->txpow[chan - 1], 31);
+		power = uimin(sc->txpow[chan - 1], 31);
 	else
 		power = 31;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: min.c,v 1.6 2009/03/14 21:04:24 dsl Exp $	*/
+/*	$NetBSD: min.c,v 1.7 2018/09/03 16:29:35 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1991 Regents of the University of California.
@@ -35,7 +35,7 @@
 #include <lib/libkern/libkern.h>
 
 unsigned int
-min(unsigned int a, unsigned int b)
+uimin(unsigned int a, unsigned int b)
 {
 	return (a < b ? a : b);
 }

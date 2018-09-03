@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_module.c,v 1.6 2018/01/18 13:31:21 maxv Exp $	*/
+/*	$NetBSD: netbsd32_module.c,v 1.7 2018/09/03 16:29:29 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_module.c,v 1.6 2018/01/18 13:31:21 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_module.c,v 1.7 2018/09/03 16:29:29 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -101,7 +101,7 @@ modctl32_handle_stat(struct netbsd32_iovec *iov, void *arg)
 	}
 	kernconfig_unlock();
 	error = copyout(mso, NETBSD32PTR64(iov->iov_base),
-	    min(mslen - sizeof(modstat_t), iov->iov_len));
+	    uimin(mslen - sizeof(modstat_t), iov->iov_len));
 	kmem_free(mso, mslen);
 	if (error == 0) {
 		iov->iov_len = mslen - sizeof(modstat_t);

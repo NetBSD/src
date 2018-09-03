@@ -1,4 +1,4 @@
-/* $NetBSD: xc5k.c,v 1.8 2018/04/12 21:14:53 christos Exp $ */
+/* $NetBSD: xc5k.c,v 1.9 2018/09/03 16:29:31 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2010 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xc5k.c,v 1.8 2018/04/12 21:14:53 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xc5k.c,v 1.9 2018/09/03 16:29:31 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -111,7 +111,7 @@ xc5k_firmware_upload(struct xc5k *xc, const uint8_t *fw, size_t fwlen)
 		p = &fw[i + 2];
 		rem = len - 2;
 		while (rem > 0) {
-			wrlen = min(rem, __arraycount(cmd) - 2);
+			wrlen = uimin(rem, __arraycount(cmd) - 2);
 			memcpy(&cmd[2], p, wrlen);
 			error = xc5k_write_buffer(xc, cmd, wrlen + 2);
 			if (error)

@@ -1,4 +1,4 @@
-/*	$NetBSD: btl.c,v 1.27 2016/12/12 15:58:44 maya Exp $	*/
+/*	$NetBSD: btl.c,v 1.28 2018/09/03 16:29:22 riastradh Exp $	*/
 /*	NetBSD: bt.c,v 1.10 1996/05/12 23:51:54 mycroft Exp 	*/
 
 #undef BTDIAG
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btl.c,v 1.27 2016/12/12 15:58:44 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btl.c,v 1.28 2018/09/03 16:29:22 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1275,7 +1275,7 @@ bt_scsi_cmd(struct scsipi_xfer *xs)
 			if(thisbounce == 0)
 				break;
 			ltophys(KVTOPHYS(thisbounce), sg->seg_addr);
-			bytes_this_page = min(sizeof(struct bt_buf), datalen);
+			bytes_this_page = uimin(sizeof(struct bt_buf), datalen);
 			if (control & XS_CTL_DATA_OUT) {
 				memcpy((void *)thisbounce, (void *)thiskv, bytes_this_page);
 			}

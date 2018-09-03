@@ -1,4 +1,4 @@
-/*	$NetBSD: buf.h,v 1.12 2017/02/16 22:10:50 christos Exp $	*/
+/*	$NetBSD: buf.h,v 1.13 2018/09/03 16:29:37 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -88,6 +88,20 @@ struct buf *	getblk(struct vnode *, daddr_t, int, int, int);
 #define	BC_AGE		0
 
 #define min(a, b) MIN((a), (b))
+
+static inline unsigned int
+uimin(unsigned int a, unsigned int b)
+{
+
+	return (a < b ? a : b);
+}
+
+static inline unsigned int
+uimax(unsigned int a, unsigned int b)
+{
+
+	return (a > b ? a : b);
+}
 
 static inline void
 microtime(struct timeval *tv)

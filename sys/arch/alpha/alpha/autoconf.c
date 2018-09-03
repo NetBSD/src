@@ -1,4 +1,4 @@
-/* $NetBSD: autoconf.c,v 1.53 2014/01/20 15:05:13 tsutsui Exp $ */
+/* $NetBSD: autoconf.c,v 1.54 2018/09/03 16:29:22 riastradh Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -42,7 +42,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.53 2014/01/20 15:05:13 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.54 2018/09/03 16:29:22 riastradh Exp $");
 
 #include "pci.h"
 
@@ -120,7 +120,7 @@ parse_prom_bootdev(void)
 	bootdev_data = NULL;
 
 	memcpy(hacked_boot_dev, bootinfo.booted_dev,
-	    min(sizeof bootinfo.booted_dev, sizeof hacked_boot_dev));
+	    uimin(sizeof bootinfo.booted_dev, sizeof hacked_boot_dev));
 #if 0
 	printf("parse_prom_bootdev: boot dev = \"%s\"\n", hacked_boot_dev);
 #endif

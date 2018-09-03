@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.17 2016/07/07 06:55:38 msaitoh Exp $	*/
+/*	$NetBSD: clock.c,v 1.18 2018/09/03 16:29:27 riastradh Exp $	*/
 
 /*
  * Copyright 1997
@@ -154,7 +154,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.17 2016/07/07 06:55:38 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.18 2018/09/03 16:29:27 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -496,7 +496,7 @@ findcpuspeed(void)
 		ticks = 0xFFFF - gettick();
 		if (ticks == 0) ticks = 1; /* just in case */
 		if (ticks < (TIMER_MUSECDIV(1024))) { /* not accurate enough */
-			guess *= max(2, (TIMER_MUSECDIV(1024) / ticks));
+			guess *= uimax(2, (TIMER_MUSECDIV(1024) / ticks));
 			continue;
 		}
 		count1024usec = (guess * (TIMER_MUSECDIV(1024))) / ticks;

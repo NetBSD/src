@@ -1,4 +1,4 @@
-/* $NetBSD: bcm2835_vcaudio.c,v 1.11 2016/10/14 20:29:45 nat Exp $ */
+/* $NetBSD: bcm2835_vcaudio.c,v 1.12 2018/09/03 16:29:23 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2013 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_vcaudio.c,v 1.11 2016/10/14 20:29:45 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_vcaudio.c,v 1.12 2018/09/03 16:29:23 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -500,7 +500,7 @@ vcaudio_worker(void *priv)
 		}
 
 		while (resid > 0) {
-			nb = min(resid, msg.u.write.max_packet);
+			nb = uimin(resid, msg.u.write.max_packet);
 			error = vchi_msg_queue(sc->sc_service,
 			    (char *)block + off, nb,
 			    VCHI_FLAGS_BLOCK_UNTIL_QUEUED, NULL);

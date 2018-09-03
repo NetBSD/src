@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.77 2016/02/29 18:25:29 christos Exp $	*/
+/*	$NetBSD: ite.c,v 1.78 2018/09/03 16:29:24 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.77 2016/02/29 18:25:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.78 2018/09/03 16:29:24 riastradh Exp $");
 
 #include "opt_ddb.h"
 
@@ -1099,7 +1099,7 @@ snap_cury(struct ite_softc *sc)
 static inline void
 ite_dnchar(struct ite_softc *sc, int n)
 {
-  n = min(n, sc->cols - sc->curx);
+  n = uimin(n, sc->cols - sc->curx);
   if (n < sc->cols - sc->curx)
     {
       SUBR_SCROLL(sc, sc->cury, sc->curx + n, n, SCROLL_LEFT);
@@ -1115,7 +1115,7 @@ ite_dnchar(struct ite_softc *sc, int n)
 static inline void
 ite_inchar(struct ite_softc *sc, int n)
 {
-  n = min(n, sc->cols - sc->curx);
+  n = uimin(n, sc->cols - sc->curx);
   if (n < sc->cols - sc->curx)
     {
       SUBR_SCROLL(sc, sc->cury, sc->curx, n, SCROLL_RIGHT);
@@ -1143,7 +1143,7 @@ ite_clrtoeol(struct ite_softc *sc)
 static inline void
 ite_clrtobol(struct ite_softc *sc)
 {
-  int y = sc->cury, x = min(sc->curx + 1, sc->cols);
+  int y = sc->cury, x = uimin(sc->curx + 1, sc->cols);
   SUBR_CLEAR(sc, y, 0, 1, x);
   attrclr(sc, y, 0, 1, x);
   SUBR_CURSOR(sc, DRAW_CURSOR);
@@ -1202,7 +1202,7 @@ ite_dnline(struct ite_softc *sc, int n)
   if (sc->cury < sc->top_margin || sc->cury > sc->bottom_margin)
     return;
 
-  n = min(n, sc->bottom_margin + 1 - sc->cury);
+  n = uimin(n, sc->bottom_margin + 1 - sc->cury);
   if (n <= sc->bottom_margin - sc->cury)
     {
       SUBR_SCROLL(sc, sc->cury + n, 0, n, SCROLL_UP);
@@ -1222,7 +1222,7 @@ ite_inline(struct ite_softc *sc, int n)
   if (sc->cury < sc->top_margin || sc->cury > sc->bottom_margin)
     return;
 
-  n = min(n, sc->bottom_margin + 1 - sc->cury);
+  n = uimin(n, sc->bottom_margin + 1 - sc->cury);
   if (n <= sc->bottom_margin - sc->cury)
     {
       SUBR_SCROLL(sc, sc->cury, 0, n, SCROLL_DOWN);
@@ -1768,7 +1768,7 @@ iteputchar(register int c, struct ite_softc *sc)
 		    *sc->ap = 0;
 		    x = atoi (sc->argbuf);
 		    if (x) x--;
-		    sc->curx = min(x, sc->cols - 1);
+		    sc->curx = uimin(x, sc->cols - 1);
 		    sc->escape = 0;
 		    SUBR_CURSOR(sc, MOVE_CURSOR);
 		    clr_attr (sc, ATTR_INV);
@@ -1783,7 +1783,7 @@ iteputchar(register int c, struct ite_softc *sc)
 		    if (y) y--;
 		    if (sc->inside_margins)
 		      y += sc->top_margin;
-		    sc->cury = min(y, sc->rows - 1);
+		    sc->cury = uimin(y, sc->rows - 1);
 		    sc->escape = 0;
 		    snap_cury(sc);
 		    SUBR_CURSOR(sc, MOVE_CURSOR);
@@ -1803,8 +1803,8 @@ iteputchar(register int c, struct ite_softc *sc)
 		    if (y) y--;
 		    if (sc->inside_margins)
 		      y += sc->top_margin;
-		    sc->cury = min(y, sc->rows - 1);
-		    sc->curx = min(x, sc->cols - 1);
+		    sc->cury = uimin(y, sc->rows - 1);
+		    sc->curx = uimin(x, sc->cols - 1);
 		    sc->escape = 0;
 		    snap_cury(sc);
 		    SUBR_CURSOR(sc, MOVE_CURSOR);
@@ -1816,7 +1816,7 @@ iteputchar(register int c, struct ite_softc *sc)
 		    n = sc->cury - (n ? n : 1);
 		    if (n < 0) n = 0;
 		    if (sc->inside_margins)
-		      n = max(sc->top_margin, n);
+		      n = uimax(sc->top_margin, n);
 		    else if (n == sc->top_margin - 1)
 		      /* allow scrolling outside region, but don't scroll out
 			 of active region without explicit CUP */
@@ -1830,9 +1830,9 @@ iteputchar(register int c, struct ite_softc *sc)
 		  case 'B':
 		    n = ite_argnum (sc);
 		    n = sc->cury + (n ? n : 1);
-		    n = min(sc->rows - 1, n);
+		    n = uimin(sc->rows - 1, n);
 		    if (sc->inside_margins)
-		      n = min(sc->bottom_margin, n);
+		      n = uimin(sc->bottom_margin, n);
 		    else if (n == sc->bottom_margin + 1)
 		      /* allow scrolling outside region, but don't scroll out
 			 of active region without explicit CUP */
@@ -1846,7 +1846,7 @@ iteputchar(register int c, struct ite_softc *sc)
 		  case 'C':
 		    n = ite_argnum (sc);
 		    n = n ? n : 1;
-		    sc->curx = min(sc->curx + n, sc->cols - 1);
+		    sc->curx = uimin(sc->curx + n, sc->cols - 1);
 		    sc->escape = 0;
 		    SUBR_CURSOR(sc, MOVE_CURSOR);
 		    clr_attr (sc, ATTR_INV);
@@ -1892,7 +1892,7 @@ iteputchar(register int c, struct ite_softc *sc)
 
 		  case 'X':
 		    n = ite_argnum(sc) - 1;
-		    n = min(n, sc->cols - 1 - sc->curx);
+		    n = uimin(n, sc->cols - 1 - sc->curx);
 		    for (; n >= 0; n--)
 		      {
 			attrclr(sc, sc->cury, sc->curx + n, 1, 1);
@@ -1927,8 +1927,8 @@ iteputchar(register int c, struct ite_softc *sc)
 		      }
 		    x--;
 		    y--;
-		    sc->top_margin = min(x, sc->rows - 1);
-		    sc->bottom_margin = min(y, sc->rows - 1);
+		    sc->top_margin = uimin(x, sc->rows - 1);
+		    sc->bottom_margin = uimin(y, sc->rows - 1);
 		    if (sc->inside_margins)
 		      {
 			sc->cury = sc->top_margin;

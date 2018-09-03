@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_pty.c,v 1.143 2017/10/25 08:12:39 maya Exp $	*/
+/*	$NetBSD: tty_pty.c,v 1.144 2018/09/03 16:29:35 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.143 2017/10/25 08:12:39 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.144 2018/09/03 16:29:35 riastradh Exp $");
 
 #include "opt_ptm.h"
 
@@ -675,7 +675,7 @@ ptcread(dev_t dev, struct uio *uio, int flag)
 				 * opened again while we were out uiomoving.
 				 */
 				if (c & TIOCPKT_IOCTL) {
-					cc = min(uio->uio_resid,
+					cc = uimin(uio->uio_resid,
 						sizeof(tp->t_termios));
 					uiomove((void *) &tp->t_termios,
 						cc, uio);
@@ -714,7 +714,7 @@ ptcread(dev_t dev, struct uio *uio, int flag)
 			error = EIO;
 	}
 	while (uio->uio_resid > 0 && error == 0) {
-		cc = q_to_b(&tp->t_outq, bf, min(uio->uio_resid, BUFSIZ));
+		cc = q_to_b(&tp->t_outq, bf, uimin(uio->uio_resid, BUFSIZ));
 		if (cc <= 0)
 			break;
 		mutex_spin_exit(&tty_lock);
@@ -750,8 +750,8 @@ again:
 			goto block;
 		while (uio->uio_resid > 0 && tp->t_canq.c_cc < TTYHOG) {
 			if (cc == 0) {
-				cc = min(uio->uio_resid, BUFSIZ);
-				cc = min(cc, TTYHOG - tp->t_canq.c_cc);
+				cc = uimin(uio->uio_resid, BUFSIZ);
+				cc = uimin(cc, TTYHOG - tp->t_canq.c_cc);
 				cp = locbuf;
 				mutex_spin_exit(&tty_lock);
 				error = uiomove(cp, cc, uio);
@@ -783,7 +783,7 @@ again:
 	}
 	while (uio->uio_resid > 0) {
 		if (cc == 0) {
-			cc = min(uio->uio_resid, BUFSIZ);
+			cc = uimin(uio->uio_resid, BUFSIZ);
 			cp = locbuf;
 			mutex_spin_exit(&tty_lock);
 			error = uiomove(cp, cc, uio);

@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: bcm53xx_pax.c,v 1.15 2015/10/02 05:22:49 msaitoh Exp $");
+__KERNEL_RCSID(1, "$NetBSD: bcm53xx_pax.c,v 1.16 2018/09/03 16:29:23 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -150,27 +150,27 @@ bcmpax_iwin_init(struct bcmpax_softc *sc)
 {
 #if 0
 	uint32_t megs = (physical_end + 0xfffff - physical_start) >> 20;
-	uint32_t iwin_megs = min(256, megs);
+	uint32_t iwin_megs = uimin(256, megs);
 #if 1
 	bus_addr_t iwin1_start = physical_start;
 #else
 	bus_addr_t iwin1_start = 0;
 #endif
 #if 1
-	bcmpax_write_4(sc, PCIE_IARR_1_LOWER, iwin1_start | min(megs, 128));
+	bcmpax_write_4(sc, PCIE_IARR_1_LOWER, iwin1_start | uimin(megs, 128));
 	bcmpax_write_4(sc, PCIE_FUNC0_IMAP1, iwin1_start | 1);
 #else
-	bcmpax_write_4(sc, PCIE_FUNC0_IMAP1, iwin1_start | min(megs, 128));
+	bcmpax_write_4(sc, PCIE_FUNC0_IMAP1, iwin1_start | uimin(megs, 128));
 	bcmpax_write_4(sc, PCIE_IARR_1_LOWER, iwin1_start | 1);
 #endif
 	bcmpax_conf_write(sc, 0, PCI_MAPREG_START+4, iwin1_start);
 	if (iwin_megs > 128) {
 		bus_addr_t iwin2_start = iwin1_start + 128*1024*1024;
 #if 1
-		bcmpax_write_4(sc, PCIE_IARR_2_LOWER, iwin2_start | min(megs - 128, 128));
+		bcmpax_write_4(sc, PCIE_IARR_2_LOWER, iwin2_start | uimin(megs - 128, 128));
 		bcmpax_write_4(sc, PCIE_FUNC0_IMAP2, iwin2_start | 1);
 #else
-		bcmpax_write_4(sc, PCIE_FUNC0_IMAP2, iwin2_start | min(megs - 128, 128));
+		bcmpax_write_4(sc, PCIE_FUNC0_IMAP2, iwin2_start | uimin(megs - 128, 128));
 		bcmpax_write_4(sc, PCIE_IARR_2_LOWER, iwin2_start | 1);
 #endif
 		bcmpax_conf_write(sc, 0, PCI_MAPREG_START+8, iwin2_start);

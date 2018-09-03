@@ -1,4 +1,4 @@
-/*	$NetBSD: kttcp.c,v 1.40 2016/10/02 14:16:02 christos Exp $	*/
+/*	$NetBSD: kttcp.c,v 1.41 2018/09/03 16:29:30 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kttcp.c,v 1.40 2016/10/02 14:16:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kttcp.c,v 1.41 2018/09/03 16:29:30 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -376,7 +376,7 @@ kttcp_soreceive(struct socket *so, unsigned long long slen,
 		if (error)
 			goto bad;
 		do {
-			resid -= min(resid, m->m_len);
+			resid -= uimin(resid, m->m_len);
 			m = m_free(m);
 		} while (resid && error == 0 && m);
  bad:

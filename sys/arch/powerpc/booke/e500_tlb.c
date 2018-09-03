@@ -1,4 +1,4 @@
-/*	$NetBSD: e500_tlb.c,v 1.18 2016/07/11 16:06:52 matt Exp $	*/
+/*	$NetBSD: e500_tlb.c,v 1.19 2018/09/03 16:29:26 riastradh Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: e500_tlb.c,v 1.18 2016/07/11 16:06:52 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: e500_tlb.c,v 1.19 2018/09/03 16:29:26 riastradh Exp $");
 
 #include <sys/param.h>
 
@@ -840,7 +840,7 @@ e500_tlbmemmap(paddr_t memstart, psize_t memsize, struct e500_tlb1 *tlb1)
 	KASSERT(((memstart + memsize - 1) & -memsize) == memstart);
 	for (paddr_t lastaddr = memstart; 0 < memsize; ) {
 		u_int cnt = __builtin_clz(memsize);
-		psize_t size = min(1UL << (31 - (cnt | 1)), tlb1->tlb1_maxsize);
+		psize_t size = uimin(1UL << (31 - (cnt | 1)), tlb1->tlb1_maxsize);
 		slots += memsize / size;
 		if (slots > 4)
 			panic("%s: %d: can't map memory (%#lx) into TLB1: %s",
@@ -910,7 +910,7 @@ e500_tlb_init(vaddr_t endkernel, psize_t memsize)
 	 * Limit maxsize to 1G since 4G isn't really useful to us.
 	 */
 	tlb1->tlb1_minsize = 1024 << (2 * TLBCFG_MINSIZE(tlb1cfg));
-	tlb1->tlb1_maxsize = 1024 << (2 * min(10, TLBCFG_MAXSIZE(tlb1cfg)));
+	tlb1->tlb1_maxsize = 1024 << (2 * uimin(10, TLBCFG_MAXSIZE(tlb1cfg)));
 
 #ifdef VERBOSE_INITPPC
 	printf(" tlb1cfg=%#x numentries=%u minsize=%#xKB maxsize=%#xKB",

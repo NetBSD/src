@@ -1,4 +1,4 @@
-/* 	$NetBSD: wsfont.c,v 1.62 2017/11/04 08:33:28 maya Exp $	*/
+/* 	$NetBSD: wsfont.c,v 1.63 2018/09/03 16:29:34 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsfont.c,v 1.62 2017/11/04 08:33:28 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsfont.c,v 1.63 2018/09/03 16:29:34 riastradh Exp $");
 
 #include "opt_wsfont.h"
 
@@ -587,9 +587,9 @@ wsfont_matches(struct wsdisplay_font *font, const char *name,
 				return (0);
 		} else {
 			if (font->fontwidth > width)
-				score -= 10000 + min(font->fontwidth - width, 9999);
+				score -= 10000 + uimin(font->fontwidth - width, 9999);
 			else
-				score -= min(width - font->fontwidth, 9999);
+				score -= uimin(width - font->fontwidth, 9999);
 		}
 	}
 

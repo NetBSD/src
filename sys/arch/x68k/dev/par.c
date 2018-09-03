@@ -1,4 +1,4 @@
-/*	$NetBSD: par.c,v 1.42 2014/07/25 08:10:35 dholland Exp $	*/
+/*	$NetBSD: par.c,v 1.43 2018/09/03 16:29:28 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: par.c,v 1.42 2014/07/25 08:10:35 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: par.c,v 1.43 2018/09/03 16:29:28 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -299,7 +299,7 @@ parrw(dev_t dev, struct uio *uio)
 	if (uio->uio_resid == 0)
 		return(0);
 	
-	buflen = min(sc->sc_burst, uio->uio_resid);
+	buflen = uimin(sc->sc_burst, uio->uio_resid);
 	buf = (char *)malloc(buflen, M_DEVBUF, M_WAITOK);
 	sc->sc_flags |= PARF_UIO;
 	if (sc->sc_timo > 0) {
@@ -307,7 +307,7 @@ parrw(dev_t dev, struct uio *uio)
 		callout_reset(&sc->sc_timo_ch, sc->sc_timo, partimo, sc);
 	}
 	while (uio->uio_resid > 0) {
-		len = min(buflen, uio->uio_resid);
+		len = uimin(buflen, uio->uio_resid);
 		cp = buf;
 		if (uio->uio_rw == UIO_WRITE) {
 			error = uiomove(cp, len, uio);

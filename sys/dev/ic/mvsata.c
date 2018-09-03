@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsata.c,v 1.41 2018/08/31 18:43:29 jdolecek Exp $	*/
+/*	$NetBSD: mvsata.c,v 1.42 2018/09/03 16:29:31 riastradh Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.41 2018/08/31 18:43:29 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.42 2018/09/03 16:29:31 riastradh Exp $");
 
 #include "opt_mvsata.h"
 
@@ -1240,7 +1240,7 @@ do_pio:
 			cyl = blkno;
 			head |= WDSD_CHS;
 		}
-		ata_bio->nblks = min(nblks, drvp->multi);
+		ata_bio->nblks = uimin(nblks, drvp->multi);
 		ata_bio->nbytes = ata_bio->nblks * drvp->lp->d_secsize;
 		KASSERT(nblks == 1 || (ata_bio->flags & ATA_SINGLE) == 0);
 		if (ata_bio->nblks > 1)

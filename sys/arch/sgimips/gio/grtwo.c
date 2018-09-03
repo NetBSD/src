@@ -1,4 +1,4 @@
-/* $NetBSD: grtwo.c,v 1.14 2018/03/04 21:42:28 mrg Exp $	 */
+/* $NetBSD: grtwo.c,v 1.15 2018/09/03 16:29:27 riastradh Exp $	 */
 
 /*
  * Copyright (c) 2004 Christopher SEKIYA
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grtwo.c,v 1.14 2018/03/04 21:42:28 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grtwo.c,v 1.15 2018/09/03 16:29:27 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -273,8 +273,8 @@ grtwo_fill_rectangle(struct grtwo_devconfig * dc, int x1, int y1, int x2,
 
 	/* Coordinates, not length.  Remember that! */
 
-	to_y = min(dc->yres - 1 - y1, dc->yres - 1 - y2);
-	from_y = max(dc->yres - 1 - y1, dc->yres - 1 - y2);
+	to_y = uimin(dc->yres - 1 - y1, dc->yres - 1 - y2);
+	from_y = uimax(dc->yres - 1 - y1, dc->yres - 1 - y2);
 
 	remaining = to_y - from_y;
 

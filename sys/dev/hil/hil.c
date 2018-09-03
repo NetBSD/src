@@ -1,4 +1,4 @@
-/*	$NetBSD: hil.c,v 1.2 2011/02/15 11:05:51 tsutsui Exp $	*/
+/*	$NetBSD: hil.c,v 1.3 2018/09/03 16:29:31 riastradh Exp $	*/
 /*	$OpenBSD: hil.c,v 1.24 2010/11/20 16:45:46 miod Exp $	*/
 /*
  * Copyright (c) 2003, 2004, Miodrag Vallat.
@@ -762,7 +762,7 @@ send_hildev_cmd(struct hildev_softc *hdsc, u_int cmd,
 		 * Return the command response in the buffer if necessary
 	 	*/
 		if (outbuf != NULL && outlen != NULL) {
-			*outlen = min(*outlen, sc->sc_cmdbp - sc->sc_cmdbuf);
+			*outlen = uimin(*outlen, sc->sc_cmdbp - sc->sc_cmdbuf);
 			memcpy(outbuf, sc->sc_cmdbuf, *outlen);
 		}
 	}

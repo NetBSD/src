@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9x.c,v 1.148 2017/07/01 15:54:08 macallan Exp $	*/
+/*	$NetBSD: ncr53c9x.c,v 1.149 2018/09/03 16:29:31 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ncr53c9x.c,v 1.148 2017/07/01 15:54:08 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ncr53c9x.c,v 1.149 2018/09/03 16:29:31 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2063,7 +2063,7 @@ ncr53c9x_msgout(struct ncr53c9x_softc *sc)
 		NCRCMD(sc, NCRCMD_TRANS);
 	} else {
 		/* (re)send the message */
-		size = min(sc->sc_omlen, sc->sc_maxxfer);
+		size = uimin(sc->sc_omlen, sc->sc_maxxfer);
 		NCRDMA_SETUP(sc, &sc->sc_omp, &sc->sc_omlen, 0, &size);
 		/* Program the SCSI counter */
 		NCR_SET_COUNT(sc, size);
@@ -2774,7 +2774,7 @@ msgin:
 	case DATA_OUT_PHASE:
 		NCR_PHASE(("DATA_OUT_PHASE [%ld] ",(long)sc->sc_dleft));
 		NCRCMD(sc, NCRCMD_FLUSH);
-		size = min(sc->sc_dleft, sc->sc_maxxfer);
+		size = uimin(sc->sc_dleft, sc->sc_maxxfer);
 		NCRDMA_SETUP(sc, &sc->sc_dp, &sc->sc_dleft, 0, &size);
 		sc->sc_prevphase = DATA_OUT_PHASE;
 		goto setup_xfer;
@@ -2783,7 +2783,7 @@ msgin:
 		NCR_PHASE(("DATA_IN_PHASE "));
 		if (sc->sc_rev == NCR_VARIANT_ESP100)
 			NCRCMD(sc, NCRCMD_FLUSH);
-		size = min(sc->sc_dleft, sc->sc_maxxfer);
+		size = uimin(sc->sc_dleft, sc->sc_maxxfer);
 		NCRDMA_SETUP(sc, &sc->sc_dp, &sc->sc_dleft, 1, &size);
 		sc->sc_prevphase = DATA_IN_PHASE;
 	setup_xfer:

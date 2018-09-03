@@ -1,4 +1,4 @@
-/* $NetBSD: if_lmc.c,v 1.66 2018/06/26 06:48:01 msaitoh Exp $ */
+/* $NetBSD: if_lmc.c,v 1.67 2018/09/03 16:29:32 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2002-2006 David Boggs. <boggs@boggs.palo-alto.ca.us>
@@ -74,7 +74,7 @@
  */
 
 # include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_lmc.c,v 1.66 2018/06/26 06:48:01 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_lmc.c,v 1.67 2018/09/03 16:29:32 riastradh Exp $");
 # include <sys/param.h>	/* OS version */
 # include "opt_inet.h"	/* INET6, INET */
 # include "opt_altq_enabled.h" /* ALTQ */
@@ -3727,7 +3727,7 @@ netdev_poll(struct net_device *netdev, int *budget)
   /* Allow processing up to netdev->quota incoming packets. */
   /* This is the ONLY time lmc_interrupt() may process rx pkts. */
   /* Otherwise (sc->quota == 0) and rxintr_cleanup() is a NOOP. */
-  lmc_interrupt(sc, min(netdev->quota, *budget), 0);
+  lmc_interrupt(sc, uimin(netdev->quota, *budget), 0);
 
   /* Report number of rx packets processed. */
   received = netdev->quota - sc->quota;

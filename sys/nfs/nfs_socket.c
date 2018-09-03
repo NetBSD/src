@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.199 2018/01/21 20:36:49 christos Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.200 2018/09/03 16:29:36 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.199 2018/01/21 20:36:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.200 2018/09/03 16:29:36 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs.h"
@@ -286,11 +286,11 @@ nfs_connect(struct nfsmount *nmp, struct nfsreq *rep, struct lwp *l)
 	}
 	if (nmp->nm_sotype == SOCK_DGRAM) {
 		sndreserve = (nmp->nm_wsize + NFS_MAXPKTHDR) * 3;
-		rcvreserve = (max(nmp->nm_rsize, nmp->nm_readdirsize) +
+		rcvreserve = (uimax(nmp->nm_rsize, nmp->nm_readdirsize) +
 		    NFS_MAXPKTHDR) * 2;
 	} else if (nmp->nm_sotype == SOCK_SEQPACKET) {
 		sndreserve = (nmp->nm_wsize + NFS_MAXPKTHDR) * 3;
-		rcvreserve = (max(nmp->nm_rsize, nmp->nm_readdirsize) +
+		rcvreserve = (uimax(nmp->nm_rsize, nmp->nm_readdirsize) +
 		    NFS_MAXPKTHDR) * 3;
 	} else {
 		sounlock(so);
@@ -1097,7 +1097,7 @@ nfs_getreq(struct nfsrv_descript *nd, struct nfsd *nfsd, int has_header)
 		nfsm_dissect(tl, u_int32_t *, (len + 2) * NFSX_UNSIGNED);
 
 		if (len > 0) {
-			size_t grbuf_size = min(len, NGROUPS) * sizeof(gid_t);
+			size_t grbuf_size = uimin(len, NGROUPS) * sizeof(gid_t);
 			gid_t *grbuf = kmem_alloc(grbuf_size, KM_SLEEP);
 
 			for (i = 0; i < len; i++) {
@@ -1107,7 +1107,7 @@ nfs_getreq(struct nfsrv_descript *nd, struct nfsd *nfsd, int has_header)
 					tl++;
 			}
 			kauth_cred_setgroups(nd->nd_cr, grbuf,
-			    min(len, NGROUPS), -1, UIO_SYSSPACE);
+			    uimin(len, NGROUPS), -1, UIO_SYSSPACE);
 			kmem_free(grbuf, grbuf_size);
 		}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ed_mca.c,v 1.66 2016/07/14 04:00:45 msaitoh Exp $	*/
+/*	$NetBSD: ed_mca.c,v 1.67 2018/09/03 16:29:32 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ed_mca.c,v 1.66 2016/07/14 04:00:45 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ed_mca.c,v 1.67 2018/09/03 16:29:32 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -659,14 +659,14 @@ edmcadump(dev_t dev, daddr_t blkno, void *va, size_t size)
 
 	while (nblks > 0) {
 		error = edc_bio(ed->edc_softc, ed, va, blkno,
-			min(nblks, eddumpmulti) * lp->d_secsize, 0, 1);
+			uimin(nblks, eddumpmulti) * lp->d_secsize, 0, 1);
 		if (error)
 			return (error);
 
 		/* update block count */
-		nblks -= min(nblks, eddumpmulti);
-		blkno += min(nblks, eddumpmulti);
-		va = (char *)va + min(nblks, eddumpmulti) * lp->d_secsize;
+		nblks -= uimin(nblks, eddumpmulti);
+		blkno += uimin(nblks, eddumpmulti);
+		va = (char *)va + uimin(nblks, eddumpmulti) * lp->d_secsize;
 	}
 
 	eddoingadump = 0;

@@ -1,4 +1,4 @@
-/* $NetBSD: flash_vrip.c,v 1.10 2014/07/25 08:10:33 dholland Exp $ */
+/* $NetBSD: flash_vrip.c,v 1.11 2018/09/03 16:29:24 riastradh Exp $ */
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: flash_vrip.c,v 1.10 2014/07/25 08:10:33 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: flash_vrip.c,v 1.11 2018/09/03 16:29:24 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -357,10 +357,10 @@ flashread(dev_t dev, struct uio *uio, int flag)
 	ioh = sc->sc_ioh;
 
 	off = uio->uio_offset;
-	total = min(sc->sc_size - off, uio->uio_resid);
+	total = uimin(sc->sc_size - off, uio->uio_resid);
 
 	while (total > 0) {
-		count = min(sc->sc_block_size, uio->uio_resid);
+		count = uimin(sc->sc_block_size, uio->uio_resid);
 		bus_space_read_region_1(iot, ioh, off, sc->sc_buf, count);
 		if ((error = uiomove(sc->sc_buf, count, uio)) != 0)
 			return error;

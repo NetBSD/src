@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.284 2018/08/09 21:23:23 prlw1 Exp $	*/
+/*	$NetBSD: ohci.c,v 1.285 2018/09/03 16:29:33 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2005, 2012 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.284 2018/08/09 21:23:23 prlw1 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.285 2018/09/03 16:29:33 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1717,7 +1717,7 @@ ohci_rhsc(ohci_softc_t *sc, struct usbd_xfer *xfer)
 	}
 
 	p = xfer->ux_buf;
-	m = min(sc->sc_noport, xfer->ux_length * 8 - 1);
+	m = uimin(sc->sc_noport, xfer->ux_length * 8 - 1);
 	memset(p, 0, xfer->ux_length);
 	for (i = 1; i <= m; i++) {
 		/* Pick out CHANGE bits from the status reg. */
@@ -2484,7 +2484,7 @@ ohci_roothub_ctrl(struct usbd_bus *bus, usb_device_request_t *req,
 		}
 		usb_hub_descriptor_t hubd;
 
-		totlen = min(buflen, sizeof(hubd));
+		totlen = uimin(buflen, sizeof(hubd));
 		memcpy(&hubd, buf, totlen);
 
 		v = OREAD4(sc, OHCI_RH_DESCRIPTOR_A);
@@ -2499,7 +2499,7 @@ ohci_roothub_ctrl(struct usbd_bus *bus, usb_device_request_t *req,
 		for (i = 0, l = sc->sc_noport; l > 0; i++, l -= 8, v >>= 8)
 			hubd.DeviceRemovable[i++] = (uint8_t)v;
 		hubd.bDescLength = USB_HUB_DESCRIPTOR_SIZE + i;
-		totlen = min(totlen, hubd.bDescLength);
+		totlen = uimin(totlen, hubd.bDescLength);
 		memcpy(buf, &hubd, totlen);
 		break;
 	case C(UR_GET_STATUS, UT_READ_CLASS_DEVICE):
@@ -2521,7 +2521,7 @@ ohci_roothub_ctrl(struct usbd_bus *bus, usb_device_request_t *req,
 		DPRINTFN(8, "port status=0x%04jx", v, 0, 0, 0);
 		USETW(ps.wPortStatus, v);
 		USETW(ps.wPortChange, v >> 16);
-		totlen = min(len, sizeof(ps));
+		totlen = uimin(len, sizeof(ps));
 		memcpy(buf, &ps, totlen);
 		break;
 	case C(UR_SET_DESCRIPTOR, UT_WRITE_CLASS_DEVICE):

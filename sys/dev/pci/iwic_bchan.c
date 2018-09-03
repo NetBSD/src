@@ -1,4 +1,4 @@
-/*	$NetBSD: iwic_bchan.c,v 1.9 2014/03/23 02:53:12 christos Exp $	*/
+/*	$NetBSD: iwic_bchan.c,v 1.10 2018/09/03 16:29:32 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Dave Boyce. All rights reserved.
@@ -38,7 +38,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iwic_bchan.c,v 1.9 2014/03/23 02:53:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iwic_bchan.c,v 1.10 2018/09/03 16:29:32 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -348,7 +348,7 @@ iwic_bchan_xirq(struct iwic_softc *sc, int chan_no)
 
 		while(chan->out_mbuf_cur && len != IWIC_BCHAN_FIFO_LEN)
 		{
-			nextlen = min(chan->out_mbuf_cur_len, IWIC_BCHAN_FIFO_LEN - len);
+			nextlen = uimin(chan->out_mbuf_cur_len, IWIC_BCHAN_FIFO_LEN - len);
 
 			NDBGL1(L1_H_IRQ, "B_EXIR_XFR, wr fifo, len = %d", nextlen);
 

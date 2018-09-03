@@ -1,4 +1,4 @@
-/*	$NetBSD: hdfd.c,v 1.82 2015/12/08 20:36:14 christos Exp $	*/
+/*	$NetBSD: hdfd.c,v 1.83 2018/09/03 16:29:24 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1996 Leo Weppelman
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdfd.c,v 1.82 2015/12/08 20:36:14 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdfd.c,v 1.83 2018/09/03 16:29:24 riastradh Exp $");
 
 #include "opt_ddb.h"
 
@@ -1043,8 +1043,8 @@ loop:
 		head  = sec / type->sectrac;
 		sec  -= head * type->sectrac;
 		nblks = type->sectrac - sec;
-		nblks = min(nblks, fd->sc_bcount / FDC_BSIZE);
-		nblks = min(nblks, FDC_MAXIOSIZE / FDC_BSIZE);
+		nblks = uimin(nblks, fd->sc_bcount / FDC_BSIZE);
+		nblks = uimin(nblks, FDC_MAXIOSIZE / FDC_BSIZE);
 		fd->sc_nblks  = nblks;
 		fd->sc_nbytes = finfo ? bp->b_bcount : nblks * FDC_BSIZE;
 #ifdef DIAGNOSTIC

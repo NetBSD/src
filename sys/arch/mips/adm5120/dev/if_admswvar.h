@@ -1,4 +1,4 @@
-/* $NetBSD: if_admswvar.h,v 1.5 2012/10/27 17:18:01 chs Exp $ */
+/* $NetBSD: if_admswvar.h,v 1.6 2018/09/03 16:29:25 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2007 Ruslan Ermilov and Vsevolod Lobko.
@@ -34,7 +34,7 @@
 #define	_IF_ADMSWVAR_H_
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_admswvar.h,v 1.5 2012/10/27 17:18:01 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_admswvar.h,v 1.6 2018/09/03 16:29:25 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -188,7 +188,7 @@ do {								\
 	__m->m_data = __m->m_ext.ext_buf + 2;			\
 	__desc->data = __ds->ds_dmamap->dm_segs[0].ds_addr + 2;	\
 	__desc->cntl = 0;					\
-	__desc->len = min(MCLBYTES - 2, MAC_BUFLEN - 2);	\
+	__desc->len = uimin(MCLBYTES - 2, MAC_BUFLEN - 2);	\
 	__desc->status = 0;					\
 	if ((x) == ADMSW_NRXHDESC - 1)				\
 		__desc->data |= ADM5120_DMA_RINGEND;		\
@@ -205,7 +205,7 @@ do {								\
 	__m->m_data = __m->m_ext.ext_buf + 2;			\
 	__desc->data = __ds->ds_dmamap->dm_segs[0].ds_addr + 2;	\
 	__desc->cntl = 0;					\
-	__desc->len = min(MCLBYTES - 2, MAC_BUFLEN - 2);	\
+	__desc->len = uimin(MCLBYTES - 2, MAC_BUFLEN - 2);	\
 	__desc->status = 0;					\
 	if ((x) == ADMSW_NRXLDESC - 1)				\
 		__desc->data |= ADM5120_DMA_RINGEND;		\

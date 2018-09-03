@@ -1,4 +1,4 @@
-/*	$NetBSD: kauai.c,v 1.39 2018/03/01 13:54:36 macallan Exp $	*/
+/*	$NetBSD: kauai.c,v 1.40 2018/09/03 16:29:25 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2003 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kauai.c,v 1.39 2018/03/01 13:54:36 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kauai.c,v 1.40 2018/09/03 16:29:25 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -231,7 +231,7 @@ kauai_set_modes(struct ata_channel *chp)
 	if (drvp0->drive_type != ATA_DRIVET_NONE &&
 	    drvp1->drive_type != ATA_DRIVET_NONE) {
 		drvp0->PIO_mode = drvp1->PIO_mode =
-		    min(drvp0->PIO_mode, drvp1->PIO_mode);
+		    uimin(drvp0->PIO_mode, drvp1->PIO_mode);
 	}
 
 	for (drive = 0; drive < 2; drive++) {

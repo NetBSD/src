@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_iod.c,v 1.7 2015/07/15 03:28:55 manu Exp $	*/
+/*	$NetBSD: nfs_iod.c,v 1.8 2018/09/03 16:29:36 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_iod.c,v 1.7 2015/07/15 03:28:55 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_iod.c,v 1.8 2018/09/03 16:29:36 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -228,7 +228,7 @@ nfs_set_niothreads(int newval)
 
 	mutex_enter(&nfs_iodlist_lock);
 	/* clamp to sane range */
-	nfs_niothreads = max(0, min(newval, NFS_MAXASYNCDAEMON));
+	nfs_niothreads = uimax(0, uimin(newval, NFS_MAXASYNCDAEMON));
 
 	while (nfs_numasync != nfs_niothreads && error == 0) {
 		while (nfs_numasync < nfs_niothreads) {

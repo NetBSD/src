@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.98 2014/07/25 08:10:31 dholland Exp $ */
+/*	$NetBSD: ite.c,v 1.99 2018/09/03 16:29:22 riastradh Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -46,7 +46,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.98 2014/07/25 08:10:31 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.99 2018/09/03 16:29:22 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -1043,7 +1043,7 @@ snap_cury(struct ite_softc *ip)
 inline static void
 ite_dnchar(struct ite_softc *ip, int n)
 {
-  n = min(n, ip->cols - ip->curx);
+  n = uimin(n, ip->cols - ip->curx);
   if (n < ip->cols - ip->curx)
     {
       SUBR_SCROLL(ip, ip->cury, ip->curx + n, n, SCROLL_LEFT);
@@ -1059,7 +1059,7 @@ ite_dnchar(struct ite_softc *ip, int n)
 inline static void
 ite_inchar(struct ite_softc *ip, int n)
 {
-  n = min(n, ip->cols - ip->curx);
+  n = uimin(n, ip->cols - ip->curx);
   if (n < ip->cols - ip->curx)
     {
       SUBR_SCROLL(ip, ip->cury, ip->curx, n, SCROLL_RIGHT);
@@ -1087,7 +1087,7 @@ ite_clrtoeol(struct ite_softc *ip)
 inline static void
 ite_clrtobol(struct ite_softc *ip)
 {
-  int y = ip->cury, x = min(ip->curx + 1, ip->cols);
+  int y = ip->cury, x = uimin(ip->curx + 1, ip->cols);
   SUBR_CLEAR(ip, y, 0, 1, x);
   attrclr(ip, y, 0, 1, x);
   SUBR_CURSOR(ip, DRAW_CURSOR);
@@ -1146,7 +1146,7 @@ ite_dnline(struct ite_softc *ip, int n)
   if (ip->cury < ip->top_margin || ip->cury > ip->bottom_margin)
     return;
 
-  n = min(n, ip->bottom_margin + 1 - ip->cury);
+  n = uimin(n, ip->bottom_margin + 1 - ip->cury);
   if (n <= ip->bottom_margin - ip->cury)
     {
       SUBR_SCROLL(ip, ip->cury + n, 0, n, SCROLL_UP);
@@ -1166,7 +1166,7 @@ ite_inline(struct ite_softc *ip, int n)
   if (ip->cury < ip->top_margin || ip->cury > ip->bottom_margin)
     return;
 
-  n = min(n, ip->bottom_margin + 1 - ip->cury);
+  n = uimin(n, ip->bottom_margin + 1 - ip->cury);
   if (n <= ip->bottom_margin - ip->cury)
     {
       SUBR_SCROLL(ip, ip->cury, 0, n, SCROLL_DOWN);
@@ -1717,7 +1717,7 @@ iteputchar(register int c, struct ite_softc *ip)
 				x = atoi(ip->argbuf);
 				if (x)
 					x--;
-				ip->curx = min(x, ip->cols - 1);
+				ip->curx = uimin(x, ip->cols - 1);
 				ip->escape = 0;
 				SUBR_CURSOR(ip, MOVE_CURSOR);
 				clr_attr(ip, ATTR_INV);
@@ -1734,7 +1734,7 @@ iteputchar(register int c, struct ite_softc *ip)
 					y--;
 				if (ip->inside_margins)
 					y += ip->top_margin;
-				ip->cury = min(y, ip->rows - 1);
+				ip->cury = uimin(y, ip->rows - 1);
 				ip->escape = 0;
 				snap_cury(ip);
 				SUBR_CURSOR(ip, MOVE_CURSOR);
@@ -1754,8 +1754,8 @@ iteputchar(register int c, struct ite_softc *ip)
 					y--;
 				if (ip->inside_margins)
 					y += ip->top_margin;
-				ip->cury = min(y, ip->rows - 1);
-				ip->curx = min(x, ip->cols - 1);
+				ip->cury = uimin(y, ip->rows - 1);
+				ip->curx = uimin(x, ip->cols - 1);
 				ip->escape = 0;
 				snap_cury(ip);
 				SUBR_CURSOR(ip, MOVE_CURSOR);
@@ -1767,7 +1767,7 @@ iteputchar(register int c, struct ite_softc *ip)
 				if (n < 0)
 					n = 0;
 				if (ip->inside_margins)
-					n = max(ip->top_margin, n);
+					n = uimax(ip->top_margin, n);
 				else if (n == ip->top_margin - 1)
 					/*
 					 * allow scrolling outside region, but
@@ -1783,9 +1783,9 @@ iteputchar(register int c, struct ite_softc *ip)
 			case 'B':
 				n = ite_argnum(ip);
 				n = ip->cury + (n ? n : 1);
-				n = min(ip->rows - 1, n);
+				n = uimin(ip->rows - 1, n);
 				if (ip->inside_margins)
-					n = min(ip->bottom_margin, n);
+					n = uimin(ip->bottom_margin, n);
 				else if (n == ip->bottom_margin + 1)
 					/*
 					 * allow scrolling outside region, but
@@ -1801,7 +1801,7 @@ iteputchar(register int c, struct ite_softc *ip)
 			case 'C':
 				n = ite_argnum(ip);
 				n = n ? n : 1;
-				ip->curx = min(ip->curx + n, ip->cols - 1);
+				ip->curx = uimin(ip->curx + n, ip->cols - 1);
 				ip->escape = 0;
 				SUBR_CURSOR(ip, MOVE_CURSOR);
 				clr_attr(ip, ATTR_INV);
@@ -1838,7 +1838,7 @@ iteputchar(register int c, struct ite_softc *ip)
 				return;
 			case 'X':
 				n = ite_argnum(ip) - 1;
-				n = min(n, ip->cols - 1 - ip->curx);
+				n = uimin(n, ip->cols - 1 - ip->curx);
 				for (; n >= 0; n--) {
 					attrclr(ip, ip->cury, ip->curx + n, 1, 1);
 					SUBR_PUTC(ip, ' ', ip->cury, ip->curx + n, ATTR_NOR);
@@ -1870,8 +1870,8 @@ iteputchar(register int c, struct ite_softc *ip)
 				}
 				x--;
 				y--;
-				ip->top_margin = min(x, ip->rows - 1);
-				ip->bottom_margin = min(y, ip->rows - 1);
+				ip->top_margin = uimin(x, ip->rows - 1);
+				ip->bottom_margin = uimin(y, ip->rows - 1);
 				if (ip->inside_margins) {
 					ip->cury = ip->top_margin;
 					ip->curx = 0;

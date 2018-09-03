@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.247 2018/06/26 06:48:00 msaitoh Exp $	*/
+/*	$NetBSD: wi.c,v 1.248 2018/09/03 16:29:31 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.247 2018/06/26 06:48:00 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.248 2018/09/03 16:29:31 riastradh Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -2078,7 +2078,7 @@ wi_info_intr(struct wi_softc *sc)
 
 	case WI_INFO_COUNTERS:
 		/* some card versions have a larger stats structure */
-		len = min(le16toh(ltbuf[0]) - 1, sizeof(sc->sc_stats) / 4);
+		len = uimin(le16toh(ltbuf[0]) - 1, sizeof(sc->sc_stats) / 4);
 		ptr = (u_int32_t *)&sc->sc_stats;
 		off = sizeof(ltbuf);
 		for (i = 0; i < len; i++, off += 2, ptr++) {
@@ -3045,7 +3045,7 @@ wi_mwrite_bap(struct wi_softc *sc, int id, int off, struct mbuf *m0, int totlen)
 		if (m->m_len == 0)
 			continue;
 
-		len = min(m->m_len, totlen);
+		len = uimin(m->m_len, totlen);
 
 		if (((u_long)m->m_data) % 2 != 0 || len % 2 != 0) {
 			m_copydata(m, 0, totlen, (void *)&sc->sc_txbuf);

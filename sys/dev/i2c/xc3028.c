@@ -1,4 +1,4 @@
-/* $NetBSD: xc3028.c,v 1.8 2017/06/01 02:45:10 chs Exp $ */
+/* $NetBSD: xc3028.c,v 1.9 2018/09/03 16:29:31 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xc3028.c,v 1.8 2017/06/01 02:45:10 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xc3028.c,v 1.9 2018/09/03 16:29:31 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -401,7 +401,7 @@ xc3028_firmware_upload(struct xc3028 *xc, struct xc3028_fw *xcfw)
 		p = &fw[i + 1];
 		rem = len - 1;
 		while (rem > 0) {
-			wrlen = min(rem, __arraycount(cmd) - 1);
+			wrlen = uimin(rem, __arraycount(cmd) - 1);
 			memcpy(&cmd[1], p, wrlen);
 			error = xc3028_write_buffer(xc, cmd, wrlen + 1);
 			if (error)

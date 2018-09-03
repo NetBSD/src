@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.172 2017/08/28 04:57:11 dholland Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.173 2018/09/03 16:29:35 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.172 2017/08/28 04:57:11 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.173 2018/09/03 16:29:35 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -687,7 +687,7 @@ ktr_io(lwp_t *l, int fd, enum uio_rw rw, struct iovec *iov, size_t len)
 	char *cp;
 
  next:
-	buflen = min(PAGE_SIZE, resid + sizeof(struct ktr_genio));
+	buflen = uimin(PAGE_SIZE, resid + sizeof(struct ktr_genio));
 
 	if (ktealloc(&kte, (void *)&ktp, l, KTR_GENIO, buflen))
 		return;
@@ -700,7 +700,7 @@ ktr_io(lwp_t *l, int fd, enum uio_rw rw, struct iovec *iov, size_t len)
 	kte->kte_kth.ktr_len = sizeof(struct ktr_genio);
 
 	while (buflen > 0) {
-		cnt = min(iov->iov_len, buflen);
+		cnt = uimin(iov->iov_len, buflen);
 		if (copyin(iov->iov_base, cp, cnt) != 0)
 			goto out;
 		kte->kte_kth.ktr_len += cnt;

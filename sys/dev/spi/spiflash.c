@@ -1,4 +1,4 @@
-/* $NetBSD: spiflash.c,v 1.20 2018/01/12 19:38:52 jakllsch Exp $ */
+/* $NetBSD: spiflash.c,v 1.21 2018/09/03 16:29:33 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spiflash.c,v 1.20 2018/01/12 19:38:52 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spiflash.c,v 1.21 2018/09/03 16:29:33 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -635,7 +635,7 @@ spiflash_common_write(spiflash_handle_t sc, size_t start, size_t size,
 			return rv;
 		}
 
-		cnt = min(size, sc->sc_write_size);
+		cnt = uimin(size, sc->sc_write_size);
 		if ((rv = spiflash_cmd(sc, SPIFLASH_CMD_PROGRAM, 3, start,
 			 cnt, data, NULL)) != 0) {
 			spiflash_write_disable(sc);
@@ -672,7 +672,7 @@ spiflash_common_read(spiflash_handle_t sc, size_t start, size_t size,
 		int cnt;
 
 		if (sc->sc_read_size > 0)
-			cnt = min(size, sc->sc_read_size);
+			cnt = uimin(size, sc->sc_read_size);
 		else 
 			cnt = size;
 

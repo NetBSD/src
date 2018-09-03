@@ -1,4 +1,4 @@
-/*	$NetBSD: jziic.c,v 1.4 2017/05/19 07:43:31 skrll Exp $ */
+/*	$NetBSD: jziic.c,v 1.5 2018/09/03 16:29:26 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2015 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: jziic.c,v 1.4 2017/05/19 07:43:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: jziic.c,v 1.5 2018/09/03 16:29:26 riastradh Exp $");
 
 /*
  * a preliminary driver for JZ4780's on-chip SMBus controllers
@@ -273,7 +273,7 @@ jziic_set_speed(struct jziic_softc *sc)
 	hcnt = (ticks * 40 / (40 + 47)) - 8;
 	lcnt = (ticks * 47 / (40 + 47)) - 1;
 	hold = sc->sc_pclk * 4 / 10000 - 1; /* ... * 400 / 1000000 ... */
-	hold = max(1, hold);
+	hold = uimax(1, hold);
 	hold |= JZ_HDENB;
 	setup = sc->sc_pclk * 3 / 10000 + 1; /* ... * 300 / 1000000 ... */
 	DPRINTF("hcnt %d lcnt %d hold %d\n", hcnt, lcnt, hold);
@@ -527,7 +527,7 @@ jziic_i2c_exec_intr(struct jziic_softc *sc, i2c_op_t op, i2c_addr_t addr,
 		bus_space_write_4(sc->sc_memt, sc->sc_memh, JZ_SMBINTM,
 		    JZ_TXABT | JZ_RXFL | JZ_TXEMP);
 
-		for (i = 0; i < min((buflen + 1), 4); i++) {
+		for (i = 0; i < uimin((buflen + 1), 4); i++) {
 			bus_space_write_4(sc->sc_memt, sc->sc_memh,
 			    JZ_SMBDC, JZ_CMD);
 			wbflush();
@@ -574,7 +574,7 @@ jziic_intr(void *cookie)
 		if (sc->sc_reading) {
 			if (sc->sc_rds < (sc->sc_buflen + 1)) {
 				for (i = 0;
-				     i < min(4, (sc->sc_buflen + 1) -
+				     i < uimin(4, (sc->sc_buflen + 1) -
 				                 sc->sc_rds);
 				     i++) {
 					bus_space_write_4( sc->sc_memt,

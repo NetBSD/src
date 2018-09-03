@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.111 2018/07/17 12:31:16 christos Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.112 2018/09/03 16:29:23 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #include "opt_cputypes.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.111 2018/07/17 12:31:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.112 2018/09/03 16:29:23 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -905,7 +905,7 @@ _bus_dmamap_sync_linear(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 		}
 
 		paddr_t pa = _bus_dma_busaddr_to_paddr(t, ds->ds_addr + offset);
-		size_t seglen = min(len, ds->ds_len - offset);
+		size_t seglen = uimin(len, ds->ds_len - offset);
 
 		if ((ds->_ds_flags & _BUS_DMAMAP_COHERENT) == 0)
 			_bus_dmamap_sync_segment(va + offset, pa, seglen, ops,
@@ -941,7 +941,7 @@ _bus_dmamap_sync_mbuf(bus_dma_tag_t t, bus_dmamap_t map, bus_size_t offset,
 		 * Now at the first mbuf to sync; nail each one until
 		 * we have exhausted the length.
 		 */
-		vsize_t seglen = min(len, min(m->m_len - voff, ds->ds_len - ds_off));
+		vsize_t seglen = uimin(len, uimin(m->m_len - voff, ds->ds_len - ds_off));
 		vaddr_t va = mtod(m, vaddr_t) + voff;
 		paddr_t pa = _bus_dma_busaddr_to_paddr(t, ds->ds_addr + ds_off);
 
@@ -1005,7 +1005,7 @@ _bus_dmamap_sync_uio(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 		 * Now at the first iovec to sync; nail each one until
 		 * we have exhausted the length.
 		 */
-		vsize_t seglen = min(len, min(iov->iov_len - voff, ds->ds_len - ds_off));
+		vsize_t seglen = uimin(len, uimin(iov->iov_len - voff, ds->ds_len - ds_off));
 		vaddr_t va = (vaddr_t) iov->iov_base + voff;
 		paddr_t pa = _bus_dma_busaddr_to_paddr(t, ds->ds_addr + ds_off);
 
@@ -1686,7 +1686,7 @@ arm32_dma_range_intersect(struct arm32_dma_range *ranges, int nranges,
 			 * Beginning of region intersects with this range.
 			 */
 			*pap = trunc_page(pa);
-			*sizep = round_page(min(pa + size,
+			*sizep = round_page(uimin(pa + size,
 			    dr->dr_sysbase + dr->dr_len) - pa);
 			return 1;
 		}
@@ -1695,7 +1695,7 @@ arm32_dma_range_intersect(struct arm32_dma_range *ranges, int nranges,
 			 * End of region intersects with this range.
 			 */
 			*pap = trunc_page(dr->dr_sysbase);
-			*sizep = round_page(min((pa + size) - dr->dr_sysbase,
+			*sizep = round_page(uimin((pa + size) - dr->dr_sysbase,
 			    dr->dr_len));
 			return 1;
 		}

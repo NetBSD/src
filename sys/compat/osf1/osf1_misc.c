@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_misc.c,v 1.87 2016/11/10 17:00:51 christos Exp $ */
+/* $NetBSD: osf1_misc.c,v 1.88 2018/09/03 16:29:29 riastradh Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_misc.c,v 1.87 2016/11/10 17:00:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_misc.c,v 1.88 2018/09/03 16:29:29 riastradh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_syscall_debug.h"
@@ -321,7 +321,7 @@ dont_care:
 	slen = strlen(string) + 1;
 	if (SCARG(uap, buf)) {
 		error = copyout(string, SCARG(uap, buf),
-				min(slen, SCARG(uap, len)));
+				uimin(slen, SCARG(uap, len)));
 		if (!error && (SCARG(uap, len) > 0) && (SCARG(uap, len) < slen))
 			subyte(SCARG(uap, buf) + SCARG(uap, len) - 1, 0);
 	}

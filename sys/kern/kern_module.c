@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module.c,v 1.131 2018/05/28 21:04:40 chs Exp $	*/
+/*	$NetBSD: kern_module.c,v 1.132 2018/09/03 16:29:35 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.131 2018/05/28 21:04:40 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.132 2018/09/03 16:29:35 riastradh Exp $");
 
 #define _MODULE_INTERNAL
 
@@ -868,7 +868,7 @@ module_do_builtin(const module_t *pmod, const char *name, module_t **modp,
 			p = s;
 			while (*p != '\0' && *p != ',')
 				p++;
-			len = min(p - s + 1, sizeof(buf));
+			len = uimin(p - s + 1, sizeof(buf));
 			strlcpy(buf, s, len);
 			if (buf[0] == '\0')
 				break;

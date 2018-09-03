@@ -1,4 +1,4 @@
-/*	$NetBSD: machfb.c,v 1.94 2017/06/02 19:35:54 macallan Exp $	*/
+/*	$NetBSD: machfb.c,v 1.95 2018/09/03 16:29:32 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2002 Bang Jun-Young
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 __KERNEL_RCSID(0,
-	"$NetBSD: machfb.c,v 1.94 2017/06/02 19:35:54 macallan Exp $");
+	"$NetBSD: machfb.c,v 1.95 2018/09/03 16:29:32 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -502,7 +502,7 @@ mach64_attach(device_t parent, device_t self, void *aux)
 	if ((edid_data = prop_dictionary_get(device_properties(self), "EDID"))
 	    != NULL) {
 
-		sc->sc_edid_size = min(1024, prop_data_size(edid_data));
+		sc->sc_edid_size = uimin(1024, prop_data_size(edid_data));
 		memset(sc->sc_edid_data, 0, sizeof(sc->sc_edid_data));
 		memcpy(sc->sc_edid_data, prop_data_data_nocopy(edid_data),
 		    sc->sc_edid_size);

@@ -1,4 +1,4 @@
-/*	$NetBSD: exynos_i2c.c,v 1.15 2018/07/01 21:22:16 jmcneill Exp $ */
+/*	$NetBSD: exynos_i2c.c,v 1.16 2018/09/03 16:29:24 riastradh Exp $ */
 
 /*
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
 #include "opt_arm_debug.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exynos_i2c.c,v 1.15 2018/07/01 21:22:16 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exynos_i2c.c,v 1.16 2018/09/03 16:29:24 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -241,7 +241,7 @@ exynos_i2c_wait(struct exynos_i2c_softc *sc, int flags)
 	while (--retry > 0) {
 		if ((flags & I2C_F_POLL) == 0) {
 			error = cv_timedwait_sig(&sc->sc_cv, &sc->sc_lock,
-			    max(mstohz(10), 1));
+			    uimax(mstohz(10), 1));
 			if (error) {
 				return error;
 			}

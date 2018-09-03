@@ -1,4 +1,4 @@
-/*	$NetBSD: pic_mpcsoc.c,v 1.6 2017/06/01 02:45:07 chs Exp $ */
+/*	$NetBSD: pic_mpcsoc.c,v 1.7 2018/09/03 16:29:26 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic_mpcsoc.c,v 1.6 2017/06/01 02:45:07 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic_mpcsoc.c,v 1.7 2018/09/03 16:29:26 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -155,7 +155,7 @@ mpcpic_reserv16(void)
 static void
 mpcpic_establish_irq(struct pic_ops *pic, int irq, int type, int pri)
 {
-	int realpri = max(1, min(15, pri));
+	int realpri = uimax(1, uimin(15, pri));
 	u_int x;
 
 	x = irq;

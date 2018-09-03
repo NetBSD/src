@@ -1,4 +1,4 @@
-/* $Id: pbms.c,v 1.15 2017/12/13 09:46:05 maya Exp $ */
+/* $Id: pbms.c,v 1.16 2018/09/03 16:29:25 riastradh Exp $ */
 
 /*
  * Copyright (c) 2005, Johan Wallén
@@ -613,7 +613,7 @@ compute_delta(struct pbms_softc *sc, int *dx, int *dy, int *dz,
 	y_det = detect_pos(sc->sc_acc + PBMS_X_SENSORS, sc->sc_y_sensors,
 			   sc->sc_theshold, sc->sc_y_factor,
 			   &y_raw, &y_fingers);
-	fingers = max(x_fingers, y_fingers);
+	fingers = uimax(x_fingers, y_fingers);
 
 	/* Check the number of fingers and if we have detected a position. */
 	if (fingers > 1) {

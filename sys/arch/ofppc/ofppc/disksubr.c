@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.27 2017/03/05 22:14:51 mrg Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.28 2018/09/03 16:29:26 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2010 Frank Wille.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.27 2017/03/05 22:14:51 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.28 2018/09/03 16:29:26 riastradh Exp $");
 
 #include "opt_disksubr.h"
 
@@ -332,7 +332,7 @@ read_rdb_label(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp,
 	/*
 	 * I also don't trust rdb->secpercyl
 	 */
-	lp->d_secpercyl = min(rbp->secpercyl, lp->d_nsectors * lp->d_ntracks);
+	lp->d_secpercyl = uimin(rbp->secpercyl, lp->d_nsectors * lp->d_ntracks);
 	if (lp->d_secpercyl == 0)
 		lp->d_secpercyl = lp->d_nsectors * lp->d_ntracks;
 #ifdef DIAGNOSTIC
@@ -346,7 +346,7 @@ read_rdb_label(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp,
 		    rbp->nsectors, rbp->nheads);
 #endif
 	lp->d_sparespercyl =
-	    max(rbp->secpercyl, lp->d_nsectors * lp->d_ntracks)
+	    uimax(rbp->secpercyl, lp->d_nsectors * lp->d_ntracks)
 	    - lp->d_secpercyl;
 	if (lp->d_sparespercyl == 0)
 		lp->d_sparespertrack = 0;
@@ -521,7 +521,7 @@ read_rdb_label(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp,
 			 */
 			int bsize, secperblk, minbsize, prefac;
 
-			minbsize = max(512, lp->d_secsize);
+			minbsize = uimax(512, lp->d_secsize);
 
 			bsize	  = pbp->e.sizeblock << 2;
 			secperblk = pbp->e.secperblk;

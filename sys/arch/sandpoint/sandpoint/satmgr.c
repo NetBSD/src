@@ -1,4 +1,4 @@
-/* $NetBSD: satmgr.c,v 1.27 2017/10/25 08:12:37 maya Exp $ */
+/* $NetBSD: satmgr.c,v 1.28 2018/09/03 16:29:27 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -510,8 +510,8 @@ satread(dev_t dev, struct uio *uio, int flags)
 			goto out;
 	}
 	while (uio->uio_resid > 0 && sc->sc_rd_cnt > 0) {
-		n = min(sc->sc_rd_cnt, uio->uio_resid);
-		n = min(n, sc->sc_rd_lim - sc->sc_rd_ptr);
+		n = uimin(sc->sc_rd_cnt, uio->uio_resid);
+		n = uimin(n, sc->sc_rd_lim - sc->sc_rd_ptr);
 		error = uiomove(sc->sc_rd_ptr, n, uio);
 		if (error)
 			goto out;
@@ -548,8 +548,8 @@ satwrite(dev_t dev, struct uio *uio, int flags)
 			goto out;
 	}
 	while (uio->uio_resid > 0 && sc->sc_wr_cnt < sizeof(sc->sc_wr_buf)) {
-		n = min(uio->uio_resid, sizeof(sc->sc_wr_buf));
-		n = min(n, sc->sc_wr_lim - sc->sc_wr_cur);
+		n = uimin(uio->uio_resid, sizeof(sc->sc_wr_buf));
+		n = uimin(n, sc->sc_wr_lim - sc->sc_wr_cur);
 		error = uiomove(sc->sc_wr_cur, n, uio);
 		if (error)
 			goto out;
@@ -708,7 +708,7 @@ startoutput(struct satmgr_softc *sc)
 	int n;
 
 	mutex_enter(&sc->sc_replk);
-	n = min(sc->sc_wr_cnt, 16);
+	n = uimin(sc->sc_wr_cnt, 16);
 	while (n-- > 0) {
 		CSR_WRITE(sc, THR, *sc->sc_wr_ptr);
 		if (++sc->sc_wr_ptr == sc->sc_wr_lim)

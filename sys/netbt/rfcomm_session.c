@@ -1,4 +1,4 @@
-/*	$NetBSD: rfcomm_session.c,v 1.23 2014/08/05 07:55:32 rtr Exp $	*/
+/*	$NetBSD: rfcomm_session.c,v 1.24 2018/09/03 16:29:36 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rfcomm_session.c,v 1.23 2014/08/05 07:55:32 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rfcomm_session.c,v 1.24 2018/09/03 16:29:36 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -1041,7 +1041,7 @@ rfcomm_session_recv_mcc(struct rfcomm_session *rs, struct mbuf *m)
 		m_adj(m, sizeof(b));
 
 		len = (len << 7) | (b >> 1);
-		len = min(len, RFCOMM_MTU_MAX);
+		len = uimin(len, RFCOMM_MTU_MAX);
 	} while (RFCOMM_EA(b) == 0);
 
 	if (len != m->m_pkthdr.len) {
@@ -1338,9 +1338,9 @@ rfcomm_session_recv_mcc_pn(struct rfcomm_session *rs, int cr, struct mbuf *m)
 		}
 
 		/* accept any valid MTU, and offer it back */
-		pn.mtu = min(pn.mtu, RFCOMM_MTU_MAX);
-		pn.mtu = min(pn.mtu, rs->rs_mtu);
-		pn.mtu = max(pn.mtu, RFCOMM_MTU_MIN);
+		pn.mtu = uimin(pn.mtu, RFCOMM_MTU_MAX);
+		pn.mtu = uimin(pn.mtu, rs->rs_mtu);
+		pn.mtu = uimax(pn.mtu, RFCOMM_MTU_MIN);
 		dlc->rd_mtu = pn.mtu;
 		pn.mtu = htole16(pn.mtu);
 
@@ -1351,7 +1351,7 @@ rfcomm_session_recv_mcc_pn(struct rfcomm_session *rs, int cr, struct mbuf *m)
 			dlc->rd_txcred = pn.credits & 0x07;
 
 			dlc->rd_rxcred = (dlc->rd_rxsize / dlc->rd_mtu);
-			dlc->rd_rxcred = min(dlc->rd_rxcred,
+			dlc->rd_rxcred = uimin(dlc->rd_rxcred,
 						RFCOMM_CREDITS_DEFAULT);
 
 			pn.flow_control = 0xe0;
@@ -1688,14 +1688,14 @@ rfcomm_session_send_mcc(struct rfcomm_session *rs, int cr,
 	if (len > 0) {
 		m->m_pkthdr.len = m->m_len = MHLEN;
 		m_copyback(m, hlen, len, data);
-		if (m->m_pkthdr.len != max(MHLEN, hlen + len)) {
+		if (m->m_pkthdr.len != uimax(MHLEN, hlen + len)) {
 			m_freem(m);
 			return ENOMEM;
 		}
 	}
 
 	m->m_pkthdr.len = hlen + len;
-	m->m_len = min(MHLEN, m->m_pkthdr.len);
+	m->m_len = uimin(MHLEN, m->m_pkthdr.len);
 
 	DPRINTFN(5, "%s type %2.2x len %d\n",
 		(cr ? "command" : "response"), type, m->m_pkthdr.len);

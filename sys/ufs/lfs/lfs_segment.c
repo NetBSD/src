@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.277 2018/06/09 18:48:31 zafer Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.278 2018/09/03 16:29:37 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.277 2018/06/09 18:48:31 zafer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.278 2018/09/03 16:29:37 riastradh Exp $");
 
 #ifdef DEBUG
 # define vndebug(vp, str) do {						\
@@ -698,7 +698,7 @@ lfs_segwrite(struct mount *mp, int flags)
 				      "seguse %u: error %d\n",
 				      n, bread_error);
 			segusep = (SEGUSE *)bp->b_data;
-			maxseg = min(segleft, lfs_sb_getsepb(fs));
+			maxseg = uimin(segleft, lfs_sb_getsepb(fs));
 			for (i = 0; i < maxseg; i++) {
 				sn = curseg + i;
 				if (sn != lfs_dtosn(fs, lfs_sb_getcurseg(fs)) &&

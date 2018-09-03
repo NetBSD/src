@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_serv.c,v 1.174 2018/05/03 07:28:43 hannken Exp $	*/
+/*	$NetBSD: nfs_serv.c,v 1.175 2018/09/03 16:29:36 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.174 2018/05/03 07:28:43 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.175 2018/09/03 16:29:36 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -761,7 +761,7 @@ loan_fail:
 			i = 0;
 			m = m2 = mb;
 			while (left > 0) {
-				siz = min(M_TRAILINGSPACE(m), left);
+				siz = uimin(M_TRAILINGSPACE(m), left);
 				if (siz > 0) {
 					left -= siz;
 					i++;
@@ -783,7 +783,7 @@ loan_fail:
 			while (left > 0) {
 				if (m == NULL)
 					panic("nfsrv_read iov");
-				siz = min(M_TRAILINGSPACE(m), left);
+				siz = uimin(M_TRAILINGSPACE(m), left);
 				if (siz > 0) {
 					iv->iov_base = mtod(m, char *) +
 					    m->m_len;

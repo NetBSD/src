@@ -1,4 +1,4 @@
-/*	$NetBSD: bzivsc.c,v 1.31 2010/12/20 00:25:25 matt Exp $ */
+/*	$NetBSD: bzivsc.c,v 1.32 2018/09/03 16:29:22 riastradh Exp $ */
 
 /*
  * Copyright (c) 1997 Michael L. Hitch
@@ -36,7 +36,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bzivsc.c,v 1.31 2010/12/20 00:25:25 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bzivsc.c,v 1.32 2018/09/03 16:29:22 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -354,7 +354,7 @@ bzivsc_dma_setup(struct ncr53c9x_softc *sc, uint8_t **addr, size_t *len,
 		bsc->sc_dmasize = bzivsc_max_dma;
 	ptr = *addr;			/* Kernel virtual address */
 	pa = kvtop(ptr);		/* Physical address of DMA */
-	xfer = min(bsc->sc_dmasize, PAGE_SIZE - (pa & (PAGE_SIZE - 1)));
+	xfer = uimin(bsc->sc_dmasize, PAGE_SIZE - (pa & (PAGE_SIZE - 1)));
 	bsc->sc_xfr_align = 0;
 	/*
 	 * If output and unaligned, stuff odd byte into FIFO
@@ -370,7 +370,7 @@ bzivsc_dma_setup(struct ncr53c9x_softc *sc, uint8_t **addr, size_t *len,
 	 */
 	else if ((int)ptr & 1) {
 		pa = kvtop((void *)&bsc->sc_alignbuf);
-		xfer = bsc->sc_dmasize = min(xfer, sizeof(bsc->sc_alignbuf));
+		xfer = bsc->sc_dmasize = uimin(xfer, sizeof(bsc->sc_alignbuf));
 		NCR_DMA(("bzivsc_dma_setup: align read by %d bytes\n", xfer));
 		bsc->sc_xfr_align = 1;
 	}

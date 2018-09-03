@@ -1,4 +1,4 @@
-/*	$NetBSD: pic_ohare.c,v 1.15 2017/06/16 18:48:22 macallan Exp $ */
+/*	$NetBSD: pic_ohare.c,v 1.16 2018/09/03 16:29:25 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic_ohare.c,v 1.15 2017/06/16 18:48:22 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic_ohare.c,v 1.16 2018/09/03 16:29:25 riastradh Exp $");
 
 #include "opt_interrupt.h"
 
@@ -290,7 +290,7 @@ ohare_establish_irq(struct pic_ops *pic, int irq, int type, int pri)
 {
 	struct ohare_ops *ohare = (struct ohare_ops *)pic;
 	uint32_t mask = (1 << irq);
-	int realpri = min(NIPL, max(0, pri)), i;
+	int realpri = uimin(NIPL, uimax(0, pri)), i;
 	uint32_t level = 1 << realpri;
 
 	KASSERT((irq >= 0) && (irq < OHARE_NIRQ));

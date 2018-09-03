@@ -1,4 +1,4 @@
-/*      $NetBSD: xennetback_xenbus.c,v 1.68 2018/08/11 10:34:25 jdolecek Exp $      */
+/*      $NetBSD: xennetback_xenbus.c,v 1.69 2018/09/03 16:29:29 riastradh Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xennetback_xenbus.c,v 1.68 2018/08/11 10:34:25 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xennetback_xenbus.c,v 1.69 2018/09/03 16:29:29 riastradh Exp $");
 
 #include "opt_xen.h"
 
@@ -301,7 +301,7 @@ xennetback_xenbus_create(struct xenbus_device *xbusd)
 	ifp->if_flags =
 	    IFF_BROADCAST|IFF_SIMPLEX|IFF_NOTRAILERS|IFF_MULTICAST;
 	ifp->if_snd.ifq_maxlen =
-	    max(ifqmaxlen, NET_TX_RING_SIZE * 2);
+	    uimax(ifqmaxlen, NET_TX_RING_SIZE * 2);
 	ifp->if_capabilities = IFCAP_CSUM_TCPv4_Tx | IFCAP_CSUM_UDPv4_Tx;
 	ifp->if_ioctl = xennetback_ifioctl;
 	ifp->if_start = xennetback_ifstart;
@@ -874,7 +874,7 @@ xennetback_evthandler(void *arg)
 			 * ack it. Delaying it until the mbuf is
 			 * freed will stall transmit.
 			 */
-			m->m_len = min(MHLEN, txreq.size);
+			m->m_len = uimin(MHLEN, txreq.size);
 			m->m_pkthdr.len = 0;
 			m_copyback(m, 0, txreq.size,
 			    (void *)(pkt_va + txreq.offset));

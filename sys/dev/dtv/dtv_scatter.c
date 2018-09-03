@@ -1,4 +1,4 @@
-/* $NetBSD: dtv_scatter.c,v 1.4 2017/11/09 22:16:34 riastradh Exp $ */
+/* $NetBSD: dtv_scatter.c,v 1.5 2018/09/03 16:29:30 riastradh Exp $ */
 
 /*
  * Copyright (c) 2008 Patrick Mahoney <pat@polycrystal.org>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dtv_scatter.c,v 1.4 2017/11/09 22:16:34 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dtv_scatter.c,v 1.5 2018/09/03 16:29:30 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -95,7 +95,7 @@ dtv_scatter_buf_set_size(struct dtv_scatter_buf *sb, size_t sz)
 		sb->sb_page_ary = NULL;
 	}
 
-	minpages = min(npages, oldnpages);
+	minpages = uimin(npages, oldnpages);
 	/* copy any pages that will be reused */
 	for (i = 0; i < minpages; ++i)
 		sb->sb_page_ary[i] = old_ary[i];
@@ -174,7 +174,7 @@ dtv_scatter_io_next(struct dtv_scatter_io *sio, void **p, size_t *sz)
 	pg = sio->sio_offset >> PAGE_SHIFT;
 	pgo = sio->sio_offset & PAGE_MASK;
 
-	*sz = min(PAGE_SIZE - pgo, sio->sio_resid);
+	*sz = uimin(PAGE_SIZE - pgo, sio->sio_resid);
 	*p = sio->sio_buf->sb_page_ary[pg] + pgo;
 
 	sio->sio_offset += *sz;

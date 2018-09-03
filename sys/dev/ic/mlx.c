@@ -1,4 +1,4 @@
-/*	$NetBSD: mlx.c,v 1.66 2017/10/28 04:53:55 riastradh Exp $	*/
+/*	$NetBSD: mlx.c,v 1.67 2018/09/03 16:29:31 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mlx.c,v 1.66 2017/10/28 04:53:55 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mlx.c,v 1.67 2018/09/03 16:29:31 riastradh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "ld.h"
@@ -480,7 +480,7 @@ mlx_init(struct mlx_softc *mlx, const char *intrstr)
 
 	/* Set maximum number of queued commands for `regular' operations. */
 	mlx->mlx_max_queuecnt =
-	    min(ci->ci_max_commands, MLX_MAX_QUEUECNT) -
+	    uimin(ci->ci_max_commands, MLX_MAX_QUEUECNT) -
 	    MLX_NCCBS_CONTROL;
 #ifdef DIAGNOSTIC
 	if (mlx->mlx_max_queuecnt < MLX_NCCBS_CONTROL + MLX_MAX_DRIVES)
@@ -1005,7 +1005,7 @@ mlx_periodic(struct mlx_softc *mlx)
 			else
 				etype =  MLX_CMD_ENQUIRY;
 
-			mlx_enquire(mlx, etype, max(sizeof(struct mlx_enquiry),
+			mlx_enquire(mlx, etype, uimax(sizeof(struct mlx_enquiry),
 			    sizeof(struct mlx_enquiry_old)),
 			    mlx_periodic_enquiry, 1);
 		}

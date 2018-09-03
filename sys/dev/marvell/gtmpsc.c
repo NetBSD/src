@@ -1,4 +1,4 @@
-/*	$NetBSD: gtmpsc.c,v 1.46 2014/11/15 19:18:18 christos Exp $	*/
+/*	$NetBSD: gtmpsc.c,v 1.47 2018/09/03 16:29:31 riastradh Exp $	*/
 /*
  * Copyright (c) 2009 KIYOHARA Takashi
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtmpsc.c,v 1.46 2014/11/15 19:18:18 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtmpsc.c,v 1.47 2018/09/03 16:29:31 riastradh Exp $");
 
 #include "opt_kgdb.h"
 
@@ -1005,7 +1005,7 @@ gtmpsc_write(struct gtmpsc_softc *sc)
 
 	kick = 0;
 	while (sc->sc_tbc > 0 && sc->sc_nexttx != sc->sc_lasttx) {
-		n = min(sc->sc_tbc, GTMPSC_TXBUFSZ);
+		n = uimin(sc->sc_tbc, GTMPSC_TXBUFSZ);
 
 		ix = sc->sc_nexttx;
 		sc->sc_nexttx = (ix + 1) % GTMPSC_NTXDESC;

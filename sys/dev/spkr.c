@@ -1,4 +1,4 @@
-/*	$NetBSD: spkr.c,v 1.15 2017/10/28 03:47:24 riastradh Exp $	*/
+/*	$NetBSD: spkr.c,v 1.16 2018/09/03 16:29:30 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1990 Eric S. Raymond (esr@snark.thyrsus.com)
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spkr.c,v 1.15 2017/10/28 03:47:24 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spkr.c,v 1.16 2018/09/03 16:29:30 riastradh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "wsmux.h"
@@ -460,7 +460,7 @@ spkrwrite(dev_t dev, struct uio *uio, int flags)
 	if (sc->sc_inbuf == NULL)
 		return EINVAL;
 
-	size_t n = min(DEV_BSIZE, uio->uio_resid);
+	size_t n = uimin(DEV_BSIZE, uio->uio_resid);
 	int error = uiomove(sc->sc_inbuf, n, uio);
 	if (error)
 		return error;

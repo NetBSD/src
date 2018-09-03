@@ -1,4 +1,4 @@
-/*	$NetBSD: i82586.c,v 1.78 2018/06/26 06:48:00 msaitoh Exp $	*/
+/*	$NetBSD: i82586.c,v 1.79 2018/09/03 16:29:31 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -137,7 +137,7 @@ Mode of operation:
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82586.c,v 1.78 2018/06/26 06:48:00 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82586.c,v 1.79 2018/09/03 16:29:31 riastradh Exp $");
 
 
 #include <sys/param.h>
@@ -930,7 +930,7 @@ ieget(struct ie_softc *sc, int head, int totlen)
 			m->m_data = newdata;
 		}
 
-		m->m_len = len = min(totlen, len);
+		m->m_len = len = uimin(totlen, len);
 
 		totlen -= len;
 		if (totlen > 0) {
@@ -961,7 +961,7 @@ ieget(struct ie_softc *sc, int head, int totlen)
 	while (resid > 0) {
 		int thisrblen = IE_RBUF_SIZE - thisrboff,
 		    thismblen = m->m_len - thismboff;
-		len = min(thisrblen, thismblen);
+		len = uimin(thisrblen, thismblen);
 
 		(sc->memcopyin)(sc, mtod(m, char *) + thismboff,
 				IE_RBUF_ADDR(sc,head) + thisrboff,

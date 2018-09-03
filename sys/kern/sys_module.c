@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_module.c,v 1.23 2018/01/18 13:31:20 maxv Exp $	*/
+/*	$NetBSD: sys_module.c,v 1.24 2018/09/03 16:29:35 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_module.c,v 1.23 2018/01/18 13:31:20 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_module.c,v 1.24 2018/09/03 16:29:35 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_modular.h"
@@ -169,7 +169,7 @@ handle_modctl_stat(struct iovec *iov, void *arg)
 	}
 	kernconfig_unlock();
 	error = copyout(mso, iov->iov_base,
-	    min(mslen - sizeof(modstat_t), iov->iov_len));
+	    uimin(mslen - sizeof(modstat_t), iov->iov_len));
 	kmem_free(mso, mslen);
 	if (error == 0) {
 		iov->iov_len = mslen - sizeof(modstat_t);

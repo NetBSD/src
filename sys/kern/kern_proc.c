@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.213 2018/08/25 09:54:37 maxv Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.214 2018/09/03 16:29:35 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.213 2018/08/25 09:54:37 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.214 2018/09/03 16:29:35 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_kstack.h"
@@ -1802,7 +1802,7 @@ sysctl_doeproc(SYSCTLFN_ARGS)
 			 * Copy out elem_size, but not larger than kelem_size
 			 */
 			error = sysctl_copyout(l, kbuf, dp,
-			    min(kelem_size, elem_size));
+			    uimin(kelem_size, elem_size));
 			mutex_enter(proc_lock);
 			if (error) {
 				goto bah;
@@ -2265,7 +2265,7 @@ fill_kproc2(struct proc *p, struct kinfo_proc2 *ki, bool zombie)
 	ki->p_svgid = kauth_cred_getsvgid(p->p_cred);
 	ki->p_ngroups = kauth_cred_ngroups(p->p_cred);
 	kauth_cred_getgroups(p->p_cred, ki->p_groups,
-	    min(ki->p_ngroups, sizeof(ki->p_groups) / sizeof(ki->p_groups[0])),
+	    uimin(ki->p_ngroups, sizeof(ki->p_groups) / sizeof(ki->p_groups[0])),
 	    UIO_SYSSPACE);
 
 	ki->p_uticks = p->p_uticks;
@@ -2288,7 +2288,7 @@ fill_kproc2(struct proc *p, struct kinfo_proc2 *ki, bool zombie)
 	ki->p_acflag = p->p_acflag;
 
 	strncpy(ki->p_comm, p->p_comm,
-	    min(sizeof(ki->p_comm), sizeof(p->p_comm)));
+	    uimin(sizeof(ki->p_comm), sizeof(p->p_comm)));
 	strncpy(ki->p_ename, p->p_emul->e_name, sizeof(ki->p_ename));
 
 	ki->p_nlwps = p->p_nlwps;
@@ -2353,7 +2353,7 @@ fill_kproc2(struct proc *p, struct kinfo_proc2 *ki, bool zombie)
 		if (SESS_LEADER(p))
 			ki->p_eflag |= EPROC_SLEADER;
 		strncpy(ki->p_login, p->p_session->s_login,
-		    min(sizeof ki->p_login - 1, sizeof p->p_session->s_login));
+		    uimin(sizeof ki->p_login - 1, sizeof p->p_session->s_login));
 		ki->p_jobc = p->p_pgrp->pg_jobc;
 		if ((p->p_lflag & PL_CONTROLT) && (tp = p->p_session->s_ttyp)) {
 			ki->p_tdev = tp->t_dev;

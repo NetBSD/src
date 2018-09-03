@@ -1,4 +1,4 @@
-/*	$NetBSD: cac.c,v 1.58 2017/10/28 04:53:55 riastradh Exp $	*/
+/*	$NetBSD: cac.c,v 1.59 2018/09/03 16:29:31 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2006, 2007 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cac.c,v 1.58 2017/10/28 04:53:55 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cac.c,v 1.59 2018/09/03 16:29:31 riastradh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "bio.h"
@@ -333,7 +333,7 @@ cac_cmd(struct cac_softc *sc, int command, void *data, int datasize,
 		    BUS_DMASYNC_PREWRITE);
 
 		sgb = ccb->ccb_seg;
-		nsegs = min(ccb->ccb_dmamap_xfer->dm_nsegs, CAC_SG_SIZE);
+		nsegs = uimin(ccb->ccb_dmamap_xfer->dm_nsegs, CAC_SG_SIZE);
 
 		for (i = 0; i < nsegs; i++, sgb++) {
 			size += ccb->ccb_dmamap_xfer->dm_segs[i].ds_len;

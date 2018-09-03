@@ -1,4 +1,4 @@
-/*	$NetBSD: hcsc.c,v 1.21 2012/10/27 17:18:37 chs Exp $	*/
+/*	$NetBSD: hcsc.c,v 1.22 2018/09/03 16:29:33 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2001 Ben Harris
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hcsc.c,v 1.21 2012/10/27 17:18:37 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hcsc.c,v 1.22 2018/09/03 16:29:33 riastradh Exp $");
 
 #include <sys/param.h>
 
@@ -278,7 +278,7 @@ hcsc_pdma_in(struct ncr5380_softc *ncr_sc, int phase, int datalen,
 
 	resid = datalen;
 	while (resid > 0) {
-		len = min(resid, HCSC_TSIZE_IN);
+		len = uimin(resid, HCSC_TSIZE_IN);
 		if (hcsc_ready(ncr_sc) == 0)
 			goto interrupt;
 		bus_space_read_multi_1(pdmat, pdmah, 0, data, len);

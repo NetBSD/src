@@ -1,4 +1,4 @@
-/*	$NetBSD: ptyfs_vnops.c,v 1.54 2017/05/26 14:21:00 riastradh Exp $	*/
+/*	$NetBSD: ptyfs_vnops.c,v 1.55 2018/09/03 16:29:35 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1993, 1995
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ptyfs_vnops.c,v 1.54 2017/05/26 14:21:00 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ptyfs_vnops.c,v 1.55 2018/09/03 16:29:35 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -710,7 +710,7 @@ ptyfs_readdir(void *v)
 		goto out;
 
 	if (ap->a_ncookies) {
-		ncookies = min(ncookies, (npty + 2 - i));
+		ncookies = uimin(ncookies, (npty + 2 - i));
 		cookies = malloc(ncookies * sizeof (off_t),
 		    M_TEMP, M_WAITOK);
 		*ap->a_cookies = cookies;

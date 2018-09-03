@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_ioctl.c,v 1.69 2016/11/20 15:37:19 mlelstv Exp $	*/
+/*	$NetBSD: scsipi_ioctl.c,v 1.70 2018/09/03 16:29:33 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipi_ioctl.c,v 1.69 2016/11/20 15:37:19 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipi_ioctl.c,v 1.70 2018/09/03 16:29:33 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_freebsd.h"
@@ -166,14 +166,14 @@ scsipi_user_done(struct scsipi_xfer *xs)
 		break;
 	case XS_SENSE:
 		SC_DEBUG(periph, SCSIPI_DB3, ("have sense\n"));
-		screq->senselen_used = min(sizeof(xs->sense.scsi_sense),
+		screq->senselen_used = uimin(sizeof(xs->sense.scsi_sense),
 		    SENSEBUFLEN);
 		memcpy(screq->sense, &xs->sense.scsi_sense, screq->senselen);
 		screq->retsts = SCCMD_SENSE;
 		break;
 	case XS_SHORTSENSE:
 		SC_DEBUG(periph, SCSIPI_DB3, ("have short sense\n"));
-		screq->senselen_used = min(sizeof(xs->sense.atapi_sense),
+		screq->senselen_used = uimin(sizeof(xs->sense.atapi_sense),
 		    SENSEBUFLEN);
 		memcpy(screq->sense, &xs->sense.scsi_sense, screq->senselen);
 		screq->retsts = SCCMD_UNKNOWN; /* XXX need a shortsense here */

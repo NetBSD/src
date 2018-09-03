@@ -1,4 +1,4 @@
-/*	$NetBSD: tropic.c,v 1.50 2018/06/26 06:48:00 msaitoh Exp $	*/
+/*	$NetBSD: tropic.c,v 1.51 2018/09/03 16:29:31 riastradh Exp $	*/
 
 /*
  * Ported to NetBSD by Onno van der Linden
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tropic.c,v 1.50 2018/06/26 06:48:00 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tropic.c,v 1.51 2018/09/03 16:29:31 riastradh Exp $");
 
 #include "opt_inet.h"
 
@@ -1465,7 +1465,7 @@ tr_get(struct tr_softc *sc, int totlen, struct ifnet *ifp)
 			len -= newdata - m->m_data;
 			m->m_data = newdata;
 		}
-		m->m_len = len = min(totlen, len);
+		m->m_len = len = uimin(totlen, len);
 		tr_bcopy(sc, mtod(m, char *), len);
 		totlen -= len;
 		if (totlen > 0) {

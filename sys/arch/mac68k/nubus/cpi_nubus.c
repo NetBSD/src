@@ -1,4 +1,4 @@
-/*	$NetBSD: cpi_nubus.c,v 1.9 2014/07/25 08:10:33 dholland Exp $	*/
+/*	$NetBSD: cpi_nubus.c,v 1.10 2018/09/03 16:29:25 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008 Hauke Fath
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpi_nubus.c,v 1.9 2014/07/25 08:10:33 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpi_nubus.c,v 1.10 2018/09/03 16:29:25 riastradh Exp $");
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
@@ -462,7 +462,7 @@ cpi_write(dev_t device, struct uio *uio, int flags)
 
 	/* Send data to printer, a line buffer full at a time */
 	while (uio->uio_resid > 0) {
-		numbytes = min(CPI_BUFSIZE, uio->uio_resid);
+		numbytes = uimin(CPI_BUFSIZE, uio->uio_resid);
 		sc->sc_cp = sc->sc_printbuf;
 		uiomove(sc->sc_cp, numbytes, uio);
 		sc->sc_bufbytes = numbytes;

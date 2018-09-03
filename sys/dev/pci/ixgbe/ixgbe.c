@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.164 2018/08/29 09:03:14 msaitoh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.165 2018/09/03 16:29:33 riastradh Exp $ */
 
 /******************************************************************************
 
@@ -2620,11 +2620,11 @@ ixgbe_msix_que(void *arg)
 	if ((txr->bytes) && (txr->packets))
 		newitr = txr->bytes/txr->packets;
 	if ((rxr->bytes) && (rxr->packets))
-		newitr = max(newitr, (rxr->bytes / rxr->packets));
+		newitr = uimax(newitr, (rxr->bytes / rxr->packets));
 	newitr += 24; /* account for hardware frame, crc */
 
 	/* set an upper boundary */
-	newitr = min(newitr, 3000);
+	newitr = uimin(newitr, 3000);
 
 	/* Be nice to the mid range */
 	if ((newitr > 300) && (newitr < 1200))
@@ -6549,7 +6549,7 @@ ixgbe_configure_interrupts(struct adapter *adapter)
 #ifdef	RSS
 	/* If we're doing RSS, clamp at the number of RSS buckets */
 	if (adapter->feat_en & IXGBE_FEATURE_RSS)
-		queues = min(queues, rss_getnumbuckets());
+		queues = uimin(queues, rss_getnumbuckets());
 #endif
 	if (ixgbe_num_queues > queues) {
 		aprint_error_dev(adapter->dev, "ixgbe_num_queues (%d) is too large, using reduced amount (%d).\n", ixgbe_num_queues, queues);
@@ -6559,8 +6559,8 @@ ixgbe_configure_interrupts(struct adapter *adapter)
 	if (ixgbe_num_queues != 0)
 		queues = ixgbe_num_queues;
 	else
-		queues = min(queues,
-		    min(mac->max_tx_queues, mac->max_rx_queues));
+		queues = uimin(queues,
+		    uimin(mac->max_tx_queues, mac->max_rx_queues));
 
 	/* reflect correct sysctl value */
 	ixgbe_num_queues = queues;

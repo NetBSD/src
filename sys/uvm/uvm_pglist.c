@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pglist.c,v 1.70 2016/12/23 09:18:02 skrll Exp $	*/
+/*	$NetBSD: uvm_pglist.c,v 1.71 2018/09/03 16:29:37 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pglist.c,v 1.70 2016/12/23 09:18:02 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pglist.c,v 1.71 2018/09/03 16:29:37 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -146,9 +146,9 @@ uvm_pglistalloc_c_ps(uvm_physseg_t psi, int num, paddr_t low, paddr_t high,
 	 * We start our search at the just after where the last allocation
 	 * succeeded.
 	 */
-	candidate = roundup2(max(low, uvm_physseg_get_avail_start(psi) +
+	candidate = roundup2(uimax(low, uvm_physseg_get_avail_start(psi) +
 		uvm_physseg_get_start_hint(psi)), alignment);
-	limit = min(high, uvm_physseg_get_avail_end(psi));
+	limit = uimin(high, uvm_physseg_get_avail_end(psi));
 	pagemask = ~((boundary >> PAGE_SHIFT) - 1);
 	skip = 0;
 	second_pass = false;
@@ -170,8 +170,8 @@ uvm_pglistalloc_c_ps(uvm_physseg_t psi, int num, paddr_t low, paddr_t high,
 			 * is were we started.
 			 */
 			second_pass = true;
-			candidate = roundup2(max(low, uvm_physseg_get_avail_start(psi)), alignment);
-			limit = min(limit, uvm_physseg_get_avail_start(psi) +
+			candidate = roundup2(uimax(low, uvm_physseg_get_avail_start(psi)), alignment);
+			limit = uimin(limit, uvm_physseg_get_avail_start(psi) +
 			    uvm_physseg_get_start_hint(psi));
 			skip = 0;
 			continue;
@@ -273,7 +273,7 @@ uvm_pglistalloc_c_ps(uvm_physseg_t psi, int num, paddr_t low, paddr_t high,
 		 * The number of pages we can skip checking 
 		 * (might be 0 if cnt > num).
 		 */
-		skip = max(num - cnt, 0);
+		skip = uimax(num - cnt, 0);
 		candidate += cnt;
 	}
 
@@ -378,9 +378,9 @@ uvm_pglistalloc_s_ps(uvm_physseg_t psi, int num, paddr_t low, paddr_t high,
 	low = atop(low);
 	high = atop(high);
 	todo = num;
-	candidate = max(low, uvm_physseg_get_avail_start(psi) +
+	candidate = uimax(low, uvm_physseg_get_avail_start(psi) +
 	    uvm_physseg_get_start_hint(psi));
-	limit = min(high, uvm_physseg_get_avail_end(psi));
+	limit = uimin(high, uvm_physseg_get_avail_end(psi));
 	pg = uvm_physseg_get_pg(psi, candidate - uvm_physseg_get_start(psi));
 	second_pass = false;
 
@@ -399,8 +399,8 @@ again:
 				break;
 			}
 			second_pass = true;
-			candidate = max(low, uvm_physseg_get_avail_start(psi));
-			limit = min(limit, uvm_physseg_get_avail_start(psi) +
+			candidate = uimax(low, uvm_physseg_get_avail_start(psi));
+			limit = uimin(limit, uvm_physseg_get_avail_start(psi) +
 			    uvm_physseg_get_start_hint(psi));
 			pg = uvm_physseg_get_pg(psi, candidate - uvm_physseg_get_start(psi));
 			goto again;
