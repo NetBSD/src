@@ -1,4 +1,4 @@
-/*	$NetBSD: printf.c,v 1.43 2018/08/31 17:27:35 kre Exp $	*/
+/*	$NetBSD: printf.c,v 1.44 2018/09/03 04:10:20 kre Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\
 #if 0
 static char sccsid[] = "@(#)printf.c	8.2 (Berkeley) 3/22/95";
 #else
-__RCSID("$NetBSD: printf.c,v 1.43 2018/08/31 17:27:35 kre Exp $");
+__RCSID("$NetBSD: printf.c,v 1.44 2018/09/03 04:10:20 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -121,7 +121,9 @@ static char  **gargv;
 #ifdef main
 int main(int, char *[]);
 #endif
-int main(int argc, char *argv[])
+
+int
+main(int argc, char *argv[])
 {
 	char *fmt, *start;
 	int fieldwidth, precision;
@@ -189,34 +191,39 @@ int main(int argc, char *argv[])
 			if (*fmt == '*') {
 				fmt++;
 				fieldwidth = getwidth();
-			} else
+			} else {
 				fieldwidth = -1;
 
-			/* skip to possible '.', get following precision */
-			fmt += strspn(fmt, SKIP2);
+				/* skip to possible '.' for precision */
+				fmt += strspn(fmt, SKIP2);
+			}
+
 			if (*fmt == '.') {
+				 /* get following precision */
 				fmt++;
 				if (*fmt == '*') {
 					fmt++;
 					precision = getwidth();
-				} else
+				} else {
 					precision = -1;
+					fmt += strspn(fmt, SKIP2);
+				}
 			} else
 				precision = -1;
 
-			fmt += strspn(fmt, SKIP2);
-
 			ch = *fmt;
 			if (!ch) {
-				warnx("missing format character");
+				warnx("%s: missing format character", start);
 				return 1;
 			}
+
 			/*
 			 * null terminate format string to we can use it
 			 * as an argument to printf.
 			 */
 			nextch = fmt[1];
 			fmt[1] = 0;
+
 			switch (ch) {
 
 			case 'B': {
@@ -323,6 +330,11 @@ int main(int argc, char *argv[])
 					goto out;
 				break;
 			}
+			case '%':
+				/* Don't ask, but this is useful ... */
+				if (fieldwidth == 'N' && precision == 'B')
+					return 0;
+				/* FALLTHROUGH */
 			default:
 				warnx("%s: invalid directive", start);
 				return 1;
@@ -617,7 +629,7 @@ getwidth(void)
 	char *s, *ep;
 
 	s = *gargv;
-	if (!*gargv)
+	if (s == NULL)
 		return 0;
 	gargv++;
 
