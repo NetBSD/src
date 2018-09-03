@@ -534,8 +534,9 @@ query_info_parse(struct query_info* m, sldns_buffer* query)
 	/* minimum size: header + \0 + qtype + qclass */
 	if(sldns_buffer_limit(query) < LDNS_HEADER_SIZE + 5)
 		return 0;
-	if(LDNS_OPCODE_WIRE(q) != LDNS_PACKET_QUERY || 
-		LDNS_QDCOUNT(q) != 1 || sldns_buffer_position(query) != 0)
+	if((LDNS_OPCODE_WIRE(q) != LDNS_PACKET_QUERY && LDNS_OPCODE_WIRE(q) !=
+		LDNS_PACKET_NOTIFY) || LDNS_QDCOUNT(q) != 1 ||
+		sldns_buffer_position(query) != 0)
 		return 0;
 	sldns_buffer_skip(query, LDNS_HEADER_SIZE);
 	m->qname = sldns_buffer_current(query);
@@ -631,9 +632,14 @@ query_info_entrysetup(struct query_info* q, struct reply_info* r,
 	e->entry.key = e;
 	e->entry.data = r;
 	lock_rw_init(&e->entry.lock);
-	lock_protect(&e->entry.lock, &e->key, sizeof(e->key));
-	lock_protect(&e->entry.lock, &e->entry.hash, sizeof(e->entry.hash) +
-		sizeof(e->entry.key) + sizeof(e->entry.data));
+	lock_protect(&e->entry.lock, &e->key.qname, sizeof(e->key.qname));
+	lock_protect(&e->entry.lock, &e->key.qname_len, sizeof(e->key.qname_len));
+	lock_protect(&e->entry.lock, &e->key.qtype, sizeof(e->key.qtype));
+	lock_protect(&e->entry.lock, &e->key.qclass, sizeof(e->key.qclass));
+	lock_protect(&e->entry.lock, &e->key.local_alias, sizeof(e->key.local_alias));
+	lock_protect(&e->entry.lock, &e->entry.hash, sizeof(e->entry.hash));
+	lock_protect(&e->entry.lock, &e->entry.key, sizeof(e->entry.key));
+	lock_protect(&e->entry.lock, &e->entry.data, sizeof(e->entry.data));
 	lock_protect(&e->entry.lock, e->key.qname, e->key.qname_len);
 	q->qname = NULL;
 	return e;
@@ -894,6 +900,25 @@ reply_all_rrsets_secure(struct reply_info* rep)
 		return 0;
 	}
 	return 1;
+}
+
+struct reply_info*
+parse_reply_in_temp_region(sldns_buffer* pkt, struct regional* region,
+	struct query_info* qi)
+{
+	struct reply_info* rep;
+	struct msg_parse* msg;
+	if(!(msg = regional_alloc(region, sizeof(*msg)))) {
+		return NULL;
+	}
+	memset(msg, 0, sizeof(*msg));
+	sldns_buffer_set_position(pkt, 0);
+	if(parse_packet(pkt, msg, region) != 0)
+		return 0;
+	if(!parse_create_msg(pkt, msg, NULL, qi, &rep, region)) {
+		return 0;
+	}
+	return rep;
 }
 
 int edns_opt_append(struct edns_data* edns, struct regional* region,

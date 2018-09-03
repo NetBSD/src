@@ -524,6 +524,7 @@ verify_test(void)
 #endif
 #if (defined(HAVE_EVP_SHA512) || defined(HAVE_NSS) || defined(HAVE_NETTLE)) && defined(USE_SHA2)
 	verifytest_file("testdata/test_sigs.rsasha512_draft", "20070829144150");
+	verifytest_file("testdata/test_signatures.9", "20171215000000");
 #endif
 #ifdef USE_SHA1
 	verifytest_file("testdata/test_sigs.hinfo", "20090107100022");
@@ -545,6 +546,11 @@ verify_test(void)
 #ifdef USE_ED25519
 	if(dnskey_algo_id_is_supported(LDNS_ED25519)) {
 		verifytest_file("testdata/test_sigs.ed25519", "20170530140439");
+	}
+#endif
+#ifdef USE_ED448
+	if(dnskey_algo_id_is_supported(LDNS_ED448)) {
+		verifytest_file("testdata/test_sigs.ed448", "20180408143630");
 	}
 #endif
 #ifdef USE_SHA1
