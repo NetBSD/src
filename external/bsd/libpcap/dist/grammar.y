@@ -1,4 +1,4 @@
-/*	$NetBSD: grammar.y,v 1.7 2017/01/24 22:29:28 christos Exp $	*/
+/*	$NetBSD: grammar.y,v 1.8 2018/09/03 15:26:43 christos Exp $	*/
 
 /*
  * We want a reentrant parser.
@@ -23,7 +23,7 @@
 /*
  * And we need to pass the compiler state to the scanner.
  */
-%parse-param {compiler_state_t *cstate}
+%parse-param { compiler_state_t *cstate }
 
 %{
 /*
@@ -48,22 +48,18 @@
  *
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: grammar.y,v 1.7 2017/01/24 22:29:28 christos Exp $");
+__RCSID("$NetBSD: grammar.y,v 1.8 2018/09/03 15:26:43 christos Exp $");
 
 #ifdef HAVE_CONFIG_H
-#include "config.h"
+#include <config.h>
 #endif
-
-#ifdef _WIN32
-#include <pcap-stdinc.h>
-#else /* _WIN32 */
-#include <sys/types.h>
-#include <sys/socket.h>
-#endif /* _WIN32 */
 
 #include <stdlib.h>
 
 #ifndef _WIN32
+#include <sys/types.h>
+#include <sys/socket.h>
+
 #if __STDC__
 struct mbuf;
 struct rtentry;
@@ -74,6 +70,8 @@ struct rtentry;
 #endif /* _WIN32 */
 
 #include <stdio.h>
+
+#include "diag-control.h"
 
 #include "pcap-int.h"
 
@@ -94,9 +92,30 @@ struct rtentry;
 #include "os-proto.h"
 #endif
 
-#define QSET(q, p, d, a) (q).proto = (p),\
-			 (q).dir = (d),\
-			 (q).addr = (a)
+#ifdef YYBYACC
+/*
+ * Both Berkeley YACC and Bison define yydebug (under whatever name
+ * it has) as a global, but Bison does so only if YYDEBUG is defined.
+ * Berkeley YACC define it even if YYDEBUG isn't defined; declare it
+ * here to suppress a warning.
+ */
+#if !defined(YYDEBUG)
+extern int yydebug;
+#endif
+
+/*
+ * In Berkeley YACC, yynerrs (under whatever name it has) is global,
+ * even if it's building a reentrant parser.  In Bison, it's local
+ * in reentrant parsers.
+ *
+ * Declare it to squelch a warning.
+ */
+extern int yynerrs;
+#endif
+
+#define QSET(q, p, d, a) (q).proto = (unsigned char)(p),\
+			 (q).dir = (unsigned char)(d),\
+			 (q).addr = (unsigned char)(a)
 
 struct tok {
 	int v;			/* value */
@@ -203,8 +222,8 @@ str2tok(const char *str, const struct tok *toks)
 
 static struct qual qerr = { Q_UNDEF, Q_UNDEF, Q_UNDEF, Q_UNDEF };
 
-__dead static void
-yyerror(void *yyscanner, compiler_state_t *cstate, const char *msg)
+static PCAP_NORETURN_DEF void
+yyerror(void *yyscanner _U_, compiler_state_t *cstate, const char *msg)
 {
 	bpf_syntax_error(cstate, msg);
 	/* NOTREACHED */
@@ -250,26 +269,22 @@ pfaction_to_num(compiler_state_t *cstate, const char *action)
 	}
 }
 #else /* !HAVE_NET_PFVAR_H */
-static int
-pfreason_to_num(compiler_state_t *cstate, const char *reason)
+static PCAP_NORETURN_DEF int
+pfreason_to_num(compiler_state_t *cstate, const char *reason _U_)
 {
 	bpf_error(cstate, "libpcap was compiled on a machine without pf support");
 	/*NOTREACHED*/
-
-	/* this is to make the VC compiler happy */
-	return -1;
 }
 
-static int
-pfaction_to_num(compiler_state_t *cstate, const char *action)
+static PCAP_NORETURN_DEF int
+pfaction_to_num(compiler_state_t *cstate, const char *action _U_)
 {
 	bpf_error(cstate, "libpcap was compiled on a machine without pf support");
 	/*NOTREACHED*/
-
-	/* this is to make the VC compiler happy */
-	return -1;
 }
 #endif /* HAVE_NET_PFVAR_H */
+
+DIAG_OFF_BISON_BYACC
 %}
 
 %union {

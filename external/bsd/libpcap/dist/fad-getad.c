@@ -1,4 +1,4 @@
-/*	$NetBSD: fad-getad.c,v 1.3 2017/01/24 22:29:28 christos Exp $	*/
+/*	$NetBSD: fad-getad.c,v 1.4 2018/09/03 15:26:43 christos Exp $	*/
 
 /* -*- Mode: c; tab-width: 8; indent-tabs-mode: 1; c-basic-offset: 8; -*- */
 /*
@@ -35,10 +35,10 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: fad-getad.c,v 1.3 2017/01/24 22:29:28 christos Exp $");
+__RCSID("$NetBSD: fad-getad.c,v 1.4 2018/09/03 15:26:43 christos Exp $");
 
 #ifdef HAVE_CONFIG_H
-#include "config.h"
+#include <config.h>
 #endif
 
 #include <sys/types.h>
@@ -107,10 +107,10 @@ __RCSID("$NetBSD: fad-getad.c,v 1.3 2017/01/24 22:29:28 christos Exp $");
  * all those systems we have "struct sockaddr_storage".
  */
 #ifndef SA_LEN
-#ifdef HAVE_SOCKADDR_SA_LEN
+#ifdef HAVE_STRUCT_SOCKADDR_SA_LEN
 #define SA_LEN(addr)	((addr)->sa_len)
-#else /* HAVE_SOCKADDR_SA_LEN */
-#ifdef HAVE_SOCKADDR_STORAGE
+#else /* HAVE_STRUCT_SOCKADDR_SA_LEN */
+#ifdef HAVE_STRUCT_SOCKADDR_STORAGE
 static size_t
 get_sa_len(struct sockaddr *addr)
 {
@@ -136,10 +136,10 @@ get_sa_len(struct sockaddr *addr)
 	}
 }
 #define SA_LEN(addr)	(get_sa_len(addr))
-#else /* HAVE_SOCKADDR_STORAGE */
+#else /* HAVE_STRUCT_SOCKADDR_STORAGE */
 #define SA_LEN(addr)	(sizeof (struct sockaddr))
-#endif /* HAVE_SOCKADDR_STORAGE */
-#endif /* HAVE_SOCKADDR_SA_LEN */
+#endif /* HAVE_STRUCT_SOCKADDR_STORAGE */
+#endif /* HAVE_STRUCT_SOCKADDR_SA_LEN */
 #endif /* SA_LEN */
 
 /*
@@ -149,10 +149,9 @@ get_sa_len(struct sockaddr *addr)
  * could be opened.
  */
 int
-pcap_findalldevs_interfaces(pcap_if_t **alldevsp, char *errbuf,
-    int (*check_usable)(const char *))
+pcap_findalldevs_interfaces(pcap_if_list_t *devlistp, char *errbuf,
+    int (*check_usable)(const char *), get_if_flags_func get_flags_func)
 {
-	pcap_if_t *devlist = NULL;
 	struct ifaddrs *ifap, *ifa;
 	struct sockaddr *addr, *netmask, *broadaddr, *dstaddr;
 	size_t addr_size, broadaddr_size, dstaddr_size;
@@ -174,8 +173,8 @@ pcap_findalldevs_interfaces(pcap_if_t **alldevsp, char *errbuf,
 	 * those.
 	 */
 	if (getifaddrs(&ifap) != 0) {
-		(void)pcap_snprintf(errbuf, PCAP_ERRBUF_SIZE,
-		    "getifaddrs: %s", pcap_strerror(errno));
+		pcap_fmt_errmsg_for_errno(errbuf, PCAP_ERRBUF_SIZE,
+		    errno, "getifaddrs");
 		return (-1);
 	}
 	for (ifa = ifap; ifa != NULL; ifa = ifa->ifa_next) {
@@ -238,7 +237,7 @@ pcap_findalldevs_interfaces(pcap_if_t **alldevsp, char *errbuf,
 		/*
 		 * Note that, on some platforms, ifa_broadaddr and
 		 * ifa_dstaddr could be the same field (true on at
-		 * least some versions of *BSD and OS X), so we
+		 * least some versions of *BSD and macOS), so we
 		 * can't just check whether the broadcast address
 		 * is null and add it if so and check whether the
 		 * destination address is null and add it if so.
@@ -270,8 +269,8 @@ pcap_findalldevs_interfaces(pcap_if_t **alldevsp, char *errbuf,
 		/*
 		 * Add information for this address to the list.
 		 */
-		if (add_addr_to_iflist(&devlist, ifa->ifa_name,
-		    if_flags_to_pcap_flags(ifa->ifa_name, ifa->ifa_flags),
+		if (add_addr_to_if(devlistp, ifa->ifa_name, ifa->ifa_flags,
+		    get_flags_func,
 		    addr, addr_size, netmask, addr_size,
 		    broadaddr, broadaddr_size, dstaddr, dstaddr_size,
 		    errbuf) < 0) {
@@ -282,16 +281,5 @@ pcap_findalldevs_interfaces(pcap_if_t **alldevsp, char *errbuf,
 
 	freeifaddrs(ifap);
 
-	if (ret == -1) {
-		/*
-		 * We had an error; free the list we've been constructing.
-		 */
-		if (devlist != NULL) {
-			pcap_freealldevs(devlist);
-			devlist = NULL;
-		}
-	}
-
-	*alldevsp = devlist;
 	return (ret);
 }
