@@ -1,4 +1,4 @@
-/*	$NetBSD: efiboot.h,v 1.2 2018/08/26 21:28:18 jmcneill Exp $	*/
+/*	$NetBSD: efiboot.h,v 1.3 2018/09/03 00:04:02 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -40,6 +40,10 @@ struct boot_command {
 	const char *c_help;
 };
 
+/* conf.c */
+extern struct fs_ops null_fs_ops;
+extern struct fs_ops tftp_fs_ops;
+
 /* boot.c */
 void boot(void);
 void clearit(void);
@@ -68,6 +72,18 @@ int utf8_to_ucs2(const char *, CHAR16 **, size_t *);
 /* efidev.c */
 int efi_device_path_depth(EFI_DEVICE_PATH *dp, int);
 int efi_device_path_ncmp(EFI_DEVICE_PATH *, EFI_DEVICE_PATH *, int);
+
+/* efinet.c */
+int efi_net_open(struct open_file *, ...);
+void efi_net_probe(void);
+void efi_net_show(void);
+int efi_net_get_booted_interface_unit(void);
+extern struct netif_driver efinetif;
+
+/* efipxe.c */
+void efi_pxe_probe(void);
+void efi_pxe_show(void);
+bool efi_pxe_match_booted_interface(const EFI_MAC_ADDRESS *, UINT32);
 
 /* exec.c */
 int exec_netbsd(const char *, const char *);
