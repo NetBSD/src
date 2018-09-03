@@ -1,4 +1,4 @@
-/*	$NetBSD: rngtest.c,v 1.3 2016/03/28 15:20:16 riastradh Exp $ */
+/*	$NetBSD: rngtest.c,v 1.4 2018/09/03 18:52:33 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -142,7 +142,7 @@ the GNU Public License.
 #include <lib/libkern/libkern.h>
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rngtest.c,v 1.3 2016/03/28 15:20:16 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rngtest.c,v 1.4 2018/09/03 18:52:33 riastradh Exp $");
 
 #ifndef _KERNEL
 static inline int
@@ -168,26 +168,6 @@ const int minones = MINONES;
 const int maxones = MAXONES;
 const long long minpoke = (MINPOKE * PRECISION);
 const long long maxpoke = (MAXPOKE * PRECISION);
-
-/* Population count of 1's in a byte */
-const unsigned char Popcount[] = {
-	0, 1, 1, 2, 1, 2, 2, 3, 1, 2, 2, 3, 2, 3, 3, 4,
-	1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5,
-	1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5,
-	2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6,
-	1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5,
-	2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6,
-	2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6,
-	3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7,
-	1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5,
-	2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6,
-	2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6,
-	3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7,
-	2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6,
-	3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7,
-	3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7,
-	4, 5, 5, 6, 5, 6, 6, 7, 5, 6, 6, 7, 6, 7, 7, 8
-};
 
 /* end of run */
 static void
@@ -221,7 +201,7 @@ rngtest(rngtest_t *const rc)
 
 	/* monobit test */
 	for (p = rc->rt_b, c = 0; p < &rc->rt_b[sizeof rc->rt_b]; ++p)
-		c += Popcount[*p];
+		c += popcount(*p);
 	if (c <= minones || maxones <= c) {
 		printf("Kernel RNG \"%s\" monobit test FAILURE: %d ones\n",
 		       rc->rt_name, c);
