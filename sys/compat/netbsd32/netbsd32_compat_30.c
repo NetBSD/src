@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_30.c,v 1.31 2014/12/05 17:26:21 maxv Exp $	*/
+/*	$NetBSD: netbsd32_compat_30.c,v 1.32 2018/09/03 16:29:29 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_30.c,v 1.31 2014/12/05 17:26:21 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_30.c,v 1.32 2018/09/03 16:29:29 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,7 +69,7 @@ compat_30_netbsd32_getdents(struct lwp *l, const struct compat_30_netbsd32_getde
 	netbsd32_size_t count;
 
 	/* Limit the size on any kernel buffers used by VOP_READDIR */
-	count = min(MAXBSIZE, SCARG(uap, count));
+	count = uimin(MAXBSIZE, SCARG(uap, count));
 
 	/* fd_getvnode() will use the descriptor for us */
 	if ((error = fd_getvnode(SCARG(uap, fd), &fp)) != 0)

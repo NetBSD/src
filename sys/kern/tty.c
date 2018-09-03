@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.276 2018/03/30 22:59:43 maya Exp $	*/
+/*	$NetBSD: tty.c,v 1.277 2018/09/03 16:29:35 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.276 2018/03/30 22:59:43 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.277 2018/09/03 16:29:35 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -774,7 +774,7 @@ ttyinput_wlock(int c, struct tty *tp)
 			/*
 			 * Place the cursor over the '^' of the ^D.
 			 */
-			i = min(2, tp->t_column - i);
+			i = uimin(2, tp->t_column - i);
 			while (i > 0) {
 				(void)ttyoutput('\b', tp);
 				i--;
@@ -2185,7 +2185,7 @@ ttwrite(struct tty *tp, struct uio *uio, int flag)
 		 * leftover from last time.
 		 */
 		if (cc == 0) {
-			cc = min(uio->uio_resid, OBUFSIZ);
+			cc = uimin(uio->uio_resid, OBUFSIZ);
 			cp = obuf;
 			error = uiomove(cp, cc, uio);
 			if (error) {

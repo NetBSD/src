@@ -1,4 +1,4 @@
-/*	$NetBSD: fdc.c,v 1.44 2015/04/26 15:15:19 mlelstv Exp $	*/
+/*	$NetBSD: fdc.c,v 1.45 2018/09/03 16:29:27 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdc.c,v 1.44 2015/04/26 15:15:19 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdc.c,v 1.45 2018/09/03 16:29:27 riastradh Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -1772,8 +1772,8 @@ loop:
 		type = fd->sc_type;
 		sec = fd->sc_blkno % type->seccyl;
 		nblks = type->seccyl - sec;
-		nblks = min(nblks, fd->sc_bcount / FD_BSIZE(fd));
-		nblks = min(nblks, FDC_MAXIOSIZE / FD_BSIZE(fd));
+		nblks = uimin(nblks, fd->sc_bcount / FD_BSIZE(fd));
+		nblks = uimin(nblks, FDC_MAXIOSIZE / FD_BSIZE(fd));
 		fd->sc_nblks = nblks;
 		fd->sc_nbytes = finfo ? bp->b_bcount : nblks * FD_BSIZE(fd);
 		head = sec / type->sectrac;

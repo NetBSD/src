@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_execve.c,v 1.38 2014/02/02 14:48:57 martin Exp $	*/
+/*	$NetBSD: netbsd32_execve.c,v 1.39 2018/09/03 16:29:29 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_execve.c,v 1.38 2014/02/02 14:48:57 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_execve.c,v 1.39 2018/09/03 16:29:29 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -195,7 +195,7 @@ netbsd32_posix_spawn(struct lwp *l,
 
 	/* copy in file_actions struct */
 	if (SCARG_P32(uap, file_actions) != NULL) {
-		max_fileactions = 2 * min(p->p_rlimit[RLIMIT_NOFILE].rlim_cur,
+		max_fileactions = 2 * uimin(p->p_rlimit[RLIMIT_NOFILE].rlim_cur,
 		    maxfiles);
 		error = netbsd32_posix_spawn_fa_alloc(&fa,
 		    SCARG_P32(uap, file_actions), max_fileactions);

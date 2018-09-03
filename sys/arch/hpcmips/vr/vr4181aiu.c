@@ -1,4 +1,4 @@
-/* $NetBSD: vr4181aiu.c,v 1.10 2014/07/25 08:10:33 dholland Exp $ */
+/* $NetBSD: vr4181aiu.c,v 1.11 2018/09/03 16:29:24 riastradh Exp $ */
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vr4181aiu.c,v 1.10 2014/07/25 08:10:33 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vr4181aiu.c,v 1.11 2018/09/03 16:29:24 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -342,7 +342,7 @@ vr4181aiuread(dev_t dev, struct uio *uio, int flag)
 		? &sc->sc_inbuf1[INPUTLEN]
 		: &sc->sc_inbuf2[INPUTLEN];
 	avail = (fence - src) / PICKUPCOUNT;
-	count = min(avail, uio->uio_resid);
+	count = uimin(avail, uio->uio_resid);
 	dst = tmp;
 	while (count > 0) {
 		*dst++ = (u_int8_t) (*src >> 2);

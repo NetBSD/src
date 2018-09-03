@@ -1,4 +1,4 @@
-/* $NetBSD: nvram_pnpbus.c,v 1.20 2014/07/25 08:10:34 dholland Exp $ */
+/* $NetBSD: nvram_pnpbus.c,v 1.21 2018/09/03 16:29:26 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvram_pnpbus.c,v 1.20 2014/07/25 08:10:34 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvram_pnpbus.c,v 1.21 2018/09/03 16:29:26 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -472,11 +472,11 @@ prep_nvramread(dev_t dev, struct uio *uio, int flags)
 	while (resid > 0 && error == 0 && uio->uio_offset < size) {
 		switch (minor(dev)) {
 		case DEV_NVRAM:
-			c = min(resid, PAGE_SIZE);
+			c = uimin(resid, PAGE_SIZE);
 			error = uiomove(&nvramData[uio->uio_offset], c, uio);
 			break;
 		case DEV_RESIDUAL:
-			c = min(resid, PAGE_SIZE);
+			c = uimin(resid, PAGE_SIZE);
 			error = uiomove(&rdata[uio->uio_offset], c, uio);
 			break;
 		default:

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iy.c,v 1.102 2018/06/26 06:48:01 msaitoh Exp $	*/
+/*	$NetBSD: if_iy.c,v 1.103 2018/09/03 16:29:31 riastradh Exp $	*/
 /* #define IYDEBUG */
 /* #define IYMEMDEBUG */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iy.c,v 1.102 2018/06/26 06:48:01 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iy.c,v 1.103 2018/09/03 16:29:31 riastradh Exp $");
 
 #include "opt_inet.h"
 
@@ -1018,7 +1018,7 @@ iyget(struct iy_softc *sc, bus_space_tag_t iot, bus_space_handle_t ioh,
 			}
 			len = MCLBYTES;
 		}
-		len = min(rxlen, len);
+		len = uimin(rxlen, len);
 		/*
 		 * XXX ALIGNMENT LOSSAGE HERE.
 		 */

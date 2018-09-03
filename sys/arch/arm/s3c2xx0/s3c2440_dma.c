@@ -511,7 +511,7 @@ dmac_transfer_segment(uint8_t channel_no, struct dmac_xfer_state *dxs)
 		if (!dx->dx_desc[DMAC_DESC_DST].xd_increment) {
 			transfer_size = dxs->dxs_segs[DMAC_DESC_SRC].ds_curseg->ds_len;
 		} else {
-			transfer_size = min(dxs->dxs_segs[DMAC_DESC_DST].ds_curseg->ds_len,
+			transfer_size = uimin(dxs->dxs_segs[DMAC_DESC_DST].ds_curseg->ds_len,
 					    dxs->dxs_segs[DMAC_DESC_SRC].ds_curseg->ds_len);
 		}
 	} else {
@@ -530,7 +530,7 @@ dmac_transfer_segment(uint8_t channel_no, struct dmac_xfer_state *dxs)
 	bus_space_write_4(sc->sc_iot, sc->sc_dmach, DMA_CON(channel_no),
 			  dxs->dxs_options |
 			  DMACON_TC(((transfer_size/dxs->dxs_width)+
-				     min((transfer_size % dxs->dxs_width), 1))));
+				     uimin((transfer_size % dxs->dxs_width), 1))));
 
 	DPRINTF(("Transfer size: %d (%d)\n", transfer_size, transfer_size/dxs->dxs_width));
 

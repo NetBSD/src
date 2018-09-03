@@ -27,7 +27,7 @@
  *	i4b_tel.c - device driver for ISDN telephony
  *	--------------------------------------------
  *
- *	$Id: i4b_tel.c,v 1.28 2017/10/25 08:12:40 maya Exp $
+ *	$Id: i4b_tel.c,v 1.29 2018/09/03 16:29:36 riastradh Exp $
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_tel.c,v 1.28 2017/10/25 08:12:40 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_tel.c,v 1.29 2018/09/03 16:29:36 riastradh Exp $");
 
 #include "isdntel.h"
 
@@ -767,7 +767,7 @@ isdntelwrite(dev_t dev, struct uio * uio, int ioflag)
 		{
 			register int i;
 
-			m->m_len = min(BCH_MAX_DATALEN, uio->uio_resid);
+			m->m_len = uimin(BCH_MAX_DATALEN, uio->uio_resid);
 
 			error = uiomove(m->m_data, m->m_len, uio);
 
@@ -801,7 +801,7 @@ isdntelwrite(dev_t dev, struct uio * uio, int ioflag)
 
 #define CMDBUFSIZ 80
 		char cmdbuf[CMDBUFSIZ];
-		int len = min(CMDBUFSIZ-1, uio->uio_resid);
+		int len = uimin(CMDBUFSIZ-1, uio->uio_resid);
 
 		error = uiomove(cmdbuf, len, uio);
 

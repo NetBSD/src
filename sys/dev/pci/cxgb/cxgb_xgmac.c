@@ -29,7 +29,7 @@ POSSIBILITY OF SUCH DAMAGE.
 ***************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cxgb_xgmac.c,v 1.1 2010/03/21 21:11:13 jklos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cxgb_xgmac.c,v 1.2 2018/09/03 16:29:32 riastradh Exp $");
 
 #ifdef CONFIG_DEFINED
 #include <cxgb_include.h>
@@ -340,8 +340,8 @@ static int rx_fifo_hwm(int mtu)
 {
     int hwm;
 
-    hwm = max(MAC_RXFIFO_SIZE - 3 * mtu, (MAC_RXFIFO_SIZE * 38) / 100);
-    return min(hwm, MAC_RXFIFO_SIZE - 8192);
+    hwm = uimax(MAC_RXFIFO_SIZE - 3 * mtu, (MAC_RXFIFO_SIZE * 38) / 100);
+    return uimin(hwm, MAC_RXFIFO_SIZE - 8192);
 }
 
 int t3_mac_set_mtu(struct cmac *mac, unsigned int mtu)
@@ -388,7 +388,7 @@ int t3_mac_set_mtu(struct cmac *mac, unsigned int mtu)
      * HWM only if flow-control is enabled.
      */
     hwm = rx_fifo_hwm(mtu);
-    lwm = min(3 * (int) mtu, MAC_RXFIFO_SIZE /4);
+    lwm = uimin(3 * (int) mtu, MAC_RXFIFO_SIZE /4);
     v = t3_read_reg(adap, A_XGM_RXFIFO_CFG + mac->offset);
     v &= ~V_RXFIFOPAUSELWM(M_RXFIFOPAUSELWM);
     v |= V_RXFIFOPAUSELWM(lwm / 8);
@@ -404,7 +404,7 @@ int t3_mac_set_mtu(struct cmac *mac, unsigned int mtu)
     if (is_10G(adap))
         thres /= 10;
     thres = mtu > thres ? (mtu - thres + 7) / 8 : 0;
-    thres = max(thres, 8U);                          /* need at least 8 */
+    thres = uimax(thres, 8U);                          /* need at least 8 */
     t3_set_reg_field(adap, A_XGM_TXFIFO_CFG + mac->offset,
              V_TXFIFOTHRESH(M_TXFIFOTHRESH) | V_TXIPG(M_TXIPG),
              V_TXFIFOTHRESH(thres) | V_TXIPG(1));

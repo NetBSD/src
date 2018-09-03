@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_domain.c,v 1.103 2018/05/05 19:58:08 christos Exp $	*/
+/*	$NetBSD: uipc_domain.c,v 1.104 2018/09/03 16:29:35 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_domain.c,v 1.103 2018/05/05 19:58:08 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_domain.c,v 1.104 2018/09/03 16:29:35 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/socket.h>
@@ -504,7 +504,7 @@ sysctl_dounpcb(struct kinfo_pcb *pcb, const struct socket *so)
 		 * makeun().
 		 */
 		memcpy(un, unp->unp_addr,
-		    min(sizeof(pcb->ki_spad), unp->unp_addr->sun_len + 1));
+		    uimin(sizeof(pcb->ki_spad), unp->unp_addr->sun_len + 1));
 	}
 	else {
 		un->sun_len = offsetof(struct sockaddr_un, sun_path);
@@ -514,7 +514,7 @@ sysctl_dounpcb(struct kinfo_pcb *pcb, const struct socket *so)
 		un = (struct sockaddr_un *)pcb->ki_dpad;
 		if (unp->unp_conn->unp_addr != NULL) {
 			memcpy(un, unp->unp_conn->unp_addr,
-			    min(sizeof(pcb->ki_dpad), unp->unp_conn->unp_addr->sun_len + 1));
+			    uimin(sizeof(pcb->ki_dpad), unp->unp_conn->unp_addr->sun_len + 1));
 		}
 		else {
 			un->sun_len = offsetof(struct sockaddr_un, sun_path);

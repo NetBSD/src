@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fwip.c,v 1.27 2016/06/10 13:27:14 ozaki-r Exp $	*/
+/*	$NetBSD: if_fwip.c,v 1.28 2018/09/03 16:29:31 riastradh Exp $	*/
 /*-
  * Copyright (c) 2004
  *	Doug Rabson
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fwip.c,v 1.27 2016/06/10 13:27:14 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fwip.c,v 1.28 2018/09/03 16:29:31 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -648,7 +648,7 @@ fwip_async_output(struct fwip_softc *sc, struct ifnet *ifp)
 
 			fp->mode.wreqb = sc->sc_last_hdr.mode.wreqb;
 			fp->mode.wreqb.len = m->m_pkthdr.len;
-			xfer->send.spd = min(destfw->sspd, fc->speed);
+			xfer->send.spd = uimin(destfw->sspd, fc->speed);
 		}
 
 		xfer->send.pay_len = m->m_pkthdr.len;

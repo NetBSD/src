@@ -747,8 +747,8 @@ smu_fan_set_rpm(struct smu_fan *fan, int rpm)
 
 	DPRINTF("%s: fan %s rpm %d\n", __func__, fan->location, rpm);
 
-	rpm = max(fan->min_rpm, rpm);
-	rpm = min(fan->max_rpm, rpm);
+	rpm = uimax(fan->min_rpm, rpm);
+	rpm = uimin(fan->max_rpm, rpm);
 
 	cmd.cmd = SMU_CMD_FAN;
 	cmd.len = 4;

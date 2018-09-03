@@ -1,4 +1,4 @@
-/*	$NetBSD: adlookup.c,v 1.19 2014/02/07 15:29:21 hannken Exp $	*/
+/*	$NetBSD: adlookup.c,v 1.20 2018/09/03 16:29:34 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adlookup.c,v 1.19 2014/02/07 15:29:21 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adlookup.c,v 1.20 2018/09/03 16:29:34 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -161,7 +161,7 @@ adosfs_lookup(void *v)
 	 */
 	hval = adoshash(pelt, plen, adp->ntabent, IS_INTER(adp->amp));
 	bn = adp->tab[hval];
-	i = min(adp->tabi[hval], 0);
+	i = uimin(adp->tabi[hval], 0);
 	while (bn != 0) {
 		if ((error = VFS_VGET(vdp->v_mount, (ino_t)bn, vpp
 				      )) != 0) {

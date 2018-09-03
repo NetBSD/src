@@ -1,4 +1,4 @@
-/*	$NetBSD: aurateconv.c,v 1.22 2017/08/07 13:30:51 isaki Exp $	*/
+/*	$NetBSD: aurateconv.c,v 1.23 2018/09/03 16:29:30 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aurateconv.c,v 1.22 2017/08/07 13:30:51 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aurateconv.c,v 1.23 2018/09/03 16:29:30 riastradh Exp $");
 
 #include <sys/systm.h>
 #include <sys/types.h>
@@ -187,7 +187,7 @@ aurateconv_fetch_to(struct audio_softc *sc, stream_fetcher_t *self,
 	if ((err = this->base.prev->fetch_to(sc, this->base.prev, this->base.src, m)))
 	    return err;
 	m = (dst->end - dst->start) / frame_dst * frame_dst;
-	m = min(m, max_used);
+	m = uimin(m, max_used);
 
 	switch (this->from.encoding) {
 	case AUDIO_ENCODING_SLINEAR_LE:

@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmc_mem.c,v 1.64 2018/02/07 14:42:07 bouyer Exp $	*/
+/*	$NetBSD: sdmmc_mem.c,v 1.65 2018/09/03 16:29:33 riastradh Exp $	*/
 /*	$OpenBSD: sdmmc_mem.c,v 1.10 2009/01/09 10:55:22 jsg Exp $	*/
 
 /*
@@ -45,7 +45,7 @@
 /* Routines for SD/MMC memory cards. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdmmc_mem.c,v 1.64 2018/02/07 14:42:07 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdmmc_mem.c,v 1.65 2018/09/03 16:29:33 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -790,7 +790,7 @@ sdmmc_mem_sd_init(struct sdmmc_softc *sc, struct sdmmc_function *sf)
 	bool ddr = false;
 
 	/* change bus clock */
-	bus_clock = min(sc->sc_busclk, sf->csd.tran_speed);
+	bus_clock = uimin(sc->sc_busclk, sf->csd.tran_speed);
 	error = sdmmc_chip_bus_clock(sc->sc_sct, sc->sc_sch, bus_clock, false);
 	if (error) {
 		aprint_error_dev(sc->sc_dev, "can't change bus clock\n");
@@ -926,7 +926,7 @@ sdmmc_mem_mmc_init(struct sdmmc_softc *sc, struct sdmmc_function *sf)
 	sc->sc_transfer_mode = NULL;
 
 	/* change bus clock */
-	bus_clock = min(sc->sc_busclk, sf->csd.tran_speed);
+	bus_clock = uimin(sc->sc_busclk, sf->csd.tran_speed);
 	error = sdmmc_chip_bus_clock(sc->sc_sct, sc->sc_sch, bus_clock, false);
 	if (error) {
 		aprint_error_dev(sc->sc_dev, "can't change bus clock\n");

@@ -1,4 +1,4 @@
-/*	$NetBSD: uaudio.c,v 1.156 2018/06/16 08:24:55 nakayama Exp $	*/
+/*	$NetBSD: uaudio.c,v 1.157 2018/09/03 16:29:34 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1999, 2012 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.156 2018/06/16 08:24:55 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.157 2018/09/03 16:29:34 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -2832,7 +2832,7 @@ uaudio_chan_ptransfer(struct chan *ch)
 	 * Transfer data from upper layer buffer to channel buffer, taking
 	 * care of wrapping the upper layer buffer.
 	 */
-	n = min(total, ch->end - ch->cur);
+	n = uimin(total, ch->end - ch->cur);
 	memcpy(cb->buffer, ch->cur, n);
 	ch->cur += n;
 	if (ch->cur >= ch->end)
@@ -2973,7 +2973,7 @@ uaudio_chan_rintr(struct usbd_xfer *xfer, void *priv,
 	 */
 	for (i = 0; i < UAUDIO_NFRAMES; i++) {
 		frsize = cb->sizes[i];
-		n = min(frsize, ch->end - ch->cur);
+		n = uimin(frsize, ch->end - ch->cur);
 		memcpy(ch->cur, cb->buffer + cb->offsets[i], n);
 		ch->cur += n;
 		if (ch->cur >= ch->end)

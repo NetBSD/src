@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.261 2018/08/09 18:17:39 jakllsch Exp $ */
+/*	$NetBSD: ehci.c,v 1.262 2018/09/03 16:29:33 riastradh Exp $ */
 
 /*
  * Copyright (c) 2004-2012 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.261 2018/08/09 18:17:39 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.262 2018/09/03 16:29:33 riastradh Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -782,7 +782,7 @@ ehci_pcd(void *addr)
 	}
 
 	p = xfer->ux_buf;
-	m = min(sc->sc_noport, xfer->ux_length * 8 - 1);
+	m = uimin(sc->sc_noport, xfer->ux_length * 8 - 1);
 	memset(p, 0, xfer->ux_length);
 	for (i = 1; i <= m; i++) {
 		/* Pick out CHANGE bits from the status reg. */
@@ -1094,7 +1094,7 @@ ehci_idone(struct ehci_xfer *ex, ex_completeq_t *cq)
 #endif
 
 		i = xfer->ux_pipe->up_endpoint->ue_edesc->bInterval;
-		uframes = min(1 << (i - 1), USB_UFRAMES_PER_FRAME);
+		uframes = uimin(1 << (i - 1), USB_UFRAMES_PER_FRAME);
 
 		for (itd = ex->ex_itdstart; itd != NULL; itd = itd->xfer_next) {
 			usb_syncmem(&itd->dma,
@@ -2417,7 +2417,7 @@ ehci_roothub_ctrl(struct usbd_bus *bus, usb_device_request_t *req,
 		if ((value & 0xff) != 0) {
 			return -1;
 		}
-		totlen = min(buflen, sizeof(hubd));
+		totlen = uimin(buflen, sizeof(hubd));
 		memcpy(&hubd, buf, totlen);
 		hubd.bNbrPorts = sc->sc_noport;
 		v = EOREAD4(sc, EHCI_HCSPARAMS);
@@ -2429,7 +2429,7 @@ ehci_roothub_ctrl(struct usbd_bus *bus, usb_device_request_t *req,
 		for (i = 0, l = sc->sc_noport; l > 0; i++, l -= 8, v >>= 8)
 			hubd.DeviceRemovable[i++] = 0; /* XXX can't find out? */
 		hubd.bDescLength = USB_HUB_DESCRIPTOR_SIZE + i;
-		totlen = min(totlen, hubd.bDescLength);
+		totlen = uimin(totlen, hubd.bDescLength);
 		memcpy(buf, &hubd, totlen);
 		break;
 	case C(UR_GET_STATUS, UT_READ_CLASS_DEVICE):
@@ -2475,7 +2475,7 @@ ehci_roothub_ctrl(struct usbd_bus *bus, usb_device_request_t *req,
 		if (v & EHCI_PS_OCC)	i |= UPS_C_OVERCURRENT_INDICATOR;
 		if (sc->sc_isreset[index]) i |= UPS_C_PORT_RESET;
 		USETW(ps.wPortChange, i);
-		totlen = min(len, sizeof(ps));
+		totlen = uimin(len, sizeof(ps));
 		memcpy(buf, &ps, totlen);
 		break;
 	case C(UR_SET_DESCRIPTOR, UT_WRITE_CLASS_DEVICE):
@@ -4549,7 +4549,7 @@ ehci_device_isoc_init(struct usbd_xfer *xfer)
 		return USBD_INVAL;
 	}
 
-	ufrperframe = max(1, USB_UFRAMES_PER_FRAME / (1 << (i - 1)));
+	ufrperframe = uimax(1, USB_UFRAMES_PER_FRAME / (1 << (i - 1)));
 	frames = (xfer->ux_nframes + (ufrperframe - 1)) / ufrperframe;
 
 	for (i = 0, prev = NULL; i < frames; i++, prev = itd) {
@@ -4684,7 +4684,7 @@ ehci_device_isoc_transfer(struct usbd_xfer *xfer)
 		return USBD_INVAL;
 	}
 
-	ufrperframe = max(1, USB_UFRAMES_PER_FRAME / (1 << (i - 1)));
+	ufrperframe = uimax(1, USB_UFRAMES_PER_FRAME / (1 << (i - 1)));
 	frames = (xfer->ux_nframes + (ufrperframe - 1)) / ufrperframe;
 	uframes = USB_UFRAMES_PER_FRAME / ufrperframe;
 

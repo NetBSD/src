@@ -1,4 +1,4 @@
-/* $NetBSD: wsemul_sun.c,v 1.32 2017/11/03 18:42:35 maya Exp $ */
+/* $NetBSD: wsemul_sun.c,v 1.33 2018/09/03 16:29:34 riastradh Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -33,7 +33,7 @@
 /* XXX DESCRIPTION/SOURCE OF INFORMATION */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsemul_sun.c,v 1.32 2017/11/03 18:42:35 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsemul_sun.c,v 1.33 2018/09/03 16:29:34 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -236,7 +236,7 @@ wsemul_sun_output_normal(struct wsemul_sun_emuldata *edp, u_char c, int kernel)
 		break;
 
 	case ASCII_HT:		/* "Tab (TAB)" */
-		n = min(8 - (edp->ccol & 7), COLS_LEFT);
+		n = uimin(8 - (edp->ccol & 7), COLS_LEFT);
 		(*edp->emulops->erasecols)(edp->emulcookie, edp->crow,
 				edp->ccol, n,
 				kernel ? edp->kernattr : edp->curattr);
@@ -342,7 +342,7 @@ wsemul_sun_control(struct wsemul_sun_emuldata *edp, u_char c)
 
 	switch (c) {
 	case '@':		/* "Insert Character (ICH)" */
-		n = min(NORMALIZE_ARG(0), COLS_LEFT + 1);
+		n = uimin(NORMALIZE_ARG(0), COLS_LEFT + 1);
 		src = edp->ccol;
 		dst = edp->ccol + n;
 		if (dst < edp->ncols) {
@@ -354,28 +354,28 @@ wsemul_sun_control(struct wsemul_sun_emuldata *edp, u_char c)
 		break;
 
 	case 'A':		/* "Cursor Up (CUU)" */
-		edp->crow -= min(NORMALIZE_ARG(0), edp->crow);
+		edp->crow -= uimin(NORMALIZE_ARG(0), edp->crow);
 		break;
 
 	case 'E':		/* "Cursor Next Line (CNL)" */
 		edp->ccol = 0;
 		/* FALLTHRU */
 	case 'B':		/* "Cursor Down (CUD)" */
-		edp->crow += min(NORMALIZE_ARG(0), ROWS_LEFT);
+		edp->crow += uimin(NORMALIZE_ARG(0), ROWS_LEFT);
 		break;
 
 	case 'C':		/* "Cursor Forward (CUF)" */
-		edp->ccol += min(NORMALIZE_ARG(0), COLS_LEFT);
+		edp->ccol += uimin(NORMALIZE_ARG(0), COLS_LEFT);
 		break;
 
 	case 'D':		/* "Cursor Backward (CUB)" */
-		edp->ccol -= min(NORMALIZE_ARG(0), edp->ccol);
+		edp->ccol -= uimin(NORMALIZE_ARG(0), edp->ccol);
 		break;
 
 	case 'f':		/* "Horizontal And Vertical Position (HVP)" */
 	case 'H':		/* "Cursor Position (CUP)" */
-		edp->crow = min(NORMALIZE_ARG(1), edp->nrows) - 1;
-		edp->ccol = min(NORMALIZE_ARG(0), edp->ncols) - 1;
+		edp->crow = uimin(NORMALIZE_ARG(1), edp->nrows) - 1;
+		edp->ccol = uimin(NORMALIZE_ARG(0), edp->ncols) - 1;
 		break;
 
 	case 'J':		/* "Erase in Display (ED)" */
@@ -390,7 +390,7 @@ wsemul_sun_control(struct wsemul_sun_emuldata *edp, u_char c)
 		break;
 
 	case 'L':		/* "Insert Line (IL)" */
-		n = min(NORMALIZE_ARG(0), ROWS_LEFT + 1);
+		n = uimin(NORMALIZE_ARG(0), ROWS_LEFT + 1);
 		src = edp->crow;
 		dst = edp->crow + n;
 		if (dst < edp->nrows) {
@@ -402,7 +402,7 @@ wsemul_sun_control(struct wsemul_sun_emuldata *edp, u_char c)
 		break;
 
 	case 'M':		/* "Delete Line (DL)" */
-		n = min(NORMALIZE_ARG(0), ROWS_LEFT + 1);
+		n = uimin(NORMALIZE_ARG(0), ROWS_LEFT + 1);
 		src = edp->crow + n;
 		dst = edp->crow;
 		if (src < edp->nrows) {
@@ -414,7 +414,7 @@ wsemul_sun_control(struct wsemul_sun_emuldata *edp, u_char c)
 		break;
 
 	case 'P':		/* "Delete Character (DCH)" */
-		n = min(NORMALIZE_ARG(0), COLS_LEFT + 1);
+		n = uimin(NORMALIZE_ARG(0), COLS_LEFT + 1);
 		src = edp->ccol + n;
 		dst = edp->ccol;
 		if (src < edp->ncols) {
@@ -441,7 +441,7 @@ wsemul_sun_control(struct wsemul_sun_emuldata *edp, u_char c)
 		goto setattr;
 
 	case 'r':		/* "Set Scrolling (SUNSCRL)" */
-		edp->scrolldist = min(ARG(0), edp->nrows);
+		edp->scrolldist = uimin(ARG(0), edp->nrows);
 		break;
 
 	case 's':		/* "Reset Terminal Emulator (SUNRESET)" */

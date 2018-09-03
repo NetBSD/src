@@ -1,4 +1,4 @@
-/*	$NetBSD: magma.c,v 1.59 2014/07/25 08:10:38 dholland Exp $	*/
+/*	$NetBSD: magma.c,v 1.60 2018/09/03 16:29:33 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1998 Iain Hibbert
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: magma.c,v 1.59 2014/07/25 08:10:38 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: magma.c,v 1.60 2018/09/03 16:29:33 riastradh Exp $");
 
 #if 0
 #define MAGMA_DEBUG
@@ -1564,7 +1564,7 @@ mbpp_rw(dev_t dev, struct uio *uio, int flag)
 	if( uio->uio_resid == 0 )
 		return(0);
 
-	buflen = min(uio->uio_resid, mp->mp_burst);
+	buflen = uimin(uio->uio_resid, mp->mp_burst);
 	buffer = malloc(buflen, M_DEVBUF, M_WAITOK);
 	if( buffer == NULL )
 		return(ENOMEM);
@@ -1582,7 +1582,7 @@ mbpp_rw(dev_t dev, struct uio *uio, int flag)
 
 	len = cnt = 0;
 	while( uio->uio_resid > 0 ) {
-		len = min(buflen, uio->uio_resid);
+		len = uimin(buflen, uio->uio_resid);
 		ptr = buffer;
 
 		if( uio->uio_rw == UIO_WRITE ) {

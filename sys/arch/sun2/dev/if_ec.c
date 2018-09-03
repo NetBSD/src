@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ec.c,v 1.29 2018/06/26 06:47:59 msaitoh Exp $	*/
+/*	$NetBSD: if_ec.c,v 1.30 2018/09/03 16:29:28 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ec.c,v 1.29 2018/06/26 06:47:59 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ec.c,v 1.30 2018/09/03 16:29:28 riastradh Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -501,7 +501,7 @@ ec_recv(struct ec_softc *sc, int intbit)
 					break;
 				length = MCLBYTES;
 			}
-			m->m_len = length = min(total_length, length);
+			m->m_len = length = uimin(total_length, length);
 			ec_copyin(sc, mtod(m, uint8_t *), buf, length);
 			total_length -= length;
 			buf += length;

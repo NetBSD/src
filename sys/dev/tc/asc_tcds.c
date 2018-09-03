@@ -1,4 +1,4 @@
-/* $NetBSD: asc_tcds.c,v 1.25 2010/11/13 13:52:11 uebayasi Exp $ */
+/* $NetBSD: asc_tcds.c,v 1.26 2018/09/03 16:29:33 riastradh Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: asc_tcds.c,v 1.25 2010/11/13 13:52:11 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asc_tcds.c,v 1.26 2018/09/03 16:29:33 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -260,7 +260,7 @@ tcds_dma_setup(struct ncr53c9x_softc *sc, uint8_t **addr, size_t *len,
 	 * the rules say we cannot transfer more than the limit
 	 * of this DMA chip (64k) and we cannot cross a 8k boundary.
 	 */
-	size = min(*dmasize, DMAMAX((size_t)*addr));
+	size = uimin(*dmasize, DMAMAX((size_t)*addr));
 	asc->sc_dmaaddr = addr;
 	asc->sc_dmalen = len;
 	asc->sc_flags = (ispullup) ? ASC_ISPULLUP : 0;

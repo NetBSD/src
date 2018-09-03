@@ -1,4 +1,4 @@
-/*	$NetBSD: udsir.c,v 1.6 2018/01/21 13:57:12 skrll Exp $	*/
+/*	$NetBSD: udsir.c,v 1.7 2018/09/03 16:29:34 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udsir.c,v 1.6 2018/01/21 13:57:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udsir.c,v 1.7 2018/09/03 16:29:34 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -367,7 +367,7 @@ udsir_open(void *h, int flag, int mode, struct lwp *l)
 	sc->sc_direction = udir_idle;
 	sc->sc_params.speed = 0;
 	sc->sc_params.ebofs = 0;
-	sc->sc_params.maxsize = min(sc->sc_rd_maxpsz, sc->sc_wr_maxpsz);
+	sc->sc_params.maxsize = uimin(sc->sc_rd_maxpsz, sc->sc_wr_maxpsz);
 
 	deframe_init(&sc->sc_framestate, sc->sc_ur_buf, IRDA_MAX_FRAME_SIZE);
 
@@ -720,7 +720,7 @@ udsir_set_params(void *h, struct irda_params *p)
 		return EINVAL;
 
 	if (p->maxsize != sc->sc_params.maxsize) {
-		if (p->maxsize > min(sc->sc_rd_maxpsz, sc->sc_wr_maxpsz))
+		if (p->maxsize > uimin(sc->sc_rd_maxpsz, sc->sc_wr_maxpsz))
 			return EINVAL;
 		sc->sc_params.maxsize = p->maxsize;
 	}

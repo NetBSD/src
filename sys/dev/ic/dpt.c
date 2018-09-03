@@ -1,4 +1,4 @@
-/*	$NetBSD: dpt.c,v 1.74 2017/10/28 04:53:55 riastradh Exp $	*/
+/*	$NetBSD: dpt.c,v 1.75 2018/09/03 16:29:31 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dpt.c,v 1.74 2017/10/28 04:53:55 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dpt.c,v 1.75 2018/09/03 16:29:31 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -346,7 +346,7 @@ dpt_init(struct dpt_softc *sc, const char *intrstr)
 	 * Allocate the CCB/status packet/scratch DMA map and load.
 	 */
 	sc->sc_nccbs =
-	    min(be16toh(*(int16_t *)ec->ec_queuedepth), DPT_MAX_CCBS);
+	    uimin(be16toh(*(int16_t *)ec->ec_queuedepth), DPT_MAX_CCBS);
 	sc->sc_stpoff = sc->sc_nccbs * sizeof(struct dpt_ccb);
 	sc->sc_scroff = sc->sc_stpoff + sizeof(struct eata_sp);
 	mapsize = sc->sc_nccbs * sizeof(struct dpt_ccb) +
@@ -1134,7 +1134,7 @@ dptioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 
 	switch (cmd & 0xffff) {
 	case DPT_SIGNATURE:
-		memcpy(data, &dpt_sig, min(IOCPARM_LEN(cmd), sizeof(dpt_sig)));
+		memcpy(data, &dpt_sig, uimin(IOCPARM_LEN(cmd), sizeof(dpt_sig)));
 		break;
 
 	case DPT_CTRLINFO:
@@ -1375,7 +1375,7 @@ dpt_passthrough(struct dpt_softc *sc, struct eata_ucp *ucp, struct lwp *l)
 		}
 	}
 	if (rv == 0 && ucp->ucp_senseaddr != NULL) {
-		i = min(uslen, sizeof(ccb->ccb_sense));
+		i = uimin(uslen, sizeof(ccb->ccb_sense));
 		rv = copyout(&ccb->ccb_sense, ucp->ucp_senseaddr, i);
 		if (rv != 0) {
 			DPRINTF(("%s: sense copyout() failed\n",

@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_crypt.c,v 1.11 2009/03/18 16:00:24 cegger Exp $	*/
+/*	$NetBSD: smb_crypt.c,v 1.12 2018/09/03 16:29:36 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_crypt.c,v 1.11 2009/03/18 16:00:24 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_crypt.c,v 1.12 2018/09/03 16:29:36 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -97,7 +97,7 @@ smb_encrypt(const u_char *apwd, u_char *C8, u_char *RN)
 	p = malloc(14 + 21, M_SMBTEMP, M_WAITOK|M_ZERO);
 	P14 = p;
 	S21 = p + 14;
-	bcopy(apwd, P14, min(14, strlen(apwd)));
+	bcopy(apwd, P14, uimin(14, strlen(apwd)));
 	/*
 	 * S21 = concat(Ex(P14, N8), zeros(5));
 	 */

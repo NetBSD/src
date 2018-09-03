@@ -1,6 +1,6 @@
 /* $SourceForge: bktr_core.c,v 1.6 2003/03/11 23:11:22 thomasklausner Exp $ */
 
-/*	$NetBSD: bktr_core.c,v 1.54 2012/12/14 19:38:36 joerg Exp $	*/
+/*	$NetBSD: bktr_core.c,v 1.55 2018/09/03 16:29:32 riastradh Exp $	*/
 /* $FreeBSD: src/sys/dev/bktr/bktr_core.c,v 1.114 2000/10/31 13:09:56 roger Exp$ */
 
 /*
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bktr_core.c,v 1.54 2012/12/14 19:38:36 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bktr_core.c,v 1.55 2018/09/03 16:29:32 riastradh Exp $");
 
 #include "opt_bktr.h"		/* Include any kernel config options */
 
@@ -2620,7 +2620,7 @@ static bool_t getline(bktr_reg_t *bktr, int x) {
     if (bktr->line_length == 0 ||
 	bktr->current_col >= bktr->line_length) return FALSE;
 
-    bktr->y = min(bktr->last_y, bktr->line_length);
+    bktr->y = uimin(bktr->last_y, bktr->line_length);
     bktr->y2 = bktr->line_length;
 
     bktr->yclip = bktr->yclip2 = -1;
@@ -2628,10 +2628,10 @@ static bool_t getline(bktr_reg_t *bktr, int x) {
 	clip_node = (bktr_clip_t *) &bktr->clip_list[i];
 	if (x >= clip_node->x_min && x <= clip_node->x_max) {
 	    if (bktr->last_y <= clip_node->y_min) {
-		bktr->y =      min(bktr->last_y, bktr->line_length);
-		bktr->y2 =     min(clip_node->y_min, bktr->line_length);
-		bktr->yclip =  min(clip_node->y_min, bktr->line_length);
-		bktr->yclip2 = min(clip_node->y_max, bktr->line_length);
+		bktr->y =      uimin(bktr->last_y, bktr->line_length);
+		bktr->y2 =     uimin(clip_node->y_min, bktr->line_length);
+		bktr->yclip =  uimin(clip_node->y_min, bktr->line_length);
+		bktr->yclip2 = uimin(clip_node->y_max, bktr->line_length);
 		bktr->last_y = bktr->yclip2;
 		bktr->clip_start = i;
 
@@ -2639,7 +2639,7 @@ static bool_t getline(bktr_reg_t *bktr, int x) {
 		    clip_node = (bktr_clip_t *) &bktr->clip_list[j];
 		    if (x >= clip_node->x_min && x <= clip_node->x_max) {
 			if (bktr->last_y >= clip_node->y_min) {
-			    bktr->yclip2 = min(clip_node->y_max, bktr->line_length);
+			    bktr->yclip2 = uimin(clip_node->y_max, bktr->line_length);
 			    bktr->last_y = bktr->yclip2;
 			    bktr->clip_start = j;
 			}

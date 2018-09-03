@@ -1,4 +1,4 @@
-/*	$NetBSD: urio.c,v 1.46 2016/12/04 10:12:35 skrll Exp $	*/
+/*	$NetBSD: urio.c,v 1.47 2018/09/03 16:29:34 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: urio.c,v 1.46 2016/12/04 10:12:35 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: urio.c,v 1.47 2018/09/03 16:29:34 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -355,7 +355,7 @@ urioread(dev_t dev, struct uio *uio, int flag)
 
 	sc->sc_refcnt++;
 
-	while ((n = min(URIO_BSIZE, uio->uio_resid)) != 0) {
+	while ((n = uimin(URIO_BSIZE, uio->uio_resid)) != 0) {
 		DPRINTFN(1, ("urioread: start transfer %d bytes\n", n));
 		tn = n;
 		err = usbd_bulk_transfer(xfer, sc->sc_in_pipe, 0,
@@ -409,7 +409,7 @@ uriowrite(dev_t dev, struct uio *uio, int flag)
 	bufp = usbd_get_buffer(xfer);
 	sc->sc_refcnt++;
 
-	while ((n = min(URIO_BSIZE, uio->uio_resid)) != 0) {
+	while ((n = uimin(URIO_BSIZE, uio->uio_resid)) != 0) {
 		error = uiomove(bufp, n, uio);
 		if (error)
 			break;

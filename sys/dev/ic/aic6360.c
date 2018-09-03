@@ -1,4 +1,4 @@
-/*	$NetBSD: aic6360.c,v 1.101 2017/10/28 04:53:55 riastradh Exp $	*/
+/*	$NetBSD: aic6360.c,v 1.102 2018/09/03 16:29:31 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Charles M. Hannum.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic6360.c,v 1.101 2017/10/28 04:53:55 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic6360.c,v 1.102 2018/09/03 16:29:31 riastradh Exp $");
 
 #include "opt_ddb.h"
 
@@ -1621,7 +1621,7 @@ aic_datain_pio(struct aic_softc *sc, u_char *p, int n)
 		} else {
 			int xfer;
 
-			xfer = min(bus_space_read_1(iot, ioh, FIFOSTAT), n);
+			xfer = uimin(bus_space_read_1(iot, ioh, FIFOSTAT), n);
 			AIC_MISC((">%d ", xfer));
 
 			n -= xfer;

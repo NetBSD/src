@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_balloc.c,v 1.41 2016/08/13 07:40:10 christos Exp $	*/
+/*	$NetBSD: ext2fs_balloc.c,v 1.42 2018/09/03 16:29:37 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_balloc.c,v 1.41 2016/08/13 07:40:10 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_balloc.c,v 1.42 2018/09/03 16:29:37 riastradh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_uvmhist.h"
@@ -363,7 +363,7 @@ ext2fs_gop_alloc(struct vnode *vp, off_t off, off_t len, int flags,
 	len += delta;
 
 	while (len > 0) {
-		bsize = min(bsize, len);
+		bsize = uimin(bsize, len);
 		UVMHIST_LOG(ubchist, "off 0x%x len 0x%x bsize 0x%x",
 			    off, len, bsize, 0);
 

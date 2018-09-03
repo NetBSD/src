@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.263 2017/10/28 03:47:24 riastradh Exp $	*/
+/*	$NetBSD: vnd.c,v 1.264 2018/09/03 16:29:30 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.263 2017/10/28 03:47:24 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.264 2018/09/03 16:29:30 riastradh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vnd.h"
@@ -1646,7 +1646,7 @@ vndsetcred(struct vnd_softc *vnd, kauth_cred_t cred)
 
 	/* XXX: Horrible kludge to establish credentials for NFS */
 	aiov.iov_base = tmpbuf;
-	aiov.iov_len = min(DEV_BSIZE, dbtob(vnd->sc_size));
+	aiov.iov_len = uimin(DEV_BSIZE, dbtob(vnd->sc_size));
 	auio.uio_iov = &aiov;
 	auio.uio_iovcnt = 1;
 	auio.uio_offset = 0;

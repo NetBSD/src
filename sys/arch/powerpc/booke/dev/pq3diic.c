@@ -1,4 +1,4 @@
-/*	$NetBSD: pq3diic.c,v 1.3 2011/08/01 17:05:17 matt Exp $	*/
+/*	$NetBSD: pq3diic.c,v 1.4 2018/09/03 16:29:26 riastradh Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pq3diic.c,v 1.3 2011/08/01 17:05:17 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pq3diic.c,v 1.4 2018/09/03 16:29:26 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -106,7 +106,7 @@ pq3diic_attach(device_t parent, device_t self, void *aux)
 
 	aprint_normal(": %u port%s\n", nports, nports == 1 ? "" : "s");
 
-	for (u_int port = 0; port <= min(1, nports); port++) {
+	for (u_int port = 0; port <= uimin(1, nports); port++) {
 		struct motoi2c_softc * const msc = &sc->sc_motoi2c[port];
 		msc->sc_iot = cna->cna_memt;
 		error = bus_space_map(msc->sc_iot,

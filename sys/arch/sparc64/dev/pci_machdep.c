@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.77 2014/03/29 19:28:30 christos Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.78 2018/09/03 16:29:27 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.77 2014/03/29 19:28:30 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.78 2018/09/03 16:29:27 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -268,7 +268,7 @@ sparc64_pci_enumerate_bus(struct pci_softc *sc, const int *locators,
 	 * Make sure the cache line size is at least as big as the
 	 * ecache line and the streaming cache (64 byte).
 	 */
-	cacheline = max(ecache_min_line_size, 64);
+	cacheline = uimax(ecache_min_line_size, 64);
 	KASSERT((cacheline/64)*64 == cacheline &&
 	    (cacheline/ecache_min_line_size)*ecache_min_line_size == cacheline &&
 	    (cacheline/4)*4 == cacheline);
@@ -345,7 +345,7 @@ sparc64_pci_enumerate_bus(struct pci_softc *sc, const int *locators,
 		bhlc = pci_conf_read(pc, tag, PCI_BHLC_REG);
 		ic = pci_conf_read(pc, tag, PCI_INTERRUPT_REG);
 
-		lt = min(PCI_MIN_GNT(ic) * bus_frequency / 4, 255);
+		lt = uimin(PCI_MIN_GNT(ic) * bus_frequency / 4, 255);
 		if (lt == 0 || lt < PCI_LATTIMER(bhlc))
 			lt = PCI_LATTIMER(bhlc);
 

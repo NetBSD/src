@@ -1,4 +1,4 @@
-/* $NetBSD: auvolconv.c,v 1.3 2016/02/26 13:08:28 nat Exp $ */
+/* $NetBSD: auvolconv.c,v 1.4 2018/09/03 16:29:30 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auvolconv.c,v 1.3 2016/02/26 13:08:28 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auvolconv.c,v 1.4 2018/09/03 16:29:30 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -59,7 +59,7 @@ auvolconv_slinear16_le_fetch_to(struct audio_softc *asc,
 	if ((err = this->prev->fetch_to(asc, this->prev, this->src, max_used)))
 		return err;
 	m = (dst->end - dst->start) & ~1;
-	m = min(m, max_used);
+	m = uimin(m, max_used);
 	FILTER_LOOP_PROLOGUE(this->src, 2, dst, 2, m) {
 		j = le16dec(s);
 		wp = (int16_t *)d;
@@ -87,7 +87,7 @@ auvolconv_slinear16_be_fetch_to(struct audio_softc *asc,
 	if ((err = this->prev->fetch_to(asc, this->prev, this->src, max_used)))
 		return err;
 	m = (dst->end - dst->start) & ~1;
-	m = min(m, max_used);
+	m = uimin(m, max_used);
 	FILTER_LOOP_PROLOGUE(this->src, 2, dst, 2, m) {
 		j = be16dec(s);
 		wp = (int16_t *)d;

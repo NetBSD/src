@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.113 2016/03/07 00:28:36 christos Exp $	*/
+/*	$NetBSD: iommu.c,v 1.114 2018/09/03 16:29:27 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iommu.c,v 1.113 2016/03/07 00:28:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iommu.c,v 1.114 2018/09/03 16:29:27 riastradh Exp $");
 
 #include "opt_ddb.h"
 
@@ -591,7 +591,7 @@ iommu_dvmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 	 */
 	if ((boundary = (map->dm_segs[0]._ds_boundary)) == 0)
 		boundary = map->_dm_boundary;
-	align = max(map->dm_segs[0]._ds_align, PAGE_SIZE);
+	align = uimax(map->dm_segs[0]._ds_align, PAGE_SIZE);
 
 	/*
 	 * If our segment size is larger than the boundary we need to
@@ -640,7 +640,7 @@ iommu_dvmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 		/* Oops. We crossed a boundary or large seg. Split the xfer. */
 		len = map->dm_maxsegsz;
 		if ((sgstart & bmask) != (sgend & bmask))
-			len = min(len, boundary - (sgstart & (boundary - 1)));
+			len = uimin(len, boundary - (sgstart & (boundary - 1)));
 		map->dm_segs[seg].ds_len = len;
 		DPRINTF(IDB_INFO, ("iommu_dvmamap_load: "
 		    "seg %d start %lx size %lx\n", seg,
@@ -803,7 +803,7 @@ iommu_dvmamap_load_raw(bus_dma_tag_t t, bus_dmamap_t map,
 	if ((boundary = segs[0]._ds_boundary) == 0)
 		boundary = map->_dm_boundary;
 
-	align = max(segs[0]._ds_align, pagesz);
+	align = uimax(segs[0]._ds_align, pagesz);
 
 	/*
 	 * Make sure that on error condition we return "no valid mappings".
@@ -817,7 +817,7 @@ iommu_dvmamap_load_raw(bus_dma_tag_t t, bus_dmamap_t map,
 		if (round_page(pa) != round_page(segs[i].ds_addr))
 			sgsize = round_page(sgsize) +
 			    (segs[i].ds_addr & PGOFSET);
-		sgsize += min(left, segs[i].ds_len);
+		sgsize += uimin(left, segs[i].ds_len);
 		left -= segs[i].ds_len;
 		pa = segs[i].ds_addr + segs[i].ds_len;
 	}
@@ -875,7 +875,7 @@ iommu_dvmamap_load_raw(bus_dma_tag_t t, bus_dmamap_t map,
 			offset = (pa & PGOFSET);
 			pa = trunc_page(pa);
 			dvmaddr = trunc_page(dvmaddr);
-			left = min(len, segs[i].ds_len);
+			left = uimin(len, segs[i].ds_len);
 
 			DPRINTF(IDB_INFO, ("iommu_dvmamap_load_raw: converting "
 				"physseg %d start %lx size %lx\n", i,
