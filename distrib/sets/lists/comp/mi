@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2224 2018/09/03 21:17:09 christos Exp $
+#	$NetBSD: mi,v 1.2225 2018/09/03 21:26:19 kre Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -2704,6 +2704,7 @@
 ./usr/include/pcap-namedb.h			comp-c-include
 ./usr/include/pcap.h				comp-c-include
 ./usr/include/pcap/bpf.h			comp-c-include
+./usr/include/pcap/compiler-tests.h		comp-c-include
 ./usr/include/pcap/export-defs.h		comp-obsolete		obsolete
 ./usr/include/pcap/funcattrs.h			comp-c-include
 ./usr/include/pcap/namedb.h			comp-c-include
