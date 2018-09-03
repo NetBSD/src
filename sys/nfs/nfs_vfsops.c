@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.236 2018/03/16 17:25:04 christos Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.237 2018/09/03 16:29:36 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.236 2018/03/16 17:25:04 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.237 2018/09/03 16:29:36 riastradh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfs.h"
@@ -212,7 +212,7 @@ nfs_statvfs(struct mount *mp, struct statvfs *sbp)
 	}
 	nfsm_dissect(sfp, struct nfs_statfs *, NFSX_STATFS(v3));
 	sbp->f_flag = nmp->nm_flag;
-	sbp->f_iosize = min(nmp->nm_rsize, nmp->nm_wsize);
+	sbp->f_iosize = uimin(nmp->nm_rsize, nmp->nm_wsize);
 	if (v3) {
 		sbp->f_frsize = sbp->f_bsize = NFS_FABLKSIZE;
 		tquad = fxdr_hyper(&sfp->sf_tbytes);

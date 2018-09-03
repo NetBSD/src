@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.203 2018/04/07 13:42:42 hannken Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.204 2018/09/03 16:29:35 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.203 2018/04/07 13:42:42 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.204 2018/09/03 16:29:35 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1332,7 +1332,7 @@ procfs_readdir(void *v)
 			break;
 
 		if (ap->a_ncookies) {
-			ncookies = min(ncookies, (nproc_targets - i));
+			ncookies = uimin(ncookies, (nproc_targets - i));
 			cookies = malloc(ncookies * sizeof (off_t),
 			    M_TEMP, M_WAITOK);
 			*ap->a_cookies = cookies;
@@ -1384,14 +1384,14 @@ procfs_readdir(void *v)
 
 		nfd = p->p_fd->fd_dt->dt_nfiles;
 
-		lim = min((int)p->p_rlimit[RLIMIT_NOFILE].rlim_cur, maxfiles);
+		lim = uimin((int)p->p_rlimit[RLIMIT_NOFILE].rlim_cur, maxfiles);
 		if (i >= lim) {
 		    	procfs_proc_unlock(p);
 			return 0;
 		}
 
 		if (ap->a_ncookies) {
-			ncookies = min(ncookies, (nfd + 2 - i));
+			ncookies = uimin(ncookies, (nfd + 2 - i));
 			cookies = malloc(ncookies * sizeof (off_t),
 			    M_TEMP, M_WAITOK);
 			*ap->a_cookies = cookies;
@@ -1444,7 +1444,7 @@ procfs_readdir(void *v)
 		nfd = 3;	/* ., .., pid */
 
 		if (ap->a_ncookies) {
-			ncookies = min(ncookies, (nfd + 2 - i));
+			ncookies = uimin(ncookies, (nfd + 2 - i));
 			cookies = malloc(ncookies * sizeof (off_t),
 			    M_TEMP, M_WAITOK);
 			*ap->a_cookies = cookies;

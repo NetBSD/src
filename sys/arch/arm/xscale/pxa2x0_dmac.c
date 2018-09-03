@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_dmac.c,v 1.13 2015/02/05 13:27:18 nonaka Exp $	*/
+/*	$NetBSD: pxa2x0_dmac.c,v 1.14 2018/09/03 16:29:24 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2003, 2005 Wasabi Systems, Inc.
@@ -1085,13 +1085,13 @@ dmac_continue_xfer(struct pxadmac_softc *sc, struct dmac_xfer_state *dxs)
 			if (dst_xd->xd_addr_hold)
 				this_size = src_size;
 			else
-				this_size = min(dst_size, src_size);
+				this_size = uimin(dst_size, src_size);
 
 			/*
 			 * But clamp the transfer size to the DMAC
 			 * descriptor's maximum.
 			 */
-			this_size = min(this_size, DCMD_LENGTH_MASK & ~0x1f);
+			this_size = uimin(this_size, DCMD_LENGTH_MASK & ~0x1f);
 
 			/*
 			 * Fill in the DMAC descriptor

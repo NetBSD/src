@@ -1,4 +1,4 @@
-/*	$NetBSD: dma.c,v 1.22 2012/10/13 06:32:11 tsutsui Exp $ */
+/*	$NetBSD: dma.c,v 1.23 2018/09/03 16:29:28 riastradh Exp $ */
 
 /*
  * Copyright (c) 1994 Paul Kranenburg.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dma.c,v 1.22 2012/10/13 06:32:11 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dma.c,v 1.23 2018/09/03 16:29:28 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -265,7 +265,7 @@ dma_setup(struct dma_softc *sc, uint8_t **addr, size_t *len, int datain,
 	 * and we cannot cross a 16Mb boundary.
 	 */
 	*dmasize = sc->sc_dmasize =
-	    min(*dmasize, DMAMAX((size_t) *sc->sc_dmaaddr));
+	    uimin(*dmasize, DMAMAX((size_t) *sc->sc_dmaaddr));
 
 	NCR_DMA(("%s: dmasize = %d\n", __func__, sc->sc_dmasize));
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_smb.c,v 1.47 2014/12/21 10:48:53 hannken Exp $	*/
+/*	$NetBSD: smbfs_smb.c,v 1.48 2018/09/03 16:29:35 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_smb.c,v 1.47 2014/12/21 10:48:53 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_smb.c,v 1.48 2018/09/03 16:29:35 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -867,7 +867,7 @@ smbfs_smb_search(struct smbfs_fctx *ctx)
 	u_int16_t ec, dlen, bc;
 	int maxent, error;
 
-	maxent = min(ctx->f_left, (vcp->vc_txmax - SMB_HDRLEN - 3) / SMB_DENTRYLEN);
+	maxent = uimin(ctx->f_left, (vcp->vc_txmax - SMB_HDRLEN - 3) / SMB_DENTRYLEN);
 	if (ctx->f_rq) {
 		smb_rq_done(ctx->f_rq);
 		ctx->f_rq = NULL;
@@ -1212,7 +1212,7 @@ smbfs_findnextLM2(struct smbfs_fctx *ctx, int limit)
 		return EINVAL;
 #endif
 	}
-	nmlen = min(size, SMB_MAXNAMLEN * 2);
+	nmlen = uimin(size, SMB_MAXNAMLEN * 2);
 	cp = ctx->f_name;
 	error = md_get_mem(mbp, cp, nmlen, MB_MSYSTEM);
 	if (error)

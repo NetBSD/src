@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.174 2017/06/24 12:14:21 hannken Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.175 2018/09/03 16:29:35 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.174 2017/06/24 12:14:21 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.175 2018/09/03 16:29:35 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -715,12 +715,12 @@ spec_read(void *v)
 		do {
 			bn = (uio->uio_offset >> DEV_BSHIFT) &~ (bscale - 1);
 			on = uio->uio_offset % bsize;
-			n = min((unsigned)(bsize - on), uio->uio_resid);
+			n = uimin((unsigned)(bsize - on), uio->uio_resid);
 			error = bread(vp, bn, bsize, 0, &bp);
 			if (error) {
 				return (error);
 			}
-			n = min(n, bsize - bp->b_resid);
+			n = uimin(n, bsize - bp->b_resid);
 			error = uiomove((char *)bp->b_data + on, n, uio);
 			brelse(bp, 0);
 		} while (error == 0 && uio->uio_resid > 0 && n != 0);
@@ -784,7 +784,7 @@ spec_write(void *v)
 		do {
 			bn = (uio->uio_offset >> DEV_BSHIFT) &~ (bscale - 1);
 			on = uio->uio_offset % bsize;
-			n = min((unsigned)(bsize - on), uio->uio_resid);
+			n = uimin((unsigned)(bsize - on), uio->uio_resid);
 			if (n == bsize)
 				bp = getblk(vp, bn, bsize, 0, 0);
 			else
@@ -792,7 +792,7 @@ spec_write(void *v)
 			if (error) {
 				return (error);
 			}
-			n = min(n, bsize - bp->b_resid);
+			n = uimin(n, bsize - bp->b_resid);
 			error = uiomove((char *)bp->b_data + on, n, uio);
 			if (error)
 				brelse(bp, 0);

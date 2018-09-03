@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.350 2017/03/16 16:13:20 chs Exp $ */
+/* $NetBSD: machdep.c,v 1.351 2018/09/03 16:29:22 riastradh Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.350 2017/03/16 16:13:20 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.351 2018/09/03 16:29:22 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -292,10 +292,10 @@ alpha_init(u_long pfn, u_long ptb, u_long bim, u_long bip, u_long biv)
 				    ((struct rpb *)HWRPB_ADDR)->rpb_size;
 			}
 			memcpy(bootinfo.boot_flags, v1p->boot_flags,
-			    min(sizeof v1p->boot_flags,
+			    uimin(sizeof v1p->boot_flags,
 			      sizeof bootinfo.boot_flags));
 			memcpy(bootinfo.booted_kernel, v1p->booted_kernel,
-			    min(sizeof v1p->booted_kernel,
+			    uimin(sizeof v1p->booted_kernel,
 			      sizeof bootinfo.booted_kernel));
 			/* booted dev not provided in bootinfo */
 			init_prom_interface((struct rpb *)

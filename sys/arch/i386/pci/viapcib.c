@@ -1,4 +1,4 @@
-/* $NetBSD: viapcib.c,v 1.15 2016/02/14 19:54:20 chs Exp $ */
+/* $NetBSD: viapcib.c,v 1.16 2018/09/03 16:29:25 riastradh Exp $ */
 /* $FreeBSD: src/sys/pci/viapm.c,v 1.10 2005/05/29 04:42:29 nyan Exp $ */
 
 /*-
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: viapcib.c,v 1.15 2016/02/14 19:54:20 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: viapcib.c,v 1.16 2018/09/03 16:29:25 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -614,7 +614,7 @@ viapcib_smbus_block_write(void *opaque, i2c_addr_t slave, uint8_t cmd,
 
 	remain = cnt;
 	while (remain) {
-		len = min(remain, SMB_MAXBLOCKSIZE);
+		len = uimin(remain, SMB_MAXBLOCKSIZE);
 
 		viapcib_smbus_write(sc, SMBHSTADD, (slave & 0x7f) << 1);
 		viapcib_smbus_write(sc, SMBHSTCMD, cmd);
@@ -674,7 +674,7 @@ viapcib_smbus_block_read(void *opaque, i2c_addr_t slave, uint8_t cmd,
 		len = viapcib_smbus_read(sc, SMBHSTDAT0);
 		i = viapcib_smbus_read(sc, SMBHSTCNT);
 
-		len = min(len, remain);
+		len = uimin(len, remain);
 
 		/* FreeBSD does this too... */
 		for (i = 0; i < len; i++) {

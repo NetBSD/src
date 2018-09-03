@@ -1,4 +1,4 @@
-/*	$NetBSD: umidi.c,v 1.74 2018/01/21 13:57:12 skrll Exp $	*/
+/*	$NetBSD: umidi.c,v 1.75 2018/09/03 16:29:34 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2012, 2014 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.74 2018/01/21 13:57:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.75 2018/09/03 16:29:34 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1228,7 +1228,7 @@ assign_all_jacks_automatically(struct umidi_softc *sc)
 
 	err =
 	    alloc_all_mididevs(sc,
-			       max(sc->sc_out_num_jacks, sc->sc_in_num_jacks));
+			       uimax(sc->sc_out_num_jacks, sc->sc_in_num_jacks));
 	if (err!=USBD_NORMAL_COMPLETION)
 		return err;
 

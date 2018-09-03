@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.5 2016/12/22 14:47:54 cherry Exp $	*/
+/*	$NetBSD: machdep.c,v 1.6 2018/09/03 16:29:24 riastradh Exp $	*/
 /*
  * Copyright (c) 2012, 2013 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.5 2016/12/22 14:47:54 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.6 2018/09/03 16:29:24 riastradh Exp $");
 
 #include "clpscom.h"
 #include "clpslcd.h"
@@ -218,7 +218,7 @@ initarm(void *arg)
 			args = (struct btinfo_bootargs *)btinfo;
 			btinfo = &(args + 1)->common;
 			memcpy(bootargs, args->bootargs,
-			    min(sizeof(bootargs), sizeof(args->bootargs)));
+			    uimin(sizeof(bootargs), sizeof(args->bootargs)));
 			bootargs[sizeof(bootargs) - 1] = '\0';
 			boot_args = bootargs;
 			break;

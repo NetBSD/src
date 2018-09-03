@@ -1,4 +1,4 @@
-/*	$NetBSD: twa.c,v 1.55 2016/09/27 12:04:16 pgoyette Exp $ */
+/*	$NetBSD: twa.c,v 1.56 2018/09/03 16:29:32 riastradh Exp $ */
 /*	$wasabi: twa.c,v 1.27 2006/07/28 18:17:21 wrstuden Exp $	*/
 
 /*-
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: twa.c,v 1.55 2016/09/27 12:04:16 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: twa.c,v 1.56 2018/09/03 16:29:32 riastradh Exp $");
 
 //#define TWA_DEBUG
 
@@ -2255,7 +2255,7 @@ fw_passthru_done:
 
 		/* Copy compatibility information to user space. */
 		copyout(&comp_pkt, user_buf->pdata,
-				min(sizeof(struct tw_cl_compatibility_packet),
+				uimin(sizeof(struct tw_cl_compatibility_packet),
 					user_buf->twa_drvr_pkt.buffer_length));
 		break;
 	}

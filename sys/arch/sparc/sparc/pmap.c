@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.364 2018/02/08 09:05:18 dholland Exp $ */
+/*	$NetBSD: pmap.c,v 1.365 2018/09/03 16:29:27 riastradh Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.364 2018/02/08 09:05:18 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.365 2018/09/03 16:29:27 riastradh Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -3644,7 +3644,7 @@ pmap_bootstrap4m(void *top)
 	 * Allocate context table.
 	 * To keep supersparc happy, minimum aligment is on a 4K boundary.
 	 */
-	ctxtblsize = max(ncontext,1024) * sizeof(int);
+	ctxtblsize = uimax(ncontext,1024) * sizeof(int);
 	cpuinfo.ctx_tbl = (int *)roundup((u_int)p, ctxtblsize);
 	cpuinfo.ctx_tbl_pa = PMAP_BOOTSTRAP_VA2PA(cpuinfo.ctx_tbl);
 	p = (u_int)cpuinfo.ctx_tbl + ctxtblsize;

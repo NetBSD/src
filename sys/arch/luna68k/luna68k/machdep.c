@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.101 2017/11/07 14:55:30 christos Exp $ */
+/* $NetBSD: machdep.c,v 1.102 2018/09/03 16:29:25 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.101 2017/11/07 14:55:30 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.102 2018/09/03 16:29:25 riastradh Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -303,7 +303,7 @@ symtab_size(vaddr_t hdr)
 		    shp[i].sh_type != SHT_STRTAB) {
 			continue;
 		}
-		maxsym = max(maxsym, shp[i].sh_offset + shp[i].sh_size);
+		maxsym = uimax(maxsym, shp[i].sh_offset + shp[i].sh_size);
 	}
 
 	return maxsym;

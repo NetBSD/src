@@ -1,4 +1,4 @@
-/*	$NetBSD: opms.c,v 1.22 2017/10/25 08:12:37 maya Exp $	*/
+/*	$NetBSD: opms.c,v 1.23 2018/09/03 16:29:22 riastradh Exp $	*/
 /*	$OpenBSD: pccons.c,v 1.22 1999/01/30 22:39:37 imp Exp $	*/
 /*	NetBSD: pms.c,v 1.21 1995/04/18 02:25:18 mycroft Exp	*/
 
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: opms.c,v 1.22 2017/10/25 08:12:37 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: opms.c,v 1.23 2018/09/03 16:29:22 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -296,7 +296,7 @@ opmsread(dev_t dev, struct uio *uio, int flag)
 	/* Transfer as many chunks as possible. */
 
 	while (sc->sc_q.c_cc > 0 && uio->uio_resid > 0) {
-		length = min(sc->sc_q.c_cc, uio->uio_resid);
+		length = uimin(sc->sc_q.c_cc, uio->uio_resid);
 		if (length > sizeof(buffer))
 			length = sizeof(buffer);
 

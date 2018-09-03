@@ -1,4 +1,4 @@
-/*	$NetBSD: ofisa.c,v 1.25 2016/12/09 17:18:35 christos Exp $	*/
+/*	$NetBSD: ofisa.c,v 1.26 2018/09/03 16:29:32 riastradh Exp $	*/
 
 /*
  * Copyright 1997, 1998
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofisa.c,v 1.25 2016/12/09 17:18:35 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofisa.c,v 1.26 2018/09/03 16:29:32 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -156,7 +156,7 @@ ofisa_reg_get(int phandle, struct ofisa_reg_desc *descp, int ndescs)
 	if (i < 0)
 		return (-1);
 	proplen = i * 12;
-	ndescs = min(ndescs, i);
+	ndescs = uimin(ndescs, i);
 
 	i = ndescs * 12;
 	if (i > OFW_MAX_STACK_BUF_SIZE) {
@@ -226,7 +226,7 @@ ofisa_intr_get(int phandle, struct ofisa_intr_desc *descp, int ndescs)
 	if (i < 0)
 		return (-1);
 	proplen = i * 8;
-	ndescs = min(ndescs, i);
+	ndescs = uimin(ndescs, i);
 
 	i = ndescs * 8;
 	if (i > OFW_MAX_STACK_BUF_SIZE) {
@@ -308,7 +308,7 @@ ofisa_dma_get(int phandle, struct ofisa_dma_desc *descp, int ndescs)
 	if (i < 0)
 		return (-1);
 	proplen = i * 20;
-	ndescs = min(ndescs, i);
+	ndescs = uimin(ndescs, i);
 
 	i = ndescs * 20;
 	if (i > OFW_MAX_STACK_BUF_SIZE) {

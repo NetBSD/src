@@ -1,4 +1,4 @@
-/*	$NetBSD: dp8390.c,v 1.90 2018/07/15 05:16:45 maxv Exp $	*/
+/*	$NetBSD: dp8390.c,v 1.91 2018/09/03 16:29:31 riastradh Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -14,7 +14,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dp8390.c,v 1.90 2018/07/15 05:16:45 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dp8390.c,v 1.91 2018/09/03 16:29:31 riastradh Exp $");
 
 #include "opt_inet.h"
 
@@ -1042,7 +1042,7 @@ dp8390_get(struct dp8390_softc *sc, int src, u_short total_len)
 			m->m_data = newdata;
 		}
 
-		m->m_len = len = min(total_len, len);
+		m->m_len = len = uimin(total_len, len);
 		src = (*sc->ring_copy)(sc, src, mtod(m, void *), len);
 
 		total_len -= len;

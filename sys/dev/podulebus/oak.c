@@ -1,4 +1,4 @@
-/*	$NetBSD: oak.c,v 1.20 2012/10/27 17:18:37 chs Exp $	*/
+/*	$NetBSD: oak.c,v 1.21 2018/09/03 16:29:33 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: oak.c,v 1.20 2012/10/27 17:18:37 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: oak.c,v 1.21 2018/09/03 16:29:33 riastradh Exp $");
 
 #include <sys/param.h>
 
@@ -293,7 +293,7 @@ oak_pdma_in(struct ncr5380_softc *ncr_sc, int phase, int datalen,
 
 	resid = datalen;
 	while (resid > 0) {
-		len = min(resid, OAK_TSIZE_IN);
+		len = uimin(resid, OAK_TSIZE_IN);
 		if (oak_ready(ncr_sc) == 0)
 			goto interrupt;
 		KASSERT(BUS_SPACE_ALIGNED_POINTER(data, uint16_t));

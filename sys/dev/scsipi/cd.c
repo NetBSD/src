@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.341 2017/06/17 22:35:50 mlelstv Exp $	*/
+/*	$NetBSD: cd.c,v 1.342 2018/09/03 16:29:33 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2003, 2004, 2005, 2008 The NetBSD Foundation,
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.341 2017/06/17 22:35:50 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.342 2018/09/03 16:29:33 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1252,7 +1252,7 @@ cdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 		    args->data_format, args->track, &data, len, 0);
 		if (error)
 			return (error);
-		len = min(len, _2btol(data.header.data_len) +
+		len = uimin(len, _2btol(data.header.data_len) +
 		    sizeof(struct cd_sub_channel_header));
 		return (copyout(&data, args->data, len));
 	}
@@ -1282,7 +1282,7 @@ cdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 		error = do_cdioreadentries(cd, te, &toc);
 		if (error != 0)
 			return error;
-		return copyout(toc.entries, te->data, min(te->data_len,
+		return copyout(toc.entries, te->data, uimin(te->data_len,
 		    toc.header.len - (sizeof(toc.header.starting_track)
 			+ sizeof(toc.header.ending_track))));
 	}
@@ -1291,7 +1291,7 @@ cdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 		error = do_cdioreadentries(cd, &te->req, &toc);
 		if (error != 0)
 			return error;
-		memcpy(te->entry, toc.entries, min(te->req.data_len,
+		memcpy(te->entry, toc.entries, uimin(te->req.data_len,
 		    toc.header.len - (sizeof(toc.header.starting_track)
 			+ sizeof(toc.header.ending_track))));
 		return 0;

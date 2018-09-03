@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.38 2017/11/14 16:56:03 martin Exp $ */
+/*	$NetBSD: vmparam.h,v 1.39 2018/09/03 16:29:28 riastradh Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -108,7 +108,7 @@
  * model.
  */
 #define VM_DEFAULT_ADDRESS_BOTTOMUP(da, sz) \
-    round_page((vaddr_t)(da) + (vsize_t)max(maxdmap,1UL*1024*1024*1024))
+    round_page((vaddr_t)(da) + (vsize_t)uimax(maxdmap,1UL*1024*1024*1024))
 #endif
 #ifndef	DFLSSIZ
 #define	DFLSSIZ		(2*1024*1024)		/* initial stack size limit */

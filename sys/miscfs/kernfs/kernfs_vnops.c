@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vnops.c,v 1.159 2018/03/31 23:12:01 christos Exp $	*/
+/*	$NetBSD: kernfs_vnops.c,v 1.160 2018/09/03 16:29:35 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kernfs_vnops.c,v 1.159 2018/03/31 23:12:01 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kernfs_vnops.c,v 1.160 2018/09/03 16:29:35 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -402,7 +402,7 @@ kernfs_xread(struct kernfs_node *kfs, int off, char **bufp, size_t len, size_t *
 		n = msgbufp->msg_bufx + off;
 		if (n >= msgbufp->msg_bufs)
 			n -= msgbufp->msg_bufs;
-		len = min(msgbufp->msg_bufs - n, msgbufp->msg_bufs - off);
+		len = uimin(msgbufp->msg_bufs - n, msgbufp->msg_bufs - off);
 		*bufp = msgbufp->msg_bufc + n;
 		*wrlen = len;
 		return (0);
@@ -777,7 +777,7 @@ kernfs_default_xwrite(void *v)
 	if (uio->uio_offset != 0)
 		return (EINVAL);
 
-	xlen = min(uio->uio_resid, KSTRING-1);
+	xlen = uimin(uio->uio_resid, KSTRING-1);
 	if ((error = uiomove(strbuf, xlen, uio)) != 0)
 		return (error);
 
@@ -907,7 +907,7 @@ kernfs_readdir(void *v)
 			return (0);
 
 		if (ap->a_ncookies) {
-			ncookies = min(ncookies, (nkern_targets - i));
+			ncookies = uimin(ncookies, (nkern_targets - i));
 			cookies = malloc(ncookies * sizeof(off_t), M_TEMP,
 			    M_WAITOK);
 			*ap->a_cookies = cookies;
@@ -966,7 +966,7 @@ kernfs_readdir(void *v)
 			return 0;
 
 		if (ap->a_ncookies) {
-			ncookies = min(ncookies, (2 - i));
+			ncookies = uimin(ncookies, (2 - i));
 			cookies = malloc(ncookies * sizeof(off_t), M_TEMP,
 			    M_WAITOK);
 			*ap->a_cookies = cookies;
@@ -994,7 +994,7 @@ kernfs_readdir(void *v)
 			return (0);
 
 		if (ap->a_ncookies) {
-			ncookies = min(ncookies, (ks->ks_nentries - i));
+			ncookies = uimin(ncookies, (ks->ks_nentries - i));
 			cookies = malloc(ncookies * sizeof(off_t), M_TEMP,
 			    M_WAITOK);
 			*ap->a_cookies = cookies;

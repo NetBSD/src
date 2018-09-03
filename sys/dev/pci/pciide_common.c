@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_common.c,v 1.65 2017/10/20 07:06:08 jdolecek Exp $	*/
+/*	$NetBSD: pciide_common.c,v 1.66 2018/09/03 16:29:32 riastradh Exp $	*/
 
 
 /*
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciide_common.c,v 1.65 2017/10/20 07:06:08 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide_common.c,v 1.66 2018/09/03 16:29:32 riastradh Exp $");
 
 #include <sys/param.h>
 
@@ -601,7 +601,7 @@ pciide_channel_dma_setup(struct pciide_channel *cp)
 }
 
 #define NIDEDMA_TABLES(sc)	\
-	(MAXPHYS/(min((sc)->sc_dma_maxsegsz, PAGE_SIZE)) + 1)
+	(MAXPHYS/(uimin((sc)->sc_dma_maxsegsz, PAGE_SIZE)) + 1)
 
 int
 pciide_dma_table_setup(struct pciide_softc *sc, int channel, int drive)

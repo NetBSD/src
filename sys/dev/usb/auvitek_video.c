@@ -1,4 +1,4 @@
-/* $NetBSD: auvitek_video.c,v 1.7 2016/04/23 10:15:31 skrll Exp $ */
+/* $NetBSD: auvitek_video.c,v 1.8 2018/09/03 16:29:33 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2010 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auvitek_video.c,v 1.7 2016/04/23 10:15:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auvitek_video.c,v 1.8 2018/09/03 16:29:33 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -787,7 +787,7 @@ auvitek_videobuf_weave(struct auvitek_softc *sc, uint8_t *buf, uint32_t len)
 		if (*l >= 240) {
 			break;
 		}
-		wlen = min(resid, av->av_stride - *b);
+		wlen = uimin(resid, av->av_stride - *b);
 		memcpy(vp + (av->av_stride * 2 * *l) + *b, buf, wlen);
 		*b += wlen;
 		buf += wlen;

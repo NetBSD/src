@@ -1,4 +1,4 @@
-/*	$NetBSD: lcd.c,v 1.1 2014/02/24 07:23:42 skrll Exp $	*/
+/*	$NetBSD: lcd.c,v 1.2 2018/09/03 16:29:24 riastradh Exp $	*/
 /*	OpenBSD: lcd.c,v 1.2 2007/07/20 22:13:45 kettenis Exp 	*/
 
 /*
@@ -127,7 +127,7 @@ lcd_blink(void *v, int on)
 
 	sc->sc_on = on;
 	bus_space_write_1(sc->sc_iot, sc->sc_cmdh, 0, sc->sc_heartbeat[0]);
-	callout_schedule(&sc->sc_to, max(1, (sc->sc_delay * hz) / 1000000));
+	callout_schedule(&sc->sc_to, uimax(1, (sc->sc_delay * hz) / 1000000));
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw.c,v 1.67 2017/03/04 01:29:27 jakllsch Exp $	*/
+/*	$NetBSD: ofw.c,v 1.68 2018/09/03 16:29:27 riastradh Exp $	*/
 
 /*
  * Copyright 1997
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw.c,v 1.67 2017/03/04 01:29:27 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw.c,v 1.68 2018/09/03 16:29:27 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1811,7 +1811,7 @@ ofw_malloc(vsize_t size)
 	vsize_t   newSize, claim_size;
 
 	/* round and set minimum size */
-	size = max(sizeof(LEFTOVER), 
+	size = uimax(sizeof(LEFTOVER), 
 	    ((size + (sizeof(LEFTOVER) - 1)) & ~(sizeof(LEFTOVER) - 1)));
 
 	for (ppLeftover = &leftovers; *ppLeftover;

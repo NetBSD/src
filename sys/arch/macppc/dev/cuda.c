@@ -1,4 +1,4 @@
-/*	$NetBSD: cuda.c,v 1.22 2017/09/22 04:00:58 macallan Exp $ */
+/*	$NetBSD: cuda.c,v 1.23 2018/09/03 16:29:25 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2006 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cuda.c,v 1.22 2017/09/22 04:00:58 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cuda.c,v 1.23 2018/09/03 16:29:25 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -969,7 +969,7 @@ cuda_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr, const void *_send,
 
 	/* Copy command and output data bytes, if any, to buffer */
 	if (send_len > 0)
-		memcpy(&command[3], send, min((int)send_len, 12));
+		memcpy(&command[3], send, uimin((int)send_len, 12));
 	else if (I2C_OP_READ_P(op) && (recv_len == 0)) {
 		/*
 		 * If no data bytes in either direction, it's a "quick"
@@ -1030,7 +1030,7 @@ cuda_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr, const void *_send,
 		int rlen;
 
 		/* we got an answer */
-		rlen = min(sc->sc_iic_done - 3, recv_len);
+		rlen = uimin(sc->sc_iic_done - 3, recv_len);
 		memcpy(recv, &sc->sc_in[4], rlen);
 #ifdef CUDA_DEBUG
 		{

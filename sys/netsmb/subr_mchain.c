@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_mchain.c,v 1.23 2014/11/15 18:52:45 nakayama Exp $	*/
+/*	$NetBSD: subr_mchain.c,v 1.24 2018/09/03 16:29:36 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_mchain.c,v 1.23 2014/11/15 18:52:45 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_mchain.c,v 1.24 2018/09/03 16:29:36 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,7 +66,7 @@ m_getm(struct mbuf *m, size_t len, int how, int type)
 		}
 	}
 	mp->m_len = 0;
-	len -= min(len, M_TRAILINGSPACE(mp));
+	len -= uimin(len, M_TRAILINGSPACE(mp));
 
 	if (m != NULL)
 		for (mtail = m; mtail->m_next != NULL; mtail = mtail->m_next);
@@ -88,7 +88,7 @@ m_getm(struct mbuf *m, size_t len, int how, int type)
 		}
 
 		mp->m_len = 0;
-		len -= min(len, M_TRAILINGSPACE(mp));
+		len -= uimin(len, M_TRAILINGSPACE(mp));
 	}
 
 	if (mtail != NULL)

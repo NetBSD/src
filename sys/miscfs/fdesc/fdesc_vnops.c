@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc_vnops.c,v 1.129 2017/05/26 14:21:01 riastradh Exp $	*/
+/*	$NetBSD: fdesc_vnops.c,v 1.130 2018/09/03 16:29:35 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdesc_vnops.c,v 1.129 2017/05/26 14:21:01 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdesc_vnops.c,v 1.130 2018/09/03 16:29:35 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -589,7 +589,7 @@ fdesc_readdir(void *v)
 			return 0;
 
 		if (ap->a_ncookies) {
-			ncookies = min(ncookies, (nfdesc_targets - i));
+			ncookies = uimin(ncookies, (nfdesc_targets - i));
 			cookies = malloc(ncookies * sizeof(off_t),
 			    M_TEMP, M_WAITOK);
 			*ap->a_cookies = cookies;
@@ -630,7 +630,7 @@ fdesc_readdir(void *v)
 	} else {
 		membar_consumer();
 		if (ap->a_ncookies) {
-			ncookies = min(ncookies, dt->dt_nfiles + 2);
+			ncookies = uimin(ncookies, dt->dt_nfiles + 2);
 			cookies = malloc(ncookies * sizeof(off_t),
 			    M_TEMP, M_WAITOK);
 			*ap->a_cookies = cookies;

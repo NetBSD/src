@@ -1,4 +1,4 @@
-/*	$NetBSD: ugen.c,v 1.139 2018/03/05 09:35:01 ws Exp $	*/
+/*	$NetBSD: ugen.c,v 1.140 2018/09/03 16:29:34 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.139 2018/03/05 09:35:01 ws Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.140 2018/09/03 16:29:34 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -663,7 +663,7 @@ ugen_do_read(struct ugen_softc *sc, int endpt, struct uio *uio, int flag)
 
 		/* Transfer as many chunks as possible. */
 		while (sce->q.c_cc > 0 && uio->uio_resid > 0 && !error) {
-			n = min(sce->q.c_cc, uio->uio_resid);
+			n = uimin(sce->q.c_cc, uio->uio_resid);
 			if (n > sizeof(sc->sc_buffer))
 				n = sizeof(sc->sc_buffer);
 
@@ -711,9 +711,9 @@ ugen_do_read(struct ugen_softc *sc, int endpt, struct uio *uio, int flag)
 				/* Copy data to the process. */
 				while (uio->uio_resid > 0
 				       && sce->ra_wb_used > 0) {
-					n = min(uio->uio_resid,
+					n = uimin(uio->uio_resid,
 						sce->ra_wb_used);
-					n = min(n, sce->limit - sce->cur);
+					n = uimin(n, sce->limit - sce->cur);
 					error = uiomove(sce->cur, n, uio);
 					if (error)
 						break;
@@ -732,7 +732,7 @@ ugen_do_read(struct ugen_softc *sc, int endpt, struct uio *uio, int flag)
 					n = (sce->limit - sce->ibuf)
 					    - sce->ra_wb_used;
 					usbd_setup_xfer(xfer, sce, NULL,
-					    min(n, sce->ra_wb_xferlen),
+					    uimin(n, sce->ra_wb_xferlen),
 					    0, USBD_NO_TIMEOUT,
 					    ugen_bulkra_intr);
 					sce->state &= ~UGEN_RA_WB_STOP;
@@ -754,7 +754,7 @@ ugen_do_read(struct ugen_softc *sc, int endpt, struct uio *uio, int flag)
 		    0, 0, &xfer);
 		if (error)
 			return error;
-		while ((n = min(UGEN_BBSIZE, uio->uio_resid)) != 0) {
+		while ((n = uimin(UGEN_BBSIZE, uio->uio_resid)) != 0) {
 			DPRINTFN(1, ("ugenread: start transfer %d bytes\n",n));
 			tn = n;
 			err = usbd_bulk_transfer(xfer, sce->pipeh,
@@ -799,9 +799,9 @@ ugen_do_read(struct ugen_softc *sc, int endpt, struct uio *uio, int flag)
 
 		while (sce->cur != sce->fill && uio->uio_resid > 0 && !error) {
 			if(sce->fill > sce->cur)
-				n = min(sce->fill - sce->cur, uio->uio_resid);
+				n = uimin(sce->fill - sce->cur, uio->uio_resid);
 			else
-				n = min(sce->limit - sce->cur, uio->uio_resid);
+				n = uimin(sce->limit - sce->cur, uio->uio_resid);
 
 			DPRINTFN(5, ("ugenread: isoc got %d chars\n", n));
 
@@ -913,10 +913,10 @@ ugen_do_write(struct ugen_softc *sc, int endpt, struct uio *uio,
 				/* Copy data from the process. */
 				while (uio->uio_resid > 0 &&
 				    sce->ra_wb_used < sce->limit - sce->ibuf) {
-					n = min(uio->uio_resid,
+					n = uimin(uio->uio_resid,
 						(sce->limit - sce->ibuf)
 						 - sce->ra_wb_used);
-					n = min(n, sce->limit - sce->fill);
+					n = uimin(n, sce->limit - sce->fill);
 					error = uiomove(sce->fill, n, uio);
 					if (error)
 						break;
@@ -933,9 +933,9 @@ ugen_do_write(struct ugen_softc *sc, int endpt, struct uio *uio,
 				if (sce->state & UGEN_RA_WB_STOP &&
 				    sce->ra_wb_used > 0) {
 					dbuf = (char *)usbd_get_buffer(xfer);
-					n = min(sce->ra_wb_used,
+					n = uimin(sce->ra_wb_used,
 						sce->ra_wb_xferlen);
-					tn = min(n, sce->limit - sce->cur);
+					tn = uimin(n, sce->limit - sce->cur);
 					memcpy(dbuf, sce->cur, tn);
 					dbuf += tn;
 					if (n - tn > 0)
@@ -963,7 +963,7 @@ ugen_do_write(struct ugen_softc *sc, int endpt, struct uio *uio,
 		    0, 0, &xfer);
 		if (error)
 			return error;
-		while ((n = min(UGEN_BBSIZE, uio->uio_resid)) != 0) {
+		while ((n = uimin(UGEN_BBSIZE, uio->uio_resid)) != 0) {
 			error = uiomove(sc->sc_buffer, n, uio);
 			if (error)
 				break;
@@ -987,7 +987,7 @@ ugen_do_write(struct ugen_softc *sc, int endpt, struct uio *uio,
 		    UGETW(sce->edesc->wMaxPacketSize), 0, 0, &xfer);
 		if (error)
 			return error;
-		while ((n = min(UGETW(sce->edesc->wMaxPacketSize),
+		while ((n = uimin(UGETW(sce->edesc->wMaxPacketSize),
 		    uio->uio_resid)) != 0) {
 			error = uiomove(sc->sc_buffer, n, uio);
 			if (error)
@@ -1178,7 +1178,7 @@ ugen_isoc_rintr(struct usbd_xfer *xfer, void *addr,
 
 		/* copy data to buffer */
 		while (actlen > 0) {
-			n = min(actlen, sce->limit - sce->fill);
+			n = uimin(actlen, sce->limit - sce->fill);
 			memcpy(sce->fill, tbuf, n);
 
 			tbuf += n;
@@ -1235,7 +1235,7 @@ ugen_bulkra_intr(struct usbd_xfer *xfer, void *addr,
 
 	/* Copy data to buffer. */
 	tbuf = (char const *)usbd_get_buffer(sce->ra_wb_xfer);
-	n = min(count, sce->limit - sce->fill);
+	n = uimin(count, sce->limit - sce->fill);
 	memcpy(sce->fill, tbuf, n);
 	tbuf += n;
 	count -= n;
@@ -1250,7 +1250,7 @@ ugen_bulkra_intr(struct usbd_xfer *xfer, void *addr,
 	/* Set up the next request if necessary. */
 	n = (sce->limit - sce->ibuf) - sce->ra_wb_used;
 	if (n > 0) {
-		usbd_setup_xfer(xfer, sce, NULL, min(n, sce->ra_wb_xferlen), 0,
+		usbd_setup_xfer(xfer, sce, NULL, uimin(n, sce->ra_wb_xferlen), 0,
 		    USBD_NO_TIMEOUT, ugen_bulkra_intr);
 		err = usbd_transfer(xfer);
 		if (err != USBD_IN_PROGRESS) {
@@ -1311,8 +1311,8 @@ ugen_bulkwb_intr(struct usbd_xfer *xfer, void *addr,
 	if (sce->ra_wb_used > 0) {
 		/* copy data from buffer */
 		tbuf = (char *)usbd_get_buffer(sce->ra_wb_xfer);
-		count = min(sce->ra_wb_used, sce->ra_wb_xferlen);
-		n = min(count, sce->limit - sce->cur);
+		count = uimin(sce->ra_wb_used, sce->ra_wb_xferlen);
+		n = uimin(count, sce->limit - sce->cur);
 		memcpy(tbuf, sce->cur, n);
 		tbuf += n;
 		if (count - n > 0)
@@ -1518,7 +1518,7 @@ ugen_do_ioctl(struct ugen_softc *sc, int endpt, u_long cmd,
 			sce->state &= ~UGEN_RA_WB_STOP;
 			/* Now start reading. */
 			usbd_setup_xfer(sce->ra_wb_xfer, sce, NULL,
-			    min(sce->ra_wb_xferlen, sce->ra_wb_bufsize),
+			    uimin(sce->ra_wb_xferlen, sce->ra_wb_bufsize),
 			     0, USBD_NO_TIMEOUT, ugen_bulkra_intr);
 			err = usbd_transfer(sce->ra_wb_xfer);
 			if (err != USBD_IN_PROGRESS) {
@@ -1820,7 +1820,7 @@ ugen_do_ioctl(struct ugen_softc *sc, int endpt, u_long cmd,
 		}
 		if (len != 0) {
 			if (uio.uio_rw == UIO_READ) {
-				size_t alen = min(len, ur->ucr_actlen);
+				size_t alen = uimin(len, ur->ucr_actlen);
 				error = uiomove(ptr, alen, &uio);
 				if (error)
 					goto ret;

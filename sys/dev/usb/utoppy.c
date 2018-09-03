@@ -1,4 +1,4 @@
-/*	$NetBSD: utoppy.c,v 1.30 2018/01/21 13:57:12 skrll Exp $	*/
+/*	$NetBSD: utoppy.c,v 1.31 2018/09/03 16:29:34 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: utoppy.c,v 1.30 2018/01/21 13:57:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: utoppy.c,v 1.31 2018/09/03 16:29:34 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -469,7 +469,7 @@ utoppy_dump_packet(const void *b, size_t len)
 	if (len == 0)
 		return;
 
-	len = min(len, 256);
+	len = uimin(len, 256);
 
 	printf("00: ");
 
@@ -595,14 +595,14 @@ utoppy_send_packet(struct utoppy_softc *sc, uint16_t cmd, uint32_t timeout)
 	do {
 		uint32_t thislen;
 
-		thislen = min(len, UTOPPY_FRAG_SIZE);
+		thislen = uimin(len, UTOPPY_FRAG_SIZE);
 
 		memcpy(sc->sc_out_buf, data, thislen);
 
 		err = utoppy_bulk_transfer(sc->sc_out_xfer, sc->sc_out_pipe,
 		    0, timeout, sc->sc_out_buf, &thislen);
 
-		if (thislen != min(len, UTOPPY_FRAG_SIZE)) {
+		if (thislen != uimin(len, UTOPPY_FRAG_SIZE)) {
 			DPRINTF(UTOPPY_DBG_SEND_PACKET, ("%s: "
 			    "utoppy_send_packet: sent %ld, err %d\n",
 			    device_xname(sc->sc_dev), (u_long)thislen, err));
@@ -638,7 +638,7 @@ utoppy_recv_packet(struct utoppy_softc *sc, uint16_t *respp, uint32_t timeout)
 	    device_xname(sc->sc_dev)));
 
 	do {
-		requested = thislen = min(bytesleft, UTOPPY_FRAG_SIZE);
+		requested = thislen = uimin(bytesleft, UTOPPY_FRAG_SIZE);
 
 		err = utoppy_bulk_transfer(sc->sc_in_xfer, sc->sc_in_pipe,
 		    USBD_SHORT_XFER_OK, timeout, sc->sc_in_buf,
@@ -1459,7 +1459,7 @@ utoppyread(dev_t dev, struct uio *uio, int flags)
 				break;
 			}
 
-			len = min(uio->uio_resid, sc->sc_in_len);
+			len = uimin(uio->uio_resid, sc->sc_in_len);
 			if (len) {
 				err = uiomove(UTOPPY_IN_DATA(sc), len, uio);
 				if (err == 0) {
@@ -1524,9 +1524,9 @@ utoppywrite(dev_t dev, struct uio *uio, int flags)
 	    (u_long)uio->uio_resid, sc->sc_wr_size, sc->sc_wr_offset));
 
 	while (sc->sc_state == UTOPPY_STATE_WRITEFILE &&
-	    (len = min(uio->uio_resid, sc->sc_wr_size)) != 0) {
+	    (len = uimin(uio->uio_resid, sc->sc_wr_size)) != 0) {
 
-		len = min(len, UTOPPY_BSIZE - (UTOPPY_HEADER_SIZE +
+		len = uimin(len, UTOPPY_BSIZE - (UTOPPY_HEADER_SIZE +
 		    sizeof(uint64_t) + 3));
 
 		DPRINTF(UTOPPY_DBG_WRITE, ("%s: utoppywrite: uiomove(%ld)\n",

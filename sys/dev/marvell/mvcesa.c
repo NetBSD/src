@@ -1,4 +1,4 @@
-/*	$NetBSD: mvcesa.c,v 1.1 2012/07/27 03:00:01 kiyohara Exp $	*/
+/*	$NetBSD: mvcesa.c,v 1.2 2018/09/03 16:29:31 riastradh Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvcesa.c,v 1.1 2012/07/27 03:00:01 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvcesa.c,v 1.2 2018/09/03 16:29:31 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -544,7 +544,7 @@ mvcesa_authentication(struct mvcesa_softc *sc, struct mvcesa_session *ses,
 		data = 0;
 		if (buf != NULL)
 			for (i = 0; i < 512 / 8 && off + i < len; i += s) {
-				s = min(sizeof(data), len - off - i);
+				s = uimin(sizeof(data), len - off - i);
 				memcpy(&data, buf + skip + off + i, s);
 				if (s == sizeof(data))
 					bus_space_write_4(sc->sc_iot,
@@ -553,7 +553,7 @@ mvcesa_authentication(struct mvcesa_softc *sc, struct mvcesa_session *ses,
 			}
 		else if (m != NULL)
 			for (i = 0; i < 512 / 8 && off + i < len; i += s) {
-				s = min(sizeof(data), len - off - i);
+				s = uimin(sizeof(data), len - off - i);
 				m_copydata(m, skip + off + i, s, &data);
 				if (s == sizeof(data))
 					bus_space_write_4(sc->sc_iot,
@@ -562,7 +562,7 @@ mvcesa_authentication(struct mvcesa_softc *sc, struct mvcesa_session *ses,
 			}
 		else if (uio != NULL)
 			for (i = 0; i < 512 / 8 && off + i < len; i += s) {
-				s = min(sizeof(data), len - off - i);
+				s = uimin(sizeof(data), len - off - i);
 				cuio_copydata(uio, skip + off + i, s, &data);
 				if (s == sizeof(data))
 					bus_space_write_4(sc->sc_iot,
@@ -674,7 +674,7 @@ mvcesa_des_encdec(struct mvcesa_softc *sc, struct mvcesa_session *ses,
 
 	i = o = 0;
 	while (i < len) {
-		s = min(sizeof(iblk), len - i);
+		s = uimin(sizeof(iblk), len - i);
 		iblk = 0;
 
 		if (buf != NULL)

@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt.c,v 1.37 2014/07/25 08:10:32 dholland Exp $ */
+/*	$NetBSD: lpt.c,v 1.38 2018/09/03 16:29:24 riastradh Exp $ */
 
 /*
  * Copyright (c) 1996 Leo Weppelman
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpt.c,v 1.37 2014/07/25 08:10:32 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt.c,v 1.38 2018/09/03 16:29:24 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -346,7 +346,7 @@ lpwrite(dev_t dev, struct uio *uio, int flags)
 	size_t n;
 	int error = 0;
 
-	while ((n = min(LPT_BSIZE, uio->uio_resid)) > 0) {
+	while ((n = uimin(LPT_BSIZE, uio->uio_resid)) > 0) {
 		uiomove(sc->sc_cp = sc->sc_inbuf->b_data, n, uio);
 		sc->sc_count = n;
 		error = pushbytes(sc);

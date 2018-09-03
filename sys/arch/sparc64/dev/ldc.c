@@ -1,4 +1,4 @@
-/*	$NetBSD: ldc.c,v 1.3 2017/03/03 21:09:25 palle Exp $	*/
+/*	$NetBSD: ldc.c,v 1.4 2018/09/03 16:29:27 riastradh Exp $	*/
 /*	$OpenBSD: ldc.c,v 1.12 2015/03/21 18:02:58 kettenis Exp $	*/
 /*
  * Copyright (c) 2009 Mark Kettenis
@@ -446,13 +446,13 @@ ldc_send_unreliable(struct ldc_conn *lc, void *msg, size_t len)
 		bzero(lp, sizeof(struct ldc_pkt));
 		lp->type = LDC_DATA;
 		lp->stype = LDC_INFO;
-		lp->env = min(len, LDC_PKT_PAYLOAD);
+		lp->env = uimin(len, LDC_PKT_PAYLOAD);
 		if (p == msg)
 			lp->env |= LDC_FRAG_START;
 		if (len <= LDC_PKT_PAYLOAD)
 			lp->env |= LDC_FRAG_STOP;
 		lp->seqid = lc->lc_tx_seqid++;
-		bcopy(p, &lp->major, min(len, LDC_PKT_PAYLOAD));
+		bcopy(p, &lp->major, uimin(len, LDC_PKT_PAYLOAD));
 
 		tx_tail += sizeof(*lp);
 		tx_tail &= ((lc->lc_txq->lq_nentries * sizeof(*lp)) - 1);
@@ -462,8 +462,8 @@ ldc_send_unreliable(struct ldc_conn *lc, void *msg, size_t len)
 			mutex_exit(&lc->lc_txq->lq_mtx);
 			return (EIO);
 		}
-		p += min(len, LDC_PKT_PAYLOAD);
-		len -= min(len, LDC_PKT_PAYLOAD);
+		p += uimin(len, LDC_PKT_PAYLOAD);
+		len -= uimin(len, LDC_PKT_PAYLOAD);
 	}
 
 	mutex_exit(&lc->lc_txq->lq_mtx);

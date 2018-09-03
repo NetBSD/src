@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.367 2018/08/28 14:45:33 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.368 2018/09/03 16:29:23 riastradh Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -217,7 +217,7 @@
 
 #include <arm/locore.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.367 2018/08/28 14:45:33 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.368 2018/09/03 16:29:23 riastradh Exp $");
 
 //#define PMAP_DEBUG
 #ifdef PMAP_DEBUG
@@ -4138,7 +4138,7 @@ pmap_icache_sync_range(pmap_t pm, vaddr_t sva, vaddr_t eva)
 		     page_size = PAGE_SIZE) {
 			if (l2pte_valid_p(*ptep)) {
 				cpu_icache_sync_range(sva,
-				    min(page_size, eva - sva));
+				    uimin(page_size, eva - sva));
 			}
 		}
 	}
