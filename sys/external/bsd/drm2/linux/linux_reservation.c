@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_reservation.c,v 1.10 2018/08/27 15:28:27 riastradh Exp $	*/
+/*	$NetBSD: linux_reservation.c,v 1.11 2018/09/03 18:02:11 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_reservation.c,v 1.10 2018/08/27 15:28:27 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_reservation.c,v 1.11 2018/09/03 18:02:11 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/poll.h>
@@ -711,6 +711,7 @@ reservation_object_wait_timeout_rcu(struct reservation_object *robj,
 	struct reservation_object_list *list;
 	struct fence *fence;
 	uint32_t i, shared_count;
+	long ret;
 
 	if (timeout == 0)
 		return reservation_object_test_signaled_rcu(robj, shared);
@@ -792,9 +793,11 @@ wait:
 	 */
 	KASSERT(fence != NULL);
 	rcu_read_unlock();
-	timeout = fence_wait_timeout(fence, intr, timeout);
-	if (timeout <= 0)
-		return timeout;
+	ret = fence_wait_timeout(fence, intr, timeout);
+	if (ret <= 0)
+		return ret;
+	KASSERT(ret <= timeout);
+	timeout = ret;
 	goto top;
 }
 
