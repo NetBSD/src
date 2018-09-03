@@ -166,6 +166,9 @@ struct query_info;
 struct edns_data;
 struct regional;
 struct worker;
+struct comm_base;
+struct auth_zones;
+struct outside_network;
 struct module_qstate;
 struct ub_randstate;
 struct mesh_area;
@@ -335,6 +338,8 @@ struct module_env {
 	 * @param zone: delegation point name.
 	 * @param zonelen: length of zone name.
 	 * @param ssl_upstream: use SSL for upstream queries.
+	 * @param tls_auth_name: if ssl_upstream, use this name with TLS
+	 * 	authentication.
 	 * @param q: wich query state to reactivate upon return.
 	 * @return: false on failure (memory or socket related). no query was
 	 *	sent. Or returns an outbound entry with qsent and qstate set.
@@ -345,7 +350,7 @@ struct module_env {
 		uint16_t flags, int dnssec, int want_dnssec, int nocaps,
 		struct sockaddr_storage* addr, socklen_t addrlen,
 		uint8_t* zone, size_t zonelen, int ssl_upstream,
-		struct module_qstate* q);
+		char* tls_auth_name, struct module_qstate* q);
 
 	/**
 	 * Detach-subqueries.
@@ -445,6 +450,10 @@ struct module_env {
 	struct sldns_buffer* scratch_buffer;
 	/** internal data for daemon - worker thread. */
 	struct worker* worker;
+	/** the worker event base */
+	struct comm_base* worker_base;
+	/** the outside network */
+	struct outside_network* outnet;
 	/** mesh area with query state dependencies */
 	struct mesh_area* mesh;
 	/** allocation service */
@@ -468,6 +477,8 @@ struct module_env {
 	struct val_neg_cache* neg_cache;
 	/** the 5011-probe timer (if any) */
 	struct comm_timer* probe_timer;
+	/** auth zones */
+	struct auth_zones* auth_zones;
 	/** Mapping of forwarding zones to targets.
 	 * iterator forwarder information. per-thread, created by worker */
 	struct iter_forwards* fwds;
