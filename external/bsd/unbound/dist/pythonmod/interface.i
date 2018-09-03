@@ -574,7 +574,7 @@ struct module_env {
     struct outbound_entry* (*send_query)(struct query_info* qinfo,
         uint16_t flags, int dnssec, int want_dnssec, int nocaps,
         struct sockaddr_storage* addr, socklen_t addrlen,
-        uint8_t* zone, size_t zonelen, int ssl_upstream,
+        uint8_t* zone, size_t zonelen, int ssl_upstream, char* tls_auth_name,
         struct module_qstate* q);
     void (*detach_subs)(struct module_qstate* qstate);
     int (*attach_sub)(struct module_qstate* qstate,
@@ -883,7 +883,7 @@ struct config_file {
    struct config_strlist* local_zones_nodefault;
    struct config_strlist* local_data;
    int remote_control_enable;
-   struct config_strlist* control_ifs;
+   struct config_strlist_head control_ifs;
    int control_port;
    char* server_key_file;
    char* server_cert_file;
