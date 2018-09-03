@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.18 2018/09/03 19:32:58 kre Exp $	
+# $NetBSD: Makefile,v 1.19 2018/09/03 21:03:07 christos Exp $	
 
 USE_SHLIBDIR=yes
 .include <bsd.own.mk>
@@ -155,7 +155,7 @@ sf-pcapng.c
 .PATH:	${NETBSDSRCDIR}/sys/net
 SRCS+=	bpf_filter.c
 
-INCS=		pcap/pcap.h pcap/namedb.h
+INCS=		pcap/pcap.h pcap/namedb.h pcap/funcattrs.h pcap/pcap-inttypes.h
 INCSDIR=	/usr/include
 INCSYMLINKS+=   ../net/bpf.h ${INCSDIR}/pcap/bpf.h
 INCSYMLINKS+=	pcap/pcap.h ${INCSDIR}/pcap.h
