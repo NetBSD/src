@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.3 2018/08/26 21:28:18 jmcneill Exp $	*/
+/*	$NetBSD: boot.c,v 1.4 2018/09/03 00:04:02 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -63,7 +63,7 @@ void	command_quit(char *);
 const struct boot_command commands[] = {
 	{ "boot",	command_boot,		"boot [fsN:][filename] [args]\n     (ex. \"fs0:\\netbsd.old -s\"" },
 	{ "dev",	command_dev,		"dev" },
-	{ "ls",		command_ls,		"ls [hdNn:/path]\n" },
+	{ "ls",		command_ls,		"ls [hdNn:/path]" },
 	{ "version",	command_version,	"version" },
 	{ "help",	command_help,		"help|?" },
 	{ "?",		command_help,		NULL },
@@ -99,6 +99,8 @@ command_dev(char *arg)
 		set_default_device(arg);
 	} else {
 		efi_block_show();
+		efi_net_show();
+		efi_pxe_show();
 	}
 
 	if (strlen(default_device) > 0) {

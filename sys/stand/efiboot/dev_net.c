@@ -1,4 +1,4 @@
-/* $NetBSD: devopen.c,v 1.3 2018/09/03 00:04:02 jmcneill Exp $ */
+/*	$NetBSD: dev_net.c,v 1.1 2018/09/03 00:04:02 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,21 +27,70 @@
  */
 
 #include "efiboot.h"
-#include "efifile.h"
-#include "efiblock.h"
+
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <net/if.h>
+#include <netinet/in.h>
+
+#include <lib/libsa/net.h>
+#include <lib/libsa/netif.h>
+#include <lib/libsa/bootparam.h>
+#include <lib/libsa/bootp.h>
+
+#include "dev_net.h"
+
+static int	net_socket = -1;
 
 int
-devopen(struct open_file *f, const char *fname, char **file)
+net_open(struct open_file *f, ...)
 {
+	va_list ap;
+	char *devname;
 	int error;
 
-	error = efi_net_open(f, fname, file);
-	file_system[0] = error ? null_fs_ops : tftp_fs_ops;
+	va_start(ap, f);
+	devname = va_arg(ap, char *);
+	va_end(ap);
 
-	if (error)
-		error = efi_block_open(f, fname, file);
-	if (error)
-		error = efi_file_open(f, fname);
+	if (net_socket < 0)
+		net_socket = netif_open(devname);
+	if (net_socket < 0)
+		return ENXIO;
 
-	return error;
+	if (myip.s_addr == INADDR_ANY) {
+		bootp(net_socket);
+
+		if (myip.s_addr == INADDR_ANY) {
+			error = EIO;
+			goto fail;
+		}
+
+		printf("boot: client ip: %s\n", inet_ntoa(myip));
+		printf("boot: server ip: %s\n", inet_ntoa(rootip));
+	}
+
+	f->f_devdata = &net_socket;
+
+	return 0;
+
+fail:
+	printf("net_open failed: %d\n", error);
+	netif_close(net_socket);
+	net_socket = -1;
+	return error;	
+}
+
+int
+net_close(struct open_file *f)
+{
+	f->f_devdata = NULL;
+
+	return 0;
+}
+
+int
+net_strategy(void *devdata, int rw, daddr_t dblk, size_t size, void *buf, size_t *rsize)
+{
+	return EIO;
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: efiboot.c,v 1.4 2018/08/26 21:28:18 jmcneill Exp $ */
+/* $NetBSD: efiboot.c,v 1.5 2018/09/03 00:04:02 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
 #include "efiblock.h"
 #include "efifdt.h"
 
-EFI_HANDLE efi_ih;
+EFI_HANDLE IH;
 EFI_DEVICE_PATH *efi_bootdp;
 EFI_LOADED_IMAGE *efi_li;
 
@@ -47,7 +47,7 @@ efi_main(EFI_HANDLE imageHandle, EFI_SYSTEM_TABLE *systemTable)
 	EFI_STATUS status;
 	u_int sz = EFI_SIZE_TO_PAGES(heap_size);
 
-	efi_ih = imageHandle;
+	IH = imageHandle;
 
 	InitializeLib(imageHandle, systemTable);
 
@@ -76,6 +76,8 @@ efi_main(EFI_HANDLE imageHandle, EFI_SYSTEM_TABLE *systemTable)
 	efi_fdt_probe();
 	efi_file_system_probe();
 	efi_block_probe();
+	efi_pxe_probe();
+	efi_net_probe();
 
 	boot();
 
@@ -91,7 +93,7 @@ efi_cleanup(void)
 
 	LibMemoryMap(&nentries, &mapkey, &descsize, &descver);
 
-	status = uefi_call_wrapper(BS->ExitBootServices, 2, efi_ih, mapkey);
+	status = uefi_call_wrapper(BS->ExitBootServices, 2, IH, mapkey);
 	if (EFI_ERROR(status))
 		printf("WARNING: ExitBootServices failed\n");
 }
@@ -101,7 +103,7 @@ efi_exit(void)
 {
 	EFI_STATUS status;
 
-	status = uefi_call_wrapper(BS->Exit, 4, efi_ih, EFI_ABORTED, 0, NULL);
+	status = uefi_call_wrapper(BS->Exit, 4, IH, EFI_ABORTED, 0, NULL);
 	if (EFI_ERROR(status))
 		printf("WARNING: Exit failed\n");
 }
