@@ -1,4 +1,4 @@
-/* $NetBSD: conf.c,v 1.2 2018/08/26 21:28:18 jmcneill Exp $ */
+/* $NetBSD: conf.c,v 1.3 2018/09/03 00:04:02 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -33,20 +33,29 @@
 #include <lib/libsa/stand.h>
 #include <lib/libsa/ufs.h>
 #include <lib/libsa/dosfs.h>
+#include <lib/libsa/tftp.h>
+#include <lib/libsa/net.h>
+#include <lib/libsa/dev_net.h>
 
 struct devsw devsw[] = {
 	{ "efifile", efi_file_strategy, efi_file_open, efi_file_close, noioctl },
 	{ "efiblock", efi_block_strategy, efi_block_open, efi_block_close, noioctl },
+	{ "net", net_strategy, net_open, net_close, noioctl },
 };
 int ndevs = __arraycount(devsw);
 
 struct netif_driver *netif_drivers[] = {
+	&efinetif,
 };
 int n_netif_drivers = __arraycount(netif_drivers);
 
 struct fs_ops file_system[] = {
+	FS_OPS(null),
 	FS_OPS(ffsv1),
 	FS_OPS(ffsv2),
 	FS_OPS(dosfs),
 };
 int nfsys = __arraycount(file_system);
+
+struct fs_ops null_fs_ops = FS_OPS(null);
+struct fs_ops tftp_fs_ops = FS_OPS(tftp);
