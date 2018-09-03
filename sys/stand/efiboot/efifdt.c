@@ -1,4 +1,4 @@
-/* $NetBSD: efifdt.c,v 1.6 2018/09/02 23:54:25 jmcneill Exp $ */
+/* $NetBSD: efifdt.c,v 1.7 2018/09/03 00:17:00 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -75,6 +75,27 @@ int
 efi_fdt_size(void)
 {
 	return fdt_data == NULL ? 0 : fdt_totalsize(fdt_data);
+}
+
+void
+efi_fdt_show(void)
+{
+	const char *model, *compat;
+	int n, ncompat;
+
+	if (fdt_data == NULL)
+		return;
+
+	model = fdt_getprop(fdt_data, fdt_path_offset(fdt_data, "/"), "model", NULL);
+	if (model)
+		printf("FDT: %s [", model);
+	ncompat = fdt_stringlist_count(fdt_data, fdt_path_offset(fdt_data, "/"), "compatible");
+	for (n = 0; n < ncompat; n++) {
+		compat = fdt_stringlist_get(fdt_data, fdt_path_offset(fdt_data, "/"),
+		    "compatible", n, NULL);
+		printf("%s%s", n == 0 ? "" : ", ", compat);
+	}
+	printf("]\n");
 }
 
 void

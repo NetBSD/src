@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.4 2018/09/03 00:04:02 jmcneill Exp $	*/
+/*	$NetBSD: boot.c,v 1.5 2018/09/03 00:17:00 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -29,6 +29,7 @@
 
 #include "efiboot.h"
 #include "efiblock.h"
+#include "efifdt.h"
 
 #include <sys/bootblock.h>
 #include <sys/boot_flag.h>
@@ -131,6 +132,8 @@ command_version(char *arg)
 		    ST->FirmwareRevision & 0xffff);
 		FreePool(ufirmware);
 	}
+
+	efi_fdt_show();
 }
 
 void
