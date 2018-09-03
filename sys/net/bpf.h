@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.h,v 1.72 2018/06/26 06:48:02 msaitoh Exp $	*/
+/*	$NetBSD: bpf.h,v 1.73 2018/09/03 15:16:11 christos Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -334,6 +334,16 @@ struct bpf_insn {
 };
 
 /*
+ * Auxiliary data, for use when interpreting a filter intended for the
+ * Linux kernel when the kernel rejects the filter (requiring us to
+ * run it in userland).  It contains VLAN tag information.
+ */
+struct bpf_aux_data {
+	u_short vlan_tag_present;
+	u_short vlan_tag;
+};
+
+/*
  * Macros for insn array initializers.
  */
 #define BPF_STMT(code, k) { (uint16_t)(code), 0, 0, k }
@@ -545,6 +555,9 @@ void	bpf_jit_freecode(bpfjit_func_t);
 
 int	bpf_validate(const struct bpf_insn *, int);
 u_int	bpf_filter(const struct bpf_insn *, const u_char *, u_int, u_int);
+
+u_int	bpf_filter_with_aux_data(const struct bpf_insn *, const u_char *, u_int, u_int, const struct bpf_aux_data *);
+
 
 __END_DECLS
 
