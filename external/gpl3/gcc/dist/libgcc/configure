@@ -4957,6 +4957,11 @@ rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
 fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $gcc_cv_have_cc_tls" >&5
 $as_echo "$gcc_cv_have_cc_tls" >&6; }
+  if test "$enable_tls $gcc_cv_have_cc_tls" = "yes yes"; then
+
+$as_echo "#define HAVE_CC_TLS 1" >>confdefs.h
+
+  fi
 set_have_cc_tls=
 if test "$enable_tls $gcc_cv_have_cc_tls" = "yes yes"; then
   set_have_cc_tls="-DHAVE_CC_TLS"
