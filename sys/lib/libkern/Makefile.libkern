@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.libkern,v 1.42 2018/07/08 17:54:42 christos Exp $
+#	$NetBSD: Makefile.libkern,v 1.43 2018/09/03 16:54:54 riastradh Exp $
 
 # 
 # Variable definitions for libkern.  
@@ -61,7 +61,7 @@ SRCS+=	ppath_kmem_alloc.c
 SRCS+=	strsep.c strstr.c
 SRCS+=	strlcpy.c strlcat.c
 
-SRCS+=	imax.c imin.c lmax.c lmin.c max.c min.c ulmax.c ulmin.c
+SRCS+=	imax.c imin.c lmax.c lmin.c uimax.c uimin.c ulmax.c ulmin.c
 SRCS+=	memmove.c
 SRCS+=	strchr.c strrchr.c
 SRCS+=	memcmp.c memmem.c
