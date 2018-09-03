@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket2.c,v 1.131 2018/07/20 08:26:25 msaitoh Exp $	*/
+/*	$NetBSD: uipc_socket2.c,v 1.132 2018/09/03 16:29:35 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.131 2018/07/20 08:26:25 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.132 2018/09/03 16:29:35 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -689,7 +689,7 @@ sbreserve(struct sockbuf *sb, u_long cc, struct socket *so)
 	uidinfo = so->so_uidinfo;
 	if (!chgsbsize(uidinfo, &sb->sb_hiwat, cc, maxcc))
 		return 0;
-	sb->sb_mbmax = min(cc * 2, sb_max);
+	sb->sb_mbmax = uimin(cc * 2, sb_max);
 	if (sb->sb_lowat > sb->sb_hiwat)
 		sb->sb_lowat = sb->sb_hiwat;
 

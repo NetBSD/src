@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.154 2018/06/26 06:48:01 msaitoh Exp $	*/
+/*	$NetBSD: if_de.c,v 1.155 2018/09/03 16:29:32 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1994-1997 Matt Thomas (matt@3am-software.com)
@@ -37,7 +37,7 @@
  *   board which support 21040, 21041, or 21140 (mostly).
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_de.c,v 1.154 2018/06/26 06:48:01 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_de.c,v 1.155 2018/09/03 16:29:32 riastradh Exp $");
 
 #define	TULIP_HDR_DATA
 
@@ -4476,7 +4476,7 @@ tulip_txput(
 	unsigned clsize = PAGE_SIZE - (((u_long) addr) & PAGE_MASK);
 
 	while (len > 0) {
-	    unsigned slen = min(len, clsize);
+	    unsigned slen = uimin(len, clsize);
 #ifdef BIG_PACKET
 	    int partial = 0;
 	    if (slen >= 2048)

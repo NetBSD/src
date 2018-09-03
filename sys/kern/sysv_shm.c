@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_shm.c,v 1.131 2015/11/26 13:15:34 martin Exp $	*/
+/*	$NetBSD: sysv_shm.c,v 1.132 2018/09/03 16:29:35 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2007 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_shm.c,v 1.131 2015/11/26 13:15:34 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_shm.c,v 1.132 2018/09/03 16:29:35 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sysv.h"
@@ -975,7 +975,7 @@ shminit(struct sysctllog **clog)
 	    ALIGN(shminfo.shmmni * sizeof(struct shmid_ds)));
 
 	if (shminfo.shmmax == 0)
-		shminfo.shmmax = max(physmem / 4, 1024) * PAGE_SIZE;
+		shminfo.shmmax = uimax(physmem / 4, 1024) * PAGE_SIZE;
 	else
 		shminfo.shmmax *= PAGE_SIZE;
 	shminfo.shmall = shminfo.shmmax / PAGE_SIZE;

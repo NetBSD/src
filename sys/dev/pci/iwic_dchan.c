@@ -1,4 +1,4 @@
-/*	$NetBSD: iwic_dchan.c,v 1.9 2014/03/23 02:54:12 christos Exp $	*/
+/*	$NetBSD: iwic_dchan.c,v 1.10 2018/09/03 16:29:32 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Dave Boyce. All rights reserved.
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iwic_dchan.c,v 1.9 2014/03/23 02:54:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iwic_dchan.c,v 1.10 2018/09/03 16:29:32 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -412,7 +412,7 @@ iwic_dchan_transmit(struct iwic_softc *sc)
 		return;
 
 	ptr = sc->sc_dchan.obuf_ptr;
-	len = min(sc->sc_dchan.obuf_len, IWIC_DCHAN_FIFO_LEN);
+	len = uimin(sc->sc_dchan.obuf_len, IWIC_DCHAN_FIFO_LEN);
 
 	if(sc->sc_trace & TRACE_D_TX)
 	{

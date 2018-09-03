@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_cc.c,v 1.39 2009/03/18 16:00:09 cegger Exp $ */
+/*	$NetBSD: ite_cc.c,v 1.40 2018/09/03 16:29:22 riastradh Exp $ */
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -33,7 +33,7 @@
 #include "opt_amigaccgrf.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite_cc.c,v 1.39 2009/03/18 16:00:09 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite_cc.c,v 1.40 2018/09/03 16:29:22 riastradh Exp $");
 
 #include "grfcc.h"
 #if NGRFCC > 0
@@ -441,7 +441,7 @@ cursor32(struct ite_softc *ip, int flag)
 	 * draw the cursor
 	 */
 
-	ip->cursorx = min(ip->curx, ip->cols-1);
+	ip->cursorx = uimin(ip->curx, ip->cols-1);
 	ip->cursory = ip->cury;
 	cstart = 0;
 	cend = ip->ftheight-1;

@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.178 2017/07/14 17:50:11 christos Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.179 2018/09/03 16:29:33 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.178 2017/07/14 17:50:11 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.179 2018/09/03 16:29:33 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_scsi.h"
@@ -2657,7 +2657,7 @@ show_scsipi_cmd(struct scsipi_xfer *xs)
 		}
 		printf("-[%d bytes]\n", xs->datalen);
 		if (xs->datalen)
-			show_mem(xs->data, min(64, xs->datalen));
+			show_mem(xs->data, uimin(64, xs->datalen));
 	} else
 		printf("-RESET-\n");
 }

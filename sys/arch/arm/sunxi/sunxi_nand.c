@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_nand.c,v 1.5 2017/11/15 00:30:02 jmcneill Exp $ */
+/* $NetBSD: sunxi_nand.c,v 1.6 2018/09/03 16:29:24 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_nand.c,v 1.5 2017/11/15 00:30:02 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_nand.c,v 1.6 2018/09/03 16:29:24 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -257,7 +257,7 @@ sunxi_nand_read_buf_n(device_t dev, void *data, size_t len, int n)
 	sunxi_nand_send_address(sc, chip);
 
 	while (resid > 0) {
-		const size_t xfer = min(resid, NDFC_RAM_SIZE);
+		const size_t xfer = uimin(resid, NDFC_RAM_SIZE);
 
 		/* Wait for space in the command FIFO */
 		error = sunxi_nand_wait_status(sc, NDFC_ST_CMD_FIFO_STATUS, 0);
@@ -314,7 +314,7 @@ sunxi_nand_write_buf_n(device_t dev, const void *data, size_t len, int n)
 	sunxi_nand_send_address(sc, chip);
 
 	while (resid > 0) {
-		const size_t xfer = min(resid, NDFC_RAM_SIZE);
+		const size_t xfer = uimin(resid, NDFC_RAM_SIZE);
 
 		/* Wait for space in the command FIFO */
 		error = sunxi_nand_wait_status(sc, NDFC_ST_CMD_FIFO_STATUS, 0);

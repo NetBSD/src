@@ -1,4 +1,4 @@
-/*	$NetBSD: pmu.c,v 1.31 2018/03/28 15:34:29 macallan Exp $ */
+/*	$NetBSD: pmu.c,v 1.32 2018/09/03 16:29:25 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2006 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmu.c,v 1.31 2018/03/28 15:34:29 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmu.c,v 1.32 2018/09/03 16:29:25 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -594,7 +594,7 @@ pmu_send(void *cookie, int cmd, int length, uint8_t *in_msg, int rlen,
 		pmu_read_byte(sc, &out_len);
 		rcv_len = out_len + 1;
 	}
-	for (i = 1; i < min(rcv_len, rlen); i++)
+	for (i = 1; i < uimin(rcv_len, rlen); i++)
 		pmu_read_byte(sc, &out_msg[i]);
 
 done:

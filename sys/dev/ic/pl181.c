@@ -1,4 +1,4 @@
-/* $NetBSD: pl181.c,v 1.5 2018/02/19 19:00:42 jmcneill Exp $ */
+/* $NetBSD: pl181.c,v 1.6 2018/09/03 16:29:31 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pl181.c,v 1.5 2018/02/19 19:00:42 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pl181.c,v 1.6 2018/09/03 16:29:31 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -172,7 +172,7 @@ plmmc_intr_xfer(struct plmmc_softc *sc, struct sdmmc_command *cmd)
 	if (cmd->c_flags & SCF_CMD_READ)
 		len = sc->sc_fifo_resid - fifo_cnt;
 	else
-		len = min(sc->sc_fifo_resid, PL181_FIFO_DEPTH);
+		len = uimin(sc->sc_fifo_resid, PL181_FIFO_DEPTH);
 
 	if (len == 0)
 		return 0;
@@ -384,7 +384,7 @@ plmmc_do_command(sdmmc_chipset_handle_t sch, struct sdmmc_command *cmd)
 
 	KASSERT(mutex_owned(&sc->sc_lock));
 
-	const int xferlen = min(cmd->c_resid, PLMMC_MAXXFER);
+	const int xferlen = uimin(cmd->c_resid, PLMMC_MAXXFER);
 
 	sc->sc_cmd = cmd;
 	sc->sc_fifo_resid = xferlen;

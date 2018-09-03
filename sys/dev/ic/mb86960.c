@@ -1,4 +1,4 @@
-/*	$NetBSD: mb86960.c,v 1.87 2018/06/26 06:48:00 msaitoh Exp $	*/
+/*	$NetBSD: mb86960.c,v 1.88 2018/09/03 16:29:31 riastradh Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mb86960.c,v 1.87 2018/06/26 06:48:00 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mb86960.c,v 1.88 2018/09/03 16:29:31 riastradh Exp $");
 
 /*
  * Device driver for Fujitsu MB86960A/MB86965A based Ethernet cards.
@@ -1411,7 +1411,7 @@ mb86960_write_mbufs(struct mb86960_softc *sc, struct mbuf *m)
 	 * packet in the transmission buffer, we can skip the
 	 * padding process.  It may gain performance slightly.  FIXME.
 	 */
-	len = max(totlen, (ETHER_MIN_LEN - ETHER_CRC_LEN));
+	len = uimax(totlen, (ETHER_MIN_LEN - ETHER_CRC_LEN));
 	if (sc->sc_flags & FE_FLAGS_SBW_BYTE) {
 		bus_space_write_1(bst, bsh, FE_BMPR8, len);
 		bus_space_write_1(bst, bsh, FE_BMPR8, len >> 8);
@@ -1427,7 +1427,7 @@ mb86960_write_mbufs(struct mb86960_softc *sc, struct mbuf *m)
 	 * if the chip is set in SBW_WORD mode.
 	 */
 	sc->txb_free -= FE_TXLEN_SIZE +
-	    max(totlen, (ETHER_MIN_LEN - ETHER_CRC_LEN));
+	    uimax(totlen, (ETHER_MIN_LEN - ETHER_CRC_LEN));
 	sc->txb_count++;
 
 #if FE_DELAYED_PADDING

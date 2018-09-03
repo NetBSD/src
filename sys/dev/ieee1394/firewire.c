@@ -1,4 +1,4 @@
-/*	$NetBSD: firewire.c,v 1.47 2016/11/20 22:47:39 riastradh Exp $	*/
+/*	$NetBSD: firewire.c,v 1.48 2018/09/03 16:29:31 riastradh Exp $	*/
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
  * Copyright (c) 1998-2002 Katsushi Kobayashi and Hidetoshi Shimokawa
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: firewire.c,v 1.47 2016/11/20 22:47:39 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: firewire.c,v 1.48 2018/09/03 16:29:31 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -1016,7 +1016,7 @@ fw_sidrcv(struct firewire_comm* fc, uint32_t *sid, u_int len)
 			for (j = 0; j < node; j++)
 				fc->speed_map->speed[j][node] =
 				    fc->speed_map->speed[node][j] =
-				    min(fc->speed_map->speed[j][j],
+				    uimin(fc->speed_map->speed[j][j],
 							self_id->p0.phy_speed);
 			if ((fc->irm == -1 || self_id->p0.phy_id > fc->irm) &&
 			    (self_id->p0.link_active && self_id->p0.contender))

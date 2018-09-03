@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_mmc.c,v 1.14 2018/07/02 12:47:19 jmcneill Exp $ */
+/* $NetBSD: dwc_mmc.c,v 1.15 2018/09/03 16:29:31 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2014-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc_mmc.c,v 1.14 2018/07/02 12:47:19 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc_mmc.c,v 1.15 2018/09/03 16:29:31 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -480,12 +480,12 @@ dwc_mmc_dma_prepare(struct dwc_mmc_softc *sc, struct sdmmc_command *cmd)
 	for (seg = 0; seg < cmd->c_dmamap->dm_nsegs; seg++) {
 		bus_addr_t paddr = cmd->c_dmamap->dm_segs[seg].ds_addr;
 		bus_size_t len = cmd->c_dmamap->dm_segs[seg].ds_len;
-		resid = min(len, cmd->c_resid);
+		resid = uimin(len, cmd->c_resid);
 		off = 0;
 		while (resid > 0) {
 			if (desc == sc->sc_idma_ndesc)
 				break;
-			len = min(sc->sc_idma_xferlen, resid);
+			len = uimin(sc->sc_idma_xferlen, resid);
 			dma[desc].dma_buf_size = htole32(len);
 			dma[desc].dma_buf_addr = htole32(paddr + off);
 			dma[desc].dma_config = htole32(

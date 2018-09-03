@@ -1,4 +1,4 @@
-/*	$NetBSD: wsdisplay_glyphcache.c,v 1.10 2017/11/04 01:52:09 christos Exp $	*/
+/*	$NetBSD: wsdisplay_glyphcache.c,v 1.11 2018/09/03 16:29:34 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2012 Michael Lorenz
@@ -116,14 +116,14 @@ glyphcache_reconfig(glyphcache *gc, int cellwidth, int cellheight, long attr)
 	if (buckets < 1)
 		return ENOMEM;
 
-	buckets = min(buckets, gc->gc_nbuckets);
+	buckets = uimin(buckets, gc->gc_nbuckets);
 	gc->gc_numbuckets = buckets;
 
 	DPRINTF("%s: using %d buckets\n", __func__, buckets);
 	for (i = 0; i < buckets; i++) {
 		b = &gc->gc_buckets[i];
 		b->gb_firstcell = usedcells;
-		b->gb_numcells = min(223, gc->gc_numcells - usedcells);
+		b->gb_numcells = uimin(223, gc->gc_numcells - usedcells);
 		usedcells += 223;
 		b->gb_usedcells = 0;
 		b->gb_index = -1;

@@ -1,4 +1,4 @@
-/*	$NetBSD: sl811hs.c,v 1.99 2018/04/09 16:21:10 jakllsch Exp $	*/
+/*	$NetBSD: sl811hs.c,v 1.100 2018/09/03 16:29:31 riastradh Exp $	*/
 
 /*
  * Not (c) 2007 Matthew Orgass
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.99 2018/04/09 16:21:10 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.100 2018/09/03 16:29:31 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_slhci.h"
@@ -905,7 +905,7 @@ slhci_start(struct usbd_xfer *xfer)
 	    | (UE_GET_DIR(ed->bEndpointAddress) == UE_DIR_IN ? SL11_PID_IN :
 	    SL11_PID_OUT);
 	spipe->newlen[0] = xfer->ux_length % max_packet;
-	spipe->newlen[1] = min(xfer->ux_length, max_packet);
+	spipe->newlen[1] = uimin(xfer->ux_length, max_packet);
 
 	if (spipe->ptype == PT_BULK || spipe->ptype == PT_INTR) {
 		if (spipe->pflags & PF_TOGGLE)
@@ -3124,7 +3124,7 @@ slhci_set_feature(struct slhci_softc *sc, unsigned int what)
 			slhci_reset(sc);
 		} else {
 			t->flags |= F_RESET;
-			callout_schedule(&sc->sc_timer, max(mstohz(50), 2));
+			callout_schedule(&sc->sc_timer, uimax(mstohz(50), 2));
 		}
 	} else if (what == UHF_PORT_SUSPEND) {
 		printf("%s: USB Suspend not implemented!\n", SC_NAME(sc));
@@ -3315,7 +3315,7 @@ slhci_roothub_ctrl(struct usbd_bus *bus, usb_device_request_t *req,
 			} else if (value == (UDESC_CONFIG<<8)) {
 				struct usb_roothub_descriptors confd;
 
-				actlen = min(buflen, sizeof(confd));
+				actlen = uimin(buflen, sizeof(confd));
 				memcpy(&confd, buf, actlen);
 
 				/* 2 mA units */
@@ -3339,7 +3339,7 @@ slhci_roothub_ctrl(struct usbd_bus *bus, usb_device_request_t *req,
 			if (value == (UDESC_HUB<<8)) {
 				usb_hub_descriptor_t hubd;
 
-				actlen = min(buflen, sizeof(hubd));
+				actlen = uimin(buflen, sizeof(hubd));
 				memcpy(&hubd, buf, actlen);
 				hubd.bHubContrCurrent =
 				    500 - t->max_current;

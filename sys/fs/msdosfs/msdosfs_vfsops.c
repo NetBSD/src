@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.129 2017/11/27 15:02:05 mlelstv Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.130 2018/09/03 16:29:34 riastradh Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.129 2017/11/27 15:02:05 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.130 2018/09/03 16:29:34 riastradh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -736,7 +736,7 @@ msdosfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l, struct msd
 		 * limit block size to what is needed to read a FAT block
 		 * to not exceed MAXBSIZE
 		 */
-		pmp->pm_fatblocksec = min(3, fatblocksecs);
+		pmp->pm_fatblocksec = uimin(3, fatblocksecs);
 		pmp->pm_fatblocksize = pmp->pm_fatblocksec
 			* pmp->pm_BytesPerSec;
 	} else {

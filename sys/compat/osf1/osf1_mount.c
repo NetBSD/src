@@ -1,4 +1,4 @@
-/*	$NetBSD: osf1_mount.c,v 1.54 2017/04/13 09:17:55 hannken Exp $	*/
+/*	$NetBSD: osf1_mount.c,v 1.55 2018/09/03 16:29:29 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_mount.c,v 1.54 2017/04/13 09:17:55 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_mount.c,v 1.55 2018/09/03 16:29:29 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -122,7 +122,7 @@ osf1_sys_fstatfs(struct lwp *l, const struct osf1_sys_fstatfs_args *uap, registe
 		goto out;
 	sp->f_flag = mp->mnt_flag & MNT_VISFLAGMASK;
 	osf1_cvt_statfs_from_native(sp, &osfs);
-	error = copyout(&osfs, SCARG(uap, buf), min(sizeof osfs,
+	error = copyout(&osfs, SCARG(uap, buf), uimin(sizeof osfs,
 	    SCARG(uap, len)));
  out:
  	fd_putfile(SCARG(uap, fd));
@@ -219,7 +219,7 @@ osf1_sys_statfs(struct lwp *l, const struct osf1_sys_statfs_args *uap, register_
 		return (error);
 	sp->f_flag = mp->mnt_flag & MNT_VISFLAGMASK;
 	osf1_cvt_statfs_from_native(sp, &osfs);
-	return copyout(&osfs, SCARG(uap, buf), min(sizeof osfs,
+	return copyout(&osfs, SCARG(uap, buf), uimin(sizeof osfs,
 	    SCARG(uap, len)));
 }
 

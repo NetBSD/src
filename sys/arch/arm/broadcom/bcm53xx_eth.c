@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: bcm53xx_eth.c,v 1.31 2018/06/26 06:47:57 msaitoh Exp $");
+__KERNEL_RCSID(1, "$NetBSD: bcm53xx_eth.c,v 1.32 2018/09/03 16:29:23 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -480,7 +480,7 @@ bcmeth_ifinit(struct ifnet *ifp)
 	struct bcmeth_softc * const sc = ifp->if_softc;
 	int error = 0;
 
-	sc->sc_maxfrm = max(ifp->if_mtu + 32, MCLBYTES);
+	sc->sc_maxfrm = uimax(ifp->if_mtu + 32, MCLBYTES);
 	if (ifp->if_mtu > ETHERMTU_JUMBO)
 		return error;
 
@@ -1626,7 +1626,7 @@ bcmeth_txq_consume(
 		if (consumer == txq->txq_producer) {
 			txq->txq_consumer = consumer;
 			txq->txq_free += txfree;
-			txq->txq_lastintr -= min(txq->txq_lastintr, txfree);
+			txq->txq_lastintr -= uimin(txq->txq_lastintr, txfree);
 #if 0
 			printf("%s: empty: freed %zu descriptors going from %zu to %zu\n",
 			    __func__, txfree, txq->txq_free - txfree, txq->txq_free);
@@ -1640,7 +1640,7 @@ bcmeth_txq_consume(
 		if (consumer == txq->txq_first + __SHIFTOUT(s0, XMT_CURRDSCR)) {
 			txq->txq_consumer = consumer;
 			txq->txq_free += txfree;
-			txq->txq_lastintr -= min(txq->txq_lastintr, txfree);
+			txq->txq_lastintr -= uimin(txq->txq_lastintr, txfree);
 #if 0
 			printf("%s: freed %zu descriptors\n",
 			    __func__, txfree);

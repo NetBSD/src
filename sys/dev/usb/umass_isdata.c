@@ -1,4 +1,4 @@
-/*	$NetBSD: umass_isdata.c,v 1.36 2017/10/20 07:06:08 jdolecek Exp $	*/
+/*	$NetBSD: umass_isdata.c,v 1.37 2018/09/03 16:29:34 riastradh Exp $	*/
 
 /*
  * TODO:
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass_isdata.c,v 1.36 2017/10/20 07:06:08 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass_isdata.c,v 1.37 2018/09/03 16:29:34 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -334,7 +334,7 @@ uisdata_bio1(struct ata_drive_datas *drv, struct ata_xfer *xfer)
 	if (ata_bio->flags & ATA_SINGLE)
 		nblks = 1;
 	else
-		nblks = min(drv->multi, nbytes / drv->lp->d_secsize);
+		nblks = uimin(drv->multi, nbytes / drv->lp->d_secsize);
 	nbytes = nblks * drv->lp->d_secsize;
 	ata_bio->nblks = nblks;
 	ata_bio->nbytes = nbytes;

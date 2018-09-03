@@ -1,4 +1,4 @@
-/*	$NetBSD: iop.c,v 1.88 2017/10/28 04:53:55 riastradh Exp $	*/
+/*	$NetBSD: iop.c,v 1.89 2018/09/03 16:29:31 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002, 2007 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.88 2017/10/28 04:53:55 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.89 2018/09/03 16:29:31 riastradh Exp $");
 
 #include "iop.h"
 
@@ -2018,7 +2018,7 @@ iop_msg_map_bio(struct iop_softc *sc, struct iop_msg *im, u_int32_t *mb,
 
 			while (slen > 0) {
 				eaddr = (saddr + PAGE_SIZE) & ~(PAGE_SIZE - 1);
-				tlen = min(eaddr - saddr, slen);
+				tlen = uimin(eaddr - saddr, slen);
 				slen -= tlen;
 				*p++ = le32toh(saddr);
 				saddr = eaddr;

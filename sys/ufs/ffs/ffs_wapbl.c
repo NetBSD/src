@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_wapbl.c,v 1.41 2017/05/28 16:37:55 hannken Exp $	*/
+/*	$NetBSD: ffs_wapbl.c,v 1.42 2018/09/03 16:29:37 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2003,2006,2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_wapbl.c,v 1.41 2017/05/28 16:37:55 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_wapbl.c,v 1.42 2018/09/03 16:29:37 riastradh Exp $");
 
 #define WAPBL_INTERNAL
 
@@ -575,8 +575,8 @@ wapbl_log_position(struct mount *mp, struct fs *fs, struct vnode *devvp,
 	desired_logsize =
 	    ffs_lfragtosize(fs, fs->fs_size) / UFS_WAPBL_JOURNAL_SCALE;
 	DPRINTF("desired log size = %" PRId64 " kB\n", desired_logsize / 1024);
-	desired_logsize = max(desired_logsize, UFS_WAPBL_MIN_JOURNAL_SIZE);
-	desired_logsize = min(desired_logsize, UFS_WAPBL_MAX_JOURNAL_SIZE);
+	desired_logsize = uimax(desired_logsize, UFS_WAPBL_MIN_JOURNAL_SIZE);
+	desired_logsize = uimin(desired_logsize, UFS_WAPBL_MAX_JOURNAL_SIZE);
 	DPRINTF("adjusted desired log size = %" PRId64 " kB\n",
 	    desired_logsize / 1024);
 
@@ -785,8 +785,8 @@ wapbl_find_log_start(struct mount *mp, struct vnode *vp, off_t logsize,
 		logsize = ffs_lfragtosize(fs, fs->fs_dsize) /
 		    UFS_WAPBL_JOURNAL_SCALE;
 		DPRINTF("suggested log size = %" PRId64 "\n", logsize);
-		logsize = max(logsize, UFS_WAPBL_MIN_JOURNAL_SIZE);
-		logsize = min(logsize, UFS_WAPBL_MAX_JOURNAL_SIZE);
+		logsize = uimax(logsize, UFS_WAPBL_MIN_JOURNAL_SIZE);
+		logsize = uimin(logsize, UFS_WAPBL_MAX_JOURNAL_SIZE);
 		DPRINTF("adjusted log size = %" PRId64 "\n", logsize);
 	} else {
 		fixedsize = 1;
@@ -920,7 +920,7 @@ wapbl_find_log_start(struct mount *mp, struct vnode *vp, off_t logsize,
 		*addr = best_addr + ffs_blkstofrags(fs, indir_blks);
 		*indir_addr = best_addr;
 	}
-	*size = min(desired_blks, best_blks) - indir_blks;
+	*size = uimin(desired_blks, best_blks) - indir_blks;
 	return;
 
 bad:

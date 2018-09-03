@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_nfsdport.c,v 1.2 2016/12/13 21:50:32 pgoyette Exp $	*/
+/*	$NetBSD: nfs_nfsdport.c,v 1.3 2018/09/03 16:29:34 riastradh Exp $	*/
 /*-
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("FreeBSD: head/sys/fs/nfsserver/nfs_nfsdport.c 308212 2016-11-02 12:43:15Z kib "); */
-__RCSID("$NetBSD: nfs_nfsdport.c,v 1.2 2016/12/13 21:50:32 pgoyette Exp $");
+__RCSID("$NetBSD: nfs_nfsdport.c,v 1.3 2018/09/03 16:29:34 riastradh Exp $");
 
 #if 0
 #include <sys/capsicum.h>
@@ -657,7 +657,7 @@ nfsvno_read(struct vnode *vp, off_t off, int cnt, struct ucred *cred,
 		NFSMGET(m);
 		MCLGET(m, M_WAITOK);
 		m->m_len = 0;
-		siz = min(M_TRAILINGSPACE(m), left);
+		siz = uimin(M_TRAILINGSPACE(m), left);
 		left -= siz;
 		i++;
 		if (m3)
@@ -675,7 +675,7 @@ nfsvno_read(struct vnode *vp, off_t off, int cnt, struct ucred *cred,
 	while (left > 0) {
 		if (m == NULL)
 			panic("nfsvno_read iov");
-		siz = min(M_TRAILINGSPACE(m), left);
+		siz = uimin(M_TRAILINGSPACE(m), left);
 		if (siz > 0) {
 			iv->iov_base = mtod(m, caddr_t) + m->m_len;
 			iv->iov_len = siz;
@@ -744,7 +744,7 @@ nfsvno_write(struct vnode *vp, off_t off, int retlen, int cnt, int stable,
 		if (mp == NULL)
 			panic("nfsvno_write");
 		if (i > 0) {
-			i = min(i, len);
+			i = uimin(i, len);
 			ivp->iov_base = cp;
 			ivp->iov_len = i;
 			ivp++;

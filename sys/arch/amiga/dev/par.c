@@ -1,4 +1,4 @@
-/*	$NetBSD: par.c,v 1.40 2014/07/25 08:10:31 dholland Exp $ */
+/*	$NetBSD: par.c,v 1.41 2018/09/03 16:29:22 riastradh Exp $ */
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: par.c,v 1.40 2014/07/25 08:10:31 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: par.c,v 1.41 2018/09/03 16:29:22 riastradh Exp $");
 
 /*
  * parallel port interface
@@ -287,7 +287,7 @@ parrw(dev_t dev, register struct uio *uio)
 	   dev, uio, uio->uio_rw == UIO_READ ? 'R' : 'W',
 	   sc->sc_burst, sc->sc_timo, uio->uio_resid);
 #endif
-  buflen = min(sc->sc_burst, uio->uio_resid);
+  buflen = uimin(sc->sc_burst, uio->uio_resid);
   buf = (char *)malloc(buflen, M_DEVBUF, M_WAITOK);
   sc->sc_flags |= PARF_UIO;
   if (sc->sc_timo > 0)
@@ -297,7 +297,7 @@ parrw(dev_t dev, register struct uio *uio)
     }
   while (uio->uio_resid > 0)
     {
-      len = min(buflen, uio->uio_resid);
+      len = uimin(buflen, uio->uio_resid);
       cp = buf;
       if (uio->uio_rw == UIO_WRITE)
 	{

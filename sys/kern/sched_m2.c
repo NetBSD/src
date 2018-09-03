@@ -1,4 +1,4 @@
-/*	$NetBSD: sched_m2.c,v 1.32 2014/06/24 10:08:45 maxv Exp $	*/
+/*	$NetBSD: sched_m2.c,v 1.33 2018/09/03 16:29:35 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sched_m2.c,v 1.32 2014/06/24 10:08:45 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sched_m2.c,v 1.33 2018/09/03 16:29:35 riastradh Exp $");
 
 #include <sys/param.h>
 
@@ -189,7 +189,7 @@ sched_nice(struct proc *p, int prio)
 		lwp_lock(l);
 		if (l->l_class == SCHED_OTHER) {
 			pri_t pri = l->l_priority - n;
-			pri = (n < 0) ? min(pri, PRI_HIGHEST_TS) : imax(pri, 0);
+			pri = (n < 0) ? uimin(pri, PRI_HIGHEST_TS) : imax(pri, 0);
 			lwp_changepri(l, pri);
 		}
 		lwp_unlock(l);
@@ -217,8 +217,8 @@ sched_slept(struct lwp *l)
 
 		KASSERT(l->l_class == SCHED_OTHER);
 		if (__predict_false(p->p_nice < NZERO)) {
-			const int n = max((NZERO - p->p_nice) >> 2, 1);
-			l->l_priority = min(l->l_priority + n, PRI_HIGHEST_TS);
+			const int n = uimax((NZERO - p->p_nice) >> 2, 1);
+			l->l_priority = uimin(l->l_priority + n, PRI_HIGHEST_TS);
 		} else {
 			l->l_priority++;
 		}
@@ -315,7 +315,7 @@ sched_tick(struct cpu_info *ci)
 
 		p = l->l_proc;
 		if (__predict_false(p->p_nice > NZERO)) {
-			const int n = max((p->p_nice - NZERO) >> 2, 1);
+			const int n = uimax((p->p_nice - NZERO) >> 2, 1);
 			l->l_priority = imax(l->l_priority - n, 0);
 		} else
 			l->l_priority--;

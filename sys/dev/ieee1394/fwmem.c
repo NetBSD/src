@@ -1,4 +1,4 @@
-/*	$NetBSD: fwmem.c,v 1.18 2014/02/25 18:30:09 pooka Exp $	*/
+/*	$NetBSD: fwmem.c,v 1.19 2018/09/03 16:29:31 riastradh Exp $	*/
 /*-
  * Copyright (c) 2002-2003
  * 	Hidetoshi Shimokawa. All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwmem.c,v 1.18 2014/02/25 18:30:09 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwmem.c,v 1.19 2018/09/03 16:29:31 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -458,7 +458,7 @@ fwmem_xfer_req(struct fw_device *fwdev, void *sc, int spd, int slen, int rlen,
 	if (spd < 0)
 		xfer->send.spd = fwdev->speed;
 	else
-		xfer->send.spd = min(spd, fwdev->speed);
+		xfer->send.spd = uimin(spd, fwdev->speed);
 	xfer->hand = hand;
 	xfer->sc = sc;
 	xfer->send.pay_len = slen;

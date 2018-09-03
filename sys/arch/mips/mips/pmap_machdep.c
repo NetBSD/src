@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_machdep.c,v 1.22 2018/06/06 01:49:08 maya Exp $	*/
+/*	$NetBSD: pmap_machdep.c,v 1.23 2018/09/03 16:29:26 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap_machdep.c,v 1.22 2018/06/06 01:49:08 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_machdep.c,v 1.23 2018/09/03 16:29:26 riastradh Exp $");
 
 /*
  *	Manages physical address maps.
@@ -344,7 +344,7 @@ pmap_bootstrap(void)
 
 	if (MIPS_CACHE_VIRTUAL_ALIAS && uvmexp.ncolors) {
 		pmap_page_colormask = (uvmexp.ncolors - 1) << PAGE_SHIFT;
-		pmap_page_cache_alias_mask = max(
+		pmap_page_cache_alias_mask = uimax(
 		    mips_cache_info.mci_cache_alias_mask,
 		    mips_cache_info.mci_icache_alias_mask);
 	}
@@ -525,7 +525,7 @@ pmap_md_alloc_ephemeral_address_space(struct cpu_info *ci)
 #endif
 	    || MIPS_CACHE_VIRTUAL_ALIAS
 	    || MIPS_ICACHE_VIRTUAL_ALIAS) {
-		vsize_t size = max(mci->mci_pdcache_way_size, mci->mci_picache_way_size);
+		vsize_t size = uimax(mci->mci_pdcache_way_size, mci->mci_picache_way_size);
 		const u_int __diagused mask = pmap_page_cache_alias_mask;
 
 		ci->ci_pmap_dstbase = uvm_km_alloc(kernel_map, size, size,

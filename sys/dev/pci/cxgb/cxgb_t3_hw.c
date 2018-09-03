@@ -28,7 +28,7 @@ POSSIBILITY OF SUCH DAMAGE.
 ***************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cxgb_t3_hw.c,v 1.2 2018/02/08 09:05:19 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cxgb_t3_hw.c,v 1.3 2018/09/03 16:29:32 riastradh Exp $");
 
 
 #ifdef CONFIG_DEFINED
@@ -838,7 +838,7 @@ static int t3_write_flash(adapter_t *adapter, unsigned int addr,
         return ret;
 
     for (left = n; left; left -= c) {
-        c = min(left, 4U);
+        c = uimin(left, 4U);
         for (val = 0, i = 0; i < c; ++i)
             val = (val << 8) + *data++;
 
@@ -1050,7 +1050,7 @@ int t3_load_fw(adapter_t *adapter, const u8 *fw_data, unsigned int size)
 
     size -= 8;  /* trim off version and checksum */
     for (addr = FW_FLASH_BOOT_ADDR; size; ) {
-        unsigned int chunk_size = min(size, 256U);
+        unsigned int chunk_size = uimin(size, 256U);
 
         ret = t3_write_flash(adapter, addr, chunk_size, fw_data);
         if (ret)
@@ -2658,7 +2658,7 @@ int t3_tp_set_coalescing_size(adapter_t *adap, unsigned int size, int psh)
         val |= F_RXCOALESCEENABLE;
         if (psh)
             val |= F_RXCOALESCEPSHEN;
-        size = min(MAX_RX_COALESCING_LEN, size);
+        size = uimin(MAX_RX_COALESCING_LEN, size);
         t3_write_reg(adap, A_TP_PARA_REG2, V_RXCOALESCESIZE(size) |
                  V_MAXRXDATA(MAX_RX_COALESCING_LEN));
     }
@@ -2776,7 +2776,7 @@ void t3_load_mtus(adapter_t *adap, unsigned short mtus[NMTUS],
     unsigned int i, w;
 
     for (i = 0; i < NMTUS; ++i) {
-        unsigned int mtu = min(mtus[i], mtu_cap);
+        unsigned int mtu = uimin(mtus[i], mtu_cap);
         unsigned int log2 = fls(mtu);
 
         if (!(mtu & ((1 << log2) >> 2)))     /* round */
@@ -2787,7 +2787,7 @@ void t3_load_mtus(adapter_t *adap, unsigned short mtus[NMTUS],
         for (w = 0; w < NCCTRL_WIN; ++w) {
             unsigned int inc;
 
-            inc = max(((mtu - 40) * alpha[w]) / avg_pkts[w],
+            inc = uimax(((mtu - 40) * alpha[w]) / avg_pkts[w],
                   CC_MIN_INCR);
 
             t3_write_reg(adap, A_TP_CCTRL_TABLE, (i << 21) |
@@ -3461,10 +3461,10 @@ int t3_init_hw(adapter_t *adapter, u32 fw_params)
 
 #ifdef CONFIG_CHELSIO_T3_CORE
     t3_tp_set_coalescing_size(adapter,
-                  min(adapter->params.sge.max_pkt_size,
+                  uimin(adapter->params.sge.max_pkt_size,
                       MAX_RX_COALESCING_LEN), 1);
     t3_tp_set_max_rxsize(adapter,
-                 min(adapter->params.sge.max_pkt_size, 16384U));
+                 uimin(adapter->params.sge.max_pkt_size, 16384U));
     ulp_config(adapter, &adapter->params.tp);
 #endif
     if (is_pcie(adapter))

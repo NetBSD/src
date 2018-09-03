@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_file.c,v 1.44 2017/07/28 15:34:06 riastradh Exp $ */
+/* $NetBSD: osf1_file.c,v 1.45 2018/09/03 16:29:29 riastradh Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_file.c,v 1.44 2017/07/28 15:34:06 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_file.c,v 1.45 2018/09/03 16:29:29 riastradh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_syscall_debug.h"
@@ -170,7 +170,7 @@ osf1_sys_getdirentries(struct lwp *l, const struct osf1_sys_getdirentries_args *
 		goto out1;
 	}
 
-	buflen = min(MAXBSIZE, SCARG(uap, nbytes));
+	buflen = uimin(MAXBSIZE, SCARG(uap, nbytes));
 	buf = kmem_alloc(buflen, KM_SLEEP);
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	off = off1 = fp->f_offset;

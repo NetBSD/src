@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.197 2017/11/30 20:25:55 christos Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.198 2018/09/03 16:29:35 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.197 2017/11/30 20:25:55 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.198 2018/09/03 16:29:35 riastradh Exp $");
 
 #include "veriexec.h"
 
@@ -482,7 +482,7 @@ vn_readdir(file_t *fp, char *bf, int segflg, u_int count, int *done,
 	int error, eofflag;
 
 	/* Limit the size on any kernel buffers used by VOP_READDIR */
-	count = min(MAXBSIZE, count);
+	count = uimin(MAXBSIZE, count);
 
 unionread:
 	if (vp->v_type != VDIR)

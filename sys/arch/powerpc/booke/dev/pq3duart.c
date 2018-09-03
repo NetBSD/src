@@ -1,4 +1,4 @@
-/*	$NetBSD: pq3duart.c,v 1.3 2011/08/01 17:05:17 matt Exp $	*/
+/*	$NetBSD: pq3duart.c,v 1.4 2018/09/03 16:29:26 riastradh Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pq3duart.c,v 1.3 2011/08/01 17:05:17 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pq3duart.c,v 1.4 2018/09/03 16:29:26 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -165,7 +165,7 @@ pq3duart_attach(device_t parent, device_t self, void *aux)
 
 	aprint_normal(": %u ports\n", nports);
 
-	for (u_int port = 1; port <= min(2, nports); port++) {
+	for (u_int port = 1; port <= uimin(2, nports); port++) {
 		da.da_memt = cna->cna_memt;
 		da.da_port = port;
 		da.da_addr = cnl->cnl_addr + (port - 1) * DUART_SIZE;

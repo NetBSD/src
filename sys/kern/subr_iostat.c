@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_iostat.c,v 1.23 2017/06/01 02:45:13 chs Exp $	*/
+/*	$NetBSD: subr_iostat.c,v 1.24 2018/09/03 16:29:35 riastradh Exp $	*/
 /*	NetBSD: subr_disk.c,v 1.69 2005/05/29 22:24:15 christos Exp	*/
 
 /*-
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_iostat.c,v 1.23 2017/06/01 02:45:13 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_iostat.c,v 1.24 2018/09/03 16:29:35 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -452,7 +452,7 @@ sysctl_hw_iostats(SYSCTLFN_ARGS)
 
 		sdrive.busy = stats->io_busy;
 
-		error = copyout(&sdrive, where, min(tocopy, sizeof(sdrive)));
+		error = copyout(&sdrive, where, uimin(tocopy, sizeof(sdrive)));
 		if (error)
 			break;
 		where += tocopy;

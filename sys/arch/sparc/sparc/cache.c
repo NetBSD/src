@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.100 2018/01/16 08:23:17 mrg Exp $ */
+/*	$NetBSD: cache.c,v 1.101 2018/09/03 16:29:27 riastradh Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.100 2018/01/16 08:23:17 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.101 2018/09/03 16:29:27 riastradh Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_sparc_arch.h"
@@ -141,7 +141,7 @@ ms1_cache_enable(void)
 {
 	u_int pcr;
 
-	cache_alias_dist = max(
+	cache_alias_dist = uimax(
 		CACHEINFO.ic_totalsize / CACHEINFO.ic_associativity,
 		CACHEINFO.dc_totalsize / CACHEINFO.dc_associativity);
 	cache_alias_bits = (cache_alias_dist - 1) & ~PGOFSET;
@@ -258,7 +258,7 @@ swift_cache_enable(void)
 	int i, ls, ts;
 	u_int pcr;
 
-	cache_alias_dist = max(
+	cache_alias_dist = uimax(
 		CACHEINFO.ic_totalsize / CACHEINFO.ic_associativity,
 		CACHEINFO.dc_totalsize / CACHEINFO.dc_associativity);
 	cache_alias_bits = (cache_alias_dist - 1) & ~PGOFSET;
@@ -323,7 +323,7 @@ turbosparc_cache_enable(void)
 	/* External cache sizes in KB; see Turbo sparc manual */
 	static const int ts_ecache_table[8] = {0,256,512,1024,512,1024,1024,0};
 
-	cache_alias_dist = max(
+	cache_alias_dist = uimax(
 		CACHEINFO.ic_totalsize / CACHEINFO.ic_associativity,
 		CACHEINFO.dc_totalsize / CACHEINFO.dc_associativity);
 	cache_alias_bits = (cache_alias_dist - 1) & ~PGOFSET;

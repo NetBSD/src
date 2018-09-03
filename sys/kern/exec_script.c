@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_script.c,v 1.77 2018/06/30 11:10:54 kre Exp $	*/
+/*	$NetBSD: exec_script.c,v 1.78 2018/09/03 16:29:35 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1996 Christopher G. Demetriou
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_script.c,v 1.77 2018/06/30 11:10:54 kre Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_script.c,v 1.78 2018/09/03 16:29:35 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_script.h"
@@ -145,7 +145,7 @@ exec_script_makecmds(struct lwp *l, struct exec_package *epp)
 	 * Check that the shell spec is terminated by a newline, and that
 	 * it isn't too large.
 	 */
-	hdrlinelen = min(epp->ep_hdrvalid, SCRIPT_HDR_SIZE);
+	hdrlinelen = uimin(epp->ep_hdrvalid, SCRIPT_HDR_SIZE);
 	for (cp = hdrstr + EXEC_SCRIPT_MAGICLEN; cp < hdrstr + hdrlinelen;
 	    cp++) {
 		if (*cp == '\n') {

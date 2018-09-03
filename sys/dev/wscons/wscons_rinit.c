@@ -1,4 +1,4 @@
-/* $NetBSD: wscons_rinit.c,v 1.7 2013/10/25 20:55:24 martin Exp $ */
+/* $NetBSD: wscons_rinit.c,v 1.8 2018/09/03 16:29:34 riastradh Exp $ */
 
 /*
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wscons_rinit.c,v 1.7 2013/10/25 20:55:24 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wscons_rinit.c,v 1.8 2018/09/03 16:29:34 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,10 +103,10 @@ rcons_init(struct rcons *rc, int mrow, int mcol)
 	rcons_initfont(rc, &gallant19);
 
 	i = rp->height / rc->rc_font->height;
-	rc->rc_maxrow = min(i, mrow);
+	rc->rc_maxrow = uimin(i, mrow);
 
 	i = rp->width / rc->rc_font->width;
-	rc->rc_maxcol = min(i, mcol);
+	rc->rc_maxcol = uimin(i, mcol);
 
 	/* Center emulator screen (but align x origin to 32 bits) */
 	rc->rc_xorigin =

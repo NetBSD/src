@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.48 2018/04/27 07:53:07 maxv Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.49 2018/09/03 16:29:26 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 
 #define _POWERPC_BUS_DMA_PRIVATE
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.48 2018/04/27 07:53:07 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.49 2018/09/03 16:29:26 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -183,7 +183,7 @@ _bus_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map, void *buf, bus_size_t
 		sgsize = PAGE_SIZE - ((u_long)vaddr & PGOFSET);
 		if (buflen < sgsize)
 			sgsize = buflen;
-		sgsize = min(sgsize, map->dm_maxsegsz);
+		sgsize = uimin(sgsize, map->dm_maxsegsz);
 
 		/*
 		 * Make sure we don't cross any boundaries.

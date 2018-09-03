@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cxgb_offload.c,v 1.4 2014/09/21 17:05:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cxgb_offload.c,v 1.5 2018/09/03 16:29:32 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -247,12 +247,12 @@ cxgb_ulp_iscsi_ctl(adapter_t *adapter, unsigned int req, void *data)
          * On tx, the iscsi pdu has to be <= tx page size and has to
          * fit into the Tx PM FIFO.
          */
-        uiip->max_txsz = min(adapter->params.tp.tx_pg_size,
+        uiip->max_txsz = uimin(adapter->params.tp.tx_pg_size,
                      t3_read_reg(adapter, A_PM1_TX_CFG) >> 17);
         /* on rx, the iscsi pdu has to be < rx page size and the
            whole pdu + cpl headers has to fit into one sge buffer */
         uiip->max_rxsz =
-            (unsigned int)min(adapter->params.tp.rx_pg_size,
+            (unsigned int)uimin(adapter->params.tp.rx_pg_size,
             (adapter->sge.qs[0].fl[1].buf_size -
                 sizeof(struct cpl_rx_data) * 2 -
                 sizeof(struct cpl_rx_data_ddp)) );
@@ -1381,7 +1381,7 @@ cxgb_offload_activate(struct adapter *adapter)
     if (!L2DATA(dev))
         goto out_free;
 
-    natids = min(tid_range.num / 2, MAX_ATIDS);
+    natids = uimin(tid_range.num / 2, MAX_ATIDS);
     err = init_tid_tabs(&t->tid_maps, tid_range.num, natids,
                 stid_range.num, ATID_BASE, stid_range.base);
     if (err)

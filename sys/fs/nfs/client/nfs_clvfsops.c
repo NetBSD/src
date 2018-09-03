@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_clvfsops.c,v 1.2 2016/12/13 22:17:33 pgoyette Exp $	*/
+/*	$NetBSD: nfs_clvfsops.c,v 1.3 2018/09/03 16:29:34 riastradh Exp $	*/
 /*-
  * Copyright (c) 1989, 1993, 1995
  *	The Regents of the University of California.  All rights reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("FreeBSD: head/sys/fs/nfsclient/nfs_clvfsops.c 304026 2016-08-12 22:44:59Z rmacklem "); */
-__RCSID("$NetBSD: nfs_clvfsops.c,v 1.2 2016/12/13 22:17:33 pgoyette Exp $");
+__RCSID("$NetBSD: nfs_clvfsops.c,v 1.3 2018/09/03 16:29:34 riastradh Exp $");
 
 
 #ifdef _KERNEL_OPT
@@ -1880,7 +1880,7 @@ nfs_getnlminfo(struct vnode *vp, uint8_t *fhp, size_t *fhlenp,
 	if (fhp != NULL)
 		bcopy(np->n_fhp->nfh_fh, fhp, np->n_fhp->nfh_len);
 	if (sp != NULL)
-		bcopy(nmp->nm_nam, sp, min(nmp->nm_nam->sa_len, sizeof(*sp)));
+		bcopy(nmp->nm_nam, sp, uimin(nmp->nm_nam->sa_len, sizeof(*sp)));
 	if (is_v3p != NULL)
 		*is_v3p = NFS_ISV3(vp);
 	if (sizep != NULL)

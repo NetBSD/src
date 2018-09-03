@@ -1,4 +1,4 @@
-/*	$NetBSD: hdc9224.c,v 1.58 2017/05/22 17:17:25 ragge Exp $ */
+/*	$NetBSD: hdc9224.c,v 1.59 2018/09/03 16:29:28 riastradh Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -45,7 +45,7 @@
 #undef	RDDEBUG
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdc9224.c,v 1.58 2017/05/22 17:17:25 ragge Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdc9224.c,v 1.59 2018/09/03 16:29:28 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -297,7 +297,7 @@ hdcattach(device_t parent, device_t self, void *aux)
 	sc->sc_dmabase = (void *)va->va_dmaaddr;
 	sc->sc_dmasize = va->va_dmasize;
 	sc->sc_intbit = va->va_maskno;
-	rd_dmasize = min(MAXPHYS, sc->sc_dmasize); /* Used in rd_minphys */
+	rd_dmasize = uimin(MAXPHYS, sc->sc_dmasize); /* Used in rd_minphys */
 
 	sc->sc_vd.vd_go = hdc_qstart;
 	sc->sc_vd.vd_arg = sc;

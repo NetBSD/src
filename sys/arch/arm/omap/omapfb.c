@@ -1,4 +1,4 @@
-/*	$NetBSD: omapfb.c,v 1.27 2014/08/20 00:40:33 macallan Exp $	*/
+/*	$NetBSD: omapfb.c,v 1.28 2018/09/03 16:29:23 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2010 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omapfb.c,v 1.27 2014/08/20 00:40:33 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omapfb.c,v 1.28 2018/09/03 16:29:23 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -246,7 +246,7 @@ omapfb_attach(device_t parent, device_t self, void *aux)
 	if (edid_data != NULL) {
 		struct edid_info ei;
 
-		sc->sc_edid_size = min(prop_data_size(edid_data), 1024);
+		sc->sc_edid_size = uimin(prop_data_size(edid_data), 1024);
 		memset(sc->sc_edid_data, 0, sizeof(sc->sc_edid_data));
 		memcpy(sc->sc_edid_data, prop_data_data_nocopy(edid_data),
 		    sc->sc_edid_size);
@@ -1184,7 +1184,7 @@ omapfb_do_cursor(struct omapfb_softc * sc,
 		int i;
 		uint32_t val;
 
-		for (i = 0; i < min(cur->cmap.count, 3); i++) {
+		for (i = 0; i < uimin(cur->cmap.count, 3); i++) {
 			val = (cur->cmap.red[i] << 16 ) |
 			      (cur->cmap.green[i] << 8) |
 			      (cur->cmap.blue[i] ) |

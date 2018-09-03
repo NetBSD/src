@@ -1,4 +1,4 @@
-/*	$NetBSD: nvme_pci.c,v 1.20 2018/04/18 10:05:59 nonaka Exp $	*/
+/*	$NetBSD: nvme_pci.c,v 1.21 2018/09/03 16:29:32 riastradh Exp $	*/
 /*	$OpenBSD: nvme_pci.c,v 1.3 2016/04/14 11:18:32 dlg Exp $ */
 
 /*
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvme_pci.c,v 1.20 2018/04/18 10:05:59 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvme_pci.c,v 1.21 2018/09/03 16:29:32 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -397,7 +397,7 @@ nvme_pci_setup_intr(struct pci_attach_args *pa, struct nvme_pci_softc *psc)
 
 	/* MSI-X */
 	max_type = PCI_INTR_TYPE_MSIX;
-	counts[PCI_INTR_TYPE_MSIX] = min(pci_msix_count(pa->pa_pc, pa->pa_tag),
+	counts[PCI_INTR_TYPE_MSIX] = uimin(pci_msix_count(pa->pa_pc, pa->pa_tag),
 	    ncpu + 1);
 	if (counts[PCI_INTR_TYPE_MSIX] > 0) {
 		memset(alloced_counts, 0, sizeof(alloced_counts));

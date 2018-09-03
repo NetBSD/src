@@ -1,4 +1,4 @@
-/* $NetBSD: if_vge.c,v 1.64 2018/07/18 23:10:28 sevan Exp $ */
+/* $NetBSD: if_vge.c,v 1.65 2018/09/03 16:29:32 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2004
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vge.c,v 1.64 2018/07/18 23:10:28 sevan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vge.c,v 1.65 2018/09/03 16:29:32 riastradh Exp $");
 
 /*
  * VIA Networking Technologies VT612x PCI gigabit ethernet NIC driver.
@@ -983,7 +983,7 @@ vge_attach(device_t parent, device_t self, void *aux)
 #endif
 #endif
 	ifp->if_watchdog = vge_watchdog;
-	IFQ_SET_MAXLEN(&ifp->if_snd, max(VGE_IFQ_MAXLEN, IFQ_MAXLEN));
+	IFQ_SET_MAXLEN(&ifp->if_snd, uimax(VGE_IFQ_MAXLEN, IFQ_MAXLEN));
 	IFQ_SET_READY(&ifp->if_snd);
 
 	/*
