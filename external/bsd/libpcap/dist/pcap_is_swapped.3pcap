@@ -1,4 +1,4 @@
-.\"	$NetBSD: pcap_is_swapped.3pcap,v 1.3 2017/01/24 22:29:28 christos Exp $
+.\"	$NetBSD: pcap_is_swapped.3pcap,v 1.4 2018/09/03 15:26:43 christos Exp $
 .\"
 .\" Copyright (c) 1994, 1996, 1997
 .\"	The Regents of the University of California.  All rights reserved.
@@ -45,7 +45,7 @@ It must not be called on a pcap descriptor created by
 that has not yet been activated by
 .BR pcap_activate() .
 .SH RETURN VALUE
-.B pcap_datalink()
+.B pcap_is_swapped()
 returns true (1) or false (0) on success and
 .B PCAP_ERROR_NOT_ACTIVATED
 if called on a capture handle that has been created but not activated.

@@ -1,4 +1,4 @@
-/*	$NetBSD: pcap-usb-linux.h,v 1.3 2015/03/31 21:39:42 christos Exp $	*/
+/*	$NetBSD: pcap-usb-linux.h,v 1.4 2018/09/03 15:26:43 christos Exp $	*/
 
 /*
  * Copyright (c) 2006 Paolo Abeni (Italy)
@@ -36,5 +36,5 @@
 /*
  * Prototypes for USB-related functions
  */
-int usb_findalldevs(pcap_if_t **alldevsp, char *err_str);
+int usb_findalldevs(pcap_if_list_t *devlistp, char *err_str);
 pcap_t *usb_create(const char *device, char *ebuf, int *is_ours);

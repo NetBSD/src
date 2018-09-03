@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.h,v 1.8 2017/01/24 22:29:29 christos Exp $	*/
+/*	$NetBSD: bpf.h,v 1.9 2018/09/03 15:26:44 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -17,11 +17,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by the University of
- *      California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -74,7 +70,7 @@
 #if !defined(_NET_BPF_H_) && !defined(_NET_BPF_H_INCLUDED) && !defined(_BPF_H_) && !defined(_H_BPF) && !defined(lib_pcap_bpf_h)
 #define lib_pcap_bpf_h
 
-#include <pcap/export-defs.h>
+#include <pcap/funcattrs.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -260,15 +256,9 @@ struct bpf_aux_data {
 #define BPF_STMT(code, k) { (u_short)(code), 0, 0, k }
 #define BPF_JUMP(code, k, jt, jf) { (u_short)(code), jt, jf, k }
 
-#if __STDC__ || defined(__cplusplus)
 PCAP_API int bpf_validate(const struct bpf_insn *, int);
 PCAP_API u_int bpf_filter(const struct bpf_insn *, const u_char *, u_int, u_int);
 extern u_int bpf_filter_with_aux_data(const struct bpf_insn *, const u_char *, u_int, u_int, const struct bpf_aux_data *);
-#else
-PCAP_API int bpf_validate();
-PCAP_API u_int bpf_filter();
-extern u_int bpf_filter_with_aux_data();
-#endif
 
 /*
  * Number of scratch memory words (for BPF_LD|BPF_MEM and BPF_ST).

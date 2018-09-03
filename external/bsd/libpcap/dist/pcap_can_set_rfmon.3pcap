@@ -1,4 +1,4 @@
-.\"	$NetBSD: pcap_can_set_rfmon.3pcap,v 1.3 2017/01/24 22:29:28 christos Exp $
+.\"	$NetBSD: pcap_can_set_rfmon.3pcap,v 1.4 2018/09/03 15:26:43 christos Exp $
 .\"
 .\" Copyright (c) 1994, 1996, 1997
 .\"	The Regents of the University of California.  All rights reserved.
@@ -19,7 +19,7 @@
 .\" WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
 .\" MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 .\"
-.TH PCAP_CAN_SET_RFMON 3PCAP "3 January 2014"
+.TH PCAP_CAN_SET_RFMON 3PCAP "31 July 2016"
 .SH NAME
 pcap_can_set_rfmon \- check whether monitor mode can be set for a
 not-yet-activated capture handle

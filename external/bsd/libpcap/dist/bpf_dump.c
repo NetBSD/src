@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf_dump.c,v 1.3 2017/01/24 22:29:28 christos Exp $	*/
+/*	$NetBSD: bpf_dump.c,v 1.4 2018/09/03 15:26:43 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994, 1995, 1996
@@ -22,14 +22,16 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: bpf_dump.c,v 1.3 2017/01/24 22:29:28 christos Exp $");
+__RCSID("$NetBSD: bpf_dump.c,v 1.4 2018/09/03 15:26:43 christos Exp $");
 
 #ifdef HAVE_CONFIG_H
-#include "config.h"
+#include <config.h>
 #endif
 
 #include <pcap.h>
 #include <stdio.h>
+
+#include "optimize.h"
 
 void
 bpf_dump(const struct bpf_program *p, int option)
@@ -55,8 +57,7 @@ bpf_dump(const struct bpf_program *p, int option)
 	}
 	for (i = 0; i < n; ++insn, ++i) {
 #ifdef BDEBUG
-		extern int bids[];
-		if (bids[i] > 0)
+		if (i < NBIDS && bids[i] > 0)
 			printf("[%02d]", bids[i] - 1);
 		else
 			printf(" -- ");
