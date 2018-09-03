@@ -82,6 +82,7 @@
 #include "services/localzone.h"
 #include "services/view.h"
 #include "services/modstack.h"
+#include "services/authzone.h"
 #include "util/module.h"
 #include "util/random.h"
 #include "util/tube.h"
@@ -281,6 +282,13 @@ daemon_init(void)
 	if(gettimeofday(&daemon->time_boot, NULL) < 0)
 		log_err("gettimeofday: %s", strerror(errno));
 	daemon->time_last_stat = daemon->time_boot;
+	if((daemon->env->auth_zones = auth_zones_create()) == 0) {
+		acl_list_delete(daemon->acl);
+		edns_known_options_delete(daemon->env);
+		free(daemon->env);
+		free(daemon);
+		return NULL;
+	}
 	return daemon;	
 }
 
@@ -603,6 +611,10 @@ daemon_fork(struct daemon* daemon)
 		fatal_exit("Could not set up per-view response IP sets");
 	daemon->use_response_ip = !respip_set_is_empty(daemon->respip_set) ||
 		have_view_respip_cfg;
+	
+	/* read auth zonefiles */
+	if(!auth_zones_apply_cfg(daemon->env->auth_zones, daemon->cfg, 1))
+		fatal_exit("auth_zones could not be setup");
 
 	/* setup modules */
 	daemon_setup_modules(daemon);
@@ -683,6 +695,8 @@ daemon_cleanup(struct daemon* daemon)
 	daemon->respip_set = NULL;
 	views_delete(daemon->views);
 	daemon->views = NULL;
+	if(daemon->env->auth_zones)
+		auth_zones_cleanup(daemon->env->auth_zones);
 	/* key cache is cleared by module desetup during next daemon_fork() */
 	daemon_remote_clear(daemon->rc);
 	for(i=0; i<daemon->num; i++)
@@ -690,11 +704,14 @@ daemon_cleanup(struct daemon* daemon)
 	free(daemon->workers);
 	daemon->workers = NULL;
 	daemon->num = 0;
+	alloc_clear_special(&daemon->superalloc);
 #ifdef USE_DNSTAP
 	dt_delete(daemon->dtenv);
+	daemon->dtenv = NULL;
 #endif
 #ifdef USE_DNSCRYPT
 	dnsc_delete(daemon->dnscenv);
+	daemon->dnscenv = NULL;
 #endif
 	daemon->cfg = NULL;
 }
@@ -716,6 +733,7 @@ daemon_delete(struct daemon* daemon)
 		rrset_cache_delete(daemon->env->rrset_cache);
 		infra_delete(daemon->env->infra_cache);
 		edns_known_options_delete(daemon->env);
+		auth_zones_delete(daemon->env->auth_zones);
 	}
 	ub_randfree(daemon->rand);
 	alloc_clear(&daemon->superalloc);
@@ -763,6 +781,9 @@ daemon_delete(struct daemon* daemon)
 #  if defined(HAVE_SSL) && defined(OPENSSL_THREADS) && !defined(THREADS_DISABLED)
 	ub_openssl_lock_delete();
 #  endif
+#ifndef HAVE_ARC4RANDOM
+	_ARC4_LOCK_DESTROY();
+#endif
 #elif defined(HAVE_NSS)
 	NSS_Shutdown();
 #endif /* HAVE_SSL or HAVE_NSS */
