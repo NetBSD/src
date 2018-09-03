@@ -27,3 +27,6 @@ USE AT YOUR OWN RISK.
   Copy the file to /usr/share/munin/plugins (or you munin node dir).
   You may also need to create a number of symbolic links under the names
   of the graphs you want to create (documented at head of file).
+
+* nsd.socket and nsd.service : example systemd service scripts for NSD.
+  They are copies from Unbound's service files, edited for NSD.

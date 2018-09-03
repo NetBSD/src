@@ -364,11 +364,13 @@ config_print_zone(nsd_options_type* opt, const char* k, int s, const char *o,
 		SERV_GET_BIN(do_ip4, o);
 		SERV_GET_BIN(do_ip6, o);
 		SERV_GET_BIN(reuseport, o);
+		SERV_GET_BIN(use_systemd, o);
 		SERV_GET_BIN(hide_version, o);
 		SERV_GET_BIN(zonefiles_check, o);
 		SERV_GET_BIN(log_time_ascii, o);
 		SERV_GET_BIN(round_robin, o);
 		SERV_GET_BIN(minimal_responses, o);
+		SERV_GET_BIN(refuse_any, o);
 		/* str */
 		SERV_GET_PATH(final, database, o);
 		SERV_GET_STR(identity, o);
@@ -479,6 +481,7 @@ config_test_print_server(nsd_options_type* opt)
 	printf("\tip-transparent: %s\n", opt->ip_transparent?"yes":"no");
 	printf("\tip-freebind: %s\n", opt->ip_freebind?"yes":"no");
 	printf("\treuseport: %s\n", opt->reuseport?"yes":"no");
+	printf("\tuse-systemd: %s\n", opt->use_systemd?"yes":"no");
 	printf("\tdo-ip4: %s\n", opt->do_ip4?"yes":"no");
 	printf("\tdo-ip6: %s\n", opt->do_ip6?"yes":"no");
 	printf("\thide-version: %s\n", opt->hide_version?"yes":"no");
@@ -508,6 +511,7 @@ config_test_print_server(nsd_options_type* opt)
 	printf("\tlog-time-ascii: %s\n", opt->log_time_ascii?"yes":"no");
 	printf("\tround-robin: %s\n", opt->round_robin?"yes":"no");
 	printf("\tminimal-responses: %s\n", opt->minimal_responses?"yes":"no");
+	printf("\trefuse-any: %s\n", opt->refuse_any?"yes":"no");
 	printf("\tverbosity: %d\n", opt->verbosity);
 	for(ip = opt->ip_addresses; ip; ip=ip->next)
 	{

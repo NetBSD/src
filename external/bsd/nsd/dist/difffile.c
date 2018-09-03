@@ -462,7 +462,7 @@ nsec3_delete_rr_trigger(namedb_type* db, rr_type* rr, zone_type* zone,
 		/* clear trees, wipe hashes, wipe precompile */
 		nsec3_clear_precompile(db, zone);
 		/* pick up new nsec3param (from udb, or avoid deleted rr) */
-		nsec3_find_zone_param(db, zone, udbz, rr);
+		nsec3_find_zone_param(db, zone, udbz, rr, 0);
 		/* if no more NSEC3, done */
 		if(!zone->nsec3_param)
 			return;
@@ -568,7 +568,7 @@ nsec3_add_rr_trigger(namedb_type* db, rr_type* rr, zone_type* zone,
 		prehash_add(db->domains, rr->owner);
 	} else if(!zone->nsec3_param && rr->type == TYPE_NSEC3PARAM) {
 		/* see if this means NSEC3 chain can be used */
-		nsec3_find_zone_param(db, zone, udbz, NULL);
+		nsec3_find_zone_param(db, zone, udbz, NULL, 0);
 		if(!zone->nsec3_param)
 			return;
 		nsec3_zone_trees_create(db->region, zone);
@@ -1277,6 +1277,7 @@ apply_ixfr_for_zone(nsd_type* nsd, zone_type* zonedb, FILE* in,
 	uint8_t committed;
 	uint32_t i;
 	int num_bytes = 0;
+	assert(zonedb);
 
 	/* read zone name and serial */
 	if(!diff_read_32(in, &type)) {
@@ -1333,6 +1334,7 @@ apply_ixfr_for_zone(nsd_type* nsd, zone_type* zonedb, FILE* in,
 		udb_ptr z;
 
 		DEBUG(DEBUG_XFRD,1, (LOG_INFO, "processing xfr: %s", zone_buf));
+		memset(&z, 0, sizeof(z)); /* if udb==NULL, have &z defined */
 		if(nsd->db->udb) {
 			if(udb_base_get_userflags(nsd->db->udb) != 0) {
 				log_msg(LOG_ERR, "database corrupted, cannot update");
@@ -1362,6 +1364,7 @@ apply_ixfr_for_zone(nsd_type* nsd, zone_type* zonedb, FILE* in,
 				i, num_parts, &is_axfr, &delete_mode,
 				&rr_count, (nsd->db->udb?&z:NULL), &zonedb,
 				patname_buf, &num_bytes, &softfail);
+			assert(zonedb);
 			if(ret == 0) {
 				log_msg(LOG_ERR, "bad ixfr packet part %d in diff file for %s", (int)i, zone_buf);
 				xfrd_unlink_xfrfile(nsd, xfrfilenr);
