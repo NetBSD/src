@@ -1,6 +1,6 @@
 /* tasinh -- test file for mpc_asinh.
 
-Copyright (C) 2009 INRIA
+Copyright (C) 2009, 2013 INRIA
 
 This file is part of GNU MPC.
 
@@ -39,17 +39,24 @@ bug20091120 (void)
   mpc_clear (y);
 }
 
+#define MPC_FUNCTION_CALL                                       \
+  P[0].mpc_inex = mpc_asinh (P[1].mpc, P[2].mpc, P[3].mpc_rnd)
+#define MPC_FUNCTION_CALL_REUSE_OP1                             \
+  P[0].mpc_inex = mpc_asinh (P[1].mpc, P[1].mpc, P[3].mpc_rnd)
+
+#include "data_check.tpl"
+#include "tgeneric.tpl"
+
 int
 main (void)
 {
-  DECL_FUNC (CC, f, mpc_asinh);
-
   test_start ();
 
   bug20091120 ();
 
-  data_check (f, "asinh.dat");
-  tgeneric (f, 2, 512, 7, 7);
+  data_check_template ("asinh.dsc", "asinh.dat");
+
+  tgeneric_template ("asinh.dsc", 2, 512, 7, 7);
 
   test_end ();
 
