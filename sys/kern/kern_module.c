@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module.c,v 1.130.2.13 2018/07/09 08:45:41 pgoyette Exp $	*/
+/*	$NetBSD: kern_module.c,v 1.130.2.14 2018/09/04 11:31:11 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.130.2.13 2018/07/09 08:45:41 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.130.2.14 2018/09/04 11:31:11 pgoyette Exp $");
 
 #define _MODULE_INTERNAL
 
@@ -847,7 +847,7 @@ alloc_required(module_t *mod)
 		areq = mod->mod_arequired + MAXMODDEPS;
 		old = mod->mod_required;
 		new = kmem_zalloc(areq * sizeof(module_t *), KM_SLEEP);
-		for (i = 0; i< mod->mod_arequired; i++)
+		for (i = 0; i < mod->mod_arequired; i++)
 			(*new)[i] = (*old)[i];
 		mod->mod_required = new;
 		if (old)
@@ -912,8 +912,10 @@ module_do_builtin(const module_t *pmod, const char *name, module_t **modp,
 	/*
 	 * Initialize pre-requisites.
 	 */
+	KASSERT(mod->mod_required == NULL);
+	KASSERT(mod->mod_arequired == 0);
+	KASSERT(mod->mod_nrequired == 0);
 	if (mi->mi_required != NULL) {
-		mod->mod_arequired = 0;
 		for (s = mi->mi_required; *s != '\0'; s = p) {
 			if (*s == ',')
 				s++;
@@ -926,8 +928,9 @@ module_do_builtin(const module_t *pmod, const char *name, module_t **modp,
 				break;
 			alloc_required(mod);
 			error = module_do_builtin(mod, buf, &mod2, NULL);
-			if (error != 0)
+			if (error != 0) {
 				goto fail;
+			}
 			(*mod->mod_required)[mod->mod_nrequired++] = mod2;
 		}
 	}
@@ -973,6 +976,9 @@ module_do_builtin(const module_t *pmod, const char *name, module_t **modp,
 	if (mod->mod_required)
 		kmem_free(mod->mod_required, mod->mod_arequired *
 		    sizeof(module_t *));
+	mod->mod_arequired = 0;
+	mod->mod_nrequired = 0;
+	mod->mod_required = NULL;
 	return error;
 }
 
