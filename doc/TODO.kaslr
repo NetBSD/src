@@ -17,9 +17,14 @@
 
 [DONE] -- PPPoE sends a kernel address as host unique. (What is this shit.)
 
--- "netstat -nat" leaks kernel addresses.
-
--- Investigate some other tools.
+-- Several entry points leak kernel addresses:
+       [DONE] - "modstat -k"
+       - "netstat -nat"
+       - kern.proc
+       - kern.proc2
+       - kern.file
+       - kern.file2
+       - kern.lwp
 
 -- Be careful with dmesg.
 
