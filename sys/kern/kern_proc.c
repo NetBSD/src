@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.214 2018/09/03 16:29:35 riastradh Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.215 2018/09/04 14:31:18 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.214 2018/09/03 16:29:35 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.215 2018/09/04 14:31:18 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_kstack.h"
@@ -278,6 +278,7 @@ proc_listener_cb(kauth_cred_t cred, kauth_action_t action, void *cookie,
 
 			break;
 
+		case KAUTH_REQ_PROCESS_CANSEE_KPTR:
 		default:
 			break;
 		}
