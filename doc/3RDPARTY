@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1561 2018/09/03 15:32:09 christos Exp $
+#	$NetBSD: 3RDPARTY,v 1.1562 2018/09/04 06:05:39 wiz Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -1508,7 +1508,7 @@ Notes:
 3. Carefully check for GPL components leaked into the dist area.
 
 Package:	mpc
-Version:	1.0.3
+Version:	1.1.0
 Current Vers:	1.1.0
 Maintainer:	
 Archive Site:	http://www.multiprecision.org/mpc/download/
@@ -1520,7 +1520,7 @@ Location:	external/lgpl3/mpc/dist
 Notes:
 
 Package:	mpfr
-Version:	3.1.5
+Version:	4.0.1
 Current Vers:	4.0.1
 Maintainer:	
 Archive Site:	http://www.mpfr.org/mpfr-current/
