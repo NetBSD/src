@@ -1,4 +1,4 @@
-/*	$NetBSD: efinet.c,v 1.1 2018/09/03 00:04:02 jmcneill Exp $	*/
+/*	$NetBSD: efinet.c,v 1.2 2018/09/04 15:08:30 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2001 Doug Rabson
@@ -203,7 +203,7 @@ efinet_get(struct iodesc *desc, void *pkt, size_t len, saseconds_t timeout)
 		status = uefi_call_wrapper(net->Receive, 7, net, NULL, &rsz, ptr,
 		    NULL, NULL, NULL);
 		if (!EFI_ERROR(status)) {
-			rsz = min(rsz, len);
+			rsz = uimin(rsz, len);
 			memcpy(pkt, ptr, rsz);
 			ret = (int)rsz;
 			break;

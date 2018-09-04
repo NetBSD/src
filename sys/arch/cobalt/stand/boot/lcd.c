@@ -1,4 +1,4 @@
-/*	$NetBSD: lcd.c,v 1.2 2008/05/29 14:25:01 tsutsui Exp $	*/
+/*	$NetBSD: lcd.c,v 1.3 2018/09/04 15:08:30 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008 Izumi Tsutsui.  All rights reserved.
@@ -88,7 +88,7 @@ void
 lcd_loadfile(const char *file)
 {
 
-	memcpy(loadfile_message.row2, file, min(NCOLS, strlen(file)));
+	memcpy(loadfile_message.row2, file, uimin(NCOLS, strlen(file)));
 
 	lcd_puts(&loadfile_message);
 }

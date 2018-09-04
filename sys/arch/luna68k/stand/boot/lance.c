@@ -1,4 +1,4 @@
-/*	$NetBSD: lance.c,v 1.3 2014/04/16 11:18:00 tsutsui Exp $	*/
+/*	$NetBSD: lance.c,v 1.4 2018/09/04 15:08:30 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2013 Izumi Tsutsui.  All rights reserved.
@@ -172,7 +172,7 @@ lance_get(void *cookie, void *data, size_t maxlen)
 		goto out;
 	}
 	len -= 4;
-	memcpy(data, (void *)lemem->lem_rbuf[sc->sc_currmd], min(len, maxlen));
+	memcpy(data, (void *)lemem->lem_rbuf[sc->sc_currmd], uimin(len, maxlen));
 
  out:
 	rmd->rmd2 = -LEMTU;
@@ -208,7 +208,7 @@ lance_put(void *cookie, void *data, size_t len)
 		continue;
 	tmd->tmd1_bits = LE_T1_STP | LE_T1_ENP;
 	memcpy((void *)lemem->lem_tbuf[sc->sc_curtmd], data, len);
-	tmd->tmd2 = -max(len, LEMINSIZE);
+	tmd->tmd2 = -uimax(len, LEMINSIZE);
 	tmd->tmd3 = 0;
 
 	/* start TX */
