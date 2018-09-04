@@ -1,4 +1,4 @@
-/*	$NetBSD: jobs.c,v 1.98 2017/12/30 23:24:19 kre Exp $	*/
+/*	$NetBSD: jobs.c,v 1.99 2018/09/04 01:09:28 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)jobs.c	8.5 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: jobs.c,v 1.98 2017/12/30 23:24:19 kre Exp $");
+__RCSID("$NetBSD: jobs.c,v 1.99 2018/09/04 01:09:28 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -1509,8 +1509,12 @@ commandtext(struct procstat *ps, union node *n)
 	int len;
 
 	cmdnextc = ps->cmd;
-	if (iflag || mflag || sizeof ps->cmd < 100)
+	if (iflag || mflag || sizeof(ps->cmd) <= 60)
 		len = sizeof(ps->cmd);
+	else if (sizeof ps->cmd <= 400)
+		len = 50;
+	else if (sizeof ps->cmd <= 800)
+		len = 80;
 	else
 		len = sizeof(ps->cmd) / 10;
 	cmdnleft = len;
@@ -1525,7 +1529,7 @@ commandtext(struct procstat *ps, union node *n)
 		*cmdnextc = '\0';
 
 	VTRACE(DBG_JOBS,
-	    ("commandtext: ps->cmd %x, end %x, left %d\n\t\"%s\"\n",
+	    ("commandtext: ps->cmd %p, end %p, left %d\n\t\"%s\"\n",
 	    ps->cmd, cmdnextc, cmdnleft, ps->cmd));
 }
 
