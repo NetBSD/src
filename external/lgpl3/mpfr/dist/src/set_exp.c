@@ -1,6 +1,6 @@
 /* mpfr_set_exp - set the exponent of a floating-point number
 
-Copyright 2002-2004, 2006-2016 Free Software Foundation, Inc.
+Copyright 2002-2004, 2006-2018 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -25,7 +25,9 @@ http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 int
 mpfr_set_exp (mpfr_ptr x, mpfr_exp_t exponent)
 {
-  if (exponent >= __gmpfr_emin && exponent <= __gmpfr_emax)
+  if (MPFR_LIKELY (MPFR_IS_PURE_FP (x) &&
+                   exponent >= __gmpfr_emin &&
+                   exponent <= __gmpfr_emax))
     {
       MPFR_EXP(x) = exponent; /* do not use MPFR_SET_EXP of course... */
       return 0;

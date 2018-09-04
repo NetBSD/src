@@ -1,6 +1,6 @@
 /* Test file for l2b constants.
 
-Copyright 2007-2016 Free Software Foundation, Inc.
+Copyright 2007-2018 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -23,33 +23,44 @@ http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 /* Execute this program with an argument to generate code that initializes
    the l2b constants. */
 
-#include <stdio.h>
-#include <stdlib.h>
 #include "mpfr-test.h"
 
 /* Must be a multiple of 4 */
 static const int bits2use[] = {16, 32, 64, 96, 128, 256};
-#define size_of_bits2use ((sizeof bits2use) / sizeof bits2use[0])
+#define size_of_bits2use (numberof (bits2use))
 
 static __mpfr_struct l2b[BASE_MAX-1][2];
 
 static void
 print_mpfr (mpfr_srcptr x, const char *name)
 {
-  unsigned char temp[16];   /* buffer for the base-256 string */
-  unsigned char *ptr;       /* pointer to its first non-zero byte */
-  int size;                 /* size of the string */
-  int i;                    /* bits2use index */
-  int j;                    /* output limb index */
-  int k;                    /* byte index (in output limb) */
-  int r;                    /* digit index, relative to ptr */
+  unsigned char temp[16]; /* buffer for the base-256 string */
+  unsigned char *ptr;     /* pointer to its first non-zero byte */
+  int size;               /* size of the string */
+  int i;                  /* bits2use index */
+  int j;                  /* output limb index */
+  int k;                  /* byte index (in output limb) */
+  int r;                  /* digit index, relative to ptr */
+  char prefix[12];        /* "0x" or "UINT64_C(0x" */
+  char suffix[2];         /* "" or ")" */
 
   if (printf ("#if 0\n") < 0)
     { fprintf (stderr, "Error in printf\n"); exit (1); }
   for (i = 0; i < size_of_bits2use; i++)
     {
+      if (bits2use[i] == 64)
+        {
+          strcpy (prefix, "UINT64_C(0x");
+          strcpy (suffix, ")");
+        }
+      else
+        {
+          strcpy (prefix, "0x");
+          strcpy (suffix, "");
+        }
       if (printf ("#elif GMP_NUMB_BITS == %d\n"
-                  "const mp_limb_t %s__tab[] = { 0x", bits2use[i], name) < 0)
+                  "const mp_limb_t %s__tab[] = { %s", bits2use[i], name,
+                  prefix) < 0)
         { fprintf (stderr, "Error in printf\n"); exit (1); }
       size = mpn_get_str (temp, 256, MPFR_MANT (x), MPFR_LIMB_SIZE (x));
       MPFR_ASSERTN (size <= 16);
@@ -68,7 +79,9 @@ print_mpfr (mpfr_srcptr x, const char *name)
           for (k = 0; k < bits2use[i] / 8; k++)
             if (printf ("%02x", r < size ? ptr[r++] : 0) < 0)
               { fprintf (stderr, "Error in printf\n"); exit (1); }
-          if (printf (j == 0 ? " };\n" : ", 0x") < 0)
+          if (j == 0 && printf ("%s };\n", suffix) < 0)
+            { fprintf (stderr, "Error in printf\n"); exit (1); }
+          else if (j > 0 && printf ("%s, %s", suffix, prefix) < 0)
             { fprintf (stderr, "Error in printf\n"); exit (1); }
         }
     }
@@ -83,7 +96,10 @@ compute_l2b (int output)
   mpfr_srcptr t;
   int beta, i;
   int error = 0;
-  char buffer[30];
+  char buffer[256];  /* larger than needed, for maintainability */
+
+  if (output)
+    printf ("#ifndef UINT64_C\n# define UINT64_C(c) c\n#endif\n\n");
 
   for (beta = 2; beta <= BASE_MAX; beta++)
     {
@@ -101,7 +117,7 @@ compute_l2b (int output)
             }
           else
             {
-              /* 76-bit upper approximation to log(2)/log(b) */
+              /* 77-bit upper approximation to log(2)/log(b) */
               mpfr_init2 (p, 77);
               mpfr_set_ui (p, beta, MPFR_RNDD);
               mpfr_log2 (p, p, MPFR_RNDD);

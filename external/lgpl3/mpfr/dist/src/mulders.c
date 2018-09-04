@@ -1,6 +1,6 @@
-/* Mulders' MulHigh function (short product)
+/* Mulders' short product, square and division.
 
-Copyright 2005-2016 Free Software Foundation, Inc.
+Copyright 2005-2018 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -26,6 +26,9 @@ http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
        July 25-27, 2011, pages 7-14.
 */
 
+/* Defines it to 1 to use short div (or 0 for FoldDiv(K)) */
+#define USE_SHORT_DIV 1
+
 #define MPFR_NEED_LONGLONG_H
 #include "mpfr-impl.h"
 
@@ -38,8 +41,7 @@ http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 static short mulhigh_ktab[MPFR_MULHIGH_TAB_SIZE];
 #else
 static short mulhigh_ktab[] = {MPFR_MULHIGH_TAB};
-#define MPFR_MULHIGH_TAB_SIZE \
-  ((mp_size_t) (sizeof(mulhigh_ktab) / sizeof(mulhigh_ktab[0])))
+#define MPFR_MULHIGH_TAB_SIZE (numberof_const (mulhigh_ktab))
 #endif
 
 /* Put in  rp[n..2n-1] an approximation of the n high limbs
@@ -64,19 +66,6 @@ mpfr_mulhigh_n_basecase (mpfr_limb_ptr rp, mpfr_limb_srcptr up,
   /* in total, we neglect less than n*B^n, i.e., n ulps of rp[n]. */
 }
 
-/* Put in  rp[0..n] the n+1 low limbs of {up, n} * {vp, n}.
-   Assume 2n limbs are allocated at rp. */
-static void
-mpfr_mullow_n_basecase (mpfr_limb_ptr rp, mpfr_limb_srcptr up,
-                        mpfr_limb_srcptr vp, mp_size_t n)
-{
-  mp_size_t i;
-
-  rp[n] = mpn_mul_1 (rp, up, n, vp[0]);
-  for (i = 1 ; i < n ; i++)
-    mpn_addmul_1 (rp + i, up, n - i + 1, vp[i]);
-}
-
 /* Put in  rp[n..2n-1] an approximation of the n high limbs
    of {np, n} * {mp, n}. The error is less than n ulps of rp[n] (and the
    approximation is always less or equal to the truncated full product).
@@ -89,7 +78,7 @@ mpfr_mulhigh_n (mpfr_limb_ptr rp, mpfr_limb_srcptr np, mpfr_limb_srcptr mp,
 {
   mp_size_t k;
 
-  MPFR_ASSERTN (MPFR_MULHIGH_TAB_SIZE >= 8); /* so that 3*(n/4) > n/2 */
+  MPFR_STAT_STATIC_ASSERT (MPFR_MULHIGH_TAB_SIZE >= 8); /* so that 3*(n/4) > n/2 */
   k = MPFR_LIKELY (n < MPFR_MULHIGH_TAB_SIZE) ? mulhigh_ktab[n] : 3*(n/4);
   /* Algorithm ShortMul from [1] requires k >= (n+3)/2, which translates
      into k >= (n+4)/2 in the C language. */
@@ -114,6 +103,20 @@ mpfr_mulhigh_n (mpfr_limb_ptr rp, mpfr_limb_srcptr np, mpfr_limb_srcptr mp,
     }
 }
 
+#if USE_SHORT_DIV == 0
+/* Put in  rp[0..n] the n+1 low limbs of {up, n} * {vp, n}.
+   Assume 2n limbs are allocated at rp. */
+static void
+mpfr_mullow_n_basecase (mpfr_limb_ptr rp, mpfr_limb_srcptr up,
+                        mpfr_limb_srcptr vp, mp_size_t n)
+{
+  mp_size_t i;
+
+  rp[n] = mpn_mul_1 (rp, up, n, vp[0]);
+  for (i = 1 ; i < n ; i++)
+    mpn_addmul_1 (rp + i, up, n - i + 1, vp[i]);
+}
+
 /* Put in  rp[0..n] the n+1 low limbs of {np, n} * {mp, n}.
    Assume 2n limbs are allocated at rp. */
 void
@@ -122,7 +125,7 @@ mpfr_mullow_n (mpfr_limb_ptr rp, mpfr_limb_srcptr np, mpfr_limb_srcptr mp,
 {
   mp_size_t k;
 
-  MPFR_ASSERTN (MPFR_MULHIGH_TAB_SIZE >= 8); /* so that 3*(n/4) > n/2 */
+  MPFR_STAT_STATIC_ASSERT (MPFR_MULHIGH_TAB_SIZE >= 8); /* so that 3*(n/4) > n/2 */
   k = MPFR_LIKELY (n < MPFR_MULHIGH_TAB_SIZE) ? mulhigh_ktab[n] : 3*(n/4);
   MPFR_ASSERTD (k == -1 || k == 0 || (2 * k >= n && k < n));
   if (k < 0)
@@ -142,12 +145,13 @@ mpfr_mullow_n (mpfr_limb_ptr rp, mpfr_limb_srcptr np, mpfr_limb_srcptr mp,
       mpn_add_n (rp + k, rp + k, rp + n, l + 1);
     }
 }
+#endif
 
 #ifdef MPFR_SQRHIGH_TAB_SIZE
 static short sqrhigh_ktab[MPFR_SQRHIGH_TAB_SIZE];
 #else
 static short sqrhigh_ktab[] = {MPFR_SQRHIGH_TAB};
-#define MPFR_SQRHIGH_TAB_SIZE (sizeof(sqrhigh_ktab) / sizeof(sqrhigh_ktab[0]))
+#define MPFR_SQRHIGH_TAB_SIZE (numberof_const (sqrhigh_ktab))
 #endif
 
 /* Put in  rp[n..2n-1] an approximation of the n high limbs
@@ -157,7 +161,7 @@ mpfr_sqrhigh_n (mpfr_limb_ptr rp, mpfr_limb_srcptr np, mp_size_t n)
 {
   mp_size_t k;
 
-  MPFR_ASSERTN (MPFR_SQRHIGH_TAB_SIZE > 2); /* ensures k < n */
+  MPFR_STAT_STATIC_ASSERT (MPFR_SQRHIGH_TAB_SIZE > 2); /* ensures k < n */
   k = MPFR_LIKELY (n < MPFR_SQRHIGH_TAB_SIZE) ? sqrhigh_ktab[n]
     : (n+4)/2; /* ensures that k >= (n+3)/2 */
   MPFR_ASSERTD (k == -1 || k == 0 || (k >= (n+4)/2 && k < n));
@@ -165,7 +169,7 @@ mpfr_sqrhigh_n (mpfr_limb_ptr rp, mpfr_limb_srcptr np, mp_size_t n)
     /* we can't use mpn_sqr_basecase here, since it requires
        n <= SQR_KARATSUBA_THRESHOLD, where SQR_KARATSUBA_THRESHOLD
        is not exported by GMP */
-    mpn_sqr_n (rp, np, n);
+    mpn_sqr (rp, np, n);
   else if (k == 0)
     mpfr_mulhigh_n_basecase (rp, np, np, n);
   else
@@ -173,7 +177,7 @@ mpfr_sqrhigh_n (mpfr_limb_ptr rp, mpfr_limb_srcptr np, mp_size_t n)
       mp_size_t l = n - k;
       mp_limb_t cy;
 
-      mpn_sqr_n (rp + 2 * l, np + l, k);          /* fills rp[2l..2n-1] */
+      mpn_sqr (rp + 2 * l, np + l, k);            /* fills rp[2l..2n-1] */
       mpfr_mulhigh_n (rp, np, np + k, l);         /* fills rp[l-1..2l-1] */
       /* {rp+n-1,l+1} += 2 * {rp+l-1,l+1} */
       cy = mpn_lshift (rp + l - 1, rp + l - 1, l + 1, 1);
@@ -182,15 +186,13 @@ mpfr_sqrhigh_n (mpfr_limb_ptr rp, mpfr_limb_srcptr np, mp_size_t n)
     }
 }
 
+#if USE_SHORT_DIV == 1
+
 #ifdef MPFR_DIVHIGH_TAB_SIZE
 static short divhigh_ktab[MPFR_DIVHIGH_TAB_SIZE];
 #else
 static short divhigh_ktab[] = {MPFR_DIVHIGH_TAB};
-#define MPFR_DIVHIGH_TAB_SIZE (sizeof(divhigh_ktab) / sizeof(divhigh_ktab[0]))
-#endif
-
-#ifndef __GMPFR_GMP_H__
-#define mpfr_pi1_t gmp_pi1_t /* with a GMP build */
+#define MPFR_DIVHIGH_TAB_SIZE (numberof_const (divhigh_ktab))
 #endif
 
 #if !(defined(WANT_GMP_INTERNALS) && defined(HAVE___GMPN_SBPI1_DIVAPPR_Q))
@@ -240,7 +242,7 @@ mpfr_divhigh_n_basecase (mpfr_limb_ptr qp, mpfr_limb_ptr np,
          since we truncate the divisor at each step, but since {np,n} < D
          originally, the largest possible partial quotient is B-1. */
       if (MPFR_UNLIKELY(np[n-1] > d1 || (np[n-1] == d1 && np[n-2] >= d0)))
-        q2 = ~ (mp_limb_t) 0;
+        q2 = MPFR_LIMB_MAX;
       else
         udiv_qr_3by2 (q2, q1, q0, np[n - 1], np[n - 2], np[n - 3],
                       d1, d0, dinv2.inv32);
@@ -290,7 +292,6 @@ mpfr_divhigh_n_basecase (mpfr_limb_ptr qp, mpfr_limb_ptr np,
 
    This implements the ShortDiv algorithm from reference [1].
 */
-#if 1
 mp_limb_t
 mpfr_divhigh_n (mpfr_limb_ptr qp, mpfr_limb_ptr np, mpfr_limb_ptr dp,
                 mp_size_t n)
@@ -300,7 +301,7 @@ mpfr_divhigh_n (mpfr_limb_ptr qp, mpfr_limb_ptr np, mpfr_limb_ptr dp,
   mpfr_limb_ptr tp;
   MPFR_TMP_DECL(marker);
 
-  MPFR_ASSERTN (MPFR_MULHIGH_TAB_SIZE >= 15); /* so that 2*(n/3) >= (n+4)/2 */
+  MPFR_STAT_STATIC_ASSERT (MPFR_DIVHIGH_TAB_SIZE >= 15); /* so that 2*(n/3) >= (n+4)/2 */
   k = MPFR_LIKELY (n < MPFR_DIVHIGH_TAB_SIZE) ? divhigh_ktab[n] : 2*(n/3);
 
   if (k == 0)
@@ -348,7 +349,9 @@ mpfr_divhigh_n (mpfr_limb_ptr qp, mpfr_limb_ptr np, mpfr_limb_ptr dp,
 
   return qh;
 }
+
 #else /* below is the FoldDiv(K) algorithm from [1] */
+
 mp_limb_t
 mpfr_divhigh_n (mpfr_limb_ptr qp, mpfr_limb_ptr np, mpfr_limb_ptr dp,
                 mp_size_t n)

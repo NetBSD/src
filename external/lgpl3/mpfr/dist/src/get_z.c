@@ -1,7 +1,7 @@
 /* mpfr_get_z -- get a multiple-precision integer from
                  a floating-point number
 
-Copyright 2004, 2006-2016 Free Software Foundation, Inc.
+Copyright 2004, 2006-2018 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -29,17 +29,20 @@ mpfr_get_z (mpz_ptr z, mpfr_srcptr f, mpfr_rnd_t rnd)
   int inex;
   mpfr_t r;
   mpfr_exp_t exp;
+  MPFR_SAVE_EXPO_DECL (expo);
 
   if (MPFR_UNLIKELY (MPFR_IS_SINGULAR (f)))
     {
       if (MPFR_UNLIKELY (MPFR_NOTZERO (f)))
-        MPFR_SET_ERANGE ();
+        MPFR_SET_ERANGEFLAG ();
       mpz_set_ui (z, 0);
       /* The ternary value is 0 even for infinity. Giving the rounding
          direction in this case would not make much sense anyway, and
          the direction would not necessarily match rnd. */
       return 0;
     }
+
+  MPFR_SAVE_EXPO_MARK (expo);
 
   exp = MPFR_GET_EXP (f);
   /* if exp <= 0, then |f|<1, thus |o(f)|<=1 */
@@ -50,12 +53,19 @@ mpfr_get_z (mpz_ptr z, mpfr_srcptr f, mpfr_rnd_t rnd)
   MPFR_ASSERTN (inex != 1 && inex != -1); /* integral part of f is
                                              representable in r */
   MPFR_ASSERTN (MPFR_IS_FP (r));
+
+  /* The flags from mpfr_rint are the wanted ones. In particular,
+     it sets the inexact flag when necessary. */
+  MPFR_SAVE_EXPO_UPDATE_FLAGS (expo, __gmpfr_flags);
+
   exp = mpfr_get_z_2exp (z, r);
   if (exp >= 0)
     mpz_mul_2exp (z, z, exp);
   else
     mpz_fdiv_q_2exp (z, z, -exp);
   mpfr_clear (r);
+
+  MPFR_SAVE_EXPO_FREE (expo);
 
   return inex;
 }
