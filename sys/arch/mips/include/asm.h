@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.54 2017/02/25 21:16:50 joerg Exp $	*/
+/*	$NetBSD: asm.h,v 1.55 2018/09/04 00:01:41 mrg Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -169,8 +169,9 @@ _C_LABEL(x):
  *	No profilable local nested routine.
  */
 #define	STATIC_NESTED_NOPROFILE(x, fsize, retpc)	\
-	.ent	_C_LABEL(x);			\
-_C_LABEL(x): ;					\
+	.ent	_C_LABEL(x);				\
+	.type	_C_LABEL(x), @function;			\
+_C_LABEL(x): ;						\
 	.frame	sp, fsize, retpc
 
 /*
