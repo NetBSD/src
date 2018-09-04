@@ -1,6 +1,6 @@
 /* tfr_div -- test file for mpc_fr_div.
 
-Copyright (C) 2008 INRIA
+Copyright (C) 2008, 2013 INRIA
 
 This file is part of GNU MPC.
 
@@ -20,15 +20,24 @@ along with this program. If not, see http://www.gnu.org/licenses/ .
 
 #include "mpc-tests.h"
 
+#define MPC_FUNCTION_CALL                                               \
+  P[0].mpc_inex = mpc_fr_div (P[1].mpc, P[2].mpfr, P[3].mpc, P[4].mpc_rnd)
+#define MPC_FUNCTION_CALL_REUSE_OP2                                     \
+  P[0].mpc_inex = mpc_fr_div (P[1].mpc, P[2].mpfr, P[1].mpc, P[4].mpc_rnd)
+
+#include "data_check.tpl"
+#include "tgeneric.tpl"
+
 int
 main (void)
 {
-  DECL_FUNC (CFC, f, mpc_fr_div);
   test_start();
 
-  data_check (f, "fr_div.dat");
-  tgeneric (f, 2, 1024, 7, 65535);
+  data_check_template ("fr_div.dsc", "fr_div.dat");
+
+  tgeneric_template ("fr_div.dsc", 2, 1024, 7, 65535);
 
   test_end ();
+
   return 0;
 }

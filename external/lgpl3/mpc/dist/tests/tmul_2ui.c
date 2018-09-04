@@ -1,6 +1,6 @@
 /* tmul_2ui -- test file for mpc_mul_2ui.
 
-Copyright (C) 2008, 2012 INRIA
+Copyright (C) 2008, 2012, 2013 INRIA
 
 This file is part of GNU MPC.
 
@@ -20,14 +20,19 @@ along with this program. If not, see http://www.gnu.org/licenses/ .
 
 #include "mpc-tests.h"
 
+#define MPC_FUNCTION_CALL                                               \
+  P[0].mpc_inex = mpc_mul_2ui (P[1].mpc, P[2].mpc, P[3].ui, P[4].mpc_rnd)
+#define MPC_FUNCTION_CALL_REUSE_OP1                                     \
+  P[0].mpc_inex = mpc_mul_2ui (P[1].mpc, P[1].mpc, P[3].ui, P[4].mpc_rnd)
+
+#include "tgeneric.tpl"
+
 int
 main (void)
 {
-  DECL_FUNC (CCU, f, mpc_mul_2ui);
-
   test_start ();
 
-  tgeneric (f, 2, 1024, 7, -1);
+  tgeneric_template ("mul_2ui.dsc", 2, 1024, 7, 1024);
 
   test_end ();
 

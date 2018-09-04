@@ -1,6 +1,6 @@
 /* texp -- test file for mpc_exp.
 
-Copyright (C) 2002, 2008 INRIA
+Copyright (C) 2002, 2008, 2013 INRIA
 
 This file is part of GNU MPC.
 
@@ -20,15 +20,22 @@ along with this program. If not, see http://www.gnu.org/licenses/ .
 
 #include "mpc-tests.h"
 
+#define MPC_FUNCTION_CALL                                               \
+  P[0].mpc_inex = mpc_exp (P[1].mpc, P[2].mpc, P[3].mpc_rnd)
+#define MPC_FUNCTION_CALL_REUSE_OP1                                     \
+  P[0].mpc_inex = mpc_exp (P[1].mpc, P[1].mpc, P[3].mpc_rnd)
+
+#include "data_check.tpl"
+#include "tgeneric.tpl"
+
 int
 main (void)
 {
-  DECL_FUNC (CC, f, mpc_exp);
-
   test_start ();
 
-  data_check (f, "exp.dat");
-  tgeneric (f, 2, 512, 7, 256);
+  data_check_template ("exp.dsc", "exp.dat");
+
+  tgeneric_template ("exp.dsc", 2, 512, 7, 256);
 
   test_end ();
 

@@ -1,6 +1,6 @@
 /* mpc_pow_fr -- Raise a complex number to a floating-point power.
 
-Copyright (C) 2009, 2011 INRIA
+Copyright (C) 2009, 2011, 2012 INRIA
 
 This file is part of GNU MPC.
 
@@ -29,7 +29,7 @@ mpc_pow_fr (mpc_ptr z, mpc_srcptr x, mpfr_srcptr y, mpc_rnd_t rnd)
   /* avoid copying the significand of y by copying only the struct */
   mpc_realref(yy)[0] = y[0];
   mpfr_init2 (mpc_imagref(yy), MPFR_PREC_MIN);
-  mpfr_set_ui (mpc_imagref(yy), 0, GMP_RNDN);
+  mpfr_set_ui (mpc_imagref(yy), 0, MPFR_RNDN);
   inex = mpc_pow (z, x, yy, rnd);
   mpfr_clear (mpc_imagref(yy));
   return inex;

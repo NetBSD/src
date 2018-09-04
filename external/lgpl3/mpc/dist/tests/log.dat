@@ -169,22 +169,22 @@
 
 # Example leading to intermediate overflow in x^2+y^2
 + + 53 0x58B90BFD4BCBFp-22   2  0x1p0       2 0x1p536870912 2 0x1p536870912 U U
-+ + 53 0x58B90BFAA42A98p-25   2  0x1p0       2 0x3p1073741821 2 0x3p1073741821 U U
++ + 53 0xb17217efbcc47p-22   2  0x1p0       2 0x3p1073741819 2 0x3p1073741819 U U
 # Example leading to intermediate underflow in x^2+y^2
-- - 53 -0x58B90BFB3775A8p-25   2  0x3p-2     2 0x1p-1073741824 2 0x1p-1073741824 D D
+- - 53 -0xb17217f0e35a9p-22   2  0x3p-2     2 0x1p-1073741822 2 0x1p-1073741822 D D
 
 # log (-1 + i*eps), looped in previous version
 - - 2 0 2 3                2 -1 2 0x1p-1073741813 N N
 - - 2 0 2 3                2 -1 2 0x1p-1073741813 D D
-+ + 2 0x1p-1073741824 2 4  2 -1 2 0x1p-1073741813 U U
++ + 2 0x1p-1073741822 2 4  2 -1 2 0x1p-1073741813 U U
 # log(1 + i*eps), could cause similar problems
-- + 2 0               2 0x1p-1073741824  2 1 2 0x1p-1073741824 N N
-- - 2 0               2 0                2 1 2 0x1p-1073741824 D D
-+ + 2 0x1p-1073741824 2 0x1p-1073741824  2 1 2 0x1p-1073741824 U U
+- + 2 0               2 0x1p-1073741822  2 1 2 0x1p-1073741822 N N
+- - 2 0               2 0                2 1 2 0x1p-1073741822 D D
++ + 2 0x1p-1073741822 2 0x1p-1073741822  2 1 2 0x1p-1073741822 U U
 # log (eps + i)
-- - 2 0               2 0x3p-1  2 0x1p-1073741824 2 1 N N
-- - 2 0               2 0x3p-1  2 0x1p-1073741824 2 1 D D
-+ + 2 0x1p-1073741824 2 2  2 0x1p-1073741824 2 1 U U
+- - 2 0               2 0x3p-1  2 0x1p-1073741822 2 1 N N
+- - 2 0               2 0x3p-1  2 0x1p-1073741822 2 1 D D
++ + 2 0x1p-1073741822 2 2  2 0x1p-1073741822 2 1 U U
 
 # log (close to 1 + i*eps), improves test coverage
-+ - 2 -0x1p-36 2 0x1p-1073741824  36 0x0.FFFFFFFFF 2 0x1p-1073741824 N N
++ - 2 -0x1p-36 2 0x1p-1073741822  36 0x0.FFFFFFFFF 2 0x1p-1073741822 N N
