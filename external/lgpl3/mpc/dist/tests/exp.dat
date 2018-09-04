@@ -1,6 +1,6 @@
 # Data file for mpc_exp.
 #
-# Copyright (C) 2008, 2010 INRIA
+# Copyright (C) 2008, 2010, 2016 INRIA
 #
 # This file is part of GNU MPC.
 #
@@ -115,4 +115,7 @@
 - - 2 -inf 2 -inf  53 0x3312ae437f94441ec@-9 53 0xe45f7bab0595dd700@-10 N N
 
 # input close to 0
-? ? 53 1 53 0x5D7A2148071Fp-7213522 53 0x1E02AE0D0F6Fp-7213521 53 0x5D7A2148071Fp-7213522 N N
+? ? 53 1 53 0x5D7A2148071Fp-72135 53 0x1E02AE0D0F6Fp-72135 53 0x5D7A2148071Fp-72135 N N
+
+# bug reported by Joseph Myers (07 Apr 2015)
+- + 2 0x3p1073741819 2 -0x3p1073741819 2 0x1p200 2 0x1p800 Z Z

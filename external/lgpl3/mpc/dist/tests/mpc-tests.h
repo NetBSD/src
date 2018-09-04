@@ -1,6 +1,6 @@
 /* mpc-tests.h -- Tests helper functions.
 
-Copyright (C) 2008, 2009, 2010, 2011, 2012 INRIA
+Copyright (C) 2008, 2009, 2010, 2011, 2012, 2013, 2014 INRIA
 
 This file is part of GNU MPC.
 
@@ -65,7 +65,7 @@ do {                                                            \
 #define MPFR_OUT(x)                                             \
 do {                                                            \
   printf (#x "[%lu]=", (unsigned long int) mpfr_get_prec (x));  \
-  mpfr_out_str (stdout, 2, 0, x, GMP_RNDN);                     \
+  mpfr_out_str (stdout, 2, 0, x, MPFR_RNDN);                     \
   printf ("\n");                                                \
 } while (0)
 
@@ -103,9 +103,17 @@ do {                                                            \
 extern gmp_randstate_t  rands;
 
 extern void test_start (void);
-extern void test_end (void);
-extern void test_default_random (mpc_ptr, mp_exp_t, mp_exp_t, unsigned int, unsigned int);
+extern void test_end   (void);
+extern void test_default_random (mpc_ptr, mp_exp_t, mp_exp_t,
+                                 unsigned int, unsigned int);
 
+void test_random_si   (long int *n, unsigned long emax,
+                       unsigned int negative_probability);
+void test_random_d    (double *x, unsigned int negative_probability);
+void test_random_mpfr (mpfr_ptr x, mpfr_exp_t emin, mpfr_exp_t emax,
+                       unsigned int negative_probability);
+void test_random_mpc  (mpc_ptr z, mpfr_exp_t emin, mpfr_exp_t emax,
+                       unsigned int negative_probability);
 
 /** COMPARISON FUNCTIONS **/
 /* some sign are unspecified in ISO C99, thus we record in struct known_signs_t
@@ -125,111 +133,233 @@ typedef struct
    Unlike mpfr_cmp, same_mpfr_value(got, ref, x) return 1 when got and
    ref are both NaNs. */
 extern int same_mpfr_value (mpfr_ptr got, mpfr_ptr ref, int known_sign);
-extern int same_mpc_value (mpc_ptr got, mpc_ptr ref, known_signs_t known_signs);
-
-
-/** GENERIC TESTS **/
-
-typedef int (*CC_func_ptr) (mpc_t, mpc_srcptr, mpc_rnd_t);
-typedef int (*C_CC_func_ptr) (mpc_t, mpc_srcptr, mpc_srcptr, mpc_rnd_t);
-typedef int (*CCCC_func_ptr) (mpc_t, mpc_srcptr, mpc_srcptr, mpc_srcptr,
-			      mpc_rnd_t);
-typedef int (*CCU_func_ptr) (mpc_t, mpc_srcptr, unsigned long, mpc_rnd_t);
-typedef int (*CCS_func_ptr) (mpc_t, mpc_srcptr, long, mpc_rnd_t);
-typedef int (*CCI_func_ptr) (mpc_t, mpc_srcptr, int, mpc_rnd_t);
-typedef int (*CCF_func_ptr) (mpc_t, mpc_srcptr, mpfr_srcptr, mpc_rnd_t);
-typedef int (*CFC_func_ptr) (mpc_t, mpfr_srcptr, mpc_srcptr, mpc_rnd_t);
-typedef int (*CUC_func_ptr) (mpc_t, unsigned long, mpc_srcptr, mpc_rnd_t);
-typedef int (*CUUC_func_ptr) (mpc_t, unsigned long, unsigned long, mpc_srcptr,
-                              mpc_rnd_t);
-typedef int (*FC_func_ptr) (mpfr_t, mpc_srcptr, mpfr_rnd_t);
-typedef int (*CC_C_func_ptr) (mpc_t, mpc_t, mpc_srcptr, mpc_rnd_t, mpc_rnd_t);
-
-typedef union {
-   FC_func_ptr FC;     /* output: mpfr_t, input: mpc_t */
-   CC_func_ptr CC;     /* output: mpc_t, input: mpc_t */
-   C_CC_func_ptr C_CC; /* output: mpc_t, inputs: (mpc_t, mpc_t) */
-   CCCC_func_ptr CCCC; /* output: mpc_t, inputs: (mpc_t, mpc_t, mpc_t) */
-   CCU_func_ptr CCU;   /* output: mpc_t, inputs: (mpc_t, unsigned long) */
-   CCS_func_ptr CCS;   /* output: mpc_t, inputs: (mpc_t, long) */
-   CCI_func_ptr CCI;   /* output: mpc_t, inputs: (mpc_t, int) */
-   CCF_func_ptr CCF;   /* output: mpc_t, inputs: (mpc_t, mpfr_t) */
-   CFC_func_ptr CFC;   /* output: mpc_t, inputs: (mpfr_t, mpc_t) */
-   CUC_func_ptr CUC;   /* output: mpc_t, inputs: (unsigned long, mpc_t) */
-   CUUC_func_ptr CUUC; /* output: mpc_t, inputs: (ulong, ulong, mpc_t) */
-   CC_C_func_ptr CC_C;   /* outputs: (mpc_t, mpc_t), input: mpc_t */
-} func_ptr;
-
-/* the rounding mode is implicit */
-typedef enum {
-   FC,   /* output: mpfr_t, input: mpc_t */
-   CC,   /* output: mpc_t, input: mpc_t */
-   C_CC, /* output: mpc_t, inputs: (mpc_t, mpc_t) */
-   CCCC, /* output: mpc_t, inputs: (mpc_t, mpc_t, mpc_t) */
-   CCU,  /* output: mpc_t, inputs: (mpc_t, unsigned long) */
-   CCS,  /* output: mpc_t, inputs: (mpc_t, long) */
-   CCI,  /* output: mpc_t, inputs: (mpc_t, int) */
-   CCF,  /* output: mpc_t, inputs: (mpc_t, mpfr_t) */
-   CFC,  /* output: mpc_t, inputs: (mpfr_t, mpc_t) */
-   CUC,  /* output: mpc_t, inputs: (unsigned long, mpc_t) */
-   CUUC, /* output: mpc_t, inputs: (ulong, ulong, mpc_t) */
-   CC_C  /* outputs: (mpc_t, mpc_t), input: mpc_t */
-} func_type;
-
-/* properties */
-#define FUNC_PROP_NONE     0
-#define FUNC_PROP_SYMETRIC 1
-
-typedef struct
-{
-  func_ptr     pointer;
-  func_type    type;
-  const char * name;
-  int          properties;
-} mpc_function;
-
-#define DECL_FUNC(_ftype, _fvar, _func)         \
-  mpc_function _fvar;                           \
-  _fvar.pointer._ftype = _func;                 \
-  _fvar.type = _ftype;                          \
-  _fvar.name = QUOTE (_func);                   \
-  _fvar.properties = FUNC_PROP_NONE;
-
-
-/* tgeneric(mpc_function, prec_min, prec_max, step, exp_max) checks rounding
- with random numbers:
- - with precision ranging from prec_min to prec_max with an increment of
-   step,
- - with exponent between -exp_max and exp_max.
-
- It also checks parameter reuse (it is assumed here that either two mpc_t
- variables are equal or they are different, in the sense that the real part of
- one of them cannot be the imaginary part of the other). */
-void tgeneric (mpc_function, mpfr_prec_t, mpfr_prec_t, mpfr_prec_t, mp_exp_t);
-
+extern int same_mpc_value  (mpc_ptr got, mpc_ptr ref,
+                            known_signs_t known_signs);
 
 /** READ FILE WITH TEST DATA SET **/
-/* data_check (function, "data_file_name") checks function results against
-   precomputed data in a file.*/
-extern void data_check (mpc_function, const char *);
-
-extern FILE * open_data_file (const char *file_name);
-extern void close_data_file (FILE *fp);
+extern FILE * open_data_file         (const char *file_name);
+extern void   close_data_file        (FILE *fp);
 
 /* helper file reading functions */
 extern void skip_whitespace_comments (FILE *fp);
-extern void read_ternary (FILE *fp, int* ternary);
-extern void read_mpfr_rounding_mode (FILE *fp, mpfr_rnd_t* rnd);
-extern void read_mpc_rounding_mode (FILE *fp, mpc_rnd_t* rnd);
-extern mpfr_prec_t read_mpfr_prec (FILE *fp);
-extern void read_int (FILE *fp, int *n, const char *name);
-extern size_t read_string (FILE *fp, char **buffer_ptr, size_t buffer_length, const char *name);
-extern void read_mpfr (FILE *fp, mpfr_ptr x, int *known_sign);
-extern void read_mpc (FILE *fp, mpc_ptr z, known_signs_t *ks);
+extern void read_ternary             (FILE *fp, int* ternary);
+extern void read_mpfr_rounding_mode  (FILE *fp, mpfr_rnd_t* rnd);
+extern void read_mpc_rounding_mode   (FILE *fp, mpc_rnd_t* rnd);
+extern mpfr_prec_t read_mpfr_prec    (FILE *fp);
+extern void read_int                 (FILE *fp, int *n, const char *name);
+extern size_t read_string            (FILE *fp, char **buffer_ptr,
+                                      size_t buffer_length, const char *name);
+extern void read_mpfr                (FILE *fp, mpfr_ptr x, int *known_sign);
+extern void read_mpc                 (FILE *fp, mpc_ptr z, known_signs_t *ks);
+
+void set_mpfr_flags   (int counter);
+void check_mpfr_flags (int counter);
+
+/*
+  function descriptions
+*/
+
+/* type for return, output and input parameters */
+typedef enum {
+  NATIVE_INT,          /* int */
+  NATIVE_UL,           /* unsigned long */
+  NATIVE_L,            /* signed long */
+  NATIVE_D,            /* double */
+  NATIVE_LD,           /* long double */
+  NATIVE_DC,           /* double _Complex */
+  NATIVE_LDC,          /* long double _Complex */
+  NATIVE_IM,           /* intmax_t */
+  NATIVE_UIM,          /* uintmax_t */
+  NATIVE_STRING,       /* char* */
+  GMP_Z,               /* mpz_t */
+  GMP_Q,               /* mpq_t */
+  GMP_F,               /* mpf_t */
+  MPFR_INEX,           /* mpfr_inex */
+  MPFR,                /* mpfr_t  */
+  MPFR_RND,            /* mpfr_rnd_t */
+  MPC_INEX,            /* mpc_inex */
+  MPC,                 /* mpc_t */
+  MPC_RND,             /* mpc_rnd_t */
+  MPCC_INEX            /* mpcc_inex */
+} mpc_param_t;
+
+/* additional information for checking mpfr_t result */
+typedef struct {
+  mpfr_t              mpfr; /* skip space for the variable */
+  int                 known_sign;
+} mpfr_data_t;
 
 #define TERNARY_NOT_CHECKED 255
-   /* special value to indicate that the ternary value is not checked */
+/* special value to indicate that the ternary value is not checked */
 #define TERNARY_ERROR 254
-   /* special value to indicate that an error occurred in an mpc function */
+/* special value to indicate that an error occurred in an mpc function */
+
+/* mpc nonary value as a pair of ternary value for data from a file */
+typedef struct {
+  int                real;
+  int                imag;
+} mpc_inex_data_t;
+
+/* additional information for checking mpc_t result */
+typedef struct {
+  mpc_t               mpc; /* skip space */
+  int                 known_sign_real;
+  int                 known_sign_imag;
+} mpc_data_t;
+
+/* string buffer information */
+typedef struct {
+  char*               string; /* skip space */
+  int                 length;
+} string_info_t;
+
+/* abstract parameter type
+
+   Let consider an abstract parameter p, which is declared as follows:
+   mpc_operand_t p;
+   we use the fact that a mpfr_t (respectively mpc_t) value can be accessed as
+   'p.mpfr' (resp. 'p.mpc') as well as 'p.mpfr_info.mpfr'
+   (resp. 'p.mpc_info.mpc'), the latter form permitting access to the
+   'known_sign' field(s).
+   Similarly, if the abstract parameter represent a string variable, we can
+   access its value with 'p.string' or 'p.string_info.string' and its size
+   with 'p.string_info.length'.
+
+   The user uses the simple form when adding a test, the second form is used by the
+   test suite itself when reading reference data and checking result against them.
+*/
+typedef union {
+  int                  i;
+  unsigned long        ui;
+  signed long          si;
+  double               d;
+  long double          ld;
+#ifdef _MPC_H_HAVE_INTMAX_T
+  intmax_t             im;
+  uintmax_t            uim;
+#endif
+#ifdef _Complex_I
+  double _Complex      dc;
+  long double _Complex ldc;
+#endif
+  char *               string;
+  string_info_t        string_info;
+  mpz_t                mpz;
+  mpq_t                mpq;
+  mpf_t                mpf;
+  mpfr_t               mpfr;
+  mpfr_data_t          mpfr_data;
+  mpfr_rnd_t           mpfr_rnd;
+  int                  mpfr_inex;
+  mpc_t                mpc;
+  mpc_data_t           mpc_data;
+  mpc_rnd_t            mpc_rnd;
+  int                  mpc_inex;
+  mpc_inex_data_t      mpc_inex_data;
+  int                  mpcc_inex;
+} mpc_operand_t;
+
+#define PARAMETER_ARRAY_SIZE 10
+
+/* function name plus parameters in the following order:
+   output parameters, input parameters (ending with rounding modes).
+   The input parameters include one rounding mode per mpfr/mpc
+   output starting from rnd_index.
+   For the time being, there may be either one or two rounding modes;
+   in the latter case, we assume that there are three outputs:
+   the inexact value and two complex numbers.
+ */
+typedef struct {
+  char         *name;  /* name of the function */
+  int           nbout; /* number of output parameters */
+  int           nbin;  /* number of input parameters, including rounding
+                          modes */
+  int           nbrnd; /* number of rounding mode parameters */
+  mpc_operand_t P[PARAMETER_ARRAY_SIZE]; /* value of parameters */
+  mpc_param_t   T[PARAMETER_ARRAY_SIZE]; /* type of parameters */
+} mpc_fun_param_t;
+
+
+void        read_description    (mpc_fun_param_t* param, const char *file);
+const char* read_description_findname (mpc_param_t e);
+
+/* file functions */
+typedef struct {
+  char *pathname;
+  FILE *fd;
+  unsigned long line_number;
+  unsigned long test_line_number;
+  int nextchar;
+} mpc_datafile_context_t;
+
+void    open_datafile       (mpc_datafile_context_t* datafile_context,
+                             const char * data_filename);
+void    close_datafile      (mpc_datafile_context_t *dc);
+
+/* data file functions */
+void    read_line           (mpc_datafile_context_t* datafile_context,
+                             mpc_fun_param_t* params);
+void    check_data          (mpc_datafile_context_t* datafile_context,
+                             mpc_fun_param_t* params,
+                             int index_reused_operand);
+
+/* parameters templated functions */
+int     data_check_template (const char* descr_file, const char * data_file);
+
+void    init_parameters     (mpc_fun_param_t *params);
+void    clear_parameters    (mpc_fun_param_t *params);
+void    print_parameter     (mpc_fun_param_t *params, int index);
+int     copy_parameter      (mpc_fun_param_t *params,
+                             int index_dest, int index_src);
+
+void    tpl_read_int        (mpc_datafile_context_t* datafile_context,
+                             int *nread, const char *name);
+void    tpl_read_ui         (mpc_datafile_context_t* datafile_context,
+                             unsigned long int *ui);
+void    tpl_read_si         (mpc_datafile_context_t* datafile_context,
+                             long int *si);
+void    tpl_read_mpz        (mpc_datafile_context_t* datafile_context,
+                             mpz_t z);
+void    tpl_skip_whitespace_comments (mpc_datafile_context_t* datafile_context);
+void    tpl_read_ternary    (mpc_datafile_context_t* datafile_context,
+                             int* ternary);
+void    tpl_read_mpfr       (mpc_datafile_context_t* datafile_context,
+                             mpfr_ptr x, int* known_sign);
+void    tpl_read_mpfr_rnd   (mpc_datafile_context_t* datafile_context,
+                             mpfr_rnd_t* rnd);
+void    tpl_read_mpfr_inex  (mpc_datafile_context_t* datafile_context,
+                             int *ternary);
+void    tpl_read_mpc_inex   (mpc_datafile_context_t* datafile_context,
+                             mpc_inex_data_t* ternarypair);
+void    tpl_read_mpc        (mpc_datafile_context_t* datafile_context,
+                             mpc_data_t* z);
+void    tpl_read_mpc_rnd    (mpc_datafile_context_t* datafile_context,
+                             mpc_rnd_t* rnd);
+
+int     tpl_same_mpz_value  (mpz_ptr n1, mpz_ptr n2);
+int     tpl_same_mpfr_value (mpfr_ptr x1, mpfr_ptr x2, int known_sign);
+int     tpl_check_mpfr_data (mpfr_t got, mpfr_data_t expected);
+int     tpl_check_mpc_data  (mpc_ptr got, mpc_data_t expected);
+
+void    tpl_copy_int        (int *dest, const int * const src);
+void    tpl_copy_ui         (unsigned long int *dest,
+                             const unsigned long int * const src);
+void    tpl_copy_si         (long int *dest, const long int * const src);
+void    tpl_copy_d          (double *dest, const double * const src);
+void    tpl_copy_mpz        (mpz_ptr dest, mpz_srcptr src);
+void    tpl_copy_mpfr       (mpfr_ptr dest, mpfr_srcptr src);
+void    tpl_copy_mpc        (mpc_ptr dest, mpc_srcptr src);
+
+int     double_rounding     (mpc_fun_param_t *params);
+
+/* iterating over rounding modes */
+void    first_rnd_mode      (mpc_fun_param_t *params);
+int     is_valid_rnd_mode   (mpc_fun_param_t *params);
+void    next_rnd_mode       (mpc_fun_param_t *params);
+
+/* parameter precision */
+void    set_output_precision    (mpc_fun_param_t *params, mpfr_prec_t prec);
+void    set_input_precision     (mpc_fun_param_t *params, mpfr_prec_t prec);
+void    set_reference_precision (mpc_fun_param_t *params, mpfr_prec_t prec);
 
 #endif /* __MPC_TESTS_H */
