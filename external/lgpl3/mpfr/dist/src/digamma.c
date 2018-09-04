@@ -1,6 +1,6 @@
 /* mpfr_digamma -- digamma function of a floating-point number
 
-Copyright 2009-2016 Free Software Foundation, Inc.
+Copyright 2009-2018 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -34,8 +34,7 @@ mpfr_digamma_approx (mpfr_ptr s, mpfr_srcptr x)
   mpfr_prec_t p = MPFR_PREC (s);
   mpfr_t t, u, invxx;
   mpfr_exp_t e, exps, f, expu;
-  mpz_t *INITIALIZED(B);  /* variable B declared as initialized */
-  unsigned long n0, n; /* number of allocated B[] */
+  unsigned long n;
 
   MPFR_ASSERTN(MPFR_IS_POS(x) && (MPFR_EXP(x) >= 2));
 
@@ -59,12 +58,9 @@ mpfr_digamma_approx (mpfr_ptr s, mpfr_srcptr x)
   /* in the following we note err=xxx when the ratio between the approximation
      and the exact result can be written (1 + theta)^xxx for |theta| <= 2^(-p),
      following Higham's method */
-  B = mpfr_bernoulli_internal ((mpz_t *) 0, 0);
   mpfr_set_ui (t, 1, MPFR_RNDN); /* err = 0 */
   for (n = 1;; n++)
     {
-      /* compute next Bernoulli number */
-      B = mpfr_bernoulli_internal (B, n);
       /* The main term is Bernoulli[2n]/(2n)/x^(2n) = B[n]/(2n+1)!(2n)/x^(2n)
          = B[n]*t[n]/(2n) where t[n]/t[n-1] = 1/(2n)/(2n+1)/x^2. */
       mpfr_mul (t, t, invxx, MPFR_RNDU);        /* err = err + 3 */
@@ -72,7 +68,7 @@ mpfr_digamma_approx (mpfr_ptr s, mpfr_srcptr x)
       mpfr_div_ui (t, t, 2 * n + 1, MPFR_RNDU); /* err = err + 1 */
       /* we thus have err = 5n here */
       mpfr_div_ui (u, t, 2 * n, MPFR_RNDU);     /* err = 5n+1 */
-      mpfr_mul_z (u, u, B[n], MPFR_RNDU);       /* err = 5n+2, and the
+      mpfr_mul_z (u, u, mpfr_bernoulli_cache(n), MPFR_RNDU);/* err = 5n+2, and the
                                                    absolute error is bounded
                                                    by 10n+4 ulp(u) [Rule 11] */
       /* if the terms 'u' are decreasing by a factor two at least,
@@ -92,13 +88,8 @@ mpfr_digamma_approx (mpfr_ptr s, mpfr_srcptr x)
           f = (1 + f) / 2;
           expu ++;
         }
-      e += f; /* total rouding error coming from 'u' term */
+      e += f; /* total rounding error coming from 'u' term */
     }
-
-  n0 = ++n;
-  while (n--)
-    mpz_clear (B[n]);
-  (*__gmp_free_func) (B, n0 * sizeof (mpz_t));
 
   mpfr_clear (t);
   mpfr_clear (u);
@@ -126,6 +117,10 @@ mpfr_digamma_reflection (mpfr_ptr y, mpfr_srcptr x, mpfr_rnd_t rnd_mode)
   int inex;
   MPFR_ZIV_DECL (loop);
 
+  MPFR_LOG_FUNC
+    (("x[%Pu]=%.*Rg rnd=%d", mpfr_get_prec(x), mpfr_log_prec, x, rnd_mode),
+     ("y[%Pu]=%.*Rg inexact=%d", mpfr_get_prec(y), mpfr_log_prec, y, inex));
+
   /* we want that 1-x is exact with precision q: if 0 < x < 1/2, then
      q = PREC(x)-EXP(x) is ok, otherwise if -1 <= x < 0, q = PREC(x)-EXP(x)
      is ok, otherwise for x < -1, PREC(x) is ok if EXP(x) <= PREC(x),
@@ -137,7 +132,8 @@ mpfr_digamma_reflection (mpfr_ptr y, mpfr_srcptr x, mpfr_rnd_t rnd_mode)
   else
     q = MPFR_EXP(x);
   mpfr_init2 (u, q);
-  MPFR_ASSERTN(mpfr_ui_sub (u, 1, x, MPFR_RNDN) == 0);
+  MPFR_DBGRES(inex = mpfr_ui_sub (u, 1, x, MPFR_RNDN));
+  MPFR_ASSERTN(inex == 0);
 
   /* if x is half an integer, cot(Pi*x) = 0, thus Digamma(x) = Digamma(1-x) */
   mpfr_mul_2exp (u, u, 1, MPFR_RNDN);
@@ -208,11 +204,31 @@ mpfr_digamma_positive (mpfr_ptr y, mpfr_srcptr x, mpfr_rnd_t rnd_mode)
   unsigned long j = 0, min;
   MPFR_ZIV_DECL (loop);
 
+  MPFR_LOG_FUNC
+    (("x[%Pu]=%.*Rg rnd=%d", mpfr_get_prec(x), mpfr_log_prec, x, rnd_mode),
+     ("y[%Pu]=%.*Rg inexact=%d", mpfr_get_prec(y), mpfr_log_prec, y, inex));
+
   /* compute a precision q such that x+1 is exact */
   if (MPFR_PREC(x) < MPFR_EXP(x))
     q = MPFR_EXP(x);
   else
     q = MPFR_PREC(x) + 1;
+
+  /* for very large x, use |digamma(x) - log(x)| < 1/x < 2^(1-EXP(x)) */
+  if (MPFR_PREC(y) + 10 < MPFR_EXP(x))
+    {
+      /* this ensures EXP(x) >= 3, thus x >= 4, thus log(x) > 1 */
+      mpfr_init2 (t, MPFR_PREC(y) + 10);
+      mpfr_log (t, x, MPFR_RNDZ);
+      if (MPFR_CAN_ROUND (t, MPFR_PREC(y) + 10, MPFR_PREC(y), rnd_mode))
+        {
+          inex = mpfr_set (y, t, rnd_mode);
+          mpfr_clear (t);
+          return inex;
+        }
+      mpfr_clear (t);
+    }
+
   mpfr_init2 (x_plus_j, q);
 
   mpfr_init2 (t, p);
@@ -285,7 +301,6 @@ mpfr_digamma (mpfr_ptr y, mpfr_srcptr x, mpfr_rnd_t rnd_mode)
     (("x[%Pu]=%.*Rg rnd=%d", mpfr_get_prec(x), mpfr_log_prec, x, rnd_mode),
      ("y[%Pu]=%.*Rg inexact=%d", mpfr_get_prec(y), mpfr_log_prec, y, inex));
 
-
   if (MPFR_UNLIKELY(MPFR_IS_SINGULAR(x)))
     {
       if (MPFR_IS_NAN(x))
@@ -312,7 +327,7 @@ mpfr_digamma (mpfr_ptr y, mpfr_srcptr x, mpfr_rnd_t rnd_mode)
           /* the following works also in case of overlap */
           MPFR_SET_INF(y);
           MPFR_SET_OPPOSITE_SIGN(y, x);
-          mpfr_set_divby0 ();
+          MPFR_SET_DIVBY0 ();
           MPFR_RET(0);
         }
     }

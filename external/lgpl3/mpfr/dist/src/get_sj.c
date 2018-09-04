@@ -1,6 +1,6 @@
 /* mpfr_get_sj -- convert a MPFR number to a huge machine signed integer
 
-Copyright 2004, 2006-2016 Free Software Foundation, Inc.
+Copyright 2004, 2006-2018 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -21,7 +21,7 @@ http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA. */
 
 #ifdef HAVE_CONFIG_H
-# include "config.h"            /* for a build within gmp */
+# include "config.h"
 #endif
 
 #include "mpfr-intmax.h"
@@ -35,10 +35,11 @@ mpfr_get_sj (mpfr_srcptr f, mpfr_rnd_t rnd)
   intmax_t r;
   mpfr_prec_t prec;
   mpfr_t x;
+  MPFR_SAVE_EXPO_DECL (expo);
 
   if (MPFR_UNLIKELY (!mpfr_fits_intmax_p (f, rnd)))
     {
-      MPFR_SET_ERANGE ();
+      MPFR_SET_ERANGEFLAG ();
       return MPFR_IS_NAN (f) ? 0 :
         MPFR_IS_NEG (f) ? MPFR_INTMAX_MIN : MPFR_INTMAX_MAX;
     }
@@ -46,19 +47,23 @@ mpfr_get_sj (mpfr_srcptr f, mpfr_rnd_t rnd)
   if (MPFR_IS_ZERO (f))
      return (intmax_t) 0;
 
-  /* determine the precision of intmax_t */
-  for (r = MPFR_INTMAX_MIN, prec = 0; r != 0; r /= 2, prec++)
+  /* Determine the precision of intmax_t. |INTMAX_MIN| may have one
+     more bit as an integer, but in this case, this is a power of 2,
+     thus fits in a precision-prec floating-point number. */
+  for (r = MPFR_INTMAX_MAX, prec = 0; r != 0; r /= 2, prec++)
     { }
-  /* Note: though INTMAX_MAX would have been sufficient for the conversion,
-     we chose INTMAX_MIN so that INTMAX_MIN - 1 is always representable in
-     precision prec; this is useful to detect overflows in MPFR_RNDZ (will
-     be needed later). */
 
-  /* Now, r = 0. */
+  MPFR_ASSERTD (r == 0);
+
+  MPFR_SAVE_EXPO_MARK (expo);
 
   mpfr_init2 (x, prec);
   mpfr_rint (x, f, rnd);
   MPFR_ASSERTN (MPFR_IS_FP (x));
+
+  /* The flags from mpfr_rint are the wanted ones. In particular,
+     it sets the inexact flag when necessary. */
+  MPFR_SAVE_EXPO_UPDATE_FLAGS (expo, __gmpfr_flags);
 
   if (MPFR_NOTZERO (x))
     {
@@ -67,15 +72,15 @@ mpfr_get_sj (mpfr_srcptr f, mpfr_rnd_t rnd)
 
       xp = MPFR_MANT (x);
       sh = MPFR_GET_EXP (x);
-      MPFR_ASSERTN ((mpfr_prec_t) sh <= prec);
+      MPFR_ASSERTN ((mpfr_prec_t) sh <= prec + 1);
       if (MPFR_INTMAX_MIN + MPFR_INTMAX_MAX != 0
-          && MPFR_UNLIKELY ((mpfr_prec_t) sh == prec))
+          && MPFR_UNLIKELY ((mpfr_prec_t) sh > prec))
         {
           /* 2's complement and x <= INTMAX_MIN: in the case mp_limb_t
              has the same size as intmax_t, we cannot use the code in
              the for loop since the operations would be performed in
              unsigned arithmetic. */
-          MPFR_ASSERTN (MPFR_IS_NEG (x) && (mpfr_powerof2_raw (x)));
+          MPFR_ASSERTN (MPFR_IS_NEG (x) && mpfr_powerof2_raw (x));
           r = MPFR_INTMAX_MIN;
         }
       else if (MPFR_IS_POS (x))
@@ -116,6 +121,8 @@ mpfr_get_sj (mpfr_srcptr f, mpfr_rnd_t rnd)
     }
 
   mpfr_clear (x);
+
+  MPFR_SAVE_EXPO_FREE (expo);
 
   return r;
 }

@@ -1,7 +1,7 @@
 /* mpfr_subnormalize -- Subnormalize a floating point number
    emulating sub-normal numbers.
 
-Copyright 2005-2016 Free Software Foundation, Inc.
+Copyright 2005-2018 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -54,7 +54,7 @@ mpfr_subnormalize (mpfr_ptr y, int old_inexact, mpfr_rnd_t rnd)
                        __gmpfr_emin + (mpfr_exp_t) MPFR_PREC (y) - 1)))
     MPFR_RET (old_inexact);
 
-  mpfr_set_underflow ();
+  MPFR_SET_UNDERFLOW ();
   sign = MPFR_SIGN (y);
 
   /* We have to emulate one bit rounding if EXP(y) = emin */
@@ -112,7 +112,7 @@ mpfr_subnormalize (mpfr_ptr y, int old_inexact, mpfr_rnd_t rnd)
           MPFR_RET (sign);
         }
     }
-  else /* Hard case: It is more or less the same problem than mpfr_cache */
+  else /* Hard case: It is more or less the same problem as mpfr_cache */
     {
       mpfr_t dest;
       mpfr_prec_t q;
@@ -144,8 +144,11 @@ mpfr_subnormalize (mpfr_ptr y, int old_inexact, mpfr_rnd_t rnd)
                 {
                   if (SAME_SIGN (inexact, MPFR_INT_SIGN (y)))
                     mpfr_nexttozero (dest);
-                  else
-                    mpfr_nexttoinf (dest);
+                  else  /* subnormal range, thus no overflow */
+                    {
+                      mpfr_nexttoinf (dest);
+                      MPFR_ASSERTD(!MPFR_IS_INF (dest));
+                    }
                   inexact = -inexact;
                 }
             }
