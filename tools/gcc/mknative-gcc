@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: mknative-gcc,v 1.92 2018/02/06 07:04:01 mrg Exp $
+#	$NetBSD: mknative-gcc,v 1.93 2018/09/04 06:40:37 mrg Exp $
 #
 # Shell script for generating all the constants needed for a native
 # platform build of gcc.
@@ -369,10 +369,9 @@ __EOF__
 		if [ "${f}" = "configargs" ]
 		then
 			_srcquoted=$(echo "$_SRC" | sed 's/\//\\\//g')
-			ex <<__EOF__ $_OUTDIR/usr.bin/$_subdir/arch/$MACHINE_ARCH/$f.h
-/static const char configuration_arguments/ s/$_srcquoted/\/usr\/src/g
-wq
-__EOF__
+			sed -i -E -e "s,$_srcquoted,/usr/src,g" \
+				  -e 's/--build=[^ ]+ --host=([^ ]+)/--build=\1 --host=\1/' \
+				$_OUTDIR/usr.bin/$_subdir/arch/$MACHINE_ARCH/$f.h
 		fi
 	done
 
