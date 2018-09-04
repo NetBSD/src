@@ -1,6 +1,6 @@
 /* tpow_ld -- test file for mpc_pow_ld.
 
-Copyright (C) 2009 INRIA
+Copyright (C) 2009, 2014 INRIA
 
 This file is part of GNU MPC.
 
@@ -33,6 +33,9 @@ main (void)
   if (mpc_cmp_si_si (z, -9, 46) != 0)
     {
       printf ("Error for mpc_pow_ld (1)\n");
+      printf ("expected (-9 46)\ngot ");
+      mpc_out_str (stdout, 10, 0, z, MPC_RNDNN);
+      printf ("\n");
       exit (1);
     }
   mpc_clear (z);

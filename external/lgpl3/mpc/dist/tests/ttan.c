@@ -1,6 +1,6 @@
 /* ttan -- test file for mpc_tan.
 
-Copyright (C) 2008, 2011 INRIA
+Copyright (C) 2008, 2011, 2012, 2013 INRIA
 
 This file is part of GNU MPC.
 
@@ -38,8 +38,8 @@ pure_real_argument (void)
 
   /* tan(1 +i*0) = tan(1) +i*0 */
   mpc_set_ui_ui (z, 1, 0, MPC_RNDNN);
-  mpfr_set_ui (x, 1, GMP_RNDN);
-  mpfr_tan (tan_x, x, GMP_RNDN);
+  mpfr_set_ui (x, 1, MPFR_RNDN);
+  mpfr_tan (tan_x, x, MPFR_RNDN);
   mpc_tan (tan_z, z, MPC_RNDNN);
   if (mpfr_cmp (mpc_realref (tan_z), tan_x) != 0
       || !mpfr_zero_p (mpc_imagref (tan_z)) || mpfr_signbit (mpc_imagref (tan_z)))
@@ -59,11 +59,11 @@ pure_real_argument (void)
     }
 
   /* tan(Pi/2 +i*0) = +Inf +i*0 */
-  mpfr_const_pi (x, GMP_RNDN);
-  mpfr_div_2ui (x, x, 1, GMP_RNDN);
-  mpfr_set (mpc_realref (z), x, GMP_RNDN);
-  mpfr_set_ui (mpc_imagref (z), 0, GMP_RNDN);
-  mpfr_tan (tan_x, x, GMP_RNDN);
+  mpfr_const_pi (x, MPFR_RNDN);
+  mpfr_div_2ui (x, x, 1, MPFR_RNDN);
+  mpfr_set (mpc_realref (z), x, MPFR_RNDN);
+  mpfr_set_ui (mpc_imagref (z), 0, MPFR_RNDN);
+  mpfr_tan (tan_x, x, MPFR_RNDN);
   mpc_tan (tan_z, z, MPC_RNDNN);
   if (mpfr_cmp (mpc_realref (tan_z), tan_x) != 0
       || !mpfr_zero_p (mpc_imagref (tan_z)) || mpfr_signbit (mpc_imagref (tan_z)))
@@ -83,9 +83,9 @@ pure_real_argument (void)
     }
 
   /* tan(-Pi/2 +i*0) = -Inf +i*0 */
-  mpfr_neg (x, x, GMP_RNDN);
+  mpfr_neg (x, x, MPFR_RNDN);
   mpc_neg (z, z, MPC_RNDNN);
-  mpfr_tan (tan_x, x, GMP_RNDN);
+  mpfr_tan (tan_x, x, MPFR_RNDN);
   mpc_tan (tan_z, z, MPC_RNDNN);
   if (mpfr_cmp (mpc_realref (tan_z), tan_x) != 0
       || !mpfr_zero_p (mpc_imagref (tan_z)) || mpfr_signbit (mpc_imagref (tan_z)))
@@ -128,8 +128,8 @@ pure_imaginary_argument (void)
 
   /* tan(0 +i) = +0 +i*tanh(1) */
   mpc_set_ui_ui (z, 0, 1, MPC_RNDNN);
-  mpfr_set_ui (y, 1, GMP_RNDN);
-  mpfr_tanh (tanh_y, y, GMP_RNDN);
+  mpfr_set_ui (y, 1, MPFR_RNDN);
+  mpfr_tanh (tanh_y, y, MPFR_RNDN);
   mpc_tan (tan_z, z, MPC_RNDNN);
   if (mpfr_cmp (mpc_imagref (tan_z), tanh_y) != 0
       || !mpfr_zero_p (mpc_realref (tan_z)) || mpfr_signbit (mpc_realref (tan_z)))
@@ -137,15 +137,15 @@ pure_imaginary_argument (void)
       mpc_t c99;
 
       mpc_init2 (c99, prec);
-      mpfr_set_ui (mpc_realref (c99), 0, GMP_RNDN);
-      mpfr_set (mpc_imagref (c99), tanh_y, GMP_RNDN);
+      mpfr_set_ui (mpc_realref (c99), 0, MPFR_RNDN);
+      mpfr_set (mpc_imagref (c99), tanh_y, MPFR_RNDN);
 
       TEST_FAILED ("mpc_tan", z, tan_z, c99, MPC_RNDNN);
     }
 
   /* tan(0 -i) = +0 +i*tanh(-1) */
   mpc_conj (z, z, MPC_RNDNN);
-  mpfr_neg (tanh_y, tanh_y, GMP_RNDN);
+  mpfr_neg (tanh_y, tanh_y, MPFR_RNDN);
   mpc_tan (tan_z, z, MPC_RNDNN);
   if (mpfr_cmp (mpc_imagref (tan_z), tanh_y) != 0
       || !mpfr_zero_p (mpc_realref (tan_z)) || mpfr_signbit (mpc_realref (tan_z)))
@@ -153,15 +153,15 @@ pure_imaginary_argument (void)
       mpc_t c99;
 
       mpc_init2 (c99, prec);
-      mpfr_set_ui (mpc_realref (c99), 0, GMP_RNDN);
-      mpfr_set (mpc_imagref (c99), tanh_y, GMP_RNDN);
+      mpfr_set_ui (mpc_realref (c99), 0, MPFR_RNDN);
+      mpfr_set (mpc_imagref (c99), tanh_y, MPFR_RNDN);
 
       TEST_FAILED ("mpc_tan", z, tan_z, c99, MPC_RNDNN);
     }
 
   /* tan(-0 +i) = -0 +i*tanh(1) */
   mpc_neg (z, z, MPC_RNDNN);
-  mpfr_neg (tanh_y, tanh_y, GMP_RNDN);
+  mpfr_neg (tanh_y, tanh_y, MPFR_RNDN);
   mpc_tan (tan_z, z, MPC_RNDNN);
   if (mpfr_cmp (mpc_imagref (tan_z), tanh_y) != 0
       || !mpfr_zero_p (mpc_realref (tan_z)) || !mpfr_signbit (mpc_realref (tan_z)))
@@ -169,15 +169,15 @@ pure_imaginary_argument (void)
       mpc_t c99;
 
       mpc_init2 (c99, prec);
-      mpfr_set_ui (mpc_realref (c99), 0, GMP_RNDN);
-      mpfr_set (mpc_imagref (c99), tanh_y, GMP_RNDN);
+      mpfr_set_ui (mpc_realref (c99), 0, MPFR_RNDN);
+      mpfr_set (mpc_imagref (c99), tanh_y, MPFR_RNDN);
 
       TEST_FAILED ("mpc_tan", z, tan_z, c99, MPC_RNDNN);
     }
 
   /* tan(-0 -i) = -0 +i*tanh(-1) */
   mpc_conj (z, z, MPC_RNDNN);
-  mpfr_neg (tanh_y, tanh_y, GMP_RNDN);
+  mpfr_neg (tanh_y, tanh_y, MPFR_RNDN);
   mpc_tan (tan_z, z, MPC_RNDNN);
   if (mpfr_cmp (mpc_imagref (tan_z), tanh_y) != 0
       || !mpfr_zero_p (mpc_realref (tan_z)) || !mpfr_signbit (mpc_realref (tan_z)))
@@ -185,8 +185,8 @@ pure_imaginary_argument (void)
       mpc_t c99;
 
       mpc_init2 (c99, prec);
-      mpfr_set_ui (mpc_realref (c99), 0, GMP_RNDN);
-      mpfr_set (mpc_imagref (c99), tanh_y, GMP_RNDN);
+      mpfr_set_ui (mpc_realref (c99), 0, MPFR_RNDN);
+      mpfr_set (mpc_imagref (c99), tanh_y, MPFR_RNDN);
 
       TEST_FAILED ("mpc_tan", z, tan_z, c99, MPC_RNDNN);
     }
@@ -197,16 +197,24 @@ pure_imaginary_argument (void)
   mpfr_clear (y);
 }
 
+#define MPC_FUNCTION_CALL                                       \
+  P[0].mpc_inex = mpc_tan (P[1].mpc, P[2].mpc, P[3].mpc_rnd)
+#define MPC_FUNCTION_CALL_REUSE_OP1                             \
+  P[0].mpc_inex = mpc_tan (P[1].mpc, P[1].mpc, P[3].mpc_rnd)
+
+#include "data_check.tpl"
+#include "tgeneric.tpl"
+
 int
 main (void)
 {
-  DECL_FUNC (CC, f, mpc_tan);
-
   test_start ();
 
-  data_check (f, "tan.dat");
-  tgeneric (f, 2, 512, 7, 4);
+  data_check_template ("tan.dsc", "tan.dat");
 
+  tgeneric_template ("tan.dsc", 2, 512, 7, 4);
+
+  /* FIXME: remove them? */
   pure_real_argument ();
   pure_imaginary_argument ();
 

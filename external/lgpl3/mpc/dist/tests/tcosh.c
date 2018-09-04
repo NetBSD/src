@@ -1,6 +1,6 @@
-/* test file for mpc_cosh.
+/* tcosh -- test file for mpc_cosh.
 
-Copyright (C) 2008, 2009, 2010, 2011 INRIA
+Copyright (C) 2008, 2009, 2010, 2011, 2012, 2013 INRIA
 
 This file is part of GNU MPC.
 
@@ -38,8 +38,8 @@ pure_real_argument (void)
 
   /* cosh(1 +i*0) = cosh(1) +i*0 */
   mpc_set_ui_ui (z, 1, 0, MPC_RNDNN);
-  mpfr_cosh (mpc_realref (u), mpc_realref (z), GMP_RNDN);
-  mpfr_set_ui (mpc_imagref (u), 0, GMP_RNDN);
+  mpfr_cosh (mpc_realref (u), mpc_realref (z), MPFR_RNDN);
+  mpfr_set_ui (mpc_imagref (u), 0, MPFR_RNDN);
   mpc_cosh (cosh_z, z, MPC_RNDNN);
   if (mpc_cmp (cosh_z, u) != 0 || mpfr_signbit (mpc_imagref (cosh_z)))
     TEST_FAILED ("mpc_cosh", z, cosh_z, u, MPC_RNDNN);
@@ -84,8 +84,8 @@ pure_imaginary_argument (void)
 
   /* cosh(+0 +i) = cos(1) + i*0 */
   mpc_set_ui_ui (z, 0, 1, MPC_RNDNN);
-  mpfr_cos (mpc_realref (u), mpc_imagref (z), GMP_RNDN);
-  mpfr_set_ui (mpc_imagref (u), 0, GMP_RNDN);
+  mpfr_cos (mpc_realref (u), mpc_imagref (z), MPFR_RNDN);
+  mpfr_set_ui (mpc_imagref (u), 0, MPFR_RNDN);
   mpc_cosh (cosh_z, z, MPC_RNDNN);
   if (mpc_cmp (cosh_z, u) != 0 || mpfr_signbit (mpc_imagref (cosh_z)))
     TEST_FAILED ("mpc_cosh", z, cosh_z, u, MPC_RNDNN);
@@ -115,16 +115,23 @@ pure_imaginary_argument (void)
   mpc_clear (u);
 }
 
+#define MPC_FUNCTION_CALL                                       \
+  P[0].mpc_inex = mpc_cosh (P[1].mpc, P[2].mpc, P[3].mpc_rnd)
+#define MPC_FUNCTION_CALL_REUSE_OP1                             \
+  P[0].mpc_inex = mpc_cosh (P[1].mpc, P[1].mpc, P[3].mpc_rnd)
+
+#include "data_check.tpl"
+#include "tgeneric.tpl"
 int
 main (void)
 {
-  DECL_FUNC(CC, f,mpc_cosh);
-
   test_start ();
 
-  data_check (f, "cosh.dat");
-  tgeneric (f, 2, 512, 7, 7);
+  data_check_template ("cosh.dsc", "cosh.dat");
 
+  tgeneric_template ("cosh.dsc", 2, 512, 7, 7);
+
+  /* FIXME: remove the following tests? (Now tested by tgeneric) */
   pure_real_argument ();
   pure_imaginary_argument ();
 

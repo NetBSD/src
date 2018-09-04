@@ -1,6 +1,6 @@
 /* targ -- test file for mpc_arg.
 
-Copyright (C) 2008 INRIA
+Copyright (C) 2008, 2013 INRIA
 
 This file is part of GNU MPC.
 
@@ -20,15 +20,20 @@ along with this program. If not, see http://www.gnu.org/licenses/ .
 
 #include "mpc-tests.h"
 
+#define MPC_FUNCTION_CALL                                               \
+  P[0].mpfr_inex = mpc_arg (P[1].mpfr, P[2].mpc, P[3].mpfr_rnd)
+
+#include "data_check.tpl"
+#include "tgeneric.tpl"
+
 int
 main (void)
 {
-  DECL_FUNC (FC, f, mpc_arg);
-
   test_start ();
 
-  tgeneric (f, 2, 1024, 1, 4096);
-  data_check (f, "arg.dat");
+  data_check_template ("arg.dsc", "arg.dat");
+
+  tgeneric_template ("arg.dsc", 2, 1024, 1, 4096);
 
   test_end ();
 
