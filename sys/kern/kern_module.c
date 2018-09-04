@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module.c,v 1.130.2.14 2018/09/04 11:31:11 pgoyette Exp $	*/
+/*	$NetBSD: kern_module.c,v 1.130.2.15 2018/09/04 11:48:38 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.130.2.14 2018/09/04 11:31:11 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.130.2.15 2018/09/04 11:48:38 pgoyette Exp $");
 
 #define _MODULE_INTERNAL
 
@@ -904,8 +904,8 @@ module_do_builtin(const module_t *pmod, const char *name, module_t **modp,
 		 * cases (such as nfsserver + nfs), the dependee can be
 		 * succesfully linked without the dependencies.
 		 */
-		module_error("%s: can't find builtin dependency `%s'",
-		    pmod->mod_info->mi_name, name);
+		module_error("built-in module %s can't find builtin "
+		    "dependency `%s'", pmod->mod_info->mi_name, name);
 		return ENOENT;
 	}
 
@@ -929,6 +929,8 @@ module_do_builtin(const module_t *pmod, const char *name, module_t **modp,
 			alloc_required(mod);
 			error = module_do_builtin(mod, buf, &mod2, NULL);
 			if (error != 0) {
+				module_error("built-in module %s prerequisite "
+				    "%s failed, error %d", name, buf, error);
 				goto fail;
 			}
 			(*mod->mod_required)[mod->mod_nrequired++] = mod2;
@@ -945,6 +947,9 @@ module_do_builtin(const module_t *pmod, const char *name, module_t **modp,
 				if (modp != NULL)
 					*modp = mod2;
 				error = EEXIST;
+				module_error("built-in module %s alias %s "
+				    "already exists in module %s", name,
+				    *--aliasp, mod2->mod_info->mod_name);
 				goto fail;
 			}
 		}
@@ -957,8 +962,8 @@ module_do_builtin(const module_t *pmod, const char *name, module_t **modp,
 	error = (*mi->mi_modcmd)(MODULE_CMD_INIT, props);
 	module_active = prev_active;
 	if (error != 0) {
-		module_error("builtin module `%s' "
-		    "failed to init, error %d", mi->mi_name, error);
+		module_error("built-in module %s failed its MODULE_CMD_INIT, "
+		    "error %d", mi->mi_name, error);
 		goto fail;
 	}
 
