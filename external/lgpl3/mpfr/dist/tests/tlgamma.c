@@ -1,6 +1,6 @@
 /* mpfr_tlgamma -- test file for lgamma function
 
-Copyright 2005-2016 Free Software Foundation, Inc.
+Copyright 2005-2018 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -19,9 +19,6 @@ You should have received a copy of the GNU Lesser General Public License
 along with the GNU MPFR Library; see the file COPYING.LESSER.  If not, see
 http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA. */
-
-#include <stdio.h>
-#include <stdlib.h>
 
 #include "mpfr-test.h"
 
@@ -147,9 +144,9 @@ special (void)
     {
       printf ("mpfr_lgamma("CHECK_X1") is wrong:\n"
               "expected ");
-      mpfr_print_binary (x); putchar ('\n');
+      mpfr_dump (x);
       printf ("got      ");
-      mpfr_print_binary (y); putchar ('\n');
+      mpfr_dump (y);
       exit (1);
     }
 
@@ -163,9 +160,9 @@ special (void)
     {
       printf ("mpfr_lgamma("CHECK_X2") is wrong:\n"
               "expected ");
-      mpfr_print_binary (x); putchar ('\n');
+      mpfr_dump (x);
       printf ("got      ");
-      mpfr_print_binary (y); putchar ('\n');
+      mpfr_dump (y);
       exit (1);
     }
 
@@ -192,8 +189,8 @@ special (void)
   if (mpfr_equal_p (x, y) == 0 || sign != 1)
     {
       printf ("Error in mpfr_lgamma (120)\n");
-      printf ("Expected "); mpfr_print_binary (y); puts ("");
-      printf ("Got      "); mpfr_print_binary (x); puts ("");
+      printf ("Expected "); mpfr_dump (y);
+      printf ("Got      "); mpfr_dump (x);
       exit (1);
     }
 
@@ -388,13 +385,83 @@ mpfr_lgamma1 (mpfr_ptr y, mpfr_srcptr x, mpfr_rnd_t r)
   return mpfr_lgamma (y, &sign, x, r);
 }
 
+/* Since r10377, the following test causes a "too much memory" error
+   when MPFR is built with Debian's tcc 0.9.27~git20151227.933c223-1
+   on x86_64. The problem came from __gmpfr_ceil_log2, now fixed in
+   r10443 (according to the integer promotion rules, this appeared to
+   be a bug in tcc, not in MPFR; however relying on such an obscure
+   rule was not a good idea). */
+static void
+tcc_bug20160606 (void)
+{
+  mpfr_t x, y;
+  int sign;
+
+  mpfr_init2 (x, 53);
+  mpfr_init2 (y, 53);
+  mpfr_set_ui_2exp (x, 1, -1, MPFR_RNDN);
+  mpfr_lgamma (y, &sign, x, MPFR_RNDN);
+  mpfr_clear (x);
+  mpfr_clear (y);
+}
+
+/* With r12088, mpfr_lgamma is much too slow with a reduced emax that
+   yields an overflow, even though this case is easier. In practice,
+   this test will hang. */
+static void
+bug20180110 (void)
+{
+  mpfr_exp_t emax, e;
+  mpfr_t x, y, z;
+  mpfr_flags_t flags, eflags;
+  int i, inex, sign;
+
+  emax = mpfr_get_emax ();
+
+  mpfr_init2 (x, 2);
+  mpfr_inits2 (64, y, z, (mpfr_ptr) 0);
+  eflags = MPFR_FLAGS_INEXACT | MPFR_FLAGS_OVERFLOW;
+
+  for (i = 10; i <= 30; i++)
+    {
+      mpfr_set_si_2exp (x, -1, -(1L << i), MPFR_RNDN);  /* -2^(-2^i) */
+      mpfr_lgamma (y, &sign, x, MPFR_RNDZ);
+      e = mpfr_get_exp (y);
+      mpfr_set_emax (e - 1);
+      mpfr_clear_flags ();
+      inex = mpfr_lgamma (y, &sign, x, MPFR_RNDZ);
+      flags = __gmpfr_flags;
+      mpfr_set_inf (z, 1);
+      mpfr_nextbelow (z);
+      mpfr_set_emax (emax);
+      if (! (mpfr_equal_p (y, z) && SAME_SIGN (inex, -1) && flags == eflags))
+        {
+          printf ("Error in bug20180110 for i = %d:\n", i);
+          printf ("Expected ");
+          mpfr_dump (z);
+          printf ("with inex = %d and flags =", -1);
+          flags_out (eflags);
+          printf ("Got      ");
+          mpfr_dump (y);
+          printf ("with inex = %d and flags =", inex);
+          flags_out (flags);
+          exit (1);
+        }
+    }
+
+  mpfr_clears (x, y, z, (mpfr_ptr) 0);
+}
+
 int
 main (void)
 {
   tests_start_mpfr ();
 
+  tcc_bug20160606 ();
+  bug20180110 ();
+
   special ();
-  test_generic (2, 100, 2);
+  test_generic (MPFR_PREC_MIN, 100, 2);
 
   data_check ("data/lgamma", mpfr_lgamma1, "mpfr_lgamma");
 

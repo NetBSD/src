@@ -1,6 +1,6 @@
 /* mpfr_get_uj -- convert a MPFR number to a huge machine unsigned integer
 
-Copyright 2004, 2006-2016 Free Software Foundation, Inc.
+Copyright 2004, 2006-2018 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -21,7 +21,7 @@ http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA. */
 
 #ifdef HAVE_CONFIG_H
-# include "config.h"       /* for a build within gmp */
+# include "config.h"
 #endif
 
 #include "mpfr-intmax.h"
@@ -35,10 +35,11 @@ mpfr_get_uj (mpfr_srcptr f, mpfr_rnd_t rnd)
   uintmax_t r;
   mpfr_prec_t prec;
   mpfr_t x;
+  MPFR_SAVE_EXPO_DECL (expo);
 
   if (MPFR_UNLIKELY (!mpfr_fits_uintmax_p (f, rnd)))
     {
-      MPFR_SET_ERANGE ();
+      MPFR_SET_ERANGEFLAG ();
       return MPFR_IS_NAN (f) || MPFR_IS_NEG (f) ?
         (uintmax_t) 0 : MPFR_UINTMAX_MAX;
     }
@@ -50,11 +51,17 @@ mpfr_get_uj (mpfr_srcptr f, mpfr_rnd_t rnd)
   for (r = MPFR_UINTMAX_MAX, prec = 0; r != 0; r /= 2, prec++)
     { }
 
-  /* Now, r = 0. */
+  MPFR_ASSERTD (r == 0);
+
+  MPFR_SAVE_EXPO_MARK (expo);
 
   mpfr_init2 (x, prec);
   mpfr_rint (x, f, rnd);
   MPFR_ASSERTN (MPFR_IS_FP (x));
+
+  /* The flags from mpfr_rint are the wanted ones. In particular,
+     it sets the inexact flag when necessary. */
+  MPFR_SAVE_EXPO_UPDATE_FLAGS (expo, __gmpfr_flags);
 
   if (MPFR_NOTZERO (x))
     {
@@ -75,6 +82,8 @@ mpfr_get_uj (mpfr_srcptr f, mpfr_rnd_t rnd)
     }
 
   mpfr_clear (x);
+
+  MPFR_SAVE_EXPO_FREE (expo);
 
   return r;
 }

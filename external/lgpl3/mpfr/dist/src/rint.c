@@ -1,6 +1,6 @@
 /* mpfr_rint -- Round to an integer.
 
-Copyright 1999-2016 Free Software Foundation, Inc.
+Copyright 1999-2018 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -213,7 +213,7 @@ mpfr_rint (mpfr_ptr r, mpfr_srcptr u, mpfr_rnd_t rnd_mode)
           uj = un - ui;  /* lowest limb of the integer part in u */
           rj = rn - ui;  /* lowest limb of the integer part in r */
 
-          if (MPFR_LIKELY (rp != up))
+          if (rp != up)
             MPN_COPY(rp + rj, up + uj, ui);
 
           /* Ignore the lowest rj limbs, all equal to zero. */
@@ -281,7 +281,7 @@ mpfr_rint (mpfr_ptr r, mpfr_srcptr u, mpfr_rnd_t rnd_mode)
         }
 
       if (sh != 0)
-        rp[0] &= MP_LIMB_T_MAX << sh;
+        rp[0] &= MPFR_LIMB_MAX << sh;
 
       /* If u is a representable integer, there is no rounding. */
       if (uflags == 0)
@@ -302,6 +302,14 @@ mpfr_rint (mpfr_ptr r, mpfr_srcptr u, mpfr_rnd_t rnd_mode)
 
       MPFR_RET (rnd_away ^ (sign < 0) ? uflags : -uflags);
     }  /* exp > 0, |u| >= 1 */
+}
+
+#undef mpfr_roundeven
+
+int
+mpfr_roundeven (mpfr_ptr r, mpfr_srcptr u)
+{
+  return mpfr_rint (r, u, MPFR_RNDN);
 }
 
 #undef mpfr_round
@@ -341,6 +349,32 @@ mpfr_floor (mpfr_ptr r, mpfr_srcptr u)
  * the inexact flag when the argument is not an integer.
  */
 
+#undef mpfr_rint_roundeven
+
+int
+mpfr_rint_roundeven (mpfr_ptr r, mpfr_srcptr u, mpfr_rnd_t rnd_mode)
+{
+  if (MPFR_UNLIKELY( MPFR_IS_SINGULAR(u) ) || mpfr_integer_p (u))
+    return mpfr_set (r, u, rnd_mode);
+  else
+    {
+      mpfr_t tmp;
+      int inex;
+      mpfr_flags_t saved_flags = __gmpfr_flags;
+      MPFR_BLOCK_DECL (flags);
+
+      mpfr_init2 (tmp, MPFR_PREC (u));
+      /* round(u) is representable in tmp unless an overflow occurs */
+      MPFR_BLOCK (flags, mpfr_roundeven (tmp, u));
+      __gmpfr_flags = saved_flags;
+      inex = (MPFR_OVERFLOW (flags)
+              ? mpfr_overflow (r, rnd_mode, MPFR_SIGN (u))
+              : mpfr_set (r, tmp, rnd_mode));
+      mpfr_clear (tmp);
+      return inex;
+    }
+}
+
 #undef mpfr_rint_round
 
 int
@@ -352,7 +386,7 @@ mpfr_rint_round (mpfr_ptr r, mpfr_srcptr u, mpfr_rnd_t rnd_mode)
     {
       mpfr_t tmp;
       int inex;
-      unsigned int saved_flags = __gmpfr_flags;
+      mpfr_flags_t saved_flags = __gmpfr_flags;
       MPFR_BLOCK_DECL (flags);
 
       mpfr_init2 (tmp, MPFR_PREC (u));
@@ -378,7 +412,7 @@ mpfr_rint_trunc (mpfr_ptr r, mpfr_srcptr u, mpfr_rnd_t rnd_mode)
     {
       mpfr_t tmp;
       int inex;
-      unsigned int saved_flags = __gmpfr_flags;
+      mpfr_flags_t saved_flags = __gmpfr_flags;
 
       mpfr_init2 (tmp, MPFR_PREC (u));
       /* trunc(u) is always representable in tmp */
@@ -401,7 +435,7 @@ mpfr_rint_ceil (mpfr_ptr r, mpfr_srcptr u, mpfr_rnd_t rnd_mode)
     {
       mpfr_t tmp;
       int inex;
-      unsigned int saved_flags = __gmpfr_flags;
+      mpfr_flags_t saved_flags = __gmpfr_flags;
       MPFR_BLOCK_DECL (flags);
 
       mpfr_init2 (tmp, MPFR_PREC (u));
@@ -427,7 +461,7 @@ mpfr_rint_floor (mpfr_ptr r, mpfr_srcptr u, mpfr_rnd_t rnd_mode)
     {
       mpfr_t tmp;
       int inex;
-      unsigned int saved_flags = __gmpfr_flags;
+      mpfr_flags_t saved_flags = __gmpfr_flags;
       MPFR_BLOCK_DECL (flags);
 
       mpfr_init2 (tmp, MPFR_PREC (u));

@@ -17,6 +17,9 @@ Laurent Fousse          Original version of sum.c
 Damien Stehlé           Function mpfr_get_ld_2exp
 Philippe Théveny        Main author
 Sylvain Chevillard      Original version of ai.c
+Charles Karney          mpfr_nrandom and mpfr_erandom functions
+Fredrik Johannsson      New version of mpfr_const_euler
+Mickaël Gastineau       MPFRbench program
 
 The main authors are included in the MPFR mailing-list <mpfr@inria.fr>.
 This is the preferred way to contact us. For further information, please
