@@ -1,6 +1,6 @@
 /* tpow_d -- test file for mpc_pow_d.
 
-Copyright (C) 2009 INRIA
+Copyright (C) 2009, 2013 INRIA
 
 This file is part of GNU MPC.
 
@@ -20,12 +20,10 @@ along with this program. If not, see http://www.gnu.org/licenses/ .
 
 #include "mpc-tests.h"
 
-int
-main (void)
+static void
+test_integer_values (void)
 {
   mpc_t z;
-
-  test_start ();
 
   mpc_init2 (z, 11);
 
@@ -54,6 +52,23 @@ main (void)
     }
 
   mpc_clear (z);
+}
+
+#define MPC_FUNCTION_CALL                                               \
+  P[0].mpc_inex = mpc_pow_d (P[1].mpc, P[2].mpc, P[3].d, P[4].mpc_rnd)
+#define MPC_FUNCTION_CALL_REUSE_OP1                                     \
+  P[0].mpc_inex = mpc_pow_d (P[1].mpc, P[1].mpc, P[3].d, P[4].mpc_rnd)
+
+#include "tgeneric.tpl"
+
+int
+main (void)
+{
+  test_start ();
+
+  tgeneric_template ("pow_d.dsc", 2, 1024, 15, 20);
+
+  test_integer_values (); /* FIXME: should be in a data file */
 
   test_end ();
 

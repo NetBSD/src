@@ -1,6 +1,6 @@
 # Data file for mpc_atan.
 #
-# Copyright (C) 2009, 2012, 2013 INRIA
+# Copyright (C) 2009, 2012, 2013, 2017 INRIA
 #
 # This file is part of GNU MPC.
 #
@@ -146,3 +146,7 @@
 
 # improve test coverage
 + - 57 -0x1.921fb54442d184 57 -0x8.a7e33db93ecf18@-34  57 -0xa.529626a89a1960@23 57 -0x3.9a5472b5709e74@14 N N
+
+# bug reported by Joseph Myers, Tue, 7 Mar 2017
+# http://lists.gforge.inria.fr/pipermail/mpc-discuss/2017-March/001404.html
+- - 115 0x3243f6a8885a308d313198a2e037p-109 115 0x8.5159201dd5b9740d76d715caba0ep+0 115 0 115 0x1.000002p+0 Z Z

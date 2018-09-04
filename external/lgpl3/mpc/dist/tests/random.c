@@ -1,6 +1,6 @@
 /* random.c -- Handle seed for random numbers.
 
-// Copyright (C) 2008, 2009, 2010, 2011 INRIA
+// Copyright (C) 2008, 2009, 2010, 2011, 2012 INRIA
 
 This file is part of GNU MPC.
 
@@ -84,6 +84,11 @@ test_start (void)
           gmp_randseed_ui (rands, seed);
         }
     }
+
+  /* some tests assume a given exponent range for MPFR, thus since the
+     default exponent range for MPFR is not specified, we hard-code it */
+  mpfr_set_emax (1073741821);
+  mpfr_set_emin (-1073741821);
 }
 
 void
@@ -140,9 +145,9 @@ test_default_random (mpc_ptr z, mpfr_exp_t emin, mpfr_exp_t emax,
           zero_im_p = !zero_re_p;
         }
       if (zero_re_p)
-        mpfr_set_ui (mpc_realref (z), 0, GMP_RNDN);
+        mpfr_set_ui (mpc_realref (z), 0, MPFR_RNDN);
       if (zero_im_p)
-        mpfr_set_ui (mpc_imagref (z), 0, GMP_RNDN);
+        mpfr_set_ui (mpc_imagref (z), 0, MPFR_RNDN);
     }
   if (!mpfr_zero_p (mpc_realref (z)))
     mpfr_set_exp (mpc_realref (z), (mpfr_exp_t) gmp_urandomm_ui (rands, range) + emin);
@@ -154,7 +159,118 @@ test_default_random (mpc_ptr z, mpfr_exp_t emin, mpfr_exp_t emax,
     negative_probability = 256;
   r = gmp_urandomb_ui (rands, 16);
   if ((r & 0xFF) < negative_probability)
-    mpfr_neg (mpc_realref (z), mpc_realref (z), GMP_RNDN);
+    mpfr_neg (mpc_realref (z), mpc_realref (z), MPFR_RNDN);
   if (((r>>8) & 0xFF) < negative_probability)
-    mpfr_neg (mpc_imagref (z), mpc_imagref (z), GMP_RNDN);
+    mpfr_neg (mpc_imagref (z), mpc_imagref (z), MPFR_RNDN);
+}
+
+/* Set n to a non zero value random value with absolute values less than
+   2^emax.
+
+   n is negative with probability equal to NEGATIVE_PROBABILITY / 256.
+*/
+void test_random_si (long int *n, unsigned long emax,
+                     unsigned int negative_probability)
+{
+  unsigned long r;
+
+  if (!rands_initialized)
+    {
+      fprintf (stderr,
+               "Put test_start at the beginning of your test function.\n");
+      exit (1);
+    }
+
+  do
+    {
+      *n = gmp_urandomb_ui (rands, emax);
+    } while (*n == 0);
+
+  if (negative_probability > 256)
+    negative_probability = 256;
+  r = gmp_urandomb_ui (rands, 8);
+  if ((r & 0xFF) < negative_probability)
+    *n = -(*n);
+}
+
+/* Set x to a non zero value random value with absolute values greater than
+   or equal to 2^{emin-1} and less than 2^emax.
+
+   x is negative with probability equal to NEGATIVE_PROBABILITY / 256.
+*/
+void
+test_random_mpfr (mpfr_ptr x, mpfr_exp_t emin, mpfr_exp_t emax,
+                  unsigned int negative_probability)
+{
+  const unsigned long range = (unsigned long int) (emax - emin) + 1;
+  unsigned long r;
+
+  if (!rands_initialized)
+    {
+      fprintf (stderr,
+               "Put test_start at the beginning of your test function.\n");
+      exit (1);
+    }
+
+  do
+    {
+      mpfr_urandom (x, rands, MPFR_RNDN);
+    } while (mpfr_zero_p (x));
+
+  mpfr_set_exp (x, (mpfr_exp_t) gmp_urandomm_ui (rands, range) + emin);
+  if (negative_probability > 256)
+    negative_probability = 256;
+  r = gmp_urandomb_ui (rands, 8);
+  if ((r & 0xFF) < negative_probability)
+    mpfr_neg (x, x, MPFR_RNDN);
+}
+
+/* Set x to a non zero value random value.
+   x is negative with probability equal to NEGATIVE_PROBABILITY / 256.
+*/
+void
+test_random_d (double *x, unsigned int negative_probability)
+{
+  MPFR_DECL_INIT (mpfr_x, 53);
+  test_random_mpfr (mpfr_x, -1022, 1022, negative_probability);
+  *x = mpfr_get_d (mpfr_x, MPFR_RNDN);
+}
+
+/* Set z to a non zero value random value with absolute values of Re(z) and
+   Im(z) greater than or equal to 2^{emin-1} and less than 2^emax.
+
+   Each part is negative with probability equal to NEGATIVE_PROBABILITY / 256.
+*/
+void
+test_random_mpc (mpc_ptr z, mpfr_exp_t emin, mpfr_exp_t emax,
+                 unsigned int negative_probability)
+{
+  const unsigned long range = (unsigned long int) (emax - emin) + 1;
+  unsigned long r;
+
+  if (!rands_initialized)
+    {
+      fprintf (stderr,
+               "Put test_start at the beginning of your test function.\n");
+      exit (1);
+    }
+
+  do
+    {
+      mpc_urandom (z, rands);
+    } while (mpfr_zero_p (mpc_realref (z)) || mpfr_zero_p (mpc_imagref (z)));
+
+    mpfr_set_exp (mpc_realref (z),
+                  (mpfr_exp_t) gmp_urandomm_ui (rands, range) + emin);
+
+    mpfr_set_exp (mpc_imagref (z),
+                  (mpfr_exp_t) gmp_urandomm_ui (rands, range) + emin);
+
+  if (negative_probability > 256)
+    negative_probability = 256;
+  r = gmp_urandomb_ui (rands, 16);
+  if ((r & 0xFF) < negative_probability)
+    mpfr_neg (mpc_realref (z), mpc_realref (z), MPFR_RNDN);
+  if (((r>>8) & 0xFF) < negative_probability)
+    mpfr_neg (mpc_imagref (z), mpc_imagref (z), MPFR_RNDN);
 }

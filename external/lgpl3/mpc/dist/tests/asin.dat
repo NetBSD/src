@@ -1,6 +1,6 @@
 # Data file for mpc_asin.
 #
-# Copyright (C) 2009 INRIA
+# Copyright (C) 2009, 2011, 2013, 2014 INRIA
 #
 # This file is part of GNU MPC.
 #
@@ -124,3 +124,10 @@
 + - 53 0x189BF9EC7FCD5Bp-54 53 0x1206ECFA94614Bp-50 53 17 53 42 N N
 - + 2 1.5 2 6 2 96 2 0x1p-8 N N
 - - 8 0xC9p-7 8 0x15p-2 2 96 2 0x1p-8 N N
+
+# special cases 1 + i*y with tiny y
+- - 53 0x3243f6a8885a3p-49 53 0x1p-500 53 1 53 0x1p-1000 N N
+- + 53 0x3243f6a8885a3p-49 53 -0x1p-500 53 1 53 -0x1p-1000 N N
+- - 11 0xc9p-7 11 0xb5p-28 11 1 11 0x1p-41 N N
+- + 53 0x3243f6a8885a3p-49 53 0x16a09e667f3bcdp-552 53 1 53 0x1p-999 N N
+- + 2 1.5 2 0x1p-40 2 1 20 0xff802p-100 N N
