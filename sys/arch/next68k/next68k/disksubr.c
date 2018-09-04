@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.28 2015/01/02 19:42:06 christos Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.29 2018/09/04 15:08:30 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.28 2015/01/02 19:42:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.29 2018/09/04 15:08:30 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -94,11 +94,11 @@ parse_nextstep_label(struct next68k_disklabel *ondisk, struct disklabel *lp, str
 	if (sizeof (lp->d_typename) > sizeof (ondisk->cd_name))
 		lp->d_typename[sizeof (ondisk->cd_name)] = '\0';
 	memcpy (lp->d_typename, ondisk->cd_name,
-		min (sizeof (lp->d_typename), sizeof (ondisk->cd_name)));
+		uimin (sizeof (lp->d_typename), sizeof (ondisk->cd_name)));
 	if (sizeof (lp->d_packname) > sizeof (ondisk->cd_label))
 		lp->d_packname[sizeof (ondisk->cd_label)] = '\0';
 	memcpy (lp->d_packname, ondisk->cd_label,
-		 min (sizeof (lp->d_packname), sizeof (ondisk->cd_label)));
+		 uimin (sizeof (lp->d_packname), sizeof (ondisk->cd_label)));
 	if (lp->d_secsize == 0)
 		lp->d_secsize = ondisk->cd_secsize;
 	KASSERT(ondisk->cd_secsize >= lp->d_secsize);
@@ -191,17 +191,17 @@ build_nextstep_label(struct next68k_disklabel *ondisk, struct disklabel *lp)
 	KASSERT(ondisk->cd_secsize >= lp->d_secsize);
 
 	if (memcmp (ondisk->cd_name, lp->d_typename,
-		     min (sizeof (lp->d_typename), sizeof (ondisk->cd_name))) &&
+		     uimin (sizeof (lp->d_typename), sizeof (ondisk->cd_name))) &&
 	    sizeof (ondisk->cd_name) > sizeof (lp->d_typename))
 		ondisk->cd_name[sizeof (lp->d_typename)] = '\0';
 	memcpy (ondisk->cd_name, lp->d_typename,
-		min (sizeof (lp->d_typename), sizeof (ondisk->cd_name)));
+		uimin (sizeof (lp->d_typename), sizeof (ondisk->cd_name)));
 	if (memcmp (lp->d_packname, ondisk->cd_label,
-		    min (sizeof (lp->d_packname), sizeof (ondisk->cd_label))) &&
+		    uimin (sizeof (lp->d_packname), sizeof (ondisk->cd_label))) &&
 	    sizeof (ondisk->cd_label) > sizeof (lp->d_packname))
 		ondisk->cd_label[sizeof (lp->d_packname)] = '\0';
 	memcpy (ondisk->cd_label, lp->d_packname,
-		min (sizeof (lp->d_packname), sizeof (ondisk->cd_label)));
+		uimin (sizeof (lp->d_packname), sizeof (ondisk->cd_label)));
 
 	ondisk->cd_nsectors = lp->d_nsectors;
 	ondisk->cd_ntracks = lp->d_ntracks;

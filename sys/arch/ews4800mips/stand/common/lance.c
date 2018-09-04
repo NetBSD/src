@@ -1,4 +1,4 @@
-/*	$NetBSD: lance.c,v 1.6 2013/01/13 14:24:24 tsutsui Exp $	*/
+/*	$NetBSD: lance.c,v 1.7 2018/09/04 15:08:30 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -161,14 +161,14 @@ lance_put(void *data, size_t len)
 	tmd->tmd1_bits = LE_T1_STP;
 	for (i = 0; i < 8; i++) {
 		current = (current + 1) & 0x7;
-		n = min(len, 512);
+		n = uimin(len, 512);
 		p = (uint8_t *)((tmd->tmd1_hadr << 16) | tmd->tmd0 |
 		    0xa0000000);
 		for (j = 0; j < n; j++)
 			*p++ = *q++;
 		len -= n;
 #if 1
-		tmd->tmd2 = -max(n, 64) | 0xf000;
+		tmd->tmd2 = -uimax(n, 64) | 0xf000;
 #else
 		tmd->tmd2 = -n | 0xf000;
 #endif

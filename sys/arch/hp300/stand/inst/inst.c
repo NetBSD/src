@@ -1,4 +1,4 @@
-/*	$NetBSD: inst.c,v 1.22 2016/06/11 06:20:11 dholland Exp $	*/
+/*	$NetBSD: inst.c,v 1.23 2018/09/04 15:08:30 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -356,7 +356,7 @@ get_fstype(struct disklabel *lp, int partno)
 	}
 
 	fragsize = blocksize / 8;	/* XXX */
-	fragsize = max(fragsize, lp->d_secsize);
+	fragsize = uimax(fragsize, lp->d_secsize);
 	GETNUM("             FFS fragment size? [%d] ", fragsize);
 	if (fragsize < lp->d_secsize || (fragsize % lp->d_secsize) != 0) {
 		printf("FFS fragment size must be a multiple of sector size"
