@@ -1,4 +1,4 @@
-/* $NetBSD: COMPAT-branch-notes,v 1.1.2.20 2018/09/04 02:24:03 pgoyette Exp $ */
+/* $NetBSD: COMPAT-branch-notes,v 1.1.2.21 2018/09/04 11:36:06 pgoyette Exp $ */
 
 DONE
 ----
@@ -48,6 +48,9 @@ DONE
 10. syscalls.master has been updated to autoload the version-specific
     compat modules rather than the monolithic modules.
 
+11. Separated COMPAT_BSDPTY stuff, allowing the COMPAT_60 module to be
+    built regardless.
+
 
 TODO - Required for branch merge
 --------------------------------
@@ -88,7 +91,4 @@ TODO - Not required for branch merge
     news68k, and x68k platforms, all in their respective machdep.c
     source file.  Additionally, the zaurus platform defines COMPAT_44 in
     its INSTALL kernel configuration - but no other configuration files!
-
-5.  Separated COMPAT_BSDPTY stuff, allowing the COMPAT_60 module to be
-    built regardless.
 
