@@ -1,7 +1,7 @@
 /* Test file for internal debugging-out functions:
-   mpfr_dump, mpfr_print_binary, mpfr_print_rnd_mode.
+   mpfr_print_rnd_mode, mpfr_dump, mpfr_print_mant_binary.
 
-Copyright 2004-2016 Free Software Foundation, Inc.
+Copyright 2004-2018 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -21,23 +21,33 @@ along with the GNU MPFR Library; see the file COPYING.LESSER.  If not, see
 http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA. */
 
-#include <stdlib.h>
 #include "mpfr-test.h"
 
-/* We output stdout to a file to check if it is correct
-   Is it a good idea?
-   We can't use tmpname since it is insecure */
-#define FILE_NAME "dummy.tmp"
+#define FILE_NAME "toutimpl_out.txt"
 
 static const char Buffer[] =
-"@NaN@\n"
-"-@Inf@\n"
-"-0\n"
-"0.10101010101011111001000110001100010000100000000000000E32\n";
+  "@NaN@\n"
+  "-@NaN@\n"
+  "@Inf@\n"
+  "-@Inf@\n"
+  "0\n"
+  "-0\n"
+  "0.10101010101011111001000110001100010000100000000000000E32\n"
+#if GMP_NUMB_BITS == 32
+  "x = 10101010101011111001000110001100.010000100000000000000[00000000000.]\n"
+  "0.01010101010101111100100011000110010000100000000000000[00000000001]E32!!!NT<!!!\n"
+  "0.01010101010101111100100011000110010000100000000000000[00000000001]E32!!!NT>!!!\n"
+#elif GMP_NUMB_BITS == 64
+  "x = 10101010101011111001000110001100010000100000000000000[00000000000.]\n"
+  "0.01010101010101111100100011000110001000010000000000000[00000000001]E32!!!NT<!!!\n"
+  "0.01010101010101111100100011000110001000010000000000000[00000000001]E32!!!NT>!!!\n"
+#endif
+  ;
 
 int
 main (void)
 {
+  mpfr_exp_t e;
   mpfr_t x;
   FILE *f;
   int i;
@@ -45,22 +55,22 @@ main (void)
   tests_start_mpfr ();
 
   /* Check RND_MODE */
-  if (strcmp (mpfr_print_rnd_mode(MPFR_RNDN), "MPFR_RNDN"))
+  if (strcmp (mpfr_print_rnd_mode (MPFR_RNDN), "MPFR_RNDN"))
     {
       printf ("Error for printing MPFR_RNDN\n");
       exit (1);
     }
-  if (strcmp (mpfr_print_rnd_mode(MPFR_RNDU), "MPFR_RNDU"))
+  if (strcmp (mpfr_print_rnd_mode (MPFR_RNDU), "MPFR_RNDU"))
     {
       printf ("Error for printing MPFR_RNDU\n");
       exit (1);
     }
-  if (strcmp (mpfr_print_rnd_mode(MPFR_RNDD), "MPFR_RNDD"))
+  if (strcmp (mpfr_print_rnd_mode (MPFR_RNDD), "MPFR_RNDD"))
     {
       printf ("Error for printing MPFR_RNDD\n");
       exit (1);
     }
-  if (strcmp (mpfr_print_rnd_mode(MPFR_RNDZ), "MPFR_RNDZ"))
+  if (strcmp (mpfr_print_rnd_mode (MPFR_RNDZ), "MPFR_RNDZ"))
     {
       printf ("Error for printing MPFR_RNDZ\n");
       exit (1);
@@ -72,27 +82,41 @@ main (void)
       exit (1);
     }
 
-  /* Reopen stdout to a file. All errors will be put to stderr
-     Can't use tmpname since it is unsecure */
+  /* Reopen stdout to a file. All errors will be put to stderr. */
   if (freopen (FILE_NAME, "w", stdout) == NULL)
     {
       printf ("Error can't redirect stdout\n");
       exit (1);
     }
-  mpfr_init (x);
+  mpfr_init2 (x, 53);
   mpfr_set_nan (x);
+  mpfr_dump (x);
+  MPFR_CHANGE_SIGN (x);
+  mpfr_dump (x);
+  mpfr_set_inf (x, +1);
   mpfr_dump (x);
   mpfr_set_inf (x, -1);
   mpfr_dump (x);
-  MPFR_SET_ZERO (x); MPFR_SET_NEG (x);
+  mpfr_set_zero (x, +1);
+  mpfr_dump (x);
+  mpfr_set_zero (x, -1);
   mpfr_dump (x);
   mpfr_set_str_binary (x, "0.101010101010111110010001100011000100001E32");
   mpfr_dump (x);
-  mpfr_print_mant_binary ("x=",MPFR_MANT(x), MPFR_PREC(x));
-
-
+  mpfr_print_mant_binary ("x =", MPFR_MANT(x), MPFR_PREC(x));
+  MPFR_MANT(x)[MPFR_LAST_LIMB(x)] >>= 1;
+  MPFR_MANT(x)[0] |= 1;
+  e = mpfr_get_emin ();
+  mpfr_set_emin (33);
+  mpfr_dump (x);
+  mpfr_set_emin (e);
+  e = mpfr_get_emax ();
+  mpfr_set_emax (31);
+  mpfr_dump (x);
+  mpfr_set_emax (e);
   mpfr_clear (x);
   fclose (stdout);
+
   /* Open it and check for it */
   f = fopen (FILE_NAME, "r");
   if (f == NULL)
@@ -100,7 +124,7 @@ main (void)
       fprintf (stderr, "Can't reopen file!\n");
       exit (1);
     }
-  for(i = 0 ; i < sizeof(Buffer)-1 ; i++)
+  for (i = 0 ; i < sizeof (Buffer) - 1 ; i++)
     {
       if (feof (f))
         {
@@ -109,8 +133,8 @@ main (void)
         }
       if (Buffer[i] != fgetc (f))
         {
-          fprintf (stderr, "Character mismatch for i=%d / %lu\n",
-                  i, (unsigned long) sizeof(Buffer));
+          fprintf (stderr, "Character mismatch for i = %d / %lu\n",
+                  i, (unsigned long) sizeof (Buffer));
           exit (1);
         }
     }

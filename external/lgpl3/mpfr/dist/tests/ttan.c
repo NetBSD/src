@@ -1,6 +1,6 @@
 /* Test file for mpfr_tan.
 
-Copyright 2001-2004, 2006-2016 Free Software Foundation, Inc.
+Copyright 2001-2004, 2006-2018 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -19,9 +19,6 @@ You should have received a copy of the GNU Lesser General Public License
 along with the GNU MPFR Library; see the file COPYING.LESSER.  If not, see
 http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA. */
-
-#include <stdio.h>
-#include <stdlib.h>
 
 #include "mpfr-test.h"
 
@@ -95,6 +92,25 @@ check_nans (void)
   mpfr_clear (y);
 }
 
+/* This test was generated from bad_cases, with GMP_CHECK_RANDOMIZE=1514257254.
+   For the x value below, we have tan(x) = -1.875 + epsilon,
+   thus with RNDZ it should be rounded to -1.c. */
+static void
+bug20171218 (void)
+{
+  mpfr_t x, y, z;
+  mpfr_init2 (x, 804);
+  mpfr_init2 (y, 4);
+  mpfr_init2 (z, 4);
+  mpfr_set_str (x, "-1.14b1dd5f90ce0eded2a8f59c05e72daf7cc4c78f5075d73246fa420e2c026291d9377e67e7f54e925c4aed39c7b2f917424033c8612f00a19821890558d6c2cef9c60f4ad2c3b061ed53a1709dc1ec8e139627c2119c36d7ebdff0d715e559b47f740c534", 16, MPFR_RNDN);
+  mpfr_tan (y, x, MPFR_RNDZ);
+  mpfr_set_str (z, "-1.c", 16, MPFR_RNDN);
+  MPFR_ASSERTN(mpfr_equal_p (y, z));
+  mpfr_clear (x);
+  mpfr_clear (y);
+  mpfr_clear (z);
+}
+
 int
 main (int argc, char *argv[])
 {
@@ -105,6 +121,7 @@ main (int argc, char *argv[])
 
   tests_start_mpfr ();
 
+  bug20171218 ();
   check_nans ();
 
   mpfr_init (x);
@@ -115,9 +132,8 @@ main (int argc, char *argv[])
   if (mpfr_cmp_ui_2exp(x, 1, -1))
     {
       printf ("mpfr_tan(0.5, MPFR_RNDD) failed\n"
-              "expected 0.5, got");
-      mpfr_print_binary(x);
-      putchar('\n');
+              "expected 0.5, got ");
+      mpfr_dump (x);
       exit (1);
     }
 
@@ -153,7 +169,7 @@ main (int argc, char *argv[])
 
   mpfr_clear (x);
 
-  test_generic (2, 100, 10);
+  test_generic (MPFR_PREC_MIN, 100, 10);
 
   data_check ("data/tan", mpfr_tan, "mpfr_tan");
   bad_cases (mpfr_tan, mpfr_atan, "mpfr_tan", 256, -256, 255, 4, 128, 800, 40);

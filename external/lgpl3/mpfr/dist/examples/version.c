@@ -3,7 +3,7 @@
  */
 
 /*
-Copyright 2010-2016 Free Software Foundation, Inc.
+Copyright 2010-2018 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -181,9 +181,11 @@ int main (void)
           mpfr_get_version (), MPFR_VERSION_STRING, MPFR_VERSION_MAJOR,
           MPFR_VERSION_MINOR, MPFR_VERSION_PATCHLEVEL);
 
-  printf ("MPFR features: TLS = %s, decimal = %s",
-          mpfr_buildopt_tls_p () ? "yes" : "no",
-          mpfr_buildopt_decimal_p () ? "yes" : "no");
+  printf ("MPFR features: TLS = %s", mpfr_buildopt_tls_p () ? "yes" : "no");
+#if MPFR_VERSION_MAJOR >= 4
+  printf (", float128 = %s", mpfr_buildopt_float128_p () ? "yes" : "no");
+#endif
+  printf (", decimal = %s", mpfr_buildopt_decimal_p () ? "yes" : "no");
 #if MPFR_VERSION_MAJOR > 3 || MPFR_VERSION_MINOR >= 1
   printf (", GMP internals = %s\nMPFR tuning: %s",
           mpfr_buildopt_gmpinternals_p () ? "yes" : "no",

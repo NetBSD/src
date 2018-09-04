@@ -1,6 +1,6 @@
 /* Implementations of operations between mpfr and mpz/mpq data
 
-Copyright 2001, 2003-2016 Free Software Foundation, Inc.
+Copyright 2001, 2003-2018 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -22,6 +22,11 @@ http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 
 #define MPFR_NEED_LONGLONG_H
 #include "mpfr-impl.h"
+
+/* TODO: for functions with mpz_srcptr, check whether mpz_fits_slong_p
+   is really useful in all cases. For instance, concerning the addition,
+   one now has mpz_t -> long -> unsigned long -> mpfr_t then mpfr_add
+   instead of mpz_t -> mpfr_t then mpfr_add. */
 
 /* Init and set a mpfr_t with enough precision to store a mpz.
    This function should be called in the extended exponent range. */
@@ -83,21 +88,26 @@ foo2 (mpfr_ptr x, mpz_srcptr y, mpfr_srcptr z, mpfr_rnd_t r,
 int
 mpfr_mul_z (mpfr_ptr y, mpfr_srcptr x, mpz_srcptr z, mpfr_rnd_t r)
 {
-  return foo (y, x, z, r, mpfr_mul);
+  if (mpz_fits_slong_p (z))
+    return mpfr_mul_si (y, x, mpz_get_si (z), r);
+  else
+    return foo (y, x, z, r, mpfr_mul);
 }
 
 int
 mpfr_div_z (mpfr_ptr y, mpfr_srcptr x, mpz_srcptr z, mpfr_rnd_t r)
 {
-  return foo (y, x, z, r, mpfr_div);
+  if (mpz_fits_slong_p (z))
+    return mpfr_div_si (y, x, mpz_get_si (z), r);
+  else
+    return foo (y, x, z, r, mpfr_div);
 }
 
 int
 mpfr_add_z (mpfr_ptr y, mpfr_srcptr x, mpz_srcptr z, mpfr_rnd_t r)
 {
-  /* Mpz 0 is unsigned */
-  if (MPFR_UNLIKELY (mpz_sgn (z) == 0))
-    return mpfr_set (y, x, r);
+  if (mpz_fits_slong_p (z))
+    return mpfr_add_si (y, x, mpz_get_si (z), r);
   else
     return foo (y, x, z, r, mpfr_add);
 }
@@ -105,9 +115,8 @@ mpfr_add_z (mpfr_ptr y, mpfr_srcptr x, mpz_srcptr z, mpfr_rnd_t r)
 int
 mpfr_sub_z (mpfr_ptr y, mpfr_srcptr x, mpz_srcptr z, mpfr_rnd_t r)
 {
-  /* Mpz 0 is unsigned */
-  if (MPFR_UNLIKELY (mpz_sgn (z) == 0))
-    return mpfr_set (y, x, r);
+  if (mpz_fits_slong_p (z))
+    return mpfr_sub_si (y, x, mpz_get_si (z), r);
   else
     return foo (y, x, z, r, mpfr_sub);
 }
@@ -115,9 +124,8 @@ mpfr_sub_z (mpfr_ptr y, mpfr_srcptr x, mpz_srcptr z, mpfr_rnd_t r)
 int
 mpfr_z_sub (mpfr_ptr y, mpz_srcptr x, mpfr_srcptr z, mpfr_rnd_t r)
 {
-  /* Mpz 0 is unsigned */
-  if (MPFR_UNLIKELY (mpz_sgn (x) == 0))
-    return mpfr_neg (y, z, r);
+  if (mpz_fits_slong_p (x))
+    return mpfr_si_sub (y, mpz_get_si (x), z, r);
   else
     return foo2 (y, x, z, r, mpfr_sub);
 }
@@ -128,10 +136,13 @@ mpfr_cmp_z (mpfr_srcptr x, mpz_srcptr z)
   mpfr_t t;
   int res;
   mpfr_prec_t p;
-  unsigned int flags;
+  mpfr_flags_t flags;
 
   if (MPFR_UNLIKELY (MPFR_IS_SINGULAR (x)))
     return mpfr_cmp_si (x, mpz_sgn (z));
+
+  if (mpz_fits_slong_p (z))
+    return mpfr_cmp_si (x, mpz_get_si (z));
 
   if (mpz_size (z) <= 1)
     p = GMP_NUMB_BITS;
@@ -153,6 +164,7 @@ mpfr_cmp_z (mpfr_srcptr x, mpz_srcptr z)
   return res;
 }
 
+#ifndef MPFR_USE_MINI_GMP
 /* Compute y = RND(x*n/d), where n and d are mpz integers.
    An integer 0 is assumed to have a positive sign.
    This function is used by mpfr_mul_q and mpfr_div_q.
@@ -220,7 +232,8 @@ mpfr_muldiv_z (mpfr_ptr y, mpfr_srcptr x, mpz_srcptr n, mpz_srcptr d,
                       MPFR_ASSERTN (!MPFR_BLOCK_EXCEP));
           MPFR_EXP (y) += ex;
           /* Detect highly unlikely, not supported corner cases... */
-          MPFR_ASSERTN (MPFR_EXP (y) >= __gmpfr_emin && MPFR_IS_PURE_FP (y));
+          MPFR_ASSERTN (MPFR_EXP (y) >= __gmpfr_emin);
+          MPFR_ASSERTN (! MPFR_IS_SINGULAR (y));
           /* The potential overflow will be detected by mpfr_check_range. */
         }
       else
@@ -465,7 +478,9 @@ mpfr_cmp_q (mpfr_srcptr x, mpq_srcptr q)
   MPFR_SAVE_EXPO_FREE (expo);
   return res;
 }
+#endif
 
+#ifndef MPFR_USE_MINI_GMP
 int
 mpfr_cmp_f (mpfr_srcptr x, mpf_srcptr z)
 {
@@ -478,7 +493,7 @@ mpfr_cmp_f (mpfr_srcptr x, mpf_srcptr z)
 
   MPFR_SAVE_EXPO_MARK (expo);
 
-  mpfr_init2 (t, MPFR_PREC_MIN + ABS(SIZ(z)) * GMP_NUMB_BITS );
+  mpfr_init2 (t, MPFR_PREC_MIN + ABSIZ(z) * GMP_NUMB_BITS);
   res = mpfr_set_f (t, z, MPFR_RNDN);
   MPFR_ASSERTD (res == 0);
   res = mpfr_cmp (x, t);
@@ -487,3 +502,4 @@ mpfr_cmp_f (mpfr_srcptr x, mpf_srcptr z)
   MPFR_SAVE_EXPO_FREE (expo);
   return res;
 }
+#endif

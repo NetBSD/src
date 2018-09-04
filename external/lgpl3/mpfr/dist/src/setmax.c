@@ -1,6 +1,6 @@
 /* mpfr_setmax -- maximum representable floating-point number (raw version)
 
-Copyright 2002-2004, 2006-2016 Free Software Foundation, Inc.
+Copyright 2002-2004, 2006-2018 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -35,7 +35,7 @@ mpfr_setmax (mpfr_ptr x, mpfr_exp_t e)
   xn = MPFR_LIMB_SIZE (x);
   sh = (mpfr_prec_t) xn * GMP_NUMB_BITS - MPFR_PREC(x);
   xp = MPFR_MANT(x);
-  xp[0] = MP_LIMB_T_MAX << sh;
+  xp[0] = MPFR_LIMB_MAX << sh;
   for (i = 1; i < xn; i++)
-    xp[i] = MP_LIMB_T_MAX;
+    xp[i] = MPFR_LIMB_MAX;
 }

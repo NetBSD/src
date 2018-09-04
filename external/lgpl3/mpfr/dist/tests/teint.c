@@ -1,6 +1,6 @@
 /* Test file for mpfr_eint.
 
-Copyright 2005-2016 Free Software Foundation, Inc.
+Copyright 2005-2018 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -20,14 +20,9 @@ along with the GNU MPFR Library; see the file COPYING.LESSER.  If not, see
 http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA. */
 
-#include <stdio.h>
-#include <stdlib.h>
-
 #include "mpfr-test.h"
 
 #define TEST_FUNCTION mpfr_eint
-#define TEST_RANDOM_POS 8
-#define TEST_RANDOM_EMAX 40
 #include "tgeneric.c"
 
 static void
@@ -56,9 +51,9 @@ check_specials (void)
 
   mpfr_set_inf (x, -1);
   mpfr_eint (y, x, MPFR_RNDN);
-  if (! mpfr_nan_p (y))
+  if (! (mpfr_zero_p (y) && MPFR_IS_NEG (y)))
     {
-      printf ("Error: eint(-Inf) != NaN\n");
+      printf ("Error: eint(-Inf) != -0\n");
       exit (1);
     }
 
@@ -75,15 +70,6 @@ check_specials (void)
   if (! (mpfr_inf_p (y) && mpfr_sgn (y) < 0))
     {
       printf ("Error: eint(-0) != -Inf\n");
-      exit (1);
-    }
-
-  /* eint(x) = NaN for x < 0 */
-  mpfr_set_si (x, -1, MPFR_RNDN);
-  mpfr_eint (y, x, MPFR_RNDN);
-  if (! mpfr_nan_p (y))
-    {
-      printf ("Error: eint(-1) != NaN\n");
       exit (1);
     }
 
@@ -123,6 +109,31 @@ check_specials (void)
       printf ("Error (1) for MPFR_RNDZ\n");
       printf ("expected "); mpfr_dump (y);
       printf ("got      "); mpfr_dump (x);
+      exit (1);
+    }
+
+  mpfr_set_prec (x, 2);
+  mpfr_set_prec (y, 2);
+  mpfr_set_si (x, -1, MPFR_RNDN);
+  mpfr_eint (x, x, MPFR_RNDN); /* eint1(1) = 0.219383934395520 */
+  mpfr_set_str_binary (y, "-1e-2");
+  if (mpfr_cmp (x, y) != 0)
+    {
+      printf ("Error for x=-1, MPFR_RNDN\n");
+      printf ("expected "); mpfr_dump (y);
+      printf ("got      "); mpfr_dump (x);
+      exit (1);
+    }
+
+  mpfr_set_prec (x, 10);
+  mpfr_set_prec (y, 10);
+  mpfr_set_si (x, -2, MPFR_RNDN);
+  mpfr_eint (y, x, MPFR_RNDN); /* eint1(2) = 0.0489005107080611 */
+  if (mpfr_cmp_si_2exp (y, -801, -14) != 0)
+    {
+      printf ("Error for x=-2, MPFR_RNDN\n");
+      printf ("expected -801/2^14\n");
+      printf ("got      "); mpfr_dump (y);
       exit (1);
     }
 
@@ -180,6 +191,25 @@ check_specials (void)
       exit (1);
     }
 
+  /* Runtime error at si_op.c:42:31 with r9996 on an x86-64 Linux machine,
+     using CFLAGS="-fsanitize=undefined -fno-sanitize-recover". */
+  mpfr_set_prec (x, 32);
+  mpfr_set_prec (y, 46);
+  mpfr_set_si_2exp (x, -1, -1, MPFR_RNDN);
+  mpfr_eint (y, x, MPFR_RNDN);
+
+  mpfr_set_prec (x, 10);
+  mpfr_set_prec (y, 6);
+  mpfr_set_str (x, "-7.875", 10, MPFR_RNDN);
+  mpfr_eint (y, x, MPFR_RNDN);
+  if (mpfr_cmp_si_2exp (y, -45, -20) != 0)
+    {
+      printf ("Error for x=-7.875, MPFR_RNDN\n");
+      printf ("expected -45/2^20\n");
+      printf ("got      "); mpfr_dump (y);
+      exit (1);
+    }
+
   mpfr_clear (x);
   mpfr_clear (y);
 }
@@ -208,7 +238,7 @@ main (int argc, char *argv[])
     {
       check_specials ();
 
-      test_generic (2, 100, 100);
+      test_generic (MPFR_PREC_MIN, 100, 100);
     }
 
   tests_end_mpfr ();

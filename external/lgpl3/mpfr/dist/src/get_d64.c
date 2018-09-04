@@ -1,11 +1,11 @@
 /* mpfr_get_decimal64 -- convert a multiple precision floating-point number
-                         to a IEEE 754r decimal64 float
+                         to an IEEE 754-2008 decimal64 float
 
-See http://gcc.gnu.org/ml/gcc/2006-06/msg00691.html,
-http://gcc.gnu.org/onlinedocs/gcc/Decimal-Float.html,
+See https://gcc.gnu.org/ml/gcc/2006-06/msg00691.html,
+https://gcc.gnu.org/onlinedocs/gcc/Decimal-Float.html,
 and TR 24732 <http://www.open-std.org/jtc1/sc22/wg14/www/projects#24732>.
 
-Copyright 2006-2016 Free Software Foundation, Inc.
+Copyright 2006-2018 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -25,19 +25,23 @@ along with the GNU MPFR Library; see the file COPYING.LESSER.  If not, see
 http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA. */
 
-#include <stdlib.h> /* for strtol */
 #include "mpfr-impl.h"
 
 #define ISDIGIT(c) ('0' <= c && c <= '9')
 
 #ifdef MPFR_WANT_DECIMAL_FLOATS
 
+#if _MPFR_IEEE_FLOATS
+#else
+#include "ieee_floats.h"
+#endif
+
 #ifndef DEC64_MAX
 # define DEC64_MAX 9.999999999999999E384dd
 #endif
 
 #ifdef DPD_FORMAT
-static int T[1000] = {
+static const int T[1000] = {
   0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 32,
   33, 34, 35, 36, 37, 38, 39, 40, 41, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57,
   64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 80, 81, 82, 83, 84, 85, 86, 87, 88,
@@ -110,25 +114,33 @@ static int T[1000] = {
 static _Decimal64
 get_decimal64_nan (void)
 {
-  union ieee_double_extract x;
+#if _MPFR_IEEE_FLOATS
+  union mpfr_ieee_double_extract x;
   union ieee_double_decimal64 y;
 
   x.s.exp = 1984; /* G[0]..G[4] = 11111: quiet NaN */
   y.d = x.d;
   return y.d64;
+#else
+  return (_Decimal64) MPFR_DBL_NAN;
+#endif
 }
 
 /* construct the decimal64 Inf with given sign */
 static _Decimal64
 get_decimal64_inf (int negative)
 {
-  union ieee_double_extract x;
+#if _MPFR_IEEE_FLOATS
+  union mpfr_ieee_double_extract x;
   union ieee_double_decimal64 y;
 
   x.s.sig = (negative) ? 1 : 0;
   x.s.exp = 1920; /* G[0]..G[4] = 11110: Inf */
   y.d = x.d;
   return y.d64;
+#else
+  return (_Decimal64) (negative ? MPFR_DBL_INFM : MPFR_DBL_INFP);
+#endif
 }
 
 /* construct the decimal64 zero with given sign */
@@ -164,6 +176,7 @@ get_decimal64_max (int negative)
    (b2) or -398 <= e <= 369 with m integer, |m| < 10^16.
    Assumes s is neither NaN nor +Inf nor -Inf.
 */
+#if _MPFR_IEEE_FLOATS
 static _Decimal64
 string_to_Decimal64 (char *s)
 {
@@ -171,7 +184,7 @@ string_to_Decimal64 (char *s)
   char m[17];
   long n = 0; /* mantissa length */
   char *endptr[1];
-  union ieee_double_extract x;
+  union mpfr_ieee_double_extract x;
   union ieee_double_decimal64 y;
 #ifdef DPD_FORMAT
   unsigned int G, d1, d2, d3, d4, d5;
@@ -284,6 +297,199 @@ string_to_Decimal64 (char *s)
   y.d = x.d;
   return y.d64;
 }
+#else
+/* portable version */
+static _Decimal64
+string_to_Decimal64 (char *s)
+{
+  long int exp = 0;
+  char m[17];
+  long n = 0; /* mantissa length */
+  char *endptr[1];
+  _Decimal64 x = 0.0;
+  int sign = 0;
+#ifdef DPD_FORMAT
+  unsigned int G, d1, d2, d3, d4, d5;
+#endif
+
+  /* read sign */
+  if (*s == '-')
+    {
+      sign = 1;
+      s ++;
+    }
+  /* read mantissa */
+  while (ISDIGIT (*s))
+    m[n++] = *s++;
+  exp = n;
+  if (*s == '.')
+    {
+      s ++;
+      while (ISDIGIT (*s))
+        m[n++] = *s++;
+    }
+  /* we have exp digits before decimal point, and a total of n digits */
+  exp -= n; /* we will consider an integer mantissa */
+  MPFR_ASSERTN(n <= 16);
+  if (*s == 'E' || *s == 'e')
+    exp += strtol (s + 1, endptr, 10);
+  else
+    *endptr = s;
+  MPFR_ASSERTN(**endptr == '\0');
+  MPFR_ASSERTN(-398 <= exp && exp <= (long) (385 - n));
+  while (n < 16)
+    {
+      m[n++] = '0';
+      exp --;
+    }
+  /* now n=16 and -398 <= exp <= 369 */
+  m[n] = '\0';
+
+  /* the number to convert is m[] * 10^exp where the mantissa is a 16-digit
+     integer */
+
+  /* compute biased exponent */
+  exp += 398;
+
+  MPFR_ASSERTN(exp >= -15);
+  if (exp < 0)
+    {
+      int i;
+      n = -exp;
+      /* check the last n digits of the mantissa are zero */
+      for (i = 1; i <= n; i++)
+        MPFR_ASSERTN(m[16 - n] == '0');
+      /* shift the first (16-n) digits to the right */
+      for (i = 16 - n - 1; i >= 0; i--)
+        m[i + n] = m[i];
+      /* zero the first n digits */
+      for (i = 0; i < n; i ++)
+        m[i] = '0';
+      exp = 0;
+    }
+
+  /* the number to convert is m[] * 10^(exp-398) */
+  exp -= 398;
+
+  for (n = 0; n < 16; n++)
+    x = (_Decimal64) 10.0 * x + (_Decimal64) (m[n] - '0');
+
+  /* multiply by 10^exp */
+  if (exp > 0)
+    {
+      _Decimal64 ten16 = (double) 1e16; /* 10^16 is exactly representable
+                                           in binary64 */
+      _Decimal64 ten32 = ten16 * ten16;
+      _Decimal64 ten64 = ten32 * ten32;
+      _Decimal64 ten128 = ten64 * ten64;
+      _Decimal64 ten256 = ten128 * ten128;
+      if (exp >= 256)
+        {
+          x *= ten256;
+          exp -= 256;
+        }
+      if (exp >= 128)
+        {
+          x *= ten128;
+          exp -= 128;
+        }
+      if (exp >= 64)
+        {
+          x *= ten64;
+          exp -= 64;
+        }
+      if (exp >= 32)
+        {
+          x *= ten32;
+          exp -= 32;
+        }
+      if (exp >= 16)
+        {
+          x *= (_Decimal64) 10000000000000000.0;
+          exp -= 16;
+        }
+      if (exp >= 8)
+        {
+          x *= (_Decimal64) 100000000.0;
+          exp -= 8;
+        }
+      if (exp >= 4)
+        {
+          x *= (_Decimal64) 10000.0;
+          exp -= 4;
+        }
+      if (exp >= 2)
+        {
+          x *= (_Decimal64) 100.0;
+          exp -= 2;
+        }
+      if (exp >= 1)
+        {
+          x *= (_Decimal64) 10.0;
+          exp -= 1;
+        }
+    }
+  else if (exp < 0)
+    {
+      _Decimal64 ten16 = (double) 1e16; /* 10^16 is exactly representable
+                                           in binary64 */
+      _Decimal64 ten32 = ten16 * ten16;
+      _Decimal64 ten64 = ten32 * ten32;
+      _Decimal64 ten128 = ten64 * ten64;
+      _Decimal64 ten256 = ten128 * ten128;
+      if (exp <= -256)
+        {
+          x /= ten256;
+          exp += 256;
+        }
+      if (exp <= -128)
+        {
+          x /= ten128;
+          exp += 128;
+        }
+      if (exp <= -64)
+        {
+          x /= ten64;
+          exp += 64;
+        }
+      if (exp <= -32)
+        {
+          x /= ten32;
+          exp += 32;
+        }
+      if (exp <= -16)
+        {
+          x /= (_Decimal64) 10000000000000000.0;
+          exp += 16;
+        }
+      if (exp <= -8)
+        {
+          x /= (_Decimal64) 100000000.0;
+          exp += 8;
+        }
+      if (exp <= -4)
+        {
+          x /= (_Decimal64) 10000.0;
+          exp += 4;
+        }
+      if (exp <= -2)
+        {
+          x /= (_Decimal64) 100.0;
+          exp += 2;
+        }
+      if (exp <= -1)
+        {
+          x /= (_Decimal64) 10.0;
+          exp += 1;
+        }
+    }
+
+  if (sign)
+    x = -x;
+
+  return x;
+}
+#endif
 
 _Decimal64
 mpfr_get_decimal64 (mpfr_srcptr src, mpfr_rnd_t rnd_mode)

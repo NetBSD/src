@@ -1,4 +1,4 @@
-# Copyright 2000-2016 Free Software Foundation, Inc.
+# Copyright 2000-2018 Free Software Foundation, Inc.
 # This Makefile.am is free software; the Free Software Foundation
 # gives unlimited permission to copy and/or distribute it,
 # with or without modifications, as long as this notice is preserved.
@@ -13,7 +13,8 @@ EXTRA_DIST = round_raw_generic.c jyn_asympt.c x86/core2/mparam.h        \
 	x86/mparam.h x86_64/core2/mparam.h x86_64/pentium4/mparam.h  	\
 	ia64/mparam.h arm/mparam.h powerpc64/mparam.h sparc64/mparam.h	\
 	generic/mparam.h amd/athlon/mparam.h amd/k8/mparam.h 		\
-	amd/amdfam10/mparam.h powerpc32/mparam.h hppa/mparam.h
+	amd/amdfam10/mparam.h powerpc32/mparam.h hppa/mparam.h          \
+	mips/mparam.h generic/coverage/mparam.h
 
 include_HEADERS = mpfr.h mpf2mpfr.h
 
@@ -22,8 +23,9 @@ BUILT_SOURCES = mparam.h
 
 lib_LTLIBRARIES = libmpfr.la
 
-libmpfr_la_SOURCES = mpfr.h mpf2mpfr.h mpfr-gmp.h mpfr-impl.h mpfr-intmax.h \
-mpfr-longlong.h mpfr-thread.h exceptions.c extract.c uceil_exp2.c	\
+libmpfr_la_SOURCES = mpfr.h mpf2mpfr.h mpfr-cvers.h mpfr-gmp.h          \
+mpfr-impl.h mpfr-intmax.h mpfr-longlong.h mpfr-sassert.h mpfr-thread.h 	\
+exceptions.c extract.c uceil_exp2.c					\
 uceil_log2.c ufloor_log2.c add.c add1.c add_ui.c agm.c clear.c cmp.c	\
 cmp_abs.c cmp_si.c cmp_ui.c comparisons.c div_2exp.c div_2si.c		\
 div_2ui.c div.c div_ui.c dump.c eq.c exp10.c exp2.c exp3.c exp.c	\
@@ -55,7 +57,10 @@ zeta_ui.c set_d64.c get_d64.c jn.c yn.c rem1.c get_patches.c add_d.c	\
 sub_d.c d_sub.c mul_d.c div_d.c d_div.c li2.c rec_sqrt.c min_prec.c	\
 buildopt.c digamma.c bernoulli.c isregular.c set_flt.c get_flt.c	\
 scale2.c set_z_exp.c ai.c gammaonethird.c ieee_floats.h			\
-grandom.c
+grandom.c fpif.c set_float128.c get_float128.c rndna.c nrandom.c        \
+random_deviate.h random_deviate.c erandom.c mpfr-mini-gmp.c             \
+mpfr-mini-gmp.h fmma.c log_ui.c gamma_inc.c ubf.c invert_limb.h 	\
+invsqrt_limb.h beta.c odd_p.c get_q.c pool.c
 
 libmpfr_la_LIBADD = @LIBOBJS@
 
@@ -75,7 +80,8 @@ libmpfr_la_LIBADD = @LIBOBJS@
 #        2.4.x    3:x:2
 #        3.0.x    4:x:0
 #        3.1.x    5:x:1
-libmpfr_la_LDFLAGS = $(MPFR_LDFLAGS) $(LIBMPFR_LDFLAGS) -version-info 5:5:1
+#        4.0.x    6:x:0
+libmpfr_la_LDFLAGS = $(MPFR_LDFLAGS) $(LIBMPFR_LDFLAGS) -version-info 6:1:0
 
 # Important note: If for some reason, srcdir is read-only at build time
 # (and you use objdir != srcdir), then you need to rebuild get_patches.c
@@ -91,3 +97,55 @@ $(srcdir)/get_patches.c: $(top_srcdir)/PATCHES $(top_srcdir)/tools/get_patches.s
 # and "make clean" shouldn't remove it, just like it doesn't remove
 # what has been changed by "patch".
 #CLEANFILES = get_patches.c
+
+# For check-gmp-symbols
+GMPC = $(top_builddir)/src/gmp.c
+GMPI = $(top_builddir)/src/gmp.i
+
+# For check-gmp-symbols and check-exported-symbols (if the library does
+# not have this name, e.g. on some platforms or when the shared library
+# is disabled, these rules do nothing).
+LIBMPFRSO = $(top_builddir)/src/.libs/libmpfr.so
+
+# Check that MPFR does not use GMP internal symbols. Of course, do not run
+# this rule if you use --with-gmp-build or --enable-gmp-internals. This
+# test does nothing if --disable-shared has been used.
+# Note: we use a temporary file $(GMPC) instead of "| $(COMPILE) -E -"
+# because the latter is not supported by all compilers (at least under
+# MS Windows).
+check-gmp-symbols: $(LTLIBRARIES)
+	if [ -f "$(LIBMPFRSO)" ]; then \
+	  printf "#include <%s.h>\n" stdarg stdio gmp > $(GMPC) && \
+	  $(COMPILE) -E $(GMPC) > $(GMPI) || exit 1; \
+	  internals=`$(NM) -u "$(LIBMPFRSO)" | \
+	    $(SED) -n 's/^ *U \(__gmp.*\)/\1/p' | \
+	    while read s; \
+	    do \
+	      $(GREP) -q "$$s[ (;]" $(GMPI) || echo "$$s"; \
+	    done`; \
+	  if [ -n "$$internals" ]; then \
+	    echo "Internal GMP symbols:" $$internals; \
+	    exit 1; \
+	  fi; \
+	  rm $(GMPC) $(GMPI); \
+	fi
+
+# Check that MPFR does not define symbols with a GMP reserved prefix.
+# For instance, with r11968, and
+#   ./configure --with-gmp-build=... CC=tcc
+# the symbol __gmpn_clz_tab is defined, which is wrong.
+# Note: the "grep -v '@plt$$'" below is for tcc.
+check-exported-symbols: $(LTLIBRARIES)
+	if [ -f "$(LIBMPFRSO)" ]; then \
+	  gsymbols=`$(NM) -gP "$(LIBMPFRSO)" | perl -ne \
+	    '/^(__gmp[a-z]?_[_0-9A-Za-z]*) +[A-TV-Z]/ and print " $$1"' | \
+	    grep -v '@plt$$'`; \
+	  if [ -n "$$gsymbols" ]; then \
+	    echo "MPFR defines symbols with a GMP reserved prefix:$$gsymbols"; \
+	    exit 1; \
+	  fi; \
+	fi
+
+CLEANFILES = $(GMPC) $(GMPI)
+
+.PHONY: check-gmp-symbols check-exported-symbols

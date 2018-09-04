@@ -1,6 +1,6 @@
 /* Test file for mpfr_log.
 
-Copyright 1999, 2001-2016 Free Software Foundation, Inc.
+Copyright 1999, 2001-2018 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -19,9 +19,6 @@ You should have received a copy of the GNU Lesser General Public License
 along with the GNU MPFR Library; see the file COPYING.LESSER.  If not, see
 http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA. */
-
-#include <stdio.h>
-#include <stdlib.h>
 
 #include "mpfr-test.h"
 
@@ -64,23 +61,22 @@ check2 (const char *as, mpfr_rnd_t rnd_mode, const char *res1s)
       printf ("correct result is        %s\n mpfr_log gives          ",
               res1s);
       mpfr_out_str(stdout, 10, 0, tres, MPFR_RNDN);
+      printf ("\n");
       exit (1);
     }
   mpfr_clears (ta, tres, (mpfr_ptr) 0);
 }
 
 static void
-check3 (double d, unsigned long prec, mpfr_rnd_t rnd)
+check3 (char *s, unsigned long prec, mpfr_rnd_t rnd)
 {
   mpfr_t x, y;
 
   mpfr_init2 (x, prec);
   mpfr_init2 (y, prec);
-  mpfr_set_d (x, d, rnd);
+  mpfr_set_str (x, s, 10, rnd);
   test_log (y, x, rnd);
   mpfr_out_str (stdout, 10, 0, y, rnd);
-  puts ("");
-  mpfr_print_binary (y);
   puts ("");
   mpfr_clear (x);
   mpfr_clear (y);
@@ -277,9 +273,10 @@ main (int argc, char *argv[])
 {
   tests_start_mpfr ();
 
-  if (argc==4)
+  if (argc == 3 || argc == 4)
     {   /* tlog x prec rnd */
-      check3 (atof(argv[1]), atoi(argv[2]), (mpfr_rnd_t) atoi(argv[3]));
+      check3 (argv[1], strtoul (argv[2], NULL, 10),
+              (argc == 4) ? (mpfr_rnd_t) atoi (argv[3]) : MPFR_RNDN);
       goto done;
     }
 
@@ -350,7 +347,7 @@ main (int argc, char *argv[])
 
   x_near_one ();
 
-  test_generic (2, 100, 40);
+  test_generic (MPFR_PREC_MIN, 100, 40);
 
   data_check ("data/log", mpfr_log, "mpfr_log");
   bad_cases (mpfr_log, mpfr_exp, "mpfr_log", 256, -30, 30, 4, 128, 800, 50);

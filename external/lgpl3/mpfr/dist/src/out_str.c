@@ -1,6 +1,6 @@
 /* mpfr_out_str -- output a floating-point number to a stream
 
-Copyright 1999, 2001-2002, 2004, 2006-2016 Free Software Foundation, Inc.
+Copyright 1999, 2001-2002, 2004, 2006-2018 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -73,7 +73,7 @@ mpfr_out_str (FILE *stream, int base, size_t n_digits, mpfr_srcptr op,
     || fputc (*s++, stream) == EOF  /* leading digit */
     || fputc ((unsigned char) MPFR_DECIMAL_POINT, stream) == EOF
     || fputs (s, stream) == EOF;     /* trailing significand */
-  (*__gmp_free_func) (s0, l);
+  mpfr_free_func (s0, l);
   if (MPFR_UNLIKELY (err))
     return 0;
 

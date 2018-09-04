@@ -1,6 +1,6 @@
 /* __gmpfr_int_ceil_log2 -- Integer ceil of log2(x)
 
-Copyright 2004-2016 Free Software Foundation, Inc.
+Copyright 2004-2018 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.

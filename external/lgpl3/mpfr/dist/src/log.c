@@ -1,6 +1,6 @@
 /* mpfr_log -- natural logarithm of a floating-point number
 
-Copyright 1999-2016 Free Software Foundation, Inc.
+Copyright 1999-2018 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -44,6 +44,7 @@ mpfr_log (mpfr_ptr r, mpfr_srcptr a, mpfr_rnd_t rnd_mode)
   int inexact;
   mpfr_prec_t p, q;
   mpfr_t tmp1, tmp2;
+  mpfr_exp_t exp_a;
   MPFR_SAVE_EXPO_DECL (expo);
   MPFR_ZIV_DECL (loop);
   MPFR_GROUP_DECL(group);
@@ -83,18 +84,22 @@ mpfr_log (mpfr_ptr r, mpfr_srcptr a, mpfr_rnd_t rnd_mode)
           MPFR_ASSERTD (MPFR_IS_ZERO (a));
           MPFR_SET_INF (r);
           MPFR_SET_NEG (r);
-          mpfr_set_divby0 ();
+          MPFR_SET_DIVBY0 ();
           MPFR_RET (0); /* log(0) is an exact -infinity */
         }
     }
+
   /* If a is negative, the result is NaN */
-  else if (MPFR_UNLIKELY (MPFR_IS_NEG (a)))
+  if (MPFR_UNLIKELY (MPFR_IS_NEG (a)))
     {
       MPFR_SET_NAN (r);
       MPFR_RET_NAN;
     }
-  /* If a is 1, the result is 0 */
-  else if (MPFR_UNLIKELY (MPFR_GET_EXP (a) == 1 && mpfr_cmp_ui (a, 1) == 0))
+
+  exp_a = MPFR_GET_EXP (a);
+
+  /* If a is 1, the result is +0 */
+  if (MPFR_UNLIKELY (exp_a == 1 && mpfr_cmp_ui (a, 1) == 0))
     {
       MPFR_SET_ZERO (r);
       MPFR_SET_POS (r);
@@ -103,8 +108,8 @@ mpfr_log (mpfr_ptr r, mpfr_srcptr a, mpfr_rnd_t rnd_mode)
 
   q = MPFR_PREC (r);
 
-  /* use initial precision about q+lg(q)+5 */
-  p = q + 5 + 2 * MPFR_INT_CEIL_LOG2 (q);
+  /* use initial precision about q+2*lg(q)+cte */
+  p = q + 2 * MPFR_INT_CEIL_LOG2 (q) + 10;
   /* % ~(mpfr_prec_t)GMP_NUMB_BITS  ;
      m=q; while (m) { p++; m >>= 1; }  */
   /* if (MPFR_LIKELY(p % GMP_NUMB_BITS != 0))
@@ -116,13 +121,28 @@ mpfr_log (mpfr_ptr r, mpfr_srcptr a, mpfr_rnd_t rnd_mode)
   MPFR_ZIV_INIT (loop, p);
   for (;;)
     {
-      long m;
+      mpfr_exp_t m;
       mpfr_exp_t cancel;
 
-      /* Calculus of m (depends on p) */
-      m = (p + 1) / 2 - MPFR_GET_EXP (a) + 1;
+      /* Calculus of m (depends on p)
+         If mpfr_exp_t has N bits, then both (p + 3) / 2 and |exp_a| fit
+         on N-2 bits, so that there cannot be an overflow. */
+      m = (p + 3) / 2 - exp_a;
 
+      /* In standard configuration (_MPFR_EXP_FORMAT <= 3), one has
+         mpfr_exp_t <= long, so that the following assertion is always
+         true. */
+      MPFR_ASSERTN (m >= LONG_MIN && m <= LONG_MAX);
+
+      /* FIXME: Why 1 ulp and not 1/2 ulp? Ditto with some other ones
+         below. The error concerning the AGM should be explained since
+         4/s is inexact (one needs a bound on its derivative). */
       mpfr_mul_2si (tmp2, a, m, MPFR_RNDN);    /* s=a*2^m,        err<=1 ulp  */
+      MPFR_ASSERTD (MPFR_EXP (tmp2) >= (p + 3) / 2);
+      /* [FIXME] and one can have the equality, even if p is even.
+         This means that if a is a power of 2 and p is even, then
+         s = (1/2) * 2^((p+2)/2) = 2^(p/2), so that the condition
+         s > 2^(p/2) from algorithms.tex is not satisfied. */
       mpfr_div (tmp1, __gmpfr_four, tmp2, MPFR_RNDN);/* 4/s,      err<=2 ulps */
       mpfr_agm (tmp2, __gmpfr_one, tmp1, MPFR_RNDN); /* AG(1,4/s),err<=3 ulps */
       mpfr_mul_2ui (tmp2, tmp2, 1, MPFR_RNDN); /* 2*AG(1,4/s),    err<=3 ulps */
@@ -143,19 +163,19 @@ mpfr_log (mpfr_ptr r, mpfr_srcptr a, mpfr_rnd_t rnd_mode)
           /* we have 7 ulps of error from the above roundings,
              4 ulps from the 4/s^2 second order term,
              plus the canceled bits */
-          if (MPFR_LIKELY (MPFR_CAN_ROUND (tmp1, p-cancel-4, q, rnd_mode)))
+          if (MPFR_LIKELY (MPFR_CAN_ROUND (tmp1, p - cancel - 4, q, rnd_mode)))
             break;
 
           /* VL: I think it is better to have an increment that it isn't
              too low; in particular, the increment must be positive even
              if cancel = 0 (can this occur?). */
-          p += cancel >= 8 ? cancel : 8;
+          p += cancel + MPFR_INT_CEIL_LOG2 (p);
         }
       else
         {
           /* TODO: find why this case can occur and what is best to do
              with it. */
-          p += 32;
+          p += MPFR_INT_CEIL_LOG2 (p);
         }
 
       MPFR_ZIV_NEXT (loop, p);

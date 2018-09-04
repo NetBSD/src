@@ -1,6 +1,6 @@
 /* mpfr_fma -- Floating multiply-add
 
-Copyright 2001-2002, 2004, 2006-2016 Free Software Foundation, Inc.
+Copyright 2001-2002, 2004, 2006-2018 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -20,18 +20,90 @@ along with the GNU MPFR Library; see the file COPYING.LESSER.  If not, see
 http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA. */
 
+#define MPFR_NEED_LONGLONG_H
 #include "mpfr-impl.h"
 
 /* The fused-multiply-add (fma) of x, y and z is defined by:
    fma(x,y,z)= x*y + z
 */
 
+/* this function deals with all cases where inputs are singular, i.e.,
+   either NaN, Inf or zero */
+static int
+mpfr_fma_singular (mpfr_ptr s, mpfr_srcptr x, mpfr_srcptr y, mpfr_srcptr z,
+                   mpfr_rnd_t rnd_mode)
+{
+  if (MPFR_IS_NAN(x) || MPFR_IS_NAN(y) || MPFR_IS_NAN(z))
+    {
+      MPFR_SET_NAN(s);
+      MPFR_RET_NAN;
+    }
+  /* now neither x, y or z is NaN */
+  else if (MPFR_IS_INF(x) || MPFR_IS_INF(y))
+    {
+      /* cases Inf*0+z, 0*Inf+z, Inf-Inf */
+      if ((MPFR_IS_ZERO(y)) ||
+          (MPFR_IS_ZERO(x)) ||
+          (MPFR_IS_INF(z) &&
+           ((MPFR_MULT_SIGN(MPFR_SIGN(x), MPFR_SIGN(y))) != MPFR_SIGN(z))))
+        {
+          MPFR_SET_NAN(s);
+          MPFR_RET_NAN;
+        }
+      else if (MPFR_IS_INF(z)) /* case Inf-Inf already checked above */
+        {
+          MPFR_SET_INF(s);
+          MPFR_SET_SAME_SIGN(s, z);
+          MPFR_RET(0);
+        }
+      else /* z is finite */
+        {
+          MPFR_SET_INF(s);
+          MPFR_SET_SIGN(s, MPFR_MULT_SIGN(MPFR_SIGN(x) , MPFR_SIGN(y)));
+          MPFR_RET(0);
+        }
+    }
+  /* now x and y are finite */
+  else if (MPFR_IS_INF(z))
+    {
+      MPFR_SET_INF(s);
+      MPFR_SET_SAME_SIGN(s, z);
+      MPFR_RET(0);
+    }
+  else if (MPFR_IS_ZERO(x) || MPFR_IS_ZERO(y))
+    {
+      if (MPFR_IS_ZERO(z))
+        {
+          int sign_p;
+          sign_p = MPFR_MULT_SIGN( MPFR_SIGN(x) , MPFR_SIGN(y) );
+          MPFR_SET_SIGN(s, (rnd_mode != MPFR_RNDD ?
+                            (MPFR_IS_NEG_SIGN(sign_p) && MPFR_IS_NEG(z) ?
+                             MPFR_SIGN_NEG : MPFR_SIGN_POS) :
+                            (MPFR_IS_POS_SIGN(sign_p) && MPFR_IS_POS(z) ?
+                             MPFR_SIGN_POS : MPFR_SIGN_NEG)));
+          MPFR_SET_ZERO(s);
+          MPFR_RET(0);
+        }
+      else
+        return mpfr_set (s, z, rnd_mode);
+    }
+  else /* necessarily z is zero here */
+    {
+      MPFR_ASSERTD(MPFR_IS_ZERO(z));
+      return mpfr_mul (s, x, y, rnd_mode);
+    }
+}
+
+/* s <- x*y + z */
 int
 mpfr_fma (mpfr_ptr s, mpfr_srcptr x, mpfr_srcptr y, mpfr_srcptr z,
           mpfr_rnd_t rnd_mode)
 {
   int inexact;
   mpfr_t u;
+  mp_size_t n;
+  mpfr_exp_t e;
+  mpfr_prec_t precx, precy;
   MPFR_SAVE_EXPO_DECL (expo);
   MPFR_GROUP_DECL(group);
 
@@ -44,75 +116,103 @@ mpfr_fma (mpfr_ptr s, mpfr_srcptr x, mpfr_srcptr y, mpfr_srcptr z,
       mpfr_get_prec (s), mpfr_log_prec, s, inexact));
 
   /* particular cases */
-  if (MPFR_UNLIKELY( MPFR_IS_SINGULAR(x) ||
-                     MPFR_IS_SINGULAR(y) ||
+  if (MPFR_UNLIKELY( MPFR_IS_SINGULAR(x) || MPFR_IS_SINGULAR(y) ||
                      MPFR_IS_SINGULAR(z) ))
+    return mpfr_fma_singular (s, x, y, z, rnd_mode);
+
+  e = MPFR_GET_EXP (x) + MPFR_GET_EXP (y);
+
+  precx = MPFR_PREC (x);
+  precy = MPFR_PREC (y);
+
+  /* First deal with special case where prec(x) = prec(y) and x*y does
+     not overflow nor underflow. Do it only for small sizes since for large
+     sizes x*y is faster using Mulders' algorithm (as a rule of thumb,
+     we assume mpn_mul_n is faster up to 4*MPFR_MUL_THRESHOLD).
+     Since |EXP(x)|, |EXP(y)| < 2^(k-2) on a k-bit computer,
+     |EXP(x)+EXP(y)| < 2^(k-1), thus cannot overflow nor underflow. */
+  if (precx == precy && e <= __gmpfr_emax && e > __gmpfr_emin)
     {
-      if (MPFR_IS_NAN(x) || MPFR_IS_NAN(y) || MPFR_IS_NAN(z))
+      if (precx < GMP_NUMB_BITS &&
+          MPFR_PREC(z) == precx &&
+          MPFR_PREC(s) == precx)
         {
-          MPFR_SET_NAN(s);
-          MPFR_RET_NAN;
-        }
-      /* now neither x, y or z is NaN */
-      else if (MPFR_IS_INF(x) || MPFR_IS_INF(y))
-        {
-          /* cases Inf*0+z, 0*Inf+z, Inf-Inf */
-          if ((MPFR_IS_ZERO(y)) ||
-              (MPFR_IS_ZERO(x)) ||
-              (MPFR_IS_INF(z) &&
-               ((MPFR_MULT_SIGN(MPFR_SIGN(x), MPFR_SIGN(y))) != MPFR_SIGN(z))))
+          mp_limb_t umant[2], zmant[2];
+          mpfr_t zz;
+          int inex;
+
+          umul_ppmm (umant[1], umant[0], MPFR_MANT(x)[0], MPFR_MANT(y)[0]);
+          MPFR_PREC(u) = MPFR_PREC(zz) = 2 * precx;
+          MPFR_MANT(u) = umant;
+          MPFR_MANT(zz) = zmant;
+          MPFR_SIGN(u) = MPFR_MULT_SIGN( MPFR_SIGN(x) , MPFR_SIGN(y) );
+          MPFR_SIGN(zz) = MPFR_SIGN(z);
+          MPFR_EXP(zz) = MPFR_EXP(z);
+          if (MPFR_PREC(zz) <= GMP_NUMB_BITS) /* zz fits in one limb */
             {
-              MPFR_SET_NAN(s);
-              MPFR_RET_NAN;
-            }
-          else if (MPFR_IS_INF(z)) /* case Inf-Inf already checked above */
-            {
-              MPFR_SET_INF(s);
-              MPFR_SET_SAME_SIGN(s, z);
-              MPFR_RET(0);
-            }
-          else /* z is finite */
-            {
-              MPFR_SET_INF(s);
-              MPFR_SET_SIGN(s, MPFR_MULT_SIGN(MPFR_SIGN(x) , MPFR_SIGN(y)));
-              MPFR_RET(0);
-            }
-        }
-      /* now x and y are finite */
-      else if (MPFR_IS_INF(z))
-        {
-          MPFR_SET_INF(s);
-          MPFR_SET_SAME_SIGN(s, z);
-          MPFR_RET(0);
-        }
-      else if (MPFR_IS_ZERO(x) || MPFR_IS_ZERO(y))
-        {
-          if (MPFR_IS_ZERO(z))
-            {
-              int sign_p;
-              sign_p = MPFR_MULT_SIGN( MPFR_SIGN(x) , MPFR_SIGN(y) );
-              MPFR_SET_SIGN(s,(rnd_mode != MPFR_RNDD ?
-                               ((MPFR_IS_NEG_SIGN(sign_p) && MPFR_IS_NEG(z))
-                                ? -1 : 1) :
-                               ((MPFR_IS_POS_SIGN(sign_p) && MPFR_IS_POS(z))
-                                ? 1 : -1)));
-              MPFR_SET_ZERO(s);
-              MPFR_RET(0);
+              if ((umant[1] & MPFR_LIMB_HIGHBIT) == 0)
+                {
+                  umant[0] = umant[1] << 1;
+                  MPFR_EXP(u) = e - 1;
+                }
+              else
+                {
+                  umant[0] = umant[1];
+                  MPFR_EXP(u) = e;
+                }
+              zmant[0] = MPFR_MANT(z)[0];
             }
           else
-            return mpfr_set (s, z, rnd_mode);
+            {
+              zmant[1] = MPFR_MANT(z)[0];
+              zmant[0] = MPFR_LIMB_ZERO;
+              if ((umant[1] & MPFR_LIMB_HIGHBIT) == 0)
+                {
+                  umant[1] = (umant[1] << 1) |
+                    (umant[0] >> (GMP_NUMB_BITS - 1));
+                  umant[0] = umant[0] << 1;
+                  MPFR_EXP(u) = e - 1;
+                }
+              else
+                MPFR_EXP(u) = e;
+            }
+          inex = mpfr_add (u, u, zz, rnd_mode);
+          /* mpfr_set_1_2 requires PREC(u) = 2*PREC(s),
+             thus we need PREC(s) = PREC(x) = PREC(y) = PREC(z) */
+          return mpfr_set_1_2 (s, u, rnd_mode, inex);
         }
-      else /* necessarily z is zero here */
+      else if ((n = MPFR_LIMB_SIZE(x)) <= 4 * MPFR_MUL_THRESHOLD)
         {
-          MPFR_ASSERTD(MPFR_IS_ZERO(z));
-          return mpfr_mul (s, x, y, rnd_mode);
+          mpfr_limb_ptr up;
+          mp_size_t un = n + n;
+          MPFR_TMP_DECL(marker);
+
+          MPFR_TMP_MARK(marker);
+          MPFR_TMP_INIT (up, u, un * GMP_NUMB_BITS, un);
+          up = MPFR_MANT(u);
+          /* multiply x*y exactly into u */
+          mpn_mul_n (up, MPFR_MANT(x), MPFR_MANT(y), n);
+          if (MPFR_LIMB_MSB (up[un - 1]) == 0)
+            {
+              mpn_lshift (up, up, un, 1);
+              MPFR_EXP(u) = e - 1;
+            }
+          else
+            MPFR_EXP(u) = e;
+          MPFR_SIGN(u) = MPFR_MULT_SIGN( MPFR_SIGN(x) , MPFR_SIGN(y) );
+          /* The above code does not generate any exception.
+             The exceptions will come only from mpfr_add. */
+          inexact = mpfr_add (s, u, z, rnd_mode);
+          MPFR_TMP_FREE(marker);
+          return inexact;
         }
     }
 
   /* If we take prec(u) >= prec(x) + prec(y), the product u <- x*y
      is exact, except in case of overflow or underflow. */
+  MPFR_ASSERTN (precx + precy <= MPFR_PREC_MAX);
+  MPFR_GROUP_INIT_1 (group, precx + precy, u);
   MPFR_SAVE_EXPO_MARK (expo);
-  MPFR_GROUP_INIT_1 (group, MPFR_PREC(x) + MPFR_PREC(y), u);
 
   if (MPFR_UNLIKELY (mpfr_mul (u, x, y, MPFR_RNDN)))
     {
@@ -132,8 +232,7 @@ mpfr_fma (mpfr_ptr s, mpfr_srcptr x, mpfr_srcptr y, mpfr_srcptr z,
              Also, we know that |z| < 2^emax. If E(x) + E(y) >= emax+3,
              then |x*y| >= 2^(emax+1), and |x*y + z| >= 2^emax. This case
              is also an overflow. */
-          if (MPFR_SIGN (u) == MPFR_SIGN (z) ||
-              MPFR_GET_EXP (x) + MPFR_GET_EXP (y) >= __gmpfr_emax + 3)
+          if (MPFR_SIGN (u) == MPFR_SIGN (z) || e >= __gmpfr_emax + 3)
             {
               MPFR_GROUP_CLEAR (group);
               MPFR_SAVE_EXPO_FREE (expo);
@@ -239,13 +338,13 @@ mpfr_fma (mpfr_ptr s, mpfr_srcptr x, mpfr_srcptr y, mpfr_srcptr z,
               MPFR_BLOCK (flags,
                           if (MPFR_GET_EXP (x) < MPFR_GET_EXP (y))
                             {
-                              mpfr_init2 (scaled_v, MPFR_PREC (x));
+                              mpfr_init2 (scaled_v, precx);
                               mpfr_mul_2ui (scaled_v, x, scale, MPFR_RNDN);
                               mpfr_mul (u, scaled_v, y, MPFR_RNDN);
                             }
                           else
                             {
-                              mpfr_init2 (scaled_v, MPFR_PREC (y));
+                              mpfr_init2 (scaled_v, precy);
                               mpfr_mul_2ui (scaled_v, y, scale, MPFR_RNDN);
                               mpfr_mul (u, x, scaled_v, MPFR_RNDN);
                             });

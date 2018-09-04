@@ -1,7 +1,7 @@
 /* Test file for
    mpfr_set_sj, mpfr_set_uj, mpfr_set_sj_2exp and mpfr_set_uj_2exp.
 
-Copyright 2004, 2006-2016 Free Software Foundation, Inc.
+Copyright 2004, 2006-2018 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -22,12 +22,9 @@ http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA. */
 
 #ifdef HAVE_CONFIG_H
-# include "config.h"       /* for a build within gmp */
+# include "config.h"
 #endif
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <limits.h>
 
 #include "mpfr-intmax.h"
 #include "mpfr-test.h"
@@ -42,7 +39,8 @@ main (void)
 
 #else
 
-#define ERROR(str) do { printf ("Error for " str "\n"); exit (1); } while (0)
+#define PRINT_ERROR(str) \
+  do { printf ("Error for %s\n", str); exit (1); } while (0)
 
 static int
 inexact_sign (int x)
@@ -60,7 +58,7 @@ check_set_uj (mpfr_prec_t pmin, mpfr_prec_t pmax, int N)
 
   mpfr_inits2 (pmax, x, y, (mpfr_ptr) 0);
 
-  for ( p = pmin ; p < pmax ; p++)
+  for (p = pmin ; p < pmax ; p++)
     {
       mpfr_set_prec (x, p);
       mpfr_set_prec (y, p);
@@ -91,14 +89,14 @@ check_set_uj (mpfr_prec_t pmin, mpfr_prec_t pmax, int N)
   mpfr_set_prec (x, sizeof(uintmax_t)*CHAR_BIT);
   inex1 = mpfr_set_uj (x, MPFR_UINTMAX_MAX, MPFR_RNDN);
   if (inex1 != 0 || mpfr_sgn(x) <= 0)
-    ERROR ("inexact / UINTMAX_MAX");
+    PRINT_ERROR ("inexact / UINTMAX_MAX");
   inex1 = mpfr_add_ui (x, x, 1, MPFR_RNDN);
   if (inex1 != 0 || !mpfr_powerof2_raw (x)
-      || MPFR_EXP (x) != (sizeof(uintmax_t)*CHAR_BIT+1) )
-    ERROR ("power of 2");
+      || MPFR_EXP (x) != sizeof(uintmax_t) * CHAR_BIT + 1)
+    PRINT_ERROR ("power of 2");
   mpfr_set_uj (x, 0, MPFR_RNDN);
   if (!MPFR_IS_ZERO (x))
-    ERROR ("Setting 0");
+    PRINT_ERROR ("Setting 0");
 
   mpfr_clears (x, y, (mpfr_ptr) 0);
 }
@@ -113,30 +111,30 @@ check_set_uj_2exp (void)
 
   inex = mpfr_set_uj_2exp (x, 1, 0, MPFR_RNDN);
   if (inex || mpfr_cmp_ui(x, 1))
-    ERROR("(1U,0)");
+    PRINT_ERROR ("(1U,0)");
 
   inex = mpfr_set_uj_2exp (x, 1024, -10, MPFR_RNDN);
   if (inex || mpfr_cmp_ui(x, 1))
-    ERROR("(1024U,-10)");
+    PRINT_ERROR ("(1024U,-10)");
 
   inex = mpfr_set_uj_2exp (x, 1024, 10, MPFR_RNDN);
   if (inex || mpfr_cmp_ui(x, 1024L * 1024L))
-    ERROR("(1024U,+10)");
+    PRINT_ERROR ("(1024U,+10)");
 
   inex = mpfr_set_uj_2exp (x, MPFR_UINTMAX_MAX, 1000, MPFR_RNDN);
   inex |= mpfr_div_2ui (x, x, 1000, MPFR_RNDN);
   inex |= mpfr_add_ui (x, x, 1, MPFR_RNDN);
   if (inex || !mpfr_powerof2_raw (x)
-      || MPFR_EXP (x) != (sizeof(uintmax_t)*CHAR_BIT+1) )
-    ERROR("(UINTMAX_MAX)");
+      || MPFR_EXP (x) != sizeof(uintmax_t) * CHAR_BIT + 1)
+    PRINT_ERROR ("(UINTMAX_MAX)");
 
   inex = mpfr_set_uj_2exp (x, MPFR_UINTMAX_MAX, MPFR_EMAX_MAX-10, MPFR_RNDN);
   if (inex == 0 || !mpfr_inf_p (x))
-    ERROR ("Overflow");
+    PRINT_ERROR ("Overflow");
 
   inex = mpfr_set_uj_2exp (x, MPFR_UINTMAX_MAX, MPFR_EMIN_MIN-1000, MPFR_RNDN);
   if (inex == 0 || !MPFR_IS_ZERO (x))
-    ERROR ("Underflow");
+    PRINT_ERROR ("Underflow");
 
   mpfr_clear (x);
 }
@@ -152,12 +150,12 @@ check_set_sj (void)
   inex = mpfr_set_sj (x, -MPFR_INTMAX_MAX, MPFR_RNDN);
   inex |= mpfr_add_si (x, x, -1, MPFR_RNDN);
   if (inex || mpfr_sgn (x) >=0 || !mpfr_powerof2_raw (x)
-      || MPFR_EXP (x) != (sizeof(intmax_t)*CHAR_BIT) )
-    ERROR("set_sj (-INTMAX_MAX)");
+      || MPFR_EXP (x) != sizeof(intmax_t) * CHAR_BIT)
+    PRINT_ERROR ("set_sj (-INTMAX_MAX)");
 
   inex = mpfr_set_sj (x, 1742, MPFR_RNDN);
   if (inex || mpfr_cmp_ui (x, 1742))
-    ERROR ("set_sj (1742)");
+    PRINT_ERROR ("set_sj (1742)");
 
   mpfr_clear (x);
 }
@@ -172,8 +170,8 @@ check_set_sj_2exp (void)
 
   inex = mpfr_set_sj_2exp (x, MPFR_INTMAX_MIN, 1000, MPFR_RNDN);
   if (inex || mpfr_sgn (x) >=0 || !mpfr_powerof2_raw (x)
-      || MPFR_EXP (x) != (sizeof(intmax_t)*CHAR_BIT+1000) )
-    ERROR("set_sj_2exp (INTMAX_MIN)");
+      || MPFR_EXP (x) != sizeof(intmax_t) * CHAR_BIT + 1000)
+    PRINT_ERROR ("set_sj_2exp (INTMAX_MIN)");
 
   mpfr_clear (x);
 }
