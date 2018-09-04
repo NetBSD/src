@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2017/08/22 09:17:50 mrg Exp $
+#	$NetBSD: Makefile,v 1.4 2018/09/04 05:16:25 mrg Exp $
 
 .include <bsd.init.mk>
 
@@ -30,6 +30,7 @@ SRCS=	\
 	atanh.c \
 	clear.c \
 	cmp.c \
+	cmp_abs.c \
 	cmp_si_si.c \
 	conj.c \
 	cos.c \
@@ -73,6 +74,7 @@ SRCS=	\
 	pow_z.c \
 	proj.c \
 	real.c \
+	rootofunity.c \
 	urandom.c \
 	set.c \
 	set_prec.c \
