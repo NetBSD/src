@@ -1,6 +1,6 @@
 /* Test file for round away.
 
-Copyright 2000-2016 Free Software Foundation, Inc.
+Copyright 2000-2018 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -20,13 +20,17 @@ along with the GNU MPFR Library; see the file COPYING.LESSER.  If not, see
 http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA. */
 
-#include <stdio.h>
-#include <stdlib.h>
-
 #include "mpfr-test.h"
 
-#define DISP(s, t) {printf(s); mpfr_out_str(stdout, 2, 0, t, MPFR_RNDN); }
-#define DISP2(s,t) {DISP(s,t); putchar('\n');}
+#define DISP(s,t)                                       \
+  do                                                    \
+    {                                                   \
+      printf (s);                                       \
+      mpfr_out_str (stdout, 2, 0, t, MPFR_RNDN);        \
+    }                                                   \
+  while (0)
+
+#define DISP2(s,t) do { DISP(s,t); putchar ('\n'); } while (0)
 
 #define SPECIAL_MAX 12
 
@@ -114,7 +118,7 @@ test3 (int (*testfunc)(mpfr_ptr, mpfr_srcptr, mpfr_srcptr, mpfr_rnd_t),
       set_special (ref3, i/SPECIAL_MAX);
 
       inexa = testfunc (res1, ref2, ref3, MPFR_RNDA);
-      r = MPFR_SIGN(res1) > 0 ? MPFR_RNDU : MPFR_RNDD;
+      r = MPFR_IS_POS (res1) ? MPFR_RNDU : MPFR_RNDD;
       inexd = testfunc (ref1, ref2, ref3, r);
 
       if (mpfr_compare (res1, ref1) || inexa != inexd)
@@ -122,8 +126,8 @@ test3 (int (*testfunc)(mpfr_ptr, mpfr_srcptr, mpfr_srcptr, mpfr_rnd_t),
           printf ("Error with RNDA for %s with ", foo);
           DISP("x=",ref2); DISP2(", y=",ref3);
           printf ("inexa=%d inexd=%d\n", inexa, inexd);
-          printf ("expected "); mpfr_print_binary (ref1); puts ("");
-          printf ("got      "); mpfr_print_binary (res1); puts ("");
+          printf ("expected "); mpfr_dump (ref1);
+          printf ("got      "); mpfr_dump (res1);
           exit (1);
         }
     }
@@ -169,7 +173,7 @@ test4 (int (*testfunc)(mpfr_ptr, mpfr_srcptr, mpfr_srcptr, mpfr_srcptr,
               set_special (op3, k);
 
               inexa = testfunc (res, op1, op2, op3, MPFR_RNDA);
-              r = MPFR_SIGN(res) > 0 ? MPFR_RNDU : MPFR_RNDD;
+              r = MPFR_IS_POS (res) ? MPFR_RNDU : MPFR_RNDD;
               inexd = testfunc (ref, op1, op2, op3, r);
 
               if (mpfr_compare (res, ref) || inexa != inexd)
@@ -217,7 +221,7 @@ test2ui (int (*testfunc)(mpfr_ptr, mpfr_srcptr, unsigned long int, mpfr_rnd_t),
       ref3 = i / SPECIAL_MAX == 0 ? 0 : randlimb ();
 
       inexa = testfunc (res1, ref2, ref3, MPFR_RNDA);
-      r = MPFR_SIGN(res1) > 0 ? MPFR_RNDU : MPFR_RNDD;
+      r = MPFR_IS_POS (res1) ? MPFR_RNDU : MPFR_RNDD;
       inexd = testfunc (ref1, ref2, ref3, r);
 
       if (mpfr_compare (res1, ref1) || inexa != inexd)
@@ -225,8 +229,8 @@ test2ui (int (*testfunc)(mpfr_ptr, mpfr_srcptr, unsigned long int, mpfr_rnd_t),
           printf ("Error with RNDA for %s for c=%u\n", foo, ref3);
           DISP2("a=",ref2);
           printf ("inexa=%d inexd=%d\n", inexa, inexd);
-          printf ("expected "); mpfr_print_binary (ref1); puts ("");
-          printf ("got      "); mpfr_print_binary (res1); puts ("");
+          printf ("expected "); mpfr_dump (ref1);
+          printf ("got      "); mpfr_dump (res1);
           exit (1);
         }
     }
@@ -260,7 +264,7 @@ testui2 (int (*testfunc)(mpfr_ptr, unsigned long int, mpfr_srcptr, mpfr_rnd_t),
       ref2 = i / SPECIAL_MAX == 0 ? 0 : randlimb ();
 
       inexa = testfunc (res1, ref2, ref3, MPFR_RNDA);
-      r = MPFR_SIGN(res1) > 0 ? MPFR_RNDU : MPFR_RNDD;
+      r = MPFR_IS_POS (res1) ? MPFR_RNDU : MPFR_RNDD;
       inexd = testfunc (ref1, ref2, ref3, r);
 
       if (mpfr_compare (res1, ref1) || inexa != inexd)
@@ -302,7 +306,7 @@ test2 (int (*testfunc)(mpfr_ptr, mpfr_srcptr, mpfr_rnd_t), const char *foo)
       /* first round to away */
       inexa = testfunc (res1, ref2, MPFR_RNDA);
 
-      r = MPFR_SIGN(res1) > 0 ? MPFR_RNDU : MPFR_RNDD;
+      r = MPFR_IS_POS (res1) ? MPFR_RNDU : MPFR_RNDD;
       inexd = testfunc (ref1, ref2, r);
       if (mpfr_compare (res1, ref1) || inexa != inexd)
         {
@@ -347,7 +351,7 @@ test3a (int (*testfunc)(mpfr_ptr, mpfr_ptr, mpfr_srcptr, mpfr_rnd_t),
       inexa = testfunc (res1, res2, ref3, MPFR_RNDA);
 
       /* first check wrt the first operand */
-      r = MPFR_SIGN(res1) > 0 ? MPFR_RNDU : MPFR_RNDD;
+      r = MPFR_IS_POS (res1) ? MPFR_RNDU : MPFR_RNDD;
       inexd = testfunc (ref1, ref2, ref3, r);
       /* the low 2 bits of the inexact flag concern the 1st operand */
       if (mpfr_compare (res1, ref1) || (inexa & 3) != (inexd & 3))
@@ -361,7 +365,7 @@ test3a (int (*testfunc)(mpfr_ptr, mpfr_ptr, mpfr_srcptr, mpfr_rnd_t),
         }
 
       /* now check wrt the second operand */
-      r = MPFR_SIGN(res2) > 0 ? MPFR_RNDU : MPFR_RNDD;
+      r = MPFR_IS_POS (res2) ? MPFR_RNDU : MPFR_RNDD;
       inexd = testfunc (ref1, ref2, ref3, r);
       /* bits 2..3 of the inexact flag concern the 2nd operand */
       if (mpfr_compare (res2, ref2) || (inexa >> 2) != (inexd >> 2))
@@ -483,12 +487,15 @@ main (void)
       test4 (mpfr_fma, "mpfr_fma");
       test4 (mpfr_fms, "mpfr_fms");
 
-#if MPFR_VERSION >= MPFR_VERSION_NUM(2,4,0)
       test2 (mpfr_li2, "mpfr_li2");
       test2 (mpfr_rec_sqrt, "mpfr_rec_sqrt");
       test3 (mpfr_fmod, "mpfr_fmod");
       test3a (mpfr_modf, "mpfr_modf");
       test3a (mpfr_sinh_cosh, "mpfr_sinh_cosh");
+
+#if MPFR_VERSION >= MPFR_VERSION_NUM(3,0,0)
+      test2 (mpfr_ai, "mpfr_ai");
+      test2 (mpfr_digamma, "mpfr_digamma");
 #endif
     }
 

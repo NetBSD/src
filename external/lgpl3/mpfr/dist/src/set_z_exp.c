@@ -1,7 +1,7 @@
 /* mpfr_set_z_2exp -- set a floating-point number from a multiple-precision
                       integer and an exponent
 
-Copyright 1999-2016 Free Software Foundation, Inc.
+Copyright 1999-2018 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -42,7 +42,7 @@ mpfr_set_z_2exp (mpfr_ptr f, mpz_srcptr z, mpfr_exp_t e, mpfr_rnd_t rnd_mode)
     }
   MPFR_ASSERTD (sign_z == MPFR_SIGN_POS || sign_z == MPFR_SIGN_NEG);
 
-  zn = ABS(SIZ(z)); /* limb size of z */
+  zn = ABSIZ(z); /* limb size of z */
   /* compute en = floor(e/GMP_NUMB_BITS) */
   en = (e >= 0) ? e / GMP_NUMB_BITS : (e + 1) / GMP_NUMB_BITS - 1;
   MPFR_ASSERTD (zn >= 1);
@@ -81,7 +81,7 @@ mpfr_set_z_2exp (mpfr_ptr f, mpz_srcptr z, mpfr_exp_t e, mpfr_rnd_t rnd_mode)
       if (MPFR_LIKELY (k != 0))
         {
           mpn_lshift (fp, &zp[dif], fn, k);
-          if (MPFR_LIKELY (dif > 0))
+          if (MPFR_UNLIKELY (dif > 0))
             fp[0] |= zp[dif - 1] >> (GMP_NUMB_BITS - k);
         }
       else
@@ -101,7 +101,7 @@ mpfr_set_z_2exp (mpfr_ptr f, mpz_srcptr z, mpfr_exp_t e, mpfr_rnd_t rnd_mode)
       else /* sh == 0 */
         {
           mp_limb_t mask = MPFR_LIMB_ONE << (GMP_NUMB_BITS - 1 - k);
-          if (MPFR_LIKELY (dif > 0))
+          if (MPFR_UNLIKELY (dif > 0))
             {
               rb = zp[--dif] & mask;
               sb = zp[dif] & (mask-1);
@@ -111,7 +111,7 @@ mpfr_set_z_2exp (mpfr_ptr f, mpz_srcptr z, mpfr_exp_t e, mpfr_rnd_t rnd_mode)
           k = 0;
           ulp = MPFR_LIMB_ONE;
         }
-      if (MPFR_UNLIKELY (sb == 0) && MPFR_LIKELY (dif > 0))
+      if (MPFR_UNLIKELY (sb == 0 && dif > 0))
         {
           sb = zp[--dif];
           if (MPFR_LIKELY (k != 0))
@@ -140,7 +140,7 @@ mpfr_set_z_2exp (mpfr_ptr f, mpz_srcptr z, mpfr_exp_t e, mpfr_rnd_t rnd_mode)
         }
 
     trunc:
-      inex = MPFR_LIKELY ((sb | rb) != 0) ? -1 : 0;
+      inex = - ((sb | rb) != 0);
       goto end;
 
     addoneulp:

@@ -1,6 +1,6 @@
 /* tzeta -- test file for the Riemann Zeta function
 
-Copyright 2003-2016 Free Software Foundation, Inc.
+Copyright 2003-2018 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -19,9 +19,6 @@ You should have received a copy of the GNU Lesser General Public License
 along with the GNU MPFR Library; see the file COPYING.LESSER.  If not, see
 http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA. */
-
-#include <stdio.h>
-#include <stdlib.h>
 
 #include "mpfr-test.h"
 
@@ -45,12 +42,12 @@ test1 (void)
   if (mpfr_cmp (x, y))
     {
       printf ("Error for input on 40 bits, output on 50 bits\n");
-      printf ("Expected "); mpfr_print_binary (x); puts ("");
-      printf ("Got      "); mpfr_print_binary (y); puts ("");
+      printf ("Expected "); mpfr_dump (x);
+      printf ("Got      "); mpfr_dump (y);
       mpfr_set_str_binary (x, "1.001101001101000010011010110100110000101e-1");
       mpfr_zeta (y, x, MPFR_RNDU);
-      mpfr_print_binary (x); puts ("");
-      mpfr_print_binary (y); puts ("");
+      mpfr_dump (x);
+      mpfr_dump (y);
       exit (1);
     }
 
@@ -63,8 +60,8 @@ test1 (void)
   if (mpfr_cmp (x, y))
     {
       printf ("Error in mpfr_zeta (1)\n");
-      printf ("Expected "); mpfr_print_binary (x); puts ("");
-      printf ("Got      "); mpfr_print_binary (y); puts ("");
+      printf ("Expected "); mpfr_dump (x);
+      printf ("Got      "); mpfr_dump (y);
       exit (1);
     }
 
@@ -171,20 +168,62 @@ test2 (void)
       if (mpfr_cmp_str (y, val[i+1] , 2, MPFR_RNDZ))
         {
           printf("Wrong result for zeta(%s=", val[i]);
-          mpfr_print_binary (x);
+          mpfr_out_str (stdout, 2, 0, x, MPFR_RNDN);
           printf (").\nGot     : ");
-          mpfr_print_binary(y); putchar('\n');
+          mpfr_dump (y);
           printf("Expected: ");
           mpfr_set_str (y, val[i+1], 2, MPFR_RNDZ);
-          mpfr_print_binary(y); putchar('\n');
+          mpfr_dump (y);
           mpfr_set_prec(y, 65);
           mpfr_zeta(y, x, MPFR_RNDZ);
           printf("+ Prec  : ");
-          mpfr_print_binary(y); putchar('\n');
+          mpfr_dump (y);
           exit(1);
         }
     }
   mpfr_clears (x, y, (mpfr_ptr) 0);
+}
+
+/* The following test attempts to trigger an intermediate overflow in
+   Gamma(s1) in the reflection formula with a 32-bit ABI (the example
+   depends on the extended exponent range): r10804 fails when the
+   exponent field is on 32 bits. */
+static void
+intermediate_overflow (void)
+{
+  mpfr_t x, y1, y2;
+  mpfr_flags_t flags1, flags2;
+  int inex1, inex2;
+
+  mpfr_inits2 (64, x, y1, y2, (mpfr_ptr) 0);
+
+  mpfr_set_si (x, -44787928, MPFR_RNDN);
+  mpfr_nextabove (x);
+
+  mpfr_set_str (y1, "0x3.0a6ab0ab281742acp+954986780", 0, MPFR_RNDN);
+  inex1 = -1;
+  flags1 = MPFR_FLAGS_INEXACT;
+
+  mpfr_clear_flags ();
+  inex2 = mpfr_zeta (y2, x, MPFR_RNDN);
+  flags2 = __gmpfr_flags;
+
+  if (!(mpfr_equal_p (y1, y2) &&
+        SAME_SIGN (inex1, inex2) &&
+        flags1 == flags2))
+    {
+      printf ("Error in intermediate_overflow\n");
+      printf ("Expected ");
+      mpfr_dump (y1);
+      printf ("with inex = %d and flags =", inex1);
+      flags_out (flags1);
+      printf ("Got      ");
+      mpfr_dump (y2);
+      printf ("with inex = %d and flags =", inex2);
+      flags_out (flags2);
+      exit (1);
+    }
+  mpfr_clears (x, y1, y2, (mpfr_ptr) 0);
 }
 
 #define TEST_FUNCTION mpfr_zeta
@@ -201,6 +240,7 @@ main (int argc, char *argv[])
   mpfr_t s, y, z;
   mpfr_prec_t prec;
   mpfr_rnd_t rnd_mode;
+  mpfr_flags_t flags;
   int inex;
 
   tests_start_mpfr ();
@@ -250,7 +290,7 @@ main (int argc, char *argv[])
   mpfr_set_ui (s, 1, MPFR_RNDN);
   mpfr_clear_divby0();
   mpfr_zeta (z, s, MPFR_RNDN);
-  if (!mpfr_inf_p (z) || MPFR_SIGN (z) < 0 || !mpfr_divby0_p())
+  if (!mpfr_inf_p (z) || MPFR_IS_NEG (z) || !mpfr_divby0_p())
     {
       printf ("Error in mpfr_zeta for s = 1 (should be +inf) with divby0 flag\n");
       exit (1);
@@ -342,14 +382,14 @@ main (int argc, char *argv[])
 
   mpfr_set_str (s, "-400000001", 10, MPFR_RNDZ);
   mpfr_zeta (z, s, MPFR_RNDN);
-  if (!(mpfr_inf_p (z) && MPFR_SIGN(z) < 0))
+  if (!(mpfr_inf_p (z) && MPFR_IS_NEG (z)))
     {
       printf ("Error in mpfr_zeta (-400000001)\n");
       exit (1);
     }
   mpfr_set_str (s, "-400000003", 10, MPFR_RNDZ);
   mpfr_zeta (z, s, MPFR_RNDN);
-  if (!(mpfr_inf_p (z) && MPFR_SIGN(z) > 0))
+  if (!(mpfr_inf_p (z) && MPFR_IS_POS (z)))
     {
       printf ("Error in mpfr_zeta (-400000003)\n");
       exit (1);
@@ -387,7 +427,7 @@ main (int argc, char *argv[])
   mpfr_set_prec (z, 128);
   mpfr_set_str_binary (s, "-0.1000000000000000000000000000000000000000000000000000000000000001E64");
   inex = mpfr_zeta (z, s, MPFR_RNDN);
-  MPFR_ASSERTN (mpfr_inf_p (z) && MPFR_SIGN (z) < 0 && inex < 0);
+  MPFR_ASSERTN (mpfr_inf_p (z) && MPFR_IS_NEG (z) && inex < 0);
   inex = mpfr_zeta (z, s, MPFR_RNDU);
   mpfr_set_inf (s, -1);
   mpfr_nextabove (s);
@@ -414,6 +454,24 @@ main (int argc, char *argv[])
         }
     }
 
+  /* The following test yields an overflow in the error computation.
+     With r10864, this is detected and one gets an assertion failure. */
+  mpfr_set_prec (s, 1025);
+  mpfr_set_si_2exp (s, -1, 1024, MPFR_RNDN);
+  mpfr_nextbelow (s);  /* -(2^1024 + 1) */
+  mpfr_clear_flags ();
+  inex = mpfr_zeta (z, s, MPFR_RNDN);
+  flags = __gmpfr_flags;
+  if (flags != (MPFR_FLAGS_OVERFLOW | MPFR_FLAGS_INEXACT) ||
+      ! mpfr_inf_p (z) || MPFR_IS_POS (z) || inex >= 0)
+    {
+      printf ("Error in mpfr_zeta for s = -(2^1024 + 1)\nGot ");
+      mpfr_dump (z);
+      printf ("with inex = %d and flags =", inex);
+      flags_out (flags);
+      exit (1);
+    }
+
   mpfr_clear (s);
   mpfr_clear (y);
   mpfr_clear (z);
@@ -423,6 +481,8 @@ main (int argc, char *argv[])
      the input. */
   test_generic (MPFR_PREC_MIN, 70, 1);
   test2 ();
+
+  intermediate_overflow ();
 
   tests_end_mpfr ();
   return 0;

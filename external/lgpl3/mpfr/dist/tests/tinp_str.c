@@ -1,6 +1,6 @@
 /* Test file for mpfr_inp_str.
 
-Copyright 2004, 2006-2016 Free Software Foundation, Inc.
+Copyright 2004, 2006-2018 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -20,9 +20,6 @@ along with the GNU MPFR Library; see the file COPYING.LESSER.  If not, see
 http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA. */
 
-#include <stdio.h>
-#include <stdlib.h>
-
 #include "mpfr-test.h"
 
 int
@@ -31,31 +28,39 @@ main (int argc, char *argv[])
   mpfr_t x;
   mpfr_t y;
   FILE *f;
-  int i;
+  int i, n;
+
   tests_start_mpfr ();
 
   mpfr_init (x);
   mpfr_init (y);
 
   mpfr_set_prec (x, 15);
-  f = src_fopen ("inp_str.data", "r");
+  f = src_fopen ("inp_str.dat", "r");
   if (f == NULL)
     {
-      printf ("Error, can't open inp_str.data\n");
+      printf ("Error, can't open inp_str.dat\n");
+      exit (1);
+    }
+  i = mpfr_inp_str (x, f, 10, MPFR_RNDN);
+  if (i == 0 || mpfr_cmp_si (x, -1700))
+    {
+      printf ("Error in reading 1st line from file inp_str.dat (%d)\n", i);
+      mpfr_dump (x);
       exit (1);
     }
   i = mpfr_inp_str (x, f, 10, MPFR_RNDN);
   if (i == 0 || mpfr_cmp_ui (x, 31415))
     {
-      printf ("Error in reading 1st line from file inp_str.data (%d)\n", i);
+      printf ("Error in reading 2nd line from file inp_str.dat (%d)\n", i);
       mpfr_dump (x);
       exit (1);
     }
   getc (f);
   i = mpfr_inp_str (x, f, 10, MPFR_RNDN);
-  if ((i == 0) || mpfr_cmp_ui (x, 31416))
+  if (i == 0 || mpfr_cmp_ui (x, 31416))
     {
-      printf ("Error in reading 2nd line from file inp_str.data (%d)\n", i);
+      printf ("Error in reading 3rd line from file inp_str.dat (%d)\n", i);
       mpfr_dump (x);
       exit (1);
     }
@@ -63,7 +68,7 @@ main (int argc, char *argv[])
   i = mpfr_inp_str (x, f, 10, MPFR_RNDN);
   if (i != 0)
     {
-      printf ("Error in reading 3rd line from file inp_str.data (%d)\n", i);
+      printf ("Error in reading 4th line from file inp_str.dat (%d)\n", i);
       mpfr_dump (x);
       exit (1);
     }
@@ -72,12 +77,14 @@ main (int argc, char *argv[])
   mpfr_set_prec (y, 53);
   mpfr_set_str (y, "1.0010010100001110100101001110011010111011100001110010e226",
                 2, MPFR_RNDN);
-  for (i = 2; i < 63; i++)
+  for (n = 2; n < 63; n++)
     {
       getc (f);
-      if (mpfr_inp_str (x, f, i, MPFR_RNDN) == 0 || !mpfr_equal_p (x, y))
+      i = mpfr_inp_str (x, f, n, MPFR_RNDN);
+      if (i == 0 || !mpfr_equal_p (x, y))
         {
-          printf ("Error in reading %dth line from file inp_str.data\n", i+2);
+          printf ("Error in reading %dth line from file inp_str.dat (%d)\n",
+                  n+3, i);
           mpfr_dump (x);
           exit (1);
         }

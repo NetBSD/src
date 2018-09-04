@@ -3,7 +3,7 @@
    using STATE as the random state previously initialized by a call to
    gmp_randinit_lc_2exp_size().
 
-Copyright 2000-2004, 2006-2016 Free Software Foundation, Inc.
+Copyright 2000-2004, 2006-2018 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -36,16 +36,14 @@ mpfr_rand_raw (mpfr_limb_ptr mp, gmp_randstate_t rstate,
   mpz_t z;
 
   MPFR_ASSERTN (nbits >= 1);
-  /* To be sure to avoid the potential allocation of mpz_urandomb */
-  ALLOC(z) = SIZ(z) = MPFR_PREC2LIMBS (nbits);
-  PTR(z)   = mp;
-#if __MPFR_GMP(5,0,0)
   /* Check for integer overflow (unless mp_bitcnt_t is signed,
      but according to the GMP manual, this shouldn't happen).
      Note: mp_bitcnt_t has been introduced in GMP 5.0.0. */
   MPFR_ASSERTN ((mp_bitcnt_t) -1 < 0 || nbits <= (mp_bitcnt_t) -1);
-#endif
+  mpz_init (z);
   mpz_urandomb (z, rstate, nbits);
+  MPN_COPY(mp, PTR(z), MPFR_PREC2LIMBS (nbits));
+  mpz_clear (z);
 }
 
 int
@@ -85,7 +83,8 @@ mpfr_urandomb (mpfr_ptr rop, gmp_randstate_t rstate)
     {
       count_leading_zeros (cnt, rp[nlimbs - 1]);
       /* Normalization */
-      if (mpfr_set_exp (rop, exp - cnt))
+      exp -= cnt;
+      if (MPFR_UNLIKELY (! MPFR_EXP_IN_RANGE (exp)))
         {
           /* If the exponent is not in the current exponent range, we
              choose to return a NaN as this is probably a user error.
@@ -96,10 +95,11 @@ mpfr_urandomb (mpfr_ptr rop, gmp_randstate_t rstate)
           __gmpfr_flags |= MPFR_FLAGS_NAN; /* Can't use MPFR_RET_NAN */
           return 1;
         }
+      MPFR_SET_EXP (rop, exp);
       if (cnt != 0)
         mpn_lshift (rp + k, rp, nlimbs, cnt);
       else if (k != 0)
-        MPN_COPY (rp + k, rp, nlimbs);
+        mpn_copyd (rp + k, rp, nlimbs);
       if (k != 0)
         MPN_ZERO (rp, k);
     }

@@ -1,4 +1,4 @@
-Copyright 2000-2016 Free Software Foundation, Inc.
+Copyright 2000-2018 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -41,12 +41,13 @@ compile         - auxiliary installation file
 config.*        - auxiliary installation files
 configure*      - configuration files
 depcomp         - auxiliary installation file
-doc/            - directory containing the documentation (manual, FAQ)
+doc/            - directory containing documentation (manual, FAQ, etc.)
 examples/       - directory containing examples
 install-sh      - installation file
 ltmain.sh       - auxiliary installation file
 m4/             - directory containing additional configuration files
 missing         - auxiliary installation file
+mpfr.pc.in      - auxiliary pkg-config file
 src/            - directory containing the MPFR source
 test-driver     - auxiliary installation file
 tests/          - directory containing the testsuite (for "make check")
@@ -85,5 +86,5 @@ For more information about Subversion, please see:
     but interesting general information can be found there);
   * http://subversion.apache.org/faq.html (the Subversion FAQ).
 
-Subversion users should read the file "doc/README.dev" (provided via
-SVN only).
+Subversion users should read the file "doc/README.dev" (in the
+source tree).

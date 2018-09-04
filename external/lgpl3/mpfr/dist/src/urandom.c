@@ -2,7 +2,7 @@
    real number between 0 and 1 (exclusive) and round it to the precision of rop
    according to the given rounding mode.
 
-Copyright 2000-2004, 2006-2016 Free Software Foundation, Inc.
+Copyright 2000-2004, 2006-2018 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -27,16 +27,28 @@ http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 #include "mpfr-impl.h"
 
 
-/* generate one random bit */
-static int
-random_rounding_bit (gmp_randstate_t rstate)
-{
-  mp_limb_t r;
-
-  mpfr_rand_raw (&r, rstate, 1);
-  return r & MPFR_LIMB_ONE;
-}
-
+/* The mpfr_urandom() function is implemented in the following way,
+   so that the exact number (the random value to be rounded) and the
+   final status of the random generator do not depend on the current
+   exponent range and on the rounding mode. However, they depend on
+   the target precision: from the same state of the random generator,
+   if the precision of the destination is changed, then the value may
+   be completely different (and the state of the random generator is
+   different too).
+   1. One determines the exponent exp: 0 with probability 1/2, -1 with
+      probability 1/4, -2 with probability 1/8, etc.
+   2. One draws a 1-ulp interval ]a,b[ containing the exact result (the
+      interval can be regarded as open since it has the same measure as
+      the closed interval).
+      One also draws the rounding bit. This is currently done with a
+      separate call to mpfr_rand_raw(), but it should be better to draw
+      the rounding bit as part of the significand; there is space for it
+      since the MSB is always 1.
+   3. Rounding is done. For the directed rounding modes, the rounded value
+      is uniquely determined. For rounding to nearest, ]a,m[ and ]m,b[,
+      where m = (a+b)/2, have the same measure, so that one gets a or b
+      with equal probabilities.
+*/
 
 int
 mpfr_urandom (mpfr_ptr rop, gmp_randstate_t rstate, mpfr_rnd_t rnd_mode)
@@ -46,37 +58,28 @@ mpfr_urandom (mpfr_ptr rop, gmp_randstate_t rstate, mpfr_rnd_t rnd_mode)
   mp_size_t nlimbs;
   mp_size_t n;
   mpfr_exp_t exp;
-  mpfr_exp_t emin;
+  mp_limb_t rbit;
   int cnt;
   int inex;
+  MPFR_SAVE_EXPO_DECL (expo);
+
+  /* We need to extend the exponent range in order to simplify
+     the case where one rounds upward (we would not be able to
+     use mpfr_nextabove() in the case emin = max). It could be
+     partly reimplemented under a simpler form here, but it is
+     better to make the code shorter and more readable. */
+  MPFR_SAVE_EXPO_MARK (expo);
 
   rp = MPFR_MANT (rop);
   nbits = MPFR_PREC (rop);
-  nlimbs = MPFR_LIMB_SIZE (rop);
+  MPFR_SET_EXP (rop, 0);
   MPFR_SET_POS (rop);
   exp = 0;
-  emin = mpfr_get_emin ();
-  if (MPFR_UNLIKELY (emin > 0))
-    {
-      if (rnd_mode == MPFR_RNDU || rnd_mode == MPFR_RNDA
-          || (emin == 1 && rnd_mode == MPFR_RNDN
-              && random_rounding_bit (rstate)))
-        {
-          mpfr_set_ui_2exp (rop, 1, emin - 1, rnd_mode);
-          return +1;
-        }
-      else
-        {
-          MPFR_SET_ZERO (rop);
-          return -1;
-        }
-    }
 
-  /* Exponent */
+  /* Step 1 (exponent). */
 #define DRAW_BITS 8 /* we draw DRAW_BITS at a time */
-  cnt = DRAW_BITS;
-  MPFR_ASSERTN(DRAW_BITS <= GMP_NUMB_BITS);
-  while (cnt == DRAW_BITS)
+  MPFR_STAT_STATIC_ASSERT (DRAW_BITS <= GMP_NUMB_BITS);
+  do
     {
       /* generate DRAW_BITS in rp[0] */
       mpfr_rand_raw (rp, rstate, DRAW_BITS);
@@ -87,61 +90,49 @@ mpfr_urandom (mpfr_ptr rop, gmp_randstate_t rstate, mpfr_rnd_t rnd_mode)
           count_leading_zeros (cnt, rp[0]);
           cnt -= GMP_NUMB_BITS - DRAW_BITS;
         }
-
-      if (MPFR_UNLIKELY (exp < emin + cnt))
-        {
-          /* To get here, we have been drawing more than -emin zeros
-             in a row, then return 0 or the smallest representable
-             positive number.
-
-             The rounding to nearest mode is subtle:
-             If exp - cnt == emin - 1, the rounding bit is set, except
-             if cnt == DRAW_BITS in which case the rounding bit is
-             outside rp[0] and must be generated. */
-          if (rnd_mode == MPFR_RNDU || rnd_mode == MPFR_RNDA
-              || (rnd_mode == MPFR_RNDN && cnt == exp - emin - 1
-                  && (cnt != DRAW_BITS || random_rounding_bit (rstate))))
-            {
-              mpfr_set_ui_2exp (rop, 1, emin - 1, rnd_mode);
-              return +1;
-            }
-          else
-            {
-              MPFR_SET_ZERO (rop);
-              return -1;
-            }
-        }
-      exp -= cnt;
+      /* Any value of exp < MPFR_EMIN_MIN - 1 are equivalent. So, we can
+         avoid a theoretical integer overflow in the following way. */
+      if (MPFR_LIKELY (exp >= MPFR_EMIN_MIN - 1))
+        exp -= cnt;  /* no integer overflow */
     }
-  MPFR_EXP (rop) = exp; /* Warning: may be outside the current
-                           exponent range */
+  while (cnt == DRAW_BITS);
+  /* We do not want the random generator to depend on the ABI or on the
+     exponent range. Therefore we do not use MPFR_EMIN_MIN or __gmpfr_emin
+     in the stop condition. */
 
-
-  /* Significand: we need generate only nbits-1 bits, since the most
-     significant is 1 */
-  mpfr_rand_raw (rp, rstate, nbits - 1);
-  n = nlimbs * GMP_NUMB_BITS - nbits;
-  if (MPFR_LIKELY (n != 0)) /* this will put the low bits to zero */
-    mpn_lshift (rp, rp, nlimbs, n);
-
-  /* Set the msb to 1 since it was fixed by the exponent choice */
-  rp[nlimbs - 1] |= MPFR_LIMB_HIGHBIT;
-
-  /* Rounding */
-  if (rnd_mode == MPFR_RNDU || rnd_mode == MPFR_RNDA
-      || (rnd_mode == MPFR_RNDN && random_rounding_bit (rstate)))
+  /* Step 2 (significand): we need generate only nbits-1 bits, since the
+     most significant bit is 1. */
+  if (MPFR_UNLIKELY (nbits == 1))
     {
-      /* Take care of the exponent range: it may have been reduced */
-      if (exp < emin)
-        mpfr_set_ui_2exp (rop, 1, emin - 1, rnd_mode);
-      else if (exp > mpfr_get_emax ())
-        mpfr_set_inf (rop, +1); /* overflow, flag set by mpfr_check_range */
-      else
-        mpfr_nextabove (rop);
+      rp[0] = MPFR_LIMB_HIGHBIT;
+    }
+  else
+    {
+      mpfr_rand_raw (rp, rstate, nbits - 1);
+      nlimbs = MPFR_LIMB_SIZE (rop);
+      n = nlimbs * GMP_NUMB_BITS - nbits;
+      if (MPFR_LIKELY (n != 0)) /* this will put the low bits to zero */
+        mpn_lshift (rp, rp, nlimbs, n);
+      rp[nlimbs - 1] |= MPFR_LIMB_HIGHBIT;
+    }
+
+  /* Rounding bit */
+  mpfr_rand_raw (&rbit, rstate, 1);
+  MPFR_ASSERTD (rbit == 0 || rbit == 1);
+
+  /* Step 3 (rounding). */
+  if (rnd_mode == MPFR_RNDU || rnd_mode == MPFR_RNDA
+      || (rnd_mode == MPFR_RNDN && rbit != 0))
+    {
+      mpfr_nextabove (rop);
       inex = +1;
     }
   else
-    inex = -1;
+    {
+      inex = -1;
+    }
 
+  MPFR_EXP (rop) += exp; /* may be smaller than emin */
+  MPFR_SAVE_EXPO_FREE (expo);
   return mpfr_check_range (rop, inex, rnd_mode);
 }

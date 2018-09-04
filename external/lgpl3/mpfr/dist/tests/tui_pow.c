@@ -1,6 +1,6 @@
 /* Test file for mpfr_ui_pow and mpfr_ui_pow_ui.
 
-Copyright 2001-2016 Free Software Foundation, Inc.
+Copyright 2001-2018 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -19,10 +19,6 @@ You should have received a copy of the GNU Lesser General Public License
 along with the GNU MPFR Library; see the file COPYING.LESSER.  If not, see
 http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA. */
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <limits.h>
 
 #include "mpfr-test.h"
 
@@ -114,14 +110,11 @@ check1 (mpfr_ptr x, mpfr_prec_t prec, unsigned long nt, mpfr_rnd_t rnd)
           printf (" prec=%u rnd_mode=%s\n", (unsigned) prec,
                   mpfr_print_rnd_mode (rnd));
           printf ("got      ");
-          mpfr_out_str (stdout, 2, prec, z, MPFR_RNDN);
-          puts ("");
+          mpfr_dump (z);
           printf ("expected ");
-          mpfr_out_str (stdout, 2, prec, t, MPFR_RNDN);
-          puts ("");
-          printf ("approx  ");
-          mpfr_print_binary (y);
-          puts ("");
+          mpfr_dump (t);
+          printf ("approx   ");
+          mpfr_dump (y);
           exit (1);
         }
       compare2 = mpfr_cmp (t, y);
@@ -137,9 +130,9 @@ check1 (mpfr_ptr x, mpfr_prec_t prec, unsigned long nt, mpfr_rnd_t rnd)
         {
           printf ("Wrong inexact flag for rnd=%s: expected %d, got %d\n",
                   mpfr_print_rnd_mode (rnd), compare, inexact);
-          printf ("x="); mpfr_print_binary (x); puts ("");
-          printf ("y="); mpfr_print_binary (y); puts ("");
-          printf ("t="); mpfr_print_binary (t); puts ("");
+          printf ("x="); mpfr_dump (x);
+          printf ("y="); mpfr_dump (y);
+          printf ("t="); mpfr_dump (t);
           exit (1);
         }
     }
@@ -160,13 +153,13 @@ main (int argc, char *argv[])
   mpfr_init (x);
   mpfr_init (y);
 
-  n = randlimb ();
+  do n = randlimb (); while (n <= 1);
 
   MPFR_SET_INF(x);
   mpfr_ui_pow (y, n, x, MPFR_RNDN);
   if(!MPFR_IS_INF(y))
     {
-      printf ("evaluation of function in INF does not return INF\n");
+      printf ("evaluation of function at INF does not return INF\n");
       exit (1);
     }
 
@@ -243,12 +236,12 @@ main (int argc, char *argv[])
   for (prec = p0; prec <= p1; prec++)
     {
       mpfr_set_prec (x, prec);
-      for (n=0; n<N; n++)
+      for (n = 0; n < N; n++)
         {
           int nt;
           nt = randlimb () & INT_MAX;
           mpfr_urandomb (x, RANDS);
-          rnd = RND_RAND ();
+          rnd = RND_RAND_NO_RNDF ();
           check1 (x, prec, nt, rnd);
         }
     }

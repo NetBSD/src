@@ -1,6 +1,6 @@
 /* mpfr_get_si -- convert a floating-point number to a signed long.
 
-Copyright 2003-2016 Free Software Foundation, Inc.
+Copyright 2003-2018 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -28,10 +28,11 @@ mpfr_get_si (mpfr_srcptr f, mpfr_rnd_t rnd)
   mpfr_prec_t prec;
   long s;
   mpfr_t x;
+  MPFR_SAVE_EXPO_DECL (expo);
 
   if (MPFR_UNLIKELY (!mpfr_fits_slong_p (f, rnd)))
     {
-      MPFR_SET_ERANGE ();
+      MPFR_SET_ERANGEFLAG ();
       return MPFR_IS_NAN (f) ? 0 :
         MPFR_IS_NEG (f) ? LONG_MIN : LONG_MAX;
     }
@@ -39,13 +40,21 @@ mpfr_get_si (mpfr_srcptr f, mpfr_rnd_t rnd)
   if (MPFR_IS_ZERO (f))
     return (long) 0;
 
-  /* determine prec of long */
-  for (s = LONG_MIN, prec = 0; s != 0; s /= 2, prec++)
+  /* Determine the precision of long. |LONG_MIN| may have one more bit
+     as an integer, but in this case, this is a power of 2, thus fits
+     in a precision-prec floating-point number. */
+  for (s = LONG_MAX, prec = 0; s != 0; s /= 2, prec++)
     { }
+
+  MPFR_SAVE_EXPO_MARK (expo);
 
   /* first round to prec bits */
   mpfr_init2 (x, prec);
   mpfr_rint (x, f, rnd);
+
+  /* The flags from mpfr_rint are the wanted ones. In particular,
+     it sets the inexact flag when necessary. */
+  MPFR_SAVE_EXPO_UPDATE_FLAGS (expo, __gmpfr_flags);
 
   /* warning: if x=0, taking its exponent is illegal */
   if (MPFR_UNLIKELY (MPFR_IS_ZERO(x)))
@@ -60,10 +69,12 @@ mpfr_get_si (mpfr_srcptr f, mpfr_rnd_t rnd)
       exp = MPFR_GET_EXP (x); /* since |x| >= 1, exp >= 1 */
       n = MPFR_LIMB_SIZE(x);
       a = MPFR_MANT(x)[n - 1] >> (GMP_NUMB_BITS - exp);
-      s = MPFR_SIGN(f) > 0 ? a : a <= LONG_MAX ? - (long) a : LONG_MIN;
+      s = MPFR_IS_POS (f) ? a : a <= LONG_MAX ? - (long) a : LONG_MIN;
     }
 
   mpfr_clear (x);
+
+  MPFR_SAVE_EXPO_FREE (expo);
 
   return s;
 }
