@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module.c,v 1.130.2.15 2018/09/04 11:48:38 pgoyette Exp $	*/
+/*	$NetBSD: kern_module.c,v 1.130.2.16 2018/09/04 11:53:46 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.130.2.15 2018/09/04 11:48:38 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.130.2.16 2018/09/04 11:53:46 pgoyette Exp $");
 
 #define _MODULE_INTERNAL
 
@@ -949,7 +949,7 @@ module_do_builtin(const module_t *pmod, const char *name, module_t **modp,
 				error = EEXIST;
 				module_error("built-in module %s alias %s "
 				    "already exists in module %s", name,
-				    *--aliasp, mod2->mod_info->mod_name);
+				    *--aliasp, mod2->mod_info->mi_name);
 				goto fail;
 			}
 		}
