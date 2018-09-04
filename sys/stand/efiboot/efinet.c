@@ -1,4 +1,4 @@
-/*	$NetBSD: efinet.c,v 1.2 2018/09/04 15:08:30 riastradh Exp $	*/
+/*	$NetBSD: efinet.c,v 1.3 2018/09/04 21:29:54 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2001 Doug Rabson
@@ -28,6 +28,7 @@
  */
 
 #include <sys/cdefs.h>
+#include <sys/param.h>
 
 #include "efiboot.h"
 
@@ -334,7 +335,7 @@ efi_net_probe(void)
 	EFI_HANDLE *handles;
 	EFI_STATUS status;
 	UINTN i, nhandles;
-	int nifs;
+	int nifs, depth = -1;
 	bool found;
 
 	status = LibLocateHandle(ByProtocol, &SimpleNetworkProtocol, NULL,
@@ -346,6 +347,12 @@ efi_net_probe(void)
 	if (enis == NULL)
 		return;
 	memset(enis, 0, nhandles * sizeof(*enis));
+
+	if (efi_bootdp) {
+		depth = efi_device_path_depth(efi_bootdp, HARDWARE_DEVICE_PATH);
+		if (depth == 0)
+			depth = 1;
+	}
 
 	nifs = 0;
 	for (i = 0; i < nhandles; i++) {
@@ -402,6 +409,13 @@ efi_net_probe(void)
 				FreePool(handles);
 				return;
 			}
+
+			if (depth > 0 && efi_device_path_ncmp(efi_bootdp, dp0, depth) == 0) {
+				char devname[9];
+				snprintf(devname, sizeof(devname), "net%u", nifs);
+				set_default_device(devname);
+			}
+
 			nifs++;
 		}
 	}
@@ -489,9 +503,9 @@ efi_net_get_booted_interface_unit(void)
 int
 efi_net_open(struct open_file *f, ...)
 {
+	char **file, pathbuf[PATH_MAX], *default_device, *path, *ep;
+	const char *fname, *full_path;
 	struct devdesc desc;
-	const char *fname;
-	char **file, *ep;
 	intmax_t dev;
 	va_list ap;
 	int n;
@@ -501,13 +515,25 @@ efi_net_open(struct open_file *f, ...)
 	file = va_arg(ap, char **);
 	va_end(ap);
 
-	if (strncmp(fname, "net", 3) != 0)
+	default_device = get_default_device();
+	if (strchr(fname, ':') == NULL) {
+		if (strlen(default_device) > 0) {
+			snprintf(pathbuf, sizeof(pathbuf), "%s:%s", default_device, fname);
+			full_path = pathbuf;
+			path = __UNCONST(fname);
+		} else {
+			return EINVAL;
+		}
+	} else {
+		full_path = fname;
+		path = strchr(fname, ':') + 1;
+	}
+
+	if (strncmp(full_path, "net", 3) != 0)
 		return EINVAL;
-        dev = strtoimax(fname + 3, &ep, 10);
+        dev = strtoimax(full_path + 3, &ep, 10);
         if (dev < 0 || dev >= efinetif.netif_nifs)
                 return ENXIO;
-	if (*ep != ':')
-		return ENXIO;
 
         for (n = 0; n < ndevs; n++)
                 if (strcmp(DEV_NAME(&devsw[n]), "net") == 0) {
@@ -517,7 +543,7 @@ efi_net_open(struct open_file *f, ...)
         if (n == ndevs)
                 return ENXIO;
 
-	*file = ep + 1;
+	*file = path;
 
 	//try_bootp = 1;
 
