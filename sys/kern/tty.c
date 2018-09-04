@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.275.2.2 2018/04/07 04:12:19 pgoyette Exp $	*/
+/*	$NetBSD: tty.c,v 1.275.2.3 2018/09/04 02:21:58 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.275.2.2 2018/04/07 04:12:19 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.275.2.3 2018/09/04 02:21:58 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -209,7 +209,11 @@ struct ttylist_head ttylist = TAILQ_HEAD_INITIALIZER(ttylist);
 int tty_count;
 kmutex_t tty_lock;
 krwlock_t ttcompat_lock;
-int (*vec_compat_ttioctl_60)(struct tty *, u_long, void *, int, struct lwp *);
+int (*vec_compat_ttioctl_60)(dev_t, u_long, void *, int, struct lwp *) = NULL;
+int (*vec_compat_ptmioctl_60)(dev_t, u_long, void *, int, struct lwp *) =
+    stub_compat_ptmioctl_60;
+
+struct ptm_pty *ptm = NULL;
 
 uint64_t tk_cancc;
 uint64_t tk_nin;
@@ -1420,7 +1424,7 @@ ttioctl(struct tty *tp, u_long cmd, void *data, int flag, struct lwp *l)
 				return EPASSTHROUGH;
 			}
 		}
-		error = (*vec_compat_ttioctl_60)(tp, cmd, data, flag, l);
+		error = (*vec_compat_ttioctl_60)(tp->t_dev, cmd, data, flag, l);
 		rw_exit(&ttcompat_lock);
 		return error;
 	}
@@ -3063,4 +3067,12 @@ tty_try_xonxoff(struct tty *tp, unsigned char c)
 	}
     }
     return EAGAIN;
+}
+
+int
+stub_compat_ptmioctl_60(dev_t dev, u_long cmd, void *data, int flag,
+    struct lwp *l)
+{
+
+	return EPASSTHROUGH;
 }

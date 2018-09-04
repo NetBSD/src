@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_60.c,v 1.4.16.3 2018/03/18 23:34:25 pgoyette Exp $	*/
+/*	$NetBSD: tty_60.c,v 1.4.16.4 2018/09/04 02:21:58 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_60.c,v 1.4.16.3 2018/03/18 23:34:25 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_60.c,v 1.4.16.4 2018/09/04 02:21:58 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -92,14 +92,14 @@ compat_60_ptmget_ioctl(dev_t dev, u_long cmd, void *data, int flag,
  * COMPAT_60 versions of ttioctl and ptmioctl.
  */
 int
-compat_60_ttioctl(struct tty *tp, u_long cmd, void *data, int flag,
+compat_60_ttioctl(dev_t dev, u_long cmd, void *data, int flag,
 	struct lwp *l)
 {
 
 	switch (cmd) {
 	case COMPAT_60_TIOCPTMGET:
 	case COMPAT_60_TIOCPTSNAME:
-		return compat_60_ptmget_ioctl(tp->t_dev, cmd, data, flag, l);
+		return compat_60_ptmget_ioctl(dev, cmd, data, flag, l);
 	default:
 		return EPASSTHROUGH;
 	}
@@ -122,12 +122,12 @@ kern_tty_60_init(void)
 {
 
 	vec_compat_ttioctl_60 = compat_60_ttioctl;
-/*	vec_compat_ptmioctl_60 = compat_60_ptmioctl;	XXX NOT-YET */
+	vec_compat_ptmioctl_60 = compat_60_ptmioctl;
 }
 
 void
 kern_tty_60_fini(void)
 {
 	vec_compat_ttioctl_60 = NULL;
-/*	vec_compat_ptmioctl_60 = NULL;			XXX NOT-YET */
+	vec_compat_ptmioctl_60 = stub_compat_ptmioctl_60;
 }
