@@ -13,6 +13,9 @@
 /* Define to 1 if you have the `dup2' function. */
 #define HAVE_DUP2 1
 
+/* Define to 1 if you have the `getrusage' function. */
+#define HAVE_GETRUSAGE 1
+
 /* Define to 1 if you have the `gettimeofday' function. */
 #define HAVE_GETTIMEOFDAY 1
 
@@ -37,6 +40,9 @@
 /* Define to 1 if you have the <memory.h> header file. */
 #define HAVE_MEMORY_H 1
 
+/* mpfr_fmma is not present */
+#define HAVE_MPFR_FMMA 1
+
 /* Define to 1 if you have the `setlocale' function. */
 #define HAVE_SETLOCALE 1
 
@@ -52,6 +58,9 @@
 /* Define to 1 if you have the <string.h> header file. */
 #define HAVE_STRING_H 1
 
+/* Define to 1 if you have the <sys/resource.h> header file. */
+#define HAVE_SYS_RESOURCE_H 1
+
 /* Define to 1 if you have the <sys/stat.h> header file. */
 #define HAVE_SYS_STAT_H 1
 
@@ -64,8 +73,7 @@
 /* Define to 1 if you have the <unistd.h> header file. */
 #define HAVE_UNISTD_H 1
 
-/* Define to the sub-directory in which libtool stores uninstalled libraries.
-   */
+/* Define to the sub-directory where libtool stores uninstalled libraries. */
 #define LT_OBJDIR ".libs/"
 
 /* C compiler */
@@ -75,7 +83,7 @@
 #define MPC_GCC "yes"
 
 /* Version of gcc */
-#define MPC_GCC_VERSION "4.5.3"
+#define MPC_GCC_VERSION "5.5.0"
 
 /* Do not check mpc_out_str on stdout */
 /* #undef MPC_NO_STREAM_REDIRECTION */
@@ -93,7 +101,7 @@
 #define PACKAGE_NAME "mpc"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "mpc 1.0.1"
+#define PACKAGE_STRING "mpc 1.1.0"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "mpc"
@@ -102,7 +110,7 @@
 #define PACKAGE_URL ""
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "1.0.1"
+#define PACKAGE_VERSION "1.1.0"
 
 /* Define to 1 if you have the ANSI C header files. */
 #define STDC_HEADERS 1
@@ -111,7 +119,7 @@
 #define TIME_WITH_SYS_TIME 1
 
 /* Version number of package */
-#define VERSION "1.0.1"
+#define VERSION "1.1.0"
 
 /* Define to empty if `const' does not conform to ANSI C. */
 /* #undef const */
