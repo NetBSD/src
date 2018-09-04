@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.27 2017/08/22 09:59:37 mrg Exp $
+#	$NetBSD: Makefile,v 1.28 2018/09/04 06:09:31 mrg Exp $
 
 .include <bsd.init.mk>
 
@@ -72,9 +72,12 @@ MPZ_SRCS = \
 	millerrabin.c mod.c mul.c mul_2exp.c		\
 	mul_si.c mul_ui.c				\
 	n_pow_ui.c neg.c nextprime.c			\
+	oddfac_1.c					\
 	out_raw.c out_str.c perfpow.c perfsqr.c		\
 	popcount.c pow_ui.c powm.c			\
-	powm_ui.c pprime_p.c random.c random2.c		\
+	powm_ui.c pprime_p.c 				\
+	prodlimbs.c					\
+	random.c random2.c				\
 	realloc.c realloc2.c remove.c			\
 	roinit_n.c					\
 	root.c rootrem.c rrandomb.c scan0.c		\
@@ -125,7 +128,7 @@ SRCS+= 									\
 	mp_bpl.c mp_clz_tab.c mp_dv_tab.c mp_minv_tab.c mp_get_fns.c	\
 	mp_set_fns.c randclr.c randdef.c randiset.c randlc2s.c 	\
 	randlc2x.c randmt.c randmts.c rands.c randsd.c randsdui.c 	\
-	randbui.c randmui.c version.c nextprime.c
+	randbui.c randmui.c version.c nextprime.c primesieve.c
 
 SRCS+=	tal-reent.c
 
