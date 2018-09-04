@@ -1,4 +1,4 @@
-/*	$NetBSD: printf.c,v 1.44 2018/09/03 04:10:20 kre Exp $	*/
+/*	$NetBSD: printf.c,v 1.45 2018/09/04 01:13:50 kre Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\
 #if 0
 static char sccsid[] = "@(#)printf.c	8.2 (Berkeley) 3/22/95";
 #else
-__RCSID("$NetBSD: printf.c,v 1.44 2018/09/03 04:10:20 kre Exp $");
+__RCSID("$NetBSD: printf.c,v 1.45 2018/09/04 01:13:50 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -504,6 +504,7 @@ conv_escape(char *str, char *conv_ch, int quiet)
 	case 'a':	value = '\a';	break;	/* alert */
 	case 'b':	value = '\b';	break;	/* backspace */
 	case 'e':	value = ESCAPE;	break;	/* escape */
+	case 'E':	value = ESCAPE;	break;	/* escape */
 	case 'f':	value = '\f';	break;	/* form-feed */
 	case 'n':	value = '\n';	break;	/* newline */
 	case 'r':	value = '\r';	break;	/* carriage-return */
