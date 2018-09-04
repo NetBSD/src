@@ -1,4 +1,4 @@
-.\"	$NetBSD: sh.1,v 1.207 2018/08/25 17:35:31 kre Exp $
+.\"	$NetBSD: sh.1,v 1.208 2018/09/04 23:16:30 kre Exp $
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -488,7 +488,8 @@ in the
 section.)
 (Not implemented.)
 .It "\ \ " Em pipefail
-If set, the way the exit status of a pipeline is determined
+If set when a pipeline is created,
+the way the exit status of the pipeline is determined
 is altered.
 See
 .Sx Pipelines
@@ -1155,16 +1156,16 @@ The simplest case of a pipeline is a single simple command.
 .Pp
 If the
 .Ic pipefail
-option is set when the pipeline completes and its status is
-collected, the pipeline status is the status of
-the last (rightmost) command in the pipeline to exit with non-zero exit
-status, or zero, if, and only if, all commands in the pipeline
-exited with a status of zero.
+option was set when a pipeline was started,
+the pipeline status is the status of
+the last (lexically last, i.e.: rightmost) command in the
+pipeline to exit with non-zero exit status, or zero, if,
+and only if, all commands in the pipeline exited with a status of zero.
 If the
 .Ic pipefail
-option is not set, which is the default state,
+option was not set, which is the default state,
 the pipeline status is the exit
-status of the last command in the pipeline,
+status of the last (rightmost) command in the pipeline,
 and the exit status of any other commands in the pipeline is ignored.
 .Pp
 If the reserved word
