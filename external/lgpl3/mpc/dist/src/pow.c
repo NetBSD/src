@@ -1,6 +1,6 @@
 /* mpc_pow -- Raise a complex number to the power of another complex number.
 
-Copyright (C) 2009, 2010, 2011, 2012 INRIA
+Copyright (C) 2009-2015 INRIA
 
 This file is part of GNU MPC.
 
@@ -137,7 +137,7 @@ fix_sign (mpc_ptr z, int sign_eps, int sign_a, mpfr_srcptr y)
       MPC_ASSERT (ymod4 == 1 || ymod4 == 3);
       if ((ymod4 == 3 && sign_eps == 0) ||
           (ymod4 == 1 && sign_eps == 1))
-        mpfr_neg (mpc_realref(z), mpc_realref(z), GMP_RNDZ);
+        mpfr_neg (mpc_realref(z), mpc_realref(z), MPFR_RNDZ);
     }
   else if (mpfr_zero_p (mpc_imagref(z)))
     {
@@ -147,7 +147,7 @@ fix_sign (mpc_ptr z, int sign_eps, int sign_a, mpfr_srcptr y)
       MPC_ASSERT (ymod4 == 0 || ymod4 == 2);
       if ((ymod4 == 0 && sign_a == sign_eps) ||
           (ymod4 == 2 && sign_a != sign_eps))
-        mpfr_neg (mpc_imagref(z), mpc_imagref(z), GMP_RNDZ);
+        mpfr_neg (mpc_imagref(z), mpc_imagref(z), MPFR_RNDZ);
     }
 
  end:
@@ -187,7 +187,7 @@ mpc_pow_exact (mpc_ptr z, mpc_srcptr x, mpfr_srcptr y, mpc_rnd_t rnd,
     {
       z_is_y = 1;
       mpfr_init2 (copy_of_y, mpfr_get_prec (y));
-      mpfr_set (copy_of_y, y, GMP_RNDN);
+      mpfr_set (copy_of_y, y, MPFR_RNDN);
     }
 
   mpz_init (my);
@@ -483,7 +483,7 @@ mpc_pow (mpc_ptr z, mpc_srcptr x, mpc_srcptr y, mpc_rnd_t rnd)
   mpc_t t, u;
   mpfr_prec_t p, pr, pi, maxprec;
   int saved_underflow, saved_overflow;
-  
+
   /* save the underflow or overflow flags from MPFR */
   saved_underflow = mpfr_underflow_p ();
   saved_overflow = mpfr_overflow_p ();
@@ -512,7 +512,7 @@ mpc_pow (mpc_ptr z, mpc_srcptr x, mpc_srcptr y, mpc_rnd_t rnd)
              cx1 > 0 if |x| > 1
           */
           mpfr_init (n);
-          inex = mpc_norm (n, x, GMP_RNDN);
+          inex = mpc_norm (n, x, MPFR_RNDN);
           cx1 = mpfr_cmp_ui (n, 1);
           if (cx1 == 0 && inex != 0)
             cx1 = -inex;
@@ -525,7 +525,7 @@ mpc_pow (mpc_ptr z, mpc_srcptr x, mpc_srcptr y, mpc_rnd_t rnd)
           /* warning: mpc_set_ui_ui does not set Im(z) to -0 if Im(rnd)=RNDD */
           ret = mpc_set_ui_ui (z, 1, 0, rnd);
 
-          if (MPC_RND_IM (rnd) == GMP_RNDD || sign_zi)
+          if (MPC_RND_IM (rnd) == MPFR_RNDD || sign_zi)
             mpc_conj (z, z, MPC_RNDNN);
 
           mpfr_clear (n);
@@ -574,7 +574,7 @@ mpc_pow (mpc_ptr z, mpc_srcptr x, mpc_srcptr y, mpc_rnd_t rnd)
              Note that the sign must also be set explicitly when rnd=RNDD
              because mpfr_set_ui(z_i, 0, rnd) always sets z_i to +0.
           */
-          if (MPC_RND_IM (rnd) == GMP_RNDD || s1 != s2)
+          if (MPC_RND_IM (rnd) == MPFR_RNDD || s1 != s2)
             mpc_conj (z, z, MPC_RNDNN);
           goto end;
         }
@@ -600,7 +600,7 @@ mpc_pow (mpc_ptr z, mpc_srcptr x, mpc_srcptr y, mpc_rnd_t rnd)
              Note that the sign must also be set explicitly when rnd=RNDD
              because mpfr_set_ui(z_i, 0, rnd) always sets z_i to +0.
           */
-          if (MPC_RND_IM(rnd) == GMP_RNDD || s1 != s2)
+          if (MPC_RND_IM(rnd) == MPFR_RNDD || s1 != s2)
             mpfr_neg (mpc_imagref(z), mpc_imagref(z), MPC_RND_IM(rnd));
           goto end;
         }
@@ -650,8 +650,8 @@ mpc_pow (mpc_ptr z, mpc_srcptr x, mpc_srcptr y, mpc_rnd_t rnd)
     p = 64;
   mpc_init2 (u, p);
   mpc_init2 (t, p);
-  pr += MPC_RND_RE(rnd) == GMP_RNDN;
-  pi += MPC_RND_IM(rnd) == GMP_RNDN;
+  pr += MPC_RND_RE(rnd) == MPFR_RNDN;
+  pi += MPC_RND_IM(rnd) == MPFR_RNDN;
   maxprec = MPC_MAX_PREC (z);
   x_imag = mpfr_zero_p (mpc_realref(x));
   for (loop = 0;; loop++)
@@ -670,13 +670,29 @@ mpc_pow (mpc_ptr z, mpc_srcptr x, mpc_srcptr y, mpc_rnd_t rnd)
       if (mpfr_get_exp (mpc_imagref(t)) > (mpfr_exp_t) q)
         q = mpfr_get_exp (mpc_imagref(t));
 
+      /* if q >= p, we get an error of order 1 on the imaginary part of t,
+         which is not enough to get the correct sign of exp(t) */
+      if (q >= p)
+        {
+          p = p + 64;
+          goto try_again;
+        }
+
       mpfr_clear_overflow ();
       mpfr_clear_underflow ();
       ret_exp = mpc_exp (u, t, MPC_RNDNN);
       if (mpfr_underflow_p () || mpfr_overflow_p ()) {
+         int inex_re, inex_im;
          /* under- and overflow flags are set by mpc_exp */
          mpc_set (z, u, MPC_RNDNN);
          ret = ret_exp;
+         inex_re = MPC_INEX_RE(ret_exp);
+         inex_im = MPC_INEX_IM(ret_exp);
+         if (mpfr_inf_p (mpc_realref (z)))
+           inex_re = mpc_fix_inf (mpc_realref (z), MPC_RND_RE(rnd));
+         if (mpfr_inf_p (mpc_imagref (z)))
+           inex_im = mpc_fix_inf (mpc_imagref (z), MPC_RND_IM(rnd));
+         ret = MPC_INEX(inex_re,inex_im);
          goto exact;
       }
 
@@ -701,8 +717,8 @@ mpc_pow (mpc_ptr z, mpc_srcptr x, mpc_srcptr y, mpc_rnd_t rnd)
          (see algorithms.tex) plus one due to the exponent difference: if
          z = a + I*b, where the relative error on z is at most 2^(-p), and
          EXP(a) = EXP(b) + k, the relative error on b is at most 2^(k-p) */
-      if ((z_imag || (p > q + 3 + dr && mpfr_can_round (mpc_realref(u), p - q - 3 - dr, GMP_RNDN, GMP_RNDZ, pr))) &&
-          (z_real || (p > q + 3 + di && mpfr_can_round (mpc_imagref(u), p - q - 3 - di, GMP_RNDN, GMP_RNDZ, pi))))
+      if ((z_imag || (p > q + 3 + dr && mpfr_can_round (mpc_realref(u), p - q - 3 - dr, MPFR_RNDN, MPFR_RNDZ, pr))) &&
+          (z_real || (p > q + 3 + di && mpfr_can_round (mpc_imagref(u), p - q - 3 - di, MPFR_RNDN, MPFR_RNDZ, pi))))
         break;
 
       /* if Re(u) is not known to be zero, assume it is a normal number, i.e.,
@@ -726,6 +742,7 @@ mpc_pow (mpc_ptr z, mpc_srcptr x, mpc_srcptr y, mpc_rnd_t rnd)
         }
       else
         p += p / 2;
+    try_again:
       mpc_set_prec (t, p);
       mpc_set_prec (u, p);
     }
@@ -749,7 +766,7 @@ mpc_pow (mpc_ptr z, mpc_srcptr x, mpc_srcptr y, mpc_rnd_t rnd)
       sign_rex = mpfr_signbit (mpc_realref (x));
       sign_imx = mpfr_signbit (mpc_imagref (x));
       mpfr_init (n);
-      inex = mpc_norm (n, x, GMP_RNDN);
+      inex = mpc_norm (n, x, MPFR_RNDN);
       cx1 = mpfr_cmp_ui (n, 1);
       if (cx1 == 0 && inex != 0)
         cx1 = -inex;
@@ -760,7 +777,7 @@ mpc_pow (mpc_ptr z, mpc_srcptr x, mpc_srcptr y, mpc_rnd_t rnd)
 
       /* copy RE(y) to n since if z==y we will destroy Re(y) below */
       mpfr_set_prec (n, mpfr_get_prec (mpc_realref (y)));
-      mpfr_set (n, mpc_realref (y), GMP_RNDN);
+      mpfr_set (n, mpc_realref (y), MPFR_RNDN);
       ret = mpfr_set (mpc_realref(z), mpc_realref(u), MPC_RND_RE(rnd));
       if (y_real && (x_real || x_imag))
         {
@@ -775,7 +792,7 @@ mpc_pow (mpc_ptr z, mpc_srcptr x, mpc_srcptr y, mpc_rnd_t rnd)
         {
           ret = MPC_INEX (ret, mpfr_set_ui (mpc_imagref (z), 0, MPC_RND_IM (rnd)));
           /* warning: mpfr_set_ui does not set Im(z) to -0 if Im(rnd) = RNDD */
-          if (MPC_RND_IM (rnd) == GMP_RNDD || sign_zi)
+          if (MPC_RND_IM (rnd) == MPFR_RNDD || sign_zi)
             mpc_conj (z, z, MPC_RNDNN);
         }
 

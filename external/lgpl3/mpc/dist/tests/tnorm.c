@@ -1,6 +1,6 @@
 /* tnorm -- test file for mpc_norm.
 
-Copyright (C) 2008, 2011 INRIA
+Copyright (C) 2008, 2011, 2012, 2013 INRIA
 
 This file is part of GNU MPC.
 
@@ -30,11 +30,11 @@ test_underflow (void)
   
   mpfr_set_emin (-1); /* smallest positive number is 0.5*2^emin = 0.25 */
   mpc_init2 (z, 10);
-  mpfr_set_ui_2exp (mpc_realref (z), 1023, -11, GMP_RNDN); /* exact */
-  mpfr_set_ui_2exp (mpc_imagref (z), 1023, -11, GMP_RNDN); /* exact */
+  mpfr_set_ui_2exp (mpc_realref (z), 1023, -11, MPFR_RNDN); /* exact */
+  mpfr_set_ui_2exp (mpc_imagref (z), 1023, -11, MPFR_RNDN); /* exact */
   mpfr_init2 (f, 10);
 
-  inex = mpc_norm (f, z, GMP_RNDZ); /* should give 511/1024 */
+  inex = mpc_norm (f, z, MPFR_RNDZ); /* should give 511/1024 */
   if (inex >= 0)
     {
       printf ("Error in underflow case (1)\n");
@@ -47,12 +47,12 @@ test_underflow (void)
       printf ("got      ");
       mpfr_dump (f);
       printf ("expected ");
-      mpfr_set_ui_2exp (f, 511, -10, GMP_RNDZ);
+      mpfr_set_ui_2exp (f, 511, -10, MPFR_RNDZ);
       mpfr_dump (f);
       exit (1);
     }
 
-  inex = mpc_norm (f, z, GMP_RNDN); /* should give 511/1024 */
+  inex = mpc_norm (f, z, MPFR_RNDN); /* should give 511/1024 */
   if (inex >= 0)
     {
       printf ("Error in underflow case (2)\n");
@@ -65,12 +65,12 @@ test_underflow (void)
       printf ("got      ");
       mpfr_dump (f);
       printf ("expected ");
-      mpfr_set_ui_2exp (f, 511, -10, GMP_RNDZ);
+      mpfr_set_ui_2exp (f, 511, -10, MPFR_RNDZ);
       mpfr_dump (f);
       exit (1);
     }
 
-  inex = mpc_norm (f, z, GMP_RNDU); /* should give 1023/2048 */
+  inex = mpc_norm (f, z, MPFR_RNDU); /* should give 1023/2048 */
   if (inex <= 0)
     {
       printf ("Error in underflow case (3)\n");
@@ -83,7 +83,7 @@ test_underflow (void)
       printf ("got      ");
       mpfr_dump (f);
       printf ("expected ");
-      mpfr_set_ui_2exp (f, 1023, -11, GMP_RNDZ);
+      mpfr_set_ui_2exp (f, 1023, -11, MPFR_RNDZ);
       mpfr_dump (f);
       exit (1);
     }
@@ -93,15 +93,21 @@ test_underflow (void)
   mpfr_set_emin (emin);
 }
 
+#define MPC_FUNCTION_CALL                                               \
+  P[0].mpfr_inex = mpc_norm (P[1].mpfr, P[2].mpc, P[3].mpfr_rnd)
+
+#include "data_check.tpl"
+#include "tgeneric.tpl"
+
 int
 main (void)
 {
-  DECL_FUNC (FC, f, mpc_norm);
-
   test_start ();
 
-  data_check (f, "norm.dat");
-  tgeneric (f, 2, 1024, 1, 4096);
+  data_check_template ("norm.dsc", "norm.dat");
+
+  tgeneric_template ("norm.dsc", 2, 1024, 1, 4096);
+
   test_underflow ();
 
   test_end ();

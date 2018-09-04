@@ -1,6 +1,6 @@
 /* tmul -- test file for mpc_mul.
 
-Copyright (C) 2002, 2005, 2008, 2009, 2010, 2011, 2012 INRIA
+Copyright (C) 2002, 2005, 2008, 2009, 2010, 2011, 2012, 2013 INRIA
 
 This file is part of GNU MPC.
 
@@ -102,15 +102,15 @@ check_regular (void)
      imaginary part */
   mpc_set_prec (x, 7);
   mpc_set_prec (y, 7);
-  mpfr_set_str (mpc_realref (x), "0xB4p+733", 16, GMP_RNDN);
-  mpfr_set_str (mpc_imagref (x), "0x90p+244", 16, GMP_RNDN);
-  mpfr_set_str (mpc_realref (y), "0xECp-146", 16, GMP_RNDN);
-  mpfr_set_str (mpc_imagref (y), "0xACp-471", 16, GMP_RNDN);
+  mpfr_set_str (mpc_realref (x), "0xB4p+733", 16, MPFR_RNDN);
+  mpfr_set_str (mpc_imagref (x), "0x90p+244", 16, MPFR_RNDN);
+  mpfr_set_str (mpc_realref (y), "0xECp-146", 16, MPFR_RNDN);
+  mpfr_set_str (mpc_imagref (y), "0xACp-471", 16, MPFR_RNDN);
   cmpmul (x, y, MPC_RNDNN);
-  mpfr_set_str (mpc_realref (x), "0xB4p+733", 16, GMP_RNDN);
-  mpfr_set_str (mpc_imagref (x), "0x90p+244", 16, GMP_RNDN);
-  mpfr_set_str (mpc_realref (y), "0xACp-471", 16, GMP_RNDN);
-  mpfr_set_str (mpc_imagref (y), "-0xECp-146", 16, GMP_RNDN);
+  mpfr_set_str (mpc_realref (x), "0xB4p+733", 16, MPFR_RNDN);
+  mpfr_set_str (mpc_imagref (x), "0x90p+244", 16, MPFR_RNDN);
+  mpfr_set_str (mpc_realref (y), "0xACp-471", 16, MPFR_RNDN);
+  mpfr_set_str (mpc_imagref (y), "-0xECp-146", 16, MPFR_RNDN);
   cmpmul (x, y, MPC_RNDNN);
 
   for (prec = 2; prec < 1000; prec = (mpfr_prec_t) (prec * 1.1 + 1))
@@ -178,13 +178,21 @@ timemul (void)
 }
 #endif
 
+#define MPC_FUNCTION_CALL                                               \
+  P[0].mpc_inex = mpc_mul (P[1].mpc, P[2].mpc, P[3].mpc, P[4].mpc_rnd)
+#define MPC_FUNCTION_CALL_SYMMETRIC                                     \
+  P[0].mpc_inex = mpc_mul (P[1].mpc, P[3].mpc, P[2].mpc, P[4].mpc_rnd)
+#define MPC_FUNCTION_CALL_REUSE_OP1                                     \
+  P[0].mpc_inex = mpc_mul (P[1].mpc, P[1].mpc, P[3].mpc, P[4].mpc_rnd)
+#define MPC_FUNCTION_CALL_REUSE_OP2                                     \
+  P[0].mpc_inex = mpc_mul (P[1].mpc, P[2].mpc, P[1].mpc, P[4].mpc_rnd)
+
+#include "data_check.tpl"
+#include "tgeneric.tpl"
 
 int
 main (void)
 {
-  DECL_FUNC (C_CC, f, mpc_mul);
-  f.properties = FUNC_PROP_SYMETRIC;
-
   test_start ();
 
 #ifdef TIMING
@@ -193,9 +201,11 @@ main (void)
 
   check_regular ();
 
-  data_check (f, "mul.dat");
-  tgeneric (f, 2, 4096, 41, 100);
+  data_check_template ("mul.dsc", "mul.dat");
+
+  tgeneric_template ("mul.dsc", 2, 4096, 41, 1024);
 
   test_end ();
+
   return 0;
 }
