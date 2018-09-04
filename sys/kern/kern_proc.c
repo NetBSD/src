@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.215 2018/09/04 14:31:18 maxv Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.216 2018/09/04 15:48:44 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.215 2018/09/04 14:31:18 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.216 2018/09/04 15:48:44 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_kstack.h"
@@ -2203,16 +2203,16 @@ fill_eproc(struct proc *p, struct eproc *ep, bool zombie)
 		ep->e_jobc = p->p_pgrp->pg_jobc;
 		ep->e_sid = p->p_session->s_sid;
 		if ((p->p_lflag & PL_CONTROLT) &&
-		    (tp = ep->e_sess->s_ttyp)) {
+		    (tp = p->p_session->s_ttyp)) {
 			ep->e_tdev = tp->t_dev;
 			ep->e_tpgid = tp->t_pgrp ? tp->t_pgrp->pg_id : NO_PGID;
 			ep->e_tsess = tp->t_session;
 		} else
 			ep->e_tdev = (uint32_t)NODEV;
-		ep->e_flag = ep->e_sess->s_ttyvp ? EPROC_CTTY : 0;
+		ep->e_flag = p->p_session->s_ttyvp ? EPROC_CTTY : 0;
 		if (SESS_LEADER(p))
 			ep->e_flag |= EPROC_SLEADER;
-		strncpy(ep->e_login, ep->e_sess->s_login, MAXLOGNAME);
+		strncpy(ep->e_login, p->p_session->s_login, MAXLOGNAME);
 	}
 	ep->e_xsize = ep->e_xrssize = 0;
 	ep->e_xccount = ep->e_xswrss = 0;
