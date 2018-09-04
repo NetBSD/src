@@ -1,4 +1,4 @@
-/* $NetBSD: COMPAT-branch-notes,v 1.1.2.19 2018/08/25 23:12:23 pgoyette Exp $ */
+/* $NetBSD: COMPAT-branch-notes,v 1.1.2.20 2018/09/04 02:24:03 pgoyette Exp $ */
 
 DONE
 ----
@@ -51,10 +51,7 @@ DONE
 
 TODO - Required for branch merge
 --------------------------------
-1.  For compat_60, still need to figure out what to do with BSDPTY and
-    tty_ptm
-
-2.  For compat_50, in addition to rtsock there are some things in dev/vnd,
+1.  For compat_50, in addition to rtsock there are some things in dev/vnd,
     dev/gpio, and dev/wscons/wsmux that I haven't been able to cleanly
     separate.
 
@@ -91,4 +88,7 @@ TODO - Not required for branch merge
     news68k, and x68k platforms, all in their respective machdep.c
     source file.  Additionally, the zaurus platform defines COMPAT_44 in
     its INSTALL kernel configuration - but no other configuration files!
+
+5.  Separated COMPAT_BSDPTY stuff, allowing the COMPAT_60 module to be
+    built regardless.
 
