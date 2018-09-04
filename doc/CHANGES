@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2438 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2439 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -218,3 +218,5 @@ Changes from NetBSD 8.0 to NetBSD 9.0:
 	nsd: Import 4.1.24 [christos 20180903]
 	unbound: Import 1.7.3. [christos 20180803]
 	libpcap: Import 1.9.0. [christos 20180903]
+	mpfr: Updated to version 4.0.1. [mrg 20180904]
+	mpc: Updated to version 1.1.0. [mrg 20180904]
