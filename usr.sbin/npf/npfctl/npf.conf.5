@@ -1,4 +1,4 @@
-.\"    $NetBSD: npf.conf.5,v 1.74 2018/09/02 18:03:23 wiz Exp $
+.\"    $NetBSD: npf.conf.5,v 1.75 2018/09/04 15:36:01 maxv Exp $
 .\"
 .\" Copyright (c) 2009-2017 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd September 2, 2018
+.Dd September 4, 2018
 .Dt NPF.CONF 5
 .Os
 .Sh NAME
@@ -99,16 +99,20 @@ form of:
 10.1.1.1
 .Ed
 .Ss Interfaces
-In the context of NPF, an interface is seen as a list of IP addresses,
-that can be IPv4 or IPv6, which are configured on the actual associated
-interface.
+In NPF, an interface can be referenced directly by using its name, or can be
+passed to an extraction function which will return a list of IP addresses
+configured on the actual associated interface.
 .Pp
-Such list can be either static or dynamic.
-With a static list, NPF will
-capture the interface addresses on configuration load, whereas with a dynamic
-list NPF will capture the runtime list of addresses, reflecting any changes
-to the interface, including the attach and detach.
+It is legal to pass an extracted list from an interface in keywords where
+NPF would expect instead a direct reference to said interface.
+In this case, NPF infers a direct reference to the interface, and does not
+consider the list.
 .Pp
+There are two types of IP address lists.
+With a static list, NPF will capture the interface addresses on configuration
+load, whereas with a dynamic list NPF will capture the runtime list of
+addresses, reflecting any changes to the interface, including the attach and
+detach.
 Note that with a dynamic list, marking the interface as ``down'' has no effect,
 all addresses will remain present.
 .Pp
@@ -127,27 +131,27 @@ keyword can be used in combination of a filtering rule to explicitly select
 an IP address type.
 .El
 .Pp
-By default, when no extraction function is used,
-.Fn ifaddrs
-is assumed.
-.Pp
-Example of configuration with static interface lists:
+Example of configuration:
 .Bd -literal
-$pub_if4 = inet4(wm0)
-$pub_if46 = { inet4(wm0), inet6(wm0) }
+$var1 = inet4(wm0)
+$var2 = ifaddrs(wm0)
+group default {
+	block in on wm0 all               # rule 1
+	block in on $var1 all             # rule 2
+	block in on inet4(wm0) all        # rule 3
+	pass in on inet6(wm0) from $var2  # rule 4
+	pass in on wm0 from ifaddrs(wm0)  # rule 5
+}
 .Ed
 .Pp
-In the above example, $pub_if4 is the list of IPv4 addresses configured
-on wm0, and $pub_if46 is the list of IPv4 and IPv6 addresses configured
-on wm0.
-.Pp
-Example of configuration with dynamic interface lists:
-.Bd -literal
-$pub_if_1 = ifaddrs(wm0)
-$pub_if_2 = wm0
-.Ed
-.Pp
-In the above example, $pub_if_1 and $pub_if_2 are equal.
+In the above example, $var1 is the static list of IPv4 addresses configured
+on wm0, and $var2 is the dynamic list of all the IPv4 and IPv6 addresses
+configured on wm0.
+The first three rules are equivalent, because with the
+.Cd block ... on <interface>
+syntax, NPF expects a direct reference to an interface, and therefore does
+not consider the extraction functions.
+The fourth and fifth rules are equivalent, for the same reason.
 .Ss Groups
 NPF requires that all rules be defined within groups.
 Groups can be thought of as higher level rules which can contain subrules.
