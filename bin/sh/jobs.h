@@ -1,4 +1,4 @@
-/*	$NetBSD: jobs.h,v 1.21 2017/10/28 06:36:17 kre Exp $	*/
+/*	$NetBSD: jobs.h,v 1.22 2018/09/04 23:16:30 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -79,6 +79,7 @@ struct job {
 	char	flags;	
 #define	JOBCHANGED	1	/* set if status has changed */
 #define	JOBWANTED	2	/* set if this is a job being sought */
+#define JPIPEFAIL	4	/* set if -o pipefail when job created */
 #if JOBS
 	char 	jobctl;		/* job running under job control */
 	int	prev_job;	/* previous job index */
