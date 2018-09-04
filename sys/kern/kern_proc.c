@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.216 2018/09/04 15:48:44 maxv Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.217 2018/09/04 16:03:56 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.216 2018/09/04 15:48:44 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.217 2018/09/04 16:03:56 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_kstack.h"
@@ -2160,22 +2160,35 @@ done:
 	return error;
 }
 
+#define SET_KERN_ADDR(dst, src, allow)	\
+	do {				\
+		if (allow)		\
+			dst = src;	\
+	} while (0);
+
 /*
  * Fill in an eproc structure for the specified process.
  */
 void
 fill_eproc(struct proc *p, struct eproc *ep, bool zombie)
 {
+	bool allowaddr;
 	struct tty *tp;
 	struct lwp *l;
+	int error;
 
 	KASSERT(mutex_owned(proc_lock));
 	KASSERT(mutex_owned(p->p_lock));
 
 	memset(ep, 0, sizeof(*ep));
 
-	ep->e_paddr = p;
-	ep->e_sess = p->p_session;
+	/* If not privileged, don't expose kernel addresses. */
+	error = kauth_authorize_process(kauth_cred_get(), KAUTH_PROCESS_CANSEE,
+	    curproc, KAUTH_ARG(KAUTH_REQ_PROCESS_CANSEE_KPTR), NULL, NULL);
+	allowaddr = (error == 0);
+
+	SET_KERN_ADDR(ep->e_paddr, p, allowaddr);
+	SET_KERN_ADDR(ep->e_sess, p->p_session, allowaddr);
 	if (p->p_cred) {
 		kauth_cred_topcred(p->p_cred, &ep->e_pcred);
 		kauth_cred_toucred(p->p_cred, &ep->e_ucred);
@@ -2206,7 +2219,7 @@ fill_eproc(struct proc *p, struct eproc *ep, bool zombie)
 		    (tp = p->p_session->s_ttyp)) {
 			ep->e_tdev = tp->t_dev;
 			ep->e_tpgid = tp->t_pgrp ? tp->t_pgrp->pg_id : NO_PGID;
-			ep->e_tsess = tp->t_session;
+			SET_KERN_ADDR(ep->e_tsess, tp->t_session, allowaddr);
 		} else
 			ep->e_tdev = (uint32_t)NODEV;
 		ep->e_flag = p->p_session->s_ttyvp ? EPROC_CTTY : 0;
@@ -2230,24 +2243,31 @@ fill_kproc2(struct proc *p, struct kinfo_proc2 *ki, bool zombie)
 	sigset_t ss1, ss2;
 	struct rusage ru;
 	struct vmspace *vm;
+	bool allowaddr;
+	int error;
 
 	KASSERT(mutex_owned(proc_lock));
 	KASSERT(mutex_owned(p->p_lock));
+
+	/* If not privileged, don't expose kernel addresses. */
+	error = kauth_authorize_process(kauth_cred_get(), KAUTH_PROCESS_CANSEE,
+	    curproc, KAUTH_ARG(KAUTH_REQ_PROCESS_CANSEE_KPTR), NULL, NULL);
+	allowaddr = (error == 0);
 
 	sigemptyset(&ss1);
 	sigemptyset(&ss2);
 	memset(ki, 0, sizeof(*ki));
 
-	ki->p_paddr = PTRTOUINT64(p);
-	ki->p_fd = PTRTOUINT64(p->p_fd);
-	ki->p_cwdi = PTRTOUINT64(p->p_cwdi);
-	ki->p_stats = PTRTOUINT64(p->p_stats);
-	ki->p_limit = PTRTOUINT64(p->p_limit);
-	ki->p_vmspace = PTRTOUINT64(p->p_vmspace);
-	ki->p_sigacts = PTRTOUINT64(p->p_sigacts);
-	ki->p_sess = PTRTOUINT64(p->p_session);
+	SET_KERN_ADDR(ki->p_paddr, PTRTOUINT64(p), allowaddr);
+	SET_KERN_ADDR(ki->p_fd, PTRTOUINT64(p->p_fd), allowaddr);
+	SET_KERN_ADDR(ki->p_cwdi, PTRTOUINT64(p->p_cwdi), allowaddr);
+	SET_KERN_ADDR(ki->p_stats, PTRTOUINT64(p->p_stats), allowaddr);
+	SET_KERN_ADDR(ki->p_limit, PTRTOUINT64(p->p_limit), allowaddr);
+	SET_KERN_ADDR(ki->p_vmspace, PTRTOUINT64(p->p_vmspace), allowaddr);
+	SET_KERN_ADDR(ki->p_sigacts, PTRTOUINT64(p->p_sigacts), allowaddr);
+	SET_KERN_ADDR(ki->p_sess, PTRTOUINT64(p->p_session), allowaddr);
 	ki->p_tsess = 0;	/* may be changed if controlling tty below */
-	ki->p_ru = PTRTOUINT64(&p->p_stats->p_ru);
+	SET_KERN_ADDR(ki->p_ru, PTRTOUINT64(&p->p_stats->p_ru), allowaddr);
 	ki->p_eflag = 0;
 	ki->p_exitsig = p->p_exitsig;
 	ki->p_flag = L_INMEM;   /* Process never swapped out */
@@ -2273,7 +2293,7 @@ fill_kproc2(struct proc *p, struct kinfo_proc2 *ki, bool zombie)
 	ki->p_sticks = p->p_sticks;
 	ki->p_iticks = p->p_iticks;
 	ki->p_tpgid = NO_PGID;	/* may be changed if controlling tty below */
-	ki->p_tracep = PTRTOUINT64(p->p_tracep);
+	SET_KERN_ADDR(ki->p_tracep, PTRTOUINT64(p->p_tracep), allowaddr);
 	ki->p_traceflag = p->p_traceflag;
 
 	memcpy(&ki->p_sigignore, &p->p_sigctx.ps_sigignore,sizeof(ki_sigset_t));
@@ -2317,7 +2337,7 @@ fill_kproc2(struct proc *p, struct kinfo_proc2 *ki, bool zombie)
 		ki->p_nrlwps = p->p_nrlwps;
 		ki->p_forw = 0;
 		ki->p_back = 0;
-		ki->p_addr = PTRTOUINT64(l->l_addr);
+		SET_KERN_ADDR(ki->p_addr, PTRTOUINT64(l->l_addr), allowaddr);
 		ki->p_stat = l->l_stat;
 		ki->p_flag |= sysctl_map_flags(sysctl_lwpflagmap, l->l_flag);
 		ki->p_swtime = l->l_swtime;
@@ -2330,7 +2350,7 @@ fill_kproc2(struct proc *p, struct kinfo_proc2 *ki, bool zombie)
 		ki->p_usrpri = l->l_priority;
 		if (l->l_wchan)
 			strncpy(ki->p_wmesg, l->l_wmesg, sizeof(ki->p_wmesg));
-		ki->p_wchan = PTRTOUINT64(l->l_wchan);
+		SET_KERN_ADDR(ki->p_wchan, PTRTOUINT64(l->l_wchan), allowaddr);
 		ki->p_cpuid = cpu_index(l->l_cpu);
 		lwp_unlock(l);
 		LIST_FOREACH(l, &p->p_lwps, l_sibling) {
@@ -2359,7 +2379,8 @@ fill_kproc2(struct proc *p, struct kinfo_proc2 *ki, bool zombie)
 		if ((p->p_lflag & PL_CONTROLT) && (tp = p->p_session->s_ttyp)) {
 			ki->p_tdev = tp->t_dev;
 			ki->p_tpgid = tp->t_pgrp ? tp->t_pgrp->pg_id : NO_PGID;
-			ki->p_tsess = PTRTOUINT64(tp->t_session);
+			SET_KERN_ADDR(ki->p_tsess, PTRTOUINT64(tp->t_session),
+			    allowaddr);
 		} else {
 			ki->p_tdev = (int32_t)NODEV;
 		}
