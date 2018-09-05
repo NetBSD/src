@@ -1,4 +1,4 @@
-/*	$NetBSD: t_builtin.c,v 1.3 2017/01/13 21:30:42 christos Exp $	*/
+/*	$NetBSD: t_builtin.c,v 1.3.12.1 2018/09/05 21:53:45 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.  All rights reserved.
@@ -139,9 +139,11 @@ ATF_TC_HEAD(disabledstat, tc)
 
 ATF_TC_BODY(disabledstat, tc)
 {
-	struct modstat ms[128];
+	modstat_t *ms;
 	struct iovec iov;
 	size_t i;
+	size_t len;
+	int count;
 	bool found = false;
 
 	rump_init();
@@ -149,14 +151,30 @@ ATF_TC_BODY(disabledstat, tc)
 
 	RL(rump_sys_modctl(MODCTL_UNLOAD, kernfs));
 
-	iov.iov_base = ms;
-	iov.iov_len = sizeof(ms);
-	RL(rump_sys_modctl(MODCTL_STAT, &iov));
+	for (len = 8192; ;) {
+		iov.iov_base = malloc(len);
+		iov.iov_len = len;
 
-	for (i = 0; i < __arraycount(ms); i++) {
-		if (strcmp(ms[i].ms_name, kernfs) == 0) {
-			ATF_REQUIRE_EQ(ms[i].ms_refcnt, (u_int)-1);
-			found = 1;
+		errno = 0;
+
+		if (rump_sys_modctl(MODCTL_STAT, &iov) != 0) {
+			int err = errno;
+			fprintf(stderr, "modctl(MODCTL_STAT) failed: %s\n",
+			    strerror(err));
+			atf_tc_fail("Failed to query module status");
+		}
+		if (len >= iov.iov_len)
+			break;
+		free(iov.iov_base);
+		len = iov.iov_len;
+	}
+
+	count = *(int *)iov.iov_base;
+	ms = (modstat_t *)((char *)iov.iov_base + sizeof(int));
+	while ( count ) {
+		if (strcmp(ms->ms_name, kernfs) == 0) {
+			ATF_REQUIRE_EQ(ms->ms_refcnt, (u_int)-1);
+			found = true;
 			break;
 		}
 	}
