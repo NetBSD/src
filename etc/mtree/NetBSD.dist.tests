@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.tests,v 1.152 2018/08/03 04:24:41 kamil Exp $
+#	$NetBSD: NetBSD.dist.tests,v 1.153 2018/09/05 21:05:40 kre Exp $
 
 ./usr/libdata/debug/usr/tests
 ./usr/libdata/debug/usr/tests/atf
@@ -410,6 +410,7 @@
 ./usr/tests/usr.bin/nbperf
 ./usr/tests/usr.bin/pkill
 ./usr/tests/usr.bin/pr
+./usr/tests/usr.bin/printf
 ./usr/tests/usr.bin/rump_server
 ./usr/tests/usr.bin/sdiff
 ./usr/tests/usr.bin/sed
