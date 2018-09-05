@@ -847,7 +847,7 @@ namespace std
 #define _GLIBCXX_HAVE_LDEXPF 1
 
 /* Define to 1 if you have the `ldexpl' function. */
-/* #undef _GLIBCXX_HAVE_LDEXPL */
+#define _GLIBCXX_HAVE_LDEXPL 1
 
 /* Define to 1 if you have the <libintl.h> header file. */
 /* #undef _GLIBCXX_HAVE_LIBINTL_H */
