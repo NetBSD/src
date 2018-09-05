@@ -38,6 +38,8 @@
  *	@(#)bpf.c	7.5 (Berkeley) 7/15/91
  */
 
+#error "We are using the kernel version of this file"
+
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
