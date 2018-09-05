@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.1,v 1.1.2.19 2018/09/05 09:00:37 martin Exp $
+# $NetBSD: CHANGES-8.1,v 1.1.2.20 2018/09/05 09:23:21 martin Exp $
 
 A complete list of changes from the NetBSD 8.0 release to the NetBSD 8.1
 release:
@@ -759,11 +759,16 @@ lib/libc/net/if_nametoindex.c			1.6
 external/gpl3/gcc/dist/config/tls.m4		1.2
 external/gpl3/gcc/dist/libgcc/configure		1.5
 tools/gcc/gcc-version.mk			1.11 (patch)
-tools/gcc/mknative-gcc				1.93
+tools/gcc/mknative-gcc				1.93,1.94
 
-	Correct extra parens, regen configure (selectively),
+	Correct extra parens, regen configure (selectively).
+	Also pullout INTERNAL_CFLAGS for the libgcc build, where it may have
+	-DHAVE_CC_TLS defined on the command line.  (we already collect all
+	the other components.)
 	Fixes root cause of PR toolchain/53567.
 	Normalize source tree path so mknative runs are reproducable.
 	Remove GCC 5 marker.  This is now nb3 20180905.
 	[mrg, ticket #1008]
+
+
 
