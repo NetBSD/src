@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.9 2016/06/08 02:00:40 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.10 2018/09/05 12:01:52 martin Exp $
 #
 # Makefile for sysinst
 
@@ -43,11 +43,30 @@ LDADD=		-lcurses -ltermlib -lutil
 UNIF_AWK=	${.CURDIR}/../../unif.awk
 MSG_XLAT_SH=	${.CURDIR}/../../msg_xlat.sh
 
+
 CATALOGDIR=	/usr/share/sysinst/catalog
 CPPFLAGS+=	-I. -I${.CURDIR}/../.. -I${.CURDIR} \
 		-DREL=\"${DISTRIBVER}\" -DMACH=\"${MACHINE}\" \
 		-DMACH_${MACHINE} -DARCH_${MACHINE_ARCH} \
 		${NODISKLABEL:D-DNO_DISKLABEL}
+
+.if (defined(BUILDID))
+COPTS+=	-DBUILDID=\"${BUILDID}\"
+.endif
+.if defined(NETBSD_OFFICIAL_RELEASE) && ${NETBSD_OFFICIAL_RELEASE} == "yes"
+CPPFLAGS+= -DSYSINST_FTP_HOST=\"ftp.NetBSD.org\" -DNETBSD_OFFICIAL_RELEASE
+CPPFLAGS+= -DSYSINST_HTTP_HOST=\"cdn.NetBSD.org\" -DNETBSD_OFFICIAL_RELEASE
+.else
+CPPFLAGS+= -DSYSINST_FTP_HOST=\"nyftp.NetBSD.org\"
+CPPFLAGS+= -DSYSINST_HTTP_HOST=\"nycdn.NetBSD.org\"
+.if (${DISTRIBVER:M*.99.*})
+CPPFLAGS+= -DREL_PATH=\"HEAD\"
+.elif (${DISTRIBVER:M*.[0-9].[0-9]*})
+CPPFLAGS+= -DREL_PATH=\"netbsd-${DISTRIBVER:C/\.[0-9][_A-Z]*$//:S/./-/}\"
+.elif (${DISTRIBVER:M*.[0-9]*})
+CPPFLAGS+= -DREL_PATH=\"netbsd-${DISTRIBVER:C/\.[0-9][_A-Z]*$//}\"
+.endif
+.endif
 
 .if !defined(DEBUG)
 CPPFLAGS+=	-DCATALOG_DIR=\"${CATALOGDIR}\"
