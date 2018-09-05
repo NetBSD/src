@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.11 2018/06/03 13:16:30 martin Exp $	*/
+/*	$NetBSD: defs.h,v 1.12 2018/09/05 12:01:52 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -341,11 +341,17 @@ int  clean_xfer_dir;
 #endif
 
 #if !defined(SYSINST_FTP_DIR)
+#if defined(NETBSD_OFFICIAL_RELEASE)
 #define SYSINST_FTP_DIR		"pub/NetBSD/NetBSD-" REL
+#elif defined(BUILDID) && defined(REL_PATH)
+#define SYSINST_FTP_DIR		"pub/NetBSD-daily/" REL_PATH "/" BUILDID "Z"
+#else
+#define SYSINST_FTP_DIR		"pub/NetBSD-daily/NetBSD-" REL
+#endif
 #endif
 
 #if !defined(SYSINST_PKG_HOST)
-#define SYSINST_PKG_HOST	SYSINST_FTP_HOST
+#define SYSINST_PKG_HOST		"pub/NetBSD/NetBSD-" REL
 #endif
 
 #if !defined(SYSINST_PKG_DIR)
