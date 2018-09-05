@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.8 2018/08/02 00:03:35 mrg Exp $
+#	$NetBSD: Makefile.inc,v 1.9 2018/09/05 06:26:58 mrg Exp $
 
 LIBGCC_MACHINE_ARCH?=${MACHINE_ARCH:S/earmv5/earm/}
 
@@ -28,6 +28,7 @@ CPPFLAGS+=	-I${DIST}/libgcc/config/i386
 CPPFLAGS+=	-I${DIST}/libgcc/config/${LIBGCC_MACHINE_ARCH}
 .endif
 CPPFLAGS+=	-I${DIST}/gcc -I${DIST}/include -I.
+CPPFLAGS+=	${G_INTERNAL_CFLAGS:M-DHAVE_CC_TLS}
 
 .if ${LIBGCC_MACHINE_ARCH} == "powerpc" || \
     ${LIBGCC_MACHINE_ARCH} == "sh3el" || \
