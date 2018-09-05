@@ -368,12 +368,12 @@ FreeBSD 5.2           |      |                 |                       |
  |     |              |     |  NetBSD 7.1.2    |                       |
  |     |              |     |      |           |                       |
  |     |              |     |      |      OpenBSD 6.3                  |
- |     |              |     |      |           |               DragonFly 5.2.0
- |     |              |     |      |           |                       |
+ |     |              |  NetBSD    |           |               DragonFly 5.2.0
+ |     |              |    8.0     |           |                       |
  |     |              |     |      |           |               DragonFly 5.2.1
  |     |              |     |      |           |                       |
  |     |              |     |      |           |               DragonFly 5.2.2
- |  FreeBSD           |     |  NetBSD 8.0      |                       |
+ |  FreeBSD           |     |  NetBSD 7.2      |                       |
  |   11.2             |     |      |           |                       |
  |     v              |     |      |           |                       |
  |                    |     |      v           |                       |
@@ -752,6 +752,7 @@ DragonFly 5.2.1		2018-05-20 [DFB]
 DragonFly 5.2.2		2018-06-18 [DFB]
 FreeBSD 11.2		2018-06-27 [FBD]
 NetBSD 8.0		2018-07-17 [NBD]
+NetBSD 7.2		2018-08-29 [NBD]
 
 Bibliography
 ------------------------
@@ -817,4 +818,4 @@ Copyright (c) 1997-2012 Wolfram Schneider <wosch@FreeBSD.ORG>
 URL: https://svnweb.freebsd.org/base/head/share/misc/bsd-family-tree
 
 $FreeBSD: head/share/misc/bsd-family-tree 336757 2018-07-27 10:40:48Z eadler $
-$NetBSD: bsd-family-tree,v 1.71 2018/08/15 15:46:41 sevan Exp $
+$NetBSD: bsd-family-tree,v 1.72 2018/09/05 04:01:32 eadler Exp $
