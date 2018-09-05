@@ -1,4 +1,4 @@
-/*	$NetBSD: t_builtin.c,v 1.3.12.1 2018/09/05 21:53:45 pgoyette Exp $	*/
+/*	$NetBSD: t_builtin.c,v 1.3.12.2 2018/09/05 23:06:08 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.  All rights reserved.
@@ -141,7 +141,6 @@ ATF_TC_BODY(disabledstat, tc)
 {
 	modstat_t *ms;
 	struct iovec iov;
-	size_t i;
 	size_t len;
 	int count;
 	bool found = false;
