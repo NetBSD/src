@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.20 2018/09/03 21:26:19 kre Exp $	
+# $NetBSD: Makefile,v 1.21 2018/09/05 17:10:27 christos Exp $	
 
 USE_SHLIBDIR=yes
 .include <bsd.own.mk>
@@ -24,6 +24,8 @@ __sed: .USE
 	    -e 's,3PCAP,3,g' < ${.ALLSRC} > ${.TARGET}
 
 
+# Search first in the kernel for bpf_filter.c
+.PATH:	${NETBSDSRCDIR}/sys/net
 SRCDIR=		${.CURDIR}/../dist
 .PATH:		${SRCDIR}
 
@@ -136,6 +138,7 @@ CPPFLAGS+=	-DINET6
 
 SRCS= \
 bpf_dump.c \
+bpf_filter.c \
 bpf_image.c \
 etherent.c \
 fad-getad.c \
@@ -152,8 +155,6 @@ scanner.l \
 sf-pcap.c \
 sf-pcapng.c
 
-.PATH:	${NETBSDSRCDIR}/sys/net
-SRCS+=	bpf_filter.c
 
 INCS=		pcap/pcap.h pcap/namedb.h pcap/funcattrs.h \
 	pcap/pcap-inttypes.h pcap/compiler-tests.h
