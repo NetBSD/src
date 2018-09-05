@@ -1,4 +1,4 @@
-/*	$NetBSD: t_modctl.c,v 1.12 2012/08/20 08:07:52 martin Exp $	*/
+/*	$NetBSD: t_modctl.c,v 1.12.30.1 2018/09/05 08:58:03 pgoyette Exp $	*/
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: t_modctl.c,v 1.12 2012/08/20 08:07:52 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: t_modctl.c,v 1.12.30.1 2018/09/05 08:58:03 pgoyette Exp $");
 
 #include <sys/module.h>
 #include <sys/sysctl.h>
@@ -84,11 +84,12 @@ get_modstat_info(const char *name, modstat_t *msdest)
 {
 	bool found;
 	size_t len;
+	int count;
 	struct iovec iov;
 	modstat_t *ms;
 
 	check_permission();
-	for (len = 4096; ;) {
+	for (len = 8192; ;) {
 		iov.iov_base = malloc(len);
 		iov.iov_len = len;
 
@@ -107,14 +108,17 @@ get_modstat_info(const char *name, modstat_t *msdest)
 	}
 
 	found = false;
-	len = iov.iov_len / sizeof(modstat_t);
-	for (ms = (modstat_t *)iov.iov_base; len != 0 && !found;
-	    ms++, len--) {
+	count = *(int *)iov.iov_base;
+	ms = (modstat_t *)((char *)iov.iov_base + sizeof(int));
+	while ( count ) {
 		if (strcmp(ms->ms_name, name) == 0) {
 			if (msdest != NULL)
 				*msdest = *ms;
 			found = true;
+			break;
 		}
+		ms++;
+		count--;
 	}
 
 	free(iov.iov_base);
