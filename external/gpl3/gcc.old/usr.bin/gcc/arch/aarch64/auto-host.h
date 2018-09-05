@@ -188,7 +188,7 @@
 
 /* Define to enable plugin support. */
 #ifndef USED_FOR_TARGET
-/* #undef ENABLE_PLUGIN */
+#define ENABLE_PLUGIN 1
 #endif
 
 

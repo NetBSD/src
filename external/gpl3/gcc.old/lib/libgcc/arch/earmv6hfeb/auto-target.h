@@ -6,7 +6,7 @@
 /* config.in.  Generated from configure.ac by autoheader.  */
 
 /* Define to 1 if the target assembler supports thread-local storage. */
-/* #undef HAVE_CC_TLS */
+#define HAVE_CC_TLS 1
 
 /* Define to 1 if you have the <ftw.h> header file. */
 #define HAVE_FTW_H 1
