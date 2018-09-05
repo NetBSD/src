@@ -1,4 +1,4 @@
-/*	$NetBSD: pdc.c,v 1.1 2014/02/24 07:23:43 skrll Exp $	*/
+/*	$NetBSD: pdc.c,v 1.2 2018/09/05 07:32:45 riastradh Exp $	*/
 
 /*	$OpenBSD: pdc.c,v 1.10 1999/05/06 02:27:44 mickey Exp $	*/
 
@@ -101,7 +101,7 @@ pdc_init(void)
 
 	err = (*pdc)(PDC_STABLE, PDC_STABLE_SIZE, pdcbuf, 0, 0);
 	if (err >= 0) {
-		sstorsiz = min(pdcbuf[0],sizeof(sstor));
+		sstorsiz = uimin(pdcbuf[0],sizeof(sstor));
 		err = (*pdc)(PDC_STABLE, PDC_STABLE_READ, 0, &sstor, sstorsiz);
 	}
 
@@ -203,7 +203,7 @@ iodcstrategy(void *devdata, int rw, daddr_t blk, size_t size, void *buf,
 	if (dp->last_blk <= blk && (dp->last_blk + dp->last_read) > blk) {
 		twiddle();
 		offset = blk - dp->last_blk;
-		xfer = min(dp->last_read - offset, size);
+		xfer = uimin(dp->last_read - offset, size);
 		size -= xfer;
 		blk += xfer;
 #ifdef PDCDEBUG
