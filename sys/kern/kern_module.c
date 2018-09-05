@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module.c,v 1.130.2.16 2018/09/04 11:53:46 pgoyette Exp $	*/
+/*	$NetBSD: kern_module.c,v 1.130.2.17 2018/09/05 09:26:59 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.130.2.16 2018/09/04 11:53:46 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.130.2.17 2018/09/05 09:26:59 pgoyette Exp $");
 
 #define _MODULE_INTERNAL
 
@@ -1406,8 +1406,16 @@ module_do_unload(const char *name, bool load_requires_force)
 		kmem_free(mod->mod_required, mod->mod_arequired *
 		    sizeof(module_t));
 	if (mod->mod_source == MODULE_SOURCE_KERNEL) {
-		mod->mod_nrequired = 0; /* will be re-parsed */
-		mod->mod_arequired = 0;
+		if (mod_arequired != 0) {
+			/*
+			 * release "required" resources - will be re-parsed
+			 * if the module is re-enabled
+			 */
+			kmem_free(mod->mod_required,
+			    mod->mod_arequired * sizeof(module_t *));
+			mod->mod_nrequired = 0;
+			mod->mod_arequired = 0;
+		}
 		if (load_requires_force)
 			module_require_force(mod);
 		TAILQ_INSERT_TAIL(&module_builtins, mod, mod_chain);
