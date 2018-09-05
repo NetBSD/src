@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.1,v 1.1.2.18 2018/09/01 06:35:20 martin Exp $
+# $NetBSD: CHANGES-8.1,v 1.1.2.19 2018/09/05 09:00:37 martin Exp $
 
 A complete list of changes from the NetBSD 8.0 release to the NetBSD 8.1
 release:
@@ -726,4 +726,44 @@ sys/external/bsd/drm2/linux/linux_ww_mutex.c	1.3,1.4
 	Linux 4.4 drm import, with the exception of Tegra (arm)
 	specific code.
 	[riastradh, ticket #1003]
+
+share/man/man4/acphy.4				1.4
+share/man/man4/acpicpu.4			1.35
+share/man/man4/adb.4				1.4
+share/man/man4/atppc.4				1.16
+share/man/man4/axe.4				1.14
+share/man/man4/az.4				1.7
+share/man/man4/bktr.4				1.19
+share/man/man4/cgd.4				1.22
+
+	axe(4): Add the correct PHY to SYNOPSIS.
+	Various markup fixes.
+	[sevan, ticket #1004]
+
+etc/MAKEDEV.tmpl				1.192
+
+	Create fw(4) & fwmem(4) device nodes by default,
+	so fwctl(8) works out of the box.
+	[sevan, ticket #1005]
+
+sys/dev/pci/ixgbe/ixgbe.c			1.164
+
+	Fix a bug that media change may fail.
+	[msaitoh, ticket #1006]
+
+lib/libc/net/if_nametoindex.c			1.6
+
+	Make if_freenameindex(3) use SIOCGIFINDEX to improve performance.
+	[msaitoh, ticket #1007]
+
+external/gpl3/gcc/dist/config/tls.m4		1.2
+external/gpl3/gcc/dist/libgcc/configure		1.5
+tools/gcc/gcc-version.mk			1.11 (patch)
+tools/gcc/mknative-gcc				1.93
+
+	Correct extra parens, regen configure (selectively),
+	Fixes root cause of PR toolchain/53567.
+	Normalize source tree path so mknative runs are reproducable.
+	Remove GCC 5 marker.  This is now nb3 20180905.
+	[mrg, ticket #1008]
 
