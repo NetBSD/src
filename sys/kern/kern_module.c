@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module.c,v 1.130.2.19 2018/09/05 22:04:51 pgoyette Exp $	*/
+/*	$NetBSD: kern_module.c,v 1.130.2.20 2018/09/06 00:10:55 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.130.2.19 2018/09/05 22:04:51 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.130.2.20 2018/09/06 00:10:55 pgoyette Exp $");
 
 #define _MODULE_INTERNAL
 
@@ -1402,9 +1402,6 @@ module_do_unload(const char *name, bool load_requires_force)
 	if (mod->mod_kobj != NULL) {
 		kobj_unload(mod->mod_kobj);
 	}
-	if (mod->mod_required)
-		kmem_free(mod->mod_required, mod->mod_arequired *
-		    sizeof(module_t));
 	if (mod->mod_source == MODULE_SOURCE_KERNEL) {
 		if (mod->mod_required != NULL) {
 			/*
