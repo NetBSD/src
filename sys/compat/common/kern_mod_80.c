@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_mod_80.c,v 1.1.2.1 2018/04/03 08:29:44 pgoyette Exp $	*/
+/*	$NetBSD: kern_mod_80.c,v 1.1.2.2 2018/09/06 21:22:05 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_mod_80.c,v 1.1.2.1 2018/04/03 08:29:44 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_mod_80.c,v 1.1.2.2 2018/09/06 21:22:05 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_modular.h"
@@ -161,6 +161,7 @@ compat_80_modstat(int cmd, struct iovec *iov, void *arg)
 		if (mod->mod_kobj != NULL && stataddr) {
 			kobj_stat(mod->mod_kobj, &addr, &size);
 			oms->oms_addr = addr;
+A
 			oms->oms_size = size;
 		}
 		oms->oms_class = mi->mi_class;
@@ -178,7 +179,7 @@ compat_80_modstat(int cmd, struct iovec *iov, void *arg)
 		}
 	}
 	kernconfig_unlock();
-	error = copyout(omso, iov->iov_base, min(omslen, iov->iov_len));
+	error = copyout(omso, iov->iov_base, uimin(omslen, iov->iov_len));
 	kmem_free(omso, omslen);
 	if (error == 0) {
 		iov->iov_len = omslen;
