@@ -1,4 +1,4 @@
-/* $NetBSD: ix_txrx.c,v 1.49 2018/07/31 09:19:34 msaitoh Exp $ */
+/* $NetBSD: ix_txrx.c,v 1.50 2018/09/06 08:20:12 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -202,7 +202,7 @@ ixgbe_mq_start(struct ifnet *ifp, struct mbuf *m)
 {
 	struct adapter	*adapter = ifp->if_softc;
 	struct tx_ring	*txr;
-	int 		i, err = 0;
+	int 		i;
 #ifdef RSS
 	uint32_t bucket_id;
 #endif
@@ -238,11 +238,10 @@ ixgbe_mq_start(struct ifnet *ifp, struct mbuf *m)
 
 	txr = &adapter->tx_rings[i];
 
-	err = pcq_put(txr->txr_interq, m);
-	if (err == false) {
+	if (__predict_false(!pcq_put(txr->txr_interq, m))) {
 		m_freem(m);
 		txr->pcq_drops.ev_count++;
-		return (err);
+		return ENOBUFS;
 	}
 	if (IXGBE_TX_TRYLOCK(txr)) {
 		ixgbe_mq_start_locked(ifp, txr);
