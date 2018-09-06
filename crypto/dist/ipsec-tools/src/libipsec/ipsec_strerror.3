@@ -1,4 +1,4 @@
-.\"	$NetBSD: ipsec_strerror.3,v 1.12 2012/01/04 16:30:50 wiz Exp $
+.\"	$NetBSD: ipsec_strerror.3,v 1.13 2018/09/06 09:38:05 maxv Exp $
 .\"
 .\"	$KAME: ipsec_strerror.3,v 1.9 2001/08/17 07:21:36 itojun Exp $
 .\"
@@ -29,7 +29,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd January 4, 2012
+.Dd September 6, 2018
 .Dt IPSEC_STRERROR 3
 .Os
 .\"
@@ -45,17 +45,9 @@
 .Fn ipsec_strerror void
 .\"
 .Sh DESCRIPTION
-.Pa netinet6/ipsec.h
-declares
-.Pp
-.Dl extern int ipsec_errcode ;
-.Pp
-which is used to pass an error code from the IPsec policy manipulation
-library to a program.
 .Fn ipsec_strerror
 can be used to obtain the error message string for the error code.
 .Pp
-The array pointed to is not to be modified by the calling program.
 Since
 .Fn ipsec_strerror
 uses
