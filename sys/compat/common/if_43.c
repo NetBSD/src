@@ -1,4 +1,4 @@
-/*	$NetBSD: if_43.c,v 1.14 2017/07/29 04:08:47 riastradh Exp $	*/
+/*	$NetBSD: if_43.c,v 1.15 2018/09/06 06:41:59 maxv Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_43.c,v 1.14 2017/07/29 04:08:47 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_43.c,v 1.15 2018/09/06 06:41:59 maxv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -64,7 +64,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_43.c,v 1.14 2017/07/29 04:08:47 riastradh Exp $")
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
 #include <net/if_gre.h>
-#include <net/if_atm.h>
 #include <net/if_tap.h>
 #include <net80211/ieee80211_ioctl.h>
 #include <netinet6/in6_var.h>
@@ -179,7 +178,6 @@ compat_cvtcmd(u_long cmd)
 		case SIOCGIFPSRCADDR_IN6:
 		case SIOCGIFSTAT_ICMP6:
 		case SIOCGIFSTAT_IN6:
-		case SIOCGPVCSIF:
 		case SIOCGVH:
 		case SIOCIFCREATE:
 		case SIOCIFDESTROY:
@@ -199,7 +197,6 @@ compat_cvtcmd(u_long cmd)
 		case SIOCSIFNETMASK_IN6:
 		case SIOCSNDFLUSH_IN6:
 		case SIOCSPFXFLUSH_IN6:
-		case SIOCSPVCSIF:
 		case SIOCSRTRFLUSH_IN6:
 		case SIOCSVH:
 		case TAPGIFNAME:

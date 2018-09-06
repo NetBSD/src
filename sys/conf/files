@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1205 2018/09/06 05:36:51 maxv Exp $
+#	$NetBSD: files,v 1.1206 2018/09/06 06:42:00 maxv Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20171118
@@ -237,7 +237,6 @@ include "netinet/files.netinet"
 include "netinet6/files.netinet6"
 include "netipsec/files.netipsec"
 include "netmpls/files.netmpls"
-include "netnatm/files.netnatm"
 include "netsmb/files.netsmb"
 
 include "net/npf/files.npf"
@@ -418,10 +417,9 @@ include "dev/splash/files.splash"
 include "dev/videomode/files.videomode"
 
 # net device attributes - we have generic code for arc(net), ether(net),
-# fddi, token ring, and atm.
+# fddi, and token ring.
 #
 define	arcnet
-define	atm
 define	ether
 define	fddi
 define	hippi

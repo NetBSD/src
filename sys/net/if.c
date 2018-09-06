@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.434 2018/08/27 04:53:24 ozaki-r Exp $	*/
+/*	$NetBSD: if.c,v 1.435 2018/09/06 06:42:00 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,13 +90,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.434 2018/08/27 04:53:24 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.435 2018/09/06 06:42:00 maxv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
 #include "opt_ipsec.h"
 #include "opt_atalk.h"
-#include "opt_natm.h"
 #include "opt_wlan.h"
 #include "opt_net_mpsafe.h"
 #include "opt_mrouting.h"

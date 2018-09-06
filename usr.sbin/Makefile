@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.277 2018/08/25 11:06:00 martin Exp $
+#	$NetBSD: Makefile,v 1.278 2018/09/06 06:42:00 maxv Exp $
 #	from: @(#)Makefile	5.20 (Berkeley) 6/12/93
 
 .include <bsd.own.mk>
@@ -51,9 +51,6 @@ SUBDIR+=faithd ifmcstat ip6addrctl ndp rip6query rtsold
 .if (${USE_INET6} != "no")
 SUBDIR+=mld6query route6d rtadvd traceroute6 
 .endif
-
-# ATM PVC
-SUBDIR+=pvcsif pvctxctl
 
 SUBDIR+= racoon racoonctl
 

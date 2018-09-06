@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1613 2018/09/06 05:36:49 maxv Exp $
+# $NetBSD: mi,v 1.1614 2018/09/06 06:41:59 maxv Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2928,8 +2928,8 @@
 ./usr/share/man/cat8/pvchange.0			man-lvm-catman		lvm,.cat
 ./usr/share/man/cat8/pvck.0			man-lvm-catman		lvm,.cat
 ./usr/share/man/cat8/pvcreate.0			man-lvm-catman		lvm,.cat
-./usr/share/man/cat8/pvcsif.0			man-netutil-catman	.cat
-./usr/share/man/cat8/pvctxctl.0			man-netutil-catman	.cat
+./usr/share/man/cat8/pvcsif.0			man-obsolete		obsolete
+./usr/share/man/cat8/pvctxctl.0			man-obsolete		obsolete
 ./usr/share/man/cat8/pvdisplay.0		man-lvm-catman		lvm,.cat
 ./usr/share/man/cat8/pvmove.0			man-lvm-catman		lvm,.cat
 ./usr/share/man/cat8/pvremove.0			man-lvm-catman		lvm,.cat
@@ -5829,8 +5829,8 @@
 ./usr/share/man/html8/pvchange.html		man-lvm-htmlman		lvm,html
 ./usr/share/man/html8/pvck.html			man-lvm-htmlman		lvm,html
 ./usr/share/man/html8/pvcreate.html		man-lvm-htmlman		lvm,html
-./usr/share/man/html8/pvcsif.html		man-netutil-htmlman	html
-./usr/share/man/html8/pvctxctl.html		man-netutil-htmlman	html
+./usr/share/man/html8/pvcsif.html		man-obsolete		obsolete
+./usr/share/man/html8/pvctxctl.html		man-obsolete		obsolete
 ./usr/share/man/html8/pvdisplay.html		man-lvm-htmlman		lvm,html
 ./usr/share/man/html8/pvmove.html		man-lvm-htmlman		lvm,html
 ./usr/share/man/html8/pvremove.html		man-lvm-htmlman		lvm,html
@@ -9002,8 +9002,8 @@
 ./usr/share/man/man8/pvchange.8			man-lvm-man		lvm,.man
 ./usr/share/man/man8/pvck.8			man-lvm-man		lvm,.man
 ./usr/share/man/man8/pvcreate.8			man-lvm-man		lvm,.man
-./usr/share/man/man8/pvcsif.8			man-netutil-man		.man
-./usr/share/man/man8/pvctxctl.8			man-netutil-man		.man
+./usr/share/man/man8/pvcsif.8			man-obsolete		obsolete
+./usr/share/man/man8/pvctxctl.8			man-obsolete		obsolete
 ./usr/share/man/man8/pvdisplay.8		man-lvm-man		lvm,.man
 ./usr/share/man/man8/pvmove.8			man-lvm-man		lvm,.man
 ./usr/share/man/man8/pvremove.8			man-lvm-man		lvm,.man

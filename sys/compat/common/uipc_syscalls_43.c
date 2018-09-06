@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls_43.c,v 1.49 2018/05/03 21:43:33 christos Exp $	*/
+/*	$NetBSD: uipc_syscalls_43.c,v 1.50 2018/09/06 06:41:59 maxv Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls_43.c,v 1.49 2018/05/03 21:43:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls_43.c,v 1.50 2018/09/06 06:41:59 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,7 +61,6 @@ __KERNEL_RCSID(0, "$NetBSD: uipc_syscalls_43.c,v 1.49 2018/05/03 21:43:33 christ
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
 #include <net/if_gre.h>
-#include <net/if_atm.h>
 #include <net/if_tap.h>
 #include <net80211/ieee80211_ioctl.h>
 #include <netinet6/in6_var.h>

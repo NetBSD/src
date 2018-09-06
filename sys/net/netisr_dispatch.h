@@ -1,4 +1,4 @@
-/* $NetBSD: netisr_dispatch.h,v 1.19 2017/05/27 21:02:56 bouyer Exp $ */
+/* $NetBSD: netisr_dispatch.h,v 1.20 2018/09/06 06:42:00 maxv Exp $ */
 
 #ifndef _NET_NETISR_DISPATCH_H_
 #define _NET_NETISR_DISPATCH_H_
@@ -37,9 +37,6 @@
 #endif
 #ifdef MPLS
 	DONETISR(NETISR_MPLS,mplsintr);
-#endif
-#ifdef NATM
-	DONETISR(NETISR_NATM,natmintr);
 #endif
 #ifdef CAN
 	DONETISR(NETISR_CAN,canintr);
