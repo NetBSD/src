@@ -1,4 +1,4 @@
-#	$NetBSD: makesyscalls.sh,v 1.169 2017/05/10 06:08:56 riastradh Exp $
+#	$NetBSD: makesyscalls.sh,v 1.169.8.1 2018/09/06 06:56:42 pgoyette Exp $
 #
 # Copyright (c) 1994, 1996, 2000 Christopher G. Demetriou
 # All rights reserved.
@@ -77,6 +77,21 @@ case $1 in
 /*)	. $1;;
 *)	. ./$1;;
 esac
+
+errmsg()
+{
+	fail=true;
+	printf '%s: %s\n' "$0" "$*" >&2
+}
+
+fail=false
+case "${nsysent:-0}" in
+*[!0-9]*)	errmsg "Non numeric value for nsysent:" "${nsysent}";;
+esac
+case "${maxsysargs:-0}" in
+*[!0-9]*)	errmsg "Non numeric value for maxsysargs:" "${maxsysargs}";;
+esac
+$fail && exit 1
 
 # tmp files:
 sysdcl="sysent.dcl"
@@ -172,7 +187,7 @@ BEGIN {
 	if (!registertype) {
 	    registertype = \"register_t\"
 	}
-	nsysent = \"$nsysent\"
+	nsysent = ${nsysent:-0}
 
 	sysdcl = \"$sysdcl\"
 	syscompat_pref = \"$syscompat_pref\"
@@ -182,7 +197,7 @@ BEGIN {
 	rumpprotos = \"$rumpprotos\"
 	rumptypes = \"$rumptypes\"
 	sys_nosys = \"$sys_nosys\"
-	maxsysargs = \"$maxsysargs\"
+	maxsysargs = ${maxsysargs:-8}
 	rumpnoflags=\"$rumpnoflags\"
 	rumpnosys=\"$rumpnosys\"
 	rumpnomodule=\"$rumpnomodule\"
@@ -855,9 +870,12 @@ function putent(type, compatwrap) {
 	if (argc != 0) {
 		printf("\n\t\tns(struct %s%s_args),", compatwrap_, funcname) > sysent
 	}
-	if (modular) 
+	if (modular) {
 		wfn = "sys_nomodule";
-	else if (compatwrap == "")
+		idx = int(syscall / 32);
+		bit = 2 ^ (syscall % 32);
+		nomodbits[ idx ] += bit;
+	} else if (compatwrap == "")
 		wfn = funcname;
 	else
 		wfn = compatwrap "(" funcname ")";
@@ -1126,6 +1144,7 @@ END {
 	}
 
 	maxsyscall = syscall
+
 	if (nsysent) {
 		if (syscall > nsysent) {
 			printf("%s: line %d: too many syscalls [%d > %d]\n", infile, NR, syscall, nsysent)
@@ -1140,6 +1159,16 @@ END {
 			    > sysnamesfriendly
 			syscall++
 		}
+	}
+	printf("};\n") > sysent
+	printf("\nconst uint32_t %s_nomodbits[] = {\n", switchname) > sysent
+	printf("};\n") > rumpsysent
+	printf("\nconst uint32_t rump_sysent_nomodbits[] = {\n") > rumpsysent
+	for (i = 0; i < syscall / 32; i++) {
+		printf("\t0x%08x,\t/* syscalls %3d-%3d */\n",
+			nomodbits[i], i * 32, i * 32 + 31) > sysent
+		printf("\t0x%08x,\t/* syscalls %3d-%3d */\n",
+			nomodbits[i], i * 32, i * 32 + 31) > rumpsysent
 	}
 	printf("};\n") > sysent
 	printf("};\n") > rumpsysent

@@ -1,7 +1,7 @@
 /* mpfr_pow_ui-- compute the power of a floating-point
                                   by a machine integer
 
-Copyright 1999-2016 Free Software Foundation, Inc.
+Copyright 1999-2018 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.

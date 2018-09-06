@@ -1,0 +1,21 @@
+Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+
+See COPYRIGHT in the source root or http://isc.org/copyright.html for terms.
+
+This is for testing managed-keys, in particular with problems
+with RFC 5011 Automated Updates of DNSSEC Trust Anchors.
+
+ns1 is the root server that offers new KSKs and hosts one record for
+testing. The TTL for the zone's records is 2 seconds.
+
+ns2 is a validator that uses managed-keys.  "-T mkeytimers=2/20/40"
+is used so it will attempt do automated updates frequently. "-T tat=1"
+is used so it will send TAT queries once per second.
+
+ns3 is a validator with a broken key in managed-keys.
+
+ns4 is a validator with a deliberately broken managed-keys.bind and
+managed-keys.jnl, causing RFC 5011 initialization to fail.
+
+ns5 is a validator which is prevented from getting a response from the
+root server, causing key refresh queries to fail.

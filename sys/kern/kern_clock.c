@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_clock.c,v 1.136.2.1 2018/07/28 04:38:08 pgoyette Exp $	*/
+/*	$NetBSD: kern_clock.c,v 1.136.2.2 2018/09/06 06:56:41 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.136.2.1 2018/07/28 04:38:08 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.136.2.2 2018/09/06 06:56:41 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_dtrace.h"
@@ -141,14 +141,14 @@ int	psratio;			/* ratio: prof / stat */
 static u_int get_intr_timecount(struct timecounter *);
 
 static struct timecounter intr_timecounter = {
-	get_intr_timecount,	/* get_timecount */
-	0,			/* no poll_pps */
-	~0u,			/* counter_mask */
-	0,		        /* frequency */
-	"clockinterrupt",	/* name */
-	0,			/* quality - minimum implementation level for a clock */
-	NULL,			/* prev */
-	NULL,			/* next */
+	.tc_get_timecount	= get_intr_timecount,
+	.tc_poll_pps		= NULL,
+	.tc_counter_mask	= ~0u,
+	.tc_frequency		= 0,
+	.tc_name		= "clockinterrupt",
+	/* quality - minimum implementation level for a clock */
+	.tc_quality		= 0,
+	.tc_priv		= NULL,
 };
 
 static u_int

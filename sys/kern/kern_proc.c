@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.209.2.2 2018/04/16 02:00:07 pgoyette Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.209.2.3 2018/09/06 06:56:42 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.209.2.2 2018/04/16 02:00:07 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.209.2.3 2018/09/06 06:56:42 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_kstack.h"
@@ -263,8 +263,8 @@ proc_listener_cb(kauth_cred_t cred, kauth_action_t action, void *cookie,
 		case KAUTH_REQ_PROCESS_CANSEE_ARGS:
 		case KAUTH_REQ_PROCESS_CANSEE_ENTRY:
 		case KAUTH_REQ_PROCESS_CANSEE_OPENFILES:
+		case KAUTH_REQ_PROCESS_CANSEE_EPROC:
 			result = KAUTH_RESULT_ALLOW;
-
 			break;
 
 		case KAUTH_REQ_PROCESS_CANSEE_ENV:
@@ -278,6 +278,7 @@ proc_listener_cb(kauth_cred_t cred, kauth_action_t action, void *cookie,
 
 			break;
 
+		case KAUTH_REQ_PROCESS_CANSEE_KPTR:
 		default:
 			break;
 		}
@@ -1701,7 +1702,7 @@ sysctl_doeproc(SYSCTLFN_ARGS)
 		mutex_enter(p->p_lock);
 		error = kauth_authorize_process(l->l_cred,
 		    KAUTH_PROCESS_CANSEE, p,
-		    KAUTH_ARG(KAUTH_REQ_PROCESS_CANSEE_ENTRY), NULL, NULL);
+		    KAUTH_ARG(KAUTH_REQ_PROCESS_CANSEE_EPROC), NULL, NULL);
 		if (error != 0) {
 			mutex_exit(p->p_lock);
 			continue;
@@ -1802,7 +1803,7 @@ sysctl_doeproc(SYSCTLFN_ARGS)
 			 * Copy out elem_size, but not larger than kelem_size
 			 */
 			error = sysctl_copyout(l, kbuf, dp,
-			    min(kelem_size, elem_size));
+			    uimin(kelem_size, elem_size));
 			mutex_enter(proc_lock);
 			if (error) {
 				goto bah;
@@ -2159,22 +2160,35 @@ done:
 	return error;
 }
 
+#define SET_KERN_ADDR(dst, src, allow)	\
+	do {				\
+		if (allow)		\
+			dst = src;	\
+	} while (0);
+
 /*
  * Fill in an eproc structure for the specified process.
  */
 void
 fill_eproc(struct proc *p, struct eproc *ep, bool zombie)
 {
+	bool allowaddr;
 	struct tty *tp;
 	struct lwp *l;
+	int error;
 
 	KASSERT(mutex_owned(proc_lock));
 	KASSERT(mutex_owned(p->p_lock));
 
 	memset(ep, 0, sizeof(*ep));
 
-	ep->e_paddr = p;
-	ep->e_sess = p->p_session;
+	/* If not privileged, don't expose kernel addresses. */
+	error = kauth_authorize_process(kauth_cred_get(), KAUTH_PROCESS_CANSEE,
+	    curproc, KAUTH_ARG(KAUTH_REQ_PROCESS_CANSEE_KPTR), NULL, NULL);
+	allowaddr = (error == 0);
+
+	SET_KERN_ADDR(ep->e_paddr, p, allowaddr);
+	SET_KERN_ADDR(ep->e_sess, p->p_session, allowaddr);
 	if (p->p_cred) {
 		kauth_cred_topcred(p->p_cred, &ep->e_pcred);
 		kauth_cred_toucred(p->p_cred, &ep->e_ucred);
@@ -2202,16 +2216,16 @@ fill_eproc(struct proc *p, struct eproc *ep, bool zombie)
 		ep->e_jobc = p->p_pgrp->pg_jobc;
 		ep->e_sid = p->p_session->s_sid;
 		if ((p->p_lflag & PL_CONTROLT) &&
-		    (tp = ep->e_sess->s_ttyp)) {
+		    (tp = p->p_session->s_ttyp)) {
 			ep->e_tdev = tp->t_dev;
 			ep->e_tpgid = tp->t_pgrp ? tp->t_pgrp->pg_id : NO_PGID;
-			ep->e_tsess = tp->t_session;
+			SET_KERN_ADDR(ep->e_tsess, tp->t_session, allowaddr);
 		} else
 			ep->e_tdev = (uint32_t)NODEV;
-		ep->e_flag = ep->e_sess->s_ttyvp ? EPROC_CTTY : 0;
+		ep->e_flag = p->p_session->s_ttyvp ? EPROC_CTTY : 0;
 		if (SESS_LEADER(p))
 			ep->e_flag |= EPROC_SLEADER;
-		strncpy(ep->e_login, ep->e_sess->s_login, MAXLOGNAME);
+		strncpy(ep->e_login, p->p_session->s_login, MAXLOGNAME);
 	}
 	ep->e_xsize = ep->e_xrssize = 0;
 	ep->e_xccount = ep->e_xswrss = 0;
@@ -2229,24 +2243,31 @@ fill_kproc2(struct proc *p, struct kinfo_proc2 *ki, bool zombie)
 	sigset_t ss1, ss2;
 	struct rusage ru;
 	struct vmspace *vm;
+	bool allowaddr;
+	int error;
 
 	KASSERT(mutex_owned(proc_lock));
 	KASSERT(mutex_owned(p->p_lock));
+
+	/* If not privileged, don't expose kernel addresses. */
+	error = kauth_authorize_process(kauth_cred_get(), KAUTH_PROCESS_CANSEE,
+	    curproc, KAUTH_ARG(KAUTH_REQ_PROCESS_CANSEE_KPTR), NULL, NULL);
+	allowaddr = (error == 0);
 
 	sigemptyset(&ss1);
 	sigemptyset(&ss2);
 	memset(ki, 0, sizeof(*ki));
 
-	ki->p_paddr = PTRTOUINT64(p);
-	ki->p_fd = PTRTOUINT64(p->p_fd);
-	ki->p_cwdi = PTRTOUINT64(p->p_cwdi);
-	ki->p_stats = PTRTOUINT64(p->p_stats);
-	ki->p_limit = PTRTOUINT64(p->p_limit);
-	ki->p_vmspace = PTRTOUINT64(p->p_vmspace);
-	ki->p_sigacts = PTRTOUINT64(p->p_sigacts);
-	ki->p_sess = PTRTOUINT64(p->p_session);
+	SET_KERN_ADDR(ki->p_paddr, PTRTOUINT64(p), allowaddr);
+	SET_KERN_ADDR(ki->p_fd, PTRTOUINT64(p->p_fd), allowaddr);
+	SET_KERN_ADDR(ki->p_cwdi, PTRTOUINT64(p->p_cwdi), allowaddr);
+	SET_KERN_ADDR(ki->p_stats, PTRTOUINT64(p->p_stats), allowaddr);
+	SET_KERN_ADDR(ki->p_limit, PTRTOUINT64(p->p_limit), allowaddr);
+	SET_KERN_ADDR(ki->p_vmspace, PTRTOUINT64(p->p_vmspace), allowaddr);
+	SET_KERN_ADDR(ki->p_sigacts, PTRTOUINT64(p->p_sigacts), allowaddr);
+	SET_KERN_ADDR(ki->p_sess, PTRTOUINT64(p->p_session), allowaddr);
 	ki->p_tsess = 0;	/* may be changed if controlling tty below */
-	ki->p_ru = PTRTOUINT64(&p->p_stats->p_ru);
+	SET_KERN_ADDR(ki->p_ru, PTRTOUINT64(&p->p_stats->p_ru), allowaddr);
 	ki->p_eflag = 0;
 	ki->p_exitsig = p->p_exitsig;
 	ki->p_flag = L_INMEM;   /* Process never swapped out */
@@ -2265,14 +2286,14 @@ fill_kproc2(struct proc *p, struct kinfo_proc2 *ki, bool zombie)
 	ki->p_svgid = kauth_cred_getsvgid(p->p_cred);
 	ki->p_ngroups = kauth_cred_ngroups(p->p_cred);
 	kauth_cred_getgroups(p->p_cred, ki->p_groups,
-	    min(ki->p_ngroups, sizeof(ki->p_groups) / sizeof(ki->p_groups[0])),
+	    uimin(ki->p_ngroups, sizeof(ki->p_groups) / sizeof(ki->p_groups[0])),
 	    UIO_SYSSPACE);
 
 	ki->p_uticks = p->p_uticks;
 	ki->p_sticks = p->p_sticks;
 	ki->p_iticks = p->p_iticks;
 	ki->p_tpgid = NO_PGID;	/* may be changed if controlling tty below */
-	ki->p_tracep = PTRTOUINT64(p->p_tracep);
+	SET_KERN_ADDR(ki->p_tracep, PTRTOUINT64(p->p_tracep), allowaddr);
 	ki->p_traceflag = p->p_traceflag;
 
 	memcpy(&ki->p_sigignore, &p->p_sigctx.ps_sigignore,sizeof(ki_sigset_t));
@@ -2288,7 +2309,7 @@ fill_kproc2(struct proc *p, struct kinfo_proc2 *ki, bool zombie)
 	ki->p_acflag = p->p_acflag;
 
 	strncpy(ki->p_comm, p->p_comm,
-	    min(sizeof(ki->p_comm), sizeof(p->p_comm)));
+	    uimin(sizeof(ki->p_comm), sizeof(p->p_comm)));
 	strncpy(ki->p_ename, p->p_emul->e_name, sizeof(ki->p_ename));
 
 	ki->p_nlwps = p->p_nlwps;
@@ -2316,7 +2337,7 @@ fill_kproc2(struct proc *p, struct kinfo_proc2 *ki, bool zombie)
 		ki->p_nrlwps = p->p_nrlwps;
 		ki->p_forw = 0;
 		ki->p_back = 0;
-		ki->p_addr = PTRTOUINT64(l->l_addr);
+		SET_KERN_ADDR(ki->p_addr, PTRTOUINT64(l->l_addr), allowaddr);
 		ki->p_stat = l->l_stat;
 		ki->p_flag |= sysctl_map_flags(sysctl_lwpflagmap, l->l_flag);
 		ki->p_swtime = l->l_swtime;
@@ -2329,7 +2350,7 @@ fill_kproc2(struct proc *p, struct kinfo_proc2 *ki, bool zombie)
 		ki->p_usrpri = l->l_priority;
 		if (l->l_wchan)
 			strncpy(ki->p_wmesg, l->l_wmesg, sizeof(ki->p_wmesg));
-		ki->p_wchan = PTRTOUINT64(l->l_wchan);
+		SET_KERN_ADDR(ki->p_wchan, PTRTOUINT64(l->l_wchan), allowaddr);
 		ki->p_cpuid = cpu_index(l->l_cpu);
 		lwp_unlock(l);
 		LIST_FOREACH(l, &p->p_lwps, l_sibling) {
@@ -2353,12 +2374,13 @@ fill_kproc2(struct proc *p, struct kinfo_proc2 *ki, bool zombie)
 		if (SESS_LEADER(p))
 			ki->p_eflag |= EPROC_SLEADER;
 		strncpy(ki->p_login, p->p_session->s_login,
-		    min(sizeof ki->p_login - 1, sizeof p->p_session->s_login));
+		    uimin(sizeof ki->p_login - 1, sizeof p->p_session->s_login));
 		ki->p_jobc = p->p_pgrp->pg_jobc;
 		if ((p->p_lflag & PL_CONTROLT) && (tp = p->p_session->s_ttyp)) {
 			ki->p_tdev = tp->t_dev;
 			ki->p_tpgid = tp->t_pgrp ? tp->t_pgrp->pg_id : NO_PGID;
-			ki->p_tsess = PTRTOUINT64(tp->t_session);
+			SET_KERN_ADDR(ki->p_tsess, PTRTOUINT64(tp->t_session),
+			    allowaddr);
 		} else {
 			ki->p_tdev = (int32_t)NODEV;
 		}

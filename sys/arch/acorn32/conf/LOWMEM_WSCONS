@@ -1,4 +1,4 @@
-#	$NetBSD: LOWMEM_WSCONS,v 1.72.2.2 2018/06/25 07:25:38 pgoyette Exp $
+#	$NetBSD: LOWMEM_WSCONS,v 1.72.2.3 2018/09/06 06:55:23 pgoyette Exp $
 #
 #	LOWMEM_WSCONS -- RiscPC config with wscons for SMALL machines
 #
@@ -257,7 +257,7 @@ pseudo-device	loop			# network loopback
 #pseudo-device	sl			# CSLIP
 pseudo-device	ppp			# PPP
 #pseudo-device	tun			# network tunneling over tty
-#pseudo-device	ipfilter		# ip filter
+#pseudo-device	npf			# NPF packet filter
 #pseudo-device	strip			# STRIP
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	vnd			# disk-like interface to files

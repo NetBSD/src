@@ -1,5 +1,5 @@
 /* Process source files and output type information.
-   Copyright (C) 2006-2015 Free Software Foundation, Inc.
+   Copyright (C) 2006-2016 Free Software Foundation, Inc.
 
    This file is part of GCC.
 
@@ -274,15 +274,11 @@ require_template_declaration (const char *tmpl_name)
 	  str = concat (str, "enum ", (char *) 0);
 	  continue;
 	}
-      if (token () == NUM)
+      if (token () == NUM
+	  || token () == ':'
+	  || token () == '+')
 	{
 	  str = concat (str, advance (), (char *) 0);
-	  continue;
-	}
-      if (token () == ':')
-	{
-	  advance ();
-	  str = concat (str, ":", (char *) 0);
 	  continue;
 	}
       if (token () == '<')

@@ -1,5 +1,5 @@
 /* Integrated Register Allocator (IRA) intercommunication header file.
-   Copyright (C) 2006-2015 Free Software Foundation, Inc.
+   Copyright (C) 2006-2016 Free Software Foundation, Inc.
    Contributed by Vladimir Makarov <vmakarov@redhat.com>.
 
 This file is part of GCC.
@@ -21,14 +21,12 @@ along with GCC; see the file COPYING3.  If not see
 #ifndef GCC_IRA_INT_H
 #define GCC_IRA_INT_H
 
-#include "cfgloop.h"
-#include "ira.h"
-#include "alloc-pool.h"
+#include "recog.h"
 
 /* To provide consistency in naming, all IRA external variables,
    functions, common typedefs start with prefix ira_.  */
 
-#ifdef ENABLE_CHECKING
+#if CHECKING_P
 #define ENABLE_IRA_CHECKING
 #endif
 

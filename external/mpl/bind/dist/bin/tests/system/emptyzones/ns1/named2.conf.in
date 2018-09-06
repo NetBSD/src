@@ -1,0 +1,46 @@
+/*
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
+ */
+
+key rndc_key {
+	algorithm       hmac-sha256;
+	secret          "1234abcd8765";
+};
+
+controls {
+	inet 10.53.0.1 port @CONTROLPORT@ allow { any; } keys { rndc_key; };
+};
+
+options {
+	query-source address 10.53.0.1 dscp 1;
+	notify-source 10.53.0.1 dscp 2;
+	transfer-source 10.53.0.1 dscp 3;
+	port @PORT@;
+	pid-file "named.pid";
+	listen-on { 10.53.0.1; };
+	listen-on-v6 { none; };
+	recursion yes;
+	deny-answer-addresses { 192.0.2.0/24; 2001:db8:beef::/48; }
+		 except-from { "example.org"; };
+	deny-answer-aliases { "example.org"; }
+		except-from { "goodcname.example.net";
+			      "gooddname.example.net"; };
+	allow-query {!10.53.0.8; any; };
+	allow-transfer { none; };
+};
+
+zone "." {
+	type hint;
+	file "root.hint";
+};
+
+zone "1.10.in-addr.arpa" {
+	type master; file "empty.db";
+};

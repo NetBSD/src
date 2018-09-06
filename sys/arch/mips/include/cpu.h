@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.123.2.1 2018/03/15 09:12:03 pgoyette Exp $	*/
+/*	$NetBSD: cpu.h,v 1.123.2.2 2018/09/06 06:55:37 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -289,13 +289,5 @@ void	cpu_vmspace_exec(struct lwp *, vaddr_t, vaddr_t);
 #define CPU_ROOT_DEVICE		3	/* string: root device name */
 #define CPU_LLSC		4	/* OS/CPU supports LL/SC instruction */
 #define CPU_LMMI		5	/* Loongson multimedia instructions */
-
-/*
- * Platform can override, but note this breaks userland compatibility
- * with other mips platforms.
- */
-#ifndef CPU_MAXID
-#define CPU_MAXID		5	/* number of valid machdep ids */
-#endif
 
 #endif /* _CPU_H_ */

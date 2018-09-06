@@ -1,4 +1,4 @@
-/*	$NetBSD: delay.h,v 1.4 2016/02/19 21:08:19 skrll Exp $	*/
+/*	$NetBSD: delay.h,v 1.4.16.1 2018/09/06 06:56:36 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@ static inline void
 ndelay(unsigned int nsec)
 {
 
-	DELAY(nsec / 1000);
+	DELAY((nsec + 999) / 1000);
 }
 
 #endif  /* _LINUX_DELAY_H_ */

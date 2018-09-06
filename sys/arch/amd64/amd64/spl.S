@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.31.2.2 2018/07/28 04:37:26 pgoyette Exp $	*/
+/*	$NetBSD: spl.S,v 1.31.2.3 2018/09/06 06:55:24 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -65,6 +65,7 @@
  */
 
 #include "opt_ddb.h"
+#include "opt_kasan.h"
 
 #define ALIGN_TEXT	.align 16,0x90
 
@@ -104,6 +105,17 @@ IDTVEC(softintr)
 	movq	L_PCB(%rdi),%rdx
 	movq	L_PCB(%r15),%rcx
 	movq	%rdi,CPUVAR(CURLWP)
+
+#ifdef KASAN
+	/* clear the new stack */
+	pushq	%rax
+	pushq	%rdx
+	pushq	%rcx
+	callq	_C_LABEL(kasan_softint)
+	popq	%rcx
+	popq	%rdx
+	popq	%rax
+#endif
 
 	/* save old context */
 	movq	%rsp,PCB_RSP(%rcx)

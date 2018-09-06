@@ -1,3 +1,5 @@
+/*	$NetBSD: via_verifier.c,v 1.1.1.1.36.1 2018/09/06 06:56:34 pgoyette Exp $	*/
+
 /*
  * Copyright 2004 The Unichrome Project. All Rights Reserved.
  * Copyright 2005 Thomas Hellstrom. All Rights Reserved.
@@ -28,9 +30,13 @@
  * be very slow.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: via_verifier.c,v 1.1.1.1.36.1 2018/09/06 06:56:34 pgoyette Exp $");
+
 #include "via_3d_reg.h"
 #include <drm/drmP.h>
 #include <drm/via_drm.h>
+#include <drm/drm_legacy.h>
 #include "via_verifier.h"
 #include "via_drv.h"
 

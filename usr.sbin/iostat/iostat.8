@@ -1,4 +1,4 @@
-.\"	$NetBSD: iostat.8,v 1.25 2017/03/05 23:07:12 mlelstv Exp $
+.\"	$NetBSD: iostat.8,v 1.25.10.1 2018/09/06 06:56:51 pgoyette Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,14 +29,12 @@
 .\"
 .\"	from: @(#)iostat.8	8.1 (Berkeley) 6/6/93
 .\"
-.Dd July 9, 2015
+.Dd July 29, 2018
 .Dt IOSTAT 8
 .Os
 .Sh NAME
 .Nm iostat
-.Nd report
-.Tn I/O
-statistics
+.Nd report I/O statistics
 .Sh SYNOPSIS
 .Nm
 .Op Fl CdDITxy
@@ -45,9 +43,7 @@ statistics
 .Op Ar drives
 .Sh DESCRIPTION
 .Nm
-displays kernel
-.Tn I/O
-statistics on terminal, disk and CPU operations.
+displays kernel I/O statistics on terminal, disk and CPU operations.
 By default,
 .Nm
 displays one line of statistics averaged over the machine's run time.
@@ -162,7 +158,6 @@ Kilobytes transferred per disk transfer
 transfers per second
 .It MB/s
 Megabytes transferred per second
-.Pp
 .El
 The alternative display format, (selected with
 .Fl D ) ,
@@ -174,7 +169,6 @@ Kilobytes transferred
 Disk transfers
 .It time
 Seconds spent in disk activity
-.Pp
 .El
 With the
 .Fl y
@@ -201,6 +195,8 @@ and is then shown as zeros.
 % of CPU time in user mode running niced processes
 .It \&sy
 % of CPU time in system mode
+.It \&in
+% of CPU time in interrupt mode
 .It \&id
 % of CPU time in idle mode
 .El
@@ -209,7 +205,7 @@ and is then shown as zeros.
 .Xr fstat 1 ,
 .Xr netstat 1 ,
 .Xr nfsstat 1 ,
-.Xr \&ps 1 ,
+.Xr ps 1 ,
 .Xr systat 1 ,
 .Xr vmstat 1 ,
 .Xr fnmatch 3 ,

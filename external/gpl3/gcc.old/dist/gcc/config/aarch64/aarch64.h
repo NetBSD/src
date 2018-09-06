@@ -1,5 +1,5 @@
 /* Machine description for AArch64 architecture.
-   Copyright (C) 2009-2015 Free Software Foundation, Inc.
+   Copyright (C) 2009-2016 Free Software Foundation, Inc.
    Contributed by ARM Ltd.
 
    This file is part of GCC.
@@ -23,79 +23,12 @@
 #define GCC_AARCH64_H
 
 /* Target CPU builtins.  */
-#define TARGET_CPU_CPP_BUILTINS()			\
-  do							\
-    {							\
-      builtin_define ("__aarch64__");                   \
-      builtin_define ("__ARM_64BIT_STATE");             \
-      builtin_define_with_int_value                     \
-        ("__ARM_ARCH", aarch64_architecture_version);   \
-      cpp_define_formatted                                              \
-        (parse_in, "__ARM_ARCH_%dA", aarch64_architecture_version);     \
-      builtin_define ("__ARM_ARCH_ISA_A64");            \
-      builtin_define_with_int_value                     \
-        ("__ARM_ARCH_PROFILE", 'A');                    \
-      builtin_define ("__ARM_FEATURE_CLZ");             \
-      builtin_define ("__ARM_FEATURE_IDIV");            \
-      builtin_define ("__ARM_FEATURE_UNALIGNED");       \
-      if (flag_unsafe_math_optimizations)               \
-        builtin_define ("__ARM_FP_FAST");               \
-      builtin_define ("__ARM_PCS_AAPCS64");             \
-      builtin_define_with_int_value                     \
-        ("__ARM_SIZEOF_WCHAR_T", WCHAR_TYPE_SIZE / 8);  \
-      builtin_define_with_int_value                     \
-        ("__ARM_SIZEOF_MINIMAL_ENUM",                   \
-         flag_short_enums? 1 : 4);                      \
-      if (TARGET_BIG_END)				\
-        {                                               \
-          builtin_define ("__AARCH64EB__");             \
-          builtin_define ("__ARM_BIG_ENDIAN");          \
-        }                                               \
-      else						\
-	builtin_define ("__AARCH64EL__");		\
-							\
-      if (TARGET_FLOAT)                                         \
-        {                                                       \
-          builtin_define ("__ARM_FEATURE_FMA");                 \
-          builtin_define_with_int_value ("__ARM_FP", 0x0C);     \
-        }                                                       \
-      if (TARGET_SIMD)                                          \
-        {                                                       \
-          builtin_define ("__ARM_FEATURE_NUMERIC_MAXMIN");      \
-          builtin_define ("__ARM_NEON");			\
-          builtin_define_with_int_value ("__ARM_NEON_FP", 0x0C);\
-        }                                                       \
-							        \
-      if (TARGET_CRC32)				        \
-	builtin_define ("__ARM_FEATURE_CRC32");		\
-							\
-      switch (aarch64_cmodel)				\
-	{						\
-	  case AARCH64_CMODEL_TINY:			\
-	  case AARCH64_CMODEL_TINY_PIC:			\
-	    builtin_define ("__AARCH64_CMODEL_TINY__");	\
-	    break;					\
-	  case AARCH64_CMODEL_SMALL:			\
-	  case AARCH64_CMODEL_SMALL_PIC:		\
-	    builtin_define ("__AARCH64_CMODEL_SMALL__");\
-	    break;					\
-	  case AARCH64_CMODEL_LARGE:			\
-	    builtin_define ("__AARCH64_CMODEL_LARGE__");	\
-	    break;					\
-	  default:					\
-	    break;					\
-	}						\
-							\
-      if (TARGET_ILP32)					\
-	{						\
-	  cpp_define (parse_in, "_ILP32");		\
-	  cpp_define (parse_in, "__ILP32__");		\
-	}						\
-      if (TARGET_CRYPTO)				\
-	builtin_define ("__ARM_FEATURE_CRYPTO");	\
-    } while (0)
+#define TARGET_CPU_CPP_BUILTINS()	\
+  aarch64_cpu_cpp_builtins (pfile)
 
 
+
+#define REGISTER_TARGET_PRAGMAS() aarch64_register_pragmas ()
 
 /* Target machine storage layout.  */
 
@@ -151,8 +84,6 @@
 
 #define LONG_DOUBLE_TYPE_SIZE	128
 
-#define TARGET_SUPPORTS_WIDE_INT 1
-
 /* The architecture reserves all bits of the address for hardware use,
    so the vbit must go into the delta field of pointers to member
    functions.  This is the same config as that in the AArch32
@@ -200,8 +131,10 @@ extern unsigned aarch64_architecture_version;
 #define AARCH64_FL_SIMD       (1 << 0)	/* Has SIMD instructions.  */
 #define AARCH64_FL_FP         (1 << 1)	/* Has FP.  */
 #define AARCH64_FL_CRYPTO     (1 << 2)	/* Has crypto.  */
-#define AARCH64_FL_SLOWMUL    (1 << 3)	/* A slow multiply core.  */
-#define AARCH64_FL_CRC        (1 << 4)	/* Has CRC.  */
+#define AARCH64_FL_CRC        (1 << 3)	/* Has CRC.  */
+/* ARMv8.1 architecture extensions.  */
+#define AARCH64_FL_LSE	      (1 << 4)  /* Has Large System Extensions.  */
+#define AARCH64_FL_V8_1	      (1 << 5)  /* Has ARMv8.1 extensions.  */
 
 /* Has FP and SIMD.  */
 #define AARCH64_FL_FPSIMD     (AARCH64_FL_FP | AARCH64_FL_SIMD)
@@ -211,23 +144,57 @@ extern unsigned aarch64_architecture_version;
 
 /* Architecture flags that effect instruction selection.  */
 #define AARCH64_FL_FOR_ARCH8       (AARCH64_FL_FPSIMD)
+#define AARCH64_FL_FOR_ARCH8_1			       \
+  (AARCH64_FL_FOR_ARCH8 | AARCH64_FL_LSE | AARCH64_FL_CRC | AARCH64_FL_V8_1)
 
 /* Macros to test ISA flags.  */
-extern unsigned long aarch64_isa_flags;
+
 #define AARCH64_ISA_CRC            (aarch64_isa_flags & AARCH64_FL_CRC)
 #define AARCH64_ISA_CRYPTO         (aarch64_isa_flags & AARCH64_FL_CRYPTO)
 #define AARCH64_ISA_FP             (aarch64_isa_flags & AARCH64_FL_FP)
 #define AARCH64_ISA_SIMD           (aarch64_isa_flags & AARCH64_FL_SIMD)
-
-/* Macros to test tuning flags.  */
-extern unsigned long aarch64_tune_flags;
-#define AARCH64_TUNE_SLOWMUL       (aarch64_tune_flags & AARCH64_FL_SLOWMUL)
+#define AARCH64_ISA_LSE		   (aarch64_isa_flags & AARCH64_FL_LSE)
+#define AARCH64_ISA_RDMA	   (aarch64_isa_flags & AARCH64_FL_V8_1)
 
 /* Crypto is an optional extension to AdvSIMD.  */
 #define TARGET_CRYPTO (TARGET_SIMD && AARCH64_ISA_CRYPTO)
 
 /* CRC instructions that can be enabled through +crc arch extension.  */
 #define TARGET_CRC32 (AARCH64_ISA_CRC)
+
+/* Atomic instructions that can be enabled through the +lse extension.  */
+#define TARGET_LSE (AARCH64_ISA_LSE)
+
+/* Make sure this is always defined so we don't have to check for ifdefs
+   but rather use normal ifs.  */
+#ifndef TARGET_FIX_ERR_A53_835769_DEFAULT
+#define TARGET_FIX_ERR_A53_835769_DEFAULT 0
+#else
+#undef TARGET_FIX_ERR_A53_835769_DEFAULT
+#define TARGET_FIX_ERR_A53_835769_DEFAULT 1
+#endif
+
+/* Apply the workaround for Cortex-A53 erratum 835769.  */
+#define TARGET_FIX_ERR_A53_835769	\
+  ((aarch64_fix_a53_err835769 == 2)	\
+  ? TARGET_FIX_ERR_A53_835769_DEFAULT : aarch64_fix_a53_err835769)
+
+/* Make sure this is always defined so we don't have to check for ifdefs
+   but rather use normal ifs.  */
+#ifndef TARGET_FIX_ERR_A53_843419_DEFAULT
+#define TARGET_FIX_ERR_A53_843419_DEFAULT 0
+#else
+#undef TARGET_FIX_ERR_A53_843419_DEFAULT
+#define TARGET_FIX_ERR_A53_843419_DEFAULT 1
+#endif
+
+/* Apply the workaround for Cortex-A53 erratum 843419.  */
+#define TARGET_FIX_ERR_A53_843419	\
+  ((aarch64_fix_a53_err843419 == 2)	\
+  ? TARGET_FIX_ERR_A53_843419_DEFAULT : aarch64_fix_a53_err843419)
+
+/* ARMv8.1 Adv.SIMD support.  */
+#define TARGET_SIMD_RDMA (TARGET_SIMD && AARCH64_ISA_RDMA)
 
 /* Standard register usage.  */
 
@@ -418,9 +385,13 @@ extern unsigned long aarch64_tune_flags;
 #define ASM_PREFERRED_EH_DATA_FORMAT(CODE, GLOBAL) \
   aarch64_asm_preferred_eh_data_format ((CODE), (GLOBAL))
 
-/* The register that holds the return address in exception handlers.  */
-#define AARCH64_EH_STACKADJ_REGNUM	(R0_REGNUM + 4)
-#define EH_RETURN_STACKADJ_RTX	gen_rtx_REG (Pmode, AARCH64_EH_STACKADJ_REGNUM)
+/* Output the assembly strings we want to add to a function definition.  */
+#define ASM_DECLARE_FUNCTION_NAME(STR, NAME, DECL)	\
+  aarch64_declare_function_name (STR, NAME, DECL)
+
+/* For EH returns X4 contains the stack adjustment.  */
+#define EH_RETURN_STACKADJ_RTX	gen_rtx_REG (Pmode, R4_REGNUM)
+#define EH_RETURN_HANDLER_RTX  aarch64_eh_return_handler_rtx ()
 
 /* Don't use __builtin_setjmp until we've defined it.  */
 #undef DONT_USE_BUILTIN_SETJMP
@@ -508,7 +479,7 @@ enum reg_class
 
 enum target_cpus
 {
-#define AARCH64_CORE(NAME, INTERNAL_IDENT, SCHED, ARCH, FLAGS, COSTS) \
+#define AARCH64_CORE(NAME, INTERNAL_IDENT, SCHED, ARCH, FLAGS, COSTS, IMP, PART) \
   TARGET_CPU_##INTERNAL_IDENT,
 #include "aarch64-cores.def"
 #undef AARCH64_CORE
@@ -556,12 +527,6 @@ extern enum aarch64_processor aarch64_tune;
   gen_rtx_REG (MODE, FLOAT_MODE_P (MODE) ? V0_REGNUM : R0_REGNUM)
 
 #define DEFAULT_PCC_STRUCT_RETURN 0
-
-#define AARCH64_ROUND_UP(X, ALIGNMENT) \
-  (((X) + ((ALIGNMENT) - 1)) & ~((ALIGNMENT) - 1))
-
-#define AARCH64_ROUND_DOWN(X, ALIGNMENT) \
-  ((X) & ~((ALIGNMENT) - 1))
 
 #ifdef HOST_WIDE_INT
 struct GTY (()) aarch64_frame
@@ -825,7 +790,8 @@ do {									     \
 #define TRAMPOLINE_SECTION text_section
 
 /* To start with.  */
-#define BRANCH_COST(SPEED_P, PREDICTABLE_P) 2
+#define BRANCH_COST(SPEED_P, PREDICTABLE_P) \
+  (aarch64_branch_cost (SPEED_P, PREDICTABLE_P))
 
 
 /* Assembly output.  */
@@ -840,11 +806,6 @@ do {									     \
 
 /* Jump table alignment is explicit in ASM_OUTPUT_CASE_LABEL.  */
 #define ADDR_VEC_ALIGN(JUMPTABLE) 0
-
-#define PRINT_OPERAND(STREAM, X, CODE) aarch64_print_operand (STREAM, X, CODE)
-
-#define PRINT_OPERAND_ADDRESS(STREAM, X) \
-  aarch64_print_operand_address (STREAM, X)
 
 #define MCOUNT_NAME "_mcount"
 
@@ -897,6 +858,9 @@ do {									     \
 #define HARD_REGNO_CALL_PART_CLOBBERED(REGNO, MODE) \
 		(FP_REGNUM_P (REGNO) && GET_MODE_SIZE (MODE) > 8)
 
+#undef SWITCHABLE_TARGET
+#define SWITCHABLE_TARGET 1
+
 /* Check TLS Descriptors mechanism is selected.  */
 #define TARGET_TLS_DESC (aarch64_tls_dialect == TLS_DESCRIPTORS)
 
@@ -912,10 +876,19 @@ extern enum aarch64_code_model aarch64_cmodel;
   (aarch64_cmodel == AARCH64_CMODEL_TINY		\
    || aarch64_cmodel == AARCH64_CMODEL_TINY_PIC)
 
+#define TARGET_SUPPORTS_WIDE_INT 1
+
+/* Modes valid for AdvSIMD D registers, i.e. that fit in half a Q register.  */
+#define AARCH64_VALID_SIMD_DREG_MODE(MODE) \
+  ((MODE) == V2SImode || (MODE) == V4HImode || (MODE) == V8QImode \
+   || (MODE) == V2SFmode || (MODE) == V4HFmode || (MODE) == DImode \
+   || (MODE) == DFmode)
+
 /* Modes valid for AdvSIMD Q registers.  */
 #define AARCH64_VALID_SIMD_QREG_MODE(MODE) \
   ((MODE) == V4SImode || (MODE) == V8HImode || (MODE) == V16QImode \
-   || (MODE) == V4SFmode || (MODE) == V2DImode || mode == V2DFmode)
+   || (MODE) == V4SFmode || (MODE) == V8HFmode || (MODE) == V2DImode \
+   || (MODE) == V2DFmode)
 
 #define ENDIAN_LANE_N(mode, n)  \
   (BYTES_BIG_ENDIAN ? GET_MODE_NUNITS (mode) - 1 - n : n)
@@ -927,19 +900,39 @@ extern enum aarch64_code_model aarch64_cmodel;
   {"arch", "%{!march=*:%{!mcpu=*:-march=%(VALUE)}}" },	\
   {"cpu",  "%{!march=*:%{!mcpu=*:-mcpu=%(VALUE)}}" },
 
-#define BIG_LITTLE_SPEC \
-   " %{mcpu=*:-mcpu=%:rewrite_mcpu(%{mcpu=*:%*})}"
+#define MCPU_TO_MARCH_SPEC \
+   " %{mcpu=*:-march=%:rewrite_mcpu(%{mcpu=*:%*})}"
 
 extern const char *aarch64_rewrite_mcpu (int argc, const char **argv);
-#define BIG_LITTLE_CPU_SPEC_FUNCTIONS \
+#define MCPU_TO_MARCH_SPEC_FUNCTIONS \
   { "rewrite_mcpu", aarch64_rewrite_mcpu },
 
-#define ASM_CPU_SPEC \
-   BIG_LITTLE_SPEC
+#if defined(__aarch64__)
+extern const char *host_detect_local_cpu (int argc, const char **argv);
+# define EXTRA_SPEC_FUNCTIONS						\
+  { "local_cpu_detect", host_detect_local_cpu },			\
+  MCPU_TO_MARCH_SPEC_FUNCTIONS
 
-#define EXTRA_SPEC_FUNCTIONS BIG_LITTLE_CPU_SPEC_FUNCTIONS
+# define MCPU_MTUNE_NATIVE_SPECS					\
+   " %{march=native:%<march=native %:local_cpu_detect(arch)}"		\
+   " %{mcpu=native:%<mcpu=native %:local_cpu_detect(cpu)}"		\
+   " %{mtune=native:%<mtune=native %:local_cpu_detect(tune)}"
+#else
+# define MCPU_MTUNE_NATIVE_SPECS ""
+# define EXTRA_SPEC_FUNCTIONS MCPU_TO_MARCH_SPEC_FUNCTIONS
+#endif
+
+#define ASM_CPU_SPEC \
+   MCPU_TO_MARCH_SPEC
 
 #define EXTRA_SPECS						\
   { "asm_cpu_spec",		ASM_CPU_SPEC }
+
+#define ASM_OUTPUT_POOL_EPILOGUE  aarch64_asm_output_pool_epilogue
+
+/* This type is the user-visible __fp16, and a pointer to that type.  We
+   need it in many places in the backend.  Defined in aarch64-builtins.c.  */
+extern tree aarch64_fp16_type_node;
+extern tree aarch64_fp16_ptr_type_node;
 
 #endif /* GCC_AARCH64_H */

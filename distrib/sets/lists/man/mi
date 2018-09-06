@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1577.2.4 2018/07/28 04:33:00 pgoyette Exp $
+# $NetBSD: mi,v 1.1577.2.5 2018/09/06 06:51:42 pgoyette Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1071,7 +1071,7 @@
 ./usr/share/man/cat4/esp.0			man-sys-catman		.cat
 ./usr/share/man/cat4/ess.0			man-sys-catman		.cat
 ./usr/share/man/cat4/et.0			man-sys-catman		.cat
-./usr/share/man/cat4/etherip.0			man-sys-catman		.cat
+./usr/share/man/cat4/etherip.0			man-obsolete		obsolete
 ./usr/share/man/cat4/etphy.0			man-sys-catman		.cat
 ./usr/share/man/cat4/evbarm/bcmgpio.0		man-sys-catman		.cat
 ./usr/share/man/cat4/evbarm/cpsw.0		man-sys-catman		.cat
@@ -1261,7 +1261,7 @@
 ./usr/share/man/cat4/i386/lpt.0			man-obsolete		obsolete
 ./usr/share/man/cat4/i386/mem.0			man-obsolete		obsolete
 ./usr/share/man/cat4/i386/mms.0			man-sys-catman		.cat
-./usr/share/man/cat4/i386/ndis.0		man-sys-catman		.cat
+./usr/share/man/cat4/i386/ndis.0		man-obsolete		obsolete
 ./usr/share/man/cat4/i386/npx.0			man-obsolete		obsolete
 ./usr/share/man/cat4/i386/olms.0		man-obsolete		obsolete
 ./usr/share/man/cat4/i386/omms.0		man-obsolete		obsolete
@@ -1455,6 +1455,7 @@
 ./usr/share/man/cat4/mt2131.0			man-sys-catman		.cat
 ./usr/share/man/cat4/mtd.0			man-sys-catman		.cat
 ./usr/share/man/cat4/mtio.0			man-sys-catman		.cat
+./usr/share/man/cat4/mue.0			man-sys-catman		.cat
 ./usr/share/man/cat4/multicast.0		man-sys-catman		.cat
 ./usr/share/man/cat4/music.0			man-sys-catman		.cat
 ./usr/share/man/cat4/mvme68k/autoconf.0		man-sys-catman		.cat
@@ -1494,7 +1495,7 @@
 ./usr/share/man/cat4/nside.0			man-sys-catman		.cat
 ./usr/share/man/cat4/nsip.0			man-obsolete		obsolete
 ./usr/share/man/cat4/nsmb.0			man-sys-catman		.cat
-./usr/share/man/cat4/nsp.0			man-sys-catman		.cat
+./usr/share/man/cat4/nsp.0			man-obsolete		obsolete
 ./usr/share/man/cat4/nsphy.0			man-sys-catman		.cat
 ./usr/share/man/cat4/nsphyter.0			man-sys-catman		.cat
 ./usr/share/man/cat4/ntwo.0			man-sys-catman		.cat
@@ -1642,6 +1643,7 @@
 ./usr/share/man/cat4/schide.0			man-sys-catman		.cat
 ./usr/share/man/cat4/scsi.0			man-sys-catman		.cat
 ./usr/share/man/cat4/scsibus.0			man-sys-catman		.cat
+./usr/share/man/cat4/sctp.0			man-sys-catman		.cat
 ./usr/share/man/cat4/sd.0			man-sys-catman		.cat
 ./usr/share/man/cat4/sdhc.0			man-sys-catman		.cat
 ./usr/share/man/cat4/sdmmc.0			man-sys-catman		.cat
@@ -1866,6 +1868,7 @@
 ./usr/share/man/cat4/ukyopon.0			man-sys-catman		.cat
 ./usr/share/man/cat4/ulpt.0			man-sys-catman		.cat
 ./usr/share/man/cat4/umass.0			man-sys-catman		.cat
+./usr/share/man/cat4/umb.0			man-sys-catman		.cat
 ./usr/share/man/cat4/umcs.0			man-sys-catman		.cat
 ./usr/share/man/cat4/umct.0			man-sys-catman		.cat
 ./usr/share/man/cat4/umidi.0			man-sys-catman		.cat
@@ -2600,7 +2603,7 @@
 ./usr/share/man/cat8/i386/makedev.0		man-obsolete		obsolete
 ./usr/share/man/cat8/i386/mbr.0			man-obsolete		obsolete
 ./usr/share/man/cat8/i386/multiboot.0		man-obsolete		obsolete
-./usr/share/man/cat8/i386/ndiscvt.0		man-netutil-catman	.cat
+./usr/share/man/cat8/i386/ndiscvt.0		man-obsolete		obsolete
 ./usr/share/man/cat8/i386/pxeboot.0		man-obsolete		obsolete
 ./usr/share/man/cat8/i386/reboot.0		man-obsolete		obsolete
 ./usr/share/man/cat8/i386/reboot_i386.0		man-obsolete		obsolete
@@ -2692,7 +2695,7 @@
 ./usr/share/man/cat8/lvresize.0			man-lvm-catman		lvm,.cat
 ./usr/share/man/cat8/lvs.0			man-lvm-catman		lvm,.cat
 ./usr/share/man/cat8/lvscan.0			man-lvm-catman		lvm,.cat
-./usr/share/man/cat8/lwresd.0			man-bind-catman		.cat
+./usr/share/man/cat8/lwresd.0			man-obsolete		obsolete
 ./usr/share/man/cat8/mac68k/MAKEDEV.0		man-obsolete		obsolete
 ./usr/share/man/cat8/mac68k/boot.0		man-sys-catman		.cat
 ./usr/share/man/cat8/mac68k/makedev.0		man-obsolete		obsolete
@@ -3152,6 +3155,7 @@
 ./usr/share/man/cat8/trsp.0			man-obsolete		obsolete
 ./usr/share/man/cat8/ttyflags.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/tunefs.0			man-sysutil-catman	.cat
+./usr/share/man/cat8/umbctl.0			man-isdn-catman		.cat
 ./usr/share/man/cat8/umount.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/unbound-anchor.0		man-netutil-catman	.cat,unbound
 ./usr/share/man/cat8/unbound-checkconf.0	man-netutil-catman	.cat,unbound
@@ -4218,7 +4222,7 @@
 ./usr/share/man/html4/esp.html			man-sys-htmlman		html
 ./usr/share/man/html4/ess.html			man-sys-htmlman		html
 ./usr/share/man/html4/et.html			man-sys-htmlman		html
-./usr/share/man/html4/etherip.html		man-sys-htmlman		html
+./usr/share/man/html4/etherip.html		man-obsolete		obsolete
 ./usr/share/man/html4/etphy.html		man-sys-htmlman		html
 ./usr/share/man/html4/evbarm/bcmgpio.html	man-sys-htmlman		html
 ./usr/share/man/html4/evbarm/cpsw.html		man-sys-htmlman		html
@@ -4393,7 +4397,7 @@
 ./usr/share/man/html4/i386/lpt.html		man-obsolete		obsolete
 ./usr/share/man/html4/i386/mem.html		man-obsolete		obsolete
 ./usr/share/man/html4/i386/mms.html		man-sys-htmlman		html
-./usr/share/man/html4/i386/ndis.html		man-sys-htmlman		html
+./usr/share/man/html4/i386/ndis.html		man-obsolete		obsolete
 ./usr/share/man/html4/i386/npx.html		man-obsolete		obsolete
 ./usr/share/man/html4/i386/pcibios.html		man-sys-htmlman		html
 ./usr/share/man/html4/i386/pnpbios.html		man-sys-htmlman		html
@@ -4563,6 +4567,7 @@
 ./usr/share/man/html4/mt2131.html		man-sys-htmlman		html
 ./usr/share/man/html4/mtd.html			man-sys-htmlman		html
 ./usr/share/man/html4/mtio.html			man-sys-htmlman		html
+./usr/share/man/html4/mue.html			man-sys-htmlman		html
 ./usr/share/man/html4/multicast.html		man-sys-htmlman		html
 ./usr/share/man/html4/music.html		man-sys-htmlman		html
 ./usr/share/man/html4/mvme68k/autoconf.html	man-sys-htmlman		html
@@ -4598,7 +4603,7 @@
 ./usr/share/man/html4/nsclpcsio.html		man-sys-htmlman		html
 ./usr/share/man/html4/nside.html		man-sys-htmlman		html
 ./usr/share/man/html4/nsmb.html			man-sys-htmlman		html
-./usr/share/man/html4/nsp.html			man-sys-htmlman		html
+./usr/share/man/html4/nsp.html			man-obsolete		obsolete
 ./usr/share/man/html4/nsphy.html		man-sys-htmlman		html
 ./usr/share/man/html4/nsphyter.html		man-sys-htmlman		html
 ./usr/share/man/html4/ntwo.html			man-sys-htmlman		html
@@ -4722,6 +4727,7 @@
 ./usr/share/man/html4/schide.html		man-sys-htmlman		html
 ./usr/share/man/html4/scsi.html			man-sys-htmlman		html
 ./usr/share/man/html4/scsibus.html		man-sys-htmlman		html
+./usr/share/man/html4/sctp.html			man-sys-htmlman		html
 ./usr/share/man/html4/sd.html			man-sys-htmlman		html
 ./usr/share/man/html4/sdhc.html			man-sys-htmlman		html
 ./usr/share/man/html4/sdmmc.html		man-sys-htmlman		html
@@ -4937,6 +4943,7 @@
 ./usr/share/man/html4/ukyopon.html		man-sys-htmlman		html
 ./usr/share/man/html4/ulpt.html			man-sys-htmlman		html
 ./usr/share/man/html4/umass.html		man-sys-htmlman		html
+./usr/share/man/html4/umb.html			man-sys-htmlman		html
 ./usr/share/man/html4/umcs.html			man-sys-htmlman		html
 ./usr/share/man/html4/umct.html			man-sys-htmlman		html
 ./usr/share/man/html4/umidi.html		man-sys-htmlman		html
@@ -5565,7 +5572,7 @@
 ./usr/share/man/html8/i386/dosboot.html		man-obsolete		obsolete
 ./usr/share/man/html8/i386/mbr.html		man-obsolete		obsolete
 ./usr/share/man/html8/i386/multiboot.html	man-obsolete		obsolete
-./usr/share/man/html8/i386/ndiscvt.html		man-netutil-htmlman	html
+./usr/share/man/html8/i386/ndiscvt.html		man-obsolete		obsolete
 ./usr/share/man/html8/i386/pxeboot.html		man-obsolete		obsolete
 ./usr/share/man/html8/i386/w95boot.html		man-obsolete		obsolete
 ./usr/share/man/html8/iasl.html			man-sysutil-htmlman	html
@@ -5646,7 +5653,7 @@
 ./usr/share/man/html8/lvresize.html		man-lvm-htmlman		lvm,html
 ./usr/share/man/html8/lvs.html			man-lvm-htmlman		lvm,html
 ./usr/share/man/html8/lvscan.html		man-lvm-htmlman		lvm,html
-./usr/share/man/html8/lwresd.html		man-bind-htmlman	html
+./usr/share/man/html8/lwresd.html		man-obsolete		obsolete
 ./usr/share/man/html8/mac68k/boot.html		man-sys-htmlman		html
 ./usr/share/man/html8/macppc/boot.html		man-sys-htmlman		html
 ./usr/share/man/html8/macppc/ofwboot.elf.html	man-sysutil-htmlman	html
@@ -6010,6 +6017,7 @@
 ./usr/share/man/html8/trpt.html			man-netutil-htmlman	html
 ./usr/share/man/html8/ttyflags.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/tunefs.html		man-sysutil-htmlman	html
+./usr/share/man/html8/umbctl.html		man-isdn-htmlman	html
 ./usr/share/man/html8/umount.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/unbound-anchor.html	man-netutil-htmlman	html,unbound
 ./usr/share/man/html8/unbound-checkconf.html	man-netutil-htmlman	html,unbound
@@ -7137,7 +7145,7 @@
 ./usr/share/man/man4/esp.4			man-sys-man		.man
 ./usr/share/man/man4/ess.4			man-sys-man		.man
 ./usr/share/man/man4/et.4			man-sys-man		.man
-./usr/share/man/man4/etherip.4			man-sys-man		.man
+./usr/share/man/man4/etherip.4			man-obsolete		obsolete
 ./usr/share/man/man4/etphy.4			man-sys-man		.man
 ./usr/share/man/man4/evbarm/bcmgpio.4		man-sys-man		.man
 ./usr/share/man/man4/evbarm/cpsw.4		man-sys-man		.man
@@ -7327,7 +7335,7 @@
 ./usr/share/man/man4/i386/lpt.4			man-obsolete		obsolete
 ./usr/share/man/man4/i386/mem.4			man-obsolete		obsolete
 ./usr/share/man/man4/i386/mms.4			man-sys-man		.man
-./usr/share/man/man4/i386/ndis.4		man-sys-man		.man
+./usr/share/man/man4/i386/ndis.4		man-obsolete		obsolete
 ./usr/share/man/man4/i386/npx.4			man-obsolete		obsolete
 ./usr/share/man/man4/i386/olms.4		man-obsolete		obsolete
 ./usr/share/man/man4/i386/omms.4		man-obsolete		obsolete
@@ -7521,6 +7529,7 @@
 ./usr/share/man/man4/mt2131.4			man-sys-man		.man
 ./usr/share/man/man4/mtd.4			man-sys-man		.man
 ./usr/share/man/man4/mtio.4			man-sys-man		.man
+./usr/share/man/man4/mue.4			man-sys-man		.man
 ./usr/share/man/man4/multicast.4		man-sys-man		.man
 ./usr/share/man/man4/music.4			man-sys-man		.man
 ./usr/share/man/man4/mvme68k/autoconf.4		man-sys-man		.man
@@ -7560,7 +7569,7 @@
 ./usr/share/man/man4/nside.4			man-sys-man		.man
 ./usr/share/man/man4/nsip.4			man-obsolete		obsolete
 ./usr/share/man/man4/nsmb.4			man-sys-man		.man
-./usr/share/man/man4/nsp.4			man-sys-man		.man
+./usr/share/man/man4/nsp.4			man-obsolete		obsolete
 ./usr/share/man/man4/nsphy.4			man-sys-man		.man
 ./usr/share/man/man4/nsphyter.4			man-sys-man		.man
 ./usr/share/man/man4/ntwo.4			man-sys-man		.man
@@ -7708,6 +7717,7 @@
 ./usr/share/man/man4/schide.4			man-sys-man		.man
 ./usr/share/man/man4/scsi.4			man-sys-man		.man
 ./usr/share/man/man4/scsibus.4			man-sys-man		.man
+./usr/share/man/man4/sctp.4			man-sys-man		.man
 ./usr/share/man/man4/sd.4			man-sys-man		.man
 ./usr/share/man/man4/sdhc.4			man-sys-man		.man
 ./usr/share/man/man4/sdmmc.4			man-sys-man		.man
@@ -7932,6 +7942,7 @@
 ./usr/share/man/man4/ukyopon.4			man-sys-man		.man
 ./usr/share/man/man4/ulpt.4			man-sys-man		.man
 ./usr/share/man/man4/umass.4			man-sys-man		.man
+./usr/share/man/man4/umb.4			man-sys-man		.man
 ./usr/share/man/man4/umcs.4			man-sys-man		.man
 ./usr/share/man/man4/umct.4			man-sys-man		.man
 ./usr/share/man/man4/umidi.4			man-sys-man		.man
@@ -8665,7 +8676,7 @@
 ./usr/share/man/man8/i386/makedev.8		man-obsolete		obsolete
 ./usr/share/man/man8/i386/mbr.8			man-obsolete		obsolete
 ./usr/share/man/man8/i386/multiboot.8		man-obsolete		obsolete
-./usr/share/man/man8/i386/ndiscvt.8		man-netutil-man		.man
+./usr/share/man/man8/i386/ndiscvt.8		man-obsolete		obsolete
 ./usr/share/man/man8/i386/pxeboot.8		man-obsolete		obsolete
 ./usr/share/man/man8/i386/reboot.8		man-obsolete		obsolete
 ./usr/share/man/man8/i386/reboot_i386.8		man-obsolete		obsolete
@@ -8758,7 +8769,7 @@
 ./usr/share/man/man8/lvresize.8			man-lvm-man		lvm,.man
 ./usr/share/man/man8/lvs.8			man-lvm-man		lvm,.man
 ./usr/share/man/man8/lvscan.8			man-lvm-man		lvm,.man
-./usr/share/man/man8/lwresd.8			man-bind-man		.man
+./usr/share/man/man8/lwresd.8			man-obsolete		obsolete
 ./usr/share/man/man8/mac68k/MAKEDEV.8		man-obsolete		obsolete
 ./usr/share/man/man8/mac68k/boot.8		man-sys-man		.man
 ./usr/share/man/man8/mac68k/makedev.8		man-obsolete		obsolete
@@ -9215,6 +9226,7 @@
 ./usr/share/man/man8/trsp.8			man-obsolete		obsolete
 ./usr/share/man/man8/ttyflags.8			man-sysutil-man		.man
 ./usr/share/man/man8/tunefs.8			man-sysutil-man		.man
+./usr/share/man/man8/umbctl.8			man-isdn-man		.man
 ./usr/share/man/man8/umount.8			man-sysutil-man		.man
 ./usr/share/man/man8/unbound-anchor.8		man-netutil-man		.man,unbound
 ./usr/share/man/man8/unbound-checkconf.8	man-netutil-man		.man,unbound

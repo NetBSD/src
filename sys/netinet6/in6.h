@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.h,v 1.90.2.1 2018/04/22 07:20:28 pgoyette Exp $	*/
+/*	$NetBSD: in6.h,v 1.90.2.2 2018/09/06 06:56:45 pgoyette Exp $	*/
 /*	$KAME: in6.h,v 1.83 2001/03/29 02:55:07 jinmei Exp $	*/
 
 /*
@@ -491,55 +491,6 @@ struct ip6_mtuinfo {
  * Third level is protocol number.
  * Fourth level is desired variable within that protocol.
  */
-#define IPV6PROTO_MAXID	(IPPROTO_PIM + 1)	/* don't list to IPV6PROTO_MAX */
-
-#define CTL_IPV6PROTO_NAMES { \
-	{ 0, 0 }, { 0, 0 }, { 0, 0 }, { 0, 0 }, { 0, 0 }, \
-	{ 0, 0 }, \
-	{ "tcp6", CTLTYPE_NODE }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, { 0, 0 }, { 0, 0 }, { 0, 0 }, { 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ "udp6", CTLTYPE_NODE }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, { 0, 0 }, { 0, 0 }, { 0, 0 }, { 0, 0 }, \
-	{ 0, 0 }, { 0, 0 }, { 0, 0 }, { 0, 0 }, { 0, 0 }, \
-	{ 0, 0 }, { 0, 0 }, { 0, 0 }, { 0, 0 }, { 0, 0 }, \
-	{ 0, 0 }, { 0, 0 }, { 0, 0 }, { 0, 0 }, { 0, 0 }, \
-	{ 0, 0 }, \
-	{ "ip6", CTLTYPE_NODE }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, { 0, 0 }, { 0, 0 }, { 0, 0 }, { 0, 0 }, \
-	{ 0, 0 }, \
-	{ "ipsec6", CTLTYPE_NODE }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ "icmp6", CTLTYPE_NODE }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, { 0, 0 }, { 0, 0 }, { 0, 0 }, { 0, 0 }, \
-	{ 0, 0 }, { 0, 0 }, { 0, 0 }, { 0, 0 }, { 0, 0 }, \
-	{ 0, 0 }, { 0, 0 }, { 0, 0 }, { 0, 0 }, { 0, 0 }, \
-	{ 0, 0 }, { 0, 0 }, { 0, 0 }, { 0, 0 }, { 0, 0 }, \
-	{ 0, 0 }, { 0, 0 }, { 0, 0 }, { 0, 0 }, { 0, 0 }, \
-	{ 0, 0 }, { 0, 0 }, { 0, 0 }, { 0, 0 }, { 0, 0 }, \
-	{ 0, 0 }, { 0, 0 }, { 0, 0 }, { 0, 0 }, { 0, 0 }, \
-	{ 0, 0 }, { 0, 0 }, { 0, 0 }, { 0, 0 }, { 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ "pim6", CTLTYPE_NODE }, \
-}
-
 /*
  * Names for IP sysctl objects
  */
@@ -584,58 +535,6 @@ struct ip6_mtuinfo {
 					/* via router advertisement */
 #define IPV6CTL_RTADV_NUMROUTES 44	/* current number of routes */
 					/* via router advertisement */
-/* New entries should be added here from current IPV6CTL_MAXID value. */
-/* to define items, should talk with KAME guys first, for *BSD compatibility */
-#define IPV6CTL_MAXID		45
-
-#define IPV6CTL_NAMES { \
-	{ 0, 0 }, \
-	{ "forwarding", CTLTYPE_INT }, \
-	{ "redirect", CTLTYPE_INT }, \
-	{ "hlim", CTLTYPE_INT }, \
-	{ "mtu", CTLTYPE_INT }, \
-	{ "forwsrcrt", CTLTYPE_INT }, \
-	{ "stats", CTLTYPE_STRUCT }, \
-	{ 0, 0 }, \
-	{ "mrtproto", CTLTYPE_INT }, \
-	{ "maxfragpackets", CTLTYPE_INT }, \
-	{ "sourcecheck", CTLTYPE_INT }, \
-	{ "sourcecheck_logint", CTLTYPE_INT }, \
-	{ "accept_rtadv", CTLTYPE_INT }, \
-	{ "keepfaith", CTLTYPE_INT }, \
-	{ "log_interval", CTLTYPE_INT }, \
-	{ "hdrnestlimit", CTLTYPE_INT }, \
-	{ "dad_count", CTLTYPE_INT }, \
-	{ "auto_flowlabel", CTLTYPE_INT }, \
-	{ "defmcasthlim", CTLTYPE_INT }, \
-	{ "gifhlim", CTLTYPE_INT }, \
-	{ "kame_version", CTLTYPE_STRING }, \
-	{ "use_deprecated", CTLTYPE_INT }, \
-	{ "rr_prune", CTLTYPE_INT }, \
-	{ 0, 0 }, \
-	{ "v6only", CTLTYPE_INT }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ "anonportmin", CTLTYPE_INT }, \
-	{ "anonportmax", CTLTYPE_INT }, \
-	{ "lowportmin", CTLTYPE_INT }, \
-	{ "lowportmax", CTLTYPE_INT }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ 0, 0 }, \
-	{ "maxfrags", CTLTYPE_INT }, \
-	{ "ifq", CTLTYPE_NODE }, \
-	{ "rtadv_maxroutes", CTLTYPE_INT }, \
-	{ "rtadv_numroutes", CTLTYPE_INT }, \
-}
-
 #endif /* _NETBSD_SOURCE */
 
 #ifdef _KERNEL
@@ -698,7 +597,6 @@ int sockaddr_in6_cmp(const struct sockaddr *, const struct sockaddr *);
 struct sockaddr *sockaddr_in6_externalize(struct sockaddr *, socklen_t,
     const struct sockaddr *);
 int	in6_cksum(struct mbuf *, u_int8_t, u_int32_t, u_int32_t);
-void	in6_delayed_cksum(struct mbuf *);
 int	in6_localaddr(const struct in6_addr *);
 int	in6_addrscope(const struct in6_addr *);
 struct	in6_ifaddr *in6_ifawithifp(struct ifnet *, struct in6_addr *);

@@ -131,10 +131,10 @@ mpc_pow_usi (mpc_ptr z, mpc_srcptr x, unsigned long y, int sign,
          /* the factor on the imaginary part is 2+2^(diff+2) <= 4 for diff <= -1
             and < 2^(diff+3) for diff >= 0 */
          ei = (diff <= -1) ? l0 + 3 : l0 + diff + 3;
-         if (mpfr_can_round (mpc_realref(t), p - er, GMP_RNDN, GMP_RNDZ,
-                              MPC_PREC_RE(z) + (MPC_RND_RE(rnd) == GMP_RNDN))
-               && mpfr_can_round (mpc_imagref(t), p - ei, GMP_RNDN, GMP_RNDZ,
-                              MPC_PREC_IM(z) + (MPC_RND_IM(rnd) == GMP_RNDN))) {
+         if (mpfr_can_round (mpc_realref(t), p - er, MPFR_RNDN, MPFR_RNDZ,
+                              MPC_PREC_RE(z) + (MPC_RND_RE(rnd) == MPFR_RNDN))
+               && mpfr_can_round (mpc_imagref(t), p - ei, MPFR_RNDN, MPFR_RNDZ,
+                              MPC_PREC_IM(z) + (MPC_RND_IM(rnd) == MPFR_RNDN))) {
             inex = mpc_set (z, t, rnd);
             done = 1;
          }

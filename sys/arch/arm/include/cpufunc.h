@@ -358,7 +358,7 @@ cpsid(register_t psw)
 	case I32_bit|F32_bit:	__asm("cpsid\tif"); break;
 	}
 	return oldpsw;
-#else 
+#else
 	return disable_interrupts(psw);
 #endif
 }

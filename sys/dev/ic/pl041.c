@@ -1,4 +1,4 @@
-/* $NetBSD: pl041.c,v 1.3.10.1 2018/04/16 01:59:57 pgoyette Exp $ */
+/* $NetBSD: pl041.c,v 1.3.10.2 2018/09/06 06:55:50 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pl041.c,v 1.3.10.1 2018/04/16 01:59:57 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pl041.c,v 1.3.10.2 2018/09/06 06:55:50 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,7 +106,7 @@ aaci_write_data(struct aaci_softc *sc)
 		return;
 
 	while ((AACI_READ(sc, AACISR) & AACISR_TXHE) != 0) {
-		const int len = min(AACI_FIFO_DEPTH / 2, min(sc->sc_pblkresid,
+		const int len = uimin(AACI_FIFO_DEPTH / 2, uimin(sc->sc_pblkresid,
 		    (uintptr_t)sc->sc_pend - (uintptr_t)sc->sc_pcur));
 		KASSERT((len & 3) == 0);
 		AACI_WRITE_MULTI(sc, AACIDR, sc->sc_pcur, len >> 2);

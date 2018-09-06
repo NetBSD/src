@@ -1,8 +1,8 @@
-/*	$NetBSD: if_cnmac.c,v 1.8.2.1 2018/07/28 04:37:37 pgoyette Exp $	*/
+/*	$NetBSD: if_cnmac.c,v 1.8.2.2 2018/09/06 06:55:37 pgoyette Exp $	*/
 
 #include <sys/cdefs.h>
 #if 0
-__KERNEL_RCSID(0, "$NetBSD: if_cnmac.c,v 1.8.2.1 2018/07/28 04:37:37 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cnmac.c,v 1.8.2.2 2018/09/06 06:55:37 pgoyette Exp $");
 #endif
 
 #include "opt_octeon.h"
@@ -358,7 +358,7 @@ octeon_eth_attach(device_t parent, device_t self, void *aux)
 	ifp->if_watchdog = octeon_eth_watchdog;
 	ifp->if_init = octeon_eth_init;
 	ifp->if_stop = octeon_eth_stop;
-	IFQ_SET_MAXLEN(&ifp->if_snd, max(GATHER_QUEUE_SIZE, IFQ_MAXLEN));
+	IFQ_SET_MAXLEN(&ifp->if_snd, uimax(GATHER_QUEUE_SIZE, IFQ_MAXLEN));
 	IFQ_SET_READY(&ifp->if_snd);
 
 	/* XXX: not yet tx checksum */

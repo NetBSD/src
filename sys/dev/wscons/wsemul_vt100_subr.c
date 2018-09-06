@@ -1,4 +1,4 @@
-/* $NetBSD: wsemul_vt100_subr.c,v 1.21.8.1 2018/06/25 07:26:03 pgoyette Exp $ */
+/* $NetBSD: wsemul_vt100_subr.c,v 1.21.8.2 2018/09/06 06:56:06 pgoyette Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsemul_vt100_subr.c,v 1.21.8.1 2018/06/25 07:26:03 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsemul_vt100_subr.c,v 1.21.8.2 2018/09/06 06:56:06 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -387,41 +387,41 @@ wsemul_vt100_handle_csi(struct vt100base_data *edp, u_char c)
 		break;
 
 	    case '@': /* ICH insert character VT300 only */
-		n = min(DEF1_ARG(edp, 0), COLS_LEFT(edp) + 1);
+		n = uimin(DEF1_ARG(edp, 0), COLS_LEFT(edp) + 1);
 		help = NCOLS(edp) - (edp->ccol + n);
 		if (help > 0)
 			COPYCOLS(edp, edp->ccol, edp->ccol + n, help);
 		ERASECOLS(edp, edp->ccol, n, edp->bkgdattr);
 		break;
 	    case 'A': /* CUU */
-		edp->crow -= min(DEF1_ARG(edp, 0), ROWS_ABOVE(edp));
+		edp->crow -= uimin(DEF1_ARG(edp, 0), ROWS_ABOVE(edp));
 		CHECK_DW(edp);
 		break;
 	    case 'B': /* CUD */
-		edp->crow += min(DEF1_ARG(edp, 0), ROWS_BELOW(edp));
+		edp->crow += uimin(DEF1_ARG(edp, 0), ROWS_BELOW(edp));
 		CHECK_DW(edp);
 		break;
 	    case 'C': /* CUF */
-		edp->ccol += min(DEF1_ARG(edp, 0), COLS_LEFT(edp));
+		edp->ccol += uimin(DEF1_ARG(edp, 0), COLS_LEFT(edp));
 		break;
 	    case 'D': /* CUB */
-		edp->ccol -= min(DEF1_ARG(edp, 0), edp->ccol);
+		edp->ccol -= uimin(DEF1_ARG(edp, 0), edp->ccol);
 		edp->flags &= ~VTFL_LASTCHAR;
 		break;
 	    case 'H': /* CUP */
 	    case 'f': /* HVP */
 		if (edp->flags & VTFL_DECOM)
 			edp->crow = edp->scrreg_startrow +
-			    min(DEF1_ARG(edp, 0), edp->scrreg_nrows) - 1;
+			    uimin(DEF1_ARG(edp, 0), edp->scrreg_nrows) - 1;
 		else
-			edp->crow = min(DEF1_ARG(edp, 0), edp->nrows) - 1;
+			edp->crow = uimin(DEF1_ARG(edp, 0), edp->nrows) - 1;
 		CHECK_DW(edp);
-		edp->ccol = min(DEF1_ARG(edp, 1), NCOLS(edp)) - 1;
+		edp->ccol = uimin(DEF1_ARG(edp, 1), NCOLS(edp)) - 1;
 		edp->flags &= ~VTFL_LASTCHAR;
 		break;
 	    case 'L': /* IL insert line */
 	    case 'M': /* DL delete line */
-		n = min(DEF1_ARG(edp, 0), ROWS_BELOW(edp) + 1);
+		n = uimin(DEF1_ARG(edp, 0), ROWS_BELOW(edp) + 1);
 		{
 		int savscrstartrow, savscrnrows;
 		savscrstartrow = edp->scrreg_startrow;
@@ -437,14 +437,14 @@ wsemul_vt100_handle_csi(struct vt100base_data *edp, u_char c)
 		}
 		break;
 	    case 'P': /* DCH delete character */
-		n = min(DEF1_ARG(edp, 0), COLS_LEFT(edp) + 1);
+		n = uimin(DEF1_ARG(edp, 0), COLS_LEFT(edp) + 1);
 		help = NCOLS(edp) - (edp->ccol + n);
 		if (help > 0)
 			COPYCOLS(edp, edp->ccol + n, edp->ccol, help);
 		ERASECOLS(edp, NCOLS(edp) - n, n, edp->bkgdattr);
 		break;
 	    case 'X': /* ECH erase character */
-		n = min(DEF1_ARG(edp, 0), COLS_LEFT(edp) + 1);
+		n = uimin(DEF1_ARG(edp, 0), COLS_LEFT(edp) + 1);
 		ERASECOLS(edp, edp->ccol, n, edp->bkgdattr);
 		break;
 	    case 'c': /* DA primary */
@@ -599,8 +599,8 @@ wsemul_vt100_handle_csi(struct vt100base_data *edp, u_char c)
 		}
 		break;
 	    case 'r': /* DECSTBM set top/bottom margins */
-		help = min(DEF1_ARG(edp, 0), edp->nrows) - 1;
-		n = min(DEFx_ARG(edp, 1, edp->nrows), edp->nrows) - help;
+		help = uimin(DEF1_ARG(edp, 0), edp->nrows) - 1;
+		n = uimin(DEFx_ARG(edp, 1, edp->nrows), edp->nrows) - help;
 		if (n < 2) {
 			/* minimal scrolling region has 2 lines */
 			return;

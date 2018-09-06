@@ -1,0 +1,27 @@
+/*	$NetBSD: efilibplat.h,v 1.1.1.1.2.2 2018/09/06 06:56:38 pgoyette Exp $	*/
+
+/*++
+
+Copyright (c) 1998  Intel Corporation
+
+Module Name:
+
+    efilibplat.h
+
+Abstract:
+
+    EFI to compile bindings
+
+
+
+
+Revision History
+
+--*/
+
+VOID
+InitializeLibPlatform (
+    IN EFI_HANDLE           ImageHandle,
+    IN EFI_SYSTEM_TABLE     *SystemTable
+    );
+

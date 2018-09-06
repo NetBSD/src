@@ -1,3 +1,5 @@
+/*	$NetBSD: via_3d_reg.h,v 1.1.1.1.36.1 2018/09/06 06:56:34 pgoyette Exp $	*/
+
 /*
  * Copyright 1998-2003 VIA Technologies, Inc. All Rights Reserved.
  * Copyright 2001-2003 S3 Graphics, Inc. All Rights Reserved.

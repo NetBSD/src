@@ -1,7 +1,7 @@
-/*	Id: tree.c,v 1.73 2017/02/10 15:45:28 schwarze Exp  */
+/*	Id: tree.c,v 1.78 2018/04/11 17:11:13 schwarze Exp  */
 /*
  * Copyright (c) 2008, 2009, 2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
- * Copyright (c) 2013, 2014, 2015, 2017 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2013,2014,2015,2017,2018 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -115,6 +115,9 @@ print_mdoc(const struct roff_node *n, int indent)
 	case ROFFT_TEXT:
 		t = "text";
 		break;
+	case ROFFT_COMMENT:
+		t = "comment";
+		break;
 	case ROFFT_TBL:
 		break;
 	case ROFFT_EQN:
@@ -126,26 +129,27 @@ print_mdoc(const struct roff_node *n, int indent)
 
 	switch (n->type) {
 	case ROFFT_TEXT:
+	case ROFFT_COMMENT:
 		p = n->string;
 		break;
 	case ROFFT_BODY:
-		p = mdoc_macronames[n->tok];
+		p = roff_name[n->tok];
 		break;
 	case ROFFT_HEAD:
-		p = mdoc_macronames[n->tok];
+		p = roff_name[n->tok];
 		break;
 	case ROFFT_TAIL:
-		p = mdoc_macronames[n->tok];
+		p = roff_name[n->tok];
 		break;
 	case ROFFT_ELEM:
-		p = mdoc_macronames[n->tok];
+		p = roff_name[n->tok];
 		if (n->args) {
 			argv = n->args->argv;
 			argc = n->args->argc;
 		}
 		break;
 	case ROFFT_BLOCK:
-		p = mdoc_macronames[n->tok];
+		p = roff_name[n->tok];
 		if (n->args) {
 			argv = n->args->argv;
 			argc = n->args->argc;
@@ -202,7 +206,7 @@ print_mdoc(const struct roff_node *n, int indent)
 	}
 
 	if (n->eqn)
-		print_box(n->eqn->root->first, indent + 4);
+		print_box(n->eqn->first, indent + 4);
 	if (n->child)
 		print_mdoc(n->child, indent +
 		    (n->type == ROFFT_BLOCK ? 2 : 4));
@@ -231,6 +235,9 @@ print_man(const struct roff_node *n, int indent)
 	case ROFFT_TEXT:
 		t = "text";
 		break;
+	case ROFFT_COMMENT:
+		t = "comment";
+		break;
 	case ROFFT_BLOCK:
 		t = "block";
 		break;
@@ -251,13 +258,14 @@ print_man(const struct roff_node *n, int indent)
 
 	switch (n->type) {
 	case ROFFT_TEXT:
+	case ROFFT_COMMENT:
 		p = n->string;
 		break;
 	case ROFFT_ELEM:
 	case ROFFT_BLOCK:
 	case ROFFT_HEAD:
 	case ROFFT_BODY:
-		p = man_macronames[n->tok];
+		p = roff_name[n->tok];
 		break;
 	case ROFFT_ROOT:
 		p = "root";
@@ -287,7 +295,7 @@ print_man(const struct roff_node *n, int indent)
 	}
 
 	if (n->eqn)
-		print_box(n->eqn->root->first, indent + 4);
+		print_box(n->eqn->first, indent + 4);
 	if (n->child)
 		print_man(n->child, indent +
 		    (n->type == ROFFT_BLOCK ? 2 : 4));
@@ -313,10 +321,6 @@ print_box(const struct eqn_box *ep, int indent)
 
 	t = NULL;
 	switch (ep->type) {
-	case EQN_ROOT:
-		t = "eqn-root";
-		break;
-	case EQN_LISTONE:
 	case EQN_LIST:
 		t = "eqn-list";
 		break;

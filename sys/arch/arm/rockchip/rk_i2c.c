@@ -1,4 +1,4 @@
-/* $NetBSD: rk_i2c.c,v 1.1.2.2 2018/07/28 04:37:29 pgoyette Exp $ */
+/* $NetBSD: rk_i2c.c,v 1.1.2.3 2018/09/06 06:55:27 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: rk_i2c.c,v 1.1.2.2 2018/07/28 04:37:29 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rk_i2c.c,v 1.1.2.3 2018/09/06 06:55:27 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -137,7 +137,7 @@ rk_i2c_init(struct rk_i2c_softc *sc)
 	 * SCL = PCLK / SCLK Divisor
 	 */
 
-	rate = clk_get_rate(sc->sc_pclk);
+	rate = clk_get_rate(sc->sc_sclk);
 	div = howmany(rate, sc->sc_clkfreq * 8) - 2;
 	if (div >= 0) {
 		divl = div / 2;
@@ -294,7 +294,7 @@ rk_i2c_read(struct rk_i2c_softc *sc, i2c_addr_t addr,
 		return EINVAL;
 
 	mode = RKI2C_CON_I2C_MODE_RTX;
-	con = RKI2C_CON_I2C_EN | __SHIFTIN(mode, RKI2C_CON_I2C_MODE);
+	con = RKI2C_CON_I2C_EN | RKI2C_CON_ACK | __SHIFTIN(mode, RKI2C_CON_I2C_MODE);
 	WR4(sc, RKI2C_CON, con);
 
 	if (send_start && (error = rk_i2c_start(sc)) != 0)
@@ -418,6 +418,8 @@ rk_i2c_attach(device_t parent, device_t self, void *aux)
 
 	aprint_naive("\n");
 	aprint_normal(": Rockchip I2C (%u Hz)\n", sc->sc_clkfreq);
+
+	fdtbus_clock_assign(phandle);
 
 	rk_i2c_init(sc);
 

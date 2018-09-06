@@ -1,6 +1,6 @@
 /* tlog -- test file for mpc_log.
 
-Copyright (C) 2008, 2009 INRIA
+Copyright (C) 2008, 2009, 2013 INRIA
 
 This file is part of GNU MPC.
 
@@ -18,18 +18,24 @@ You should have received a copy of the GNU Lesser General Public License
 along with this program. If not, see http://www.gnu.org/licenses/ .
 */
 
-#include <stdlib.h>
 #include "mpc-tests.h"
+
+#define MPC_FUNCTION_CALL                                               \
+  P[0].mpc_inex = mpc_log (P[1].mpc, P[2].mpc, P[3].mpc_rnd)
+#define MPC_FUNCTION_CALL_REUSE_OP1                                     \
+  P[0].mpc_inex = mpc_log (P[1].mpc, P[1].mpc, P[3].mpc_rnd)
+
+#include "data_check.tpl"
+#include "tgeneric.tpl"
 
 int
 main (void)
 {
-  DECL_FUNC (CC, f, mpc_log);
-
   test_start ();
 
-  data_check (f, "log.dat");
-  tgeneric (f, 2, 512, 7, 128);
+  data_check_template ("log.dsc", "log.dat");
+
+  tgeneric_template ("log.dsc", 2, 512, 7, 128);
 
   test_end ();
 

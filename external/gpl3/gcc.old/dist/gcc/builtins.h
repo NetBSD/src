@@ -1,5 +1,5 @@
 /* Expand builtin functions.
-   Copyright (C) 1988-2015 Free Software Foundation, Inc.
+   Copyright (C) 1988-2016 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -50,6 +50,7 @@ extern struct target_builtins *this_target_builtins;
 extern bool force_folding_builtin_constant_p;
 
 extern bool is_builtin_fn (tree);
+extern bool called_as_built_in (tree);
 extern bool get_object_alignment_1 (tree, unsigned int *,
 				    unsigned HOST_WIDE_INT *);
 extern unsigned int get_object_alignment (tree);
@@ -59,7 +60,9 @@ extern unsigned int get_pointer_alignment (tree);
 extern tree c_strlen (tree, int);
 extern void expand_builtin_setjmp_setup (rtx, rtx);
 extern void expand_builtin_setjmp_receiver (rtx);
+extern void expand_builtin_update_setjmp_buf (rtx);
 extern tree mathfn_built_in (tree, enum built_in_function fn);
+extern tree mathfn_built_in (tree, combined_fn);
 extern rtx builtin_strncpy_read_str (void *, HOST_WIDE_INT, machine_mode);
 extern rtx builtin_memset_read_str (void *, HOST_WIDE_INT, machine_mode);
 extern rtx expand_builtin_saveregs (void);
@@ -72,7 +75,6 @@ extern rtx expand_builtin (tree, rtx, rtx, machine_mode, int);
 extern rtx expand_builtin_with_bounds (tree, rtx, rtx, machine_mode, int);
 extern enum built_in_function builtin_mathfn_code (const_tree);
 extern tree fold_builtin_expect (location_t, tree, tree, tree);
-extern tree fold_fma (location_t, tree, tree, tree, tree);
 extern bool avoid_folding_inline_builtin (tree);
 extern tree fold_call_expr (location_t, tree, bool);
 extern tree fold_builtin_call_array (location_t, tree, tree, int, tree *);
@@ -87,12 +89,14 @@ extern bool is_simple_builtin (tree);
 extern bool is_inexpensive_builtin (tree);
 
 extern bool readonly_data_expr (tree exp);
-extern const char *c_getstr (tree);
 extern bool init_target_chars (void);
 extern unsigned HOST_WIDE_INT target_newline;
 extern unsigned HOST_WIDE_INT target_percent;
 extern char target_percent_s[3];
 extern char target_percent_c[3];
 extern char target_percent_s_newline[4];
+
+extern internal_fn associated_internal_fn (tree);
+extern internal_fn replacement_internal_fn (gcall *);
 
 #endif

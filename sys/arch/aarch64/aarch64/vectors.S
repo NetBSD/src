@@ -1,7 +1,8 @@
-/*	$NetBSD: vectors.S,v 1.4.2.2 2018/07/28 04:37:25 pgoyette Exp $	*/
+/*	$NetBSD: vectors.S,v 1.4.2.3 2018/09/06 06:55:22 pgoyette Exp $	*/
 
 #include <aarch64/asm.h>
 #include "assym.h"
+#include "opt_ddb.h"
 
 	/*
 	 * vector_entry macro must be small enough to fit 0x80 bytes!
@@ -69,6 +70,9 @@
 
 	adr	x30, el\el\()_trap_exit	/* el[01]_trap_exit */
 	mov	x0, sp
+#ifdef DDB
+	mov	x29, sp			/* for backtrace */
+#endif
 	b	\label
 	.endm
 

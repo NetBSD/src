@@ -8,6 +8,9 @@ Another TODO list is available here:
 
 -- add more examples
 
+-- modify the doc of IPF and PF to indicate they are deprecated, and that
+   NPF should be used instead
+
 ====== NPFCTL ======
 
 -- npfctl start does not load the configuration if not loaded.
@@ -50,3 +53,8 @@ Another TODO list is available here:
 -- support large IPv6 options, as explained here:
        http://mail-index.netbsd.org/tech-net/2018/04/08/msg006786.html
    But it's not a big problem - perhaps we don't care at all.
+
+-- add command line variables.  See -D option in pf.
+
+-- improve mss clamping, as explained here:
+       http://mail-index.netbsd.org/tech-net/2017/01/15/msg006224.html

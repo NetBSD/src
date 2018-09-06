@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsatavar.h,v 1.3 2017/10/07 16:05:32 jdolecek Exp $	*/
+/*	$NetBSD: mvsatavar.h,v 1.3.2.1 2018/09/06 06:55:50 pgoyette Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -142,7 +142,7 @@ struct mvsata_softc {
 	void (*sc_enable_intr)(struct mvsata_port *, int);
 };
 
-int mvsata_attach(struct mvsata_softc *, struct mvsata_product *,
+int mvsata_attach(struct mvsata_softc *, const struct mvsata_product *,
 		  int (*mvsata_sreset)(struct mvsata_softc *),
 		  int (*mvsata_misc_reset)(struct mvsata_softc *), int);
 int mvsata_intr(struct mvsata_hc *);

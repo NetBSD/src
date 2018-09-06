@@ -1,0 +1,42 @@
+; Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+;
+; This Source Code Form is subject to the terms of the Mozilla Public
+; License, v. 2.0. If a copy of the MPL was not distributed with this
+; file, You can obtain one at http://mozilla.org/MPL/2.0/.
+;
+; See the COPYRIGHT file distributed with this work for additional
+; information regarding copyright ownership.
+
+$TTL 3600
+$ORIGIN flushtest.example.
+@			IN SOA	flushtest.example. ns.flushtest.example. (
+				2011072900
+				600
+				600
+				1200
+				3600
+				)
+			NS	ns
+ns			IN	A	10.53.0.1
+
+top1			IN	TXT	"text"
+second1.top1		IN	TXT	"text"
+third1.second1.top1	IN	TXT	"text"
+third2.second1.top1	IN	TXT	"text"
+second2.top1		IN	TXT	"text"
+second3.top1		IN	TXT	"text"
+
+; top2 node is omitted for testing with an empty nonterminal
+second1.top2		IN	TXT	"text"
+second2.top2		IN	TXT	"text"
+second3.top2		IN	TXT	"text"
+
+top3			IN	TXT	"text"
+second1.top3		IN	TXT	"text"
+third1.second1.top3	IN	TXT	"text"
+third2.second1.top3	IN	TXT	"text"
+; second2.top3 is omitted for testing with an empty nontermianl
+third1.second2.top3	IN	TXT	"text"
+third2.second2.top3	IN	TXT	"text"
+second3.top3		IN	TXT	"text"
+

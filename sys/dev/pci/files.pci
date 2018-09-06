@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.394.2.3 2018/07/28 04:37:46 pgoyette Exp $
+#	$NetBSD: files.pci,v 1.394.2.4 2018/09/06 06:55:51 pgoyette Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -933,12 +933,6 @@ file	dev/pci/if_dge.c		dge
 attach	re at pci with re_pci
 file	dev/pci/if_re_pci.c		re_pci
 
-# Windows NDIS drivers (Experimental)
-device 	ndis
-attach 	ndis at pci
-file	dev/if_ndis/if_ndis.c		ndis
-file	dev/if_ndis/if_ndis_pci.c	ndis
-
 # Intel PRO/Wireless 2100
 device	ipw: ifnet, arp, wlan, firmload
 attach	ipw at pci
@@ -1059,11 +1053,6 @@ file	dev/pci/siisata_pci.c		siisata_pci
 device	alipm: i2cbus
 attach	alipm at pci
 file	dev/pci/alipm.c				alipm
-
-#
-# NetOctave NSP2000
-#
-include "dev/pci/n8/files.n8"
 
 #
 # Broadcom AirForce / Apple Airport Extreme

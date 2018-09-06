@@ -1,3 +1,5 @@
+/*	$NetBSD: drm_crtc_internal.h,v 1.1.1.1.30.1 2018/09/06 06:56:09 pgoyette Exp $	*/
+
 /*
  * Copyright © 2006 Keith Packard
  * Copyright © 2007-2008 Dave Airlie
@@ -35,4 +37,10 @@ int drm_mode_object_get(struct drm_device *dev,
 			struct drm_mode_object *obj, uint32_t obj_type);
 void drm_mode_object_put(struct drm_device *dev,
 			 struct drm_mode_object *object);
+
+/* drm_atomic.c */
+int drm_atomic_get_property(struct drm_mode_object *obj,
+			   struct drm_property *property, uint64_t *val);
+int drm_mode_atomic_ioctl(struct drm_device *dev,
+			  void *data, struct drm_file *file_priv);
 

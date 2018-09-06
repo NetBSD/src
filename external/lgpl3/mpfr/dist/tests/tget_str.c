@@ -1,6 +1,6 @@
 /* Test file for mpfr_get_str.
 
-Copyright 1999, 2001-2016 Free Software Foundation, Inc.
+Copyright 1999, 2001-2018 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -19,8 +19,6 @@ You should have received a copy of the GNU Lesser General Public License
 along with the GNU MPFR Library; see the file COPYING.LESSER.  If not, see
 http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA. */
-
-#include <stdlib.h>
 
 #include "mpfr-test.h"
 
@@ -1014,10 +1012,16 @@ check_large (void)
   mpfr_free_str (s);
 
   mpfr_set_nan (x);
+  mpfr_clear_flags ();
   s = mpfr_get_str (NULL, &e, 10, 1000, x, MPFR_RNDN);
   if (strcmp (s, "@NaN@"))
     {
-      printf ("Error for NaN\n");
+      printf ("Error for NaN (incorrect string)\n");
+      exit (1);
+    }
+  if (__gmpfr_flags != MPFR_FLAGS_NAN)
+    {
+      printf ("Error for NaN (incorrect flags)\n");
       exit (1);
     }
   mpfr_free_str (s);
@@ -1081,6 +1085,8 @@ check_special (int b, mpfr_prec_t p)
   int r;
   size_t m;
 
+  mpfr_init2 (x, p);
+
   /* check for invalid base */
   if (mpfr_get_str (s, &e, 1, 10, x, MPFR_RNDN) != NULL)
     {
@@ -1094,16 +1100,15 @@ check_special (int b, mpfr_prec_t p)
     }
 
   s2[0] = '1';
-  for (i=1; i<MAX_DIGITS+2; i++)
+  for (i = 1; i < MAX_DIGITS + 2; i++)
     s2[i] = '0';
 
-  mpfr_init2 (x, p);
   mpfr_set_ui (x, 1, MPFR_RNDN);
-  for (i=1; i<MAX_DIGITS && mpfr_mul_ui (x, x, b, MPFR_RNDN) == 0; i++)
+  for (i = 1; i < MAX_DIGITS && mpfr_mul_ui (x, x, b, MPFR_RNDN) == 0; i++)
     {
       /* x = b^i (exact) */
       for (r = 0; r < MPFR_RND_MAX; r++)
-        for (m= (i<3)? 2 : i-1 ; (int) m <= i+1 ; m++)
+        for (m = i < 3 ? 2 : i-1 ; (int) m <= i+1 ; m++)
           {
             mpfr_get_str (s, &e, b, m, x, (mpfr_rnd_t) r);
             /* s should be 1 followed by (m-1) zeros, and e should be i+1 */
@@ -1199,6 +1204,67 @@ check_reduced_exprange (void)
   mpfr_clear (x);
 }
 
+static void
+check_inex (void)
+{
+  mpfr_t x;
+  int i;
+
+  mpfr_init2 (x, 8);
+  mpfr_set_str (x, "0.11111111E-17", 2, MPFR_RNDN);
+  for (i = 1; i <= 25; i++)
+    {
+      char *s[2];
+      int r, inex = 0;
+
+      RND_LOOP (r)
+        {
+          mpfr_exp_t e;
+          mpfr_flags_t flags;
+
+          mpfr_clear_flags ();
+          s[r != 0] = mpfr_get_str (NULL, &e, 10, i, x, (mpfr_rnd_t) r);
+          MPFR_ASSERTN (e == -5);
+          flags = __gmpfr_flags;
+          if ((i >= 20) ^ (! mpfr_inexflag_p ()))
+            {
+              printf ("Error in check_inex on i=%d and %s\n",
+                      i, mpfr_print_rnd_mode ((mpfr_rnd_t) r));
+              printf ("Got %s\n", s[r != 0]);
+              printf ("Flags:");
+              flags_out (flags);
+              exit (1);
+            }
+          if (r != 0)
+            {
+              inex |= strcmp (s[0], s[1]) != 0;
+              mpfr_free_str (s[1]);
+            }
+        }
+
+      MPFR_ASSERTN ((i >= 20) ^ inex);
+      mpfr_free_str (s[0]);
+    }
+  mpfr_clear (x);
+}
+
+static void
+check_negative_base (void)
+{
+  mpfr_t f;
+  mpfr_exp_t e;
+  char *s, s2[16] = "7B000000000000", s3[16] = "74000000000000";
+
+  mpfr_init_set_ui (f, 123, MPFR_RNDN);
+  s = mpfr_get_str (0, &e, -16, 0, f, MPFR_RNDN);
+  MPFR_ASSERTN(strcmp (s, s2) == 0);
+  mpfr_free_str (s);
+  s = mpfr_get_str (0, &e, -17, 0, f, MPFR_RNDN);
+  MPFR_ASSERTN(strcmp (s, s3) == 0);
+  mpfr_free_str (s);
+  mpfr_clear (f);
+}
+
 #define ITER 1000
 
 int
@@ -1231,8 +1297,9 @@ main (int argc, char *argv[])
       m = 2 + (randlimb () % (MAX_DIGITS - 1));
       mpfr_urandomb (x, RANDS);
       e = (mpfr_exp_t) (randlimb () % 21) - 10;
-      mpfr_set_exp (x, (e == -10) ? mpfr_get_emin () :
-                    ((e == 10) ? mpfr_get_emax () : e));
+      if (!MPFR_IS_ZERO(x))
+        mpfr_set_exp (x, (e == -10) ? mpfr_get_emin () :
+                      ((e == 10) ? mpfr_get_emax () : e));
       b = 2 + (randlimb () % 35);
       r = RND_RAND ();
       mpfr_get_str (s, &f, b, m, x, r);
@@ -1262,6 +1329,8 @@ main (int argc, char *argv[])
 
   check_bug_base2k ();
   check_reduced_exprange ();
+  check_inex ();
+  check_negative_base ();
 
   tests_end_mpfr ();
   return 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_enavar.h,v 1.2.2.3 2018/06/25 07:25:51 pgoyette Exp $	*/
+/*	$NetBSD: if_enavar.h,v 1.2.2.4 2018/09/06 06:55:51 pgoyette Exp $	*/
 
 /*-
  * BSD LICENSE
@@ -427,7 +427,7 @@ static inline int ena_mbuf_count(struct mbuf *mbuf)
 #define if_settransmitfn(ifp, txfn)	(ifp)->if_transmit = (txfn)
 #define if_setioctlfn(ifp, ioctlfn)	(ifp)->if_ioctl = (ioctlfn)
 #define if_setsendqlen(ifp, sqlen)	\
-	IFQ_SET_MAXLEN(&(ifp)->if_snd, max(sqlen, IFQ_MAXLEN))
+	IFQ_SET_MAXLEN(&(ifp)->if_snd, uimax(sqlen, IFQ_MAXLEN))
 #define if_setsendqready(ifp)		IFQ_SET_READY(&(ifp)->if_snd)
 #define if_setifheaderlen(ifp, len)	(ifp)->if_hdrlen = (len)
 

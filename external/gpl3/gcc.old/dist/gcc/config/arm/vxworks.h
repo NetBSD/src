@@ -1,6 +1,6 @@
 /* Definitions of target machine for GCC,
    for ARM with targeting the VXWorks run time environment. 
-   Copyright (C) 1999-2015 Free Software Foundation, Inc.
+   Copyright (C) 1999-2016 Free Software Foundation, Inc.
 
    Contributed by: Mike Stump <mrs@wrs.com>
    Brought up to date by CodeSourcery, LLC.
@@ -40,7 +40,7 @@ see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
       builtin_define ("CPU=ARMARCH5");		\
     else if (arm_arch4)				\
       {						\
-	if (thumb_code)				\
+	if (TARGET_THUMB)			\
 	  builtin_define ("CPU=ARMARCH4_T");	\
 	else					\
 	  builtin_define ("CPU=ARMARCH4");	\
@@ -112,3 +112,10 @@ see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
 
 #undef TARGET_DEFAULT_WORD_RELOCATIONS
 #define TARGET_DEFAULT_WORD_RELOCATIONS 1
+
+/* Define this to be nonzero if static stack checking is supported.  */
+#define STACK_CHECK_STATIC_BUILTIN 1
+
+/* This platform supports the probing method of stack checking (RTP mode).
+   8K is reserved in the stack to propagate exceptions in case of overflow.  */
+#define STACK_CHECK_PROTECT 8192

@@ -1,4 +1,4 @@
-/* $NetBSD: if_bwfm_usb.c,v 1.4.2.1 2018/05/21 04:36:12 pgoyette Exp $ */
+/* $NetBSD: if_bwfm_usb.c,v 1.4.2.2 2018/09/06 06:56:04 pgoyette Exp $ */
 /* $OpenBSD: if_bwfm_usb.c,v 1.2 2017/10/15 14:55:13 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
@@ -16,6 +16,9 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_bwfm_usb.c,v 1.4.2.2 2018/09/06 06:56:04 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -200,7 +203,7 @@ int		 bwfm_usb_alloc_tx_list(struct bwfm_usb_softc *);
 void		 bwfm_usb_free_tx_list(struct bwfm_usb_softc *);
 
 int		 bwfm_usb_txcheck(struct bwfm_softc *);
-int		 bwfm_usb_txdata(struct bwfm_softc *, struct mbuf *);
+int		 bwfm_usb_txdata(struct bwfm_softc *, struct mbuf **);
 int		 bwfm_usb_txctl(struct bwfm_softc *, char *, size_t);
 int		 bwfm_usb_rxctl(struct bwfm_softc *, char *, size_t *);
 
@@ -782,9 +785,10 @@ bwfm_usb_txcheck(struct bwfm_softc *bwfm)
 
 
 int
-bwfm_usb_txdata(struct bwfm_softc *bwfm, struct mbuf *m)
+bwfm_usb_txdata(struct bwfm_softc *bwfm, struct mbuf **mp)
 {
 	struct bwfm_usb_softc *sc = (void *)bwfm;
+	struct mbuf *m = *mp;
 	struct bwfm_proto_bcdc_hdr *hdr;
 	struct bwfm_usb_tx_data *data;
 	struct ether_header *eh;

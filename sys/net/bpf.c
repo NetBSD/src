@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.223.2.3 2018/07/28 04:38:09 pgoyette Exp $	*/
+/*	$NetBSD: bpf.c,v 1.223.2.4 2018/09/06 06:56:44 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.223.2.3 2018/07/28 04:38:09 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.223.2.4 2018/09/06 06:56:44 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_bpf.h"
@@ -1544,7 +1544,7 @@ bpf_mcpy(void *dst_arg, const void *src_arg, size_t len)
 	while (len > 0) {
 		if (m == NULL)
 			panic("bpf_mcpy");
-		count = min(m->m_len, len);
+		count = uimin(m->m_len, len);
 		memcpy(dst, mtod(m, const void *), count);
 		m = m->m_next;
 		dst += count;
@@ -1889,7 +1889,7 @@ catchpacket(struct bpf_d *d, u_char *pkt, u_int pktlen, u_int snaplen,
 	 * much.  Otherwise, transfer the whole packet (unless
 	 * we hit the buffer size limit).
 	 */
-	totlen = hdrlen + min(snaplen, pktlen);
+	totlen = hdrlen + uimin(snaplen, pktlen);
 	if (totlen > d->bd_bufsize)
 		totlen = d->bd_bufsize;
 	/*

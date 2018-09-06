@@ -1,0 +1,35 @@
+Content-Type: application/X-atf-atffile; version="1"
+
+prop: test-suite = bind9
+
+tp: acl_test
+tp: db_test
+tp: dbdiff_test
+tp: dbiterator_test
+tp: dbversion_test
+tp: dh_test
+tp: dispatch_test
+tp: dnstap_test
+tp: dst_test
+tp: dstrandom_test
+tp: geoip_test
+tp: gost_test
+tp: keytable_test
+tp: master_test
+tp: name_test
+tp: nsec3_test
+tp: peer_test
+tp: private_test
+tp: rbt_serialize_test
+tp: rbt_test
+tp: rdata_test
+tp: rdataset_test
+tp: rdatasetstats_test
+tp: resolver_test
+tp: rsa_test
+tp: sigs_test
+tp: time_test
+tp: tsig_test
+tp: update_test
+tp: zonemgr_test
+tp: zt_test

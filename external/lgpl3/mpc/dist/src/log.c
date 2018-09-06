@@ -100,7 +100,7 @@ mpc_log (mpc_ptr rop, mpc_srcptr op, mpc_rnd_t rnd){
          inex_re = mpfr_log (mpc_realref (rop), mpc_imagref (op), MPC_RND_RE (rnd));
          inex_im = mpfr_const_pi (mpc_imagref (rop), MPC_RND_IM (rnd));
          /* division by 2 does not change the ternary flag */
-         mpfr_div_2ui (mpc_imagref (rop), mpc_imagref (rop), 1, GMP_RNDN);
+         mpfr_div_2ui (mpc_imagref (rop), mpc_imagref (rop), 1, MPFR_RNDN);
       }
       else {
          w [0] = *mpc_imagref (op);
@@ -108,8 +108,8 @@ mpc_log (mpc_ptr rop, mpc_srcptr op, mpc_rnd_t rnd){
          inex_re = mpfr_log (mpc_realref (rop), w, MPC_RND_RE (rnd));
          inex_im = mpfr_const_pi (mpc_imagref (rop), INV_RND (MPC_RND_IM (rnd)));
          /* division by 2 does not change the ternary flag */
-         mpfr_div_2ui (mpc_imagref (rop), mpc_imagref (rop), 1, GMP_RNDN);
-         mpfr_neg (mpc_imagref (rop), mpc_imagref (rop), GMP_RNDN);
+         mpfr_div_2ui (mpc_imagref (rop), mpc_imagref (rop), 1, MPFR_RNDN);
+         mpfr_neg (mpc_imagref (rop), mpc_imagref (rop), MPFR_RNDN);
          inex_im = -inex_im; /* negate the ternary flag */
       }
       return MPC_INEX(inex_re, inex_im);
@@ -125,14 +125,14 @@ mpc_log (mpc_ptr rop, mpc_srcptr op, mpc_rnd_t rnd){
       prec += mpc_ceil_log2 (prec) + 4;
       mpfr_set_prec (w, prec);
 
-      mpc_abs (w, op, GMP_RNDN);
+      mpc_abs (w, op, MPFR_RNDN);
          /* error 0.5 ulp */
       if (mpfr_inf_p (w))
          /* intermediate overflow; the logarithm may be representable.
             Intermediate underflow is impossible.                      */
          break;
 
-      mpfr_log (w, w, GMP_RNDN);
+      mpfr_log (w, w, MPFR_RNDN);
          /* generic error of log: (2^(- exp(w)) + 0.5) ulp */
 
       if (mpfr_zero_p (w))
@@ -141,8 +141,8 @@ mpc_log (mpc_ptr rop, mpc_srcptr op, mpc_rnd_t rnd){
 
       err = MPC_MAX (-mpfr_get_exp (w), 0) + 1;
          /* number of lost digits */
-      ok = mpfr_can_round (w, prec - err, GMP_RNDN, GMP_RNDZ,
-         mpfr_get_prec (mpc_realref (rop)) + (MPC_RND_RE (rnd) == GMP_RNDN));
+      ok = mpfr_can_round (w, prec - err, MPFR_RNDN, MPFR_RNDZ,
+         mpfr_get_prec (mpc_realref (rop)) + (MPC_RND_RE (rnd) == MPFR_RNDN));
    }
 
    if (!ok) {
@@ -164,21 +164,21 @@ mpc_log (mpc_ptr rop, mpc_srcptr op, mpc_rnd_t rnd){
          mpfr_set_prec (v, prec);
          mpfr_set_prec (w, prec);
 
-         mpfr_div (v, y, x, GMP_RNDD); /* error 1 ulp */
-         mpfr_sqr (v, v, GMP_RNDD);
+         mpfr_div (v, y, x, MPFR_RNDD); /* error 1 ulp */
+         mpfr_sqr (v, v, MPFR_RNDD);
             /* generic error of multiplication:
                1 + 2*1*(2+1*2^(1-prec)) <= 5.0625 since prec >= 6 */
-         mpfr_log1p (v, v, GMP_RNDD);
+         mpfr_log1p (v, v, MPFR_RNDD);
             /* error 1 + 4*5.0625 = 21.25 , see algorithms.tex */
-         mpfr_div_2ui (v, v, 1, GMP_RNDD);
+         mpfr_div_2ui (v, v, 1, MPFR_RNDD);
             /* If the result is 0, then there has been an underflow somewhere. */
 
-         mpfr_abs (w, x, GMP_RNDN); /* exact */
-         mpfr_log (w, w, GMP_RNDN); /* error 0.5 ulp */
+         mpfr_abs (w, x, MPFR_RNDN); /* exact */
+         mpfr_log (w, w, MPFR_RNDN); /* error 0.5 ulp */
          expw = mpfr_get_exp (w);
          sgnw = mpfr_signbit (w);
 
-         mpfr_add (w, w, v, GMP_RNDN);
+         mpfr_add (w, w, v, MPFR_RNDN);
          if (!sgnw) /* v is positive, so no cancellation;
                        error 22.25 ulp; error counts lost bits */
             err = 5;
@@ -196,8 +196,8 @@ mpc_log (mpc_ptr rop, mpc_srcptr op, mpc_rnd_t rnd){
             underflow = 1;
 
       } while (!underflow &&
-               !mpfr_can_round (w, prec - err, GMP_RNDN, GMP_RNDZ,
-               mpfr_get_prec (mpc_realref (rop)) + (MPC_RND_RE (rnd) == GMP_RNDN)));
+               !mpfr_can_round (w, prec - err, MPFR_RNDN, MPFR_RNDZ,
+               mpfr_get_prec (mpc_realref (rop)) + (MPC_RND_RE (rnd) == MPFR_RNDN)));
       mpfr_clear (v);
    }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.214 2018/02/04 17:31:51 maxv Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.214.2.1 2018/09/06 06:56:41 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2003, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.214 2018/02/04 17:31:51 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.214.2.1 2018/09/06 06:56:41 pgoyette Exp $");
 
 #include "opt_sysv.h"
 #include "opt_compat_netbsd.h"
@@ -632,6 +632,8 @@ struct ctldebug /* debug0, */ /* debug1, */ debug2, debug3, debug4;
 struct ctldebug debug5, debug6, debug7, debug8, debug9;
 struct ctldebug debug10, debug11, debug12, debug13, debug14;
 struct ctldebug debug15, debug16, debug17, debug18, debug19;
+
+#define	CTL_DEBUG_MAXID		20
 static struct ctldebug *debugvars[CTL_DEBUG_MAXID] = {
 	&debug0, &debug1, &debug2, &debug3, &debug4,
 	&debug5, &debug6, &debug7, &debug8, &debug9,
@@ -1113,7 +1115,7 @@ sysctl_kern_lwp(SYSCTLFN_ARGS)
 					 * struct kinfo_proc2.
 					 */
 					error = dcopyout(l, &klwp, dp,
-					    min(sizeof(klwp), elem_size));
+					    uimin(sizeof(klwp), elem_size));
 					if (error) {
 						rw_exit(&p->p_reflock);
 						goto cleanup;
@@ -1171,7 +1173,7 @@ sysctl_kern_lwp(SYSCTLFN_ARGS)
 				 * the size of a struct kinfo_proc2.
 				 */
 				error = dcopyout(l, &klwp, dp,
-				    min(sizeof(klwp), elem_size));
+				    uimin(sizeof(klwp), elem_size));
 				if (error) {
 					rw_exit(&p->p_reflock);
 					goto cleanup;

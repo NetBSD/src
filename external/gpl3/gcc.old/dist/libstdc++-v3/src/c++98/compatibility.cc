@@ -1,6 +1,6 @@
 // Compatibility symbols for previous versions -*- C++ -*-
 
-// Copyright (C) 2005-2015 Free Software Foundation, Inc.
+// Copyright (C) 2005-2016 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -381,11 +381,11 @@ _GLIBCXX_END_NAMESPACE_VERSION
    asm (".symver " #cur "," #old "@@" #version);
 
 #define _GLIBCXX_APPLY_SYMVER _GLIBCXX_3_4_SYMVER
-#include <bits/compatibility.h>
+#include <abi/compatibility.h>
 #undef _GLIBCXX_APPLY_SYMVER
 
 #define _GLIBCXX_APPLY_SYMVER _GLIBCXX_3_4_5_SYMVER
-#include <bits/compatibility.h>
+#include <abi/compatibility.h>
 #undef _GLIBCXX_APPLY_SYMVER
 
 

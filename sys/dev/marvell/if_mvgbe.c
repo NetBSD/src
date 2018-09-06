@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mvgbe.c,v 1.49.8.1 2018/07/28 04:37:45 pgoyette Exp $	*/
+/*	$NetBSD: if_mvgbe.c,v 1.49.8.2 2018/09/06 06:55:50 pgoyette Exp $	*/
 /*
  * Copyright (c) 2007, 2008, 2013 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mvgbe.c,v 1.49.8.1 2018/07/28 04:37:45 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mvgbe.c,v 1.49.8.2 2018/09/06 06:55:50 pgoyette Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -875,7 +875,7 @@ mvgbe_attach(device_t parent, device_t self, void *aux)
 	 * But, IPv6 packets in the stream can cause incorrect TCPv4 Tx sums.
 	 */
 	sc->sc_ethercom.ec_if.if_capabilities &= ~IFCAP_CSUM_TCPv4_Tx;
-	IFQ_SET_MAXLEN(&ifp->if_snd, max(MVGBE_TX_RING_CNT - 1, IFQ_MAXLEN));
+	IFQ_SET_MAXLEN(&ifp->if_snd, uimax(MVGBE_TX_RING_CNT - 1, IFQ_MAXLEN));
 	IFQ_SET_READY(&ifp->if_snd);
 	strcpy(ifp->if_xname, device_xname(sc->sc_dev));
 

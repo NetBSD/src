@@ -1,6 +1,6 @@
 /* mpc.h -- Include file for mpc.
 
-Copyright (C) 2002, 2003, 2004, 2005, 2007, 2008, 2009, 2010, 2011, 2012, 2014, 2015 INRIA
+Copyright (C) 2002, 2003, 2004, 2005, 2007, 2008, 2009, 2010, 2011, 2012, 2016, 2017 INRIA
 
 This file is part of GNU MPC.
 
@@ -24,16 +24,11 @@ along with this program. If not, see http://www.gnu.org/licenses/ .
 #include "gmp.h"
 #include "mpfr.h"
 
-/* Backwards compatibility with mpfr<3.0.0 */
-#ifndef mpfr_exp_t
-#define mpfr_exp_t mp_exp_t
-#endif
-
 /* Define MPC version number */
 #define MPC_VERSION_MAJOR 1
-#define MPC_VERSION_MINOR 0
-#define MPC_VERSION_PATCHLEVEL 3
-#define MPC_VERSION_STRING "1.0.3"
+#define MPC_VERSION_MINOR 1
+#define MPC_VERSION_PATCHLEVEL 0
+#define MPC_VERSION_STRING "1.1.0"
 
 /* Macros dealing with MPC VERSION */
 #define MPC_VERSION_NUM(a,b,c) (((a) << 16L) | ((b) << 8) | (c))
@@ -78,25 +73,25 @@ typedef int mpc_rnd_t;
 #define MPC_RND_RE(x) ((mpfr_rnd_t)((x) & 0x0F))
 #define MPC_RND_IM(x) ((mpfr_rnd_t)((x) >> 4))
 
-#define MPC_RNDNN MPC_RND (GMP_RNDN,GMP_RNDN)
-#define MPC_RNDNZ MPC_RND (GMP_RNDN,GMP_RNDZ)
-#define MPC_RNDNU MPC_RND (GMP_RNDN,GMP_RNDU)
-#define MPC_RNDND MPC_RND (GMP_RNDN,GMP_RNDD)
+#define MPC_RNDNN MPC_RND (MPFR_RNDN,MPFR_RNDN)
+#define MPC_RNDNZ MPC_RND (MPFR_RNDN,MPFR_RNDZ)
+#define MPC_RNDNU MPC_RND (MPFR_RNDN,MPFR_RNDU)
+#define MPC_RNDND MPC_RND (MPFR_RNDN,MPFR_RNDD)
 
-#define MPC_RNDZN MPC_RND (GMP_RNDZ,GMP_RNDN)
-#define MPC_RNDZZ MPC_RND (GMP_RNDZ,GMP_RNDZ)
-#define MPC_RNDZU MPC_RND (GMP_RNDZ,GMP_RNDU)
-#define MPC_RNDZD MPC_RND (GMP_RNDZ,GMP_RNDD)
+#define MPC_RNDZN MPC_RND (MPFR_RNDZ,MPFR_RNDN)
+#define MPC_RNDZZ MPC_RND (MPFR_RNDZ,MPFR_RNDZ)
+#define MPC_RNDZU MPC_RND (MPFR_RNDZ,MPFR_RNDU)
+#define MPC_RNDZD MPC_RND (MPFR_RNDZ,MPFR_RNDD)
 
-#define MPC_RNDUN MPC_RND (GMP_RNDU,GMP_RNDN)
-#define MPC_RNDUZ MPC_RND (GMP_RNDU,GMP_RNDZ)
-#define MPC_RNDUU MPC_RND (GMP_RNDU,GMP_RNDU)
-#define MPC_RNDUD MPC_RND (GMP_RNDU,GMP_RNDD)
+#define MPC_RNDUN MPC_RND (MPFR_RNDU,MPFR_RNDN)
+#define MPC_RNDUZ MPC_RND (MPFR_RNDU,MPFR_RNDZ)
+#define MPC_RNDUU MPC_RND (MPFR_RNDU,MPFR_RNDU)
+#define MPC_RNDUD MPC_RND (MPFR_RNDU,MPFR_RNDD)
 
-#define MPC_RNDDN MPC_RND (GMP_RNDD,GMP_RNDN)
-#define MPC_RNDDZ MPC_RND (GMP_RNDD,GMP_RNDZ)
-#define MPC_RNDDU MPC_RND (GMP_RNDD,GMP_RNDU)
-#define MPC_RNDDD MPC_RND (GMP_RNDD,GMP_RNDD)
+#define MPC_RNDDN MPC_RND (MPFR_RNDD,MPFR_RNDN)
+#define MPC_RNDDZ MPC_RND (MPFR_RNDD,MPFR_RNDZ)
+#define MPC_RNDDU MPC_RND (MPFR_RNDD,MPFR_RNDU)
+#define MPC_RNDDD MPC_RND (MPFR_RNDD,MPFR_RNDD)
 
 
 /* Definitions of types and their semantics */
@@ -182,53 +177,55 @@ __MPC_DECLSPEC int  mpc_fma       (mpc_ptr, mpc_srcptr, mpc_srcptr, mpc_srcptr, 
 
 __MPC_DECLSPEC void mpc_set_nan   (mpc_ptr);
 
-__MPC_DECLSPEC int  mpc_real      (mpfr_ptr, mpc_srcptr, mpfr_rnd_t);
-__MPC_DECLSPEC int  mpc_imag      (mpfr_ptr, mpc_srcptr, mpfr_rnd_t);
-__MPC_DECLSPEC int  mpc_arg       (mpfr_ptr, mpc_srcptr, mpfr_rnd_t);
-__MPC_DECLSPEC int  mpc_proj      (mpc_ptr, mpc_srcptr, mpc_rnd_t);
-__MPC_DECLSPEC int  mpc_cmp       (mpc_srcptr, mpc_srcptr);
-__MPC_DECLSPEC int  mpc_cmp_si_si (mpc_srcptr, long int, long int);
-__MPC_DECLSPEC int  mpc_exp       (mpc_ptr, mpc_srcptr, mpc_rnd_t);
-__MPC_DECLSPEC int  mpc_log       (mpc_ptr, mpc_srcptr, mpc_rnd_t);
-__MPC_DECLSPEC int  mpc_log10     (mpc_ptr, mpc_srcptr, mpc_rnd_t);
-__MPC_DECLSPEC int  mpc_sin       (mpc_ptr, mpc_srcptr, mpc_rnd_t);
-__MPC_DECLSPEC int  mpc_cos       (mpc_ptr, mpc_srcptr, mpc_rnd_t);
-__MPC_DECLSPEC int  mpc_sin_cos   (mpc_ptr, mpc_ptr, mpc_srcptr, mpc_rnd_t, mpc_rnd_t);
-__MPC_DECLSPEC int  mpc_tan       (mpc_ptr, mpc_srcptr, mpc_rnd_t);
-__MPC_DECLSPEC int  mpc_sinh      (mpc_ptr, mpc_srcptr, mpc_rnd_t);
-__MPC_DECLSPEC int  mpc_cosh      (mpc_ptr, mpc_srcptr, mpc_rnd_t);
-__MPC_DECLSPEC int  mpc_tanh      (mpc_ptr, mpc_srcptr, mpc_rnd_t);
-__MPC_DECLSPEC int  mpc_asin      (mpc_ptr, mpc_srcptr, mpc_rnd_t);
-__MPC_DECLSPEC int  mpc_acos      (mpc_ptr, mpc_srcptr, mpc_rnd_t);
-__MPC_DECLSPEC int  mpc_atan      (mpc_ptr, mpc_srcptr, mpc_rnd_t);
-__MPC_DECLSPEC int  mpc_asinh     (mpc_ptr, mpc_srcptr, mpc_rnd_t);
-__MPC_DECLSPEC int  mpc_acosh     (mpc_ptr, mpc_srcptr, mpc_rnd_t);
-__MPC_DECLSPEC int  mpc_atanh     (mpc_ptr, mpc_srcptr, mpc_rnd_t);
-__MPC_DECLSPEC void mpc_clear     (mpc_ptr);
-__MPC_DECLSPEC int  mpc_urandom   (mpc_ptr, gmp_randstate_t);
-__MPC_DECLSPEC void mpc_init2     (mpc_ptr, mpfr_prec_t);
-__MPC_DECLSPEC void mpc_init3     (mpc_ptr, mpfr_prec_t, mpfr_prec_t);
+__MPC_DECLSPEC int  mpc_real        (mpfr_ptr, mpc_srcptr, mpfr_rnd_t);
+__MPC_DECLSPEC int  mpc_imag        (mpfr_ptr, mpc_srcptr, mpfr_rnd_t);
+__MPC_DECLSPEC int  mpc_arg         (mpfr_ptr, mpc_srcptr, mpfr_rnd_t);
+__MPC_DECLSPEC int  mpc_proj        (mpc_ptr, mpc_srcptr, mpc_rnd_t);
+__MPC_DECLSPEC int  mpc_cmp         (mpc_srcptr, mpc_srcptr);
+__MPC_DECLSPEC int  mpc_cmp_si_si   (mpc_srcptr, long int, long int);
+__MPC_DECLSPEC int  mpc_cmp_abs     (mpc_srcptr, mpc_srcptr);
+__MPC_DECLSPEC int  mpc_exp         (mpc_ptr, mpc_srcptr, mpc_rnd_t);
+__MPC_DECLSPEC int  mpc_log         (mpc_ptr, mpc_srcptr, mpc_rnd_t);
+__MPC_DECLSPEC int  mpc_log10       (mpc_ptr, mpc_srcptr, mpc_rnd_t);
+__MPC_DECLSPEC int  mpc_sin         (mpc_ptr, mpc_srcptr, mpc_rnd_t);
+__MPC_DECLSPEC int  mpc_cos         (mpc_ptr, mpc_srcptr, mpc_rnd_t);
+__MPC_DECLSPEC int  mpc_sin_cos     (mpc_ptr, mpc_ptr, mpc_srcptr, mpc_rnd_t, mpc_rnd_t);
+__MPC_DECLSPEC int  mpc_tan         (mpc_ptr, mpc_srcptr, mpc_rnd_t);
+__MPC_DECLSPEC int  mpc_sinh        (mpc_ptr, mpc_srcptr, mpc_rnd_t);
+__MPC_DECLSPEC int  mpc_cosh        (mpc_ptr, mpc_srcptr, mpc_rnd_t);
+__MPC_DECLSPEC int  mpc_tanh        (mpc_ptr, mpc_srcptr, mpc_rnd_t);
+__MPC_DECLSPEC int  mpc_asin        (mpc_ptr, mpc_srcptr, mpc_rnd_t);
+__MPC_DECLSPEC int  mpc_acos        (mpc_ptr, mpc_srcptr, mpc_rnd_t);
+__MPC_DECLSPEC int  mpc_atan        (mpc_ptr, mpc_srcptr, mpc_rnd_t);
+__MPC_DECLSPEC int  mpc_asinh       (mpc_ptr, mpc_srcptr, mpc_rnd_t);
+__MPC_DECLSPEC int  mpc_acosh       (mpc_ptr, mpc_srcptr, mpc_rnd_t);
+__MPC_DECLSPEC int  mpc_atanh       (mpc_ptr, mpc_srcptr, mpc_rnd_t);
+__MPC_DECLSPEC int  mpc_rootofunity (mpc_ptr, unsigned long int, unsigned long int, mpc_rnd_t);
+__MPC_DECLSPEC void mpc_clear       (mpc_ptr);
+__MPC_DECLSPEC int  mpc_urandom     (mpc_ptr, gmp_randstate_t);
+__MPC_DECLSPEC void mpc_init2       (mpc_ptr, mpfr_prec_t);
+__MPC_DECLSPEC void mpc_init3       (mpc_ptr, mpfr_prec_t, mpfr_prec_t);
 __MPC_DECLSPEC mpfr_prec_t mpc_get_prec (mpc_srcptr x);
-__MPC_DECLSPEC void mpc_get_prec2 (mpfr_prec_t *pr, mpfr_prec_t *pi, mpc_srcptr x);
-__MPC_DECLSPEC void mpc_set_prec  (mpc_ptr, mpfr_prec_t);
+__MPC_DECLSPEC void mpc_get_prec2   (mpfr_prec_t *pr, mpfr_prec_t *pi, mpc_srcptr x);
+__MPC_DECLSPEC void mpc_set_prec    (mpc_ptr, mpfr_prec_t);
 __MPC_DECLSPEC const char * mpc_get_version (void);
 
-__MPC_DECLSPEC int  mpc_strtoc    (mpc_ptr, const char *, char **, int, mpc_rnd_t);
-__MPC_DECLSPEC int  mpc_set_str   (mpc_ptr, const char *, int, mpc_rnd_t);
-__MPC_DECLSPEC char * mpc_get_str (int, size_t, mpc_srcptr, mpc_rnd_t);
-__MPC_DECLSPEC void mpc_free_str  (char *);
+__MPC_DECLSPEC int  mpc_strtoc      (mpc_ptr, const char *, char **, int, mpc_rnd_t);
+__MPC_DECLSPEC int  mpc_set_str     (mpc_ptr, const char *, int, mpc_rnd_t);
+__MPC_DECLSPEC char * mpc_get_str   (int, size_t, mpc_srcptr, mpc_rnd_t);
+__MPC_DECLSPEC void mpc_free_str    (char *);
 
 /* declare certain functions only if appropriate headers have been included */
 #ifdef _MPC_H_HAVE_INTMAX_T
-__MPC_DECLSPEC int  mpc_set_sj    (mpc_ptr, intmax_t, mpc_rnd_t);
-__MPC_DECLSPEC int  mpc_set_uj    (mpc_ptr, uintmax_t,  mpc_rnd_t);
-__MPC_DECLSPEC int  mpc_set_sj_sj (mpc_ptr, intmax_t, intmax_t, mpc_rnd_t);
-__MPC_DECLSPEC int  mpc_set_uj_uj (mpc_ptr, uintmax_t, uintmax_t, mpc_rnd_t);
+__MPC_DECLSPEC int  mpc_set_sj      (mpc_ptr, intmax_t, mpc_rnd_t);
+__MPC_DECLSPEC int  mpc_set_uj      (mpc_ptr, uintmax_t,  mpc_rnd_t);
+__MPC_DECLSPEC int  mpc_set_sj_sj   (mpc_ptr, intmax_t, intmax_t, mpc_rnd_t);
+__MPC_DECLSPEC int  mpc_set_uj_uj   (mpc_ptr, uintmax_t, uintmax_t, mpc_rnd_t);
 #endif
 
 #ifdef _Complex_I
-__MPC_DECLSPEC int  mpc_set_dc    (mpc_ptr, double _Complex, mpc_rnd_t);
-__MPC_DECLSPEC int  mpc_set_ldc   (mpc_ptr, long double _Complex, mpc_rnd_t);
+__MPC_DECLSPEC int  mpc_set_dc      (mpc_ptr, double _Complex, mpc_rnd_t);
+__MPC_DECLSPEC int  mpc_set_ldc     (mpc_ptr, long double _Complex, mpc_rnd_t);
 __MPC_DECLSPEC double _Complex mpc_get_dc (mpc_srcptr, mpc_rnd_t);
 __MPC_DECLSPEC long double _Complex mpc_get_ldc (mpc_srcptr, mpc_rnd_t);
 #endif

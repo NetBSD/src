@@ -1,4 +1,4 @@
-/*	$NetBSD: rumperr.h,v 1.6.16.1 2018/04/22 07:20:29 pgoyette Exp $	*/
+/*	$NetBSD: rumperr.h,v 1.6.16.2 2018/09/06 06:56:46 pgoyette Exp $	*/
 
 /*
  *	AUTOMATICALLY GENERATED.  DO NOT EDIT.

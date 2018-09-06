@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.128.2.9 2018/07/28 04:37:56 pgoyette Exp $ */
+/* $NetBSD: ixgbe.c,v 1.128.2.10 2018/09/06 06:56:02 pgoyette Exp $ */
 
 /******************************************************************************
 
@@ -2620,11 +2620,11 @@ ixgbe_msix_que(void *arg)
 	if ((txr->bytes) && (txr->packets))
 		newitr = txr->bytes/txr->packets;
 	if ((rxr->bytes) && (rxr->packets))
-		newitr = max(newitr, (rxr->bytes / rxr->packets));
+		newitr = uimax(newitr, (rxr->bytes / rxr->packets));
 	newitr += 24; /* account for hardware frame, crc */
 
 	/* set an upper boundary */
-	newitr = min(newitr, 3000);
+	newitr = uimin(newitr, 3000);
 
 	/* Be nice to the mid range */
 	if ((newitr > 300) && (newitr < 1200))
@@ -2843,6 +2843,7 @@ ixgbe_media_change(struct ifnet *ifp)
 	if (hw->phy.media_type == ixgbe_media_type_backplane)
 		return (EPERM);
 
+	IXGBE_CORE_LOCK(adapter);
 	/*
 	 * We don't actually need to check against the supported
 	 * media types of the adapter; ifmedia will take care of
@@ -2855,6 +2856,7 @@ ixgbe_media_change(struct ifnet *ifp)
 		if (err != IXGBE_SUCCESS) {
 			device_printf(adapter->dev, "Unable to determine "
 			    "supported advertise speeds\n");
+			IXGBE_CORE_UNLOCK(adapter);
 			return (ENODEV);
 		}
 		speed |= link_caps;
@@ -2915,10 +2917,12 @@ ixgbe_media_change(struct ifnet *ifp)
 			adapter->advertise |= 1 << 5;
 	}
 
+	IXGBE_CORE_UNLOCK(adapter);
 	return (0);
 
 invalid:
 	device_printf(adapter->dev, "Invalid media type!\n");
+	IXGBE_CORE_UNLOCK(adapter);
 
 	return (EINVAL);
 } /* ixgbe_media_change */
@@ -6545,7 +6549,7 @@ ixgbe_configure_interrupts(struct adapter *adapter)
 #ifdef	RSS
 	/* If we're doing RSS, clamp at the number of RSS buckets */
 	if (adapter->feat_en & IXGBE_FEATURE_RSS)
-		queues = min(queues, rss_getnumbuckets());
+		queues = uimin(queues, rss_getnumbuckets());
 #endif
 	if (ixgbe_num_queues > queues) {
 		aprint_error_dev(adapter->dev, "ixgbe_num_queues (%d) is too large, using reduced amount (%d).\n", ixgbe_num_queues, queues);
@@ -6555,8 +6559,8 @@ ixgbe_configure_interrupts(struct adapter *adapter)
 	if (ixgbe_num_queues != 0)
 		queues = ixgbe_num_queues;
 	else
-		queues = min(queues,
-		    min(mac->max_tx_queues, mac->max_rx_queues));
+		queues = uimin(queues,
+		    uimin(mac->max_tx_queues, mac->max_rx_queues));
 
 	/* reflect correct sysctl value */
 	ixgbe_num_queues = queues;

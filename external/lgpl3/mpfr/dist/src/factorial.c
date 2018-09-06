@@ -1,6 +1,6 @@
-/* mpfr_fac_ui -- factorial of a non-negative integer
+/* mpfr_fac_ui -- factorial of a nonnegative integer
 
-Copyright 2001, 2004-2016 Free Software Foundation, Inc.
+Copyright 2001, 2004-2018 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -57,7 +57,7 @@ mpfr_fac_ui (mpfr_ptr y, unsigned long int x, mpfr_rnd_t rnd_mode)
   /* compute the size of intermediary variable */
   Nt = Ny + 2 * MPFR_INT_CEIL_LOG2 (x) + 7;
 
-  mpfr_init2 (t, Nt); /* initialise of intermediary variable */
+  mpfr_init2 (t, Nt); /* initialize of intermediary variable */
 
   rnd = MPFR_RNDZ;
   MPFR_ZIV_INIT (loop, Nt);
@@ -76,8 +76,7 @@ mpfr_fac_ui (mpfr_ptr y, unsigned long int x, mpfr_rnd_t rnd_mode)
 
       err = Nt - 1 - MPFR_INT_CEIL_LOG2 (Nt);
 
-      round = !inexact || mpfr_can_round (t, err, rnd, MPFR_RNDZ,
-                                          Ny + (rnd_mode == MPFR_RNDN));
+      round = !inexact || MPFR_CAN_ROUND (t, err, Ny, rnd_mode);
 
       if (MPFR_LIKELY (round))
         {

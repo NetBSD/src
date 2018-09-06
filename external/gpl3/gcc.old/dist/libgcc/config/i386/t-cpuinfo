@@ -1,1 +1,3 @@
 LIB2ADD += $(srcdir)/config/i386/cpuinfo.c
+LIBGCC2_INCLUDES = -I$(srcdir)/../gcc/config/i386
+

@@ -1,4 +1,4 @@
-/*	$NetBSD: exynos_var.h,v 1.23.16.1 2018/07/28 04:37:29 pgoyette Exp $	*/
+/*	$NetBSD: exynos_var.h,v 1.23.16.2 2018/09/06 06:55:27 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2013, 2014 The NetBSD Foundation, Inc.
@@ -143,7 +143,7 @@ extern bus_space_handle_t exynos_pmu_bsh;
 extern bus_space_handle_t exynos_cmu_bsh;
 extern bus_space_handle_t exynos_sysreg_bsh;
 
-extern void exynos_bootstrap(vaddr_t, vaddr_t);
+extern void exynos_bootstrap(vaddr_t);
 extern void exynos_dma_bootstrap(psize_t memsize);
 
 struct exynos_pinctrl_softc;

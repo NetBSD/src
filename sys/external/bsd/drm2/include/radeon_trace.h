@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_trace.h,v 1.1 2014/07/16 20:59:58 riastradh Exp $	*/
+/*	$NetBSD: radeon_trace.h,v 1.1.30.1 2018/09/06 06:56:36 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -94,6 +94,11 @@ trace_radeon_vm_grab_id(unsigned vmid __unused, int ring __unused)
 static inline void
 trace_radeon_vm_set_page(uint64_t pe __unused, uint64_t addr __unused,
     unsigned count __unused, uint32_t incr __unused, uint32_t flags __unused)
+{
+}
+
+static inline void
+trace_radeon_vm_flush(uint64_t pd_addr, int ring, unsigned id)
 {
 }
 

@@ -1,0 +1,65 @@
+# Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+#
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+#
+# See the COPYRIGHT file distributed with this work for additional
+# information regarding copyright ownership.
+
+AC_INIT(perftcpdns.c)
+
+AC_PREREQ(2.13)
+
+AC_PROG_CC
+
+AC_CHECK_LIB(m, sqrt)
+AC_CHECK_LIB(rt, clock_gettime)
+
+AC_MSG_CHECKING(epoll support)
+AC_TRY_RUN([
+#include <sys/epoll.h>
+int main() {
+	if (epoll_create(1) < 0)
+		return (1);
+	return (0);
+}
+], [AC_MSG_RESULT(yes)], [AC_MSG_ERROR(epoll not found)])
+
+case "$host" in
+        *-freebsd*)
+                # We don't want to set -lpthread as that break
+                # the ability to choose threads library at final
+                # link time and is not valid for all architectures.
+                
+                PTHREAD=
+                if test "X$GCC" = "Xyes"; then
+                        saved_cc="$CC"
+                        CC="$CC -pthread"
+                        AC_MSG_CHECKING(for gcc -pthread support);
+                        AC_TRY_LINK([#include <pthread.h>],
+                                    [printf("%x\n", pthread_create);],
+                                    PTHREAD="yes"
+                                    AC_MSG_RESULT(yes),
+                                    AC_MSG_RESULT(no))
+                        CC="$saved_cc"
+                fi
+                if test "X$PTHREAD" != "Xyes"; then
+                        AC_CHECK_LIB(pthread, pthread_create,,
+                        AC_CHECK_LIB(thr, thread_create,,
+                        AC_CHECK_LIB(c_r, pthread_create,,
+                        AC_CHECK_LIB(c, pthread_create,,
+                        AC_MSG_ERROR("could not find thread libraries")))))
+                fi
+                ;;
+        *)
+                AC_CHECK_LIB(pthread, pthread_create,,
+                        AC_CHECK_LIB(pthread, __pthread_create,,
+                        AC_CHECK_LIB(pthread, __pthread_create_system,,
+                        AC_CHECK_LIB(c_r, pthread_create,,
+                        AC_CHECK_LIB(c, pthread_create,,
+                        AC_MSG_ERROR("could not find thread libraries"))))))
+        ;;
+esac
+
+AC_OUTPUT(Makefile)

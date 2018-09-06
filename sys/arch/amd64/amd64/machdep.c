@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.301.2.5 2018/07/28 04:37:26 pgoyette Exp $	*/
+/*	$NetBSD: machdep.c,v 1.301.2.6 2018/09/06 06:55:24 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.301.2.5 2018/07/28 04:37:26 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.301.2.6 2018/09/06 06:55:24 pgoyette Exp $");
 
 #include "opt_modular.h"
 #include "opt_user_ldt.h"
@@ -122,6 +122,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.301.2.5 2018/07/28 04:37:26 pgoyette E
 #include "opt_xen.h"
 #include "opt_svs.h"
 #include "opt_kaslr.h"
+#include "opt_kasan.h"
 #ifndef XEN
 #include "opt_physmem.h"
 #endif
@@ -263,6 +264,10 @@ static struct vm_map module_map_store;
 extern struct vm_map *module_map;
 extern struct bootspace bootspace;
 extern struct slotspace slotspace;
+
+vaddr_t vm_min_kernel_address __read_mostly = VM_MIN_KERNEL_ADDRESS_DEFAULT;
+vaddr_t vm_max_kernel_address __read_mostly = VM_MAX_KERNEL_ADDRESS_DEFAULT;
+pd_entry_t *pte_base __read_mostly;
 
 struct vm_map *phys_map = NULL;
 
@@ -1538,7 +1543,7 @@ init_x86_64_ksyms(void)
 #endif
 }
 
-void
+void __noasan
 init_bootspace(void)
 {
 	extern char __rodata_start;
@@ -1586,59 +1591,86 @@ init_bootspace(void)
 	bootspace.emodule = KERNBASE + NKL2_KIMG_ENTRIES * NBPD_L2;
 }
 
-void
+static void __noasan
+init_pte(void)
+{
+#ifndef XEN
+	extern uint32_t nox_flag;
+	pd_entry_t *pdir = (pd_entry_t *)bootspace.pdir;
+	pdir[L4_SLOT_PTE] = PDPpaddr | PG_KW | ((uint64_t)nox_flag << 32) |
+	    PG_V;
+#endif
+
+	extern pd_entry_t *normal_pdes[3];
+	normal_pdes[0] = L2_BASE;
+	normal_pdes[1] = L3_BASE;
+	normal_pdes[2] = L4_BASE;
+}
+
+void __noasan
 init_slotspace(void)
 {
+	vaddr_t va;
+
 	memset(&slotspace, 0, sizeof(slotspace));
 
-	/* User. */
+	/* User. [256, because we want to land in >= 256] */
 	slotspace.area[SLAREA_USER].sslot = 0;
-	slotspace.area[SLAREA_USER].mslot = PDIR_SLOT_PTE;
-	slotspace.area[SLAREA_USER].nslot = PDIR_SLOT_PTE;
+	slotspace.area[SLAREA_USER].nslot = PDIR_SLOT_USERLIM+1;
 	slotspace.area[SLAREA_USER].active = true;
-	slotspace.area[SLAREA_USER].dropmax = false;
 
+#ifdef XEN
 	/* PTE. */
 	slotspace.area[SLAREA_PTE].sslot = PDIR_SLOT_PTE;
-	slotspace.area[SLAREA_PTE].mslot = 1;
 	slotspace.area[SLAREA_PTE].nslot = 1;
 	slotspace.area[SLAREA_PTE].active = true;
-	slotspace.area[SLAREA_PTE].dropmax = false;
-
-	/* Main. */
-	slotspace.area[SLAREA_MAIN].sslot = PDIR_SLOT_KERN;
-	slotspace.area[SLAREA_MAIN].mslot = NKL4_MAX_ENTRIES;
-	slotspace.area[SLAREA_MAIN].nslot = 0 /* variable */;
-	slotspace.area[SLAREA_MAIN].active = true;
-	slotspace.area[SLAREA_MAIN].dropmax = false;
+#endif
 
 #ifdef __HAVE_PCPU_AREA
 	/* Per-CPU. */
 	slotspace.area[SLAREA_PCPU].sslot = PDIR_SLOT_PCPU;
-	slotspace.area[SLAREA_PCPU].mslot = 1;
 	slotspace.area[SLAREA_PCPU].nslot = 1;
 	slotspace.area[SLAREA_PCPU].active = true;
-	slotspace.area[SLAREA_PCPU].dropmax = false;
 #endif
 
 #ifdef __HAVE_DIRECT_MAP
-	/* Direct Map. */
-	slotspace.area[SLAREA_DMAP].sslot = PDIR_SLOT_DIRECT;
-	slotspace.area[SLAREA_DMAP].mslot = NL4_SLOT_DIRECT+1;
-	slotspace.area[SLAREA_DMAP].nslot = 0 /* variable */;
+	/* Direct Map. [Randomized later] */
 	slotspace.area[SLAREA_DMAP].active = false;
-	slotspace.area[SLAREA_DMAP].dropmax = true;
+#endif
+
+#ifdef XEN
+	/* Hypervisor. */
+	slotspace.area[SLAREA_HYPV].sslot = 256;
+	slotspace.area[SLAREA_HYPV].nslot = 17;
+	slotspace.area[SLAREA_HYPV].active = true;
+#endif
+
+#ifdef KASAN
+	/* ASAN. */
+	slotspace.area[SLAREA_ASAN].sslot = L4_SLOT_KASAN;
+	slotspace.area[SLAREA_ASAN].nslot = NL4_SLOT_KASAN;
+	slotspace.area[SLAREA_ASAN].active = true;
 #endif
 
 	/* Kernel. */
 	slotspace.area[SLAREA_KERN].sslot = L4_SLOT_KERNBASE;
-	slotspace.area[SLAREA_KERN].mslot = 1;
 	slotspace.area[SLAREA_KERN].nslot = 1;
 	slotspace.area[SLAREA_KERN].active = true;
-	slotspace.area[SLAREA_KERN].dropmax = false;
+
+	/* Main. */
+	va = slotspace_rand(SLAREA_MAIN, NKL4_MAX_ENTRIES * NBPD_L4,
+	    NBPD_L4); /* TODO: NBPD_L1 */
+	vm_min_kernel_address = va;
+	vm_max_kernel_address = va + NKL4_MAX_ENTRIES * NBPD_L4;
+
+#ifndef XEN
+	/* PTE. */
+	va = slotspace_rand(SLAREA_PTE, NBPD_L4, NBPD_L4);
+	pte_base = (pd_entry_t *)va;
+#endif
 }
 
-void
+void __noasan
 init_x86_64(paddr_t first_avail)
 {
 	extern void consinit(void);
@@ -1657,6 +1689,13 @@ init_x86_64(paddr_t first_avail)
 #ifdef XEN
 	KASSERT(HYPERVISOR_shared_info != NULL);
 	cpu_info_primary.ci_vcpu = &HYPERVISOR_shared_info->vcpu_info[0];
+#endif
+
+	init_pte();
+
+#ifdef KASAN
+	void kasan_early_init(void);
+	kasan_early_init();
 #endif
 
 	uvm_lwp_setuarea(&lwp0, lwp0uarea);
@@ -1736,6 +1775,11 @@ init_x86_64(paddr_t first_avail)
 #endif
 
 	init_x86_msgbuf();
+
+#ifdef KASAN
+	void kasan_init(void);
+	kasan_init();
+#endif
 
 	pmap_growkernel(VM_MIN_KERNEL_ADDRESS + 32 * 1024 * 1024);
 

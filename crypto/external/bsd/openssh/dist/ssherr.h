@@ -1,5 +1,6 @@
-/*	$NetBSD: ssherr.h,v 1.1.1.3.2.1 2018/04/07 04:11:48 pgoyette Exp $	*/
-/*	$OpenBSD: ssherr.h,v 1.5 2017/09/12 06:32:08 djm Exp $	*/
+/*	$NetBSD: ssherr.h,v 1.1.1.3.2.2 2018/09/06 06:51:33 pgoyette Exp $	*/
+/*	$OpenBSD: ssherr.h,v 1.6 2018/07/03 11:39:54 djm Exp $	*/
+
 /*
  * Copyright (c) 2011 Damien Miller
  *
@@ -80,6 +81,7 @@
 #define SSH_ERR_PROTOCOL_ERROR			-55
 #define SSH_ERR_KEY_LENGTH			-56
 #define SSH_ERR_NUMBER_TOO_LARGE		-57
+#define SSH_ERR_SIGN_ALG_UNSUPPORTED		-58
 
 /* Translate a numeric error code to a human-readable error string */
 const char *ssh_err(int n);

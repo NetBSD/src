@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_i2c.c,v 1.16.10.2 2018/07/28 04:37:28 pgoyette Exp $ */
+/* $NetBSD: tegra_i2c.c,v 1.16.10.3 2018/09/06 06:55:27 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_i2c.c,v 1.16.10.2 2018/07/28 04:37:28 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_i2c.c,v 1.16.10.3 2018/09/06 06:55:27 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -136,8 +136,8 @@ tegra_i2c_attach(device_t parent, device_t self, void *aux)
 	sc->sc_cid = device_unit(self);
 	error = bus_space_map(sc->sc_bst, addr, size, 0, &sc->sc_bsh);
 	if (error) {
-		aprint_error(": couldn't map %#" PRIx64 ": %d",
-		    (uint64_t)addr, error);
+		aprint_error(": couldn't map %#" PRIxBUSADDR ": %d",
+		    addr, error);
 		return;
 	}
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_VM);
@@ -334,7 +334,7 @@ tegra_i2c_wait(struct tegra_i2c_softc *sc, int flags)
 	while (--retry > 0) {
 		if ((flags & I2C_F_POLL) == 0) {
 			error = cv_timedwait_sig(&sc->sc_cv, &sc->sc_lock,
-			    max(mstohz(10), 1));
+			    uimax(mstohz(10), 1));
 			if (error) {
 				return error;
 			}
@@ -413,12 +413,12 @@ tegra_i2c_write(struct tegra_i2c_softc *sc, i2c_addr_t addr, const uint8_t *buf,
 			return ETIMEDOUT;
 		}
 
-		for (n = 0, data = 0; n < min(resid, 4); n++) {
+		for (n = 0, data = 0; n < uimin(resid, 4); n++) {
 			data |= (uint32_t)p[n] << (n * 8);
 		}
 		I2C_WRITE(sc, I2C_TX_PACKET_FIFO_REG, data);
-		p += min(resid, 4);
-		resid -= min(resid, 4);
+		p += uimin(resid, 4);
+		resid -= uimin(resid, 4);
 	}
 
 	return tegra_i2c_wait(sc, flags);
@@ -470,11 +470,11 @@ tegra_i2c_read(struct tegra_i2c_softc *sc, i2c_addr_t addr, uint8_t *buf,
 		}
 
 		data = I2C_READ(sc, I2C_RX_FIFO_REG);
-		for (n = 0; n < min(resid, 4); n++) {
+		for (n = 0; n < uimin(resid, 4); n++) {
 			p[n] = (data >> (n * 8)) & 0xff;
 		}
-		p += min(resid, 4);
-		resid -= min(resid, 4);
+		p += uimin(resid, 4);
+		resid -= uimin(resid, 4);
 	}
 
 	return tegra_i2c_wait(sc, flags);

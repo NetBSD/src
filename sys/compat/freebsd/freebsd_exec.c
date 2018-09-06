@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_exec.c,v 1.40.2.1 2018/05/21 04:36:03 pgoyette Exp $	*/
+/*	$NetBSD: freebsd_exec.c,v 1.40.2.2 2018/09/06 06:55:45 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: freebsd_exec.c,v 1.40.2.1 2018/05/21 04:36:03 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: freebsd_exec.c,v 1.40.2.2 2018/09/06 06:55:45 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_syscall_debug.h"
@@ -54,6 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: freebsd_exec.c,v 1.40.2.1 2018/05/21 04:36:03 pgoyet
 #include <compat/freebsd/freebsd_machdep.h>
 
 extern struct sysent freebsd_sysent[];
+extern const uint32_t freebsd_sysent_nomodbits[];
 extern const char * const freebsd_syscallnames[];
 
 struct uvm_object *emul_freebsd_object;
@@ -72,6 +73,7 @@ struct emul emul_freebsd = {
 	.e_nsysent =		FREEBSD_SYS_NSYSENT,
 #endif
 	.e_sysent =		freebsd_sysent,
+	.e_nomodbits =		freebsd_sysent_nomodbits,
 #ifdef SYSCALL_DEBUG
 	.e_syscallnames =	freebsd_syscallnames,
 #else

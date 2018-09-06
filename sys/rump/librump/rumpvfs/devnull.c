@@ -1,4 +1,4 @@
-/*	$NetBSD: devnull.c,v 1.7 2016/01/26 23:12:18 pooka Exp $	*/
+/*	$NetBSD: devnull.c,v 1.7.16.1 2018/09/06 06:56:46 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: devnull.c,v 1.7 2016/01/26 23:12:18 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: devnull.c,v 1.7.16.1 2018/09/06 06:56:46 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -106,7 +106,7 @@ rump_devnullrw(dev_t dev, struct uio *uio, int flags)
 		memset(zeros, 0, sizeof(zeros));
 		while (uio->uio_resid > 0) {
 			error = uiomove(zeros,
-			    min(sizeof(zeros), uio->uio_resid), uio);
+			    uimin(sizeof(zeros), uio->uio_resid), uio);
 			if (error)
 				return error;
 		}

@@ -1,6 +1,6 @@
 /* Operating system specific defines to be used when targeting GCC for any
    Solaris 2 system.
-   Copyright (C) 2002-2015 Free Software Foundation, Inc.
+   Copyright (C) 2002-2016 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -127,7 +127,7 @@ along with GCC; see the file COPYING3.  If not see
 #define ASM_SPEC_BASE \
 "%{v:-V} %{Qy:} %{!Qn:-Qy} %{Ym,*} -s %(asm_cpu)"
 
-#define ASM_PIC_SPEC " %{fpic|fpie|fPIC|fPIE:-K PIC}"
+#define ASM_PIC_SPEC " %{" FPIE_OR_FPIC_SPEC ":-K PIC}"
 
 #undef ASM_CPU_DEFAULT_SPEC
 #define ASM_CPU_DEFAULT_SPEC \
@@ -150,14 +150,36 @@ along with GCC; see the file COPYING3.  If not see
 #define MD_EXEC_PREFIX "/usr/ccs/bin/"
 #endif
 
+/* Enable constructor priorities if the configured linker supports it.  */
+#undef SUPPORTS_INIT_PRIORITY
+#define SUPPORTS_INIT_PRIORITY HAVE_INITFINI_ARRAY_SUPPORT
+
 #undef STARTFILE_ARCH_SPEC
 #define STARTFILE_ARCH_SPEC "%{ansi:values-Xc.o%s} \
 			    %{!ansi:values-Xa.o%s}"
 
 #if defined(HAVE_LD_PIE) && defined(HAVE_SOLARIS_CRTS)
-#define STARTFILE_CRTBEGIN_SPEC "%{shared|pie:crtbeginS.o%s;:crtbegin.o%s}"
+#define STARTFILE_CRTBEGIN_SPEC "%{shared:crtbeginS.o%s} \
+				 %{" PIE_SPEC ":crtbeginS.o%s} \
+				 %{" NO_PIE_SPEC ":crtbegin.o%s}"
 #else
 #define STARTFILE_CRTBEGIN_SPEC	"crtbegin.o%s"
+#endif
+
+#if SUPPORTS_INIT_PRIORITY
+#define STARTFILE_VTV_SPEC \
+  "%{fvtable-verify=none:%s; \
+     fvtable-verify=preinit:vtv_start_preinit.o%s; \
+     fvtable-verify=std:vtv_start.o%s}"
+
+#define ENDFILE_VTV_SPEC \
+  "%{fvtable-verify=none:%s; \
+     fvtable-verify=preinit:vtv_end_preinit.o%s; \
+     fvtable-verify=std:vtv_end.o%s}"
+#else
+#define STARTFILE_VTV_SPEC \
+  "%{fvtable-verify:%e-fvtable-verify is not supported in this configuration}"
+#define ENDFILE_VTV_SPEC ""
 #endif
 
 /* We don't use the standard svr4 STARTFILE_SPEC because it's wrong for us.  */
@@ -170,17 +192,21 @@ along with GCC; see the file COPYING3.  If not see
 			  %{p:%e-p is not supported; \
 			    pg:crtpg.o%s gmon.o%s; \
 			      :crtp.o%s}}} \
-			crti.o%s %(startfile_arch) %(startfile_crtbegin)"
+			crti.o%s %(startfile_arch) %(startfile_crtbegin) \
+			%(startfile_vtv)"
 #else
 #define STARTFILE_SPEC "%{!shared:%{!symbolic: \
 			  %{p:mcrt1.o%s; \
                             pg:gcrt1.o%s gmon.o%s; \
                               :crt1.o%s}}} \
-			crti.o%s %(startfile_arch) %(startfile_crtbegin)"
+			crti.o%s %(startfile_arch) %(startfile_crtbegin) \
+			%(startfile_vtv)"
 #endif
 
 #if defined(HAVE_LD_PIE) && defined(HAVE_SOLARIS_CRTS)
-#define ENDFILE_CRTEND_SPEC "%{shared|pie:crtendS.o%s;:crtend.o%s}"
+#define ENDFILE_CRTEND_SPEC "%{shared:crtendS.o%s;: \
+			       %{" PIE_SPEC ":crtendS.o%s} \
+			       %{" NO_PIE_SPEC ":crtend.o%s}}"
 #else
 #define ENDFILE_CRTEND_SPEC "crtend.o%s"
 #endif
@@ -188,7 +214,7 @@ along with GCC; see the file COPYING3.  If not see
 #undef  ENDFILE_SPEC
 #define ENDFILE_SPEC \
   "%{Ofast|ffast-math|funsafe-math-optimizations:crtfastmath.o%s} \
-   %(endfile_arch) %(endfile_crtend) crtn.o%s"
+   %(endfile_arch) %(endfile_vtv) %(endfile_crtend) crtn.o%s"
 
 #undef LINK_ARCH32_SPEC_BASE
 #define LINK_ARCH32_SPEC_BASE \
@@ -263,12 +289,14 @@ along with GCC; see the file COPYING3.  If not see
 #define SUBTARGET_EXTRA_SPECS \
   { "startfile_arch",	 	STARTFILE_ARCH_SPEC },		\
   { "startfile_crtbegin",	STARTFILE_CRTBEGIN_SPEC },	\
+  { "startfile_vtv",		STARTFILE_VTV_SPEC },		\
   { "link_arch32",       	LINK_ARCH32_SPEC },		\
   { "link_arch64",       	LINK_ARCH64_SPEC },		\
   { "link_arch_default", 	LINK_ARCH_DEFAULT_SPEC },	\
   { "link_arch",	 	LINK_ARCH_SPEC },		\
   { "endfile_arch",	 	ENDFILE_ARCH_SPEC },		\
-  { "endfile_crtend",		ENDFILE_CRTEND_SPEC },	\
+  { "endfile_crtend",		ENDFILE_CRTEND_SPEC },		\
+  { "endfile_vtv",		ENDFILE_VTV_SPEC },		\
   SUBTARGET_CPU_EXTRA_SPECS
 
 /* C++11 programs need -lrt for nanosleep.  */
@@ -326,10 +354,10 @@ along with GCC; see the file COPYING3.  If not see
 #if defined(HAVE_LD_PIE) && defined(HAVE_SOLARIS_CRTS)
 #ifdef USE_GLD
 /* Assert -z text by default to match Solaris ld.  */
-#define LINK_PIE_SPEC "%{pie:-pie %{!mimpure-text:-z text}} "
+#define LD_PIE_SPEC "-pie %{!mimpure-text:-z text}"
 #else
 /* Solaris ld needs -z type=pie instead of -pie.  */
-#define LINK_PIE_SPEC "%{pie:-z type=pie %{mimpure-text:-z textoff}} "
+#define LD_PIE_SPEC "-z type=pie %{mimpure-text:-z textoff}"
 #endif
 #else
 /* Error out if some part of PIE support is missing.  */
@@ -392,12 +420,6 @@ along with GCC; see the file COPYING3.  If not see
 /* The Solaris assembler cannot grok .stabd directives.  */
 #undef NO_DBX_BNSYM_ENSYM
 #define NO_DBX_BNSYM_ENSYM 1
-#endif
-
-#ifndef USE_GLD
-/* The Solaris linker doesn't understand constructor priorities.  */
-#undef SUPPORTS_INIT_PRIORITY
-#define SUPPORTS_INIT_PRIORITY 0
 #endif
 
 /* Solaris has an implementation of __enable_execute_stack.  */

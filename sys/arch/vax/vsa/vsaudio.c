@@ -550,7 +550,7 @@ vsaudio_input_conv_fetch_to(struct audio_softc *sc, stream_fetcher_t *self,
         if ((err = this->prev->fetch_to(sc, this->prev, this->src, max_used * 4)))
                 return err;
         m = dst->end - dst->start;
-        m = min(m, max_used);
+        m = uimin(m, max_used);
         FILTER_LOOP_PROLOGUE(this->src, 4, dst, 1, m) {
                 *d = ((*(const uint32_t *)s) >> 16) & 0xff;
         } FILTER_LOOP_EPILOGUE(this->src, dst);
@@ -576,7 +576,7 @@ vsaudio_output_conv_fetch_to(struct audio_softc *sc, stream_fetcher_t *self,
         if ((err = this->prev->fetch_to(sc, this->prev, this->src, max_used / 4)))
                 return err;
         m = (dst->end - dst->start) & ~3;
-        m = min(m, max_used);
+        m = uimin(m, max_used);
         FILTER_LOOP_PROLOGUE(this->src, 1, dst, 4, m) {
                 *(uint32_t *)d = (*s << 16);
         } FILTER_LOOP_EPILOGUE(this->src, dst);

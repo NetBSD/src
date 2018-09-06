@@ -1,0 +1,3 @@
+# teardown of a huge zone with tracing enabled takes way too long 
+# -m none is set so that stop.pl does not timeout
+-X named.lock -m none -T clienttest -c named.conf -d 99 -g -U 4

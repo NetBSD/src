@@ -1,6 +1,6 @@
 /* Routines for reading trees from a file stream.
 
-   Copyright (C) 2011-2015 Free Software Foundation, Inc.
+   Copyright (C) 2011-2016 Free Software Foundation, Inc.
    Contributed by Diego Novillo <dnovillo@google.com>
 
 This file is part of GCC.
@@ -22,44 +22,17 @@ along with GCC; see the file COPYING3.  If not see
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
-#include "diagnostic.h"
-#include "hash-set.h"
-#include "machmode.h"
-#include "vec.h"
-#include "double-int.h"
-#include "input.h"
-#include "alias.h"
-#include "symtab.h"
-#include "options.h"
-#include "wide-int.h"
-#include "inchash.h"
-#include "real.h"
-#include "fixed-value.h"
+#include "backend.h"
+#include "target.h"
 #include "tree.h"
-#include "fold-const.h"
-#include "stringpool.h"
-#include "predict.h"
-#include "tm.h"
-#include "hard-reg-set.h"
-#include "input.h"
-#include "function.h"
-#include "basic-block.h"
-#include "tree-ssa-alias.h"
-#include "internal-fn.h"
-#include "gimple-expr.h"
-#include "is-a.h"
 #include "gimple.h"
-#include "hash-map.h"
-#include "plugin-api.h"
-#include "ipa-ref.h"
-#include "cgraph.h"
+#include "stringpool.h"
 #include "tree-streamer.h"
-#include "data-streamer.h"
-#include "streamer-hooks.h"
-#include "lto-streamer.h"
+#include "cgraph.h"
 #include "builtins.h"
 #include "ipa-chkp.h"
 #include "gomp-constants.h"
+#include "asan.h"
 
 
 /* Read a STRING_CST from the string table in DATA_IN using input
@@ -144,7 +117,10 @@ unpack_ts_base_value_fields (struct bitpack_d *bp, tree expr)
   TREE_ADDRESSABLE (expr) = (unsigned) bp_unpack_value (bp, 1);
   TREE_THIS_VOLATILE (expr) = (unsigned) bp_unpack_value (bp, 1);
   if (DECL_P (expr))
-    DECL_UNSIGNED (expr) = (unsigned) bp_unpack_value (bp, 1);
+    {
+      DECL_UNSIGNED (expr) = (unsigned) bp_unpack_value (bp, 1);
+      DECL_NAMELESS (expr) = (unsigned) bp_unpack_value (bp, 1);
+    }
   else if (TYPE_P (expr))
     TYPE_UNSIGNED (expr) = (unsigned) bp_unpack_value (bp, 1);
   else
@@ -164,8 +140,16 @@ unpack_ts_base_value_fields (struct bitpack_d *bp, tree expr)
   TREE_DEPRECATED (expr) = (unsigned) bp_unpack_value (bp, 1);
   if (TYPE_P (expr))
     {
-      TYPE_SATURATING (expr) = (unsigned) bp_unpack_value (bp, 1);
+      if (AGGREGATE_TYPE_P (expr))
+	TYPE_REVERSE_STORAGE_ORDER (expr) = (unsigned) bp_unpack_value (bp, 1);
+      else
+	TYPE_SATURATING (expr) = (unsigned) bp_unpack_value (bp, 1);
       TYPE_ADDR_SPACE (expr) = (unsigned) bp_unpack_value (bp, 8);
+    }
+  else if (TREE_CODE (expr) == BIT_FIELD_REF || TREE_CODE (expr) == MEM_REF)
+    {
+      REF_REVERSE_STORAGE_ORDER (expr) = (unsigned) bp_unpack_value (bp, 1);
+      bp_unpack_value (bp, 8);
     }
   else if (TREE_CODE (expr) == SSA_NAME)
     {
@@ -379,8 +363,13 @@ unpack_ts_type_common_value_fields (struct bitpack_d *bp, tree expr)
   mode = bp_unpack_machine_mode (bp);
   SET_TYPE_MODE (expr, mode);
   TYPE_STRING_FLAG (expr) = (unsigned) bp_unpack_value (bp, 1);
-  TYPE_NO_FORCE_BLK (expr) = (unsigned) bp_unpack_value (bp, 1);
+  /* TYPE_NO_FORCE_BLK is private to stor-layout and need
+     no streaming.  */
   TYPE_NEEDS_CONSTRUCTING (expr) = (unsigned) bp_unpack_value (bp, 1);
+  TYPE_PACKED (expr) = (unsigned) bp_unpack_value (bp, 1);
+  TYPE_RESTRICT (expr) = (unsigned) bp_unpack_value (bp, 1);
+  TYPE_USER_ALIGN (expr) = (unsigned) bp_unpack_value (bp, 1);
+  TYPE_READONLY (expr) = (unsigned) bp_unpack_value (bp, 1);
   if (RECORD_OR_UNION_TYPE_P (expr))
     {
       TYPE_TRANSPARENT_AGGR (expr) = (unsigned) bp_unpack_value (bp, 1);
@@ -388,17 +377,12 @@ unpack_ts_type_common_value_fields (struct bitpack_d *bp, tree expr)
     }
   else if (TREE_CODE (expr) == ARRAY_TYPE)
     TYPE_NONALIASED_COMPONENT (expr) = (unsigned) bp_unpack_value (bp, 1);
-  TYPE_PACKED (expr) = (unsigned) bp_unpack_value (bp, 1);
-  TYPE_RESTRICT (expr) = (unsigned) bp_unpack_value (bp, 1);
-  TYPE_USER_ALIGN (expr) = (unsigned) bp_unpack_value (bp, 1);
-  TYPE_READONLY (expr) = (unsigned) bp_unpack_value (bp, 1);
   TYPE_PRECISION (expr) = bp_unpack_var_len_unsigned (bp);
   TYPE_ALIGN (expr) = bp_unpack_var_len_unsigned (bp);
 #ifdef ACCEL_COMPILER
   if (TYPE_ALIGN (expr) > targetm.absolute_biggest_alignment)
     TYPE_ALIGN (expr) = targetm.absolute_biggest_alignment;
 #endif
-  TYPE_ALIAS_SET (expr) = bp_unpack_var_len_int (bp);
 }
 
 
@@ -1153,13 +1137,21 @@ streamer_get_builtin_tree (struct lto_input_block *ib, struct data_in *data_in)
 	fatal_error (input_location,
 		     "machine independent builtin code out of range");
       result = builtin_decl_explicit (fcode);
-      if (!result
-	  && fcode > BEGIN_CHKP_BUILTINS
-	  && fcode < END_CHKP_BUILTINS)
+      if (!result)
 	{
-	  fcode = (enum built_in_function) (fcode - BEGIN_CHKP_BUILTINS - 1);
-	  result = builtin_decl_explicit (fcode);
-	  result = chkp_maybe_clone_builtin_fndecl (result);
+	  if (fcode > BEGIN_CHKP_BUILTINS && fcode < END_CHKP_BUILTINS)
+	    {
+	      fcode = (enum built_in_function)
+		      (fcode - BEGIN_CHKP_BUILTINS - 1);
+	      result = builtin_decl_explicit (fcode);
+	      result = chkp_maybe_clone_builtin_fndecl (result);
+	    }
+	  else if (fcode > BEGIN_SANITIZER_BUILTINS
+		   && fcode < END_SANITIZER_BUILTINS)
+	    {
+	      initialize_sanitizer_builtins ();
+	      result = builtin_decl_explicit (fcode);
+	    }
 	}
       gcc_assert (result);
     }

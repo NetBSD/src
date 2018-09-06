@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.178.2.8 2018/07/28 04:38:12 pgoyette Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.178.2.9 2018/09/06 06:56:47 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1999, 2001, 2007 The NetBSD Foundation, Inc.
@@ -748,18 +748,6 @@ struct mbstat_cpu {
 #define	MBUF_MCLLOWAT		5	/* int: mbuf cluster low water mark */
 #define	MBUF_STATS		6	/* struct: mbstat */
 #define	MBUF_MOWNERS		7	/* struct: m_owner[] */
-#define	MBUF_MAXID		8	/* number of valid MBUF ids */
-
-#define	CTL_MBUF_NAMES {						\
-	{ 0, 0 },							\
-	{ "msize", CTLTYPE_INT },					\
-	{ "mclbytes", CTLTYPE_INT },					\
-	{ "nmbclusters", CTLTYPE_INT },					\
-	{ "mblowat", CTLTYPE_INT },					\
-	{ "mcllowat", CTLTYPE_INT },					\
-	{ 0 /* "stats" */, CTLTYPE_STRUCT },				\
-	{ 0 /* "mowners" */, CTLTYPE_STRUCT },				\
-}
 
 #ifdef	_KERNEL
 extern struct mbstat mbstat;
@@ -773,7 +761,6 @@ extern int max_datalen;		/* MHLEN - max_hdr */
 extern const int msize;			/* mbuf base size */
 extern const int mclbytes;		/* mbuf cluster size */
 extern pool_cache_t mb_cache;
-extern pool_cache_t mcl_cache;
 #ifdef MBUFTRACE
 LIST_HEAD(mownerhead, mowner);
 extern struct mownerhead mowners;

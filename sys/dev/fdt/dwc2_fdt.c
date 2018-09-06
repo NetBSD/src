@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2_fdt.c,v 1.2.2.2 2018/06/25 07:25:49 pgoyette Exp $	*/
+/*	$NetBSD: dwc2_fdt.c,v 1.2.2.3 2018/09/06 06:55:49 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc2_fdt.c,v 1.2.2.2 2018/06/25 07:25:49 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc2_fdt.c,v 1.2.2.3 2018/09/06 06:55:49 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -38,8 +38,6 @@ __KERNEL_RCSID(0, "$NetBSD: dwc2_fdt.c,v 1.2.2.2 2018/06/25 07:25:49 pgoyette Ex
 #include <sys/mutex.h>
 #include <sys/bus.h>
 #include <sys/workqueue.h>
-
-#include <arm/broadcom/bcm2835reg.h>
 
 #include <dev/fdt/fdtvar.h>
 

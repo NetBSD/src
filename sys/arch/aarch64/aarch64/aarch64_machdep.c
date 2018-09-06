@@ -1,4 +1,4 @@
-/* $NetBSD: aarch64_machdep.c,v 1.1.28.4 2018/07/28 04:37:25 pgoyette Exp $ */
+/* $NetBSD: aarch64_machdep.c,v 1.1.28.5 2018/09/06 06:55:22 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,16 +30,18 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: aarch64_machdep.c,v 1.1.28.4 2018/07/28 04:37:25 pgoyette Exp $");
+__KERNEL_RCSID(1, "$NetBSD: aarch64_machdep.c,v 1.1.28.5 2018/09/06 06:55:22 pgoyette Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_ddb.h"
 #include "opt_kernhist.h"
+#include "opt_modular.h"
 
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/bus.h>
 #include <sys/kauth.h>
+#include <sys/module.h>
 #include <sys/msgbuf.h>
 #include <sys/sysctl.h>
 
@@ -60,6 +62,14 @@ __KERNEL_RCSID(1, "$NetBSD: aarch64_machdep.c,v 1.1.28.4 2018/07/28 04:37:25 pgo
 #include <aarch64/pte.h>
 #include <aarch64/vmparam.h>
 
+#include <arch/evbarm/fdt/platform.h>
+
+#ifdef VERBOSE_INIT_ARM
+#define VPRINTF(...)	printf(__VA_ARGS__)
+#else
+#define VPRINTF(...)	do { } while (/* CONSTCOND */ 0)
+#endif
+
 char cpu_model[32];
 char machine[] = MACHINE;
 char machine_arch[] = MACHINE_ARCH;
@@ -79,11 +89,41 @@ const pcu_ops_t * const pcu_ops_md_defs[PCU_UNIT_COUNT] = {
 
 struct vm_map *phys_map;
 
+#ifdef MODULAR
+vaddr_t module_start, module_end;
+static struct vm_map module_map_store;
+#endif
+
 /* XXX */
 vaddr_t physical_start;
 vaddr_t physical_end;
 /* filled in before cleaning bss. keep in .data */
 u_long kern_vtopdiff __attribute__((__section__(".data")));
+
+void
+cpu_kernel_vm_init(uint64_t memory_start, uint64_t memory_size)
+{
+
+	extern char __kernel_text[];
+	extern char _end[];
+
+	vaddr_t kernstart = trunc_page((vaddr_t)__kernel_text);
+	vaddr_t kernend = round_page((vaddr_t)_end);
+
+	paddr_t	kernstart_phys = KERN_VTOPHYS(kernstart);
+	paddr_t kernend_phys = KERN_VTOPHYS(kernend);
+
+	VPRINTF("%s: kernel phys start %lx end %lx\n", __func__,
+	    kernstart_phys, kernend_phys);
+
+        fdt_add_reserved_memory_range(kernstart_phys,
+	     kernend_phys - kernstart_phys);
+
+	/*
+	 * XXX whole bunch of stuff to map kernel correctly
+	 */
+}
+
 
 
 /*
@@ -124,10 +164,9 @@ initarm_common(vaddr_t kvm_base, vsize_t kvm_size,
 	struct trapframe *tf;
 	psize_t memsize_total;
 	vaddr_t kernstart, kernend;
-	vaddr_t kernstart_l2, kernend_l2;	/* L2 table 2MB aligned */
+	vaddr_t kernstart_l2 __unused, kernend_l2;	/* L2 table 2MB aligned */
+	vaddr_t kernelvmstart;
 	int i;
-
-	aarch64_getcacheinfo();
 
 	cputype = cpu_idnum();	/* for compatible arm */
 
@@ -135,16 +174,34 @@ initarm_common(vaddr_t kvm_base, vsize_t kvm_size,
 	kernend = round_page((vaddr_t)_end);
 	kernstart_l2 = kernstart & -L2_SIZE;		/* trunk L2_SIZE(2M) */
 	kernend_l2 = (kernend + L2_SIZE - 1) & -L2_SIZE;/* round L2_SIZE(2M) */
+	kernelvmstart = kernend_l2;
 
-	paddr_t kernstart_phys = KERN_VTOPHYS(kernstart);
-	paddr_t kernend_phys = KERN_VTOPHYS(kernend);
+#ifdef MODULAR
+	/*
+	 * aarch64 compiler (gcc & llvm) uses R_AARCH_CALL26/R_AARCH_JUMP26
+	 * for function calling/jumping.
+	 * (at this time, both compilers doesn't support -mlong-calls)
+	 * therefore kernel modules should be loaded within maximum 26bit word,
+	 * or +-128MB from kernel.
+	 */
+#define MODULE_RESERVED_MAX	(1024 * 1024 * 128)
+#define MODULE_RESERVED_SIZE	(1024 * 1024 * 32)	/* good enough? */
+	module_start = kernelvmstart;
+	module_end = kernend_l2 + MODULE_RESERVED_SIZE;
+	if (module_end >= kernstart_l2 + MODULE_RESERVED_MAX)
+		module_end = kernstart_l2 + MODULE_RESERVED_MAX;
+	KASSERT(module_end > kernend_l2);
+	kernelvmstart = module_end;
+#endif /* MODULAR */
+
+	paddr_t kernstart_phys __unused = KERN_VTOPHYS(kernstart);
+	paddr_t kernend_phys __unused = KERN_VTOPHYS(kernend);
 
 	/* XXX */
 	physical_start = bootconfig.dram[0].address;
 	physical_end = physical_start + ptoa(bootconfig.dram[0].pages);
 
-#ifdef VERBOSE_INIT_ARM
-	printf(
+	VPRINTF(
 	    "------------------------------------------\n"
 	    "kern_vtopdiff         = 0x%016lx\n"
 	    "physical_start        = 0x%016lx\n"
@@ -156,6 +213,10 @@ initarm_common(vaddr_t kvm_base, vsize_t kvm_size,
 	    "kernel_start          = 0x%016lx\n"
 	    "kernel_end            = 0x%016lx\n"
 	    "kernel_end_l2         = 0x%016lx\n"
+#ifdef MODULAR
+	    "module_start          = 0x%016lx\n"
+	    "module_end            = 0x%016lx\n"
+#endif
 	    "(kernel va area)\n"
 	    "(devmap va area)\n"
 	    "VM_MAX_KERNEL_ADDRESS = 0x%016lx\n"
@@ -170,8 +231,11 @@ initarm_common(vaddr_t kvm_base, vsize_t kvm_size,
 	    kernstart,
 	    kernend,
 	    kernend_l2,
-	    VM_MAX_KERNEL_ADDRESS);
+#ifdef MODULAR
+	    module_start,
+	    module_end,
 #endif
+	    VM_MAX_KERNEL_ADDRESS);
 
 	/*
 	 * msgbuf is always allocated from bottom of 1st memory block.
@@ -242,7 +306,7 @@ initarm_common(vaddr_t kvm_base, vsize_t kvm_size,
 	 * kernel image is mapped on L2 table (2MB*n) by locore.S
 	 * virtual space start from 2MB aligned kernend
 	 */
-	pmap_bootstrap(kernend_l2, VM_MAX_KERNEL_ADDRESS);
+	pmap_bootstrap(kernelvmstart, VM_MAX_KERNEL_ADDRESS);
 
 	/*
 	 * setup lwp0
@@ -397,6 +461,14 @@ machdep_init(void)
 	cpu_reset_address0 = NULL;
 }
 
+#ifdef MODULAR
+/* Push any modules loaded by the boot loader */
+void
+module_init_md(void)
+{
+}
+#endif /* MODULAR */
+
 bool
 mm_md_direct_mapped_phys(paddr_t pa, vaddr_t *vap)
 {
@@ -433,6 +505,12 @@ cpu_startup(void)
 	minaddr = 0;
 	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
 	   VM_PHYS_SIZE, 0, FALSE, NULL);
+
+#ifdef MODULAR
+	uvm_map_setup(&module_map_store, module_start, module_end, 0);
+	module_map_store.pmap = pmap_kernel();
+	module_map = &module_map_store;
+#endif
 
 	/* Hello! */
 	banner();

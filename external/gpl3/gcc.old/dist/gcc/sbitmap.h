@@ -1,5 +1,5 @@
 /* Simple bitmaps.
-   Copyright (C) 1999-2015 Free Software Foundation, Inc.
+   Copyright (C) 1999-2016 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -52,7 +52,7 @@ along with GCC; see the file COPYING3.  If not see
      * set_disjuction		: (not implemented)
      * set_compare		: bitmap_equal_p
 
-   Some operations on 3 sets that occur frequently in in data flow problems
+   Some operations on 3 sets that occur frequently in data flow problems
    are also implemented:
 
       * A | (B & C)		: bitmap_or_and

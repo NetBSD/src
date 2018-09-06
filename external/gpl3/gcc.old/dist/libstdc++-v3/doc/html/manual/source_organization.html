@@ -86,7 +86,9 @@ In addition, a subdirectory holds the convenience library libsupc++.
   </dd></dl></div><p>
 Note that glibc also has a <code class="filename">bits/</code>
 subdirectory.  We need to be careful not to collide with names in its
-<code class="filename">bits/</code> directory.
+<code class="filename">bits/</code> directory. For example
+<code class="filename">&lt;bits/std_mutex.h&gt;</code> has to be
+renamed from <code class="filename">&lt;bits/mutex.h&gt;</code>.
 Another solution would be to rename <code class="filename">bits</code>
 to (e.g.) <code class="filename">cppbits</code>.
 </p><p>

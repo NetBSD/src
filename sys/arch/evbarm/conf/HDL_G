@@ -1,4 +1,4 @@
-# $NetBSD: HDL_G,v 1.51.2.1 2018/07/28 04:37:31 pgoyette Exp $
+# $NetBSD: HDL_G,v 1.51.2.2 2018/09/06 06:55:30 pgoyette Exp $
 #
 #       HDL_G -- I-O DATA HDL-G Kernel
 #
@@ -73,10 +73,6 @@ options 	INET6		# IPV6
 #options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 #options 	PPP_DEFLATE	# Deflate compression support for PPP
 #options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
-options 	IPFILTER_LOG	# ipmon(8) log support
-options 	IPFILTER_LOOKUP	# ippool(8) support
-options 	IPFILTER_COMPAT # Compat for IP-Filter
-#options 	IPFILTER_DEFAULT_BLOCK	# block all packets by default
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 #options 	TCP_SIGNATURE
 
@@ -302,6 +298,7 @@ axe*	at uhub? port ?		# ASIX AX88172 based adapters
 cdce*	at uhub? port ?		# CDC, Ethernet Networking Control Model
 cue*	at uhub? port ?		# CATC USB-EL1201A based adapters
 kue*	at uhub? port ?		# Kawasaki LSI KL5KUSB101B based adapters
+mue*	at uhub? port ?		# Microchip LAN75xx/LAN78xx based adapters
 udav*	at uhub? port ?		# Davicom DM9601 based adapters
 url*	at uhub? port ?		# Realtek RTL8150L based adapters
 
@@ -391,7 +388,7 @@ options 	VND_COMPRESSION		# compressed vnd(4)
 
 # network pseudo-devices
 pseudo-device	bpfilter		# Berkeley packet filter
-pseudo-device	ipfilter		# IP filter (firewall) and NAT
+pseudo-device	npf			# NPF packet filter
 pseudo-device	loop			# network loopback
 pseudo-device	ppp			# Point-to-Point Protocol
 pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
@@ -407,8 +404,6 @@ pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
 pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	bridge			# simple inter-network bridging
 options 	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
-pseudo-device	pf			# PF packet filter
-pseudo-device	pflog			# PF log if
 #pseudo-device	kttcp
 
 # miscellaneous pseudo-devices

@@ -1,6 +1,6 @@
 /* RTX cost tables for AArch64.
 
-   Copyright (C) 2014-2015 Free Software Foundation, Inc.
+   Copyright (C) 2014-2016 Free Software Foundation, Inc.
 
    This file is part of GCC.
 
@@ -83,7 +83,9 @@ const struct cpu_cost_table thunderx_extra_costs =
     0,			/* N/A: Stm_regs_per_insn_subsequent.  */
     0,			/* Storef.  */
     0,			/* Stored.  */
-    COSTS_N_INSNS (1)  /* Store_unaligned.  */
+    COSTS_N_INSNS (1),	/* Store_unaligned.  */
+    COSTS_N_INSNS (1),	/* Loadv.  */
+    COSTS_N_INSNS (1)	/* Storev.  */
   },
   {
     /* FP SFmode */

@@ -1,3 +1,5 @@
+/*	$NetBSD: ast_dram_tables.h,v 1.1.1.1.36.1 2018/09/06 06:56:16 pgoyette Exp $	*/
+
 #ifndef AST_DRAM_TABLES_H
 #define AST_DRAM_TABLES_H
 

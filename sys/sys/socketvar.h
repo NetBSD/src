@@ -1,4 +1,4 @@
-/*	$NetBSD: socketvar.h,v 1.146.2.6 2018/07/28 04:38:12 pgoyette Exp $	*/
+/*	$NetBSD: socketvar.h,v 1.146.2.7 2018/09/06 06:56:47 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -378,6 +378,7 @@ int	do_sys_connect(struct lwp *, int, struct sockaddr *);
 int	do_sys_accept(struct lwp *, int, struct sockaddr *, register_t *,
 	    const sigset_t *, int, int);
 
+int	do_sys_peeloff(struct socket *, void *);
 /*
  * Inline functions for sockets and socket buffering.
  */

@@ -1,4 +1,4 @@
-/* Copyright (C) 2007-2015 Free Software Foundation, Inc.
+/* Copyright (C) 2007-2016 Free Software Foundation, Inc.
    Contributor: Joern Rennecke <joern.rennecke@embecosm.com>
 		on behalf of Synopsys Inc.
 
@@ -48,7 +48,7 @@ see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
 #define L_mul_df
 #define L_div_df
 #elif (!defined (__ARC700__) && !defined (__ARC_MUL64__) \
-       && !defined(__ARC_MUL32BY16__))
+       && !defined (__ARC_MUL32BY16__) && !defined (__HS__))
 #define L_mul_df
 #define L_div_df
 #undef QUIET_NAN

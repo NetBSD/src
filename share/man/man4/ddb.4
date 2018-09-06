@@ -1,4 +1,4 @@
-.\"	$NetBSD: ddb.4,v 1.174.2.2 2018/07/28 04:37:24 pgoyette Exp $
+.\"	$NetBSD: ddb.4,v 1.174.2.3 2018/09/06 06:55:22 pgoyette Exp $
 .\"
 .\" Copyright (c) 1997 - 2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -56,7 +56,7 @@
 .\" any improvements or extensions that they make and grant Carnegie Mellon
 .\" the rights to redistribute these changes.
 .\"
-.Dd July 20, 2018
+.Dd August 12, 2018
 .Dt DDB 4
 .Os
 .Sh NAME
@@ -771,9 +771,21 @@ is specified, all sockets are printed.
 .El
 .It Ic show uvmexp
 Print a selection of UVM counters and statistics.
-.It Ic show kernhist Oo Ar addr Oc
+.It Ic show kernhist Ns Oo Cm /i Oc Oo Ar addr Ns Oo , Ns Ar count Oc Oc
 Dumps all the kernel histories if no address is specified, or the history
 at the address.
+If
+.Cm /i
+is specified, display information about the named history or all histories,
+instead of history entries.
+If
+.Ar count
+is specified, only the last
+.Ar count
+entries will be displayed.
+Currently the
+.Ar count
+handling is only performed if a single history is requested.
 This command is available only if a kernel is compiled with one or more
 of the kernel history options
 .Cd KERNHIST ,
@@ -991,6 +1003,45 @@ to indicate that they are part of the machine-specific command
 set (e.g.
 .Ic machine reboot ) .
 Some of these commands are:
+.Ss AARCH64
+.Bl -tag -width "traptrace" -compact
+.It Ic cpu
+Switch to another cpu.
+.It Ic cpuinfo
+Print cpu information about the ``struct cpuinfo''.
+.It Ic frame
+Given a trap frame address, print out the trap frame.
+.It Ic lwp
+Print lwp information about the ``struct lwp''.
+.It Ic pte
+Print PTE information.
+.It Ic sysreg
+Print system registers.
+.It Ic watch
+Set or clear a hardware watchpoint.
+Pass the address to be watched, or watchpoint number to clear the watchpoint.
+Optional modifiers are
+.Dq l
+for load access,
+.Dq s
+for store access,
+.Dq 1
+for 8 bit width,
+.Dq 2
+for 16 bit,
+.Dq 3
+for 24 bit,
+.Dq 4
+for 32 bit,
+.Dq 5
+for 40 bit,
+.Dq 6
+for 48 bit,
+.Dq 7
+for 56 bit,
+.Dq 8
+for 64 bit.
+.El
 .Ss ALPHA
 .Bl -tag -width "traptrace" -compact
 .It Ic cpu

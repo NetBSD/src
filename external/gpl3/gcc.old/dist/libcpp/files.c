@@ -1,5 +1,5 @@
 /* Part of CPP library.  File handling.
-   Copyright (C) 1986-2015 Free Software Foundation, Inc.
+   Copyright (C) 1986-2016 Free Software Foundation, Inc.
    Written by Per Bothner, 1994.
    Based on CCCP program by Paul Rubin, June 1986
    Adapted to ANSI C, Richard Stallman, Jan 1987
@@ -1239,10 +1239,12 @@ bool
 cpp_included_before (cpp_reader *pfile, const char *fname,
 		     source_location location)
 {
-  struct cpp_file_hash_entry *entry;
+  struct cpp_file_hash_entry *entry
+    = (struct cpp_file_hash_entry *)
+      htab_find_with_hash (pfile->file_hash, fname, htab_hash_string (fname));
 
-  entry = (struct cpp_file_hash_entry *)
-     htab_find_with_hash (pfile->file_hash, fname, htab_hash_string (fname));
+  if (IS_ADHOC_LOC (location))
+    location = get_location_from_adhoc_loc (pfile->line_table, location);
 
   while (entry && (entry->start_dir == NULL || entry->u.file->err_no
 		   || entry->location > location))
@@ -1344,7 +1346,7 @@ cpp_make_system_header (cpp_reader *pfile, int syshdr, int externc)
 {
   int flags = 0;
   const struct line_maps *line_table = pfile->line_table;
-  const struct line_map *map = LINEMAPS_LAST_ORDINARY_MAP (line_table);
+  const line_map_ordinary *map = LINEMAPS_LAST_ORDINARY_MAP (line_table);
   /* 1 = system header, 2 = system header to be treated as C.  */
   if (syshdr)
     flags = 1 + (externc != 0);

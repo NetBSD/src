@@ -1,4 +1,4 @@
-/*	$NetBSD: udl.c,v 1.20.8.1 2018/04/07 04:12:18 pgoyette Exp $	*/
+/*	$NetBSD: udl.c,v 1.20.8.2 2018/09/06 06:56:04 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2009 FUKAUMI Naoki.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udl.c,v 1.20.8.1 2018/04/07 04:12:18 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udl.c,v 1.20.8.2 2018/09/06 06:56:04 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1821,7 +1821,7 @@ udl_update_thread(void *v)
 	mutex_enter(&sc->sc_thread_mtx);
 
 	for (;;) {
-		stride = min(sc->sc_width, UDL_CMD_WIDTH_MAX - 8);
+		stride = uimin(sc->sc_width, UDL_CMD_WIDTH_MAX - 8);
 		if (sc->sc_dying == true) {
 			mutex_exit(&sc->sc_thread_mtx);
 			kthread_exit(0);

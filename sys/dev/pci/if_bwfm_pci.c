@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bwfm_pci.c,v 1.1.2.2 2018/05/21 04:36:06 pgoyette Exp $	*/
+/*	$NetBSD: if_bwfm_pci.c,v 1.1.2.3 2018/09/06 06:55:51 pgoyette Exp $	*/
 /*	$OpenBSD: if_bwfm_pci.c,v 1.18 2018/02/08 05:00:38 patrick Exp $	*/
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
@@ -225,7 +225,7 @@ void		 bwfm_pci_dmamem_free(struct bwfm_pci_softc *, struct bwfm_pci_dmamem *);
 int		 bwfm_pci_pktid_avail(struct bwfm_pci_softc *,
 		    struct bwfm_pci_pkts *);
 int		 bwfm_pci_pktid_new(struct bwfm_pci_softc *,
-		    struct bwfm_pci_pkts *, struct mbuf *,
+		    struct bwfm_pci_pkts *, struct mbuf **,
 		    uint32_t *, paddr_t *);
 struct mbuf *	 bwfm_pci_pktid_free(struct bwfm_pci_softc *,
 		    struct bwfm_pci_pkts *, uint32_t);
@@ -281,7 +281,7 @@ void		 bwfm_pci_flowring_delete(struct bwfm_pci_softc *, int);
 
 void		 bwfm_pci_stop(struct bwfm_softc *);
 int		 bwfm_pci_txcheck(struct bwfm_softc *);
-int		 bwfm_pci_txdata(struct bwfm_softc *, struct mbuf *);
+int		 bwfm_pci_txdata(struct bwfm_softc *, struct mbuf **);
 
 #ifdef BWFM_DEBUG
 void		 bwfm_pci_debug_console(struct bwfm_pci_softc *);
@@ -922,7 +922,7 @@ bwfm_pci_pktid_avail(struct bwfm_pci_softc *sc, struct bwfm_pci_pkts *pkts)
 
 int
 bwfm_pci_pktid_new(struct bwfm_pci_softc *sc, struct bwfm_pci_pkts *pkts,
-    struct mbuf *m, uint32_t *pktid, paddr_t *paddr)
+    struct mbuf **mp, uint32_t *pktid, paddr_t *paddr)
 {
 	int i, idx;
 
@@ -932,15 +932,32 @@ bwfm_pci_pktid_new(struct bwfm_pci_softc *sc, struct bwfm_pci_pkts *pkts,
 			idx = 0;
 		if (pkts->pkts[idx].bb_m == NULL) {
 			if (bus_dmamap_load_mbuf(sc->sc_dmat,
-			    pkts->pkts[idx].bb_map, m, BUS_DMA_NOWAIT) != 0) {
-				if (m_defrag(m, M_DONTWAIT))
-					return EFBIG;
+			    pkts->pkts[idx].bb_map, *mp, BUS_DMA_NOWAIT) != 0) {
+				/*
+				 * Didn't fit.  Maybe it has too many
+				 * segments.  If it has only one
+				 * segment, fail; otherwise try to
+				 * compact it into a single mbuf
+				 * segment.
+				 */
+				if ((*mp)->m_next == NULL)
+					return ENOBUFS;
+				struct mbuf *m0 = MCLGETI(NULL, M_DONTWAIT,
+				    NULL, MSGBUF_MAX_PKT_SIZE);
+				if (m0 == NULL)
+					return ENOBUFS;
+				m_copydata(*mp, 0, (*mp)->m_pkthdr.len,
+				    mtod(m0, void *));
+				m0->m_pkthdr.len = m0->m_len =
+				    (*mp)->m_pkthdr.len;
+				m_freem(*mp);
+				*mp = m0;
 				if (bus_dmamap_load_mbuf(sc->sc_dmat,
-				    pkts->pkts[idx].bb_map, m, BUS_DMA_NOWAIT) != 0)
+				    pkts->pkts[idx].bb_map, *mp, BUS_DMA_NOWAIT) != 0)
 					return EFBIG;
 			}
 			pkts->last = idx;
-			pkts->pkts[idx].bb_m = m;
+			pkts->pkts[idx].bb_m = *mp;
 			*pktid = idx;
 			*paddr = pkts->pkts[idx].bb_map->dm_segs[0].ds_addr;
 			return 0;
@@ -997,7 +1014,7 @@ bwfm_pci_fill_rx_ioctl_ring(struct bwfm_pci_softc *sc, struct if_rxring *rxring,
 			break;
 		}
 		m->m_len = m->m_pkthdr.len = MSGBUF_MAX_PKT_SIZE;
-		if (bwfm_pci_pktid_new(sc, &sc->sc_rx_pkts, m, &pktid, &paddr)) {
+		if (bwfm_pci_pktid_new(sc, &sc->sc_rx_pkts, &m, &pktid, &paddr)) {
 			bwfm_pci_ring_write_cancel(sc, &sc->sc_ctrl_submit, 1);
 			m_freem(m);
 			break;
@@ -1037,7 +1054,7 @@ bwfm_pci_fill_rx_buf_ring(struct bwfm_pci_softc *sc)
 			break;
 		}
 		m->m_len = m->m_pkthdr.len = MSGBUF_MAX_PKT_SIZE;
-		if (bwfm_pci_pktid_new(sc, &sc->sc_rx_pkts, m, &pktid, &paddr)) {
+		if (bwfm_pci_pktid_new(sc, &sc->sc_rx_pkts, &m, &pktid, &paddr)) {
 			bwfm_pci_ring_write_cancel(sc, &sc->sc_rxpost_submit, 1);
 			m_freem(m);
 			break;
@@ -1243,7 +1260,7 @@ bwfm_pci_ring_write_reserve_multi(struct bwfm_pci_softc *sc,
 		return NULL;
 
 	ret = BWFM_PCI_DMA_KVA(ring->ring) + (ring->w_ptr * ring->itemsz);
-	*avail = min(count, available - 1);
+	*avail = uimin(count, available - 1);
 	if (*avail + ring->w_ptr > ring->nitem)
 		*avail = ring->nitem - ring->w_ptr;
 	ring->w_ptr += *avail;
@@ -1388,7 +1405,7 @@ bwfm_pci_msg_rx(struct bwfm_pci_softc *sc, void *buf)
 		if (ring->m != NULL) {
 			m = ring->m;
 			ring->m = NULL;
-			if (bwfm_pci_txdata(&sc->sc_sc, m))
+			if (bwfm_pci_txdata(&sc->sc_sc, &m))
 				m_freem(ring->m);
 		}
 		ifp->if_flags &= ~IFF_OACTIVE;
@@ -1851,7 +1868,7 @@ bwfm_pci_txcheck(struct bwfm_softc *bwfm)
 }
 
 int
-bwfm_pci_txdata(struct bwfm_softc *bwfm, struct mbuf *m)
+bwfm_pci_txdata(struct bwfm_softc *bwfm, struct mbuf **mp)
 {
 	struct bwfm_pci_softc *sc = (void *)bwfm;
 	struct bwfm_pci_msgring *ring;
@@ -1861,7 +1878,7 @@ bwfm_pci_txdata(struct bwfm_softc *bwfm, struct mbuf *m)
 	struct ether_header *eh;
 	int flowid, ret, ac;
 
-	flowid = bwfm_pci_flowring_lookup(sc, m);
+	flowid = bwfm_pci_flowring_lookup(sc, *mp);
 	if (flowid < 0) {
 		/*
 		 * We cannot send the packet right now as there is
@@ -1872,7 +1889,7 @@ bwfm_pci_txdata(struct bwfm_softc *bwfm, struct mbuf *m)
 		 * is created the queue will be restarted and this
 		 * mbuf will be transmitted.
 		 */
-		bwfm_pci_flowring_create(sc, m);
+		bwfm_pci_flowring_create(sc, *mp);
 		return 0;
 	}
 
@@ -1890,9 +1907,9 @@ bwfm_pci_txdata(struct bwfm_softc *bwfm, struct mbuf *m)
 		return ENOBUFS;
 
 	/* No QoS for EAPOL frames. */
-	eh = mtod(m, struct ether_header *);
+	eh = mtod(*mp, struct ether_header *);
 	ac = (eh->ether_type != htons(ETHERTYPE_PAE)) ?
-	    M_WME_GETAC(m) : WME_AC_BE;
+	    M_WME_GETAC(*mp) : WME_AC_BE;
 
 	memset(tx, 0, sizeof(*tx));
 	tx->msg.msgtype = MSGBUF_TYPE_TX_POST;
@@ -1900,9 +1917,9 @@ bwfm_pci_txdata(struct bwfm_softc *bwfm, struct mbuf *m)
 	tx->flags = BWFM_MSGBUF_PKT_FLAGS_FRAME_802_3;
 	tx->flags |= ac << BWFM_MSGBUF_PKT_FLAGS_PRIO_SHIFT;
 	tx->seg_cnt = 1;
-	memcpy(tx->txhdr, mtod(m, char *), ETHER_HDR_LEN);
+	memcpy(tx->txhdr, mtod(*mp, char *), ETHER_HDR_LEN);
 
-	ret = bwfm_pci_pktid_new(sc, &sc->sc_tx_pkts, m, &pktid, &paddr);
+	ret = bwfm_pci_pktid_new(sc, &sc->sc_tx_pkts, mp, &pktid, &paddr);
 	if (ret) {
 		if (ret == ENOBUFS) {
 			printf("%s: no pktid available for TX\n",
@@ -1915,7 +1932,7 @@ bwfm_pci_txdata(struct bwfm_softc *bwfm, struct mbuf *m)
 	paddr += ETHER_HDR_LEN;
 
 	tx->msg.request_id = htole32(pktid);
-	tx->data_len = htole16(m->m_len - ETHER_HDR_LEN);
+	tx->data_len = htole16((*mp)->m_len - ETHER_HDR_LEN);
 	tx->data_buf_addr.high_addr = htole32(paddr >> 32);
 	tx->data_buf_addr.low_addr = htole32(paddr & 0xffffffff);
 
@@ -2021,7 +2038,7 @@ bwfm_pci_msgbuf_query_dcmd(struct bwfm_softc *bwfm, int ifidx,
 	req->output_buf_len = htole16(*len);
 	req->trans_id = htole16(sc->sc_ioctl_reqid++);
 
-	buflen = min(*len, BWFM_DMA_H2D_IOCTL_BUF_LEN);
+	buflen = uimin(*len, BWFM_DMA_H2D_IOCTL_BUF_LEN);
 	req->input_buf_len = htole16(buflen);
 	req->req_buf_addr.high_addr =
 	    htole32((uint64_t)BWFM_PCI_DMA_DVA(sc->sc_ioctl_buf) >> 32);
@@ -2045,7 +2062,7 @@ bwfm_pci_msgbuf_query_dcmd(struct bwfm_softc *bwfm, int ifidx,
 	if (m == NULL)
 		return 1;
 
-	*len = min(buflen, sc->sc_ioctl_resp_ret_len);
+	*len = uimin(buflen, sc->sc_ioctl_resp_ret_len);
 	if (buf)
 		memcpy(buf, mtod(m, char *), *len);
 	m_freem(m);

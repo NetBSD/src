@@ -1,0 +1,109 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<!--
+ - Copyright (C) 2015-2018 Internet Systems Consortium, Inc. ("ISC")
+ - 
+ - This Source Code Form is subject to the terms of the Mozilla Public
+ - License, v. 2.0. If a copy of the MPL was not distributed with this
+ - file, You can obtain one at http://mozilla.org/MPL/2.0/.
+-->
+<html lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+<title>dnstap-read</title>
+<meta name="generator" content="DocBook XSL Stylesheets V1.78.1">
+</head>
+<body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="refentry">
+<a name="man.dnstap-read"></a><div class="titlepage"></div>
+  
+  
+
+  
+
+  <div class="refnamediv">
+<h2>Name</h2>
+<p>
+    <span class="application">dnstap-read</span>
+     &#8212; print dnstap data in human-readable form
+  </p>
+</div>
+
+  
+
+  <div class="refsynopsisdiv">
+<h2>Synopsis</h2>
+    <div class="cmdsynopsis"><p>
+      <code class="command">dnstap-read</code> 
+       [<code class="option">-m</code>]
+       [<code class="option">-p</code>]
+       [<code class="option">-x</code>]
+       [<code class="option">-y</code>]
+       {<em class="replaceable"><code>file</code></em>}
+    </p></div>
+  </div>
+
+  <div class="refsection">
+<a name="id-1.7"></a><h2>DESCRIPTION</h2>
+
+    <p>
+      <span class="command"><strong>dnstap-read</strong></span>
+      reads <span class="command"><strong>dnstap</strong></span> data from a specified file
+      and prints it in a human-readable format.  By default,
+      <span class="command"><strong>dnstap</strong></span> data is printed in a short summary
+      format, but if the <code class="option">-y</code> option is specified,
+      then a longer and more detailed YAML format is used instead.
+    </p>
+  </div>
+
+  <div class="refsection">
+<a name="id-1.8"></a><h2>OPTIONS</h2>
+
+
+    <div class="variablelist"><dl class="variablelist">
+<dt><span class="term">-m</span></dt>
+<dd>
+          <p>
+            Trace memory allocations; used for debugging memory leaks.
+          </p>
+        </dd>
+<dt><span class="term">-p</span></dt>
+<dd>
+          <p>
+            After printing the <span class="command"><strong>dnstap</strong></span> data, print
+            the text form of the DNS message that was encapsulated in the
+            <span class="command"><strong>dnstap</strong></span> frame.
+          </p>
+        </dd>
+<dt><span class="term">-x</span></dt>
+<dd>
+          <p>
+            After printing the <span class="command"><strong>dnstap</strong></span> data, print
+            a hex dump of the wire form of the DNS message that was
+            encapsulated in the <span class="command"><strong>dnstap</strong></span> frame.
+          </p>
+        </dd>
+<dt><span class="term">-y</span></dt>
+<dd>
+          <p>
+            Print <span class="command"><strong>dnstap</strong></span> data in a detailed YAML
+            format.
+          </p>
+        </dd>
+</dl></div>
+  </div>
+
+  <div class="refsection">
+<a name="id-1.9"></a><h2>SEE ALSO</h2>
+
+    <p>
+      <span class="citerefentry">
+        <span class="refentrytitle">named</span>(8)
+      </span>,
+      <span class="citerefentry">
+        <span class="refentrytitle">rndc</span>(8)
+      </span>,
+      <em class="citetitle">BIND 9 Administrator Reference Manual</em>.
+    </p>
+  </div>
+
+</div></body>
+</html>

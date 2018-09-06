@@ -1,4 +1,4 @@
-/*	$NetBSD: sockio.h,v 1.33 2015/05/02 14:41:32 roy Exp $	*/
+/*	$NetBSD: sockio.h,v 1.33.16.1 2018/09/06 06:56:47 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993, 1994
@@ -44,6 +44,9 @@
 #define	SIOCATMARK	 _IOR('s',  7, int)		/* at oob mark? */
 #define	SIOCSPGRP	 _IOW('s',  8, int)		/* set process group */
 #define	SIOCGPGRP	 _IOR('s',  9, int)		/* get process group */
+#define SIOCPEELOFF	_IOWR('s', 10, int)
+/* ('s', 11, ...) is SIOCCONNECTX in sctp_uio.h */
+/* ('s', 12, ...) is SIOCCONNECTXDEL in sctp_uio.h */
 
 #define	SIOCADDRT	 _IOW('r', 10, struct ortentry)	/* add route */
 #define	SIOCDELRT	 _IOW('r', 11, struct ortentry)	/* delete route */
@@ -138,6 +141,10 @@
 
 #define	SIOCGETHERCAP	_IOWR('i', 139, struct eccapreq) /* get ethercap */
 #define SIOCGIFINDEX  _IOWR('i', 140, struct ifreq)   /* get ifnet index */
+
+#define SIOCGUMBINFO	_IOWR('i', 190, struct ifreq)	/* get MBIM info */
+#define SIOCSUMBPARAM	_IOW('i', 191, struct ifreq)	/* set MBIM param */
+#define SIOCGUMBPARAM	_IOWR('i', 192, struct ifreq)	/* get MBIM param */
 
 #define	SIOCSETPFSYNC	_IOW('i', 247, struct ifreq)	
 #define	SIOCGETPFSYNC	_IOWR('i', 248, struct ifreq)

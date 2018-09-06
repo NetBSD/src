@@ -1,5 +1,5 @@
 /* Header file for high level statement building routines.
-   Copyright (C) 2013-2015 Free Software Foundation, Inc.
+   Copyright (C) 2013-2016 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -22,12 +22,13 @@ along with GCC; see the file COPYING3.  If not see
 #define GCC_GIMPLE_BUILDER_H
 
 gassign *build_assign (enum tree_code, tree, int, tree lhs = NULL_TREE);
-gassign *build_assign (enum tree_code, gimple, int, tree lhs = NULL_TREE);
+gassign *build_assign (enum tree_code, gimple *, int, tree lhs = NULL_TREE);
 gassign *build_assign (enum tree_code, tree, tree, tree lhs = NULL_TREE);
-gassign *build_assign (enum tree_code, gimple, tree, tree lhs = NULL_TREE);
-gassign *build_assign (enum tree_code, tree, gimple, tree lhs = NULL_TREE);
-gassign *build_assign (enum tree_code, gimple, gimple, tree lhs = NULL_TREE);
+gassign *build_assign (enum tree_code, gimple *, tree, tree lhs = NULL_TREE);
+gassign *build_assign (enum tree_code, tree, gimple *, tree lhs = NULL_TREE);
+gassign *build_assign (enum tree_code, gimple *, gimple *,
+		       tree lhs = NULL_TREE);
 gassign *build_type_cast (tree, tree, tree lhs = NULL_TREE);
-gassign *build_type_cast (tree, gimple, tree lhs = NULL_TREE);
+gassign *build_type_cast (tree, gimple *, tree lhs = NULL_TREE);
 
 #endif /* GCC_GIMPLE_BUILDER_H */

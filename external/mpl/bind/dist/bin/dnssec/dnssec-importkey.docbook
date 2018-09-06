@@ -1,0 +1,252 @@
+<!--
+ - Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ -
+ - This Source Code Form is subject to the terms of the Mozilla Public
+ - License, v. 2.0. If a copy of the MPL was not distributed with this
+ - file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ -
+ - See the COPYRIGHT file distributed with this work for additional
+ - information regarding copyright ownership.
+-->
+
+<!-- Converted by db4-upgrade version 1.0 -->
+<refentry xmlns:db="http://docbook.org/ns/docbook" version="5.0" xml:id="man.dnssec-importkey">
+  <info>
+    <date>2014-02-20</date>
+  </info>
+  <refentryinfo>
+    <date>August 21, 2015</date>
+    <corpname>ISC</corpname>
+    <corpauthor>Internet Systems Consortium, Inc.</corpauthor>
+  </refentryinfo>
+
+  <refmeta>
+    <refentrytitle><application>dnssec-importkey</application></refentrytitle>
+    <manvolnum>8</manvolnum>
+    <refmiscinfo>BIND9</refmiscinfo>
+  </refmeta>
+
+  <refnamediv>
+    <refname><application>dnssec-importkey</application></refname>
+    <refpurpose>import DNSKEY records from external systems so they can be managed</refpurpose>
+  </refnamediv>
+
+  <docinfo>
+    <copyright>
+      <year>2013</year>
+      <year>2014</year>
+      <year>2015</year>
+      <year>2016</year>
+      <year>2018</year>
+      <holder>Internet Systems Consortium, Inc. ("ISC")</holder>
+    </copyright>
+  </docinfo>
+
+  <refsynopsisdiv>
+    <cmdsynopsis sepchar=" ">
+      <command>dnssec-importkey</command>
+      <arg choice="opt" rep="norepeat"><option>-K <replaceable class="parameter">directory</replaceable></option></arg>
+      <arg choice="opt" rep="norepeat"><option>-L <replaceable class="parameter">ttl</replaceable></option></arg>
+      <arg choice="opt" rep="norepeat"><option>-P <replaceable class="parameter">date/offset</replaceable></option></arg>
+      <arg choice="opt" rep="norepeat"><option>-P sync <replaceable class="parameter">date/offset</replaceable></option></arg>
+      <arg choice="opt" rep="norepeat"><option>-D <replaceable class="parameter">date/offset</replaceable></option></arg>
+      <arg choice="opt" rep="norepeat"><option>-D sync <replaceable class="parameter">date/offset</replaceable></option></arg>
+      <arg choice="opt" rep="norepeat"><option>-h</option></arg>
+      <arg choice="opt" rep="norepeat"><option>-v <replaceable class="parameter">level</replaceable></option></arg>
+      <arg choice="opt" rep="norepeat"><option>-V</option></arg>
+      <arg choice="req" rep="norepeat"><option>keyfile</option></arg>
+    </cmdsynopsis>
+    <cmdsynopsis sepchar=" ">
+      <command>dnssec-importkey</command>
+      <arg choice="req" rep="norepeat"><option>-f <replaceable class="parameter">filename</replaceable></option></arg>
+      <arg choice="opt" rep="norepeat"><option>-K <replaceable class="parameter">directory</replaceable></option></arg>
+      <arg choice="opt" rep="norepeat"><option>-L <replaceable class="parameter">ttl</replaceable></option></arg>
+      <arg choice="opt" rep="norepeat"><option>-P <replaceable class="parameter">date/offset</replaceable></option></arg>
+      <arg choice="opt" rep="norepeat"><option>-P sync <replaceable class="parameter">date/offset</replaceable></option></arg>
+      <arg choice="opt" rep="norepeat"><option>-D <replaceable class="parameter">date/offset</replaceable></option></arg>
+      <arg choice="opt" rep="norepeat"><option>-D sync <replaceable class="parameter">date/offset</replaceable></option></arg>
+      <arg choice="opt" rep="norepeat"><option>-h</option></arg>
+      <arg choice="opt" rep="norepeat"><option>-v <replaceable class="parameter">level</replaceable></option></arg>
+      <arg choice="opt" rep="norepeat"><option>-V</option></arg>
+      <arg choice="opt" rep="norepeat"><option>dnsname</option></arg>
+    </cmdsynopsis>
+  </refsynopsisdiv>
+
+  <refsection><info><title>DESCRIPTION</title></info>
+
+    <para><command>dnssec-importkey</command>
+      reads a public DNSKEY record and generates a pair of
+      .key/.private files.  The DNSKEY record may be read from an
+      existing .key file, in which case a corresponding .private file
+      will be generated, or it may be read from any other file or
+      from the standard input, in which case both .key and .private
+      files will be generated.
+    </para>
+    <para>
+      The newly-created .private file does <emphasis>not</emphasis>
+      contain private key data, and cannot be used for signing.
+      However, having a .private file makes it possible to set
+      publication (<option>-P</option>) and deletion
+      (<option>-D</option>) times for the key, which means the
+      public key can be added to and removed from the DNSKEY RRset
+      on schedule even if the true private key is stored offline.
+    </para>
+  </refsection>
+
+  <refsection><info><title>OPTIONS</title></info>
+
+
+    <variablelist>
+      <varlistentry>
+	<term>-f <replaceable class="parameter">filename</replaceable></term>
+	<listitem>
+	  <para>
+	    Zone file mode: instead of a public keyfile name, the argument
+	    is the DNS domain name of a zone master file, which can be read
+	    from <option>file</option>.  If the domain name is the same as
+	    <option>file</option>, then it may be omitted.
+	  </para>
+	  <para>
+	    If <option>file</option> is set to <literal>"-"</literal>, then
+	    the zone data is read from the standard input.
+	  </para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term>-K <replaceable class="parameter">directory</replaceable></term>
+	<listitem>
+	  <para>
+	    Sets the directory in which the key files are to reside.
+	  </para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term>-L <replaceable class="parameter">ttl</replaceable></term>
+	<listitem>
+	  <para>
+	    Sets the default TTL to use for this key when it is converted
+	    into a DNSKEY RR.  If the key is imported into a zone,
+	    this is the TTL that will be used for it, unless there was
+	    already a DNSKEY RRset in place, in which case the existing TTL
+	    would take precedence.  Setting the default TTL to
+	    <literal>0</literal> or <literal>none</literal> removes it.
+	  </para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term>-h</term>
+	<listitem>
+	  <para>
+	    Emit usage message and exit.
+	  </para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term>-v <replaceable class="parameter">level</replaceable></term>
+	<listitem>
+	  <para>
+	    Sets the debugging level.
+	  </para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term>-V</term>
+	<listitem>
+	  <para>
+	    Prints version information.
+	  </para>
+	</listitem>
+      </varlistentry>
+
+    </variablelist>
+  </refsection>
+
+  <refsection><info><title>TIMING OPTIONS</title></info>
+
+    <para>
+      Dates can be expressed in the format YYYYMMDD or YYYYMMDDHHMMSS.
+      If the argument begins with a '+' or '-', it is interpreted as
+      an offset from the present time.  For convenience, if such an offset
+      is followed by one of the suffixes 'y', 'mo', 'w', 'd', 'h', or 'mi',
+      then the offset is computed in years (defined as 365 24-hour days,
+      ignoring leap years), months (defined as 30 24-hour days), weeks,
+      days, hours, or minutes, respectively.  Without a suffix, the offset
+      is computed in seconds.  To explicitly prevent a date from being
+      set, use 'none' or 'never'.
+    </para>
+
+    <variablelist>
+      <varlistentry>
+	<term>-P <replaceable class="parameter">date/offset</replaceable></term>
+	<listitem>
+	  <para>
+	    Sets the date on which a key is to be published to the zone.
+	    After that date, the key will be included in the zone but will
+	    not be used to sign it.
+	  </para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term>-P sync <replaceable class="parameter">date/offset</replaceable></term>
+	<listitem>
+	  <para>
+	    Sets the date on which CDS and CDNSKEY records that match this
+	    key are to be published to the zone.
+	  </para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term>-D <replaceable class="parameter">date/offset</replaceable></term>
+	<listitem>
+	  <para>
+	    Sets the date on which the key is to be deleted.  After that
+	    date, the key will no longer be included in the zone.  (It
+	    may remain in the key repository, however.)
+	  </para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term>-D sync <replaceable class="parameter">date/offset</replaceable></term>
+	<listitem>
+	  <para>
+	    Sets the date on which the CDS and CDNSKEY records that match
+	    this key are to be deleted.
+	  </para>
+	</listitem>
+      </varlistentry>
+
+    </variablelist>
+  </refsection>
+
+  <refsection><info><title>FILES</title></info>
+
+    <para>
+      A keyfile can be designed by the key identification
+      <filename>Knnnn.+aaa+iiiii</filename> or the full file name
+      <filename>Knnnn.+aaa+iiiii.key</filename> as generated by
+      <refentrytitle>dnssec-keygen</refentrytitle><manvolnum>8</manvolnum>.
+    </para>
+  </refsection>
+
+  <refsection><info><title>SEE ALSO</title></info>
+
+    <para><citerefentry>
+	<refentrytitle>dnssec-keygen</refentrytitle><manvolnum>8</manvolnum>
+      </citerefentry>,
+      <citerefentry>
+	<refentrytitle>dnssec-signzone</refentrytitle><manvolnum>8</manvolnum>
+      </citerefentry>,
+      <citetitle>BIND 9 Administrator Reference Manual</citetitle>,
+      <citetitle>RFC 5011</citetitle>.
+    </para>
+  </refsection>
+
+</refentry>

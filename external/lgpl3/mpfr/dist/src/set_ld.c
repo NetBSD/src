@@ -1,7 +1,7 @@
 /* mpfr_set_ld -- convert a machine long double to
                   a multiple precision floating-point number
 
-Copyright 2002-2016 Free Software Foundation, Inc.
+Copyright 2002-2018 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -21,7 +21,7 @@ along with the GNU MPFR Library; see the file COPYING.LESSER.  If not, see
 http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA. */
 
-#include <float.h>
+#include <float.h> /* needed so that MPFR_LDBL_MANT_DIG is correctly defined */
 
 #define MPFR_NEED_LONGLONG_H
 #include "mpfr-impl.h"
@@ -45,7 +45,176 @@ static const union {
 #define MPFR_LDBL_MAX   LDBL_MAX
 #endif
 
-#ifndef HAVE_LDOUBLE_IEEE_EXT_LITTLE
+/* To check for +inf, one can use the test x > MPFR_LDBL_MAX, as LDBL_MAX
+   is the maximum finite number representable in a long double, according
+   to DR 467; see
+     http://www.open-std.org/jtc1/sc22/wg14/www/docs/n2092.htm
+   If this fails on some platform, a test x - x != 0 might be used. */
+
+#if defined(HAVE_LDOUBLE_IS_DOUBLE)
+
+/* the "long double" format is the same as "double" */
+int
+mpfr_set_ld (mpfr_ptr r, long double d, mpfr_rnd_t rnd_mode)
+{
+  return mpfr_set_d (r, (double) d, rnd_mode);
+}
+
+#elif defined(HAVE_LDOUBLE_IEEE_EXT_LITTLE)
+
+/* IEEE Extended Little Endian Code */
+int
+mpfr_set_ld (mpfr_ptr r, long double d, mpfr_rnd_t rnd_mode)
+{
+  int inexact, i, k, cnt;
+  mpfr_t tmp;
+  mp_limb_t tmpmant[MPFR_LIMBS_PER_LONG_DOUBLE];
+  mpfr_long_double_t x;
+  mpfr_exp_t exp;
+  int signd;
+  MPFR_SAVE_EXPO_DECL (expo);
+
+  /* Check for NAN */
+  if (MPFR_UNLIKELY (DOUBLE_ISNAN (d)))
+    {
+      MPFR_SET_NAN (r);
+      MPFR_RET_NAN;
+    }
+  /* Check for INF */
+  else if (MPFR_UNLIKELY (d > MPFR_LDBL_MAX))
+    {
+      MPFR_SET_INF (r);
+      MPFR_SET_POS (r);
+      return 0;
+    }
+  else if (MPFR_UNLIKELY (d < -MPFR_LDBL_MAX))
+    {
+      MPFR_SET_INF (r);
+      MPFR_SET_NEG (r);
+      return 0;
+    }
+  /* Check for ZERO */
+  else if (MPFR_UNLIKELY (d == 0.0))
+    {
+      x.ld = d;
+      MPFR_SET_ZERO (r);
+      if (x.s.sign == 1)
+        MPFR_SET_NEG(r);
+      else
+        MPFR_SET_POS(r);
+      return 0;
+    }
+
+  /* now d is neither 0, nor NaN nor Inf */
+  MPFR_SAVE_EXPO_MARK (expo);
+
+  MPFR_MANT (tmp) = tmpmant;
+  MPFR_PREC (tmp) = 64;
+
+  /* Extract sign */
+  x.ld = d;
+  signd = MPFR_SIGN_POS;
+  if (x.ld < 0.0)
+    {
+      signd = MPFR_SIGN_NEG;
+      x.ld = -x.ld;
+    }
+
+  /* Extract mantissa */
+#if GMP_NUMB_BITS >= 64
+  tmpmant[0] = ((mp_limb_t) x.s.manh << 32) | ((mp_limb_t) x.s.manl);
+#else
+  tmpmant[0] = (mp_limb_t) x.s.manl;
+  tmpmant[1] = (mp_limb_t) x.s.manh;
+#endif
+
+  /* Normalize mantissa */
+  i = MPFR_LIMBS_PER_LONG_DOUBLE;
+  MPN_NORMALIZE_NOT_ZERO (tmpmant, i);
+  k = MPFR_LIMBS_PER_LONG_DOUBLE - i;
+  count_leading_zeros (cnt, tmpmant[i - 1]);
+  if (MPFR_UNLIKELY (cnt != 0))
+    mpn_lshift (tmpmant + k, tmpmant, i, cnt);
+  else if (MPFR_UNLIKELY (k != 0))
+    MPN_COPY (tmpmant + k, tmpmant, i);
+  if (MPFR_UNLIKELY (k != 0))
+    MPN_ZERO (tmpmant, k);
+
+  /* Set exponent */
+  exp = (mpfr_exp_t) ((x.s.exph << 8) + x.s.expl);  /* 15-bit unsigned int */
+  if (MPFR_UNLIKELY (exp == 0))
+    exp -= 0x3FFD;
+  else
+    exp -= 0x3FFE;
+
+  MPFR_SET_EXP (tmp, exp - cnt - k * GMP_NUMB_BITS);
+
+  /* tmp is exact */
+  inexact = mpfr_set4 (r, tmp, rnd_mode, signd);
+
+  MPFR_SAVE_EXPO_FREE (expo);
+  return mpfr_check_range (r, inexact, rnd_mode);
+}
+
+#elif defined(HAVE_LDOUBLE_MAYBE_DOUBLE_DOUBLE)
+
+/* double-double code */
+int
+mpfr_set_ld (mpfr_ptr r, long double d, mpfr_rnd_t rnd_mode)
+{
+  mpfr_t t, u;
+  int inexact, shift_exp;
+  double h, l;
+  MPFR_SAVE_EXPO_DECL (expo);
+
+  /* Check for NAN */
+  LONGDOUBLE_NAN_ACTION (d, goto nan);
+
+  /* Check for INF */
+  if (d > MPFR_LDBL_MAX)
+    {
+      mpfr_set_inf (r, 1);
+      return 0;
+    }
+  else if (d < -MPFR_LDBL_MAX)
+    {
+      mpfr_set_inf (r, -1);
+      return 0;
+    }
+  /* Check for ZERO */
+  else if (d == 0.0)
+    return mpfr_set_d (r, (double) d, rnd_mode);
+
+  if (d >= (long double) MPFR_LDBL_MAX || d <= (long double) -MPFR_LDBL_MAX)
+    h = (d >= (long double) MPFR_LDBL_MAX) ? MPFR_LDBL_MAX : -MPFR_LDBL_MAX;
+  else
+    h = (double) d; /* should not overflow */
+  l = (double) (d - (long double) h);
+
+  MPFR_SAVE_EXPO_MARK (expo);
+
+  mpfr_init2 (t, IEEE_DBL_MANT_DIG);
+  mpfr_init2 (u, IEEE_DBL_MANT_DIG);
+
+  inexact = mpfr_set_d (t, h, MPFR_RNDN);
+  MPFR_ASSERTN(inexact == 0);
+  inexact = mpfr_set_d (u, l, MPFR_RNDN);
+  MPFR_ASSERTN(inexact == 0);
+  inexact = mpfr_add (r, t, u, rnd_mode);
+
+  mpfr_clear (t);
+  mpfr_clear (u);
+
+  MPFR_SAVE_EXPO_FREE (expo);
+  inexact = mpfr_check_range (r, inexact, rnd_mode);
+  return inexact;
+
+ nan:
+  MPFR_SET_NAN(r);
+  MPFR_RET_NAN;
+}
+
+#else
 
 /* Generic code */
 int
@@ -191,7 +360,8 @@ mpfr_set_ld (mpfr_ptr r, long double d, mpfr_rnd_t rnd_mode)
                     break;
                   /* Inexact. This cannot happen unless the C implementation
                      "lies" on the precision or when long doubles are
-                     implemented with FP expansions like under Mac OS X. */
+                     implemented with FP expansions like double-double on
+                     PowerPC. */
                   if (MPFR_PREC (t) != MPFR_PREC (r) + 1)
                     {
                       /* We assume that MPFR_PREC (r) < MPFR_PREC_MAX.
@@ -231,101 +401,6 @@ mpfr_set_ld (mpfr_ptr r, long double d, mpfr_rnd_t rnd_mode)
  nan:
   MPFR_SET_NAN(r);
   MPFR_RET_NAN;
-}
-
-#else /* IEEE Extended Little Endian Code */
-
-int
-mpfr_set_ld (mpfr_ptr r, long double d, mpfr_rnd_t rnd_mode)
-{
-  int inexact, i, k, cnt;
-  mpfr_t tmp;
-  mp_limb_t tmpmant[MPFR_LIMBS_PER_LONG_DOUBLE];
-  mpfr_long_double_t x;
-  mpfr_exp_t exp;
-  int signd;
-  MPFR_SAVE_EXPO_DECL (expo);
-
-  /* Check for NAN */
-  if (MPFR_UNLIKELY (d != d))
-    {
-      MPFR_SET_NAN (r);
-      MPFR_RET_NAN;
-    }
-  /* Check for INF */
-  else if (MPFR_UNLIKELY (d > MPFR_LDBL_MAX))
-    {
-      MPFR_SET_INF (r);
-      MPFR_SET_POS (r);
-      return 0;
-    }
-  else if (MPFR_UNLIKELY (d < -MPFR_LDBL_MAX))
-    {
-      MPFR_SET_INF (r);
-      MPFR_SET_NEG (r);
-      return 0;
-    }
-  /* Check for ZERO */
-  else if (MPFR_UNLIKELY (d == 0.0))
-    {
-      x.ld = d;
-      MPFR_SET_ZERO (r);
-      if (x.s.sign == 1)
-        MPFR_SET_NEG(r);
-      else
-        MPFR_SET_POS(r);
-      return 0;
-    }
-
-  /* now d is neither 0, nor NaN nor Inf */
-  MPFR_SAVE_EXPO_MARK (expo);
-
-  MPFR_MANT (tmp) = tmpmant;
-  MPFR_PREC (tmp) = 64;
-
-  /* Extract sign */
-  x.ld = d;
-  signd = MPFR_SIGN_POS;
-  if (x.ld < 0.0)
-    {
-      signd = MPFR_SIGN_NEG;
-      x.ld = -x.ld;
-    }
-
-  /* Extract mantissa */
-#if GMP_NUMB_BITS >= 64
-  tmpmant[0] = ((mp_limb_t) x.s.manh << 32) | ((mp_limb_t) x.s.manl);
-#else
-  tmpmant[0] = (mp_limb_t) x.s.manl;
-  tmpmant[1] = (mp_limb_t) x.s.manh;
-#endif
-
-  /* Normalize mantissa */
-  i = MPFR_LIMBS_PER_LONG_DOUBLE;
-  MPN_NORMALIZE_NOT_ZERO (tmpmant, i);
-  k = MPFR_LIMBS_PER_LONG_DOUBLE - i;
-  count_leading_zeros (cnt, tmpmant[i - 1]);
-  if (MPFR_LIKELY (cnt != 0))
-    mpn_lshift (tmpmant + k, tmpmant, i, cnt);
-  else if (k != 0)
-    MPN_COPY (tmpmant + k, tmpmant, i);
-  if (MPFR_UNLIKELY (k != 0))
-    MPN_ZERO (tmpmant, k);
-
-  /* Set exponent */
-  exp = (mpfr_exp_t) ((x.s.exph << 8) + x.s.expl);  /* 15-bit unsigned int */
-  if (MPFR_UNLIKELY (exp == 0))
-    exp -= 0x3FFD;
-  else
-    exp -= 0x3FFE;
-
-  MPFR_SET_EXP (tmp, exp - cnt - k * GMP_NUMB_BITS);
-
-  /* tmp is exact */
-  inexact = mpfr_set4 (r, tmp, rnd_mode, signd);
-
-  MPFR_SAVE_EXPO_FREE (expo);
-  return mpfr_check_range (r, inexact, rnd_mode);
 }
 
 #endif

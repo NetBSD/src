@@ -1,0 +1,22 @@
+; Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+;
+; This Source Code Form is subject to the terms of the Mozilla Public
+; License, v. 2.0. If a copy of the MPL was not distributed with this
+; file, You can obtain one at http://mozilla.org/MPL/2.0/.
+;
+; See the COPYRIGHT file distributed with this work for additional
+; information regarding copyright ownership.
+
+$ORIGIN .
+$TTL 60		; 1 minute
+child.parent.nil		IN SOA	ns.child.parent.nil. hostmaster.parent.nil. (
+				1          ; serial
+				2000       ; refresh (33 minutes 20 seconds)
+				2000       ; retry (33 minutes 20 seconds)
+				1814400    ; expire (3 weeks)
+				3600       ; minimum (1 hour)
+				)
+			NS	ns.child.parent.nil.
+$ORIGIN child.parent.nil.
+$TTL 300	; 5 minutes
+ns			A	10.53.0.3

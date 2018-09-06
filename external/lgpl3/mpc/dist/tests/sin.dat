@@ -161,3 +161,6 @@
 # huge values
 + + 53 +inf 53 +inf 53 0x4580CBF242683p-3 53 -0x1B3E8A3660D279p-3 N N
 - + 53 -inf 53 +inf 53 -0x1B3E8A3660D279p-3 53 0x4580CBF242683p-3 N N
+
+# bug reported by Joseph Myers (25 Mar 2015)
+- - 2 0x3p1073741819 2 0x3p1073741819 2 -0x1p200 2 -0x1p800 Z Z

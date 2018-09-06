@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_FLOPPY,v 1.43 2017/11/06 02:57:18 rin Exp $
+#	$NetBSD: INSTALL_FLOPPY,v 1.43.2.1 2018/09/06 06:55:35 pgoyette Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -658,6 +658,7 @@ aue*	at uhub? port ?		# ADMtek AN986 Pegasus based adapters
 axe*	at uhub? port ?		# ASIX AX88172 based adapters
 cue*	at uhub? port ?		# CATC USB-EL1201A based adapters
 kue*	at uhub? port ?		# Kawasaki LSI KL5KUSB101B based adapters
+mue*	at uhub? port ?		# Microchip LAN75xx/LAN78xx based adapters
 url*	at uhub? port ?		# Realtek RTL8150L based adapters
 
 # Audio Devices
@@ -743,7 +744,6 @@ pseudo-device	md			# memory disk device (ramdisk)
 
 # network pseudo-devices
 pseudo-device	bpfilter		# Berkeley packet filter
-#pseudo-device	ipfilter		# IP filter (firewall) and NAT
 pseudo-device	loop			# network loopback
 #pseudo-device	ppp			# Point-to-Point Protocol
 pseudo-device	sl			# Serial Line IP

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rwlock.c,v 1.50 2018/02/05 04:25:04 ozaki-r Exp $	*/
+/*	$NetBSD: kern_rwlock.c,v 1.50.2.1 2018/09/06 06:56:42 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.50 2018/02/05 04:25:04 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.50.2.1 2018/09/06 06:56:42 pgoyette Exp $");
 
 #define	__RWLOCK_PRIVATE
 
@@ -52,6 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.50 2018/02/05 04:25:04 ozaki-r Exp
 #include <sys/cpu.h>
 #include <sys/atomic.h>
 #include <sys/lock.h>
+#include <sys/pserialize.h>
 
 #include <dev/lockstat.h>
 
@@ -72,7 +73,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.50 2018/02/05 04:25:04 ozaki-r Exp
 	    (uintptr_t)__builtin_return_address(0), op == RW_READER);
 #define	RW_DASSERT(rw, cond)						\
 do {									\
-	if (!(cond))							\
+	if (__predict_false(!(cond)))					\
 		rw_abort(__func__, __LINE__, rw, "assertion failed: " #cond);\
 } while (/* CONSTCOND */ 0);
 
@@ -93,7 +94,7 @@ do {									\
 
 #define	RW_ASSERT(rw, cond)						\
 do {									\
-	if (!(cond))							\
+	if (__predict_false(!(cond)))					\
 		rw_abort(__func__, __LINE__, rw, "assertion failed: " #cond);\
 } while (/* CONSTCOND */ 0)
 
@@ -289,6 +290,7 @@ rw_vector_enter(krwlock_t *rw, const krw_t op)
 	RW_ASSERT(rw, !cpu_intr_p());
 	RW_ASSERT(rw, curthread != 0);
 	RW_WANTLOCK(rw, op);
+	KDASSERT(pserialize_not_in_read_section());
 
 	if (panicstr == NULL) {
 		LOCKDEBUG_BARRIER(&kernel_lock, 1);

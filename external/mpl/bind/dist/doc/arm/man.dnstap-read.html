@@ -1,0 +1,148 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<!--
+ - Copyright (C) 2000-2018 Internet Systems Consortium, Inc. ("ISC")
+ - 
+ - This Source Code Form is subject to the terms of the Mozilla Public
+ - License, v. 2.0. If a copy of the MPL was not distributed with this
+ - file, You can obtain one at http://mozilla.org/MPL/2.0/.
+-->
+<html lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+<title>dnstap-read</title>
+<meta name="generator" content="DocBook XSL Stylesheets V1.78.1">
+<link rel="home" href="Bv9ARM.html" title="BIND 9 Administrator Reference Manual">
+<link rel="up" href="Bv9ARM.ch12.html" title="Manual pages">
+<link rel="prev" href="man.dnssec-verify.html" title="dnssec-verify">
+<link rel="next" href="man.genrandom.html" title="genrandom">
+</head>
+<body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
+<div class="navheader">
+<table width="100%" summary="Navigation header">
+<tr><th colspan="3" align="center"><span class="application">dnstap-read</span></th></tr>
+<tr>
+<td width="20%" align="left">
+<a accesskey="p" href="man.dnssec-verify.html">Prev</a> </td>
+<th width="60%" align="center">Manual pages</th>
+<td width="20%" align="right"> <a accesskey="n" href="man.genrandom.html">Next</a>
+</td>
+</tr>
+</table>
+<hr>
+</div>
+<div class="refentry">
+<a name="man.dnstap-read"></a><div class="titlepage"></div>
+  
+  
+
+  
+
+  <div class="refnamediv">
+<h2>Name</h2>
+<p>
+    <span class="application">dnstap-read</span>
+     &#8212; print dnstap data in human-readable form
+  </p>
+</div>
+
+  
+
+  <div class="refsynopsisdiv">
+<h2>Synopsis</h2>
+    <div class="cmdsynopsis"><p>
+      <code class="command">dnstap-read</code> 
+       [<code class="option">-m</code>]
+       [<code class="option">-p</code>]
+       [<code class="option">-x</code>]
+       [<code class="option">-y</code>]
+       {<em class="replaceable"><code>file</code></em>}
+    </p></div>
+  </div>
+
+  <div class="refsection">
+<a name="id-1.13.18.7"></a><h2>DESCRIPTION</h2>
+
+    <p>
+      <span class="command"><strong>dnstap-read</strong></span>
+      reads <span class="command"><strong>dnstap</strong></span> data from a specified file
+      and prints it in a human-readable format.  By default,
+      <span class="command"><strong>dnstap</strong></span> data is printed in a short summary
+      format, but if the <code class="option">-y</code> option is specified,
+      then a longer and more detailed YAML format is used instead.
+    </p>
+  </div>
+
+  <div class="refsection">
+<a name="id-1.13.18.8"></a><h2>OPTIONS</h2>
+
+
+    <div class="variablelist"><dl class="variablelist">
+<dt><span class="term">-m</span></dt>
+<dd>
+          <p>
+            Trace memory allocations; used for debugging memory leaks.
+          </p>
+        </dd>
+<dt><span class="term">-p</span></dt>
+<dd>
+          <p>
+            After printing the <span class="command"><strong>dnstap</strong></span> data, print
+            the text form of the DNS message that was encapsulated in the
+            <span class="command"><strong>dnstap</strong></span> frame.
+          </p>
+        </dd>
+<dt><span class="term">-x</span></dt>
+<dd>
+          <p>
+            After printing the <span class="command"><strong>dnstap</strong></span> data, print
+            a hex dump of the wire form of the DNS message that was
+            encapsulated in the <span class="command"><strong>dnstap</strong></span> frame.
+          </p>
+        </dd>
+<dt><span class="term">-y</span></dt>
+<dd>
+          <p>
+            Print <span class="command"><strong>dnstap</strong></span> data in a detailed YAML
+            format.
+          </p>
+        </dd>
+</dl></div>
+  </div>
+
+  <div class="refsection">
+<a name="id-1.13.18.9"></a><h2>SEE ALSO</h2>
+
+    <p>
+      <span class="citerefentry">
+        <span class="refentrytitle">named</span>(8)
+      </span>,
+      <span class="citerefentry">
+        <span class="refentrytitle">rndc</span>(8)
+      </span>,
+      <em class="citetitle">BIND 9 Administrator Reference Manual</em>.
+    </p>
+  </div>
+
+</div>
+<div class="navfooter">
+<hr>
+<table width="100%" summary="Navigation footer">
+<tr>
+<td width="40%" align="left">
+<a accesskey="p" href="man.dnssec-verify.html">Prev</a> </td>
+<td width="20%" align="center"><a accesskey="u" href="Bv9ARM.ch12.html">Up</a></td>
+<td width="40%" align="right"> <a accesskey="n" href="man.genrandom.html">Next</a>
+</td>
+</tr>
+<tr>
+<td width="40%" align="left" valign="top">
+<span class="application">dnssec-verify</span> </td>
+<td width="20%" align="center"><a accesskey="h" href="Bv9ARM.html">Home</a></td>
+<td width="40%" align="right" valign="top"> <span class="application">genrandom</span>
+</td>
+</tr>
+</table>
+</div>
+<p xmlns:db="http://docbook.org/ns/docbook" style="text-align: center;">BIND 9.12.2-P1</p>
+</body>
+</html>

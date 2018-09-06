@@ -1,5 +1,5 @@
 /* DDG - Data Dependence Graph implementation.
-   Copyright (C) 2004-2015 Free Software Foundation, Inc.
+   Copyright (C) 2004-2016 Free Software Foundation, Inc.
    Contributed by Ayal Zaks and Mustafa Hagog <zaks,mustafa@il.ibm.com>
 
 This file is part of GCC.
@@ -22,48 +22,11 @@ along with GCC; see the file COPYING3.  If not see
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
-#include "tm.h"
-#include "diagnostic-core.h"
+#include "backend.h"
 #include "rtl.h"
-#include "tm_p.h"
-#include "hard-reg-set.h"
-#include "regs.h"
-#include "hashtab.h"
-#include "hash-set.h"
-#include "vec.h"
-#include "machmode.h"
-#include "input.h"
-#include "function.h"
-#include "flags.h"
-#include "insn-config.h"
-#include "insn-attr.h"
-#include "except.h"
-#include "recog.h"
-#include "predict.h"
-#include "basic-block.h"
-#include "sched-int.h"
-#include "target.h"
-#include "cfgloop.h"
-#include "sbitmap.h"
-#include "symtab.h"
-#include "statistics.h"
-#include "double-int.h"
-#include "real.h"
-#include "fixed-value.h"
-#include "alias.h"
-#include "wide-int.h"
-#include "inchash.h"
-#include "tree.h"
-#include "expmed.h"
-#include "dojump.h"
-#include "explow.h"
-#include "calls.h"
-#include "emit-rtl.h"
-#include "varasm.h"
-#include "stmt.h"
-#include "expr.h"
-#include "bitmap.h"
 #include "df.h"
+#include "insn-attr.h"
+#include "sched-int.h"
 #include "ddg.h"
 #include "rtl-iter.h"
 
@@ -318,19 +281,16 @@ add_cross_iteration_register_deps (ddg_ptr g, df_ref last_def)
   rtx_insn *def_insn = DF_REF_INSN (last_def);
   ddg_node_ptr last_def_node = get_node_of_insn (g, def_insn);
   ddg_node_ptr use_node;
-#ifdef ENABLE_CHECKING
-  struct df_rd_bb_info *bb_info = DF_RD_BB_INFO (g->bb);
-#endif
   df_ref first_def = df_bb_regno_first_def_find (g->bb, regno);
 
   gcc_assert (last_def_node);
   gcc_assert (first_def);
 
-#ifdef ENABLE_CHECKING
-  if (DF_REF_ID (last_def) != DF_REF_ID (first_def))
-    gcc_assert (!bitmap_bit_p (&bb_info->gen,
-			       DF_REF_ID (first_def)));
-#endif
+  if (flag_checking && DF_REF_ID (last_def) != DF_REF_ID (first_def))
+    {
+      struct df_rd_bb_info *bb_info = DF_RD_BB_INFO (g->bb);
+      gcc_assert (!bitmap_bit_p (&bb_info->gen, DF_REF_ID (first_def)));
+    }
 
   /* Create inter-loop true dependences and anti dependences.  */
   for (r_use = DF_REF_CHAIN (last_def); r_use != NULL; r_use = r_use->next)
@@ -1031,7 +991,6 @@ order_sccs (ddg_all_sccs_ptr g)
 	 (int (*) (const void *, const void *)) compare_sccs);
 }
 
-#ifdef ENABLE_CHECKING
 /* Check that every node in SCCS belongs to exactly one strongly connected
    component and that no element of SCCS is empty.  */
 static void
@@ -1051,7 +1010,6 @@ check_sccs (ddg_all_sccs_ptr sccs, int num_nodes)
     }
   sbitmap_free (tmp);
 }
-#endif
 
 /* Perform the Strongly Connected Components decomposing algorithm on the
    DDG and return DDG_ALL_SCCS structure that contains them.  */
@@ -1097,9 +1055,10 @@ create_ddg_all_sccs (ddg_ptr g)
   sbitmap_free (from);
   sbitmap_free (to);
   sbitmap_free (scc_nodes);
-#ifdef ENABLE_CHECKING
-  check_sccs (sccs, num_nodes);
-#endif
+
+  if (flag_checking)
+    check_sccs (sccs, num_nodes);
+
   return sccs;
 }
 

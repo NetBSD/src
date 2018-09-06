@@ -1,4 +1,4 @@
-Copyright (C) INRIA 2003, 2005, 2007, 2008, 2009, 2010, 2011, 2012, 2014
+Copyright (C) INRIA 2003, 2005, 2007, 2008, 2009, 2010, 2011, 2012
 
 Copying and distribution of this file, with or without modification,
 are permitted in any medium without royalty provided the copyright
@@ -14,13 +14,13 @@ This is for the impatient, for deeper explanations see the chapter
 
 0. You first need to install GMP, the GNU Multiprecision Arithmetic Library,
    see <http://gmplib.org/>, and GNU MPFR, see <http://www.mpfr.org>.
-   GNU MPC requires GMP version 4.3.2 or later
-   and GNU MPFR version 2.4.2 or later.
+   GNU MPC requires GMP version 5.0.0 or later
+   and GNU MPFR version 3.0.0 or later.
 
 1. In the directory of the GNU MPC archive, type
 
-      tar xzf mpc-1.0.3.tar.gz
-      cd mpc-1.0.3
+      tar xzf mpc-1.1.0.tar.gz
+      cd mpc-1.1.0
       ./configure
       make
 

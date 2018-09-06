@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.h,v 1.1.28.5 2018/07/28 04:37:26 pgoyette Exp $ */
+/* $NetBSD: pmap.h,v 1.1.28.6 2018/09/06 06:55:23 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -95,8 +95,8 @@ struct vm_page_md {
 #define l2pde_is_table(pde)	(((pde) & LX_TYPE) == LX_TYPE_TBL)
 
 #define l3pte_pa(pde)		((paddr_t)((pde) & LX_TBL_PA))
-#define l3pte_executable(pde)	\
-    (((pde) & (LX_BLKPAG_UXN|LX_BLKPAG_PXN)) != (LX_BLKPAG_UXN|LX_BLKPAG_PXN))
+#define l3pte_executable(pde,user)	\
+    (((pde) & ((user) ? LX_BLKPAG_UXN : LX_BLKPAG_PXN)) == 0)
 #define l3pte_readable(pde)	((pde) & LX_BLKPAG_AF)
 #define l3pte_writable(pde)	\
     (((pde) & (LX_BLKPAG_AF|LX_BLKPAG_AP)) == (LX_BLKPAG_AF|LX_BLKPAG_AP_RW))
@@ -107,7 +107,11 @@ struct vm_page_md {
 
 void pmap_bootstrap(vaddr_t, vaddr_t);
 bool pmap_fault_fixup(struct pmap *, vaddr_t, vm_prot_t, bool user);
+
+/* for ddb */
 void pmap_db_pteinfo(vaddr_t, void (*)(const char *, ...));
+pt_entry_t *kvtopte(vaddr_t);
+pt_entry_t pmap_kvattr(vaddr_t, vm_prot_t);
 
 /* Hooks for the pool allocator */
 paddr_t vtophys(vaddr_t);

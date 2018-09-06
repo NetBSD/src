@@ -1,4 +1,4 @@
-/* $NetBSD: ibmhawk.c,v 1.4.16.2 2018/06/25 07:25:50 pgoyette Exp $ */
+/* $NetBSD: ibmhawk.c,v 1.4.16.3 2018/09/06 06:55:49 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -136,8 +136,8 @@ ibmhawk_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(sc->sc_dev, "equip query failed\n");
 		return;
 	}
-	sc->sc_numcpus = min(resp.ihr_numcpus, IBMHAWK_MAX_CPU);
-	sc->sc_numfans = min(resp.ihr_numfans, IBMHAWK_MAX_FAN);
+	sc->sc_numcpus = uimin(resp.ihr_numcpus, IBMHAWK_MAX_CPU);
+	sc->sc_numfans = uimin(resp.ihr_numfans, IBMHAWK_MAX_FAN);
 #if IBMHAWK_DEBUG > 0
 	aprint_normal_dev(sc->sc_dev, "monitoring %d/%d cpu(s) %d/%d fan(s)\n",
 	    sc->sc_numcpus, resp.ihr_numcpus, sc->sc_numfans, resp.ihr_numfans);
@@ -258,7 +258,7 @@ again:
 
 bad:
 #if IBMHAWK_DEBUG > 1
-	for (i = 0; i < min(buf[0]+1, sizeof buf); i++)
+	for (i = 0; i < uimin(buf[0]+1, sizeof buf); i++)
 		printf(" %02x", buf[i]);
 	printf(" ] => %d\n", error);
 #endif

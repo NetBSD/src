@@ -1,4 +1,4 @@
-/*      $NetBSD: if_xennet_xenbus.c,v 1.74.2.2 2018/07/28 04:37:43 pgoyette Exp $      */
+/*      $NetBSD: if_xennet_xenbus.c,v 1.74.2.3 2018/09/06 06:55:44 pgoyette Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.74.2.2 2018/07/28 04:37:43 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.74.2.3 2018/09/06 06:55:44 pgoyette Exp $");
 
 #include "opt_xen.h"
 #include "opt_nfs_boot.h"
@@ -131,6 +131,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.74.2.2 2018/07/28 04:37:43 pg
 
 #undef XENNET_DEBUG_DUMP
 #undef XENNET_DEBUG
+
 #ifdef XENNET_DEBUG
 #define XEDB_FOLLOW     0x01
 #define XEDB_INIT       0x02
@@ -371,7 +372,7 @@ xennet_xenbus_attach(device_t parent, device_t self, void *aux)
 	ifp->if_stop = xennet_stop;
 	ifp->if_flags = IFF_BROADCAST|IFF_SIMPLEX|IFF_NOTRAILERS|IFF_MULTICAST;
 	ifp->if_timer = 0;
-	ifp->if_snd.ifq_maxlen = max(ifqmaxlen, NET_TX_RING_SIZE * 2);
+	ifp->if_snd.ifq_maxlen = uimax(ifqmaxlen, NET_TX_RING_SIZE * 2);
 	ifp->if_capabilities = IFCAP_CSUM_TCPv4_Tx | IFCAP_CSUM_UDPv4_Tx;
 	IFQ_SET_READY(&ifp->if_snd);
 	if_attach(ifp);
@@ -1171,7 +1172,7 @@ xennet_softstart(void *arg)
 	struct mbuf *m, *new_m;
 	netif_tx_request_t *txreq;
 	RING_IDX req_prod;
-	paddr_t pa, pa2;
+	paddr_t pa;
 	struct xennet_txreq *req;
 	int notify;
 	int do_notify = 0;
@@ -1290,9 +1291,13 @@ xennet_softstart(void *arg)
 		    "mbuf %p, buf %p/%p/%p, size %d\n",
 		    req->txreq_id, m, mtod(m, void *), (void *)pa,
 		    (void *)xpmap_ptom_masked(pa), m->m_pkthdr.len));
+#ifdef XENNET_DEBUG
+		paddr_t pa2;
 		pmap_extract_ma(pmap_kernel(), mtod(m, vaddr_t), &pa2);
 		DPRINTFN(XEDB_MBUF, ("xennet_start pa %p ma %p/%p\n",
 		    (void *)pa, (void *)xpmap_ptom_masked(pa), (void *)pa2));
+#endif
+
 #ifdef XENNET_DEBUG_DUMP
 		xennet_hex_dump(mtod(m, u_char *), m->m_pkthdr.len, "s",
 			       	req->txreq_id);

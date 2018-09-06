@@ -1,6 +1,6 @@
 # Makefile for the MPC library (Windows version).
 #
-# Copyright (C) INRIA - CNRS, 2002, 2004, 2005, 2007, 2008, 2009, 2010, 2011, 2012, 2014, 2015
+# Copyright (C) INRIA - CNRS, 2002, 2004, 2005, 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2016, 2017
 #
 # This file is part of the MPC Library.
 #
@@ -50,7 +50,7 @@ CPP = cl.exe
 CC = cl.exe
 CDEFAULTFLAGS=/O2 /GR- /MD /nologo /EHs
 
-VERSION=1.0.3
+VERSION=1.1.0
 
 ######################## do not edit below this line ##########################
 
@@ -83,9 +83,15 @@ INCLUDES = /I$(DIRMPC) /I$(GMPDIR)\include  /I$(MPFR)\include
 CKERNELFLAGS = $(CDEFAULTFLAGS) $(GMPMUSTBEDLL)   $(INCLUDES)
 CFLAGS = $(CKERNELFLAGS)  /D__MPC_WITHIN_MPC /D_GMP_IEEE_FLOATS /DHAVE_CONFIG_H
 
-TESTCOMPILE=$(CC) $(CKERNELFLAGS) $(DIRMPCTESTS)\tgeneric.c $(DIRMPCTESTS)\comparisons.c $(DIRMPCTESTS)\read_data.c $(DIRMPCTESTS)\random.c $(DIRMPCTESTS)
+TESTSSOURCES=$(DIRMPCTESTS)\check_data.c $(DIRMPCTESTS)\clear_parameters.c	\
+  $(DIRMPCTESTS)\close_datafile.c $(DIRMPCTESTS)\comparisons.c $(DIRMPCTESTS)\copy_parameter.c $(DIRMPCTESTS)\double_rounding.c	\
+  $(DIRMPCTESTS)\init_parameters.c $(DIRMPCTESTS)\mpfr_flags.c $(DIRMPCTESTS)\open_datafile.c $(DIRMPCTESTS)\print_parameter.c	\
+  $(DIRMPCTESTS)\random.c $(DIRMPCTESTS)\read_data.c $(DIRMPCTESTS)\read_description.c $(DIRMPCTESTS)\read_line.c $(DIRMPCTESTS)\rounding.c	\
+  $(DIRMPCTESTS)\setprec_parameters.c $(DIRMPCTESTS)\tpl_gmp.c $(DIRMPCTESTS)\tpl_mpc.c $(DIRMPCTESTS)\tpl_mpfr.c $(DIRMPCTESTS)\tpl_native.c
+
+TESTCOMPILE=$(CC) $(CKERNELFLAGS) $(TESTSSOURCES) $(DIRMPCTESTS)
 MIDTESTCOMPILE=/link  /out:$(DIRMPCTESTS)
-ENDTESTCOMPILE=/LIBPATH:"$(GMPDIR)\lib" libmpc.lib libmpfr.lib libgmp.lib $(LIBS_LOGGING)
+ENDTESTCOMPILE=/LIBPATH:"$(DIRMPCTESTS)" libmpc.lib  /LIBPATH:"$(GMPDIR)\lib" libmpfr.lib libgmp.lib $(LIBS_LOGGING)
 
 
 #generate the CPPOBJECTS : goto src and execute
@@ -93,7 +99,7 @@ ENDTESTCOMPILE=/LIBPATH:"$(GMPDIR)\lib" libmpc.lib libmpfr.lib libgmp.lib $(LIBS
 #generate the CPPLINKOBJECTS : goto src and execute
 # ls *.c | sed "s/\.c/\.obj/" | awk ' { printf("%s \\\n",$1); } '
 #generate the list for tests : goto tests and execute
-# ls t*.c | sed "s/\.c//" | grep -v tgeneric| grep -v comparisons | grep -v read_data | grep -v random | awk ' { printf("\t$(TESTCOMPILE)%s.c  $(MIDTESTCOMPILE)%s.exe $(ENDTESTCOMPILE)\n\tcd $(DIRMPCTESTS) && %s.exe && cd ..\n",$1,$1,$1,$1); } '
+# ls t*.c | sed "s/\.c//" | grep -v comparisons | grep -v read_data | grep -v random | awk ' { printf("\t$(TESTCOMPILE)%s.c  $(MIDTESTCOMPILE)%s.exe $(ENDTESTCOMPILE)\n\tcd $(DIRMPCTESTS) && %s.exe && cd ..\n",$1,$1,$1,$1); } '
 
 LIBRARYLIB = libmpc.lib
 
@@ -111,6 +117,7 @@ $(DIRMPC)\atan.obj \
 $(DIRMPC)\atanh.obj \
 $(DIRMPC)\clear.obj \
 $(DIRMPC)\cmp.obj \
+$(DIRMPC)\cmp_abs.obj \
 $(DIRMPC)\cmp_si_si.obj \
 $(DIRMPC)\conj.obj \
 $(DIRMPC)\cos.obj \
@@ -152,6 +159,7 @@ $(DIRMPC)\pow_ui.obj \
 $(DIRMPC)\pow_z.obj \
 $(DIRMPC)\proj.obj \
 $(DIRMPC)\real.obj \
+$(DIRMPC)\rootofunity.obj \
 $(DIRMPC)\set.obj \
 $(DIRMPC)\set_prec.obj \
 $(DIRMPC)\set_str.obj \
@@ -188,6 +196,7 @@ atan.obj \
 atanh.obj \
 clear.obj \
 cmp.obj \
+cmp_abs.obj \
 cmp_si_si.obj \
 conj.obj \
 cos.obj \
@@ -229,6 +238,7 @@ pow_ui.obj \
 pow_z.obj \
 proj.obj \
 real.obj \
+rootofunity.obj \
 set.obj \
 set_prec.obj \
 set_str.obj \
@@ -321,6 +331,8 @@ test :
 	cd $(DIRMPCTESTS) && tatan.exe && cd ..
 	$(TESTCOMPILE)tatanh.c  $(MIDTESTCOMPILE)tatanh.exe $(ENDTESTCOMPILE)
 	cd $(DIRMPCTESTS) && tatanh.exe && cd ..
+	$(TESTCOMPILE)tcmp_abs.c  $(MIDTESTCOMPILE)tcmp_abs.exe $(ENDTESTCOMPILE)
+	cd $(DIRMPCTESTS) && tcmp_abs.exe && cd ..
 	$(TESTCOMPILE)tconj.c  $(MIDTESTCOMPILE)tconj.exe $(ENDTESTCOMPILE)
 	cd $(DIRMPCTESTS) && tconj.exe && cd ..
 	$(TESTCOMPILE)tcos.c  $(MIDTESTCOMPILE)tcos.exe $(ENDTESTCOMPILE)
@@ -355,6 +367,8 @@ test :
 	cd $(DIRMPCTESTS) && tlog10.exe && cd ..
 	$(TESTCOMPILE)tmul.c  $(MIDTESTCOMPILE)tmul.exe $(ENDTESTCOMPILE)
 	cd $(DIRMPCTESTS) && tmul.exe && cd ..
+	$(TESTCOMPILE)tmul_2si.c  $(MIDTESTCOMPILE)tmul_2si.exe $(ENDTESTCOMPILE)
+	cd $(DIRMPCTESTS) && tmul_2si.exe && cd ..
 	$(TESTCOMPILE)tmul_2ui.c  $(MIDTESTCOMPILE)tmul_2ui.exe $(ENDTESTCOMPILE)
 	cd $(DIRMPCTESTS) && tmul_2ui.exe && cd ..
 	$(TESTCOMPILE)tmul_fr.c  $(MIDTESTCOMPILE)tmul_fr.exe $(ENDTESTCOMPILE)
@@ -391,6 +405,8 @@ test :
 	cd $(DIRMPCTESTS) && treal.exe && cd ..
 	$(TESTCOMPILE)treimref.c  $(MIDTESTCOMPILE)treimref.exe $(ENDTESTCOMPILE)
 	cd $(DIRMPCTESTS) && treimref.exe && cd ..
+	$(TESTCOMPILE)trootofunity.c  $(MIDTESTCOMPILE)trootofunity.exe $(ENDTESTCOMPILE)
+	cd $(DIRMPCTESTS) && trootofunity.exe && cd ..
 	$(TESTCOMPILE)tset.c  $(MIDTESTCOMPILE)tset.exe $(ENDTESTCOMPILE)
 	cd $(DIRMPCTESTS) && tset.exe && cd ..
 	$(TESTCOMPILE)tsin.c  $(MIDTESTCOMPILE)tsin.exe $(ENDTESTCOMPILE)

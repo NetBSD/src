@@ -1,0 +1,697 @@
+<!DOCTYPE book [
+<!ENTITY mdash "&#8212;">]>
+<!--
+ - Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ -
+ - This Source Code Form is subject to the terms of the Mozilla Public
+ - License, v. 2.0. If a copy of the MPL was not distributed with this
+ - file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ -
+ - See the COPYRIGHT file distributed with this work for additional
+ - information regarding copyright ownership.
+-->
+
+<!-- Converted by db4-upgrade version 1.0 -->
+<refentry xmlns:db="http://docbook.org/ns/docbook" version="5.0" xml:id="man.mdig">
+  <info>
+    <date>2015-01-05</date>
+  </info>
+  <refentryinfo>
+    <corpname>ISC</corpname>
+    <corpauthor>Internet Systems Consortium, Inc.</corpauthor>
+  </refentryinfo>
+  <refmeta>
+    <refentrytitle><application>mdig</application></refentrytitle>
+    <manvolnum>1</manvolnum>
+    <refmiscinfo>BIND9</refmiscinfo>
+  </refmeta>
+  <refnamediv>
+    <refname><application>mdig</application></refname>
+    <refpurpose>DNS pipelined lookup utility</refpurpose>
+  </refnamediv>
+
+  <docinfo>
+    <copyright>
+      <year>2015</year>
+      <year>2016</year>
+      <year>2017</year>
+      <year>2018</year>
+      <holder>Internet Systems Consortium, Inc. ("ISC")</holder>
+    </copyright>
+  </docinfo>
+
+  <refsynopsisdiv>
+    <cmdsynopsis sepchar=" ">
+      <command>mdig</command>
+      <arg choice="req" rep="norepeat">@server</arg>
+      <arg choice="opt" rep="norepeat"><option>-f <replaceable class="parameter">filename</replaceable></option></arg>
+      <arg choice="opt" rep="norepeat"><option>-h</option></arg>
+      <arg choice="opt" rep="norepeat"><option>-v</option></arg>
+      <group choice="opt" rep="norepeat">
+	<arg choice="opt" rep="norepeat"><option>-4</option></arg>
+	<arg choice="opt" rep="norepeat"><option>-6</option></arg>
+      </group>
+      <arg choice="opt" rep="norepeat"><option>-m</option></arg>
+      <arg choice="opt" rep="norepeat"><option>-b <replaceable class="parameter">address</replaceable></option></arg>
+      <arg choice="opt" rep="norepeat"><option>-p <replaceable class="parameter">port#</replaceable></option></arg>
+      <arg choice="opt" rep="norepeat"><option>-c <replaceable class="parameter">class</replaceable></option></arg>
+      <arg choice="opt" rep="norepeat"><option>-t <replaceable class="parameter">type</replaceable></option></arg>
+      <arg choice="opt" rep="norepeat"><option>-i</option></arg>
+      <arg choice="opt" rep="norepeat"><option>-x <replaceable class="parameter">addr</replaceable></option></arg>
+      <arg choice="opt" rep="repeat">plusopt</arg>
+    </cmdsynopsis>
+
+    <cmdsynopsis sepchar=" ">
+      <command>mdig</command>
+      <arg choice="req" rep="norepeat">-h</arg>
+    </cmdsynopsis>
+
+    <cmdsynopsis sepchar=" ">
+      <command>mdig</command>
+      <arg choice="opt" rep="norepeat">@server</arg>
+      <arg choice="req" rep="repeat">global-opt</arg>
+      <arg choice="req" rep="repeat">
+         <arg choice="req" rep="repeat">local-opt</arg>
+         <arg choice="req" rep="norepeat">query</arg>
+      </arg>
+    </cmdsynopsis>
+  </refsynopsisdiv>
+
+  <refsection><info><title>DESCRIPTION</title></info>
+
+    <para><command>mdig</command>
+      is a multiple/pipelined query version of <command>dig</command>:
+      instead of waiting for a response after sending each query,
+      it begins by sending all queries. Responses are displayed in
+      the order in which they are received, not in the order the
+      corresponding queries were sent.
+    </para>
+
+    <para>
+      <command>mdig</command> options are a subset of the
+      <command>dig</command> options, and are divided into "anywhere
+      options" which can occur anywhere, "global options" which must
+      occur before the query name (or they are ignored with a warning),
+      and "local options" which apply to the next query on the command
+      line.
+    </para>
+
+    <para>
+      The <arg choice="req" rep="norepeat">@server</arg> option is a mandatory global
+      option.  It is the name or IP address of the name server to query.
+      (Unlike <command>dig</command>, this value is not retrieved from
+      <filename>/etc/resolv.conf</filename>.)  It can be an IPv4 address
+      in dotted-decimal notation, an IPv6 address in colon-delimited
+      notation, or a hostname.  When the supplied
+      <parameter>server</parameter> argument is a hostname,
+      <command>mdig</command> resolves that name before querying
+      the name server.
+    </para>
+
+    <para><command>mdig</command>
+      provides a number of query options which affect
+      the way in which lookups are made and the results displayed.  Some of
+      these set or reset flag bits in the query header, some determine which
+      sections of the answer get printed, and others determine the timeout
+      and retry strategies.
+    </para>
+
+    <para>
+      Each query option is identified by a keyword preceded by a plus
+      sign (<literal>+</literal>).  Some keywords set or reset an
+      option.  These may be preceded by the string <literal>no</literal>
+      to negate the meaning of that keyword.  Other keywords assign
+      values to options like the timeout interval.  They have the
+      form <option>+keyword=value</option>.
+    </para>
+  </refsection>
+
+  <refsection><info><title>ANYWHERE OPTIONS</title></info>
+
+
+    <para>
+      The <option>-f</option> option makes <command>mdig</command>
+      operate in batch mode by reading a list of lookup requests to
+      process from the file <parameter>filename</parameter>.  The file
+      contains a number of queries, one per line.  Each entry in the
+      file should be organized in the same way they would be presented
+      as queries to <command>mdig</command> using the command-line interface.
+    </para>
+
+    <para>
+      The <option>-h</option> causes <command>mdig</command> to
+      print the detailed help with the full list of options and exit.
+    </para>
+
+    <para>
+      The <option>-v</option> causes <command>mdig</command> to
+      print the version number and exit.
+    </para>
+  </refsection>
+
+  <refsection><info><title>GLOBAL OPTIONS</title></info>
+
+
+    <para>
+      The <option>-4</option> option forces <command>mdig</command> to
+      only use IPv4 query transport.
+    </para>
+
+    <para>
+      The <option>-6</option> option forces <command>mdig</command> to
+      only use IPv6 query transport.
+    </para>
+
+    <para>
+      The <option>-b</option> option sets the source IP address of the
+      query to <parameter>address</parameter>.  This must be a valid
+      address on one of the host's network interfaces or "0.0.0.0" or
+      "::".  An optional port may be specified by appending
+      "#&lt;port&gt;"
+    </para>
+
+    <para>
+      The <option>-m</option> option enables memory usage debugging.
+    </para>
+
+    <para>
+      The <option>-p</option> option is used when a non-standard port
+      number is to be queried.
+      <parameter>port#</parameter> is the port number
+      that <command>mdig</command> will send its queries instead of
+      the standard DNS port number 53.  This option would be used to
+      test a name server that has been configured to listen for
+      queries on a non-standard port number.
+    </para>
+
+    <para>
+      The global query options are:
+      <variablelist>
+
+        <varlistentry>
+          <term><option>+[no]additional</option></term>
+          <listitem>
+            <para>
+              Display [do not display] the additional section of a
+              reply.  The default is to display it.
+            </para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term><option>+[no]all</option></term>
+          <listitem>
+            <para>
+              Set or clear all display flags.
+            </para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term><option>+[no]answer</option></term>
+          <listitem>
+            <para>
+              Display [do not display] the answer section of a
+              reply.  The default is to display it.
+            </para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term><option>+[no]authority</option></term>
+          <listitem>
+            <para>
+              Display [do not display] the authority section of a
+              reply.  The default is to display it.
+            </para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term><option>+[no]besteffort</option></term>
+          <listitem>
+            <para>
+              Attempt to display the contents of messages which are
+              malformed.  The default is to not display malformed
+              answers.
+            </para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term><option>+[no]cl</option></term>
+          <listitem>
+            <para>
+              Display [do not display] the CLASS when printing the
+              record.
+            </para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term><option>+[no]comments</option></term>
+          <listitem>
+            <para>
+              Toggle the display of comment lines in the output.
+              The default is to print comments.
+            </para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term><option>+[no]continue</option></term>
+          <listitem>
+            <para>
+              Continue on errors (e.g. timeouts).
+            </para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term><option>+[no]crypto</option></term>
+          <listitem>
+            <para>
+              Toggle the display of cryptographic fields in DNSSEC
+              records.  The contents of these field are unnecessary
+              to debug most DNSSEC validation failures and removing
+              them makes it easier to see the common failures.  The
+              default is to display the fields.  When omitted they
+              are replaced by the string "[omitted]" or in the
+              DNSKEY case the key id is displayed as the replacement,
+              e.g. "[ key id = value ]".
+            </para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term><option>+dscp[=value]</option></term> <listitem>
+            <para>
+              Set the DSCP code point to be used when sending the
+              query.  Valid DSCP code points are in the range
+              [0..63].  By default no code point is explicitly set.
+            </para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term><option>+[no]multiline</option></term>
+          <listitem>
+            <para>
+              Print records like the SOA records in a verbose
+              multi-line format with human-readable comments.  The
+              default is to print each record on a single line, to
+              facilitate machine parsing of the <command>mdig</command>
+              output.
+            </para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term><option>+[no]question</option></term>
+          <listitem>
+            <para>
+              Print [do not print] the question section of a query
+              when an answer is returned.  The default is to print
+              the question section as a comment.
+            </para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term><option>+[no]rrcomments</option></term>
+          <listitem>
+            <para>
+              Toggle the display of per-record comments in the
+              output (for example, human-readable key information
+              about DNSKEY records).  The default is not to print
+              record comments unless multiline mode is active.
+            </para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term><option>+[no]short</option></term>
+          <listitem>
+            <para>
+              Provide a terse answer.  The default is to print the
+              answer in a verbose form.
+            </para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term><option>+split=W</option></term>
+          <listitem>
+            <para>
+              Split long hex- or base64-formatted fields in resource
+              records into chunks of <parameter>W</parameter>
+              characters (where <parameter>W</parameter> is rounded
+              up to the nearest multiple of 4).
+              <parameter>+nosplit</parameter> or
+              <parameter>+split=0</parameter> causes fields not to
+              be split at all.  The default is 56 characters, or
+              44 characters when multiline mode is active.
+            </para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term><option>+[no]tcp</option></term>
+          <listitem>
+            <para>
+              Use [do not use] TCP when querying name servers. The
+              default behavior is to use UDP.
+            </para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term><option>+[no]ttlid</option></term>
+          <listitem>
+            <para>
+              Display [do not display] the TTL when printing the
+              record.
+            </para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term><option>+[no]ttlunits</option></term>
+          <listitem>
+            <para>
+              Display [do not display] the TTL in friendly human-readable
+              time units of "s", "m", "h", "d", and "w", representing
+              seconds, minutes, hours, days and weeks.  Implies +ttlid.
+            </para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term><option>+[no]vc</option></term>
+          <listitem>
+            <para>
+              Use [do not use] TCP when querying name servers.  This
+              alternate syntax to <parameter>+[no]tcp</parameter>
+              is provided for backwards compatibility.  The "vc"
+              stands for "virtual circuit".
+            </para>
+          </listitem>
+        </varlistentry>
+
+      </variablelist>
+
+    </para>
+  </refsection>
+
+  <refsection><info><title>LOCAL OPTIONS</title></info>
+
+
+    <para>
+      The <option>-c</option> option sets the query class to
+      <parameter>class</parameter>.  It can be any valid query class
+      which is supported in BIND 9.  The default query class is "IN".
+    </para>
+
+    <para>
+      The <option>-t</option> option sets the query type to
+      <parameter>type</parameter>.  It can be any valid query type
+      which is supported in BIND 9.  The default query type is "A",
+      unless the <option>-x</option> option is supplied to indicate
+      a reverse lookup with the "PTR" query type.
+    </para>
+
+    <para>
+      The <option>-i</option> option sets the reverse domain for
+      IPv6 addresses to IP6.INT.
+    </para>
+
+    <para>
+      Reverse lookups &mdash; mapping addresses to names &mdash; are
+      simplified by the <option>-x</option> option.
+      <parameter>addr</parameter> is an IPv4
+      address in dotted-decimal notation, or a colon-delimited IPv6 address.
+      <command>mdig</command> automatically performs a lookup for a
+      query name like <literal>11.12.13.10.in-addr.arpa</literal> and
+      sets the query type and class to PTR and IN respectively.
+      By default, IPv6 addresses are looked up using nibble format
+      under the IP6.ARPA domain.  To use the older RFC1886 method
+      using the IP6.INT domain specify the <option>-i</option> option.
+    </para>
+
+    <para>
+      The local query options are:
+      <variablelist>
+
+        <varlistentry>
+          <term><option>+[no]aaflag</option></term>
+          <listitem>
+            <para>
+              A synonym for <parameter>+[no]aaonly</parameter>.
+            </para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term><option>+[no]aaonly</option></term>
+          <listitem>
+            <para>
+              Sets the "aa" flag in the query.
+            </para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term><option>+[no]adflag</option></term>
+          <listitem>
+            <para>
+              Set [do not set] the AD (authentic data) bit in the
+              query.  This requests the server to return whether
+              all of the answer and authority sections have all
+              been validated as secure according to the security
+              policy of the server.  AD=1 indicates that all records
+              have been validated as secure and the answer is not
+              from a OPT-OUT range.  AD=0 indicate that some part
+              of the answer was insecure or not validated.  This
+              bit is set by default.
+            </para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term><option>+bufsize=B</option></term>
+          <listitem>
+            <para>
+              Set the UDP message buffer size advertised using EDNS0
+              to <parameter>B</parameter> bytes.  The maximum and
+              minimum sizes of this buffer are 65535 and 0 respectively.
+              Values outside this range are rounded up or down
+              appropriately.  Values other than zero will cause a
+              EDNS query to be sent.
+            </para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term><option>+[no]cdflag</option></term>
+          <listitem>
+            <para>
+              Set [do not set] the CD (checking disabled) bit in
+              the query.  This requests the server to not perform
+              DNSSEC validation of responses.
+            </para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term><option>+[no]cookie<optional>=####</optional></option></term>
+	  <listitem>
+	    <para>
+	      Send a COOKIE EDNS option, with optional value.
+	      Replaying a COOKIE from a previous response will allow
+	      the server to identify a previous client.  The default
+	      is <option>+nocookie</option>.
+	    </para>
+	  </listitem>
+	</varlistentry>
+
+        <varlistentry>
+          <term><option>+[no]dnssec</option></term>
+          <listitem>
+            <para>
+              Requests DNSSEC records be sent by setting the DNSSEC
+              OK bit (DO) in the OPT record in the additional section
+              of the query.
+            </para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term><option>+[no]edns[=#]</option></term>
+          <listitem>
+            <para>
+               Specify the EDNS version to query with.  Valid values
+               are 0 to 255.  Setting the EDNS version will cause
+               a EDNS query to be sent.  <option>+noedns</option>
+               clears the remembered EDNS version.  EDNS is set to
+               0 by default.
+            </para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term><option>+[no]ednsflags[=#]</option></term>
+          <listitem>
+            <para>
+              Set the must-be-zero EDNS flags bits (Z bits) to the
+              specified value. Decimal, hex and octal encodings are
+              accepted. Setting a named flag (e.g. DO) will silently be
+              ignored. By default, no Z bits are set.
+            </para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term><option>+[no]ednsopt[=code[:value]]</option></term>
+          <listitem>
+            <para>
+              Specify EDNS option with code point <option>code</option>
+              and optionally payload of <option>value</option> as a
+              hexadecimal string.  <option>+noednsopt</option>
+              clears the EDNS options to be sent.
+            </para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term><option>+[no]expire</option></term>
+          <listitem>
+            <para>
+              Send an EDNS Expire option.
+            </para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term><option>+[no]nsid</option></term>
+          <listitem>
+            <para>
+              Include an EDNS name server ID request when sending
+              a query.
+            </para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term><option>+[no]recurse</option></term>
+          <listitem>
+            <para>
+              Toggle the setting of the RD (recursion desired) bit
+              in the query.  This bit is set by default, which means
+              <command>mdig</command> normally sends recursive
+              queries.
+            </para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term><option>+retry=T</option></term>
+          <listitem>
+            <para>
+              Sets the number of times to retry UDP queries to
+              server to <parameter>T</parameter> instead of the
+              default, 2.  Unlike <parameter>+tries</parameter>,
+              this does not include the initial query.
+            </para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term><option>+[no]subnet=addr[/prefix-length]</option></term>
+          <listitem>
+	    <para>
+	      Send (don't send) an EDNS Client Subnet option with the
+              specified IP address or network prefix.
+	    </para>
+	    <para>
+              <command>mdig +subnet=0.0.0.0/0</command>, or simply
+              <command>mdig +subnet=0</command> for short, sends an EDNS
+              client-subnet option with an empty address and a source
+              prefix-length of zero, which signals a resolver that
+              the client's address information must
+              <emphasis>not</emphasis> be used when resolving
+              this query.
+	    </para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term><option>+timeout=T</option></term>
+          <listitem>
+            <para>
+              Sets the timeout for a query to
+              <parameter>T</parameter> seconds.  The default
+              timeout is 5 seconds for UDP transport and 10 for TCP.
+              An attempt to set <parameter>T</parameter> to less
+              than 1 will result
+              in a query timeout of 1 second being applied.
+            </para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term><option>+tries=T</option></term>
+          <listitem>
+            <para>
+              Sets the number of times to try UDP queries to server
+              to <parameter>T</parameter> instead of the default,
+              3.  If <parameter>T</parameter> is less than or equal
+              to zero, the number of tries is silently rounded up
+              to 1.
+            </para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term><option>+udptimeout=T</option></term>
+          <listitem>
+            <para>
+              Sets the timeout between UDP query retries.
+            </para>
+          </listitem>
+        </varlistentry>
+
+	<varlistentry>
+	  <term><option>+[no]unknownformat</option></term>
+	  <listitem>
+	    <para>
+	      Print all RDATA in unknown RR type presentation format
+	      (RFC 3597). The default is to print RDATA for known types
+	      in the type's presentation format.
+	    </para>
+	  </listitem>
+	</varlistentry>
+
+        <varlistentry>
+          <term><option>+[no]zflag</option></term>
+          <listitem>
+            <para>
+              Set [do not set] the last unassigned DNS header flag in a
+              DNS query.  This flag is off by default.
+            </para>
+          </listitem>
+        </varlistentry>
+
+      </variablelist>
+
+    </para>
+  </refsection>
+
+  <refsection><info><title>SEE ALSO</title></info>
+
+    <para><citerefentry>
+        <refentrytitle>dig</refentrytitle><manvolnum>1</manvolnum>
+      </citerefentry>,
+      <citetitle>RFC1035</citetitle>.
+    </para>
+  </refsection>
+</refentry>

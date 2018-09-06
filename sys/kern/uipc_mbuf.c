@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.181.2.7 2018/07/28 04:38:08 pgoyette Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.181.2.8 2018/09/06 06:56:42 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.181.2.7 2018/07/28 04:38:08 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.181.2.8 2018/09/06 06:56:42 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_mbuftrace.h"
@@ -89,7 +89,7 @@ __KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.181.2.7 2018/07/28 04:38:08 pgoyette
 #include <net/if.h>
 
 pool_cache_t mb_cache;	/* mbuf cache */
-pool_cache_t mcl_cache;	/* mbuf cluster cache */
+static pool_cache_t mcl_cache;	/* mbuf cluster cache */
 
 struct mbstat mbstat;
 int max_linkhdr;
@@ -652,7 +652,7 @@ m_dup(struct mbuf *m, int off, int len, int wait)
 static inline int
 m_copylen(int len, int copylen)
 {
-	return (len == M_COPYALL) ? copylen : min(len, copylen);
+	return (len == M_COPYALL) ? copylen : uimin(len, copylen);
 }
 
 static struct mbuf *
@@ -715,7 +715,7 @@ m_copy_internal(struct mbuf *m, int off0, int len, int wait, bool deep)
 				n->m_len = 0;
 				n->m_len = M_TRAILINGSPACE(n);
 				n->m_len = m_copylen(len, n->m_len);
-				n->m_len = min(n->m_len, m->m_len - off);
+				n->m_len = uimin(n->m_len, m->m_len - off);
 				memcpy(mtod(n, void *), mtod(m, char *) + off,
 				    (unsigned)n->m_len);
 			}
@@ -826,7 +826,7 @@ m_copydata(struct mbuf *m, int off, int len, void *cp)
 			    "m=NULL, off=%d (%d), len=%d (%d)",
 			    m0, len0, off0, cp0,
 			    off, off0 - off, len, len0 - len);
-		count = min(m->m_len - off, len);
+		count = uimin(m->m_len - off, len);
 		memcpy(cp, mtod(m, char *) + off, count);
 		len -= count;
 		cp = (char *)cp + count;
@@ -1039,7 +1039,7 @@ m_copyup(struct mbuf *n, int len, int dstoff)
 	m->m_data += dstoff;
 	space = &m->m_dat[MLEN] - (m->m_data + m->m_len);
 	do {
-		count = min(min(max(len, max_protohdr), space), n->m_len);
+		count = uimin(uimin(uimax(len, max_protohdr), space), n->m_len);
 		memcpy(mtod(m, char *) + m->m_len, mtod(n, void *),
 		    (unsigned)count);
 		len -= count;
@@ -1176,7 +1176,7 @@ m_devget(char *buf, int totlen, int off0, struct ifnet *ifp,
 			m->m_len = MLEN;
 		}
 
-		len = min(totlen, epkt - cp);
+		len = uimin(totlen, epkt - cp);
 
 		if (len >= MINCLSIZE) {
 			MCLGET(m, M_DONTWAIT);
@@ -1185,7 +1185,7 @@ m_devget(char *buf, int totlen, int off0, struct ifnet *ifp,
 				m_freem(top);
 				return NULL;
 			}
-			m->m_len = len = min(len, MCLBYTES);
+			m->m_len = len = uimin(len, MCLBYTES);
 		} else {
 			/*
 			 * Place initial small packet/header at end of mbuf.
@@ -1337,10 +1337,10 @@ extend:
 			}
 			tspace = M_TRAILINGSPACE(m);
 			if (tspace > 0) {
-				tspace = min(tspace, off + len);
+				tspace = uimin(tspace, off + len);
 				KASSERT(tspace > 0);
 				memset(mtod(m, char *) + m->m_len, 0,
-				    min(off, tspace));
+				    uimin(off, tspace));
 				m->m_len += tspace;
 				off += mlen;
 				totlen -= mlen;
@@ -1359,8 +1359,8 @@ extend:
 			if (n == NULL) {
 				goto out;
 			}
-			n->m_len = min(M_TRAILINGSPACE(n), off + len);
-			memset(mtod(n, char *), 0, min(n->m_len, off));
+			n->m_len = uimin(M_TRAILINGSPACE(n), off + len);
+			memset(mtod(n, char *), 0, uimin(n->m_len, off));
 			m->m_next = n;
 		}
 		mp = &m->m_next;
@@ -1428,7 +1428,7 @@ extend:
 			eatlen = n->m_len;
 			while (m != NULL && M_READONLY(m) &&
 			    n->m_type == m->m_type && eatlen > 0) {
-				mlen = min(eatlen, m->m_len);
+				mlen = uimin(eatlen, m->m_len);
 				if (datap) {
 					m_copydata(m, 0, mlen, datap);
 					datap += mlen;
@@ -1445,7 +1445,7 @@ extend:
 			*mp = m = n;
 			continue;
 		}
-		mlen = min(mlen, len);
+		mlen = uimin(mlen, len);
 		if (flags & CB_COPYBACK) {
 			memcpy(mtod(m, char *) + off, cp, (unsigned)mlen);
 			cp += mlen;
@@ -1597,7 +1597,7 @@ m_apply(struct mbuf *m, int off, int len,
 	}
 	while (len > 0) {
 		KASSERT(m != NULL);
-		count = min(m->m_len - off, len);
+		count = uimin(m->m_len - off, len);
 
 		rval = (*f)(arg, mtod(m, char *) + off, count);
 		if (rval)

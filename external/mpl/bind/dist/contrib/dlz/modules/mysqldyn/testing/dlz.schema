@@ -1,0 +1,31 @@
+CREATE DATABASE `BindDB` DEFAULT CHARACTER SET latin1;
+USE `BindDB`;
+
+CREATE TABLE `ZoneData` (
+    `id` int(11) NOT NULL AUTO_INCREMENT,
+    `zone_id` int(11) NOT NULL,
+    `name` varchar(128) NOT NULL DEFAULT '',
+    `type` varchar(16) NOT NULL DEFAULT '',
+    `data` varchar(128) NOT NULL DEFAULT '',
+    `ttl` int(11) NOT NULL DEFAULT '86400',
+    PRIMARY KEY (`id`),
+    KEY `zone_idx` (`zone_id`),
+    KEY `name_idx` (`zone_id`, `name`),
+    KEY `type_idx` (`type`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
+CREATE TABLE `Zones` (
+    `id` int(11) NOT NULL AUTO_INCREMENT,
+    `domain` varchar(128) NOT NULL DEFAULT '',
+    `host` varchar(128) NOT NULL DEFAULT '',
+    `admin` varchar(128) NOT NULL DEFAULT '',
+    `serial` int(11) NOT NULL DEFAULT '1',
+    `expire` int(11) NOT NULL DEFAULT '86400',
+    `refresh` int(11) NOT NULL DEFAULT '86400',
+    `retry` int(11) NOT NULL DEFAULT '86400',
+    `minimum` int(11) NOT NULL DEFAULT '86400',
+    `ttl` int(11) NOT NULL DEFAULT '86400',
+    `writeable` tinyint(1) NOT NULL DEFAULT '0',
+    PRIMARY KEY (`id`),
+    KEY `domain_idx` (`domain`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.376.2.4 2018/07/28 04:38:10 pgoyette Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.376.2.5 2018/09/06 06:56:44 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.376.2.4 2018/07/28 04:38:10 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.376.2.5 2018/09/06 06:56:44 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -176,7 +176,7 @@ int ip_do_randomid = 0;
  * and transmit implementation do not implement the Strong ES model,
  * setting this to 1 results in an odd hybrid.
  *
- * XXX - ip_checkinterface currently must be disabled if you use ipnat
+ * XXX - ip_checkinterface currently must be disabled if you use NAT
  * to translate the destination address to another local interface.
  *
  * XXX - ip_checkinterface must be disabled if you add IP aliases
@@ -323,13 +323,6 @@ ip_match_our_address(struct ifnet *ifp, struct ip *ip, int *downmatch)
 	 * and the arrival interface for a unicast packet (the RFC 1122
 	 * strong ES model) if IP forwarding is disabled and the packet
 	 * is not locally generated.
-	 *
-	 * XXX - Checking also should be disabled if the destination
-	 * address is ipnat'ed to a different interface.
-	 *
-	 * XXX - Checking is incompatible with IP aliases added
-	 * to the loopback interface instead of the interface where
-	 * the packets are received.
 	 *
 	 * XXX - We need to add a per ifaddr flag for this so that
 	 * we get finer grain control.

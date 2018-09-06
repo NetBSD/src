@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.383.2.5 2018/05/21 04:36:16 pgoyette Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.383.2.6 2018/09/06 06:56:45 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.383.2.5 2018/05/21 04:36:16 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.383.2.6 2018/09/06 06:56:45 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1994,7 +1994,7 @@ after_listen:
 					    so->so_rcv.sb_hiwat <
 					    tcp_autorcvbuf_max) {
 						newsize =
-						    min(so->so_rcv.sb_hiwat +
+						    uimin(so->so_rcv.sb_hiwat +
 						    tcp_autorcvbuf_inc,
 						    tcp_autorcvbuf_max);
 					}
@@ -3413,7 +3413,7 @@ tcp_xmit_timer(struct tcpcb *tp, uint32_t rtt)
 	 * the minimum feasible timer (which is 2 ticks).
 	 */
 	TCPT_RANGESET(tp->t_rxtcur, TCP_REXMTVAL(tp),
-	    max(tp->t_rttmin, rtt + 2), TCPTV_REXMTMAX);
+	    uimax(tp->t_rttmin, rtt + 2), TCPTV_REXMTMAX);
 
 	/*
 	 * We received an ack for a packet that wasn't retransmitted;

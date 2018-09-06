@@ -1,6 +1,6 @@
 /* Process target.def to create initialization macros definition in
    target-hooks-def.h and documentation in target-hooks.texi.
-   Copyright (C) 2009-2015 Free Software Foundation, Inc.
+   Copyright (C) 2009-2016 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -19,7 +19,6 @@ along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 #include "bconfig.h"
 #include "system.h"
-#include "hashtab.h"
 #include "errors.h"
 
 struct hook_desc { const char *doc, *type, *name, *param, *init, *docname; };

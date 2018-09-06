@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_hdmi.c,v 1.3.2.3 2018/06/25 07:25:40 pgoyette Exp $ */
+/* $NetBSD: sunxi_hdmi.c,v 1.3.2.4 2018/09/06 06:55:27 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_hdmi.c,v 1.3.2.3 2018/06/25 07:25:40 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_hdmi.c,v 1.3.2.4 2018/09/06 06:55:27 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -320,7 +320,7 @@ sunxi_hdmi_i2c_exec(void *priv, i2c_op_t op, i2c_addr_t addr,
 	pbuf = buf;
 	resid = len;
 	while (resid > 0) {
-		size_t blklen = min(resid, sc->sc_i2c_blklen);
+		size_t blklen = uimin(resid, sc->sc_i2c_blklen);
 
 		err = sunxi_hdmi_i2c_xfer(sc, addr, block >> 1, off, blklen,
 		      SUNXI_HDMI_DDC_COMMAND_ACCESS_CMD_EOREAD, flags);

@@ -1,0 +1,57 @@
+; Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+;
+; This Source Code Form is subject to the terms of the Mozilla Public
+; License, v. 2.0. If a copy of the MPL was not distributed with this
+; file, You can obtain one at http://mozilla.org/MPL/2.0/.
+;
+; See the COPYRIGHT file distributed with this work for additional
+; information regarding copyright ownership.
+
+$TTL 300	; 5 minutes
+@			IN SOA	mname1. . (
+				2000042407 ; serial
+				20         ; refresh (20 seconds)
+				20         ; retry (20 seconds)
+				1814400    ; expire (3 weeks)
+				3600       ; minimum (1 hour)
+				)
+			NS	ns2
+			NS	ns3
+ns2			A	10.53.0.2
+ns2			AAAA	fd92:7065:b8e:ffff::2
+ns3			A	10.53.0.3
+ns3			AAAA	fd92:7065:b8e:ffff::3
+
+a			A	10.0.0.1
+a			AAAA	fd92:7065:b8e:ffff::1
+b			A	10.0.0.2
+b			AAAA	fd92:7065:b8e:ffff::2
+c			A	10.0.0.3
+c			AAAA	fd92:7065:b8e:ffff::3
+
+xn--caf-dma		A	10.1.2.3
+
+foo			TXT	"testing"
+foo			A	10.0.1.0
+foo			SSHFP	2 1 123456789abcdef67890123456789abcdef67890
+
+;;
+;; we are not testing DNSSEC behavior, so we don't care about the semantics
+;; of the following records.
+dnskey                  300     DNSKEY  256 3 1 (
+                                        AQPTpWyReB/e9Ii6mVGnakS8hX2zkh/iUYAg
+                                        +Ge4noWROpTWOIBvm76zeJPWs4Zfqa1IsswD
+                                        Ix5Mqeg0zwclz59uecKsKyx5w9IhtZ8plc4R
+                                        b9VIE5x7KNHAYTvTO5d4S8M=
+                                        )
+
+; TTL of 3 weeks
+weeks		1814400	A	10.53.0.2
+; TTL of 3 days
+days		259200	A	10.53.0.2
+; TTL of 3 hours
+hours		10800	A	10.53.0.2
+;TTL of 45 minutes
+minutes		2700	A	10.53.0.2
+;TTL of 45 seconds
+seconds		45	A	10.53.0.2

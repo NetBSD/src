@@ -1,6 +1,6 @@
 /* Header file for routines that straddle the border between GIMPLE and
    SSA in gimple.
-   Copyright (C) 2009-2015 Free Software Foundation, Inc.
+   Copyright (C) 2009-2016 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -21,21 +21,19 @@ along with GCC; see the file COPYING3.  If not see
 #ifndef GCC_GIMPLE_SSA_H
 #define GCC_GIMPLE_SSA_H
 
-#include "hash-map.h"
-#include "tree-hasher.h"
 #include "tree-ssa-operands.h"
 
 /* This structure is used to map a gimple statement to a label,
    or list of labels to represent transaction restart.  */
 
 struct GTY((for_user)) tm_restart_node {
-  gimple stmt;
+  gimple *stmt;
   tree label_or_list;
 };
 
 /* Hasher for tm_restart_node.  */
 
-struct tm_restart_hasher : ggc_hasher<tm_restart_node *>
+struct tm_restart_hasher : ggc_ptr_hash<tm_restart_node>
 {
   static hashval_t hash (tm_restart_node *n) { return htab_hash_pointer (n); }
 
@@ -46,7 +44,10 @@ struct tm_restart_hasher : ggc_hasher<tm_restart_node *>
   }
 };
 
-struct ssa_name_hasher : ggc_hasher<tree>
+extern void gt_ggc_mx (gimple *&);
+extern void gt_pch_nx (gimple *&);
+
+struct ssa_name_hasher : ggc_ptr_hash<tree_node>
 {
   /* Hash a tree in a uid_decl_map.  */
 
@@ -69,13 +70,6 @@ struct ssa_name_hasher : ggc_hasher<tree>
    gimple_ accessor defined, all publicly modifiable fields should have
    gimple_set accessor.  */
 struct GTY(()) gimple_df {
-  /* A vector of all the noreturn calls passed to modify_stmt.
-     cleanup_control_flow uses it to detect cases where a mid-block
-     indirect call has been turned into a noreturn call.  When this
-     happens, all the instructions after the call are no longer
-     reachable and must be deleted as dead.  */
-  vec<gimple, va_gc> *modified_noreturn_calls;
-
   /* Array of all SSA_NAMEs used in the function.  */
   vec<tree, va_gc> *ssa_names;
 
@@ -91,6 +85,9 @@ struct GTY(()) gimple_df {
 
   /* Free list of SSA_NAMEs.  */
   vec<tree, va_gc> *free_ssanames;
+
+  /* Queue of SSA_NAMEs to be freed at the next opportunity.  */
+  vec<tree, va_gc> *free_ssanames_queue;
 
   /* Hashtable holding definition for symbol.  If this field is not NULL, it
      means that the first reference to this variable in the function is a
@@ -139,7 +136,7 @@ gimple_vop (const struct function *fun)
 /* Return the set of VUSE operand for statement G.  */
 
 static inline use_operand_p
-gimple_vuse_op (const_gimple g)
+gimple_vuse_op (const gimple *g)
 {
   struct use_optype_d *ops;
   const gimple_statement_with_memory_ops *mem_ops_stmt =
@@ -156,7 +153,7 @@ gimple_vuse_op (const_gimple g)
 /* Return the set of VDEF operand for statement G.  */
 
 static inline def_operand_p
-gimple_vdef_op (gimple g)
+gimple_vdef_op (gimple *g)
 {
   gimple_statement_with_memory_ops *mem_ops_stmt =
      dyn_cast <gimple_statement_with_memory_ops *> (g);
@@ -170,7 +167,7 @@ gimple_vdef_op (gimple g)
 /* Mark statement S as modified, and update it.  */
 
 static inline void
-update_stmt (gimple s)
+update_stmt (gimple *s)
 {
   if (gimple_has_ops (s))
     {
@@ -182,7 +179,7 @@ update_stmt (gimple s)
 /* Update statement S if it has been optimized.  */
 
 static inline void
-update_stmt_if_modified (gimple s)
+update_stmt_if_modified (gimple *s)
 {
   if (gimple_modified_p (s))
     update_stmt_operands (cfun, s);
@@ -191,7 +188,7 @@ update_stmt_if_modified (gimple s)
 /* Mark statement S as modified, and update it.  */
 
 static inline void
-update_stmt_fn (struct function *fn, gimple s)
+update_stmt_fn (struct function *fn, gimple *s)
 {
   if (gimple_has_ops (s))
     {

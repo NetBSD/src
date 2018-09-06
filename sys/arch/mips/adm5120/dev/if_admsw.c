@@ -1,4 +1,4 @@
-/* $NetBSD: if_admsw.c,v 1.16.14.1 2018/07/28 04:37:37 pgoyette Exp $ */
+/* $NetBSD: if_admsw.c,v 1.16.14.2 2018/09/06 06:55:37 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2007 Ruslan Ermilov and Vsevolod Lobko.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_admsw.c,v 1.16.14.1 2018/07/28 04:37:37 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_admsw.c,v 1.16.14.2 2018/09/06 06:55:37 pgoyette Exp $");
 
 
 #include <sys/param.h>
@@ -475,7 +475,7 @@ admsw_attach(device_t parent, device_t self, void *aux)
 		ifp->if_init = admsw_init;
 		ifp->if_stop = admsw_stop;
 		ifp->if_capabilities |= IFCAP_CSUM_IPv4_Tx | IFCAP_CSUM_IPv4_Rx;
-		IFQ_SET_MAXLEN(&ifp->if_snd, max(ADMSW_NTXLDESC, IFQ_MAXLEN));
+		IFQ_SET_MAXLEN(&ifp->if_snd, uimax(ADMSW_NTXLDESC, IFQ_MAXLEN));
 		IFQ_SET_READY(&ifp->if_snd);
 
 		/* Attach the interface. */

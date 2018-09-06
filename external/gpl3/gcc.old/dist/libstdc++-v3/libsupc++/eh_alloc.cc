@@ -1,5 +1,5 @@
 // -*- C++ -*- Allocate exception objects.
-// Copyright (C) 2001-2015 Free Software Foundation, Inc.
+// Copyright (C) 2001-2016 Free Software Foundation, Inc.
 //
 // This file is part of GCC.
 //
@@ -73,6 +73,10 @@ using namespace __cxxabiv1;
 # define EMERGENCY_OBJ_COUNT	4
 #endif
 
+namespace __gnu_cxx
+{
+  void __freeres();
+}
 
 namespace
 {
@@ -106,6 +110,8 @@ namespace
       // to implement in_pool.
       char *arena;
       std::size_t arena_size;
+
+      friend void __gnu_cxx::__freeres();
     };
 
   pool::pool()
@@ -242,6 +248,19 @@ namespace
     }
 
   pool emergency_pool;
+}
+
+namespace __gnu_cxx
+{
+  void
+  __freeres()
+  {
+    if (emergency_pool.arena)
+      {
+	::free(emergency_pool.arena);
+	emergency_pool.arena = 0;
+      }
+  }
 }
 
 extern "C" void *

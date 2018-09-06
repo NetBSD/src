@@ -1,0 +1,31 @@
+; Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+;
+; This Source Code Form is subject to the terms of the Mozilla Public
+; License, v. 2.0. If a copy of the MPL was not distributed with this
+; file, You can obtain one at http://mozilla.org/MPL/2.0/.
+;
+; See the COPYRIGHT file distributed with this work for additional
+; information regarding copyright ownership.
+
+$TTL 120
+@	IN	SOA	ns	marka.isc.org. 1 0 0 0 120
+@	IN	NS	ns
+@	IN	DNSKEY	256 3 7 AwEAAY9437GPWJHzBeR4FP6eJAie7gh2QSM6LUnbDAHvHOx8MNqgSVRM PZka2rAgivb65/MkT1lXRUegj91iRFP3iggTpCgvdUbcBjsYrdODsrwF YUMIUl1pU0lH9x7KvfFUOfSmG+Rk5UHUWuRZbNyc65Sq69iFXg5c11+8 MAkRoeDF
+;
+;	Delegation only test CDS and CDNSKEY records.  These should be
+;	returned even if delegation-only is set for this zone.
+;
+@	IN	A	1.2.3.4
+@	IN	AAAA	c::1.2.3.4
+@	IN	CDS	21366 7 1 E6C1716CFB6BDC84E84CE1AB5510DAC69173B5B2
+@	IN	CDNSKEY	256 3 7 AwEAAY9437GPWJHzBeR4FP6eJAie7gh2QSM6LUnbDAHvHOx8MNqgSVRM PZka2rAgivb65/MkT1lXRUegj91iRFP3iggTpCgvdUbcBjsYrdODsrwF YUMIUl1pU0lH9x7KvfFUOfSmG+Rk5UHUWuRZbNyc65Sq69iFXg5c11+8 MAkRoeDF
+;
+;	Delegation only test CDS and CDNSKEY records.  These should be rejected
+;	as they are not at the zone apex.
+;
+a	IN	A	1.2.3.4
+aaaa	IN	AAAA	c::1.2.3.4
+cds	IN	CDS	21366 7 1 E6C1716CFB6BDC84E84CE1AB5510DAC69173B5B2
+cdnskey	IN	CDNSKEY	256 3 7 AwEAAY9437GPWJHzBeR4FP6eJAie7gh2QSM6LUnbDAHvHOx8MNqgSVRM PZka2rAgivb65/MkT1lXRUegj91iRFP3iggTpCgvdUbcBjsYrdODsrwF YUMIUl1pU0lH9x7KvfFUOfSmG+Rk5UHUWuRZbNyc65Sq69iFXg5c11+8 MAkRoeDF
+;
+ns	IN	A	10.53.0.6

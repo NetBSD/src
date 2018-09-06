@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_lockdebug.c,v 1.60.2.1 2018/03/22 01:44:50 pgoyette Exp $	*/
+/*	$NetBSD: subr_lockdebug.c,v 1.60.2.2 2018/09/06 06:56:42 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.60.2.1 2018/03/22 01:44:50 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.60.2.2 2018/09/06 06:56:42 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -396,7 +396,7 @@ lockdebug_more(int s)
 		ld_nfree += LD_BATCH;
 		ld = block;
 		base <<= LD_BATCH_SHIFT;
-		m = min(LD_MAX_LOCKS, base + LD_BATCH);
+		m = uimin(LD_MAX_LOCKS, base + LD_BATCH);
 
 		if (m == LD_MAX_LOCKS)
 			ld_nomore = true;
@@ -979,6 +979,19 @@ lockdebug_show_lockstats(void (*pr)(const char *, ...))
 #endif	/* LOCKDEBUG */
 }
 #endif	/* DDB */
+
+/*
+ * lockdebug_dismiss:
+ *
+ *      The system is rebooting, and potentially from an unsafe
+ *      place so avoid any future aborts.
+ */
+void
+lockdebug_dismiss(void)
+{
+
+	atomic_inc_uint_nv(&ld_panic);
+}
 
 /*
  * lockdebug_abort:

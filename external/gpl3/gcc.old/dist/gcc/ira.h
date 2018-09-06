@@ -1,6 +1,6 @@
 /* Communication between the Integrated Register Allocator (IRA) and
    the rest of the compiler.
-   Copyright (C) 2006-2015 Free Software Foundation, Inc.
+   Copyright (C) 2006-2016 Free Software Foundation, Inc.
    Contributed by Vladimir Makarov <vmakarov@redhat.com>.
 
 This file is part of GCC.
@@ -21,6 +21,8 @@ along with GCC; see the file COPYING3.  If not see
 
 #ifndef GCC_IRA_H
 #define GCC_IRA_H
+
+#include "emit-rtl.h"
 
 /* True when we use LRA instead of reload pass for the current
    function.  */
@@ -200,12 +202,23 @@ extern bool ira_reassign_pseudos (int *, int, HARD_REG_SET, HARD_REG_SET *,
 				  HARD_REG_SET *, bitmap);
 extern rtx ira_reuse_stack_slot (int, unsigned int, unsigned int);
 extern void ira_mark_new_stack_slot (rtx, int, unsigned int);
-extern bool ira_better_spill_reload_regno_p (int *, int *, rtx, rtx, rtx);
+extern bool ira_better_spill_reload_regno_p (int *, int *, rtx, rtx, rtx_insn *);
 extern bool ira_bad_reload_regno (int, rtx, rtx);
 
 extern void ira_adjust_equiv_reg_cost (unsigned, int);
 
 /* ira-costs.c */
 extern void ira_costs_c_finalize (void);
+
+/* Spilling static chain pseudo may result in generation of wrong
+   non-local goto code using frame-pointer to address saved stack
+   pointer value after restoring old frame pointer value.  The
+   function returns TRUE if REGNO is such a static chain pseudo.  */
+static inline bool
+non_spilled_static_chain_regno_p (int regno)
+{
+  return (cfun->static_chain_decl && crtl->has_nonlocal_goto
+	  && REG_EXPR (regno_reg_rtx[regno]) == cfun->static_chain_decl);
+}
 
 #endif /* GCC_IRA_H */

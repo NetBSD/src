@@ -1,0 +1,205 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<!--
+ - Copyright (C) 2000-2018 Internet Systems Consortium, Inc. ("ISC")
+ - 
+ - This Source Code Form is subject to the terms of the Mozilla Public
+ - License, v. 2.0. If a copy of the MPL was not distributed with this
+ - file, You can obtain one at http://mozilla.org/MPL/2.0/.
+-->
+<html lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+<title>pkcs11-keygen</title>
+<meta name="generator" content="DocBook XSL Stylesheets V1.78.1">
+<link rel="home" href="Bv9ARM.html" title="BIND 9 Administrator Reference Manual">
+<link rel="up" href="Bv9ARM.ch12.html" title="Manual pages">
+<link rel="prev" href="man.pkcs11-destroy.html" title="pkcs11-destroy">
+<link rel="next" href="man.pkcs11-list.html" title="pkcs11-list">
+</head>
+<body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
+<div class="navheader">
+<table width="100%" summary="Navigation header">
+<tr><th colspan="3" align="center"><span class="application">pkcs11-keygen</span></th></tr>
+<tr>
+<td width="20%" align="left">
+<a accesskey="p" href="man.pkcs11-destroy.html">Prev</a> </td>
+<th width="60%" align="center">Manual pages</th>
+<td width="20%" align="right"> <a accesskey="n" href="man.pkcs11-list.html">Next</a>
+</td>
+</tr>
+</table>
+<hr>
+</div>
+<div class="refentry">
+<a name="man.pkcs11-keygen"></a><div class="titlepage"></div>
+  
+  
+
+  
+
+  <div class="refnamediv">
+<h2>Name</h2>
+<p>
+    <span class="application">pkcs11-keygen</span>
+     &#8212; generate keys on a PKCS#11 device
+  </p>
+</div>
+
+  
+
+  <div class="refsynopsisdiv">
+<h2>Synopsis</h2>
+    <div class="cmdsynopsis"><p>
+      <code class="command">pkcs11-keygen</code> 
+       {-a <em class="replaceable"><code>algorithm</code></em>}
+       [<code class="option">-b <em class="replaceable"><code>keysize</code></em></code>]
+       [<code class="option">-e</code>]
+       [<code class="option">-i <em class="replaceable"><code>id</code></em></code>]
+       [<code class="option">-m <em class="replaceable"><code>module</code></em></code>]
+       [<code class="option">-P</code>]
+       [<code class="option">-p <em class="replaceable"><code>PIN</code></em></code>]
+       [<code class="option">-q</code>]
+       [<code class="option">-S</code>]
+       [<code class="option">-s <em class="replaceable"><code>slot</code></em></code>]
+       {label}
+    </p></div>
+  </div>
+
+  <div class="refsection">
+<a name="id-1.13.33.7"></a><h2>DESCRIPTION</h2>
+
+    <p>
+      <span class="command"><strong>pkcs11-keygen</strong></span> causes a PKCS#11 device to generate
+      a new key pair with the given <code class="option">label</code> (which must be
+      unique) and with <code class="option">keysize</code> bits of prime.
+    </p>
+  </div>
+
+  <div class="refsection">
+<a name="id-1.13.33.8"></a><h2>ARGUMENTS</h2>
+
+    <div class="variablelist"><dl class="variablelist">
+<dt><span class="term">-a <em class="replaceable"><code>algorithm</code></em></span></dt>
+<dd>
+          <p>
+            Specify the key algorithm class: Supported classes are RSA,
+            DSA, DH, ECC and ECX. In addition to these strings, the
+            <code class="option">algorithm</code> can be specified as a DNSSEC
+            signing algorithm that will be used with this key; for
+            example, NSEC3RSASHA1 maps to RSA, ECDSAP256SHA256 maps
+            to ECC, and ED25519 to ECX.  The default class is "RSA".
+          </p>
+        </dd>
+<dt><span class="term">-b <em class="replaceable"><code>keysize</code></em></span></dt>
+<dd>
+          <p>
+            Create the key pair with <code class="option">keysize</code> bits of
+            prime. For ECC keys, the only valid values are 256 and 384,
+            and the default is 256. For ECX kyes, the only valid values
+            are 256 and 456, and the default is 256.
+          </p>
+        </dd>
+<dt><span class="term">-e</span></dt>
+<dd>
+          <p>
+            For RSA keys only, use a large exponent.
+          </p>
+        </dd>
+<dt><span class="term">-i <em class="replaceable"><code>id</code></em></span></dt>
+<dd>
+          <p>
+            Create key objects with id. The id is either
+            an unsigned short 2 byte or an unsigned long 4 byte number.
+          </p>
+        </dd>
+<dt><span class="term">-m <em class="replaceable"><code>module</code></em></span></dt>
+<dd>
+          <p>
+            Specify the PKCS#11 provider module.  This must be the full
+            path to a shared library object implementing the PKCS#11 API
+            for the device.
+          </p>
+        </dd>
+<dt><span class="term">-P</span></dt>
+<dd>
+          <p>
+            Set the new private key to be non-sensitive and extractable.
+            The allows the private key data to be read from the PKCS#11
+            device.  The default is for private keys to be sensitive and
+            non-extractable.
+          </p>
+        </dd>
+<dt><span class="term">-p <em class="replaceable"><code>PIN</code></em></span></dt>
+<dd>
+          <p>
+            Specify the PIN for the device.  If no PIN is provided on
+            the command line, <span class="command"><strong>pkcs11-keygen</strong></span> will
+            prompt for it.
+          </p>
+        </dd>
+<dt><span class="term">-q</span></dt>
+<dd>
+          <p>
+            Quiet mode: suppress unnecessary output.
+          </p>
+        </dd>
+<dt><span class="term">-S</span></dt>
+<dd>
+          <p>
+            For Diffie-Hellman (DH) keys only, use a special prime of
+            768, 1024 or 1536 bit size and base (aka generator) 2.
+	    If not specified, bit size will default to 1024.
+          </p>
+        </dd>
+<dt><span class="term">-s <em class="replaceable"><code>slot</code></em></span></dt>
+<dd>
+          <p>
+            Open the session with the given PKCS#11 slot.  The default is
+            slot 0.
+          </p>
+        </dd>
+</dl></div>
+  </div>
+
+  <div class="refsection">
+<a name="id-1.13.33.9"></a><h2>SEE ALSO</h2>
+
+    <p>
+      <span class="citerefentry">
+        <span class="refentrytitle">pkcs11-destroy</span>(8)
+      </span>,
+      <span class="citerefentry">
+        <span class="refentrytitle">pkcs11-list</span>(8)
+      </span>,
+      <span class="citerefentry">
+        <span class="refentrytitle">pkcs11-tokens</span>(8)
+      </span>,
+      <span class="citerefentry">
+        <span class="refentrytitle">dnssec-keyfromlabel</span>(8)
+      </span>
+    </p>
+  </div>
+
+</div>
+<div class="navfooter">
+<hr>
+<table width="100%" summary="Navigation footer">
+<tr>
+<td width="40%" align="left">
+<a accesskey="p" href="man.pkcs11-destroy.html">Prev</a> </td>
+<td width="20%" align="center"><a accesskey="u" href="Bv9ARM.ch12.html">Up</a></td>
+<td width="40%" align="right"> <a accesskey="n" href="man.pkcs11-list.html">Next</a>
+</td>
+</tr>
+<tr>
+<td width="40%" align="left" valign="top">
+<span class="application">pkcs11-destroy</span> </td>
+<td width="20%" align="center"><a accesskey="h" href="Bv9ARM.html">Home</a></td>
+<td width="40%" align="right" valign="top"> <span class="application">pkcs11-list</span>
+</td>
+</tr>
+</table>
+</div>
+<p xmlns:db="http://docbook.org/ns/docbook" style="text-align: center;">BIND 9.12.2-P1</p>
+</body>
+</html>

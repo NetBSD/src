@@ -1,5 +1,5 @@
 /* IA32 VxWorks target definitions for GNU compiler.
-   Copyright (C) 2003-2015 Free Software Foundation, Inc.
+   Copyright (C) 2003-2016 Free Software Foundation, Inc.
    Updated by CodeSourcery, LLC.
 
 This file is part of GCC.
@@ -88,3 +88,10 @@ along with GCC; see the file COPYING3.  If not see
 #undef ASM_PREFERRED_EH_DATA_FORMAT
 
 #define IX86_MAYBE_NO_LIBGCC_TFMODE
+
+/* Define this to be nonzero if static stack checking is supported.  */
+#define STACK_CHECK_STATIC_BUILTIN 1
+
+/* This platform supports the probing method of stack checking (RTP mode).
+   8K is reserved in the stack to propagate exceptions in case of overflow.  */
+#define STACK_CHECK_PROTECT 8192

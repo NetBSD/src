@@ -1,6 +1,6 @@
 /* mpfr_neg -- change the sign of a floating-point number
 
-Copyright 1999-2001, 2004, 2006-2016 Free Software Foundation, Inc.
+Copyright 1999-2001, 2004, 2006-2018 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -27,13 +27,12 @@ mpfr_neg (mpfr_ptr a, mpfr_srcptr b, mpfr_rnd_t rnd_mode)
 {
   if (MPFR_UNLIKELY(a != b))
     return mpfr_set4 (a, b, rnd_mode, -MPFR_SIGN(b));
-  else if (MPFR_UNLIKELY(MPFR_IS_NAN (b)))
-    {
-      MPFR_RET_NAN;
-    }
   else
     {
-      MPFR_CHANGE_SIGN(a);
-      MPFR_RET(0);
+      MPFR_CHANGE_SIGN (a);
+      if (MPFR_UNLIKELY (MPFR_IS_NAN (b)))
+        MPFR_RET_NAN;
+      else
+        MPFR_RET (0);
     }
 }

@@ -1,6 +1,6 @@
 /* mpfr_get_ui -- convert a floating-point number to an unsigned long.
 
-Copyright 2003-2004, 2006-2016 Free Software Foundation, Inc.
+Copyright 2003-2004, 2006-2018 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -30,10 +30,11 @@ mpfr_get_ui (mpfr_srcptr f, mpfr_rnd_t rnd)
   mpfr_t x;
   mp_size_t n;
   mpfr_exp_t exp;
+  MPFR_SAVE_EXPO_DECL (expo);
 
   if (MPFR_UNLIKELY (!mpfr_fits_ulong_p (f, rnd)))
     {
-      MPFR_SET_ERANGE ();
+      MPFR_SET_ERANGEFLAG ();
       return MPFR_IS_NAN (f) || MPFR_IS_NEG (f) ?
         (unsigned long) 0 : ULONG_MAX;
     }
@@ -44,9 +45,15 @@ mpfr_get_ui (mpfr_srcptr f, mpfr_rnd_t rnd)
   for (s = ULONG_MAX, prec = 0; s != 0; s /= 2, prec ++)
     { }
 
+  MPFR_SAVE_EXPO_MARK (expo);
+
   /* first round to prec bits */
   mpfr_init2 (x, prec);
   mpfr_rint (x, f, rnd);
+
+  /* The flags from mpfr_rint are the wanted ones. In particular,
+     it sets the inexact flag when necessary. */
+  MPFR_SAVE_EXPO_UPDATE_FLAGS (expo, __gmpfr_flags);
 
   /* warning: if x=0, taking its exponent is illegal */
   if (MPFR_IS_ZERO(x))
@@ -60,6 +67,8 @@ mpfr_get_ui (mpfr_srcptr f, mpfr_rnd_t rnd)
     }
 
   mpfr_clear (x);
+
+  MPFR_SAVE_EXPO_FREE (expo);
 
   return s;
 }

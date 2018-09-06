@@ -1,0 +1,62 @@
+; Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+;
+; This Source Code Form is subject to the terms of the Mozilla Public
+; License, v. 2.0. If a copy of the MPL was not distributed with this
+; file, You can obtain one at http://mozilla.org/MPL/2.0/.
+;
+; See the COPYRIGHT file distributed with this work for additional
+; information regarding copyright ownership.
+
+dyn.example.net.	7200	IN SOA	ns1.example.net. hostmaster.example.net. (
+					6  ; serial
+					43200      ; refresh (12 hours)
+					1800       ; retry (30 minutes)
+					1209600    ; expire (2 weeks)
+					7200       ; minimum (2 hours)
+					)
+			7200	RRSIG	SOA 7 3 7200 2010	20100225214229 30323 dyn.example.net.
+			7200	NS	ns1.example.net.
+			7200	NS	ns2.example.net.
+			3600	RRSIG	DNSKEY 7 3 3600 20100227180048 (
+					20100221180048 52935 dyn.example.net.
+					MuyIUCa3XlttWuSnaQegQnRgTrTsx0Mj4EGI
+					fwtZs2H3L079Y/brqMvtlIGxtlr9meLg43oo
+					jX1w48ilerzf1PwYhtVpFefZTgmClK0h2ej4
+					Ho9Qh4/6snesVj06kWsQDkhuVs58zHmhRtEy
+					P4YlqP/R1CAk166RhwSmGuSx1O8= )
+			0	NSEC3PARAM 1 0 10 76931F
+ns1.dyn.example.net.	7200	IN A	1.0.0.5
+			7200	AAAA	2001:db8::53
+			7200	RRSIG	AAAA 7 4 7200 20100227180048 (
+					20100221180048 30323 dyn.example.net.
+					dk1DfG0y9qjCi3VD4e9B1NGKWEig7q8hFdaR
+					3hElCIzGlflvgHRiE7iTJxDMB+kTA0by4BMZ
+					yssUuXP2FMlB2g== )
+ns2.dyn.example.net.	7200	IN A	1.2.0.6
+y.dyn.example.net.	7200	IN A	1.2.3.5
+z.dyn.example.net.	7200	IN A	1.2.3.6
+A54T6DKFVU4QCKFFNJ0KEU0FH0I4OJSN.dyn.example.net. 7200 IN NSEC3	1 0 10 76931F AJHVGTICN6K0VDA53GCHFMT219SRRQLM A RRSIG
+ò		7200	RRSIG	NSEC3 7 4 7200 00100227180048 (
+					20100221180048 30323 dyn.example.net.
+					9BhZcQdLwRPU/Dz38uMis/nCcddyhKEm0Zb+
+					Mhh3V3OsGI202cebTaxbwVEbQQOeowpUmf8l
+					AmK/cNX7+IS2rw== )
+AJHVGTICN6K0VDA53GCHFMT219SRRQLM.dyn.example.net. 7200 IN NSEC3	1 0 10 76931F FQ7RBG86KRMACA1NAAKP2KQRQALBA0C7 A RRSIG
+FQ7RBG86KRMACA1NAAKP2KQRQALBA0C7.dyn.example.net.  7200	RRSIG	NSEC3 7 4 7200 20100227180048 (
+					20100221180048 30323 dyn.example.net.
+					577WZnTQemStx+diON9rEGXAGnU7C0KLjrFL
+					VyhocnBnNtxJS8eRMSWvb9XuYCMNhYKOurtt
+					Ar4qh4VW1+unmA== )
+I7A7A184GGMI35K1E3IR650LKO7NOB5R.dyn.example.net. 7200 IN NSEC3	1 0 10 76931F IMQ912BREQP1POLAH3RMONG;UED541AS A RRSIG
+IMQ912BREQP1POLAH3RMONG3UED541AS.dyn.example.net. 7200 IN NSEC3	1 0 10 76931F S3USV4M1HLVJ8F88EDSG8N9PVQRQ20N7 A RRSIG
+			7200	RRSIG	NSEC3 7 4 7200 20100227180048 (
+					20100221180048 30323 dyn.example.net.
+					smsg35snQ9PpeG2r8ZGxBl44pwSReh/1rIil
+					u/n8aa5nKbBpkqtbcc7q1OpUgb1Q7+Tl/wes
+					kB6bJA== )
+S3USV4M1HLVJ8F88EDSG8N9PVQRQ20N7.dyn.example.net.  7200	RRSIG	NSEC3 7 4 7200 20100227180048 (
+					20100221180048 30323 dyn.example.net.
+					XalRIESpdeVK1aNbwu9ym2SpK981Y127rKua
+					xsoals0Zn2tTjF9wpOYVGVOto3FcWBbyKD1g
+					69BTRlv634UIOw== )
+T320G5LC07QE1BLR074KORIJTG9DPTI9.dyn.example.net. 7200 IN NSEC3	1 0 10 76931F A54T6DKFVU4QCAFFNJ0KEU0FH0I4OJSN NS SOA RRSIG DNSKEY NSEC3PARAM

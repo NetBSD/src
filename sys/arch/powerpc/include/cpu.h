@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.103.2.4 2018/07/28 04:37:39 pgoyette Exp $	*/
+/*	$NetBSD: cpu.h,v 1.103.2.5 2018/09/06 06:55:39 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 1999 Wolfgang Solfrank.
@@ -489,6 +489,5 @@ void	__syncicache(void *, size_t);
 #define	CPU_BOOTED_DEVICE	9	/* string: device we booted from */
 #define	CPU_BOOTED_KERNEL	10	/* string: kernel we booted */
 #define	CPU_EXECPROT		11	/* bool: PROT_EXEC works */
-#define	CPU_MAXID		12	/* number of valid machdep ids */
 
 #endif	/* _POWERPC_CPU_H_ */

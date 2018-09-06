@@ -1,4 +1,4 @@
-@c Copyright (C) 2002-2015 Free Software Foundation, Inc.
+@c Copyright (C) 2002-2016 Free Software Foundation, Inc.
 @c This is part of the GCC manual.
 @c For copying conditions, see the file gcc.texi.
 
@@ -1366,8 +1366,8 @@ Target supports a vector misalign access.
 @item vect_no_align
 Target does not support a vector alignment mechanism.
 
-@item vect_no_int_max
-Target does not support a vector max instruction on @code{int}.
+@item vect_no_int_min_max
+Target does not support a vector min and max instruction on @code{int}.
 
 @item vect_no_int_add
 Target does not support a vector add instruction on @code{int}.
@@ -1466,6 +1466,9 @@ Target supports conversion from @code{float} to @code{signed int}.
 
 @item vect_floatuint_cvt
 Target supports conversion from @code{float} to @code{unsigned int}.
+
+@item vect_max_reduc
+Target supports max reduction for vectors.
 @end table
 
 @subsubsection Thread Local Storage attributes
@@ -1511,6 +1514,12 @@ ARM target generates 32-bit code.
 @item arm_eabi
 ARM target adheres to the ABI for the ARM Architecture.
 
+@item arm_fp_ok
+@anchor{arm_fp_ok}
+ARM target defines @code{__ARM_FP} using @code{-mfloat-abi=softfp} or
+equivalent options.  Some multilibs may be incompatible with these
+options.
+
 @item arm_hf_eabi
 ARM target adheres to the VFP and Advanced SIMD Register Arguments
 variant of the ABI for the ARM Architecture (as selected with
@@ -1549,7 +1558,12 @@ options.  Some multilibs may be incompatible with these options.
 @item arm_neon_fp16_ok
 @anchor{arm_neon_fp16_ok}
 ARM Target supports @code{-mfpu=neon-fp16 -mfloat-abi=softfp} or compatible
-options.  Some multilibs may be incompatible with these options.
+options, including @code{-mfp16-format=ieee} if necessary to obtain the
+@code{__fp16} type.  Some multilibs may be incompatible with these options.
+
+@item arm_neon_fp16_hw
+Test system supports executing Neon half-precision float instructions.
+(Implies previous.)
 
 @item arm_thumb1_ok
 ARM target generates Thumb-1 code for @code{-mthumb}.
@@ -1574,9 +1588,40 @@ Some multilibs may be incompatible with these options.
 ARM target supports @code{-mfpu=neon-fp-armv8 -mfloat-abi=softfp}.
 Some multilibs may be incompatible with these options.
 
+@item arm_v8_1a_neon_ok
+ARM target supports options to generate ARMv8.1 Adv.SIMD instructions.
+Some multilibs may be incompatible with these options.
+
+@item arm_v8_1a_neon_hw
+ARM target supports executing ARMv8.1 Adv.SIMD instructions.  Some
+multilibs may be incompatible with the options needed.  Implies
+arm_v8_1a_neon_ok.
+
 @item arm_prefer_ldrd_strd
 ARM target prefers @code{LDRD} and @code{STRD} instructions over
 @code{LDM} and @code{STM} instructions.
+
+@end table
+
+@subsubsection AArch64-specific attributes
+
+@table @code
+@item aarch64_asm_<ext>_ok
+AArch64 assembler supports the architecture extension @code{ext} via the
+@code{.arch_extension} pseudo-op.
+@item aarch64_tiny
+AArch64 target which generates instruction sequences for tiny memory model.
+@item aarch64_small
+AArch64 target which generates instruction sequences for small memory model.
+@item aarch64_large
+AArch64 target which generates instruction sequences for large memory model.
+@item aarch64_little_endian
+AArch64 target which generates instruction sequences for little endian.
+@item aarch64_big_endian
+AArch64 target which generates instruction sequences for big endian.
+@item aarch64_small_fpic
+Binutils installed on test system supports relocation types required by -fpic
+for AArch64 small memory model.
 
 @end table
 
@@ -1694,6 +1739,9 @@ Target supports FPU instructions.
 
 @item non_strict_align
 Target does not require strict alignment.
+
+@item sqrt_insn
+Target has a square root instruction that the compiler can generate.
 
 @item sse
 Target supports compiling @code{sse} instructions.
@@ -1902,6 +1950,9 @@ Target supports @option{-mpe-aligned-commons}.
 @item pie
 Target supports @option{-pie}, @option{-fpie} and @option{-fPIE}.
 
+@item rdynamic
+Target supports @option{-rdynamic}.
+
 @item section_anchors
 Target supports section anchors.
 
@@ -2008,6 +2059,11 @@ The supported values of @var{feature} for directive @code{dg-add-options}
 are:
 
 @table @code
+@item arm_fp
+@code{__ARM_FP} definition.  Only ARM targets support this feature, and only then
+in certain modes; see the @ref{arm_fp_ok,,arm_fp_ok effective target
+keyword}.
+
 @item arm_neon
 NEON support.  Only ARM targets support this feature, and only then
 in certain modes; see the @ref{arm_neon_ok,,arm_neon_ok effective target
@@ -2016,7 +2072,7 @@ keyword}.
 @item arm_neon_fp16
 NEON and half-precision floating point support.  Only ARM targets
 support this feature, and only then in certain modes; see
-the @ref{arm_neon_ok,,arm_neon_fp16_ok effective target keyword}.
+the @ref{arm_neon_fp16_ok,,arm_neon_fp16_ok effective target keyword}.
 
 @item arm_vfp3
 arm vfp3 floating point support; see
@@ -2213,12 +2269,16 @@ Check branch and/or call counts, in addition to line counts, in
 
 @subsubsection Clean up generated test files
 
+Usually the test-framework removes files that were generated during
+testing. If a testcase, for example, uses any dumping mechanism to
+inspect a passes dump file, the testsuite recognized the dump option
+passed to the tool and schedules a final cleanup to remove these files.
+
+There are, however, following additional cleanup directives that can be
+used to annotate a testcase "manually".
 @table @code
 @item cleanup-coverage-files
 Removes coverage data files generated for this test.
-
-@item cleanup-ipa-dump @var{suffix}
-Removes IPA dump files generated for this test.
 
 @item cleanup-modules "@var{list-of-extra-modules}"
 Removes Fortran module files generated for this test, excluding the
@@ -2254,21 +2314,23 @@ end module keep2
 ! @{ dg-final @{ keep-modules "" @} @} ! keep all
 @end smallexample
 
+@item dg-keep-saved-temps "@var{list-of-suffixes-not-to-delete}"
+Whitespace separated list of suffixes that should not be deleted
+automatically in a testcase that uses @option{-save-temps}.
+@smallexample
+// @{ dg-options "-save-temps -fpch-preprocess -I." @}
+int main() @{ return 0; @}
+// @{ dg-keep-saved-temps ".s" @} ! just keep assembler file
+// @{ dg-keep-saved-temps ".s" ".i" @} ! ... and .i
+// @{ dg-keep-saved-temps ".ii" ".o" @} ! or just .ii and .o
+@end smallexample
+
 @item cleanup-profile-file
 Removes profiling files generated for this test.
 
 @item cleanup-repo-files
 Removes files generated for this test for @option{-frepo}.
 
-@item cleanup-rtl-dump @var{suffix}
-Removes RTL dump files generated for this test.
-
-@item cleanup-saved-temps
-Removes files for the current test which were kept for @option{-save-temps}.
-
-@item cleanup-tree-dump @var{suffix}
-Removes tree dump files matching @var{suffix} which were generated for
-this test.
 @end table
 
 @node Ada Tests

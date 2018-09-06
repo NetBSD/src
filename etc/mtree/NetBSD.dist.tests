@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.tests,v 1.150.2.1 2018/06/25 07:25:11 pgoyette Exp $
+#	$NetBSD: NetBSD.dist.tests,v 1.150.2.2 2018/09/06 06:51:44 pgoyette Exp $
 
 ./usr/libdata/debug/usr/tests
 ./usr/libdata/debug/usr/tests/atf
@@ -83,6 +83,7 @@
 ./usr/libdata/debug/usr/tests/lib/libc/hash
 ./usr/libdata/debug/usr/tests/lib/libc/locale
 ./usr/libdata/debug/usr/tests/lib/libc/inet
+./usr/libdata/debug/usr/tests/lib/libc/misc
 ./usr/libdata/debug/usr/tests/lib/libc/net
 ./usr/libdata/debug/usr/tests/lib/libc/net/getaddrinfo
 ./usr/libdata/debug/usr/tests/lib/libc/regex
@@ -266,6 +267,7 @@
 ./usr/tests/lib/libc/hash/data
 ./usr/tests/lib/libc/locale
 ./usr/tests/lib/libc/inet
+./usr/tests/lib/libc/misc
 ./usr/tests/lib/libc/net
 ./usr/tests/lib/libc/net/getaddrinfo
 ./usr/tests/lib/libc/net/getaddrinfo/data
@@ -408,6 +410,7 @@
 ./usr/tests/usr.bin/nbperf
 ./usr/tests/usr.bin/pkill
 ./usr/tests/usr.bin/pr
+./usr/tests/usr.bin/printf
 ./usr/tests/usr.bin/rump_server
 ./usr/tests/usr.bin/sdiff
 ./usr/tests/usr.bin/sed

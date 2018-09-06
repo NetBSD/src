@@ -1,4 +1,4 @@
-/*	$NetBSD: xhcivar.h,v 1.8.2.1 2018/04/16 02:00:02 pgoyette Exp $	*/
+/*	$NetBSD: xhcivar.h,v 1.8.2.2 2018/09/06 06:56:06 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -35,7 +35,6 @@
 
 struct xhci_xfer {
 	struct usbd_xfer xx_xfer;
-	struct usb_task xx_abort_task;
 	struct xhci_trb xx_trb[XHCI_XFER_NTRB];
 };
 
@@ -85,7 +84,6 @@ struct xhci_softc {
 
 	kmutex_t sc_lock;
 	kmutex_t sc_intr_lock;
-	kcondvar_t sc_softwake_cv;
 
 	pool_cache_t sc_xferpool;
 

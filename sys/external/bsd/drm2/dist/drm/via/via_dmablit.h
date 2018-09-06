@@ -1,3 +1,5 @@
+/*	$NetBSD: via_dmablit.h,v 1.2.18.1 2018/09/06 06:56:34 pgoyette Exp $	*/
+
 /* via_dmablit.h -- PCI DMA BitBlt support for the VIA Unichrome/Pro
  *
  * Copyright 2005 Thomas Hellstrom.

@@ -1,6 +1,6 @@
 /* Test file for mpfr_sub_ui
 
-Copyright 2000-2016 Free Software Foundation, Inc.
+Copyright 2000-2018 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -20,8 +20,6 @@ along with the GNU MPFR Library; see the file COPYING.LESSER.  If not, see
 http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA. */
 
-#include <stdio.h>
-#include <stdlib.h>
 #include <float.h>
 
 #include "mpfr-test.h"
@@ -38,8 +36,8 @@ check3 (const char *xs, unsigned long y, mpfr_rnd_t rnd_mode, const char *zs)
   if (mpfr_cmp_str1(zz, zs))
     {
       printf ("expected sum is %s, got ", zs);
-      mpfr_print_binary(zz);
-      printf ("\nmpfr_sub_ui failed for x=%s y=%lu with rnd_mode=%s\n",
+      mpfr_dump (zz);
+      printf ("mpfr_sub_ui failed for x=%s y=%lu with rnd_mode=%s\n",
               xs, y, mpfr_print_rnd_mode (rnd_mode));
       exit (1);
     }
@@ -76,10 +74,10 @@ check_two_sum (mpfr_prec_t p)
       printf ("Wrong inexact flag for prec=%u, rnd=%s\n",
               (unsigned int) p, mpfr_print_rnd_mode (rnd));
       printf ("x=%u\n", x);
-      printf ("y="); mpfr_print_binary(y); puts ("");
-      printf ("u="); mpfr_print_binary(u); puts ("");
-      printf ("v="); mpfr_print_binary(v); puts ("");
-      printf ("w="); mpfr_print_binary(w); puts ("");
+      printf ("y="); mpfr_dump (y);
+      printf ("u="); mpfr_dump (u);
+      printf ("v="); mpfr_dump (v);
+      printf ("w="); mpfr_dump (w);
       printf ("inexact = %d\n", inexact);
       exit (1);
     }
@@ -139,7 +137,7 @@ main (int argc, char *argv[])
   check3 ("0.9999999999", 1, MPFR_RNDN,
           "-10000000827403709990903735160827636718750e-50");
 
-  test_generic (2, 1000, 100);
+  test_generic (MPFR_PREC_MIN, 1000, 100);
 
   tests_end_mpfr ();
   return 0;

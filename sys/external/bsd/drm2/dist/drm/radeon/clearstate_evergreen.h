@@ -1,3 +1,5 @@
+/*	$NetBSD: clearstate_evergreen.h,v 1.1.1.1.30.1 2018/09/06 06:56:31 pgoyette Exp $	*/
+
 /*
  * Copyright 2012 Advanced Micro Devices, Inc.
  *

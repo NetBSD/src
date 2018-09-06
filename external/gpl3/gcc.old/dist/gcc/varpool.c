@@ -1,5 +1,5 @@
 /* Callgraph handling code.
-   Copyright (C) 2003-2015 Free Software Foundation, Inc.
+   Copyright (C) 2003-2016 Free Software Foundation, Inc.
    Contributed by Jan Hubicka
 
 This file is part of GCC.
@@ -21,42 +21,18 @@ along with GCC; see the file COPYING3.  If not see
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
-#include "tm.h"
-#include "hash-set.h"
-#include "machmode.h"
-#include "vec.h"
-#include "double-int.h"
-#include "input.h"
-#include "alias.h"
-#include "symtab.h"
-#include "wide-int.h"
-#include "inchash.h"
-#include "tree.h"
-#include "fold-const.h"
-#include "varasm.h"
-#include "predict.h"
-#include "basic-block.h"
-#include "hash-map.h"
-#include "is-a.h"
-#include "plugin-api.h"
-#include "hard-reg-set.h"
-#include "input.h"
-#include "function.h"
-#include "ipa-ref.h"
-#include "cgraph.h"
-#include "langhooks.h"
-#include "diagnostic-core.h"
-#include "timevar.h"
-#include "debug.h"
+#include "backend.h"
 #include "target.h"
-#include "output.h"
-#include "gimple-expr.h"
-#include "flags.h"
-#include "tree-ssa-alias.h"
+#include "tree.h"
 #include "gimple.h"
+#include "timevar.h"
+#include "cgraph.h"
 #include "lto-streamer.h"
-#include "context.h"
+#include "varasm.h"
+#include "debug.h"
+#include "output.h"
 #include "omp-low.h"
+#include "context.h"
 
 const char * const tls_model_names[]={"none", "emulated",
 				      "global-dynamic", "local-dynamic",
@@ -177,12 +153,12 @@ varpool_node::get_create (tree decl)
       && lookup_attribute ("omp declare target", DECL_ATTRIBUTES (decl)))
     {
       node->offloadable = 1;
-#ifdef ENABLE_OFFLOADING
-      g->have_offload = true;
-      if (!in_lto_p)
-	vec_safe_push (offload_vars, decl);
-      node->force_output = 1;
-#endif
+      if (ENABLE_OFFLOADING)
+	{
+	  g->have_offload = true;
+	  if (!in_lto_p)
+	    vec_safe_push (offload_vars, decl);
+	}
     }
 
   node->register_symbol ();
@@ -319,9 +295,11 @@ varpool_node::get_constructor (void)
 
   /* We may have renamed the declaration, e.g., a static function.  */
   name = lto_get_decl_name_mapping (file_data, name);
+  struct lto_in_decl_state *decl_state
+	 = lto_get_function_in_decl_state (file_data, decl);
 
   data = lto_get_section_data (file_data, LTO_section_function_body,
-			       name, &len);
+			       name, &len, decl_state->compressed);
   if (!data)
     fatal_error (input_location, "%s: section %s is missing",
 		 file_data->file_name,
@@ -331,7 +309,7 @@ varpool_node::get_constructor (void)
   gcc_assert (DECL_INITIAL (decl) != error_mark_node);
   lto_stats.num_function_bodies++;
   lto_free_section_data (file_data, LTO_section_function_body, name,
-			 data, len);
+			 data, len, decl_state->compressed);
   lto_free_function_in_decl_state_for_node (this);
   timevar_pop (TV_IPA_LTO_CTORS_IN);
   return DECL_INITIAL (decl);
@@ -463,7 +441,7 @@ ctor_for_folding (tree decl)
       gcc_assert (!DECL_INITIAL (decl)
 		  || (node->alias && node->get_alias_target () == real_node)
 		  || DECL_INITIAL (decl) == error_mark_node);
-      if (node->weakref)
+      while (node->transparent_alias && node->analyzed)
 	{
 	  node = node->get_alias_target ();
 	  decl = node->decl;
@@ -513,11 +491,11 @@ varpool_node::get_availability (void)
   if (DECL_IN_CONSTANT_POOL (decl)
       || DECL_VIRTUAL_P (decl))
     return AVAIL_AVAILABLE;
-  if (alias && weakref)
+  if (transparent_alias && definition)
     {
       enum availability avail;
 
-      ultimate_alias_target (&avail)->get_availability ();
+      ultimate_alias_target (&avail);
       return avail;
     }
   /* If the variable can be overwritten, return OVERWRITABLE.  Takes
@@ -559,8 +537,9 @@ varpool_node::assemble_aliases (void)
   FOR_EACH_ALIAS (this, ref)
     {
       varpool_node *alias = dyn_cast <varpool_node *> (ref->referring);
-      do_assemble_alias (alias->decl,
-			 DECL_ASSEMBLER_NAME (decl));
+      if (!alias->transparent_alias)
+	do_assemble_alias (alias->decl,
+			   DECL_ASSEMBLER_NAME (decl));
       alias->assemble_aliases ();
     }
 }
@@ -604,6 +583,10 @@ varpool_node::assemble_decl (void)
       gcc_assert (TREE_ASM_WRITTEN (decl));
       gcc_assert (definition);
       assemble_aliases ();
+      /* After the parser has generated debugging information, augment
+	 this information with any new location/etc information that may
+	 have become available after the compilation proper.  */
+      debug_hooks->late_global_decl (decl);
       return true;
     }
 
@@ -682,7 +665,14 @@ symbol_table::remove_unreferenced_decls (void)
 	      && vnode->analyzed)
 	    enqueue_node (vnode, &first);
 	  else
-	    referenced.add (node);
+	    {
+	      referenced.add (vnode);
+	      while (vnode && vnode->alias && vnode->definition)
+		{
+		  vnode = vnode->get_alias_target ();
+	          referenced.add (vnode);
+		}
+	    }
 	}
     }
   if (dump_file)
@@ -755,6 +745,13 @@ symbol_table::output_variables (void)
       /* Handled in output_in_order.  */
       if (node->no_reorder)
 	continue;
+#ifdef ACCEL_COMPILER
+      /* Do not assemble "omp declare target link" vars.  */
+      if (DECL_HAS_VALUE_EXPR_P (node->decl)
+	  && lookup_attribute ("omp declare target link",
+			       DECL_ATTRIBUTES (node->decl)))
+	continue;
+#endif
       if (node->assemble_decl ())
         changed = true;
     }
@@ -777,7 +774,7 @@ varpool_node::create_alias (tree alias, tree decl)
   alias_node->definition = true;
   alias_node->alias_target = decl;
   if (lookup_attribute ("weakref", DECL_ATTRIBUTES (alias)) != NULL)
-    alias_node->weakref = true;
+    alias_node->weakref = alias_node->transparent_alias = true;
   return alias_node;
 }
 

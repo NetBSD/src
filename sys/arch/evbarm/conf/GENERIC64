@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC64,v 1.1.2.6 2018/07/28 04:37:31 pgoyette Exp $
+#	$NetBSD: GENERIC64,v 1.1.2.7 2018/09/06 06:55:30 pgoyette Exp $
 #
 #	GENERIC ARM (aarch64) kernel
 #
@@ -22,6 +22,14 @@ makeoptions	DTS="
 	rk3328-evb.dts
 	rk3328-roc-cc.dts
 	rk3328-rock64.dts
+
+	rk3399-evb.dts
+	rk3399-firefly.dts
+	rk3399-gru-kevin.dts
+	rk3399-puma-haikou.dts
+	rk3399-rockpro64.dts
+	rk3399-sapphire-excavator.dts
+	rk3399-sapphire.dts
 
 	sun50i-a64-bananapi-m64.dts
 	sun50i-a64-nanopi-a64.dts
@@ -52,6 +60,7 @@ options 	CPU_CORTEXA53
 options 	CPU_CORTEXA57
 options 	SOC_BCM2837
 options 	SOC_RK3328
+options 	SOC_RK3399
 options 	SOC_TEGRA210
 options 	SOC_SUN50I_A64
 options 	SOC_SUN50I_H5
@@ -69,6 +78,7 @@ options 	VERBOSE_INIT_ARM # verbose bootstrapping messages
 # EARLYCONS is required for early init messages from VERBOSE_INIT_ARM.
 #options 	EARLYCONS=bcm2837
 #options 	EARLYCONS=rk3328, CONSADDR=0xff130000
+#options 	EARLYCONS=rk3399, CONSADDR=0xff1a0000
 #options 	EARLYCONS=sunxi, CONSADDR=0x01c28000
 #options 	EARLYCONS=tegra, CONSADDR=0x70006000
 #options 	EARLYCONS=virt
@@ -119,8 +129,9 @@ watchdog*	at fdt?			# Broadcom BCM283x watchdog
 # Interrupt controller
 bcmicu*		at fdt? pass 1		# Broadcom BCM283x ICU
 tegralic*	at fdt? pass 1		# NVIDIA Tegra LIC
-gic*		at fdt? pass 1		# ARM GIC
+gic*		at fdt? pass 1		# ARM GICv2
 armgic0		at gic?
+gicvthree*	at fdt? pass 1		# ARM GICv3
 sunxinmi*	at fdt? pass 2		# Allwinner NMI / R_INTC
 
 # Memory controller
@@ -168,7 +179,7 @@ gpio*		at gpiobus?
 sunxipwm*	at fdt? pass 3		# Allwinner PWM
 
 # MPIO / Pinmux
-rkiomux*	at fdt?	pass 2		# Rockchip IOMUX
+rkiomux*	at fdt?	pass 3		# Rockchip IOMUX
 tegrapinmux*	at fdt?			# NVIDIA Tegra MPIO
 
 # XUSB PADCTL
@@ -236,8 +247,11 @@ as3722pmic*	at iic?
 as3722reg*	at as3722pmic?
 axppmic*	at iic?			# X-Powers AXP Power Management IC
 axpreg*		at axppmic?
+fan53555reg*	at iic?			# FAN53555 / SY82x regulator
 max77620pmic*	at iic?
 pcf8563rtc*	at iic?			# PCF8563 RTC
+rkpmic*		at iic?			# Rockchip Power Management IC
+rkreg*		at rkpmic?
 tcagpio*	at iic?
 
 # Random number generators

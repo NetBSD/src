@@ -1,5 +1,5 @@
 /* Definitions of target machine of Andes NDS32 cpu for GNU compiler
-   Copyright (C) 2012-2015 Free Software Foundation, Inc.
+   Copyright (C) 2012-2016 Free Software Foundation, Inc.
    Contributed by Andes Technology Corporation.
 
    This file is part of GCC.
@@ -696,7 +696,7 @@ enum reg_class
 
 /* Stack Layout and Calling Conventions.  */
 
-#define STACK_GROWS_DOWNWARD
+#define STACK_GROWS_DOWNWARD 1
 
 #define FRAME_GROWS_DOWNWARD 1
 
@@ -831,7 +831,7 @@ enum reg_class
 
 #define SLOW_BYTE_ACCESS 1
 
-#define NO_FUNCTION_CSE
+#define NO_FUNCTION_CSE 1
 
 
 /* Adjusting the Instruction Scheduler.  */
@@ -1001,7 +1001,7 @@ enum reg_class
 
 /* Define this macro if operations between registers with integral mode
    smaller than a word are always performed on the entire register.  */
-#define WORD_REGISTER_OPERATIONS
+#define WORD_REGISTER_OPERATIONS 1
 
 /* A C expression indicating when insns that read memory in mem_mode,
    an integral mode narrower than a word, set the bits outside of mem_mode

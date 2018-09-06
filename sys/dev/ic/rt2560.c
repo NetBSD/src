@@ -1,4 +1,4 @@
-/*	$NetBSD: rt2560.c,v 1.32.2.2 2018/07/28 04:37:45 pgoyette Exp $	*/
+/*	$NetBSD: rt2560.c,v 1.32.2.3 2018/09/06 06:55:50 pgoyette Exp $	*/
 /*	$OpenBSD: rt2560.c,v 1.15 2006/04/20 20:31:12 miod Exp $  */
 /*	$FreeBSD: rt2560.c,v 1.3 2006/03/21 21:15:43 damien Exp $*/
 
@@ -24,7 +24,7 @@
  * http://www.ralinktech.com/
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rt2560.c,v 1.32.2.2 2018/07/28 04:37:45 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rt2560.c,v 1.32.2.3 2018/09/06 06:55:50 pgoyette Exp $");
 
 
 #include <sys/param.h>
@@ -2352,7 +2352,7 @@ rt2560_set_chan(struct rt2560_softc *sc, struct ieee80211_channel *c)
 		return;
 
 	if (IEEE80211_IS_CHAN_2GHZ(c))
-		power = min(sc->txpow[chan - 1], 31);
+		power = uimin(sc->txpow[chan - 1], 31);
 	else
 		power = 31;
 

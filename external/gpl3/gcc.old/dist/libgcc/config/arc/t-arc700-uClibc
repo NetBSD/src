@@ -1,6 +1,6 @@
 # GCC Makefile fragment for the Synopsys DesignWare ARC700 CPU with uClibc.
 
-# Copyright (C) 2007-2015 Free Software Foundation, Inc.
+# Copyright (C) 2007-2016 Free Software Foundation, Inc.
 # Contributor: Joern Rennecke <joern.rennecke@embecosm.com>
 #              on behalf of Synopsys Inc.
 
@@ -28,10 +28,10 @@
 CRTSTUFF_T_CFLAGS += -mno-sdata
 
 # Compile crtbeginS.o and crtendS.o with pic.
-CRTSTUFF_T_CFLAGS_S = $(CRTSTUFF_T_CFLAGS) -mA7 -fPIC
+CRTSTUFF_T_CFLAGS_S = $(CRTSTUFF_T_CFLAGS) -fPIC
 
 # Compile libgcc2.a with pic.
-TARGET_LIBGCC2_CFLAGS = -mA7 -fPIC
+TARGET_LIBGCC2_CFLAGS = -fPIC
 
 PROFILE_OSDEP = prof-freq.o
 

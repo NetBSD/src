@@ -1,0 +1,6 @@
+Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+
+See COPYRIGHT in the source root or http://isc.org/copyright.html for terms.
+
+This set includes one KSK rollover.  The KSK is deactivated prior to
+its replacement being activated.

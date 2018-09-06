@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_emmc.c,v 1.32 2017/12/10 21:38:26 skrll Exp $	*/
+/*	$NetBSD: bcm2835_emmc.c,v 1.32.2.1 2018/09/06 06:55:25 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_emmc.c,v 1.32 2017/12/10 21:38:26 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_emmc.c,v 1.32.2.1 2018/09/06 06:55:25 pgoyette Exp $");
 
 #include "bcmdmac.h"
 
@@ -174,7 +174,7 @@ bcmemmc_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	sc->sc_ih = fdtbus_intr_establish(phandle, 0, IPL_SDMMC, IST_LEVEL,
+	sc->sc_ih = fdtbus_intr_establish(phandle, 0, IPL_SDMMC, 0,
 	    sdhc_intr, &sc->sc);
 
 	if (sc->sc_ih == NULL) {

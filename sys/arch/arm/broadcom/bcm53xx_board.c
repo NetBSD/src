@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm53xx_board.c,v 1.23.14.1 2018/06/25 07:25:39 pgoyette Exp $	*/
+/*	$NetBSD: bcm53xx_board.c,v 1.23.14.2 2018/09/06 06:55:25 pgoyette Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -28,6 +28,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "opt_arm_debug.h"
 #include "opt_broadcom.h"
 #include "arml2cc.h"
 
@@ -35,7 +36,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: bcm53xx_board.c,v 1.23.14.1 2018/06/25 07:25:39 pgoyette Exp $");
+__KERNEL_RCSID(1, "$NetBSD: bcm53xx_board.c,v 1.23.14.2 2018/09/06 06:55:25 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>

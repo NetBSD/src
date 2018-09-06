@@ -1,0 +1,9 @@
+example1 IN first master
+clone IN first master
+example1 IN second master
+example2 IN second static-stub
+clone IN second in-view first
+. IN second redirect
+clone IN third in-view first
+dnssec IN third master
+hostname.bind chaos chaos master

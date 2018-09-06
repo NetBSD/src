@@ -1,4 +1,4 @@
-/* $NetBSD: prom.c,v 1.49 2016/10/13 16:18:20 flxd Exp $ */
+/* $NetBSD: prom.c,v 1.49.14.1 2018/09/06 06:55:23 pgoyette Exp $ */
 
 /*
  * Copyright (c) 1992, 1994, 1995, 1996 Carnegie Mellon University
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: prom.c,v 1.49 2016/10/13 16:18:20 flxd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: prom.c,v 1.49.14.1 2018/09/06 06:55:23 pgoyette Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -240,7 +240,7 @@ prom_getenv(int id, char *buf, int len)
 	ret.bits = prom_getenv_disp(id, to, len);
 	if (ret.u.status & 0x4)
 		ret.u.retval = 0;
-	len = min(len - 1, ret.u.retval);
+	len = uimin(len - 1, ret.u.retval);
 	memcpy(buf, to, len);
 	buf[len] = '\0';
 	prom_leave();

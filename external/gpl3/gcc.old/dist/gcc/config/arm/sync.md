@@ -1,5 +1,5 @@
 ;; Machine description for ARM processor synchronization primitives.
-;; Copyright (C) 2010-2015 Free Software Foundation, Inc.
+;; Copyright (C) 2010-2016 Free Software Foundation, Inc.
 ;; Written by Marcus Shawcroft (marcus.shawcroft@arm.com)
 ;; 64bit Atomics by Dave Gilbert (david.gilbert@linaro.org)
 ;;
@@ -50,14 +50,11 @@
   {
     if (TARGET_HAVE_DMB)
       {
-	/* Note we issue a system level barrier. We should consider issuing
-	   a inner shareabilty zone barrier here instead, ie. "DMB ISH".  */
-	/* ??? Differentiate based on SEQ_CST vs less strict?  */
-	return "dmb\tsy";
+	return "dmb\\tish";
       }
 
     if (TARGET_HAVE_DMB_MCR)
-      return "mcr\tp15, 0, r0, c7, c10, 5";
+      return "mcr\\tp15, 0, r0, c7, c10, 5";
 
     gcc_unreachable ();
   }
@@ -75,7 +72,7 @@
   {
     enum memmodel model = memmodel_from_int (INTVAL (operands[2]));
     if (is_mm_relaxed (model) || is_mm_consume (model) || is_mm_release (model))
-      return \"ldr%(<sync_sfx>%)\\t%0, %1\";
+      return \"ldr<sync_sfx>%?\\t%0, %1\";
     else
       return \"lda<sync_sfx>%?\\t%0, %1\";
   }
@@ -92,7 +89,7 @@
   {
     enum memmodel model = memmodel_from_int (INTVAL (operands[2]));
     if (is_mm_relaxed (model) || is_mm_consume (model) || is_mm_acquire (model))
-      return \"str%(<sync_sfx>%)\t%1, %0\";
+      return \"str<sync_sfx>%?\t%1, %0\";
     else
       return \"stl<sync_sfx>%?\t%1, %0\";
   }
@@ -107,7 +104,7 @@
 	  [(match_operand:DI 1 "arm_sync_memory_operand" "Q")]
 	    VUNSPEC_LDRD_ATOMIC))]
   "ARM_DOUBLEWORD_ALIGN && TARGET_HAVE_LPAE"
-  "ldr%(d%)\t%0, %H0, %C1"
+  "ldrd%?\t%0, %H0, %C1"
   [(set_attr "predicable" "yes")
    (set_attr "predicable_short_it" "no")])
 

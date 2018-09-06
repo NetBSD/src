@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.24.2.1 2018/03/22 01:44:41 pgoyette Exp $	*/
+/*	$NetBSD: param.h,v 1.24.2.2 2018/09/06 06:55:24 pgoyette Exp $	*/
 
 #ifdef __x86_64__
 
@@ -9,6 +9,9 @@
 
 #ifdef _KERNEL
 #include <machine/cpu.h>
+#if defined(_KERNEL_OPT)
+#include "opt_kasan.h"
+#endif
 #endif
 
 #define	_MACHINE	amd64
@@ -57,7 +60,10 @@
 
 #define	SSIZE		1		/* initial stack size/NBPG */
 #define	SINCR		1		/* increment of stack/NBPG */
-#ifdef DIAGNOSTIC
+
+#ifdef KASAN
+#define	UPAGES		8
+#elif defined(DIAGNOSTIC)
 #define	UPAGES		5		/* pages of u-area (1 for redzone) */
 #else
 #define	UPAGES		4		/* pages of u-area */

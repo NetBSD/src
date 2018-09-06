@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sn.c,v 1.39.2.2 2018/07/28 04:37:38 pgoyette Exp $	*/
+/*	$NetBSD: if_sn.c,v 1.39.2.3 2018/09/06 06:55:38 pgoyette Exp $	*/
 
 /*
  * National Semiconductor  DP8393X SONIC Driver
@@ -16,7 +16,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sn.c,v 1.39.2.2 2018/07/28 04:37:38 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sn.c,v 1.39.2.3 2018/09/06 06:55:38 pgoyette Exp $");
 
 #include "opt_inet.h"
 
@@ -1106,7 +1106,7 @@ sonic_get(struct sn_softc *sc, void *pkt, int datalen)
 			m->m_data = newdata;
 		}
 
-		m->m_len = len = min(datalen, len);
+		m->m_len = len = uimin(datalen, len);
 
 		memcpy(mtod(m, void *), pkt, (unsigned) len);
 		pkt = (char *)pkt + len;

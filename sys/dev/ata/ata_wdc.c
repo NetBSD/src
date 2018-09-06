@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_wdc.c,v 1.109.2.1 2018/06/25 07:25:49 pgoyette Exp $	*/
+/*	$NetBSD: ata_wdc.c,v 1.109.2.2 2018/09/06 06:55:48 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata_wdc.c,v 1.109.2.1 2018/06/25 07:25:49 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata_wdc.c,v 1.109.2.2 2018/09/06 06:55:48 pgoyette Exp $");
 
 #include "opt_ata.h"
 #include "opt_wdc.h"
@@ -516,7 +516,7 @@ _wdc_ata_bio_start(struct ata_channel *chp, struct ata_xfer *xfer)
 			}
 		}
 #endif
-		ata_bio->nblks = min(nblks, drvp->multi);
+		ata_bio->nblks = uimin(nblks, drvp->multi);
 		ata_bio->nbytes = ata_bio->nblks * drvp->lp->d_secsize;
 		KASSERT(nblks == 1 || (ata_bio->flags & ATA_SINGLE) == 0);
 		if (ata_bio->nblks > 1) {

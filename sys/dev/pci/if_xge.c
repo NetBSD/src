@@ -1,4 +1,4 @@
-/*      $NetBSD: if_xge.c,v 1.25.14.1 2018/07/28 04:37:46 pgoyette Exp $ */
+/*      $NetBSD: if_xge.c,v 1.25.14.2 2018/09/06 06:55:51 pgoyette Exp $ */
 
 /*
  * Copyright (c) 2004, SUNET, Swedish University Computer Network.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xge.c,v 1.25.14.1 2018/07/28 04:37:46 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xge.c,v 1.25.14.2 2018/09/06 06:55:51 pgoyette Exp $");
 
 
 #include <sys/param.h>
@@ -536,7 +536,7 @@ xge_attach(device_t parent, device_t self, void *aux)
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_ioctl = xge_ioctl;
 	ifp->if_start = xge_start;
-	IFQ_SET_MAXLEN(&ifp->if_snd, max(NTXDESCS - 1, IFQ_MAXLEN));
+	IFQ_SET_MAXLEN(&ifp->if_snd, uimax(NTXDESCS - 1, IFQ_MAXLEN));
 	IFQ_SET_READY(&ifp->if_snd);
 
 	/*

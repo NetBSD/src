@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_extensions.c,v 1.7.16.1 2018/04/16 02:00:09 pgoyette Exp $ */
+/* $NetBSD: secmodel_extensions.c,v 1.7.16.2 2018/09/06 06:56:47 pgoyette Exp $ */
 /*-
  * Copyright (c) 2011 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_extensions.c,v 1.7.16.1 2018/04/16 02:00:09 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_extensions.c,v 1.7.16.2 2018/09/06 06:56:47 pgoyette Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -428,6 +428,7 @@ secmodel_extensions_process_cb(kauth_cred_t cred, kauth_action_t action,
 		case KAUTH_REQ_PROCESS_CANSEE_ARGS:
 		case KAUTH_REQ_PROCESS_CANSEE_ENTRY:
 		case KAUTH_REQ_PROCESS_CANSEE_OPENFILES:
+		case KAUTH_REQ_PROCESS_CANSEE_EPROC:
 			if (curtain != 0) {
 				struct proc *p = arg0;
 
@@ -449,6 +450,7 @@ secmodel_extensions_process_cb(kauth_cred_t cred, kauth_action_t action,
 
 			break;
 
+		case KAUTH_REQ_PROCESS_CANSEE_KPTR:
 		default:
 			break;
 		}

@@ -1,4 +1,4 @@
-/*	$NetBSD: error.h,v 1.19.32.1 2018/07/28 04:32:56 pgoyette Exp $	*/
+/*	$NetBSD: error.h,v 1.19.32.2 2018/09/06 06:51:32 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -70,6 +70,7 @@ extern int exerrno;	/* error for EXEXEC */
 #define EXERROR 1	/* a generic error */
 #define EXSHELLPROC 2	/* execute a shell procedure */
 #define EXEXEC 3	/* command execution failed */
+#define EXEXIT 4	/* shell wants to exit(exitstatus) */
 
 
 /*

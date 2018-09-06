@@ -1,4 +1,4 @@
-/*	$NetBSD: am79c950.c,v 1.38.12.2 2018/07/28 04:37:36 pgoyette Exp $	*/
+/*	$NetBSD: am79c950.c,v 1.38.12.3 2018/09/06 06:55:37 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1997 David Huang <khym@bga.com>
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: am79c950.c,v 1.38.12.2 2018/07/28 04:37:36 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: am79c950.c,v 1.38.12.3 2018/09/06 06:55:37 pgoyette Exp $");
 
 #include "opt_inet.h"
 
@@ -634,7 +634,7 @@ mace_get(struct mc_softc *sc, uint8_t *pkt, int totlen)
 			}
 			len = MCLBYTES;
 		}
-		m->m_len = len = min(totlen, len);
+		m->m_len = len = uimin(totlen, len);
 		memcpy(mtod(m, void *), pkt, len);
 		pkt += len;
 		totlen -= len;

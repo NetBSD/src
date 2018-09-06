@@ -1,0 +1,202 @@
+<!DOCTYPE book [
+<!ENTITY Scaron "&#x160;">
+<!ENTITY scaron "&#x161;">
+<!ENTITY ccaron "&#x10D;">
+<!ENTITY aacute "&#x0E1;">
+<!ENTITY iacute "&#x0ED;">
+<!ENTITY mdash "&#8212;">
+<!ENTITY ouml "&#xf6;">]>
+<!--
+ - Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ -
+ - This Source Code Form is subject to the terms of the Mozilla Public
+ - License, v. 2.0. If a copy of the MPL was not distributed with this
+ - file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ -
+ - See the COPYRIGHT file distributed with this work for additional
+ - information regarding copyright ownership.
+-->
+
+<section xmlns:db="http://docbook.org/ns/docbook" version="5.0"><info/>
+  <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="noteversion.xml"/>
+  <section xml:id="relnotes_intro"><info><title>Introduction</title></info>
+    <para>
+      This document summarizes changes since the last production
+      release on the BIND 9.12 branch. Please see the
+      <filename>CHANGES</filename> for a further list of bug fixes
+      and other changes.
+    </para>
+  </section>
+
+  <section xml:id="relnotes_download"><info><title>Download</title></info>
+    <para>
+      The latest versions of BIND 9 software can always be found at
+      <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.isc.org/downloads/">http://www.isc.org/downloads/</link>.
+      There you will find additional information about each release,
+      source code, and pre-compiled versions for Microsoft Windows
+      operating systems.
+    </para>
+  </section>
+
+  <section xml:id="relnotes_security"><info><title>Security Fixes</title></info>
+    <itemizedlist>
+      <listitem>
+	<para>
+	  <command>named</command> could crash during recursive processing
+	  of DNAME records when <command>deny-answer-aliases</command> was
+	  in use. This flaw is disclosed in CVE-2018-5740. [GL #387]
+	</para>
+      </listitem>
+      <listitem>
+	<para>
+	  When recursion is enabled but the <command>allow-recursion</command>
+	  and <command>allow-query-cache</command> ACLs are not specified, they
+	  should be limited to local networks, but they were inadvertently set
+	  to match the default <command>allow-query</command>, thus allowing
+	  remote queries. This flaw is disclosed in CVE-2018-5738. [GL #309]
+	</para>
+      </listitem>
+      <listitem>
+	<para>
+	  The serve-stale feature could cause an assertion failure in
+	  rbtdb.c even when stale-answer-enable was false. The
+	  simultaneous use of stale cache records and NSEC aggressive
+	  negative caching could trigger a recursion loop in the
+	  <command>named</command> process. This flaw is disclosed in
+	  CVE-2018-5737. [GL #185]
+	</para>
+      </listitem>
+      <listitem>
+	<para>
+	  A bug in zone database reference counting could lead to a crash
+	  when multiple versions of a slave zone were transferred from a
+	  master in close succession. This flaw is disclosed in
+	  CVE-2018-5736. [GL #134]
+	</para>
+      </listitem>
+    </itemizedlist>
+  </section>
+
+  <section xml:id="relnotes_features"><info><title>New Features</title></info>
+    <itemizedlist>
+      <listitem>
+	<para>
+	  <command>update-policy</command> rules that otherwise ignore the
+	  name field now require that it be set to "." to ensure that any
+	  type list present is properly interpreted.  Previously, if the
+	  name field was omitted from the rule declaration but a type list
+	  was present, it wouldn't be interpreted as expected.
+	</para>
+      </listitem>
+      <listitem>
+	<para>
+	  <command>named</command> now supports the "root key sentinel"
+	  mechanism. This enables validating resolvers to indicate
+	  which trust anchors are configured for the root, so that
+	  information about root key rollover status can be gathered.
+	  To disable this feature, add
+	  <command>root-key-sentinel no;</command> to
+	  <filename>named.conf</filename>. [GL #37]
+	</para>
+      </listitem>
+      <listitem>
+	<para>
+	  Add the ability to not return a DNS COOKIE option when one
+	  is present in the request.  To prevent a cookie being returned
+	  add <command>answer-cookie no;</command> to
+	  <filename>named.conf</filename>. [GL #173]
+	</para>
+	<para>
+	  <command>answer-cookie no</command> is only intended as a
+	  temporary measure, for use when <command>named</command>
+	  shares an IP address with other servers that do not yet
+	  support DNS COOKIE.  A mismatch between servers on the
+	  same address is not expected to cause operational problems,
+	  but the option to disable COOKIE responses so that all
+	  servers have the same behavior is provided out of an
+	  abundance of caution. DNS COOKIE is an important security
+	  mechanism, and should not be disabled unless absolutely
+	  necessary.
+	</para>
+      </listitem>
+    </itemizedlist>
+  </section>
+
+  <section xml:id="relnotes_changes"><info><title>Feature Changes</title></info>
+    <itemizedlist>
+      <listitem>
+	<para>
+	  BIND now can be compiled against libidn2 library to add
+	  IDNA2008 support.  Previously BIND only supported IDNA2003
+	  using (now obsolete) idnkit-1 library.
+	</para>
+      </listitem>
+      <listitem>
+	<para>
+	  <command>dig +noidnin</command> can be used to disable IDN
+	  processing on the input domain name, when BIND is compiled
+	  with IDN support.
+	</para>
+      </listitem>
+    </itemizedlist>
+  </section>
+
+  <section xml:id="relnotes_bugs"><info><title>Bug Fixes</title></info>
+    <itemizedlist>
+      <listitem>
+	<para>
+	  <command>named</command> now rejects excessively large
+	  incremental (IXFR) zone transfers in order to prevent
+	  possible corruption of journal files which could cause
+	  <command>named</command> to abort when loading zones. [GL #339]
+	</para>
+      </listitem>
+    </itemizedlist>
+  </section>
+
+  <section xml:id="relnotes_license"><info><title>License</title></info>
+    <para>
+      BIND is open source software licenced under the terms of the Mozilla
+      Public License, version 2.0 (see the <filename>LICENSE</filename>
+      file for the full text).
+    </para>
+    <para>
+      The license requires that if you make changes to BIND and distribute
+      them outside your organization, those changes must be published under
+      the same license. It does not require that you publish or disclose
+      anything other than the changes you have made to our software.  This
+      requirement does not affect anyone who is using BIND, with or without
+      modifications, without redistributing it, nor anyone redistributing
+      BIND without changes.
+    </para>
+    <para>
+      Those wishing to discuss license compliance may contact ISC at
+      <link
+	xmlns:xlink="http://www.w3.org/1999/xlink"
+	xlink:href="https://www.isc.org/mission/contact/">
+	https://www.isc.org/mission/contact/</link>.
+    </para>
+  </section>
+
+  <section xml:id="end_of_life"><info><title>End of Life</title></info>
+    <para>
+      The end-of-life date for BIND 9.12 has not yet been determined.
+      However, it is not intended to be an Extended Support Version (ESV)
+      branch; accordingly, support will end after the next stable
+      branch (9.14) becomes available.  Those needing a longer-lived
+      branch are encouraged to use the current ESV, BIND 9.11, which
+      will be supported until December 2021. See
+      <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://www.isc.org/downloads/software-support-policy/">https://www.isc.org/downloads/software-support-policy/</link>
+      for details of ISC's software support policy.
+    </para>
+  </section>
+
+  <section xml:id="relnotes_thanks"><info><title>Thank You</title></info>
+    <para>
+      Thank you to everyone who assisted us in making this release possible.
+      If you would like to contribute to ISC to assist us in continuing to
+      make quality open source software, please visit our donations page at
+      <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.isc.org/donate/">http://www.isc.org/donate/</link>.
+    </para>
+  </section>
+</section>

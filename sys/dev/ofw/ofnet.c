@@ -1,4 +1,4 @@
-/*	$NetBSD: ofnet.c,v 1.57.14.2 2018/07/28 04:37:46 pgoyette Exp $	*/
+/*	$NetBSD: ofnet.c,v 1.57.14.3 2018/09/06 06:55:51 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofnet.c,v 1.57.14.2 2018/07/28 04:37:46 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofnet.c,v 1.57.14.3 2018/09/06 06:55:51 pgoyette Exp $");
 
 #include "ofnet.h"
 #include "opt_inet.h"
@@ -223,7 +223,7 @@ ofnet_read(struct ofnet_softc *of)
 				m->m_data = newdata;
 			}
 
-			m->m_len = l = min(len, l);
+			m->m_len = l = uimin(len, l);
 			memcpy(mtod(m, char *), bufp, l);
 			bufp += l;
 			len -= l;

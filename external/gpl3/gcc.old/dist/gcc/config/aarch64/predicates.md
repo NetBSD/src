@@ -1,5 +1,5 @@
 ;; Machine description for AArch64 architecture.
-;; Copyright (C) 2009-2015 Free Software Foundation, Inc.
+;; Copyright (C) 2009-2016 Free Software Foundation, Inc.
 ;; Contributed by ARM Ltd.
 ;;
 ;; This file is part of GCC.
@@ -43,23 +43,6 @@
   (ior (match_operand 0 "register_operand")
        (match_operand 0 "aarch64_ccmp_immediate")))
 
-(define_special_predicate "ccmp_cc_register"
-  (and (match_code "reg")
-       (and (match_test "REGNO (op) == CC_REGNUM")
-	    (ior (match_test "mode == GET_MODE (op)")
-		 (match_test "mode == VOIDmode
-			      && (GET_MODE (op) == CC_DNEmode
-				  || GET_MODE (op) == CC_DEQmode
-				  || GET_MODE (op) == CC_DLEmode
-				  || GET_MODE (op) == CC_DLTmode
-				  || GET_MODE (op) == CC_DGEmode
-				  || GET_MODE (op) == CC_DGTmode
-				  || GET_MODE (op) == CC_DLEUmode
-				  || GET_MODE (op) == CC_DLTUmode
-				  || GET_MODE (op) == CC_DGEUmode
-				  || GET_MODE (op) == CC_DGTUmode)"))))
-)
-
 (define_predicate "aarch64_simd_register"
   (and (match_code "reg")
        (ior (match_test "REGNO_REG_CLASS (REGNO (op)) == FP_LO_REGS")
@@ -87,6 +70,13 @@
        (and (match_code "const_double")
 	    (match_test "aarch64_float_const_zero_rtx_p (op)"))))
 
+(define_predicate "aarch64_fp_pow2"
+  (and (match_code "const_double")
+	(match_test "aarch64_fpconst_pow_of_2 (op) > 0")))
+
+(define_predicate "aarch64_fp_vec_pow2"
+  (match_test "aarch64_vec_fpconst_pow_of_2 (op) > 0"))
+
 (define_predicate "aarch64_plus_immediate"
   (and (match_code "const_int")
        (ior (match_test "aarch64_uimm12_shift (INTVAL (op))")
@@ -99,6 +89,10 @@
 (define_predicate "aarch64_pluslong_immediate"
   (and (match_code "const_int")
        (match_test "(INTVAL (op) < 0xffffff && INTVAL (op) > -0xffffff)")))
+
+(define_predicate "aarch64_pluslong_strict_immedate"
+  (and (match_operand 0 "aarch64_pluslong_immediate")
+       (not (match_operand 0 "aarch64_plus_immediate"))))
 
 (define_predicate "aarch64_pluslong_operand"
   (ior (match_operand 0 "register_operand")
@@ -138,6 +132,11 @@
   (and (match_code "const_int")
        (match_test "(unsigned HOST_WIDE_INT) INTVAL (op) <= 4")))
 
+;; An immediate that fits into 24 bits.
+(define_predicate "aarch64_imm24"
+  (and (match_code "const_int")
+       (match_test "IN_RANGE (UINTVAL (op), 0, 0xffffff)")))
+
 (define_predicate "aarch64_pwr_imm3"
   (and (match_code "const_int")
        (match_test "INTVAL (op) != 0
@@ -165,7 +164,7 @@
 (define_predicate "aarch64_valid_symref"
   (match_code "const, symbol_ref, label_ref")
 {
-  return (aarch64_classify_symbolic_expression (op, SYMBOL_CONTEXT_ADR)
+  return (aarch64_classify_symbolic_expression (op)
 	  != SYMBOL_FORCE_TO_MEM);
 })
 
@@ -215,7 +214,7 @@
   (and (match_code "reg,subreg,mem,const,const_int,symbol_ref,label_ref,high")
        (ior (match_operand 0 "register_operand")
 	    (ior (match_operand 0 "memory_operand")
-		 (match_test "aarch64_mov_operand_p (op, SYMBOL_CONTEXT_ADR, mode)")))))
+		 (match_test "aarch64_mov_operand_p (op, mode)")))))
 
 (define_predicate "aarch64_movti_operand"
   (and (match_code "reg,subreg,mem,const_int")
@@ -230,10 +229,19 @@
 
 ;; True for integer comparisons and for FP comparisons other than LTGT or UNEQ.
 (define_special_predicate "aarch64_comparison_operator"
-  (match_code "eq,ne,le,lt,ge,gt,geu,gtu,leu,ltu,unordered,ordered,unlt,unle,unge,ungt"))
+  (match_code "eq,ne,le,lt,ge,gt,geu,gtu,leu,ltu,unordered,
+	       ordered,unlt,unle,unge,ungt"))
+
+;; Same as aarch64_comparison_operator but don't ignore the mode.
+;; RTL SET operations require their operands source and destination have
+;; the same modes, so we can't ignore the modes there.  See PR target/69161.
+(define_predicate "aarch64_comparison_operator_mode"
+  (match_code "eq,ne,le,lt,ge,gt,geu,gtu,leu,ltu,unordered,
+	       ordered,unlt,unle,unge,ungt"))
 
 (define_special_predicate "aarch64_comparison_operation"
-  (match_code "eq,ne,le,lt,ge,gt,geu,gtu,leu,ltu,unordered,ordered,unlt,unle,unge,ungt")
+  (match_code "eq,ne,le,lt,ge,gt,geu,gtu,leu,ltu,unordered,
+	       ordered,unlt,unle,unge,ungt")
 {
   if (XEXP (op, 1) != const0_rtx)
     return false;
@@ -294,7 +302,7 @@
 })
 
 (define_predicate "aarch64_simd_reg_or_zero"
-  (and (match_code "reg,subreg,const_int,const_vector")
+  (and (match_code "reg,subreg,const_int,const_double,const_vector")
        (ior (match_operand 0 "register_operand")
            (ior (match_test "op == const0_rtx")
                 (match_test "aarch64_simd_imm_zero_p (op, mode)")))))
@@ -381,3 +389,7 @@
 (define_predicate "aarch64_simd_shift_imm_bitsize_di"
   (and (match_code "const_int")
        (match_test "IN_RANGE (INTVAL (op), 0, 64)")))
+
+(define_predicate "aarch64_constant_pool_symref"
+   (and (match_code "symbol_ref")
+	(match_test "CONSTANT_POOL_ADDRESS_P (op)")))

@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_mbuf.c,v 1.18.14.1 2018/07/28 04:38:10 pgoyette Exp $	*/
+/*	$NetBSD: npf_mbuf.c,v 1.18.14.2 2018/09/06 06:56:44 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_mbuf.c,v 1.18.14.1 2018/07/28 04:38:10 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_mbuf.c,v 1.18.14.2 2018/09/06 06:56:44 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -46,6 +46,13 @@ __KERNEL_RCSID(0, "$NetBSD: npf_mbuf.c,v 1.18.14.1 2018/07/28 04:38:10 pgoyette 
 #endif
 
 #include "npf_impl.h"
+
+#ifdef _KERNEL
+#ifdef INET6
+#include <netinet6/in6.h>
+#include <netinet6/in6_offload.h>
+#endif
+#endif
 
 #if defined(_NPF_STANDALONE)
 #define	m_length(m)		(nbuf)->nb_mops->getchainlen(m)
@@ -279,7 +286,7 @@ nbuf_cksum_barrier(nbuf_t *nbuf, int di)
 	}
 #ifdef INET6
 	if (m->m_pkthdr.csum_flags & (M_CSUM_TCPv6 | M_CSUM_UDPv6)) {
-		in6_delayed_cksum(m);
+		in6_undefer_cksum_tcpudp(m);
 		m->m_pkthdr.csum_flags &= ~(M_CSUM_TCPv6 | M_CSUM_UDPv6);
 		return true;
 	}

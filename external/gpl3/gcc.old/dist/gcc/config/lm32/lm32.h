@@ -1,7 +1,7 @@
 /* Definitions of target machine for GNU compiler, Lattice Mico32 architecture.
    Contributed by Jon Beniston <jon@beniston.com>
 
-   Copyright (C) 2009-2015 Free Software Foundation, Inc.
+   Copyright (C) 2009-2016 Free Software Foundation, Inc.
 
    This file is part of GCC.
 
@@ -302,8 +302,6 @@ enum reg_class
   LM32_NUM_INTS ((MODE) == BLKmode ?                     \
   int_size_in_bytes (TYPE) : GET_MODE_SIZE (MODE))
 
-#define STRUCT_VALUE 0
-
 /*---------------------------*/
 /* Function entry and exit.  */
 /*---------------------------*/
@@ -354,7 +352,7 @@ enum reg_class
 
 #define SLOW_BYTE_ACCESS 1
 
-#define NO_FUNCTION_CSE
+#define NO_FUNCTION_CSE 1
 
 #define BRANCH_COST(speed_p, predictable_p) 4
 
@@ -437,7 +435,7 @@ do 									\
       switch_to_section (bss_section);					\
       fprintf ((FILE), "%s", COMMON_ASM_OP);				\
       assemble_name ((FILE), (NAME));					\
-      fprintf ((FILE), ","HOST_WIDE_INT_PRINT_UNSIGNED",%u\n",          \
+      fprintf ((FILE), "," HOST_WIDE_INT_PRINT_UNSIGNED",%u\n",          \
                (SIZE), (ALIGN) / BITS_PER_UNIT);	                \
     }									\
 }									\
@@ -521,11 +519,11 @@ do {                                                            \
 
 #define CASE_VECTOR_MODE Pmode
 
-#define WORD_REGISTER_OPERATIONS
+#define WORD_REGISTER_OPERATIONS 1
 
 #define LOAD_EXTEND_OP(MODE) ZERO_EXTEND
 
-#define SHORT_IMMEDIATES_SIGN_EXTEND
+#define SHORT_IMMEDIATES_SIGN_EXTEND 1
 
 #define MOVE_MAX        UNITS_PER_WORD
 #define MAX_MOVE_MAX    4

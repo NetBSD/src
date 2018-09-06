@@ -1,4 +1,4 @@
-#	$NetBSD: files.kern,v 1.16.2.7 2018/08/02 05:34:09 pgoyette Exp $
+#	$NetBSD: files.kern,v 1.16.2.8 2018/09/06 06:56:41 pgoyette Exp $
 
 #
 # kernel sources
@@ -116,8 +116,6 @@ file	kern/subr_iostat.c		kern
 file	kern/subr_ipi.c			kern
 file	kern/subr_kcpuset.c		kern
 defflag	opt_kmem.h			KMEM_GUARD
-					KMEM_POISON
-					KMEM_REDZONE
 					KMEM_SIZE
 defparam opt_kmem.h			KMEM_GUARD_DEPTH
 file	kern/subr_kmem.c		kern
@@ -218,3 +216,9 @@ file	miscfs/genfs/layer_vfsops.c	layerfs
 file	miscfs/genfs/layer_vnops.c	layerfs
 
 file	miscfs/specfs/spec_vnops.c	vfs
+
+defflag	KUBSAN
+prefix	../common/lib/libc/misc
+file	ubsan.c				kubsan
+prefix
+makeoptions	kubsan	CFLAGS+="-fsanitize=undefined"

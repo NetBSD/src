@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.66.38.2 2018/06/25 07:25:46 pgoyette Exp $ */
+/* $NetBSD: trap.c,v 1.66.38.3 2018/09/06 06:55:43 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@netbsd.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.66.38.2 2018/06/25 07:25:46 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.66.38.3 2018/09/06 06:55:43 pgoyette Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -46,6 +46,12 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.66.38.2 2018/06/25 07:25:46 pgoyette Exp 
 #include <machine/intr.h>
 #include <machine/thunk.h>
 
+#include "opt_kgdb.h"
+
+#ifdef KGDB
+#include <sys/kgdb.h>
+#endif
+
 /* define maximum signal number */
 #ifndef NSIG
 #define NSIG 64
@@ -60,6 +66,8 @@ static sigfunc_t illegal_instruction;
 static sigfunc_t alarm;
 static sigfunc_t sigio;
 static sigfunc_t pass_on;
+
+void kgdb_kernel_trap(int signo, vaddr_t pc, vaddr_t va, ucontext_t *ctx);
 
 /* raw signal handlers */
 static char    sig_stack[SIGSTKSZ];
@@ -123,7 +131,7 @@ setup_signal_handlers(void)
 	/* INT */	/* ttycons ^C */
 	/* QUIT */
 	signal_intr_establish(SIGILL, illegal_instruction);
-	/* TRAP */
+	signal_intr_establish(SIGTRAP, pass_on); 	/* special */
 	/* ABRT */
 	/* SIGEMT */
 	signal_intr_establish(SIGFPE, pass_on);
@@ -317,23 +325,39 @@ handle_signal(int sig, siginfo_t *info, void *ctx)
 	f = sig_funcs[sig];
 	KASSERT(f);
 
-	l = curlwp; KASSERT(l);
-	pcb = lwp_getpcb(l); KASSERT(pcb);
-
-	/* get address of possible faulted memory access and page aligne it */
+	/* get address of possible faulted memory access and page align it */
 	va = (vaddr_t) info->si_addr;
 	va = trunc_page(va);
 
 	/* get PC address of possibly faulted instruction */
 	pc = md_get_pc(ctx);
 
-	/* nest it on the stack */
+	/*
+	 * short-cut for SIGTRAP as we have NO indication anything is valid
+	 */
+#ifdef KGDB
+	if (sig == SIGTRAP) {
+		from_userland = 0;
+		if (pc < kmem_user_end)
+			from_userland = 1;
+		if (!from_userland) {
+			kgdb_kernel_trap(sig, pc, va, ucp);
+			return;
+		}
+	}
+#endif
+
+	/* get stack pointer for nesting */
 	sp = md_get_sp(ctx);
 
 	if (sig == SIGBUS || sig == SIGSEGV)
 		print_mem_access_siginfo(sig, info, ctx, pc, va, sp);
 	if (sig == SIGILL)
 		print_illegal_instruction_siginfo(sig, info, ctx, pc, va, sp);
+
+	/* get thread */
+	l = curlwp; KASSERT(l);
+	pcb = lwp_getpcb(l); KASSERT(pcb);
 
 	/* currently running on the dedicated signal stack */
 

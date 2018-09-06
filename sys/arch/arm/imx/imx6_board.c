@@ -1,4 +1,4 @@
-/*	$NetBSD: imx6_board.c,v 1.9.4.1 2018/06/25 07:25:39 pgoyette Exp $	*/
+/*	$NetBSD: imx6_board.c,v 1.9.4.2 2018/09/06 06:55:26 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2012  Genetec Corporation.  All rights reserved.
@@ -27,11 +27,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: imx6_board.c,v 1.9.4.1 2018/06/25 07:25:39 pgoyette Exp $");
+__KERNEL_RCSID(1, "$NetBSD: imx6_board.c,v 1.9.4.2 2018/09/06 06:55:26 pgoyette Exp $");
 
-#include "opt_imx.h"
 #include "arml2cc.h"
 #include "opt_cputypes.h"
+#include "opt_imx.h"
 
 #include <sys/param.h>
 #include <sys/bus.h>

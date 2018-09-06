@@ -1,7 +1,7 @@
 /* Tree lowering to gimple for middle end use only.  
    This converts the GENERIC functions-as-trees tree representation into
    the GIMPLE form.
-   Copyright (C) 2013-2015 Free Software Foundation, Inc.
+   Copyright (C) 2013-2016 Free Software Foundation, Inc.
    Major work done by Sebastian Pop <s.pop@laposte.net>,
    Diego Novillo <dnovillo@redhat.com> and Jason Merrill <jason@redhat.com>.
 
@@ -24,38 +24,16 @@ along with GCC; see the file COPYING3.  If not see
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
-#include "hash-set.h"
-#include "machmode.h"
-#include "vec.h"
-#include "double-int.h"
-#include "input.h"
-#include "alias.h"
-#include "symtab.h"
-#include "options.h"
-#include "wide-int.h"
-#include "inchash.h"
+#include "backend.h"
 #include "tree.h"
-#include "fold-const.h"
+#include "gimple.h"
+#include "ssa.h"
 #include "stmt.h"
 #include "stor-layout.h"
-#include "predict.h"
-#include "tm.h"
-#include "hard-reg-set.h"
-#include "input.h"
-#include "function.h"
-#include "basic-block.h"
-#include "tree-ssa-alias.h"
-#include "internal-fn.h"
 #include "tree-eh.h"
-#include "gimple-expr.h"
-#include "is-a.h"
-#include "gimple.h"
 #include "gimple-iterator.h"
 #include "gimplify.h"
 #include "gimplify-me.h"
-#include "gimple-ssa.h"
-#include "stringpool.h"
-#include "tree-ssanames.h"
 
 
 /* Expand EXPR to list of gimple statements STMTS.  GIMPLE_TEST_F specifies
@@ -172,12 +150,12 @@ force_gimple_operand_gsi (gimple_stmt_iterator *gsi, tree expr,
    GIMPLE statements are inserted before *GSI_P.  */
 
 void
-gimple_regimplify_operands (gimple stmt, gimple_stmt_iterator *gsi_p)
+gimple_regimplify_operands (gimple *stmt, gimple_stmt_iterator *gsi_p)
 {
   size_t i, num_ops;
   tree lhs;
   gimple_seq pre = NULL;
-  gimple post_stmt = NULL;
+  gimple *post_stmt = NULL;
 
   push_gimplify_context (gimple_in_ssa_p (cfun));
 
@@ -321,7 +299,8 @@ gimple_regimplify_operands (gimple stmt, gimple_stmt_iterator *gsi_p)
 	  if (need_temp)
 	    {
 	      tree temp = create_tmp_reg (TREE_TYPE (lhs));
-	      if (gimple_in_ssa_p (cfun))
+	      if (gimple_in_ssa_p (cfun)
+		  && is_gimple_reg_type (TREE_TYPE (lhs)))
 		temp = make_ssa_name (temp);
 	      gimple_set_lhs (stmt, temp);
 	      post_stmt = gimple_build_assign (lhs, temp);

@@ -1,6 +1,6 @@
 // Core algorithmic facilities -*- C++ -*-
 
-// Copyright (C) 2001-2015 Free Software Foundation, Inc.
+// Copyright (C) 2001-2016 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -173,7 +173,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 				  _ForwardIterator2>)
       __glibcxx_requires_valid_range(__first1, __last1);
 
-      for (; __first1 != __last1; ++__first1, ++__first2)
+      for (; __first1 != __last1; ++__first1, (void)++__first2)
 	std::iter_swap(__first1, __first2);
       return __first2;
     }
@@ -270,28 +270,12 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       return __a;
     }
 
-  // If _Iterator is a __normal_iterator return its base (a plain pointer,
-  // normally) otherwise return it untouched.  See copy, fill, ... 
+  // Fallback implementation of the function in bits/stl_iterator.h used to
+  // remove the __normal_iterator wrapper. See copy, fill, ...
   template<typename _Iterator>
-    struct _Niter_base
-    : _Iter_base<_Iterator, __is_normal_iterator<_Iterator>::__value>
-    { };
-
-  template<typename _Iterator>
-    inline typename _Niter_base<_Iterator>::iterator_type
+    inline _Iterator
     __niter_base(_Iterator __it)
-    { return std::_Niter_base<_Iterator>::_S_base(__it); }
-
-  // Likewise, for move_iterator.
-  template<typename _Iterator>
-    struct _Miter_base
-    : _Iter_base<_Iterator, __is_move_iterator<_Iterator>::__value>
-    { };
-
-  template<typename _Iterator>
-    inline typename _Miter_base<_Iterator>::iterator_type
-    __miter_base(_Iterator __it)
-    { return std::_Miter_base<_Iterator>::_S_base(__it); }
+    { return __it; }
 
   // All of these auxiliary structs serve two purposes.  (1) Replace
   // calls to copy with memmove whenever possible.  (Memmove, not memcpy,
@@ -306,7 +290,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
         static _OI
         __copy_m(_II __first, _II __last, _OI __result)
         {
-	  for (; __first != __last; ++__result, ++__first)
+	  for (; __first != __last; ++__result, (void)++__first)
 	    *__result = *__first;
 	  return __result;
 	}
@@ -320,7 +304,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
         static _OI
         __copy_m(_II __first, _II __last, _OI __result)
         {
-	  for (; __first != __last; ++__result, ++__first)
+	  for (; __first != __last; ++__result, (void)++__first)
 	    *__result = std::move(*__first);
 	  return __result;
 	}
@@ -812,7 +796,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
         static bool
         equal(_II1 __first1, _II1 __last1, _II2 __first2)
         {
-	  for (; __first1 != __last1; ++__first1, ++__first2)
+	  for (; __first1 != __last1; ++__first1, (void)++__first2)
 	    if (!(*__first1 == *__first2))
 	      return false;
 	  return true;
@@ -894,7 +878,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 
       __last1 = __rai_type::__newlast1(__first1, __last1, __first2, __last2);
       for (; __first1 != __last1 && __rai_type::__cnd2(__first2, __last2);
-	   ++__first1, ++__first2)
+	   ++__first1, (void)++__first2)
 	{
 	  if (__comp(__first1, __first2))
 	    return true;
@@ -1094,7 +1078,7 @@ _GLIBCXX_BEGIN_NAMESPACE_ALGO
       __glibcxx_function_requires(_InputIteratorConcept<_IIter2>)
       __glibcxx_requires_valid_range(__first1, __last1);
 
-      for (; __first1 != __last1; ++__first1, ++__first2)
+      for (; __first1 != __last1; ++__first1, (void)++__first2)
 	if (!bool(__binary_pred(*__first1, *__first2)))
 	  return false;
       return true;
@@ -1143,7 +1127,8 @@ _GLIBCXX_BEGIN_NAMESPACE_ALGO
 	  return _GLIBCXX_STD_A::equal(__first1, __last1, __first2);
 	}
 
-      for (; __first1 != __last1 && __first2 != __last2; ++__first1, ++__first2)
+      for (; __first1 != __last1 && __first2 != __last2;
+	  ++__first1, (void)++__first2)
 	if (!(*__first1 == *__first2))
 	  return false;
       return __first1 == __last1 && __first2 == __last2;
@@ -1190,7 +1175,8 @@ _GLIBCXX_BEGIN_NAMESPACE_ALGO
 				       __binary_pred);
 	}
 
-      for (; __first1 != __last1 && __first2 != __last2; ++__first1, ++__first2)
+      for (; __first1 != __last1 && __first2 != __last2;
+	  ++__first1, (void)++__first2)
 	if (!bool(__binary_pred(*__first1, *__first2)))
 	  return false;
       return __first1 == __last1 && __first2 == __last2;

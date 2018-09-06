@@ -1,6 +1,6 @@
 // class template regex -*- C++ -*-
 
-// Copyright (C) 2013-2015 Free Software Foundation, Inc.
+// Copyright (C) 2013-2016 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -27,13 +27,6 @@
  *  This is an internal header file, included by other library headers.
  *  Do not attempt to use it directly. @headername{regex}
  */
-
-// A non-standard switch to let the user pick the matching algorithm.
-// If _GLIBCXX_REGEX_USE_THOMPSON_NFA is defined, the thompson NFA
-// algorithm will be used. This algorithm is not enabled by default,
-// and cannot be used if the regex contains back-references, but has better
-// (polynomial instead of exponential) worst case performance.
-// See __regex_algo_impl below.
 
 namespace std _GLIBCXX_VISIBILITY(default)
 {
@@ -67,16 +60,10 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       for (auto& __it : __res)
 	__it.matched = false;
 
-      // __policy is used by testsuites so that they can use Thompson NFA
-      // without defining a macro. Users should define
-      // _GLIBCXX_REGEX_USE_THOMPSON_NFA if they need to use this approach.
       bool __ret;
-      if (!__re._M_automaton->_M_has_backref
-	  && !(__re._M_flags & regex_constants::ECMAScript)
-#ifndef _GLIBCXX_REGEX_USE_THOMPSON_NFA
-	  && __policy == _RegexExecutorPolicy::_S_alternate
-#endif
-	  )
+      if ((__re.flags() & regex_constants::__polynomial)
+	  || (__policy == _RegexExecutorPolicy::_S_alternate
+	      && !__re._M_automaton->_M_has_backref))
 	{
 	  _Executor<_BiIter, _Alloc, _TraitsT, false>
 	    __executor(__s, __e, __m, __re, __flags);
@@ -375,7 +362,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 	   const match_results<_Bi_iter, _Alloc>::char_type* __fmt_last,
 	   match_flag_type __flags) const
     {
-      _GLIBCXX_DEBUG_ASSERT( ready() );
+      __glibcxx_assert( ready() );
       regex_traits<char_type> __traits;
       typedef std::ctype<char_type> __ctype_type;
       const __ctype_type&
@@ -549,7 +536,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 				   | regex_constants::match_not_null
 				   | regex_constants::match_continuous))
 		    {
-		      _GLIBCXX_DEBUG_ASSERT(_M_match[0].matched);
+		      __glibcxx_assert(_M_match[0].matched);
 		      auto& __prefix = _M_match._M_prefix();
 		      __prefix.first = __prefix_first;
 		      __prefix.matched = __prefix.first != __prefix.second;
@@ -564,7 +551,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 	  _M_flags |= regex_constants::match_prev_avail;
 	  if (regex_search(__start, _M_end, _M_match, *_M_pregex, _M_flags))
 	    {
-	      _GLIBCXX_DEBUG_ASSERT(_M_match[0].matched);
+	      __glibcxx_assert(_M_match[0].matched);
 	      auto& __prefix = _M_match._M_prefix();
 	      __prefix.first = __prefix_first;
 	      __prefix.matched = __prefix.first != __prefix.second;

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.zfsmod,v 1.6.16.1 2018/06/25 07:26:06 pgoyette Exp $
+#	$NetBSD: Makefile.zfsmod,v 1.6.16.2 2018/09/06 06:56:44 pgoyette Exp $
 
 ZFSDIR=	${S}/../external/cddl/osnet
 
@@ -118,7 +118,6 @@ SRCS+= 	zfs_acl.c
 SRCS+=	zfs_stub.c
 
 WARNS=		0
-NOGCCERROR=	yes
 
 CWARNFLAGS+=	-Wall
 CWARNFLAGS+=	-Wno-unknown-pragmas

@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.h,v 1.19.14.1 2018/07/28 04:32:56 pgoyette Exp $	*/
+/*	$NetBSD: eval.h,v 1.19.14.2 2018/09/06 06:51:32 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -78,4 +78,3 @@ void reset_eval(void);
 #define EV_EXIT		0x01	/* exit after evaluating tree */
 #define EV_TESTED	0x02	/* exit status is checked; ignore -e flag */
 #define EV_BACKCMD	0x04	/* command executing within back quotes */
-#define EV_MORE		0x08	/* more commands in this sub-shell */

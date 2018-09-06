@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsata.c,v 1.39.2.1 2018/04/16 01:59:57 pgoyette Exp $	*/
+/*	$NetBSD: mvsata.c,v 1.39.2.2 2018/09/06 06:55:49 pgoyette Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.39.2.1 2018/04/16 01:59:57 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.39.2.2 2018/09/06 06:55:49 pgoyette Exp $");
 
 #include "opt_mvsata.h"
 
@@ -255,7 +255,7 @@ mvsata_pmp_select(struct mvsata_port *mvport, int pmpport)
 }
 
 int
-mvsata_attach(struct mvsata_softc *sc, struct mvsata_product *product,
+mvsata_attach(struct mvsata_softc *sc, const struct mvsata_product *product,
 	      int (*mvsata_sreset)(struct mvsata_softc *),
 	      int (*mvsata_misc_reset)(struct mvsata_softc *),
 	      int read_pre_amps)
@@ -1240,7 +1240,7 @@ do_pio:
 			cyl = blkno;
 			head |= WDSD_CHS;
 		}
-		ata_bio->nblks = min(nblks, drvp->multi);
+		ata_bio->nblks = uimin(nblks, drvp->multi);
 		ata_bio->nbytes = ata_bio->nblks * drvp->lp->d_secsize;
 		KASSERT(nblks == 1 || (ata_bio->flags & ATA_SINGLE) == 0);
 		if (ata_bio->nblks > 1)

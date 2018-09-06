@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_alloc.c,v 1.159.2.1 2018/07/28 04:38:12 pgoyette Exp $	*/
+/*	$NetBSD: ffs_alloc.c,v 1.159.2.2 2018/09/06 06:56:47 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.159.2.1 2018/07/28 04:38:12 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.159.2.2 2018/09/06 06:56:47 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -676,7 +676,7 @@ ffs_dirpref(struct inode *pip)
 	 * Avoid cylinder groups with no free blocks or inodes as that
 	 * triggers an I/O-expensive cylinder group scan.
 	 */
-	maxndir = min(avgndir + fs->fs_ipg / 16, fs->fs_ipg);
+	maxndir = uimin(avgndir + fs->fs_ipg / 16, fs->fs_ipg);
 	minifree = avgifree - avgifree / 4;
 	if (minifree < 1)
 		minifree = 1;
@@ -695,7 +695,7 @@ ffs_dirpref(struct inode *pip)
 	else
 		maxcontigdirs = 255;
 	if (fs->fs_avgfpdir > 0)
-		maxcontigdirs = min(maxcontigdirs,
+		maxcontigdirs = uimin(maxcontigdirs,
 				    fs->fs_ipg / fs->fs_avgfpdir);
 	if (maxcontigdirs == 0)
 		maxcontigdirs = 1;
@@ -1583,7 +1583,7 @@ ffs_blkfree_td(struct fs *fs, struct discardopdata *td)
 	int error;
 
 	while (td->size) {
-		todo = min(td->size,
+		todo = uimin(td->size,
 		  ffs_lfragtosize(fs, (fs->fs_frag - ffs_fragnum(fs, td->bno))));
 		error = UFS_WAPBL_BEGIN(mp);
 		if (error) {

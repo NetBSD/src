@@ -1,4 +1,4 @@
-# $NetBSD: genassym.cf,v 1.1.28.2 2018/07/28 04:37:25 pgoyette Exp $
+# $NetBSD: genassym.cf,v 1.1.28.3 2018/09/06 06:55:22 pgoyette Exp $
 #-
 # Copyright (c) 2014 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -120,6 +120,8 @@ define	L2_SIZE			L2_SIZE
 define	LX_BLKPAG_UXN		LX_BLKPAG_UXN
 define	LX_BLKPAG_PXN		LX_BLKPAG_PXN
 define	LX_BLKPAG_AF		LX_BLKPAG_AF
+define	LX_BLKPAG_AP		LX_BLKPAG_AP
+define	LX_BLKPAG_AP_RO		LX_BLKPAG_AP_RO
 define	LX_BLKPAG_AP_RW		LX_BLKPAG_AP_RW
 define	LX_BLKPAG_SH_IS		LX_BLKPAG_SH_IS
 define	LX_BLKPAG_ATTR_INDX_0	LX_BLKPAG_ATTR_INDX_0
@@ -297,10 +299,13 @@ define	FPREG_Q31		offsetof(struct fpreg, fp_reg[31])
 define	FPREG_FPCR		offsetof(struct fpreg, fpcr)
 define	FPREG_FPSR		offsetof(struct fpreg, fpsr)
 
+define	CPU_INFO_SIZE		sizeof(struct cpu_info)
 define	CI_CURPRIORITY		offsetof(struct cpu_info, ci_schedstate.spc_curpriority)
 define	CI_CURLWP		offsetof(struct cpu_info, ci_curlwp)
 define	CI_CPL			offsetof(struct cpu_info, ci_cpl)
 define	CI_CPUID		offsetof(struct cpu_info, ci_cpuid)
+define	CI_MIDR			offsetof(struct cpu_info, ci_midr)
+define	CI_MPIDR		offsetof(struct cpu_info, ci_mpidr)
 define	CI_ASTPENDING		offsetof(struct cpu_info, ci_astpending)
 define	CI_WANT_RESCHED		offsetof(struct cpu_info, ci_want_resched)
 define	CI_INTR_DEPTH		offsetof(struct cpu_info, ci_intr_depth)

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_enet.c,v 1.12.2.2 2018/07/28 04:37:28 pgoyette Exp $	*/
+/*	$NetBSD: if_enet.c,v 1.12.2.3 2018/09/06 06:55:26 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2014 Ryo Shimizu <ryo@nerv.org>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_enet.c,v 1.12.2.2 2018/07/28 04:37:28 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_enet.c,v 1.12.2.3 2018/09/06 06:55:26 pgoyette Exp $");
 
 #include "vlan.h"
 
@@ -279,7 +279,7 @@ enet_attach_common(device_t self, bus_space_tag_t iot,
 	    IFCAP_CSUM_TCPv6_Tx | IFCAP_CSUM_UDPv6_Tx |
 	    IFCAP_CSUM_TCPv6_Rx | IFCAP_CSUM_UDPv6_Rx;
 
-	IFQ_SET_MAXLEN(&ifp->if_snd, max(ENET_TX_RING_CNT, IFQ_MAXLEN));
+	IFQ_SET_MAXLEN(&ifp->if_snd, uimax(ENET_TX_RING_CNT, IFQ_MAXLEN));
 	IFQ_SET_READY(&ifp->if_snd);
 
 	/* setup MII */

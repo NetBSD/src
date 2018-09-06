@@ -1,4 +1,4 @@
-/*	$NetBSD: midway.c,v 1.101.2.1 2018/07/28 04:37:45 pgoyette Exp $	*/
+/*	$NetBSD: midway.c,v 1.101.2.2 2018/09/06 06:55:49 pgoyette Exp $	*/
 /*	(sync'd to midway.c 1.68)	*/
 
 /*
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: midway.c,v 1.101.2.1 2018/07/28 04:37:45 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: midway.c,v 1.101.2.2 2018/09/06 06:55:49 pgoyette Exp $");
 
 #include "opt_natm.h"
 
@@ -585,7 +585,7 @@ STATIC INLINE int en_dqneed(struct en_softc *sc, void *data, u_int len, u_int tx
       needalign = (((unsigned long) data) % sizeof(u_int32_t));
       if (needalign) {
         result++;
-        sz = min(len, sizeof(u_int32_t) - needalign);
+        sz = uimin(len, sizeof(u_int32_t) - needalign);
         len -= sz;
         data = (char *)data + sz;
       }
@@ -595,7 +595,7 @@ STATIC INLINE int en_dqneed(struct en_softc *sc, void *data, u_int len, u_int tx
       needalign = (((unsigned long) data) & sc->bestburstmask);
       if (needalign) {
 	result++;		/* alburst */
-        sz = min(len, sc->bestburstlen - needalign);
+        sz = uimin(len, sc->bestburstlen - needalign);
         len -= sz;
       }
     }
@@ -658,7 +658,7 @@ STATIC INLINE struct mbuf *en_mget(struct en_softc *sc, u_int totlen, u_int *drq
       }
       m->m_len = MCLBYTES;
     }
-    m->m_len = min(totlen, m->m_len);
+    m->m_len = uimin(totlen, m->m_len);
     totlen -= m->m_len;
     *mp = m;
     mp = &m->m_next;
@@ -2381,7 +2381,7 @@ STATIC void en_txlaunch(struct en_softc *sc, int chan, struct en_launch *l)
         count = 1;
         bcode = MIDDMA_2BYTE;
       } else {
-        cnt = min(cnt, len);		/* prevent overflow */
+        cnt = uimin(cnt, len);		/* prevent overflow */
         count = cnt;
         bcode = MIDDMA_BYTE;
       }

@@ -1,4 +1,4 @@
-/* $NetBSD: prom.c,v 1.15 2016/10/13 16:18:20 flxd Exp $ */
+/* $NetBSD: prom.c,v 1.15.14.1 2018/09/06 06:55:23 pgoyette Exp $ */
 
 /*  
  * Mach Operating System
@@ -134,7 +134,7 @@ prom_getenv(int id, char *buf, int len)
 	ret.bits = prom_dispatch(PROM_R_GETENV, id, abuf, 128);
 	if (ret.u.status & 0x4)
 		ret.u.retval = 0;
-	len = min(len - 1, ret.u.retval);
+	len = uimin(len - 1, ret.u.retval);
 	memcpy(buf, abuf, len);
 	buf[len] = '\0';
 

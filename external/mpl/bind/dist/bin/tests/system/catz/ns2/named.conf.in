@@ -1,0 +1,74 @@
+/*
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
+ */
+
+include "../../common/rndc.key";
+
+controls {
+	inet 10.53.0.2 port @CONTROLPORT@ allow { any; } keys { rndc_key; };
+};
+
+options {
+	query-source address 10.53.0.2;
+	notify-source 10.53.0.2;
+	transfer-source 10.53.0.2;
+	port @PORT@;
+	pid-file "named.pid";
+	listen-on { 10.53.0.2; };
+	listen-on-v6 { fd92:7065:b8e:ffff::2; };
+	notify no;
+	recursion no;
+	serial-query-rate 100;
+	catalog-zones {
+		zone "catalog1.example"
+			default-masters { 10.53.0.1; }
+			in-memory no
+			zone-directory "zonedir";
+		zone "catalog2.example"
+			default-masters { 10.53.0.1 port @EXTRAPORT1@; }
+			in-memory yes;
+		zone "catalog3.example"
+			default-masters { 10.53.0.1; }
+			zone-directory "nonexistent";
+#T1		zone "catalog4.example"
+#T1			default-masters { 10.53.0.1; };
+#T2		zone "catalog5.example"
+#T2			default-masters { 10.53.0.1; };
+	};
+};
+
+zone "catalog1.example" {
+	type slave;
+	file "catalog1.example.db";
+	masters { 10.53.0.1; };
+};
+
+zone "catalog2.example" {
+	type slave;
+	file "catalog2.example.db";
+	masters { 10.53.0.3; };
+};
+
+zone "catalog3.example" {
+	type slave;
+	file "catalog3.example.db";
+	masters { 10.53.0.1; };
+};
+
+zone "catalog4.example" {
+	type slave;
+	file "catalog4.example.db";
+	masters { 10.53.0.1; };
+};
+
+key tsig_key. {
+	secret "LSAnCU+Z";
+	algorithm hmac-md5;
+};

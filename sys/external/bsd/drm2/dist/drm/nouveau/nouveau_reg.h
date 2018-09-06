@@ -1,3 +1,5 @@
+/*	$NetBSD: nouveau_reg.h,v 1.1.1.1.30.1 2018/09/06 06:56:18 pgoyette Exp $	*/
+
 
 #define NV04_PFB_BOOT_0						0x00100000
 #	define NV04_PFB_BOOT_0_RAM_AMOUNT			0x00000003
@@ -72,7 +74,7 @@
 #    define NV_RAMHT_CONTEXT_VALID                         (1<<31)
 #    define NV_RAMHT_CONTEXT_CHANNEL_SHIFT                 24
 #    define NV_RAMHT_CONTEXT_ENGINE_SHIFT                  16
-#        define NV_RAMHT_CONTEXT_ENGINE_SOFTWARE           0
+#        define NV_RAMHT_CONTEXT_ENGINE_SW           0
 #        define NV_RAMHT_CONTEXT_ENGINE_GRAPHICS           1
 #    define NV_RAMHT_CONTEXT_INSTANCE_SHIFT                0
 #    define NV40_RAMHT_CONTEXT_CHANNEL_SHIFT               23

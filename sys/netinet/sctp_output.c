@@ -1,4 +1,4 @@
-/*	$NetBSD: sctp_output.c,v 1.12.2.3 2018/05/21 04:36:16 pgoyette Exp $ */
+/*	$NetBSD: sctp_output.c,v 1.12.2.4 2018/09/06 06:56:44 pgoyette Exp $ */
 /*	$KAME: sctp_output.c,v 1.48 2005/06/16 18:29:24 jinmei Exp $	*/
 
 /*
@@ -30,7 +30,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sctp_output.c,v 1.12.2.3 2018/05/21 04:36:16 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sctp_output.c,v 1.12.2.4 2018/09/06 06:56:44 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -2644,7 +2644,7 @@ sctp_send_initiate(struct sctp_inpcb *inp, struct sctp_tcb *stcb)
 	/* place in my tag */
 	initm->msg.init.initiate_tag = htonl(stcb->asoc.my_vtag);
 	/* set up some of the credits. */
-	initm->msg.init.a_rwnd = htonl(max(inp->sctp_socket->so_rcv.sb_hiwat,
+	initm->msg.init.a_rwnd = htonl(uimax(inp->sctp_socket->so_rcv.sb_hiwat,
 	    SCTP_MINIMAL_RWND));
 
 	initm->msg.init.num_outbound_streams = htons(stcb->asoc.pre_open_streams);
@@ -3585,7 +3585,7 @@ sctp_send_initiate_ack(struct sctp_inpcb *inp, struct sctp_tcb *stcb,
 	initackm_out->sh.checksum = 0;	/* calculate later */
 	/* who are we */
 	strncpy(stc.identification, SCTP_VERSION_STRING,
-	   min(strlen(SCTP_VERSION_STRING), sizeof(stc.identification)));
+	   uimin(strlen(SCTP_VERSION_STRING), sizeof(stc.identification)));
 	/* now the chunk header */
 	initackm_out->msg.ch.chunk_type = SCTP_INITIATION_ACK;
 	initackm_out->msg.ch.chunk_flags = 0;
@@ -3607,7 +3607,7 @@ sctp_send_initiate_ack(struct sctp_inpcb *inp, struct sctp_tcb *stcb,
 	stc.my_vtag = initackm_out->msg.init.initiate_tag;
 
 	/* set up some of the credits. */
-	initackm_out->msg.init.a_rwnd = htonl(max(inp->sctp_socket->so_rcv.sb_hiwat, SCTP_MINIMAL_RWND));
+	initackm_out->msg.init.a_rwnd = htonl(uimax(inp->sctp_socket->so_rcv.sb_hiwat, SCTP_MINIMAL_RWND));
 	/* set what I want */
 	his_limit = ntohs(init_chk->init.num_inbound_streams);
 	/* choose what I want */
@@ -4741,7 +4741,7 @@ sctp_copy_out_all(struct uio *uio, int len)
 		return (NULL);
 	}
 	cancpy = M_TRAILINGSPACE(ret);
-	willcpy = min(cancpy, left);
+	willcpy = uimin(cancpy, left);
 	at = ret;
 	while (left > 0) {
 		/* Align data to the end */
@@ -4770,7 +4770,7 @@ sctp_copy_out_all(struct uio *uio, int len)
 				goto err_out_now;
 			}
 			cancpy = M_TRAILINGSPACE(at);
-			willcpy = min(cancpy, left);
+			willcpy = uimin(cancpy, left);
 		}
 	}
 	return (ret);
@@ -9241,7 +9241,7 @@ sctp_copy_one(struct mbuf *m, struct uio *uio, int cpsz, int resv_upfront, int *
 	}
 	*mbcnt += MSIZE;
 	cancpy = M_TRAILINGSPACE(m);
-	willcpy = min(cancpy, left);
+	willcpy = uimin(cancpy, left);
 	if ((willcpy + resv_upfront) > cancpy) {
 		willcpy -= resv_upfront;
 	}
@@ -9285,7 +9285,7 @@ sctp_copy_one(struct mbuf *m, struct uio *uio, int cpsz, int resv_upfront, int *
 				*mbcnt += m->m_ext.ext_size;
 			}
 			cancpy = M_TRAILINGSPACE(m);
-			willcpy = min(cancpy, left);
+			willcpy = uimin(cancpy, left);
 		}
 	}
 	return (0);
@@ -9655,7 +9655,7 @@ clean_up:
 				error = ENOMEM;
 				goto temp_clean_up;
 			}
-			tot_demand = min(tot_out, frag_size);
+			tot_demand = uimin(tot_out, frag_size);
 			error = sctp_copy_one(chk->data, uio, tot_demand , resv_in_first, &mbcnt_e);
 			if (error)
 				goto temp_clean_up;

@@ -1,6 +1,6 @@
 !  OpenACC Runtime Library Definitions.			-*- mode: fortran -*-
 
-!  Copyright (C) 2014-2015 Free Software Foundation, Inc.
+!  Copyright (C) 2014-2016 Free Software Foundation, Inc.
 
 !  Contributed by Tobias Burnus <burnus@net-b.de>
 !              and Mentor Embedded.
@@ -38,7 +38,8 @@
       integer (acc_device_kind), parameter :: acc_device_none = 0
       integer (acc_device_kind), parameter :: acc_device_default = 1
       integer (acc_device_kind), parameter :: acc_device_host = 2
-      integer (acc_device_kind), parameter :: acc_device_host_nonshm = 3
+!     integer (acc_device_kind), parameter :: acc_device_host_nonshm = 3
+!     removed.
       integer (acc_device_kind), parameter :: acc_device_not_host = 4
       integer (acc_device_kind), parameter :: acc_device_nvidia = 5
 

@@ -1,0 +1,26 @@
+/*
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
+ */
+
+options {
+	query-source address 10.53.0.1;
+	notify-source 10.53.0.1;
+	transfer-source 10.53.0.1;
+	port @PORT@;
+	pid-file "named.pid";
+	listen-on { 10.53.0.1; };
+	listen-on-v6 { none; };
+	recursion yes;
+};
+
+zone "." {
+	type master;
+	file "root.db";
+};

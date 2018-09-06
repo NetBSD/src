@@ -1,5 +1,5 @@
 /* VMS specific, C compiler specific functions.
-   Copyright (C) 2011-2015 Free Software Foundation, Inc.
+   Copyright (C) 2011-2016 Free Software Foundation, Inc.
    Contributed by Tristan Gingold (gingold@adacore.com).
 
 This file is part of GCC.
@@ -22,25 +22,13 @@ along with GCC; see the file COPYING3.  If not see
 #include "system.h"
 #include "coretypes.h"
 #include "tm.h"
-#include "cpplib.h"
-#include "hash-set.h"
-#include "machmode.h"
-#include "vec.h"
-#include "double-int.h"
-#include "input.h"
-#include "alias.h"
-#include "symtab.h"
-#include "wide-int.h"
-#include "inchash.h"
 #include "tree.h"
-#include "c-family/c-pragma.h"
 #include "c-family/c-common.h"
 #include "c/c-tree.h"
-#include "toplev.h"
-#include "ggc.h"
 #include "tm_p.h"
+#include "c-family/c-pragma.h"
+#include "toplev.h"
 #include "incpath.h"
-#include "diagnostic.h"
 
 /* '#pragma __nostandard' is simply ignored.  */
 
@@ -163,7 +151,7 @@ vms_pragma_nomember_alignment (cpp_reader *pfile ATTRIBUTE_UNUSED)
    1) extern int name;
    2) int name;
    3) int name = 5;
-   See below for the behaviour as implemented by the native compiler.
+   See below for the behavior as implemented by the native compiler.
 */
 
 enum extern_model_kind

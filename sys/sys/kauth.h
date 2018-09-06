@@ -1,4 +1,4 @@
-/* $NetBSD: kauth.h,v 1.75.2.2 2018/07/28 04:38:12 pgoyette Exp $ */
+/* $NetBSD: kauth.h,v 1.75.2.3 2018/09/06 06:56:47 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>  
@@ -230,6 +230,8 @@ enum kauth_process_req {
 	KAUTH_REQ_PROCESS_RLIMIT_GET,
 	KAUTH_REQ_PROCESS_RLIMIT_SET,
 	KAUTH_REQ_PROCESS_RLIMIT_BYPASS,
+	KAUTH_REQ_PROCESS_CANSEE_EPROC,
+	KAUTH_REQ_PROCESS_CANSEE_KPTR
 };
 
 /*

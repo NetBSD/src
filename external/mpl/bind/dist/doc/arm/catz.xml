@@ -1,0 +1,277 @@
+<!--
+ - Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ -
+ - This Source Code Form is subject to the terms of the Mozilla Public
+ - License, v. 2.0. If a copy of the MPL was not distributed with this
+ - file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ -
+ - See the COPYRIGHT file distributed with this work for additional
+ - information regarding copyright ownership.
+-->
+
+<section xmlns:db="http://docbook.org/ns/docbook" version="5.0" xml:id="catz-info"><info><title>Catalog Zones</title></info>
+
+  <para>
+    A "catalog zone" is a special DNS zone that contains a list of
+    other zones to be served, along with their configuration parameters.
+    Zones listed in a catalog zone are called "member zones".
+    When a catalog zone is loaded or transferred to a slave server
+    which supports this functionality, the slave server will create
+    the member zones automatically. When the catalog zone is updated
+    (for example, to add or delete member zones, or change
+    their configuration parameters) those changes are immediately put
+    into effect. Because the catalog zone is a normal DNS zone, these
+    configuration changes can be propagated using the standard AXFR/IXFR
+    zone transfer mechanism.
+  </para>
+  <para>
+    Catalog zones' format and behavior are specified as an internet draft
+    for interoperability among DNS implementations.  As of this release, the
+    latest revision of the DNS catalog zones draft can be found here:
+    https://datatracker.ietf.org/doc/draft-muks-dnsop-dns-catalog-zones/
+  </para>
+
+  <section><info><title>Principle of Operation</title></info>
+    <para>
+      Normally, if a zone is to be served by a slave server, the
+      <filename>named.conf</filename> file on the server must list the
+      zone, or the zone must be added using <command>rndc addzone</command>.
+      In environments with a large number of slave servers and/or where
+      the zones being served are changing frequently, the overhead involved
+      in maintaining consistent zone configuration on all the slave
+      servers can be significant.
+    </para>
+    <para>
+      A catalog zone is a way to ease this administrative burden.  It is a
+      DNS zone that lists member zones that should be served by slave servers.
+      When a slave server receives an update to the catalog zone, it adds,
+      removes, or reconfigures member zones based on the data received.
+    </para>
+    <para>
+      To use a catalog zone, it must first be set up as a normal zone on
+      the master and the on slave servers that will be configured to use
+      it.  It must also be added to a <option>catalog-zones</option> list
+      in the <option>options</option> or <option>view</option> statement
+      in <filename>named.conf</filename>.  (This is comparable to the way
+      a policy zone is configured as a normal zone and also listed in
+      a <option>response-policy</option> statement.)
+    </para>
+    <para>
+      To use the catalog zone feature to serve a new member zone:
+      <itemizedlist>
+        <listitem>
+          <para>
+	    Set up the the member zone to be served on the master as normal.
+	    This could be done by editing <filename>named.conf</filename>,
+	    or by running <command>rndc addzone</command>.
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            Add an entry to the catalog zone for the new member zone.
+	    This could be done by editing the catalog zone's master file
+	    and running <command>rndc reload</command>, or by updating
+	    the zone using <command>nsupdate</command>.
+          </para>
+        </listitem>
+      </itemizedlist>
+      The change to the catalog zone will be propagated from the master to all
+      slaves using the normal AXFR/IXFR mechanism.  When the slave receives the
+      update to the catalog zone, it will detect the entry for the new member
+      zone, create an instance of of that zone on the slave server, and point
+      that instance to the <option>masters</option> specified in the catalog
+      zone data. The newly created member zone is a normal slave zone, so
+      BIND will immediately initiate a transfer of zone contents from the
+      master.  Once complete, the slave will start serving the member zone.
+    </para>
+    <para>
+      Removing a member zone from a slave server requires nothing more than
+      deleting the member zone's entry in the catalog zone. The change to the
+      catalog zone is propagated to the slave server using the normal AXFR/IXFR
+      transfer mechanism.  The slave server, on processing the update, will
+      notice that the member zone has been removed.  It will stop serving the
+      zone and remove it from its list of configured zones.  (Removing the
+      member zone from the master server has to be done in the normal way,
+      by editing the configuration file or running
+      <command>rndc delzone</command>.)
+    </para>
+  </section>
+
+  <section><info><title>Configuring Catalog Zones</title></info>
+    <para>
+      Catalog zones are configured with a <command>catalog-zones</command>
+      statement in the <literal>options</literal> or <literal>view</literal>
+      section of <filename>named.conf</filename>. For example,
+    </para>
+<screen>
+catalog-zones {
+	zone "catalog.example"
+	     default-masters { 10.53.0.1; }
+	     in-memory no
+	     zone-directory "catzones"
+	     min-update-interval 10;
+};
+</screen>
+    <para>
+      This statement specifies that the zone
+      <literal>catalog.example</literal> is a catalog zone. This zone must be
+      properly configured in the same view. In most configurations, it would
+      be a slave zone.
+    </para>
+    <para>
+      The options following the zone name are not required, and may be
+      specified in any order:
+    </para>
+    <para>
+      The <option>default-masters</option> option defines the default masters
+      for member zones listed in a catalog zone. This can be overridden by
+      options within a catalog zone. If no such options are included, then
+      member zones will transfer their contents from the servers listed in
+      this option.
+    </para>
+    <para>
+      The <option>in-memory</option> option, if set to <literal>yes</literal>,
+      causes member zones to be stored only in memory. This is functionally
+      equivalent to configuring a slave zone without a <option>file</option>.
+      option.  The default is <literal>no</literal>; member zones' content
+      will be stored locally in a file whose name is automatically generated
+      from the view name, catalog zone name, and member zone name.
+    </para>
+    <para>
+      The <option>zone-directory</option> option causes local copies of
+      member zones' master files (if <option>in-memory</option> is not set
+      to <literal>yes</literal>) to be stored in the specified directory.
+      The default is to store zone files in the server's working directory.
+      A non-absolute pathname in <option>zone-directory</option> is
+      assumed to be relative to the working directory.
+    </para>
+    <para>
+      The <option>min-update-interval</option> option sets the minimum
+      interval between processing of updates to catalog zones, in seconds.
+      If an update to a catalog zone (for example, via IXFR) happens less
+      than <option>min-update-interval</option> seconds after the most
+      recent update, then the changes will not be carried out until this
+      interval has elapsed.  The default is <literal>5</literal> seconds.
+    </para>
+    <para>
+      Catalog zones are defined on a per-view basis. Configuring a non-empty
+      <option>catalog-zones</option> statement in a view will automatically
+      turn on <option>allow-new-zones</option> for that view. (Note: this
+      means <command>rndc addzone</command> and <command>rndc delzone</command>
+      will also work in any view that supports catalog zones.)
+    </para>
+  </section>
+
+  <section><info><title>Catalog Zone format</title></info>
+    <para>
+      A catalog zone is a regular DNS zone; therefore, it has to have a
+      single <literal>SOA</literal> and at least one <literal>NS</literal>
+      record.
+    </para>
+    <para>
+      A record stating the version of the catalog zone format is
+      also required. If the version number listed is not supported by
+      the server, then a catalog zone may not be used by that server.
+    </para>
+<screen>
+catalog.example.    IN SOA . . 2016022901 900 600 86400 1
+catalog.example.    IN NS nsexample.
+version.catalog.example.    IN TXT "1"
+</screen>
+    <para>
+      Note that this record must have the domain name
+      version.<replaceable>catalog-zone-name</replaceable>.  This illustrates
+      how the meaning of data stored in a catalog zone is indicated by the
+      the domain name label immediately before the catalog zone domain.
+    </para>
+    <para>
+      Catalog zone options can be set either globally for the whole catalog
+      zone or for a single member zone. Global options override the settings
+      in the configuration file and member zone options override global
+      options.
+    </para>
+    <para>
+      Global options are set at the apex of the catalog zone, e.g.:
+</para>
+<screen>
+ masters.catalog.example.    IN AAAA 2001:db8::1
+</screen>
+    <para>BIND currently supports the following options:</para>
+    <itemizedlist>
+      <listitem>
+        <para>A simple <option>masters</option> definition:</para>
+	<screen>
+	 masters.catalog.example.    IN A 192.0.2.1
+	</screen>
+	<para>
+	  This option defines a master server for the member zones - it
+	  can be either an A or AAAA record. If multiple masters are set the
+	  order in which they are used is random.
+	</para>
+      </listitem>
+      <listitem>
+        <para>A <option>masters</option> with a TSIG key defined:</para>
+        <screen>
+         label.masters.catalog.example.     IN A 192.0.2.2
+         label.masters.catalog.example.	    IN TXT "tsig_key_name"
+        </screen>
+        <para>
+         This option defines a master server for the member zone with a TSIG
+         key set. The TSIG key must be configured in the configuration file.
+         <option>label</option> can be any valid DNS label.
+        </para>
+      </listitem>
+      <listitem>
+        <para><option>allow-query</option> and
+        <option>allow-transfer</option> ACLs:</para>
+        <screen>
+         allow-query.catalog.example.	IN APL 1:10.0.0.1/24
+         allow-transfer.catalog.example.	IN APL !1:10.0.0.1/32 1:10.0.0.0/24
+        </screen>
+        <para>
+          These options are the equivalents of <option>allow-query</option>
+          and <option>allow-transfer</option> in a zone declaration in the
+          <filename>named.conf</filename> configuration file. The ACL is
+          processed in order - if there's no match to any rule the default
+          policy is to deny access.  For the syntax of the APL RR see RFC
+          3123
+        </para>
+      </listitem>
+    </itemizedlist>
+    <para>
+      A member zone is added by including a <literal>PTR</literal>
+      resource record in the <literal>zones</literal> sub-domain of the
+      catalog zone. The record label is a <literal>SHA-1</literal> hash
+      of the member zone name in wire format. The target of the PTR
+      record is the member zone name. For example, to add the member
+      zone <literal>domain.example</literal>:
+    </para>
+<screen>
+5960775ba382e7a4e09263fc06e7c00569b6a05c.zones.catalog.example. IN PTR domain.example.
+</screen>
+    <para>
+      The hash is necessary to identify options for a specific member
+      zone. The member zone-specific options are defined the same way as
+      global options, but in the member zone subdomain:
+    </para>
+<screen>
+masters.5960775ba382e7a4e09263fc06e7c00569b6a05c.zones.catalog.example. IN A 192.0.2.2
+label.masters.5960775ba382e7a4e09263fc06e7c00569b6a05c.zones.catalog.example. IN AAAA 2001:db8::2
+label.masters.5960775ba382e7a4e09263fc06e7c00569b6a05c.zones.catalog.example. IN TXT "tsig_key"
+allow-query.5960775ba382e7a4e09263fc06e7c00569b6a05c.zones.catalog.example. IN APL 1:10.0.0.0/24
+</screen>
+    <para>
+      As would be expected, options defined for a specific zone override
+      the global options defined in the catalog zone. These in turn override
+      the global options defined in the <literal>catalog-zones</literal>
+      statement in the configuration file.
+    </para>
+    <para>
+      (Note that none of the global records an option will be inherited if
+      any records are defined for that option for the specific zone.  For
+      example, if the zone had a <literal>masters</literal> record of type
+      A but not AAAA, then it would <emphasis>not</emphasis> inherit the
+      type AAAA record from the global option.)
+    </para>
+  </section>
+</section>

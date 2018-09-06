@@ -1,4 +1,4 @@
-.\"	Id: man.cgi.8,v 1.20 2016/07/11 22:48:37 schwarze Exp 
+.\"	Id: man.cgi.8,v 1.23 2018/05/20 21:48:44 schwarze Exp 
 .\"
 .\" Copyright (c) 2014, 2015, 2016 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd July 11, 2016
+.Dd May 20, 2018
 .Dt MAN.CGI 8
 .Os
 .Sh NAME
@@ -104,6 +104,9 @@ Lists are returned when searches match more than one manual page.
 The first column shows the names and section numbers of manuals
 as clickable links.
 The second column shows the one-line descriptions of the manuals.
+For
+.Xr man 1
+style searches, the content of the first manual page follows the list.
 .It A manual page.
 This output format is used when a search matches exactly one
 manual page, or when a link on a list page or an
@@ -111,7 +114,7 @@ manual page, or when a link on a list page or an
 link on another manual page is followed.
 .It A no-result page.
 This is shown when a search request returns no results -
-eiher because it violates the query syntax, or because
+either because it violates the query syntax, or because
 the search does not match any manual pages.
 .It \&An error page.
 This cannot happen by merely clicking the
@@ -186,11 +189,6 @@ Otherwise, a leading slash is needed.
 This is used in generated HTML code.
 .It Dv CUSTOMIZE_TITLE
 An ASCII string to be used for the HTML <TITLE> element.
-.It Dv HTTP_HOST
-The FQDN of the (possibly virtual) host the HTTP server is running on.
-This is used for
-.Ic Location:
-headers in HTTP 303 responses.
 .It Dv MAN_DIR
 A file system path to the
 .Nm
@@ -239,6 +237,8 @@ They consist of:
 .It
 The
 .Cm http://
+or
+.Cm https://
 protocol specifier.
 .It
 The host name.
@@ -399,7 +399,7 @@ The
 CGI program is call-compatible with queries from the traditional
 .Pa man.cgi
 script by Wolfram Schneider.
-However, the output may not be quite the same.
+However, the output looks quite different.
 .Sh SEE ALSO
 .Xr apropos 1 ,
 .Xr mandoc.db 5 ,
@@ -411,15 +411,16 @@ A version of
 based on
 .Xr mandoc 1
 first appeared in mdocml-1.12.1 (March 2012).
-The current SQLite3-based version first appeared in
-.Ox 5.6 .
+The current
+.Xr mandoc.db 5
+database format first appeared in
+.Ox 6.1 .
 .Sh AUTHORS
 .An -nosplit
 The
 .Nm
 program was written by
 .An Kristaps Dzonsons Aq Mt kristaps@bsd.lv
-and ported to the SQLite3-based
-.Xr mandoc.db 5
-backend by
-.An Ingo Schwarze Aq Mt schwarze@openbsd.org .
+and is maintained by
+.An Ingo Schwarze Aq Mt schwarze@openbsd.org ,
+who also designed and implemented the database format.

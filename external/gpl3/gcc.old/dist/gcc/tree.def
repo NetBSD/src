@@ -1,6 +1,6 @@
 /* This file contains the definitions and documentation for the
    tree codes used in GCC.
-   Copyright (C) 1987-2015 Free Software Foundation, Inc.
+   Copyright (C) 1987-2016 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -110,9 +110,12 @@ DEFTREECODE (BLOCK, "block", tcc_exceptional, 0)
     particular, since any type which is of some type category  (e.g.
     an array type or a function type) which cannot either have a name
     itself or have named members doesn't really have a "scope" per se.
-  The TREE_CHAIN field is used as a forward-references to names for
+  The TYPE_STUB_DECL field is used as a forward-references to names for
     ENUMERAL_TYPE, RECORD_TYPE, UNION_TYPE, and QUAL_UNION_TYPE nodes;
-    see below.  */
+    see below.
+  The TYPE_METHODS points to list of all methods associated with the type.
+    It is non-NULL only at main variant of the type and after free_lang_data
+    it may be set to error_mark_node instead of actual list to save memory. */
 
 /* The ordering of the following codes is optimized for the checking
    macros in tree.h.  Changing the order will degrade the speed of the
@@ -245,6 +248,8 @@ DEFTREECODE (POINTER_BOUNDS_TYPE, "pointer_bounds_type", tcc_type, 0)
    TREE_TYPE		    type of value returned.
    TYPE_ARG_TYPES      list of types of arguments expected.
 	this list is made of TREE_LIST nodes.
+	In this list TREE_PURPOSE can be used to indicate the default
+	value of parameter (used by C++ frontend).
    Types of "Procedures" in languages where they are different from functions
    have code FUNCTION_TYPE also, but then TREE_TYPE is zero or void type.  */
 DEFTREECODE (FUNCTION_TYPE, "function_type", tcc_type, 0)
@@ -298,7 +303,7 @@ DEFTREECODE (FIXED_CST, "fixed_cst", tcc_constant, 0)
    whose contents are other constant nodes.  */
 DEFTREECODE (COMPLEX_CST, "complex_cst", tcc_constant, 0)
 
-/* Contents are in TREE_VECTOR_CST_ELTS field.  */
+/* Contents are in VECTOR_CST_ELTS field.  */
 DEFTREECODE (VECTOR_CST, "vector_cst", tcc_constant, 0)
 
 /* Contents are TREE_STRING_LENGTH and the actual contents of the string.  */
@@ -680,19 +685,27 @@ DEFTREECODE (MULT_HIGHPART_EXPR, "mult_highpart_expr", tcc_binary, 2)
 /* Division for integer result that rounds the quotient toward zero.  */
 DEFTREECODE (TRUNC_DIV_EXPR, "trunc_div_expr", tcc_binary, 2)
 
-/* Division for integer result that rounds the quotient toward infinity.  */
+/* Division for integer result that rounds it toward plus infinity.  */
 DEFTREECODE (CEIL_DIV_EXPR, "ceil_div_expr", tcc_binary, 2)
 
-/* Division for integer result that rounds toward minus infinity.  */
+/* Division for integer result that rounds it toward minus infinity.  */
 DEFTREECODE (FLOOR_DIV_EXPR, "floor_div_expr", tcc_binary, 2)
 
-/* Division for integer result that rounds toward nearest integer.  */
+/* Division for integer result that rounds it toward nearest integer.  */
 DEFTREECODE (ROUND_DIV_EXPR, "round_div_expr", tcc_binary, 2)
 
-/* Four kinds of remainder that go with the four kinds of division.  */
+/* Four kinds of remainder that go with the four kinds of division:  */
+
+/* The sign of the remainder is that of the dividend.  */
 DEFTREECODE (TRUNC_MOD_EXPR, "trunc_mod_expr", tcc_binary, 2)
+
+/* The sign of the remainder is the opposite of that of the divisor.  */
 DEFTREECODE (CEIL_MOD_EXPR, "ceil_mod_expr", tcc_binary, 2)
+
+/* The sign of the remainder is that of the divisor.  */
 DEFTREECODE (FLOOR_MOD_EXPR, "floor_mod_expr", tcc_binary, 2)
+
+/* The sign of the remainder is not predictable.  */
 DEFTREECODE (ROUND_MOD_EXPR, "round_mod_expr", tcc_binary, 2)
 
 /* Division for real result.  */
@@ -857,10 +870,10 @@ DEFTREECODE (POSTINCREMENT_EXPR, "postincrement_expr", tcc_expression, 2)
 /* Used to implement `va_arg'.  */
 DEFTREECODE (VA_ARG_EXPR, "va_arg_expr", tcc_expression, 1)
 
-/* Evaluate operand 1.  If and only if an exception is thrown during
-   the evaluation of operand 1, evaluate operand 2.
+/* Evaluate operand 0.  If and only if an exception is thrown during
+   the evaluation of operand 0, evaluate operand 1.
 
-   This differs from TRY_FINALLY_EXPR in that operand 2 is not evaluated
+   This differs from TRY_FINALLY_EXPR in that operand 1 is not evaluated
    on a normal or jump exit, only on an exception.  */
 DEFTREECODE (TRY_CATCH_EXPR, "try_catch_expr", tcc_statement, 2)
 
@@ -1034,14 +1047,14 @@ DEFTREECODE (MEM_REF, "mem_ref", tcc_reference, 2)
    not change the ordering of these codes.  */
 
 /* OpenACC - #pragma acc parallel [clause1 ... clauseN]
-   Operand 0: OACC_PARALLEL_BODY: Code to be executed in parallel.
-   Operand 1: OACC_PARALLEL_CLAUSES: List of clauses.  */
+   Operand 0: OMP_BODY: Code to be executed in parallel.
+   Operand 1: OMP_CLAUSES: List of clauses.  */
 
 DEFTREECODE (OACC_PARALLEL, "oacc_parallel", tcc_statement, 2)
 
 /* OpenACC - #pragma acc kernels [clause1 ... clauseN]
-   Operand 0: OACC_KERNELS_BODY: Sequence of kernels.
-   Operand 1: OACC_KERNELS_CLAUSES: List of clauses.  */
+   Operand 0: OMP_BODY: Sequence of kernels.
+   Operand 1: OMP_CLAUSES: List of clauses.  */
 
 DEFTREECODE (OACC_KERNELS, "oacc_kernels", tcc_statement, 2)
 
@@ -1082,33 +1095,42 @@ DEFTREECODE (OMP_TASK, "omp_task", tcc_statement, 2)
 	from INIT, COND, and INCR that are technically part of the
 	OMP_FOR structured block, but are evaluated before the loop
 	body begins.
+   Operand 6: OMP_FOR_ORIG_DECLS: If non-NULL, list of DECLs initialized
+	in OMP_FOR_INIT.  In some cases, like C++ iterators, the original
+	DECL init has been lost in gimplification and now contains a
+	temporary (D.nnnn).  This list contains the original DECLs in
+	the source.
 
    VAR must be an integer or pointer variable, which is implicitly thread
    private.  N1, N2 and INCR are required to be loop invariant integer
    expressions that are evaluated without any synchronization.
    The evaluation order, frequency of evaluation and side-effects are
    unspecified by the standards.  */
-DEFTREECODE (OMP_FOR, "omp_for", tcc_statement, 6)
+DEFTREECODE (OMP_FOR, "omp_for", tcc_statement, 7)
 
 /* OpenMP - #pragma omp simd [clause1 ... clauseN]
    Operands like for OMP_FOR.  */
-DEFTREECODE (OMP_SIMD, "omp_simd", tcc_statement, 6)
+DEFTREECODE (OMP_SIMD, "omp_simd", tcc_statement, 7)
 
 /* Cilk Plus - #pragma simd [clause1 ... clauseN]
    Operands like for OMP_FOR.  */
-DEFTREECODE (CILK_SIMD, "cilk_simd", tcc_statement, 6)
+DEFTREECODE (CILK_SIMD, "cilk_simd", tcc_statement, 7)
 
 /* Cilk Plus - _Cilk_for (..)
    Operands like for OMP_FOR.  */
-DEFTREECODE (CILK_FOR, "cilk_for", tcc_statement, 6)
+DEFTREECODE (CILK_FOR, "cilk_for", tcc_statement, 7)
 
 /* OpenMP - #pragma omp distribute [clause1 ... clauseN]
    Operands like for OMP_FOR.  */
-DEFTREECODE (OMP_DISTRIBUTE, "omp_distribute", tcc_statement, 6)
+DEFTREECODE (OMP_DISTRIBUTE, "omp_distribute", tcc_statement, 7)
+
+/* OpenMP - #pragma omp taskloop [clause1 ... clauseN]
+   Operands like for OMP_FOR.  */
+DEFTREECODE (OMP_TASKLOOP, "omp_taskloop", tcc_statement, 7)
 
 /* OpenMP - #pragma acc loop [clause1 ... clauseN]
    Operands like for OMP_FOR.  */
-DEFTREECODE (OACC_LOOP, "oacc_loop", tcc_statement, 6)
+DEFTREECODE (OACC_LOOP, "oacc_loop", tcc_statement, 7)
 
 /* OpenMP - #pragma omp teams [clause1 ... clauseN]
    Operand 0: OMP_TEAMS_BODY: Teams body.
@@ -1130,6 +1152,17 @@ DEFTREECODE (OMP_TARGET, "omp_target", tcc_statement, 2)
    Operand 1: OMP_SECTIONS_CLAUSES: List of clauses.  */
 DEFTREECODE (OMP_SECTIONS, "omp_sections", tcc_statement, 2)
 
+/* OpenMP - #pragma omp ordered
+   Operand 0: OMP_ORDERED_BODY: Master section body.
+   Operand 1: OMP_ORDERED_CLAUSES: List of clauses.  */
+DEFTREECODE (OMP_ORDERED, "omp_ordered", tcc_statement, 2)
+
+/* OpenMP - #pragma omp critical [name]
+   Operand 0: OMP_CRITICAL_BODY: Critical section body.
+   Operand 1: OMP_CRITICAL_CLAUSES: List of clauses.
+   Operand 2: OMP_CRITICAL_NAME: Identifier for critical section.  */
+DEFTREECODE (OMP_CRITICAL, "omp_critical", tcc_statement, 3)
+
 /* OpenMP - #pragma omp single
    Operand 0: OMP_SINGLE_BODY: Single section body.
    Operand 1: OMP_SINGLE_CLAUSES: List of clauses.  */
@@ -1146,15 +1179,6 @@ DEFTREECODE (OMP_MASTER, "omp_master", tcc_statement, 1)
 /* OpenMP - #pragma omp taskgroup
    Operand 0: OMP_TASKGROUP_BODY: Taskgroup body.  */
 DEFTREECODE (OMP_TASKGROUP, "omp_taskgroup", tcc_statement, 1)
-
-/* OpenMP - #pragma omp ordered
-   Operand 0: OMP_ORDERED_BODY: Master section body.  */
-DEFTREECODE (OMP_ORDERED, "omp_ordered", tcc_statement, 1)
-
-/* OpenMP - #pragma omp critical [name]
-   Operand 0: OMP_CRITICAL_BODY: Critical section body.
-   Operand 1: OMP_CRITICAL_NAME: Identifier for critical section.  */
-DEFTREECODE (OMP_CRITICAL, "omp_critical", tcc_statement, 2)
 
 /* OpenACC - #pragma acc cache (variable1 ... variableN)
    Operand 0: OACC_CACHE_CLAUSES: List of variables (transformed into
@@ -1180,6 +1204,14 @@ DEFTREECODE (OACC_UPDATE, "oacc_update", tcc_statement, 1)
 /* OpenMP - #pragma omp target update [clause1 ... clauseN]
    Operand 0: OMP_TARGET_UPDATE_CLAUSES: List of clauses.  */
 DEFTREECODE (OMP_TARGET_UPDATE, "omp_target_update", tcc_statement, 1)
+
+/* OpenMP - #pragma omp target enter data [clause1 ... clauseN]
+   Operand 0: OMP_TARGET_ENTER_DATA_CLAUSES: List of clauses.  */
+DEFTREECODE (OMP_TARGET_ENTER_DATA, "omp_target_enter_data", tcc_statement, 1)
+
+/* OpenMP - #pragma omp target exit data [clause1 ... clauseN]
+   Operand 0: OMP_TARGET_EXIT_DATA_CLAUSES: List of clauses.  */
+DEFTREECODE (OMP_TARGET_EXIT_DATA, "omp_target_exit_data", tcc_statement, 1)
 
 /* OMP_ATOMIC through OMP_ATOMIC_CAPTURE_NEW must be consecutive,
    or OMP_ATOMIC_SEQ_CST needs adjusting.  */

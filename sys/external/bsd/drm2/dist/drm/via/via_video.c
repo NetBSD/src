@@ -1,3 +1,5 @@
+/*	$NetBSD: via_video.c,v 1.5.16.1 2018/09/06 06:56:34 pgoyette Exp $	*/
+
 /*
  * Copyright 2005 Thomas Hellstrom. All Rights Reserved.
  *
@@ -24,6 +26,9 @@
  *
  * Video and XvMC related functions.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: via_video.c,v 1.5.16.1 2018/09/06 06:56:34 pgoyette Exp $");
 
 #include <drm/drmP.h>
 #include <drm/via_drm.h>

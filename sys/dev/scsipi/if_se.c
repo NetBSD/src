@@ -1,4 +1,4 @@
-/*	$NetBSD: if_se.c,v 1.95.2.2 2018/07/28 04:37:57 pgoyette Exp $	*/
+/*	$NetBSD: if_se.c,v 1.95.2.3 2018/09/06 06:56:04 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1997 Ian W. Dall <ian.dall@dsto.defence.gov.au>
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_se.c,v 1.95.2.2 2018/07/28 04:37:57 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_se.c,v 1.95.2.3 2018/09/06 06:56:04 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -604,7 +604,7 @@ se_get(struct se_softc *sc, char *data, int totlen)
 			m->m_data = newdata;
 		}
 
-		m->m_len = len = min(totlen, len);
+		m->m_len = len = uimin(totlen, len);
 		memcpy(mtod(m, void *), data, len);
 		data += len;
 

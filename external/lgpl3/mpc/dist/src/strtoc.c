@@ -1,6 +1,6 @@
 /* mpc_strtoc -- Read a complex number from a string.
 
-Copyright (C) 2009, 2010, 2011 INRIA
+Copyright (C) 2009, 2010, 2011, 2012 INRIA
 
 This file is part of GNU MPC.
 
@@ -57,7 +57,7 @@ mpc_strtoc (mpc_ptr rop, const char *nptr, char **endptr, int base, mpc_rnd_t rn
    p = end;
 
    if (!bracketed)
-     inex_im = mpfr_set_ui (mpc_imagref (rop), 0ul, GMP_RNDN);
+     inex_im = mpfr_set_ui (mpc_imagref (rop), 0ul, MPFR_RNDN);
    else {
      if (!isspace ((unsigned char)*p))
          goto error;

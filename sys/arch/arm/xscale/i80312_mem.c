@@ -1,4 +1,4 @@
-/*	$NetBSD: i80312_mem.c,v 1.5 2011/07/01 20:32:51 dyoung Exp $	*/
+/*	$NetBSD: i80312_mem.c,v 1.5.52.1 2018/09/06 06:55:28 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -39,8 +39,10 @@
  * Intel i80312 Companion I/O memory controller support.
  */
 
+#include "opt_arm_debug.h"
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i80312_mem.c,v 1.5 2011/07/01 20:32:51 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i80312_mem.c,v 1.5.52.1 2018/09/06 06:55:28 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

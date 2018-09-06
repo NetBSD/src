@@ -1,5 +1,5 @@
 /* Loop optimizations over tree-ssa.
-   Copyright (C) 2003-2015 Free Software Foundation, Inc.
+   Copyright (C) 2003-2016 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -20,43 +20,23 @@ along with GCC; see the file COPYING3.  If not see
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
-#include "tm.h"
-#include "hash-set.h"
-#include "machmode.h"
-#include "vec.h"
-#include "double-int.h"
-#include "input.h"
-#include "alias.h"
-#include "symtab.h"
-#include "wide-int.h"
-#include "inchash.h"
+#include "backend.h"
 #include "tree.h"
-#include "fold-const.h"
-#include "tm_p.h"
-#include "predict.h"
-#include "hard-reg-set.h"
-#include "input.h"
-#include "function.h"
-#include "dominance.h"
-#include "cfg.h"
-#include "basic-block.h"
-#include "tree-ssa-alias.h"
-#include "internal-fn.h"
-#include "gimple-expr.h"
-#include "is-a.h"
 #include "gimple.h"
+#include "tree-pass.h"
+#include "tm_p.h"
+#include "fold-const.h"
 #include "gimple-iterator.h"
 #include "tree-ssa-loop-ivopts.h"
 #include "tree-ssa-loop-manip.h"
 #include "tree-ssa-loop-niter.h"
 #include "tree-ssa-loop.h"
-#include "tree-pass.h"
 #include "cfgloop.h"
-#include "flags.h"
 #include "tree-inline.h"
 #include "tree-scalar-evolution.h"
-#include "diagnostic-core.h"
 #include "tree-vectorizer.h"
+#include "omp-low.h"
+#include "diagnostic-core.h"
 
 
 /* A pass making sure loops are fixed up.  */
@@ -163,6 +143,142 @@ make_pass_tree_loop (gcc::context *ctxt)
   return new pass_tree_loop (ctxt);
 }
 
+/* Gate for oacc kernels pass group.  */
+
+static bool
+gate_oacc_kernels (function *fn)
+{
+  if (!flag_openacc)
+    return false;
+
+  tree oacc_function_attr = get_oacc_fn_attrib (fn->decl);
+  if (oacc_function_attr == NULL_TREE)
+    return false;
+  if (!oacc_fn_attrib_kernels_p (oacc_function_attr))
+    return false;
+
+  struct loop *loop;
+  FOR_EACH_LOOP (loop, 0)
+    if (loop->in_oacc_kernels_region)
+      return true;
+
+  return false;
+}
+
+/* The oacc kernels superpass.  */
+
+namespace {
+
+const pass_data pass_data_oacc_kernels =
+{
+  GIMPLE_PASS, /* type */
+  "oacc_kernels", /* name */
+  OPTGROUP_LOOP, /* optinfo_flags */
+  TV_TREE_LOOP, /* tv_id */
+  PROP_cfg, /* properties_required */
+  0, /* properties_provided */
+  0, /* properties_destroyed */
+  0, /* todo_flags_start */
+  0, /* todo_flags_finish */
+};
+
+class pass_oacc_kernels : public gimple_opt_pass
+{
+public:
+  pass_oacc_kernels (gcc::context *ctxt)
+    : gimple_opt_pass (pass_data_oacc_kernels, ctxt)
+  {}
+
+  /* opt_pass methods: */
+  virtual bool gate (function *fn) { return gate_oacc_kernels (fn); }
+
+}; // class pass_oacc_kernels
+
+} // anon namespace
+
+gimple_opt_pass *
+make_pass_oacc_kernels (gcc::context *ctxt)
+{
+  return new pass_oacc_kernels (ctxt);
+}
+
+/* The ipa oacc superpass.  */
+
+namespace {
+
+const pass_data pass_data_ipa_oacc =
+{
+  SIMPLE_IPA_PASS, /* type */
+  "ipa_oacc", /* name */
+  OPTGROUP_LOOP, /* optinfo_flags */
+  TV_TREE_LOOP, /* tv_id */
+  PROP_cfg, /* properties_required */
+  0, /* properties_provided */
+  0, /* properties_destroyed */
+  0, /* todo_flags_start */
+  0, /* todo_flags_finish */
+};
+
+class pass_ipa_oacc : public simple_ipa_opt_pass
+{
+public:
+  pass_ipa_oacc (gcc::context *ctxt)
+    : simple_ipa_opt_pass (pass_data_ipa_oacc, ctxt)
+  {}
+
+  /* opt_pass methods: */
+  virtual bool gate (function *)
+  {
+    return (optimize
+	    && flag_openacc
+	    /* Don't bother doing anything if the program has errors.  */
+	    && !seen_error ());
+  }
+
+}; // class pass_ipa_oacc
+
+} // anon namespace
+
+simple_ipa_opt_pass *
+make_pass_ipa_oacc (gcc::context *ctxt)
+{
+  return new pass_ipa_oacc (ctxt);
+}
+
+/* The ipa oacc kernels pass.  */
+
+namespace {
+
+const pass_data pass_data_ipa_oacc_kernels =
+{
+  SIMPLE_IPA_PASS, /* type */
+  "ipa_oacc_kernels", /* name */
+  OPTGROUP_LOOP, /* optinfo_flags */
+  TV_TREE_LOOP, /* tv_id */
+  PROP_cfg, /* properties_required */
+  0, /* properties_provided */
+  0, /* properties_destroyed */
+  0, /* todo_flags_start */
+  0, /* todo_flags_finish */
+};
+
+class pass_ipa_oacc_kernels : public simple_ipa_opt_pass
+{
+public:
+  pass_ipa_oacc_kernels (gcc::context *ctxt)
+    : simple_ipa_opt_pass (pass_data_ipa_oacc_kernels, ctxt)
+  {}
+
+}; // class pass_ipa_oacc_kernels
+
+} // anon namespace
+
+simple_ipa_opt_pass *
+make_pass_ipa_oacc_kernels (gcc::context *ctxt)
+{
+  return new pass_ipa_oacc_kernels (ctxt);
+}
+
 /* The no-loop superpass.  */
 
 namespace {
@@ -233,12 +349,15 @@ public:
 unsigned int
 pass_tree_loop_init::execute (function *fun ATTRIBUTE_UNUSED)
 {
+  /* When processing a loop in the loop pipeline, we should be able to assert
+     that:
+       (loops_state_satisfies_p (LOOPS_NORMAL | LOOPS_HAVE_RECORDED_EXITS
+					      | LOOP_CLOSED_SSA)
+	&& scev_initialized_p ())
+  */
   loop_optimizer_init (LOOPS_NORMAL
 		       | LOOPS_HAVE_RECORDED_EXITS);
   rewrite_into_loop_closed_ssa (NULL, TODO_update_ssa);
-
-  /* We might discover new loops, e.g. when turning irreducible
-     regions into reducible.  */
   scev_initialize ();
 
   return 0;
@@ -301,54 +420,6 @@ gimple_opt_pass *
 make_pass_vectorize (gcc::context *ctxt)
 {
   return new pass_vectorize (ctxt);
-}
-
-/* Check the correctness of the data dependence analyzers.  */
-
-namespace {
-
-const pass_data pass_data_check_data_deps =
-{
-  GIMPLE_PASS, /* type */
-  "ckdd", /* name */
-  OPTGROUP_LOOP, /* optinfo_flags */
-  TV_CHECK_DATA_DEPS, /* tv_id */
-  ( PROP_cfg | PROP_ssa ), /* properties_required */
-  0, /* properties_provided */
-  0, /* properties_destroyed */
-  0, /* todo_flags_start */
-  0, /* todo_flags_finish */
-};
-
-class pass_check_data_deps : public gimple_opt_pass
-{
-public:
-  pass_check_data_deps (gcc::context *ctxt)
-    : gimple_opt_pass (pass_data_check_data_deps, ctxt)
-  {}
-
-  /* opt_pass methods: */
-  virtual bool gate (function *) { return flag_check_data_deps != 0; }
-  virtual unsigned int execute (function *);
-
-}; // class pass_check_data_deps
-
-unsigned int
-pass_check_data_deps::execute (function *fun)
-{
-  if (number_of_loops (fun) <= 1)
-    return 0;
-
-  tree_check_data_deps ();
-  return 0;
-}
-
-} // anon namespace
-
-gimple_opt_pass *
-make_pass_check_data_deps (gcc::context *ctxt)
-{
-  return new pass_check_data_deps (ctxt);
 }
 
 /* Propagation of constants using scev.  */
@@ -491,7 +562,7 @@ make_pass_iv_optimize (gcc::context *ctxt)
 static unsigned int
 tree_ssa_loop_done (void)
 {
-  free_numbers_of_iterations_estimates ();
+  free_numbers_of_iterations_estimates (cfun);
   scev_finalize ();
   loop_optimizer_finalize ();
   return 0;

@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.95.2.1 2018/07/28 04:38:14 pgoyette Exp $ */
+/* $NetBSD: cgram.y,v 1.95.2.2 2018/09/06 06:56:50 pgoyette Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.95.2.1 2018/07/28 04:38:14 pgoyette Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.95.2.2 2018/09/06 06:56:50 pgoyette Exp $");
 #endif
 
 #include <stdlib.h>
@@ -523,8 +523,10 @@ type_attribute_bounded_type:
 	| T_AT_BUFFER
 	;
 
+
 type_attribute_spec:
 	  /* empty */	
+	| T_AT_DEPRECATED T_LPARN string T_RPARN
 	| T_AT_DEPRECATED
 	| T_AT_ALIGNED T_LPARN constant T_RPARN
 	| T_AT_BOUNDED T_LPARN type_attribute_bounded_type

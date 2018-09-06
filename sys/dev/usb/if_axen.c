@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axen.c,v 1.12.2.1 2018/07/28 04:37:58 pgoyette Exp $	*/
+/*	$NetBSD: if_axen.c,v 1.12.2.2 2018/09/06 06:56:04 pgoyette Exp $	*/
 /*	$OpenBSD: if_axen.c,v 1.3 2013/10/21 10:10:22 yuo Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axen.c,v 1.12.2.1 2018/07/28 04:37:58 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axen.c,v 1.12.2.2 2018/09/06 06:56:04 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -827,11 +827,9 @@ axen_detach(device_t self, int flags)
 
 	sc->axen_dying = true;
 
-	/*
-	 * Remove any pending tasks.  They cannot be executing because they run
-	 * in the same thread as detach.
-	 */
-	usb_rem_task(sc->axen_udev, &sc->axen_tick_task);
+	callout_halt(&sc->axen_stat_ch, NULL);
+	usb_rem_task_wait(sc->axen_udev, &sc->axen_tick_task,
+	    USB_TASKQ_DRIVER, NULL);
 
 	s = splusb();
 

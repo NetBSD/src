@@ -1,4 +1,4 @@
-/* $NetBSD: qp.c,v 1.1 2014/08/10 05:47:37 matt Exp $ */
+/* $NetBSD: qp.c,v 1.1.24.1 2018/09/06 06:55:19 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -46,14 +46,6 @@ long double __modtf3(long double, long double);
 long double __multf3(long double, long double);
 long double __negtf2(long double);
 long double __subtf3(long double, long double);
-
-int __getf2(long double, long double);
-int __lttf2(long double, long double);
-int __gttf2(long double, long double);
-int __letf2(long double, long double);
-int __eqtf2(long double, long double);
-int __netf2(long double, long double);
-int __unordtf2(long double, long double);
 
 double __trunctfdf2(long double);
 float __trunctfsf2(long double);
@@ -182,60 +174,6 @@ _Qp_cmpe(float128 *a, float128 *b)
 }
 #endif
 
-int
-__eqtf2(long double ld_a, long double ld_b)
-{
-	const union sf_ieee_ldbl_u a = { .ldblu_ld = ld_a };
-	const union sf_ieee_ldbl_u b = { .ldblu_ld = ld_b };
-
-	return float128_eq(a.ldblu_f128, b.ldblu_f128);
-}
-
-int
-__getf2(long double ld_a, long double ld_b)
-{
-	const union sf_ieee_ldbl_u a = { .ldblu_ld = ld_a };
-	const union sf_ieee_ldbl_u b = { .ldblu_ld = ld_b };
-
-	return float128_le(b.ldblu_f128, a.ldblu_f128);
-}
-
-int
-__gttf2(long double ld_a, long double ld_b)
-{
-	const union sf_ieee_ldbl_u a = { .ldblu_ld = ld_a };
-	const union sf_ieee_ldbl_u b = { .ldblu_ld = ld_b };
-
-	return float128_lt(b.ldblu_f128, a.ldblu_f128);
-}
-
-int
-__letf2(long double ld_a, long double ld_b)
-{
-	const union sf_ieee_ldbl_u a = { .ldblu_ld = ld_a };
-	const union sf_ieee_ldbl_u b = { .ldblu_ld = ld_b };
-
-	return float128_le(a.ldblu_f128, b.ldblu_f128);
-}
-
-int
-__lttf2(long double ld_a, long double ld_b)
-{
-	const union sf_ieee_ldbl_u a = { .ldblu_ld = ld_a };
-	const union sf_ieee_ldbl_u b = { .ldblu_ld = ld_b };
-
-	return float128_lt(a.ldblu_f128, b.ldblu_f128);
-}
-
-int
-__netf2(long double ld_a, long double ld_b)
-{
-	const union sf_ieee_ldbl_u a = { .ldblu_ld = ld_a };
-	const union sf_ieee_ldbl_u b = { .ldblu_ld = ld_b };
-
-	return !float128_eq(a.ldblu_f128, b.ldblu_f128);
-}
-
 float
 __trunctfsf2(long double ld_a)
 {
@@ -360,19 +298,4 @@ __floatditf(int64_t a)
 	};
 
 	return c.ldblu_ld;
-}
-
-int
-__unordtf2(long double ld_a, long double ld_b)
-{
-	const union sf_ieee_ldbl_u a = { .ldblu_ld = ld_a };
-	const union sf_ieee_ldbl_u b = { .ldblu_ld = ld_b };
-
-	/*
-	 * The comparison is unordered if either input is a NaN.
-	 * Test for this by comparing each operand with itself.
-	 * We must perform both comparisons to correctly check for
-	 * signalling NaNs.
-	 */
-	return 1 ^ (float128_eq(a.ldblu_f128, a.ldblu_f128) & float128_eq(b.ldblu_f128, b.ldblu_f128));
 }

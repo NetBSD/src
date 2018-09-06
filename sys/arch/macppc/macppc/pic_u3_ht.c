@@ -416,7 +416,7 @@ static void
 u3_ht_establish_irq(struct pic_ops *pic, int irq, int type, int pri)
 {
 	struct u3_ht_ops *u3_ht = (struct u3_ht_ops *)pic;
-	int realpri = max(1, min(15, pri));
+	int realpri = uimax(1, uimin(15, pri));
 	uint32_t x;
 
 	x = irq;

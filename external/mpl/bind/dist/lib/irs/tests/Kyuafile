@@ -1,0 +1,4 @@
+syntax(2)
+test_suite('bind9')
+
+atf_test_program{name='resconf_test'}

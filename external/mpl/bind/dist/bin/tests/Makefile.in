@@ -1,0 +1,85 @@
+# Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+#
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+#
+# See the COPYRIGHT file distributed with this work for additional
+# information regarding copyright ownership.
+
+srcdir =	@srcdir@
+VPATH =		@srcdir@
+top_srcdir =	@top_srcdir@
+
+@BIND9_MAKE_INCLUDES@
+
+CINCLUDES =	${DNS_INCLUDES} ${ISC_INCLUDES} ${ISCCFG_INCLUDES} \
+		@DST_OPENSSL_INC@
+
+CDEFINES =	@CRYPTO@
+CWARNINGS =
+BACKTRACECFLAGS = @BACKTRACECFLAGS@
+
+DNSLIBS =	../../lib/dns/libdns.@A@ @DNS_CRYPTO_LIBS@
+ISCLIBS =	../../lib/isc/libisc.@A@ @ISC_OPENSSL_LIBS@
+ISCNOSYMLIBS =	../../lib/isc/libisc-nosymtbl.@A@ @ISC_OPENSSL_LIBS@
+ISCCFGLIBS = 	../../lib/isccfg/libisccfg.@A@
+
+DNSDEPLIBS =	../../lib/dns/libdns.@A@
+ISCDEPLIBS =	../../lib/isc/libisc.@A@
+ISCDEPNOSYMLIBS = ../../lib/isc/libisc-nosymtbl.@A@
+ISCCFGDEPLIBS = ../../lib/isccfg/libisccfg.@A@
+
+LIBS =		@LIBS@
+
+SUBDIRS =	system @PKCS11_TOOLS@
+TESTDIRS =	system
+
+# Test programs that are built by default:
+# cfg_test is needed for regenerating doc/misc/options
+# makejournal is needed by system tests
+# wire_test is needed for fuzz testing
+# other opptional test programs have been moved to ./optional
+
+# Alphabetically
+XTARGETS =	all_tests
+TARGETS =	cfg_test@EXEEXT@ makejournal@EXEEXT@ \
+		wire_test@EXEEXT@ @XTARGETS@
+
+SRCS =		cfg_test.c makejournal.c wire_test.c
+
+@BIND9_MAKE_RULES@
+
+.NOTPARALLEL:
+
+.PHONY:
+all_tests:
+	echo "making depend in `pwd`/optional"; \
+	(cd optional; ${MAKE} ${MAKEDEFS} DESTDIR="${DESTDIR}" $@)
+
+wire_test@EXEEXT@: wire_test.@O@ ${ISCDEPLIBS} ${DNSDEPLIBS}
+	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} ${LDFLAGS} -o $@ wire_test.@O@ \
+		${DNSLIBS} ${ISCLIBS} ${LIBS}
+
+cfg_test@EXEEXT@: cfg_test.@O@ ${ISCCFGDEPLIBS} ${ISCDEPLIBS}
+	${LIBTOOL_MODE_LINK} ${CC} ${CFLAGS} ${LDFLAGS} -o $@ cfg_test.@O@ \
+		${ISCCFGLIBS} ${DNSLIBS} ${ISCLIBS} ${LIBS}
+
+makejournal@EXEEXT@: makejournal.@O@ ${ISCDEPLIBS} ${DNSDEPLIBS}
+	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} ${LDFLAGS} -o $@ makejournal.@O@ \
+		${DNSLIBS} ${ISCLIBS} ${LIBS}
+
+distclean::
+	rm -f headerdep_test.sh
+
+clean distclean::
+	rm -f ${TARGETS}
+	( cd optional; $(MAKE) $@)
+
+check: test
+
+test:
+	@for dir in $(SUBDIRS) ;\
+	do \
+		( cd $$dir; $(MAKE) test ) ;\
+	done

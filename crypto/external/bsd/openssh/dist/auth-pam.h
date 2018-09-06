@@ -1,3 +1,4 @@
+/*	$NetBSD: auth-pam.h,v 1.6.10.2 2018/09/06 06:51:33 pgoyette Exp $	*/
 /*
  * Copyright (c) 2000 Damien Miller.  All rights reserved.
  *

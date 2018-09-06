@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.102.2.1 2018/04/16 02:00:10 pgoyette Exp $	*/
+/*	$NetBSD: defs.h,v 1.102.2.2 2018/09/06 06:56:49 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -107,7 +107,7 @@ extern const char *progname;
  * The next two lines define the current version of the config(1) binary,
  * and the minimum version of the configuration files it supports.
  */
-#define CONFIG_VERSION		20171118
+#define CONFIG_VERSION		20180827
 #define CONFIG_MINVERSION	0
 
 /*

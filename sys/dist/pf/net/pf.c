@@ -1,4 +1,4 @@
-/*	$NetBSD: pf.c,v 1.80.2.2 2018/07/28 04:37:59 pgoyette Exp $	*/
+/*	$NetBSD: pf.c,v 1.80.2.3 2018/09/06 06:56:06 pgoyette Exp $	*/
 /*	$OpenBSD: pf.c,v 1.552.2.1 2007/11/27 16:37:57 henning Exp $ */
 
 /*
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pf.c,v 1.80.2.2 2018/07/28 04:37:59 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pf.c,v 1.80.2.3 2018/09/06 06:56:06 pgoyette Exp $");
 
 #include "pflog.h"
 
@@ -2980,18 +2980,18 @@ pf_calc_mss(struct pf_addr *addr, sa_family_t af, u_int16_t offer)
 	rtalloc_noclone(rop, NO_CLONING);
 	if ((rt = ro->ro_rt) != NULL) {
 		mss = rt->rt_ifp->if_mtu - hlen - sizeof(struct tcphdr);
-		mss = max(tcp_mssdflt, mss);
+		mss = uimax(tcp_mssdflt, mss);
 	}
 #else
 	if ((rt = rtcache_init_noclone(rop)) != NULL) {
 		mss = rt->rt_ifp->if_mtu - hlen - sizeof(struct tcphdr);
-		mss = max(tcp_mssdflt, mss);
+		mss = uimax(tcp_mssdflt, mss);
 		rtcache_unref(rt, rop);
 	}
 	rtcache_free(rop);
 #endif
-	mss = min(mss, offer);
-	mss = max(mss, 64);		/* sanity - at least max opt space */
+	mss = uimin(mss, offer);
+	mss = uimax(mss, 64);		/* sanity - at least max opt space */
 	return (mss);
 }
 

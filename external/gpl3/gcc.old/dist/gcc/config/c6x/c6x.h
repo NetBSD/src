@@ -1,5 +1,5 @@
 /* Target Definitions for TI C6X.
-   Copyright (C) 2010-2015 Free Software Foundation, Inc.
+   Copyright (C) 2010-2016 Free Software Foundation, Inc.
    Contributed by Andrew Jenner <andrew@codesourcery.com>
    Contributed by Bernd Schmidt <bernds@codesourcery.com>
 
@@ -84,6 +84,8 @@ extern c6x_cpu_t c6x_arch;
 						\
       switch (c6x_arch)				\
 	{					\
+	case unk_isa:				\
+	  break;				\
 	case C6X_CPU_C62X:			\
 	  builtin_define ("_TMS320C6200");	\
 	  break;				\
@@ -311,7 +313,7 @@ enum reg_class
 #define FIRST_PARM_OFFSET(fundecl) 4
 #define STARTING_FRAME_OFFSET 0
 #define FRAME_GROWS_DOWNWARD 1
-#define STACK_GROWS_DOWNWARD
+#define STACK_GROWS_DOWNWARD 1
 
 #define STACK_POINTER_REGNUM REG_B15
 #define HARD_FRAME_POINTER_REGNUM REG_A15

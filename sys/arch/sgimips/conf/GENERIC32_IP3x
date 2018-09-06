@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC32_IP3x,v 1.115.2.1 2018/03/22 01:44:46 pgoyette Exp $
+#	$NetBSD: GENERIC32_IP3x,v 1.115.2.2 2018/09/06 06:55:40 pgoyette Exp $
 #
 # GENERIC32_IP3x machine description file
 # 
@@ -28,7 +28,7 @@ makeoptions	TEXTADDR="0x80069000"	# entry point
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC32_IP3x-$Revision: 1.115.2.1 $"
+#ident		"GENERIC32_IP3x-$Revision: 1.115.2.2 $"
 
 maxusers	32
 
@@ -120,9 +120,6 @@ options 	NETATALK	# AppleTalk networking protocols
 options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 options 	PPP_DEFLATE	# Deflate compression support for PPP
 options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
-options 	IPFILTER_LOG	# ipmon(8) log support
-options 	IPFILTER_LOOKUP	# ippool(8) support
-#options 	IPFILTER_DEFAULT_BLOCK	# block all packets by default
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
 #options 	ALTQ		# Manipulate network interfaces' output queues
@@ -347,6 +344,7 @@ aue*    at uhub? port ?         # ADMtek AN986 Pegasus based adapters
 axe*    at uhub? port ?         # ASIX AX88172 based adapters
 cue*    at uhub? port ?         # CATC USB-EL1201A based adapters
 kue*    at uhub? port ?         # Kawasaki LSI KL5KUSB101B based adapters
+mue*	at uhub? port ?		# Microchip LAN75xx/LAN78xx based adapters
 url*    at uhub? port ?         # Realtek RTL8150L based adapters
 udav*   at uhub? port ?         # Davicom DM9601 based adapters
 
@@ -429,7 +427,7 @@ pseudo-device	vnd			# disk-like interface to files
 # network pseudo-devices
 pseudo-device	bpfilter		# Berkeley packet filter
 #pseudo-device	carp			# Common Address Redundancy Protocol
-pseudo-device	ipfilter		# IP filter (firewall) and NAT
+pseudo-device	npf			# NPF packet filter
 pseudo-device	loop			# network loopback
 pseudo-device	ppp			# Point-to-Point Protocol
 pseudo-device	sl			# Serial Line IP
@@ -444,8 +442,6 @@ pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	bridge			# simple inter-network bridging
 #options 	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
 pseudo-device	agr			# IEEE 802.3ad link aggregation
-#pseudo-device	pf			# PF packet filter
-#pseudo-device	pflog			# PF log if
 pseudo-device   accf_data		# "dataready" accept filter
 pseudo-device   accf_http		# "httpready" accept filter
 

@@ -1,6 +1,6 @@
 /* tio_str-- Test file for mpc_inp_str and mpc_out_str.
 
-Copyright (C) 2009, 2011 INRIA
+Copyright (C) 2009, 2011, 2013, 2014 INRIA
 
 This file is part of GNU MPC.
 
@@ -21,7 +21,9 @@ along with this program. If not, see http://www.gnu.org/licenses/ .
 #include "mpc-tests.h"
 
 #ifdef HAVE_UNISTD_H
+#ifndef _POSIX_C_SOURCE
 #define _POSIX_C_SOURCE 1 /* apparently needed on Darwin */
+#endif
 #include <unistd.h> /* for dup, dup2, STDIN_FILENO and STDOUT_FILENO */
 #else
 #define STDIN_FILENO 0
@@ -31,7 +33,7 @@ along with this program. If not, see http://www.gnu.org/licenses/ .
 extern unsigned long line_number;
 /* character appearing next in the file, may be EOF */
 extern int nextchar;
-extern const char *rnd_mode[];
+extern const char *mpc_rnd_mode[];
 
 static void
 check_file (const char* file_name)
@@ -85,7 +87,7 @@ check_file (const char* file_name)
           || size != expected_size)
         {
           printf ("mpc_inp_str failed (line %lu) with rounding mode %s\n",
-                  line_number, rnd_mode[rnd]);
+                  line_number, mpc_rnd_mode[rnd]);
           if (inex != expected_inex)
             printf("     got inexact value: %d\nexpected inexact value: %d\n",
                    inex, expected_inex);

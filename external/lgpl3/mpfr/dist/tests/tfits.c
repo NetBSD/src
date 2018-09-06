@@ -2,7 +2,7 @@
  mpfr_fits_sint_p, mpfr_fits_slong_p, mpfr_fits_sshort_p,
  mpfr_fits_uint_p, mpfr_fits_ulong_p, mpfr_fits_ushort_p
 
-Copyright 2004-2016 Free Software Foundation, Inc.
+Copyright 2004-2018 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -23,12 +23,8 @@ http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA. */
 
 #ifdef HAVE_CONFIG_H
-# include "config.h"       /* for a build within gmp */
+# include "config.h"
 #endif
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <limits.h>
 
 #include "mpfr-intmax.h"
 #include "mpfr-test.h"
@@ -47,7 +43,7 @@ http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
         }                                                       \
       if (__gmpfr_flags != ex_flags)                            \
         {                                                       \
-          unsigned int flags = __gmpfr_flags;                   \
+          mpfr_flags_t flags = __gmpfr_flags;                   \
           printf ("Flags error %d for %s, rnd = %s and x = ",   \
                   N, #FCT,                                      \
                   mpfr_print_rnd_mode ((mpfr_rnd_t) r));        \
@@ -123,7 +119,7 @@ main (void)
 {
   mpfr_exp_t emin, emax;
   mpfr_t x, y;
-  unsigned int flags[2] = { 0, MPFR_FLAGS_ALL }, ex_flags;
+  mpfr_flags_t flags[2] = { 0, MPFR_FLAGS_ALL }, ex_flags;
   int i, r, fi;
 
   tests_start_mpfr ();
@@ -195,7 +191,8 @@ main (void)
             int inv;
 
             mpfr_set_si_2exp (x, -i, -2, MPFR_RNDN);
-            mpfr_rint (y, x, (mpfr_rnd_t) r);
+            /* for RNDF, it fits if it fits when rounding away from zero */
+            mpfr_rint (y, x, r != MPFR_RNDF ? (mpfr_rnd_t) r : MPFR_RNDA);
             inv = MPFR_NOTZERO (y);
             FTEST (80, inv ^ !, mpfr_fits_ulong_p);
             FTEST (81,       !, mpfr_fits_slong_p);
@@ -261,7 +258,10 @@ main (void)
           mpfr_set_si_2exp (x, -i, -2, MPFR_RNDN);
           mpfr_rint (y, x, (mpfr_rnd_t) r);
           inv = MPFR_NOTZERO (y);
-          FTEST (80, inv ^ !, mpfr_fits_uintmax_p);
+          if (r != MPFR_RNDF)
+            FTEST (80, inv ^ !, mpfr_fits_uintmax_p);
+          else
+            FTEST (80, !!, mpfr_fits_uintmax_p);
           FTEST (81,       !, mpfr_fits_intmax_p);
         }
     }

@@ -1,4 +1,4 @@
-/*	$NetBSD: hdlg_machdep.c,v 1.23 2016/12/22 14:47:55 cherry Exp $	*/
+/*	$NetBSD: hdlg_machdep.c,v 1.23.14.1 2018/09/06 06:55:30 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -73,8 +73,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdlg_machdep.c,v 1.23 2016/12/22 14:47:55 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdlg_machdep.c,v 1.23.14.1 2018/09/06 06:55:30 pgoyette Exp $");
 
+#include "opt_arm_debug.h"
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
 #include "opt_pmap_debug.h"

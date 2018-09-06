@@ -1,4 +1,4 @@
-/* $NetBSD: fcu.c,v 1.1.2.5 2018/07/28 04:37:44 pgoyette Exp $ */
+/* $NetBSD: fcu.c,v 1.1.2.6 2018/09/06 06:55:49 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2018 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fcu.c,v 1.1.2.5 2018/07/28 04:37:44 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fcu.c,v 1.1.2.6 2018/09/06 06:55:49 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -431,10 +431,10 @@ fcu_set_fan_rpm(struct fcu_softc *sc, fcu_fan_t *f, int speed)
 		diff = data - speed;
 		DPRINTF("d %d s %d t %d diff %d ", f->duty, data, speed, diff);
 		if (diff > 100) {
-			nduty = max(20, nduty - 1);
+			nduty = uimax(20, nduty - 1);
 		}
 		if (diff < -100) {
-			nduty = min(0xd0, nduty + 1);
+			nduty = uimin(0xd0, nduty + 1);
 		}
 		cmd = f->reg;
 		DPRINTF("%s nduty %d", __func__, nduty);

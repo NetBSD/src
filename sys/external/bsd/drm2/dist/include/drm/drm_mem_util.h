@@ -1,3 +1,5 @@
+/*	$NetBSD: drm_mem_util.h,v 1.1.1.1.36.1 2018/09/06 06:56:35 pgoyette Exp $	*/
+
 /*
  * Copyright © 2008 Intel Corporation
  *
@@ -56,10 +58,7 @@ static __inline__ void *drm_malloc_ab(size_t nmemb, size_t size)
 
 static __inline void drm_free_large(void *ptr)
 {
-	if (!is_vmalloc_addr(ptr))
-		return kfree(ptr);
-
-	vfree(ptr);
+	kvfree(ptr);
 }
 
 #endif

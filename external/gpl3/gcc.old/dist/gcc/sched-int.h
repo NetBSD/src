@@ -1,6 +1,6 @@
 /* Instruction scheduling pass.  This file contains definitions used
    internally in the scheduler.
-   Copyright (C) 1992-2015 Free Software Foundation, Inc.
+   Copyright (C) 1992-2016 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -21,11 +21,7 @@ along with GCC; see the file COPYING3.  If not see
 #ifndef GCC_SCHED_INT_H
 #define GCC_SCHED_INT_H
 
-#include "insn-attr.h"
-
 #ifdef INSN_SCHEDULING
-
-#include "df.h"
 
 /* Identificator of a scheduler pass.  */
 enum sched_pass_id_t { SCHED_PASS_UNKNOWN, SCHED_RGN_PASS, SCHED_EBB_PASS,
@@ -104,7 +100,7 @@ extern int get_rgn_sched_max_insns_priority (void);
 extern void sel_add_to_insn_priority (rtx, int);
 
 /* True if during selective scheduling we need to emulate some of haifa
-   scheduler behaviour.  */
+   scheduler behavior.  */
 extern int sched_emulate_haifa_p;
 
 /* Mapping from INSN_UID to INSN_LUID.  In the end all other per insn data
@@ -244,7 +240,7 @@ struct _dep
   int cost:20;
 };
 
-#define UNKNOWN_DEP_COST (-1<<19)
+#define UNKNOWN_DEP_COST ((int) ((unsigned int) -1 << 19))
 
 typedef struct _dep dep_def;
 typedef dep_def *dep_t;
@@ -811,8 +807,17 @@ struct autopref_multipass_data_
 {
   /* Base part of memory address.  */
   rtx base;
-  /* Memory offset.  */
-  int offset;
+
+  /* Memory offsets from the base.  For single simple sets
+     only min_offset is valid.  For multi-set insns min_offset
+     and max_offset record the minimum and maximum offsets from the same
+     base among the sets inside the PARALLEL.  */
+  int min_offset;
+  int max_offset;
+
+  /* True if this is a load/store-multiple instruction.  */
+  bool multi_mem_insn_p;
+
   /* Entry status.  */
   enum autopref_multipass_data_status status;
 };
@@ -1345,7 +1350,7 @@ extern void init_deps_global (void);
 extern void finish_deps_global (void);
 extern void deps_analyze_insn (struct deps_desc *, rtx_insn *);
 extern void remove_from_deps (struct deps_desc *, rtx_insn *);
-extern void init_insn_reg_pressure_info (rtx);
+extern void init_insn_reg_pressure_info (rtx_insn *);
 extern void get_implicit_reg_pending_clobbers (HARD_REG_SET *, rtx_insn *);
 
 extern dw_t get_dep_weak (ds_t, ds_t);
@@ -1493,6 +1498,9 @@ extern void compute_priorities (void);
 extern void increase_insn_priority (rtx_insn *, int);
 extern void debug_rgn_dependencies (int);
 extern void debug_dependencies (rtx_insn *, rtx_insn *);
+extern void dump_rgn_dependencies_dot (FILE *);
+extern void dump_rgn_dependencies_dot (const char *);
+
 extern void free_rgn_deps (void);
 extern int contributes_to_priority (rtx_insn *, rtx_insn *);
 extern void extend_rgns (int *, int *, sbitmap, int *);
@@ -1650,8 +1658,8 @@ sd_iterator_next (sd_iterator_def *it_ptr)
 
 extern int sd_lists_size (const_rtx, sd_list_types_def);
 extern bool sd_lists_empty_p (const_rtx, sd_list_types_def);
-extern void sd_init_insn (rtx);
-extern void sd_finish_insn (rtx);
+extern void sd_init_insn (rtx_insn *);
+extern void sd_finish_insn (rtx_insn *);
 extern dep_t sd_find_dep_between (rtx, rtx, bool);
 extern void sd_add_dep (dep_t, bool);
 extern enum DEPS_ADJUST_RESULT sd_add_or_update_dep (dep_t, bool);

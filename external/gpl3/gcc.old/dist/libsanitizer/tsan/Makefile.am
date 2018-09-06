@@ -3,7 +3,7 @@ AM_CPPFLAGS = -I $(top_srcdir) -I $(top_srcdir)/include
 # May be used by toolexeclibdir.
 gcc_version := $(shell cat $(top_srcdir)/../gcc/BASE-VER)
 
-DEFS = -D_GNU_SOURCE -D_DEBUG -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS -D__STDC_LIMIT_MACROS 
+DEFS = -D_GNU_SOURCE -D_DEBUG -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS -D__STDC_LIMIT_MACROS -DCAN_SANITIZE_UB=0 @OBSTACK_DEFS@
 AM_CXXFLAGS = -Wall -W -Wno-unused-parameter -Wwrite-strings -pedantic -Wno-long-long  -fPIC -fno-builtin -fno-exceptions -fno-rtti -fomit-frame-pointer -funwind-tables -fvisibility=hidden -Wno-variadic-macros
 AM_CXXFLAGS += $(LIBSTDCXX_RAW_CXX_CXXFLAGS)
 AM_CXXFLAGS += -std=gnu++11
@@ -21,12 +21,16 @@ tsan_files = \
 	tsan_interface_atomic.cc \
 	tsan_interface.cc \
 	tsan_interface_java.cc \
+	tsan_libdispatch_mac.cc \
+	tsan_malloc_mac.cc \
 	tsan_md5.cc \
 	tsan_mman.cc \
 	tsan_mutex.cc \
 	tsan_mutexset.cc \
+	tsan_new_delete.cc \
 	tsan_platform_linux.cc \
 	tsan_platform_mac.cc \
+	tsan_platform_posix.cc \
 	tsan_platform_windows.cc \
 	tsan_report.cc \
 	tsan_rtl.cc \
@@ -40,7 +44,7 @@ tsan_files = \
 	tsan_sync.cc 
 
 libtsan_la_SOURCES = $(tsan_files)
-EXTRA_libtsan_la_SOURCES = tsan_rtl_amd64.S
+EXTRA_libtsan_la_SOURCES = tsan_rtl_amd64.S tsan_rtl_aarch64.S
 libtsan_la_LIBADD = $(top_builddir)/sanitizer_common/libsanitizer_common.la $(top_builddir)/interception/libinterception.la $(TSAN_TARGET_DEPENDENT_OBJECTS)
 libtsan_la_DEPENDENCIES = $(top_builddir)/sanitizer_common/libsanitizer_common.la $(top_builddir)/interception/libinterception.la $(TSAN_TARGET_DEPENDENT_OBJECTS)
 if LIBBACKTRACE_SUPPORTED

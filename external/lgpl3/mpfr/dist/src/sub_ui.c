@@ -1,6 +1,6 @@
 /* mpfr_sub_ui -- subtract a floating-point number and a machine integer
 
-Copyright 2000-2016 Free Software Foundation, Inc.
+Copyright 2000-2018 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -27,35 +27,55 @@ http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 int
 mpfr_sub_ui (mpfr_ptr y, mpfr_srcptr x, unsigned long int u, mpfr_rnd_t rnd_mode)
 {
-  if (MPFR_LIKELY (u != 0))  /* if u=0, do nothing */
-    {
-      mpfr_t uu;
-      mp_limb_t up[1];
-      unsigned long cnt;
-      int inex;
+  MPFR_LOG_FUNC
+    (("x[%Pu]=%.*Rg u=%lu rnd=%d",
+      mpfr_get_prec(x), mpfr_log_prec, x, u, rnd_mode),
+     ("y[%Pu]=%.*Rg", mpfr_get_prec (y), mpfr_log_prec, y));
 
-      MPFR_SAVE_EXPO_DECL (expo);
-
-      MPFR_LOG_FUNC
-        (("x[%Pu]=%.*Rg u=%lu rnd=%d",
-          mpfr_get_prec(x), mpfr_log_prec, x, u, rnd_mode),
-         ("y[%Pu]=%.*Rg inexact=%d",
-          mpfr_get_prec(y), mpfr_log_prec, y, inex));
-
-      MPFR_TMP_INIT1 (up, uu, GMP_NUMB_BITS);
-      MPFR_ASSERTN (u == (mp_limb_t) u);
-      count_leading_zeros (cnt, (mp_limb_t) u);
-      *up = (mp_limb_t) u << cnt;
-
-      /* Optimization note: Exponent save/restore operations may be
-         removed if mpfr_sub works even when uu is out-of-range. */
-      MPFR_SAVE_EXPO_MARK (expo);
-      MPFR_SET_EXP (uu, GMP_NUMB_BITS - cnt);
-      inex = mpfr_sub (y, x, uu, rnd_mode);
-      MPFR_SAVE_EXPO_UPDATE_FLAGS (expo, __gmpfr_flags);
-      MPFR_SAVE_EXPO_FREE (expo);
-      return mpfr_check_range (y, inex, rnd_mode);
-    }
-  else
+  /* (unsigned long) 0 is assumed to be a real 0 (unsigned) */
+  if (MPFR_UNLIKELY (u == 0))
     return mpfr_set (y, x, rnd_mode);
+
+  /* This block is actually useless, but this is a minor optimization. */
+  if (MPFR_UNLIKELY (MPFR_IS_SINGULAR (x)))
+    {
+      if (MPFR_IS_NAN (x))
+        {
+          MPFR_SET_NAN (y);
+          MPFR_RET_NAN;
+        }
+      if (MPFR_IS_INF (x))
+        {
+          MPFR_SET_INF (y);
+          MPFR_SET_SAME_SIGN (y, x);
+          MPFR_RET (0); /* +/-infinity is exact */
+        }
+      /* The case x being zero is handled below: we can't use mpfr_set_si
+         as the opposite of u does not necessarily fit in a long. */
+    }
+
+  /* Main code */
+  {
+    mpfr_t uu;
+    mp_limb_t up[1];
+    int cnt;
+    int inex;
+    MPFR_SAVE_EXPO_DECL (expo);
+
+    MPFR_TMP_INIT1 (up, uu, GMP_NUMB_BITS);
+    MPFR_STAT_STATIC_ASSERT (MPFR_LIMB_MAX >= ULONG_MAX);
+    /* So, u fits in a mp_limb_t, which justifies the casts below. */
+    MPFR_ASSERTD (u != 0);
+    count_leading_zeros (cnt, (mp_limb_t) u);
+    *up = (mp_limb_t) u << cnt;
+
+    /* Optimization note: Exponent save/restore operations may be
+       removed if mpfr_sub works even when uu is out-of-range. */
+    MPFR_SAVE_EXPO_MARK (expo);
+    MPFR_SET_EXP (uu, GMP_NUMB_BITS - cnt);
+    inex = mpfr_sub (y, x, uu, rnd_mode);
+    MPFR_SAVE_EXPO_UPDATE_FLAGS (expo, __gmpfr_flags);
+    MPFR_SAVE_EXPO_FREE (expo);
+    return mpfr_check_range (y, inex, rnd_mode);
+  }
 }

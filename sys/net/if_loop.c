@@ -1,4 +1,4 @@
-/*	$NetBSD: if_loop.c,v 1.101.2.1 2018/07/28 04:38:10 pgoyette Exp $	*/
+/*	$NetBSD: if_loop.c,v 1.101.2.2 2018/09/06 06:56:44 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_loop.c,v 1.101.2.1 2018/07/28 04:38:10 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_loop.c,v 1.101.2.2 2018/09/06 06:56:44 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -332,7 +332,7 @@ looutput(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 		KASSERT((csum_flags & ~M_CSUM_UDPv6) == 0);
 		if (csum_flags != 0 &&
 		    IN6_LOOPBACK_NEED_CHECKSUM(csum_flags)) {
-			ip6_undefer_csum(m, 0, csum_flags);
+			in6_undefer_cksum(m, 0, csum_flags);
 		}
 		m->m_pkthdr.csum_flags = 0;
 		m->m_flags |= M_LOOP;

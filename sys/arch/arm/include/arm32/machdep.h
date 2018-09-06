@@ -1,7 +1,7 @@
-/* $NetBSD: machdep.h,v 1.21.12.1 2018/07/28 04:37:28 pgoyette Exp $ */
+/* $NetBSD: machdep.h,v 1.21.12.2 2018/09/06 06:55:26 pgoyette Exp $ */
 
-#ifndef _ARM32_BOOT_MACHDEP_H_
-#define _ARM32_BOOT_MACHDEP_H_
+#ifndef _ARM32_MACHDEP_H_
+#define _ARM32_MACHDEP_H_
 
 /* Define various stack sizes in pages */
 #ifndef IRQ_STACK_SIZE
@@ -16,7 +16,6 @@
 #ifndef FIQ_STACK_SIZE
 #define FIQ_STACK_SIZE	1
 #endif
-
 
 extern void (*cpu_reset_address)(void);
 extern paddr_t cpu_reset_address_paddr;
@@ -53,6 +52,8 @@ extern char *booted_kernel;
 extern volatile uint32_t arm_cpu_hatched;
 extern volatile uint32_t arm_cpu_mbox;
 extern u_int arm_cpu_max;
+extern u_long kern_vtopdiff;
+
 
 /* misc prototypes used by the many arm machdeps */
 void cortex_pmc_ccnt_init(void);
@@ -71,6 +72,24 @@ void dumpsys(void);
 u_int initarm(void *);
 struct pmap_devmap;
 struct boot_physmem;
+
+static inline paddr_t
+aarch32_kern_vtophys(vaddr_t va)
+{
+	return va - kern_vtopdiff;
+}
+
+static inline vaddr_t
+aarch32_kern_phystov(paddr_t pa)
+{
+	return pa + kern_vtopdiff;
+}
+
+#define KERN_VTOPHYS(va)	aarch32_kern_vtophys(va)
+#define KERN_PHYSTOV(pa)	aarch32_kern_phystov(pa)
+
+void cpu_kernel_vm_init(paddr_t, psize_t);
+
 void arm32_bootmem_init(paddr_t memstart, psize_t memsize, paddr_t kernelstart);
 void arm32_kernel_vm_init(vaddr_t kvm_base, vaddr_t vectors,
 	vaddr_t iovbase /* (can be zero) */,

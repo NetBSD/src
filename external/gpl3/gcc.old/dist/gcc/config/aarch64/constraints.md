@@ -1,5 +1,5 @@
 ;; Machine description for AArch64 architecture.
-;; Copyright (C) 2009-2015 Free Software Foundation, Inc.
+;; Copyright (C) 2009-2016 Free Software Foundation, Inc.
 ;; Contributed by ARM Ltd.
 ;;
 ;; This file is part of GCC.
@@ -34,6 +34,11 @@
  "A constant that can be used with an ADD operation."
  (and (match_code "const_int")
       (match_test "aarch64_uimm12_shift (ival)")))
+
+(define_constraint "Upl"
+  "@internal A constant that matches two uses of add instructions."
+  (and (match_code "const_int")
+       (match_test "aarch64_pluslong_strict_immedate (op, VOIDmode)")))
 
 (define_constraint "J"
  "A constant that can be used with a SUB operation (once negated)."
@@ -101,8 +106,9 @@
        (match_test "(unsigned HOST_WIDE_INT) ival < 64")))
 
 (define_constraint "Usf"
-  "@internal Usf is a symbol reference."
-  (match_code "symbol_ref"))
+  "@internal Usf is a symbol reference under the context where plt stub allowed."
+  (and (match_code "symbol_ref")
+       (match_test "!aarch64_is_noplt_call_p (op)")))
 
 (define_constraint "UsM"
   "@internal

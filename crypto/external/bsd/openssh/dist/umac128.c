@@ -1,3 +1,4 @@
+/*	$NetBSD: umac128.c,v 1.1.22.2 2018/09/06 06:51:33 pgoyette Exp $	*/
 /* $OpenBSD: umac128.c,v 1.2 2018/02/08 04:12:32 dtucker Exp $ */
 
 #define UMAC_OUTPUT_LEN	16

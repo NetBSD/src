@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.313.2.1 2018/07/28 04:37:46 pgoyette Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.313.2.2 2018/09/06 06:55:51 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.313.2.1 2018/07/28 04:37:46 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.313.2.2 2018/09/06 06:55:51 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -3967,7 +3967,7 @@ alloc_retry:
 	ifp->if_start = bge_start;
 	ifp->if_init = bge_init;
 	ifp->if_watchdog = bge_watchdog;
-	IFQ_SET_MAXLEN(&ifp->if_snd, max(BGE_TX_RING_CNT - 1, IFQ_MAXLEN));
+	IFQ_SET_MAXLEN(&ifp->if_snd, uimax(BGE_TX_RING_CNT - 1, IFQ_MAXLEN));
 	IFQ_SET_READY(&ifp->if_snd);
 	DPRINTFN(5, ("strcpy if_xname\n"));
 	strcpy(ifp->if_xname, device_xname(sc->bge_dev));

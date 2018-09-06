@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module.c,v 1.130.2.20 2018/09/06 00:10:55 pgoyette Exp $	*/
+/*	$NetBSD: kern_module.c,v 1.130.2.21 2018/09/06 06:56:41 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.130.2.20 2018/09/06 00:10:55 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.130.2.21 2018/09/06 06:56:41 pgoyette Exp $");
 
 #define _MODULE_INTERNAL
 
@@ -922,7 +922,7 @@ module_do_builtin(const module_t *pmod, const char *name, module_t **modp,
 			p = s;
 			while (*p != '\0' && *p != ',')
 				p++;
-			len = min(p - s + 1, sizeof(buf));
+			len = uimin(p - s + 1, sizeof(buf));
 			strlcpy(buf, s, len);
 			if (buf[0] == '\0')
 				break;

@@ -1,4 +1,4 @@
-/*  $NetBSD: if_wpivar.h,v 1.21 2017/02/02 10:05:35 nonaka Exp $    */
+/*  $NetBSD: if_wpivar.h,v 1.21.12.1 2018/09/06 06:55:51 pgoyette Exp $    */
 
 /*-
  * Copyright (c) 2006
@@ -197,5 +197,7 @@ struct wpi_softc {
 	struct lwp		*sc_rsw_lwp;
 	struct kmutex 		sc_rsw_mtx;
 	struct kcondvar 	sc_rsw_cv;
-	int 			sc_dying;
+	bool 			sc_dying;
+	bool 			sc_rsw_suspend;
+	bool 			sc_rsw_suspended;
 };

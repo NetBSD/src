@@ -129,7 +129,7 @@ compile_time_root_prime(int do_ip4, int do_ip6)
 	dp->has_parent_side_NS = 1;
       if(do_ip4) {
 	if(!ah(dp, "A.ROOT-SERVERS.NET.", "198.41.0.4"))	goto failed;
-	if(!ah(dp, "B.ROOT-SERVERS.NET.", "192.228.79.201")) goto failed;
+	if(!ah(dp, "B.ROOT-SERVERS.NET.", "199.9.14.201")) goto failed;
 	if(!ah(dp, "C.ROOT-SERVERS.NET.", "192.33.4.12"))	goto failed;
 	if(!ah(dp, "D.ROOT-SERVERS.NET.", "199.7.91.13"))	goto failed;
 	if(!ah(dp, "E.ROOT-SERVERS.NET.", "192.203.230.10")) goto failed;
@@ -244,14 +244,16 @@ read_stubs_addr(struct config_stub* s, struct delegpt* dp)
 	struct config_strlist* p;
 	struct sockaddr_storage addr;
 	socklen_t addrlen;
+	char* auth_name;
 	for(p = s->addrs; p; p = p->next) {
 		log_assert(p->str);
-		if(!extstrtoaddr(p->str, &addr, &addrlen)) {
+		if(!authextstrtoaddr(p->str, &addr, &addrlen, &auth_name)) {
 			log_err("cannot parse stub %s ip address: '%s'", 
 				s->name, p->str);
 			return 0;
 		}
-		if(!delegpt_add_addr_mlc(dp, &addr, addrlen, 0, 0)) {
+		if(!delegpt_add_addr_mlc(dp, &addr, addrlen, 0, 0,
+			auth_name)) {
 			log_err("out of memory");
 			return 0;
 		}

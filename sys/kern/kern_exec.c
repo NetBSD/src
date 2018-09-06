@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.456.2.3 2018/06/25 07:26:04 pgoyette Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.456.2.4 2018/09/06 06:56:41 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.456.2.3 2018/06/25 07:26:04 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.456.2.4 2018/09/06 06:56:41 pgoyette Exp $");
 
 #include "opt_exec.h"
 #include "opt_execfmt.h"
@@ -209,6 +209,7 @@ struct emul emul_netbsd = {
 	.e_sc_autoload =	netbsd_syscalls_autoload,
 #endif
 	.e_sysent =		sysent,
+	.e_nomodbits =		sysent_nomodbits,
 #ifdef SYSCALL_DEBUG
 	.e_syscallnames =	syscallnames,
 #else
@@ -2628,7 +2629,7 @@ sys_posix_spawn(struct lwp *l1, const struct sys_posix_spawn_args *uap,
 
 	/* copy in file_actions struct */
 	if (SCARG(uap, file_actions) != NULL) {
-		max_fileactions = 2 * min(p->p_rlimit[RLIMIT_NOFILE].rlim_cur,
+		max_fileactions = 2 * uimin(p->p_rlimit[RLIMIT_NOFILE].rlim_cur,
 		    maxfiles);
 		error = posix_spawn_fa_alloc(&fa, SCARG(uap, file_actions),
 		    max_fileactions);

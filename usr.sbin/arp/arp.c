@@ -1,4 +1,4 @@
-/*	$NetBSD: arp.c,v 1.58.4.2 2018/07/28 04:38:14 pgoyette Exp $ */
+/*	$NetBSD: arp.c,v 1.58.4.3 2018/09/06 06:56:50 pgoyette Exp $ */
 
 /*
  * Copyright (c) 1984, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1984, 1993\
 #if 0
 static char sccsid[] = "@(#)arp.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: arp.c,v 1.58.4.2 2018/07/28 04:38:14 pgoyette Exp $");
+__RCSID("$NetBSD: arp.c,v 1.58.4.3 2018/09/06 06:56:50 pgoyette Exp $");
 #endif
 #endif /* not lint */
 
@@ -497,6 +497,7 @@ void
 delete(const char *host, const char *info)
 {
 	int mib[6];
+	char addr[sizeof("000.000.000.000\0")];
 	size_t needed;
 	char *lim, *buf, *next;
 	struct rt_msghdr *rtm;
@@ -543,8 +544,10 @@ retry:
 		found = true;
 		ret = delete_one(rtm);
 		if (vflag && ret == 0) {
-			(void)printf("%s (%s) deleted\n", host,
+			snprintf(addr, sizeof(addr), "%s",
 			    inet_ntoa(sina->sin_addr));
+			(void)printf("%s (%s) deleted\n",
+			    host != NULL ? host : addr, addr);
 		}
 	}
 	if (host != NULL && !found)

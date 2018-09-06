@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17 2015/07/01 15:38:56 christos Exp $
+#	$NetBSD: Makefile,v 1.17.14.1 2018/09/06 06:53:50 pgoyette Exp $
 
 .include <bsd.own.mk>
 
@@ -158,3 +158,4 @@ COPTS.sampleCompTop.cc+=	-O0
 .endif
 
 CWARNFLAGS.clang+=	-Wno-parentheses -Wno-tautological-compare
+CWARNFLAGS.clang+=	-Wno-deprecated-register

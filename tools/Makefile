@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.193.2.1 2018/05/21 04:36:18 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.193.2.2 2018/09/06 06:56:49 pgoyette Exp $
 
 .include <bsd.own.mk>
 .include <bsd.endian.mk>
@@ -101,6 +101,7 @@ SUBDIR+= cap_mkdb crunchgen ctags gencat hexdump \
 .endif
 
 SUBDIR+= cat rpcgen join lorder m4 mkdep tsort .WAIT yacc .WAIT awk .WAIT lex
+SUBDIR+= grep
 
 .if ${TOOLS_BUILDRUMP} == "no"
 SUBDIR += .WAIT texinfo \

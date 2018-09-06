@@ -1,3 +1,5 @@
+/*	$NetBSD: intel_sdvo_regs.h,v 1.1.1.2.28.1 2018/09/06 06:56:18 pgoyette Exp $	*/
+
 /*
  * Copyright © 2006-2007 Intel Corporation
  *

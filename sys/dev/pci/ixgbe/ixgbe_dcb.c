@@ -69,7 +69,7 @@ s32 ixgbe_dcb_calculate_tc_credits(u8 *bw, u16 *refill, u16 *max,
 
 	/* Find out the hw credits for each TC */
 	for (i = 0; i < IXGBE_DCB_MAX_TRAFFIC_CLASS; i++) {
-		int val = min(bw[i] * multiplier, IXGBE_DCB_MAX_CREDIT_REFILL);
+		int val = uimin(bw[i] * multiplier, IXGBE_DCB_MAX_CREDIT_REFILL);
 
 		if (val < min_credit)
 			val = min_credit;
@@ -153,7 +153,7 @@ s32 ixgbe_dcb_calculate_tc_credits_cee(struct ixgbe_hw *hw,
 		p->link_percent = (u8)link_percentage;
 
 		/* Calculate credit refill ratio using multiplier */
-		credit_refill = min(link_percentage * min_multiplier,
+		credit_refill = uimin(link_percentage * min_multiplier,
 				    (u32)IXGBE_DCB_MAX_CREDIT_REFILL);
 
 		/* Refill at least minimum credit */

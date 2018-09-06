@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.191.2.2 2018/05/21 04:36:15 pgoyette Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.191.2.3 2018/09/06 06:56:42 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,10 +61,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.191.2.2 2018/05/21 04:36:15 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.191.2.3 2018/09/06 06:56:42 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pipe.h"
+#include "opt_sctp.h"
 #endif
 
 #define MBUFTYPES
@@ -84,6 +85,11 @@ __KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.191.2.2 2018/05/21 04:36:15 pgoy
 #include <sys/event.h>
 #include <sys/atomic.h>
 #include <sys/kauth.h>
+
+#ifdef SCTP
+#include <netinet/sctp_uio.h>
+#include <netinet/sctp_peeloff.h>
+#endif
 
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
@@ -1192,17 +1198,10 @@ sys_setsockopt(struct lwp *l, const struct sys_setsockopt_args *uap,
 	return error;
 }
 
-int
-sys_getsockopt(struct lwp *l, const struct sys_getsockopt_args *uap,
-    register_t *retval)
+static int
+getsockopt(struct lwp *l, const struct sys_getsockopt_args *uap,
+    register_t *retval, bool copyarg)
 {
-	/* {
-		syscallarg(int)			s;
-		syscallarg(int)			level;
-		syscallarg(int)			name;
-		syscallarg(void *)		val;
-		syscallarg(unsigned int *)	avalsize;
-	} */
 	struct sockopt	sopt;
 	struct socket	*so;
 	file_t		*fp;
@@ -1216,37 +1215,66 @@ sys_getsockopt(struct lwp *l, const struct sys_getsockopt_args *uap,
 	} else
 		valsize = 0;
 
-	if ((error = fd_getsock1(SCARG(uap, s), &so, &fp)) != 0)
-		return (error);
-
 	if (valsize > MCLBYTES)
 		return EINVAL;
 
+	if ((error = fd_getsock1(SCARG(uap, s), &so, &fp)) != 0)
+		return error;
+
 	sockopt_init(&sopt, SCARG(uap, level), SCARG(uap, name), valsize);
+	if (copyarg && valsize > 0) {
+		error = copyin(SCARG(uap, val), sopt.sopt_data, valsize);
+		if (error)
+			goto out;
+	}
 
 	if (fp->f_flag & FNOSIGPIPE)
 		so->so_options |= SO_NOSIGPIPE;
 	else
 		so->so_options &= ~SO_NOSIGPIPE;
+
 	error = sogetopt(so, &sopt);
+	if (error || valsize == 0)
+		goto out;
+
+	len = uimin(valsize, sopt.sopt_retsize);
+	error = copyout(sopt.sopt_data, SCARG(uap, val), len);
 	if (error)
 		goto out;
 
-	if (valsize > 0) {
-		len = min(valsize, sopt.sopt_retsize);
-		error = copyout(sopt.sopt_data, SCARG(uap, val), len);
-		if (error)
-			goto out;
-
-		error = copyout(&len, SCARG(uap, avalsize), sizeof(len));
-		if (error)
-			goto out;
-	}
-
+	error = copyout(&len, SCARG(uap, avalsize), sizeof(len));
  out:
 	sockopt_destroy(&sopt);
 	fd_putfile(SCARG(uap, s));
 	return error;
+}
+
+int
+sys_getsockopt(struct lwp *l, const struct sys_getsockopt_args *uap,
+    register_t *retval)
+{
+	/* {
+		syscallarg(int)			s;
+		syscallarg(int)			level;
+		syscallarg(int)			name;
+		syscallarg(void *)		val;
+		syscallarg(unsigned int *)	avalsize;
+	} */
+	return getsockopt(l, uap, retval, false);
+}
+
+int
+sys_getsockopt2(struct lwp *l, const struct sys_getsockopt2_args *uap,
+    register_t *retval)
+{
+	/* {
+		syscallarg(int)			s;
+		syscallarg(int)			level;
+		syscallarg(int)			name;
+		syscallarg(void *)		val;
+		syscallarg(unsigned int *)	avalsize;
+	} */
+	return getsockopt(l, (const struct sys_getsockopt_args *) uap, retval, true);
 }
 
 #ifdef PIPE_SOCKETPAIR
@@ -1583,4 +1611,70 @@ sockargs(struct mbuf **mp, const void *bf, size_t buflen, enum uio_seg seg,
 	default:
 		return EINVAL;
 	}
+}
+
+int
+do_sys_peeloff(struct socket *head, void *data)
+{
+#ifdef SCTP
+	/*file_t *lfp = NULL;*/
+	file_t *nfp = NULL;
+	int error;
+	struct socket *so;
+	int fd;
+	uint32_t name;
+	/*short fflag;*/		/* type must match fp->f_flag */
+
+	name = *(uint32_t *) data;
+	error = sctp_can_peel_off(head, name);
+	if (error) {
+		printf("peeloff failed\n");
+		return error;
+	}
+	/*
+	 * At this point we know we do have a assoc to pull
+	 * we proceed to get the fd setup. This may block
+	 * but that is ok.
+	 */
+	error = fd_allocfile(&nfp, &fd);
+	if (error) {
+		/*
+		 * Probably ran out of file descriptors. Put the
+		 * unaccepted connection back onto the queue and
+		 * do another wakeup so some other process might
+		 * have a chance at it.
+		 */
+		return error;
+	}
+	*(int *) data = fd;
+
+	so = sctp_get_peeloff(head, name, &error);
+	if (so == NULL) {
+		/*
+		 * Either someone else peeled it off OR
+		 * we can't get a socket.
+		 * close the new descriptor, assuming someone hasn't ripped it
+		 * out from under us.
+		 */
+		mutex_enter(&nfp->f_lock);
+		nfp->f_count++;
+		mutex_exit(&nfp->f_lock);
+		fd_abort(curlwp->l_proc, nfp, fd);
+		return error;
+	}
+	so->so_state &= ~SS_NOFDREF;
+	so->so_state &= ~SS_ISCONNECTING;
+	so->so_head = NULL;
+	so->so_cred = kauth_cred_dup(head->so_cred);
+	nfp->f_socket = so;
+	nfp->f_flag = FREAD|FWRITE;
+	nfp->f_ops = &socketops;
+	nfp->f_type = DTYPE_SOCKET;
+
+	fd_affix(curlwp->l_proc, nfp, fd);
+
+	return error;
+#else
+	return EOPNOTSUPP;
+#endif
 }

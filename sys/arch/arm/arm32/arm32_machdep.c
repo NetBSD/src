@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_machdep.c,v 1.115 2017/10/31 12:37:23 martin Exp $	*/
+/*	$NetBSD: arm32_machdep.c,v 1.115.2.1 2018/09/06 06:55:25 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -42,8 +42,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.115 2017/10/31 12:37:23 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.115.2.1 2018/09/06 06:55:25 pgoyette Exp $");
 
+#include "opt_arm_debug.h"
+#include "opt_fdt.h"
 #include "opt_modular.h"
 #include "opt_md.h"
 #include "opt_pmap_debug.h"
@@ -79,6 +81,17 @@ __KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.115 2017/10/31 12:37:23 martin E
 
 #include <machine/bootconfig.h>
 #include <machine/pcb.h>
+
+#if defined(FDT)
+#include <arm/fdt/arm_fdtvar.h>
+#include <arch/evbarm/fdt/platform.h>
+#endif
+
+#ifdef VERBOSE_INIT_ARM
+#define VPRINTF(...)	printf(__VA_ARGS__)
+#else
+#define VPRINTF(...)	do { } while (/* CONSTCOND */ 0)
+#endif
 
 void (*cpu_reset_address)(void);	/* Used by locore */
 paddr_t cpu_reset_address_paddr;	/* Used by locore */
@@ -151,9 +164,7 @@ arm32_vector_init(vaddr_t va, int which)
 		vector_page = (vaddr_t)page0rel;
 		KASSERT((vector_page & 0x1f) == 0);
 		armreg_vbar_write(vector_page);
-#ifdef VERBOSE_INIT_ARM
-		printf(" vbar=%p", page0rel);
-#endif
+		VPRINTF(" vbar=%p", page0rel);
 		cpu_control(CPU_CONTROL_VECRELOC, 0);
 		return;
 #ifndef ARM_HAS_VBAR
@@ -259,12 +270,6 @@ cpu_startup(void)
 {
 	vaddr_t minaddr;
 	vaddr_t maxaddr;
-	char pbuf[9];
-
-	/*
-	 * Until we better locking, we have to live under the kernel lock.
-	 */
-	//KERNEL_LOCK(1, NULL);
 
 	/* Set the CPU control register */
 	cpu_setup(boot_args);
@@ -296,24 +301,13 @@ cpu_startup(void)
 	initmsgbuf(msgbufaddr, round_page(MSGBUFSIZE));
 
 	/*
-	 * Identify ourselves for the msgbuf (everything printed earlier will
-	 * not be buffered).
-	 */
-	printf("%s%s", copyright, version);
-
-	format_bytes(pbuf, sizeof(pbuf), arm_ptob(physmem));
-	printf("total memory = %s\n", pbuf);
-
-	minaddr = 0;
-
-	/*
 	 * Allocate a submap for physio
 	 */
+	minaddr = 0;
 	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
 				   VM_PHYS_SIZE, 0, false, NULL);
 
-	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
-	printf("avail memory = %s\n", pbuf);
+	banner();
 
 	/*
 	 * This is actually done by initarm_common, but not all ports use it
@@ -700,9 +694,7 @@ cpu_uarea_alloc_idlelwp(struct cpu_info *ci)
 void
 cpu_boot_secondary_processors(void)
 {
-#ifdef VERBOSE_INIT_ARM
-	printf("%s: writing mbox with %#x\n", __func__, arm_cpu_hatched);
-#endif
+	VPRINTF("%s: writing mbox with %#x\n", __func__, arm_cpu_hatched);
 	arm_cpu_mbox = arm_cpu_hatched;
 	membar_producer();
 #ifdef _ARM_ARCH_7
@@ -759,3 +751,54 @@ mm_md_page_color(paddr_t pa, int *colorp)
 	return true;
 #endif
 }
+
+#if defined(FDT)
+extern char KERNEL_BASE_phys[];
+#define KERNEL_BASE_PHYS ((paddr_t)KERNEL_BASE_phys)
+
+void
+cpu_kernel_vm_init(paddr_t memory_start, psize_t memory_size)
+{
+	const struct arm_platform *plat = arm_fdt_platform();
+
+#ifdef VERBOSE_INIT_ARM
+	extern char _end[];
+
+	const vaddr_t kernend = round_page((vaddr_t)_end);
+
+	const paddr_t kernstart_phys = KERNEL_BASE_PHYS;
+	const paddr_t kernend_phys = KERN_VTOPHYS(kernend);
+#endif
+
+	VPRINTF("KERNEL_BASE=0x%x, "
+	    "KERNEL_VM_BASE=0x%x, "
+	    "KERNEL_VM_BASE - KERNEL_BASE=0x%x, "
+	    "KERNEL_BASE_VOFFSET=0x%x\n",
+	    KERNEL_BASE,
+	    KERNEL_VM_BASE,
+	    KERNEL_VM_BASE - KERNEL_BASE,
+	    KERNEL_BASE_VOFFSET);
+
+	VPRINTF("%s: kernel phys start %lx end %lx\n", __func__,
+	    kernstart_phys, kernend_phys);
+
+#ifdef __HAVE_MM_MD_DIRECT_MAPPED_PHYS
+	const bool mapallmem_p = true;
+#ifndef PMAP_NEED_ALLOC_POOLPAGE
+	if (memory_size > KERNEL_VM_BASE - KERNEL_BASE) {
+		VPRINTF("%s: dropping RAM size from %luMB to %uMB\n",
+		    __func__, (unsigned long) (memory_size >> 20),
+		    (KERNEL_VM_BASE - KERNEL_BASE) >> 20);
+		memory_size = KERNEL_VM_BASE - KERNEL_BASE;
+	}
+#endif
+#else
+	const bool mapallmem_p = false;
+#endif
+
+	arm32_bootmem_init(memory_start, memory_size, KERNEL_BASE_PHYS);
+	arm32_kernel_vm_init(KERNEL_VM_BASE, ARM_VECTORS_HIGH, 0,
+	    plat->ap_devmap(), mapallmem_p);
+}
+#endif
+

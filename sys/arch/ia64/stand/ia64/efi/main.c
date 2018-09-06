@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.11 2016/08/04 18:07:43 scole Exp $	*/
+/*	$NetBSD: main.c,v 1.11.14.1 2018/09/06 06:55:35 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1998 Michael Smith <msmith@freebsd.org>
@@ -63,7 +63,7 @@ EFI_GUID devid = DEVICE_PATH_PROTOCOL;
 EFI_GUID hcdp = HCDP_TABLE_GUID;
 EFI_GUID imgid = LOADED_IMAGE_PROTOCOL;
 EFI_GUID mps = MPS_TABLE_GUID;
-EFI_GUID netid = EFI_SIMPLE_NETWORK_PROTOCOL;
+EFI_GUID netid = EFI_SIMPLE_NETWORK_PROTOCOL_GUID;
 EFI_GUID sal = SAL_SYSTEM_TABLE_GUID;
 EFI_GUID smbios = SMBIOS_TABLE_GUID;
 

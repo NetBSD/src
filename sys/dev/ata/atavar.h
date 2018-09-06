@@ -1,4 +1,4 @@
-/*	$NetBSD: atavar.h,v 1.95.2.2 2018/06/25 07:25:49 pgoyette Exp $	*/
+/*	$NetBSD: atavar.h,v 1.95.2.3 2018/09/06 06:55:48 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -538,7 +538,7 @@ void	ata_kill_active(struct ata_channel *, int, int);
 void	ata_reset_channel(struct ata_channel *, int);
 void	ata_channel_freeze(struct ata_channel *);
 void	ata_channel_thaw(struct ata_channel *);
-void	ata_channel_start(struct ata_channel *, int);
+void	ata_channel_start(struct ata_channel *, int, bool);
 void	ata_channel_lock(struct ata_channel *);
 void	ata_channel_unlock(struct ata_channel *);
 void	ata_channel_lock_owned(struct ata_channel *);
@@ -574,6 +574,10 @@ bool	ata_waitdrain_xfer_check(struct ata_channel *, struct ata_xfer *);
 
 void	atacmd_toncq(struct ata_xfer *, uint8_t *, uint16_t *, uint16_t *,
 	    uint8_t *);
+
+#ifdef ATADEBUG
+void	atachannel_debug(struct ata_channel *);
+#endif
 
 #endif /* _KERNEL */
 

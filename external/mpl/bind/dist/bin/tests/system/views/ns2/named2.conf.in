@@ -1,0 +1,98 @@
+/*
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
+ */
+
+options {
+	query-source address 10.53.0.2;
+	notify-source 10.53.0.2;
+	transfer-source 10.53.0.2;
+	port @PORT@;
+	pid-file "named.pid";
+	listen-on { 10.53.0.2; 10.53.0.4; };
+	listen-on-v6 { none; };
+	recursion yes;
+	notify yes;
+};
+
+key rndc_key {
+	secret "1234abcd8765";
+	algorithm hmac-sha256;
+};
+
+controls {
+	inet 10.53.0.2 port @CONTROLPORT@ allow { any; } keys { rndc_key; };
+};
+
+view "internal" {
+	match-clients { 10.53.0.2;
+			10.53.0.3; };
+
+	zone "." {
+		type hint;
+		file "../../common/root.hint";
+	};
+
+	zone "example" {
+		type master;
+		file "internal.db";
+		allow-update { any; };
+	};
+
+	zone "clone" {
+		type master;
+		file "clone.db";
+		allow-update { any; };
+	};
+
+	zone "1.10.in-addr.arpa" {
+		type master;
+		file "1.10.in-addr.arpa.db";
+	};
+
+	zone "inline" {
+		type master;
+		file "internal/inline.db";
+		key-directory "internal";
+		auto-dnssec maintain;
+		inline-signing yes;
+	};
+};
+
+view "external" {
+	match-clients { any; };
+
+	zone "." {
+		type hint;
+		file "../../common/root.hint";
+	};
+
+	zone "example" {
+		type master;
+		file "example.db";
+	};
+
+	zone "clone" {
+		in-view internal;
+		forward only;
+		forwarders { 10.53.0.5; };
+	};
+
+	zone "1.10.in-addr.arpa" {
+		in-view internal;
+	};
+
+	zone "inline" {
+		type master;
+		file "external/inline.db";
+		key-directory "external";
+		auto-dnssec maintain;
+		inline-signing yes;
+	};
+};

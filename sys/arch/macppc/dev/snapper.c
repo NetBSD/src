@@ -1,4 +1,4 @@
-/*	$NetBSD: snapper.c,v 1.43.2.2 2018/05/21 04:36:01 pgoyette Exp $	*/
+/*	$NetBSD: snapper.c,v 1.43.2.3 2018/09/06 06:55:37 pgoyette Exp $	*/
 /*	Id: snapper.c,v 1.11 2002/10/31 17:42:13 tsubai Exp	*/
 /*	Id: i2s.c,v 1.12 2005/01/15 14:32:35 tsubai Exp		*/
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: snapper.c,v 1.43.2.2 2018/05/21 04:36:01 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: snapper.c,v 1.43.2.3 2018/09/06 06:55:37 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/audioio.h>
@@ -200,7 +200,7 @@ DEFINE_FILTER(snapper_volume)
 	if ((err = this->prev->fetch_to(sc, this->prev, this->src, max_used)))
 		return err;
 	m = (dst->end - dst->start) & ~1;
-	m = min(m, max_used);
+	m = uimin(m, max_used);
 	FILTER_LOOP_PROLOGUE(this->src, 2, dst, 2, m) {
 		j = (s[0] << 8 | s[1]);
 		wp = (int16_t *)d;
@@ -235,7 +235,7 @@ DEFINE_FILTER(snapper_fixphase)
 
 	/* work in stereo frames (4 bytes) */
 	m = (dst->end - dst->start) & ~2;
-	m = min(m, max_used);
+	m = uimin(m, max_used);
 	FILTER_LOOP_PROLOGUE(this->src, 4, dst, 4, m) {
 		rp = (const int16_t *) s;
 		wp = (int16_t *) d;
@@ -1500,8 +1500,8 @@ snapper_set_volume(struct snapper_softc *sc, u_int left, u_int right)
 	u_char regs[6];
 	int l, r;
 
-	left = min(255, left);
-	right = min(255, right);
+	left = uimin(255, left);
+	right = uimin(255, right);
 
 	if (sc->sc_mode == SNAPPER_SWVOL) {
 		snapper_vol_l = left;

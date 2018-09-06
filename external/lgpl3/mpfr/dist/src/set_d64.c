@@ -1,11 +1,11 @@
-/* mpfr_set_decimal64 -- convert a IEEE 754r decimal64 float to
+/* mpfr_set_decimal64 -- convert an IEEE 754-2008 decimal64 float to
                          a multiple precision floating-point number
 
-See http://gcc.gnu.org/ml/gcc/2006-06/msg00691.html,
-http://gcc.gnu.org/onlinedocs/gcc/Decimal-Float.html,
+See https://gcc.gnu.org/ml/gcc/2006-06/msg00691.html,
+https://gcc.gnu.org/onlinedocs/gcc/Decimal-Float.html,
 and TR 24732 <http://www.open-std.org/jtc1/sc22/wg14/www/projects#24732>.
 
-Copyright 2006-2016 Free Software Foundation, Inc.
+Copyright 2006-2018 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -102,13 +102,19 @@ static unsigned int T[1024] = {
   774, 775, 776, 777, 778, 779, 796, 797, 976, 977, 998, 999 };
 #endif
 
+#if _MPFR_IEEE_FLOATS
 /* Convert d to a decimal string (one-to-one correspondence, no rounding).
-   The string s needs to have at least 23 characters.
+   The string s needs to have at least 25 characters (with the final '\0'):
+   * 1 for the sign '-'
+   * 2 for the leading '0.'
+   * 16 for the significand
+   * 5 for the exponent (for example 'E-100')
+   * 1 for the final '\0'
  */
 static void
 decimal64_to_string (char *s, _Decimal64 d)
 {
-  union ieee_double_extract x;
+  union mpfr_ieee_double_extract x;
   union ieee_double_decimal64 y;
   char *t;
   unsigned int Gh; /* most 5 significant bits from combination field */
@@ -205,15 +211,216 @@ decimal64_to_string (char *s, _Decimal64 d)
 #endif /* DPD or BID */
 
   exp -= 398; /* unbiased exponent */
-  t += sprintf (t, "E%d", exp);
+  sprintf (t, "E%d", exp);
 }
+#else
+/* portable version */
+#ifndef DEC64_MAX
+# define DEC64_MAX 9.999999999999999E384dd
+#endif
+
+static void
+decimal64_to_string (char *s, _Decimal64 d)
+{
+  int sign = 0, n;
+  int exp = 0;
+
+  if (MPFR_UNLIKELY (DOUBLE_ISNAN (d))) /* NaN */
+    {
+      sprintf (s, "NaN"); /* sprintf puts a final '\0' */
+      return;
+    }
+  else if (MPFR_UNLIKELY (d > DEC64_MAX)) /* +Inf */
+    {
+      sprintf (s, "Inf");
+      return;
+    }
+  else if (MPFR_UNLIKELY (d < -DEC64_MAX)) /* -Inf */
+    {
+      sprintf (s, "-Inf");
+      return;
+    }
+
+  /* now d is neither NaN nor +Inf nor -Inf */
+
+  if (d < (_Decimal64) 0.0)
+    {
+      sign = 1;
+      d = -d;
+    }
+  else if (d == (_Decimal64) -0.0)
+    { /* Warning: the comparison d == -0.0 returns true for d = 0.0 too,
+         copy code from set_d.c here. We first compare to the +0.0 bitstring,
+         in case +0.0 and -0.0 are represented identically. */
+      double dd = (double) d, poszero = +0.0, negzero = DBL_NEG_ZERO;
+      if (memcmp (&dd, &poszero, sizeof(double)) != 0 &&
+          memcmp (&dd, &negzero, sizeof(double)) == 0)
+        {
+          sign = 1;
+          d = -d;
+        }
+    }
+
+  /* now normalize d in [0.1, 1[ */
+  if (d >= (_Decimal64) 1.0)
+    {
+      _Decimal64 ten16 = (double) 1e16; /* 10^16 is exactly representable
+                                           in binary64 */
+      _Decimal64 ten32 = ten16 * ten16;
+      _Decimal64 ten64 = ten32 * ten32;
+      _Decimal64 ten128 = ten64 * ten64;
+      _Decimal64 ten256 = ten128 * ten128;
+
+      if (d >= ten256)
+        {
+          d /= ten256;
+          exp += 256;
+        }
+      if (d >= ten128)
+        {
+          d /= ten128;
+          exp += 128;
+        }
+      if (d >= ten64)
+        {
+          d /= ten64;
+          exp += 64;
+        }
+      if (d >= ten32)
+        {
+          d /= ten32;
+          exp += 32;
+        }
+      if (d >= (_Decimal64) 10000000000000000.0)
+        {
+          d /= (_Decimal64) 10000000000000000.0;
+          exp += 16;
+        }
+      if (d >= (_Decimal64) 100000000.0)
+        {
+          d /= (_Decimal64) 100000000.0;
+          exp += 8;
+        }
+      if (d >= (_Decimal64) 10000.0)
+        {
+          d /= (_Decimal64) 10000.0;
+          exp += 4;
+        }
+      if (d >= (_Decimal64) 100.0)
+        {
+          d /= (_Decimal64) 100.0;
+          exp += 2;
+        }
+      if (d >= (_Decimal64) 10.0)
+        {
+          d /= (_Decimal64) 10.0;
+          exp += 1;
+        }
+      if (d >= (_Decimal64) 1.0)
+        {
+          d /= (_Decimal64) 10.0;
+          exp += 1;
+        }
+    }
+  else /* d < 1.0 */
+    {
+      _Decimal64 ten16, ten32, ten64, ten128, ten256;
+
+      ten16 = (double) 1e16; /* 10^16 is exactly representable in binary64 */
+      ten16 = (_Decimal64) 1.0 / ten16; /* 10^(-16), exact */
+      ten32 = ten16 * ten16;
+      ten64 = ten32 * ten32;
+      ten128 = ten64 * ten64;
+      ten256 = ten128 * ten128;
+
+      if (d < ten256)
+        {
+          d /= ten256;
+          exp -= 256;
+        }
+      if (d < ten128)
+        {
+          d /= ten128;
+          exp -= 128;
+        }
+      if (d < ten64)
+        {
+          d /= ten64;
+          exp -= 64;
+        }
+      if (d < ten32)
+        {
+          d /= ten32;
+          exp -= 32;
+        }
+      /* the double constant 0.0000000000000001 is 2028240960365167/2^104,
+         which should be rounded to 1e-16 in _Decimal64 */
+      if (d < (_Decimal64) 0.0000000000000001)
+        {
+          d *= (_Decimal64) 10000000000000000.0;
+          exp -= 16;
+        }
+      /* the double constant 0.00000001 is 3022314549036573/2^78,
+         which should be rounded to 1e-8 in _Decimal64 */
+      if (d < (_Decimal64) 0.00000001)
+        {
+          d *= (_Decimal64) 100000000.0;
+          exp -= 8;
+        }
+      /* the double constant 0.0001 is 7378697629483821/2^66,
+         which should be rounded to 1e-4 in _Decimal64 */
+      if (d < (_Decimal64) 0.0001)
+        {
+          d *= (_Decimal64) 10000.0;
+          exp -= 4;
+        }
+      /* the double constant 0.01 is 5764607523034235/2^59,
+         which should be rounded to 1e-2 in _Decimal64 */
+      if (d < (_Decimal64) 0.01)
+        {
+          d *= (_Decimal64) 100.0;
+          exp -= 2;
+        }
+      /* the double constant 0.1 is 3602879701896397/2^55,
+         which should be rounded to 1e-1 in _Decimal64 */
+      if (d < (_Decimal64) 0.1)
+        {
+          d *= (_Decimal64) 10.0;
+          exp -= 1;
+        }
+    }
+
+  /* now 0.1 <= d < 1 */
+  if (sign == 1)
+    *s++ = '-';
+  *s++ = '0';
+  *s++ = '.';
+  for (n = 0; n < 16; n++)
+    {
+      double e;
+      int r;
+
+      d *= (_Decimal64) 10.0;
+      e = (double) d;
+      r = (int) e;
+      *s++ = '0' + r;
+      d -= (_Decimal64) r;
+    }
+  MPFR_ASSERTN(d == (_Decimal64) 0.0);
+  if (exp != 0)
+    sprintf (s, "E%d", exp); /* adds a final '\0' */
+  else
+    *s = '\0';
+}
+#endif /* _MPFR_IEEE_FLOATS */
 
 int
 mpfr_set_decimal64 (mpfr_ptr r, _Decimal64 d, mpfr_rnd_t rnd_mode)
 {
-  char s[23]; /* need 1 character for sign,
-                     16 characters for mantissa,
-                      1 character for exponent,
+  char s[25]; /* need 1 character for sign,
+                      2 characters for '0.'
+                     16 characters for significand,
+                      1 character for exponent 'E',
                       4 characters for exponent (including sign),
                       1 character for terminating \0. */
 

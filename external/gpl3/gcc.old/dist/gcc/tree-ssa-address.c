@@ -1,5 +1,5 @@
 /* Memory address lowering and addressing mode selection.
-   Copyright (C) 2004-2015 Free Software Foundation, Inc.
+   Copyright (C) 2004-2016 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -23,58 +23,28 @@ along with GCC; see the file COPYING3.  If not see
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
-#include "tm.h"
-#include "hash-set.h"
-#include "machmode.h"
-#include "vec.h"
-#include "double-int.h"
-#include "input.h"
-#include "alias.h"
-#include "symtab.h"
-#include "wide-int.h"
-#include "inchash.h"
+#include "backend.h"
+#include "target.h"
+#include "rtl.h"
 #include "tree.h"
-#include "fold-const.h"
-#include "stor-layout.h"
-#include "tm_p.h"
-#include "predict.h"
-#include "hard-reg-set.h"
-#include "function.h"
-#include "basic-block.h"
-#include "tree-pretty-print.h"
-#include "tree-ssa-alias.h"
-#include "internal-fn.h"
-#include "gimple-expr.h"
-#include "is-a.h"
 #include "gimple.h"
-#include "gimple-iterator.h"
-#include "gimplify-me.h"
 #include "stringpool.h"
 #include "tree-ssanames.h"
-#include "tree-ssa-loop-ivopts.h"
-#include "hashtab.h"
-#include "rtl.h"
-#include "flags.h"
-#include "statistics.h"
-#include "real.h"
-#include "fixed-value.h"
-#include "insn-config.h"
 #include "expmed.h"
-#include "dojump.h"
-#include "explow.h"
-#include "calls.h"
-#include "emit-rtl.h"
-#include "varasm.h"
-#include "stmt.h"
+#include "insn-config.h"
+#include "recog.h"
+#include "tree-pretty-print.h"
+#include "fold-const.h"
+#include "stor-layout.h"
+#include "gimple-iterator.h"
+#include "gimplify-me.h"
+#include "tree-ssa-loop-ivopts.h"
 #include "expr.h"
 #include "tree-dfa.h"
 #include "dumpfile.h"
-#include "tree-inline.h"
 #include "tree-affine.h"
 
 /* FIXME: We compute address costs using RTL.  */
-#include "recog.h"
-#include "target.h"
 #include "tree-ssa-address.h"
 
 /* TODO -- handling of symbols (according to Richard Hendersons
@@ -104,13 +74,13 @@ along with GCC; see the file COPYING3.  If not see
 /* A "template" for memory address, used to determine whether the address is
    valid for mode.  */
 
-typedef struct GTY (()) mem_addr_template {
+struct GTY (()) mem_addr_template {
   rtx ref;			/* The template.  */
   rtx * GTY ((skip)) step_p;	/* The point in template where the step should be
 				   filled in.  */
   rtx * GTY ((skip)) off_p;	/* The point in template where the offset should
 				   be filled in.  */
-} mem_addr_template;
+};
 
 
 /* The templates.  Each of the low five bits of the index corresponds to one
@@ -407,7 +377,7 @@ create_mem_ref_raw (tree type, tree alias_ptr_type, struct mem_address *addr,
     }
   else
     {
-      base = build_int_cst (ptr_type_node, 0);
+      base = build_int_cst (build_pointer_type (type), 0);
       index2 = addr->base;
     }
 

@@ -1,6 +1,6 @@
 /* mpfr_cmpabs -- compare the absolute values of two FP numbers
 
-Copyright 1999, 2001-2004, 2006-2016 Free Software Foundation, Inc.
+Copyright 1999, 2001-2004, 2006-2018 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -36,7 +36,7 @@ mpfr_cmpabs (mpfr_srcptr b, mpfr_srcptr c)
     {
       if (MPFR_IS_NAN (b) || MPFR_IS_NAN (c))
         {
-          MPFR_SET_ERANGE ();
+          MPFR_SET_ERANGEFLAG ();
           return 0;
         }
       else if (MPFR_IS_INF (b))

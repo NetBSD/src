@@ -1,4 +1,4 @@
-.\"	$NetBSD: printf.1,v 1.25.22.2 2018/07/28 04:38:14 pgoyette Exp $
+.\"	$NetBSD: printf.1,v 1.25.22.3 2018/09/06 06:56:50 pgoyette Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"	from: @(#)printf.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd July 25, 2018
+.Dd August 31, 2018
 .Dt PRINTF 1
 .Os
 .Sh NAME
@@ -255,9 +255,12 @@ The format characters and their meanings are:
 .Bl -tag -width Fl
 .It Cm diouXx
 The
-.Ar argument
-is printed as a signed decimal (d or i), unsigned octal, unsigned decimal,
-or unsigned hexadecimal (X or x), respectively.
+.Ar argument ,
+which must represent an integer constant,
+with an optional leading plus or minus sign,
+is printed as a signed decimal (d or i),
+unsigned octal (o), unsigned decimal (u),
+or unsigned hexadecimal (X or x).
 .It Cm fF
 The
 .Ar argument

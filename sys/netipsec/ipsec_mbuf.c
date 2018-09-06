@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_mbuf.c,v 1.21.2.4 2018/06/25 07:26:07 pgoyette Exp $	*/
+/*	$NetBSD: ipsec_mbuf.c,v 1.21.2.5 2018/09/06 06:56:45 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_mbuf.c,v 1.21.2.4 2018/06/25 07:26:07 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_mbuf.c,v 1.21.2.5 2018/09/06 06:56:45 pgoyette Exp $");
 
 /*
  * IPsec-specific mbuf routines.
@@ -144,7 +144,7 @@ m_clone(struct mbuf *m0)
 		mfirst = n;
 		mlast = NULL;
 		for (;;) {
-			const int cc = min(len, MCLBYTES);
+			const int cc = uimin(len, MCLBYTES);
 			memcpy(mtod(n, char *), mtod(m, char *) + off, cc);
 			n->m_len = cc;
 			if (mlast != NULL)
@@ -232,7 +232,7 @@ m_makespace(struct mbuf *m0, int skip, int hlen, int *off)
 			*np = n;
 			np = &n->m_next;
 			alloc++;
-			len = min(todo, len);
+			len = uimin(todo, len);
 			memcpy(n->m_data, mtod(m, char *) + skip + done, len);
 			n->m_len = len;
 			done += len;

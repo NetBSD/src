@@ -1,6 +1,6 @@
 // Types used in iterator implementation -*- C++ -*-
 
-// Copyright (C) 2001-2015 Free Software Foundation, Inc.
+// Copyright (C) 2001-2016 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -206,6 +206,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 
   //@}
 
+#if __cplusplus < 201103L
   // If _Iterator has a base returns it otherwise _Iterator is returned
   // untouched
   template<typename _Iterator, bool _HasBase>
@@ -223,6 +224,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       static iterator_type _S_base(_Iterator __it)
       { return __it.base(); }
     };
+#endif
 
 #if __cplusplus >= 201103L
   template<typename _InIter>

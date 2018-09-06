@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.243.2.5 2018/07/28 04:33:00 pgoyette Exp $
+# $NetBSD: mi,v 1.243.2.6 2018/09/06 06:51:42 pgoyette Exp $
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib,compatfile
@@ -97,7 +97,7 @@
 ./usr/lib/libldap_r_g.a				comp-c-debuglib		debuglib,ldap,compatfile
 ./usr/lib/liblsan_g.a				comp-c-debuglib		debuglib,compatfile,gcc
 ./usr/lib/liblua_g.a				comp-c-debuglib		debuglib,compatfile
-./usr/lib/liblwres_g.a				comp-c-debuglib		debuglib,compatfile
+./usr/lib/liblwres_g.a				comp-obsolete		obsolete
 ./usr/lib/liblzf_g.a				comp-c-debuglib		debuglib,compatfile
 ./usr/lib/liblzma_g.a				comp-c-debuglib		debuglib,compatfile
 ./usr/lib/libm_g.a				comp-c-debuglib		debuglib,compatfile
@@ -109,6 +109,7 @@
 ./usr/lib/libnetpgp_g.a				comp-c-debuglib		debuglib,compatfile
 ./usr/lib/libnetpgpverify_g.a			comp-c-debuglib		debuglib,compatfile
 ./usr/lib/libnpf_g.a				comp-c-debuglib		debuglib,compatfile
+./usr/lib/libns_g.a				comp-c-debuglib		debuglib,compatfile
 ./usr/lib/libnvpair_g.a				comp-c-debuglib		debuglib,zfs,compatfile
 ./usr/lib/libobjc_g.a				comp-c-debuglib		debuglib,gcc,compatfile
 ./usr/lib/libopcodes_g.a			comp-c-debuglib		debuglib,compatfile,binutils
@@ -265,8 +266,8 @@
 ./usr/lib/libwrap_g.a				comp-c-debuglib		debuglib,compatfile
 ./usr/lib/liby_g.a				comp-c-debuglib		debuglib,compatfile
 ./usr/lib/libz_g.a				comp-c-debuglib		debuglib,compatfile
-./usr/lib/libzfs_g.a				comp-c-debuglib		debuglib,compatfile,zfs
 ./usr/lib/libzfs_core_g.a			comp-c-debuglib		debuglib,compatfile,zfs
+./usr/lib/libzfs_g.a				comp-c-debuglib		debuglib,compatfile,zfs
 ./usr/lib/libzpool_g.a				comp-c-debuglib		debuglib,compatfile,zfs
 ./usr/libdata/debug/bin/cat.debug		comp-util-debug		debug
 ./usr/libdata/debug/bin/chio.debug		comp-util-debug		debug
@@ -430,6 +431,7 @@
 ./usr/libdata/debug/sbin/tbrconfig.debug	comp-router-debug	debug
 ./usr/libdata/debug/sbin/ttyflags.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/tunefs.debug		comp-sysutil-debug	debug
+./usr/libdata/debug/sbin/umbctl.debug		comp-netutil-debug	debug
 ./usr/libdata/debug/sbin/umount.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/veriexecctl.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/wdogctl.debug		comp-sysutil-debug	debug
@@ -544,8 +546,8 @@
 ./usr/libdata/debug/usr/bin/g77.debug		comp-obsolete	obsolete
 ./usr/libdata/debug/usr/bin/gcc.debug		comp-c-debug		gcccmds,debug
 ./usr/libdata/debug/usr/bin/gcore.debug		comp-debug-debug	debug
-./usr/libdata/debug/usr/bin/gcov.debug		comp-debug-debug	gcccmds,debug
 ./usr/libdata/debug/usr/bin/gcov-dump.debug	comp-debug-debug	gcccmds,debug,gcc=6
+./usr/libdata/debug/usr/bin/gcov.debug		comp-debug-debug	gcccmds,debug
 ./usr/libdata/debug/usr/bin/gdb.debug		comp-debug-debug	gdb,debug
 ./usr/libdata/debug/usr/bin/gdbtui.debug	comp-debug-debug	gdb,debug
 ./usr/libdata/debug/usr/bin/gencat.debug	comp-locale-debug	debug
@@ -1979,6 +1981,8 @@
 ./usr/libdata/debug/usr/tests/lib/libc/locale/t_wcstod.debug		tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libc/locale/t_wctomb.debug		tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libc/locale/t_wctype.debug		tests-lib-debug		debug,atf,compattestfile
+./usr/libdata/debug/usr/tests/lib/libc/misc/t_ubsan.debug		tests-lib-debug		debug,atf,compattestfile
+./usr/libdata/debug/usr/tests/lib/libc/misc/t_ubsanxx.debug		tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libc/net/getaddrinfo/h_gai.debug	tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libc/net/h_dns_server.debug		tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libc/net/h_hostent.debug		tests-lib-debug		debug,atf,compattestfile
@@ -1987,6 +1991,7 @@
 ./usr/libdata/debug/usr/tests/lib/libc/net/h_servent.debug		tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libc/net/t_ether_aton.debug		tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libc/net/t_getprotoent.debug		tests-lib-debug		debug,atf,compattestfile
+./usr/libdata/debug/usr/tests/lib/libc/net/t_if_nametoindex.debug	tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libc/regex/h_regex.debug		tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libc/regex/h_regex_att.debug		tests-obsolete		obsolete,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libc/regex/t_exhaust.debug		tests-lib-debug		debug,atf,compattestfile
@@ -2123,6 +2128,8 @@
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_recvmmsg.debug		tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_revoke.debug		tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_select.debug		tests-lib-debug		debug,atf,compattestfile
+./usr/libdata/debug/usr/tests/lib/libc/sys/t_sendmmsg.debug		tests-lib-debug		debug,atf,compattestfile
+./usr/libdata/debug/usr/tests/lib/libc/sys/t_sendrecv.debug		tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_setrlimit.debug		tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_setuid.debug		tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_sigaction.debug		tests-lib-debug		debug,atf,compattestfile

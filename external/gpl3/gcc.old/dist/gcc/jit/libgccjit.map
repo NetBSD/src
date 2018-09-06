@@ -1,5 +1,5 @@
 # Linker script for libgccjit.so
-#   Copyright (C) 2013-2015 Free Software Foundation, Inc.
+#   Copyright (C) 2013-2016 Free Software Foundation, Inc.
 #   Contributed by David Malcolm <dmalcolm@redhat.com>.
 #
 # This file is part of GCC.
@@ -128,3 +128,20 @@ LIBGCCJIT_ABI_3 {
     gcc_jit_case_as_object;
     gcc_jit_context_new_case;
 } LIBGCCJIT_ABI_2;
+
+# Add timing API.
+LIBGCCJIT_ABI_4 {
+  global:
+    gcc_jit_context_get_timer;
+    gcc_jit_context_set_timer;
+    gcc_jit_timer_new;
+    gcc_jit_timer_release;
+    gcc_jit_timer_push;
+    gcc_jit_timer_pop;
+    gcc_jit_timer_print;
+};
+
+LIBGCCJIT_ABI_5 {
+  global:
+    gcc_jit_context_set_bool_use_external_driver;
+} LIBGCCJIT_ABI_4;

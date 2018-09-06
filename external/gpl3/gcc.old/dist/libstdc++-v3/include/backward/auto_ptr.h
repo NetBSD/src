@@ -1,6 +1,6 @@
 // auto_ptr implementation -*- C++ -*-
 
-// Copyright (C) 2007-2015 Free Software Foundation, Inc.
+// Copyright (C) 2007-2016 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -180,7 +180,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       element_type&
       operator*() const throw() 
       {
-	_GLIBCXX_DEBUG_ASSERT(_M_ptr != 0);
+	__glibcxx_assert(_M_ptr != 0);
 	return *_M_ptr; 
       }
       
@@ -193,7 +193,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       element_type*
       operator->() const throw() 
       {
-	_GLIBCXX_DEBUG_ASSERT(_M_ptr != 0);
+	__glibcxx_assert(_M_ptr != 0);
 	return _M_ptr; 
       }
       

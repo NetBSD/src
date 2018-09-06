@@ -1,3 +1,5 @@
+/*	$NetBSD: evergreen_blit_shaders.h,v 1.1.1.1.30.1 2018/09/06 06:56:32 pgoyette Exp $	*/
+
 /*
  * Copyright 2009 Advanced Micro Devices, Inc.
  *

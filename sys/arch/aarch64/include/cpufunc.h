@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.1.2.3 2018/07/28 04:37:26 pgoyette Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.1.2.4 2018/09/06 06:55:23 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -74,7 +74,8 @@ extern u_int aarch64_cache_vindexsize;	/* cachesize/way (VIVT/VIPT) */
 extern u_int aarch64_cache_prefer_mask;
 extern u_int cputype;			/* compat arm */
 
-int aarch64_getcacheinfo(void);
+void aarch64_getcacheinfo(void);
+void aarch64_printcacheinfo(device_t);
 
 void aarch64_dcache_wbinv_all(void);
 void aarch64_dcache_inv_all(void);

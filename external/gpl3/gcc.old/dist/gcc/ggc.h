@@ -1,6 +1,6 @@
 /* Garbage collection for the GNU compiler.
 
-   Copyright (C) 1998-2015 Free Software Foundation, Inc.
+   Copyright (C) 1998-2016 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -20,7 +20,6 @@ along with GCC; see the file COPYING3.  If not see
 
 #ifndef GCC_GGC_H
 #define GCC_GGC_H
-#include "statistics.h"
 
 /* Symbols are marked with `ggc' for `gcc gc' so as not to interfere with
    an external gc library that might be linked in.  */
@@ -293,11 +292,10 @@ ggc_alloc_cleared_tree_node_stat (size_t s CXX_MEM_STAT_INFO)
   return (union tree_node *) ggc_internal_cleared_alloc (s PASS_MEM_STAT);
 }
 
-static inline struct gimple_statement_base *
+static inline gimple *
 ggc_alloc_cleared_gimple_statement_stat (size_t s CXX_MEM_STAT_INFO)
 {
-  return (struct gimple_statement_base *)
-    ggc_internal_cleared_alloc (s PASS_MEM_STAT);
+  return (gimple *) ggc_internal_cleared_alloc (s PASS_MEM_STAT);
 }
 
 static inline void

@@ -1,0 +1,369 @@
+#!/bin/sh
+#
+# Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+#
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+#
+# See the COPYRIGHT file distributed with this work for additional
+# information regarding copyright ownership.
+
+#
+# Common configuration data for system tests, to be sourced into
+# other shell scripts.
+#
+
+# Find the top of the BIND9 tree.
+TOP=${SYSTEMTESTTOP:=.}/../../..
+
+# Make it absolute so that it continues to work after we cd.
+TOP=`cd $TOP && pwd`
+
+ARPANAME=$TOP/bin/tools/arpaname
+CDS=$TOP/bin/dnssec/dnssec-cds
+CHECKCONF=$TOP/bin/check/named-checkconf
+CHECKDS=$TOP/bin/python/dnssec-checkds
+CHECKZONE=$TOP/bin/check/named-checkzone
+COVERAGE=$TOP/bin/python/dnssec-coverage
+DDNSCONFGEN=$TOP/bin/confgen/ddns-confgen
+DELV=$TOP/bin/delv/delv
+DIG=$TOP/bin/dig/dig
+DNSTAPREAD=$TOP/bin/tools/dnstap-read
+DSFROMKEY=$TOP/bin/dnssec/dnssec-dsfromkey
+FEATURETEST=$TOP/bin/tests/system/feature-test
+FSTRM_CAPTURE=@FSTRM_CAPTURE@
+GENRANDOM=$TOP/bin/tools/genrandom
+IMPORTKEY=$TOP/bin/dnssec/dnssec-importkey
+JOURNALPRINT=$TOP/bin/tools/named-journalprint
+KEYFRLAB=$TOP/bin/dnssec/dnssec-keyfromlabel
+KEYGEN=$TOP/bin/dnssec/dnssec-keygen
+KEYMGR=$TOP/bin/python/dnssec-keymgr
+MDIG=$TOP/bin/tools/mdig
+NAMED=$TOP/bin/named/named
+NSEC3HASH=$TOP/bin/tools/nsec3hash
+NSLOOKUP=$TOP/bin/dig/nslookup
+NSUPDATE=$TOP/bin/nsupdate/nsupdate
+NZD2NZF=$TOP/bin/tools/named-nzd2nzf
+PK11DEL="$TOP/bin/pkcs11/pkcs11-destroy -s ${SLOT:-0} -p ${HSMPIN:-1234} -w 0"
+PK11GEN="$TOP/bin/pkcs11/pkcs11-keygen -q -s ${SLOT:-0} -p ${HSMPIN:-1234}"
+PK11LIST="$TOP/bin/pkcs11/pkcs11-list -s ${SLOT:-0} -p ${HSMPIN:-1234}"
+RESOLVE=$TOP/lib/samples/resolve
+REVOKE=$TOP/bin/dnssec/dnssec-revoke
+RNDC=$TOP/bin/rndc/rndc
+RNDCCONFGEN=$TOP/bin/confgen/rndc-confgen
+RRCHECKER=$TOP/bin/tools/named-rrchecker
+SETTIME=$TOP/bin/dnssec/dnssec-settime
+SIGNER=$TOP/bin/dnssec/dnssec-signzone
+TSIGKEYGEN=$TOP/bin/confgen/tsig-keygen
+VERIFY=$TOP/bin/dnssec/dnssec-verify
+WIRETEST=$TOP/bin/tests/wire_test
+
+RANDFILE=$TOP/bin/tests/system/random.data
+
+BIGKEY=$TOP/bin/tests/system/rsabigexponent/bigkey
+GENCHECK=$TOP/bin/tests/system/rndc/gencheck
+KEYCREATE=$TOP/bin/tests/system/tkey/keycreate
+KEYDELETE=$TOP/bin/tests/system/tkey/keydelete
+MAKEJOURNAL=$TOP/bin/tests/makejournal
+PIPEQUERIES=$TOP/bin/tests/system/pipelined/pipequeries
+SAMPLEUPDATE=$TOP/lib/samples/sample-update
+
+# we don't want a KRB5_CONFIG setting breaking the tests
+KRB5_CONFIG=/dev/null
+
+# The "stress" test is not run by default since it creates enough
+# load on the machine to make it unusable to other users.
+# The "dialup", "delzone", and "dupsigs" tests are also not run by
+# default because they take a very long time to complete.
+#
+# List of tests hard-coded to use ports 5300 and 9953. For this
+# reason, these must be run sequentially.
+SEQUENTIALDIRS="ecdsa eddsa gost @PKCS11_TEST@ tkey"
+
+# List of tests that use ports assigned by caller (other than 5300
+# and 9953). Because separate blocks of ports can be used for teach
+# test, these tests can be run in parallel.
+#
+# This symbol must be kept in step with the PARALLEL macro in Makefile.in
+PARALLELDIRS="acl additional addzone allow-query auth autosign \
+	builtin cacheclean case catz cds chain \
+	checkconf checknames checkzone \
+	@CHECKDS@ @COVERAGE@ @KEYMGR@ \
+	cookie database digdelv dlv dlz dlzexternal \
+	dns64 dnssec @DNSTAP@ dscp dsdigest dyndb \
+	ednscompliance emptyzones \
+	fetchlimit filter-aaaa formerr forward \
+	geoip glue idna inline integrity ixfr keepalive \
+	legacy limits logfileconfig \
+	masterfile masterformat metadata mkeys \
+	names notify nslookup nsupdate nzd2nzf \
+	padding pending pipelined \
+	reclimit redirect resolver rndc rootkeysentinel rpz rpzrecurse \
+	rrchecker rrl rrsetorder rsabigexponent runtime \
+	serve-stale sfcache smartsign sortlist \
+	spf staticstub statistics statschannel stub synthfromdnssec \
+	tcp tools tsig tsiggss \
+	unknown upforwd verify views wildcard \
+	xfer xferquota zero zonechecks"
+
+SUBDIRS="$SEQUENTIALDIRS $PARALLELDIRS"
+
+
+# Things that are different on Windows
+KILL=kill
+DIFF=diff
+DOS2UNIX=true
+# There's no trailing period on Windows
+TP=.
+
+# Use the CONFIG_SHELL detected by configure for tests
+SHELL=@SHELL@
+
+# CURL will be empty if no program was found by configure
+CURL=@CURL@
+
+# XMLLINT will be empty if no program was found by configure
+XMLLINT=@XMLLINT@
+
+# PERL will be an empty string if no perl interpreter was found.
+PERL=@PERL@
+
+if test -n "$PERL"
+then
+	if $PERL -e "use IO::Socket::INET6;" 2> /dev/null
+	then
+		TESTSOCK6="$PERL $TOP/bin/tests/system/testsock6.pl"
+	else
+		TESTSOCK6=false
+	fi
+else
+	TESTSOCK6=false
+fi
+
+if grep "^#define WANT_IPV6 1" $TOP/config.h > /dev/null 2>&1 ; then
+        TESTSOCK6="$TESTSOCK6"
+else
+        TESTSOCK6=false
+fi
+
+# Windows process management leave empty
+PSSUSPEND=
+
+PYTHON=@PYTHON@
+
+#
+# Determine if we support various optional features.
+#
+CHECK_DSA=@CHECK_DSA@
+HAVEXMLSTATS=@XMLSTATS@
+HAVEJSONSTATS=@JSONSTATS@
+ZLIB=@ZLIB@
+NZD=@NZD_TOOLS@
+
+. ${TOP}/version
+
+#
+# Set up color-coded test output
+#
+if [ ${SYSTEMTEST_FORCE_COLOR:-0} -eq 1 ] || test -t 1 && type tput > /dev/null 2>&1 && tput setaf 7 > /dev/null 2>&1 ; then
+    COLOR_END=`tput setaf 4`    # blue
+    COLOR_FAIL=`tput setaf 1`   # red
+    COLOR_INFO=`tput bold`      # bold
+    COLOR_NONE=`tput sgr0`
+    COLOR_PASS=`tput setaf 2`   # green
+    COLOR_START=`tput setaf 4`  # blue
+    COLOR_WARN=`tput setaf 3`   # yellow
+else
+    # set to empty strings so printf succeeds
+    COLOR_END=''
+    COLOR_FAIL=''
+    COLOR_INFO=''
+    COLOR_NONE=''
+    COLOR_PASS=''
+    COLOR_START=''
+    COLOR_WARN=''
+fi
+
+if type printf > /dev/null 2>&1
+then
+	echofail () {
+		printf "${COLOR_FAIL}%s${COLOR_NONE}\n" "$*"
+	}
+	echowarn () {
+		printf "${COLOR_WARN}%s${COLOR_NONE}\n" "$*"
+	}
+	echopass () {
+		printf "${COLOR_PASS}%s${COLOR_NONE}\n" "$*"
+	}
+	echoinfo () {
+		printf "${COLOR_INFO}%s${COLOR_NONE}\n" "$*"
+	}
+	echostart () {
+		printf "${COLOR_START}%s${COLOR_NONE}\n" "$*"
+	}
+	echoend () {
+		printf "${COLOR_END}%s${COLOR_NONE}\n" "$*"
+	}
+else
+	echofail () {
+		echo "$*"
+	}
+	echowarn () {
+		echo "$*"
+	}
+	echopass () {
+		echo "$*"
+	}
+	echoinfo () {
+		echo "$*"
+	}
+	echostart () {
+		echo "$*"
+	}
+	echoend () {
+		echo "$*"
+	}
+fi
+
+SYSTESTDIR="`basename $PWD`"
+
+echo_i() {
+    echo "$@" | while read LINE ; do
+       echoinfo "I:$SYSTESTDIR:$LINE"
+    done
+}
+
+echo_ic() {
+    echo "$@" | while read LINE ; do
+       echoinfo "I:$SYSTESTDIR:  $LINE"
+    done
+}
+
+cat_i() {
+    while read LINE ; do
+       echoinfo "I:$SYSTESTDIR:$LINE"
+    done
+}
+
+digcomp() {
+    output=`$PERL $SYSTEMTESTTOP/digcomp.pl "$@"`
+    result=$?
+    [ -n "$output" ] &&  { echo "digcomp failed:"; echo "$output"; } | cat_i
+    return $result
+}
+
+#
+# Useful functions in test scripts
+#
+
+# keyfile_to_keys_section: helper function for keyfile_to_*_keys() which
+# converts keyfile data into a configuration section using the supplied
+# parameters
+keyfile_to_keys_section() {
+    section_name=$1
+    key_prefix=$2
+    shift
+    shift
+    echo "$section_name {"
+    for keyname in $*; do
+        awk '!/^; /{
+            printf "\t\""$1"\" "
+            printf "'"$key_prefix"'"
+            printf $4 " " $5 " " $6 " \""
+            for (i=7; i<=NF; i++) printf $i
+            printf "\";\n"
+        }' $keyname.key
+    done
+    echo "};"
+}
+
+# keyfile_to_trusted_keys: convert key data contained in the keyfile(s)
+# provided to a "trusted-keys" section suitable for including in a
+# resolver's configuration file
+keyfile_to_trusted_keys() {
+    keyfile_to_keys_section "trusted-keys" "" $*
+}
+
+# keyfile_to_managed_keys: convert key data contained in the keyfile(s)
+# provided to a "managed-keys" section suitable for including in a
+# resolver's configuration file
+keyfile_to_managed_keys() {
+    keyfile_to_keys_section "managed-keys" "initial-key " $*
+}
+
+# nextpart: read everything that's been appended to a file since the
+# last time 'nextpart' was called.
+nextpart () {
+    [ -f $1.prev ] || echo "0" > $1.prev
+    prev=`cat $1.prev`
+    awk "NR > $prev "'{ print }
+         END          { print NR > "/dev/stderr" }' $1 2> $1.prev
+}
+
+# copy_setports - Copy Configuration File and Replace Ports
+#
+# Convenience function to copy a configuration file, replacing the tokens
+# QUERYPORT, CONTROLPORT and EXTRAPORT[1-8] with the values of the equivalent
+# environment variables. (These values are set by "run.sh", which calls the
+# scripts invoking this function.)
+#
+# Usage:
+#   copy_setports infile outfile
+
+copy_setports() {
+    sed -e "s/@PORT@/${PORT}/g" \
+        -e "s/@EXTRAPORT1@/${EXTRAPORT1}/g" \
+        -e "s/@EXTRAPORT2@/${EXTRAPORT2}/g" \
+        -e "s/@EXTRAPORT3@/${EXTRAPORT3}/g" \
+        -e "s/@EXTRAPORT4@/${EXTRAPORT4}/g" \
+        -e "s/@EXTRAPORT5@/${EXTRAPORT5}/g" \
+        -e "s/@EXTRAPORT6@/${EXTRAPORT6}/g" \
+        -e "s/@EXTRAPORT7@/${EXTRAPORT7}/g" \
+        -e "s/@EXTRAPORT8@/${EXTRAPORT8}/g" \
+        -e "s/@CONTROLPORT@/${CONTROLPORT}/g" $1 > $2
+}
+
+#
+# Export command paths
+#
+export ARPANAME
+export BIGKEY
+export CDS
+export CHECKZONE
+export DESCRIPTION
+export DIG
+export FEATURETEST
+export FSTRM_CAPTURE
+export GENCHECK
+export JOURNALPRINT
+export KEYCREATE
+export KEYDELETE
+export KEYFRLAB
+export KEYGEN
+export KEYSETTOOL
+export KEYSIGNER
+export KRB5_CONFIG
+export MAKEJOURNAL
+export MDIG
+export NAMED
+export NSEC3HASH
+export NSLOOKUP
+export NSUPDATE
+export NZD2NZF
+export PERL
+export PIPEQUERIES
+export PK11DEL
+export PK11GEN
+export PK11LIST
+export PSSUSPEND
+export PYTHON
+export RANDFILE
+export RESOLVE
+export RNDC
+export RRCHECKER
+export SAMPLEUPDATE
+export SIGNER
+export SUBDIRS
+export TESTSOCK6
+export WIRETEST

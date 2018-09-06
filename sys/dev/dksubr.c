@@ -1,4 +1,4 @@
-/* $NetBSD: dksubr.c,v 1.101.2.1 2018/05/21 04:36:04 pgoyette Exp $ */
+/* $NetBSD: dksubr.c,v 1.101.2.2 2018/09/06 06:55:48 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2002, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.101.2.1 2018/05/21 04:36:04 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.101.2.2 2018/09/06 06:55:48 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -521,7 +521,7 @@ dk_discard(struct dk_softc *dksc, dev_t dev, off_t pos, off_t len)
 		/* enough data to please the bounds checking code */
 		bp->b_dev = dev;
 		bp->b_blkno = (daddr_t)(pos / secsize);
-		bp->b_bcount = min(len, maxsz);
+		bp->b_bcount = uimin(len, maxsz);
 		bp->b_flags = B_WRITE;
 
 		error = dk_translate(dksc, bp);
@@ -847,7 +847,7 @@ dk_dump(struct dk_softc *dksc, dev_t dev,
 	/* Start dumping and return when done. */
 	maxblkcnt = howmany(maxxfer, lp->d_secsize);
 	while (towrt > 0) {
-		nblk = min(maxblkcnt, towrt);
+		nblk = uimin(maxblkcnt, towrt);
 
 		if ((rv = (*dkd->d_dumpblocks)(dksc->sc_dev, va, blkno, nblk))
 		    != 0) {
