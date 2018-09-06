@@ -1,4 +1,4 @@
-/*	$NetBSD: entry.c,v 1.7.14.2 2018/09/06 06:51:44 pgoyette Exp $	*/
+/*	$NetBSD: entry.c,v 1.7.14.3 2018/09/06 11:12:14 pgoyette Exp $	*/
 
 /*
  * Copyright 1988,1990,1993,1994 by Paul Vixie
@@ -26,11 +26,7 @@
 #if 0
 static char rcsid[] = "Id: entry.c,v 1.17 2004/01/23 18:56:42 vixie Exp";
 #else
-<<<<<<< entry.c
-__RCSID("$NetBSD: entry.c,v 1.7.14.2 2018/09/06 06:51:44 pgoyette Exp $");
-=======
-__RCSID("$NetBSD: entry.c,v 1.7.14.2 2018/09/06 06:51:44 pgoyette Exp $");
->>>>>>> 1.10
+__RCSID("$NetBSD: entry.c,v 1.7.14.3 2018/09/06 11:12:14 pgoyette Exp $");
 #endif
 #endif
 
