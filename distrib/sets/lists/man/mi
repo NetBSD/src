@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1615 2018/09/06 12:05:23 kre Exp $
+# $NetBSD: mi,v 1.1616 2018/09/06 14:08:24 maxv Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1057,7 +1057,7 @@
 ./usr/share/man/cat4/emips/enic.0		man-sys-catman		.cat
 ./usr/share/man/cat4/emips/intro.0		man-sys-catman		.cat
 ./usr/share/man/cat4/emuxki.0			man-sys-catman		.cat
-./usr/share/man/cat4/en.0			man-sys-catman		.cat
+./usr/share/man/cat4/en.0			man-obsolete		obsolete
 ./usr/share/man/cat4/envsys.0			man-sys-catman		.cat
 ./usr/share/man/cat4/ep.0			man-sys-catman		.cat
 ./usr/share/man/cat4/epic.0			man-sys-catman		.cat
