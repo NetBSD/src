@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.110 2017/09/14 07:58:38 mrg Exp $
+# $NetBSD: INSTALL,v 1.111 2018/09/06 05:36:49 maxv Exp $
 #
 # Alpha INSTALL kernel.
 
@@ -185,7 +185,6 @@ ahc*	at	pci? dev ? function ?		# Adaptec [23]94x, aic78x0 SCSI
 bha*	at	pci? dev ? function ?		# BusLogic 9xx SCSI (untested)
 cac*	at	pci? dev ? function ?		# Compaq array controller (untested)
 dpt*	at	pci? dev ? function ?		# DPT SmartCache/SmartRAID
-en*	at	pci? dev ? function ?		# ENI PCI ATM (untested)
 ep*	at	pci? dev ? function ?		# 3COM 3c59x/3c90x Ethernet
 epic*	at	pci? dev ? function ?		# SMC EPIC/100 Ethernet
 ex*	at	pci? dev ? function ?		# 3COM 3c90x[BC] Ethernet

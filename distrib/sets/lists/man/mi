@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1612 2018/08/25 20:12:21 rin Exp $
+# $NetBSD: mi,v 1.1613 2018/09/06 05:36:49 maxv Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -7131,7 +7131,7 @@
 ./usr/share/man/man4/emips/enic.4		man-sys-man		.man
 ./usr/share/man/man4/emips/intro.4		man-sys-man		.man
 ./usr/share/man/man4/emuxki.4			man-sys-man		.man
-./usr/share/man/man4/en.4			man-sys-man		.man
+./usr/share/man/man4/en.4			man-obsolete		obsolete
 ./usr/share/man/man4/envsys.4			man-sys-man		.man
 ./usr/share/man/man4/ep.4			man-sys-man		.man
 ./usr/share/man/man4/epic.4			man-sys-man		.man

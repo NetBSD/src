@@ -1,4 +1,4 @@
-#	$NetBSD: P4032,v 1.76 2018/08/25 20:52:40 rin Exp $
+#	$NetBSD: P4032,v 1.77 2018/09/06 05:36:49 maxv Exp $
 #
 # Algorithmics P-4032 kernel.
 #
@@ -7,7 +7,7 @@ include	"arch/algor/conf/std.algor"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"P4032-$Revision: 1.76 $"
+#ident 		"P4032-$Revision: 1.77 $"
 
 maxusers 32
 
@@ -130,7 +130,6 @@ pci*	at	vtpbc?
 #cz*	at	pci? dev ? function ?		# Cyclades-Z (untested)
 #dpt*	at	pci? dev ? function ?		# DPT SmartCache/SmartRAID
 #eap*	at	pci? dev ? function ?		# Ensoniq AudioPCI
-#en*	at	pci? dev ? function ?		# ENI PCI ATM (untested)
 #ep*	at	pci? dev ? function ?		# 3COM 3c59x
 #epic*	at	pci? dev ? function ?		# SMC EPIC/100 Ethernet
 #eso*	at	pci? dev ? function ?		# ESS Solo-1 PCI AudioDrive
