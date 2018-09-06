@@ -1,4 +1,4 @@
-/* $NetBSD: fdtvar.h,v 1.38 2018/07/01 18:16:40 jmcneill Exp $ */
+/* $NetBSD: fdtvar.h,v 1.39 2018/09/06 22:54:05 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -271,8 +271,11 @@ int		fdtbus_get_phandle_from_native(int);
 i2c_tag_t	fdtbus_get_i2c_tag(int);
 void *		fdtbus_intr_establish(int, u_int, int, int,
 		    int (*func)(void *), void *arg);
+void *		fdtbus_intr_establish_raw(int, const u_int *, int, int,
+		    int (*func)(void *), void *arg);
 void		fdtbus_intr_disestablish(int, void *);
 bool		fdtbus_intr_str(int, u_int, char *, size_t);
+bool		fdtbus_intr_str_raw(int, const u_int *, char *, size_t);
 struct fdtbus_gpio_pin *fdtbus_gpio_acquire(int, const char *, int);
 struct fdtbus_gpio_pin *fdtbus_gpio_acquire_index(int, const char *, int, int);
 void		fdtbus_gpio_release(struct fdtbus_gpio_pin *);
