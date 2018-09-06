@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2227 2018/09/06 19:07:13 maxv Exp $
+#	$NetBSD: mi,v 1.2228 2018/09/06 19:19:44 maxv Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -2510,7 +2510,7 @@
 ./usr/include/netkey/key_debug.h		comp-obsolete		obsolete
 ./usr/include/netkey/key_var.h			comp-obsolete		obsolete
 ./usr/include/netkey/keydb.h			comp-obsolete		obsolete
-./usr/include/netkey/keysock.h			comp-c-include
+./usr/include/netkey/keysock.h			comp-obsolete		obsolete
 ./usr/include/netkey/keyv2.h			comp-obsolete		obsolete
 ./usr/include/netmpls/mpls.h			comp-c-include
 ./usr/include/netnatm/natm.h			comp-obsolete		obsolete
