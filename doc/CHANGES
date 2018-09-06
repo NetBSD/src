@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2439 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2440 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -220,3 +220,5 @@ Changes from NetBSD 8.0 to NetBSD 9.0:
 	libpcap: Import 1.9.0. [christos 20180903]
 	mpfr: Updated to version 4.0.1. [mrg 20180904]
 	mpc: Updated to version 1.1.0. [mrg 20180904]
+	kernel: Remove en(4). [maxv 20180906]
+	kernel: Remove the NATM code. [maxv 20180906]
