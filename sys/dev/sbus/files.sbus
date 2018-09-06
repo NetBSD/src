@@ -1,4 +1,4 @@
-#	$NetBSD: files.sbus,v 1.42 2016/02/11 02:23:44 macallan Exp $
+#	$NetBSD: files.sbus,v 1.43 2018/09/06 05:36:51 maxv Exp $
 #
 # Config file and device description for machine-independent SBUS code.
 # Included by ports that need it.
@@ -44,11 +44,6 @@ file	dev/sbus/esp_sbus.c		esp_sbus | esp_dma	needs-flag
 device	bpp {}: lsi64854
 attach	bpp at sbus
 file	dev/sbus/bpp.c			bpp	needs-flag
-
-# Efficient Networks, Inc. ATM interface
-# device declaration in sys/conf/files
-attach	en at sbus with en_sbus
-file	dev/sbus/if_en.c		en_sbus
 
 device	qec {}
 attach	qec at sbus
