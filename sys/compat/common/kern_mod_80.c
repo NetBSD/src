@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_mod_80.c,v 1.1.2.2 2018/09/06 21:22:05 pgoyette Exp $	*/
+/*	$NetBSD: kern_mod_80.c,v 1.1.2.3 2018/09/06 21:37:43 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_mod_80.c,v 1.1.2.2 2018/09/06 21:22:05 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_mod_80.c,v 1.1.2.3 2018/09/06 21:37:43 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_modular.h"
@@ -161,7 +161,6 @@ compat_80_modstat(int cmd, struct iovec *iov, void *arg)
 		if (mod->mod_kobj != NULL && stataddr) {
 			kobj_stat(mod->mod_kobj, &addr, &size);
 			oms->oms_addr = addr;
-A
 			oms->oms_size = size;
 		}
 		oms->oms_class = mi->mi_class;
