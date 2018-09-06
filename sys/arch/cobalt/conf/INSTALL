@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.68 2018/08/01 20:04:10 maxv Exp $
+# $NetBSD: INSTALL,v 1.69 2018/09/06 05:36:50 maxv Exp $
 #
 # INSTALL -- installation and rescue kernel.
 #
@@ -10,7 +10,7 @@ include 	"arch/cobalt/conf/std.cobalt"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"INSTALL-$Revision: 1.68 $"
+#ident 		"INSTALL-$Revision: 1.69 $"
 
 makeoptions     COPTS="-Os -mmemcpy"
 makeoptions	CPUFLAGS="-march=vr5000 -mabi=32"
@@ -225,7 +225,6 @@ atabus* 	at ata?
 wd* 		at atabus? drive ? flags 0x0000
 
 # PCI network interfaces
-#en*		at pci? dev ? function ?	# ENI/Adaptec ATM
 #ep*		at pci? dev ? function ?	# 3Com 3c59x
 #ex*		at pci? dev ? function ?	# 3Com 90x[BC]
 #epic*		at pci? dev ? function ?	# SMC EPIC/100 Ethernet
