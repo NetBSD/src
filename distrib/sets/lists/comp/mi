@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2226 2018/09/06 06:41:59 maxv Exp $
+#	$NetBSD: mi,v 1.2227 2018/09/06 19:07:13 maxv Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -2453,7 +2453,7 @@
 ./usr/include/netinet6/ip6_var.h		comp-c-include
 ./usr/include/netinet6/ip6protosw.h		comp-c-include
 ./usr/include/netinet6/ipcomp.h			comp-obsolete		obsolete
-./usr/include/netinet6/ipsec.h			comp-c-include
+./usr/include/netinet6/ipsec.h			comp-obsolete		obsolete
 ./usr/include/netinet6/mld6_var.h		comp-c-include
 ./usr/include/netinet6/nd6.h			comp-c-include
 ./usr/include/netinet6/pim6.h			comp-c-include
