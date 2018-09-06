@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2225 2018/09/03 21:26:19 kre Exp $
+#	$NetBSD: mi,v 1.2226 2018/09/06 06:41:59 maxv Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -2295,7 +2295,7 @@
 ./usr/include/net/if.h				comp-c-include
 ./usr/include/net/if_arc.h			comp-c-include
 ./usr/include/net/if_arp.h			comp-c-include
-./usr/include/net/if_atm.h			comp-c-include
+./usr/include/net/if_atm.h			comp-obsolete		obsolete
 ./usr/include/net/if_bridgevar.h		comp-c-include
 ./usr/include/net/if_dl.h			comp-c-include
 ./usr/include/net/if_ether.h			comp-c-include
@@ -2384,7 +2384,7 @@
 ./usr/include/netinet/icmp6.h			comp-c-include
 ./usr/include/netinet/icmp_var.h		comp-c-include
 ./usr/include/netinet/if_arc.h			comp-obsolete		obsolete
-./usr/include/netinet/if_atm.h			comp-c-include
+./usr/include/netinet/if_atm.h			comp-obsolete		obsolete
 ./usr/include/netinet/if_ether.h		comp-c-include
 ./usr/include/netinet/if_inarp.h		comp-c-include
 ./usr/include/netinet/igmp.h			comp-c-include
@@ -2513,7 +2513,7 @@
 ./usr/include/netkey/keysock.h			comp-c-include
 ./usr/include/netkey/keyv2.h			comp-obsolete		obsolete
 ./usr/include/netmpls/mpls.h			comp-c-include
-./usr/include/netnatm/natm.h			comp-c-include
+./usr/include/netnatm/natm.h			comp-obsolete		obsolete
 ./usr/include/netns/idp.h			comp-obsolete		obsolete
 ./usr/include/netns/idp_var.h			comp-obsolete		obsolete
 ./usr/include/netns/ns.h			comp-obsolete		obsolete

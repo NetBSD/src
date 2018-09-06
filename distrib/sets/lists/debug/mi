@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.263 2018/08/21 11:09:18 christos Exp $
+# $NetBSD: mi,v 1.264 2018/09/06 06:41:59 maxv Exp $
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib,compatfile
@@ -1209,8 +1209,8 @@
 ./usr/libdata/debug/usr/sbin/pppstats.debug	comp-ppp-debug		debug
 ./usr/libdata/debug/usr/sbin/psrset.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/pstat.debug	comp-sysutil-debug	debug
-./usr/libdata/debug/usr/sbin/pvcsif.debug	comp-netutil-debug	debug
-./usr/libdata/debug/usr/sbin/pvctxctl.debug	comp-netutil-debug	debug
+./usr/libdata/debug/usr/sbin/pvcsif.debug	comp-obsolete		obsolete
+./usr/libdata/debug/usr/sbin/pvctxctl.debug	comp-obsolete		obsolete
 ./usr/libdata/debug/usr/sbin/pwd_mkdb.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/quot.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/quotacheck.debug	comp-sysutil-debug	debug
