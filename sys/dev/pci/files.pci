@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.400 2018/08/25 07:48:57 maxv Exp $
+#	$NetBSD: files.pci,v 1.401 2018/09/06 05:36:51 maxv Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -166,11 +166,6 @@ file	dev/pci/mpii.c			mpii
 device	de: ether, ifnet, arp
 attach	de at pci
 file	dev/pci/if_de.c			de
-
-# Efficient Networks, Inc. ATM interface
-# device declaration in sys/conf/files
-attach	en at pci with en_pci
-file	dev/pci/if_en_pci.c		en_pci
 
 # 3Com 3c590 and 3c595 Ethernet controllers
 # device declaration in sys/conf/files

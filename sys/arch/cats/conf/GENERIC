@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.168 2018/08/25 20:52:40 rin Exp $
+# $NetBSD: GENERIC,v 1.169 2018/09/06 05:36:50 maxv Exp $
 #
 # GENERIC machine description file
 # 
@@ -285,7 +285,6 @@ sd*	at atapibus? drive ? flags 0x0000	# ATAPI disk drives
 uk*	at atapibus? drive ? flags 0x0000	# ATAPI unknown
 
 # PCI network interfaces
-#en*	at pci? dev ? function ?	# ENI/Adaptec ATM
 ep*	at pci? dev ? function ?	# 3C590 ethernet cards
 ex*	at pci? dev ? function ?	# 3Com 90x[B]
 epic*	at pci? dev ? function ?	# SMC EPIC/100 Ethernet
