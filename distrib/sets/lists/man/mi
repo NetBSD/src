@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1614 2018/09/06 06:41:59 maxv Exp $
+# $NetBSD: mi,v 1.1615 2018/09/06 12:05:23 kre Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -4208,7 +4208,7 @@
 ./usr/share/man/html4/emips/enic.html		man-sys-htmlman		html
 ./usr/share/man/html4/emips/intro.html		man-sys-htmlman		html
 ./usr/share/man/html4/emuxki.html		man-sys-htmlman		html
-./usr/share/man/html4/en.html			man-sys-htmlman		html
+./usr/share/man/html4/en.html			man-obsolete		obsolete
 ./usr/share/man/html4/envsys.html		man-sys-htmlman		html
 ./usr/share/man/html4/ep.html			man-sys-htmlman		html
 ./usr/share/man/html4/epic.html			man-sys-htmlman		html
