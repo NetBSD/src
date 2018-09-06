@@ -1,4 +1,4 @@
-/* $NetBSD: COMPAT-branch-notes,v 1.1.2.21 2018/09/04 11:36:06 pgoyette Exp $ */
+/* $NetBSD: COMPAT-branch-notes,v 1.1.2.22 2018/09/06 08:22:10 pgoyette Exp $ */
 
 DONE
 ----
@@ -40,10 +40,8 @@ DONE
     that the component modules are available.
 
     Similarly, the compat_sysv module has also been split into several
-    version-specific modules.
-
-    There are still several areas which are not complete - see the
-    TODO list below for more details.
+    version-specific modules.  (A mini-monolithic compat_sysv module
+    is still provided.)
 
 10. syscalls.master has been updated to autoload the version-specific
     compat modules rather than the monolithic modules.
@@ -54,9 +52,8 @@ DONE
 
 TODO - Required for branch merge
 --------------------------------
-1.  For compat_50, in addition to rtsock there are some things in dev/vnd,
-    dev/gpio, and dev/wscons/wsmux that I haven't been able to cleanly
-    separate.
+none
+
 
 TODO - Not required for branch merge
 ------------------------------------
@@ -70,13 +67,17 @@ TODO - Not required for branch merge
     routines needs to be verified.
 
     Currently, this entire code is built for the monolithic COMPAT
-    module, but there's no way to reach the entry points.
+    module, but there's no way to reach the entry points, so none of
+    the compat code can be executed, neither on the branch nor on
+    HEAD.
 
 3.  The compat_60 module still needs some work for XEN systems.  We
     probably need some build infrastructure changes to ensure that
     XEN (and, for i386, XEN-PAE) modules are build with the correct
     macros defined and with -I directories specified in the same order
-    as for building kernels. See PR port-xen/53130.
+    as for building kernels. See PR port-xen/53130.  This currently
+    prevents loading of micro-code updates for amd64 processors running
+    XEN kernels.  This limitation also exists on HEAD.
 
 4.  There seems to be quite a bit of MD compat_xx code, in the various
     sys/arch/ directories.  I haven't yet looked at any of this.  But it
@@ -86,9 +87,19 @@ TODO - Not required for branch merge
     compat_xx_MD_init() routine.
 
     Note also that there are a few bits of MD code that is COMPAT_44
-    related.  The only bit of MI COMPAT_44 code is in the single module
-    shared by COMPAT_43 and COMPAT_09.  This affects the cesfic, hp300,
+    related.  (The only bit of MI COMPAT_44 code is in the single module
+    shared by COMPAT_43 and COMPAT_09.)  This affects the cesfic, hp300,
     news68k, and x68k platforms, all in their respective machdep.c
     source file.  Additionally, the zaurus platform defines COMPAT_44 in
     its INSTALL kernel configuration - but no other configuration files!
+
+    As far as I can tell, none of the MD compat code is currently built
+    into the monolithic COMPAT module on HEAD.  Thus, its absence from
+    any of the version-specific modules is not a regression.
+
+5.  For compat_50, in addition to rtsock there are some things in dev/vnd,
+    dev/gpio, and dev/wscons/wsmux that I haven't been able to cleanly
+    separate.  These items are not currently included in the monolithic
+    COMPAT module on HEAD, so lack of integration on the branch is not a
+    regression.
 
