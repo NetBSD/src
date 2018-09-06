@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.80 2017/05/27 21:02:55 bouyer Exp $
+#	$NetBSD: Makefile,v 1.81 2018/09/06 09:13:42 martin Exp $
 
 .include <bsd.own.mk>
 
 SUBDIR=	altq arch compat dev fs miscfs \
 	net net80211 netatalk netbt netcan netipsec netinet netinet6 \
-        netisdn netkey netmpls netnatm netsmb \
+        netisdn netkey netmpls netsmb \
 	nfs opencrypto sys ufs uvm
 
 # interrupt implementation depends on the kernel within the port
