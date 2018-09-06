@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_ataraid.c,v 1.44.14.1 2018/06/25 07:25:49 pgoyette Exp $ */
+/*	$NetBSD: ld_ataraid.c,v 1.44.14.2 2018/09/06 06:55:48 pgoyette Exp $ */
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_ataraid.c,v 1.44.14.1 2018/06/25 07:25:49 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_ataraid.c,v 1.44.14.2 2018/09/06 06:55:48 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "bio.h"
@@ -419,12 +419,12 @@ ld_ataraid_start_raid0(struct ld_softc *ld, struct buf *bp)
 			comp = off / sz;
 			cbn = ((tbn / aai->aai_width) * aai->aai_interleave) +
 			    (off % sz);
-			rcount = min(bcount, dbtob(sz));
+			rcount = uimin(bcount, dbtob(sz));
 		} else {
 			comp = tbn % aai->aai_width;
 			cbn = ((tbn / aai->aai_width) * aai->aai_interleave) +
 			    off;
-			rcount = min(bcount, dbtob(aai->aai_interleave - off));
+			rcount = uimin(bcount, dbtob(aai->aai_interleave - off));
 		}
 
 		/*

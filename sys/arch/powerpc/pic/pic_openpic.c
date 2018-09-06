@@ -1,4 +1,4 @@
-/*	$NetBSD: pic_openpic.c,v 1.12.2.2 2018/05/21 04:36:01 pgoyette Exp $ */
+/*	$NetBSD: pic_openpic.c,v 1.12.2.3 2018/09/06 06:55:39 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic_openpic.c,v 1.12.2.2 2018/05/21 04:36:01 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic_openpic.c,v 1.12.2.3 2018/09/06 06:55:39 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -138,7 +138,7 @@ setup_openpic(void *addr, int passthrough)
 static void
 opic_establish_irq(struct pic_ops *pic, int irq, int type, int pri)
 {
-	int realpri = max(1, min(15, pri));
+	int realpri = uimax(1, uimin(15, pri));
 	uint32_t x;
 
 	x = irq;

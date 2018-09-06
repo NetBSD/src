@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.41.4.1 2018/07/28 04:32:56 pgoyette Exp $	*/
+/*	$NetBSD: trap.c,v 1.41.4.2 2018/09/06 06:51:32 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)trap.c	8.5 (Berkeley) 6/5/95";
 #else
-__RCSID("$NetBSD: trap.c,v 1.41.4.1 2018/07/28 04:32:56 pgoyette Exp $");
+__RCSID("$NetBSD: trap.c,v 1.41.4.2 2018/09/06 06:51:32 pgoyette Exp $");
 #endif
 #endif /* not lint */
 
@@ -324,7 +324,19 @@ clear_traps(int vforked)
 	}
 }
 
+/*
+ * See if there are any defined traps
+ */
+int
+have_traps(void)
+{
+	char **tp;
 
+	for (tp = trap ; tp < &trap[NSIG] ; tp++)
+		if (*tp && **tp)	/* trap not NULL or SIG_IGN */
+			return 1;
+	return 0;
+}
 
 /*
  * Set the signal handler for the specified signal.  The routine figures

@@ -1,6 +1,6 @@
 /* mpfr_cmp -- compare two floating-point numbers
 
-Copyright 1999, 2001, 2003-2016 Free Software Foundation, Inc.
+Copyright 1999, 2001, 2003-2018 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -28,7 +28,7 @@ http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
    returns 0 and sets erange flag if b and/or c is NaN.
 */
 
-int
+MPFR_HOT_FUNCTION_ATTR int
 mpfr_cmp3 (mpfr_srcptr b, mpfr_srcptr c, int s)
 {
   mpfr_exp_t be, ce;
@@ -41,7 +41,7 @@ mpfr_cmp3 (mpfr_srcptr b, mpfr_srcptr c, int s)
     {
       if (MPFR_IS_NAN (b) || MPFR_IS_NAN (c))
         {
-          MPFR_SET_ERANGE ();
+          MPFR_SET_ERANGEFLAG ();
           return 0;
         }
       else if (MPFR_IS_INF(b))
@@ -73,8 +73,8 @@ mpfr_cmp3 (mpfr_srcptr b, mpfr_srcptr c, int s)
 
   /* both signs and exponents are equal */
 
-  bn = (MPFR_PREC(b)-1)/GMP_NUMB_BITS;
-  cn = (MPFR_PREC(c)-1)/GMP_NUMB_BITS;
+  bn = MPFR_LAST_LIMB (b);
+  cn = MPFR_LAST_LIMB (c);
 
   bp = MPFR_MANT(b);
   cp = MPFR_MANT(c);

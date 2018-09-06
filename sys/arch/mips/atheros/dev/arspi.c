@@ -1,4 +1,4 @@
-/* $NetBSD: arspi.c,v 1.10 2012/10/27 17:18:02 chs Exp $ */
+/* $NetBSD: arspi.c,v 1.10.36.1 2018/09/06 06:55:37 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arspi.c,v 1.10 2012/10/27 17:18:02 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arspi.c,v 1.10.36.1 2018/09/06 06:55:37 pgoyette Exp $");
 
 #include "locators.h"
 
@@ -591,8 +591,8 @@ arspi_update_job(struct spi_transfer *st)
 	job->job_txcnt = 0;
 	job->job_data = 0;
 
-	job->job_txcnt = min(job->job_wresid, 4);
-	job->job_rxcnt = min(job->job_rresid, 4);
+	job->job_txcnt = uimin(job->job_wresid, 4);
+	job->job_rxcnt = uimin(job->job_rresid, 4);
 
 	job->job_wresid -= job->job_txcnt;
 	job->job_rresid -= job->job_rxcnt;

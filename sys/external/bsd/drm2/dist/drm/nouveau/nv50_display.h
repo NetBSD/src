@@ -1,3 +1,5 @@
+/*	$NetBSD: nv50_display.h,v 1.1.1.1.30.1 2018/09/06 06:56:18 pgoyette Exp $	*/
+
 /*
  * Copyright (C) 2008 Maarten Maathuis.
  * All Rights Reserved.

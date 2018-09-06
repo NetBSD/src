@@ -1,0 +1,14 @@
+
+; <<>> DiG 9.11.0pre-alpha <<>> axfr dynamic @10.53.0.1 -p 5300
+;; global options: +cmd
+dYNAMIc.		0	IN	SOA	mname1. . 2000042409 20 20 1814400 3600
+DyNaMiC.		300	IN	NS	ns1.DYNAMIC.
+DyNaMiC.		300	IN	MX	0 mail.eXaMpLe.
+mAiL.DynamiC.		300	IN	A	10.53.0.1
+Ns1.DyNaMIC.		300	IN	A	10.53.0.1
+dYNAMIc.		0	IN	SOA	mname1. . 2000042409 20 20 1814400 3600
+;; Query time: 0 msec
+;; SERVER: 10.53.0.1#5300(10.53.0.1)
+;; WHEN: Mon Jan 19 14:50:54 EST 2015
+;; XFR size: 6 records (messages 1, bytes 234)
+

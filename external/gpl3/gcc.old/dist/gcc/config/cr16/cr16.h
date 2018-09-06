@@ -1,5 +1,5 @@
 /* Definitions of target machine for GNU compiler, for CR16.
-   Copyright (C) 2012-2015 Free Software Foundation, Inc.
+   Copyright (C) 2012-2016 Free Software Foundation, Inc.
    Contributed by KPIT Cummins Infosystems Limited.
 
    This file is part of GCC.
@@ -368,7 +368,7 @@ enum reg_class
        && GET_CODE (XEXP ((XEXP (OP, 0)), 1)) == CONST_INT))
 
 /* Stack layout and calling conventions.  */
-#define STACK_GROWS_DOWNWARD
+#define STACK_GROWS_DOWNWARD 1
 
 #define STARTING_FRAME_OFFSET   0
 
@@ -467,7 +467,7 @@ struct cumulative_args
 
 /* It is as good or better to call a constant function address than to
    call an address kept in a register.  */
-#define NO_FUNCTION_CSE
+#define NO_FUNCTION_CSE 1
 
 /* Dividing the output into sections.  */
 

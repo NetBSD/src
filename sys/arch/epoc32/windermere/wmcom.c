@@ -1,4 +1,4 @@
-/*      $NetBSD: wmcom.c,v 1.6 2015/04/13 21:18:41 riastradh Exp $      */
+/*      $NetBSD: wmcom.c,v 1.6.16.1 2018/09/06 06:55:29 pgoyette Exp $      */
 /*
  * Copyright (c) 2012 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wmcom.c,v 1.6 2015/04/13 21:18:41 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wmcom.c,v 1.6.16.1 2018/09/06 06:55:29 pgoyette Exp $");
 
 #include "rnd.h"
 
@@ -384,7 +384,7 @@ wmcom_start(struct tty *tp)
 		bus_space_write_1(iot, ioh, UARTINTM, intm | INT_TXINT);
 
 		/* Output the first chunk of the contiguous buffer. */
-		n = min(sc->sc_tbc, UART_FIFO_SIZE);
+		n = uimin(sc->sc_tbc, UART_FIFO_SIZE);
 		bus_space_write_multi_1(iot, ioh, UARTDR, sc->sc_tba, n);
 		sc->sc_tba += n;
 		sc->sc_tbc -= n;

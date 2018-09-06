@@ -1,7 +1,7 @@
-/*	Id: term_ascii.c,v 1.54 2016/07/31 09:29:13 schwarze Exp  */
+/*	Id: term_ascii.c,v 1.61 2018/05/20 21:37:34 schwarze Exp  */
 /*
  * Copyright (c) 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
- * Copyright (c) 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2014, 2015, 2017, 2018 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -67,13 +67,14 @@ ascii_init(enum termenc enc, const struct manoutput *outopts)
 #endif
 	struct termp	*p;
 
-	p = mandoc_calloc(1, sizeof(struct termp));
+	p = mandoc_calloc(1, sizeof(*p));
+	p->tcol = p->tcols = mandoc_calloc(1, sizeof(*p->tcol));
+	p->maxtcol = 1;
 
 	p->line = 1;
-	p->tabwidth = 5;
 	p->defrmargin = p->lastrmargin = 78;
 	p->fontq = mandoc_reallocarray(NULL,
-	     (p->fontsz = 8), sizeof(enum termfont));
+	     (p->fontsz = 8), sizeof(*p->fontq));
 	p->fontq[0] = p->fontl = TERMFONT_NONE;
 
 	p->begin = ascii_begin;
@@ -132,6 +133,8 @@ ascii_init(enum termenc enc, const struct manoutput *outopts)
 	if (outopts->synopsisonly)
 		p->synopsisonly = 1;
 
+	assert(p->defindent < UINT16_MAX);
+	assert(p->defrmargin < UINT16_MAX);
 	return p;
 }
 
@@ -161,7 +164,7 @@ ascii_setwidth(struct termp *p, int iop, int width)
 {
 
 	width /= 24;
-	p->rmargin = p->defrmargin;
+	p->tcol->rmargin = p->defrmargin;
 	if (iop > 0)
 		p->defrmargin += width;
 	else if (iop == 0)
@@ -170,8 +173,10 @@ ascii_setwidth(struct termp *p, int iop, int width)
 		p->defrmargin -= width;
 	else
 		p->defrmargin = 0;
-	p->lastrmargin = p->rmargin;
-	p->rmargin = p->maxrmargin = p->defrmargin;
+	if (p->defrmargin > 1000)
+		p->defrmargin = 1000;
+	p->lastrmargin = p->tcol->rmargin;
+	p->tcol->rmargin = p->maxrmargin = p->defrmargin;
 }
 
 void
@@ -228,6 +233,8 @@ ascii_endline(struct termp *p)
 {
 
 	p->line++;
+	p->tcol->offset -= p->ti;
+	p->ti = 0;
 	putchar('\n');
 }
 
@@ -236,6 +243,7 @@ ascii_advance(struct termp *p, size_t len)
 {
 	size_t		i;
 
+	assert(len < UINT16_MAX);
 	for (i = 0; i < len; i++)
 		putchar(' ');
 }
@@ -302,18 +310,18 @@ ascii_uc2str(int uc)
 	"<80>",	"<81>",	"<82>",	"<83>",	"<84>",	"<85>",	"<86>",	"<87>",
 	"<88>",	"<89>",	"<8A>",	"<8B>",	"<8C>",	"<8D>",	"<8E>",	"<8F>",
 	"<90>",	"<91>",	"<92>",	"<93>",	"<94>",	"<95>",	"<96>",	"<97>",
-	"<99>",	"<99>",	"<9A>",	"<9B>",	"<9C>",	"<9D>",	"<9E>",	"<9F>",
-	nbrsp,	"!",	"/\bc",	"GBP",	"o\bx",	"=\bY",	"|",	"<sec>",
+	"<98>",	"<99>",	"<9A>",	"<9B>",	"<9C>",	"<9D>",	"<9E>",	"<9F>",
+	nbrsp,	"!",	"/\bc",	"GBP",	"o\bx",	"=\bY",	"|",	"<section>",
 	"\"",	"(C)",	"_\ba",	"<<",	"~",	"",	"(R)",	"-",
-	"<deg>","+-",	"2",	"3",	"'",	",\bu",	"<par>",".",
-	",",	"1",	"_\bo",	">>",	"1/4",	"1/2",	"3/4",	"?",
+	"<degree>","+-","^2",	"^3",	"'","<micro>","<paragraph>",".",
+	",",	"^1",	"_\bo",	">>",	"1/4",	"1/2",	"3/4",	"?",
 	"`\bA",	"'\bA",	"^\bA",	"~\bA",	"\"\bA","o\bA",	"AE",	",\bC",
 	"`\bE",	"'\bE",	"^\bE",	"\"\bE","`\bI",	"'\bI",	"^\bI",	"\"\bI",
-	"-\bD",	"~\bN",	"`\bO",	"'\bO",	"^\bO",	"~\bO",	"\"\bO","x",
+	"Dh",	"~\bN",	"`\bO",	"'\bO",	"^\bO",	"~\bO",	"\"\bO","x",
 	"/\bO",	"`\bU",	"'\bU",	"^\bU",	"\"\bU","'\bY",	"Th",	"ss",
 	"`\ba",	"'\ba",	"^\ba",	"~\ba",	"\"\ba","o\ba",	"ae",	",\bc",
 	"`\be",	"'\be",	"^\be",	"\"\be","`\bi",	"'\bi",	"^\bi",	"\"\bi",
-	"d",	"~\bn",	"`\bo",	"'\bo",	"^\bo",	"~\bo",	"\"\bo","-:-",
+	"dh",	"~\bn",	"`\bo",	"'\bo",	"^\bo",	"~\bo",	"\"\bo","/",
 	"/\bo",	"`\bu",	"'\bu",	"^\bu",	"\"\bu","'\by",	"th",	"\"\by",
 	"A",	"a",	"A",	"a",	"A",	"a",	"'\bC",	"'\bc",
 	"^\bC",	"^\bc",	"C",	"c",	"C",	"c",	"D",	"d",
@@ -373,6 +381,7 @@ locale_advance(struct termp *p, size_t len)
 {
 	size_t		i;
 
+	assert(len < UINT16_MAX);
 	for (i = 0; i < len; i++)
 		putwchar(L' ');
 }
@@ -382,6 +391,8 @@ locale_endline(struct termp *p)
 {
 
 	p->line++;
+	p->tcol->offset -= p->ti;
+	p->ti = 0;
 	putwchar(L'\n');
 }
 

@@ -1,5 +1,5 @@
 /* Callgraph construction.
-   Copyright (C) 2003-2015 Free Software Foundation, Inc.
+   Copyright (C) 2003-2016 Free Software Foundation, Inc.
    Contributed by Jan Hubicka
 
 This file is part of GCC.
@@ -21,46 +21,16 @@ along with GCC; see the file COPYING3.  If not see
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
-#include "tm.h"
-#include "hash-set.h"
-#include "machmode.h"
-#include "vec.h"
-#include "double-int.h"
-#include "input.h"
-#include "alias.h"
-#include "symtab.h"
-#include "wide-int.h"
-#include "inchash.h"
+#include "backend.h"
 #include "tree.h"
-#include "fold-const.h"
-#include "predict.h"
-#include "hard-reg-set.h"
-#include "input.h"
-#include "function.h"
-#include "dominance.h"
-#include "cfg.h"
-#include "basic-block.h"
-#include "tree-ssa-alias.h"
-#include "internal-fn.h"
-#include "gimple-fold.h"
-#include "gimple-expr.h"
-#include "is-a.h"
 #include "gimple.h"
+#include "tree-pass.h"
+#include "cgraph.h"
+#include "gimple-fold.h"
 #include "gimple-iterator.h"
 #include "gimple-walk.h"
-#include "langhooks.h"
-#include "intl.h"
-#include "tree-pass.h"
-#include "hash-map.h"
-#include "plugin-api.h"
-#include "ipa-ref.h"
-#include "cgraph.h"
 #include "ipa-utils.h"
 #include "except.h"
-#include "alloc-pool.h"
-#include "symbol-summary.h"
-#include "ipa-prop.h"
-#include "ipa-inline.h"
 
 /* Context of record_reference.  */
 struct record_reference_ctx
@@ -240,7 +210,7 @@ compute_call_stmt_bb_frequency (tree decl, basic_block bb)
 /* Mark address taken in STMT.  */
 
 static bool
-mark_address (gimple stmt, tree addr, tree, void *data)
+mark_address (gimple *stmt, tree addr, tree, void *data)
 {
   addr = get_base_address (addr);
   if (TREE_CODE (addr) == FUNCTION_DECL)
@@ -263,7 +233,7 @@ mark_address (gimple stmt, tree addr, tree, void *data)
 /* Mark load of T.  */
 
 static bool
-mark_load (gimple stmt, tree t, tree, void *data)
+mark_load (gimple *stmt, tree t, tree, void *data)
 {
   t = get_base_address (t);
   if (t && TREE_CODE (t) == FUNCTION_DECL)
@@ -287,7 +257,7 @@ mark_load (gimple stmt, tree t, tree, void *data)
 /* Mark store of T.  */
 
 static bool
-mark_store (gimple stmt, tree t, tree, void *data)
+mark_store (gimple *stmt, tree t, tree, void *data)
 {
   t = get_base_address (t);
   if (t && TREE_CODE (t) == VAR_DECL
@@ -303,7 +273,7 @@ mark_store (gimple stmt, tree t, tree, void *data)
 /* Record all references from cgraph_node that are taken in statement STMT.  */
 
 void
-cgraph_node::record_stmt_references (gimple stmt)
+cgraph_node::record_stmt_references (gimple *stmt)
 {
   walk_stmt_load_store_addr_ops (stmt, this, mark_load, mark_store,
 				 mark_address);
@@ -354,7 +324,7 @@ pass_build_cgraph_edges::execute (function *fun)
     {
       for (gsi = gsi_start_bb (bb); !gsi_end_p (gsi); gsi_next (&gsi))
 	{
-	  gimple stmt = gsi_stmt (gsi);
+	  gimple *stmt = gsi_stmt (gsi);
 	  tree decl;
 
 	  if (is_gimple_debug (stmt))
@@ -401,7 +371,8 @@ pass_build_cgraph_edges::execute (function *fun)
   FOR_EACH_LOCAL_DECL (fun, ix, decl)
     if (TREE_CODE (decl) == VAR_DECL
 	&& (TREE_STATIC (decl) && !DECL_EXTERNAL (decl))
-	&& !DECL_HAS_VALUE_EXPR_P (decl))
+	&& !DECL_HAS_VALUE_EXPR_P (decl)
+	&& TREE_TYPE (decl) != error_mark_node)
       varpool_node::finalize_decl (decl);
   record_eh_tables (node, fun);
 
@@ -452,7 +423,7 @@ cgraph_edge::rebuild_edges (void)
     {
       for (gsi = gsi_start_bb (bb); !gsi_end_p (gsi); gsi_next (&gsi))
 	{
-	  gimple stmt = gsi_stmt (gsi);
+	  gimple *stmt = gsi_stmt (gsi);
 	  tree decl;
 
 	  if (gcall *call_stmt = dyn_cast <gcall *> (stmt))

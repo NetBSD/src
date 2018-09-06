@@ -1,5 +1,5 @@
 /* Definitions for RTEMS based ARM systems using EABI.
-   Copyright (C) 2011-2015 Free Software Foundation, Inc.
+   Copyright (C) 2011-2016 Free Software Foundation, Inc.
  
    This file is part of GCC.
  
@@ -27,3 +27,5 @@
 	builtin_assert ("system=rtems");	\
 	TARGET_BPABI_CPP_BUILTINS();    	\
     } while (0)
+
+#define ARM_DEFAULT_SHORT_ENUMS false

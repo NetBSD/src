@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.21 2017/10/23 07:05:23 skrll Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.21.2.1 2018/09/06 06:55:30 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.21 2017/10/23 07:05:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.21.2.1 2018/09/06 06:55:30 pgoyette Exp $");
 
 #include "opt_md.h"
 
@@ -49,6 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.21 2017/10/23 07:05:23 skrll Exp $");
 
 void	(*evbarm_device_register)(device_t, void *);
 void	(*evbarm_device_register_post_config)(device_t, void *);
+void	(*evbarm_cpu_rootconf)(void);
 
 extern struct cfdata cfdata[];
 
@@ -148,6 +149,8 @@ void
 cpu_rootconf(void)
 {
 #ifndef MEMORY_DISK_IS_ROOT
+	if (evbarm_cpu_rootconf)
+		(*evbarm_cpu_rootconf)();
 	set_root_device();
 #endif
 	aprint_normal("boot device: %s\n",

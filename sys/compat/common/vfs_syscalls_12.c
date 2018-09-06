@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_12.c,v 1.35.2.1 2018/03/31 09:17:35 pgoyette Exp $	*/
+/*	$NetBSD: vfs_syscalls_12.c,v 1.35.2.2 2018/09/06 06:55:45 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_12.c,v 1.35.2.1 2018/03/31 09:17:35 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_12.c,v 1.35.2.2 2018/09/06 06:55:45 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -151,7 +151,7 @@ compat_12_sys_getdirentries(struct lwp *l,
 
 	loff = fp->f_offset;
 	nbytes = SCARG(uap, count);
-	buflen = min(MAXBSIZE, nbytes);
+	buflen = uimin(MAXBSIZE, nbytes);
 	if (buflen < va.va_blocksize)
 		buflen = va.va_blocksize;
 	tbuf = malloc(buflen, M_TEMP, M_WAITOK);

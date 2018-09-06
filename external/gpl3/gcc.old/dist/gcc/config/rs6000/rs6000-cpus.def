@@ -1,5 +1,5 @@
 /* IBM RS/6000 CPU names..
-   Copyright (C) 1991-2015 Free Software Foundation, Inc.
+   Copyright (C) 1991-2016 Free Software Foundation, Inc.
    Contributed by Richard Kenner (kenner@vlsi1.ultra.nyu.edu)
 
    This file is part of GCC.
@@ -59,6 +59,27 @@
   				 | OPTION_MASK_QUAD_MEMORY_ATOMIC	\
 				 | OPTION_MASK_UPPER_REGS_SF)
 
+/* Add ISEL back into ISA 3.0, since it is supposed to be a win.  Do not add
+   P9_MINMAX until the hardware that supports it is available.  Do not add
+   FLOAT128_HW here until we are ready to make -mfloat128 on by default.  */
+#define ISA_3_0_MASKS_SERVER	(ISA_2_7_MASKS_SERVER			\
+				 | OPTION_MASK_ISEL			\
+				 | OPTION_MASK_MODULO			\
+				 | OPTION_MASK_P9_FUSION		\
+				 | OPTION_MASK_P9_DFORM_SCALAR		\
+				 | OPTION_MASK_P9_DFORM_VECTOR		\
+				 | OPTION_MASK_P9_MISC			\
+				 | OPTION_MASK_P9_VECTOR)
+
+/* Support for the IEEE 128-bit floating point hardware requires a lot of the
+   VSX instructions that are part of ISA 3.0.  */
+#define ISA_3_0_MASKS_IEEE	(OPTION_MASK_VSX			\
+				 | OPTION_MASK_P8_VECTOR		\
+				 | OPTION_MASK_P9_VECTOR		\
+				 | OPTION_MASK_DIRECT_MOVE		\
+				 | OPTION_MASK_UPPER_REGS_DF		\
+				 | OPTION_MASK_UPPER_REGS_SF)
+
 #define POWERPC_7400_MASK	(OPTION_MASK_PPC_GFXOPT | OPTION_MASK_ALTIVEC)
 
 /* Deal with ports that do not have -mstrict-align.  */
@@ -80,15 +101,24 @@
 				 | OPTION_MASK_DIRECT_MOVE		\
 				 | OPTION_MASK_DLMZB			\
 				 | OPTION_MASK_EFFICIENT_UNALIGNED_VSX	\
+				 | OPTION_MASK_FLOAT128			\
 				 | OPTION_MASK_FPRND			\
 				 | OPTION_MASK_HTM			\
 				 | OPTION_MASK_ISEL			\
+				 | OPTION_MASK_LRA			\
 				 | OPTION_MASK_MFCRF			\
 				 | OPTION_MASK_MFPGPR			\
+				 | OPTION_MASK_MODULO			\
 				 | OPTION_MASK_MULHW			\
 				 | OPTION_MASK_NO_UPDATE		\
 				 | OPTION_MASK_P8_FUSION		\
 				 | OPTION_MASK_P8_VECTOR		\
+				 | OPTION_MASK_P9_DFORM_SCALAR		\
+				 | OPTION_MASK_P9_DFORM_VECTOR		\
+				 | OPTION_MASK_P9_FUSION		\
+				 | OPTION_MASK_P9_MINMAX		\
+				 | OPTION_MASK_P9_MISC			\
+				 | OPTION_MASK_P9_VECTOR		\
 				 | OPTION_MASK_POPCNTB			\
 				 | OPTION_MASK_POPCNTD			\
 				 | OPTION_MASK_POWERPC64		\
@@ -99,6 +129,7 @@
 				 | OPTION_MASK_RECIP_PRECISION		\
 				 | OPTION_MASK_SOFT_FLOAT		\
 				 | OPTION_MASK_STRICT_ALIGN_OPTIONAL	\
+				 | OPTION_MASK_TOC_FUSION		\
 				 | OPTION_MASK_UPPER_REGS_DF		\
 				 | OPTION_MASK_UPPER_REGS_SF		\
 				 | OPTION_MASK_VSX			\
@@ -193,6 +224,7 @@ RS6000_CPU ("power7", PROCESSOR_POWER7,   /* Don't add MASK_ISEL by default */
 	    | MASK_POPCNTB | MASK_FPRND | MASK_CMPB | MASK_DFP | MASK_POPCNTD
 	    | MASK_VSX | MASK_RECIP_PRECISION | OPTION_MASK_UPPER_REGS_DF)
 RS6000_CPU ("power8", PROCESSOR_POWER8, MASK_POWERPC64 | ISA_2_7_MASKS_SERVER)
+RS6000_CPU ("power9", PROCESSOR_POWER9, MASK_POWERPC64 | ISA_3_0_MASKS_SERVER)
 RS6000_CPU ("powerpc", PROCESSOR_POWERPC, 0)
 RS6000_CPU ("powerpc64", PROCESSOR_POWERPC64, MASK_PPC_GFXOPT | MASK_POWERPC64)
 RS6000_CPU ("powerpc64le", PROCESSOR_POWER8, MASK_POWERPC64 | ISA_2_7_MASKS_SERVER)

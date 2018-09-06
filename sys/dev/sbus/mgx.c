@@ -1,4 +1,4 @@
-/*	$NetBSD: mgx.c,v 1.12.4.1 2018/03/30 06:20:15 pgoyette Exp $ */
+/*	$NetBSD: mgx.c,v 1.12.4.2 2018/09/06 06:56:03 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2014 Michael Lorenz
@@ -29,7 +29,7 @@
 /* a console driver for the SSB 4096V-MGX graphics card */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mgx.c,v 1.12.4.1 2018/03/30 06:20:15 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mgx.c,v 1.12.4.2 2018/09/06 06:56:03 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1164,7 +1164,7 @@ mgx_do_cursor(struct mgx_softc *sc, struct wsdisplay_cursor *cur)
 		mgx_set_cursor(sc);
 	}
 	if (cur->which & WSDISPLAY_CURSOR_DOCMAP) {
-		int cnt = min(2, cur->cmap.count);
+		int cnt = uimin(2, cur->cmap.count);
 		uint8_t c;
 		uint8_t r[2], g[2], b[2];
 

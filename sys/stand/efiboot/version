@@ -1,0 +1,8 @@
+$NetBSD: version,v 1.2.2.2 2018/09/06 06:56:47 pgoyette Exp $
+
+NOTE ANY CHANGES YOU MAKE TO THE EFI BOOTLOADER HERE.  The format of this
+file is important - make sure the entries are appended on end, last item
+is taken as the current.
+
+1.0:	Initial version.
+1.1:	Add PXE booting support.

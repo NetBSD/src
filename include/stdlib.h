@@ -1,4 +1,4 @@
-/*	$NetBSD: stdlib.h,v 1.119 2017/10/07 21:16:06 christos Exp $	*/
+/*	$NetBSD: stdlib.h,v 1.119.2.1 2018/09/06 06:55:19 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -205,6 +205,8 @@ char	*realpath(const char * __restrict, char * __restrict);
 int	 ttyslot(void);
 
 void	*valloc(size_t);		/* obsoleted by malloc() */
+
+int	 getsubopt(char **, char * const *, char **);
 
 int	 grantpt(int);
 int	 unlockpt(int);

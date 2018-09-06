@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_exec.c,v 1.77.2.1 2018/05/21 04:36:03 pgoyette Exp $	*/
+/*	$NetBSD: ibcs2_exec.c,v 1.77.2.2 2018/09/06 06:55:45 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1998 Scott Bartram
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_exec.c,v 1.77.2.1 2018/05/21 04:36:03 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_exec.c,v 1.77.2.2 2018/09/06 06:55:45 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_syscall_debug.h"
@@ -64,6 +64,7 @@ __KERNEL_RCSID(0, "$NetBSD: ibcs2_exec.c,v 1.77.2.1 2018/05/21 04:36:03 pgoyette
 static void ibcs2_e_proc_exec(struct proc *, struct exec_package *);
 
 extern struct sysent ibcs2_sysent[];
+extern const uint32_t ibcs2_sysent_nomodbits[];
 extern const char * const ibcs2_syscallnames[];
 extern char ibcs2_sigcode[], ibcs2_esigcode[];
 #ifndef __HAVE_SYSCALL_INTERN
@@ -86,6 +87,7 @@ struct emul emul_ibcs2 = {
 	.e_nsysent =		IBCS2_SYS_NSYSENT,
 #endif
 	.e_sysent =		ibcs2_sysent,
+	.e_nomodbits =		ibcs2_sysent_nomodbits,
 #ifdef SYSCALL_DEBUG
 	.e_syscallnames =	ibcs2_syscallnames,
 #else

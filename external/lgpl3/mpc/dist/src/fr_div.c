@@ -1,6 +1,6 @@
 /* mpc_fr_div -- Divide a floating-point number by a complex number.
 
-Copyright (C) 2008, 2009, 2011 INRIA
+Copyright (C) 2008, 2009, 2011, 2012 INRIA
 
 This file is part of GNU MPC.
 
@@ -29,7 +29,7 @@ mpc_fr_div (mpc_ptr a, mpfr_srcptr b, mpc_srcptr c, mpc_rnd_t rnd)
    mpc_realref (bc)[0] = b [0];
    mpfr_init (mpc_imagref (bc));
    /* we consider the operand b to have imaginary part +0 */
-   mpfr_set_ui (mpc_imagref (bc), 0, GMP_RNDN);
+   mpfr_set_ui (mpc_imagref (bc), 0, MPFR_RNDN);
 
    inexact = mpc_div (a, bc, c, rnd);
 

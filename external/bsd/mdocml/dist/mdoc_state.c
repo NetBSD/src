@@ -1,6 +1,6 @@
-/*	Id: mdoc_state.c,v 1.4 2017/01/10 13:47:00 schwarze Exp  */
+/*	Id: mdoc_state.c,v 1.9 2017/11/29 20:05:33 schwarze Exp  */
 /*
- * Copyright (c) 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2014, 2015, 2017 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -16,6 +16,7 @@
  */
 #include <sys/types.h>
 
+#include <assert.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -35,8 +36,7 @@ static	void	 state_dl(STATE_ARGS);
 static	void	 state_sh(STATE_ARGS);
 static	void	 state_sm(STATE_ARGS);
 
-static	const state_handler state_handlers[MDOC_MAX] = {
-	NULL,		/* Ap */
+static	const state_handler __state_handlers[MDOC_MAX - MDOC_Dd] = {
 	NULL,		/* Dd */
 	NULL,		/* Dt */
 	NULL,		/* Os */
@@ -52,6 +52,7 @@ static	const state_handler state_handlers[MDOC_MAX] = {
 	NULL,		/* It */
 	NULL,		/* Ad */
 	NULL,		/* An */
+	NULL,		/* Ap */
 	NULL,		/* Ar */
 	NULL,		/* Cd */
 	NULL,		/* Cm */
@@ -154,12 +155,10 @@ static	const state_handler state_handlers[MDOC_MAX] = {
 	NULL,		/* En */
 	NULL,		/* Dx */
 	NULL,		/* %Q */
-	NULL,		/* br */
-	NULL,		/* sp */
 	NULL,		/* %U */
 	NULL,		/* Ta */
-	NULL,		/* ll */
 };
+static const state_handler *const state_handlers = __state_handlers - MDOC_Dd;
 
 
 void
@@ -167,9 +166,10 @@ mdoc_state(struct roff_man *mdoc, struct roff_node *n)
 {
 	state_handler handler;
 
-	if (n->tok == TOKEN_NONE)
+	if (n->tok == TOKEN_NONE || n->tok < ROFF_MAX)
 		return;
 
+	assert(n->tok >= MDOC_Dd && n->tok < MDOC_MAX);
 	if ( ! (mdoc_macros[n->tok].flags & MDOC_PROLOGUE))
 		mdoc->flags |= MDOC_PBODY;
 
@@ -208,19 +208,24 @@ state_bd(STATE_ARGS)
 static void
 state_bl(STATE_ARGS)
 {
+	struct mdoc_arg	*args;
+	size_t		 i;
 
 	if (n->type != ROFFT_HEAD || n->parent->args == NULL)
 		return;
 
-	switch(n->parent->args->argv[0].arg) {
-	case MDOC_Diag:
-		n->norm->Bl.type = LIST_diag;
-		break;
-	case MDOC_Column:
-		n->norm->Bl.type = LIST_column;
-		break;
-	default:
-		break;
+	args = n->parent->args;
+	for (i = 0; i < args->argc; i++) {
+		switch(args->argv[i].arg) {
+		case MDOC_Diag:
+			n->norm->Bl.type = LIST_diag;
+			return;
+		case MDOC_Column:
+			n->norm->Bl.type = LIST_column;
+			return;
+		default:
+			break;
+		}
 	}
 }
 

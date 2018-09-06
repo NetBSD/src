@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_writecomb.c,v 1.4 2015/10/17 21:06:42 jmcneill Exp $	*/
+/*	$NetBSD: linux_writecomb.c,v 1.4.16.1 2018/09/06 06:56:37 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_writecomb.c,v 1.4 2015/10/17 21:06:42 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_writecomb.c,v 1.4.16.1 2018/09/06 06:56:37 pgoyette Exp $");
 
 #if defined(__i386__) || defined(__x86_64__)
 #define HAS_MTRR 1
@@ -112,8 +112,8 @@ fail1:	KASSERT(id < 0);
 	mtrr->flags = 0;
 	/* XXX errno NetBSD->Linux */
 	ret = -mtrr_set(mtrr, &n, NULL, MTRR_GETSET_KERNEL);
-	KASSERT(ret == 0);
-	KASSERT(n == 1);
+	KASSERTMSG(ret == 0, "mtrr_set failed to delete: %d", -ret);
+	KASSERTMSG(n == 1, "mtrr_set returned wrong number: %d", n);
 	ret = id;
 fail0:	KASSERT(ret < 0);
 	kmem_free(mtrr, sizeof(*mtrr));
@@ -128,7 +128,7 @@ arch_phys_wc_del(int id)
 {
 #if defined(MTRR)
 	struct mtrr *mtrr;
-	int n;
+	int n = 1;
 	int ret __diagused;
 
 	KASSERT(0 <= id);
@@ -136,22 +136,22 @@ arch_phys_wc_del(int id)
 	mutex_spin_enter(&linux_writecomb.lock);
 	mtrr = idr_find(&linux_writecomb.idr, id);
 	idr_remove(&linux_writecomb.idr, id);
-	mutex_spin_enter(&linux_writecomb.lock);
+	mutex_spin_exit(&linux_writecomb.lock);
 
 	if (mtrr != NULL) {
 		mtrr->type = 0;
 		mtrr->flags = 0;
 		/* XXX errno NetBSD->Linux */
 		ret = -mtrr_set(mtrr, &n, NULL, MTRR_GETSET_KERNEL);
-		KASSERT(ret == 0);
-		KASSERT(n == 1);
+		KASSERTMSG(ret == 0, "mtrr_set failed to delete: %d", -ret);
+		KASSERTMSG(n == 1, "mtrr_set returned wrong number: %d", n);
 		kmem_free(mtrr, sizeof(*mtrr));
 	}
 #endif
 }
 
 int
-phys_wc_to_mtrr_index(int handle)
+arch_phys_wc_index(int handle)
 {
 
 	/* XXX Actually implement this...requires changes to our MTRR API.  */

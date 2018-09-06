@@ -10,6 +10,7 @@ sinclude(../config/picflag.m4)
 sinclude(../config/dfp.m4)
 sinclude(../config/unwind_ipinfo.m4)
 sinclude(../config/gthr.m4)
+sinclude(../config/sjlj.m4)
 
 AC_PREREQ(2.64)
 AC_INIT([GNU C Runtime Library], 1.0,,[libgcc])
@@ -230,59 +231,8 @@ AC_SUBST(fixed_point)
 # config.gcc also contains tests of with_system_libunwind.
 GCC_CHECK_UNWIND_GETIPINFO
 
-# The sjlj test is almost duplicated here and in libgo/configure.ac (for C),
-# libstdc++-v3/acinclude.m4 and libjava/configure.ac (for C++), and
-# libobjc/configure.ac (for Objective-C).
-# FIXME: This should be centralized in config/sjlj.m4.
-AC_ARG_ENABLE(sjlj-exceptions,
-  AC_HELP_STRING([--enable-sjlj-exceptions],
-		 [force use of builtin_setjmp for exceptions]),
-  [case "$enableval" in
-   yes|no|auto) ;;
-   *) AC_MSG_ERROR([unknown argument to --enable-sjlj-exceptions]) ;;
-   esac],
-  [enable_sjlj_exceptions=auto])
-
-AC_CACHE_CHECK([whether to use setjmp/longjmp exceptions],
-[libgcc_cv_lib_sjlj_exceptions],
-[AC_LANG_CONFTEST(
-  [AC_LANG_SOURCE([
-void bar ();
-void clean (int *);
-void foo ()
-{
-  int i __attribute__ ((cleanup (clean)));
-  bar();
-}
-])])
-CFLAGS_hold=$CFLAGS
-CFLAGS="--save-temps -fexceptions"
-libgcc_cv_lib_sjlj_exceptions=unknown
-AS_IF([ac_fn_c_try_compile],
-  [if grep _Unwind_SjLj_Resume conftest.s >/dev/null 2>&1; then
-    libgcc_cv_lib_sjlj_exceptions=yes
-  elif grep _Unwind_Resume conftest.s >/dev/null 2>&1; then
-    libgcc_cv_lib_sjlj_exceptions=no
-  fi])
-CFLAGS=$CFLAGS_hold
-rm -f conftest*
-])
-
-if test "$enable_sjlj_exceptions" = "auto"; then
-  enable_sjlj_exceptions=$libgcc_cv_lib_sjlj_exceptions
-fi
-
-case $enable_sjlj_exceptions in
-yes)
-  AC_DEFINE(LIBGCC_SJLJ_EXCEPTIONS, 1,
-	[Define if the C compiler is configured for setjmp/longjmp exceptions.])
-  ;;
-no)
-  ;;
-*)
-  AC_MSG_ERROR([unable to detect exception model])
-  ;;
-esac
+# Check if the compiler is configured for setjmp/longjmp exceptions.
+GCC_CHECK_SJLJ_EXCEPTIONS
 
 AC_ARG_ENABLE([explicit-exception-frame-registration],
   [AC_HELP_STRING([--enable-explicit-exception-frame-registration],
@@ -291,9 +241,9 @@ AC_ARG_ENABLE([explicit-exception-frame-registration],
 [
 force_explicit_eh_registry=
 if test "$enable_explicit_exception_frame_registration" = yes; then
-  if test "$enable_sjlj_exceptions" = yes; then
-    AC_MSG_ERROR([Can't enable both of --enable-sjlj-exceptions
-                  and --enable-explicit-exception-frame-registration])
+  if test $ac_cv_sjlj_exceptions = yes; then
+    AC_MSG_ERROR([Can't --enable-explicit-exception-frame-registration
+                  with setjmp/longjmp exceptions])
   fi
   force_explicit_eh_registry=-DUSE_EH_FRAME_REGISTRY_ALWAYS
 fi
@@ -423,24 +373,56 @@ esac
 ;;
 esac
 
+case ${host} in
+# At present, we cannot turn -mfloat128 on via #pragma GCC target,
+# so just check if we have VSX (ISA 2.06) support to build the
+# software libraries, and whether the assembler can handle xsaddqp
+# for hardware support.
+powerpc*-*-linux*)
+  AC_CACHE_CHECK([for PowerPC ISA 2.06 to build __float128 libraries],
+		 [libgcc_cv_powerpc_float128],
+		 [AC_COMPILE_IFELSE(
+    [#pragma GCC target ("vsx")
+     vector double dadd (vector double a, vector double b) { return a + b; }],
+    [libgcc_cv_powerpc_float128=yes],
+    [libgcc_cv_powerpc_float128=no])])
+
+  AC_CACHE_CHECK([for PowerPC ISA 3.0 to build hardware __float128 libraries],
+		 [libgcc_cv_powerpc_float128_hw],
+		 [AC_COMPILE_IFELSE(
+    [#pragma GCC target ("vsx,power9-vector")
+     #include <sys/auxv.h>
+     #ifndef AT_PLATFORM
+     #error "AT_PLATFORM is not defined"
+     #endif
+     vector unsigned char (vector unsigned char a, vector unsigned char b)
+     {
+       vector unsigned char ret;
+       __asm__ ("xsaddqp %0,%1,%2" : "=v" (ret) : "v" (a), "v" (b));
+       return ret;
+     }
+     void *add_resolver (void) { return (void *) add; }
+     __float128 add_ifunc (__float128, __float128)
+	__attribute__ ((__ifunc__ ("add_resolver")));],
+    [libgcc_cv_powerpc_float128_hw=yes],
+    [libgcc_cv_powerpc_float128_hw=no])])
+esac
+
 # Collect host-machine-specific information.
 . ${srcdir}/config.host
 
 # Used for constructing correct paths for offload compilers.
 accel_dir_suffix=
+real_host_noncanonical=${host_noncanonical}
 if test x"$enable_as_accelerator_for" != x; then
   accel_dir_suffix=/accel/${target_noncanonical}
-  case "${target_noncanonical}" in
-    *-intelmicemul-*)
-      # In this case we expect offload compiler to be built as native, so we
-      # need to change install directory for driver to be able to find libgcc.
-      host_noncanonical=${enable_as_accelerator_for} ;;
-  esac
+  real_host_noncanonical=${enable_as_accelerator_for}
 fi
 AC_SUBST(accel_dir_suffix)
+AC_SUBST(real_host_noncanonical)
 
 if test x"$enable_offload_targets" != x; then
-  extra_parts="${extra_parts} crtoffloadbegin.o crtoffloadend.o"
+  extra_parts="${extra_parts} crtoffloadbegin.o crtoffloadend.o crtoffloadtable.o"
 fi
 
 # Check if Solaris/x86 linker supports ZERO terminator unwind entries.

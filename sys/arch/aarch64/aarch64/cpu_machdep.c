@@ -1,4 +1,4 @@
-/* $NetBSD: cpu_machdep.c,v 1.2.16.2 2018/07/28 04:37:25 pgoyette Exp $ */
+/* $NetBSD: cpu_machdep.c,v 1.2.16.3 2018/09/06 06:55:22 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: cpu_machdep.c,v 1.2.16.2 2018/07/28 04:37:25 pgoyette Exp $");
+__KERNEL_RCSID(1, "$NetBSD: cpu_machdep.c,v 1.2.16.3 2018/09/06 06:55:22 pgoyette Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -204,8 +204,10 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 			return error;
 
 		memcpy(&tf->tf_regs, mcp->__gregs, sizeof(tf->tf_regs));
-		l->l_private = (void *)mcp->__gregs[_REG_TPIDR];
 	}
+
+	if (flags & _UC_TLSBASE)
+		l->l_private = (void *)mcp->__gregs[_REG_TPIDR];
 
 	if (flags & _UC_FPU) {
 		struct pcb * const pcb = lwp_getpcb(l);

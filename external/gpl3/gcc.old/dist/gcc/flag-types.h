@@ -1,5 +1,5 @@
 /* Compilation switch flag type definitions for GCC.
-   Copyright (C) 1987-2015 Free Software Foundation, Inc.
+   Copyright (C) 1987-2016 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -91,18 +91,20 @@ enum debug_struct_file
   DINFO_STRUCT_FILE_ANY     /* Debug structs defined in all files. */
 };
 
-/* Enumerate visibility settings.  This is deliberately ordered from most
-   to least visibility.  */
-#ifndef SYMBOL_VISIBILITY_DEFINED
-#define SYMBOL_VISIBILITY_DEFINED
-enum symbol_visibility
+/* Balance between GNAT encodings and standard DWARF to emit.  */
+
+enum dwarf_gnat_encodings
 {
-  VISIBILITY_DEFAULT,
-  VISIBILITY_PROTECTED,
-  VISIBILITY_HIDDEN,
-  VISIBILITY_INTERNAL
+  DWARF_GNAT_ENCODINGS_ALL = 0,	    /* Emit all GNAT encodings, then emit as
+				       much standard DWARF as possible so it
+				       does not conflict with GNAT
+				       encodings.  */
+  DWARF_GNAT_ENCODINGS_GDB = 1,	    /* Emit as much standard DWARF as possible
+				       as long as GDB handles them.  Emit GNAT
+				       encodings for the rest.  */
+  DWARF_GNAT_ENCODINGS_MINIMAL = 2  /* Emit all the standard DWARF we can.
+				       Emit GNAT encodings for the rest.  */
 };
-#endif
 
 /* Enumerate Objective-c instance variable visibility settings. */
 
@@ -120,6 +122,13 @@ enum stack_reuse_level
   SR_NONE,
   SR_NAMED_VARS,
   SR_ALL
+};
+
+/* The algorithm used for basic block reordering.  */
+enum reorder_blocks_algorithm
+{
+  REORDER_BLOCKS_ALGORITHM_SIMPLE,
+  REORDER_BLOCKS_ALGORITHM_STC
 };
 
 /* The algorithm used for the integrated register allocator (IRA).  */
@@ -171,7 +180,6 @@ enum stack_check_type
 
 /* Names for the different levels of -Wstrict-overflow=N.  The numeric
    values here correspond to N.  */
-
 enum warn_strict_overflow_code
 {
   /* Overflow warning that should be issued with -Wall: a questionable
@@ -201,6 +209,13 @@ enum fp_contract_mode {
   FP_CONTRACT_FAST = 2
 };
 
+/* Scalar storage order kind.  */
+enum scalar_storage_order_kind {
+  SSO_NATIVE = 0,
+  SSO_BIG_ENDIAN,
+  SSO_LITTLE_ENDIAN
+};
+
 /* Vectorizer cost-model.  */
 enum vect_cost_model {
   VECT_COST_MODEL_UNLIMITED = 0,
@@ -208,7 +223,6 @@ enum vect_cost_model {
   VECT_COST_MODEL_DYNAMIC = 2,
   VECT_COST_MODEL_DEFAULT = 3
 };
-
 
 /* Different instrumentation modes.  */
 enum sanitize_code {
@@ -238,6 +252,7 @@ enum sanitize_code {
   SANITIZE_RETURNS_NONNULL_ATTRIBUTE = 1UL << 19,
   SANITIZE_OBJECT_SIZE = 1UL << 20,
   SANITIZE_VPTR = 1UL << 21,
+  SANITIZE_BOUNDS_STRICT = 1UL << 22,
   SANITIZE_UNDEFINED = SANITIZE_SHIFT | SANITIZE_DIVIDE | SANITIZE_UNREACHABLE
 		       | SANITIZE_VLA | SANITIZE_NULL | SANITIZE_RETURN
 		       | SANITIZE_SI_OVERFLOW | SANITIZE_BOOL | SANITIZE_ENUM
@@ -246,6 +261,7 @@ enum sanitize_code {
 		       | SANITIZE_RETURNS_NONNULL_ATTRIBUTE
 		       | SANITIZE_OBJECT_SIZE | SANITIZE_VPTR,
   SANITIZE_NONDEFAULT = SANITIZE_FLOAT_DIVIDE | SANITIZE_FLOAT_CAST
+			| SANITIZE_BOUNDS_STRICT
 };
 
 /* flag_vtable_verify initialization levels. */
@@ -264,6 +280,14 @@ enum lto_partition_model {
   LTO_PARTITION_MAX = 4
 };
 
+/* flag_lto_linker_output initialization values.  */
+enum lto_linker_output {
+  LTO_LINKER_OUTPUT_UNKNOWN,
+  LTO_LINKER_OUTPUT_REL,
+  LTO_LINKER_OUTPUT_DYN,
+  LTO_LINKER_OUTPUT_PIE,
+  LTO_LINKER_OUTPUT_EXEC
+};
 
 /* gfortran -finit-real= values.  */
 

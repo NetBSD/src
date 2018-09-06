@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.354 2018/02/06 09:20:29 mrg Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.354.2.1 2018/09/06 06:56:48 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.354 2018/02/06 09:20:29 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.354.2.1 2018/09/06 06:56:48 pgoyette Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pax.h"
@@ -5013,7 +5013,7 @@ out:
 	if (pid != -1)
 		mutex_exit(p->p_lock);
 	if (error == 0) {
-		const u_int esize = min(sizeof(*vme), elem_size);
+		const u_int esize = uimin(sizeof(*vme), elem_size);
 		dp = oldp;
 		for (size_t i = 0; i < count; i++) {
 			if (oldp && (dp - (char *)oldp) < vmesize) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: entry.c,v 1.7.14.1 2018/06/25 07:25:12 pgoyette Exp $	*/
+/*	$NetBSD: entry.c,v 1.7.14.2 2018/09/06 06:51:44 pgoyette Exp $	*/
 
 /*
  * Copyright 1988,1990,1993,1994 by Paul Vixie
@@ -26,7 +26,11 @@
 #if 0
 static char rcsid[] = "Id: entry.c,v 1.17 2004/01/23 18:56:42 vixie Exp";
 #else
-__RCSID("$NetBSD: entry.c,v 1.7.14.1 2018/06/25 07:25:12 pgoyette Exp $");
+<<<<<<< entry.c
+__RCSID("$NetBSD: entry.c,v 1.7.14.2 2018/09/06 06:51:44 pgoyette Exp $");
+=======
+__RCSID("$NetBSD: entry.c,v 1.7.14.2 2018/09/06 06:51:44 pgoyette Exp $");
+>>>>>>> 1.10
 #endif
 #endif
 
@@ -468,10 +472,10 @@ random_with_range(int low, int high)
 {
 	/* Kind of crappy error detection, but...
 	 */
-	if (low >= high)
+	if (low < 0 || low >= high)
 		return low;
 	else
-		return (int)arc4random() % (high - low + 1) + low;
+		return (int)(arc4random() % (unsigned)((high - low + 1) + low));
 }
 
 static int

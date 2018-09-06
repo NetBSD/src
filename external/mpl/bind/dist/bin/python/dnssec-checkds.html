@@ -1,0 +1,116 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<!--
+ - Copyright (C) 2012-2018 Internet Systems Consortium, Inc. ("ISC")
+ - 
+ - This Source Code Form is subject to the terms of the Mozilla Public
+ - License, v. 2.0. If a copy of the MPL was not distributed with this
+ - file, You can obtain one at http://mozilla.org/MPL/2.0/.
+-->
+<html lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+<title>dnssec-checkds</title>
+<meta name="generator" content="DocBook XSL Stylesheets V1.78.1">
+</head>
+<body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="refentry">
+<a name="man.dnssec-checkds"></a><div class="titlepage"></div>
+  
+  
+
+  
+
+  <div class="refnamediv">
+<h2>Name</h2>
+<p>
+    <span class="application">dnssec-checkds</span>
+     &#8212; DNSSEC delegation consistency checking tool
+  </p>
+</div>
+
+  
+
+  <div class="refsynopsisdiv">
+<h2>Synopsis</h2>
+    <div class="cmdsynopsis"><p>
+      <code class="command">dnssec-checkds</code> 
+       [<code class="option">-d <em class="replaceable"><code>dig path</code></em></code>]
+       [<code class="option">-D <em class="replaceable"><code>dsfromkey path</code></em></code>]
+       [<code class="option">-f <em class="replaceable"><code>file</code></em></code>]
+       [<code class="option">-l <em class="replaceable"><code>domain</code></em></code>]
+       [<code class="option">-s <em class="replaceable"><code>file</code></em></code>]
+       {zone}
+    </p></div>
+  </div>
+
+  <div class="refsection">
+<a name="id-1.7"></a><h2>DESCRIPTION</h2>
+
+    <p><span class="command"><strong>dnssec-checkds</strong></span>
+      verifies the correctness of Delegation Signer (DS) or DNSSEC
+      Lookaside Validation (DLV) resource records for keys in a specified
+      zone.
+    </p>
+  </div>
+
+  <div class="refsection">
+<a name="id-1.8"></a><h2>OPTIONS</h2>
+
+
+    <div class="variablelist"><dl class="variablelist">
+<dt><span class="term">-f <em class="replaceable"><code>file</code></em></span></dt>
+<dd>
+          <p>
+            If a <code class="option">file</code> is specified, then the zone is
+            read from that file to find the DNSKEY records.  If not,
+            then the DNSKEY records for the zone are looked up in the DNS.
+          </p>
+        </dd>
+<dt><span class="term">-l <em class="replaceable"><code>domain</code></em></span></dt>
+<dd>
+          <p>
+            Check for a DLV record in the specified lookaside domain,
+            instead of checking for a DS record in the zone's parent.
+          </p>
+        </dd>
+<dt><span class="term">-s <em class="replaceable"><code>file</code></em></span></dt>
+<dd>
+          <p>
+            Specifies a prepared dsset file, such as would be generated
+            by <span class="command"><strong>dnssec-signzone</strong></span>, to use as a source for
+            the DS RRset instead of querying the parent.
+          </p>
+        </dd>
+<dt><span class="term">-d <em class="replaceable"><code>dig path</code></em></span></dt>
+<dd>
+          <p>
+            Specifies a path to a <span class="command"><strong>dig</strong></span> binary.  Used
+            for testing.
+          </p>
+        </dd>
+<dt><span class="term">-D <em class="replaceable"><code>dsfromkey path</code></em></span></dt>
+<dd>
+          <p>
+            Specifies a path to a <span class="command"><strong>dnssec-dsfromkey</strong></span> binary.
+            Used for testing.
+          </p>
+        </dd>
+</dl></div>
+  </div>
+
+  <div class="refsection">
+<a name="id-1.9"></a><h2>SEE ALSO</h2>
+
+    <p><span class="citerefentry">
+        <span class="refentrytitle">dnssec-dsfromkey</span>(8)
+      </span>,
+      <span class="citerefentry">
+        <span class="refentrytitle">dnssec-keygen</span>(8)
+      </span>,
+      <span class="citerefentry">
+        <span class="refentrytitle">dnssec-signzone</span>(8)
+      </span>,
+    </p>
+  </div>
+
+</div></body>
+</html>

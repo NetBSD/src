@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.145 2017/11/06 03:47:48 christos Exp $	*/
+/*	$NetBSD: machdep.c,v 1.145.2.1 2018/09/06 06:55:41 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.145 2017/11/06 03:47:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.145.2.1 2018/09/06 06:55:41 pgoyette Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -244,12 +244,12 @@ mach_init(int argc, int32_t argv32[], uintptr_t magic, int32_t bip32)
 	vaddr_t kernend;
 	u_int i;
 	int rv;
-#if NKSYMS > 0 || defined(DDB) || defined(MODULAR)
+#if NKSYMS || defined(DDB) || defined(MODULAR)
 	int nsym = 0;
 	char *ssym = NULL;
 	char *esym = NULL;
 	struct btinfo_symtab *bi_syms;
-#endif
+#endif /* NKSYMS || defined(DDB) || defined(MODULAR) */
 #ifdef _LP64
 	char *argv[20];
 
@@ -307,7 +307,7 @@ mach_init(int argc, int32_t argv32[], uintptr_t magic, int32_t bip32)
 	} else
 		bootinfo_msg = "no bootinfo found. (old bootblocks?)\n";
 
-#if NKSYM > 0 || defined(DDB) || defined(MODULAR)
+#if NKSYMS || defined(DDB) || defined(MODULAR)
 	bi_syms = lookup_bootinfo(BTINFO_SYMTAB);
 
 	/* check whether there is valid bootinfo symtab info */
@@ -317,7 +317,7 @@ mach_init(int argc, int32_t argv32[], uintptr_t magic, int32_t bip32)
 		esym = (char *)bi_syms->esym;
 		kernend = mips_round_page(esym);
 	} else
-#endif
+#endif /* NKSYMS || defined(DDB) || defined(MODULAR) */
 	{
 		kernend = mips_round_page(end);
 	}

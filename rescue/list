@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.48.12.1 2018/04/16 01:59:51 pgoyette Exp $
+#	$NetBSD: list,v 1.48.12.2 2018/09/06 06:55:20 pgoyette Exp $
 
 SRCDIRS	bin
 
@@ -114,6 +114,7 @@ PROG	swapctl		swapon
 PROG	sysctl
 PROG	ttyflags
 PROG	tunefs
+PROG	umbctl
 PROG	umount
 PROG	wdogctl
 PROG	veriexecctl

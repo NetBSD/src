@@ -1,4 +1,4 @@
-/* $NetBSD: gic_fdt.c,v 1.8.4.2 2018/07/28 04:37:28 pgoyette Exp $ */
+/* $NetBSD: gic_fdt.c,v 1.8.4.3 2018/09/06 06:55:26 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gic_fdt.c,v 1.8.4.2 2018/07/28 04:37:28 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gic_fdt.c,v 1.8.4.3 2018/09/06 06:55:26 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -142,8 +142,8 @@ gic_fdt_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	const bus_addr_t addr = min(addr_d, addr_c);
-	const bus_size_t end = max(addr_d + size_d, addr_c + size_c);
+	const bus_addr_t addr = uimin(addr_d, addr_c);
+	const bus_size_t end = uimax(addr_d + size_d, addr_c + size_c);
 	const bus_size_t size = end - addr;
 
 	error = bus_space_map(faa->faa_bst, addr, size, 0, &bsh);

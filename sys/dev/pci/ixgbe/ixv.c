@@ -1,4 +1,4 @@
-/*$NetBSD: ixv.c,v 1.84.2.8 2018/06/25 07:26:01 pgoyette Exp $*/
+/*$NetBSD: ixv.c,v 1.84.2.9 2018/09/06 06:56:02 pgoyette Exp $*/
 
 /******************************************************************************
 
@@ -932,11 +932,11 @@ ixv_msix_que(void *arg)
 	if ((txr->bytes) && (txr->packets))
 		newitr = txr->bytes/txr->packets;
 	if ((rxr->bytes) && (rxr->packets))
-		newitr = max(newitr, (rxr->bytes / rxr->packets));
+		newitr = uimax(newitr, (rxr->bytes / rxr->packets));
 	newitr += 24; /* account for hardware frame, crc */
 
 	/* set an upper boundary */
-	newitr = min(newitr, 3000);
+	newitr = uimin(newitr, 3000);
 
 	/* Be nice to the mid range */
 	if ((newitr > 300) && (newitr < 1200))

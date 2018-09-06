@@ -27,7 +27,7 @@ presence of the required flag.
 </para>
 
 <para>
-This page describes the C++11 support in the GCC 5 series.
+This page describes the C++11 support in the GCC 6 series.
 </para>
 
 <!-- Status is Yes or No, Broken/Partial-->
@@ -528,10 +528,9 @@ This page describes the C++11 support in the GCC 5 series.
       <entry/>
     </row>
     <row>
-      <?dbhtml bgcolor="#B0B0B0" ?>
       <entry>20.6.4</entry>
       <entry>Pointer safety</entry>
-      <entry>Partial</entry>
+      <entry>Y</entry>
       <entry/>
     </row>
     <row>
@@ -1340,12 +1339,10 @@ This page describes the C++11 support in the GCC 5 series.
       <entry/>
     </row>
     <row>
-      <?dbhtml bgcolor="#B0B0B0" ?>
       <entry>23.2.1</entry>
       <entry>General container requirements</entry>
-      <entry>Partial</entry>
-      <entry><code>list</code> does not meet the requirements
-             relating to allocator use and propagation.</entry>
+      <entry>Y</entry>
+      <entry/>
     </row>
     <row>
       <entry>23.2.2</entry>
@@ -1396,11 +1393,10 @@ This page describes the C++11 support in the GCC 5 series.
       <entry/>
     </row>
     <row>
-      <?dbhtml bgcolor="#B0B0B0" ?>
       <entry>23.3.5</entry>
       <entry>Class template <code>list</code></entry>
-      <entry>Partial</entry>
-      <entry>Incomplete allocator support.</entry>
+      <entry>Y</entry>
+      <entry/>
     </row>
     <row>
       <entry>23.3.6</entry>
@@ -2349,8 +2345,7 @@ This page describes the C++11 support in the GCC 5 series.
       <entry>30.4.1.3</entry>
       <entry>Timed mutex types</entry>
       <entry/>
-      <entry>On POSIX sytems these types are only defined if the OS
-         supports the POSIX Timeouts option. </entry>
+      <entry/>
     </row>
     <row>
       <entry>30.4.1.3.1</entry>

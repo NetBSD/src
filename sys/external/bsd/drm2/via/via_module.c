@@ -1,4 +1,4 @@
-/*	$NetBSD: via_module.c,v 1.2 2015/09/05 23:04:01 dholland Exp $	*/
+/*	$NetBSD: via_module.c,v 1.2.18.1 2018/09/06 06:56:37 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: via_module.c,v 1.2 2015/09/05 23:04:01 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: via_module.c,v 1.2.18.1 2018/09/06 06:56:37 pgoyette Exp $");
 
 #include <sys/types.h>
 #include <sys/module.h>
@@ -52,7 +52,6 @@ extern struct drm_driver *const via_drm_driver; /* XXX */
 static int
 viadrm_init(void)
 {
-	extern int drm_guarantee_initialized(void);
 	int error;
 
 	via_init_command_verifier(); /* idempotent, no unwind needed */
@@ -60,13 +59,6 @@ viadrm_init(void)
 	error = drm_guarantee_initialized();
 	if (error)
 		return error;
-
-	error = drm_pci_init(via_drm_driver, NULL);
-	if (error) {
-		aprint_error("viadrmkms: failed to init pci: %d\n",
-		    error);
-		return error;
-	}
 
 	return 0;
 }
@@ -87,8 +79,6 @@ viadrm_guarantee_initialized(void)
 static void
 viadrm_fini(void)
 {
-
-	drm_pci_exit(via_drm_driver, NULL);
 }
 
 static int

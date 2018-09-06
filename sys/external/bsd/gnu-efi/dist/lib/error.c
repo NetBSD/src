@@ -1,4 +1,4 @@
-/*	$NetBSD: error.c,v 1.1.1.1 2014/04/01 16:16:06 jakllsch Exp $	*/
+/*	$NetBSD: error.c,v 1.1.1.1.34.1 2018/09/06 06:56:39 pgoyette Exp $	*/
 
 /*++
 
@@ -49,6 +49,13 @@ struct {
 	{  EFI_ICMP_ERROR,             L"ICMP Error"},
 	{  EFI_TFTP_ERROR,             L"TFTP Error"},
 	{  EFI_PROTOCOL_ERROR,         L"Protocol Error"},
+	{  EFI_INCOMPATIBLE_VERSION,   L"Incompatible Version"},
+	{  EFI_SECURITY_VIOLATION,     L"Security Policy Violation"},
+	{  EFI_CRC_ERROR,              L"CRC Error"},
+	{  EFI_END_OF_MEDIA,           L"End of Media"},
+	{  EFI_END_OF_FILE,            L"End of File"},
+	{  EFI_INVALID_LANGUAGE,       L"Invalid Languages"},
+	{  EFI_COMPROMISED_DATA,       L"Compromised Data"},
 
 	// warnings
 	{  EFI_WARN_UNKOWN_GLYPH,      L"Warning Unknown Glyph"},

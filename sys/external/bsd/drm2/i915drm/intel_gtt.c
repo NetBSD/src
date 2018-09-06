@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_gtt.c,v 1.5 2015/03/06 22:03:06 riastradh Exp $	*/
+/*	$NetBSD: intel_gtt.c,v 1.5.16.1 2018/09/06 06:56:36 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 /* Intel GTT stubs */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_gtt.c,v 1.5 2015/03/06 22:03:06 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_gtt.c,v 1.5.16.1 2018/09/06 06:56:36 pgoyette Exp $");
 
 #include <sys/types.h>
 #include <sys/bus.h>
@@ -54,8 +54,8 @@ static struct {
 } intel_gtt;
 
 void
-intel_gtt_get(size_t *va_size, size_t *stolen_size, bus_addr_t *aper_base,
-    unsigned long *aper_size)
+intel_gtt_get(uint64_t *va_size, size_t *stolen_size, bus_addr_t *aper_base,
+    uint64_t *aper_size)
 {
 	struct agp_softc *const sc = agp_i810_sc;
 
@@ -125,8 +125,14 @@ intel_gmch_remove(void)
 bool
 intel_enable_gtt(void)
 {
+	struct agp_softc *sc = agp_i810_sc;
+	struct agp_i810_softc *isc;
 
-	return (agp_i810_sc != NULL);
+	if (sc == NULL)
+		return false;
+	isc = sc->as_chipc;
+	agp_i810_reset(isc);
+	return true;
 }
 
 void
@@ -138,7 +144,8 @@ intel_gtt_chipset_flush(void)
 }
 
 void
-intel_gtt_insert_entries(bus_dmamap_t dmamap, unsigned va_page, unsigned flags)
+intel_gtt_insert_sg_entries(bus_dmamap_t dmamap, unsigned va_page,
+    unsigned flags)
 {
 	struct agp_i810_softc *const isc = agp_i810_sc->as_chipc;
 	off_t va = (va_page << PAGE_SHIFT);
@@ -163,19 +170,27 @@ intel_gtt_insert_entries(bus_dmamap_t dmamap, unsigned va_page, unsigned flags)
 
 	for (seg = 0; seg < dmamap->dm_nsegs; seg++) {
 		const bus_addr_t addr = dmamap->dm_segs[seg].ds_addr;
+		bus_size_t len;
 
-		KASSERT(dmamap->dm_segs[seg].ds_len == PAGE_SIZE);
-
-		/* XXX Respect flags.  */
-		error = agp_i810_write_gtt_entry(isc, va, addr, gtt_flags);
-		if (error)
-			device_printf(agp_i810_sc->as_dev,
-			    "write gtt entry"
-			    " %"PRIxMAX" -> %"PRIxMAX" failed: %d\n",
-			    (uintmax_t)va, (uintmax_t)(addr | 1), error);
-		va += PAGE_SIZE;
+		for (len = dmamap->dm_segs[seg].ds_len;
+		     len >= PAGE_SIZE;
+		     len -= PAGE_SIZE, va += PAGE_SIZE) {
+			/* XXX Respect flags.  */
+			error = agp_i810_write_gtt_entry(isc, va, addr,
+			    gtt_flags);
+			if (error)
+				device_printf(agp_i810_sc->as_dev,
+				    "write gtt entry"
+				    " %"PRIxMAX" -> %"PRIxMAX" failed: %d\n",
+				    (uintmax_t)va, (uintmax_t)(addr | 1),
+				    error);
+		}
+		KASSERTMSG(len == 0,
+		    "segment length not divisible by PAGE_SIZE: %jx",
+		    (uintmax_t)dmamap->dm_segs[seg].ds_len);
 	}
 	agp_i810_post_gtt_entry(isc, (va - PAGE_SIZE));
+	intel_gtt_chipset_flush();
 }
 
 void

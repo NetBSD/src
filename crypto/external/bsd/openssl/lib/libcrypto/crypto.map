@@ -4067,7 +4067,13 @@ OPENSSL_1_1_0g {
     global:
         CRYPTO_secure_clear_free;
         EVP_PKEY_set1_engine;
-    local: *;
 } OPENSSL_1_1_0f;
 
+OPENSSL_1_1_0i {
+    global:
+        conf_ssl_get;
+        conf_ssl_get_cmd;
+        conf_ssl_name_find;
+    local: *;
+} OPENSSL_1_1_0g;
 

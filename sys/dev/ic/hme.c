@@ -1,4 +1,4 @@
-/*	$NetBSD: hme.c,v 1.96.8.3 2018/07/28 04:37:45 pgoyette Exp $	*/
+/*	$NetBSD: hme.c,v 1.96.8.4 2018/09/06 06:55:49 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.96.8.3 2018/07/28 04:37:45 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.96.8.4 2018/09/06 06:55:49 pgoyette Exp $");
 
 /* #define HMEDEBUG */
 
@@ -718,7 +718,7 @@ hme_get(struct hme_softc *sc, int ri, uint32_t flags)
 			m->m_data = newdata;
 		}
 
-		m->m_len = len = min(totlen, len);
+		m->m_len = len = uimin(totlen, len);
 		memcpy(mtod(m, void *), bp, len);
 		bp += len;
 

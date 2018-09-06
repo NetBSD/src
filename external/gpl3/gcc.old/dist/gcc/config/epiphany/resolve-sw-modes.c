@@ -1,5 +1,5 @@
 /* Mode switching cleanup pass for the EPIPHANY cpu.
-   Copyright (C) 2000-2015 Free Software Foundation, Inc.
+   Copyright (C) 2000-2016 Free Software Foundation, Inc.
    Contributed by Embecosm on behalf of Adapteva, Inc.
 
 This file is part of GCC.
@@ -21,31 +21,14 @@ along with GCC; see the file COPYING3.  If not see
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
-#include "machmode.h"
-#include "tm.h"
-#include "hard-reg-set.h"
-#include "tm_p.h"
-#include "vec.h"
-#include "sbitmap.h"
-#include "predict.h"
-#include "hashtab.h"
-#include "hash-set.h"
-#include "input.h"
-#include "function.h"
-#include "dominance.h"
-#include "cfg.h"
-#include "cfgrtl.h"
-#include "cfganal.h"
-#include "lcm.h"
-#include "cfgbuild.h"
-#include "cfgcleanup.h"
-#include "basic-block.h"
-#include "df.h"
+#include "backend.h"
 #include "rtl.h"
+#include "df.h"
+#include "tm_p.h"
 #include "insn-config.h"
-#include "insn-codes.h"
 #include "emit-rtl.h"
 #include "recog.h"
+#include "cfgrtl.h"
 #include "insn-attr-common.h"
 #include "tree-pass.h"
 

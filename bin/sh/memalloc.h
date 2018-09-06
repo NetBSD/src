@@ -1,4 +1,4 @@
-/*	$NetBSD: memalloc.h,v 1.17 2017/06/17 07:22:12 kre Exp $	*/
+/*	$NetBSD: memalloc.h,v 1.17.4.1 2018/09/06 06:51:32 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -55,6 +55,7 @@ pointer stalloc(int);
 void stunalloc(pointer);
 void setstackmark(struct stackmark *);
 void popstackmark(struct stackmark *);
+void rststackmark(struct stackmark *);
 void growstackblock(void);
 void grabstackblock(int);
 char *growstackstr(void);

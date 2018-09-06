@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.73 2018/01/23 22:12:52 sevan Exp $	*/
+/*	$NetBSD: main.c,v 1.73.2.1 2018/09/06 06:51:32 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.7 (Berkeley) 7/19/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.73 2018/01/23 22:12:52 sevan Exp $");
+__RCSID("$NetBSD: main.c,v 1.73.2.1 2018/09/06 06:51:32 pgoyette Exp $");
 #endif
 #endif /* not lint */
 
@@ -150,7 +150,8 @@ main(int argc, char **argv)
 		}
 
 		if (exception != EXSHELLPROC) {
-			if (state == 0 || iflag == 0 || ! rootshell)
+			if (state == 0 || iflag == 0 || ! rootshell ||
+			    exception == EXEXIT)
 				exitshell(exitstatus);
 		}
 		reset();
@@ -234,7 +235,7 @@ state3:
 	}
 
 	if (minusc)
-		evalstring(minusc, 0);
+		evalstring(minusc, sflag ? 0 : EV_EXIT);
 
 	if (sflag || minusc == NULL) {
 state4:	/* XXX ??? - why isn't this before the "if" statement */
@@ -291,10 +292,9 @@ cmdloop(int top)
 		} else if (n != NULL && nflag == 0) {
 			job_warning = (job_warning == 2) ? 1 : 0;
 			numeof = 0;
-			evaltree(n, EV_MORE);
+			evaltree(n, 0);
 		}
-		popstackmark(&smark);
-		setstackmark(&smark);
+		rststackmark(&smark);
 
 		/*
 		 * Any SKIP* can occur here!  SKIP(FUNC|BREAK|CONT) occur when

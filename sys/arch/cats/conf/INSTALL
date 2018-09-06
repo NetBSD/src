@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.103 2017/09/14 07:58:39 mrg Exp $
+#	$NetBSD: INSTALL,v 1.103.2.1 2018/09/06 06:55:28 pgoyette Exp $
 #
 #	CATSINST -- CHALTECH CATS Install kernel
 #
@@ -318,6 +318,7 @@ ukphy*	at mii? phy ?			# generic unknown PHYs
 #axe*	at uhub? port ?		# ASIX AX88172 based adapters
 #cue*	at uhub? port ?		# CATC USB-EL1201A based adapters
 #kue*	at uhub? port ?		# Kawasaki LSI KL5KUSB101B based adapters
+#mue*	at uhub? port ?		# Microchip LAN75xx/LAN78xx based adapters
 #url*	at uhub? port ?		# Realtek RTL8150L based adapters
 
 # USB Generic driver
@@ -431,7 +432,7 @@ pseudo-device	md			# memory disk device (ramdisk)
 
 # network pseudo-devices
 pseudo-device	bpfilter		# Berkeley packet filter
-#pseudo-device	ipfilter		# IP filter (firewall) and NAT
+#pseudo-device	npf			# NPF packet filter
 pseudo-device	loop			# network loopback
 #pseudo-device	ppp			# Point-to-Point Protocol
 #pseudo-device	sl			# Serial Line IP

@@ -1,3 +1,5 @@
+/*	$NetBSD: nvreg.h,v 1.1.1.1.30.1 2018/09/06 06:56:23 pgoyette Exp $	*/
+
 /* $XConsortium: nvreg.h /main/2 1996/10/28 05:13:41 kaleb $ */
 /*
  * Copyright 1996-1997  David J. McKay

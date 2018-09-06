@@ -1,0 +1,96 @@
+#!/bin/sh
+#
+# Driver script to run resperf and generate an HTML report of
+# the results, with graphs.
+#
+
+# Program locations - change these if not in $PATH
+resperf=resperf
+gnuplot=gnuplot
+
+# The gnuplot terminal type.  This determines the image format for the
+# plots; "png" or "gif" will both work as long as the corresponding
+# terminal support is compiled into your copy of gnuplot.
+terminal=png
+
+# Create a unique ID for this report
+id=`date '+%Y%m%d-%H%M'`
+
+# Set up file names
+reportfile="$id.html"
+outputfile="$id.output"
+plotfile="$id.gnuplot"
+rate_graph="$id.rate.$terminal"
+latency_graph="$id.latency.$terminal"
+
+# Run the test
+$resperf -P "$plotfile" "$@" >"$outputfile" 2>&1 ||
+  { echo "`basename $0`: error running resperf:" >&2;
+    cat $outputfile >&2;
+    exit 1;
+  }
+
+# Create plots
+
+if
+    $gnuplot <<EOF
+set terminal $terminal
+set output "$rate_graph"
+set title "Query / response / failure rate"
+set key top left
+set xlabel "Time (seconds)"
+set yrange [0:]
+plot \
+"$plotfile" using 1:3 title "Queries sent per second" with lines, \
+"$plotfile" using 1:4 title "Total responses received per second" with lines, \
+"$plotfile" using 1:5 title "Failure responses received per second" with lines
+EOF
+then
+    :
+else
+    echo "`basename $0`: error running gnuplot" >&2; exit 1;
+fi
+
+if
+    $gnuplot <<EOF
+set terminal $terminal
+set output "$latency_graph"
+set title "Latency"
+set key top left
+set xlabel "Time (seconds)"
+set yrange [0:]
+plot \
+"$plotfile" using 1:6 title "Average latency (seconds)" with lines
+EOF
+then
+    :
+else
+    echo "`basename $0`: error running gnuplot" >&2; exit 1;
+fi
+
+# Generate the report
+
+exec >"$reportfile"
+
+cat <<EOF
+<html><head></head><body>
+<h1>Resperf report $id</h1>
+<h2>Resperf output</h2>
+<pre>
+EOF
+cat "$outputfile"
+cat <<EOF
+</pre>
+EOF
+
+cat <<EOF
+<h2>Plots</h2>
+<p>
+<img src="$rate_graph" />
+<img src="$latency_graph" />
+</p>
+</body></html>
+EOF
+
+echo "Done, report is in $reportfile" >&2
+

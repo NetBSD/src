@@ -1,5 +1,6 @@
-/*	$NetBSD: scp.c,v 1.17.2.1 2018/04/07 04:11:48 pgoyette Exp $	*/
-/* $OpenBSD: scp.c,v 1.195 2018/02/10 06:15:12 djm Exp $ */
+/*	$NetBSD: scp.c,v 1.17.2.2 2018/09/06 06:51:33 pgoyette Exp $	*/
+/* $OpenBSD: scp.c,v 1.197 2018/06/01 04:31:48 dtucker Exp $ */
+
 /*
  * scp - secure remote copy.  This is basically patched BSD rcp which
  * uses ssh to do the data transfer (instead of using rcmd).
@@ -73,7 +74,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: scp.c,v 1.17.2.1 2018/04/07 04:11:48 pgoyette Exp $");
+__RCSID("$NetBSD: scp.c,v 1.17.2.2 2018/09/06 06:51:33 pgoyette Exp $");
 
 #include <sys/param.h>	/* roundup MAX */
 #include <sys/types.h>
@@ -304,7 +305,7 @@ do_cmd(char *host, char *remuser, int port, char *cmd, int *fdin, int *fdout)
 }
 
 /*
- * This functions executes a command simlar to do_cmd(), but expects the
+ * This function executes a command similar to do_cmd(), but expects the
  * input and output descriptors to be setup by a previous call to do_cmd().
  * This way the input and output of two commands can be connected.
  */
@@ -1086,6 +1087,8 @@ sink(int argc, char **argv)
 				SCREWUP("bad mode");
 			mode = (mode << 3) | (*cp - '0');
 		}
+		if (!pflag)
+			mode &= ~mask;
 		if (*cp++ != ' ')
 			SCREWUP("mode not delimited");
 

@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.311.2.3 2018/07/28 04:37:25 pgoyette Exp $
+#	$NetBSD: bsd.prog.mk,v 1.311.2.4 2018/09/06 06:55:22 pgoyette Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .ifndef HOSTPROG
@@ -112,7 +112,7 @@ LIBCRTI=	${DESTDIR}/usr/lib/${MLIBDIR:D${MLIBDIR}/}crti.o
 #	etc..
 #	NB:	If you are a library here, add it in bsd.README
 
-.for _lib in \
+_LIBLIST=\
 	archive \
 	asn1 \
 	atf_c \
@@ -134,8 +134,10 @@ LIBCRTI=	${DESTDIR}/usr/lib/${MLIBDIR:D${MLIBDIR}/}crti.o
 	dns \
 	edit \
 	event \
-	expat \
+	event_openssl \
+	event_pthreads \
 	execinfo \
+	expat \
 	fetch \
 	fl \
 	form \
@@ -162,13 +164,15 @@ LIBCRTI=	${DESTDIR}/usr/lib/${MLIBDIR:D${MLIBDIR}/}crti.o
 	ldap \
 	ldap_r \
 	lua \
-	lwres \
+	lutok \
 	m \
 	magic \
 	menu \
 	netpgpverify \
+	ns \
 	objc \
 	ossaudio \
+	panel \
 	pam \
 	pcap \
 	pci \
@@ -177,6 +181,7 @@ LIBCRTI=	${DESTDIR}/usr/lib/${MLIBDIR:D${MLIBDIR}/}crti.o
 	puffs \
 	quota \
 	radius \
+	refuse \
 	resolv \
 	rmt \
 	roken \
@@ -205,8 +210,8 @@ LIBCRTI=	${DESTDIR}/usr/lib/${MLIBDIR:D${MLIBDIR}/}crti.o
 	ssh \
 	ssl \
 	ssp \
-	stdcxx \
-	supcxx \
+	stdc++ \
+	supc++ \
 	terminfo \
 	tre \
 	unbound \
@@ -216,6 +221,8 @@ LIBCRTI=	${DESTDIR}/usr/lib/${MLIBDIR:D${MLIBDIR}/}crti.o
 	wrap \
 	y \
 	z 
+
+.for _lib in ${_LIBLIST}
 .ifndef LIB${_lib:tu}
 LIB${_lib:tu}=	${DESTDIR}/usr/lib/lib${_lib:S/xx/++/:S/atf_c/atf-c/}.a
 .MADE:		${LIB${_lib:tu}}	# Note: ${DESTDIR} will be expanded

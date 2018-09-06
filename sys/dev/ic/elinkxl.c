@@ -1,4 +1,4 @@
-/*	$NetBSD: elinkxl.c,v 1.121.12.2 2018/07/28 04:37:45 pgoyette Exp $	*/
+/*	$NetBSD: elinkxl.c,v 1.121.12.3 2018/09/06 06:55:49 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: elinkxl.c,v 1.121.12.2 2018/07/28 04:37:45 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elinkxl.c,v 1.121.12.3 2018/09/06 06:55:49 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -816,7 +816,7 @@ ex_txstat(struct ex_softc *sc)
 		if (err & TXS_UNDERRUN) {
 			aprint_error(" @%d", sc->tx_start_thresh);
 			if (sc->tx_succ_ok < 256 &&
-			    (i = min(ETHER_MAX_LEN, sc->tx_start_thresh + 20))
+			    (i = uimin(ETHER_MAX_LEN, sc->tx_start_thresh + 20))
 			    > sc->tx_start_thresh) {
 				aprint_error(", new threshold is %d", i);
 				sc->tx_start_thresh = i;

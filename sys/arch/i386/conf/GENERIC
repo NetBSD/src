@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.1174.2.4 2018/07/28 04:37:34 pgoyette Exp $
+# $NetBSD: GENERIC,v 1.1174.2.5 2018/09/06 06:55:34 pgoyette Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.1174.2.4 $"
+#ident		"GENERIC-$Revision: 1.1174.2.5 $"
 
 maxusers	64		# estimated number of users
 
@@ -131,7 +131,6 @@ include 	"conf/compat_netbsd09.config"
 options 	COMPAT_OSSAUDIO	# OSS (Voxware) audio driver compatibility
 options 	COMPAT_LINUX	# binary compatibility with Linux
 #options 	COMPAT_FREEBSD	# binary compatibility with FreeBSD
-#options 	COMPAT_NDIS	# NDIS network driver
 
 # Wedge support
 options 	DKWEDGE_AUTODISCOVER	# Automatically add dk(4) instances
@@ -194,10 +193,6 @@ options 	NETATALK	# AppleTalk networking protocols
 #options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 #options 	PPP_DEFLATE	# Deflate compression support for PPP
 options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
-options 	IPFILTER_LOG	# ipmon(8) log support
-options 	IPFILTER_LOOKUP	# ippool(8) support
-options 	IPFILTER_COMPAT # Compat for IP-Filter
-#options 	IPFILTER_DEFAULT_BLOCK	# block all packets by default
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
 #options 	ALTQ		# Manipulate network interfaces' output queues
@@ -1004,7 +999,6 @@ malo*	at pci? dev ? function ?	# Marvell Libertas Wireless
 mskc*	at pci? dev ? function ?	# Marvell Yukon 2 Gigabit Ethernet
 msk*	at mskc?			# Marvell Yukon 2 Gigabit Ethernet
 mtd*	at pci? dev ? function ?	# Myson MTD803 3-in-1 Ethernet
-#ndis*	at pci? dev ? function ?	# Experimental - NDIS Network Driver
 ne*	at pci? dev ? function ?	# NE2000-compatible Ethernet
 nfe*	at pci?	dev ? function ?	# NVIDIA nForce Ethernet
 ntwoc*	at pci? dev ? function ?	# Riscom/N2 PCI Sync Serial
@@ -1183,182 +1177,7 @@ usb*	at ohci?
 usb*	at slhci?
 usb*	at uhci?
 
-# USB Hubs
-uhub*	at usb?
-uhub*	at uhub? port ?
-
-# USB HID device
-uhidev* at uhub? port ? configuration ? interface ?
-
-# USB Mice
-ums*	at uhidev? reportid ?
-wsmouse* at ums? mux 0
-
-# USB generic touchscreen
-uts*	at uhidev? reportid ?
-wsmouse* at uts? mux 0
-
-# USB eGalax touch-panel
-uep*	at uhub? port ?
-wsmouse* at uep? mux 0
-
-# USB Keyboards
-ukbd*	at uhidev? reportid ?
-wskbd*	at ukbd? console ? mux 1
-
-# USB TEMPer and TEMPerHUM
-uthum*	at uhidev? reportid ?
-
-# USB serial adapter
-ucycom* at uhidev? reportid ?
-
-# USB Generic HID devices
-uhid*	at uhidev? reportid ?
-
-# USB LCDs and USB-VGA adaptors
-udl*	at uhub? port ?		# DisplayLink DL-1x0/1x5
-wsdisplay* at udl?
-
-# USB Printer
-ulpt*	at uhub? port ? configuration ? interface ?
-
-# USB Modem
-umodem* at uhub? port ? configuration ?
-ucom*	at umodem?
-
-# Option N.V. Wireless WAN modems
-uhso*	at uhub? port ? configuration ?
-
-# USB Mass Storage
-umass*	at uhub? port ? configuration ? interface ?
-wd*	at umass?
-
-# USB audio
-uaudio* at uhub? port ? configuration ?
-uaudio* at usbifif?
-
-# USB MIDI
-umidi*	at uhub? port ? configuration ?
-
-# USB IrDA
-# USB-IrDA bridge spec
-uirda*	at uhub? port ? configuration ? interface ?
-irframe* at uirda?
-
-stuirda* at uhub? port ? configuration ? interface ?
-irframe* at stuirda?
-
-# SigmaTel STIr4200 USB/IrDA Bridge
-ustir*	at uhub? port ?
-irframe* at ustir?
-
-# KingSun/DonShine USB/IrDA Bridge
-udsir*	at uhub? port ?
-irframe* at udsir?
-
-# Windows Media Center IR transceiver
-irmce*	at uhub? port ?
-cir*	at irmce?
-
-# USB Ethernet adapters
-aue*	at uhub? port ?		# ADMtek AN986 Pegasus based adapters
-axe*	at uhub? port ?		# ASIX AX88172 based adapters
-axen*	at uhub? port ?		# ASIX AX88178a/AX88179 based adapters
-cdce*	at uhub? port ?		# CDC, Ethernet Networking Control Model
-cue*	at uhub? port ?		# CATC USB-EL1201A based adapters
-kue*	at uhub? port ?		# Kawasaki LSI KL5KUSB101B based adapters
-udav*	at uhub? port ?		# Davicom DM9601 based adapters
-url*	at uhub? port ?		# Realtek RTL8150L based adapters
-urndis*	at uhub? port ?		# Microsoft RNDIS specification
-
-# USB 802.11 adapters
-athn*	at uhub? port ?		# Atheros AR9002U
-atu*	at uhub? port ?		# Atmel AT76C50XX based adapters
-bwfm*	at uhub? port ?		# Broadcom FullMAC
-otus*	at uhub? port ?		# Atheros AR9001U
-rum*	at uhub? port ?		# Ralink Technology RT2501/RT2601 802.11a/b/g
-run*	at uhub? port ?		# Ralink Technology RT(2[78]|30)00 802.11a/b/g/n
-upgt*	at uhub? port ?		# Intersil PrismGT
-ural*	at uhub? port ?		# Ralink Technology RT2500USB 802.11a/b/g
-urtw*	at uhub? port ?		# Realtek RTL8187/RTL8187B 802.11b/g
-urtwn*	at uhub? port ?		# Realtek RTL8188CU/RTL8192CU 802.11b/g/n
-zyd*	at uhub? port ?		# Zydas ZD1211
-
-# Prolific PL2301/PL2302 host-to-host adapter
-upl*	at uhub? port ?
-
-# Serial adapters
-ubsa*	at uhub? port ?		# Belkin serial adapter
-ucom*	at ubsa? portno ?
-
-uchcom* at uhub? port ? 	# WinChipHead CH341/CH340 serial adapter
-ucom*	at uchcom? portno ?
-
-uftdi*	at uhub? port ?		# FTDI FT8U100AX serial adapter
-ucom*	at uftdi? portno ?
-
-uipaq*	at uhub? port ?		# iPAQ PDAs
-ucom*	at uipaq? portno ?
-
-umct*	at uhub? port ?		# MCT USB-RS232 serial adapter
-ucom*	at umct? portno ?
-
-uplcom* at uhub? port ? 	# I/O DATA USB-RSAQ2 serial adapter
-ucom*	at uplcom? portno ?
-
-uslsa*	at uhub? port ?		# Silicon Labs USB-RS232 serial adapter
-ucom*	at uslsa? portno ?
-
-uvscom* at uhub? port ? 	# SUNTAC Slipper U VS-10U serial adapter
-ucom*	at uvscom? portno ?
-
-# RIM BlackBerry
-uberry* at uhub? port ?
-
-# Apple iPad
-uipad* at uhub? port ?
-
-# Diamond Multimedia Rio 500
-urio*	at uhub? port ?
-
-# USB Handspring Visor
-uvisor* at uhub? port ?
-ucom*	at uvisor?
-
-# Kyocera AIR-EDGE PHONE
-ukyopon* at uhub? port ?
-ucom*	at ukyopon? portno ?
-
-# USB scanners
-#uscanner* at uhub? port ?
-
-# USB scanners that use SCSI emulation, e.g., HP5300
-usscanner* at uhub? port ?
-
-# Topfield TF5000PVR range of DVB recorders
-utoppy* at uhub? port ?
-
-# Y@P firmware loader
-uyap*	at uhub? port ?
-
-# D-Link DSB-R100 USB radio
-udsbr*	at uhub? port ?
-radio*	at udsbr?
-
-# USB Generic driver
-ugen*	at uhub? port ?
-
-# USB 3G datacards
-umodeswitch* at uhub? port ?
-u3g*	at uhub? port ?
-ucom*	at u3g?
-
-# USB generic serial port (e.g., data over cellular)
-ugensa* at uhub? port ?
-ucom*	at ugensa?
-
-# Araneus Alea I/II TRNG
-#ualea* at uhub? port ? configuration ? interface ?
+include "dev/usb/usbdevices.config"
 
 # IrDA and Consumer Ir devices
 
@@ -1494,17 +1313,8 @@ midi*	at pcppi?		# MIDI interface to the PC speaker
 
 
 # Video capture devices
-
-auvitek* at uhub?			# Auvitek AU0828 USB TV
 coram*	at pci? dev ? function ?	# Conexant CX23885 PCI-E TV
 cxdtv*	at pci? dev ? function ?	# Conexant CX2388[0-3] PCI TV
-emdtv*	at uhub?			# Empia EM28xx USB TV
-cir*	at emdtv?
-pseye*	at uhub?			# Sony PLAYSTATION(R) Eye webcam
-uvideo* at uhub?			# USB Video Class capture devices
-
-video*	at videobus?			# Analog capture interface
-dtv*	at dtvbus?			# Digital capture interface
 
 
 # TV cards
@@ -1523,17 +1333,12 @@ btbc* at pcmcia? function ?		# AnyCom BlueCard LSE041/039/139
 # Bluetooth SDIO Controller
 sbt* at sdmmc?
 
-# Bluetooth USB Controllers
-ubt* at uhub? port ?
-aubtfwl* at uhub? port ?
-
 # Bluetooth Device Hub
 bthub* at bcsp?
 bthub* at bt3c?
 bthub* at btbc?
 bthub* at btuart?
 bthub* at sbt?
-bthub* at ubt?
 
 # Bluetooth HID support
 bthidev* at bthub?
@@ -1652,7 +1457,6 @@ options 	VND_COMPRESSION		# compressed vnd(4)
 # network pseudo-devices
 pseudo-device	bpfilter		# Berkeley packet filter
 #pseudo-device	carp			# Common Address Redundancy Protocol
-pseudo-device	ipfilter		# IP filter (firewall) and NAT
 pseudo-device	loop			# network loopback
 #pseudo-device	mpls			# MPLS pseudo-interface
 pseudo-device	ppp			# Point-to-Point Protocol
@@ -1671,11 +1475,8 @@ pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	bridge			# simple inter-network bridging
 #options 	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
 pseudo-device	agr			# IEEE 802.3ad link aggregation
-#pseudo-device	pf			# PF packet filter
-#pseudo-device	pflog			# PF log if
-#pseudo-device	pfsync			# PF sync if
-#pseudo-device	npf			# NPF packet filter
-#pseudo-device	etherip 		# Tunnel Ethernet over IP
+pseudo-device	l2tp			# L2TPv3 interface
+pseudo-device	npf			# NPF packet filter
 # srt is EXPERIMENTAL
 #pseudo-device	srt			# source-address-based routing
 

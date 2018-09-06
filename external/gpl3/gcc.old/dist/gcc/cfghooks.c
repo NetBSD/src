@@ -1,5 +1,5 @@
 /* Hooks for cfg representation specific functions.
-   Copyright (C) 2003-2015 Free Software Foundation, Inc.
+   Copyright (C) 2003-2016 Free Software Foundation, Inc.
    Contributed by Sebastian Pop <s.pop@laposte.net>
 
 This file is part of GCC.
@@ -21,36 +21,16 @@ along with GCC; see the file COPYING3.  If not see
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
-#include "dumpfile.h"
-#include "tm.h"
-#include "hash-set.h"
-#include "machmode.h"
-#include "vec.h"
-#include "double-int.h"
-#include "input.h"
-#include "alias.h"
-#include "symtab.h"
-#include "wide-int.h"
-#include "inchash.h"
-#include "tree.h"
+#include "backend.h"
 #include "rtl.h"
-#include "predict.h"
-#include "vec.h"
-#include "hashtab.h"
-#include "hash-set.h"
-#include "machmode.h"
-#include "hard-reg-set.h"
-#include "input.h"
-#include "function.h"
-#include "dominance.h"
-#include "cfg.h"
-#include "cfganal.h"
-#include "basic-block.h"
-#include "tree-ssa.h"
+#include "cfghooks.h"
 #include "timevar.h"
-#include "diagnostic-core.h"
-#include "cfgloop.h"
 #include "pretty-print.h"
+#include "diagnostic-core.h"
+#include "dumpfile.h"
+#include "cfganal.h"
+#include "tree-ssa.h"
+#include "cfgloop.h"
 
 /* A pointer to one of the hooks containers.  */
 static struct cfg_hooks *cfg_hooks;
@@ -330,7 +310,7 @@ dump_bb_for_graph (pretty_printer *pp, basic_block bb)
     internal_error ("%s does not support dump_bb_for_graph",
 		    cfg_hooks->name);
   if (bb->count)
-    pp_printf (pp, "COUNT:" "%"PRId64, bb->count);
+    pp_printf (pp, "COUNT:" "%" PRId64, bb->count);
   pp_printf (pp, " FREQ:%i |", bb->frequency);
   pp_write_text_to_stream (pp);
   if (!(dump_flags & TDF_SLIM))
@@ -428,7 +408,20 @@ void
 remove_edge (edge e)
 {
   if (current_loops != NULL)
-    rescan_loop_exit (e, false, true);
+    {
+      rescan_loop_exit (e, false, true);
+
+      /* Removal of an edge inside an irreducible region or which leads
+	 to an irreducible region can turn the region into a natural loop.
+	 In that case, ask for the loop structure fixups.
+
+	 FIXME: Note that LOOPS_HAVE_MARKED_IRREDUCIBLE_REGIONS is not always
+	 set, so always ask for fixups when removing an edge in that case.  */
+      if (!loops_state_satisfies_p (LOOPS_HAVE_MARKED_IRREDUCIBLE_REGIONS)
+	  || (e->flags & EDGE_IRREDUCIBLE_LOOP)
+	  || (e->dest->flags & BB_IRREDUCIBLE_LOOP))
+	loops_state_set (LOOPS_NEED_FIXUP);
+    }
 
   /* This is probably not needed, but it doesn't hurt.  */
   /* FIXME: This should be called via a remove_edge hook.  */
@@ -505,8 +498,8 @@ redirect_edge_and_branch_force (edge e, basic_block dest)
    the labels).  If I is NULL, splits just after labels.  The newly created edge
    is returned.  The new basic block is created just after the old one.  */
 
-edge
-split_block (basic_block bb, void *i)
+static edge
+split_block_1 (basic_block bb, void *i)
 {
   basic_block new_bb;
   edge res;
@@ -550,12 +543,24 @@ split_block (basic_block bb, void *i)
   return res;
 }
 
+edge
+split_block (basic_block bb, gimple *i)
+{
+  return split_block_1 (bb, i);
+}
+
+edge
+split_block (basic_block bb, rtx i)
+{
+  return split_block_1 (bb, i);
+}
+
 /* Splits block BB just after labels.  The newly created edge is returned.  */
 
 edge
 split_block_after_labels (basic_block bb)
 {
-  return split_block (bb, NULL);
+  return split_block_1 (bb, NULL);
 }
 
 /* Moves block BB immediately after block AFTER.  Returns false if the
@@ -696,8 +701,8 @@ split_edge (edge e)
    HEAD and END are the first and the last statement belonging
    to the block.  If both are NULL, an empty block is created.  */
 
-basic_block
-create_basic_block (void *head, void *end, basic_block after)
+static basic_block
+create_basic_block_1 (void *head, void *end, basic_block after)
 {
   basic_block ret;
 
@@ -714,12 +719,25 @@ create_basic_block (void *head, void *end, basic_block after)
   return ret;
 }
 
+basic_block
+create_basic_block (gimple_seq seq, basic_block after)
+{
+  return create_basic_block_1 (seq, NULL, after);
+}
+
+basic_block
+create_basic_block (rtx head, rtx end, basic_block after)
+{
+  return create_basic_block_1 (head, end, after);
+}
+
+
 /* Creates an empty basic block just after basic block AFTER.  */
 
 basic_block
 create_empty_bb (basic_block after)
 {
-  return create_basic_block (NULL, NULL, after);
+  return create_basic_block_1 (NULL, NULL, after);
 }
 
 /* Checks whether we may merge blocks BB1 and BB2.  */

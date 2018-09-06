@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_malloc.c,v 1.146 2017/07/28 12:28:48 martin Exp $	*/
+/*	$NetBSD: kern_malloc.c,v 1.146.2.1 2018/09/06 06:56:41 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1987, 1991, 1993
@@ -70,11 +70,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.146 2017/07/28 12:28:48 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.146.2.1 2018/09/06 06:56:41 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
 #include <sys/kmem.h>
+#include <sys/asan.h>
 
 /*
  * Built-in malloc types.  Note: ought to be removed.
@@ -93,16 +94,24 @@ MALLOC_DEFINE(M_MRTABLE, "mrt", "multicast routing tables");
  * Header contains total size, including the header itself.
  */
 struct malloc_header {
-	size_t		mh_size;
+	size_t mh_size;
+#ifdef KASAN
+	size_t mh_rqsz;
+#endif
 } __aligned(ALIGNBYTES + 1);
 
 void *
 kern_malloc(unsigned long size, int flags)
 {
 	const int kmflags = (flags & M_NOWAIT) ? KM_NOSLEEP : KM_SLEEP;
+#ifdef KASAN
+	const size_t origsize = size;
+#endif
 	size_t allocsize, hdroffset;
 	struct malloc_header *mh;
 	void *p;
+
+	kasan_add_redzone(&size);
 
 	if (size >= PAGE_SIZE) {
 		if (size > (ULONG_MAX-PAGE_SIZE))
@@ -124,8 +133,14 @@ kern_malloc(unsigned long size, int flags)
 	}
 	mh = (void *)((char *)p + hdroffset);
 	mh->mh_size = allocsize - hdroffset;
+#ifdef KASAN
+	mh->mh_rqsz = origsize;
+#endif
+	mh++;
 
-	return mh + 1;
+	kasan_alloc(mh, origsize, size);
+
+	return mh;
 }
 
 void
@@ -135,6 +150,8 @@ kern_free(void *addr)
 
 	mh = addr;
 	mh--;
+
+	kasan_free(addr, mh->mh_size);
 
 	if (mh->mh_size >= PAGE_SIZE + sizeof(struct malloc_header))
 		kmem_intr_free((char *)addr - PAGE_SIZE,
@@ -171,7 +188,11 @@ kern_realloc(void *curaddr, unsigned long newsize, int flags)
 	mh = curaddr;
 	mh--;
 
+#ifdef KASAN
+	cursize = mh->mh_rqsz;
+#else
 	cursize = mh->mh_size - sizeof(struct malloc_header);
+#endif
 
 	/*
 	 * If we already actually have as much as they want, we're done.

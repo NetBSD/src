@@ -26,8 +26,9 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: hawk_machdep.c,v 1.1.34.1 2018/07/28 04:37:31 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hawk_machdep.c,v 1.1.34.2 2018/09/06 06:55:30 pgoyette Exp $");
 
+#include "opt_arm_debug.h"
 #include "opt_timer.h"
 #include "opt_machdep.h"
 #include "opt_ddb.h"

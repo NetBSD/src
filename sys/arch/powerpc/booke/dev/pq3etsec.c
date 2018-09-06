@@ -1,4 +1,4 @@
-/*	$NetBSD: pq3etsec.c,v 1.32.2.2 2018/07/28 04:37:39 pgoyette Exp $	*/
+/*	$NetBSD: pq3etsec.c,v 1.32.2.3 2018/09/06 06:55:39 pgoyette Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pq3etsec.c,v 1.32.2.2 2018/07/28 04:37:39 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pq3etsec.c,v 1.32.2.3 2018/09/06 06:55:39 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -873,7 +873,7 @@ pq3etsec_ifinit(struct ifnet *ifp)
 	struct pq3etsec_softc * const sc = ifp->if_softc;
 	int error = 0;
 
-	sc->sc_maxfrm = max(ifp->if_mtu + 32, MCLBYTES);
+	sc->sc_maxfrm = uimax(ifp->if_mtu + 32, MCLBYTES);
 	if (ifp->if_mtu > ETHERMTU_JUMBO)
 		return error;
 
@@ -2095,7 +2095,7 @@ pq3etsec_tx_offload(
 #endif
 			} else if (csum_flags & M_CSUM_IP6) {
 #ifdef INET6
-				ip6_undefer_csum(m, ETHER_HDR_LEN,
+				in6_undefer_cksum(m, ETHER_HDR_LEN,
 				    csum_flags & M_CSUM_IP6);
 #else
 				panic("%s: impossible M_CSUM flags %#x",
@@ -2175,7 +2175,7 @@ pq3etsec_txq_consume(
 		if (consumer == txq->txq_producer) {
 			txq->txq_consumer = consumer;
 			txq->txq_free += txfree;
-			txq->txq_lastintr -= min(txq->txq_lastintr, txfree);
+			txq->txq_lastintr -= uimin(txq->txq_lastintr, txfree);
 #if 0
 			printf("%s: empty: freed %zu descriptors going form %zu to %zu\n",
 			    __func__, txfree, txq->txq_free - txfree, txq->txq_free);
@@ -2189,7 +2189,7 @@ pq3etsec_txq_consume(
 		if (txbd_flags & TXBD_R) {
 			txq->txq_consumer = consumer;
 			txq->txq_free += txfree;
-			txq->txq_lastintr -= min(txq->txq_lastintr, txfree);
+			txq->txq_lastintr -= uimin(txq->txq_lastintr, txfree);
 #if 0
 			printf("%s: freed %zu descriptors\n",
 			    __func__, txfree);

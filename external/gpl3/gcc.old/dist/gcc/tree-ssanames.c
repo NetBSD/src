@@ -1,5 +1,5 @@
 /* Generic routines for manipulating SSA_NAME expressions
-   Copyright (C) 2003-2015 Free Software Foundation, Inc.
+   Copyright (C) 2003-2016 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -20,38 +20,15 @@ along with GCC; see the file COPYING3.  If not see
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
-#include "tm.h"
-#include "hash-set.h"
-#include "machmode.h"
-#include "vec.h"
-#include "double-int.h"
-#include "input.h"
-#include "alias.h"
-#include "symtab.h"
-#include "wide-int.h"
-#include "inchash.h"
+#include "backend.h"
 #include "tree.h"
-#include "fold-const.h"
-#include "stor-layout.h"
-#include "predict.h"
-#include "hard-reg-set.h"
-#include "input.h"
-#include "function.h"
-#include "basic-block.h"
-#include "tree-ssa-alias.h"
-#include "internal-fn.h"
-#include "gimple-expr.h"
-#include "is-a.h"
 #include "gimple.h"
-#include "gimple-ssa.h"
+#include "tree-pass.h"
+#include "ssa.h"
 #include "gimple-iterator.h"
-#include "tree-phinodes.h"
-#include "ssa-iterators.h"
-#include "stringpool.h"
-#include "tree-ssanames.h"
+#include "stor-layout.h"
 #include "tree-into-ssa.h"
 #include "tree-ssa.h"
-#include "tree-pass.h"
 
 /* Rewriting a function into SSA form can create a huge number of SSA_NAMEs,
    many of which may be thrown away shortly after their creation if jumps
@@ -89,6 +66,7 @@ unsigned int ssa_name_nodes_reused;
 unsigned int ssa_name_nodes_created;
 
 #define FREE_SSANAMES(fun) (fun)->gimple_df->free_ssanames
+#define FREE_SSANAMES_QUEUE(fun) (fun)->gimple_df->free_ssanames_queue
 
 
 /* Initialize management of SSA_NAMEs to default SIZE.  If SIZE is
@@ -111,6 +89,7 @@ init_ssanames (struct function *fn, int size)
      least 50 elements reserved in it.  */
   SSANAMES (fn)->quick_push (NULL_TREE);
   FREE_SSANAMES (fn) = NULL;
+  FREE_SSANAMES_QUEUE (fn) = NULL;
 
   fn->gimple_df->ssa_renaming_needed = 0;
   fn->gimple_df->rename_vops = 0;
@@ -119,10 +98,11 @@ init_ssanames (struct function *fn, int size)
 /* Finalize management of SSA_NAMEs.  */
 
 void
-fini_ssanames (void)
+fini_ssanames (struct function *fn)
 {
-  vec_free (SSANAMES (cfun));
-  vec_free (FREE_SSANAMES (cfun));
+  vec_free (SSANAMES (fn));
+  vec_free (FREE_SSANAMES (fn));
+  vec_free (FREE_SSANAMES_QUEUE (fn));
 }
 
 /* Dump some simple statistics regarding the re-use of SSA_NAME nodes.  */
@@ -134,13 +114,148 @@ ssanames_print_statistics (void)
   fprintf (stderr, "SSA_NAME nodes reused: %u\n", ssa_name_nodes_reused);
 }
 
+/* Verify the state of the SSA_NAME lists.
+
+   There must be no duplicates on the free list.
+   Every name on the free list must be marked as on the free list.
+   Any name on the free list must not appear in the IL.
+   No names can be leaked.  */
+
+DEBUG_FUNCTION void
+verify_ssaname_freelists (struct function *fun)
+{
+  if (!gimple_in_ssa_p (fun))
+    return;
+
+  bitmap names_in_il = BITMAP_ALLOC (NULL);
+
+  /* Walk the entire IL noting every SSA_NAME we see.  */
+  basic_block bb;
+  FOR_EACH_BB_FN (bb, fun)
+    {
+      tree t;
+      /* First note the result and arguments of PHI nodes.  */
+      for (gphi_iterator gsi = gsi_start_phis (bb);
+	   !gsi_end_p (gsi);
+	   gsi_next (&gsi))
+	{
+	  gphi *phi = gsi.phi ();
+	  t = gimple_phi_result (phi);
+	  bitmap_set_bit (names_in_il, SSA_NAME_VERSION (t));
+
+	  for (unsigned int i = 0; i < gimple_phi_num_args (phi); i++)
+	    {
+	      t = gimple_phi_arg_def (phi, i);
+	      if (TREE_CODE (t) == SSA_NAME)
+		bitmap_set_bit (names_in_il, SSA_NAME_VERSION (t));
+	    }
+	}
+
+      /* Then note the operands of each statement.  */
+      for (gimple_stmt_iterator gsi = gsi_start_bb (bb);
+	   !gsi_end_p (gsi);
+	   gsi_next (&gsi))
+	{
+	  ssa_op_iter iter;
+	  gimple *stmt = gsi_stmt (gsi);
+	  FOR_EACH_SSA_TREE_OPERAND (t, stmt, iter, SSA_OP_ALL_OPERANDS)
+	    bitmap_set_bit (names_in_il, SSA_NAME_VERSION (t));
+	}
+    }
+
+  /* Now walk the free list noting what we find there and verifying
+     there are no duplicates.  */
+  bitmap names_in_freelists = BITMAP_ALLOC (NULL);
+  if (FREE_SSANAMES (fun))
+    {
+      for (unsigned int i = 0; i < FREE_SSANAMES (fun)->length (); i++)
+	{
+	  tree t = (*FREE_SSANAMES (fun))[i];
+
+	  /* Verify that the name is marked as being in the free list.  */
+	  gcc_assert (SSA_NAME_IN_FREE_LIST (t));
+
+	  /* Verify the name has not already appeared in the free list and
+	     note it in the list of names found in the free list.  */
+	  gcc_assert (!bitmap_bit_p (names_in_freelists, SSA_NAME_VERSION (t)));
+	  bitmap_set_bit (names_in_freelists, SSA_NAME_VERSION (t));
+	}
+    }
+
+  /* Similarly for the names in the pending free list.  */
+  if (FREE_SSANAMES_QUEUE (fun))
+    {
+      for (unsigned int i = 0; i < FREE_SSANAMES_QUEUE (fun)->length (); i++)
+	{
+	  tree t = (*FREE_SSANAMES_QUEUE (fun))[i];
+
+	  /* Verify that the name is marked as being in the free list.  */
+	  gcc_assert (SSA_NAME_IN_FREE_LIST (t));
+
+	  /* Verify the name has not already appeared in the free list and
+	     note it in the list of names found in the free list.  */
+	  gcc_assert (!bitmap_bit_p (names_in_freelists, SSA_NAME_VERSION (t)));
+	  bitmap_set_bit (names_in_freelists, SSA_NAME_VERSION (t));
+	}
+    }
+
+  /* If any name appears in both the IL and the freelists, then
+     something horrible has happened.  */
+  bool intersect_p = bitmap_intersect_p (names_in_il, names_in_freelists);
+  gcc_assert (!intersect_p);
+
+  /* Names can be queued up for release if there is an ssa update
+     pending.  Pretend we saw them in the IL.  */
+  if (names_to_release)
+    bitmap_ior_into (names_in_il, names_to_release);
+
+  /* Function splitting can "lose" SSA_NAMEs in an effort to ensure that
+     debug/non-debug compilations have the same SSA_NAMEs.  So for each
+     lost SSA_NAME, see if it's likely one from that wart.  These will always
+     be marked as default definitions.  So we loosely assume that anything
+     marked as a default definition isn't leaked by pretending they are
+     in the IL.  */
+  for (unsigned int i = UNUSED_NAME_VERSION + 1; i < num_ssa_names; i++)
+    if (ssa_name (i) && SSA_NAME_IS_DEFAULT_DEF (ssa_name (i)))
+      bitmap_set_bit (names_in_il, i);
+
+  unsigned int i;
+  bitmap_iterator bi;
+  bitmap all_names = BITMAP_ALLOC (NULL);
+  bitmap_set_range (all_names, UNUSED_NAME_VERSION + 1, num_ssa_names - 1);
+  bitmap_ior_into (names_in_il, names_in_freelists);
+
+  /* Any name not mentioned in the IL and not in the feelists
+     has been leaked.  */
+  EXECUTE_IF_AND_COMPL_IN_BITMAP(all_names, names_in_il,
+				 UNUSED_NAME_VERSION + 1, i, bi)
+    gcc_assert (!ssa_name (i));
+
+  BITMAP_FREE (all_names);
+  BITMAP_FREE (names_in_freelists);
+  BITMAP_FREE (names_in_il);
+}
+
+/* Move all SSA_NAMEs from FREE_SSA_NAMES_QUEUE to FREE_SSA_NAMES.
+
+   We do not, but should have a mode to verify the state of the SSA_NAMEs
+   lists.  In particular at this point every name must be in the IL,
+   on the free list or in the queue.  Anything else is an error.  */
+
+void
+flush_ssaname_freelist (void)
+{
+  vec_safe_splice (FREE_SSANAMES (cfun), FREE_SSANAMES_QUEUE (cfun));
+  vec_safe_truncate (FREE_SSANAMES_QUEUE (cfun), 0);
+}
+
 /* Return an SSA_NAME node for variable VAR defined in statement STMT
    in function FN.  STMT may be an empty statement for artificial
    references (e.g., default definitions created when a variable is
    used without a preceding definition).  */
 
 tree
-make_ssa_name_fn (struct function *fn, tree var, gimple stmt)
+make_ssa_name_fn (struct function *fn, tree var, gimple *stmt)
 {
   tree t;
   use_operand_p imm;
@@ -154,8 +269,7 @@ make_ssa_name_fn (struct function *fn, tree var, gimple stmt)
   if (!vec_safe_is_empty (FREE_SSANAMES (fn)))
     {
       t = FREE_SSANAMES (fn)->pop ();
-      if (GATHER_STATISTICS)
-	ssa_name_nodes_reused++;
+      ssa_name_nodes_reused++;
 
       /* The node was cleared out when we put it on the free list, so
 	 there is no need to do so again here.  */
@@ -167,13 +281,12 @@ make_ssa_name_fn (struct function *fn, tree var, gimple stmt)
       t = make_node (SSA_NAME);
       SSA_NAME_VERSION (t) = SSANAMES (fn)->length ();
       vec_safe_push (SSANAMES (fn), t);
-      if (GATHER_STATISTICS)
-	ssa_name_nodes_created++;
+      ssa_name_nodes_created++;
     }
 
   if (TYPE_P (var))
     {
-      TREE_TYPE (t) = var;
+      TREE_TYPE (t) = TYPE_MAIN_VARIANT (var);
       SET_SSA_NAME_VAR_OR_IDENTIFIER (t, NULL_TREE);
     }
   else
@@ -298,6 +411,39 @@ get_nonzero_bits (const_tree name)
   return ri->get_nonzero_bits ();
 }
 
+/* Return TRUE is OP, an SSA_NAME has a range of values [0..1], false
+   otherwise.
+
+   This can be because it is a boolean type, any unsigned integral
+   type with a single bit of precision, or has known range of [0..1]
+   via VRP analysis.  */
+
+bool
+ssa_name_has_boolean_range (tree op)
+{
+  gcc_assert (TREE_CODE (op) == SSA_NAME);
+
+  /* Boolean types always have a range [0..1].  */
+  if (TREE_CODE (TREE_TYPE (op)) == BOOLEAN_TYPE)
+    return true;
+
+  /* An integral type with a single bit of precision.  */
+  if (INTEGRAL_TYPE_P (TREE_TYPE (op))
+      && TYPE_UNSIGNED (TREE_TYPE (op))
+      && TYPE_PRECISION (TREE_TYPE (op)) == 1)
+    return true;
+
+  /* An integral type with more precision, but the object
+     only takes on values [0..1] as determined by VRP
+     analysis.  */
+  if (INTEGRAL_TYPE_P (TREE_TYPE (op))
+      && (TYPE_PRECISION (TREE_TYPE (op)) > 1)
+      && wi::eq_p (get_nonzero_bits (op), 1))
+    return true;
+
+  return false;
+}
+
 /* We no longer need the SSA_NAME expression VAR, release it so that
    it may be reused.
 
@@ -341,9 +487,8 @@ release_ssa_name_fn (struct function *fn, tree var)
       if (MAY_HAVE_DEBUG_STMTS)
 	insert_debug_temp_for_var_def (NULL, var);
 
-#ifdef ENABLE_CHECKING
-      verify_imm_links (stderr, var);
-#endif
+      if (flag_checking)
+	verify_imm_links (stderr, var);
       while (imm->next != imm)
 	delink_imm_use (imm->next);
 
@@ -368,8 +513,8 @@ release_ssa_name_fn (struct function *fn, tree var)
       /* Note this SSA_NAME is now in the first list.  */
       SSA_NAME_IN_FREE_LIST (var) = 1;
 
-      /* And finally put it on the free list.  */
-      vec_safe_push (FREE_SSANAMES (fn), var);
+      /* And finally queue it so that it will be put on the free list.  */
+      vec_safe_push (FREE_SSANAMES_QUEUE (fn), var);
     }
 }
 
@@ -400,7 +545,7 @@ mark_ptr_info_alignment_unknown (struct ptr_info_def *pi)
   pi->misalign = 0;
 }
 
-/* Store the the power-of-two byte alignment and the deviation from that
+/* Store the power-of-two byte alignment and the deviation from that
    alignment of pointer described by PI to ALIOGN and MISALIGN
    respectively.  */
 
@@ -457,7 +602,7 @@ get_ptr_info (tree t)
    statement STMT in function FN.  */
 
 tree
-copy_ssa_name_fn (struct function *fn, tree name, gimple stmt)
+copy_ssa_name_fn (struct function *fn, tree name, gimple *stmt)
 {
   tree new_name;
 
@@ -524,7 +669,7 @@ duplicate_ssa_name_range_info (tree name, enum value_range_type range_type,
    in function FN.  */
 
 tree
-duplicate_ssa_name_fn (struct function *fn, tree name, gimple stmt)
+duplicate_ssa_name_fn (struct function *fn, tree name, gimple *stmt)
 {
   tree new_name = copy_ssa_name_fn (fn, name, stmt);
   if (POINTER_TYPE_P (TREE_TYPE (name)))
@@ -572,7 +717,7 @@ reset_flow_sensitive_info_in_bb (basic_block bb)
   for (gimple_stmt_iterator gsi = gsi_start_bb (bb); !gsi_end_p (gsi);
        gsi_next (&gsi))
     {
-      gimple stmt = gsi_stmt (gsi);
+      gimple *stmt = gsi_stmt (gsi);
       ssa_op_iter i;
       tree op;
       FOR_EACH_SSA_TREE_OPERAND (op, stmt, i, SSA_OP_DEF)
@@ -590,7 +735,7 @@ reset_flow_sensitive_info_in_bb (basic_block bb)
 /* Release all the SSA_NAMEs created by STMT.  */
 
 void
-release_defs (gimple stmt)
+release_defs (gimple *stmt)
 {
   tree def;
   ssa_op_iter iter;
@@ -612,6 +757,42 @@ replace_ssa_name_symbol (tree ssa_name, tree sym)
 {
   SET_SSA_NAME_VAR_OR_IDENTIFIER (ssa_name, sym);
   TREE_TYPE (ssa_name) = TREE_TYPE (sym);
+}
+
+/* Release the vector of free SSA_NAMEs and compact the vector of SSA_NAMEs
+   that are live.  */
+
+static void
+release_free_names_and_compact_live_names (function *fun)
+{
+  unsigned i, j;
+  int n = vec_safe_length (FREE_SSANAMES (fun));
+
+  /* Now release the freelist.  */
+  vec_free (FREE_SSANAMES (fun));
+
+  /* And compact the SSA number space.  We make sure to not change the
+     relative order of SSA versions.  */
+  for (i = 1, j = 1; i < fun->gimple_df->ssa_names->length (); ++i)
+    {
+      tree name = ssa_name (i);
+      if (name)
+	{
+	  if (i != j)
+	    {
+	      SSA_NAME_VERSION (name) = j;
+	      (*fun->gimple_df->ssa_names)[j] = name;
+	    }
+	  j++;
+	}
+    }
+  fun->gimple_df->ssa_names->truncate (j);
+
+  statistics_counter_event (fun, "SSA names released", n);
+  statistics_counter_event (fun, "SSA name holes removed", i - j);
+  if (dump_file)
+    fprintf (dump_file, "Released %i names, %.2f%%, removed %i holes\n",
+	     n, n * 100.0 / num_ssa_names, i - j);
 }
 
 /* Return SSA names that are unused to GGC memory and compact the SSA
@@ -648,34 +829,7 @@ public:
 unsigned int
 pass_release_ssa_names::execute (function *fun)
 {
-  unsigned i, j;
-  int n = vec_safe_length (FREE_SSANAMES (fun));
-
-  /* Now release the freelist.  */
-  vec_free (FREE_SSANAMES (fun));
-
-  /* And compact the SSA number space.  We make sure to not change the
-     relative order of SSA versions.  */
-  for (i = 1, j = 1; i < fun->gimple_df->ssa_names->length (); ++i)
-    {
-      tree name = ssa_name (i);
-      if (name)
-	{
-	  if (i != j)
-	    {
-	      SSA_NAME_VERSION (name) = j;
-	      (*fun->gimple_df->ssa_names)[j] = name;
-	    }
-	  j++;
-	}
-    }
-  fun->gimple_df->ssa_names->truncate (j);
-
-  statistics_counter_event (fun, "SSA names released", n);
-  statistics_counter_event (fun, "SSA name holes removed", i - j);
-  if (dump_file)
-    fprintf (dump_file, "Released %i names, %.2f%%, removed %i holes\n",
-	     n, n * 100.0 / num_ssa_names, i - j);
+  release_free_names_and_compact_live_names (fun);
   return 0;
 }
 

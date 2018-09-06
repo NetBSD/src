@@ -257,7 +257,7 @@ CONFIGURATION
 
      MKDEBUGLIB  Can be set to "yes" or "no".  Indicates whether debug
                  information (see MKDEBUG) should also be generated for all
-                 libraries build.
+                 libraries built.
 
                  Default: "no"
 
@@ -289,8 +289,9 @@ CONFIGURATION
                  Default: "no"
 
      MKINFO      Can be set to "yes" or "no".  Indicates whether GNU Info
-                 files, used for the documentation for most of the compilation
-                 tools, will be created and installed during a build.
+                 files will be created and installed during a build.  GNU Info
+                 files are used for providing documentation by most of the
+                 compilation tools.
 
                  Default: "yes"
 
@@ -1112,4 +1113,4 @@ CAVEATS
      in object directories.  Instead, one may have to manually remove the
      files.  Consult the UPDATING file for notices concerning this.
 
-NetBSD                         October 21, 2017                         NetBSD
+NetBSD                           July 29, 2018                          NetBSD

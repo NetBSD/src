@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.1.2.2 2018/04/16 01:59:43 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.1.2.3 2018/09/06 06:53:50 pgoyette Exp $
 
 .include <bsd.own.mk>
 
-SUBDIR=	dhcp
+SUBDIR=	bind dhcp
 
 .include <bsd.subdir.mk>

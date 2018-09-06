@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.156.2.2 2018/07/28 04:37:34 pgoyette Exp $	*/
+/*	$NetBSD: locore.S,v 1.156.2.3 2018/09/06 06:55:35 pgoyette Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -128,7 +128,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.156.2.2 2018/07/28 04:37:34 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.156.2.3 2018/09/06 06:55:35 pgoyette Exp $");
 
 #include "opt_copy_symtab.h"
 #include "opt_ddb.h"
@@ -253,9 +253,7 @@ __KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.156.2.2 2018/07/28 04:37:34 pgoyette Ex
 	.ascii	",VIRT_ENTRY=0xc0100000" /* KERNTEXTOFF */
 	.ascii	",HYPERCALL_PAGE=0x00000101"
 		/* (???+HYPERCALL_PAGE_OFFSET)/PAGE_SIZE) */
-#ifdef PAE
 	.ascii	",PAE=yes[extended-cr3]"
-#endif
 	.ascii	",LOADER=generic"
 #if (NKSYMS || defined(DDB) || defined(MODULAR)) && !defined(makeoptions_COPY_SYMTAB)
 	.ascii	",BSD_SYMTAB=yes"
@@ -906,9 +904,7 @@ begin:
 	addl	$(USPACE+PAGE_SIZE),%esi
 	subl	$KERNBASE,%esi		/* init386 wants a physical address */
 
-#ifdef PAE
 	pushl	$0	/* init386() expects a 64 bits paddr_t with PAE */
-#endif
 	pushl	%esi
 	call	_C_LABEL(init_bootspace)
 	call	_C_LABEL(init386)

@@ -1,7 +1,7 @@
 /* The tracer pass for the GNU compiler.
    Contributed by Jan Hubicka, SuSE Labs.
    Adapted to work on GIMPLE instead of RTL by Robert Kidd, UIUC.
-   Copyright (C) 2001-2015 Free Software Foundation, Inc.
+   Copyright (C) 2001-2016 Free Software Foundation, Inc.
 
    This file is part of GCC.
 
@@ -36,46 +36,24 @@
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
-#include "tm.h"
-#include "hash-set.h"
-#include "machmode.h"
-#include "vec.h"
-#include "double-int.h"
-#include "input.h"
-#include "alias.h"
-#include "symtab.h"
-#include "wide-int.h"
-#include "inchash.h"
-#include "tree.h"
-#include "fold-const.h"
+#include "backend.h"
 #include "rtl.h"
-#include "hard-reg-set.h"
-#include "profile.h"
-#include "predict.h"
-#include "input.h"
-#include "function.h"
-#include "dominance.h"
-#include "cfg.h"
-#include "cfganal.h"
-#include "basic-block.h"
-#include "flags.h"
-#include "params.h"
-#include "coverage.h"
-#include "tree-pass.h"
-#include "tree-ssa-alias.h"
-#include "internal-fn.h"
-#include "gimple-expr.h"
-#include "is-a.h"
+#include "tree.h"
 #include "gimple.h"
+#include "cfghooks.h"
+#include "tree-pass.h"
+#include "profile.h"
+#include "cfganal.h"
+#include "params.h"
 #include "gimple-iterator.h"
 #include "tree-cfg.h"
 #include "tree-ssa.h"
 #include "tree-inline.h"
 #include "cfgloop.h"
 #include "fibonacci_heap.h"
+#include "tracer.h"
 
 static int count_insns (basic_block);
-static bool ignore_bb_p (const_basic_block);
 static bool better_p (const_edge, const_edge);
 static edge find_best_successor (basic_block);
 static edge find_best_predecessor (basic_block);
@@ -107,21 +85,28 @@ bb_seen_p (basic_block bb)
 }
 
 /* Return true if we should ignore the basic block for purposes of tracing.  */
-static bool
+bool
 ignore_bb_p (const_basic_block bb)
 {
-  gimple g;
-
   if (bb->index < NUM_FIXED_BLOCKS)
     return true;
   if (optimize_bb_for_size_p (bb))
     return true;
 
-  /* A transaction is a single entry multiple exit region.  It must be
-     duplicated in its entirety or not at all.  */
-  g = last_stmt (CONST_CAST_BB (bb));
-  if (g && gimple_code (g) == GIMPLE_TRANSACTION)
-    return true;
+  if (gimple *g = last_stmt (CONST_CAST_BB (bb)))
+    {
+      /* A transaction is a single entry multiple exit region.  It
+	 must be duplicated in its entirety or not at all.  */
+      if (gimple_code (g) == GIMPLE_TRANSACTION)
+	return true;
+
+      /* An IFN_UNIQUE call must be duplicated as part of its group,
+	 or not at all.  */
+      if (is_gimple_call (g)
+	  && gimple_call_internal_p (g)
+	  && gimple_call_internal_unique_p (g))
+	return true;
+    }
 
   return false;
 }
@@ -132,7 +117,7 @@ static int
 count_insns (basic_block bb)
 {
   gimple_stmt_iterator gsi;
-  gimple stmt;
+  gimple *stmt;
   int n = 0;
 
   for (gsi = gsi_start_bb (bb); !gsi_end_p (gsi); gsi_next (&gsi))
@@ -241,6 +226,24 @@ find_trace (basic_block bb, basic_block *trace)
   return i;
 }
 
+/* Duplicate block BB2, placing it after BB in the CFG.  Return the
+   newly created block.  */
+basic_block
+transform_duplicate (basic_block bb, basic_block bb2)
+{
+  edge e;
+  basic_block copy;
+
+  e = find_edge (bb, bb2);
+
+  copy = duplicate_block (bb2, e, bb);
+  flush_pending_stmts (e);
+
+  add_phi_args_after_copy (&copy, 1, NULL);
+
+  return (copy);
+}
+
 /* Look for basic blocks in frequency order, construct traces and tail duplicate
    if profitable.  */
 
@@ -336,17 +339,8 @@ tail_duplicate (void)
 		 entries or at least rotate the loop.  */
 	      && bb2->loop_father->header != bb2)
 	    {
-	      edge e;
-	      basic_block copy;
-
 	      nduplicated += counts [bb2->index];
-
-	      e = find_edge (bb, bb2);
-
-	      copy = duplicate_block (bb2, e, bb);
-	      flush_pending_stmts (e);
-
-	      add_phi_args_after_copy (&copy, 1, NULL);
+	      basic_block copy = transform_duplicate (bb, bb2);
 
 	      /* Reconsider the original copy of block we've duplicated.
 	         Removing the most common predecessor may make it to be

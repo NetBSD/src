@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.c,v 1.139.12.2 2018/07/28 04:38:08 pgoyette Exp $ */
+/* $NetBSD: udf_subr.c,v 1.139.12.3 2018/09/06 06:56:41 pgoyette Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.139.12.2 2018/07/28 04:38:08 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.139.12.3 2018/09/06 06:56:41 pgoyette Exp $");
 #endif /* not lint */
 
 
@@ -2623,7 +2623,7 @@ udf_update_lvid_from_vat_extattr(struct udf_node *vat_node)
 		return error;
 
 	/* paranoia */
-	if (a_l != sizeof(*implext) -1 + udf_rw32(implext->iu_l) + sizeof(lvext)) {
+	if (a_l != sizeof(*implext) -2 + udf_rw32(implext->iu_l) + sizeof(lvext)) {
 		DPRINTF(VOLUMES, ("VAT LVExtension size doesn't compute\n"));
 		return EINVAL;
 	}

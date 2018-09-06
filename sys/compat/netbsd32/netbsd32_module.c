@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_module.c,v 1.6.2.1 2018/04/03 08:29:44 pgoyette Exp $	*/
+/*	$NetBSD: netbsd32_module.c,v 1.6.2.2 2018/09/06 06:55:46 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_module.c,v 1.6.2.1 2018/04/03 08:29:44 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_module.c,v 1.6.2.2 2018/09/06 06:55:46 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -166,7 +166,7 @@ modctl32_handle_ostat(int cmd, struct netbsd32_iovec *iov, void *arg)
 	}
 	kernconfig_unlock();
 	error = copyout(omso, NETBSD32PTR64(iov->iov_base),
-	    min(omslen - sizeof(modstat_t), iov->iov_len));
+	    uimin(omslen - sizeof(modstat_t), iov->iov_len));
 	kmem_free(omso, omslen);
 	if (error == 0) {
 		iov->iov_len = omslen - sizeof(modstat_t);
@@ -333,21 +333,21 @@ modctl32_handle_stat(struct netbsd32_iovec *iov, void *arg)
 
 	/* Copy out the count of modstat_t */
 	if (out_s) {
-		size = min(sizeof(ms_cnt), out_s);
+		size = uimin(sizeof(ms_cnt), out_s);
 		error = copyout(&ms_cnt, out_p, size);
 		out_p += size;
 		out_s -= size;
 	}
 	/* Copy out the modstat_t array */
 	if (out_s && error == 0) {
-		size = min(ms_len, out_s);
+		size = uimin(ms_len, out_s);
 		error = copyout(mso, out_p, size);
 		out_p += size;
 		out_s -= size;
 	}
 	/* Copy out the "required" strings */
 	if (out_s && error == 0) {
-		size = min(req_len, out_s);
+		size = uimin(req_len, out_s);
 		error = copyout(reqo, out_p, size);
 		out_p += size;
 		out_s -= size;

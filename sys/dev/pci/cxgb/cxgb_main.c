@@ -28,7 +28,7 @@ POSSIBILITY OF SUCH DAMAGE.
 ***************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cxgb_main.c,v 1.4.36.1 2018/07/28 04:37:56 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cxgb_main.c,v 1.4.36.2 2018/09/06 06:56:02 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1009,8 +1009,8 @@ setup_rss(adapter_t *adap)
 
         nq[pi->tx_chan] += pi->nqsets;
     }
-    nq[0] = max(nq[0], 1U);
-    nq[1] = max(nq[1], 1U);
+    nq[0] = uimax(nq[0], 1U);
+    nq[1] = uimax(nq[1], 1U);
     for (i = 0; i < RSS_TABLE_SIZE / 2; ++i) {
         rspq_map[i] = i % nq[0];
         rspq_map[i + RSS_TABLE_SIZE / 2] = (i % nq[1]) + nq[0];

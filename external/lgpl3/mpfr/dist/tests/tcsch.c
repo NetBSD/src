@@ -1,6 +1,6 @@
 /* Test file for mpfr_csch.
 
-Copyright 2005-2016 Free Software Foundation, Inc.
+Copyright 2005-2018 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -19,9 +19,6 @@ You should have received a copy of the GNU Lesser General Public License
 along with the GNU MPFR Library; see the file COPYING.LESSER.  If not, see
 http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA. */
-
-#include <stdio.h>
-#include <stdlib.h>
 
 #include "mpfr-test.h"
 
@@ -47,7 +44,7 @@ check_specials (void)
 
   mpfr_set_inf (x, 1);
   mpfr_csch (y, x, MPFR_RNDN);
-  if (! (mpfr_zero_p (y) && MPFR_SIGN (y) >0))
+  if (! (mpfr_zero_p (y) && MPFR_IS_POS (y)))
     {
       printf ("Error: csch(+Inf) != +0\n");
       exit (1);
@@ -55,7 +52,7 @@ check_specials (void)
 
   mpfr_set_inf (x, -1);
   mpfr_csch (y, x, MPFR_RNDN);
-  if (! (mpfr_zero_p (y) && MPFR_SIGN (y) <0))
+  if (! (mpfr_zero_p (y) && MPFR_IS_NEG (y)))
     {
       printf ("Error: csch(-0) != -0\n");
       exit (1);
@@ -80,14 +77,14 @@ check_specials (void)
   /* check huge x */
   mpfr_set_str (x, "8e8", 10, MPFR_RNDN);
   mpfr_csch (y, x, MPFR_RNDN);
-  if (! (mpfr_zero_p (y) && MPFR_SIGN (y) > 0))
+  if (! (mpfr_zero_p (y) && MPFR_IS_POS (y)))
     {
       printf ("Error: csch(8e8) != +0\n");
       exit (1);
     }
   mpfr_set_str (x, "-8e8", 10, MPFR_RNDN);
   mpfr_csch (y, x, MPFR_RNDN);
-  if (! (mpfr_zero_p (y) && MPFR_SIGN (y) < 0))
+  if (! (mpfr_zero_p (y) && MPFR_IS_NEG (y)))
     {
       printf ("Error: csch(-8e8) != -0\n");
       exit (1);
@@ -103,7 +100,7 @@ main (int argc, char *argv[])
   tests_start_mpfr ();
 
   check_specials ();
-  test_generic (2, 200, 10);
+  test_generic (MPFR_PREC_MIN, 200, 10);
 
   tests_end_mpfr ();
   return 0;

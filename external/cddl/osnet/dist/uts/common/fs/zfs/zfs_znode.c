@@ -1309,6 +1309,7 @@ skip_lookup:
 	zp->z_blksz = blksz;
 	zp->z_seq = 0x7A4653;
 	zp->z_sync_cnt = 0;
+	zp->z_lockf = NULL;
 
 	zfs_znode_sa_init(zfsvfs, zp, db, obj_type, hdl);
 

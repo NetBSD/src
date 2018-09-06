@@ -27,10 +27,11 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "opt_cputypes.h"
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: arm32_tlb.c,v 1.11 2017/08/24 14:19:36 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: arm32_tlb.c,v 1.11.2.1 2018/09/06 06:55:25 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>

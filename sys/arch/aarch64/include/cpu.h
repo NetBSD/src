@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.1.28.2 2018/07/28 04:37:26 pgoyette Exp $ */
+/* $NetBSD: cpu.h,v 1.1.28.3 2018/09/06 06:55:23 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -37,6 +37,8 @@
 #ifdef _KERNEL_OPT
 #include "opt_multiprocessor.h"
 #endif
+
+#include <sys/param.h>
 
 #if defined(_KERNEL) || defined(_KMEMUSER)
 #include <sys/evcnt.h>
@@ -78,7 +80,17 @@ struct cpu_info {
 	struct evcnt ci_vfp_reuse;
 	struct evcnt ci_vfp_save;
 	struct evcnt ci_vfp_release;
-};
+
+	/* interrupt controller */
+	u_int ci_gic_redist;	/* GICv3 redistributor index */
+	uint64_t ci_gic_sgir;	/* GICv3 SGIR target */
+
+	uint64_t ci_midr;	/* MIDR_EL1 */
+	uint64_t ci_mpidr;	/* MPIDR_EL1 */
+
+	struct aarch64_cache_info *ci_cacheinfo;
+
+} __aligned(COHERENCY_UNIT);
 
 static inline struct cpu_info *
 curcpu(void)
@@ -99,8 +111,7 @@ void cpu_hatch(struct cpu_info *);
 
 extern struct cpu_info *cpu_info[];
 extern volatile u_int arm_cpu_hatched;	/* MULTIPROCESSOR */
-extern uint32_t cpus_midr[];		/* MULTIPROCESSOR */
-extern uint64_t cpus_mpidr[];		/* MULTIPROCESSOR */
+extern volatile u_int arm_cpu_hatch_arg;/* MULTIPROCESSOR */
 
 #define CPU_INFO_ITERATOR	cpuid_t
 #ifdef MULTIPROCESSOR

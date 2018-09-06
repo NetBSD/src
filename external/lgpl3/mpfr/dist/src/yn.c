@@ -1,7 +1,7 @@
 /* mpfr_y0, mpfr_y1, mpfr_yn -- Bessel functions of 2nd kind, integer order.
    http://www.opengroup.org/onlinepubs/009695399/functions/y0.html
 
-Copyright 2007-2016 Free Software Foundation, Inc.
+Copyright 2007-2018 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -170,7 +170,7 @@ mpfr_yn (mpfr_ptr res, long n, mpfr_srcptr z, mpfr_rnd_t r)
          0. We choose to return +0 in that case. */
       else if (MPFR_IS_INF (z))
         {
-          if (MPFR_SIGN(z) > 0)
+          if (MPFR_IS_POS (z))
             return mpfr_set_ui (res, 0, r);
           else /* y(n,-Inf) = NaN */
             {
@@ -186,14 +186,14 @@ mpfr_yn (mpfr_ptr res, long n, mpfr_srcptr z, mpfr_rnd_t r)
             MPFR_SET_NEG(res);
           else
             MPFR_SET_POS(res);
-          mpfr_set_divby0 ();
+          MPFR_SET_DIVBY0 ();
           MPFR_RET(0);
         }
     }
 
   /* for z < 0, y(n,z) is imaginary except when j(n,|z|) = 0, which we
      assume does not happen for a rational z. */
-  if (MPFR_SIGN(z) < 0)
+  if (MPFR_IS_NEG (z))
     {
       MPFR_SET_NAN (res);
       MPFR_RET_NAN;

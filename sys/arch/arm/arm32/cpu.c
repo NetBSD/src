@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.116 2017/09/16 00:47:16 matt Exp $	*/
+/*	$NetBSD: cpu.c,v 1.116.2.1 2018/09/06 06:55:25 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -42,18 +42,19 @@
  */
 
 #include "opt_armfpe.h"
+#include "opt_cputypes.h"
 #include "opt_multiprocessor.h"
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.116.2.1 2018/09/06 06:55:25 pgoyette Exp $");
+
 #include <sys/param.h>
-
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.116 2017/09/16 00:47:16 matt Exp $");
-
-#include <sys/systm.h>
 #include <sys/conf.h>
 #include <sys/cpu.h>
 #include <sys/device.h>
 #include <sys/kmem.h>
 #include <sys/proc.h>
+#include <sys/systm.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -739,15 +740,6 @@ identify_arm_cpu(device_t dv, struct cpu_info *ci)
 
 
 	switch (cpu_class) {
-#ifdef CPU_ARM2
-	case CPU_CLASS_ARM2:
-#endif
-#ifdef CPU_ARM250
-	case CPU_CLASS_ARM2AS:
-#endif
-#ifdef CPU_ARM3
-	case CPU_CLASS_ARM3:
-#endif
 #ifdef CPU_ARM6
 	case CPU_CLASS_ARM6:
 #endif

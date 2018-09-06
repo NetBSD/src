@@ -1,5 +1,5 @@
 /* Process source files and output type information.
-   Copyright (C) 2002-2015 Free Software Foundation, Inc.
+   Copyright (C) 2002-2016 Free Software Foundation, Inc.
 
    This file is part of GCC.
 
@@ -27,7 +27,6 @@
 #include "errors.h"		/* for fatal */
 #include "getopt.h"
 #include "version.h"		/* for version_string & pkgversion_string.  */
-#include "hashtab.h"
 #include "xregex.h"
 #include "obstack.h"
 #include "gengtype.h"
@@ -159,9 +158,6 @@ size_t num_lang_dirs;
    BASE_FILES entry for each language.  */
 static outf_p *base_files;
 
-
-
-#if ENABLE_CHECKING
 /* Utility debugging function, printing the various type counts within
    a list of types.  Called through the DBGPRINT_COUNT_TYPE macro.  */
 void
@@ -223,7 +219,6 @@ dbgprint_count_type_at (const char *fil, int lin, const char *msg, type_p t)
     fprintf (stderr, "@@%%@@ %d undefined types\n", nb_undefined);
   fprintf (stderr, "\n");
 }
-#endif /* ENABLE_CHECKING */
 
 /* Scan the input file, LIST, and determine how much space we need to
    store strings in.  Also, count the number of language directories
@@ -1241,6 +1236,7 @@ adjust_field_rtx_def (type_p t, options_p ARG_UNUSED (opt))
 	    case 'i':
 	    case 'n':
 	    case 'w':
+	    case 'r':
 	      t = scalar_tp;
 	      subname = "rt_int";
 	      break;
@@ -1268,8 +1264,6 @@ adjust_field_rtx_def (type_p t, options_p ARG_UNUSED (opt))
 		t = scalar_tp, subname = "rt_int";
 	      else if (i == DEBUG_EXPR && aindex == 0)
 		t = tree_tp, subname = "rt_tree";
-	      else if (i == REG && aindex == 1)
-		t = reg_attrs_tp, subname = "rt_reg";
 	      else if (i == SYMBOL_REF && aindex == 1)
 		t = symbol_union_tp, subname = "";
 	      else if (i == JUMP_TABLE_DATA && aindex >= 4)
@@ -1343,6 +1337,9 @@ adjust_field_rtx_def (type_p t, options_p ARG_UNUSED (opt))
 	      create_string_option (subfields->opt, "desc",
 				    "CONSTANT_POOL_ADDRESS_P (&%0)");
 	}
+
+      if (i == REG)
+	subfields = create_field (subfields, reg_attrs_tp, "reg.attrs");
 
       if (i == SYMBOL_REF)
 	{
@@ -1610,7 +1607,7 @@ static outf_p
 create_file (const char *name, const char *oname)
 {
   static const char *const hdr[] = {
-    "   Copyright (C) 2004-2015 Free Software Foundation, Inc.\n",
+    "   Copyright (C) 2004-2016 Free Software Foundation, Inc.\n",
     "\n",
     "This file is part of GCC.\n",
     "\n",
@@ -1709,23 +1706,13 @@ open_base_files (void)
   {
     /* The order of files here matters very much.  */
     static const char *const ifiles[] = {
-      "config.h", "system.h", "coretypes.h", "tm.h", "insn-codes.h",
-      "hashtab.h", "splay-tree.h", "obstack.h", "bitmap.h", "input.h",
-      "hash-set.h", "machmode.h", "vec.h", "double-int.h", "input.h",
-      "alias.h", "symtab.h", "options.h", 
-      "wide-int.h", "inchash.h",
-      "tree.h", "fold-const.h", "rtl.h",
-      "machmode.h", "tm.h", "hard-reg-set.h", "input.h", "predict.h",
-      "function.h", "insn-config.h", "flags.h", "statistics.h",
-      "real.h", "fixed-value.h", "tree.h", "expmed.h", "dojump.h",
+      "config.h", "system.h", "coretypes.h", "backend.h", "predict.h", "tree.h",
+      "rtl.h", "gimple.h", "fold-const.h", "insn-codes.h", "splay-tree.h",
+      "alias.h", "insn-config.h", "flags.h", "expmed.h", "dojump.h",
       "explow.h", "calls.h", "emit-rtl.h", "varasm.h", "stmt.h",
-      "expr.h", "alloc-pool.h",
-      "basic-block.h", "cselib.h", "insn-addr.h",
-      "optabs.h", "libfuncs.h", "debug.h", "ggc.h", 
-      "ggc.h", "dominance.h", "cfg.h", "basic-block.h",
-      "tree-ssa-alias.h", "internal-fn.h", "gimple-fold.h", "tree-eh.h",
-      "gimple-expr.h", "is-a.h",
-      "gimple.h", "gimple-iterator.h", "gimple-ssa.h", "tree-cfg.h",
+      "expr.h", "alloc-pool.h", "cselib.h", "insn-addr.h", "optabs.h",
+      "libfuncs.h", "debug.h", "internal-fn.h", "gimple-fold.h", "tree-eh.h",
+      "gimple-iterator.h", "gimple-ssa.h", "tree-cfg.h",
       "tree-phinodes.h", "ssa-iterators.h", "stringpool.h", "tree-ssanames.h",
       "tree-ssa-loop.h", "tree-ssa-loop-ivopts.h", "tree-ssa-loop-manip.h",
       "tree-ssa-loop-niter.h", "tree-into-ssa.h", "tree-dfa.h", 
@@ -2420,7 +2407,6 @@ struct write_types_data
   const char *marker_routine;
   const char *reorder_note_routine;
   const char *comment;
-  int skip_hooks;		/* skip hook generation if non zero */
   enum write_types_kinds kind;
 };
 
@@ -2690,8 +2676,6 @@ walk_type (type_p t, struct walk_type_data *d)
       maybe_undef_p = 1;
     else if (strcmp (oo->name, "desc") == 0 && oo->kind == OPTION_STRING)
       desc = oo->info.string;
-    else if (strcmp (oo->name, "mark_hook") == 0)
-      ;
     else if (strcmp (oo->name, "nested_ptr") == 0 
 	     && oo->kind == OPTION_NESTED)
       nested_ptr_d = (const struct nested_ptr_data *) oo->info.nested;
@@ -2931,7 +2915,6 @@ walk_type (type_p t, struct walk_type_data *d)
 	const char *oldval = d->val;
 	const char *oldprevval1 = d->prev_val[1];
 	const char *oldprevval2 = d->prev_val[2];
-	const char *struct_mark_hook = NULL;
 	const int union_p = t->kind == TYPE_UNION;
 	int seen_default_p = 0;
 	options_p o;
@@ -2955,13 +2938,6 @@ walk_type (type_p t, struct walk_type_data *d)
 	  if (!desc && strcmp (o->name, "desc") == 0
 	      && o->kind == OPTION_STRING)
 	    desc = o->info.string;
-	  else if (!struct_mark_hook && strcmp (o->name, "mark_hook") == 0
-		   && o->kind == OPTION_STRING)
-	    struct_mark_hook = o->info.string;
-
-	if (struct_mark_hook)
-	  oprintf (d->of, "%*s%s (&%s);\n",
-		   d->indent, "", struct_mark_hook, oldval);
 
 	d->prev_val[2] = oldval;
 	d->prev_val[1] = oldprevval2;
@@ -3486,7 +3462,6 @@ write_func_for_structure (type_p orig_s, type_p s,
   const char *chain_next = NULL;
   const char *chain_prev = NULL;
   const char *chain_circular = NULL;
-  const char *mark_hook_name = NULL;
   options_p opt;
   struct walk_type_data d;
 
@@ -3522,9 +3497,6 @@ write_func_for_structure (type_p orig_s, type_p s,
     else if (strcmp (opt->name, "chain_circular") == 0
 	     && opt->kind == OPTION_STRING)
       chain_circular = opt->info.string;
-    else if (strcmp (opt->name, "mark_hook") == 0
-	     && opt->kind == OPTION_STRING)
-      mark_hook_name = opt->info.string;
     else if (strcmp (opt->name, "for_user") == 0)
       for_user = true;
   if (chain_prev != NULL && chain_next == NULL)
@@ -3589,17 +3561,11 @@ write_func_for_structure (type_p orig_s, type_p s,
       oprintf (d.of, "))\n");
       if (chain_circular != NULL)
 	oprintf (d.of, "    return;\n  do\n");
-      if (mark_hook_name && !wtd->skip_hooks)
-	{
-	  oprintf (d.of, "    {\n");
-	  oprintf (d.of, "      %s (xlimit);\n   ", mark_hook_name);
-	}
+
       oprintf (d.of, "   xlimit = (");
       d.prev_val[2] = "*xlimit";
       output_escaped_param (&d, chain_next, "chain_next");
       oprintf (d.of, ");\n");
-      if (mark_hook_name && !wtd->skip_hooks)
-	oprintf (d.of, "    }\n");
       if (chain_prev != NULL)
 	{
 	  oprintf (d.of, "  if (x != xlimit)\n");
@@ -3631,18 +3597,12 @@ write_func_for_structure (type_p orig_s, type_p s,
 	      output_mangled_typename (d.of, orig_s);
 	    }
 	  oprintf (d.of, "));\n");
-	  if (mark_hook_name && !wtd->skip_hooks)
-	    oprintf (d.of, "  %s (xlimit);\n", mark_hook_name);
 	  oprintf (d.of, "  do\n");
 	}
       else
 	oprintf (d.of, "  while (x != xlimit)\n");
     }
   oprintf (d.of, "    {\n");
-  if (mark_hook_name && chain_next == NULL && !wtd->skip_hooks)
-    {
-      oprintf (d.of, "      %s (x);\n", mark_hook_name);
-    }
 
   d.prev_val[2] = "*x";
   d.indent = 6;
@@ -3802,14 +3762,14 @@ write_types (outf_p output_header, type_p structures,
 static const struct write_types_data ggc_wtd = {
   "ggc_m", NULL, "ggc_mark", "ggc_test_and_set_mark", NULL,
   "GC marker procedures.  ",
-  FALSE, WTK_GGC
+  WTK_GGC
 };
 
 static const struct write_types_data pch_wtd = {
   "pch_n", "pch_p", "gt_pch_note_object", "gt_pch_note_object",
   "gt_pch_note_reorder",
   "PCH type-walking procedures.  ",
-  TRUE, WTK_PCH
+  WTK_PCH
 };
 
 /* Write out the local pointer-walking routines.  */
@@ -4718,33 +4678,6 @@ write_roots (pair_p variables, bool emit_pch)
    this funcion will have to be adjusted to be more like
    output_mangled_typename.  */
 
-static void
-output_typename (outf_p of, const_type_p t)
-{
-  switch (t->kind)
-    {
-    case TYPE_STRING:
-      oprintf (of, "str");
-      break;
-    case TYPE_SCALAR:
-      oprintf (of, "scalar");
-      break;
-    case TYPE_POINTER:
-      output_typename (of, t->u.p);
-      break;
-    case TYPE_STRUCT:
-    case TYPE_USER_STRUCT:
-    case TYPE_UNION:
-    case TYPE_LANG_STRUCT:
-      oprintf (of, "%s", t->u.s.tag);
-      break;
-    case TYPE_NONE:
-    case TYPE_UNDEFINED:
-    case TYPE_ARRAY:
-      gcc_unreachable ();
-    }
-}
-
 #define INDENT 2
 
 /* Dumps the value of typekind KIND.  */
@@ -4914,10 +4847,17 @@ dump_type (int indent, type_p t)
 {
   PTR *slot;
 
+  printf ("%*cType at %p: ", indent, ' ', (void *) t);
+  if (t->kind == TYPE_UNDEFINED)
+    {
+      gcc_assert (t->gc_used == GC_UNUSED);
+      printf ("undefined.\n");
+      return;
+    }
+
   if (seen_types == NULL)
     seen_types = htab_create (100, htab_hash_pointer, htab_eq_pointer, NULL);
 
-  printf ("%*cType at %p: ", indent, ' ', (void *) t);
   slot = htab_find_slot (seen_types, t, INSERT);
   if (*slot != NULL)
     {
@@ -5217,7 +5157,6 @@ main (int argc, char **argv)
 
   parse_program_options (argc, argv);
 
-#if ENABLE_CHECKING
   if (do_debug)
     {
       time_t now = (time_t) 0;
@@ -5225,7 +5164,6 @@ main (int argc, char **argv)
       DBGPRINTF ("gengtype started pid %d at %s",
 		 (int) getpid (), ctime (&now));
     }
-#endif	/* ENABLE_CHECKING */
 
   /* Parse the input list and the input files.  */
   DBGPRINTF ("inputlist %s", inputlist);

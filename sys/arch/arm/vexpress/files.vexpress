@@ -1,19 +1,8 @@
-#	$NetBSD: files.vexpress,v 1.4.2.1 2018/03/22 01:44:44 pgoyette Exp $
+#	$NetBSD: files.vexpress,v 1.4.2.2 2018/09/06 06:55:27 pgoyette Exp $
 #
 # Configuration info for ARM Ltd. Versatile Express peripherals
 #
 #
-
-include	"arch/arm/pic/files.pic"
-include	"arch/arm/cortex/files.cortex"
-
-file	arch/arm/arm32/arm32_boot.c
-file	arch/arm/arm32/arm32_kvminit.c
-file	arch/arm/arm32/arm32_reboot.c
-file	arch/arm/arm32/irq_dispatch.S
-file	arch/arm/arm32/armv7_generic_space.c
-file	arch/arm/arm/arm_generic_dma.c
-file	arch/arm/arm/bus_space_a4x.S
 
 file	arch/arm/vexpress/vexpress_platform.c
 

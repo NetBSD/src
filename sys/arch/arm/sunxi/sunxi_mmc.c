@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_mmc.c,v 1.20.2.4 2018/06/25 07:25:40 pgoyette Exp $ */
+/* $NetBSD: sunxi_mmc.c,v 1.20.2.5 2018/09/06 06:55:27 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2014-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_sunximmc.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_mmc.c,v 1.20.2.4 2018/06/25 07:25:40 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_mmc.c,v 1.20.2.5 2018/09/06 06:55:27 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -964,12 +964,12 @@ sunxi_mmc_dma_prepare(struct sunxi_mmc_softc *sc, struct sdmmc_command *cmd)
 	for (seg = 0; seg < map->dm_nsegs; seg++) {
 		bus_addr_t paddr = map->dm_segs[seg].ds_addr;
 		bus_size_t len = map->dm_segs[seg].ds_len;
-		resid = min(len, cmd->c_resid);
+		resid = uimin(len, cmd->c_resid);
 		off = 0;
 		while (resid > 0) {
 			if (desc == sc->sc_idma_ndesc)
 				break;
-			len = min(sc->sc_config->idma_xferlen, resid);
+			len = uimin(sc->sc_config->idma_xferlen, resid);
 			dma[desc].dma_buf_size = htole32(len);
 			dma[desc].dma_buf_addr = htole32(paddr + off);
 			dma[desc].dma_config = htole32(SUNXI_MMC_IDMA_CONFIG_CH |

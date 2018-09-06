@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10.2.1 2018/05/02 07:20:27 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.10.2.2 2018/09/06 06:56:49 pgoyette Exp $
 
 HOSTPROGNAME=	${_TOOL_PREFIX}mandoc
 HOST_SRCDIR=	external/bsd/mdocml/bin/mandoc
@@ -9,6 +9,7 @@ NETBSD_MINOR!=	${HOST_SH} ${NETBSDSRCDIR}/sys/conf/osrelease.sh -n
 NETBSD_OSNAME=	"NetBSD ${NETBSD_MINOR}"
 
 HOST_CPPFLAGS+=	-DOSNAME=${NETBSD_OSNAME:Q} -DHAVE_CONFIG_H -I.
+HOST_CPPFLAGS+= -D_OPENBSD_SOURCE
 
 DPSRCS+=	config.h
 

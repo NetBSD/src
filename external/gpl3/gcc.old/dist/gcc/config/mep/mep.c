@@ -1,5 +1,5 @@
 /* Definitions for Toshiba Media Processor
-   Copyright (C) 2001-2015 Free Software Foundation, Inc.
+   Copyright (C) 2001-2016 Free Software Foundation, Inc.
    Contributed by Red Hat, Inc.
 
 This file is part of GCC.
@@ -21,77 +21,37 @@ along with GCC; see the file COPYING3.  If not see
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
-#include "tm.h"
+#include "backend.h"
+#include "target.h"
 #include "rtl.h"
-#include "hash-set.h"
-#include "machmode.h"
-#include "vec.h"
-#include "double-int.h"
-#include "input.h"
-#include "alias.h"
-#include "symtab.h"
-#include "wide-int.h"
-#include "inchash.h"
 #include "tree.h"
+#include "gimple.h"
+#include "df.h"
+#include "tm_p.h"
+#include "stringpool.h"
+#include "optabs.h"
+#include "emit-rtl.h"
+#include "recog.h"
+#include "diagnostic-core.h"
 #include "fold-const.h"
 #include "varasm.h"
 #include "calls.h"
-#include "stringpool.h"
 #include "stor-layout.h"
-#include "regs.h"
-#include "hard-reg-set.h"
-#include "insn-config.h"
-#include "conditions.h"
-#include "insn-flags.h"
 #include "output.h"
 #include "insn-attr.h"
-#include "flags.h"
-#include "recog.h"
-#include "obstack.h"
-#include "hashtab.h"
-#include "function.h"
-#include "statistics.h"
-#include "real.h"
-#include "fixed-value.h"
-#include "expmed.h"
-#include "dojump.h"
 #include "explow.h"
-#include "emit-rtl.h"
-#include "stmt.h"
 #include "expr.h"
-#include "except.h"
-#include "insn-codes.h"
-#include "optabs.h"
 #include "reload.h"
-#include "tm_p.h"
-#include "ggc.h"
-#include "diagnostic-core.h"
-#include "target.h"
-#include "target-def.h"
 #include "langhooks.h"
-#include "dominance.h"
-#include "cfg.h"
 #include "cfgrtl.h"
-#include "cfganal.h"
-#include "lcm.h"
-#include "cfgbuild.h"
-#include "cfgcleanup.h"
-#include "predict.h"
-#include "basic-block.h"
-#include "df.h"
-#include "hash-table.h"
-#include "tree-ssa-alias.h"
-#include "internal-fn.h"
-#include "gimple-fold.h"
-#include "tree-eh.h"
-#include "gimple-expr.h"
-#include "is-a.h"
-#include "gimple.h"
 #include "gimplify.h"
 #include "opts.h"
 #include "dumpfile.h"
 #include "builtins.h"
 #include "rtl-iter.h"
+
+/* This file should be included last.  */
+#include "target-def.h"
 
 /* Structure of this file:
 
@@ -252,7 +212,7 @@ static void mep_move_ready_insn (rtx_insn **, int, rtx_insn *);
 static int mep_sched_reorder (FILE *, int, rtx_insn **, int *, int);
 static rtx_insn *mep_make_bundle (rtx, rtx_insn *);
 static void mep_bundle_insns (rtx_insn *);
-static bool mep_rtx_cost (rtx, int, int, int, int *, bool);
+static bool mep_rtx_cost (rtx, machine_mode, int, int, int *, bool);
 static int mep_address_cost (rtx, machine_mode, addr_space_t, bool);
 static void mep_setup_incoming_varargs (cumulative_args_t, machine_mode,
 					tree, int *, int);
@@ -1420,7 +1380,7 @@ mep_expand_mov (rtx *operands, machine_mode mode)
 
 	      n = gen_rtx_PLUS (mode, (t == 'b' ? mep_tp_rtx ()
 				       : mep_gp_rtx ()), n);
-	      n = emit_insn (gen_rtx_SET (mode, operands[0], n));
+	      n = emit_insn (gen_rtx_SET (operands[0], n));
 #if DEBUG_EXPAND_MOV
 	      fprintf(stderr, "mep_expand_mov emitting ");
 	      debug_rtx(n);
@@ -1686,8 +1646,7 @@ mep_expand_setcc_1 (enum rtx_code code, rtx dest, rtx op1, rtx op2)
     case LT:
     case LTU:
       op1 = force_reg (SImode, op1);
-      emit_insn (gen_rtx_SET (VOIDmode, dest,
-			      gen_rtx_fmt_ee (code, SImode, op1, op2)));
+      emit_insn (gen_rtx_SET (dest, gen_rtx_fmt_ee (code, SImode, op1, op2)));
       return true;
 
     case EQ:
@@ -1716,8 +1675,7 @@ mep_expand_setcc_1 (enum rtx_code code, rtx dest, rtx op1, rtx op2)
       op2 = gen_reg_rtx (SImode);
       mep_expand_setcc_1 (LTU, op2, op1, const1_rtx);
 
-      emit_insn (gen_rtx_SET (VOIDmode, dest,
-			      gen_rtx_XOR (SImode, op2, const1_rtx)));
+      emit_insn (gen_rtx_SET (dest, gen_rtx_XOR (SImode, op2, const1_rtx)));
       return true;
 
     case LE:
@@ -2629,8 +2587,7 @@ add_constant (int dest, int src, int value, int mark_frame)
     {
       RTX_FRAME_RELATED_P(insn) = 1;
       add_reg_note (insn, REG_FRAME_RELATED_EXPR,
-		    gen_rtx_SET (SImode,
-				 gen_rtx_REG (SImode, dest),
+		    gen_rtx_SET (gen_rtx_REG (SImode, dest),
 				 gen_rtx_PLUS (SImode,
 					       gen_rtx_REG (SImode, dest),
 					       GEN_INT (value))));
@@ -2790,8 +2747,7 @@ mep_expand_prologue (void)
 	    RTX_FRAME_RELATED_P (insn) = 1;
 	    
 	    add_reg_note (insn, REG_FRAME_RELATED_EXPR,
-			  gen_rtx_SET (VOIDmode,
-				       copy_rtx (mem),
+			  gen_rtx_SET (copy_rtx (mem),
 				       gen_rtx_REG (rmode, i)));
 	    mem = gen_rtx_MEM (SImode,
 			       plus_constant (Pmode, stack_pointer_rtx,
@@ -2812,8 +2768,7 @@ mep_expand_prologue (void)
 	    RTX_FRAME_RELATED_P (insn) = 1;
 	    
 	    add_reg_note (insn, REG_FRAME_RELATED_EXPR,
-			  gen_rtx_SET (VOIDmode,
-				       copy_rtx (mem),
+			  gen_rtx_SET (copy_rtx (mem),
 				       gen_rtx_REG (rmode, i)));
 	  }
       }
@@ -4090,26 +4045,14 @@ struct GTY(()) pragma_entry {
   int flag;
 };
 
-struct pragma_traits : default_hashmap_traits
-{
-  static hashval_t hash (const char *s) { return htab_hash_string (s); }
-  static bool
-  equal_keys (const char *a, const char *b)
-  {
-    return strcmp (a, b) == 0;
-  }
-};
-
 /* Hash table of farcall-tagged sections.  */
-static GTY(()) hash_map<const char *, pragma_entry, pragma_traits> *
-  pragma_htab;
+static GTY(()) hash_map<nofree_string_hash, pragma_entry> *pragma_htab;
 
 static void
 mep_note_pragma_flag (const char *funcname, int flag)
 {
   if (!pragma_htab)
-    pragma_htab
-      = hash_map<const char *, pragma_entry, pragma_traits>::create_ggc (31);
+    pragma_htab = hash_map<nofree_string_hash, pragma_entry>::create_ggc (31);
 
   bool existed;
   const char *name = ggc_strdup (funcname);
@@ -7147,10 +7090,13 @@ mep_expand_binary_intrinsic (int ATTRIBUTE_UNUSED immediate,
 }
 
 static bool
-mep_rtx_cost (rtx x, int code, int outer_code ATTRIBUTE_UNUSED,
+mep_rtx_cost (rtx x, machine_mode mode ATTRIBUTE_UNUSED,
+	      int outer_code ATTRIBUTE_UNUSED,
 	      int opno ATTRIBUTE_UNUSED, int *total,
 	      bool ATTRIBUTE_UNUSED speed_t)
 {
+  int code = GET_CODE (x);
+
   switch (code)
     {
     case CONST_INT:

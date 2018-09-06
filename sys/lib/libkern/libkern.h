@@ -1,4 +1,4 @@
-/*	$NetBSD: libkern.h,v 1.126.2.1 2018/07/28 04:38:08 pgoyette Exp $	*/
+/*	$NetBSD: libkern.h,v 1.126.2.2 2018/09/06 06:56:42 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -36,6 +36,7 @@
 
 #ifdef _KERNEL_OPT
 #include "opt_diagnostic.h"
+#include "opt_kasan.h"
 #endif
 
 #include <sys/types.h>
@@ -49,8 +50,8 @@
 
 LIBKERN_INLINE int imax(int, int) __unused;
 LIBKERN_INLINE int imin(int, int) __unused;
-LIBKERN_INLINE u_int max(u_int, u_int) __unused;
-LIBKERN_INLINE u_int min(u_int, u_int) __unused;
+LIBKERN_INLINE u_int uimax(u_int, u_int) __unused;
+LIBKERN_INLINE u_int uimin(u_int, u_int) __unused;
 LIBKERN_INLINE long lmax(long, long) __unused;
 LIBKERN_INLINE long lmin(long, long) __unused;
 LIBKERN_INLINE u_long ulmax(u_long, u_long) __unused;
@@ -97,12 +98,12 @@ lmin(long a, long b)
 	return (a < b ? a : b);
 }
 LIBKERN_INLINE u_int
-max(u_int a, u_int b)
+uimax(u_int a, u_int b)
 {
 	return (a > b ? a : b);
 }
 LIBKERN_INLINE u_int
-min(u_int a, u_int b)
+uimin(u_int a, u_int b)
 {
 	return (a < b ? a : b);
 }
@@ -368,11 +369,18 @@ int	 memcmp(const void *, const void *, size_t);
 void	*memset(void *, int, size_t);
 void	*memmem(const void *, size_t, const void *, size_t);
 #if __GNUC_PREREQ__(2, 95) && !defined(_STANDALONE)
+#if defined(_KERNEL) && defined(KASAN)
+void	*kasan_memset(void *, int, size_t);
+int	 kasan_memcmp(const void *, const void *, size_t);
+void	*kasan_memcpy(void *, const void *, size_t);
+#define	memcpy(d, s, l)		kasan_memcpy(d, s, l)
+#define	memcmp(a, b, l)		kasan_memcmp(a, b, l)
+#define	memset(d, v, l)		kasan_memset(d, v, l)
+#else
 #define	memcpy(d, s, l)		__builtin_memcpy(d, s, l)
 #define	memcmp(a, b, l)		__builtin_memcmp(a, b, l)
-#endif
-#if __GNUC_PREREQ__(2, 95) && !defined(_STANDALONE)
 #define	memset(d, v, l)		__builtin_memset(d, v, l)
+#endif /* _KERNEL && KASAN */
 #endif
 
 char	*strcpy(char *, const char *);
@@ -381,9 +389,18 @@ size_t	 strlen(const char *);
 size_t	 strnlen(const char *, size_t);
 char	*strsep(char **, const char *);
 #if __GNUC_PREREQ__(2, 95) && !defined(_STANDALONE)
+#if defined(_KERNEL) && defined(KASAN)
+char	*kasan_strcpy(char *, const char *);
+int	 kasan_strcmp(const char *, const char *);
+size_t	 kasan_strlen(const char *);
+#define	strcpy(d, s)		kasan_strcpy(d, s)
+#define	strcmp(a, b)		kasan_strcmp(a, b)
+#define	strlen(a)		kasan_strlen(a)
+#else
 #define	strcpy(d, s)		__builtin_strcpy(d, s)
 #define	strcmp(a, b)		__builtin_strcmp(a, b)
 #define	strlen(a)		__builtin_strlen(a)
+#endif /* _KERNEL && KASAN */
 #endif
 
 /* Functions for which we always use built-ins. */

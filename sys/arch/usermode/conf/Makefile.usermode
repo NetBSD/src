@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.usermode,v 1.41.2.1 2018/06/25 07:25:46 pgoyette Exp $
+# $NetBSD: Makefile.usermode,v 1.41.2.2 2018/09/06 06:55:43 pgoyette Exp $
 
 MKCTF?=				no
 USETOOLS?=			no
@@ -74,9 +74,9 @@ KERNLDSCRIPT?=	${USERMODE}/conf/kern.ldscript
 SYSTEM_LD=	@do_system_ld() { \
 		${_MKSHMSG} "   link  ${.CURDIR:T}/${.TARGET}"; \
 		${_MKSHECHO}\
-		${CC} -static ${COPTS} -Wl,-Map,$${target}.map -o ${.TARGET} ${LINKFORMAT} -Ttext ${TEXTADDR} '$${SYSTEM_OBJ}' '$${EXTRA_OBJ}' vers.o ${USERMODE_LIBS} $$@; \
+		${CC} -static ${COPTS} -Wl,-Map,$${target}.map -o ${.TARGET} ${LINKFORMAT} -Wl,-Ttext,${TEXTADDR} '$${SYSTEM_OBJ}' '$${EXTRA_OBJ}' vers.o netbsd.ldscript ${USERMODE_LIBS} $$@; \
 		${SYSTEM_LD_FIX} \
-		${CC} -static ${COPTS} -Wl,-Map,$${target}.map -o ${.TARGET} ${LINKFORMAT} -Ttext ${TEXTADDR} ${SYSTEM_OBJ} ${EXTRA_OBJ} vers.o ${USERMODE_LIBS} $$@; \
+		${CC} -static ${COPTS} -Wl,-Map,$${target}.map -o ${.TARGET} ${LINKFORMAT} -Wl,-Ttext,${TEXTADDR} ${SYSTEM_OBJ} ${EXTRA_OBJ} vers.o netbsd.ldscript ${USERMODE_LIBS} $$@; \
 		}; \
 		do_system_ld
 NVFLAGS=	-n

@@ -1,4 +1,4 @@
-/*	$NetBSD: radeonfb.c,v 1.94.2.2 2018/07/28 04:37:56 pgoyette Exp $ */
+/*	$NetBSD: radeonfb.c,v 1.94.2.3 2018/09/06 06:56:02 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.94.2.2 2018/07/28 04:37:56 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.94.2.3 2018/09/06 06:56:02 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -966,7 +966,7 @@ radeonfb_attach(device_t parent, device_t dev, void *aux)
 		 * cache, cap at 4096 lines
 		 */
 		glyphcache_init(&dp->rd_gc, dp->rd_virty + 4,
-		    min(4096, 
+		    uimin(4096, 
 		        (dp->rd_curoff / dp->rd_stride) - (dp->rd_virty + 4)),
 		    dp->rd_virtx,
 		    ri->ri_font->fontwidth,
@@ -1809,7 +1809,7 @@ radeonfb_getconnectors(struct radeonfb_softc *sc)
 			    ddc > RADEON_DDC_CRT2 ? RADEON_DDC_NONE : ddc;
 			sc->sc_ports[port].rp_dac_type = dac;
 			sc->sc_ports[port].rp_conn_type =
-			    min(conn, RADEON_CONN_UNSUPPORTED) ;
+			    uimin(conn, RADEON_CONN_UNSUPPORTED) ;
 
 			sc->sc_ports[port].rp_tmds_type = tmds;
 
@@ -1973,7 +1973,7 @@ radeonfb_gettmds(struct radeonfb_softc *sc)
 		if (GETBIOS8(sc, ptr) == 3) {	
 			/* revision three table */
 			n = GETBIOS8(sc, ptr + 5) + 1;
-			n = min(n, 4);
+			n = uimin(n, 4);
 
 			memset(sc->sc_tmds_pll, 0, sizeof (sc->sc_tmds_pll));
 			for (i = 0; i < n; i++) {
@@ -4333,7 +4333,7 @@ radeonfb_brightness_up(device_t dev)
 	/* make sure pushing the hotkeys always has an effect */
 	dp->rd_bl_on = 1;
 	level = dp->rd_bl_level;
-	level = min(RADEONFB_BACKLIGHT_MAX, level + 5);
+	level = uimin(RADEONFB_BACKLIGHT_MAX, level + 5);
 	radeonfb_set_backlight(dp, level);
 }
 
@@ -4349,6 +4349,6 @@ radeonfb_brightness_down(device_t dev)
 	/* make sure pushing the hotkeys always has an effect */
 	dp->rd_bl_on = 1;
 	level = dp->rd_bl_level;
-	level = max(0, level - 5);
+	level = uimax(0, level - 5);
 	radeonfb_set_backlight(dp, level);
 }

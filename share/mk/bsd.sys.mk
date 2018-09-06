@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.275.2.3 2018/07/28 04:37:25 pgoyette Exp $
+#	$NetBSD: bsd.sys.mk,v 1.275.2.4 2018/09/06 06:55:22 pgoyette Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -141,13 +141,13 @@ LDFLAGS+=	-Wl,-z,now
 .endif
 
 .if ${MKSANITIZER:Uno} == "yes"
-SANITIZERFLAGS+=	-fsanitize=${USE_SANITIZER}
+SANITIZERFLAGS:=	-fsanitize=${USE_SANITIZER} ${SANITIZERFLAGS}
 .else
 SANITIZERFLAGS=		# empty
 .endif
 
 .if ${MKLIBCSANITIZER:Uno} == "yes"
-LIBCSANITIZERFLAGS+=	-fsanitize=${USE_LIBCSANITIZER}
+LIBCSANITIZERFLAGS:=	-fsanitize=${USE_LIBCSANITIZER} ${LIBCSANITIZERFLAGS}
 LIBCSANITIZERFLAGS+=	-fno-sanitize=vptr	# Unsupported in micro-UBSan
 .else
 LIBCSANITIZERFLAGS=	# empty

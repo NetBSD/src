@@ -1,5 +1,5 @@
 /* Parse C expressions for cpplib.
-   Copyright (C) 1987-2015 Free Software Foundation, Inc.
+   Copyright (C) 1987-2016 Free Software Foundation, Inc.
    Contributed by Per Bothner, 1994.
 
 This program is free software; you can redistribute it and/or modify it
@@ -307,6 +307,8 @@ cpp_userdef_char_remove_type (enum cpp_ttype type)
     return CPP_CHAR16;
   else if (type == CPP_CHAR32_USERDEF)
     return CPP_CHAR32;
+  else if (type == CPP_UTF8CHAR_USERDEF)
+    return CPP_UTF8CHAR;
   else
     return type;
 }
@@ -325,6 +327,8 @@ cpp_userdef_char_add_type (enum cpp_ttype type)
     return CPP_CHAR16_USERDEF;
   else if (type == CPP_CHAR32)
     return CPP_CHAR32_USERDEF;
+  else if (type == CPP_UTF8CHAR)
+    return CPP_UTF8CHAR_USERDEF;
   else
     return type;
 }
@@ -350,7 +354,8 @@ cpp_userdef_char_p (enum cpp_ttype type)
   if (type == CPP_CHAR_USERDEF
    || type == CPP_WCHAR_USERDEF
    || type == CPP_CHAR16_USERDEF
-   || type == CPP_CHAR32_USERDEF)
+   || type == CPP_CHAR32_USERDEF
+   || type == CPP_UTF8CHAR_USERDEF)
     return true;
   else
     return false;
@@ -547,7 +552,7 @@ cpp_classify_number (cpp_reader *pfile, const cpp_token *token,
 	{
 	  if (CPP_OPTION (pfile, cplusplus))
 	    cpp_error_with_line (pfile, CPP_DL_PEDWARN, virtual_location, 0,
-				 "use of C++11 hexadecimal floating constant");
+				 "use of C++1z hexadecimal floating constant");
 	  else
 	    cpp_error_with_line (pfile, CPP_DL_PEDWARN, virtual_location, 0,
 				 "use of C99 hexadecimal floating constant");
@@ -1029,6 +1034,7 @@ eval_token (cpp_reader *pfile, const cpp_token *token,
     case CPP_CHAR:
     case CPP_CHAR16:
     case CPP_CHAR32:
+    case CPP_UTF8CHAR:
       {
 	cppchar_t cc = cpp_interpret_charconst (pfile, token,
 						&temp, &unsignedp);
@@ -1214,6 +1220,7 @@ _cpp_parse_expr (cpp_reader *pfile, bool is_if)
 	case CPP_WCHAR:
 	case CPP_CHAR16:
 	case CPP_CHAR32:
+	case CPP_UTF8CHAR:
 	case CPP_NAME:
 	case CPP_HASH:
 	  if (!want_value)

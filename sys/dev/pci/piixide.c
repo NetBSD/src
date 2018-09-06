@@ -1,4 +1,4 @@
-/*	$NetBSD: piixide.c,v 1.65.16.1 2018/06/25 07:26:00 pgoyette Exp $	*/
+/*	$NetBSD: piixide.c,v 1.65.16.2 2018/09/06 06:56:02 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: piixide.c,v 1.65.16.1 2018/06/25 07:26:00 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: piixide.c,v 1.65.16.2 2018/09/06 06:56:02 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -620,7 +620,7 @@ piix_setup_channel(struct ata_channel *chp)
 	if ((drvp[0].drive_flags & ATA_DRIVE_DMA) &&
 	    (drvp[1].drive_flags & ATA_DRIVE_DMA)) {
 		mode[0] = mode[1] =
-		    min(drvp[0].DMA_mode, drvp[1].DMA_mode);
+		    uimin(drvp[0].DMA_mode, drvp[1].DMA_mode);
 		    drvp[0].DMA_mode = mode[0];
 		    drvp[1].DMA_mode = mode[1];
 		goto ok;
@@ -657,7 +657,7 @@ piix_setup_channel(struct ata_channel *chp)
 		mode[0] = drvp[0].PIO_mode;
 	} else {
 		mode[0] = mode[1] =
-		    min(drvp[1].PIO_mode, drvp[0].PIO_mode);
+		    uimin(drvp[1].PIO_mode, drvp[0].PIO_mode);
 		drvp[0].PIO_mode = mode[0];
 		drvp[1].PIO_mode = mode[1];
 	}

@@ -1,5 +1,5 @@
 /* Definitions of target machine for GNU compiler, for IBM RS/6000.
-   Copyright (C) 1992-2015 Free Software Foundation, Inc.
+   Copyright (C) 1992-2016 Free Software Foundation, Inc.
    Contributed by Richard Kenner (kenner@vlsi1.ultra.nyu.edu)
 
    This file is part of GCC.
@@ -95,6 +95,12 @@
 #define ASM_CPU_POWER8_SPEC ASM_CPU_POWER7_SPEC
 #endif
 
+#ifdef HAVE_AS_POWER9
+#define ASM_CPU_POWER9_SPEC "-mpower9"
+#else
+#define ASM_CPU_POWER9_SPEC ASM_CPU_POWER8_SPEC
+#endif
+
 #ifdef HAVE_AS_DCI
 #define ASM_CPU_476_SPEC "-m476"
 #else
@@ -119,6 +125,7 @@
 %{mcpu=power6x: %(asm_cpu_power6) -maltivec} \
 %{mcpu=power7: %(asm_cpu_power7)} \
 %{mcpu=power8: %(asm_cpu_power8)} \
+%{mcpu=power9: %(asm_cpu_power9)} \
 %{mcpu=a2: -ma2} \
 %{mcpu=powerpc: -mppc} \
 %{mcpu=powerpc64le: %(asm_cpu_power8)} \
@@ -194,6 +201,7 @@
   { "asm_cpu_power6",		ASM_CPU_POWER6_SPEC },			\
   { "asm_cpu_power7",		ASM_CPU_POWER7_SPEC },			\
   { "asm_cpu_power8",		ASM_CPU_POWER8_SPEC },			\
+  { "asm_cpu_power9",		ASM_CPU_POWER9_SPEC },			\
   { "asm_cpu_476",		ASM_CPU_476_SPEC },			\
   SUBTARGET_EXTRA_SPECS
 
@@ -292,6 +300,28 @@ extern const char *host_detect_local_cpu (int argc, const char **argv);
 #define TARGET_CRYPTO 0
 #define TARGET_HTM 0
 #define TARGET_P8_VECTOR 0
+#endif
+
+/* Define the ISA 3.0 flags as 0 if the target assembler does not support
+   Power9 instructions.  Allow -mpower9-fusion, since it does not add new
+   instructions.  Allow -misel, since it predates ISA 3.0 and does
+   not require any Power9 features.  */
+
+#ifndef HAVE_AS_POWER9
+#undef  TARGET_FLOAT128_HW
+#undef  TARGET_MODULO
+#undef  TARGET_P9_VECTOR
+#undef  TARGET_P9_MINMAX
+#undef  TARGET_P9_DFORM_SCALAR
+#undef  TARGET_P9_DFORM_VECTOR
+#undef  TARGET_P9_MISC
+#define TARGET_FLOAT128_HW 0
+#define TARGET_MODULO 0
+#define TARGET_P9_VECTOR 0
+#define TARGET_P9_MINMAX 0
+#define TARGET_P9_DFORM_SCALAR 0
+#define TARGET_P9_DFORM_VECTOR 0
+#define TARGET_P9_MISC 0
 #endif
 
 /* Define TARGET_LWSYNC_INSTRUCTION if the assembler knows about lwsync.  If
@@ -403,6 +433,33 @@ extern const char *host_detect_local_cpu (int argc, const char **argv);
 #define TARGET_DEBUG_TARGET	(rs6000_debug & MASK_DEBUG_TARGET)
 #define TARGET_DEBUG_BUILTIN	(rs6000_debug & MASK_DEBUG_BUILTIN)
 
+/* Helper macros for TFmode.  Quad floating point (TFmode) can be either IBM
+   long double format that uses a pair of doubles, or IEEE 128-bit floating
+   point.  KFmode was added as a way to represent IEEE 128-bit floating point,
+   even if the default for long double is the IBM long double format.
+   Similarly IFmode is the IBM long double format even if the default is IEEE
+   128-bit.  */
+#define FLOAT128_IEEE_P(MODE)						\
+  ((TARGET_IEEEQUAD && ((MODE) == TFmode || (MODE) == TCmode))		\
+   || ((MODE) == KFmode) || ((MODE) == KCmode))
+
+#define FLOAT128_IBM_P(MODE)						\
+  ((!TARGET_IEEEQUAD && ((MODE) == TFmode || (MODE) == TCmode))		\
+   || ((MODE) == IFmode) || ((MODE) == ICmode))
+
+/* Helper macros to say whether a 128-bit floating point type can go in a
+   single vector register, or whether it needs paired scalar values.  */
+#define FLOAT128_VECTOR_P(MODE) (TARGET_FLOAT128 && FLOAT128_IEEE_P (MODE))
+
+#define FLOAT128_2REG_P(MODE)						\
+  (FLOAT128_IBM_P (MODE)						\
+   || ((MODE) == TDmode)						\
+   || (!TARGET_FLOAT128 && FLOAT128_IEEE_P (MODE)))
+
+/* Return true for floating point that does not use a vector register.  */
+#define SCALAR_FLOAT_MODE_NOT_VECTOR_P(MODE)				\
+  (SCALAR_FLOAT_MODE_P (MODE) && !FLOAT128_VECTOR_P (MODE))
+
 /* Describe the vector unit used for arithmetic operations.  */
 extern enum rs6000_vector rs6000_vector_unit[];
 
@@ -482,6 +539,10 @@ extern int rs6000_vector_align[];
    with scalar instructions.  */
 #define VECTOR_ELEMENT_SCALAR_64BIT	((BYTES_BIG_ENDIAN) ? 0 : 1)
 
+/* Element number of the 64-bit value in a 128-bit vector that can be accessed
+   with the ISA 3.0 MFVSRLD instructions.  */
+#define VECTOR_ELEMENT_MFVSRLD_64BIT	((BYTES_BIG_ENDIAN) ? 1 : 0)
+
 /* Alignment options for fields in structures for sub-targets following
    AIX-like ABI.
    ALIGN_POWER word-aligns FP doubles (default AIX ABI).
@@ -531,10 +592,15 @@ extern int rs6000_vector_align[];
 #define TARGET_FCFIDUS	TARGET_POPCNTD
 #define TARGET_FCTIDUZ	TARGET_POPCNTD
 #define TARGET_FCTIWUZ	TARGET_POPCNTD
+#define TARGET_CTZ	TARGET_MODULO
+#define TARGET_EXTSWSLI	(TARGET_MODULO && TARGET_POWERPC64)
+#define TARGET_MADDLD	(TARGET_MODULO && TARGET_POWERPC64)
 
 #define TARGET_XSCVDPSPN	(TARGET_DIRECT_MOVE || TARGET_P8_VECTOR)
 #define TARGET_XSCVSPDPN	(TARGET_DIRECT_MOVE || TARGET_P8_VECTOR)
 #define TARGET_VADDUQM		(TARGET_P8_VECTOR && TARGET_POWERPC64)
+#define TARGET_DIRECT_MOVE_128	(TARGET_P9_VECTOR && TARGET_DIRECT_MOVE \
+				 && TARGET_POWERPC64)
 
 /* Byte/char syncs were added as phased in for ISA 2.06B, but are not present
    in power7, so conditionalize them on p8 features.  TImode syncs need quad
@@ -550,6 +616,15 @@ extern int rs6000_vector_align[];
    in the register.  */
 #define TARGET_NO_SDMODE_STACK	(TARGET_LFIWZX && TARGET_STFIWX && TARGET_DFP)
 
+/* ISA 3.0 has new min/max functions that don't need fast math that are being
+   phased in.  Min/max using FSEL or XSMAXDP/XSMINDP do not return the correct
+   answers if the arguments are not in the normal range.  */
+#define TARGET_MINMAX_SF	(TARGET_SF_FPR && TARGET_PPC_GFXOPT	\
+				 && (TARGET_P9_MINMAX || !flag_trapping_math))
+
+#define TARGET_MINMAX_DF	(TARGET_DF_FPR && TARGET_PPC_GFXOPT	\
+				 && (TARGET_P9_MINMAX || !flag_trapping_math))
+
 /* In switching from using target_flags to using rs6000_isa_flags, the options
    machinery creates OPTION_MASK_<xxx> instead of MASK_<xxx>.  For now map
    OPTION_MASK_<xxx> back into MASK_<xxx>.  */
@@ -560,6 +635,7 @@ extern int rs6000_vector_align[];
 #define MASK_DIRECT_MOVE		OPTION_MASK_DIRECT_MOVE
 #define MASK_DLMZB			OPTION_MASK_DLMZB
 #define MASK_EABI			OPTION_MASK_EABI
+#define MASK_FLOAT128			OPTION_MASK_FLOAT128
 #define MASK_FPRND			OPTION_MASK_FPRND
 #define MASK_P8_FUSION			OPTION_MASK_P8_FUSION
 #define MASK_HARD_FLOAT			OPTION_MASK_HARD_FLOAT
@@ -571,6 +647,8 @@ extern int rs6000_vector_align[];
 #define MASK_MULTIPLE			OPTION_MASK_MULTIPLE
 #define MASK_NO_UPDATE			OPTION_MASK_NO_UPDATE
 #define MASK_P8_VECTOR			OPTION_MASK_P8_VECTOR
+#define MASK_P9_VECTOR			OPTION_MASK_P9_VECTOR
+#define MASK_P9_MISC			OPTION_MASK_P9_MISC
 #define MASK_POPCNTB			OPTION_MASK_POPCNTB
 #define MASK_POPCNTD			OPTION_MASK_POPCNTD
 #define MASK_PPC_GFXOPT			OPTION_MASK_PPC_GFXOPT
@@ -611,6 +689,11 @@ extern int rs6000_vector_align[];
 #define MASK_PROTOTYPE			OPTION_MASK_PROTOTYPE
 #endif
 
+#ifdef TARGET_MODULO
+#define RS6000_BTM_MODULO		OPTION_MASK_MODULO
+#endif
+
+
 /* For power systems, we want to enable Altivec and VSX builtins even if the
    user did not use -maltivec or -mvsx to allow the builtins to be used inside
    of #pragma GCC target or the target attribute to change the code level for a
@@ -640,7 +723,7 @@ extern int rs6000_vector_align[];
 #define TARGET_DF_SPE	(TARGET_HARD_FLOAT && TARGET_DOUBLE_FLOAT	\
 			 && !TARGET_FPRS && TARGET_E500_DOUBLE)
 
-/* Whether SF/DF operations are supported by by the normal floating point unit
+/* Whether SF/DF operations are supported by the normal floating point unit
    (or the vector/scalar unit).  */
 #define TARGET_SF_FPR	(TARGET_HARD_FLOAT && TARGET_FPRS		\
 			 && TARGET_SINGLE_FLOAT)
@@ -661,11 +744,28 @@ extern int rs6000_vector_align[];
 			 && (TARGET_POPCNTB || VECTOR_UNIT_VSX_P (DFmode)))
 
 #define TARGET_FRSQRTES	(TARGET_HARD_FLOAT && TARGET_POPCNTB \
-			 && TARGET_FPRS && TARGET_SINGLE_FLOAT)
+			 && TARGET_PPC_GFXOPT && TARGET_FPRS \
+			 && TARGET_SINGLE_FLOAT)
 
 #define TARGET_FRSQRTE	(TARGET_HARD_FLOAT && TARGET_FPRS \
 			 && TARGET_DOUBLE_FLOAT \
 			 && (TARGET_PPC_GFXOPT || VECTOR_UNIT_VSX_P (DFmode)))
+
+/* Conditions to allow TOC fusion for loading/storing integers.  */
+#define TARGET_TOC_FUSION_INT	(TARGET_P8_FUSION			\
+				 && TARGET_TOC_FUSION			\
+				 && (TARGET_CMODEL != CMODEL_SMALL)	\
+				 && TARGET_POWERPC64)
+
+/* Conditions to allow TOC fusion for loading/storing floating point.  */
+#define TARGET_TOC_FUSION_FP	(TARGET_P9_FUSION			\
+				 && TARGET_TOC_FUSION			\
+				 && (TARGET_CMODEL != CMODEL_SMALL)	\
+				 && TARGET_POWERPC64			\
+				 && TARGET_HARD_FLOAT			\
+				 && TARGET_FPRS				\
+				 && TARGET_SINGLE_FLOAT			\
+				 && TARGET_DOUBLE_FLOAT)
 
 /* Whether the various reciprocal divide/square root estimate instructions
    exist, and whether we should automatically generate code for the instruction
@@ -889,11 +989,10 @@ enum data_align { align_abi, align_opt, align_both };
    aligned to 4 or 8 bytes.  */
 #define SLOW_UNALIGNED_ACCESS(MODE, ALIGN)				\
   (STRICT_ALIGNMENT							\
-   || (((MODE) == SFmode || (MODE) == DFmode || (MODE) == TFmode	\
-	|| (MODE) == SDmode || (MODE) == DDmode || (MODE) == TDmode)	\
-       && (ALIGN) < 32)							\
+   || (SCALAR_FLOAT_MODE_NOT_VECTOR_P (MODE) && (ALIGN) < 32)		\
    || (!TARGET_EFFICIENT_UNALIGNED_VSX                                  \
-       && (VECTOR_MODE_P ((MODE)) && (((int)(ALIGN)) < VECTOR_ALIGN (MODE)))))
+       && ((VECTOR_MODE_P (MODE) || FLOAT128_VECTOR_P (MODE))		\
+	   && (((int)(ALIGN)) < VECTOR_ALIGN (MODE)))))
 
 
 /* Standard register usage.  */
@@ -1175,7 +1274,7 @@ enum data_align { align_abi, align_opt, align_both };
    ? V2DFmode								\
    : TARGET_E500_DOUBLE && ((MODE) == VOIDmode || (MODE) == DFmode)	\
    ? DFmode								\
-   : !TARGET_E500_DOUBLE && (MODE) == TFmode && FP_REGNO_P (REGNO)	\
+   : !TARGET_E500_DOUBLE && FLOAT128_IBM_P (MODE) && FP_REGNO_P (REGNO)	\
    ? DFmode								\
    : !TARGET_E500_DOUBLE && (MODE) == TDmode && FP_REGNO_P (REGNO)	\
    ? DImode								\
@@ -1186,18 +1285,22 @@ enum data_align { align_abi, align_opt, align_both };
      && (GET_MODE_SIZE (MODE) > 4)					\
      && INT_REGNO_P (REGNO)) ? 1 : 0)					\
    || (TARGET_VSX && FP_REGNO_P (REGNO)					\
-       && GET_MODE_SIZE (MODE) > 8 && ((MODE) != TDmode) 		\
-       && ((MODE) != TFmode)))
+       && GET_MODE_SIZE (MODE) > 8 && !FLOAT128_2REG_P (MODE)))
 
 #define VSX_VECTOR_MODE(MODE)		\
 	 ((MODE) == V4SFmode		\
 	  || (MODE) == V2DFmode)	\
 
-#define ALTIVEC_VECTOR_MODE(MODE)	\
-	 ((MODE) == V16QImode		\
-	  || (MODE) == V8HImode		\
-	  || (MODE) == V4SFmode		\
-	  || (MODE) == V4SImode)
+/* Note KFmode and possibly TFmode (i.e. IEEE 128-bit floating point) are not
+   really a vector, but we want to treat it as a vector for moves, and
+   such.  */
+
+#define ALTIVEC_VECTOR_MODE(MODE)					\
+  ((MODE) == V16QImode							\
+   || (MODE) == V8HImode						\
+   || (MODE) == V4SFmode						\
+   || (MODE) == V4SImode						\
+   || FLOAT128_VECTOR_P (MODE))
 
 #define ALTIVEC_OR_VSX_VECTOR_MODE(MODE)				\
   (ALTIVEC_VECTOR_MODE (MODE) || VSX_VECTOR_MODE (MODE)			\
@@ -1224,11 +1327,18 @@ enum data_align { align_abi, align_opt, align_both };
 
    PTImode cannot tie with other modes because PTImode is restricted to even
    GPR registers, and TImode can go in any GPR as well as VSX registers (PR
-   57744).  */
+   57744).
+
+   Altivec/VSX vector tests were moved ahead of scalar float mode, so that IEEE
+   128-bit floating point on VSX systems ties with other vectors.  */
 #define MODES_TIEABLE_P(MODE1, MODE2)		\
   ((MODE1) == PTImode				\
    ? (MODE2) == PTImode				\
    : (MODE2) == PTImode				\
+   ? 0						\
+   : ALTIVEC_OR_VSX_VECTOR_MODE (MODE1)		\
+   ? ALTIVEC_OR_VSX_VECTOR_MODE (MODE2)		\
+   : ALTIVEC_OR_VSX_VECTOR_MODE (MODE2)		\
    ? 0						\
    : SCALAR_FLOAT_MODE_P (MODE1)		\
    ? SCALAR_FLOAT_MODE_P (MODE2)		\
@@ -1241,10 +1351,6 @@ enum data_align { align_abi, align_opt, align_both };
    : SPE_VECTOR_MODE (MODE1)			\
    ? SPE_VECTOR_MODE (MODE2)			\
    : SPE_VECTOR_MODE (MODE2)			\
-   ? 0						\
-   : ALTIVEC_OR_VSX_VECTOR_MODE (MODE1)		\
-   ? ALTIVEC_OR_VSX_VECTOR_MODE (MODE2)		\
-   : ALTIVEC_OR_VSX_VECTOR_MODE (MODE2)		\
    ? 0						\
    : 1)
 
@@ -1294,6 +1400,9 @@ enum data_align { align_abi, align_opt, align_both };
 
 /* Place to put static chain when calling a function that requires it.  */
 #define STATIC_CHAIN_REGNUM 11
+
+/* Base register for access to thread local storage variables.  */
+#define TLS_REGNUM ((TARGET_64BIT) ? 13 : 2)
 
 
 /* Define the classes of registers for register constraints in the
@@ -1447,14 +1556,9 @@ enum reg_class
 
 extern enum reg_class rs6000_regno_regclass[FIRST_PSEUDO_REGISTER];
 
-#if ENABLE_CHECKING
 #define REGNO_REG_CLASS(REGNO) 						\
-  (gcc_assert (IN_RANGE ((REGNO), 0, FIRST_PSEUDO_REGISTER-1)),		\
+  (gcc_checking_assert (IN_RANGE ((REGNO), 0, FIRST_PSEUDO_REGISTER-1)),\
    rs6000_regno_regclass[(REGNO)])
-
-#else
-#define REGNO_REG_CLASS(REGNO) rs6000_regno_regclass[(REGNO)]
-#endif
 
 /* Register classes for various constraints that are based on the target
    switches.  */
@@ -1463,7 +1567,9 @@ enum r6000_reg_class_enum {
   RS6000_CONSTRAINT_f,		/* fpr registers for single values */
   RS6000_CONSTRAINT_v,		/* Altivec registers */
   RS6000_CONSTRAINT_wa,		/* Any VSX register */
+  RS6000_CONSTRAINT_wb,		/* Altivec register if ISA 3.0 vector. */
   RS6000_CONSTRAINT_wd,		/* VSX register for V2DF */
+  RS6000_CONSTRAINT_we,		/* VSX register if ISA 3.0 vector. */
   RS6000_CONSTRAINT_wf,		/* VSX register for V4SF */
   RS6000_CONSTRAINT_wg,		/* FPR register for -mmfpgpr */
   RS6000_CONSTRAINT_wh,		/* FPR register for direct moves.  */
@@ -1472,6 +1578,9 @@ enum r6000_reg_class_enum {
   RS6000_CONSTRAINT_wk,		/* FPR/VSX register for DFmode direct moves. */
   RS6000_CONSTRAINT_wl,		/* FPR register for LFIWAX */
   RS6000_CONSTRAINT_wm,		/* VSX register for direct move */
+  RS6000_CONSTRAINT_wo,		/* VSX register for power9 vector.  */
+  RS6000_CONSTRAINT_wp,		/* VSX reg for IEEE 128-bit fp TFmode. */
+  RS6000_CONSTRAINT_wq,		/* VSX reg for IEEE 128-bit fp KFmode.  */
   RS6000_CONSTRAINT_wr,		/* GPR register if 64-bit  */
   RS6000_CONSTRAINT_ws,		/* VSX register for DF */
   RS6000_CONSTRAINT_wt,		/* VSX register for TImode */
@@ -1481,6 +1590,7 @@ enum r6000_reg_class_enum {
   RS6000_CONSTRAINT_wx,		/* FPR register for STFIWX */
   RS6000_CONSTRAINT_wy,		/* VSX register for SF */
   RS6000_CONSTRAINT_wz,		/* FPR register for LFIWZX */
+  RS6000_CONSTRAINT_wA,		/* BASE_REGS if 64-bit.  */
   RS6000_CONSTRAINT_MAX
 };
 
@@ -1564,7 +1674,7 @@ extern enum reg_class rs6000_constraints[RS6000_CONSTRAINT_MAX];
 
 /* Define this if pushing a word on the stack
    makes the stack pointer a smaller address.  */
-#define STACK_GROWS_DOWNWARD
+#define STACK_GROWS_DOWNWARD 1
 
 /* Offsets recorded in opcodes are a multiple of this alignment factor.  */
 #define DWARF_CIE_DATA_ALIGNMENT (-((int) (TARGET_32BIT ? 4 : 8)))
@@ -1589,7 +1699,7 @@ extern enum reg_class rs6000_constraints[RS6000_CONSTRAINT_MAX];
   ((DEFAULT_ABI == ABI_ELFv2 ? 12 : 20) << (TARGET_64BIT ? 1 : 0))
 
 /* Align an address */
-#define RS6000_ALIGN(n,a) (((n) + (a) - 1) & ~((a) - 1))
+#define RS6000_ALIGN(n,a) ROUND_UP ((n), (a))
 
 /* Offset within stack frame to start allocating local variables at.
    If FRAME_GROWS_DOWNWARD, this is the offset to the END of the
@@ -1705,7 +1815,9 @@ extern enum reg_class rs6000_constraints[RS6000_CONSTRAINT_MAX];
 #define ALTIVEC_ARG_RETURN (FIRST_ALTIVEC_REGNO + 2)
 #define FP_ARG_MAX_RETURN (DEFAULT_ABI != ABI_ELFv2 ? FP_ARG_RETURN	\
 			   : (FP_ARG_RETURN + AGGR_ARG_NUM_REG - 1))
-#define ALTIVEC_ARG_MAX_RETURN (DEFAULT_ABI != ABI_ELFv2 ? ALTIVEC_ARG_RETURN \
+#define ALTIVEC_ARG_MAX_RETURN (DEFAULT_ABI != ABI_ELFv2		\
+				? (ALTIVEC_ARG_RETURN			\
+				   + (TARGET_FLOAT128 ? 1 : 0))		\
 			        : (ALTIVEC_ARG_RETURN + AGGR_ARG_NUM_REG - 1))
 
 /* Flags for the call/call_value rtl operations set up by function_arg */
@@ -1775,6 +1887,7 @@ typedef struct rs6000_args
 				   GPR space (darwin64) */
   int named;			/* false for varargs params */
   int escapes;			/* if function visible outside tu */
+  int libcall;			/* If this is a compiler generated call.  */
 } CUMULATIVE_ARGS;
 
 /* Initialize a variable CUM of type CUMULATIVE_ARGS
@@ -1954,7 +2067,7 @@ typedef struct rs6000_args
 				    && ((n) & 1) == 0)
 
 #define EASY_VECTOR_MSB(n,mode)						\
-  (((unsigned HOST_WIDE_INT)n) ==					\
+  ((((unsigned HOST_WIDE_INT) (n)) & GET_MODE_MASK (mode)) ==		\
    ((((unsigned HOST_WIDE_INT)GET_MODE_MASK (mode)) + 1) >> 1))
 
 
@@ -2040,10 +2153,6 @@ do {									     \
    is undesirable.  */
 #define SLOW_BYTE_ACCESS 1
 
-/* Define if operations between registers always perform the operation
-   on the full register even if a narrower mode is specified.  */
-#define WORD_REGISTER_OPERATIONS
-
 /* Define if loading in MODE, an integral mode narrower than BITS_PER_WORD
    will either zero-extend or sign-extend.  The value of this macro should
    be the code that says which one of the two operations is implicitly
@@ -2051,7 +2160,7 @@ do {									     \
 #define LOAD_EXTEND_OP(MODE) ZERO_EXTEND
 
 /* Define if loading short immediate values into registers sign extends.  */
-#define SHORT_IMMEDIATES_SIGN_EXTEND
+#define SHORT_IMMEDIATES_SIGN_EXTEND 1
 
 /* Value is 1 if truncating an integer of INPREC bits to OUTPREC bits
    is done just by pretending it is already truncated.  */
@@ -2061,8 +2170,12 @@ do {									     \
 #define CLZ_DEFINED_VALUE_AT_ZERO(MODE, VALUE) \
   ((VALUE) = ((MODE) == SImode ? 32 : 64), 1)
 
-/* The CTZ patterns return -1 for input of zero.  */
-#define CTZ_DEFINED_VALUE_AT_ZERO(MODE, VALUE) ((VALUE) = -1, 1)
+/* The CTZ patterns that are implemented in terms of CLZ return -1 for input of
+   zero.  The hardware instructions added in Power9 return 32 or 64.  */
+#define CTZ_DEFINED_VALUE_AT_ZERO(MODE, VALUE)				\
+  ((!TARGET_CTZ)							\
+   ? ((VALUE) = -1, 1)							\
+   : ((VALUE) = ((MODE) == SImode ? 32 : 64), 1))
 
 /* Specify the machine mode that pointers have.
    After generation of rtl, the compiler makes no further distinction
@@ -2081,7 +2194,7 @@ extern unsigned rs6000_pmode;
    shouldn't be put through pseudo regs where they can be cse'd.
    Desirable on machines where ordinary constants are expensive
    but a CALL with constant address is cheap.  */
-#define NO_FUNCTION_CSE
+#define NO_FUNCTION_CSE 1
 
 /* Define this to be nonzero if shift instructions ignore all but the low-order
    few bits.
@@ -2568,7 +2681,9 @@ extern int frame_pointer_needed;
 
 #define RS6000_BTC_MISC		0x00000000	/* No special attributes.  */
 #define RS6000_BTC_CONST	0x00000100	/* uses no global state.  */
-#define RS6000_BTC_PURE		0x00000200	/* reads global state/mem.  */
+#define RS6000_BTC_PURE		0x00000200	/* reads global
+						   state/mem and does
+						   not modify global state.  */
 #define RS6000_BTC_FP		0x00000400	/* depends on rounding mode.  */
 #define RS6000_BTC_ATTR_MASK	0x00000700	/* Mask of the attributes.  */
 
@@ -2590,6 +2705,8 @@ extern int frame_pointer_needed;
 #define RS6000_BTM_ALTIVEC	MASK_ALTIVEC	/* VMX/altivec vectors.  */
 #define RS6000_BTM_VSX		MASK_VSX	/* VSX (vector/scalar).  */
 #define RS6000_BTM_P8_VECTOR	MASK_P8_VECTOR	/* ISA 2.07 vector.  */
+#define RS6000_BTM_P9_VECTOR	MASK_P9_VECTOR	/* ISA 3.00 vector.  */
+#define RS6000_BTM_P9_MISC	MASK_P9_MISC	/* ISA 3.0 misc. non-vector.  */
 #define RS6000_BTM_CRYPTO	MASK_CRYPTO	/* crypto funcs.  */
 #define RS6000_BTM_HTM		MASK_HTM	/* hardware TM funcs.  */
 #define RS6000_BTM_SPE		MASK_STRING	/* E500 */
@@ -2603,10 +2720,15 @@ extern int frame_pointer_needed;
 #define RS6000_BTM_DFP		MASK_DFP	/* Decimal floating point.  */
 #define RS6000_BTM_HARD_FLOAT	MASK_SOFT_FLOAT	/* Hardware floating point.  */
 #define RS6000_BTM_LDBL128	MASK_MULTIPLE	/* 128-bit long double.  */
+#define RS6000_BTM_64BIT	MASK_64BIT	/* 64-bit addressing.  */
+#define RS6000_BTM_FLOAT128	MASK_FLOAT128	/* IEEE 128-bit float.  */
 
 #define RS6000_BTM_COMMON	(RS6000_BTM_ALTIVEC			\
 				 | RS6000_BTM_VSX			\
 				 | RS6000_BTM_P8_VECTOR			\
+				 | RS6000_BTM_P9_VECTOR			\
+				 | RS6000_BTM_P9_MISC			\
+				 | RS6000_BTM_MODULO                    \
 				 | RS6000_BTM_CRYPTO			\
 				 | RS6000_BTM_FRE			\
 				 | RS6000_BTM_FRES			\
@@ -2617,10 +2739,12 @@ extern int frame_pointer_needed;
 				 | RS6000_BTM_CELL			\
 				 | RS6000_BTM_DFP			\
 				 | RS6000_BTM_HARD_FLOAT		\
-				 | RS6000_BTM_LDBL128)
+				 | RS6000_BTM_LDBL128			\
+				 | RS6000_BTM_FLOAT128)
 
 /* Define builtin enum index.  */
 
+#undef RS6000_BUILTIN_0
 #undef RS6000_BUILTIN_1
 #undef RS6000_BUILTIN_2
 #undef RS6000_BUILTIN_3
@@ -2633,6 +2757,7 @@ extern int frame_pointer_needed;
 #undef RS6000_BUILTIN_S
 #undef RS6000_BUILTIN_X
 
+#define RS6000_BUILTIN_0(ENUM, NAME, MASK, ATTR, ICODE) ENUM,
 #define RS6000_BUILTIN_1(ENUM, NAME, MASK, ATTR, ICODE) ENUM,
 #define RS6000_BUILTIN_2(ENUM, NAME, MASK, ATTR, ICODE) ENUM,
 #define RS6000_BUILTIN_3(ENUM, NAME, MASK, ATTR, ICODE) ENUM,
@@ -2652,6 +2777,7 @@ enum rs6000_builtins
   RS6000_BUILTIN_COUNT
 };
 
+#undef RS6000_BUILTIN_0
 #undef RS6000_BUILTIN_1
 #undef RS6000_BUILTIN_2
 #undef RS6000_BUILTIN_3
@@ -2716,6 +2842,9 @@ enum rs6000_builtin_type_index
   RS6000_BTI_dfloat64,		 /* dfloat64_type_node */
   RS6000_BTI_dfloat128,		 /* dfloat128_type_node */
   RS6000_BTI_void,	         /* void_type_node */
+  RS6000_BTI_ieee128_float,	 /* ieee 128-bit floating point */
+  RS6000_BTI_ibm128_float,	 /* IBM 128-bit floating point */
+  RS6000_BTI_const_str,		 /* pointer to const char * */
   RS6000_BTI_MAX
 };
 
@@ -2770,6 +2899,9 @@ enum rs6000_builtin_type_index
 #define dfloat64_type_internal_node	 (rs6000_builtin_types[RS6000_BTI_dfloat64])
 #define dfloat128_type_internal_node	 (rs6000_builtin_types[RS6000_BTI_dfloat128])
 #define void_type_internal_node		 (rs6000_builtin_types[RS6000_BTI_void])
+#define ieee128_float_type_node		 (rs6000_builtin_types[RS6000_BTI_ieee128_float])
+#define ibm128_float_type_node		 (rs6000_builtin_types[RS6000_BTI_ibm128_float])
+#define const_str_type_node		 (rs6000_builtin_types[RS6000_BTI_const_str])
 
 extern GTY(()) tree rs6000_builtin_types[RS6000_BTI_MAX];
 extern GTY(()) tree rs6000_builtin_decls[RS6000_BUILTIN_COUNT];

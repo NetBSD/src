@@ -40,6 +40,7 @@
  * According to RFC 4034.
  */
 #include "config.h"
+#include <ctype.h>
 #include "validator/validator.h"
 #include "validator/val_anchor.h"
 #include "validator/val_kcache.h"
@@ -51,6 +52,7 @@
 #include "validator/val_sigcrypt.h"
 #include "validator/autotrust.h"
 #include "services/cache/dns.h"
+#include "services/cache/rrset.h"
 #include "util/data/dname.h"
 #include "util/module.h"
 #include "util/log.h"
@@ -461,7 +463,7 @@ generate_keytag_query(struct module_qstate* qstate, int id,
 		return 0;
 	}
 
-	log_nametypeclass(VERB_ALGO, "keytag query", keytagdname,
+	log_nametypeclass(VERB_OPS, "generate keytag query", keytagdname,
 		LDNS_RR_TYPE_NULL, ta->dclass);
 	if(!generate_request(qstate, id, keytagdname, dnamebuf_len,
 		LDNS_RR_TYPE_NULL, ta->dclass, 0, &newq, 1)) {
@@ -473,6 +475,31 @@ generate_keytag_query(struct module_qstate* qstate, int id,
 	 * that might be changed by generate_request() */
 	qstate->ext_state[id] = ext_state;
 
+	return 1;
+}
+
+/**
+ * Get keytag as uint16_t from string
+ *
+ * @param start: start of string containing keytag
+ * @param keytag: pointer where to store the extracted keytag
+ * @return: 1 if keytag was extracted, else 0.
+ */
+static int
+sentinel_get_keytag(char* start, uint16_t* keytag) {
+	char* keytag_str;
+	char* e = NULL;
+	keytag_str = calloc(1, SENTINEL_KEYTAG_LEN + 1 /* null byte */);
+	if(!keytag_str)
+		return 0;
+	memmove(keytag_str, start, SENTINEL_KEYTAG_LEN);
+	keytag_str[SENTINEL_KEYTAG_LEN] = '\0';
+	*keytag = (uint16_t)strtol(keytag_str, &e, 10);
+	if(!e || *e != '\0') {
+		free(keytag_str);
+		return 0;
+	}
+	free(keytag_str);
 	return 1;
 }
 
@@ -745,6 +772,8 @@ validate_positive_response(struct module_env* env, struct val_env* ve,
 	struct key_entry_key* kkey)
 {
 	uint8_t* wc = NULL;
+	size_t wl;
+	int wc_cached = 0;
 	int wc_NSEC_ok = 0;
 	int nsec3s_seen = 0;
 	size_t i;
@@ -757,13 +786,19 @@ validate_positive_response(struct module_env* env, struct val_env* ve,
 		/* Check to see if the rrset is the result of a wildcard 
 		 * expansion. If so, an additional check will need to be 
 		 * made in the authority section. */
-		if(!val_rrset_wildcard(s, &wc)) {
+		if(!val_rrset_wildcard(s, &wc, &wl)) {
 			log_nametypeclass(VERB_QUERY, "Positive response has "
 				"inconsistent wildcard sigs:", s->rk.dname,
 				ntohs(s->rk.type), ntohs(s->rk.rrset_class));
 			chase_reply->security = sec_status_bogus;
 			return;
 		}
+		if(wc && !wc_cached && env->cfg->aggressive_nsec) {
+			rrset_cache_update_wildcard(env->rrset_cache, s, wc, wl,
+				env->alloc, *env->now);
+			wc_cached = 1;
+		}
+
 	}
 
 	/* validate the AUTHORITY section as well - this will generally be 
@@ -944,6 +979,9 @@ validate_nameerror_response(struct module_env* env, struct val_env* ve,
 	int nsec3s_seen = 0;
 	struct ub_packed_rrset_key* s; 
 	size_t i;
+	uint8_t* ce;
+	int ce_labs = 0;
+	int prev_ce_labs = 0;
 
 	for(i=chase_reply->an_numrrsets; i<chase_reply->an_numrrsets+
 		chase_reply->ns_numrrsets; i++) {
@@ -951,9 +989,19 @@ validate_nameerror_response(struct module_env* env, struct val_env* ve,
 		if(ntohs(s->rk.type) == LDNS_RR_TYPE_NSEC) {
 			if(val_nsec_proves_name_error(s, qchase->qname))
 				has_valid_nsec = 1;
-			if(val_nsec_proves_no_wc(s, qchase->qname, 
-				qchase->qname_len))
-				has_valid_wnsec = 1;
+			ce = nsec_closest_encloser(qchase->qname, s);            
+			ce_labs = dname_count_labels(ce);                        
+			/* Use longest closest encloser to prove wildcard. */
+			if(ce_labs > prev_ce_labs ||                             
+			       (ce_labs == prev_ce_labs &&                      
+				       has_valid_wnsec == 0)) {                 
+			       if(val_nsec_proves_no_wc(s, qchase->qname,       
+				       qchase->qname_len))                      
+				       has_valid_wnsec = 1;                     
+			       else                                             
+				       has_valid_wnsec = 0;                     
+			}                                                        
+			prev_ce_labs = ce_labs; 
 			if(val_nsec_proves_insecuredelegation(s, qchase)) {
 				verbose(VERB_ALGO, "delegation is insecure");
 				chase_reply->security = sec_status_insecure;
@@ -1068,6 +1116,7 @@ validate_any_response(struct module_env* env, struct val_env* ve,
 	/* but check if a wildcard response is given, then check NSEC/NSEC3
 	 * for qname denial to see if wildcard is applicable */
 	uint8_t* wc = NULL;
+	size_t wl;
 	int wc_NSEC_ok = 0;
 	int nsec3s_seen = 0;
 	size_t i;
@@ -1086,7 +1135,7 @@ validate_any_response(struct module_env* env, struct val_env* ve,
 		/* Check to see if the rrset is the result of a wildcard 
 		 * expansion. If so, an additional check will need to be 
 		 * made in the authority section. */
-		if(!val_rrset_wildcard(s, &wc)) {
+		if(!val_rrset_wildcard(s, &wc, &wl)) {
 			log_nametypeclass(VERB_QUERY, "Positive ANY response"
 				" has inconsistent wildcard sigs:", 
 				s->rk.dname, ntohs(s->rk.type), 
@@ -1175,6 +1224,7 @@ validate_cname_response(struct module_env* env, struct val_env* ve,
 	struct key_entry_key* kkey)
 {
 	uint8_t* wc = NULL;
+	size_t wl;
 	int wc_NSEC_ok = 0;
 	int nsec3s_seen = 0;
 	size_t i;
@@ -1187,7 +1237,7 @@ validate_cname_response(struct module_env* env, struct val_env* ve,
 		/* Check to see if the rrset is the result of a wildcard 
 		 * expansion. If so, an additional check will need to be 
 		 * made in the authority section. */
-		if(!val_rrset_wildcard(s, &wc)) {
+		if(!val_rrset_wildcard(s, &wc, &wl)) {
 			log_nametypeclass(VERB_QUERY, "Cname response has "
 				"inconsistent wildcard sigs:", s->rk.dname,
 				ntohs(s->rk.type), ntohs(s->rk.rrset_class));
@@ -1296,6 +1346,9 @@ validate_cname_noanswer_response(struct module_env* env, struct val_env* ve,
 	int nsec3s_seen = 0; /* nsec3s seen */
 	struct ub_packed_rrset_key* s; 
 	size_t i;
+	uint8_t* nsec_ce; /* Used to find the NSEC with the longest ce */
+	int ce_labs = 0;
+	int prev_ce_labs = 0;
 
 	/* the AUTHORITY section */
 	for(i=chase_reply->an_numrrsets; i<chase_reply->an_numrrsets+
@@ -1314,9 +1367,19 @@ validate_cname_noanswer_response(struct module_env* env, struct val_env* ve,
 				ce = nsec_closest_encloser(qchase->qname, s);
 				nxdomain_valid_nsec = 1;
 			}
-			if(val_nsec_proves_no_wc(s, qchase->qname, 
-				qchase->qname_len))
-				nxdomain_valid_wnsec = 1;
+			nsec_ce = nsec_closest_encloser(qchase->qname, s);
+			ce_labs = dname_count_labels(nsec_ce);
+			/* Use longest closest encloser to prove wildcard. */
+			if(ce_labs > prev_ce_labs ||
+			       (ce_labs == prev_ce_labs &&
+				       nxdomain_valid_wnsec == 0)) {
+			       if(val_nsec_proves_no_wc(s, qchase->qname,
+				       qchase->qname_len))
+				       nxdomain_valid_wnsec = 1;
+			       else
+				       nxdomain_valid_wnsec = 0;
+			}
+			prev_ce_labs = ce_labs;
 			if(val_nsec_proves_insecuredelegation(s, qchase)) {
 				verbose(VERB_ALGO, "delegation is insecure");
 				chase_reply->security = sec_status_insecure;
@@ -2134,6 +2197,10 @@ processFinished(struct module_qstate* qstate, struct val_qstate* vq,
 		if(vq->orig_msg->rep->security == sec_status_secure) {
 			log_query_info(VERB_DETAIL, "validation success", 
 				&qstate->qinfo);
+			if(!qstate->no_cache_store) {
+				val_neg_addreply(qstate->env->neg_cache,
+					vq->orig_msg->rep);
+			}
 		}
 	}
 
@@ -2182,6 +2249,34 @@ processFinished(struct module_qstate* qstate, struct val_qstate* vq,
 			vq->orig_msg->rep->security = sec_status_indeterminate;
 	}
 
+	if(vq->orig_msg->rep->security == sec_status_secure &&
+		qstate->env->cfg->root_key_sentinel &&
+		(qstate->qinfo.qtype == LDNS_RR_TYPE_A ||
+		qstate->qinfo.qtype == LDNS_RR_TYPE_AAAA)) {
+		char* keytag_start;
+		uint16_t keytag;
+		if(*qstate->qinfo.qname == strlen(SENTINEL_IS) +
+			SENTINEL_KEYTAG_LEN &&
+			dname_lab_startswith(qstate->qinfo.qname, SENTINEL_IS,
+			&keytag_start)) {
+			if(sentinel_get_keytag(keytag_start, &keytag) &&
+				!anchor_has_keytag(qstate->env->anchors,
+				(uint8_t*)"", 1, 0, vq->qchase.qclass, keytag)) {
+				vq->orig_msg->rep->security =
+					sec_status_secure_sentinel_fail;
+			}
+		} else if(*qstate->qinfo.qname == strlen(SENTINEL_NOT) +
+			SENTINEL_KEYTAG_LEN &&
+			dname_lab_startswith(qstate->qinfo.qname, SENTINEL_NOT,
+			&keytag_start)) {
+			if(sentinel_get_keytag(keytag_start, &keytag) &&
+				anchor_has_keytag(qstate->env->anchors,
+				(uint8_t*)"", 1, 0, vq->qchase.qclass, keytag)) {
+				vq->orig_msg->rep->security =
+					sec_status_secure_sentinel_fail;
+			}
+		}
+	}
 	/* store results in cache */
 	if(qstate->query_flags&BIT_RD) {
 		/* if secure, this will override cache anyway, no need

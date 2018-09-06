@@ -29,7 +29,6 @@
 #include <dlfcn.h>
 #include <fcntl.h>
 #include <pthread.h>
-#include <signal.h>
 #include <stdio.h>
 #include <unistd.h>
 #include <unwind.h>
@@ -70,6 +69,12 @@ asan_rt_version_t  __asan_rt_version;
 }
 
 namespace __asan {
+
+void InitializePlatformInterceptors() {}
+
+void DisableReexec() {
+  // No need to re-exec on Linux.
+}
 
 void MaybeReexec() {
   // No need to re-exec on Linux.
@@ -119,8 +124,11 @@ static void ReportIncompatibleRT() {
 }
 
 void AsanCheckDynamicRTPrereqs() {
+  if (!ASAN_DYNAMIC)
+    return;
+
   // Ensure that dynamic RT is the first DSO in the list
-  const char *first_dso_name = 0;
+  const char *first_dso_name = nullptr;
   dl_iterate_phdr(FindFirstDSOCallback, &first_dso_name);
   if (first_dso_name && !IsDynamicRTName(first_dso_name)) {
     Report("ASan runtime does not come first in initial library list; "
@@ -145,7 +153,8 @@ void AsanCheckIncompatibleRT() {
       // system libraries, causing crashes later in ASan initialization.
       MemoryMappingLayout proc_maps(/*cache_enabled*/true);
       char filename[128];
-      while (proc_maps.Next(0, 0, 0, filename, sizeof(filename), 0)) {
+      while (proc_maps.Next(nullptr, nullptr, nullptr, filename,
+                            sizeof(filename), nullptr)) {
         if (IsDynamicRTName(filename)) {
           Report("Your application is linked against "
                  "incompatible ASan runtimes.\n");
@@ -158,46 +167,45 @@ void AsanCheckIncompatibleRT() {
     }
   }
 }
-#endif  // SANITIZER_ANDROID
+#endif // SANITIZER_ANDROID
 
+#if 0 // was in old netbsd / gcc 5 sanitizer stuff
 void GetPcSpBp(void *context, uptr *pc, uptr *sp, uptr *bp) {
 #ifdef __NetBSD__
-# ifndef _UC_MACHINE_FP
-#  define __UC_MACHINE_FP(ucontext, r) \
+# define __UC_MACHINE_FP(ucontext, r) \
     (ucontext)->uc_mcontext.__gregs[(r)]
 /*
  * Unfortunately we don't have a portable frame pointer (yet)
  */
-#  if defined(__alpha__)
-#   define _UC_MACHINE_FP(ucontext) __UC_MACHINE_FP(ucontext, _REG_S6)
-#  elif defined(__arm__)
-#   define _UC_MACHINE_FP(ucontext) __UC_MACHINE_FP(ucontext, _REG_FP)
-#  elif defined(__x86_64__)
-#   define _UC_MACHINE_FP(ucontext) __UC_MACHINE_FP(ucontext, _REG_RBP)
-#  elif defined(__i386__)
-#   define _UC_MACHINE_FP(ucontext) __UC_MACHINE_FP(ucontext, _REG_EBP)
-#  elif defined(__m68k__)
-#   define _UC_MACHINE_FP(ucontext) __UC_MACHINE_FP(ucontext, _REG_A6)
-#  elif defined(__mips__)
-#   define _UC_MACHINE_FP(ucontext) __UC_MACHINE_FP(ucontext, _REG_S8)
-#  elif defined(__powerpc__) || defined(__powerpc64__)
-#   define _UC_MACHINE_FP(ucontext) __UC_MACHINE_FP(ucontext, _REG_R1)
-#  elif defined(__riscv__)
-#   define _UC_MACHINE_FP(ucontext) __UC_MACHINE_FP(ucontext, _REG_S0)
-#  elif defined(__sparc__)
-#   define _UC_MACHINE_FP(ucontext) sp[15]
-#  elif defined(__sh3__)
-#   define _UC_MACHINE_FP(ucontext) __UC_MACHINE_FP(ucontext, _REG_R14)
-#  elif defined(__vax__)
-#   define _UC_MACHINE_FP(ucontext) __UC_MACHINE_FP(ucontext, _REG_FP)
-#  else
-#   define _UC_MACHINE_FP(ucontext) 0
-#  endif
+# if defined(__alpha__)
+#  define _UC_MACHINE_FP(ucontext) __UC_MACHINE_FP(ucontext, _REG_S6)
+# elif defined(__arm__)
+#  define _UC_MACHINE_FP(ucontext) __UC_MACHINE_FP(ucontext, _REG_FP)
+# elif defined(__x86_64__)
+#  define _UC_MACHINE_FP(ucontext) __UC_MACHINE_FP(ucontext, _REG_RBP)
+# elif defined(__i386__)
+#  define _UC_MACHINE_FP(ucontext) __UC_MACHINE_FP(ucontext, _REG_EBP)
+# elif defined(__m68k__)
+#  define _UC_MACHINE_FP(ucontext) __UC_MACHINE_FP(ucontext, _REG_A6)
+# elif defined(__mips__)
+#  define _UC_MACHINE_FP(ucontext) __UC_MACHINE_FP(ucontext, _REG_S8)
+# elif defined(__powerpc__) || defined(__powerpc64__)
+#  define _UC_MACHINE_FP(ucontext) __UC_MACHINE_FP(ucontext, _REG_R1)
+# elif defined(__riscv__)
+#  define _UC_MACHINE_FP(ucontext) __UC_MACHINE_FP(ucontext, _REG_S0)
+# elif defined(__sparc__)
+#  define _UC_MACHINE_FP(ucontext) sp[15]
+# elif defined(__sh3__)
+#  define _UC_MACHINE_FP(ucontext) __UC_MACHINE_FP(ucontext, _REG_R14)
+# elif defined(__vax__)
+#  define _UC_MACHINE_FP(ucontext) __UC_MACHINE_FP(ucontext, _REG_FP)
+# else
+#  define _UC_MACHINE_FP(ucontext) 0
+# endif
   ucontext_t *ucontext = (ucontext_t*)context;
   *pc = _UC_MACHINE_PC(ucontext);
   *sp = _UC_MACHINE_SP(ucontext);
   *bp = _UC_MACHINE_FP(ucontext);
-# endif
 #elif ASAN_ANDROID
   *pc = *sp = *bp = 0;
 #elif defined(__arm__)
@@ -292,6 +300,7 @@ bool AsanInterceptsSignal(int signum) {
 void AsanPlatformThreadInit() {
   // Nothing here for now.
 }
+#endif
 
 #if !SANITIZER_ANDROID
 void ReadContextStack(void *context, uptr *stack, uptr *ssize) {
@@ -309,6 +318,6 @@ void *AsanDlSymNext(const char *sym) {
   return dlsym(RTLD_NEXT, sym);
 }
 
-}  // namespace __asan
+} // namespace __asan
 
-#endif  // SANITIZER_FREEBSD || SANITIZER_LINUX || SANITIZER_NETBSD
+#endif // SANITIZER_FREEBSD || SANITIZER_LINUX || SANITIZER_NETBSD

@@ -1,3 +1,5 @@
+/*	$NetBSD: ttm_agp_backend.c,v 1.1.1.2.28.1 2018/09/06 06:56:34 pgoyette Exp $	*/
+
 /**************************************************************************
  *
  * Copyright (c) 2006-2009 VMware, Inc., Palo Alto, CA., USA
@@ -28,6 +30,9 @@
  * Authors: Thomas Hellstrom <thellstrom-at-vmware-dot-com>
  *          Keith Packard.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ttm_agp_backend.c,v 1.1.1.2.28.1 2018/09/06 06:56:34 pgoyette Exp $");
 
 #define pr_fmt(fmt) "[TTM] " fmt
 

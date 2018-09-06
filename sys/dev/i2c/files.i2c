@@ -1,4 +1,4 @@
-#	$NetBSD: files.i2c,v 1.84.2.5 2018/07/28 04:37:44 pgoyette Exp $
+#	$NetBSD: files.i2c,v 1.84.2.6 2018/09/06 06:55:49 pgoyette Exp $
 
 obsolete defflag	opt_i2cbus.h		I2C_SCAN
 define	i2cbus { }
@@ -345,3 +345,14 @@ device tea5767radio : radiodev
 attach tea5767radio at iic
 file dev/i2c/tea5767.c				tea5767radio
 
+# Fairchild FAN53555 / Silergy SY82x regulator
+device	fan53555reg
+attach	fan53555reg at iic
+file	dev/i2c/fan53555.c			fan53555reg
+
+# Rockchip Power Management IC
+device	rkpmic { }
+device	rkreg: rkpmic
+attach	rkpmic at iic
+attach	rkreg at rkpmic
+file	dev/i2c/rkpmic.c			rkpmic

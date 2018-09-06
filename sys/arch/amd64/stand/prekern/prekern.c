@@ -1,4 +1,4 @@
-/*	$NetBSD: prekern.c,v 1.7.4.1 2018/06/25 07:25:38 pgoyette Exp $	*/
+/*	$NetBSD: prekern.c,v 1.7.4.2 2018/09/06 06:55:24 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2017 The NetBSD Foundation, Inc. All rights reserved.
@@ -221,7 +221,10 @@ init_idt(void)
 
 /* -------------------------------------------------------------------------- */
 
+#define PREKERN_API_VERSION	2
+
 struct prekern_args {
+	int version;
 	int boothowto;
 	void *bootinfo;
 	void *bootspace;
@@ -253,6 +256,7 @@ init_prekern_args(void)
 	extern paddr_t pa_avail;
 
 	memset(&pkargs, 0, sizeof(pkargs));
+	pkargs.version = PREKERN_API_VERSION;
 	pkargs.boothowto = boothowto;
 	pkargs.bootinfo = (void *)&bootinfo;
 	pkargs.bootspace = &bootspace;
@@ -285,9 +289,9 @@ exec_kernel(vaddr_t ent)
 	ret = (*jumpfunc)(&pkargs);
 
 	if (ret == -1) {
-		fatal("kernel returned -1");
+		fatal("kernel returned: wrong API version");
 	} else {
-		fatal("kernel returned unknown value");
+		fatal("kernel returned: unknown value");
 	}
 }
 

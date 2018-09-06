@@ -1,6 +1,6 @@
 /* Generic test file for functions with one mpfr_t argument and an integer.
 
-Copyright 2005-2016 Free Software Foundation, Inc.
+Copyright 2005-2018 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -74,7 +74,7 @@ test_generic_ui (mpfr_prec_t p0, mpfr_prec_t p1, unsigned int N)
               else  /* unsigned */
                 u = n == 2 ? 0 : -1;
             }
-          rnd = RND_RAND ();
+          rnd = RND_RAND_NO_RNDF ();
           mpfr_set_prec (y, yprec);
           compare = TEST_FUNCTION (y, x, u, rnd);
           if (mpfr_can_round (y, yprec, rnd, rnd, prec))
@@ -92,14 +92,11 @@ test_generic_ui (mpfr_prec_t p0, mpfr_prec_t p1, unsigned int N)
                   printf ("Function: %s\n", TEST_FUNCTION_NAME);
 #endif
                   printf ("got      ");
-                  mpfr_out_str (stdout, 2, prec, z, MPFR_RNDN);
-                  puts ("");
+                  mpfr_dump (z);
                   printf ("expected ");
-                  mpfr_out_str (stdout, 2, prec, t, MPFR_RNDN);
-                  puts ("");
-                  printf ("approx  ");
-                  mpfr_print_binary (y);
-                  puts ("");
+                  mpfr_dump (t);
+                  printf ("approx   ");
+                  mpfr_dump (y);
                   exit (1);
                 }
               compare2 = mpfr_cmp (t, y);
@@ -109,7 +106,7 @@ test_generic_ui (mpfr_prec_t p0, mpfr_prec_t p1, unsigned int N)
                 compare = compare + compare2;
               else
                 compare = inexact; /* cannot determine sign(t-f(x)) */
-              if (! SAME_SIGN (inexact, compare))
+              if (! SAME_SIGN (inexact, compare) && rnd != MPFR_RNDF)
                 {
                   printf ("Wrong inexact flag for rnd=%s: expected %d, got %d"
                           "\n", mpfr_print_rnd_mode (rnd), compare, inexact);

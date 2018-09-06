@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.19 2011/02/26 16:26:58 matt Exp $
+#	$NetBSD: Makefile,v 1.19.54.1 2018/09/06 06:55:41 pgoyette Exp $
 
 
 # Don't strip the ECOFF'ed version on install -- strip gets confused by that,
@@ -12,10 +12,7 @@ SRCS=	start.S boot.c bootinfo.c conf.c devopen.c putchar.c getchar.c \
 PROG=	aoutboot
 ${PROG}: ip2xboot ip3xboot
 .if ${MACHINE_ARCH} == "mipseb"
-	${OBJCOPY} --impure -O ecoff-bigmips \
-		-R .pdr -R .mdebug.nabi32 -R .mdebug.abi32 \
-		-R .comment -R .ident \
-		ip2xboot ${.TARGET}
+	${ELF2ECOFF} ip2xboot ${.TARGET}
 .else
 	touch ${.TARGET}
 .endif

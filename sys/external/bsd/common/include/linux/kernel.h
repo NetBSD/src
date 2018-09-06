@@ -1,4 +1,4 @@
-/*	$NetBSD: kernel.h,v 1.8 2015/08/20 21:41:12 skrll Exp $	*/
+/*	$NetBSD: kernel.h,v 1.8.16.1 2018/09/06 06:56:08 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -38,15 +38,28 @@
 #include <sys/systm.h>
 
 #include <lib/libkern/libkern.h>
+#include <linux/bitops.h>
+#include <linux/printk.h>
+#include <linux/slab.h>
+
+#define U16_MAX UINT16_MAX
+#define U32_MAX UINT32_MAX
+#define U64_MAX UINT64_MAX
 
 #define	oops_in_progress	(panicstr != NULL)
 
 #define	IS_ENABLED(option)	(option)
+#define	IS_BUILTIN(option)	(1) /* Probably... */
 
 #define	__printf	__printflike
 #define	__user
-#define	__must_check	/* __attribute__((warn_unused_result)), if GCC */
+#if __GNUC_PREREQ__(4,0)	/* not sure when but this will work */
+#define	__must_check	__attribute__((warn_unused_result))
+#else
+#define	__must_check	/* nothing */
+#endif
 #define	__always_unused	__unused
+#define	noinline	__noinline
 
 #define	barrier()	__insn_barrier()
 #define	likely(X)	__predict_true(X)
@@ -59,11 +72,17 @@
 #define	uninitialized_var(x)	x = 0
 
 /* XXX These will multiply evaluate their arguments.  */
+#define	min(X, Y)	MIN(X, Y)
+#define	max(X, Y)	MAX(X, Y)
+
 #define	max_t(T, X, Y)	MAX(X, Y)
 #define	min_t(T, X, Y)	MIN(X, Y)
 
 #define	clamp_t(T, X, MIN, MAX)	min_t(T, max_t(T, X, MIN), MAX)
 #define	clamp(X, MN, MX)	MIN(MAX(X, MN), MX)
+
+#define	min3(X, Y, Z)	MIN(X, MIN(Y, Z))
+#define	max3(X, Y, Z)	MAX(X, MAX(Y, Z))
 
 /*
  * Rounding to nearest.
@@ -71,6 +90,8 @@
 #define	DIV_ROUND_CLOSEST(N, D)						\
 	((0 < (N)) ? (((N) + ((D) / 2)) / (D))				\
 	    : (((N) - ((D) / 2)) / (D)))
+
+#define	DIV_ROUND_CLOSEST_ULL(N, D)	(((N) + (D)/2)/(D))
 
 /*
  * Rounding to what may or may not be powers of two.
@@ -110,6 +131,12 @@
 		(void)memcpy(&(Y), __swap_tmp, sizeof(X));		\
 	}								\
 } while (0)
+
+#define	ACCESS_ONCE(X) ({						      \
+	typeof(X) __access_once_tmp = (X);				      \
+	__insn_barrier();						      \
+	__access_once_tmp;						      \
+})
 
 static inline int64_t
 abs64(int64_t x)
@@ -167,6 +194,38 @@ kstrtol(const char *s, unsigned base, long *vp)
 		return -ERANGE;
 	*vp = v;
 	return 0;
+}
+
+static inline char *
+kvasprintf(gfp_t gfp, const char *fmt, va_list va)
+{
+	va_list tva;
+	char *str;
+	int len, len1 __diagused;
+
+	va_copy(tva, va);
+	len = vsnprintf(NULL, 0, fmt, tva);
+	va_end(tva);
+	str = kmalloc(len + 1, gfp);
+	if (str == NULL)
+		return NULL;
+	len1 = vsnprintf(str, len + 1, fmt, va);
+	KASSERT(len1 == len);
+
+	return str;
+}
+
+static inline char * __printflike(2,3)
+kasprintf(gfp_t gfp, const char *fmt, ...)
+{
+	va_list va;
+	char *str;
+
+	va_start(va, fmt);
+	str = kvasprintf(gfp, fmt, va);
+	va_end(va);
+
+	return str;
 }
 
 #endif  /* _LINUX_KERNEL_H_ */

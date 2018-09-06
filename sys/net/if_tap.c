@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tap.c,v 1.105.2.1 2018/07/28 04:38:10 pgoyette Exp $	*/
+/*	$NetBSD: if_tap.c,v 1.105.2.2 2018/09/06 06:56:44 pgoyette Exp $	*/
 
 /*
  *  Copyright (c) 2003, 2004, 2008, 2009 The NetBSD Foundation.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.105.2.1 2018/07/28 04:38:10 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.105.2.2 2018/09/06 06:56:44 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 
@@ -980,7 +980,7 @@ tap_dev_read(int unit, struct uio *uio, int flags)
 	 */
 	do {
 		error = uiomove(mtod(m, void *),
-		    min(m->m_len, uio->uio_resid), uio);
+		    uimin(m->m_len, uio->uio_resid), uio);
 		m = n = m_free(m);
 	} while (m != NULL && uio->uio_resid > 0 && error == 0);
 
@@ -1068,7 +1068,7 @@ tap_dev_write(int unit, struct uio *uio, int flags)
 				break;
 			}
 		}
-		(*mp)->m_len = min(MHLEN, uio->uio_resid);
+		(*mp)->m_len = uimin(MHLEN, uio->uio_resid);
 		error = uiomove(mtod(*mp, void *), (*mp)->m_len, uio);
 		mp = &(*mp)->m_next;
 	}

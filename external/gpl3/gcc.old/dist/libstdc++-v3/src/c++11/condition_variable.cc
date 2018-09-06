@@ -1,6 +1,6 @@
 // condition_variable -*- C++ -*-
 
-// Copyright (C) 2008-2015 Free Software Foundation, Inc.
+// Copyright (C) 2008-2016 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -48,12 +48,12 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
   }
 
   void
-  condition_variable::wait(unique_lock<mutex>& __lock)
+  condition_variable::wait(unique_lock<mutex>& __lock) noexcept
   {
     int __e = __gthread_cond_wait(&_M_cond, __lock.mutex()->native_handle());
 
     if (__e)
-      __throw_system_error(__e);
+      std::terminate();
   }
 
   void

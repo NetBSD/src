@@ -1,5 +1,5 @@
 /* GCC instrumentation plugin for ThreadSanitizer.
-   Copyright (C) 2011-2015 Free Software Foundation, Inc.
+   Copyright (C) 2011-2016 Free Software Foundation, Inc.
    Contributed by Dmitry Vyukov <dvyukov@google.com>
 
 This file is part of GCC.
@@ -22,63 +22,19 @@ along with GCC; see the file COPYING3.  If not see
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
-#include "hash-set.h"
-#include "machmode.h"
-#include "vec.h"
-#include "double-int.h"
-#include "input.h"
-#include "alias.h"
-#include "symtab.h"
-#include "options.h"
-#include "wide-int.h"
-#include "inchash.h"
-#include "tree.h"
-#include "fold-const.h"
-#include "hashtab.h"
-#include "tm.h"
-#include "hard-reg-set.h"
-#include "function.h"
+#include "backend.h"
 #include "rtl.h"
-#include "flags.h"
-#include "statistics.h"
-#include "real.h"
-#include "fixed-value.h"
-#include "insn-config.h"
-#include "expmed.h"
-#include "dojump.h"
-#include "explow.h"
-#include "calls.h"
-#include "emit-rtl.h"
-#include "varasm.h"
-#include "stmt.h"
-#include "expr.h"
-#include "intl.h"
-#include "predict.h"
-#include "dominance.h"
-#include "cfg.h"
-#include "basic-block.h"
-#include "tree-ssa-alias.h"
-#include "internal-fn.h"
-#include "gimple-expr.h"
-#include "is-a.h"
+#include "tree.h"
 #include "gimple.h"
+#include "tree-pass.h"
+#include "ssa.h"
+#include "cgraph.h"
+#include "fold-const.h"
 #include "gimplify.h"
 #include "gimple-iterator.h"
 #include "gimplify-me.h"
-#include "gimple-ssa.h"
-#include "hash-map.h"
-#include "plugin-api.h"
-#include "ipa-ref.h"
-#include "cgraph.h"
 #include "tree-cfg.h"
-#include "stringpool.h"
-#include "tree-ssanames.h"
-#include "tree-pass.h"
 #include "tree-iterator.h"
-#include "langhooks.h"
-#include "output.h"
-#include "target.h"
-#include "diagnostic.h"
 #include "tree-ssa-propagate.h"
 #include "tree-ssa-loop-ivopts.h"
 #include "tsan.h"
@@ -118,7 +74,7 @@ get_memory_access_decl (bool is_write, unsigned size)
 /* Check as to whether EXPR refers to a store to vptr.  */
 
 static tree
-is_vptr_store (gimple stmt, tree expr, bool is_write)
+is_vptr_store (gimple *stmt, tree expr, bool is_write)
 {
   if (is_write == true
       && gimple_assign_single_p (stmt)
@@ -141,7 +97,7 @@ instrument_expr (gimple_stmt_iterator gsi, tree expr, bool is_write)
   tree base, rhs, expr_ptr, builtin_decl;
   basic_block bb;
   HOST_WIDE_INT size;
-  gimple stmt, g;
+  gimple *stmt, *g;
   gimple_seq seq;
   location_t loc;
   unsigned int align;
@@ -153,9 +109,9 @@ instrument_expr (gimple_stmt_iterator gsi, tree expr, bool is_write)
   HOST_WIDE_INT bitsize, bitpos;
   tree offset;
   machine_mode mode;
-  int volatilep = 0, unsignedp = 0;
-  base = get_inner_reference (expr, &bitsize, &bitpos, &offset,
-			      &mode, &unsignedp, &volatilep, false);
+  int unsignedp, reversep, volatilep = 0;
+  base = get_inner_reference (expr, &bitsize, &bitpos, &offset, &mode,
+			      &unsignedp, &reversep, &volatilep, false);
 
   /* No need to instrument accesses to decls that don't escape,
      they can't escape to other threads then.  */
@@ -525,7 +481,7 @@ static const struct tsan_map_atomic
 static void
 instrument_builtin_call (gimple_stmt_iterator *gsi)
 {
-  gimple stmt = gsi_stmt (*gsi), g;
+  gimple *stmt = gsi_stmt (*gsi), *g;
   tree callee = gimple_call_fndecl (stmt), last_arg, args[6], t, lhs;
   enum built_in_function fcode = DECL_FUNCTION_CODE (callee);
   unsigned int i, num = gimple_call_num_args (stmt), j;
@@ -732,7 +688,7 @@ instrument_builtin_call (gimple_stmt_iterator *gsi)
 static bool
 instrument_gimple (gimple_stmt_iterator *gsi)
 {
-  gimple stmt;
+  gimple *stmt;
   tree rhs, lhs;
   bool instrumented = false;
 
@@ -769,10 +725,10 @@ instrument_gimple (gimple_stmt_iterator *gsi)
 /* Replace TSAN_FUNC_EXIT internal call with function exit tsan builtin.  */
 
 static void
-replace_func_exit (gimple stmt)
+replace_func_exit (gimple *stmt)
 {
   tree builtin_decl = builtin_decl_implicit (BUILT_IN_TSAN_FUNC_EXIT);
-  gimple g = gimple_build_call (builtin_decl, 0);
+  gimple *g = gimple_build_call (builtin_decl, 0);
   gimple_set_location (g, cfun->function_end_locus);
   gimple_stmt_iterator gsi = gsi_for_stmt (stmt);
   gsi_replace (&gsi, g, true);
@@ -786,7 +742,7 @@ instrument_func_exit (void)
   location_t loc;
   basic_block exit_bb;
   gimple_stmt_iterator gsi;
-  gimple stmt, g;
+  gimple *stmt, *g;
   tree builtin_decl;
   edge e;
   edge_iterator ei;
@@ -817,12 +773,12 @@ instrument_memory_accesses (void)
   gimple_stmt_iterator gsi;
   bool fentry_exit_instrument = false;
   bool func_exit_seen = false;
-  auto_vec<gimple> tsan_func_exits;
+  auto_vec<gimple *> tsan_func_exits;
 
   FOR_EACH_BB_FN (bb, cfun)
     for (gsi = gsi_start_bb (bb); !gsi_end_p (gsi); gsi_next (&gsi))
       {
-	gimple stmt = gsi_stmt (gsi);
+	gimple *stmt = gsi_stmt (gsi);
 	if (is_gimple_call (stmt)
 	    && gimple_call_internal_p (stmt)
 	    && gimple_call_internal_fn (stmt) == IFN_TSAN_FUNC_EXIT)
@@ -837,7 +793,7 @@ instrument_memory_accesses (void)
 	  fentry_exit_instrument |= instrument_gimple (&gsi);
       }
   unsigned int i;
-  gimple stmt;
+  gimple *stmt;
   FOR_EACH_VEC_ELT (tsan_func_exits, i, stmt)
     if (fentry_exit_instrument)
       replace_func_exit (stmt);
@@ -857,7 +813,7 @@ static void
 instrument_func_entry (void)
 {
   tree ret_addr, builtin_decl;
-  gimple g;
+  gimple *g;
   gimple_seq seq = NULL;
 
   builtin_decl = builtin_decl_implicit (BUILT_IN_RETURN_ADDRESS);

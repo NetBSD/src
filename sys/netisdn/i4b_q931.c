@@ -27,7 +27,7 @@
  *	i4b_q931.c - Q931 received messages handling
  *	--------------------------------------------
  *
- *	$Id: i4b_q931.c,v 1.22 2014/03/21 16:45:49 christos Exp $
+ *	$Id: i4b_q931.c,v 1.22.28.1 2018/09/06 06:56:45 pgoyette Exp $
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_q931.c,v 1.22 2014/03/21 16:45:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_q931.c,v 1.22.28.1 2018/09/06 06:56:45 pgoyette Exp $");
 
 #ifdef __FreeBSD__
 #include "i4bq931.h"
@@ -408,8 +408,8 @@ i4b_decode_q931_cs0_ie(call_desc_t *cd, int msg_len, u_char *msg_ptr)
 			break;
 
 		case IEI_DISPLAY:	/* display		*/
-			memcpy(cd->display, &msg_ptr[2], min(DISPLAY_MAX, msg_ptr[1]));
-			cd->display[min(DISPLAY_MAX, msg_ptr[1])] = '\0';
+			memcpy(cd->display, &msg_ptr[2], uimin(DISPLAY_MAX, msg_ptr[1]));
+			cd->display[uimin(DISPLAY_MAX, msg_ptr[1])] = '\0';
 			NDBGL3(L3_P_MSG, "IEI_DISPLAY = %s", cd->display);
   			break;
 
@@ -453,15 +453,15 @@ i4b_decode_q931_cs0_ie(call_desc_t *cd, int msg_len, u_char *msg_ptr)
 			cd->type_plan = msg_ptr[2] & 0x7f;
 			if(msg_ptr[2] & 0x80) /* no presentation/screening indicator ? */
 			{
-				memcpy(cd->src_telno, &msg_ptr[3], min(TELNO_MAX, msg_ptr[1]-1));
-				cd->src_telno[min(TELNO_MAX, msg_ptr[1] - 1)] = '\0';
+				memcpy(cd->src_telno, &msg_ptr[3], uimin(TELNO_MAX, msg_ptr[1]-1));
+				cd->src_telno[uimin(TELNO_MAX, msg_ptr[1] - 1)] = '\0';
 				cd->scr_ind = SCR_NONE;
 				cd->prs_ind = PRS_NONE;
 			}
 			else
 			{
-				memcpy(cd->src_telno, &msg_ptr[4], min(TELNO_MAX, msg_ptr[1]-2));
-				cd->src_telno[min(TELNO_MAX, msg_ptr[1] - 2)] = '\0';
+				memcpy(cd->src_telno, &msg_ptr[4], uimin(TELNO_MAX, msg_ptr[1]-2));
+				cd->src_telno[uimin(TELNO_MAX, msg_ptr[1] - 2)] = '\0';
 				cd->scr_ind = (msg_ptr[3] & 0x03) + SCR_USR_NOSC;
 				cd->prs_ind = ((msg_ptr[3] >> 5) & 0x03) + PRS_ALLOWED;
 			}
@@ -470,18 +470,18 @@ i4b_decode_q931_cs0_ie(call_desc_t *cd, int msg_len, u_char *msg_ptr)
 
 		case IEI_CALLINGPS:	/* calling party subaddress */
 			NDBGL3(L3_P_MSG, "IEI_CALLINGPS");
-			memcpy(cd->src_subaddr, &msg_ptr[1], min(SUBADDR_MAX, msg_ptr[1]-1));
+			memcpy(cd->src_subaddr, &msg_ptr[1], uimin(SUBADDR_MAX, msg_ptr[1]-1));
 			break;
 
 		case IEI_CALLEDPN:	/* called party number */
-			memcpy(cd->dst_telno, &msg_ptr[3], min(TELNO_MAX, msg_ptr[1]-1));
-			cd->dst_telno[min(TELNO_MAX, msg_ptr [1] - 1)] = '\0';
+			memcpy(cd->dst_telno, &msg_ptr[3], uimin(TELNO_MAX, msg_ptr[1]-1));
+			cd->dst_telno[uimin(TELNO_MAX, msg_ptr [1] - 1)] = '\0';
 			NDBGL3(L3_P_MSG, "IEI_CALLED = %s", cd->dst_telno);
 			break;
 
 		case IEI_CALLEDPS:	/* called party subaddress */
 			NDBGL3(L3_P_MSG, "IEI_CALLEDPS");
-			memcpy(cd->dest_subaddr, &msg_ptr[1], min(SUBADDR_MAX, msg_ptr[1]-1));
+			memcpy(cd->dest_subaddr, &msg_ptr[1], uimin(SUBADDR_MAX, msg_ptr[1]-1));
 			break;
 
 		case IEI_REDIRNO:	/* redirecting number */

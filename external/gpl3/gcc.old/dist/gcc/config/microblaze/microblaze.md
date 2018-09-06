@@ -1,5 +1,5 @@
 ;; microblaze.md -- Machine description for Xilinx MicroBlaze processors.
-;; Copyright (C) 2009-2015 Free Software Foundation, Inc.
+;; Copyright (C) 2009-2016 Free Software Foundation, Inc.
 
 ;; Contributed by Michael Eager <eager@eagercon.com>.
 
@@ -43,6 +43,9 @@
   (UNSPEC_TLS           106)    ;; jump table
 ])
 
+(define_c_enum "unspec" [
+  UNSPEC_IPREFETCH
+])
 
 ;;----------------------------------------------------
 ;; Instruction Attributes
@@ -508,6 +511,17 @@
   (set_attr "mode"	"SI")
   (set_attr "length"	"4,8")])
 
+(define_insn "iprefetch"
+  [(unspec [(match_operand:SI 0 "const_int_operand" "n")] UNSPEC_IPREFETCH)
+   (clobber (mem:BLK (scratch)))]
+   "TARGET_PREFETCH"
+  {
+    operands[2] = gen_rtx_REG (SImode, MB_ABI_ASM_TEMP_REGNUM);
+    return "mfs\t%2,rpc\n\twic\t%2,r0";
+  }
+  [(set_attr "type" "arith")
+   (set_attr "mode"  "SI")
+   (set_attr "length"    "8")])
 
 ;;----------------------------------------------------------------
 ;; Double Precision Subtraction
@@ -663,6 +677,31 @@
   (set_attr "mode"	"SI")
   (set_attr "length"	"4")])
 
+(define_peephole2
+  [(set (match_operand:SI 0 "register_operand")
+        (fix:SI (match_operand:SF 1 "register_operand")))
+   (set (pc)
+        (if_then_else (match_operator 2 "ordered_comparison_operator"
+                       [(match_operand:SI 3 "register_operand")
+                        (match_operand:SI 4 "arith_operand")])
+                      (label_ref (match_operand 5))
+                      (pc)))]
+   "TARGET_HARD_FLOAT"
+   [(set (match_dup 1) (match_dup 3))]
+
+  {
+    rtx condition;
+    rtx cmp_op0 = operands[3];
+    rtx cmp_op1 = operands[4];
+    rtx comp_reg =  gen_rtx_REG (SImode, MB_ABI_ASM_TEMP_REGNUM);
+
+    emit_insn (gen_cstoresf4 (comp_reg, operands[2],
+                              gen_rtx_REG (SFmode, REGNO (cmp_op0)),
+                              gen_rtx_REG (SFmode, REGNO (cmp_op1))));
+    condition = gen_rtx_NE (SImode, comp_reg, const0_rtx);
+    emit_jump_insn (gen_condjump (condition, operands[5]));
+  }
+)
 
 ;;----------------------------------------------------------------
 ;; Negation and one's complement
@@ -1655,14 +1694,27 @@
 
 (define_expand "cbranchsi4"
   [(set (pc)
-	(if_then_else (match_operator 0 "ordered_comparison_operator"
-		       [(match_operand:SI 1 "register_operand")
-		        (match_operand:SI 2 "arith_operand")])
-		      (label_ref (match_operand 3 ""))
-		      (pc)))]
+        (if_then_else (match_operator 0 "ordered_comparison_operator"
+                       [(match_operand:SI 1 "register_operand")
+                        (match_operand:SI 2 "arith_operand" "I,i")])
+                      (label_ref (match_operand 3 ""))
+                      (pc)))]
   ""
 {
   microblaze_expand_conditional_branch (SImode, operands);
+  DONE;
+})
+
+(define_expand "cbranchsi4_reg"
+  [(set (pc)
+        (if_then_else (match_operator 0 "ordered_comparison_operator"
+                       [(match_operand:SI 1 "register_operand")
+                        (match_operand:SI 2 "register_operand")])
+                      (label_ref (match_operand 3 ""))
+                      (pc)))]
+  ""
+{
+  microblaze_expand_conditional_branch_reg (SImode, operands);
   DONE;
 })
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_ext_normalize.c,v 1.6.2.1 2018/04/16 02:00:08 pgoyette Exp $	*/
+/*	$NetBSD: npf_ext_normalize.c,v 1.6.2.2 2018/09/06 06:56:44 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_ext_normalize.c,v 1.6.2.1 2018/04/16 02:00:08 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_ext_normalize.c,v 1.6.2.2 2018/09/06 06:56:44 pgoyette Exp $");
 
 #include <sys/types.h>
 #include <sys/module.h>
@@ -148,8 +148,10 @@ npf_normalize(npf_cache_t *npc, void *params, const npf_match_info_t *mi,
 {
 	npf_normalize_t *np = params;
 	uint16_t cksum, mss, maxmss = np->n_maxmss;
+	uint16_t old[2], new[2];
 	struct tcphdr *th;
 	int wscale;
+	bool mid;
 
 	/* Skip, if already blocking. */
 	if (*decision == NPF_DECISION_BLOCK) {
@@ -182,13 +184,22 @@ npf_normalize(npf_cache_t *npc, void *params, const npf_match_info_t *mi,
 	maxmss = htons(maxmss);
 
 	/*
-	 * Store new MSS, calculate TCP checksum and update it.
+	 * Store new MSS, calculate TCP checksum and update it. The MSS may
+	 * not be aligned and fall in the middle of two uint16_t's, so we
+	 * need to take care of that when calculating the checksum.
+	 *
 	 * WARNING: must re-fetch the TCP header after the modification.
 	 */
-	if (npf_fetch_tcpopts(npc, &maxmss, &wscale) &&
+	if (npf_set_mss(npc, maxmss, old, new, &mid) &&
 	    !nbuf_cksum_barrier(npc->npc_nbuf, mi->mi_di)) {
 		th = npc->npc_l4.tcp;
-		cksum = npf_fixup16_cksum(th->th_sum, mss, maxmss);
+		if (mid) {
+			cksum = th->th_sum;
+			cksum = npf_fixup16_cksum(cksum, old[0], new[0]);
+			cksum = npf_fixup16_cksum(cksum, old[1], new[1]);
+		} else {
+			cksum = npf_fixup16_cksum(th->th_sum, mss, maxmss);
+		}
 		th->th_sum = cksum;
 	}
 

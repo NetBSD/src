@@ -1,5 +1,5 @@
 /* Subroutines for insn-output.c for Matsushita MN10300 series
-   Copyright (C) 1996-2015 Free Software Foundation, Inc.
+   Copyright (C) 1996-2016 Free Software Foundation, Inc.
    Contributed by Jeff Law (law@cygnus.com).
 
    This file is part of GCC.
@@ -21,63 +21,35 @@
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
-#include "tm.h"
+#include "backend.h"
+#include "target.h"
 #include "rtl.h"
-#include "hash-set.h"
-#include "machmode.h"
-#include "vec.h"
-#include "double-int.h"
-#include "input.h"
-#include "alias.h"
-#include "symtab.h"
-#include "wide-int.h"
-#include "inchash.h"
 #include "tree.h"
+#include "cfghooks.h"
+#include "cfgloop.h"
+#include "df.h"
+#include "tm_p.h"
+#include "optabs.h"
+#include "regs.h"
+#include "emit-rtl.h"
+#include "recog.h"
+#include "diagnostic-core.h"
+#include "alias.h"
 #include "stor-layout.h"
 #include "varasm.h"
 #include "calls.h"
-#include "regs.h"
-#include "hard-reg-set.h"
-#include "insn-config.h"
-#include "conditions.h"
 #include "output.h"
 #include "insn-attr.h"
-#include "flags.h"
-#include "recog.h"
 #include "reload.h"
-#include "hashtab.h"
-#include "function.h"
-#include "statistics.h"
-#include "real.h"
-#include "fixed-value.h"
-#include "expmed.h"
-#include "dojump.h"
 #include "explow.h"
-#include "emit-rtl.h"
-#include "stmt.h"
 #include "expr.h"
-#include "insn-codes.h"
-#include "optabs.h"
-#include "obstack.h"
-#include "diagnostic-core.h"
-#include "tm_p.h"
 #include "tm-constrs.h"
-#include "target.h"
-#include "target-def.h"
-#include "dominance.h"
-#include "cfg.h"
 #include "cfgrtl.h"
-#include "cfganal.h"
-#include "lcm.h"
-#include "cfgbuild.h"
-#include "cfgcleanup.h"
-#include "predict.h"
-#include "basic-block.h"
-#include "df.h"
-#include "opts.h"
-#include "cfgloop.h"
 #include "dumpfile.h"
 #include "builtins.h"
+
+/* This file should be included last.  */
+#include "target-def.h"
 
 /* This is used in the am33_2.0-linux-gnu port, in which global symbol
    names are not prefixed by underscores, to tell whether to prefix a
@@ -267,7 +239,7 @@ mn10300_print_operand (FILE *file, rtx x, int code)
 	{
 	case MEM:
 	  fputc ('(', file);
-	  output_address (XEXP (x, 0));
+	  output_address (GET_MODE (x), XEXP (x, 0));
 	  fputc (')', file);
 	  break;
 
@@ -286,7 +258,7 @@ mn10300_print_operand (FILE *file, rtx x, int code)
 	{
 	case MEM:
 	  fputc ('(', file);
-	  output_address (XEXP (x, 0));
+	  output_address (GET_MODE (x), XEXP (x, 0));
 	  fputc (')', file);
 	  break;
 
@@ -301,18 +273,17 @@ mn10300_print_operand (FILE *file, rtx x, int code)
 	case CONST_DOUBLE:
 	  {
 	    long val[2];
-	    REAL_VALUE_TYPE rv;
 
 	    switch (GET_MODE (x))
 	      {
 	      case DFmode:
-		REAL_VALUE_FROM_CONST_DOUBLE (rv, x);
-		REAL_VALUE_TO_TARGET_DOUBLE (rv, val);
+		REAL_VALUE_TO_TARGET_DOUBLE
+		  (*CONST_DOUBLE_REAL_VALUE (x), val);
 		fprintf (file, "0x%lx", val[0]);
 		break;;
 	      case SFmode:
-		REAL_VALUE_FROM_CONST_DOUBLE (rv, x);
-		REAL_VALUE_TO_TARGET_SINGLE (rv, val[0]);
+		REAL_VALUE_TO_TARGET_SINGLE
+		  (*CONST_DOUBLE_REAL_VALUE (x), val[0]);
 		fprintf (file, "0x%lx", val[0]);
 		break;;
 	      case VOIDmode:
@@ -346,7 +317,7 @@ mn10300_print_operand (FILE *file, rtx x, int code)
 	case MEM:
 	  fputc ('(', file);
 	  x = adjust_address (x, SImode, 4);
-	  output_address (XEXP (x, 0));
+	  output_address (GET_MODE (x), XEXP (x, 0));
 	  fputc (')', file);
 	  break;
 
@@ -361,13 +332,12 @@ mn10300_print_operand (FILE *file, rtx x, int code)
 	case CONST_DOUBLE:
 	  {
 	    long val[2];
-	    REAL_VALUE_TYPE rv;
 
 	    switch (GET_MODE (x))
 	      {
 	      case DFmode:
-		REAL_VALUE_FROM_CONST_DOUBLE (rv, x);
-		REAL_VALUE_TO_TARGET_DOUBLE (rv, val);
+		REAL_VALUE_TO_TARGET_DOUBLE
+		  (*CONST_DOUBLE_REAL_VALUE (x), val);
 		fprintf (file, "0x%lx", val[1]);
 		break;;
 	      case SFmode:
@@ -399,9 +369,10 @@ mn10300_print_operand (FILE *file, rtx x, int code)
     case 'A':
       fputc ('(', file);
       if (REG_P (XEXP (x, 0)))
-	output_address (gen_rtx_PLUS (SImode, XEXP (x, 0), const0_rtx));
+	output_address (VOIDmode, gen_rtx_PLUS (SImode,
+						XEXP (x, 0), const0_rtx));
       else
-	output_address (XEXP (x, 0));
+	output_address (VOIDmode, XEXP (x, 0));
       fputc (')', file);
       break;
 
@@ -432,12 +403,12 @@ mn10300_print_operand (FILE *file, rtx x, int code)
 	{
 	case MEM:
 	  fputc ('(', file);
-	  output_address (XEXP (x, 0));
+	  output_address (GET_MODE (x), XEXP (x, 0));
 	  fputc (')', file);
 	  break;
 
 	case PLUS:
-	  output_address (x);
+	  output_address (VOIDmode, x);
 	  break;
 
 	case REG:
@@ -452,10 +423,8 @@ mn10300_print_operand (FILE *file, rtx x, int code)
 	case CONST_DOUBLE:
 	  {
 	    unsigned long val;
-	    REAL_VALUE_TYPE rv;
 
-	    REAL_VALUE_FROM_CONST_DOUBLE (rv, x);
-	    REAL_VALUE_TO_TARGET_SINGLE (rv, val);
+	    REAL_VALUE_TO_TARGET_SINGLE (*CONST_DOUBLE_REAL_VALUE (x), val);
 	    fprintf (file, "0x%lx", val);
 	    break;
 	  }
@@ -748,7 +717,7 @@ mn10300_gen_multiple_store (unsigned int mask)
       ++count;
       x = plus_constant (Pmode, stack_pointer_rtx, count * -4);
       x = gen_frame_mem (SImode, x);
-      x = gen_rtx_SET (VOIDmode, x, gen_rtx_REG (SImode, regno));
+      x = gen_rtx_SET (x, gen_rtx_REG (SImode, regno));
       elts[count] = F(x);
 
       /* Remove the register from the mask so that... */
@@ -761,7 +730,7 @@ mn10300_gen_multiple_store (unsigned int mask)
 
   /* Create the instruction that updates the stack pointer.  */
   x = plus_constant (Pmode, stack_pointer_rtx, count * -4);
-  x = gen_rtx_SET (VOIDmode, stack_pointer_rtx, x);
+  x = gen_rtx_SET (stack_pointer_rtx, x);
   elts[0] = F(x);
 
   /* We need one PARALLEL element to update the stack pointer and
@@ -2243,7 +2212,7 @@ mn10300_address_cost (rtx x, machine_mode mode ATTRIBUTE_UNUSED,
       return speed ? 2 : 6;
 
     default:
-      return rtx_cost (x, MEM, 0, speed);
+      return rtx_cost (x, Pmode, MEM, 0, speed);
     }
 }
 
@@ -2357,13 +2326,14 @@ mn10300_memory_move_cost (machine_mode mode ATTRIBUTE_UNUSED,
    to represent cycles.  Size-relative costs are in bytes.  */
 
 static bool
-mn10300_rtx_costs (rtx x, int code, int outer_code, int opno ATTRIBUTE_UNUSED,
-		   int *ptotal, bool speed)
+mn10300_rtx_costs (rtx x, machine_mode mode, int outer_code,
+		   int opno ATTRIBUTE_UNUSED, int *ptotal, bool speed)
 {
   /* This value is used for SYMBOL_REF etc where we want to pretend
      we have a full 32-bit constant.  */
   HOST_WIDE_INT i = 0x12345678;
   int total;
+  int code = GET_CODE (x);
 
   switch (code)
     {
@@ -2449,7 +2419,7 @@ mn10300_rtx_costs (rtx x, int code, int outer_code, int opno ATTRIBUTE_UNUSED,
 	  i = INTVAL (XEXP (x, 1));
 	  if (i == 1 || i == 4)
 	    {
-	      total = 1 + rtx_cost (XEXP (x, 0), PLUS, 0, speed);
+	      total = 1 + rtx_cost (XEXP (x, 0), mode, PLUS, 0, speed);
 	      goto alldone;
 	    }
 	}
@@ -2505,7 +2475,7 @@ mn10300_rtx_costs (rtx x, int code, int outer_code, int opno ATTRIBUTE_UNUSED,
       break;
 
     case MEM:
-      total = mn10300_address_cost (XEXP (x, 0), GET_MODE (x),
+      total = mn10300_address_cost (XEXP (x, 0), mode,
 				    MEM_ADDR_SPACE (x), speed);
       if (speed)
 	total = COSTS_N_INSNS (2 + total);
@@ -2881,18 +2851,18 @@ mn10300_conditional_register_usage (void)
     call_used_regs[PIC_OFFSET_TABLE_REGNUM] = 1;
 }
 
-/* Worker function for TARGET_MD_ASM_CLOBBERS.
+/* Worker function for TARGET_MD_ASM_ADJUST.
    We do this in the mn10300 backend to maintain source compatibility
    with the old cc0-based compiler.  */
 
-static tree
-mn10300_md_asm_clobbers (tree outputs ATTRIBUTE_UNUSED,
-                         tree inputs ATTRIBUTE_UNUSED,
-                         tree clobbers)
+static rtx_insn *
+mn10300_md_asm_adjust (vec<rtx> &/*outputs*/, vec<rtx> &/*inputs*/,
+		       vec<const char *> &/*constraints*/,
+		       vec<rtx> &clobbers, HARD_REG_SET &clobbered_regs)
 {
-  clobbers = tree_cons (NULL_TREE, build_string (5, "EPSW"),
-                        clobbers);
-  return clobbers;
+  clobbers.safe_push (gen_rtx_REG (CCmode, CC_REG));
+  SET_HARD_REG_BIT (clobbered_regs, CC_REG);
+  return NULL;
 }
 
 /* A helper function for splitting cbranch patterns after reload.  */
@@ -2904,12 +2874,12 @@ mn10300_split_cbranch (machine_mode cmp_mode, rtx cmp_op, rtx label_ref)
 
   flags = gen_rtx_REG (cmp_mode, CC_REG);
   x = gen_rtx_COMPARE (cmp_mode, XEXP (cmp_op, 0), XEXP (cmp_op, 1));
-  x = gen_rtx_SET (VOIDmode, flags, x);
+  x = gen_rtx_SET (flags, x);
   emit_insn (x);
 
   x = gen_rtx_fmt_ee (GET_CODE (cmp_op), VOIDmode, flags, const0_rtx);
   x = gen_rtx_IF_THEN_ELSE (VOIDmode, x, label_ref, pc_rtx);
-  x = gen_rtx_SET (VOIDmode, pc_rtx, x);
+  x = gen_rtx_SET (pc_rtx, x);
   emit_jump_insn (x);
 }
 
@@ -3442,8 +3412,8 @@ mn10300_reorg (void)
 #undef  TARGET_CONDITIONAL_REGISTER_USAGE
 #define TARGET_CONDITIONAL_REGISTER_USAGE mn10300_conditional_register_usage
 
-#undef TARGET_MD_ASM_CLOBBERS
-#define TARGET_MD_ASM_CLOBBERS  mn10300_md_asm_clobbers
+#undef TARGET_MD_ASM_ADJUST
+#define TARGET_MD_ASM_ADJUST mn10300_md_asm_adjust
 
 #undef  TARGET_FLAGS_REGNUM
 #define TARGET_FLAGS_REGNUM  CC_REG

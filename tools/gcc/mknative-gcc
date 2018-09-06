@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: mknative-gcc,v 1.92 2018/02/06 07:04:01 mrg Exp $
+#	$NetBSD: mknative-gcc,v 1.92.2.1 2018/09/06 06:56:49 pgoyette Exp $
 #
 # Shell script for generating all the constants needed for a native
 # platform build of gcc.
@@ -71,7 +71,9 @@ get_libgcc () {
 	cd $_TMPDIR/$_PLATFORM/libgcc
 	{
 		getvars $_PLATFORM/libgcc/Makefile \
-			INCLUDES LIB2ADD LIB2ADDEH LIB2ADD_ST \
+			INCLUDES \
+			INTERNAL_CFLAGS \
+			LIB2ADD LIB2ADDEH LIB2ADD_ST \
 			LIB1ASMFUNCS LIB1ASMSRC \
 			LIB2_DIVMOD_FUNCS LIB2FUNCS_ST \
 			LIB2FUNCS_EXTRA \
@@ -369,10 +371,9 @@ __EOF__
 		if [ "${f}" = "configargs" ]
 		then
 			_srcquoted=$(echo "$_SRC" | sed 's/\//\\\//g')
-			ex <<__EOF__ $_OUTDIR/usr.bin/$_subdir/arch/$MACHINE_ARCH/$f.h
-/static const char configuration_arguments/ s/$_srcquoted/\/usr\/src/g
-wq
-__EOF__
+			sed -i -E -e "s,$_srcquoted,/usr/src,g" \
+				  -e 's/--build=[^ ]+ --host=([^ ]+)/--build=\1 --host=\1/' \
+				$_OUTDIR/usr.bin/$_subdir/arch/$MACHINE_ARCH/$f.h
 		fi
 	done
 

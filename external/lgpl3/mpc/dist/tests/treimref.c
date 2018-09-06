@@ -1,6 +1,6 @@
 /* treimref -- test file for mpc_realref and mpc_imagref.
 
-Copyright (C) 2009 INRIA
+Copyright (C) 2009, 2012 INRIA
 
 This file is part of GNU MPC.
 
@@ -30,14 +30,14 @@ main (void)
 
   mpc_init2 (z, 6);
   mpc_set_ui_ui (z, 17, 42, MPC_RNDNN);
-  mpfr_set_ui (mpc_realref (z), 18, GMP_RNDN);
-  if (mpfr_get_ui (mpc_realref (z), GMP_RNDN) != 18)
+  mpfr_set_ui (mpc_realref (z), 18, MPFR_RNDN);
+  if (mpfr_get_ui (mpc_realref (z), MPFR_RNDN) != 18)
     {
       fprintf (stderr, "Error in mpfr_set_ui/mpc_realref\n");
       exit (1);
     }
-  mpfr_set_ui (mpc_imagref (z), 43, GMP_RNDN);
-  if (mpfr_get_ui (mpc_imagref (z), GMP_RNDN) != 43)
+  mpfr_set_ui (mpc_imagref (z), 43, MPFR_RNDN);
+  if (mpfr_get_ui (mpc_imagref (z), MPFR_RNDN) != 43)
     {
       fprintf (stderr, "Error in mpfr_set_ui/mpc_imagref\n");
       exit (1);

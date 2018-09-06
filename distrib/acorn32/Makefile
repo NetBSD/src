@@ -1,9 +1,9 @@
-# $NetBSD: Makefile,v 1.19 2008/06/23 02:16:53 matt Exp $
+# $NetBSD: Makefile,v 1.19.60.1 2018/09/06 06:51:41 pgoyette Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
 
-SUBDIR=		ramdisk .WAIT kernels stand cdroms
+SUBDIR=		ramdisk .WAIT kernels stand .WAIT cdroms
 TARGETS+=	release
 
 release: check_RELEASEDIR

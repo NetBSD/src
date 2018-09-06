@@ -1,4 +1,4 @@
-#	$NetBSD: libglsl7.mk,v 1.1 2015/01/05 03:45:31 mrg Exp $
+#	$NetBSD: libglsl7.mk,v 1.1.16.1 2018/09/06 06:53:50 pgoyette Exp $
 
 # This copy for MesaLib7 old drivers.
 
@@ -14,6 +14,7 @@ CPPFLAGS+=	-I${X11SRCDIR.MesaLib7}/include
 CPPFLAGS+=	-I${X11SRCDIR.MesaLib7}/src/glsl
 CPPFLAGS+=	-I${X11SRCDIR.MesaLib7}/src/mapi
 CPPFLAGS+=	-I${X11SRCDIR.MesaLib7}/src/mesa
+COPTS.glsl_lexer.cpp+=	-Wno-deprecated-register
 
 SRCS.glsl.libglcpp= \
 	glcpp-lex.c \

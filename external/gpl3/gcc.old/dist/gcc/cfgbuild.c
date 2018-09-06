@@ -1,5 +1,5 @@
 /* Control flow graph building code for GNU compiler.
-   Copyright (C) 1987-2015 Free Software Foundation, Inc.
+   Copyright (C) 1987-2016 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -21,46 +21,15 @@ along with GCC; see the file COPYING3.  If not see
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
-#include "tm.h"
-#include "hash-set.h"
-#include "machmode.h"
-#include "vec.h"
-#include "double-int.h"
-#include "input.h"
-#include "alias.h"
-#include "symtab.h"
-#include "wide-int.h"
-#include "inchash.h"
-#include "tree.h"
+#include "backend.h"
 #include "rtl.h"
-#include "hard-reg-set.h"
-#include "predict.h"
-#include "hashtab.h"
-#include "function.h"
-#include "dominance.h"
-#include "cfg.h"
+#include "cfghooks.h"
+#include "emit-rtl.h"
 #include "cfgrtl.h"
 #include "cfganal.h"
 #include "cfgbuild.h"
-#include "basic-block.h"
-#include "regs.h"
-#include "flags.h"
 #include "except.h"
-#include "statistics.h"
-#include "real.h"
-#include "fixed-value.h"
-#include "insn-config.h"
-#include "expmed.h"
-#include "dojump.h"
-#include "explow.h"
-#include "calls.h"
-#include "emit-rtl.h"
-#include "varasm.h"
 #include "stmt.h"
-#include "expr.h"
-#include "diagnostic-core.h"
-#include "timevar.h"
-#include "sbitmap.h"
 
 static void make_edges (basic_block, basic_block, int);
 static void make_label_edge (sbitmap, basic_block, rtx, int);
@@ -179,7 +148,7 @@ rtl_make_eh_edge (sbitmap edge_cache, basic_block src, rtx insn)
 
   if (lp)
     {
-      rtx label = lp->landing_pad;
+      rtx_insn *label = lp->landing_pad;
 
       /* During initial rtl generation, use the post_landing_pad.  */
       if (label == NULL)

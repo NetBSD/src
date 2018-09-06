@@ -1,6 +1,6 @@
-/* mpfr_free_cache - Free the cache used by MPFR for internal consts.
+/* mpfr_free_cache... - Free cache/pool memory used by MPFR.
 
-Copyright 2004-2016 Free Software Foundation, Inc.
+Copyright 2004-2018 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -22,27 +22,9 @@ http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 
 #include "mpfr-impl.h"
 
-#if 0
+/* Theses caches may be global to all threads or local to the current one. */
 static void
-free_l2b (void)
-{
-  int i, b;
-
-  for (b = 2; b <= BASE_MAX; b++)
-    for (i = 0; i < 2; i++)
-      {
-        mpfr_ptr p = __gmpfr_l2b[b-2][i];
-        if (p != NULL)
-          {
-            mpfr_clear (p);
-            (*__gmp_free_func) (p, sizeof (mpfr_t));
-          }
-      }
-}
-#endif
-
-void
-mpfr_free_cache (void)
+mpfr_free_const_caches (void)
 {
 #ifndef MPFR_USE_LOGGING
   mpfr_clear_cache (__gmpfr_cache_const_pi);
@@ -55,5 +37,56 @@ mpfr_free_cache (void)
 #endif
   mpfr_clear_cache (__gmpfr_cache_const_euler);
   mpfr_clear_cache (__gmpfr_cache_const_catalan);
-  /* free_l2b (); */
+}
+
+/* Theses caches/pools are always local to a thread. */
+static void
+mpfr_free_local_cache (void)
+{
+  /* Before freeing the mpz_t pool, we need to free any cache of
+     mpz_t numbers, since freeing such a cache may add entries to
+     the mpz_t pool. */
+  mpfr_bernoulli_freecache ();
+  mpfr_free_pool ();
+}
+
+void
+mpfr_free_cache (void)
+{
+  mpfr_free_local_cache ();
+  mpfr_free_const_caches ();
+}
+
+void
+mpfr_free_cache2 (mpfr_free_cache_t way)
+{
+  if ((unsigned int) way & MPFR_FREE_LOCAL_CACHE)
+    {
+      mpfr_free_local_cache ();
+#if !defined (WANT_SHARED_CACHE)
+      mpfr_free_const_caches ();
+#endif
+    }
+  if ((unsigned int) way & MPFR_FREE_GLOBAL_CACHE)
+    {
+#if defined (WANT_SHARED_CACHE)
+      mpfr_free_const_caches ();
+#endif
+    }
+}
+
+/* Function an application should call before mp_set_memory_functions().
+   This is currently equivalent to freeing the caches (and pools) since
+   they are allocated with GMP's current allocator. But this might change
+   in the future to avoid the drawback of having to free the caches just
+   because the allocators are changed: the caches could optionally be
+   allocated with malloc().
+   This function returns 0 in case of success, non-zero in case of error.
+   Errors are currently not possible. But let's avoid a prototype change
+   in the future, in case errors would be possible. */
+int
+mpfr_mp_memory_cleanup (void)
+{
+  mpfr_free_cache ();
+  return 0;
 }

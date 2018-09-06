@@ -1,5 +1,5 @@
 /* A pure C API to enable client code to embed GCC as a JIT-compiler.
-   Copyright (C) 2013-2015 Free Software Foundation, Inc.
+   Copyright (C) 2013-2016 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -277,6 +277,30 @@ gcc_jit_context_set_bool_allow_unreachable_blocks (gcc_jit_context *ctxt,
    gcc_jit_context_set_bool_allow_unreachable_blocks.  This can be
    tested for with #ifdef.  */
 #define LIBGCCJIT_HAVE_gcc_jit_context_set_bool_allow_unreachable_blocks
+
+/* Implementation detail:
+   libgccjit internally generates assembler, and uses "driver" code
+   for converting it to other formats (e.g. shared libraries).
+
+   By default, libgccjit will use an embedded copy of the driver
+   code.
+
+   This option can be used to instead invoke an external driver executable
+   as a subprocess.
+
+   This entrypoint was added in LIBGCCJIT_ABI_5; you can test for
+   its presence using
+     #ifdef LIBGCCJIT_HAVE_gcc_jit_context_set_bool_use_external_driver
+*/
+
+extern void
+gcc_jit_context_set_bool_use_external_driver (gcc_jit_context *ctxt,
+					      int bool_value);
+
+/* Pre-canned feature macro to indicate the presence of
+   gcc_jit_context_set_bool_use_external_driver.  This can be
+   tested for with #ifdef.  */
+#define LIBGCCJIT_HAVE_gcc_jit_context_set_bool_use_external_driver
 
 /* Add an arbitrary gcc command-line option to the context.
    The context takes a copy of the string, so the
@@ -1265,6 +1289,90 @@ extern void
 gcc_jit_context_enable_dump (gcc_jit_context *ctxt,
 			     const char *dumpname,
 			     char **out_ptr);
+
+/**********************************************************************
+ Timing support.
+ **********************************************************************/
+
+/* The timing API was added in LIBGCCJIT_ABI_4; you can test for its
+   presence using
+     #ifdef LIBGCCJIT_HAVE_TIMING_API
+*/
+#define LIBGCCJIT_HAVE_TIMING_API
+
+typedef struct gcc_jit_timer gcc_jit_timer;
+
+/* Create a gcc_jit_timer instance, and start timing.
+
+   This API entrypoint was added in LIBGCCJIT_ABI_4; you can test for its
+   presence using
+     #ifdef LIBGCCJIT_HAVE_TIMING_API
+*/
+extern gcc_jit_timer *
+gcc_jit_timer_new (void);
+
+/* Release a gcc_jit_timer instance.
+
+   This API entrypoint was added in LIBGCCJIT_ABI_4; you can test for its
+   presence using
+     #ifdef LIBGCCJIT_HAVE_TIMING_API
+*/
+extern void
+gcc_jit_timer_release (gcc_jit_timer *timer);
+
+/* Associate a gcc_jit_timer instance with a context.
+
+   This API entrypoint was added in LIBGCCJIT_ABI_4; you can test for its
+   presence using
+     #ifdef LIBGCCJIT_HAVE_TIMING_API
+*/
+extern void
+gcc_jit_context_set_timer (gcc_jit_context *ctxt,
+			   gcc_jit_timer *timer);
+
+/* Get the timer associated with a context (if any).
+
+   This API entrypoint was added in LIBGCCJIT_ABI_4; you can test for its
+   presence using
+     #ifdef LIBGCCJIT_HAVE_TIMING_API
+*/
+
+extern gcc_jit_timer *
+gcc_jit_context_get_timer (gcc_jit_context *ctxt);
+
+/* Push the given item onto the timing stack.
+
+   This API entrypoint was added in LIBGCCJIT_ABI_4; you can test for its
+   presence using
+     #ifdef LIBGCCJIT_HAVE_TIMING_API
+*/
+
+extern void
+gcc_jit_timer_push (gcc_jit_timer *timer,
+		    const char *item_name);
+
+/* Pop the top item from the timing stack.
+
+   This API entrypoint was added in LIBGCCJIT_ABI_4; you can test for its
+   presence using
+     #ifdef LIBGCCJIT_HAVE_TIMING_API
+*/
+
+extern void
+gcc_jit_timer_pop (gcc_jit_timer *timer,
+		   const char *item_name);
+
+/* Print timing information to the given stream about activity since
+   the timer was started.
+
+   This API entrypoint was added in LIBGCCJIT_ABI_4; you can test for its
+   presence using
+     #ifdef LIBGCCJIT_HAVE_TIMING_API
+*/
+
+extern void
+gcc_jit_timer_print (gcc_jit_timer *timer,
+		     FILE *f_out);
 
 #ifdef __cplusplus
 }

@@ -1,5 +1,5 @@
-/*	$NetBSD: packet.h,v 1.16.2.1 2018/04/07 04:11:48 pgoyette Exp $	*/
-/* $OpenBSD: packet.h,v 1.84 2017/12/10 05:55:29 dtucker Exp $ */
+/*	$NetBSD: packet.h,v 1.16.2.2 2018/09/06 06:51:33 pgoyette Exp $	*/
+/* $OpenBSD: packet.h,v 1.86 2018/07/09 21:20:26 markus Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -94,7 +94,6 @@ void	 ssh_clear_newkeys(struct ssh *, int);
 int	 ssh_packet_is_rekeying(struct ssh *);
 void     ssh_packet_set_protocol_flags(struct ssh *, u_int);
 u_int	 ssh_packet_get_protocol_flags(struct ssh *);
-int      ssh_packet_start_compression(struct ssh *, int);
 void	 ssh_packet_set_tos(struct ssh *, int);
 void     ssh_packet_set_interactive(struct ssh *, int, int, int);
 int      ssh_packet_is_interactive(struct ssh *);
@@ -137,8 +136,8 @@ int      ssh_packet_not_very_much_data_to_write(struct ssh *);
 int	 ssh_packet_connection_is_on_socket(struct ssh *);
 int	 ssh_packet_remaining(struct ssh *);
 
-void	 tty_make_modes(int, struct termios *);
-void	 tty_parse_modes(int, int *);
+void	 ssh_tty_make_modes(struct ssh *, int, struct termios *);
+void	 ssh_tty_parse_modes(struct ssh *, int);
 
 void	 ssh_packet_set_alive_timeouts(struct ssh *, int);
 int	 ssh_packet_inc_alive_timeouts(struct ssh *);

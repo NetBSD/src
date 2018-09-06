@@ -1,3 +1,5 @@
+/*	$NetBSD: drm_sysfs.h,v 1.1.1.1.30.1 2018/09/06 06:56:35 pgoyette Exp $	*/
+
 #ifndef _DRM_SYSFS_H_
 #define _DRM_SYSFS_H_
 

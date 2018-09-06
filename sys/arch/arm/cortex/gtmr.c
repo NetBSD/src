@@ -1,4 +1,4 @@
-/*	$NetBSD: gtmr.c,v 1.23.2.4 2018/07/28 04:37:27 pgoyette Exp $	*/
+/*	$NetBSD: gtmr.c,v 1.23.2.5 2018/09/06 06:55:26 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtmr.c,v 1.23.2.4 2018/07/28 04:37:27 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtmr.c,v 1.23.2.5 2018/09/06 06:55:26 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -87,7 +87,9 @@ reg ## _stable_read(struct gtmr_softc *sc) \
 	return val; \
 }
 
+#ifdef DIAGNOSTIC
 stable_read(gtmr_cntv_cval);
+#endif
 stable_read(gtmr_cntvct);
 
 static int gtmr_match(device_t, cfdata_t, void *);
@@ -172,8 +174,10 @@ gtmr_attach(device_t parent, device_t self, void *aux)
 
 	evcnt_attach_dynamic(&gtmr_cntv_tval_write_ev, EVCNT_TYPE_MISC, NULL,
 	    device_xname(self), "CNTV_TVAL write retry max");
+#ifdef DIAGNOSTIC
 	evcnt_attach_dynamic(&gtmr_cntv_cval_read_ev, EVCNT_TYPE_MISC, NULL,
 	    device_xname(self), "CNTV_CVAL read retry max");
+#endif
 	evcnt_attach_dynamic(&gtmr_cntvct_read_ev, EVCNT_TYPE_MISC, NULL,
 	    device_xname(self), "CNTVCT read retry max");
 

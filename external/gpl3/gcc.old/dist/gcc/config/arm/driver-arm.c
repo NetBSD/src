@@ -1,5 +1,5 @@
 /* Subroutines for the gcc driver.
-   Copyright (C) 2011-2015 Free Software Foundation, Inc.
+   Copyright (C) 2011-2016 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -35,6 +35,9 @@ static struct vendor_cpu arm_cpu_table[] = {
     {"0xb02", "armv6k", "mpcore"},
     {"0xb36", "armv6j", "arm1136j-s"},
     {"0xb56", "armv6t2", "arm1156t2-s"},
+    /* armv6kz is the correct spelling for ARMv6KZ but may not be supported in
+       the version of binutils used.  The incorrect spelling is supported in
+       legacy and current binutils so that is used instead.  */
     {"0xb76", "armv6zk", "arm1176jz-s"},
     {"0xc05", "armv7-a", "cortex-a5"},
     {"0xc07", "armv7ve", "cortex-a7"},

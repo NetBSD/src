@@ -1,4 +1,4 @@
-;; Copyright (C) 2011-2015 Free Software Foundation, Inc.
+;; Copyright (C) 2011-2016 Free Software Foundation, Inc.
 ;;
 ;; This file is part of GCC.
 ;;
@@ -372,7 +372,7 @@
 
   rshift = gen_rtx_ASHIFTRT (SImode, tmp, GEN_INT (7));
 
-  emit_insn (gen_rtx_SET (VOIDmode, gen_lowpart (HImode, operands[0]),
+  emit_insn (gen_rtx_SET (gen_lowpart (HImode, operands[0]),
 			  gen_rtx_SS_TRUNCATE (HImode, rshift)));
 
   DONE;

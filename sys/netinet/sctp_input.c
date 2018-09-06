@@ -1,5 +1,5 @@
 /*	$KAME: sctp_input.c,v 1.28 2005/04/21 18:36:21 nishida Exp $	*/
-/*	$NetBSD: sctp_input.c,v 1.8.2.1 2018/05/02 07:20:23 pgoyette Exp $	*/
+/*	$NetBSD: sctp_input.c,v 1.8.2.2 2018/09/06 06:56:44 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 2002, 2003, 2004 Cisco Systems Inc,
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sctp_input.c,v 1.8.2.1 2018/05/02 07:20:23 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sctp_input.c,v 1.8.2.2 2018/09/06 06:56:44 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -2988,7 +2988,7 @@ sctp_handle_packet_dropped(struct sctp_pktdrop_chunk *cp,
 			 * Take 1/4 of the space left or
 			 * max burst up .. whichever is less.
 			 */
-			incr = min((bw_avail - on_queue) >> 2,
+			incr = uimin((bw_avail - on_queue) >> 2,
 			    (int)stcb->asoc.max_burst * (int)net->mtu);
 			net->cwnd += incr;
 		}

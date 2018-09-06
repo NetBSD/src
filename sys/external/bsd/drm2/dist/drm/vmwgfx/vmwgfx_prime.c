@@ -1,3 +1,5 @@
+/*	$NetBSD: vmwgfx_prime.c,v 1.1.1.1.30.1 2018/09/06 06:56:34 pgoyette Exp $	*/
+
 /**************************************************************************
  *
  * Copyright © 2013 VMware, Inc., Palo Alto, CA., USA
@@ -29,6 +31,9 @@
  *     Thomas Hellstrom <thellstrom@vmware.com>
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: vmwgfx_prime.c,v 1.1.1.1.30.1 2018/09/06 06:56:34 pgoyette Exp $");
 
 #include "vmwgfx_drv.h"
 #include <linux/dma-buf.h>

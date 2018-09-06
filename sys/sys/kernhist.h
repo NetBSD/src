@@ -1,4 +1,4 @@
-/*	$NetBSD: kernhist.h,v 1.22.2.1 2018/04/22 07:20:29 pgoyette Exp $	*/
+/*	$NetBSD: kernhist.h,v 1.22.2.2 2018/09/06 06:56:47 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -252,7 +252,7 @@ do { \
 	uint32_t _kernhist_call = 0;
 
 #ifdef DDB
-#define KERNHIST_DUMP(NAME)	kernhist_dump(&NAME, printf)
+#define KERNHIST_DUMP(NAME)	kernhist_dump(&NAME, 0, printf)
 #else
 #define KERNHIST_DUMP(NAME)
 #endif
@@ -270,8 +270,8 @@ kernhist_entry_print(const struct kern_history_ent *e, void (*pr)(const char *, 
 }
 
 #if defined(DDB)
-void	kernhist_dump(struct kern_history *, void (*)(const char *, ...) __printflike(1, 2));
-void	kernhist_print(void *, void (*)(const char *, ...) __printflike(1, 2));
+void	kernhist_dump(struct kern_history *, size_t, void (*)(const char *, ...) __printflike(1, 2));
+void	kernhist_print(void *, size_t, const char *, void (*)(const char *, ...) __printflike(1, 2));
 #endif /* DDB */
 
 void sysctl_kernhist_init(void);

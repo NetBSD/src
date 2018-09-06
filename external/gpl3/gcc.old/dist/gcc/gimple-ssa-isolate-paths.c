@@ -1,7 +1,7 @@
 /* Detect paths through the CFG which can never be executed in a conforming
    program and isolate them.
 
-   Copyright (C) 2013-2015 Free Software Foundation, Inc.
+   Copyright (C) 2013-2016 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -22,45 +22,19 @@ along with GCC; see the file COPYING3.  If not see
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
-#include "hash-set.h"
-#include "machmode.h"
-#include "vec.h"
-#include "double-int.h"
-#include "input.h"
-#include "alias.h"
-#include "symtab.h"
-#include "options.h"
-#include "wide-int.h"
-#include "inchash.h"
+#include "backend.h"
 #include "tree.h"
-#include "fold-const.h"
-#include "flags.h"
-#include "predict.h"
-#include "tm.h"
-#include "hard-reg-set.h"
-#include "input.h"
-#include "function.h"
-#include "dominance.h"
-#include "cfg.h"
-#include "basic-block.h"
-#include "tree-ssa-alias.h"
-#include "internal-fn.h"
-#include "gimple-expr.h"
-#include "is-a.h"
 #include "gimple.h"
+#include "cfghooks.h"
+#include "tree-pass.h"
+#include "ssa.h"
+#include "diagnostic-core.h"
+#include "fold-const.h"
 #include "gimple-iterator.h"
 #include "gimple-walk.h"
 #include "tree-ssa.h"
-#include "stringpool.h"
-#include "tree-ssanames.h"
-#include "gimple-ssa.h"
-#include "tree-ssa-operands.h"
-#include "tree-phinodes.h"
-#include "ssa-iterators.h"
 #include "cfgloop.h"
-#include "tree-pass.h"
 #include "tree-cfg.h"
-#include "diagnostic-core.h"
 #include "intl.h"
 
 
@@ -74,7 +48,7 @@ static bool cfg_altered;
    This routine only makes a superficial check for a dereference.  Thus,
    it must only be used if it is safe to return a false negative.  */
 static bool
-check_loadstore (gimple stmt, tree op, tree, void *data)
+check_loadstore (gimple *stmt, tree op, tree, void *data)
 {
   if ((TREE_CODE (op) == MEM_REF || TREE_CODE (op) == TARGET_MEM_REF)
       && operand_equal_p (TREE_OPERAND (op, 0), (tree)data, 0))
@@ -87,10 +61,10 @@ check_loadstore (gimple stmt, tree op, tree, void *data)
   return false;
 }
 
-/* Insert a trap after SI and remove SI and all statements after the trap.  */
+/* Insert a trap after SI and split the block after the trap.  */
 
 static void
-insert_trap_and_remove_trailing_statements (gimple_stmt_iterator *si_p, tree op)
+insert_trap (gimple_stmt_iterator *si_p, tree op)
 {
   /* We want the NULL pointer dereference to actually occur so that
      code that wishes to catch the signal can do so.
@@ -101,7 +75,7 @@ insert_trap_and_remove_trailing_statements (gimple_stmt_iterator *si_p, tree op)
      If the dereference is a store and we can easily transform the RHS,
      then simplify the RHS to enable more DCE.   Note that we require the
      statement to be a GIMPLE_ASSIGN which filters out calls on the RHS.  */
-  gimple stmt = gsi_stmt (*si_p);
+  gimple *stmt = gsi_stmt (*si_p);
   if (walk_stmt_load_store_ops (stmt, (void *)op, NULL, check_loadstore)
       && is_gimple_assign (stmt)
       && INTEGRAL_TYPE_P (TREE_TYPE (gimple_assign_lhs (stmt))))
@@ -136,23 +110,13 @@ insert_trap_and_remove_trailing_statements (gimple_stmt_iterator *si_p, tree op)
   else
     gsi_insert_before (si_p, seq, GSI_NEW_STMT);
 
-  /* We must remove statements from the end of the block so that we
-     never reference a released SSA_NAME.  */
-  basic_block bb = gimple_bb (gsi_stmt (*si_p));
-  for (gimple_stmt_iterator si = gsi_last_bb (bb);
-       gsi_stmt (si) != gsi_stmt (*si_p);
-       si = gsi_last_bb (bb))
-    {
-      stmt = gsi_stmt (si);
-      unlink_stmt_vdef (stmt);
-      gsi_remove (&si, true);
-      release_defs (stmt);
-    }
+  split_block (gimple_bb (new_stmt), new_stmt);
+  *si_p = gsi_for_stmt (stmt);
 }
 
-/* BB when reached via incoming edge E will exhibit undefined behaviour
+/* BB when reached via incoming edge E will exhibit undefined behavior
    at STMT.  Isolate and optimize the path which exhibits undefined
-   behaviour.
+   behavior.
 
    Isolation is simple.  Duplicate BB and redirect E to BB'.
 
@@ -167,7 +131,7 @@ insert_trap_and_remove_trailing_statements (gimple_stmt_iterator *si_p, tree op)
 
 basic_block
 isolate_path (basic_block bb, basic_block duplicate,
-	      edge e, gimple stmt, tree op, bool ret_zero)
+	      edge e, gimple *stmt, tree op, bool ret_zero)
 {
   gimple_stmt_iterator si, si2;
   edge_iterator ei;
@@ -192,14 +156,14 @@ isolate_path (basic_block bb, basic_block duplicate,
 
 
   /* There may be more than one statement in DUPLICATE which exhibits
-     undefined behaviour.  Ultimately we want the first such statement in
+     undefined behavior.  Ultimately we want the first such statement in
      DUPLCIATE so that we're able to delete as much code as possible.
 
-     So each time we discover undefined behaviour in DUPLICATE, search for
-     the statement which triggers undefined behaviour.  If found, then
+     So each time we discover undefined behavior in DUPLICATE, search for
+     the statement which triggers undefined behavior.  If found, then
      transform the statement into a trap and delete everything after the
      statement.  If not found, then this particular instance was subsumed by
-     an earlier instance of undefined behaviour and there's nothing to do.
+     an earlier instance of undefined behavior and there's nothing to do.
 
      This is made more complicated by the fact that we have STMT, which is in
      BB rather than in DUPLICATE.  So we set up two iterators, one for each
@@ -236,7 +200,7 @@ isolate_path (basic_block bb, basic_block duplicate,
 	  update_stmt (ret);
 	}
       else
-	insert_trap_and_remove_trailing_statements (&si2, op);
+	insert_trap (&si2, op);
     }
 
   return duplicate;
@@ -251,7 +215,7 @@ isolate_path (basic_block bb, basic_block duplicate,
    When found isolate and optimize the path associated with the PHI
    argument feeding the erroneous statement.  */
 static void
-find_implicit_erroneous_behaviour (void)
+find_implicit_erroneous_behavior (void)
 {
   basic_block bb;
 
@@ -297,7 +261,7 @@ find_implicit_erroneous_behaviour (void)
 	      tree op = gimple_phi_arg_def (phi, i);
 	      edge e = gimple_phi_arg_edge (phi, i);
 	      imm_use_iterator iter;
-	      gimple use_stmt;
+	      gimple *use_stmt;
 
 	      next_i = i + 1;
 
@@ -352,11 +316,29 @@ find_implicit_erroneous_behaviour (void)
 		  if (gimple_bb (use_stmt) != bb)
 		    continue;
 
-		  if (infer_nonnull_range (use_stmt, lhs,
-					   flag_isolate_erroneous_paths_dereference,
-					   flag_isolate_erroneous_paths_attribute))
+		  bool by_dereference 
+		    = infer_nonnull_range_by_dereference (use_stmt, lhs);
 
+		  if (by_dereference 
+		      || infer_nonnull_range_by_attribute (use_stmt, lhs))
 		    {
+		      location_t loc = gimple_location (use_stmt)
+			? gimple_location (use_stmt)
+			: gimple_phi_arg_location (phi, i);
+
+		      if (by_dereference)
+			{
+			  warning_at (loc, OPT_Wnull_dereference,
+				      "potential null pointer dereference");
+			  if (!flag_isolate_erroneous_paths_dereference)
+			    continue;
+			}
+		      else 
+			{
+			  if (!flag_isolate_erroneous_paths_attribute)
+			    continue;
+			}
+
 		      duplicate = isolate_path (bb, duplicate, e,
 						use_stmt, lhs, false);
 
@@ -371,12 +353,12 @@ find_implicit_erroneous_behaviour (void)
     }
 }
 
-/* Look for statements which exhibit erroneous behaviour.  For example
+/* Look for statements which exhibit erroneous behavior.  For example
    a NULL pointer dereference.
 
-   When found, optimize the block containing the erroneous behaviour.  */
+   When found, optimize the block containing the erroneous behavior.  */
 static void
-find_explicit_erroneous_behaviour (void)
+find_explicit_erroneous_behavior (void)
 {
   basic_block bb;
 
@@ -400,23 +382,33 @@ find_explicit_erroneous_behaviour (void)
 	 because of jump threading and constant propagation.  */
       for (si = gsi_start_bb (bb); !gsi_end_p (si); gsi_next (&si))
 	{
-	  gimple stmt = gsi_stmt (si);
+	  gimple *stmt = gsi_stmt (si);
 
-	  /* By passing null_pointer_node, we can use infer_nonnull_range
-	     to detect explicit NULL pointer dereferences and other uses
-	     where a non-NULL value is required.  */
-	  if (infer_nonnull_range (stmt, null_pointer_node,
-				   flag_isolate_erroneous_paths_dereference,
-				   flag_isolate_erroneous_paths_attribute))
+	  /* By passing null_pointer_node, we can use the
+	     infer_nonnull_range functions to detect explicit NULL
+	     pointer dereferences and other uses where a non-NULL
+	     value is required.  */
+	  
+	  bool by_dereference
+	    = infer_nonnull_range_by_dereference (stmt, null_pointer_node);
+	  if (by_dereference
+	      || infer_nonnull_range_by_attribute (stmt, null_pointer_node))
 	    {
-	      insert_trap_and_remove_trailing_statements (&si,
-							  null_pointer_node);
+	      if (by_dereference)
+		{
+		  warning_at (gimple_location (stmt), OPT_Wnull_dereference,
+			      "null pointer dereference");
+		  if (!flag_isolate_erroneous_paths_dereference)
+		    continue;
+		}
+	      else
+		{
+		  if (!flag_isolate_erroneous_paths_attribute)
+		    continue;
+		}
 
-	      /* And finally, remove all outgoing edges from BB.  */
-	      edge e;
-	      for (edge_iterator ei = ei_start (bb->succs);
-		   (e = ei_safe_edge (ei)); )
-		remove_edge (e);
+	      insert_trap (&si, null_pointer_node);
+	      bb = gimple_bb (gsi_stmt (si));
 
 	      /* Ignore any more operands on this statement and
 		 continue the statement iterator (which should
@@ -493,11 +485,11 @@ gimple_ssa_isolate_erroneous_paths (void)
   initialize_original_copy_tables ();
 
   /* Search all the blocks for edges which, if traversed, will
-     result in undefined behaviour.  */
+     result in undefined behavior.  */
   cfg_altered = false;
 
   /* First handle cases where traversal of a particular edge
-     triggers undefined behaviour.  These cases require creating
+     triggers undefined behavior.  These cases require creating
      duplicate blocks and thus new SSA_NAMEs.
 
      We want that process complete prior to the phase where we start
@@ -509,8 +501,8 @@ gimple_ssa_isolate_erroneous_paths (void)
      back to the manager but we could still have dangling references
      to the released SSA_NAME in unreachable blocks.
      that any released names not have dangling references in the IL.  */
-  find_implicit_erroneous_behaviour ();
-  find_explicit_erroneous_behaviour ();
+  find_implicit_erroneous_behavior ();
+  find_explicit_erroneous_behavior ();
 
   free_original_copy_tables ();
 
@@ -555,7 +547,8 @@ public:
       /* If we do not have a suitable builtin function for the trap statement,
 	 then do not perform the optimization.  */
       return (flag_isolate_erroneous_paths_dereference != 0
-	      || flag_isolate_erroneous_paths_attribute != 0);
+	      || flag_isolate_erroneous_paths_attribute != 0
+	      || warn_null_dereference);
     }
 
   virtual unsigned int execute (function *)

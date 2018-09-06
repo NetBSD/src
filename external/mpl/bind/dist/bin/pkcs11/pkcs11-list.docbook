@@ -1,0 +1,148 @@
+<!--
+ - Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ -
+ - This Source Code Form is subject to the terms of the Mozilla Public
+ - License, v. 2.0. If a copy of the MPL was not distributed with this
+ - file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ -
+ - See the COPYRIGHT file distributed with this work for additional
+ - information regarding copyright ownership.
+-->
+
+<!-- Converted by db4-upgrade version 1.0 -->
+<refentry xmlns:db="http://docbook.org/ns/docbook" version="5.0" xml:id="man.pkcs11-list">
+  <info>
+    <date>2009-10-05</date>
+  </info>
+  <refentryinfo>
+    <corpname>ISC</corpname>
+    <corpauthor>Internet Systems Consortium, Inc.</corpauthor>
+  </refentryinfo>
+
+  <refmeta>
+    <refentrytitle><application>pkcs11-list</application></refentrytitle>
+    <manvolnum>8</manvolnum>
+    <refmiscinfo>BIND9</refmiscinfo>
+  </refmeta>
+
+  <refnamediv>
+    <refname><application>pkcs11-list</application></refname>
+    <refpurpose>list PKCS#11 objects</refpurpose>
+  </refnamediv>
+
+  <docinfo>
+    <copyright>
+      <year>2009</year>
+      <year>2014</year>
+      <year>2015</year>
+      <year>2016</year>
+      <year>2018</year>
+      <holder>Internet Systems Consortium, Inc. ("ISC")</holder>
+    </copyright>
+  </docinfo>
+
+  <refsynopsisdiv>
+    <cmdsynopsis sepchar=" ">
+      <command>pkcs11-list</command>
+      <arg choice="opt" rep="norepeat"><option>-P</option></arg>
+      <arg choice="opt" rep="norepeat"><option>-m <replaceable class="parameter">module</replaceable></option></arg>
+      <arg choice="opt" rep="norepeat"><option>-s <replaceable class="parameter">slot</replaceable></option></arg>
+      <arg choice="opt" rep="norepeat">-i <replaceable class="parameter">ID</replaceable></arg>
+      <arg choice="opt" rep="norepeat">-l <replaceable class="parameter">label</replaceable></arg>
+      <arg choice="opt" rep="norepeat"><option>-p <replaceable class="parameter">PIN</replaceable></option></arg>
+    </cmdsynopsis>
+  </refsynopsisdiv>
+
+  <refsection><info><title>DESCRIPTION</title></info>
+
+    <para>
+      <command>pkcs11-list</command>
+      lists the PKCS#11 objects with <option>ID</option> or
+      <option>label</option> or by default all objects.
+      The object class, label, and ID are displayed for all
+      keys.  For private or secret keys, the extractability
+      attribute is also displayed, as either <literal>true</literal>,
+      <literal>false</literal>, or <literal>never</literal>.
+    </para>
+  </refsection>
+
+  <refsection><info><title>ARGUMENTS</title></info>
+
+    <variablelist>
+      <varlistentry>
+        <term>-P</term>
+        <listitem>
+          <para>
+            List only the public objects. (Note that on some PKCS#11
+            devices, all objects are private.)
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>-m <replaceable class="parameter">module</replaceable></term>
+        <listitem>
+          <para>
+            Specify the PKCS#11 provider module.  This must be the full
+            path to a shared library object implementing the PKCS#11 API
+            for the device.
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>-s <replaceable class="parameter">slot</replaceable></term>
+        <listitem>
+          <para>
+            Open the session with the given PKCS#11 slot.  The default is
+            slot 0.
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>-i <replaceable class="parameter">ID</replaceable></term>
+        <listitem>
+          <para>
+            List only key objects with the given object ID.
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>-l <replaceable class="parameter">label</replaceable></term>
+        <listitem>
+          <para>
+            List only key objects with the given label.
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>-p <replaceable class="parameter">PIN</replaceable></term>
+        <listitem>
+          <para>
+            Specify the PIN for the device.  If no PIN is provided on the
+            command line, <command>pkcs11-list</command> will prompt for it.
+          </para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+  </refsection>
+
+  <refsection><info><title>SEE ALSO</title></info>
+
+    <para>
+      <citerefentry>
+        <refentrytitle>pkcs11-destroy</refentrytitle><manvolnum>8</manvolnum>
+      </citerefentry>,
+      <citerefentry>
+        <refentrytitle>pkcs11-keygen</refentrytitle><manvolnum>8</manvolnum>
+      </citerefentry>,
+      <citerefentry>
+        <refentrytitle>pkcs11-tokens</refentrytitle><manvolnum>8</manvolnum>
+      </citerefentry>
+    </para>
+  </refsection>
+
+</refentry>

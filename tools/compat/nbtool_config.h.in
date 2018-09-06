@@ -1,6 +1,5 @@
-/* nbtool_config.h.in.  Generated from configure.ac by autoheader.  */
 
-/*      $NetBSD: nbtool_config.h.in,v 1.42.2.1 2018/06/25 07:26:09 pgoyette Exp $    */
+/*      $NetBSD: nbtool_config.h.in,v 1.42.2.2 2018/09/06 06:56:49 pgoyette Exp $    */
  
 #ifndef __NETBSD_NBTOOL_CONFIG_H__
 #define __NETBSD_NBTOOL_CONFIG_H__
@@ -153,6 +152,10 @@
 /* Define to 1 if you have the declaration of `getprogname', and to 0 if you
    don't. */
 #undef HAVE_DECL_GETPROGNAME
+
+/* Define to 1 if you have the declaration of `getsubopt', and to 0 if you
+   don't. */
+#undef HAVE_DECL_GETSUBOPT
 
 /* Define to 1 if you have the declaration of `gid_from_group', and to 0 if
    you don't. */
@@ -310,6 +313,10 @@
    don't. */
 #undef HAVE_DECL_SNPRINTF
 
+/* Define to 1 if you have the declaration of `strcasecmp', and to 0 if you
+   don't. */
+#undef HAVE_DECL_STRCASECMP
+
 /* Define to 1 if you have the declaration of `strlcat', and to 0 if you
    don't. */
 #undef HAVE_DECL_STRLCAT
@@ -321,6 +328,10 @@
 /* Define to 1 if you have the declaration of `strmode', and to 0 if you
    don't. */
 #undef HAVE_DECL_STRMODE
+
+/* Define to 1 if you have the declaration of `strncasecmp', and to 0 if you
+   don't. */
+#undef HAVE_DECL_STRNCASECMP
 
 /* Define to 1 if you have the declaration of `strndup', and to 0 if you
    don't. */
@@ -634,6 +645,9 @@
 /* Define to 1 if you have the <stdlib.h> header file. */
 #undef HAVE_STDLIB_H
 
+/* Define to 1 if you have the `strcasecmp' function. */
+#undef HAVE_STRCASECMP
+
 /* Define to 1 if you have the <strings.h> header file. */
 #undef HAVE_STRINGS_H
 
@@ -648,6 +662,9 @@
 
 /* Define to 1 if you have the `strmode' function. */
 #undef HAVE_STRMODE
+
+/* Define to 1 if you have the `strncasecmp' function. */
+#undef HAVE_STRNCASECMP
 
 /* Define to 1 if you have the `strndup' function. */
 #undef HAVE_STRNDUP

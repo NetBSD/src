@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.76.2.3 2018/07/28 04:37:42 pgoyette Exp $	*/
+/*	$NetBSD: pmap.h,v 1.76.2.4 2018/09/06 06:55:44 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -160,18 +160,20 @@ struct bootspace {
 #define SLAREA_MAIN	3
 #define SLAREA_PCPU	4
 #define SLAREA_DMAP	5
-#define SLAREA_KERN	6
-#define SLSPACE_NAREAS	7
+#define SLAREA_HYPV	6
+#define SLAREA_ASAN	7
+#define SLAREA_KERN	8
+#define SLSPACE_NAREAS	9
 
 struct slotspace {
 	struct {
 		size_t sslot; /* start slot */
 		size_t nslot; /* # of slots */
-		size_t mslot; /* max # of slots */
 		bool active;  /* area is active */
-		bool dropmax; /* !resizable */
 	} area[SLSPACE_NAREAS];
 };
+
+extern struct slotspace slotspace;
 
 #ifndef MAXGDTSIZ
 #define MAXGDTSIZ 65536 /* XXX */
@@ -355,6 +357,7 @@ bool		pmap_is_curpmap(struct pmap *);
 #ifndef __HAVE_DIRECT_MAP
 void		pmap_vpage_cpu_init(struct cpu_info *);
 #endif
+vaddr_t		slotspace_rand(int, size_t, size_t);
 
 vaddr_t reserve_dumppages(vaddr_t); /* XXX: not a pmap fn */
 
@@ -549,6 +552,8 @@ int	pmap_enter_ma(struct pmap *, vaddr_t, paddr_t, paddr_t,
 bool	pmap_extract_ma(pmap_t, vaddr_t, paddr_t *);
 void	pmap_free_ptps(struct vm_page *);
 
+paddr_t pmap_get_physpage(void);
+
 /*
  * Hooks for the pool allocator.
  */
@@ -556,7 +561,7 @@ void	pmap_free_ptps(struct vm_page *);
 
 #ifdef __HAVE_PCPU_AREA
 extern struct pcpu_area *pcpuarea;
-#define PDIR_SLOT_PCPU		384
+#define PDIR_SLOT_PCPU		510
 #define PMAP_PCPU_BASE		(VA_SIGN_NEG((PDIR_SLOT_PCPU * NBPD_L4)))
 #endif
 
@@ -564,13 +569,6 @@ extern struct pcpu_area *pcpuarea;
 
 extern vaddr_t pmap_direct_base;
 extern vaddr_t pmap_direct_end;
-
-#define L4_SLOT_DIRECT		456
-#define PDIR_SLOT_DIRECT	L4_SLOT_DIRECT
-
-#define NL4_SLOT_DIRECT		32
-
-#define PMAP_DIRECT_DEFAULT_BASE (VA_SIGN_NEG((L4_SLOT_DIRECT * NBPD_L4)))
 
 #define PMAP_DIRECT_BASE	pmap_direct_base
 #define PMAP_DIRECT_END		pmap_direct_end

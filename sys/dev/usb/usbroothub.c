@@ -1,4 +1,4 @@
-/* $NetBSD: usbroothub.c,v 1.4.4.1 2018/04/16 02:00:02 pgoyette Exp $ */
+/* $NetBSD: usbroothub.c,v 1.4.4.2 2018/09/06 06:56:06 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 1998, 2004, 2011, 2012 The NetBSD Foundation, Inc.
@@ -56,6 +56,9 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: usbroothub.c,v 1.4.4.2 2018/09/06 06:56:06 pgoyette Exp $");
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>
@@ -406,25 +409,25 @@ roothub_ctrl_start(struct usbd_xfer *xfer)
 		switch (value) {
 		case C(0, UDESC_DEVICE):
 			if (bus->ub_revision >= USBREV_3_0) {
-				buflen = min(len, sizeof(usbroothub_devd3));
+				buflen = uimin(len, sizeof(usbroothub_devd3));
 				memcpy(buf, &usbroothub_devd3, buflen);
 			} else if (bus->ub_revision == USBREV_2_0) {
-				buflen = min(len, sizeof(usbroothub_devd2));
+				buflen = uimin(len, sizeof(usbroothub_devd2));
 				memcpy(buf, &usbroothub_devd2, buflen);
 			} else {
-				buflen = min(len, sizeof(usbroothub_devd1));
+				buflen = uimin(len, sizeof(usbroothub_devd1));
 				memcpy(buf, &usbroothub_devd1, buflen);
 			}
 			break;
 		case C(0, UDESC_CONFIG):
 			if (bus->ub_revision >= USBREV_3_0) {
-				buflen = min(len, sizeof(usbroothub_confd3));
+				buflen = uimin(len, sizeof(usbroothub_confd3));
 				memcpy(buf, &usbroothub_confd3, buflen);
 			} else if (bus->ub_revision == USBREV_2_0) {
-				buflen = min(len, sizeof(usbroothub_confd2));
+				buflen = uimin(len, sizeof(usbroothub_confd2));
 				memcpy(buf, &usbroothub_confd2, buflen);
 			} else {
-				buflen = min(len, sizeof(usbroothub_confd1));
+				buflen = uimin(len, sizeof(usbroothub_confd1));
 				memcpy(buf, &usbroothub_confd1, buflen);
 			}
 			break;
@@ -434,7 +437,7 @@ roothub_ctrl_start(struct usbd_xfer *xfer)
 				 * We can't really operate at another speed,
 				 * but the spec says we need this descriptor.
 				 */
-				buflen = min(len, sizeof(usbroothub_odevd2));
+				buflen = uimin(len, sizeof(usbroothub_odevd2));
 				memcpy(buf, &usbroothub_odevd2, buflen);
 			} else
 				goto fail;
@@ -447,7 +450,7 @@ roothub_ctrl_start(struct usbd_xfer *xfer)
 				 * We can't really operate at another speed,
 				 * but the spec says we need this descriptor.
 				 */
-				buflen = min(len, sizeof(usbroothub_confd2));
+				buflen = uimin(len, sizeof(usbroothub_confd2));
 				memcpy(&confd, &usbroothub_confd2, buflen);
 				confd.urh_confd.bDescriptorType =
 				    UDESC_OTHER_SPEED_CONFIGURATION;
@@ -457,7 +460,7 @@ roothub_ctrl_start(struct usbd_xfer *xfer)
 			break;
 		case C(0, UDESC_BOS):
 			if (bus->ub_revision >= USBREV_3_0) {
-				buflen = min(len, sizeof(usbroothub_bosd3));
+				buflen = uimin(len, sizeof(usbroothub_bosd3));
 				memcpy(buf, &usbroothub_bosd3, buflen);
 			} else
 				goto fail;
@@ -482,7 +485,7 @@ roothub_ctrl_start(struct usbd_xfer *xfer)
 		}
 		break;
 	case C(UR_GET_DESCRIPTOR, UT_READ_CLASS_DEVICE):
-		buflen = min(len, sizeof(usbroothub_hubd));
+		buflen = uimin(len, sizeof(usbroothub_hubd));
 		memcpy(buf, &usbroothub_hubd, buflen);
 		break;
 	case C(UR_GET_INTERFACE, UT_READ_INTERFACE):

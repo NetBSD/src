@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.344.2.2 2018/05/21 04:36:17 pgoyette Exp $	*/
+/*	$NetBSD: proc.h,v 1.344.2.3 2018/09/06 06:56:47 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -150,6 +150,8 @@ struct emul {
 	int		e_nsysent;	/* Number of system call entries */
 #endif
 	struct sysent	*e_sysent;	/* System call array */
+	const uint32_t	*e_nomodbits;	/* sys_nosys/sys_nomodule flags
+					 * for syscall_disestablish() */
 	const char * const *e_syscallnames; /* System call name array */
 					/* Signal sending function */
 	struct sc_autoload *e_sc_autoload;	/* List of autoloadable syscalls */

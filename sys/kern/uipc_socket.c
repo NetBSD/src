@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.259.2.3 2018/06/25 07:26:04 pgoyette Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.259.2.4 2018/09/06 06:56:42 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.259.2.3 2018/06/25 07:26:04 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.259.2.4 2018/09/06 06:56:42 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -663,7 +663,7 @@ solisten(struct socket *so, int backlog, struct lwp *l)
 		so->so_options |= SO_ACCEPTCONN;
 	if (backlog < 0)
 		backlog = 0;
-	so->so_qlimit = min(backlog, somaxconn);
+	so->so_qlimit = uimin(backlog, somaxconn);
 
 	error = (*so->so_proto->pr_usrreqs->pr_listen)(so, l);
 	if (error != 0) {

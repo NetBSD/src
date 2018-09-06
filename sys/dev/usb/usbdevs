@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.745.2.4 2018/07/28 04:37:58 pgoyette Exp $
+$NetBSD: usbdevs,v 1.745.2.5 2018/09/06 06:56:05 pgoyette Exp $
 
 /*-
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -3023,6 +3023,8 @@ product SIERRA AC881U		0x6856	Sierra Wireless AirCard 881U
 product SIERRA AC885U		0x6880	Sierra Wireless AirCard 885U
 product SIERRA C01SW		0x6890	C01SW
 product SIERRA USB305		0x68a3	Sierra Wireless AirCard USB 305
+product SIERRA MC7304		0x68c0	MC7304
+product SIERRA EM7455		0x9079	EM7455
 
 /* Sigmatel products */
 product SIGMATEL SIR4116	0x4116	StIR4116 SIR
@@ -3138,6 +3140,7 @@ product SMSC 2513HUB		0x2513	USB 2.0 3-Port Hub
 product SMSC 2514HUB		0x2514	USB 2.0 4-Port Hub
 product SMSC 2517HUB		0x2517	USB 2.0 7-Port Hub
 product SMSC LAN7500		0x7500	LAN7500 USB 2.0 gigabit ethernet device
+product SMSC LAN7505		0x7505	LAN7505 USB 2.0 gigabit ethernet device
 product SMSC LAN7800		0x7800	LAN7800 USB 3.1 gigabit ethernet device
 product SMSC LAN7801		0x7801	LAN7801 USB 3.1 gigabit ethernet device
 product SMSC LAN7850		0x7850	LAN7850 USB 2.0 gigabit ethernet device

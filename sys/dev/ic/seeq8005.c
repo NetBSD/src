@@ -1,4 +1,4 @@
-/* $NetBSD: seeq8005.c,v 1.57.14.2 2018/07/28 04:37:45 pgoyette Exp $ */
+/* $NetBSD: seeq8005.c,v 1.57.14.3 2018/09/06 06:55:50 pgoyette Exp $ */
 
 /*
  * Copyright (c) 2000, 2001 Ben Harris
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: seeq8005.c,v 1.57.14.2 2018/07/28 04:37:45 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: seeq8005.c,v 1.57.14.3 2018/09/06 06:55:50 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1280,11 +1280,11 @@ ea_get(struct seeq8005_softc *sc, int addr, int totlen, struct ifnet *ifp)
                         }
                         m->m_len = MLEN;
                 }
-                len = min(totlen, epkt - cp);
+                len = uimin(totlen, epkt - cp);
                 if (len >= MINCLSIZE) {
                         MCLGET(m, M_DONTWAIT);
                         if (m->m_flags & M_EXT)
-                                m->m_len = len = min(len, MCLBYTES);
+                                m->m_len = len = uimin(len, MCLBYTES);
                         else
                                 len = m->m_len;
                 } else {

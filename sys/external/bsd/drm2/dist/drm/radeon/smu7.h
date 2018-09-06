@@ -1,3 +1,5 @@
+/*	$NetBSD: smu7.h,v 1.1.1.1.30.1 2018/09/06 06:56:33 pgoyette Exp $	*/
+
 /*
  * Copyright 2013 Advanced Micro Devices, Inc.
  *

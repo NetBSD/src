@@ -1,4 +1,4 @@
-/*	$NetBSD: gumstix_machdep.c,v 1.58.12.1 2018/06/25 07:25:41 pgoyette Exp $ */
+/*	$NetBSD: gumstix_machdep.c,v 1.58.12.2 2018/09/06 06:55:30 pgoyette Exp $ */
 /*
  * Copyright (C) 2005, 2006, 2007  WIDE Project and SOUM Corporation.
  * All rights reserved.
@@ -137,6 +137,7 @@
  * boards using RedBoot firmware.
  */
 
+#include "opt_arm_debug.h"
 #include "opt_com.h"
 #include "opt_cputypes.h"
 #include "opt_evbarm_boardtype.h"

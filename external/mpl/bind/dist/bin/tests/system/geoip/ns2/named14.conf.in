@@ -1,0 +1,106 @@
+/*
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
+ */
+
+// NS2
+
+options {
+	query-source address 10.53.0.2;
+	notify-source 10.53.0.2;
+	transfer-source 10.53.0.2;
+	port @PORT@;
+	pid-file "named.pid";
+	listen-on { 127.0.0.1; 10.53.0.2; };
+	listen-on-v6 { none; };
+	recursion no;
+	geoip-directory "../data";
+	geoip-use-ecs no;
+};
+
+key rndc_key {
+	secret "1234abcd8765";
+	algorithm hmac-sha256;
+};
+
+controls {
+	inet 10.53.0.2 port @CONTROLPORT@ allow { any; } keys { rndc_key; };
+};
+
+acl gAU { geoip db country country AU; };
+acl gUS { geoip db country country US; };
+acl gGB { geoip db country country GB; };
+acl gCA { geoip db country country CA; };
+acl gCL { geoip db country country CL; };
+acl gDE { geoip db country country DE; };
+acl gEH { geoip db country country EH; };
+
+view one {
+	match-clients { gAU; };
+	zone "example" {
+		type master;
+		file "example1.db";
+	};
+};
+
+view two {
+	match-clients { gUS; };
+	zone "example" {
+		type master;
+		file "example2.db";
+	};
+};
+
+view three {
+	match-clients { gGB; };
+	zone "example" {
+		type master;
+		file "example3.db";
+	};
+};
+
+view four {
+	match-clients { gCA; };
+	zone "example" {
+		type master;
+		file "example4.db";
+	};
+};
+
+view five {
+	match-clients { gCL; };
+	zone "example" {
+		type master;
+		file "example5.db";
+	};
+};
+
+view six {
+	match-clients { gDE; };
+	zone "example" {
+		type master;
+		file "example6.db";
+	};
+};
+
+view seven {
+	match-clients { gEH; };
+	zone "example" {
+		type master;
+		file "example7.db";
+	};
+};
+
+view none {
+	match-clients { any; };
+	zone "example" {
+		type master;
+		file "examplebogus.db";
+	};
+};

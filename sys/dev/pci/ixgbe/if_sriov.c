@@ -412,7 +412,7 @@ ixgbe_vf_set_mc_addr(struct adapter *adapter, struct ixgbe_vf *vf, u32 *msg)
 	u32	vmolr, vec_bit, vec_reg, mta_reg;
 
 	entries = (msg[0] & IXGBE_VT_MSGINFO_MASK) >> IXGBE_VT_MSGINFO_SHIFT;
-	entries = min(entries, IXGBE_MAX_VF_MC);
+	entries = uimin(entries, IXGBE_MAX_VF_MC);
 
 	vmolr = IXGBE_READ_REG(&adapter->hw, IXGBE_VMOLR(vf->pool));
 

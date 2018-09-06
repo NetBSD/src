@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_bus_dma.c,v 1.26.38.1 2018/06/25 07:25:47 pgoyette Exp $	*/
+/*	$NetBSD: xen_bus_dma.c,v 1.26.38.2 2018/09/06 06:55:44 pgoyette Exp $	*/
 /*	NetBSD bus_dma.c,v 1.21 2005/04/16 07:53:35 yamt Exp */
 
 /*-
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_bus_dma.c,v 1.26.38.1 2018/06/25 07:25:47 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_bus_dma.c,v 1.26.38.2 2018/09/06 06:55:44 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -76,7 +76,7 @@ _xen_alloc_contig(bus_size_t size, bus_size_t alignment,
 	 * The only way to enforce alignment is to request a memory region
 	 * of size max(alignment, size).
 	 */
-	order = max(get_order(size), get_order(alignment));
+	order = uimax(get_order(size), get_order(alignment));
 	npages = (1 << order);
 	npagesreq = (size >> PAGE_SHIFT);
 	KASSERT(npages >= npagesreq);

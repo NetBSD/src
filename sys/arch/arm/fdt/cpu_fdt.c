@@ -1,4 +1,4 @@
-/* $NetBSD: cpu_fdt.c,v 1.4.2.3 2018/07/28 04:37:28 pgoyette Exp $ */
+/* $NetBSD: cpu_fdt.c,v 1.4.2.4 2018/09/06 06:55:26 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_fdt.c,v 1.4.2.3 2018/07/28 04:37:28 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_fdt.c,v 1.4.2.4 2018/09/06 06:55:26 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -68,6 +68,7 @@ static const struct of_compat_data compat_data[] = {
 	{ "arm,cortex-a15",		ARM_CPU_ARMV7 },
 	{ "arm,cortex-a17",		ARM_CPU_ARMV7 },
 
+	{ "arm,armv8",			ARM_CPU_ARMV8 },	/* nonstandard */
 	{ "arm,arm-v8",			ARM_CPU_ARMV8 },
 	{ "arm,cortex-a53",		ARM_CPU_ARMV8 },
 	{ "arm,cortex-a57",		ARM_CPU_ARMV8 },
@@ -97,15 +98,17 @@ cpu_fdt_match(device_t parent, cfdata_t cf, void *aux)
 	switch (type) {
 	case ARM_CPU_ARMV7:
 	case ARM_CPU_ARMV8:
-		/* XXX NetBSD requires all CPUs to be in the same cluster */
 		if (fdtbus_get_reg(phandle, 0, &mpidr, NULL) != 0)
 			return 0;
 
+#ifndef __aarch64__
+		/* XXX NetBSD/arm requires all CPUs to be in the same cluster */
 		const u_int bp_clid = cpu_clusterid();
 		const u_int clid = __SHIFTOUT(mpidr, MPIDR_AFF1);
 
 		if (bp_clid != clid)
 			return 0;
+#endif
 		break;
 	default:
 		break;
@@ -136,8 +139,10 @@ cpu_fdt_attach(device_t parent, device_t self, void *aux)
 			aprint_error(": missing 'reg' property\n");
 			return;
 		}
-
-		cpuid = __SHIFTOUT(mpidr, MPIDR_AFF0);
+#ifndef __aarch64__
+		mpidr = __SHIFTOUT(mpidr, MPIDR_AFF0);
+#endif
+		cpuid = mpidr;
 		break;
 	default:
 		cpuid = 0;

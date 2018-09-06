@@ -1,4 +1,4 @@
-.\"	$NetBSD: mt.1,v 1.36 2012/03/19 10:48:20 njoly Exp $
+.\"	$NetBSD: mt.1,v 1.36.32.1 2018/09/06 06:51:32 pgoyette Exp $
 .\"
 .\" Copyright (c) 1981, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)mt.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd March 9, 2008
+.Dd September 1, 2018
 .Dt MT 1
 .Os
 .Sh NAME
@@ -184,6 +184,10 @@ If
 is zero, disable compression.
 Otherwise enable compression.
 Not all tape drives support this feature.
+.It Cm cache
+Enable controller buffering.
+.It Cm nocache
+Disable controller buffering.
 .El
 .Pp
 If a tape name is not specified, and the environment variable

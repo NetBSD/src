@@ -1,4 +1,4 @@
-/* $NetBSD: virt_platform.c,v 1.4.2.2 2018/06/25 07:25:40 pgoyette Exp $ */
+/* $NetBSD: virt_platform.c,v 1.4.2.3 2018/09/06 06:55:28 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
 #include "opt_fdt_arm.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: virt_platform.c,v 1.4.2.2 2018/06/25 07:25:40 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: virt_platform.c,v 1.4.2.3 2018/09/06 06:55:28 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -119,14 +119,14 @@ virt_platform_uart_freq(void)
 }
 
 static const struct arm_platform virt_platform = {
-	.devmap = virt_platform_devmap,
-	.bootstrap = psci_fdt_bootstrap,
-	.init_attach_args = virt_platform_init_attach_args,
-	.early_putchar = virt_platform_early_putchar,
-	.device_register = virt_platform_device_register,
-	.reset = psci_fdt_reset,
-	.delay = gtmr_delay,
-	.uart_freq = virt_platform_uart_freq,
+	.ap_devmap = virt_platform_devmap,
+	.ap_bootstrap = psci_fdt_bootstrap,
+	.ap_init_attach_args = virt_platform_init_attach_args,
+	.ap_early_putchar = virt_platform_early_putchar,
+	.ap_device_register = virt_platform_device_register,
+	.ap_reset = psci_fdt_reset,
+	.ap_delay = gtmr_delay,
+	.ap_uart_freq = virt_platform_uart_freq,
 };
 
 ARM_PLATFORM(virt, "linux,dummy-virt", &virt_platform);

@@ -1,4 +1,4 @@
-/*	$NetBSD: t_recvmmsg.c,v 1.1.32.1 2018/03/22 01:44:52 pgoyette Exp $	*/
+/*	$NetBSD: t_recvmmsg.c,v 1.1.32.2 2018/09/06 06:56:48 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_recvmmsg.c,v 1.1.32.1 2018/03/22 01:44:52 pgoyette Exp $");
+__RCSID("$NetBSD: t_recvmmsg.c,v 1.1.32.2 2018/09/06 06:56:48 pgoyette Exp $");
 
 #include <atf-c.h>
 #include <sys/types.h>

@@ -1,5 +1,5 @@
 /* Subroutines used for macro/preprocessor support on SPARC.
-   Copyright (C) 2011-2015 Free Software Foundation, Inc.
+   Copyright (C) 2011-2016 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -21,28 +21,15 @@ along with GCC; see the file COPYING3.  If not see
 #include "system.h"
 #include "coretypes.h"
 #include "tm.h"
-#include "hash-set.h"
-#include "machmode.h"
-#include "vec.h"
-#include "double-int.h"
-#include "input.h"
-#include "alias.h"
-#include "symtab.h"
-#include "wide-int.h"
-#include "inchash.h"
-#include "tree.h"
-#include "tm_p.h"
-#include "flags.h"
 #include "c-family/c-common.h"
 #include "c-family/c-pragma.h"
-#include "cpplib.h"
 
 void
 sparc_target_macros (void)
 {
   builtin_define_std ("sparc");
 
-  if (TARGET_64BIT)
+  if (TARGET_ARCH64)
     {
       cpp_assert (parse_in, "cpu=sparc64");
       cpp_assert (parse_in, "machine=sparc64");
@@ -53,7 +40,12 @@ sparc_target_macros (void)
       cpp_assert (parse_in, "machine=sparc");
     }
 
-  if (TARGET_VIS3)
+  if (TARGET_VIS4)
+    {
+      cpp_define (parse_in, "__VIS__=0x400");
+      cpp_define (parse_in, "__VIS=0x400");
+    }
+  else if (TARGET_VIS3)
     {
       cpp_define (parse_in, "__VIS__=0x300");
       cpp_define (parse_in, "__VIS=0x300");

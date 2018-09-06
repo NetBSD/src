@@ -1,5 +1,9 @@
+/*	$NetBSD: i810_drm.h,v 1.1.1.1.36.1 2018/09/06 06:56:35 pgoyette Exp $	*/
+
 #ifndef _I810_DRM_H_
 #define _I810_DRM_H_
+
+#include <drm/drm.h>
 
 /* WARNING: These defines must be the same as what the Xserver uses.
  * if you change them, you must change the defines in the Xserver.

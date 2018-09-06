@@ -1,4 +1,4 @@
-/* Copyright (C) 2005-2015 Free Software Foundation, Inc.
+/* Copyright (C) 2005-2016 Free Software Foundation, Inc.
    Contributed by Richard Henderson <rth@redhat.com>.
 
    This file is part of the GNU Offloading and Multi Processing Library
@@ -29,8 +29,8 @@
 
 #include "wait.h"
 
-long int gomp_futex_wake = FUTEX_WAKE | FUTEX_PRIVATE_FLAG;
-long int gomp_futex_wait = FUTEX_WAIT | FUTEX_PRIVATE_FLAG;
+int gomp_futex_wake = FUTEX_WAKE | FUTEX_PRIVATE_FLAG;
+int gomp_futex_wait = FUTEX_WAIT | FUTEX_PRIVATE_FLAG;
 
 void
 gomp_mutex_lock_slow (gomp_mutex_t *mutex, int oldval)

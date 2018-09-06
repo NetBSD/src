@@ -1,4 +1,4 @@
-/*	$NetBSD: ixdp425_machdep.c,v 1.37.14.1 2018/03/15 09:12:03 pgoyette Exp $ */
+/*	$NetBSD: ixdp425_machdep.c,v 1.37.14.2 2018/09/06 06:55:31 pgoyette Exp $ */
 /*
  * Copyright (c) 2003
  *	Ichiro FUKUHARA <ichiro@ichiro.org>.
@@ -64,8 +64,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixdp425_machdep.c,v 1.37.14.1 2018/03/15 09:12:03 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixdp425_machdep.c,v 1.37.14.2 2018/09/06 06:55:31 pgoyette Exp $");
 
+#include "opt_arm_debug.h"
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
 #include "opt_pmap_debug.h"

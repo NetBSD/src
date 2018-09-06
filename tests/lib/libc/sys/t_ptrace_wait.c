@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.23.2.6 2018/07/28 04:38:12 pgoyette Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.23.2.7 2018/09/06 06:56:48 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.23.2.6 2018/07/28 04:38:12 pgoyette Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.23.2.7 2018/09/06 06:56:48 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -1182,11 +1182,13 @@ UNRELATED_TRACER_SEES_CRASH(unrelated_tracer_sees_crash_bus, SIGBUS)
 
 #if defined(TWAIT_HAVE_PID)
 static void
-tracer_sees_terminaton_before_the_parent_raw(bool notimeout, bool unrelated)
+tracer_sees_terminaton_before_the_parent_raw(bool notimeout, bool unrelated,
+                                             bool stopped)
 {
 	/*
 	 * notimeout - disable timeout in await zombie function
 	 * unrelated - attach from unrelated tracer reparented to initproc
+	 * stopped - attach to a stopped process
 	 */
 
 	struct msg_fds parent_tracee, parent_tracer;
@@ -1198,10 +1200,23 @@ tracer_sees_terminaton_before_the_parent_raw(bool notimeout, bool unrelated)
 	int status;
 #endif
 
+	/*
+	 * Only a subset of options are supported.
+	 */
+	ATF_REQUIRE((!notimeout && !unrelated && !stopped) ||
+	            (!notimeout && unrelated && !stopped) ||
+	            (notimeout && !unrelated && !stopped) ||
+	            (!notimeout && unrelated && stopped));
+
 	DPRINTF("Spawn tracee\n");
 	SYSCALL_REQUIRE(msg_open(&parent_tracee) == 0);
 	tracee = atf_utils_fork();
 	if (tracee == 0) {
+		if (stopped) {
+			DPRINTF("Stop self PID %d\n", getpid());
+			raise(SIGSTOP);
+		}
+
 		// Wait for parent to let us exit
 		CHILD_FROM_PARENT("exit tracee", parent_tracee, msg);
 		_exit(exitval_tracee);
@@ -1216,6 +1231,11 @@ tracer_sees_terminaton_before_the_parent_raw(bool notimeout, bool unrelated)
 			tracer = atf_utils_fork();
 			if (tracer != 0)
 				_exit(exitval_tracer);
+		}
+
+		if (stopped) {
+			DPRINTF("Await for a stopped parent PID %d\n", tracee);
+			await_stopped(tracee);
 		}
 
 		DPRINTF("Before calling PT_ATTACH from tracee %d\n", getpid());
@@ -1316,7 +1336,7 @@ ATF_TC_HEAD(tracer_sees_terminaton_before_the_parent, tc)
 ATF_TC_BODY(tracer_sees_terminaton_before_the_parent, tc)
 {
 
-	tracer_sees_terminaton_before_the_parent_raw(false, false);
+	tracer_sees_terminaton_before_the_parent_raw(false, false, false);
 }
 
 ATF_TC(tracer_sysctl_lookup_without_duplicates);
@@ -1342,7 +1362,8 @@ ATF_TC_BODY(tracer_sysctl_lookup_without_duplicates, tc)
 	start = time(NULL);
 	while (true) {
 		DPRINTF("Step: %lu\n", N);
-		tracer_sees_terminaton_before_the_parent_raw(true, false);
+		tracer_sees_terminaton_before_the_parent_raw(true, false,
+		                                             false);
 		end = time(NULL);
 		diff = difftime(end, start);
 		if (diff >= 5.0)
@@ -1362,20 +1383,27 @@ ATF_TC_HEAD(unrelated_tracer_sees_terminaton_before_the_parent, tc)
 ATF_TC_BODY(unrelated_tracer_sees_terminaton_before_the_parent, tc)
 {
 
-	tracer_sees_terminaton_before_the_parent_raw(false, true);
+	tracer_sees_terminaton_before_the_parent_raw(false, true, false);
+}
+
+ATF_TC(tracer_attach_to_unrelated_stopped_process);
+ATF_TC_HEAD(tracer_attach_to_unrelated_stopped_process, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Assert that tracer can attach to an unrelated stopped process");
+}
+
+ATF_TC_BODY(tracer_attach_to_unrelated_stopped_process, tc)
+{
+
+	tracer_sees_terminaton_before_the_parent_raw(false, true, true);
 }
 #endif
 
 /// ----------------------------------------------------------------------------
 
-ATF_TC(parent_attach_to_its_child);
-ATF_TC_HEAD(parent_attach_to_its_child, tc)
-{
-	atf_tc_set_md_var(tc, "descr",
-	    "Assert that tracer parent can PT_ATTACH to its child");
-}
-
-ATF_TC_BODY(parent_attach_to_its_child, tc)
+static void
+parent_attach_to_its_child(bool stopped)
 {
 	struct msg_fds parent_tracee;
 	const int exitval_tracee = 5;
@@ -1392,11 +1420,21 @@ ATF_TC_BODY(parent_attach_to_its_child, tc)
 		CHILD_FROM_PARENT("Message 1", parent_tracee, msg);
 		DPRINTF("Parent should now attach to tracee\n");
 
+		if (stopped) {
+			DPRINTF("Stop self PID %d\n", getpid());
+			SYSCALL_REQUIRE(raise(SIGSTOP) != -1);
+		}
+
 		CHILD_FROM_PARENT("Message 2", parent_tracee, msg);
 		/* Wait for message from the parent */
 		_exit(exitval_tracee);
 	}
 	PARENT_TO_CHILD("Message 1", parent_tracee, msg);
+
+	if (stopped) {
+		DPRINTF("Await for a stopped tracee PID %d\n", tracee);
+		await_stopped(tracee);
+	}
 
 	DPRINTF("Before calling PT_ATTACH for tracee %d\n", tracee);
 	SYSCALL_REQUIRE(ptrace(PT_ATTACH, tracee, NULL, 0) != -1);
@@ -1427,16 +1465,36 @@ ATF_TC_BODY(parent_attach_to_its_child, tc)
 	msg_close(&parent_tracee);
 }
 
-/// ----------------------------------------------------------------------------
-
-ATF_TC(child_attach_to_its_parent);
-ATF_TC_HEAD(child_attach_to_its_parent, tc)
+ATF_TC(parent_attach_to_its_child);
+ATF_TC_HEAD(parent_attach_to_its_child, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
-	    "Assert that tracer child can PT_ATTACH to its parent");
+	    "Assert that tracer parent can PT_ATTACH to its child");
 }
 
-ATF_TC_BODY(child_attach_to_its_parent, tc)
+ATF_TC_BODY(parent_attach_to_its_child, tc)
+{
+
+	parent_attach_to_its_child(false);
+}
+
+ATF_TC(parent_attach_to_its_stopped_child);
+ATF_TC_HEAD(parent_attach_to_its_stopped_child, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Assert that tracer parent can PT_ATTACH to its stopped child");
+}
+
+ATF_TC_BODY(parent_attach_to_its_stopped_child, tc)
+{
+
+	parent_attach_to_its_child(true);
+}
+
+/// ----------------------------------------------------------------------------
+
+static void
+child_attach_to_its_parent(bool stopped)
 {
 	struct msg_fds parent_tracee;
 	const int exitval_tracer = 5;
@@ -1450,9 +1508,14 @@ ATF_TC_BODY(child_attach_to_its_parent, tc)
 	SYSCALL_REQUIRE(msg_open(&parent_tracee) == 0);
 	tracer = atf_utils_fork();
 	if (tracer == 0) {
-
 		/* Wait for message from the parent */
 		CHILD_FROM_PARENT("Message 1", parent_tracee, msg);
+
+		if (stopped) {
+			DPRINTF("Await for a stopped parent PID %d\n",
+			        getppid());
+			await_stopped(getppid());
+		}
 
 		DPRINTF("Attach to parent PID %d with PT_ATTACH from child\n",
 		    getppid());
@@ -1477,6 +1540,12 @@ ATF_TC_BODY(child_attach_to_its_parent, tc)
 
 	DPRINTF("Wait for the tracer to become ready\n");
 	PARENT_TO_CHILD("Message 1", parent_tracee, msg);
+
+	if (stopped) {
+		DPRINTF("Stop self PID %d\n", getpid());
+		SYSCALL_REQUIRE(raise(SIGSTOP) != -1);
+	}
+
 	DPRINTF("Allow the tracer to exit now\n");
 	PARENT_FROM_CHILD("Message 1", parent_tracee, msg);
 
@@ -1491,6 +1560,57 @@ ATF_TC_BODY(child_attach_to_its_parent, tc)
 	    wpid = TWAIT_GENERIC(tracer, &status, 0));
 
 	msg_close(&parent_tracee);
+}
+
+ATF_TC(child_attach_to_its_parent);
+ATF_TC_HEAD(child_attach_to_its_parent, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Assert that tracer child can PT_ATTACH to its parent");
+}
+
+ATF_TC_BODY(child_attach_to_its_parent, tc)
+{
+
+	child_attach_to_its_parent(false);
+}
+
+ATF_TC(child_attach_to_its_stopped_parent);
+ATF_TC_HEAD(child_attach_to_its_stopped_parent, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Assert that tracer child can PT_ATTACH to its stopped parent");
+}
+
+ATF_TC_BODY(child_attach_to_its_stopped_parent, tc)
+{
+	/*
+	 * The ATF framework (atf-run) does not tolerate raise(SIGSTOP), as
+	 * this causes a pipe (established from atf-run) to be broken.
+	 * atf-run uses this mechanism to monitor whether a test is alive.
+	 *
+	 * As a workaround spawn this test as a subprocess.
+	 */
+
+	const int exitval = 15;
+	pid_t child, wpid;
+#if defined(TWAIT_HAVE_STATUS)
+	int status;
+#endif
+
+	SYSCALL_REQUIRE((child = fork()) != -1);
+	if (child == 0) {
+		child_attach_to_its_parent(true);
+		_exit(exitval);
+	} else {
+		DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
+		TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
+
+		validate_status_exited(status, exitval);
+
+		DPRINTF("Before calling %s() for the exited child\n", TWAIT_FNAME);
+		TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
+	}
 }
 
 /// ----------------------------------------------------------------------------
@@ -5612,10 +5732,13 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC_HAVE_PID(tp, tracer_sysctl_lookup_without_duplicates);
 	ATF_TP_ADD_TC_HAVE_PID(tp,
 		unrelated_tracer_sees_terminaton_before_the_parent);
+	ATF_TP_ADD_TC_HAVE_PID(tp, tracer_attach_to_unrelated_stopped_process);
 
 	ATF_TP_ADD_TC(tp, parent_attach_to_its_child);
+	ATF_TP_ADD_TC(tp, parent_attach_to_its_stopped_child);
 
 	ATF_TP_ADD_TC(tp, child_attach_to_its_parent);
+	ATF_TP_ADD_TC(tp, child_attach_to_its_stopped_parent);
 
 	ATF_TP_ADD_TC_HAVE_PID(tp,
 		tracee_sees_its_original_parent_getppid);

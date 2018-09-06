@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.15.10.1 2018/06/25 07:25:12 pgoyette Exp $	
+# $NetBSD: Makefile,v 1.15.10.2 2018/09/06 06:51:47 pgoyette Exp $	
 
 USE_SHLIBDIR=yes
 .include <bsd.own.mk>
@@ -24,6 +24,8 @@ __sed: .USE
 	    -e 's,3PCAP,3,g' < ${.ALLSRC} > ${.TARGET}
 
 
+# Search first in the kernel for bpf_filter.c
+.PATH:	${NETBSDSRCDIR}/sys/net
 SRCDIR=		${.CURDIR}/../dist
 .PATH:		${SRCDIR}
 
@@ -128,21 +130,34 @@ YPREFIX=	pcap_
 YHEADER=	1
 
 CPPFLAGS+=	-DHAVE_CONFIG_H
-CPPFLAGS+=	-D_U_="__attribute__((__unused__))"
+#CPPFLAGS+=	-D_U_="__attribute__((__unused__))"
 
 .if (${USE_INET6} != "no")
 CPPFLAGS+=	-DINET6
 .endif
 
-SRCS=	scanner.l savefile.c pcap.c pcap-bpf.c optimize.c nametoaddr.c \
-	inet.c grammar.y gencode.c fad-getad.c etherent.c bpf_image.c \
-	bpf_dump.c pcap_version.c sf-pcap-ng.c sf-pcap.c pcap-common.c \
-	fad-getad.c fad-helpers.c
+SRCS= \
+bpf_dump.c \
+bpf_filter.c \
+bpf_image.c \
+etherent.c \
+fad-getad.c \
+fmtutils.c \
+gencode.c \
+grammar.y \
+nametoaddr.c \
+optimize.c \
+pcap-bpf.c \
+pcap-common.c \
+pcap.c \
+savefile.c \
+scanner.l \
+sf-pcap.c \
+sf-pcapng.c
 
-.PATH:	${NETBSDSRCDIR}/sys/net
-SRCS+=	bpf_filter.c
 
-INCS=		pcap/pcap.h pcap/namedb.h pcap/export-defs.h
+INCS=		pcap/pcap.h pcap/namedb.h pcap/funcattrs.h \
+	pcap/pcap-inttypes.h pcap/compiler-tests.h
 INCSDIR=	/usr/include
 INCSYMLINKS+=   ../net/bpf.h ${INCSDIR}/pcap/bpf.h
 INCSYMLINKS+=	pcap/pcap.h ${INCSDIR}/pcap.h

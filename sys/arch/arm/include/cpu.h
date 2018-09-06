@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.95.2.1 2018/04/07 04:12:12 pgoyette Exp $	*/
+/*	$NetBSD: cpu.h,v 1.95.2.2 2018/09/06 06:55:26 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -60,7 +60,6 @@
 #define	CPU_BOOTED_KERNEL	3	/* string: kernel we booted */
 #define	CPU_CONSDEV		4	/* struct: dev_t of our console */
 #define	CPU_POWERSAVE		5	/* int: use CPU powersave mode */
-#define	CPU_MAXID		6	/* number of valid machdep ids */
 
 #if defined(_KERNEL) || defined(_KMEMUSER)
 

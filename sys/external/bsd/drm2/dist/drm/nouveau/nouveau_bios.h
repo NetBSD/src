@@ -1,3 +1,5 @@
+/*	$NetBSD: nouveau_bios.h,v 1.2.30.1 2018/09/06 06:56:18 pgoyette Exp $	*/
+
 /*
  * Copyright 2007-2008 Nouveau Project
  *

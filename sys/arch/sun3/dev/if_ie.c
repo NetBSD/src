@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie.c,v 1.62.12.2 2018/07/28 04:37:41 pgoyette Exp $ */
+/*	$NetBSD: if_ie.c,v 1.62.12.3 2018/09/06 06:55:43 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.
@@ -98,7 +98,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ie.c,v 1.62.12.2 2018/07/28 04:37:41 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ie.c,v 1.62.12.3 2018/09/06 06:55:43 pgoyette Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -815,7 +815,7 @@ ieget(struct ie_softc *sc)
 			m->m_data = newdata;
 		}
 
-		m->m_len = len = min(totlen, len);
+		m->m_len = len = uimin(totlen, len);
 
 		totlen -= len;
 		*mp = m;
@@ -842,7 +842,7 @@ ieget(struct ie_softc *sc)
 		int thisrblen = ie_buflen(sc, head) - thisrboff;
 		int thismblen = m->m_len - thismboff;
 
-		len = min(thisrblen, thismblen);
+		len = uimin(thisrblen, thismblen);
 		(sc->sc_memcpy)(mtod(m, char *) + thismboff,
 		    (void *)(sc->cbuffs[head] + thisrboff),
 		    (u_int)len);

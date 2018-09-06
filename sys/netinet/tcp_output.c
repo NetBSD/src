@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.198.2.4 2018/05/21 04:36:16 pgoyette Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.198.2.5 2018/09/06 06:56:45 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -135,7 +135,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.198.2.4 2018/05/21 04:36:16 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.198.2.5 2018/09/06 06:56:45 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -373,8 +373,8 @@ tcp_segsize(struct tcpcb *tp, int *txsegsizep, int *rxsegsizep,
 	 * ipseclen is subtracted from both sides, this may not be right.
 	 * I'm not quite sure about this (could someone comment).
 	 */
-	*txsegsizep = min(tp->t_peermss - optlen, size);
-	*rxsegsizep = min(tp->t_ourmss - optlen, size);
+	*txsegsizep = uimin(tp->t_peermss - optlen, size);
+	*rxsegsizep = uimin(tp->t_ourmss - optlen, size);
 
 	/*
 	 * Never send more than half a buffer full.  This insures that we can
@@ -383,7 +383,7 @@ tcp_segsize(struct tcpcb *tp, int *txsegsizep, int *rxsegsizep,
 	 * transmit.
 	 */
 	if (so) {
-		*txsegsizep = min(so->so_snd.sb_hiwat >> 1, *txsegsizep);
+		*txsegsizep = uimin(so->so_snd.sb_hiwat >> 1, *txsegsizep);
 	}
 
 	if (*txsegsizep != tp->t_segsz) {
@@ -397,9 +397,9 @@ tcp_segsize(struct tcpcb *tp, int *txsegsizep, int *rxsegsizep,
 		 * our congestion window will be different.
 		 */
 		if (*txsegsizep < tp->t_segsz) {
-			tp->snd_cwnd = max((tp->snd_cwnd / tp->t_segsz)
+			tp->snd_cwnd = uimax((tp->snd_cwnd / tp->t_segsz)
 			    * *txsegsizep, *txsegsizep);
-			tp->snd_ssthresh = max((tp->snd_ssthresh / tp->t_segsz)
+			tp->snd_ssthresh = uimax((tp->snd_ssthresh / tp->t_segsz)
 			    * *txsegsizep, *txsegsizep);
 		}
 		tp->t_segsz = *txsegsizep;
@@ -640,7 +640,7 @@ tcp_output(struct tcpcb *tp)
 		 *
 		 * XXX Link this to Initial Window?
 		 */
-		tp->snd_cwnd = min(tp->snd_cwnd,
+		tp->snd_cwnd = uimin(tp->snd_cwnd,
 		    (tcp_cwm_burstsize * txsegsize) +
 		    (tp->snd_nxt - tp->snd_una));
 	} else {
@@ -659,7 +659,7 @@ tcp_output(struct tcpcb *tp)
 			    in6_localaddr(&tp->t_in6pcb->in6p_faddr))
 				ss = tcp_init_win_local;
 #endif
-			tp->snd_cwnd = min(tp->snd_cwnd,
+			tp->snd_cwnd = uimin(tp->snd_cwnd,
 			    TCP_INITIAL_WINDOW(ss, txsegsize));
 		}
 	}
@@ -704,7 +704,7 @@ again:
 		tcp_sack_adjust(tp);
 	sendalot = 0;
 	off = tp->snd_nxt - tp->snd_una;
-	win = min(tp->snd_wnd, tp->snd_cwnd);
+	win = uimin(tp->snd_wnd, tp->snd_cwnd);
 
 	flags = tcp_outflags[tp->t_state];
 
@@ -732,7 +732,7 @@ again:
 		if (p == NULL)
 			break;
 
-		cwin = min(tp->snd_wnd, tp->snd_cwnd) - sack_bytes_rxmt;
+		cwin = uimin(tp->snd_wnd, tp->snd_cwnd) - sack_bytes_rxmt;
 		if (cwin < 0)
 			cwin = 0;
 		/* Do not retransmit SACK segments beyond snd_recover */
@@ -913,7 +913,7 @@ again:
 		    so->so_snd.sb_cc < tcp_autosndbuf_max &&
 		    win >= (so->so_snd.sb_cc - (tp->snd_nxt - tp->snd_una))) {
 			if (!sbreserve(&so->so_snd,
-			    min(so->so_snd.sb_hiwat + tcp_autosndbuf_inc,
+			    uimin(so->so_snd.sb_hiwat + tcp_autosndbuf_inc,
 			     tcp_autosndbuf_max), so))
 				so->so_snd.sb_flags &= ~SB_AUTOSIZE;
 		}
@@ -929,7 +929,7 @@ again:
 #ifdef INET6
 			CTASSERT(IPV6_MAXPACKET == IP_MAXPACKET);
 #endif
-			len = (min(len, IP_MAXPACKET) / txsegsize) * txsegsize;
+			len = (uimin(len, IP_MAXPACKET) / txsegsize) * txsegsize;
 			if (len <= txsegsize) {
 				use_tso = 0;
 			}
@@ -987,7 +987,7 @@ again:
 		 * taking into account that we are limited by
 		 * TCP_MAXWIN << tp->rcv_scale.
 		 */
-		long recwin = min(win, (long)TCP_MAXWIN << tp->rcv_scale);
+		long recwin = uimin(win, (long)TCP_MAXWIN << tp->rcv_scale);
 		long oldwin, adv;
 
 		/*

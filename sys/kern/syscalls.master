@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.291.2.8 2018/07/28 04:38:08 pgoyette Exp $
+	$NetBSD: syscalls.master,v 1.291.2.9 2018/09/06 06:56:42 pgoyette Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -413,7 +413,8 @@
 			    struct stat12 *ub); } lstat12
 191	STD 	RUMP	{ long|sys||pathconf(const char *path, int name); }
 192	STD 	RUMP	{ long|sys||fpathconf(int fd, int name); }
-193	UNIMPL
+193	STD	RUMP	{ int|sys||getsockopt2(int s, int level, int name, \
+			    void *val, socklen_t *avalsize); }
 194	STD 	RUMP	{ int|sys||getrlimit(int which, \
 			    struct rlimit *rlp); }
 195	STD 	RUMP	{ int|sys||setrlimit(int which, \

@@ -1,0 +1,6 @@
+syntax(2)
+test_suite('bind9')
+
+atf_test_program{name='listenlist_test'}
+atf_test_program{name='notify_test'}
+atf_test_program{name='query_test'}

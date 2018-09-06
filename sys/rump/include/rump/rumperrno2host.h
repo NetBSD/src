@@ -1,4 +1,4 @@
-/*	$NetBSD: rumperrno2host.h,v 1.3.18.1 2018/04/22 07:20:29 pgoyette Exp $	*/
+/*	$NetBSD: rumperrno2host.h,v 1.3.18.2 2018/09/06 06:56:46 pgoyette Exp $	*/
 
 /*
  *	AUTOMATICALLY GENERATED.  DO NOT EDIT.

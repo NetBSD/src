@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_module.c,v 1.23.2.7 2018/07/08 07:33:14 pgoyette Exp $	*/
+/*	$NetBSD: sys_module.c,v 1.23.2.8 2018/09/06 06:56:42 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_module.c,v 1.23.2.7 2018/07/08 07:33:14 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_module.c,v 1.23.2.8 2018/09/06 06:56:42 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_modular.h"
@@ -147,8 +147,8 @@ handle_modctl_stat(struct iovec *iov, void *arg)
 	const char * const *aliasp;
 
 	/* If not privileged, don't expose kernel addresses. */
-	error = kauth_authorize_system(kauth_cred_get(), KAUTH_SYSTEM_MODULE,
-	    0, (void *)(uintptr_t)MODCTL_STAT, NULL, NULL);
+	error = kauth_authorize_process(kauth_cred_get(), KAUTH_PROCESS_CANSEE,
+	    curproc, KAUTH_ARG(KAUTH_REQ_PROCESS_CANSEE_KPTR), NULL, NULL);
 	stataddr = (error == 0);
 
 	kernconfig_lock();
@@ -268,21 +268,21 @@ handle_modctl_stat(struct iovec *iov, void *arg)
 
 	/* Copy out the count of modstat_t */
 	if (out_s) {
-		size = min(sizeof(ms_cnt), out_s);
+		size = uimin(sizeof(ms_cnt), out_s);
 		error = copyout(&ms_cnt, out_p, size);
 		out_p += size;
 		out_s -= size;
 	}
 	/* Copy out the modstat_t array */
 	if (out_s && error == 0) {
-		size = min(ms_len, out_s);
+		size = uimin(ms_len, out_s);
 		error = copyout(mso, out_p, size);
 		out_p += size;
 		out_s -= size;
 	}
 	/* Copy out the "required" strings */
 	if (out_s && error == 0) {
-		size = min(req_len, out_s);
+		size = uimin(req_len, out_s);
 		error = copyout(reqo, out_p, size);
 		out_p += size;
 		out_s -= size;

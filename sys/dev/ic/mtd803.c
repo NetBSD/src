@@ -1,4 +1,4 @@
-/* $NetBSD: mtd803.c,v 1.33.14.2 2018/07/28 04:37:45 pgoyette Exp $ */
+/* $NetBSD: mtd803.c,v 1.33.14.3 2018/09/06 06:55:49 pgoyette Exp $ */
 
 /*-
  *
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mtd803.c,v 1.33.14.2 2018/07/28 04:37:45 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mtd803.c,v 1.33.14.3 2018/09/06 06:55:49 pgoyette Exp $");
 
 
 #include <sys/param.h>
@@ -602,7 +602,7 @@ mtd_get(struct mtd_softc *sc, int index, int totlen)
 			m->m_data = newdata;
 		}
 
-		m->m_len = len = min(totlen, len);
+		m->m_len = len = uimin(totlen, len);
 		memcpy(mtod(m, void *), buf, len);
 		buf += len;
 

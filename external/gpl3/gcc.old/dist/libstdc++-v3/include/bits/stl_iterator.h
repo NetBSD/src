@@ -1,6 +1,6 @@
 // Iterators -*- C++ -*-
 
-// Copyright (C) 2001-2015 Free Software Foundation, Inc.
+// Copyright (C) 2001-2016 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -395,8 +395,15 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
     { return __y.base() - __x.base(); }
   //@}
 
-#if __cplusplus > 201103L
-#define __cpp_lib_make_reverse_iterator 201402
+#if __cplusplus >= 201103L
+  // Same as C++14 make_reverse_iterator but used in C++03 mode too.
+  template<typename _Iterator>
+    inline reverse_iterator<_Iterator>
+    __make_reverse_iterator(_Iterator __i)
+    { return reverse_iterator<_Iterator>(__i); }
+
+# if __cplusplus > 201103L
+#  define __cpp_lib_make_reverse_iterator 201402
 
   // _GLIBCXX_RESOLVE_LIB_DEFECTS
   // DR 2285. make_reverse_iterator
@@ -405,6 +412,26 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
     inline reverse_iterator<_Iterator>
     make_reverse_iterator(_Iterator __i)
     { return reverse_iterator<_Iterator>(__i); }
+# endif
+#endif
+
+#if __cplusplus >= 201103L
+  template<typename _Iterator>
+    auto
+    __niter_base(reverse_iterator<_Iterator> __it)
+    -> decltype(__make_reverse_iterator(__niter_base(__it.base())))
+    { return __make_reverse_iterator(__niter_base(__it.base())); }
+
+  template<typename _Iterator>
+    struct __is_move_iterator<reverse_iterator<_Iterator> >
+      : __is_move_iterator<_Iterator>
+    { };
+
+  template<typename _Iterator>
+    auto
+    __miter_base(reverse_iterator<_Iterator> __it)
+    -> decltype(__make_reverse_iterator(__miter_base(__it.base())))
+    { return __make_reverse_iterator(__miter_base(__it.base())); }
 #endif
 
   // 24.4.2.2.1 back_insert_iterator
@@ -431,7 +458,8 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 
       /// The only way to create this %iterator is with a container.
       explicit
-      back_insert_iterator(_Container& __x) : container(&__x) { }
+      back_insert_iterator(_Container& __x)
+      : container(std::__addressof(__x)) { }
 
       /**
        *  @param  __value  An instance of whatever type
@@ -521,7 +549,8 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       typedef _Container          container_type;
 
       /// The only way to create this %iterator is with a container.
-      explicit front_insert_iterator(_Container& __x) : container(&__x) { }
+      explicit front_insert_iterator(_Container& __x)
+      : container(std::__addressof(__x)) { }
 
       /**
        *  @param  __value  An instance of whatever type
@@ -620,7 +649,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
        *  initial position (a normal %iterator into the container).
       */
       insert_iterator(_Container& __x, typename _Container::iterator __i)
-      : container(&__x), iter(__i) {}
+      : container(std::__addressof(__x)), iter(__i) {}
 
       /**
        *  @param  __value  An instance of whatever type
@@ -942,6 +971,18 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 _GLIBCXX_END_NAMESPACE_VERSION
 } // namespace
 
+namespace std _GLIBCXX_VISIBILITY(default)
+{
+_GLIBCXX_BEGIN_NAMESPACE_VERSION
+
+  template<typename _Iterator, typename _Container>
+    _Iterator
+    __niter_base(__gnu_cxx::__normal_iterator<_Iterator, _Container> __it)
+    { return __it.base(); }
+
+_GLIBCXX_END_NAMESPACE_VERSION
+} // namespace
+
 #if __cplusplus >= 201103L
 
 namespace std _GLIBCXX_VISIBILITY(default)
@@ -1173,7 +1214,35 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
     __make_move_if_noexcept_iterator(_Iterator __i)
     { return _ReturnType(__i); }
 
+  // Overload for pointers that matches std::move_if_noexcept more closely,
+  // returning a constant iterator when we don't want to move.
+  template<typename _Tp, typename _ReturnType
+    = typename conditional<__move_if_noexcept_cond<_Tp>::value,
+			   const _Tp*, move_iterator<_Tp*>>::type>
+    inline _ReturnType
+    __make_move_if_noexcept_iterator(_Tp* __i)
+    { return _ReturnType(__i); }
+
   // @} group iterators
+
+  template<typename _Iterator>
+    auto
+    __niter_base(move_iterator<_Iterator> __it)
+    -> decltype(make_move_iterator(__niter_base(__it.base())))
+    { return make_move_iterator(__niter_base(__it.base())); }
+
+  template<typename _Iterator>
+    struct __is_move_iterator<move_iterator<_Iterator> >
+    {
+      enum { __value = 1 };
+      typedef __true_type __type;
+    };
+
+  template<typename _Iterator>
+    auto
+    __miter_base(move_iterator<_Iterator> __it)
+    -> decltype(__miter_base(__it.base()))
+    { return __miter_base(__it.base()); }
 
 _GLIBCXX_END_NAMESPACE_VERSION
 } // namespace
@@ -1185,5 +1254,9 @@ _GLIBCXX_END_NAMESPACE_VERSION
 #define _GLIBCXX_MAKE_MOVE_ITERATOR(_Iter) (_Iter)
 #define _GLIBCXX_MAKE_MOVE_IF_NOEXCEPT_ITERATOR(_Iter) (_Iter)
 #endif // C++11
+
+#ifdef _GLIBCXX_DEBUG
+# include <debug/stl_iterator.h>
+#endif
 
 #endif

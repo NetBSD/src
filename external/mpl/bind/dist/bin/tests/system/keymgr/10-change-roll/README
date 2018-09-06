@@ -1,0 +1,7 @@
+Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+
+See COPYRIGHT in the source root or http://isc.org/copyright.html for terms.
+
+This directory has a key set which is valid, but has a ZSK rollover period
+of only three months. It will be updated to have a ZSK rollover period of
+one year.

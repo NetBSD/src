@@ -1,4 +1,4 @@
-# Copyright (C) 2002-2015 Free Software Foundation, Inc.
+# Copyright (C) 2002-2016 Free Software Foundation, Inc.
 #
 # This file is part of GCC.
 #
@@ -22,3 +22,7 @@ $(srcdir)/config/mips/mips-tables.opt: $(srcdir)/config/mips/genopt.sh \
 NetBSD_DISABLED_config_mips_mips-tables.opt:
 	$(SHELL) $(srcdir)/config/mips/genopt.sh $(srcdir)/config/mips > \
 		$(srcdir)/config/mips/mips-tables.opt
+
+frame-header-opt.o: $(srcdir)/config/mips/frame-header-opt.c
+	$(COMPILE) $<
+	$(POSTCOMPILE)

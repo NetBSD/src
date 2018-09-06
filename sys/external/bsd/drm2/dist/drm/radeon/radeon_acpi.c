@@ -1,3 +1,5 @@
+/*	$NetBSD: radeon_acpi.c,v 1.1.1.1.30.1 2018/09/06 06:56:32 pgoyette Exp $	*/
+
 /*
  * Copyright 2012 Advanced Micro Devices, Inc.
  *
@@ -21,11 +23,13 @@
  *
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: radeon_acpi.c,v 1.1.1.1.30.1 2018/09/06 06:56:32 pgoyette Exp $");
+
 #include <linux/pci.h>
 #include <linux/acpi.h>
 #include <linux/slab.h>
 #include <linux/power_supply.h>
-#include <linux/vga_switcheroo.h>
 #include <acpi/video.h>
 #include <drm/drmP.h>
 #include <drm/drm_crtc_helper.h>

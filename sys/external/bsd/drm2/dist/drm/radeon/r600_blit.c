@@ -1,3 +1,5 @@
+/*	$NetBSD: r600_blit.c,v 1.1.1.1.30.1 2018/09/06 06:56:32 pgoyette Exp $	*/
+
 /*
  * Copyright 2009 Advanced Micro Devices, Inc.
  *
@@ -25,6 +27,9 @@
  *
  * ------------------------ This file is DEPRECATED! -------------------------
  */
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: r600_blit.c,v 1.1.1.1.30.1 2018/09/06 06:56:32 pgoyette Exp $");
+
 #include <drm/drmP.h>
 #include <drm/radeon_drm.h>
 #include "radeon_drv.h"

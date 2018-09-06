@@ -157,6 +157,12 @@ AcpiDmDumpIort (
             Length = IortNode->Length - NodeOffset;
             break;
 
+        case ACPI_IORT_NODE_PMCG:
+
+            InfoTable = AcpiDmTableInfoIort5;
+            Length = IortNode->Length - NodeOffset;
+            break;
+
         default:
 
             AcpiOsPrintf ("\n**** Unknown IORT node type 0x%X\n",

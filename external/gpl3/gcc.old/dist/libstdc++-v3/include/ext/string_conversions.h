@@ -1,6 +1,6 @@
 // String Conversions -*- C++ -*-
 
-// Copyright (C) 2008-2015 Free Software Foundation, Inc.
+// Copyright (C) 2008-2016 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -58,7 +58,13 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       _Ret __ret;
 
       _CharT* __endptr;
-      errno = 0;
+
+      struct _Save_errno {
+	_Save_errno() : _M_errno(errno) { errno = 0; }
+	~_Save_errno() { if (errno == 0) errno = _M_errno; }
+	int _M_errno;
+      } const __save_errno;
+
       const _TRet __tmp = __convf(__str, &__endptr, __base...);
 
       if (__endptr == __str)

@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile.epoc32.inc,v 1.5 2015/08/25 02:38:15 uebayasi Exp $
+#	$NetBSD: Makefile.epoc32.inc,v 1.5.16.1 2018/09/06 06:55:29 pgoyette Exp $
 
-MACHINE_ARCH=		arm
+MACHINE_ARCH?=		arm
 CPPFLAGS+=		-D${MACHINE}
 
 SYSTEM_FIRST_OBJ=	epoc32_start.o

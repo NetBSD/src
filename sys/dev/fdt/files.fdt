@@ -1,4 +1,4 @@
-# $NetBSD: files.fdt,v 1.22.4.5 2018/07/28 04:37:44 pgoyette Exp $
+# $NetBSD: files.fdt,v 1.22.4.6 2018/09/06 06:55:49 pgoyette Exp $
 
 include	"external/bsd/libfdt/conf/files.libfdt"
 
@@ -126,3 +126,7 @@ file	dev/fdt/qemufwcfg_fdt.c			qemufwcfg_fdt
 device	pl061gpio: gpiobus
 attach 	pl061gpio at fdt with pl061gpio_fdt
 file	dev/fdt/pl061gpio_fdt.c			pl061gpio_fdt
+
+# AHCI SATA controller
+attach	ahcisata at fdt with ahcisata_fdt
+file	dev/fdt/ahcisata_fdt.c			ahcisata_fdt

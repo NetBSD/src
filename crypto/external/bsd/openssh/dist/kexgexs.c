@@ -1,5 +1,6 @@
-/*	$NetBSD: kexgexs.c,v 1.15.2.1 2018/04/07 04:11:48 pgoyette Exp $	*/
-/* $OpenBSD: kexgexs.c,v 1.32 2018/02/07 02:06:51 jsing Exp $ */
+/*	$NetBSD: kexgexs.c,v 1.15.2.2 2018/09/06 06:51:33 pgoyette Exp $	*/
+/* $OpenBSD: kexgexs.c,v 1.33 2018/04/10 00:10:49 djm Exp $ */
+
 /*
  * Copyright (c) 2000 Niels Provos.  All rights reserved.
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -26,7 +27,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: kexgexs.c,v 1.15.2.1 2018/04/07 04:11:48 pgoyette Exp $");
+__RCSID("$NetBSD: kexgexs.c,v 1.15.2.2 2018/09/06 06:51:33 pgoyette Exp $");
 
 #include <sys/param.h>	/* MIN MAX */
 #include <stdio.h>

@@ -1,6 +1,6 @@
 /* mpc_tan -- tangent of a complex number.
 
-Copyright (C) 2008, 2009, 2010, 2011 INRIA
+Copyright (C) 2008-2015 INRIA
 
 This file is part of GNU MPC.
 
@@ -83,7 +83,7 @@ mpc_tan (mpc_ptr rop, mpc_srcptr op, mpc_rnd_t rnd)
               int inex_im;
 
               mpfr_set_ui (mpc_realref (rop), 0, MPC_RND_RE (rnd));
-              mpfr_setsign (mpc_realref (rop), mpc_realref (rop), sign_re, GMP_RNDN);
+              mpfr_setsign (mpc_realref (rop), mpc_realref (rop), sign_re, MPFR_RNDN);
 
               /* exact, unless 1 is not in exponent range */
               inex_im = mpfr_set_si (mpc_imagref (rop),
@@ -111,10 +111,10 @@ mpc_tan (mpc_ptr rop, mpc_srcptr op, mpc_rnd_t rnd)
           mpfr_init (c);
           mpfr_init (s);
 
-          mpfr_sin_cos (s, c, mpc_realref (op), GMP_RNDN);
+          mpfr_sin_cos (s, c, mpc_realref (op), MPFR_RNDN);
           mpfr_set_ui (mpc_realref (rop), 0, MPC_RND_RE (rnd));
           mpfr_setsign (mpc_realref (rop), mpc_realref (rop),
-                        mpfr_signbit (c) != mpfr_signbit (s), GMP_RNDN);
+                        mpfr_signbit (c) != mpfr_signbit (s), MPFR_RNDN);
           /* exact, unless 1 is not in exponent range */
           inex_im = mpfr_set_si (mpc_imagref (rop),
                                  (mpfr_signbit (mpc_imagref (op)) ? -1 : +1),
@@ -207,24 +207,34 @@ mpc_tan (mpc_ptr rop, mpc_srcptr op, mpc_rnd_t rnd)
             sign(tan(Re(op)))*0 + sign(Im(op))*I,
             where sign(tan(Re(op))) = sign(Re(x))*sign(Re(y)). */
           int inex_re, inex_im;
-          mpfr_set_ui (mpc_realref (rop), 0, GMP_RNDN);
+          mpfr_set_ui (mpc_realref (rop), 0, MPFR_RNDN);
           if (mpfr_sgn (mpc_realref (x)) * mpfr_sgn (mpc_realref (y)) < 0)
             {
-              mpfr_neg (mpc_realref (rop), mpc_realref (rop), GMP_RNDN);
+              mpfr_neg (mpc_realref (rop), mpc_realref (rop), MPFR_RNDN);
               inex_re = 1;
             }
           else
             inex_re = -1; /* +0 is rounded down */
           if (mpfr_sgn (mpc_imagref (op)) > 0)
             {
-              mpfr_set_ui (mpc_imagref (rop), 1, GMP_RNDN);
+              mpfr_set_ui (mpc_imagref (rop), 1, MPFR_RNDN);
               inex_im = 1;
             }
           else
             {
-              mpfr_set_si (mpc_imagref (rop), -1, GMP_RNDN);
+              mpfr_set_si (mpc_imagref (rop), -1, MPFR_RNDN);
               inex_im = -1;
             }
+          /* if rounding is toward zero, fix the imaginary part */
+          if (MPC_IS_LIKE_RNDZ(MPC_RND_IM(rnd), MPFR_SIGNBIT(mpc_imagref (rop))))
+            {
+              mpfr_nexttoward (mpc_imagref (rop), mpc_realref (rop));
+              inex_im = -inex_im;
+            }
+          if (mpfr_zero_p (mpc_realref (rop)))
+            inex_re = mpc_fix_zero (mpc_realref (rop), MPC_RND_RE(rnd));
+          if (mpfr_zero_p (mpc_imagref (rop)))
+            inex_im = mpc_fix_zero (mpc_imagref (rop), MPC_RND_IM(rnd));
           inex = MPC_INEX(inex_re, inex_im);
           goto end;
         }
@@ -237,7 +247,7 @@ mpc_tan (mpc_ptr rop, mpc_srcptr op, mpc_rnd_t rnd)
       inex = mpc_div (x, x, y, MPC_RNDZZ);
       /* OP is no pure real nor pure imaginary, so in theory the real and
          imaginary parts of its tangent cannot be null. However due to
-         rouding errors this might happen. Consider for example
+         rounding errors this might happen. Consider for example
          tan(1+14*I) = 1.26e-10 + 1.00*I. For small precision sin(op) and
          cos(op) differ only by a factor I, thus after mpc_div x = I and
          its real part is zero. */
@@ -261,15 +271,15 @@ mpc_tan (mpc_ptr rop, mpc_srcptr op, mpc_rnd_t rnd)
 
       /* Can the real part be rounded? */
       ok = (!mpfr_number_p (mpc_realref (x)))
-           || mpfr_can_round (mpc_realref(x), prec - err, GMP_RNDN, GMP_RNDZ,
-                      MPC_PREC_RE(rop) + (MPC_RND_RE(rnd) == GMP_RNDN));
+           || mpfr_can_round (mpc_realref(x), prec - err, MPFR_RNDN, MPFR_RNDZ,
+                      MPC_PREC_RE(rop) + (MPC_RND_RE(rnd) == MPFR_RNDN));
 
       if (ok)
         {
           /* Can the imaginary part be rounded? */
           ok = (!mpfr_number_p (mpc_imagref (x)))
-               || mpfr_can_round (mpc_imagref(x), prec - 6, GMP_RNDN, GMP_RNDZ,
-                      MPC_PREC_IM(rop) + (MPC_RND_IM(rnd) == GMP_RNDN));
+               || mpfr_can_round (mpc_imagref(x), prec - 6, MPFR_RNDN, MPFR_RNDZ,
+                      MPC_PREC_IM(rop) + (MPC_RND_IM(rnd) == MPFR_RNDN));
         }
     }
   while (ok == 0);

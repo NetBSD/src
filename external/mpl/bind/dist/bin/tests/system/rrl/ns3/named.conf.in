@@ -1,0 +1,44 @@
+/*
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
+ */
+
+options {
+	query-source address 10.53.0.3;
+	notify-source 10.53.0.3;
+	transfer-source 10.53.0.3;
+	port @PORT@;
+	session-keyfile "session.key";
+	pid-file "named.pid";
+	listen-on { 10.53.0.3; };
+	listen-on-v6 { none; };
+	notify no;
+
+	// check that all of the options are parsed without limiting anything
+	rate-limit {
+	    responses-per-second 200;
+	    referrals-per-second 220;
+	    nodata-per-second 230;
+	    nxdomains-per-second 240;
+	    errors-per-second 250;
+	    all-per-second 700;
+	    ipv4-prefix-length 24;
+	    ipv6-prefix-length 64;
+	    qps-scale 10;
+	    window 1;
+	    max-table-size 1000;
+	    log-only no;
+	    min-table-size 0;
+	};
+
+};
+
+zone "." { type hint; file "hints"; };
+
+zone "tld3."{ type master; file "tld3.db"; };

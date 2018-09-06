@@ -1,4 +1,4 @@
-/*	$NetBSD: ww_mutex.h,v 1.11 2015/05/21 21:55:55 riastradh Exp $	*/
+/*	$NetBSD: ww_mutex.h,v 1.11.16.1 2018/09/06 06:56:36 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -37,13 +37,16 @@
 #include <sys/mutex.h>
 #include <sys/rbtree.h>
 
+#include <linux/atomic.h>
+#include <linux/mutex.h>
+
 struct ww_class {
-	volatile uint64_t	wwc_ticket;
+	atomic64_t	wwc_ticket;
 };
 
 #define	DEFINE_WW_CLASS(CLASS)						      \
 	struct ww_class CLASS = {					      \
-		.wwc_ticket = 0,					      \
+		.wwc_ticket = ATOMIC64_INIT(0),				      \
 	}
 
 struct ww_acquire_ctx {

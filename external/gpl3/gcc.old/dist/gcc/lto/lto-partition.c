@@ -1,5 +1,5 @@
 /* LTO partitioning logic routines.
-   Copyright (C) 2009-2015 Free Software Foundation, Inc.
+   Copyright (C) 2009-2016 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -20,44 +20,20 @@ along with GCC; see the file COPYING3.  If not see
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
-#include "toplev.h"
-#include "hash-set.h"
-#include "machmode.h"
-#include "vec.h"
-#include "double-int.h"
-#include "input.h"
-#include "alias.h"
-#include "symtab.h"
-#include "options.h"
-#include "wide-int.h"
-#include "inchash.h"
-#include "tree.h"
-#include "fold-const.h"
-#include "predict.h"
-#include "tm.h"
-#include "hard-reg-set.h"
-#include "input.h"
+#include "target.h"
 #include "function.h"
 #include "basic-block.h"
-#include "tree-ssa-alias.h"
-#include "internal-fn.h"
-#include "gimple-expr.h"
-#include "is-a.h"
+#include "tree.h"
 #include "gimple.h"
-#include "hash-map.h"
-#include "plugin-api.h"
-#include "ipa-ref.h"
+#include "alloc-pool.h"
+#include "stringpool.h"
 #include "cgraph.h"
 #include "lto-streamer.h"
-#include "timevar.h"
 #include "params.h"
-#include "alloc-pool.h"
 #include "symbol-summary.h"
 #include "ipa-prop.h"
 #include "ipa-inline.h"
-#include "ipa-utils.h"
 #include "lto-partition.h"
-#include "stringpool.h"
 
 vec<ltrans_partition> ltrans_partitions;
 
@@ -73,6 +49,7 @@ new_partition (const char *name)
   part->encoder = lto_symtab_encoder_new (false);
   part->name = name;
   part->insns = 0;
+  part->symbols = 0;
   ltrans_partitions.safe_push (part);
   return part;
 }
@@ -157,6 +134,8 @@ add_symbol_to_partition_1 (ltrans_partition part, symtab_node *node)
   gcc_assert (c != SYMBOL_EXTERNAL
 	      && (c == SYMBOL_DUPLICATE || !symbol_partitioned_p (node)));
 
+  part->symbols++;
+
   lto_set_symtab_encoder_in_partition (part->encoder, node);
 
   if (symbol_partitioned_p (node))
@@ -198,8 +177,20 @@ add_symbol_to_partition_1 (ltrans_partition part, symtab_node *node)
   /* Add all aliases associated with the symbol.  */
 
   FOR_EACH_ALIAS (node, ref)
-    if (!node->weakref)
+    if (!ref->referring->transparent_alias)
       add_symbol_to_partition_1 (part, ref->referring);
+    else
+      {
+	struct ipa_ref *ref2;
+	/* We do not need to add transparent aliases if they are not used.
+	   However we must add aliases of transparent aliases if they exist.  */
+	FOR_EACH_ALIAS (ref->referring, ref2)
+	  {
+	    /* Nested transparent aliases are not permitted.  */
+	    gcc_checking_assert (!ref2->referring->transparent_alias);
+	    add_symbol_to_partition_1 (part, ref2->referring);
+	  }
+      }
 
   /* Ensure that SAME_COMDAT_GROUP lists all allways added in a group.  */
   if (node->same_comdat_group)
@@ -220,8 +211,10 @@ add_symbol_to_partition_1 (ltrans_partition part, symtab_node *node)
 static symtab_node *
 contained_in_symbol (symtab_node *node)
 {
-  /* Weakrefs are never contained in anything.  */
-  if (node->weakref)
+  /* There is no need to consider transparent aliases to be part of the
+     definition: they are only useful insite the partition they are output
+     and thus we will always see an explicit reference to it.  */
+  if (node->transparent_alias)
     return node;
   if (cgraph_node *cnode = dyn_cast <cgraph_node *> (node))
     {
@@ -274,6 +267,7 @@ undo_partition (ltrans_partition partition, unsigned int n_nodes)
     {
       symtab_node *node = lto_symtab_encoder_deref (partition->encoder,
 						   n_nodes);
+      partition->symbols--;
       cgraph_node *cnode;
 
       /* After UNDO we no longer know what was visited.  */
@@ -462,7 +456,7 @@ lto_balanced_map (int n_lto_partitions)
   auto_vec<varpool_node *> varpool_order;
   int i;
   struct cgraph_node *node;
-  int total_size = 0, best_total_size = 0;
+  int original_total_size, total_size = 0, best_total_size = 0;
   int partition_size;
   ltrans_partition partition;
   int last_visited_node = 0;
@@ -487,6 +481,8 @@ lto_balanced_map (int n_lto_partitions)
 	if (!node->alias)
 	  total_size += inline_summaries->get (node)->size;
       }
+
+  original_total_size = total_size;
 
   /* Streaming works best when the source units do not cross partition
      boundaries much.  This is because importing function from a source
@@ -668,8 +664,9 @@ lto_balanced_map (int n_lto_partitions)
 
 		vnode = dyn_cast <varpool_node *> (ref->referring);
 		gcc_assert (vnode->definition);
-		/* It is better to couple variables with their users, because it allows them
-		   to be removed.  Coupling with objects they refer to only helps to reduce
+		/* It is better to couple variables with their users,
+		   because it allows them to be removed.  Coupling
+		   with objects they refer to only helps to reduce
 		   number of symbols promoted to hidden.  */
 		if (!symbol_partitioned_p (vnode) && flag_toplevel_reorder
 		    && !vnode->no_reorder
@@ -782,6 +779,23 @@ lto_balanced_map (int n_lto_partitions)
   add_sorted_nodes (next_nodes, partition);
 
   free (order);
+
+  if (symtab->dump_file)
+    {
+      fprintf (symtab->dump_file, "\nPartition sizes:\n");
+      unsigned partitions = ltrans_partitions.length ();
+
+      for (unsigned i = 0; i < partitions ; i++)
+	{
+	  ltrans_partition p = ltrans_partitions[i];
+	  fprintf (symtab->dump_file, "partition %d contains %d (%2.2f%%)"
+		   " symbols and %d (%2.2f%%) insns\n", i, p->symbols,
+		   100.0 * p->symbols / n_nodes, p->insns,
+		   100.0 * p->insns / original_total_size);
+	}
+
+      fprintf (symtab->dump_file, "\n");
+    }
 }
 
 /* Return true if we must not change the name of the NODE.  The name as
@@ -968,14 +982,33 @@ promote_symbol (symtab_node *node)
   TREE_PUBLIC (node->decl) = 1;
   DECL_VISIBILITY (node->decl) = VISIBILITY_HIDDEN;
   DECL_VISIBILITY_SPECIFIED (node->decl) = true;
+  ipa_ref *ref;
+
+  /* Promoting a symbol also promotes all trasparent aliases with exception
+     of weakref where the visibility flags are always wrong and set to 
+     !PUBLIC.  */
+  for (unsigned i = 0; node->iterate_direct_aliases (i, ref); i++)
+    {
+      struct symtab_node *alias = ref->referring;
+      if (alias->transparent_alias && !alias->weakref)
+	{
+	  TREE_PUBLIC (alias->decl) = 1;
+	  DECL_VISIBILITY (alias->decl) = VISIBILITY_HIDDEN;
+	  DECL_VISIBILITY_SPECIFIED (alias->decl) = true;
+	}
+      gcc_assert (!alias->weakref || TREE_PUBLIC (alias->decl));
+    }
+
   if (symtab->dump_file)
     fprintf (symtab->dump_file,
 	    "Promoting as hidden: %s\n", node->name ());
 }
 
-/* Return true if NODE needs named section even if it won't land in the partition
-   symbol table.
-   FIXME: we should really not use named sections for inline clones and master clones.  */
+/* Return true if NODE needs named section even if it won't land in
+   the partition symbol table.
+
+   FIXME: we should really not use named sections for inline clones
+   and master clones.  */
 
 static bool
 may_need_named_section_p (lto_symtab_encoder_t encoder, symtab_node *node)
@@ -1005,7 +1038,7 @@ rename_statics (lto_symtab_encoder_t encoder, symtab_node *node)
   tree name = DECL_ASSEMBLER_NAME (decl);
 
   /* See if this is static symbol. */
-  if ((node->externally_visible
+  if (((node->externally_visible && !node->weakref)
       /* FIXME: externally_visible is somewhat illogically not set for
 	 external symbols (i.e. those not defined).  Remove this test
 	 once this is fixed.  */
@@ -1036,7 +1069,15 @@ rename_statics (lto_symtab_encoder_t encoder, symtab_node *node)
   /* Assign every symbol in the set that shares the same ASM name an unique
      mangled name.  */
   for (s = symtab_node::get_for_asmname (name); s;)
-    if (!s->externally_visible
+    if ((!s->externally_visible || s->weakref)
+	/* Transparent aliases having same name as target are renamed at a
+	   time their target gets new name.  Transparent aliases that use
+	   separate assembler name require the name to be unique.  */
+	&& (!s->transparent_alias || !s->definition || s->weakref
+	    || !symbol_table::assembler_names_equal_p
+		 (IDENTIFIER_POINTER (DECL_ASSEMBLER_NAME (s->decl)),
+		  IDENTIFIER_POINTER
+		    (DECL_ASSEMBLER_NAME (s->get_alias_target()->decl))))
 	&& ((s->real_symbol_p ()
              && !DECL_EXTERNAL (s->decl)
 	     && !TREE_PUBLIC (s->decl))
@@ -1045,7 +1086,8 @@ rename_statics (lto_symtab_encoder_t encoder, symtab_node *node)
 	    || lto_symtab_encoder_lookup (encoder, s) != LCC_NOT_FOUND))
       {
         if (privatize_symbol_name (s))
-	  /* Re-start from beginning since we do not know how many symbols changed a name.  */
+	  /* Re-start from beginning since we do not know how many
+	     symbols changed a name.  */
 	  s = symtab_node::get_for_asmname (name);
         else s = s->next_sharing_asm_name;
       }
@@ -1086,8 +1128,8 @@ lto_promote_cross_file_statics (void)
         {
           symtab_node *node = lsei_node (lsei);
 
-	  /* If symbol is static, rename it if its assembler name clash with
-	     anything else in this unit.  */
+	  /* If symbol is static, rename it if its assembler name
+	     clashes with anything else in this unit.  */
 	  rename_statics (encoder, node);
 
 	  /* No need to promote if symbol already is externally visible ... */
@@ -1095,7 +1137,7 @@ lto_promote_cross_file_statics (void)
  	      /* ... or if it is part of current partition ... */
 	      || lto_symtab_encoder_in_partition_p (encoder, node)
 	      /* ... or if we do not partition it. This mean that it will
-		 appear in every partition refernecing it.  */
+		 appear in every partition referencing it.  */
 	      || node->get_partitioning_class () != SYMBOL_PARTITION)
 	    {
 	      validize_symbol_for_target (node);

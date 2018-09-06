@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.223.2.5 2018/06/25 07:26:07 pgoyette Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.223.2.6 2018/09/06 06:56:45 pgoyette Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.223.2.5 2018/06/25 07:26:07 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.223.2.6 2018/09/06 06:56:45 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -2503,7 +2503,7 @@ icmp6_redirect_output(struct mbuf *m0, struct rtentry *rt)
 	m_reset_rcvif(m);
 	m->m_len = 0;
 	maxlen = M_TRAILINGSPACE(m);
-	maxlen = min(IPV6_MMTU, maxlen);
+	maxlen = uimin(IPV6_MMTU, maxlen);
 
 	/* just for safety */
 	if (maxlen < sizeof(struct ip6_hdr) + sizeof(struct nd_redirect) +

@@ -1,6 +1,6 @@
 /* Infrastructure for tracking user variable locations and values
    throughout compilation.
-   Copyright (C) 2010-2015 Free Software Foundation, Inc.
+   Copyright (C) 2010-2016 Free Software Foundation, Inc.
    Contributed by Alexandre Oliva <aoliva@redhat.com>.
 
 This file is part of GCC.
@@ -22,18 +22,10 @@ along with GCC; see the file COPYING3.  If not see
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
-#include "tm.h"
+#include "backend.h"
 #include "rtl.h"
-#include "predict.h"
-#include "basic-block.h"
+#include "df.h"
 #include "valtrack.h"
-#include "hashtab.h"
-#include "hash-set.h"
-#include "vec.h"
-#include "machmode.h"
-#include "hard-reg-set.h"
-#include "input.h"
-#include "function.h"
 #include "regs.h"
 #include "emit-rtl.h"
 
@@ -62,7 +54,9 @@ static rtx
 cleanup_auto_inc_dec (rtx src, machine_mode mem_mode ATTRIBUTE_UNUSED)
 {
   rtx x = src;
-#ifdef AUTO_INC_DEC
+  if (!AUTO_INC_DEC)
+    return copy_rtx (x);
+
   const RTX_CODE code = GET_CODE (x);
   int i;
   const char *fmt;
@@ -144,10 +138,6 @@ cleanup_auto_inc_dec (rtx src, machine_mode mem_mode ATTRIBUTE_UNUSED)
 	  XVECEXP (x, i, j)
 	    = cleanup_auto_inc_dec (XVECEXP (src, i, j), mem_mode);
       }
-
-#else /* !AUTO_INC_DEC */
-  x = copy_rtx (x);
-#endif /* !AUTO_INC_DEC */
 
   return x;
 }
@@ -287,7 +277,7 @@ dead_debug_global_insert (struct dead_debug_global *global, rtx reg, rtx dtemp)
 }
 
 /* If UREGNO, referenced by USE, is a pseudo marked as used in GLOBAL,
-   replace it with with a USE of the debug temp recorded for it, and
+   replace it with a USE of the debug temp recorded for it, and
    return TRUE.  Otherwise, just return FALSE.
 
    If PTO_RESCAN is given, instead of rescanning modified INSNs right
@@ -671,9 +661,7 @@ dead_debug_insert_temp (struct dead_debug_local *debug, unsigned int uregno,
 	     the debug temp to.  ??? We could bind the debug_expr to a
 	     CONCAT or PARALLEL with the split multi-registers, and
 	     replace them as we found the corresponding sets.  */
-	  else if (REGNO (reg) < FIRST_PSEUDO_REGISTER
-		   && (hard_regno_nregs[REGNO (reg)][GET_MODE (reg)]
-		       != hard_regno_nregs[REGNO (reg)][GET_MODE (dest)]))
+	  else if (REG_NREGS (reg) != REG_NREGS (dest))
 	    breg = NULL;
 	  /* Ok, it's the same (hardware) REG, but with a different
 	     mode, so SUBREG it.  */
@@ -695,7 +683,7 @@ dead_debug_insert_temp (struct dead_debug_local *debug, unsigned int uregno,
 	     setting REG in its mode would, we won't know what to bind
 	     the debug temp to.  */
 	  else if (REGNO (reg) < FIRST_PSEUDO_REGISTER
-		   && (hard_regno_nregs[REGNO (reg)][GET_MODE (reg)]
+		   && (REG_NREGS (reg)
 		       != hard_regno_nregs[REGNO (reg)][GET_MODE (dest)]))
 	    breg = NULL;
 	  /* Yay, we can use SRC, just adjust its mode.  */

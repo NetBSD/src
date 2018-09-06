@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbufdebug.c,v 1.2.2.2 2018/07/28 04:38:08 pgoyette Exp $	*/
+/*	$NetBSD: uipc_mbufdebug.c,v 1.2.2.3 2018/09/06 06:56:42 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 2017 Internet Initiative Japan Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbufdebug.c,v 1.2.2.2 2018/07/28 04:38:08 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbufdebug.c,v 1.2.2.3 2018/09/06 06:56:42 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -141,7 +141,7 @@ m_peek_data(const struct mbuf *m, int off, int len, void *vp)
 	while (len > 0) {
 		if (m == 0)
 			return -1;
-		count = min(m->m_len - off, len);
+		count = uimin(m->m_len - off, len);
 		memcpy(cp, mtod(m, char *) + off, count);
 		len -= count;
 		cp += count;

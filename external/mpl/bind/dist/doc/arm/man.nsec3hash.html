@@ -1,0 +1,160 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<!--
+ - Copyright (C) 2000-2018 Internet Systems Consortium, Inc. ("ISC")
+ - 
+ - This Source Code Form is subject to the terms of the Mozilla Public
+ - License, v. 2.0. If a copy of the MPL was not distributed with this
+ - file, You can obtain one at http://mozilla.org/MPL/2.0/.
+-->
+<html lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+<title>nsec3hash</title>
+<meta name="generator" content="DocBook XSL Stylesheets V1.78.1">
+<link rel="home" href="Bv9ARM.html" title="BIND 9 Administrator Reference Manual">
+<link rel="up" href="Bv9ARM.ch12.html" title="Manual pages">
+<link rel="prev" href="man.named.html" title="named">
+<link rel="next" href="man.nslookup.html" title="nslookup">
+</head>
+<body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
+<div class="navheader">
+<table width="100%" summary="Navigation header">
+<tr><th colspan="3" align="center"><span class="application">nsec3hash</span></th></tr>
+<tr>
+<td width="20%" align="left">
+<a accesskey="p" href="man.named.html">Prev</a> </td>
+<th width="60%" align="center">Manual pages</th>
+<td width="20%" align="right"> <a accesskey="n" href="man.nslookup.html">Next</a>
+</td>
+</tr>
+</table>
+<hr>
+</div>
+<div class="refentry">
+<a name="man.nsec3hash"></a><div class="titlepage"></div>
+  
+  
+
+  
+
+  <div class="refnamediv">
+<h2>Name</h2>
+<p>
+    <span class="application">nsec3hash</span>
+     &#8212; generate NSEC3 hash
+  </p>
+</div>
+
+  
+
+  <div class="refsynopsisdiv">
+<h2>Synopsis</h2>
+    <div class="cmdsynopsis"><p>
+      <code class="command">nsec3hash</code> 
+       {<em class="replaceable"><code>salt</code></em>}
+       {<em class="replaceable"><code>algorithm</code></em>}
+       {<em class="replaceable"><code>iterations</code></em>}
+       {<em class="replaceable"><code>domain</code></em>}
+    </p></div>
+    <div class="cmdsynopsis"><p>
+      <code class="command">nsec3hash -r</code> 
+       {<em class="replaceable"><code>algorithm</code></em>}
+       {<em class="replaceable"><code>flags</code></em>}
+       {<em class="replaceable"><code>iterations</code></em>}
+       {<em class="replaceable"><code>salt</code></em>}
+       {<em class="replaceable"><code>domain</code></em>}
+    </p></div>
+  </div>
+
+  <div class="refsection">
+<a name="id-1.13.29.7"></a><h2>DESCRIPTION</h2>
+
+    <p>
+      <span class="command"><strong>nsec3hash</strong></span> generates an NSEC3 hash based on
+      a set of NSEC3 parameters.  This can be used to check the validity
+      of NSEC3 records in a signed zone.
+    </p>
+
+    <p>
+      If this command is invoked as <span class="command"><strong>nsec3hash -r</strong></span>,
+      it takes arguments in an order matching the first four fields
+      of an NSEC3 record, followed by the domain name: algorithm, flags,
+      iterations, salt, domain.  This makes it convenient to copy and
+      paste a portion of an NSEC3 or NSEC3PARAM record into a command
+      line to confirm the correctness of an NSEC3 hash.
+    </p>
+
+  </div>
+
+  <div class="refsection">
+<a name="id-1.13.29.8"></a><h2>ARGUMENTS</h2>
+
+    <div class="variablelist"><dl class="variablelist">
+<dt><span class="term">salt</span></dt>
+<dd>
+          <p>
+            The salt provided to the hash algorithm.
+          </p>
+        </dd>
+<dt><span class="term">algorithm</span></dt>
+<dd>
+          <p>
+            A number indicating the hash algorithm.  Currently the
+            only supported hash algorithm for NSEC3 is SHA-1, which is
+            indicated by the number 1; consequently "1" is the only
+            useful value for this argument.
+          </p>
+        </dd>
+<dt><span class="term">flags</span></dt>
+<dd>
+          <p>
+            Provided for compatibility with NSEC3 record presentation
+            format, but ignored since the flags do not affect the hash.
+          </p>
+        </dd>
+<dt><span class="term">iterations</span></dt>
+<dd>
+          <p>
+            The number of additional times the hash should be performed.
+          </p>
+        </dd>
+<dt><span class="term">domain</span></dt>
+<dd>
+          <p>
+            The domain name to be hashed.
+          </p>
+        </dd>
+</dl></div>
+  </div>
+
+  <div class="refsection">
+<a name="id-1.13.29.9"></a><h2>SEE ALSO</h2>
+
+    <p>
+      <em class="citetitle">BIND 9 Administrator Reference Manual</em>,
+      <em class="citetitle">RFC 5155</em>.
+    </p>
+  </div>
+
+</div>
+<div class="navfooter">
+<hr>
+<table width="100%" summary="Navigation footer">
+<tr>
+<td width="40%" align="left">
+<a accesskey="p" href="man.named.html">Prev</a> </td>
+<td width="20%" align="center"><a accesskey="u" href="Bv9ARM.ch12.html">Up</a></td>
+<td width="40%" align="right"> <a accesskey="n" href="man.nslookup.html">Next</a>
+</td>
+</tr>
+<tr>
+<td width="40%" align="left" valign="top">
+<span class="application">named</span> </td>
+<td width="20%" align="center"><a accesskey="h" href="Bv9ARM.html">Home</a></td>
+<td width="40%" align="right" valign="top"> nslookup</td>
+</tr>
+</table>
+</div>
+<p xmlns:db="http://docbook.org/ns/docbook" style="text-align: center;">BIND 9.12.2-P1</p>
+</body>
+</html>

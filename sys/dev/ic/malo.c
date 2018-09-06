@@ -1,4 +1,4 @@
-/*	$NetBSD: malo.c,v 1.10.2.1 2018/07/28 04:37:45 pgoyette Exp $ */
+/*	$NetBSD: malo.c,v 1.10.2.2 2018/09/06 06:55:49 pgoyette Exp $ */
 /*	$OpenBSD: malo.c,v 1.92 2010/08/27 17:08:00 jsg Exp $ */
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: malo.c,v 1.10.2.1 2018/07/28 04:37:45 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: malo.c,v 1.10.2.2 2018/09/06 06:55:49 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -1884,7 +1884,7 @@ malo_hexdump(void *buf, int len)
 
 	for (i = 0; i < len; i += l) {
 		printf("%4i:", i);
-		l = min(sizeof(b), len - i);
+		l = uimin(sizeof(b), len - i);
 		memcpy(b, (char*)buf + i, l);
 		
 		for (j = 0; j < sizeof(b); j++) {

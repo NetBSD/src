@@ -1,0 +1,19 @@
+; Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+;
+; This Source Code Form is subject to the terms of the Mozilla Public
+; License, v. 2.0. If a copy of the MPL was not distributed with this
+; file, You can obtain one at http://mozilla.org/MPL/2.0/.
+;
+; See the COPYRIGHT file distributed with this work for additional
+; information regarding copyright ownership.
+
+$TTL 600
+@		SOA	ns hostmaster 2011012708 3600 1200 604800 1200
+		NS	ns
+ns		A	192.0.2.1
+
+; The following NSEC3 RR is invalid as the Next Hashed Owner Name field
+; is padded. See RFC 5155.
+0p9mhaveqvm6t7vbl5lop2u3t2rp3tom NSEC3 1 1 12 aabbccdd (
+			CPNMU=== MX DNSKEY NS
+			SOA NSEC3PARAM RRSIG )

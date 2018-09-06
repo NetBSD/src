@@ -1,3 +1,5 @@
+/*	$NetBSD: nouveau_ttm.h,v 1.2.16.1 2018/09/06 06:56:18 pgoyette Exp $	*/
+
 #ifndef __NOUVEAU_TTM_H__
 #define __NOUVEAU_TTM_H__
 

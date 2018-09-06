@@ -1,4 +1,4 @@
-/*	$NetBSD: spinlock.h,v 1.7 2016/04/13 08:43:56 riastradh Exp $	*/
+/*	$NetBSD: spinlock.h,v 1.7.16.1 2018/09/06 06:56:36 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -36,6 +36,8 @@
 #include <sys/mutex.h>
 
 #include <machine/limits.h>
+#include <linux/irqflags.h>
+#include <linux/preempt.h>
 
 #define	__acquires(lock)	/* XXX lockdep stuff */
 #define	__releases(lock)	/* XXX lockdep stuff */

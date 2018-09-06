@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.5 2017/07/23 01:12:17 mrg Exp $
+#	$NetBSD: Makefile,v 1.5.2.1 2018/09/06 06:53:35 pgoyette Exp $
 
 PROG=		gplusplus
 PROGNAME=	g++
 SRCS=		${G_GXX_OBJS:S/cp\///:.o=.c}
 
 NOMAN=		# Linked to gcc.1
-.include <bsd.own.mk>
+.include <bsd.init.mk>
 
 .include "../Makefile.target-defines"
 

@@ -645,6 +645,15 @@ STACK_OF(POLICYQUALINFO) *X509_policy_node_get0_qualifiers(const
                                                            *node);
 const X509_POLICY_NODE *X509_policy_node_get0_parent(const X509_POLICY_NODE
                                                      *node);
+#if OPENSSL_API_COMPAT >= 0x10100000L
+
+static inline X509 *
+X509_STORE_CTX_get0_cert(X509_STORE_CTX *x)
+{ 
+	return X509_STORE_CTX_get_current_cert(x);
+}
+ 
+#endif
 
 #ifdef  __cplusplus
 }

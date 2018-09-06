@@ -1,4 +1,4 @@
-/*	$NetBSD: uhid.c,v 1.101.2.1 2018/03/29 11:20:03 pgoyette Exp $	*/
+/*	$NetBSD: uhid.c,v 1.101.2.2 2018/09/06 06:56:04 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2008, 2012 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhid.c,v 1.101.2.1 2018/03/29 11:20:03 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhid.c,v 1.101.2.2 2018/09/06 06:56:04 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -421,7 +421,7 @@ uhid_do_read(struct uhid_softc *sc, struct uio *uio, int flag)
 
 	/* Transfer as many chunks as possible. */
 	while (sc->sc_q.c_cc > 0 && uio->uio_resid > 0 && !error) {
-		length = min(sc->sc_q.c_cc, uio->uio_resid);
+		length = uimin(sc->sc_q.c_cc, uio->uio_resid);
 		if (length > sizeof(buffer))
 			length = sizeof(buffer);
 
@@ -577,7 +577,7 @@ uhid_do_ioctl(struct uhid_softc *sc, u_long cmd, void *addr,
 	case USB_GET_REPORT_DESC:
 		uhidev_get_report_desc(sc->sc_hdev.sc_parent, &desc, &size);
 		rd = (struct usb_ctl_report_desc *)addr;
-		size = min(size, sizeof(rd->ucrd_data));
+		size = uimin(size, sizeof(rd->ucrd_data));
 		rd->ucrd_size = size;
 		memcpy(rd->ucrd_data, desc, size);
 		break;

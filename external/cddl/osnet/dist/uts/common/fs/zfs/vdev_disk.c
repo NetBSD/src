@@ -470,7 +470,7 @@ vdev_disk_io_start(zio_t *zio)
 		resid = zio->io_size;
 		off = 0;
 		while (resid != 0) {
-			size = min(resid, MAXPHYS);
+			size = uimin(resid, MAXPHYS);
 			nbp = getiobuf(vp, true);
 			nbp->b_blkno = btodb(zio->io_offset + off);
 			/* Below call increments v_numoutput. */

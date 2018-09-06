@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.231.8.1 2018/07/28 04:38:08 pgoyette Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.231.8.2 2018/09/06 06:56:41 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.231.8.1 2018/07/28 04:38:08 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.231.8.2 2018/09/06 06:56:41 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -860,8 +860,8 @@ fd_alloc(proc_t *p, int want, int *result)
 	fd_checkmaps(fdp);
 	dt = fdp->fd_dt;
 	KASSERT(dt->dt_ff[0] == (fdfile_t *)fdp->fd_dfdfile[0]);
-	lim = min((int)p->p_rlimit[RLIMIT_NOFILE].rlim_cur, maxfiles);
-	last = min(dt->dt_nfiles, lim);
+	lim = uimin((int)p->p_rlimit[RLIMIT_NOFILE].rlim_cur, maxfiles);
+	last = uimin(dt->dt_nfiles, lim);
 	for (;;) {
 		if ((i = want) < fdp->fd_freefile)
 			i = fdp->fd_freefile;

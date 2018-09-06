@@ -1,3 +1,5 @@
+/*	$NetBSD: drm_hashtab.h,v 1.2.32.1 2018/09/06 06:56:35 pgoyette Exp $	*/
+
 /**************************************************************************
  *
  * Copyright 2006 Tungsten Graphics, Inc., Bismack, ND. USA.

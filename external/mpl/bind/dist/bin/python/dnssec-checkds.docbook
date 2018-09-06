@@ -1,0 +1,139 @@
+<!--
+ - Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ -
+ - This Source Code Form is subject to the terms of the Mozilla Public
+ - License, v. 2.0. If a copy of the MPL was not distributed with this
+ - file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ -
+ - See the COPYRIGHT file distributed with this work for additional
+ - information regarding copyright ownership.
+-->
+
+<!-- Converted by db4-upgrade version 1.0 -->
+<refentry xmlns:db="http://docbook.org/ns/docbook" version="5.0" xml:id="man.dnssec-checkds">
+  <info>
+    <date>2013-01-01</date>
+  </info>
+  <refentryinfo>
+    <corpname>ISC</corpname>
+    <corpauthor>Internet Systems Consortium, Inc.</corpauthor>
+  </refentryinfo>
+
+  <refmeta>
+    <refentrytitle><application>dnssec-checkds</application></refentrytitle>
+    <manvolnum>8</manvolnum>
+    <refmiscinfo>BIND9</refmiscinfo>
+  </refmeta>
+
+  <refnamediv>
+    <refname><application>dnssec-checkds</application></refname>
+    <refpurpose>DNSSEC delegation consistency checking tool</refpurpose>
+  </refnamediv>
+
+  <docinfo>
+    <copyright>
+      <year>2012</year>
+      <year>2013</year>
+      <year>2014</year>
+      <year>2015</year>
+      <year>2016</year>
+      <year>2017</year>
+      <year>2018</year>
+      <holder>Internet Systems Consortium, Inc. ("ISC")</holder>
+    </copyright>
+  </docinfo>
+
+  <refsynopsisdiv>
+    <cmdsynopsis sepchar=" ">
+      <command>dnssec-checkds</command>
+      <arg choice="opt" rep="norepeat"><option>-d <replaceable class="parameter">dig path</replaceable></option></arg>
+      <arg choice="opt" rep="norepeat"><option>-D <replaceable class="parameter">dsfromkey path</replaceable></option></arg>
+      <arg choice="opt" rep="norepeat"><option>-f <replaceable class="parameter">file</replaceable></option></arg>
+      <arg choice="opt" rep="norepeat"><option>-l <replaceable class="parameter">domain</replaceable></option></arg>
+      <arg choice="opt" rep="norepeat"><option>-s <replaceable class="parameter">file</replaceable></option></arg>
+      <arg choice="req" rep="norepeat">zone</arg>
+    </cmdsynopsis>
+  </refsynopsisdiv>
+
+  <refsection><info><title>DESCRIPTION</title></info>
+
+    <para><command>dnssec-checkds</command>
+      verifies the correctness of Delegation Signer (DS) or DNSSEC
+      Lookaside Validation (DLV) resource records for keys in a specified
+      zone.
+    </para>
+  </refsection>
+
+  <refsection><info><title>OPTIONS</title></info>
+
+
+    <variablelist>
+      <varlistentry>
+        <term>-f <replaceable class="parameter">file</replaceable></term>
+        <listitem>
+          <para>
+            If a <option>file</option> is specified, then the zone is
+            read from that file to find the DNSKEY records.  If not,
+            then the DNSKEY records for the zone are looked up in the DNS.
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>-l <replaceable class="parameter">domain</replaceable></term>
+        <listitem>
+          <para>
+            Check for a DLV record in the specified lookaside domain,
+            instead of checking for a DS record in the zone's parent.
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>-s <replaceable class="parameter">file</replaceable></term>
+        <listitem>
+          <para>
+            Specifies a prepared dsset file, such as would be generated
+            by <command>dnssec-signzone</command>, to use as a source for
+            the DS RRset instead of querying the parent.
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>-d <replaceable class="parameter">dig path</replaceable></term>
+        <listitem>
+          <para>
+            Specifies a path to a <command>dig</command> binary.  Used
+            for testing.
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>-D <replaceable class="parameter">dsfromkey path</replaceable></term>
+        <listitem>
+          <para>
+            Specifies a path to a <command>dnssec-dsfromkey</command> binary.
+            Used for testing.
+          </para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+  </refsection>
+
+  <refsection><info><title>SEE ALSO</title></info>
+
+    <para><citerefentry>
+        <refentrytitle>dnssec-dsfromkey</refentrytitle><manvolnum>8</manvolnum>
+      </citerefentry>,
+      <citerefentry>
+        <refentrytitle>dnssec-keygen</refentrytitle><manvolnum>8</manvolnum>
+      </citerefentry>,
+      <citerefentry>
+        <refentrytitle>dnssec-signzone</refentrytitle><manvolnum>8</manvolnum>
+      </citerefentry>,
+    </para>
+  </refsection>
+
+</refentry>

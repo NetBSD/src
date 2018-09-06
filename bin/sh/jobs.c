@@ -1,4 +1,4 @@
-/*	$NetBSD: jobs.c,v 1.98 2017/12/30 23:24:19 kre Exp $	*/
+/*	$NetBSD: jobs.c,v 1.98.2.1 2018/09/06 06:51:32 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)jobs.c	8.5 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: jobs.c,v 1.98 2017/12/30 23:24:19 kre Exp $");
+__RCSID("$NetBSD: jobs.c,v 1.98.2.1 2018/09/06 06:51:32 pgoyette Exp $");
 #endif
 #endif /* not lint */
 
@@ -635,7 +635,7 @@ jobstatus(const struct job *jp, int raw)
 	int status = 0;
 	int retval;
 
-	if (pipefail && jp->nprocs) {
+	if ((jp->flags & JPIPEFAIL) && jp->nprocs) {
 		int i;
 
 		for (i = 0; i < jp->nprocs; i++)
@@ -1068,7 +1068,7 @@ makejob(union node *node, int nprocs)
 	INTOFF;
 	jp->state = JOBRUNNING;
 	jp->used = 1;
-	jp->flags = 0;
+	jp->flags = pipefail ? JPIPEFAIL : 0;
 	jp->nprocs = 0;
 	jp->pgrp = 0;
 #if JOBS
@@ -1081,8 +1081,8 @@ makejob(union node *node, int nprocs)
 		jp->ps = &jp->ps0;
 	}
 	INTON;
-	VTRACE(DBG_JOBS, ("makejob(0x%lx, %d) returns %%%d\n",
-	    (long)node, nprocs, jp - jobtab + 1));
+	VTRACE(DBG_JOBS, ("makejob(%p, %d)%s returns %%%d\n", (void *)node,
+	    nprocs, (jp->flags&JPIPEFAIL)?" PF":"", jp - jobtab + 1));
 	return jp;
 }
 
@@ -1509,8 +1509,12 @@ commandtext(struct procstat *ps, union node *n)
 	int len;
 
 	cmdnextc = ps->cmd;
-	if (iflag || mflag || sizeof ps->cmd < 100)
+	if (iflag || mflag || sizeof(ps->cmd) <= 60)
 		len = sizeof(ps->cmd);
+	else if (sizeof ps->cmd <= 400)
+		len = 50;
+	else if (sizeof ps->cmd <= 800)
+		len = 80;
 	else
 		len = sizeof(ps->cmd) / 10;
 	cmdnleft = len;
@@ -1525,7 +1529,7 @@ commandtext(struct procstat *ps, union node *n)
 		*cmdnextc = '\0';
 
 	VTRACE(DBG_JOBS,
-	    ("commandtext: ps->cmd %x, end %x, left %d\n\t\"%s\"\n",
+	    ("commandtext: ps->cmd %p, end %p, left %d\n\t\"%s\"\n",
 	    ps->cmd, cmdnextc, cmdnleft, ps->cmd));
 }
 

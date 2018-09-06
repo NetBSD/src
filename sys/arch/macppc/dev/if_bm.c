@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bm.c,v 1.53.14.1 2018/07/28 04:37:36 pgoyette Exp $	*/
+/*	$NetBSD: if_bm.c,v 1.53.14.2 2018/09/06 06:55:37 pgoyette Exp $	*/
 
 /*-
  * Copyright (C) 1998, 1999, 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bm.c,v 1.53.14.1 2018/07/28 04:37:36 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bm.c,v 1.53.14.2 2018/09/06 06:55:37 pgoyette Exp $");
 
 #include "opt_inet.h"
 
@@ -665,7 +665,7 @@ bmac_get(struct bmac_softc *sc, void *pkt, int totlen)
 			}
 			len = MCLBYTES;
 		}
-		m->m_len = len = min(totlen, len);
+		m->m_len = len = uimin(totlen, len);
 		memcpy(mtod(m, void *), pkt, len);
 		pkt = (char *)pkt + len;
 		totlen -= len;

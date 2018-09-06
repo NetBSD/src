@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_wdc.c,v 1.129 2017/10/17 18:52:51 jdolecek Exp $	*/
+/*	$NetBSD: atapi_wdc.c,v 1.129.2.1 2018/09/06 06:56:04 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.129 2017/10/17 18:52:51 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.129.2.1 2018/09/06 06:56:04 pgoyette Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -67,7 +67,10 @@ __KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.129 2017/10/17 18:52:51 jdolecek Exp
 #define DEBUG_FUNCS  0x08
 #define DEBUG_PROBE  0x10
 #ifdef ATADEBUG
-int wdcdebug_atapi_mask = 0;
+#ifndef ATADEBUG_ATAPI_MASK
+#define ATADEBUG_ATAPI_MASK 0x0
+#endif
+int wdcdebug_atapi_mask = ATADEBUG_ATAPI_MASK;
 #define ATADEBUG_PRINT(args, level) \
 	if (wdcdebug_atapi_mask & (level)) \
 		printf args

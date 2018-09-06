@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.50.2.2 2018/06/25 07:26:09 pgoyette Exp $
+# $NetBSD: Makefile,v 1.50.2.3 2018/09/06 06:56:48 pgoyette Exp $
 
 MKMAN=	no
 
@@ -62,6 +62,8 @@ TESTS_C+=		t_ptrace_waitpid
 TESTS_C+=		t_recvmmsg
 TESTS_C+=		t_revoke
 TESTS_C+=		t_select
+TESTS_C+=		t_sendmmsg
+TESTS_C+=		t_sendrecv
 TESTS_C+=		t_setrlimit
 TESTS_C+=		t_setuid
 TESTS_C+=		t_sigaction

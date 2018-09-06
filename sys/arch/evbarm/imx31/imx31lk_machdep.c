@@ -1,4 +1,4 @@
-/* $NetBSD: imx31lk_machdep.c,v 1.19.14.2 2018/07/28 04:37:31 pgoyette Exp $ */
+/* $NetBSD: imx31lk_machdep.c,v 1.19.14.3 2018/09/06 06:55:31 pgoyette Exp $ */
 
 /*
  * Startup routines for the ZOOM iMX31 LITEKIT.
@@ -110,8 +110,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx31lk_machdep.c,v 1.19.14.2 2018/07/28 04:37:31 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx31lk_machdep.c,v 1.19.14.3 2018/09/06 06:55:31 pgoyette Exp $");
 
+#include "opt_arm_debug.h"
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
 #include "opt_pmap_debug.h"

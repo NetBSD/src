@@ -1,4 +1,4 @@
-/* $NetBSD: cpu_rng.c,v 1.5.20.1 2018/07/28 04:37:42 pgoyette Exp $ */
+/* $NetBSD: cpu_rng.c,v 1.5.20.2 2018/09/06 06:55:44 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -203,7 +203,7 @@ static uint64_t earlyrng_state;
  * Small PRNG, that can be used very early. The only requirement is that
  * cpu_probe got called before.
  */
-void
+void __noasan
 cpu_earlyrng(void *out, size_t sz)
 {
 	uint8_t digest[SHA512_DIGEST_LENGTH];

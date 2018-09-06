@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_var.h,v 1.5.88.2 2018/05/02 07:20:24 pgoyette Exp $ */
+/*	$NetBSD: ipsec_var.h,v 1.5.88.3 2018/09/06 06:56:45 pgoyette Exp $ */
 /*	$FreeBSD: ipsec.h,v 1.2.4.2 2004/02/14 22:23:23 bms Exp $	*/
 
 /*-
@@ -73,6 +73,5 @@
 #define	IPSECCTL_ECN			11
 #define	IPSECCTL_DEBUG			12
 #define	IPSECCTL_ESP_RANDPAD		13
-#define IPSECCTL_MAXID			14
 
 #endif /* !_NETIPSEC_IPSEC_VAR_H_ */

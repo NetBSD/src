@@ -1,4 +1,4 @@
-/*	$NetBSD: t4.c,v 1.1.1.1 2014/04/01 16:16:06 jakllsch Exp $	*/
+/*	$NetBSD: t4.c,v 1.1.1.1.34.1 2018/09/06 06:56:38 pgoyette Exp $	*/
 
 #include <efi.h>
 #include <efilib.h>
@@ -8,6 +8,7 @@ efi_main (EFI_HANDLE *image, EFI_SYSTEM_TABLE *systab)
 {
 	UINTN index;
 
+        InitializeLib(image, systab);
 	uefi_call_wrapper(systab->ConOut->OutputString, 2, systab->ConOut, L"Hello application started\r\n");
 	uefi_call_wrapper(systab->ConOut->OutputString, 2, systab->ConOut, L"\r\n\r\n\r\nHit any key to exit\r\n");
 	uefi_call_wrapper(systab->BootServices->WaitForEvent, 3, 1, &systab->ConIn->WaitForKey, &index);

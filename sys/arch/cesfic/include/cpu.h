@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.30 2016/12/17 14:36:29 flxd Exp $	*/
+/*	$NetBSD: cpu.h,v 1.30.14.1 2018/09/06 06:55:28 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -101,16 +101,6 @@ struct clockframe {
 
 extern int astpending;		/* need to trap before returning to user mode */
 #define aston() (astpending++)
-
-#endif /* _KERNEL */
-
-/*
- * CTL_MACHDEP definitions.
- */
-#define	CPU_CONSDEV		1	/* dev_t: console terminal device */
-#define	CPU_MAXID		2	/* number of valid machdep ids */
-
-#ifdef _KERNEL
 
 #ifndef M68040
 #define	M68040

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.566.2.6 2018/07/28 04:37:46 pgoyette Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.566.2.7 2018/09/06 06:55:51 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.566.2.6 2018/07/28 04:37:46 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.566.2.7 2018/09/06 06:55:51 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -842,6 +842,7 @@ static bool	wm_sgmii_uses_mdio(struct wm_softc *);
 static int	wm_sgmii_readreg(device_t, int, int);
 static void	wm_sgmii_writereg(device_t, int, int, int);
 /* TBI related */
+static bool	wm_tbi_havesignal(struct wm_softc *, uint32_t);
 static void	wm_tbi_mediainit(struct wm_softc *);
 static int	wm_tbi_mediachange(struct ifnet *);
 static void	wm_tbi_mediastatus(struct ifnet *, struct ifmediareq *);
@@ -2721,7 +2722,7 @@ alloc_retry:
 	/* wm(4) doest not use ifp->if_watchdog, use wm_tick as watchdog. */
 	ifp->if_init = wm_init;
 	ifp->if_stop = wm_stop;
-	IFQ_SET_MAXLEN(&ifp->if_snd, max(WM_IFQUEUELEN, IFQ_MAXLEN));
+	IFQ_SET_MAXLEN(&ifp->if_snd, uimax(WM_IFQUEUELEN, IFQ_MAXLEN));
 	IFQ_SET_READY(&ifp->if_snd);
 
 	/* Check for jumbo frame */
@@ -5011,7 +5012,7 @@ wm_adjust_qnum(struct wm_softc *sc, int nvectors)
 		break;
 	}
 
-	hw_nqueues = min(hw_ntxqueues, hw_nrxqueues);
+	hw_nqueues = uimin(hw_ntxqueues, hw_nrxqueues);
 
 	/*
 	 * As queues more than MSI-X vectors cannot improve scaling, we limit
@@ -5338,7 +5339,7 @@ wm_itrs_calculate(struct wm_softc *sc, struct wm_queue *wmq)
 	if (rxq->rxq_packets)
 		avg_size =  rxq->rxq_bytes / rxq->rxq_packets;
 	if (txq->txq_packets)
-		avg_size = max(avg_size, txq->txq_bytes / txq->txq_packets);
+		avg_size = uimax(avg_size, txq->txq_bytes / txq->txq_packets);
 
 	if (avg_size == 0) {
 		new_itr = 450; /* restore default value */
@@ -5349,7 +5350,7 @@ wm_itrs_calculate(struct wm_softc *sc, struct wm_queue *wmq)
 	avg_size += 24;
 
 	/* Don't starve jumbo frames */
-	avg_size = min(avg_size, 3000);
+	avg_size = uimin(avg_size, 3000);
 
 	/* Give a little boost to mid-size frames */
 	if ((avg_size > 300) && (avg_size < 1200))
@@ -8755,6 +8756,7 @@ wm_linkintr_tbi(struct wm_softc *sc, uint32_t icr)
 
 	status = CSR_READ(sc, WMREG_STATUS);
 	if (icr & ICR_LSC) {
+		wm_check_for_link(sc);
 		if (status & STATUS_LU) {
 			DPRINTF(WM_DEBUG_LINK, ("%s: LINK: LSC -> up %s\n",
 				device_xname(sc->sc_dev),
@@ -10962,6 +10964,23 @@ wm_sgmii_writereg(device_t dev, int phy, int reg, int val)
 
 /* TBI related */
 
+static bool
+wm_tbi_havesignal(struct wm_softc *sc, uint32_t ctrl)
+{
+	bool sig;
+
+	sig = ctrl & CTRL_SWDPIN(1);
+
+	/*
+	 * On 82543 and 82544, the CTRL_SWDPIN(1) bit will be 0 if the optics
+	 * detect a signal, 1 if they don't.
+	 */
+	if ((sc->sc_type == WM_T_82543) || (sc->sc_type == WM_T_82544))
+		sig = !sig;
+
+	return sig;
+}
+
 /*
  * wm_tbi_mediainit:
  *
@@ -11053,9 +11072,11 @@ wm_tbi_mediachange(struct ifnet *ifp)
 {
 	struct wm_softc *sc = ifp->if_softc;
 	struct ifmedia_entry *ife = sc->sc_mii.mii_media.ifm_cur;
-	uint32_t status;
+	uint32_t status, ctrl;
+	bool signal;
 	int i;
 
+	KASSERT(sc->sc_mediatype != WM_MEDIATYPE_COPPER);
 	if (sc->sc_mediatype == WM_MEDIATYPE_SERDES) {
 		/* XXX need some work for >= 82571 and < 82575 */
 		if (sc->sc_type < WM_T_82575)
@@ -11085,14 +11106,13 @@ wm_tbi_mediachange(struct ifnet *ifp)
 	CSR_WRITE_FLUSH(sc);
 	delay(1000);
 
-	i = CSR_READ(sc, WMREG_CTRL) & CTRL_SWDPIN(1);
-	DPRINTF(WM_DEBUG_LINK,("%s: i = 0x%x\n", device_xname(sc->sc_dev),i));
+	ctrl =  CSR_READ(sc, WMREG_CTRL);
+	signal = wm_tbi_havesignal(sc, ctrl);
 
-	/*
-	 * On 82544 chips and later, the CTRL_SWDPIN(1) bit will be set if the
-	 * optics detect a signal, 0 if they don't.
-	 */
-	if (((i != 0) && (sc->sc_type > WM_T_82544)) || (i == 0)) {
+	DPRINTF(WM_DEBUG_LINK, ("%s: signal = %d\n", device_xname(sc->sc_dev),
+		signal));
+
+	if (signal) {
 		/* Have signal; wait for the link to come up. */
 		for (i = 0; i < WM_LINKUP_TIMEOUT; i++) {
 			delay(10000);
@@ -11198,7 +11218,10 @@ wm_check_for_link(struct wm_softc *sc)
 	uint32_t rxcw;
 	uint32_t ctrl;
 	uint32_t status;
-	uint32_t sig;
+	bool signal;
+
+	DPRINTF(WM_DEBUG_LINK, ("%s: %s called\n",
+		device_xname(sc->sc_dev), __func__));
 
 	if (sc->sc_mediatype == WM_MEDIATYPE_SERDES) {
 		/* XXX need some work for >= 82571 */
@@ -11211,13 +11234,11 @@ wm_check_for_link(struct wm_softc *sc)
 	rxcw = CSR_READ(sc, WMREG_RXCW);
 	ctrl = CSR_READ(sc, WMREG_CTRL);
 	status = CSR_READ(sc, WMREG_STATUS);
-
-	sig = (sc->sc_type > WM_T_82544) ? CTRL_SWDPIN(1) : 0;
-
+	signal = wm_tbi_havesignal(sc, ctrl);
+	
 	DPRINTF(WM_DEBUG_LINK,
-	    ("%s: %s: sig = %d, status_lu = %d, rxcw_c = %d\n",
-		device_xname(sc->sc_dev), __func__,
-		((ctrl & CTRL_SWDPIN(1)) == sig),
+	    ("%s: %s: signal = %d, status_lu = %d, rxcw_c = %d\n",
+		device_xname(sc->sc_dev), __func__, signal,
 		((status & STATUS_LU) != 0), ((rxcw & RXCW_C) != 0)));
 
 	/*
@@ -11232,11 +11253,10 @@ wm_check_for_link(struct wm_softc *sc)
 	 *	1    1	  1	If IFM_AUTO, back to autonego
 	 *
 	 */
-	if (((ctrl & CTRL_SWDPIN(1)) == sig)
-	    && ((status & STATUS_LU) == 0)
-	    && ((rxcw & RXCW_C) == 0)) {
-		DPRINTF(WM_DEBUG_LINK, ("%s: force linkup and fullduplex\n",
-			__func__));
+	if (signal && ((status & STATUS_LU) == 0) && ((rxcw & RXCW_C) == 0)) {
+		DPRINTF(WM_DEBUG_LINK,
+		    ("%s: %s: force linkup and fullduplex\n",
+			device_xname(sc->sc_dev), __func__));
 		sc->sc_tbi_linkup = 0;
 		/* Disable auto-negotiation in the TXCW register */
 		CSR_WRITE(sc, WMREG_TXCW, (sc->sc_txcw & ~TXCW_ANE));
@@ -11253,15 +11273,17 @@ wm_check_for_link(struct wm_softc *sc)
 	    && ((rxcw & RXCW_C) != 0)
 	    && (IFM_SUBTYPE(ife->ifm_media) == IFM_AUTO)) {
 		sc->sc_tbi_linkup = 1;
-		DPRINTF(WM_DEBUG_LINK, ("%s: go back to autonego\n",
+		DPRINTF(WM_DEBUG_LINK, ("%s: %s: go back to autonego\n",
+			device_xname(sc->sc_dev),
 			__func__));
 		CSR_WRITE(sc, WMREG_TXCW, sc->sc_txcw);
 		CSR_WRITE(sc, WMREG_CTRL, (ctrl & ~CTRL_SLU));
-	} else if (((ctrl & CTRL_SWDPIN(1)) == sig)
-	    && ((rxcw & RXCW_C) != 0)) {
-		DPRINTF(WM_DEBUG_LINK, ("/C/"));
+	} else if (signal && ((rxcw & RXCW_C) != 0)) {
+		DPRINTF(WM_DEBUG_LINK, ("%s: %s: /C/",
+			device_xname(sc->sc_dev), __func__));
 	} else {
-		DPRINTF(WM_DEBUG_LINK, ("%s: %x,%x,%x\n", __func__, rxcw, ctrl,
+		DPRINTF(WM_DEBUG_LINK, ("%s: %s: linkup %08x,%08x,%08x\n",
+			device_xname(sc->sc_dev), __func__, rxcw, ctrl,
 			status));
 	}
 

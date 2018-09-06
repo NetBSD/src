@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.106.16.1 2018/05/21 04:36:02 pgoyette Exp $ */
+/* $NetBSD: pmap.c,v 1.106.16.2 2018/09/06 06:55:43 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@NetBSD.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.106.16.1 2018/05/21 04:36:02 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.106.16.2 2018/09/06 06:55:43 pgoyette Exp $");
 
 #include "opt_memsize.h"
 #include "opt_kmempages.h"
@@ -76,6 +76,14 @@ struct pmap {
 	struct	pmap_l2 **pm_l1;
 };
 
+/*
+ * pv_table is list of pv_entry structs completely spanning the total memory.
+ * It is indexed on physical page number. Each entry will be daisy chained
+ * with pv_entry records for each usage in all the pmaps.
+ *
+ * kernel_pm_entries contains all kernel L2 pages for its complete map.
+ *
+ */
 
 static struct pv_entry **kernel_pm_entries;
 static struct pv_entry  *pv_table;	/* physical pages info (direct mapped) */
@@ -93,9 +101,10 @@ static int pm_nentries = 0;
 static int pm_nl1 = 0;
 static int pm_l1_size = 0;
 static uint64_t pm_entries_size = 0;
+static void *pm_tmp_p0;
+static void *pm_tmp_p1;
 
 static struct pool pmap_pool;
-static struct pool pmap_l1_pool;
 static struct pool pmap_pventry_pool;
 
 /* forwards */
@@ -132,13 +141,14 @@ pmap_bootstrap(void)
 	struct pmap *pmap;
 	paddr_t DRAM_cfg;
 	paddr_t fpos, file_len;
-	paddr_t pv_fpos, tlb_fpos, pm_l1_fpos, pm_fpos;
+	paddr_t kernel_fpos, pv_fpos, tlb_fpos, pm_l1_fpos, pm_fpos;
 	paddr_t wlen;
 	paddr_t barrier_len;
 	paddr_t pv_table_size;
 	vaddr_t free_start, free_end;
 	paddr_t pa;
 	vaddr_t va;
+	size_t  kmem_k_length, written;
 	uintptr_t pg, l1;
 	void *addr;
 	int err;
@@ -165,6 +175,7 @@ pmap_bootstrap(void)
 	/* calculate kernel section (R-X) */
 	kmem_k_start = (vaddr_t) PAGE_SIZE * (atop(_start)    );
 	kmem_k_end   = (vaddr_t) PAGE_SIZE * (atop(&etext) + 1);
+	kmem_k_length = kmem_k_end - kmem_k_start;
 
 	/* calculate total available memory space & available pages */
 	DRAM_cfg = (vaddr_t) TEXTADDR;
@@ -173,6 +184,11 @@ pmap_bootstrap(void)
 	/* kvm at the top */
 	kmem_kvm_end    = kmem_k_start - barrier_len;
 	kmem_kvm_start  = kmem_kvm_end - KVMSIZE;
+
+	/* allow some pmap scratch space */
+	pm_tmp_p0 = (void *) (kmem_kvm_start);
+	pm_tmp_p1 = (void *) (kmem_kvm_start + PAGE_SIZE);
+	kmem_kvm_start += 2*PAGE_SIZE;
 
 	/* claim an area for userland (---/R--/RW-/RWX) */
 	kmem_user_start = vm_min_addr;
@@ -260,7 +276,7 @@ pmap_bootstrap(void)
 #endif
 
 	/* protect the current kernel section */
-	err = thunk_mprotect((void *) kmem_k_start, kmem_k_end - kmem_k_start,
+	err = thunk_mprotect((void *) kmem_k_start, kmem_k_length,
 		THUNK_PROT_READ | THUNK_PROT_EXEC);
 	assert(err == 0);
 
@@ -271,28 +287,34 @@ pmap_bootstrap(void)
 		THUNK_MADV_WILLNEED | THUNK_MADV_RANDOM);
 	assert(err == 0);
 
+	/* map the kernel at the start of the 'memory' file */
+	kernel_fpos = 0;
+	written = thunk_pwrite(mem_fh, (void *) kmem_k_start, kmem_k_length,
+			kernel_fpos);
+	assert(written == kmem_k_length);
+	fpos = kernel_fpos + kmem_k_length;
+
 	/* initialize counters */
-	fpos = 0;
 	free_start = fpos;     /* in physical space ! */
 	free_end   = file_len; /* in physical space ! */
 	kmem_kvm_cur_start = kmem_kvm_start;
 
 	/* calculate pv table size */
-	phys_npages = (free_end - free_start) / PAGE_SIZE;
+	phys_npages = file_len / PAGE_SIZE;
 	pv_table_size = round_page(phys_npages * sizeof(struct pv_entry));
 	thunk_printf_debug("claiming %"PRIu64" KB of pv_table for "
 		"%"PRIdPTR" pages of physical memory\n",
 		(uint64_t) pv_table_size/1024, (uintptr_t) phys_npages);
 
 	/* calculate number of pmap entries needed for a complete map */
-	pm_nentries = (kmem_k_start - VM_MIN_ADDRESS) / PAGE_SIZE;
+	pm_nentries = (kmem_k_end - VM_MIN_ADDRESS) / PAGE_SIZE;
 	pm_entries_size = round_page(pm_nentries * sizeof(struct pv_entry *));
 	thunk_printf_debug("tlb va->pa lookup table is %"PRIu64" KB for "
 		"%d logical pages\n", pm_entries_size/1024, pm_nentries);
 
 	/* calculate how big the l1 tables are going to be */
 	pm_nl1 = pm_nentries / PMAP_L2_NENTRY;
-	pm_l1_size = pm_nl1 * sizeof(struct pmap_l1 *);
+	pm_l1_size = round_page(pm_nl1 * sizeof(struct pmap_l1 *));
 
 	/* claim pv table */
 	pv_fpos = fpos;
@@ -404,6 +426,15 @@ pmap_bootstrap(void)
 		pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE, 0);
 	}
 	thunk_printf_debug("kernel pmap entries mem added to the kernel pmap\n");
+#if 0
+	/* not yet, or not needed */
+	for (pg = 0; pg < kmem_k_length; pg += PAGE_SIZE) {
+		pa = kernel_fpos + pg;
+		va = (vaddr_t) kmem_k_start + pg;
+		pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE | VM_PROT_EXECUTE, 0);
+	}
+	thunk_printf_debug("kernel mem added to the kernel pmap\n");
+#endif
 
 	/* add file space to uvm's FREELIST */
 	uvm_page_physload(atop(0),
@@ -449,8 +480,6 @@ pmap_deferred_init(void)
 	/* create pmap pool */
 	pool_init(&pmap_pool, sizeof(struct pmap), 0, 0, 0,
 	    "pmappool", NULL, IPL_NONE);
-	pool_init(&pmap_l1_pool, pm_l1_size, 0, 0, 0,
-	    "pmapl1pool", NULL, IPL_NONE);
 	pool_init(&pmap_pventry_pool, sizeof(struct pv_entry), 0, 0, 0,
 	    "pventry", NULL, IPL_HIGH);
 }
@@ -484,8 +513,8 @@ pmap_create(void)
 	pmap->pm_flags = 0;
 
 	/* claim l1 table */
-	pmap->pm_l1 = pool_get(&pmap_l1_pool, PR_WAITOK);
-	memset(pmap->pm_l1, 0, pm_l1_size);
+	pmap->pm_l1 = kmem_zalloc(pm_l1_size, KM_SLEEP);
+	assert(pmap->pm_l1);
 
 	thunk_printf_debug("\tpmap %p\n", pmap);
 
@@ -527,7 +556,7 @@ pmap_destroy(pmap_t pmap)
 			continue;
 		kmem_free(l2tbl, PMAP_L2_SIZE);
 	}
-	pool_put(&pmap_l1_pool, pmap->pm_l1);
+	kmem_free(pmap->pm_l1, pm_l1_size);
 	pool_put(&pmap_pool, pmap);
 }
 
@@ -660,7 +689,8 @@ pmap_fault(pmap_t pmap, vaddr_t va, vm_prot_t *atype)
 
 	/* not known! then it must be UVM's work */
 	if (pv == NULL) {
-		thunk_printf_debug("%s: no mapping yet\n", __func__);
+		//thunk_printf("%s: no mapping yet for %p\n",
+		//	__func__, (void *) va);
 		*atype = VM_PROT_READ;		/* assume it was a read */
 		return false;
 	}
@@ -1089,8 +1119,12 @@ pmap_extract(pmap_t pmap, vaddr_t va, paddr_t *ppa)
 
 	thunk_printf_debug("pmap_extract: extracting va %p\n", (void *) va);
 #ifdef DIAGNOSTIC
-	if ((va < VM_MIN_ADDRESS) || (va > VM_MAX_KERNEL_ADDRESS))
-		panic("pmap_extract: invalid va isued\n");
+	if ((va < VM_MIN_ADDRESS) || (va > VM_MAX_KERNEL_ADDRESS)) {
+		thunk_printf_debug("pmap_extract: invalid va isued\n");
+		thunk_printf("%p not in [%p, %p]\n", (void *) va,
+		    (void *) VM_MIN_ADDRESS, (void *) VM_MAX_KERNEL_ADDRESS);
+		return false;
+	}
 #endif
 	lpn = atop(va - VM_MIN_ADDRESS);	/* V->L */
 	pv = pmap_lookup_pv(pmap, lpn);
@@ -1200,14 +1234,12 @@ pmap_zero_page(paddr_t pa)
 	if (pa & (PAGE_SIZE-1))
 		panic("%s: unaligned address passed : %p\n", __func__, (void *) pa);
 
-	blob = thunk_mmap(NULL, PAGE_SIZE,
+	blob = thunk_mmap(pm_tmp_p0, PAGE_SIZE,
 		THUNK_PROT_READ | THUNK_PROT_WRITE,
-		THUNK_MAP_FILE | THUNK_MAP_SHARED,
+		THUNK_MAP_FILE | THUNK_MAP_FIXED | THUNK_MAP_SHARED,
 		mem_fh, pa);
-	if (!blob)
+	if (blob != pm_tmp_p0)
 		panic("%s: couldn't get mapping", __func__);
-	if (blob < (char *) kmem_k_end)
-		panic("%s: mmap in illegal memory range", __func__);
 
 	memset(blob, 0, PAGE_SIZE);
 
@@ -1227,25 +1259,21 @@ pmap_copy_page(paddr_t src_pa, paddr_t dst_pa)
 	thunk_printf_debug("pmap_copy_page: pa src %p, pa dst %p\n",
 		(void *) src_pa, (void *) dst_pa);
 
-	/* XXX bug alart: can we allow the kernel to make a decision on this? */
-	sblob = thunk_mmap(NULL, PAGE_SIZE,
+	/* source */
+	sblob = thunk_mmap(pm_tmp_p0, PAGE_SIZE,
 		THUNK_PROT_READ,
-		THUNK_MAP_FILE | THUNK_MAP_SHARED,
+		THUNK_MAP_FILE | THUNK_MAP_FIXED | THUNK_MAP_SHARED,
 		mem_fh, src_pa);
-	if (!sblob)
+	if (sblob != pm_tmp_p0)
 		panic("%s: couldn't get src mapping", __func__);
-	if (sblob < (char *) kmem_k_end)
-		panic("%s: mmap in illegal memory range", __func__);
 
-	/* XXX bug alart: can we allow the kernel to make a decision on this? */
-	dblob = thunk_mmap(NULL, PAGE_SIZE,
+	/* destination */
+	dblob = thunk_mmap(pm_tmp_p1, PAGE_SIZE,
 		THUNK_PROT_READ | THUNK_PROT_WRITE,
-		THUNK_MAP_FILE | THUNK_MAP_SHARED,
+		THUNK_MAP_FILE | THUNK_MAP_FIXED | THUNK_MAP_SHARED,
 		mem_fh, dst_pa);
-	if (!dblob)
+	if (dblob != pm_tmp_p1)
 		panic("%s: couldn't get dst mapping", __func__);
-	if (dblob < (char *) kmem_k_end)
-		panic("%s: mmap in illegal memory range", __func__);
 
 	memcpy(dblob, sblob, PAGE_SIZE);
 

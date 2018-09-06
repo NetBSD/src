@@ -4,7 +4,7 @@
 .nr D @DEFAULT_DELAY@
 .nr L @HAVE_GETOPT_LONG@
 .nr K @ENABLE_KILL@
-.TH TOP 1 "December 28, 2016"
+.TH TOP 1 "August 26, 2018"
 .UC 4
 .SH NAME
 top \- display and update information about the top cpu processes
@@ -398,6 +398,9 @@ Current state (typically one of \*(lqsleep\*(rq,
 .TP
 .B TIME
 Number of system and user cpu seconds that the process has used.
+.TP
+.B WCPU
+Weighted percentage of available cpu time used by this process.
 .TP
 .B CPU
 Percentage of available cpu time used by this process.

@@ -1,5 +1,5 @@
 /* IA-32 common hooks.
-   Copyright (C) 1988-2015 Free Software Foundation, Inc.
+   Copyright (C) 1988-2016 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -127,6 +127,8 @@ along with GCC; see the file COPYING3.  If not see
 #define OPTION_MASK_ISA_F16C_SET \
   (OPTION_MASK_ISA_F16C | OPTION_MASK_ISA_AVX_SET)
 #define OPTION_MASK_ISA_MWAITX_SET OPTION_MASK_ISA_MWAITX
+#define OPTION_MASK_ISA_CLZERO_SET OPTION_MASK_ISA_CLZERO
+#define OPTION_MASK_ISA_PKU_SET OPTION_MASK_ISA_PKU
 
 /* Define a set of ISAs which aren't available when a given ISA is
    disabled.  MMX and SSE ISAs are handled separately.  */
@@ -186,6 +188,8 @@ along with GCC; see the file COPYING3.  If not see
 #define OPTION_MASK_ISA_XSAVES_UNSET OPTION_MASK_ISA_XSAVES
 #define OPTION_MASK_ISA_CLWB_UNSET OPTION_MASK_ISA_CLWB
 #define OPTION_MASK_ISA_MWAITX_UNSET OPTION_MASK_ISA_MWAITX
+#define OPTION_MASK_ISA_CLZERO_UNSET OPTION_MASK_ISA_CLZERO
+#define OPTION_MASK_ISA_PKU_UNSET OPTION_MASK_ISA_PKU
 
 /* SSE4 includes both SSE4.1 and SSE4.2.  -mno-sse4 should the same
    as -mno-sse4.1. */
@@ -932,6 +936,33 @@ ix86_handle_option (struct gcc_options *opts,
 	}
       return true;
 
+    case OPT_mclzero:
+      if (value)
+	{
+	  opts->x_ix86_isa_flags |= OPTION_MASK_ISA_CLZERO_SET;
+	  opts->x_ix86_isa_flags_explicit |= OPTION_MASK_ISA_CLZERO_SET;
+	}
+      else
+	{
+	  opts->x_ix86_isa_flags &= ~OPTION_MASK_ISA_CLZERO_UNSET;
+	  opts->x_ix86_isa_flags_explicit |= OPTION_MASK_ISA_CLZERO_UNSET;
+	}
+      return true;
+
+    case OPT_mpku:
+      if (value)
+	{
+	  opts->x_ix86_isa_flags |= OPTION_MASK_ISA_PKU_SET;
+	  opts->x_ix86_isa_flags_explicit |= OPTION_MASK_ISA_PKU_SET;
+	}
+      else
+	{
+	  opts->x_ix86_isa_flags &= ~OPTION_MASK_ISA_PKU_UNSET;
+	  opts->x_ix86_isa_flags_explicit |= OPTION_MASK_ISA_PKU_UNSET;
+	}
+      return true;
+
+
   /* Comes from final.c -- no real reason to change it.  */
 #define MAX_CODE_ALIGN 16
 
@@ -982,6 +1013,9 @@ static const struct default_options ix86_option_optimization_table[] =
     { OPT_LEVELS_2_PLUS, OPT_free, NULL, 1 },
     /* Enable function splitting at -O2 and higher.  */
     { OPT_LEVELS_2_PLUS, OPT_freorder_blocks_and_partition, NULL, 1 },
+    /* The STC algorithm produces the smallest code at -Os, for x86.  */
+    { OPT_LEVELS_2_PLUS, OPT_freorder_blocks_algorithm_, NULL,
+      REORDER_BLOCKS_ALGORITHM_STC },
     /* Turn off -fschedule-insns by default.  It tends to make the
        problem with not enough registers even worse.  */
     { OPT_LEVELS_ALL, OPT_fschedule_insns, NULL, 0 },

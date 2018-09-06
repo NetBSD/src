@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1172.2.4 2018/07/28 04:32:59 pgoyette Exp $
+# $NetBSD: mi,v 1.1172.2.5 2018/09/06 06:51:42 pgoyette Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -616,6 +616,7 @@
 ./sbin/tbrconfig				base-router-root
 ./sbin/ttyflags					base-sysutil-root
 ./sbin/tunefs					base-sysutil-root
+./sbin/umbctl					base-netutil-root
 ./sbin/umount					base-sysutil-root
 ./sbin/veriexecctl				base-sysutil-root
 ./sbin/verifiedexec_load			base-obsolete		obsolete
@@ -1766,7 +1767,7 @@
 ./usr/sbin/lpc					base-lpr-bin
 ./usr/sbin/lpd					base-lpr-bin
 ./usr/sbin/lptest				base-lpr-bin
-./usr/sbin/lwresd				base-bind-bin
+./usr/sbin/lwresd				base-obsolete		obsolete
 ./usr/sbin/mailstats				base-obsolete		obsolete
 ./usr/sbin/mailwrapper				base-mailwrapper-bin
 ./usr/sbin/makedbm				base-nis-bin		yp
@@ -5973,7 +5974,7 @@
 ./var/chroot/named/usr/libexec			base-bind-root
 ./var/chroot/named/var				base-bind-root
 ./var/chroot/named/var/run			base-bind-root
-./var/chroot/named/var/run/lwresd		base-bind-root
+./var/chroot/named/var/run/lwresd		base-obsolete		obsolete
 ./var/chroot/named/var/run/named		base-bind-root
 ./var/chroot/named/var/tmp			base-bind-root
 ./var/chroot/nsd				base-sys-root
@@ -6041,7 +6042,7 @@
 ./var/preserve					base-util-root
 ./var/quotas					base-util-root
 ./var/run					base-sys-root
-./var/run/lwresd				base-bind-root
+./var/run/lwresd				base-obsolete		obsolete
 ./var/run/named					base-bind-root
 ./var/rwho					base-netutil-root
 ./var/shm					base-sys-root

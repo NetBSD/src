@@ -1,4 +1,4 @@
-#	$NetBSD: configure.ac,v 1.89.2.1 2018/06/25 07:26:09 pgoyette Exp $
+#	$NetBSD: configure.ac,v 1.89.2.2 2018/09/06 06:56:49 pgoyette Exp $
 #
 # Autoconf definition file for libnbcompat.
 #
@@ -145,7 +145,7 @@ AC_CHECK_DECLS([asprintf, asnprintf, vasprintf, vasnprintf, vsnprintf, fgetln, f
 #include <stdio.h>
 ])
 
-AC_CHECK_DECLS([atoll, heapsort, mkdtemp, mkstemp, reallocarr,
+AC_CHECK_DECLS([atoll, heapsort, mkdtemp, mkstemp, reallocarr, getsubopt,
 	setenv, strtoi, strtoll, strtou, setprogname, getprogname],,, [
 #include <stdlib.h>
 ])
@@ -192,7 +192,8 @@ AC_CHECK_FUNCS(atoll asprintf asnprintf basename devname dirfd dirname \
 	pwrite raise_default_signal random reallocarr setenv \
 	setgroupent setprogname setpassent \
 	snprintb_m snprintf strlcat strlcpy strmode \
-	strndup strnlen strsep strsuftoll strtoi strtoll strtou \
+	strcasecmp strncasecmp strndup strnlen strsep strsuftoll strtoi \
+	strtoll strtou \
 	user_from_uid uid_from_user vasprintf vasnprintf vsnprintf)
 
 AC_CHECK_DECLS([user_from_uid, uid_from_user, pwcache_userdb],,,[
@@ -201,7 +202,8 @@ AC_CHECK_DECLS([user_from_uid, uid_from_user, pwcache_userdb],,,[
 AC_CHECK_DECLS([group_from_gid, gid_from_group, pwcache_groupdb],,,[
 #include <grp.h>
 ])
-AC_CHECK_DECLS([strlcpy, strlcat, strndup, strnlen, strsep],,,[
+AC_CHECK_DECLS([strcasecmp, strncasecmp, strlcpy, strlcat, strndup,
+		strnlen, strsep],,,[
 #include <string.h>
 ])
 AC_CHECK_DECLS([strsuftoll, mi_vector_hash],,,[#include <stdlib.h>])
@@ -210,7 +212,8 @@ AC_CHECK_DECLS([lchflags, lchmod, lchown],,,[
 #include <unistd.h>
 ])
 
-AC_CHECK_DECLS([err, errc, errx, verrc, verrx, warn, warnc, warnx, vwarnc, vwarnx],,, [
+AC_CHECK_DECLS([err, errc, errx, verrc, verrx, warn, warnc, warnx, vwarnc,
+		vwarnx],,,[
 #ifdef HAVE_ERR_H
 #include <err.h>
 #endif

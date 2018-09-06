@@ -1,4 +1,4 @@
-/*	$NetBSD: sctp_indata.c,v 1.5.2.1 2018/05/02 07:20:23 pgoyette Exp $ */
+/*	$NetBSD: sctp_indata.c,v 1.5.2.2 2018/09/06 06:56:44 pgoyette Exp $ */
 /*	$KAME: sctp_indata.c,v 1.36 2005/03/06 16:04:17 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sctp_indata.c,v 1.5.2.1 2018/05/02 07:20:23 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sctp_indata.c,v 1.5.2.2 2018/09/06 06:56:44 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -128,7 +128,7 @@ sctp_set_rwnd(struct sctp_tcb *stcb, struct sctp_association *asoc)
 	    asoc->size_on_reasm_queue == 0 &&
 	    asoc->size_on_all_streams == 0) {
 		/* Full rwnd granted */
-		asoc->my_rwnd = max(stcb->sctp_socket->so_rcv.sb_hiwat,
+		asoc->my_rwnd = uimax(stcb->sctp_socket->so_rcv.sb_hiwat,
 				    SCTP_MINIMAL_RWND);
 		return;
 	}

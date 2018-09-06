@@ -1,4 +1,4 @@
-/*	$NetBSD: show.c,v 1.47.4.1 2018/07/28 04:32:56 pgoyette Exp $	*/
+/*	$NetBSD: show.c,v 1.47.4.2 2018/09/06 06:51:32 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)show.c	8.3 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: show.c,v 1.47.4.1 2018/07/28 04:32:56 pgoyette Exp $");
+__RCSID("$NetBSD: show.c,v 1.47.4.2 2018/09/06 06:51:32 pgoyette Exp $");
 #endif
 #endif /* not lint */
 
@@ -614,8 +614,12 @@ shredir(union node *np, TFILE *fp, int first)
 			if (np->ndup.vname)
 				sharg(np->ndup.vname, fp);
 			else {
-				sprintf(buf, "%d", np->ndup.dupfd);
-				trace_puts(buf, fp);
+				if (np->ndup.dupfd < 0)
+					trace_puts("-", fp);
+				else {
+					sprintf(buf, "%d", np->ndup.dupfd);
+					trace_puts(buf, fp);
+				}
 			}
 		} else
 		    if (np->nfile.type == NHERE || np->nfile.type == NXHERE) {

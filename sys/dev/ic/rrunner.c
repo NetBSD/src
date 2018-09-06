@@ -1,4 +1,4 @@
-/*	$NetBSD: rrunner.c,v 1.85.2.2 2018/07/28 04:37:45 pgoyette Exp $	*/
+/*	$NetBSD: rrunner.c,v 1.85.2.3 2018/09/06 06:55:50 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rrunner.c,v 1.85.2.2 2018/07/28 04:37:45 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rrunner.c,v 1.85.2.3 2018/09/06 06:55:50 pgoyette Exp $");
 
 #include "opt_inet.h"
 
@@ -2250,7 +2250,7 @@ esh_adjust_mbufs(struct esh_softc *sc, struct mbuf *m)
 			 *      to do this kind of funky copy.
 			 */
 
-			len = min(MCLBYTES, write_len);
+			len = uimin(MCLBYTES, write_len);
 #ifdef DIAGNOSTIC
 			assert(n->m_len <= len);
 			assert(len <= MCLBYTES);

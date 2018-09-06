@@ -1,5 +1,5 @@
 /* Definitions of target machine GNU compiler. 32bit VMS version.
-   Copyright (C) 2009-2015 Free Software Foundation, Inc.
+   Copyright (C) 2009-2016 Free Software Foundation, Inc.
    Contributed by Douglas B Rupp (rupp@gnat.com).
 
 This file is part of GCC.
@@ -21,23 +21,12 @@ along with GCC; see the file COPYING3.  If not see
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
-#include "hash-set.h"
-#include "machmode.h"
-#include "vec.h"
-#include "double-int.h"
-#include "input.h"
-#include "alias.h"
-#include "symtab.h"
-#include "options.h"
-#include "wide-int.h"
-#include "inchash.h"
+#include "target.h"
 #include "tree.h"
 #include "stringpool.h"
+#include "alias.h"
 #include "vms-protos.h"
-#include "ggc.h"
-#include "target.h"
 #include "output.h"
-#include "tm.h"
 #include "dwarf2out.h"
 
 /* Correlation of standard CRTL names with DECCRTL function names.  */

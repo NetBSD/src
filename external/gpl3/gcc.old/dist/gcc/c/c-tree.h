@@ -1,5 +1,5 @@
 /* Definitions for C parsing and type checking.
-   Copyright (C) 1987-2015 Free Software Foundation, Inc.
+   Copyright (C) 1987-2016 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -132,6 +132,26 @@ struct c_expr
      The type of an enum constant is a plain integer type, but this
      field will be the enum type.  */
   tree original_type;
+
+  /* The source range of this expression.  This is redundant
+     for node values that have locations, but not all node kinds
+     have locations (e.g. constants, and references to params, locals,
+     etc), so we stash a copy here.  */
+  source_range src_range;
+
+  /* Access to the first and last locations within the source spelling
+     of this expression.  */
+  location_t get_start () const { return src_range.m_start; }
+  location_t get_finish () const { return src_range.m_finish; }
+
+  /* Set the value to error_mark_node whilst ensuring that src_range
+     is initialized.  */
+  void set_error ()
+  {
+    value = error_mark_node;
+    src_range.m_start = UNKNOWN_LOCATION;
+    src_range.m_finish = UNKNOWN_LOCATION;
+  }
 };
 
 /* Type alias for struct c_expr. This allows to use the structure
@@ -355,12 +375,12 @@ enum c_declarator_kind {
   cdk_attrs
 };
 
-typedef struct c_arg_tag_d {
+struct c_arg_tag {
   /* The argument name.  */
   tree id;
   /* The type of the argument.  */
   tree type;
-} c_arg_tag;
+};
 
 
 /* Information about the parameters in a function declarator.  */
@@ -630,7 +650,7 @@ extern tree build_asm_stmt (tree, tree);
 extern int c_types_compatible_p (tree, tree);
 extern tree c_begin_compound_stmt (bool);
 extern tree c_end_compound_stmt (location_t, tree, bool);
-extern void c_finish_if_stmt (location_t, tree, tree, tree, bool);
+extern void c_finish_if_stmt (location_t, tree, tree, tree);
 extern void c_finish_loop (location_t, tree, tree, tree, tree, tree, bool);
 extern tree c_begin_stmt_expr (void);
 extern tree c_finish_stmt_expr (location_t, tree);
@@ -641,17 +661,17 @@ extern tree c_finish_bc_stmt (location_t, tree *, bool);
 extern tree c_finish_goto_label (location_t, tree);
 extern tree c_finish_goto_ptr (location_t, tree);
 extern tree c_expr_to_decl (tree, bool *, bool *);
-extern tree c_finish_oacc_parallel (location_t, tree, tree);
-extern tree c_finish_oacc_kernels (location_t, tree, tree);
+extern tree c_finish_omp_construct (location_t, enum tree_code, tree, tree);
 extern tree c_finish_oacc_data (location_t, tree, tree);
+extern tree c_finish_oacc_host_data (location_t, tree, tree);
 extern tree c_begin_omp_parallel (void);
 extern tree c_finish_omp_parallel (location_t, tree, tree);
 extern tree c_begin_omp_task (void);
 extern tree c_finish_omp_task (location_t, tree, tree);
 extern void c_finish_omp_cancel (location_t, tree);
 extern void c_finish_omp_cancellation_point (location_t, tree);
-extern tree c_finish_omp_clauses (tree);
-extern tree c_build_va_arg (location_t, tree, tree);
+extern tree c_finish_omp_clauses (tree, bool, bool = false);
+extern tree c_build_va_arg (location_t, tree, location_t, tree);
 extern tree c_finish_transaction (location_t, tree, int);
 extern bool c_tree_equal (tree, tree);
 extern tree c_build_function_call_vec (location_t, vec<location_t>, tree,
@@ -696,18 +716,31 @@ typedef void c_binding_oracle_function (enum c_oracle_request, tree identifier);
 extern c_binding_oracle_function *c_binding_oracle;
 
 extern void c_finish_incomplete_decl (tree);
-extern void c_write_global_declarations (void);
 extern tree c_omp_reduction_id (enum tree_code, tree);
 extern tree c_omp_reduction_decl (tree);
 extern tree c_omp_reduction_lookup (tree, tree);
 extern tree c_check_omp_declare_reduction_r (tree *, int *, void *);
 extern void c_pushtag (location_t, tree, tree);
 extern void c_bind (location_t, tree, bool);
+extern bool tag_exists_p (enum tree_code, tree);
 
 /* In c-errors.c */
 extern void pedwarn_c90 (location_t, int opt, const char *, ...)
     ATTRIBUTE_GCC_DIAG(3,4);
 extern bool pedwarn_c99 (location_t, int opt, const char *, ...)
     ATTRIBUTE_GCC_DIAG(3,4);
+
+extern void
+set_c_expr_source_range (c_expr *expr,
+			 location_t start, location_t finish);
+
+extern void
+set_c_expr_source_range (c_expr *expr,
+			 source_range src_range);
+
+/* In c-fold.c */
+extern tree decl_constant_value_for_optimization (tree);
+
+extern vec<tree> incomplete_record_decls;
 
 #endif /* ! GCC_C_TREE_H */

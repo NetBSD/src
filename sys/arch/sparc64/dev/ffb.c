@@ -1,4 +1,4 @@
-/*	$NetBSD: ffb.c,v 1.61.8.1 2018/03/30 06:20:12 pgoyette Exp $	*/
+/*	$NetBSD: ffb.c,v 1.61.8.2 2018/09/06 06:55:42 pgoyette Exp $	*/
 /*	$OpenBSD: creator.c,v 1.20 2002/07/30 19:48:15 jason Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffb.c,v 1.61.8.1 2018/03/30 06:20:12 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffb.c,v 1.61.8.2 2018/09/06 06:55:42 pgoyette Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -957,7 +957,7 @@ ffbfb_mmap(dev_t dev, off_t off, int prot)
 		reg = map[i].reg;
 		/* the number of entries in reg seems to vary */
 		if (reg < sc->sc_nreg) {
-			size = min((map[i + 1].voff - map[i].voff), 
+			size = uimin((map[i + 1].voff - map[i].voff), 
 			    sc->sc_sizes[reg]);
 			if ((off >= map[i].voff) && 
 			    (off < (map[i].voff + size))) {

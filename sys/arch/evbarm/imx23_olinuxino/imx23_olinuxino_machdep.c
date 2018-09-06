@@ -1,4 +1,4 @@
-/* $Id: imx23_olinuxino_machdep.c,v 1.6 2015/01/10 12:18:09 jmcneill Exp $ */
+/* $Id: imx23_olinuxino_machdep.c,v 1.6.16.1 2018/09/06 06:55:30 pgoyette Exp $ */
 
 /*
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -29,6 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "opt_arm_debug.h"
 #include "opt_imx.h"
 
 #include <sys/bus.h>
@@ -86,10 +87,6 @@ do {									\
 
 #define KERNEL_BASE_PHYS ((paddr_t)&KERNEL_BASE_phys)
 #define KERNEL_BASE_VIRT ((vaddr_t)&KERNEL_BASE_virt)
-#define KERN_VTOPHYS(va) \
-        ((paddr_t)((vaddr_t)(va) - KERNEL_BASE + KERNEL_BASE_PHYS))
-#define KERN_PHYSTOV(pa) \
-        ((vaddr_t)((paddr_t)(pa) + KERNEL_BASE_VIRT + KERNEL_BASE))
 
 /*
  * Static device map for i.MX23 peripheral address space.
@@ -140,6 +137,8 @@ initarm(void *arg)
 
 	if (set_cpufuncs())
 		panic("set_cpufuncs failed");
+
+	kern_vtopdiff = KERNEL_BASE + KERNEL_BASE_PHYS;
 
 	pmap_devmap_register(devmap);
 	consinit();

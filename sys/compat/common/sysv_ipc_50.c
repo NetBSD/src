@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_ipc_50.c,v 1.4.16.1 2018/03/10 02:20:13 pgoyette Exp $	*/
+/*	$NetBSD: sysv_ipc_50.c,v 1.4.16.2 2018/09/06 06:55:45 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_ipc_50.c,v 1.4.16.1 2018/03/10 02:20:13 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_ipc_50.c,v 1.4.16.2 2018/09/06 06:55:45 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sysv.h"
@@ -149,7 +149,7 @@ sysctl_kern_sysvipc50(SYSCTLFN_ARGS)
 		*sizep = 0;
 		return ENOMEM;
 	}
-	bf = malloc(min(tsize, buflen), M_TEMP, M_WAITOK | M_ZERO);
+	bf = malloc(uimin(tsize, buflen), M_TEMP, M_WAITOK | M_ZERO);
 
 	switch (*name) {
 #ifdef SYSVMSG

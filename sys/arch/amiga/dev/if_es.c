@@ -1,4 +1,4 @@
-/*	$NetBSD: if_es.c,v 1.57.12.2 2018/07/28 04:37:27 pgoyette Exp $ */
+/*	$NetBSD: if_es.c,v 1.57.12.3 2018/09/06 06:55:24 pgoyette Exp $ */
 
 /*
  * Copyright (c) 1995 Michael L. Hitch
@@ -33,7 +33,7 @@
 #include "opt_ns.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_es.c,v 1.57.12.2 2018/07/28 04:37:27 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_es.c,v 1.57.12.3 2018/09/06 06:55:24 pgoyette Exp $");
 
 
 #include <sys/param.h>
@@ -683,7 +683,7 @@ esrint(struct es_softc *sc)
 			if (m->m_flags & M_EXT)
 				len = MCLBYTES;
 		}
-		m->m_len = len = min(pktlen, len);
+		m->m_len = len = uimin(pktlen, len);
 #ifdef USEPKTBUF
 		memcpy(mtod(m, void *), (void *)b, len);
 		b += len;

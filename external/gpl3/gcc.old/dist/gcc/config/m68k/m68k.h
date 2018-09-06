@@ -1,5 +1,5 @@
 /* Definitions of target machine for GCC for Motorola 680x0/ColdFire.
-   Copyright (C) 1987-2015 Free Software Foundation, Inc.
+   Copyright (C) 1987-2016 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -40,7 +40,8 @@ along with GCC; see the file COPYING3.  If not see
 %{m68020-40:-m68040}%{m68020-60:-m68040}\
 %{mcpu=*:-mcpu=%*}%{march=*:-march=%*}\
 "
-#define ASM_PCREL_SPEC "%{fPIC|fpic|mpcrel:--pcrel} \
+#define ASM_PCREL_SPEC "%{" FPIE_OR_FPIC_SPEC ":--pcrel} \
+ %{mpcrel:%{" NO_FPIE_AND_FPIC_SPEC ":--pcrel}} \
  %{msep-data|mid-shared-library:--pcrel} \
 "
 

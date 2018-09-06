@@ -1,5 +1,5 @@
 /* Default target hook functions.
-   Copyright (C) 2003-2015 Free Software Foundation, Inc.
+   Copyright (C) 2003-2016 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -67,7 +67,7 @@ extern bool hook_callee_copies_named
   (cumulative_args_t ca, machine_mode, const_tree, bool);
 
 extern void default_print_operand (FILE *, rtx, int);
-extern void default_print_operand_address (FILE *, rtx);
+extern void default_print_operand_address (FILE *, machine_mode, rtx);
 extern bool default_print_operand_punct_valid_p (unsigned char);
 extern tree default_mangle_assembler_name (const char *);
 
@@ -83,13 +83,14 @@ extern bool default_has_ifunc_p (void);
 
 extern const char * default_invalid_within_doloop (const rtx_insn *);
 
-extern tree default_builtin_vectorized_function (tree, tree, tree);
+extern tree default_builtin_vectorized_function (unsigned int, tree, tree);
+extern tree default_builtin_md_vectorized_function (tree, tree, tree);
 
 extern tree default_builtin_vectorized_conversion (unsigned int, tree, tree);
 
 extern int default_builtin_vectorization_cost (enum vect_cost_for_stmt, tree, int);
 
-extern tree default_builtin_reciprocal (unsigned int, bool, bool);
+extern tree default_builtin_reciprocal (tree);
 
 extern HOST_WIDE_INT default_vector_alignment (const_tree);
 
@@ -100,12 +101,19 @@ default_builtin_support_vector_misalignment (machine_mode mode,
 					     int, bool);
 extern machine_mode default_preferred_simd_mode (machine_mode mode);
 extern unsigned int default_autovectorize_vector_sizes (void);
+extern machine_mode default_get_mask_mode (unsigned, unsigned);
 extern void *default_init_cost (struct loop *);
 extern unsigned default_add_stmt_cost (void *, int, enum vect_cost_for_stmt,
 				       struct _stmt_vec_info *, int,
 				       enum vect_cost_model_location);
 extern void default_finish_cost (void *, unsigned *, unsigned *, unsigned *);
 extern void default_destroy_cost_data (void *);
+
+/* OpenACC hooks.  */
+extern bool default_goacc_validate_dims (tree, int [], int);
+extern int default_goacc_dim_limit (int);
+extern bool default_goacc_fork_join (gcall *, const int [], bool);
+extern void default_goacc_reduction (gcall *);
 
 /* These are here, and not in hooks.[ch], because not all users of
    hooks.h include tm.h, and thus we don't have CUMULATIVE_ARGS.  */
@@ -140,6 +148,8 @@ extern rtx default_static_chain (const_tree, bool);
 extern void default_trampoline_init (rtx, tree, rtx);
 extern int default_return_pops_args (tree, tree, int);
 extern reg_class_t default_branch_target_register_class (void);
+extern reg_class_t default_ira_change_pseudo_allocno_class (int, reg_class_t,
+							    reg_class_t);
 extern bool default_lra_p (void);
 extern int default_register_priority (int);
 extern bool default_register_usage_leveling_p (void);
@@ -169,6 +179,8 @@ extern bool default_addr_space_legitimate_address_p (machine_mode, rtx,
 extern rtx default_addr_space_legitimize_address (rtx, rtx, machine_mode,
 						  addr_space_t);
 extern bool default_addr_space_subset_p (addr_space_t, addr_space_t);
+extern bool default_addr_space_zero_address_valid (addr_space_t);
+extern int default_addr_space_debug (addr_space_t);
 extern rtx default_addr_space_convert (rtx, tree, tree);
 extern unsigned int default_case_values_threshold (void);
 extern bool default_have_conditional_execution (void);
@@ -239,4 +251,7 @@ extern void default_setup_incoming_vararg_bounds (cumulative_args_t ca ATTRIBUTE
 						  tree type ATTRIBUTE_UNUSED,
 						  int *pretend_arg_size ATTRIBUTE_UNUSED,
 						  int second_time ATTRIBUTE_UNUSED);
+extern bool default_optab_supported_p (int, machine_mode, machine_mode,
+				       optimization_type);
+
 #endif /* GCC_TARGHOOKS_H */

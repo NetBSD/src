@@ -1,6 +1,6 @@
 /* Test file for mpfr_zeta_ui.
 
-Copyright 2005-2016 Free Software Foundation, Inc.
+Copyright 2005-2018 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -20,9 +20,6 @@ along with the GNU MPFR Library; see the file COPYING.LESSER.  If not, see
 http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA. */
 
-#include <stdio.h>
-#include <stdlib.h>
-
 #include "mpfr-test.h"
 
 #define TEST_FUNCTION mpfr_zeta_ui
@@ -30,14 +27,13 @@ http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 int
 main (int argc, char *argv[])
 {
-#if MPFR_VERSION >= MPFR_VERSION_NUM(2,3,0)
   unsigned int prec, yprec;
   int rnd;
   mpfr_t x, y, z, t;
   unsigned long n;
   int inex;
   mpfr_exp_t emin, emax;
-  unsigned int flags, ex_flags;
+  mpfr_flags_t flags, ex_flags;
   int i;
 
   tests_start_mpfr ();
@@ -78,7 +74,7 @@ main (int argc, char *argv[])
   MPFR_ASSERTN (inex == 0 && mpfr_cmp_si_2exp (x, -1, -1) == 0 && flags == 0);
 
   for (i = -2; i <= 2; i += 2)
-    RND_LOOP (rnd)
+    RND_LOOP_NO_RNDF (rnd)
       {
         int ex_inex;
 
@@ -154,7 +150,7 @@ main (int argc, char *argv[])
       mpfr_set_prec (y, yprec);
 
       for (n = 0; n < 50; n++)
-        RND_LOOP (rnd)
+        RND_LOOP_NO_RNDF (rnd)
           {
             mpfr_zeta_ui (y, n, MPFR_RNDN);
             if (mpfr_can_round (y, yprec, MPFR_RNDN, MPFR_RNDZ, prec
@@ -205,6 +201,5 @@ main (int argc, char *argv[])
   mpfr_clear (t);
 
   tests_end_mpfr ();
-#endif
   return 0;
 }

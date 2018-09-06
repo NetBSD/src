@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1196.2.11 2018/07/28 04:37:43 pgoyette Exp $
+#	$NetBSD: files,v 1.1196.2.12 2018/09/06 06:55:47 pgoyette Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20171118
@@ -29,6 +29,7 @@ defflag				KEYLOCK
 defparam opt_syslimits.h	CHILD_MAX OPEN_MAX
 defflag opt_diagnostic.h	_DIAGNOSTIC
 defflag				GPROF
+defflag				KASAN
 
 defparam opt_copy_symtab.h	makeoptions_COPY_SYMTAB
 
@@ -1466,7 +1467,6 @@ defpseudo srt:		ifnet
 defpseudo stf:		ifnet
 defpseudodev tap:	ifnet, ether, arp
 defpseudo carp:		ifnet, ether, arp
-defpseudodev etherip:	ifnet, ether, arp
 defpseudodev l2tp:	ifnet, ether, arp
 defpseudo canloop:	ifnet
 defpseudo ipsecif:	ifnet		# avoid to confuse ipsec itself option

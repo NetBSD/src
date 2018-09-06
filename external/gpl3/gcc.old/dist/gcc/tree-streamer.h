@@ -1,6 +1,6 @@
 /* Data structures and functions for streaming trees.
 
-   Copyright (C) 2011-2015 Free Software Foundation, Inc.
+   Copyright (C) 2011-2016 Free Software Foundation, Inc.
    Contributed by Diego Novillo <dnovillo@google.com>
 
 This file is part of GCC.
@@ -23,9 +23,7 @@ along with GCC; see the file COPYING3.  If not see
 #define GCC_TREE_STREAMER_H
 
 #include "streamer-hooks.h"
-#include "lto-streamer.h"
 #include "data-streamer.h"
-#include "hash-map.h"
 
 /* Cache of pickled nodes.  Used to avoid writing the same node more
    than once.  The first time a tree node is streamed out, it is

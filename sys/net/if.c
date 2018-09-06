@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.419.2.9 2018/07/28 04:38:09 pgoyette Exp $	*/
+/*	$NetBSD: if.c,v 1.419.2.10 2018/09/06 06:56:44 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.419.2.9 2018/07/28 04:38:09 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.419.2.10 2018/09/06 06:56:44 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -1042,6 +1042,7 @@ if_snd_is_used(struct ifnet *ifp)
 {
 
 	return ifp->if_transmit == NULL || ifp->if_transmit == if_nulltransmit ||
+	    ifp->if_transmit == if_transmit ||
 	    ALTQ_IS_ENABLED(&ifp->if_snd);
 }
 
@@ -2325,6 +2326,7 @@ if_link_state_change_softint(struct ifnet *ifp, int link_state)
 	/* Ensure the change is still valid. */
 	if (ifp->if_link_state == link_state) {
 		IF_LINK_STATE_CHANGE_UNLOCK(ifp);
+		splx(s);
 		return;
 	}
 
@@ -3768,7 +3770,7 @@ sysctl_net_pktq_setup(struct sysctllog **clog, int pf)
 
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
-		       CTLTYPE_INT, "len",
+		       CTLTYPE_QUAD, "len",
 		       SYSCTL_DESCR("Current input queue length"),
 		       len_func, 0, NULL, 0,
 		       CTL_NET, pf, ipn, qid, IFQCTL_LEN, CTL_EOL);
@@ -3780,7 +3782,7 @@ sysctl_net_pktq_setup(struct sysctllog **clog, int pf)
 		       CTL_NET, pf, ipn, qid, IFQCTL_MAXLEN, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
-		       CTLTYPE_INT, "drops",
+		       CTLTYPE_QUAD, "drops",
 		       SYSCTL_DESCR("Packets dropped due to full input queue"),
 		       drops_func, 0, NULL, 0,
 		       CTL_NET, pf, ipn, qid, IFQCTL_DROPS, CTL_EOL);

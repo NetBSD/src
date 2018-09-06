@@ -1,0 +1,9 @@
+Content-Type: application/X-atf-atffile; version="1"
+
+prop: test-suite = bind9
+
+tp: dns
+tp: irs
+tp: isc
+tp: isccfg
+tp: ns

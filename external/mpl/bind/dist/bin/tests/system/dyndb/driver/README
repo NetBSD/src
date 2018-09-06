@@ -1,0 +1,65 @@
+To use the Dynamic DB sample driver, run named and check the log.
+
+    $ cd testing
+    $ named -gc named.conf
+
+You should be able to see something like:
+
+zone test/IN: loaded serial 0
+zone arpa/IN: loaded serial 0
+
+This means that the sample driver created empty zones "test." and
+"arpa." as defined by "arg" parameters in named.conf.
+
+$ dig @localhost test.
+
+should work as usual and you should be able to see the dummy zone with
+NS record pointing to the zone apex and A record with 127.0.0.1:
+
+;; ANSWER SECTION:
+test.			86400	IN	A	127.0.0.1
+test.			86400	IN	NS	test.
+test.			86400	IN	SOA	test. test. 0 28800 7200 604800 86400
+
+This driver creates two empty zones and allows query/transfer/update to
+all IP addresses for demonstration purposes.
+
+The driver wraps the RBT database implementation used natively by BIND,
+and modifies the addrdataset() and substractrdataset() functions to do
+additional work during dynamic updates.
+
+A dynamic update modifies the target zone as usual. After that, the
+driver detects whether the modified RR was of type A or AAAA, and if so,
+attempts to appropriately generate or delete a matching PTR record in
+one of the two zones managed by the driver.
+
+E.g.:
+
+$ nsupdate
+> update add a.test. 300 IN A 192.0.2.1
+> send
+
+will add the A record
+a.test.			300	IN	A	192.0.2.1
+
+and also automatically generate the PTR record
+1.2.0.192.in-addr.arpa.	300	IN	PTR	a.test.
+
+AXFR and RR deletion via dynamic updates should work as usual. Deletion
+of a type A or AAAA record should delete the corresponding PTR record
+too.
+
+The zone is stored only in memory, and all changes will be lost on
+reload/reconfig.
+
+Hints for code readers:
+- Driver initialization starts in driver.c: dyndb_init() function.
+- New database implementation is registered by calling dns_db_register()
+  and passing a function pointer to it. This sample uses the function
+  create_db() to initialize the database.
+- Zones are created later in instance.c: load_sample_instance_zones().
+- Database entry points are in structure db.c: dns_dbmethods_t
+  sampledb_methods
+- sampledb_methods points to an implementation of the database interface.
+  See the db.c: addrdataset() implementation and look at how the RBT
+  database instance is wrapped into an additional layer of logic.

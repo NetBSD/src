@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.117.2.2 2018/07/28 04:37:43 pgoyette Exp $	*/
+/*	$NetBSD: cpu.c,v 1.117.2.3 2018/09/06 06:55:44 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.117.2.2 2018/07/28 04:37:43 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.117.2.3 2018/09/06 06:55:44 pgoyette Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -342,7 +342,7 @@ cpu_vm_init(struct cpu_info *ci)
 		default:
 			tcolors /= cai->cai_associativity;
 		}
-		ncolors = max(ncolors, tcolors);
+		ncolors = uimax(ncolors, tcolors);
 	}
 
 	/*
@@ -1136,7 +1136,7 @@ cpu_load_pmap(struct pmap *pmap, struct pmap *oldpmap)
 	KASSERT(pmap == ci->ci_pmap);
 
 	/* Copy user pmap L4 PDEs (in user addr. range) to per-cpu L4 */
-	for (i = 0; i < PDIR_SLOT_PTE; i++) {
+	for (i = 0; i < PDIR_SLOT_USERLIM; i++) {
 		KASSERT(pmap != pmap_kernel() || new_pgd[i] == 0);
 		if (ci->ci_kpm_pdir[i] != new_pgd[i]) {
 			xpq_queue_pte_update(l4_pd_ma + i * sizeof(pd_entry_t),

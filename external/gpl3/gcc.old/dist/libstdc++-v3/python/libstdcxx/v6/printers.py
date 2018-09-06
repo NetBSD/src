@@ -1,6 +1,6 @@
 # Pretty-printers for libstdc++.
 
-# Copyright (C) 2008-2015 Free Software Foundation, Inc.
+# Copyright (C) 2008-2016 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -126,8 +126,24 @@ class UniquePointerPrinter:
 
     def to_string (self):
         v = self.val['_M_t']['_M_head_impl']
-        return ('std::unique_ptr<%s> containing %s' % (str(v.type.target()),
-                                                       str(v)))
+        return 'std::unique_ptr<%s> containing %s' % (str(v.type.target()),
+                                                      str(v))
+
+def get_value_from_list_node(node):
+    """Returns the value held in an _List_node<_Val>"""
+    try:
+        member = node.type.fields()[1].name
+        if member == '_M_data':
+            # C++03 implementation, node contains the value as a member
+            return node['_M_data']
+        elif member == '_M_storage':
+            # C++11 implementation, node stores value in __aligned_membuf
+            p = node['_M_storage']['_M_storage'].address
+            p = p.cast(node.type.template_argument(0).pointer())
+            return p.dereference()
+    except:
+        pass
+    raise ValueError("Unsupported implementation for %s" % str(node.type))
 
 class StdListPrinter:
     "Print a std::list"
@@ -149,7 +165,8 @@ class StdListPrinter:
             self.base = elt['_M_next']
             count = self.count
             self.count = self.count + 1
-            return ('[%d]' % count, elt['_M_data'])
+            val = get_value_from_list_node(elt)
+            return ('[%d]' % count, val)
 
     def __init__(self, typename, val):
         self.typename = typename
@@ -177,7 +194,8 @@ class StdListIteratorPrinter:
             return 'non-dereferenceable iterator for std::list'
         nodetype = find_type(self.val.type, '_Node')
         nodetype = nodetype.strip_typedefs().pointer()
-        return str(self.val['_M_node'].cast(nodetype).dereference()['_M_data'])
+        node = self.val['_M_node'].cast(nodetype).dereference()
+        return str(get_value_from_list_node(node))
 
 class StdSlistPrinter:
     "Print a __gnu_cxx::slist"
@@ -406,6 +424,11 @@ class StdStackOrQueuePrinter:
         return None
 
 class RbtreeIterator(Iterator):
+    """
+    Turn an RB-tree-based container (std::map, std::set etc.) into
+    a Python iterable object.
+    """
+
     def __init__(self, rbtree):
         self.size = rbtree['_M_t']['_M_impl']['_M_node_count']
         self.node = rbtree['_M_t']['_M_impl']['_M_header']['_M_left']
@@ -447,7 +470,7 @@ def get_value_from_Rb_tree_node(node):
             # C++03 implementation, node contains the value as a member
             return node['_M_value_field']
         elif member == '_M_storage':
-            # C++11 implementation, node stores value in __aligned_buffer
+            # C++11 implementation, node stores value in __aligned_membuf
             p = node['_M_storage']['_M_storage'].address
             p = p.cast(node.type.template_argument(0).pointer())
             return p.dereference()
@@ -459,7 +482,7 @@ def get_value_from_Rb_tree_node(node):
 # std::map::iterator), and has nothing to do with the RbtreeIterator
 # class above.
 class StdRbtreeIteratorPrinter:
-    "Print std::map::iterator"
+    "Print std::map::iterator, std::set::iterator, etc."
 
     def __init__ (self, typename, val):
         self.val = val
@@ -864,8 +887,8 @@ class StdForwardListPrinter:
 
     def to_string(self):
         if self.val['_M_impl']['_M_head']['_M_next'] == 0:
-            return 'empty %s' % (self.typename)
-        return '%s' % (self.typename)
+            return 'empty %s' % self.typename
+        return '%s' % self.typename
 
 class SingleObjContainerPrinter(object):
     "Base class for printers of containers of single objects"
@@ -938,10 +961,6 @@ class StdExpAnyPrinter(SingleObjContainerPrinter):
                 valptr = self.val['_M_storage']['_M_buffer'].address
             elif '::_Manager_external' in mgrname:
                 valptr = self.val['_M_storage']['_M_ptr']
-            elif '::_Manager_alloc' in mgrname:
-                datatype = gdb.lookup_type(mgrname + '::_Data')
-                valptr = self.val['_M_storage']['_M_ptr'].cast(datatype.pointer())
-                valptr = valptr.dereference()['_M_data'].address
             else:
                 raise ValueError("Unknown manager function in std::experimental::any")
             contained_value = valptr.cast(self.contained_type.pointer()).dereference()
@@ -970,9 +989,10 @@ class StdExpOptionalPrinter(SingleObjContainerPrinter):
 
     def to_string (self):
         if self.contained_value is None:
-            return self.typename + " [no contained value]"
+            return "%s [no contained value]" % self.typename
         if hasattr (self.visualizer, 'children'):
-            return self.typename + " containing " + self.visualizer.to_string ()
+            return "%s containing %s" % (self.typename,
+                                         self.visualizer.to_string())
         return self.typename
 
 class StdExpStringViewPrinter:
@@ -1128,7 +1148,8 @@ class Printer(object):
 libstdcxx_printer = None
 
 class TemplateTypePrinter(object):
-    r"""A type printer for class templates.
+    r"""
+    A type printer for class templates.
 
     Recognizes type names that match a regular expression.
     Replaces them with a formatted string which can use replacement field

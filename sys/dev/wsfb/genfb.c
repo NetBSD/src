@@ -1,4 +1,4 @@
-/*	$NetBSD: genfb.c,v 1.62.2.1 2018/03/15 09:12:06 pgoyette Exp $ */
+/*	$NetBSD: genfb.c,v 1.62.2.2 2018/09/06 06:56:06 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.62.2.1 2018/03/15 09:12:06 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.62.2.2 2018/09/06 06:56:06 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -298,7 +298,7 @@ genfb_attach(struct genfb_softc *sc, struct genfb_ops *ops)
 
 #ifdef SPLASHSCREEN
 	j = 0;
-	for (i = 0; i < min(1 << sc->sc_depth, 256); i++) {
+	for (i = 0; i < uimin(1 << sc->sc_depth, 256); i++) {
 		if (i >= SPLASH_CMAP_OFFSET &&
 		    i < SPLASH_CMAP_OFFSET + SPLASH_CMAP_SIZE) {
 			splash_get_cmap(i,

@@ -1,5 +1,5 @@
 /* Default error handlers for CPP Library.
-   Copyright (C) 1986-2015 Free Software Foundation, Inc.
+   Copyright (C) 1986-2016 Free Software Foundation, Inc.
    Written by Per Bothner, 1994.
    Based on CCCP program by Paul Rubin, June 1986
    Adapted to ANSI C, Richard Stallman, Jan 1987
@@ -57,7 +57,8 @@ cpp_diagnostic (cpp_reader * pfile, int level, int reason,
 
   if (!pfile->cb.error)
     abort ();
-  ret = pfile->cb.error (pfile, level, reason, src_loc, 0, _(msgid), ap);
+  rich_location richloc (pfile->line_table, src_loc);
+  ret = pfile->cb.error (pfile, level, reason, &richloc, _(msgid), ap);
 
   return ret;
 }
@@ -139,7 +140,10 @@ cpp_diagnostic_with_line (cpp_reader * pfile, int level, int reason,
   
   if (!pfile->cb.error)
     abort ();
-  ret = pfile->cb.error (pfile, level, reason, src_loc, column, _(msgid), ap);
+  rich_location richloc (pfile->line_table, src_loc);
+  if (column)
+    richloc.override_column (column);
+  ret = pfile->cb.error (pfile, level, reason, &richloc, _(msgid), ap);
 
   return ret;
 }

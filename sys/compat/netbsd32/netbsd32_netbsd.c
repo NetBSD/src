@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.214.2.2 2018/05/21 04:36:03 pgoyette Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.214.2.3 2018/09/06 06:55:46 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2008 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.214.2.2 2018/05/21 04:36:03 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.214.2.3 2018/09/06 06:55:46 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -90,6 +90,7 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.214.2.2 2018/05/21 04:36:03 pg
 #endif
 
 extern struct sysent netbsd32_sysent[];
+extern const uint32_t netbsd32_sysent_nomodbits[];
 #ifdef SYSCALL_DEBUG
 extern const char * const netbsd32_syscallnames[];
 #endif
@@ -122,6 +123,7 @@ struct emul emul_netbsd32 = {
 	.e_nsysent =		NETBSD32_SYS_NSYSENT,
 #endif
 	.e_sysent =		netbsd32_sysent,
+	.e_nomodbits =		netbsd32_sysent_nomodbits,
 #ifdef SYSCALL_DEBUG
 	.e_syscallnames =	netbsd32_syscallnames,
 #else
@@ -1037,6 +1039,26 @@ netbsd32_getsockopt(struct lwp *l, const struct netbsd32_getsockopt_args *uap, r
 	NETBSD32TOP_UAP(val, void);
 	NETBSD32TOP_UAP(avalsize, socklen_t);
 	return (sys_getsockopt(l, &ua, retval));
+}
+
+int
+netbsd32_getsockopt2(struct lwp *l, const struct netbsd32_getsockopt2_args *uap, register_t *retval)
+{
+	/* {
+		syscallarg(int) s;
+		syscallarg(int) level;
+		syscallarg(int) name;
+		syscallarg(netbsd32_voidp) val;
+		syscallarg(netbsd32_intp) avalsize;
+	} */
+	struct sys_getsockopt2_args ua;
+
+	NETBSD32TO64_UAP(s);
+	NETBSD32TO64_UAP(level);
+	NETBSD32TO64_UAP(name);
+	NETBSD32TOP_UAP(val, void);
+	NETBSD32TOP_UAP(avalsize, socklen_t);
+	return (sys_getsockopt2(l, &ua, retval));
 }
 
 int

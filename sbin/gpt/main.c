@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.10.10.1 2018/03/22 01:44:40 pgoyette Exp $	*/
+/*	$NetBSD: main.c,v 1.10.10.2 2018/09/06 06:55:21 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2002 Marcel Moolenaar
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __RCSID
-__RCSID("$NetBSD: main.c,v 1.10.10.1 2018/03/22 01:44:40 pgoyette Exp $");
+__RCSID("$NetBSD: main.c,v 1.10.10.2 2018/09/06 06:55:21 pgoyette Exp $");
 #endif
 
 #include <stdio.h>
@@ -105,7 +105,7 @@ usage(void)
 {
 	const char *p = getprogname();
 	const char *f =
-	    "[-nrqv] [-m mediasize] [-s sectorsize]";
+	    "[-nrqv] [-m mediasize] [-s sectorsize] [-T timestamp]";
 	size_t i;
 
 	if (strcmp(p, "gpt") == 0)

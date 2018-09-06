@@ -1,4 +1,4 @@
-/* $NetBSD: bwfm.c,v 1.10.2.2 2018/07/28 04:37:45 pgoyette Exp $ */
+/* $NetBSD: bwfm.c,v 1.10.2.3 2018/09/06 06:55:49 pgoyette Exp $ */
 /* $OpenBSD: bwfm.c,v 1.5 2017/10/16 22:27:16 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
@@ -237,6 +237,7 @@ bwfm_attach(struct bwfm_softc *sc)
 	ifp->if_init = bwfm_init;
 	ifp->if_ioctl = bwfm_ioctl;
 	ifp->if_start = bwfm_start;
+	ifp->if_stop = bwfm_stop;
 	ifp->if_watchdog = bwfm_watchdog;
 	IFQ_SET_READY(&ifp->if_snd);
 	memcpy(ifp->if_xname, DEVNAME(sc), IFNAMSIZ);
@@ -337,7 +338,7 @@ bwfm_start(struct ifnet *ifp)
 			continue;
 		}
 
-		error = sc->sc_bus_ops->bs_txdata(sc, m);
+		error = sc->sc_bus_ops->bs_txdata(sc, &m);
 		if (error == ENOBUFS) {
 			IF_PREPEND(&ifp->if_snd, m);
 			ifp->if_flags |= IFF_OACTIVE;

@@ -1,0 +1,67 @@
+/*
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
+ */
+
+key "a" {
+	algorithm "hmac-md5";
+	secret "aaaaaaaaaaaaaaaaaaaa";
+};
+
+key "b" {
+	algorithm "hmac-md5";
+	secret "bbbbbbbbbbbbbbbbbbbb";
+};
+
+key "c" {
+	algorithm "hmac-md5";
+	secret "cccccccccccccccccccc";
+};
+
+options {
+	query-source address 10.53.0.5;
+	notify-source 10.53.0.5;
+	transfer-source 10.53.0.5;
+	port @PORT@;
+	pid-file "named.pid";
+	listen-on { 10.53.0.5; };
+	listen-on-v6 { none; };
+	recursion yes;
+	notify yes;
+};
+
+view "a" {
+	match-clients { key "a"; };
+	zone "x21" {
+		type master;
+		also-notify { 10.53.0.5 key "b"; 10.53.0.5 key "c"; };
+		file "x21.db";
+		allow-update { any; };
+	};
+};
+
+view "b" {
+	match-clients { key "b"; };
+	zone "x21" {
+		type slave;
+		masters { 10.53.0.5 key "a"; };
+		file "x21.bk-b";
+		notify no;
+	};
+};
+
+view "c" {
+	match-clients { key "c"; };
+	zone "x21" {
+		type slave;
+		masters { 10.53.0.5 key "a"; };
+		file "x21.bk-c";
+		notify no;
+	};
+};

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.202.2.24 2018/07/28 04:38:08 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.202.2.25 2018/09/06 06:56:43 pgoyette Exp $
 
 .include <bsd.own.mk>
 
@@ -73,6 +73,7 @@ SUBDIR+=	if_gre
 SUBDIR+=	if_l2tp
 SUBDIR+=	if_loop
 SUBDIR+=	if_mpls
+SUBDIR+=	if_mue
 SUBDIR+=	if_npflog
 SUBDIR+=	if_ppp
 SUBDIR+=	if_pppoe
@@ -301,6 +302,7 @@ SUBDIR+=	azalia
 SUBDIR+=	compat_linux
 SUBDIR+=	drm
 SUBDIR+=	drmkms
+SUBDIR+=	drmkms_agp
 SUBDIR+=	drmkms_linux
 SUBDIR+=	drmkms_pci
 SUBDIR+=	i915drm

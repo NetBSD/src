@@ -1,0 +1,111 @@
+# Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+#
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+#
+# See the COPYRIGHT file distributed with this work for additional
+# information regarding copyright ownership.
+
+srcdir =	@srcdir@
+VPATH =		@srcdir@
+top_srcdir =	@top_srcdir@
+
+VERSION=@BIND9_VERSION@
+
+@BIND9_MAKE_INCLUDES@
+
+READLINE_LIB = @READLINE_LIB@
+
+CINCLUDES =	-I${srcdir}/include ${DNS_INCLUDES} \
+		${BIND9_INCLUDES} ${ISC_INCLUDES} \
+		${IRS_INCLUDES} ${ISCCFG_INCLUDES} @LIBIDN2_CFLAGS@ @DST_OPENSSL_INC@
+
+CDEFINES =	-DVERSION=\"${VERSION}\" @CRYPTO@
+CWARNINGS =
+
+ISCCFGLIBS =	../../lib/isccfg/libisccfg.@A@
+DNSLIBS =	../../lib/dns/libdns.@A@ @DNS_CRYPTO_LIBS@
+BIND9LIBS =	../../lib/bind9/libbind9.@A@
+ISCLIBS =	../../lib/isc/libisc.@A@ @ISC_OPENSSL_LIBS@
+ISCNOSYMLIBS =	../../lib/isc/libisc-nosymtbl.@A@ @ISC_OPENSSL_LIBS@
+IRSLIBS =	../../lib/irs/libirs.@A@
+
+ISCCFGDEPLIBS =	../../lib/isccfg/libisccfg.@A@
+DNSDEPLIBS =	../../lib/dns/libdns.@A@
+BIND9DEPLIBS =	../../lib/bind9/libbind9.@A@
+ISCDEPLIBS =	../../lib/isc/libisc.@A@
+IRSDEPLIBS =	../../lib/irs/libirs.@A@
+
+DEPLIBS =	${DNSDEPLIBS} ${IRSDEPLIBS} ${BIND9DEPLIBS} \
+		${ISCDEPLIBS} ${ISCCFGDEPLIBS}
+
+LIBS =		${DNSLIBS} ${IRSLIBS} ${BIND9LIBS} ${ISCCFGLIBS} \
+		${ISCLIBS} @IDNKIT_LIBS@ @LIBIDN2_LIBS@ @LIBS@
+
+NOSYMLIBS =	${DNSLIBS} ${IRSLIBS} ${BIND9LIBS} ${ISCCFGLIBS} \
+		${ISCNOSYMLIBS} @IDNKIT_LIBS@ @LIBIDN2_LIBS@ @LIBS@
+
+SUBDIRS =
+
+TARGETS =	dig@EXEEXT@ host@EXEEXT@ nslookup@EXEEXT@
+
+OBJS =		dig.@O@ dighost.@O@ host.@O@ nslookup.@O@
+
+UOBJS =
+
+SRCS =		dig.c dighost.c host.c nslookup.c
+
+MANPAGES =	dig.1 host.1 nslookup.1
+
+HTMLPAGES =	dig.html host.html nslookup.html
+
+MANOBJS =	${MANPAGES} ${HTMLPAGES}
+
+@BIND9_MAKE_RULES@
+
+dig@EXEEXT@: dig.@O@ dighost.@O@ ${UOBJS} ${DEPLIBS}
+	export BASEOBJS="dig.@O@ dighost.@O@ ${UOBJS}"; \
+	export LIBS0="${DNSLIBS} ${IRSLIBS}"; \
+	${FINALBUILDCMD}
+
+host@EXEEXT@: host.@O@ dighost.@O@ ${UOBJS} ${DEPLIBS}
+	export BASEOBJS="host.@O@ dighost.@O@ ${UOBJS}"; \
+	export LIBS0="${DNSLIBS} ${IRSLIBS}"; \
+	${FINALBUILDCMD}
+
+nslookup@EXEEXT@: nslookup.@O@ dighost.@O@ ${UOBJS} ${DEPLIBS}
+	export BASEOBJS="nslookup.@O@ dighost.@O@ ${READLINE_LIB} ${UOBJS}"; \
+	export LIBS0="${DNSLIBS} ${IRSLIBS}"; \
+	${FINALBUILDCMD}
+
+doc man:: ${MANOBJS}
+
+docclean manclean maintainer-clean::
+	rm -f ${MANOBJS}
+
+clean distclean maintainer-clean::
+	rm -f ${TARGETS}
+
+installdirs:
+	$(SHELL) ${top_srcdir}/mkinstalldirs ${DESTDIR}${bindir}
+	$(SHELL) ${top_srcdir}/mkinstalldirs ${DESTDIR}${mandir}/man1
+
+install:: dig@EXEEXT@ host@EXEEXT@ nslookup@EXEEXT@ installdirs
+	${LIBTOOL_MODE_INSTALL} ${INSTALL_PROGRAM} \
+		dig@EXEEXT@ ${DESTDIR}${bindir}
+	${LIBTOOL_MODE_INSTALL} ${INSTALL_PROGRAM} \
+		host@EXEEXT@ ${DESTDIR}${bindir}
+	${LIBTOOL_MODE_INSTALL} ${INSTALL_PROGRAM} \
+		nslookup@EXEEXT@ ${DESTDIR}${bindir}
+	for m in ${MANPAGES}; do \
+		${INSTALL_DATA} ${srcdir}/$$m ${DESTDIR}${mandir}/man1; \
+		done
+
+uninstall::
+	for m in ${MANPAGES}; do \
+		rm -f ${DESTDIR}${mandir}/man1/$$m ; \
+	done
+	${LIBTOOL_MODE_UNINSTALL} rm -f ${DESTDIR}${bindir}/nslookup@EXEEXT@
+	${LIBTOOL_MODE_UNINSTALL} rm -f ${DESTDIR}${bindir}/host@EXEEXT@
+	${LIBTOOL_MODE_UNINSTALL} rm -f ${DESTDIR}${bindir}/dig@EXEEXT@

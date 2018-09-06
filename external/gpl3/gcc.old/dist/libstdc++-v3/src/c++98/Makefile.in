@@ -344,7 +344,7 @@ WARN_CXXFLAGS = \
 
 
 # -I/-D flags to pass when compiling.
-AM_CPPFLAGS = $(GLIBCXX_INCLUDES)
+AM_CPPFLAGS = $(GLIBCXX_INCLUDES) $(CPPFLAGS)
 
 # Convenience library for C++98 runtime.
 noinst_LTLIBRARIES = libc++98convenience.la 
@@ -443,6 +443,7 @@ PARALLEL_FLAGS = -D_GLIBCXX_PARALLEL
 # OPTIMIZE_CXXFLAGS on the compile line so that -O2 can be overridden
 # as the occasion calls for it.
 AM_CXXFLAGS = \
+	-std=gnu++98 \
 	$(glibcxx_lt_pic_flag) $(glibcxx_compiler_shared_flag) \
 	$(XTEMPLATE_FLAGS) $(VTV_CXXFLAGS) \
 	$(WARN_CXXFLAGS) $(OPTIMIZE_CXXFLAGS) $(CONFIG_CXXFLAGS)
@@ -775,6 +776,12 @@ basic_file.cc: ${glibcxx_srcdir}/$(BASIC_FILE_CC)
 	$(LN_S) ${glibcxx_srcdir}/$(BASIC_FILE_CC) ./$@ || true
 
 vpath % $(top_srcdir)/src/c++98
+
+# Use special rules to compile with -fimplicit-templates.
+c++locale.lo: c++locale.cc
+	$(LTCXXCOMPILE) -fimplicit-templates -c $<
+c++locale.o: c++locale.cc
+	$(CXXCOMPILE) -fimplicit-templates -c $<
 # Use special rules to compile with the non-default string ABI.
 @ENABLE_DUAL_ABI_TRUE@collate_members_cow.lo: collate_members_cow.cc
 @ENABLE_DUAL_ABI_TRUE@	$(LTCXXCOMPILE) $(GLIBCXX_ABI_FLAGS) -fimplicit-templates -c $<

@@ -1,5 +1,5 @@
 /* Subroutines used for code generation on Xilinx MicroBlaze.
-   Copyright (C) 2009-2015 Free Software Foundation, Inc.
+   Copyright (C) 2009-2016 Free Software Foundation, Inc.
 
    Contributed by Michael Eager <eager@eagercon.com>.
 
@@ -22,67 +22,33 @@
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
-#include "tm.h"
+#include "backend.h"
+#include "target.h"
 #include "rtl.h"
-#include "regs.h"
-#include "hard-reg-set.h"
-#include "real.h"
-#include "insn-config.h"
-#include "conditions.h"
-#include "insn-flags.h"
-#include "insn-attr.h"
-#include "recog.h"
-#include "hash-set.h"
-#include "machmode.h"
-#include "vec.h"
-#include "double-int.h"
-#include "input.h"
-#include "alias.h"
-#include "symtab.h"
-#include "wide-int.h"
-#include "inchash.h"
 #include "tree.h"
+#include "df.h"
+#include "tm_p.h"
+#include "optabs.h"
+#include "regs.h"
+#include "emit-rtl.h"
+#include "recog.h"
+#include "cgraph.h"
+#include "diagnostic-core.h"
 #include "varasm.h"
 #include "stor-layout.h"
 #include "calls.h"
-#include "function.h"
-#include "hashtab.h"
-#include "flags.h"
-#include "statistics.h"
-#include "fixed-value.h"
-#include "expmed.h"
-#include "dojump.h"
 #include "explow.h"
-#include "emit-rtl.h"
-#include "stmt.h"
 #include "expr.h"
 #include "reload.h"
 #include "output.h"
-#include "ggc.h"
-#include "target.h"
-#include "target-def.h"
-#include "tm_p.h"
-#include "gstab.h"
-#include "dominance.h"
-#include "cfg.h"
-#include "cfgrtl.h"
-#include "cfganal.h"
-#include "lcm.h"
-#include "cfgbuild.h"
-#include "cfgcleanup.h"
-#include "predict.h"
-#include "basic-block.h"
-#include "df.h"
-#include "insn-codes.h"
-#include "optabs.h"
-#include "diagnostic-core.h"
-#include "hash-map.h"
-#include "is-a.h"
-#include "plugin-api.h"
-#include "ipa-ref.h"
-#include "cgraph.h"
 #include "builtins.h"
 #include "rtl-iter.h"
+#include "cfgloop.h"
+#include "insn-addr.h"
+#include "cfgrtl.h"
+
+/* This file should be included last.  */
+#include "target-def.h"
 
 #define MICROBLAZE_VERSION_COMPARE(VA,VB) strcasecmp (VA, VB)
 
@@ -290,7 +256,7 @@ microblaze_const_double_ok (rtx op, machine_mode mode)
   if (op == CONST0_RTX (mode))
     return 1;
 
-  REAL_VALUE_FROM_CONST_DOUBLE (d, op);
+  d = *CONST_DOUBLE_REAL_VALUE (op);
 
   if (REAL_VALUE_ISNAN (d))
     return FALSE;
@@ -300,12 +266,12 @@ microblaze_const_double_ok (rtx op, machine_mode mode)
 
   if (mode == DFmode)
     {
-      if (REAL_VALUES_LESS (d, dfhigh) && REAL_VALUES_LESS (dflow, d))
+      if (real_less (&d, &dfhigh) && real_less (&dflow, &d))
 	return 1;
     }
   else
     {
-      if (REAL_VALUES_LESS (d, sfhigh) && REAL_VALUES_LESS (sflow, d))
+      if (real_less (&d, &sfhigh) && real_less (&sflow, &d))
 	return 1;
     }
 
@@ -592,7 +558,7 @@ load_tls_operand (rtx x, rtx reg)
 
   tmp = gen_rtx_CONST (Pmode, x);
 
-  emit_insn (gen_rtx_SET (VOIDmode, reg,
+  emit_insn (gen_rtx_SET (reg,
                           gen_rtx_PLUS (Pmode, pic_offset_table_rtx, tmp)));
 
   return reg;
@@ -681,7 +647,7 @@ microblaze_classify_unspec (struct microblaze_address_info *info, rtx x)
   else if (XINT (x, 1) == UNSPEC_TLS)
     {
       info->type = ADDRESS_TLS;
-      info->tls_type = tls_reloc INTVAL(XVECEXP(x, 0, 1));
+      info->tls_type = tls_reloc (INTVAL (XVECEXP (x, 0, 1)));
     }
   else
     {
@@ -866,7 +832,7 @@ microblaze_classify_address (struct microblaze_address_info *info, rtx x,
       }
     case CONST_INT:
       {
-	info->regA = gen_rtx_raw_REG (mode, 0);
+	info->regA = gen_raw_REG (mode, 0);
 	info->type = ADDRESS_CONST_INT;
 	info->offset = x;
 	return true;
@@ -878,13 +844,13 @@ microblaze_classify_address (struct microblaze_address_info *info, rtx x,
 	info->type = ADDRESS_SYMBOLIC;
 	info->symbol_type = SYMBOL_TYPE_GENERAL;
 	info->symbol = x;
-	info->regA = gen_rtx_raw_REG (mode, get_base_reg (x));
+	info->regA = gen_raw_REG (mode, get_base_reg (x));
 
 	if (GET_CODE (x) == CONST)
 	  {
 	    if (GET_CODE (XEXP (x, 0)) == UNSPEC)
 	     {
-		info->regA = gen_rtx_raw_REG (mode,
+		info->regA = gen_raw_REG (mode,
 				  get_base_reg (XVECEXP (XEXP (x,0), 0, 0)));
 		return microblaze_classify_unspec (info, XEXP (x, 0));
 	     }
@@ -1023,8 +989,7 @@ microblaze_legitimize_address (rtx x, rtx oldx ATTRIBUTE_UNUSED,
 
 	  emit_move_insn (int_reg, GEN_INT (INTVAL (xplus1) & ~0x7fff));
 
-	  emit_insn (gen_rtx_SET (VOIDmode,
-				  ptr_reg,
+	  emit_insn (gen_rtx_SET (ptr_reg,
 				  gen_rtx_PLUS (Pmode, xplus0, int_reg)));
 
 	  result = gen_rtx_PLUS (Pmode, ptr_reg,
@@ -1253,11 +1218,11 @@ microblaze_expand_block_move (rtx dest, rtx src, rtx length, rtx align_rtx)
 }
 
 static bool
-microblaze_rtx_costs (rtx x, int code, int outer_code ATTRIBUTE_UNUSED,
+microblaze_rtx_costs (rtx x, machine_mode mode, int outer_code ATTRIBUTE_UNUSED,
 		      int opno ATTRIBUTE_UNUSED, int *total,
 		      bool speed ATTRIBUTE_UNUSED)
 {
-  machine_mode mode = GET_MODE (x);
+  int code = GET_CODE (x);
 
   switch (code)
     {
@@ -1661,7 +1626,7 @@ microblaze_version_to_int (const char *version)
 	{			/* Looking for major  */
           if (*p == '.')
             {
-              *v++;
+              v++;
             }
           else
             {
@@ -2355,7 +2320,7 @@ print_operand (FILE * file, rtx op, int letter)
     if (letter == 'o')
       {
 	rtx op4 = adjust_address (op, GET_MODE (op), 4);
-	output_address (XEXP (op4, 0));
+	output_address (GET_MODE (op), XEXP (op4, 0));
       }
     else if (letter == 'y')
       {
@@ -2367,7 +2332,7 @@ print_operand (FILE * file, rtx op, int letter)
         }
       }
     else
-      output_address (XEXP (op, 0));
+      output_address (GET_MODE (op), XEXP (op, 0));
 
   else if (letter == 'h' || letter == 'j')
     {
@@ -2375,11 +2340,7 @@ print_operand (FILE * file, rtx op, int letter)
       if (code == CONST_DOUBLE)
 	{
 	  if (GET_MODE (op) == DFmode)
-	    {
-	      REAL_VALUE_TYPE value;
-	      REAL_VALUE_FROM_CONST_DOUBLE (value, op);
-	      REAL_VALUE_TO_TARGET_DOUBLE (value, val);
-	    }
+	    REAL_VALUE_TO_TARGET_DOUBLE (*CONST_DOUBLE_REAL_VALUE (op), val);
 	  else
 	    {
 	      val[0] = CONST_DOUBLE_HIGH (op);
@@ -2401,9 +2362,8 @@ print_operand (FILE * file, rtx op, int letter)
       if (letter == 'F')
 	{
 	  unsigned long value_long;
-	  REAL_VALUE_TYPE value;
-	  REAL_VALUE_FROM_CONST_DOUBLE (value, op);
-	  REAL_VALUE_TO_TARGET_SINGLE (value, value_long);
+	  REAL_VALUE_TO_TARGET_SINGLE (*CONST_DOUBLE_REAL_VALUE (op),
+				       value_long);
 	  fprintf (file, HOST_WIDE_INT_PRINT_HEX, value_long);
 	}
       else
@@ -3471,6 +3431,51 @@ microblaze_expand_conditional_branch (machine_mode mode, rtx operands[])
     }
 }
 
+void
+microblaze_expand_conditional_branch_reg (enum machine_mode mode,
+                                          rtx operands[])
+{
+  enum rtx_code code = GET_CODE (operands[0]);
+  rtx cmp_op0 = operands[1];
+  rtx cmp_op1 = operands[2];
+  rtx label1 = operands[3];
+  rtx comp_reg = gen_reg_rtx (SImode);
+  rtx condition;
+
+  gcc_assert ((GET_CODE (cmp_op0) == REG)
+               || (GET_CODE (cmp_op0) == SUBREG));
+
+  /* If comparing against zero, just test source reg.  */
+  if (cmp_op1 == const0_rtx)
+    {
+      comp_reg = cmp_op0;
+      condition = gen_rtx_fmt_ee (signed_condition (code),
+                                  SImode, comp_reg, const0_rtx);
+      emit_jump_insn (gen_condjump (condition, label1));
+    }
+  else if (code == EQ)
+    {
+      emit_insn (gen_seq_internal_pat (comp_reg,
+                                       cmp_op0, cmp_op1));
+      condition = gen_rtx_EQ (SImode, comp_reg, const0_rtx);
+      emit_jump_insn (gen_condjump (condition, label1));
+    }
+  else if (code == NE)
+    {
+      emit_insn (gen_sne_internal_pat (comp_reg, cmp_op0,
+                                       cmp_op1));
+      condition = gen_rtx_NE (SImode, comp_reg, const0_rtx);
+      emit_jump_insn (gen_condjump (condition, label1));
+    }
+  else
+    {
+      /* Generate compare and branch in single instruction. */
+      cmp_op1 = force_reg (mode, cmp_op1);
+      condition = gen_rtx_fmt_ee (code, mode, cmp_op0, cmp_op1);
+      emit_jump_insn (gen_branch_compare (condition, cmp_op0,
+                                         cmp_op1, label1));
+    }
+}
 
 void
 microblaze_expand_conditional_branch_sf (rtx operands[])
@@ -3605,6 +3610,151 @@ microblaze_legitimate_constant_p (machine_mode mode ATTRIBUTE_UNUSED, rtx x)
   return true;
 }
 
+static rtx
+get_branch_target (rtx branch)
+{
+  if (CALL_P (branch))
+    {
+      rtx call;
+
+      call = XVECEXP (PATTERN (branch), 0, 0);
+      if (GET_CODE (call) == SET)
+        call = SET_SRC (call);
+      if (GET_CODE (call) != CALL)
+        abort ();
+      return XEXP (XEXP (call, 0), 0);
+    }
+}
+
+/* Heuristics to identify where to insert at the
+   fall through path of the caller function. If there
+   is a call after the caller branch delay slot then
+   we dont generate the instruction prefetch instruction.
+
+   Scan up to 32 instructions after the call and checks
+   for the JUMP and call instruction . If there is a call
+   or JUMP instruction in the range of 32 instruction "wic"
+   instruction wont be generated. Otherwise insert the "wic"
+   instruction in the fall through of the call instruction
+   four instruction after the call. before_4 is used for
+   the position to insert "wic" instructions. before_16 is
+   used to check for call and JUMP instruction for first
+   15 insns.  */
+
+static void
+insert_wic_for_ilb_runout (rtx_insn *first)
+{
+  rtx_insn *insn;
+  rtx_insn *before_4 = 0;
+  rtx_insn *before_16 = 0;
+  int addr_offset = 0;
+  int length;
+  int wic_addr0 = 128 * 4;
+  int wic_addr1 = 128 * 4;
+
+  int first_addr = INSN_ADDRESSES (INSN_UID (first));
+
+  for (insn = first; insn; insn = NEXT_INSN (insn))
+    if (INSN_P (insn))
+      {
+        addr_offset = INSN_ADDRESSES (INSN_UID (insn)) - first_addr;
+        length = get_attr_length (insn);
+        if (before_4 == 0 && addr_offset + length >= 4 * 4)
+          before_4 = insn;
+
+        if (JUMP_P(insn))
+          return;
+        if (before_16 == 0 && addr_offset + length >= 14 * 4)
+          before_16 = insn;
+        if (CALL_P (insn) || tablejump_p (insn, 0, 0))
+          return;
+        if (addr_offset + length >= 32 * 4)
+          {
+            gcc_assert (before_4 && before_16);
+            if (wic_addr0 > 4 * 4)
+              {
+                insn =
+                  emit_insn_before (gen_iprefetch
+                                    (gen_int_mode (addr_offset, SImode)),
+                                    before_4);
+                recog_memoized (insn);
+                INSN_LOCATION (insn) = INSN_LOCATION (before_4);
+                INSN_ADDRESSES_NEW (insn, INSN_ADDRESSES (INSN_UID (before_4)));
+                return;
+              }
+           }
+       }
+}
+
+/* Insert instruction prefetch instruction at the fall
+   through path of the function call.  */
+
+static void
+insert_wic (void)
+{
+  rtx_insn *insn;
+  int i, j;
+  basic_block bb, prev = 0;
+  rtx branch_target = 0;
+
+  shorten_branches (get_insns ());
+
+  for (i = 0; i < n_basic_blocks_for_fn (cfun) - 1; i++)
+     {
+       edge e;
+       edge_iterator ei;
+       bool simple_loop = false;
+
+       bb = BASIC_BLOCK_FOR_FN (cfun, i);
+
+       if (bb == NULL)
+         continue;
+
+       if ((prev != 0) && (prev != bb))
+         continue;
+       else
+         prev = 0;
+
+       FOR_EACH_EDGE (e, ei, bb->preds)
+         if (e->src == bb)
+           {
+             simple_loop = true;
+             prev= e->dest;
+             break;
+           }
+
+       for (insn = BB_END (bb); insn; insn = PREV_INSN (insn))
+          {
+            if (INSN_P (insn) && !simple_loop
+               && CALL_P(insn))
+              {
+                if ((branch_target = get_branch_target (insn)))
+                  insert_wic_for_ilb_runout (
+                    next_active_insn (next_active_insn (insn)));
+              }
+              if (insn == BB_HEAD (bb))
+                break;
+           }
+      }
+}
+
+/* The reorg function defined through the macro
+   TARGET_MACHINE_DEPENDENT_REORG.  */
+
+static void
+microblaze_machine_dependent_reorg (void)
+{
+  if (TARGET_PREFETCH)
+    {
+      compute_bb_for_insn ();
+      loop_optimizer_init (AVOID_CFG_MODIFICATIONS);
+      shorten_branches (get_insns ());
+      insert_wic ();
+      loop_optimizer_finalize ();
+      free_bb_for_insn ();
+      return;
+    }
+}
 
 #undef TARGET_ENCODE_SECTION_INFO
 #define TARGET_ENCODE_SECTION_INFO      microblaze_encode_section_info
@@ -3696,6 +3846,9 @@ microblaze_legitimate_constant_p (machine_mode mode ATTRIBUTE_UNUSED, rtx x)
 
 #undef TARGET_LEGITIMATE_CONSTANT_P
 #define TARGET_LEGITIMATE_CONSTANT_P microblaze_legitimate_constant_p
+
+#undef TARGET_MACHINE_DEPENDENT_REORG
+#define TARGET_MACHINE_DEPENDENT_REORG microblaze_machine_dependent_reorg
 
 struct gcc_target targetm = TARGET_INITIALIZER;
 

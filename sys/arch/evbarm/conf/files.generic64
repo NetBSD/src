@@ -1,4 +1,4 @@
-#	$NetBSD: files.generic64,v 1.1.2.3 2018/06/25 07:25:40 pgoyette Exp $
+#	$NetBSD: files.generic64,v 1.1.2.4 2018/09/06 06:55:30 pgoyette Exp $
 #
 
 defparam opt_arm_debug.h	EARLYCONS
@@ -15,3 +15,9 @@ include "arch/arm/nvidia/files.tegra"
 include "arch/arm/rockchip/files.rockchip"
 include "arch/arm/sunxi/files.sunxi"
 include "arch/arm/virt/files.virt"
+
+#
+# Stack-less Just-In-Time compiler
+#
+
+include	"external/bsd/sljit/conf/files.sljit"

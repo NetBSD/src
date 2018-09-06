@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.452.2.2 2018/06/25 07:25:49 pgoyette Exp $	*/
+/*	$NetBSD: audio.c,v 1.452.2.3 2018/09/06 06:55:48 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.452.2.2 2018/06/25 07:25:49 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.452.2.3 2018/09/06 06:55:48 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -1491,7 +1491,7 @@ audio_stream_ctor(audio_stream_t *stream, const audio_params_t *param, int size)
 {
 	int frame_size;
 
-	size = min(size, AU_RING_SIZE);
+	size = uimin(size, AU_RING_SIZE);
 	stream->bufsize = size;
 	stream->start = kmem_zalloc(size, KM_SLEEP);
 	frame_size = (param->precision + 7) / 8 * param->channels;
@@ -2874,7 +2874,7 @@ audio_silence_copyout(struct audio_softc *sc, int n, struct uio *uio)
 
 	error = 0;
 	while (n > 0 && uio->uio_resid > 0 && !error) {
-		k = min(n, min(uio->uio_resid, sizeof zerobuf));
+		k = uimin(n, uimin(uio->uio_resid, sizeof zerobuf));
 		mutex_exit(sc->sc_lock);
 		error = uiomove(zerobuf, k, uio);
 		mutex_enter(sc->sc_lock);
@@ -2907,7 +2907,7 @@ uio_fetcher_fetch_to(struct audio_softc *sc, stream_fetcher_t *self,
 	 * for audio_prinfo::seek and kfilters.
 	 */
 	stream_space = audio_stream_get_space(p);
-	size = min(this->uio->uio_resid, stream_space);
+	size = uimin(this->uio->uio_resid, stream_space);
 
 	/* the first fragment of the space */
 	stream_space = p->end - p->inp;
@@ -3000,7 +3000,7 @@ audio_write(struct audio_softc *sc, struct uio *uio, int ioflag,
 	}
 
 	if (!(vc->sc_mode & AUMODE_PLAY_ALL) && vc->sc_playdrop > 0) {
-		m = min(vc->sc_playdrop, uio->uio_resid);
+		m = uimin(vc->sc_playdrop, uio->uio_resid);
 		DPRINTF(("audio_write: playdrop %d\n", m));
 		uio->uio_offset += m;
 		uio->uio_resid -= m;

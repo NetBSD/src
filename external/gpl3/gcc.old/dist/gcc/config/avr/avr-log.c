@@ -1,5 +1,5 @@
 /* Subroutines for log output for Atmel AVR back end.
-   Copyright (C) 2011-2015 Free Software Foundation, Inc.
+   Copyright (C) 2011-2016 Free Software Foundation, Inc.
    Contributed by Georg-Johann Lay (avr@gjlay.de)
 
    This file is part of GCC.
@@ -22,24 +22,12 @@
 #include "system.h"
 #include "coretypes.h"
 #include "tm.h"
-#include "rtl.h"
-#include "hash-set.h"
-#include "machmode.h"
-#include "vec.h"
-#include "double-int.h"
-#include "input.h"
-#include "alias.h"
-#include "symtab.h"
-#include "wide-int.h"
-#include "inchash.h"
-#include "tree.h"
-#include "print-tree.h"
-#include "output.h"
-#include "input.h"
-#include "hard-reg-set.h"
 #include "function.h"
-#include "tm_p.h"
+#include "rtl.h"
+#include "tree.h"
 #include "tree-pass.h"	/* for current_pass */
+#include "tm_p.h"
+#include "print-tree.h"
 
 /* This file supplies some functions for AVR back-end developers
    with a printf-like interface.  The functions are called through

@@ -1,3 +1,5 @@
+/*	$NetBSD: nouveau_debugfs.h,v 1.1.1.1.30.1 2018/09/06 06:56:18 pgoyette Exp $	*/
+
 #ifndef __NOUVEAU_DEBUGFS_H__
 #define __NOUVEAU_DEBUGFS_H__
 

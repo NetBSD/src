@@ -1,5 +1,5 @@
 /* Definitions of target machine for GNU compiler, for IBM RS/6000.
-   Copyright (C) 2000-2015 Free Software Foundation, Inc.
+   Copyright (C) 2000-2016 Free Software Foundation, Inc.
    Contributed by Richard Kenner (kenner@vlsi1.ultra.nyu.edu)
 
    This file is part of GCC.
@@ -31,12 +31,15 @@ extern void init_cumulative_args (CUMULATIVE_ARGS *, tree, rtx, int, int, int,
 #endif /* TREE_CODE */
 
 extern bool easy_altivec_constant (rtx, machine_mode);
+extern bool xxspltib_constant_p (rtx, machine_mode, int *, int *);
+extern int vspltis_shifted (rtx);
 extern HOST_WIDE_INT const_vector_elt_as_int (rtx, unsigned int);
 extern bool macho_lo_sum_memory_operand (rtx, machine_mode);
 extern int num_insns_constant (rtx, machine_mode);
 extern int num_insns_constant_wide (HOST_WIDE_INT);
 extern int small_data_operand (rtx, machine_mode);
 extern bool mem_operand_gpr (rtx, machine_mode);
+extern bool mem_operand_ds_form (rtx, machine_mode);
 extern bool toc_relative_expr_p (const_rtx, bool);
 extern bool invalid_e500_subreg (rtx, machine_mode);
 extern void validate_condition_mode (enum rtx_code, machine_mode);
@@ -53,6 +56,9 @@ extern const char *output_vec_const_move (rtx *);
 extern const char *rs6000_output_move_128bit (rtx *);
 extern bool rs6000_move_128bit_ok_p (rtx []);
 extern bool rs6000_split_128bit_ok_p (rtx []);
+extern void rs6000_expand_float128_convert (rtx, rtx, bool);
+extern void convert_float128_to_int (rtx *, enum rtx_code);
+extern void convert_int_to_float128 (rtx *, enum rtx_code);
 extern void rs6000_expand_vector_init (rtx, rtx);
 extern void paired_expand_vector_init (rtx, rtx);
 extern void rs6000_expand_vector_set (rtx, rtx, int);
@@ -66,23 +72,35 @@ extern void altivec_expand_stvex_be (rtx, rtx, machine_mode, unsigned);
 extern void rs6000_expand_extract_even (rtx, rtx, rtx);
 extern void rs6000_expand_interleave (rtx, rtx, rtx, bool);
 extern void rs6000_scale_v2df (rtx, rtx, int);
-extern void build_mask64_2_operands (rtx, rtx *);
 extern int expand_block_clear (rtx[]);
 extern int expand_block_move (rtx[]);
 extern const char * rs6000_output_load_multiple (rtx[]);
-extern int includes_lshift_p (rtx, rtx);
-extern int includes_rshift_p (rtx, rtx);
-extern int includes_rldic_lshift_p (rtx, rtx);
-extern int includes_rldicr_lshift_p (rtx, rtx);
-extern int insvdi_rshift_rlwimi_p (rtx, rtx, rtx);
+extern bool rs6000_is_valid_mask (rtx, int *, int *, machine_mode);
+extern bool rs6000_is_valid_and_mask (rtx, machine_mode);
+extern bool rs6000_is_valid_shift_mask (rtx, rtx, machine_mode);
+extern bool rs6000_is_valid_insert_mask (rtx, rtx, machine_mode);
+extern const char *rs6000_insn_for_and_mask (machine_mode, rtx *, bool);
+extern const char *rs6000_insn_for_shift_mask (machine_mode, rtx *, bool);
+extern const char *rs6000_insn_for_insert_mask (machine_mode, rtx *, bool);
+extern bool rs6000_is_valid_2insn_and (rtx, machine_mode);
+extern void rs6000_emit_2insn_and (machine_mode, rtx *, bool, int);
 extern int registers_ok_for_quad_peep (rtx, rtx);
 extern int mems_ok_for_quad_peep (rtx, rtx);
 extern bool gpr_or_gpr_p (rtx, rtx);
 extern bool direct_move_p (rtx, rtx);
+extern bool quad_address_p (rtx, machine_mode, bool);
 extern bool quad_load_store_p (rtx, rtx);
 extern bool fusion_gpr_load_p (rtx, rtx, rtx, rtx);
 extern void expand_fusion_gpr_load (rtx *);
+extern void emit_fusion_addis (rtx, rtx, const char *, const char *);
+extern void emit_fusion_load_store (rtx, rtx, rtx, const char *);
 extern const char *emit_fusion_gpr_load (rtx, rtx);
+extern bool fusion_p9_p (rtx, rtx, rtx, rtx);
+extern void expand_fusion_p9_load (rtx *);
+extern void expand_fusion_p9_store (rtx *);
+extern const char *emit_fusion_p9_load (rtx, rtx, rtx);
+extern const char *emit_fusion_p9_store (rtx, rtx, rtx);
+extern rtx fusion_wrap_memory_address (rtx);
 extern enum reg_class (*rs6000_preferred_reload_class_ptr) (rtx,
 							    enum reg_class);
 extern enum reg_class (*rs6000_secondary_reload_class_ptr) (enum reg_class,
@@ -102,8 +120,6 @@ extern void paired_expand_vector_move (rtx operands[]);
 
 
 extern int ccr_bit (rtx, int);
-extern int extract_MB (rtx);
-extern int extract_ME (rtx);
 extern void rs6000_output_function_entry (FILE *, const char *);
 extern void print_operand (FILE *, rtx, int);
 extern void print_operand_address (FILE *, rtx);
@@ -120,11 +136,12 @@ extern bool rs6000_emit_set_const (rtx, rtx);
 extern int rs6000_emit_cmove (rtx, rtx, rtx, rtx);
 extern int rs6000_emit_vector_cond_expr (rtx, rtx, rtx, rtx, rtx, rtx);
 extern void rs6000_emit_minmax (rtx, enum rtx_code, rtx, rtx);
+extern void rs6000_split_signbit (rtx, rtx);
 extern void rs6000_expand_atomic_compare_and_swap (rtx op[]);
 extern void rs6000_expand_atomic_exchange (rtx op[]);
 extern void rs6000_expand_atomic_op (enum rtx_code, rtx, rtx, rtx, rtx, rtx);
 extern void rs6000_emit_swdiv (rtx, rtx, rtx, bool);
-extern void rs6000_emit_swrsqrt (rtx, rtx);
+extern void rs6000_emit_swsqrt (rtx, rtx, bool);
 extern void output_toc (FILE *, rtx, int, machine_mode);
 extern rtx rs6000_longcall_ref (rtx);
 extern void rs6000_fatal_bad_address (rtx);
@@ -133,8 +150,7 @@ extern void rs6000_split_multireg_move (rtx, rtx);
 extern void rs6000_emit_le_vsx_move (rtx, rtx, machine_mode);
 extern void rs6000_emit_move (rtx, rtx, machine_mode);
 extern rtx rs6000_secondary_memory_needed_rtx (machine_mode);
-extern machine_mode rs6000_secondary_memory_needed_mode (enum
-							      machine_mode);
+extern machine_mode rs6000_secondary_memory_needed_mode (machine_mode);
 extern rtx (*rs6000_legitimize_reload_address_ptr) (rtx, machine_mode,
 						    int, int, int, int *);
 extern bool rs6000_legitimate_offset_address_p (machine_mode, rtx,
@@ -191,6 +207,8 @@ extern void rs6000_emit_prologue (void);
 extern void rs6000_emit_load_toc_table (int);
 extern unsigned int rs6000_dbx_register_number (unsigned int, unsigned int);
 extern void rs6000_emit_epilogue (int);
+extern void rs6000_expand_split_stack_prologue (void);
+extern void rs6000_split_stack_space_check (rtx, rtx);
 extern void rs6000_emit_eh_reg_restore (rtx, rtx);
 extern const char * output_isel (rtx *);
 extern void rs6000_call_aix (rtx, rtx, rtx, rtx);
@@ -199,6 +217,10 @@ extern void rs6000_aix_asm_output_dwarf_table_ref (char *);
 extern void get_ppc476_thunk_name (char name[32]);
 extern bool rs6000_overloaded_builtin_p (enum rs6000_builtins);
 extern HOST_WIDE_INT rs6000_builtin_mask_calculate (void);
+extern void rs6000_asm_output_dwarf_pcrel (FILE *file, int size,
+					   const char *label);
+extern void rs6000_asm_output_dwarf_datarel (FILE *file, int size,
+					     const char *label);
 
 /* Declare functions in rs6000-c.c */
 

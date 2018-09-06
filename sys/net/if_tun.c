@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tun.c,v 1.142.2.2 2018/07/28 04:38:10 pgoyette Exp $	*/
+/*	$NetBSD: if_tun.c,v 1.142.2.3 2018/09/06 06:56:44 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.142.2.2 2018/07/28 04:38:10 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.142.2.3 2018/09/06 06:56:44 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -288,7 +288,7 @@ tun_clone_destroy(struct ifnet *ifp)
 		tp->tun_flags &= ~TUN_RWAIT;
 		cv_broadcast(&tp->tun_cv);
 	}
-	selnotify(&tp->tun_rsel, 0, 0);
+	selnotify(&tp->tun_rsel, 0, NOTE_SUBMIT);
 
 	mutex_exit(&tp->tun_lock);
 
@@ -381,7 +381,7 @@ tunclose(dev_t dev, int flag, int mode,
 	tp->tun_flags &= ~TUN_OPEN;
 
 	tp->tun_pgid = 0;
-	selnotify(&tp->tun_rsel, 0, 0);
+	selnotify(&tp->tun_rsel, 0, NOTE_SUBMIT);
 
 	TUNDEBUG ("%s: closed\n", ifp->if_xname);
 	mutex_exit(&tp->tun_lock);
@@ -625,7 +625,7 @@ tun_output(struct ifnet *ifp, struct mbuf *m0, const struct sockaddr *dst,
 	if (tp->tun_flags & TUN_ASYNC && tp->tun_pgid)
 		softint_schedule(tp->tun_isih);
 
-	selnotify(&tp->tun_rsel, 0, 0);
+	selnotify(&tp->tun_rsel, 0, NOTE_SUBMIT);
 
 	mutex_exit(&tp->tun_lock);
 out:
@@ -808,7 +808,7 @@ tunread(dev_t dev, struct uio *uio, int ioflag)
 
 	/* Copy the mbuf chain */
 	while (m0 && uio->uio_resid > 0 && error == 0) {
-		len = min(uio->uio_resid, m0->m_len);
+		len = uimin(uio->uio_resid, m0->m_len);
 		if (len != 0)
 			error = uiomove(mtod(m0, void *), len, uio);
 		m0 = m = m_free(m0);
@@ -921,7 +921,7 @@ tunwrite(dev_t dev, struct uio *uio, int ioflag)
 	top = NULL;
 	mp = &top;
 	while (error == 0 && uio->uio_resid > 0) {
-		m->m_len = min(mlen, uio->uio_resid);
+		m->m_len = uimin(mlen, uio->uio_resid);
 		error = uiomove(mtod(m, void *), m->m_len, uio);
 		*mp = m;
 		mp = &m->m_next;
@@ -996,7 +996,7 @@ tunstart(struct ifnet *ifp)
 		if (tp->tun_flags & TUN_ASYNC && tp->tun_pgid)
 			softint_schedule(tp->tun_osih);
 
-		selnotify(&tp->tun_rsel, 0, 0);
+		selnotify(&tp->tun_rsel, 0, NOTE_SUBMIT);
 	}
 	mutex_exit(&tp->tun_lock);
 }
@@ -1057,20 +1057,24 @@ filt_tunread(struct knote *kn, long hint)
 	struct tun_softc *tp = kn->kn_hook;
 	struct ifnet *ifp = &tp->tun_if;
 	struct mbuf *m;
+	int ready;
 
-	mutex_enter(&tp->tun_lock);
+	if (hint & NOTE_SUBMIT)
+		KASSERT(mutex_owned(&tp->tun_lock));
+	else
+		mutex_enter(&tp->tun_lock);
+
 	IF_POLL(&ifp->if_snd, m);
-	if (m == NULL) {
-		mutex_exit(&tp->tun_lock);
-		return 0;
-	}
-
+	ready = (m != NULL);
 	for (kn->kn_data = 0; m != NULL; m = m->m_next)
 		kn->kn_data += m->m_len;
 
-	mutex_exit(&tp->tun_lock);
+	if (hint & NOTE_SUBMIT)
+		KASSERT(mutex_owned(&tp->tun_lock));
+	else
+		mutex_exit(&tp->tun_lock);
 
-	return 1;
+	return ready;
 }
 
 static const struct filterops tunread_filtops = {

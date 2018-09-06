@@ -1,5 +1,5 @@
 /* Internals of libgccjit: classes for recording calls made to the JIT API.
-   Copyright (C) 2013-2015 Free Software Foundation, Inc.
+   Copyright (C) 2013-2016 Free Software Foundation, Inc.
    Contributed by David Malcolm <dmalcolm@redhat.com>.
 
 This file is part of GCC.
@@ -23,6 +23,8 @@ along with GCC; see the file COPYING3.  If not see
 
 #include "jit-common.h"
 #include "jit-logging.h"
+
+class timer;
 
 namespace gcc {
 
@@ -276,6 +278,9 @@ public:
   void
   get_all_requested_dumps (vec <recording::requested_dump> *out);
 
+  void set_timer (timer *t) { m_timer = t; }
+  timer *get_timer () const { return m_timer; }
+
 private:
   void log_all_options () const;
   void log_str_option (enum gcc_jit_str_option opt) const;
@@ -291,6 +296,8 @@ private:
   /* The ultimate ancestor of the contexts within a family tree of
      contexts.  This has itself as its own m_toplevel_ctxt.  */
   context *m_toplevel_ctxt;
+
+  timer *m_timer;
 
   int m_error_count;
 
@@ -497,6 +504,7 @@ public:
   virtual type *is_pointer () = 0;
   virtual type *is_array () = 0;
   virtual bool is_void () const { return false; }
+  virtual bool has_known_size () const { return true; }
 
   bool is_numeric () const
   {
@@ -794,6 +802,8 @@ public:
   bool is_bool () const { return false; }
   type *is_pointer () { return NULL; }
   type *is_array () { return NULL; }
+
+  bool has_known_size () const { return m_fields != NULL; }
 
   playback::compound_type *
   playback_compound_type ()

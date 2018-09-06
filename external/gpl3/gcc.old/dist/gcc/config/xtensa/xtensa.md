@@ -1,5 +1,5 @@
 ;; GCC machine description for Tensilica's Xtensa architecture.
-;; Copyright (C) 2001-2015 Free Software Foundation, Inc.
+;; Copyright (C) 2001-2016 Free Software Foundation, Inc.
 ;; Contributed by Bob Wilson (bwilson@tensilica.com) at Tensilica.
 
 ;; This file is part of GCC.
@@ -86,7 +86,7 @@
 ;; Attributes.
 
 (define_attr "type"
-  "unknown,jump,call,load,store,move,arith,multi,nop,farith,fmadd,fconv,fload,fstore,mul16,mul32,div32,mac16,rsr,wsr,entry"
+  "unknown,jump,call,load,store,move,arith,multi,nop,farith,fmadd,fconv,fload,fstore,mul16,mul32,div32,mac16,rsr,wsr,entry,trap"
   (const_string "unknown"))
 
 (define_attr "mode"
@@ -761,8 +761,8 @@
 })
 
 (define_insn "movsi_internal"
-  [(set (match_operand:SI 0 "nonimmed_operand" "=D,D,D,D,R,R,a,q,a,W,a,a,U,*a,*A")
-	(match_operand:SI 1 "move_operand" "M,D,d,R,D,d,r,r,I,i,T,U,r,*A,*r"))]
+  [(set (match_operand:SI 0 "nonimmed_operand" "=D,D,D,D,R,R,a,q,a,a,W,a,a,U,*a,*A")
+	(match_operand:SI 1 "move_operand" "M,D,d,R,D,d,r,r,I,Y,i,T,U,r,*A,*r"))]
   "xtensa_valid_move (SImode, operands)"
   "@
    movi.n\t%0, %x1
@@ -774,15 +774,16 @@
    mov\t%0, %1
    movsp\t%0, %1
    movi\t%0, %x1
+   movi\t%0, %1
    const16\t%0, %t1\;const16\t%0, %b1
    %v1l32r\t%0, %1
    %v1l32i\t%0, %1
    %v0s32i\t%1, %0
    rsr\t%0, ACCLO
    wsr\t%1, ACCLO"
-  [(set_attr "type" "move,move,move,load,store,store,move,move,move,move,load,load,store,rsr,wsr")
+  [(set_attr "type" "move,move,move,load,store,store,move,move,move,move,move,load,load,store,rsr,wsr")
    (set_attr "mode"	"SI")
-   (set_attr "length"	"2,2,2,2,2,2,3,3,3,6,3,3,3,3,3")])
+   (set_attr "length"	"2,2,2,2,2,2,3,3,3,3,6,3,3,3,3,3")])
 
 ;; 16-bit Integer moves
 
@@ -796,21 +797,22 @@
 })
 
 (define_insn "movhi_internal"
-  [(set (match_operand:HI 0 "nonimmed_operand" "=D,D,a,a,a,U,*a,*A")
-	(match_operand:HI 1 "move_operand" "M,d,r,I,U,r,*A,*r"))]
+  [(set (match_operand:HI 0 "nonimmed_operand" "=D,D,a,a,a,a,U,*a,*A")
+	(match_operand:HI 1 "move_operand" "M,d,r,I,Y,U,r,*A,*r"))]
   "xtensa_valid_move (HImode, operands)"
   "@
    movi.n\t%0, %x1
    mov.n\t%0, %1
    mov\t%0, %1
    movi\t%0, %x1
+   movi\t%0, %1
    %v1l16ui\t%0, %1
    %v0s16i\t%1, %0
    rsr\t%0, ACCLO
    wsr\t%1, ACCLO"
-  [(set_attr "type"	"move,move,move,move,load,store,rsr,wsr")
+  [(set_attr "type"	"move,move,move,move,move,load,store,rsr,wsr")
    (set_attr "mode"	"HI")
-   (set_attr "length"	"2,2,3,3,3,3,3,3")])
+   (set_attr "length"	"2,2,3,3,3,3,3,3,3")])
 
 ;; 8-bit Integer moves
 
@@ -881,7 +883,7 @@
 	(match_operand:SF 1 "general_operand" ""))]
   ""
 {
-  if (!TARGET_CONST16 && CONSTANT_P (operands[1]))
+  if (!TARGET_CONST16 && !TARGET_AUTO_LITPOOLS && CONSTANT_P (operands[1]))
     operands[1] = force_const_mem (SFmode, operands[1]);
 
   if ((!register_operand (operands[0], SFmode)
@@ -896,8 +898,8 @@
 })
 
 (define_insn "movsf_internal"
-  [(set (match_operand:SF 0 "nonimmed_operand" "=f,f,U,D,D,R,a,f,a,W,a,a,U")
-	(match_operand:SF 1 "move_operand" "f,U,f,d,R,d,r,r,f,iF,T,U,r"))]
+  [(set (match_operand:SF 0 "nonimmed_operand" "=f,f,U,D,D,R,a,f,a,a,W,a,a,U")
+	(match_operand:SF 1 "move_operand" "f,U,f,d,R,d,r,r,f,Y,iF,T,U,r"))]
   "((register_operand (operands[0], SFmode)
      || register_operand (operands[1], SFmode))
     && !(FP_REG_P (xt_true_regnum (operands[0]))
@@ -912,13 +914,14 @@
    mov\t%0, %1
    wfr\t%0, %1
    rfr\t%0, %1
+   movi\t%0, %y1
    const16\t%0, %t1\;const16\t%0, %b1
    %v1l32r\t%0, %1
    %v1l32i\t%0, %1
    %v0s32i\t%1, %0"
-  [(set_attr "type"	"farith,fload,fstore,move,load,store,move,farith,farith,move,load,load,store")
+  [(set_attr "type"	"farith,fload,fstore,move,load,store,move,farith,farith,move,move,load,load,store")
    (set_attr "mode"	"SF")
-   (set_attr "length"	"3,3,3,2,2,2,3,3,3,6,3,3,3")])
+   (set_attr "length"	"3,3,3,2,2,2,3,3,3,3,6,3,3,3")])
 
 (define_insn "*lsiu"
   [(set (match_operand:SF 0 "register_operand" "=f")
@@ -991,7 +994,7 @@
 	(match_operand:DF 1 "general_operand" ""))]
   ""
 {
-  if (CONSTANT_P (operands[1]) && !TARGET_CONST16)
+  if (CONSTANT_P (operands[1]) && !TARGET_CONST16 && !TARGET_AUTO_LITPOOLS)
     operands[1] = force_const_mem (DFmode, operands[1]);
 
   if (!register_operand (operands[0], DFmode)
@@ -1002,8 +1005,8 @@
 })
 
 (define_insn_and_split "movdf_internal"
-  [(set (match_operand:DF 0 "nonimmed_operand" "=a,W,a,a,U")
-	(match_operand:DF 1 "move_operand" "r,iF,T,U,r"))]
+  [(set (match_operand:DF 0 "nonimmed_operand" "=a,a,W,a,a,U")
+	(match_operand:DF 1 "move_operand" "r,Y,iF,T,U,r"))]
   "register_operand (operands[0], DFmode)
    || register_operand (operands[1], DFmode)"
   "#"
@@ -1660,7 +1663,7 @@
 (define_insn "return"
   [(return)
    (use (reg:SI A0_REG))]
-  "(TARGET_WINDOWED_ABI || !xtensa_current_frame_size) && reload_completed"
+  "xtensa_use_return_instruction_p ()"
 {
   return TARGET_WINDOWED_ABI ?
       (TARGET_DENSITY ? "retw.n" : "retw") :
@@ -1763,6 +1766,19 @@
   ""
   [(set_attr "length" "0")
    (set_attr "type" "nop")])
+
+(define_insn "trap"
+  [(trap_if (const_int 1) (const_int 0))]
+  ""
+{
+  if (TARGET_DEBUG)
+    return "break\t1, 15";
+  else
+    return (TARGET_DENSITY ? "ill.n" : "ill");
+}
+  [(set_attr "type"	"trap")
+   (set_attr "mode"	"none")
+   (set_attr "length"	"3")])
 
 ;; Setting up a frame pointer is tricky for Xtensa because GCC doesn't
 ;; know if a frame pointer is required until the reload pass, and

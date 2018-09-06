@@ -1,4 +1,4 @@
-/* $NetBSD: if_pppoe.c,v 1.134.2.4 2018/07/28 04:38:10 pgoyette Exp $ */
+/* $NetBSD: if_pppoe.c,v 1.134.2.5 2018/09/06 06:56:44 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2002, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.134.2.4 2018/07/28 04:38:10 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.134.2.5 2018/09/06 06:56:44 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "pppoe.h"
@@ -56,6 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.134.2.4 2018/07/28 04:38:10 pgoyette 
 #include <sys/rwlock.h>
 #include <sys/mutex.h>
 #include <sys/psref.h>
+#include <sys/cprng.h>
 
 #include <net/if.h>
 #include <net/if_types.h>
@@ -157,6 +158,7 @@ struct pppoe_softc {
 	LIST_ENTRY(pppoe_softc) sc_list;
 	struct ifnet *sc_eth_if;	/* ethernet interface we are using */
 
+	uint64_t sc_id;			/* id of this softc, our hunique */
 	int sc_state;			/* discovery phase or session connected */
 	struct ether_addr sc_dest;	/* hardware address of concentrator */
 	uint16_t sc_session;		/* PPPoE session id */
@@ -293,6 +295,31 @@ pppoedetach(void)
 	return error;
 }
 
+static void
+pppoe_softc_genid(uint64_t *id)
+{
+	struct pppoe_softc *sc;
+	uint64_t rndid;
+
+	rw_enter(&pppoe_softc_list_lock, RW_READER);
+
+	while (1) {
+		rndid = cprng_strong64();
+
+		sc = NULL;
+		LIST_FOREACH(sc, &pppoe_softc_list, sc_list) {
+			if (sc->sc_id == rndid)
+				break;
+		}
+		if (sc == NULL) {
+			break;
+		}
+	}
+
+	rw_exit(&pppoe_softc_list_lock);
+	*id = rndid;
+}
+
 static int
 pppoe_clone_create(struct if_clone *ifc, int unit)
 {
@@ -300,6 +327,8 @@ pppoe_clone_create(struct if_clone *ifc, int unit)
 	int rv;
 
 	sc = malloc(sizeof(struct pppoe_softc), M_DEVBUF, M_WAITOK|M_ZERO);
+
+	pppoe_softc_genid(&sc->sc_id);
 
 	if_initname(&sc->sc_sppp.pp_if, "pppoe", unit);
 	sc->sc_sppp.pp_if.if_softc = sc;
@@ -428,7 +457,10 @@ static struct pppoe_softc *
 pppoe_find_softc_by_hunique(uint8_t *token, size_t len,
     struct ifnet *rcvif, krw_t lock)
 {
-	struct pppoe_softc *sc, *t;
+	struct pppoe_softc *sc;
+	uint64_t t;
+
+	CTASSERT(sizeof(t) == sizeof(sc->sc_id));
 
 	rw_enter(&pppoe_softc_list_lock, RW_READER);
 	if (LIST_EMPTY(&pppoe_softc_list)) {
@@ -436,14 +468,14 @@ pppoe_find_softc_by_hunique(uint8_t *token, size_t len,
 		return NULL;
 	}
 
-	if (len != sizeof sc) {
+	if (len != sizeof(sc->sc_id)) {
 		rw_exit(&pppoe_softc_list_lock);
 		return NULL;
 	}
 	memcpy(&t, token, len);
 
 	LIST_FOREACH(sc, &pppoe_softc_list, sc_list) {
-		if (sc == t) {
+		if (sc->sc_id == t) {
 			PPPOE_LOCK(sc, lock);
 			break;
 		}
@@ -1329,32 +1361,33 @@ static int
 pppoe_send_padi(struct pppoe_softc *sc)
 {
 	struct mbuf *m0;
-	int len, l1 = 0, l2 = 0; /* XXX: gcc */
+	int len, l1 = 0, l2 = 0;
 	uint8_t *p;
 
-	if (sc->sc_state >PPPOE_STATE_PADI_SENT)
+	if (sc->sc_state > PPPOE_STATE_PADI_SENT)
 		panic("pppoe_send_padi in state %d", sc->sc_state);
 
-	/* calculate length of frame (excluding ethernet header + pppoe header) */
-	len = 2 + 2 + 2 + 2 + sizeof sc;	/* service name tag is required, host unique is send too */
+	/* Compute packet length. */
+	len = sizeof(struct pppoetag);
 	if (sc->sc_service_name != NULL) {
 		l1 = strlen(sc->sc_service_name);
 		len += l1;
 	}
 	if (sc->sc_concentrator_name != NULL) {
 		l2 = strlen(sc->sc_concentrator_name);
-		len += 2 + 2 + l2;
+		len += sizeof(struct pppoetag) + l2;
 	}
+	len += sizeof(struct pppoetag) + sizeof(sc->sc_id);
 	if (sc->sc_sppp.pp_if.if_mtu > PPPOE_MAXMTU) {
-		len += 2 + 2 + 2;
+		len += sizeof(struct pppoetag) + 2;
 	}
 
-	/* allocate a buffer */
-	m0 = pppoe_get_mbuf(len + PPPOE_HEADERLEN);	/* header len + payload len */
-	if (!m0)
+	/* Allocate packet. */
+	m0 = pppoe_get_mbuf(len + PPPOE_HEADERLEN);
+	if (m0 == NULL)
 		return ENOBUFS;
 
-	/* fill in pkt */
+	/* Fill in packet. */
 	p = mtod(m0, uint8_t *);
 	PPPOE_ADD_HEADER(p, PPPOE_CODE_PADI, 0, len);
 	PPPOE_ADD_16(p, PPPOE_TAG_SNAME);
@@ -1372,9 +1405,9 @@ pppoe_send_padi(struct pppoe_softc *sc)
 		p += l2;
 	}
 	PPPOE_ADD_16(p, PPPOE_TAG_HUNIQUE);
-	PPPOE_ADD_16(p, sizeof(sc));
-	memcpy(p, &sc, sizeof sc);
-	p += sizeof(sc);
+	PPPOE_ADD_16(p, sizeof(sc->sc_id));
+	memcpy(p, &sc->sc_id, sizeof(sc->sc_id));
+	p += sizeof(sc->sc_id);
 
 	if (sc->sc_sppp.pp_if.if_mtu > PPPOE_MAXMTU) {
 		PPPOE_ADD_16(p, PPPOE_TAG_MAX_PAYLOAD);
@@ -1388,7 +1421,7 @@ pppoe_send_padi(struct pppoe_softc *sc)
 		    (long)(len + PPPOE_HEADERLEN), (long)(p - mtod(m0, uint8_t *)));
 #endif
 
-	/* send pkt */
+	/* Send packet. */
 	return pppoe_output(sc, m0);
 }
 
@@ -1598,32 +1631,39 @@ pppoe_abort_connect(struct pppoe_softc *sc)
 	sc->sc_state = PPPOE_STATE_INITIAL;
 }
 
-/* Send a PADR packet */
 static int
 pppoe_send_padr(struct pppoe_softc *sc)
 {
 	struct mbuf *m0;
 	uint8_t *p;
-	size_t len, l1 = 0; /* XXX: gcc */
+	size_t len, l1 = 0;
 
 	if (sc->sc_state != PPPOE_STATE_PADR_SENT)
 		return EIO;
 
-	len = 2 + 2 + 2 + 2 + sizeof(sc);		/* service name, host unique */
-	if (sc->sc_service_name != NULL) {		/* service name tag maybe empty */
+	/* Compute packet length. */
+	len = sizeof(struct pppoetag);
+	if (sc->sc_service_name != NULL) {
 		l1 = strlen(sc->sc_service_name);
 		len += l1;
 	}
-	if (sc->sc_ac_cookie_len > 0)
-		len += 2 + 2 + sc->sc_ac_cookie_len;	/* AC cookie */
-	if (sc->sc_relay_sid_len > 0)
-		len += 2 + 2 + sc->sc_relay_sid_len;	/* Relay SID */
-	if (sc->sc_sppp.pp_if.if_mtu > PPPOE_MAXMTU) {
-		len += 2 + 2 + 2;
+	if (sc->sc_ac_cookie_len > 0) {
+		len += sizeof(struct pppoetag) + sc->sc_ac_cookie_len;
 	}
+	if (sc->sc_relay_sid_len > 0) {
+		len += sizeof(struct pppoetag) + sc->sc_relay_sid_len;
+	}
+	len += sizeof(struct pppoetag) + sizeof(sc->sc_id);
+	if (sc->sc_sppp.pp_if.if_mtu > PPPOE_MAXMTU) {
+		len += sizeof(struct pppoetag) + 2;
+	}
+
+	/* Allocate packet. */
 	m0 = pppoe_get_mbuf(len + PPPOE_HEADERLEN);
-	if (!m0)
+	if (m0 == NULL)
 		return ENOBUFS;
+
+	/* Fill in packet. */
 	p = mtod(m0, uint8_t *);
 	PPPOE_ADD_HEADER(p, PPPOE_CODE_PADR, 0, len);
 	PPPOE_ADD_16(p, PPPOE_TAG_SNAME);
@@ -1647,9 +1687,9 @@ pppoe_send_padr(struct pppoe_softc *sc)
 		p += sc->sc_relay_sid_len;
 	}
 	PPPOE_ADD_16(p, PPPOE_TAG_HUNIQUE);
-	PPPOE_ADD_16(p, sizeof(sc));
-	memcpy(p, &sc, sizeof sc);
-	p += sizeof(sc);
+	PPPOE_ADD_16(p, sizeof(sc->sc_id));
+	memcpy(p, &sc->sc_id, sizeof(sc->sc_id));
+	p += sizeof(sc->sc_id);
 
 	if (sc->sc_sppp.pp_if.if_mtu > PPPOE_MAXMTU) {
 		PPPOE_ADD_16(p, PPPOE_TAG_MAX_PAYLOAD);
@@ -1663,6 +1703,7 @@ pppoe_send_padr(struct pppoe_softc *sc)
 			(long)(len + PPPOE_HEADERLEN), (long)(p - mtod(m0, uint8_t *)));
 #endif
 
+	/* Send packet. */
 	return pppoe_output(sc, m0);
 }
 
@@ -1714,9 +1755,9 @@ pppoe_send_pado(struct pppoe_softc *sc)
 	p = mtod(m0, uint8_t *);
 	PPPOE_ADD_HEADER(p, PPPOE_CODE_PADO, 0, len);
 	PPPOE_ADD_16(p, PPPOE_TAG_ACCOOKIE);
-	PPPOE_ADD_16(p, sizeof(sc));
-	memcpy(p, &sc, sizeof(sc));
-	p += sizeof(sc);
+	PPPOE_ADD_16(p, sizeof(sc->sc_id));
+	memcpy(p, &sc->sc_id, sizeof(sc->sc_id));
+	p += sizeof(sc->sc_id);
 	PPPOE_ADD_16(p, PPPOE_TAG_HUNIQUE);
 	PPPOE_ADD_16(p, sc->sc_hunique_len);
 	memcpy(p, sc->sc_hunique, sc->sc_hunique_len);

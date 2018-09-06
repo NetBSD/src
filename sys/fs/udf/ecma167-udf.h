@@ -1,8 +1,8 @@
-/* $NetBSD: ecma167-udf.h,v 1.14.52.1 2018/07/28 04:38:08 pgoyette Exp $ */
+/* $NetBSD: ecma167-udf.h,v 1.14.52.2 2018/09/06 06:56:41 pgoyette Exp $ */
 
 /*-
- * Copyright (c) 2003, 2004, 2005, 2006, 2008, 2009
- * 	Reinoud Zandijk * <reinoud@NetBSD.org>
+ * Copyright (c) 2003, 2004, 2005, 2006, 2008, 2009, 2017, 2018
+ * 	Reinoud Zandijk <reinoud@NetBSD.org>
  * Copyright (c) 2001, 2002 Scott Long <scottl@freebsd.org>
  * All rights reserved.
  *
@@ -264,7 +264,10 @@ struct regid {
 struct icb_tag {
 	uint32_t	prev_num_dirs;
 	uint16_t	strat_type;
-	uint8_t		strat_param[2];
+	union {
+		uint8_t	 strat_param[2];
+		uint16_t strat_param16;
+	};
 	uint16_t	max_num_entries;
 	uint8_t		reserved;
 	uint8_t		file_type;
@@ -682,7 +685,10 @@ struct impl_extattr_entry {
 	struct extattr_entry    hdr;
 	uint32_t		iu_l;
 	struct regid		imp_id;
-	uint8_t			data[1];
+	union {
+		uint8_t	 data[1];
+		uint16_t data16;
+	};
 } __packed;
 
 

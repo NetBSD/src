@@ -1,3 +1,5 @@
+/*	$NetBSD: sil164.h,v 1.1.1.1.36.1 2018/09/06 06:56:35 pgoyette Exp $	*/
+
 /*
  * Copyright (C) 2010 Francisco Jerez.
  * All Rights Reserved.

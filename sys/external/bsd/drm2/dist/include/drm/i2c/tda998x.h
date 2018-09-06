@@ -1,3 +1,5 @@
+/*	$NetBSD: tda998x.h,v 1.1.1.1.30.1 2018/09/06 06:56:35 pgoyette Exp $	*/
+
 #ifndef __DRM_I2C_TDA998X_H__
 #define __DRM_I2C_TDA998X_H__
 

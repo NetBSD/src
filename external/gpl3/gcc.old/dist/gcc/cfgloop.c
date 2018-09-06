@@ -1,5 +1,5 @@
 /* Natural loop discovery code for GNU compiler.
-   Copyright (C) 2000-2015 Free Software Foundation, Inc.
+   Copyright (C) 2000-2016 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -20,34 +20,16 @@ along with GCC; see the file COPYING3.  If not see
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
-#include "tm.h"
+#include "backend.h"
 #include "rtl.h"
-#include "hashtab.h"
-#include "hash-set.h"
-#include "vec.h"
-#include "symtab.h"
-#include "inchash.h"
-#include "machmode.h"
-#include "hard-reg-set.h"
-#include "input.h"
-#include "function.h"
-#include "predict.h"
-#include "dominance.h"
-#include "cfg.h"
-#include "cfganal.h"
-#include "basic-block.h"
-#include "cfgloop.h"
-#include "diagnostic-core.h"
-#include "flags.h"
 #include "tree.h"
-#include "fold-const.h"
-#include "tree-ssa-alias.h"
-#include "internal-fn.h"
-#include "gimple-expr.h"
-#include "is-a.h"
 #include "gimple.h"
-#include "gimple-iterator.h"
+#include "cfghooks.h"
 #include "gimple-ssa.h"
+#include "diagnostic-core.h"
+#include "cfganal.h"
+#include "cfgloop.h"
+#include "gimple-iterator.h"
 #include "dumpfile.h"
 
 static void flow_loops_cfg_dump (FILE *);
@@ -931,37 +913,32 @@ get_loop_body_in_bfs_order (const struct loop *loop)
   basic_block *blocks;
   basic_block bb;
   bitmap visited;
-  unsigned int i = 0;
-  unsigned int vc = 1;
+  unsigned int i = 1;
+  unsigned int vc = 0;
 
   gcc_assert (loop->num_nodes);
   gcc_assert (loop->latch != EXIT_BLOCK_PTR_FOR_FN (cfun));
 
   blocks = XNEWVEC (basic_block, loop->num_nodes);
   visited = BITMAP_ALLOC (NULL);
-
-  bb = loop->header;
+  blocks[0] = loop->header;
+  bitmap_set_bit (visited, loop->header->index);
   while (i < loop->num_nodes)
     {
       edge e;
       edge_iterator ei;
-
-      if (bitmap_set_bit (visited, bb->index))
-	/* This basic block is now visited */
-	blocks[i++] = bb;
+      gcc_assert (i > vc);
+      bb = blocks[vc++];
 
       FOR_EACH_EDGE (e, ei, bb->succs)
 	{
 	  if (flow_bb_inside_loop_p (loop, e->dest))
 	    {
+	      /* This bb is now visited.  */
 	      if (bitmap_set_bit (visited, e->dest->index))
 		blocks[i++] = e->dest;
 	    }
 	}
-
-      gcc_assert (i >= vc);
-
-      bb = blocks[vc++];
     }
 
   BITMAP_FREE (visited);
@@ -1129,12 +1106,12 @@ dump_recorded_exits (FILE *file)
 /* Releases lists of loop exits.  */
 
 void
-release_recorded_exits (void)
+release_recorded_exits (function *fn)
 {
-  gcc_assert (loops_state_satisfies_p (LOOPS_HAVE_RECORDED_EXITS));
-  current_loops->exits->empty ();
-  current_loops->exits = NULL;
-  loops_state_clear (LOOPS_HAVE_RECORDED_EXITS);
+  gcc_assert (loops_state_satisfies_p (fn, LOOPS_HAVE_RECORDED_EXITS));
+  loops_for_fn (fn)->exits->empty ();
+  loops_for_fn (fn)->exits = NULL;
+  loops_state_clear (fn, LOOPS_HAVE_RECORDED_EXITS);
 }
 
 /* Returns the list of the exit edges of a LOOP.  */
@@ -1346,6 +1323,16 @@ verify_loop_structure (void)
     calculate_dominance_info (CDI_DOMINATORS);
   else
     verify_dominators (CDI_DOMINATORS);
+
+  /* Check the loop tree root.  */
+  if (current_loops->tree_root->header != ENTRY_BLOCK_PTR_FOR_FN (cfun)
+      || current_loops->tree_root->latch != EXIT_BLOCK_PTR_FOR_FN (cfun)
+      || (current_loops->tree_root->num_nodes
+	  != (unsigned) n_basic_blocks_for_fn (cfun)))
+    {
+      error ("corrupt loop tree root");
+      err = 1;
+    }
 
   /* Check the headers.  */
   FOR_EACH_BB_FN (bb, cfun)

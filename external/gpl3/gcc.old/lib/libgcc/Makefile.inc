@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.7 2017/07/23 01:11:51 mrg Exp $
+#	$NetBSD: Makefile.inc,v 1.7.2.1 2018/09/06 06:53:14 pgoyette Exp $
 
 LIBGCC_MACHINE_ARCH?=${MACHINE_ARCH:S/earmv5/earm/}
 
@@ -28,6 +28,7 @@ CPPFLAGS+=	-I${DIST}/libgcc/config/i386
 CPPFLAGS+=	-I${DIST}/libgcc/config/${LIBGCC_MACHINE_ARCH}
 .endif
 CPPFLAGS+=	-I${DIST}/gcc -I${DIST}/include -I.
+CPPFLAGS+=	${G_INTERNAL_CFLAGS:M-DHAVE_CC_TLS}
 
 .if ${LIBGCC_MACHINE_ARCH} == "powerpc" || \
     ${LIBGCC_MACHINE_ARCH} == "sh3el" || \
@@ -68,6 +69,7 @@ LIB2FUNCS_ALL+= \
 
 .if ${LIBGCC_MACHINE_ARCH} != "coldfire" && \
     empty(LIBGCC_MACHINE_ARCH:Mearm*) && \
+    empty(LIBGCC_MACHINE_ARCH:Maarch64*) && \
     empty(LIBGCC_MACHINE_ARCH:Mmips64*)
 
 # non swfloat versions 

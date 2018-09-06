@@ -1,0 +1,48 @@
+# Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+#
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+#
+# See the COPYRIGHT file distributed with this work for additional
+# information regarding copyright ownership.
+
+srcdir =	@srcdir@
+VPATH =		@srcdir@
+top_srcdir =	@top_srcdir@
+
+VERSION=@BIND9_VERSION@
+
+@BIND9_MAKE_INCLUDES@
+
+CINCLUDES =     ${ISC_INCLUDES} ${DNS_INCLUDES}
+
+CDEFINES =
+CWARNINGS =
+
+DNSLIBS =
+ISCLIBS =	../../../../lib/isc/libisc.@A@ @ISC_OPENSSL_LIBS@
+
+DNSDEPLIBS =
+ISCDEPLIBS =    ../../../../lib/isc/libisc.@A@
+
+DEPLIBS =	${ISCDEPLIBS}
+
+LIBS =		${ISCLIBS} @LIBS@
+
+TARGETS =	dnsrps@EXEEXT@
+
+DNSRPSOBJS =	dnsrps.@O@
+
+SRCS =		dnsrps.c
+
+@BIND9_MAKE_RULES@
+
+all: dnsrps@EXEEXT@
+
+dnsrps@EXEEXT@: ${DNSRPSOBJS} ${DEPLIBS}
+	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} ${LDFLAGS} -o $@ ${DNSRPSOBJS} ${LIBS}
+
+clean distclean::
+	rm -f ${TARGETS}
+

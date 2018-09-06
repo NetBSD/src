@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.24.2.1 2018/04/07 04:11:49 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.24.2.2 2018/09/06 06:51:34 pgoyette Exp $
 
 .include <bsd.own.mk>
 
@@ -13,10 +13,6 @@ authfile.c \
 bcrypt_pbkdf.c \
 bitmap.c \
 blowfish.c \
-bufaux.c \
-bufbn.c \
-bufec.c \
-buffer.c \
 canohost.c \
 channels.c \
 cipher-chachapoly.c \
@@ -43,7 +39,6 @@ kexecdh.c \
 kexecdhc.c \
 kexgex.c \
 kexgexc.c \
-key.c \
 krl.c \
 log.c \
 mac.c \

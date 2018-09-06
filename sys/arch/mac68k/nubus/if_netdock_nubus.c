@@ -1,4 +1,4 @@
-/*	$NetBSD: if_netdock_nubus.c,v 1.26.2.1 2018/07/28 04:37:36 pgoyette Exp $	*/
+/*	$NetBSD: if_netdock_nubus.c,v 1.26.2.2 2018/09/06 06:55:36 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 2000,2002 Daishi Kato <daishi@axlight.com>
@@ -43,7 +43,7 @@
 /***********************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_netdock_nubus.c,v 1.26.2.1 2018/07/28 04:37:36 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_netdock_nubus.c,v 1.26.2.2 2018/09/06 06:55:36 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -817,7 +817,7 @@ netdock_get(struct netdock_softc *sc, int datalen)
 			m->m_data = newdata;
 		}
 
-		m->m_len = len = min(datalen, len);
+		m->m_len = len = uimin(datalen, len);
 
 		data = mtod(m, u_char *);
 		len4 = len >> 2;

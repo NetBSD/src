@@ -1,0 +1,74 @@
+/*
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
+ */
+
+// NS6
+
+options {
+	query-source address 10.53.0.6 dscp 10;
+	notify-source 10.53.0.6 dscp 11;
+	transfer-source 10.53.0.6 dscp 12;
+	port @PORT@;
+	pid-file "named.pid";
+	listen-on { 10.53.0.6; };
+	listen-on-v6 { none; };
+	recursion no;
+	// minimal-responses yes;
+	querylog yes;
+	/*
+	 * test that named loads with root-delegation-only that
+	 * has a exclude list.
+	 */
+	root-delegation-only exclude { "a"; };
+};
+
+zone "." {
+	type master;
+	file "root.db";
+};
+
+zone "example.net" {
+	type master;
+	file "example.net.db.signed";
+	allow-update { any; };
+};
+
+zone "ds.example.net" {
+	type master;
+	file "ds.example.net.db.signed";
+	allow-update { any; };
+};
+
+zone "to-be-removed.tld" {
+	type master;
+	file "to-be-removed.tld.db";
+	allow-update { any; };
+};
+
+zone "broken" {
+	type master;
+	file "broken.db";
+	allow-update { any; };
+};
+
+zone "no-edns-version.tld" {
+	type master;
+	file "no-edns-version.tld.db";
+};
+
+zone "delegation-only" {
+	type master;
+	file "delegation-only.db";
+};
+
+zone "fetch.tld" {
+	type master;
+	file "fetch.tld.db";
+};

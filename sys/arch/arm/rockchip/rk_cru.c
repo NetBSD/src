@@ -1,4 +1,4 @@
-/* $NetBSD: rk_cru.c,v 1.2.2.3 2018/07/28 04:37:29 pgoyette Exp $ */
+/* $NetBSD: rk_cru.c,v 1.2.2.4 2018/09/06 06:55:27 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #include "opt_fdt_arm.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rk_cru.c,v 1.2.2.3 2018/07/28 04:37:29 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rk_cru.c,v 1.2.2.4 2018/09/06 06:55:27 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -42,8 +42,6 @@ __KERNEL_RCSID(0, "$NetBSD: rk_cru.c,v 1.2.2.3 2018/07/28 04:37:29 pgoyette Exp 
 #include <dev/clk/clk_backend.h>
 
 #include <arm/rockchip/rk_cru.h>
-
-#define	CRU_SOFTRST_CON0	0x0300
 
 static void *
 rk_cru_reset_acquire(device_t dev, const void *data, size_t len)
@@ -64,7 +62,7 @@ rk_cru_reset_assert(device_t dev, void *priv)
 {
 	struct rk_cru_softc * const sc = device_private(dev);
 	const uintptr_t reset_id = (uintptr_t)priv;
-	const bus_size_t reg = CRU_SOFTRST_CON0 + (reset_id / 16) * 4;
+	const bus_size_t reg = sc->sc_softrst_base + (reset_id / 16) * 4;
 	const u_int shift = reset_id % 16;
 
 	CRU_WRITE(sc, reg, (1 << (shift + 16)) | (1 << shift));
@@ -77,7 +75,7 @@ rk_cru_reset_deassert(device_t dev, void *priv)
 {
 	struct rk_cru_softc * const sc = device_private(dev);
 	const uintptr_t reset_id = (uintptr_t)priv;
-	const bus_size_t reg = CRU_SOFTRST_CON0 + (reset_id / 16) * 4;
+	const bus_size_t reg = sc->sc_softrst_base + (reset_id / 16) * 4;
 	const u_int shift = reset_id % 16;
 
 	CRU_WRITE(sc, reg, (1 << (shift + 16)) | (0 << shift));
