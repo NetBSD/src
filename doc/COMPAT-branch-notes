@@ -1,16 +1,17 @@
-/* $NetBSD: COMPAT-branch-notes,v 1.1.2.22 2018/09/06 08:22:10 pgoyette Exp $ */
+/* $NetBSD: COMPAT-branch-notes,v 1.1.2.23 2018/09/07 23:32:29 pgoyette Exp $ */
 
 DONE
 ----
-1.  Removed linking of the kernel compat object library into all kernels;
-    using the .o library caused some build breakage, and resulted in the
-    bulk of the compat code being included in every kernel, but without
-    any module linkage.  In turn, this caused failure when loading some
-    modules due to symbols already being defined in the kernel.
+1.  Returned the build to use a .a compat library rather than a .o
+    library.  The original method used was .a but that was changed
+    (fairly recently) as a work-around to address some support
+    routines that were not being included when needed.  These support
+    modules are now included in their own module, and the work-around
+    is therefore no longer needed.
 
-2.  Reverted some intentional breakage for loading the sysv_ipc module;
-    the breakage was introduced as the fix for the above-mentioned build
-    breakage.  
+2.  Reverted some intentional auto-load breakage for loading the sysv_ipc
+    module; the breakage was introduced as the fix for the above-mentioned
+    build breakage.  
 
 3.  Split the sysv_ipc compat routines into their own compat_sysv module.
 
@@ -19,34 +20,27 @@ DONE
 5.  Extracted some net/if.c compat routines into the compat module, and
     replaced the originals with indirect (vectored) function calls.
 
-6.  Implemented a mechanism for modules to include "aliases", allowing
-    a single module file to declare multiple names.  For example, a
-    single "compat" module could declare compat_80, compat_70, etc, and
-    other modules could depend on specific compat levels rather than on
-    the entirety of compat.
-
-7.  Reconfirmed existing compat-module dependencies, and update the
+6.  Reconfirmed existing compat-module dependencies, and update the
     defopt/defflag lines in the config files* as needed, to insure that
     built-in dependencies get resolved.
 
-8.  Fixed limits on the number of module depedencies and maximum
+7.  Fixed limits on the number of module depedencies and maximum
     recursion level have been removed.  Previous code for reporting
     module status to userland has been versioned and moved to the
     compat_80 module.
 
-9.  The old monolithic compat module has been broken into multiple
+8.  The old monolithic compat module has been broken into multiple
     modules, one for each old NetBSD version.  The monolithic module
-    is still available, and uses the alias mechanism to "advertise"
-    that the component modules are available.
+    is still available.
 
     Similarly, the compat_sysv module has also been split into several
-    version-specific modules.  (A mini-monolithic compat_sysv module
-    is still provided.)
+    version-specific modules, and the mini-monolithic compat_sysv module
+    is still provided.
 
-10. syscalls.master has been updated to autoload the version-specific
+9.  syscalls.master has been updated to autoload the version-specific
     compat modules rather than the monolithic modules.
 
-11. Separated COMPAT_BSDPTY stuff, allowing the COMPAT_60 module to be
+10. Separated COMPAT_BSDPTY stuff, allowing the COMPAT_60 module to be
     built regardless.
 
 

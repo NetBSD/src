@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_module.c,v 1.23.2.8 2018/09/06 06:56:42 pgoyette Exp $	*/
+/*	$NetBSD: sys_module.c,v 1.23.2.9 2018/09/07 23:32:30 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_module.c,v 1.23.2.8 2018/09/06 06:56:42 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_module.c,v 1.23.2.9 2018/09/07 23:32:30 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_modular.h"
@@ -111,19 +111,6 @@ out1:
 	return error;
 }
 
-static void
-copy_alias(modstat_t *ms, const char * const *aliasp, modinfo_t *mi,
-    module_t *mod)
-{
-
-	strlcpy(ms->ms_name, *aliasp, sizeof(ms->ms_name));
-	ms->ms_class = mi->mi_class;
-	ms->ms_source = mod->mod_source;
-	ms->ms_flags = mod->mod_flags;
-	SET(ms->ms_flags, MODFLG_IS_ALIAS);
-	ms->ms_reqoffset = 0;
-}
-
 static int
 handle_modctl_stat(struct iovec *iov, void *arg)
 {
@@ -144,7 +131,6 @@ handle_modctl_stat(struct iovec *iov, void *arg)
 	int off;
 	int error;
 	bool stataddr;
-	const char * const *aliasp;
 
 	/* If not privileged, don't expose kernel addresses. */
 	error = kauth_authorize_process(kauth_cred_get(), KAUTH_PROCESS_CANSEE,
@@ -162,10 +148,6 @@ handle_modctl_stat(struct iovec *iov, void *arg)
 	TAILQ_FOREACH(mod, &module_list, mod_chain) {
 		ms_cnt++;
 		mi = mod->mod_info;
-		if ((aliasp = *mi->mi_aliases) != NULL) {
-			while (*aliasp++ != NULL)
-				ms_cnt++;
-		}
 		if (mi->mi_required != NULL) {
 			req_cnt++;
 			req_len += strlen(mi->mi_required) + 1;
@@ -174,10 +156,6 @@ handle_modctl_stat(struct iovec *iov, void *arg)
 	TAILQ_FOREACH(mod, &module_builtins, mod_chain) {
 		ms_cnt++;
 		mi = mod->mod_info;
-		if ((aliasp = *mi->mi_aliases) != NULL) {
-			while (*aliasp++ != NULL)
-				ms_cnt++;
-		}
 		if (mi->mi_required != NULL) {
 			req_cnt++;
 			req_len += strlen(mi->mi_required) + 1;
@@ -218,14 +196,6 @@ handle_modctl_stat(struct iovec *iov, void *arg)
 		ms->ms_source = mod->mod_source;
 		ms->ms_flags = mod->mod_flags;
 		ms++;
-		aliasp = *mi->mi_aliases;
-		if (aliasp == NULL)
-			continue;
-		while (*aliasp) {
-			copy_alias(ms, aliasp, mi, mod);
-			aliasp++;
-			ms++;
-		}
 	}
 	TAILQ_FOREACH(mod, &module_builtins, mod_chain) {
 		mi = mod->mod_info;
@@ -248,14 +218,6 @@ handle_modctl_stat(struct iovec *iov, void *arg)
 		KASSERT(mod->mod_source == MODULE_SOURCE_KERNEL);
 		ms->ms_source = mod->mod_source;
 		ms++;
-		aliasp = *mi->mi_aliases;
-		if (aliasp == NULL)
-			continue;
-		while (*aliasp) {
-			copy_alias(ms, aliasp, mi, mod);
-			aliasp++;
-			ms++;
-		}
 	}
 	kernconfig_unlock();
 

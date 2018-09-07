@@ -1,4 +1,4 @@
-.\"	$NetBSD: module.9,v 1.42.2.7 2018/06/25 07:25:37 pgoyette Exp $
+.\"	$NetBSD: module.9,v 1.42.2.8 2018/09/07 23:32:30 pgoyette Exp $
 .\"
 .\" Copyright (c) 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd June 19, 2018
+.Dd September 8, 2018
 .Dt MODULE 9
 .Os
 .Sh NAME
@@ -52,7 +52,6 @@
 .Sh SYNOPSIS
 .In sys/module.h
 .Fn MODULE "class" "name" "required"
-.Fn MODULE_WITH_ALIASES "class" "name" "required" "aliases"
 .Ft int
 .Fn module_load "const char *name" "int flags" "prop_dictionary_t props" \
 "modclass_t class"
@@ -125,12 +124,9 @@ The module subsystem is protected by the global
 .Sh FUNCTIONS
 .Bl -tag -width abcd
 .It Fn MODULE "class" "name" "required"
-.It Fn MODULE_WITH_ALIASES "class" "name" "required" "aliases"
 The
 .Fn MODULE
-and
-.Fn MODULE_WITH_ALIASES
-macros create and initialize a
+macro creates and initialize a
 .Vt modinfo_t
 structure.
 The
@@ -173,30 +169,7 @@ When a module is loaded, all of its required modules are auto-loaded and
 initialized before the module itself is loaded.
 Loading of required modules is a recursive operation.
 .Pp
-The
-.Fa aliases
-argument is a pointer to a NULL-terminated constant array of constant
-strings.
-Each string in the array is an alternate name (i.e., an alias) of the
-module.
-Module names and aliases must all be unique; a module cannot be loaded
-if its name or any of its aliases matches the name or an alias of any
-already-loaded module.
-(Module names are displayed by the
-.Xr modstat 8
-utility, with an
-.Dv A
-in the flags column.)
-.Pp
-For example,
-.Bd -literal
-	const char * const my_pets[] = { "dog", "cat", "bird", NULL };
-
-	MODULE_WITH_ALIASES(MODULE_CLASS_MISC, pets, NULL, &my_pets);
-.Ed
-.Pp
-If there are no required modules or aliases, these arguments should be
-specified as
+If there are no required modules, this argument should be specified as
 .Dv NULL .
 .Pp
 In addition to the explicit arguments, the

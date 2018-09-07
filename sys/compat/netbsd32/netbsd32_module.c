@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_module.c,v 1.6.2.2 2018/09/06 06:55:46 pgoyette Exp $	*/
+/*	$NetBSD: netbsd32_module.c,v 1.6.2.3 2018/09/07 23:32:30 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_module.c,v 1.6.2.2 2018/09/06 06:55:46 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_module.c,v 1.6.2.3 2018/09/07 23:32:30 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -43,18 +43,6 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_module.c,v 1.6.2.2 2018/09/06 06:55:46 pgoy
 #include <compat/netbsd32/netbsd32_conv.h>
 
 #ifdef COMPAT_80
-static void
-copy_oalias(omodstat_t *oms, const char * const *aliasp, modinfo_t *mi,
-    module_t *mod)
-{
-
-	strlcpy(oms->oms_name, *aliasp, sizeof(oms->oms_name));
-	strlcpy(oms->oms_required, mi->mi_name, sizeof(oms->oms_required));
-	oms->oms_class = mi->mi_class;
-	oms->oms_source = mod->mod_source;
-	oms->oms_flags = mod->mod_flags | MODFLG_IS_ALIAS;
-}
-
 static int
 modctl32_handle_ostat(int cmd, struct netbsd32_iovec *iov, void *arg)
 {
@@ -68,7 +56,6 @@ modctl32_handle_ostat(int cmd, struct netbsd32_iovec *iov, void *arg)
 	int error;
 	int omscnt;
 	bool stataddr;
-	const char * const *aliasp;
 	const char *suffix = "...";
 
 	if (cmd != MODCTL_OSTAT)
@@ -84,18 +71,10 @@ modctl32_handle_ostat(int cmd, struct netbsd32_iovec *iov, void *arg)
 	TAILQ_FOREACH(mod, &module_list, mod_chain) {
 		omscnt++;
 		mi = mod->mod_info;
-		if ((aliasp = *mi->mi_aliases) != NULL) {
-			while (*aliasp++ != NULL)
-			omscnt++;
-		}
 	}
 	TAILQ_FOREACH(mod, &module_builtins, mod_chain) {
 		omscnt++;
 		mi = mod->mod_info;
-		if ((aliasp = *mi->mi_aliases) != NULL) {
-			while (*aliasp++ != NULL)
-			omscnt++;
-		}
 	}
 	omslen = omscnt * sizeof(omodstat_t);
 	omso = kmem_zalloc(omslen, KM_SLEEP);
@@ -123,14 +102,6 @@ modctl32_handle_ostat(int cmd, struct netbsd32_iovec *iov, void *arg)
 		oms->oms_source = mod->mod_source;
 		oms->oms_flags = mod->mod_flags;
 		oms++;
-		aliasp = *mi->mi_aliases;
-		if (aliasp == NULL)
-			continue;
-		while (*aliasp) {
-			copy_oalias(oms, aliasp, mi, mod);
-			aliasp++;
-			oms++;
-		}
 	}
 	TAILQ_FOREACH(mod, &module_builtins, mod_chain) {
 		mi = mod->mod_info;
@@ -155,14 +126,6 @@ modctl32_handle_ostat(int cmd, struct netbsd32_iovec *iov, void *arg)
 		KASSERT(mod->mod_source == MODULE_SOURCE_KERNEL);
 		oms->oms_source = mod->mod_source;
 		oms++;
-		aliasp = *mi->mi_aliases;
-		if (aliasp == NULL)
-			continue;
-		while (*aliasp) {
-			copy_oalias(oms, aliasp, mi, mod);
-			aliasp++;
-			oms++;
-		}
 	}
 	kernconfig_unlock();
 	error = copyout(omso, NETBSD32PTR64(iov->iov_base),
@@ -176,18 +139,6 @@ modctl32_handle_ostat(int cmd, struct netbsd32_iovec *iov, void *arg)
 	return error;
 }
 #endif	/* COMPAT_80 */
-
-static void
-copy_alias(modstat_t *ms, const char * const *aliasp, modinfo_t *mi,
-    module_t *mod)
-{
-
-	strlcpy(ms->ms_name, *aliasp, sizeof(ms->ms_name));
-	ms->ms_class = mi->mi_class;
-	ms->ms_source = mod->mod_source;
-	ms->ms_flags = mod->mod_flags | MODFLG_IS_ALIAS;
-	ms->ms_reqoffset = 0;
-}
 
 static int
 modctl32_handle_stat(struct netbsd32_iovec *iov, void *arg)
@@ -209,7 +160,6 @@ modctl32_handle_stat(struct netbsd32_iovec *iov, void *arg)
 	int off;
 	int error;
 	bool stataddr;
-	const char * const *aliasp;
 
 	/* If not privileged, don't expose kernel addresses. */
 	error = kauth_authorize_system(kauth_cred_get(), KAUTH_SYSTEM_MODULE,
@@ -227,22 +177,14 @@ modctl32_handle_stat(struct netbsd32_iovec *iov, void *arg)
 	TAILQ_FOREACH(mod, &module_list, mod_chain) {
 		ms_cnt++;
 		mi = mod->mod_info;
-		if ((aliasp = *mi->mi_aliases) != NULL) {
-			while (*aliasp++ != NULL)
-				ms_cnt++;
-		}
 		if (mi->mi_required != NULL) {
 			req_cnt++;
 			req_len += strlen(mi->mi_required) + 1;
 		}
 	}
 	TAILQ_FOREACH(mod, &module_builtins, mod_chain) {
-	ms_cnt++;
-	mi = mod->mod_info;
-	if ((aliasp = *mi->mi_aliases) != NULL) {
-		while (*aliasp++ != NULL)
-			ms_cnt++;
-		}
+		ms_cnt++;
+		mi = mod->mod_info;
 		if (mi->mi_required != NULL) {
 			req_cnt++;
 			req_len += strlen(mi->mi_required) + 1;
@@ -263,34 +205,26 @@ modctl32_handle_stat(struct netbsd32_iovec *iov, void *arg)
 	 * build-in module lists
 	 */
 	TAILQ_FOREACH(mod, &module_list, mod_chain) {
-	mi = mod->mod_info;
-	strlcpy(ms->ms_name, mi->mi_name, sizeof(ms->ms_name));
-	if (mi->mi_required != NULL) {
-		ms->ms_reqoffset = off;
-		used = strlcpy(req,  mi->mi_required, req_len - off);
-		KASSERTMSG(used < req_len - off, "reqlist grew!");
-		off = used + 1;
-		req += used + 1;
-	} else
-		ms->ms_reqoffset = 0;
-	if (mod->mod_kobj != NULL && stataddr) {
-		kobj_stat(mod->mod_kobj, &addr, &size);
-		ms->ms_addr = addr;
-		ms->ms_size = size;
-	}
-	ms->ms_class = mi->mi_class;
-	ms->ms_refcnt = mod->mod_refcnt;
-	ms->ms_source = mod->mod_source;
-	ms->ms_flags = mod->mod_flags;
-	ms++;
-	aliasp = *mi->mi_aliases;
-	if (aliasp == NULL)
-		continue;
-	while (*aliasp) {
-		copy_alias(ms, aliasp, mi, mod);
-		aliasp++;
-		ms++;
+		mi = mod->mod_info;
+		strlcpy(ms->ms_name, mi->mi_name, sizeof(ms->ms_name));
+		if (mi->mi_required != NULL) {
+			ms->ms_reqoffset = off;
+			used = strlcpy(req,  mi->mi_required, req_len - off);
+			KASSERTMSG(used < req_len - off, "reqlist grew!");
+			off = used + 1;
+			req += used + 1;
+		} else
+			ms->ms_reqoffset = 0;
+		if (mod->mod_kobj != NULL && stataddr) {
+			kobj_stat(mod->mod_kobj, &addr, &size);
+			ms->ms_addr = addr;
+			ms->ms_size = size;
 		}
+		ms->ms_class = mi->mi_class;
+		ms->ms_refcnt = mod->mod_refcnt;
+		ms->ms_source = mod->mod_source;
+		ms->ms_flags = mod->mod_flags;
+		ms++;
 	}
 	TAILQ_FOREACH(mod, &module_builtins, mod_chain) {
 		mi = mod->mod_info;
@@ -313,14 +247,6 @@ modctl32_handle_stat(struct netbsd32_iovec *iov, void *arg)
 		KASSERT(mod->mod_source == MODULE_SOURCE_KERNEL);
 		ms->ms_source = mod->mod_source;
 		ms++;
-		aliasp = *mi->mi_aliases;
-		if (aliasp == NULL)
-			continue;
-		while (*aliasp) {
-			copy_alias(ms, aliasp, mi, mod);
-			aliasp++;
-			ms++;
-		}
 	}
 	kernconfig_unlock();
 

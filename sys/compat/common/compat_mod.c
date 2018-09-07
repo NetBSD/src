@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_mod.c,v 1.24.14.36 2018/05/21 04:36:03 pgoyette Exp $	*/
+/*	$NetBSD: compat_mod.c,v 1.24.14.37 2018/09/07 23:32:30 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_mod.c,v 1.24.14.36 2018/05/21 04:36:03 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_mod.c,v 1.24.14.37 2018/09/07 23:32:30 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -53,13 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: compat_mod.c,v 1.24.14.36 2018/05/21 04:36:03 pgoyet
 #include <compat/common/compat_util.h>
 #include <compat/common/compat_mod.h>
 
-static const char * const compat_includes[] = {
-	"compat_80", "compat_70", "compat_60", "compat_50", "compat_40",
-	"compat_30", "compat_20", "compat_16", "compat_14", "compat_13",
-	"compat_12", "compat_10", "compat_09", "compat_43", NULL
-};
-
-MODULE_WITH_ALIASES(MODULE_CLASS_EXEC, compat, NULL, &compat_includes);
+MODULE(MODULE_CLASS_EXEC, compat, NULL);
 
 extern krwlock_t ttcompat_lock;
 
