@@ -1,4 +1,4 @@
-/* $NetBSD: plcom_fdt.c,v 1.1 2017/06/02 14:30:58 jmcneill Exp $ */
+/* $NetBSD: plcom_fdt.c,v 1.2 2018/09/07 12:50:58 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: plcom_fdt.c,v 1.1 2017/06/02 14:30:58 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: plcom_fdt.c,v 1.2 2018/09/07 12:50:58 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -62,6 +62,7 @@ plcom_fdt_attach(device_t parent, device_t self, void *aux)
 	struct plcom_softc * const sc = device_private(self);
 	struct fdt_attach_args * const faa = aux;
 	const int phandle = faa->faa_phandle;
+	char intrstr[128];
 	struct clk *clk;
 	bus_addr_t addr;
 	bus_size_t size;
@@ -69,6 +70,11 @@ plcom_fdt_attach(device_t parent, device_t self, void *aux)
 
 	if (fdtbus_get_reg(phandle, 0, &addr, &size) != 0) {
 		aprint_error(": missing 'reg' property\n");
+		return;
+	}
+
+	if (!fdtbus_intr_str(phandle, 0, intrstr, sizeof(intrstr))) {
+		aprint_error(": failed to decode interrupt\n");
 		return;
 	}
 
@@ -97,6 +103,8 @@ plcom_fdt_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 	plcom_attach_subr(sc);
+
+	aprint_normal_dev(self, "interrupting on %s\n", intrstr);
 
 	ih = fdtbus_intr_establish(phandle, 0, IPL_SERIAL, FDT_INTR_MPSAFE,
 	    plcomintr, sc);
