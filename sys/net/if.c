@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.435 2018/09/06 06:42:00 maxv Exp $	*/
+/*	$NetBSD: if.c,v 1.436 2018/09/07 13:24:14 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.435 2018/09/06 06:42:00 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.436 2018/09/07 13:24:14 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -1322,6 +1322,18 @@ if_detach(struct ifnet *ifp)
 	if_deactivate(ifp);
 	IFNET_UNLOCK(ifp);
 
+	/*
+	 * Unlink from the list and wait for all readers to leave
+	 * from pserialize read sections.  Note that we can't do
+	 * psref_target_destroy here.  See below.
+	 */
+	IFNET_GLOBAL_LOCK();
+	ifindex2ifnet[ifp->if_index] = NULL;
+	TAILQ_REMOVE(&ifnet_list, ifp, if_list);
+	IFNET_WRITER_REMOVE(ifp);
+	pserialize_perform(ifnet_psz);
+	IFNET_GLOBAL_UNLOCK();
+
 	if (ifp->if_slowtimo != NULL && ifp->if_slowtimo_ch != NULL) {
 		ifp->if_slowtimo = NULL;
 		callout_halt(ifp->if_slowtimo_ch, NULL);
@@ -1453,14 +1465,10 @@ restart:
 		}
 	}
 
-	/* Wait for all readers to drain before freeing.  */
-	IFNET_GLOBAL_LOCK();
-	ifindex2ifnet[ifp->if_index] = NULL;
-	TAILQ_REMOVE(&ifnet_list, ifp, if_list);
-	IFNET_WRITER_REMOVE(ifp);
-	pserialize_perform(ifnet_psz);
-	IFNET_GLOBAL_UNLOCK();
-
+	/*
+	 * Must be done after the above pr_purgeif because if_psref may be
+	 * still used in pr_purgeif.
+	 */
 	psref_target_destroy(&ifp->if_psref, ifnet_psref_class);
 	PSLIST_ENTRY_DESTROY(ifp, if_pslist_entry);
 
