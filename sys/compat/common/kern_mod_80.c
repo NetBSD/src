@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_mod_80.c,v 1.1.2.3 2018/09/06 21:37:43 pgoyette Exp $	*/
+/*	$NetBSD: kern_mod_80.c,v 1.1.2.4 2018/09/07 23:32:30 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_mod_80.c,v 1.1.2.3 2018/09/06 21:37:43 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_mod_80.c,v 1.1.2.4 2018/09/07 23:32:30 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_modular.h"
@@ -51,18 +51,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_mod_80.c,v 1.1.2.3 2018/09/06 21:37:43 pgoyette
 
 #include <compat/common/compat_mod.h>
 
-static void
-copy_oalias(omodstat_t *oms, const char * const *aliasp, modinfo_t *mi,
-    module_t *mod)
-{
-
-	strlcpy(oms->oms_name, *aliasp, sizeof(oms->oms_name));
-	strlcpy(oms->oms_required, mi->mi_name, sizeof(oms->oms_required));
-	oms->oms_class = mi->mi_class;
-	oms->oms_source = mod->mod_source;
-	oms->oms_flags = mod->mod_flags | MODFLG_IS_ALIAS;
-}
-
 static int
 compat_80_modstat(int cmd, struct iovec *iov, void *arg)
 {
@@ -76,7 +64,6 @@ compat_80_modstat(int cmd, struct iovec *iov, void *arg)
 	int error;
 	int omscnt;
 	bool stataddr;
-	const char * const *aliasp;
 	const char *suffix = "...";
 
 	if (cmd != MODCTL_OSTAT)
@@ -97,18 +84,10 @@ compat_80_modstat(int cmd, struct iovec *iov, void *arg)
 	TAILQ_FOREACH(mod, &module_list, mod_chain) {
 		omscnt++;
 		mi = mod->mod_info;
-		if ((aliasp = *mi->mi_aliases) != NULL) {
-			while (*aliasp++ != NULL)
-				omscnt++;
-		}
 	}
 	TAILQ_FOREACH(mod, &module_builtins, mod_chain) {
 		omscnt++;
 		mi = mod->mod_info;
-		if ((aliasp = *mi->mi_aliases) != NULL) {
-			while (*aliasp++ != NULL)
-				omscnt++;
-		}
 	}
 	omslen = omscnt * sizeof(omodstat_t);
 	omso = kmem_zalloc(omslen, KM_SLEEP);
@@ -136,14 +115,6 @@ compat_80_modstat(int cmd, struct iovec *iov, void *arg)
 		oms->oms_source = mod->mod_source;
 		oms->oms_flags = mod->mod_flags;
 		oms++;
-		aliasp = *mi->mi_aliases;
-		if (aliasp == NULL)
-			continue;
-		while (*aliasp) {
-			copy_oalias(oms, aliasp, mi, mod);
-			aliasp++;
-			oms++;
-		}
 	}
 	TAILQ_FOREACH(mod, &module_builtins, mod_chain) {
 		mi = mod->mod_info;
@@ -168,14 +139,6 @@ compat_80_modstat(int cmd, struct iovec *iov, void *arg)
 		KASSERT(mod->mod_source == MODULE_SOURCE_KERNEL);
 		oms->oms_source = mod->mod_source;
 		oms++;
-		aliasp = *mi->mi_aliases;
-		if (aliasp == NULL)
-			continue;
-		while (*aliasp) {
-			copy_oalias(oms, aliasp, mi, mod);
-			aliasp++;
-			oms++;
-		}
 	}
 	kernconfig_unlock();
 	error = copyout(omso, iov->iov_base, uimin(omslen, iov->iov_len));

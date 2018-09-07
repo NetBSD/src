@@ -1,4 +1,4 @@
-.\" $NetBSD: modstat.8,v 1.22.12.2 2018/03/15 10:03:04 pgoyette Exp $
+.\" $NetBSD: modstat.8,v 1.22.12.3 2018/09/07 23:32:30 pgoyette Exp $
 .\"
 .\" Copyright (c) 1993 Christopher G. Demetriou
 .\" All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\" <<Id: LICENSE,v 1.2 2000/06/14 15:57:33 cgd Exp>>
 .\"
-.Dd September 12, 2016
+.Dd September 8, 2018
 .Dt MODSTAT 8
 .Os
 .Sh NAME
@@ -40,8 +40,8 @@
 .Nd display status of loaded kernel modules
 .Sh SYNOPSIS
 .Nm
-.Op Fl Aaen
-.Op Ar name
+.Op Fl Aaek
+.Op Fl n Ar name | name
 .Sh DESCRIPTION
 The
 .Nm
@@ -102,11 +102,6 @@ Requires the
 flag
 .Fl f
 (force) to be loaded.
-.It Dv A
-The named module is an alias for another module.
-The REQUIRES column contains the
-.Dq real
-module name.
 .El
 .It Li REFS
 Number of references held on the module.

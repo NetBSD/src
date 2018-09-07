@@ -1,4 +1,4 @@
-/*	$NetBSD: module.h,v 1.41.14.10 2018/06/25 10:11:21 pgoyette Exp $	*/
+/*	$NetBSD: module.h,v 1.41.14.11 2018/09/07 23:32:30 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -79,7 +79,6 @@ typedef struct modinfo {
 	int			(*mi_modcmd)(modcmd_t, void *);
 	const char		*mi_name;
 	const char		*mi_required;
-	const char * const	(*mi_aliases)[];
 } const modinfo_t;
 
 /* Per module information, maintained by kern_module.c */ 
@@ -88,7 +87,6 @@ typedef struct module {
 	int			mod_flags;
 #define MODFLG_MUST_FORCE	0x01
 #define MODFLG_AUTO_LOADED	0x02
-#define	MODFLG_IS_ALIAS		0x04	/* only for export via modstat_t */
 	const modinfo_t		*mod_info;
 	struct kobj		*mod_kobj;
 	TAILQ_ENTRY(module)	mod_chain;
@@ -152,26 +150,16 @@ static void __CONCAT(moddtor_,name)(void)				\
 
 #endif /* RUMP_USE_CTOR */
 
-#define	MODULE_WITH_ALIASES(class, name, required, aliases)	\
+#define	MODULE(class, name, required)				\
 static int __CONCAT(name,_modcmd)(modcmd_t, void *);		\
 static const modinfo_t __CONCAT(name,_modinfo) = {		\
 	.mi_version = __NetBSD_Version__,			\
 	.mi_class = (class),					\
 	.mi_modcmd = __CONCAT(name,_modcmd),			\
 	.mi_name = __STRING(name),				\
-	.mi_aliases = (aliases),				\
 	.mi_required = (required)				\
 }; 								\
 _MODULE_REGISTER(name)
-
-#define	MODULE(class, name, required)				\
-	MODULE_WITH_ALIASES(class, name, required, NULL)
-
-#ifdef PRG
-static mod_alias_list __CONCAT(name,_aliases) = { aliases };	\
-	.mi_aliases = & __CONCAT(name,_aliases),		\
-
-#endif
 
 TAILQ_HEAD(modlist, module);
 
