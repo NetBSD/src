@@ -1,4 +1,4 @@
-/* $NetBSD: read.c,v 1.27 2017/12/26 17:02:19 christos Exp $ */
+/* $NetBSD: read.c,v 1.28 2018/09/07 15:16:15 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: read.c,v 1.27 2017/12/26 17:02:19 christos Exp $");
+__RCSID("$NetBSD: read.c,v 1.28 2018/09/07 15:16:15 christos Exp $");
 #endif
 
 #include <ctype.h>
@@ -713,6 +713,10 @@ inptype(const char *cp, const char **epp)
 	case FLOAT:
 	case UQUAD:
 	case QUAD:
+#ifdef INT128_SIZE
+	case UINT128:
+	case INT128:
+#endif
 	case ULONG:
 	case UINT:
 	case INT:
@@ -952,9 +956,13 @@ gettlen(const char *cp, const char **epp)
 	case LDOUBLE:
 	case VOID:
 	case ULONG:
+	case LONG:
 	case QUAD:
 	case UQUAD:
-	case LONG:
+#ifdef INT128_SIZE
+	case INT128:
+	case UINT128:
+#endif
 	case FCOMPLEX:
 	case DCOMPLEX:
 	case LCOMPLEX:
