@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_lockdebug.c,v 1.57.2.1 2018/04/02 09:07:52 martin Exp $	*/
+/*	$NetBSD: subr_lockdebug.c,v 1.57.2.2 2018/09/07 12:34:18 martin Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.57.2.1 2018/04/02 09:07:52 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.57.2.2 2018/09/07 12:34:18 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -975,6 +975,19 @@ lockdebug_show_lockstats(void (*pr)(const char *, ...))
 #endif	/* LOCKDEBUG */
 }
 #endif	/* DDB */
+
+/*
+ * lockdebug_dismiss:
+ *
+ *      The system is rebooting, and potentially from an unsafe
+ *      place so avoid any future aborts.
+ */
+void
+lockdebug_dismiss(void)
+{
+
+	atomic_inc_uint_nv(&ld_panic);
+}
 
 /*
  * lockdebug_abort:
