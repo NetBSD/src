@@ -1,4 +1,4 @@
-/*	$NetBSD: inittyp.c,v 1.11 2009/04/15 01:20:57 christos Exp $	*/
+/*	$NetBSD: inittyp.c,v 1.12 2018/09/07 15:16:15 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: inittyp.c,v 1.11 2009/04/15 01:20:57 christos Exp $");
+__RCSID("$NetBSD: inittyp.c,v 1.12 2018/09/07 15:16:15 christos Exp $");
 #endif
 
 #include <limits.h>
@@ -104,6 +104,15 @@ inittyp(void)
 		{ UQUAD,    { QUAD_SIZE, 8 * CHAR_BIT,
 				      QUAD, UQUAD,
 				      1, 1, 0, 1, 1, 0, "unsigned long long" } },
+#ifdef INT128_SIZE
+		{ INT128,   { INT128_SIZE, 16 * CHAR_BIT,
+				      INT128, UINT128,
+				      1, 0, 0, 1, 1, 0, "__int128_t" } },
+		{ UINT128,  { INT128_SIZE, 16 * CHAR_BIT,
+				      INT128, UINT128,
+				      1, 1, 0, 1, 1, 0, "__uint128_t" } },
+#endif
+
 		{ FLOAT,    { FLOAT_SIZE, 4 * CHAR_BIT,
 				      FLOAT, FLOAT,
 				      0, 0, 1, 1, 1, 0, "float" } },
