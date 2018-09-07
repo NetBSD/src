@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.218 2018/03/28 17:56:52 maya Exp $	*/
+/*	$NetBSD: locore.S,v 1.219 2018/09/07 21:14:45 macallan Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -63,7 +63,7 @@
 #include <mips/trap.h>
 #include <mips/locore.h>
 
-RCSID("$NetBSD: locore.S,v 1.218 2018/03/28 17:56:52 maya Exp $")
+RCSID("$NetBSD: locore.S,v 1.219 2018/09/07 21:14:45 macallan Exp $")
 
 #include "assym.h"
 
@@ -87,12 +87,17 @@ _C_LABEL(kernel_text):
 	mtc0	k0, MIPS_COP_0_STATUS
 	COP0_SYNC
 
-#ifdef _LP64
+#if defined(_LP64) 
 	/* Enable 64-bit addressing */
 	mfc0	k0, MIPS_COP_0_STATUS
 	MFC0_HAZARD
 	or	k0, MIPS_SR_KX | MIPS_SR_UX
 	mtc0	k0, MIPS_COP_0_STATUS
+#elif defined(__mips_n32)
+        mfc0    k0, MIPS_COP_0_STATUS
+        MFC0_HAZARD
+        or      k0, MIPS_SR_KX
+        mtc0    k0, MIPS_COP_0_STATUS
 #endif
 
 #ifdef HPCMIPS_L1CACHE_DISABLE
