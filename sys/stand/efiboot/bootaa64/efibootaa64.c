@@ -1,4 +1,4 @@
-/*	$NetBSD: efibootaa64.c,v 1.1 2018/08/24 02:01:06 jmcneill Exp $	*/
+/*	$NetBSD: efibootaa64.c,v 1.2 2018/09/07 17:30:32 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -36,6 +36,13 @@
 /* cache.S */
 void aarch64_dcache_wbinv_range(vaddr_t, vsize_t);
 void aarch64_icache_inv_all(void);
+void aarch64_exec_kernel(paddr_t, paddr_t);
+
+void
+efi_dcache_flush(u_long start, u_long size)
+{
+	aarch64_dcache_wbinv_range(start, size);
+}
 
 void
 efi_boot_kernel(u_long marks[MARK_MAX])
@@ -51,5 +58,5 @@ efi_boot_kernel(u_long marks[MARK_MAX])
 		aarch64_dcache_wbinv_range((u_long)efi_fdt_data(), efi_fdt_size());
 	aarch64_icache_inv_all();
 
-	kernel_entry((register_t)efi_fdt_data(), 0, 0, 0);
+	aarch64_exec_kernel((paddr_t)marks[MARK_ENTRY], (paddr_t)efi_fdt_data());
 }
