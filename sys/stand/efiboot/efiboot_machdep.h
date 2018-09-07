@@ -1,4 +1,4 @@
-/* $NetBSD: efiboot_machdep.h,v 1.1 2018/08/24 02:01:06 jmcneill Exp $ */
+/* $NetBSD: efiboot_machdep.h,v 1.2 2018/09/07 17:30:32 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -30,4 +30,5 @@
 #define	EFIBOOT_ALIGN 0
 #endif
 
+void efi_dcache_flush(u_long, u_long);
 void efi_boot_kernel(u_long[]);
