@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.1,v 1.1.2.21 2018/09/06 08:11:54 martin Exp $
+# $NetBSD: CHANGES-8.1,v 1.1.2.22 2018/09/07 12:38:23 martin Exp $
 
 A complete list of changes from the NetBSD 8.0 release to the NetBSD 8.1
 release:
@@ -941,4 +941,41 @@ external/gpl3/gcc/usr.bin/gcc/arch/x86_64/configargs.h		(patch)
 	it to CPPFLAGS. This fixes PR#53567.
 	Regen (mknative).
 	[mrg, ticket #1009]
+
+sys/dev/scsipi/scsipi_base.c			1.178
+
+	Async event can be called before the adapter is running (pmax tc asc).
+	[mrg, ticket #1010]
+
+sys/arch/amd64/conf/GENERIC			1.502 (patch)
+sys/arch/i386/conf/GENERIC			1.1188 (patch)
+sys/dev/usb/usbdevices.config			1.32 (patch)
+
+	Add commented entries that exist in amd64 GENERIC: oboe, mos, umb.
+	Comment out uscanner(4) -- usb scanners use ugen(4) interface.
+	Use dev/usb/usbdevices.config, gaining these missing drivers:
+	slurm(4), uthum(4), umcs(4), uark(4), upgt(4), and usmsc(4).
+	[mrg, ticket #1011]
+
+sys/net/route.c					1.212,1.213
+
+	Fix reference leak in the delyed route free mechanism.
+	Avoid a race overwriting rt_free_global.enqueued.
+	[ozaki-r, ticket #1012]
+
+sys/ddb/db_command.c				1.155 (patch)
+sys/kern/subr_lockdebug.c			1.65 (patch)
+sys/sys/lockdebug.h				1.20 (patch)
+
+	Add a lockdebug_dismiss() function for DDB to use that tells
+	lockdebug to avoid asserts.  use it for the ddb "reboot"
+	command, so that it doesn't matter how ddb was entered, the
+	reboot not trigger mutex checks and not work.
+	[mrg, ticket #1013]
+
+sys/dev/pci/ixgbe/ix_txrx.c			1.50
+
+	Fix a wrong error return value from ixgbe_mq_start (an if_transmit
+	function).
+	[msaitoh, ticket #1014]
 
