@@ -1,4 +1,4 @@
-/*	$NetBSD: efiboot.h,v 1.3 2018/09/03 00:04:02 jmcneill Exp $	*/
+/*	$NetBSD: efiboot.h,v 1.4 2018/09/07 17:30:58 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -52,6 +52,8 @@ extern const struct boot_command commands[];
 void command_help(char *);
 int set_default_device(char *);
 char *get_default_device(void);
+int set_initrd_path(char *);
+char *get_initrd_path(void);
 
 /* console.c */
 int ischar(void);

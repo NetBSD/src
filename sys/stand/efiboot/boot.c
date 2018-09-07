@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.5 2018/09/03 00:17:00 jmcneill Exp $	*/
+/*	$NetBSD: boot.c,v 1.6 2018/09/07 17:30:58 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -53,17 +53,20 @@ static const char * const names[][2] = {
 #define	DEFTIMEOUT	5
 
 static char default_device[32];
+static char initrd_path[255];
 
 void	command_boot(char *);
 void	command_dev(char *);
+void	command_initrd(char *);
 void	command_ls(char *);
 void	command_reset(char *);
 void	command_version(char *);
 void	command_quit(char *);
 
 const struct boot_command commands[] = {
-	{ "boot",	command_boot,		"boot [fsN:][filename] [args]\n     (ex. \"fs0:\\netbsd.old -s\"" },
+	{ "boot",	command_boot,		"boot [dev:][filename] [args]\n     (ex. \"hd0a:\\netbsd.old -s\"" },
 	{ "dev",	command_dev,		"dev" },
+	{ "initrd",	command_initrd,		"initrd [dev:][filename]" },
 	{ "ls",		command_ls,		"ls [hdNn:/path]" },
 	{ "version",	command_version,	"version" },
 	{ "help",	command_help,		"help|?" },
@@ -111,6 +114,12 @@ command_dev(char *arg)
 }
 
 void
+command_initrd(char *arg)
+{
+	set_initrd_path(arg);
+}
+
+void
 command_ls(char *arg)
 {
 	ls(arg);
@@ -155,6 +164,21 @@ char *
 get_default_device(void)
 {
 	return default_device;
+}
+
+int
+set_initrd_path(char *arg)
+{
+	if (strlen(arg) + 1 > sizeof(initrd_path))
+		return ERANGE;
+	strcpy(initrd_path, arg);
+	return 0;
+}
+
+char *
+get_initrd_path(void)
+{
+	return initrd_path;
 }
 
 void
