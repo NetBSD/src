@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1185 2018/09/06 19:19:44 maxv Exp $
+# $NetBSD: mi,v 1.1186 2018/09/07 20:44:04 para Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -5983,6 +5983,7 @@
 ./var/chroot/nsd/var				base-sys-root
 ./var/chroot/nsd/var/db				base-sys-root
 ./var/chroot/nsd/var/db/nsd			base-sys-root
+./var/chroot/nsd/var/run			base-sys-root
 ./var/chroot/ntpd				base-ntp-root
 ./var/chroot/ntpd/dev				base-ntp-root
 ./var/chroot/ntpd/etc				base-ntp-root
