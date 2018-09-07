@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.194.6.10 2018/06/08 10:14:33 martin Exp $	*/
+/*	$NetBSD: route.c,v 1.194.6.11 2018/09/07 12:31:30 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.194.6.10 2018/06/08 10:14:33 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.194.6.11 2018/09/07 12:31:30 martin Exp $");
 
 #include <sys/param.h>
 #ifdef RTFLUSH_DEBUG
@@ -702,8 +702,8 @@ rt_free_work(struct work *wk, void *arg)
 		struct rtentry *rt;
 
 		mutex_enter(&rt_free_global.lock);
-		rt_free_global.enqueued = false;
 		if ((rt = SLIST_FIRST(&rt_free_global.queue)) == NULL) {
+			rt_free_global.enqueued = false;
 			mutex_exit(&rt_free_global.lock);
 			return;
 		}
@@ -726,7 +726,7 @@ rt_free(struct rtentry *rt)
 	}
 
 	mutex_enter(&rt_free_global.lock);
-	rt_ref(rt);
+	/* No need to add a reference here. */
 	SLIST_INSERT_HEAD(&rt_free_global.queue, rt, rt_free);
 	if (!rt_free_global.enqueued) {
 		workqueue_enqueue(rt_free_global.wq, &rt_free_global.wk, NULL);
