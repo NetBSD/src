@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.85 2018/06/29 20:18:05 christos Exp $	*/
+/*	$NetBSD: tree.c,v 1.86 2018/09/07 15:16:15 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.85 2018/06/29 20:18:05 christos Exp $");
+__RCSID("$NetBSD: tree.c,v 1.86 2018/09/07 15:16:15 christos Exp $");
 #endif
 
 #include <stdlib.h>
@@ -1298,11 +1298,13 @@ asgntypok(op_t op, int arg, tnode_t *ln, tnode_t *rn)
 	switch (op) {
 	case INIT:
 		/* initialisation type mismatch */
-		error(185);
+		error(185, tyname(lbuf, sizeof(lbuf), ltp), 
+		    tyname(rbuf, sizeof(rbuf), rtp));
 		break;
 	case RETURN:
 		/* return value type mismatch */
-		error(211);
+		error(211, tyname(lbuf, sizeof(lbuf), ltp),
+		    tyname(rbuf, sizeof(rbuf), rtp));
 		break;
 	case FARG:
 		/* argument is incompatible with prototype, arg #%d */
