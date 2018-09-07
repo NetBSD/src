@@ -20,11 +20,13 @@
 -- Several entry points leak kernel addresses:
        [DONE] - "modstat -k"
        - "netstat -nat"
-       - kern.proc
-       - kern.proc2
+       [DONE] - kern.proc
+       [DONE] - kern.proc2
        - kern.file
        - kern.file2
        - kern.lwp
+       - sysctl_inpcblist
+       - sysctl_unpcblist
 
 -- Be careful with dmesg.
 
