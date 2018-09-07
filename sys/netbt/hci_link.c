@@ -1,4 +1,4 @@
-/*	$NetBSD: hci_link.c,v 1.24 2014/05/20 18:25:54 rmind Exp $	*/
+/*	$NetBSD: hci_link.c,v 1.25 2018/09/07 14:47:15 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hci_link.c,v 1.24 2014/05/20 18:25:54 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hci_link.c,v 1.25 2018/09/07 14:47:15 plunky Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -475,12 +475,15 @@ hci_acl_recv(struct mbuf *m, struct hci_unit *unit)
 
 	switch (pb) {
 	case HCI_PACKET_START:
-		if (link->hl_rxp != NULL)
+		if (m->m_pkthdr.len < sizeof(l2cap_hdr_t))
+			goto bad;
+
+		if (link->hl_rxp != NULL) {
 			aprint_error_dev(unit->hci_dev,
 			    "dropped incomplete ACL packet\n");
 
-		if (m->m_pkthdr.len < sizeof(l2cap_hdr_t))
-			goto bad;
+			m_freem(link->hl_rxp);
+		}
 
 		link->hl_rxp = m;
 		got = m->m_pkthdr.len;
@@ -508,17 +511,23 @@ hci_acl_recv(struct mbuf *m, struct hci_unit *unit)
 	}
 
 	m_copydata(m, 0, sizeof(want), &want);
-	want = le16toh(want) + sizeof(l2cap_hdr_t) - got;
+	want = le16toh(want);
+	got -= sizeof(l2cap_hdr_t);
 
-	if (want > 0)
+	if (got < want)		/* wait for more */
 		return;
 
 	link->hl_rxp = NULL;
 
-	if (want == 0) {
-		l2cap_recv_frame(m, link);
-		return;
+	if (got > want) {
+		DPRINTF("%s: packet overflow\n",
+			device_xname(unit->hci_dev));
+
+		goto bad;
 	}
+
+	l2cap_recv_frame(m, link);
+	return;
 
 bad:
 	m_freem(m);
