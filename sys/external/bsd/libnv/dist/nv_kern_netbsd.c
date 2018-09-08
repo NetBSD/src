@@ -1,4 +1,4 @@
-/*	$NetBSD: nv_kern_netbsd.c,v 1.1 2018/09/08 14:02:15 christos Exp $	*/
+/*	$NetBSD: nv_kern_netbsd.c,v 1.2 2018/09/08 14:12:53 christos Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -29,8 +29,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/ctypes.h>
-__RCSID("$NetBSD: nv_kern_netbsd.c,v 1.1 2018/09/08 14:02:15 christos Exp $");
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: nv_kern_netbsd.c,v 1.2 2018/09/08 14:12:53 christos Exp $");
 
 #if !defined(_KERNEL) && !defined(_STANDALONE)
 #include <sys/mman.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: nvlist.c,v 1.2 2018/09/08 14:02:15 christos Exp $	*/
+/*	$NetBSD: nvlist.c,v 1.3 2018/09/08 14:12:53 christos Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -36,7 +36,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: head/sys/contrib/libnv/nvlist.c 335347 2018-06-18 22:57:32Z oshogbo $");
 #else
-__RCSID("$NetBSD: nvlist.c,v 1.2 2018/09/08 14:02:15 christos Exp $");
+__RCSID("$NetBSD: nvlist.c,v 1.3 2018/09/08 14:12:53 christos Exp $");
 #endif
 
 #include <sys/param.h>
@@ -77,7 +77,7 @@ __RCSID("$NetBSD: nvlist.c,v 1.2 2018/09/08 14:02:15 christos Exp $");
 #ifdef __FreeBSD__
 #include <sys/nv.h>
 #else
-#incude "nv.h"
+#include "nv.h"
 #endif
 
 #include "nv_impl.h"
