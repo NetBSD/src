@@ -1,3 +1,5 @@
+/*	$NetBSD: nv.h,v 1.2 2018/09/08 14:02:15 christos Exp $	*/
+
 /*-
  * SPDX-License-Identifier: BSD-2-Clause
  *
@@ -37,11 +39,13 @@
 
 #include <sys/cdefs.h>
 
-#ifndef _KERNEL
+#if !defined(_KERNEL) && !defined(_STANDALONE)
 #include <stdarg.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
+#else
+#include <sys/types.h>
 #endif
 
 #ifndef	_NVLIST_T_DECLARED
@@ -92,7 +96,7 @@ void		 nvlist_set_error(nvlist_t *nvl, int error);
 
 nvlist_t *nvlist_clone(const nvlist_t *nvl);
 
-#ifndef _KERNEL
+#if !defined(_KERNEL) && !defined(_STANDALONE)
 void nvlist_dump(const nvlist_t *nvl, int fd);
 void nvlist_fdump(const nvlist_t *nvl, FILE *fp);
 #endif
@@ -132,7 +136,7 @@ bool nvlist_exists_bool_array(const nvlist_t *nvl, const char *name);
 bool nvlist_exists_number_array(const nvlist_t *nvl, const char *name);
 bool nvlist_exists_string_array(const nvlist_t *nvl, const char *name);
 bool nvlist_exists_nvlist_array(const nvlist_t *nvl, const char *name);
-#ifndef _KERNEL
+#if !defined(_KERNEL) && !defined(_STANDALONE)
 bool nvlist_exists_descriptor(const nvlist_t *nvl, const char *name);
 bool nvlist_exists_descriptor_array(const nvlist_t *nvl, const char *name);
 #endif
@@ -157,7 +161,7 @@ void nvlist_add_bool_array(nvlist_t *nvl, const char *name, const bool *value, s
 void nvlist_add_number_array(nvlist_t *nvl, const char *name, const uint64_t *value, size_t nitems);
 void nvlist_add_string_array(nvlist_t *nvl, const char *name, const char * const *value, size_t nitems);
 void nvlist_add_nvlist_array(nvlist_t *nvl, const char *name, const nvlist_t * const *value, size_t nitems);
-#ifndef _KERNEL
+#if !defined(_KERNEL) && !defined(_STANDALONE)
 void nvlist_add_descriptor(nvlist_t *nvl, const char *name, int value);
 void nvlist_add_descriptor_array(nvlist_t *nvl, const char *name, const int *value, size_t nitems);
 #endif
@@ -166,7 +170,7 @@ void nvlist_append_bool_array(nvlist_t *nvl, const char *name, const bool value)
 void nvlist_append_number_array(nvlist_t *nvl, const char *name, const uint64_t value);
 void nvlist_append_string_array(nvlist_t *nvl, const char *name, const char * const value);
 void nvlist_append_nvlist_array(nvlist_t *nvl, const char *name, const nvlist_t * const value);
-#ifndef _KERNEL
+#if !defined(_KERNEL) && !defined(_STANDALONE)
 void nvlist_append_descriptor_array(nvlist_t *nvl, const char *name, int value);
 #endif
 
@@ -182,7 +186,7 @@ void nvlist_move_bool_array(nvlist_t *nvl, const char *name, bool *value, size_t
 void nvlist_move_string_array(nvlist_t *nvl, const char *name, char **value, size_t nitems);
 void nvlist_move_nvlist_array(nvlist_t *nvl, const char *name, nvlist_t **value, size_t nitems);
 void nvlist_move_number_array(nvlist_t *nvl, const char *name, uint64_t *value, size_t nitems);
-#ifndef _KERNEL
+#if !defined(_KERNEL) && !defined(_STANDALONE)
 void nvlist_move_descriptor(nvlist_t *nvl, const char *name, int value);
 void nvlist_move_descriptor_array(nvlist_t *nvl, const char *name, int *value, size_t nitems);
 #endif
@@ -202,7 +206,7 @@ const bool		*nvlist_get_bool_array(const nvlist_t *nvl, const char *name, size_t
 const uint64_t		*nvlist_get_number_array(const nvlist_t *nvl, const char *name, size_t *nitemsp);
 const char * const	*nvlist_get_string_array(const nvlist_t *nvl, const char *name, size_t *nitemsp);
 const nvlist_t * const	*nvlist_get_nvlist_array(const nvlist_t *nvl, const char *name, size_t *nitemsp);
-#ifndef _KERNEL
+#if !defined(_KERNEL) && !defined(_STANDALONE)
 int			 nvlist_get_descriptor(const nvlist_t *nvl, const char *name);
 const int		*nvlist_get_descriptor_array(const nvlist_t *nvl, const char *name, size_t *nitemsp);
 #endif
@@ -222,7 +226,7 @@ bool		 *nvlist_take_bool_array(nvlist_t *nvl, const char *name, size_t *nitemsp)
 uint64_t	 *nvlist_take_number_array(nvlist_t *nvl, const char *name, size_t *nitemsp);
 char		**nvlist_take_string_array(nvlist_t *nvl, const char *name, size_t *nitemsp);
 nvlist_t	**nvlist_take_nvlist_array(nvlist_t *nvl, const char *name, size_t *nitemsp);
-#ifndef _KERNEL
+#if !defined(_KERNEL) && !defined(_STANDALONE)
 int		 nvlist_take_descriptor(nvlist_t *nvl, const char *name);
 int		 *nvlist_take_descriptor_array(nvlist_t *nvl, const char *name, size_t *nitemsp);
 #endif
@@ -246,9 +250,31 @@ void nvlist_free_number_array(nvlist_t *nvl, const char *name);
 void nvlist_free_string_array(nvlist_t *nvl, const char *name);
 void nvlist_free_nvlist_array(nvlist_t *nvl, const char *name);
 void nvlist_free_binary_array(nvlist_t *nvl, const char *name);
-#ifndef _KERNEL
+#if !defined(_KERNEL) && !defined(_STANDALONE)
 void nvlist_free_descriptor(nvlist_t *nvl, const char *name);
 void nvlist_free_descriptor_array(nvlist_t *nvl, const char *name);
+#endif
+
+#ifdef __NetBSD__
+/*
+ * ioctl kernel-userspace interface.
+ */
+
+typedef struct {
+	void *		buf;
+	size_t		len;
+	int		flags;
+} nvlist_ref_t;
+
+#if defined(_KERNEL)
+int nvlist_copyin(const nvlist_ref_t *nref, nvlist_t **nvlp, size_t lim);
+int nvlist_copyout(nvlist_ref_t *nref, const nvlist_t *nvl);
+#else
+int nvlist_xfer_ioctl(int fd, unsigned long cmd, const nvlist_t *nvl,
+    nvlist_t **nvlp);
+int nvlist_send_ioctl(int fd, unsigned long cmd, const nvlist_t *nvl);
+int nvlist_recv_ioctl(int fd, unsigned long cmd, nvlist_t **nvlp);
+#endif
 #endif
 
 __END_DECLS
