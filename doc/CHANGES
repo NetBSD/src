@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2440 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2441 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -222,3 +222,4 @@ Changes from NetBSD 8.0 to NetBSD 9.0:
 	mpc: Updated to version 1.1.0. [mrg 20180904]
 	kernel: Remove en(4). [maxv 20180906]
 	kernel: Remove the NATM code. [maxv 20180906]
+	libnv: Imported from FreeBSD [christos 20180908]
