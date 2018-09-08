@@ -1,4 +1,4 @@
-# $NetBSD: t_builtin.sh,v 1.1 2018/09/05 21:05:40 kre Exp $
+# $NetBSD: t_builtin.sh,v 1.2 2018/09/08 18:24:01 kre Exp $
 #
 # Copyright (c) 2018 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -95,7 +95,8 @@ Not_builtin()
 
 setup()
 {
-	case "$( ${TEST_SH} -c 'type printf' 2>&1 )" in
+	case "$(unset LANG LC_ALL LC_NUMERIC LC_CTYPE LC_MESSAGES
+	    ${TEST_SH} -c 'type printf' 2>&1 )" in
 
 	( *[Bb]uiltin* | *[Bb]uilt[-\ ][Ii]n* )
 		# nothing here, it all happens below.
