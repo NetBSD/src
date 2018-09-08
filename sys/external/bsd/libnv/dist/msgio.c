@@ -1,3 +1,5 @@
+/*	$NetBSD: msgio.c,v 1.2 2018/09/08 14:02:15 christos Exp $	*/
+
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
  *
@@ -31,10 +33,15 @@
  */
 
 #include <sys/cdefs.h>
+#ifdef __FreeBSD__
 __FBSDID("$FreeBSD: head/lib/libnv/msgio.c 326219 2017-11-26 02:00:33Z pfg $");
+#else
+__RCSID("$NetBSD: msgio.c,v 1.2 2018/09/08 14:02:15 christos Exp $");
+#endif
 
 #include <sys/param.h>
 #include <sys/socket.h>
+#include <sys/select.h>
 
 #include <errno.h>
 #include <fcntl.h>
@@ -58,7 +65,12 @@ __FBSDID("$FreeBSD: head/lib/libnv/msgio.c 326219 2017-11-26 02:00:33Z pfg $");
 #define	PJDLOG_ABORT(...)		abort()
 #endif
 
+#ifdef __linux__
+/* Linux: arbitrary size, but must be lower than SCM_MAX_FD. */
+#define	PKG_MAX_SIZE	((64U - 1) * CMSG_SPACE(sizeof(int)))
+#else
 #define	PKG_MAX_SIZE	(MCLBYTES / CMSG_SPACE(sizeof(int)) - 1)
+#endif
 
 static int
 msghdr_add_fd(struct cmsghdr *cmsg, int fd)
@@ -162,6 +174,7 @@ msg_send(int sock, const struct msghdr *msg)
 	return (0);
 }
 
+#ifdef __FreeBSD__
 int
 cred_send(int sock)
 {
@@ -237,6 +250,7 @@ cred_recv(int sock, struct cmsgcred *cred)
 
 	return (0);
 }
+#endif
 
 static int
 fd_package_send(int sock, const int *fds, size_t nfds)
