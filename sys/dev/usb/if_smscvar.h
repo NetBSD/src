@@ -1,4 +1,4 @@
-/*	$NetBSD: if_smscvar.h,v 1.5 2016/04/23 10:15:31 skrll Exp $	*/
+/*	$NetBSD: if_smscvar.h,v 1.6 2018/09/08 13:10:08 mlelstv Exp $	*/
 
 /*	$OpenBSD: if_smscreg.h,v 1.2 2012/09/27 12:38:11 jsg Exp $	*/
 /*-
@@ -46,16 +46,17 @@ struct smsc_chain {
 struct smsc_cdata {
 	struct smsc_chain	 tx_chain[SMSC_TX_LIST_CNT];
 	struct smsc_chain	 rx_chain[SMSC_RX_LIST_CNT];
-	int			 tx_prod;
-	int			 tx_cons;
-	int			 tx_cnt;
-	int			 rx_prod;
+	int			 tx_free;
+	int			 tx_next;
+	int			 rx_next;
 };
 
 struct smsc_softc {
 	device_t		sc_dev;
 	struct usbd_device *	sc_udev;
 	bool			sc_dying;
+	bool			sc_stopping;
+	bool			sc_ttpending;
 
 	uint8_t			sc_enaddr[ETHER_ADDR_LEN];
 	struct ethercom		sc_ec;
@@ -77,12 +78,15 @@ struct smsc_softc {
 	int			sc_refcnt;
 
 	struct usb_task		sc_tick_task;
-	struct usb_task		sc_stop_task;
 
 	int			sc_ed[SMSC_ENDPT_MAX];
 	struct usbd_pipe *	sc_ep[SMSC_ENDPT_MAX];
 
+	kmutex_t		sc_lock;
+	kmutex_t		sc_txlock;
+	kmutex_t		sc_rxlock;
 	kmutex_t		sc_mii_lock;
+	kcondvar_t		sc_detachcv;
 
 	struct smsc_cdata	sc_cdata;
 	callout_t		sc_stat_ch;
@@ -92,6 +96,9 @@ struct smsc_softc {
 
 	uint32_t		sc_flags;
 #define	SMSC_FLAG_LINK      0x0001
+
+	struct if_percpuq *sc_ipq;		/* softint-based input queues */
+
 };
 
 #define SMSC_MIN_BUFSZ		2048
