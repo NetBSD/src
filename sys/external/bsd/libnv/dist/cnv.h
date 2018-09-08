@@ -1,3 +1,5 @@
+/*	$NetBSD: cnv.h,v 1.2 2018/09/08 14:02:15 christos Exp $	*/
+
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
  *
@@ -33,7 +35,7 @@
 
 #include <sys/cdefs.h>
 
-#ifndef _KERNEL
+#if !defined(_KERNEL) && !defined(_STANDALONE)
 #include <stdarg.h>
 #include <stdbool.h>
 #include <stdint.h>
@@ -70,7 +72,7 @@ const bool		*cnvlist_get_bool_array(const void *cookie, size_t *nitemsp);
 const uint64_t		*cnvlist_get_number_array(const void *cookie, size_t *nitemsp);
 const char * const	*cnvlist_get_string_array(const void *cookie, size_t *nitemsp);
 const nvlist_t * const	*cnvlist_get_nvlist_array(const void *cookie, size_t *nitemsp);
-#ifndef _KERNEL
+#if !defined(_KERNEL) && !defined(_STANDALONE)
 int			 cnvlist_get_descriptor(const void *cookie);
 const int		*cnvlist_get_descriptor_array(const void *cookie, size_t *nitemsp);
 #endif
@@ -91,7 +93,7 @@ bool			 *cnvlist_take_bool_array(void *cookie, size_t *nitemsp);
 uint64_t		 *cnvlist_take_number_array(void *cookie, size_t *nitemsp);
 char			**cnvlist_take_string_array(void *cookie, size_t *nitemsp);
 nvlist_t		**cnvlist_take_nvlist_array(void *cookie, size_t *nitemsp);
-#ifndef _KERNEL
+#if !defined(_KERNEL) && !defined(_STANDALONE)
 int			  cnvlist_take_descriptor(void *cookie);
 int			 *cnvlist_take_descriptor_array(void *cookie, size_t *nitemsp);
 #endif
@@ -110,7 +112,7 @@ void	cnvlist_free_bool_array(void *cookie);
 void	cnvlist_free_number_array(void *cookie);
 void	cnvlist_free_string_array(void *cookie);
 void	cnvlist_free_nvlist_array(void *cookie);
-#ifndef _KERNEL
+#if !defined(_KERNEL) && !defined(_STANDALONE)
 void	cnvlist_free_descriptor(void *cookie);
 void	cnvlist_free_descriptor_array(void *cookie);
 #endif
