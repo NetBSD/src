@@ -1,3 +1,5 @@
+/*	$NetBSD: nvpair_impl.h,v 1.2 2018/09/08 14:02:15 christos Exp $	*/
+
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
  *
@@ -35,10 +37,14 @@
 #ifndef	_NVPAIR_IMPL_H_
 #define	_NVPAIR_IMPL_H_
 
+#ifdef __FreeBSD__
 #include <sys/nv.h>
+#else
+#include "nv.h"
+#endif
 #include <sys/queue.h>
 
-#ifndef _KERNEL
+#if !defined(_KERNEL) && !defined(_STANDALONE)
 #include <stdint.h>
 #endif
 

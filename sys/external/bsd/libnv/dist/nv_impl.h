@@ -1,3 +1,5 @@
+/*	$NetBSD: nv_impl.h,v 1.2 2018/09/08 14:02:15 christos Exp $	*/
+
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
  *
@@ -35,6 +37,8 @@
 #ifndef	_NV_IMPL_H_
 #define	_NV_IMPL_H_
 
+#include "nv_compat.h"
+
 #ifndef	_NVPAIR_T_DECLARED
 #define	_NVPAIR_T_DECLARED
 struct nvpair;
@@ -51,22 +55,31 @@ typedef struct nvpair nvpair_t;
 #define	NV_FLAG_BIG_ENDIAN		0x080
 #define	NV_FLAG_IN_ARRAY		0x100
 
-#ifdef _KERNEL
+#if defined(_KERNEL)
 #define	nv_malloc(size)			malloc((size), M_NVLIST, M_WAITOK)
+#ifdef __FreeBSD__
 #define	nv_calloc(n, size)		mallocarray((n), (size), M_NVLIST, \
 					    M_WAITOK | M_ZERO)
+#else
+extern void *nv_calloc(size_t, size_t);
+#endif
 #define	nv_realloc(buf, size)		realloc((buf), (size), M_NVLIST, \
 					    M_WAITOK)
 #define	nv_free(buf)			free((buf), M_NVLIST)
+#ifdef __FreeBSD__
 #define	nv_strdup(buf)			strdup((buf), M_NVLIST)
+#else
+extern char *nv_strdup(const char *);
+#endif
 #define	nv_vasprintf(ptr, ...)		vasprintf(ptr, M_NVLIST, __VA_ARGS__)
-
-#define	ERRNO_SET(var)			do { } while (0)
-#define	ERRNO_SAVE()			do { do { } while(0)
-#define	ERRNO_RESTORE()			} while (0)
-
-#define	ERRNO_OR_DEFAULT(default)	(default)
-
+#endif
+#elif defined(_STANDALONE)
+extern void *nv_malloc(size_t);
+extern void *nv_calloc(size_t, size_t);
+extern void *nv_realloc(void *, size_t);
+extern void nv_free(void *);
+extern char *nv_strdup(const char *);
+#define	nv_vasprintf(ptr, ...)		vasprintf(ptr, M_NVLIST, __VA_ARGS__)
 #else
 
 #define	nv_malloc(size)			malloc((size))
@@ -87,6 +100,14 @@ typedef struct nvpair nvpair_t;
 
 #define	ERRNO_OR_DEFAULT(default)	(errno == 0 ? (default) : errno)
 
+#endif
+
+#ifndef ERRNO_SET
+#define	ERRNO_SET(var)			do { } while (/*CONSTCOND*/0)
+#define	ERRNO_SAVE()			do { do { } while(/*CONSTCOND*/0)
+#define	ERRNO_RESTORE()			} while (/*CONSTCOND*/0)
+
+#define	ERRNO_OR_DEFAULT(default)	(default)
 #endif
 
 int	*nvlist_descriptors(const nvlist_t *nvl, size_t *nitemsp);
