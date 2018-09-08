@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1563 2018/09/08 09:02:50 wiz Exp $
+#	$NetBSD: 3RDPARTY,v 1.1564 2018/09/08 13:26:12 christos Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -2051,3 +2051,20 @@ Responsible:
 Location:	sys/dev/microcode/zyd
 Notes:
 
+Package:	libnv
+Version:	20180906
+Current Vers:	$(date)
+Maintainer:	christos
+Archive Site:
+Home Page:
+Mailing List:
+License:	BSD-like (2-clause)
+Responsible:	
+Location:	sys/external/bsd/libnv/dist
+Notes:
+To be used only for npf (library and headers are private)
+Copied from FreeBSD:
+/usr/src/sys/sys/{d,c,}nv.h
+/usr/src/lib/libnv/
+/usr/src/contrib/lib/libnv/
+/usr/src/share/man/man9/{d,c,}nv.9
