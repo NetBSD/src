@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC64,v 1.34 2018/09/02 01:17:23 jmcneill Exp $
+#	$NetBSD: GENERIC64,v 1.35 2018/09/08 00:42:01 jmcneill Exp $
 #
 #	GENERIC ARM (aarch64) kernel
 #
@@ -170,6 +170,7 @@ tegra210car*	at fdt? pass 3		# NVIDIA Tegra CAR (T210)
 
 # GPIO controller
 bcmgpio*	at fdt?			# Broadcom BCM283x GPIO
+pl061gpio*	at fdt?			# ARM PrimeCell PL061 GPIO
 sunxigpio*	at fdt? pass 3		# Allwinner GPIO
 tegragpio*	at fdt? pass 2		# NVIDIA Tegra GPIO
 rkgpio*		at rkiomux?		# Rockchip GPIO
@@ -187,14 +188,17 @@ tegra210xpad*	at fdt?			# NVIDIA Tegra XUSB PADCTL (T210)
 tegra210xphy*	at tegra210xpad?
 
 # PCIE
+pcihost*	at fdt?			# Generic PCI host controller
 tegrapcie0	at fdt?			# NVIDIA Tegra PCIE
-pci*		at tegrapcie0
+pci*		at pcibus? 
 ppb*		at pci? dev ? function ?
 pci*		at ppb?
 
 # Ethernet
 awge*		at fdt?				# DesignWare Gigabit Ethernet
 emac*		at fdt?				# Allwinner Gigabit Ethernet (EMAC)
+#mskc*		at pci? dev ? function ?	# Marvell Yukon 2 Gigabit Ethernet
+#msk*		at mskc?
 re*		at pci? dev ? function ?	# Realtek RTL8111GS
 
 # MII/PHY support
@@ -343,9 +347,12 @@ sunxiusb3phy*	at fdt? pass 9		# Allwinner USB3 PHY
 tegrausbphy*	at fdt?			# NVIDIA Tegra USB PHY
 dwctwo*		at fdt?			# Designware USB DRD
 ehci*		at fdt?			# EHCI
+ehci*		at pci?			# EHCI
 motg*		at fdt?			# Mentor Graphics USB OTG
 ohci*		at fdt?			# OHCI
+ohci*		at pci?			# OHCI
 xhci*		at fdt?			# XHCI
+xhci*		at pci?			# XHCI
 usb*		at usbus?
 
 include "dev/usb/usbdevices.config"
