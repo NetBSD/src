@@ -1,4 +1,4 @@
-/*	$NetBSD: dnvlist.c,v 1.3 2018/09/08 14:12:53 christos Exp $	*/
+/*	$NetBSD: dnvlist.c,v 1.4 2018/09/08 14:32:25 christos Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -35,7 +35,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: head/sys/contrib/libnv/dnvlist.c 328474 2018-01-27 12:58:21Z oshogbo $");
 #else
-__RCSID("$NetBSD: dnvlist.c,v 1.3 2018/09/08 14:12:53 christos Exp $");
+__RCSID("$NetBSD: dnvlist.c,v 1.4 2018/09/08 14:32:25 christos Exp $");
 #endif
 
 #if defined(_KERNEL) || defined(_STANDALONE)
@@ -46,7 +46,7 @@ __RCSID("$NetBSD: dnvlist.c,v 1.3 2018/09/08 14:12:53 christos Exp $");
 #include <sys/systm.h>
 #include <sys/malloc.h>
 
-#ifndef __FreeBSD__
+#ifdef __FreeBSD__
 #include <machine/stdarg.h>
 #endif
 
