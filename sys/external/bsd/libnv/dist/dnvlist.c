@@ -1,3 +1,5 @@
+/*	$NetBSD: dnvlist.c,v 1.2 2018/09/08 14:02:15 christos Exp $	*/
+
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
  *
@@ -30,9 +32,13 @@
  */
 
 #include <sys/cdefs.h>
+#ifdef __FreeBSD__
 __FBSDID("$FreeBSD: head/sys/contrib/libnv/dnvlist.c 328474 2018-01-27 12:58:21Z oshogbo $");
+#else
+__RCSID("$NetBSD: dnvlist.c,v 1.2 2018/09/08 14:02:15 christos Exp $");
+#endif
 
-#ifdef _KERNEL
+#if defined(_KERNEL) || defined(_STANDALONE)
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -40,7 +46,9 @@ __FBSDID("$FreeBSD: head/sys/contrib/libnv/dnvlist.c 328474 2018-01-27 12:58:21Z
 #include <sys/systm.h>
 #include <sys/malloc.h>
 
+#ifndef __FreeBSD__
 #include <machine/stdarg.h>
+#endif
 
 #else
 #include <stdarg.h>
@@ -49,8 +57,13 @@ __FBSDID("$FreeBSD: head/sys/contrib/libnv/dnvlist.c 328474 2018-01-27 12:58:21Z
 #include <stdlib.h>
 #endif
 
+#ifndef __FreeBSD__
 #include <sys/dnv.h>
 #include <sys/nv.h>
+#else
+#include "dnv.h"
+#include "nv.h"
+#endif
 
 #include "nv_impl.h"
 
@@ -69,7 +82,7 @@ DNVLIST_GET(bool, bool)
 DNVLIST_GET(uint64_t, number)
 DNVLIST_GET(const char *, string)
 DNVLIST_GET(const nvlist_t *, nvlist)
-#ifndef _KERNEL
+#if !defined(_KERNEL) && !defined(_STANDALONE)
 DNVLIST_GET(int, descriptor)
 #endif
 
@@ -106,7 +119,7 @@ DNVLIST_TAKE(bool, bool)
 DNVLIST_TAKE(uint64_t, number)
 DNVLIST_TAKE(char *, string)
 DNVLIST_TAKE(nvlist_t *, nvlist)
-#ifndef _KERNEL
+#if !defined(_KERNEL) && !defined(_STANDALONE)
 DNVLIST_TAKE(int, descriptor)
 #endif
 

@@ -1,3 +1,5 @@
+/*	$NetBSD: nvpair.c,v 1.2 2018/09/08 14:02:15 christos Exp $	*/
+
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
  *
@@ -31,20 +33,26 @@
  */
 
 #include <sys/cdefs.h>
+#ifdef __FreeBSD__
 __FBSDID("$FreeBSD: head/sys/contrib/libnv/nvpair.c 335382 2018-06-19 18:43:02Z lwhsu $");
+#else
+__RCSID("$NetBSD: nvpair.c,v 1.2 2018/09/08 14:02:15 christos Exp $");
+#endif
 
 #include <sys/param.h>
 #include <sys/endian.h>
 #include <sys/queue.h>
 
-#ifdef _KERNEL
+#if defined(_KERNEL) || defined(_STANDALONE)
 
 #include <sys/errno.h>
 #include <sys/lock.h>
 #include <sys/malloc.h>
 #include <sys/systm.h>
 
+#ifdef __FreeBSD__
 #include <machine/stdarg.h>
+#endif
 
 #else
 #include <errno.h>
@@ -63,22 +71,36 @@ __FBSDID("$FreeBSD: head/sys/contrib/libnv/nvpair.c 335382 2018-06-19 18:43:02Z 
 #include <pjdlog.h>
 #endif
 
+#ifdef __FreeBSD__
 #include <sys/nv.h>
+#else
+#include "nv.h"
+#endif
 
 #include "nv_impl.h"
 #include "nvlist_impl.h"
 #include "nvpair_impl.h"
 
 #ifndef	HAVE_PJDLOG
-#ifdef _KERNEL
+#if defined(_KERNEL) || defined(_STANDALONE)
+#ifdef __FreeBSD__
 #define	PJDLOG_ASSERT(...)		MPASS(__VA_ARGS__)
+#else
+#define	PJDLOG_ASSERT(...)		KASSERT(__VA_ARGS__)
+#endif
 #define	PJDLOG_RASSERT(expr, ...)	KASSERT(expr, (__VA_ARGS__))
 #define	PJDLOG_ABORT(...)		panic(__VA_ARGS__)
 #else
+#ifndef __lint__
 #include <assert.h>
 #define	PJDLOG_ASSERT(...)		assert(__VA_ARGS__)
 #define	PJDLOG_RASSERT(expr, ...)	assert(expr)
 #define	PJDLOG_ABORT(...)		abort()
+#else
+#define	PJDLOG_ASSERT(...)	
+#define	PJDLOG_RASSERT(expr, ...)
+#define	PJDLOG_ABORT(...)
+#endif
 #endif
 #endif
 
@@ -97,7 +119,7 @@ struct nvpair {
 #define	NVPAIR_ASSERT(nvp)	do {					\
 	PJDLOG_ASSERT((nvp) != NULL);					\
 	PJDLOG_ASSERT((nvp)->nvp_magic == NVPAIR_MAGIC);		\
-} while (0)
+} while (/*CONSTCOND*/0)
 
 struct nvpair_header {
 	uint8_t		nvph_type;
@@ -298,7 +320,7 @@ nvpair_clone(const nvpair_t *nvp)
 		data = nvpair_get_nvlist_array(nvp, &datasize);
 		newnvp = nvpair_create_nvlist_array(name, data, datasize);
 		break;
-#ifndef _KERNEL
+#if !defined(_KERNEL) && !defined(_STANDALONE)
 	case NV_TYPE_DESCRIPTOR:
 		newnvp = nvpair_create_descriptor(name,
 		    nvpair_get_descriptor(nvp));
@@ -470,7 +492,7 @@ nvpair_pack_nvlist_array_next(unsigned char *ptr, size_t *leftp)
 	return (ptr);
 }
 
-#ifndef _KERNEL
+#if !defined(_KERNEL) && !defined(_STANDALONE)
 unsigned char *
 nvpair_pack_descriptor(const nvpair_t *nvp, unsigned char *ptr, int64_t *fdidxp,
     size_t *leftp)
@@ -577,7 +599,7 @@ nvpair_pack_string_array(const nvpair_t *nvp, unsigned char *ptr, size_t *leftp)
 	return (ptr);
 }
 
-#ifndef _KERNEL
+#if !defined(_KERNEL) && !defined(_STANDALONE)
 unsigned char *
 nvpair_pack_descriptor_array(const nvpair_t *nvp, unsigned char *ptr,
     int64_t *fdidxp, size_t *leftp)
@@ -825,7 +847,7 @@ nvpair_unpack_nvlist(bool isbe __unused, nvpair_t *nvp,
 	return (ptr);
 }
 
-#ifndef _KERNEL
+#if !defined(_KERNEL) && !defined(_STANDALONE)
 const unsigned char *
 nvpair_unpack_descriptor(bool isbe, nvpair_t *nvp, const unsigned char *ptr,
     size_t *leftp, const int *fds, size_t nfds)
@@ -1018,7 +1040,7 @@ out:
 	return (NULL);
 }
 
-#ifndef _KERNEL
+#if !defined(_KERNEL) && !defined(_STANDALONE) && !defined(__NetBSD__)
 const unsigned char *
 nvpair_unpack_descriptor_array(bool isbe, nvpair_t *nvp,
     const unsigned char *ptr, size_t *leftp, const int *fds, size_t nfds)
@@ -1270,7 +1292,7 @@ nvpair_create_nvlist(const char *name, const nvlist_t *value)
 	return (nvp);
 }
 
-#ifndef _KERNEL
+#if !defined(_KERNEL) && !defined(_STANDALONE)
 nvpair_t *
 nvpair_create_descriptor(const char *name, int value)
 {
@@ -1494,7 +1516,7 @@ fail:
 	return (NULL);
 }
 
-#ifndef _KERNEL
+#if !defined(_KERNEL) && !defined(_STANDALONE)
 nvpair_t *
 nvpair_create_descriptor_array(const char *name, const int *value,
     size_t nitems)
@@ -1593,7 +1615,7 @@ nvpair_move_nvlist(const char *name, nvlist_t *value)
 	return (nvp);
 }
 
-#ifndef _KERNEL
+#if !defined(_KERNEL) && !defined(_STANDALONE)
 nvpair_t *
 nvpair_move_descriptor(const char *name, int value)
 {
@@ -1767,7 +1789,7 @@ fail:
 	return (NULL);
 }
 
-#ifndef _KERNEL
+#if !defined(_KERNEL) && !defined(_STANDALONE)
 nvpair_t *
 nvpair_move_descriptor_array(const char *name, int *value, size_t nitems)
 {
@@ -1843,7 +1865,7 @@ nvpair_get_nvlist(const nvpair_t *nvp)
 	return ((const nvlist_t *)(intptr_t)nvp->nvp_data);
 }
 
-#ifndef _KERNEL
+#if !defined(_KERNEL) && !defined(_STANDALONE)
 int
 nvpair_get_descriptor(const nvpair_t *nvp)
 {
@@ -1920,7 +1942,7 @@ nvpair_get_nvlist_array(const nvpair_t *nvp, size_t *nitems)
 	return ((const nvlist_t * const *)((intptr_t)nvp->nvp_data));
 }
 
-#ifndef _KERNEL
+#if !defined(_KERNEL) && !defined(_STANDALONE)
 const int *
 nvpair_get_descriptor_array(const nvpair_t *nvp, size_t *nitems)
 {
@@ -2027,7 +2049,7 @@ fail:
 	return (-1);
 }
 
-#ifndef _KERNEL
+#if !defined(_KERNEL) && !defined(_STANDALONE)
 int
 nvpair_append_descriptor_array(nvpair_t *nvp, const int value)
 {
@@ -2061,7 +2083,7 @@ nvpair_free(nvpair_t *nvp)
 
 	nvp->nvp_magic = 0;
 	switch (nvp->nvp_type) {
-#ifndef _KERNEL
+#if !defined(_KERNEL) && !defined(_STANDALONE)
 	case NV_TYPE_DESCRIPTOR:
 		close((int)nvp->nvp_data);
 		break;
