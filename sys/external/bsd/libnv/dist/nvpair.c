@@ -1,4 +1,4 @@
-/*	$NetBSD: nvpair.c,v 1.2 2018/09/08 14:02:15 christos Exp $	*/
+/*	$NetBSD: nvpair.c,v 1.3 2018/09/08 14:32:25 christos Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -36,7 +36,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: head/sys/contrib/libnv/nvpair.c 335382 2018-06-19 18:43:02Z lwhsu $");
 #else
-__RCSID("$NetBSD: nvpair.c,v 1.2 2018/09/08 14:02:15 christos Exp $");
+__RCSID("$NetBSD: nvpair.c,v 1.3 2018/09/08 14:32:25 christos Exp $");
 #endif
 
 #include <sys/param.h>
@@ -1191,6 +1191,7 @@ nvpair_name(const nvpair_t *nvp)
 	return (nvp->nvp_name);
 }
 
+#if !defined(_KERNEL) && !defined(_STANDALONE) && !defined(__NetBSD__)
 nvpair_t *
 nvpair_create_stringf(const char *name, const char *valuefmt, ...)
 {
@@ -1219,6 +1220,7 @@ nvpair_create_stringv(const char *name, const char *valuefmt, va_list valueap)
 		nv_free(str);
 	return (nvp);
 }
+#endif
 
 nvpair_t *
 nvpair_create_null(const char *name)
