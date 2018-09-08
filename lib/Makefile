@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.260 2018/08/12 13:01:55 christos Exp $
+#	$NetBSD: Makefile,v 1.261 2018/09/08 14:11:41 christos Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 .include <bsd.own.mk>
@@ -67,6 +67,8 @@ SUBDIR+=	../external/bsd/sljit/lib
 SUBDIR+=	libbpfjit
 .endif
 
+SUBDIR+=	../external/bsd/libnv/lib
+
 .if (${MKZFS} != "no")
 SUBDIR+=        ../external/cddl/osnet/lib/libavl
 SUBDIR+=        ../external/cddl/osnet/lib/libnvpair
@@ -130,7 +132,7 @@ SUBDIR+=	librumpuser	# depends on libpthread
 .endif
 
 .if (${MKNPF} != "no")
-SUBDIR+=	libnpf		# depends on libprop
+SUBDIR+=	libnpf		# depends on libnv
 .endif
 
 SUBDIR+=	../crypto/external/bsd/${EXTERNAL_OPENSSL_SUBDIR}/lib # depends on libcrypt
