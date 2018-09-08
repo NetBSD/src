@@ -1,4 +1,4 @@
-/*	$NetBSD: picvar.h,v 1.18 2018/07/16 10:13:34 jmcneill Exp $	*/
+/*	$NetBSD: picvar.h,v 1.19 2018/09/08 11:54:26 jmcneill Exp $	*/
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -114,7 +114,7 @@ struct intrsource {
 	struct pic_softc *is_pic;		/* owning PIC */
 	uint8_t is_type;			/* IST_xxx */
 	uint8_t is_ipl;				/* IPL_xxx */
-	uint8_t is_irq;				/* local to pic */
+	uint16_t is_irq;			/* local to pic */
 	uint8_t is_iplidx;
 	bool is_mpsafe;
 	char is_source[16];
