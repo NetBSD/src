@@ -1,4 +1,4 @@
-/* $NetBSD: COMPAT-branch-notes,v 1.1.2.23 2018/09/07 23:32:29 pgoyette Exp $ */
+/* $NetBSD: COMPAT-branch-notes,v 1.1.2.24 2018/09/08 23:39:21 pgoyette Exp $ */
 
 DONE
 ----
@@ -96,4 +96,8 @@ TODO - Not required for branch merge
     separate.  These items are not currently included in the monolithic
     COMPAT module on HEAD, so lack of integration on the branch is not a
     regression.
+
+6.  Even though the build mechanism has been switched back to using a
+    .a compat library, it might be useful to make it work with the .o
+    library.
 
