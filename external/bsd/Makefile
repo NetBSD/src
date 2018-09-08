@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.60 2018/08/12 13:02:42 christos Exp $
+#	$NetBSD: Makefile,v 1.61 2018/09/08 14:11:10 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -44,6 +44,6 @@ SUBDIR+= librtld_db
 SUBDIR+= unbound
 .endif
 
-SUBDIR+= blacklist pdisk nvi ppp smbfs
+SUBDIR+= blacklist pdisk nvi ppp smbfs libnv
 
 .include <bsd.subdir.mk>
