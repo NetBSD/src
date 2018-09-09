@@ -1,4 +1,4 @@
-/* $NetBSD: efiboot.c,v 1.5 2018/09/03 00:04:02 jmcneill Exp $ */
+/* $NetBSD: efiboot.c,v 1.6 2018/09/09 18:00:20 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -106,6 +106,14 @@ efi_exit(void)
 	status = uefi_call_wrapper(BS->Exit, 4, IH, EFI_ABORTED, 0, NULL);
 	if (EFI_ERROR(status))
 		printf("WARNING: Exit failed\n");
+}
+
+void
+efi_reboot(void)
+{
+	uefi_call_wrapper(RT->ResetSystem, 4, EfiResetCold, EFI_SUCCESS, 0, NULL);
+
+	printf("WARNING: Reset failed\n");
 }
 
 void

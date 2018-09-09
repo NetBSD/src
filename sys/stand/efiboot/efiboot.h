@@ -1,4 +1,4 @@
-/*	$NetBSD: efiboot.h,v 1.5 2018/09/09 13:37:54 jmcneill Exp $	*/
+/*	$NetBSD: efiboot.h,v 1.6 2018/09/09 18:00:20 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -67,6 +67,7 @@ extern EFI_LOADED_IMAGE *efi_li;
 void efi_cleanup(void);
 void efi_exit(void);
 void efi_delay(int);
+void efi_reboot(void);
 
 /* efichar.c */
 size_t ucs2len(const CHAR16 *);

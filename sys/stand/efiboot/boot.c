@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.8 2018/09/09 17:55:22 jmcneill Exp $	*/
+/*	$NetBSD: boot.c,v 1.9 2018/09/09 18:00:20 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -80,6 +80,8 @@ const struct boot_command commands[] = {
 	{ "setenv",	command_setenv,		"setenv <key> <value>" },
 	{ "clearenv",	command_clearenv,	"clearenv <key>" },
 	{ "resetenv",	command_resetenv,	"resetenv" },
+	{ "reboot",	command_reset,		"reboot|reset" },
+	{ "reset",	command_reset,		NULL },
 	{ "version",	command_version,	"version" },
 	{ "help",	command_help,		"help|?" },
 	{ "?",		command_help,		NULL },
@@ -214,6 +216,12 @@ void
 command_quit(char *arg)
 {
 	efi_exit();
+}
+
+void
+command_reset(char *arg)
+{
+	efi_reboot();
 }
 
 int
