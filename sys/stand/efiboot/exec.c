@@ -1,4 +1,4 @@
-/* $NetBSD: exec.c,v 1.4 2018/09/07 17:30:58 jmcneill Exp $ */
+/* $NetBSD: exec.c,v 1.5 2018/09/09 13:37:54 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -36,19 +36,17 @@ u_long load_offset = 0;
 #define	FDT_SPACE	(4 * 1024 * 1024)
 #define	FDT_ALIGN	((2 * 1024 * 1024) - 1)
 
-static EFI_PHYSICAL_ADDRESS initrd_addr;
-static u_long initrd_size = 0;
+static EFI_PHYSICAL_ADDRESS initrd_addr, dtb_addr;
+static u_long initrd_size = 0, dtb_size = 0;
 
 static int
-load_initrd(void)
+load_file(char *path, EFI_PHYSICAL_ADDRESS *paddr, u_long *psize)
 {
 	EFI_STATUS status;
 	struct stat st;
 	ssize_t len;
-	char *path;
 	int fd;
 
-	path = get_initrd_path();
 	if (strlen(path) == 0)
 		return 0;
 
@@ -63,44 +61,44 @@ load_initrd(void)
 		return errno;
 	}
 	if (st.st_size == 0) {
-		printf("boot: empty initrd %s\n", path);
+		printf("boot: empty file %s\n", path);
 		close(fd);
 		return EINVAL;
 	}
 
-	initrd_size = st.st_size;
+	*psize = st.st_size;
 
 #ifdef EFIBOOT_ALLOCATE_MAX_ADDRESS
-	initrd_addr = EFIBOOT_ALLOCATE_MAX_ADDRESS;
+	*paddr = EFIBOOT_ALLOCATE_MAX_ADDRESS;
 	status = uefi_call_wrapper(BS->AllocatePages, 4, AllocateMaxAddress, EfiLoaderData,
-	    EFI_SIZE_TO_PAGES(initrd_size), &initrd_addr);
+	    EFI_SIZE_TO_PAGES(*psize), paddr);
 #else
-	initrd_addr = 0;
+	*paddr = 0;
 	status = uefi_call_wrapper(BS->AllocatePages, 4, AllocateAnyPages, EfiLoaderData,
-	    EFI_SIZE_TO_PAGES(initrd_size), &initrd_addr);
+	    EFI_SIZE_TO_PAGES(*psize), paddr);
 #endif
 	if (EFI_ERROR(status)) {
-		printf("Failed to allocate %lu bytes for initrd image (error %lu)\n",
-		    initrd_size, status);
+		printf("Failed to allocate %lu bytes for %s (error %lu)\n",
+		    *psize, path, status);
 		close(fd);
 		return ENOMEM;
 	}
 
 	printf("boot: loading %s ", path);
-	len = read(fd, (void *)initrd_addr, initrd_size);
+	len = read(fd, (void *)*paddr, *psize);
 	close(fd);
 
-	if (len != initrd_size) {
+	if (len != *psize) {
 		if (len < 0)
 			printf(": %s\n", strerror(errno));
 		else
-			printf(": returned %ld (expected %ld)\n", len, initrd_size);
+			printf(": returned %ld (expected %ld)\n", len, *psize);
 		return EIO;
 	}
 
 	printf("done.\n");
 
-	efi_dcache_flush(initrd_addr, initrd_size);
+	efi_dcache_flush(*paddr, *psize);
 
 	return 0;
 }
@@ -113,7 +111,8 @@ exec_netbsd(const char *fname, const char *args)
 	EFI_STATUS status;
 	int fd;
 
-	load_initrd();
+	load_file(get_initrd_path(), &initrd_addr, &initrd_size);
+	load_file(get_dtb_path(), &dtb_addr, &dtb_size);
 
 	memset(marks, 0, sizeof(marks));
 	fd = loadfile(fname, marks, COUNT_KERNEL | LOAD_NOTE);
@@ -150,6 +149,11 @@ exec_netbsd(const char *fname, const char *args)
 	close(fd);
 	load_offset = 0;
 
+	if (dtb_addr && efi_fdt_set_data((void *)dtb_addr) != 0) {
+		printf("boot: invalid DTB data\n");
+		goto cleanup;
+	}
+
 	if (efi_fdt_size() > 0) {
 		efi_fdt_init((marks[MARK_END] + FDT_ALIGN) & ~FDT_ALIGN, FDT_ALIGN + 1);
 		efi_fdt_initrd(initrd_addr, initrd_size);
@@ -170,6 +174,11 @@ cleanup:
 		uefi_call_wrapper(BS->FreePages, 2, initrd_addr, EFI_SIZE_TO_PAGES(initrd_size));
 		initrd_addr = 0;
 		initrd_size = 0;
+	}
+	if (dtb_addr) {
+		uefi_call_wrapper(BS->FreePages, 2, dtb_addr, EFI_SIZE_TO_PAGES(dtb_size));
+		dtb_addr = 0;
+		dtb_size = 0;
 	}
 	return EIO;
 }
