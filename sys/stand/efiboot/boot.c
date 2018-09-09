@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.6 2018/09/07 17:30:58 jmcneill Exp $	*/
+/*	$NetBSD: boot.c,v 1.7 2018/09/09 13:37:54 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -54,9 +54,11 @@ static const char * const names[][2] = {
 
 static char default_device[32];
 static char initrd_path[255];
+static char dtb_path[255];
 
 void	command_boot(char *);
 void	command_dev(char *);
+void	command_dtb(char *);
 void	command_initrd(char *);
 void	command_ls(char *);
 void	command_reset(char *);
@@ -66,6 +68,7 @@ void	command_quit(char *);
 const struct boot_command commands[] = {
 	{ "boot",	command_boot,		"boot [dev:][filename] [args]\n     (ex. \"hd0a:\\netbsd.old -s\"" },
 	{ "dev",	command_dev,		"dev" },
+	{ "dtb",	command_dtb,		"dtb [dev:][filename]" },
 	{ "initrd",	command_initrd,		"initrd [dev:][filename]" },
 	{ "ls",		command_ls,		"ls [hdNn:/path]" },
 	{ "version",	command_version,	"version" },
@@ -111,6 +114,12 @@ command_dev(char *arg)
 		printf("\n");
 		printf("default: %s\n", default_device);
 	}
+}
+
+void
+command_dtb(char *arg)
+{
+	set_dtb_path(arg);
 }
 
 void
@@ -179,6 +188,21 @@ char *
 get_initrd_path(void)
 {
 	return initrd_path;
+}
+
+int
+set_dtb_path(char *arg)
+{
+	if (strlen(arg) + 1 > sizeof(dtb_path))
+		return ERANGE;
+	strcpy(dtb_path, arg);
+	return 0;
+}
+
+char *
+get_dtb_path(void)
+{
+	return dtb_path;
 }
 
 void
