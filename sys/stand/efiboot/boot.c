@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.7 2018/09/09 13:37:54 jmcneill Exp $	*/
+/*	$NetBSD: boot.c,v 1.8 2018/09/09 17:55:22 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -30,6 +30,7 @@
 #include "efiboot.h"
 #include "efiblock.h"
 #include "efifdt.h"
+#include "efienv.h"
 
 #include <sys/bootblock.h>
 #include <sys/boot_flag.h>
@@ -61,6 +62,10 @@ void	command_dev(char *);
 void	command_dtb(char *);
 void	command_initrd(char *);
 void	command_ls(char *);
+void	command_printenv(char *);
+void	command_setenv(char *);
+void	command_clearenv(char *);
+void	command_resetenv(char *);
 void	command_reset(char *);
 void	command_version(char *);
 void	command_quit(char *);
@@ -71,6 +76,10 @@ const struct boot_command commands[] = {
 	{ "dtb",	command_dtb,		"dtb [dev:][filename]" },
 	{ "initrd",	command_initrd,		"initrd [dev:][filename]" },
 	{ "ls",		command_ls,		"ls [hdNn:/path]" },
+	{ "printenv",	command_printenv,	"printenv [key]" },
+	{ "setenv",	command_setenv,		"setenv <key> <value>" },
+	{ "clearenv",	command_clearenv,	"clearenv <key>" },
+	{ "resetenv",	command_resetenv,	"resetenv" },
 	{ "version",	command_version,	"version" },
 	{ "help",	command_help,		"help|?" },
 	{ "?",		command_help,		NULL },
@@ -132,6 +141,53 @@ void
 command_ls(char *arg)
 {
 	ls(arg);
+}
+
+void
+command_printenv(char *arg)
+{
+	char *val;
+
+	if (arg && *arg) {
+		val = efi_env_get(arg);
+		if (val) {
+			printf("\"%s\" = \"%s\"\n", arg, val);
+			FreePool(val);
+		}
+	} else {
+		efi_env_print();
+	}
+}
+
+void
+command_setenv(char *arg)
+{
+	char *spc;
+
+	spc = strchr(arg, ' ');
+	if (spc == NULL || spc[1] == '\0') {
+		command_help("");
+		return;
+	}
+
+	*spc = '\0';
+	efi_env_set(arg, spc + 1);
+}
+
+void
+command_clearenv(char *arg)
+{
+	if (*arg == '\0') {
+		command_help("");
+		return;
+	}
+	efi_env_clear(arg);
+}
+
+void
+command_resetenv(char *arg)
+{
+	efi_env_reset();
 }
 
 void
@@ -213,10 +269,45 @@ print_banner(void)
 	    bootprog_name, bootprog_rev, bootprog_kernrev);
 }
 
+static void
+read_env(void)
+{
+	char *s;
+
+	s = efi_env_get("fdtfile");
+	if (s) {
+#ifdef EFIBOOT_DEBUG
+		printf(">> Setting DTB path to '%s' from environment\n", s);
+#endif
+		set_dtb_path(s);
+		FreePool(s);
+	}
+
+	s = efi_env_get("initrd");
+	if (s) {
+#ifdef EFIBOOT_DEBUG
+		printf(">> Setting initrd path to '%s' from environment\n", s);
+#endif
+		set_initrd_path(s);
+		FreePool(s);
+	}
+
+	s = efi_env_get("rootdev");
+	if (s) {
+#ifdef EFIBOOT_DEBUG
+		printf(">> Setting default device to '%s' from environment\n", s);
+#endif
+		set_default_device(s);
+		FreePool(s);
+	}
+}
+
 void
 boot(void)
 {
 	int currname, c;
+
+	read_env();
 
 	print_banner();
 
