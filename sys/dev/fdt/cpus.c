@@ -1,4 +1,4 @@
-/* $NetBSD: cpus.c,v 1.3 2018/06/30 16:30:35 jmcneill Exp $ */
+/* $NetBSD: cpus.c,v 1.4 2018/09/09 21:15:21 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpus.c,v 1.3 2018/06/30 16:30:35 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpus.c,v 1.4 2018/09/09 21:15:21 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -41,6 +41,8 @@ __KERNEL_RCSID(0, "$NetBSD: cpus.c,v 1.3 2018/06/30 16:30:35 jmcneill Exp $");
 
 static int	cpus_match(device_t, cfdata_t, void *);
 static void	cpus_attach(device_t, device_t, void *);
+
+static bool	cpus_bus_match(void *, int);
 
 CFATTACH_DECL_NEW(cpus, 0, cpus_match, cpus_attach, NULL, NULL);
 
@@ -61,5 +63,28 @@ cpus_attach(device_t parent, device_t self, void *aux)
 	aprint_naive("\n");
 	aprint_normal("\n");
 
-	fdt_add_bus(self, phandle, faa);
+	fdt_add_bus_match(self, phandle, faa, cpus_bus_match, NULL);
+}
+
+static bool
+cpus_bus_match(void *priv, int child)
+{
+	const char *s;
+
+	/* Only match nodes with device_type = "cpu" */
+	s = fdtbus_get_string(child, "device_type");
+	if (!s || strcmp(s, "cpu") != 0)
+		return false;
+
+	/* If status is set, it must be either "okay" or "disabled" */
+	s = fdtbus_get_string(child, "status");
+	if (s) {
+		if (strcmp(s, "okay") == 0)
+			return false;
+		if (strcmp(s, "disabled") == 0)
+			return of_hasprop(child, "enable-method");
+		return false;
+	} else {
+		return true;
+	}
 }
