@@ -1,4 +1,4 @@
-#	$NetBSD: shlib_version,v 1.17 2016/04/23 23:23:17 christos Exp $
+#	$NetBSD: shlib_version,v 1.18 2018/09/09 07:24:59 maya Exp $
 #	Remember to update distrib/sets/lists/base/shl.* when changing
 #
 # Things to do when bumping major version:
@@ -14,6 +14,9 @@
 #	make objects same size and layout on 32/64 bit, so kernel can
 #	inspect them for priority inheritance / inter-process synch,
 #	without compat_netbsd32 shims??
+#
+#	use reserved identifiers for things that shouldn't be visible,
+#	e.g. rename pthread__pagesize to __pthread_pagesize,
 #
 major=1
 minor=3
