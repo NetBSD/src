@@ -1,4 +1,4 @@
-/* $NetBSD: psci_fdt.c,v 1.16 2018/09/09 13:32:26 jmcneill Exp $ */
+/* $NetBSD: psci_fdt.c,v 1.17 2018/09/09 21:16:05 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: psci_fdt.c,v 1.16 2018/09/09 13:32:26 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: psci_fdt.c,v 1.17 2018/09/09 21:16:05 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -169,6 +169,27 @@ psci_fdt_mpstart_pa(void)
 }
 #endif
 
+static bool
+psci_fdt_cpu_okay(const int child)
+{
+	const char *s;
+
+	s = fdtbus_get_string(child, "device_type");
+	if (!s || strcmp(s, "cpu") != 0)
+		return false;
+
+	s = fdtbus_get_string(child, "status");
+	if (s) {
+		if (strcmp(s, "okay") == 0)
+			return false;
+		if (strcmp(s, "disabled") == 0)
+			return of_hasprop(child, "enable-method");
+		return false;
+	} else {
+		return true;
+	}
+}
+
 void
 psci_fdt_bootstrap(void)
 {
@@ -202,7 +223,7 @@ psci_fdt_bootstrap(void)
 	/* Boot APs */
 	cpuindex = 1;
 	for (child = OF_child(cpus); child; child = OF_peer(child)) {
-		if (!fdtbus_status_okay(child))
+		if (!psci_fdt_cpu_okay(child))
 			continue;
 		if (fdtbus_get_reg64(child, 0, &mpidr, NULL) != 0)
 			continue;
