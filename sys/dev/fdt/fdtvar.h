@@ -1,4 +1,4 @@
-/* $NetBSD: fdtvar.h,v 1.39 2018/09/06 22:54:05 jmcneill Exp $ */
+/* $NetBSD: fdtvar.h,v 1.40 2018/09/09 07:21:18 aymeric Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -111,7 +111,7 @@ struct fdtbus_regulator_controller_func {
 };
 
 struct fdtbus_clock_controller_func {
-	struct clk *	(*decode)(device_t, const void *, size_t);
+	struct clk *	(*decode)(device_t, int, const void *, size_t);
 };
 
 struct fdtbus_reset_controller;
