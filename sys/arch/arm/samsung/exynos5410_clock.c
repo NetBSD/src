@@ -1,4 +1,4 @@
-/* $NetBSD: exynos5410_clock.c,v 1.3 2018/07/02 20:24:55 jmcneill Exp $ */
+/* $NetBSD: exynos5410_clock.c,v 1.4 2018/09/09 07:21:18 aymeric Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exynos5410_clock.c,v 1.3 2018/07/02 20:24:55 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exynos5410_clock.c,v 1.4 2018/09/09 07:21:18 aymeric Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -45,7 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: exynos5410_clock.c,v 1.3 2018/07/02 20:24:55 jmcneil
 
 #include <dev/fdt/fdtvar.h>
 
-static struct clk *exynos5410_clock_decode(device_t, const void *, size_t);
+static struct clk *exynos5410_clock_decode(device_t, int, const void *, size_t);
 
 static const struct fdtbus_clock_controller_func exynos5410_car_fdtclock_funcs = {
 	.decode = exynos5410_clock_decode
@@ -549,7 +549,8 @@ exynos5410_clock_print(struct exynos5410_clock_softc *sc,
 }
 
 static struct clk *
-exynos5410_clock_decode(device_t dev, const void *data, size_t len)
+exynos5410_clock_decode(device_t dev, int cc_phandle, const void *data,
+			size_t len)
 {
 	struct exynos_clk *eclk;
 
