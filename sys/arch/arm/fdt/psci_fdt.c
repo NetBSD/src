@@ -1,4 +1,4 @@
-/* $NetBSD: psci_fdt.c,v 1.15 2018/08/26 18:15:49 ryo Exp $ */
+/* $NetBSD: psci_fdt.c,v 1.16 2018/09/09 13:32:26 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: psci_fdt.c,v 1.15 2018/08/26 18:15:49 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: psci_fdt.c,v 1.16 2018/09/09 13:32:26 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -216,7 +216,7 @@ psci_fdt_bootstrap(void)
 		    sizeof(arm_cpu_hatch_arg));
 #endif
 
-		int ret = psci_cpu_on(cpuindex, psci_fdt_mpstart_pa(), 0);
+		int ret = psci_cpu_on(mpidr, psci_fdt_mpstart_pa(), 0);
 		if (ret != PSCI_SUCCESS)
 			continue;
 
