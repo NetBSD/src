@@ -1,4 +1,4 @@
-/* $NetBSD: pcihost_fdt.c,v 1.1 2018/09/08 00:40:57 jmcneill Exp $ */
+/* $NetBSD: pcihost_fdt.c,v 1.2 2018/09/09 13:40:28 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcihost_fdt.c,v 1.1 2018/09/08 00:40:57 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcihost_fdt.c,v 1.2 2018/09/09 13:40:28 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -50,7 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: pcihost_fdt.c,v 1.1 2018/09/08 00:40:57 jmcneill Exp
 
 #include <dev/fdt/fdtvar.h>
 
-#define	IH_PIN_MASK			0x0000000f
+#define	IH_INDEX_MASK			0x0000ffff
 #define	IH_MPSAFE			0x80000000
 
 #define	PCIHOST_DEFAULT_BUS_MIN		0
@@ -402,25 +402,69 @@ pcihost_conf_interrupt(void *v, int bus, int dev, int ipin, int swiz, int *iline
 static int
 pcihost_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ih)
 {
+	struct pcihost_softc *sc = pa->pa_pc->pc_intr_v;
+	u_int addr_cells, interrupt_cells;
+	const u_int *imap, *imask;
+	int imaplen, imasklen;
+	u_int match[4];
+	int index;
+
 	if (pa->pa_intrpin == 0)
 		return EINVAL;
-	*ih = pa->pa_intrpin;
-	return 0;
+
+	imap = fdtbus_get_prop(sc->sc_phandle, "interrupt-map", &imaplen);
+	imask = fdtbus_get_prop(sc->sc_phandle, "interrupt-map-mask", &imasklen);
+	if (imap == NULL || imask == NULL || imasklen != 16)
+		return EINVAL;
+
+	/* Convert attach args to specifier */
+	match[0] = htobe32(
+			__SHIFTIN(pa->pa_bus, PHYS_HI_BUS) |
+			__SHIFTIN(pa->pa_device, PHYS_HI_DEVICE) |
+			__SHIFTIN(pa->pa_function, PHYS_HI_FUNCTION)
+		   ) & imask[0];
+	match[1] = htobe32(0) & imask[1];
+	match[2] = htobe32(0) & imask[2];
+	match[3] = htobe32(pa->pa_intrpin) & imask[3];
+
+	index = 0;
+	while (imaplen >= 20) {
+		const int map_ihandle = fdtbus_get_phandle_from_native(be32toh(imap[4]));
+	        if (of_getprop_uint32(map_ihandle, "#address-cells", &addr_cells))
+                	addr_cells = 2;
+		if (of_getprop_uint32(map_ihandle, "#interrupt-cells", &interrupt_cells))
+			interrupt_cells = 0;
+		if (imaplen < (addr_cells + interrupt_cells) * 4)
+			return ENXIO;
+
+		if ((imap[0] & imask[0]) == match[0] &&
+		    (imap[1] & imask[1]) == match[1] &&
+		    (imap[2] & imask[2]) == match[2] &&
+		    (imap[3] & imask[3]) == match[3]) {
+			*ih = index;
+			return 0;
+		}
+
+		imap += (5 + addr_cells + interrupt_cells);
+		imaplen -= (5 + addr_cells + interrupt_cells) * 4;
+		index++;
+	}
+
+	return EINVAL;
 }
 
 static const u_int *
-pcihost_find_intr(struct pcihost_softc *sc, int pin, int *pihandle)
+pcihost_find_intr(struct pcihost_softc *sc, pci_intr_handle_t ih, int *pihandle)
 {
 	u_int addr_cells, interrupt_cells;
+	int imaplen, index;
 	const u_int *imap;
-	int imaplen;
 
 	imap = fdtbus_get_prop(sc->sc_phandle, "interrupt-map", &imaplen);
-	if (imap == NULL)
-		return NULL;
+	KASSERT(imap != NULL);
 
+	index = 0;
 	while (imaplen >= 20) {
-		const int map_pin = be32toh(imap[3]);
 		const int map_ihandle = fdtbus_get_phandle_from_native(be32toh(imap[4]));
 	        if (of_getprop_uint32(map_ihandle, "#address-cells", &addr_cells))
                 	addr_cells = 2;
@@ -429,13 +473,14 @@ pcihost_find_intr(struct pcihost_softc *sc, int pin, int *pihandle)
 		if (imaplen < (addr_cells + interrupt_cells) * 4)
 			return NULL;
 
-		if (map_pin == pin) {
+		if (index == ih) {
 			*pihandle = map_ihandle;
 			return imap + 5 + addr_cells;
 		}
 
-		imap += (addr_cells + interrupt_cells);
-		imaplen -= (addr_cells + interrupt_cells) * 4;
+		imap += (5 + addr_cells + interrupt_cells);
+		imaplen -= (5 + addr_cells + interrupt_cells) * 4;
+		index++;
 	}
 
 	return NULL;
@@ -445,14 +490,10 @@ static const char *
 pcihost_intr_string(void *v, pci_intr_handle_t ih, char *buf, size_t len)
 {
 	struct pcihost_softc *sc = v;
-	u_int pin = ih & IH_PIN_MASK;
 	const u_int *specifier;
 	int ihandle;
 
-	if (pin == PCI_INTERRUPT_PIN_NONE || pin > PCI_INTERRUPT_PIN_MAX)
-		return NULL;
-
-	specifier = pcihost_find_intr(sc, pin, &ihandle);
+	specifier = pcihost_find_intr(sc, ih & IH_INDEX_MASK, &ihandle);
 	if (specifier == NULL)
 		return NULL;
 
@@ -488,15 +529,11 @@ pcihost_intr_establish(void *v, pci_intr_handle_t ih, int ipl,
     int (*callback)(void *), void *arg)
 {
 	struct pcihost_softc *sc = v;
-	u_int pin = ih & IH_PIN_MASK;
 	const int flags = (ih & IH_MPSAFE) ? FDT_INTR_MPSAFE : 0;
 	const u_int *specifier;
 	int ihandle;
 
-	if (pin == PCI_INTERRUPT_PIN_NONE || pin > PCI_INTERRUPT_PIN_MAX)
-		return NULL;
-
-	specifier = pcihost_find_intr(sc, pin, &ihandle);
+	specifier = pcihost_find_intr(sc, ih & IH_INDEX_MASK, &ihandle);
 	if (specifier == NULL)
 		return NULL;
 
