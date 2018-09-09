@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.356.2.1 2018/03/24 01:59:15 pgoyette Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.356.2.2 2018/09/09 22:12:16 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008-2011 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.356.2.1 2018/03/24 01:59:15 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.356.2.2 2018/09/09 22:12:16 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1123,7 +1123,7 @@ raidioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	retcode = (*raidframe50_ioctl)(cmd, (rs->sc_flags & RAIDF_INITED),
 	    raidPtr, unit, data, &k_cfg);
 	if (retcode == ENOSYS)
-		retcode = EINVAL;
+		retcode = 0;
 	else if (retcode == EAGAIN)
 		goto config;
 	else if (retcode != EPASSTHROUGH)
@@ -1132,11 +1132,12 @@ raidioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	retcode = (*raidframe80_ioctl)(cmd, (rs->sc_flags & RAIDF_INITED),
 	    raidPtr, unit, data, &k_cfg);
 	if (retcode == ENOSYS)
-		retcode = EINVAL;
+		retcode = 0;
 	else if (retcode == EAGAIN)
 		goto config;
 	else if (retcode != EPASSTHROUGH)
 		return retcode;
+
 	/*
 	 * XXX
 	 * Handling of FAIL_DISK80 command requires us to retain retcode's
