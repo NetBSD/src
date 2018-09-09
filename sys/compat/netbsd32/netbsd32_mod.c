@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_mod.c,v 1.13.16.2 2018/03/21 02:01:34 pgoyette Exp $	*/
+/*	$NetBSD: netbsd32_mod.c,v 1.13.16.3 2018/09/09 11:51:48 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_mod.c,v 1.13.16.2 2018/03/21 02:01:34 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_mod.c,v 1.13.16.3 2018/09/09 11:51:48 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_execfmt.h"
@@ -50,7 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_mod.c,v 1.13.16.2 2018/03/21 02:01:34 pgoye
 #include <compat/netbsd32/netbsd32_exec.h>
 #include <compat/sys/rnd.h>
 
-# define	DEPS1	"compat,ksem"
+# define	DEPS1	"compat_09,ksem"
 
 #if defined(EXEC_ELF32)
 # define	DEPS2	",exec_elf32"
