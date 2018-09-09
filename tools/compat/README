@@ -1,4 +1,4 @@
-$NetBSD: README,v 1.12 2005/04/05 00:21:22 jmc Exp $
+$NetBSD: README,v 1.13 2018/09/09 19:17:21 palle Exp $
 
 Special notes for cross-hosting a NetBSD build on certain platforms.  
 Only those platforms which have been tested to complete a "build.sh" run
@@ -65,6 +65,8 @@ NETBSD (earlier releases):
 
 SOLARIS:
 
+(updated instruction for Solaris 11 further below)
+
 * Tested on Solaris/x86 8 (5.8) with gcc 2.95.2 and Solaris/sparc 8 (5.8)
   with gcc 3.2 (not yet tested with SUNWspro).
 
@@ -85,3 +87,16 @@ SOLARIS:
   /usr/ucb may optionally be placed before /usr/bin, per your preference,
   but /usr/ucb *MUST NOT* be before /usr/ccs/bin or before the path to
   the host C and C++ compilers.
+
+Solaris 11:
+
+* Solaris 11.3
+ * Set PATH to /usr/xpg6/bin:/usr/xpg4/bin:/usr/bin
+ * Set HOST_CC to /usr/bin/gcc
+
+* Solaris 11.4
+ * Install gcc-5 since the default installed gcc-7 has issues when compiling 
+   toolchain version of groff (hypot())
+ * Set PATH to /usr/xpg7/bin:/usr/xpg6/bin:/usr/xpg4/bin:/usr/bin
+ * set HOST_CC to /usr/gcc/5/bin/gcc
+ * set HOST_CXX to /usr/gcc/5/bin/g++
