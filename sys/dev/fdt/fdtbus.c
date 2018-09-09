@@ -1,4 +1,4 @@
-/* $NetBSD: fdtbus.c,v 1.22 2018/06/30 17:28:09 jmcneill Exp $ */
+/* $NetBSD: fdtbus.c,v 1.23 2018/09/09 21:14:04 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdtbus.c,v 1.22 2018/06/30 17:28:09 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdtbus.c,v 1.23 2018/09/09 21:14:04 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -157,14 +157,27 @@ fdt_init_attach_args(const struct fdt_attach_args *faa_tmpl, struct fdt_node *no
 	faa->faa_quiet = quiet;
 }
 
+static bool
+fdt_add_bus_stdmatch(void *arg, int child)
+{
+	return fdtbus_status_okay(child);
+}
+
 void
 fdt_add_bus(device_t bus, const int phandle, struct fdt_attach_args *faa)
+{
+	fdt_add_bus_match(bus, phandle, faa, fdt_add_bus_stdmatch, NULL);
+}
+
+void
+fdt_add_bus_match(device_t bus, const int phandle, struct fdt_attach_args *faa,
+    bool (*fn)(void *, int), void *fnarg)
 {
 	struct fdt_node *node;
 	int child;
 
 	for (child = OF_child(phandle); child; child = OF_peer(child)) {
-		if (!fdtbus_status_okay(child))
+		if (fn && !fn(fnarg, child))
 			continue;
 
 		/* Add the node to our device list */
