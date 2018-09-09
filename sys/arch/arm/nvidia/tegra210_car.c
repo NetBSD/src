@@ -1,4 +1,4 @@
-/* $NetBSD: tegra210_car.c,v 1.18 2018/07/16 23:11:47 christos Exp $ */
+/* $NetBSD: tegra210_car.c,v 1.19 2018/09/09 07:21:17 aymeric Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra210_car.c,v 1.18 2018/07/16 23:11:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra210_car.c,v 1.19 2018/09/09 07:21:17 aymeric Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -53,7 +53,8 @@ __KERNEL_RCSID(0, "$NetBSD: tegra210_car.c,v 1.18 2018/07/16 23:11:47 christos E
 static int	tegra210_car_match(device_t, cfdata_t, void *);
 static void	tegra210_car_attach(device_t, device_t, void *);
 
-static struct clk *tegra210_car_clock_decode(device_t, const void *, size_t);
+static struct clk *tegra210_car_clock_decode(device_t, int, const void *,
+					     size_t);
 
 static const struct fdtbus_clock_controller_func tegra210_car_fdtclock_funcs = {
 	.decode = tegra210_car_clock_decode
@@ -1069,7 +1070,8 @@ tegra210_car_clock_find_by_id(u_int clock_id)
 }
 
 static struct clk *
-tegra210_car_clock_decode(device_t dev, const void *data, size_t len)
+tegra210_car_clock_decode(device_t dev, int cc_phandle, const void *data,
+			  size_t len)
 {
 	struct tegra210_car_softc * const sc = device_private(dev);
 	struct tegra_clk *tclk;
