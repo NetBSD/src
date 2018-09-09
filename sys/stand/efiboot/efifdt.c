@@ -1,4 +1,4 @@
-/* $NetBSD: efifdt.c,v 1.8 2018/09/07 17:30:58 jmcneill Exp $ */
+/* $NetBSD: efifdt.c,v 1.9 2018/09/09 13:37:54 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -62,6 +62,16 @@ efi_fdt_probe(void)
 		return EINVAL;
 	}
 
+	return 0;
+}
+
+int
+efi_fdt_set_data(void *data)
+{
+	if (fdt_check_header(data) != 0)
+		return EINVAL;
+
+	fdt_data = data;
 	return 0;
 }
 
