@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvif.c,v 1.4 2018/08/27 14:47:53 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvif.c,v 1.5 2018/09/09 03:10:03 pgoyette Exp $	*/
 
 /*
  * Copyright 2014 Red Hat Inc.
@@ -29,7 +29,7 @@
  ******************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvif.c,v 1.4 2018/08/27 14:47:53 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvif.c,v 1.5 2018/09/09 03:10:03 pgoyette Exp $");
 
 #include <core/client.h>
 #include <core/notify.h>
@@ -90,7 +90,7 @@ nvkm_client_unmap(void *priv, bus_space_tag_t tag, bus_space_handle_t handle,
 	if (tag == client->mmiot &&
 	    client->mmioaddr <= busaddr &&
 	    busaddr - client->mmioaddr <= client->mmiosz) {
-		const bus_size_t offset = busaddr - client->mmioaddr;
+		__diagused const bus_size_t offset = busaddr - client->mmioaddr;
 		KASSERT(size <= client->mmiosz - offset);
 		/* Nothing to do to release a subregion.  */
 		return;
