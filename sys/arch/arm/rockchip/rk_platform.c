@@ -1,4 +1,4 @@
-/* $NetBSD: rk_platform.c,v 1.3 2018/08/12 16:48:05 jmcneill Exp $ */
+/* $NetBSD: rk_platform.c,v 1.4 2018/09/10 11:05:12 ryo Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
 #include "opt_fdt_arm.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rk_platform.c,v 1.3 2018/08/12 16:48:05 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rk_platform.c,v 1.4 2018/09/10 11:05:12 ryo Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -53,7 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: rk_platform.c,v 1.3 2018/08/12 16:48:05 jmcneill Exp
 #include <dev/ic/comreg.h>
 
 #include <arm/arm/psci.h>
-#include <arm/fdt/psci_fdt.h>
+#include <arm/fdt/psci_fdtvar.h>
 
 #include <libfdt.h>
 
@@ -79,7 +79,7 @@ rk_platform_bootstrap(void)
 {
 	void *fdt_data = __UNCONST(fdtbus_get_data());
 
-	psci_fdt_bootstrap();
+	arm_fdt_cpu_bootstrap();
 
 	const int chosen_off = fdt_path_offset(fdt_data, "/chosen");
 	if (chosen_off < 0)
