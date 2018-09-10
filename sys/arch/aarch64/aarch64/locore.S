@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.23 2018/09/10 05:14:42 skrll Exp $	*/
+/*	$NetBSD: locore.S,v 1.24 2018/09/10 07:30:33 skrll Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -35,7 +35,7 @@
 #include <aarch64/hypervisor.h>
 #include "assym.h"
 
-RCSID("$NetBSD: locore.S,v 1.23 2018/09/10 05:14:42 skrll Exp $")
+RCSID("$NetBSD: locore.S,v 1.24 2018/09/10 07:30:33 skrll Exp $")
 
 /* #define DEBUG_LOCORE */
 /* #define DEBUG_MMU */
@@ -78,6 +78,10 @@ ENTRY_NP(aarch64_start)
 	/* set stack pointer for boot */
 	ADDR	x0, bootstk
 	mov	sp, x0
+
+#ifdef VERBOSE_INIT_ARM
+	PRINT("boot NetBSD/evbarm (aarch64)\r\n")
+#endif
 
 #ifdef DEBUG_LOCORE
 	PRINT("PC               = ")

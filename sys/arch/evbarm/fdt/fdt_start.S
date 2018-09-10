@@ -1,4 +1,4 @@
-/*	$NetBSD: fdt_start.S,v 1.3 2018/07/18 06:50:48 ryo Exp $	*/
+/*	$NetBSD: fdt_start.S,v 1.4 2018/09/10 07:30:33 skrll Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -32,10 +32,7 @@
 
 #include <aarch64/asm.h>
 
-RCSID("$NetBSD: fdt_start.S,v 1.3 2018/07/18 06:50:48 ryo Exp $")
-
-#define PRINT(string)	\
-	bl xprint;.asciz string;.align 2
+RCSID("$NetBSD: fdt_start.S,v 1.4 2018/09/10 07:30:33 skrll Exp $")
 
 /* load far effective address (pc relative) */
 .macro	ADDR, reg, addr
@@ -73,11 +70,6 @@ start:
 	 */
 	ADDR	x8, fdt_addr_r
 	str	x0, [x8]
-
-
-#ifdef VERBOSE_INIT_ARM
-	PRINT("boot NetBSD/evbarm (aarch64)\r\n")
-#endif
 
 	b	aarch64_start		/* aarch64_start() @ aarch64/locore.S */
 
