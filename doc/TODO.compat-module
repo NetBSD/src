@@ -1,4 +1,4 @@
-/* $NetBSD: TODO.compat-module,v 1.1.2.1 2018/09/09 02:20:17 pgoyette Exp $ */
+/* $NetBSD: TODO.compat-module,v 1.1.2.2 2018/09/10 08:49:25 pgoyette Exp $ */
 
 DONE
 ----
@@ -31,11 +31,11 @@ DONE
 
 8.  The old monolithic compat module has been broken into multiple
     modules, one for each old NetBSD version.  The monolithic module
-    is still available.
+    is no longer available.
 
     Similarly, the compat_sysv module has also been split into several
     version-specific modules, and the mini-monolithic compat_sysv module
-    is still provided.
+    is no longer provided.
 
 9.  syscalls.master has been updated to autoload the version-specific
     compat modules rather than the monolithic modules.
@@ -46,7 +46,8 @@ DONE
 
 TODO - Required for branch merge
 --------------------------------
-none
+1.  Replace version-specific parts of the compat_netbsd32 module with
+    individual modules.  Update dependencies accordingly.
 
 
 TODO - Not required for branch merge
