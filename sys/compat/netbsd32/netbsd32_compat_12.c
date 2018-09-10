@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_12.c,v 1.33.36.1 2018/09/10 09:54:47 pgoyette Exp $	*/
+/*	$NetBSD: netbsd32_compat_12.c,v 1.33.36.2 2018/09/10 10:49:09 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_12.c,v 1.33.36.1 2018/09/10 09:54:47 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_12.c,v 1.33.36.2 2018/09/10 10:49:09 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -210,22 +210,22 @@ compat_12_netbsd32_getdirentries(struct lwp *l, const struct compat_12_netbsd32_
 	return (compat_12_sys_getdirentries(l, &ua, retval));
 }
 
-static struct syscall_package compat_netbsd32_09_syscalls[] = {
-        { NETBSD32_SYS_reboot, 0,
-            (sy_call_t *)compat_12_netbsd32_reboot },
-        { NETBSD32_SYS_msync, 0,
-            (sy_call_t *)compat_12_netbsd32_msync },
-        { NETBSD32_SYS_swapon, 0,
-            (sy_call_t *)compat_12_netbsd32_swapon },
-        { NETBSD32_SYS_stat12, 0,
-            (sy_call_t *)compat_12_netbsd32_stat12 },
-        { NETBSD32_SYS_fstat12, 0,
-            (sy_call_t *)compat_12_netbsd32_fstat12 },
-        { NETBSD32_SYS_lstat12, 0,
-            (sy_call_t *)compat_12_netbsd32_lstat12 },
-        { NETBSD32_SYS_getdirentries, 0,
-            (sy_call_t *)compat_12_netbsd32_getdirentries },
-        { 0, 0, NULL }
+static struct syscall_package compat_netbsd32_12_syscalls[] = {
+	{ NETBSD32_SYS_reboot, 0,
+	    (sy_call_t *)compat_12_netbsd32_reboot },
+	{ NETBSD32_SYS_msync, 0,
+	    (sy_call_t *)compat_12_netbsd32_msync },
+	{ NETBSD32_SYS_swapon, 0,
+	    (sy_call_t *)compat_12_netbsd32_swapon },
+	{ NETBSD32_SYS_stat12, 0,
+	    (sy_call_t *)compat_12_netbsd32_stat12 },
+	{ NETBSD32_SYS_fstat12, 0,
+	    (sy_call_t *)compat_12_netbsd32_fstat12 },
+	{ NETBSD32_SYS_lstat12, 0,
+	    (sy_call_t *)compat_12_netbsd32_lstat12 },
+	{ NETBSD32_SYS_getdirentries, 0,
+	    (sy_call_t *)compat_12_netbsd32_getdirentries },
+	{ 0, 0, NULL }
 };
 
 MODULE(MODULE_CLASS_EXEC, compat_netbsd32_12, "compat_netbsd32,compat_12");
@@ -236,8 +236,10 @@ compat_netbsd32_12_modcmd(modcmd_t cmd, void *arg)
 
 	switch (cmd) {
 	case MODULE_CMD_INIT:
+		return syscall_establish(NULL, compat_netbsd32_12_syscalls);
 
 	case MODULE_CMD_FINI:
+		return syscall_disestablish(NULL, compat_netbsd32_12_syscalls);
 
 	default:
 		return ENOTTY;

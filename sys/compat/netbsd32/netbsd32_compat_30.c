@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_30.c,v 1.31.16.1 2018/09/06 06:55:46 pgoyette Exp $	*/
+/*	$NetBSD: netbsd32_compat_30.c,v 1.31.16.2 2018/09/10 10:49:09 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,10 +27,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_30.c,v 1.31.16.1 2018/09/06 06:55:46 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_30.c,v 1.31.16.2 2018/09/10 10:49:09 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/mount.h>
 #include <sys/mount.h>
 #include <sys/socket.h>
 #include <sys/socketvar.h>
@@ -50,6 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_30.c,v 1.31.16.1 2018/09/06 06:55:46
 #include <sys/vfs_syscalls.h>
 
 #include <compat/netbsd32/netbsd32.h>
+#include <compat/netbsd32/netbsd32_syscallvar.h>
 #include <compat/netbsd32/netbsd32_syscallargs.h>
 #include <compat/netbsd32/netbsd32_conv.h>
 #include <compat/sys/mount.h>
@@ -292,4 +294,46 @@ compat_30_netbsd32_fhopen(struct lwp *l, const struct compat_30_netbsd32_fhopen_
 	NETBSD32TOP_UAP(fhp, struct compat_30_fhandle);
 	NETBSD32TO64_UAP(flags);
 	return (compat_30_sys_fhopen(l, &ua, retval));
+}
+
+static struct syscall_package compat_netbsd32_30_syscalls[] = {
+	{ NETBSD32_SYS_getdents, 0,
+	    (sy_call_t *)compat_30_netbsd32_getdents }, 
+	{ NETBSD32_SYS_stat13, 0,
+	    (sy_call_t *)compat_30_netbsd32___stat13 }, 
+	{ NETBSD32_SYS_fstat13, 0,
+	    (sy_call_t *)compat_30_netbsd32___fstat13 }, 
+	{ NETBSD32_SYS_lstat13, 0,
+	    (sy_call_t *)compat_30_netbsd32___lstat13 }, 
+	{ NETBSD32_SYS_fhstat, 0,
+	    (sy_call_t *)compat_30_netbsd32_fhstat }, 
+	{ NETBSD32_SYS_fhstatvfs1, 0,
+	    (sy_call_t *)compat_30_netbsd32_fhstatvfs1 }, 
+	{ NETBSD32_SYS_socket, 0,
+	    (sy_call_t *)compat_30_netbsd32_socket }, 
+	{ NETBSD32_SYS_getfh, 0,
+	    (sy_call_t *)compat_30_netbsd32_getfh }, 
+	{ NETBSD32_SYS_fhstat30, 0,
+	    (sy_call_t *)compat_30_netbsd32___fhstat30 }, 
+	{ NETBSD32_SYS_fhopen, 0,
+	    (sy_call_t *)compat_30_netbsd32___fhopen }, 
+	{ 0, 0, NULL }
+};
+
+MODULE(MODULE_CLASS_EXEC, compat_netbsd32_30, "compat_netbsd32,compat_30");
+
+static int
+compat_netbsd32_30_modcmd(modcmd_t cmd, void *arg)
+{
+
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		return syscall_establish(NULL, compat_netbsd32_30_syscalls);
+
+	case MODULE_CMD_FINI:
+		return syscall_disestablish(NULL, compat_netbsd32_30_syscalls);
+
+	default:
+		return ENOTTY;
+	}
 }
