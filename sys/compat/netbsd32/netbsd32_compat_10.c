@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_10.c,v 1.25 2015/12/03 10:38:21 pgoyette Exp $	*/
+/*	$NetBSD: netbsd32_compat_10.c,v 1.25.16.1 2018/09/10 09:54:47 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1994 Adam Glass and Charles M. Hannum.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_10.c,v 1.25 2015/12/03 10:38:21 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_10.c,v 1.25.16.1 2018/09/10 09:54:47 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sysv.h"
@@ -40,6 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_10.c,v 1.25 2015/12/03 10:38:21 pgoy
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/module.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
 #include <sys/sem.h>
@@ -48,6 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_10.c,v 1.25 2015/12/03 10:38:21 pgoy
 #include <sys/syscallargs.h>
 
 #include <compat/netbsd32/netbsd32.h>
+#include <compat/netbsd32/netbsd32_syscallvar.h>
 #include <compat/netbsd32/netbsd32_syscallargs.h>
 #include <compat/sys/shm.h>
 
