@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_sysctl_09_43.c,v 1.1.2.1 2018/04/17 07:24:55 pgoyette Exp $	*/
+/*	$NetBSD: compat_sysctl_09_43.c,v 1.1.2.2 2018/09/10 08:41:47 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_sysctl_09_43.c,v 1.1.2.1 2018/04/17 07:24:55 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_sysctl_09_43.c,v 1.1.2.2 2018/09/10 08:41:47 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -146,8 +146,6 @@ compat_sysctl_09_43_fini(void)
 	return 0;
 }
 
-#ifdef _MODULE
-
 MODULE (MODULE_CLASS_EXEC, compat_sysctl_09_43, NULL);
 
 static int
@@ -163,4 +161,3 @@ compat_sysctl_09_43_modcmd(modcmd_t cmd, void *arg)
 		return ENOTTY;
 	}
 }
-#endif

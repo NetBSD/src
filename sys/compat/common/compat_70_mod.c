@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_70_mod.c,v 1.1.2.7 2018/03/24 08:11:12 pgoyette Exp $	*/
+/*	$NetBSD: compat_70_mod.c,v 1.1.2.8 2018/09/10 08:41:47 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_70_mod.c,v 1.1.2.7 2018/03/24 08:11:12 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_70_mod.c,v 1.1.2.8 2018/09/10 08:41:47 pgoyette Exp $");
 
 #include <sys/systm.h>
 #include <sys/module.h>
@@ -67,8 +67,6 @@ int compat_70_fini(void)
 	return 0;
 }
 
-#ifdef _MODULE
-
 #define REQD_70 "compat_80"
 MODULE(MODULE_CLASS_EXEC, compat_70, REQD_70);
 
@@ -87,4 +85,3 @@ compat_70_modcmd(modcmd_t cmd, void *arg)
 		return ENOTTY;
 	}
 }
-#endif /* _MODULE */

@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_43_mod.c,v 1.1.2.1 2018/04/17 08:07:13 pgoyette Exp $	*/
+/*	$NetBSD: compat_43_mod.c,v 1.1.2.2 2018/09/10 08:41:47 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_43_mod.c,v 1.1.2.1 2018/04/17 08:07:13 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_43_mod.c,v 1.1.2.2 2018/09/10 08:41:47 pgoyette Exp $");
 
 #include <sys/systm.h>
 #include <sys/module.h>
@@ -168,8 +168,6 @@ compat_43_fini(void)
 	return error;
 }
 
-#ifdef _MODULE
-
 /*
  * XXX We "require" the compat_60 module to ensure proper ordering of
  * XXX vectoring the ttcompatvec replacement routine!
@@ -190,5 +188,3 @@ compat_43_modcmd(modcmd_t cmd, void *arg)
 		return ENOTTY;
 	}
 }
-#endif
-

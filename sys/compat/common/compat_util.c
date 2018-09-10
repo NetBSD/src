@@ -1,4 +1,4 @@
-/* 	$NetBSD: compat_util.c,v 1.46.18.2 2018/03/30 23:57:59 pgoyette Exp $	*/
+/* 	$NetBSD: compat_util.c,v 1.46.18.3 2018/09/10 08:41:47 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_util.c,v 1.46.18.2 2018/03/30 23:57:59 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_util.c,v 1.46.18.3 2018/09/10 08:41:47 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -157,8 +157,6 @@ compat_elf_check_interp(struct exec_package *epp,
 	return error;
 }
 
-#ifdef _MODULE
-
 MODULE(MODULE_CLASS_MISC, compat_util, NULL);
 
 int
@@ -173,4 +171,3 @@ compat_util_modcmd(modcmd_t cmd, void *arg)
 		return ENOTTY;
 	}
 }
-#endif	/* _MODULE */

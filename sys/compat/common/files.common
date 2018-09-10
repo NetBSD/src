@@ -1,9 +1,9 @@
-#	$NetBSD: files.common,v 1.1.2.33 2018/04/17 21:59:27 pgoyette Exp $
+#	$NetBSD: files.common,v 1.1.2.34 2018/09/10 08:41:47 pgoyette Exp $
 
 #
 # Generic files, used by all compat options.
 #
-file	compat/common/compat_mod.c		compat_netbsd
+#file	compat/common/compat_mod.c		compat_netbsd
 file	compat/common/compat_exec.c		compat_netbsd
 file	compat/common/compat_util.c		compat_netbsd
 
