@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.c,v 1.132.2.5 2018/08/25 14:45:37 martin Exp $	*/
+/*	$NetBSD: parser.c,v 1.132.2.6 2018/09/10 15:45:11 martin Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)parser.c	8.7 (Berkeley) 5/16/95";
 #else
-__RCSID("$NetBSD: parser.c,v 1.132.2.5 2018/08/25 14:45:37 martin Exp $");
+__RCSID("$NetBSD: parser.c,v 1.132.2.6 2018/09/10 15:45:11 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -1633,7 +1633,7 @@ readtoken1(int firstc, char const *syn, int magicq)
 	for (c = firstc ;; c = pgetc_macro()) {	/* until of token */
 		if (syntax == ARISYNTAX)
 			out = insert_elided_nl(out);
-		CHECKSTRSPACE(4, out);	/* permit 4 calls to USTPUTC */
+		CHECKSTRSPACE(6, out);	/* permit 6 calls to USTPUTC */
 		switch (syntax[c]) {
 		case CNL:	/* '\n' */
 			if (syntax == BASESYNTAX && varnest == 0)
@@ -1646,6 +1646,9 @@ readtoken1(int firstc, char const *syn, int magicq)
 				setprompt(0);
 			continue;
 
+		case CSBACK:	/* single quoted backslash */
+			USTPUTC(CTLESC, out);
+			/* FALLTHROUGH */
 		case CWORD:
 			USTPUTC(c, out);
 			continue;
@@ -1672,9 +1675,11 @@ readtoken1(int firstc, char const *syn, int magicq)
 			}
 			quotef = 1;	/* current token is quoted */
 			if (ISDBLQUOTE() && c != '\\' && c != '`' &&
-			    c != '$' && (c != '"' || magicq))
+			    c != '$' && (c != '"' || magicq)) {
+				USTPUTC(CTLESC, out);
 				USTPUTC('\\', out);
-			if (SQSYNTAX[c] == CCTL)
+			}
+			if (SQSYNTAX[c] == CCTL || SQSYNTAX[c] == CSBACK)
 				USTPUTC(CTLESC, out);
 			else if (!magicq) {
 				USTPUTC(CTLQUOTEMARK, out);

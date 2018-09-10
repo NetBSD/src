@@ -1,4 +1,4 @@
-/*	$NetBSD: syntax.h,v 1.7.2.1 2017/07/23 14:58:14 snj Exp $	*/
+/*	$NetBSD: syntax.h,v 1.7.2.2 2018/09/10 15:45:11 martin Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -49,6 +49,7 @@
 #define CEOF 10			/* end of file */
 #define CCTL 11			/* like CWORD, except it must be escaped */
 #define CSPCL 12		/* these terminate a word */
+#define CSBACK 13		/* a backslash in a single quote syntax */
 
 /* Syntax classes for is_ functions */
 #define ISDIGIT 01		/* a digit */
