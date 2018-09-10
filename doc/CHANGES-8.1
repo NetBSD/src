@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.1,v 1.1.2.23 2018/09/10 16:00:09 martin Exp $
+# $NetBSD: CHANGES-8.1,v 1.1.2.24 2018/09/10 17:56:49 martin Exp $
 
 A complete list of changes from the NetBSD 8.0 release to the NetBSD 8.1
 release:
@@ -1012,4 +1012,12 @@ sys/netinet6/in6_l2tp.c				1.17
 	fix: l2tp(4) cannot receive packets after reset session without
 	reset tunnel.
 	[knakahara, ticket #1018]
+
+sbin/raidctl/raidctl.8				1.73
+sbin/raidctl/rf_configure.c			1.27-1.32
+sbin/raidctl/rf_configure.h			1.2
+
+	Various raidctl fixes.
+	Support NAME=<wedge name> syntax for disks and spares.
+	[nakayama, ticket #1019]
 
