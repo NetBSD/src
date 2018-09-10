@@ -1,4 +1,4 @@
-/*	$NetBSD: expand.c,v 1.110.2.4 2018/07/13 14:32:01 martin Exp $	*/
+/*	$NetBSD: expand.c,v 1.110.2.5 2018/09/10 15:45:11 martin Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)expand.c	8.5 (Berkeley) 5/15/95";
 #else
-__RCSID("$NetBSD: expand.c,v 1.110.2.4 2018/07/13 14:32:01 martin Exp $");
+__RCSID("$NetBSD: expand.c,v 1.110.2.5 2018/09/10 15:45:11 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -924,7 +924,9 @@ evalvar(const char *p, int flag)
 					varlen++;
 			} else {
 				while (*val) {
-					if (quotes && syntax[(int)*val] == CCTL)
+					if (quotes && (varflags & VSQUOTE) &&
+					    (syntax[(int)*val] == CCTL ||
+					     syntax[(int)*val] == CBACK))
 						STPUTC(CTLESC, expdest);
 					STPUTC(*val++, expdest);
 				}
@@ -1106,7 +1108,7 @@ varvalue(const char *name, int quoted, int subtype, int flag)
 	int num;
 	char *p;
 	int i;
-	char sep;
+	int sep;
 	char **ap;
 	char const *syntax;
 
@@ -1164,10 +1166,14 @@ varvalue(const char *name, int quoted, int subtype, int flag)
 			STRTODEST(p);
 			if (!*ap)
 				break;
-			if (sep)
+			if (sep) {
+				if (quoted && (flag & (EXP_GLOB|EXP_CASE)) &&
+				    (SQSYNTAX[sep] == CCTL || SQSYNTAX[sep] == CSBACK))
+					STPUTC(CTLESC, expdest);
 				STPUTC(sep, expdest);
-			else if ((flag & (EXP_SPLIT|EXP_IN_QUOTES)) == EXP_SPLIT
-			    && !quoted && **ap != '\0')
+			} else
+			    if ((flag & (EXP_SPLIT|EXP_IN_QUOTES)) == EXP_SPLIT
+			      && !quoted && **ap != '\0')
 				STPUTC('\0', expdest);
 		}
 		return;
@@ -1457,22 +1463,59 @@ expmeta(char *enddir, char *name)
 			metaflag = 1;
 		else if (*p == '[') {
 			q = p + 1;
-			if (*q == '!')
+			if (*q == '!' || *q == '^')
 				q++;
 			for (;;) {
 				while (*q == CTLQUOTEMARK || *q == CTLNONL)
 					q++;
-				if (*q == CTLESC)
+				if (*q == ']') {
 					q++;
-				if (*q == '/' || *q == '\0')
-					break;
-				if (*++q == ']') {
 					metaflag = 1;
 					break;
 				}
+				if (*q == '[' && q[1] == ':') {
+					/*
+					 * character class, look for :] ending
+					 * also stop on ']' (end bracket expr)
+					 * or '\0' or '/' (end pattern)
+					 */
+					while (*++q != '\0' && *q != ']' &&
+					    *q != '/') {
+						if (*q == CTLESC) {
+							if (*++q == '\0')
+								break;
+							if (*q == '/')
+								break;
+						} else if (*q == ':' &&
+						    q[1] == ']')
+							break;
+					}
+					if (*q == ':') {
+						/*
+						 * stopped at ':]'
+						 * still in [...]
+						 * skip ":]" and continue;
+						 */
+						q += 2;
+						continue;
+					}
+
+					/* done at end of pattern, not [...] */
+					if (*q == '\0' || *q == '/')
+						break;
+
+					/* found the ']', we have a [...] */
+					metaflag = 1;
+					q++;	/* skip ']' */
+					break;
+				}
+				if (*q == CTLESC)
+					q++;
+				/* end of pattern cannot be escaped */
+				if (*q == '/' || *q == '\0')
+					break;
+				q++;
 			}
-		} else if (*p == '!' && p[1] == '!'	&& (p == name || p[-1] == '/')) {
-			metaflag = 1;
 		} else if (*p == '\0')
 			break;
 		else if (*p == CTLQUOTEMARK || *p == CTLNONL)
@@ -1690,10 +1733,24 @@ patmatch(const char *pattern, const char *string, int squoted)
 	for (;;) {
 		switch (c = *p++) {
 		case '\0':
+			if (squoted && *q == CTLESC) {
+				if (q[1] == '\0')
+					q++;
+			}
 			if (*q != '\0')
 				goto backtrack;
 			return 1;
 		case CTLESC:
+			if (squoted && *q == CTLESC)
+				q++;
+			if (*p == '\0' && *q == '\0') {
+				VTRACE(DBG_MATCH, ("match-\\\n"));
+				return 1;
+			}
+			if (*q++ != *p++)
+				goto backtrack;
+			break;
+		case '\\':
 			if (squoted && *q == CTLESC)
 				q++;
 			if (*q++ != *p++)
@@ -1725,6 +1782,10 @@ patmatch(const char *pattern, const char *string, int squoted)
 					q++;
 				}
 			}
+			if (c == CTLESC && p[1] == '\0') {
+				VTRACE(DBG_MATCH, ("match+\\\n"));
+				return 1;
+			}
 			/*
 			 * First try the shortest match for the '*' that
 			 * could work. We can forget any earlier '*' since
@@ -1739,19 +1800,31 @@ patmatch(const char *pattern, const char *string, int squoted)
 			int invert, found;
 			unsigned char chr;
 
+			/*
+			 * First quick check to see if there is a
+			 * possible matching ']' - if not, then this
+			 * is not a char class, and the '[' is just
+			 * a literal '['.
+			 *
+			 * This check will not detect all non classes, but
+			 * that's OK - It just means that we execute the
+			 * harder code sometimes when it it cannot succeed.
+			 */
 			endp = p;
-			if (*endp == '!')
+			if (*endp == '!' || *endp == '^')
 				endp++;
 			for (;;) {
 				while (*endp == CTLQUOTEMARK || *endp==CTLNONL)
 					endp++;
 				if (*endp == '\0')
-					goto dft;		/* no matching ] */
+					goto dft;	/* no matching ] */
 				if (*endp == CTLESC)
 					endp++;
 				if (*++endp == ']')
 					break;
 			}
+			/* end shortcut */
+
 			invert = 0;
 			savep = p, saveq = q;
 			invert = 0;
@@ -1762,6 +1835,8 @@ patmatch(const char *pattern, const char *string, int squoted)
 			found = 0;
 			if (*q == '\0')
 				return 0;
+			if (squoted && *q == CTLESC)
+				q++;
 			chr = (unsigned char)*q++;
 			c = *p++;
 			do {
@@ -1779,12 +1854,12 @@ patmatch(const char *pattern, const char *string, int squoted)
 						continue;
 					}
 				}
-				if (c == CTLESC)
+				if (c == CTLESC || c == '\\')
 					c = *p++;
 				wc = (unsigned char)c;
 				if (*p == '-' && p[1] != ']') {
 					p++;
-					if (*p == CTLESC)
+					if (*p == CTLESC || *p == '\\')
 						p++;
 					wc2 = (unsigned char)*p++;
 					if (   collate_range_cmp(chr, wc) >= 0

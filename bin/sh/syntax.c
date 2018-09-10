@@ -1,7 +1,7 @@
-/*	$NetBSD: syntax.c,v 1.3.26.1 2017/07/23 14:58:14 snj Exp $	*/
+/*	$NetBSD: syntax.c,v 1.3.26.2 2018/09/10 15:45:11 martin Exp $	*/
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: syntax.c,v 1.3.26.1 2017/07/23 14:58:14 snj Exp $");
+__RCSID("$NetBSD: syntax.c,v 1.3.26.2 2018/09/10 15:45:11 martin Exp $");
 
 #include <limits.h>
 #include "shell.h"
@@ -46,7 +46,7 @@ const char dqsyntax[257] = { CEOF,
     set('`', CBQUOTE)
     set('$', CVAR)
     set('}', CENDVAR)
-    /* ':/' for tilde expansion, '-' for [a\-x] pattern ranges */
+    /* ':/' for tilde expansion, '-]' for [a\-x] pattern ranges */
     set('!', CCTL)
     set('*', CCTL)
     set('?', CCTL)
@@ -56,6 +56,7 @@ const char dqsyntax[257] = { CEOF,
     set(':', CCTL)
     set('/', CCTL)
     set('-', CCTL)
+    set(']', CCTL)
 };
 
 /* syntax table used when in single quotes */
@@ -63,7 +64,8 @@ const char sqsyntax[257] = { CEOF,
     set_range(CTL_FIRST, CTL_LAST, CCTL)
     set('\n', CNL)
     set('\'', CSQUOTE)
-    /* ':/' for tilde expansion, '-' for [a\-x] pattern ranges */
+    set('\\', CSBACK)
+    /* ':/' for tilde expansion, '-]' for [a\-x] pattern ranges */
     set('!', CCTL)
     set('*', CCTL)
     set('?', CCTL)
@@ -73,6 +75,7 @@ const char sqsyntax[257] = { CEOF,
     set(':', CCTL)
     set('/', CCTL)
     set('-', CCTL)
+    set(']', CCTL)
 };
 
 /* syntax table used when in arithmetic */
