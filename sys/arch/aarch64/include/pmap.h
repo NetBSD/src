@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.h,v 1.8 2018/08/10 21:06:42 ryo Exp $ */
+/* $NetBSD: pmap.h,v 1.9 2018/09/10 15:14:50 maxv Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -134,6 +134,8 @@ const struct pmap_devmap *pmap_devmap_find_pa(paddr_t, psize_t);
 const struct pmap_devmap *pmap_devmap_find_va(vaddr_t, vsize_t);
 vaddr_t pmap_devmap_phystov(paddr_t);
 paddr_t pmap_devmap_vtophys(paddr_t);
+
+pd_entry_t *pmap_alloc_pdp(struct pmap *, paddr_t *);
 
 /* devmap use L2 blocks. (2Mbyte) */
 #define DEVMAP_TRUNC_ADDR(x)	((x) & ~L2_OFFSET)
