@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_intr_machdep.c,v 1.43 2018/06/24 11:51:15 jdolecek Exp $	*/
+/*	$NetBSD: pci_intr_machdep.c,v 1.44 2018/09/10 02:49:23 cherry Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2009 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_intr_machdep.c,v 1.43 2018/06/24 11:51:15 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_intr_machdep.c,v 1.44 2018/09/10 02:49:23 cherry Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -294,9 +294,7 @@ pci_intr_find_intx_irq(pci_intr_handle_t ih, int *irq, struct pic **pic,
 			return ENOENT;
 		*pic = &ioapic->sc_pic;
 		*pin = APIC_IRQ_PIN(ih);
-		*irq = APIC_IRQ_LEGACY_IRQ(ih);
-		if (*irq < 0 || *irq >= NUM_LEGACY_IRQS)
-			*irq = -1;
+		*irq = -1; /* PCI doesn't use legacy irq */
 	}
 #endif
 
