@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.22 2018/09/04 15:50:25 skrll Exp $	*/
+/*	$NetBSD: locore.S,v 1.23 2018/09/10 05:14:42 skrll Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -35,7 +35,7 @@
 #include <aarch64/hypervisor.h>
 #include "assym.h"
 
-RCSID("$NetBSD: locore.S,v 1.22 2018/09/04 15:50:25 skrll Exp $")
+RCSID("$NetBSD: locore.S,v 1.23 2018/09/10 05:14:42 skrll Exp $")
 
 /* #define DEBUG_LOCORE */
 /* #define DEBUG_MMU */
@@ -553,7 +553,7 @@ ENTRY_NP(_print_x0)
 	ret
 END(_print_x0)
 
-/* Preserve x{0,1,2} descpite them being caller saved */
+/* Preserve x{0,1,2} despite them being caller saved */
 ENTRY_NP(print_x0)
 	stp	x0, lr, [sp, #-16]!
 	stp	x1, x2, [sp, #-16]!
@@ -564,7 +564,7 @@ ENTRY_NP(print_x0)
 	ret
 END(print_x0)
 
-/* Preserve x{0,1,2} descpite them being caller saved */
+/* Preserve x{0,1,2} despite them being caller saved */
 ENTRY_NP(printn_x1)
 	stp	x0, lr, [sp, #-16]!
 	stp	x1, x2, [sp, #-16]!
@@ -575,7 +575,7 @@ ENTRY_NP(printn_x1)
 	ret
 END(printn_x1)
 
-/* Preserve x{0,1,2} descpite them being caller saved */
+/* Preserve x{0,1,2} despite them being caller saved */
 ENTRY_NP(print_x2)
 	stp	x0, lr, [sp, #-16]!
 	mov	x0, x2
@@ -802,7 +802,7 @@ ENTRY_NP(l1_setblocks)
 
 #ifdef DEBUG_MMU
 	PRINT("L1 entry[")
-	mov	x1, x19
+	mov	x1, x20
 	bl	printn_x1
 	PRINT("]=")
 	mov	x2, x21
@@ -877,7 +877,7 @@ ENTRY_NP(l2_setblocks)
 
 #ifdef DEBUG_MMU
 	PRINT("L2 entry[")
-	mov	x1, x19
+	mov	x1, x20
 	bl	printn_x1
 	PRINT("]=")
 	mov	x2, x21
