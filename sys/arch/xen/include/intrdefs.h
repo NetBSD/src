@@ -1,4 +1,4 @@
-/* $NetBSD: intrdefs.h,v 1.12 2014/05/19 22:47:54 rmind Exp $ */
+/* $NetBSD: intrdefs.h,v 1.13 2018/09/10 05:08:55 cherry Exp $ */
 
 /* This file co-exists, and is included via machine/intrdefs.h */
 
@@ -16,5 +16,8 @@
 
 /* Note: IPI_KICK does not have a handler. */
 #define XEN_NIPIS		6
+
+/* The number of 'irqs' that XEN understands */
+#define NUM_XEN_IRQS 		256
 
 #endif /* _XEN_INTRDEFS_H_ */
