@@ -1,4 +1,4 @@
-/*	$NetBSD: gic.c,v 1.36 2018/09/10 09:48:57 jmcneill Exp $	*/
+/*	$NetBSD: gic.c,v 1.37 2018/09/10 19:43:58 jmcneill Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -34,7 +34,7 @@
 #define _INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gic.c,v 1.36 2018/09/10 09:48:57 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gic.c,v 1.37 2018/09/10 19:43:58 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -547,9 +547,12 @@ armgic_ipi_send(struct pic_softc *pic, const kcpuset_t *kcp, u_long ipi)
 
 	uint32_t sgir = __SHIFTIN(ARMGIC_SGI_IPIBASE + ipi, GICD_SGIR_SGIINTID);
 	if (kcp != NULL) {
-		uint32_t targets;
-		kcpuset_export_u32(kcp, &targets, sizeof(targets));
-		sgir |= __SHIFTIN(targets, GICD_SGIR_TargetList);
+		uint32_t targets_val = 0;
+		for (int n = 0; n < MAXCPUS; n++) {
+			if (kcpuset_isset(kcp, n))
+				targets_val |= sc->sc_target[n];
+		}
+		sgir |= __SHIFTIN(targets_val, GICD_SGIR_TargetList);
 		sgir |= GICD_SGIR_TargetListFilter_List;
 	} else {
 		if (ncpu == 1)
