@@ -1,4 +1,4 @@
-# $NetBSD: printf.sh,v 1.1 2018/09/05 21:05:40 kre Exp $
+# $NetBSD: printf.sh,v 1.2 2018/09/10 15:02:11 kre Exp $
 #
 # Copyright (c) 2018 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1344,6 +1344,15 @@ b_SysV_echo_backslash_c()
 
 	# This is undefined, though would be nice if we could rely upon it
 	# expect "abcd"		%.1b		'a\c' 'b\c' 'c\c' 'd\c' '\c' e
+
+	# Check for interference from one instance of execution of
+	# a builtin printf execution to another
+	# (this makes no sense to test for standalone printf, and for which
+	# the tests don't handle ';' magic args, so this would not work)
+	if $BUILTIN_TEST
+	then
+		expect abcdefjklmno   %s%b%s abc 'def\c' ghi ';' %s%s jkl mno
+	fi
 
 	return $RVAL
 }
