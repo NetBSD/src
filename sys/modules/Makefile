@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.202.2.25 2018/09/06 06:56:43 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.202.2.26 2018/09/10 08:43:50 pgoyette Exp $
 
 .include <bsd.own.mk>
 
@@ -6,13 +6,15 @@
 
 # Modules for compatability with earlier versions of NetBSD
 
-SUBDIR+=	compat      compat_util
+#SUBDIR+=	compat
+SUBDIR+=	compat_util
 SUBDIR+=	compat_43   compat_sysctl_09_43
 SUBDIR+=	compat_09   compat_10   compat_12   compat_13   compat_14
 SUBDIR+=	compat_16   compat_20   compat_30   compat_40   compat_50
 SUBDIR+=	compat_60   compat_70   compat_80 
 
-SUBDIR+=	compat_sysv compat_sysv_10 compat_sysv_14 compat_sysv_50
+#SUBDIR+=	compat_sysv
+SUBDIR+=	compat_sysv_10 compat_sysv_14 compat_sysv_50
 
 SUBDIR+=	accf_dataready
 SUBDIR+=	accf_httpready
@@ -265,6 +267,12 @@ SUBDIR+=	wmimsi
 .if ${MACHINE_CPU} == "arm" \
     || (!empty(MACHINE_ARCH:Mmips64*) && !defined(BSD_MK_COMPAT_FILE))
 SUBDIR+=	compat_netbsd32
+SUBDIR+=	compat_netbsd32_09	compat_netbsd32_10
+SUBDIR+=	compat_netbsd32_12	compat_netbsd32_13
+SUBDIR+=	compat_netbsd32_14	compat_netbsd32_20
+SUBDIR+=	compat_netbsd32_30	compat_netbsd32_50
+SUBDIR+=	compat_netbsd32_60	compat_netbsd32_80
+SUBDIR+=	compat_netbsd32_43
 SUBDIR+=	compat_netbsd32_mqueue
 SUBDIR+=	compat_netbsd32_nfssrv
 SUBDIR+=	compat_netbsd32_ptrace
@@ -274,6 +282,12 @@ SUBDIR+=	compat_netbsd32_sysvipc
 .if ${MACHINE_ARCH} == "x86_64"
 SUBDIR+=	compat_linux32
 SUBDIR+=	compat_netbsd32
+SUBDIR+=	compat_netbsd32_09	compat_netbsd32_10
+SUBDIR+=	compat_netbsd32_12	compat_netbsd32_13
+SUBDIR+=	compat_netbsd32_14	compat_netbsd32_20
+SUBDIR+=	compat_netbsd32_30	compat_netbsd32_50
+SUBDIR+=	compat_netbsd32_60	compat_netbsd32_80
+SUBDIR+=	compat_netbsd32_43
 SUBDIR+=	compat_netbsd32_mqueue
 SUBDIR+=	compat_netbsd32_nfssrv
 SUBDIR+=	compat_netbsd32_ptrace
