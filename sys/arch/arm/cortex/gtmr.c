@@ -1,4 +1,4 @@
-/*	$NetBSD: gtmr.c,v 1.33 2018/09/01 20:54:32 tnn Exp $	*/
+/*	$NetBSD: gtmr.c,v 1.34 2018/09/10 10:55:02 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtmr.c,v 1.33 2018/09/01 20:54:32 tnn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtmr.c,v 1.34 2018/09/10 10:55:02 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -125,7 +125,7 @@ gtmr_match(device_t parent, cfdata_t cf, void *aux)
 	if (gtmr_sc.sc_dev != NULL)
 		return 0;
 
-	/* Genertic Timer is always implemented in ARMv8-A */
+	/* Generic Timer is always implemented in ARMv8-A */
 	if (!cpu_gtmr_exists_p())
 		return 0;
 
