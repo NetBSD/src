@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.39 2018/06/24 13:35:33 jdolecek Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.40 2018/09/10 07:04:08 cherry Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.39 2018/06/24 13:35:33 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.40 2018/09/10 07:04:08 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -237,31 +237,8 @@ isa_intr_establish_xname(isa_chipset_tag_t ic, int irq, int type, int level,
 			printf("isa_intr_establish: no MP mapping found\n");
 	}
 #endif
-#if defined(XEN)
-	KASSERT(APIC_IRQ_ISLEGACY(irq));
-
-	int evtch;
-	const char *intrstr;
-	char intrstr_buf[INTRIDBUF];
-
-	mpih |= APIC_IRQ_LEGACY_IRQ(irq);
-
-	evtch = xen_pirq_alloc(&mpih, type); /* XXX: legacy - xen just tosses irq back at us */
-	if (evtch == -1)
-		return NULL;
-
-	intrstr = intr_create_intrid(irq, pic, pin, intrstr_buf,
-	    sizeof(intrstr_buf));
-
-	aprint_debug("irq: %d requested on pic: %s.\n", irq, pic->pic_name);
-
-	return (void *)pirq_establish(irq, evtch, ih_fun, ih_arg, level,
-	    intrstr, xname);
-#else /* defined(XEN) */
 	return intr_establish_xname(irq, pic, pin, type, level, ih_fun, ih_arg,
 	    false, xname);
-#endif
-
 }
 
 /* Deregister an interrupt handler. */
