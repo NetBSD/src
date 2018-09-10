@@ -1,4 +1,4 @@
-/* $NetBSD: psci_fdt.h,v 1.2 2018/05/26 22:49:03 jmcneill Exp $ */
+/* $NetBSD: psci_fdtvar.h,v 1.1 2018/09/10 11:05:12 ryo Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -26,13 +26,12 @@
  * SUCH DAMAGE.
  */
 
-#ifndef _ARM_PSCI_FDT_H
-#define _ARM_PSCI_FDT_H
+#ifndef _ARM_PSCI_FDTVAR_H
+#define _ARM_PSCI_FDTVAR_H
 
-/* Initialize PSCI and boot APs */
-void	psci_fdt_bootstrap(void);
+int	psci_fdt_preinit(void);
 
 /* Board reset */
 void	psci_fdt_reset(void);
 
-#endif /* !_ARM_PSCI_FDT_H */
+#endif /* !_ARM_PSCI_FDTVAR_H */
