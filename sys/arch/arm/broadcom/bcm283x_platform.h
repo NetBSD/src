@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm283x_platform.h,v 1.1 2018/04/01 04:35:03 ryo Exp $	*/
+/*	$NetBSD: bcm283x_platform.h,v 1.2 2018/09/10 11:05:12 ryo Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -45,5 +45,8 @@
 
 #define	BCM2836_ARM_LOCAL_VBASE \
 	BCM2835_IOPHYSTOVIRT(BCM2836_ARM_LOCAL_BASE)
+
+#define	BCM2836_ARM_SMP_VBASE	\
+	BCM2835_IOPHYSTOVIRT(BCM2836_ARM_SMP_BASE)
 
 #endif /* _ARM_BCM2835REG_PLATFORM_H_ */

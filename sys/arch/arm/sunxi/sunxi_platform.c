@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_platform.c,v 1.25 2018/08/05 14:02:35 skrll Exp $ */
+/* $NetBSD: sunxi_platform.c,v 1.26 2018/09/10 11:05:12 ryo Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
 #include "opt_fdt_arm.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_platform.c,v 1.25 2018/08/05 14:02:35 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_platform.c,v 1.26 2018/09/10 11:05:12 ryo Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -54,7 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: sunxi_platform.c,v 1.25 2018/08/05 14:02:35 skrll Ex
 #include <dev/ic/comreg.h>
 
 #include <arm/arm/psci.h>
-#include <arm/fdt/psci_fdt.h>
+#include <arm/fdt/psci_fdtvar.h>
 
 #include <arm/sunxi/sunxi_platform.h>
 
@@ -201,7 +201,7 @@ sunxi_platform_bootstrap(void)
 static void
 sunxi_platform_psci_bootstrap(void)
 {
-	psci_fdt_bootstrap();
+	arm_fdt_cpu_bootstrap();
 	sunxi_platform_bootstrap();
 }
 

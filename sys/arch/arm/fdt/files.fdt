@@ -1,4 +1,4 @@
-# $NetBSD: files.fdt,v 1.24 2018/09/08 00:40:57 jmcneill Exp $
+# $NetBSD: files.fdt,v 1.25 2018/09/10 11:05:12 ryo Exp $
 
 include	"dev/pckbport/files.pckbport"
 
@@ -51,7 +51,7 @@ attach	plrtc at fdt with plrtc_fdt
 file	arch/arm/fdt/plrtc_fdt.c		plrtc_fdt
 
 attach	psci at fdt with psci_fdt
-file	arch/arm/fdt/psci_fdt.c			psci_fdt
+file	arch/arm/fdt/psci_fdt.c			psci_fdt	needs-flag
 
 # Generic PCI host controller
 device	pcihost: pcibus

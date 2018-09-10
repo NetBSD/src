@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.24 2018/09/10 07:30:33 skrll Exp $	*/
+/*	$NetBSD: locore.S,v 1.25 2018/09/10 11:05:12 ryo Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -35,7 +35,7 @@
 #include <aarch64/hypervisor.h>
 #include "assym.h"
 
-RCSID("$NetBSD: locore.S,v 1.24 2018/09/10 07:30:33 skrll Exp $")
+RCSID("$NetBSD: locore.S,v 1.25 2018/09/10 11:05:12 ryo Exp $")
 
 /* #define DEBUG_LOCORE */
 /* #define DEBUG_MMU */
@@ -299,14 +299,26 @@ END(printcpu)
 
 ENTRY_NP(aarch64_mpstart)
 ENTRY_NP(cortex_mpstart)	/* compat arm */
-	ADDR	x0, arm_cpu_hatch_arg	/* from cpu0 */
-	ldr	w27, [x0]		/* x27 = cpuindex */
+	mrs	x3, mpidr_el1
+	ldr	x0, =(MPIDR_AFF0|MPIDR_AFF1|MPIDR_AFF2|MPIDR_AFF3)
+	and	x3, x3, x0
+
+	ADDR	x0, cpu_mpidr
+	mov	x1, xzr
+1:
+	add	x1, x1, #1
+	cmp	x1, MAXCPUS		/* cpuindex >= MAXCPUS ? */
+	bge	toomanycpus
+	ldr	x2, [x0, x1, lsl #3]	/* cpu_mpidr[cpunidex] */
+	cmp	x2, x3			/* == mpidr_el1 & MPIDR_AFF ? */
+	bne	1b
+
+	mov	x27, x1			/* x27 = cpuindex */
+
 	mov	x0, #1
 	lsl	x28, x0, x27		/* x28 = 1 << cpuindex */
 
 	/* x27 = cpuindex, x28 = (1 << cpuindex) */
-	cmp	x27, MAXCPUS
-	bge	toomanycpus
 
 	/* set stack pointer for boot */
 #define BOOT_STACKSIZE	256
@@ -477,7 +489,7 @@ END(aarch64_mpstart)
 
 toomanycpus:
 	PRINTCPU()
-	PRINT("too many cpus\r\n")
+	PRINT("too many cpus, or MPIDR not exists in cpu_mpidr[]\r\n")
 1:	wfi
 	b	1b
 
