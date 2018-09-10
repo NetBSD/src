@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.1,v 1.1.2.22 2018/09/07 12:38:23 martin Exp $
+# $NetBSD: CHANGES-8.1,v 1.1.2.23 2018/09/10 16:00:09 martin Exp $
 
 A complete list of changes from the NetBSD 8.0 release to the NetBSD 8.1
 release:
@@ -978,4 +978,38 @@ sys/dev/pci/ixgbe/ix_txrx.c			1.50
 	Fix a wrong error return value from ixgbe_mq_start (an if_transmit
 	function).
 	[msaitoh, ticket #1014]
+
+bin/sh/expand.c					1.124,1.127 (patch)
+bin/sh/parser.c					1.148,1.149 (patch)
+bin/sh/syntax.c					1.6 (patch)
+bin/sh/syntax.h					1.9 (partial, patch)
+
+	Fix pattern matching.
+	[kre, ticket #1015]
+
+usr.bin/find/function.c				1.77
+
+	Avoid getting "arguemt list too long" in find -exec invocations.
+	[kre, ticket #1016]
+
+distrib/sgimips/instkernel/Makefile		1.13
+sys/arch/sgimips/conf/INSTALL32_IP2x		1.10
+sys/arch/sgimips/hpc/wdsc.c			1.35
+sys/arch/sgimips/sgimips/machdep.c		1.146
+sys/arch/sgimips/stand/boot/Makefile		1.20
+
+	Disable misc options to shrink an INSTALL kernel for IP2x.
+	Fix build failure without options DDB and with pseudo-device ksyms.
+	Use elf2ecoff(1) rather than objcopy(1) to generat ecoff for old
+	machines.
+	Fix wdsc(4) probe failure on HPC1.5 machines
+	(Indigo R3k/R4k, IP6/IP10/IP12).
+	[tsutsui, ticket #1017]
+
+sys/netinet/in_l2tp.c				1.16
+sys/netinet6/in6_l2tp.c				1.17
+
+	fix: l2tp(4) cannot receive packets after reset session without
+	reset tunnel.
+	[knakahara, ticket #1018]
 
