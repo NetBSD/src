@@ -1,4 +1,4 @@
-/* $NetBSD: seattle_platform.c,v 1.1 2018/09/08 00:49:06 jmcneill Exp $ */
+/* $NetBSD: seattle_platform.c,v 1.2 2018/09/10 19:09:38 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
 #define _ARM32_BUS_DMA_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: seattle_platform.c,v 1.1 2018/09/08 00:49:06 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: seattle_platform.c,v 1.2 2018/09/10 19:09:38 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -60,7 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: seattle_platform.c,v 1.1 2018/09/08 00:49:06 jmcneil
 #include <dev/ic/comreg.h>
 
 #include <arm/arm/psci.h>
-#include <arm/fdt/psci_fdt.h>
+#include <arm/fdt/psci_fdtvar.h>
 
 #include <libfdt.h>
 
@@ -147,7 +147,7 @@ seattle_platform_uart_freq(void)
 
 static const struct arm_platform seattle_platform = {
 	.ap_devmap = seattle_platform_devmap,
-	.ap_bootstrap = psci_fdt_bootstrap,
+	.ap_bootstrap = arm_fdt_cpu_bootstrap,
 	.ap_init_attach_args = seattle_platform_init_attach_args,
 	.ap_early_putchar = seattle_platform_early_putchar,
 	.ap_device_register = seattle_platform_device_register,
