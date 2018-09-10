@@ -1,4 +1,4 @@
-# $NetBSD: t_builtin.sh,v 1.2 2018/09/08 18:24:01 kre Exp $
+# $NetBSD: t_builtin.sh,v 1.3 2018/09/10 15:02:11 kre Exp $
 #
 # Copyright (c) 2018 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -63,6 +63,9 @@ do_printf()
 	for ARG
 	do
 		case "${ARG}" in
+		(';')	# Allow multiple commands
+			COMMAND="${COMMAND} ; printf"
+			;;
 		(*\'*)
 			# This is kind of odd, we need a working
 			# printf in order to test printf ...
