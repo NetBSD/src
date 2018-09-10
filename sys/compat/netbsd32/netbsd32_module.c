@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_module.c,v 1.6.2.3 2018/09/07 23:32:30 pgoyette Exp $	*/
+/*	$NetBSD: netbsd32_module.c,v 1.6.2.4 2018/09/10 22:50:51 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_module.c,v 1.6.2.3 2018/09/07 23:32:30 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_module.c,v 1.6.2.4 2018/09/10 22:50:51 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -41,104 +41,6 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_module.c,v 1.6.2.3 2018/09/07 23:32:30 pgoy
 #include <compat/netbsd32/netbsd32_syscall.h>
 #include <compat/netbsd32/netbsd32_syscallargs.h>
 #include <compat/netbsd32/netbsd32_conv.h>
-
-#ifdef COMPAT_80
-static int
-modctl32_handle_ostat(int cmd, struct netbsd32_iovec *iov, void *arg)
-{
-	omodstat_t *oms, *omso;
-	modinfo_t *mi;
-	module_t *mod;
-	vaddr_t addr;
-	size_t size;
-	size_t omslen;
-	size_t used;
-	int error;
-	int omscnt;
-	bool stataddr;
-	const char *suffix = "...";
-
-	if (cmd != MODCTL_OSTAT)
-		return EINVAL;
-
-	/* If not privileged, don't expose kernel addresses. */
-	error = kauth_authorize_system(kauth_cred_get(), KAUTH_SYSTEM_MODULE,
-	    0, (void *)(uintptr_t)MODCTL_STAT, NULL, NULL);
-	stataddr = (error == 0);
-
-	kernconfig_lock();
-	omscnt = 0;
-	TAILQ_FOREACH(mod, &module_list, mod_chain) {
-		omscnt++;
-		mi = mod->mod_info;
-	}
-	TAILQ_FOREACH(mod, &module_builtins, mod_chain) {
-		omscnt++;
-		mi = mod->mod_info;
-	}
-	omslen = omscnt * sizeof(omodstat_t);
-	omso = kmem_zalloc(omslen, KM_SLEEP);
-	oms = omso;
-	TAILQ_FOREACH(mod, &module_list, mod_chain) {
-		mi = mod->mod_info;
-		strlcpy(oms->oms_name, mi->mi_name, sizeof(oms->oms_name));
-		if (mi->mi_required != NULL) {
-			used = strlcpy(oms->oms_required, mi->mi_required,
-			    sizeof(oms->oms_required));
-			if (used >= sizeof(oms->oms_required)) { 
-				oms->oms_required[sizeof(oms->oms_required) -
-				    strlen(suffix) - 1] = '\0';
-				strlcat(oms->oms_required, suffix,
-				    sizeof(oms->oms_required));
-                        }
-		}
-		if (mod->mod_kobj != NULL && stataddr) {
-			kobj_stat(mod->mod_kobj, &addr, &size);
-			oms->oms_addr = addr;
-			oms->oms_size = size;
-		}
-		oms->oms_class = mi->mi_class;
-		oms->oms_refcnt = mod->mod_refcnt;
-		oms->oms_source = mod->mod_source;
-		oms->oms_flags = mod->mod_flags;
-		oms++;
-	}
-	TAILQ_FOREACH(mod, &module_builtins, mod_chain) {
-		mi = mod->mod_info;
-		strlcpy(oms->oms_name, mi->mi_name, sizeof(oms->oms_name));
-		if (mi->mi_required != NULL) {
-			used = strlcpy(oms->oms_required, mi->mi_required,
-			    sizeof(oms->oms_required));
-			if (used >= sizeof(oms->oms_required)) { 
-				oms->oms_required[sizeof(oms->oms_required) -
-				    strlen(suffix) - 1] = '\0';
-				strlcat(oms->oms_required, suffix,
-				    sizeof(oms->oms_required));
-                        }
-		}
-		if (mod->mod_kobj != NULL && stataddr) {
-			kobj_stat(mod->mod_kobj, &addr, &size);
-			oms->oms_addr = addr;
-			oms->oms_size = size;
-		}
-		oms->oms_class = mi->mi_class;
-		oms->oms_refcnt = -1;
-		KASSERT(mod->mod_source == MODULE_SOURCE_KERNEL);
-		oms->oms_source = mod->mod_source;
-		oms++;
-	}
-	kernconfig_unlock();
-	error = copyout(omso, NETBSD32PTR64(iov->iov_base),
-	    uimin(omslen - sizeof(modstat_t), iov->iov_len));
-	kmem_free(omso, omslen);
-	if (error == 0) {
-		iov->iov_len = omslen - sizeof(modstat_t);
-		error = copyout(iov, arg, sizeof(*iov));
-	}
-
-	return error;
-}
-#endif	/* COMPAT_80 */
 
 static int
 modctl32_handle_stat(struct netbsd32_iovec *iov, void *arg)
@@ -290,6 +192,13 @@ modctl32_handle_stat(struct netbsd32_iovec *iov, void *arg)
 	return error;
 }
 
+int
+compat32_80_modctl_compat_stub(struct lwp *lwp,
+    const struct netbsd32_modctl_args *uap, register_t *result)
+{
+
+	return EPASSTHROUGH;
+}
 
 int
 netbsd32_modctl(struct lwp *lwp, const struct netbsd32_modctl_args *uap,
@@ -310,6 +219,10 @@ netbsd32_modctl(struct lwp *lwp, const struct netbsd32_modctl_args *uap,
 
 	arg = SCARG_P32(uap, arg);
 
+	error = (*vec_netbsd32_modctl_compat)(lwp, uap, result);
+	if (error != EPASSTHROUGH)
+		return error;
+
 	switch (SCARG(uap, cmd)) {
 	case MODCTL_LOAD:
 		error = copyin(arg, &ml, sizeof(ml));
@@ -325,16 +238,6 @@ netbsd32_modctl(struct lwp *lwp, const struct netbsd32_modctl_args *uap,
 			error = module_unload(buf);
 		}
 		break;
-
-#ifdef COMPAT_80
-	case MODCTL_OSTAT:
-		error = copyin(arg, &iov, sizeof(iov));
-		if (error != 0) {
-			break;
-		}
-		error = modctl32_handle_ostat(SCARG(uap, cmd), &iov, arg);
-		break;
-#endif
 
 	case MODCTL_STAT:
 		error = copyin(arg, &iov, sizeof(iov));

@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_mod.c,v 1.13.16.3 2018/09/09 11:51:48 pgoyette Exp $	*/
+/*	$NetBSD: netbsd32_mod.c,v 1.13.16.4 2018/09/10 22:50:51 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_mod.c,v 1.13.16.3 2018/09/09 11:51:48 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_mod.c,v 1.13.16.4 2018/09/10 22:50:51 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_execfmt.h"
@@ -109,14 +109,17 @@ compat_netbsd32_modcmd(modcmd_t cmd, void *arg)
 		error = exec_add(netbsd32_execsw,
 		    __arraycount(netbsd32_execsw));
 		vec_compat32_50_rnd_ioctl = compat32_50_rnd_ioctl;
+		vec_compat32_80_modctl = compat32_80_modctl_compat_stub;
 		if (error != 0) {
 			vec_compat32_50_rnd_ioctl = (void *)enosys;
+			vec_compat32_80_modctl = (void *)enosys;
 			netbsd32_sysctl_fini();
 		}
 		return error;
 
 	case MODULE_CMD_FINI:
 		vec_compat32_50_rnd_ioctl = (void *)enosys;
+		vec_compat32_80_modctl = (void *)enosys;
 		error = exec_remove(netbsd32_execsw,
 		    __arraycount(netbsd32_execsw));
 		if (error == 0)
