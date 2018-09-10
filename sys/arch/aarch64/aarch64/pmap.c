@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.22 2018/09/10 15:14:50 maxv Exp $	*/
+/*	$NetBSD: pmap.c,v 1.23 2018/09/10 16:43:24 maxv Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.22 2018/09/10 15:14:50 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.23 2018/09/10 16:43:24 maxv Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_ddb.h"
@@ -577,7 +577,9 @@ pmap_steal_memory(vsize_t size, vaddr_t *vstartp, vaddr_t *vendp)
 			break;
 	}
 
-	KDASSERT(uvm_physseg_valid_p(bank));
+	if (!uvm_physseg_valid_p(bank)) {
+		panic("%s: no memory", __func__);
+	}
 
 	/* Steal pages */
 	pa = ptoa(uvm_physseg_get_avail_start(bank));
