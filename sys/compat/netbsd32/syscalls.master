@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.120.2.3 2018/09/06 06:55:47 pgoyette Exp $
+	$NetBSD: syscalls.master,v 1.120.2.4 2018/09/10 09:54:47 pgoyette Exp $
 
 ;	from: NetBSD: syscalls.master,v 1.81 1998/07/05 08:49:50 jonathan Exp
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -330,11 +330,14 @@
 160	UNIMPL
 161	COMPAT_30	{ int|netbsd32||getfh(netbsd32_charp fname, \
 			    netbsd32_compat_30_fhandlep_t fhp); }
-162	COMPAT_09	{ int|netbsd32||ogetdomainname( \
+162	COMPAT_09 modular compat_netbsd32_09	\
+			{ int|netbsd32||ogetdomainname( \
 			    netbsd32_charp domainname, int len); }
-163	COMPAT_09	{ int|netbsd32||osetdomainname( \
+163	COMPAT_09 modular compat_netbsd32_09	\
+			{ int|netbsd32||osetdomainname( \
 			    netbsd32_charp domainname, int len); }
-164	COMPAT_09	{ int|netbsd32||uname(netbsd32_outsnamep_t name); }
+164	COMPAT_09 modular compat_netbsd32_09	\
+			{ int|netbsd32||uname(netbsd32_outsnamep_t name); }
 165	STD		{ int|netbsd32||sysarch(int op, netbsd32_voidp parms); }
 166	UNIMPL
 167	UNIMPL

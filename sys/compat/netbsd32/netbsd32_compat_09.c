@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_09.c,v 1.18 2008/05/29 14:51:26 mrg Exp $	*/
+/*	$NetBSD: netbsd32_compat_09.c,v 1.18.86.1 2018/09/10 09:54:47 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1998 Matthew R. Green
@@ -27,11 +27,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_09.c,v 1.18 2008/05/29 14:51:26 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_09.c,v 1.18.86.1 2018/09/10 09:54:47 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/module.h>
 #include <sys/mount.h>
+#include <sys/syscallvar.h>
 #include <sys/syscallargs.h>
 
 #include <sys/time.h>
@@ -83,4 +85,31 @@ compat_09_netbsd32_uname(struct lwp *l, const struct compat_09_netbsd32_uname_ar
 
 	NETBSD32TOP_UAP(name, struct outsname);
 	return (compat_09_sys_uname(l, &ua, retval));
+}
+
+static struct syscall_package compat_netbsd32_09_syscalls[] = {
+        { NETBSD32_SYS_ogetdomainname, 0,
+            (sy_call_t *)compat_09_netbsd32_ogetdomainname },
+        { NETBSD32_SYS_osetdomainname, 0,
+            (sy_call_t *)compat_09_netbsd32_osetdomainname },
+        { NETBSD32_SYS_ouname, 0, (sy_call_t *)compat_09_netbsd32_uname },
+        { 0, 0, NULL }
+};
+
+MODULE(MODULE_CLASS_EXEC, compat_netbsd32_09, "compat_netbsd32,compat_09");
+
+static int
+compat_netbsd32_09_modcmd(modcmt_t cmd, void *(arg)
+{
+
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		return syscall_establish(NULL, compat_netbsd32_09_syscalls);
+
+	case MODULE_CMD_FINI:
+		return syscall_disestablish(NULL, compat_netbsd32_09_syscalls);
+
+	default:
+		return ENOTTY;
+	}
 }
