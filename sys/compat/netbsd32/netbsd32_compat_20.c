@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_20.c,v 1.36.10.1 2018/05/21 04:36:03 pgoyette Exp $	*/
+/*	$NetBSD: netbsd32_compat_20.c,v 1.36.10.2 2018/09/10 10:49:09 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,10 +27,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_20.c,v 1.36.10.1 2018/05/21 04:36:03 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_20.c,v 1.36.10.2 2018/09/10 10:49:09 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/module.h>
 #include <sys/mount.h>
 #include <sys/stat.h>
 #include <sys/time.h>
@@ -45,6 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_20.c,v 1.36.10.1 2018/05/21 04:36:03
 #include <sys/dirent.h>
 
 #include <compat/netbsd32/netbsd32.h>
+#include <compat/netbsd32/netbsd32_syscallvar.h>
 #include <compat/netbsd32/netbsd32_syscallargs.h>
 #include <compat/netbsd32/netbsd32_conv.h>
 
@@ -215,4 +217,28 @@ compat_20_netbsd32_fhstatfs(struct lwp *l, const struct compat_20_netbsd32_fhsta
 	NETBSD32TOP_UAP(flags, int);
 #endif
 	return (compat_30_sys_fhstatvfs1(l, &ua, retval));
+}
+
+static struct syscall_package compat_netbsd32_20_syscalls[] = {
+	{ NETBSD32_SYS_getfsstat, 0,
+	    (sy_call_t *)compat_20_netbsd32_getfsstat },
+	{ 0, 0, NULL }
+};
+
+MODULE(MODULE_CLASS_EXEC, compat_netbsd32_20, "compat_netbsd32,compat_20");
+
+static int
+compat_netbsd32_20_modcmt(modcmd_t cmd, void *arg)
+{
+
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		return syscall_establish(NULL, compat_netbsd32_20_syscalls);
+
+	case MODULE_CMD_FINI:
+		return syscall_disestablish(NULL, compat_netbsd32_20_syscalls);
+
+	default:
+		return ENOTTY;
+	}
 }

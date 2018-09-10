@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_13.c,v 1.26 2014/01/24 22:44:00 christos Exp $	*/
+/*	$NetBSD: netbsd32_compat_13.c,v 1.26.28.1 2018/09/10 10:49:09 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,10 +27,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_13.c,v 1.26 2014/01/24 22:44:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_13.c,v 1.26.28.1 2018/09/10 10:49:09 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/module.h>
 #include <sys/mount.h>
 #include <sys/proc.h>
 #include <sys/signal.h>
@@ -38,6 +39,7 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_13.c,v 1.26 2014/01/24 22:44:00 chri
 #include <sys/syscallargs.h>
 
 #include <compat/netbsd32/netbsd32.h>
+#include <compat/netbsd32/netbsd32_syscallvar.h>
 #include <compat/netbsd32/netbsd32_syscallargs.h>
 
 #include <compat/sys/stat.h>
@@ -89,4 +91,32 @@ compat_13_netbsd32_sigsuspend(struct lwp *l, const struct compat_13_netbsd32_sig
 	ess = SCARG(uap, mask);
 	native_sigset13_to_sigset(&ess, &bss);
 	return (sigsuspend1(l, &bss));
+}
+
+static struct syscall_package compat_netbsd32_13_syscalls[] = {
+	{ NETBSD32_SYS_sigaltstack13, 0,
+	    (sy_call_t *)compat_13_netbsd32_sigaltstack13 },
+	{ NETBSD32_SYS_sigprocmask, 0,
+	    (sy_call_t *)compat_13_netbsd32_sigprocmask },
+	{ NETBSD32_SYS_sigsuspend, 0,
+	    (sy_call_t *)compat_13_netbsd32_sigsuspend },
+	{ 0, 0, NULL }
+}; 
+
+MODULE(MODULE_CLASS_EXEC, compat_netbsd32_13, "compat_netbsd32,compat_13");
+
+static int
+compat_netbsd32_13_modcmd(modcmd_t cmd, void *arg)
+{
+
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		return syscall_establish(NULL, compat_netbsd32_13_syscalls);
+
+	case MODULE_CMD_FINI:
+		return syscall_disestablish(NULL, compat_netbsd32_13_syscalls);
+
+	default:
+		return ENOTTY;
+	}
 }
