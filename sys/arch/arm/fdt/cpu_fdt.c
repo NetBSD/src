@@ -1,4 +1,4 @@
-/* $NetBSD: cpu_fdt.c,v 1.12 2018/09/10 11:05:12 ryo Exp $ */
+/* $NetBSD: cpu_fdt.c,v 1.13 2018/09/10 19:15:16 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #include "psci_fdt.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_fdt.c,v 1.12 2018/09/10 11:05:12 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_fdt.c,v 1.13 2018/09/10 19:15:16 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -205,6 +205,26 @@ spintable_cpu_on(u_int cpuindex, paddr_t entry_point_address, paddr_t cpu_releas
 }
 #endif /* MULTIPROCESSOR */
 
+static bool
+arm_fdt_cpu_okay(const int child)
+{
+	const char *s;
+
+	s = fdtbus_get_string(child, "device_type");
+	if (!s || strcmp(s, "cpu") != 0)
+		return false;
+
+	s = fdtbus_get_string(child, "status");
+	if (s) {
+		if (strcmp(s, "okay") == 0)
+			return false;
+		if (strcmp(s, "disabled") == 0)
+			return of_hasprop(child, "enable-method");
+		return false;
+	} else {
+		return true;
+	}
+}
 
 void
 arm_fdt_cpu_bootstrap(void)
@@ -213,7 +233,7 @@ arm_fdt_cpu_bootstrap(void)
 	uint64_t mpidr, bp_mpidr;
 	u_int cpuindex;
 	int child, ret;
-	const char *devtype, *method;
+	const char *method;
 
 	const int cpus = OF_finddevice("/cpus");
 	if (cpus == -1) {
@@ -225,9 +245,7 @@ arm_fdt_cpu_bootstrap(void)
 	/* Count CPUs */
 	arm_cpu_max = 0;
 	for (child = OF_child(cpus); child; child = OF_peer(child))
-		if (fdtbus_status_okay(child) && ((devtype =
-		    fdtbus_get_string(child, "device_type")) != NULL) &&
-		    (strcmp(devtype, "cpu") == 0))
+		if (arm_fdt_cpu_okay(child))
 			arm_cpu_max++;
 
 #if NPSCI_FDT > 0
@@ -242,7 +260,7 @@ arm_fdt_cpu_bootstrap(void)
 	uint32_t started = 0;
 	cpuindex = 1;
 	for (child = OF_child(cpus); child; child = OF_peer(child)) {
-		if (!fdtbus_status_okay(child))
+		if (!arm_fdt_cpu_okay(child))
 			continue;
 		if (fdtbus_get_reg64(child, 0, &mpidr, NULL) != 0)
 			continue;
