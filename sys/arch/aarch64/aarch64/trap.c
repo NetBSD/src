@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.8 2018/07/28 09:57:59 ryo Exp $ */
+/* $NetBSD: trap.c,v 1.9 2018/09/10 17:25:15 ryo Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.8 2018/07/28 09:57:59 ryo Exp $");
+__KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.9 2018/09/10 17:25:15 ryo Exp $");
 
 #include "opt_arm_intr_impl.h"
 #include "opt_compat_netbsd32.h"
@@ -418,19 +418,6 @@ ucas_ras_check(struct trapframe *tf)
 		tf->tf_pc = (vaddr_t)ucas_64_ras_start;
 	}
 #endif
-}
-
-int
-kcopy(const void *src, void *dst, size_t len)
-{
-	struct faultbuf fb;
-	int error;
-
-	if ((error = cpu_set_onfault(&fb)) == 0) {
-		memcpy(dst, src, len);
-		cpu_unset_onfault();
-	}
-	return error;
 }
 
 int

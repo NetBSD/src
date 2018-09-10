@@ -1,4 +1,4 @@
-/* $NetBSD: copyinout.S,v 1.7 2018/07/30 09:08:41 ryo Exp $ */
+/* $NetBSD: copyinout.S,v 1.8 2018/09/10 17:25:15 ryo Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #include <aarch64/asm.h>
 #include "assym.h"
 
-RCSID("$NetBSD: copyinout.S,v 1.7 2018/07/30 09:08:41 ryo Exp $");
+RCSID("$NetBSD: copyinout.S,v 1.8 2018/09/10 17:25:15 ryo Exp $");
 
 	.macro enter_cpu_onfault
 	stp	fp, lr, [sp, #-16]!	/* save fp, lr */
@@ -312,3 +312,19 @@ copyoutstr_done:
 	exit_cpu_onfault
 	ret
 END(copyoutstr)
+
+
+/* LINTSTUB: int kcopy(const void *src, void *dst, size_t len); */
+
+ENTRY(kcopy)
+	enter_cpu_onfault
+
+	mov	x3, x0			/* swap src and dst for memcpy */
+	mov	x0, x1
+	mov	x1, x3
+	bl	_C_LABEL(memcpy)
+	mov	x8, #0			/* error = 0 */
+
+	exit_cpu_onfault
+	ret
+END(kcopy)
