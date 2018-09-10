@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.21 2018/09/10 11:05:12 ryo Exp $	*/
+/*	$NetBSD: pmap.c,v 1.22 2018/09/10 15:14:50 maxv Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.21 2018/09/10 11:05:12 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.22 2018/09/10 15:14:50 maxv Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_ddb.h"
@@ -596,8 +596,8 @@ pmap_reference(struct pmap *pm)
 	atomic_inc_uint(&pm->pm_refcnt);
 }
 
-static pd_entry_t *
-_pmap_alloc_pdp(struct pmap *pm, paddr_t *pap)
+pd_entry_t *
+pmap_alloc_pdp(struct pmap *pm, paddr_t *pap)
 {
 	paddr_t pa;
 
@@ -1300,7 +1300,7 @@ pmap_create(void)
 	pm->pm_asid = -1;
 	SLIST_INIT(&pm->pm_vmlist);
 	mutex_init(&pm->pm_lock, MUTEX_DEFAULT, IPL_VM);
-	pm->pm_l0table = _pmap_alloc_pdp(pm, &pm->pm_l0table_pa);
+	pm->pm_l0table = pmap_alloc_pdp(pm, &pm->pm_l0table_pa);
 	KASSERT(((vaddr_t)pm->pm_l0table & (PAGE_SIZE - 1)) == 0);
 
 	UVMHIST_LOG(pmaphist, "pm=%p, pm_l0table=%016lx, pm_l0table_pa=%016lx",
@@ -1420,7 +1420,7 @@ _pmap_enter(struct pmap *pm, vaddr_t va, paddr_t pa, vm_prot_t prot,
 	idx = l0pde_index(va);
 	pde = l0[idx];
 	if (!l0pde_valid(pde)) {
-		_pmap_alloc_pdp(pm, &pdppa);
+		pmap_alloc_pdp(pm, &pdppa);
 		KASSERT(pdppa != POOL_PADDR_INVALID);
 		atomic_swap_64(&l0[idx], pdppa | L0_TABLE);
 		l3only = false;
@@ -1432,7 +1432,7 @@ _pmap_enter(struct pmap *pm, vaddr_t va, paddr_t pa, vm_prot_t prot,
 	idx = l1pde_index(va);
 	pde = l1[idx];
 	if (!l1pde_valid(pde)) {
-		_pmap_alloc_pdp(pm, &pdppa);
+		pmap_alloc_pdp(pm, &pdppa);
 		KASSERT(pdppa != POOL_PADDR_INVALID);
 		atomic_swap_64(&l1[idx], pdppa | L1_TABLE);
 		l3only = false;
@@ -1444,7 +1444,7 @@ _pmap_enter(struct pmap *pm, vaddr_t va, paddr_t pa, vm_prot_t prot,
 	idx = l2pde_index(va);
 	pde = l2[idx];
 	if (!l2pde_valid(pde)) {
-		_pmap_alloc_pdp(pm, &pdppa);
+		pmap_alloc_pdp(pm, &pdppa);
 		KASSERT(pdppa != POOL_PADDR_INVALID);
 		atomic_swap_64(&l2[idx], pdppa | L2_TABLE);
 		l3only = false;
