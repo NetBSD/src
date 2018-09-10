@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_20.c,v 1.36.10.2 2018/09/10 10:49:09 pgoyette Exp $	*/
+/*	$NetBSD: netbsd32_compat_20.c,v 1.36.10.3 2018/09/10 22:50:51 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_20.c,v 1.36.10.2 2018/09/10 10:49:09 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_20.c,v 1.36.10.3 2018/09/10 22:50:51 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -220,6 +220,12 @@ compat_20_netbsd32_fhstatfs(struct lwp *l, const struct compat_20_netbsd32_fhsta
 }
 
 static struct syscall_package compat_netbsd32_20_syscalls[] = {
+	{ NETBSD32_SYS_statfs, 0,
+	    (sy_call_t *)compat_20_netbsd32_statfs },
+	{ NETBSD32_SYS_fstatfs, 0,
+	    (sy_call_t *)compat_20_netbsd32_fstatfs },
+	{ NETBSD32_SYS_fhstatfs, 0,
+	    (sy_call_t *)compat_20_netbsd32_fhstatfs },
 	{ NETBSD32_SYS_getfsstat, 0,
 	    (sy_call_t *)compat_20_netbsd32_getfsstat },
 	{ 0, 0, NULL }

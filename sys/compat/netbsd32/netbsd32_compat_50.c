@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_50.c,v 1.32 2015/12/03 10:38:21 pgoyette Exp $	*/
+/*	$NetBSD: netbsd32_compat_50.c,v 1.32.16.1 2018/09/10 22:50:51 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_50.c,v 1.32 2015/12/03 10:38:21 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_50.c,v 1.32.16.1 2018/09/10 22:50:51 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -44,6 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_50.c,v 1.32 2015/12/03 10:38:21 pgoy
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/module.h>
 #include <sys/mount.h>
 #include <sys/socket.h>
 #include <sys/socketvar.h>
@@ -65,6 +66,7 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_50.c,v 1.32 2015/12/03 10:38:21 pgoy
 #include <sys/vfs_syscalls.h>
 
 #include <compat/netbsd32/netbsd32.h>
+#include <compat/netbsd32/netbsd32_syscallvar.h>
 #include <compat/netbsd32/netbsd32_syscallargs.h>
 #include <compat/netbsd32/netbsd32_conv.h>
 #include <compat/sys/mount.h>
@@ -924,4 +926,79 @@ compat_50_netbsd32_quotactl(struct lwp *l, const struct compat_50_netbsd32_quota
 	return (compat_50_sys_quotactl(l, &ua, retval));
 }
 
+static struct syscall_package compat_netbsd32_50_syscalls[] = {
+	{ NETBSD32_SYS_mknod, 0,
+	    (sy_call_t *)compat_50_netbsd32_mknod }, 
+	{ NETBSD32_SYS_select, 0,
+	    (sy_call_t *)compat_50_netbsd32_select }, 
+	{ NETBSD32_SYS_gettimeofday, 0,
+	    (sy_call_t *)compat_50_netbsd32_gettimeofday }, 
+	{ NETBSD32_SYS_settimeofday, 0,
+	    (sy_call_t *)compat_50_netbsd32_settimeofday }, 
+	{ NETBSD32_SYS_utimes, 0,
+	    (sy_call_t *)compat_50_netbsd32_utimes }, 
+	{ NETBSD32_SYS_futimes, 0,
+	    (sy_call_t *)compat_50_netbsd32_futimes }, 
+	{ NETBSD32_SYS_adjtime, 0,
+	    (sy_call_t *)compat_50_netbsd32_adjtime }, 
+	{ NETBSD32_SYS_clock_gettime, 0,
+	    (sy_call_t *)compat_50_netbsd32_clock_gettime }, 
+	{ NETBSD32_SYS_clock_settime, 0,
+	    (sy_call_t *)compat_50_netbsd32_clock_settime }, 
+	{ NETBSD32_SYS_clock_getres, 0,
+	    (sy_call_t *)compat_50_netbsd32_clock_getres }, 
+	{ NETBSD32_SYS_timer_settime, 0,
+	    (sy_call_t *)compat_50_netbsd32_timer_settime }, 
+	{ NETBSD32_SYS_timer_gettime, 0,
+	    (sy_call_t *)compat_50_netbsd32_timer_gettime }, 
+	{ NETBSD32_SYS_nanosleep, 0,
+	    (sy_call_t *)compat_50_netbsd32_nanosleep }, 
+	{ NETBSD32_SYS_sigtimedwait, 0,
+	    (sy_call_t *)compat_50_netbsd32___sigtimedwait }, 
+	{ NETBSD32_SYS_lutimes, 0,
+	    (sy_call_t *)compat_50_netbsd32_lutimes }, 
+	{ NETBSD32_SYS__lwp_park, 0,
+	    (sy_call_t *)compat_50_netbsd32__lwp_park }, 
+	{ NETBSD32_SYS_kevent, 0,
+	    (sy_call_t *)compat_50_netbsd32_kevent }, 
+	{ NETBSD32_SYS_pselect, 0,
+	    (sy_call_t *)compat_50_netbsd32_pselect }, 
+	{ NETBSD32_SYS_pollts, 0,
+	    (sy_call_t *)compat_50_netbsd32_pollts }, 
+	{ NETBSD32_SYS___stat30, 0,
+	    (sy_call_t *)compat_50_netbsd32___stat30 }, 
+	{ NETBSD32_SYS___lstat30, 0,
+	    (sy_call_t *)compat_50_netbsd32___lstat30 }, 
+	{ NETBSD32_SYS___fstat30, 0,
+	    (sy_call_t *)compat_50_netbsd32___fstat30 }, 
+	{ NETBSD32_SYS___fhstat40, 0,
+	    (sy_call_t *)compat_50_netbsd32___fhstat40 }, 
+	{ NETBSD32_SYS_wait4, 0,
+	    (sy_call_t *)compat_50_netbsd32_wait4 }, 
+	{ NETBSD32_SYS_getrusage, 0,
+	    (sy_call_t *)compat_50_netbsd32_getrusage }, 
+	{ NETBSD32_SYS_setitimer, 0,
+	    (sy_call_t *)compat_50_netbsd32_setitimer }, 
+	{ NETBSD32_SYS_quotactl, 0,
+	    (sy_call_t *)compat_50_netbsd32_quotactl }, 
+	{ 0, 0, NULL }
+}; 
+
+MODULE(MODULE_CLASS_EXEC, compat_netbsd32_50, "compat_netbsd32,compat_50");
+
+static int
+compat_netbsd32_50_modcmd(modcmd_t cmd, void *arg)
+{
+
+	switch (cmd) {
+	MODULE_CMD_INIT:
+                return syscall_establish(NULL, compat_netbsd32_50_syscalls);
+
+	MODULE_CMD_FINI:
+                return syscall_disestablish(NULL, compat_netbsd32_50_syscalls);
+
+	default:
+		return ENOTTY;
+	}
+}
 #endif /* COMPAT_50 */
