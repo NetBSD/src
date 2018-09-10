@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.20 2018/08/27 15:43:37 ryo Exp $	*/
+/*	$NetBSD: pmap.c,v 1.21 2018/09/10 11:05:12 ryo Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.20 2018/08/27 15:43:37 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.21 2018/09/10 11:05:12 ryo Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_ddb.h"
@@ -46,6 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.20 2018/08/27 15:43:37 ryo Exp $");
 #include <aarch64/pte.h>
 #include <aarch64/armreg.h>
 #include <aarch64/cpufunc.h>
+#include <aarch64/machdep.h>
 
 //#define PMAP_DEBUG
 //#define PMAP_PV_DEBUG
@@ -683,7 +684,12 @@ pmap_extract(struct pmap *pm, vaddr_t va, paddr_t *pap)
 		return false;
 #endif
 
-	if (AARCH64_KSEG_START <= va && va < AARCH64_KSEG_END) {
+	extern char __kernel_text[];
+	extern char _end[];
+	if ((vaddr_t)__kernel_text <= va && va < (vaddr_t)_end) {
+		pa = KERN_VTOPHYS(va);
+		found = true;
+	} else if (AARCH64_KSEG_START <= va && va < AARCH64_KSEG_END) {
 		pa = AARCH64_KVA_TO_PA(va);
 		found = true;
 	} else {
