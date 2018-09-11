@@ -1,4 +1,4 @@
-/*	$NetBSD: nvlist_impl.h,v 1.2 2018/09/08 14:02:15 christos Exp $	*/
+/*	$NetBSD: nvlist_impl.h,v 1.3 2018/09/11 02:20:31 christos Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -47,7 +47,7 @@
 #include <stdint.h>
 #endif
 
-void nvlist_report_missing(int type, const char *name);
+__dead void nvlist_report_missing(int type, const char *name);
 nvpair_t *nvlist_get_nvpair_parent(const nvlist_t *nvl);
 const unsigned char *nvlist_unpack_header(nvlist_t *nvl,
     const unsigned char *ptr, size_t nfds, bool *isbep, size_t *leftp);

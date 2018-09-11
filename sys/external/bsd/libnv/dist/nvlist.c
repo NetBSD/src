@@ -1,4 +1,4 @@
-/*	$NetBSD: nvlist.c,v 1.4 2018/09/08 14:32:25 christos Exp $	*/
+/*	$NetBSD: nvlist.c,v 1.5 2018/09/11 02:20:31 christos Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -36,7 +36,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: head/sys/contrib/libnv/nvlist.c 335347 2018-06-18 22:57:32Z oshogbo $");
 #else
-__RCSID("$NetBSD: nvlist.c,v 1.4 2018/09/08 14:32:25 christos Exp $");
+__RCSID("$NetBSD: nvlist.c,v 1.5 2018/09/11 02:20:31 christos Exp $");
 #endif
 
 #include <sys/param.h>
@@ -337,7 +337,7 @@ nvlist_set_flags(nvlist_t *nvl, int flags)
 	nvl->nvl_flags = flags;
 }
 
-void
+__dead void
 nvlist_report_missing(int type, const char *name)
 {
 
