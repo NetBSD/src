@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ptrace.c,v 1.5 2017/12/17 20:59:27 christos Exp $	*/
+/*	$NetBSD: netbsd32_ptrace.c,v 1.5.2.1 2018/09/11 21:18:32 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_ptrace.c,v 1.5 2017/12/17 20:59:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_ptrace.c,v 1.5.2.1 2018/09/11 21:18:32 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ptrace.h"
@@ -46,9 +46,6 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_ptrace.c,v 1.5 2017/12/17 20:59:27 christos
 #include <compat/netbsd32/netbsd32_syscall.h>
 #include <compat/netbsd32/netbsd32_syscallargs.h>
 #include <compat/netbsd32/netbsd32_conv.h>
-
-extern struct emul emul_netbsd32;
-
 
 /*
  * PTRACE methods

@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_nfssvc.c,v 1.5 2016/10/15 06:50:13 skrll Exp $	*/
+/*	$NetBSD: netbsd32_nfssvc.c,v 1.5.16.1 2018/09/11 21:18:32 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2015 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_nfssvc.c,v 1.5 2016/10/15 06:50:13 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_nfssvc.c,v 1.5.16.1 2018/09/11 21:18:32 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfs.h"
@@ -52,8 +52,6 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_nfssvc.c,v 1.5 2016/10/15 06:50:13 skrll Ex
 #include <nfs/nfsproto.h>
 #include <nfs/nfs.h>
 #include <nfs/nfs_var.h>
-
-extern struct emul emul_netbsd32;
 
 static int nfssvc32_addsock_in(struct nfsd_args *, const void *);
 static int nfssvc32_setexports_in(struct mountd_exports_list *, const void *);

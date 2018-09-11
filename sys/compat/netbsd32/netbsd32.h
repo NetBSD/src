@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32.h,v 1.116.2.3 2018/09/06 06:55:46 pgoyette Exp $	*/
+/*	$NetBSD: netbsd32.h,v 1.116.2.4 2018/09/11 21:18:32 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2008, 2015 Matthew R. Green
@@ -1164,4 +1164,12 @@ struct iovec *netbsd32_get_iov(struct netbsd32_iovec *, int, struct iovec *,
 #ifdef SYSCTL_SETUP_PROTO
 SYSCTL_SETUP_PROTO(netbsd32_sysctl_emul_setup);
 #endif /* SYSCTL_SETUP_PROTO */
+
+/*
+ * Finally, declare emul_netbsd32 as this is needed in lots of
+ * places when calling syscall_{,dis}establish()
+ */
+
+extern struct emul emul_netbsd32;
+
 #endif /* _COMPAT_NETBSD32_NETBSD32_H_ */
