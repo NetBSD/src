@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.75.2.4 2018/09/11 06:46:24 pgoyette Exp $
+# $NetBSD: md.amd64,v 1.75.2.5 2018/09/11 09:05:32 pgoyette Exp $
 #
 # NOTE that there are two sets of files here:
 # @MODULEDIR@ and amd64-xen
@@ -76,7 +76,7 @@
 ./@MODULEDIR@/compat_netbsd32_80		base-kernel-modules	kmod
 ./@MODULEDIR@/compat_netbsd32_80/compat_netbsd32_80.kmod base-kernel-modules	kmod
 ./@MODULEDIR@/compat_netbsd32_43		base-kernel-modules	kmod
-./@MODULEDIR@/compat_netbsd32_43/compat_netbsd32.kmod_43 base-kernel-modules	kmod
+./@MODULEDIR@/compat_netbsd32_43/compat_netbsd32_43.kmod base-kernel-modules	kmod
 ./@MODULEDIR@/compat_netbsd32_mqueue		base-kernel-modules	kmod
 ./@MODULEDIR@/compat_netbsd32_mqueue/compat_netbsd32_mqueue.kmod	base-kernel-modules	kmod
 ./@MODULEDIR@/compat_netbsd32_nfssrv		base-kernel-modules	kmod
