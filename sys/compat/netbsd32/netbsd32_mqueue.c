@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_mqueue.c,v 1.6 2015/12/01 23:56:43 pgoyette Exp $	*/
+/*	$NetBSD: netbsd32_mqueue.c,v 1.6.18.1 2018/09/11 05:48:07 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_mqueue.c,v 1.6 2015/12/01 23:56:43 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_mqueue.c,v 1.6.18.1 2018/09/11 05:48:07 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -328,7 +328,7 @@ netbsd32___mq_timedreceive50(struct lwp *l,
 
 int
 compat_50_netbsd32_mq_timedsend(struct lwp *l,
-    const struct compat_50_netbsd32_mq_timedsend_args *uap,
+    const struct netbsd32_mq_timedsend_args *uap,
     register_t *retval)
 {
 	/* {
@@ -360,7 +360,7 @@ compat_50_netbsd32_mq_timedsend(struct lwp *l,
 
 int
 compat_50_netbsd32_mq_timedreceive(struct lwp *l,
-    const struct compat_50_netbsd32_mq_timedreceive_args *uap,
+    const struct netbsd32_mq_timedreceive_args *uap,
     register_t *retval)
 {
 	/* {
