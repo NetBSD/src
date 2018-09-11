@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_module.c,v 1.6.2.4 2018/09/10 22:50:51 pgoyette Exp $	*/
+/*	$NetBSD: netbsd32_module.c,v 1.6.2.5 2018/09/11 04:53:42 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_module.c,v 1.6.2.4 2018/09/10 22:50:51 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_module.c,v 1.6.2.5 2018/09/11 04:53:42 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -41,6 +41,9 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_module.c,v 1.6.2.4 2018/09/10 22:50:51 pgoy
 #include <compat/netbsd32/netbsd32_syscall.h>
 #include <compat/netbsd32/netbsd32_syscallargs.h>
 #include <compat/netbsd32/netbsd32_conv.h>
+
+extern int (*vec_compat32_80_modctl)(struct lwp *, 
+    const struct netbsd32_modctl_args *, register_t *);
 
 static int
 modctl32_handle_stat(struct netbsd32_iovec *iov, void *arg)
@@ -219,7 +222,7 @@ netbsd32_modctl(struct lwp *lwp, const struct netbsd32_modctl_args *uap,
 
 	arg = SCARG_P32(uap, arg);
 
-	error = (*vec_netbsd32_modctl_compat)(lwp, uap, result);
+	error = (*vec_compat32_80_modctl)(lwp, uap, result);
 	if (error != EPASSTHROUGH)
 		return error;
 

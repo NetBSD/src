@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_mod.c,v 1.13.16.4 2018/09/10 22:50:51 pgoyette Exp $	*/
+/*	$NetBSD: netbsd32_mod.c,v 1.13.16.5 2018/09/11 04:53:42 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_mod.c,v 1.13.16.4 2018/09/10 22:50:51 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_mod.c,v 1.13.16.5 2018/09/11 04:53:42 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_execfmt.h"
@@ -60,6 +60,12 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_mod.c,v 1.13.16.4 2018/09/10 22:50:51 pgoye
 
 #define ELF32_AUXSIZE (howmany(ELF_AUX_ENTRIES * sizeof(Aux32Info), \
     sizeof(Elf32_Addr)) + MAXPATHLEN + ALIGN(1))
+
+int compat32_80_modctl_compat_stub(struct lwp *,
+    const struct netbsd32_modctl_args *, register_t *);
+
+int (*vec_compat32_80_modctl)(struct lwp *,
+    const struct netbsd32_modctl_args *, register_t *);
 
 MODULE(MODULE_CLASS_EXEC, compat_netbsd32, DEPS1 DEPS2);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_30.c,v 1.31.16.4 2018/09/11 02:53:56 pgoyette Exp $	*/
+/*	$NetBSD: netbsd32_compat_30.c,v 1.31.16.5 2018/09/11 04:53:42 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,10 +27,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_30.c,v 1.31.16.4 2018/09/11 02:53:56 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_30.c,v 1.31.16.5 2018/09/11 04:53:42 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/module.h>
 #include <sys/mount.h>
 #include <sys/mount.h>
 #include <sys/socket.h>
@@ -317,7 +318,7 @@ static struct syscall_package compat_netbsd32_30_syscalls[] = {
 	{ NETBSD32_SYS_compat_30_netbsd32___fhstat30, 0,
 	    (sy_call_t *)compat_30_netbsd32___fhstat30 }, 
 	{ NETBSD32_SYS_compat_30_netbsd32_fhopen, 0,
-	    (sy_call_t *)compat_30_netbsd32___fhopen }, 
+	    (sy_call_t *)compat_30_netbsd32_fhopen }, 
 	{ 0, 0, NULL }
 };
 
@@ -329,10 +330,12 @@ compat_netbsd32_30_modcmd(modcmd_t cmd, void *arg)
 
 	switch (cmd) {
 	case MODULE_CMD_INIT:
-		return syscall_establish(NULL, compat_netbsd32_30_syscalls);
+		return syscall_establish(&emul_netbsd32,
+		    compat_netbsd32_30_syscalls);
 
 	case MODULE_CMD_FINI:
-		return syscall_disestablish(NULL, compat_netbsd32_30_syscalls);
+		return syscall_disestablish(&emul_netbsd32,
+		    compat_netbsd32_30_syscalls);
 
 	default:
 		return ENOTTY;
