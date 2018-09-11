@@ -1,4 +1,4 @@
-/* $NetBSD: TODO.compat-module,v 1.1.2.2 2018/09/10 08:49:25 pgoyette Exp $ */
+/* $NetBSD: TODO.compat-module,v 1.1.2.3 2018/09/11 08:42:45 pgoyette Exp $ */
 
 DONE
 ----
@@ -46,8 +46,9 @@ DONE
 
 TODO - Required for branch merge
 --------------------------------
-1.  Replace version-specific parts of the compat_netbsd32 module with
-    individual modules.  Update dependencies accordingly.
+1.  Replace version-specific parts of the compat_netbsd32 module (and
+    also the compat_netbsd32_sysv module) with individual modules.  Update
+    dependencies accordingly.
 
 
 TODO - Not required for branch merge
