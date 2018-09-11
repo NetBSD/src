@@ -1,4 +1,4 @@
-/*	$NetBSD: module.h,v 1.41.14.12 2018/09/10 22:50:52 pgoyette Exp $	*/
+/*	$NetBSD: module.h,v 1.41.14.13 2018/09/11 08:25:43 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -218,7 +218,8 @@ void	module_print(const char *, ...) __printflike(1, 2);
 extern char	module_base[MODULE_BASE_SIZE];
 extern const char	*module_machine;
 
-extern int (*vec_compat32_80_modctl)(struct lwp *,
+struct netbsd32_modctl_args;
+extern int (*vec_compat32_80_modctl)(struct lwp *, 
     const struct netbsd32_modctl_args *, register_t *);
 extern int compat32_80_modctl_compat_stub(struct lwp *,
     const struct netbsd32_modctl_args *, register_t *);
