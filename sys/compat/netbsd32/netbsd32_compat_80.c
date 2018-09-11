@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_80.c,v 1.1.2.1 2018/09/10 22:50:51 pgoyette Exp $	*/
+/*	$NetBSD: netbsd32_compat_80.c,v 1.1.2.2 2018/09/11 05:48:07 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_80.c,v 1.1.2.1 2018/09/10 22:50:51 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_80.c,v 1.1.2.2 2018/09/11 05:48:07 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -37,12 +37,18 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_80.c,v 1.1.2.1 2018/09/10 22:50:51 p
 #include <sys/module.h>
 #include <sys/kobj.h>
 
+#include <compat/sys/siginfo.h>
+
 #include <compat/netbsd32/netbsd32.h>
 #include <compat/netbsd32/netbsd32_syscall.h>
 #include <compat/netbsd32/netbsd32_syscallargs.h>
 #include <compat/netbsd32/netbsd32_conv.h>
 
 #ifdef COMPAT_80
+
+int netbsd32_80_modctl(struct lwp *, const struct netbsd32_modctl_args *,
+	register_t *);
+
 static int
 modctl32_handle_ostat(int cmd, struct netbsd32_iovec *iov, void *arg)
 {
@@ -147,9 +153,7 @@ netbsd32_80_modctl(struct lwp *lwp, const struct netbsd32_modctl_args *uap,
 		syscallarg(int) cmd;
 		syscallarg(netbsd32_voidp) arg;
 	} */
-	char buf[MAXMODNAME];
 	struct netbsd32_iovec iov;
-	struct netbsd32_modctl_load ml;
 	int error;
 	void *arg;
 #ifdef MODULAR
@@ -197,5 +201,3 @@ static int (*orig_netbsd32_80_modctl)(struct lwp *,
 	}
 }
 #endif	/* COMPAT_80 */
-
-vec_compat32_80_modctl = compat32_80_modctl_compat_stub;
