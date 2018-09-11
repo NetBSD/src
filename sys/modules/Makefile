@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.202.2.27 2018/09/10 10:49:10 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.202.2.28 2018/09/11 04:20:50 pgoyette Exp $
 
 .include <bsd.own.mk>
 
@@ -271,7 +271,7 @@ SUBDIR+=	compat_netbsd32_09	compat_netbsd32_12
 SUBDIR+=	compat_netbsd32_13	compat_netbsd32_20
 SUBDIR+=	compat_netbsd32_30	compat_netbsd32_50
 SUBDIR+=	compat_netbsd32_60	compat_netbsd32_80
-SUBDIR+=	compat_netbsd32_43
+#SUBDIR+=	compat_netbsd32_43
 SUBDIR+=	compat_netbsd32_mqueue
 SUBDIR+=	compat_netbsd32_nfssrv
 SUBDIR+=	compat_netbsd32_ptrace
@@ -285,7 +285,7 @@ SUBDIR+=	compat_netbsd32_09	compat_netbsd32_12
 SUBDIR+=	compat_netbsd32_13	compat_netbsd32_20
 SUBDIR+=	compat_netbsd32_30	compat_netbsd32_50
 SUBDIR+=	compat_netbsd32_60	compat_netbsd32_80
-SUBDIR+=	compat_netbsd32_43
+#SUBDIR+=	compat_netbsd32_43
 SUBDIR+=	compat_netbsd32_mqueue
 SUBDIR+=	compat_netbsd32_nfssrv
 SUBDIR+=	compat_netbsd32_ptrace
