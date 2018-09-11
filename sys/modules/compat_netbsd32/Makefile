@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.20.12.4 2018/09/10 22:50:52 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.20.12.5 2018/09/11 05:01:35 pgoyette Exp $
 
 .include "../Makefile.inc"
 .include "../Makefile.assym"
@@ -27,7 +27,6 @@ CPPFLAGS+=	-DNTP -DKTRACE -DMODULAR
 SRCS+=	netbsd32_compat_10.c	# belongs to compat_netbsd32_sysvipc_10
 SRCS+=	netbsd32_compat_14.c	# belongs to compat_netbsd32_sysvipc_14
 SRCS+=	netbsd32_compat_43.c
-SRCS+=	netbsd32_compat_60.c
 SRCS+=	netbsd32_core.c netbsd32_event.c
 SRCS+=	netbsd32_exec_elf32.c
 SRCS+=	netbsd32_execve.c netbsd32_fs.c
