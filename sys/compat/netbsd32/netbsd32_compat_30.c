@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_30.c,v 1.31.16.3 2018/09/11 01:52:00 pgoyette Exp $	*/
+/*	$NetBSD: netbsd32_compat_30.c,v 1.31.16.4 2018/09/11 02:53:56 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_30.c,v 1.31.16.3 2018/09/11 01:52:00 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_30.c,v 1.31.16.4 2018/09/11 02:53:56 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,6 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_30.c,v 1.31.16.3 2018/09/11 01:52:00
 #include <sys/vfs_syscalls.h>
 
 #include <compat/netbsd32/netbsd32.h>
+#include <compat/netbsd32/netbsd32_syscall.h>
 #include <compat/netbsd32/netbsd32_syscallargs.h>
 #include <compat/netbsd32/netbsd32_conv.h>
 #include <compat/sys/mount.h>
@@ -297,25 +298,25 @@ compat_30_netbsd32_fhopen(struct lwp *l, const struct compat_30_netbsd32_fhopen_
 }
 
 static struct syscall_package compat_netbsd32_30_syscalls[] = {
-	{ NETBSD32_SYS_getdents, 0,
+	{ NETBSD32_SYS_compat_30_netbsd32_getdents, 0,
 	    (sy_call_t *)compat_30_netbsd32_getdents }, 
-	{ NETBSD32_SYS_stat13, 0,
+	{ NETBSD32_SYS_compat_30_netbsd32___stat13, 0,
 	    (sy_call_t *)compat_30_netbsd32___stat13 }, 
-	{ NETBSD32_SYS_fstat13, 0,
+	{ NETBSD32_SYS_compat_30_netbsd32___fstat13, 0,
 	    (sy_call_t *)compat_30_netbsd32___fstat13 }, 
-	{ NETBSD32_SYS_lstat13, 0,
+	{ NETBSD32_SYS_compat_30_netbsd32___lstat13, 0,
 	    (sy_call_t *)compat_30_netbsd32___lstat13 }, 
-	{ NETBSD32_SYS_fhstat, 0,
+	{ NETBSD32_SYS_compat_30_netbsd32_fhstat, 0,
 	    (sy_call_t *)compat_30_netbsd32_fhstat }, 
-	{ NETBSD32_SYS_fhstatvfs1, 0,
+	{ NETBSD32_SYS_compat_30_netbsd32_fhstatvfs1, 0,
 	    (sy_call_t *)compat_30_netbsd32_fhstatvfs1 }, 
-	{ NETBSD32_SYS_socket, 0,
+	{ NETBSD32_SYS_compat_30_netbsd32_socket, 0,
 	    (sy_call_t *)compat_30_netbsd32_socket }, 
-	{ NETBSD32_SYS_getfh, 0,
+	{ NETBSD32_SYS_compat_30_netbsd32_getfh, 0,
 	    (sy_call_t *)compat_30_netbsd32_getfh }, 
-	{ NETBSD32_SYS_fhstat30, 0,
+	{ NETBSD32_SYS_compat_30_netbsd32___fhstat30, 0,
 	    (sy_call_t *)compat_30_netbsd32___fhstat30 }, 
-	{ NETBSD32_SYS_fhopen, 0,
+	{ NETBSD32_SYS_compat_30_netbsd32_fhopen, 0,
 	    (sy_call_t *)compat_30_netbsd32___fhopen }, 
 	{ 0, 0, NULL }
 };
