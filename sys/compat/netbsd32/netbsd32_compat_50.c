@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_50.c,v 1.32.16.3 2018/09/11 02:53:56 pgoyette Exp $	*/
+/*	$NetBSD: netbsd32_compat_50.c,v 1.32.16.4 2018/09/11 04:53:42 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_50.c,v 1.32.16.3 2018/09/11 02:53:56 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_50.c,v 1.32.16.4 2018/09/11 04:53:42 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -994,11 +994,13 @@ compat_netbsd32_50_modcmd(modcmd_t cmd, void *arg)
 {
 
 	switch (cmd) {
-	MODULE_CMD_INIT:
-                return syscall_establish(NULL, compat_netbsd32_50_syscalls);
+	case MODULE_CMD_INIT:
+                return syscall_establish(&emul_netbsd32,
+		    compat_netbsd32_50_syscalls);
 
-	MODULE_CMD_FINI:
-                return syscall_disestablish(NULL, compat_netbsd32_50_syscalls);
+	case MODULE_CMD_FINI:
+                return syscall_disestablish(&emul_netbsd32,
+		    compat_netbsd32_50_syscalls);
 
 	default:
 		return ENOTTY;

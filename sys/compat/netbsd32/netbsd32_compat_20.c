@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_20.c,v 1.36.10.5 2018/09/11 02:53:56 pgoyette Exp $	*/
+/*	$NetBSD: netbsd32_compat_20.c,v 1.36.10.6 2018/09/11 04:53:42 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_20.c,v 1.36.10.5 2018/09/11 02:53:56 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_20.c,v 1.36.10.6 2018/09/11 04:53:42 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -235,15 +235,17 @@ static struct syscall_package compat_netbsd32_20_syscalls[] = {
 MODULE(MODULE_CLASS_EXEC, compat_netbsd32_20, "compat_netbsd32,compat_20");
 
 static int
-compat_netbsd32_20_modcmt(modcmd_t cmd, void *arg)
+compat_netbsd32_20_modcmd(modcmd_t cmd, void *arg)
 {
 
 	switch (cmd) {
 	case MODULE_CMD_INIT:
-		return syscall_establish(NULL, compat_netbsd32_20_syscalls);
+		return syscall_establish(&emul_netbsd32,
+		    compat_netbsd32_20_syscalls);
 
 	case MODULE_CMD_FINI:
-		return syscall_disestablish(NULL, compat_netbsd32_20_syscalls);
+		return syscall_disestablish(&emul_netbsd32,
+		    compat_netbsd32_20_syscalls);
 
 	default:
 		return ENOTTY;
