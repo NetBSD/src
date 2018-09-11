@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.120.2.7 2018/09/11 01:45:19 pgoyette Exp $
+	$NetBSD: syscalls.master,v 1.120.2.8 2018/09/11 05:47:52 pgoyette Exp $
 
 ;	from: NetBSD: syscalls.master,v 1.81 1998/07/05 08:49:50 jonathan Exp
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -461,7 +461,7 @@
 218	UNIMPL
 219	UNIMPL
 ; System calls 220-300 are reserved for use by NetBSD
-220	STD MODULAR compat_netbsd32_sysvipc	\
+220	COMPAT_14 MODULAR compat_netbsd32_sysvipc	\
 			{ int|netbsd32||__semctl(int semid, int semnum, \
 			    int cmd, netbsd32_semunu_t arg); }
 221	STD MODULAR compat_netbsd32_sysvipc	\
@@ -472,7 +472,7 @@
 			    netbsd32_sembufp_t sops, netbsd32_size_t nsops); }
 223	STD MODULAR compat_netbsd32_sysvipc	\
 			{ int|netbsd32||semconfig(int flag); }
-224	STD MODULAR compat_netbsd32_sysvipc	\
+224	COMPAT_14 MODULAR compat_netbsd32_sysvipc	\
 			{ int|netbsd32||msgctl(int msqid, int cmd, \
 			    netbsd32_msqid_ds14p_t buf); }
 225	STD MODULAR compat_netbsd32_sysvipc	\
@@ -487,7 +487,7 @@
 228	STD MODULAR compat_netbsd32_sysvipc	\
 			{ netbsd32_voidp|netbsd32||shmat(int shmid, \
 			    netbsd32_voidp shmaddr, int shmflg); }
-229	STD MODULAR compat_netbsd32_sysvipc	\
+229	COMPAT_14 MODULAR compat_netbsd32_sysvipc	\
 			{ int|netbsd32||shmctl(int shmid, int cmd, \
 			    netbsd32_shmid_dsp_t buf); }
 230	STD MODULAR compat_netbsd32_sysvipc	\
@@ -579,13 +579,13 @@
 			{ netbsd32_ssize_t|netbsd32||mq_receive(mqd_t mqdes, \
 			    netbsd32_charp msg_ptr, \
 			    netbsd32_size_t msg_len, netbsd32_uintp msg_prio); }
-265	STD MODULAR compat_netbsd32_mqueue	\
+265	COMPAT_50 MODULAR compat_netbsd32_mqueue	\
 			{ int|netbsd32||mq_timedsend(mqd_t mqdes, \
 			    const netbsd32_charp msg_ptr, \
 			    netbsd32_size_t msg_len, \
 			    unsigned msg_prio, \
 			    const netbsd32_timespec50p_t abs_timeout); }
-266	STD MODULAR compat_netbsd32_mqueue	\
+266	COMPAT_50 MODULAR compat_netbsd32_mqueue	\
 			{ netbsd32_ssize_t|netbsd32||mq_timedreceive( \
 			    mqd_t mqdes, \
 			    netbsd32_charp msg_ptr, netbsd32_size_t msg_len, \
