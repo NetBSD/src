@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_12.c,v 1.33.36.2 2018/09/10 10:49:09 pgoyette Exp $	*/
+/*	$NetBSD: netbsd32_compat_12.c,v 1.33.36.3 2018/09/11 01:52:00 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_12.c,v 1.33.36.2 2018/09/10 10:49:09 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_12.c,v 1.33.36.3 2018/09/11 01:52:00 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -46,11 +46,11 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_12.c,v 1.33.36.2 2018/09/10 10:49:09
 #include <sys/vfs_syscalls.h>
 
 #include <sys/syscallargs.h>
+#include <sys/syscallvar.h>
 
 #include <compat/sys/stat.h>
 
 #include <compat/netbsd32/netbsd32.h>
-#include <compat/netbsd32/netbsd32_syscallvar.h>
 #include <compat/netbsd32/netbsd32_syscallargs.h>
 
 static void netbsd32_stat12_to_netbsd32(struct stat12 *,

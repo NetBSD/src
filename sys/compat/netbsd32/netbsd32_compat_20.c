@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_20.c,v 1.36.10.3 2018/09/10 22:50:51 pgoyette Exp $	*/
+/*	$NetBSD: netbsd32_compat_20.c,v 1.36.10.4 2018/09/11 01:52:00 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_20.c,v 1.36.10.3 2018/09/10 22:50:51 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_20.c,v 1.36.10.4 2018/09/11 01:52:00 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -42,11 +42,11 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_20.c,v 1.36.10.3 2018/09/10 22:50:51
 #include <sys/filedesc.h>
 #include <sys/namei.h>
 #include <sys/syscallargs.h>
+#include <sys/syscallvar.h>
 #include <sys/proc.h>
 #include <sys/dirent.h>
 
 #include <compat/netbsd32/netbsd32.h>
-#include <compat/netbsd32/netbsd32_syscallvar.h>
 #include <compat/netbsd32/netbsd32_syscallargs.h>
 #include <compat/netbsd32/netbsd32_conv.h>
 
