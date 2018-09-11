@@ -1,4 +1,4 @@
-/* $NetBSD: exynos_platform.c,v 1.14 2018/08/22 07:43:02 skrll Exp $ */
+/* $NetBSD: exynos_platform.c,v 1.15 2018/09/11 10:06:53 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared D. McNeill <jmcneill@invisible.ca>
@@ -34,7 +34,7 @@
 #include "ukbd.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exynos_platform.c,v 1.14 2018/08/22 07:43:02 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exynos_platform.c,v 1.15 2018/09/11 10:06:53 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -65,11 +65,73 @@ void exynos_platform_early_putchar(char);
 #define EXYNOS_IOPHYSTOVIRT(a) \
     ((vaddr_t)(((a) - EXYNOS_CORE_PBASE) + EXYNOS_CORE_VBASE))
 
+#define	EXYNOS5800_PMU_BASE		0x10040000
+#define	EXYNOS5800_PMU_SIZE		0x20000
+#define	 EXYNOS5800_PMU_CORE_CONFIG(n)	(0x2000 + 0x80 * (n))
+#define	 EXYNOS5800_PMU_CORE_STATUS(n)	(0x2004 + 0x80 * (n))
+#define	 EXYNOS5800_PMU_CORE_POWER_EN	0x3
+#define	EXYNOS5800_SYSRAM_BASE		0x0207301c
+#define	EXYNOS5800_SYSRAM_SIZE		0x4
+
+static void
+exynos5800_mp_bootstrap(void)
+{
+#if defined(MULTIPROCESSOR)
+	extern void cortex_mpstart(void);
+	bus_space_tag_t bst = &armv7_generic_bs_tag;
+	bus_space_handle_t pmu_bsh, sysram_bsh;
+	uint32_t val, started = 0;
+	int n;
+
+	arm_cpu_max = 1 + __SHIFTOUT(armreg_l2ctrl_read(), L2CTRL_NUMCPU);
+
+	bus_space_map(bst, EXYNOS5800_PMU_BASE, EXYNOS5800_PMU_SIZE, 0, &pmu_bsh);
+	bus_space_map(bst, EXYNOS5800_SYSRAM_BASE, EXYNOS5800_SYSRAM_SIZE, 0, &sysram_bsh);
+
+	bus_space_write_4(bst, sysram_bsh, 0, (uint32_t)cortex_mpstart);
+	bus_space_barrier(bst, sysram_bsh, 0, 4, BUS_SPACE_BARRIER_READ | BUS_SPACE_BARRIER_WRITE);
+
+	for (n = 1; n < arm_cpu_max; n++) {
+		bus_space_write_4(bst, pmu_bsh, EXYNOS5800_PMU_CORE_CONFIG(n),
+		    EXYNOS5800_PMU_CORE_POWER_EN);
+		for (u_int i = 0x01000000; i > 0; i--) {
+			val = bus_space_read_4(bst, pmu_bsh, EXYNOS5800_PMU_CORE_STATUS(n));
+			if ((val & EXYNOS5800_PMU_CORE_POWER_EN) == EXYNOS5800_PMU_CORE_POWER_EN) {
+				started |= __BIT(n);
+				break;
+			}
+		}
+	}
+
+	for (u_int i = 0x10000000; i > 0; i--) {
+		arm_dmb();
+		if (arm_cpu_hatched == started)
+			break;
+	}
+
+	bus_space_unmap(bst, sysram_bsh, EXYNOS5800_SYSRAM_SIZE);
+	bus_space_unmap(bst, pmu_bsh, EXYNOS5800_PMU_SIZE);
+#endif
+}
+
+static struct of_compat_data mp_compat_data[] = {
+	{ "samsung,exynos5800",		(uintptr_t)exynos5800_mp_bootstrap },
+	{ NULL }
+};
+
 static void
 exynos_platform_bootstrap(void)
 {
 
 	exynos_bootstrap(EXYNOS_CORE_VBASE);
+
+	void (*mp_bootstrap)(void) = NULL;
+	const struct of_compat_data *cd = of_search_compatible(OF_finddevice("/"), mp_compat_data);
+	if (cd)
+		mp_bootstrap = (void (*)(void))cd->data;
+
+	if (mp_bootstrap)
+		mp_bootstrap();
 }
 
 static void
@@ -168,6 +230,9 @@ exynos5_platform_devmap(void)
 		DEVMAP_ENTRY(EXYNOS5_AUDIOCORE_VBASE,
 			     EXYNOS5_AUDIOCORE_PBASE,
 			     EXYNOS5_AUDIOCORE_SIZE),
+		DEVMAP_ENTRY(EXYNOS5_SYSRAM_VBASE,
+			     EXYNOS5_SYSRAM_PBASE,
+			     EXYNOS5_SYSRAM_SIZE),
 		DEVMAP_ENTRY_END
 	};
 
