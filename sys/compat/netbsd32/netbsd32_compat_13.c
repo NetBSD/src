@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_13.c,v 1.26.28.2 2018/09/11 01:52:00 pgoyette Exp $	*/
+/*	$NetBSD: netbsd32_compat_13.c,v 1.26.28.3 2018/09/11 02:53:56 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_13.c,v 1.26.28.2 2018/09/11 01:52:00 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_13.c,v 1.26.28.3 2018/09/11 02:53:56 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -40,6 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_13.c,v 1.26.28.2 2018/09/11 01:52:00
 #include <sys/syscallvar.h>
 
 #include <compat/netbsd32/netbsd32.h>
+#include <compat/netbsd32/netbsd32_syscall.h>
 #include <compat/netbsd32/netbsd32_syscallargs.h>
 
 #include <compat/sys/stat.h>
@@ -94,11 +95,11 @@ compat_13_netbsd32_sigsuspend(struct lwp *l, const struct compat_13_netbsd32_sig
 }
 
 static struct syscall_package compat_netbsd32_13_syscalls[] = {
-	{ NETBSD32_SYS_sigaltstack13, 0,
+	{ NETBSD32_SYS_compat_13_netbsd32_sigaltstack13, 0,
 	    (sy_call_t *)compat_13_netbsd32_sigaltstack13 },
-	{ NETBSD32_SYS_sigprocmask, 0,
+	{ NETBSD32_SYS_compat_13_sigprocmask13, 0,
 	    (sy_call_t *)compat_13_netbsd32_sigprocmask },
-	{ NETBSD32_SYS_sigsuspend, 0,
+	{ NETBSD32_SYS_compat_13_sigsuspend13, 0,
 	    (sy_call_t *)compat_13_netbsd32_sigsuspend },
 	{ 0, 0, NULL }
 }; 

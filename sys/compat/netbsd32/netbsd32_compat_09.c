@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_09.c,v 1.18.86.1 2018/09/10 09:54:47 pgoyette Exp $	*/
+/*	$NetBSD: netbsd32_compat_09.c,v 1.18.86.2 2018/09/11 02:53:56 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1998 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_09.c,v 1.18.86.1 2018/09/10 09:54:47 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_09.c,v 1.18.86.2 2018/09/11 02:53:56 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -41,6 +41,7 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_09.c,v 1.18.86.1 2018/09/10 09:54:47
 #include <sys/sysctl.h>
 
 #include <compat/netbsd32/netbsd32.h>
+#include <compat/netbsd32/netbsd32_syscall.h>
 #include <compat/netbsd32/netbsd32_syscallargs.h>
 
 int
@@ -86,13 +87,14 @@ compat_09_netbsd32_uname(struct lwp *l, const struct compat_09_netbsd32_uname_ar
 	NETBSD32TOP_UAP(name, struct outsname);
 	return (compat_09_sys_uname(l, &ua, retval));
 }
-
+NETBSD32_SYS_compat_30_netbsd32_fhstat
 static struct syscall_package compat_netbsd32_09_syscalls[] = {
-        { NETBSD32_SYS_ogetdomainname, 0,
+        { NETBSD32_SYS_compat_30_netbsd32_ogetdomainname, 0,
             (sy_call_t *)compat_09_netbsd32_ogetdomainname },
-        { NETBSD32_SYS_osetdomainname, 0,
+        { NETBSD32_SYS_compat_30_netbsd32_osetdomainname, 0,
             (sy_call_t *)compat_09_netbsd32_osetdomainname },
-        { NETBSD32_SYS_ouname, 0, (sy_call_t *)compat_09_netbsd32_uname },
+        { NETBSD32_SYS_compat_30_netbsd32_ouname, 0,
+	    (sy_call_t *)compat_09_netbsd32_uname },
         { 0, 0, NULL }
 };
 

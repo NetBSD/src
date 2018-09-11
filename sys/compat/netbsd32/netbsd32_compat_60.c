@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_60.c,v 1.3.2.2 2018/09/11 01:52:00 pgoyette Exp $	*/
+/*	$NetBSD: netbsd32_compat_60.c,v 1.3.2.3 2018/09/11 02:53:56 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_60.c,v 1.3.2.2 2018/09/11 01:52:00 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_60.c,v 1.3.2.3 2018/09/11 02:53:56 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,6 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_60.c,v 1.3.2.2 2018/09/11 01:52:00 p
 #include <sys/syscallvar.h>
 
 #include <compat/netbsd32/netbsd32.h>
+#include <compat/netbsd32/netbsd32_syscall.h>
 #include <compat/netbsd32/netbsd32_syscallargs.h>
 #include <compat/netbsd32/netbsd32_conv.h>
 
@@ -88,7 +89,7 @@ compat_60_netbsd32__lwp_park(struct lwp *l,
 }
 
 static struct syscall_package compat_netbsd32_60_syscalls[] = {
-	{ NETBSD32_SYS__lwp_park, 0,
+	{ NETBSD32_SYS_compat_60_netbsd32__lwp_park, 0,
 	    (sy_call_t *)compat_60_netbsd32__lwp_park },
 	{ 0, 0, NULL }
 }; 
@@ -97,7 +98,7 @@ static struct syscall_package compat_netbsd32_60_syscalls[] = {
 MODULE(MODULE_CLASS_EXEC, compat_netbsd32_60, "compat_netbsd,compat_60");
 
 static int
-compat_netbsd32_60_modcmd(modcmd_t CMD, void *arg)
+compat_netbsd32_60_modcmd(modcmd_t cmd, void *arg)
 {
 
 	switch (cmd) {
