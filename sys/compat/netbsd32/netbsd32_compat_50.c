@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_50.c,v 1.32.16.6 2018/09/11 21:18:32 pgoyette Exp $	*/
+/*	$NetBSD: netbsd32_compat_50.c,v 1.32.16.7 2018/09/11 23:26:21 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_50.c,v 1.32.16.6 2018/09/11 21:18:32 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_50.c,v 1.32.16.7 2018/09/11 23:26:21 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -65,6 +65,7 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_50.c,v 1.32.16.6 2018/09/11 21:18:32
 #include <sys/dirent.h>
 #include <sys/kauth.h>
 #include <sys/vfs_syscalls.h>
+#include <sys/rnd.h>
 
 #include <compat/netbsd32/netbsd32.h>
 #include <compat/netbsd32/netbsd32_syscall.h>
@@ -72,6 +73,7 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_50.c,v 1.32.16.6 2018/09/11 21:18:32
 #include <compat/netbsd32/netbsd32_conv.h>
 #include <compat/sys/mount.h>
 #include <compat/sys/time.h>
+#include <compat/sys/rnd.h>
 
 #if defined(COMPAT_50)
 
@@ -992,15 +994,24 @@ MODULE(MODULE_CLASS_EXEC, compat_netbsd32_50, "compat_netbsd32,compat_50");
 static int
 compat_netbsd32_50_modcmd(modcmd_t cmd, void *arg)
 {
+	int ret;
 
 	switch (cmd) {
 	case MODULE_CMD_INIT:
-                return syscall_establish(&emul_netbsd32,
+		vec_compat32_50_rnd_ioctl = compat32_50_rnd_ioctl;
+                ret = syscall_establish(&emul_netbsd32,
 		    compat_netbsd32_50_syscalls);
+		if (ret)
+			vec_compat32_50_rnd_ioctl = (void *)enosys;
+		return ret;
 
 	case MODULE_CMD_FINI:
-                return syscall_disestablish(&emul_netbsd32,
+		vec_compat32_50_rnd_ioctl = (void *)enosys;
+                ret = syscall_disestablish(&emul_netbsd32,
 		    compat_netbsd32_50_syscalls);
+		if (ret)
+			vec_compat32_50_rnd_ioctl = compat32_50_rnd_ioctl;
+		return ret;
 
 	default:
 		return ENOTTY;
