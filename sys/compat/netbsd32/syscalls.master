@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.120.2.10 2018/09/11 08:35:27 pgoyette Exp $
+	$NetBSD: syscalls.master,v 1.120.2.11 2018/09/11 23:58:46 pgoyette Exp $
 
 ;	from: NetBSD: syscalls.master,v 1.81 1998/07/05 08:49:50 jonathan Exp
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -408,7 +408,8 @@
 			    netbsd32_voidp buf, netbsd32_size_t nbyte, \
 			    int PAD, netbsd32_off_t offset); }
 #if defined(NTP) || !defined(_KERNEL_OPT)
-175	COMPAT_30	{ int|netbsd32||ntp_gettime( \
+175	COMPAT_30 MODULAR compat_netbsd32_30	\
+			{ int|netbsd32||ntp_gettime( \
 			    netbsd32_ntptimeval50p_t ntvp); }
 176	STD		{ int|netbsd32||ntp_adjtime(netbsd32_timexp_t tp); }
 #else
@@ -888,7 +889,8 @@
 			    netbsd32_fhandlep_t fhp, \
 			    netbsd32_stat50p_t sb); }
 #if defined(NTP) || !defined(_KERNEL_OPT)
-393	COMPAT_50	{ int|netbsd32||ntp_gettime( \
+393	COMPAT_50 MODULAR compat_netbsd32_50	\
+			{ int|netbsd32||ntp_gettime( \
 			    netbsd32_ntptimeval50p_t ntvp); }
 #else
 393	EXCL		__ntp_gettime30

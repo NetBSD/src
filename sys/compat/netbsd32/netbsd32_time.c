@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_time.c,v 1.49 2017/02/26 10:26:19 njoly Exp $	*/
+/*	$NetBSD: netbsd32_time.c,v 1.49.12.1 2018/09/11 23:58:46 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_time.c,v 1.49 2017/02/26 10:26:19 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_time.c,v 1.49.12.1 2018/09/11 23:58:46 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ntp.h"
@@ -80,65 +80,6 @@ netbsd32___ntp_gettime50(struct lwp *l,
 
 	return (error);
 }
-
-#ifdef COMPAT_50
-int
-compat_50_netbsd32_ntp_gettime(struct lwp *l,
-    const struct compat_50_netbsd32_ntp_gettime_args *uap, register_t *retval)
-{
-	/* {
-		syscallarg(netbsd32_ntptimeval50p_t) ntvp;
-	} */
-	struct netbsd32_ntptimeval50 ntv32;
-	struct ntptimeval ntv;
-	int error = 0;
-
-	if (SCARG_P32(uap, ntvp)) {
-		ntp_gettime(&ntv);
-
-		ntv32.time.tv_sec = (int32_t)ntv.time.tv_sec;
-		ntv32.time.tv_nsec = ntv.time.tv_nsec;
-		ntv32.maxerror = (netbsd32_long)ntv.maxerror;
-		ntv32.esterror = (netbsd32_long)ntv.esterror;
-		ntv32.tai = (netbsd32_long)ntv.tai;
-		ntv32.time_state = ntv.time_state;
-		error = copyout(&ntv32, SCARG_P32(uap, ntvp), sizeof(ntv32));
-	}
-	if (!error) {
-		*retval = ntp_timestatus();
-	}
-
-	return (error);
-}
-#endif
-
-#ifdef COMPAT_30
-int
-compat_30_netbsd32_ntp_gettime(struct lwp *l, const struct compat_30_netbsd32_ntp_gettime_args *uap, register_t *retval)
-{
-	/* {
-		syscallarg(netbsd32_ntptimevalp_t) ntvp;
-	} */
-	struct netbsd32_ntptimeval30 ntv32;
-	struct ntptimeval ntv;
-	int error = 0;
-
-	if (SCARG_P32(uap, ntvp)) {
-		ntp_gettime(&ntv);
-
-		ntv32.time.tv_sec = ntv.time.tv_sec;
-		ntv32.time.tv_usec = ntv.time.tv_nsec / 1000;
-		ntv32.maxerror = (netbsd32_long)ntv.maxerror;
-		ntv32.esterror = (netbsd32_long)ntv.esterror;
-		error = copyout(&ntv32, SCARG_P32(uap, ntvp), sizeof(ntv32));
-	}
-	if (!error) {
-		*retval = ntp_timestatus();
-	}
-
-	return (error);
-}
-#endif
 
 int
 netbsd32_ntp_adjtime(struct lwp *l, const struct netbsd32_ntp_adjtime_args *uap, register_t *retval)

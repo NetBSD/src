@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_30.c,v 1.31.16.7 2018/09/11 21:18:32 pgoyette Exp $	*/
+/*	$NetBSD: netbsd32_compat_30.c,v 1.31.16.8 2018/09/11 23:58:46 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_30.c,v 1.31.16.7 2018/09/11 21:18:32 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_30.c,v 1.31.16.8 2018/09/11 23:58:46 pgoyette Exp $");
+
+#if defined(_KERNEL_OPT)
+#include <opt_ntp.h>
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -297,6 +301,34 @@ compat_30_netbsd32_fhopen(struct lwp *l, const struct compat_30_netbsd32_fhopen_
 	return (compat_30_sys_fhopen(l, &ua, retval));
 }
 
+#ifdef NTP
+int
+compat_30_netbsd32_ntp_gettime(struct lwp *l, const struct compat_30_netbsd32_ntp_gettime_args *uap, register_t *retval)
+{
+	/* {
+		syscallarg(netbsd32_ntptimevalp_t) ntvp;
+	} */
+	struct netbsd32_ntptimeval30 ntv32;
+	struct ntptimeval ntv;
+	int error = 0;
+
+	if (SCARG_P32(uap, ntvp)) {
+		ntp_gettime(&ntv);
+
+		ntv32.time.tv_sec = ntv.time.tv_sec;
+		ntv32.time.tv_usec = ntv.time.tv_nsec / 1000;
+		ntv32.maxerror = (netbsd32_long)ntv.maxerror;
+		ntv32.esterror = (netbsd32_long)ntv.esterror;
+		error = copyout(&ntv32, SCARG_P32(uap, ntvp), sizeof(ntv32));
+	}
+	if (!error) {
+		*retval = ntp_timestatus();
+	}
+
+	return (error);
+}
+#endif
+
 static struct syscall_package compat_netbsd32_30_syscalls[] = {
 	{ NETBSD32_SYS_compat_30_netbsd32_getdents, 0,
 	    (sy_call_t *)compat_30_netbsd32_getdents }, 
@@ -318,6 +350,8 @@ static struct syscall_package compat_netbsd32_30_syscalls[] = {
 	    (sy_call_t *)compat_30_netbsd32___fhstat30 }, 
 	{ NETBSD32_SYS_compat_30_netbsd32_fhopen, 0,
 	    (sy_call_t *)compat_30_netbsd32_fhopen }, 
+	{ NETBSD32_SYS_compat_30_netbsd32_ntp_gettime, 0,
+	    (sy_call_t *)compat_30_netbsd32_ntp_gettime }, 
 	{ 0, 0, NULL }
 };
 

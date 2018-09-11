@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_50.c,v 1.32.16.7 2018/09/11 23:26:21 pgoyette Exp $	*/
+/*	$NetBSD: netbsd32_compat_50.c,v 1.32.16.8 2018/09/11 23:58:46 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -36,11 +36,13 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_50.c,v 1.32.16.7 2018/09/11 23:26:21 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_50.c,v 1.32.16.8 2018/09/11 23:58:46 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
+#include <opt_ntp.h>
 #endif
+
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -929,6 +931,36 @@ compat_50_netbsd32_quotactl(struct lwp *l, const struct compat_50_netbsd32_quota
 	return (compat_50_sys_quotactl(l, &ua, retval));
 }
 
+int
+compat_50_netbsd32_ntp_gettime(struct lwp *l,
+    const struct compat_50_netbsd32_ntp_gettime_args *uap, register_t *retval)
+{
+	/* {
+		syscallarg(netbsd32_ntptimeval50p_t) ntvp;
+	} */
+	struct netbsd32_ntptimeval50 ntv32;
+	struct ntptimeval ntv;
+	int error = 0;
+
+	if (SCARG_P32(uap, ntvp)) {
+		ntp_gettime(&ntv);
+
+		ntv32.time.tv_sec = (int32_t)ntv.time.tv_sec;
+		ntv32.time.tv_nsec = ntv.time.tv_nsec;
+		ntv32.maxerror = (netbsd32_long)ntv.maxerror;
+		ntv32.esterror = (netbsd32_long)ntv.esterror;
+		ntv32.tai = (netbsd32_long)ntv.tai;
+		ntv32.time_state = ntv.time_state;
+		error = copyout(&ntv32, SCARG_P32(uap, ntvp), sizeof(ntv32));
+	}
+	if (!error) {
+		*retval = ntp_timestatus();
+	}
+
+	return (error);
+}
+
+
 static struct syscall_package compat_netbsd32_50_syscalls[] = {
 	{ NETBSD32_SYS_compat_50_netbsd32_mknod, 0,
 	    (sy_call_t *)compat_50_netbsd32_mknod }, 
@@ -986,6 +1018,8 @@ static struct syscall_package compat_netbsd32_50_syscalls[] = {
 	    (sy_call_t *)compat_50_netbsd32_getitimer }, 
 	{ NETBSD32_SYS_compat_50_netbsd32_quotactl, 0,
 	    (sy_call_t *)compat_50_netbsd32_quotactl }, 
+	{ NETBSD32_SYS_compat_50_netbsd32_ntp_gettime, 0,
+	    (sy_call_t *)compat_50_netbsd32_ntp_gettime }, 
 	{ 0, 0, NULL }
 }; 
 
