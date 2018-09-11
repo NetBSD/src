@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_43.c,v 1.54.14.4 2018/09/11 08:51:55 pgoyette Exp $	*/
+/*	$NetBSD: netbsd32_compat_43.c,v 1.54.14.5 2018/09/11 21:18:32 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_43.c,v 1.54.14.4 2018/09/11 08:51:55 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_43.c,v 1.54.14.5 2018/09/11 21:18:32 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_43.h"
@@ -72,8 +72,6 @@ SYS_DEF(compat_43_netbsd32_killpg);
 SYS_DEF(compat_43_netbsd32_sigblock);
 SYS_DEF(compat_43_netbsd32_sigsetmask);
 #undef SYS_DEF
-
-extern struct emul emul_netbsd32;
 
 static void
 netbsd32_from_stat(const struct stat *sb, struct netbsd32_stat43 *sp32)

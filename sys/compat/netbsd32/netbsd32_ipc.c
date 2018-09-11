@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ipc.c,v 1.18.16.2 2018/03/13 04:12:09 pgoyette Exp $	*/
+/*	$NetBSD: netbsd32_ipc.c,v 1.18.16.3 2018/09/11 21:18:32 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_ipc.c,v 1.18.16.2 2018/03/13 04:12:09 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_ipc.c,v 1.18.16.3 2018/09/11 21:18:32 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -51,8 +51,6 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_ipc.c,v 1.18.16.2 2018/03/13 04:12:09 pgoye
 #include <compat/netbsd32/netbsd32_syscall.h>
 #include <compat/netbsd32/netbsd32_syscallargs.h>
 #include <compat/netbsd32/netbsd32_conv.h>
-
-extern struct emul emul_netbsd32;
 
 #define _PKG_ENTRY(name)	\
 	{ NETBSD32_SYS_ ## name, 0, (sy_call_t *)name }

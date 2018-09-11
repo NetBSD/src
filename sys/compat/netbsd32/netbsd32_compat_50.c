@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_50.c,v 1.32.16.5 2018/09/11 05:00:42 pgoyette Exp $	*/
+/*	$NetBSD: netbsd32_compat_50.c,v 1.32.16.6 2018/09/11 21:18:32 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_50.c,v 1.32.16.5 2018/09/11 05:00:42 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_50.c,v 1.32.16.6 2018/09/11 21:18:32 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -72,8 +72,6 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_50.c,v 1.32.16.5 2018/09/11 05:00:42
 #include <compat/netbsd32/netbsd32_conv.h>
 #include <compat/sys/mount.h>
 #include <compat/sys/time.h>
-
-extern struct emul emul_netbsd32;
 
 #if defined(COMPAT_50)
 
