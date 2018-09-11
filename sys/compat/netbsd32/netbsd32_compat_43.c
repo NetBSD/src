@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_43.c,v 1.54.14.3 2018/09/11 08:42:23 pgoyette Exp $	*/
+/*	$NetBSD: netbsd32_compat_43.c,v 1.54.14.4 2018/09/11 08:51:55 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_43.c,v 1.54.14.3 2018/09/11 08:42:23 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_43.c,v 1.54.14.4 2018/09/11 08:51:55 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_43.h"
@@ -754,7 +754,7 @@ static struct syscall_package compat_netbsd32_43_syscalls[] = {
 	    (sy_call_t *)compat_43_netbsd32_orecv },
 	{ NETBSD32_SYS_compat_43_netbsd32_orecvmsg, 0,
 	    (sy_call_t *)compat_43_netbsd32_orecvmsg },
-	{ compat_43_netbsd32_osendmsg, 0,
+	{ NETBSD32_SYS_compat_43_netbsd32_osendmsg, 0,
 	    (sy_call_t *)compat_43_netbsd32_osendmsg },
 	{ NETBSD32_SYS_compat_43_netbsd32_orecvfrom, 0,
 	    (sy_call_t *)compat_43_netbsd32_orecvfrom },
