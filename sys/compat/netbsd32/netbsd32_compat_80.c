@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_80.c,v 1.1.2.2 2018/09/11 05:48:07 pgoyette Exp $	*/
+/*	$NetBSD: netbsd32_compat_80.c,v 1.1.2.3 2018/09/11 09:22:51 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_80.c,v 1.1.2.2 2018/09/11 05:48:07 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_80.c,v 1.1.2.3 2018/09/11 09:22:51 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -156,9 +156,6 @@ netbsd32_80_modctl(struct lwp *lwp, const struct netbsd32_modctl_args *uap,
 	struct netbsd32_iovec iov;
 	int error;
 	void *arg;
-#ifdef MODULAR
-	uintptr_t loadtype;
-#endif
 
 	arg = SCARG_P32(uap, arg);
 
