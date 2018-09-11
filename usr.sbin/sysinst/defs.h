@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.15 2018/09/08 20:01:19 martin Exp $	*/
+/*	$NetBSD: defs.h,v 1.16 2018/09/11 08:05:18 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -340,6 +340,10 @@ int  clean_xfer_dir;
 #define SYSINST_FTP_HOST	"ftp.NetBSD.org"
 #endif
 
+#if !defined(SYSINST_HTTP_HOST)
+#define SYSINST_HTTP_HOST	"cdn.NetBSD.org"
+#endif
+
 #if !defined(SYSINST_FTP_DIR)
 #if defined(NETBSD_OFFICIAL_RELEASE)
 #define SYSINST_FTP_DIR		"pub/NetBSD/NetBSD-" REL
@@ -355,6 +359,9 @@ int  clean_xfer_dir;
 #if !defined(SYSINST_PKG_HOST)
 #define SYSINST_PKG_HOST	"ftp.NetBSD.org"
 #endif
+#if !defined(SYSINST_PKG_HTTP_HOST)
+#define SYSINST_PKG_HTTP_HOST	"cdn.NetBSD.org"
+#endif
 
 #if !defined(SYSINST_PKG_DIR)
 #define SYSINST_PKG_DIR		"pub/pkgsrc/packages/NetBSD"
@@ -362,6 +369,9 @@ int  clean_xfer_dir;
 
 #if !defined(SYSINST_PKGSRC_HOST)
 #define SYSINST_PKGSRC_HOST	SYSINST_PKG_HOST
+#endif
+#if !defined(SYSINST_PKGSRC_HTTP_HOST)
+#define SYSINST_PKGSRC_HTTP_HOST	SYSINST_PKG_HTTP_HOST
 #endif
 
 /* Abs. path we extract binary sets from */
@@ -388,13 +398,17 @@ char pkgsrc_dir[STRSIZE];
 /* User shell */
 const char *ushell;
 
+#define	XFER_FTP	0
+#define	XFER_HTTP	1
+#define	XFER_MAX	XFER_HTTP
+
 struct ftpinfo {
-    char host[STRSIZE];
+    char xfer_host[XFER_MAX+1][STRSIZE];
     char dir[STRSIZE] ;
     char user[SSTRSIZE];
     char pass[STRSIZE];
     char proxy[STRSIZE];
-    const char *xfer_type;		/* "ftp" or "http" */
+    unsigned int xfer;	/* XFER_FTP for "ftp" or XFER_HTTP for "http" */
 };
 
 /* use the same struct for sets ftp and to build pkgpath */
@@ -500,12 +514,13 @@ int	get_real_geom(const char *, struct disklabel *);
 /* from net.c */
 extern int network_up;
 extern char net_namesvr[STRSIZE];
-int	get_via_ftp(const char *);
+int	get_via_ftp(unsigned int);
 int	get_via_nfs(void);
 int	config_network(void);
 void	mnt_net_config(void);
 void	make_url(char *, struct ftpinfo *, const char *);
 int	get_pkgsrc(void);
+const char *url_proto(unsigned int);
 
 /* From run.c */
 int	collect(int, char **, const char *, ...) __printflike(3, 4);

@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.fr,v 1.10 2018/06/03 13:16:30 martin Exp $	*/
+/*	$NetBSD: msg.mi.fr,v 1.11 2018/09/11 08:05:18 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1023,6 +1023,7 @@ message Base_dir {Répertoire de base}
 message Set_dir_bin {Répertoire des composants binaire}
 message Set_dir_src {Répertoire des composants source}
 message Xfer_dir {Répertoire de transfert}
+message transfer_method {Download via}
 message User {Utilisateur}
 message Password {Mot de passe}
 message Proxy {Proxy}

@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.mi,v 1.13 2018/06/03 13:23:58 martin Exp $	*/
+/*	$NetBSD: menus.mi,v 1.14 2018/09/11 08:05:18 martin Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -327,8 +327,8 @@ menu sizechoice, sub menu, y=0, title MSG_Choose_your_size_specifier;
 
 menu distmedium, title MSG_Select_medium, y=-5;
 	option MSG_cdrom,     exit, action { *(int *)arg = get_via_cdrom(); };
-	option MSG_http,      exit, action { *(int *)arg = get_via_ftp("http"); };
-	option MSG_ftp,	      exit, action { *(int *)arg = get_via_ftp("ftp"); };
+	option MSG_http,      exit, action { *(int *)arg = get_via_ftp(XFER_HTTP); };
+	option MSG_ftp,	      exit, action { *(int *)arg = get_via_ftp(XFER_FTP); };
 	option MSG_nfs,	      exit, action { *(int *)arg = get_via_nfs(); };
 	option MSG_floppy,    exit, action { *(int *)arg = get_via_floppy(); };
 	option MSG_local_fs,  exit, action { *(int *)arg = get_via_localfs(); };
@@ -347,9 +347,9 @@ menu distset, title MSG_Select_your_distribution, exit,
 
 menu ftpsource, y=-4, x=0, w=70, no box, no clear,
 	    exitstring MSG_Get_Distribution;
-	display action { msg_display(MSG_ftpsource, ((arg_rv*)arg)->arg); };
-	option {src_legend(menu, MSG_Host, ftp.host);},
-		action { src_prompt(MSG_Host, ftp.host, sizeof ftp.host); };
+	display action { msg_display(MSG_ftpsource, url_proto((uintptr_t)((arg_rv*)arg)->arg)); };
+	option {src_legend(menu, MSG_Host, ftp.xfer_host[(uintptr_t)((arg_rv*)arg)->arg]);},
+		action { src_prompt(MSG_Host, ftp.xfer_host[(uintptr_t)((arg_rv*)arg)->arg], sizeof ftp.xfer_host[(uintptr_t)((arg_rv*)arg)->arg]); };
 	option {src_legend(menu, MSG_Base_dir, ftp.dir);},
 		action { src_prompt(MSG_Base_dir, ftp.dir, sizeof ftp.dir); };
 	option {src_legend(menu, MSG_Set_dir_bin, set_dir_bin);},
@@ -533,8 +533,8 @@ menu zeroconf, title "Zeroconf", no clear;
 menu binpkg, y=-4, x=0, w=70, no box, no clear,
 	    exitstring MSG_Install_pkgin;
 	display action { msg_display(MSG_pkgpath); };
-	option {src_legend(menu, MSG_Host, pkg.host);},
-		action { src_prompt(MSG_Host, pkg.host, sizeof pkg.host); };
+	option {src_legend(menu, MSG_Host, pkg.xfer_host[pkg.xfer]);},
+		action { src_prompt(MSG_Host, pkg.xfer_host[pkg.xfer], sizeof pkg.xfer_host[pkg.xfer]); };
 	option {src_legend(menu, MSG_Base_dir, pkg.dir);},
 		action { src_prompt(MSG_Base_dir, pkg.dir, sizeof pkg.dir); };
 	option {src_legend(menu, MSG_Pkg_dir, pkg_dir);},
@@ -573,14 +573,16 @@ menu binpkg, y=-4, x=0, w=70, no box, no clear,
 			config_network();
 			mnt_net_config();
 		};
+	option {src_legend(menu, MSG_transfer_method, url_proto(pkg.xfer));},
+		action { pkg.xfer = (pkg.xfer+1) % (XFER_MAX+1); };
 	option MSG_quit_pkgs_install, exit, action { ((arg_rv*)arg)->rv = SET_SKIP; };
 
 menu pkgsrc, y=-4, x=0, w=70, no box, no clear,
 	    exit, exitstring MSG_Install_pkgsrc;
 	display action { msg_display(MSG_pkgsrc); };
-	option {src_legend(menu, MSG_Host, pkgsrc.host);},
-		action { src_prompt(MSG_Host, pkgsrc.host,
-			sizeof pkgsrc.host); };
+	option {src_legend(menu, MSG_Host, pkgsrc.xfer_host[pkgsrc.xfer]);},
+		action { src_prompt(MSG_Host, pkgsrc.xfer_host[pkgsrc.xfer],
+			sizeof pkgsrc.xfer_host[pkgsrc.xfer]); };
 	option {src_legend(menu, MSG_Pkgsrc_dir, pkgsrc_dir);},
 		action { src_prompt(MSG_Pkgsrc_dir, pkgsrc_dir, sizeof pkgsrc_dir); };
 	option {src_legend(menu, MSG_User, pkgsrc.user);},
@@ -612,6 +614,8 @@ menu pkgsrc, y=-4, x=0, w=70, no box, no clear,
 	option {src_legend(menu, MSG_delete_xfer_file,
 			clean_xfer_dir ? MSG_Yes : MSG_No);},
 		action {clean_xfer_dir = ask_yesno(MSG_delete_xfer_file); };
+	option {src_legend(menu, MSG_transfer_method, url_proto(pkgsrc.xfer));},
+		action { pkgsrc.xfer = (pkgsrc.xfer+1) % (XFER_MAX+1); };
 	option MSG_quit_pkgsrc, exit, action { *((int*)arg) = SET_SKIP;};
 
 menu usersh, title MSG_User_shell, no clear;
