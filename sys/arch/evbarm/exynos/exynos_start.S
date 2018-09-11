@@ -1,4 +1,4 @@
-/*	$NetBSD: exynos_start.S,v 1.7 2018/08/19 07:27:33 skrll Exp $	*/
+/*	$NetBSD: exynos_start.S,v 1.8 2018/09/11 10:06:53 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
 
 #include <evbarm/exynos/platform.h>
 
-RCSID("$NetBSD: exynos_start.S,v 1.7 2018/08/19 07:27:33 skrll Exp $")
+RCSID("$NetBSD: exynos_start.S,v 1.8 2018/09/11 10:06:53 jmcneill Exp $")
 
 #if defined(KERNEL_BASES_EQUAL)
 #define CALL(f)		bl	_C_LABEL(f)
@@ -242,7 +242,6 @@ mmu_init_table:
 		EXYNOS_CORE_SIZE / L1_S_SIZE,
 		L1_S_PROTO_armv7 | L1_S_APv7_KRW | L1_S_V6_XN)
 
-#if 0
 	/* Map EXYNOS AUDIOBASE */
 	MMU_INIT(EXYNOS5_AUDIOCORE_VBASE, EXYNOS5_AUDIOCORE_VBASE,
 	        EXYNOS5_AUDIOCORE_SIZE / L1_S_SIZE,
@@ -262,7 +261,6 @@ mmu_init_table:
 	MMU_INIT(EXYNOS5_SYSRAM_PBASE, EXYNOS5_SYSRAM_PBASE,
 	        EXYNOS5_SYSRAM_SIZE / L1_S_SIZE,
 		L1_S_PROTO_armv7 | L1_S_APv7_KRW | L1_S_V6_XN)
-#endif
 
 	/* Map DTB location in SDRAM, patched in later */
 .Lmmu_init_table_dtb:
