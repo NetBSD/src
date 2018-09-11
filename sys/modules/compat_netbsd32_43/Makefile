@@ -1,14 +1,14 @@
-#	$NetBSD: Makefile,v 1.1.2.1 2018/09/11 07:01:10 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.1.2.2 2018/09/11 08:41:27 pgoyette Exp $
 
 .include "../Makefile.inc"
 
 .PATH:	${S}/compat/netbsd32
 
-KMOD=	compat_netbsd32_80
+KMOD=	compat_netbsd32_43
 
 CPPFLAGS+=	-DCOMPAT_NETBSD32
-CPPFLAGS+=	-DCOMPAT_80
+CPPFLAGS+=	-DCOMPAT_43
 
-SRCS+=	netbsd32_compat_80.c
+SRCS+=	netbsd32_compat_43.c
 
 .include <bsd.kmodule.mk>
