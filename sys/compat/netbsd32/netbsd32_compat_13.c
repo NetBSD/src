@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_13.c,v 1.26.28.4 2018/09/11 04:53:42 pgoyette Exp $	*/
+/*	$NetBSD: netbsd32_compat_13.c,v 1.26.28.5 2018/09/11 05:00:42 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_13.c,v 1.26.28.4 2018/09/11 04:53:42 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_13.c,v 1.26.28.5 2018/09/11 05:00:42 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,6 +48,8 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_13.c,v 1.26.28.4 2018/09/11 04:53:42
 #include <compat/sys/signalvar.h>
 
 #include <compat/common/compat_sigaltstack.h>
+
+extern struct emul emul_netbsd32;
 
 int
 compat_13_netbsd32_sigaltstack13(struct lwp *l, const struct compat_13_netbsd32_sigaltstack13_args *uap, register_t *retval)

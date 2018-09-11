@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_60.c,v 1.3.2.4 2018/09/11 04:53:42 pgoyette Exp $	*/
+/*	$NetBSD: netbsd32_compat_60.c,v 1.3.2.5 2018/09/11 05:00:42 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_60.c,v 1.3.2.4 2018/09/11 04:53:42 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_60.c,v 1.3.2.5 2018/09/11 05:00:42 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,6 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_60.c,v 1.3.2.4 2018/09/11 04:53:42 p
 #include <compat/netbsd32/netbsd32_syscallargs.h>
 #include <compat/netbsd32/netbsd32_conv.h>
 
+extern struct emul emul_netbsd32;
 
 int
 compat_60_netbsd32__lwp_park(struct lwp *l,

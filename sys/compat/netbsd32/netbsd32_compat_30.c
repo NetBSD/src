@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_30.c,v 1.31.16.5 2018/09/11 04:53:42 pgoyette Exp $	*/
+/*	$NetBSD: netbsd32_compat_30.c,v 1.31.16.6 2018/09/11 05:00:42 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_30.c,v 1.31.16.5 2018/09/11 04:53:42 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_30.c,v 1.31.16.6 2018/09/11 05:00:42 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,6 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_30.c,v 1.31.16.5 2018/09/11 04:53:42
 #include <compat/netbsd32/netbsd32_conv.h>
 #include <compat/sys/mount.h>
 
+extern struct emul emul_netbsd32;
 
 int
 compat_30_netbsd32_getdents(struct lwp *l, const struct compat_30_netbsd32_getdents_args *uap, register_t *retval)
