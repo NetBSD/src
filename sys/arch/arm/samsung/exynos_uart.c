@@ -1,4 +1,4 @@
-/* $NetBSD: exynos_uart.c,v 1.1 2018/07/05 13:11:58 jmcneill Exp $ */
+/* $NetBSD: exynos_uart.c,v 1.2 2018/09/11 10:05:31 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2013-2018 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: exynos_uart.c,v 1.1 2018/07/05 13:11:58 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exynos_uart.c,v 1.2 2018/09/11 10:05:31 jmcneill Exp $");
 
 #define cn_trap()			\
 	do {				\
@@ -77,6 +77,7 @@ struct exynos_uart_softc {
 	device_t sc_dev;
 	bus_space_tag_t	sc_bst;
 	bus_space_handle_t sc_bsh;
+	kmutex_t sc_lock;
 	u_int sc_freq;
 	void *sc_ih;
 
@@ -186,6 +187,7 @@ exynos_uart_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_dev = self;
 	sc->sc_bst = faa->faa_bst;
+	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_HIGH);
 	sc->sc_console = is_console;
 	if (is_console) {
 		sc->sc_bsh = exynos_uart_cnsc.sc_bsh;
@@ -259,13 +261,13 @@ static int
 exynos_uart_cngetc(dev_t dev)
 {
 	struct exynos_uart_softc * const sc = &exynos_uart_cnsc;
-	uint32_t status;
+	uint32_t ufstat;
 	int s, c;
 
 	s = splserial();
 
-	status = RD4(sc, SSCOM_UTRSTAT);
-	if ((status & UTRSTAT_RXREADY) == 0) {
+	ufstat = RD4(sc, SSCOM_UFSTAT);
+	if (__SHIFTOUT(ufstat, UFSTAT_RXCOUNT) == 0) {
 		splx(s);
 		return -1;
 	}
@@ -334,6 +336,8 @@ exynos_uart_open(dev_t dev, int flag, int mode, lwp_t *l)
 		return EBUSY;
 	}
 
+	mutex_enter(&sc->sc_lock);
+
 	if ((tp->t_state & TS_ISOPEN) == 0 && tp->t_wopen == 0) {
 		tp->t_dev = dev;
 		ttychars(tp);
@@ -354,6 +358,8 @@ exynos_uart_open(dev_t dev, int flag, int mode, lwp_t *l)
 	/* Enable RX and error interrupts */
 	WR4(sc, SSCOM_UINTM, ~0u & ~(UINT_RXD|UINT_ERROR));
 
+	mutex_exit(&sc->sc_lock);
+
 	return tp->t_linesw->l_open(dev, tp);
 }
 
@@ -364,11 +370,15 @@ exynos_uart_close(dev_t dev, int flag, int mode, lwp_t *l)
 	    device_lookup_private(&exuart_cd, minor(dev));
 	struct tty *tp = sc->sc_tty;
 
+	mutex_enter(&sc->sc_lock);
+
 	tp->t_linesw->l_close(tp, flag);
 	ttyclose(tp);
 
 	/* Disable interrupts */
 	WR4(sc, SSCOM_UINTM, ~0u);
+
+	mutex_exit(&sc->sc_lock);
 
 	return 0;
 }
@@ -447,8 +457,6 @@ exynos_uart_start(struct tty *tp)
 	}
 	tp->t_state |= TS_BUSY;
 
-	splx(s);
-
 	for (brem = q_to_b(&tp->t_outq, sc->sc_buf, sizeof(sc->sc_buf));
 	     brem > 0;
 	     brem--, p++) {
@@ -459,7 +467,6 @@ exynos_uart_start(struct tty *tp)
 		    SSCOM_UTXH, *p);
 	}
 
-	s = spltty();
 	tp->t_state &= ~TS_BUSY;
 	if (ttypull(tp)) {
 		tp->t_state |= TS_TIMEOUT;
@@ -473,46 +480,50 @@ exynos_uart_param(struct tty *tp, struct termios *t)
 {
 	struct exynos_uart_softc *sc = tp->t_sc;
 
-	if (tp->t_ospeed == t->c_ospeed &&
-	    tp->t_cflag == t->c_cflag)
-		return 0;
+	mutex_enter(&sc->sc_lock);
 
-	uint32_t ulcon = 0, ubrdiv;
-	switch (ISSET(t->c_cflag, CSIZE)) {
-	case CS5:
-		ulcon |= ULCON_LENGTH_5;
-		break;
-	case CS6:
-		ulcon |= ULCON_LENGTH_6;
-		break;
-	case CS7:
-		ulcon |= ULCON_LENGTH_7;
-		break;
-	case CS8:
-		ulcon |= ULCON_LENGTH_8;
-		break;
+	if (tp->t_cflag != t->c_cflag) {
+		uint32_t ulcon = 0;
+		switch (ISSET(t->c_cflag, CSIZE)) {
+		case CS5:
+			ulcon |= ULCON_LENGTH_5;
+			break;
+		case CS6:
+			ulcon |= ULCON_LENGTH_6;
+			break;
+		case CS7:
+			ulcon |= ULCON_LENGTH_7;
+			break;
+		case CS8:
+			ulcon |= ULCON_LENGTH_8;
+			break;
+		}
+		switch (ISSET(t->c_cflag, PARENB|PARODD)) {
+		case PARENB|PARODD:
+			ulcon |= ULCON_PARITY_ODD;
+			break;
+		case PARENB:
+			ulcon |= ULCON_PARITY_EVEN;
+			break;
+		default:
+			ulcon |= ULCON_PARITY_NONE;
+			break;
+		}
+		if (ISSET(t->c_cflag, CSTOPB))
+			ulcon |= ULCON_STOP;
+		WR4(sc, SSCOM_ULCON, ulcon);
 	}
-	switch (ISSET(t->c_cflag, PARENB|PARODD)) {
-	case PARENB|PARODD:
-		ulcon |= ULCON_PARITY_ODD;
-		break;
-	case PARENB:
-		ulcon |= ULCON_PARITY_EVEN;
-		break;
-	default:
-		ulcon |= ULCON_PARITY_NONE;
-		break;
-	}
-	if (ISSET(t->c_cflag, CSTOPB))
-		ulcon |= ULCON_STOP;
-	WR4(sc, SSCOM_ULCON, ulcon);
 
-	ubrdiv = (sc->sc_freq / 16) / t->c_ospeed - 1;
-	WR4(sc, SSCOM_UBRDIV, ubrdiv);
+	if (tp->t_ospeed != t->c_ospeed) {
+		const uint32_t ubrdiv = (sc->sc_freq / 16) / t->c_ospeed - 1;
+		WR4(sc, SSCOM_UBRDIV, ubrdiv);
+	}
 
 	tp->t_ispeed = t->c_ispeed;
 	tp->t_ospeed = t->c_ospeed;
 	tp->t_cflag = t->c_cflag;
+
+	mutex_exit(&sc->sc_lock);
 
 	return 0;
 }
@@ -523,6 +534,8 @@ exynos_uart_intr(void *priv)
 	struct exynos_uart_softc *sc = priv;
 	struct tty *tp = sc->sc_tty;
 	uint32_t uintp, uerstat, ufstat, c;
+
+	mutex_enter(&sc->sc_lock);
 
 	uintp = RD4(sc, SSCOM_UINTP);
 
@@ -550,6 +563,8 @@ exynos_uart_intr(void *priv)
 	}
 
 	WR4(sc, SSCOM_UINTP, uintp);
+
+	mutex_exit(&sc->sc_lock);
 
 	return 1;
 }
