@@ -1,4 +1,4 @@
-/* $NetBSD: netbsd32_systrace_args.c,v 1.24.2.2 2018/09/06 06:55:47 pgoyette Exp $ */
+/* $NetBSD: netbsd32_systrace_args.c,v 1.24.2.3 2018/09/11 01:52:00 pgoyette Exp $ */
 
 /*
  * System call argument to DTrace register array converstion.
@@ -1193,7 +1193,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* netbsd32_semsys */
 	case 169: {
-		const struct compat_10_netbsd32_semsys_args *p = params;
+		const struct netbsd32_semsys_args *p = params;
 		iarg[0] = SCARG(p, which); /* int */
 		iarg[1] = SCARG(p, a2); /* int */
 		iarg[2] = SCARG(p, a3); /* int */
@@ -1204,7 +1204,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* netbsd32_msgsys */
 	case 170: {
-		const struct compat_10_netbsd32_msgsys_args *p = params;
+		const struct netbsd32_msgsys_args *p = params;
 		iarg[0] = SCARG(p, which); /* int */
 		iarg[1] = SCARG(p, a2); /* int */
 		iarg[2] = SCARG(p, a3); /* int */
@@ -1216,7 +1216,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* netbsd32_shmsys */
 	case 171: {
-		const struct compat_10_netbsd32_shmsys_args *p = params;
+		const struct netbsd32_shmsys_args *p = params;
 		iarg[0] = SCARG(p, which); /* int */
 		iarg[1] = SCARG(p, a2); /* int */
 		iarg[2] = SCARG(p, a3); /* int */
@@ -1479,7 +1479,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* netbsd32___semctl */
 	case 220: {
-		const struct compat_14_netbsd32___semctl_args *p = params;
+		const struct netbsd32___semctl_args *p = params;
 		iarg[0] = SCARG(p, semid); /* int */
 		iarg[1] = SCARG(p, semnum); /* int */
 		iarg[2] = SCARG(p, cmd); /* int */
@@ -1514,7 +1514,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* netbsd32_msgctl */
 	case 224: {
-		const struct compat_14_netbsd32_msgctl_args *p = params;
+		const struct netbsd32_msgctl_args *p = params;
 		iarg[0] = SCARG(p, msqid); /* int */
 		iarg[1] = SCARG(p, cmd); /* int */
 		uarg[2] = (intptr_t) SCARG(p, buf).i32; /* netbsd32_msqid_ds14p_t */
@@ -1561,7 +1561,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* netbsd32_shmctl */
 	case 229: {
-		const struct compat_14_netbsd32_shmctl_args *p = params;
+		const struct netbsd32_shmctl_args *p = params;
 		iarg[0] = SCARG(p, shmid); /* int */
 		iarg[1] = SCARG(p, cmd); /* int */
 		uarg[2] = (intptr_t) SCARG(p, buf).i32; /* netbsd32_shmid_dsp_t */
@@ -1849,7 +1849,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* netbsd32_mq_timedsend */
 	case 265: {
-		const struct compat_50_netbsd32_mq_timedsend_args *p = params;
+		const struct netbsd32_mq_timedsend_args *p = params;
 		iarg[0] = SCARG(p, mqdes); /* mqd_t */
 		uarg[1] = (intptr_t) SCARG(p, msg_ptr).i32; /* const netbsd32_charp */
 		iarg[2] = SCARG(p, msg_len); /* netbsd32_size_t */
@@ -1860,7 +1860,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* netbsd32_mq_timedreceive */
 	case 266: {
-		const struct compat_50_netbsd32_mq_timedreceive_args *p = params;
+		const struct netbsd32_mq_timedreceive_args *p = params;
 		iarg[0] = SCARG(p, mqdes); /* mqd_t */
 		uarg[1] = (intptr_t) SCARG(p, msg_ptr).i32; /* netbsd32_charp */
 		iarg[2] = SCARG(p, msg_len); /* netbsd32_size_t */
@@ -2129,7 +2129,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* netbsd32___semctl14 */
 	case 301: {
-		const struct compat_50_netbsd32___semctl14_args *p = params;
+		const struct netbsd32___semctl14_args *p = params;
 		iarg[0] = SCARG(p, semid); /* int */
 		iarg[1] = SCARG(p, semnum); /* int */
 		iarg[2] = SCARG(p, cmd); /* int */
@@ -2139,7 +2139,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* netbsd32___msgctl13 */
 	case 302: {
-		const struct compat_50_netbsd32___msgctl13_args *p = params;
+		const struct netbsd32___msgctl13_args *p = params;
 		iarg[0] = SCARG(p, msqid); /* int */
 		iarg[1] = SCARG(p, cmd); /* int */
 		uarg[2] = (intptr_t) SCARG(p, buf).i32; /* netbsd32_msqid_ds50p_t */
@@ -2148,7 +2148,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* netbsd32___shmctl13 */
 	case 303: {
-		const struct compat_50_netbsd32___shmctl13_args *p = params;
+		const struct netbsd32___shmctl13_args *p = params;
 		iarg[0] = SCARG(p, shmid); /* int */
 		iarg[1] = SCARG(p, cmd); /* int */
 		uarg[2] = (intptr_t) SCARG(p, buf).i32; /* netbsd32_shmid_ds50p_t */

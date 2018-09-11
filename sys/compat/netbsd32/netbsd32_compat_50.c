@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_50.c,v 1.32.16.1 2018/09/10 22:50:51 pgoyette Exp $	*/
+/*	$NetBSD: netbsd32_compat_50.c,v 1.32.16.2 2018/09/11 01:52:00 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_50.c,v 1.32.16.1 2018/09/10 22:50:51 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_50.c,v 1.32.16.2 2018/09/11 01:52:00 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -60,13 +60,13 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_50.c,v 1.32.16.1 2018/09/10 22:50:51
 #include <sys/namei.h>
 #include <sys/statvfs.h>
 #include <sys/syscallargs.h>
+#include <sys/syscallvar.h>
 #include <sys/proc.h>
 #include <sys/dirent.h>
 #include <sys/kauth.h>
 #include <sys/vfs_syscalls.h>
 
 #include <compat/netbsd32/netbsd32.h>
-#include <compat/netbsd32/netbsd32_syscallvar.h>
 #include <compat/netbsd32/netbsd32_syscallargs.h>
 #include <compat/netbsd32/netbsd32_conv.h>
 #include <compat/sys/mount.h>
