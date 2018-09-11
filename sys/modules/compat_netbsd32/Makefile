@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.20.12.7 2018/09/11 23:26:21 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.20.12.8 2018/09/11 23:58:46 pgoyette Exp $
 
 .include "../Makefile.inc"
 .include "../Makefile.assym"
@@ -21,7 +21,7 @@ CPPFLAGS+=	-DCOMPAT_43
 CPPFLAGS+=	-DCOMPAT_NETBSD32
 CPPFLAGS+=	-DEXEC_ELF32 -DEXEC_ELF64
 CPPFLAGS+=	-DCOREDUMP -DNTP -DVMSWAP
-CPPFLAGS+=	-DNTP -DKTRACE -DMODULAR
+CPPFLAGS+=	-DKTRACE -DMODULAR
 
 .PATH:	${S}/compat/netbsd32
 SRCS+=	netbsd32_compat_10.c	# belongs to compat_netbsd32_sysvipc_10
