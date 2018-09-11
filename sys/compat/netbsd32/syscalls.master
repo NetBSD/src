@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.120.2.9 2018/09/11 06:11:59 pgoyette Exp $
+	$NetBSD: syscalls.master,v 1.120.2.10 2018/09/11 08:35:27 pgoyette Exp $
 
 ;	from: NetBSD: syscalls.master,v 1.81 1998/07/05 08:49:50 jonathan Exp
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -73,7 +73,8 @@
 7	COMPAT_50 MODULAR compat_netbsd32_50	\
 			{ int|netbsd32||wait4(int pid, netbsd32_intp status, \
 			    int options, netbsd32_rusage50p_t rusage); }
-8	COMPAT_43	{ int|netbsd32||ocreat(netbsd32_charp path, \
+8	COMPAT_43 MODULAR compat_netbsd32_43	\
+			{ int|netbsd32||ocreat(netbsd32_charp path, \
 			    mode_t mode); }
 9	STD		{ int|netbsd32||link(netbsd32_charp path, \
 			    netbsd32_charp link); }
@@ -91,7 +92,8 @@
 18	COMPAT_20 MODULAR compat_netbsd32_20	\
 			{ int|netbsd32||getfsstat(netbsd32_statfsp_t buf, \
 			    netbsd32_long bufsize, int flags); }
-19	COMPAT_43	{ netbsd32_long|netbsd32||olseek(int fd, \
+19	COMPAT_43 MODULAR compat_netbsd32_43	\
+			{ netbsd32_long|netbsd32||olseek(int fd, \
 			    netbsd32_long offset, int whence); }
 20	NOARGS 		{ pid_t|sys||getpid(void); }
 21	STD		{ int|netbsd32||mount(netbsd32_charp type, \
@@ -127,10 +129,12 @@
 			    netbsd32_u_long flags); }
 36	NOARGS		{ void|sys||sync(void); }
 37	STD		{ int|netbsd32||kill(int pid, int signum); }
-38	COMPAT_43	{ int|netbsd32||stat43(netbsd32_charp path, \
+38	COMPAT_43 MODULAR compat_netbsd32_43	\
+			{ int|netbsd32||stat43(netbsd32_charp path, \
 			    netbsd32_stat43p_t ub); }
 39	NOARGS 		{ pid_t|sys||getppid(void); }
-40	COMPAT_43	{ int|netbsd32||lstat43(netbsd32_charp path, \
+40	COMPAT_43 MODULAR compat_netbsd32_43	\
+			{ int|netbsd32||lstat43(netbsd32_charp path, \
 			    netbsd32_stat43p_t ub); }
 41	STD		{ int|netbsd32||dup(int fd); }
 42	NOARGS		{ int|sys||pipe(void); }
@@ -169,8 +173,10 @@
 			    netbsd32_charpp argp, netbsd32_charpp envp); }
 60	STD		{ mode_t|netbsd32||umask(mode_t newmask); }
 61	STD		{ int|netbsd32||chroot(netbsd32_charp path); }
-62	COMPAT_43	{ int|netbsd32||fstat43(int fd, netbsd32_stat43p_t sb); }
-63	COMPAT_43	{ int|netbsd32||ogetkerninfo(int op, \
+62	COMPAT_43 MODULAR compat_netbsd32_43	\
+			{ int|netbsd32||fstat43(int fd, netbsd32_stat43p_t sb); }
+63	COMPAT_43 MODULAR compat_netbsd32_43	\
+			{ int|netbsd32||ogetkerninfo(int op, \
 			    netbsd32_charp where, netbsd32_intp size, \
 			    int arg); }
 64	COMPAT_43	{ int|sys||getpagesize(void); } ogetpagesize
@@ -183,7 +189,8 @@
 68	OBSOL		vwrite
 69	OBSOL		sbrk
 70	OBSOL		sstk
-71	COMPAT_43	{ int|netbsd32||ommap(netbsd32_voidp addr, \
+71	COMPAT_43 MODULAR compat_netbsd32_43	\
+			{ int|netbsd32||ommap(netbsd32_voidp addr, \
 			    netbsd32_size_t len, int prot, int flags, int fd, \
 			    netbsd32_long pos); }
 72	STD		{ int|netbsd32||ovadvise(int anom); } vadvise
@@ -213,9 +220,11 @@
 86	COMPAT_50 MODULAR compat_netbsd32_50	\
 			{ int|netbsd32||getitimer(int which, \
 			    netbsd32_itimerval50p_t itv); }
-87	COMPAT_43	{ int|netbsd32||ogethostname(netbsd32_charp hostname, \
+87	COMPAT_43 MODULAR compat_netbsd32_43	\
+			{ int|netbsd32||ogethostname(netbsd32_charp hostname, \
 			    u_int len); }
-88	COMPAT_43	{ int|netbsd32||osethostname(netbsd32_charp hostname, \
+88	COMPAT_43 MODULAR compat_netbsd32_43	\
+			{ int|netbsd32||osethostname(netbsd32_charp hostname, \
 			    u_int len); }
 89	COMPAT_43	{ int|sys||getdtablesize(void); } ogetdtablesize
 90	STD		{ int|netbsd32||dup2(int from, int to); }
@@ -235,12 +244,15 @@
 			    int protocol); }
 98	STD		{ int|netbsd32||connect(int s, \
 			    netbsd32_sockaddrp_t name, int namelen); }
-99	COMPAT_43	{ int|netbsd32||oaccept(int s, netbsd32_voidp name, \
+99	COMPAT_43 MODULAR compat_netbsd32_43	\
+			{ int|netbsd32||oaccept(int s, netbsd32_voidp name, \
 			    netbsd32_intp anamelen); }
 100	STD		{ int|netbsd32||getpriority(int which, int who); }
-101	COMPAT_43	{ int|netbsd32||osend(int s, netbsd32_voidp buf, \
+101	COMPAT_43 MODULAR compat_netbsd32_43	\
+			{ int|netbsd32||osend(int s, netbsd32_voidp buf, \
 			    int len, int flags); }
-102	COMPAT_43	{ int|netbsd32||orecv(int s, netbsd32_voidp buf, \
+102	COMPAT_43 MODULAR compat_netbsd32_43	\
+			{ int|netbsd32||orecv(int s, netbsd32_voidp buf, \
 			    int len, int flags); }
 103	COMPAT_13	{ int|netbsd32||sigreturn( \
 			    netbsd32_sigcontextp_t sigcntxp); } sigreturn13
@@ -252,15 +264,20 @@
 107	OBSOL		vtimes
 108	COMPAT_43	{ int|netbsd32||osigvec(int signum, \
 			    netbsd32_sigvecp_t nsv, netbsd32_sigvecp_t osv); }
-109	COMPAT_43	{ int|netbsd32||sigblock(int mask); }
-110	COMPAT_43	{ int|netbsd32||sigsetmask(int mask); }
+109	COMPAT_43 MODULAR compat_netbsd32_43	\
+			{ int|netbsd32||sigblock(int mask); }
+110	COMPAT_43 MODULAR compat_netbsd32_43	\
+			{ int|netbsd32||sigsetmask(int mask); }
 111	COMPAT_13 MODULAR compat_netbsd32_13	\
 			{ int|netbsd32||sigsuspend(int mask); } sigsuspend13
-112	COMPAT_43	{ int|netbsd32||osigstack(netbsd32_sigstackp_t nss, \
+112	COMPAT_43 MODULAR compat_netbsd32_43	\
+			{ int|netbsd32||osigstack(netbsd32_sigstackp_t nss, \
 			    netbsd32_sigstackp_t oss); }
-113	COMPAT_43	{ int|netbsd32||orecvmsg(int s, \
+113	COMPAT_43 MODULAR compat_netbsd32_43	\
+			{ int|netbsd32||orecvmsg(int s, \
 			    netbsd32_omsghdrp_t msg, int flags); }
-114	COMPAT_43	{ int|netbsd32||osendmsg(int s, netbsd32_voidp msg, \
+114	COMPAT_43 MODULAR compat_netbsd32_43	\
+			{ int|netbsd32||osendmsg(int s, netbsd32_voidp msg, \
 			    int flags); }
 115	OBSOL		vtrace
 116	COMPAT_50 MODULAR compat_netbsd32_50	\
@@ -281,16 +298,19 @@
 			    netbsd32_timezonep_t tzp); }
 123	STD		{ int|netbsd32||fchown(int fd, uid_t uid, gid_t gid); }
 124	STD		{ int|netbsd32||fchmod(int fd, mode_t mode); }
-125	COMPAT_43	{ int|netbsd32||orecvfrom(int s, netbsd32_voidp buf, \
+125	COMPAT_43 MODULAR compat_netbsd32_43	\
+			{ int|netbsd32||orecvfrom(int s, netbsd32_voidp buf, \
 			    netbsd32_size_t len, int flags, \
 			    netbsd32_voidp from, netbsd32_intp fromlenaddr); }
 126	STD		{ int|netbsd32||setreuid(uid_t ruid, uid_t euid); }
 127	STD		{ int|netbsd32||setregid(gid_t rgid, gid_t egid); }
 128	STD		{ int|netbsd32||rename(netbsd32_charp from, \
 			    netbsd32_charp to); }
-129	COMPAT_43	{ int|netbsd32||otruncate(netbsd32_charp path, \
+129	COMPAT_43 MODULAR compat_netbsd32_43	\
+			{ int|netbsd32||otruncate(netbsd32_charp path, \
 			    netbsd32_long length); }
-130	COMPAT_43	{ int|netbsd32||oftruncate(int fd, \
+130	COMPAT_43 MODULAR compat_netbsd32_43	\
+			{ int|netbsd32||oftruncate(int fd, \
 			    netbsd32_long length); }
 131	STD		{ int|netbsd32||flock(int fd, int how); }
 132	STD		{ int|netbsd32||mkfifo(netbsd32_charp path, \
@@ -311,21 +331,27 @@
 140	COMPAT_50 MODULAR compat_netbsd32_50	\
 			{ int|netbsd32||adjtime(netbsd32_timeval50p_t delta, \
 			    netbsd32_timeval50p_t olddelta); }
-141	COMPAT_43	{ int|netbsd32||ogetpeername(int fdes, \
+141	COMPAT_43 MODULAR compat_netbsd32_43	\
+			{ int|netbsd32||ogetpeername(int fdes, \
 			    netbsd32_voidp asa, netbsd32_intp alen); }
 142	COMPAT_43	{ int32_t|sys||gethostid(void); } ogethostid
-143	COMPAT_43	{ int|netbsd32||sethostid(int32_t hostid); }
-144	COMPAT_43	{ int|netbsd32||ogetrlimit(int which, \
+143	COMPAT_43 MODULAR compat_netbsd32_43	\
+			{ int|netbsd32||sethostid(int32_t hostid); }
+144	COMPAT_43 MODULAR compat_netbsd32_43	\
+			{ int|netbsd32||ogetrlimit(int which, \
 			    netbsd32_orlimitp_t rlp); }
-145	COMPAT_43	{ int|netbsd32||osetrlimit(int which, \
+145	COMPAT_43 MODULAR compat_netbsd32_43	\
+			{ int|netbsd32||osetrlimit(int which, \
 			    netbsd32_orlimitp_t rlp); }
-146	COMPAT_43	{ int|netbsd32||killpg(int pgid, int signum); }
+146	COMPAT_43 MODULAR compat_netbsd32_43	\
+			{ int|netbsd32||killpg(int pgid, int signum); }
 147	NOARGS		{ int|sys||setsid(void); }
 148	COMPAT_50 MODULAR compat_netbsd32_50	\
 			{ int|netbsd32||quotactl(netbsd32_charp path, int cmd, \
 			    int uid, netbsd32_voidp arg); }
 149	COMPAT_43	{ int|sys||quota(void); } oquota
-150	COMPAT_43	{ int|netbsd32||ogetsockname(int fdec, \
+150	COMPAT_43 MODULAR compat_netbsd32_43	\
+			{ int|netbsd32||ogetsockname(int fdec, \
 			    netbsd32_voidp asa, netbsd32_intp alen); }
 
 ; Syscalls 151-180 inclusive are reserved for vendor-specific
@@ -338,7 +364,8 @@
 154	UNIMPL
 155	STD MODULAR compat_netbsd32_nfssrv	\
 			{ int|netbsd32||nfssvc(int flag, netbsd32_voidp argp); }
-156	COMPAT_43	{ int|netbsd32||ogetdirentries(int fd, \
+156	COMPAT_43 MODULAR compat_netbsd32_43	\
+			{ int|netbsd32||ogetdirentries(int fd, \
 			    netbsd32_charp buf, u_int count, \
 			    netbsd32_longp basep); }
 157	COMPAT_20 MODULAR compat_netbsd32_20	\
