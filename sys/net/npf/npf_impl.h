@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_impl.h,v 1.71 2018/08/31 14:16:06 maxv Exp $	*/
+/*	$NetBSD: npf_impl.h,v 1.72 2018/09/12 21:58:38 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009-2014 The NetBSD Foundation, Inc.
@@ -405,6 +405,8 @@ npf_nat_t *	npf_nat_import(npf_t *, prop_dictionary_t, npf_ruleset_t *,
 		    npf_conn_t *);
 
 /* ALG interface. */
+void		npf_alg_sysinit(void);
+void		npf_alg_sysfini(void);
 void		npf_alg_init(npf_t *);
 void		npf_alg_fini(npf_t *);
 npf_alg_t *	npf_alg_register(npf_t *, const char *, const npfa_funcs_t *);
