@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.8 2018/09/11 08:05:18 martin Exp $	*/
+/*	$NetBSD: main.c,v 1.9 2018/09/12 13:44:05 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -112,7 +112,7 @@ static const struct f_arg fflagopts[] = {
 	{"pkg host", SYSINST_PKG_HOST, pkg.xfer_host[XFER_FTP], sizeof pkg.xfer_host[XFER_FTP]},
 	{"pkg http host", SYSINST_PKG_HTTP_HOST, pkg.xfer_host[XFER_HTTP], sizeof pkg.xfer_host[XFER_HTTP]},
 	{"pkg dir", SYSINST_PKG_DIR, pkg.dir, sizeof pkg.dir},
-	{"pkg prefix", "/" MACH "/" REL "/All", pkg_dir, sizeof pkg_dir},
+	{"pkg prefix", "/" MACH "/" PKG_SUBDIR "/All", pkg_dir, sizeof pkg_dir},
 	{"pkg user", "ftp", pkg.user, sizeof pkg.user},
 	{"pkg pass", "", pkg.pass, sizeof pkg.pass},
 	{"pkg proxy", "", pkg.proxy, sizeof pkg.proxy},
