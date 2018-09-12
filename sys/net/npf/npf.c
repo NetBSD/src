@@ -1,4 +1,4 @@
-/*	$NetBSD: npf.c,v 1.34 2017/06/01 02:45:14 chs Exp $	*/
+/*	$NetBSD: npf.c,v 1.35 2018/09/12 21:58:38 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009-2013 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.34 2017/06/01 02:45:14 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.35 2018/09/12 21:58:38 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -56,6 +56,7 @@ npf_sysinit(unsigned nworkers)
 	npf_bpf_sysinit();
 	npf_tableset_sysinit();
 	npf_nat_sysinit();
+	npf_alg_sysinit();
 	return npf_worker_sysinit(nworkers);
 }
 
@@ -63,6 +64,7 @@ __dso_public void
 npf_sysfini(void)
 {
 	npf_worker_sysfini();
+	npf_alg_sysfini();
 	npf_nat_sysfini();
 	npf_tableset_sysfini();
 	npf_bpf_sysfini();
