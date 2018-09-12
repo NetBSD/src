@@ -1,4 +1,4 @@
-#	$NetBSD: files.common,v 1.1.2.34 2018/09/10 08:41:47 pgoyette Exp $
+#	$NetBSD: files.common,v 1.1.2.35 2018/09/12 21:46:09 pgoyette Exp $
 
 #
 # Generic files, used by all compat options.
@@ -108,20 +108,25 @@ file	compat/common/kern_mod_80.c		compat_80
 
 # Module interface for sysv ipc compatability options
 
-define	compat_sysv			: sysvmsg, sysvshm, sysvsem
-file	compat/common/compat_sysv_mod.c		compat_sysv
-
 # Compatibility code for NetBSD 1.0
-file	compat/common/kern_ipc_10.c		compat_sysv
+file	compat/common/compat_sysv_10_mod.c	compat_10 &
+						  (sysvmsg | sysvshm | sysvsem)
+file	compat/common/kern_ipc_10.c		compat_10 &
+						  (sysvmsg | sysvshm | sysvsem)
 
 # Compatibility code for NetBSD 1.4
-file	compat/common/sysv_msg_14.c		compat_sysv
-file	compat/common/sysv_sem_14.c		compat_sysv
-file	compat/common/sysv_shm_14.c		compat_sysv
+file	compat/common/compat_sysv_14_mod.c	compat_14 &
+						  (sysvmsg | sysvshm | sysvsem)
+file	compat/common/sysv_msg_14.c		compat_14 & sysvmsg
+file	compat/common/sysv_sem_14.c		compat_14 & sysvsem
+file	compat/common/sysv_shm_14.c		compat_14 & sysvshm
 
 # Compatibility code for NetBSD 5.0
-file	compat/common/sysv_ipc_50.c		compat_sysv
-file	compat/common/sysv_msg_50.c		compat_sysv
-file	compat/common/sysv_sem_50.c		compat_sysv
-file	compat/common/sysv_shm_50.c		compat_sysv
+file	compat/common/compat_sysv_50_mod.c	compat_50 &
+						  (sysvmsg | sysvshm | sysvsem)
+file	compat/common/sysv_ipc_50.c		compat_50 &
+						  (sysvmsg | sysvshm | sysvsem)
+file	compat/common/sysv_msg_50.c		compat_50 & sysvmsg
+file	compat/common/sysv_sem_50.c		compat_50 & sysvsem
+file	compat/common/sysv_shm_50.c		compat_50 & sysvshm
 
