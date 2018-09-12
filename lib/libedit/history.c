@@ -1,4 +1,4 @@
-/*	$NetBSD: history.c,v 1.59 2017/12/23 18:25:03 uwe Exp $	*/
+/*	$NetBSD: history.c,v 1.60 2018/09/12 22:10:35 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)history.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: history.c,v 1.59 2017/12/23 18:25:03 uwe Exp $");
+__RCSID("$NetBSD: history.c,v 1.60 2018/09/12 22:10:35 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -775,6 +775,7 @@ history_load(TYPE(History) *h, const char *fname)
 	char *ptr;
 	int i = -1;
 	TYPE(HistEvent) ev;
+	Char *decode_result;
 #ifndef NARROWCHAR
 	static ct_buffer_t conv;
 #endif
@@ -807,6 +808,9 @@ history_load(TYPE(History) *h, const char *fname)
 			ptr = nptr;
 		}
 		(void) strunvis(ptr, line);
+		decode_result = ct_decode_string(ptr, &conv);
+		if (decode_result == NULL)
+			continue;
 		if (HENTER(h, &ev, ct_decode_string(ptr, &conv)) == -1) {
 			i = -1;
 			goto oomem;
