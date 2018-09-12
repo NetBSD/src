@@ -1,4 +1,4 @@
-/*	$NetBSD: pcireg.h,v 1.139 2018/07/02 03:52:32 msaitoh Exp $	*/
+/*	$NetBSD: pcireg.h,v 1.140 2018/09/12 07:42:21 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1999, 2000
@@ -1770,6 +1770,7 @@ struct pci_rom {
 #define	PCI_ATS_CAP_INVQDEPTH	__BITS(4, 0)	/* Invalidate Queue Depth */
 #define	PCI_ATS_CAP_PALIGNREQ	__BIT(5)	/* Page Aligned Request */
 #define	PCI_ATS_CAP_GLOBALINVL	__BIT(6)	/* Global Invalidate Support */
+#define	PCI_ATS_CAP_RELAXORD	__BIT(7)	/* Relaxed Ordering */
 #define	PCI_ATS_CTL	0x04	/* Control Register */
 #define	PCI_ATS_CTL_STU		__BITS(20, 16)	/* Smallest Translation Unit */
 #define	PCI_ATS_CTL_EN		__BIT(31)	/* Enable */
