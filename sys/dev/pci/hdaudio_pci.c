@@ -1,4 +1,4 @@
-/* $NetBSD: hdaudio_pci.c,v 1.9 2018/09/12 03:23:38 mrg Exp $ */
+/* $NetBSD: hdaudio_pci.c,v 1.10 2018/09/12 09:49:03 mrg Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdaudio_pci.c,v 1.9 2018/09/12 03:23:38 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdaudio_pci.c,v 1.10 2018/09/12 09:49:03 mrg Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -139,7 +139,10 @@ hdaudio_pci_attach(device_t parent, device_t self, void *opaque)
 		return;
 	}
 	sc->sc_hdaudio.sc_memvalid = true;
-	sc->sc_hdaudio.sc_dmat = pa->pa_dmat;
+	if (pci_dma64_available(pa))
+		sc->sc_hdaudio.sc_dmat = pa->pa_dmat64;
+	else
+		sc->sc_hdaudio.sc_dmat = pa->pa_dmat;
 
 	/* Map interrupt and establish handler */
 	if (pci_intr_alloc(pa, &sc->sc_pihp, NULL, 0)) {
