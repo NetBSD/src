@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.120.2.11 2018/09/11 23:58:46 pgoyette Exp $
+	$NetBSD: syscalls.master,v 1.120.2.12 2018/09/12 00:20:53 pgoyette Exp $
 
 ;	from: NetBSD: syscalls.master,v 1.81 1998/07/05 08:49:50 jonathan Exp
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -96,7 +96,8 @@
 			{ netbsd32_long|netbsd32||olseek(int fd, \
 			    netbsd32_long offset, int whence); }
 20	NOARGS 		{ pid_t|sys||getpid(void); }
-21	STD		{ int|netbsd32||mount(netbsd32_charp type, \
+21	COMPAT_40 MODULAR compat_netbsd32_40	\
+			{ int|netbsd32||mount(netbsd32_charp type, \
 			    netbsd32_charp path, int flags, \
 			    netbsd32_voidp data); }
 22	STD		{ int|netbsd32||unmount(netbsd32_charp path, \
