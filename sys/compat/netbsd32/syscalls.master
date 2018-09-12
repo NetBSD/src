@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.120.2.12 2018/09/12 00:20:53 pgoyette Exp $
+	$NetBSD: syscalls.master,v 1.120.2.13 2018/09/12 03:21:14 pgoyette Exp $
 
 ;	from: NetBSD: syscalls.master,v 1.81 1998/07/05 08:49:50 jonathan Exp
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -392,13 +392,13 @@
 166	UNIMPL
 167	UNIMPL
 168	UNIMPL
-169	COMPAT_10 MODULAR compat_netbsd32_sysvipc	\
+169	COMPAT_10 MODULAR compat_netbsd32_sysvipc_10	\
 			{ int|netbsd32||semsys(int which, int a2, int a3, \
 			    int a4, int a5); } osemsys
-170	COMPAT_10 MODULAR compat_netbsd32_sysvipc	\
+170	COMPAT_10 MODULAR compat_netbsd32_sysvipc_10	\
 			{ int|netbsd32||msgsys(int which, int a2, int a3, \
 			    int a4, int a5, int a6); } omsgsys
-171	COMPAT_10 MODULAR compat_netbsd32_sysvipc	\
+171	COMPAT_10 MODULAR compat_netbsd32_sysvipc_10	\
 			{ int|netbsd32||shmsys(int which, int a2, int a3, \
 			    int a4); } oshmsys
 172	UNIMPL
@@ -490,7 +490,7 @@
 218	UNIMPL
 219	UNIMPL
 ; System calls 220-300 are reserved for use by NetBSD
-220	COMPAT_14 MODULAR compat_netbsd32_sysvipc	\
+220	COMPAT_14 MODULAR compat_netbsd32_sysvipc_14	\
 			{ int|netbsd32||__semctl(int semid, int semnum, \
 			    int cmd, netbsd32_semunu_t arg); }
 221	STD MODULAR compat_netbsd32_sysvipc	\
@@ -501,7 +501,7 @@
 			    netbsd32_sembufp_t sops, netbsd32_size_t nsops); }
 223	STD MODULAR compat_netbsd32_sysvipc	\
 			{ int|netbsd32||semconfig(int flag); }
-224	COMPAT_14 MODULAR compat_netbsd32_sysvipc	\
+224	COMPAT_14 MODULAR compat_netbsd32_sysvipc_14	\
 			{ int|netbsd32||msgctl(int msqid, int cmd, \
 			    netbsd32_msqid_ds14p_t buf); }
 225	STD MODULAR compat_netbsd32_sysvipc	\
@@ -516,7 +516,7 @@
 228	STD MODULAR compat_netbsd32_sysvipc	\
 			{ netbsd32_voidp|netbsd32||shmat(int shmid, \
 			    netbsd32_voidp shmaddr, int shmflg); }
-229	COMPAT_14 MODULAR compat_netbsd32_sysvipc	\
+229	COMPAT_14 MODULAR compat_netbsd32_sysvipc_14	\
 			{ int|netbsd32||shmctl(int shmid, int cmd, \
 			    netbsd32_shmid_dsp_t buf); }
 230	STD MODULAR compat_netbsd32_sysvipc	\
@@ -693,13 +693,13 @@
 300	COMPAT_20 MODULAR compat_netbsd32_20	\
 			{ int|netbsd32||fhstatfs(netbsd32_fhandlep_t fhp, \
 			    netbsd32_stat50p_t buf); }
-301	COMPAT_50 MODULAR compat_netbsd32_sysvipc	\
+301	COMPAT_50 MODULAR compat_netbsd32_sysvipc_50	\
 			{ int|netbsd32|14|semctl(int semid, int semnum, \
 			    int cmd, ... netbsd32_semun50p_t arg); }
-302	COMPAT_50 MODULAR compat_netbsd32_sysvipc	\
+302	COMPAT_50 MODULAR compat_netbsd32_sysvipc_50	\
 			{ int|netbsd32|13|msgctl(int msqid, int cmd, \
 			    netbsd32_msqid_ds50p_t buf); }
-303	COMPAT_50 MODULAR compat_netbsd32_sysvipc	\
+303	COMPAT_50 MODULAR compat_netbsd32_sysvipc_50	\
 			{ int|netbsd32|13|shmctl(int shmid, int cmd, \
 			    netbsd32_shmid_ds50p_t buf); }
 304	STD		{ int|netbsd32||lchflags(netbsd32_charp path, \
