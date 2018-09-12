@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.16 2018/09/11 08:05:18 martin Exp $	*/
+/*	$NetBSD: defs.h,v 1.17 2018/09/12 13:44:05 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -365,6 +365,10 @@ int  clean_xfer_dir;
 
 #if !defined(SYSINST_PKG_DIR)
 #define SYSINST_PKG_DIR		"pub/pkgsrc/packages/NetBSD"
+#endif
+
+#if !defined(PKG_SUBDIR)
+#define	PKG_SUBDIR		REL
 #endif
 
 #if !defined(SYSINST_PKGSRC_HOST)
