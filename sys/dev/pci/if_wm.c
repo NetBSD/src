@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.586 2018/09/12 04:37:18 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.587 2018/09/12 04:59:26 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.586 2018/09/12 04:37:18 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.587 2018/09/12 04:59:26 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -197,11 +197,12 @@ static int wm_watchdog_timeout = WM_WATCHDOG_TIMEOUT;
  * of packets, and we go ahead and manage up to 64 (16 for the i82547)
  * of them at a time.
  *
- * We allow up to 256 (!) DMA segments per packet.  Pathological packet
+ * We allow up to 64 DMA segments per packet.  Pathological packet
  * chains containing many small mbufs have been observed in zero-copy
- * situations with jumbo frames.
+ * situations with jumbo frames. If a mbuf chain has more than 40 DMA segments,
+ * m_defrag() is called to reduce it.
  */
-#define	WM_NTXSEGS		256
+#define	WM_NTXSEGS		64
 #define	WM_IFQUEUELEN		256
 #define	WM_TXQUEUELEN_MAX	64
 #define	WM_TXQUEUELEN_MAX_82547	16
@@ -392,7 +393,10 @@ struct wm_txqueue {
 	WM_Q_EVCNT_DEFINE(txq, tsopain)     /* Painful header manip. for TSO */
 	WM_Q_EVCNT_DEFINE(txq, pcqdrop)	    /* Pkt dropped in pcq */
 	WM_Q_EVCNT_DEFINE(txq, descdrop)    /* Pkt dropped in MAC desc ring */
+					    /* other than toomanyseg */
 
+	WM_Q_EVCNT_DEFINE(txq, toomanyseg)  /* Pkt dropped(toomany DMA segs) */
+	WM_Q_EVCNT_DEFINE(txq, defrag)	    /* m_defrag() */
 	WM_Q_EVCNT_DEFINE(txq, underrun)    /* Tx underrun */
 
 	char txq_txseg_evcnt_names[WM_NTXSEGS][sizeof("txqXXtxsegXXX")];
@@ -6472,6 +6476,8 @@ wm_alloc_txrx_queues(struct wm_softc *sc)
 
 		WM_Q_MISC_EVCNT_ATTACH(txq, pcqdrop, txq, i, xname);
 		WM_Q_MISC_EVCNT_ATTACH(txq, descdrop, txq, i, xname);
+		WM_Q_MISC_EVCNT_ATTACH(txq, toomanyseg, txq, i, xname);
+		WM_Q_MISC_EVCNT_ATTACH(txq, defrag, txq, i, xname);
 		WM_Q_MISC_EVCNT_ATTACH(txq, underrun, txq, i, xname);
 #endif /* WM_EVENT_COUNTERS */
 
@@ -6592,6 +6598,8 @@ wm_free_txrx_queues(struct wm_softc *sc)
 
 		WM_Q_EVCNT_DETACH(txq, pcqdrop, txq, i);
 		WM_Q_EVCNT_DETACH(txq, descdrop, txq, i);
+		WM_Q_EVCNT_DETACH(txq, toomanyseg, txq, i);
+		WM_Q_EVCNT_DETACH(txq, defrag, txq, i);
 		WM_Q_EVCNT_DETACH(txq, underrun, txq, i);
 #endif /* WM_EVENT_COUNTERS */
 
@@ -7173,6 +7181,7 @@ wm_send_common_locked(struct ifnet *ifp, struct wm_txqueue *txq,
 	bus_size_t seglen, curlen;
 	uint32_t cksumcmd;
 	uint8_t cksumfields;
+	bool remap = true;
 
 	KASSERT(mutex_owned(txq->txq_lock));
 
@@ -7246,11 +7255,23 @@ wm_send_common_locked(struct ifnet *ifp, struct wm_txqueue *txq,
 		 * since we can't sanely copy a jumbo packet to a single
 		 * buffer.
 		 */
+retry:
 		error = bus_dmamap_load_mbuf(sc->sc_dmat, dmamap, m0,
 		    BUS_DMA_WRITE | BUS_DMA_NOWAIT);
-		if (error) {
+		if (__predict_false(error)) {
 			if (error == EFBIG) {
-				WM_Q_EVCNT_INCR(txq, descdrop);
+				if (remap == true) {
+					struct mbuf *m;
+
+					remap = false;
+					m = m_defrag(m0, M_NOWAIT);
+					if (m != NULL) {
+						WM_Q_EVCNT_INCR(txq, defrag);
+						m0 = m;
+						goto retry;
+					}
+				}
+				WM_Q_EVCNT_INCR(txq, toomanyseg);
 				log(LOG_ERR, "%s: Tx packet consumes too many "
 				    "DMA segments, dropping...\n",
 				    device_xname(sc->sc_dev));
@@ -7775,6 +7796,7 @@ wm_nq_send_common_locked(struct ifnet *ifp, struct wm_txqueue *txq,
 	bus_dmamap_t dmamap;
 	int error, nexttx, lasttx = -1, seg, segs_needed;
 	bool do_csum, sent;
+	bool remap = true;
 
 	KASSERT(mutex_owned(txq->txq_lock));
 
@@ -7830,11 +7852,23 @@ wm_nq_send_common_locked(struct ifnet *ifp, struct wm_txqueue *txq,
 		 * since we can't sanely copy a jumbo packet to a single
 		 * buffer.
 		 */
+retry:
 		error = bus_dmamap_load_mbuf(sc->sc_dmat, dmamap, m0,
 		    BUS_DMA_WRITE | BUS_DMA_NOWAIT);
-		if (error) {
+		if (__predict_false(error)) {
 			if (error == EFBIG) {
-				WM_Q_EVCNT_INCR(txq, descdrop);
+				if (remap == true) {
+					struct mbuf *m;
+
+					remap = false;
+					m = m_defrag(m0, M_NOWAIT);
+					if (m != NULL) {
+						WM_Q_EVCNT_INCR(txq, defrag);
+						m0 = m;
+						goto retry;
+					}
+				}
+				WM_Q_EVCNT_INCR(txq, toomanyseg);
 				log(LOG_ERR, "%s: Tx packet consumes too many "
 				    "DMA segments, dropping...\n",
 				    device_xname(sc->sc_dev));
