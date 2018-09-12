@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.120.2.13 2018/09/12 03:21:14 pgoyette Exp $
+	$NetBSD: syscalls.master,v 1.120.2.14 2018/09/12 23:26:38 pgoyette Exp $
 
 ;	from: NetBSD: syscalls.master,v 1.81 1998/07/05 08:49:50 jonathan Exp
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -263,7 +263,8 @@
 			    netbsd32_voidp val, int valsize); }
 106	STD		{ int|netbsd32||listen(int s, int backlog); }
 107	OBSOL		vtimes
-108	COMPAT_43	{ int|netbsd32||osigvec(int signum, \
+108	COMPAT_43 MODULAR compat_netbsd32_43	\
+			{ int|netbsd32||osigvec(int signum, \
 			    netbsd32_sigvecp_t nsv, netbsd32_sigvecp_t osv); }
 109	COMPAT_43 MODULAR compat_netbsd32_43	\
 			{ int|netbsd32||sigblock(int mask); }
@@ -447,7 +448,8 @@
 			    netbsd32_rlimitp_t rlp); }
 195	STD		{ int|netbsd32||setrlimit(int which, \
 			    netbsd32_rlimitp_t rlp); }
-196	COMPAT_12	{ int|netbsd32||getdirentries(int fd, \
+196	COMPAT_12 MODULAR compat_netbsd32_12	\
+			{ int|netbsd32||getdirentries(int fd, \
 			    netbsd32_charp buf, u_int count, \
 			    netbsd32_longp basep); }
 197	STD		{ netbsd32_voidp|netbsd32||mmap(netbsd32_voidp addr, \
