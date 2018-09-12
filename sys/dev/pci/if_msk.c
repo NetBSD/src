@@ -1,4 +1,4 @@
-/* $NetBSD: if_msk.c,v 1.76 2018/08/23 11:53:15 maxv Exp $ */
+/* $NetBSD: if_msk.c,v 1.77 2018/09/12 13:52:36 jakllsch Exp $ */
 /*	$OpenBSD: if_msk.c,v 1.79 2009/10/15 17:54:56 deraadt Exp $	*/
 
 /*
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_msk.c,v 1.76 2018/08/23 11:53:15 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_msk.c,v 1.77 2018/09/12 13:52:36 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1310,7 +1310,6 @@ mskc_attach(device_t parent, device_t self, void *aux)
 	pcireg_t command, memtype;
 	pci_intr_handle_t ih;
 	const char *intrstr = NULL;
-	bus_size_t size;
 	int rc, sk_nodenum;
 	u_int8_t hw, pmd;
 	const char *revstr = NULL;
@@ -1356,7 +1355,7 @@ mskc_attach(device_t parent, device_t self, void *aux)
 	 */
 	memtype = pci_mapreg_type(pc, pa->pa_tag, SK_PCI_LOMEM);
 	if (pci_mapreg_map(pa, SK_PCI_LOMEM, memtype, 0, &sc->sk_btag,
-	    &sc->sk_bhandle, NULL, &size)) {
+	    &sc->sk_bhandle, NULL, &sc->sk_bsize)) {
 		aprint_error(": can't map mem space\n");
 		return;
 	}
@@ -1677,7 +1676,7 @@ fail_2:
 	pci_intr_disestablish(pc, sc->sk_intrhand);
 	sc->sk_intrhand = NULL;
 fail_1:
-	bus_space_unmap(sc->sk_btag, sc->sk_bhandle, size);
+	bus_space_unmap(sc->sk_btag, sc->sk_bhandle, sc->sk_bsize);
 	sc->sk_bsize = 0;
 }
 
@@ -1687,8 +1686,10 @@ mskc_detach(device_t self, int flags)
 	struct sk_softc *sc = device_private(self);
 	int rv;
 
-	if (sc->sk_intrhand)
+	if (sc->sk_intrhand) {
 		pci_intr_disestablish(sc->sk_pc, sc->sk_intrhand);
+		sc->sk_intrhand = NULL;
+	}
 
 	rv = config_detach_children(self, flags);
 	if (rv != 0)
