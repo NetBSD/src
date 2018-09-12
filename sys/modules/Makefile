@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.202.2.31 2018/09/12 01:26:39 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.202.2.32 2018/09/12 04:35:22 pgoyette Exp $
 
 .include <bsd.own.mk>
 
@@ -277,6 +277,9 @@ SUBDIR+=	compat_netbsd32_mqueue
 SUBDIR+=	compat_netbsd32_nfssrv
 SUBDIR+=	compat_netbsd32_ptrace
 SUBDIR+=	compat_netbsd32_sysvipc
+SUBDIR+=	compat_netbsd32_sysvipc_10
+SUBDIR+=	compat_netbsd32_sysvipc_14
+SUBDIR+=	compat_netbsd32_sysvipc_50
 .endif
 
 .if ${MACHINE_ARCH} == "x86_64"
@@ -292,6 +295,9 @@ SUBDIR+=	compat_netbsd32_mqueue
 SUBDIR+=	compat_netbsd32_nfssrv
 SUBDIR+=	compat_netbsd32_ptrace
 SUBDIR+=	compat_netbsd32_sysvipc
+SUBDIR+=	compat_netbsd32_sysvipc_10
+SUBDIR+=	compat_netbsd32_sysvipc_14
+SUBDIR+=	compat_netbsd32_sysvipc_50
 .endif
 
 .if ${MACHINE_ARCH} == "i386"
