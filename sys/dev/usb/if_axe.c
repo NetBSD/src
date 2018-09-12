@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axe.c,v 1.92 2018/08/02 06:09:04 riastradh Exp $	*/
+/*	$NetBSD: if_axe.c,v 1.93 2018/09/12 21:57:18 christos Exp $	*/
 /*	$OpenBSD: if_axe.c,v 1.137 2016/04/13 11:03:37 mpi Exp $ */
 
 /*
@@ -87,7 +87,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.92 2018/08/02 06:09:04 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.93 2018/09/12 21:57:18 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1962,7 +1962,7 @@ axe_stop(struct ifnet *ifp, int disable)
 	sc->axe_link = 0;
 }
 
-MODULE(MODULE_CLASS_DRIVER, if_axe, "bpf");
+MODULE(MODULE_CLASS_DRIVER, if_axe, NULL);
 
 #ifdef _MODULE
 #include "ioconf.c"

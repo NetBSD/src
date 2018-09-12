@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axen.c,v 1.16 2018/08/02 06:09:04 riastradh Exp $	*/
+/*	$NetBSD: if_axen.c,v 1.17 2018/09/12 21:57:18 christos Exp $	*/
 /*	$OpenBSD: if_axen.c,v 1.3 2013/10/21 10:10:22 yuo Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axen.c,v 1.16 2018/08/02 06:09:04 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axen.c,v 1.17 2018/09/12 21:57:18 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1560,7 +1560,7 @@ axen_stop(struct ifnet *ifp, int disable)
 	sc->axen_link = 0;
 }
 
-MODULE(MODULE_CLASS_DRIVER, if_axen, "bpf");
+MODULE(MODULE_CLASS_DRIVER, if_axen, NULL);
 
 #ifdef _MODULE
 #include "ioconf.c"

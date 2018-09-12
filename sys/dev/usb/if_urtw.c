@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urtw.c,v 1.17 2018/08/02 06:09:04 riastradh Exp $	*/
+/*	$NetBSD: if_urtw.c,v 1.18 2018/09/12 21:57:18 christos Exp $	*/
 /*	$OpenBSD: if_urtw.c,v 1.39 2011/07/03 15:47:17 matthew Exp $	*/
 
 /*-
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urtw.c,v 1.17 2018/08/02 06:09:04 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urtw.c,v 1.18 2018/09/12 21:57:18 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -4056,7 +4056,7 @@ fail:
 	return error;
 }
 
-MODULE(MODULE_CLASS_DRIVER, if_urtw, "bpf");
+MODULE(MODULE_CLASS_DRIVER, if_urtw, NULL);
 
 #ifdef _MODULE
 #include "ioconf.c"

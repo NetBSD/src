@@ -1,5 +1,5 @@
 /*	$OpenBSD: if_rum.c,v 1.40 2006/09/18 16:20:20 damien Exp $	*/
-/*	$NetBSD: if_rum.c,v 1.63 2018/08/02 06:09:04 riastradh Exp $	*/
+/*	$NetBSD: if_rum.c,v 1.64 2018/09/12 21:57:18 christos Exp $	*/
 
 /*-
  * Copyright (c) 2005-2007 Damien Bergamini <damien.bergamini@free.fr>
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rum.c,v 1.63 2018/08/02 06:09:04 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rum.c,v 1.64 2018/09/12 21:57:18 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -2286,7 +2286,7 @@ rum_activate(device_t self, enum devact act)
 	}
 }
 
-MODULE(MODULE_CLASS_DRIVER, if_rum, "bpf");
+MODULE(MODULE_CLASS_DRIVER, if_rum, NULL);
 
 #ifdef _MODULE
 #include "ioconf.c"
