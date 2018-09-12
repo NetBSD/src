@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.587 2018/09/12 04:59:26 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.588 2018/09/12 05:03:05 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.587 2018/09/12 04:59:26 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.588 2018/09/12 05:03:05 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -199,7 +199,7 @@ static int wm_watchdog_timeout = WM_WATCHDOG_TIMEOUT;
  *
  * We allow up to 64 DMA segments per packet.  Pathological packet
  * chains containing many small mbufs have been observed in zero-copy
- * situations with jumbo frames. If a mbuf chain has more than 40 DMA segments,
+ * situations with jumbo frames. If a mbuf chain has more than 64 DMA segments,
  * m_defrag() is called to reduce it.
  */
 #define	WM_NTXSEGS		64
