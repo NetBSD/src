@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.214.2.3 2018/09/06 06:55:46 pgoyette Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.214.2.4 2018/09/12 01:05:21 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2008 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.214.2.3 2018/09/06 06:55:46 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.214.2.4 2018/09/12 01:05:21 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -354,28 +354,6 @@ netbsd32_break(struct lwp *l, const struct netbsd32_break_args *uap, register_t 
 
 	NETBSD32TOP_UAP(nsize, char);
 	return (sys_obreak(l, &ua, retval));
-}
-
-int
-netbsd32_mount(struct lwp *l, const struct netbsd32_mount_args *uap, register_t *retval)
-{
-#ifdef COMPAT_40
-	/* {
-		syscallarg(const netbsd32_charp) type;
-		syscallarg(const netbsd32_charp) path;
-		syscallarg(int) flags;
-		syscallarg(netbsd32_voidp) data;
-	} */
-	struct compat_40_sys_mount_args ua;
-
-	NETBSD32TOP_UAP(type, const char);
-	NETBSD32TOP_UAP(path, const char);
-	NETBSD32TO64_UAP(flags);
-	NETBSD32TOP_UAP(data, void);
-	return (compat_40_sys_mount(l, &ua, retval));
-#else
-	return ENOSYS;
-#endif
 }
 
 int
