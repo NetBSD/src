@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_mod.c,v 1.11.2.2 2018/09/12 07:45:56 pgoyette Exp $	*/
+/*	$NetBSD: linux32_mod.c,v 1.11.2.3 2018/09/12 08:09:23 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_mod.c,v 1.11.2.2 2018/09/12 07:45:56 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_mod.c,v 1.11.2.3 2018/09/12 08:09:23 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_execfmt.h"
@@ -59,7 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux32_mod.c,v 1.11.2.2 2018/09/12 07:45:56 pgoyett
 
 #define	REQ1	"compat_linux,compat_sysv_50"
 #define	REQ2	",compat_netbsd32_43,compat_netbsd32_50,compat_netbsd32_12"
-#define	REQ3	",compat_netbsd32_30,compat_netbsd32_16
+#define	REQ3	",compat_netbsd32_30,compat_netbsd32_16"
 #define REQ4    ",compat_ossaudio,sysv_ipc,compat_netbsd32_sysvipc"
 
 MODULE(MODULE_CLASS_EXEC, compat_linux32, REQ1 REQ2 REQ3 REQ4 MD1);
