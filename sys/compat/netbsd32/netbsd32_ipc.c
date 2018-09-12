@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ipc.c,v 1.18.16.3 2018/09/11 21:18:32 pgoyette Exp $	*/
+/*	$NetBSD: netbsd32_ipc.c,v 1.18.16.4 2018/09/12 04:35:22 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_ipc.c,v 1.18.16.3 2018/09/11 21:18:32 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_ipc.c,v 1.18.16.4 2018/09/12 04:35:22 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -64,15 +64,6 @@ static const struct syscall_package compat_sysvipc_syscalls[] = {
 	_PKG_ENTRY(netbsd32_semget),
 	_PKG_ENTRY(netbsd32_semop),
 	_PKG_ENTRY(netbsd32_semconfig),
-#if defined(COMPAT_10)
-	_PKG_ENTRY2(compat_10_osemsys, compat_10_netbsd32_semsys),
-#endif
-#if defined(COMPAT_14)
-	_PKG_ENTRY(compat_14_netbsd32___semctl),
-#endif
-#if defined(COMPAT_50)
-	_PKG_ENTRY(compat_50_netbsd32___semctl14),
-#endif
 #endif /* SYSVSEM */
 
 #if defined(SYSVSHM)
@@ -80,15 +71,6 @@ static const struct syscall_package compat_sysvipc_syscalls[] = {
 	_PKG_ENTRY(netbsd32___shmctl50),
 	_PKG_ENTRY(netbsd32_shmdt),
 	_PKG_ENTRY(netbsd32_shmget),
-#if defined(COMPAT_10)
-	_PKG_ENTRY2(compat_10_oshmsys, compat_10_netbsd32_shmsys),
-#endif
-#if defined(COMPAT_14)
-	_PKG_ENTRY(compat_14_netbsd32_shmctl),
-#endif
-#if defined(COMPAT_50)
-	_PKG_ENTRY(compat_50_netbsd32___shmctl13),
-#endif
 #endif /* SYSVSHM */
 
 #if defined(SYSVMSG)
@@ -96,15 +78,6 @@ static const struct syscall_package compat_sysvipc_syscalls[] = {
 	_PKG_ENTRY(netbsd32_msgget),
 	_PKG_ENTRY(netbsd32_msgsnd),
 	_PKG_ENTRY(netbsd32_msgrcv),
-#if defined(COMPAT_10)
-	_PKG_ENTRY2(compat_10_omsgsys, compat_10_netbsd32_msgsys),
-#endif
-#if defined(COMPAT_14)
-	_PKG_ENTRY(compat_14_netbsd32_msgctl),
-#endif
-#if defined(COMPAT_50)
-	_PKG_ENTRY(compat_50_netbsd32___msgctl13),
-#endif
 #endif /* SYSVMSG */
 	{ 0, 0, NULL }
 };

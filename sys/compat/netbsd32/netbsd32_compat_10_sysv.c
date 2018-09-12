@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_10.c,v 1.25.16.2 2018/09/11 01:52:00 pgoyette Exp $	*/
+/*	$NetBSD: netbsd32_compat_10_sysv.c,v 1.1.2.1 2018/09/12 04:35:22 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1994 Adam Glass and Charles M. Hannum.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_10.c,v 1.25.16.2 2018/09/11 01:52:00 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_10_sysv.c,v 1.1.2.1 2018/09/12 04:35:22 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sysv.h"
@@ -50,10 +50,12 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_10.c,v 1.25.16.2 2018/09/11 01:52:00
 #include <sys/syscallvar.h>
 
 #include <compat/netbsd32/netbsd32.h>
+#include <compat/netbsd32/netbsd32_syscall.h>
 #include <compat/netbsd32/netbsd32_syscallargs.h>
 #include <compat/sys/shm.h>
 
 #if defined(COMPAT_10)
+
 #if defined(SYSVSEM)
 int
 compat_10_netbsd32_semsys(struct lwp *l, const struct compat_10_netbsd32_semsys_args *uap, register_t *retval)
@@ -241,4 +243,48 @@ compat_10_netbsd32_msgsys(struct lwp *l, const struct compat_10_netbsd32_msgsys_
 	}
 }
 #endif
+
+#define _PKG_ENTRY(name)        \
+	{ NETBSD32_SYS_ ## name, 0, (sy_call_t *)name }
+
+#define _PKG_ENTRY2(code, name) \
+	{ NETBSD32_SYS_ ## code, 0, (sy_call_t *)name }
+
+static const struct syscall_package compat_sysvipc_10_syscalls[] = {
+#if defined(SYSVSEM)
+	_PKG_ENTRY2(compat_10_osemsys, compat_10_netbsd32_semsys),
+#endif
+#if defined(SYSVSHM)
+	_PKG_ENTRY2(compat_10_oshmsys, compat_10_netbsd32_shmsys),
+#endif
+#if defined(SYSVMSG)
+	_PKG_ENTRY2(compat_10_omsgsys, compat_10_netbsd32_msgsys),
+#endif
+	{ 0, 0, NULL }
+};
+
+#define	REQ1    "sysv_ipc,compat_sysv_10,"
+#define	REQ2    "compat_netbsd32,compat_netbsd32_sysvipc,"
+#define	REQ3	"compat_netbsd32_sysvipc_14,compat_netbsd32_sysvipc_50"
+
+MODULE(MODULE_CLASS_EXEC, compat_netbsd32_sysvipc_10, REQ1 REQ2 REQ3 );
+
+static int
+compat_netbsd32_sysvipc_10_modcmd(modcmd_t cmd, void *arg)
+{
+
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		return syscall_establish(&emul_netbsd32,
+		    compat_sysvipc_10_syscalls);
+
+	case MODULE_CMD_FINI:
+		return syscall_disestablish(&emul_netbsd32,
+		    compat_sysvipc_10_syscalls);
+
+	default:
+		return ENOTTY;
+	}
+}
+
 #endif /* COMPAT_10 */

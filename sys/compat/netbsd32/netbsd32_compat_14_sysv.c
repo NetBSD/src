@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_14.c,v 1.26 2016/01/07 21:58:28 joerg Exp $	*/
+/*	$NetBSD: netbsd32_compat_14_sysv.c,v 1.1.2.1 2018/09/12 04:35:22 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1999 Eduardo E. Horvath
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_14.c,v 1.26 2016/01/07 21:58:28 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_14_sysv.c,v 1.1.2.1 2018/09/12 04:35:22 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sysv.h"
@@ -39,6 +39,7 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_14.c,v 1.26 2016/01/07 21:58:28 joer
 #include <sys/param.h>
 #include <sys/ipc.h>
 #include <sys/systm.h>
+#include <sys/module.h>
 #include <sys/signal.h>
 #include <sys/proc.h>
 #include <sys/mount.h>
@@ -47,8 +48,12 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_14.c,v 1.26 2016/01/07 21:58:28 joer
 #include <sys/shm.h>
 
 #include <sys/syscallargs.h>
+#include <sys/syscallvar.h>
+
 #include <compat/netbsd32/netbsd32.h>
+#include <compat/netbsd32/netbsd32_syscall.h>
 #include <compat/netbsd32/netbsd32_syscallargs.h>
+#include <compat/sys/siginfo.h>
 #include <compat/sys/shm.h>
 
 #if defined(COMPAT_14)
@@ -314,4 +319,49 @@ compat_14_netbsd32_shmctl(struct lwp *l, const struct compat_14_netbsd32_shmctl_
 	return (error);
 }
 #endif
+
+#define REQ1    "sysv_ipc,compat_sysv_14,"
+#define REQ2    "compat_netbsd32,compat_netbsd32_sysvipc,"
+#define REQ3    "compat_netbsd32_sysvipc_50"  
+
+#define _PKG_ENTRY(name)        \
+	{ NETBSD32_SYS_ ## name, 0, (sy_call_t *)name }
+
+static const struct syscall_package compat_sysvipc_14_syscalls[] = {
+#if defined(SYSVSEM)
+	_PKG_ENTRY(compat_14_netbsd32___semctl),
+#endif
+#if defined(SYSVSHM)
+	_PKG_ENTRY(compat_14_netbsd32_shmctl),
+#endif
+#if defined(SYSVMSG)
+	_PKG_ENTRY(compat_14_netbsd32_msgctl),
+#endif
+	{ 0, 0, NULL }
+};
+ 
+#define REQ1    "sysv_ipc,compat_sysv_14,"
+#define REQ2    "compat_netbsd32,compat_netbsd32_sysvipc,"
+#define REQ3    "compat_netbsd32_sysvipc_50"
+
+MODULE(MODULE_CLASS_EXEC, compat_netbsd32_sysvipc_14, REQ1 REQ2 REQ3 );
+ 
+static int
+compat_netbsd32_sysvipc_14_modcmd(modcmd_t cmd, void *arg)
+{
+ 
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		return syscall_establish(&emul_netbsd32,
+		    compat_sysvipc_14_syscalls);
+ 
+	case MODULE_CMD_FINI:
+		return syscall_disestablish(&emul_netbsd32,
+		    compat_sysvipc_14_syscalls);
+ 
+	default:
+		return ENOTTY;
+	}
+}
+
 #endif /* COMPAT_14 */
