@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_ddi.c,v 1.7 2018/08/27 07:26:08 riastradh Exp $	*/
+/*	$NetBSD: intel_ddi.c,v 1.8 2018/09/13 08:25:55 mrg Exp $	*/
 
 /*
  * Copyright © 2012 Intel Corporation
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_ddi.c,v 1.7 2018/08/27 07:26:08 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_ddi.c,v 1.8 2018/09/13 08:25:55 mrg Exp $");
 
 #include <linux/math64.h>
 
@@ -360,10 +360,10 @@ static const struct ddi_buf_trans *skl_get_buf_trans_dp(struct drm_device *dev,
 {
 	const struct ddi_buf_trans *ddi_translations;
 
-	if (IS_SKL_ULX(dev)) {
+	if (IS_SKL_ULX(dev) || IS_KBL_ULX(dev)) {
 		ddi_translations = skl_y_ddi_translations_dp;
 		*n_entries = ARRAY_SIZE(skl_y_ddi_translations_dp);
-	} else if (IS_SKL_ULT(dev)) {
+	} else if (IS_SKL_ULT(dev) || IS_KBL_ULT(dev)) {
 		ddi_translations = skl_u_ddi_translations_dp;
 		*n_entries = ARRAY_SIZE(skl_u_ddi_translations_dp);
 	} else {
@@ -380,7 +380,7 @@ static const struct ddi_buf_trans *skl_get_buf_trans_edp(struct drm_device *dev,
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	const struct ddi_buf_trans *ddi_translations;
 
-	if (IS_SKL_ULX(dev)) {
+	if (IS_SKL_ULX(dev) || IS_KBL_ULX(dev)) {
 		if (dev_priv->edp_low_vswing) {
 			ddi_translations = skl_y_ddi_translations_edp;
 			*n_entries = ARRAY_SIZE(skl_y_ddi_translations_edp);
@@ -388,7 +388,7 @@ static const struct ddi_buf_trans *skl_get_buf_trans_edp(struct drm_device *dev,
 			ddi_translations = skl_y_ddi_translations_dp;
 			*n_entries = ARRAY_SIZE(skl_y_ddi_translations_dp);
 		}
-	} else if (IS_SKL_ULT(dev)) {
+	} else if (IS_SKL_ULT(dev) || IS_KBL_ULT(dev)) {
 		if (dev_priv->edp_low_vswing) {
 			ddi_translations = skl_u_ddi_translations_edp;
 			*n_entries = ARRAY_SIZE(skl_u_ddi_translations_edp);
@@ -415,7 +415,7 @@ skl_get_buf_trans_hdmi(struct drm_device *dev,
 {
 	const struct ddi_buf_trans *ddi_translations;
 
-	if (IS_SKL_ULX(dev)) {
+	if (IS_SKL_ULX(dev) || IS_KBL_ULX(dev)) {
 		ddi_translations = skl_y_ddi_translations_hdmi;
 		*n_entries = ARRAY_SIZE(skl_y_ddi_translations_hdmi);
 	} else {
@@ -455,7 +455,7 @@ static void intel_prepare_ddi_buffers(struct drm_device *dev, enum port port,
 		bxt_ddi_vswing_sequence(dev, hdmi_level, port,
 					INTEL_OUTPUT_HDMI);
 		return;
-	} else if (IS_SKYLAKE(dev)) {
+	} else if (IS_SKYLAKE(dev) || IS_KABYLAKE(dev)) {
 		ddi_translations_fdi = NULL;
 		ddi_translations_dp =
 				skl_get_buf_trans_dp(dev, &n_dp_entries);
@@ -1199,7 +1199,7 @@ void intel_ddi_clock_get(struct intel_encoder *encoder,
 
 	if (INTEL_INFO(dev)->gen <= 8)
 		hsw_ddi_clock_get(encoder, pipe_config);
-	else if (IS_SKYLAKE(dev))
+	else if (IS_SKYLAKE(dev) || IS_KABYLAKE(dev))
 		skl_ddi_clock_get(encoder, pipe_config);
 	else if (IS_BROXTON(dev))
 		bxt_ddi_clock_get(encoder, pipe_config);
@@ -1796,7 +1796,7 @@ bool intel_ddi_pll_select(struct intel_crtc *intel_crtc,
 	struct intel_encoder *intel_encoder =
 		intel_ddi_get_crtc_new_encoder(crtc_state);
 
-	if (IS_SKYLAKE(dev))
+	if (IS_SKYLAKE(dev) || IS_KABYLAKE(dev))
 		return skl_ddi_pll_select(intel_crtc, crtc_state,
 					  intel_encoder);
 	else if (IS_BROXTON(dev))
@@ -2279,7 +2279,7 @@ uint32_t ddi_signal_levels(struct intel_dp *intel_dp)
 
 	level = translate_signal_level(signal_levels);
 
-	if (IS_SKYLAKE(dev))
+	if (IS_SKYLAKE(dev) || IS_KABYLAKE(dev))
 		skl_ddi_set_iboost(dev, level, port, encoder->type);
 	else if (IS_BROXTON(dev))
 		bxt_ddi_vswing_sequence(dev, level, port, encoder->type);
@@ -2302,7 +2302,7 @@ static void intel_ddi_pre_enable(struct intel_encoder *intel_encoder)
 		intel_edp_panel_on(intel_dp);
 	}
 
-	if (IS_SKYLAKE(dev)) {
+	if (IS_SKYLAKE(dev) || IS_KABYLAKE(dev)) {
 		uint32_t dpll = crtc->config->ddi_pll_sel;
 		uint32_t val;
 
@@ -2397,7 +2397,7 @@ static void intel_ddi_post_disable(struct intel_encoder *intel_encoder)
 		intel_edp_panel_off(intel_dp);
 	}
 
-	if (IS_SKYLAKE(dev))
+	if (IS_SKYLAKE(dev) || IS_KABYLAKE(dev))
 		I915_WRITE(DPLL_CTRL2, (I915_READ(DPLL_CTRL2) |
 					DPLL_CTRL2_DDI_CLK_OFF(port)));
 	else if (INTEL_INFO(dev)->gen < 9)
@@ -3008,14 +3008,14 @@ void intel_ddi_pll_init(struct drm_device *dev)
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	uint32_t val = I915_READ(LCPLL_CTL);
 
-	if (IS_SKYLAKE(dev))
+	if (IS_SKYLAKE(dev) || IS_KABYLAKE(dev))
 		skl_shared_dplls_init(dev_priv);
 	else if (IS_BROXTON(dev))
 		bxt_shared_dplls_init(dev_priv);
 	else
 		hsw_shared_dplls_init(dev_priv);
 
-	if (IS_SKYLAKE(dev)) {
+	if (IS_SKYLAKE(dev) || IS_KABYLAKE(dev)) {
 		int cdclk_freq;
 
 		cdclk_freq = dev_priv->display.get_display_clock_speed(dev);

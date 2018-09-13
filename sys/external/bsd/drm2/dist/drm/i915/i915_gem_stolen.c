@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem_stolen.c,v 1.10 2018/08/27 07:20:39 riastradh Exp $	*/
+/*	$NetBSD: i915_gem_stolen.c,v 1.11 2018/09/13 08:25:55 mrg Exp $	*/
 
 /*
  * Copyright © 2008-2012 Intel Corporation
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gem_stolen.c,v 1.10 2018/08/27 07:20:39 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gem_stolen.c,v 1.11 2018/09/13 08:25:55 mrg Exp $");
 
 #include <linux/printk.h>
 #include <linux/err.h>
@@ -465,7 +465,8 @@ int i915_gem_init_stolen(struct drm_device *dev)
 					 &reserved_size);
 		break;
 	default:
-		if (IS_BROADWELL(dev_priv) || IS_SKYLAKE(dev_priv))
+		if (IS_BROADWELL(dev_priv) ||
+		    IS_SKYLAKE(dev_priv) || IS_KABYLAKE(dev))
 			bdw_get_stolen_reserved(dev_priv, &reserved_base,
 						&reserved_size);
 		else
