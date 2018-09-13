@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_i2c.c,v 1.16 2018/08/27 06:16:37 riastradh Exp $	*/
+/*	$NetBSD: intel_i2c.c,v 1.17 2018/09/13 08:25:55 mrg Exp $	*/
 
 /*
  * Copyright (c) 2006 Dave Airlie <airlied@linux.ie>
@@ -29,7 +29,7 @@
  *	Chris Wilson <chris@chris-wilson.co.uk>
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_i2c.c,v 1.16 2018/08/27 06:16:37 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_i2c.c,v 1.17 2018/09/13 08:25:55 mrg Exp $");
 
 #include <linux/i2c.h>
 #include <linux/i2c-algo-bit.h>
@@ -80,7 +80,7 @@ static const struct gmbus_pin *get_gmbus_pin(struct drm_i915_private *dev_priv,
 {
 	if (IS_BROXTON(dev_priv))
 		return &gmbus_pins_bxt[pin];
-	else if (IS_SKYLAKE(dev_priv))
+	else if (IS_SKYLAKE(dev_priv) || IS_KABYLAKE(dev_priv))
 		return &gmbus_pins_skl[pin];
 	else if (IS_BROADWELL(dev_priv))
 		return &gmbus_pins_bdw[pin];
@@ -95,7 +95,7 @@ bool intel_gmbus_is_valid_pin(struct drm_i915_private *dev_priv,
 
 	if (IS_BROXTON(dev_priv))
 		size = ARRAY_SIZE(gmbus_pins_bxt);
-	else if (IS_SKYLAKE(dev_priv))
+	else if (IS_SKYLAKE(dev_priv) || IS_KABYLAKE(dev_priv))
 		size = ARRAY_SIZE(gmbus_pins_skl);
 	else if (IS_BROADWELL(dev_priv))
 		size = ARRAY_SIZE(gmbus_pins_bdw);
