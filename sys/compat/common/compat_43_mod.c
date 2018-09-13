@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_43_mod.c,v 1.1.2.2 2018/09/10 08:41:47 pgoyette Exp $	*/
+/*	$NetBSD: compat_43_mod.c,v 1.1.2.3 2018/09/13 22:53:52 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_43_mod.c,v 1.1.2.2 2018/09/10 08:41:47 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_43_mod.c,v 1.1.2.3 2018/09/13 22:53:52 pgoyette Exp $");
 
 #include <sys/systm.h>
 #include <sys/module.h>
@@ -183,7 +183,7 @@ compat_43_modcmd(modcmd_t cmd, void *arg)
 	case MODULE_CMD_INIT:
 		return compat_43_init();
 	case MODULE_CMD_FINI:
-		return compat_43_init();
+		return compat_43_fini();
 	default:
 		return ENOTTY;
 	}
