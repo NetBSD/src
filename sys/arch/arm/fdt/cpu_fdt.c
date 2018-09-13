@@ -1,4 +1,4 @@
-/* $NetBSD: cpu_fdt.c,v 1.13 2018/09/10 19:15:16 jmcneill Exp $ */
+/* $NetBSD: cpu_fdt.c,v 1.14 2018/09/13 12:53:00 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #include "psci_fdt.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_fdt.c,v 1.13 2018/09/10 19:15:16 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_fdt.c,v 1.14 2018/09/13 12:53:00 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -205,6 +205,7 @@ spintable_cpu_on(u_int cpuindex, paddr_t entry_point_address, paddr_t cpu_releas
 }
 #endif /* MULTIPROCESSOR */
 
+#ifdef MULTIPROCESSOR
 static bool
 arm_fdt_cpu_okay(const int child)
 {
@@ -225,6 +226,7 @@ arm_fdt_cpu_okay(const int child)
 		return true;
 	}
 }
+#endif /* MULTIPROCESSOR */
 
 void
 arm_fdt_cpu_bootstrap(void)
