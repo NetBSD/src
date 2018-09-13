@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_mod.c,v 1.13.16.6 2018/09/11 23:26:21 pgoyette Exp $	*/
+/*	$NetBSD: netbsd32_mod.c,v 1.13.16.7 2018/09/13 02:03:49 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_mod.c,v 1.13.16.6 2018/09/11 23:26:21 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_mod.c,v 1.13.16.7 2018/09/13 02:03:49 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_execfmt.h"
@@ -48,14 +48,6 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_mod.c,v 1.13.16.6 2018/09/11 23:26:21 pgoye
 #include <compat/netbsd32/netbsd32_sysctl.h>
 #include <compat/netbsd32/netbsd32_exec.h>
 
-# define	DEPS1	"compat_09,ksem"
-
-#if defined(EXEC_ELF32)
-# define	DEPS2	",exec_elf32"
-#else
-# define	DEPS2	""
-#endif
-
 #define ELF32_AUXSIZE (howmany(ELF_AUX_ENTRIES * sizeof(Aux32Info), \
     sizeof(Elf32_Addr)) + MAXPATHLEN + ALIGN(1))
 
@@ -64,6 +56,14 @@ int compat32_80_modctl_compat_stub(struct lwp *,
 
 int (*vec_compat32_80_modctl)(struct lwp *,
     const struct netbsd32_modctl_args *, register_t *);
+
+# define	DEPS1	"ksem"
+
+#if defined(EXEC_ELF32)
+# define	DEPS2	",exec_elf32"
+#else
+# define	DEPS2	""
+#endif
 
 MODULE(MODULE_CLASS_EXEC, compat_netbsd32, DEPS1 DEPS2);
 
