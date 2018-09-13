@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_lockdebug.c,v 1.66 2018/09/03 16:29:35 riastradh Exp $	*/
+/*	$NetBSD: subr_lockdebug.c,v 1.67 2018/09/13 01:55:16 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.66 2018/09/03 16:29:35 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.67 2018/09/13 01:55:16 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -1016,20 +1016,21 @@ lockdebug_abort(const char *func, size_t line, const volatile void *lock,
 #endif	/* LOCKDEBUG */
 
 	/*
-	 * Complain first on the occurrance only.  Otherwise proceeed to
-	 * panic where we will `rendezvous' with other CPUs if the machine
-	 * is going down in flames.
+	 * Don't make the situation worse if the system is already going
+	 * down in flames.  Once a panic is triggered, lockdebug state
+	 * becomes stale and cannot be trusted.
 	 */
-	if (atomic_inc_uint_nv(&ld_panic) == 1) {
-		printf_nolog("%s error: %s,%zu: %s\n\n"
-		    "lock address : %#018lx\n"
-		    "current cpu  : %18d\n"
-		    "current lwp  : %#018lx\n",
-		    ops->lo_name, func, line, msg, (long)lock,
-		    (int)cpu_index(curcpu()), (long)curlwp);
-		(*ops->lo_dump)(lock);
-		printf_nolog("\n");
-	}
+	if (atomic_inc_uint_nv(&ld_panic) > 1)
+		return;
+
+	printf_nolog("%s error: %s,%zu: %s\n\n"
+	    "lock address : %#018lx\n"
+	    "current cpu  : %18d\n"
+	    "current lwp  : %#018lx\n",
+	    ops->lo_name, func, line, msg, (long)lock,
+	    (int)cpu_index(curcpu()), (long)curlwp);
+	(*ops->lo_dump)(lock);
+	printf_nolog("\n");
 
 	panic("lock error: %s: %s,%zu: %s: lock %p cpu %d lwp %p",
 	    ops->lo_name, func, line, msg, lock, cpu_index(curcpu()), curlwp);
