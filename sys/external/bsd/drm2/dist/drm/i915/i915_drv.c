@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_drv.c,v 1.15 2018/08/27 15:22:54 riastradh Exp $	*/
+/*	$NetBSD: i915_drv.c,v 1.16 2018/09/13 08:25:55 mrg Exp $	*/
 
 /* i915_drv.c -- i830,i845,i855,i865,i915 driver -*- linux-c -*-
  */
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_drv.c,v 1.15 2018/08/27 15:22:54 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_drv.c,v 1.16 2018/09/13 08:25:55 mrg Exp $");
 
 #include <linux/device.h>
 #include <linux/acpi.h>
@@ -406,6 +406,34 @@ static const struct intel_device_info intel_broxton_info = {
 	IVB_CURSOR_OFFSETS,
 };
 
+static const struct intel_device_info intel_kabylake_info = {
+	.is_kabylake = 1,
+	.gen = 9,
+	.num_pipes = 3,
+	.need_gfx_hws = 1, .has_hotplug = 1,
+	.ring_mask = RENDER_RING | BSD_RING | BLT_RING | VEBOX_RING,
+	.has_llc = 1,
+	.has_ddi = 1,
+	.has_fpga_dbg = 1,
+	.has_fbc = 1,
+	GEN_DEFAULT_PIPEOFFSETS,
+	IVB_CURSOR_OFFSETS,
+};
+
+static const struct intel_device_info intel_kabylake_gt3_info = {
+	.is_kabylake = 1,
+	.gen = 9,
+	.num_pipes = 3,
+	.need_gfx_hws = 1, .has_hotplug = 1,
+	.ring_mask = RENDER_RING | BSD_RING | BLT_RING | VEBOX_RING | BSD2_RING,
+	.has_llc = 1,
+	.has_ddi = 1,
+	.has_fpga_dbg = 1,
+	.has_fbc = 1,
+	GEN_DEFAULT_PIPEOFFSETS,
+	IVB_CURSOR_OFFSETS,
+};
+
 /*
  * Make sure any device matches here are from most specific to most
  * general.  For example, since the Quanta match is based on the subsystem
@@ -446,7 +474,13 @@ static const struct intel_device_info intel_broxton_info = {
 	INTEL_SKL_GT1_IDS(&intel_skylake_info),	\
 	INTEL_SKL_GT2_IDS(&intel_skylake_info),	\
 	INTEL_SKL_GT3_IDS(&intel_skylake_gt3_info),	\
-	INTEL_BXT_IDS(&intel_broxton_info)
+	INTEL_SKL_GT4_IDS(&intel_skylake_gt3_info),	\
+	INTEL_BXT_IDS(&intel_broxton_info),	\
+	INTEL_KBL_GT1_IDS(&intel_kabylake_info),	\
+	INTEL_KBL_GT2_IDS(&intel_kabylake_info),	\
+	INTEL_KBL_GT3_IDS(&intel_kabylake_gt3_info),	\
+	INTEL_KBL_GT4_IDS(&intel_kabylake_gt3_info)
+
 
 static const struct pci_device_id pciidlist[] = {		/* aka */
 	INTEL_PCI_IDS,
@@ -475,7 +509,7 @@ static enum intel_pch intel_virt_detect_pch(struct drm_device *dev)
 	} else if (IS_HASWELL(dev) || IS_BROADWELL(dev)) {
 		ret = PCH_LPT;
 		DRM_DEBUG_KMS("Assuming LynxPoint PCH\n");
-	} else if (IS_SKYLAKE(dev)) {
+	} else if (IS_SKYLAKE(dev) || IS_KABYLAKE(dev)) {
 		ret = PCH_SPT;
 		DRM_DEBUG_KMS("Assuming SunrisePoint PCH\n");
 	}
@@ -544,11 +578,17 @@ void intel_detect_pch(struct drm_device *dev)
 			} else if (id == INTEL_PCH_SPT_DEVICE_ID_TYPE) {
 				dev_priv->pch_type = PCH_SPT;
 				DRM_DEBUG_KMS("Found SunrisePoint PCH\n");
-				WARN_ON(!IS_SKYLAKE(dev));
+				WARN_ON(!IS_SKYLAKE(dev) &&
+					!IS_KABYLAKE(dev));
 			} else if (id == INTEL_PCH_SPT_LP_DEVICE_ID_TYPE) {
 				dev_priv->pch_type = PCH_SPT;
 				DRM_DEBUG_KMS("Found SunrisePoint LP PCH\n");
-				WARN_ON(!IS_SKYLAKE(dev));
+				WARN_ON(!IS_SKYLAKE(dev) &&
+					!IS_KABYLAKE(dev));
+			} else if (id == INTEL_PCH_KBP_DEVICE_ID_TYPE) {
+				dev_priv->pch_type = PCH_KBP;
+				DRM_DEBUG_KMS("Found KabyPoint PCH\n");
+				WARN_ON(!IS_KABYLAKE(dev_priv));
 			} else if ((id == INTEL_PCH_P2X_DEVICE_ID_TYPE) ||
 				   ((id == INTEL_PCH_QEMU_DEVICE_ID_TYPE) &&
 				    pch->subsystem_vendor == 0x1af4 &&
