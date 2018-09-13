@@ -1,4 +1,4 @@
-/* $NetBSD: test.c,v 1.42 2018/09/12 23:33:31 kre Exp $ */
+/* $NetBSD: test.c,v 1.43 2018/09/13 22:00:58 kre Exp $ */
 
 /*
  * test(1); version 7-like  --  author Erik Baalbergen
@@ -12,7 +12,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: test.c,v 1.42 2018/09/12 23:33:31 kre Exp $");
+__RCSID("$NetBSD: test.c,v 1.43 2018/09/13 22:00:58 kre Exp $");
 #endif
 
 #include <sys/stat.h>
@@ -91,10 +91,13 @@ enum token {
 
 enum token_types {
 	UNOP,
-	BINOP,
+	BINOP
+#ifndef SMALL
+		,
 	BUNOP,
 	BBINOP,
 	PAREN
+#endif
 };
 
 struct t_op {
@@ -103,9 +106,11 @@ struct t_op {
 };
 
 static const struct t_op cop[] = {
+#ifndef SMALL
 	{"!",	UNOT,	BUNOP},
 	{"(",	LPAREN,	PAREN},
 	{")",	RPAREN,	PAREN},
+#endif
 	{"<",	STRLT,	BINOP},
 	{"=",	STREQ,	BINOP},
 	{">",	STRGT,	BINOP},
@@ -132,7 +137,9 @@ static const struct t_op mop2[] = {
 	{"L",	FILSYM,	UNOP},
 	{"O",	FILUID,	UNOP},
 	{"S",	FILSOCK,UNOP},
+#ifndef SMALL
 	{"a",	BAND,	BBINOP},
+#endif
 	{"b",	FILBDEV,UNOP},
 	{"c",	FILCDEV,UNOP},
 	{"d",	FILDIR,	UNOP},
@@ -142,7 +149,9 @@ static const struct t_op mop2[] = {
 	{"h",	FILSYM,	UNOP},		/* for backwards compat */
 	{"k",	FILSTCK,UNOP},
 	{"n",	STRNZ,	UNOP},
+#ifndef SMALL
 	{"o",	BOR,	BBINOP},
+#endif
 	{"p",	FILFIFO,UNOP},
 	{"r",	FILRD,	UNOP},
 	{"s",	FILGZ,	UNOP},
@@ -153,22 +162,26 @@ static const struct t_op mop2[] = {
 	{"z",	STREZ,	UNOP},
 };
 
+#ifndef SMALL
 static char **t_wp;
 static struct t_op const *t_wp_op;
+#endif
 
+#ifndef SMALL
 __dead static void syntax(const char *, const char *);
 static int oexpr(enum token);
 static int aexpr(enum token);
 static int nexpr(enum token);
-static struct t_op const *findop(const char *);
 static int primary(enum token);
 static int binop(void);
+static enum token t_lex(char *);
+static int isoperand(void);
+#endif
+static struct t_op const *findop(const char *);
 static int perform_unop(enum token, const char *);
 static int perform_binop(enum token, const char *, const char *);
 static int test_access(struct stat *, mode_t);
 static int filstat(const char *, enum token);
-static enum token t_lex(char *);
-static int isoperand(void);
 static long long getn(const char *);
 static int newerf(const char *, const char *);
 static int olderf(const char *, const char *);
@@ -292,6 +305,10 @@ main(int argc, char *argv[])
 	 * operators and operands that happen to look like operators)
 	 */
 
+#ifdef SMALL
+	error("SMALL test, no fallback usage");
+#else
+
 	t_wp = &argv[1];
 	res = !oexpr(t_lex(*t_wp));
 
@@ -299,8 +316,10 @@ main(int argc, char *argv[])
 		syntax(*t_wp, "unexpected operator");
 
 	return res;
+#endif
 }
 
+#ifndef SMALL
 static void
 syntax(const char *op, const char *msg)
 {
@@ -310,6 +329,7 @@ syntax(const char *op, const char *msg)
 	else
 		error("%s", msg);
 }	
+#endif
 
 static int
 one_arg(const char *arg)
@@ -333,12 +353,14 @@ two_arg(const char *a1, const char *a2)
 	if (op != NULL && op->op_type == UNOP)
 		return !perform_unop(op->op_num, a2);
 
+#ifndef TINY
 	/*
 	 * an extension, but as we've entered the realm of the unspecified
 	 * we're allowed...		test ( $a )	where a=''
 	 */
 	if (a1[0] == '(' && a2[0] == ')' && (a1[1] | a2[1]) == 0)
 		return 1;
+#endif
 
 	return -1;
 }
@@ -363,8 +385,10 @@ three_arg(const char *a1, const char *a2, const char *a3)
 		return res;
 	}
 
+#ifndef TINY
 	if (a1[0] == '(' && a3[0] == ')' && a3[1] == '\0')
 		return one_arg(a2);
+#endif
 
 	return -1;
 }
@@ -384,12 +408,15 @@ four_arg(const char *a1, const char *a2, const char *a3, const char *a4)
 		return res;
 	}
 
+#ifndef TINY
 	if (a1[0] == '(' && a4[0] == ')' && a4[1] == '\0')
 		return two_arg(a2, a3);
+#endif
 
 	return -1;
 }
 
+#ifndef SMALL
 static int
 oexpr(enum token n)
 {
@@ -456,6 +483,7 @@ primary(enum token n)
 
 	return strlen(*t_wp) > 0;
 }
+#endif /* !SMALL */
 
 static int
 perform_unop(enum token n, const char *opnd)
@@ -472,6 +500,7 @@ perform_unop(enum token n, const char *opnd)
 	}
 }
 
+#ifndef SMALL
 static int
 binop(void)
 {
@@ -487,6 +516,7 @@ binop(void)
 		
 	return perform_binop(op->op_num, opnd1, opnd2);
 }
+#endif
 
 static int
 perform_binop(enum token op_num, const char *opnd1, const char *opnd2)
@@ -780,6 +810,7 @@ findop(const char *s)
 	}
 }
 
+#ifndef SMALL
 static enum token
 t_lex(char *s)
 {
@@ -815,6 +846,7 @@ isoperand(void)
 		return op->op_type == BINOP && (t[0] != ')' || t[1] != '\0'); 
 	return 0;
 }
+#endif
 
 /* atoi with error detection */
 static long long
