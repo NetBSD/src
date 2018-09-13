@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_sysv_10_mod.c,v 1.1.2.1 2018/04/17 23:06:11 pgoyette Exp $	*/
+/*	$NetBSD: compat_sysv_10_mod.c,v 1.1.2.2 2018/09/13 00:15:00 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_sysv_10_mod.c,v 1.1.2.1 2018/04/17 23:06:11 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_sysv_10_mod.c,v 1.1.2.2 2018/09/13 00:15:00 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -44,7 +44,8 @@ __KERNEL_RCSID(0, "$NetBSD: compat_sysv_10_mod.c,v 1.1.2.1 2018/04/17 23:06:11 p
 #include <sys/syscallvar.h>
 #include <sys/sysctl.h>
 
-MODULE(MODULE_CLASS_EXEC, compat_sysv_10, "sysv_ipc,sysv_50,sysv_14");
+MODULE(MODULE_CLASS_EXEC, compat_sysv_10,
+    "sysv_ipc,compat_sysv_50,compat_sysv_14");
 
 /* Build the syscall package based on options specified */
 
