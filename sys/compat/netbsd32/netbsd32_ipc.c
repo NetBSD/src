@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ipc.c,v 1.18.16.5 2018/09/12 23:28:16 pgoyette Exp $	*/
+/*	$NetBSD: netbsd32_ipc.c,v 1.18.16.6 2018/09/13 03:51:32 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_ipc.c,v 1.18.16.5 2018/09/12 23:28:16 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_ipc.c,v 1.18.16.6 2018/09/13 03:51:32 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -83,7 +83,7 @@ static const struct syscall_package compat_sysvipc_syscalls[] = {
 };
 
 MODULE(MODULE_CLASS_EXEC, compat_netbsd32_sysvipc,
-    "sysv_ipc,compat_netbsd32,sysv_ipc");
+    "compat_netbsd32,sysv_ipc");
 
 static int
 compat_netbsd32_sysvipc_modcmd(modcmd_t cmd, void *arg)
