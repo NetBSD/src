@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time_50.c,v 1.31.16.2 2018/03/20 08:11:25 pgoyette Exp $	*/
+/*	$NetBSD: kern_time_50.c,v 1.31.16.3 2018/09/13 23:33:56 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time_50.c,v 1.31.16.2 2018/03/20 08:11:25 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time_50.c,v 1.31.16.3 2018/09/13 23:33:56 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_aio.h"
@@ -100,8 +100,6 @@ static const struct syscall_package kern_time_50_syscalls[] = {
 	    (sy_call_t *)compat_50_sys_timer_settime },
         { SYS_compat_50_timer_gettime, 0,
 	    (sy_call_t *)compat_50_sys_timer_gettime },
-	{ SYS_compat_50___ntp_gettime30, 0,
-	    (sy_call_t *)compat_50_sys___ntp_gettime30 },
 	{ SYS_compat_50___ntp_gettime30, 0,
 	    (sy_call_t *)compat_50_sys___ntp_gettime30 },
 	{ 0, 0, NULL }
