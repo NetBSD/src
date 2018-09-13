@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_drv.h,v 1.27 2018/08/27 15:22:54 riastradh Exp $	*/
+/*	$NetBSD: i915_drv.h,v 1.28 2018/09/13 08:25:55 mrg Exp $	*/
 
 /* i915_drv.h -- Private header for the I915 driver -*- linux-c -*-
  */
@@ -800,6 +800,7 @@ struct intel_csr {
 	func(is_valleyview) sep \
 	func(is_haswell) sep \
 	func(is_skylake) sep \
+	func(is_kabylake) sep \
 	func(is_preliminary) sep \
 	func(has_fbc) sep \
 	func(has_pipe_cxsr) sep \
@@ -1027,6 +1028,7 @@ enum intel_pch {
 	PCH_CPT,	/* Cougarpoint PCH */
 	PCH_LPT,	/* Lynxpoint PCH */
 	PCH_SPT,        /* Sunrisepoint PCH */
+	PCH_KBP,	/* Kabypoint PCH */
 	PCH_NOP,
 };
 
@@ -2521,6 +2523,16 @@ struct drm_i915_cmd_table {
 #define INTEL_DEVID(p)	(INTEL_INFO(p)->device_id)
 #define INTEL_REVID(p)	(__I915__(p)->dev->pdev->revision)
 
+#define REVID_FOREVER	(0xff)
+
+/*
+ * Return true if revision is in range [since,until] inclusive.
+ *
+ * Use 0 for open-ended since, and REVID_FOREVER for open-ended until.
+ */
+#define IS_REVID(p, since, until) \
+	(INTEL_REVID(p) >= (since) && INTEL_REVID(p) <= (until))
+
 #define IS_I830(dev)		(INTEL_DEVID(dev) == 0x3577)
 #define IS_845G(dev)		(INTEL_DEVID(dev) == 0x2562)
 #define IS_I85X(dev)		(INTEL_INFO(dev)->is_i85x)
@@ -2544,10 +2556,12 @@ struct drm_i915_cmd_table {
 				 INTEL_DEVID(dev) == 0x015a)
 #define IS_VALLEYVIEW(dev)	(INTEL_INFO(dev)->is_valleyview)
 #define IS_CHERRYVIEW(dev)	(INTEL_INFO(dev)->is_valleyview && IS_GEN8(dev))
-#define IS_HASWELL(dev)	(INTEL_INFO(dev)->is_haswell)
+#define IS_HASWELL(dev)		(INTEL_INFO(dev)->is_haswell)
 #define IS_BROADWELL(dev)	(!INTEL_INFO(dev)->is_valleyview && IS_GEN8(dev))
-#define IS_SKYLAKE(dev)	(INTEL_INFO(dev)->is_skylake)
-#define IS_BROXTON(dev)	(!INTEL_INFO(dev)->is_skylake && IS_GEN9(dev))
+#define IS_SKYLAKE(dev)		(INTEL_INFO(dev)->is_skylake)
+#define IS_KABYLAKE(dev)	(INTEL_INFO(dev)->is_kabylake)
+#define IS_BROXTON(dev)		(!IS_SKYLAKE(dev) && !IS_KABYLAKE(dev) && \
+				 IS_GEN9(dev))
 #define IS_MOBILE(dev)		(INTEL_INFO(dev)->is_mobile)
 #define IS_HSW_EARLY_SDV(dev)	(IS_HASWELL(dev) && \
 				 (INTEL_DEVID(dev) & 0xFF00) == 0x0C00)
@@ -2575,6 +2589,14 @@ struct drm_i915_cmd_table {
 #define IS_SKL_ULX(dev)		(INTEL_DEVID(dev) == 0x190E || \
 				 INTEL_DEVID(dev) == 0x1915 || \
 				 INTEL_DEVID(dev) == 0x191E)
+#define IS_KBL_ULT(dev)		(INTEL_DEVID(dev) == 0x5906 || \
+				 INTEL_DEVID(dev) == 0x5913 || \
+				 INTEL_DEVID(dev) == 0x5916 || \
+				 INTEL_DEVID(dev) == 0x5921 || \
+				 INTEL_DEVID(dev) == 0x5926)
+#define IS_KBL_ULX(dev)		(INTEL_DEVID(dev) == 0x590E || \
+				 INTEL_DEVID(dev) == 0x5915 || \
+				 INTEL_DEVID(dev) == 0x591E)
 #define IS_SKL_GT3(dev)		(IS_SKYLAKE(dev) && \
 				 (INTEL_DEVID(dev) & 0x00F0) == 0x0020)
 #define IS_SKL_GT4(dev)		(IS_SKYLAKE(dev) && \
@@ -2589,9 +2611,22 @@ struct drm_i915_cmd_table {
 #define SKL_REVID_E0		(0x4)
 #define SKL_REVID_F0		(0x5)
 
+#define IS_SKL_REVID(p, since, until) (IS_SKYLAKE(p) && IS_REVID(p, since, until))
+
 #define BXT_REVID_A0		(0x0)
+#define BXT_REVID_A1		(0x1)
 #define BXT_REVID_B0		(0x3)
 #define BXT_REVID_C0		(0x9)
+
+#define IS_BXT_REVID(p, since, until) (IS_BROXTON(p) && IS_REVID(p, since, until))
+
+#define KBL_REVID_A0		(0x0)
+#define KBL_REVID_B0		(0x1)
+#define KBL_REVID_C0		(0x2)
+#define KBL_REVID_D0		(0x3)
+#define KBL_REVID_E0		(0x4)
+
+#define IS_KBL_REVID(p, since, until) (IS_KABYLAKE(p) && IS_REVID(p, since, until))
 
 /*
  * The genX designation typically refers to the render engine, so render
@@ -2689,10 +2724,12 @@ struct drm_i915_cmd_table {
 #define INTEL_PCH_LPT_LP_DEVICE_ID_TYPE		0x9c00
 #define INTEL_PCH_SPT_DEVICE_ID_TYPE		0xA100
 #define INTEL_PCH_SPT_LP_DEVICE_ID_TYPE		0x9D00
+#define INTEL_PCH_KBP_DEVICE_ID_TYPE		0xA200
 #define INTEL_PCH_P2X_DEVICE_ID_TYPE		0x7100
 #define INTEL_PCH_QEMU_DEVICE_ID_TYPE		0x2900 /* qemu q35 has 2918 */
 
 #define INTEL_PCH_TYPE(dev) (__I915__(dev)->pch_type)
+#define HAS_PCH_KBP(dev) (INTEL_PCH_TYPE(dev) == PCH_KBP)
 #define HAS_PCH_SPT(dev) (INTEL_PCH_TYPE(dev) == PCH_SPT)
 #define HAS_PCH_LPT(dev) (INTEL_PCH_TYPE(dev) == PCH_LPT)
 #define HAS_PCH_LPT_LP(dev) (__I915__(dev)->pch_id == INTEL_PCH_LPT_LP_DEVICE_ID_TYPE)
