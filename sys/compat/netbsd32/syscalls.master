@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.120.2.14 2018/09/12 23:26:38 pgoyette Exp $
+	$NetBSD: syscalls.master,v 1.120.2.15 2018/09/13 03:49:46 pgoyette Exp $
 
 ;	from: NetBSD: syscalls.master,v 1.81 1998/07/05 08:49:50 jonathan Exp
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -156,7 +156,8 @@
 			    u_int namelen); }
 50	STD		{ int|netbsd32||setlogin(netbsd32_charp namebuf); }
 51	STD		{ int|netbsd32||acct(netbsd32_charp path); }
-52	COMPAT_13 	{ int|sys||sigpending(void); } sigpending13
+52	COMPAT_13 MODULAR compat_netbsd32_13	\
+		 	{ int|sys||sigpending(void); } sigpending13
 53	COMPAT_13 MODULAR compat_netbsd32_13	\
 			{ int|netbsd32||sigaltstack13( \
 			    netbsd32_sigaltstack13p_t nss, \
@@ -180,7 +181,8 @@
 			{ int|netbsd32||ogetkerninfo(int op, \
 			    netbsd32_charp where, netbsd32_intp size, \
 			    int arg); }
-64	COMPAT_43	{ int|sys||getpagesize(void); } ogetpagesize
+64	COMPAT_43 MODULAR compat_netbsd32_43	\
+			{ int|sys||getpagesize(void); } ogetpagesize
 65	COMPAT_12 MODULAR compat_netbsd32_12	\
 			{ int|netbsd32||msync(netbsd32_voidp addr, \
 			    netbsd32_size_t len); }
@@ -215,7 +217,8 @@
 			{ int|netbsd32||setitimer(int which, \
 			    netbsd32_itimerval50p_t itv, \
 			    netbsd32_itimerval50p_t oitv); }
-84	COMPAT_43	{ int|sys||wait(void); } owait
+84	COMPAT_43 MODULAR compat_netbsd32_43	\
+			{ int|sys||wait(void); } owait
 85	COMPAT_12 MODULAR compat_netbsd32_12	\
 			{ int|netbsd32||oswapon(netbsd32_charp name); }
 86	COMPAT_50 MODULAR compat_netbsd32_50	\
@@ -227,7 +230,8 @@
 88	COMPAT_43 MODULAR compat_netbsd32_43	\
 			{ int|netbsd32||osethostname(netbsd32_charp hostname, \
 			    u_int len); }
-89	COMPAT_43	{ int|sys||getdtablesize(void); } ogetdtablesize
+89	COMPAT_43 MODULAR compat_netbsd32_43	\
+			{ int|sys||getdtablesize(void); } ogetdtablesize
 90	STD		{ int|netbsd32||dup2(int from, int to); }
 91	UNIMPL		getdopt
 92	STD		{ int|netbsd32||fcntl(int fd, int cmd, \
@@ -336,7 +340,8 @@
 141	COMPAT_43 MODULAR compat_netbsd32_43	\
 			{ int|netbsd32||ogetpeername(int fdes, \
 			    netbsd32_voidp asa, netbsd32_intp alen); }
-142	COMPAT_43	{ int32_t|sys||gethostid(void); } ogethostid
+142	COMPAT_43 MODULAR compat_netbsd32_43	\
+			{ int32_t|sys||gethostid(void); } ogethostid
 143	COMPAT_43 MODULAR compat_netbsd32_43	\
 			{ int|netbsd32||sethostid(int32_t hostid); }
 144	COMPAT_43 MODULAR compat_netbsd32_43	\
@@ -351,7 +356,8 @@
 148	COMPAT_50 MODULAR compat_netbsd32_50	\
 			{ int|netbsd32||quotactl(netbsd32_charp path, int cmd, \
 			    int uid, netbsd32_voidp arg); }
-149	COMPAT_43	{ int|sys||quota(void); } oquota
+149	COMPAT_43 MODULAR compat_netbsd32_43	\
+			{ int|sys||quota(void); } oquota
 150	COMPAT_43 MODULAR compat_netbsd32_43	\
 			{ int|netbsd32||ogetsockname(int fdec, \
 			    netbsd32_voidp asa, netbsd32_intp alen); }
