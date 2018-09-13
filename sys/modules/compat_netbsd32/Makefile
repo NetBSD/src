@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.20.12.9 2018/09/12 04:35:22 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.20.12.10 2018/09/13 22:10:04 pgoyette Exp $
 
 .include "../Makefile.inc"
 .include "../Makefile.assym"
@@ -43,6 +43,7 @@ SRCS+=	netbsd32_exec_aout.c
 
 .if ${MACHINE_ARCH} == "x86_64"
 .PATH:	${S}/arch/amd64/amd64
+CPPFLAGS+=	-DCOMPAT_13 -DCOMPAT_16
 SRCS+=	netbsd32_machdep.c netbsd32_sigcode.S netbsd32_syscall.c
 .endif
 
