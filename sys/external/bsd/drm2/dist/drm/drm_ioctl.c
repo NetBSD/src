@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_ioctl.c,v 1.10 2018/08/28 03:41:38 riastradh Exp $	*/
+/*	$NetBSD: drm_ioctl.c,v 1.11 2018/09/14 05:31:14 maya Exp $	*/
 
 /*
  * Created: Fri Jan  8 09:01:26 1999 by faith@valinux.com
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_ioctl.c,v 1.10 2018/08/28 03:41:38 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_ioctl.c,v 1.11 2018/09/14 05:31:14 maya Exp $");
 
 #include <drm/drmP.h>
 #include <drm/drm_core.h>
@@ -703,6 +703,7 @@ drm_ioctl(struct file *fp, unsigned long cmd, void *data)
 {
 	char stackbuf[128];
 	char *buf = stackbuf;
+	void *data0 = data;
 	struct drm_file *const file = fp->f_data;
 	const unsigned int nr = DRM_IOCTL_NR(cmd);
 	int error;
@@ -761,19 +762,23 @@ drm_ioctl(struct file *fp, unsigned long cmd, void *data)
 		memcpy(buf, data, IOCPARM_LEN(cmd));
 		memset(buf + IOCPARM_LEN(cmd), 0,
 		    IOCPARM_LEN(ioctl->cmd) - IOCPARM_LEN(cmd));
-		data = buf;
+		data0 = buf;
 	}
 
 	if ((drm_core_check_feature(dev, DRIVER_MODESET) && is_driver_ioctl) ||
 	    ISSET(ioctl->flags, DRM_UNLOCKED)) {
 		/* XXX errno Linux->NetBSD */
-		error = -(*ioctl->func)(dev, data, file);
+		error = -(*ioctl->func)(dev, data0, file);
 	} else {
 		mutex_lock(&drm_global_mutex);
 		/* XXX errno Linux->NetBSD */
-		error = -(*ioctl->func)(dev, data, file);
+		error = -(*ioctl->func)(dev, data0, file);
 		mutex_unlock(&drm_global_mutex);
 	}
+
+	/* If we used a temporary buffer, copy it back out.  */
+	if (data != data0)
+		memcpy(data, data0, IOCPARM_LEN(cmd));
 
 	/* If we had to allocate a heap buffer, free it.  */
 	if (buf != stackbuf)
