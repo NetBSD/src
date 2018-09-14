@@ -1,4 +1,4 @@
-/*	$NetBSD: protosw.h,v 1.68 2017/10/04 02:25:07 ozaki-r Exp $	*/
+/*	$NetBSD: protosw.h,v 1.69 2018/09/14 05:09:51 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -76,7 +76,7 @@ struct protosw {
 
 /* protocol-protocol hooks */
 	void	(*pr_input)		/* input to protocol (from below) */
-			(struct mbuf *, ...);
+			(struct mbuf *, int, int);
 	void	*(*pr_ctlinput)		/* control input (from below) */
 			(int, const struct sockaddr *, void *);
 	int	(*pr_ctloutput)		/* control output (from above) */
@@ -498,17 +498,10 @@ name##_wrapper(int a, const struct sockaddr *b, void *c)\
 
 #define	PR_WRAP_INPUT(name)				\
 static void						\
-name##_wrapper(struct mbuf *m, ...)			\
+name##_wrapper(struct mbuf *m, int off, int proto)	\
 {							\
-	va_list args;					\
-	int off, nxt;					\
-	/* XXX just passing args doesn't work on rump kernels */\
-	va_start(args, m);				\
-	off = va_arg(args, int);			\
-	nxt = va_arg(args, int);			\
-	va_end(args);					\
 	mutex_enter(softnet_lock);			\
-	name(m, off, nxt);				\
+	name(m, off, proto);				\
 	mutex_exit(softnet_lock);			\
 }
 

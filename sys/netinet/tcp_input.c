@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.411 2018/09/14 04:29:46 maxv Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.412 2018/09/14 05:09:51 maxv Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.411 2018/09/14 04:29:46 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.412 2018/09/14 05:09:51 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1172,7 +1172,7 @@ drop:
  * TCP input routine, follows pages 65-76 of RFC 793 very closely.
  */
 void
-tcp_input(struct mbuf *m, ...)
+tcp_input(struct mbuf *m, int off, int proto)
 {
 	struct tcphdr *th;
 	struct ip *ip;
@@ -1183,7 +1183,7 @@ tcp_input(struct mbuf *m, ...)
 #endif
 	u_int8_t *optp = NULL;
 	int optlen = 0;
-	int len, tlen, off, hdroptlen = 0;
+	int len, tlen, hdroptlen = 0;
 	struct tcpcb *tp = NULL;
 	int tiflags;
 	struct socket *so = NULL;
@@ -1195,7 +1195,6 @@ tcp_input(struct mbuf *m, ...)
 	u_long tiwin;
 	struct tcp_opt_info opti;
 	int thlen, iphlen;
-	va_list ap;
 	int af;		/* af on the wire */
 	struct mbuf *tcp_saveti = NULL;
 	uint32_t ts_rtt;
@@ -1206,10 +1205,6 @@ tcp_input(struct mbuf *m, ...)
 	vestige.valid = 0;
 
 	MCLAIM(m, &tcp_rx_mowner);
-	va_start(ap, m);
-	off = va_arg(ap, int);
-	(void)va_arg(ap, int);		/* ignore value, advance ap */
-	va_end(ap);
 
 	TCP_STATINC(TCP_STAT_RCVTOTAL);
 

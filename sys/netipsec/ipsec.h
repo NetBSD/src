@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.h,v 1.82 2018/05/14 17:34:26 maxv Exp $	*/
+/*	$NetBSD: ipsec.h,v 1.83 2018/09/14 05:09:51 maxv Exp $	*/
 /*	$FreeBSD: ipsec.h,v 1.2.4.2 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: ipsec.h,v 1.53 2001/11/20 08:32:38 itojun Exp $	*/
 
@@ -291,7 +291,7 @@ void *ah4_ctlinput(int, const struct sockaddr *, void *);
 
 void ipsec_output_init(void);
 struct m_tag;
-void ipsec4_common_input(struct mbuf *m, ...);
+void ipsec4_common_input(struct mbuf *m, int, int);
 int ipsec4_common_input_cb(struct mbuf *, struct secasvar *, int, int);
 int ipsec4_process_packet(struct mbuf *, const struct ipsecrequest *, u_long *);
 int ipsec_process_done(struct mbuf *, const struct ipsecrequest *,

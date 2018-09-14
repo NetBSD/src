@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_carp.c,v 1.99 2018/06/26 06:48:03 msaitoh Exp $	*/
+/*	$NetBSD: ip_carp.c,v 1.100 2018/09/14 05:09:51 maxv Exp $	*/
 /*	$OpenBSD: ip_carp.c,v 1.113 2005/11/04 08:11:54 mcbride Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_carp.c,v 1.99 2018/06/26 06:48:03 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_carp.c,v 1.100 2018/09/14 05:09:51 maxv Exp $");
 
 /*
  * TODO:
@@ -569,7 +569,7 @@ _carp_proto_input(struct mbuf *m, int hlen, int proto)
 }
 
 void
-carp_proto_input(struct mbuf *m, ...)
+carp_proto_input(struct mbuf *m, int off, int proto)
 {
 
 	wqinput_input(carp_wqinput, m, 0, 0);

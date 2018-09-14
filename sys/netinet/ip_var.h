@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_var.h,v 1.126 2018/07/10 15:46:58 maxv Exp $	*/
+/*	$NetBSD: ip_var.h,v 1.127 2018/09/14 05:09:51 maxv Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -224,7 +224,7 @@ void	 ip_statinc(u_int);
 void *	 rip_ctlinput(int, const struct sockaddr *, void *);
 int	 rip_ctloutput(int, struct socket *, struct sockopt *);
 void	 rip_init(void);
-void	 rip_input(struct mbuf *, ...);
+void	 rip_input(struct mbuf *, int, int);
 int	 rip_output(struct mbuf *, struct inpcb *, struct mbuf *, struct lwp *);
 int	 rip_usrreq(struct socket *,
 	    int, struct mbuf *, struct mbuf *, struct mbuf *, struct lwp *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_input.c,v 1.70 2018/05/18 19:02:49 maxv Exp $	*/
+/*	$NetBSD: ipsec_input.c,v 1.71 2018/09/14 05:09:51 maxv Exp $	*/
 /*	$FreeBSD: ipsec_input.c,v 1.2.4.2 2003/03/28 20:32:53 sam Exp $	*/
 /*	$OpenBSD: ipsec_input.c,v 1.63 2003/02/20 18:35:43 deraadt Exp $	*/
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_input.c,v 1.70 2018/05/18 19:02:49 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_input.c,v 1.71 2018/09/14 05:09:51 maxv Exp $");
 
 /*
  * IPsec input processing.
@@ -295,18 +295,10 @@ ipsec_common_input(struct mbuf *m, int skip, int protoff, int af, int sproto)
  * Common input handler for IPv4 AH, ESP, and IPCOMP.
  */
 void
-ipsec4_common_input(struct mbuf *m, ...)
+ipsec4_common_input(struct mbuf *m, int off, int proto)
 {
-	va_list ap;
-	int off, nxt;
-
-	va_start(ap, m);
-	off = va_arg(ap, int);
-	nxt = va_arg(ap, int);
-	va_end(ap);
-
 	(void)ipsec_common_input(m, off, offsetof(struct ip, ip_p),
-	    AF_INET, nxt);
+	    AF_INET, proto);
 }
 
 /*
