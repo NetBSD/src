@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.aarch64,v 1.10 2018/06/23 01:51:03 jakllsch Exp $
+#	$NetBSD: Makefile.aarch64,v 1.11 2018/09/14 08:51:06 skrll Exp $
 
 # Makefile for NetBSD
 #
@@ -25,8 +25,8 @@ NEED_OWN_INSTALL_TARGET?=no
 ## (1) port identification
 ##
 THISARM=	$S/arch/${MACHINE}
-A64=		$S/arch/aarch64
-GENASSYM_CONF=	${A64}/aarch64/genassym.cf
+ARM=		$S/arch/aarch64
+GENASSYM_CONF=	${ARM}/aarch64/genassym.cf
 .-include "$S/arch/${MACHINE}/conf/Makefile.${MACHINE}.inc"
 
 ##
@@ -50,20 +50,20 @@ KERN_AS=	obj
 ##
 MD_OBJS+=	${SYSTEM_FIRST_OBJ} locore.o
 MD_CFILES+=
-MD_SFILES+=	${SYSTEM_FIRST_SFILE} ${A64}/aarch64/locore.S
+MD_SFILES+=	${SYSTEM_FIRST_SFILE} ${ARM}/aarch64/locore.S
 
 .if defined(SYSTEM_FIRST_OBJ)
 ${SYSTEM_FIRST_OBJ}: ${SYSTEM_FIRST_SFILE} assym.h
 	${NORMAL_S}
 .endif
 
-locore.o: ${A64}/aarch64/locore.S assym.h
+locore.o: ${ARM}/aarch64/locore.S assym.h
 	${NORMAL_S}
 
 ##
 ## (5) link settings
 ##
-KERNLDSCRIPT?=	${A64}/conf/kern.ldscript
+KERNLDSCRIPT?=	${ARM}/conf/kern.ldscript
 LOADADDRESS?=	0xffffffc000000040
 LINKFLAGS_NORMAL=	-X
 
