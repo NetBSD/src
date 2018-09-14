@@ -1,4 +1,4 @@
-/* $NetBSD: TODO.compat-module,v 1.1.2.3 2018/09/11 08:42:45 pgoyette Exp $ */
+/* $NetBSD: TODO.compat-module,v 1.1.2.4 2018/09/14 06:21:17 pgoyette Exp $ */
 
 DONE
 ----
@@ -49,6 +49,11 @@ TODO - Required for branch merge
 1.  Replace version-specific parts of the compat_netbsd32 module (and
     also the compat_netbsd32_sysv module) with individual modules.  Update
     dependencies accordingly.
+
+2.  Wherever we have vectors function calls, we need to protect all uses
+    of the vector using localcount(9).  And when unloading a module, we
+    need to localcount_drain() after replacing the function pointer but
+    before letting the module disappear.
 
 
 TODO - Not required for branch merge
