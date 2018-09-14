@@ -1,4 +1,4 @@
-.\" $NetBSD: attribute.3,v 1.16 2014/04/21 15:52:27 riastradh Exp $
+.\" $NetBSD: attribute.3,v 1.17 2018/09/14 20:38:38 joerg Exp $
 .\"
 .\" Copyright (c) 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -99,10 +99,11 @@ Certain functions, such as
 .Xr abort 3
 and
 .Xr exit 3 ,
-can never return any value.
+can never return.
 When such a function is declared with
 .Ic __dead ,
-certain optimizations are possible.
+certain optimizations are possible and warnings sensitive to the code flow graph
+may be pruned.
 Obviously a
 .Ic __dead
 function can never have return type other than
