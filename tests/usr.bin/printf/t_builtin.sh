@@ -1,4 +1,4 @@
-# $NetBSD: t_builtin.sh,v 1.3 2018/09/10 15:02:11 kre Exp $
+# $NetBSD: t_builtin.sh,v 1.4 2018/09/14 19:52:23 kre Exp $
 #
 # Copyright (c) 2018 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -98,19 +98,24 @@ Not_builtin()
 
 setup()
 {
-	case "$(unset LANG LC_ALL LC_NUMERIC LC_CTYPE LC_MESSAGES
-	    ${TEST_SH} -c 'type printf' 2>&1 )" in
+	# If the shell being used for its printf supports "type -t", use it
+	if B=$( ${TEST_SH} -c 'type -t printf' 2>/dev/null )
+	then
+		case "$B" in
+		( builtin )	return 0;;
+		esac
+	else
+		# We get here if type -t is not supported, or it is,
+		# but printf is completely unknown.  No harm trying again.
 
-	( *[Bb]uiltin* | *[Bb]uilt[-\ ][Ii]n* )
-		# nothing here, it all happens below.
-		;;
+		case "$( unset LANG LC_ALL LC_NUMERIC LC_CTYPE LC_MESSAGES
+		    ${TEST_SH} -c 'type printf' 2>&1 )" in
+		( *[Bb]uiltin* | *[Bb]uilt[-\ ][Ii]n* ) return 0;;
+		esac
+	fi
 
-	(*)	Tests=
-		define Not_builtin 'Dummy test to skip when no printf builtin'
-		return 1
-		;;
-	esac
-
+	Tests=
+	define Not_builtin 'Dummy test to skip when no printf builtin'
 	return 0
 }
 
