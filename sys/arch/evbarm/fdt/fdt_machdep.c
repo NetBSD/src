@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_machdep.c,v 1.35 2018/09/07 17:21:58 jmcneill Exp $ */
+/* $NetBSD: fdt_machdep.c,v 1.36 2018/09/14 22:08:49 jakllsch Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.35 2018/09/07 17:21:58 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.36 2018/09/14 22:08:49 jakllsch Exp $");
 
 #include "opt_machdep.h"
 #include "opt_bootconfig.h"
@@ -634,7 +634,7 @@ fdt_cpu_rootconf(void)
 		if (get_bootconf_option(boot_args, "root", BOOTOPT_TYPE_STRING, &ptr) != 0)
 			break;
 
-		if (device_is_a(dev, "ld") || device_is_a(dev, "sd") || device_is_a(dev, "ld"))
+		if (device_is_a(dev, "ld") || device_is_a(dev, "sd") || device_is_a(dev, "wd"))
 			fdt_detect_root_device(dev);
 	}
 	deviter_release(&di);
