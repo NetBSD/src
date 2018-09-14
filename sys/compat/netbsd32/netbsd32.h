@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32.h,v 1.116.2.4 2018/09/11 21:18:32 pgoyette Exp $	*/
+/*	$NetBSD: netbsd32.h,v 1.116.2.5 2018/09/14 08:38:37 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2008, 2015 Matthew R. Green
@@ -1165,11 +1165,22 @@ struct iovec *netbsd32_get_iov(struct netbsd32_iovec *, int, struct iovec *,
 SYSCTL_SETUP_PROTO(netbsd32_sysctl_emul_setup);
 #endif /* SYSCTL_SETUP_PROTO */
 
+extern void (*vec_netbsd32_sendsig)(const ksiginfo_t *, const sigset_t *);
+
 /*
  * Finally, declare emul_netbsd32 as this is needed in lots of
  * places when calling syscall_{,dis}establish()
  */
 
 extern struct emul emul_netbsd32;
+extern char netbsd32_sigcode[], netbsd32_esigcode[];
+
+/*
+ * Prototypes for MD initialization routines
+ */
+void netbsd32_machdep_md_init(void);
+void netbsd32_machdep_md_fini(void);
+void netbsd32_machdep_md_16_init(void);
+void netbsd32_machdep_md_16_fini(void);
 
 #endif /* _COMPAT_NETBSD32_NETBSD32_H_ */

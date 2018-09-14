@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_mod.c,v 1.13.16.10 2018/09/14 05:37:08 pgoyette Exp $	*/
+/*	$NetBSD: netbsd32_mod.c,v 1.13.16.11 2018/09/14 08:38:37 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_mod.c,v 1.13.16.10 2018/09/14 05:37:08 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_mod.c,v 1.13.16.11 2018/09/14 08:38:37 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_execfmt.h"
@@ -102,11 +102,6 @@ static struct execsw netbsd32_execsw[] = {
 #endif
 };
 
-#ifdef MACHDEP_INIT_PREF
-int __CONCAT(MACHDEP_INIT_PREF,_init)(int);
-int __CONCAT(MACHDEP_INIT_PREF,_fini)(int);
-#endif
-
 static int
 compat_netbsd32_modcmd(modcmd_t cmd, void *arg)
 {
@@ -114,36 +109,27 @@ compat_netbsd32_modcmd(modcmd_t cmd, void *arg)
 
 	switch (cmd) {
 	case MODULE_CMD_INIT:
-		netbsd32_sysctl_init();
 		error = exec_add(netbsd32_execsw,
 		    __arraycount(netbsd32_execsw));
-		vec_compat32_80_modctl = compat32_80_modctl_compat_stub;
-#ifdef MACHDEP_INIT_PREF
-		if (error == 0)
-			error = __CONCAT(MACHDEP_INIT_PREF,_init)(0);
-#endif
-		if (error != 0) {
-			vec_compat32_80_modctl = (void *)enosys;
-			netbsd32_sysctl_fini();
+		if (error == 0) {
+			netbsd32_sysctl_init();
+			vec_compat32_80_modctl = compat32_80_modctl_compat_stub;
+			netbsd32_machdep_md_init();
 		}
 		return error;
 
 	case MODULE_CMD_FINI:
-#ifdef MACHDEP_INIT_PREF
-		error = __CONCAT(MACHDEP_INIT_PREF,_fini)(0);
-		if (error)
-			return error;
-#endif
+		netbsd32_machdep_md_fini();
 		vec_compat32_80_modctl = (void *)enosys;
+		netbsd32_sysctl_fini();
+
 		error = exec_remove(netbsd32_execsw,
 		    __arraycount(netbsd32_execsw));
 		if (error) {
+			netbsd32_sysctl_init();
 			vec_compat32_80_modctl = compat32_80_modctl_compat_stub;
-#ifdef MACHDEP_INIT_PREF
-			(void)__CONCAT(MACHDEP_INIT_PREF,_init)(0);
-#endif
-		} else
-			netbsd32_sysctl_fini();
+			netbsd32_machdep_md_init();
+		}
 		return error;
 
 	default:

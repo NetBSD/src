@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.115.2.2 2018/09/14 05:37:08 pgoyette Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.115.2.3 2018/09/14 08:38:37 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.115.2.2 2018/09/14 05:37:08 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.115.2.3 2018/09/14 08:38:37 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -278,66 +278,6 @@ netbsd32_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 
 	(*vec_netbsd32_sendsig)(ksi, mask);
 }
-
-int
-compat_16_netbsd32___sigreturn14(struct lwp *l, const struct compat_16_netbsd32___sigreturn14_args *uap, register_t *retval)
-{
-	/* {
-		syscallarg(netbsd32_sigcontextp_t) sigcntxp;
-	} */
-	struct netbsd32_sigcontext *scp, context;
-	struct proc *p = l->l_proc;
-	struct trapframe *tf;
-	int error;
-
-	/*
-	 * The trampoline code hands us the context.
-	 * It is unsafe to keep track of it ourselves, in the event that a
-	 * program jumps out of a signal handler.
-	 */
-	scp = NETBSD32PTR64(SCARG(uap, sigcntxp));
-	if (copyin(scp, &context, sizeof(*scp)) != 0)
-		return (EFAULT);
-
-	/*
-	 * Check for security violations.
-	 */
-	error = check_sigcontext32(l, &context);
-	if (error != 0)
-		return error;
-
-	/* Restore register context. */
-	tf = l->l_md.md_regs;
-	tf->tf_ds = context.sc_ds & 0xFFFF;
-	tf->tf_es = context.sc_es & 0xFFFF;
-	cpu_fsgs_reload(l, context.sc_fs, context.sc_gs);
-	tf->tf_rflags = context.sc_eflags;
-	tf->tf_rdi = context.sc_edi;
-	tf->tf_rsi = context.sc_esi;
-	tf->tf_rbp = context.sc_ebp;
-	tf->tf_rbx = context.sc_ebx;
-	tf->tf_rdx = context.sc_edx;
-	tf->tf_rcx = context.sc_ecx;
-	tf->tf_rax = context.sc_eax;
-
-	tf->tf_rip = context.sc_eip;
-	tf->tf_cs = context.sc_cs & 0xFFFF;
-	tf->tf_rsp = context.sc_esp;
-	tf->tf_ss = context.sc_ss & 0xFFFF;
-
-	mutex_enter(p->p_lock);
-	/* Restore signal stack. */
-	if (context.sc_onstack & SS_ONSTACK)
-		l->l_sigstk.ss_flags |= SS_ONSTACK;
-	else
-		l->l_sigstk.ss_flags &= ~SS_ONSTACK;
-	/* Restore signal mask. */
-	(void) sigprocmask1(l, SIG_SETMASK, &context.sc_mask, 0);
-	mutex_exit(p->p_lock);
-
-	return (EJUSTRETURN);
-}
-
 
 #ifdef COREDUMP
 /*
@@ -1028,17 +968,14 @@ netbsd32_vm_default_addr(struct proc *p, vaddr_t base, vsize_t sz,
 int netbsd32_amd64_init(int);
 int netbsd32_amd64_fini(int);
 
-int
-netbsd32_amd64_init(int misc)
+void
+netbsd32_machdep_md_init(void)
 {
 
 	vec_netbsd32_sendsig = netbsd32_sendsig_siginfo;
-	return 0;
 }
 
-int
-netbsd32_amd64_fini(int misc)
+void
+netbsd32_machdep_md_fini(void)
 {
-
-	return 0;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_16.c,v 1.1.2.2 2018/09/14 05:37:08 pgoyette Exp $	*/
+/*	$NetBSD: netbsd32_compat_16.c,v 1.1.2.3 2018/09/14 08:38:37 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_16.c,v 1.1.2.2 2018/09/14 05:37:08 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_16.c,v 1.1.2.3 2018/09/14 08:38:37 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,39 +51,28 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_16.c,v 1.1.2.2 2018/09/14 05:37:08 p
 #include <compat/netbsd32/netbsd32_syscallargs.h>
 #include <compat/netbsd32/netbsd32_conv.h>
 
-extern char netbsd32_sigcode[], netbsd32_esigcode[];
 struct uvm_object *emul_netbsd32_object;
-
-#ifdef MACHDEP_INIT_PREF
-int __CONCAT(MACHDEP_INIT_PREF,_init)(int);
-int __CONCAT(MACHDEP_INIT_PREF,_fini)(int);
-#endif
 
 MODULE(MODULE_CLASS_EXEC, compat_netbsd32_16, "compat_netbsd32,compat_16");
 
 static int
 compat_netbsd32_16_modcmd(modcmd_t cmd, void *arg)
 {
-int error = 0;
 
 	switch (cmd) {
 	case MODULE_CMD_INIT:
 		emul_netbsd32.e_sigcode = netbsd32_sigcode;
         	emul_netbsd32.e_esigcode = netbsd32_esigcode;
         	emul_netbsd32.e_sigobject = &emul_netbsd32_object;
-#ifdef MACHDEP_INIT_PREF
-		error = __CONCAT(MACHDEP_INIT_PREF,_init)(0);
-#endif
-		return error;
+		netbsd32_machdep_md_16_init();
+		return 0;
 
 	case MODULE_CMD_FINI:
 		emul_netbsd32.e_sigcode = NULL;
         	emul_netbsd32.e_esigcode = NULL;
         	emul_netbsd32.e_sigobject = NULL;
-#ifdef MACHDEP_INIT_PREF
-		error = __CONCAT(MACHDEP_INIT_PREF,_fini)(0);
-#endif
-		return error;
+		netbsd32_machdep_md_16_fini();
+		return 0;
 
 	default:
 		return ENOTTY;
