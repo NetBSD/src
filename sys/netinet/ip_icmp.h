@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.h,v 1.39 2018/02/08 10:42:12 maxv Exp $	*/
+/*	$NetBSD: ip_icmp.h,v 1.40 2018/09/14 05:09:51 maxv Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -292,7 +292,7 @@ static const char *icmp_code_photuris[] = {
 #ifdef _KERNEL
 void icmp_error(struct mbuf *, int, int, n_long, int);
 void icmp_mtudisc(struct icmp *, struct in_addr);
-void icmp_input(struct mbuf *, ...);
+void icmp_input(struct mbuf *, int, int);
 void icmp_init(void);
 void icmp_reflect(struct mbuf *);
 

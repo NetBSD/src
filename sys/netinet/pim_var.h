@@ -1,4 +1,4 @@
-/*	$NetBSD: pim_var.h,v 1.3 2018/08/22 01:05:24 msaitoh Exp $	*/
+/*	$NetBSD: pim_var.h,v 1.4 2018/09/14 05:09:51 maxv Exp $	*/
 
 /*
  * Copyright (c) 1998-2000
@@ -69,7 +69,7 @@ struct pimstat {
 #ifdef _KERNEL
 extern struct pimstat pimstat;
 
-void	pim_input(struct mbuf *, ...);
+void	pim_input(struct mbuf *, int, int);
 #endif
 
 #endif /* !_NETINET_PIM_VAR_H_ */
