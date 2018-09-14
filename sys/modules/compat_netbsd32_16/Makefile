@@ -1,6 +1,7 @@
-#	$NetBSD: Makefile,v 1.1.2.1 2018/09/12 01:26:40 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.1.2.2 2018/09/14 05:37:08 pgoyette Exp $
 
 .include "../Makefile.inc"
+.include "../Makefile.assym"
 
 .PATH:	${S}/compat/netbsd32
 
@@ -11,5 +12,11 @@ CPPFLAGS+=	-DCOMPAT_16 -DCOMPAT_20 -DCOMPAT_30
 CPPFLAGS+=	-DCOMPAT_40 -DCOMPAT_50 -DCOMPAT_60 -DCOMPAT_70 -DCOMPAT_80
 
 SRCS+=	netbsd32_compat_16.c
+
+.if ${MACHINE_ARCH} == "x86_64"
+.PATH:  ${S}/arch/amd64/amd64
+CPPFLAGS+=	-DMACHDEP_INIT_PREF=netbsd32_amd64_16
+SRCS+=  netbsd32_machdep_16.c netbsd32_sigcode.S
+.endif
 
 .include <bsd.kmodule.mk>
