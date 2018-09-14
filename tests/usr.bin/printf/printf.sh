@@ -1,4 +1,4 @@
-# $NetBSD: printf.sh,v 1.2 2018/09/10 15:02:11 kre Exp $
+# $NetBSD: printf.sh,v 1.3 2018/09/14 19:57:57 kre Exp $
 #
 # Copyright (c) 2018 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -408,6 +408,7 @@ d_decimal()
 	expect 49		'%d'		"'1"
 	expect 45		'%d'		"'-1"
 	expect 43		'%d'		"'+1"
+	expect 00		'%.2d'		"'"
 
 	expect 68		'%d'		'"D'
 	expect 069		'%03d'		'"E'
@@ -475,6 +476,8 @@ i_decimal()
 	expect 51		'%i'		063
 	expect '02  '		'%-4.2i'	2
 	expect ' +02'		'%+ 4.2i'	2
+
+	expect 0		'%i'		'"'
 
 	expect_fail '0'		%i	x22
 	expect_fail '123'	%i	123Mb
@@ -996,12 +999,6 @@ e_floats()
 	expect2 '  nan' 'nan(*)'	%5e		nan
 	expect2 'nan  ' 'nan(*)'	%-5e		NAN
 
-	expect 6.500000e+01	'%e'		"'A"
-	expect 6.5e+01		'%.1e'		"'A"
-	expect 5e+01		'%.0e'		"'1"
-	expect 4.50e+01		'%.2e'		"'-1"
-	expect 4.300e+01	'%.3e'		"'+1"
-
 	expect_fail 0.000000e+00 '%e'	NOT-E
 	expect_fail 1.200000e+00 '%e'	1.2Gb
 
@@ -1084,6 +1081,16 @@ g_floats()
 
 	expect 4.4?e+03		%.3g	4444		# p = 3, x = 3 :  %.2e
 	expect 1.2e-05		%.2g	0.000012	# p = 2, x = -5:  $.1e
+
+	expect 1e+10		%g	10000000000
+	expect 1e+10		%g	1e10
+	expect 1e+10		%g	1e+10
+	expect 1e-10		%g	1e-10
+	expect 10000000000	%.11g	10000000000
+	expect 10000000000.	%#.11g	10000000000
+	expect 1e+99		%g	1e99
+	expect 1e+100		%g	1e100
+	expect 1e-100		%g	1e-100
 
 	expect2 inf infinity	%g	Infinity
 	expect2 -inf -infinity	%g	-INF
@@ -1549,6 +1556,14 @@ NetBSD_extensions()
 		# verify float support, so don't bother...
 	fi
 
+	expect 6.500000e+01	'%e'		"'A"
+	expect 6.5e+01		'%.1e'		"'A"
+	expect 5e+01		'%.0e'		"'1"
+	expect 4.50e+01		'%.2e'		"'-1"
+	expect 4.300e+01	'%.3e'		"'+1"
+	expect 99.000000	'%f'		'"c"
+	expect 97		'%g'		'"a"
+
 	# NetBSD (non-POSIX) format excape extensions
 	expect ''		'\e'
 	expect ''		'\E'
@@ -1750,7 +1765,7 @@ else
 	Failures=0
 
 	STDERR=$(mktemp ${TMPDIR:-/tmp}/Test-XXXXXX)
-	trap 'rm -f "${STDERR}"' EXIT
+	trap "rm -f '${STDERR}'" EXIT
 	exec 3>"${STDERR}"
 
 	case "$#" in
