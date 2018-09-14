@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.120.2.15 2018/09/13 03:49:46 pgoyette Exp $
+	$NetBSD: syscalls.master,v 1.120.2.16 2018/09/14 01:20:52 pgoyette Exp $
 
 ;	from: NetBSD: syscalls.master,v 1.81 1998/07/05 08:49:50 jonathan Exp
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -687,7 +687,8 @@
 			    netbsd32_sigsetp_t set, \
 			    netbsd32_sigsetp_t oset); }
 294	STD		{ int|netbsd32|14|sigsuspend(netbsd32_sigsetp_t set); }
-295	COMPAT_16	{ int|netbsd32|14|sigreturn( \
+295	COMPAT_16 MODULAR compat_netbsd32_16	\
+			{ int|netbsd32|14|sigreturn( \
 			    netbsd32_sigcontextp_t sigcntxp); }
 296	STD		{ int|netbsd32||__getcwd(netbsd32_charp bufp, \
 			    netbsd32_size_t length); }
