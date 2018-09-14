@@ -1,4 +1,4 @@
-/*	$NetBSD: vectors.S,v 1.7 2018/07/30 15:59:44 ryo Exp $	*/
+/*	$NetBSD: vectors.S,v 1.8 2018/09/14 05:33:50 ryo Exp $	*/
 
 #include <aarch64/asm.h>
 #include "assym.h"
@@ -78,7 +78,7 @@
 
 
 	.align 11	/* vector table must be aligned 2048 */
-ENTRY(el1_vectors)
+ENTRY_NP(el1_vectors)
 /*
  * Exception taken from current Exception Level with SP_EL0.
  * (These shouldn't happen)
