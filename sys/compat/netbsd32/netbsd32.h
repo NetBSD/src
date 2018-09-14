@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32.h,v 1.116.2.6 2018/09/14 08:53:22 pgoyette Exp $	*/
+/*	$NetBSD: netbsd32.h,v 1.116.2.7 2018/09/14 09:21:33 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2008, 2015 Matthew R. Green
@@ -1175,6 +1175,7 @@ extern const char * const netbsd32_syscallnames[];
 
 extern struct sysctlnode netbsd32_sysctl_root;
 
+struct netbsd32_modctl_args;
 extern int (*vec_compat32_80_modctl)(struct lwp *,
     const struct netbsd32_modctl_args *, register_t *);
 
