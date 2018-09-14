@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.409 2018/09/03 16:29:36 riastradh Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.410 2018/09/14 04:25:16 maxv Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.409 2018/09/03 16:29:36 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.410 2018/09/14 04:25:16 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1194,7 +1194,7 @@ tcp_input(struct mbuf *m, ...)
 #endif
 	u_long tiwin;
 	struct tcp_opt_info opti;
-	int off, iphlen;
+	int thlen, iphlen;
 	va_list ap;
 	int af;		/* af on the wire */
 	struct mbuf *tcp_saveti = NULL;
@@ -1327,21 +1327,21 @@ tcp_input(struct mbuf *m, ...)
 	 * Check that TCP offset makes sense, pull out TCP options and
 	 * adjust length.
 	 */
-	off = th->th_off << 2;
-	if (off < sizeof(struct tcphdr) || off > tlen) {
+	thlen = th->th_off << 2;
+	if (thlen < sizeof(struct tcphdr) || thlen > tlen) {
 		TCP_STATINC(TCP_STAT_RCVBADOFF);
 		goto drop;
 	}
-	tlen -= off;
+	tlen -= thlen;
 
-	if (off > sizeof(struct tcphdr)) {
-		M_REGION_GET(th, struct tcphdr *, m, toff, off);
+	if (thlen > sizeof(struct tcphdr)) {
+		M_REGION_GET(th, struct tcphdr *, m, toff, thlen);
 		if (th == NULL) {
 			TCP_STATINC(TCP_STAT_RCVSHORT);
 			return;
 		}
 		KASSERT(TCP_HDR_ALIGNED_P(th));
-		optlen = off - sizeof(struct tcphdr);
+		optlen = thlen - sizeof(struct tcphdr);
 		optp = ((u_int8_t *)th) + sizeof(struct tcphdr);
 
 		/*
@@ -1368,7 +1368,7 @@ tcp_input(struct mbuf *m, ...)
 	/*
 	 * Checksum extended TCP header and data
 	 */
-	if (tcp_input_checksum(af, m, th, toff, off, tlen))
+	if (tcp_input_checksum(af, m, th, toff, thlen, tlen))
 		goto badcsum;
 
 	/*
@@ -2020,7 +2020,7 @@ after_listen:
 					if (!sbreserve(&so->so_rcv,
 					    newsize, so))
 						so->so_rcv.sb_flags &= ~SB_AUTOSIZE;
-				m_adj(m, toff + off);
+				m_adj(m, toff + thlen);
 				sbappendstream(&so->so_rcv, m);
 			}
 			sorwakeup(so);
@@ -2039,7 +2039,7 @@ after_listen:
 	/*
 	 * Compute mbuf offset to TCP data segment.
 	 */
-	hdroptlen = toff + off;
+	hdroptlen = toff + thlen;
 
 	/*
 	 * Calculate amount of space in receive window. Receive window is
