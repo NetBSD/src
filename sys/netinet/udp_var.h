@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_var.h,v 1.44 2018/08/22 01:05:24 msaitoh Exp $	*/
+/*	$NetBSD: udp_var.h,v 1.45 2018/09/14 05:09:51 maxv Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -85,7 +85,7 @@ void *udp_ctlinput(int, const struct sockaddr *, void *);
 int udp_ctloutput(int, struct socket *, struct sockopt *);
 void udp_init(void);
 void udp_init_common(void);
-void udp_input(struct mbuf *, ...);
+void udp_input(struct mbuf *, int, int);
 int udp_output(struct mbuf *, struct inpcb *, struct mbuf *, struct lwp *);
 int udp_input_checksum(int af, struct mbuf *, const struct udphdr *, int, int);
 void udp_statinc(u_int);

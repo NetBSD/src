@@ -1,5 +1,5 @@
 /*	$KAME: dccp_var.h,v 1.29 2005/11/03 14:59:28 nishida Exp $	*/
-/*	$NetBSD: dccp_var.h,v 1.4 2018/08/22 01:05:24 msaitoh Exp $ */
+/*	$NetBSD: dccp_var.h,v 1.5 2018/09/14 05:09:51 maxv Exp $ */
 
 /*
  * Copyright (c) 2003 Joacim Häggmark, Magnus Erixzon, Nils-Erik Mattsson 
@@ -287,7 +287,7 @@ extern struct inpcbtable dccpbtable;
 /* These four functions are called from inetsw (in_proto.c) */
 void	dccp_init(void);
 void	dccp_log(int, const char *, ...);
-void	dccp_input(struct mbuf *, ...);
+void	dccp_input(struct mbuf *, int, int);
 void*	dccp_ctlinput(int, const struct sockaddr *, void *);
 int	dccp_ctloutput(int , struct socket *, struct sockopt *);
 int	dccp_sysctl(int *, u_int, void *, size_t *, void *, size_t);
