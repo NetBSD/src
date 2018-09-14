@@ -1,4 +1,4 @@
-/*	$NetBSD: exynos_soc.c,v 1.35 2018/08/19 07:27:33 skrll Exp $	*/
+/*	$NetBSD: exynos_soc.c,v 1.36 2018/09/14 11:58:38 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #include "opt_exynos.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exynos_soc.c,v 1.35 2018/08/19 07:27:33 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exynos_soc.c,v 1.36 2018/09/14 11:58:38 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -475,7 +475,7 @@ exynos_clocks_bootstrap(void)
 
 
 void
-exynos_bootstrap(vaddr_t iobase)
+exynos_bootstrap(void)
 {
 	int error;
 	size_t core_size, audiocore_size;
@@ -485,6 +485,7 @@ exynos_bootstrap(vaddr_t iobase)
 	bus_addr_t exynos_pmu_offset;
 	bus_addr_t exynos_sysreg_offset;
 	bus_addr_t exynos_cmu_apll_offset;
+	const vaddr_t iobase = EXYNOS_CORE_VBASE;
 
 #ifdef SOC_EXYNOS4
 	core_size = EXYNOS4_CORE_SIZE;
