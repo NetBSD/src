@@ -1,4 +1,4 @@
-#	$NetBSD: files.kern,v 1.22 2018/08/20 11:35:28 maxv Exp $
+#	$NetBSD: files.kern,v 1.23 2018/09/14 01:55:19 mrg Exp $
 
 #
 # kernel sources
@@ -66,6 +66,7 @@ file	kern/kern_proc.c		kern
 file	kern/kern_prot.c		kern
 file	kern/kern_ras.c			kern
 file	kern/kern_rate.c		kern
+file	kern/kern_reboot.c		kern
 file	kern/kern_resource.c		kern
 file	kern/kern_rndpool.c		kern
 file	kern/kern_rndq.c		kern
@@ -73,6 +74,7 @@ file	kern/kern_rndsink.c		kern
 file	kern/kern_runq.c		kern
 file	kern/kern_rwlock.c		kern
 file	kern/kern_rwlock_obj.c		kern
+file	kern/kern_scdebug.c		kern
 file	kern/kern_sdt.c			kdtrace_hooks
 file	kern/kern_sig.c			kern
 file	kern/kern_sleepq.c		kern
@@ -90,7 +92,6 @@ file	kern/kern_turnstile.c		kern
 file	kern/kern_todr.c		kern
 file	kern/kern_uidinfo.c		kern
 file	kern/kern_uuid.c		kern
-file	kern/kern_xxx.c			kern
 file	kern/kgdb_stub.c		kgdb
 file	kern/sched_4bsd.c		sched_4bsd
 file	kern/sched_m2.c			sched_m2
