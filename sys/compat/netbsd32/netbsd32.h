@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32.h,v 1.116.2.5 2018/09/14 08:38:37 pgoyette Exp $	*/
+/*	$NetBSD: netbsd32.h,v 1.116.2.6 2018/09/14 08:53:22 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2008, 2015 Matthew R. Green
@@ -1166,6 +1166,17 @@ SYSCTL_SETUP_PROTO(netbsd32_sysctl_emul_setup);
 #endif /* SYSCTL_SETUP_PROTO */
 
 extern void (*vec_netbsd32_sendsig)(const ksiginfo_t *, const sigset_t *);
+
+extern struct sysent netbsd32_sysent[];
+extern const uint32_t netbsd32_sysent_nomodbits[]; 
+#ifdef SYSCALL_DEBUG 
+extern const char * const netbsd32_syscallnames[];
+#endif
+
+extern struct sysctlnode netbsd32_sysctl_root;
+
+extern int (*vec_compat32_80_modctl)(struct lwp *,
+    const struct netbsd32_modctl_args *, register_t *);
 
 /*
  * Finally, declare emul_netbsd32 as this is needed in lots of
