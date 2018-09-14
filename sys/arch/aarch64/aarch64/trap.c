@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.9 2018/09/10 17:25:15 ryo Exp $ */
+/* $NetBSD: trap.c,v 1.10 2018/09/14 13:47:14 ryo Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.9 2018/09/10 17:25:15 ryo Exp $");
+__KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.10 2018/09/14 13:47:14 ryo Exp $");
 
 #include "opt_arm_intr_impl.h"
 #include "opt_compat_netbsd32.h"
@@ -418,32 +418,6 @@ ucas_ras_check(struct trapframe *tf)
 		tf->tf_pc = (vaddr_t)ucas_64_ras_start;
 	}
 #endif
-}
-
-int
-copystr(const void *kfaddr, void *kdaddr, size_t len, size_t *done)
-{
-	struct faultbuf fb;
-	size_t i;
-	int error;
-	const char *src = kfaddr;
-	char *dst = kdaddr;
-
-	if ((error = cpu_set_onfault(&fb)) == 0) {
-		for (i = 0; i < len; i++) {
-			if ((*dst++ = *src++) == '\0') {
-				i++;
-				error = 0;
-				goto done;
-			}
-		}
-		error = ENAMETOOLONG;
- done:
-		if (done != NULL)
-			*done = i;
-		cpu_unset_onfault();
-	}
-	return error;
 }
 
 #ifdef TRAP_SIGDEBUG
