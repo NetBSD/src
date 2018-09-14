@@ -1,4 +1,4 @@
-/* $NetBSD: if_skreg.h,v 1.24 2018/07/11 00:46:39 kre Exp $ */
+/* $NetBSD: if_skreg.h,v 1.25 2018/09/14 18:46:47 jakllsch Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -1679,6 +1679,8 @@ struct sk_tx_desc {
 
 #define SK_TX_RING_CNT		512
 #define SK_RX_RING_CNT		256
+
+#define SK_Y2_BMUOPC_ADDR64	0x21
 
 struct msk_rx_desc {
 	u_int32_t		sk_addr;
