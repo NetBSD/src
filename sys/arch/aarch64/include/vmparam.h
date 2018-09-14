@@ -1,4 +1,4 @@
-/* $NetBSD: vmparam.h,v 1.5 2018/09/07 17:21:38 jmcneill Exp $ */
+/* $NetBSD: vmparam.h,v 1.6 2018/09/14 05:37:42 ryo Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -131,6 +131,7 @@
  * see also aarch64/pmap.c:pmap_devmap_*
  */
 #define VM_KERNEL_IO_ADDRESS	0xfffffffff0000000L
+#define VM_KERNEL_IO_SIZE	(VM_MAX_KERNEL_ADDRESS - VM_KERNEL_IO_ADDRESS)
 
 /* virtual sizes (bytes) for various kernel submaps */
 #define USRIOSIZE		(PAGE_SIZE / 8)
