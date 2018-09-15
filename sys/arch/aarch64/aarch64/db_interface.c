@@ -1,4 +1,4 @@
-/* $NetBSD: db_interface.c,v 1.5 2018/08/06 12:50:56 ryo Exp $ */
+/* $NetBSD: db_interface.c,v 1.6 2018/09/15 23:03:27 ryo Exp $ */
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.5 2018/08/06 12:50:56 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.6 2018/09/15 23:03:27 ryo Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -114,8 +114,13 @@ db_write_text(vaddr_t addr, size_t size, const char *data)
 		/* save pte */
 		pte = *ptep;
 
-		/* change to writable */
-		pmap_kvattr(addr, VM_PROT_READ|VM_PROT_WRITE);
+		/*
+		 * change to writable. require to keep execute permission.
+		 * because if the block/page to which the target address belongs and
+		 * the block/page to which this function itself belongs are the same,
+		 * if drop PROT_EXECUTE and TLB invalidate, the program stop...
+		 */
+		pmap_kvattr(addr, VM_PROT_EXECUTE|VM_PROT_READ|VM_PROT_WRITE);
 		aarch64_tlbi_all();
 
 		s = size;
