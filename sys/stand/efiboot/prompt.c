@@ -1,4 +1,4 @@
-/*	$NetBSD: prompt.c,v 1.2 2018/08/24 20:55:20 jmcneill Exp $	*/
+/*	$NetBSD: prompt.c,v 1.3 2018/09/15 16:41:37 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997
@@ -90,8 +90,7 @@ awaitkey(int timeout, int tell)
 			}
 		}
 		if (ischar()) {
-			while (ischar())
-				c = getchar();
+			c = getchar();
 			if (c == 0)
 				c = -1;
 			goto out;
