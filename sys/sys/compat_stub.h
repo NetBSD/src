@@ -1,4 +1,4 @@
-/* $NetBSD: compat_stub.h,v 1.1.2.16 2018/09/15 05:56:50 pgoyette Exp $	*/
+/* $NetBSD: compat_stub.h,v 1.1.2.17 2018/09/15 05:57:51 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@ extern int (*vec_ntp_timestatus)(void);
  */
 
 extern int (*compat_ccd_ioctl_60)(dev_t, u_long, void *, int, struct lwp *,
--    int (*f)(dev_t, u_long, void *, int, struct lwp *));
+    int (*f)(dev_t, u_long, void *, int, struct lwp *));
 
 /*
  * Routine vector for dev/clockctl ioctl()
