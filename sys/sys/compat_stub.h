@@ -1,4 +1,4 @@
-/* $NetBSD: compat_stub.h,v 1.1.2.17 2018/09/15 05:57:51 pgoyette Exp $	*/
+/* $NetBSD: compat_stub.h,v 1.1.2.18 2018/09/15 06:37:48 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -51,7 +51,7 @@ struct __CONCAT(name,_t) {			\
 	type			(*func)(args);	\
 } name __cacheline_aligned;
 #else	/* defined(MODULAR) */
-#define COMPAT_HOOK(name,type.args)		\
+#define COMPAT_HOOK(name,type,args)		\
 struct __CONCAT(name,_t) {			\
         bool			hooked;		\
 	type			(*func)(args);	\
