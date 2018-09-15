@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC64,v 1.35 2018/09/08 00:42:01 jmcneill Exp $
+#	$NetBSD: GENERIC64,v 1.36 2018/09/15 16:21:36 jmcneill Exp $
 #
 #	GENERIC ARM (aarch64) kernel
 #
@@ -233,8 +233,8 @@ ukphy*		at mii? phy ?		# generic unknown PHYs
 #athn*		at pci? dev ? function ?	# Atheros IEEE 802.11
 
 # UART
-com*		at fdt?			# UART
-plcom*		at fdt?			# ARM PL011 UART
+com*		at fdt?	pass 4		# UART
+plcom*		at fdt?	pass 4		# ARM PL011 UART
 
 # I2C controllers
 bsciic*		at fdt?			# Broadcom BCM283x Serial Control
@@ -326,6 +326,7 @@ options 	WSDISPLAY_COMPAT_SYSCONS
 options 	WSDISPLAY_COMPAT_USL
 options 	WSDISPLAY_COMPAT_RAWKBD
 options 	WSDISPLAY_DEFAULTSCREENS=4
+options 	WSDISPLAY_MULTICONS
 pseudo-device	wsmux
 pseudo-device	wsfont
 
