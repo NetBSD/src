@@ -1,4 +1,4 @@
-/*	$NetBSD: hpc.c,v 1.69 2016/07/24 16:47:49 macallan Exp $	*/
+/*	$NetBSD: hpc.c,v 1.70 2018/09/15 00:37:53 macallan Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpc.c,v 1.69 2016/07/24 16:47:49 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpc.c,v 1.70 2018/09/15 00:37:53 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -201,7 +201,7 @@ static const struct hpc_device hpc3_devices[] = {
 	  -1,
 	  HPCDEV_IP22 | HPCDEV_IP24 },
 
-	{ "panel",	/* Indy front panel */
+	{ "button",	/* Indy front panel */
 	  HPC_BASE_ADDRESS_0,
 	  HPC3_PBUS_CH6_DEVREGS + IOC_PANEL, 0,
 	  9,
