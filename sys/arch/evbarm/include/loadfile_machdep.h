@@ -26,7 +26,12 @@ extern u_long			load_offset;
 					else \
 						(void)printf("\n"); \
 				} while(/* CONSTCOND */0)
+#ifdef PROGRESS_FN
+void PROGRESS_FN(const char *, ...) __printflike(1, 2);
+#define PROGRESS(a)		PROGRESS_FN a
+#else
 #define PROGRESS(a)		(void)printf a
+#endif
 #define ALLOC(a)		alloc(a)
 #define DEALLOC(a, b)		dealloc(a, b)
 #define OKMAGIC(a)		((a) == ZMAGIC)
