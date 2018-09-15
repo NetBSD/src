@@ -1,4 +1,4 @@
-/* $NetBSD: db_trace.c,v 1.4 2018/07/30 15:59:44 ryo Exp $ */
+/* $NetBSD: db_trace.c,v 1.5 2018/09/15 19:16:58 jakllsch Exp $ */
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.4 2018/07/30 15:59:44 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.5 2018/09/15 19:16:58 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -89,7 +89,7 @@ getlwpnamebysp(uint64_t sp)
 
 static void
 pr_traceaddr(const char *prefix, uint64_t frame, uint64_t pc, int flags,
-    void (*pr)(const char *, ...))
+    void (*pr)(const char *, ...) __printflike(1, 2))
 {
 	db_expr_t offset;
 	db_sym_t sym;
@@ -100,27 +100,27 @@ pr_traceaddr(const char *prefix, uint64_t frame, uint64_t pc, int flags,
 		db_symbol_values(sym, &name, NULL);
 
 		if (flags & TRACEFLAG_LOOKUPLWP) {
-			(*pr)("%s %016llx %s %s() at %016llx ",
+			(*pr)("%s %016lx %s %s() at %016lx ",
 			    prefix, frame, getlwpnamebysp(frame), name, pc);
 		} else {
-			(*pr)("%s %016llx %s() at %016llx ",
+			(*pr)("%s %016lx %s() at %016lx ",
 			    prefix, frame, name, pc);
 		}
 		db_printsym(pc, DB_STGY_PROC, pr);
 		(*pr)("\n");
 	} else {
 		if (flags & TRACEFLAG_LOOKUPLWP) {
-			(*pr)("%s %016llx %s ?() at %016llx\n",
+			(*pr)("%s %016lx %s ?() at %016lx\n",
 			    prefix, frame, getlwpnamebysp(frame), pc);
 		} else {
-			(*pr)("%s %016llx ?() at %016llx\n", prefix, frame, pc);
+			(*pr)("%s %016lx ?() at %016lx\n", prefix, frame, pc);
 		}
 	}
 }
 
 void
 db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
-    const char *modif, void (*pr)(const char *, ...))
+    const char *modif, void (*pr)(const char *, ...) __printflike(1, 2))
 {
 	uint64_t lr, fp, lastlr, lastfp;
 	struct trapframe *tf = NULL;
@@ -196,26 +196,26 @@ db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
 		if (addr == (db_addr_t)curlwp) {
 			fp = (uint64_t)&DDB_REGS->tf_reg[29];	/* &reg[29]={fp,lr} */
 			tf = DDB_REGS;
-			(*pr)("trace: pid %d lid %d (curlwp) at tf %016lx\n",
+			(*pr)("trace: pid %d lid %d (curlwp) at tf %p\n",
 			    p.p_pid, l.l_lid, tf);
 		} else {
 			tf = l.l_md.md_ktf;
 			db_read_bytes((db_addr_t)&tf->tf_reg[29], sizeof(fp), (char *)&fp);
-			(*pr)("trace: pid %d lid %d at tf %016lx\n",
+			(*pr)("trace: pid %d lid %d at tf %p\n",
 			    p.p_pid, l.l_lid, tf);
 		}
 	} else if (tf == NULL) {
 		fp = addr;
-		pr("trace fp %016llx\n", fp);
+		pr("trace fp %016lx\n", fp);
 	} else {
-		pr("trace tf %016llx\n", tf);
+		pr("trace tf %p\n", tf);
 	}
 
 	if (count > MAXBACKTRACE)
 		count = MAXBACKTRACE;
 
 	if (tf != NULL) {
-		(*pr)("---- trapframe %016llx (%d bytes) ----\n",
+		(*pr)("---- trapframe %p (%zu bytes) ----\n",
 		    tf, sizeof(*tf));
 		dump_trapframe(tf, pr);
 		(*pr)("------------------------"
@@ -269,7 +269,7 @@ db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
 			if (lr == 0)
 				break;
 
-			(*pr)("---- trapframe %016llx (%d bytes) ----\n",
+			(*pr)("---- trapframe %p (%zu bytes) ----\n",
 			    tf, sizeof(*tf));
 			dump_trapframe(tf, pr);
 			(*pr)("------------------------"
