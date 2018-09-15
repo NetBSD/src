@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_09_mod.c,v 1.1.2.3 2018/09/13 22:53:52 pgoyette Exp $	*/
+/*	$NetBSD: compat_09_mod.c,v 1.1.2.4 2018/09/15 02:14:39 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_09_mod.c,v 1.1.2.3 2018/09/13 22:53:52 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_09_mod.c,v 1.1.2.4 2018/09/15 02:14:39 pgoyette Exp $");
 
 #include <sys/systm.h>
 #include <sys/module.h>
@@ -69,12 +69,8 @@ compat_09_fini(void)
 	return 0;
 }
 
-#define REQD_09_1	"compat_80,compat_70,compat_60,compat_50,"
-#define REQD_09_2	"compat_40,compat_30,compat_20,compat_16,"
-#define REQD_09_3	"compat_14,compat_13,compat_12,compat_10,"
-#define REQD_09_4	"compat_util,compat_sysctl_09_43"
-
-MODULE(MODULE_CLASS_EXEC, compat_09, REQD_09_1 REQD_09_2 REQD_09_3 REQD_09_4);
+MODULE(MODULE_CLASS_EXEC, compat_09,
+    "compat_10,compat_util,compat_sysctl_09_43");
 
 static int
 compat_09_modcmd(modcmd_t cmd, void *arg)
