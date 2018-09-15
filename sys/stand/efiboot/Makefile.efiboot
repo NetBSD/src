@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.efiboot,v 1.4 2018/09/09 17:55:22 jmcneill Exp $
+# $NetBSD: Makefile.efiboot,v 1.5 2018/09/15 17:06:32 jmcneill Exp $
 
 S=		${.CURDIR}/../../..
 
@@ -61,6 +61,7 @@ LDFLAGS+= --defsym=EFI_SUBSYSTEM=0xa
 COPTS+= ${${ACTIVE_CC} == "gcc":? -Wno-error=unused-but-set-variable :}
 CPPFLAGS+= -nostdinc -D_STANDALONE
 CPPFLAGS+= -DEFIBOOT
+CPPFLAGS+= -DPROGRESS_FN=efi_progress
 
 CPPFLAGS+= -Wall -Wmissing-prototypes
 CPPFLAGS+= -Wno-pointer-sign
