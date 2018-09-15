@@ -1,4 +1,4 @@
-/* $NetBSD: fdtvar.h,v 1.41 2018/09/09 21:14:04 jmcneill Exp $ */
+/* $NetBSD: fdtvar.h,v 1.42 2018/09/15 13:42:41 jakllsch Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -37,7 +37,9 @@
 #include <dev/pwm/pwmvar.h>
 #include <dev/clk/clk.h>
 
+#ifdef _KERNEL_OPT
 #include "audio.h"
+#endif
 #if NAUDIO > 0
 #include <dev/audio_dai.h>
 #else
