@@ -1,4 +1,4 @@
-/* $NetBSD: console.c,v 1.1 2018/08/24 02:01:06 jmcneill Exp $ */
+/* $NetBSD: console.c,v 1.2 2018/09/15 16:44:15 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -28,16 +28,25 @@
 
 #include "efiboot.h"
 
+static EFI_INPUT_KEY key_cur;
+static int key_pending;
+
 int
 getchar(void)
 {
 	EFI_STATUS status;
 	EFI_INPUT_KEY key;
 
-	status = uefi_call_wrapper(ST->ConIn->ReadKeyStroke, 2, ST->ConIn, &key);
-	while (status == EFI_NOT_READY) {
-		WaitForSingleEvent(ST->ConIn->WaitForKey, 0);
+	if (key_pending) {
+		key = key_cur;
+		key_pending = 0;
+	} else {
 		status = uefi_call_wrapper(ST->ConIn->ReadKeyStroke, 2, ST->ConIn, &key);
+		while (status == EFI_NOT_READY) {
+			if (ST->ConIn->WaitForKey != NULL)
+				WaitForSingleEvent(ST->ConIn->WaitForKey, 0);
+			status = uefi_call_wrapper(ST->ConIn->ReadKeyStroke, 2, ST->ConIn, &key);
+		}
 	}
 
 	return key.UnicodeChar;
@@ -55,9 +64,20 @@ putchar(int c)
 int
 ischar(void)
 {
+	EFI_INPUT_KEY key;
 	EFI_STATUS status;
 
-	status = uefi_call_wrapper(BS->CheckEvent, 1, ST->ConIn->WaitForKey);
-
-	return status == EFI_SUCCESS;
+	if (ST->ConIn->WaitForKey == NULL) {
+		if (key_pending)
+			return 1;
+		status = uefi_call_wrapper(ST->ConIn->ReadKeyStroke, 2, ST->ConIn, &key);
+		if (status == EFI_SUCCESS) {
+			key_cur = key;
+			key_pending = 1;
+		}
+		return key_pending;
+	} else {
+		status = uefi_call_wrapper(BS->CheckEvent, 1, ST->ConIn->WaitForKey);
+		return status == EFI_SUCCESS;
+	}
 }
