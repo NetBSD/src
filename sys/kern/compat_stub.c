@@ -1,4 +1,4 @@
-/* $NetBSD: compat_stub.c,v 1.1.2.15 2018/04/17 07:24:55 pgoyette Exp $	*/
+/* $NetBSD: compat_stub.c,v 1.1.2.16 2018/09/15 05:56:50 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -39,6 +39,11 @@
 #include <sys/systm.h>
 #include <sys/compat_stub.h>
 
+#ifdef NTP
+#include <sys/timespec.h>
+#include <sys/timex.h>
+#endif
+
 /*
  * Routine vectors for compat_50___sys_ntp_gettime
  */
@@ -49,6 +54,11 @@ int (*vec_ntp_timestatus)(void) = ntp_timestatus;
 #else
 void (*vec_ntp_gettime)(struct ntptimeval *) = NULL;
 int (*vec_ntp_timestatus)(void) = NULL;
+#endif
+
+#if NUSB > 0
+#include <dev/usb/usb.h>
+#include <dev/usb/usbdi.h>
 #endif
 
 /*
