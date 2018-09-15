@@ -1,4 +1,4 @@
-/* $NetBSD: db_trace.c,v 1.5 2018/09/15 19:16:58 jakllsch Exp $ */
+/* $NetBSD: db_trace.c,v 1.6 2018/09/15 19:47:48 jakllsch Exp $ */
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.5 2018/09/15 19:16:58 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.6 2018/09/15 19:47:48 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -53,8 +53,9 @@ __KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.5 2018/09/15 19:16:58 jakllsch Exp $"
 #define MAXBACKTRACE	128	/* against infinite loop */
 
 
+__CTASSERT(VM_MIN_ADDRESS == 0);
 #define IN_USER_VM_ADDRESS(addr)	\
-	((VM_MIN_ADDRESS <= (addr)) && ((addr) < VM_MAX_ADDRESS))
+	((addr) < VM_MAX_ADDRESS)
 #define IN_KERNEL_VM_ADDRESS(addr)	\
 	((VM_MIN_KERNEL_ADDRESS <= (addr)) && ((addr) < VM_MAX_KERNEL_ADDRESS))
 
@@ -74,6 +75,7 @@ is_lwp(void *p)
 static const char *
 getlwpnamebysp(uint64_t sp)
 {
+#if defined(_KERNEL)
 	lwp_t *lwp;
 
 	for (lwp = db_lwp_first(); lwp != NULL; lwp = db_lwp_next(lwp)) {
@@ -82,6 +84,7 @@ getlwpnamebysp(uint64_t sp)
 			return lwp->l_name;
 		}
 	}
+#endif
 	return "unknown";
 }
 
@@ -157,6 +160,7 @@ db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
 		}
 	}
 
+#if defined(_KERNEL)
 	if (!have_addr) {
 		if (trace_lwp) {
 			addr = (db_expr_t)curlwp;
@@ -166,6 +170,7 @@ db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
 			tf = DDB_REGS;
 		}
 	}
+#endif
 
 	if (trace_thread) {
 		proc_t *pp, p;
@@ -193,12 +198,15 @@ db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
 		db_read_bytes(addr, sizeof(l), (char *)&l);
 		db_read_bytes((db_addr_t)l.l_proc, sizeof(p), (char *)&p);
 
-		if (addr == (db_addr_t)curlwp) {
+#if defined(_KERNEL)
+		if (addr == (db_expr_t)curlwp) {
 			fp = (uint64_t)&DDB_REGS->tf_reg[29];	/* &reg[29]={fp,lr} */
 			tf = DDB_REGS;
 			(*pr)("trace: pid %d lid %d (curlwp) at tf %p\n",
 			    p.p_pid, l.l_lid, tf);
-		} else {
+		} else
+#endif
+		{
 			tf = l.l_md.md_ktf;
 			db_read_bytes((db_addr_t)&tf->tf_reg[29], sizeof(fp), (char *)&fp);
 			(*pr)("trace: pid %d lid %d at tf %p\n",
@@ -215,12 +223,14 @@ db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
 		count = MAXBACKTRACE;
 
 	if (tf != NULL) {
+#if defined(_KERNEL)
 		(*pr)("---- trapframe %p (%zu bytes) ----\n",
 		    tf, sizeof(*tf));
 		dump_trapframe(tf, pr);
 		(*pr)("------------------------"
 		      "------------------------\n");
 
+#endif
 		lastfp = lastlr = lr = fp = 0;
 		db_read_bytes((db_addr_t)&tf->tf_pc, sizeof(lr), (char *)&lr);
 		db_read_bytes((db_addr_t)&tf->tf_reg[29], sizeof(fp), (char *)&fp);
@@ -243,6 +253,7 @@ db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
 		if (!trace_user && IN_USER_VM_ADDRESS(lr))
 			break;
 
+#if defined(_KERNEL)
 		extern char el1_trap[];	/* XXX */
 		extern char el0_trap[];	/* XXX */
 		if (((char *)(lr - 4) == (char *)el0_trap) ||
@@ -281,7 +292,9 @@ db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
 
 			pr_traceaddr("fp", fp, lr, flags, pr);
 
-		} else {
+		} else
+#endif
+		{
 			pr_traceaddr("fp", fp, lr - 4, flags, pr);
 		}
 	}

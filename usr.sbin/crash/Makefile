@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.40 2018/05/20 03:09:02 christos Exp $
+#	$NetBSD: Makefile,v 1.41 2018/09/15 19:47:48 jakllsch Exp $
 
 PROG=		crash
 MAN=		crash.8
@@ -19,6 +19,7 @@ DPADD+=	${LIBUTIL} ${LIBKVM} ${LIBEDIT} ${LIBTERMINFO}
     || ${MACHINE} == "sparc" \
     || ${MACHINE} == "sparc64" \
     || ${MACHINE_CPU} == "arm" \
+    || ${MACHINE_CPU} == "aarch64" \
     || ${MACHINE_ARCH} == "m68k"
 SRCS+=	db_trace.c
 .if ${MACHINE_ARCH} != "m68k"
@@ -67,6 +68,9 @@ MACHINE_FAMILY = ${MACHINE_CPU}
 .if ${MACHINE_CPU} == "arm"
 .PATH:	${S}/arch/arm/arm32
 SRCS+=disassem.c cpufunc_asm.S
+.endif
+.if ${MACHINE_CPU} == "aarch64"
+SRCS+=disasm.c
 .endif
 
 .PATH:	${S}/arch/${MACHINE_FAMILY}/${MACHINE_FAMILY}
