@@ -1,4 +1,4 @@
-/* $NetBSD: compat_stub.h,v 1.1.2.15 2018/04/17 07:24:55 pgoyette Exp $	*/
+/* $NetBSD: compat_stub.h,v 1.1.2.16 2018/09/15 05:56:50 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -32,12 +32,37 @@
 #ifndef _SYS_COMPAT_STUB_H
 #define _SYS_COMPAT_STUB_H
 
+#include <sys/mutex.h>
+#include <sys/localcount.h>
+#include <sys/condvar.h>
+#include <sys/pserialize.h>
+
+/*
+ * Macro for creating MP-safe vectored function calls
+ */
+#if defined(MODULAR)
+#define COMPAT_HOOK(name,type,args)		\
+struct __CONCAT(name,_t) {			\
+	kmutex_t		lock;		\
+	kcondvar_t		cv;		\
+	struct localcount	lc;		\
+	pserialize_t		psz;		\
+        bool			hooked;		\
+	type			(*func)(args);	\
+} name __cacheline_aligned;
+#else	/* defined(MODULAR) */
+#define COMPAT_HOOK(name,type.args)		\
+struct __CONCAT(name,_t) {			\
+        bool			hooked;		\
+	type			(*func)(args);	\
+} name __cacheline_aligned;
+#endif	/* defined(MODULAR) */
+
 /*
  * Routine vectors for compat_50___sys_ntp_gettime
  */
 
-#include <sys/timespec.h>
-#include <sys/timex.h>
+struct ntptimeval;
 
 extern void (*vec_ntp_gettime)(struct ntptimeval *);
 extern int (*vec_ntp_timestatus)(void);
@@ -47,7 +72,7 @@ extern int (*vec_ntp_timestatus)(void);
  */
 
 extern int (*compat_ccd_ioctl_60)(dev_t, u_long, void *, int, struct lwp *,
-    int (*f)(dev_t, u_long, void *, int, struct lwp *));
+-    int (*f)(dev_t, u_long, void *, int, struct lwp *));
 
 /*
  * Routine vector for dev/clockctl ioctl()
@@ -127,9 +152,6 @@ extern int (*compat_vndioctl_30)(u_long, struct lwp *, void *, int,
 /*
  * usb devinfo compatability
  */
-
-#include <dev/usb/usb.h>
-#include <dev/usb/usbdi.h>
 
 struct usbd_device;
 struct usb_device_info;
