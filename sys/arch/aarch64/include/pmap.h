@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.h,v 1.9 2018/09/10 15:14:50 maxv Exp $ */
+/* $NetBSD: pmap.h,v 1.10 2018/09/15 19:47:48 jakllsch Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -34,6 +34,7 @@
 
 #ifdef __aarch64__
 
+#ifdef _KERNEL
 #include <sys/types.h>
 #include <sys/pool.h>
 #include <sys/queue.h>
@@ -215,6 +216,8 @@ aarch64_mmap_flags(paddr_t mdpgno)
 bool	pmap_extract_coherency(pmap_t, vaddr_t, paddr_t *, bool *);
 
 #define	PMAP_MAPSIZE1	L2_SIZE
+
+#endif /* _KERNEL */
 
 #elif defined(__arm__)
 
