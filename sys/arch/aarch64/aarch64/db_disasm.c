@@ -1,4 +1,4 @@
-/* $NetBSD: db_disasm.c,v 1.3 2018/07/17 10:07:49 ryo Exp $ */
+/* $NetBSD: db_disasm.c,v 1.4 2018/09/15 19:47:48 jakllsch Exp $ */
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.3 2018/07/17 10:07:49 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.4 2018/09/15 19:47:48 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <machine/db_machdep.h>
@@ -35,6 +35,7 @@ __KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.3 2018/07/17 10:07:49 ryo Exp $");
 #include <ddb/db_sym.h>
 #include <ddb/db_output.h>
 #include <ddb/db_access.h>
+#include <ddb/db_user.h>
 
 #include <arch/aarch64/aarch64/disasm.h>
 
