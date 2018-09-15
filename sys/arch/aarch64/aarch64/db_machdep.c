@@ -1,4 +1,4 @@
-/* $NetBSD: db_machdep.c,v 1.7 2018/08/14 05:51:54 ryo Exp $ */
+/* $NetBSD: db_machdep.c,v 1.8 2018/09/15 19:47:48 jakllsch Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.7 2018/08/14 05:51:54 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.8 2018/09/15 19:47:48 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,6 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.7 2018/08/14 05:51:54 ryo Exp $");
 #include <ddb/db_sym.h>
 #include <ddb/db_extern.h>
 #include <ddb/db_interface.h>
+#include <ddb/db_user.h>
 
 #include <dev/cons.h>
 
@@ -78,6 +79,7 @@ const struct db_command db_machine_command_table[] = {
 		    NULL, NULL)
 	},
 #endif
+#if defined(_KERNEL)
 	{
 		DDB_ADD_CMD(
 		    "cpuinfo", db_md_cpuinfo_cmd, 0,
@@ -124,6 +126,7 @@ const struct db_command db_machine_command_table[] = {
 		    "<param>",
 		    "\tparam: <address> | <#>")
 	},
+#endif
 	{
 		DDB_ADD_CMD(NULL, NULL, 0,
 		    NULL,
@@ -215,6 +218,7 @@ dump_trapframe(struct trapframe *tf, void (*pr)(const char *, ...))
 	    tf->tf_reg[30],  tf->tf_sp);
 }
 
+#if defined(_KERNEL)
 void
 db_md_cpuinfo_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
     const char *modif)
@@ -715,6 +719,7 @@ db_md_watch_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
 
 	show_watchpoints();
 }
+#endif
 
 #ifdef MULTIPROCESSOR
 volatile struct cpu_info *db_trigger;
@@ -755,6 +760,7 @@ db_md_switch_cpu_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
 #endif /* _KERNEL */
 #endif /* MULTIPROCESSOR */
 
+#ifdef DDB
 int
 kdb_trap(int type, struct trapframe *tf)
 {
@@ -846,3 +852,4 @@ kdb_trap(int type, struct trapframe *tf)
 
 	return 1;
 }
+#endif
