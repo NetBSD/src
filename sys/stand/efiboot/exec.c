@@ -1,4 +1,4 @@
-/* $NetBSD: exec.c,v 1.5 2018/09/09 13:37:54 jmcneill Exp $ */
+/* $NetBSD: exec.c,v 1.6 2018/09/15 17:06:32 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "efiboot.h"
 #include "efifdt.h"
 
-#include <loadfile.h>
+#include <sys/reboot.h>
 
 u_long load_offset = 0;
 
@@ -109,13 +109,16 @@ exec_netbsd(const char *fname, const char *args)
 	EFI_PHYSICAL_ADDRESS addr;
 	u_long marks[MARK_MAX], alloc_size;
 	EFI_STATUS status;
-	int fd;
+	int fd, ohowto;
 
 	load_file(get_initrd_path(), &initrd_addr, &initrd_size);
 	load_file(get_dtb_path(), &dtb_addr, &dtb_size);
 
 	memset(marks, 0, sizeof(marks));
+	ohowto = howto;
+	howto |= AB_SILENT;
 	fd = loadfile(fname, marks, COUNT_KERNEL | LOAD_NOTE);
+	howto = ohowto;
 	if (fd < 0) {
 		printf("boot: %s: %s\n", fname, strerror(errno));
 		return EIO;
