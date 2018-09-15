@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.12 2018/09/15 17:42:38 martin Exp $ */
+/*	$NetBSD: md.c,v 1.13 2018/09/15 18:04:21 martin Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -67,6 +67,8 @@ static int mbr_root_above_chs(void);
 static void md_upgrade_mbrtype(void);
 static int md_read_bootcode(const char *, struct mbr_sector *);
 static unsigned int get_bootmodel(void);
+
+static int conmib[] = {CTL_MACHDEP, CPU_CONSDEV};
 
 void
 md_init(void)
@@ -313,7 +315,6 @@ md_post_newfs(void)
 		"com3kbd" /* CONSDEV_COM3KBD */ };
 	static struct x86_boot_params boottype =
 		{sizeof boottype, 0, 5, 0, 9600, { '\0' }, "", 0};
-	static int conmib[] = {CTL_MACHDEP, CPU_CONSDEV};
 	struct termios t;
 	dev_t condev;
 
@@ -380,6 +381,9 @@ md_post_extract(void)
 void
 md_cleanup_install(void)
 {
+	size_t len;
+	dev_t condev;
+
 #ifndef DEBUG
 	enable_rc_conf();
 	add_rc_conf("wscons=YES\n");
@@ -400,6 +404,24 @@ md_cleanup_install(void)
 			    "H;$!d;g;w /etc/ttys' /etc/ttys");
 
 #endif
+
+	/*
+	 * Get console device, should either be ttyE0 or tty0n.
+	 * Too hard to double check, so just 'know' the device numbers.
+	 */
+	len = sizeof condev;
+	if (sysctl(conmib, nelem(conmib), &condev, &len, NULL, 0) != -1
+	    && (condev & ~3) != 0x800) {
+
+		/*
+		 * Current console is not com*, assume ttyE*.
+		 * Modify /etc/ttys to use wsvt25 for all ports.
+		 */
+
+		run_program(RUN_CHROOT,
+			    "sed -an -e 's/vt100/wsvt25/g;"
+			    "H;$!d;g;w  /etc/ttys' /etc/ttys");
+	}
 }
 
 int
