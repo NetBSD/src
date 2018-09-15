@@ -1,7 +1,7 @@
-/*	$NetBSD: setjmp.h,v 1.2 2018/04/01 04:35:05 ryo Exp $	*/
+/*	$NetBSD: setjmp.h,v 1.3 2018/09/15 15:22:06 jakllsch Exp $	*/
 
 #ifdef __aarch64__
-#include <arch64/setjmp.h>
+#include <aarch64/setjmp.h>
 #else
 #include <arm/setjmp.h>
 #endif
