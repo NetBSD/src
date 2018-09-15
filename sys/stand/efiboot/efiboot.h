@@ -1,4 +1,4 @@
-/*	$NetBSD: efiboot.h,v 1.6 2018/09/09 18:00:20 jmcneill Exp $	*/
+/*	$NetBSD: efiboot.h,v 1.7 2018/09/15 17:06:32 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -32,6 +32,8 @@
 #include <lib/libsa/stand.h>
 #include <lib/libkern/libkern.h>
 
+#include <loadfile.h>
+
 #include "efiboot_machdep.h"
 
 struct boot_command {
@@ -56,6 +58,7 @@ int set_initrd_path(char *);
 char *get_initrd_path(void);
 int set_dtb_path(char *);
 char *get_dtb_path(void);
+extern int howto;
 
 /* console.c */
 int ischar(void);
