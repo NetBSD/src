@@ -1,4 +1,4 @@
-/* $NetBSD: compat_stub.h,v 1.1.2.18 2018/09/15 06:37:48 pgoyette Exp $	*/
+/* $NetBSD: compat_stub.h,v 1.1.2.19 2018/09/16 00:40:27 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -32,34 +32,152 @@
 #ifndef _SYS_COMPAT_STUB_H
 #define _SYS_COMPAT_STUB_H
 
+#include <sys/param.h>	/* for COHERENCY_UNIT, for __cacheline_aligned */
 #include <sys/mutex.h>
 #include <sys/localcount.h>
 #include <sys/condvar.h>
 #include <sys/pserialize.h>
 
 /*
- * Macro for creating MP-safe vectored function calls
+ * Macros for creating MP-safe vectored function calls, where
+ * the function implementations are in modules which could be
+ * unloaded.
  */
-#if defined(MODULAR)
-#define COMPAT_HOOK(name,type,args)		\
-struct __CONCAT(name,_t) {			\
-	kmutex_t		lock;		\
-	kcondvar_t		cv;		\
-	struct localcount	lc;		\
-	pserialize_t		psz;		\
-        bool			hooked;		\
-	type			(*func)(args);	\
-} name __cacheline_aligned;
-#else	/* defined(MODULAR) */
-#define COMPAT_HOOK(name,type,args)		\
-struct __CONCAT(name,_t) {			\
-        bool			hooked;		\
-	type			(*func)(args);	\
-} name __cacheline_aligned;
-#endif	/* defined(MODULAR) */
+
+#define COMPAT_HOOK(hook,type,args)				\
+extern struct __CONCAT(hook,_t) {				\
+	kmutex_t		lock;				\
+	kcondvar_t		cv;				\
+	struct localcount	lc;				\
+	pserialize_t		psz;				\
+        bool			hooked;				\
+	type			(*func)args;			\
+} hook __cacheline_aligned;
+
+#define COMPAT_HOOK2(hook,type1,args1,type2,args2)		\
+extern struct __CONCAT(hook,_t) {				\
+	kmutex_t		lock;				\
+	kcondvar_t		cv;				\
+	struct localcount	lc;				\
+	pserialize_t		psz;				\
+        bool			hooked;				\
+	type1			(*func1)args1;			\
+	type2			(*func2)args2;			\
+} hook __cacheline_aligned;
+
+#define COMPAT_SET_HOOK(hook, waitchan, f)			\
+static void __CONCAT(hook,sethook)(void)			\
+{								\
+								\
+	KASSERT(!hook.hooked);					\
+								\
+	hook.psz = pserialize_create();				\
+	mutex_init(&hook.mtx, MUTEX_DEFAULT, IPL_NONE);		\
+	cv_init(&hook.cv, waitchan);				\
+	localcount_init(&hook.lc);				\
+	hook.func = f;						\
+								\
+	/* Make sure it's initialized before anyone uses it */	\
+	membar_producer();					\
+								\
+	/* Let them use it */					\
+	hook.hooked = true;					\
+}
+
+#define COMPAT_SET_HOOK2(hook, waitchan, f1, f2)		\
+static void __CONCAT(hook,sethook)(void)			\
+{								\
+								\
+	KASSERT(!hook.hooked);					\
+								\
+	hook.psz = pserialize_create();				\
+	mutex_init(&hook.mtx, MUTEX_DEFAULT, IPL_NONE);		\
+	cv_init(&hook.cv, waitchan);				\
+	localcount_init(&hook.lc);				\
+	hook.func1 = f1;					\
+	hook.func2 = f2;					\
+								\
+	/* Make sure it's initialized before anyone uses it */	\
+	membar_producer();					\
+								\
+	/* Let them use it */					\
+	hook.hooked = true;					\
+}
+
+#define COMPAT_UNSET_HOOK(hook)					\
+static void __CONCAT(hook,unsethook)(void)			\
+{								\
+								\
+	KASSERT(kernconfig_is_held());				\
+	KASSERT(hook.hooked);					\
+	KASSERT(hook.func);					\
+								\
+	/* Prevent new localcount_acquire calls.  */		\
+	hook.hooked = false;					\
+								\
+	/* Wait for existing localcount_acquire calls to drain.  */ \
+	pserialize_perform(hook.psz);				\
+								\
+	/* Wait for existing localcount references to drain.  */\
+	localcount_drain(&hook.lc, &hook.cv, &hook.mtx);	\
+								\
+	localcount_fini(&hook.lc);				\
+	cv_destroy(&hook.cv);					\
+	mutex_destroy(&hook.mtx);				\
+	pserialize_destroy(hook.psz);				\
+}
+
+#define COMPAT_UNSET_HOOK2(hook)				\
+static void __CONCAT(hook,unsethook)(void)			\
+{								\
+								\
+	KASSERT(kernconfig_is_held());				\
+	KASSERT(hook.hooked);					\
+	KASSERT(hook.func1);					\
+	KASSERT(hook.func2);					\
+								\
+	/* Prevent new localcount_acquire calls.  */		\
+	hook.hooked = false;					\
+								\
+	/* Wait for existing localcount_acquire calls to drain.  */ \
+	pserialize_perform(hook.psz);				\
+								\
+	/* Wait for existing localcount references to drain.  */\
+	localcount_drain(&hook.lc, &hook.cv, &hook.mtx);	\
+								\
+	localcount_fini(&hook.lc);				\
+	cv_destroy(&hook.cv);					\
+	mutex_destroy(&hook.mtx);				\
+	pserialize_destroy(hook.psz);				\
+}
+
+#define COMPAT_CALL_HOOK(hook, which, args, no_hook)		\
+type								\
+__CONCAT(call_,hook)(args)					\
+{								\
+	bool hooked;						\
+	int error, s;						\
+								\
+	s = pserialize_read_enter();				\
+	hooked = hook.hooked;					\
+	if (hooked) {						\
+		membar_consumer():				\
+		localcount_acquire(&hook.lc);			\
+	}							\
+	pserialize_read_exit();					\
+								\
+	if (hooked) {						\
+		error = (*hook.which)(args);			\
+		localcount_release(&hook.lc, &hook.cv,		\
+		    &hook.mtx);					\
+	} else {						\
+		error = no_hook(args);				\
+	}							\
+	return error;						\
+;
 
 /*
- * Routine vectors for compat_50___sys_ntp_gettime
+ * Routine hooks for compat_50___sys_ntp_gettime
  */
 
 struct ntptimeval;
@@ -67,12 +185,17 @@ struct ntptimeval;
 extern void (*vec_ntp_gettime)(struct ntptimeval *);
 extern int (*vec_ntp_timestatus)(void);
 
+COMPAT_HOOK2(ntp_gettime_hooks, void, (struct ntptimeval *), int, (void))
+
 /*
  * Routine vector for dev/ccd ioctl()
  */
 
 extern int (*compat_ccd_ioctl_60)(dev_t, u_long, void *, int, struct lwp *,
     int (*f)(dev_t, u_long, void *, int, struct lwp *));
+
+COMPAT_HOOK(ccd_ioctl_hook, int, (dev_t, u_long, void *, int, struct lwp *,
+    int (*f)(dev_t, u_long, void *, int, struct lwp *)))
 
 /*
  * Routine vector for dev/clockctl ioctl()
