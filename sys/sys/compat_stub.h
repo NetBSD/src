@@ -1,4 +1,4 @@
-/* $NetBSD: compat_stub.h,v 1.1.2.21 2018/09/16 02:16:21 pgoyette Exp $	*/
+/* $NetBSD: compat_stub.h,v 1.1.2.22 2018/09/16 04:56:26 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -37,6 +37,7 @@
 #include <sys/localcount.h>
 #include <sys/condvar.h>
 #include <sys/pserialize.h>
+#include <sys/atomic.h>
 
 /*
  * Macros for creating MP-safe vectored function calls, where
@@ -45,8 +46,8 @@
  */
 
 #define COMPAT_HOOK(hook,args)					\
-extern struct __CONCAT(hook,_t) {				\
-	kmutex_t		lock;				\
+extern struct hook ## _t {					\
+	kmutex_t		mtx;				\
 	kcondvar_t		cv;				\
 	struct localcount	lc;				\
 	pserialize_t		psz;				\
@@ -55,8 +56,8 @@ extern struct __CONCAT(hook,_t) {				\
 } hook __cacheline_aligned;
 
 #define COMPAT_HOOK2(hook,args1,args2)				\
-extern struct __CONCAT(hook,_t) {				\
-	kmutex_t		lock;				\
+extern struct hook ## _t {					\
+	kmutex_t		mtx;				\
 	kcondvar_t		cv;				\
 	struct localcount	lc;				\
 	pserialize_t		psz;				\
@@ -66,7 +67,8 @@ extern struct __CONCAT(hook,_t) {				\
 } hook __cacheline_aligned;
 
 #define COMPAT_SET_HOOK(hook, waitchan, func)			\
-static void __CONCAT(hook,sethook)(void)			\
+static void hook ## _set(void);					\
+static void hook ## _set(void)					\
 {								\
 								\
 	KASSERT(!hook.hooked);					\
@@ -85,7 +87,8 @@ static void __CONCAT(hook,sethook)(void)			\
 }
 
 #define COMPAT_SET_HOOK2(hook, waitchan, func1, func2)		\
-static void __CONCAT(hook,sethook)(void)			\
+static void hook ## _set(void);					\
+static void hook ## _set(void)					\
 {								\
 								\
 	KASSERT(!hook.hooked);					\
@@ -105,7 +108,8 @@ static void __CONCAT(hook,sethook)(void)			\
 }
 
 #define COMPAT_UNSET_HOOK(hook)					\
-static void __CONCAT(hook,unsethook)(void)			\
+static void (hook ## _unset)(void);				\
+static void (hook ## _unset)(void)				\
 {								\
 								\
 	KASSERT(kernconfig_is_held());				\
@@ -128,7 +132,8 @@ static void __CONCAT(hook,unsethook)(void)			\
 }
 
 #define COMPAT_UNSET_HOOK2(hook)				\
-static void __CONCAT(hook,unsethook)(void)			\
+static void (hook ## _unset)(void);				\
+static void (hook ## _unset)(void)				\
 {								\
 								\
 	KASSERT(kernconfig_is_held());				\
@@ -151,9 +156,11 @@ static void __CONCAT(hook,unsethook)(void)			\
 	pserialize_destroy(hook.psz);				\
 }
 
-#define COMPAT_CALL_HOOK(hook, which, decl, args, no_hook)	\
+#define COMPAT_CALL_HOOK(hook, which, decl, args, default)	\
 int								\
-__CONCAT(call_,hook_which)(decl)				\
+hook ## _ ## which ## _call decl;				\
+int								\
+hook ## _ ## which ## _call decl				\
 {								\
 	bool hooked;						\
 	int error, s;						\
@@ -161,20 +168,20 @@ __CONCAT(call_,hook_which)(decl)				\
 	s = pserialize_read_enter();				\
 	hooked = hook.hooked;					\
 	if (hooked) {						\
-		membar_consumer():				\
+		membar_consumer();				\
 		localcount_acquire(&hook.lc);			\
 	}							\
-	pserialize_read_exit();					\
+	pserialize_read_exit(s);				\
 								\
 	if (hooked) {						\
-		error = (*hook.which)(args);			\
+		error = (*hook.which)args;			\
 		localcount_release(&hook.lc, &hook.cv,		\
 		    &hook.mtx);					\
 	} else {						\
-		error = no_hook(args);				\
+		error = default;				\
 	}							\
 	return error;						\
-;
+}
 
 /*
  * Routine hooks for compat_50___sys_ntp_gettime
@@ -185,7 +192,7 @@ struct ntptimeval;
 extern void (*vec_ntp_gettime)(struct ntptimeval *);
 extern int (*vec_ntp_timestatus)(void);
 
-COMPAT_HOOK2(ntp_gettime_hooks, void, (struct ntptimeval *), int, (void))
+COMPAT_HOOK2(ntp_gettime_hooks, (struct ntptimeval *), (void))
 
 /*
  * Routine vector for dev/ccd ioctl()
