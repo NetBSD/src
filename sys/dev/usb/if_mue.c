@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mue.c,v 1.15 2018/09/16 01:41:28 rin Exp $	*/
+/*	$NetBSD: if_mue.c,v 1.16 2018/09/16 01:44:11 rin Exp $	*/
 /*	$OpenBSD: if_mue.c,v 1.3 2018/08/04 16:42:46 jsg Exp $	*/
 
 /*
@@ -20,7 +20,7 @@
 /* Driver for Microchip LAN7500/LAN7800 chipsets. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mue.c,v 1.15 2018/09/16 01:41:28 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mue.c,v 1.16 2018/09/16 01:44:11 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1443,7 +1443,7 @@ mue_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 
 	usbd_get_xfer_status(xfer, NULL, NULL, &totlen, NULL);
 
-	KASSERTMSG(totlen <= sc->mue_rxbufsz, "%u <= %u",
+	KASSERTMSG(totlen <= sc->mue_rxbufsz, "%u vs %u",
 	    totlen, sc->mue_rxbufsz);
 
 	do {
