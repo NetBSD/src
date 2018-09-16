@@ -1,4 +1,4 @@
-/* $NetBSD: compat_stub.h,v 1.1.2.20 2018/09/16 01:51:58 pgoyette Exp $	*/
+/* $NetBSD: compat_stub.h,v 1.1.2.21 2018/09/16 02:16:21 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -51,7 +51,7 @@ extern struct __CONCAT(hook,_t) {				\
 	struct localcount	lc;				\
 	pserialize_t		psz;				\
         bool			hooked;				\
-	int			(*func)args;			\
+	int			(*f)args;			\
 } hook __cacheline_aligned;
 
 #define COMPAT_HOOK2(hook,args1,args2)				\
@@ -61,11 +61,11 @@ extern struct __CONCAT(hook,_t) {				\
 	struct localcount	lc;				\
 	pserialize_t		psz;				\
         bool			hooked;				\
-	int			(*func1)args1;			\
-	int			(*func2)args2;			\
+	int			(*f1)args1;			\
+	int			(*f2)args2;			\
 } hook __cacheline_aligned;
 
-#define COMPAT_SET_HOOK(hook, waitchan, f)			\
+#define COMPAT_SET_HOOK(hook, waitchan, func)			\
 static void __CONCAT(hook,sethook)(void)			\
 {								\
 								\
@@ -75,7 +75,7 @@ static void __CONCAT(hook,sethook)(void)			\
 	mutex_init(&hook.mtx, MUTEX_DEFAULT, IPL_NONE);		\
 	cv_init(&hook.cv, waitchan);				\
 	localcount_init(&hook.lc);				\
-	hook.func = f;						\
+	hook.f = func;						\
 								\
 	/* Make sure it's initialized before anyone uses it */	\
 	membar_producer();					\
@@ -84,7 +84,7 @@ static void __CONCAT(hook,sethook)(void)			\
 	hook.hooked = true;					\
 }
 
-#define COMPAT_SET_HOOK2(hook, waitchan, f1, f2)		\
+#define COMPAT_SET_HOOK2(hook, waitchan, func1, func2)		\
 static void __CONCAT(hook,sethook)(void)			\
 {								\
 								\
@@ -94,8 +94,8 @@ static void __CONCAT(hook,sethook)(void)			\
 	mutex_init(&hook.mtx, MUTEX_DEFAULT, IPL_NONE);		\
 	cv_init(&hook.cv, waitchan);				\
 	localcount_init(&hook.lc);				\
-	hook.func1 = f1;					\
-	hook.func2 = f2;					\
+	hook.f1 = func1;					\
+	hook.f2 = func2;					\
 								\
 	/* Make sure it's initialized before anyone uses it */	\
 	membar_producer();					\
@@ -110,7 +110,7 @@ static void __CONCAT(hook,unsethook)(void)			\
 								\
 	KASSERT(kernconfig_is_held());				\
 	KASSERT(hook.hooked);					\
-	KASSERT(hook.func);					\
+	KASSERT(hook.f);					\
 								\
 	/* Prevent new localcount_acquire calls.  */		\
 	hook.hooked = false;					\
@@ -133,8 +133,8 @@ static void __CONCAT(hook,unsethook)(void)			\
 								\
 	KASSERT(kernconfig_is_held());				\
 	KASSERT(hook.hooked);					\
-	KASSERT(hook.func1);					\
-	KASSERT(hook.func2);					\
+	KASSERT(hook.f1);					\
+	KASSERT(hook.f2);					\
 								\
 	/* Prevent new localcount_acquire calls.  */		\
 	hook.hooked = false;					\
@@ -151,9 +151,9 @@ static void __CONCAT(hook,unsethook)(void)			\
 	pserialize_destroy(hook.psz);				\
 }
 
-#define COMPAT_CALL_HOOK(hook, which, args, no_hook)		\
+#define COMPAT_CALL_HOOK(hook, which, decl, args, no_hook)	\
 int								\
-__CONCAT(call_,hook)(args)					\
+__CONCAT(call_,hook_which)(decl)				\
 {								\
 	bool hooked;						\
 	int error, s;						\
