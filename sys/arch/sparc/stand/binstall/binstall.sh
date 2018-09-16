@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: binstall.sh,v 1.15 2006/07/12 21:34:45 he Exp $
+#	$NetBSD: binstall.sh,v 1.16 2018/09/16 14:23:04 kre Exp $
 #
 
 vecho () {
@@ -119,7 +119,7 @@ case $WHAT in
 		DEV=`mount | while read line; do
 			set -- $line
 			vecho "Inspecting \"$line\""
-			if [ "$2" = "on" -a "$3" = "$DEST" ]; then
+			if [ "$2" = "on" ] && [ "$3" = "$DEST" ]; then
 				if [ ! -b $1 ]; then
 					continue
 				fi
