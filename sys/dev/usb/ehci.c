@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.263 2018/09/16 09:25:47 skrll Exp $ */
+/*	$NetBSD: ehci.c,v 1.264 2018/09/16 20:21:56 mrg Exp $ */
 
 /*
  * Copyright (c) 2004-2012 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.263 2018/09/16 09:25:47 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.264 2018/09/16 20:21:56 mrg Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -2637,13 +2637,16 @@ Static usbd_status
 ehci_root_intr_start(struct usbd_xfer *xfer)
 {
 	ehci_softc_t *sc = EHCI_XFER2SC(xfer);
+	const bool polling = sc->sc_bus.ub_usepolling;
 
 	if (sc->sc_dying)
 		return USBD_IOERROR;
 
-	mutex_enter(&sc->sc_lock);
+	if (!polling)
+		mutex_enter(&sc->sc_lock);
 	sc->sc_intrxfer = xfer;
-	mutex_exit(&sc->sc_lock);
+	if (!polling)
+		mutex_exit(&sc->sc_lock);
 
 	return USBD_IN_PROGRESS;
 }
@@ -3538,6 +3541,7 @@ ehci_device_ctrl_start(struct usbd_xfer *xfer)
 	ehci_softc_t *sc = EHCI_XFER2SC(xfer);
 	ehci_soft_qtd_t *setup, *status, *next;
 	ehci_soft_qh_t *sqh;
+	const bool polling = sc->sc_bus.ub_usepolling;
 
 	EHCIHIST_FUNC(); EHCIHIST_CALLED();
 
@@ -3657,7 +3661,8 @@ ehci_device_ctrl_start(struct usbd_xfer *xfer)
 	DPRINTFN(5, "--- dump end ---", 0, 0, 0, 0);
 #endif
 
-	mutex_enter(&sc->sc_lock);
+	if (!polling)
+		mutex_enter(&sc->sc_lock);
 
 	/* Insert qTD in QH list - also does usb_syncmem(sqh) */
 	ehci_set_qh_qtd(sqh, setup);
@@ -3667,7 +3672,8 @@ ehci_device_ctrl_start(struct usbd_xfer *xfer)
 	}
 	ehci_add_intr_list(sc, exfer);
 	xfer->ux_status = USBD_IN_PROGRESS;
-	mutex_exit(&sc->sc_lock);
+	if (!polling)
+		mutex_exit(&sc->sc_lock);
 
 #if 0
 #ifdef EHCI_DEBUG
@@ -3814,6 +3820,7 @@ ehci_device_bulk_start(struct usbd_xfer *xfer)
 	ehci_soft_qh_t *sqh;
 	ehci_soft_qtd_t *end;
 	int len, isread, endpt;
+	const bool polling = sc->sc_bus.ub_usepolling;
 
 	EHCIHIST_FUNC(); EHCIHIST_CALLED();
 
@@ -3837,7 +3844,8 @@ ehci_device_bulk_start(struct usbd_xfer *xfer)
 #endif
 
 	/* Take lock here to protect nexttoggle */
-	mutex_enter(&sc->sc_lock);
+	if (!polling)
+		mutex_enter(&sc->sc_lock);
 
 	ehci_reset_sqtd_chain(sc, xfer, len, isread, &epipe->nexttoggle, &end);
 
@@ -3864,7 +3872,8 @@ ehci_device_bulk_start(struct usbd_xfer *xfer)
 	}
 	ehci_add_intr_list(sc, exfer);
 	xfer->ux_status = USBD_IN_PROGRESS;
-	mutex_exit(&sc->sc_lock);
+	if (!polling)
+		mutex_exit(&sc->sc_lock);
 
 #if 0
 #ifdef EHCI_DEBUG
@@ -4029,6 +4038,7 @@ ehci_device_intr_start(struct usbd_xfer *xfer)
 	ehci_soft_qtd_t *end;
 	ehci_soft_qh_t *sqh;
 	int len, isread, endpt;
+	const bool polling = sc->sc_bus.ub_usepolling;
 
 	EHCIHIST_FUNC(); EHCIHIST_CALLED();
 
@@ -4052,7 +4062,8 @@ ehci_device_intr_start(struct usbd_xfer *xfer)
 #endif
 
 	/* Take lock to protect nexttoggle */
-	mutex_enter(&sc->sc_lock);
+	if (!polling)
+		mutex_enter(&sc->sc_lock);
 
 	ehci_reset_sqtd_chain(sc, xfer, len, isread, &epipe->nexttoggle, &end);
 
@@ -4079,7 +4090,8 @@ ehci_device_intr_start(struct usbd_xfer *xfer)
 	}
 	ehci_add_intr_list(sc, exfer);
 	xfer->ux_status = USBD_IN_PROGRESS;
-	mutex_exit(&sc->sc_lock);
+	if (!polling)
+		mutex_exit(&sc->sc_lock);
 
 #if 0
 #ifdef EHCI_DEBUG
