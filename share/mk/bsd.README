@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.383 2018/09/16 13:11:48 christos Exp $
+#	$NetBSD: bsd.README,v 1.384 2018/09/16 13:14:12 christos Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -1329,6 +1329,10 @@ SRCS		List of source files to build the library.  Suffix types
 LIBDPLIBS/
 PROGDPLIBS	A list of the tuples:
 			libname  path-to-srcdir-of-libname
+
+		Instead of depending on installed versions of the libraries,
+		one can depend on their built version in the source directory.
+		This is useful for finding private libraries (LIBISPRIVATE).
 
 		For each tuple;
 		     *	LIBDO.libname contains the .OBJDIR of the library
