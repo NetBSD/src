@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.c,v 1.158 2018/09/15 08:48:18 mrg Exp $	*/
+/*	$NetBSD: db_command.c,v 1.159 2018/09/16 23:18:55 mrg Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 1999, 2002, 2009 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.158 2018/09/15 08:48:18 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.159 2018/09/16 23:18:55 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_aio.h"
@@ -90,9 +90,9 @@ __KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.158 2018/09/15 08:48:18 mrg Exp $")
 #include <sys/module.h>
 #include <sys/kernhist.h>
 #include <sys/socketvar.h>
-
-/*include queue macros*/
 #include <sys/queue.h>
+
+#include <dev/cons.h>
 
 #include <ddb/ddb.h>
 
@@ -542,7 +542,10 @@ db_unregister_tbl(uint8_t type,const struct db_command *cmd_tbl)
 	return ENOENT;
 }
 
-/* This function is called from machine trap code. */
+/*
+ * This function is called via db_trap() or directly from
+ * machine trap code.
+ */
 void
 db_command_loop(void)
 {
@@ -579,7 +582,9 @@ db_command_loop(void)
 		if (db_print_position() != 0)
 			db_printf("\n");
 		db_output_line = 0;
+		cnpollc(1);
 		(void) db_read_line();
+		cnpollc(0);
 		db_command(&db_last_command);
 	}
 
