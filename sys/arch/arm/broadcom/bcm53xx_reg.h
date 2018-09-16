@@ -727,7 +727,7 @@ struct gmac_txdb {
 };
 #define TXDB_FLAG_SF		__BIT(31)	// Start oF Frame
 #define TXDB_FLAG_EF		__BIT(30)	// End oF Frame
-#define TXDB_FLAG_IC		__BIT(29)	// Interupt on Completetion
+#define TXDB_FLAG_IC		__BIT(29)	// Interrupt on Completetion
 #define TXDB_FLAG_ET		__BIT(28)	// End Of Table
 
 struct gmac_rxdb {
