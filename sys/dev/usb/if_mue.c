@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mue.c,v 1.10 2018/09/16 01:13:26 rin Exp $	*/
+/*	$NetBSD: if_mue.c,v 1.11 2018/09/16 01:18:30 rin Exp $	*/
 /*	$OpenBSD: if_mue.c,v 1.3 2018/08/04 16:42:46 jsg Exp $	*/
 
 /*
@@ -20,7 +20,7 @@
 /* Driver for Microchip LAN7500/LAN7800 chipsets. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mue.c,v 1.10 2018/09/16 01:13:26 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mue.c,v 1.11 2018/09/16 01:18:30 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -777,7 +777,7 @@ mue_chip_init(struct mue_softc *sc)
 	MUE_CLRBIT(sc, MUE_MAC_RX, MUE_MAC_RX_RXEN);
 	val = mue_csr_read(sc, MUE_MAC_RX);
 	val &= ~MUE_MAC_RX_MAX_SIZE_MASK;
-	val |= MUE_MAC_RX_MAX_LEN(ETHER_MAX_LEN);
+	val |= MUE_MAC_RX_MAX_LEN(ETHER_MAX_LEN + ETHER_VLAN_ENCAP_LEN);
 	mue_csr_write(sc, MUE_MAC_RX, val);
 	MUE_SETBIT(sc, MUE_MAC_RX, MUE_MAC_RX_RXEN);
 
