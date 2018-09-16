@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_platform.c,v 1.26 2018/09/10 11:05:12 ryo Exp $ */
+/* $NetBSD: sunxi_platform.c,v 1.27 2018/09/16 13:21:36 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
 #include "opt_fdt_arm.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_platform.c,v 1.26 2018/09/10 11:05:12 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_platform.c,v 1.27 2018/09/16 13:21:36 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -163,6 +163,17 @@ sunxi_platform_device_register(device_t self, void *aux)
 		};
 		if (of_match_compatible(OF_finddevice("/"), compat)) {
 			prop_dictionary_set_bool(prop, "no-rx-delay", true);
+		}
+	}
+
+	if (device_is_a(self, "armgtmr")) {
+		/* Allwinner A64 has an unstable architectural timer */
+		const char * compat[] = {
+			"allwinner,sun50i-a64",
+			NULL
+		};
+		if (of_match_compatible(OF_finddevice("/"), compat)) {
+			prop_dictionary_set_bool(prop, "sun50i-a64-unstable-timer", true);
 		}
 	}
 }
