@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mue.c,v 1.14 2018/09/16 01:29:28 rin Exp $	*/
+/*	$NetBSD: if_mue.c,v 1.15 2018/09/16 01:41:28 rin Exp $	*/
 /*	$OpenBSD: if_mue.c,v 1.3 2018/08/04 16:42:46 jsg Exp $	*/
 
 /*
@@ -20,7 +20,7 @@
 /* Driver for Microchip LAN7500/LAN7800 chipsets. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mue.c,v 1.14 2018/09/16 01:29:28 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mue.c,v 1.15 2018/09/16 01:41:28 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1414,7 +1414,7 @@ mue_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 	struct ifnet *ifp = GET_IFP(sc);
 	struct mbuf *m;
 	struct mue_rxbuf_hdr *hdrp;
-	uint32_t rx_cmd_a, total_len;
+	uint32_t rx_cmd_a, totlen;
 	uint16_t pktlen;
 	int s;
 	char *buf = c->mue_buf;
@@ -1441,15 +1441,14 @@ mue_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 		goto done;
 	}
 
-	usbd_get_xfer_status(xfer, NULL, NULL, &total_len, NULL);
+	usbd_get_xfer_status(xfer, NULL, NULL, &totlen, NULL);
 
-	KASSERTMSG(total_len <= sc->mue_rxbufsz, "%d <= %u",
-	    total_len, sc->mue_rxbufsz);
+	KASSERTMSG(totlen <= sc->mue_rxbufsz, "%u <= %u",
+	    totlen, sc->mue_rxbufsz);
 
 	do {
-		if (__predict_false(total_len < sizeof(*hdrp))) {
-			MUE_PRINTF(sc, "packet length %u too short\n",
-			    total_len);
+		if (__predict_false(totlen < sizeof(*hdrp))) {
+			MUE_PRINTF(sc, "packet length %u too short\n", totlen);
 			ifp->if_ierrors++;
 			goto done;
 		}
@@ -1472,7 +1471,7 @@ mue_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 
 		if (__predict_false(pktlen < ETHER_HDR_LEN + ETHER_CRC_LEN ||
 		    pktlen > MCLBYTES - ETHER_ALIGN ||
-		    pktlen + sizeof(*hdrp) > total_len)) {
+		    pktlen + sizeof(*hdrp) > totlen)) {
 			MUE_PRINTF(sc, "invalid packet length %d\n", pktlen);
 			ifp->if_ierrors++;
 			goto done;
@@ -1492,15 +1491,15 @@ mue_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 
 		/* Attention: sizeof(hdr) = 10 */
 		pktlen = roundup(pktlen + sizeof(*hdrp), 4);
-		if (pktlen > total_len)
-			pktlen = total_len;
-		total_len -= pktlen;
+		if (pktlen > totlen)
+			pktlen = totlen;
+		totlen -= pktlen;
 		buf += pktlen;
 
 		s = splnet();
 		if_percpuq_enqueue(ifp->if_percpuq, m);
 		splx(s);
-	} while (total_len > 0);
+	} while (totlen > 0);
 
 done:
 	/* Setup new transfer. */
