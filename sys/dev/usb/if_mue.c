@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mue.c,v 1.12 2018/09/16 01:23:09 rin Exp $	*/
+/*	$NetBSD: if_mue.c,v 1.13 2018/09/16 01:27:21 rin Exp $	*/
 /*	$OpenBSD: if_mue.c,v 1.3 2018/08/04 16:42:46 jsg Exp $	*/
 
 /*
@@ -20,7 +20,7 @@
 /* Driver for Microchip LAN7500/LAN7800 chipsets. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mue.c,v 1.12 2018/09/16 01:23:09 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mue.c,v 1.13 2018/09/16 01:27:21 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -53,7 +53,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_mue.c,v 1.12 2018/09/16 01:23:09 rin Exp $");
 #include <netinet/in.h>
 #include <netinet/ip.h>		/* XXX for struct ip */
 #include <netinet/ip6.h>	/* XXX for struct ip6_hdr */
-#include <netinet/tcp.h>	/* XXX for struct tcphdr */
 
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
@@ -1266,7 +1265,6 @@ mue_tx_offload(struct mue_softc *sc, struct mbuf *m)
 	struct ip *ip;
 	struct ip6_hdr *ip6;
 	int offset;
-	bool v4;
 
 	eh = mtod(m, struct ether_header *);
 	switch (htons(eh->ether_type)) {
@@ -1284,19 +1282,8 @@ mue_tx_offload(struct mue_softc *sc, struct mbuf *m)
 		/* NOTREACHED */
 	}
 
-	v4 = (m->m_pkthdr.csum_flags & M_CSUM_TSOv4) != 0;
-
-#ifdef DIAGNOSTIC /* XXX */
-	int hlen = offset;
-	if (v4)
-		hlen += M_CSUM_DATA_IPv4_IPHL(m->m_pkthdr.csum_data);
-	else
-		hlen += M_CSUM_DATA_IPv6_IPHL(m->m_pkthdr.csum_data);
-	KASSERT(m->m_len >= (int)(hlen + sizeof(struct tcphdr)));
-#endif
-
 	/* Packet length should be cleared. */
-	if (v4) {
+	if (m->m_pkthdr.csum_flags & M_CSUM_TSOv4) {
 		ip = (void *)(mtod(m, char *) + offset);
 		ip->ip_len = 0;
 	} else {
