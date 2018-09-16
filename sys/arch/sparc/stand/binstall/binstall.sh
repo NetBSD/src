@@ -1,12 +1,10 @@
 #!/bin/sh
-#	$NetBSD: binstall.sh,v 1.16 2018/09/16 14:23:04 kre Exp $
+#	$NetBSD: binstall.sh,v 1.17 2018/09/16 14:26:04 kre Exp $
 #
 
 vecho () {
-# echo if VERBOSE on
-	if [ "$VERBOSE" = "1" ]; then
-		echo "$@" 1>&2
-	fi
+	# echo if VERBOSE on
+	[ -n "$VERBOSE" ] && echo "$*" 1>&2
 	return 0
 }
 
@@ -25,7 +23,7 @@ Options () {
 }
 
 Usage () {
-	echo "Usage: $0 [options] <"'"net"|"ffs"'"> <directory>"
+	echo "Usage: $0"' [options] <"net"|"ffs"> <directory>'
 	Options
 	exit 1
 }
@@ -33,7 +31,7 @@ Usage () {
 Help () {
 	echo "This script copies the boot programs to one of several"
 	echo "commonly used places."
-	echo "When installing an \"ffs\" boot program, this script also runs"
+	echo 'When installing an "ffs" boot program, this script also runs'
 	echo "installboot(8) which installs the default proto bootblocks into"
 	echo "the appropriate filesystem partition or filesystem image."
 	Options
@@ -48,38 +46,36 @@ Secure () {
 }
 
 PATH=/bin:/usr/bin:/sbin:/usr/sbin
+VERBOSE=
 : ${MDEC:=/usr/mdec}
 : ${INSTALLBOOT:=/usr/sbin/installboot}
 : ${BOOTPROG:=boot}
 : ${OFWBOOTBLK:=ofwboot}
-if [ "`sysctl -n machdep.cpu_arch`" = 9 ]; then
-	ULTRASPARC=1
-else
-	ULTRASPARC=0
-fi
+[ "$( sysctl -n machdep.cpu_arch )" = 9 ] && ULTRASPARC=true || ULTRASPARC=false
 
-set -- `getopt "b:hf:i:m:tUuv" "$@"`
+### XXX this should be converted to use getopts
+set -- $(getopt "b:hf:i:m:tUuv" "$@" )
 if [ $? -gt 0 ]; then
 	Usage
 fi
 
-for a in $*
+for a
 do
-	case $1 in
+	case "$1" in
 	-h) Help; shift ;;
-	-u) ULTRASPARC=1; shift ;;
-	-U) ULTRASPARC=0; shift ;;
+	-u) ULTRASPARC=true; shift ;;
+	-U) ULTRASPARC=false; shift ;;
 	-b) BOOTPROG=$2; OFWBOOTBLK=$2; shift 2 ;;
 	-f) DEV=$2; shift 2 ;;
 	-m) MDEC=$2; shift 2 ;;
 	-i) INSTALLBOOT=$2; shift 2 ;;
-	-t) TEST=1; VERBOSE=1; shift ;;
-	-v) VERBOSE=1; shift ;;
+	-t) TEST=1; VERBOSE=-v; shift ;;
+	-v) VERBOSE=-v; shift ;;
 	--) shift; break ;;
 	esac
 done
 
-if [ "`sysctl -n kern.securelevel`" -gt 0 ] && [ ! -f "$DEV" ]; then
+if [ "$( sysctl -n kern.securelevel )" -gt 0 ] && ! [ -f "$DEV" ]; then
 	Secure
 fi
 
@@ -92,12 +88,13 @@ fi
 WHAT=$1
 DEST=$2
 
-if [ ! -d $DEST ]; then
+if ! [ -d "$DEST" ]; then
 	echo "$DEST: not a directory"
 	Usage
 fi
 
-if [ "$ULTRASPARC" = "1" ]; then
+if $ULTRASPARC
+then
 	machine=sparc64
 	targ=ofwboot
 	stage2=""
@@ -114,42 +111,42 @@ fi
 
 case $WHAT in
 "ffs")
-	if [ "$DEV" = "" ]; then
+	if [ -z "$DEV" ]; then
 		# Lookup device mounted on DEST
-		DEV=`mount | while read line; do
+		DEV=$( mount | while read line; do
 			set -- $line
 			vecho "Inspecting \"$line\""
 			if [ "$2" = "on" ] && [ "$3" = "$DEST" ]; then
-				if [ ! -b $1 ]; then
-					continue
-				fi
-				RAW=\`echo -n "$1" | sed -e 's;/dev/;/dev/r;'\`
-				if [ ! -c \$RAW ]; then
-					continue
-				fi
-				echo -n $RAW
+				[ -b "$1" ] || continue
+				case "$1" in
+				(*/*) RAW="${1%/*}/r${1##*/}";;
+				(*)   RAW="r$1";;
+				esac
+				[ -c "$RAW" ] || continue
+				echo -n "$RAW"
 				break;
 			fi
-		done`
-		if [ "$DEV" = "" ]; then
+		done )
+		if [ -z "$DEV" ]; then
 			echo "Cannot find \"$DEST\" in mount table"
 			exit 1
 		fi
 	fi
 
-	vecho Boot device: $DEV
-	vecho Primary boot program: $BOOTXX
-	vecho Secondary boot program: $DEST/$targ
+	vecho "Boot device: $DEV"
+	vecho "Primary boot program: $BOOTXX"
+	vecho "Secondary boot program: $DEST/$targ"
 
-	$DOIT cp -p -f ${MDEC}/${BOOTPROG} $DEST/$targ
+	$DOIT cp -p -f "${MDEC}/${BOOTPROG}" "$DEST/$targ"
 	sync; sync; sync
-	vecho ${INSTALLBOOT} ${VERBOSE:+-v} -m $machine $DEV ${BOOTXX} $stage2
-	$DOIT ${INSTALLBOOT} ${VERBOSE:+-v} -m $machine $DEV ${BOOTXX} $stage2
+	vecho "${INSTALLBOOT} ${VERBOSE} -m $machine $DEV $BOOTXX $stage2"
+	$DOIT "${INSTALLBOOT}" ${VERBOSE} -m "$machine" \
+		"$DEV" "$BOOTXX" "$stage2"
 	;;
 
 "net")
-	vecho Network boot program: $DEST/$boot.${machine}.netbsd
-	$DOIT cp -p -f ${MDEC}/$netboot $DEST/$boot.${machine}.netbsd
+	vecho "Network boot program: $DEST/$boot.${machine}.netbsd"
+	$DOIT cp -p -f "${MDEC}/$netboot" "$DEST/$boot.${machine}.netbsd"
 	;;
 
 *)
