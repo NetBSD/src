@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mue.c,v 1.16 2018/09/16 01:44:11 rin Exp $	*/
+/*	$NetBSD: if_mue.c,v 1.17 2018/09/16 01:56:29 rin Exp $	*/
 /*	$OpenBSD: if_mue.c,v 1.3 2018/08/04 16:42:46 jsg Exp $	*/
 
 /*
@@ -20,7 +20,7 @@
 /* Driver for Microchip LAN7500/LAN7800 chipsets. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mue.c,v 1.16 2018/09/16 01:44:11 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mue.c,v 1.17 2018/09/16 01:56:29 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -473,8 +473,9 @@ mue_eeprom_getbyte(struct mue_softc *sc, int off, uint8_t *dest)
 		return ETIMEDOUT;
 	}
 
+	KASSERT((off & ~MUE_E2P_CMD_ADDR_MASK) == 0);
 	mue_csr_write(sc, MUE_E2P_CMD, MUE_E2P_CMD_READ | MUE_E2P_CMD_BUSY |
-	    (off & MUE_E2P_CMD_ADDR_MASK));
+	    off);
 
 	if (MUE_WAIT_CLR(sc, MUE_E2P_CMD, MUE_E2P_CMD_BUSY,
 	    MUE_E2P_CMD_TIMEOUT)) {
