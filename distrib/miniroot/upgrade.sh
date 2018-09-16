@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: upgrade.sh,v 1.22 2008/04/30 13:10:48 martin Exp $
+#	$NetBSD: upgrade.sh,v 1.23 2018/09/16 21:32:29 kre Exp $
 #
 # Copyright (c) 1996-2000,2006 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -238,8 +238,8 @@ esac
 (
 	> /tmp/fstab
 	while read _dev _mp _fstype _rest ; do
-		if [ "X${_fstype}" = X"ufs" -o \
-		     "X${_fstype}" = X"ffs" ]; then
+		if [ "X${_fstype}" = X"ufs" ] ||
+		   [ "X${_fstype}" = X"ffs" ]; then
 			if [ "X${_fstype}" = X"ufs" ]; then
 				# Convert ufs to ffs.
 				_fstype=ffs
