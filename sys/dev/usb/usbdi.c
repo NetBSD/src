@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.177 2018/08/09 06:26:47 mrg Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.178 2018/09/16 20:21:56 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012, 2015 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.177 2018/08/09 06:26:47 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.178 2018/09/16 20:21:56 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -964,19 +964,19 @@ usb_transfer_complete(struct usbd_xfer *xfer)
 	    (uintptr_t)xfer, (uintptr_t)xfer->ux_callback, xfer->ux_status, 0);
 
 	if (xfer->ux_callback) {
-		if (!polling)
+		if (!polling) {
 			mutex_exit(pipe->up_dev->ud_bus->ub_lock);
-
-		if (!(pipe->up_flags & USBD_MPSAFE))
-			KERNEL_LOCK(1, curlwp);
+			if (!(pipe->up_flags & USBD_MPSAFE))
+				KERNEL_LOCK(1, curlwp);
+		}
 
 		xfer->ux_callback(xfer, xfer->ux_priv, xfer->ux_status);
 
-		if (!(pipe->up_flags & USBD_MPSAFE))
-			KERNEL_UNLOCK_ONE(curlwp);
-
-		if (!polling)
+		if (!polling) {
+			if (!(pipe->up_flags & USBD_MPSAFE))
+				KERNEL_UNLOCK_ONE(curlwp);
 			mutex_enter(pipe->up_dev->ud_bus->ub_lock);
+		}
 	}
 
 	if (sync && !polling) {
@@ -1175,7 +1175,8 @@ usbd_dopoll(struct usbd_interface *iface)
 }
 
 /*
- * XXX use this more???  ub_usepolling it touched manually all over
+ * This is for keyboard driver as well, which only operates in polling
+ * mode from the ask root, etc., prompt and from DDB.
  */
 void
 usbd_set_polling(struct usbd_device *dev, int on)
