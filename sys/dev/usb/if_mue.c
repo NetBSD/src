@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mue.c,v 1.11 2018/09/16 01:18:30 rin Exp $	*/
+/*	$NetBSD: if_mue.c,v 1.12 2018/09/16 01:23:09 rin Exp $	*/
 /*	$OpenBSD: if_mue.c,v 1.3 2018/08/04 16:42:46 jsg Exp $	*/
 
 /*
@@ -20,7 +20,7 @@
 /* Driver for Microchip LAN7500/LAN7800 chipsets. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mue.c,v 1.11 2018/09/16 01:18:30 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mue.c,v 1.12 2018/09/16 01:23:09 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1207,42 +1207,49 @@ mue_encap(struct mue_softc *sc, struct mbuf *m, int idx)
 	struct mue_chain *c;
 	usbd_status err;
 	struct mue_txbuf_hdr hdr;
+	uint32_t tx_cmd_a, tx_cmd_b;
 	int len;
+	bool tso;
+
+	tso = m->m_pkthdr.csum_flags & (M_CSUM_TSOv4 | M_CSUM_TSOv6);
+
+	len = m->m_pkthdr.len;
+	if (__predict_false((!tso && len > MUE_MAX_TX_LEN) ||
+			    ( tso && len > MUE_MAX_TSO_LEN))) {
+		MUE_PRINTF(sc, "packet length %d\n too long", len);
+		return EINVAL;
+	}
 
 	c = &sc->mue_cdata.mue_tx_chain[idx];
 
-	hdr.tx_cmd_a = htole32((m->m_pkthdr.len & MUE_TX_CMD_A_LEN_MASK) |
-	    MUE_TX_CMD_A_FCS);
+	KASSERT((len & ~MUE_TX_CMD_A_LEN_MASK) == 0);
+	tx_cmd_a = len | MUE_TX_CMD_A_FCS;
 
-	if (m->m_pkthdr.csum_flags & (M_CSUM_TSOv4 | M_CSUM_TSOv6)) {
-		hdr.tx_cmd_a |= htole32(MUE_TX_CMD_A_LSO);
+	if (tso) {
+		tx_cmd_a |= MUE_TX_CMD_A_LSO;
 		if (__predict_true(m->m_pkthdr.segsz > MUE_TX_MSS_MIN))
-			hdr.tx_cmd_b = htole32(m->m_pkthdr.segsz <<
-			    MUE_TX_CMD_B_MSS_SHIFT);
+			tx_cmd_b = m->m_pkthdr.segsz;
 		else
-			hdr.tx_cmd_b = htole32(MUE_TX_MSS_MIN <<
-			    MUE_TX_CMD_B_MSS_SHIFT);
-		hdr.tx_cmd_b &= htole32(MUE_TX_CMD_B_MSS_MASK);
+			tx_cmd_b = MUE_TX_MSS_MIN;
+		tx_cmd_b <<= MUE_TX_CMD_B_MSS_SHIFT;
+		KASSERT((tx_cmd_b & ~MUE_TX_CMD_B_MSS_MASK) == 0);
 		mue_tx_offload(sc, m);
 	} else
-		hdr.tx_cmd_b = 0;
+		tx_cmd_b = 0;
+
+	hdr.tx_cmd_a = htole32(tx_cmd_a);
+	hdr.tx_cmd_b = htole32(tx_cmd_b);
 
 	memcpy(c->mue_buf, &hdr, sizeof(hdr)); 
-	len = sizeof(hdr);
+	m_copydata(m, 0, len, c->mue_buf + sizeof(hdr));
 
-	KASSERTMSG((unsigned)(len + m->m_pkthdr.len) <= sc->mue_txbufsz,
-	    "%d <= %u", len + m->m_pkthdr.len, sc->mue_txbufsz);
-
-	m_copydata(m, 0, m->m_pkthdr.len, c->mue_buf + len);
-	len += m->m_pkthdr.len;
-
-	usbd_setup_xfer(c->mue_xfer, c, c->mue_buf, len,
+	usbd_setup_xfer(c->mue_xfer, c, c->mue_buf, len + sizeof(hdr),
 	    USBD_FORCE_SHORT_XFER, 10000, mue_txeof);
 
 	/* Transmit */
 	err = usbd_transfer(c->mue_xfer);
 	if (__predict_false(err != USBD_IN_PROGRESS)) {
-		DPRINTF(sc, "%s\n", usbd_errstr(err));
+		MUE_PRINTF(sc, "%s\n", usbd_errstr(err));
 		mue_stop(ifp, 0);
 		return EIO;
 	}
