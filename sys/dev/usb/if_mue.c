@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mue.c,v 1.17 2018/09/16 01:56:29 rin Exp $	*/
+/*	$NetBSD: if_mue.c,v 1.18 2018/09/16 02:00:36 rin Exp $	*/
 /*	$OpenBSD: if_mue.c,v 1.3 2018/08/04 16:42:46 jsg Exp $	*/
 
 /*
@@ -20,7 +20,7 @@
 /* Driver for Microchip LAN7500/LAN7800 chipsets. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mue.c,v 1.17 2018/09/16 01:56:29 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mue.c,v 1.18 2018/09/16 02:00:36 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -144,7 +144,7 @@ static int	mue_get_macaddr(struct mue_softc *, prop_dictionary_t);
 static int	mue_rx_list_init(struct mue_softc *);
 static int	mue_tx_list_init(struct mue_softc *);
 static int	mue_open_pipes(struct mue_softc *);
-static void	mue_start_rx(struct mue_softc *);
+static void	mue_startup_rx_pipes(struct mue_softc *);
 
 static int	mue_encap(struct mue_softc *, struct mbuf *, int);
 static void	mue_tx_offload(struct mue_softc *, struct mbuf *);
@@ -1186,7 +1186,7 @@ mue_open_pipes(struct mue_softc *sc)
 }
 
 static void
-mue_start_rx(struct mue_softc *sc)
+mue_startup_rx_pipes(struct mue_softc *sc)
 {
 	struct mue_chain *c;
 	size_t i;
@@ -1265,17 +1265,17 @@ mue_tx_offload(struct mue_softc *sc, struct mbuf *m)
 	struct ether_header *eh;
 	struct ip *ip;
 	struct ip6_hdr *ip6;
-	int offset;
+	int off;
 
 	eh = mtod(m, struct ether_header *);
 	switch (htons(eh->ether_type)) {
 	case ETHERTYPE_IP:
 	case ETHERTYPE_IPV6:
-		offset = ETHER_HDR_LEN;
+		off = ETHER_HDR_LEN;
 		break;
 	case ETHERTYPE_VLAN:
 		/* XXX not yet supported */
-		offset = ETHER_HDR_LEN + ETHER_VLAN_ENCAP_LEN;
+		off = ETHER_HDR_LEN + ETHER_VLAN_ENCAP_LEN;
 		break;
 	default:
 		/* XXX */
@@ -1285,10 +1285,10 @@ mue_tx_offload(struct mue_softc *sc, struct mbuf *m)
 
 	/* Packet length should be cleared. */
 	if (m->m_pkthdr.csum_flags & M_CSUM_TSOv4) {
-		ip = (void *)(mtod(m, char *) + offset);
+		ip = (void *)(mtod(m, char *) + off);
 		ip->ip_len = 0;
 	} else {
-		ip6 = (void *)(mtod(m, char *) + offset);
+		ip6 = (void *)(mtod(m, char *) + off);
 		ip6->ip6_plen = 0;
 	}
 }
@@ -1593,7 +1593,7 @@ mue_init(struct ifnet *ifp)
 		return ENOBUFS;
 	}
 
-	mue_start_rx(sc);
+	mue_startup_rx_pipes(sc);
 
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
