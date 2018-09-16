@@ -1,5 +1,5 @@
 #!/bin/sh
-# $NetBSD: install.sh,v 1.9 2003/07/26 17:06:28 salo Exp $
+# $NetBSD: install.sh,v 1.10 2018/09/16 22:22:44 kre Exp $
 #
 # Copyright (c) 1994 Christopher G. Demetriou
 # All rights reserved.
@@ -45,7 +45,7 @@ FSTAB=${FSTABDIR}/fstab
 
 getresp() {
 	read resp
-	if [ "X$resp" = "X" ]; then
+	if [ -z "$resp" ]; then
 		resp=$1
 	fi
 }
@@ -55,7 +55,7 @@ getvar() {
 }
 
 shiftvar() {
-	local - var
+	local var
 	var="$1"
 	list="$(getvar $var)"
 	set -- $list
@@ -76,7 +76,7 @@ getdrives() {
 	for du in /dev/r${drivetype}?a; do
 		dd if=$du of=/dev/null bs=1b count=1 >/dev/null 2>&1
 		if [ $? -eq 0 ]; then
-			thisunit=`echo $du | sed -e 's,/dev/r\(...\)a,\1,g'`
+			thisunit=$( echo $du | sed -e 's,/dev/r\(...\)a,\1,g' )
 			driveunits="$driveunits $thisunit"
 		else
 			continue;
@@ -136,7 +136,9 @@ sect_fwd=""
 getdrives
 for du in $driveunits; do
 	set -- $(getvar $du)
-	if [ $# -ge 2 -a "$1" = "a" -a "`echo $2 | sed -e 's,.*BSD.*,BSD,'`" = "BSD" ]; then
+	if [ $# -ge 2 ] &&
+	   [ "$1" = a ] &&
+	   [ "$( echo "$2" | sed -e 's,.*BSD.*,BSD,' )" = BSD ]; then
 		rdev=$du
 	fi
 done
@@ -147,10 +149,10 @@ echo	"      "${driveunits}
 echo	""
 prefdev=${rdev}
 rdev=""
-while [ "X${rdev}" = "X" ]; do
+while [ -z "${rdev}" ]; do
 	echo -n "Which device would you like to install on ? [${prefdev}] "
 	getresp ${prefdev}
-	otherdrives=`echo "${driveunits}" | sed -e s,${resp},,`
+	otherdrives=$( echo "${driveunits}" | sed -e "s,${resp},," )
 	if [ "X${driveunits}" = "X${otherdrives}" ]; then
 		echo	""
 		echo	"\"${resp}\" is an invalid drive name. Valid choices"
@@ -163,8 +165,8 @@ done
 echo	""
 echo	"The root device you have chosen is on: ${rdev}"
 echo	""
-# driveunits=`ls /dev/${drivetype}?a | sed -e 's,/dev/\(...\)a,\1,g'`
-if [ "X${driveunits}" = "X" ]; then
+# driveunits=$( ls /dev/${drivetype}?a | sed -e 's,/dev/\(...\)a,\1,g' )
+if [ -z "${driveunits}" ]; then
 	echo	"FATAL ERROR:"
 	echo	"No devices for disks of type '${drivetype}'."
 	echo	"This is probably a bug in the install disks."
@@ -178,9 +180,9 @@ echo	""
 echo	"(answering yes will format your root partition on $rdev)"
 echo -n	"Are you SURE you want NetBSD installed on your hard drive? (yes/no) "
 answer=""
-while [ "$answer" = "" ]; do
+while [ -z "$answer" ]; do
 	getresp
-	case $resp in
+	case "$resp" in
 		yes|YES)
 			echo	""
 			answer=yes
@@ -214,10 +216,10 @@ echo	""
 echo	"Now lets setup your /usr file system"
 echo	"(Once a valid input for drive and partition is seen"
 echo	"it will be FORMATTED and inserted in the fstab.)"
-while [ "X$usrpart" = "X" ]; do
+while [ -z "$usrpart" ]; do
 	resp=""
 	drivename=""
-	while [ "X$resp" = "X" ]; do
+	while [ -z "$resp" ]; do
 		echo	"choices: $driveunits"
 		echo	"which drive do you want /usr on?"
 		getresp
@@ -238,11 +240,12 @@ while [ "X$usrpart" = "X" ]; do
 	usrpart=""
 	echo	"You have selected $drivename"
 	echo	"here is a list of partitions on $drivename"
-	disklabel $drivename 2>/dev/null | sed -e '/^[ ][ ][ad-p]:/p;/^#[ \t]*size/p;d' 
+	disklabel $drivename 2>/dev/null |
+	    sed -e '/^[ ][ ][ad-p]:/p;/^#[ \t]*size/p;d' 
 	echo	"which partition would you like to format and have"
 	echo -n	"mounted as /usr? (supply the letter): "
 	getresp
-	if [ "X$resp" = "X" ]; then
+	if [ -z "$resp" ]; then
 		continue;
 	fi
 
@@ -250,10 +253,11 @@ while [ "X$usrpart" = "X" ]; do
 	set -- $list
 	while [ $# -gt 0 ]; do
 		if [ "$resp" = "$1" ]; then
-			if [ "`echo $2 | sed -e 's,.*BSD.*,BSD,'`" != "BSD" ]; then
+			if [ "$( echo $2 | sed -e 's,.*BSD.*,BSD,' )" != "BSD" ]
+			then
 				echo	""
-				echo -n	"$drivename$resp is of type $2 which is not"
-				echo	" a BSD filesystem type"
+				echo -n	"$drivename$resp is of type $2 which"
+				echo	" is not a BSD filesystem type"
 				break
 			fi
 			usrpart=$drivename$resp
@@ -263,7 +267,7 @@ while [ "X$usrpart" = "X" ]; do
 			shift
 		fi
 	done
-	if [ "X$usrpart" = "X" ]; then
+	if [ -z "$usrpart" ]; then
 		echo	"$resp is not a valid input."
 		echo	""
 	fi
