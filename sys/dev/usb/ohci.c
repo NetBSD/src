@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.285 2018/09/03 16:29:33 riastradh Exp $	*/
+/*	$NetBSD: ohci.c,v 1.286 2018/09/16 10:29:39 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2005, 2012 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.285 2018/09/03 16:29:33 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.286 2018/09/16 10:29:39 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1389,9 +1389,8 @@ ohci_softintr(void *v)
 	int len, cc;
 	int i, j, actlen, iframes, uedir;
 	ohci_physaddr_t done;
-	bool polling __diagused = sc->sc_bus.ub_usepolling;
 
-	KASSERT(polling || mutex_owned(&sc->sc_lock));
+	KASSERT(sc->sc_bus.ub_usepolling || mutex_owned(&sc->sc_lock));
 
 	OHCIHIST_FUNC(); OHCIHIST_CALLED();
 
@@ -1624,7 +1623,7 @@ ohci_softintr(void *v)
 	}
 
 	DPRINTFN(10, "done", 0, 0, 0, 0);
-	KASSERT(polling || mutex_owned(&sc->sc_lock));
+	KASSERT(sc->sc_bus.ub_usepolling || mutex_owned(&sc->sc_lock));
 }
 
 void
