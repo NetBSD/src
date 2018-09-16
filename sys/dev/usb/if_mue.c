@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mue.c,v 1.8 2018/09/16 00:58:47 rin Exp $	*/
+/*	$NetBSD: if_mue.c,v 1.9 2018/09/16 01:07:38 rin Exp $	*/
 /*	$OpenBSD: if_mue.c,v 1.3 2018/08/04 16:42:46 jsg Exp $	*/
 
 /*
@@ -20,7 +20,7 @@
 /* Driver for Microchip LAN7500/LAN7800 chipsets. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mue.c,v 1.8 2018/09/16 00:58:47 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mue.c,v 1.9 2018/09/16 01:07:38 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -642,7 +642,7 @@ mue_init_ltm(struct mue_softc *sc)
 			}
 			if (mue_read_eeprom(sc, (uint8_t *)idx, temp[1] << 1,
 				sizeof(idx))) {
-				DPRINTF(sc, "EEPROM read failed\n");
+				DPRINTF(sc, "EEPROM: failed to read\n");
 				goto done;
 			}
 			DPRINTF(sc, "success\n");
@@ -653,7 +653,7 @@ mue_init_ltm(struct mue_softc *sc)
 			}
 			if (mue_read_otp(sc, (uint8_t *)idx, temp[1] << 1,
 				sizeof(idx))) {
-				DPRINTF(sc, "OTP read failed\n");
+				DPRINTF(sc, "OTP: failed to read\n");
 				goto done;
 			}
 			DPRINTF(sc, "success\n");
@@ -975,7 +975,7 @@ mue_attach(device_t parent, device_t self, void *aux)
 	sc->mue_phyno = 1;
 
 	if (mue_chip_init(sc)) {
-		aprint_error_dev(self, "chip initialization failed\n");
+		aprint_error_dev(self, "failed to initialize chip\n");
 		splx(s);
 		return;
 	}
@@ -1454,7 +1454,8 @@ mue_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 
 	do {
 		if (__predict_false(total_len < sizeof(*hdrp))) {
-			DPRINTF(sc, "too short transfer\n");
+			MUE_PRINTF(sc, "packet length %u too short\n",
+			    total_len);
 			ifp->if_ierrors++;
 			goto done;
 		}
@@ -1463,7 +1464,7 @@ mue_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 		rx_cmd_a = le32toh(hdrp->rx_cmd_a);
 
 		if (__predict_false(rx_cmd_a & MUE_RX_CMD_A_RED)) {
-			DPRINTF(sc, "rx_cmd_a: 0x%x\n", rx_cmd_a);
+			MUE_PRINTF(sc, "rx_cmd_a: 0x%x\n", rx_cmd_a);
 			ifp->if_ierrors++;
 			goto done;
 		}
@@ -1478,14 +1479,14 @@ mue_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 		if (__predict_false(pktlen < ETHER_HDR_LEN ||
 		    pktlen > MCLBYTES - ETHER_ALIGN ||
 		    pktlen + sizeof(*hdrp) > total_len)) {
-			DPRINTF(sc, "bad pktlen\n");
+			MUE_PRINTF(sc, "invalid packet length %d\n", pktlen);
 			ifp->if_ierrors++;
 			goto done;
 		}
 
 		m = mue_newbuf();
 		if (__predict_false(m == NULL)) {
-			DPRINTF(sc, "mbuf allocation failed\n");
+			MUE_PRINTF(sc, "failed to allocate mbuf\n");
 			ifp->if_ierrors++;
 			goto done;
 		}
@@ -1586,14 +1587,14 @@ mue_init(struct ifnet *ifp)
 
 	/* Init RX ring. */
 	if (mue_rx_list_init(sc)) {
-		MUE_PRINTF(sc, "rx list init failed\n");
+		MUE_PRINTF(sc, "failed to init rx list\n");
 		splx(s);
 		return ENOBUFS;
 	}
 
 	/* Init TX ring. */
 	if (mue_tx_list_init(sc)) {
-		MUE_PRINTF(sc, "tx list init failed\n");
+		MUE_PRINTF(sc, "failed to init tx list\n");
 		splx(s);
 		return ENOBUFS;
 	}
