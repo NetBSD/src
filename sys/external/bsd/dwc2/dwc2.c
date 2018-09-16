@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2.c,v 1.54 2018/08/28 08:17:10 skrll Exp $	*/
+/*	$NetBSD: dwc2.c,v 1.55 2018/09/16 20:21:56 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc2.c,v 1.54 2018/08/28 08:17:10 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc2.c,v 1.55 2018/09/16 20:21:56 mrg Exp $");
 
 #include "opt_usb.h"
 
@@ -625,16 +625,19 @@ Static usbd_status
 dwc2_root_intr_start(struct usbd_xfer *xfer)
 {
 	struct dwc2_softc *sc = DWC2_XFER2SC(xfer);
+	const bool polling = sc->sc_bus.ub_usepolling;
 
 	DPRINTF("\n");
 
 	if (sc->sc_dying)
 		return USBD_IOERROR;
 
-	mutex_enter(&sc->sc_lock);
+	if (!polling)
+		mutex_enter(&sc->sc_lock);
 	KASSERT(sc->sc_intrxfer == NULL);
 	sc->sc_intrxfer = xfer;
-	mutex_exit(&sc->sc_lock);
+	if (!polling)
+		mutex_exit(&sc->sc_lock);
 
 	return USBD_IN_PROGRESS;
 }
@@ -702,13 +705,16 @@ dwc2_device_ctrl_start(struct usbd_xfer *xfer)
 {
 	struct dwc2_softc *sc = DWC2_XFER2SC(xfer);
 	usbd_status err;
+	const bool polling = sc->sc_bus.ub_usepolling;
 
 	DPRINTF("\n");
 
-	mutex_enter(&sc->sc_lock);
+	if (!polling)
+		mutex_enter(&sc->sc_lock);
 	xfer->ux_status = USBD_IN_PROGRESS;
 	err = dwc2_device_start(xfer);
-	mutex_exit(&sc->sc_lock);
+	if (!polling)
+		mutex_exit(&sc->sc_lock);
 
 	if (err)
 		return err;
@@ -822,11 +828,14 @@ dwc2_device_intr_start(struct usbd_xfer *xfer)
 	struct usbd_device *dev = dpipe->pipe.up_dev;
 	struct dwc2_softc *sc = dev->ud_bus->ub_hcpriv;
 	usbd_status err;
+	const bool polling = sc->sc_bus.ub_usepolling;
 
-	mutex_enter(&sc->sc_lock);
+	if (!polling)
+		mutex_enter(&sc->sc_lock);
 	xfer->ux_status = USBD_IN_PROGRESS;
 	err = dwc2_device_start(xfer);
-	mutex_exit(&sc->sc_lock);
+	if (!polling)
+		mutex_exit(&sc->sc_lock);
 
 	if (err)
 		return err;

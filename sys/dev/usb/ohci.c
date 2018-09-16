@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.286 2018/09/16 10:29:39 mrg Exp $	*/
+/*	$NetBSD: ohci.c,v 1.287 2018/09/16 20:21:56 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2005, 2012 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.286 2018/09/16 10:29:39 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.287 2018/09/16 20:21:56 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -2591,14 +2591,17 @@ Static usbd_status
 ohci_root_intr_start(struct usbd_xfer *xfer)
 {
 	ohci_softc_t *sc = OHCI_XFER2SC(xfer);
+	const bool polling = sc->sc_bus.ub_usepolling;
 
 	if (sc->sc_dying)
 		return USBD_IOERROR;
 
-	mutex_enter(&sc->sc_lock);
+	if (!polling)
+		mutex_enter(&sc->sc_lock);
 	KASSERT(sc->sc_intrxfer == NULL);
 	sc->sc_intrxfer = xfer;
-	mutex_exit(&sc->sc_lock);
+	if (!polling)
+		mutex_exit(&sc->sc_lock);
 
 	return USBD_IN_PROGRESS;
 }
@@ -2732,6 +2735,7 @@ ohci_device_ctrl_start(struct usbd_xfer *xfer)
 	ohci_soft_ed_t *sed;
 	int isread;
 	int len;
+	const bool polling = sc->sc_bus.ub_usepolling;
 
 	OHCIHIST_FUNC(); OHCIHIST_CALLED();
 
@@ -2750,7 +2754,8 @@ ohci_device_ctrl_start(struct usbd_xfer *xfer)
 	    UGETW(req->wIndex));
 
 	/* Need to take lock here for pipe->tail.td */
-	mutex_enter(&sc->sc_lock);
+	if (!polling)
+		mutex_enter(&sc->sc_lock);
 
 	/*
 	 * Use the pipe "tail" TD as our first and loan our first TD to the
@@ -2866,7 +2871,7 @@ ohci_device_ctrl_start(struct usbd_xfer *xfer)
 	    sizeof(sed->ed.ed_tailp),
 	    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
 	OWRITE4(sc, OHCI_COMMAND_STATUS, OHCI_CLF);
-	if (xfer->ux_timeout && !sc->sc_bus.ub_usepolling) {
+	if (xfer->ux_timeout && !polling) {
 		callout_reset(&xfer->ux_callout, mstohz(xfer->ux_timeout),
 			    ohci_timeout, xfer);
 	}
@@ -2874,7 +2879,8 @@ ohci_device_ctrl_start(struct usbd_xfer *xfer)
 	DPRINTF("done", 0, 0, 0, 0);
 
 	xfer->ux_status = USBD_IN_PROGRESS;
-	mutex_exit(&sc->sc_lock);
+	if (!polling)
+		mutex_exit(&sc->sc_lock);
 
 	return USBD_IN_PROGRESS;
 }
@@ -3001,6 +3007,7 @@ ohci_device_bulk_start(struct usbd_xfer *xfer)
 	ohci_soft_td_t *data, *tail, *tdp;
 	ohci_soft_ed_t *sed;
 	int len, isread, endpt;
+	const bool polling = sc->sc_bus.ub_usepolling;
 
 	OHCIHIST_FUNC(); OHCIHIST_CALLED();
 
@@ -3018,7 +3025,8 @@ ohci_device_bulk_start(struct usbd_xfer *xfer)
 	    len, isread, xfer->ux_flags);
 	DPRINTFN(4, "endpt=%jd", endpt, 0, 0, 0);
 
-	mutex_enter(&sc->sc_lock);
+	if (!polling)
+		mutex_enter(&sc->sc_lock);
 
 	/*
 	 * Use the pipe "tail" TD as our first and loan our first TD to the
@@ -3084,7 +3092,8 @@ ohci_device_bulk_start(struct usbd_xfer *xfer)
 	}
 
 	xfer->ux_status = USBD_IN_PROGRESS;
-	mutex_exit(&sc->sc_lock);
+	if (!polling)
+		mutex_exit(&sc->sc_lock);
 
 	return USBD_IN_PROGRESS;
 }
@@ -3203,6 +3212,7 @@ ohci_device_intr_start(struct usbd_xfer *xfer)
 	ohci_soft_ed_t *sed = opipe->sed;
 	ohci_soft_td_t *data, *last, *tail;
 	int len, isread, endpt;
+	const bool polling = sc->sc_bus.ub_usepolling;
 
 	OHCIHIST_FUNC(); OHCIHIST_CALLED();
 
@@ -3218,7 +3228,8 @@ ohci_device_intr_start(struct usbd_xfer *xfer)
 	endpt = xfer->ux_pipe->up_endpoint->ue_edesc->bEndpointAddress;
 	isread = UE_GET_DIR(endpt) == UE_DIR_IN;
 
-	mutex_enter(&sc->sc_lock);
+	if (!polling)
+		mutex_enter(&sc->sc_lock);
 
 	/*
 	 * Use the pipe "tail" TD as our first and loan our first TD to the
@@ -3270,7 +3281,8 @@ ohci_device_intr_start(struct usbd_xfer *xfer)
 	    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
 
 	xfer->ux_status = USBD_IN_PROGRESS;
-	mutex_exit(&sc->sc_lock);
+	if (!polling)
+		mutex_exit(&sc->sc_lock);
 
 	return USBD_IN_PROGRESS;
 }

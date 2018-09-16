@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.171 2018/08/02 06:09:04 riastradh Exp $	*/
+/*	$NetBSD: usb.c,v 1.172 2018/09/16 20:21:56 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998, 2002, 2008, 2012 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.171 2018/08/02 06:09:04 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.172 2018/09/16 20:21:56 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -375,6 +375,10 @@ usb_doattach(device_t self)
 		sc->sc_dying = 1;
 	}
 
+	/*
+	 * Drop this reference after the first set of attachments in the
+	 * event thread.
+	 */
 	config_pending_incr(self);
 
 	if (!pmf_device_register(self, NULL, NULL))
@@ -529,6 +533,7 @@ void
 usb_event_thread(void *arg)
 {
 	struct usb_softc *sc = arg;
+	struct usbd_bus *bus = sc->sc_bus;
 
 	USBHIST_FUNC(); USBHIST_CALLED(usbdebug);
 
@@ -540,30 +545,37 @@ usb_event_thread(void *arg)
 	 * know how to synchronize the creation of the threads so it
 	 * will work.
 	 */
-	usb_delay_ms(sc->sc_bus, 500);
+	usb_delay_ms(bus, 500);
 
 	/* Make sure first discover does something. */
-	mutex_enter(sc->sc_bus->ub_lock);
+	mutex_enter(bus->ub_lock);
 	sc->sc_bus->ub_needsexplore = 1;
 	usb_discover(sc);
-	mutex_exit(sc->sc_bus->ub_lock);
-	config_pending_decr(sc->sc_bus->ub_usbctl);
+	mutex_exit(bus->ub_lock);
 
-	mutex_enter(sc->sc_bus->ub_lock);
+	/* Drop the config_pending reference from attach. */
+	config_pending_decr(bus->ub_usbctl);
+
+	mutex_enter(bus->ub_lock);
 	while (!sc->sc_dying) {
+#if 0 /* not yet */
+		while (sc->sc_bus->ub_usepolling)
+			kpause("usbpoll", true, hz, bus->ub_lock);
+#endif
+
 		if (usb_noexplore < 2)
 			usb_discover(sc);
 
-		cv_timedwait(&sc->sc_bus->ub_needsexplore_cv,
-		    sc->sc_bus->ub_lock, usb_noexplore ? 0 : hz * 60);
+		cv_timedwait(&bus->ub_needsexplore_cv,
+		    bus->ub_lock, usb_noexplore ? 0 : hz * 60);
 
 		DPRINTFN(2, "sc %#jx woke up", (uintptr_t)sc, 0, 0, 0);
 	}
 	sc->sc_event_thread = NULL;
 
 	/* In case parent is waiting for us to exit. */
-	cv_signal(&sc->sc_bus->ub_needsexplore_cv);
-	mutex_exit(sc->sc_bus->ub_lock);
+	cv_signal(&bus->ub_needsexplore_cv);
+	mutex_exit(bus->ub_lock);
 
 	DPRINTF("sc %#jx exit", (uintptr_t)sc, 0, 0, 0);
 	kthread_exit(0);
@@ -997,25 +1009,28 @@ usbkqfilter(dev_t dev, struct knote *kn)
 Static void
 usb_discover(struct usb_softc *sc)
 {
+	struct usbd_bus *bus = sc->sc_bus;
 
 	USBHIST_FUNC(); USBHIST_CALLED(usbdebug);
 
-	KASSERT(mutex_owned(sc->sc_bus->ub_lock));
+	KASSERT(mutex_owned(bus->ub_lock));
 
 	if (usb_noexplore > 1)
 		return;
+
 	/*
 	 * We need mutual exclusion while traversing the device tree,
 	 * but this is guaranteed since this function is only called
 	 * from the event thread for the controller.
 	 *
-	 * Also, we now have sc_bus->ub_lock held.
+	 * Also, we now have bus->ub_lock held, and in combination
+	 * with ub_exploring, avoids interferring with polling.
 	 */
-	while (sc->sc_bus->ub_needsexplore && !sc->sc_dying) {
-		sc->sc_bus->ub_needsexplore = 0;
+	while (bus->ub_needsexplore && !sc->sc_dying) {
+		bus->ub_needsexplore = 0;
 		mutex_exit(sc->sc_bus->ub_lock);
-		sc->sc_bus->ub_roothub->ud_hub->uh_explore(sc->sc_bus->ub_roothub);
-		mutex_enter(sc->sc_bus->ub_lock);
+		bus->ub_roothub->ud_hub->uh_explore(bus->ub_roothub);
+		mutex_enter(bus->ub_lock);
 	}
 }
 
