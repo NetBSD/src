@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mue.c,v 1.6 2018/09/01 09:57:12 mlelstv Exp $	*/
+/*	$NetBSD: if_mue.c,v 1.7 2018/09/16 00:55:16 rin Exp $	*/
 /*	$OpenBSD: if_mue.c,v 1.3 2018/08/04 16:42:46 jsg Exp $	*/
 
 /*
@@ -20,7 +20,7 @@
 /* Driver for Microchip LAN7500/LAN7800 chipsets. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mue.c,v 1.6 2018/09/01 09:57:12 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mue.c,v 1.7 2018/09/16 00:55:16 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1061,7 +1061,7 @@ mue_detach(device_t self, int flags)
 			usbd_abort_pipe(sc->mue_ep[i]);
 
 	/*
-	 * Remove any pending tasks.  They cannot be executing because they run
+	 * Remove any pending tasks. They cannot be executing because they run
 	 * in the same thread as detach.
 	 */
 	usb_rem_task_wait(sc->mue_udev, &sc->mue_tick_task, USB_TASKQ_DRIVER,
@@ -1525,7 +1525,6 @@ mue_txeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 		return;
 
 	s = splnet();
-
 
 	if (__predict_false(status != USBD_NORMAL_COMPLETION)) {
 		if (status == USBD_NOT_STARTED || status == USBD_CANCELLED) {
