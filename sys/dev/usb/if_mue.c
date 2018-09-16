@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mue.c,v 1.7 2018/09/16 00:55:16 rin Exp $	*/
+/*	$NetBSD: if_mue.c,v 1.8 2018/09/16 00:58:47 rin Exp $	*/
 /*	$OpenBSD: if_mue.c,v 1.3 2018/08/04 16:42:46 jsg Exp $	*/
 
 /*
@@ -20,7 +20,7 @@
 /* Driver for Microchip LAN7500/LAN7800 chipsets. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mue.c,v 1.7 2018/09/16 00:55:16 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mue.c,v 1.8 2018/09/16 00:58:47 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -903,7 +903,8 @@ mue_attach(device_t parent, device_t self, void *aux)
 	struct mii_data	*mii;
 	struct ifnet *ifp;
 	usbd_status err;
-	int i, s;
+	uint8_t i;
+	int s;
 
 	aprint_naive("\n");
 	aprint_normal("\n");
@@ -951,7 +952,7 @@ mue_attach(device_t parent, device_t self, void *aux)
 	for (i = 0; i < id->bNumEndpoints; i++) {
 		ed = usbd_interface2endpoint_descriptor(sc->mue_iface, i);
 		if (ed == NULL) {
-			aprint_error_dev(self, "couldn't get ep %d\n", i);
+			aprint_error_dev(self, "failed to get ep %hhd\n", i);
 			return;
 		}
 		if (UE_GET_DIR(ed->bEndpointAddress) == UE_DIR_IN &&
@@ -1307,7 +1308,7 @@ mue_setmulti(struct mue_softc *sc)
 	uint32_t pfiltbl[MUE_NUM_ADDR_FILTX][2];
 	uint32_t hashtbl[MUE_DP_SEL_VHF_HASH_LEN];
 	uint32_t reg, rxfilt, h, hireg, loreg;
-	int i;
+	size_t i;
 
 	if (sc->mue_dying)
 		return;
