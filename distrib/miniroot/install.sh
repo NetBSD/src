@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: install.sh,v 1.25 2009/09/20 22:44:06 abs Exp $
+#	$NetBSD: install.sh,v 1.26 2018/09/16 21:32:29 kre Exp $
 #
 # Copyright (c) 1996,1997,1999,2000,2006 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -377,7 +377,7 @@ mount_fs /tmp/fstab.shadow
 
 mount | while read line; do
 	set -- $line
-	if [ "$2" = "/" -a "$3" = "nfs" ]; then
+	if [ "$2" = "/" ] && [ "$3" = "nfs" ]; then
 		echo "You appear to be running diskless."
 		echo -n	"Are the install sets on one of your currently mounted filesystems? [n] "
 		getresp "n"
