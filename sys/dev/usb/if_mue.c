@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mue.c,v 1.13 2018/09/16 01:27:21 rin Exp $	*/
+/*	$NetBSD: if_mue.c,v 1.14 2018/09/16 01:29:28 rin Exp $	*/
 /*	$OpenBSD: if_mue.c,v 1.3 2018/08/04 16:42:46 jsg Exp $	*/
 
 /*
@@ -20,7 +20,7 @@
 /* Driver for Microchip LAN7500/LAN7800 chipsets. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mue.c,v 1.13 2018/09/16 01:27:21 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mue.c,v 1.14 2018/09/16 01:29:28 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1707,8 +1707,7 @@ mue_start(struct ifnet *ifp)
 		return;
 
 	if (__predict_false(mue_encap(sc, m, 0))) {
-		DPRINTF(sc, "encap failed\n");
-		ifp->if_flags |= IFF_OACTIVE;
+		ifp->if_oerrors++;
 		return;
 	}
 	IFQ_DEQUEUE(&ifp->if_snd, m);
