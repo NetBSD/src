@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mue.c,v 1.9 2018/09/16 01:07:38 rin Exp $	*/
+/*	$NetBSD: if_mue.c,v 1.10 2018/09/16 01:13:26 rin Exp $	*/
 /*	$OpenBSD: if_mue.c,v 1.3 2018/08/04 16:42:46 jsg Exp $	*/
 
 /*
@@ -20,7 +20,7 @@
 /* Driver for Microchip LAN7500/LAN7800 chipsets. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mue.c,v 1.9 2018/09/16 01:07:38 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mue.c,v 1.10 2018/09/16 01:13:26 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1476,7 +1476,7 @@ mue_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 		if (sc->mue_flags & LAN7500)
 			pktlen -= 2;
 
-		if (__predict_false(pktlen < ETHER_HDR_LEN ||
+		if (__predict_false(pktlen < ETHER_HDR_LEN + ETHER_CRC_LEN ||
 		    pktlen > MCLBYTES - ETHER_ALIGN ||
 		    pktlen + sizeof(*hdrp) > total_len)) {
 			MUE_PRINTF(sc, "invalid packet length %d\n", pktlen);
