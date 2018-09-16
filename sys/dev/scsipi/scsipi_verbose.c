@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_verbose.c,v 1.33 2016/09/17 18:53:13 kardel Exp $	*/
+/*	$NetBSD: scsipi_verbose.c,v 1.34 2018/09/16 23:20:18 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipi_verbose.c,v 1.33 2016/09/17 18:53:13 kardel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipi_verbose.c,v 1.34 2018/09/16 23:20:18 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/time.h>
@@ -954,10 +954,8 @@ scsipi_print_sense_data_real(struct scsi_sense_data *sense, int verbosity)
 	if (sbs)
 		printf("\n         SKSV:  %s", sbs);
 	printf("\n");
-	if (verbosity == 0) {
-		printf("\n");
+	if (verbosity == 0)
 		return;
-	}
 
 	/*
 	 * Now figure whether we should print any additional informtion.
