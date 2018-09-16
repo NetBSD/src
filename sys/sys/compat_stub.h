@@ -1,4 +1,4 @@
-/* $NetBSD: compat_stub.h,v 1.1.2.19 2018/09/16 00:40:27 pgoyette Exp $	*/
+/* $NetBSD: compat_stub.h,v 1.1.2.20 2018/09/16 01:51:58 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -44,25 +44,25 @@
  * unloaded.
  */
 
-#define COMPAT_HOOK(hook,type,args)				\
+#define COMPAT_HOOK(hook,args)					\
 extern struct __CONCAT(hook,_t) {				\
 	kmutex_t		lock;				\
 	kcondvar_t		cv;				\
 	struct localcount	lc;				\
 	pserialize_t		psz;				\
         bool			hooked;				\
-	type			(*func)args;			\
+	int			(*func)args;			\
 } hook __cacheline_aligned;
 
-#define COMPAT_HOOK2(hook,type1,args1,type2,args2)		\
+#define COMPAT_HOOK2(hook,args1,args2)				\
 extern struct __CONCAT(hook,_t) {				\
 	kmutex_t		lock;				\
 	kcondvar_t		cv;				\
 	struct localcount	lc;				\
 	pserialize_t		psz;				\
         bool			hooked;				\
-	type1			(*func1)args1;			\
-	type2			(*func2)args2;			\
+	int			(*func1)args1;			\
+	int			(*func2)args2;			\
 } hook __cacheline_aligned;
 
 #define COMPAT_SET_HOOK(hook, waitchan, f)			\
@@ -152,7 +152,7 @@ static void __CONCAT(hook,unsethook)(void)			\
 }
 
 #define COMPAT_CALL_HOOK(hook, which, args, no_hook)		\
-type								\
+int								\
 __CONCAT(call_,hook)(args)					\
 {								\
 	bool hooked;						\
@@ -191,10 +191,7 @@ COMPAT_HOOK2(ntp_gettime_hooks, void, (struct ntptimeval *), int, (void))
  * Routine vector for dev/ccd ioctl()
  */
 
-extern int (*compat_ccd_ioctl_60)(dev_t, u_long, void *, int, struct lwp *,
-    int (*f)(dev_t, u_long, void *, int, struct lwp *));
-
-COMPAT_HOOK(ccd_ioctl_hook, int, (dev_t, u_long, void *, int, struct lwp *,
+COMPAT_HOOK(ccd_ioctl_60_hook, (dev_t, u_long, void *, int, struct lwp *,
     int (*f)(dev_t, u_long, void *, int, struct lwp *)))
 
 /*
