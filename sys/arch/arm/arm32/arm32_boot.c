@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_boot.c,v 1.21 2018/08/15 06:00:02 skrll Exp $	*/
+/*	$NetBSD: arm32_boot.c,v 1.22 2018/09/16 11:34:20 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2005  Genetec Corporation.  All rights reserved.
@@ -122,7 +122,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: arm32_boot.c,v 1.21 2018/08/15 06:00:02 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: arm32_boot.c,v 1.22 2018/09/16 11:34:20 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_cputypes.h"
@@ -336,13 +336,6 @@ cpu_hatch(struct cpu_info *ci, cpuid_t cpuid, void (*md_cpu_init)(struct cpu_inf
 	 * Raise our IPL to the max
 	 */
 	splhigh();
-
-#ifdef CPU_CORTEX
-#if 0
-	KASSERTMSG(armreg_auxctl_read() & CORTEXA9_AUXCTL_SMP, "auxctl %#x",
-	    armreg_auxctl_read());
-#endif
-#endif
 
 	VPRINTF("%s(%s): ", __func__, ci->ci_data.cpu_name);
 	uint32_t mpidr = armreg_mpidr_read();
