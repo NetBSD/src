@@ -1,5 +1,5 @@
 #! /bin/sh
-#	$NetBSD: mkinit.sh,v 1.7 2016/03/27 14:34:46 christos Exp $
+#	$NetBSD: mkinit.sh,v 1.8 2018/09/16 22:31:30 kre Exp $
 
 # Copyright (c) 2003 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -102,8 +102,11 @@ for src in $srcs; do
 			read -r line
 			[ "$line" != "}" ]
 		do
-			[ -n "$line" -a "$line" = "${line###}" ] &&
-				line="	$line"
+			case "$line" in
+			('')	;;
+			('#'*)	;;
+			(*)	line="	$line";;
+			esac
 			ev="${ev}${line}${nl}"
 		done
 		ev="${ev}	}${nl}"
