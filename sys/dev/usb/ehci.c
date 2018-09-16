@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.262 2018/09/03 16:29:33 riastradh Exp $ */
+/*	$NetBSD: ehci.c,v 1.263 2018/09/16 09:25:47 skrll Exp $ */
 
 /*
  * Copyright (c) 2004-2012 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.262 2018/09/03 16:29:33 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.263 2018/09/16 09:25:47 skrll Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -638,7 +638,7 @@ ehci_init(ehci_softc_t *sc)
 	}
 
 	/* Enable interrupts */
-	DPRINTF("enabling interupts", 0, 0, 0, 0);
+	DPRINTF("enabling interrupts", 0, 0, 0, 0);
 	EOWRITE4(sc, EHCI_USBINTR, sc->sc_eintrs);
 
 	return 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.125 2018/08/22 01:05:22 msaitoh Exp $	*/
+/*	$NetBSD: cpu.h,v 1.126 2018/09/16 09:25:46 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -200,17 +200,17 @@ register struct lwp *mips_curlwp asm(MIPS_CURLWP_QUOTED);
  */
 
 /*
- * Send an inter-processor interupt to each other CPU (excludes curcpu())
+ * Send an inter-processor interrupt to each other CPU (excludes curcpu())
  */
 void cpu_broadcast_ipi(int);
 
 /*
- * Send an inter-processor interupt to CPUs in kcpuset (excludes curcpu())
+ * Send an inter-processor interrupt to CPUs in kcpuset (excludes curcpu())
  */
 void cpu_multicast_ipi(const kcpuset_t *, int);
 
 /*
- * Send an inter-processor interupt to another CPU.
+ * Send an inter-processor interrupt to another CPU.
  */
 int cpu_send_ipi(struct cpu_info *, int);
 
