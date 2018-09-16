@@ -1,4 +1,4 @@
-/*	$NetBSD: ccd.c,v 1.175.2.4 2018/03/23 09:22:24 pgoyette Exp $	*/
+/*	$NetBSD: ccd.c,v 1.175.2.5 2018/09/16 04:57:22 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2007, 2009 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.175.2.4 2018/03/23 09:22:24 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.175.2.5 2018/09/16 04:57:22 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -1056,6 +1056,16 @@ ccdread(dev_t dev, struct uio *uio, int flags)
 	return (physio(ccdstrategy, NULL, dev, B_READ, minphys, uio));
 }
 
+/* Hook the compat_60 ioctl code
+ *
+ * This looks ugly, since we pass the "real" ioctl function as an
+ * argument to the compat_xxx function.
+ */
+COMPAT_CALL_HOOK(ccd_ioctl_60_hook, f, (dev_t dev, u_long cmd, void *data,
+    int flag, struct lwp *l, int (*ff)(dev_t, u_long, void *, int,
+					 struct lwp *)),
+    (dev, cmd, data, flag, l, ccdioctl), enosys());
+
 /* ARGSUSED */
 static int
 ccdwrite(dev_t dev, struct uio *uio, int flags)
@@ -1098,7 +1108,8 @@ ccdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		make = 1;
 		break;
 	default:
-		if ((*compat_ccd_ioctl_60)(0, cmd, NULL, 0, NULL, NULL) == 0)
+		if (ccd_ioctl_60_hook_f_call(0, cmd, NULL, 0, NULL, NULL)
+		    == 0)
 			make = 1;
 		else
 			make = 0;
@@ -1109,7 +1120,7 @@ ccdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		return ENOENT;
 	uc = kauth_cred_get();
 
-	error = (*compat_ccd_ioctl_60)(dev, cmd, data, flag, l, ccdioctl);
+	error = ccd_ioctl_60_hook_f_call(dev, cmd, data, flag, l, ccdioctl);
 	if (error != ENOSYS)
 		return error;
 
