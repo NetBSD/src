@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.11 2018/09/12 13:44:05 martin Exp $
+#	$NetBSD: Makefile.inc,v 1.12 2018/09/16 09:15:12 martin Exp $
 #
 # Makefile for sysinst
 
@@ -50,9 +50,6 @@ CPPFLAGS+=	-I. -I${.CURDIR}/../.. -I${.CURDIR} \
 		-DMACH_${MACHINE} -DARCH_${MACHINE_ARCH} \
 		${NODISKLABEL:D-DNO_DISKLABEL}
 
-.if (defined(BUILDID))
-COPTS+=	-DBUILDID=\"${BUILDID}\"
-.endif
 .if defined(NETBSD_OFFICIAL_RELEASE) && ${NETBSD_OFFICIAL_RELEASE} == "yes"
 CPPFLAGS+= -DSYSINST_FTP_HOST=\"ftp.NetBSD.org\" -DNETBSD_OFFICIAL_RELEASE
 CPPFLAGS+= -DSYSINST_HTTP_HOST=\"cdn.NetBSD.org\" -DNETBSD_OFFICIAL_RELEASE
