@@ -1,4 +1,4 @@
-/*	$NetBSD: ata.c,v 1.141.6.3 2018/09/17 18:36:13 jdolecek Exp $	*/
+/*	$NetBSD: ata.c,v 1.141.6.4 2018/09/17 19:00:43 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.141.6.3 2018/09/17 18:36:13 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.141.6.4 2018/09/17 19:00:43 jdolecek Exp $");
 
 #include "opt_ata.h"
 
@@ -1062,10 +1062,10 @@ ata_exec_xfer(struct ata_channel *chp, struct ata_xfer *xfer)
 	 * recovery commands must be run immediatelly.
 	 */
 	if ((xfer->c_flags & C_RECOVERY) == 0)
-		TAILQ_INSERT_TAIL(&chp->ch_queue->queue_xfer, xfer,
+		SIMPLEQ_INSERT_TAIL(&chp->ch_queue->queue_xfer, xfer,
 		    c_xferchain);
 	else
-		TAILQ_INSERT_HEAD(&chp->ch_queue->queue_xfer, xfer,
+		SIMPLEQ_INSERT_HEAD(&chp->ch_queue->queue_xfer, xfer,
 		    c_xferchain);
 
 	/*
@@ -1073,7 +1073,7 @@ ata_exec_xfer(struct ata_channel *chp, struct ata_xfer *xfer)
 	 */
 	if ((xfer->c_flags & (C_POLL | C_WAIT)) ==  (C_POLL | C_WAIT)) {
 		while (chp->ch_queue->queue_active > 0 ||
-		    TAILQ_FIRST(&chp->ch_queue->queue_xfer) != xfer) {
+		    SIMPLEQ_FIRST(&chp->ch_queue->queue_xfer) != xfer) {
 			xfer->c_flags |= C_WAITACT;
 			cv_wait(&chp->ch_queue->c_active, &chp->ch_lock);
 			xfer->c_flags &= ~C_WAITACT;
@@ -1137,7 +1137,7 @@ again:
 	}
 
 	/* is there a xfer ? */
-	if ((xfer = TAILQ_FIRST(&chp->ch_queue->queue_xfer)) == NULL) {
+	if ((xfer = SIMPLEQ_FIRST(&chp->ch_queue->queue_xfer)) == NULL) {
 		ATADEBUG_PRINT(("%s(chp=%p): channel %d queue_xfer is empty\n",
 		    __func__, chp, chp->ch_channel), DEBUG_XFERS);
 		goto out;
@@ -1207,6 +1207,8 @@ again:
 	else
 		CLR(chp->ch_flags, ATACH_NCQ);
 
+	SIMPLEQ_REMOVE_HEAD(&chq->queue_xfer, c_xferchain);
+
 	ata_activate_xfer_locked(chp, xfer);
 
 	if (atac->atac_cap & ATAC_CAP_NOIRQ)
@@ -1275,7 +1277,6 @@ ata_activate_xfer_locked(struct ata_channel *chp, struct ata_xfer *xfer)
 	KASSERT(chq->queue_active < chq->queue_openings);
 	KASSERT((chq->active_xfers_used & __BIT(xfer->c_slot)) == 0);
 
-	TAILQ_REMOVE(&chq->queue_xfer, xfer, c_xferchain);
 	if ((xfer->c_flags & C_RECOVERY) == 0)
 		TAILQ_INSERT_TAIL(&chq->active_xfers, xfer, c_activechain);
 	else {
@@ -1419,18 +1420,18 @@ ata_kill_pending(struct ata_drive_datas *drvp)
 {
 	struct ata_channel * const chp = drvp->chnl_softc;
 	struct ata_queue * const chq = chp->ch_queue;
-	struct ata_xfer *xfer, *xfernext;
+	struct ata_xfer *xfer;
 
 	ata_channel_lock(chp);
 
 	/* Kill all pending transfers */
-	TAILQ_FOREACH_SAFE(xfer, &chq->queue_xfer, c_xferchain, xfernext) {
+	while ((xfer = SIMPLEQ_FIRST(&chq->queue_xfer))) {
 		KASSERT(xfer->c_chp == chp);
 
 		if (xfer->c_drive != drvp->drive)
 			continue;
 
-		TAILQ_REMOVE(&chp->ch_queue->queue_xfer, xfer, c_xferchain);
+		SIMPLEQ_REMOVE_HEAD(&chp->ch_queue->queue_xfer, c_xferchain);
 
 		/*
 		 * Keep the lock, so that we get deadlock (and 'locking against

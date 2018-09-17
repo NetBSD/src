@@ -1,4 +1,4 @@
-/*	$NetBSD: atavar.h,v 1.99.2.2 2018/09/17 18:36:13 jdolecek Exp $	*/
+/*	$NetBSD: atavar.h,v 1.99.2.3 2018/09/17 19:00:43 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -160,7 +160,7 @@ struct ata_xfer {
 #define c_scsipi u.c_scsipi
 
 	/* Link on the command queue. */
-	TAILQ_ENTRY(ata_xfer) c_xferchain;
+	SIMPLEQ_ENTRY(ata_xfer) c_xferchain;
 	TAILQ_ENTRY(ata_xfer) c_activechain;
 
 	/* Links for error handling */
@@ -223,7 +223,7 @@ struct ata_queue {
 #define QF_NEED_XFER	0x02    	/* someone wants xfer */
 	int8_t queue_active; 		/* number of active transfers */
 	uint8_t queue_openings;			/* max number of active xfers */
-	TAILQ_HEAD(, ata_xfer) queue_xfer; 	/* queue of pending commands */
+	SIMPLEQ_HEAD(, ata_xfer) queue_xfer; 	/* queue of pending commands */
 	int queue_freeze; 			/* freeze count for the queue */
 	kcondvar_t queue_busy;			/* c: waiting of xfer */
 	kcondvar_t queue_drain;			/* c: waiting of queue drain */
