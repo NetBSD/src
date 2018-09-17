@@ -1,4 +1,4 @@
-/*	$NetBSD: bio_30.c,v 1.1.2.1 2018/03/28 04:18:24 pgoyette Exp $ */
+/*	$NetBSD: bio_30.c,v 1.1.2.2 2018/09/17 11:04:30 pgoyette Exp $ */
 /*	$OpenBSD: bio.c,v 1.9 2007/03/20 02:35:55 marco Exp $	*/
 
 /*
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bio_30.c,v 1.1.2.1 2018/03/28 04:18:24 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bio_30.c,v 1.1.2.2 2018/09/17 11:04:30 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -88,16 +88,19 @@ compat_30_bio(void *cookie, u_long cmd, void *addr,
 	}
 }
 
+COMPAT_SET_HOOK(compat_bio_30_hook, "bio_30", compat_30_bio);
+COMPAT_UNSET_HOOK(compat_bio_30_hook);
+
 void
 bio_30_init(void)
 {
 
-	compat_bio_30 = compat_30_bio;
+	compat_bio_30_hook_set();
 }
 
 void
 bio_30_fini(void)
 {
 
-	compat_bio_30 = (void *)enosys;
+	compat_bio_30_hook_unset();
 }

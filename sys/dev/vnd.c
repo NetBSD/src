@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.263.2.2 2018/09/06 06:55:48 pgoyette Exp $	*/
+/*	$NetBSD: vnd.c,v 1.263.2.3 2018/09/17 11:04:30 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.263.2.2 2018/09/06 06:55:48 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.263.2.3 2018/09/17 11:04:30 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vnd.h"
@@ -1111,6 +1111,12 @@ vndioctl_get(struct lwp *l, void *data, int unit, struct vattr *va)
 	}
 }
 
+COMPAT_CALL_HOOK(compat_vndioctl_30_hook, f,
+    (u_long cmd, struct lwp *l, void *data, int unit, struct vattr *vattr,
+     int (*ff)(struct lwp *, void *, int, struct vattr *)),
+    (cmd, l, data, unit, vattr, ff),
+    enosys());
+
 /* ARGSUSED */
 static int
 vndioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
@@ -1158,13 +1164,13 @@ vndioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		return 0;
 	}
 	default:
-		error = (*compat_vndioctl_30)(cmd, l, data, unit, &vattr,
-		    vndioctl_get);
-		if (error == ENOSYS) {
-			error = 0;
-			break;
+		error = compat_vndioctl_30_hook_f_call(cmd, l, data, unit,
+		    &vattr, vndioctl_get);
+		if (error == ENOSYS)
+			error = EINVAL;
+		if (error != EPASSTHROUGH) {
+			return error;
 		}
-		return error;
 	}
 
 	vnd = device_lookup_private(&vnd_cd, unit);

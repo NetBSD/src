@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_sys.h,v 1.90.16.1 2018/03/24 08:24:40 pgoyette Exp $	*/
+/*	$NetBSD: puffs_sys.h,v 1.90.16.2 2018/09/17 11:04:31 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -291,7 +291,7 @@ void	puffs_senderr(struct puffs_mount *, int, int, const char *,
 		      puffs_cookie_t);
 
 int	puffs_compat_outgoing(struct puffs_req *, struct puffs_req**, ssize_t*);
-void	puffs_compat_incoming(struct puffs_req *, struct puffs_req *);
+int	puffs_compat_incoming(struct puffs_req *, struct puffs_req *);
 
 void	puffs_updatenode(struct puffs_node *, int, voff_t);
 #define PUFFS_UPDATEATIME	0x01

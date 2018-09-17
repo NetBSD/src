@@ -1,4 +1,4 @@
-/* $NetBSD: compat_stub.c,v 1.1.2.17 2018/09/16 04:57:22 pgoyette Exp $	*/
+/* $NetBSD: compat_stub.c,v 1.1.2.18 2018/09/17 11:04:31 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 
 #ifdef _KERNEL_OPT
 #include "opt_ntp.h"
-#include "usb.h"
+#include "usb.h"	/* XXX No other way to determine if USB is present */
 #endif
 
 #include <sys/systm.h>
@@ -46,6 +46,8 @@
 
 /*
  * Routine vectors for compat_50___sys_ntp_gettime
+ *
+ * MP-hooks not needed since the NTP code is not modular
  */
 
 #ifdef NTP
@@ -62,70 +64,9 @@ int (*vec_ntp_timestatus)(void) = NULL;
 #endif
 
 /*
- * ccd device compatability ioctl
- */
-
-struct ccd_ioctl_60_hook_t ccd_ioctl_60_hook;
-
-/*
- * clockctl device compatability ioctl
- */
-int (*compat_clockctl_ioctl_50)(dev_t, u_long, void *, int, struct lwp *) =
-    (void *)enosys;
-
-/*
- * if_sppp device compatability ioctl subroutine
- */
-int (*sppp_params50)(struct sppp *, u_long, void *) = (void *)enosys;
-
-/*
- * cryptodev compatability ioctl
- */
-int (*ocryptof50_ioctl)(struct file *, u_long, void *) = (void *)enosys;
-
-/*
- * raidframe compatability
- */
-int (*raidframe50_ioctl)(int, int, struct RF_Raid_s *, int, void *,
-    struct RF_Config_s **) = (void *)enosys;
-int (*raidframe80_ioctl)(int, int, struct RF_Raid_s *, int, void *,
-    struct RF_Config_s **) = (void *)enosys;
-
-/*
- * puffs compatability
- */
-int (*puffs50_compat_outgoing)(struct puffs_req *, struct puffs_req **,
-    ssize_t *) = (void *)enosys;
-void (*puffs50_compat_incoming)(struct puffs_req *, struct puffs_req *) =
-    (void *)voidop;
-
-/*
- * wsevents compatability
- */
-int (*wsevent_50_copyout_events)(const struct wscons_event *, int,
-    struct uio *) = (void *)enosys;
-
-/*
- * sysmon_power compatability
- */
-void (*compat_sysmon_power_40)(struct power_event *, struct sysmon_pswitch *,
-    int) = (void *)voidop;
-
-/*
- * bio compatability
- */
-
-int (*compat_bio_30)(void *, u_long, void *, int(*)(void *, u_long, void *)) =
-    (void *)enosys;
-
-/*
- * vnd ioctl compatability
- */
-int (*compat_vndioctl_30)(u_long, struct lwp *, void *, int, struct vattr *,
-    int (*get)(struct lwp *, void *, int, struct vattr *)) = (void *)enosys;
-
-/*
  * usb device_info compatability
+ *
+ * MP-hooks not needed since the USB code is not modular
  */
 int (*usbd30_fill_deviceinfo_old)(struct usbd_device *,
     struct usb_device_info_old *, int) = (void *)enosys;
@@ -145,8 +86,72 @@ int (*vec_usbd_printBCD)(char *cp, size_t l, int bcd) = NULL;
 #endif
 
 /*
+ * ccd device compatability ioctl
+ */
+
+struct ccd_ioctl_60_hook_t ccd_ioctl_60_hook;
+
+/*
+ * clockctl device compatability ioctl
+ */
+
+struct clockctl_ioctl_50_hook_t clockctl_ioctl_50_hook;
+
+/*
+ * if_sppp device compatability ioctl subroutine
+ */
+
+struct sppp_params_50_hook_t sppp_params_50_hook;
+
+/*
+ * cryptodev compatability ioctl
+ */
+
+struct ocryptof_50_hook_t ocryptof_50_hook;
+
+/*
+ * raidframe compatability
+ */
+struct raidframe50_ioctl_hook_t raidframe50_ioctl_hook;
+struct raidframe80_ioctl_hook_t raidframe80_ioctl_hook;
+
+/*
+ * puffs compatability
+ */
+
+struct puffs50_compat_hook_t puffs50_compat_hook;
+
+int (*puffs50_compat_outgoing)(struct puffs_req *, struct puffs_req **,
+    ssize_t *) = (void *)enosys;
+void (*puffs50_compat_incoming)(struct puffs_req *, struct puffs_req *) =
+    (void *)voidop;
+
+/*
+ * wsevents compatability
+ */
+struct wsevent_50_copyout_events_hook_t wsevent_50_copyout_events_hook;
+
+/*
+ * sysmon_power compatability
+ */
+struct compat_sysmon_power_40_hook_t compat_sysmon_power_40_hook;
+
+/*
+ * compat_bio compatability
+ */
+struct compat_bio_30_hook_t compat_bio_30_hook;
+
+/*
+ * vnd ioctl compatability
+ */
+struct compat_vndioctl_30_hook_t compat_vndioctl_30_hook;
+
+/*
  * ieee80211 ioctl compatability
  */
+struct ieee80211_ostats_hook_t ieee80211_ostats_hook;
+struct ieee80211_get_ostats_20_hook_t ieee80211_get_ostats_20_hook;
+
 int (*ieee80211_get_ostats_20)(struct ieee80211_ostats *,
     struct ieee80211_stats *) = (void *)enosys;
 
@@ -155,14 +160,12 @@ int (*if43_20_cvtcmd)(int) = (void *)enosys;
 /*
  * rtsock 14 compatability
  */
-void (*rtsock14_oifmsg)(struct ifnet *) = (void *)voidop;
-int (*rtsock14_iflist)(struct ifnet *, struct rt_walkarg *,
-    struct rt_addrinfo *, size_t) = (void *)enosys;
+struct rtsock14_hook_t rtsock14_hook;
 
 /*
  * modctl handler for old style OSTAT
  */
-int (*compat_modstat_80)(int, struct iovec *, void *) = (void *)enosys;
+struct compat_modstat_80_hook_t compat_modstat_80_hook;
 
 /*
  * mask for kern_sig_43's killpg (updated by compat_09)

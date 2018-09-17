@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptodev.c,v 1.98.2.1 2018/03/23 09:41:10 pgoyette Exp $ */
+/*	$NetBSD: cryptodev.c,v 1.98.2.2 2018/09/17 11:04:31 pgoyette Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.c,v 1.4.2.4 2003/06/03 00:09:02 sam Exp $	*/
 /*	$OpenBSD: cryptodev.c,v 1.53 2002/07/10 22:21:30 mickey Exp $	*/
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.98.2.1 2018/03/23 09:41:10 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.98.2.2 2018/09/17 11:04:31 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -86,6 +86,7 @@ __KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.98.2.1 2018/03/23 09:41:10 pgoyette 
 #include <sys/atomic.h>
 #include <sys/stat.h>
 #include <sys/module.h>
+#include <sys/compat_stub.h> 
 
 #ifdef _KERNEL_OPT
 #include "opt_ocf.h"
@@ -217,6 +218,10 @@ cryptof_write(file_t *fp, off_t *poff,
 {
 	return EIO;
 }
+
+/* Hook the ocryptodev 50 compat code */
+COMPAT_CALL_HOOK(ocryptof_50_hook, f,
+    (struct file *fp, u_long cmd, void *data), (fp, cmd, data), enosys());
 
 /* ARGSUSED */
 int
@@ -439,7 +444,7 @@ reterr:
 		break;
 	default:
 		/* Check for backward compatible commands */
-		error = (*ocryptof50_ioctl)(fp, cmd, data);
+		error = ocryptof_50_hook_f_call(fp, cmd, data);
 		if (error == ENOSYS)
 			error = EINVAL;
 		return error;

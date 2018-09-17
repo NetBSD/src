@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_mod_80.c,v 1.1.2.4 2018/09/07 23:32:30 pgoyette Exp $	*/
+/*	$NetBSD: kern_mod_80.c,v 1.1.2.5 2018/09/17 11:04:30 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_mod_80.c,v 1.1.2.4 2018/09/07 23:32:30 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_mod_80.c,v 1.1.2.5 2018/09/17 11:04:30 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_modular.h"
@@ -151,16 +151,19 @@ compat_80_modstat(int cmd, struct iovec *iov, void *arg)
 	return error;
 }
 
+COMPAT_SET_HOOK(compat_modstat_80_hook, "mod_80",compat_80_modstat);
+COMPAT_UNSET_HOOK(compat_modstat_80_hook);
+
 void
 kern_mod_80_init(void)
 {
 
-	compat_modstat_80 = compat_80_modstat;
+	compat_modstat_80_hook_set();
 }
 
 void
 kern_mod_80_fini(void)
 {
 
-	compat_modstat_80 = (void *)enosys;
+	compat_modstat_80_hook_unset();
 }

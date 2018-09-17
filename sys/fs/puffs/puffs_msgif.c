@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_msgif.c,v 1.101.10.2 2018/03/24 10:46:13 pgoyette Exp $	*/
+/*	$NetBSD: puffs_msgif.c,v 1.101.10.3 2018/09/17 11:04:31 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.101.10.2 2018/03/24 10:46:13 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.101.10.3 2018/09/17 11:04:31 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -323,6 +323,17 @@ puffs_getmsgid(struct puffs_mount *pmp)
 	return rv;
 }
 
+/* Routines to call the compat hooks */
+	/* Out-going */
+COMPAT_CALL_HOOK(puffs50_compat_hook, f1,
+     (struct puffs_req *oreq, struct puffs_req **creqp, ssize_t *deltap),
+     (oreq, creqp, deltap), enosys());
+
+	/* Incoming */
+COMPAT_CALL_HOOK(puffs50_compat_hook, f2,
+     (struct puffs_req *oreq, struct puffs_req *creqp),
+     (oreq, creqp), enosys());
+
 /*
  * A word about reference counting of parks.  A reference must be taken
  * when accessing a park and additionally when it is on a queue.  So
@@ -350,7 +361,7 @@ puffs_msg_enqueue(struct puffs_mount *pmp, struct puffs_msgpark *park)
 #if 1
 	/* check if we do compat adjustments */
 	if (pmp->pmp_docompat &&
-	    (*puffs50_compat_outgoing)(preq, &creq, &delta) == 0) {
+	    puffs50_compat_hook_f1_call(preq, &creq, &delta) == 0) {
 		park->park_creq = park->park_preq;
 		park->park_creqlen = park->park_maxlen;
 
@@ -807,7 +818,8 @@ puffsop_msg(void *ctx, struct puffs_req *preq)
 			size_t csize;
 
 			KASSERT(pmp->pmp_docompat);
-			(*puffs50_compat_incoming)(preq, park->park_creq);
+			(void)puffs50_compat_hook_f2_call(preq,
+			    park->park_creq);
 			creq = park->park_creq;
 			csize = park->park_creqlen;
 			park->park_creq = park->park_preq;

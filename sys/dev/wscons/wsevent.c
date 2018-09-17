@@ -1,4 +1,4 @@
-/* $NetBSD: wsevent.c,v 1.37.2.2 2018/06/25 07:26:03 pgoyette Exp $ */
+/* $NetBSD: wsevent.c,v 1.37.2.3 2018/09/17 11:04:31 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2006, 2008 The NetBSD Foundation, Inc.
@@ -104,7 +104,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsevent.c,v 1.37.2.2 2018/06/25 07:26:03 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsevent.c,v 1.37.2.3 2018/09/17 11:04:31 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -189,6 +189,10 @@ wsevent_fini(struct wseventvar *ev)
 	softint_disestablish(ev->sih);
 }
 
+COMPAT_CALL_HOOK(wsevent_50_copyout_events_hook, f,
+    (const struct wscons_event *events, int cnt, struct uio *uio),
+    (events, cnt, uio), enosys());
+
 static int
 wsevent_copyout_events(const struct wscons_event *events, int cnt,
     struct uio *uio, int ver)
@@ -197,7 +201,7 @@ wsevent_copyout_events(const struct wscons_event *events, int cnt,
 
 	switch (ver) {
 	case 0:
-		error = (*wsevent_50_copyout_events)(events, cnt, uio);
+		error = wsevent_50_copyout_events_hook_f_call(events, cnt, uio);
 		if (error == ENOSYS)
 			error = EINVAL;
 		return error;

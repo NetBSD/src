@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd_30.c,v 1.1.2.1 2018/03/28 07:51:09 pgoyette Exp $	*/
+/*	$NetBSD: vnd_30.c,v 1.1.2.2 2018/09/17 11:04:30 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd_30.c,v 1.1.2.1 2018/03/28 07:51:09 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd_30.c,v 1.1.2.2 2018/09/17 11:04:30 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -104,7 +104,7 @@ compat_30_vndioctl(u_long cmd, struct lwp *l, void *data, int unit,
 	int error;
 
 	if (cmd != VNDIOCGET30)
-		return ENOSYS;
+		return EPASSTHROUGH;
 
 	error = (*get)(l, data, unit, vattr_p);
 	if (error != 0)
@@ -115,16 +115,19 @@ compat_30_vndioctl(u_long cmd, struct lwp *l, void *data, int unit,
 	return 0;
 }
 
+COMPAT_SET_HOOK(compat_vndioctl_30_hook, "vnd_30", compat_30_vndioctl);
+COMPAT_UNSET_HOOK(compat_vndioctl_30_hook);
+
 void
 vnd_30_init(void)
 {
 
-	compat_vndioctl_30 = compat_30_vndioctl;
+	compat_vndioctl_30_hook_set();
 }
 
 void
 vnd_30_fini(void)
 {
 
-	compat_vndioctl_30 = (void *)enosys;
+	compat_vndioctl_30_hook_unset();
 }

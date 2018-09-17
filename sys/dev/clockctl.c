@@ -1,4 +1,4 @@
-/*      $NetBSD: clockctl.c,v 1.35.14.1 2018/03/21 04:48:32 pgoyette Exp $ */
+/*      $NetBSD: clockctl.c,v 1.35.14.2 2018/09/17 11:04:30 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clockctl.c,v 1.35.14.1 2018/03/21 04:48:32 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clockctl.c,v 1.35.14.2 2018/09/17 11:04:30 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ntp.h"
@@ -46,9 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: clockctl.c,v 1.35.14.1 2018/03/21 04:48:32 pgoyette 
 #include <sys/device.h>
 #include <sys/time.h>
 #include <sys/conf.h>
-#ifdef NTP
 #include <sys/timex.h>
-#endif /* NTP */
 #include <sys/kauth.h>
 #include <sys/module.h>
 #include <sys/mutex.h>
@@ -202,6 +200,11 @@ clockctl_modcmd(modcmd_t cmd, void *data)
 	return error;
 }
 
+/* Hook the compat_50 stuff */
+COMPAT_CALL_HOOK(clockctl_ioctl_50_hook, f,
+    (dev_t dev, u_long cmd, void *data, int flags, struct lwp *l),
+    (dev, cmd, data, flags, l), enosys());
+
 int
 clockctlioctl(
     dev_t dev,
@@ -245,11 +248,14 @@ clockctlioctl(
 		error = clock_settime1(l->l_proc, args->clock_id, &ts, false);
 		break;
 	}
-#ifdef NTP
 	case CLOCKCTL_NTP_ADJTIME: {
 		struct clockctl_ntp_adjtime *args = data;
 		struct timex ntv;
 
+		if (vec_ntp_timestatus == NULL) {
+			error = ENOTTY;
+			break;
+		}
 		error = copyin(args->tp, &ntv, sizeof(ntv));
 		if (error)
 			return (error);
@@ -261,9 +267,8 @@ clockctlioctl(
 			args->retval = ntp_timestatus();
 		break;
 	}
-#endif /* NTP */
 	default:
-		error = (*compat_clockctl_ioctl_50)(dev, cmd, data, flags, l);
+		error = clockctl_ioctl_50_hook_f_call(dev, cmd, data, flags, l);
 		if (error == ENOSYS)
 			error = ENOTTY;
 	}

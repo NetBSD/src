@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.356.2.2 2018/09/09 22:12:16 pgoyette Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.356.2.3 2018/09/17 11:04:30 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008-2011 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.356.2.2 2018/09/09 22:12:16 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.356.2.3 2018/09/17 11:04:30 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1037,6 +1037,18 @@ raid_detach_unlocked(struct raid_softc *rs)
 	return 0;
 }
 
+/* Hooks to call the 5.0 and 8.0 ioctl compat code */
+COMPAT_CALL_HOOK(raidframe50_ioctl_hook, f,
+    (int cmd, int initted, RF_Raid_t *raidPtr, int unit, void *data,
+     RF_Config_t **k_cfg),
+    (cmd, initted, raidPtr, unit, data, k_cfg),
+    enosys());
+COMPAT_CALL_HOOK(raidframe80_ioctl_hook, f,
+    (int cmd, int initted, RF_Raid_t *raidPtr, int unit, void *data,
+     RF_Config_t **k_cfg),
+    (cmd, initted, raidPtr, unit, data, k_cfg),
+    enosys());
+
 static int
 raidioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
@@ -1120,8 +1132,8 @@ raidioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	 * * If compat code returns EAGAIN, we need to finish via config
 	 * * Otherwise the cmd has been handled and we just return
 	 */
-	retcode = (*raidframe50_ioctl)(cmd, (rs->sc_flags & RAIDF_INITED),
-	    raidPtr, unit, data, &k_cfg);
+	retcode = raidframe50_ioctl_hook_f_call(cmd,
+	    (rs->sc_flags & RAIDF_INITED), raidPtr, unit, data, &k_cfg);
 	if (retcode == ENOSYS)
 		retcode = 0;
 	else if (retcode == EAGAIN)
@@ -1129,8 +1141,8 @@ raidioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	else if (retcode != EPASSTHROUGH)
 		return retcode;
 
-	retcode = (*raidframe80_ioctl)(cmd, (rs->sc_flags & RAIDF_INITED),
-	    raidPtr, unit, data, &k_cfg);
+	retcode = raidframe80_ioctl_hook_f_call(cmd,
+	    (rs->sc_flags & RAIDF_INITED), raidPtr, unit, data, &k_cfg);
 	if (retcode == ENOSYS)
 		retcode = 0;
 	else if (retcode == EAGAIN)
