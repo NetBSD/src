@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.23 2018/09/10 16:43:24 maxv Exp $	*/
+/*	$NetBSD: pmap.c,v 1.24 2018/09/17 00:15:55 ryo Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.23 2018/09/10 16:43:24 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.24 2018/09/17 00:15:55 ryo Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_ddb.h"
@@ -1824,23 +1824,9 @@ pmap_fault_fixup(struct pmap *pm, vaddr_t va, vm_prot_t accessprot, bool user)
 		goto done;
 	}
 
-	if ((pte & LX_BLKPAG_AF) && ((pte & LX_BLKPAG_AP) == LX_BLKPAG_AP_RW)) {
-#if 1 /* XXX: DEBUG */
-		if (!user) {
-			/*
-			 * pte is readable and writable, but occured fault?
-			 * unprivileged load/store, or else ?
-			 */
-			printf("%s: fault: va=%016lx pte=%08" PRIx64
-			    ": pte is rw."
-			    " unprivileged load/store ? (onfault=%p)\n",
-			    __func__, va, pte, curlwp->l_md.md_onfault);
-		}
-#endif
+	/* pte is readable and writable, but occured fault? probably copy(9) */
+	if ((pte & LX_BLKPAG_AF) && ((pte & LX_BLKPAG_AP) == LX_BLKPAG_AP_RW))
 		goto done;
-	}
-	KASSERT(((pte & LX_BLKPAG_AF) == 0) ||
-	    ((pte & LX_BLKPAG_AP) == LX_BLKPAG_AP_RO));
 
 	pmap_pv_lock(md);
 	if ((pte & LX_BLKPAG_AF) == 0) {
