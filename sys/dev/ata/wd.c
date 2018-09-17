@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.441.2.2 2018/09/01 09:48:32 jdolecek Exp $ */
+/*	$NetBSD: wd.c,v 1.441.2.3 2018/09/17 20:54:41 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.441.2.2 2018/09/01 09:48:32 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.441.2.3 2018/09/17 20:54:41 jdolecek Exp $");
 
 #include "opt_ata.h"
 #include "opt_wd.h"
@@ -69,7 +69,6 @@ __KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.441.2.2 2018/09/01 09:48:32 jdolecek Exp $"
 #include <sys/buf.h>
 #include <sys/bufq.h>
 #include <sys/uio.h>
-#include <sys/malloc.h>
 #include <sys/device.h>
 #include <sys/disklabel.h>
 #include <sys/disk.h>
@@ -548,9 +547,9 @@ wddetach(device_t self, int flags)
 #ifdef WD_SOFTBADSECT
 	/* Clean out the bad sector list */
 	while (!SLIST_EMPTY(&wd->sc_bslist)) {
-		void *head = SLIST_FIRST(&wd->sc_bslist);
+		struct disk_badsectors *dbs = SLIST_FIRST(&wd->sc_bslist);
 		SLIST_REMOVE_HEAD(&wd->sc_bslist, dbs_next);
-		free(head, M_TEMP);
+		kmem_free(dbs, sizeof(*dbs));
 	}
 	wd->sc_bscount = 0;
 #endif
@@ -892,7 +891,7 @@ retry2:
 		     (wd->drvp->ata_vers < 4 && xfer->c_bio.r_error & 192))) {
 			struct disk_badsectors *dbs;
 
-			dbs = malloc(sizeof *dbs, M_TEMP, M_NOWAIT);
+			dbs = kmem_zalloc(sizeof *dbs, KM_NOSLEEP);
 			if (dbs == NULL) {
 				aprint_error_dev(dksc->sc_dev,
 				    "failed to add bad block to list\n");
@@ -1219,6 +1218,7 @@ wdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 		 * back to user space whilst the summary is returned via
 		 * the struct passed in via the ioctl.
 		 */
+		mutex_enter(&wd->sc_lock);
 		SLIST_FOREACH(dbs, &wd->sc_bslist, dbs_next) {
 			if (skip > 0) {
 				missing--;
@@ -1233,6 +1233,7 @@ wdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 			missing--;
 			count++;
 		}
+		mutex_exit(&wd->sc_lock);
 		dbsi.dbsi_left = missing;
 		dbsi.dbsi_copied = count;
 		*(struct disk_badsecinfo *)addr = dbsi;
@@ -1241,11 +1242,14 @@ wdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 
 	case DIOCBSFLUSH :
 		/* Clean out the bad sector list */
+		mutex_enter(&wd->sc_lock);
 		while (!SLIST_EMPTY(&wd->sc_bslist)) {
-			void *head = SLIST_FIRST(&wd->sc_bslist);
+			struct disk_badsectors *dbs =
+			    SLIST_FIRST(&wd->sc_bslist);
 			SLIST_REMOVE_HEAD(&wd->sc_bslist, dbs_next);
-			free(head, M_TEMP);
+			kmem_free(dbs, sizeof(*dbs));
 		}
+		mutex_exit(&wd->sc_lock);
 		wd->sc_bscount = 0;
 		return 0;
 #endif
@@ -1306,7 +1310,7 @@ wdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 			void *tbuf;
 			if (atareq->datalen < DEV_BSIZE
 			    && atareq->command == WDCC_IDENTIFY) {
-				tbuf = malloc(DEV_BSIZE, M_TEMP, M_WAITOK);
+				tbuf = kmem_zalloc(DEV_BSIZE, KM_SLEEP);
 				wi->wi_iov.iov_base = tbuf;
 				wi->wi_iov.iov_len = DEV_BSIZE;
 				UIO_SETUP_SYSSPACE(&wi->wi_uio);
@@ -1328,7 +1332,7 @@ wdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 			if (tbuf != NULL && error1 == 0) {
 				error1 = copyout(tbuf, atareq->databuf,
 				    atareq->datalen);
-				free(tbuf, M_TEMP);
+				kmem_free(tbuf, DEV_BSIZE);
 			}
 		} else {
 			/* No need to call physio if we don't have any
@@ -1919,7 +1923,7 @@ wi_get(struct wd_softc *wd)
 {
 	struct wd_ioctl *wi;
 
-	wi = malloc(sizeof(struct wd_ioctl), M_TEMP, M_WAITOK|M_ZERO);
+	wi = kmem_zalloc(sizeof(struct wd_ioctl), KM_SLEEP);
 	wi->wi_softc = wd;
 	buf_init(&wi->wi_bp);
 
@@ -1934,7 +1938,7 @@ void
 wi_free(struct wd_ioctl *wi)
 {
 	buf_destroy(&wi->wi_bp);
-	free(wi, M_TEMP);
+	kmem_free(wi, sizeof(*wi));
 }
 
 /*
