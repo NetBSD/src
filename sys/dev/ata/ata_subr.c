@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_subr.c,v 1.6.2.2 2018/09/17 18:36:13 jdolecek Exp $	*/
+/*	$NetBSD: ata_subr.c,v 1.6.2.3 2018/09/17 19:00:43 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata_subr.c,v 1.6.2.2 2018/09/17 18:36:13 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata_subr.c,v 1.6.2.3 2018/09/17 19:00:43 jdolecek Exp $");
 
 #include "opt_ata.h"
 
@@ -70,7 +70,7 @@ void
 ata_queue_reset(struct ata_queue *chq)
 {
 	/* make sure that we can use polled commands */
-	TAILQ_INIT(&chq->queue_xfer);
+	SIMPLEQ_INIT(&chq->queue_xfer);
 	TAILQ_INIT(&chq->active_xfers);
 	chq->queue_freeze = 0;
 	chq->queue_active = 0;
