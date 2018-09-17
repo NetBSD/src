@@ -1,4 +1,4 @@
-/* $NetBSD: TODO.compat-module,v 1.1.2.4 2018/09/14 06:21:17 pgoyette Exp $ */
+/* $NetBSD: TODO.compat-module,v 1.1.2.5 2018/09/17 10:06:29 pgoyette Exp $ */
 
 DONE
 ----
@@ -43,6 +43,9 @@ DONE
 10. Separated COMPAT_BSDPTY stuff, allowing the COMPAT_60 module to be
     built regardless.
 
+11. Implemented a MP-safe mechanism for installing and removing function
+    pointers.  Thanks to riastradh@ for the template code.
+
 
 TODO - Required for branch merge
 --------------------------------
@@ -50,10 +53,21 @@ TODO - Required for branch merge
     also the compat_netbsd32_sysv module) with individual modules.  Update
     dependencies accordingly.
 
-2.  Wherever we have vectors function calls, we need to protect all uses
-    of the vector using localcount(9).  And when unloading a module, we
-    need to localcount_drain() after replacing the function pointer but
-    before letting the module disappear.
+2.  Need to finish cleaning up the netbsd32 machine-dependent code, since
+    the MI code assumes that there's MD file available.
+
+3.  Still have some work to do to split the vnd_30 and vnd_50 compat
+    code into separate modules.
+
+4.  The ieee_80211 compat code needs to be verified to make sure it is
+    handling the if43_20 compat routine cvtcmd() correctly.
+
+5.  There are a few function pointers in netbsd32 module that need to
+    be converted to the new MP-safe mechanism.  See files
+	netbsd32_mod.c
+	netbsd32_module.c
+	netbsd32_compat_80.[ch]
+	amd64's machdep.c and machdep_16.c
 
 
 TODO - Not required for branch merge
