@@ -1,4 +1,4 @@
-/* $NetBSD: siisata.c,v 1.35.6.2 2018/09/01 10:13:41 jdolecek Exp $ */
+/* $NetBSD: siisata.c,v 1.35.6.3 2018/09/17 18:36:14 jdolecek Exp $ */
 
 /* from ahcisata_core.c */
 
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siisata.c,v 1.35.6.2 2018/09/01 10:13:41 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siisata.c,v 1.35.6.3 2018/09/17 18:36:14 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -563,7 +563,7 @@ siisata_intr_port(struct siisata_channel *schp)
 
 process:
 	if (xfer != NULL) {
-		xfer->c_intr(chp, xfer, tfd);
+		xfer->ops->c_intr(chp, xfer, tfd);
 	} else {
 		/*
 		 * For NCQ, HBA halts processing when error is notified,
@@ -580,7 +580,7 @@ process:
 			if ((aslots & __BIT(slot)) != 0 &&
 			    (pss & PR_PXSS(slot)) == 0) {
 				xfer = ata_queue_hwslot_to_xfer(chp, slot);
-				xfer->c_intr(chp, xfer, 0);
+				xfer->ops->c_intr(chp, xfer, 0);
 			}
 		}
 	}
@@ -659,7 +659,7 @@ siisata_channel_recover(struct ata_channel *chp, uint32_t tfd)
 		if ((schp->sch_active_slots & (1 << eslot)) != 0) {
 			xfer = ata_queue_hwslot_to_xfer(chp, eslot);
 			xfer->c_flags |= C_RECOVERED;
-			xfer->c_intr(chp, xfer, ATACH_ERR_ST(err, st));
+			xfer->ops->c_intr(chp, xfer, ATACH_ERR_ST(err, st));
 		}
 		break;
 
@@ -674,7 +674,7 @@ siisata_channel_recover(struct ata_channel *chp, uint32_t tfd)
 				if (xfer->c_drive != drive)
 					continue;
 
-				xfer->c_intr(chp, xfer, tfd);
+				xfer->ops->c_intr(chp, xfer, tfd);
 			}
 		}
 		break;
@@ -708,7 +708,7 @@ reset:
 		if (xfer->c_drive != drive)
 			continue;
 
-		xfer->c_kill_xfer(chp, xfer,
+		xfer->ops->c_kill_xfer(chp, xfer,
 		    (error == 0) ? KILL_REQUEUE : KILL_RESET);
 	}
 
@@ -970,6 +970,14 @@ siisata_setup_channel(struct ata_channel *chp)
 	return;
 }
 
+static const struct ata_xfer_ops siisata_cmd_xfer_ops = {
+	.c_start = siisata_cmd_start,
+	.c_intr = siisata_cmd_complete,
+	.c_poll = siisata_cmd_poll,
+	.c_abort = siisata_cmd_abort,
+	.c_kill_xfer = siisata_cmd_kill_xfer,
+};
+
 int
 siisata_exec_command(struct ata_drive_datas *drvp, struct ata_xfer *xfer)
 {
@@ -989,11 +997,7 @@ siisata_exec_command(struct ata_drive_datas *drvp, struct ata_xfer *xfer)
 	xfer->c_drive = drvp->drive;
 	xfer->c_databuf = ata_c->data;
 	xfer->c_bcount = ata_c->bcount;
-	xfer->c_start = siisata_cmd_start;
-	xfer->c_intr = siisata_cmd_complete;
-	xfer->c_poll = siisata_cmd_poll;
-	xfer->c_abort = siisata_cmd_abort;
-	xfer->c_kill_xfer = siisata_cmd_kill_xfer;
+	xfer->ops = &siisata_cmd_xfer_ops;
 	s = splbio();
 	ata_exec_xfer(chp, xfer);
 #ifdef DIAGNOSTIC
@@ -1223,6 +1227,14 @@ siisata_cmd_done_end(struct ata_channel *chp, struct ata_xfer *xfer)
 	ata_c->flags |= AT_DONE;
 }
 
+static const struct ata_xfer_ops siisata_bio_xfer_ops = {
+	.c_start = siisata_bio_start,
+	.c_intr = siisata_bio_complete,
+	.c_poll = siisata_bio_poll,
+	.c_abort = siisata_bio_abort,
+	.c_kill_xfer = siisata_bio_kill_xfer,
+};
+
 int
 siisata_ata_bio(struct ata_drive_datas *drvp, struct ata_xfer *xfer)
 {
@@ -1240,11 +1252,7 @@ siisata_ata_bio(struct ata_drive_datas *drvp, struct ata_xfer *xfer)
 	xfer->c_drive = drvp->drive;
 	xfer->c_databuf = ata_bio->databuf;
 	xfer->c_bcount = ata_bio->bcount;
-	xfer->c_start = siisata_bio_start;
-	xfer->c_intr = siisata_bio_complete;
-	xfer->c_poll = siisata_bio_poll;
-	xfer->c_abort = siisata_bio_abort;
-	xfer->c_kill_xfer = siisata_bio_kill_xfer;
+	xfer->ops = &siisata_bio_xfer_ops;
 	ata_exec_xfer(chp, xfer);
 	return (ata_bio->flags & ATA_ITSDONE) ?
 	    ATACMD_COMPLETE : ATACMD_QUEUED;
@@ -1782,6 +1790,14 @@ siisata_atapi_probe_device(struct atapibus_softc *sc, int target)
 	}
 }
 
+static const struct ata_xfer_ops siisata_atapi_xfer_ops = {
+	.c_start = siisata_atapi_start,
+	.c_intr = siisata_atapi_complete,
+	.c_poll = siisata_atapi_poll,
+	.c_abort = siisata_atapi_abort,
+	.c_kill_xfer = siisata_atapi_kill_xfer,
+};
+
 void
 siisata_atapi_scsipi_request(struct scsipi_channel *chan,
     scsipi_adapter_req_t req, void *arg)
@@ -1824,11 +1840,7 @@ siisata_atapi_scsipi_request(struct scsipi_channel *chan,
 		xfer->c_scsipi = sc_xfer;
 		xfer->c_databuf = sc_xfer->data;
 		xfer->c_bcount = sc_xfer->datalen;
-		xfer->c_start = siisata_atapi_start;
-		xfer->c_intr = siisata_atapi_complete;
-		xfer->c_poll = siisata_atapi_poll;
-		xfer->c_abort = siisata_atapi_abort;
-		xfer->c_kill_xfer = siisata_atapi_kill_xfer;
+		xfer->ops = &siisata_atapi_xfer_ops;
 		xfer->c_dscpoll = 0;
 		s = splbio();
 		ata_exec_xfer(atac->atac_channels[channel], xfer);

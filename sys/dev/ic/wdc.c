@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.288.6.1 2018/08/31 19:08:03 jdolecek Exp $ */
+/*	$NetBSD: wdc.c,v 1.288.6.2 2018/09/17 18:36:14 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.288.6.1 2018/08/31 19:08:03 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.288.6.2 2018/09/17 18:36:14 jdolecek Exp $");
 
 #include "opt_ata.h"
 #include "opt_wdc.h"
@@ -919,8 +919,8 @@ ignore:
 	}
 #endif
 	chp->ch_flags &= ~ATACH_IRQ_WAIT;
-	KASSERT(xfer->c_intr != NULL);
-	ret = xfer->c_intr(chp, xfer, 1);
+	KASSERT(xfer->ops != NULL && xfer->ops->c_intr != NULL);
+	ret = xfer->ops->c_intr(chp, xfer, 1);
 	if (ret == 0) /* irq was not for us, still waiting for irq */
 		chp->ch_flags |= ATACH_IRQ_WAIT;
 	return (ret);
@@ -1367,12 +1367,20 @@ wdctimeout(void *arg)
 	 */
 	callout_reset(&chp->c_timo_callout, hz, wdctimeout, chp);
 	xfer->c_flags |= C_TIMEOU;
-	KASSERT(xfer->c_intr != NULL);
-	xfer->c_intr(chp, xfer, 1);
+	KASSERT(xfer->ops != NULL && xfer->ops->c_intr != NULL);
+	xfer->ops->c_intr(chp, xfer, 1);
 
 out:
 	splx(s);
 }
+
+static const struct ata_xfer_ops wdc_cmd_xfer_ops = {
+	.c_start = __wdccommand_start,
+	.c_poll = __wdccommand_poll,
+	.c_abort = __wdccommand_done,
+	.c_intr = __wdccommand_intr,
+	.c_kill_xfer = __wdccommand_kill_xfer,
+};
 
 int
 wdc_exec_command(struct ata_drive_datas *drvp, struct ata_xfer *xfer)
@@ -1395,11 +1403,7 @@ wdc_exec_command(struct ata_drive_datas *drvp, struct ata_xfer *xfer)
 	xfer->c_drive = drvp->drive;
 	xfer->c_databuf = ata_c->data;
 	xfer->c_bcount = ata_c->bcount;
-	xfer->c_start = __wdccommand_start;
-	xfer->c_poll = __wdccommand_poll;
-	xfer->c_abort = __wdccommand_done;
-	xfer->c_intr = __wdccommand_intr;
-	xfer->c_kill_xfer = __wdccommand_kill_xfer;
+	xfer->ops = &wdc_cmd_xfer_ops;
 
 	s = splbio();
 	ata_exec_xfer(chp, xfer);
