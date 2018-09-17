@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.5 2018/09/08 18:10:35 martin Exp $	*/
+/*	$NetBSD: md.c,v 1.6 2018/09/17 15:19:29 tsutsui Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -220,7 +220,7 @@ md_pre_update(void)
 int
 md_update(void)
 {
-	md_post_newfs();
+	md_post_disklabel();
 	return 1;
 }
 
