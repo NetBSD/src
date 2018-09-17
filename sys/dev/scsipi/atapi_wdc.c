@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_wdc.c,v 1.129.6.1 2018/08/31 19:08:03 jdolecek Exp $	*/
+/*	$NetBSD: atapi_wdc.c,v 1.129.6.2 2018/09/17 18:36:14 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.129.6.1 2018/08/31 19:08:03 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.129.6.2 2018/09/17 18:36:14 jdolecek Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -359,6 +359,14 @@ wdc_atapi_probe_device(struct atapibus_softc *sc, int target)
 	}
 }
 
+static const struct ata_xfer_ops wdc_atapi_xfer_ops = {
+	.c_start = wdc_atapi_start,
+	.c_intr = wdc_atapi_intr,
+	.c_poll = wdc_atapi_poll,
+	.c_abort = wdc_atapi_reset,
+	.c_kill_xfer = wdc_atapi_kill_xfer,
+};
+
 static void
 wdc_atapi_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
     void *arg)
@@ -452,11 +460,7 @@ wdc_atapi_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 		xfer->c_scsipi = sc_xfer;
 		xfer->c_databuf = sc_xfer->data;
 		xfer->c_bcount = sc_xfer->datalen;
-		xfer->c_start = wdc_atapi_start;
-		xfer->c_intr = wdc_atapi_intr;
-		xfer->c_poll = wdc_atapi_poll;
-		xfer->c_abort = wdc_atapi_reset;
-		xfer->c_kill_xfer = wdc_atapi_kill_xfer;
+		xfer->ops = &wdc_atapi_xfer_ops;
 		xfer->c_dscpoll = 0;
 		s = splbio();
 		ata_exec_xfer(atac->atac_channels[channel], xfer);

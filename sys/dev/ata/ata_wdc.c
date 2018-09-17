@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_wdc.c,v 1.110.4.1 2018/08/31 19:08:03 jdolecek Exp $	*/
+/*	$NetBSD: ata_wdc.c,v 1.110.4.2 2018/09/17 18:36:13 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata_wdc.c,v 1.110.4.1 2018/08/31 19:08:03 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata_wdc.c,v 1.110.4.2 2018/09/17 18:36:13 jdolecek Exp $");
 
 #include "opt_ata.h"
 #include "opt_wdc.h"
@@ -131,6 +131,14 @@ const struct ata_bustype wdc_ata_bustype = {
 	ata_kill_pending,
 };
 
+static const struct ata_xfer_ops wdc_bio_xfer_ops = {
+	.c_start = wdc_ata_bio_start,
+	.c_poll = wdc_ata_bio_poll,
+	.c_abort = wdc_ata_bio_done,
+	.c_intr = wdc_ata_bio_intr,
+	.c_kill_xfer = wdc_ata_bio_kill_xfer
+};
+
 /*
  * Handle block I/O operation. Return ATACMD_COMPLETE, ATACMD_QUEUED, or
  * ATACMD_TRY_AGAIN. Must be called at splbio().
@@ -161,11 +169,7 @@ wdc_ata_bio(struct ata_drive_datas *drvp, struct ata_xfer *xfer)
 	xfer->c_drive = drvp->drive;
 	xfer->c_databuf = ata_bio->databuf;
 	xfer->c_bcount = ata_bio->bcount;
-	xfer->c_start = wdc_ata_bio_start;
-	xfer->c_poll = wdc_ata_bio_poll;
-	xfer->c_abort = wdc_ata_bio_done;
-	xfer->c_intr = wdc_ata_bio_intr;
-	xfer->c_kill_xfer = wdc_ata_bio_kill_xfer;
+	xfer->ops = &wdc_bio_xfer_ops;
 	ata_exec_xfer(chp, xfer);
 	return (ata_bio->flags & ATA_ITSDONE) ? ATACMD_COMPLETE : ATACMD_QUEUED;
 }

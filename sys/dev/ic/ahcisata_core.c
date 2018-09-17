@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata_core.c,v 1.62.2.2 2018/09/01 10:13:41 jdolecek Exp $	*/
+/*	$NetBSD: ahcisata_core.c,v 1.62.2.3 2018/09/17 18:36:13 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.62.2.2 2018/09/01 10:13:41 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.62.2.3 2018/09/17 18:36:13 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -647,7 +647,7 @@ ahci_intr_port(struct ahci_softc *sc, struct ahci_channel *achp)
 		if ((achp->ahcic_cmds_active & __BIT(slot)) != 0 &&
 		    (sact & __BIT(slot)) == 0) {
 			xfer = ata_queue_hwslot_to_xfer(chp, slot);
-			xfer->c_intr(chp, xfer, tfd);
+			xfer->ops->c_intr(chp, xfer, tfd);
 		}
 	} else {
 		/*
@@ -665,7 +665,7 @@ ahci_intr_port(struct ahci_softc *sc, struct ahci_channel *achp)
 			if ((aslots & __BIT(slot)) != 0 &&
 			    (sact & __BIT(slot)) == 0) {
 				xfer = ata_queue_hwslot_to_xfer(chp, slot);
-				xfer->c_intr(chp, xfer, tfd);
+				xfer->ops->c_intr(chp, xfer, tfd);
 			}
 		}
 	}
@@ -1003,6 +1003,14 @@ ahci_setup_channel(struct ata_channel *chp)
 	return;
 }
 
+static const struct ata_xfer_ops ahci_cmd_xfer_ops = {
+	.c_start = ahci_cmd_start,
+	.c_poll = ahci_cmd_poll,
+	.c_abort = ahci_cmd_abort,
+	.c_intr = ahci_cmd_complete,
+	.c_kill_xfer = ahci_cmd_kill_xfer,
+};
+
 static int
 ahci_exec_command(struct ata_drive_datas *drvp, struct ata_xfer *xfer)
 {
@@ -1022,11 +1030,7 @@ ahci_exec_command(struct ata_drive_datas *drvp, struct ata_xfer *xfer)
 	xfer->c_drive = drvp->drive;
 	xfer->c_databuf = ata_c->data;
 	xfer->c_bcount = ata_c->bcount;
-	xfer->c_start = ahci_cmd_start;
-	xfer->c_poll = ahci_cmd_poll;
-	xfer->c_abort = ahci_cmd_abort;
-	xfer->c_intr = ahci_cmd_complete;
-	xfer->c_kill_xfer = ahci_cmd_kill_xfer;
+	xfer->ops = &ahci_cmd_xfer_ops;
 	s = splbio();
 	ata_exec_xfer(chp, xfer);
 #ifdef DIAGNOSTIC
@@ -1142,7 +1146,7 @@ ahci_cmd_poll(struct ata_channel *chp, struct ata_xfer *xfer)
 
 	if ((xfer->c_ata_c.flags & AT_DONE) == 0) {
 		xfer->c_ata_c.flags |= AT_TIMEOU;
-		xfer->c_intr(chp, xfer, 0);
+		xfer->ops->c_intr(chp, xfer, 0);
 	}
 	/* reenable interrupts */
 	AHCI_WRITE(sc, AHCI_GHC, AHCI_READ(sc, AHCI_GHC) | AHCI_GHC_IE);
@@ -1279,6 +1283,14 @@ ahci_cmd_done_end(struct ata_channel *chp, struct ata_xfer *xfer)
 	ata_c->flags |= AT_DONE;
 }
 
+static const struct ata_xfer_ops ahci_bio_xfer_ops = {
+	.c_start = ahci_bio_start,
+	.c_poll = ahci_bio_poll,
+	.c_abort = ahci_bio_abort,
+	.c_intr = ahci_bio_complete,
+	.c_kill_xfer = ahci_bio_kill_xfer,
+};
+
 static int
 ahci_ata_bio(struct ata_drive_datas *drvp, struct ata_xfer *xfer)
 {
@@ -1294,11 +1306,7 @@ ahci_ata_bio(struct ata_drive_datas *drvp, struct ata_xfer *xfer)
 	xfer->c_drive = drvp->drive;
 	xfer->c_databuf = ata_bio->databuf;
 	xfer->c_bcount = ata_bio->bcount;
-	xfer->c_start = ahci_bio_start;
-	xfer->c_poll = ahci_bio_poll;
-	xfer->c_abort = ahci_bio_abort;
-	xfer->c_intr = ahci_bio_complete;
-	xfer->c_kill_xfer = ahci_bio_kill_xfer;
+	xfer->ops = &ahci_bio_xfer_ops;
 	ata_exec_xfer(chp, xfer);
 	return (ata_bio->flags & ATA_ITSDONE) ? ATACMD_COMPLETE : ATACMD_QUEUED;
 }
@@ -1386,7 +1394,7 @@ ahci_bio_poll(struct ata_channel *chp, struct ata_xfer *xfer)
 	    DEBUG_XFERS);
 	if ((xfer->c_bio.flags & ATA_ITSDONE) == 0) {
 		xfer->c_bio.error = TIMEOUT;
-		xfer->c_intr(chp, xfer, 0);
+		xfer->ops->c_intr(chp, xfer, 0);
 	}
 	/* reenable interrupts */
 	AHCI_WRITE(sc, AHCI_GHC, AHCI_READ(sc, AHCI_GHC) | AHCI_GHC_IE);
@@ -1671,7 +1679,7 @@ ahci_channel_recover(struct ahci_softc *sc, struct ata_channel *chp, int tfd)
 		if ((achp->ahcic_cmds_active & (1U << eslot)) != 0) {
 			xfer = ata_queue_hwslot_to_xfer(chp, eslot);
 			xfer->c_flags |= C_RECOVERED;
-			xfer->c_intr(chp, xfer,
+			xfer->ops->c_intr(chp, xfer,
 			    (err << AHCI_P_TFD_ERR_SHIFT) | st);
 		}
 		break;
@@ -1684,7 +1692,7 @@ ahci_channel_recover(struct ahci_softc *sc, struct ata_channel *chp, int tfd)
 		for (slot = 0; slot < sc->sc_ncmds; slot++) {
 			if ((achp->ahcic_cmds_active & (1U << slot)) != 0) {
 				xfer = ata_queue_hwslot_to_xfer(chp, slot);
-				xfer->c_intr(chp, xfer, tfd);
+				xfer->ops->c_intr(chp, xfer, tfd);
 			}
 		}
 		break;
@@ -1718,7 +1726,7 @@ reset:
 		if (drive != xfer->c_drive)
 			continue;
 
-		xfer->c_kill_xfer(chp, xfer,
+		xfer->ops->c_kill_xfer(chp, xfer,
 		    (error == 0) ? KILL_REQUEUE : KILL_RESET);
 	}
 
@@ -1827,6 +1835,14 @@ ahci_atapi_kill_pending(struct scsipi_periph *periph)
 	ata_kill_pending(&chp->ch_drive[periph->periph_target]);
 }
 
+static const struct ata_xfer_ops ahci_atapi_xfer_ops = {
+	.c_start = ahci_atapi_start,
+	.c_poll = ahci_atapi_poll,
+	.c_abort = ahci_atapi_abort,
+	.c_intr = ahci_atapi_complete,
+	.c_kill_xfer = ahci_atapi_kill_xfer,
+};
+
 static void
 ahci_atapi_scsipi_request(struct scsipi_channel *chan,
     scsipi_adapter_req_t req, void *arg)
@@ -1864,11 +1880,7 @@ ahci_atapi_scsipi_request(struct scsipi_channel *chan,
 		xfer->c_scsipi = sc_xfer;
 		xfer->c_databuf = sc_xfer->data;
 		xfer->c_bcount = sc_xfer->datalen;
-		xfer->c_start = ahci_atapi_start;
-		xfer->c_poll = ahci_atapi_poll;
-		xfer->c_abort = ahci_atapi_abort;
-		xfer->c_intr = ahci_atapi_complete;
-		xfer->c_kill_xfer = ahci_atapi_kill_xfer;
+		xfer->ops = &ahci_atapi_xfer_ops;
 		xfer->c_dscpoll = 0;
 		s = splbio();
 		ata_exec_xfer(atac->atac_channels[channel], xfer);
@@ -1972,7 +1984,7 @@ ahci_atapi_poll(struct ata_channel *chp, struct ata_xfer *xfer)
 	    DEBUG_XFERS);
 	if ((xfer->c_scsipi->xs_status & XS_STS_DONE) == 0) {
 		xfer->c_scsipi->error = XS_TIMEOUT;
-		xfer->c_intr(chp, xfer, 0);
+		xfer->ops->c_intr(chp, xfer, 0);
 	}
 	/* reenable interrupts */
 	AHCI_WRITE(sc, AHCI_GHC, AHCI_READ(sc, AHCI_GHC) | AHCI_GHC_IE);

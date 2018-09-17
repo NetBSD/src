@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_subr.c,v 1.6.2.1 2018/08/31 19:08:03 jdolecek Exp $	*/
+/*	$NetBSD: ata_subr.c,v 1.6.2.2 2018/09/17 18:36:13 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata_subr.c,v 1.6.2.1 2018/08/31 19:08:03 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata_subr.c,v 1.6.2.2 2018/09/17 18:36:13 jdolecek Exp $");
 
 #include "opt_ata.h"
 
@@ -326,6 +326,7 @@ ata_free_xfer(struct ata_channel *chp, struct ata_xfer *xfer)
 		goto out;
 	}
 
+	/* XXX move PIOBM and free_gw to deactivate? */
 #if NATA_PIOBM		/* XXX wdc dependent code */
 	if (xfer->c_flags & C_PIOBM) {
 		struct wdc_softc *wdc = CHAN_TO_WDC(chp);
@@ -386,7 +387,7 @@ ata_timeout(void *v)
 
 		/* Mark as timed out. Do not print anything, wd(4) will. */
 		xfer->c_flags |= C_TIMEOU;
-		xfer->c_intr(xfer->c_chp, xfer, 0);
+		xfer->ops->c_intr(xfer->c_chp, xfer, 0);
 	}
 
 	splx(s);

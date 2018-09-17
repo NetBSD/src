@@ -1,4 +1,4 @@
-/*	$NetBSD: ata.c,v 1.141.6.2 2018/09/01 09:48:32 jdolecek Exp $	*/
+/*	$NetBSD: ata.c,v 1.141.6.3 2018/09/17 18:36:13 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.141.6.2 2018/09/01 09:48:32 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.141.6.3 2018/09/17 18:36:13 jdolecek Exp $");
 
 #include "opt_ata.h"
 
@@ -1238,7 +1238,7 @@ ata_xfer_start(struct ata_xfer *xfer)
 
 	KASSERT(mutex_owned(&chp->ch_lock));
 
-	rv = xfer->c_start(chp, xfer);
+	rv = xfer->ops->c_start(chp, xfer);
 	switch (rv) {
 	case ATASTART_STARTED:
 		/* nothing to do */
@@ -1250,14 +1250,14 @@ ata_xfer_start(struct ata_xfer *xfer)
 	case ATASTART_POLL:
 		/* can happen even in thread context for some ATAPI devices */
 		ata_channel_unlock(chp);
-		KASSERT(xfer->c_poll != NULL);
-		xfer->c_poll(chp, xfer);
+		KASSERT(xfer->ops != NULL && xfer->ops->c_poll != NULL);
+		xfer->ops->c_poll(chp, xfer);
 		ata_channel_lock(chp);
 		break;
 	case ATASTART_ABORT:
 		ata_channel_unlock(chp);
-		KASSERT(xfer->c_abort != NULL);
-		xfer->c_abort(chp, xfer);
+		KASSERT(xfer->ops != NULL && xfer->ops->c_abort != NULL);
+		xfer->ops->c_abort(chp, xfer);
 		ata_channel_lock(chp);
 		break;
 	}
@@ -1337,7 +1337,7 @@ ata_waitdrain_xfer_check(struct ata_channel *chp, struct ata_xfer *xfer)
 	if (chp->ch_drive[drive].drive_flags & ATA_DRIVE_WAITDRAIN) {
 		ata_channel_unlock(chp);
 
-		(*xfer->c_kill_xfer)(chp, xfer, KILL_GONE);
+		xfer->ops->c_kill_xfer(chp, xfer, KILL_GONE);
 
 		ata_channel_lock(chp);
 		chp->ch_drive[drive].drive_flags &= ~ATA_DRIVE_WAITDRAIN;
@@ -1404,7 +1404,7 @@ ata_kill_active(struct ata_channel *chp, int reason, int flags)
 	KASSERT(mutex_owned(&chp->ch_lock));
 
 	TAILQ_FOREACH_SAFE(xfer, &chq->active_xfers, c_activechain, xfernext) {
-		(*xfer->c_kill_xfer)(xfer->c_chp, xfer, reason);
+		xfer->ops->c_kill_xfer(xfer->c_chp, xfer, reason);
 	}
 
 	if (flags & AT_RST_EMERG)
@@ -1438,7 +1438,7 @@ ata_kill_pending(struct ata_drive_datas *drvp)
 		 * data corruption, if the hook tries to call back into
 		 * middle layer for inactive xfer.
 		 */
-		(*xfer->c_kill_xfer)(chp, xfer, KILL_GONE_INACTIVE);
+		xfer->ops->c_kill_xfer(chp, xfer, KILL_GONE_INACTIVE);
 	}
 
 	/* Wait until all active transfers on the drive finish */

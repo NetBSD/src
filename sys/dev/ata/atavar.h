@@ -1,4 +1,4 @@
-/*	$NetBSD: atavar.h,v 1.99.2.1 2018/08/31 19:08:03 jdolecek Exp $	*/
+/*	$NetBSD: atavar.h,v 1.99.2.2 2018/09/17 18:36:13 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -125,6 +125,7 @@ struct ata_command {
 
 /* Forward declaration for ata_xfer */
 struct scsipi_xfer;
+struct ata_xfer_ops;
 
 /*
  * Description of a command to be handled by an ATA controller.  These
@@ -166,6 +167,10 @@ struct ata_xfer {
 	SLIST_ENTRY(ata_xfer) c_retrychain;
 
 	/* Low-level protocol handlers. */
+	const struct ata_xfer_ops *ops;
+};
+
+struct ata_xfer_ops {
 	int	(*c_start)(struct ata_channel *, struct ata_xfer *);
 #define ATASTART_STARTED	0	/* xfer started, waiting for intr */
 #define ATASTART_TH		1	/* xfer needs to be run in thread */

@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsata.c,v 1.41.2.1 2018/08/31 19:08:03 jdolecek Exp $	*/
+/*	$NetBSD: mvsata.c,v 1.41.2.2 2018/09/17 18:36:14 jdolecek Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.41.2.1 2018/08/31 19:08:03 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.41.2.2 2018/09/17 18:36:14 jdolecek Exp $");
 
 #include "opt_mvsata.h"
 
@@ -457,7 +457,7 @@ mvsata_nondma_handle(struct mvsata_port *mvport)
 		return 0;
 	}
 
-	ret = xfer->c_intr(chp, xfer, 1);
+	ret = xfer->ops->c_intr(chp, xfer, 1);
 	return (ret);
 }
 
@@ -609,7 +609,7 @@ mvsata_channel_recover(struct mvsata_port *mvport)
 			xfer->c_flags |= C_RECOVERED;
 			xfer->c_bio.error = ERROR;
 			xfer->c_bio.r_error = err;
-			xfer->c_intr(chp, xfer, 1);
+			xfer->ops->c_intr(chp, xfer, 1);
 		}
 		break;
 
@@ -624,7 +624,7 @@ mvsata_channel_recover(struct mvsata_port *mvport)
 				if (xfer->c_drive != drive)
 					continue;
 
-				xfer->c_intr(chp, xfer, 1);
+				xfer->ops->c_intr(chp, xfer, 1);
 			}
 		}
 		break;
@@ -657,7 +657,7 @@ mvsata_channel_recover(struct mvsata_port *mvport)
 		if (xfer->c_drive != drive)
 			continue;
 
-		xfer->c_kill_xfer(chp, xfer,
+		xfer->ops->c_kill_xfer(chp, xfer,
 		    (error == 0) ? KILL_REQUEUE : KILL_RESET);
 	}
 
@@ -1081,6 +1081,14 @@ no_edma:
 }
 
 #ifndef MVSATA_WITHOUTDMA
+static const struct ata_xfer_ops mvsata_bio_xfer_ops = {
+	.c_start = mvsata_bio_start,
+	.c_intr = mvsata_bio_intr,
+	.c_poll = mvsata_bio_poll,
+	.c_abort = mvsata_bio_done,
+	.c_kill_xfer = mvsata_bio_kill_xfer,
+};
+
 static int
 mvsata_bio(struct ata_drive_datas *drvp, struct ata_xfer *xfer)
 {
@@ -1103,11 +1111,7 @@ mvsata_bio(struct ata_drive_datas *drvp, struct ata_xfer *xfer)
 	xfer->c_drive = drvp->drive;
 	xfer->c_databuf = ata_bio->databuf;
 	xfer->c_bcount = ata_bio->bcount;
-	xfer->c_start = mvsata_bio_start;
-	xfer->c_intr = mvsata_bio_intr;
-	xfer->c_poll = mvsata_bio_poll;
-	xfer->c_abort = mvsata_bio_done;
-	xfer->c_kill_xfer = mvsata_bio_kill_xfer;
+	xfer->ops = &mvsata_bio_xfer_ops;
 	ata_exec_xfer(chp, xfer);
 	return (ata_bio->flags & ATA_ITSDONE) ? ATACMD_COMPLETE : ATACMD_QUEUED;
 }
@@ -1676,6 +1680,14 @@ ctrldone:
 	return -1;
 }
 
+static const struct ata_xfer_ops mvsata_wdc_cmd_xfer_ops = {
+	.c_start = mvsata_wdc_cmd_start,
+	.c_intr = mvsata_wdc_cmd_intr,
+	.c_poll = mvsata_wdc_cmd_poll,
+	.c_abort = mvsata_wdc_cmd_done,
+	.c_kill_xfer = mvsata_wdc_cmd_kill_xfer,
+};
+
 static int
 mvsata_exec_command(struct ata_drive_datas *drvp, struct ata_xfer *xfer)
 {
@@ -1699,11 +1711,7 @@ mvsata_exec_command(struct ata_drive_datas *drvp, struct ata_xfer *xfer)
 	xfer->c_drive = drvp->drive;
 	xfer->c_databuf = ata_c->data;
 	xfer->c_bcount = ata_c->bcount;
-	xfer->c_start = mvsata_wdc_cmd_start;
-	xfer->c_intr = mvsata_wdc_cmd_intr;
-	xfer->c_poll = mvsata_wdc_cmd_poll;
-	xfer->c_abort = mvsata_wdc_cmd_done;
-	xfer->c_kill_xfer = mvsata_wdc_cmd_kill_xfer;
+	xfer->ops = &mvsata_wdc_cmd_xfer_ops;
 	s = splbio();
 	ata_exec_xfer(chp, xfer);
 #ifdef DIAGNOSTIC
@@ -2041,6 +2049,14 @@ mvsata_wdc_cmd_done_end(struct ata_channel *chp, struct ata_xfer *xfer)
 }
 
 #if NATAPIBUS > 0
+static const struct ata_xfer_ops mvsata_atapi_xfer_ops = {
+	.c_start = mvsata_atapi_start,
+	.c_intr = mvsata_atapi_intr,
+	.c_poll = mvsata_atapi_poll,
+	.c_abort = mvsata_atapi_reset,
+	.c_kill_xfer = mvsata_atapi_kill_xfer,
+};
+
 static void
 mvsata_atapi_scsipi_request(struct scsipi_channel *chan,
 			    scsipi_adapter_req_t req, void *arg)
@@ -2079,11 +2095,7 @@ mvsata_atapi_scsipi_request(struct scsipi_channel *chan,
 		xfer->c_scsipi = sc_xfer;
 		xfer->c_databuf = sc_xfer->data;
 		xfer->c_bcount = sc_xfer->datalen;
-		xfer->c_start = mvsata_atapi_start;
-		xfer->c_intr = mvsata_atapi_intr;
-		xfer->c_poll = mvsata_atapi_poll;
-		xfer->c_abort = mvsata_atapi_reset;
-		xfer->c_kill_xfer = mvsata_atapi_kill_xfer;
+		xfer->ops = &mvsata_atapi_xfer_ops;
 		xfer->c_dscpoll = 0;
 		s = splbio();
 		ata_exec_xfer(chp, xfer);
