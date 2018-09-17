@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_wdc.c,v 1.110.4.2 2018/09/17 18:36:13 jdolecek Exp $	*/
+/*	$NetBSD: ata_wdc.c,v 1.110.4.3 2018/09/17 20:54:41 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata_wdc.c,v 1.110.4.2 2018/09/17 18:36:13 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata_wdc.c,v 1.110.4.3 2018/09/17 20:54:41 jdolecek Exp $");
 
 #include "opt_ata.h"
 #include "opt_wdc.h"
@@ -66,7 +66,6 @@ __KERNEL_RCSID(0, "$NetBSD: ata_wdc.c,v 1.110.4.2 2018/09/17 18:36:13 jdolecek E
 #include <sys/stat.h>
 #include <sys/buf.h>
 #include <sys/bufq.h>
-#include <sys/malloc.h>
 #include <sys/device.h>
 #include <sys/disklabel.h>
 #include <sys/syslog.h>

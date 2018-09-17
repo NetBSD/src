@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_raid_jmicron.c,v 1.6 2017/11/01 19:34:46 mlelstv Exp $	*/
+/*	$NetBSD: ata_raid_jmicron.c,v 1.6.6.1 2018/09/17 20:54:41 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2000-2008 Søren Schmidt <sos@FreeBSD.org>
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata_raid_jmicron.c,v 1.6 2017/11/01 19:34:46 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata_raid_jmicron.c,v 1.6.6.1 2018/09/17 20:54:41 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -45,7 +45,6 @@ __KERNEL_RCSID(0, "$NetBSD: ata_raid_jmicron.c,v 1.6 2017/11/01 19:34:46 mlelstv
 #include <sys/disk.h>
 #include <sys/disklabel.h>
 #include <sys/fcntl.h>
-#include <sys/malloc.h>
 #include <sys/vnode.h>
 #include <sys/kauth.h>
 
@@ -130,7 +129,7 @@ ata_raid_read_config_jmicron(struct wd_softc *sc)
 	int bmajor, error, count, disk, total_disks;
 	dev_t dev;
 
-	info = malloc(sizeof(*info), M_DEVBUF, M_WAITOK|M_ZERO);
+	info = kmem_zalloc(sizeof(*info), KM_SLEEP);
 
 	bmajor = devsw_name2blk(dksc->sc_xname, NULL, 0);
 
@@ -265,6 +264,6 @@ ata_raid_read_config_jmicron(struct wd_softc *sc)
 	error = 0;
 
  out:
-	free(info, M_DEVBUF);
+	kmem_free(info, sizeof(*info));
 	return error;
 }

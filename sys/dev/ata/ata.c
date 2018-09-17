@@ -1,4 +1,4 @@
-/*	$NetBSD: ata.c,v 1.141.6.4 2018/09/17 19:00:43 jdolecek Exp $	*/
+/*	$NetBSD: ata.c,v 1.141.6.5 2018/09/17 20:54:41 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -25,14 +25,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.141.6.4 2018/09/17 19:00:43 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.141.6.5 2018/09/17 20:54:41 jdolecek Exp $");
 
 #include "opt_ata.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
 #include <sys/device.h>
 #include <sys/conf.h>
 #include <sys/fcntl.h>
@@ -292,7 +291,7 @@ atabusconfig(struct atabus_softc *atabus_sc)
 	cv_broadcast(&atabus_qcv);
 	mutex_exit(&atabus_qlock);
 
-	free(atabus_initq, M_DEVBUF);
+	kmem_free(atabus_initq, sizeof(*atabus_initq));
 
 	ata_delref(chp);
 
@@ -418,7 +417,7 @@ atabusconfig_thread(void *arg)
 	cv_broadcast(&atabus_qcv);
 	mutex_exit(&atabus_qlock);
 
-	free(atabus_initq, M_DEVBUF);
+	kmem_free(atabus_initq, sizeof(*atabus_initq));
 
 	ata_delref(chp);
 
@@ -569,7 +568,7 @@ atabus_attach(device_t parent, device_t self, void *aux)
 
 	RUN_ONCE(&ata_init_ctrl, atabus_init);
 
-	initq = malloc(sizeof(*initq), M_DEVBUF, M_WAITOK);
+	initq = kmem_zalloc(sizeof(*initq), KM_SLEEP);
 	initq->atabus_sc = sc;
 	mutex_enter(&atabus_qlock);
 	TAILQ_INSERT_TAIL(&atabus_initq_head, initq, atabus_initq);
@@ -716,9 +715,8 @@ atabus_alloc_drives(struct ata_channel *chp, int ndrives)
 	if (chp->ch_ndrives != ndrives)
 		atabus_free_drives(chp);
 	if (chp->ch_drive == NULL) {
-		chp->ch_drive = malloc(
-		    sizeof(struct ata_drive_datas) * ndrives,
-		    M_DEVBUF, M_NOWAIT | M_ZERO);
+		chp->ch_drive = kmem_zalloc(
+		    sizeof(struct ata_drive_datas) * ndrives, KM_NOSLEEP);
 	}
 	if (chp->ch_drive == NULL) {
 	    aprint_error_dev(chp->ch_atac->atac_dev,
@@ -761,8 +759,9 @@ atabus_free_drives(struct ata_channel *chp)
 
 	if (chp->ch_drive == NULL)
 		return;
+	kmem_free(chp->ch_drive,
+	    sizeof(struct ata_drive_datas) * chp->ch_ndrives);
 	chp->ch_ndrives = 0;
-	free(chp->ch_drive, M_DEVBUF);
 	chp->ch_drive = NULL;
 }
 
@@ -2218,7 +2217,7 @@ atabus_rescan(device_t self, const char *ifattr, const int *locators)
 		}
 	}
 
-	initq = malloc(sizeof(*initq), M_DEVBUF, M_WAITOK);
+	initq = kmem_zalloc(sizeof(*initq), KM_SLEEP);
 	initq->atabus_sc = sc;
 	mutex_enter(&atabus_qlock);
 	TAILQ_INSERT_TAIL(&atabus_initq_head, initq, atabus_initq);

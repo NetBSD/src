@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_subr.c,v 1.6.2.3 2018/09/17 19:00:43 jdolecek Exp $	*/
+/*	$NetBSD: ata_subr.c,v 1.6.2.4 2018/09/17 20:54:41 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata_subr.c,v 1.6.2.3 2018/09/17 19:00:43 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata_subr.c,v 1.6.2.4 2018/09/17 20:54:41 jdolecek Exp $");
 
 #include "opt_ata.h"
 
@@ -167,6 +167,7 @@ ata_queue_alloc(uint8_t openings)
 	if (openings > ATA_MAX_OPENINGS)
 		openings = ATA_MAX_OPENINGS;
 
+	/* XXX convert to kmem_zalloc() once ata_xfer is moved to pool */
 	struct ata_queue *chq = malloc(offsetof(struct ata_queue, queue_xfers[openings]),
 	    M_DEVBUF, M_WAITOK | M_ZERO);
 
