@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsata.c,v 1.41.2.2 2018/09/17 18:36:14 jdolecek Exp $	*/
+/*	$NetBSD: mvsata.c,v 1.41.2.3 2018/09/17 19:30:25 jdolecek Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.41.2.2 2018/09/17 18:36:14 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.41.2.3 2018/09/17 19:30:25 jdolecek Exp $");
 
 #include "opt_mvsata.h"
 
@@ -2092,11 +2092,11 @@ mvsata_atapi_scsipi_request(struct scsipi_channel *chan,
 			xfer->c_flags |= C_POLL;
 		xfer->c_drive = drive;
 		xfer->c_flags |= C_ATAPI;
-		xfer->c_scsipi = sc_xfer;
 		xfer->c_databuf = sc_xfer->data;
 		xfer->c_bcount = sc_xfer->datalen;
 		xfer->ops = &mvsata_atapi_xfer_ops;
-		xfer->c_dscpoll = 0;
+		xfer->c_scsipi = sc_xfer;
+		xfer->c_atapi.c_dscpoll = 0;
 		s = splbio();
 		ata_exec_xfer(chp, xfer);
 #ifdef DIAGNOSTIC
@@ -2444,7 +2444,7 @@ again:
 			mvsata_atapi_reset(chp, xfer);
 			return 1;
 		}
-		xfer->c_lenoff = len - xfer->c_bcount;
+		xfer->c_atapi.c_lenoff = len - xfer->c_bcount;
 		if (xfer->c_bcount < len) {
 			aprint_error_dev(atac->atac_dev, "channel %d drive %d:"
 			    " warning: write only %d of %d requested bytes\n",
@@ -2456,7 +2456,7 @@ again:
 		wdc->dataout_pio(chp, drvp->drive_flags,
 		    (char *)xfer->c_databuf + xfer->c_skip, len);
 
-		for (i = xfer->c_lenoff; i > 0; i -= 2)
+		for (i = xfer->c_atapi.c_lenoff; i > 0; i -= 2)
 			MVSATA_WDC_WRITE_2(mvport, SRB_PIOD, 0);
 
 		xfer->c_skip += len;
@@ -2480,7 +2480,7 @@ again:
 			mvsata_atapi_reset(chp, xfer);
 			return 1;
 		}
-		xfer->c_lenoff = len - xfer->c_bcount;
+		xfer->c_atapi.c_lenoff = len - xfer->c_bcount;
 		if (xfer->c_bcount < len) {
 			aprint_error_dev(atac->atac_dev, "channel %d drive %d:"
 			    " warning: reading only %d of %d bytes\n",
@@ -2492,7 +2492,7 @@ again:
 		wdc->datain_pio(chp, drvp->drive_flags,
 		    (char *)xfer->c_databuf + xfer->c_skip, len);
 
-		if (xfer->c_lenoff > 0)
+		if (xfer->c_atapi.c_lenoff > 0)
 			wdcbit_bucket(chp, len - xfer->c_bcount);
 
 		xfer->c_skip += len;
@@ -2625,14 +2625,15 @@ mvsata_atapi_phase_complete(struct ata_xfer *xfer)
 		DPRINTF(DEBUG_XFERS,
 		    ("%s:%d:%d: mvsata_atapi_phase_complete: polldsc %d\n",
 		    device_xname(atac->atac_dev), chp->ch_channel,
-		    xfer->c_drive, xfer->c_dscpoll));
+		    xfer->c_drive, xfer->c_atapi.c_dscpoll));
 		if (cold)
 			panic("mvsata_atapi_phase_complete: cold");
 
 		if (wdcwait(chp, WDCS_DSC, WDCS_DSC, 10, AT_POLL, &tfd) ==
 		    WDCWAIT_TOUT) {
 			/* 10ms not enough, try again in 1 tick */
-			if (xfer->c_dscpoll++ > mstohz(sc_xfer->timeout)) {
+			if (xfer->c_atapi.c_dscpoll++ >
+			    mstohz(sc_xfer->timeout)) {
 				aprint_error_dev(atac->atac_dev,
 				    "channel %d: wait_for_dsc failed\n",
 				    chp->ch_channel);

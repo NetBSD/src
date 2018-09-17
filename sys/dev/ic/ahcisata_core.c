@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata_core.c,v 1.62.2.3 2018/09/17 18:36:13 jdolecek Exp $	*/
+/*	$NetBSD: ahcisata_core.c,v 1.62.2.4 2018/09/17 19:30:25 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.62.2.3 2018/09/17 18:36:13 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.62.2.4 2018/09/17 19:30:25 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -1877,11 +1877,11 @@ ahci_atapi_scsipi_request(struct scsipi_channel *chan,
 			xfer->c_flags |= C_POLL;
 		xfer->c_drive = drive;
 		xfer->c_flags |= C_ATAPI;
-		xfer->c_scsipi = sc_xfer;
 		xfer->c_databuf = sc_xfer->data;
 		xfer->c_bcount = sc_xfer->datalen;
 		xfer->ops = &ahci_atapi_xfer_ops;
-		xfer->c_dscpoll = 0;
+		xfer->c_scsipi = sc_xfer;
+		xfer->c_atapi.c_dscpoll = 0;
 		s = splbio();
 		ata_exec_xfer(atac->atac_channels[channel], xfer);
 #ifdef DIAGNOSTIC
