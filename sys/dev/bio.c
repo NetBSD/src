@@ -1,4 +1,4 @@
-/*	$NetBSD: bio.c,v 1.13.16.1 2018/03/28 04:18:24 pgoyette Exp $ */
+/*	$NetBSD: bio.c,v 1.13.16.2 2018/09/17 11:04:30 pgoyette Exp $ */
 /*	$OpenBSD: bio.c,v 1.9 2007/03/20 02:35:55 marco Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
 /* A device controller ioctl tunnelling device.  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bio.c,v 1.13.16.1 2018/03/28 04:18:24 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bio.c,v 1.13.16.2 2018/09/17 11:04:30 pgoyette Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -114,6 +114,11 @@ bioclose(dev_t dev, int flags, int mode, struct lwp *l)
 	return 0;
 }
 
+/* Hook up the compat_bio_30 routine */
+COMPAT_CALL_HOOK(compat_bio_30_hook, f,
+    (void * cookie, u_long cmd, void *addr, int(*ff)(void *, u_long, void *)),
+    (cookie, cmd, addr, ff), enosys());
+
 static int
 bioioctl(dev_t dev, u_long cmd, void *addr, int flag, struct  lwp *l)
 {
@@ -189,7 +194,7 @@ bioioctl(dev_t dev, u_long cmd, void *addr, int flag, struct  lwp *l)
 			return ENOENT;
 		}
 		mutex_exit(&bio_lock);
-		error = (*compat_bio_30)(common->bc_cookie, cmd, addr,
+		error = compat_bio_30_hook_f_call(common->bc_cookie, cmd, addr,
 		    bio_delegate_ioctl);
 		if (error == ENOSYS)
 			error = bio_delegate_ioctl(common->bc_cookie, cmd,

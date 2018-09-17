@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr50.c,v 1.1.2.1 2018/03/21 10:12:48 pgoyette Exp $	 */
+/*	$NetBSD: if_spppsubr50.c,v 1.1.2.2 2018/09/17 11:04:30 pgoyette Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr50.c,v 1.1.2.1 2018/03/21 10:12:48 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr50.c,v 1.1.2.2 2018/09/17 11:04:30 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -154,16 +154,19 @@ sppp_compat50_params(struct sppp *sp, u_long cmd, void *data)
 	return 0;
 }
 
+COMPAT_SET_HOOK(sppp_params_50_hook, "sppp60", sppp_compat50_params);
+COMPAT_UNSET_HOOK(sppp_params_50_hook);
+
 void
 if_spppsubr_50_init(void)
 {
 
-	sppp_params50 = sppp_compat50_params;
+	sppp_params_50_hook_set();
 }
 
 void
 if_spppsubr_50_fini(void)
 {
 
-	sppp_params50 = (void *)enosys;
+	sppp_params_50_hook_unset();
 }

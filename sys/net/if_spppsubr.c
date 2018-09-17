@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.179.2.3 2018/04/07 04:12:19 pgoyette Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.179.2.4 2018/09/17 11:04:31 pgoyette Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.179.2.3 2018/04/07 04:12:19 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.179.2.4 2018/09/17 11:04:31 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -5611,6 +5611,10 @@ sppp_suggest_ip6_addr(struct sppp *sp, struct in6_addr *suggest)
 }
 #endif /*INET6*/
 
+/* Hook the sppp_params50 compat code */
+COMPAT_CALL_HOOK(sppp_params_50_hook, f,
+    (struct sppp *sp, u_long cmd, void *data), (sp, cmd, data), enosys());
+
 /*
  * Process ioctl requests specific to the PPP interface.
  * Permissions have already been checked.
@@ -5916,7 +5920,7 @@ sppp_params(struct sppp *sp, u_long cmd, void *data)
 	    {
 		int ret;
 
-		ret = (*sppp_params50)(sp, cmd, data);
+		ret = sppp_params_50_hook_f_call(sp, cmd, data);
 		if (ret != ENOSYS)
 			return ret;
 		return (EINVAL);

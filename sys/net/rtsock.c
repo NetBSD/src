@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.238.2.6 2018/09/06 06:56:44 pgoyette Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.238.2.7 2018/09/17 11:04:31 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.238.2.6 2018/09/06 06:56:44 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.238.2.7 2018/09/17 11:04:31 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1377,6 +1377,23 @@ COMPATNAME(rt_missmsg)(int type, const struct rt_addrinfo *rtinfo, int flags,
 }
 
 /*
+ * COMPAT_HOOK glue for rtsock14_oifmsg and rtsock14_iflist
+ *
+ * Make them static since this same code is compiled for different
+ * COMPAT_xx options and we would otherwise end up with duplicate
+ * global symbols.
+ */
+static
+COMPAT_CALL_HOOK(rtsock14_hook, f1, (struct ifnet *ifp), (ifp), enosys());
+
+static
+COMPAT_CALL_HOOK(rtsock14_hook, f2,
+    (struct ifnet *ifp, struct rt_walkarg *w, struct rt_addrinfo *info,
+     size_t len),
+    (ifp, w, info, len),
+    enosys());
+
+/*
  * This routine is called to generate a message from the routing
  * socket indicating that the status of a network interface has changed.
  */
@@ -1400,7 +1417,7 @@ COMPATNAME(rt_ifmsg)(struct ifnet *ifp)
 	if (m == NULL)
 		return;
 	COMPATNAME(route_enqueue)(m, 0);
-	(*rtsock14_oifmsg)(ifp);
+	(void)rtsock14_hook_f1_call(ifp);
 #ifdef COMPAT_50
 	compat_50_rt_oifmsg(ifp);
 #endif
@@ -1768,7 +1785,7 @@ sysctl_iflist(int af, struct rt_walkarg *w, int type)
 		break;
 	case NET_RT_OOOIFLIST:
 		cmd = RTM_OOIFINFO;
-		iflist_if = rtsock14_iflist;
+		iflist_if = rtsock14_hook_f2_call;
 		break;
 #ifdef COMPAT_50
 	case NET_RT_OOIFLIST:

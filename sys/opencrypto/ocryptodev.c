@@ -1,4 +1,4 @@
-/*	$NetBSD: ocryptodev.c,v 1.11.2.1 2018/03/23 09:41:10 pgoyette Exp $ */
+/*	$NetBSD: ocryptodev.c,v 1.11.2.2 2018/09/17 11:04:31 pgoyette Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.c,v 1.4.2.4 2003/06/03 00:09:02 sam Exp $	*/
 /*	$OpenBSD: cryptodev.c,v 1.53 2002/07/10 22:21:30 mickey Exp $	*/
 
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ocryptodev.c,v 1.11.2.1 2018/03/23 09:41:10 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ocryptodev.c,v 1.11.2.2 2018/09/17 11:04:31 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,6 +89,7 @@ __KERNEL_RCSID(0, "$NetBSD: ocryptodev.c,v 1.11.2.1 2018/03/23 09:41:10 pgoyette
 #include <sys/select.h>
 #include <sys/poll.h>
 #include <sys/atomic.h>
+#include <sys/compat_stub.h> 
 
 #ifdef _KERNEL_OPT
 #include "opt_ocf.h"
@@ -284,16 +285,19 @@ ocryptodev_msession(struct fcrypt *fcr, struct osession_n_op *osn_ops,
 	return 0;
 }
 
+COMPAT_SET_HOOK(ocryptof_50_hook, "cryp50", ocryptof_ioctl);
+COMPAT_UNSET_HOOK(ocryptof_50_hook);
+
 void
 cryptodev_50_init(void)
 {
 
-	ocryptof50_ioctl = ocryptof_ioctl;
+	ocryptof_50_hook_set();
 }
 
 void
 cryptodev_50_fini(void)
 {
 
-	ocryptof50_ioctl = (void *)enosys;
+	ocryptof_50_hook_unset();
 }

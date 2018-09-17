@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_power.c,v 1.58.2.1 2018/03/27 07:29:44 pgoyette Exp $	*/
+/*	$NetBSD: sysmon_power.c,v 1.58.2.2 2018/09/17 11:04:31 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_power.c,v 1.58.2.1 2018/03/27 07:29:44 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_power.c,v 1.58.2.2 2018/09/17 11:04:31 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -316,6 +316,13 @@ sysmon_power_event_queue_flush(void)
 }
 
 /*
+ * Call the compat hook function
+ */
+COMPAT_CALL_HOOK(compat_sysmon_power_40_hook, f,
+    (power_event_t *pev, struct sysmon_pswitch *pswitch, int event),
+    (pev, pswitch, event), enosys());
+
+/*
  * sysmon_power_daemon_task:
  *
  *	Assign required power event members and sends a signal
@@ -346,7 +353,7 @@ sysmon_power_daemon_task(struct power_event_dictionary *ped,
 
 		pev.pev_type = POWER_EVENT_SWITCH_STATE_CHANGE;
 
-		(*compat_sysmon_power_40)(&pev, pswitch, event);
+		(void)compat_sysmon_power_40_hook_f_call(&pev, pswitch, event);
 
 		error = sysmon_power_make_dictionary(ped->dict,
 						     pswitch,

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_43.c,v 1.14.2.1 2018/03/30 02:28:49 pgoyette Exp $	*/
+/*	$NetBSD: if_43.c,v 1.14.2.2 2018/09/17 11:04:30 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_43.c,v 1.14.2.1 2018/03/30 02:28:49 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_43.c,v 1.14.2.2 2018/09/17 11:04:30 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -76,6 +76,9 @@ __KERNEL_RCSID(0, "$NetBSD: if_43.c,v 1.14.2.1 2018/03/30 02:28:49 pgoyette Exp 
 #include <compat/common/compat_util.h>
 #include <compat/common/if_43.h>
 #include <uvm/uvm_extern.h>
+
+/* COMPAT_HOOK for replacing the cmdcvt() function */
+COMPAT_CALL_HOOK(ieee80211_get_ostats_20_hook, f, (int cmd), (cmd), cmd);
 
 u_long 
 compat_cvtcmd(u_long cmd)
@@ -202,10 +205,7 @@ compat_cvtcmd(u_long cmd)
 		case TAPGIFNAME:
 			return ncmd;
 		default:
-			if ((*if43_20_cvtcmd)(ncmd) == 0)
-				return ncmd;
-			else
-				return cmd;
+			return ieee80211_get_ostats_20_hook_f_call(ncmd);
 		}
 	}
 }

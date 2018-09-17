@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_power_40.c,v 1.1.2.1 2018/03/27 07:29:44 pgoyette Exp $	*/
+/*	$NetBSD: sysmon_power_40.c,v 1.1.2.2 2018/09/17 11:04:30 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines.
@@ -62,7 +62,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_power_40.c,v 1.1.2.1 2018/03/27 07:29:44 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_power_40.c,v 1.1.2.2 2018/09/17 11:04:30 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -73,7 +73,7 @@ __KERNEL_RCSID(0, "$NetBSD: sysmon_power_40.c,v 1.1.2.1 2018/03/27 07:29:44 pgoy
 
 #include <compat/common/compat_mod.h>
 
-static void
+static int
 compat_40_sysmon_power(power_event_t *pev, struct sysmon_pswitch *pswitch,
     int event)
 {
@@ -86,18 +86,22 @@ compat_40_sysmon_power(power_event_t *pev, struct sysmon_pswitch *pswitch,
 			          pswitch->smpsw_name,
 			          sizeof(pev->pev_switch.psws_name));
 		}
+	return 0;
 }
 
+COMPAT_SET_HOOK(compat_sysmon_power_40_hook, "smon60", compat_40_sysmon_power);
+COMPAT_UNSET_HOOK(compat_sysmon_power_40_hook);
+ 
 void
 sysmon_power_40_init(void)
 {
 
-	compat_sysmon_power_40 = compat_40_sysmon_power;
+	compat_sysmon_power_40_hook_set();
 }
 
 void
 sysmon_power_40_fini(void)
 {
 
-	compat_sysmon_power_40 = (void *)voidop;
+	compat_sysmon_power_40_hook_unset();
 }
