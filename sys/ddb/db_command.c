@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.c,v 1.159 2018/09/16 23:18:55 mrg Exp $	*/
+/*	$NetBSD: db_command.c,v 1.160 2018/09/17 01:49:54 kre Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 1999, 2002, 2009 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.159 2018/09/16 23:18:55 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.160 2018/09/17 01:49:54 kre Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_aio.h"
@@ -541,6 +541,10 @@ db_unregister_tbl(uint8_t type,const struct db_command *cmd_tbl)
 	}
 	return ENOENT;
 }
+
+#ifndef _KERNEL
+#define	cnpollc(c)	__nothing
+#endif
 
 /*
  * This function is called via db_trap() or directly from
