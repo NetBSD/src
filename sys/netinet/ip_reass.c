@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_reass.c,v 1.19 2018/09/17 06:01:36 maxv Exp $	*/
+/*	$NetBSD: ip_reass.c,v 1.20 2018/09/17 08:11:27 maxv Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_reass.c,v 1.19 2018/09/17 06:01:36 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_reass.c,v 1.20 2018/09/17 08:11:27 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -287,9 +287,13 @@ ip_reass(ipfr_qent_t *ipqe, ipfr_queue_t *fp, const u_int hash)
 	}
 
 	/*
-	 * If there is a preceding segment, it may provide some of our
-	 * data already.  If so, drop the data from the incoming segment.
-	 * If it provides all of our data, drop us.
+	 * Look at the preceding segment.
+	 *
+	 * If it provides some of our data already, in part or entirely, trim
+	 * us or drop us.
+	 *
+	 * If a preceding segment exists, and was marked as the last segment,
+	 * drop us.
 	 */
 	if (p != NULL) {
 		i = p->ipqe_off + p->ipqe_len - ipqe->ipqe_off;
@@ -302,10 +306,17 @@ ip_reass(ipfr_qent_t *ipqe, ipfr_queue_t *fp, const u_int hash)
 			ipqe->ipqe_len = ipqe->ipqe_len - i;
 		}
 	}
+	if (p != NULL && !p->ipqe_mff) {
+		goto dropfrag;
+	}
 
 	/*
-	 * While we overlap succeeding segments trim them or, if they are
-	 * completely covered, dequeue them.
+	 * Look at the segments that follow.
+	 *
+	 * If we cover them, in part or entirely, trim them or dequeue them.
+	 *
+	 * If a following segment exists, and we are marked as the last
+	 * segment, drop us.
 	 */
 	while (q != NULL) {
 		i = ipqe->ipqe_off + ipqe->ipqe_len - q->ipqe_off;
@@ -325,6 +336,9 @@ ip_reass(ipfr_qent_t *ipqe, ipfr_queue_t *fp, const u_int hash)
 		fp->ipq_nfrags--;
 		ip_nfrags--;
 		q = nq;
+	}
+	if (q != NULL && !ipqe->ipqe_mff) {
+		goto dropfrag;
 	}
 
 insert:
