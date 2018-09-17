@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_wdc.c,v 1.129.6.2 2018/09/17 18:36:14 jdolecek Exp $	*/
+/*	$NetBSD: atapi_wdc.c,v 1.129.6.3 2018/09/17 19:30:26 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.129.6.2 2018/09/17 18:36:14 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.129.6.3 2018/09/17 19:30:26 jdolecek Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -457,11 +457,11 @@ wdc_atapi_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 			xfer->c_flags &= ~C_DMA;
 #endif	/* NATA_DMA */
 
-		xfer->c_scsipi = sc_xfer;
 		xfer->c_databuf = sc_xfer->data;
 		xfer->c_bcount = sc_xfer->datalen;
 		xfer->ops = &wdc_atapi_xfer_ops;
-		xfer->c_dscpoll = 0;
+		xfer->c_scsipi = sc_xfer;
+		xfer->c_atapi.c_dscpoll = 0;
 		s = splbio();
 		ata_exec_xfer(atac->atac_channels[channel], xfer);
 #ifdef DIAGNOSTIC
@@ -781,8 +781,8 @@ wdc_atapi_intr(struct ata_channel *chp, struct ata_xfer *xfer, int irq)
 
 		/* restore transfer length */
 		len = xfer->c_bcount;
-		if (xfer->c_lenoff < 0)
-			len += xfer->c_lenoff;
+		if (xfer->c_atapi.c_lenoff < 0)
+			len += xfer->c_atapi.c_lenoff;
 
 		if (sc_xfer->xs_control & XS_CTL_DATA_IN)
 			goto end_piobm_datain;
@@ -915,7 +915,7 @@ again:
 			return 1;
 		}
 #endif
-		xfer->c_lenoff = len - xfer->c_bcount;
+		xfer->c_atapi.c_lenoff = len - xfer->c_bcount;
 		if (xfer->c_bcount < len) {
 			printf("wdc_atapi_intr: warning: write only "
 			    "%d of %d requested bytes\n", xfer->c_bcount, len);
@@ -940,7 +940,7 @@ again:
 #if NATA_PIOBM
 	end_piobm_dataout:
 #endif
-		for (i = xfer->c_lenoff; i > 0; i -= 2)
+		for (i = xfer->c_atapi.c_lenoff; i > 0; i -= 2)
 			bus_space_write_2(wdr->cmd_iot,
 			    wdr->cmd_iohs[wd_data], 0, 0);
 
@@ -969,7 +969,7 @@ again:
 			return 1;
 		}
 #endif
-		xfer->c_lenoff = len - xfer->c_bcount;
+		xfer->c_atapi.c_lenoff = len - xfer->c_bcount;
 		if (xfer->c_bcount < len) {
 			printf("wdc_atapi_intr: warning: reading only "
 			    "%d of %d bytes\n", xfer->c_bcount, len);
@@ -994,8 +994,8 @@ again:
 #if NATA_PIOBM
 	end_piobm_datain:
 #endif
-		if (xfer->c_lenoff > 0)
-			wdcbit_bucket(chp, xfer->c_lenoff);
+		if (xfer->c_atapi.c_lenoff > 0)
+			wdcbit_bucket(chp, xfer->c_atapi.c_lenoff);
 
 		xfer->c_skip += len;
 		xfer->c_bcount -= len;
@@ -1073,7 +1073,7 @@ wdc_atapi_phase_complete(struct ata_xfer *xfer)
 		ATADEBUG_PRINT(("wdc_atapi_phase_complete(%s:%d:%d) "
 		    "polldsc %d\n", device_xname(atac->atac_dev),
 		    chp->ch_channel,
-		    xfer->c_drive, xfer->c_dscpoll), DEBUG_XFERS);
+		    xfer->c_drive, xfer->c_atapi.c_dscpoll), DEBUG_XFERS);
 #if 1
 		if (cold)
 			panic("wdc_atapi_phase_complete: cold");
@@ -1081,7 +1081,7 @@ wdc_atapi_phase_complete(struct ata_xfer *xfer)
 		if (wdcwait(chp, WDCS_DSC, WDCS_DSC, 10,
 		    AT_POLL, &tfd) == WDCWAIT_TOUT) {
 			/* 10ms not enough, try again in 1 tick */
-			if (xfer->c_dscpoll++ >
+			if (xfer->c_atapi.c_dscpoll++ >
 			    mstohz(sc_xfer->timeout)) {
 				printf("%s:%d:%d: wait_for_dsc "
 				    "failed\n",

@@ -1,4 +1,4 @@
-/*	$NetBSD: atavar.h,v 1.99.2.3 2018/09/17 19:00:43 jdolecek Exp $	*/
+/*	$NetBSD: atavar.h,v 1.99.2.4 2018/09/17 19:30:25 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -144,8 +144,6 @@ struct ata_xfer {
 	void	*c_databuf;		/* pointer to data buffer */
 	int	c_bcount;		/* byte count left */
 	int	c_skip;			/* bytes already transferred */
-	int	c_dscpoll;		/* counter for dsc polling (ATAPI) */
-	int	c_lenoff;		/* offset to c_bcount (ATAPI) */
 #define ATACH_ERR_ST(error, status)	((error) << 8 | (status))
 #define ATACH_ERR(val)			(((val) >> 8) & 0xff)
 #define ATACH_ST(val)			(((val) >> 0) & 0xff)
@@ -153,11 +151,16 @@ struct ata_xfer {
 	union {
 		struct ata_bio	c_bio;		/* ATA transfer */
 		struct ata_command c_ata_c;	/* ATA command */ 
-		struct scsipi_xfer *c_scsipi;	/* SCSI transfer */
+		struct {
+			struct scsipi_xfer *c_scsipi;	/* SCSI transfer */
+			int	c_dscpoll; /* counter for dsc polling (ATAPI) */
+			int	c_lenoff;  /* offset to c_bcount (ATAPI) */
+		} atapi;
 	} u;
 #define c_bio	u.c_bio
 #define c_ata_c	u.c_ata_c
-#define c_scsipi u.c_scsipi
+#define c_atapi u.atapi
+#define c_scsipi c_atapi.c_scsipi
 
 	/* Link on the command queue. */
 	SIMPLEQ_ENTRY(ata_xfer) c_xferchain;

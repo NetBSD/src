@@ -1,4 +1,4 @@
-/* $NetBSD: siisata.c,v 1.35.6.3 2018/09/17 18:36:14 jdolecek Exp $ */
+/* $NetBSD: siisata.c,v 1.35.6.4 2018/09/17 19:30:26 jdolecek Exp $ */
 
 /* from ahcisata_core.c */
 
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siisata.c,v 1.35.6.3 2018/09/17 18:36:14 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siisata.c,v 1.35.6.4 2018/09/17 19:30:26 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1837,11 +1837,11 @@ siisata_atapi_scsipi_request(struct scsipi_channel *chan,
 			xfer->c_flags |= C_POLL;
 		xfer->c_drive = drive;
 		xfer->c_flags |= C_ATAPI;
-		xfer->c_scsipi = sc_xfer;
 		xfer->c_databuf = sc_xfer->data;
 		xfer->c_bcount = sc_xfer->datalen;
 		xfer->ops = &siisata_atapi_xfer_ops;
-		xfer->c_dscpoll = 0;
+		xfer->c_scsipi = sc_xfer;
+		xfer->c_atapi.c_dscpoll = 0;
 		s = splbio();
 		ata_exec_xfer(atac->atac_channels[channel], xfer);
 #ifdef DIAGNOSTIC
