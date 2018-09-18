@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.173 2018/09/18 05:24:10 mrg Exp $	*/
+/*	$NetBSD: usb.c,v 1.174 2018/09/18 05:37:54 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998, 2002, 2008, 2012 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.173 2018/09/18 05:24:10 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.174 2018/09/18 05:37:54 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -368,15 +368,6 @@ usb_doattach(device_t self)
 		}
 		sc->sc_bus->ub_roothub = dev;
 		usb_create_event_thread(self);
-#if 1
-		/*
-		 * Turning this code off will delay attachment of USB devices
-		 * until the USB event thread is running, which means that
-		 * the keyboard will not work until after cold boot.
-		 */
-		if (cold && (device_cfdata(self)->cf_flags & 1))
-			dev->ud_hub->uh_explore(sc->sc_bus->ub_roothub);
-#endif
 	} else {
 		aprint_error("%s: root hub problem, error=%s\n",
 			     device_xname(self), usbd_errstr(err));
