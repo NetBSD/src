@@ -1,4 +1,4 @@
-/* $NetBSD: efienv.c,v 1.1 2018/09/09 17:55:22 jmcneill Exp $ */
+/* $NetBSD: efienv.c,v 1.2 2018/09/18 19:19:45 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -39,16 +39,12 @@ efi_env_set(const char *key, char *val)
 {
 	EFI_STATUS status;
 	CHAR16 *ukey;
-	char *data;
 	size_t len;
 
-	data = AllocatePool(strlen(val) + 1);
-	strcpy(data, val);
-
+	ukey = NULL;
 	utf8_to_ucs2(key, &ukey, &len);
-	status = LibSetNVVariable(ukey, &EfibootVendorGuid, strlen(data) + 1, data);
+	status = LibSetNVVariable(ukey, &EfibootVendorGuid, strlen(val) + 1, val);
 	FreePool(ukey);
-	FreePool(data);
 
 	if (EFI_ERROR(status))
 		printf("env: failed to set variable '%s': %#lx\n", key, status);
@@ -61,6 +57,7 @@ efi_env_get(const char *key)
 	size_t len;
 	char *ret;
 
+	ukey = NULL;
 	utf8_to_ucs2(key, &ukey, &len);
 	ret = LibGetVariable(ukey, &EfibootVendorGuid);
 	FreePool(ukey);
@@ -74,6 +71,7 @@ efi_env_clear(const char *key)
 	CHAR16 *ukey;
 	size_t len;
 
+	ukey = NULL;
 	utf8_to_ucs2(key, &ukey, &len);
 	LibDeleteVariable(ukey, &EfibootVendorGuid);
 	FreePool(ukey);
