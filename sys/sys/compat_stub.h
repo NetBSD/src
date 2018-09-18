@@ -1,4 +1,4 @@
-/* $NetBSD: compat_stub.h,v 1.1.2.25 2018/09/18 03:32:35 pgoyette Exp $	*/
+/* $NetBSD: compat_stub.h,v 1.1.2.26 2018/09/18 10:34:08 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -135,6 +135,7 @@ COMPAT_HOOK(compat_bio_30_hook, (void *, u_long, void *,
 
 /*
  * vnd_30 ioctl compatability
+ * XXX there's some _50 code mixed in
  */
 struct vattr;
 COMPAT_HOOK(compat_vndioctl_30_hook, (u_long, struct lwp *, void *, int,
@@ -142,6 +143,7 @@ COMPAT_HOOK(compat_vndioctl_30_hook, (u_long, struct lwp *, void *, int,
 
 /*
  * ieee80211 ioctl compatability
+ * XXX need to review this
  */
 struct ieee80211_ostats;
 struct ieee80211_stats; 
