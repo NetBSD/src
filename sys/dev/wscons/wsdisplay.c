@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay.c,v 1.145 2017/12/18 22:44:30 christos Exp $ */
+/* $NetBSD: wsdisplay.c,v 1.146 2018/09/18 06:19:28 mrg Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.145 2017/12/18 22:44:30 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.146 2018/09/18 06:19:28 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_wsdisplay_compat.h"
@@ -2303,19 +2303,18 @@ wsdisplay_getc(dev_t dev)
 
 	if (wsdisplay_cons_kbd_getc) {
 		c = wsdisplay_cons_kbd_getc(wsdisplay_cons.cn_dev);
-		if (c > 0)
+		if (c >= 0)
 			return c;
 	}
 
 #ifdef WSDISPLAY_MULTICONS
 	if (wsdisplay_ocn && wsdisplay_ocn->cn_getc) {
 		c = wsdisplay_ocn->cn_getc(wsdisplay_ocn->cn_dev);
-		if (c > 0)
+		if (c >= 0)
 			return c;
 	}
 #endif
-	/* panic? */
-	return (0);
+	return -1;
 }
 
 static void

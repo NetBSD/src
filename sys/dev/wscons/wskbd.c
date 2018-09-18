@@ -1,4 +1,4 @@
-/* $NetBSD: wskbd.c,v 1.141 2017/12/18 18:57:21 jmcneill Exp $ */
+/* $NetBSD: wskbd.c,v 1.142 2018/09/18 06:19:28 mrg Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.141 2017/12/18 18:57:21 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.142 2018/09/18 06:19:28 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -1385,11 +1385,11 @@ wskbd_cngetc(dev_t dev)
 	keysym_t ks;
 
 	if (!wskbd_console_initted)
-		return 0;
+		return -1;
 
 	if (wskbd_console_device != NULL &&
 	    !wskbd_console_device->sc_translating)
-		return 0;
+		return -1;
 
 	for(;;) {
 		if (num-- > 0) {
@@ -1402,7 +1402,7 @@ wskbd_cngetc(dev_t dev)
 				 &type, &data);
 			if (type == 0) {
 				/* No data returned */
-				return 0;
+				return -1;
 			}
 			if (type == WSCONS_EVENT_ASCII) {
 				/*
