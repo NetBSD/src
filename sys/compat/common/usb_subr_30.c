@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr_30.c,v 1.1.2.1 2018/03/29 23:23:03 pgoyette Exp $	*/
+/*	$NetBSD: usb_subr_30.c,v 1.1.2.2 2018/09/18 01:15:57 pgoyette Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_subr_30.c,v 1.1.2.1 2018/03/29 23:23:03 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_subr_30.c,v 1.1.2.2 2018/09/18 01:15:57 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -126,7 +126,10 @@ usb_copy_old_devinfo(struct usb_device_info_old *uo,
 
 static int
 usbd_fill_deviceinfo_old(struct usbd_device *dev,
-    struct usb_device_info_old *di, int usedev)
+    struct usb_device_info_old *di, int usedev,
+    void (*do_devinfo_vp)(struct usbd_device *, char *, size_t, char *,
+	    size_t, int, int),
+    int (*do_printBCD)(char *cp, size_t l, int bcd))
 {
 	struct usbd_port *p;
 	int i, j, err;
@@ -134,9 +137,9 @@ usbd_fill_deviceinfo_old(struct usbd_device *dev,
 	di->udi_bus = device_unit(dev->ud_bus->ub_usbctl);
 	di->udi_addr = dev->ud_addr;
 	di->udi_cookie = dev->ud_cookie;
-	(*vec_usbd_devinfo_vp)(dev, di->udi_vendor, sizeof(di->udi_vendor),
+	(*do_devinfo_vp)(dev, di->udi_vendor, sizeof(di->udi_vendor),
 	    di->udi_product, sizeof(di->udi_product), usedev, 0);
-	(*vec_usbd_printBCD)(di->udi_release, sizeof(di->udi_release),
+	(*do_printBCD)(di->udi_release, sizeof(di->udi_release),
 	    UGETW(dev->ud_ddesc.bcdDevice));
 	di->udi_vendorNo = UGETW(dev->ud_ddesc.idVendor);
 	di->udi_productNo = UGETW(dev->ud_ddesc.idProduct);
@@ -226,18 +229,20 @@ usb_copy_to_old30(struct usb_event *ue, struct usb_event_old *ueo,
 	return 0;
 }
 
+COMPAT_SET_HOOK2(usb_subr_30_hook, "usb_30", usbd_fill_deviceinfo_old,
+    usb_copy_to_old30);
+COMPAT_UNSET_HOOK2(usb_subr_30_hook);
+
 void
 usb_30_init(void)
 {
 
-	usbd30_fill_deviceinfo_old = usbd_fill_deviceinfo_old;
-	usb30_copy_to_old = usb_copy_to_old30;
+	usb_subr_30_hook_set();
 }
 
 void
 usb_30_fini(void)
 {
 
-	usbd30_fill_deviceinfo_old = (void *)enosys;
-	usb30_copy_to_old = (void *)enosys;
+	usb_subr_30_hook_unset();
 }

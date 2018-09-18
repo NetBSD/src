@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_module.c,v 1.23.2.10 2018/09/17 11:04:31 pgoyette Exp $	*/
+/*	$NetBSD: sys_module.c,v 1.23.2.11 2018/09/18 01:15:58 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_module.c,v 1.23.2.10 2018/09/17 11:04:31 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_module.c,v 1.23.2.11 2018/09/18 01:15:58 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_modular.h"
@@ -262,6 +262,8 @@ handle_modctl_stat(struct iovec *iov, void *arg)
 }
 
 /* COMPAT_HOOK glue for modstat_80 */
+COMPAT_CALL_HOOK_DECL(compat_modstat_80_hook, f,
+    (int cmd, struct iovec *iov, void *arg), (cmd, iov, arg), enosys());
 COMPAT_CALL_HOOK(compat_modstat_80_hook, f,
     (int cmd, struct iovec *iov, void *arg), (cmd, iov, arg), enosys());
 

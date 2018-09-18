@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_msgif.c,v 1.101.10.3 2018/09/17 11:04:31 pgoyette Exp $	*/
+/*	$NetBSD: puffs_msgif.c,v 1.101.10.4 2018/09/18 01:15:58 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.101.10.3 2018/09/17 11:04:31 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.101.10.4 2018/09/18 01:15:58 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -325,11 +325,17 @@ puffs_getmsgid(struct puffs_mount *pmp)
 
 /* Routines to call the compat hooks */
 	/* Out-going */
+COMPAT_CALL_HOOK_DECL(puffs50_compat_hook, f1,
+     (struct puffs_req *oreq, struct puffs_req **creqp, ssize_t *deltap),
+     (oreq, creqp, deltap), enosys());
 COMPAT_CALL_HOOK(puffs50_compat_hook, f1,
      (struct puffs_req *oreq, struct puffs_req **creqp, ssize_t *deltap),
      (oreq, creqp, deltap), enosys());
 
 	/* Incoming */
+COMPAT_CALL_HOOK_DECL(puffs50_compat_hook, f2,
+     (struct puffs_req *oreq, struct puffs_req *creqp),
+     (oreq, creqp), enosys());
 COMPAT_CALL_HOOK(puffs50_compat_hook, f2,
      (struct puffs_req *oreq, struct puffs_req *creqp),
      (oreq, creqp), enosys());
