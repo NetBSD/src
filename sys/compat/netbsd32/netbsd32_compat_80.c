@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_80.c,v 1.1.2.4 2018/09/18 10:35:04 pgoyette Exp $	*/
+/*	$NetBSD: netbsd32_compat_80.c,v 1.1.2.5 2018/09/18 23:03:54 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_80.c,v 1.1.2.4 2018/09/18 10:35:04 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_80.c,v 1.1.2.5 2018/09/18 23:03:54 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -175,8 +175,8 @@ netbsd32_80_modctl(struct lwp *lwp, const struct netbsd32_modctl_args *uap,
 	return error;
 }
 
-COMPAT_SET_HOOK(compat32_80_modctl_hook, "nb32_modctl_80", netbsd32_80_modctl);
-COMPAT_UNSET_HOOK(compat32_80_modctl_hook);
+MODULE_SET_HOOK(compat32_80_modctl_hook, "nb32_modctl_80", netbsd32_80_modctl);
+MODULE_UNSET_HOOK(compat32_80_modctl_hook);
 
 MODULE(MODULE_CLASS_EXEC, compat_netbsd32_80, "compat_netbsd32,compat_80");
 

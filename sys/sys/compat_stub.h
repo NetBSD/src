@@ -1,4 +1,4 @@
-/* $NetBSD: compat_stub.h,v 1.1.2.27 2018/09/18 21:38:08 pgoyette Exp $	*/
+/* $NetBSD: compat_stub.h,v 1.1.2.28 2018/09/18 23:03:55 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@ struct ntptimeval;
 extern void (*vec_ntp_gettime)(struct ntptimeval *);
 extern int (*vec_ntp_timestatus)(void);
 
-COMPAT_HOOK2(ntp_gettime_hooks, (struct ntptimeval *), (void))
+MODULE_HOOK2(ntp_gettime_hooks, (struct ntptimeval *), (void))
 
 /*
  * usb devinfo compatability
@@ -56,7 +56,7 @@ struct usb_device_info_old;
 struct usb_event;
 struct usb_event_old;
 struct uio;
-COMPAT_HOOK2(usb_subr_30_hook,
+MODULE_HOOK2(usb_subr_30_hook,
     (struct usbd_device *, struct usb_device_info_old *, int,
       void (*)(struct usbd_device *, char *, size_t, char *, size_t, int, int),
       int (*)(char *, size_t, int)),
@@ -66,27 +66,27 @@ COMPAT_HOOK2(usb_subr_30_hook,
  * Routine vector for dev/ccd ioctl()
  */
 
-COMPAT_HOOK(ccd_ioctl_60_hook, (dev_t, u_long, void *, int, struct lwp *,
+MODULE_HOOK(ccd_ioctl_60_hook, (dev_t, u_long, void *, int, struct lwp *,
     int (*f)(dev_t, u_long, void *, int, struct lwp *)))
 
 /*
  * Routine vector for dev/clockctl ioctl()
  */
 
-COMPAT_HOOK(clockctl_ioctl_50_hook, (dev_t, u_long, void *, int, struct lwp *));
+MODULE_HOOK(clockctl_ioctl_50_hook, (dev_t, u_long, void *, int, struct lwp *));
 
 /*
  * if_sppp device compatability ioctl subroutine
  */
 
 struct sppp;
-COMPAT_HOOK(sppp_params_50_hook, (struct sppp *, u_long, void *));
+MODULE_HOOK(sppp_params_50_hook, (struct sppp *, u_long, void *));
 
 /*
  * cryptodev compatability ioctl
  */
 
-COMPAT_HOOK(ocryptof_50_hook, (struct file *, u_long, void *));
+MODULE_HOOK(ocryptof_50_hook, (struct file *, u_long, void *));
 
 /*
  * raidframe compatability
@@ -94,9 +94,9 @@ COMPAT_HOOK(ocryptof_50_hook, (struct file *, u_long, void *));
 
 struct RF_Config_s;
 struct RF_Raid_s;
-COMPAT_HOOK(raidframe50_ioctl_hook, (int, int, struct RF_Raid_s *, int, void *,
+MODULE_HOOK(raidframe50_ioctl_hook, (int, int, struct RF_Raid_s *, int, void *,
     struct RF_Config_s **));
-COMPAT_HOOK(raidframe80_ioctl_hook, (int, int, struct RF_Raid_s *, int, void *,
+MODULE_HOOK(raidframe80_ioctl_hook, (int, int, struct RF_Raid_s *, int, void *,
     struct RF_Config_s **));
 
 /*
@@ -104,7 +104,7 @@ COMPAT_HOOK(raidframe80_ioctl_hook, (int, int, struct RF_Raid_s *, int, void *,
  */
 
 struct puffs_req;
-COMPAT_HOOK2(puffs50_compat_hook,
+MODULE_HOOK2(puffs50_compat_hook,
     (struct puffs_req *, struct puffs_req **, ssize_t *),	/* outgoing */
     (struct puffs_req *, struct puffs_req *));			/* incoming */
 
@@ -114,7 +114,7 @@ COMPAT_HOOK2(puffs50_compat_hook,
 
 struct wscons_event;
 struct uio;
-COMPAT_HOOK(wsevent_50_copyout_events_hook,
+MODULE_HOOK(wsevent_50_copyout_events_hook,
     (const struct wscons_event *, int, struct uio *));
 
 /*
@@ -123,14 +123,14 @@ COMPAT_HOOK(wsevent_50_copyout_events_hook,
 
 struct power_event;
 struct sysmon_pswitch;
-COMPAT_HOOK(compat_sysmon_power_40_hook, (struct power_event *,
+MODULE_HOOK(compat_sysmon_power_40_hook, (struct power_event *,
     struct sysmon_pswitch *, int));
 
 /*
  * compat_bio indirect function pointer
  */
 
-COMPAT_HOOK(compat_bio_30_hook, (void *, u_long, void *,
+MODULE_HOOK(compat_bio_30_hook, (void *, u_long, void *,
     int(*)(void *, u_long, void *)));
 
 /*
@@ -138,7 +138,7 @@ COMPAT_HOOK(compat_bio_30_hook, (void *, u_long, void *,
  * XXX there's some _50 code mixed in
  */
 struct vattr;
-COMPAT_HOOK(compat_vndioctl_30_hook, (u_long, struct lwp *, void *, int,
+MODULE_HOOK(compat_vndioctl_30_hook, (u_long, struct lwp *, void *, int,
     struct vattr *, int (*)(struct lwp *, void *, int, struct vattr *)));
 
 /*
@@ -148,9 +148,9 @@ COMPAT_HOOK(compat_vndioctl_30_hook, (u_long, struct lwp *, void *, int,
 struct ieee80211_ostats;
 struct ieee80211_stats; 
 
-COMPAT_HOOK(ieee80211_ostats_hook, (struct ieee80211_ostats *,
+MODULE_HOOK(ieee80211_ostats_hook, (struct ieee80211_ostats *,
     struct ieee80211_stats *));
-COMPAT_HOOK(ieee80211_get_ostats_20_hook, (int));
+MODULE_HOOK(ieee80211_get_ostats_20_hook, (int));
 
 extern int (*ieee80211_get_ostats_20)(struct ieee80211_ostats *, 
     struct ieee80211_stats *);
@@ -163,14 +163,14 @@ extern int (*if43_20_cvtcmd)(int);
 struct ifnet;
 struct rt_walkarg;
 struct rt_addrinfo;
-COMPAT_HOOK2(rtsock14_hook, (struct ifnet *),
+MODULE_HOOK2(rtsock14_hook, (struct ifnet *),
     (struct ifnet *, struct rt_walkarg *, struct rt_addrinfo *, size_t));
 
 /*
  * modctl handler for old style OSTAT
  */
 struct iovec;
-COMPAT_HOOK(compat_modstat_80_hook, (int, struct iovec *, void *));
+MODULE_HOOK(compat_modstat_80_hook, (int, struct iovec *, void *));
 
 /*
  * mask for kern_sig_43's killpg

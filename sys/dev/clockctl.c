@@ -1,4 +1,4 @@
-/*      $NetBSD: clockctl.c,v 1.35.14.3 2018/09/18 01:15:57 pgoyette Exp $ */
+/*      $NetBSD: clockctl.c,v 1.35.14.4 2018/09/18 23:03:54 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clockctl.c,v 1.35.14.3 2018/09/18 01:15:57 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clockctl.c,v 1.35.14.4 2018/09/18 23:03:54 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ntp.h"
@@ -201,10 +201,10 @@ clockctl_modcmd(modcmd_t cmd, void *data)
 }
 
 /* Hook the compat_50 stuff */
-COMPAT_CALL_HOOK_DECL(clockctl_ioctl_50_hook, f,
+MODULE_CALL_HOOK_DECL(clockctl_ioctl_50_hook, f,
     (dev_t dev, u_long cmd, void *data, int flags, struct lwp *l),
     (dev, cmd, data, flags, l), enosys());
-COMPAT_CALL_HOOK(clockctl_ioctl_50_hook, f,
+MODULE_CALL_HOOK(clockctl_ioctl_50_hook, f,
     (dev_t dev, u_long cmd, void *data, int flags, struct lwp *l),
     (dev, cmd, data, flags, l), enosys());
 
