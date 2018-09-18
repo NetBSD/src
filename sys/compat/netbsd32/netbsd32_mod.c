@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_mod.c,v 1.13.16.11 2018/09/14 08:38:37 pgoyette Exp $	*/
+/*	$NetBSD: netbsd32_mod.c,v 1.13.16.12 2018/09/18 10:35:04 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_mod.c,v 1.13.16.11 2018/09/14 08:38:37 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_mod.c,v 1.13.16.12 2018/09/18 10:35:04 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_execfmt.h"
@@ -44,6 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_mod.c,v 1.13.16.11 2018/09/14 08:38:37 pgoy
 #include <sys/module.h>
 #include <sys/exec.h>
 #include <sys/exec_elf.h>
+#include <sys/compat_hook.h>
 
 #include <compat/netbsd32/netbsd32_sysctl.h>
 #include <compat/netbsd32/netbsd32_exec.h>
@@ -51,11 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_mod.c,v 1.13.16.11 2018/09/14 08:38:37 pgoy
 #define ELF32_AUXSIZE (howmany(ELF_AUX_ENTRIES * sizeof(Aux32Info), \
     sizeof(Elf32_Addr)) + MAXPATHLEN + ALIGN(1))
 
-int compat32_80_modctl_compat_stub(struct lwp *,
-    const struct netbsd32_modctl_args *, register_t *);
-
-int (*vec_compat32_80_modctl)(struct lwp *,
-    const struct netbsd32_modctl_args *, register_t *);
+struct compat32_80_modctl_hook_t compat32_80_modctl_hook;
 
 # define	DEPS1	"ksem,coredump,compat_util"
 
@@ -113,21 +110,18 @@ compat_netbsd32_modcmd(modcmd_t cmd, void *arg)
 		    __arraycount(netbsd32_execsw));
 		if (error == 0) {
 			netbsd32_sysctl_init();
-			vec_compat32_80_modctl = compat32_80_modctl_compat_stub;
 			netbsd32_machdep_md_init();
 		}
 		return error;
 
 	case MODULE_CMD_FINI:
 		netbsd32_machdep_md_fini();
-		vec_compat32_80_modctl = (void *)enosys;
 		netbsd32_sysctl_fini();
 
 		error = exec_remove(netbsd32_execsw,
 		    __arraycount(netbsd32_execsw));
 		if (error) {
 			netbsd32_sysctl_init();
-			vec_compat32_80_modctl = compat32_80_modctl_compat_stub;
 			netbsd32_machdep_md_init();
 		}
 		return error;

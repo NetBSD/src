@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_80.c,v 1.1.2.3 2018/09/11 09:22:51 pgoyette Exp $	*/
+/*	$NetBSD: netbsd32_compat_80.c,v 1.1.2.4 2018/09/18 10:35:04 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_80.c,v 1.1.2.3 2018/09/11 09:22:51 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_80.c,v 1.1.2.4 2018/09/18 10:35:04 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -175,22 +175,22 @@ netbsd32_80_modctl(struct lwp *lwp, const struct netbsd32_modctl_args *uap,
 	return error;
 }
 
+COMPAT_SET_HOOK(compat32_80_modctl_hook, "nb32_modctl_80", netbsd32_80_modctl);
+COMPAT_UNSET_HOOK(compat32_80_modctl_hook);
+
 MODULE(MODULE_CLASS_EXEC, compat_netbsd32_80, "compat_netbsd32,compat_80");
 
 static int
 compat_netbsd32_80_modcmd(modcmd_t cmd, void *arg)
 {
-static int (*orig_netbsd32_80_modctl)(struct lwp *,
-    const struct netbsd32_modctl_args *, register_t *);
 
 	switch (cmd) {
 	case MODULE_CMD_INIT:
-		orig_netbsd32_80_modctl = vec_compat32_80_modctl;
-		vec_compat32_80_modctl = netbsd32_80_modctl;
+		compat32_80_modctl_hook_set();
 		return 0;
 
 	case MODULE_CMD_FINI:
-		vec_compat32_80_modctl = orig_netbsd32_80_modctl;
+		compat32_80_modctl_hook_unset();
 		return 0;
 
 	default:
