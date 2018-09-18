@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.172 2018/09/16 20:21:56 mrg Exp $	*/
+/*	$NetBSD: usb.c,v 1.173 2018/09/18 05:24:10 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998, 2002, 2008, 2012 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.172 2018/09/16 20:21:56 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.173 2018/09/18 05:24:10 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -138,6 +138,7 @@ struct usb_softc {
 	struct lwp	*sc_event_thread;
 
 	char		sc_dying;
+	bool		sc_pmf_registered;
 };
 
 struct usb_taskq {
@@ -189,6 +190,7 @@ Static int usb_nevents = 0;
 Static struct selinfo usb_selevent;
 Static kmutex_t usb_event_lock;
 Static kcondvar_t usb_event_cv;
+/* XXX this is gross and broken */
 Static proc_t *usb_async_proc;  /* process that wants USB SIGIO */
 Static void *usb_async_sih;
 Static int usb_dev_open = 0;
@@ -238,6 +240,9 @@ usb_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_bus = aux;
 	usbrev = sc->sc_bus->ub_revision;
+
+	cv_init(&sc->sc_bus->ub_needsexplore_cv, "usbevt");
+	sc->sc_pmf_registered = false;
 
 	aprint_naive("\n");
 	aprint_normal(": USB revision %s", usbrev_str[usbrev]);
@@ -307,6 +312,11 @@ usb_once_init(void)
 		 * end up using them in usb_doattach().
 		 */
 	}
+
+	KASSERT(usb_async_sih == NULL);
+	usb_async_sih = softint_establish(SOFTINT_CLOCK | SOFTINT_MPSAFE,
+	   usb_async_intr, NULL);
+
 	return 0;
 }
 
@@ -341,8 +351,6 @@ usb_doattach(device_t self)
 	default:
 		panic("usb_doattach");
 	}
-
-	cv_init(&sc->sc_bus->ub_needsexplore_cv, "usbevt");
 
 	ue = usb_alloc_event();
 	ue->u.ue_ctrlr.ue_bus = device_unit(self);
@@ -383,9 +391,8 @@ usb_doattach(device_t self)
 
 	if (!pmf_device_register(self, NULL, NULL))
 		aprint_error_dev(self, "couldn't establish power handler\n");
-
-	usb_async_sih = softint_establish(SOFTINT_CLOCK | SOFTINT_MPSAFE,
-	   usb_async_intr, NULL);
+	else
+		sc->sc_pmf_registered = true;
 
 	return;
 }
@@ -1179,6 +1186,10 @@ usb_schedsoftintr(struct usbd_bus *bus)
 
 	DPRINTFN(10, "polling=%jd", bus->ub_usepolling, 0, 0, 0);
 
+	/* In case the bus never finished setting up. */
+	if (__predict_false(bus->ub_soft == NULL))
+		return;
+
 	if (bus->ub_usepolling) {
 		bus->ub_methods->ubm_softint(bus);
 	} else {
@@ -1231,7 +1242,8 @@ usb_detach(device_t self, int flags)
 	    (rc = usb_disconnect_port(&sc->sc_port, self, flags)) != 0)
 		return rc;
 
-	pmf_device_deregister(self);
+	if (sc->sc_pmf_registered)
+		pmf_device_deregister(self);
 	/* Kill off event thread. */
 	sc->sc_dying = 1;
 	while (sc->sc_event_thread != NULL) {
