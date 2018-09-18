@@ -1,4 +1,4 @@
-/*	$NetBSD: hpckbd.c,v 1.34 2018/09/18 09:09:26 uwe Exp $ */
+/*	$NetBSD: hpckbd.c,v 1.35 2018/09/18 14:57:32 uwe Exp $ */
 
 /*-
  * Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpckbd.c,v 1.34 2018/09/18 09:09:26 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpckbd.c,v 1.35 2018/09/18 14:57:32 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -280,9 +280,8 @@ hpckbd_keymap_setup(struct hpckbd_core *hc,
 	 * is a hint as to what is wrong.  This actually ends up modifying
 	 * initialized data which is marked "const".
 	 *
-	 * The reason we get away with it here is that on sh3 kernel
-	 * is directly mapped. For mips, read-only data is mapped
-	 * read/write at the moment.
+	 * The reason we get away with it here is that on sh3 and mips
+	 * the kernel is directly mapped.
 	 */
 	desc = (struct wscons_keydesc *)__UNCONST(hpckbd_keymapdata.keydesc);
 	for (i = 0; desc[i].name != 0; i++) {
