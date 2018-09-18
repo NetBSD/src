@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_module.c,v 1.6.2.6 2018/09/14 08:53:22 pgoyette Exp $	*/
+/*	$NetBSD: netbsd32_module.c,v 1.6.2.7 2018/09/18 10:35:04 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_module.c,v 1.6.2.6 2018/09/14 08:53:22 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_module.c,v 1.6.2.7 2018/09/18 10:35:04 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -200,6 +200,18 @@ compat32_80_modctl_compat_stub(struct lwp *lwp,
 	return EPASSTHROUGH;
 }
 
+/* Module hook for netbsd32_80_modctl */
+COMPAT_CALL_HOOK_DECL(compat32_80_modctl_hook, f,
+    (struct lwp *lwp, const struct netbsd32_modctl_args *uap,
+      register_t *result),
+    (lwp, uap, result),
+    enosys());
+COMPAT_CALL_HOOK(compat32_80_modctl_hook, f,
+    (struct lwp *lwp, const struct netbsd32_modctl_args *uap,
+      register_t *result),
+    (lwp, uap, result),
+    enosys());
+
 int
 netbsd32_modctl(struct lwp *lwp, const struct netbsd32_modctl_args *uap,
 	register_t *result)
@@ -219,8 +231,8 @@ netbsd32_modctl(struct lwp *lwp, const struct netbsd32_modctl_args *uap,
 
 	arg = SCARG_P32(uap, arg);
 
-	error = (*vec_compat32_80_modctl)(lwp, uap, result);
-	if (error != EPASSTHROUGH)
+	error = compat32_80_modctl_hook_f_call(lwp, uap, result);
+	if (error != EPASSTHROUGH && error != ENOSYS)
 		return error;
 
 	switch (SCARG(uap, cmd)) {
