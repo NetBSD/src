@@ -1,4 +1,4 @@
-/* $NetBSD: TODO.compat-module,v 1.1.2.5 2018/09/17 10:06:29 pgoyette Exp $ */
+/* $NetBSD: TODO.compat-module,v 1.1.2.6 2018/09/18 01:11:33 pgoyette Exp $ */
 
 DONE
 ----
@@ -46,23 +46,23 @@ DONE
 11. Implemented a MP-safe mechanism for installing and removing function
     pointers.  Thanks to riastradh@ for the template code.
 
+12. Replace version-specific parts of the compat_netbsd32 module (and
+    also the compat_netbsd32_sysv module) with individual modules.  Update
+    dependencies accordingly.  (Done, but see #13 below.)
+
 
 TODO - Required for branch merge
 --------------------------------
-1.  Replace version-specific parts of the compat_netbsd32 module (and
-    also the compat_netbsd32_sysv module) with individual modules.  Update
-    dependencies accordingly.
-
-2.  Need to finish cleaning up the netbsd32 machine-dependent code, since
+13.  Need to finish cleaning up the netbsd32 machine-dependent code, since
     the MI code assumes that there's MD file available.
 
-3.  Still have some work to do to split the vnd_30 and vnd_50 compat
+14. Still have some work to do to split the vnd_30 and vnd_50 compat
     code into separate modules.
 
-4.  The ieee_80211 compat code needs to be verified to make sure it is
+15. The ieee_80211 compat code needs to be verified to make sure it is
     handling the if43_20 compat routine cvtcmd() correctly.
 
-5.  There are a few function pointers in netbsd32 module that need to
+16. There are a few function pointers in netbsd32 module that need to
     be converted to the new MP-safe mechanism.  See files
 	netbsd32_mod.c
 	netbsd32_module.c
@@ -72,11 +72,11 @@ TODO - Required for branch merge
 
 TODO - Not required for branch merge
 ------------------------------------
-1.  Audit the entire code base for any remaining embedded #ifdef's for
+17. Audit the entire code base for any remaining embedded #ifdef's for
     COMPAT_xx.  When found, move the actual compat code into the compat
     hierarchy and replace originals with indirect (vectored) calls.
 
-2.  The rtsock compat code is a disaster, with rtsock_50.c #include-ing
+18. The rtsock compat code is a disaster, with rtsock_50.c #include-ing
     the main rtsock.c code with various manipulations of the COMPAT_50
     macro.  Once rtsock is separated, compat_14 references to rtsock_50
     routines needs to be verified.
@@ -86,7 +86,7 @@ TODO - Not required for branch merge
     the compat code can be executed, neither on the branch nor on
     HEAD.
 
-3.  The compat_60 module still needs some work for XEN systems.  We
+19. The compat_60 module still needs some work for XEN systems.  We
     probably need some build infrastructure changes to ensure that
     XEN (and, for i386, XEN-PAE) modules are build with the correct
     macros defined and with -I directories specified in the same order
@@ -94,7 +94,7 @@ TODO - Not required for branch merge
     prevents loading of micro-code updates for amd64 processors running
     XEN kernels.  This limitation also exists on HEAD.
 
-4.  There seems to be quite a bit of MD compat_xx code, in the various
+20. There seems to be quite a bit of MD compat_xx code, in the various
     sys/arch/ directories.  I haven't yet looked at any of this.  But it
     seems to me that the MI compat build infrastructure should have some
     mechanism to "reach over" to the MD code, #include a Makefile.inc file,
@@ -112,13 +112,13 @@ TODO - Not required for branch merge
     into the monolithic COMPAT module on HEAD.  Thus, its absence from
     any of the version-specific modules is not a regression.
 
-5.  For compat_50, in addition to rtsock there are some things in dev/vnd,
+21. For compat_50, in addition to rtsock there are some things in dev/vnd,
     dev/gpio, and dev/wscons/wsmux that I haven't been able to cleanly
     separate.  These items are not currently included in the monolithic
     COMPAT module on HEAD, so lack of integration on the branch is not a
     regression.
 
-6.  Even though the build mechanism has been switched back to using a
+22. Even though the build mechanism has been switched back to using a
     .a compat library, it might be useful to make it work with the .o
     library.
 
