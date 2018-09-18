@@ -1,4 +1,4 @@
-/*	$NetBSD: ehcivar.h,v 1.45 2018/08/09 06:26:47 mrg Exp $ */
+/*	$NetBSD: ehcivar.h,v 1.46 2018/09/18 02:00:06 mrg Exp $ */
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -181,6 +181,16 @@ typedef struct ehci_softc {
 	u_int sc_ncomp;
 	u_int sc_npcomp;
 	device_t sc_comps[EHCI_COMPANION_MAX];
+
+	/* This chunk to handle early RB_ASKNAME hand over. */
+	callout_t sc_compcallout;
+	kmutex_t sc_complock;
+	kcondvar_t sc_compcv;
+	enum {
+		CO_EARLY,
+		CO_SCHED,
+		CO_DONE,
+	} sc_comp_state;
 
 	usb_dma_t sc_fldma;
 	ehci_link_t *sc_flist;
