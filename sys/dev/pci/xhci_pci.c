@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci_pci.c,v 1.13 2018/06/29 17:48:24 msaitoh Exp $	*/
+/*	$NetBSD: xhci_pci.c,v 1.14 2018/09/18 05:24:10 mrg Exp $	*/
 /*	OpenBSD: xhci_pci.c,v 1.4 2014/07/12 17:38:51 yuo Exp	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci_pci.c,v 1.13 2018/06/29 17:48:24 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci_pci.c,v 1.14 2018/09/18 05:24:10 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_xhci_pci.h"
@@ -143,6 +143,7 @@ xhci_pci_attach(device_t parent, device_t self, void *aux)
 	printf("%s: csr: %08x\n", __func__, csr);
 #endif
 	if ((csr & PCI_COMMAND_MEM_ENABLE) == 0) {
+		sc->sc_ios = 0;
 		aprint_error_dev(self, "memory access is disabled\n");
 		return;
 	}
@@ -160,6 +161,7 @@ xhci_pci_attach(device_t parent, device_t self, void *aux)
 		}
 		break;
 	default:
+		sc->sc_ios = 0;
 		aprint_error_dev(self, "BAR not 64 or 32-bit MMIO\n");
 		return;
 	}
