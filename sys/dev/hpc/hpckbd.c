@@ -1,4 +1,4 @@
-/*	$NetBSD: hpckbd.c,v 1.33 2018/09/18 02:58:10 rin Exp $ */
+/*	$NetBSD: hpckbd.c,v 1.34 2018/09/18 09:09:26 uwe Exp $ */
 
 /*-
  * Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpckbd.c,v 1.33 2018/09/18 02:58:10 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpckbd.c,v 1.34 2018/09/18 09:09:26 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -263,9 +263,9 @@ hpckbd_getevent(struct hpckbd_core* hc, u_int *type, int *data)
 
 #if defined(hpcsh) || defined(hpcmips)
 /*
- * XXX: Use the old wrong code for now as hpcsh and hpcmips attach console very
- * early when malloc(9) is not yet available. It is convenient to be able to do
- * early DDB on wscons.
+ * XXX: Use the old wrong code for now as hpcsh and hpcmips attach
+ * console very early when malloc(9) is not yet available.  It is
+ * convenient to be able to do early DDB on wscons.
  */
 void
 hpckbd_keymap_setup(struct hpckbd_core *hc,
