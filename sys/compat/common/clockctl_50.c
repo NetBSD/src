@@ -1,4 +1,4 @@
-/*      $NetBSD: clockctl_50.c,v 1.1.2.2 2018/09/17 11:04:30 pgoyette Exp $ */
+/*      $NetBSD: clockctl_50.c,v 1.1.2.3 2018/09/18 23:03:54 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clockctl_50.c,v 1.1.2.2 2018/09/17 11:04:30 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clockctl_50.c,v 1.1.2.3 2018/09/18 23:03:54 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -122,8 +122,8 @@ compat50_clockctlioctl(dev_t dev, u_long cmd, void *data, int flags,
 	return (error);
 }
 
-COMPAT_SET_HOOK(clockctl_ioctl_50_hook, "clk_50", compat50_clockctlioctl);
-COMPAT_UNSET_HOOK(clockctl_ioctl_50_hook);
+MODULE_SET_HOOK(clockctl_ioctl_50_hook, "clk_50", compat50_clockctlioctl);
+MODULE_UNSET_HOOK(clockctl_ioctl_50_hook);
 
 void
 clockctl_50_init(void)

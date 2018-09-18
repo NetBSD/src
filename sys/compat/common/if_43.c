@@ -1,4 +1,4 @@
-/*	$NetBSD: if_43.c,v 1.14.2.3 2018/09/18 01:15:57 pgoyette Exp $	*/
+/*	$NetBSD: if_43.c,v 1.14.2.4 2018/09/18 23:03:54 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_43.c,v 1.14.2.3 2018/09/18 01:15:57 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_43.c,v 1.14.2.4 2018/09/18 23:03:54 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -77,9 +77,9 @@ __KERNEL_RCSID(0, "$NetBSD: if_43.c,v 1.14.2.3 2018/09/18 01:15:57 pgoyette Exp 
 #include <compat/common/if_43.h>
 #include <uvm/uvm_extern.h>
 
-/* COMPAT_HOOK for replacing the cmdcvt() function */
-COMPAT_CALL_HOOK_DECL(ieee80211_get_ostats_20_hook, f, (int cmd), (cmd), cmd);
-COMPAT_CALL_HOOK(ieee80211_get_ostats_20_hook, f, (int cmd), (cmd), cmd);
+/* MODULE_HOOK for replacing the cmdcvt() function */
+MODULE_CALL_HOOK_DECL(ieee80211_get_ostats_20_hook, f, (int cmd), (cmd), cmd);
+MODULE_CALL_HOOK(ieee80211_get_ostats_20_hook, f, (int cmd), (cmd), cmd);
 
 u_long 
 compat_cvtcmd(u_long cmd)

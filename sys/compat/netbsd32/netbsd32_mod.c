@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_mod.c,v 1.13.16.12 2018/09/18 10:35:04 pgoyette Exp $	*/
+/*	$NetBSD: netbsd32_mod.c,v 1.13.16.13 2018/09/18 23:03:54 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_mod.c,v 1.13.16.12 2018/09/18 10:35:04 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_mod.c,v 1.13.16.13 2018/09/18 23:03:54 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_execfmt.h"
@@ -44,7 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_mod.c,v 1.13.16.12 2018/09/18 10:35:04 pgoy
 #include <sys/module.h>
 #include <sys/exec.h>
 #include <sys/exec_elf.h>
-#include <sys/compat_hook.h>
+#include <sys/module_hook.h>
 
 #include <compat/netbsd32/netbsd32_sysctl.h>
 #include <compat/netbsd32/netbsd32_exec.h>

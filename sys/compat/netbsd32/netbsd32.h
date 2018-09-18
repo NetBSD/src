@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32.h,v 1.116.2.8 2018/09/18 10:35:04 pgoyette Exp $	*/
+/*	$NetBSD: netbsd32.h,v 1.116.2.9 2018/09/18 23:03:54 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2008, 2015 Matthew R. Green
@@ -46,7 +46,7 @@
 #include <sys/shm.h>
 #include <sys/ucontext.h>
 #include <sys/ucred.h>
-#include <sys/compat_hook.h>
+#include <sys/module_hook.h>
 #include <compat/sys/ucontext.h>
 #include <compat/sys/mount.h>
 #include <compat/sys/signal.h>
@@ -1177,7 +1177,7 @@ extern const char * const netbsd32_syscallnames[];
 extern struct sysctlnode netbsd32_sysctl_root;
 
 struct netbsd32_modctl_args;
-COMPAT_HOOK(compat32_80_modctl_hook,
+MODULE_HOOK(compat32_80_modctl_hook,
     (struct lwp *, const struct netbsd32_modctl_args *, register_t *));
 
 /*

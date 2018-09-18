@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd_30.c,v 1.1.2.2 2018/09/17 11:04:30 pgoyette Exp $	*/
+/*	$NetBSD: vnd_30.c,v 1.1.2.3 2018/09/18 23:03:54 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd_30.c,v 1.1.2.2 2018/09/17 11:04:30 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd_30.c,v 1.1.2.3 2018/09/18 23:03:54 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -115,8 +115,8 @@ compat_30_vndioctl(u_long cmd, struct lwp *l, void *data, int unit,
 	return 0;
 }
 
-COMPAT_SET_HOOK(compat_vndioctl_30_hook, "vnd_30", compat_30_vndioctl);
-COMPAT_UNSET_HOOK(compat_vndioctl_30_hook);
+MODULE_SET_HOOK(compat_vndioctl_30_hook, "vnd_30", compat_30_vndioctl);
+MODULE_UNSET_HOOK(compat_vndioctl_30_hook);
 
 void
 vnd_30_init(void)

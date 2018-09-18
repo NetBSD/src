@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptodev.c,v 1.98.2.3 2018/09/18 01:15:58 pgoyette Exp $ */
+/*	$NetBSD: cryptodev.c,v 1.98.2.4 2018/09/18 23:03:55 pgoyette Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.c,v 1.4.2.4 2003/06/03 00:09:02 sam Exp $	*/
 /*	$OpenBSD: cryptodev.c,v 1.53 2002/07/10 22:21:30 mickey Exp $	*/
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.98.2.3 2018/09/18 01:15:58 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.98.2.4 2018/09/18 23:03:55 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -220,9 +220,9 @@ cryptof_write(file_t *fp, off_t *poff,
 }
 
 /* Hook the ocryptodev 50 compat code */
-COMPAT_CALL_HOOK_DECL(ocryptof_50_hook, f,
+MODULE_CALL_HOOK_DECL(ocryptof_50_hook, f,
     (struct file *fp, u_long cmd, void *data), (fp, cmd, data), enosys());
-COMPAT_CALL_HOOK(ocryptof_50_hook, f,
+MODULE_CALL_HOOK(ocryptof_50_hook, f,
     (struct file *fp, u_long cmd, void *data), (fp, cmd, data), enosys());
 
 /* ARGSUSED */

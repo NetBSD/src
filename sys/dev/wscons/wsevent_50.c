@@ -1,4 +1,4 @@
-/* $NetBSD: wsevent_50.c,v 1.1.2.4 2018/09/17 11:04:31 pgoyette Exp $ */
+/* $NetBSD: wsevent_50.c,v 1.1.2.5 2018/09/18 23:03:55 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2006, 2008 The NetBSD Foundation, Inc.
@@ -104,7 +104,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsevent_50.c,v 1.1.2.4 2018/09/17 11:04:31 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsevent_50.c,v 1.1.2.5 2018/09/18 23:03:55 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -144,9 +144,9 @@ wsevent_copyout_events50(const struct wscons_event *events, int cnt,
 	return 0;
 }
 
-COMPAT_SET_HOOK(wsevent_50_copyout_events_hook, "wsc_50",
+MODULE_SET_HOOK(wsevent_50_copyout_events_hook, "wsc_50",
     wsevent_copyout_events50);
-COMPAT_UNSET_HOOK(wsevent_50_copyout_events_hook);
+MODULE_UNSET_HOOK(wsevent_50_copyout_events_hook);
 
 void
 wsevent_50_init(void)
