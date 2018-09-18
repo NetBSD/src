@@ -1,4 +1,4 @@
-/* $NetBSD: compat_hook.h,v 1.1.2.1 2018/09/18 03:32:35 pgoyette Exp $	*/
+/* $NetBSD: module_hook.h,v 1.1.2.1 2018/09/18 21:38:08 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -29,8 +29,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _SYS_COMPAT_HOOK_H
-#define _SYS_COMPAT_HOOK_H
+#ifndef _SYS_MODULE_HOOK_H
+#define _SYS_MODULE_HOOK_H
 
 #include <sys/param.h>	/* for COHERENCY_UNIT, for __cacheline_aligned */
 #include <sys/mutex.h>
@@ -45,7 +45,7 @@
  * unloaded.
  */
 
-#define COMPAT_HOOK(hook,args)					\
+#define MODULE_HOOK(hook,args)					\
 extern struct hook ## _t {					\
 	kmutex_t		mtx;				\
 	kcondvar_t		cv;				\
@@ -55,7 +55,7 @@ extern struct hook ## _t {					\
 	int			(*f)args;			\
 } hook __cacheline_aligned;
 
-#define COMPAT_HOOK2(hook,args1,args2)				\
+#define MODULE_HOOK2(hook,args1,args2)				\
 extern struct hook ## _t {					\
 	kmutex_t		mtx;				\
 	kcondvar_t		cv;				\
@@ -66,7 +66,7 @@ extern struct hook ## _t {					\
 	int			(*f2)args2;			\
 } hook __cacheline_aligned;
 
-#define COMPAT_SET_HOOK(hook, waitchan, func)			\
+#define MODULE_SET_HOOK(hook, waitchan, func)			\
 static void hook ## _set(void);					\
 static void hook ## _set(void)					\
 {								\
@@ -86,7 +86,7 @@ static void hook ## _set(void)					\
 	hook.hooked = true;					\
 }
 
-#define COMPAT_SET_HOOK2(hook, waitchan, func1, func2)		\
+#define MODULE_SET_HOOK2(hook, waitchan, func1, func2)		\
 static void hook ## _set(void);					\
 static void hook ## _set(void)					\
 {								\
@@ -107,7 +107,7 @@ static void hook ## _set(void)					\
 	hook.hooked = true;					\
 }
 
-#define COMPAT_UNSET_HOOK(hook)					\
+#define MODULE_UNSET_HOOK(hook)					\
 static void (hook ## _unset)(void);				\
 static void (hook ## _unset)(void)				\
 {								\
@@ -131,7 +131,7 @@ static void (hook ## _unset)(void)				\
 	pserialize_destroy(hook.psz);				\
 }
 
-#define COMPAT_UNSET_HOOK2(hook)				\
+#define MODULE_UNSET_HOOK2(hook)				\
 static void (hook ## _unset)(void);				\
 static void (hook ## _unset)(void)				\
 {								\
@@ -156,10 +156,10 @@ static void (hook ## _unset)(void)				\
 	pserialize_destroy(hook.psz);				\
 }
 
-#define COMPAT_CALL_HOOK_DECL(hook, which, decl, args, default)	\
+#define MODULE_CALL_HOOK_DECL(hook, which, decl, args, default)	\
 int								\
 hook ## _ ## which ## _call decl;
-#define COMPAT_CALL_HOOK(hook, which, decl, args, default)	\
+#define MODULE_CALL_HOOK(hook, which, decl, args, default)	\
 int								\
 hook ## _ ## which ## _call decl				\
 {								\
@@ -184,4 +184,4 @@ hook ## _ ## which ## _call decl				\
 	return error;						\
 }
 
-#endif	/* _SYS_COMPAT_HOOK_H */
+#endif	/* _SYS_MODULE_HOOK_H */

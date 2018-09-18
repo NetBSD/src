@@ -1,4 +1,4 @@
-/* $NetBSD: compat_stub.h,v 1.1.2.26 2018/09/18 10:34:08 pgoyette Exp $	*/
+/* $NetBSD: compat_stub.h,v 1.1.2.27 2018/09/18 21:38:08 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #ifndef _SYS_COMPAT_STUB_H
 #define _SYS_COMPAT_STUB_H
 
-#include <sys/compat_hook.h>
+#include <sys/module_hook.h>
 
 /*
  * Routine hooks for compat_50___sys_ntp_gettime
