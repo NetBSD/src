@@ -1,4 +1,4 @@
-/* $NetBSD: compat_stub.c,v 1.1.2.18 2018/09/17 11:04:31 pgoyette Exp $	*/
+/* $NetBSD: compat_stub.c,v 1.1.2.19 2018/09/18 01:15:58 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -33,7 +33,6 @@
 
 #ifdef _KERNEL_OPT
 #include "opt_ntp.h"
-#include "usb.h"	/* XXX No other way to determine if USB is present */
 #endif
 
 #include <sys/systm.h>
@@ -58,32 +57,10 @@ void (*vec_ntp_gettime)(struct ntptimeval *) = NULL;
 int (*vec_ntp_timestatus)(void) = NULL;
 #endif
 
-#if NUSB > 0
-#include <dev/usb/usb.h>
-#include <dev/usb/usbdi.h>
-#endif
-
 /*
  * usb device_info compatability
- *
- * MP-hooks not needed since the USB code is not modular
  */
-int (*usbd30_fill_deviceinfo_old)(struct usbd_device *,
-    struct usb_device_info_old *, int) = (void *)enosys;
-
-int (*usb30_copy_to_old)(struct usb_event *, struct usb_event_old *,
-    struct uio *) = (void *)enosys;
-
-#if NUSB > 0
-void (*vec_usbd_devinfo_vp)(struct usbd_device *, char *, size_t, char *,
-    size_t, int, int) = usbd_devinfo_vp;
-int (*vec_usbd_printBCD)(char *cp, size_t l, int bcd) = usbd_printBCD;
-
-#else
-void (*vec_usbd_devinfo_vp)(struct usbd_device *, char *, size_t, char *,
-    size_t, int, int) = NULL;
-int (*vec_usbd_printBCD)(char *cp, size_t l, int bcd) = NULL;
-#endif
+struct usb_subr_30_hook_t usb_subr_30_hook;
 
 /*
  * ccd device compatability ioctl

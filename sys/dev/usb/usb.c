@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.168.2.3 2018/09/06 06:56:05 pgoyette Exp $	*/
+/*	$NetBSD: usb.c,v 1.168.2.4 2018/09/18 01:15:58 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1998, 2002, 2008, 2012 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.168.2.3 2018/09/06 06:56:05 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.168.2.4 2018/09/18 01:15:58 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -646,6 +646,14 @@ usbopen(dev_t dev, int flag, int mode, struct lwp *l)
 	return 0;
 }
 
+/* Call hook for usbd30_fill_device_info_old() */
+COMPAT_CALL_HOOK_DECL(usb_subr_30_hook, f2,
+    (struct usb_event *ue, struct usb_event_old *ueo, struct uio *uio),
+    (ue, ueo, uio), enosys());
+COMPAT_CALL_HOOK(usb_subr_30_hook, f2,
+    (struct usb_event *ue, struct usb_event_old *ueo, struct uio *uio),
+    (ue, ueo, uio), enosys());
+
 int
 usbread(dev_t dev, struct uio *uio, int flag)
 {
@@ -686,7 +694,7 @@ usbread(dev_t dev, struct uio *uio, int flag)
 	mutex_exit(&usb_event_lock);
 	if (!error) {
 		if (useold) { /* copy fields to old struct */
-			error = (*usb30_copy_to_old)(ue, ueo, uio);
+			error = usb_subr_30_hook_f2_call(ue, ueo, uio);
 			if (error == ENOSYS)
 				error = EINVAL;
 
@@ -717,6 +725,20 @@ usbclose(dev_t dev, int flag, int mode,
 
 	return 0;
 }
+
+/* Call the hook for usb30_copy_to_old() */
+COMPAT_CALL_HOOK_DECL(usb_subr_30_hook, f1,
+    (struct usbd_device *udev, struct usb_device_info_old * addr, int usedev,
+      void (*fill_devinfo_vp)(struct usbd_device *, char *, size_t, char *,
+	size_t, int, int), int (*printBCD)(char *, size_t, int)),
+    (udev, addr, usedev, fill_devinfo_vp, printBCD),
+    enosys());
+COMPAT_CALL_HOOK(usb_subr_30_hook, f1,
+    (struct usbd_device *udev, struct usb_device_info_old * addr, int usedev,
+      void (*fill_devinfo_vp)(struct usbd_device *, char *, size_t, char *,
+	size_t, int, int), int (*printBCD)(char *, size_t, int)),
+    (udev, addr, usedev, fill_devinfo_vp, printBCD),
+    enosys());
 
 int
 usbioctl(dev_t devt, u_long cmd, void *data, int flag, struct lwp *l)
@@ -866,7 +888,8 @@ usbioctl(dev_t devt, u_long cmd, void *data, int flag, struct lwp *l)
 			error = ENXIO;
 			goto fail;
 		}
-		error = (*usbd30_fill_deviceinfo_old)(dev, di, 1);
+		error = usb_subr_30_hook_f1_call(dev, di, 1,
+				usbd_devinfo_vp, usbd_printBCD);
 		if (error == ENOSYS)
 			error = EINVAL;
 		if (error)

@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.238.2.7 2018/09/17 11:04:31 pgoyette Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.238.2.8 2018/09/18 01:15:58 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.238.2.7 2018/09/17 11:04:31 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.238.2.8 2018/09/18 01:15:58 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1383,15 +1383,23 @@ COMPATNAME(rt_missmsg)(int type, const struct rt_addrinfo *rtinfo, int flags,
  * COMPAT_xx options and we would otherwise end up with duplicate
  * global symbols.
  */
-static
+COMPAT_CALL_HOOK_DECL(rtsock14_hook, f1, (struct ifnet *ifp), (ifp), enosys());
+#ifndef COMPAT_RTSOCK
 COMPAT_CALL_HOOK(rtsock14_hook, f1, (struct ifnet *ifp), (ifp), enosys());
+#endif
 
-static
+COMPAT_CALL_HOOK_DECL(rtsock14_hook, f2,
+    (struct ifnet *ifp, struct rt_walkarg *w, struct rt_addrinfo *info,
+     size_t len),
+    (ifp, w, info, len),
+    enosys());
+#ifndef COMPAT_RTSOCK
 COMPAT_CALL_HOOK(rtsock14_hook, f2,
     (struct ifnet *ifp, struct rt_walkarg *w, struct rt_addrinfo *info,
      size_t len),
     (ifp, w, info, len),
     enosys());
+#endif
 
 /*
  * This routine is called to generate a message from the routing
