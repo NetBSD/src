@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata_core.c,v 1.62 2018/07/09 10:44:44 kamil Exp $	*/
+/*	$NetBSD: ahcisata_core.c,v 1.63 2018/09/18 21:28:22 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.62 2018/07/09 10:44:44 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.63 2018/09/18 21:28:22 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -995,6 +995,8 @@ ahci_probe_drive(struct ata_channel *chp)
 		break;
 	}
 	ata_channel_unlock(chp);
+
+	ata_free_xfer(chp, xfer);
 }
 
 static void
