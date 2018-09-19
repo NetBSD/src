@@ -1,0 +1,37 @@
+#	$NetBSD: files.altera,v 1.1 2018/09/19 17:31:38 aymeric Exp $
+#
+# Configuration for Altera SoC
+#
+
+file 	arch/arm/arm32/arm32_boot.c
+file 	arch/arm/arm32/arm32_kvminit.c
+file 	arch/arm/arm32/arm32_reboot.c
+file 	arch/arm/arm32/irq_dispatch.S
+
+file 	arch/arm/arm32/armv7_generic_space.c
+file 	arch/arm/arm/arm_generic_dma.c
+file 	arch/arm/arm/bus_space_a4x.S
+
+file 	arch/arm/altera/cycv_platform.c
+
+device 	cycvfdt : bus_space_generic, fdtbus
+attach 	cycvfdt at mainbus with cycv_fdt
+file 	arch/arm/altera/cycv_fdt.c			cycv_fdt
+
+# Clock manager
+device 	cycvclkmgr : fdtbus
+attach 	cycvclkmgr at fdt
+file 	arch/arm/altera/cycv_clkmgr.c			cycvclkmgr
+
+# Reset manager
+device 	cycvrstmgr : fdtbus
+attach 	cycvrstmgr at fdt
+file 	arch/arm/altera/cycv_rstmgr.c			cycvrstmgr
+
+# GMAC
+attach	awge at fdt with cycv_gmac
+file	arch/arm/altera/cycv_gmac.c			cycv_gmac
+
+# SD/MMC Host Controller
+attach	dwcmmc at fdt with cycv_dwcmmc
+file	arch/arm/altera/cycv_dwcmmc.c			cycv_dwcmmc

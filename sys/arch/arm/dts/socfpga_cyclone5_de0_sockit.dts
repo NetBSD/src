@@ -1,0 +1,17 @@
+
+
+#include "../../../external/gpl2/dts/dist/arch/arm/boot/dts/socfpga_cyclone5_de0_sockit.dts"
+
+/ {
+	soc {
+		gtimer@fffec200 {
+			compatible = "arm,cortex-a9-global-timer";
+			reg = <0xfffec200 0x20>;
+			clocks = <&mpu_periph_clk>;
+			interrupts = <1 11 0x301>;
+		};
+		usb@ffb40000 {
+			dr_mode = "host";
+		};
+	};
+};
