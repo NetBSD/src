@@ -1,4 +1,4 @@
-/*	$NetBSD: dmesg.c,v 1.34 2018/09/19 00:15:05 christos Exp $	*/
+/*	$NetBSD: dmesg.c,v 1.35 2018/09/19 22:55:12 kre Exp $	*/
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -38,7 +38,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)dmesg.c	8.1 (Berkeley) 6/5/93";
 #else
-__RCSID("$NetBSD: dmesg.c,v 1.34 2018/09/19 00:15:05 christos Exp $");
+__RCSID("$NetBSD: dmesg.c,v 1.35 2018/09/19 22:55:12 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -71,10 +71,11 @@ __dead static void	usage(void);
 	kvm_read(kd, addr, &var, sizeof(var)) != sizeof(var)
 
 static const char *
-fmtydhmsf(char *b, size_t l, time_t t, long nsec)
+fmtydhmsf(char *b, size_t l, intmax_t t, long nsec)
 {
-	time_t s, m, h, d, M, y;
+	intmax_t s, m, h, d, M, y;
 	int z;
+	int prec;
 	size_t o;
 
 	s = t % 60;
@@ -109,10 +110,10 @@ fmtydhmsf(char *b, size_t l, time_t t, long nsec)
 
 #define APPEND(a) \
     do if (a) \
-    APPENDFMT("%jd%c", (intmax_t)a, toupper((unsigned char)__STRING(a)[0])); \
+        APPENDFMT("%jd%c", a, toupper((unsigned char)__STRING(a)[0])); \
     while (/*CONSTCOND*/0)
-#define APPENDS(a, s) \
-    APPENDFMT("%jd.%ld%c", (intmax_t)a, s, \
+#define APPENDS(a, pr, ms) \
+    APPENDFMT("%jd%s%.*ld%c", a, radix, pr, ms, \
 	toupper((unsigned char)__STRING(a)[0]))
 
 	APPENDFMT("%s", "P");
@@ -123,9 +124,12 @@ fmtydhmsf(char *b, size_t l, time_t t, long nsec)
 	APPEND(h);
 	APPEND(m);
 	if (nsec)
-		nsec = nsec / 1000000;
+		nsec = (nsec + 500000) / 1000000;	/* now milliseconds */
+	prec = 3;
+	while (prec > 0 && (nsec % 10) == 0)
+		--prec, nsec /= 10;
 	if (nsec)
-		APPENDS(s, nsec);
+		APPENDS(s, prec, nsec);
 	else
 		APPEND(s);
 	return b;
