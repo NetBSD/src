@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.264 2018/09/06 06:41:59 maxv Exp $
+# $NetBSD: mi,v 1.265 2018/09/19 13:58:26 maxv Exp $
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib,compatfile
@@ -1042,7 +1042,7 @@
 ./usr/libdata/debug/usr/sbin/cpuctl.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/crash.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/cron.debug		comp-cron-debug		debug
-./usr/libdata/debug/usr/sbin/daicctl.debug	comp-isdn-debug		debug
+./usr/libdata/debug/usr/sbin/daicctl.debug	comp-obsolete		obsolete
 ./usr/libdata/debug/usr/sbin/dbsym.debug	comp-sysutil-debug	binutils,debug
 ./usr/libdata/debug/usr/sbin/ddns-confgen.debug	comp-bind-bin		debug
 ./usr/libdata/debug/usr/sbin/dev_mkdb.debug	comp-sysutil-debug	debug

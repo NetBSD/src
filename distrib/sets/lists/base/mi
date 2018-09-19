@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1187 2018/09/12 19:55:39 para Exp $
+# $NetBSD: mi,v 1.1188 2018/09/19 13:58:26 maxv Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -1657,7 +1657,7 @@
 ./usr/sbin/cpuctl				base-sysutil-bin
 ./usr/sbin/crash				base-sysutil-bin
 ./usr/sbin/cron					base-cron-bin
-./usr/sbin/daicctl				base-isdn-bin
+./usr/sbin/daicctl				base-obsolete		obsolete
 ./usr/sbin/dbsym				base-sysutil-bin	binutils
 ./usr/sbin/ddns-confgen				base-bind-bin
 ./usr/sbin/dev_mkdb				base-sysutil-bin
