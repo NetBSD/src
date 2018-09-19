@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_50_mod.c,v 1.1.2.11 2018/09/15 02:14:39 pgoyette Exp $	*/
+/*	$NetBSD: compat_50_mod.c,v 1.1.2.12 2018/09/19 04:12:43 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_50_mod.c,v 1.1.2.11 2018/09/15 02:14:39 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_50_mod.c,v 1.1.2.12 2018/09/19 04:12:43 pgoyette Exp $");
 
 #include <sys/systm.h>
 #include <sys/module.h>
@@ -86,6 +86,7 @@ compat_50_init(void)
 	raidframe_50_init();
 	puffs_50_init();
 	wsevent_50_init();
+	vnd_50_init();
 
 	return error;
 
@@ -106,6 +107,7 @@ compat_50_fini(void)
 {
 	int error = 0;
 
+	vnd_50_fini();
 	wsevent_50_fini();
 	puffs_50_fini();
 	raidframe_50_fini();
@@ -149,6 +151,7 @@ compat_50_fini(void)
 	raidframe_50_init();
 	puffs_50_init();
 	wsevent_50_init();
+	vnd_50_init();
 
 	return error;
 }

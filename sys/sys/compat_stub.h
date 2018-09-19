@@ -1,4 +1,4 @@
-/* $NetBSD: compat_stub.h,v 1.1.2.28 2018/09/18 23:03:55 pgoyette Exp $	*/
+/* $NetBSD: compat_stub.h,v 1.1.2.29 2018/09/19 04:12:43 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -135,10 +135,16 @@ MODULE_HOOK(compat_bio_30_hook, (void *, u_long, void *,
 
 /*
  * vnd_30 ioctl compatability
- * XXX there's some _50 code mixed in
  */
 struct vattr;
 MODULE_HOOK(compat_vndioctl_30_hook, (u_long, struct lwp *, void *, int,
+    struct vattr *, int (*)(struct lwp *, void *, int, struct vattr *)));
+
+/*
+ * vnd_50 ioctl compatability
+ */
+struct vattr;
+MODULE_HOOK(compat_vndioctl_50_hook, (u_long, struct lwp *, void *, int,
     struct vattr *, int (*)(struct lwp *, void *, int, struct vattr *)));
 
 /*

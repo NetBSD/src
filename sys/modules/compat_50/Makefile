@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.2.8 2018/09/13 10:16:51 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.1.2.9 2018/09/19 04:12:43 pgoyette Exp $
 
 .include "../Makefile.inc"
 
@@ -29,5 +29,9 @@ SRCS+=	puffs_compat.c
 .PATH:  ${S}/dev/wscons
 
 SRCS+=  wsevent_50.c
+
+.PATH:	${S}/dev
+
+SRCS+=	vnd_50.c
 
 .include <bsd.kmodule.mk>
