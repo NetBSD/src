@@ -1,0 +1,7 @@
+include <dev/ic/ns16550reg.h>
+include <dev/ic/comreg.h>
+
+define 	LSR_TSRE		LSR_TSRE
+define 	LSR_TXRDY		LSR_TXRDY
+define 	COM_DATA		com_data
+define 	COM_LSR			com_lsr
