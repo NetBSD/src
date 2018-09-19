@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.sysio,v 1.7.18.21 2018/04/17 07:24:54 pgoyette Exp $
+#	$NetBSD: Makefile.sysio,v 1.7.18.22 2018/09/19 04:22:33 pgoyette Exp $
 
 # Sources for syscall and ioctl compatibility across the versions.
 
@@ -38,7 +38,7 @@ SRCS+=	vfs_syscalls_40.c uipc_syscalls_40.c
 # Compatibility code for NetBSD 5.0
 SRCS+=	kern_50.c kern_time_50.c kern_select_50.c rndpseudo_50.c rtsock_50.c \
 	vfs_syscalls_50.c uipc_syscalls_50.c uvm_50.c clockctl_50.c \
-	if_spppsubr50.c
+	if_spppsubr50.c vnd_50.c
 
 # Compatibility code for NetBSD 6.0
 SRCS+=	kern_sa_60.c tty_60.c kern_time_60.c kern_cpu_60.c ccd_60.c
