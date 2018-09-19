@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.263.2.5 2018/09/18 23:03:54 pgoyette Exp $	*/
+/*	$NetBSD: vnd.c,v 1.263.2.6 2018/09/19 04:12:43 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.263.2.5 2018/09/18 23:03:54 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.263.2.6 2018/09/19 04:12:43 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vnd.h"
@@ -1122,6 +1122,17 @@ MODULE_CALL_HOOK(compat_vndioctl_30_hook, f,
     (cmd, l, data, unit, vattr, ff),
     enosys());
 
+MODULE_CALL_HOOK_DECL(compat_vndioctl_50_hook, f,
+    (u_long cmd, struct lwp *l, void *data, int unit, struct vattr *vattr,
+     int (*ff)(struct lwp *, void *, int, struct vattr *)),
+    (cmd, l, data, unit, vattr, ff),
+    enosys());
+MODULE_CALL_HOOK(compat_vndioctl_50_hook, f,
+    (u_long cmd, struct lwp *l, void *data, int unit, struct vattr *vattr,
+     int (*ff)(struct lwp *, void *, int, struct vattr *)),
+    (cmd, l, data, unit, vattr, ff),
+    enosys());
+
 /* ARGSUSED */
 static int
 vndioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
@@ -1147,19 +1158,7 @@ vndioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 #endif
 	/* Do the get's first; they don't need initialization or verification */
 	switch (cmd) {
-#ifdef COMPAT_50
-	case VNDIOCGET50: {
-		if ((error = vndioctl_get(l, data, unit, &vattr)) != 0)
-			return error;
-
-		struct vnd_user50 *vnu = data;
-		vnu->vnu_dev = vattr.va_fsid;
-		vnu->vnu_ino = vattr.va_fileid;
-		return 0;
-	}
-#endif
-
-	case VNDIOCGET: {
+	case VNDIOCGET:
 		if ((error = vndioctl_get(l, data, unit, &vattr)) != 0)
 			return error;
 
@@ -1167,15 +1166,33 @@ vndioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		vnu->vnu_dev = vattr.va_fsid;
 		vnu->vnu_ino = vattr.va_fileid;
 		return 0;
-	}
+
 	default:
-		error = compat_vndioctl_30_hook_f_call(cmd, l, data, unit,
+		/* First check for COMPAT_50 hook */
+		error = compat_vndioctl_50_hook_f_call(cmd, l, data, unit,
 		    &vattr, vndioctl_get);
-		if (error == ENOSYS)
-			error = EINVAL;
-		if (error != EPASSTHROUGH) {
-			return error;
+
+		/*
+		 * If not present, then COMPAT_30 hook also not
+		 * present, so just continue with checks for the
+		 * "write" commands
+		 */
+		if (error == ENOSYS) {
+			error = 0;
+			break;
 		}
+
+		/* If not already handled, try the COMPAT_30 hook */
+		if (error == EPASSTHROUGH)
+			error = compat_vndioctl_30_hook_f_call(cmd, l, data,
+			    unit, &vattr, vndioctl_get);
+
+		/* If no COMPAT_30 module, or not handled, check writes */
+		if (error == ENOSYS || error == EPASSTHROUGH) {
+			error = 0;
+			break;
+		}
+		return error;
 	}
 
 	vnd = device_lookup_private(&vnd_cd, unit);
@@ -1185,12 +1202,13 @@ vndioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 
 	/* Must be open for writes for these commands... */
 	switch (cmd) {
-	case VNDIOCSET:
-	case VNDIOCCLR:
-#ifdef COMPAT_50
 	case VNDIOCSET50:
 	case VNDIOCCLR50:
-#endif
+		if (!compat_vndioctl_50_hook.hooked)
+			return EINVAL;
+		/* FALLTHROUGH */
+	case VNDIOCSET:
+	case VNDIOCCLR:
 	case DIOCSDINFO:
 	case DIOCWDINFO:
 #ifdef __HAVE_OLD_DISKLABEL
@@ -1206,9 +1224,7 @@ vndioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	/* Must be initialized for these... */
 	switch (cmd) {
 	case VNDIOCCLR:
-#ifdef VNDIOCCLR50
 	case VNDIOCCLR50:
-#endif
 	case DIOCGDINFO:
 	case DIOCSDINFO:
 	case DIOCWDINFO:
@@ -1233,9 +1249,7 @@ vndioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 
 
 	switch (cmd) {
-#ifdef VNDIOCSET50
 	case VNDIOCSET50:
-#endif
 	case VNDIOCSET:
 		if (vnd->sc_flags & VNF_INITED)
 			return EBUSY;
@@ -1472,9 +1486,7 @@ vndioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 
 		vndthrottle(vnd, vnd->sc_vp);
 		vio->vnd_osize = dbtob(vnd->sc_size);
-#ifdef VNDIOCSET50
 		if (cmd != VNDIOCSET50)
-#endif
 			vio->vnd_size = dbtob(vnd->sc_size);
 		vnd->sc_flags |= VNF_INITED;
 
@@ -1534,9 +1546,7 @@ unlock_and_exit:
 		vndunlock(vnd);
 		return error;
 
-#ifdef VNDIOCCLR50
 	case VNDIOCCLR50:
-#endif
 	case VNDIOCCLR:
 		part = DISKPART(dev);
 		pmask = (1 << part);

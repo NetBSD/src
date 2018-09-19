@@ -1,4 +1,4 @@
-#	$NetBSD: files.common,v 1.1.2.35 2018/09/12 21:46:09 pgoyette Exp $
+#	$NetBSD: files.common,v 1.1.2.36 2018/09/19 04:12:43 pgoyette Exp $
 
 #
 # Generic files, used by all compat options.
@@ -81,6 +81,7 @@ file	compat/common/rndpseudo_50.c		compat_50
 file	compat/common/rtsock_50.c		compat_50
 file	compat/common/vfs_syscalls_50.c		compat_50
 file	compat/common/uipc_syscalls_50.c	compat_50
+file	compat/common/vnd_50.c			compat_50
 file	compat/common/clockctl_50.c		compat_50 & clockctl
 file	compat/common/if_spppsubr50.c		compat_50 & sppp
 file	compat/common/uvm_50.c			compat_50

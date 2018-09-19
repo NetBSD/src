@@ -1,4 +1,4 @@
-/* $NetBSD: compat_stub.c,v 1.1.2.19 2018/09/18 01:15:58 pgoyette Exp $	*/
+/* $NetBSD: compat_stub.c,v 1.1.2.20 2018/09/19 04:12:43 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -122,6 +122,7 @@ struct compat_bio_30_hook_t compat_bio_30_hook;
  * vnd ioctl compatability
  */
 struct compat_vndioctl_30_hook_t compat_vndioctl_30_hook;
+struct compat_vndioctl_50_hook_t compat_vndioctl_50_hook;
 
 /*
  * ieee80211 ioctl compatability
