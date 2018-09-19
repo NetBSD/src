@@ -1,4 +1,4 @@
-/*	$NetBSD: dmesg.c,v 1.33 2018/04/14 01:37:34 kre Exp $	*/
+/*	$NetBSD: dmesg.c,v 1.34 2018/09/19 00:15:05 christos Exp $	*/
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -38,7 +38,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)dmesg.c	8.1 (Berkeley) 6/5/93";
 #else
-__RCSID("$NetBSD: dmesg.c,v 1.33 2018/04/14 01:37:34 kre Exp $");
+__RCSID("$NetBSD: dmesg.c,v 1.34 2018/09/19 00:15:05 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -47,6 +47,7 @@ __RCSID("$NetBSD: dmesg.c,v 1.33 2018/04/14 01:37:34 kre Exp $");
 #include <sys/sysctl.h>
 
 #include <err.h>
+#include <ctype.h>
 #include <fcntl.h>
 #include <time.h>
 #include <kvm.h>
@@ -68,6 +69,76 @@ __dead static void	usage(void);
 
 #define	KREAD(addr, var) \
 	kvm_read(kd, addr, &var, sizeof(var)) != sizeof(var)
+
+static const char *
+fmtydhmsf(char *b, size_t l, time_t t, long nsec)
+{
+	time_t s, m, h, d, M, y;
+	int z;
+	size_t o;
+
+	s = t % 60;
+	t /= 60;
+
+	m = t % 60;
+	t /= 60;
+
+	h = t % 24;
+	t /= 24;
+
+	d = t % 30;
+	t /= 30;
+
+	M = t % 12;
+	t /= 12;
+
+	y = t;
+
+	z = 0;
+	o = 0;
+
+#define APPENDFMT(fmt, ...)  \
+    do { \
+	    z = snprintf(b + o, l - o, fmt, __VA_ARGS__); \
+	    if (z == -1) \
+		    return b; \
+	    o += (size_t)z; \
+	    if (o >= l) \
+		    return b; \
+    } while (/*CONSTCOND*/0)
+
+#define APPEND(a) \
+    do if (a) \
+    APPENDFMT("%jd%c", (intmax_t)a, toupper((unsigned char)__STRING(a)[0])); \
+    while (/*CONSTCOND*/0)
+#define APPENDS(a, s) \
+    APPENDFMT("%jd.%ld%c", (intmax_t)a, s, \
+	toupper((unsigned char)__STRING(a)[0]))
+
+	APPENDFMT("%s", "P");
+	APPEND(y);
+	APPEND(M);
+	APPEND(d);
+	APPENDFMT("%s", "T");
+	APPEND(h);
+	APPEND(m);
+	if (nsec)
+		nsec = nsec / 1000000;
+	if (nsec)
+		APPENDS(s, nsec);
+	else
+		APPEND(s);
+	return b;
+}
+
+static void
+pnsec(long nsec, long fsec, int scale)
+{
+	if (scale > 6)
+		printf("%6.6ld", (nsec + 499) / 1000);
+	else
+		printf("%*.*ld%.*s", scale, scale, fsec, 6 - scale, "000000");
+}
 #endif
 
 int
@@ -116,7 +187,7 @@ main(int argc, char *argv[])
 			quiet = 1;
 			break;
 		case 'T':
-			humantime = 1;
+			humantime++;
 			break;
 		case '?':
 		default:
@@ -257,7 +328,7 @@ main(int argc, char *argv[])
 					nsec *= 10;
 				if (!quiet || deltas)
 					printf("[");
-				if (humantime) {
+				if (humantime == 1) {
 					time_t t;
 					struct tm tm;
 
@@ -268,14 +339,15 @@ main(int argc, char *argv[])
 						     &tm);
 						printf("%s", tbuf);
 					}
+				} else if (humantime > 1) {
+					const char *fp = fmtydhmsf(tbuf,
+					    sizeof(tbuf), sec, fsec);
+					if (fp) {
+						printf("%s", fp);
+					}
 				} else if (!quiet) {
-					if (scale > 6)
-						printf("% 5jd.%6.6ld",
-						    sec, (nsec + 499) / 1000);
-					else
-						printf("% 5jd.%*.*ld%.*s",
-						    sec, scale, scale, fsec,
-						    6 - scale, "000000");
+					printf(" %5jd.", sec);
+					pnsec(nsec, fsec, scale);
 				}
 				if (deltas) {
 					struct timespec nt = { sec, nsec };
