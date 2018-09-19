@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1616 2018/09/06 14:08:24 maxv Exp $
+# $NetBSD: mi,v 1.1617 2018/09/19 13:58:27 maxv Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -130,7 +130,7 @@
 ./usr/share/man/cat1/ctfmerge.0			man-util-catman		.cat,ctf
 ./usr/share/man/cat1/cu.0			man-util-catman		.cat
 ./usr/share/man/cat1/cut.0			man-util-catman		.cat
-./usr/share/man/cat1/daicctl.0			man-sysutil-catman	.cat
+./usr/share/man/cat1/daicctl.0			man-obsolete		obsolete
 ./usr/share/man/cat1/date.0			man-util-catman		.cat
 ./usr/share/man/cat1/db.0			man-util-catman		.cat
 ./usr/share/man/cat1/dc.0			man-util-catman		.cat
@@ -1002,7 +1002,7 @@
 ./usr/share/man/cat4/cy.0			man-sys-catman		.cat
 ./usr/share/man/cat4/cypide.0			man-sys-catman		.cat
 ./usr/share/man/cat4/cz.0			man-sys-catman		.cat
-./usr/share/man/cat4/daic.0			man-sys-catman		.cat
+./usr/share/man/cat4/daic.0			man-obsolete		obsolete
 ./usr/share/man/cat4/dbCool.0			man-sys-catman		.cat
 ./usr/share/man/cat4/dbcool.0			man-sys-catman		.cat
 ./usr/share/man/cat4/ddb.0			man-sys-catman		.cat
@@ -3362,7 +3362,7 @@
 ./usr/share/man/html1/ctfmerge.html		man-util-htmlman	html,ctf
 ./usr/share/man/html1/cu.html			man-util-htmlman	html
 ./usr/share/man/html1/cut.html			man-util-htmlman	html
-./usr/share/man/html1/daicctl.html		man-sysutil-htmlman	html
+./usr/share/man/html1/daicctl.html		man-obsolete		obsolete
 ./usr/share/man/html1/date.html			man-util-htmlman	html
 ./usr/share/man/html1/db.html			man-util-htmlman	html
 ./usr/share/man/html1/dc.html			man-util-htmlman	html
@@ -4153,7 +4153,7 @@
 ./usr/share/man/html4/cy.html			man-sys-htmlman		html
 ./usr/share/man/html4/cypide.html		man-sys-htmlman		html
 ./usr/share/man/html4/cz.html			man-sys-htmlman		html
-./usr/share/man/html4/daic.html			man-sys-htmlman		html
+./usr/share/man/html4/daic.html			man-obsolete		obsolete
 ./usr/share/man/html4/dbCool.html		man-sys-htmlman		html
 ./usr/share/man/html4/dbcool.html		man-sys-htmlman		html
 ./usr/share/man/html4/ddb.html			man-sys-htmlman		html
@@ -6204,7 +6204,7 @@
 ./usr/share/man/man1/ctfmerge.1			man-util-man		.man,ctf
 ./usr/share/man/man1/cu.1			man-util-man		.man
 ./usr/share/man/man1/cut.1			man-util-man		.man
-./usr/share/man/man1/daicctl.1			man-sysutil-man		.man
+./usr/share/man/man1/daicctl.1			man-obsolete		obsolete
 ./usr/share/man/man1/date.1			man-util-man		.man
 ./usr/share/man/man1/db.1			man-util-man		.man
 ./usr/share/man/man1/dc.1			man-util-man		.man
@@ -7076,7 +7076,7 @@
 ./usr/share/man/man4/cy.4			man-sys-man		.man
 ./usr/share/man/man4/cypide.4			man-sys-man		.man
 ./usr/share/man/man4/cz.4			man-sys-man		.man
-./usr/share/man/man4/daic.4			man-sys-man		.man
+./usr/share/man/man4/daic.4			man-obsolete		obsolete
 ./usr/share/man/man4/dbCool.4			man-sys-man		.man
 ./usr/share/man/man4/dbcool.4			man-sys-man		.man
 ./usr/share/man/man4/ddb.4			man-sys-man		.man
