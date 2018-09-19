@@ -1,4 +1,4 @@
-# $NetBSD: GDIUM,v 1.32 2018/08/01 20:04:11 maxv Exp $
+# $NetBSD: GDIUM,v 1.33 2018/09/19 23:22:17 rin Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/evbmips/conf/std.gdium"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GDIUM-$Revision: 1.32 $"
+#ident 		"GDIUM-$Revision: 1.33 $"
 
 maxusers	16
 
@@ -136,11 +136,6 @@ options 	WSDISPLAY_COMPAT_USL		# wsconscfg VT handling
 options 	FONT_GALLANT12x22
 # compatibility to other console drivers
 options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
-#
-# Hpckbd will set key board layout appropriately. You can use option
-# 'PCKBD_LAYOUT' to overrite the default layout.
-#
-#options 	PCKBD_LAYOUT="(KB_US | KB_SWAPCTRLCAPS | KB_MACHDEP)"
 
 mainbus0	at root
 cpu0		at mainbus0
