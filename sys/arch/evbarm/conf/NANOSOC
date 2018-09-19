@@ -1,0 +1,65 @@
+#
+#	$NetBSD: NANOSOC,v 1.1 2018/09/19 17:31:39 aymeric Exp $
+#
+#	Altera DE0 Nano SoC
+#
+
+include	"arch/evbarm/conf/std.altera"
+include	"arch/evbarm/conf/GENERIC.common"
+
+makeoptions	DTSGNUARCH="arm"
+makeoptions	DTSSUBDIR="socfpga"
+makeoptions	DTS="socfpga_cyclone5_de0_sockit.dts"
+
+options 	CPU_CORTEXA9
+options 	MULTIPROCESSOR
+#options 	MEMSIZE=1024
+
+#options 	DEBUG
+#options 	LOCKDEBUG
+#options 	PMAP_DEBUG	# Enable pmap_debug_level code
+#options 	IPKDB		# remote kernel debugging
+#options 	VERBOSE_INIT_ARM # verbose bootstraping messages
+makeoptions	DEBUG="-g"	# compile full symbol table
+makeoptions	COPY_SYMTAB=1
+
+config		netbsd		root on ? type ?
+
+armfdt0		at root
+simplebus* 	at fdt? pass 0
+
+cpus*		at fdt? pass 0
+cpu*		at fdt? pass 0
+
+cycvrstmgr0 	at fdt? pass 0
+
+gic0		at fdt? pass 1
+armgic0		at gic?
+
+cycvclkmgr0 	at fdt? pass 1
+
+a9tmr0		at fdt? pass 2
+arma9tmr0	at a9tmr0
+
+l2cc0		at fdt? pass 2
+arml2cc0	at l2cc0
+
+com*		at fdt?
+options 	CONSADDR=0xFFC02000, CONSPEED=115200
+
+awge* 		at fdt?
+#micphy* 	at mii? phy?
+ukphy* 		at mii? phy?
+
+dwcmmc* 	at fdt?
+sdmmc*		at dwcmmc?
+ld*		at sdmmc?
+
+dwctwo* 	at fdt?
+usb*		at dwctwo?
+
+include "dev/usb/usbdevices.config"
+
+no umidi
+
+cinclude "arch/evbarm/conf/NANOSOC.local"
