@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridge.c,v 1.158 2018/09/18 09:27:35 msaitoh Exp $	*/
+/*	$NetBSD: if_bridge.c,v 1.159 2018/09/19 07:51:23 msaitoh Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.158 2018/09/18 09:27:35 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.159 2018/09/19 07:51:23 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_bridge_ipf.h"
@@ -1540,7 +1540,7 @@ bridge_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *sa,
 				used = true;
 				mc = m;
 			} else {
-				mc = m_copym(m, 0, M_COPYALL, M_NOWAIT);
+				mc = m_copypacket(m, M_DONTWAIT);
 				if (mc == NULL) {
 					sc->sc_if.if_oerrors++;
 					goto next;
@@ -1558,8 +1558,7 @@ bridge_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *sa,
 					used = true;
 					mc = m;
 				} else {
-					mc = m_copym(m, 0, M_COPYALL,
-					    M_DONTWAIT);
+					mc = m_copypacket(m, M_DONTWAIT);
 					if (mc == NULL) {
 						sc->sc_if.if_oerrors++;
 						goto next;
@@ -1975,7 +1974,7 @@ bridge_broadcast(struct bridge_softc *sc, struct ifnet *src_if,
 			goto next;
 
 		if (dst_if != src_if) {
-			mc = m_copym(m, 0, M_COPYALL, M_DONTWAIT);
+			mc = m_copypacket(m, M_DONTWAIT);
 			if (mc == NULL) {
 				sc->sc_if.if_oerrors++;
 				goto next;
@@ -1993,7 +1992,7 @@ bridge_broadcast(struct bridge_softc *sc, struct ifnet *src_if,
 		}
 
 		if (bmcast) {
-			mc = m_copym(m, 0, M_COPYALL, M_DONTWAIT);
+			mc = m_copypacket(m, M_DONTWAIT);
 			if (mc == NULL) {
 				sc->sc_if.if_oerrors++;
 				goto next;
