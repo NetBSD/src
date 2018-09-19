@@ -1,4 +1,4 @@
-/*	$NetBSD: dmesg.c,v 1.35 2018/09/19 22:55:12 kre Exp $	*/
+/*	$NetBSD: dmesg.c,v 1.36 2018/09/19 22:58:03 kre Exp $	*/
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -38,7 +38,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)dmesg.c	8.1 (Berkeley) 6/5/93";
 #else
-__RCSID("$NetBSD: dmesg.c,v 1.35 2018/09/19 22:55:12 kre Exp $");
+__RCSID("$NetBSD: dmesg.c,v 1.36 2018/09/19 22:58:03 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -71,7 +71,7 @@ __dead static void	usage(void);
 	kvm_read(kd, addr, &var, sizeof(var)) != sizeof(var)
 
 static const char *
-fmtydhmsf(char *b, size_t l, intmax_t t, long nsec)
+fmtydhmsf(char *b, size_t l, intmax_t t, long nsec, int ht)
 {
 	intmax_t s, m, h, d, M, y;
 	int z;
@@ -126,9 +126,11 @@ fmtydhmsf(char *b, size_t l, intmax_t t, long nsec)
 	if (nsec)
 		nsec = (nsec + 500000) / 1000000;	/* now milliseconds */
 	prec = 3;
-	while (prec > 0 && (nsec % 10) == 0)
-		--prec, nsec /= 10;
-	if (nsec)
+	if (nsec && ht == 2) {
+		while (prec > 0 && (nsec % 10) == 0)
+			--prec, nsec /= 10;
+	}
+	if (nsec || ht > 2)
 		APPENDS(s, prec, nsec);
 	else
 		APPEND(s);
@@ -345,7 +347,7 @@ main(int argc, char *argv[])
 					}
 				} else if (humantime > 1) {
 					const char *fp = fmtydhmsf(tbuf,
-					    sizeof(tbuf), sec, fsec);
+					    sizeof(tbuf), sec, fsec, humantime);
 					if (fp) {
 						printf("%s", fp);
 					}
