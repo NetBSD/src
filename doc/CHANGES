@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2441 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2442 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -223,3 +223,5 @@ Changes from NetBSD 8.0 to NetBSD 9.0:
 	kernel: Remove en(4). [maxv 20180906]
 	kernel: Remove the NATM code. [maxv 20180906]
 	libnv: Imported from FreeBSD [christos 20180908]
+	rkpmic(4): Add support for Rockchip RK805 Power Management IC.
+		[jmcneill 20180920]
