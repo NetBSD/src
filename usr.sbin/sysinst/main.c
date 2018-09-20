@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.9 2018/09/12 13:44:05 martin Exp $	*/
+/*	$NetBSD: main.c,v 1.10 2018/09/20 12:27:42 rin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -179,7 +179,11 @@ main(int argc, char **argv)
 	}
 
 	/* argv processing */
-	while ((ch = getopt(argc, argv, "Dr:f:C:p")) != -1)
+	while ((ch = getopt(argc, argv, "Dr:f:C:"
+#ifndef NO_PARTMAN
+	    "p"
+#endif
+	    )) != -1)
 		switch(ch) {
 		case 'D':	/* set to get past certain errors in testing */
 			debug = 1;
@@ -196,10 +200,12 @@ main(int argc, char **argv)
 			/* Define colors */
 			sscanf(optarg, "%u:%u", &clr_arg.bg, &clr_arg.fg);
 			break;
+#ifndef NO_PARTMAN
 		case 'p':
 			/* Partition tool */
 			partman_go = 1;
 			break;
+#endif
 		case '?':
 		default:
 			usage();
