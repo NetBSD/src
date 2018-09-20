@@ -1,4 +1,4 @@
-/* $NetBSD: compat_stub.h,v 1.1.2.30 2018/09/20 07:34:10 pgoyette Exp $	*/
+/* $NetBSD: compat_stub.h,v 1.1.2.31 2018/09/20 09:23:22 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -175,7 +175,7 @@ MODULE_HOOK2(if_43_hook, (int),
  * uipc_syscalls_40 compatability
  */
 
-MODULE_HOOK(uipc_syscalls_40_hook, (struct lwp *, u_long, void *));
+MODULE_HOOK(uipc_syscalls_40_hook, (u_long cmd, void *data));
 
 /*
  * uipc_syscalls_50 compatability
