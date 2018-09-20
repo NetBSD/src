@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.12 2018/09/16 09:15:12 martin Exp $
+#	$NetBSD: Makefile.inc,v 1.13 2018/09/20 12:27:42 rin Exp $
 #
 # Makefile for sysinst
 
@@ -13,17 +13,21 @@ WARNS=		4
 
 SRCS+=	menu_defs.c msg_defs.c main.c install.c upgrade.c \
 	txtwalk.c run.c factor.c net.c disks.c disks_lfs.c util.c geom.c \
-	label.c target.c md.c sizemultname.c configmenu.c checkrc.c partman.c
+	label.c target.c md.c sizemultname.c configmenu.c checkrc.c
 
 SRCS+=	${MD_OPTIONS:MAOUT2ELF:S/AOUT2ELF/aout2elf.c/}
 SRCS+=	${MENUS_MD:Mmenus.mbr:S/menus.mbr/mbr.c/}
 SRCS+=	${CPPFLAGS:M-DWSKBD:S/-DWSKBD/wskbd.c/}
 SRCS+=	${NODISKLABEL:D:Ubsddisklabel.c savenewlabel.c}
+SRCS+=	${NOPARTMAN:D:Upartman.c}
 
 DPSRCS+= defs.h
 
 SYSINSTLANG?=	en
 LANGUAGES?=	de en es fr pl
+
+MENUS_MI=	menus.mi
+MENUS_MI+=	${NOPARTMAN:D:Umenus.pm}
 
 MSG_MD?=	msg.md.${SYSINSTLANG}
 MENUS_MD?=	menus.md.${SYSINSTLANG}
@@ -48,7 +52,8 @@ CATALOGDIR=	/usr/share/sysinst/catalog
 CPPFLAGS+=	-I. -I${.CURDIR}/../.. -I${.CURDIR} \
 		-DREL=\"${DISTRIBVER}\" -DMACH=\"${MACHINE}\" \
 		-DMACH_${MACHINE} -DARCH_${MACHINE_ARCH} \
-		${NODISKLABEL:D-DNO_DISKLABEL}
+		${NODISKLABEL:D-DNO_DISKLABEL} \
+		${NOPARTMAN:D-DNO_PARTMAN}
 
 .if defined(NETBSD_OFFICIAL_RELEASE) && ${NETBSD_OFFICIAL_RELEASE} == "yes"
 CPPFLAGS+= -DSYSINST_FTP_HOST=\"ftp.NetBSD.org\" -DNETBSD_OFFICIAL_RELEASE
@@ -168,7 +173,7 @@ msg.def: msg.mi.${SYSINSTLANG} ${MSG_MD} msgtouch
 	${TOOL_SED} "s/@@MACHINE@@/${MACHINE}/" | \
 	${TOOL_AWK} -f ${UNIF_AWK} -v defines="${MD_OPTIONS}" > ${.TARGET}
 
-menus.def: menus.mi ${MENUS_MD} msgtouch
+menus.def: ${MENUS_MI} ${MENUS_MD} msgtouch
 	${_MKTARGET_CREATE}
 	${TOOL_SED} "s/@@VERSION@@/${DISTRIBVER}/" ${.ALLSRC} | \
 	${TOOL_SED} "s/@@MACHINE@@/${MACHINE}/" | \
