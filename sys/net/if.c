@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.419.2.11 2018/09/20 07:34:10 pgoyette Exp $	*/
+/*	$NetBSD: if.c,v 1.419.2.12 2018/09/20 09:23:22 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.419.2.11 2018/09/20 07:34:10 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.419.2.12 2018/09/20 09:23:22 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -3110,9 +3110,9 @@ out:
  * Interface for calling the compat routines
  */
 MODULE_CALL_HOOK_DECL(uipc_syscalls_40_hook, f,
-    (struct lwp *l, int cmd, void *data), (l, cmd, data), enosys());
+    (struct lwp *l, int cmd, void *data), (cmd, data), enosys());
 MODULE_CALL_HOOK(uipc_syscalls_40_hook, f,
-    (struct lwp *l, int cmd, void *data), (l, cmd, data), enosys());
+    (struct lwp *l, int cmd, void *data), (cmd, data), enosys());
 
 MODULE_CALL_HOOK_DECL(uipc_syscalls_50_hook, f,
     (struct lwp *l, int cmd, void *data), (l, cmd, data), enosys());
