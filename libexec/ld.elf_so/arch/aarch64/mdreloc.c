@@ -1,4 +1,4 @@
-/* $NetBSD: mdreloc.c,v 1.9 2018/09/20 18:41:05 jakllsch Exp $ */
+/* $NetBSD: mdreloc.c,v 1.10 2018/09/20 19:02:22 jakllsch Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mdreloc.c,v 1.9 2018/09/20 18:41:05 jakllsch Exp $");
+__RCSID("$NetBSD: mdreloc.c,v 1.10 2018/09/20 19:02:22 jakllsch Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -412,7 +412,7 @@ _rtld_relocate_plt_object(const Obj_Entry *obj, const Elf_Rela *rela,
 		if (ELF_R_SYM(rela->r_info) != 0) {
 			struct tls_data *tlsdesc = (struct tls_data *)where[1];
 			if (tlsdesc->index == -1)
-				_rtld_tlsdesc_handle(tlsdesc, SYMLOOK_IN_PLT);
+				_rtld_tlsdesc_handle_locked(tlsdesc, SYMLOOK_IN_PLT);
 		}
 		break;
 	}
