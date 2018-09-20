@@ -1,4 +1,4 @@
-/*	$NetBSD: if_umb.c,v 1.4 2018/08/01 18:27:58 khorben Exp $ */
+/*	$NetBSD: if_umb.c,v 1.5 2018/09/20 09:45:16 khorben Exp $ */
 /*	$OpenBSD: if_umb.c,v 1.18 2018/02/19 08:59:52 mpi Exp $ */
 
 /*
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_umb.c,v 1.4 2018/08/01 18:27:58 khorben Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_umb.c,v 1.5 2018/09/20 09:45:16 khorben Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -90,10 +90,6 @@ Static void	 umb_dump(void *, int);
 #endif
 
 #define DEVNAM(sc)		device_xname((sc)->sc_dev)
-
-#ifndef notyet
-#define usb_wait_task(dev, task)
-#endif
 
 /*
  * State change timeout
@@ -584,13 +580,13 @@ umb_detach(device_t self, int flags)
 		umb_down(sc, 1);
 	umb_close(sc);
 
-	usb_rem_task(sc->sc_udev, &sc->sc_get_response_task);
-	usb_wait_task(sc->sc_udev, &sc->sc_get_response_task);
+	usb_rem_task_wait(sc->sc_udev, &sc->sc_get_response_task,
+			USB_TASKQ_DRIVER, NULL);
 	sc->sc_nresp = 0;
 	if (sc->sc_rx_ep != -1 && sc->sc_tx_ep != -1) {
 		callout_destroy(&sc->sc_statechg_timer);
-		usb_rem_task(sc->sc_udev, &sc->sc_umb_task);
-		usb_wait_task(sc->sc_udev, &sc->sc_umb_task);
+		usb_rem_task_wait(sc->sc_udev, &sc->sc_umb_task,
+			USB_TASKQ_DRIVER, NULL);
 	}
 	if (sc->sc_ctrl_pipe) {
 		usbd_close_pipe(sc->sc_ctrl_pipe);
