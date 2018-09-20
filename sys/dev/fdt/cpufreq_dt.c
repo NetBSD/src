@@ -1,4 +1,4 @@
-/* $NetBSD: cpufreq_dt.c,v 1.5 2018/09/01 23:41:16 jmcneill Exp $ */
+/* $NetBSD: cpufreq_dt.c,v 1.6 2018/09/20 09:19:56 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufreq_dt.c,v 1.5 2018/09/01 23:41:16 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufreq_dt.c,v 1.6 2018/09/20 09:19:56 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -250,20 +250,6 @@ cpufreq_dt_sysctl_helper(SYSCTLFN_ARGS)
 	return error;
 }
 
-static int
-cpufreq_dt_instance_count(void)
-{
-	deviter_t di;
-	int count = 0;
-
-	deviter_init(&di, 0);
-	while (deviter_next(&di) != NULL)
-		++count;
-	deviter_release(&di);
-
-	return count;
-}
-
 static void
 cpufreq_dt_init_sysctl(struct cpufreq_dt_softc *sc)
 {
@@ -279,10 +265,10 @@ cpufreq_dt_init_sysctl(struct cpufreq_dt_softc *sc)
 		strcat(sc->sc_freq_available, buf);
 	}
 
-	if (cpufreq_dt_instance_count() > 1)
-		cpunodename = device_xname(sc->sc_dev);
-	else
+	if (device_unit(sc->sc_dev) == 0)
 		cpunodename = "cpu";
+	else
+		cpunodename = device_xname(sc->sc_dev);
 
 	error = sysctl_createv(&cpufreq_log, 0, NULL, &node,
 	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "machdep", NULL,
