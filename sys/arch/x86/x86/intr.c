@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.129 2018/09/14 01:50:51 mrg Exp $	*/
+/*	$NetBSD: intr.c,v 1.130 2018/09/20 05:08:45 cherry Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.129 2018/09/14 01:50:51 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.130 2018/09/20 05:08:45 cherry Exp $");
 
 #include "opt_intrdebug.h"
 #include "opt_multiprocessor.h"
@@ -1291,6 +1291,7 @@ intr_establish_xname(int legacy_irq, struct pic *pic, int pin,
 	    sizeof(intrstr_buf));
 
 	evtchn = xen_pirq_alloc(&irq, type);
+	irq = (legacy_irq == -1) ? irq : legacy_irq; /* ISA compat */	
 	pih = pirq_establish(irq & 0xff, evtchn, handler, arg, level,
 	    intrstr, xname);
 	pih->pic_type = pic->pic_type;
