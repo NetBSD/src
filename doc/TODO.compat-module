@@ -1,4 +1,4 @@
-/* $NetBSD: TODO.compat-module,v 1.1.2.6 2018/09/18 01:11:33 pgoyette Exp $ */
+/* $NetBSD: TODO.compat-module,v 1.1.2.7 2018/09/20 07:32:50 pgoyette Exp $ */
 
 DONE
 ----
@@ -50,14 +50,14 @@ DONE
     also the compat_netbsd32_sysv module) with individual modules.  Update
     dependencies accordingly.  (Done, but see #13 below.)
 
+13. Still have some work to do to split the vnd_30 and vnd_50 compat
+    code into separate modules.
+
 
 TODO - Required for branch merge
 --------------------------------
-13.  Need to finish cleaning up the netbsd32 machine-dependent code, since
+14.  Need to finish cleaning up the netbsd32 machine-dependent code, since
     the MI code assumes that there's MD file available.
-
-14. Still have some work to do to split the vnd_30 and vnd_50 compat
-    code into separate modules.
 
 15. The ieee_80211 compat code needs to be verified to make sure it is
     handling the if43_20 compat routine cvtcmd() correctly.
