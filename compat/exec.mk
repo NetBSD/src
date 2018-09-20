@@ -1,4 +1,4 @@
-#	$NetBSD: exec.mk,v 1.3 2017/01/05 21:28:42 skrll Exp $
+#	$NetBSD: exec.mk,v 1.4 2018/09/20 02:51:21 macallan Exp $
 
 # this makefile fragment can be included to modify the default
 # ABI a program is compiled with.  this is designed to be used
@@ -27,7 +27,7 @@
 # mips64 defaults to 32 bit userland, but with a 64 bit kernel
 # most kvm-using tools are happier with 64 bit.
 
-.if ${MACHINE_ARCH} == "mips64el" || ${MACHINE_ARCH} == "mips64eb"
+.if ${MACHINE_ARCH} == "mips64el" || (${MACHINE_ARCH} == "mips64eb" && ${MACHINE} != "sgimips")
 
 # XXX -pie makes n64 crash
 NOPIE=1
