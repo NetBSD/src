@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.264 2018/09/03 16:29:30 riastradh Exp $	*/
+/*	$NetBSD: vnd.c,v 1.265 2018/09/20 07:18:38 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.264 2018/09/03 16:29:30 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.265 2018/09/20 07:18:38 mlelstv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vnd.h"
@@ -573,20 +573,18 @@ vnode_has_strategy(struct vnd_softc *vnd)
 	    vnode_has_op(vnd->sc_vp, VOFFSET(vop_strategy));
 }
 
+/* Verify that I/O requests cannot be smaller than the
+ * smallest I/O size supported by the backend.
+ */
 static bool
 vnode_has_large_blocks(struct vnd_softc *vnd)
 {
-	u_int32_t vnd_secsize, mnt_secsize;
-	uint64_t numsec;
-	unsigned secsize;
+	u_int32_t vnd_secsize, iosize;
 
-	if (getdisksize(vnd->sc_vp, &numsec, &secsize))
-		return true;
-
+	iosize = vnd->sc_iosize;
 	vnd_secsize = vnd->sc_geom.vng_secsize;
-	mnt_secsize = secsize;
 
-	return vnd_secsize % mnt_secsize != 0;
+	return vnd_secsize % iosize != 0;
 }
 
 /* XXX this function needs a reliable check to detect
@@ -1400,6 +1398,13 @@ vndioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		VOP_UNLOCK(nd.ni_vp);
 		vnd->sc_vp = nd.ni_vp;
 		vnd->sc_size = btodb(vattr.va_size);	/* note truncation */
+
+		/* get smallest I/O size for underlying device, fall back to
+		 * fundamental I/O size of underlying filesystem
+		 */
+		error = bdev_ioctl(vattr.va_fsid, DIOCGSECTORSIZE, &vnd->sc_iosize, FKIOCTL, l);
+		if (error)
+			vnd->sc_iosize = vnd->sc_vp->v_mount->mnt_stat.f_frsize;
 
 		/*
 		 * Use pseudo-geometry specified.  If none was provided,
