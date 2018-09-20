@@ -1,5 +1,5 @@
-/*	$NetBSD: if_umb.c,v 1.5 2018/09/20 09:45:16 khorben Exp $ */
-/*	$OpenBSD: if_umb.c,v 1.18 2018/02/19 08:59:52 mpi Exp $ */
+/*	$NetBSD: if_umb.c,v 1.6 2018/09/20 09:48:54 khorben Exp $ */
+/*	$OpenBSD: if_umb.c,v 1.20 2018/09/10 17:00:45 gerhard Exp $ */
 
 /*
  * Copyright (c) 2016 genua mbH
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_umb.c,v 1.5 2018/09/20 09:45:16 khorben Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_umb.c,v 1.6 2018/09/20 09:48:54 khorben Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -944,13 +944,7 @@ umb_statechg_timeout(void *arg)
 {
 	struct umb_softc *sc = arg;
 
-	if (sc->sc_info.regstate == MBIM_REGSTATE_ROAMING && !sc->sc_roaming) {
-		/*
-		 * Query the registration state until we're with the home
-		 * network again.
-		 */
-		umb_cmd(sc, MBIM_CID_REGISTER_STATE, MBIM_CMDOP_QRY, NULL, 0);
-	} else
+	if (sc->sc_info.regstate != MBIM_REGSTATE_ROAMING || sc->sc_roaming)
 		printf("%s: state change timeout\n",DEVNAM(sc));
 	usb_add_task(sc->sc_udev, &sc->sc_umb_task, USB_TASKQ_DRIVER);
 }
@@ -1003,6 +997,15 @@ umb_state_task(void *arg)
 	struct ifreq ifr;
 	int	 s;
 	int	 state;
+
+	if (sc->sc_info.regstate == MBIM_REGSTATE_ROAMING && !sc->sc_roaming) {
+		/*
+		 * Query the registration state until we're with the home
+		 * network again.
+		 */
+		umb_cmd(sc, MBIM_CID_REGISTER_STATE, MBIM_CMDOP_QRY, NULL, 0);
+		return;
+	}
 
 	s = splnet();
 	if (ifp->if_flags & IFF_UP)
