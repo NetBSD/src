@@ -1,4 +1,4 @@
-/*	$NetBSD: dmesg.c,v 1.38 2018/09/20 06:06:06 kre Exp $	*/
+/*	$NetBSD: dmesg.c,v 1.39 2018/09/20 19:50:42 kre Exp $	*/
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -38,7 +38,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)dmesg.c	8.1 (Berkeley) 6/5/93";
 #else
-__RCSID("$NetBSD: dmesg.c,v 1.38 2018/09/20 06:06:06 kre Exp $");
+__RCSID("$NetBSD: dmesg.c,v 1.39 2018/09/20 19:50:42 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -350,7 +350,7 @@ main(int argc, char *argv[])
 						printf("%s", fp);
 					}
 				} else if (!quiet) {
-					printf(" %5jd.", sec);
+					printf(" %5jd%s", sec, radix);
 					pnsec(nsec, fsec, scale);
 				}
 				if (deltas) {
@@ -360,8 +360,9 @@ main(int argc, char *argv[])
 					timespecsub(&nt, &lasttime, &dt);
 					if (humantime || !quiet)
 						printf(" ");
-					printf("<% 4jd.%06ld>", (intmax_t)
-					    dt.tv_sec, (dt.tv_nsec+499) / 1000);
+					printf("<% 4jd%s%6.6ld>",
+					    (intmax_t)dt.tv_sec, radix,
+					    (dt.tv_nsec+499) / 1000);
 					lasttime = nt;
 				}
 				if (!quiet || deltas)
