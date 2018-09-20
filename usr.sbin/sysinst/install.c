@@ -1,4 +1,4 @@
-/*	$NetBSD: install.c,v 1.4 2015/05/10 10:14:02 martin Exp $	*/
+/*	$NetBSD: install.c,v 1.5 2018/09/20 12:27:42 rin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -47,7 +47,11 @@ do_install(void)
 {
 	int find_disks_ret;
 	int retcode = 0;
+#ifndef NO_PARTMAN
 	partman_go = -1;
+#else
+	partman_go = 0;
+#endif
 
 #ifndef DEBUG
 	msg_display(MSG_installusure);
