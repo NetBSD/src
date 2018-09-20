@@ -1,4 +1,4 @@
-/*	$NetBSD: dmesg.c,v 1.39 2018/09/20 19:50:42 kre Exp $	*/
+/*	$NetBSD: dmesg.c,v 1.40 2018/09/20 23:46:42 kre Exp $	*/
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -38,7 +38,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)dmesg.c	8.1 (Berkeley) 6/5/93";
 #else
-__RCSID("$NetBSD: dmesg.c,v 1.39 2018/09/20 19:50:42 kre Exp $");
+__RCSID("$NetBSD: dmesg.c,v 1.40 2018/09/20 23:46:42 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -106,7 +106,7 @@ fmtydhmsf(char *b, size_t l, intmax_t t, long nsec, int ht)
 
 #define APPEND(a) \
     do if (a) \
-        APPENDFMT("%jd%c", a, toupper((unsigned char)__STRING(a)[0])); \
+	APPENDFMT("%jd%c", a, toupper((unsigned char)__STRING(a)[0])); \
     while (/*CONSTCOND*/0)
 #define APPENDS(a, pr, ms) \
     APPENDFMT("%jd%s%.*ld%c", a, radix, pr, ms, \
@@ -158,7 +158,7 @@ main(int argc, char *argv[])
 	int scale;
 	int deltas, quiet, humantime;
 	bool frac;
-	
+
 	static const int bmib[] = { CTL_KERN, KERN_BOOTTIME };
 	size = sizeof(boottime);
 
@@ -173,7 +173,7 @@ main(int argc, char *argv[])
 	lasttime.tv_nsec = 0;
 	deltas = quiet = humantime = 0;
 
-        (void)sysctl(bmib, 2, &boottime, &size, NULL, 0);
+	(void)sysctl(bmib, 2, &boottime, &size, NULL, 0);
 
 	memf = nlistf = NULL;
 	while ((ch = getopt(argc, argv, "dM:N:tT")) != -1)
@@ -340,7 +340,7 @@ main(int argc, char *argv[])
 					if (localtime_r(&t, &tm) != NULL) {
 						strftime(tbuf, sizeof(tbuf),
 						    "%a %b %e %H:%M:%S %Z %Y",
-						     &tm);
+						    &tm);
 						printf("%s", tbuf);
 					}
 				} else if (humantime > 1) {
@@ -371,7 +371,7 @@ main(int argc, char *argv[])
 				continue;
 			case ' ':
 				if (!tstamp)
-					continue;	
+					continue;
 				/*FALLTHROUGH*/
 			default:
 				if (tstamp) {
