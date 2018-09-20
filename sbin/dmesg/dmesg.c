@@ -1,4 +1,4 @@
-/*	$NetBSD: dmesg.c,v 1.37 2018/09/19 23:02:14 christos Exp $	*/
+/*	$NetBSD: dmesg.c,v 1.38 2018/09/20 06:06:06 kre Exp $	*/
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -38,7 +38,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)dmesg.c	8.1 (Berkeley) 6/5/93";
 #else
-__RCSID("$NetBSD: dmesg.c,v 1.37 2018/09/19 23:02:14 christos Exp $");
+__RCSID("$NetBSD: dmesg.c,v 1.38 2018/09/20 06:06:06 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -78,10 +78,7 @@ __dead static void	usage(void);
 static const char *
 fmtydhmsf(char *b, size_t l, intmax_t t, long nsec, int ht)
 {
-	intmax_t s, m, h
-#if 0
-			, d, M, y
-#endif
+	intmax_t s, m, h;
 	int z;
 	int prec;
 	size_t o;
@@ -92,30 +89,7 @@ fmtydhmsf(char *b, size_t l, intmax_t t, long nsec, int ht)
 	m = t % 60;
 	t /= 60;
 
-#if 0
-	/*
-	 * This is wrong for 2 reasons, first, months do not all
-	 * have 30 days (and yes, it matters, I think) and because when
-	 * summer time begins(ends) "1 day" is 23 (25) hours, not 24.
-	 *
-	 * We would need to convert to localtime, before and after,
-	 * and subtract in localtime format, then normalise, to produce
-	 * a meaningfuly yYmMdD string to use here.   So just stick to
-	 * a count of hours.  It is legit, and easy...
-	 */
-	h = t % 24;
-	t /= 24;
-
-	d = t % 30;
-	t /= 30;
-
-	M = t % 12;
-	t /= 12;
-
-	y = t;
-#else
 	h = t;
-#endif
 
 	z = 0;
 	o = 0;
@@ -139,11 +113,6 @@ fmtydhmsf(char *b, size_t l, intmax_t t, long nsec, int ht)
 	toupper((unsigned char)__STRING(a)[0]))
 
 	APPENDFMT("%s", "P");
-#if 0
-	APPEND(y);
-	APPEND(M);
-	APPEND(d);
-#endif
 	APPENDFMT("%s", "T");
 	APPEND(h);
 	APPEND(m);
