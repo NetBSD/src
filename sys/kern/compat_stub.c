@@ -1,4 +1,4 @@
-/* $NetBSD: compat_stub.c,v 1.1.2.20 2018/09/19 04:12:43 pgoyette Exp $	*/
+/* $NetBSD: compat_stub.c,v 1.1.2.21 2018/09/20 07:34:10 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -130,10 +130,25 @@ struct compat_vndioctl_50_hook_t compat_vndioctl_50_hook;
 struct ieee80211_ostats_hook_t ieee80211_ostats_hook;
 struct ieee80211_get_ostats_20_hook_t ieee80211_get_ostats_20_hook;
 
-int (*ieee80211_get_ostats_20)(struct ieee80211_ostats *,
+/*XXX PRG */int (*ieee80211_get_ostats_20)(struct ieee80211_ostats *,
     struct ieee80211_stats *) = (void *)enosys;
 
-int (*if43_20_cvtcmd)(int) = (void *)enosys;
+/*
+ * if_43 compatability
+ */
+struct if_43_hook_t if_43_hook;
+
+/*
+ * upic_syscalls_40 compatability
+ */
+struct uipc_syscalls_40_hook_t uipc_syscalls_40_hook;
+
+/*
+ * upic_syscalls_50 compatability
+ */
+struct uipc_syscalls_50_hook_t uipc_syscalls_50_hook;
+
+/*XXX PRG */int (*if43_20_cvtcmd)(int) = (void *)enosys;
 
 /*
  * rtsock 14 compatability

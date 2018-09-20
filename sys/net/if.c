@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.419.2.10 2018/09/06 06:56:44 pgoyette Exp $	*/
+/*	$NetBSD: if.c,v 1.419.2.11 2018/09/20 07:34:10 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.419.2.10 2018/09/06 06:56:44 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.419.2.11 2018/09/20 07:34:10 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -120,6 +120,7 @@ __KERNEL_RCSID(0, "$NetBSD: if.c,v 1.419.2.10 2018/09/06 06:56:44 pgoyette Exp $
 #include <sys/xcall.h>
 #include <sys/cpu.h>
 #include <sys/intr.h>
+#include <sys/compat_stub.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -246,8 +247,6 @@ static void if_sysctl_setup(struct sysctllog **);
 u_long (*vec_compat_cvtcmd)(u_long) = NULL;
 int (*vec_compat_ifioctl)(struct socket *, u_long, u_long, void *,
 	struct lwp *) = NULL;
-int (*vec_compat_ifconf)(struct lwp *, u_long, void *) = (void *)enosys;
-int (*vec_compat_ifdatareq)(struct lwp *, u_long, void *) = (void *)enosys;
 
 static int
 if_listener_cb(kauth_cred_t cred, kauth_action_t action, void *cookie,
@@ -3108,6 +3107,19 @@ out:
 }
 
 /*
+ * Interface for calling the compat routines
+ */
+MODULE_CALL_HOOK_DECL(uipc_syscalls_40_hook, f,
+    (struct lwp *l, int cmd, void *data), (l, cmd, data), enosys());
+MODULE_CALL_HOOK(uipc_syscalls_40_hook, f,
+    (struct lwp *l, int cmd, void *data), (l, cmd, data), enosys());
+
+MODULE_CALL_HOOK_DECL(uipc_syscalls_50_hook, f,
+    (struct lwp *l, int cmd, void *data), (l, cmd, data), enosys());
+MODULE_CALL_HOOK(uipc_syscalls_50_hook, f,
+    (struct lwp *l, int cmd, void *data), (l, cmd, data), enosys());
+
+/*
  * Interface ioctls.
  */
 static int
@@ -3134,12 +3146,13 @@ doifioctl(struct socket *so, u_long cmd, void *data, struct lwp *l)
 	case SIOCINITIFADDR:
 		return EPERM;
 	default:
-		error = (*vec_compat_ifconf)(l, cmd, data);
+		error = uipc_syscalls_40_hook_f_call(l, cmd, data);
 		if (error != ENOSYS)
 			return error;
-		error = (*vec_compat_ifdatareq)(l, cmd, data);
+		error = uipc_syscalls_50_hook_f_call(l, cmd, data);
 		if (error != ENOSYS)
 			return error;
+		error = 0;
 		break;
 	}
 

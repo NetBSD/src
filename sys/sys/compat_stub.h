@@ -1,4 +1,4 @@
-/* $NetBSD: compat_stub.h,v 1.1.2.29 2018/09/19 04:12:43 pgoyette Exp $	*/
+/* $NetBSD: compat_stub.h,v 1.1.2.30 2018/09/20 07:34:10 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -158,10 +158,30 @@ MODULE_HOOK(ieee80211_ostats_hook, (struct ieee80211_ostats *,
     struct ieee80211_stats *));
 MODULE_HOOK(ieee80211_get_ostats_20_hook, (int));
 
-extern int (*ieee80211_get_ostats_20)(struct ieee80211_ostats *, 
+/* XXX PRG*/extern int (*ieee80211_get_ostats_20)(struct ieee80211_ostats *, 
     struct ieee80211_stats *);
 
-extern int (*if43_20_cvtcmd)(int);
+/*
+ * if_43 compatability
+ */
+struct socket;
+
+MODULE_HOOK2(if_43_hook, (int),
+    (struct socket *, u_long, u_long, void *, struct lwp *));
+
+/* XXX PRG */extern int (*if43_20_cvtcmd)(int);
+
+/*
+ * uipc_syscalls_40 compatability
+ */
+
+MODULE_HOOK(uipc_syscalls_40_hook, (struct lwp *, u_long, void *));
+
+/*
+ * uipc_syscalls_50 compatability
+ */
+
+MODULE_HOOK(uipc_syscalls_50_hook, (struct lwp *, u_long, void *));
 
 /*
  * rtsock 14 compatability
