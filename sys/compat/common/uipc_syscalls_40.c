@@ -1,9 +1,9 @@
-/*	$NetBSD: uipc_syscalls_40.c,v 1.15.2.9 2018/04/16 03:41:34 pgoyette Exp $	*/
+/*	$NetBSD: uipc_syscalls_40.c,v 1.15.2.10 2018/09/20 07:34:09 pgoyette Exp $	*/
 
 /* written by Pavel Cahyna, 2006. Public domain. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls_40.c,v 1.15.2.9 2018/04/16 03:41:34 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls_40.c,v 1.15.2.10 2018/09/20 07:34:09 pgoyette Exp $");
 
 /*
  * System call interface to the socket abstraction.
@@ -15,6 +15,7 @@ __KERNEL_RCSID(0, "$NetBSD: uipc_syscalls_40.c,v 1.15.2.9 2018/04/16 03:41:34 pg
 #include <sys/sysctl.h>
 #include <sys/syscallargs.h>
 #include <sys/errno.h>
+#include <sys/compat_stub.h>
 
 #include <net/if.h>
 
@@ -162,16 +163,19 @@ release_exit:
 	return error;
 }
 
+MODULE_SET_HOOK(uipc_syscalls_40_hook, "uipc40", compat_ifconf);
+MODULE_UNSET_HOOK(uipc_syscalls_40_hook);
+
 void      
 uipc_syscalls_40_init(void)
 {
  
-	vec_compat_ifconf = compat_ifconf;
+	uipc_syscalls_40_hook_set();
 }
  
 void
 uipc_syscalls_40_fini(void)
 {
  
-	vec_compat_ifconf = (void *)enosys;
+	uipc_syscalls_40_hook_unset();
 }

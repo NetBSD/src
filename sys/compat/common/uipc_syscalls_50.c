@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls_50.c,v 1.3.56.8 2018/05/02 07:20:06 pgoyette Exp $	*/
+/*	$NetBSD: uipc_syscalls_50.c,v 1.3.56.9 2018/09/20 07:34:09 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls_50.c,v 1.3.56.8 2018/05/02 07:20:06 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls_50.c,v 1.3.56.9 2018/09/20 07:34:09 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -48,6 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: uipc_syscalls_50.c,v 1.3.56.8 2018/05/02 07:20:06 pg
 #include <sys/kauth.h>
 #include <sys/proc.h>
 #include <sys/time.h>
+#include <sys/compat_stub.h>
 
 #include <net/if.h>
 
@@ -108,18 +109,20 @@ compat_ifdatareq(struct lwp *l, u_long cmd, void *data)
 	}
 }
 
-/* Save and restore compat vector as needed */
+MODULE_SET_HOOK(uipc_syscalls_50_hook, "uipc50", compat_ifdatareq);
+MODULE_UNSET_HOOK(uipc_syscalls_50_hook);
 
 void
 uipc_syscalls_50_init(void)
 {
 
-	vec_compat_ifdatareq = compat_ifdatareq;
+        uipc_syscalls_50_hook_set();
 }
 
 void
 uipc_syscalls_50_fini(void)
 {
+ 
+        uipc_syscalls_50_hook_unset();
+}
 
-	vec_compat_ifdatareq = (void *)enosys;
-	}
