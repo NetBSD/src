@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1617 2018/09/19 13:58:27 maxv Exp $
+# $NetBSD: mi,v 1.1618 2018/09/21 08:38:16 maxv Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3155,7 +3155,7 @@
 ./usr/share/man/cat8/trsp.0			man-obsolete		obsolete
 ./usr/share/man/cat8/ttyflags.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/tunefs.0			man-sysutil-catman	.cat
-./usr/share/man/cat8/umbctl.0			man-isdn-catman		.cat
+./usr/share/man/cat8/umbctl.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/umount.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/unbound-anchor.0		man-netutil-catman	.cat,unbound
 ./usr/share/man/cat8/unbound-checkconf.0	man-netutil-catman	.cat,unbound
@@ -6017,7 +6017,7 @@
 ./usr/share/man/html8/trpt.html			man-netutil-htmlman	html
 ./usr/share/man/html8/ttyflags.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/tunefs.html		man-sysutil-htmlman	html
-./usr/share/man/html8/umbctl.html		man-isdn-htmlman	html
+./usr/share/man/html8/umbctl.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/umount.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/unbound-anchor.html	man-netutil-htmlman	html,unbound
 ./usr/share/man/html8/unbound-checkconf.html	man-netutil-htmlman	html,unbound
@@ -9226,7 +9226,7 @@
 ./usr/share/man/man8/trsp.8			man-obsolete		obsolete
 ./usr/share/man/man8/ttyflags.8			man-sysutil-man		.man
 ./usr/share/man/man8/tunefs.8			man-sysutil-man		.man
-./usr/share/man/man8/umbctl.8			man-isdn-man		.man
+./usr/share/man/man8/umbctl.8			man-sysutil-man		.man
 ./usr/share/man/man8/umount.8			man-sysutil-man		.man
 ./usr/share/man/man8/unbound-anchor.8		man-netutil-man		.man,unbound
 ./usr/share/man/man8/unbound-checkconf.8	man-netutil-man		.man,unbound
