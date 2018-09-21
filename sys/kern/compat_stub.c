@@ -1,4 +1,4 @@
-/* $NetBSD: compat_stub.c,v 1.1.2.22 2018/09/21 02:56:22 pgoyette Exp $	*/
+/* $NetBSD: compat_stub.c,v 1.1.2.23 2018/09/21 03:42:20 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -128,10 +128,6 @@ struct compat_vndioctl_50_hook_t compat_vndioctl_50_hook;
  * ieee80211 ioctl compatability
  */
 struct ieee80211_ostats_hook_t ieee80211_ostats_hook;
-struct ieee80211_get_ostats_20_hook_t ieee80211_get_ostats_20_hook;
-
-/*XXX PRG */int (*ieee80211_get_ostats_20)(struct ieee80211_ostats *,
-    struct ieee80211_stats *) = (void *)enosys;
 
 /*
  * if_43 compatability
