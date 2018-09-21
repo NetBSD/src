@@ -1,4 +1,4 @@
-/*	$NetBSD: ixm1200_machdep.c,v 1.59 2018/07/31 06:46:27 skrll Exp $ */
+/*	$NetBSD: ixm1200_machdep.c,v 1.60 2018/09/21 12:04:09 skrll Exp $ */
 
 /*
  * Copyright (c) 2002, 2003
@@ -61,9 +61,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixm1200_machdep.c,v 1.59 2018/07/31 06:46:27 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixm1200_machdep.c,v 1.60 2018/09/21 12:04:09 skrll Exp $");
 
 #include "opt_arm_debug.h"
+#include "opt_console.h"
 #include "opt_ddb.h"
 #include "opt_modular.h"
 #include "opt_pmap_debug.h"

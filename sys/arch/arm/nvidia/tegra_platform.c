@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_platform.c,v 1.15 2018/09/10 11:05:12 ryo Exp $ */
+/* $NetBSD: tegra_platform.c,v 1.16 2018/09/21 12:04:06 skrll Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared D. McNeill <jmcneill@invisible.ca>
@@ -28,12 +28,12 @@
 
 #include "opt_tegra.h"
 #include "opt_multiprocessor.h"
-#include "opt_fdt_arm.h"
+#include "opt_console.h"
 
 #include "ukbd.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_platform.c,v 1.15 2018/09/10 11:05:12 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_platform.c,v 1.16 2018/09/21 12:04:06 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>

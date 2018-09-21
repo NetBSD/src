@@ -1,4 +1,4 @@
-/*	$NetBSD: armadillo9_machdep.c,v 1.30 2018/07/31 06:46:26 skrll Exp $	*/
+/*	$NetBSD: armadillo9_machdep.c,v 1.31 2018/09/21 12:04:08 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -110,9 +110,10 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: armadillo9_machdep.c,v 1.30 2018/07/31 06:46:26 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: armadillo9_machdep.c,v 1.31 2018/09/21 12:04:08 skrll Exp $");
 
 #include "opt_arm_debug.h"
+#include "opt_console.h"
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
 #include "opt_pmap_debug.h"
