@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm53xx_start.S,v 1.12 2015/05/28 02:22:05 matt Exp $	*/
+/*	$NetBSD: bcm53xx_start.S,v 1.13 2018/09/21 12:04:08 skrll Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -31,6 +31,7 @@
 //#define GXEMUL
 
 #include "opt_broadcom.h"
+#include "opt_console.h"
 #include "opt_cpuoptions.h"
 #include "opt_cputypes.h"
 #include "opt_multiprocessor.h"
@@ -45,7 +46,7 @@
 #define	CONADDR		0x18000300
 #endif
 
-RCSID("$NetBSD: bcm53xx_start.S,v 1.12 2015/05/28 02:22:05 matt Exp $")
+RCSID("$NetBSD: bcm53xx_start.S,v 1.13 2018/09/21 12:04:08 skrll Exp $")
 
 #if defined(VERBOSE_INIT_ARM)
 #define	XPUTC(n)	mov r0, n; bl xputc

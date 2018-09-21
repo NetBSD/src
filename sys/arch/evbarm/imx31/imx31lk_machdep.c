@@ -1,4 +1,4 @@
-/* $NetBSD: imx31lk_machdep.c,v 1.22 2018/07/31 06:46:26 skrll Exp $ */
+/* $NetBSD: imx31lk_machdep.c,v 1.23 2018/09/21 12:04:08 skrll Exp $ */
 
 /*
  * Startup routines for the ZOOM iMX31 LITEKIT.
@@ -110,9 +110,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx31lk_machdep.c,v 1.22 2018/07/31 06:46:26 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx31lk_machdep.c,v 1.23 2018/09/21 12:04:08 skrll Exp $");
 
 #include "opt_arm_debug.h"
+#include "opt_console.h"
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
 #include "opt_pmap_debug.h"

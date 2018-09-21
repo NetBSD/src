@@ -83,6 +83,7 @@
  */
 
 #include "opt_omap.h"
+#include "opt_console.h"
 #include "opt_com.h"
 #include "opt_cpuoptions.h"
 #include "opt_cputypes.h"
@@ -99,7 +100,7 @@
 #include <arm/cortex/a9tmr_reg.h>
 #endif
 
-RCSID("$NetBSD: beagle_start.S,v 1.19 2014/03/29 14:47:30 matt Exp $")
+RCSID("$NetBSD: beagle_start.S,v 1.20 2018/09/21 12:04:08 skrll Exp $")
 
 #if defined(VERBOSE_INIT_ARM)
 #define	XPUTC(n)	mov r0, n; bl xputc

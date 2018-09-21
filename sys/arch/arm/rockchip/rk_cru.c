@@ -1,4 +1,4 @@
-/* $NetBSD: rk_cru.c,v 1.7 2018/09/09 07:21:17 aymeric Exp $ */
+/* $NetBSD: rk_cru.c,v 1.8 2018/09/21 12:04:07 skrll Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,10 +27,10 @@
  */
 
 #include "opt_soc.h"
-#include "opt_fdt_arm.h"
+#include "opt_console.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rk_cru.c,v 1.7 2018/09/09 07:21:17 aymeric Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rk_cru.c,v 1.8 2018/09/21 12:04:07 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
