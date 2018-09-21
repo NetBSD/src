@@ -1,4 +1,4 @@
-/*	$NetBSD: exynos_start.S,v 1.8 2018/09/11 10:06:53 jmcneill Exp $	*/
+/*	$NetBSD: exynos_start.S,v 1.9 2018/09/21 12:04:08 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,6 +30,7 @@
  */
 
 #include "opt_exynos.h"
+#include "opt_console.h"
 #include "opt_cpuoptions.h"
 #include "opt_cputypes.h"
 #include "opt_multiprocessor.h"
@@ -46,7 +47,7 @@
 
 #include <evbarm/exynos/platform.h>
 
-RCSID("$NetBSD: exynos_start.S,v 1.8 2018/09/11 10:06:53 jmcneill Exp $")
+RCSID("$NetBSD: exynos_start.S,v 1.9 2018/09/21 12:04:08 skrll Exp $")
 
 #if defined(KERNEL_BASES_EQUAL)
 #define CALL(f)		bl	_C_LABEL(f)

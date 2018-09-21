@@ -1,4 +1,4 @@
-/* $NetBSD: amlogic_io.c,v 1.13 2015/11/21 00:54:57 jmcneill Exp $ */
+/* $NetBSD: amlogic_io.c,v 1.14 2018/09/21 12:04:06 skrll Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,10 +26,8 @@
  * SUCH DAMAGE.
  */
 
-#include "opt_amlogic.h"
-
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amlogic_io.c,v 1.13 2015/11/21 00:54:57 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amlogic_io.c,v 1.14 2018/09/21 12:04:06 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

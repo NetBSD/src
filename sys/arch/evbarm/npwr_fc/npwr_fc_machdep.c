@@ -1,4 +1,4 @@
-/*	$NetBSD: npwr_fc_machdep.c,v 1.22 2018/07/31 06:46:27 skrll Exp $	*/
+/*	$NetBSD: npwr_fc_machdep.c,v 1.23 2018/09/21 12:04:10 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -73,9 +73,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npwr_fc_machdep.c,v 1.22 2018/07/31 06:46:27 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npwr_fc_machdep.c,v 1.23 2018/09/21 12:04:10 skrll Exp $");
 
 #include "opt_arm_debug.h"
+#include "opt_console.h"
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
 #include "opt_pmap_debug.h"

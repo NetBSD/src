@@ -1,4 +1,4 @@
-#	$NetBSD: files.amlogic,v 1.13 2015/11/29 16:52:00 jmcneill Exp $
+#	$NetBSD: files.amlogic,v 1.14 2018/09/21 12:04:06 skrll Exp $
 #
 # Configuration info for Amlogic ARM Peripherals
 #
@@ -62,11 +62,6 @@ file	arch/arm/amlogic/amlogic_rng.c		amlogic_rng
 device	amlogicrtc
 attach	amlogicrtc at amlogicio with amlogic_rtc
 file	arch/arm/amlogic/amlogic_rtc.c		amlogic_rtc
-
-# Console parameters
-defparam opt_amlogic.h			CONADDR
-defparam opt_amlogic.h			CONSPEED
-defparam opt_amlogic.h			CONMODE
 
 # Memory parameters
 defparam opt_amlogic.h			MEMSIZE

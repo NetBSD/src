@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_platform.c,v 1.27 2018/09/16 13:21:36 jmcneill Exp $ */
+/* $NetBSD: sunxi_platform.c,v 1.28 2018/09/21 12:04:07 skrll Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -28,10 +28,10 @@
 
 #include "opt_soc.h"
 #include "opt_multiprocessor.h"
-#include "opt_fdt_arm.h"
+#include "opt_console.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_platform.c,v 1.27 2018/09/16 13:21:36 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_platform.c,v 1.28 2018/09/21 12:04:07 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>

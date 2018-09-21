@@ -1,4 +1,4 @@
-#	$NetBSD: files.arm,v 1.142 2018/09/16 15:40:36 skrll Exp $
+#	$NetBSD: files.arm,v 1.143 2018/09/21 12:04:06 skrll Exp $
 
 # temporary define to allow easy moving to ../arch/arm/arm32
 defflag				ARM32
@@ -85,6 +85,12 @@ defflag  opt_arm_bus_space.h	__BUS_SPACE_HAS_STREAM_METHODS
 
 # Timer options
 defflag opt_arm_timer.h		__HAVE_GENERIC_CPU_INITCLOCKS
+
+# Console options
+defparam opt_console.h		CONSADDR
+defparam opt_console.h		CONSPEED
+defparam opt_console.h		CONMODE
+defparam opt_console.h		CONADDR
 
 # Floating point emulator
 obsolete defflag		ARMFPE

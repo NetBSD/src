@@ -1,4 +1,4 @@
-# $NetBSD: files.fdt,v 1.25 2018/09/10 11:05:12 ryo Exp $
+# $NetBSD: files.fdt,v 1.26 2018/09/21 12:04:06 skrll Exp $
 
 include	"dev/pckbport/files.pckbport"
 
@@ -67,5 +67,3 @@ file	dev/tprof/tprof_armv8.c			pmu_fdt & aarch64
 attach	genfb at fdt with plfb_fdt: fdt_display_timing
 file	arch/arm/fdt/plfb_fdt.c			plfb_fdt
 
-# Console parameters
-defparam opt_fdt_arm.h				CONSADDR

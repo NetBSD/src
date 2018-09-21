@@ -1,4 +1,4 @@
-/*	$NetBSD: a9_mpsubr.S,v 1.57 2018/06/27 11:12:14 ryo Exp $	*/
+/*	$NetBSD: a9_mpsubr.S,v 1.58 2018/09/21 12:04:06 skrll Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -28,6 +28,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "opt_console.h"
 #include "opt_cpuoptions.h"
 #include "opt_cputypes.h"
 #include "opt_multiprocessor.h"

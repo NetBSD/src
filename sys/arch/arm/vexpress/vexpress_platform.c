@@ -1,4 +1,4 @@
-/* $NetBSD: vexpress_platform.c,v 1.9 2018/08/05 14:02:35 skrll Exp $ */
+/* $NetBSD: vexpress_platform.c,v 1.10 2018/09/21 12:04:07 skrll Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,10 +27,10 @@
  */
 
 #include "opt_multiprocessor.h"
-#include "opt_fdt_arm.h"
+#include "opt_console.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vexpress_platform.c,v 1.9 2018/08/05 14:02:35 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vexpress_platform.c,v 1.10 2018/09/21 12:04:07 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>

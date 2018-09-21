@@ -1,4 +1,4 @@
-/*	$NetBSD: gemini_machdep.c,v 1.27 2018/08/12 18:42:08 skrll Exp $	*/
+/*	$NetBSD: gemini_machdep.c,v 1.28 2018/09/21 12:04:08 skrll Exp $	*/
 
 /* adapted from:
  *	NetBSD: sdp24xx_machdep.c,v 1.4 2008/08/27 11:03:10 matt Exp
@@ -129,9 +129,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gemini_machdep.c,v 1.27 2018/08/12 18:42:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gemini_machdep.c,v 1.28 2018/09/21 12:04:08 skrll Exp $");
 
 #include "opt_arm_debug.h"
+#include "opt_console.h"
 #include "opt_machdep.h"
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
