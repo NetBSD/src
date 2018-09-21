@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_20.c,v 1.1.2.1 2018/03/30 02:28:49 pgoyette Exp $	*/
+/*	$NetBSD: ieee80211_20.c,v 1.1.2.2 2018/09/21 03:42:20 pgoyette Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_ioctl.c,v 1.35 2005/08/30 14:27:47 avatar Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_20.c,v 1.1.2.1 2018/03/30 02:28:49 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_20.c,v 1.1.2.2 2018/09/21 03:42:20 pgoyette Exp $");
 #endif
 
 /*
@@ -94,15 +94,18 @@ ieee80211_get_ostats(struct ieee80211_ostats *ostats,
 	return 0;
 }
 
+MODULE_SET_HOOK(ieee80211_ostats_hook, "ieee20", ieee80211_get_ostats);
+MODULE_UNSET_HOOK(ieee80211_ostats_hook);
+
 void
 ieee80211_20_init(void)
 {
 
-	ieee80211_get_ostats_20 = ieee80211_get_ostats;
+	ieee80211_ostats_hook_set();
 }
 void
 ieee80211_20_fini(void)
 {
 
-	ieee80211_get_ostats_20 = (void *)enosys;
+	ieee80211_ostats_hook_unset();
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: compat_stub.h,v 1.1.2.32 2018/09/21 02:56:22 pgoyette Exp $	*/
+/* $NetBSD: compat_stub.h,v 1.1.2.33 2018/09/21 03:42:20 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -149,17 +149,12 @@ MODULE_HOOK(compat_vndioctl_50_hook, (u_long, struct lwp *, void *, int,
 
 /*
  * ieee80211 ioctl compatability
- * XXX need to review this
  */
 struct ieee80211_ostats;
 struct ieee80211_stats; 
 
 MODULE_HOOK(ieee80211_ostats_hook, (struct ieee80211_ostats *,
     struct ieee80211_stats *));
-MODULE_HOOK(ieee80211_get_ostats_20_hook, (int));
-
-/* XXX PRG*/extern int (*ieee80211_get_ostats_20)(struct ieee80211_ostats *, 
-    struct ieee80211_stats *);
 
 /*
  * if_43 compatability

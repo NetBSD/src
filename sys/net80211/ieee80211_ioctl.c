@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_ioctl.c,v 1.35 2005/08/30 14:27:47 avatar Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_ioctl.c,v 1.60.16.2 2018/03/30 02:28:49 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_ioctl.c,v 1.60.16.3 2018/09/21 03:42:20 pgoyette Exp $");
 #endif
 
 /*
@@ -2556,6 +2556,16 @@ ieee80211_ioctl(struct ieee80211com *ic, u_long cmd, void *data)
 #endif /* __FreeBSD__ */
 
 #ifdef __NetBSD__
+/*
+ * Compatability glue
+ */
+MODULE_CALL_HOOK_DECL(ieee80211_ostats_hook, f,
+    (struct ieee80211_ostats *ostats, struct ieee80211_stats *stats),
+    (ostats, stats), enosys());
+MODULE_CALL_HOOK(ieee80211_ostats_hook, f,
+    (struct ieee80211_ostats *ostats, struct ieee80211_stats *stats),
+    (ostats, stats), enosys());
+
 int
 ieee80211_ioctl(struct ieee80211com *ic, u_long cmd, void *data)
 {
@@ -2855,7 +2865,7 @@ ieee80211_ioctl(struct ieee80211com *ic, u_long cmd, void *data)
 
 		ifr = (struct ifreq *)data;
 		s = splnet();
-		error = (*ieee80211_get_ostats_20)(&ostats, &ic->ic_stats);
+		error = ieee80211_ostats_hook_f_call(&ostats, &ic->ic_stats);
 		if (error == ENOSYS)
 			error = EINVAL;
 		if (error == 0)
