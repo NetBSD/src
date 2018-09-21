@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1208 2018/09/19 13:58:27 maxv Exp $
+#	$NetBSD: files,v 1.1209 2018/09/21 18:38:25 maxv Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20171118
@@ -1381,11 +1381,6 @@ file	dev/ic/isic_l1.c		isic|ifpci|ifritz
 file	dev/ic/isic_l1fsm.c		isic|ifpci|ifritz
 file	dev/ic/hscx.c			isic
 file	dev/ic/isic_bchan.c		isic
-
-# AWM B1/T1
-# XXX: passive_isdn
-device	iavc: isdndev, isdncapi, passive_isdn
-file	dev/ic/iavc.c			iavc
 
 # Broadcom AirForce / Apple Airport Extreme
 device	bwi: arp, ifnet, firmload, wlan
