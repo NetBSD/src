@@ -1,4 +1,4 @@
-#	$NetBSD: DEVNAMES,v 1.313 2018/09/19 13:58:27 maxv Exp $
+#	$NetBSD: DEVNAMES,v 1.314 2018/09/21 18:38:25 maxv Exp $
 #
 # This file contains all used device names and defined attributes in
 # alphabetical order. New devices added to the system somewhere should first
@@ -612,7 +612,6 @@ i2cbus			MI		Attribute
 i2c_eeprom		MI		Attribute
 i8042			shark		Attribute
 i82586			MI		Attribute
-iavc			MI
 ibmcd			MI
 ibus			pmax
 ibus			vax
