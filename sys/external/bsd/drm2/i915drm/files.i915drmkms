@@ -1,4 +1,4 @@
-#	$NetBSD: files.i915drmkms,v 1.32 2018/08/27 16:06:01 riastradh Exp $
+#	$NetBSD: files.i915drmkms,v 1.33 2018/09/21 11:27:13 kamil Exp $
 
 version	20180827
 
@@ -21,6 +21,8 @@ makeoptions	i915drmkms	"CWARNFLAGS.i915drmkms"+="-Wno-shadow"
 
 makeoptions 	i915drmkms 	"CWARNFLAGS.i915_drv.c"+="${${ACTIVE_CC} == gcc:? -Wno-override-init :}"
 makeoptions 	i915drmkms 	"CWARNFLAGS.i915_drv.c"+="${${ACTIVE_CC} == clang:? -Wno-initializer-overrides :}"
+
+makeoptions 	i915drmkms 	"CWARNFLAGS.intel_sprite.c"+="${${ACTIVE_CC} == gcc:? -Wno-maybe-uninitialized :}"
 
 file	external/bsd/drm2/i915drm/i915_module.c		i915drmkms
 file	external/bsd/drm2/i915drm/i915_pci.c		i915drmkms
