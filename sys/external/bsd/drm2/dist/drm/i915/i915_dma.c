@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_dma.c,v 1.26 2018/09/13 08:25:55 mrg Exp $	*/
+/*	$NetBSD: i915_dma.c,v 1.27 2018/09/21 11:49:16 kamil Exp $	*/
 
 /* i915_dma.c -- DMA support for the I915 -*- linux-c -*-
  */
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_dma.c,v 1.26 2018/09/13 08:25:55 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_dma.c,v 1.27 2018/09/21 11:49:16 kamil Exp $");
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
@@ -705,7 +705,7 @@ static void broadwell_sseu_info_init(struct drm_device *dev)
 	struct intel_device_info *info;
 	const int s_max = 3, ss_max = 3, eu_max = 8;
 	int s, ss;
-	u32 fuse2, eu_disable[s_max], s_enable, ss_disable;
+	u32 fuse2, eu_disable[3], s_enable, ss_disable;
 
 	fuse2 = I915_READ(GEN8_FUSE2);
 	s_enable = (fuse2 & GEN8_F2_S_ENA_MASK) >> GEN8_F2_S_ENA_SHIFT;
