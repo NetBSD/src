@@ -1,4 +1,4 @@
-/* $NetBSD: seattle_platform.c,v 1.2 2018/09/10 19:09:38 jmcneill Exp $ */
+/* $NetBSD: seattle_platform.c,v 1.3 2018/09/21 12:04:06 skrll Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -28,12 +28,12 @@
 
 #include "opt_soc.h"
 #include "opt_multiprocessor.h"
-#include "opt_fdt_arm.h"
+#include "opt_console.h"
 
 #define _ARM32_BUS_DMA_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: seattle_platform.c,v 1.2 2018/09/10 19:09:38 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: seattle_platform.c,v 1.3 2018/09/21 12:04:06 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>

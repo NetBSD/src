@@ -1,4 +1,4 @@
-/* $NetBSD: amlogic_com.c,v 1.5 2015/04/03 15:50:15 jmcneill Exp $ */
+/* $NetBSD: amlogic_com.c,v 1.6 2018/09/21 12:04:06 skrll Exp $ */
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -29,11 +29,12 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "opt_console.h"
 #include "locators.h"
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: amlogic_com.c,v 1.5 2015/04/03 15:50:15 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: amlogic_com.c,v 1.6 2018/09/21 12:04:06 skrll Exp $");
 
 #define cn_trap()			\
 	do {				\

@@ -1,4 +1,4 @@
-/*	$NetBSD: sdp24xx_machdep.c,v 1.21 2018/08/04 16:21:40 skrll Exp $ */
+/*	$NetBSD: sdp24xx_machdep.c,v 1.22 2018/09/21 12:04:10 skrll Exp $ */
 
 /*
  * Machine dependent functions for kernel setup for TI OSK5912 board.
@@ -125,9 +125,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdp24xx_machdep.c,v 1.21 2018/08/04 16:21:40 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdp24xx_machdep.c,v 1.22 2018/09/21 12:04:10 skrll Exp $");
 
 #include "opt_arm_debug.h"
+#include "opt_console.h"
 #include "opt_machdep.h"
 #include "opt_ddb.h"
 #include "opt_kgdb.h"

@@ -1,4 +1,4 @@
-/* $NetBSD: virt_platform.c,v 1.6 2018/09/10 11:05:12 ryo Exp $ */
+/* $NetBSD: virt_platform.c,v 1.7 2018/09/21 12:04:07 skrll Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -28,10 +28,9 @@
 
 #include "opt_soc.h"
 #include "opt_multiprocessor.h"
-#include "opt_fdt_arm.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: virt_platform.c,v 1.6 2018/09/10 11:05:12 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: virt_platform.c,v 1.7 2018/09/21 12:04:07 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
