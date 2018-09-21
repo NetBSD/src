@@ -1,4 +1,4 @@
-.\"    $NetBSD: npf.conf.5,v 1.78 2018/09/21 09:42:18 uwe Exp $
+.\"    $NetBSD: npf.conf.5,v 1.79 2018/09/21 10:59:11 uwe Exp $
 .\"
 .\" Copyright (c) 2009-2017 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -95,9 +95,9 @@ or
 .Cm cdb .
 Tables can also be set as containing
 .Cm dynamic
-or
-.Cm static
-data i.e. loaded from a specified file.
+data or static
+.Cm file Ar filename
+data loaded from a specified file.
 Tables of type
 .Dq hash
 and
