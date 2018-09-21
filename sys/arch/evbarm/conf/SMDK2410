@@ -1,4 +1,4 @@
-#	$NetBSD: SMDK2410,v 1.67 2018/08/25 20:52:40 rin Exp $
+#	$NetBSD: SMDK2410,v 1.68 2018/09/21 06:02:50 skrll Exp $
 #
 #	SMDK2410 -- Samsung's S3C2410 evaluation board.
 #
@@ -329,7 +329,7 @@ ugen*	at uhub? port ?
 #pseudo-device	putter			# for puffs and pud
 
 # network pseudo-devices
-#pseudo-device	bpfilter		# Berkeley packet filter
+pseudo-device	bpfilter		# Berkeley packet filter
 pseudo-device	npf			# NPF packet filter
 pseudo-device	loop			# network loopback
 #pseudo-device	ppp			# Point-to-Point Protocol
