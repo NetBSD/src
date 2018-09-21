@@ -1,4 +1,4 @@
-#	$NetBSD: files.aarch64,v 1.3 2018/04/01 04:35:03 ryo Exp $
+#	$NetBSD: files.aarch64,v 1.4 2018/09/21 16:53:20 jakllsch Exp $
 
 defflag opt_cpuoptions.h	AARCH64_ALIGNMENT_CHECK
 defflag opt_cpuoptions.h	AARCH64_EL0_STACK_ALIGNMENT_CHECK
@@ -27,13 +27,19 @@ defflag  opt_arm_bus_space.h	__BUS_SPACE_HAS_STREAM_METHODS
 				_ARM32_NEED_BUS_DMA_BOUNCE
 				BUSDMA_COUNTERS
 
+# Console options
+defparam opt_console.h		CONSADDR
+defparam opt_console.h		CONSPEED
+defparam opt_console.h		CONMODE
+defparam opt_console.h		CONADDR
+
+# Power State Coordination Interface (PSCI)
 # FP support
 file	arch/aarch64/aarch64/fpu.c
 
 file	arch/arm/arm/arm_generic_dma.c
 file	arch/arm/arm32/bus_dma.c
 
-# Power State Coordination Interface (PSCI)
 device	psci
 file	arch/arm/arm/psci.c			psci
 file	arch/arm/arm/psci_arm.S			psci
