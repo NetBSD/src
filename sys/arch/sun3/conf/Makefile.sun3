@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.sun3,v 1.107 2018/03/07 15:02:36 maya Exp $
+# $NetBSD: Makefile.sun3,v 1.108 2018/09/22 12:05:52 rin Exp $
 
 # Makefile for NetBSD
 #
@@ -42,10 +42,8 @@ AFLAGS+=	-x assembler-with-cpp
 OPT_MODULAR=   %MODULAR%
 .if !empty(OPT_MODULAR)
 KERN_AS=	obj
-COMPAT_AS=	obj
 .else
 KERN_AS=	library
-COMPAT_AS=	library
 .endif
 
 ##
