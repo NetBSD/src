@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptodev.c,v 1.98.2.4 2018/09/18 23:03:55 pgoyette Exp $ */
+/*	$NetBSD: cryptodev.c,v 1.98.2.5 2018/09/22 10:33:50 pgoyette Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.c,v 1.4.2.4 2003/06/03 00:09:02 sam Exp $	*/
 /*	$OpenBSD: cryptodev.c,v 1.53 2002/07/10 22:21:30 mickey Exp $	*/
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.98.2.4 2018/09/18 23:03:55 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.98.2.5 2018/09/22 10:33:50 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -219,11 +219,24 @@ cryptof_write(file_t *fp, off_t *poff,
 	return EIO;
 }
 
-/* Hook the ocryptodev 50 compat code */
+/*
+ * Hook the ocryptodev 50 compat code
+ *
+ * This is a bit messy because we need to pass local stuff to the
+ * compat routines.  The compat routines may be built-in to a
+ * kernel which doesn't contain the local stuff, so the compat
+ * code cannot directly reference them as globals.
+ */
 MODULE_CALL_HOOK_DECL(ocryptof_50_hook, f,
-    (struct file *fp, u_long cmd, void *data), (fp, cmd, data), enosys());
+    (struct file *fp, u_long cmd, void *data),
+    (fp, cmd, data, cryptodev_mtx, cryptodev_session, cryptodev_op,
+	cryptodev_mop, cryptodev_csefind),
+    enosys());
 MODULE_CALL_HOOK(ocryptof_50_hook, f,
-    (struct file *fp, u_long cmd, void *data), (fp, cmd, data), enosys());
+    (struct file *fp, u_long cmd, void *data),
+    (fp, cmd, data, &cryptodev_mtx, cryptodev_session, cryptodev_op,
+	cryptodev_mop, cryptodev_csefind),
+    enosys());
 
 /* ARGSUSED */
 int
