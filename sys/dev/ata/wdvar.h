@@ -1,4 +1,4 @@
-/*	$NetBSD: wdvar.h,v 1.46.6.3 2018/09/22 16:14:25 jdolecek Exp $	*/
+/*	$NetBSD: wdvar.h,v 1.46.6.4 2018/09/22 17:50:09 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -67,6 +67,7 @@ struct wd_softc {
 	/* Retry/requeue failed transfers */
 	SLIST_HEAD(, ata_xfer) sc_retry_list;
 	struct callout sc_retry_callout;	/* retry callout handle */
+	struct callout sc_restart_diskqueue;	/* restart queue processing */
 
 	SLIST_HEAD(, ata_xfer) sc_requeue_list;
 	struct callout sc_requeue_callout;	/* requeue callout handle */
