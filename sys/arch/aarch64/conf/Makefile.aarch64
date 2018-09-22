@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.aarch64,v 1.11 2018/09/14 08:51:06 skrll Exp $
+#	$NetBSD: Makefile.aarch64,v 1.12 2018/09/22 12:24:01 rin Exp $
 
 # Makefile for NetBSD
 #
@@ -43,7 +43,7 @@ CFLAGS+=	-mno-omit-leaf-frame-pointer
 ##
 ## (3) libkern and compat
 ##
-KERN_AS=	obj
+OPT_MODULAR=	%MODULAR%
 
 ##
 ## (4) local objects, compile rules, and dependencies
