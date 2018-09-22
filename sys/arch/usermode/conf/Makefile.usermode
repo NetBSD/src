@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.usermode,v 1.43 2018/08/17 20:16:07 reinoud Exp $
+# $NetBSD: Makefile.usermode,v 1.44 2018/09/22 12:24:03 rin Exp $
 
 MKCTF?=				no
 USETOOLS?=			no
@@ -50,8 +50,7 @@ CPPFLAGS.thunk.c+=	${USERMODE_CPPFLAGS}
 ##
 ## (3) libkern and compat
 ##
-KERN_AS=	library
-COMPAT_AS=	library
+OPT_MODULAR=	%MODULAR%
 
 ##
 ## (4) local objects, compile rules, and dependencies

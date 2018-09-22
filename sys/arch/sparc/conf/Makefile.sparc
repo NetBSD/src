@@ -1,4 +1,4 @@
-# 	$NetBSD: Makefile.sparc,v 1.95 2016/12/03 16:00:10 christos Exp $
+# 	$NetBSD: Makefile.sparc,v 1.96 2018/09/22 12:24:03 rin Exp $
 
 # Makefile for NetBSD
 #
@@ -44,7 +44,7 @@ COPTS.kern_timeout.c += -Wno-stack-protector
 ##
 ## (3) libkern and compat
 ##
-KERN_AS=	obj
+OPT_MODULAR=	%MODULAR%
 
 ##
 ## (4) local objects, compile rules, and dependencies
