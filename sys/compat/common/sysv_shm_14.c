@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_shm_14.c,v 1.17 2011/01/19 10:21:16 tsutsui Exp $	*/
+/*	$NetBSD: sysv_shm_14.c,v 1.17.56.1 2018/09/22 04:56:28 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -31,7 +31,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_shm_14.c,v 1.17 2011/01/19 10:21:16 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_shm_14.c,v 1.17.56.1 2018/09/22 04:56:28 pgoyette Exp $");
+
+#if defined(_KERNEL_OPT)
+#include "opt_compat_netbsd.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>

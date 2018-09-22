@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource_43.c,v 1.21.96.1 2018/04/17 00:02:58 pgoyette Exp $	*/
+/*	$NetBSD: kern_resource_43.c,v 1.21.96.2 2018/09/22 04:56:28 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -37,7 +37,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_resource_43.c,v 1.21.96.1 2018/04/17 00:02:58 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_resource_43.c,v 1.21.96.2 2018/09/22 04:56:28 pgoyette Exp $");
+
+#if defined(_KERNEL_OPT)
+#include "opt_compat_netbsd.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>

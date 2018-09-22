@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_50.c,v 1.1.34.1 2018/03/19 21:54:43 pgoyette Exp $	*/
+/*	$NetBSD: kern_50.c,v 1.1.34.2 2018/09/22 04:56:28 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -29,7 +29,11 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_50.c,v 1.1.34.1 2018/03/19 21:54:43 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_50.c,v 1.1.34.2 2018/09/22 04:56:28 pgoyette Exp $");
+
+#if defined(_KERNEL_OPT)
+#include "opt_compat_netbsd.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/lwp.h>

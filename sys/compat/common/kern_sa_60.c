@@ -29,7 +29,11 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: kern_sa_60.c,v 1.1.42.3 2018/03/18 09:00:55 pgoyette Exp $");
+__KERNEL_RCSID(1, "$NetBSD: kern_sa_60.c,v 1.1.42.4 2018/09/22 04:56:28 pgoyette Exp $");
+
+#if defined(_KERNEL_OPT)
+#include "opt_compat_netbsd.h"
+#endif
 
 #include <sys/systm.h>
 #include <sys/syscall.h>

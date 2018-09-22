@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_power_40.c,v 1.1.2.3 2018/09/18 23:03:54 pgoyette Exp $	*/
+/*	$NetBSD: sysmon_power_40.c,v 1.1.2.4 2018/09/22 04:56:28 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines.
@@ -62,7 +62,11 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_power_40.c,v 1.1.2.3 2018/09/18 23:03:54 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_power_40.c,v 1.1.2.4 2018/09/22 04:56:28 pgoyette Exp $");
+
+#if defined(_KERNEL_OPT)
+#include "opt_compat_netbsd.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>

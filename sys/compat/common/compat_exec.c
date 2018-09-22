@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_exec.c,v 1.17 2009/08/15 23:39:35 matt Exp $	*/
+/*	$NetBSD: compat_exec.c,v 1.17.62.1 2018/09/22 04:56:28 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -31,9 +31,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_exec.c,v 1.17 2009/08/15 23:39:35 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_exec.c,v 1.17.62.1 2018/09/22 04:56:28 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
+#include "opt_compat_netbsd.h"
 #include "opt_execfmt.h"
 #endif
 

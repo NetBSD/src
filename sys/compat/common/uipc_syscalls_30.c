@@ -1,9 +1,13 @@
-/*	$NetBSD: uipc_syscalls_30.c,v 1.3.96.1 2018/03/28 04:18:24 pgoyette Exp $	*/
+/*	$NetBSD: uipc_syscalls_30.c,v 1.3.96.2 2018/09/22 04:56:28 pgoyette Exp $	*/
 
 /* written by Pavel Cahyna, 2006. Public domain. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls_30.c,v 1.3.96.1 2018/03/28 04:18:24 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls_30.c,v 1.3.96.2 2018/09/22 04:56:28 pgoyette Exp $");
+
+#if defined(_KERNEL_OPT)
+#include "opt_compat_netbsd.h"
+#endif
 
 /*
  * System call interface to the socket abstraction.

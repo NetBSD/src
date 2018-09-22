@@ -1,4 +1,4 @@
-/*	$NetBSD: bio_30.c,v 1.1.2.3 2018/09/18 23:03:54 pgoyette Exp $ */
+/*	$NetBSD: bio_30.c,v 1.1.2.4 2018/09/22 04:56:28 pgoyette Exp $ */
 /*	$OpenBSD: bio.c,v 1.9 2007/03/20 02:35:55 marco Exp $	*/
 
 /*
@@ -26,7 +26,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bio_30.c,v 1.1.2.3 2018/09/18 23:03:54 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bio_30.c,v 1.1.2.4 2018/09/22 04:56:28 pgoyette Exp $");
+
+#if defined(_KERNEL_OPT)
+#include "opt_compat_netbsd.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/conf.h>
