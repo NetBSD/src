@@ -1,4 +1,4 @@
-#	$NetBSD: DEVNAMES,v 1.315 2018/09/22 12:19:11 maxv Exp $
+#	$NetBSD: DEVNAMES,v 1.316 2018/09/22 12:41:00 maxv Exp $
 #
 # This file contains all used device names and defined attributes in
 # alphabetical order. New devices added to the system somewhere should first
@@ -701,7 +701,6 @@ iteide			MI
 ivsc			amiga
 ivsc			amigappc
 iwi			MI
-iwic			MI
 iwm			mac68k
 ix			MI
 ixg			MI
