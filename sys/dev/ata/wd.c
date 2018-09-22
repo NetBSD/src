@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.441.2.4 2018/09/22 09:22:59 jdolecek Exp $ */
+/*	$NetBSD: wd.c,v 1.441.2.5 2018/09/22 16:14:25 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.441.2.4 2018/09/22 09:22:59 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.441.2.5 2018/09/22 16:14:25 jdolecek Exp $");
 
 #include "opt_ata.h"
 #include "opt_wd.h"
@@ -1458,7 +1458,7 @@ wd_dumpblocks(device_t dev, void *va, daddr_t blkno, int nblk)
 	struct wd_softc *wd = device_private(dev);
 	struct dk_softc *dksc = &wd->sc_dksc;
 	struct disk_geom *dg = &dksc->sc_dkdev.dk_geom;
-	struct ata_xfer *xfer;
+	struct ata_xfer *xfer = &wd->dump_xfer;
 	int err;
 
 	/* Recalibrate, if first dump transfer. */
@@ -1469,11 +1469,8 @@ wd_dumpblocks(device_t dev, void *va, daddr_t blkno, int nblk)
 		wd->drvp->state = RESET;
 	}
 
-	xfer = ata_get_xfer(wd->drvp->chnl_softc, false);
-	if (xfer == NULL) {
-		printf("%s: no xfer\n", __func__);
-		return EAGAIN;
-	}
+	memset(xfer, 0, sizeof(*xfer));
+	xfer->c_flags |= C_PRIVATE_ALLOC;
 
 	xfer->c_bio.blkno = blkno;
 	xfer->c_bio.flags = ATA_POLL;
@@ -1519,7 +1516,7 @@ wd_dumpblocks(device_t dev, void *va, daddr_t blkno, int nblk)
 		err = 0;
 		break;
 	default:
-		panic("wddump: unknown error type %d", err);
+		panic("wddump: unknown error type %x", err);
 	}
 
 	if (err != 0) {

@@ -1,8 +1,6 @@
 jdolecek-ncqfixes goals:
 - add to wd(4) a callout to restart buf queue processing when ata_get_xfer()
   call fails and remove ata_channel_start()
-- change wd(4) dump code to use preallocated or on-stack ata_xfer to not rely
-  on pool having memory
 - re-fix QEMU ahci(4) bug workaround (no READ LOG EXT support) - now it
   triggers KASSERT()
 - fix ahci(4) error handling under paralles - invalid bio via WD_CHAOS_MONKEY
