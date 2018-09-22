@@ -1,4 +1,4 @@
-/*	$NetBSD: wdvar.h,v 1.46.6.1 2018/08/31 19:08:03 jdolecek Exp $	*/
+/*	$NetBSD: wdvar.h,v 1.46.6.2 2018/09/22 09:22:59 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -53,7 +53,6 @@ struct wd_softc {
 #define WDF_WAIT	0x020 /* waiting for resources */
 #define WDF_LBA		0x040 /* using LBA mode */
 #define WDF_LBA48	0x100 /* using 48-bit LBA mode */
-#define WDF_FLUSH_PEND	0x200 /* cache flush waits for free xfer */
 #define WDF_OPEN	0x400 /* device is open */
 	uint64_t sc_capacity; /* full capacity of the device */
 	uint64_t sc_capacity512; /* ... in DEV_BSIZE blocks */
@@ -74,9 +73,6 @@ struct wd_softc {
 
 	/* Sysctl nodes specific for the disk */
 	struct sysctllog *nodelog;
-	int drv_max_tags;
-#define WD_MAX_OPENINGS(wd)	\
-	(MAX(1, MIN((wd)->drvp->drv_openings, (wd)->drv_max_tags)))
 	bool drv_ncq;
 #define WD_USE_NCQ(wd)	\
 	((wd)->drv_ncq && ((wd)->drvp->drive_flags & ATA_DRIVE_NCQ))

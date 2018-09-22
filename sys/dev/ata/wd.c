@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.441.2.3 2018/09/17 20:54:41 jdolecek Exp $ */
+/*	$NetBSD: wd.c,v 1.441.2.4 2018/09/22 09:22:59 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.441.2.3 2018/09/17 20:54:41 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.441.2.4 2018/09/22 09:22:59 jdolecek Exp $");
 
 #include "opt_ata.h"
 #include "opt_wd.h"
@@ -745,8 +745,7 @@ wd_diskstart(device_t dev, struct buf *bp)
 
 	mutex_enter(&wd->sc_lock);
 
-	xfer = ata_get_xfer_ext(wd->drvp->chnl_softc, 0,
-	    WD_USE_NCQ(wd) ? WD_MAX_OPENINGS(wd) : 0);
+	xfer = ata_get_xfer(wd->drvp->chnl_softc, false);
 	if (xfer == NULL) {
 		ATADEBUG_PRINT(("wd_diskstart %s no xfer\n",
 		    dksc->sc_xname), DEBUG_XFERS);
@@ -775,22 +774,6 @@ wdstart(device_t self)
 
 	if (!device_is_active(dksc->sc_dev))
 		return;
-
-	mutex_enter(&wd->sc_lock);
-
-	/*
-	 * Do not queue any transfers until flush is finished, so that
-	 * once flush is pending, it will get handled as soon as xfer
-	 * is available.
-	 */
-	if (ISSET(wd->sc_flags, WDF_FLUSH_PEND)) {
-		ATADEBUG_PRINT(("wdstart %s flush pend\n",
-		    dksc->sc_xname), DEBUG_XFERS);
-		mutex_exit(&wd->sc_lock);
-		return;
-	}
-
-	mutex_exit(&wd->sc_lock);
 
 	dk_start(dksc, NULL);
 }
@@ -1486,7 +1469,7 @@ wd_dumpblocks(device_t dev, void *va, daddr_t blkno, int nblk)
 		wd->drvp->state = RESET;
 	}
 
-	xfer = ata_get_xfer_ext(wd->drvp->chnl_softc, 0, 0);
+	xfer = ata_get_xfer(wd->drvp->chnl_softc, false);
 	if (xfer == NULL) {
 		printf("%s: no xfer\n", __func__);
 		return EAGAIN;
@@ -1677,9 +1660,7 @@ wd_setcache(struct wd_softc *wd, int bits)
 	    (bits & DKCACHE_SAVE) != 0)
 		return EOPNOTSUPP;
 
-	xfer = ata_get_xfer(wd->drvp->chnl_softc);
-	if (xfer == NULL)
-		return EINTR;
+	xfer = ata_get_xfer(wd->drvp->chnl_softc, true);
 
 	xfer->c_ata_c.r_command = SET_FEATURES;
 	xfer->c_ata_c.r_st_bmask = 0;
@@ -1720,9 +1701,7 @@ wd_standby(struct wd_softc *wd, int flags)
 	struct ata_xfer *xfer;
 	int error;
 
-	xfer = ata_get_xfer(wd->drvp->chnl_softc);
-	if (xfer == NULL)
-		return EINTR;
+	xfer = ata_get_xfer(wd->drvp->chnl_softc, true);
 
 	xfer->c_ata_c.r_command = WDCC_STANDBY_IMMED;
 	xfer->c_ata_c.r_st_bmask = WDCS_DRDY;
@@ -1779,20 +1758,7 @@ wd_flushcache(struct wd_softc *wd, int flags, bool start_self)
 	    wd->sc_params.atap_cmd_set2 == 0xffff))
 		return ENODEV;
 
-	mutex_enter(&wd->sc_lock);
-	SET(wd->sc_flags, WDF_FLUSH_PEND);
-	mutex_exit(&wd->sc_lock);
-
-	xfer = ata_get_xfer(wd->drvp->chnl_softc);
-
-	mutex_enter(&wd->sc_lock);
-	CLR(wd->sc_flags, WDF_FLUSH_PEND);
-	mutex_exit(&wd->sc_lock);
-
-	if (xfer == NULL) {
-		error = EINTR;
-		goto out;
-	}
+	xfer = ata_get_xfer(wd->drvp->chnl_softc, true);
 
 	if ((wd->sc_params.atap_cmd2_en & ATA_CMD2_LBA48) != 0 &&
 	    (wd->sc_params.atap_cmd2_en & ATA_CMD2_FCE) != 0) {
@@ -1830,7 +1796,6 @@ wd_flushcache(struct wd_softc *wd, int flags, bool start_self)
 out_xfer:
 	ata_free_xfer(wd->drvp->chnl_softc, xfer);
 
-out:
 	/* start again I/O processing possibly stopped due to no xfer */
 	ata_channel_start(wd->drvp->chnl_softc, wd->drvp->drive, start_self);
 
@@ -1845,9 +1810,7 @@ wd_trim(struct wd_softc *wd, daddr_t bno, long size)
 	int error;
 	unsigned char *req;
 
-	xfer = ata_get_xfer(wd->drvp->chnl_softc);
-	if (xfer == NULL)
-		return EINTR;
+	xfer = ata_get_xfer(wd->drvp->chnl_softc, true);
 
 	req = kmem_zalloc(512, KM_SLEEP);
 	req[0] = bno & 0xff;
@@ -2012,11 +1975,7 @@ wdioctlstrategy(struct buf *bp)
 		goto out2;
 	}
 
-	xfer = ata_get_xfer(wi->wi_softc->drvp->chnl_softc);
-	if (xfer == NULL) {
-		error = EINTR;
-		goto out2;
-	}
+	xfer = ata_get_xfer(wi->wi_softc->drvp->chnl_softc, true);
 
 	/*
 	 * Abort if physio broke up the transfer
@@ -2131,19 +2090,6 @@ wd_sysctl_attach(struct wd_softc *wd)
 		aprint_error_dev(dksc->sc_dev,
 		    "could not create %s.%s sysctl node\n",
 		    "hw", dksc->sc_xname);
-		return;
-	}
-
-	wd->drv_max_tags = ATA_MAX_OPENINGS;
-	if ((error = sysctl_createv(&wd->nodelog, 0, NULL, NULL,
-				CTLFLAG_READWRITE, CTLTYPE_INT, "max_tags",
-				SYSCTL_DESCR("max number of NCQ tags to use"),
-				NULL, 0, &wd->drv_max_tags, 0,
-				CTL_HW, node->sysctl_num, CTL_CREATE, CTL_EOL))
-				!= 0) {
-		aprint_error_dev(dksc->sc_dev,
-		    "could not create %s.%s.max_tags sysctl - error %d\n",
-		    "hw", dksc->sc_xname, error);
 		return;
 	}
 

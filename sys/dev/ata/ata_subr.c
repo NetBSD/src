@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_subr.c,v 1.6.2.4 2018/09/17 20:54:41 jdolecek Exp $	*/
+/*	$NetBSD: ata_subr.c,v 1.6.2.5 2018/09/22 09:22:59 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -25,14 +25,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata_subr.c,v 1.6.2.4 2018/09/17 20:54:41 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata_subr.c,v 1.6.2.5 2018/09/22 09:22:59 jdolecek Exp $");
 
 #include "opt_ata.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
 #include <sys/device.h>
 #include <sys/conf.h>
 #include <sys/fcntl.h>
@@ -167,22 +166,16 @@ ata_queue_alloc(uint8_t openings)
 	if (openings > ATA_MAX_OPENINGS)
 		openings = ATA_MAX_OPENINGS;
 
-	/* XXX convert to kmem_zalloc() once ata_xfer is moved to pool */
-	struct ata_queue *chq = malloc(offsetof(struct ata_queue, queue_xfers[openings]),
-	    M_DEVBUF, M_WAITOK | M_ZERO);
+	struct ata_queue *chq = kmem_zalloc(sizeof(*chq), KM_SLEEP);
 
 	chq->queue_openings = openings;
 	ata_queue_reset(chq);
 
-	cv_init(&chq->queue_busy, "ataqbusy");
 	cv_init(&chq->queue_drain, "atdrn");
 	cv_init(&chq->queue_idle, "qidl");
 
 	cv_init(&chq->c_active, "ataact");
 	cv_init(&chq->c_cmd_finish, "atafin");
-
-	for (uint8_t i = 0; i < openings; i++)
-		chq->queue_xfers[i].c_slot = i;
 
 	return chq;
 }
@@ -190,14 +183,13 @@ ata_queue_alloc(uint8_t openings)
 void
 ata_queue_free(struct ata_queue *chq)
 {
-	cv_destroy(&chq->queue_busy);
 	cv_destroy(&chq->queue_drain);
 	cv_destroy(&chq->queue_idle);
 
 	cv_destroy(&chq->c_active);
 	cv_destroy(&chq->c_cmd_finish);
 
-	free(chq, M_DEVBUF);
+	kmem_free(chq, sizeof(*chq));
 }
 
 void
@@ -229,135 +221,6 @@ ata_channel_destroy(struct ata_channel *chp)
 
 	mutex_destroy(&chp->ch_lock);
 	cv_destroy(&chp->ch_thr_idle);
-}
-
-/*
- * Does it's own locking, does not require splbio().
- * flags - whether to block waiting for free xfer
- * openings - limit of openings supported by device, <= 0 means tag not
- *     relevant, and any available xfer can be returned
- */
-struct ata_xfer *
-ata_get_xfer_ext(struct ata_channel *chp, int flags, uint8_t openings)
-{
-	struct ata_queue *chq = chp->ch_queue;
-	struct ata_xfer *xfer = NULL;
-	uint32_t avail, slot, mask;
-	int error;
-
-	ATADEBUG_PRINT(("%s: channel %d fl 0x%x op %d qavail 0x%x qact %d",
-	    __func__, chp->ch_channel, flags, openings,
-	    chq->queue_xfers_avail, chq->queue_active),
-	    DEBUG_XFERS);
-
-	ata_channel_lock(chp);
-
-	/*
-	 * When openings is just 1, can't reserve anything for
-	 * recovery. KASSERT() here is to catch code which naively
-	 * relies on C_RECOVERY to work under this condition.
-	 */
-	KASSERT((flags & C_RECOVERY) == 0 || chq->queue_openings > 1);
-
-	if (flags & C_RECOVERY) {
-		mask = UINT32_MAX;
-	} else {
-		if (openings <= 0 || openings > chq->queue_openings)
-			openings = chq->queue_openings;
-
-		if (openings > 1) {
-			mask = __BIT(openings - 1) - 1;
-		} else {
-			mask = UINT32_MAX;
-		}
-	}
-
-retry:
-	avail = ffs32(chq->queue_xfers_avail & mask);
-	if (avail == 0) {
-		/*
-		 * Catch code which tries to get another recovery xfer while
-		 * already holding one (wrong recursion).
-		 */
-		KASSERTMSG((flags & C_RECOVERY) == 0,
-		    "recovery xfer busy openings %d mask %x avail %x",
-		    openings, mask, chq->queue_xfers_avail);
-
-		if (flags & C_WAIT) {
-			chq->queue_flags |= QF_NEED_XFER;
-			error = cv_wait_sig(&chq->queue_busy, &chp->ch_lock);
-			if (error == 0)
-				goto retry;
-		}
-
-		goto out;
-	}
-
-	slot = avail - 1;
-	xfer = &chq->queue_xfers[slot];
-	chq->queue_xfers_avail &= ~__BIT(slot);
-
-	KASSERT((chq->active_xfers_used & __BIT(slot)) == 0);
-
-	/* zero everything after the callout member */
-	memset(&xfer->c_startzero, 0,
-	    sizeof(struct ata_xfer) - offsetof(struct ata_xfer, c_startzero));
-
-out:
-	ata_channel_unlock(chp);
-
-	ATADEBUG_PRINT((" xfer %p\n", xfer), DEBUG_XFERS);
-	return xfer;
-}
-
-/*
- * ata_deactivate_xfer() must be always called prior to ata_free_xfer()
- */
-void
-ata_free_xfer(struct ata_channel *chp, struct ata_xfer *xfer)
-{
-	struct ata_queue *chq = chp->ch_queue;
-
-	ata_channel_lock(chp);
-
-	if (xfer->c_flags & (C_WAITACT|C_WAITTIMO)) {
-		/* Someone is waiting for this xfer, so we can't free now */
-		xfer->c_flags |= C_FREE;
-		cv_broadcast(&chq->c_active);
-		goto out;
-	}
-
-	/* XXX move PIOBM and free_gw to deactivate? */
-#if NATA_PIOBM		/* XXX wdc dependent code */
-	if (xfer->c_flags & C_PIOBM) {
-		struct wdc_softc *wdc = CHAN_TO_WDC(chp);
-
-		/* finish the busmastering PIO */
-		(*wdc->piobm_done)(wdc->dma_arg,
-		    chp->ch_channel, xfer->c_drive);
-		chp->ch_flags &= ~(ATACH_DMA_WAIT | ATACH_PIOBM_WAIT | ATACH_IRQ_WAIT);
-	}
-#endif
-
-	if (chp->ch_atac->atac_free_hw)
-		chp->ch_atac->atac_free_hw(chp);
- 
-	KASSERT((chq->active_xfers_used & __BIT(xfer->c_slot)) == 0);
-	KASSERT((chq->queue_xfers_avail & __BIT(xfer->c_slot)) == 0);
-	chq->queue_xfers_avail |= __BIT(xfer->c_slot);
-
-out:
-	if (chq->queue_flags & QF_NEED_XFER) {
-		chq->queue_flags &= ~QF_NEED_XFER;
-		cv_broadcast(&chq->queue_busy);
-	}
-
-	ata_channel_unlock(chp);
-
-	ATADEBUG_PRINT(("%s: channel %d xfer %p qavail 0x%x qact %d\n",
-	    __func__, chp->ch_channel, xfer, chq->queue_xfers_avail,
-	    chq->queue_active),
-	    DEBUG_XFERS);
 }
 
 void
@@ -472,18 +335,49 @@ atachannel_debug(struct ata_channel *chp)
 	    chq->queue_flags, chq->queue_xfers_avail, chq->active_xfers_used);
 	printf("        act %d freez %d open %u\n",
 	    chq->queue_active, chq->queue_freeze, chq->queue_openings);
-
-#if 0
-	printf("  xfers:\n");
-	for(int i=0; i < chq->queue_openings; i++) {
-		struct ata_xfer *xfer = &chq->queue_xfers[i];
-
-		printf("    #%d sl %d drv %d retr %d fl %x",
-		    i, xfer->c_slot, xfer->c_drive, xfer->c_retries,
-		    xfer->c_flags);
-		printf(" data %p bcount %d skip %d\n",
-		    xfer->c_databuf, xfer->c_bcount, xfer->c_skip);
-	}
-#endif
 }
 #endif /* ATADEBUG */
+
+bool
+ata_queue_alloc_slot(struct ata_channel *chp, uint8_t *c_slot,
+    uint8_t drv_openings)
+{
+	struct ata_queue *chq = chp->ch_queue;
+	uint32_t avail, mask;
+
+	KASSERT(mutex_owned(&chp->ch_lock));
+	KASSERT(chq->queue_active < chq->queue_openings);
+
+	ATADEBUG_PRINT(("%s: channel %d qavail 0x%x qact %d",
+	    __func__, chp->ch_channel,
+	    chq->queue_xfers_avail, chq->queue_active),
+	    DEBUG_XFERS);
+
+	mask = __BIT(MIN(chq->queue_openings, drv_openings)) - 1;
+
+	avail = ffs32(chq->queue_xfers_avail & mask);
+	if (avail == 0)
+		return false;
+
+	KASSERT(avail > 0);
+	KASSERT(avail <= drv_openings);
+
+	*c_slot = avail - 1;
+	chq->queue_xfers_avail &= ~__BIT(*c_slot);
+
+	KASSERT((chq->active_xfers_used & __BIT(*c_slot)) == 0);
+	return true;
+}
+
+void
+ata_queue_free_slot(struct ata_channel *chp, uint8_t c_slot)
+{
+	struct ata_queue *chq = chp->ch_queue;
+
+	KASSERT(mutex_owned(&chp->ch_lock));
+
+	KASSERT((chq->active_xfers_used & __BIT(c_slot)) == 0);
+	KASSERT((chq->queue_xfers_avail & __BIT(c_slot)) == 0);
+
+	chq->queue_xfers_avail |= __BIT(c_slot);
+}

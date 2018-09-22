@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata_core.c,v 1.62.2.4 2018/09/17 19:30:25 jdolecek Exp $	*/
+/*	$NetBSD: ahcisata_core.c,v 1.62.2.5 2018/09/22 09:22:59 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.62.2.4 2018/09/17 19:30:25 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.62.2.5 2018/09/22 09:22:59 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -59,7 +59,7 @@ static void ahci_setup_channel(struct ata_channel *);
 
 static int  ahci_ata_bio(struct ata_drive_datas *, struct ata_xfer *);
 static int  ahci_do_reset_drive(struct ata_channel *, int, int, uint32_t *,
-	struct ata_xfer *xfer);
+	uint8_t);
 static void ahci_reset_drive(struct ata_drive_datas *, int, uint32_t *);
 static void ahci_reset_channel(struct ata_channel *, int);
 static int  ahci_exec_command(struct ata_drive_datas *, struct ata_xfer *);
@@ -681,24 +681,28 @@ ahci_reset_drive(struct ata_drive_datas *drvp, int flags, uint32_t *sigp)
 {
 	struct ata_channel *chp = drvp->chnl_softc;
 	struct ahci_softc *sc = (struct ahci_softc *)chp->ch_atac;
-	struct ata_xfer *xfer;
-
-	xfer = ata_get_xfer_ext(chp, C_RECOVERY, 0);
+	uint8_t c_slot;
 
 	ata_channel_lock(chp);
+
+	/* get a slot for running the command on */
+	if (!ata_queue_alloc_slot(chp, &c_slot, ATA_MAX_OPENINGS)) {
+		panic("%s: %s: failed to get xfer for reset, port %d\n",
+		    device_xname(sc->sc_atac.atac_dev),
+		    __func__, chp->ch_channel);
+		/* NOTREACHED */
+	}
 
 	AHCI_WRITE(sc, AHCI_GHC,
 	    AHCI_READ(sc, AHCI_GHC) & ~AHCI_GHC_IE);
 	ahci_channel_stop(sc, chp, flags);
-	if (ahci_do_reset_drive(chp, drvp->drive, flags, sigp, xfer) != 0)
+	if (ahci_do_reset_drive(chp, drvp->drive, flags, sigp, c_slot) != 0)
 		ata_reset_channel(chp, flags);
 	AHCI_WRITE(sc, AHCI_GHC, AHCI_READ(sc, AHCI_GHC) | AHCI_GHC_IE);
 
+	ata_queue_free_slot(chp, c_slot);
+
 	ata_channel_unlock(chp);
-
-	ata_free_xfer(chp, xfer);
-
-	return;
 }
 
 /* return error code from ata_bio */
@@ -755,7 +759,7 @@ ahci_exec_fis(struct ata_channel *chp, int timeout, int flags, int slot)
 
 static int
 ahci_do_reset_drive(struct ata_channel *chp, int drive, int flags,
-    uint32_t *sigp, struct ata_xfer *xfer)
+    uint32_t *sigp, uint8_t c_slot)
 {
 	struct ahci_channel *achp = (struct ahci_channel *)chp;
 	struct ahci_softc *sc = (struct ahci_softc *)chp->ch_atac;
@@ -790,8 +794,8 @@ again:
 
 	/* polled command, assume interrupts are disabled */
 
-	cmd_h = &achp->ahcic_cmdh[xfer->c_slot];
-	cmd_tbl = achp->ahcic_cmd_tbl[xfer->c_slot];
+	cmd_h = &achp->ahcic_cmdh[c_slot];
+	cmd_tbl = achp->ahcic_cmd_tbl[c_slot];
 	cmd_h->cmdh_flags = htole16(AHCI_CMDH_F_RST | AHCI_CMDH_F_CBSY |
 	    RHD_FISLEN / 4 | (drive << AHCI_CMDH_F_PMP_SHIFT));
 	cmd_h->cmdh_prdbc = 0;
@@ -799,7 +803,7 @@ again:
 	cmd_tbl->cmdt_cfis[fis_type] = RHD_FISTYPE;
 	cmd_tbl->cmdt_cfis[rhd_c] = drive;
 	cmd_tbl->cmdt_cfis[rhd_control] = WDCTL_RST;
-	switch(ahci_exec_fis(chp, 100, flags, xfer->c_slot)) {
+	switch(ahci_exec_fis(chp, 100, flags, c_slot)) {
 	case ERR_DF:
 	case TIMEOUT:
 		aprint_error("%s channel %d: setting WDCTL_RST failed "
@@ -817,7 +821,7 @@ again:
 	cmd_tbl->cmdt_cfis[fis_type] = RHD_FISTYPE;
 	cmd_tbl->cmdt_cfis[rhd_c] = drive;
 	cmd_tbl->cmdt_cfis[rhd_control] = 0;
-	switch(ahci_exec_fis(chp, 310, flags, xfer->c_slot)) {
+	switch(ahci_exec_fis(chp, 310, flags, c_slot)) {
 	case ERR_DF:
 	case TIMEOUT:
 		if ((sc->sc_ahci_quirks & AHCI_QUIRK_BADPMPRESET) != 0 &&
@@ -943,17 +947,18 @@ ahci_probe_drive(struct ata_channel *chp)
 	struct ahci_softc *sc = (struct ahci_softc *)chp->ch_atac;
 	struct ahci_channel *achp = (struct ahci_channel *)chp;
 	uint32_t sig;
-	struct ata_xfer *xfer;
+	uint8_t c_slot;
 
-	xfer = ata_get_xfer_ext(chp, 0, 0);
-	if (xfer == NULL) {
+	ata_channel_lock(chp);
+
+	/* get a slot for running the command on */
+	if (!ata_queue_alloc_slot(chp, &c_slot, ATA_MAX_OPENINGS)) {
 		aprint_error_dev(sc->sc_atac.atac_dev,
 		    "%s: failed to get xfer port %d\n",
 		    __func__, chp->ch_channel);
+		ata_channel_unlock(chp);
 		return;
-        }
-
-	ata_channel_lock(chp);
+	}
 
 	/* bring interface up, accept FISs, power up and spin up device */
 	AHCI_WRITE(sc, AHCI_P_CMD(chp->ch_channel),
@@ -966,9 +971,9 @@ ahci_probe_drive(struct ata_channel *chp)
 		ata_delay(chp, 500, "ahcidv", AT_WAIT);
 		if (sc->sc_ahci_cap & AHCI_CAP_SPM) {
 			ahci_do_reset_drive(chp, PMP_PORT_CTL, AT_WAIT, &sig,
-			    xfer);
+			    c_slot);
 		} else {
-			ahci_do_reset_drive(chp, 0, AT_WAIT, &sig, xfer);
+			ahci_do_reset_drive(chp, 0, AT_WAIT, &sig, c_slot);
 		}
 		sata_interpret_sig(chp, 0, sig);
 		/* if we have a PMP attached, inform the controller */
@@ -980,7 +985,7 @@ ahci_probe_drive(struct ata_channel *chp)
 		}
 		/* clear port interrupt register */
 		AHCI_WRITE(sc, AHCI_P_IS(chp->ch_channel), 0xffffffff);
-		
+
 		/* and enable interrupts */
 		AHCI_WRITE(sc, AHCI_P_IE(chp->ch_channel),
 		    AHCI_P_IX_TFES | AHCI_P_IX_HBFS | AHCI_P_IX_HBDS |
@@ -994,6 +999,9 @@ ahci_probe_drive(struct ata_channel *chp)
 	default:
 		break;
 	}
+
+	ata_queue_free_slot(chp, c_slot);
+
 	ata_channel_unlock(chp);
 }
 
@@ -1866,7 +1874,7 @@ ahci_atapi_scsipi_request(struct scsipi_channel *chan,
 			scsipi_done(sc_xfer);
 			return;
 		}
-		xfer = ata_get_xfer_ext(atac->atac_channels[channel], 0, 0);
+		xfer = ata_get_xfer(atac->atac_channels[channel], false);
 		if (xfer == NULL) {
 			sc_xfer->error = XS_RESOURCE_SHORTAGE;
 			scsipi_done(sc_xfer);

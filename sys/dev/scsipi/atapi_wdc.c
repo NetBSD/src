@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_wdc.c,v 1.129.6.3 2018/09/17 19:30:26 jdolecek Exp $	*/
+/*	$NetBSD: atapi_wdc.c,v 1.129.6.4 2018/09/22 09:22:59 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.129.6.3 2018/09/17 19:30:26 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.129.6.4 2018/09/22 09:22:59 jdolecek Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -208,7 +208,7 @@ wdc_atapi_get_params(struct scsipi_channel *chan, int drive,
 	struct ata_xfer *xfer;
 	int rv;
 
-	xfer = ata_get_xfer(chp);
+	xfer = ata_get_xfer(chp, false);
 	if (xfer == NULL) {
 		printf("wdc_atapi_get_params: no xfer\n");
 		return EBUSY;
@@ -395,7 +395,7 @@ wdc_atapi_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 			return;
 		}
 
-		xfer = ata_get_xfer_ext(atac->atac_channels[channel], false, 0);
+		xfer = ata_get_xfer(atac->atac_channels[channel], false);
 		if (xfer == NULL) {
 			sc_xfer->error = XS_RESOURCE_SHORTAGE;
 			scsipi_done(sc_xfer);
