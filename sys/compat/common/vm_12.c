@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_12.c,v 1.20.56.1 2018/03/31 09:17:35 pgoyette Exp $	*/
+/*	$NetBSD: vm_12.c,v 1.20.56.2 2018/09/22 04:56:28 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1997 Matthew R. Green
@@ -27,7 +27,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_12.c,v 1.20.56.1 2018/03/31 09:17:35 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_12.c,v 1.20.56.2 2018/09/22 04:56:28 pgoyette Exp $");
+
+#if defined(_KERNEL_OPT)
+#include "opt_compat_netbsd.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_60_mod.c,v 1.1.2.18 2018/09/15 02:14:39 pgoyette Exp $	*/
+/*	$NetBSD: compat_60_mod.c,v 1.1.2.19 2018/09/22 04:56:28 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -33,8 +33,12 @@
  * Linkage for the compat module: spaghetti.
  */
 
+#if defined(_KERNEL_OPT)
+#include "opt_compat_netbsd.h"
+#endif
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_60_mod.c,v 1.1.2.18 2018/09/15 02:14:39 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_60_mod.c,v 1.1.2.19 2018/09/22 04:56:28 pgoyette Exp $");
 
 #include <sys/systm.h>
 #include <sys/module.h>

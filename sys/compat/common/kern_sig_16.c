@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig_16.c,v 1.2.38.3 2018/05/04 08:19:47 pgoyette Exp $	*/
+/*	$NetBSD: kern_sig_16.c,v 1.2.38.4 2018/09/22 04:56:28 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig_16.c,v 1.2.38.3 2018/05/04 08:19:47 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig_16.c,v 1.2.38.4 2018/09/22 04:56:28 pgoyette Exp $");
+
+#if defined(_KERNEL_OPT)
+#include "opt_compat_netbsd.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/kernel.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_43_mod.c,v 1.1.2.3 2018/09/13 22:53:52 pgoyette Exp $	*/
+/*	$NetBSD: compat_43_mod.c,v 1.1.2.4 2018/09/22 04:56:28 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_43_mod.c,v 1.1.2.3 2018/09/13 22:53:52 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_43_mod.c,v 1.1.2.4 2018/09/22 04:56:28 pgoyette Exp $");
+
+#if defined(_KERNEL_OPT)
+#include "opt_compat_netbsd.h"
+#endif
 
 #include <sys/systm.h>
 #include <sys/module.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_40.c,v 1.4.16.1 2018/03/27 07:29:44 pgoyette Exp $	*/
+/*	$NetBSD: vfs_syscalls_40.c,v 1.4.16.2 2018/09/22 04:56:28 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_40.c,v 1.4.16.1 2018/03/27 07:29:44 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_40.c,v 1.4.16.2 2018/09/22 04:56:28 pgoyette Exp $");
+
+#if defined(_KERNEL_OPT)
+#include "opt_compat_netbsd.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>

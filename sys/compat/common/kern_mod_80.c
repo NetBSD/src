@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_mod_80.c,v 1.1.2.6 2018/09/18 23:03:54 pgoyette Exp $	*/
+/*	$NetBSD: kern_mod_80.c,v 1.1.2.7 2018/09/22 04:56:28 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -31,9 +31,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_mod_80.c,v 1.1.2.6 2018/09/18 23:03:54 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_mod_80.c,v 1.1.2.7 2018/09/22 04:56:28 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
+#include "opt_compat_netbsd.h"
 #include "opt_modular.h"
 #endif
 

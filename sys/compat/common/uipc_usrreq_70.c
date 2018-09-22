@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq_70.c,v 1.1.20.1 2018/03/08 08:56:47 pgoyette Exp $	*/
+/*	$NetBSD: uipc_usrreq_70.c,v 1.1.20.2 2018/09/22 04:56:28 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -30,7 +30,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq_70.c,v 1.1.20.1 2018/03/08 08:56:47 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq_70.c,v 1.1.20.2 2018/09/22 04:56:28 pgoyette Exp $");
+
+#if defined(_KERNEL_OPT)
+#include "opt_compat_netbsd.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/lwp.h>
