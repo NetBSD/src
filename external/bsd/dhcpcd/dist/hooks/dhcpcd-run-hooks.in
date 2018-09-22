@@ -107,7 +107,7 @@ remove_markers()
 # Compare two files.
 comp_file()
 {
-	[ -e "$1" -a -e "$2" ] || return 1
+	[ -e "$1" ] && [ -e "$2" ] || return 1
 
 	if type cmp >/dev/null 2>&1; then
 		cmp -s "$1" "$2"
@@ -187,11 +187,11 @@ syslog()
 valid_domainname()
 {
 	name="$1"
-	[ -z "$name" -o ${#name} -gt 255 ] && return 1
+	[ -z "$name" ] || [ ${#name} -gt 255 ] && return 1
 	
 	while [ -n "$name" ]; do
 		label="${name%%.*}"
-		[ -z "$label" -o ${#label} -gt 63 ] && return 1
+		[ -z "$label" ] || [ ${#label} -gt 63 ] && return 1
 		case "$label" in
 		-*|_*|*-|*_)		return 1;;
 		*[![:alnum:]_-]*)	return 1;;
@@ -231,16 +231,16 @@ detect_init()
 	# systems we try to detect them first.
 	status="@STATUSARG@"
 	: ${status:=status}
-	if [ -x /bin/systemctl -a -S /run/systemd/private ]; then
+	if [ -x /bin/systemctl ] && [ -S /run/systemd/private ]; then
 		_service_exists="/bin/systemctl --quiet is-enabled \$1.service"
 		_service_status="/bin/systemctl --quiet is-active \$1.service"
 		_service_cmd="/bin/systemctl \$2 \$1.service"
-	elif [ -x /usr/bin/systemctl -a -S /run/systemd/private ]; then
+	elif [ -x /usr/bin/systemctl ] && [ -S /run/systemd/private ]; then
 		_service_exists="/usr/bin/systemctl --quiet is-enabled \$1.service"
 		_service_status="/usr/bin/systemctl --quiet is-active \$1.service"
 		_service_cmd="/usr/bin/systemctl \$2 \$1.service"
-	elif [ -x /sbin/rc-service -a \
-	    -s /libexec/rc/init.d/softlevel -o -s /run/openrc/softlevel ]
+	elif [ -x /sbin/rc-service ] && [ -s /libexec/rc/init.d/softlevel ] ||
+	     [ -s /run/openrc/softlevel ]
 	then
 		_service_exists="/sbin/rc-service -e \$1"
 		_service_cmd="/sbin/rc-service \$1 -- -D \$2"
@@ -259,7 +259,7 @@ detect_init()
 	elif [ -x /usr/bin/sv ]; then
 		_service_exists="/usr/bin/sv status \$1 >/dev/null 2>&1"
 		_service_cmd="/usr/bin/sv \$2 \$1"
-	elif [ -e /etc/slackware-version -a -d /etc/rc.d ]; then
+	elif [ -e /etc/slackware-version ] && [ -d /etc/rc.d ]; then
 		_service_exists="[ -x /etc/rc.d/rc.\$1 ]"
 		_service_cmd="/etc/rc.d/rc.\$1 \$2"
 		_service_status="/etc/rc.d/rc.\$1 status >/dev/null 2>&1"
@@ -274,7 +274,7 @@ detect_init()
 		done
 		if [ -e /etc/arch-release ]; then
 			_service_status="[ -e /var/run/daemons/\$1 ]"
-		elif [ "$x" = "/etc/rc.d" -a -e /etc/rc.d/rc.subr ]; then
+		elif [ "$x" = "/etc/rc.d" ] && [ -e /etc/rc.d/rc.subr ]; then
 			_service_status="$x/\$1 check >/dev/null 2>&1"
 		fi
 	fi
