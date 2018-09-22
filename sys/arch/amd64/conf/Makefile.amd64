@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.amd64,v 1.73 2018/08/22 12:07:42 maxv Exp $
+#	$NetBSD: Makefile.amd64,v 1.74 2018/09/22 12:24:01 rin Exp $
 
 # Makefile for NetBSD
 #
@@ -63,11 +63,6 @@ CFLAGS+=	${KASANFLAGS.${.IMPSRC:T}:U${KASANFLAGS}}
 ## (3) libkern and compat
 ##
 OPT_MODULAR=	%MODULAR%
-.if !empty(OPT_MODULAR)
-KERN_AS=	obj
-.else
-KERN_AS=	library
-.endif
 
 ##
 ## (4) local objects, compile rules, and dependencies

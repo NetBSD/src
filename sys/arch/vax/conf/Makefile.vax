@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.vax,v 1.83 2014/06/14 20:49:37 mrg Exp $
+#	$NetBSD: Makefile.vax,v 1.84 2018/09/22 12:24:03 rin Exp $
 
 # Makefile for NetBSD
 #
@@ -38,7 +38,7 @@ CFLAGS+=	-fno-pic
 ##
 ## (3) libkern and compat
 ##
-KERN_AS=	obj
+OPT_MODULAR=	%MODULAR%
 
 ##
 ## (4) local objects, compile rules, and dependencies

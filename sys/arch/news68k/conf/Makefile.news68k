@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.news68k,v 1.21 2015/09/06 02:17:31 uebayasi Exp $
+#	$NetBSD: Makefile.news68k,v 1.22 2018/09/22 12:24:02 rin Exp $
 #
 # Makefile for NetBSD
 #
@@ -41,7 +41,7 @@ AFLAGS+=	-x assembler-with-cpp
 ##
 ## (3) libkern and compat
 ##
-KERN_AS=	obj
+OPT_MODULAR=	%MODULAR%
 
 ##
 ## (4) local objects, compile rules, and dependencies
