@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.192 2018/07/28 14:13:13 sevan Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.193 2018/09/22 13:48:22 kre Exp $
 #
 # Copyright (c) 2003,2007,2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -2229,7 +2229,7 @@ nvme[0-9]*ns[0-9]*)
 	unit=${i#nvme}
 	unit=${unit%ns*}
 	subunit=${i#nvme${unit}ns}
-	if [ 0$subunit -le 0 -o 0$subunit -ge 65536 ]; then
+	if [ 0$subunit -le 0 ] || [ 0$subunit -ge 65536 ]; then
 		warn "bad nsid for $i: $subunit"
 		break
 	fi
