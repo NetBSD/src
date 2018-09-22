@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_50_mod.c,v 1.1.2.13 2018/09/22 04:56:28 pgoyette Exp $	*/
+/*	$NetBSD: compat_50_mod.c,v 1.1.2.14 2018/09/22 22:21:46 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_50_mod.c,v 1.1.2.13 2018/09/22 04:56:28 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_50_mod.c,v 1.1.2.14 2018/09/22 22:21:46 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -54,8 +54,6 @@ __KERNEL_RCSID(0, "$NetBSD: compat_50_mod.c,v 1.1.2.13 2018/09/22 04:56:28 pgoye
 #include <compat/common/compat_util.h>
 #include <compat/common/compat_mod.h>
 #include <compat/common/if_spppsubr50.h>
-
-#include <dev/raidframe/rf_compat50_mod.h>
 
 #include <dev/wscons/wsevent_50.h>
 
@@ -87,7 +85,6 @@ compat_50_init(void)
 	clockctl_50_init();
 	if_spppsubr_50_init();
 	cryptodev_50_init();
-	raidframe_50_init();
 	puffs_50_init();
 	wsevent_50_init();
 	vnd_50_init();
@@ -114,7 +111,6 @@ compat_50_fini(void)
 	vnd_50_fini();
 	wsevent_50_fini();
 	puffs_50_fini();
-	raidframe_50_fini();
 	cryptodev_50_fini();
 	if_spppsubr_50_fini();
 	clockctl_50_fini();
@@ -152,7 +148,6 @@ compat_50_fini(void)
 	clockctl_50_init();
 	if_spppsubr_50_init();
 	cryptodev_50_init();
-	raidframe_50_init();
 	puffs_50_init();
 	wsevent_50_init();
 	vnd_50_init();
