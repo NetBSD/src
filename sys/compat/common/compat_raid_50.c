@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_80_mod.c,v 1.1.2.11 2018/09/22 22:21:46 pgoyette Exp $	*/
+/*	$NetBSD: compat_raid_50.c,v 1.1.2.1 2018/09/22 22:21:46 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_80_mod.c,v 1.1.2.11 2018/09/22 22:21:46 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_raid_50.c,v 1.1.2.1 2018/09/22 22:21:46 pgoyette Exp $");
 
 #include <sys/systm.h>
 #include <sys/module.h>
@@ -46,34 +46,36 @@ __KERNEL_RCSID(0, "$NetBSD: compat_80_mod.c,v 1.1.2.11 2018/09/22 22:21:46 pgoye
 #include <compat/common/compat_util.h>
 #include <compat/common/compat_mod.h>
 
-int compat_80_init(void)
+#include <dev/raidframe/rf_compat50_mod.h>
+
+int compat_raid_50_init(void)
 {
 
-	kern_mod_80_init();
+	raidframe_50_init();
 
 	return 0;
 }
 
-int compat_80_fini(void)
+int compat_raid_50_fini(void)
 {
 
-	kern_mod_80_fini();
+	raidframe_50_fini();
 
 	return 0;
 }
 
-MODULE(MODULE_CLASS_EXEC, compat_80, NULL);
+MODULE(MODULE_CLASS_EXEC, compat_raid_50, "compat_50,raid");
 
 static int
-compat_80_modcmd(modcmd_t cmd, void *arg)
+compat_50_modcmd(modcmd_t cmd, void *arg)
 {
 
 	switch (cmd) {
 	case MODULE_CMD_INIT:
-		return compat_80_init();
+		return compat_raid_50_init();
 
 	case MODULE_CMD_FINI:
-		return compat_80_fini();
+		return compat_raid_50_fini();
 
 	default:
 		return ENOTTY;
