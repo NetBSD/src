@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.riscv,v 1.2 2015/03/31 01:05:52 matt Exp $
+#	$NetBSD: Makefile.riscv,v 1.3 2018/09/22 12:24:03 rin Exp $
 
 # Makefile for NetBSD
 #
@@ -55,11 +55,6 @@ AFLAGS+=	-x assembler-with-cpp ${AOPTS}
 ## (3) libkern and compat
 ##
 OPT_MODULAR=	%MODULAR%
-.if !empty(OPT_MODULAR)
-KERN_AS=	obj
-.else
-KERN_AS=	library
-.endif
 
 ##
 ## (4) local objects, compile rules, and dependencies
