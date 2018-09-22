@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.441.2.5 2018/09/22 16:14:25 jdolecek Exp $ */
+/*	$NetBSD: wd.c,v 1.441.2.6 2018/09/22 17:50:09 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.441.2.5 2018/09/22 16:14:25 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.441.2.6 2018/09/22 17:50:09 jdolecek Exp $");
 
 #include "opt_ata.h"
 #include "opt_wd.h"
@@ -192,7 +192,7 @@ static void	wi_free(struct wd_ioctl *);
 static struct	wd_ioctl *wi_get(struct wd_softc *);
 static void	wdioctlstrategy(struct buf *);
 
-static void	wdstart(device_t);
+static void	wdrestart(void *);
 static void	wdstart1(struct wd_softc *, struct buf *, struct ata_xfer *);
 static int	wd_diskstart(device_t, struct buf *);
 static int	wd_dumpblocks(device_t, void *, daddr_t, int);
@@ -324,7 +324,6 @@ wdattach(device_t parent, device_t self, void *aux)
 	wd->drvp = adev->adev_drv_data;
 
 	wd->drvp->drv_openings = 1;
-	wd->drvp->drv_start = wdstart;
 	wd->drvp->drv_done = wddone;
 	wd->drvp->drv_softc = dksc->sc_dev; /* done in atabusconfig_thread()
 					     but too late */
@@ -333,6 +332,7 @@ wdattach(device_t parent, device_t self, void *aux)
 	SLIST_INIT(&wd->sc_requeue_list);
 	callout_init(&wd->sc_retry_callout, 0);		/* XXX MPSAFE */
 	callout_init(&wd->sc_requeue_callout, 0);	/* XXX MPSAFE */
+	callout_init(&wd->sc_restart_diskqueue, 0);	/* XXX MPSAFE */
 
 	aprint_naive("\n");
 	aprint_normal("\n");
@@ -527,6 +527,8 @@ wddetach(device_t self, int flags)
 	callout_destroy(&wd->sc_retry_callout);
 	callout_halt(&wd->sc_requeue_callout, &wd->sc_lock);
 	callout_destroy(&wd->sc_requeue_callout);
+	callout_halt(&wd->sc_restart_diskqueue, &wd->sc_lock);
+	callout_destroy(&wd->sc_restart_diskqueue);
 
 	mutex_exit(&wd->sc_lock);
 
@@ -749,6 +751,17 @@ wd_diskstart(device_t dev, struct buf *bp)
 	if (xfer == NULL) {
 		ATADEBUG_PRINT(("wd_diskstart %s no xfer\n",
 		    dksc->sc_xname), DEBUG_XFERS);
+
+		/*
+		 * No available memory, retry later. This happens very rarely
+		 * and only under memory pressure, so wait relatively long
+		 * before retry.
+		 */
+		if (!callout_pending(&wd->sc_restart_diskqueue)) {
+			callout_reset(&wd->sc_restart_diskqueue, hz / 2,
+			    wdrestart, dev);
+		}
+
 		mutex_exit(&wd->sc_lock);
 		return EAGAIN;
 	}
@@ -764,8 +777,9 @@ wd_diskstart(device_t dev, struct buf *bp)
  * Queue a drive for I/O.
  */
 static void
-wdstart(device_t self)
+wdrestart(void *x)
 {
+	device_t self = x;
 	struct wd_softc *wd = device_private(self);
 	struct dk_softc *dksc = &wd->sc_dksc;
 
@@ -919,7 +933,6 @@ noerror:	if ((xfer->c_bio.flags & ATA_CORR) || xfer->c_retries > 0)
 	ata_free_xfer(wd->drvp->chnl_softc, xfer);
 
 	dk_done(dksc, bp);
-	ata_channel_start(wd->drvp->chnl_softc, wd->drvp->drive, true);
 }
 
 static void
@@ -1687,7 +1700,6 @@ wd_setcache(struct wd_softc *wd, int bits)
 
 out:
 	ata_free_xfer(wd->drvp->chnl_softc, xfer);
-	ata_channel_start(wd->drvp->chnl_softc, wd->drvp->drive, true);
 	return error;
 }
 
@@ -1729,13 +1741,6 @@ wd_standby(struct wd_softc *wd, int flags)
 
 out:
 	ata_free_xfer(wd->drvp->chnl_softc, xfer);
-
-	/*
-	 * Drive is supposed to go idle, start only other drives.
-	 * bufq might be actually already freed at this moment.
-	 */
-	ata_channel_start(wd->drvp->chnl_softc, wd->drvp->drive, false);
-
 	return error;
 }
 
@@ -1792,10 +1797,6 @@ wd_flushcache(struct wd_softc *wd, int flags, bool start_self)
 
 out_xfer:
 	ata_free_xfer(wd->drvp->chnl_softc, xfer);
-
-	/* start again I/O processing possibly stopped due to no xfer */
-	ata_channel_start(wd->drvp->chnl_softc, wd->drvp->drive, start_self);
-
 	return error;
 }
 
@@ -1855,7 +1856,6 @@ wd_trim(struct wd_softc *wd, daddr_t bno, long size)
 
 out:
 	ata_free_xfer(wd->drvp->chnl_softc, xfer);
-	ata_channel_start(wd->drvp->chnl_softc, wd->drvp->drive, true);
 	return error;
 }
 
@@ -2062,8 +2062,6 @@ wdioctlstrategy(struct buf *bp)
 
 out:
 	ata_free_xfer(wi->wi_softc->drvp->chnl_softc, xfer);
-	ata_channel_start(wi->wi_softc->drvp->chnl_softc,
-	    wi->wi_softc->drvp->drive, true);
 out2:
 	bp->b_error = error;
 	if (error)

@@ -1,4 +1,4 @@
-/*	$NetBSD: atavar.h,v 1.99.2.6 2018/09/22 16:14:25 jdolecek Exp $	*/
+/*	$NetBSD: atavar.h,v 1.99.2.7 2018/09/22 17:50:09 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -327,7 +327,6 @@ struct ata_drive_datas {
 
 	/* Callbacks into the drive's driver. */
 	void	(*drv_done)(device_t, struct ata_xfer *); /* xfer is done */
-	void	(*drv_start)(device_t);			  /* start queue */
 
 	device_t drv_softc;		/* ATA drives softc, if any */
 	struct ata_channel *chnl_softc;	/* channel softc */
@@ -547,7 +546,6 @@ void	ata_kill_active(struct ata_channel *, int, int);
 void	ata_reset_channel(struct ata_channel *, int);
 void	ata_channel_freeze(struct ata_channel *);
 void	ata_channel_thaw(struct ata_channel *);
-void	ata_channel_start(struct ata_channel *, int, bool);
 void	ata_channel_lock(struct ata_channel *);
 void	ata_channel_unlock(struct ata_channel *);
 void	ata_channel_lock_owned(struct ata_channel *);
