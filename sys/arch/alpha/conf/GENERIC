@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.379.2.3 2018/09/06 06:55:23 pgoyette Exp $
+# $NetBSD: GENERIC,v 1.379.2.4 2018/09/22 04:23:22 pgoyette Exp $
 #
 # This machine description file is used to generate the default NetBSD
 # kernel.
@@ -19,7 +19,7 @@ include 	"arch/alpha/conf/std.alpha"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident		"GENERIC-$Revision: 1.379.2.3 $"
+ident		"GENERIC-$Revision: 1.379.2.4 $"
 
 maxusers 32
 
@@ -127,7 +127,7 @@ options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
 #options 	ALTQ_WFQ	# Weighted Fair Queueing
 
 # Binary compatibility with previous versions of NetBSD.
-include 	"conf/compat_netbsd10.config"
+include 	"conf/compat_netbsd09.config"
 
 # OSF/1 binary compatibility
 options 	COMPAT_OSF1
