@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.alpha,v 1.84 2016/01/20 12:49:21 jklos Exp $
+#	$NetBSD: Makefile.alpha,v 1.85 2018/09/22 12:24:01 rin Exp $
 
 # Makefile for NetBSD
 #
@@ -42,11 +42,6 @@ NORMAL_S=	${CPP} ${AFLAGS} ${CPPFLAGS} $< | ${TOOL_SED} -e 's,^\#.*,,' | \
 ## (3) libkern and compat
 ##
 OPT_MODULAR=	%MODULAR%
-.if !empty(OPT_MODULAR)
-KERN_AS=	obj
-.else
-KERN_AS=	library
-.endif
 
 ##
 ## (4) local objects, compile rules, and dependencies
