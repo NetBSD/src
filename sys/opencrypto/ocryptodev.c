@@ -1,4 +1,4 @@
-/*	$NetBSD: ocryptodev.c,v 1.11.2.3 2018/09/18 23:03:55 pgoyette Exp $ */
+/*	$NetBSD: ocryptodev.c,v 1.11.2.4 2018/09/22 10:33:50 pgoyette Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.c,v 1.4.2.4 2003/06/03 00:09:02 sam Exp $	*/
 /*	$OpenBSD: cryptodev.c,v 1.53 2002/07/10 22:21:30 mickey Exp $	*/
 
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ocryptodev.c,v 1.11.2.3 2018/09/18 23:03:55 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ocryptodev.c,v 1.11.2.4 2018/09/22 10:33:50 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -101,14 +101,23 @@ __KERNEL_RCSID(0, "$NetBSD: ocryptodev.c,v 1.11.2.3 2018/09/18 23:03:55 pgoyette
 #include <opencrypto/xform.h>
 
 static int	ocryptodev_op(struct csession *, struct ocrypt_op *,
-		    struct lwp *);
+		    struct lwp *, int (*)(struct csession *, 
+					struct crypt_op *, struct lwp *));
 static int	ocryptodev_mop(struct fcrypt *, struct ocrypt_n_op *, int,
-		    struct lwp *);
-static int	ocryptodev_session(struct fcrypt *, struct osession_op *);
-static int	ocryptodev_msession(struct fcrypt *, struct osession_n_op *, int);
+		    struct lwp *,
+		    int (*real_mop)(struct fcrypt *, struct crypt_n_op *,
+			 int, struct lwp *));
+static int	ocryptodev_session(struct fcrypt *, struct osession_op *,
+		    	int(*)(struct fcrypt *, struct session_op *));
+static int	ocryptodev_msession(struct fcrypt *, struct osession_n_op *,
+			int, int (*)(struct fcrypt *, struct session_op *));
 
 int
-ocryptof_ioctl(struct file *fp, u_long cmd, void *data)
+ocryptof_ioctl(struct file *fp, u_long cmd, void *data, kmutex_t *mtx,
+    int (*real_session)(struct fcrypt *, struct session_op *),
+    int (*real_op)(struct csession *, struct crypt_op *, struct lwp *),
+    int (*real_mop)(struct fcrypt *, struct crypt_n_op *, int, struct lwp *),
+    struct csession * (*real_csefind)(struct fcrypt *, u_int32_t))
 {
 	struct fcrypt *fcr = fp->f_fcrypt;
 	struct csession *cse;
@@ -124,7 +133,7 @@ ocryptof_ioctl(struct file *fp, u_long cmd, void *data)
 	switch (cmd) {
 	case OCIOCGSESSION:
 		osop = (struct osession_op *)data;
-		error = ocryptodev_session(fcr, osop);
+		error = ocryptodev_session(fcr, osop, real_session);
 		break;
 	case CIOCNGSESSION:
 		osgop = (struct ocrypt_sgop *)data;
@@ -141,7 +150,8 @@ ocryptof_ioctl(struct file *fp, u_long cmd, void *data)
 			goto mbail;
 		}
 
-		error = ocryptodev_msession(fcr, osnop, osgop->count);
+		error = ocryptodev_msession(fcr, osnop, osgop->count,
+		    real_session);
 		if (error) {
 			goto mbail;
 		}
@@ -154,13 +164,13 @@ mbail:
 	case OCIOCCRYPT:
 		mutex_enter(&cryptodev_mtx);
 		ocop = (struct ocrypt_op *)data;
-		cse = cryptodev_csefind(fcr, ocop->ses);
+		cse = (*real_csefind)(fcr, ocop->ses);
 		mutex_exit(&cryptodev_mtx);
 		if (cse == NULL) {
 			DPRINTF("csefind failed\n");
 			return EINVAL;
 		}
-		error = ocryptodev_op(cse, ocop, curlwp);
+		error = ocryptodev_op(cse, ocop, curlwp, real_op);
 		DPRINTF("ocryptodev_op error = %d\n", error);
 		break;
 	case OCIOCNCRYPTM:
@@ -175,7 +185,8 @@ mbail:
 		error = copyin(omop->reqs, ocnop,
 		    (omop->count * sizeof(struct ocrypt_n_op)));
 		if(!error) {
-			error = ocryptodev_mop(fcr, ocnop, omop->count, curlwp);
+			error = ocryptodev_mop(fcr, ocnop, omop->count,
+			    curlwp, real_mop);
 			if (!error) {
 				error = copyout(ocnop, omop->reqs, 
 				    (omop->count * sizeof(struct ocrypt_n_op)));
@@ -192,7 +203,8 @@ mbail:
 
 
 static int
-ocryptodev_op(struct csession *cse, struct ocrypt_op *ocop, struct lwp *l)
+ocryptodev_op(struct csession *cse, struct ocrypt_op *ocop, struct lwp *l,
+    int (*real_op)(struct csession *, struct crypt_op *, struct lwp *))
 {
 	struct crypt_op cop;
 
@@ -206,13 +218,15 @@ ocryptodev_op(struct csession *cse, struct ocrypt_op *ocop, struct lwp *l)
 	cop.iv = ocop->iv;
 	cop.dst_len = 0;
 
-	return cryptodev_op(cse, &cop, l);
+	return real_op(cse, &cop, l);
 };
 
 static int 
 ocryptodev_mop(struct fcrypt *fcr, 
               struct ocrypt_n_op *ocnop,
-              int count, struct lwp *l)
+              int count, struct lwp *l,
+	      int (*real_mop)(struct fcrypt *, struct crypt_n_op *, int,
+				struct lwp *))
 {
 	int res;
 
@@ -234,7 +248,7 @@ ocryptodev_mop(struct fcrypt *fcr,
 	cnop.mac = ocnop->mac;
 	cnop.iv = ocnop->iv;
 	cnop.dst_len = 0;
-	res = cryptodev_mop(fcr, &cnop, count, l);
+	res = (*real_mop)(fcr, &cnop, count, l);
 	ocnop->reqid = cnop.reqid;
 	ocnop->status = cnop.status;
 
@@ -243,7 +257,8 @@ ocryptodev_mop(struct fcrypt *fcr,
 
 
 static int
-ocryptodev_session(struct fcrypt *fcr, struct osession_op *osop) 
+ocryptodev_session(struct fcrypt *fcr, struct osession_op *osop,
+    int (*real_session)(struct fcrypt *, struct session_op *))
 {
 	struct session_op sop;
 	int res;
@@ -255,7 +270,7 @@ ocryptodev_session(struct fcrypt *fcr, struct osession_op *osop)
 	sop.key = osop->key;
 	sop.mackeylen = osop->mackeylen;
 	sop.mackey = osop->mackey;
-	res = cryptodev_session(fcr, &sop);
+	res = (*real_session)(fcr, &sop);
 	if (res)
 		return res;
 	osop->ses = sop.ses;
@@ -265,7 +280,8 @@ ocryptodev_session(struct fcrypt *fcr, struct osession_op *osop)
 
 static int
 ocryptodev_msession(struct fcrypt *fcr, struct osession_n_op *osn_ops,
-		   int count)
+		   int count,
+		   int (*real_session)(struct fcrypt *, struct session_op *))
 {
 	int i;
 
@@ -278,7 +294,7 @@ ocryptodev_msession(struct fcrypt *fcr, struct osession_n_op *osn_ops,
 		os_op.mackeylen =	osn_ops->mackeylen;
 		os_op.mackey =		osn_ops->mackey;
 
-		osn_ops->status = ocryptodev_session(fcr, &os_op);
+		osn_ops->status = ocryptodev_session(fcr, &os_op, real_session);
 		osn_ops->ses =		os_op.ses;
 	}
 

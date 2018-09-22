@@ -1,4 +1,4 @@
-/* $NetBSD: compat_stub.h,v 1.1.2.33 2018/09/21 03:42:20 pgoyette Exp $	*/
+/* $NetBSD: compat_stub.h,v 1.1.2.34 2018/09/22 10:33:51 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -86,7 +86,17 @@ MODULE_HOOK(sppp_params_50_hook, (struct sppp *, u_long, void *));
  * cryptodev compatability ioctl
  */
 
-MODULE_HOOK(ocryptof_50_hook, (struct file *, u_long, void *));
+struct fcrypt;
+struct session_op;
+struct csession;
+struct crypt_op;
+struct crypt_n_op;
+struct kmutex_t;
+MODULE_HOOK(ocryptof_50_hook, (struct file *, u_long, void *, kmutex_t *,
+    int (*)(struct fcrypt *, struct session_op *),
+    int (*)(struct csession *, struct crypt_op *, struct lwp *),
+    int (*)(struct fcrypt *, struct crypt_n_op *, int, struct lwp *),
+    struct csession * (*)(struct fcrypt *, u_int32_t)));
 
 /*
  * raidframe compatability
