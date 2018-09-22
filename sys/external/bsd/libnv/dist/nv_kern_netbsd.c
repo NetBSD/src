@@ -1,4 +1,4 @@
-/*	$NetBSD: nv_kern_netbsd.c,v 1.2 2018/09/08 14:12:53 christos Exp $	*/
+/*	$NetBSD: nv_kern_netbsd.c,v 1.3 2018/09/22 17:13:30 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: nv_kern_netbsd.c,v 1.2 2018/09/08 14:12:53 christos Exp $");
+__RCSID("$NetBSD: nv_kern_netbsd.c,v 1.3 2018/09/22 17:13:30 rmind Exp $");
 
 #if !defined(_KERNEL) && !defined(_STANDALONE)
 #include <sys/mman.h>
@@ -198,11 +198,11 @@ nvlist_recv_ioctl(int fd, unsigned long cmd, nvlist_t **nvlp)
 void *
 nv_calloc(size_t n, size_t s)
 {
-	n *= s;
-	void *buf = nv_malloc(n);
+	const size_t len = n * s;
+	void *buf = nv_malloc(len);
 	if (buf == NULL)
 		return NULL;
-	memset(buf, 0, n);
+	memset(buf, 0, len);
 	return buf;
 }
 
