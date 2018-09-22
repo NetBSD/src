@@ -1,4 +1,4 @@
-/*	$NetBSD: nvlist.c,v 1.5 2018/09/11 02:20:31 christos Exp $	*/
+/*	$NetBSD: nvlist.c,v 1.6 2018/09/22 17:13:30 rmind Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -36,7 +36,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: head/sys/contrib/libnv/nvlist.c 335347 2018-06-18 22:57:32Z oshogbo $");
 #else
-__RCSID("$NetBSD: nvlist.c,v 1.5 2018/09/11 02:20:31 christos Exp $");
+__RCSID("$NetBSD: nvlist.c,v 1.6 2018/09/22 17:13:30 rmind Exp $");
 #endif
 
 #include <sys/param.h>
@@ -1180,7 +1180,7 @@ nvlist_xunpack(const void *buf, size_t size, const int *fds, size_t nfds,
 				goto fail;
 			nvlist_set_parent(tmpnvl, nvp);
 			break;
-#if !defined(_KERNEL) && !defined(_STANDALONE)
+#if !defined(_KERNEL) && !defined(_STANDALONE) && !defined(__NetBSD__)
 		case NV_TYPE_DESCRIPTOR:
 			ptr = nvpair_unpack_descriptor(isbe, nvp, ptr, &left,
 			    fds, nfds);
