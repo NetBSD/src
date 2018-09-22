@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: binstall.sh,v 1.17 2018/09/16 14:26:04 kre Exp $
+#	$NetBSD: binstall.sh,v 1.18 2018/09/22 03:29:51 kre Exp $
 #
 
 vecho () {
@@ -53,27 +53,22 @@ VERBOSE=
 : ${OFWBOOTBLK:=ofwboot}
 [ "$( sysctl -n machdep.cpu_arch )" = 9 ] && ULTRASPARC=true || ULTRASPARC=false
 
-### XXX this should be converted to use getopts
-set -- $(getopt "b:hf:i:m:tUuv" "$@" )
-if [ $? -gt 0 ]; then
-	Usage
-fi
-
-for a
+while getopts b:hf:i:m:tUuv a
 do
-	case "$1" in
-	-h) Help; shift ;;
-	-u) ULTRASPARC=true; shift ;;
-	-U) ULTRASPARC=false; shift ;;
-	-b) BOOTPROG=$2; OFWBOOTBLK=$2; shift 2 ;;
-	-f) DEV=$2; shift 2 ;;
-	-m) MDEC=$2; shift 2 ;;
-	-i) INSTALLBOOT=$2; shift 2 ;;
-	-t) TEST=1; VERBOSE=-v; shift ;;
-	-v) VERBOSE=-v; shift ;;
-	--) shift; break ;;
+	case "$a" in
+	h) Help;;
+	u) ULTRASPARC=true;;
+	U) ULTRASPARC=false;;
+	b) BOOTPROG=$OPTARG; OFWBOOTBLK=$OPTARG;;
+	f) DEV=$OPTARG;;
+	m) MDEC=$OPTARG;;
+	i) INSTALLBOOT=$OPTARG;;
+	t) TEST=1; VERBOSE=-v;;
+	v) VERBOSE=-v;;
+	\?) Usage;;
 	esac
 done
+shift $(( $OPTIND - 1 ))
 
 if [ "$( sysctl -n kern.securelevel )" -gt 0 ] && ! [ -f "$DEV" ]; then
 	Secure
