@@ -1,4 +1,4 @@
-/*	$NetBSD: nv_impl.h,v 1.3 2018/09/08 14:12:53 christos Exp $	*/
+/*	$NetBSD: nv_impl.h,v 1.4 2018/09/22 17:13:30 rmind Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -82,11 +82,11 @@ extern char *nv_strdup(const char *);
 #else /* USERLAND */
 
 # define nv_malloc(size)		malloc((size))
-# define nv_calloc(n, size)		calloc(n, size)
 # define nv_realloc(buf, size)		realloc((buf), (size))
 # define nv_free(buf)			free((buf))
-# define nv_strdup(buf)			strdup(buf)
 # define nv_vasprintf(ptr, ...)		vasprintf(ptr, __VA_ARGS__)
+void *nv_calloc(size_t, size_t);
+char *nv_strdup(const char *);
 
 # define ERRNO_SET(var)			do {				\
 						errno = (var); 		\
