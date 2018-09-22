@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1622 2018/09/22 12:41:00 maxv Exp $
+# $NetBSD: mi,v 1.1623 2018/09/22 16:22:22 maxv Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1350,7 +1350,7 @@
 ./usr/share/man/cat4/isdnctl.0			man-sys-catman		.cat
 ./usr/share/man/cat4/isdntel.0			man-sys-catman		.cat
 ./usr/share/man/cat4/isdntrc.0			man-sys-catman		.cat
-./usr/share/man/cat4/isic.0			man-sys-catman		.cat
+./usr/share/man/cat4/isic.0			man-obsolete		obsolete
 ./usr/share/man/cat4/ismt.0			man-sys-catman		.cat
 ./usr/share/man/cat4/iso.0			man-obsolete		obsolete
 ./usr/share/man/cat4/isp.0			man-sys-catman		.cat
@@ -4468,7 +4468,7 @@
 ./usr/share/man/html4/isdnctl.html		man-sys-htmlman		html
 ./usr/share/man/html4/isdntel.html		man-sys-htmlman		html
 ./usr/share/man/html4/isdntrc.html		man-sys-htmlman		html
-./usr/share/man/html4/isic.html			man-sys-htmlman		html
+./usr/share/man/html4/isic.html			man-obsolete		obsolete
 ./usr/share/man/html4/ismt.html			man-sys-htmlman		html
 ./usr/share/man/html4/iso.html			man-obsolete		obsolete
 ./usr/share/man/html4/isp.html			man-sys-htmlman		html
@@ -7424,7 +7424,7 @@
 ./usr/share/man/man4/isdnctl.4			man-sys-man		.man
 ./usr/share/man/man4/isdntel.4			man-sys-man		.man
 ./usr/share/man/man4/isdntrc.4			man-sys-man		.man
-./usr/share/man/man4/isic.4			man-sys-man		.man
+./usr/share/man/man4/isic.4			man-obsolete		obsolete
 ./usr/share/man/man4/ismt.4			man-sys-man		.man
 ./usr/share/man/man4/iso.4			man-obsolete		obsolete
 ./usr/share/man/man4/isp.4			man-sys-man		.man
