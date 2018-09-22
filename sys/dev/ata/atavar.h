@@ -1,4 +1,4 @@
-/*	$NetBSD: atavar.h,v 1.99.2.4 2018/09/17 19:30:25 jdolecek Exp $	*/
+/*	$NetBSD: atavar.h,v 1.99.2.5 2018/09/22 09:22:59 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -134,7 +134,6 @@ struct ata_xfer_ops;
 struct ata_xfer {
 	int8_t c_slot;			/* queue slot # */
 
-#define c_startzero	c_chp
 	/* Channel and drive that are to process the request. */
 	struct ata_channel *c_chp;
 	uint16_t	c_drive;
@@ -228,7 +227,6 @@ struct ata_queue {
 	uint8_t queue_openings;			/* max number of active xfers */
 	SIMPLEQ_HEAD(, ata_xfer) queue_xfer; 	/* queue of pending commands */
 	int queue_freeze; 			/* freeze count for the queue */
-	kcondvar_t queue_busy;			/* c: waiting of xfer */
 	kcondvar_t queue_drain;			/* c: waiting of queue drain */
 	kcondvar_t queue_idle;			/* c: waiting of queue idle */
 	TAILQ_HEAD(, ata_xfer) active_xfers; 	/* active commands */
@@ -236,7 +234,6 @@ struct ata_queue {
 	uint32_t queue_xfers_avail;		/* available xfers mask */
 	kcondvar_t c_active;		/* somebody actively waiting for xfer */
 	kcondvar_t c_cmd_finish;	/* somebody waiting for cmd finish */
-	struct ata_xfer queue_xfers[0];		/* xfers */
 };
 #endif
 
@@ -340,6 +337,7 @@ struct ata_drive_datas {
 	daddr_t	badsect[127];	/* 126 plus trailing -1 marker */
 
 	/* Recovery buffer */
+	struct ata_xfer recovery_xfer;
 	uint8_t recovery_blk[ATA_BSIZE];
 };
 
@@ -534,8 +532,7 @@ int	ata_read_log_ext_ncq(struct ata_drive_datas *, uint8_t, uint8_t *,
 #define CMD_ERR   1
 #define CMD_AGAIN 2
 
-struct ata_xfer *ata_get_xfer_ext(struct ata_channel *, int, uint8_t);
-#define ata_get_xfer(chp) ata_get_xfer_ext((chp), C_WAIT, 0)
+struct ata_xfer *ata_get_xfer(struct ata_channel *, bool);
 void	ata_free_xfer(struct ata_channel *, struct ata_xfer *);
 void	ata_deactivate_xfer(struct ata_channel *, struct ata_xfer *);
 void	ata_exec_xfer(struct ata_channel *, struct ata_xfer *);
@@ -578,6 +575,8 @@ struct ata_xfer *
 	ata_queue_get_active_xfer_locked(struct ata_channel *);
 struct ata_xfer *
 	ata_queue_drive_active_xfer(struct ata_channel *, int);
+bool	ata_queue_alloc_slot(struct ata_channel *, uint8_t *, uint8_t);
+void	ata_queue_free_slot(struct ata_channel *, uint8_t);
 
 void	ata_delay(struct ata_channel *, int, const char *, int);
 

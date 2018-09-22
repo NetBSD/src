@@ -1,4 +1,4 @@
-/*	$NetBSD: ata.c,v 1.141.6.5 2018/09/17 20:54:41 jdolecek Exp $	*/
+/*	$NetBSD: ata.c,v 1.141.6.6 2018/09/22 09:22:59 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.141.6.5 2018/09/17 20:54:41 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.141.6.6 2018/09/22 09:22:59 jdolecek Exp $");
 
 #include "opt_ata.h"
 
@@ -84,6 +84,7 @@ int atadebug_mask = ATADEBUG_MASK;
 #endif
 
 static ONCE_DECL(ata_init_ctrl);
+static struct pool ata_xfer_pool;
 
 /*
  * A queue of atabus instances, used to ensure the same bus probe order
@@ -142,6 +143,8 @@ static int
 atabus_init(void)
 {
 
+	pool_init(&ata_xfer_pool, sizeof(struct ata_xfer), 0, 0, 0,
+	    "ataspl", NULL, IPL_BIO);
 	TAILQ_INIT(&atabus_initq_head);
 	mutex_init(&atabus_qlock, MUTEX_DEFAULT, IPL_NONE);
 	cv_init(&atabus_qcv, "atainitq");
@@ -779,7 +782,7 @@ ata_get_params(struct ata_drive_datas *drvp, uint8_t flags,
 
 	ATADEBUG_PRINT(("%s\n", __func__), DEBUG_FUNCS);
 
-	xfer = ata_get_xfer(chp);
+	xfer = ata_get_xfer(chp, false);
 	if (xfer == NULL) {
 		ATADEBUG_PRINT(("%s: no xfer\n", __func__),
 		    DEBUG_FUNCS|DEBUG_PROBE);
@@ -884,7 +887,7 @@ ata_set_mode(struct ata_drive_datas *drvp, uint8_t mode, uint8_t flags)
 
 	ATADEBUG_PRINT(("ata_set_mode=0x%x\n", mode), DEBUG_FUNCS);
 
-	xfer = ata_get_xfer(chp);
+	xfer = ata_get_xfer(chp, false);
 	if (xfer == NULL) {
 		ATADEBUG_PRINT(("%s: no xfer\n", __func__),
 		    DEBUG_FUNCS|DEBUG_PROBE);
@@ -919,7 +922,7 @@ int
 ata_read_log_ext_ncq(struct ata_drive_datas *drvp, uint8_t flags,
     uint8_t *slot, uint8_t *status, uint8_t *err)
 {
-	struct ata_xfer *xfer;
+	struct ata_xfer *xfer = &drvp->recovery_xfer;
 	int rv;
 	struct ata_channel *chp = drvp->chnl_softc;
 	struct atac_softc *atac = chp->ch_atac;
@@ -932,7 +935,7 @@ ata_read_log_ext_ncq(struct ata_drive_datas *drvp, uint8_t flags,
 	    (drvp->drive_flags & ATA_DRIVE_NCQ) == 0)
 		return EOPNOTSUPP;
 
-	xfer = ata_get_xfer_ext(chp, C_RECOVERY, 0);
+	memset(xfer, 0, sizeof(*xfer));
 
 	tb = drvp->recovery_blk;
 	memset(tb, 0, sizeof(drvp->recovery_blk));
@@ -994,7 +997,6 @@ ata_read_log_ext_ncq(struct ata_drive_datas *drvp, uint8_t flags,
 	rv = 0;
 
 out:
-	ata_free_xfer(chp, xfer);
 	return rv;
 }
 
@@ -1128,17 +1130,22 @@ atastart(struct ata_channel *chp)
 	ata_channel_lock(chp);
 
 again:
-	KASSERT(chq->queue_active <= chq->queue_openings);
-	if (chq->queue_active == chq->queue_openings) {
-		ATADEBUG_PRINT(("%s(chp=%p): channel %d completely busy\n",
-		    __func__, chp, chp->ch_channel), DEBUG_XFERS);
-		goto out;
-	}
-
 	/* is there a xfer ? */
 	if ((xfer = SIMPLEQ_FIRST(&chp->ch_queue->queue_xfer)) == NULL) {
 		ATADEBUG_PRINT(("%s(chp=%p): channel %d queue_xfer is empty\n",
 		    __func__, chp, chp->ch_channel), DEBUG_XFERS);
+		goto out;
+	}
+
+	/*
+	 * if someone is waiting for the command to be active, wake it up
+	 * and let it process the command
+	 */
+	if (__predict_false(xfer->c_flags & C_WAITACT)) {
+		ATADEBUG_PRINT(("atastart: xfer %p channel %d drive %d "
+		    "wait active\n", xfer, chp->ch_channel, xfer->c_drive),
+		    DEBUG_XFERS);
+		cv_broadcast(&chp->ch_queue->c_active);
 		goto out;
 	}
 
@@ -1179,20 +1186,37 @@ again:
 	struct ata_drive_datas * const drvp = &chp->ch_drive[xfer->c_drive];
 
 	/*
-	 * if someone is waiting for the command to be active, wake it up
-	 * and let it process the command
+	 * Are we on limit of active xfers ?
+	 * For recovery, we must leave one slot available at all times.
 	 */
-	if (xfer->c_flags & C_WAITACT) {
-		ATADEBUG_PRINT(("atastart: xfer %p channel %d drive %d "
-		    "wait active\n", xfer, chp->ch_channel, xfer->c_drive),
-		    DEBUG_XFERS);
-		cv_broadcast(&chp->ch_queue->c_active);
+	KASSERT(chq->queue_active <= chq->queue_openings);
+	const uint8_t chq_openings = (!recovery && chq->queue_openings > 1)
+	    ? (chq->queue_openings - 1) : chq->queue_openings;
+	const uint8_t drv_openings = ISSET(xfer->c_flags, C_NCQ)
+	    ? drvp->drv_openings : ATA_MAX_OPENINGS;
+	if (chq->queue_active >= MIN(chq_openings, drv_openings)) {
+		if (recovery) {
+			panic("%s: channel %d busy, recovery not possible",
+			    __func__, chp->ch_channel);
+		}
+
+		ATADEBUG_PRINT(("%s(chp=%p): channel %d completely busy\n",
+		    __func__, chp, chp->ch_channel), DEBUG_XFERS);
 		goto out;
 	}
 
-	if (atac->atac_claim_hw)
-		if (!atac->atac_claim_hw(chp, 0))
+	/* Slot allocation can fail if drv_openings < ch_openings */
+	if (!ata_queue_alloc_slot(chp, &xfer->c_slot, drv_openings))
+		goto out;
+
+	if (__predict_false(atac->atac_claim_hw)) {
+		if (!atac->atac_claim_hw(chp, 0)) {
+			ata_queue_free_slot(chp, xfer->c_slot);
 			goto out;
+		}
+	}
+
+	/* Now committed to start the xfer */
 
 	ATADEBUG_PRINT(("%s(chp=%p): xfer %p channel %d drive %d\n",
 	    __func__, chp, xfer, chp->ch_channel, xfer->c_drive), DEBUG_XFERS);
@@ -1273,7 +1297,13 @@ ata_activate_xfer_locked(struct ata_channel *chp, struct ata_xfer *xfer)
 
 	KASSERT(mutex_owned(&chp->ch_lock));
 
-	KASSERT(chq->queue_active < chq->queue_openings);
+	/*
+	 * When openings is just 1, can't reserve anything for
+	 * recovery. KASSERT() here is to catch code which naively
+	 * relies on C_RECOVERY to work under this condition.
+	 */
+	KASSERT((xfer->c_flags & C_RECOVERY) == 0 || chq->queue_openings > 1);
+
 	KASSERT((chq->active_xfers_used & __BIT(xfer->c_slot)) == 0);
 
 	if ((xfer->c_flags & C_RECOVERY) == 0)
@@ -1288,6 +1318,64 @@ ata_activate_xfer_locked(struct ata_channel *chp, struct ata_xfer *xfer)
 	}
 	chq->active_xfers_used |= __BIT(xfer->c_slot);
 	chq->queue_active++;
+}
+
+/*
+ * Does it's own locking, does not require splbio().
+ * flags - whether to block waiting for free xfer
+ */
+struct ata_xfer *
+ata_get_xfer(struct ata_channel *chp, bool waitok)
+{
+	struct ata_xfer *xfer;
+
+	xfer = pool_get(&ata_xfer_pool, waitok ? PR_WAITOK : PR_NOWAIT);
+	KASSERT(!waitok || xfer != NULL);
+
+	if (xfer != NULL) {
+		/* zero everything */
+		memset(xfer, 0, sizeof(*xfer));
+	}
+
+	return xfer;
+}
+
+/*
+ * ata_deactivate_xfer() must be always called prior to ata_free_xfer()
+ */
+void
+ata_free_xfer(struct ata_channel *chp, struct ata_xfer *xfer)
+{
+	struct ata_queue *chq = chp->ch_queue;
+
+	ata_channel_lock(chp);
+
+	if (xfer->c_flags & (C_WAITACT|C_WAITTIMO)) {
+		/* Someone is waiting for this xfer, so we can't free now */
+		xfer->c_flags |= C_FREE;
+		cv_broadcast(&chq->c_active);
+		ata_channel_unlock(chp);
+		return;
+	}
+
+	/* XXX move PIOBM and free_gw to deactivate? */
+#if NATA_PIOBM		/* XXX wdc dependent code */
+	if (xfer->c_flags & C_PIOBM) {
+		struct wdc_softc *wdc = CHAN_TO_WDC(chp);
+
+		/* finish the busmastering PIO */
+		(*wdc->piobm_done)(wdc->dma_arg,
+		    chp->ch_channel, xfer->c_drive);
+		chp->ch_flags &= ~(ATACH_DMA_WAIT | ATACH_PIOBM_WAIT | ATACH_IRQ_WAIT);
+	}
+#endif
+
+	if (__predict_false(chp->ch_atac->atac_free_hw))
+		chp->ch_atac->atac_free_hw(chp);
+ 
+	ata_channel_unlock(chp);
+
+	pool_put(&ata_xfer_pool, xfer);
 }
 
 void
@@ -1310,6 +1398,8 @@ ata_deactivate_xfer(struct ata_channel *chp, struct ata_xfer *xfer)
 	TAILQ_REMOVE(&chq->active_xfers, xfer, c_activechain);
 	chq->active_xfers_used &= ~__BIT(xfer->c_slot);
 	chq->queue_active--;
+
+	ata_queue_free_slot(chp, xfer->c_slot);
 
 	if (xfer->c_flags & C_WAIT)
 		cv_broadcast(&chq->c_cmd_finish);

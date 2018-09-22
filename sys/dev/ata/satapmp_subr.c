@@ -1,4 +1,4 @@
-/*	$NetBSD: satapmp_subr.c,v 1.14 2018/07/29 14:11:30 jdolecek Exp $	*/
+/*	$NetBSD: satapmp_subr.c,v 1.14.2.1 2018/09/22 09:22:59 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2012 Manuel Bouyer.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: satapmp_subr.c,v 1.14 2018/07/29 14:11:30 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: satapmp_subr.c,v 1.14.2.1 2018/09/22 09:22:59 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -276,7 +276,7 @@ satapmp_attach(struct ata_channel *chp)
 	uint32_t id, rev, inf;
 	struct ata_xfer *xfer;
 
-	xfer = ata_get_xfer(chp);
+	xfer = ata_get_xfer(chp, false);
 	if (xfer == NULL) {
 		aprint_normal_dev(chp->atabus, "no available xfer\n");
 		return;
