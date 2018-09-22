@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1210 2018/09/22 12:19:11 maxv Exp $
+#	$NetBSD: files,v 1.1211 2018/09/22 12:26:27 maxv Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20171118
@@ -1377,8 +1377,8 @@ file	dev/ic/isac.c			nisac	needs-flag
 device	isic: isdndev, passive_isdn, nisac
 
 file	dev/ic/isic.c			isic
-file	dev/ic/isic_l1.c		isic|ifritz
-file	dev/ic/isic_l1fsm.c		isic|ifritz
+file	dev/ic/isic_l1.c		isic
+file	dev/ic/isic_l1fsm.c		isic
 file	dev/ic/hscx.c			isic
 file	dev/ic/isic_bchan.c		isic
 

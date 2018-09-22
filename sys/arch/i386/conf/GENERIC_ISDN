@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC_ISDN,v 1.18 2018/09/22 12:19:11 maxv Exp $
+# $NetBSD: GENERIC_ISDN,v 1.19 2018/09/22 12:26:27 maxv Exp $
 #
 # GENERIC kernel with all supported ISDN devices and drivers
 
@@ -53,9 +53,6 @@ isic*		at pci?
 
 # Winbond W6692
 iwic*		at pci?
-
-# AVM Fritz!PCI V2 card
-ifritz* 	at pci?
 
 #
 #---------------------------------------------------------------------
