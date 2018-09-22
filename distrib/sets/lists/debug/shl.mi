@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.207 2018/09/03 15:30:36 christos Exp $
+# $NetBSD: shl.mi,v 1.208 2018/09/22 12:54:34 rmind Exp $
 ./usr/lib/libbfd_g.a						comp-c-debuglib	debuglib,compatfile,binutils
 ./usr/libdata/debug/lib						base-sys-usr	debug,dynamicroot,compatdir
 ./usr/libdata/debug/lib/libblacklist.so.0.0.debug		comp-sys-debug	debug,dynamicroot
@@ -234,6 +234,7 @@
 ./usr/libdata/debug/usr/lib/librumphijack.so.0.0.debug		comp-rump-debug	debug,compatfile,rump
 ./usr/libdata/debug/usr/lib/librumpkern_crypto.so.0.0.debug	comp-rump-debug	debug,rump
 ./usr/libdata/debug/usr/lib/librumpkern_ksem.so.0.0.debug	comp-obsolete	obsolete,compatfile
+./usr/libdata/debug/usr/lib/librumpkern_nv.so.0.0.debug		comp-rump-debug	debug,rump
 ./usr/libdata/debug/usr/lib/librumpkern_sljit.so.0.0.debug	comp-rump-debug	debug,rump,sljit
 ./usr/libdata/debug/usr/lib/librumpkern_solaris.so.0.0.debug	comp-rump-debug	debug,rump,zfs
 ./usr/libdata/debug/usr/lib/librumpkern_sysproxy.so.0.0.debug	comp-rump-debug	debug,rump

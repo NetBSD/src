@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.321 2018/08/13 08:26:49 christos Exp $
+# $NetBSD: shl.mi,v 1.322 2018/09/22 12:54:34 rmind Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -213,6 +213,7 @@
 ./usr/lib/librumphijack_pic.a			comp-c-piclib		compatfile,picinstall,rump
 ./usr/lib/librumpkern_crypto_pic.a		comp-c-piclib		picinstall,rump
 ./usr/lib/librumpkern_ksem_pic.a		comp-obsolete		obsolete
+./usr/lib/librumpkern_nv_pic.a			comp-c-piclib		picinstall,rump
 ./usr/lib/librumpkern_sljit_pic.a		comp-c-piclib		picinstall,rump,sljit
 ./usr/lib/librumpkern_solaris_pic.a		comp-c-piclib		picinstall,rump,zfs
 ./usr/lib/librumpkern_sysproxy_pic.a		comp-c-piclib		picinstall,rump

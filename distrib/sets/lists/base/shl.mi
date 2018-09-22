@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.847 2018/09/03 15:30:36 christos Exp $
+# $NetBSD: shl.mi,v 1.848 2018/09/22 12:54:34 rmind Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -689,6 +689,9 @@
 ./usr/lib/librumpkern_ksem.so			base-obsolete		obsolete
 ./usr/lib/librumpkern_ksem.so.0			base-obsolete		obsolete
 ./usr/lib/librumpkern_ksem.so.0.0		base-obsolete		obsolete
+./usr/lib/librumpkern_nv.so			base-rump-shlib		rump
+./usr/lib/librumpkern_nv.so.0			base-rump-shlib		rump
+./usr/lib/librumpkern_nv.so.0.0			base-rump-shlib		rump
 ./usr/lib/librumpkern_sljit.so			base-rump-shlib		rump,sljit
 ./usr/lib/librumpkern_sljit.so.0		base-rump-shlib		rump,sljit
 ./usr/lib/librumpkern_sljit.so.0.0		base-rump-shlib		rump,sljit
