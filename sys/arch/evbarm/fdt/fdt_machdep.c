@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_machdep.c,v 1.37 2018/09/16 11:24:29 skrll Exp $ */
+/* $NetBSD: fdt_machdep.c,v 1.38 2018/09/22 11:58:19 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.37 2018/09/16 11:24:29 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.38 2018/09/22 11:58:19 jmcneill Exp $");
 
 #include "opt_machdep.h"
 #include "opt_bootconfig.h"
@@ -372,7 +372,7 @@ initarm(void *arg)
 	/* Load FDT */
 	int error = fdt_check_header(fdt_addr_r);
 	if (error == 0) {
-		error = fdt_move(fdt_addr_r, fdt_data, sizeof(fdt_data));
+		error = fdt_open_into(fdt_addr_r, fdt_data, sizeof(fdt_data));
 		if (error != 0)
 			panic("fdt_move failed: %s", fdt_strerror(error));
 		fdtbus_set_data(fdt_data);
@@ -412,6 +412,11 @@ initarm(void *arg)
 	 * value in /chosen/stdout-path before initializing console.
 	 */
 	fdt_update_stdout_path();
+
+	/*
+	 * Done making changes to the FDT.
+	 */
+	fdt_pack(fdt_data);
 
 	VPRINTF("consinit ");
 	consinit();
