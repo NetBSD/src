@@ -1,4 +1,4 @@
-/*	$NetBSD: ata.c,v 1.141.6.8 2018/09/22 12:20:31 jdolecek Exp $	*/
+/*	$NetBSD: ata.c,v 1.141.6.9 2018/09/22 16:14:25 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.141.6.8 2018/09/22 12:20:31 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.141.6.9 2018/09/22 16:14:25 jdolecek Exp $");
 
 #include "opt_ata.h"
 
@@ -1350,7 +1350,7 @@ ata_free_xfer(struct ata_channel *chp, struct ata_xfer *xfer)
 
 	ata_channel_lock(chp);
 
-	if (xfer->c_flags & (C_WAITACT|C_WAITTIMO)) {
+	if (__predict_false(xfer->c_flags & (C_WAITACT|C_WAITTIMO))) {
 		/* Someone is waiting for this xfer, so we can't free now */
 		xfer->c_flags |= C_FREE;
 		cv_broadcast(&chq->c_active);
@@ -1360,7 +1360,7 @@ ata_free_xfer(struct ata_channel *chp, struct ata_xfer *xfer)
 
 	/* XXX move PIOBM and free_gw to deactivate? */
 #if NATA_PIOBM		/* XXX wdc dependent code */
-	if (xfer->c_flags & C_PIOBM) {
+	if (__predict_false(xfer->c_flags & C_PIOBM)) {
 		struct wdc_softc *wdc = CHAN_TO_WDC(chp);
 
 		/* finish the busmastering PIO */
@@ -1375,7 +1375,8 @@ ata_free_xfer(struct ata_channel *chp, struct ata_xfer *xfer)
  
 	ata_channel_unlock(chp);
 
-	pool_put(&ata_xfer_pool, xfer);
+	if (__predict_true(!ISSET(xfer->c_flags, C_PRIVATE_ALLOC)))
+		pool_put(&ata_xfer_pool, xfer);
 }
 
 void

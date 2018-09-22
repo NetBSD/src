@@ -1,4 +1,4 @@
-/*	$NetBSD: atavar.h,v 1.99.2.5 2018/09/22 09:22:59 jdolecek Exp $	*/
+/*	$NetBSD: atavar.h,v 1.99.2.6 2018/09/22 16:14:25 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -198,6 +198,7 @@ struct ata_xfer_ops {
 #define C_WAITTIMO	0x0400		/* race vs. timeout */
 #define C_CHAOS		0x0800		/* forced error xfer */
 #define C_RECOVERED	0x1000		/* error recovered, no need for reset */
+#define C_PRIVATE_ALLOC	0x2000		/* private alloc, skip pool_put() */
 
 /* reasons for c_kill_xfer() */
 #define KILL_GONE 1		/* device is gone while xfer was active */

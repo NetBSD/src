@@ -1,4 +1,4 @@
-/*	$NetBSD: wdvar.h,v 1.46.6.2 2018/09/22 09:22:59 jdolecek Exp $	*/
+/*	$NetBSD: wdvar.h,v 1.46.6.3 2018/09/22 16:14:25 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -70,6 +70,8 @@ struct wd_softc {
 
 	SLIST_HEAD(, ata_xfer) sc_requeue_list;
 	struct callout sc_requeue_callout;	/* requeue callout handle */
+
+	struct ata_xfer dump_xfer;
 
 	/* Sysctl nodes specific for the disk */
 	struct sysctllog *nodelog;
