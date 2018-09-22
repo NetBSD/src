@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.265 2018/09/19 13:58:26 maxv Exp $
+# $NetBSD: mi,v 1.266 2018/09/22 12:54:34 rmind Exp $
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib,compatfile
@@ -202,6 +202,7 @@
 ./usr/lib/librumphijack_g.a			comp-c-debuglib		debuglib,compatfile,rump
 ./usr/lib/librumpkern_crypto_g.a		comp-c-debuglib		debuglib,rump
 ./usr/lib/librumpkern_ksem_g.a			comp-obsolete		obsolete,compatfile
+./usr/lib/librumpkern_nv_g.a			comp-c-debuglib		debuglib,rump
 ./usr/lib/librumpkern_sljit_g.a			comp-c-debuglib		debuglib,rump,sljit
 ./usr/lib/librumpkern_solaris_g.a		comp-c-debuglib		debuglib,rump,zfs
 ./usr/lib/librumpkern_sysproxy_g.a		comp-c-debuglib		debuglib,rump

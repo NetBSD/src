@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2228 2018/09/06 19:19:44 maxv Exp $
+#	$NetBSD: mi,v 1.2229 2018/09/22 12:54:34 rmind Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -3647,6 +3647,8 @@
 ./usr/lib/librumpkern_crypto_p.a		comp-c-proflib		rump,profile
 ./usr/lib/librumpkern_ksem.a			comp-obsolete		obsolete
 ./usr/lib/librumpkern_ksem_p.a			comp-obsolete		obsolete
+./usr/lib/librumpkern_nv.a			comp-c-lib		rump
+./usr/lib/librumpkern_nv_p.a			comp-c-proflib		rump,profile
 ./usr/lib/librumpkern_sljit.a			comp-c-lib		rump,sljit
 ./usr/lib/librumpkern_sljit_p.a			comp-c-proflib		rump,sljit,profile
 ./usr/lib/librumpkern_solaris.a			comp-c-lib		rump,zfs
