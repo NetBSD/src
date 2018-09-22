@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.405 2018/09/22 12:26:27 maxv Exp $
+#	$NetBSD: files.pci,v 1.406 2018/09/22 12:56:16 maxv Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -812,14 +812,6 @@ attach	isic at pci with isic_pci
 file	dev/pci/isic_pci.c		isic_pci
 
 file	dev/pci/isic_pci_elsa_qs1p.c	isic_pci
-
-# Winbond W6692
-device	iwic: isdndev, passive_isdn
-attach	iwic at pci with iwic_pci
-file	dev/pci/iwic_pci.c		iwic
-file	dev/pci/iwic_bchan.c		iwic
-file	dev/pci/iwic_dchan.c		iwic
-file	dev/pci/iwic_fsm.c		iwic
 
 # IrDA devices
 #  Toshiba Fast Infrared Type O IrDA driver
