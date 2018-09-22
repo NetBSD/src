@@ -7,7 +7,6 @@ jdolecek-ncqfixes goals:
   triggers KASSERT()
 - fix ahci(4) error handling under paralles - invalid bio via WD_CHAOS_MONKEY
   ends up being handled as NOERROR, triggering KASSERT() in wd(4)
-- weed out remaining KM_NOSLEEP
 
 Bugs
 ----
