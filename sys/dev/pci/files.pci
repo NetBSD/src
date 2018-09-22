@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.406 2018/09/22 12:56:16 maxv Exp $
+#	$NetBSD: files.pci,v 1.407 2018/09/22 16:22:23 maxv Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -806,12 +806,6 @@ file    dev/pci/if_malo_pci.c       malo_pci
 # Intersil Prism2.5 Mini-PCI
 attach	wi at pci with wi_pci
 file	dev/pci/if_wi_pci.c		wi_pci
-
-# ISDN devices
-attach	isic at pci with isic_pci
-file	dev/pci/isic_pci.c		isic_pci
-
-file	dev/pci/isic_pci_elsa_qs1p.c	isic_pci
 
 # IrDA devices
 #  Toshiba Fast Infrared Type O IrDA driver

@@ -1,4 +1,4 @@
-#	$NetBSD: files.amiga,v 1.179 2018/03/06 06:04:21 spz Exp $
+#	$NetBSD: files.amiga,v 1.180 2018/09/22 16:22:22 maxv Exp $
 
 # maxpartitions must be first item in files.${ARCH}.newconf
 maxpartitions 16			# NOTE THAT AMIGA IS SPECIAL!
@@ -313,14 +313,6 @@ file	arch/amiga/dev/ioblix_zbus.c	iobl_zbus
 
 attach	com at supio with com_supio
 file	arch/amiga/dev/com_supio.c	com_supio
-
-# ISDN Blaster, ISDN Master
-device	aster: supio
-attach	aster at zbus
-file	arch/amiga/dev/aster.c		aster
-
-attach	isic at supio with isic_supio
-file	arch/amiga/dev/isic_supio.c isic_supio
 
 # handle gvp's odd autoconf info..
 device	gvpbus {}

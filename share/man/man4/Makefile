@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.670 2018/09/22 12:41:00 maxv Exp $
+#	$NetBSD: Makefile,v 1.671 2018/09/22 16:22:22 maxv Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/18/93
 
 MAN=	aac.4 ac97.4 acardide.4 aceride.4 acphy.4 \
@@ -146,7 +146,7 @@ MAN+=	faith.4 gif.4 inet6.4 icmp6.4 ip6.4 ipsec.4 ipsecif.4 stf.4
 
 # ISDN devices
 MAN+=	isdntrc.4 isdntel.4 isdnbchan.4 ippp.4 irip.4 isdnctl.4 isdn.4 \
-	isic.4 isdncapi.4
+	isdncapi.4
 
 # onewire bus and devices
 MAN+=	gpioow.4 onewire.4 owtemp.4
