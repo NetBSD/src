@@ -1,4 +1,4 @@
-/*	$NetBSD: printf.c,v 1.37.8.2 2018/09/01 06:28:23 martin Exp $	*/
+/*	$NetBSD: printf.c,v 1.37.8.3 2018/09/23 17:16:33 martin Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\
 #if 0
 static char sccsid[] = "@(#)printf.c	8.2 (Berkeley) 3/22/95";
 #else
-__RCSID("$NetBSD: printf.c,v 1.37.8.2 2018/09/01 06:28:23 martin Exp $");
+__RCSID("$NetBSD: printf.c,v 1.37.8.3 2018/09/23 17:16:33 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -133,6 +133,8 @@ int main(int argc, char *argv[])
 #if !defined(SHELL) && !defined(BUILTIN)
 	(void)setlocale (LC_ALL, "");
 #endif
+
+	rval = 0;	/* clear for builtin versions (avoid holdover) */
 
 	while ((o = getopt(argc, argv, "")) != -1) {
 		switch (o) {
