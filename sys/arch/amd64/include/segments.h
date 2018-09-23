@@ -1,4 +1,4 @@
-/*	$NetBSD: segments.h,v 1.34 2017/12/31 08:29:38 maxv Exp $	*/
+/*	$NetBSD: segments.h,v 1.35 2018/09/23 00:59:59 cherry Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -234,15 +234,18 @@ struct region_descriptor {
 
 #ifdef _KERNEL
 #ifdef XEN
-extern struct trap_info *idt;
+typedef struct trap_info idt_descriptor_t;
 #else
-extern struct gate_descriptor *idt;
-#endif
+typedef struct gate_descriptor idt_descriptor_t; 
+#endif /* XEN */
+extern idt_descriptor_t *idt;
 extern char *gdtstore;
 extern char *ldtstore;
 
 void setgate(struct gate_descriptor *, void *, int, int, int, int);
 void unsetgate(struct gate_descriptor *);
+void set_idtgate(idt_descriptor_t *, void *, int, int, int, int);
+void unset_idtgate(idt_descriptor_t *);
 void setregion(struct region_descriptor *, void *, uint16_t);
 void set_sys_segment(struct sys_segment_descriptor *, void *, size_t,
     int, int, int);
