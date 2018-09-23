@@ -1,4 +1,4 @@
-$NetBSD: TODO.smpnet,v 1.24 2018/09/06 06:46:25 maxv Exp $
+$NetBSD: TODO.smpnet,v 1.25 2018/09/23 13:48:16 maxv Exp $
 
 MP-safe components
 ==================
@@ -90,7 +90,6 @@ Unprotected ones
    - Bluetooth (sys/netbt/)
    - altq(4)
    - CIFS (sys/netsmb/)
-   - ISDN (sys/netisbn/)
    - kttcp(4)
    - NFS
 
@@ -117,7 +116,6 @@ This is the list of the functions that have such bpf_mtap:
 
  - sca_frame_process() @ sys/dev/ic/hd64570.c
  - rxintr_cleanup() @ sys/dev/pci/if_lmc.c
- - ipr_rx_data_rdy() @ sys/netisdn/i4b_ipr.c
 
 Ideally we should make the functions run in softint somehow, but we don't have
 actual devices, no time (or interest/love) to work on the task, so instead we
