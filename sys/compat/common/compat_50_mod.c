@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_50_mod.c,v 1.1.2.15 2018/09/23 04:27:48 pgoyette Exp $	*/
+/*	$NetBSD: compat_50_mod.c,v 1.1.2.16 2018/09/23 04:31:17 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_50_mod.c,v 1.1.2.15 2018/09/23 04:27:48 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_50_mod.c,v 1.1.2.16 2018/09/23 04:31:17 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -46,8 +46,6 @@ __KERNEL_RCSID(0, "$NetBSD: compat_50_mod.c,v 1.1.2.15 2018/09/23 04:27:48 pgoye
 #include <sys/syscall.h>
 #include <sys/syscallvar.h>
 #include <sys/syscallargs.h>
-
-#include <opencrypto/ocryptodev.h>
 
 #include <compat/sys/clockctl.h>
 

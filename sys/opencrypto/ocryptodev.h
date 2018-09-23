@@ -1,4 +1,4 @@
-/*	$NetBSD: ocryptodev.h,v 1.3.16.4 2018/09/23 03:44:04 pgoyette Exp $ */
+/*	$NetBSD: ocryptodev.h,v 1.3.16.5 2018/09/23 04:31:17 pgoyette Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.h,v 1.2.2.6 2003/07/02 17:04:50 sam Exp $	*/
 /*	$OpenBSD: cryptodev.h,v 1.33 2002/07/17 23:52:39 art Exp $	*/
 
@@ -177,8 +177,5 @@ struct crypt_op;
 struct crypt_n_op;
 
 int ocryptof_ioctl(struct file *, u_long, void *);
-
-void cryptodev_50_init(void);
-void cryptodev_50_fini(void);
 
 #endif /* _CRYPTO_OCRYPTODEV_H_ */
