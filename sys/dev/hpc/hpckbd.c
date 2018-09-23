@@ -1,4 +1,4 @@
-/*	$NetBSD: hpckbd.c,v 1.30.30.2 2017/08/09 05:57:32 snj Exp $ */
+/*	$NetBSD: hpckbd.c,v 1.30.30.3 2018/09/23 17:20:08 martin Exp $ */
 
 /*-
  * Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpckbd.c,v 1.30.30.2 2017/08/09 05:57:32 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpckbd.c,v 1.30.30.3 2018/09/23 17:20:08 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -261,10 +261,11 @@ hpckbd_getevent(struct hpckbd_core* hc, u_int *type, int *data)
 }
 
 
-#ifdef hpcsh
+#if defined(hpcsh) || defined(hpcmips)
 /*
- * XXX: Use the old wrong code for now as hpcsh attaches console very
- * early and it's convenient to be able to do early DDB on wscons.
+ * XXX: Use the old wrong code for now as hpcsh and hpcmips attach
+ * console very early when malloc(9) is not yet available.  It is
+ * convenient to be able to do early DDB on wscons.
  */
 void
 hpckbd_keymap_setup(struct hpckbd_core *hc,
@@ -278,8 +279,9 @@ hpckbd_keymap_setup(struct hpckbd_core *hc,
 	 * XXX The way this is done is really wrong.  The __UNCONST()
 	 * is a hint as to what is wrong.  This actually ends up modifying
 	 * initialized data which is marked "const".
-	 * The reason we get away with it here is that on sh3 kernel
-	 * is directly mapped.
+	 *
+	 * The reason we get away with it here is that on sh3 and mips
+	 * the kernel is directly mapped.
 	 */
 	desc = (struct wscons_keydesc *)__UNCONST(hpckbd_keymapdata.keydesc);
 	for (i = 0; desc[i].name != 0; i++) {
