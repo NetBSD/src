@@ -1,4 +1,4 @@
-/* $NetBSD: hdaudio_pci.c,v 1.7.2.1 2017/06/05 08:13:05 snj Exp $ */
+/* $NetBSD: hdaudio_pci.c,v 1.7.2.2 2018/09/23 17:22:51 martin Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdaudio_pci.c,v 1.7.2.1 2017/06/05 08:13:05 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdaudio_pci.c,v 1.7.2.2 2018/09/23 17:22:51 martin Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -107,8 +107,8 @@ hdaudio_pci_attach(device_t parent, device_t self, void *opaque)
 	struct hdaudio_pci_softc *sc = device_private(self);
 	struct pci_attach_args *pa = opaque;
 	const char *intrstr;
-	pcireg_t csr;
-	int err;
+	pcireg_t csr, maptype;
+	int err, reg;
 	char intrbuf[PCI_INTRSTR_LEN];
 
 	aprint_naive("\n");
@@ -127,7 +127,9 @@ hdaudio_pci_attach(device_t parent, device_t self, void *opaque)
 	pci_conf_write(sc->sc_pc, sc->sc_tag, PCI_COMMAND_STATUS_REG, csr);
 
 	/* Map MMIO registers */
-	err = pci_mapreg_map(pa, HDAUDIO_PCI_AZBARL, PCI_MAPREG_TYPE_MEM, 0,
+	reg = HDAUDIO_PCI_AZBARL;
+	maptype = pci_mapreg_type(sc->sc_pc, sc->sc_tag, reg);
+	err = pci_mapreg_map(pa, reg, maptype, 0,
 			     &sc->sc_hdaudio.sc_memt,
 			     &sc->sc_hdaudio.sc_memh,
 			     &sc->sc_hdaudio.sc_membase,
@@ -137,7 +139,10 @@ hdaudio_pci_attach(device_t parent, device_t self, void *opaque)
 		return;
 	}
 	sc->sc_hdaudio.sc_memvalid = true;
-	sc->sc_hdaudio.sc_dmat = pa->pa_dmat;
+	if (pci_dma64_available(pa))
+		sc->sc_hdaudio.sc_dmat = pa->pa_dmat64;
+	else
+		sc->sc_hdaudio.sc_dmat = pa->pa_dmat;
 
 	/* Map interrupt and establish handler */
 	if (pci_intr_alloc(pa, &sc->sc_pihp, NULL, 0)) {
