@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.183.2.6 2018/07/26 23:11:59 snj Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.183.2.7 2018/09/23 17:40:37 martin Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.183.2.6 2018/07/26 23:11:59 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.183.2.7 2018/09/23 17:40:37 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -3152,6 +3152,7 @@ pci_conf_print_ats_cap(const pcireg_t *regs, int extcapoff)
 	printf("      Invalidate Queue Depth: %u\n", num);
 	onoff("Page Aligned Request", reg, PCI_ATS_CAP_PALIGNREQ);
 	onoff("Global Invalidate", reg, PCI_ATS_CAP_GLOBALINVL);
+	onoff("Relaxed Ordering", reg, PCI_ATS_CAP_RELAXORD);
 
 	printf("    Control register: 0x%04x\n", ctl);
 	printf("      Smallest Translation Unit: %u\n",
