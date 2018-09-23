@@ -1,4 +1,4 @@
-.\" $NetBSD: ifwatchd.8,v 1.27 2010/04/16 13:56:45 wiz Exp $
+.\" $NetBSD: ifwatchd.8,v 1.28 2018/09/23 07:24:20 maxv Exp $
 .\"
 .\" Copyright (c) 2001-2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd April 16, 2010
+.Dd September 22, 2018
 .Dt IFWATCHD 8
 .Os
 .Sh NAME
@@ -50,9 +50,7 @@ for address changes, and to monitor static interfaces for carrier
 changes.
 Sometimes these interfaces are accompanied by a daemon program,
 which can take care of running any necessary scripts (like
-.Xr pppd 8
-or
-.Xr isdnd 8 ) ,
+.Xr pppd 8 ) ,
 but sometimes the interfaces run completely autonomously (like
 .Xr pppoe 4 ) .
 .Pp

@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.207 2018/06/10 17:17:46 kamil Exp $
+# $NetBSD: mi,v 1.208 2018/09/23 07:24:19 maxv Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1423,13 +1423,13 @@
 ./usr/share/examples/ipf/nat.eg			misc-ipf-examples	ipfilter,share
 ./usr/share/examples/ipf/server			misc-ipf-examples	ipfilter,share
 ./usr/share/examples/ipf/tcpstate		misc-ipf-examples	ipfilter,share
-./usr/share/examples/isdn/holidays.D.SH		misc-isdn-examples	share
-./usr/share/examples/isdn/isdnd.rates.A		misc-isdn-examples	share
-./usr/share/examples/isdn/isdnd.rates.D		misc-isdn-examples	share
-./usr/share/examples/isdn/isdnd.rates.F		misc-isdn-examples	share
-./usr/share/examples/isdn/isdnd.rates.L		misc-isdn-examples	share
-./usr/share/examples/isdn/isdnd.rates.UK.BT	misc-isdn-examples	share
-./usr/share/examples/isdn/isdnd.rc.sample	misc-isdn-examples	share
+./usr/share/examples/isdn/holidays.D.SH		misc-obsolete		obsolete
+./usr/share/examples/isdn/isdnd.rates.A		misc-obsolete		obsolete
+./usr/share/examples/isdn/isdnd.rates.D		misc-obsolete		obsolete
+./usr/share/examples/isdn/isdnd.rates.F		misc-obsolete		obsolete
+./usr/share/examples/isdn/isdnd.rates.L		misc-obsolete		obsolete
+./usr/share/examples/isdn/isdnd.rates.UK.BT	misc-obsolete		obsolete
+./usr/share/examples/isdn/isdnd.rc.sample	misc-obsolete		obsolete
 ./usr/share/examples/kerberos/krb5.conf		misc-krb5-examples	kerberos,share
 ./usr/share/examples/kyua-cli			misc-kyua-examples
 ./usr/share/examples/kyua-cli/Kyuafile.top	misc-kyua-examples	share,kyua
