@@ -1,4 +1,4 @@
-/*	$NetBSD: xenfunc.c,v 1.20 2018/09/23 00:59:59 cherry Exp $	*/
+/*	$NetBSD: xenfunc.c,v 1.21 2018/09/23 15:28:49 cherry Exp $	*/
 
 /*
  * Copyright (c) 2004 Christian Limpach.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenfunc.c,v 1.20 2018/09/23 00:59:59 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenfunc.c,v 1.21 2018/09/23 15:28:49 cherry Exp $");
 
 #include <sys/param.h>
 
@@ -80,15 +80,19 @@ lidt(struct region_descriptor *rd)
 		xen_idt[xen_idt_idx++] = idd[i];
 	}
 
+#if defined(__x86_64__)
 	/* page needs to be r/o */
 	pmap_changeprot_local((vaddr_t) xen_idt, VM_PROT_READ);
+#endif /* __x86_64 */
 
 	/* Hook it up in the hypervisor */
 	if (HYPERVISOR_set_trap_table(xen_idt))
 		panic("HYPERVISOR_set_trap_table() failed");
 
+#if defined(__x86_64__)
 	/* reset */
 	pmap_changeprot_local((vaddr_t) xen_idt, VM_PROT_READ|VM_PROT_WRITE);
+#endif /* __x86_64 */
 }
 
 void
