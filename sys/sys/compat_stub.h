@@ -1,4 +1,4 @@
-/* $NetBSD: compat_stub.h,v 1.1.2.34 2018/09/22 10:33:51 pgoyette Exp $	*/
+/* $NetBSD: compat_stub.h,v 1.1.2.35 2018/09/23 01:33:26 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -92,11 +92,7 @@ struct csession;
 struct crypt_op;
 struct crypt_n_op;
 struct kmutex_t;
-MODULE_HOOK(ocryptof_50_hook, (struct file *, u_long, void *, kmutex_t *,
-    int (*)(struct fcrypt *, struct session_op *),
-    int (*)(struct csession *, struct crypt_op *, struct lwp *),
-    int (*)(struct fcrypt *, struct crypt_n_op *, int, struct lwp *),
-    struct csession * (*)(struct fcrypt *, u_int32_t)));
+MODULE_HOOK(ocryptof_50_hook, (struct file *, u_long, void *));
 
 /*
  * raidframe compatability

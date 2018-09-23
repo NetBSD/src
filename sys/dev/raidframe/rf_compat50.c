@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_compat50.c,v 1.3.2.4 2018/09/18 23:03:54 pgoyette Exp $	*/
+/*	$NetBSD: rf_compat50.c,v 1.3.2.5 2018/09/23 01:33:25 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -39,6 +39,7 @@
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/module.h>
 
 #include <sys/compat_stub.h>
 
@@ -254,4 +255,22 @@ raidframe_50_fini(void)
 {
 
 	raidframe50_ioctl_hook_unset();
+}
+
+MODULE(MODULE_CLASS_EXEC, raid_50, "raid,compat_50");
+
+static int
+raid_50_modcmd(modcmd_t cmd, void *arg)
+{
+
+	switch (cmd) {
+	MODULE_CMD_INIT:
+		raidframe_50_init();
+		return 0;
+	MODULE_CMD_FINI:
+		raidframe_50_fini();
+		return 0;
+	default:
+		return ENOTTY;
+	}
 }
