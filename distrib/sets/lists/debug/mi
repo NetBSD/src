@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.267 2018/09/23 07:24:19 maxv Exp $
+# $NetBSD: mi,v 1.268 2018/09/23 13:36:04 christos Exp $
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib,compatfile
@@ -1586,16 +1586,16 @@
 ./usr/libdata/debug/usr/tests/crypto/libcrypto/h_ideatest.debug		tests-crypto-debug	debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/crypto/libcrypto/h_lhashtest.debug	tests-crypto-debug	debug,atf,compattestfile,openssl=10
 ./usr/libdata/debug/usr/tests/crypto/libcrypto/h_md2test.debug		tests-crypto-debug	debug,atf,compattestfile
-./usr/libdata/debug/usr/tests/crypto/libcrypto/h_md4test.debug		tests-crypto-debug	debug,atf,compattestfile
-./usr/libdata/debug/usr/tests/crypto/libcrypto/h_md5test.debug		tests-crypto-debug	debug,atf,compattestfile
+./usr/libdata/debug/usr/tests/crypto/libcrypto/h_md4test.debug		tests-obsolete	openssl=11,obsolete
+./usr/libdata/debug/usr/tests/crypto/libcrypto/h_md5test.debug		tests-obsolete	openssl=11,obsolete
 ./usr/libdata/debug/usr/tests/crypto/libcrypto/h_mdc2test.debug		tests-crypto-debug	debug,atf,compattestfile
-./usr/libdata/debug/usr/tests/crypto/libcrypto/h_randtest.debug		tests-crypto-debug	debug,atf,compattestfile
+./usr/libdata/debug/usr/tests/crypto/libcrypto/h_randtest.debug		tests-obsolete	openssl=11,obsolete
 ./usr/libdata/debug/usr/tests/crypto/libcrypto/h_rc2test.debug		tests-crypto-debug	debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/crypto/libcrypto/h_rc4test.debug		tests-crypto-debug	debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/crypto/libcrypto/h_rc5test.debug		tests-crypto-debug	debug,atf,compattestfile
-./usr/libdata/debug/usr/tests/crypto/libcrypto/h_ripemdtest.debug	tests-crypto-debug	debug,atf,compattestfile
+./usr/libdata/debug/usr/tests/crypto/libcrypto/h_ripemdtest.debug	tests-obsolete	openssl=11,obsolete
 ./usr/libdata/debug/usr/tests/crypto/libcrypto/h_rsatest.debug		tests-crypto-debug	debug,atf,compattestfile
-./usr/libdata/debug/usr/tests/crypto/libcrypto/h_sha1test.debug		tests-crypto-debug	debug,atf,compattestfile
+./usr/libdata/debug/usr/tests/crypto/libcrypto/h_sha1test.debug		tests-obsolete	openssl=11,obsolete
 ./usr/libdata/debug/usr/tests/crypto/libcrypto/h_shatest.debug		tests-crypto-debug	debug,atf,compattestfile,openssl=10
 ./usr/libdata/debug/usr/tests/crypto/libcrypto/h_srptest.debug		tests-crypto-debug	debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/crypto/libcrypto/h_threadstest.debug	tests-crypto-debug	debug,atf,compattestfile

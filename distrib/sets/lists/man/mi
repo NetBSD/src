@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1625 2018/09/23 09:20:57 maxv Exp $
+# $NetBSD: mi,v 1.1626 2018/09/23 13:36:04 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -413,7 +413,7 @@
 ./usr/share/man/cat1/openssl_verify.0		man-crypto-catman	.cat
 ./usr/share/man/cat1/openssl_version.0		man-crypto-catman	.cat
 ./usr/share/man/cat1/openssl_x509.0		man-crypto-catman	.cat
-./usr/share/man/cat1/openssl_x509v3_config.0	man-crypto-catman	.cat
+./usr/share/man/cat1/openssl_x509v3_config.0	man-obsolete		obsolete
 ./usr/share/man/cat1/page.0			man-util-catman		.cat
 ./usr/share/man/cat1/pagesize.0			man-util-catman		.cat
 ./usr/share/man/cat1/passwd.0			man-util-catman		.cat
@@ -3629,7 +3629,7 @@
 ./usr/share/man/html1/openssl_verify.html	man-crypto-htmlman	html
 ./usr/share/man/html1/openssl_version.html	man-crypto-htmlman	html
 ./usr/share/man/html1/openssl_x509.html		man-crypto-htmlman	html
-./usr/share/man/html1/openssl_x509v3_config.html	man-crypto-htmlman	html
+./usr/share/man/html1/openssl_x509v3_config.html	man-obsolete	obsolete
 ./usr/share/man/html1/page.html			man-util-htmlman	html
 ./usr/share/man/html1/pagesize.html		man-util-htmlman	html
 ./usr/share/man/html1/passwd.html		man-util-htmlman	html
@@ -6487,7 +6487,7 @@
 ./usr/share/man/man1/openssl_verify.1		man-crypto-man		.man
 ./usr/share/man/man1/openssl_version.1		man-crypto-man		.man
 ./usr/share/man/man1/openssl_x509.1		man-crypto-man		.man
-./usr/share/man/man1/openssl_x509v3_config.1	man-crypto-man		.man
+./usr/share/man/man1/openssl_x509v3_config.1	man-obsolete		obsolete
 ./usr/share/man/man1/page.1			man-util-man		.man
 ./usr/share/man/man1/pagesize.1			man-util-man		.man
 ./usr/share/man/man1/passwd.1			man-util-man		.man
