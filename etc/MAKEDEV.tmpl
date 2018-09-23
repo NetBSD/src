@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.193 2018/09/22 13:48:22 kre Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.194 2018/09/23 09:20:57 maxv Exp $
 #
 # Copyright (c) 2003,2007,2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -45,7 +45,6 @@
 #	lua	Lua device
 #	wscons	make wscons devices
 #	usbs	make USB devices
-#	isdns	make ISDN devices
 #
 # Tapes:
 #	st*	SCSI tapes
@@ -186,14 +185,6 @@
 #	ttyHS*	USB Option N.V. modems
 #	ttyU*	USB modems
 #	ttyY*	USB serial adapters
-#
-# ISDN devices:
-#	isdn	communication between userland isdnd and kernel
-#	isdnctl	control device
-#	isdnbchan* raw b-channel access
-#	isdntel*	telephony device
-#	isdnteld*	telephony dialout device
-#	isdntrc*	trace device
 #
 # Video devices:
 #	bwtwo*	monochromatic frame buffer
@@ -925,10 +916,6 @@ usbs)
 	makedev uscanner0 uscanner1
 	makedev utoppy0 utoppy1
 	makedev ugen0 ugen1 ugen2 ugen3
-	;;
-
-isdns)
-	makedev isdn isdnctl isdnbchan0 isdnbchan1 isdntel0 isdntel1 isdnteld0 isdnteld1 isdntrc0 isdntrc1
 	;;
 
 std)
@@ -1722,34 +1709,6 @@ altq)
 		mkdev altq/$dev c %altq_chr% $unit 644
 		unit=$(($unit + 1))
 	done
-	;;
-
-isdn)
-	mkdev isdn c %isdn_chr% 0
-	;;
-
-isdnctl)
-	mkdev isdnctl c %isdnctl_chr% 0
-	;;
-
-isdnbchan[0-9]*)
-	unit=${i#isdnbchan}
-	mkdev isdnbchan$unit c %isdnbchan_chr% $unit
-	;;
-
-isdnteld[0-9]*)
-	unit=${i#isdnteld}
-	mkdev isdnteld$unit c %isdntel_chr% $(($unit + 64))
-	;;
-
-isdntel[0-9]*)
-	unit=${i#isdntel}
-	mkdev isdntel$unit c %isdntel_chr% $unit
-	;;
-
-isdntrc[0-9]*)
-	unit=${i#isdntrc}
-	mkdev isdntrc$unit c %isdntrc_chr% $unit
 	;;
 
 wsfont)

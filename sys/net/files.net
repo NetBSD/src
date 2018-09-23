@@ -1,4 +1,4 @@
-#	$NetBSD: files.net,v 1.18 2018/09/06 06:42:00 maxv Exp $
+#	$NetBSD: files.net,v 1.19 2018/09/23 09:21:03 maxv Exp $
 
 # XXX CLEANUP
 define	net
@@ -66,5 +66,3 @@ file	netinet6/in6_gif.c		gif & inet6
 file	netinet6/in6_l2tp.c		l2tp & inet6
 
 include	"net/agr/files.agr"
-
-include "netisdn/files.i4b"

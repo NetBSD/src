@@ -1,4 +1,4 @@
-#	$NetBSD: majors.ia64,v 1.12 2016/12/08 11:31:11 nat Exp $
+#	$NetBSD: majors.ia64,v 1.13 2018/09/23 09:21:02 maxv Exp $
 #
 # Device majors for ia64
 #
@@ -47,11 +47,6 @@ device-major	rnd		char 46			rnd
 device-major	wsdisplay	char 47			wsdisplay
 device-major	wskbd		char 48			wskbd
 device-major	wsmouse		char 49			wsmouse
-device-major	isdn		char 50			isdn
-device-major	isdnctl		char 51			isdnctl
-device-major	isdnbchan	char 52			isdnbchan
-device-major	isdntrc		char 53			isdntrc
-device-major	isdntel		char 54			isdntel
 device-major	usb		char 55			usb
 device-major	uhid		char 56			uhid
 device-major	ulpt		char 57			ulpt

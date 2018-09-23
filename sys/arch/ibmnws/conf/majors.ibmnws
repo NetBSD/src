@@ -1,4 +1,4 @@
-#	$NetBSD: majors.ibmnws,v 1.14 2011/06/30 20:09:31 wiz Exp $
+#	$NetBSD: majors.ibmnws,v 1.15 2018/09/23 09:21:02 maxv Exp $
 #
 # Device majors for ibmnws
 #
@@ -45,11 +45,6 @@ device-major	scsibus		char 61			scsibus
 device-major	raid		char 62  block 18	raid
 
 device-major	wsmux		char 65			wsmux
-device-major	isdn		char 66			isdn
-device-major	isdnctl		char 67			isdnctl
-device-major	isdnbchan	char 68			isdnbchan
-device-major	isdntrc		char 69			isdntrc
-device-major	isdntel		char 70			isdntel
 device-major	wsfont		char 71			wsfont
 device-major	pci		char 72			pci
 device-major	clockctl	char 73			clockctl
