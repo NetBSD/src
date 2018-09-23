@@ -1,4 +1,4 @@
-#	$NetBSD: evp.inc,v 1.7 2018/02/08 21:57:24 christos Exp $
+#	$NetBSD: evp.inc,v 1.8 2018/09/23 13:33:04 christos Exp $
 #
 #	@(#) Copyright (c) 1995 Simon J. Gerraty
 #
@@ -20,6 +20,7 @@ digest.c \
 e_aes.c \
 e_aes_cbc_hmac_sha1.c \
 e_aes_cbc_hmac_sha256.c \
+e_aria.c \
 e_bf.c \
 e_camellia.c \
 e_cast.c \
@@ -34,6 +35,7 @@ e_rc4.c \
 e_rc4_hmac_md5.c \
 e_rc5.c \
 e_seed.c \
+e_sm4.c \
 e_xcbc_d.c \
 encode.c \
 evp_cnf.c \
@@ -51,6 +53,7 @@ m_mdc2.c \
 m_null.c \
 m_ripemd.c \
 m_sha1.c \
+m_sha3.c \
 m_sigver.c \
 m_wp.c \
 names.c \
@@ -63,6 +66,7 @@ p_open.c \
 p_seal.c \
 p_sign.c \
 p_verify.c \
+pbe_scrypt.c \
 pmeth_fn.c \
 pmeth_gn.c \
 pmeth_lib.c \

@@ -1,4 +1,4 @@
-#	$NetBSD: engine.inc,v 1.11 2018/02/08 21:57:24 christos Exp $
+#	$NetBSD: engine.inc,v 1.12 2018/09/23 13:33:04 christos Exp $
 #
 #	@(#) Copyright (c) 1995 Simon J. Gerraty
 #
@@ -12,7 +12,6 @@
 ENGINE_SRCS += \
 eng_all.c \
 eng_cnf.c \
-eng_cryptodev.c \
 eng_ctrl.c \
 eng_dyn.c \
 eng_err.c \

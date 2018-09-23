@@ -1,4 +1,4 @@
-#	$NetBSD: des.inc,v 1.2 2018/02/08 21:57:24 christos Exp $
+#	$NetBSD: des.inc,v 1.3 2018/09/23 13:33:04 christos Exp $
 #
 #	@(#) Copyright (c) 1995 Simon J. Gerraty
 #
@@ -23,7 +23,6 @@ ofb_enc.c \
 pcbc_enc.c \
 qud_cksm.c \
 rand_key.c \
-rpc_enc.c \
 set_key.c \
 str2key.c \
 xcbc_enc.c
