@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.209.2.4 2018/09/23 11:23:47 pgoyette Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.209.2.5 2018/09/23 11:35:39 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.209.2.4 2018/09/23 11:23:47 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.209.2.5 2018/09/23 11:35:39 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_kstack.h"
@@ -1856,6 +1856,7 @@ sysctl_doeproc(SYSCTLFN_ARGS)
 /*
  * compat_netbsd32 hooks
  */
+#if !defined(_RUMP_KERNEL)
 MODULE_CALL_HOOK_DECL(kern_proc_32_hook, f1,
     (struct proc *p, struct ps_strings *s), (p, s), enosys());
 MODULE_CALL_HOOK(kern_proc_32_hook, f1,
@@ -1865,13 +1866,16 @@ MODULE_CALL_HOOK_DECL(kern_proc_32_hook, f2,
     (char **argv, size_t i, vaddr_t *base), (argv, i, base), enosys());
 MODULE_CALL_HOOK(kern_proc_32_hook, f2,
     (char **argv, size_t i, vaddr_t *base), (argv, i, base), enosys());
+#endif /* !defined(_RUMPKERNEL) */
 
 int
 copyin_psstrings(struct proc *p, struct ps_strings *arginfo)
 {
 
+#if !defined(_RUMP_KERNEL)
 	if (p->p_flag & PK_32)
 		return kern_proc_32_hook_f1_call(p, arginfo);
+#endif /* !defined(_RUMPKERNEL) */
 
 	return copyin_proc(p, (void *)p->p_psstrp, arginfo, sizeof(*arginfo));
 }
@@ -2081,9 +2085,11 @@ copy_procargs(struct proc *p, int oid, size_t *limit,
 			i = 0;
 		}
 
+#if !defined(_RUMP_KERNEL)
 		if (p->p_flag & PK_32)
 			(void)kern_proc_32_hook_f2_call(argv, i++, &base);
 		else
+#endif /* !defined(_RUMPKERNEL) */
 			base = (vaddr_t)argv[i++];
 		loaded -= entry_len;
 
