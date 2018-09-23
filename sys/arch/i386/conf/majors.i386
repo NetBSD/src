@@ -1,4 +1,4 @@
-#	$NetBSD: majors.i386,v 1.46 2017/01/12 05:24:36 ryo Exp $
+#	$NetBSD: majors.i386,v 1.47 2018/09/23 09:21:02 maxv Exp $
 #
 # Device majors for i386
 #
@@ -47,11 +47,6 @@ device-major	rnd		char 46			rnd
 device-major	wsdisplay	char 47			wsdisplay
 device-major	wskbd		char 48			wskbd
 device-major	wsmouse		char 49			wsmouse
-device-major	isdn		char 50			isdn
-device-major	isdnctl		char 51			isdnctl
-device-major	isdnbchan	char 52			isdnbchan
-device-major	isdntrc		char 53			isdntrc
-device-major	isdntel		char 54			isdntel
 device-major	usb		char 55			usb
 device-major	uhid		char 56			uhid
 device-major	ulpt		char 57			ulpt
