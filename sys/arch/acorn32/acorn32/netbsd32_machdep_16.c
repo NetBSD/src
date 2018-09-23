@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep_16.c,v 1.1.2.1 2018/09/22 22:36:37 pgoyette Exp $	*/
+/*	$NetBSD: netbsd32_machdep_16.c,v 1.1.2.2 2018/09/23 07:16:01 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,45 +36,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep_16.c,v 1.1.2.1 2018/09/22 22:36:37 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep_16.c,v 1.1.2.2 2018/09/23 07:16:01 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
-#include "opt_coredump.h"
-#include "opt_execfmt.h"
 #endif
 
-#include <sys/param.h>
-#include <sys/exec.h>
-#include <sys/exec_aout.h>
-#include <sys/kmem.h>
-#include <sys/malloc.h>
-#include <sys/proc.h>
-#include <sys/signalvar.h>
-#include <sys/systm.h>
-#include <sys/core.h>
-#include <sys/mount.h>
-#include <sys/buf.h>
-#include <sys/vnode.h>
-#include <sys/ras.h>
-#include <sys/ptrace.h>
-#include <sys/kauth.h>
-
-#include <x86/fpu.h>
-#include <x86/dbregs.h>
-#include <machine/frame.h>
-#include <machine/reg.h>
-#include <machine/vmparam.h>
-#include <machine/netbsd32_machdep.h>
-#include <machine/sysarch.h>
-#include <machine/userret.h>
-
 #include <compat/netbsd32/netbsd32.h>
-#include <compat/netbsd32/netbsd32_exec.h>
-#include <compat/netbsd32/netbsd32_syscallargs.h>
-
-#include <compat/sys/signal.h>
-#include <compat/sys/signalvar.h>
 
 void
 netbsd32_machdep_md_16_init(void)
