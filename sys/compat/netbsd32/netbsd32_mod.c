@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_mod.c,v 1.13.16.15 2018/09/23 11:29:53 pgoyette Exp $	*/
+/*	$NetBSD: netbsd32_mod.c,v 1.13.16.16 2018/09/23 21:43:45 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_mod.c,v 1.13.16.15 2018/09/23 11:29:53 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_mod.c,v 1.13.16.16 2018/09/23 21:43:45 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_execfmt.h"
@@ -112,19 +112,19 @@ compat_netbsd32_modcmd(modcmd_t cmd, void *arg)
 		if (error == 0) {
 			netbsd32_sysctl_init();
 			netbsd32_machdep_md_init();
-			kern_proc_32_init();
+			netbsd32_kern_proc_32_init();
 		}
 		return error;
 
 	case MODULE_CMD_FINI:
 		netbsd32_machdep_md_fini();
 		netbsd32_sysctl_fini();
-		kern_proc_32_fini();
+		netbsd32_kern_proc_32_fini();
 
 		error = exec_remove(netbsd32_execsw,
 		    __arraycount(netbsd32_execsw));
 		if (error) {
-			kern_proc_32_init();
+			netbsd32_kern_proc_32_init();
 			netbsd32_sysctl_init();
 			netbsd32_machdep_md_init();
 		}
