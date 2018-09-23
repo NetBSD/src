@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_30.c,v 1.31.16.9 2018/09/23 08:01:13 pgoyette Exp $	*/
+/*	$NetBSD: netbsd32_compat_30.c,v 1.31.16.10 2018/09/23 08:02:50 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_30.c,v 1.31.16.9 2018/09/23 08:01:13 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_30.c,v 1.31.16.10 2018/09/23 08:02:50 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include <opt_ntp.h>
@@ -301,10 +301,10 @@ compat_30_netbsd32_fhopen(struct lwp *l, const struct compat_30_netbsd32_fhopen_
 	return (compat_30_sys_fhopen(l, &ua, retval));
 }
 
+#ifdef NTP
 int
 compat_30_netbsd32_ntp_gettime(struct lwp *l, const struct compat_30_netbsd32_ntp_gettime_args *uap, register_t *retval)
 {
-#ifdef NTP
 	/* {
 		syscallarg(netbsd32_ntptimevalp_t) ntvp;
 	} */
@@ -326,11 +326,8 @@ compat_30_netbsd32_ntp_gettime(struct lwp *l, const struct compat_30_netbsd32_nt
 	}
 
 	return (error);
-#else
-
-	return ENOSYS;
-#endif
 }
+#endif
 
 static struct syscall_package compat_netbsd32_30_syscalls[] = {
 	{ NETBSD32_SYS_compat_30_netbsd32_getdents, 0,
@@ -353,8 +350,10 @@ static struct syscall_package compat_netbsd32_30_syscalls[] = {
 	    (sy_call_t *)compat_30_netbsd32___fhstat30 }, 
 	{ NETBSD32_SYS_compat_30_netbsd32_fhopen, 0,
 	    (sy_call_t *)compat_30_netbsd32_fhopen }, 
+#ifdef NTP
 	{ NETBSD32_SYS_compat_30_netbsd32_ntp_gettime, 0,
 	    (sy_call_t *)compat_30_netbsd32_ntp_gettime }, 
+#endif
 	{ 0, 0, NULL }
 };
 
