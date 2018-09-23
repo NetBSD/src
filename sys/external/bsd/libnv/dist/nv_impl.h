@@ -1,4 +1,4 @@
-/*	$NetBSD: nv_impl.h,v 1.4 2018/09/22 17:13:30 rmind Exp $	*/
+/*	$NetBSD: nv_impl.h,v 1.5 2018/09/23 19:07:10 rmind Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -65,10 +65,11 @@ extern void *nv_calloc(size_t, size_t);
 # endif
 # define nv_realloc(buf, size)		realloc((buf), (size), M_NVLIST, \
 					    M_WAITOK)
-# define nv_free(buf)			free((buf), M_NVLIST)
 # ifdef __FreeBSD__
+#  define nv_free(buf)			free((buf), M_NVLIST)
 #  define nv_strdup(buf)		strdup((buf), M_NVLIST)
 # else
+extern void nv_free(void *);
 extern char *nv_strdup(const char *);
 # endif
 # define nv_vasprintf(ptr, ...)		vasprintf(ptr, M_NVLIST, __VA_ARGS__)
