@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: weekly,v 1.31 2015/11/28 14:20:32 darcy Exp $
+#	$NetBSD: weekly,v 1.32 2018/09/23 23:12:21 kre Exp $
 #	from: @(#)weekly	8.2 (Berkeley) 1/2/94
 #
 
@@ -44,8 +44,8 @@ TMP=weekly.$$
 # see if /usr/src exists and is local
 # before looking there for checked-out files
 
-#if [ -d /usr/src -a \
-#  -n "$(find -f /usr/src ! -fstype local -prune -or -type d -print -prune)" ];
+#if [ -d /usr/src ] &&
+# [ -n "$(find -f /usr/src ! -fstype local -prune -or -type d -print -prune)" ];
 #then
 #	echo ""
 #	echo "Looking for checked out files:"
@@ -81,7 +81,7 @@ fi
 
 if checkyesno rebuild_mandb; then
 	echo ""
-	if [ -f /etc/man.conf -a -x /usr/sbin/makemandb ]; then
+	if [ -f /etc/man.conf ] && [ -x /usr/sbin/makemandb ]; then
 		echo "Rebuilding man page index:"
 		(umask 022; nice -n 5 /usr/sbin/makemandb -f -Q)
 	else
