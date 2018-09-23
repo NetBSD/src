@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$NetBSD: ypinit.sh,v 1.13 2018/07/20 13:11:01 kre Exp $
+#	$NetBSD: ypinit.sh,v 1.14 2018/09/23 02:15:25 kre Exp $
 #
 # ypinit.sh - setup a master or slave YP server
 #
@@ -30,51 +30,44 @@ if [ $( ${ID} -u ) != 0 ]; then
 	exit 1
 fi
 
-args=$(getopt cl:ms: $*)		# XXX should switch to getopts
-if [ $? -eq 0 ]; then
-	set -- $args
-	for i; do
-		case $i in
-		"-c")
-			servertype=client
-			shift
-			;;
-		"-m")
-			servertype=master
-			shift
-			;;
-		"-s")
-			servertype=slave
-			master=${2}
-			shift
-			shift
-			;;
-		"-l")
-			noninteractive=yes
-			serverlist=${2}
-			shift
-			shift
-			;;
-		"--")
-			shift
-			break
-			;;
-		esac
-	done
+while getopts cl:ms: i
+do
+	case $i in
+	c)
+		servertype=client
+		;;
+	l)
+		noninteractive=yes
+		serverlist=${OPTARG}
+		;;
+	m)
+		servertype=master
+		;;
+	s)
+		servertype=slave
+		master=${OPTARG}
+		;;
+	\?)
+		echo >&2	# "Illegal option" message issued by getopts
+		servertype=	# force usage message just below
+		break
+		;;
+	esac
+done
+shift $((OPTIND - 1))
 
-	if [ $# -eq 1 ]; then
-		domain=${1}
-		shift;
-	else
-		domain=$( ${BIN_DOMAINNAME} )
-	fi
+if [ $# -eq 1 ]; then
+	domain=${1}
+	shift;
+else
+	domain=$( ${BIN_DOMAINNAME} )
 fi
 
 if [ -z ${servertype} ]; then
 	cat 1>&2 << __usage
-usage: 	${progname} -c [domainname] [-l server1,...,serverN]
-	${progname} -m [domainname] [-l server1,...,serverN]
-	${progname} -s master_server [domainname] [-l server1,...,serverN]
+usage: 	${progname} -c [-l server1,...,serverN] [domainname]
+	${progname} -m [-l server1,...,serverN] [domainname]
+	${progname} -s master_server [-l server1,...,serverN] [domainname]
 
 The \`-c' flag sets up a YP client, the \`-m' flag builds a master YP
 server, and the \`-s' flag builds a slave YP server.  When building a
@@ -104,14 +97,14 @@ __no_hostname
 
 	exit 1
 fi
-if [ "${servertype}" = "slave" -a "${host}" = "${master}" ]; then
+if [ "${servertype}" = slave ] && [ "${host}" = "${master}" ]; then
 	echo 1>&2 \
 	    "$progname: cannot setup a YP slave server off the local host."
 	exit 1
 fi
 
 # Check if the YP directory exists.
-if [ ! -d ${yp_dir} -o -f ${yp_dir} ]; then
+if ! [ -d "${yp_dir}" ]; then
 	cat 1>&2 << __no_dir
 $progname: The directory ${yp_dir} does not exist.
 	Restore it from the distribution.
@@ -128,7 +121,7 @@ fi
 echo ""
 
 binding_dir=${yp_dir}/binding
-if [ ! -d ${binding_dir} ]; then
+if ! [ -d ${binding_dir} ]; then
 	cat 1>&2 << __no_dir
 $progname: The directory ${binding_dir} does not exist.
 	Restore it from the distribution.
@@ -152,13 +145,13 @@ When finished, press RETURN on a blank line or enter EOF.
 
 __list_of_servers
 
-		if [ "${servertype}" != "client" ]; then
-			echo ${host} >> ${tmpfile}
+		if [ "${servertype}" != client ]; then
+			echo "${host}" >> ${tmpfile}
 			echo "	next host: ${host}";
 		fi
 		echo -n "	next host: ";
 
-		while read nextserver ; test -n "${nextserver}"
+		while read nextserver && test -n "${nextserver}"
 		do
 			echo ${nextserver} >> ${tmpfile}
 			echo -n "	next host: ";
@@ -249,8 +242,8 @@ fi
 
 case ${servertype} in
 master)
-	if [ ! -f ${yp_dir}/Makefile ];	then
-		if [ ! -f ${yp_dir}/Makefile.main ]; then
+	if ! [ -f ${yp_dir}/Makefile ];	then
+		if ! [ -f ${yp_dir}/Makefile.main ]; then
 			echo 1>&2 \
 			    "$progname: Can't find ${yp_dir}/Makefile.main"
 			exit 1
@@ -283,7 +276,7 @@ master)
 	    ${yp_dir}/Makefile
 	rm ${yp_dir}/Makefile.tmp
 
-	if [ ! -f ${yp_dir}/Makefile.yp ]; then
+	if ! [ -f ${yp_dir}/Makefile.yp ]; then
 		echo 1>&2 "$progname: Can't find ${yp_dir}/Makefile.yp"
 		exit 1
 	fi
