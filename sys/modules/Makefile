@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.202.2.36 2018/09/23 01:33:25 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.202.2.37 2018/09/23 04:31:17 pgoyette Exp $
 
 .include <bsd.own.mk>
 
@@ -14,6 +14,7 @@ SUBDIR+=	compat_60   compat_70   compat_80
 
 SUBDIR+=	compat_sysv_10 compat_sysv_14 compat_sysv_50
 
+SUBDIR+=	compat_raid_50
 SUBDIR+=	compat_raid_80
 
 SUBDIR+=	compat_crypto_50
