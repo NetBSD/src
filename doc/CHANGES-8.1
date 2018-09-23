@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.1,v 1.1.2.24 2018/09/10 17:56:49 martin Exp $
+# $NetBSD: CHANGES-8.1,v 1.1.2.25 2018/09/23 18:04:52 martin Exp $
 
 A complete list of changes from the NetBSD 8.0 release to the NetBSD 8.1
 release:
@@ -1020,4 +1020,98 @@ sbin/raidctl/rf_configure.h			1.2
 	Various raidctl fixes.
 	Support NAME=<wedge name> syntax for disks and spares.
 	[nakayama, ticket #1019]
+
+usr.bin/printf/printf.c				1.46
+
+	Fix sh builtin printf %b \c state handling.
+	[kre, ticket #1020]
+
+sys/dev/hpc/hpckbd.c				1.33-1.35
+
+	Fix hpcmips kernel crash when attaching console.
+	Fix comment formatting and clarify.
+	[rin, ticket #1021]
+
+sys/dev/pci/hdaudio_pci.c			1.9,1.10
+
+	Use 64 bit dma if available.
+	[mrg, ticket #1022]
+
+sys/dev/scsipi/scsipi_verbose.c			1.34
+
+	Don't print a blank line that ends up in logs and console output.
+	[mrg, ticket #1023]
+
+sys/ddb/db_command.c				1.157,1.158
+sys/kern/subr_lockdebug.c			1.67
+
+	Fix rebooting from ddb, avoid lockdebug checks and allow
+	interrupts to work.
+	[mrg, ticket #1024]
+
+sys/kern/kern_drvctl.c				1.44
+sys/kern/subr_autoconf.c			1.263
+sys/sys/device.h				1.156
+sys/sys/systm.h					1.278
+
+	- move export for devmon_insert_vec into sys/device.h.
+	- export root_is_mounted for future USB RB_ASKNAME hack.
+	- make some things in subr_autoconf.c static
+	- move device_printf() prototype out from the middle of two sets of
+	  aprint_*() prototypes.
+	[mrg, ticket #1025]
+
+sys/arch/x86/include/specialreg.h		1.130
+sys/arch/x86/x86/procfs_machdep.c		1.24
+
+	- Add cpuid 7 edx L1D_FLUSH bit.
+	- Add IA32_ARCH_SKIP_L1DFL_VMENTRY bit.
+	- Add IA32_FLUSH_CMD MSR.
+	[msaitoh, ticket #1026]
+
+sys/dev/pci/if_wm.c				1.586-1.588
+
+	- Split txdrop evcnt into pcqdrop and descdrop.
+	- Simplify evcnt name by removing duplicated "tx" or "rx".
+	- Reduce the number of DMA segments if they do not fix.
+	- Reduce the max number of DMA segments
+	[msaitoh, ticket #1027]
+
+sys/dev/pci/pci_subr.c				1.203
+sys/dev/pci/pcireg.h				1.140
+
+	Add ATS Relaxed Ordering supported bit described in Address Translation
+	Relaxed Ordering ECN.
+	[msaitoh, ticket #1028]
+
+sys/dev/pci/ixgbe/ixgbe.c			1.166
+
+	- The location of some registers in Denverton were changed.
+	- Fix sysctl knobs for WOL for some devices.
+	[msaitoh, ticket #1029]
+
+sys/kern/kern_synch.c				1.317
+
+	Avoid a long hang (maybe forever) in pserialize.
+	[bouyer, ticket #1031]
+
+usr.sbin/sysinst/arch/sgimips/md.c		1.5,1.6
+
+	Fix bootloader installation on sgimips (PR 53583).
+	[tsutsui, ticket #1032]
+
+sys/arch/pmax/pmax/dec_3min.c			1.74
+
+	Fix hangup after framebuffers are attached on 3MIN (PR 53611).
+	[tsutsui, ticket #1033]
+
+sys/arch/xen/xen/xbdback_xenbus.c		(apply patch)
+
+	Avoid sleeping with a spin lock held.
+	[manu, ticket #1034]
+
+sys/dev/pci/files.pci				1.403
+
+	ixg and ixv depend on mii and mii_phy.
+	[nakayama, ticket #1035]
 
