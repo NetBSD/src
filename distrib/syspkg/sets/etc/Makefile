@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2018/06/29 12:34:14 roy Exp $
+#	$NetBSD: Makefile,v 1.4 2018/09/23 08:26:00 maxv Exp $
 
 SUBDIR+=etc-bind-etc
 SUBDIR+=etc-bind-rc
@@ -11,7 +11,6 @@ SUBDIR+=etc-dhcpd-rc
 SUBDIR+=etc-games-etc
 SUBDIR+=etc-games-scores
 SUBDIR+=etc-ipf-rc
-SUBDIR+=etc-isdn-rc
 SUBDIR+=etc-krb5-rc
 SUBDIR+=etc-lpr-etc
 SUBDIR+=etc-lpr-log
