@@ -1,4 +1,4 @@
-#	$NetBSD: majors.x68k,v 1.27 2015/04/23 23:22:52 pgoyette Exp $
+#	$NetBSD: majors.x68k,v 1.28 2018/09/23 09:21:03 maxv Exp $
 #
 # Device majors for x68k
 #
@@ -40,11 +40,6 @@ device-major	rnd		char 39			rnd
 device-major	scsibus		char 40			scsibus
 device-major	raid		char 41  block 16	raid
 device-major	svr4_net	char 42			compat_svr4
-device-major	isdn		char 43			isdn
-device-major	isdnctl		char 44			isdnctl
-device-major	isdnbchan	char 45			isdnbchan
-device-major	isdntrc		char 46			isdntrc
-device-major	isdntel		char 47			isdntel
 device-major	clockctl	char 48			clockctl
 device-major	usb		char 50			usb
 device-major	ugen		char 51			ugen
