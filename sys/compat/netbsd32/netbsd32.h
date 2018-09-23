@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32.h,v 1.116.2.9 2018/09/18 23:03:54 pgoyette Exp $	*/
+/*	$NetBSD: netbsd32.h,v 1.116.2.10 2018/09/23 09:16:49 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2008, 2015 Matthew R. Green
@@ -47,6 +47,7 @@
 #include <sys/ucontext.h>
 #include <sys/ucred.h>
 #include <sys/module_hook.h>
+
 #include <compat/sys/ucontext.h>
 #include <compat/sys/mount.h>
 #include <compat/sys/signal.h>
