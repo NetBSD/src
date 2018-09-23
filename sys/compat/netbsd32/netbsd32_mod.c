@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_mod.c,v 1.13.16.14 2018/09/23 11:23:47 pgoyette Exp $	*/
+/*	$NetBSD: netbsd32_mod.c,v 1.13.16.15 2018/09/23 11:29:53 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_mod.c,v 1.13.16.14 2018/09/23 11:23:47 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_mod.c,v 1.13.16.15 2018/09/23 11:29:53 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_execfmt.h"
@@ -54,7 +54,6 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_mod.c,v 1.13.16.14 2018/09/23 11:23:47 pgoy
     sizeof(Elf32_Addr)) + MAXPATHLEN + ALIGN(1))
 
 struct compat32_80_modctl_hook_t compat32_80_modctl_hook;
-struct kern_proc_32_hook_t kern_proc_32_hook;
 
 # define	DEPS1	"ksem,coredump,compat_util"
 
