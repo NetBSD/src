@@ -1,4 +1,4 @@
-/*	$NetBSD: xenfunc.c,v 1.19 2018/07/26 15:06:14 maxv Exp $	*/
+/*	$NetBSD: xenfunc.c,v 1.20 2018/09/23 00:59:59 cherry Exp $	*/
 
 /*
  * Copyright (c) 2004 Christian Limpach.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenfunc.c,v 1.19 2018/07/26 15:06:14 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenfunc.c,v 1.20 2018/09/23 00:59:59 cherry Exp $");
 
 #include <sys/param.h>
 
@@ -50,6 +50,46 @@ invlpg(vaddr_t addr)
 	xpq_queue_invlpg(addr);
 	splx(s);
 }  
+
+void
+lidt(struct region_descriptor *rd)
+{
+	/* 
+	 * We need to do this because we can't assume kmem_alloc(9)
+	 * will be available at the boot stage when this is called.
+	 */
+	static char xen_idt_page[PAGE_SIZE] __attribute__((__aligned__ (PAGE_SIZE)));
+
+	struct trap_info *xen_idt = (void * )xen_idt_page;
+	int xen_idt_idx = 0;
+	
+	struct trap_info * idd = (void *) rd->rd_base;
+	const int nidt = rd->rd_limit / (sizeof *idd); 
+
+	int i;
+
+	/*
+	 * Sweep in all initialised entries, consolidate them back to
+	 * back in the requestor array.
+	 */
+	for (i = 0; i < nidt; i++) {
+		if (idd->address == 0) /* Skip gap */
+			continue;
+
+		/* Copy over entry */
+		xen_idt[xen_idt_idx++] = idd[i];
+	}
+
+	/* page needs to be r/o */
+	pmap_changeprot_local((vaddr_t) xen_idt, VM_PROT_READ);
+
+	/* Hook it up in the hypervisor */
+	if (HYPERVISOR_set_trap_table(xen_idt))
+		panic("HYPERVISOR_set_trap_table() failed");
+
+	/* reset */
+	pmap_changeprot_local((vaddr_t) xen_idt, VM_PROT_READ|VM_PROT_WRITE);
+}
 
 void
 lldt(u_short sel)
