@@ -1,4 +1,4 @@
-#	$NetBSD: majors.sparc64,v 1.34 2017/03/26 13:57:53 martin Exp $
+#	$NetBSD: majors.sparc64,v 1.35 2018/09/23 09:21:03 maxv Exp $
 #
 # Device majors for sparc64
 #
@@ -60,11 +60,6 @@ device-major	altq		char 68			altq
 device-major	audio		char 69			audio
 device-major	openprom	char 70
 # sparc: device-major	tctrl	char 71			tctrl
-device-major	isdn		char 72			isdn
-device-major	isdnctl		char 73			isdnctl
-device-major	isdnbchan	char 74			isdnbchan
-device-major	isdntrc		char 75			isdntrc
-device-major	isdntel		char 76			isdntel
 device-major	sabtty		char 77			sabtty
 device-major	usb		char 78			usb
 device-major	uhid		char 79			uhid

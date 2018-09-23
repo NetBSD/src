@@ -1,4 +1,4 @@
-#	$NetBSD: majors.bebox,v 1.26 2016/12/08 11:31:09 nat Exp $
+#	$NetBSD: majors.bebox,v 1.27 2018/09/23 09:21:01 maxv Exp $
 #
 # Device majors for bebox
 #
@@ -49,11 +49,6 @@ device-major	wsmouse		char 49			wsmouse
 device-major	scsibus		char 50			scsibus
 device-major	raid		char 51  block 18	raid
 device-major	wsmux		char 52			wsmux
-device-major	isdn		char 53			isdn
-device-major	isdnctl		char 54			isdnctl
-device-major	isdnbchan	char 55			isdnbchan
-device-major	isdntrc		char 56			isdntrc
-device-major	isdntel		char 57			isdntel
 device-major	clockctl	char 58			clockctl
 device-major	cgd		char 60  block 19	cgd
 device-major	ksyms		char 61			ksyms
