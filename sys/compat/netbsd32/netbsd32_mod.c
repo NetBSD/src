@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_mod.c,v 1.13.16.13 2018/09/18 23:03:54 pgoyette Exp $	*/
+/*	$NetBSD: netbsd32_mod.c,v 1.13.16.14 2018/09/23 11:23:47 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_mod.c,v 1.13.16.13 2018/09/18 23:03:54 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_mod.c,v 1.13.16.14 2018/09/23 11:23:47 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_execfmt.h"
@@ -47,12 +47,14 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_mod.c,v 1.13.16.13 2018/09/18 23:03:54 pgoy
 #include <sys/module_hook.h>
 
 #include <compat/netbsd32/netbsd32_sysctl.h>
+#include <compat/netbsd32/netbsd32_kern_proc.h>
 #include <compat/netbsd32/netbsd32_exec.h>
 
 #define ELF32_AUXSIZE (howmany(ELF_AUX_ENTRIES * sizeof(Aux32Info), \
     sizeof(Elf32_Addr)) + MAXPATHLEN + ALIGN(1))
 
 struct compat32_80_modctl_hook_t compat32_80_modctl_hook;
+struct kern_proc_32_hook_t kern_proc_32_hook;
 
 # define	DEPS1	"ksem,coredump,compat_util"
 
@@ -111,16 +113,19 @@ compat_netbsd32_modcmd(modcmd_t cmd, void *arg)
 		if (error == 0) {
 			netbsd32_sysctl_init();
 			netbsd32_machdep_md_init();
+			kern_proc_32_init();
 		}
 		return error;
 
 	case MODULE_CMD_FINI:
 		netbsd32_machdep_md_fini();
 		netbsd32_sysctl_fini();
+		kern_proc_32_fini();
 
 		error = exec_remove(netbsd32_execsw,
 		    __arraycount(netbsd32_execsw));
 		if (error) {
+			kern_proc_32_init();
 			netbsd32_sysctl_init();
 			netbsd32_machdep_md_init();
 		}

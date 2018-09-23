@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32.h,v 1.116.2.10 2018/09/23 09:16:49 pgoyette Exp $	*/
+/*	$NetBSD: netbsd32.h,v 1.116.2.11 2018/09/23 11:23:47 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2008, 2015 Matthew R. Green
@@ -1180,6 +1180,13 @@ extern struct sysctlnode netbsd32_sysctl_root;
 struct netbsd32_modctl_args;
 MODULE_HOOK(compat32_80_modctl_hook,
     (struct lwp *, const struct netbsd32_modctl_args *, register_t *));
+
+/* 
+ * kern_proc compatability for netbsd32
+ */
+struct ps_strings;
+MODULE_HOOK2(kern_proc_32_hook, (struct proc *, struct ps_strings *),
+    (char **, size_t, vaddr_t *));
 
 /*
  * Finally, declare emul_netbsd32 as this is needed in lots of
