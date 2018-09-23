@@ -1,4 +1,4 @@
-/* $NetBSD: compat_stub.h,v 1.1.2.35 2018/09/23 01:33:26 pgoyette Exp $	*/
+/* $NetBSD: compat_stub.h,v 1.1.2.36 2018/09/23 11:23:47 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -33,6 +33,7 @@
 #define _SYS_COMPAT_STUB_H
 
 #include <sys/module_hook.h>
+#include <sys/param.h>
 
 /*
  * Routine hooks for compat_50___sys_ntp_gettime
@@ -207,5 +208,12 @@ MODULE_HOOK(compat_modstat_80_hook, (int, struct iovec *, void *));
  * mask for kern_sig_43's killpg
  */
 extern int kern_sig_43_pgid_mask;
+
+/*
+ * Hooks for kern_proc.c for netbsd32 compat
+ */
+struct ps_strings;
+MODULE_HOOK2(kern_proc_32_hook, (struct proc *, struct ps_strings *),
+    (char **, size_t, vaddr_t *));
 
 #endif	/* _SYS_COMPAT_STUB_H */

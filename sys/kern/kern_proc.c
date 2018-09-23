@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.209.2.3 2018/09/06 06:56:42 pgoyette Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.209.2.4 2018/09/23 11:23:47 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,18 +62,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.209.2.3 2018/09/06 06:56:42 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.209.2.4 2018/09/23 11:23:47 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_kstack.h"
 #include "opt_maxuprc.h"
 #include "opt_dtrace.h"
-#include "opt_compat_netbsd32.h"
-#endif
-
-#if defined(__HAVE_COMPAT_NETBSD32) && !defined(COMPAT_NETBSD32) \
-    && !defined(_RUMPKERNEL)
-#define COMPAT_NETBSD32
 #endif
 
 #include <sys/param.h>
@@ -105,13 +99,10 @@ __KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.209.2.3 2018/09/06 06:56:42 pgoyette
 #include <sys/sysctl.h>
 #include <sys/exec.h>
 #include <sys/cpu.h>
+#include <sys/compat_stub.h>
 
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm.h>
-
-#ifdef COMPAT_NETBSD32
-#include <compat/netbsd32/netbsd32.h>
-#endif
 
 /*
  * Process lists.
@@ -1862,25 +1853,26 @@ sysctl_doeproc(SYSCTLFN_ARGS)
 	return error;
 }
 
+/*
+ * compat_netbsd32 hooks
+ */
+MODULE_CALL_HOOK_DECL(kern_proc_32_hook, f1,
+    (struct proc *p, struct ps_strings *s), (p, s), enosys());
+MODULE_CALL_HOOK(kern_proc_32_hook, f1,
+    (struct proc *p, struct ps_strings *s), (p, s), enosys());
+
+MODULE_CALL_HOOK_DECL(kern_proc_32_hook, f2,
+    (char **argv, size_t i, vaddr_t *base), (argv, i, base), enosys());
+MODULE_CALL_HOOK(kern_proc_32_hook, f2,
+    (char **argv, size_t i, vaddr_t *base), (argv, i, base), enosys());
+
 int
 copyin_psstrings(struct proc *p, struct ps_strings *arginfo)
 {
 
-#ifdef COMPAT_NETBSD32
-	if (p->p_flag & PK_32) {
-		struct ps_strings32 arginfo32;
+	if (p->p_flag & PK_32)
+		return kern_proc_32_hook_f1_call(p, arginfo);
 
-		int error = copyin_proc(p, (void *)p->p_psstrp, &arginfo32,
-		    sizeof(arginfo32));
-		if (error)
-			return error;
-		arginfo->ps_argvstr = (void *)(uintptr_t)arginfo32.ps_argvstr;
-		arginfo->ps_nargvstr = arginfo32.ps_nargvstr;
-		arginfo->ps_envstr = (void *)(uintptr_t)arginfo32.ps_envstr;
-		arginfo->ps_nenvstr = arginfo32.ps_nenvstr;
-		return 0;
-	}
-#endif
 	return copyin_proc(p, (void *)p->p_psstrp, arginfo, sizeof(*arginfo));
 }
 
@@ -2089,14 +2081,9 @@ copy_procargs(struct proc *p, int oid, size_t *limit,
 			i = 0;
 		}
 
-#ifdef COMPAT_NETBSD32
-		if (p->p_flag & PK_32) {
-			netbsd32_charp *argv32;
-
-			argv32 = (netbsd32_charp *)argv;
-			base = (vaddr_t)NETBSD32PTR64(argv32[i++]);
-		} else
-#endif
+		if (p->p_flag & PK_32)
+			(void)kern_proc_32_hook_f2_call(argv, i++, &base);
+		else
 			base = (vaddr_t)argv[i++];
 		loaded -= entry_len;
 
