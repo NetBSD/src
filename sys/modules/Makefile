@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.202.2.38 2018/09/23 21:38:08 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.202.2.39 2018/09/23 21:47:07 pgoyette Exp $
 
 .include <bsd.own.mk>
 
@@ -287,6 +287,7 @@ SUBDIR+=	compat_netbsd32_sysvipc_50
 
 .if ${MACHINE_ARCH} == "x86_64"
 SUBDIR+=	compat_linux32
+SUBDIR+=	compat_netbsd32
 SUBDIR+=	compat_netbsd32_09	compat_netbsd32_12
 SUBDIR+=	compat_netbsd32_13	compat_netbsd32_16
 SUBDIR+=	compat_netbsd32_20	compat_netbsd32_30
