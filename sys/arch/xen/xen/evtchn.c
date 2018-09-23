@@ -1,4 +1,4 @@
-/*	$NetBSD: evtchn.c,v 1.80 2018/06/24 13:35:33 jdolecek Exp $	*/
+/*	$NetBSD: evtchn.c,v 1.81 2018/09/23 02:27:24 cherry Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -54,7 +54,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.80 2018/06/24 13:35:33 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.81 2018/09/23 02:27:24 cherry Exp $");
 
 #include "opt_xen.h"
 #include "isa.h"
@@ -737,7 +737,6 @@ pirq_establish(int pirq, int evtch, int (*func)(void *), void *arg, int level,
     const char *intrname, const char *xname)
 {
 	struct pintrhand *ih;
-	physdev_op_t physdev_op;
 
 	ih = kmem_zalloc(sizeof(struct pintrhand),
 	    cold ? KM_NOSLEEP : KM_SLEEP);
@@ -759,17 +758,7 @@ pirq_establish(int pirq, int evtch, int (*func)(void *), void *arg, int level,
 		return NULL;
 	}
 
-	physdev_op.cmd = PHYSDEVOP_IRQ_STATUS_QUERY;
-	physdev_op.u.irq_status_query.irq = pirq;
-	if (HYPERVISOR_physdev_op(&physdev_op) < 0)
-		panic("HYPERVISOR_physdev_op(PHYSDEVOP_IRQ_STATUS_QUERY)");
-	if (physdev_op.u.irq_status_query.flags &
-	    PHYSDEVOP_IRQ_NEEDS_UNMASK_NOTIFY) {
-		pirq_needs_unmask_notify[evtch >> 5] |= (1 << (evtch & 0x1f));
-#ifdef IRQ_DEBUG
-		printf("pirq %d needs notify\n", pirq);
-#endif
-	}
+	hypervisor_prime_pirq_event(pirq, evtch);
 	hypervisor_enable_event(evtch);
 	return ih;
 }
@@ -1003,6 +992,25 @@ event_remove_handler(int evtch, int (*func)(void *), void *arg)
 		intr_calculatemasks(evts, evtch, ci);
 	}
 	return 0;
+}
+
+void
+hypervisor_prime_pirq_event(int pirq, unsigned int evtch)
+{
+#if NPCI > 0 || NISA > 0
+	physdev_op_t physdev_op;
+	physdev_op.cmd = PHYSDEVOP_IRQ_STATUS_QUERY;
+	physdev_op.u.irq_status_query.irq = pirq;
+	if (HYPERVISOR_physdev_op(&physdev_op) < 0)
+		panic("HYPERVISOR_physdev_op(PHYSDEVOP_IRQ_STATUS_QUERY)");
+	if (physdev_op.u.irq_status_query.flags &
+	    PHYSDEVOP_IRQ_NEEDS_UNMASK_NOTIFY) {
+		pirq_needs_unmask_notify[evtch >> 5] |= (1 << (evtch & 0x1f));
+#ifdef IRQ_DEBUG
+		printf("pirq %d needs notify\n", pirq);
+#endif
+	}
+#endif /* NPCI > 0 || NISA > 0 */
 }
 
 void
