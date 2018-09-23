@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rndq.c,v 1.89.16.2 2018/07/28 04:38:08 pgoyette Exp $	*/
+/*	$NetBSD: kern_rndq.c,v 1.89.16.3 2018/09/23 07:44:13 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1997-2013 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.89.16.2 2018/07/28 04:38:08 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.89.16.3 2018/09/23 07:44:13 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -55,10 +55,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.89.16.2 2018/07/28 04:38:08 pgoyette
 #include <sys/systm.h>
 
 #include <dev/rnd_private.h>
-
-#ifdef COMPAT_50
-#include <compat/sys/rnd.h>
-#endif
 
 #if defined(__HAVE_CPU_RNG) && !defined(_RUMPKERNEL)
 #include <machine/cpu_rng.h>
