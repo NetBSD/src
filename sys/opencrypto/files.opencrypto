@@ -1,4 +1,4 @@
-#	$NetBSD: files.opencrypto,v 1.26.8.1 2018/09/22 10:30:00 pgoyette Exp $
+#	$NetBSD: files.opencrypto,v 1.26.8.2 2018/09/23 01:33:26 pgoyette Exp $
 #
 #
 
@@ -25,7 +25,7 @@ file	opencrypto/gmac.c		swcrypto
 # (and thus crypto hardware accelerators).
 defpseudo crypto: opencrypto
 file	opencrypto/cryptodev.c		crypto
-file	opencrypto/ocryptodev.c		compat_50
+file	opencrypto/ocryptodev.c		compat_50 & crypto
 
 defflag opt_ocf.h	CRYPTO_DEBUG CRYPTO_TIMING
 defparam opt_ocf.h	CRYPTO_RET_Q_MAXLEN CRYPTO_RET_KQ_MAXLEN

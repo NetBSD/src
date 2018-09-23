@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.114.2.22 2018/09/22 22:21:46 pgoyette Exp $
+# $NetBSD: mi,v 1.114.2.23 2018/09/23 01:33:25 pgoyette Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -118,6 +118,8 @@
 ./@MODULEDIR@/coredump/coredump.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/crypto				base-kernel-modules	kmod
 ./@MODULEDIR@/crypto/crypto.kmod		base-kernel-modules	kmod
+./@MODULEDIR@/crypto_50				base-kernel-modules	kmod
+./@MODULEDIR@/crypto_50/crypto_50.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/cyclic				base-kernel-modules	kmod,dtrace
 ./@MODULEDIR@/cyclic/cyclic.kmod		base-kernel-modules	kmod,dtrace
 ./@MODULEDIR@/dbcool				base-kernel-modules	kmod
