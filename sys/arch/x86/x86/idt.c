@@ -1,4 +1,4 @@
-/*	$NetBSD: idt.c,v 1.7 2018/09/23 00:59:59 cherry Exp $	*/
+/*	$NetBSD: idt.c,v 1.8 2018/09/23 15:28:49 cherry Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2009 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: idt.c,v 1.7 2018/09/23 00:59:59 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: idt.c,v 1.8 2018/09/23 15:28:49 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -107,9 +107,10 @@ set_idtgate(idt_descriptor_t *xen_idd, void *function, int ist,
 	vaddr_t xen_idt_vaddr = ((vaddr_t) xen_idd) & ~PAGE_MASK;
 
 	//kpreempt_disable();
+#if defined(__x86_64__)
 	/* Make it writeable, so we can update the values. */
 	pmap_changeprot_local(xen_idt_vaddr, VM_PROT_READ|VM_PROT_WRITE);
-
+#endif /* __x86_64 */
 	xen_idd->cs = sel;
 	xen_idd->address = (unsigned long) function;
 	xen_idd->flags = dpl;
@@ -122,24 +123,30 @@ set_idtgate(idt_descriptor_t *xen_idd, void *function, int ist,
 	xen_idd->vector = xen_idd - (idt_descriptor_t *)xen_idt_vaddr;
 
 	/* Back to read-only, as it should be. */
+#if defined(__x86_64__)
 	pmap_changeprot_local(xen_idt_vaddr, VM_PROT_READ);
+#endif /* __x86_64 */
 	//kpreempt_enable();
 }
 void
 unset_idtgate(idt_descriptor_t *xen_idd)
 {
+#if defined(__x86_64__)
 	vaddr_t xen_idt_vaddr = ((vaddr_t) xen_idd) & PAGE_MASK;
 
 	/* Make it writeable, so we can update the values. */
 	pmap_changeprot_local(xen_idt_vaddr, VM_PROT_READ|VM_PROT_WRITE);
-	
+#endif /* __x86_64 */
+
 	/* Zero it */
 	memset(xen_idd, 0, sizeof (*xen_idd));
 
+#if defined(__x86_64__)
 	/* Back to read-only, as it should be. */
 	pmap_changeprot_local(xen_idt_vaddr, VM_PROT_READ);
+#endif /* __x86_64 */
 }
-#else
+#else /* XEN */
 void
 set_idtgate(idt_descriptor_t *idd, void *function, int ist, int type, int dpl, int sel)
 {
@@ -150,7 +157,7 @@ unset_idtgate(idt_descriptor_t *idd)
 {
 	unsetgate(idd);
 }
-#endif
+#endif /* XEN */
 
 /*
  * Allocate an IDT vector slot within the given range.

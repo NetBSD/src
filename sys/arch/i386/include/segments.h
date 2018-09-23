@@ -1,4 +1,4 @@
-/*	$NetBSD: segments.h,v 1.66 2018/09/23 07:54:42 cherry Exp $	*/
+/*	$NetBSD: segments.h,v 1.67 2018/09/23 15:28:49 cherry Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -200,7 +200,7 @@ extern idt_descriptor_t *idt;
 extern union descriptor *gdtstore, *ldtstore;
 
 void setgate(struct gate_descriptor *, void *, int, int, int, int);
-void set_idtgate(idt_descriptor_t *, void *, int, int, int);
+void set_idtgate(idt_descriptor_t *, void *, int, int, int, int);
 void unset_idtgate(idt_descriptor_t *);
 void setregion(struct region_descriptor *, void *, size_t);
 void setsegment(struct segment_descriptor *, const void *, size_t, int, int,

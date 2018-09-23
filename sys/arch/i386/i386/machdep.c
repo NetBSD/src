@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.809 2018/09/23 00:59:59 cherry Exp $	*/
+/*	$NetBSD: machdep.c,v 1.810 2018/09/23 15:28:48 cherry Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009, 2017
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.809 2018/09/23 00:59:59 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.810 2018/09/23 15:28:48 cherry Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_freebsd.h"
@@ -1360,19 +1360,20 @@ init386(paddr_t first_avail)
 		default:
 			break;
 		}
-		set_istgate(&idt[x], IDTVEC(exceptions)[x], 0, SDT_SYS386IGT,
+		set_idtgate(&idt[x], IDTVEC(exceptions)[x], 0, SDT_SYS386IGT,
 		    sel, GSEL(GCODE_SEL, SEL_KPL));
 	}
 
 	/* new-style interrupt gate for syscalls */
 	idt_vec_reserve(128);
-	set_istgate(&idt[128], &IDTVEC(syscall), 0, SDT_SYS386IGT, SEL_UPL,
+	set_idtgate(&idt[128], &IDTVEC(syscall), 0, SDT_SYS386IGT, SEL_UPL,
 	    GSEL(GCODE_SEL, SEL_KPL));
 
+#ifndef XEN
 	setregion(&region, gdtstore, NGDT * sizeof(gdtstore[0]) - 1);
 	lgdt(&region);
-
-	cpu_init_idt();
+#endif
+	
 	lldt(GSEL(GLDT_SEL, SEL_KPL));
 	cpu_init_idt();
 
