@@ -1,4 +1,4 @@
-/* $NetBSD: compat_stub.c,v 1.1.2.23 2018/09/21 03:42:20 pgoyette Exp $	*/
+/* $NetBSD: compat_stub.c,v 1.1.2.24 2018/09/23 22:00:58 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -163,3 +163,8 @@ struct compat_modstat_80_hook_t compat_modstat_80_hook;
  * mask for kern_sig_43's killpg (updated by compat_09)
  */
 int kern_sig_43_pgid_mask = ~0;
+
+/*
+ * hook for kern_proc_32
+ */
+struct kern_proc_32_hook_t kern_proc_32_hook;
