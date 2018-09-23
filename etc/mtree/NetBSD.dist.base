@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.base,v 1.175 2018/09/12 15:29:11 christos Exp $
+#	$NetBSD: NetBSD.dist.base,v 1.176 2018/09/23 07:24:19 maxv Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -375,7 +375,6 @@
 ./usr/share/examples/getdate
 ./usr/share/examples/hostapd
 ./usr/share/examples/ipf
-./usr/share/examples/isdn
 ./usr/share/examples/kerberos
 ./usr/share/examples/kyua-cli
 ./usr/share/examples/libsaslc

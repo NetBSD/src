@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.266 2018/09/22 12:54:34 rmind Exp $
+# $NetBSD: mi,v 1.267 2018/09/23 07:24:19 maxv Exp $
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib,compatfile
@@ -1058,7 +1058,7 @@
 ./usr/libdata/debug/usr/sbin/dnssec-settime.debug	comp-bind-debug		debug
 ./usr/libdata/debug/usr/sbin/dnssec-signzone.debug	comp-bind-debug		debug
 ./usr/libdata/debug/usr/sbin/dnssec-verify.debug	comp-bind-debug		debug
-./usr/libdata/debug/usr/sbin/dtmfdecode.debug	comp-isdn-debug		debug
+./usr/libdata/debug/usr/sbin/dtmfdecode.debug	comp-obsolete		obsolete
 ./usr/libdata/debug/usr/sbin/dtrace.debug	comp-util-debug		dtrace,debug
 ./usr/libdata/debug/usr/sbin/dumpfs.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/dumplfs.debug	comp-sysutil-debug	debug
@@ -1105,11 +1105,11 @@
 ./usr/libdata/debug/usr/sbin/irdaattach.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/iscsi-initiator.debug	comp-iscsi-debug	iscsi,debug
 ./usr/libdata/debug/usr/sbin/iscsi-target.debug	comp-iscsi-debug	iscsi,debug
-./usr/libdata/debug/usr/sbin/isdnd.debug	comp-isdn-debug		debug
-./usr/libdata/debug/usr/sbin/isdnmonitor.debug	comp-isdn-debug		debug
-./usr/libdata/debug/usr/sbin/isdntel.debug	comp-isdn-debug		debug
-./usr/libdata/debug/usr/sbin/isdntelctl.debug	comp-isdn-debug		debug
-./usr/libdata/debug/usr/sbin/isdntrace.debug	comp-isdn-debug		debug
+./usr/libdata/debug/usr/sbin/isdnd.debug	comp-obsolete		obsolete
+./usr/libdata/debug/usr/sbin/isdnmonitor.debug	comp-obsolete		obsolete
+./usr/libdata/debug/usr/sbin/isdntel.debug	comp-obsolete		obsolete
+./usr/libdata/debug/usr/sbin/isdntelctl.debug	comp-obsolete		obsolete
+./usr/libdata/debug/usr/sbin/isdntrace.debug	comp-obsolete		obsolete
 ./usr/libdata/debug/usr/sbin/isibootd.debug	comp-bootserver-debug	debug
 ./usr/libdata/debug/usr/sbin/iwictl.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/kadmin.debug	comp-krb5-debug		kerberos,debug

@@ -1,4 +1,4 @@
-.\"	$NetBSD: pppoectl.8,v 1.30 2016/09/12 05:35:20 sevan Exp $
+.\"	$NetBSD: pppoectl.8,v 1.31 2018/09/23 07:24:19 maxv Exp $
 .\"
 .\" Copyright (C) 1997 by Joerg Wunsch, Dresden
 .\" All rights reserved.
@@ -26,25 +26,18 @@
 .\"
 .\" From: spppcontrol.1,v 1.1.1.1 1997/10/11 11:30:30 joerg Exp
 .\"
-.\" $Id: pppoectl.8,v 1.30 2016/09/12 05:35:20 sevan Exp $
+.\" $Id: pppoectl.8,v 1.31 2018/09/23 07:24:19 maxv Exp $
 .\"
 .\" last edit-date: [Thu Aug 31 10:47:33 2000]
 .\"
-.Dd September 12, 2016
+.Dd September 22, 2018
 .Dt PPPOECTL 8
 .Os
 .Sh NAME
-.Nm pppoectl ,
-.Nm ipppctl
-.Nd "display or set parameters for an pppoe or isdn ppp (ippp) interface"
+.Nm pppoectl
+.Nd "display or set parameters for an PPPoE interface"
 .Sh SYNOPSIS
 .Nm pppoectl
-.Op Fl v
-.Ar ifname
-.Op Ar parameter Ns Op \&= Ns Ar value
-.Op Ar ...
-.Pp
-.Nm ipppctl
 .Op Fl v
 .Ar ifname
 .Op Ar parameter Ns Op \&= Ns Ar value
@@ -102,10 +95,8 @@ Typically, not both the access concentrator name and the service name are
 specified.
 .Pp
 The
-.Xr ippp 4
-or the
 .Xr pppoe 4
-drivers require a number of additional arguments or optional
+driver requires a number of additional arguments or optional
 parameters besides the settings that can be adjusted with
 .Xr ifconfig 8 .
 These are things like authentication protocol parameters, but also
@@ -246,10 +237,6 @@ mode.
 For services that are charged by connection time the interface can optionally
 disconnect after a configured idle time.
 If set to 0, this feature is disabled.
-Note: for ISDN devices, it is preferable to use the
-.Xr isdnd 8
-based timeout mechanism, as isdnd can predict the next charging unit for
-ISDN connections and optimize the timeout with this information.
 .It Ar lcp-timeout Ns \&= Ns Em timeout-value
 Allows to change the value of the LCP timeout.
 The default value of the LCP timeout is currently set to 1 second.
@@ -306,40 +293,6 @@ option.
 .El
 .Sh EXAMPLES
 .Bd -literal
-# ipppctl ippp0
-ippp0:	phase=dead
-	myauthproto=chap myauthname="uriah"
-	hisauthproto=chap hisauthname="ifb-gw" norechallenge
-	lcp timeout: 3.000 s
-.Ed
-.Pp
-Display the settings for ippp0.
-The interface is currently in
-.Em dead
-phase, i.e. the LCP layer is down, and no traffic is possible.
-Both ends of the connection use the CHAP protocol,
-my end tells remote the system name
-.Ql uriah ,
-and remote is expected to authenticate by the name
-.Ql ifb-gw .
-Once the initial CHAP handshake was successful, no further CHAP
-challenges will be transmitted.
-There are supposedly some known CHAP
-secrets for both ends of the link which are not being shown.
-.Pp
-.Bd -literal
-# ipppctl ippp0 \e
-	authproto=chap \e
-	myauthname=uriah myauthsecret='some secret' \e
-	hisauthname=ifb-gw hisauthsecret='another' \e
-	norechallenge
-.Ed
-.Pp
-A possible call to
-.Nm
-that could have been used to bring the interface into the state shown
-by the previous example.
-.Pp
 The following example is the complete sequence of commands to bring
 a PPPoE connection up:
 .Bd -literal
@@ -363,7 +316,6 @@ ifconfig pppoe0 0.0.0.0 0.0.0.1 netmask 0xffffffff up
 .Ed
 .Sh SEE ALSO
 .Xr netstat 1 ,
-.Xr ippp 4 ,
 .Xr pppoe 4 ,
 .Xr ifconfig 8 ,
 .Xr ifwatchd 8
