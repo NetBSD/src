@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.114.2.23 2018/09/23 01:33:25 pgoyette Exp $
+# $NetBSD: mi,v 1.114.2.24 2018/09/23 03:54:08 pgoyette Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -102,6 +102,8 @@
 ./@MODULEDIR@/compat_80/compat_80.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/compat_ossaudio			base-kernel-modules	kmod
 ./@MODULEDIR@/compat_ossaudio/compat_ossaudio.kmod base-kernel-modules	kmod
+./@MODULEDIR@/compat_crypto_50			base-kernel-modules	kmod
+./@MODULEDIR@/compat_crypto_50/compat_crypto_50.kmod base-kernel-modules kmod
 ./@MODULEDIR@/compat_raid_50			base-kernel-modules	kmod
 ./@MODULEDIR@/compat_raid_50/compat_raid_50.kmod base-kernel-modules	kmod
 ./@MODULEDIR@/compat_raid_80			base-kernel-modules	kmod
@@ -118,8 +120,6 @@
 ./@MODULEDIR@/coredump/coredump.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/crypto				base-kernel-modules	kmod
 ./@MODULEDIR@/crypto/crypto.kmod		base-kernel-modules	kmod
-./@MODULEDIR@/crypto_50				base-kernel-modules	kmod
-./@MODULEDIR@/crypto_50/crypto_50.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/cyclic				base-kernel-modules	kmod,dtrace
 ./@MODULEDIR@/cyclic/cyclic.kmod		base-kernel-modules	kmod,dtrace
 ./@MODULEDIR@/dbcool				base-kernel-modules	kmod
