@@ -1,4 +1,4 @@
-# $NetBSD: t_ciphers.sh,v 1.5 2017/05/21 14:20:45 riastradh Exp $
+# $NetBSD: t_ciphers.sh,v 1.6 2018/09/23 13:34:57 christos Exp $
 #
 # Copyright (c) 2008, 2009, 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -63,7 +63,9 @@ evp_head()
 }
 evp_body()
 {
-	atf_check -o ignore -e ignore $(atf_get_srcdir)/h_evp_test $(atf_get_srcdir)/evptests.txt
+	for i in $(atf_get_srcdir)/evp*.txt; do
+	    atf_check -o ignore -e ignore $(atf_get_srcdir)/h_evp_test $i
+	done
 }
 
 atf_test_case rc2
