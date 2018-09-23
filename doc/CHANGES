@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2442 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2443 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -225,3 +225,6 @@ Changes from NetBSD 8.0 to NetBSD 9.0:
 	libnv: Imported from FreeBSD [christos 20180908]
 	rkpmic(4): Add support for Rockchip RK805 Power Management IC.
 		[jmcneill 20180920]
+	kernel: Remove the ISDN code, including daic(4), iavc(4), isic(4),
+		ifpci(4), ifritz, iwic(4), and all the ISDN-related
+		userland tools. [maxv 20180923]
