@@ -1,4 +1,4 @@
-#	$NetBSD: majors.amigappc,v 1.5 2011/06/30 20:09:19 wiz Exp $
+#	$NetBSD: majors.amigappc,v 1.6 2018/09/23 09:21:01 maxv Exp $
 #
 # Device majors for amigappc
 #
@@ -41,11 +41,6 @@ device-major	audio		char 41			audio
 device-major	rnd		char 42			rnd
 device-major	md		char 43  block 15	md
 device-major	scsibus		char 44			scsibus
-device-major	isdn		char 45			isdn
-device-major	isdnctl		char 46			isdnctl
-device-major	isdnbchan	char 47			isdnbchan
-device-major	isdntrc		char 48			isdntrc
-device-major	isdntel		char 49			isdntel
 device-major	raid		char 50  block 16	raid
 device-major	svr4_net	char 51			compat_svr4
 device-major	wd		char 52  block 17	wd

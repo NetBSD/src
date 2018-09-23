@@ -1,4 +1,4 @@
-#	$NetBSD: majors.sgimips,v 1.28 2015/04/23 23:22:52 pgoyette Exp $
+#	$NetBSD: majors.sgimips,v 1.29 2018/09/23 09:21:03 maxv Exp $
 #
 # Device majors for sgimips
 #
@@ -36,11 +36,6 @@ device-major	scsibus		char 34			scsibus
 device-major	zstty		char 35			zstty
 device-major	com		char 36			com
 device-major	arcbios		char 37
-device-major	isdn		char 38			isdn
-device-major	isdnctl		char 39			isdnctl
-device-major	isdnbchan	char 40			isdnbchan
-device-major	isdntrc		char 41			isdntrc
-device-major	isdntel		char 42			isdntel
 device-major	svr4_net	char 43			compat_svr4
 device-major	ses		char 44			ses
 
