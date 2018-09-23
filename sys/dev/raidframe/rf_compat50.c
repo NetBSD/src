@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_compat50.c,v 1.3.2.5 2018/09/23 01:33:25 pgoyette Exp $	*/
+/*	$NetBSD: rf_compat50.c,v 1.3.2.6 2018/09/23 03:44:04 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -264,10 +264,10 @@ raid_50_modcmd(modcmd_t cmd, void *arg)
 {
 
 	switch (cmd) {
-	MODULE_CMD_INIT:
+	case MODULE_CMD_INIT:
 		raidframe_50_init();
 		return 0;
-	MODULE_CMD_FINI:
+	case MODULE_CMD_FINI:
 		raidframe_50_fini();
 		return 0;
 	default:
