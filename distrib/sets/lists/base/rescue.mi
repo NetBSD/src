@@ -1,4 +1,4 @@
-# $NetBSD: rescue.mi,v 1.42 2018/07/31 16:44:28 khorben Exp $
+# $NetBSD: rescue.mi,v 1.43 2018/09/23 07:24:19 maxv Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -58,7 +58,7 @@
 ./rescue/init					base-rescue-root
 ./rescue/init.bak				base-rescue-root
 ./rescue/installboot				base-rescue-root
-./rescue/ipppctl				base-rescue-root
+./rescue/ipppctl				base-obsolete	obsolete
 ./rescue/kdump					base-rescue-root
 ./rescue/kill					base-rescue-root
 ./rescue/ksh					base-rescue-root
