@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1623 2018/09/22 16:22:22 maxv Exp $
+# $NetBSD: mi,v 1.1624 2018/09/23 07:24:19 maxv Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -148,7 +148,7 @@
 ./usr/share/man/cat1/dnsquery.0			man-obsolete		obsolete
 ./usr/share/man/cat1/domainname.0		man-nis-catman		.cat
 ./usr/share/man/cat1/download-vulnerability-list.0	man-obsolete		obsolete
-./usr/share/man/cat1/dtmfdecode.0		man-isdn-catman		.cat
+./usr/share/man/cat1/dtmfdecode.0		man-obsolete		obsolete
 ./usr/share/man/cat1/dtrace.0			man-debug-catman	dtrace,.cat
 ./usr/share/man/cat1/du.0			man-util-catman		.cat
 ./usr/share/man/cat1/echo.0			man-util-catman		.cat
@@ -2147,9 +2147,9 @@
 ./usr/share/man/cat5/ippool.conf.0		man-ipf-catman		ipfilter,.cat
 ./usr/share/man/cat5/ipsec.conf.0		man-netutil-catman	.cat
 ./usr/share/man/cat5/ipsend.0			man-ipf-catman		ipfilter,.cat
-./usr/share/man/cat5/isdnd.acct.0		man-isdn-catman		.cat
-./usr/share/man/cat5/isdnd.rates.0		man-isdn-catman		.cat
-./usr/share/man/cat5/isdnd.rc.0			man-isdn-catman		.cat
+./usr/share/man/cat5/isdnd.acct.0		man-obsolete		obsolete
+./usr/share/man/cat5/isdnd.rates.0		man-obsolete		obsolete
+./usr/share/man/cat5/isdnd.rc.0			man-obsolete		obsolete
 ./usr/share/man/cat5/krb.conf.0			man-obsolete		obsolete
 ./usr/share/man/cat5/krb.equiv.0		man-obsolete		obsolete
 ./usr/share/man/cat5/krb.extra.0		man-obsolete		obsolete
@@ -2630,7 +2630,7 @@
 ./usr/share/man/cat8/ipmon.0			man-ipf-catman		ipfilter,.cat
 ./usr/share/man/cat8/ipnat.0			man-ipf-catman		ipfilter,.cat
 ./usr/share/man/cat8/ippool.0			man-ipf-catman		ipfilter,.cat
-./usr/share/man/cat8/ipppctl.0			man-isdn-catman		.cat
+./usr/share/man/cat8/ipppctl.0			man-obsolete		obsolete
 ./usr/share/man/cat8/iprop-log.0		man-krb5-catman		kerberos,.cat
 ./usr/share/man/cat8/iprop.0			man-krb5-catman		kerberos,.cat
 ./usr/share/man/cat8/ipropd-master.0		man-krb5-catman		kerberos,.cat
@@ -2642,11 +2642,11 @@
 ./usr/share/man/cat8/iscsi-target.0		man-iscsi-catman	iscsi,.cat
 ./usr/share/man/cat8/iscsictl.0			man-iscsi-catman	iscsi,.cat
 ./usr/share/man/cat8/iscsid.0			man-iscsi-catman	iscsi,.cat
-./usr/share/man/cat8/isdnd.0			man-isdn-catman		.cat
-./usr/share/man/cat8/isdnmonitor.0		man-isdn-catman		.cat
-./usr/share/man/cat8/isdntel.0			man-isdn-catman		.cat
-./usr/share/man/cat8/isdntelctl.0		man-isdn-catman		.cat
-./usr/share/man/cat8/isdntrace.0		man-isdn-catman		.cat
+./usr/share/man/cat8/isdnd.0			man-obsolete		obsolete
+./usr/share/man/cat8/isdnmonitor.0		man-obsolete		obsolete
+./usr/share/man/cat8/isdntel.0			man-obsolete		obsolete
+./usr/share/man/cat8/isdntelctl.0		man-obsolete		obsolete
+./usr/share/man/cat8/isdntrace.0		man-obsolete		obsolete
 ./usr/share/man/cat8/isibootd.0			man-bootserver-catman	.cat
 ./usr/share/man/cat8/ispppcontrol.0		man-obsolete		obsolete
 ./usr/share/man/cat8/iteconfig.0		man-sysutil-catman	.cat
@@ -2915,7 +2915,7 @@
 ./usr/share/man/cat8/pppd.0			man-ppp-catman		.cat
 ./usr/share/man/cat8/pppd.cbcp.0		man-obsolete		obsolete
 ./usr/share/man/cat8/pppdump.0			man-ppp-catman		.cat
-./usr/share/man/cat8/pppoectl.0			man-isdn-catman		.cat
+./usr/share/man/cat8/pppoectl.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/pppstats.0			man-ppp-catman		.cat
 ./usr/share/man/cat8/praliases.0		man-obsolete		obsolete
 ./usr/share/man/cat8/prep/MAKEDEV.0		man-obsolete		obsolete
@@ -3378,7 +3378,7 @@
 ./usr/share/man/html1/dns-sd.html			man-mdns-htmlman	mdns,html
 ./usr/share/man/html1/domainname.html		man-nis-htmlman		html
 ./usr/share/man/html1/download-vulnerability-list.html	man-obsolete		obsolete
-./usr/share/man/html1/dtmfdecode.html		man-isdn-htmlman	html
+./usr/share/man/html1/dtmfdecode.html		man-obsolete		obsolete
 ./usr/share/man/html1/dtrace.html		man-debug-htmlman	dtrace,html
 ./usr/share/man/html1/du.html			man-util-htmlman	html
 ./usr/share/man/html1/echo.html			man-util-htmlman	html
@@ -5214,9 +5214,9 @@
 ./usr/share/man/html5/ippool.html		man-ipf-htmlman		ipfilter,html
 ./usr/share/man/html5/ipsec.conf.html		man-netutil-htmlman	html
 ./usr/share/man/html5/ipsend.html		man-ipf-htmlman		ipfilter,html
-./usr/share/man/html5/isdnd.acct.html		man-isdn-htmlman	html
-./usr/share/man/html5/isdnd.rates.html		man-isdn-htmlman	html
-./usr/share/man/html5/isdnd.rc.html		man-isdn-htmlman	html
+./usr/share/man/html5/isdnd.acct.html		man-obsolete		obsolete
+./usr/share/man/html5/isdnd.rates.html		man-obsolete		obsolete
+./usr/share/man/html5/isdnd.rc.html		man-obsolete		obsolete
 ./usr/share/man/html5/krb5.conf.html		man-krb5-htmlman	kerberos,html
 ./usr/share/man/html5/kyua-tester-list.html	man-kyua-htmlman	kyua,html
 ./usr/share/man/html5/kyua-tester-result.html	man-kyua-htmlman	kyua,html
@@ -5594,7 +5594,7 @@
 ./usr/share/man/html8/ipmon.html		man-ipf-htmlman		ipfilter,html
 ./usr/share/man/html8/ipnat.html		man-ipf-htmlman		ipfilter,html
 ./usr/share/man/html8/ippool.html		man-ipf-htmlman		ipfilter,html
-./usr/share/man/html8/ipppctl.html		man-isdn-htmlman	html
+./usr/share/man/html8/ipppctl.html		man-obsolete		obsolete
 ./usr/share/man/html8/iprop-log.html		man-krb5-htmlman	kerberos,html
 ./usr/share/man/html8/iprop.html		man-krb5-htmlman	kerberos,html
 ./usr/share/man/html8/ipropd-master.html	man-krb5-htmlman	kerberos,html
@@ -5606,11 +5606,11 @@
 ./usr/share/man/html8/iscsi-target.html		man-iscsi-htmlman	iscsi,html
 ./usr/share/man/html8/iscsictl.html		man-iscsi-htmlman	iscsi,html
 ./usr/share/man/html8/iscsid.html		man-iscsi-htmlman	iscsi,html
-./usr/share/man/html8/isdnd.html		man-isdn-htmlman	html
-./usr/share/man/html8/isdnmonitor.html		man-isdn-htmlman	html
-./usr/share/man/html8/isdntel.html		man-isdn-htmlman	html
-./usr/share/man/html8/isdntelctl.html		man-isdn-htmlman	html
-./usr/share/man/html8/isdntrace.html		man-isdn-htmlman	html
+./usr/share/man/html8/isdnd.html		man-obsolete		obsolete
+./usr/share/man/html8/isdnmonitor.html		man-obsolete		obsolete
+./usr/share/man/html8/isdntel.html		man-obsolete		obsolete
+./usr/share/man/html8/isdntelctl.html		man-obsolete		obsolete
+./usr/share/man/html8/isdntrace.html		man-obsolete		obsolete
 ./usr/share/man/html8/isibootd.html		man-bootserver-htmlman	html
 ./usr/share/man/html8/iteconfig.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/iwictl.html		man-sysutil-htmlman	html
@@ -5819,7 +5819,7 @@
 ./usr/share/man/html8/poweroff.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/pppd.html			man-ppp-htmlman		html
 ./usr/share/man/html8/pppdump.html		man-ppp-htmlman		html
-./usr/share/man/html8/pppoectl.html		man-isdn-htmlman	html
+./usr/share/man/html8/pppoectl.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/pppstats.html		man-ppp-htmlman		html
 ./usr/share/man/html8/prep/boot.html		man-sys-htmlman		html
 ./usr/share/man/html8/prep/mkbootimage.html	man-sys-htmlman		html
@@ -6222,7 +6222,7 @@
 ./usr/share/man/man1/dnsquery.1			man-obsolete		obsolete
 ./usr/share/man/man1/domainname.1		man-nis-man		.man
 ./usr/share/man/man1/download-vulnerability-list.1	man-obsolete		obsolete
-./usr/share/man/man1/dtmfdecode.1		man-isdn-man		.man
+./usr/share/man/man1/dtmfdecode.1		man-obsolete		obsolete
 ./usr/share/man/man1/dtrace.1			man-debug-man		dtrace,.man
 ./usr/share/man/man1/du.1			man-util-man		.man
 ./usr/share/man/man1/echo.1			man-util-man		.man
@@ -8221,9 +8221,9 @@
 ./usr/share/man/man5/ippool.conf.5		man-ipf-man		ipfilter,.man
 ./usr/share/man/man5/ipsec.conf.5		man-netutil-man		.man
 ./usr/share/man/man5/ipsend.5			man-ipf-man		ipfilter,.man
-./usr/share/man/man5/isdnd.acct.5		man-isdn-man		.man
-./usr/share/man/man5/isdnd.rates.5		man-isdn-man		.man
-./usr/share/man/man5/isdnd.rc.5			man-isdn-man		.man
+./usr/share/man/man5/isdnd.acct.5		man-obsolete		obsolete
+./usr/share/man/man5/isdnd.rates.5		man-obsolete		obsolete
+./usr/share/man/man5/isdnd.rc.5			man-obsolete		obsolete
 ./usr/share/man/man5/krb.conf.5			man-obsolete		obsolete
 ./usr/share/man/man5/krb.equiv.5		man-obsolete		obsolete
 ./usr/share/man/man5/krb.extra.5		man-obsolete		obsolete
@@ -8704,7 +8704,7 @@
 ./usr/share/man/man8/ipmon.8			man-ipf-man		ipfilter,.man
 ./usr/share/man/man8/ipnat.8			man-ipf-man		ipfilter,.man
 ./usr/share/man/man8/ippool.8			man-ipf-man		ipfilter,.man
-./usr/share/man/man8/ipppctl.8			man-isdn-man		.man
+./usr/share/man/man8/ipppctl.8			man-obsolete		obsolete
 ./usr/share/man/man8/iprop-log.8		man-krb5-man		kerberos,.man
 ./usr/share/man/man8/iprop.8			man-krb5-man		kerberos,.man
 ./usr/share/man/man8/ipropd-master.8		man-krb5-man		kerberos,.man
@@ -8716,11 +8716,11 @@
 ./usr/share/man/man8/iscsi-target.8		man-iscsi-man		iscsi,.man
 ./usr/share/man/man8/iscsictl.8			man-iscsi-man		iscsi,.man
 ./usr/share/man/man8/iscsid.8			man-iscsi-man		iscsi,.man
-./usr/share/man/man8/isdnd.8			man-isdn-man		.man
-./usr/share/man/man8/isdnmonitor.8		man-isdn-man		.man
-./usr/share/man/man8/isdntel.8			man-isdn-man		.man
-./usr/share/man/man8/isdntelctl.8		man-isdn-man		.man
-./usr/share/man/man8/isdntrace.8		man-isdn-man		.man
+./usr/share/man/man8/isdnd.8			man-obsolete		obsolete
+./usr/share/man/man8/isdnmonitor.8		man-obsolete		obsolete
+./usr/share/man/man8/isdntel.8			man-obsolete		obsolete
+./usr/share/man/man8/isdntelctl.8		man-obsolete		obsolete
+./usr/share/man/man8/isdntrace.8		man-obsolete		obsolete
 ./usr/share/man/man8/isibootd.8			man-bootserver-man	.man
 ./usr/share/man/man8/ispppcontrol.8		man-obsolete		obsolete
 ./usr/share/man/man8/iteconfig.8		man-sysutil-man		.man
@@ -8989,7 +8989,7 @@
 ./usr/share/man/man8/pppd.8			man-ppp-man		.man
 ./usr/share/man/man8/pppd.cbcp.8		man-obsolete		obsolete
 ./usr/share/man/man8/pppdump.8			man-ppp-man		.man
-./usr/share/man/man8/pppoectl.8			man-isdn-man		.man
+./usr/share/man/man8/pppoectl.8			man-sysutil-man		.man
 ./usr/share/man/man8/pppstats.8			man-ppp-man		.man
 ./usr/share/man/man8/praliases.8		man-obsolete		obsolete
 ./usr/share/man/man8/prep/MAKEDEV.8		man-obsolete		obsolete
