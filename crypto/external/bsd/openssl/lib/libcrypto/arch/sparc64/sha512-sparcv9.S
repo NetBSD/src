@@ -200,7 +200,7 @@ sha256_block_data_order:
 	sll	%l0,19,%g4
 	xor	%g3,%l7,%l7
 	srl	%l0,22,%g3
-	xor	%g4,%l7,%l7	
+	xor	%g4,%l7,%l7
 	sll	%l0,30,%g4
 	xor	%g3,%l7,%l7
 	xor	%g4,%l7,%l7		! Sigma0(a)
@@ -240,7 +240,7 @@ sha256_block_data_order:
 	sll	%l7,19,%g4
 	xor	%g3,%l6,%l6
 	srl	%l7,22,%g3
-	xor	%g4,%l6,%l6	
+	xor	%g4,%l6,%l6
 	sll	%l7,30,%g4
 	xor	%g3,%l6,%l6
 	xor	%g4,%l6,%l6		! Sigma0(a)
@@ -281,7 +281,7 @@ sha256_block_data_order:
 	sll	%l6,19,%g4
 	xor	%g3,%l5,%l5
 	srl	%l6,22,%g3
-	xor	%g4,%l5,%l5	
+	xor	%g4,%l5,%l5
 	sll	%l6,30,%g4
 	xor	%g3,%l5,%l5
 	xor	%g4,%l5,%l5		! Sigma0(a)
@@ -321,7 +321,7 @@ sha256_block_data_order:
 	sll	%l5,19,%g4
 	xor	%g3,%l4,%l4
 	srl	%l5,22,%g3
-	xor	%g4,%l4,%l4	
+	xor	%g4,%l4,%l4
 	sll	%l5,30,%g4
 	xor	%g3,%l4,%l4
 	xor	%g4,%l4,%l4		! Sigma0(a)
@@ -362,7 +362,7 @@ sha256_block_data_order:
 	sll	%l4,19,%g4
 	xor	%g3,%l3,%l3
 	srl	%l4,22,%g3
-	xor	%g4,%l3,%l3	
+	xor	%g4,%l3,%l3
 	sll	%l4,30,%g4
 	xor	%g3,%l3,%l3
 	xor	%g4,%l3,%l3		! Sigma0(a)
@@ -402,7 +402,7 @@ sha256_block_data_order:
 	sll	%l3,19,%g4
 	xor	%g3,%l2,%l2
 	srl	%l3,22,%g3
-	xor	%g4,%l2,%l2	
+	xor	%g4,%l2,%l2
 	sll	%l3,30,%g4
 	xor	%g3,%l2,%l2
 	xor	%g4,%l2,%l2		! Sigma0(a)
@@ -443,7 +443,7 @@ sha256_block_data_order:
 	sll	%l2,19,%g4
 	xor	%g3,%l1,%l1
 	srl	%l2,22,%g3
-	xor	%g4,%l1,%l1	
+	xor	%g4,%l1,%l1
 	sll	%l2,30,%g4
 	xor	%g3,%l1,%l1
 	xor	%g4,%l1,%l1		! Sigma0(a)
@@ -483,7 +483,7 @@ sha256_block_data_order:
 	sll	%l1,19,%g4
 	xor	%g3,%l0,%l0
 	srl	%l1,22,%g3
-	xor	%g4,%l0,%l0	
+	xor	%g4,%l0,%l0
 	sll	%l1,30,%g4
 	xor	%g3,%l0,%l0
 	xor	%g4,%l0,%l0		! Sigma0(a)
@@ -524,7 +524,7 @@ sha256_block_data_order:
 	sll	%l0,19,%g4
 	xor	%g3,%l7,%l7
 	srl	%l0,22,%g3
-	xor	%g4,%l7,%l7	
+	xor	%g4,%l7,%l7
 	sll	%l0,30,%g4
 	xor	%g3,%l7,%l7
 	xor	%g4,%l7,%l7		! Sigma0(a)
@@ -564,7 +564,7 @@ sha256_block_data_order:
 	sll	%l7,19,%g4
 	xor	%g3,%l6,%l6
 	srl	%l7,22,%g3
-	xor	%g4,%l6,%l6	
+	xor	%g4,%l6,%l6
 	sll	%l7,30,%g4
 	xor	%g3,%l6,%l6
 	xor	%g4,%l6,%l6		! Sigma0(a)
@@ -605,7 +605,7 @@ sha256_block_data_order:
 	sll	%l6,19,%g4
 	xor	%g3,%l5,%l5
 	srl	%l6,22,%g3
-	xor	%g4,%l5,%l5	
+	xor	%g4,%l5,%l5
 	sll	%l6,30,%g4
 	xor	%g3,%l5,%l5
 	xor	%g4,%l5,%l5		! Sigma0(a)
@@ -645,7 +645,7 @@ sha256_block_data_order:
 	sll	%l5,19,%g4
 	xor	%g3,%l4,%l4
 	srl	%l5,22,%g3
-	xor	%g4,%l4,%l4	
+	xor	%g4,%l4,%l4
 	sll	%l5,30,%g4
 	xor	%g3,%l4,%l4
 	xor	%g4,%l4,%l4		! Sigma0(a)
@@ -686,7 +686,7 @@ sha256_block_data_order:
 	sll	%l4,19,%g4
 	xor	%g3,%l3,%l3
 	srl	%l4,22,%g3
-	xor	%g4,%l3,%l3	
+	xor	%g4,%l3,%l3
 	sll	%l4,30,%g4
 	xor	%g3,%l3,%l3
 	xor	%g4,%l3,%l3		! Sigma0(a)
@@ -726,7 +726,7 @@ sha256_block_data_order:
 	sll	%l3,19,%g4
 	xor	%g3,%l2,%l2
 	srl	%l3,22,%g3
-	xor	%g4,%l2,%l2	
+	xor	%g4,%l2,%l2
 	sll	%l3,30,%g4
 	xor	%g3,%l2,%l2
 	xor	%g4,%l2,%l2		! Sigma0(a)
@@ -767,7 +767,7 @@ sha256_block_data_order:
 	sll	%l2,19,%g4
 	xor	%g3,%l1,%l1
 	srl	%l2,22,%g3
-	xor	%g4,%l1,%l1	
+	xor	%g4,%l1,%l1
 	sll	%l2,30,%g4
 	xor	%g3,%l1,%l1
 	xor	%g4,%l1,%l1		! Sigma0(a)
@@ -807,7 +807,7 @@ sha256_block_data_order:
 	sll	%l1,19,%g4
 	xor	%g3,%l0,%l0
 	srl	%l1,22,%g3
-	xor	%g4,%l0,%l0	
+	xor	%g4,%l0,%l0
 	sll	%l1,30,%g4
 	xor	%g3,%l0,%l0
 	xor	%g4,%l0,%l0		! Sigma0(a)
@@ -875,7 +875,7 @@ sha256_block_data_order:
 	sll	%l0,19,%g4
 	xor	%g3,%l7,%l7
 	srl	%l0,22,%g3
-	xor	%g4,%l7,%l7	
+	xor	%g4,%l7,%l7
 	sll	%l0,30,%g4
 	xor	%g3,%l7,%l7
 	xor	%g4,%l7,%l7		! Sigma0(a)
@@ -943,7 +943,7 @@ sha256_block_data_order:
 	sll	%l7,19,%g4
 	xor	%g3,%l6,%l6
 	srl	%l7,22,%g3
-	xor	%g4,%l6,%l6	
+	xor	%g4,%l6,%l6
 	sll	%l7,30,%g4
 	xor	%g3,%l6,%l6
 	xor	%g4,%l6,%l6		! Sigma0(a)
@@ -1010,7 +1010,7 @@ sha256_block_data_order:
 	sll	%l6,19,%g4
 	xor	%g3,%l5,%l5
 	srl	%l6,22,%g3
-	xor	%g4,%l5,%l5	
+	xor	%g4,%l5,%l5
 	sll	%l6,30,%g4
 	xor	%g3,%l5,%l5
 	xor	%g4,%l5,%l5		! Sigma0(a)
@@ -1078,7 +1078,7 @@ sha256_block_data_order:
 	sll	%l5,19,%g4
 	xor	%g3,%l4,%l4
 	srl	%l5,22,%g3
-	xor	%g4,%l4,%l4	
+	xor	%g4,%l4,%l4
 	sll	%l5,30,%g4
 	xor	%g3,%l4,%l4
 	xor	%g4,%l4,%l4		! Sigma0(a)
@@ -1145,7 +1145,7 @@ sha256_block_data_order:
 	sll	%l4,19,%g4
 	xor	%g3,%l3,%l3
 	srl	%l4,22,%g3
-	xor	%g4,%l3,%l3	
+	xor	%g4,%l3,%l3
 	sll	%l4,30,%g4
 	xor	%g3,%l3,%l3
 	xor	%g4,%l3,%l3		! Sigma0(a)
@@ -1213,7 +1213,7 @@ sha256_block_data_order:
 	sll	%l3,19,%g4
 	xor	%g3,%l2,%l2
 	srl	%l3,22,%g3
-	xor	%g4,%l2,%l2	
+	xor	%g4,%l2,%l2
 	sll	%l3,30,%g4
 	xor	%g3,%l2,%l2
 	xor	%g4,%l2,%l2		! Sigma0(a)
@@ -1280,7 +1280,7 @@ sha256_block_data_order:
 	sll	%l2,19,%g4
 	xor	%g3,%l1,%l1
 	srl	%l2,22,%g3
-	xor	%g4,%l1,%l1	
+	xor	%g4,%l1,%l1
 	sll	%l2,30,%g4
 	xor	%g3,%l1,%l1
 	xor	%g4,%l1,%l1		! Sigma0(a)
@@ -1348,7 +1348,7 @@ sha256_block_data_order:
 	sll	%l1,19,%g4
 	xor	%g3,%l0,%l0
 	srl	%l1,22,%g3
-	xor	%g4,%l0,%l0	
+	xor	%g4,%l0,%l0
 	sll	%l1,30,%g4
 	xor	%g3,%l0,%l0
 	xor	%g4,%l0,%l0		! Sigma0(a)
@@ -1415,7 +1415,7 @@ sha256_block_data_order:
 	sll	%l0,19,%g4
 	xor	%g3,%l7,%l7
 	srl	%l0,22,%g3
-	xor	%g4,%l7,%l7	
+	xor	%g4,%l7,%l7
 	sll	%l0,30,%g4
 	xor	%g3,%l7,%l7
 	xor	%g4,%l7,%l7		! Sigma0(a)
@@ -1483,7 +1483,7 @@ sha256_block_data_order:
 	sll	%l7,19,%g4
 	xor	%g3,%l6,%l6
 	srl	%l7,22,%g3
-	xor	%g4,%l6,%l6	
+	xor	%g4,%l6,%l6
 	sll	%l7,30,%g4
 	xor	%g3,%l6,%l6
 	xor	%g4,%l6,%l6		! Sigma0(a)
@@ -1550,7 +1550,7 @@ sha256_block_data_order:
 	sll	%l6,19,%g4
 	xor	%g3,%l5,%l5
 	srl	%l6,22,%g3
-	xor	%g4,%l5,%l5	
+	xor	%g4,%l5,%l5
 	sll	%l6,30,%g4
 	xor	%g3,%l5,%l5
 	xor	%g4,%l5,%l5		! Sigma0(a)
@@ -1618,7 +1618,7 @@ sha256_block_data_order:
 	sll	%l5,19,%g4
 	xor	%g3,%l4,%l4
 	srl	%l5,22,%g3
-	xor	%g4,%l4,%l4	
+	xor	%g4,%l4,%l4
 	sll	%l5,30,%g4
 	xor	%g3,%l4,%l4
 	xor	%g4,%l4,%l4		! Sigma0(a)
@@ -1685,7 +1685,7 @@ sha256_block_data_order:
 	sll	%l4,19,%g4
 	xor	%g3,%l3,%l3
 	srl	%l4,22,%g3
-	xor	%g4,%l3,%l3	
+	xor	%g4,%l3,%l3
 	sll	%l4,30,%g4
 	xor	%g3,%l3,%l3
 	xor	%g4,%l3,%l3		! Sigma0(a)
@@ -1753,7 +1753,7 @@ sha256_block_data_order:
 	sll	%l3,19,%g4
 	xor	%g3,%l2,%l2
 	srl	%l3,22,%g3
-	xor	%g4,%l2,%l2	
+	xor	%g4,%l2,%l2
 	sll	%l3,30,%g4
 	xor	%g3,%l2,%l2
 	xor	%g4,%l2,%l2		! Sigma0(a)
@@ -1820,7 +1820,7 @@ sha256_block_data_order:
 	sll	%l2,19,%g4
 	xor	%g3,%l1,%l1
 	srl	%l2,22,%g3
-	xor	%g4,%l1,%l1	
+	xor	%g4,%l1,%l1
 	sll	%l2,30,%g4
 	xor	%g3,%l1,%l1
 	xor	%g4,%l1,%l1		! Sigma0(a)
@@ -1888,7 +1888,7 @@ sha256_block_data_order:
 	sll	%l1,19,%g4
 	xor	%g3,%l0,%l0
 	srl	%l1,22,%g3
-	xor	%g4,%l0,%l0	
+	xor	%g4,%l0,%l0
 	sll	%l1,30,%g4
 	xor	%g3,%l0,%l0
 	xor	%g4,%l0,%l0		! Sigma0(a)

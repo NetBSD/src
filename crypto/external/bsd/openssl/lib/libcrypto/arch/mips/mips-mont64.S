@@ -1,3 +1,5 @@
+#include "mips_arch.h"
+
 .text
 
 .set	noat
@@ -22,7 +24,7 @@ bn_mul_mont:
 bn_mul_mont_internal:
 	.frame	$30,14*8,$31
 	.mask	0x40000000|16711680,-8
-	dsub $29,14*8
+	dsubu $29,14*8
 	sd	$30,(14-1)*8($29)
 	sd	$23,(14-2)*8($29)
 	sd	$22,(14-3)*8($29)
@@ -40,66 +42,66 @@ bn_mul_mont_internal:
 	ld	$12,0($5)	# ap[0]
 	ld	$14,0($7)	# np[0]
 
-	dsub $29,2*8	# place for two extra words
+	dsubu $29,2*8	# place for two extra words
 	sll	$9,3
 	li	$1,-4096
-	dsub $29,$9
+	dsubu $29,$9
 	and	$29,$1
 
-	dmultu	$12,$13
-	ld	$16,8($5)
-	ld	$18,8($7)
-	mflo	$10
-	mfhi	$11
-	dmultu	$10,$8
-	mflo	$23
+	dmultu	($12,$13)
+	ld	$17,8($5)
+	ld	$19,8($7)
+	mflo	($10,$12,$13)
+	mfhi	($11,$12,$13)
+	dmultu	($10,$8)
+	mflo	($23,$10,$8)
 
-	dmultu	$16,$13
-	mflo	$16
-	mfhi	$17
+	dmultu	($17,$13)
+	mflo	($16,$17,$13)
+	mfhi	($17,$17,$13)
 
-	dmultu	$14,$23
-	mflo	$24
-	mfhi	$25
-	dmultu	$18,$23
+	dmultu	($14,$23)
+	mflo	($24,$14,$23)
+	mfhi	($25,$14,$23)
+	dmultu	($19,$23)
 	daddu	$24,$10
 	sltu	$1,$24,$10
 	daddu	$25,$1
-	mflo	$18
-	mfhi	$19
+	mflo	($18,$19,$23)
+	mfhi	($19,$19,$23)
 
 	move	$15,$29
 	li	$22,2*8
 .align	4
 .L1st:
 	.set	noreorder
-	dadd $12,$5,$22
-	dadd $14,$7,$22
+	daddu $12,$5,$22
+	daddu $14,$7,$22
 	ld	$12,($12)
 	ld	$14,($14)
 
-	dmultu	$12,$13
+	dmultu	($12,$13)
 	daddu	$10,$16,$11
 	daddu	$24,$18,$25
 	sltu	$1,$10,$11
 	sltu	$2,$24,$25
 	daddu	$11,$17,$1
 	daddu	$25,$19,$2
-	mflo	$16
-	mfhi	$17
+	mflo	($16,$12,$13)
+	mfhi	($17,$12,$13)
 
 	daddu	$24,$10
 	sltu	$1,$24,$10
-	dmultu	$14,$23
+	dmultu	($14,$23)
 	daddu	$25,$1
 	addu	$22,8
 	sd	$24,($15)
 	sltu	$2,$22,$9
-	mflo	$18
-	mfhi	$19
+	mflo	($18,$14,$23)
+	mfhi	($19,$14,$23)
 
 	bnez	$2,.L1st
-	dadd $15,8
+	daddu $15,8
 	.set	reorder
 
 	daddu	$10,$16,$11
@@ -123,37 +125,37 @@ bn_mul_mont_internal:
 	li	$21,8
 .align	4
 .Louter:
-	dadd $13,$6,$21
+	daddu $13,$6,$21
 	ld	$13,($13)
 	ld	$12,($5)
-	ld	$16,8($5)
+	ld	$17,8($5)
 	ld	$20,($29)
 
-	dmultu	$12,$13
+	dmultu	($12,$13)
 	ld	$14,($7)
-	ld	$18,8($7)
-	mflo	$10
-	mfhi	$11
+	ld	$19,8($7)
+	mflo	($10,$12,$13)
+	mfhi	($11,$12,$13)
 	daddu	$10,$20
-	dmultu	$10,$8
+	dmultu	($10,$8)
 	sltu	$1,$10,$20
 	daddu	$11,$1
-	mflo	$23
+	mflo	($23,$10,$8)
 
-	dmultu	$16,$13
-	mflo	$16
-	mfhi	$17
+	dmultu	($17,$13)
+	mflo	($16,$17,$13)
+	mfhi	($17,$17,$13)
 
-	dmultu	$14,$23
-	mflo	$24
-	mfhi	$25
+	dmultu	($14,$23)
+	mflo	($24,$14,$23)
+	mfhi	($25,$14,$23)
 
-	dmultu	$18,$23
+	dmultu	($19,$23)
 	daddu	$24,$10
 	sltu	$1,$24,$10
 	daddu	$25,$1
-	mflo	$18
-	mfhi	$19
+	mflo	($18,$19,$23)
+	mfhi	($19,$19,$23)
 
 	move	$15,$29
 	li	$22,2*8
@@ -161,24 +163,24 @@ bn_mul_mont_internal:
 .align	4
 .Linner:
 	.set	noreorder
-	dadd $12,$5,$22
-	dadd $14,$7,$22
+	daddu $12,$5,$22
+	daddu $14,$7,$22
 	ld	$12,($12)
 	ld	$14,($14)
 
-	dmultu	$12,$13
+	dmultu	($12,$13)
 	daddu	$10,$16,$11
 	daddu	$24,$18,$25
 	sltu	$1,$10,$11
 	sltu	$2,$24,$25
 	daddu	$11,$17,$1
 	daddu	$25,$19,$2
-	mflo	$16
-	mfhi	$17
+	mflo	($16,$12,$13)
+	mfhi	($17,$12,$13)
 
 	daddu	$10,$20
 	addu	$22,8
-	dmultu	$14,$23
+	dmultu	($14,$23)
 	sltu	$1,$10,$20
 	daddu	$24,$10
 	daddu	$11,$1
@@ -186,11 +188,11 @@ bn_mul_mont_internal:
 	ld	$20,2*8($15)
 	daddu	$25,$2
 	sltu	$1,$22,$9
-	mflo	$18
-	mfhi	$19
+	mflo	($18,$14,$23)
+	mfhi	($19,$14,$23)
 	sd	$24,($15)
 	bnez	$1,.Linner
-	dadd $15,8
+	daddu $15,8
 	.set	reorder
 
 	daddu	$10,$16,$11
@@ -222,7 +224,7 @@ bn_mul_mont_internal:
 	bnez	$2,.Louter
 
 	.set	noreorder
-	dadd $20,$29,$9	# &tp[num]
+	daddu $20,$29,$9	# &tp[num]
 	move	$15,$29
 	move	$5,$29
 	li	$11,0		# clear borrow bit
@@ -230,8 +232,8 @@ bn_mul_mont_internal:
 .align	4
 .Lsub:	ld	$10,($15)
 	ld	$24,($7)
-	dadd $15,8
-	dadd $7,8
+	daddu $15,8
+	daddu $7,8
 	dsubu	$24,$10,$24	# tp[i]-np[i]
 	sgtu	$1,$24,$10
 	dsubu	$10,$24,$11
@@ -240,26 +242,24 @@ bn_mul_mont_internal:
 	or	$11,$1
 	sltu	$1,$15,$20
 	bnez	$1,.Lsub
-	dadd $4,8
+	daddu $4,8
 
 	dsubu	$11,$25,$11	# handle upmost overflow bit
 	move	$15,$29
-	dsub $4,$9	# restore rp
+	dsubu $4,$9	# restore rp
 	not	$25,$11
 
-	and	$5,$11,$29
-	and	$6,$25,$4
-	or	$5,$5,$6	# ap=borrow?tp:rp
-
-.align	4
-.Lcopy:	ld	$12,($5)
-	dadd $5,8
+.Lcopy:	ld	$14,($15)	# conditional move
+	ld	$12,($4)
 	sd	$0,($15)
-	dadd $15,8
+	daddu $15,8
+	and	$14,$11
+	and	$12,$25
+	or	$12,$14
 	sltu	$1,$15,$20
 	sd	$12,($4)
 	bnez	$1,.Lcopy
-	dadd $4,8
+	daddu $4,8
 
 	li	$4,1
 	li	$2,1
@@ -276,7 +276,7 @@ bn_mul_mont_internal:
 	ld	$17,(14-8)*8($29)
 	ld	$16,(14-9)*8($29)
 	jr	$31
-	dadd $29,14*8
+	daddu $29,14*8
 .end	bn_mul_mont_internal
 .rdata
 .asciiz	"Montgomery Multiplication for MIPS, CRYPTOGAMS by <appro@openssl.org>"

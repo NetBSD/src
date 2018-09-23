@@ -1,4 +1,4 @@
-#	$NetBSD: poly1305.inc,v 1.1 2018/02/08 21:57:24 christos Exp $
+#	$NetBSD: poly1305.inc,v 1.2 2018/09/23 13:33:04 christos Exp $
 #
 #	@(#) Copyright (c) 1995 Simon J. Gerraty
 #
@@ -9,7 +9,9 @@
 
 
 POLY1305_SRCS += \
-poly1305.c
+poly1305.c \
+poly1305_ameth.c \
+poly1305_pmeth.c
 
 SRCS += ${POLY1305_SRCS}
 

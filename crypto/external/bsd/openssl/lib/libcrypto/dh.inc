@@ -1,4 +1,4 @@
-#	$NetBSD: dh.inc,v 1.4 2018/02/08 21:57:24 christos Exp $
+#	$NetBSD: dh.inc,v 1.5 2018/09/23 13:33:04 christos Exp $
 #
 #	@(#) Copyright (c) 1995 Simon J. Gerraty
 #
@@ -21,7 +21,8 @@ dh_lib.c \
 dh_meth.c \
 dh_pmeth.c \
 dh_prn.c \
-dh_rfc5114.c
+dh_rfc5114.c \
+dh_rfc7919.c
 
 SRCS += ${DH_SRCS}
 

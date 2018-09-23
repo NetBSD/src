@@ -17,7 +17,7 @@ rcon:
 	blr	
 .long	0
 .byte	0,12,0x14,0,0,0,0,0
-.byte	65,69,83,32,102,111,114,32,80,111,119,101,114,73,83,65,32,50,46,48,55,44,32,67,82,89,80,84,79,71,65,77,83,32,98,121,32,60,97,112,112,114,111,64,111,112,101,110,115,115,108,46,111,114,103,62,0
+.byte	65,69,83,32,102,111,114,32,80,111,119,101,114,73,83,65,32,50,46,48,55,44,67,82,89,80,84,79,71,65,77,83,32,98,121,32,60,97,112,112,114,111,64,111,112,101,110,115,115,108,46,111,114,103,62,0
 .align	2
 
 .globl	aes_p8_set_encrypt_key
@@ -27,7 +27,6 @@ rcon:
 aes_p8_set_encrypt_key:
 .quad	.aes_p8_set_encrypt_key,.TOC.@tocbase,0
 .previous
-
 .align	5
 .aes_p8_set_encrypt_key:
 .Lset_encrypt_key:
@@ -297,7 +296,6 @@ aes_p8_set_encrypt_key:
 aes_p8_set_decrypt_key:
 .quad	.aes_p8_set_decrypt_key,.TOC.@tocbase,0
 .previous
-
 .align	5
 .aes_p8_set_decrypt_key:
 	stdu	1,-64(1)
@@ -351,7 +349,6 @@ aes_p8_set_decrypt_key:
 aes_p8_encrypt:
 .quad	.aes_p8_encrypt,.TOC.@tocbase,0
 .previous
-
 .align	5
 .aes_p8_encrypt:
 	lwz	6,240(5)
@@ -425,7 +422,6 @@ aes_p8_encrypt:
 aes_p8_decrypt:
 .quad	.aes_p8_decrypt,.TOC.@tocbase,0
 .previous
-
 .align	5
 .aes_p8_decrypt:
 	lwz	6,240(5)
@@ -499,7 +495,6 @@ aes_p8_decrypt:
 aes_p8_cbc_encrypt:
 .quad	.aes_p8_cbc_encrypt,.TOC.@tocbase,0
 .previous
-
 .align	5
 .aes_p8_cbc_encrypt:
 	cmpldi	5,16
@@ -1241,7 +1236,6 @@ _aesp8_cbc_decrypt8x:
 aes_p8_ctr32_encrypt_blocks:
 .quad	.aes_p8_ctr32_encrypt_blocks,.TOC.@tocbase,0
 .previous
-
 .align	5
 .aes_p8_ctr32_encrypt_blocks:
 	cmpldi	5,1
@@ -1875,7 +1869,6 @@ _aesp8_ctr32_encrypt8x:
 aes_p8_xts_encrypt:
 .quad	.aes_p8_xts_encrypt,.TOC.@tocbase,0
 .previous
-
 .align	5
 .aes_p8_xts_encrypt:
 	mr	10,3
@@ -2093,7 +2086,6 @@ aes_p8_xts_encrypt:
 aes_p8_xts_decrypt:
 .quad	.aes_p8_xts_decrypt,.TOC.@tocbase,0
 .previous
-
 .align	5
 .aes_p8_xts_decrypt:
 	mr	10,3

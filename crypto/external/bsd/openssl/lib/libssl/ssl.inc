@@ -1,4 +1,4 @@
-#	$NetBSD: ssl.inc,v 1.9 2018/02/08 21:57:29 christos Exp $
+#	$NetBSD: ssl.inc,v 1.10 2018/09/23 13:33:09 christos Exp $
 #
 #	@(#) Copyright (c) 1995 Simon J. Gerraty
 #
@@ -15,6 +15,7 @@ d1_lib.c \
 d1_msg.c \
 d1_srtp.c \
 methods.c \
+packet.c \
 pqueue.c \
 s3_cbc.c \
 s3_enc.c \
@@ -34,8 +35,7 @@ ssl_stat.c \
 ssl_txt.c \
 ssl_utst.c \
 t1_enc.c \
-t1_ext.c \
 t1_lib.c \
-t1_reneg.c \
 t1_trce.c \
-tls_srp.c
+tls_srp.c \
+tls13_enc.c

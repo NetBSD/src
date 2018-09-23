@@ -4093,19 +4093,17 @@ bn_mul_mont_t4:
 	sub	%l5,	%i5,	%l5
 	sub	%i0,	%i5,	%i0
 
-	subc	%l0,	%g0,	%l0	! handle upmost overflow bit
-	and	%l5,	%l0,	%i1
-	andn	%i0,	%l0,	%i3
-	or	%i3,	%i1,	%i1	! ap=borrow?tp:rp
+	subccc	%l0,	%g0,	%l0	! handle upmost overflow bit
 	ba	.Lcopy
 	sub	%i5,	8,	%l4
 
 .align	16
-.Lcopy:					! copy or in-place refresh
-	ldx	[%i1+0],	%l2
-	add	%i1,	8,	%i1
+.Lcopy:					! conditional copy
+	ldx	[%l5],		%o7
+	ldx	[%i0+0],	%l2
 	stx	%g0,	[%l5]		! zap
 	add	%l5,	8,	%l5
+	movcs	%icc,	%o7,	%l2
 	stx	%l2,	[%i0+0]
 	add	%i0,	8,	%i0
 	brnz	%l4,	.Lcopy
@@ -4350,19 +4348,17 @@ bn_mul_mont_gather5_t4:
 	sub	%l5,	%i5,	%l5
 	sub	%i0,	%i5,	%i0
 
-	subc	%l0,	%g0,	%l0	! handle upmost overflow bit
-	and	%l5,	%l0,	%i1
-	andn	%i0,	%l0,	%i3
-	or	%i3,	%i1,	%i1	! ap=borrow?tp:rp
+	subccc	%l0,	%g0,	%l0	! handle upmost overflow bit
 	ba	.Lcopy_g5
 	sub	%i5,	8,	%l4
 
 .align	16
-.Lcopy_g5:				! copy or in-place refresh
-	ldx	[%i1+0],	%l2
-	add	%i1,	8,	%i1
+.Lcopy_g5:				! conditional copy
+	ldx	[%l5],		%o7
+	ldx	[%i0+0],	%l2
 	stx	%g0,	[%l5]		! zap
 	add	%l5,	8,	%l5
+	movcs	%icc,	%o7,	%l2
 	stx	%l2,	[%i0+0]
 	add	%i0,	8,	%i0
 	brnz	%l4,	.Lcopy_g5

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2018/05/23 01:58:40 christos Exp $
+#	$NetBSD: Makefile,v 1.6 2018/09/23 13:33:06 christos Exp $
 
 # the makefile is not, and should not be visited during normal build process.
 # try to use latest pod2man, which comes with the latest perl.
@@ -10,47 +10,28 @@ CRYPTODIST=	${NETBSDSRCDIR}/crypto
 VERSION!=	head -2 ${OPENSSLSRC}/README | tail -1 | awk '{ print $$2; }'
 
 make-manpages:
-	for i in ${OPENSSLSRC}/doc/apps/*.pod; do \
+	for sec in 1 3 5 7; do \
+	for i in ${OPENSSLSRC}/doc/man$$sec/*.pod; do \
 		fn=`basename $$i .pod`; \
 		if [ "$$fn" = "config" ]; then \
-			sec=5; \
-			dst=openssl.cnf.$$sec; \
-		elif [ "$$fn" = "openssl" ]; then \
-			sec=1; \
-			dst=`basename $$i .pod`.$$sec; \
-		else \
-			sec=1; \
-			dst=openssl_`basename $$i .pod`.$$sec; \
+		    fn=openssl_config; \
 		fi; \
+		case $$sec in \
+		1) if [ "$$fn" = "openssl" ]; then \
+			dst=$$fn.$$sec; \
+		   else \
+			dst=openssl_$$fn.$$sec; \
+		   fi;; \
+		*) dst=$$fn.$$sec;; \
+		esac; \
 		(cd `dirname $$i`; \
 		 pod2man --section=$$sec --center=OpenSSL --release=${VERSION} \
 			`basename $$i`) | \
 		sed -e 's/[[:space:]]*$$//' | \
-		perl libcrypto.pl >$$dst; \
+		perl libcrypto.pl > $$dst; \
+	done \
 	done
-	for i in ${OPENSSLSRC}/doc/crypto/*.pod \
-	    ${OPENSSLSRC}/doc/ssl/*.pod; do \
-		fn=`basename $$i .pod`; \
-		if [ "$$fn" = "des_modes" ]; then \
-			sec=7; \
-			(cd `dirname $$i`; \
-			 pod2man --section=$$sec --center=OpenSSL --release=${VERSION} \
-				`basename $$i`) | \
-			sed -e '/$$RCSfile/d' -e '/$$Log/d' -e 's/[[:space:]]*$$//' \
-			> `basename $$i .pod`.$$sec; \
-		else \
-			sec=3; \
-			(cd `dirname $$i`; \
-			 pod2man --section=$$sec --center=OpenSSL --release=${VERSION} \
-				`basename $$i`) | \
-			sed -e 's/[[:space:]]*$$//' | \
-			perl libcrypto.pl >`basename $$i .pod`.$$sec; \
-		fi \
-	done
-	for i in bio evp x509 MD5 HMAC; do \
-		mv $$i.3 openssl_$$i.3; \
-	done
-
+foo:
 
 clean:
 	-/bin/rm -f *.[0-9]
