@@ -1,4 +1,4 @@
-/*	$NetBSD: ocryptodev.c,v 1.11.2.6 2018/09/23 01:33:26 pgoyette Exp $ */
+/*	$NetBSD: ocryptodev.c,v 1.11.2.7 2018/09/23 03:44:04 pgoyette Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.c,v 1.4.2.4 2003/06/03 00:09:02 sam Exp $	*/
 /*	$OpenBSD: cryptodev.c,v 1.53 2002/07/10 22:21:30 mickey Exp $	*/
 
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ocryptodev.c,v 1.11.2.6 2018/09/23 01:33:26 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ocryptodev.c,v 1.11.2.7 2018/09/23 03:44:04 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,7 +106,8 @@ static int	ocryptodev_op(struct csession *, struct ocrypt_op *,
 static int	ocryptodev_mop(struct fcrypt *, struct ocrypt_n_op *, int,
 		    struct lwp *);
 static int	ocryptodev_session(struct fcrypt *, struct osession_op *);
-static int	ocryptodev_msession(struct fcrypt *, struct osession_n_op *);
+static int	ocryptodev_msession(struct fcrypt *, struct osession_n_op *,
+		    int);
 
 int
 ocryptof_ioctl(struct file *fp, u_long cmd, void *data)
@@ -153,10 +154,10 @@ mbail:
 		kmem_free(osnop, osgop->count * sizeof(struct osession_n_op));
 		break;
 	case OCIOCCRYPT:
-		mutex_enter(mtx);
+		mutex_enter(&cryptodev_mtx);
 		ocop = (struct ocrypt_op *)data;
-		cse = cryptodev_csefind)(fcr, ocop->ses);
-		mutex_exit(mtx);
+		cse = cryptodev_csefind(fcr, ocop->ses);
+		mutex_exit(&cryptodev_mtx);
 		if (cse == NULL) {
 			DPRINTF("csefind failed\n");
 			return EINVAL;
@@ -310,10 +311,10 @@ compat_crypto_50_modcmd(modcmd_t cmd, void *arg)
 {
  
 	switch (cmd) {
-	MODULE_CMD_INIT:
+	case MODULE_CMD_INIT:
 		crypto_50_init();
 		return 0;
-	MODULE_CMD_FINI:
+	case MODULE_CMD_FINI:
 		crypto_50_fini();
 		return 0;
 	default: 
