@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_50.c,v 1.32.16.8 2018/09/11 23:58:46 pgoyette Exp $	*/
+/*	$NetBSD: netbsd32_compat_50.c,v 1.32.16.9 2018/09/23 09:16:25 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_50.c,v 1.32.16.8 2018/09/11 23:58:46 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_50.c,v 1.32.16.9 2018/09/23 09:16:25 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -931,6 +931,7 @@ compat_50_netbsd32_quotactl(struct lwp *l, const struct compat_50_netbsd32_quota
 	return (compat_50_sys_quotactl(l, &ua, retval));
 }
 
+#ifdef NTP
 int
 compat_50_netbsd32_ntp_gettime(struct lwp *l,
     const struct compat_50_netbsd32_ntp_gettime_args *uap, register_t *retval)
@@ -959,7 +960,7 @@ compat_50_netbsd32_ntp_gettime(struct lwp *l,
 
 	return (error);
 }
-
+#endif
 
 static struct syscall_package compat_netbsd32_50_syscalls[] = {
 	{ NETBSD32_SYS_compat_50_netbsd32_mknod, 0,
@@ -1018,8 +1019,10 @@ static struct syscall_package compat_netbsd32_50_syscalls[] = {
 	    (sy_call_t *)compat_50_netbsd32_getitimer }, 
 	{ NETBSD32_SYS_compat_50_netbsd32_quotactl, 0,
 	    (sy_call_t *)compat_50_netbsd32_quotactl }, 
+#ifdef NTP
 	{ NETBSD32_SYS_compat_50_netbsd32_ntp_gettime, 0,
 	    (sy_call_t *)compat_50_netbsd32_ntp_gettime }, 
+#endif
 	{ 0, 0, NULL }
 }; 
 
