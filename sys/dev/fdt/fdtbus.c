@@ -1,4 +1,4 @@
-/* $NetBSD: fdtbus.c,v 1.23 2018/09/09 21:14:04 jmcneill Exp $ */
+/* $NetBSD: fdtbus.c,v 1.24 2018/09/23 19:32:03 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdtbus.c,v 1.23 2018/09/09 21:14:04 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdtbus.c,v 1.24 2018/09/23 19:32:03 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,6 +70,9 @@ struct fdt_softc {
 
 static int	fdt_match(device_t, cfdata_t, void *);
 static void	fdt_attach(device_t, device_t, void *);
+static int	fdt_rescan(device_t, const char *, const int *);
+static void	fdt_childdet(device_t, device_t);
+
 static int	fdt_scan_submatch(device_t, cfdata_t, const int *, void *);
 static void	fdt_scan(struct fdt_softc *, int);
 static void	fdt_add_node(struct fdt_node *);
@@ -78,8 +81,8 @@ static u_int	fdt_get_order(int);
 static const char * const fdtbus_compatible[] =
     { "simple-bus", "simple-mfd", NULL };
 
-CFATTACH_DECL_NEW(simplebus, sizeof(struct fdt_softc),
-    fdt_match, fdt_attach, NULL, NULL);
+CFATTACH_DECL2_NEW(simplebus, sizeof(struct fdt_softc),
+    fdt_match, fdt_attach, NULL, NULL, fdt_rescan, fdt_childdet);
 
 static int
 fdt_match(device_t parent, cfdata_t cf, void *aux)
@@ -112,7 +115,6 @@ fdt_attach(device_t parent, device_t self, void *aux)
 	const struct fdt_attach_args *faa = aux;
 	const int phandle = faa->faa_phandle;
 	const char *descr;
-	int pass;
 
 	sc->sc_dev = self;
 	sc->sc_phandle = phandle;
@@ -134,6 +136,15 @@ fdt_attach(device_t parent, device_t self, void *aux)
 		return;
 
 	/* Scan devices */
+	fdt_rescan(self, NULL, NULL);
+}
+
+static int
+fdt_rescan(device_t self, const char *ifattr, const int *locs)
+{
+	struct fdt_softc *sc = device_private(self);
+	int pass;
+
 	pass = 0;
 	fdt_need_rescan = false;
 	do {
@@ -145,6 +156,20 @@ fdt_attach(device_t parent, device_t self, void *aux)
 			pass++;
 		}
 	} while (pass <= FDTCF_PASS_DEFAULT);
+
+	return 0;
+}
+
+static void
+fdt_childdet(device_t parent, device_t child)
+{
+	struct fdt_node *node;
+
+	TAILQ_FOREACH(node, &fdt_nodes, n_nodes)
+		if (node->n_dev == child) {
+			node->n_dev = NULL;
+			break;
+		}
 }
 
 static void
