@@ -1,4 +1,4 @@
-/* $NetBSD: pad.c,v 1.55 2018/09/23 23:30:51 kre Exp $ */
+/* $NetBSD: pad.c,v 1.56 2018/09/23 23:34:45 kre Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pad.c,v 1.55 2018/09/23 23:30:51 kre Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pad.c,v 1.56 2018/09/23 23:34:45 kre Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -387,8 +387,8 @@ pad_read(dev_t dev, struct uio *uio, int flags)
 		if (sc->sc_bytes_count >= BYTESTOSLEEP)
 			sc->sc_bytes_count -= BYTESTOSLEEP;
 
-		err = pad_get_block(sc, &pb,
-		    uio->uio_resid<PAD_BLKSIZE ? uio->uio_resid : PAD_BLKSIZE);
+		err = pad_get_block(sc, &pb, uio->uio_resid < PAD_BLKSIZE ?
+				(int)uio->uio_resid : PAD_BLKSIZE);
 		if (!err) {
 			getmicrotime(&sc->sc_last);
 			sc->sc_bytes_count += pb.pb_len;
