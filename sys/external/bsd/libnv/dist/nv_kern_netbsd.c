@@ -1,4 +1,4 @@
-/*	$NetBSD: nv_kern_netbsd.c,v 1.3 2018/09/22 17:13:30 rmind Exp $	*/
+/*	$NetBSD: nv_kern_netbsd.c,v 1.4 2018/09/23 19:07:10 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: nv_kern_netbsd.c,v 1.3 2018/09/22 17:13:30 rmind Exp $");
+__RCSID("$NetBSD: nv_kern_netbsd.c,v 1.4 2018/09/23 19:07:10 rmind Exp $");
 
 #if !defined(_KERNEL) && !defined(_STANDALONE)
 #include <sys/mman.h>
@@ -60,6 +60,15 @@ extern void dealloc(void *, unsigned int);
 
 #ifndef _STANDALONE
 #ifdef _KERNEL
+
+void 
+nv_free(void *buf)
+{
+	if (!buf) {
+		return;
+	}
+	free(buf, M_NVLIST);
+}
 
 int
 nvlist_copyin(const nvlist_ref_t *nref, nvlist_t **nvlp, size_t lim)
