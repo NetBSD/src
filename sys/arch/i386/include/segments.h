@@ -1,4 +1,4 @@
-/*	$NetBSD: segments.h,v 1.65 2018/09/23 00:59:59 cherry Exp $	*/
+/*	$NetBSD: segments.h,v 1.66 2018/09/23 07:54:42 cherry Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -198,7 +198,6 @@ typedef struct gate_descriptor idt_descriptor_t;
 #endif /* XEN */
 extern idt_descriptor_t *idt;
 extern union descriptor *gdtstore, *ldtstore;
-extern struct gate_descriptor *idt;
 
 void setgate(struct gate_descriptor *, void *, int, int, int, int);
 void set_idtgate(idt_descriptor_t *, void *, int, int, int);
