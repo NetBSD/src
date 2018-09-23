@@ -1,7 +1,7 @@
-# $NetBSD: ad.arm,v 1.10.12.7 2018/09/23 07:16:41 pgoyette Exp $
+# $NetBSD: ad.arm,v 1.10.12.8 2018/09/23 21:38:08 pgoyette Exp $
 
-./@MODULEDIR@/compat_netbsd32			base-obsolete		obsolete
-./@MODULEDIR@/compat_netbsd32/compat_netbsd32.kmod base-obsolete	obsolete
+./@MODULEDIR@/compat_netbsd32			base-kernel-modules	kmod
+./@MODULEDIR@/compat_netbsd32/compat_netbsd32.kmod base-kernel-modules	kmod
 ./@MODULEDIR@/compat_netbsd32_09		base-kernel-modules	kmod
 ./@MODULEDIR@/compat_netbsd32_09/compat_netbsd32_09.kmod base-kernel-modules	kmod
 #./@MODULEDIR@/compat_netbsd32_10		base-kernel-modules	kmod
