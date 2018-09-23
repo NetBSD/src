@@ -1,4 +1,4 @@
-/*	$NetBSD: nv_kern_netbsd.c,v 1.4 2018/09/23 19:07:10 rmind Exp $	*/
+/*	$NetBSD: nv_kern_netbsd.c,v 1.5 2018/09/23 21:35:26 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: nv_kern_netbsd.c,v 1.4 2018/09/23 19:07:10 rmind Exp $");
+__RCSID("$NetBSD: nv_kern_netbsd.c,v 1.5 2018/09/23 21:35:26 rmind Exp $");
 
 #if !defined(_KERNEL) && !defined(_STANDALONE)
 #include <sys/mman.h>
@@ -74,9 +74,9 @@ int
 nvlist_copyin(const nvlist_ref_t *nref, nvlist_t **nvlp, size_t lim)
 {
 	const size_t len = nref->len;
+	int flags, error;
 	nvlist_t *nvl;
 	void *buf;
-	int error;
 
 	if (len >= lim) {
 		return E2BIG;
@@ -87,7 +87,8 @@ nvlist_copyin(const nvlist_ref_t *nref, nvlist_t **nvlp, size_t lim)
 		kmem_free(buf, len);
 		return error;
 	}
-	nvl = nvlist_unpack(buf, len, nref->flags);
+	flags = nref->flags & (NV_FLAG_IGNORE_CASE | NV_FLAG_NO_UNIQUE);
+	nvl = nvlist_unpack(buf, len, flags);
 	kmem_free(buf, len);
 	if (nvl == NULL) {
 		return EINVAL;
@@ -126,7 +127,7 @@ nvlist_copyout(nvlist_ref_t *nref, const nvlist_t *nvl)
 		    (vaddr_t)uaddr + len);
 		goto err;
 	}
-	nref->flags = nvlist_error(nvl);
+	nref->flags = nvlist_flags(nvl);
 	nref->buf = uaddr;
 	nref->len = len;
 err:
