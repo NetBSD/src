@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.388.4.1 2017/12/21 19:28:53 snj Exp $
+#	$NetBSD: files.pci,v 1.388.4.2 2018/09/23 18:00:53 martin Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -665,7 +665,7 @@ attach	stge at pci
 file	dev/pci/if_stge.c		stge
 
 # Intel i82598 & i82599 10-Gigabit Ethernet
-device	ixg: ether, ifnet, arp
+device	ixg: ether, ifnet, arp, mii, mii_phy
 attach	ixg at pci
 file	dev/pci/ixgbe/ixgbe.c		ixg | ixv
 file	dev/pci/ixgbe/ix_txrx.c		ixg | ixv
@@ -684,7 +684,7 @@ file	dev/pci/ixgbe/if_bypass.c	ixg | ixv
 file	dev/pci/ixgbe/if_fdir.c		ixg | ixv
 
 # This appears to be the driver for virtual instances of i82599.
-device	ixv: ether, ifnet, arp
+device	ixv: ether, ifnet, arp, mii, mii_phy
 attach	ixv at pci
 file	dev/pci/ixgbe/ixv.c		ixv
 
