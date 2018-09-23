@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.33 2018/04/03 07:20:52 christos Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.34 2018/09/23 00:59:59 cherry Exp $	*/
 
 /*
  * Mach Operating System
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.33 2018/04/03 07:20:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.34 2018/09/23 00:59:59 cherry Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -113,7 +113,7 @@ db_machine_init(void)
 		handler = &Xintr_x2apic_ddbipi;
 #endif
 	ddb_vec = idt_vec_alloc(0xf0, 0xff);
-	setgate(&idt[ddb_vec], handler, 1, SDT_SYS386IGT, SEL_KPL,
+	set_idtgate(&idt[ddb_vec], handler, 1, SDT_SYS386IGT, SEL_KPL,
 	    GSEL(GCODE_SEL, SEL_KPL));
 #else
 	/* Initialised as part of xen_ipi_init() */
