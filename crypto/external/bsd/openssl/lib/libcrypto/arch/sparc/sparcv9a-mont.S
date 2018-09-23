@@ -739,5 +739,5 @@ bn_mul_mont_fpu:
 	restore
 .type   bn_mul_mont_fpu,#function
 .size	bn_mul_mont_fpu,(.-bn_mul_mont_fpu)
-.asciz	"Montgomery Multipltication for UltraSPARC, CRYPTOGAMS by <appro@openssl.org>"
+.asciz	"Montgomery Multiplication for UltraSPARC, CRYPTOGAMS by <appro@openssl.org>"
 .align	32
