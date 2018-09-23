@@ -17,7 +17,7 @@
 # endif
 
 # if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112L \
-     && !defined(__STDC_NO_ATOMICS__)
+     && !defined(__STDC_NO_ATOMICS__) && !defined(__lint__)
 #  include <stdatomic.h>
 #  define HAVE_C11_ATOMICS
 # endif

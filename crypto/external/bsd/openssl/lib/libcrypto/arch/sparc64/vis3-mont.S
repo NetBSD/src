@@ -240,23 +240,23 @@ bn_mul_mont_vis3:
 	sub	%l7,	%i5,	%l7
 	sub	%i0,	%i5,	%i0
 
-	subc	%l0,	%g0,	%l0	! handle upmost overflow bit
-	and	%l5,	%l0,	%i1
-	andn	%i0,	%l0,	%i3
-	or	%i3,	%i1,	%i1	! ap=borrow?tp:rp
+	subccc	%l0,	%g0,	%l0	! handle upmost overflow bit
 	ba	.Lcopy
 	sub	%i5,	8,	%l4
 
 .align	16
-.Lcopy:					! copy or in-place refresh
-	ld	[%i1+0],	%l2
-	ld	[%i1+4],	%l3
-	add	%i1,	8,	%i1
+.Lcopy:					! conditional copy
+	ld	[%l5+0],	%l0
+	ld	[%l5+4],	%l1
+	ld	[%i0+0],	%l2
+	ld	[%i0+4],	%l3
 	stx	%g0,	[%l5]		! zap
 	add	%l5,	8,	%l5
 	stx	%g0,	[%l7]		! zap
 	stx	%g0,	[%l7+8]
 	add	%l7,	16,	%l7
+	movcs	%icc,	%l0,	%l2
+	movcs	%icc,	%l1,	%l3
 	st	%l3,	[%i0+0]		! flip order
 	st	%l2,	[%i0+4]
 	add	%i0,	8,	%i0
