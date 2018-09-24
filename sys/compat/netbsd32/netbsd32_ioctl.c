@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.c,v 1.94 2018/09/24 21:08:08 jdolecek Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.c,v 1.95 2018/09/24 21:15:39 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.94 2018/09/24 21:08:08 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.95 2018/09/24 21:15:39 jdolecek Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ntp.h"
@@ -552,7 +552,7 @@ netbsd32_to_dkwedge_list(
     struct dkwedge_list *p,
     u_long cmd)
 {
-	p->dkwl_buf = s32p->dkwl_buf;
+	p->dkwl_buf = NETBSD32PTR64(s32p->dkwl_buf);
 	p->dkwl_bufsize = s32p->dkwl_bufsize;
 	p->dkwl_nwedges = s32p->dkwl_nwedges;
 	p->dkwl_ncopied = s32p->dkwl_ncopied;
@@ -1017,7 +1017,7 @@ netbsd32_from_dkwedge_list(
     struct netbsd32_dkwedge_list *s32p,
     u_long cmd)
 {
-	s32p->dkwl_buf = p->dkwl_buf;
+	NETBSD32PTR32(s32p->dkwl_buf, p->dkwl_buf);
 	s32p->dkwl_bufsize = p->dkwl_bufsize;
 	s32p->dkwl_nwedges = p->dkwl_nwedges;
 	s32p->dkwl_ncopied = p->dkwl_ncopied;
