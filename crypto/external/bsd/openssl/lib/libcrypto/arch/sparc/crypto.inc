@@ -1,7 +1,7 @@
 .PATH.S: ${.PARSEDIR}
 .PATH.c: ${.PARSEDIR}
 CPUID = yes
-CPUID_SRCS += sparccpuid.S sparcv9cap.S
+CPUID_SRCS += sparccpuid.S sparcv9cap.c
 CRYPTOCPPFLAGS += -DOPENSSL_CPUID_OBJ
 
 .if ${MACHINE} == "sparc64"
@@ -12,7 +12,6 @@ AFLAGS.sparcv9-mont.S+= -Wa,-Av9
 AFLAGS.sparcv9a-mont.S+= -Wa,-Av9a
 AFLAGS.sparct4-mont.S+= -Wa,-Av9a
 AFLAGS.vis3-mont.S+= -Wa,-Av9a
-AFLAGS.sparcv9cap.S+= -Wa,-Av9
 .endif
 
 .include "../../crypto.inc"
