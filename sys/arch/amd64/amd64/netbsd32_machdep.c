@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.115.2.5 2018/09/24 23:25:24 pgoyette Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.115.2.6 2018/09/24 23:37:59 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.115.2.5 2018/09/24 23:25:24 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.115.2.6 2018/09/24 23:37:59 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -202,7 +202,7 @@ netbsd32_buildcontext(struct lwp *l, struct trapframe *tf, void *fp,
 	}
 }
 
-void
+int
 netbsd32_sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 {
 	struct lwp *l = curlwp;
@@ -268,6 +268,8 @@ netbsd32_sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	}
 
 	netbsd32_buildcontext(l, tf, fp, catcher, onstack);
+
+	return 0;
 }
 
 MODULE_CALL_HOOK_DECL(netbsd32_sendsig_hook, f,
