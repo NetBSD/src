@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.115.2.6 2018/09/24 23:37:59 pgoyette Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.115.2.7 2018/09/24 23:47:07 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.115.2.6 2018/09/24 23:37:59 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.115.2.7 2018/09/24 23:47:07 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -106,7 +106,7 @@ int check_sigcontext32(struct lwp *, const struct netbsd32_sigcontext *);
 void  netbsd32_buildcontext(struct lwp *l, struct trapframe *tf, void *fp,
     sig_t catcher, int onstack);
 
-void netbsd32_sendsig_siginfo(const ksiginfo_t *, const sigset_t *);
+int netbsd32_sendsig_siginfo(const ksiginfo_t *, const sigset_t *);
 
 #ifdef EXEC_AOUT
 /*
@@ -979,10 +979,12 @@ void
 netbsd32_machdep_md_init(void)
 {
 
-	vec_netbsd32_sendsig = netbsd32_sendsig_siginfo;
+	/* nothing to do */
 }
 
 void
 netbsd32_machdep_md_fini(void)
 {
+
+	/* nothing to do */
 }
