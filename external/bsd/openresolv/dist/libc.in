@@ -98,10 +98,12 @@ fi
 : ${resolv_conf:=/etc/resolv.conf}
 : ${libc_service:=nscd}
 : ${list_resolv:=@SBINDIR@/resolvconf -l}
-if [ "${resolv_conf_head-x}" = x -a -f "$SYSCONFDIR"/resolv.conf.head ]; then
+if [ "${resolv_conf_head-x}" = x ] && [ -f "$SYSCONFDIR"/resolv.conf.head ]
+then
 	resolv_conf_head="$(cat "${SYSCONFDIR}"/resolv.conf.head)"
 fi
-if [ "${resolv_conf_tail-x}" = x -a -f "$SYSCONFDIR"/resolv.conf.tail ]; then
+if [ "${resolv_conf_tail-x}" = x ] && [ -f "$SYSCONFDIR"/resolv.conf.tail ]
+then
 	resolv_conf_tail="$(cat "$SYSCONFDIR"/resolv.conf.tail)"
 fi
 
@@ -126,7 +128,7 @@ case "${resolv_conf_passthrough:-NO}" in
 	backup=false
 	newest=
 	for conf in "$IFACEDIR"/*; do
-		if [ -z "$newest" -o "$conf" -nt "$newest" ]; then
+		if [ -z "$newest" ] || [ "$conf" -nt "$newest" ]; then
 			newest="$conf"
 		fi
 	done
@@ -178,7 +180,7 @@ case "${resolv_conf_passthrough:-NO}" in
 	fi
 
 	[ -n "$domain" ] && newconf="${newconf}domain $domain$NL"
-	if [ -n "$newsearch" -a "$newsearch" != "$domain" ]; then
+	if [ -n "$newsearch" ] && [ "$newsearch" != "$domain" ]; then
 		newconf="${newconf}search $newsearch$NL"
 	fi
 	for n in $newns; do
