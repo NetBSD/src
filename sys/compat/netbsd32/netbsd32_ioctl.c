@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.c,v 1.93 2018/09/03 16:29:29 riastradh Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.c,v 1.94 2018/09/24 21:08:08 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.93 2018/09/03 16:29:29 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.94 2018/09/24 21:08:08 jdolecek Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ntp.h"
@@ -536,6 +536,17 @@ netbsd32_to_devrescanargs(
 }
 
 static inline void
+netbsd32_to_disk_strategy(
+    const struct netbsd32_disk_strategy *s32p,
+    struct disk_strategy *p,
+    u_long cmd)
+{
+	memcpy(p->dks_name, s32p->dks_name, sizeof(p->dks_name));
+	p->dks_param = NETBSD32PTR64(s32p->dks_param);
+	p->dks_paramlen = s32p->dks_paramlen;
+}
+
+static inline void
 netbsd32_to_dkwedge_list(
     const struct netbsd32_dkwedge_list *s32p,
     struct dkwedge_list *p,
@@ -987,6 +998,17 @@ netbsd32_from_devrescanargs(
 	memcpy(s32p->ifattr, p->ifattr, sizeof(s32p->ifattr));
 	s32p->numlocators = p->numlocators;
 	NETBSD32PTR32(s32p->locators, p->locators);
+}
+
+static inline void
+netbsd32_from_disk_strategy(
+    const struct disk_strategy *p,
+    struct netbsd32_disk_strategy *s32p,
+    u_long cmd)
+{
+	memcpy(s32p->dks_name, p->dks_name, sizeof(p->dks_name));
+	NETBSD32PTR32(s32p->dks_param, p->dks_param);
+	s32p->dks_paramlen = p->dks_paramlen;
 }
 
 static inline void
@@ -1457,6 +1479,10 @@ netbsd32_ioctl(struct lwp *l, const struct netbsd32_ioctl_args *uap, register_t 
 	case DRVGETEVENT32:
 		IOCTL_STRUCT_CONV_TO(DRVGETEVENT, plistref);
 
+	case DIOCGSTRATEGY32:
+		IOCTL_STRUCT_CONV_TO(DIOCGSTRATEGY, disk_strategy);
+	case DIOCSSTRATEGY32:
+		IOCTL_STRUCT_CONV_TO(DIOCSSTRATEGY, disk_strategy);
 	case DIOCLWEDGES32:
 		IOCTL_STRUCT_CONV_TO(DIOCLWEDGES, dkwedge_list);
 
