@@ -1,13 +1,8 @@
-/* $NetBSD: TODO.compat-module,v 1.1.2.10 2018/09/24 23:23:26 pgoyette Exp $ */
+/* $NetBSD: TODO.compat-module,v 1.1.2.11 2018/09/24 23:28:55 pgoyette Exp $ */
 
 DONE
 ----
-1.  Returned the build to use a .a compat library rather than a .o
-    library.  The original method used was .a but that was changed
-    (fairly recently) as a work-around to address some support
-    routines that were not being included when needed.  These support
-    modules are now included in their own module, and the work-around
-    is therefore no longer needed.
+1.  Removed the building of the compat library - it is no longer needed.
 
 2.  Reverted some intentional auto-load breakage for loading the sysv_ipc
     module; the breakage was introduced as the fix for the above-mentioned
@@ -72,14 +67,19 @@ TODO - Required for branch merge
 	netbsd32_compat_80.[ch]
 	amd64's machdep.c and machdep_16.c
 
+18. We need a mechanism to determine, at run-time, whether or not the
+    NTP option was selected.  Even though the NTP code is not modular,
+    other modules (such as clockctl) need to know whether NTP routines
+    are available.
+
 
 TODO - Not required for branch merge
 ------------------------------------
-18. Audit the entire code base for any remaining embedded #ifdef's for
+19. Audit the entire code base for any remaining embedded #ifdef's for
     COMPAT_xx.  When found, move the actual compat code into the compat
     hierarchy and replace originals with indirect (vectored) calls.
 
-19. The rtsock compat code is a disaster, with rtsock_50.c #include-ing
+20. The rtsock compat code is a disaster, with rtsock_50.c #include-ing
     the main rtsock.c code with various manipulations of the COMPAT_50
     macro.  Once rtsock is separated, compat_14 references to rtsock_50
     routines needs to be verified.
@@ -89,7 +89,7 @@ TODO - Not required for branch merge
     the compat code can be executed, neither on the branch nor on
     HEAD.
 
-20. The compat_60 module still needs some work for XEN systems.  We
+21. The compat_60 module still needs some work for XEN systems.  We
     probably need some build infrastructure changes to ensure that
     XEN (and, for i386, XEN-PAE) modules are build with the correct
     macros defined and with -I directories specified in the same order
@@ -97,7 +97,7 @@ TODO - Not required for branch merge
     prevents loading of micro-code updates for amd64 processors running
     XEN kernels.  This limitation also exists on HEAD.
 
-21. There seems to be quite a bit of MD compat_xx code, in the various
+22. There seems to be quite a bit of MD compat_xx code, in the various
     sys/arch/ directories.  I haven't yet looked at any of this.  But it
     seems to me that the MI compat build infrastructure should have some
     mechanism to "reach over" to the MD code, #include a Makefile.inc file,
@@ -115,17 +115,8 @@ TODO - Not required for branch merge
     into the monolithic COMPAT module on HEAD.  Thus, its absence from
     any of the version-specific modules is not a regression.
 
-22. For compat_50, in addition to rtsock there are some things in dev/gpio
+23. For compat_50, in addition to rtsock there are some things in dev/gpio
     and dev/wscons/wsmux that I haven't been able to cleanly separate.
     These items are not currently included in the monolithic COMPAT module
     on HEAD, so lack of integration on the branch is not a regression.
-
-23. Even though the build mechanism has been switched back to using a
-    .a compat library, it might be useful to make it work with the .o
-    library.
-
-24. We need a mechanism to determine, at run-time, whether or not the
-    NTP option was selected.  Even though the NTP code is not modular,
-    other modules (such as clockctl) need to know whether NTP routines
-    are available.
     
