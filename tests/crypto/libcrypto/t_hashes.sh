@@ -1,4 +1,4 @@
-# $NetBSD: t_hashes.sh,v 1.3 2018/02/22 14:24:03 martin Exp $
+# $NetBSD: t_hashes.sh,v 1.4 2018/09/24 16:25:24 christos Exp $
 #
 # Copyright (c) 2008, 2009, 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -45,47 +45,6 @@ md2_body()
 	atf_check -o ignore -e ignore "$(atf_get_srcdir)/h_md2test"
 }
 
-atf_test_case md4
-md4_head()
-{
-	atf_set "descr" "Checks MD4 digest"
-}
-md4_body()
-{
-	atf_check -o ignore -e ignore "$(atf_get_srcdir)/h_md4test"
-}
-
-atf_test_case md5
-md5_head()
-{
-	atf_set "descr" "Checks MD5 digest"
-}
-md5_body()
-{
-	atf_check -o ignore -e ignore "$(atf_get_srcdir)/h_md5test"
-}
-
-atf_test_case ripemd
-ripemd_head()
-{
-	atf_set "descr" "Checks RMD-160 digest"
-}
-ripemd_body()
-{
-	atf_check -o ignore -e ignore "$(atf_get_srcdir)/h_ripemdtest"
-}
-
-atf_test_case sha
-sha_head()
-{
-	atf_set "descr" "Checks SHA-1 digest"
-}
-sha_body()
-{
-	atf_check -o ignore -e ignore "$(atf_get_srcdir)/h_shatest"
-}
-
-
 atf_test_case mdc2
 mdc2_head()
 {
@@ -100,9 +59,5 @@ atf_init_test_cases()
 {
 	atf_add_test_case hmac
 	atf_add_test_case md2
-	atf_add_test_case md4
-	atf_add_test_case md5
-	atf_add_test_case ripemd
-	openssl version | fgrep -q "OpenSSL 1.0" && atf_add_test_case sha
 	atf_add_test_case mdc2
 }
