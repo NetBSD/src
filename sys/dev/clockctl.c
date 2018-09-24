@@ -1,4 +1,4 @@
-/*      $NetBSD: clockctl.c,v 1.35.14.4 2018/09/18 23:03:54 pgoyette Exp $ */
+/*      $NetBSD: clockctl.c,v 1.35.14.5 2018/09/24 00:01:13 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clockctl.c,v 1.35.14.4 2018/09/18 23:03:54 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clockctl.c,v 1.35.14.5 2018/09/24 00:01:13 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ntp.h"
@@ -251,6 +251,7 @@ clockctlioctl(
 		error = clock_settime1(l->l_proc, args->clock_id, &ts, false);
 		break;
 	}
+#ifdef NTP
 	case CLOCKCTL_NTP_ADJTIME: {
 		struct clockctl_ntp_adjtime *args = data;
 		struct timex ntv;
@@ -270,6 +271,7 @@ clockctlioctl(
 			args->retval = ntp_timestatus();
 		break;
 	}
+#endif
 	default:
 		error = clockctl_ioctl_50_hook_f_call(dev, cmd, data, flags, l);
 		if (error == ENOSYS)
