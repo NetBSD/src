@@ -1,4 +1,4 @@
-/*	$NetBSD: ata.c,v 1.141.6.9 2018/09/22 16:14:25 jdolecek Exp $	*/
+/*	$NetBSD: ata.c,v 1.141.6.10 2018/09/24 19:48:02 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.141.6.9 2018/09/22 16:14:25 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.141.6.10 2018/09/24 19:48:02 jdolecek Exp $");
 
 #include "opt_ata.h"
 
@@ -972,7 +972,7 @@ ata_read_log_ext_ncq(struct ata_drive_datas *drvp, uint8_t flags,
 	for (int i = 0; i < sizeof(drvp->recovery_blk); i++)
 		cksum += tb[i];
 	if (cksum != 0) {
-		aprint_error_dev(drvp->drv_softc,
+		device_printf(drvp->drv_softc,
 		    "invalid checksum %x for READ LOG EXT page %x\n",
 		    cksum, page);
 		rv = EINVAL;
@@ -989,10 +989,20 @@ ata_read_log_ext_ncq(struct ata_drive_datas *drvp, uint8_t flags,
 	*status = tb[2];
 	*err = tb[3];
 
-	KASSERTMSG((*status & WDCS_ERR),
-	    "%s: non-error command slot %d reported by READ LOG EXT page %x: "
-	    "err %x status %x\n",
-	    device_xname(drvp->drv_softc), *slot, page, *err, *status);
+	if ((*status & WDCS_ERR) == 0) {
+		/*
+		 * We expect error here. Normal physical drives always
+		 * do, it's part of ATA standard. However, QEMU AHCI emulation
+		 * misehandles READ LOG EXT in a way that the command itself
+		 * returns without error, but no data is transferred.
+		 */
+		device_printf(drvp->drv_softc,
+		    "READ LOG EXT page %x failed to report error: "
+		    "slot %d err %x status %x\n",
+		    page, *slot, *err, *status);
+		rv = EOPNOTSUPP;
+		goto out;
+	}
 
 	rv = 0;
 
@@ -1460,7 +1470,7 @@ ata_timo_xfer_check(struct ata_xfer *xfer)
 			xfer->c_flags &= ~C_FREE;
 			ata_channel_unlock(chp);
 
-	    		aprint_normal_dev(drvp->drv_softc,
+	    		device_printf(drvp->drv_softc,
 			    "xfer %p freed while invoking timeout\n", xfer); 
 
 			ata_free_xfer(chp, xfer);
@@ -1470,7 +1480,7 @@ ata_timo_xfer_check(struct ata_xfer *xfer)
 		/* Race vs. callout_stop() in ata_deactivate_xfer() */
 		ata_channel_unlock(chp);
 
-	    	aprint_normal_dev(drvp->drv_softc,
+	    	device_printf(drvp->drv_softc,
 		    "xfer %p deactivated while invoking timeout\n", xfer); 
 		return true;
 	}
