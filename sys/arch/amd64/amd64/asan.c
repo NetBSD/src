@@ -1,4 +1,4 @@
-/*	$NetBSD: asan.c,v 1.7 2018/08/27 08:53:19 maxv Exp $	*/
+/*	$NetBSD: asan.c,v 1.8 2018/09/24 05:47:33 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: asan.c,v 1.7 2018/08/27 08:53:19 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asan.c,v 1.8 2018/09/24 05:47:33 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -297,6 +297,9 @@ kasan_unwind(void)
 		}
 
 		rbp = (uint64_t *)*(rbp);
+		if (rbp == 0) {
+			break;
+		}
 		nsym++;
 
 		if (nsym >= 15) {
