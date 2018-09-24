@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32.h,v 1.116.2.12 2018/09/23 11:57:09 pgoyette Exp $	*/
+/*	$NetBSD: netbsd32.h,v 1.116.2.13 2018/09/24 22:56:45 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2008, 2015 Matthew R. Green
@@ -1167,7 +1167,7 @@ struct iovec *netbsd32_get_iov(struct netbsd32_iovec *, int, struct iovec *,
 SYSCTL_SETUP_PROTO(netbsd32_sysctl_emul_setup);
 #endif /* SYSCTL_SETUP_PROTO */
 
-extern void (*vec_netbsd32_sendsig)(const ksiginfo_t *, const sigset_t *);
+MODULE_HOOK(netbsd32_sendsig_hook, (const ksiginfo_t *, const sigset_t *);
 
 extern struct sysent netbsd32_sysent[];
 extern const uint32_t netbsd32_sysent_nomodbits[]; 
