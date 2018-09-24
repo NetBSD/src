@@ -1,9 +1,9 @@
 jdolecek-ncqfixes goals:
-- re-fix QEMU ahci(4) bug workaround (no READ LOG EXT support) - now it
-  triggers KASSERT()
 - fix ahci(4) error handling under paralles - invalid bio via WD_CHAOS_MONKEY
   ends up being handled as NOERROR, triggering KASSERT() in wd(4)
 - remove controller-specific slot bitmaps (ic/siisata.c, ic/ahcisata_core.c)
+- revert rev 1.431 of wd.c (AT_POOL removal) - ensure still works
+  for the reset-via-thread case
 
 Bugs
 ----
