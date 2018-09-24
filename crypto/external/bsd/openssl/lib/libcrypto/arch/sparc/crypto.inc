@@ -2,6 +2,7 @@
 .PATH.c: ${.PARSEDIR}
 CPUID = yes
 CPUID_SRCS += sparccpuid.S sparccap.c
+CRYPTOCPPFLAGS += -DOPENSSL_CPUID_OBJ
 
 .if ${MACHINE} == "sparc64"
 CPUID_SRCS += sparcv9-mont.S sparcv9a-mont.S 
