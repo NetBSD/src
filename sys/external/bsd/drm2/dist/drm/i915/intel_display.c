@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_display.c,v 1.23 2018/09/13 08:25:55 mrg Exp $	*/
+/*	$NetBSD: intel_display.c,v 1.24 2018/09/24 00:42:34 christos Exp $	*/
 
 /*
  * Copyright © 2006-2007 Intel Corporation
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_display.c,v 1.23 2018/09/13 08:25:55 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_display.c,v 1.24 2018/09/24 00:42:34 christos Exp $");
 
 #include <linux/dmi.h>
 #include <linux/module.h>
@@ -2039,7 +2039,7 @@ static void lpt_enable_pch_transcoder(struct drm_i915_private *dev_priv,
 
 	/* FDI must be feeding us bits for PCH ports */
 	assert_fdi_tx_enabled(dev_priv, (enum i915_pipe) cpu_transcoder);
-	assert_fdi_rx_enabled(dev_priv, TRANSCODER_A);
+	assert_fdi_rx_enabled(dev_priv, (enum i915_pipe) TRANSCODER_A);
 
 	/* Workaround: set timing override bit. */
 	val = I915_READ(TRANS_CHICKEN2(PIPE_A));
@@ -2132,7 +2132,7 @@ static void intel_enable_pipe(struct intel_crtc *crtc)
 	assert_sprites_disabled(dev_priv, pipe);
 
 	if (HAS_PCH_LPT(dev_priv->dev))
-		pch_transcoder = TRANSCODER_A;
+		pch_transcoder = (enum i915_pipe)TRANSCODER_A;
 	else
 		pch_transcoder = pipe;
 
@@ -4307,7 +4307,7 @@ static void lpt_pch_enable(struct drm_crtc *crtc)
 	struct intel_crtc *intel_crtc = to_intel_crtc(crtc);
 	enum transcoder cpu_transcoder = intel_crtc->config->cpu_transcoder;
 
-	assert_pch_transcoder_disabled(dev_priv, TRANSCODER_A);
+	assert_pch_transcoder_disabled(dev_priv, (enum i915_pipe) TRANSCODER_A);
 
 	lpt_program_iclkip(crtc);
 
