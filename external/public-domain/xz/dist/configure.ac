@@ -18,7 +18,7 @@
 AC_PREREQ([2.64])
 
 AC_INIT([XZ Utils], m4_esyscmd([/bin/sh build-aux/version.sh]),
-	[lasse.collin@tukaani.org], [xz], [http://tukaani.org/xz/])
+	[lasse.collin@tukaani.org], [xz], [https://tukaani.org/xz/])
 AC_CONFIG_SRCDIR([src/liblzma/common/common.h])
 AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_MACRO_DIR([m4])
@@ -34,8 +34,8 @@ AC_CANONICAL_HOST
 
 # We do some special things on Windows (32-bit or 64-bit) builds.
 case $host_os in
-	mingw* | cygwin*) is_w32=yes ;;
-	*)                is_w32=no ;;
+	mingw* | cygwin | msys) is_w32=yes ;;
+	*)                      is_w32=no ;;
 esac
 AM_CONDITIONAL([COND_W32], [test "$is_w32" = yes])
 
@@ -43,9 +43,15 @@ AM_CONDITIONAL([COND_W32], [test "$is_w32" = yes])
 # executables. Cygwin is an exception to this, since it is recommended
 # that symlinks don't have the .exe suffix. To make this work, we
 # define LN_EXEEXT.
+#
+# MSYS2 is treated the same way as Cygwin. It uses plain "msys" like
+# the original MSYS when building MSYS/MSYS2-binaries. Hopefully this
+# doesn't break things for the original MSYS developers. Note that this
+# doesn't affect normal MSYS/MSYS2 users building non-MSYS/MSYS2 binaries
+# since in that case the $host_os is usually mingw32.
 case $host_os in
-	cygwin)  LN_EXEEXT= ;;
-	*)       LN_EXEEXT='$(EXEEXT)' ;;
+	cygwin | msys)  LN_EXEEXT= ;;
+	*)              LN_EXEEXT='$(EXEEXT)' ;;
 esac
 AC_SUBST([LN_EXEEXT])
 
@@ -91,6 +97,7 @@ AC_ARG_ENABLE([encoders], AS_HELP_STRING([--enable-encoders=LIST],
 	[], [enable_encoders=SUPPORTED_FILTERS])
 enable_encoders=`echo "$enable_encoders" | sed 's/,/ /g'`
 if test "x$enable_encoders" = xno || test "x$enable_encoders" = x; then
+	enable_encoders=no
 	AC_MSG_RESULT([(none)])
 else
 	for arg in $enable_encoders
@@ -108,6 +115,8 @@ else
 				;;
 		esac
 	done
+	AC_DEFINE([HAVE_ENCODERS], [1],
+		[Define to 1 if any of HAVE_ENCODER_foo have been defined.])
 	AC_MSG_RESULT([$enable_encoders])
 fi
 
@@ -118,6 +127,7 @@ AC_ARG_ENABLE([decoders], AS_HELP_STRING([--enable-decoders=LIST],
 	[], [enable_decoders=SUPPORTED_FILTERS])
 enable_decoders=`echo "$enable_decoders" | sed 's/,/ /g'`
 if test "x$enable_decoders" = xno || test "x$enable_decoders" = x; then
+	enable_decoders=no
 	AC_MSG_RESULT([(none)])
 else
 	for arg in $enable_decoders
@@ -135,11 +145,8 @@ else
 				;;
 		esac
 	done
-
-	# LZMA2 requires that LZMA1 is enabled.
-	test "x$enable_encoder_lzma2" = xyes && enable_encoder_lzma1=yes
-	test "x$enable_decoder_lzma2" = xyes && enable_decoder_lzma1=yes
-
+	AC_DEFINE([HAVE_DECODERS], [1],
+		[Define to 1 if any of HAVE_DECODER_foo have been defined.])
 	AC_MSG_RESULT([$enable_decoders])
 fi
 
@@ -148,8 +155,8 @@ if test "x$enable_encoder_lzma2$enable_encoder_lzma1" = xyesno \
 	AC_MSG_ERROR([LZMA2 requires that LZMA1 is also enabled.])
 fi
 
-AM_CONDITIONAL(COND_MAIN_ENCODER, test "x$enable_encoders" != xno && test "x$enable_encoders" != x)
-AM_CONDITIONAL(COND_MAIN_DECODER, test "x$enable_decoders" != xno && test "x$enable_decoders" != x)
+AM_CONDITIONAL(COND_MAIN_ENCODER, test "x$enable_encoders" != xno)
+AM_CONDITIONAL(COND_MAIN_DECODER, test "x$enable_decoders" != xno)
 
 m4_foreach([NAME], [SUPPORTED_FILTERS],
 [AM_CONDITIONAL(COND_FILTER_[]m4_toupper(NAME), test "x$enable_filter_[]NAME" = xyes)
@@ -268,6 +275,20 @@ m4_foreach([NAME], [SUPPORTED_CHECKS],
 [AM_CONDITIONAL(COND_CHECK_[]m4_toupper(NAME), test "x$enable_check_[]NAME" = xyes)
 ])dnl
 
+AC_MSG_CHECKING([if external SHA-256 should be used])
+AC_ARG_ENABLE([external-sha256], AS_HELP_STRING([--enable-external-sha256],
+		[Use SHA-256 code from the operating system.
+		See INSTALL for possible subtle problems.]),
+		[], [enable_external_sha256=no])
+if test "x$enable_check_sha256" != "xyes"; then
+	enable_external_sha256=no
+fi
+if test "x$enable_external_sha256" = xyes; then
+	AC_MSG_RESULT([yes])
+else
+	AC_MSG_RESULT([no])
+fi
+
 
 ###########################
 # Assembler optimizations #
@@ -283,7 +304,7 @@ if test "x$enable_assembler" = xyes; then
 	case $host_os in
 		# Darwin should work too but only if not creating universal
 		# binaries. Solaris x86 could work too but I cannot test.
-		linux* | *bsd* | mingw* | cygwin* | *djgpp*)
+		linux* | *bsd* | mingw* | cygwin | msys | *djgpp*)
 			case $host_cpu in
 				i?86)   enable_assembler=x86 ;;
 				x86_64) enable_assembler=x86_64 ;;
@@ -409,18 +430,21 @@ AM_CONDITIONAL([COND_XZ], [test x$enable_xz != xno])
 AC_ARG_ENABLE([xzdec], [AS_HELP_STRING([--disable-xzdec],
 		[do not build xzdec])],
 	[], [enable_xzdec=yes])
+test "x$enable_decoders" = xno && enable_xzdec=no
 AM_CONDITIONAL([COND_XZDEC], [test x$enable_xzdec != xno])
 
 AC_ARG_ENABLE([lzmadec], [AS_HELP_STRING([--disable-lzmadec],
 		[do not build lzmadec
 		(it exists primarily for LZMA Utils compatibility)])],
 	[], [enable_lzmadec=yes])
+test "x$enable_decoder_lzma1" = xno && enable_lzmadec=no
 AM_CONDITIONAL([COND_LZMADEC], [test x$enable_lzmadec != xno])
 
 AC_ARG_ENABLE([lzmainfo], [AS_HELP_STRING([--disable-lzmainfo],
 		[do not build lzmainfo
 		(it exists primarily for LZMA Utils compatibility)])],
 	[], [enable_lzmainfo=yes])
+test "x$enable_decoder_lzma1" = xno && enable_lzmainfo=no
 AM_CONDITIONAL([COND_LZMAINFO], [test x$enable_lzmainfo != xno])
 
 AC_ARG_ENABLE([lzma-links], [AS_HELP_STRING([--disable-lzma-links],
@@ -466,6 +490,30 @@ if test "x$enable_symbol_versions" = xauto; then
 fi
 AC_MSG_RESULT([$enable_symbol_versions])
 AM_CONDITIONAL([COND_SYMVERS], [test "x$enable_symbol_versions" = xyes])
+
+
+##############
+# Sandboxing #
+##############
+
+AC_MSG_CHECKING([if sandboxing should be used])
+AC_ARG_ENABLE([sandbox], [AS_HELP_STRING([--enable-sandbox=METHOD],
+		[This is an experimental feature.
+		Sandboxing METHOD can be `auto', `no', or `capsicum'.
+		The default is `no'.])],
+	[], [enable_sandbox=no])
+case $enable_sandbox in
+	auto)
+		AC_MSG_RESULT([maybe (autodetect)])
+		;;
+	no | capsicum)
+		AC_MSG_RESULT([$enable_sandbox])
+		;;
+	*)
+		AC_MSG_RESULT([])
+		AC_MSG_ERROR([--enable-sandbox only accepts `auto', `no', or `capsicum'.])
+		;;
+esac
 
 
 ###############################################################################
@@ -561,7 +609,7 @@ AM_CONDITIONAL([COND_SHARED], [test "x$enable_shared" != xno])
 
 echo
 echo "Initializing gettext:"
-AM_GNU_GETTEXT_VERSION([0.18])
+AM_GNU_GETTEXT_VERSION([0.19])
 AM_GNU_GETTEXT([external])
 
 
@@ -624,10 +672,10 @@ AC_C_BIGENDIAN
 gl_GETOPT
 
 # Find the best function to set timestamps.
-AC_CHECK_FUNCS([futimens futimes futimesat utimes utime], [break])
+AC_CHECK_FUNCS([futimens futimes futimesat utimes _futime utime], [break])
 
-# These are nice to have but not mandatory.
-AC_CHECK_FUNCS([posix_fadvise pipe2])
+# This is nice to have but not mandatory.
+AC_CHECK_FUNCS([posix_fadvise])
 
 TUKLIB_PROGNAME
 TUKLIB_INTEGER
@@ -635,34 +683,34 @@ TUKLIB_PHYSMEM
 TUKLIB_CPUCORES
 TUKLIB_MBSTR
 
-# Check for system-provided SHA-256. At least the following is supported:
+# If requsted, check for system-provided SHA-256. At least the following
+# implementations are supported:
 #
 # OS       Headers                     Library  Type           Function
 # FreeBSD  sys/types.h + sha256.h      libmd    SHA256_CTX     SHA256_Init
 # NetBSD   sys/types.h + sha2.h                 SHA256_CTX     SHA256_Init
 # OpenBSD  sys/types.h + sha2.h                 SHA2_CTX       SHA256Init
 # Solaris  sys/types.h + sha2.h        libmd    SHA256_CTX     SHA256Init
-# MINIX 3  sys/types.h + minix/sha2.h  libutil  SHA256_CTX     SHA256_Init
+# MINIX 3  sys/types.h + sha2.h                 SHA256_CTX     SHA256_Init
 # Darwin   CommonCrypto/CommonDigest.h          CC_SHA256_CTX  CC_SHA256_Init
 #
 # Note that Darwin's CC_SHA256_Update takes buffer size as uint32_t instead
 # of size_t.
 #
-# We don't check for e.g. OpenSSL or libgcrypt because we don't want
-# to introduce dependencies to other packages by default. Maybe such
-# libraries could be supported via additional configure options though.
-#
-if test "x$enable_check_sha256" = "xyes"; then
+sha256_header_found=no
+sha256_type_found=no
+sha256_func_found=no
+if test "x$enable_external_sha256" = "xyes"; then
 	# Test for Common Crypto before others, because Darwin has sha256.h
 	# too and we don't want to use that, because on older versions it
 	# uses OpenSSL functions, whose SHA256_Init is not guaranteed to
 	# succeed.
-	sha256_header_found=no
 	AC_CHECK_HEADERS(
-		[CommonCrypto/CommonDigest.h sha256.h sha2.h minix/sha2.h],
+		[CommonCrypto/CommonDigest.h sha256.h sha2.h],
 		[sha256_header_found=yes ; break])
 	if test "x$sha256_header_found" = xyes; then
-		AC_CHECK_TYPES([CC_SHA256_CTX, SHA256_CTX, SHA2_CTX], [], [],
+		AC_CHECK_TYPES([CC_SHA256_CTX, SHA256_CTX, SHA2_CTX],
+			[sha256_type_found=yes], [],
 			[[#ifdef HAVE_SYS_TYPES_H
 			  # include <sys/types.h>
 			  #endif
@@ -674,20 +722,19 @@ if test "x$enable_check_sha256" = "xyes"; then
 			  #endif
 			  #ifdef HAVE_SHA2_H
 			  # include <sha2.h>
-			  #endif
-			  #ifdef HAVE_MINIX_SHA2_H
-			  # include <minix/sha2.h>
 			  #endif]])
-		AC_SEARCH_LIBS([SHA256_Init], [md util])
-		AC_SEARCH_LIBS([SHA256Init], [md])
-		AC_CHECK_FUNCS([CC_SHA256_Init SHA256_Init SHA256Init],
-			[break])
+		if test "x$sha256_type_found" = xyes ; then
+			AC_SEARCH_LIBS([SHA256Init], [md])
+			AC_SEARCH_LIBS([SHA256_Init], [md])
+			AC_CHECK_FUNCS([CC_SHA256_Init SHA256Init SHA256_Init],
+				[sha256_func_found=yes ; break])
+		fi
 	fi
 fi
-AM_CONDITIONAL([COND_INTERNAL_SHA256],
-	[test "x$ac_cv_func_SHA256_Init" != xyes \
-		&& test "x$ac_cv_func_SHA256Init" != xyes \
-		&& test "x$ac_cv_func_CC_SHA256_Init" != xyes])
+AM_CONDITIONAL([COND_INTERNAL_SHA256], [test "x$sha256_func_found" = xno])
+if test "x$enable_external_sha256$sha256_func_found" = xyesno; then
+	AC_MSG_ERROR([--enable-external-sha256 was specified but no supported external SHA-256 implementation was found])
+fi
 
 # Check for SSE2 intrinsics.
 AC_CHECK_DECL([_mm_movemask_epi8],
@@ -697,6 +744,23 @@ AC_CHECK_DECL([_mm_movemask_epi8],
 [#ifdef HAVE_IMMINTRIN_H
 #include <immintrin.h>
 #endif])
+
+# Check for sandbox support. If one is found, set enable_sandbox=found.
+case $enable_sandbox in
+	auto | capsicum)
+		AX_CHECK_CAPSICUM([enable_sandbox=found], [:])
+		;;
+esac
+
+# If a specific sandboxing method was explicitly requested and it wasn't
+# found, give an error.
+case $enable_sandbox in
+	auto | no | found)
+		;;
+	*)
+		AC_MSG_ERROR([$enable_sandbox support not found])
+		;;
+esac
 
 
 ###############################################################################
