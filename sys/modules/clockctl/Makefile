@@ -1,8 +1,10 @@
-# $NetBSD: Makefile,v 1.1.20.1 2018/03/21 04:48:32 pgoyette Exp $
+# $NetBSD: Makefile,v 1.1.20.2 2018/09/24 00:02:50 pgoyette Exp $
 
 .include "../Makefile.inc"
 
 .PATH: ${S}/dev
+
+CPPFLAGS+=	-DNTP
 
 KMOD=		clockctl
 IOCONF=		clockctl.ioconf
