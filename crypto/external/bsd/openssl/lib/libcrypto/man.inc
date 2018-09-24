@@ -1,4 +1,4 @@
-#	$NetBSD: man.inc,v 1.11 2018/09/23 13:33:04 christos Exp $
+#	$NetBSD: man.inc,v 1.12 2018/09/24 11:02:12 christos Exp $
 
 .PATH:	${.CURDIR}/man
 
@@ -277,7 +277,6 @@ RSA_size.3 \
 SCT_new.3 \
 SCT_print.3 \
 SCT_validate.3 \
-SHA256_Init.3 \
 SM2.7 \
 SMIME_read_CMS.3 \
 SMIME_read_PKCS7.3 \
