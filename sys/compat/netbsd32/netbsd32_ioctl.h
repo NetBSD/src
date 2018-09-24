@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.h,v 1.61 2018/09/06 06:41:59 maxv Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.h,v 1.62 2018/09/24 21:08:08 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -612,3 +612,11 @@ struct netbsd32_dkwedge_list {
 
 #define DIOCLWEDGES32		_IOWR('d', 124, struct netbsd32_dkwedge_list)
 
+struct netbsd32_disk_strategy {
+	char dks_name[DK_STRATEGYNAMELEN];	/* name of strategy */
+	netbsd32_charp dks_param;		/* notyet; should be NULL */
+	netbsd32_size_t dks_paramlen;		/* notyet; should be 0 */
+} __packed;
+
+#define DIOCGSTRATEGY32		_IOR('d', 125, struct netbsd32_disk_strategy)
+#define DIOCSSTRATEGY32		_IOW('d', 126, struct netbsd32_disk_strategy)
