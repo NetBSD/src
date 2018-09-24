@@ -1,4 +1,4 @@
-/* $NetBSD: TODO.compat-module,v 1.1.2.8 2018/09/21 02:53:00 pgoyette Exp $ */
+/* $NetBSD: TODO.compat-module,v 1.1.2.9 2018/09/24 00:03:53 pgoyette Exp $ */
 
 DONE
 ----
@@ -124,3 +124,5 @@ TODO - Not required for branch merge
     .a compat library, it might be useful to make it work with the .o
     library.
 
+24. The clockctl module currently assumes that NTP exists.  We need to
+    introduce some hook(s) for this.
