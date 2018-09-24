@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.115.2.3 2018/09/14 08:38:37 pgoyette Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.115.2.4 2018/09/24 22:56:45 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.115.2.3 2018/09/14 08:38:37 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.115.2.4 2018/09/24 22:56:45 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -270,13 +270,18 @@ netbsd32_sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	netbsd32_buildcontext(l, tf, fp, catcher, onstack);
 }
 
-void (*vec_netbsd32_sendsig)(const ksiginfo_t *, const sigset_t *);
+MODULE_CALL_HOOK_DECL(netbsd32_sendsig_hook, f,
+    (const ksiginfo_t *ksi, const sigset_t *mask), (ksi, mask),
+    netbsd32_sendsig_siginfo());
+MODULE_CALL_HOOK(netbsd32_sendsig_hook, f,
+    (const ksiginfo_t *ksi, const sigset_t *mask), (ksi, mask),
+    netbsd32_sendsig_siginfo());
 
 void
 netbsd32_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 {
 
-	(*vec_netbsd32_sendsig)(ksi, mask);
+	netbsd32_sendsig_hook_f_call(ksi, mask);
 }
 
 #ifdef COREDUMP

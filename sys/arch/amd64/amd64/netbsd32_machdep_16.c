@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep_16.c,v 1.1.2.2 2018/09/14 08:38:37 pgoyette Exp $	*/
+/*	$NetBSD: netbsd32_machdep_16.c,v 1.1.2.3 2018/09/24 22:56:45 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep_16.c,v 1.1.2.2 2018/09/14 08:38:37 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep_16.c,v 1.1.2.3 2018/09/24 22:56:45 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -84,6 +84,8 @@ void netbsd32_sendsig_siginfo(const ksiginfo_t *, const sigset_t *);
 int check_sigcontext32(struct lwp *, const struct netbsd32_sigcontext *);
 
 void netbsd32_sendsig_16(const ksiginfo_t *, const sigset_t *);
+
+struct netbsd32_sendsig_hook_t netbsd32_sendsig_hook;
 
 static void
 netbsd32_sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *mask)
@@ -240,18 +242,19 @@ compat_16_netbsd32___sigreturn14(struct lwp *l, const struct compat_16_netbsd32_
 	return (EJUSTRETURN);
 }
 
-extern void (*vec_netbsd32_sendsig)(const ksiginfo_t *, const sigset_t *);
+MODULE_HOOK_SET(netbsd32_sendsig_hook, "nb32_16", netbsd32_sendsig_16);
+MODULE_HOOK_UNSET(netbsd32_sendsig_hook);
 
 void
 netbsd32_machdep_md_16_init(void)
 {
 
-	vec_netbsd32_sendsig = netbsd32_sendsig_16;
+	netbsd32_sendsig_hook_set();
 }
 
 void
 netbsd32_machdep_md_16_fini(void)
 {
 
-	vec_netbsd32_sendsig = netbsd32_sendsig_siginfo;
+	netbsd32_sendsig_hook_set();
 }
