@@ -603,7 +603,7 @@ make_vars()
 		list_resolv -i "$@" >/dev/null || IF_EXCLUSIVE=0
 		eval "$(list_resolv -l "$@" | replace | parse_resolv)"
 	fi
-	if [ -n "${name_servers_append}${search_domains_append} ]; then
+	if [ -n "${name_servers_append}${search_domains_append}" ]; then
 		eval "$(echo_append | parse_resolv)"
 	fi
 
