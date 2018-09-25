@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1564 2018/09/08 13:26:12 christos Exp $
+#	$NetBSD: 3RDPARTY,v 1.1565 2018/09/25 05:43:43 joerg Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -1494,7 +1494,7 @@ Location:	external/zlib/pigz/dist
 Notes:
 
 Package:	xz
-Version:	5.2.1
+Version:	5.2.4
 Current Vers:	5.2.4
 Maintainer:	Lasse Collin <lasse.collin@tukanni.org>
 Archive Site:	http://tukaani.org/xz/
@@ -1504,8 +1504,9 @@ License:	public-domain
 Location:	external/public-domain/xz/dist
 Notes:
 1. See prepare-import script for stripping down the distribution.
-2. Update configure.ac and use it to generate include/config.h.
-3. Carefully check for GPL components leaked into the dist area.
+2. Use run-configure and double check that the stripped down configure works
+   for tools.
+3. Carefully check for non-autoconf GPL components leaked into the dist area.
 
 Package:	mpc
 Version:	1.1.0
