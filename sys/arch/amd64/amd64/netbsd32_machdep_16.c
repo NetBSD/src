@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep_16.c,v 1.1.2.3 2018/09/24 22:56:45 pgoyette Exp $	*/
+/*	$NetBSD: netbsd32_machdep_16.c,v 1.1.2.4 2018/09/25 00:00:05 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep_16.c,v 1.1.2.3 2018/09/24 22:56:45 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep_16.c,v 1.1.2.4 2018/09/25 00:00:05 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -59,6 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep_16.c,v 1.1.2.3 2018/09/24 22:56:45 
 #include <sys/ras.h>
 #include <sys/ptrace.h>
 #include <sys/kauth.h>
+#include <sys/module_hook.h>
 
 #include <x86/fpu.h>
 #include <x86/dbregs.h>
