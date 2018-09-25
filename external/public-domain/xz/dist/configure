@@ -19545,15 +19545,10 @@ fi
 xz=`echo xz | sed "$program_transform_name"`
 
 
-ac_config_files="$ac_config_files Doxyfile Makefile po/Makefile.in lib/Makefile src/Makefile src/liblzma/Makefile src/liblzma/api/Makefile src/xz/Makefile src/xzdec/Makefile src/lzmainfo/Makefile src/scripts/Makefile tests/Makefile debug/Makefile"
 
-ac_config_files="$ac_config_files src/scripts/xzdiff"
 
-ac_config_files="$ac_config_files src/scripts/xzgrep"
 
-ac_config_files="$ac_config_files src/scripts/xzmore"
 
-ac_config_files="$ac_config_files src/scripts/xzless"
 
 
 cat >confcache <<\_ACEOF
