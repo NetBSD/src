@@ -1,4 +1,4 @@
-.\"	$NetBSD: ypinit.8,v 1.18 2018/09/23 02:15:25 kre Exp $
+.\"	$NetBSD: ypinit.8,v 1.19 2018/09/25 09:53:40 wiz Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -72,7 +72,8 @@ to contain a list of ypservers for
 to connect to.
 .It Fl l Ar server1,...,serverN
 Set the list of client servers from the command line rather than
-prompting for them interactively.  The format is a comma separated list
+prompting for them interactively.
+The format is a comma separated list
 of server names with no spaces.
 .It Fl m
 Create a master
@@ -124,7 +125,8 @@ servers to bind to.
 .Xr yppush 8 ,
 .Xr ypserv 8
 .Sh AUTHORS
-Originally written by Mats O Jansson
-.Aq moj@stacken.kth.se .
-Modified by Jason R. Thorpe
-.Aq thorpej@NetBSD.org .
+.An -nosplit
+Originally written by
+.An Mats O Jansson Aq Mt moj@stacken.kth.se .
+Modified by
+.An Jason R. Thorpe Aq Mt thorpej@NetBSD.org .
