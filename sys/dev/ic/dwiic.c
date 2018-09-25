@@ -1,4 +1,4 @@
-/* $NetBSD: dwiic.c,v 1.1 2017/12/10 17:12:54 bouyer Exp $ */
+/* $NetBSD: dwiic.c,v 1.2 2018/09/25 16:29:41 jakllsch Exp $ */
 
 /* $OpenBSD dwiic.c,v 1.24 2017/08/17 20:41:16 kettenis Exp $ */
 
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwiic.c,v 1.1 2017/12/10 17:12:54 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwiic.c,v 1.2 2018/09/25 16:29:41 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -276,7 +276,7 @@ dwiic_i2c_acquire_bus(void *cookie, int flags)
 		return (0);
 
 	mutex_enter(&sc->sc_i2c_lock);
-	return 1;
+	return 0;
 }
 
 void
