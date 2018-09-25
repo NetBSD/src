@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.4 2018/09/25 05:42:08 joerg Exp $
+# $NetBSD: Makefile,v 1.5 2018/09/25 12:34:42 joerg Exp $
 
 PROG=	xz
 BINDIR=	/usr/bin
@@ -13,7 +13,7 @@ USETBL=	yes
 .include <bsd.init.mk>
 
 CPPFLAGS+=	-DPACKAGE=\"xz\"
-.if !defined(HOST_PROG)
+.if !defined(HOSTPROG)
 CPPFLAGS+=	-DENABLE_NLS -DLOCALEDIR=\"/usr/share/locale\"
 .endif
 
