@@ -1,4 +1,4 @@
-/* $NetBSD: compat_stub.h,v 1.1.2.36 2018/09/23 11:23:47 pgoyette Exp $	*/
+/* $NetBSD: compat_stub.h,v 1.1.2.37 2018/09/25 21:41:30 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -42,9 +42,11 @@
  */
 
 struct ntptimeval;
+struct timex;
 
 extern void (*vec_ntp_gettime)(struct ntptimeval *);
 extern int (*vec_ntp_timestatus)(void);
+extern void (*vec_ntp_adjtime1)(struct timex *);
 
 MODULE_HOOK2(ntp_gettime_hooks, (struct ntptimeval *), (void))
 
