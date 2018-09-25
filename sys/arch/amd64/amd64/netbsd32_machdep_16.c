@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep_16.c,v 1.1.2.4 2018/09/25 00:00:05 pgoyette Exp $	*/
+/*	$NetBSD: netbsd32_machdep_16.c,v 1.1.2.5 2018/09/25 00:53:59 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep_16.c,v 1.1.2.4 2018/09/25 00:00:05 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep_16.c,v 1.1.2.5 2018/09/25 00:53:59 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -243,8 +243,8 @@ compat_16_netbsd32___sigreturn14(struct lwp *l, const struct compat_16_netbsd32_
 	return (EJUSTRETURN);
 }
 
-MODULE_HOOK_SET(netbsd32_sendsig_hook, "nb32_16", netbsd32_sendsig_16);
-MODULE_HOOK_UNSET(netbsd32_sendsig_hook);
+MODULE_SET_HOOK(netbsd32_sendsig_hook, "nb32_16", netbsd32_sendsig_16);
+MODULE_UNSET_HOOK(netbsd32_sendsig_hook);
 
 void
 netbsd32_machdep_md_16_init(void)
