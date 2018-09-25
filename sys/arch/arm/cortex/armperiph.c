@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: armperiph.c,v 1.14 2018/08/15 06:00:02 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: armperiph.c,v 1.15 2018/09/25 20:55:34 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -230,7 +230,7 @@ armperiph_attach(device_t parent, device_t self, void *aux)
 			.mpcaa_off1 = cfg->cfg_devices[i].pi_off1,
 			.mpcaa_off2 = cfg->cfg_devices[i].pi_off2,
 		};
-#if defined(CPU_CORTEXA9)
+#if defined(CPU_CORTEXA9) || defined(CPU_CORTEXA5)
 		if (strcmp(mpcaa.mpcaa_name, "arma9tmr") == 0)
 			mpcaa.mpcaa_irq = IRQ_A9TMR_PPI_GTIMER;
 #endif
