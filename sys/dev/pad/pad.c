@@ -1,4 +1,4 @@
-/* $NetBSD: pad.c,v 1.57 2018/09/25 06:53:49 nakayama Exp $ */
+/* $NetBSD: pad.c,v 1.58 2018/09/25 06:55:23 nakayama Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pad.c,v 1.57 2018/09/25 06:53:49 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pad.c,v 1.58 2018/09/25 06:55:23 nakayama Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -781,6 +781,8 @@ pad_set_port(void *opaque, mixer_ctrl_t *mc)
 	switch (mc->dev) {
 	case PAD_OUTPUT_MASTER_VOLUME:
 	case PAD_INPUT_DAC_VOLUME:
+		if (mc->un.value.num_channels != 1)
+			return EINVAL;
 		sc->sc_swvol = mc->un.value.level[AUDIO_MIXER_LEVEL_MONO];
 		return 0;
 	}
@@ -800,6 +802,8 @@ pad_get_port(void *opaque, mixer_ctrl_t *mc)
 	switch (mc->dev) {
 	case PAD_OUTPUT_MASTER_VOLUME:
 	case PAD_INPUT_DAC_VOLUME:
+		if (mc->un.value.num_channels != 1)
+			return EINVAL;
 		mc->un.value.level[AUDIO_MIXER_LEVEL_MONO] = sc->sc_swvol;
 		return 0;
 	}
