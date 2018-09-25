@@ -1,25 +1,27 @@
 #!/bin/sh
-# $NetBSD: prepare-import.sh,v 1.4 2015/04/17 18:49:23 christos Exp $
+# $NetBSD: prepare-import.sh,v 1.5 2018/09/25 05:38:10 joerg Exp $
 
 set -e
 
 rm -rf dist tmp
-tar xzf xz-5.2.1.tar.gz
-mv xz-5.2.1 dist
+tar xf xz-5.2.4.tar.xz
+mv xz-5.2.4 dist
 
 cd dist
 # Binary files derived from distribution files
 rm -rf doc/man
 # Files under GPL
-rm -rf build-aux extra lib m4/[a-s]* m4/[u-z]* src/scripts/xz* Doxyfile.in
+rm -rf extra lib m4/[a-s]* m4/[u-z]* src/scripts/xz* Doxyfile.in
 # Files not of relevance
-rm -rf ABOUT-NLS aclocal.m4 autogen.sh configure COPYING.*GPL* INSTALL.generic
+rm -rf ABOUT-NLS aclocal.m4 autogen.sh COPYING.*GPL* INSTALL.generic
 mkdir po.tmp
 mv po/*.po po/*.gmo po.tmp/
 rm -rf po
 mv po.tmp po
 rm -rf debug dos windows
 rm -rf Makefile* */Makefile* */*/Makefile* */*/*/Makefile*
+# Files under GPL/LGPL kept:
+# build-aux/* from autoconf
 # Binary files to be encoded
 for f in tests/compress_prepared_bcj_sparc tests/compress_prepared_bcj_x86 \
 	 tests/files/*.xz; do
@@ -27,16 +29,5 @@ for f in tests/compress_prepared_bcj_sparc tests/compress_prepared_bcj_x86 \
 	rm $f
 done
 
-# Files under GPL/LGPL kept:
-# build-aux/* from autoconf
-# lib/*
-# m4/*
-
-# Changes to config.h
-echo Add build-time endian test to include/config.h:
-cat << EOE
-#include <sys/endian.h>
-#if BYTE_ORDER == BIG_ENDIAN
-#  define WORDS_BIGENDIAN 1
-#endif
-EOE
+grep -v '^ac_config_files=' configure > configure.new
+mv configure.new ../configure
