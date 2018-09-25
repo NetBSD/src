@@ -1,4 +1,4 @@
-/* $NetBSD: TODO.compat-module,v 1.1.2.11 2018/09/24 23:28:55 pgoyette Exp $ */
+/* $NetBSD: TODO.compat-module,v 1.1.2.12 2018/09/25 21:44:30 pgoyette Exp $ */
 
 DONE
 ----
@@ -67,10 +67,7 @@ TODO - Required for branch merge
 	netbsd32_compat_80.[ch]
 	amd64's machdep.c and machdep_16.c
 
-18. We need a mechanism to determine, at run-time, whether or not the
-    NTP option was selected.  Even though the NTP code is not modular,
-    other modules (such as clockctl) need to know whether NTP routines
-    are available.
+18. Need to untangle the machdep COREDUMP stuff.
 
 
 TODO - Not required for branch merge
