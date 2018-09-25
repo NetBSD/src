@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_time.c,v 1.49.12.1 2018/09/11 23:58:46 pgoyette Exp $	*/
+/*	$NetBSD: netbsd32_time.c,v 1.49.12.2 2018/09/25 21:41:30 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_time.c,v 1.49.12.1 2018/09/11 23:58:46 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_time.c,v 1.49.12.2 2018/09/25 21:41:30 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ntp.h"
@@ -63,8 +63,11 @@ netbsd32___ntp_gettime50(struct lwp *l,
 	struct ntptimeval ntv;
 	int error = 0;
 
+	if (vec_ntp_gettime == NULL)
+		return EINVAL;
+
 	if (SCARG_P32(uap, ntvp)) {
-		ntp_gettime(&ntv);
+		(*vec_ntp_gettime)(&ntv);
 
 		ntv32.time.tv_sec = ntv.time.tv_sec;
 		ntv32.time.tv_nsec = ntv.time.tv_nsec;
@@ -75,7 +78,7 @@ netbsd32___ntp_gettime50(struct lwp *l,
 		error = copyout(&ntv32, SCARG_P32(uap, ntvp), sizeof(ntv32));
 	}
 	if (!error) {
-		*retval = ntp_timestatus();
+		*retval = (*vec_ntp_timestatus)();
 	}
 
 	return (error);
@@ -91,6 +94,9 @@ netbsd32_ntp_adjtime(struct lwp *l, const struct netbsd32_ntp_adjtime_args *uap,
 	struct timex ntv;
 	int error = 0;
 	int modes;
+
+	if (vec_ntp_adjtime1 == NULL)
+		return EINVAL;
 
 	if ((error = copyin(SCARG_P32(uap, tp), &ntv32, sizeof(ntv32))))
 		return (error);
@@ -108,12 +114,12 @@ netbsd32_ntp_adjtime(struct lwp *l, const struct netbsd32_ntp_adjtime_args *uap,
 	    NULL)))
 		return (error);
 
-	ntp_adjtime1(&ntv);
+	(*vec_ntp_adjtime1(&ntv);
 
 	netbsd32_from_timex(&ntv, &ntv32);
 	error = copyout(&ntv32, SCARG_P32(uap, tp), sizeof(ntv32));
 	if (!error) {
-		*retval = ntp_timestatus();
+		*retval = (*vec_ntp_timestatus)();
 	}
 	return error;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_50.c,v 1.32.16.9 2018/09/23 09:16:25 pgoyette Exp $	*/
+/*	$NetBSD: netbsd32_compat_50.c,v 1.32.16.10 2018/09/25 21:41:30 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_50.c,v 1.32.16.9 2018/09/23 09:16:25 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_50.c,v 1.32.16.10 2018/09/25 21:41:30 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -68,6 +68,7 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_50.c,v 1.32.16.9 2018/09/23 09:16:25
 #include <sys/kauth.h>
 #include <sys/vfs_syscalls.h>
 #include <sys/rnd.h>
+#include <sys/compat_stub.h>
 
 #include <compat/netbsd32/netbsd32.h>
 #include <compat/netbsd32/netbsd32_syscall.h>
@@ -943,8 +944,11 @@ compat_50_netbsd32_ntp_gettime(struct lwp *l,
 	struct ntptimeval ntv;
 	int error = 0;
 
+	if (vec_ntp_gettime == NULL)
+		return EINVAL;
+
 	if (SCARG_P32(uap, ntvp)) {
-		ntp_gettime(&ntv);
+		(*vec_ntp_gettime)(&ntv);
 
 		ntv32.time.tv_sec = (int32_t)ntv.time.tv_sec;
 		ntv32.time.tv_nsec = ntv.time.tv_nsec;
@@ -955,7 +959,7 @@ compat_50_netbsd32_ntp_gettime(struct lwp *l,
 		error = copyout(&ntv32, SCARG_P32(uap, ntvp), sizeof(ntv32));
 	}
 	if (!error) {
-		*retval = ntp_timestatus();
+		*retval = (*vec_ntp_timestatus)();
 	}
 
 	return (error);

@@ -1,4 +1,4 @@
-/* $NetBSD: compat_stub.c,v 1.1.2.24 2018/09/23 22:00:58 pgoyette Exp $	*/
+/* $NetBSD: compat_stub.c,v 1.1.2.25 2018/09/25 21:41:30 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -52,9 +52,11 @@
 #ifdef NTP
 void (*vec_ntp_gettime)(struct ntptimeval *) = ntp_gettime;
 int (*vec_ntp_timestatus)(void) = ntp_timestatus;
+void (*vec_ntp_adjtime1)(struct timex *) = ntp_adjtime1;
 #else
 void (*vec_ntp_gettime)(struct ntptimeval *) = NULL;
 int (*vec_ntp_timestatus)(void) = NULL;
+void (*vec_ntp_adjtime1)(struct timex *) = NULL;
 #endif
 
 /*
