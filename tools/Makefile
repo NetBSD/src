@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.195 2018/08/11 19:46:03 christos Exp $
+#	$NetBSD: Makefile,v 1.196 2018/09/25 05:42:08 joerg Exp $
 
 .include <bsd.own.mk>
 .include <bsd.endian.mk>
@@ -100,8 +100,8 @@ SUBDIR+= cap_mkdb crunchgen ctags gencat hexdump \
 		makewhatis mtree nbperf .WAIT uudecode
 .endif
 
-SUBDIR+= cat rpcgen join lorder m4 mkdep tsort .WAIT yacc .WAIT awk .WAIT lex
-SUBDIR+= grep
+SUBDIR+= cat rpcgen join lorder m4 mkdep tsort xz-include .WAIT yacc .WAIT awk .WAIT lex
+SUBDIR+= grep xz-lib
 
 .if ${TOOLS_BUILDRUMP} == "no"
 SUBDIR += .WAIT texinfo \
@@ -119,7 +119,7 @@ SUBDIR += .WAIT texinfo \
 		.WAIT installboot \
 		pwd_mkdb strfile sunlabel vgrind zic
 .endif
-SUBDIR+= stat .WAIT config
+SUBDIR+= stat .WAIT config xz-bin
 
 .if ${MKLLVM} != "no"
 SUBDIR+= \
