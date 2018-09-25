@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_i2c.c,v 1.21 2018/09/03 16:29:23 riastradh Exp $ */
+/* $NetBSD: tegra_i2c.c,v 1.22 2018/09/25 22:23:22 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_i2c.c,v 1.21 2018/09/03 16:29:23 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_i2c.c,v 1.22 2018/09/25 22:23:22 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -275,6 +275,9 @@ tegra_i2c_exec(void *priv, i2c_op_t op, i2c_addr_t addr, const void *cmdbuf,
 
 	KASSERT(mutex_owned(&sc->sc_lock));
 
+	if (buflen == 0 && cmdlen == 0)
+		return EINVAL;
+
 	if ((flags & I2C_F_POLL) == 0) {
 		I2C_WRITE(sc, I2C_INTERRUPT_MASK_REG,
 		    I2C_INTERRUPT_MASK_NOACK | I2C_INTERRUPT_MASK_ARB_LOST |
@@ -305,10 +308,12 @@ tegra_i2c_exec(void *priv, i2c_op_t op, i2c_addr_t addr, const void *cmdbuf,
 		}
 	}
 
-	if (I2C_OP_READ_P(op)) {
-		error = tegra_i2c_read(sc, addr, buf, buflen, flags);
-	} else {
-		error = tegra_i2c_write(sc, addr, buf, buflen, flags, false);
+	if (buflen > 0) {
+		if (I2C_OP_READ_P(op)) {
+			error = tegra_i2c_read(sc, addr, buf, buflen, flags);
+		} else {
+			error = tegra_i2c_write(sc, addr, buf, buflen, flags, false);
+		}
 	}
 
 done:
@@ -348,8 +353,9 @@ tegra_i2c_wait(struct tegra_i2c_softc *sc, int flags)
 		}
 	}
 	if (retry == 0) {
-		stat = I2C_READ(sc, I2C_INTERRUPT_STATUS_REG);
+#ifdef TEGRA_I2C_DEBUG
 		device_printf(sc->sc_dev, "timed out, status = %#x\n", stat);
+#endif
 		return ETIMEDOUT;
 	}
 
