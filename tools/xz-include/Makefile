@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2018/09/25 05:42:08 joerg Exp $
+#	$NetBSD: Makefile,v 1.2 2018/09/25 11:41:35 joerg Exp $
 
 .include <bsd.hostinit.mk>
 
@@ -8,7 +8,7 @@
 #
 .include "Makefile.inc"
 
-CONFIGURE_ARGS+=	--enable-threads=no
+CONFIGURE_ARGS+=	--enable-threads=no --disable-nls
 
 config.status: ${XZSRCDIR}/configure
 	${HOST_SH} ${XZSRCDIR}/configure ${CONFIGURE_ARGS} \
