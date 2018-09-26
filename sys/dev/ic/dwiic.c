@@ -1,4 +1,4 @@
-/* $NetBSD: dwiic.c,v 1.2 2018/09/25 16:29:41 jakllsch Exp $ */
+/* $NetBSD: dwiic.c,v 1.3 2018/09/26 18:06:59 jakllsch Exp $ */
 
 /* $OpenBSD dwiic.c,v 1.24 2017/08/17 20:41:16 kettenis Exp $ */
 
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwiic.c,v 1.2 2018/09/25 16:29:41 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwiic.c,v 1.3 2018/09/26 18:06:59 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -228,7 +228,7 @@ dwiic_suspend(device_t self, const pmf_qual_t *qual)
 	dwiic_read(sc, DW_IC_CLR_INTR);
 	if (sc->sc_power != NULL) {
 		if (!sc->sc_power(sc, 0)) {
-			aprint_error_dev(sc->sc_dev, "failed to power off\n");
+			device_printf(sc->sc_dev, "failed to power off\n");
 		}
 	}
 	return true;
@@ -240,7 +240,7 @@ dwiic_resume(device_t self, const pmf_qual_t *qual)
 	struct dwiic_softc *sc = device_private(self);
 	if (sc->sc_power != NULL) {
 		if (!sc->sc_power(sc, 1)) {
-			aprint_error_dev(sc->sc_dev, "failed to power up\n");
+			device_printf(sc->sc_dev, "failed to power up\n");
 			return false;
 		}
 	}
@@ -346,7 +346,7 @@ dwiic_enable(struct dwiic_softc *sc, bool enable)
 		DELAY(25);
 	}
 
-	aprint_error_dev(sc->sc_dev, "failed to %sable\n",
+	device_printf(sc->sc_dev, "failed to %sable\n",
 	    (enable ? "en" : "dis"));
 }
 
@@ -412,7 +412,7 @@ dwiic_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr, const void *cmdbuf,
 
 		if (cv_timedwait(&sc->sc_int_writewait,
 		    &sc->sc_int_lock, hz / 2) != 0)
-			aprint_error_dev(sc->sc_dev,
+			device_printf(sc->sc_dev,
 			    "timed out waiting for tx_empty intr\n");
 		dwiic_write(sc, DW_IC_INTR_MASK, 0);
 		dwiic_read(sc, DW_IC_CLR_INTR);
@@ -432,7 +432,7 @@ dwiic_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr, const void *cmdbuf,
 		tx_limit = sc->tx_fifo_depth - dwiic_read(sc, DW_IC_TXFLR);
 		if (cmdlen > tx_limit) {
 			/* TODO */
-			aprint_error_dev(sc->sc_dev, "can't write %zu (> %d)\n",
+			device_printf(sc->sc_dev, "can't write %zu (> %d)\n",
 			    cmdlen, tx_limit);
 			sc->sc_i2c_xfer.error = 1;
 			return (1);
@@ -504,7 +504,7 @@ dwiic_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr, const void *cmdbuf,
 
 				if (cv_timedwait(&sc->sc_int_readwait,
 				    &sc->sc_int_lock, hz / 2) != 0)
-					aprint_error_dev(sc->sc_dev,
+					device_printf(sc->sc_dev,
 					    "timed out waiting for "
 					    "rx_full intr\n");
 
@@ -515,7 +515,7 @@ dwiic_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr, const void *cmdbuf,
 			}
 
 			if (rx_avail == 0) {
-				aprint_error_dev(sc->sc_dev,
+				device_printf(sc->sc_dev,
 				    "timed out reading remaining %d\n",
 				    (int)(len - 1 - readpos));
 				sc->sc_i2c_xfer.error = 1;
