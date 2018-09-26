@@ -1,6 +1,6 @@
-/* $NetBSD: dwiic.c,v 1.3 2018/09/26 18:06:59 jakllsch Exp $ */
+/* $NetBSD: dwiic.c,v 1.4 2018/09/26 18:32:51 jakllsch Exp $ */
 
-/* $OpenBSD dwiic.c,v 1.24 2017/08/17 20:41:16 kettenis Exp $ */
+/* $OpenBSD: dwiic.c,v 1.4 2018/05/23 22:08:00 kettenis Exp $ */
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwiic.c,v 1.3 2018/09/26 18:06:59 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwiic.c,v 1.4 2018/09/26 18:32:51 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -188,6 +188,7 @@ dwiic_attach(struct dwiic_softc *sc)
 	mutex_init(&sc->sc_int_lock, MUTEX_DEFAULT, IPL_VM);
 	cv_init(&sc->sc_int_readwait, "dwiicr");
 	cv_init(&sc->sc_int_writewait, "dwiicw");
+	cv_init(&sc->sc_int_stopwait, "dwiics");
 
 	/* setup and attach iic bus */
 	sc->sc_i2c_tag.ic_cookie = sc;
@@ -485,7 +486,7 @@ dwiic_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr, const void *cmdbuf,
 		 * As TXFLR fills up, we need to clear it out by reading all
 		 * available data.
 		 */
-		while (tx_limit == 0 || x == len) {
+		while (I2C_OP_READ_P(op) && (tx_limit == 0 || x == len)) {
 			DPRINTF(("%s: %s: tx_limit %d, sent %d read reqs\n",
 			    device_xname(sc->sc_dev), __func__, tx_limit, x));
 
@@ -542,6 +543,33 @@ dwiic_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr, const void *cmdbuf,
 			    device_xname(sc->sc_dev), (int)(len - readpos)));
 			tx_limit = sc->tx_fifo_depth -
 			    dwiic_read(sc, DW_IC_TXFLR);
+		}
+	}
+
+	if (I2C_OP_STOP_P(op) && I2C_OP_WRITE_P(op)) {
+		if (flags & I2C_F_POLL) {
+			/* wait for bus to be idle */
+			for (retries = 100; retries > 0; retries--) {
+				st = dwiic_read(sc, DW_IC_STATUS);
+				if (!(st & DW_IC_STATUS_ACTIVITY))
+					break;
+				DELAY(1000);
+			}
+			if (st & DW_IC_STATUS_ACTIVITY)
+				device_printf(sc->sc_dev, "timed out waiting "
+				    "for bus idle\n");
+		} else {
+			mutex_enter(&sc->sc_int_lock);
+			dwiic_read(sc, DW_IC_CLR_INTR);
+			dwiic_write(sc, DW_IC_INTR_MASK,
+			    DW_IC_INTR_STOP_DET);
+			if (cv_timedwait(&sc->sc_int_stopwait,
+			    &sc->sc_int_lock, hz / 2) != 0)
+				device_printf(sc->sc_dev, "timed out waiting "
+				    "for stop intr\n");
+			dwiic_write(sc, DW_IC_INTR_MASK, 0);
+			dwiic_read(sc, DW_IC_CLR_INTR);
+			mutex_exit(&sc->sc_int_lock);
 		}
 	}
 
@@ -615,6 +643,12 @@ dwiic_intr(void *arg)
 			DPRINTF(("%s: %s: waking up writer\n",
 			    device_xname(sc->sc_dev), __func__));
 			cv_signal(&sc->sc_int_writewait);
+		}
+		if (stat & DW_IC_INTR_STOP_DET) {
+			dwiic_write(sc, DW_IC_INTR_MASK, 0);
+			DPRINTF(("%s: %s: waking up stopper\n",
+			    device_xname(sc->sc_dev), __func__));
+			cv_signal(&sc->sc_int_stopwait);
 		}
 		mutex_exit(&sc->sc_int_lock);
 	}
