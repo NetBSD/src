@@ -1,4 +1,4 @@
-/* $NetBSD: dwiic_var.h,v 1.1 2017/12/10 17:12:54 bouyer Exp $ */
+/* $NetBSD: dwiic_var.h,v 1.2 2018/09/26 18:32:51 jakllsch Exp $ */
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -54,6 +54,7 @@ struct dwiic_softc {
 	kmutex_t		sc_int_lock;
 	kcondvar_t		sc_int_readwait;
 	kcondvar_t		sc_int_writewait;
+	kcondvar_t		sc_int_stopwait;
 
 	uint32_t		master_cfg;
 	uint16_t		ss_hcnt, ss_lcnt, fs_hcnt, fs_lcnt;
