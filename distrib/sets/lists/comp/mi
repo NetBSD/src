@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2231 2018/09/23 13:36:04 christos Exp $
+#	$NetBSD: mi,v 1.2232 2018/09/26 12:59:37 rin Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -2469,7 +2469,7 @@
 ./usr/include/netipsec/ipsec_var.h		comp-c-include
 ./usr/include/netipsec/ipsecif.h		comp-c-include
 ./usr/include/netipsec/keydb.h			comp-obsolete		obsolete
-./usr/include/netipsec/keysock.h		comp-obsolete		obsolete
+./usr/include/netipsec/keysock.h		comp-c-include
 ./usr/include/netisdn/i4b_cause.h		comp-obsolete		obsolete
 ./usr/include/netisdn/i4b_debug.h		comp-obsolete		obsolete
 ./usr/include/netisdn/i4b_ioctl.h		comp-obsolete		obsolete
