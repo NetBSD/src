@@ -1,4 +1,4 @@
-/* $NetBSD: spdmem_i2c.c,v 1.15 2018/06/16 21:22:13 thorpej Exp $ */
+/* $NetBSD: spdmem_i2c.c,v 1.16 2018/09/26 20:15:08 jakllsch Exp $ */
 
 /*
  * Copyright (c) 2007 Nicolas Joly
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spdmem_i2c.c,v 1.15 2018/06/16 21:22:13 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spdmem_i2c.c,v 1.16 2018/09/26 20:15:08 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -172,11 +172,20 @@ error:
 	return rv;
 }
 
+static const struct device_compatible_entry compat_data[] = {
+	{ "atmel,spd",	0 },
+	{ NULL,		0 }
+};
+
 static int
 spdmem_i2c_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct i2c_attach_args *ia = aux;
 	struct spdmem_i2c_softc sc;
+	int match_result;
+
+	if (iic_use_direct_match(ia, match, compat_data, &match_result))
+		return match_result;
 
 	/*
 	 * XXXJRT
