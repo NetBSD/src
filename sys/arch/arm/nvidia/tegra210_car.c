@@ -1,4 +1,4 @@
-/* $NetBSD: tegra210_car.c,v 1.19 2018/09/09 07:21:17 aymeric Exp $ */
+/* $NetBSD: tegra210_car.c,v 1.20 2018/09/26 22:32:46 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra210_car.c,v 1.19 2018/09/09 07:21:17 aymeric Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra210_car.c,v 1.20 2018/09/26 22:32:46 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -764,10 +764,13 @@ tegra210_car_attach(device_t parent, device_t self, void *aux)
 	aprint_naive("\n");
 	aprint_normal(": CAR\n");
 
+	sc->sc_clkdom.name = device_xname(self);
 	sc->sc_clkdom.funcs = &tegra210_car_clock_funcs;
 	sc->sc_clkdom.priv = sc;
-	for (n = 0; n < __arraycount(tegra210_car_clocks); n++)
+	for (n = 0; n < __arraycount(tegra210_car_clocks); n++) {
 		tegra210_car_clocks[n].base.domain = &sc->sc_clkdom;
+		clk_attach(&tegra210_car_clocks[n].base);
+	}
 
 	fdtbus_register_clock_controller(self, phandle,
 	    &tegra210_car_fdtclock_funcs);
