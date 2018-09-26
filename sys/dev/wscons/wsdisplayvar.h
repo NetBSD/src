@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplayvar.h,v 1.52 2017/05/19 19:22:33 macallan Exp $ */
+/* $NetBSD: wsdisplayvar.h,v 1.53 2018/09/26 09:04:12 bouyer Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -207,6 +207,8 @@ int wsdisplay_stat_ioctl(struct wsdisplay_softc *, u_long, void *,
 
 int wsdisplay_cfg_ioctl(struct wsdisplay_softc *, u_long, void *,
 			int, struct lwp *);
+
+bool wsdisplay_isconsole(struct wsdisplay_softc *);
 
 struct wsdisplayio_edid_info;
 int wsdisplayio_get_edid(device_t, struct wsdisplayio_edid_info *);

@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay.c,v 1.146 2018/09/18 06:19:28 mrg Exp $ */
+/* $NetBSD: wsdisplay.c,v 1.147 2018/09/26 09:04:12 bouyer Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.146 2018/09/18 06:19:28 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.147 2018/09/26 09:04:12 bouyer Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_wsdisplay_compat.h"
@@ -2125,6 +2125,13 @@ wsdisplay_reset(device_t dv, enum wsdisplay_resetops op)
 		wsdisplay_closescreen(sc, scr);
 		break;
 	}
+}
+
+
+bool
+wsdisplay_isconsole(struct wsdisplay_softc *sc)
+{
+	return sc->sc_isconsole;
 }
 
 /*
