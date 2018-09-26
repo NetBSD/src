@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC64,v 1.37 2018/09/15 16:22:20 jmcneill Exp $
+#	$NetBSD: GENERIC64,v 1.38 2018/09/26 20:25:51 jakllsch Exp $
 #
 #	GENERIC ARM (aarch64) kernel
 #
@@ -238,6 +238,7 @@ plcom*		at fdt?	pass 4		# ARM PL011 UART
 
 # I2C controllers
 bsciic*		at fdt?			# Broadcom BCM283x Serial Control
+dwiic*		at fdt?			# Designware I2C
 rkiic*		at fdt?			# Rockchip I2C
 sunxirsb*	at fdt?			# Allwinner RSB
 sunxitwi*	at fdt?			# Allwinner TWI
@@ -247,6 +248,7 @@ iic*		at i2cbus?
 # I2C devices
 titemp*		at iic?
 seeprom*	at iic?
+spdmem*		at iic?			# memory module SPD EEPROM decoder
 as3722pmic*	at iic?
 as3722reg*	at as3722pmic?
 axppmic*	at iic?			# X-Powers AXP Power Management IC
