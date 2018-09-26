@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_i2c.c,v 1.4 2018/07/01 18:16:40 jmcneill Exp $ */
+/* $NetBSD: fdt_i2c.c,v 1.5 2018/09/26 20:03:36 jakllsch Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_i2c.c,v 1.4 2018/07/01 18:16:40 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_i2c.c,v 1.5 2018/09/26 20:03:36 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -93,7 +93,7 @@ device_t
 fdtbus_attach_i2cbus(device_t dev, int phandle, i2c_tag_t tag, cfprint_t print)
 {
 	struct i2cbus_attach_args iba;
-	prop_dictionary_t devs;
+	prop_dictionary_t devs, props;
 	u_int address_cells;
 
 	devs = prop_dictionary_create();
@@ -108,6 +108,9 @@ fdtbus_attach_i2cbus(device_t dev, int phandle, i2c_tag_t tag, cfprint_t print)
 	if (iba.iba_child_devices)
 		prop_object_retain(iba.iba_child_devices);
 	prop_object_release(devs);
+
+	props = device_properties(dev);
+	prop_dictionary_set_bool(props, "i2c-indirect-config", false);
 
 	return config_found_ia(dev, "i2cbus", &iba, print);
 }
