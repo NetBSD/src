@@ -1,4 +1,4 @@
-# $NetBSD: files.fdt,v 1.37 2018/09/03 23:15:12 jmcneill Exp $
+# $NetBSD: files.fdt,v 1.38 2018/09/26 19:06:33 jakllsch Exp $
 
 include	"external/bsd/libfdt/conf/files.libfdt"
 
@@ -130,3 +130,7 @@ file	dev/fdt/pl061gpio_fdt.c			pl061gpio_fdt
 # AHCI SATA controller
 attach	ahcisata at fdt with ahcisata_fdt
 file	dev/fdt/ahcisata_fdt.c			ahcisata_fdt
+
+# Designware I2C
+attach 	dwiic at fdt with dwiic_fdt
+file	dev/fdt/dwiic_fdt.c			dwiic_fdt
