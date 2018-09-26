@@ -1,4 +1,4 @@
-/*   $NetBSD: get_wch.c,v 1.15 2018/09/18 22:46:18 rin Exp $ */
+/*   $NetBSD: get_wch.c,v 1.16 2018/09/26 14:42:22 kamil Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation Inc.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: get_wch.c,v 1.15 2018/09/18 22:46:18 rin Exp $");
+__RCSID("$NetBSD: get_wch.c,v 1.16 2018/09/26 14:42:22 kamil Exp $");
 #endif						  /* not lint */
 
 #include <errno.h>
@@ -103,7 +103,11 @@ inkey(wchar_t *wc, int to, int delay)
 			c = fgetc(infd);
 			if (c == WEOF) {
 				clearerr(infd);
-				return ERR;
+				if (errno == EINTR && _cursesi_screen->resized) {
+					_cursesi_screen->resized = 0;
+					return KEY_RESIZE;
+				} else
+					return ERR;
 			}
 
 			if (delay && (__notimeout() == ERR))
@@ -151,7 +155,11 @@ inkey(wchar_t *wc, int to, int delay)
 			c = fgetc(infd);
 			if (ferror(infd)) {
 				clearerr(infd);
-				return ERR;
+				if (errno == EINTR && _cursesi_screen->resized) {
+					_cursesi_screen->resized = 0;
+					return KEY_RESIZE;
+				} else
+					return ERR;
 			}
 
 			if ((to || delay) && (__notimeout() == ERR))
