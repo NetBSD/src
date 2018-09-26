@@ -1,4 +1,4 @@
-/* $NetBSD: dwiic.c,v 1.4 2018/09/26 18:32:51 jakllsch Exp $ */
+/* $NetBSD: dwiic.c,v 1.5 2018/09/26 19:06:33 jakllsch Exp $ */
 
 /* $OpenBSD: dwiic.c,v 1.4 2018/05/23 22:08:00 kettenis Exp $ */
 
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwiic.c,v 1.4 2018/09/26 18:32:51 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwiic.c,v 1.5 2018/09/26 19:06:33 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -198,7 +198,8 @@ dwiic_attach(struct dwiic_softc *sc)
 
 	sc->sc_iba.iba_tag = &sc->sc_i2c_tag;
 
-	config_found_ia(sc->sc_dev, "i2cbus", &sc->sc_iba, iicbus_print);
+	/* config_found_ia for "i2cbus" is done in the bus-attachment glue */
+
 	return 1;
 }
 
