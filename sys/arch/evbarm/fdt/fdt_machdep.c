@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_machdep.c,v 1.38 2018/09/22 11:58:19 jmcneill Exp $ */
+/* $NetBSD: fdt_machdep.c,v 1.39 2018/09/26 09:06:48 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.38 2018/09/22 11:58:19 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.39 2018/09/26 09:06:48 bouyer Exp $");
 
 #include "opt_machdep.h"
 #include "opt_bootconfig.h"
@@ -38,6 +38,7 @@ __KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.38 2018/09/22 11:58:19 jmcneill Ex
 #include "opt_cpuoptions.h"
 
 #include "ukbd.h"
+#include "wsdisplay.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,6 +85,9 @@ __KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.38 2018/09/22 11:58:19 jmcneill Ex
 #if NUKBD > 0
 #include <dev/usb/ukbdvar.h>
 #endif
+#if NWSDISPLAY > 0
+#include <dev/wscons/wsdisplayvar.h>
+#endif
 
 #ifdef MEMORY_DISK_DYNAMIC
 #include <dev/md.h>
@@ -116,6 +120,7 @@ extern char KERNEL_BASE_phys[];
 
 static void fdt_update_stdout_path(void);
 static void fdt_device_register(device_t, void *);
+static void fdt_device_register_post_config(device_t, void *);
 static void fdt_cpu_rootconf(void);
 static void fdt_reset(void);
 static void fdt_powerdown(void);
@@ -428,6 +433,7 @@ initarm(void *arg)
 	cpu_reset_address = fdt_reset;
 	cpu_powerdown_address = fdt_powerdown;
 	evbarm_device_register = fdt_device_register;
+	evbarm_device_register_post_config = fdt_device_register_post_config;
 	evbarm_cpu_rootconf = fdt_cpu_rootconf;
 
 	/* Talk to the user */
@@ -541,10 +547,6 @@ consinit(void)
 
 	cons->consinit(&faa, uart_freq);
 
-#if NUKBD > 0
-	ukbd_cnattach();	/* allow USB keyboard to become console */
-#endif
-
 	initialized = true;
 }
 
@@ -623,6 +625,18 @@ fdt_device_register(device_t self, void *aux)
 
 	if (plat && plat->ap_device_register)
 		plat->ap_device_register(self, aux);
+}
+
+static void
+fdt_device_register_post_config(device_t self, void *aux)
+{
+#if NUKBD > 0 && NWSDISPLAY > 0
+	if (device_is_a(self, "wsdisplay")) {
+		struct wsdisplay_softc *sc = device_private(self);
+		if (wsdisplay_isconsole(sc))
+			ukbd_cnattach();
+	}
+#endif
 }
 
 static void
