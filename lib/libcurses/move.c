@@ -1,4 +1,4 @@
-/*	$NetBSD: move.c,v 1.18 2017/01/06 13:53:18 roy Exp $	*/
+/*	$NetBSD: move.c,v 1.19 2018/09/26 18:51:45 kamil Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)move.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: move.c,v 1.18 2017/01/06 13:53:18 roy Exp $");
+__RCSID("$NetBSD: move.c,v 1.19 2018/09/26 18:51:45 kamil Exp $");
 #endif
 #endif				/* not lint */
 
@@ -72,8 +72,10 @@ wmove(WINDOW *win, int y, int x)
 		return ERR;
 	win->curx = x;
 	win->alines[win->cury]->flags &= ~__ISPASTEOL;
+	win->alines[win->cury]->flags |= __ISDIRTY;
 	win->cury = y;
 	win->alines[y]->flags &= ~__ISPASTEOL;
+	win->alines[y]->flags |= __ISDIRTY;
 	return OK;
 }
 
