@@ -1,4 +1,4 @@
-#	$NetBSD: files.arm,v 1.138.2.2 2018/09/06 06:55:26 pgoyette Exp $
+#	$NetBSD: files.arm,v 1.138.2.3 2018/09/27 01:35:41 pgoyette Exp $
 
 # temporary define to allow easy moving to ../arch/arm/arm32
 defflag				ARM32
@@ -227,6 +227,12 @@ file	arch/arm/arm32/bcopy_page.S		arm32
 #
 include "compat/netbsd32/files.netbsd32"
 file	arch/arm/arm32/netbsd32_machdep.c	arm32 & compat_netbsd32
+file   arch/arm/arm32/netbsd32_machdep.c        arm32 & compat_netbsd32
+file   arch/arm/arm32/netbsd32_machdep_16.c     arm32 & compat_netbsd32 &
+                                                                compat_16
+file   arch/arm/arm32/netbsd32_machdep_13.c     arm32 & compat_netbsd32 &
+                                                                compat_13
+
 
 # Linux binary compatibility (COMPAT_LINUX)
 include "compat/ossaudio/files.ossaudio"

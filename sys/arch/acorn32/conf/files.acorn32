@@ -1,4 +1,4 @@
-#	$NetBSD: files.acorn32,v 1.29.64.1 2018/09/24 10:21:00 pgoyette Exp $
+#	$NetBSD: files.acorn32,v 1.29.64.2 2018/09/27 01:35:41 pgoyette Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -190,8 +190,8 @@ include "dev/pckbport/files.pckbport"
 #
 # Files for compat_netbsd32
 #
-file	arch/acorn32/acorn32/netbsd32_machdep.c		compat_netbsd32
-file	arch/acorn32/acorn32/netbsd32_machdep_16.c	compat_netbsd32 &
+#file	arch/acorn32/acorn32/netbsd32_machdep.c		compat_netbsd32
+#file	arch/acorn32/acorn32/netbsd32_machdep_16.c	compat_netbsd32 &
 								compat_16
 
 include "arch/acorn32/conf/majors.acorn32"
