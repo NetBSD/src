@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ww_mutex.c,v 1.2.10.1 2018/09/01 06:34:00 martin Exp $	*/
+/*	$NetBSD: linux_ww_mutex.c,v 1.2.10.2 2018/09/27 14:38:56 martin Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_ww_mutex.c,v 1.2.10.1 2018/09/01 06:34:00 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_ww_mutex.c,v 1.2.10.2 2018/09/27 14:38:56 martin Exp $");
 
 #include <sys/types.h>
 #include <sys/atomic.h>
@@ -122,7 +122,7 @@ ww_acquire_fini(struct ww_acquire_ctx *ctx)
 
 #ifdef LOCKDEBUG
 static void
-ww_dump(const volatile void *cookie)
+ww_dump(volatile void *cookie)
 {
 	const volatile struct ww_mutex *mutex = cookie;
 
