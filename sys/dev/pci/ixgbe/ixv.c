@@ -1,4 +1,4 @@
-/*$NetBSD: ixv.c,v 1.106 2018/09/03 16:29:33 riastradh Exp $*/
+/*$NetBSD: ixv.c,v 1.107 2018/09/27 05:40:27 msaitoh Exp $*/
 
 /******************************************************************************
 
@@ -1549,9 +1549,9 @@ ixv_setup_interface(device_t dev, struct adapter *adapter)
 	ec->ec_capenable = ec->ec_capabilities;
 
 	/* Don't enable LRO by default */
-	ifp->if_capabilities |= IFCAP_LRO;
 #if 0
-	ifp->if_capenable = ifp->if_capabilities;
+	/* NetBSD doesn't support LRO yet */
+	ifp->if_capabilities |= IFCAP_LRO;
 #endif
 
 	/*
