@@ -1,4 +1,4 @@
-/*      $NetBSD: clockctl.c,v 1.35.14.6 2018/09/24 23:18:15 pgoyette Exp $ */
+/*      $NetBSD: clockctl.c,v 1.35.14.7 2018/09/27 03:07:21 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clockctl.c,v 1.35.14.6 2018/09/24 23:18:15 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clockctl.c,v 1.35.14.7 2018/09/27 03:07:21 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ntp.h"
@@ -263,11 +263,11 @@ clockctlioctl(
 		if (error)
 			return (error);
 
-		ntp_adjtime1(&ntv);
+		(*vec_ntp_adjtime1)(&ntv);
 
 		error = copyout(&ntv, args->tp, sizeof(ntv));
 		if (error == 0)
-			args->retval = ntp_timestatus();
+			args->retval = (*vec_ntp_timestatus)();
 		break;
 	}
 	default:
