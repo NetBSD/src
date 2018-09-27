@@ -1,4 +1,4 @@
-/*	$NetBSD: curses_private.h,v 1.62 2017/01/31 09:17:53 roy Exp $	*/
+/*	$NetBSD: curses_private.h,v 1.62.4.1 2018/09/27 15:12:15 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998-2000 Brett Lymn
@@ -365,6 +365,7 @@ void	__cursesi_win_free_nsp(WINDOW *);
 void	__cursesi_putnsp(nschar_t *, const int, const int);
 void	__cursesi_chtype_to_cchar(chtype, cchar_t *);
 #endif /* HAVE_WCHAR */
+int	 __fgetc_resize(FILE *);
 int	 __unget(wint_t);
 int	 __mvcur(int, int, int, int, int);
 WINDOW  *__newwin(SCREEN *, int, int, int, int, int);
