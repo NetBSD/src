@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep_13.c,v 1.1.2.1 2018/09/14 05:37:08 pgoyette Exp $	*/
+/*	$NetBSD: netbsd32_machdep_13.c,v 1.1.2.2 2018/09/27 21:35:54 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep_13.c,v 1.1.2.1 2018/09/14 05:37:08 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep_13.c,v 1.1.2.2 2018/09/27 21:35:54 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -143,4 +143,18 @@ compat_13_netbsd32_sigreturn(struct lwp *l, const struct compat_13_netbsd32_sigr
 	mutex_exit(p->p_lock);
 
 	return (EJUSTRETURN);
+}
+
+void
+netbsd32_machdep_md_13_init(void)
+{
+ 
+	/* Nothing to do */
+}
+ 
+void
+netbsd32_machdep_md_13_fini(void)
+{
+
+	/* Nothing to do */
 }
