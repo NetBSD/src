@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.20.12.13 2018/09/24 10:21:00 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.20.12.14 2018/09/27 02:44:24 pgoyette Exp $
 
 .include "../Makefile.inc"
 .include "../Makefile.assym"
@@ -45,14 +45,18 @@ SRCS+=	netbsd32_exec_aout.c
 .PATH:	${S}/arch/amd64/amd64
 CPPFLAGS+=	-DMTRR
 SRCS+=	netbsd32_syscall.c
+SRCS+=	netbsd32_machdep.c
 .endif
 
 .if ${MACHINE_ARCH} == "sparc64"
 .PATH:	${S}/arch/sparc64/sparc64
 SRCS+=	netbsd32_sigcode.S
+SRCS+=	netbsd32_machdep.c
 .endif
 
-.PATH:	${S}/arch/${MACHINE}/${MACHINE}
+.if ${MACHINE_ARCH} == "arm"
+.PATH:	${S}/arch/arm/arm32
 SRCS+=	netbsd32_machdep.c
+.endif
 
 .include <bsd.kmodule.mk>

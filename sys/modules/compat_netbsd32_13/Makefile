@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.2.4 2018/09/14 05:37:08 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.1.2.5 2018/09/27 02:44:24 pgoyette Exp $
 
 .include "../Makefile.inc"
 
@@ -14,6 +14,11 @@ SRCS+=	netbsd32_compat_13.c
 
 .if ${MACHINE_ARCH} == "x86_64"
 .PATH:  ${S}/arch/amd64/amd64
+SRCS+=  netbsd32_machdep_13.c
+.endif
+
+.if ${MACHINE_ARCH} == "arm"
+.PATH:	${S}/arch/arm/arm32
 SRCS+=  netbsd32_machdep_13.c
 .endif
 
