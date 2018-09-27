@@ -1,5 +1,5 @@
-# $NetBSD: ad.mips,v 1.10.12.8 2018/09/27 04:25:16 pgoyette Exp $
-./@MODULEDIR@/compat_netbsd32			base-kernel-modules	kmod
+# $NetBSD: ad.mips,v 1.10.12.9 2018/09/27 04:31:46 pgoyette Exp $
+./@MODULEDIR@/compat_netbsd32			base-kernel-modules	kmod,arch64,nocompatmodules
 ./@MODULEDIR@/compat_netbsd32/compat_netbsd32.kmod base-kernel-modules	kmod,arch64,nocompatmodules
 ./@MODULEDIR@/compat_netbsd32_09		base-kernel-modules	kmod,arch64,nocompatmodules
 ./@MODULEDIR@/compat_netbsd32_09/compat_netbsd32_09.kmod base-kernel-modules	kmod,arch64,nocompatmodules
