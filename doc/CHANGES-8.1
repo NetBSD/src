@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.1,v 1.1.2.26 2018/09/27 15:15:58 martin Exp $
+# $NetBSD: CHANGES-8.1,v 1.1.2.27 2018/09/27 15:54:21 martin Exp $
 
 A complete list of changes from the NetBSD 8.0 release to the NetBSD 8.1
 release:
@@ -1163,6 +1163,7 @@ lib/libcurses/move.c				1.19
 
 sys/netinet/ip_reass.c				1.17 (patch)
 sys/netinet6/frag6.c				1.74 (patch)
+sys/netinet6/ip6_var.h				(apply patch)
 
 	When reassembling IPv4/IPv6 packets, ensure each fragment has been
 	subject to the same IPsec processing. That is to say, that all
