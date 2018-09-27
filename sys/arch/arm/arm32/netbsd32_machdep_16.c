@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: netbsd32_machdep_16.c,v 1.1.2.2 2018/09/27 02:41:20 pgoyette Exp $");
+__KERNEL_RCSID(1, "$NetBSD: netbsd32_machdep_16.c,v 1.1.2.3 2018/09/27 03:53:30 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -42,86 +42,18 @@ __KERNEL_RCSID(1, "$NetBSD: netbsd32_machdep_16.c,v 1.1.2.2 2018/09/27 02:41:20 
 #include <sys/exec.h>
 #include <sys/lwp.h>
 #include <sys/signalvar.h>
+#include <sys/syscallvar.h>
 #include <sys/syscallargs.h>
 
 #include <uvm/uvm_extern.h>
 
 #include <compat/netbsd32/netbsd32.h>
 #include <compat/netbsd32/netbsd32_exec.h>
+#include <compat/netbsd32/netbsd32_syscall.h>
 #include <compat/netbsd32/netbsd32_syscallargs.h>
 
-const char machine32[] = MACHINE;
-const char machine_arch32[] = MACHINE_ARCH;
-
-int
-cpu_coredump32(struct lwp *l, struct coredump_iostate *iocookie,
-    struct core32 *chdr)
-{
-	return cpu_coredump(l, iocookie, (struct core *)chdr);
-}
-
-void
-netbsd32_sendsig (const ksiginfo_t *ksi, const sigset_t *ss)
-{
-	sendsig(ksi, ss);
-}
-
-void
-startlwp32(void *arg)
-{
-	startlwp(arg);
-}
-
-int
-cpu_mcontext32_validate(struct lwp *l, const mcontext32_t *mcp)
-{
-	return cpu_mcontext_validate(l, mcp);
-}
-void
-cpu_getmcontext32(struct lwp *l, mcontext32_t *mcp, unsigned int *flagsp)
-{
-	cpu_getmcontext(l, mcp, flagsp);
-}
-
-int
-cpu_setmcontext32(struct lwp *l, const mcontext32_t *mcp, unsigned int flags)
-{
-	return cpu_setmcontext(l, mcp, flags);
-}
-
-int
-netbsd32_sysarch(struct lwp *l, const struct netbsd32_sysarch_args *uap,
-	register_t *retval)
-{
-	return sys_sysarch(l, (const struct sys_sysarch_args *)uap, retval);
-}
-
-vaddr_t
-netbsd32_vm_default_addr(struct proc *p, vaddr_t base, vsize_t sz,
-    int topdown)
-{
-	if (topdown)
-		return VM_DEFAULT_ADDRESS_TOPDOWN(base, sz);
-	else    
-		return VM_DEFAULT_ADDRESS_BOTTOMUP(base, sz);
-}
-
-
-#ifdef COMPAT_13
-int
-compat_13_netbsd32_sigreturn(struct lwp *l,
-	const struct compat_13_netbsd32_sigreturn_args *uap,
-	register_t *retval)
-{
-	struct compat_13_sys_sigreturn_args ua;
-
-	NETBSD32TOP_UAP(sigcntxp, struct sigcontext13 *);
-
-	return compat_13_sys_sigreturn(l, &ua, retval);
-}
-#endif
-
 #ifdef COMPAT_16
+
 int
 compat_16_netbsd32___sigreturn14(struct lwp *l,
 	const struct compat_16_netbsd32___sigreturn14_args *uap,
@@ -132,5 +64,27 @@ compat_16_netbsd32___sigreturn14(struct lwp *l,
 	NETBSD32TOP_UAP(sigcntxp, struct sigcontext *);
 
 	return compat_16_sys___sigreturn14(l, &ua, retval);
+}
+
+static struct syscall_package compat_arm32_netbsd32_16_syscalls[] = {
+        { NETBSD32_SYS_compat_16_netbsd32___sigreturn14, 0,
+            (sy_call_t *)compat_16_netbsd32___sigreturn14 },
+	{ 0, 0, NULL }
+};
+
+void
+netbsd32_machdep_md_16_init(void)
+{
+ 
+	(void)syscall_establish(&emul_netbsd32,
+	    compat_arm32_netbsd32_16_syscalls);
+}
+   
+void
+netbsd32_machdep_md_16_fini(void)
+{
+
+	(void)syscall_disestablish(&emul_netbsd32,
+	    compat_arm32_netbsd32_16_syscalls);
 }
 #endif

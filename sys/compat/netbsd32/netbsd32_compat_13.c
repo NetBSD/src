@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_13.c,v 1.26.28.6 2018/09/11 21:18:32 pgoyette Exp $	*/
+/*	$NetBSD: netbsd32_compat_13.c,v 1.26.28.7 2018/09/27 03:53:30 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_13.c,v 1.26.28.6 2018/09/11 21:18:32 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_13.c,v 1.26.28.7 2018/09/27 03:53:30 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -112,10 +112,12 @@ compat_netbsd32_13_modcmd(modcmd_t cmd, void *arg)
 
 	switch (cmd) {
 	case MODULE_CMD_INIT:
+		netbsd32_machdep_md_13_init();
 		return syscall_establish(&emul_netbsd32,
 		    compat_netbsd32_13_syscalls);
 
 	case MODULE_CMD_FINI:
+		netbsd32_machdep_md_13_fini();
 		return syscall_disestablish(&emul_netbsd32,
 		    compat_netbsd32_13_syscalls);
 
