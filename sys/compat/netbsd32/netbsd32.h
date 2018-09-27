@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32.h,v 1.116.2.14 2018/09/24 23:06:02 pgoyette Exp $	*/
+/*	$NetBSD: netbsd32.h,v 1.116.2.15 2018/09/27 03:53:30 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2008, 2015 Matthew R. Green
@@ -1194,6 +1194,8 @@ extern char netbsd32_sigcode[], netbsd32_esigcode[];
  */
 void netbsd32_machdep_md_init(void);
 void netbsd32_machdep_md_fini(void);
+void netbsd32_machdep_md_13_init(void);
+void netbsd32_machdep_md_13_fini(void);
 void netbsd32_machdep_md_16_init(void);
 void netbsd32_machdep_md_16_fini(void);
 
