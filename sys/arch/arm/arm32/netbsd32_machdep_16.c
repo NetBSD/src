@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: netbsd32_machdep.c,v 1.7.16.1 2018/09/27 01:35:41 pgoyette Exp $");
+__KERNEL_RCSID(1, "$NetBSD: netbsd32_machdep_16.c,v 1.1.2.1 2018/09/27 01:35:41 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -106,17 +106,31 @@ netbsd32_vm_default_addr(struct proc *p, vaddr_t base, vsize_t sz,
 		return VM_DEFAULT_ADDRESS_BOTTOMUP(base, sz);
 }
 
-void  
-netbsd32_machdep_md_init(void)
-{ 
- 
-	/* nothing to do */
-}
- 
-void
-netbsd32_machdep_md_fini(void)
-{
- 
-	/* nothing to do */
-}
 
+#ifdef COMPAT_13
+int
+compat_13_netbsd32_sigreturn(struct lwp *l,
+	const struct compat_13_netbsd32_sigreturn_args *uap,
+	register_t *retval)
+{
+	struct compat_13_sys_sigreturn_args ua;
+
+	NETBSD32TOP_UAP(sigcntxp, struct sigcontext13 *);
+
+	return compat_13_sys_sigreturn(l, &ua, retval);
+}
+#endif
+
+#ifdef COMPAT_16
+int
+compat_16_netbsd32___sigreturn14(struct lwp *l,
+	const struct compat_16_netbsd32___sigreturn14_args *uap,
+	register_t *retval)
+{
+	struct compat_16_sys___sigreturn14_args ua;
+
+	NETBSD32TOP_UAP(sigcntxp, struct sigcontext *);
+
+	return compat_16_sys___sigreturn14(l, &ua, retval);
+}
+#endif
