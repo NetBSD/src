@@ -1,4 +1,4 @@
-/*	$NetBSD: db_output.c,v 1.33 2012/09/01 01:13:51 matt Exp $	*/
+/*	$NetBSD: db_output.c,v 1.33.32.1 2018/09/27 14:52:26 martin Exp $	*/
 
 /*
  * Mach Operating System
@@ -35,7 +35,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_output.c,v 1.33 2012/09/01 01:13:51 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_output.c,v 1.33.32.1 2018/09/27 14:52:26 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -111,7 +111,7 @@ db_more(void)
 
 	for (p = "--db_more--"; *p; p++)
 		cnputc(*p);
-	switch(cngetc()) {
+	switch (cngetc()) {
 	case ' ':
 		db_output_line = 0;
 		break;

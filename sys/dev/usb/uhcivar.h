@@ -1,4 +1,4 @@
-/*	$NetBSD: uhcivar.h,v 1.53.10.1 2018/08/25 11:29:52 martin Exp $	*/
+/*	$NetBSD: uhcivar.h,v 1.53.10.2 2018/09/27 14:52:26 martin Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -170,8 +170,8 @@ typedef struct uhci_softc {
 
 	pool_cache_t sc_xferpool;	/* free xfer pool */
 
-	uint8_t sc_saved_sof;
 	uint16_t sc_saved_frnum;
+	uint8_t sc_saved_sof;
 
 	char sc_isreset;
 	char sc_suspend;

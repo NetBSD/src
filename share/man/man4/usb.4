@@ -1,4 +1,4 @@
-.\" $NetBSD: usb.4,v 1.105 2017/01/21 20:30:29 jdolecek Exp $
+.\" $NetBSD: usb.4,v 1.105.4.1 2018/09/27 14:52:27 martin Exp $
 .\"
 .\" Copyright (c) 1999-2014 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -43,10 +43,10 @@
 .Cd "slhci*  at pcmcia? function ?"
 .Cd "uhci*   at cardbus? function ?"
 .Cd "uhci*   at pci? dev ? function ?"
-.Cd "usb*    at ehci? flags X"
-.Cd "usb*    at ohci? flags X"
-.Cd "usb*    at uhci? flags X"
-.Cd "usb*    at slhci? flags X"
+.Cd "usb*    at ehci?"
+.Cd "usb*    at ohci?"
+.Cd "usb*    at uhci?"
+.Cd "usb*    at slhci?"
 .Cd "uhub*   at usb?"
 .Cd "uhub*   at uhub? port ? configuration ? interface ? vendor ? product ? release ?"
 .Cd "XX*     at uhub? port ? configuration ? interface ? vendor ? product ? release ?"
@@ -91,26 +91,6 @@ device controls
 hubs and must always be present since there is at least a root hub in any
 .Tn USB
 system.
-.Pp
-The
-.Va flags
-argument to the
-.Va usb
-device affects the order in which the device detection happens
-during cold boot.
-Normally, only the USB host controller and the
-.Va usb
-device are detected during the autoconfiguration when the
-machine is booted.
-The rest of the devices are detected once
-the system becomes functional and the kernel thread for the
-.Va usb
-device is started.
-Sometimes it is desirable to have a device detected early in the
-boot process, e.g., the console keyboard.
-To achieve this use a
-.Va flags
-value of 1.
 .Pp
 .Nx
 supports the following machine-independent
