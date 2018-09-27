@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_reass.c,v 1.11.8.3 2018/04/09 16:40:07 martin Exp $	*/
+/*	$NetBSD: ip_reass.c,v 1.11.8.4 2018/09/27 15:07:34 martin Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_reass.c,v 1.11.8.3 2018/04/09 16:40:07 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_reass.c,v 1.11.8.4 2018/09/27 15:07:34 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -93,7 +93,8 @@ typedef struct ipfr_queue {
 	struct in_addr		ipq_src;
 	struct in_addr		ipq_dst;
 	uint16_t		ipq_nfrags;	/* frags in this queue entry */
-	uint8_t 		ipq_tos;	/* TOS of this fragment */
+	uint8_t			ipq_tos;	/* TOS of this fragment */
+	int			ipq_ipsec;	/* IPsec flags */
 } ipfr_queue_t;
 
 /*
@@ -217,6 +218,7 @@ ip_reass(ipfr_qent_t *ipqe, ipfr_queue_t *fp, const u_int hash)
 	struct ip *ip = ipqe->ipqe_ip, *qip;
 	const int hlen = ip->ip_hl << 2;
 	struct mbuf *m = ipqe->ipqe_m, *t;
+	int ipsecflags = m->m_flags & (M_DECRYPTED|M_AUTHIPHDR);
 	ipfr_qent_t *nq, *p, *q;
 	int i, next;
 
@@ -269,6 +271,7 @@ ip_reass(ipfr_qent_t *ipqe, ipfr_queue_t *fp, const u_int hash)
 		fp->ipq_p = ip->ip_p;
 		fp->ipq_id = ip->ip_id;
 		fp->ipq_tos = ip->ip_tos;
+		fp->ipq_ipsec = ipsecflags;
 		fp->ipq_src = ip->ip_src;
 		fp->ipq_dst = ip->ip_dst;
 		LIST_INSERT_HEAD(&ip_frags[hash], fp, ipq_q);
@@ -614,6 +617,7 @@ ip_reass_packet(struct mbuf **m0, struct ip *ip)
 	const int hlen = ip->ip_hl << 2;
 	const int len = ntohs(ip->ip_len);
 	struct mbuf *m = *m0;
+	int ipsecflags = m->m_flags & (M_DECRYPTED|M_AUTHIPHDR);
 	ipfr_queue_t *fp;
 	ipfr_qent_t *ipqe;
 	u_int hash, off, flen;
@@ -669,11 +673,20 @@ ip_reass_packet(struct mbuf **m0, struct ip *ip)
 		break;
 	}
 
-	/* Make sure that TOS matches previous fragments. */
-	if (fp && fp->ipq_tos != ip->ip_tos) {
-		IP_STATINC(IP_STAT_BADFRAGS);
-		mutex_exit(&ipfr_lock);
-		return EINVAL;
+	if (fp) {
+		/* All fragments must have the same IPsec flags. */
+		if (fp->ipq_ipsec != ipsecflags) {
+			IP_STATINC(IP_STAT_BADFRAGS);
+			mutex_exit(&ipfr_lock);
+			return EINVAL;
+		}
+
+		/* Make sure that TOS matches previous fragments. */
+		if (fp->ipq_tos != ip->ip_tos) {
+			IP_STATINC(IP_STAT_BADFRAGS);
+			mutex_exit(&ipfr_lock);
+			return EINVAL;
+		}
 	}
 
 	/*
