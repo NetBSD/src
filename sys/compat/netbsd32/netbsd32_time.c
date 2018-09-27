@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_time.c,v 1.49.12.2 2018/09/25 21:41:30 pgoyette Exp $	*/
+/*	$NetBSD: netbsd32_time.c,v 1.49.12.3 2018/09/27 01:33:31 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_time.c,v 1.49.12.2 2018/09/25 21:41:30 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_time.c,v 1.49.12.3 2018/09/27 01:33:31 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ntp.h"
@@ -45,6 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_time.c,v 1.49.12.2 2018/09/25 21:41:30 pgoy
 #include <sys/resourcevar.h>
 #include <sys/dirent.h>
 #include <sys/kauth.h>
+#include <sys/compat_stub.h>
 
 #include <compat/netbsd32/netbsd32.h>
 #include <compat/netbsd32/netbsd32_syscallargs.h>
@@ -114,7 +115,7 @@ netbsd32_ntp_adjtime(struct lwp *l, const struct netbsd32_ntp_adjtime_args *uap,
 	    NULL)))
 		return (error);
 
-	(*vec_ntp_adjtime1(&ntv);
+	(*vec_ntp_adjtime1)(&ntv);
 
 	netbsd32_from_timex(&ntv, &ntv32);
 	error = copyout(&ntv32, SCARG_P32(uap, tp), sizeof(ntv32));
