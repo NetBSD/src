@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17 2018/09/23 13:33:04 christos Exp $
+#	$NetBSD: Makefile,v 1.18 2018/09/27 18:18:53 christos Exp $
 
 # RCSid:
 #	Id: Makefile,v 1.33 1998/11/11 11:53:53 sjg Exp
@@ -20,7 +20,7 @@ LIB=	crypto
 USE_FORT?= yes	# cryptographic software
 USE_SHLIBDIR=	yes
 USE_FIPS=	no
-DBG=-g
+#DBG=-g
 
 .include <bsd.own.mk>
 .include <bsd.shlib.mk>
