@@ -1,4 +1,4 @@
-/*	$NetBSD: tstp.c,v 1.42 2017/01/06 13:53:18 roy Exp $	*/
+/*	$NetBSD: tstp.c,v 1.42.6.1 2018/09/27 14:59:28 martin Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)tstp.c	8.3 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: tstp.c,v 1.42 2017/01/06 13:53:18 roy Exp $");
+__RCSID("$NetBSD: tstp.c,v 1.42.6.1 2018/09/27 14:59:28 martin Exp $");
 #endif
 #endif				/* not lint */
 
@@ -150,7 +150,10 @@ __winch_signal_handler(/*ARGSUSED*/int signo)
 	 * If there was a previous handler, call that,
 	 * otherwise tell getch() to send KEY_RESIZE.
 	 */
-	if (owsa.sa_handler !=  NULL)
+	if (owsa.sa_handler != SIG_DFL &&
+	    owsa.sa_handler != SIG_IGN &&
+	    owsa.sa_handler != SIG_ERR &&
+	    owsa.sa_handler != SIG_HOLD)
 		owsa.sa_handler(signo);
 	else
 		_cursesi_screen->resized = 1;

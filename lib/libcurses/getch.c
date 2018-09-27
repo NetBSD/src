@@ -1,4 +1,4 @@
-/*	$NetBSD: getch.c,v 1.65 2017/01/31 09:17:53 roy Exp $	*/
+/*	$NetBSD: getch.c,v 1.65.4.1 2018/09/27 14:59:28 martin Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,10 +34,11 @@
 #if 0
 static char sccsid[] = "@(#)getch.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: getch.c,v 1.65 2017/01/31 09:17:53 roy Exp $");
+__RCSID("$NetBSD: getch.c,v 1.65.4.1 2018/09/27 14:59:28 martin Exp $");
 #endif
 #endif					/* not lint */
 
+#include <errno.h>
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -562,7 +563,11 @@ reread:
 			c = fgetc(infd);
 			if (c == EOF) {
 				clearerr(infd);
-				return ERR;
+				if (errno == EINTR && _cursesi_screen->resized) {
+					_cursesi_screen->resized = 0;
+					return KEY_RESIZE;
+				} else
+					return ERR;
 			}
 
 			if (delay && (__notimeout() == ERR))
@@ -604,7 +609,11 @@ reread:
 			c = fgetc(infd);
 			if (ferror(infd)) {
 				clearerr(infd);
-				return ERR;
+				if (errno == EINTR && _cursesi_screen->resized) {
+					_cursesi_screen->resized = 0;
+					return KEY_RESIZE;
+				} else
+					return ERR;
 			}
 
 			if ((to || delay) && (__notimeout() == ERR))
@@ -889,7 +898,11 @@ wgetch(WINDOW *win)
 
 		if (ferror(infd)) {
 			clearerr(infd);
-			inp = ERR;
+			if (errno == EINTR && _cursesi_screen->resized) {
+				_cursesi_screen->resized = 0;
+				inp = KEY_RESIZE;
+			} else
+				inp = ERR;
 		} else {
 			inp = c;
 		}
