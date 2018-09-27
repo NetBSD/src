@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.166 2018/09/14 09:51:09 msaitoh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.167 2018/09/27 05:40:27 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -1314,8 +1314,7 @@ ixgbe_setup_interface(device_t dev, struct adapter *adapter)
 	ifp->if_capabilities |= IFCAP_RXCSUM
 			     |  IFCAP_TXCSUM
 			     |  IFCAP_TSOv4
-			     |  IFCAP_TSOv6
-			     |  IFCAP_LRO;
+			     |  IFCAP_TSOv6;
 	ifp->if_capenable = 0;
 
 	ec->ec_capabilities |= ETHERCAP_VLAN_HWTAGGING
