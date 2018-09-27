@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_var.h,v 1.74.6.2 2018/02/11 21:17:34 snj Exp $	*/
+/*	$NetBSD: ip6_var.h,v 1.74.6.3 2018/09/27 15:57:07 martin Exp $	*/
 /*	$KAME: ip6_var.h,v 1.33 2000/06/11 14:59:20 jinmei Exp $	*/
 
 /*
@@ -89,6 +89,7 @@ struct	ip6q {
 	u_char		*ip6q_nxtp;
 #endif
 	int		ip6q_nfrag;	/* # of fragments */
+	int		ip6q_ipsec;	/* IPsec flags */
 };
 
 struct	ip6asfrag {
