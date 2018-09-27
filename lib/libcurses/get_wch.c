@@ -1,4 +1,4 @@
-/*   $NetBSD: get_wch.c,v 1.16 2018/09/26 14:42:22 kamil Exp $ */
+/*   $NetBSD: get_wch.c,v 1.17 2018/09/27 14:05:26 roy Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation Inc.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: get_wch.c,v 1.16 2018/09/26 14:42:22 kamil Exp $");
+__RCSID("$NetBSD: get_wch.c,v 1.17 2018/09/27 14:05:26 roy Exp $");
 #endif						  /* not lint */
 
 #include <errno.h>
@@ -56,6 +56,7 @@ extern short state;		/* storage declared in getch.c */
 /* prototypes for private functions */
 #ifdef HAVE_WCHAR
 static int inkey(wchar_t *wc, int to, int delay);
+static wint_t __fgetwc_resize(FILE *infd, bool *resized);
 #endif /* HAVE_WCHAR */
 
 #ifdef HAVE_WCHAR
@@ -100,14 +101,10 @@ inkey(wchar_t *wc, int to, int delay)
 		if (wstate == INKEY_NORM) {
 			if (delay && __timeout(delay) == ERR)
 				return ERR;
-			c = fgetc(infd);
-			if (c == WEOF) {
+			c = __fgetc_resize(infd);
+			if (c == ERR || c == KEY_RESIZE) {
 				clearerr(infd);
-				if (errno == EINTR && _cursesi_screen->resized) {
-					_cursesi_screen->resized = 0;
-					return KEY_RESIZE;
-				} else
-					return ERR;
+				return c;
 			}
 
 			if (delay && (__notimeout() == ERR))
@@ -152,14 +149,10 @@ inkey(wchar_t *wc, int to, int delay)
 					return ERR;
 			}
 
-			c = fgetc(infd);
+			c = __fgetc_resize(infd);
 			if (ferror(infd)) {
 				clearerr(infd);
-				if (errno == EINTR && _cursesi_screen->resized) {
-					_cursesi_screen->resized = 0;
-					return KEY_RESIZE;
-				} else
-					return ERR;
+				return c;
 			}
 
 			if ((to || delay) && (__notimeout() == ERR))
@@ -206,10 +199,10 @@ inkey(wchar_t *wc, int to, int delay)
 					return ERR;
 			}
 
-			c = fgetc(infd);
+			c = __fgetc_resize(infd);
 			if (ferror(infd)) {
 				clearerr(infd);
-				return ERR;
+				return c;
 			}
 
 			if ((to || delay) && (__notimeout() == ERR))
@@ -583,6 +576,8 @@ wget_wch(WINDOW *win, wint_t *ch)
 		if ( ret == ERR )
 			return ERR;
 	} else {
+		bool resized;
+
 		switch (win->delay) {
 			case -1:
 				break;
@@ -596,17 +591,11 @@ wget_wch(WINDOW *win, wint_t *ch)
 				break;
 		}
 
-		c = getwchar();
-		if (feof(infd)) {
+		c = __fgetwc_resize(infd, &resized);
+		if (c == WEOF) {
 			clearerr(infd);
 			__restore_termios();
-			return ERR;	/* we have timed out */
-		}
-
-		if (ferror(infd)) {
-			clearerr(infd);
-			if (errno == EINTR && _cursesi_screen->resized) {
-				_cursesi_screen->resized = 0;
+			if (resized) {
 				*ch = KEY_RESIZE;
 				return KEY_CODE_YES;
 			} else
@@ -674,3 +663,28 @@ unget_wch(const wchar_t c)
 {
 	return __unget((wint_t)c);
 }
+
+#ifdef HAVE_WCHAR
+/*
+ * __fgetwc_resize --
+ *    Any call to fgetwc(3) should use this function instead.
+ */
+static wint_t
+__fgetwc_resize(FILE *infd, bool *resized)
+{
+	wint_t c;
+
+	c = fgetwc(infd);
+	if (c != WEOF)
+		return c;
+
+	if (!ferror(infd) || errno != EINTR || !_cursesi_screen->resized)
+		return ERR;
+#ifdef DEBUG
+	__CTRACE(__CTRACE_INPUT, "__fgetwc_resize returning KEY_RESIZE\n");
+#endif
+	_cursesi_screen->resized = 0;
+	*resized = true;
+	return c;
+}
+#endif
