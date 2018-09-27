@@ -1,4 +1,4 @@
-/*   $NetBSD: get_wch.c,v 1.14 2017/01/31 09:17:53 roy Exp $ */
+/*   $NetBSD: get_wch.c,v 1.14.4.1 2018/09/27 14:59:28 martin Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation Inc.
@@ -36,9 +36,10 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: get_wch.c,v 1.14 2017/01/31 09:17:53 roy Exp $");
+__RCSID("$NetBSD: get_wch.c,v 1.14.4.1 2018/09/27 14:59:28 martin Exp $");
 #endif						  /* not lint */
 
+#include <errno.h>
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -102,7 +103,11 @@ inkey(wchar_t *wc, int to, int delay)
 			c = fgetc(infd);
 			if (c == WEOF) {
 				clearerr(infd);
-				return ERR;
+				if (errno == EINTR && _cursesi_screen->resized) {
+					_cursesi_screen->resized = 0;
+					return KEY_RESIZE;
+				} else
+					return ERR;
 			}
 
 			if (delay && (__notimeout() == ERR))
@@ -150,7 +155,11 @@ inkey(wchar_t *wc, int to, int delay)
 			c = fgetc(infd);
 			if (ferror(infd)) {
 				clearerr(infd);
-				return ERR;
+				if (errno == EINTR && _cursesi_screen->resized) {
+					_cursesi_screen->resized = 0;
+					return KEY_RESIZE;
+				} else
+					return ERR;
 			}
 
 			if ((to || delay) && (__notimeout() == ERR))
@@ -596,7 +605,12 @@ wget_wch(WINDOW *win, wint_t *ch)
 
 		if (ferror(infd)) {
 			clearerr(infd);
-			return ERR;
+			if (errno == EINTR && _cursesi_screen->resized) {
+				_cursesi_screen->resized = 0;
+				*ch = KEY_RESIZE;
+				return KEY_CODE_YES;
+			} else
+				return ERR;
 		} else {
 			ret = c;
 			inp = c;
