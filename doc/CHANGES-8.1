@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.1,v 1.1.2.25 2018/09/23 18:04:52 martin Exp $
+# $NetBSD: CHANGES-8.1,v 1.1.2.26 2018/09/27 15:15:58 martin Exp $
 
 A complete list of changes from the NetBSD 8.0 release to the NetBSD 8.1
 release:
@@ -1114,4 +1114,66 @@ sys/dev/pci/files.pci				1.403
 
 	ixg and ixv depend on mii and mii_phy.
 	[nakayama, ticket #1035]
+
+usr.sbin/npf/npfctl/npf.conf.5			1.71-1.79 (patch)
+
+	Sync with NetBSD-current.
+	[maxv, ticket #1030]
+
+sys/external/bsd/drm2/linux/linux_ww_mutex.c	(apply patch)
+
+	Fix LOCKDEBUG build.
+	[mrg, ticket #1036]
+
+share/man/man4/usb.4				1.110 (patch)
+sys/ddb/db_command.c				1.159,1.160 (patch)
+sys/ddb/db_output.c				1.34 (patch)
+sys/dev/pci/xhci_pci.c				1.14 (patch)
+sys/dev/usb/ehci.c				1.264,1.265 (patch)
+sys/dev/usb/ehcivar.h				1.46 (patch)
+sys/dev/usb/ohci.c				1.287 (patch)
+sys/dev/usb/uhci.c				1.284 (patch)
+sys/dev/usb/uhcivar.h				1.56 (patch)
+sys/dev/usb/uhub.c				1.139 (patch)
+sys/dev/usb/usb.c				1.172-1.174 (patch)
+sys/dev/usb/usb_subr.c				1.227 (patch)
+sys/dev/usb/usbdi.c				1.178 (patch)
+sys/dev/usb/xhci.c				1.99 (patch)
+sys/external/bsd/dwc2/dwc2.c			1.55 (patch)
+sys/kern/subr_userconf.c			1.27 (patch)
+
+	Fix usb keyboard "boot -a" issues and sync with -current.
+	[mrg, ticket #1037]
+
+lib/libcurses/get_wch.c				1.15,1.16
+lib/libcurses/getch.c				1.66,1.67
+lib/libcurses/tstp.c				1.43
+
+	PR lib/53615: getch() and get_wch() should return KEY_RESIZE
+	when interrupted by SIGWINCH.
+	Before invoking a previous signal handler, make sure it is not SIG_*.
+	Correct detecting of terminal resize in curses(3) with keypad(,TRUE).
+	Handle catching terminal resize in INKEY_NORM and INKEY_ASSEMBLING.
+	[kamil, ticket #1039]
+
+lib/libcurses/move.c				1.19
+
+	According to POSIX moving the cursor in curses(3) touches the window.
+	[kamil, ticket #1040]
+
+sys/netinet/ip_reass.c				1.17 (patch)
+sys/netinet6/frag6.c				1.74 (patch)
+
+	When reassembling IPv4/IPv6 packets, ensure each fragment has been
+	subject to the same IPsec processing. That is to say, that all
+	fragments are ESP, or AH, or AH+ESP, or none.
+	[maxv, ticket #1041]
+
+lib/libcurses/curses_private.h			1.63
+lib/libcurses/get_wch.c				1.17,1.18
+lib/libcurses/getch.c				1.68,1.69
+
+	Unify resize handling in getch.
+	Call resizeterm if getch issues KEY_RESIZE.
+	[roy, ticket #1042]
 
