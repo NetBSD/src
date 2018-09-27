@@ -1,4 +1,4 @@
-/*	$NetBSD: getch.c,v 1.65.4.1 2018/09/27 14:59:28 martin Exp $	*/
+/*	$NetBSD: getch.c,v 1.65.4.2 2018/09/27 15:12:15 martin Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)getch.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: getch.c,v 1.65.4.1 2018/09/27 14:59:28 martin Exp $");
+__RCSID("$NetBSD: getch.c,v 1.65.4.2 2018/09/27 15:12:15 martin Exp $");
 #endif
 #endif					/* not lint */
 
@@ -560,14 +560,10 @@ reread:
 		if (state == INKEY_NORM) {
 			if (delay && __timeout(delay) == ERR)
 				return ERR;
-			c = fgetc(infd);
-			if (c == EOF) {
+			c = __fgetc_resize(infd);
+			if (c == ERR || c == KEY_RESIZE) {
 				clearerr(infd);
-				if (errno == EINTR && _cursesi_screen->resized) {
-					_cursesi_screen->resized = 0;
-					return KEY_RESIZE;
-				} else
-					return ERR;
+				return c;
 			}
 
 			if (delay && (__notimeout() == ERR))
@@ -606,14 +602,10 @@ reread:
 					return ERR;
 			}
 
-			c = fgetc(infd);
+			c = __fgetc_resize(infd);
 			if (ferror(infd)) {
 				clearerr(infd);
-				if (errno == EINTR && _cursesi_screen->resized) {
-					_cursesi_screen->resized = 0;
-					return KEY_RESIZE;
-				} else
-					return ERR;
+				return c;
 			}
 
 			if ((to || delay) && (__notimeout() == ERR))
@@ -833,6 +825,7 @@ wgetch(WINDOW *win)
 #endif
 	if (_cursesi_screen->resized) {
 		_cursesi_screen->resized = 0;
+		resizeterm(LINES, COLS);
 #ifdef DEBUG
 		__CTRACE(__CTRACE_INPUT, "wgetch returning KEY_RESIZE\n");
 #endif
@@ -889,22 +882,11 @@ wgetch(WINDOW *win)
 			break;
 		}
 
-		c = fgetc(infd);
-		if (feof(infd)) {
+		inp = __fgetc_resize(infd);
+		if (inp == ERR || inp == KEY_RESIZE) {
 			clearerr(infd);
 			__restore_termios();
-			return ERR;	/* we have timed out */
-		}
-
-		if (ferror(infd)) {
-			clearerr(infd);
-			if (errno == EINTR && _cursesi_screen->resized) {
-				_cursesi_screen->resized = 0;
-				inp = KEY_RESIZE;
-			} else
-				inp = ERR;
-		} else {
-			inp = c;
+			return inp;
 		}
 	}
 #ifdef DEBUG
@@ -1010,4 +992,28 @@ set_escdelay(int escdelay)
 	_cursesi_screen->ESCDELAY = escdelay;
 	ESCDELAY = escdelay;
 	return OK;
+}
+
+/*
+ * __fgetc_resize --
+ *    Any call to fgetc(3) should use this function instead
+ *    and test for the return value of KEY_RESIZE as well as ERR.
+ */
+int
+__fgetc_resize(FILE *infd)
+{
+	int c;
+
+	c = fgetc(infd);
+	if (c != EOF)
+		return c;
+
+	if (!ferror(infd) || errno != EINTR || !_cursesi_screen->resized)
+		return ERR;
+#ifdef DEBUG
+	__CTRACE(__CTRACE_INPUT, "__fgetc_resize returning KEY_RESIZE\n");
+#endif
+	_cursesi_screen->resized = 0;
+	resizeterm(LINES, COLS);
+	return KEY_RESIZE;
 }
