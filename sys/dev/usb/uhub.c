@@ -1,4 +1,4 @@
-/*	$NetBSD: uhub.c,v 1.136.2.1 2017/11/02 21:29:52 snj Exp $	*/
+/*	$NetBSD: uhub.c,v 1.136.2.2 2018/09/27 14:52:26 martin Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 /*	$OpenBSD: uhub.c,v 1.86 2015/06/29 18:27:40 mpi Exp $ */
 
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.136.2.1 2017/11/02 21:29:52 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.136.2.2 2018/09/27 14:52:26 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -113,9 +113,9 @@ struct uhub_softc {
 	uint8_t			*sc_statuspend;
 	uint8_t			*sc_status;
 	size_t			 sc_statuslen;
-	int			 sc_explorepending;
-
-	u_char			 sc_running;
+	bool			 sc_explorepending;
+	bool			 sc_first_explore;
+	bool			 sc_running;
 };
 
 #define UHUB_IS_HIGH_SPEED(sc) \
@@ -262,6 +262,8 @@ uhub_attach(device_t parent, device_t self, void *aux)
 	usb_endpoint_descriptor_t *ed;
 	struct usbd_tt *tts = NULL;
 
+	config_pending_incr(self);
+
 	UHUBHIST_FUNC(); UHUBHIST_CALLED();
 
 	sc->sc_dev = self;
@@ -283,14 +285,14 @@ uhub_attach(device_t parent, device_t self, void *aux)
 	if (err) {
 		DPRINTF("configuration failed, sc %#jx error %jd",
 		    (uintptr_t)sc, err, 0, 0);
-		return;
+		goto bad2;
 	}
 
 	if (dev->ud_depth > USB_HUB_MAX_DEPTH) {
 		aprint_error_dev(self,
 		    "hub depth (%d) exceeded, hub ignored\n",
 		    USB_HUB_MAX_DEPTH);
-		return;
+		goto bad2;
 	}
 
 	/* Get hub descriptor. */
@@ -300,7 +302,7 @@ uhub_attach(device_t parent, device_t self, void *aux)
 	if (err) {
 		DPRINTF("getting hub descriptor failed, uhub%jd error %jd",
 		    device_unit(self), err, 0, 0);
-		return;
+		goto bad2;
 	}
 
 	for (nremov = 0, port = 1; port <= nports; port++)
@@ -364,7 +366,7 @@ uhub_attach(device_t parent, device_t self, void *aux)
 
 	/* force initial scan */
 	memset(sc->sc_status, 0xff, sc->sc_statuslen);
-	sc->sc_explorepending = 1;
+	sc->sc_explorepending = true;
 
 	err = usbd_open_pipe_intr(iface, ed->bEndpointAddress,
 		  USBD_SHORT_XFER_OK|USBD_MPSAFE, &sc->sc_ipipe, sc,
@@ -449,8 +451,8 @@ uhub_attach(device_t parent, device_t self, void *aux)
 		usbd_delay_ms(dev, pwrdly);
 
 	/* The usual exploration will finish the setup. */
-
-	sc->sc_running = 1;
+	sc->sc_running = true;
+	sc->sc_first_explore = true;
 
 	if (!pmf_device_register(self, NULL, NULL))
 		aprint_error_dev(self, "couldn't establish power handler\n");
@@ -468,7 +470,8 @@ uhub_attach(device_t parent, device_t self, void *aux)
 		kmem_free(hub,
 		    sizeof(*hub) + (nports-1) * sizeof(struct usbd_port));
 	dev->ud_hub = NULL;
-	return;
+ bad2:
+	config_pending_decr(self);
 }
 
 usbd_status
@@ -777,7 +780,7 @@ uhub_explore(struct usbd_device *dev)
 		}
 	}
 	mutex_enter(&sc->sc_lock);
-	sc->sc_explorepending = 0;
+	sc->sc_explorepending = false;
 	for (int i = 0; i < sc->sc_statuslen; i++) {
 		if (sc->sc_statuspend[i] != 0) {
 			memcpy(sc->sc_status, sc->sc_statuspend,
@@ -788,6 +791,10 @@ uhub_explore(struct usbd_device *dev)
 		}
 	}
 	mutex_exit(&sc->sc_lock);
+	if (sc->sc_first_explore) {
+		config_pending_decr(sc->sc_dev);
+		sc->sc_first_explore = false;
+	}
 
 	return USBD_NORMAL_COMPLETION;
 }
@@ -942,7 +949,7 @@ uhub_intr(struct usbd_xfer *xfer, void *addr, usbd_status status)
 		}
 
 		if (!sc->sc_explorepending) {
-			sc->sc_explorepending = 1;
+			sc->sc_explorepending = true;
 
 			memcpy(sc->sc_status, sc->sc_statuspend,
 			    sc->sc_statuslen);

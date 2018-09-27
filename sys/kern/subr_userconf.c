@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_userconf.c,v 1.26 2013/12/23 15:34:16 skrll Exp $	*/
+/*	$NetBSD: subr_userconf.c,v 1.26.22.1 2018/09/27 14:52:26 martin Exp $	*/
 
 /*
  * Copyright (c) 1996 Mats O Jansson <moj@stacken.kth.se>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_userconf.c,v 1.26 2013/12/23 15:34:16 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_userconf.c,v 1.26.22.1 2018/09/27 14:52:26 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,7 +103,9 @@ userconf_more(void)
 	if (userconf_cnt != -1) {
 		if (userconf_cnt == userconf_lines) {
 			printf("-- more --");
+			cnpollc(1);
 			c = cngetc();
+			cnpollc(0);
 			userconf_cnt = 0;
 			printf("\r            \r");
 		}
@@ -391,7 +393,9 @@ userconf_change(int devno)
 
 		while (c != 'y' && c != 'Y' && c != 'n' && c != 'N') {
 			printf("change (y/n) ?");
+			cnpollc(1);
 			c = cngetc();
+			cnpollc(0);
 			printf("\n");
 		}
 

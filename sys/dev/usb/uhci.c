@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.275.2.4 2018/08/25 11:29:52 martin Exp $	*/
+/*	$NetBSD: uhci.c,v 1.275.2.5 2018/09/27 14:52:26 martin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2011, 2012 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.275.2.4 2018/08/25 11:29:52 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.275.2.5 2018/09/27 14:52:26 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -2256,6 +2256,7 @@ uhci_device_bulk_start(struct usbd_xfer *xfer)
 	uhci_softc_t *sc = UHCI_XFER2SC(xfer);
 	uhci_soft_td_t *data, *dataend;
 	uhci_soft_qh_t *sqh;
+	const bool polling = sc->sc_bus.ub_usepolling;
 	int len;
 	int endpt;
 	int isread;
@@ -2276,7 +2277,8 @@ uhci_device_bulk_start(struct usbd_xfer *xfer)
 	sqh = upipe->bulk.sqh;
 
 	/* Take lock here to protect nexttoggle */
-	mutex_enter(&sc->sc_lock);
+	if (!polling)
+		mutex_enter(&sc->sc_lock);
 
 	uhci_reset_std_chain(sc, xfer, len, isread, &upipe->nexttoggle,
 	    &dataend);
@@ -2310,12 +2312,13 @@ uhci_device_bulk_start(struct usbd_xfer *xfer)
 	uhci_add_bulk(sc, sqh);
 	uhci_add_intr_list(sc, ux);
 
-	if (xfer->ux_timeout && !sc->sc_bus.ub_usepolling) {
+	if (xfer->ux_timeout && !polling) {
 		callout_reset(&xfer->ux_callout, mstohz(xfer->ux_timeout),
 			    uhci_timeout, xfer);
 	}
 	xfer->ux_status = USBD_IN_PROGRESS;
-	mutex_exit(&sc->sc_lock);
+	if (!polling)
+		mutex_exit(&sc->sc_lock);
 
 	return USBD_IN_PROGRESS;
 }
@@ -2540,6 +2543,7 @@ uhci_device_ctrl_start(struct usbd_xfer *xfer)
 	int endpt = upipe->pipe.up_endpoint->ue_edesc->bEndpointAddress;
 	uhci_soft_td_t *setup, *stat, *next, *dataend;
 	uhci_soft_qh_t *sqh;
+	const bool polling = sc->sc_bus.ub_usepolling;
 	int len;
 	int isread;
 
@@ -2567,7 +2571,8 @@ uhci_device_ctrl_start(struct usbd_xfer *xfer)
 	memcpy(KERNADDR(&upipe->ctrl.reqdma, 0), req, sizeof(*req));
 	usb_syncmem(&upipe->ctrl.reqdma, 0, sizeof(*req), BUS_DMASYNC_PREWRITE);
 
-	mutex_enter(&sc->sc_lock);
+	if (!polling)
+		mutex_enter(&sc->sc_lock);
 
 	/* Set up data transaction */
 	if (len != 0) {
@@ -2664,12 +2669,13 @@ uhci_device_ctrl_start(struct usbd_xfer *xfer)
 		DPRINTF("--- dump end ---", 0, 0, 0, 0);
 	}
 #endif
-	if (xfer->ux_timeout && !sc->sc_bus.ub_usepolling) {
+	if (xfer->ux_timeout && !polling) {
 		callout_reset(&xfer->ux_callout, mstohz(xfer->ux_timeout),
 			    uhci_timeout, xfer);
 	}
 	xfer->ux_status = USBD_IN_PROGRESS;
-	mutex_exit(&sc->sc_lock);
+	if (!polling)
+		mutex_exit(&sc->sc_lock);
 
 	return USBD_IN_PROGRESS;
 }
@@ -2742,6 +2748,7 @@ uhci_device_intr_start(struct usbd_xfer *xfer)
 	uhci_softc_t *sc = UHCI_XFER2SC(xfer);
 	uhci_soft_td_t *data, *dataend;
 	uhci_soft_qh_t *sqh;
+	const bool polling = sc->sc_bus.ub_usepolling;
 	int isread, endpt;
 	int i;
 
@@ -2767,7 +2774,8 @@ uhci_device_intr_start(struct usbd_xfer *xfer)
 #endif
 
 	/* Take lock to protect nexttoggle */
-	mutex_enter(&sc->sc_lock);
+	if (!polling)
+		mutex_enter(&sc->sc_lock);
 	uhci_reset_std_chain(sc, xfer, xfer->ux_length, isread,
 	    &upipe->nexttoggle, &dataend);
 
@@ -2799,7 +2807,8 @@ uhci_device_intr_start(struct usbd_xfer *xfer)
 	}
 	uhci_add_intr_list(sc, ux);
 	xfer->ux_status = USBD_IN_PROGRESS;
-	mutex_exit(&sc->sc_lock);
+	if (!polling)
+		mutex_exit(&sc->sc_lock);
 
 #ifdef UHCI_DEBUG
 	if (uhcidebug >= 10) {
