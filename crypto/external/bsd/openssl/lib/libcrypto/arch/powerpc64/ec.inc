@@ -5,5 +5,4 @@ x25519-ppc64.S
 
 ECCPPFLAGS+= -DX25519_ASM
 
-ECNI = yes
 .include "../../ec.inc"
