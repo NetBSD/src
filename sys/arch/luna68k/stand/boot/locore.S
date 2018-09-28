@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.11 2014/03/24 10:46:58 martin Exp $	*/
+/*	$NetBSD: locore.S,v 1.12 2018/09/28 03:53:59 isaki Exp $	*/
 
 /*
  * Copyright (c) 1992 OMRON Corporation.
@@ -266,7 +266,7 @@ Lstart0:
 	movl	%d0,_C_LABEL(cputype)
 
 /* final setup for C code */
-	movw	#PSL_LOWIPL,%sr		| no interrupts
+	movw	#PSL_LOWIPL,%sr		| enable interrupts
 	jsr	_C_LABEL(main)		| lets go
 	jsr	start
 
