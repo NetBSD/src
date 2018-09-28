@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: maketars,v 1.88 2018/09/26 18:20:59 martin Exp $
+# $NetBSD: maketars,v 1.89 2018/09/28 15:04:20 martin Exp $
 #
 # Make release tar files for some or all lists.  Usage:
 # maketars [-b] [-x] [-i installdir] [-a arch] [-m machine] [-s setsdir]
@@ -226,7 +226,7 @@ export GZIP
 es=0
 
 for setname in ${lists:-${nlists}}; do
-	out="${setname}.tgz"
+	out="${setname}.${TAR_SUFF:-tgz}"
 	if [ -n "${installdir}" ]; then
 		msg "Copying set ${setname}"
 		runpax "${setname}" -r ${preserve} "${installdir}"
