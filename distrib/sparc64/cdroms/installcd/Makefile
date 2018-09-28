@@ -1,9 +1,10 @@
-#	$NetBSD: Makefile,v 1.29 2017/09/08 09:50:45 martin Exp $
+#	$NetBSD: Makefile,v 1.30 2018/09/28 15:05:23 martin Exp $
 
 .include <bsd.own.mk>
 
 CDBASE=		sparc64cd		# gives ${CDBASE}.iso
 CDRELEASE=	true			# include $RELEASEDIR/$MACHINE
+CDRELEASE_NODEBUG=	true
 CDKERNELS=	${RELEASEDIR}/${MACHINE}/binary/kernel/netbsd-GENERIC.gz	netbsd
 CD_SETS=	base etc
 .if ${MKKMOD} != "no"
@@ -13,7 +14,6 @@ CD_SETS+=	modules
 SYSINSTDIR!= cd ${.CURDIR}/../../../../usr.sbin/sysinst/arch/${MACHINE} && ${PRINTOBJDIR}
 
 CDRELEASE_NOISOS=	true
-CDRELEASE_NODEBUG=	true
 CDBOOTIMAGEDIR!= cd ${NETBSDSRCDIR}/distrib/sparc64/bootfs && ${PRINTOBJDIR}
 CDBOOTIMAGE=    ${CDBOOTIMAGEDIR}/boot.fs
 SUN_BOOT_ARGS:=  - - - - ${CDBOOTIMAGE}
