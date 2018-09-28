@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.9 2018/09/23 13:34:57 christos Exp $
+# $NetBSD: Makefile.inc,v 1.10 2018/09/28 23:40:45 christos Exp $
 
 .include <bsd.own.mk>
 .include "../Makefile.inc"
@@ -12,9 +12,6 @@ PROG=		h_${HELPER_NAME}
 SRCS=		${HELPER_SRCS}
 MAN=		# empty
 BINDIR=		${TESTSDIR}
-
-DPADD+=		${LIBCRYPTO} ${LIBCRYPT}
-LDADD+=		-lcrypto -lcrypt
 
 CWARNFLAGS.clang+=	-Wno-format
 
@@ -30,6 +27,10 @@ CRYPTODIST=	${NETBSDSRCDIR}/crypto
 .PATH: ${OPENSSLSRC}/crypto/${HELPER_DIR}
 .endif
 PROGDPLIBS+=	cryptotest ${OPENSSLSRC}/../lib/libcryptotest
+PROGDPLIBS+=	crypto ${OPENSSLSRC}/../lib/libcrypto
+DPADD+=		${LIBCRYPT}
+LDADD+=		-lcrypt
+
 
 .include <bsd.test.mk>
 .include <bsd.prog.mk>
