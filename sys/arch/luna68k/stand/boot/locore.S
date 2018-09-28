@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.12 2018/09/28 03:53:59 isaki Exp $	*/
+/*	$NetBSD: locore.S,v 1.13 2018/09/28 04:13:24 isaki Exp $	*/
 
 /*
  * Copyright (c) 1992 OMRON Corporation.
@@ -201,11 +201,6 @@ ASGLOBAL(Reset)
 ASENTRY_NOPROFILE(start1)
 	movw	#PSL_HIGHIPL,%sr	| no interrupts
 	movl	#STACK,%sp		| set SP
-
-	movl	#_C_LABEL(prgcore), %a2	| save program address
-	movl	#_ASM_LABEL(Reset), %a2@+	| save start of core
-	movl	#_C_LABEL(end),  %a2@+	| save end of core
-	movl	#STACK, %a2@		| save initial stack addr
 
 /* clear BSS area */
 	movl	#_C_LABEL(edata),%a2	| start of BSS
@@ -764,11 +759,6 @@ ENTRY(spl7)
 /*
  * Memory Information Field for secondary booter memory allocator
  */
-
-GLOBAL(prgcore)
-	.long	0
-	.long	0
-	.long	0
 
 ASLOCAL(gotoROM)
 	.long	0
