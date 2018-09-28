@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2017/11/12 08:24:37 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.15 2018/09/28 03:51:34 isaki Exp $
 #	@(#)Makefile	8.2 (Berkeley) 8/15/93
 
 NOMAN= # defined
@@ -78,6 +78,7 @@ LIBS=	${SALIB} ${ZLIB} ${KERNLIB}
 .include "${S}/conf/newvers_stand.mk"
 
 ${PROG}: ${LDSCRIPT} ${OBJS} ${LIBS}
+	${_MKTARGET_LINK}
 	${LD} ${LINKFORMAT} -x -o ${PROG}.elf ${OBJS} ${LIBS}
 	${ELF2AOUT} ${PROG}.elf ${PROG}.aout
 	mv ${PROG}.aout ${PROG}
