@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.bootcd,v 1.40 2018/06/25 12:18:22 martin Exp $
+#	$NetBSD: Makefile.bootcd,v 1.41 2018/09/28 15:03:34 martin Exp $
 #
 # Makefile snipped to create a CD/DVD ISO
 #
@@ -53,7 +53,10 @@ CDROMS_RELEASEDIR?=	images
 CDRELEASE_EXCLUDE=	-s ',./installation/cdrom.*,,gp'
 .endif
 .if defined(CDRELEASE_NODEBUG)
-CDRELEASE_EXCLUDE=+	-s ',./binary/sets/debug.tgz,,gp'	-s ',./binary/sets/xdebug.tgz,,gp'
+CDRELEASE_EXCLUDE+=	-s ',./binary/sets/debug.tgz,,gp'
+CDRELEASE_EXCLUDE+=	-s ',./binary/sets/xdebug.tgz,,gp'
+CDRELEASE_EXCLUDE+=	-s ',./binary/sets/debug.tar.xz,,gp'
+CDRELEASE_EXCLUDE+=	-s ',./binary/sets/xdebug.tar.xz,,gp'
 .endif
 .if !defined(CDRELEASE_LIVEIMAGE)
 CDRELEASE_EXCLUDE+=	-s ',./installation/liveimage.*,,gp'
@@ -189,8 +192,6 @@ copy-releasedir:
 		${TOOL_PAX} ${PAX_TIMESTAMP}				\
 			-rw -pe ${PAX_v}				\
 			${CDRELEASE_EXCLUDE}				\
-			-s ',./binary/sets/debug.tgz,,gp'		\
-			-s ',./binary/sets/xdebug.tgz,,gp'		\
 			. $$release_destdir; 				\
 		cd "${CUROBJDIR}";					\
 	fi
