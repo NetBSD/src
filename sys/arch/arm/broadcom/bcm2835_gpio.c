@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_gpio.c,v 1.7 2018/05/19 14:02:10 thorpej Exp $	*/
+/*	$NetBSD: bcm2835_gpio.c,v 1.8 2018/09/28 13:24:02 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2013, 2014, 2017 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_gpio.c,v 1.7 2018/05/19 14:02:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_gpio.c,v 1.8 2018/09/28 13:24:02 jmcneill Exp $");
 
 /*
  * Driver for BCM2835 GPIO
@@ -560,12 +560,11 @@ bcmgpio_fdt_intr_establish(device_t dev, u_int *specifier, int ipl, int flags,
 		return (NULL);
 	}
 
-	/* 1st cell is the bank */
-	/* 2nd cell is the pin */
-	/* 3rd cell is flags */
-	const u_int bank = be32toh(specifier[0]);
-	const u_int pin = be32toh(specifier[1]);
-	const u_int type = be32toh(specifier[2]) & 0xf;
+	/* 1st cell is the GPIO number */
+	/* 2nd cell is flags */
+	const u_int bank = be32toh(specifier[0]) / 32;
+	const u_int pin = be32toh(specifier[0]) % 32;
+	const u_int type = be32toh(specifier[1]) & 0xf;
 
 	switch (type) {
 	case 0x1:
@@ -668,19 +667,16 @@ static bool
 bcmgpio_fdt_intrstr(device_t dev, u_int *specifier, char *buf, size_t buflen)
 {
 
-	/* 1st cell is the bank */
-	/* 2nd cell is the pin */
+	/* 1st cell is the GPIO number */
 	/* 3rd cell is flags */
 	if (!specifier)
 		return (false);
-	const u_int bank = be32toh(specifier[0]);
-	const u_int pin = be32toh(specifier[1]);
+	const u_int bank = be32toh(specifier[0]) / 32;
+	const u_int pin = be32toh(specifier[0]) % 32;
 
 	if (bank >= BCMGPIO_NBANKS)
 		return (false);
-	if (pin >= 32)
-		return (false);
-	
+
 	snprintf(buf, buflen, "GPIO %u", (bank * 32) + pin);
 
 	return (true);
