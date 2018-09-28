@@ -1,4 +1,4 @@
-/* $NetBSD: TODO.compat-module,v 1.1.2.14 2018/09/27 03:54:25 pgoyette Exp $ */
+/* $NetBSD: TODO.compat-module,v 1.1.2.15 2018/09/28 09:36:20 pgoyette Exp $ */
 
 DONE
 ----
@@ -107,4 +107,8 @@ TODO - Not required for branch merge
     and dev/wscons/wsmux that I haven't been able to cleanly separate.
     These items are not currently included in the monolithic COMPAT module
     on HEAD, so lack of integration on the branch is not a regression.
-    
+
+22. Find all the remaining dependencies on the compat_utils routines and
+    deal with them appropriately.  For now, we simply ensure that they
+    are included in every kernel via 'options COMPAT_UTILS' in file
+    sys/conf/std
