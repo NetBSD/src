@@ -1,4 +1,4 @@
-/*	$NetBSD: getch.c,v 1.69 2018/09/27 14:07:55 roy Exp $	*/
+/*	$NetBSD: getch.c,v 1.70 2018/09/28 15:03:48 roy Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)getch.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: getch.c,v 1.69 2018/09/27 14:07:55 roy Exp $");
+__RCSID("$NetBSD: getch.c,v 1.70 2018/09/28 15:03:48 roy Exp $");
 #endif
 #endif					/* not lint */
 
@@ -824,8 +824,8 @@ wgetch(WINDOW *win)
 	    __echoit, __rawmode, _cursesi_screen->nl, win->flags, win->delay);
 #endif
 	if (_cursesi_screen->resized) {
-		_cursesi_screen->resized = 0;
 		resizeterm(LINES, COLS);
+		_cursesi_screen->resized = 0;
 #ifdef DEBUG
 		__CTRACE(__CTRACE_INPUT, "wgetch returning KEY_RESIZE\n");
 #endif
@@ -1013,7 +1013,7 @@ __fgetc_resize(FILE *infd)
 #ifdef DEBUG
 	__CTRACE(__CTRACE_INPUT, "__fgetc_resize returning KEY_RESIZE\n");
 #endif
-	_cursesi_screen->resized = 0;
 	resizeterm(LINES, COLS);
+	_cursesi_screen->resized = 0;
 	return KEY_RESIZE;
 }

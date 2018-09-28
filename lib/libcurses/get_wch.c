@@ -1,4 +1,4 @@
-/*   $NetBSD: get_wch.c,v 1.18 2018/09/27 14:07:55 roy Exp $ */
+/*   $NetBSD: get_wch.c,v 1.19 2018/09/28 15:03:48 roy Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation Inc.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: get_wch.c,v 1.18 2018/09/27 14:07:55 roy Exp $");
+__RCSID("$NetBSD: get_wch.c,v 1.19 2018/09/28 15:03:48 roy Exp $");
 #endif						  /* not lint */
 
 #include <errno.h>
@@ -530,8 +530,8 @@ wget_wch(WINDOW *win, wint_t *ch)
 	    __echoit, __rawmode, _cursesi_screen->nl, win->flags);
 #endif
 	if (_cursesi_screen->resized) {
-		_cursesi_screen->resized = 0;
 		resizeterm(LINES, COLS);
+		_cursesi_screen->resized = 0;
 		*ch = KEY_RESIZE;
 		return KEY_CODE_YES;
 	}
@@ -684,8 +684,8 @@ __fgetwc_resize(FILE *infd, bool *resized)
 #ifdef DEBUG
 	__CTRACE(__CTRACE_INPUT, "__fgetwc_resize returning KEY_RESIZE\n");
 #endif
-	_cursesi_screen->resized = 0;
 	resizeterm(LINES, COLS);
+	_cursesi_screen->resized = 0;
 	*resized = true;
 	return c;
 }
