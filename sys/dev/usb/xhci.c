@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.72.2.8 2018/09/27 14:52:26 martin Exp $	*/
+/*	$NetBSD: xhci.c,v 1.72.2.9 2018/09/28 08:33:43 martin Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.72.2.8 2018/09/27 14:52:26 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.72.2.9 2018/09/28 08:33:43 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -3979,7 +3979,7 @@ xhci_device_bulk_start(struct usbd_xfer *xfer)
 
 	xhci_db_write_4(sc, XHCI_DOORBELL(xs->xs_idx), dci);
 
-	if (xfer->ux_timeout && !xhci_polling_p(sc)) {
+	if (xfer->ux_timeout && !polling) {
 		callout_reset(&xfer->ux_callout, mstohz(xfer->ux_timeout),
 		    xhci_timeout, xfer);
 	}
@@ -4055,6 +4055,7 @@ xhci_device_intr_start(struct usbd_xfer *xfer)
 	struct xhci_ring * const tr = &xs->xs_ep[dci].xe_tr;
 	struct xhci_xfer * const xx = XHCI_XFER2XXFER(xfer);
 	const uint32_t len = xfer->ux_length;
+	const bool polling = xhci_polling_p(sc);
 	usb_dma_t * const dma = &xfer->ux_dmabuf;
 	uint64_t parameter;
 	uint32_t status;
@@ -4082,9 +4083,11 @@ xhci_device_intr_start(struct usbd_xfer *xfer)
 	xhci_trb_put(&xx->xx_trb[i++], parameter, status, control);
 	xfer->ux_status = USBD_IN_PROGRESS;
 
-	mutex_enter(&tr->xr_lock);
+	if (!polling)
+		mutex_enter(&tr->xr_lock);
 	xhci_ring_put(sc, tr, xfer, xx->xx_trb, i);
-	mutex_exit(&tr->xr_lock);
+	if (!polling)
+		mutex_exit(&tr->xr_lock);
 
 	xhci_db_write_4(sc, XHCI_DOORBELL(xs->xs_idx), dci);
 

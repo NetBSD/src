@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.254.8.5 2018/09/27 14:52:26 martin Exp $ */
+/*	$NetBSD: ehci.c,v 1.254.8.6 2018/09/28 08:33:43 martin Exp $ */
 
 /*
  * Copyright (c) 2004-2012 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.254.8.5 2018/09/27 14:52:26 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.254.8.6 2018/09/28 08:33:43 martin Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -75,6 +75,7 @@ __KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.254.8.5 2018/09/27 14:52:26 martin Exp $"
 #include <sys/select.h>
 #include <sys/sysctl.h>
 #include <sys/systm.h>
+#include <sys/reboot.h>
 
 #include <machine/endian.h>
 
@@ -446,8 +447,9 @@ ehci_init(ehci_softc_t *sc)
 	}
 	if (sc->sc_ncomp > 0) {
 		KASSERT(!(sc->sc_flags & EHCIF_ETTF));
-		aprint_normal("%s: %d companion controller%s, %d port%s%s",
-		    device_xname(sc->sc_dev), sc->sc_ncomp,
+		aprint_normal_dev(sc->sc_dev,
+		    "%d companion controller%s, %d port%s%s",
+		    sc->sc_ncomp,
 		    sc->sc_ncomp!=1 ? "s" : "",
 		    EHCI_HCS_N_PCC(sparams),
 		    EHCI_HCS_N_PCC(sparams)!=1 ? "s" : "",
@@ -459,6 +461,11 @@ ehci_init(ehci_softc_t *sc)
 				    device_xname(sc->sc_comps[i]));
 		}
 		aprint_normal("\n");
+
+		mutex_init(&sc->sc_complock, MUTEX_DEFAULT, IPL_USB);
+		callout_init(&sc->sc_compcallout, CALLOUT_MPSAFE);
+		cv_init(&sc->sc_compcv, "ehciccv");
+		sc->sc_comp_state = CO_EARLY;
 	}
 	sc->sc_noport = EHCI_HCS_N_PORTS(sparams);
 	sc->sc_hasppc = EHCI_HCS_PPC(sparams);
@@ -1336,6 +1343,19 @@ ehci_detach(struct ehci_softc *sc, int flags)
 
 	if (rv != 0)
 		return rv;
+
+	if (sc->sc_ncomp > 0) {
+		mutex_enter(&sc->sc_complock);
+		/* XXX try to halt callout instead of waiting */
+		while (sc->sc_comp_state == CO_SCHED)
+			cv_wait(&sc->sc_compcv, &sc->sc_complock);
+		mutex_exit(&sc->sc_complock);
+
+		callout_halt(&sc->sc_compcallout, NULL);
+		callout_destroy(&sc->sc_compcallout);
+		cv_destroy(&sc->sc_compcv);
+		mutex_destroy(&sc->sc_complock);
+	}
 
 	callout_halt(&sc->sc_tmo_intrlist, NULL);
 	callout_destroy(&sc->sc_tmo_intrlist);
@@ -2597,6 +2617,72 @@ ehci_roothub_ctrl(struct usbd_bus *bus, usb_device_request_t *req,
 	return totlen;
 }
 
+/*
+ * Handle ehci hand-off in early boot vs RB_ASKNAME/RB_SINGLE.
+ *
+ * This pile of garbage below works around the following problem without
+ * holding boots with no hand-over devices present, while penalising
+ * boots where the first ehci probe hands off devices with a 5 second
+ * delay, if RB_ASKNAME/RB_SINGLE is set.  This is typically not a problem
+ * for RB_SINGLE, but the same basic issue exists.
+ *
+ * The way ehci hand-off works, the companion controller does not get the
+ * device until after its' initial bus explore, so the reference dropped
+ * after the first explore is not enough.  5 seconds should be enough,
+ * and EHCI_DISOWN_DELAY_SECONDS can be set to another value.
+ *
+ * There are 3 states.  CO_EARLY is set during attach.  CO_SCHED is set
+ * if the callback is scheduled.  CO_DONE is set when the callout has
+ * called config_pending_decr().
+ *
+ * There's a mutex, a cv and a callout here, and we delay detach if the
+ * callout has been set.
+ */
+#ifndef EHCI_DISOWN_DELAY_SECONDS
+#define EHCI_DISOWN_DELAY_SECONDS 5
+#endif
+static int ehci_disown_delay_seconds = EHCI_DISOWN_DELAY_SECONDS;
+
+static void
+ehci_disown_callback(void *arg)
+{
+	ehci_softc_t *sc = arg;
+
+	config_pending_decr(sc->sc_dev);
+
+	mutex_enter(&sc->sc_complock);
+	KASSERT(sc->sc_comp_state == CO_SCHED);
+	sc->sc_comp_state = CO_DONE;
+	cv_signal(&sc->sc_compcv);
+	mutex_exit(&sc->sc_complock);
+}
+
+static void
+ehci_disown_sched_callback(ehci_softc_t *sc)
+{
+	extern bool root_is_mounted;
+
+	mutex_enter(&sc->sc_complock);
+
+	if (root_is_mounted ||
+	    (boothowto & (RB_ASKNAME|RB_SINGLE)) == 0 ||
+	    sc->sc_comp_state != CO_EARLY) {
+		mutex_exit(&sc->sc_complock);
+		return;
+	}
+
+	callout_reset(&sc->sc_compcallout, ehci_disown_delay_seconds * hz,
+	    ehci_disown_callback, &sc->sc_dev);
+	sc->sc_comp_state = CO_SCHED;
+
+	mutex_exit(&sc->sc_complock);
+
+	config_pending_incr(sc->sc_dev);
+	aprint_normal("delaying %s by %u seconds due to USB owner change.",
+	    (boothowto & RB_ASKNAME) == 0 ? "ask root" : "single user",
+	    ehci_disown_delay_seconds);
+}
+
 Static void
 ehci_disown(ehci_softc_t *sc, int index, int lowspeed)
 {
@@ -2606,13 +2692,11 @@ ehci_disown(ehci_softc_t *sc, int index, int lowspeed)
 	EHCIHIST_FUNC(); EHCIHIST_CALLED();
 
 	DPRINTF("index=%jd lowspeed=%jd", index, lowspeed, 0, 0);
-#ifdef DIAGNOSTIC
 	if (sc->sc_npcomp != 0) {
 		int i = (index-1) / sc->sc_npcomp;
-		if (i >= sc->sc_ncomp)
-			printf("%s: strange port\n",
-			       device_xname(sc->sc_dev));
-		else
+		if (i < sc->sc_ncomp) {
+			ehci_disown_sched_callback(sc);
+#ifdef DIAGNOSTIC
 			printf("%s: handing over %s speed device on "
 			       "port %d to %s\n",
 			       device_xname(sc->sc_dev),
@@ -2620,10 +2704,16 @@ ehci_disown(ehci_softc_t *sc, int index, int lowspeed)
 			       index, sc->sc_comps[i] ?
 			         device_xname(sc->sc_comps[i]) :
 			         "companion controller");
-	} else {
-		printf("%s: npcomp == 0\n", device_xname(sc->sc_dev));
-	}
+		} else {
+			printf("%s: strange port\n",
+			       device_xname(sc->sc_dev));
 #endif
+		}
+	} else {
+#ifdef DIAGNOSTIC
+		printf("%s: npcomp == 0\n", device_xname(sc->sc_dev));
+#endif
+	}
 	port = EHCI_PORTSC(index);
 	v = EOREAD4(sc, port) &~ EHCI_PS_CLEAR;
 	EOWRITE4(sc, port, v | EHCI_PS_PO);
