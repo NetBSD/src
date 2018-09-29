@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_13.c,v 1.26.28.7 2018/09/27 03:53:30 pgoyette Exp $	*/
+/*	$NetBSD: netbsd32_compat_13.c,v 1.26.28.8 2018/09/29 07:52:39 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_13.c,v 1.26.28.7 2018/09/27 03:53:30 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_13.c,v 1.26.28.8 2018/09/29 07:52:39 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -104,7 +104,8 @@ static struct syscall_package compat_netbsd32_13_syscalls[] = {
 	{ 0, 0, NULL }
 }; 
 
-MODULE(MODULE_CLASS_EXEC, compat_netbsd32_13, "compat_netbsd32,compat_13");
+MODULE(MODULE_CLASS_EXEC, compat_netbsd32_13,
+    "compat_netbsd32,compat_13,compat_netbsd32_16");
 
 static int
 compat_netbsd32_13_modcmd(modcmd_t cmd, void *arg)
