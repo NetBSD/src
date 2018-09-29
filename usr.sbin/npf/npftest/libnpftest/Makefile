@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.8 2013/11/16 01:41:43 rmind Exp $
+# $NetBSD: Makefile,v 1.9 2018/09/29 14:41:36 rmind Exp $
 #
 # Public Domain
 #
@@ -23,6 +23,8 @@ SRCS+=		npf_perf_test.c
 CPPFLAGS+=	-D_NPF_TESTING
 CPPFLAGS+=	-I${.CURDIR}/../../../../sys/net/npf
 CPPFLAGS+=	-I${RUMPTOP}/librump/rumpkern
+
+CPPFLAGS+=	-I${NETBSDSRCDIR}/sys/external/bsd/libnv/dist
 
 WARNS=		5
 

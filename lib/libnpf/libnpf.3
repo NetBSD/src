@@ -1,4 +1,4 @@
-.\"	$NetBSD: libnpf.3,v 1.5 2017/12/07 00:22:06 rmind Exp $
+.\"	$NetBSD: libnpf.3,v 1.6 2018/09/29 14:41:36 rmind Exp $
 .\"
 .\" Copyright (c) 2011-2017 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd December 7, 2017
+.Dd June 10, 2018
 .Dt LIBNPF 3
 .Os
 .Sh NAME
@@ -256,6 +256,7 @@ If the value of
 is
 .Dv NULL ,
 then insert into the main ruleset.
+The rule must not be referenced after insertion.
 .\" ---
 .It Fn npf_rule_export "rl" "length"
 Serialize the rule (including the byte-code), return a binary object
@@ -276,6 +277,7 @@ Create a rule procedure with a given
 Thr name must be unique for each procedure.
 .It Fn npf_rproc_insert "ncf" "rp"
 Insert the rule procedure into the specified configuration object.
+The rule procedure must not be referenced after insertion.
 .El
 .\" -----
 .Ss Translation interface
@@ -331,6 +333,7 @@ algorithm is supported for NPTv6 (RFC 6296).
 .\" ---
 .It Fn npf_nat_insert "ncf" "nt" "pri"
 Insert NAT policy, its rule, into the specified configuration.
+The NAT rule must not be referenced after insertion.
 .El
 .\" -----
 .Ss Table interface
@@ -342,7 +345,7 @@ The table is identified by the
 and
 .Fa index ,
 which should be in the range between 1 and
-.Dv NPF_MAX_TABLE_ID .
+.Dv NPF_MAX_TABLES .
 .Pp
 The following types are supported:
 .Bl -tag -width "NPF_TABLE_HASH"
@@ -353,12 +356,9 @@ Indicates to use a tree for storage, supporting the longest
 prefix match.
 .It Dv NPF_TABLE_CDB
 Indicates to use constant database for storage, typically using
-a perfect hash table.
-In such case, the database produced by
-.Xr cdbw 3
-should be set using the
-.Fn npf_table_setdata
-function.
+a perfect hash table, which will be generated on table insertion
+into the configuration.
+Such table will be immutable.
 .El
 .\" ---
 .It Fn npf_table_add_entry "tl" "af" "addr" "mask"
@@ -378,6 +378,7 @@ for IPv6 address.
 .It Fn npf_table_insert "ncf" "tl"
 Add the table to the configuration object.
 This routine performs a check for duplicate table IDs.
+The table must not be referenced after insertion.
 .\" ---
 .It Fn npf_table_destroy "tl"
 Destroy the specified table.
