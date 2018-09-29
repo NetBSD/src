@@ -1,4 +1,4 @@
-/*	$NetBSD: packetProcessing.c,v 1.2 2018/04/07 00:19:53 christos Exp $	*/
+/*	$NetBSD: packetProcessing.c,v 1.3 2018/09/29 21:52:35 christos Exp $	*/
 
 #include "config.h"
 
@@ -466,6 +466,8 @@ test_CorrectAuthenticatedPacketSHA1(void)
 void
 test_CorrectAuthenticatedPacketCMAC(void)
 {
+#if defined(OPENSSL) && defined(ENABLE_CMAC)
+
 	PrepareAuthenticationTest(30, CMAC_LENGTH, CMAC, "abcdefghijklmnop");
 	TEST_ASSERT_TRUE(ENABLED_OPT(AUTHENTICATION));
 
@@ -482,5 +484,11 @@ test_CorrectAuthenticatedPacketCMAC(void)
 	TEST_ASSERT_EQUAL(pkt_len,
 			  process_pkt(&testpkt.p, &testsock, pkt_len,
 				      MODE_SERVER, &testspkt.p, "UnitTest"));
+
+#else
+	
+	TEST_IGNORE_MESSAGE("OpenSSL CMAC not used, skipping...");
+	
+#endif	/* OPENSSL */
 }
 

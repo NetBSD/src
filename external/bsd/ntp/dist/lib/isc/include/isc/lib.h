@@ -1,4 +1,4 @@
-/*	$NetBSD: lib.h,v 1.4 2016/01/08 21:35:36 christos Exp $	*/
+/*	$NetBSD: lib.h,v 1.5 2018/09/29 21:52:31 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2007, 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: lib.h,v 1.16 2009/09/02 23:48:03 tbox Exp  */
+/* Id */
 
 #ifndef ISC_LIB_H
 #define ISC_LIB_H 1

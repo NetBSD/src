@@ -1,4 +1,4 @@
-/*	$NetBSD: work_fork.c,v 1.12 2018/08/28 11:11:18 christos Exp $	*/
+/*	$NetBSD: work_fork.c,v 1.13 2018/09/29 21:52:33 christos Exp $	*/
 
 /*
  * work_fork.c - fork implementation for blocking worker child.
@@ -90,6 +90,8 @@ netwrite(
 	return (size_t)(b - (const char *)vb);
 }
 
+
+int set_user_group_ids(void);
 
 /* === functions === */
 /*
@@ -609,6 +611,8 @@ fork_blocking_child(
 	signal_no_reset(SIGHUP, worker_sighup);
 	init_logging("ntp_intres", 0, FALSE);
 	setup_logfile(NULL);
+
+	(void) set_user_group_ids();
 
 	/*
 	 * And now back to the portable code

@@ -1,4 +1,4 @@
-/*	$NetBSD: tg2.c,v 1.4 2016/01/08 21:35:42 christos Exp $	*/
+/*	$NetBSD: tg2.c,v 1.5 2018/09/29 21:52:35 christos Exp $	*/
 
 /*
  * tg.c generate WWV or IRIG signals for test
@@ -51,7 +51,74 @@
  * 10, but not yet with other machines. It uses no special features and
  * should be readily portable to other hardware and operating systems.
  *
- * Log: tg.c,v 
+ * $Log: tg2.c,v $
+ * Revision 1.5  2018/09/29 21:52:35  christos
+ * merge conflicts
+ *
+ * Revision 1.1.1.6  2018/09/29 17:28:38  christos
+ * ---
+ * (4.2.8p12) 2018/08/14 Released by Harlan Stenn <stenn@ntp.org>
+ *
+ * * [Sec 3505] CVE-2018-12327 - Arbitrary Code Execution Vulnerability
+ *   - fixed stack buffer overflow in the openhost() command-line call
+ *     of NTPQ/NTPDC <perlinger@ntp.org>
+ * * [Sec 3012] noepeer tweaks.  <stenn@ntp.org>
+ * * [Bug 3521] Fix a logic bug in the INVALIDNAK checks.  <stenn@ntp.org>
+ * * [Bug 3509] Add support for running as non-root on FreeBSD, Darwin,
+ *              other TrustedBSD platforms
+ *   - applied patch by Ian Lepore <perlinger@ntp.org>
+ * * [Bug 3506] Service Control Manager interacts poorly with NTPD <perlinger@ntp.org>
+ *   - changed interaction with SCM to signal pending startup
+ * * [Bug 3486] Buffer overflow in ntpq/ntpq.c:tstflags() <perlinger@ntp.org>
+ *   - applied patch by Gerry Garvey
+ * * [Bug 3485] Undefined sockaddr used in error messages in ntp_config.c <perlinger@ntp.org>
+ *   - applied patch by Gerry Garvey
+ * * [Bug 3484] ntpq response from ntpd is incorrect when REFID is null <perlinger@ntp.org>
+ *   - rework of ntpq 'nextvar()' key/value parsing
+ * * [Bug 3482] Fixes for compilation warnings (ntp_io.c & ntpq-subs.c) <perlinger@ntp.org>
+ *   - applied patch by Gerry Garvey (with mods)
+ * * [Bug 3480] Refclock sample filter not cleared on clock STEP <perlinger@ntp.org>
+ *   - applied patch by Gerry Garvey
+ * * [Bug 3479] ctl_putrefid() allows unsafe characters through to ntpq <perlinger@ntp.org>
+ *   - applied patch by Gerry Garvey (with mods)
+ * * [Bug 3476]ctl_putstr() sends empty unquoted string [...] <perlinger@ntp.org>
+ *   - applied patch by Gerry Garvey (with mods); not sure if that's bug or feature, though
+ * * [Bug 3475] modify prettydate() to suppress output of zero time <perlinger@ntp.org>
+ *   - applied patch by Gerry Garvey
+ * * [Bug 3474] Missing pmode in mode7 peer info response <perlinger@ntp.org>
+ *   - applied patch by Gerry Garvey
+ * * [Bug 3471] Check for openssl/[ch]mac.h.  HStenn.
+ *   - add #define ENABLE_CMAC support in configure.  HStenn.
+ * * [Bug 3470] ntpd4.2.8p11 fails to compile without OpenSSL <perlinger@ntp.org>
+ * * [Bug 3469] Incomplete string compare [...] in is_refclk_addr <perlinger@ntp.org>
+ *   - patch by Stephen Friedl
+ * * [Bug 3467] Potential memory fault in ntpq [...] <perlinger@ntp.org>
+ *   - fixed IO redirection and CTRL-C handling in ntq and ntpdc
+ * * [Bug 3465] Default TTL values cannot be used <perlinger@ntp.org>
+ * * [Bug 3461] refclock_shm.c: clear error status on clock recovery <perlinger@ntp.org>
+ *   - initial patch by Hal Murray; also fixed refclock_report() trouble
+ * * [Bug 3460] Fix typo in ntpq.texi, reported by Kenyon Ralph.  <stenn@ntp.org>
+ * * [Bug 3456] Use uintptr_t rather than size_t to store an integer in a pointer
+ *   - According to Brooks Davis, there was only one location <perlinger@ntp.org>
+ * * [Bug 3449] ntpq - display "loop" instead of refid [...] <perlinger@ntp.org>
+ *   - applied patch by Gerry Garvey
+ * * [Bug 3445] Symmetric peer won't sync on startup <perlinger@ntp.org>
+ *   - applied patch by Gerry Garvey
+ * * [Bug 3442] Fixes for ntpdate as suggested by Gerry Garvey,
+ *   with modifications
+ *   New macro REFID_ISTEXT() which is also used in ntpd/ntp_control.c.
+ * * [Bug 3434] ntpd clears STA_UNSYNC on start <perlinger@ntp.org>
+ *   - applied patch by Miroslav Lichvar
+ * * [Bug 3426] ntpdate.html -t default is 2 seconds.  Leonid Evdokimov.
+ * * [Bug 3121] Drop root privileges for the forked DNS worker <perlinger@ntp.org>
+ *   - integrated patch by  Reinhard Max
+ * * [Bug 2821] minor build issues <perlinger@ntp.org>
+ *   - applied patches by Christos Zoulas, including real bug fixes
+ * * html/authopt.html: cleanup, from <stenn@ntp.org>
+ * * ntpd/ntpd.c: DROPROOT cleanup.  <stenn@ntp.org>
+ * * Symmetric key range is 1-65535.  Update docs.  <stenn@ntp.org>
+ * * html/authentic.html: cleanup, from <stenn@ntp.org>
+ *
  * Revision 1.28  2007/02/12 23:57:45  dmw
  * v0.23 2007-02-12 dmw:
  * - Changed statistics to include calculated error
@@ -2452,8 +2519,6 @@ void
 Help ( void )
 	{
 	printf ("\n\nTime Code Generation - IRIG-B or WWV, v%d.%d, %s dmw", VERSION, ISSUE, ISSUE_DATE);
-	printf ("\n\nRCS Info:");
-	printf (  "\n  Header: /home/dmw/src/IRIG_generation/ntp-4.2.2p3/util/RCS/tg.c,v 1.28 2007/02/12 23:57:45 dmw Exp ");
 	printf ("\n\nUsage: %s [option]*", CommandName);
 	printf ("\n\nOptions: -a device_name                 Output audio device name (default /dev/audio)");
 	printf (  "\n         -b yymmddhhmm                  Remove leap second at end of minute specified");
