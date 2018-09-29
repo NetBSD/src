@@ -1,4 +1,4 @@
-#	$NetBSD: mk.generic64,v 1.2 2018/09/14 09:06:12 skrll Exp $
+#	$NetBSD: mk.generic64,v 1.3 2018/09/29 17:05:55 jmcneill Exp $
 
 SYSTEM_FIRST_OBJ=	start.o
 SYSTEM_FIRST_SFILE=	${ARM}/aarch64/start.S
@@ -7,7 +7,7 @@ _OSRELEASE!=		${HOST_SH} $S/conf/osrelease.sh
 
 BOARDTYPE=		evbarm64
 
-MKUBOOTIMAGEARGS=	-f arm64
+MKUBOOTIMAGEARGS=	-f arm64 -a 0x200000
 MKKNLIMG=		${THISARM}/compile/rpi-mkknlimg.sh
 
 SYSTEM_LD_TAIL_EXTRA+=; \
