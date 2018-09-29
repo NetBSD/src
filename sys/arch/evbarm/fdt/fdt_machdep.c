@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_machdep.c,v 1.40 2018/09/29 15:50:29 jmcneill Exp $ */
+/* $NetBSD: fdt_machdep.c,v 1.41 2018/09/29 20:58:31 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.40 2018/09/29 15:50:29 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.41 2018/09/29 20:58:31 jmcneill Exp $");
 
 #include "opt_machdep.h"
 #include "opt_bootconfig.h"
@@ -377,6 +377,9 @@ initarm(void *arg)
 	/* Load FDT */
 	int error = fdt_check_header(fdt_addr_r);
 	if (error == 0) {
+		/* If the DTB is too big, try to pack it in place first. */
+		if (fdt_totalsize(fdt_addr_r) > sizeof(fdt_data))
+			(void)fdt_pack(__UNCONST(fdt_addr_r));
 		error = fdt_open_into(fdt_addr_r, fdt_data, sizeof(fdt_data));
 		if (error != 0)
 			panic("fdt_move failed: %s", fdt_strerror(error));
