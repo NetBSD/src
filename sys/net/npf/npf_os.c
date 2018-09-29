@@ -1,5 +1,3 @@
-/*	$NetBSD: npf_os.c,v 1.9 2017/12/11 03:25:46 ozaki-r Exp $	*/
-
 /*-
  * Copyright (c) 2009-2016 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -35,7 +33,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_os.c,v 1.9 2017/12/11 03:25:46 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_os.c,v 1.10 2018/09/29 14:41:36 rmind Exp $");
 
 #ifdef _KERNEL_OPT
 #include "pf.h"

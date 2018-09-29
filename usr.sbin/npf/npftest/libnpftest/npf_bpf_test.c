@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_bpf_test.c,v 1.8 2016/12/26 23:05:05 christos Exp $	*/
+/*	$NetBSD: npf_bpf_test.c,v 1.9 2018/09/29 14:41:36 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -51,7 +51,7 @@ fill_packet(int proto)
 	struct ip *ip;
 	struct tcphdr *th;
 
-	m = mbuf_construct(IPPROTO_TCP);
+	m = mbuf_construct(proto);
 	th = mbuf_return_hdrs(m, false, &ip);
 	ip->ip_src.s_addr = inet_addr("192.168.2.100");
 	ip->ip_dst.s_addr = inet_addr("10.0.0.1");
@@ -93,7 +93,7 @@ test_bpf_code(void *code, size_t size)
 	jcode = npf_bpf_compile(code, size);
 	if (jcode) {
 		jret = npf_bpf_filter(&bc_args, NULL, jcode);
-		assert(ret == jret);
+		assert(ret == jret); (void)jret;
 		bpf_jit_freecode(jcode);
 	} else if (lverbose) {
 		printf("JIT-compilation failed\n");

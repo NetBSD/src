@@ -1,5 +1,3 @@
-/*	$NetBSD: npf_var.h,v 1.8 2013/11/19 00:28:41 rmind Exp $	*/
-
 /*-
  * Copyright (c) 2011-2012 The NetBSD Foundation, Inc.
  * All rights reserved.

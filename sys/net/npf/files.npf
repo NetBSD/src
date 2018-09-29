@@ -1,4 +1,4 @@
-# $NetBSD: files.npf,v 1.20 2017/01/02 21:49:51 rmind Exp $
+# $NetBSD: files.npf,v 1.21 2018/09/29 14:41:36 rmind Exp $
 #
 # Public Domain.
 #
@@ -7,7 +7,7 @@
 # NPF pseudo device and modules.
 #
 
-defpseudo	npf:	ifnet
+defpseudo	npf:	ifnet, libnv
 
 # Core
 file	net/npf/npf.c				npf

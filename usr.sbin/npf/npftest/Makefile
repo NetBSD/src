@@ -27,9 +27,11 @@ LDADD+=		-lrumpdev
 LDADD+=		-lrumpkern_sljit -lrumpnet_bpfjit
 .endif
 
-LDADD+=		-lrumpnet_npf
+LDADD+=		-lrumpkern_nv -lrumpnet_npf
+LDADD+=		-lpcap -lpthread
 
-LDADD+=		-lpcap -lprop -lpthread
+PROGDPLIBS+=	nv ${NETBSDSRCDIR}/external/bsd/libnv/lib
+CPPFLAGS+=	-I ${NETBSDSRCDIR}/sys/external/bsd/libnv/dist
 
 SUBDIR+=	libnpftest
 

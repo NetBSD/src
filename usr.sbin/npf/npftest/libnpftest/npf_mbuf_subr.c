@@ -22,7 +22,7 @@ npfkern_m_get(int flags, int space)
 	unsigned mlen = offsetof(struct mbuf, m_data0[space]);
 	struct mbuf *m;
 
-	m = calloc(1, sizeof(struct mbuf));
+	m = calloc(1, mlen);
 	if (m) {
 		m->m_type = 1;
 		m->m_flags = flags;
@@ -104,6 +104,7 @@ npfkern_m_ensure_contig(struct mbuf **m0, size_t len)
 		dptr += m->m_len;
 	}
 	*m0 = m1;
+	(void)len;
 	return true;
 }
 

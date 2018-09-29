@@ -34,7 +34,7 @@ void		rumpns_npf_test_init(int (*)(int, const char *, void *),
 		    const char *(*)(int, const void *, char *, socklen_t),
 		    long (*)(void));
 void		rumpns_npf_test_fini(void);
-int		rumpns_npf_test_load(const void *);
+int		rumpns_npf_test_load(const void *, size_t, bool);
 ifnet_t *	rumpns_npf_test_addif(const char *, bool, bool);
 ifnet_t *	rumpns_npf_test_getif(const char *);
 

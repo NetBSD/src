@@ -24,6 +24,8 @@ CPPFLAGS+=	-D_NPF_TESTING
 CPPFLAGS+=	-I${.CURDIR}/../../../../sys/net/npf
 CPPFLAGS+=	-I${RUMPTOP}/librump/rumpkern
 
+CPPFLAGS+=	-I${NETBSDSRCDIR}/sys/external/bsd/libnv/dist
+
 WARNS=		5
 
 .include "${RUMPTOP}/Makefile.rump"

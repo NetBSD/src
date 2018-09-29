@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_table_test.c,v 1.9 2016/12/26 23:05:05 christos Exp $	*/
+/*	$NetBSD: npf_table_test.c,v 1.10 2018/09/29 14:41:36 rmind Exp $	*/
 
 /*
  * NPF tableset test.
@@ -39,22 +39,22 @@ static const char *ip_list[] = {
 
 static const uint16_t ip6_list[][8] = {
 	{
-	    U16_TO_LE(0xfe80), 0x0, 0x0, 0x0,
-	    U16_TO_LE(0x2a0), U16_TO_LE(0xc0ff),
-	    U16_TO_LE(0xfe10), U16_TO_LE(0x1234)
+		U16_TO_LE(0xfe80), 0x0, 0x0, 0x0,
+		U16_TO_LE(0x2a0), U16_TO_LE(0xc0ff),
+		U16_TO_LE(0xfe10), U16_TO_LE(0x1234)
 	},
 	{
-	    U16_TO_LE(0xfe80), 0x0, 0x0, 0x0,
-	    U16_TO_LE(0x2a0), U16_TO_LE(0xc0ff), 0x00, 0x0
+		U16_TO_LE(0xfe80), 0x0, 0x0, 0x0,
+		U16_TO_LE(0x2a0), U16_TO_LE(0xc0ff), 0x00, 0x0
 	},
 	{
-	    U16_TO_LE(0xfe80), 0x0, 0x0, 0x0,
-	    0x0, 0x0, 0x0, 0x0
+		U16_TO_LE(0xfe80), 0x0, 0x0, 0x0,
+		0x0, 0x0, 0x0, 0x0
 	},
 	{
-	    U16_TO_LE(0xfe80), 0x0, 0x0, 0x0,
-	    U16_TO_LE(0x2a0), U16_TO_LE(0xc0ff),
-	    U16_TO_LE(0xfe10), U16_TO_LE(0x1230)
+		U16_TO_LE(0xfe80), 0x0, 0x0, 0x0,
+		U16_TO_LE(0x2a0), U16_TO_LE(0xc0ff),
+		U16_TO_LE(0xfe10), U16_TO_LE(0x1230)
 	}
 };
 
@@ -103,8 +103,9 @@ npf_table_test(bool verbose, void *blob, size_t size)
 	npf_tableset_t *tblset;
 	int error, alen;
 	bool fail = false;
-	void *cdb;
-	u_int i;
+	unsigned i;
+
+	(void)verbose;
 
 	tblset = npf_tableset_create(3);
 	fail |= !check_ok(tblset != NULL);
@@ -126,10 +127,7 @@ npf_table_test(bool verbose, void *blob, size_t size)
 	fail |= !check_ok(error == 0);
 
 	/* Table ID 3, using a CDB. */
-	cdb = malloc(size, M_TEMP, M_WAITOK);
-	memcpy(cdb, blob, size);
-
-	t3 = npf_table_create(CDB_TID, 2, NPF_TABLE_CDB, cdb, size);
+	t3 = npf_table_create(CDB_TID, 2, NPF_TABLE_CDB, blob, size);
 	fail |= !(t3 != NULL);
 	error = npf_tableset_insert(tblset, t3);
 	fail |= !check_ok(error == 0);

@@ -1,5 +1,3 @@
-/*	$NetBSD: npf_ext_rndblock.c,v 1.7 2017/01/29 00:15:54 christos Exp $	*/
-
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -33,7 +31,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_ext_rndblock.c,v 1.7 2017/01/29 00:15:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_ext_rndblock.c,v 1.8 2018/09/29 14:41:36 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/cprng.h>
@@ -69,7 +67,7 @@ typedef struct {
  * associated with a rule procedure, which is being newly created.
  */
 static int
-npf_ext_rndblock_ctor(npf_rproc_t *rp, prop_dictionary_t params)
+npf_ext_rndblock_ctor(npf_rproc_t *rp, const nvlist_t *params)
 {
 	npf_ext_rndblock_t *meta;
 
@@ -78,8 +76,8 @@ npf_ext_rndblock_ctor(npf_rproc_t *rp, prop_dictionary_t params)
 	 * and our meta-data.
 	 */
 	meta = kmem_zalloc(sizeof(npf_ext_rndblock_t), KM_SLEEP);
-	prop_dictionary_get_uint32(params, "mod", &meta->mod);
-	prop_dictionary_get_uint32(params, "percentage", &meta->percentage);
+	meta->mod = dnvlist_get_number(params, "mod", 0);
+	meta->percentage = dnvlist_get_number(params, "percentage", 0);
 	npf_rproc_assign(rp, meta);
 
 	return 0;
