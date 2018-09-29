@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.435 2018/09/29 01:12:22 kre Exp $
+#	$NetBSD: Makefile,v 1.436 2018/09/29 06:10:01 martin Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -548,10 +548,10 @@ snap_post: .PHONY .MAKE build_kernelsets build_releasekernels
 #
 #	KERNEL_SETS		The list of kernels that will be
 #				packaged into sets, named
-#				kern-${kernel}.tgz.  These kernels
-#				are also placed in the binary/kernel
-#				area of the release package as
-#				netbsd-${kernel}.gz (or .tar.xz).
+#				kern-${kernel}.tgz (or .tar.xz).
+#				These kernels are also placed in the
+#				binary/kernel area of the release package
+#				as netbsd-${kernel}.gz.
 #
 #	EXTRA_KERNELS		Additional kernels to place in the
 #				binary/kernel area of the release
