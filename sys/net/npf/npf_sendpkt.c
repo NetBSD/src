@@ -33,7 +33,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_sendpkt.c,v 1.20 2018/09/29 14:41:36 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_sendpkt.c,v 1.21 2018/09/29 18:00:35 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -56,16 +56,16 @@ __KERNEL_RCSID(0, "$NetBSD: npf_sendpkt.c,v 1.20 2018/09/29 14:41:36 rmind Exp $
 #define	DEFAULT_IP_TTL		(ip_defttl)
 
 #if defined(_NPF_STANDALONE)
-#define	m_gethdr(t, f)		npf->mbufops->alloc(0, 0)
-#define	m_freem(m)		npc->npc_ctx->mbufops->free(m)
-#define	mtod(m,t)		((t)((npf)->mbufops->getdata(m)))
+#define	m_gethdr(t, f)		(npf)->mbufops->alloc(0, 0)
+#define	m_freem(m)		(npc)->npc_ctx->mbufops->free(m)
+#define	mtod(m,t)		((t)((npc)->npc_ctx->mbufops->getdata(m)))
 #endif
 
 #if !defined(INET6) || defined(_NPF_STANDALONE)
 #define	in6_cksum(...)		0
 #define	ip6_output(...)		0
 #define	icmp6_error(m, ...)	m_freem(m)
-#define	npf_ip6_setscope(n, i)	0
+#define	npf_ip6_setscope(n, i)	((void)(i), 0)
 #endif
 
 #if defined(INET6)
@@ -190,21 +190,19 @@ npf_return_tcp(npf_cache_t *npc)
 		KASSERT(npf_iscached(npc, NPC_IP6));
 		th->th_sum = in6_cksum(m, IPPROTO_TCP, sizeof(struct ip6_hdr),
 		    sizeof(struct tcphdr));
-	}
 
-	/* Handle IPv6 scopes */
-	if (npf_iscached(npc, NPC_IP6) && npf_ip6_setscope(npc, ip6) != 0) {
-		goto bad;
+		/* Handle IPv6 scopes */
+		if (npf_ip6_setscope(npc, ip6) != 0) {
+			goto bad;
+		}
 	}
 
 	/* Pass to IP layer. */
 	if (npf_iscached(npc, NPC_IP4)) {
 		return ip_output(m, NULL, NULL, IP_FORWARDING, NULL, NULL);
 	}
-#if defined(INET6)
 	return ip6_output(m, NULL, NULL, IPV6_FORWARDING, NULL, NULL, NULL);
 bad:
-#endif
 	m_freem(m);
 	return EINVAL;
 }
