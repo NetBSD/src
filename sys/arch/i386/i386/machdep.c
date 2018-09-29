@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.810 2018/09/23 15:28:48 cherry Exp $	*/
+/*	$NetBSD: machdep.c,v 1.811 2018/09/29 07:00:20 cherry Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009, 2017
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.810 2018/09/23 15:28:48 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.811 2018/09/29 07:00:20 cherry Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_freebsd.h"
@@ -1307,13 +1307,13 @@ init386(paddr_t first_avail)
 	memset((void *)gdt_vaddr, 0, PAGE_SIZE);
 	memset((void *)ldt_vaddr, 0, PAGE_SIZE);
 
-#ifndef XEN
 	pmap_kenter_pa(pentium_idt_vaddr, idt_paddr, VM_PROT_READ, 0);
 	pmap_update(pmap_kernel());
 	pentium_idt = (union descriptor *)pentium_idt_vaddr;
+	idt = (idt_descriptor_t *)idt_vaddr;
 
+#ifndef XEN	
 	tgdt = gdtstore;
-	idt = (struct gate_descriptor *)idt_vaddr;
 	gdtstore = (union descriptor *)gdt_vaddr;
 	ldtstore = (union descriptor *)ldt_vaddr;
 
