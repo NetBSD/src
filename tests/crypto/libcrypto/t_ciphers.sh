@@ -1,4 +1,4 @@
-# $NetBSD: t_ciphers.sh,v 1.6 2018/09/23 13:34:57 christos Exp $
+# $NetBSD: t_ciphers.sh,v 1.7 2018/09/29 10:50:33 gson Exp $
 #
 # Copyright (c) 2008, 2009, 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -60,6 +60,7 @@ atf_test_case evp
 evp_head()
 {
 	atf_set "descr" "Checks EVP cipher"
+	atf_set "timeout" "600"
 }
 evp_body()
 {
