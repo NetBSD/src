@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.434 2018/09/28 15:11:36 martin Exp $
+#	$NetBSD: Makefile,v 1.435 2018/09/29 01:12:22 kre Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -410,7 +410,7 @@ install-obsolete-lists: .PHONY .MAKE
 distrib-dirs: .PHONY check_DESTDIR
 	cd ${NETBSDSRCDIR}/etc/mtree && ${MAKE} distrib-dirs
 
-.if ${USE_XZ_SETS} != "no"
+.if defined(USE_XZ_SETS) && ${USE_XZ_SETS} != "no"
 COMPRESS_PROGRAM=${TOOL_XZ}
 XZ_OPT=-9
 TAR_SUFF=tar.xz
