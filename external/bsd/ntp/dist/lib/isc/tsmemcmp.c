@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: tsmemcmp.c,v 1.1.1.2 2018/09/29 17:28:40 christos Exp $ */
+/* Id */
 
 /*! \file */
 
