@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.41 2018/01/06 16:41:23 kamil Exp $
+	$NetBSD: syscalls.master,v 1.41.2.1 2018/09/29 01:37:26 pgoyette Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -271,7 +271,11 @@
 94	UNIMPL		setdopt
 95	NOARGS		{ int|sys||fsync(int fd); }
 96	NOARGS		{ int|sys||setpriority(int which, int who, int prio); }
+#if defined(COMPAT_30) || !defined(_KERNEL)
 97	NOARGS		{ int|compat_30_sys||socket(int domain, int type, int protocol); }
+#else
+97	EXCL		compat_30_sys_socket
+#endif
 98	NOARGS		{ int|sys||connect(int s, const struct sockaddr *name, \
 			    int namelen); }
 #if defined(COMPAT_43) || !defined(_KERNEL)
@@ -442,8 +446,12 @@
 #endif
 159	UNIMPL
 160	UNIMPL
+#if defined(COMPAT_30) || !defined(_KERNEL)
 161	NOARGS		{ int|compat_30_sys||getfh(const char *fname, \
 			    struct compat_30_fhandle *fhp); }
+#else
+161	EXCL		compat_30_sys_getfh
+#endif
 #if defined(COMPAT_09) || !defined(_KERNEL)
 162	NOARGS		{ int|compat_09_sys||getdomainname(char *domainname, \
 			    int len); } ogetdomainname
@@ -726,8 +734,12 @@
 #endif
 296	NOARGS		{ int|sys||__getcwd(char *bufp, size_t length); }
 297	NOARGS		{ int|sys||fchroot(int fd); }
+#if defined(COMPAT_30) || ! defined(_KERNEL)
 298	NOARGS		{ int|compat_30_sys||fhopen(const \
 			    struct compat_30_fhandle *fhp, int flags); }
+#else
+298	EXCL		compat_30_sys_fhopen
+#endif
 299	STD		{ int|aoutm68k_sys||fhstat(const struct \
 			    compat_30_fhandle *fhp, \
 			    struct aoutm68k_stat *sb); }
