@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_test.h,v 1.16 2016/12/26 23:05:05 christos Exp $	*/
+/*	$NetBSD: npf_test.h,v 1.17 2018/09/29 14:41:36 rmind Exp $	*/
 
 /*
  * Public Domain.
@@ -88,7 +88,7 @@ void		npf_test_init(int (*)(int, const char *, void *),
 		    const char *(*)(int, const void *, char *, socklen_t),
 		    long (*)(void));
 void		npf_test_fini(void);
-int		npf_test_load(const void *);
+int		npf_test_load(const void *, size_t, bool);
 ifnet_t *	npf_test_addif(const char *, bool, bool);
 ifnet_t *	npf_test_getif(const char *);
 

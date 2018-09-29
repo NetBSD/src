@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2011/11/06 13:26:54 tron Exp $
+# $NetBSD: Makefile,v 1.2 2018/09/29 14:41:35 rmind Exp $
 
 .include "../Makefile.inc"
 
@@ -9,5 +9,6 @@ KMOD=		npf_alg_icmp
 SRCS=		npf_alg_icmp.c
 
 CPPFLAGS+=	-DINET6
+CPPFLAGS+=	-I${NETBSDSRCDIR}/sys/external/bsd/libnv/dist
 
 .include <bsd.kmodule.mk>
