@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.56 2018/01/06 16:41:23 kamil Exp $
+	$NetBSD: syscalls.master,v 1.56.2.1 2018/09/29 01:45:05 pgoyette Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -255,10 +255,15 @@
 162	UNIMPL		umount
 163	UNIMPL		async_daemon
 164	NOARGS		{ int|compat_30_sys||getfh(char *fname, fhandle_t *fhp); }
+#if defined(COMPAT_09)
 165	NOARGS		{ int|compat_09_sys||getdomainname(char *domainname, \
 			    int len); }
 166	NOARGS		{ int|compat_09_sys||setdomainname(char *domainname, \
 			    int len); }
+#else
+165	UNIMPL		compat_09_sys_getdomainname
+166	UNIMPL		compat_09_sys_setdomainname
+#endif
 167	UNIMPL
 168	STD		{ int|ultrix_sys||quotactl(int cmd, char *special, \
 			    int uid, void *addr); }
