@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.20 2017/01/03 03:47:51 christos Exp $
+#	$NetBSD: Makefile,v 1.21 2018/09/29 14:41:36 rmind Exp $
 #
 # Public Domain.
 #
@@ -26,6 +26,8 @@ SRCS+=	npf_ext_log.c npf_ext_normalize.c npf_ext_rndblock.c
 SRCS+=	npf_component.c
 
 .include <bsd.own.mk>
+
+CPPFLAGS+=	-I ${NETBSDSRCDIR}/sys/external/bsd/libnv/dist
 
 .if ${RUMP_NPF_TESTING:Uyes} == "yes"
 CPPFLAGS+=	-D_NPF_TESTING

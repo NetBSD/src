@@ -1,5 +1,3 @@
-/*	$NetBSD: npf_ext_log.c,v 1.14 2018/06/26 06:48:02 msaitoh Exp $	*/
-
 /*-
  * Copyright (c) 2010-2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -35,7 +33,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_ext_log.c,v 1.14 2018/06/26 06:48:02 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_ext_log.c,v 1.15 2018/09/29 14:41:36 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/module.h>
@@ -65,12 +63,12 @@ typedef struct {
 } npf_ext_log_t;
 
 static int
-npf_log_ctor(npf_rproc_t *rp, prop_dictionary_t params)
+npf_log_ctor(npf_rproc_t *rp, const nvlist_t *params)
 {
 	npf_ext_log_t *meta;
 
 	meta = kmem_zalloc(sizeof(npf_ext_log_t), KM_SLEEP);
-	prop_dictionary_get_uint32(params, "log-interface", &meta->if_idx);
+	meta->if_idx = dnvlist_get_number(params, "log-interface", 0);
 	npf_rproc_assign(rp, meta);
 	return 0;
 }
@@ -144,8 +142,9 @@ npf_log(npf_cache_t *npc, void *meta, const npf_match_info_t *mi, int *decision)
 	/* Pass through BPF. */
 	ifp->if_opackets++;
 	ifp->if_obytes += m->m_pkthdr.len;
-	if (ifp->if_bpf)
+	if (ifp->if_bpf) {
 		bpf_mtap2(ifp->if_bpf, &hdr, NPFLOG_HDRLEN, m, BPF_D_OUT);
+	}
 	if_put(ifp, &psref);
 
 	KERNEL_UNLOCK_ONE(NULL);

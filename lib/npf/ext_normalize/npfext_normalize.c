@@ -1,4 +1,4 @@
-/*	$NetBSD: npfext_normalize.c,v 1.1 2013/03/10 21:49:26 christos Exp $	*/
+/*	$NetBSD: npfext_normalize.c,v 1.2 2018/09/29 14:41:37 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -27,9 +27,10 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npfext_normalize.c,v 1.1 2013/03/10 21:49:26 christos Exp $");
+__RCSID("$NetBSD: npfext_normalize.c,v 1.2 2018/09/29 14:41:37 rmind Exp $");
 
 #include <stdlib.h>
+#include <stdbool.h>
 #include <string.h>
 #include <assert.h>
 #include <errno.h>

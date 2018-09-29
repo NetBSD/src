@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.c,v 1.95 2018/09/24 21:15:39 jdolecek Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.c,v 1.96 2018/09/29 14:41:35 rmind Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.95 2018/09/24 21:15:39 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.96 2018/09/29 14:41:35 rmind Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ntp.h"
@@ -72,8 +72,6 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.95 2018/09/24 21:15:39 jdolecek
 
 #include <net/if_pppoe.h>
 #include <net/if_sppp.h>
-
-#include <net/npf/npf.h>
 
 #include <net/bpf.h>
 #include <netinet/in.h>
@@ -488,28 +486,6 @@ netbsd32_to_ksyms_gvalue(
 {
 
 	p->kv_name = NETBSD32PTR64(s32p->kv_name);
-}
-
-static inline void
-netbsd32_to_npf_ioctl_table(
-    const struct netbsd32_npf_ioctl_table *s32p,
-    struct npf_ioctl_table *p,
-    u_long cmd)
-{
-
-	p->nct_cmd = s32p->nct_cmd;
-	p->nct_name = NETBSD32PTR64(s32p->nct_name);
-	switch (s32p->nct_cmd) {
-	case NPF_CMD_TABLE_LOOKUP:
-	case NPF_CMD_TABLE_ADD:
-	case NPF_CMD_TABLE_REMOVE:
-		p->nct_data.ent = s32p->nct_data.ent;
-		break;
-	case NPF_CMD_TABLE_LIST:
-		p->nct_data.buf.buf = NETBSD32PTR64(s32p->nct_data.buf.buf);
-		p->nct_data.buf.len = s32p->nct_data.buf.len;
-		break;
-	}
 }
 
 static inline void
@@ -953,28 +929,6 @@ netbsd32_from_ksyms_gvalue(
 
 	NETBSD32PTR32(s32p->kv_name, p->kv_name);
 	s32p->kv_value = p->kv_value;
-}
-
-static inline void
-netbsd32_from_npf_ioctl_table(
-    const struct npf_ioctl_table *p,
-    struct netbsd32_npf_ioctl_table *s32p,
-    u_long cmd)
-{
-
-	s32p->nct_cmd = p->nct_cmd;
-	NETBSD32PTR32(s32p->nct_name, p->nct_name);
-	switch (p->nct_cmd) {
-	case NPF_CMD_TABLE_LOOKUP:
-	case NPF_CMD_TABLE_ADD:
-	case NPF_CMD_TABLE_REMOVE:
-		s32p->nct_data.ent = p->nct_data.ent;
-		break;
-	case NPF_CMD_TABLE_LIST:
-		NETBSD32PTR32(s32p->nct_data.buf.buf, p->nct_data.buf.buf);
-		s32p->nct_data.buf.len = p->nct_data.buf.len;
-		break;
-	}
 }
 
 static inline void
@@ -1458,17 +1412,6 @@ netbsd32_ioctl(struct lwp *l, const struct netbsd32_ioctl_args *uap, register_t 
 		IOCTL_STRUCT_CONV_TO(KIOCGSYMBOL, ksyms_gsymbol);
 	case KIOCGVALUE32:
 		IOCTL_STRUCT_CONV_TO(KIOCGVALUE, ksyms_gvalue);
-
-	case IOC_NPF_LOAD32:
-		IOCTL_STRUCT_CONV_TO(IOC_NPF_LOAD, plistref);
-	case IOC_NPF_TABLE32:
-		IOCTL_STRUCT_CONV_TO(IOC_NPF_TABLE, npf_ioctl_table);
-	case IOC_NPF_STATS32:
-		IOCTL_CONV_TO(IOC_NPF_STATS, voidp);
-	case IOC_NPF_SAVE32:
-		IOCTL_STRUCT_CONV_TO(IOC_NPF_SAVE, plistref);
-	case IOC_NPF_RULE32:
-		IOCTL_STRUCT_CONV_TO(IOC_NPF_RULE, plistref);
 
 	case DRVRESCANBUS32:
 		IOCTL_STRUCT_CONV_TO(DRVRESCANBUS, devrescanargs);

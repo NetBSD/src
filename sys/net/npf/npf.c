@@ -1,5 +1,3 @@
-/*	$NetBSD: npf.c,v 1.35 2018/09/12 21:58:38 christos Exp $	*/
-
 /*-
  * Copyright (c) 2009-2013 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -35,7 +33,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.35 2018/09/12 21:58:38 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.36 2018/09/29 14:41:36 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -48,7 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.35 2018/09/12 21:58:38 christos Exp $");
 #include "npf_impl.h"
 #include "npf_conn.h"
 
-__read_mostly static npf_t *	npf_kernel_ctx = NULL;
+static __read_mostly npf_t *	npf_kernel_ctx = NULL;
 
 __dso_public int
 npf_sysinit(unsigned nworkers)
@@ -111,9 +109,9 @@ npf_destroy(npf_t *npf)
 }
 
 __dso_public int
-npf_load(npf_t *npf, void *ref, npf_error_t *err)
+npf_load(npf_t *npf, void *config_ref, npf_error_t *err)
 {
-	return npfctl_load(npf, 0, ref);
+	return npfctl_load(npf, 0, config_ref);
 }
 
 __dso_public void
@@ -126,6 +124,13 @@ __dso_public void
 npf_thread_register(npf_t *npf)
 {
 	pserialize_register(npf->qsbr);
+}
+
+__dso_public void
+npf_thread_unregister(npf_t *npf)
+{
+	pserialize_perform(npf->qsbr);
+	pserialize_unregister(npf->qsbr);
 }
 
 void

@@ -1,5 +1,3 @@
-/*	$NetBSD: npf_state.c,v 1.18 2016/12/26 23:05:06 christos Exp $	*/
-
 /*-
  * Copyright (c) 2010-2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -35,7 +33,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_state.c,v 1.18 2016/12/26 23:05:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_state.c,v 1.19 2018/09/29 14:41:36 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

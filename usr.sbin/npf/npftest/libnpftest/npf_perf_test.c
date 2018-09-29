@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_perf_test.c,v 1.5 2016/12/26 23:05:05 christos Exp $	*/
+/*	$NetBSD: npf_perf_test.c,v 1.6 2018/09/29 14:41:36 rmind Exp $	*/
 
 /*
  * NPF benchmarking.
@@ -60,7 +60,7 @@ worker(void *arg)
 		int error;
 
 		error = npf_packet_handler(npf, &m, ifp, PFIL_OUT);
-		KASSERT(error == 0);
+		KASSERT(error == 0); (void)error;
 		n++;
 	}
 	npackets[i] = n;
@@ -86,7 +86,7 @@ npf_test_conc(bool st, unsigned nthreads)
 		error = kthread_create(PRI_NONE, KTHREAD_MUSTJOIN |
 		    KTHREAD_MPSAFE, NULL, worker, (void *)(uintptr_t)i,
 		    &l[i], "npfperf");
-		KASSERT(error == 0);
+		KASSERT(error == 0); (void)error;
 	}
 
 	/* Let them spin! */
