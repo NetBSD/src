@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep_16.c,v 1.1.2.1 2018/09/29 06:31:02 pgoyette Exp $	*/
+/*	$NetBSD: netbsd32_machdep_16.c,v 1.1.2.2 2018/09/29 06:55:33 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep_16.c,v 1.1.2.1 2018/09/29 06:31:02 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep_16.c,v 1.1.2.2 2018/09/29 06:55:33 pgoyette Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_coredump.h"
@@ -51,6 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep_16.c,v 1.1.2.1 2018/09/29 06:31:02 
 #include <sys/signalvar.h>
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
+#include <sys/module_hook.h>
 
 #include <compat/netbsd32/netbsd32.h>
 #include <compat/netbsd32/netbsd32_exec.h>
@@ -65,6 +66,8 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep_16.c,v 1.1.2.1 2018/09/29 06:31:02 
 #include <mips/pcb.h>
 
 #include <uvm/uvm_extern.h>
+
+void netbsd32_sendsig_siginfo(const ksiginfo_t *, const sigset_t *);
 
 #ifdef COMPAT_16
 int
