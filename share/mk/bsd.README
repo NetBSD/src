@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.384 2018/09/16 13:14:12 christos Exp $
+#	$NetBSD: bsd.README,v 1.385 2018/09/29 06:48:22 martin Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -581,6 +581,11 @@ USE_PIGZGZIP	If "no", use the host "gzip" program to compress things.
 		Otherwise, build tools/pigz, set TOOL_GZIP=${TOOL_PIGZ},
 		and use nbpigz to compress things.
 		Default: "no".
+
+USE_XZ_SETS	If "no", use the host "gzip" program to compress sets.
+		Otherwise use xz to compress things.
+		Default: "yes" for architectures with "enough" memory to
+		decompress, "no" for older ones.
 
 COPTS.lib<lib>
 OBJCOPTS.lib<lib>
