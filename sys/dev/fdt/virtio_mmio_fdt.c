@@ -1,4 +1,4 @@
-/* $NetBSD: virtio_mmio_fdt.c,v 1.2 2018/06/15 17:13:43 jakllsch Exp $ */
+/* $NetBSD: virtio_mmio_fdt.c,v 1.3 2018/09/29 15:56:25 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2018 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: virtio_mmio_fdt.c,v 1.2 2018/06/15 17:13:43 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: virtio_mmio_fdt.c,v 1.3 2018/09/29 15:56:25 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -95,7 +95,7 @@ virtio_mmio_fdt_attach(device_t parent, device_t self, void *aux)
 
 	error = bus_space_map(msc->sc_iot, addr, size, 0, &msc->sc_ioh);
 	if (error) {
-		aprint_error_dev(self, "couldn't map %#llx: %d",
+		aprint_error_dev(self, "couldn't map %#" PRIx64 ": %d",
 		    (uint64_t)addr, error);
 		return;
 	}
