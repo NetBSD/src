@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.104 2018/09/28 15:04:20 martin Exp $
+#	$NetBSD: Makefile,v 1.105 2018/09/29 06:36:29 kre Exp $
 
 # Experimental RCS METALOG versioning
 # (Needs host's rcs(1) commands)
@@ -15,7 +15,7 @@ all:
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
 
-.if ${USE_XZ_SETS} != "no"
+.if defined(USE_XZ_SETS) && ${USE_XZ_SETS} != "no"
 COMPRESS_PROGRAM=${TOOL_XZ}
 XZ_OPT=-9
 TAR_SUFF=tar.xz
