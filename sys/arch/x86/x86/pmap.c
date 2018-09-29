@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.307 2018/08/29 16:26:25 maxv Exp $	*/
+/*	$NetBSD: pmap.c,v 1.308 2018/09/29 13:19:38 cherry Exp $	*/
 
 /*
  * Copyright (c) 2008, 2010, 2016, 2017 The NetBSD Foundation, Inc.
@@ -130,7 +130,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.307 2018/08/29 16:26:25 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.308 2018/09/29 13:19:38 cherry Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -1225,7 +1225,7 @@ pmap_bootstrap(vaddr_t kva_start)
 #endif
 	ldt_paddr = pmap_bootstrap_palloc(1);
 
-#if !defined(__x86_64__) && !defined(XEN)
+#if !defined(__x86_64__)
 	/* pentium f00f bug stuff */
 	pentium_idt_vaddr = pmap_bootstrap_valloc(1);
 #endif
