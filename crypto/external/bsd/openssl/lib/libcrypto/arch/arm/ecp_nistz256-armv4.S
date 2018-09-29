@@ -1,3 +1,4 @@
+#include "arm_asm.h"
 #include "arm_arch.h"
 
 .text
@@ -2416,7 +2417,7 @@ ecp_nistz256_mul_by_2:
 	ldmia	sp!,{r4,r5,r6,r7,r8,r9,r10,r11,r12,pc}
 #else
 	ldmia	sp!,{r4,r5,r6,r7,r8,r9,r10,r11,r12,lr}
-	bx	lr			@ interoperable with Thumb ISA:-)
+	RET			@ interoperable with Thumb ISA:-)
 #endif
 .size	ecp_nistz256_mul_by_2,.-ecp_nistz256_mul_by_2
 
@@ -2457,7 +2458,7 @@ ecp_nistz256_add:
 	ldmia	sp!,{r4,r5,r6,r7,r8,r9,r10,r11,r12,pc}
 #else
 	ldmia	sp!,{r4,r5,r6,r7,r8,r9,r10,r11,r12,lr}
-	bx	lr			@ interoperable with Thumb ISA:-)
+	RET			@ interoperable with Thumb ISA:-)
 #endif
 .size	ecp_nistz256_add,.-ecp_nistz256_add
 
@@ -2547,7 +2548,7 @@ ecp_nistz256_mul_by_3:
 	ldmia	sp!,{r4,r5,r6,r7,r8,r9,r10,r11,r12,pc}
 #else
 	ldmia	sp!,{r4,r5,r6,r7,r8,r9,r10,r11,r12,lr}
-	bx	lr			@ interoperable with Thumb ISA:-)
+	RET			@ interoperable with Thumb ISA:-)
 #endif
 .size	ecp_nistz256_mul_by_3,.-ecp_nistz256_mul_by_3
 
@@ -2632,7 +2633,7 @@ ecp_nistz256_div_by_2:
 	ldmia	sp!,{r4,r5,r6,r7,r8,r9,r10,r11,r12,pc}
 #else
 	ldmia	sp!,{r4,r5,r6,r7,r8,r9,r10,r11,r12,lr}
-	bx	lr			@ interoperable with Thumb ISA:-)
+	RET			@ interoperable with Thumb ISA:-)
 #endif
 .size	ecp_nistz256_div_by_2,.-ecp_nistz256_div_by_2
 
@@ -2707,7 +2708,7 @@ ecp_nistz256_sub:
 	ldmia	sp!,{r4,r5,r6,r7,r8,r9,r10,r11,r12,pc}
 #else
 	ldmia	sp!,{r4,r5,r6,r7,r8,r9,r10,r11,r12,lr}
-	bx	lr			@ interoperable with Thumb ISA:-)
+	RET			@ interoperable with Thumb ISA:-)
 #endif
 .size	ecp_nistz256_sub,.-ecp_nistz256_sub
 
@@ -2783,7 +2784,7 @@ ecp_nistz256_neg:
 	ldmia	sp!,{r4,r5,r6,r7,r8,r9,r10,r11,r12,pc}
 #else
 	ldmia	sp!,{r4,r5,r6,r7,r8,r9,r10,r11,r12,lr}
-	bx	lr			@ interoperable with Thumb ISA:-)
+	RET			@ interoperable with Thumb ISA:-)
 #endif
 .size	ecp_nistz256_neg,.-ecp_nistz256_neg
 
@@ -2833,7 +2834,7 @@ ecp_nistz256_mul_mont:
 	ldmia	sp!,{r4,r5,r6,r7,r8,r9,r10,r11,r12,pc}
 #else
 	ldmia	sp!,{r4,r5,r6,r7,r8,r9,r10,r11,r12,lr}
-	bx	lr			@ interoperable with Thumb ISA:-)
+	RET			@ interoperable with Thumb ISA:-)
 #endif
 .size	ecp_nistz256_mul_mont,.-ecp_nistz256_mul_mont
 
@@ -3334,7 +3335,7 @@ ecp_nistz256_scatter_w5:
 
 	ldmia	sp!,{r4,r5,r6,r7,r8,r9,r10,r11}
 #if __ARM_ARCH__>=5 || defined(__thumb__)
-	bx	lr
+	RET
 #else
 	mov	pc,lr
 #endif
@@ -3415,7 +3416,7 @@ ecp_nistz256_gather_w5:
 
 	ldmia	sp!,{r4,r5,r6,r7,r8,r9,r10,r11}
 #if __ARM_ARCH__>=5 || defined(__thumb__)
-	bx	lr
+	RET
 #else
 	mov	pc,lr
 #endif
@@ -3443,7 +3444,7 @@ ecp_nistz256_scatter_w7:
 	bne	.Loop_scatter_w7
 
 #if __ARM_ARCH__>=5 || defined(__thumb__)
-	bx	lr
+	RET
 #else
 	mov	pc,lr
 #endif
@@ -3483,7 +3484,7 @@ ecp_nistz256_gather_w7:
 
 	ldmia	sp!,{r4,r5,r6,r7}
 #if __ARM_ARCH__>=5 || defined(__thumb__)
-	bx	lr
+	RET
 #else
 	mov	pc,lr
 #endif
@@ -3728,7 +3729,7 @@ ecp_nistz256_point_double:
 	ldmia	sp!,{r4,r5,r6,r7,r8,r9,r10,r11,r12,pc}
 #else
 	ldmia	sp!,{r4,r5,r6,r7,r8,r9,r10,r11,r12,lr}
-	bx	lr			@ interoperable with Thumb ISA:-)
+	RET			@ interoperable with Thumb ISA:-)
 #endif
 .size	ecp_nistz256_point_double,.-ecp_nistz256_point_double
 .globl	ecp_nistz256_point_add
@@ -4118,7 +4119,7 @@ ecp_nistz256_point_add:
 	ldmia	sp!,{r4,r5,r6,r7,r8,r9,r10,r11,r12,pc}
 #else
 	ldmia	sp!,{r4,r5,r6,r7,r8,r9,r10,r11,r12,lr}
-	bx	lr			@ interoperable with Thumb ISA:-)
+	RET			@ interoperable with Thumb ISA:-)
 #endif
 .size	ecp_nistz256_point_add,.-ecp_nistz256_point_add
 .globl	ecp_nistz256_point_add_affine
@@ -4435,6 +4436,6 @@ ecp_nistz256_point_add_affine:
 	ldmia	sp!,{r4,r5,r6,r7,r8,r9,r10,r11,r12,pc}
 #else
 	ldmia	sp!,{r4,r5,r6,r7,r8,r9,r10,r11,r12,lr}
-	bx	lr			@ interoperable with Thumb ISA:-)
+	RET			@ interoperable with Thumb ISA:-)
 #endif
 .size	ecp_nistz256_point_add_affine,.-ecp_nistz256_point_add_affine

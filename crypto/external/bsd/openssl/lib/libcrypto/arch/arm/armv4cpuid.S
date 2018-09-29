@@ -1,3 +1,4 @@
+#include "arm_asm.h"
 #include "arm_arch.h"
 
 .text
@@ -20,7 +21,7 @@ OPENSSL_atomic_add:
 	cmp	r2,#0
 	bne	.Ladd
 	mov	r0,r3
-	bx	lr
+	RET
 #else
 	stmdb	sp!,{r4,r5,r6,lr}
 	ldr	r2,.Lspinlock
@@ -42,7 +43,7 @@ OPENSSL_atomic_add:
 	ldmia	sp!,{r4,r5,r6,lr}
 	tst	lr,#1
 	moveq	pc,lr
-.word	0xe12fff1e	@ bx	lr
+.word	0xe12fff1e	@ RET
 #endif
 .size	OPENSSL_atomic_add,.-OPENSSL_atomic_add
 
@@ -77,11 +78,11 @@ OPENSSL_cleanse:
 	bne	.Little
 .Lcleanse_done:
 #if __ARM_ARCH__>=5
-	bx	lr
+	RET
 #else
 	tst	lr,#1
 	moveq	pc,lr
-.word	0xe12fff1e	@ bx	lr
+.word	0xe12fff1e	@ RET
 #endif
 .size	OPENSSL_cleanse,.-OPENSSL_cleanse
 
@@ -107,11 +108,11 @@ CRYPTO_memcmp:
 	rsb	r0,ip,#0
 	mov	r0,r0,lsr#31
 #if __ARM_ARCH__>=5
-	bx	lr
+	RET
 #else
 	tst	lr,#1
 	moveq	pc,lr
-.word	0xe12fff1e	@ bx	lr
+.word	0xe12fff1e	@ RET
 #endif
 .size	CRYPTO_memcmp,.-CRYPTO_memcmp
 
@@ -124,7 +125,7 @@ CRYPTO_memcmp:
 .type	_armv7_neon_probe,%function
 _armv7_neon_probe:
 	vorr	q0,q0,q0
-	bx	lr
+	RET
 .size	_armv7_neon_probe,.-_armv7_neon_probe
 
 .globl	_armv7_tick
@@ -135,7 +136,7 @@ _armv7_tick:
 #else
 	mrrc	p15,1,r0,r1,c14		@ CNTVCT
 #endif
-	bx	lr
+	RET
 .size	_armv7_tick,.-_armv7_tick
 
 .globl	_armv8_aes_probe
@@ -146,7 +147,7 @@ _armv8_aes_probe:
 #else
 .byte	0x00,0x03,0xb0,0xf3	@ aese.8	q0,q0
 #endif
-	bx	lr
+	RET
 .size	_armv8_aes_probe,.-_armv8_aes_probe
 
 .globl	_armv8_sha1_probe
@@ -157,7 +158,7 @@ _armv8_sha1_probe:
 #else
 .byte	0x40,0x0c,0x00,0xf2	@ sha1c.32	q0,q0,q0
 #endif
-	bx	lr
+	RET
 .size	_armv8_sha1_probe,.-_armv8_sha1_probe
 
 .globl	_armv8_sha256_probe
@@ -168,7 +169,7 @@ _armv8_sha256_probe:
 #else
 .byte	0x40,0x0c,0x00,0xf3	@ sha256h.32	q0,q0,q0
 #endif
-	bx	lr
+	RET
 .size	_armv8_sha256_probe,.-_armv8_sha256_probe
 .globl	_armv8_pmull_probe
 .type	_armv8_pmull_probe,%function
@@ -178,7 +179,7 @@ _armv8_pmull_probe:
 #else
 .byte	0x00,0x0e,0xa0,0xf2	@ vmull.p64	q0,d0,d0
 #endif
-	bx	lr
+	RET
 .size	_armv8_pmull_probe,.-_armv8_pmull_probe
 #endif
 
@@ -215,11 +216,11 @@ OPENSSL_wipe_cpu:
 #endif
 	mov	r0,sp
 #if __ARM_ARCH__>=5
-	bx	lr
+	RET
 #else
 	tst	lr,#1
 	moveq	pc,lr
-.word	0xe12fff1e	@ bx	lr
+.word	0xe12fff1e	@ RET
 #endif
 .size	OPENSSL_wipe_cpu,.-OPENSSL_wipe_cpu
 
@@ -228,11 +229,11 @@ OPENSSL_wipe_cpu:
 OPENSSL_instrument_bus:
 	eor	r0,r0,r0
 #if __ARM_ARCH__>=5
-	bx	lr
+	RET
 #else
 	tst	lr,#1
 	moveq	pc,lr
-.word	0xe12fff1e	@ bx	lr
+.word	0xe12fff1e	@ RET
 #endif
 .size	OPENSSL_instrument_bus,.-OPENSSL_instrument_bus
 
@@ -241,11 +242,11 @@ OPENSSL_instrument_bus:
 OPENSSL_instrument_bus2:
 	eor	r0,r0,r0
 #if __ARM_ARCH__>=5
-	bx	lr
+	RET
 #else
 	tst	lr,#1
 	moveq	pc,lr
-.word	0xe12fff1e	@ bx	lr
+.word	0xe12fff1e	@ RET
 #endif
 .size	OPENSSL_instrument_bus2,.-OPENSSL_instrument_bus2
 

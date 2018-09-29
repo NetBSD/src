@@ -1,3 +1,4 @@
+#include "arm_asm.h"
 .text
 
 .type	_vpaes_consts,%object
