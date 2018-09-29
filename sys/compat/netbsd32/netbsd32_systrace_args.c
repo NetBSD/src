@@ -1,4 +1,4 @@
-/* $NetBSD: netbsd32_systrace_args.c,v 1.24.2.13 2018/09/14 10:41:47 pgoyette Exp $ */
+/* $NetBSD: netbsd32_systrace_args.c,v 1.24.2.14 2018/09/29 04:11:45 pgoyette Exp $ */
 
 /*
  * System call argument to DTrace register array converstion.
@@ -1246,7 +1246,6 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 		*n_args = 5;
 		break;
 	}
-#if defined(NTP) || !defined(_KERNEL_OPT)
 	/* netbsd32_ntp_gettime */
 	case 175: {
 		const struct compat_30_netbsd32_ntp_gettime_args *p = params;
@@ -1261,8 +1260,6 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 		*n_args = 1;
 		break;
 	}
-#else
-#endif
 	/* netbsd32_setgid */
 	case 181: {
 		const struct netbsd32_setgid_args *p = params;
@@ -2772,7 +2769,6 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 		*n_args = 2;
 		break;
 	}
-#if defined(NTP) || !defined(_KERNEL_OPT)
 	/* netbsd32_ntp_gettime */
 	case 393: {
 		const struct compat_50_netbsd32_ntp_gettime_args *p = params;
@@ -2780,8 +2776,6 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 		*n_args = 1;
 		break;
 	}
-#else
-#endif
 	/* netbsd32___socket30 */
 	case 394: {
 		const struct netbsd32___socket30_args *p = params;
@@ -5511,7 +5505,6 @@ systrace_entry_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 			break;
 		};
 		break;
-#if defined(NTP) || !defined(_KERNEL_OPT)
 	/* netbsd32_ntp_gettime */
 	case 175:
 		switch(ndx) {
@@ -5532,8 +5525,6 @@ systrace_entry_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 			break;
 		};
 		break;
-#else
-#endif
 	/* netbsd32_setgid */
 	case 181:
 		switch(ndx) {
@@ -8117,7 +8108,6 @@ systrace_entry_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 			break;
 		};
 		break;
-#if defined(NTP) || !defined(_KERNEL_OPT)
 	/* netbsd32_ntp_gettime */
 	case 393:
 		switch(ndx) {
@@ -8128,8 +8118,6 @@ systrace_entry_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 			break;
 		};
 		break;
-#else
-#endif
 	/* netbsd32___socket30 */
 	case 394:
 		switch(ndx) {
@@ -10137,7 +10125,6 @@ systrace_return_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 		if (ndx == 0 || ndx == 1)
 			p = "netbsd32_ssize_t";
 		break;
-#if defined(NTP) || !defined(_KERNEL_OPT)
 	/* netbsd32_ntp_gettime */
 	case 175:
 		if (ndx == 0 || ndx == 1)
@@ -10148,8 +10135,6 @@ systrace_return_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 		if (ndx == 0 || ndx == 1)
 			p = "int";
 		break;
-#else
-#endif
 	/* netbsd32_setgid */
 	case 181:
 		if (ndx == 0 || ndx == 1)
@@ -11006,14 +10991,11 @@ systrace_return_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 		if (ndx == 0 || ndx == 1)
 			p = "int";
 		break;
-#if defined(NTP) || !defined(_KERNEL_OPT)
 	/* netbsd32_ntp_gettime */
 	case 393:
 		if (ndx == 0 || ndx == 1)
 			p = "int";
 		break;
-#else
-#endif
 	/* netbsd32___socket30 */
 	case 394:
 		if (ndx == 0 || ndx == 1)
