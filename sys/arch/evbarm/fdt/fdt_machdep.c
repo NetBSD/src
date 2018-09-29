@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_machdep.c,v 1.39 2018/09/26 09:06:48 bouyer Exp $ */
+/* $NetBSD: fdt_machdep.c,v 1.40 2018/09/29 15:50:29 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.39 2018/09/26 09:06:48 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.40 2018/09/29 15:50:29 jmcneill Exp $");
 
 #include "opt_machdep.h"
 #include "opt_bootconfig.h"
@@ -112,7 +112,7 @@ static uint64_t initrd_start, initrd_end;
 
 #include <libfdt.h>
 #include <dev/fdt/fdtvar.h>
-#define FDT_BUF_SIZE	(256*1024)
+#define FDT_BUF_SIZE	(512*1024)
 static uint8_t fdt_data[FDT_BUF_SIZE];
 
 extern char KERNEL_BASE_phys[];
