@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.80.2.1 2018/09/29 02:06:14 pgoyette Exp $
+	$NetBSD: syscalls.master,v 1.80.2.2 2018/09/29 02:29:42 pgoyette Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -276,19 +276,19 @@
 			    int flags, void *data); }
 168	STD		{ int|sunos_sys||ustat(int dev, \
 			    struct sunos_ustat *buf); }
-#ifdef SYSVSEM
+#if defined(SYSVSEM) && defined(COMPAT_10)
 169	NOARGS		{ int|compat_10_sys||semsys(int which, int a2, int a3, \
 			    int a4, int a5); }
 #else
 169	UNIMPL		semsys
 #endif
-#ifdef SYSVMSG
+#if defined(SYSVMSG) && defined(COMPAT_10)
 170	NOARGS		{ int|compat_10_sys||msgsys(int which, int a2, int a3, \
 			    int a4, int a5, int a6); }
 #else
 170	UNIMPL		msgsys
 #endif
-#ifdef SYSVSHM
+#if defined(SYSVSHM) && defined(COMPAT_10)
 171	NOARGS		{ int|compat_10_sys||shmsys(int which, int a2, int a3, \
 			    int a4); }
 #else
