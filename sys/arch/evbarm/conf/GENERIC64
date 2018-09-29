@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC64,v 1.38 2018/09/26 20:25:51 jakllsch Exp $
+#	$NetBSD: GENERIC64,v 1.39 2018/09/29 16:02:09 jmcneill Exp $
 #
 #	GENERIC ARM (aarch64) kernel
 #
@@ -360,5 +360,13 @@ usb*		at usbus?
 
 include "dev/usb/usbdevices.config"
 midi*		at midibus?
+
+# Virtio devices
+virtio*		at fdt?			# Virtio MMIO device
+#viomb*		at virtio?		# Virtio memory balloon device
+ld*		at virtio?		# Virtio disk device
+vioif*		at virtio?		# Virtio network device
+viornd*		at virtio?		# Virtio entropy device
+vioscsi*	at virtio?		# Virtio SCSI device
 
 cinclude "arch/evbarm/conf/GENERIC64.local"
