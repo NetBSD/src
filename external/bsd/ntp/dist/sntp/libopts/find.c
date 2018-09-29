@@ -1,5 +1,3 @@
-/*	$NetBSD: find.c,v 1.1.1.8 2016/05/01 15:57:23 christos Exp $	*/
-
 /**
  * @file check.c
  *

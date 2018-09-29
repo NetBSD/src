@@ -1,5 +1,3 @@
-/*	$NetBSD: stdlib.h,v 1.1.1.6 2016/01/08 21:21:22 christos Exp $	*/
-
 /*
  * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2003  Internet Software Consortium.
@@ -17,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: stdlib.h,v 1.8 2007/06/19 23:47:18 tbox Exp  */
+/* $Id: stdlib.h,v 1.1.1.7 2018/09/29 17:28:41 christos Exp $ */
 
 #ifndef ISC_STDLIB_H
 #define ISC_STDLIB_H 1

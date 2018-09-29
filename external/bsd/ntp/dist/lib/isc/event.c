@@ -1,5 +1,3 @@
-/*	$NetBSD: event.c,v 1.1.1.7 2016/01/08 21:21:22 christos Exp $	*/
-
 /*
  * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2001  Internet Software Consortium.
@@ -17,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: event.c,v 1.21 2007/06/19 23:47:17 tbox Exp  */
+/* $Id: event.c,v 1.1.1.8 2018/09/29 17:28:40 christos Exp $ */
 
 /*!
  * \file

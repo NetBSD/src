@@ -1,5 +1,3 @@
-/*	$NetBSD: refclock_true.c,v 1.1.1.9 2016/01/08 21:21:25 christos Exp $	*/
-
 /*
  * refclock_true - clock driver for the Kinemetrics/TrueTime receivers
  *	Receiver Version 3.0C - tested plain, with CLKLDISC
@@ -642,7 +640,7 @@ true_send(
 		size_t len = strlen(cmd);
 
 		true_debug(peer, "Send '%s'\n", cmd);
-		if (write(pp->io.fd, cmd, (unsigned)len) != len)
+		if (write(pp->io.fd, cmd, len) != (ssize_t)len)
 			refclock_report(peer, CEVNT_FAULT);
 		else
 			pp->polls++;

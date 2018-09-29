@@ -1,5 +1,3 @@
-/*	$NetBSD: entropy.c,v 1.1.1.6 2016/01/08 21:21:23 christos Exp $	*/
-
 /*
  * Copyright (C) 2004-2008  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2003  Internet Software Consortium.
@@ -17,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: entropy.c,v 1.82 2008/12/01 23:47:45 tbox Exp  */
+/* $Id: entropy.c,v 1.1.1.7 2018/09/29 17:28:41 christos Exp $ */
 
 /* \file unix/entropy.c
  * \brief

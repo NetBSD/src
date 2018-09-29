@@ -1,5 +1,3 @@
-/*	$NetBSD: rc_cmdlength.c,v 1.1.1.5 2016/01/08 21:21:25 christos Exp $	*/
-
 #include <config.h>
 #include <rc_cmdlength.h>
 
@@ -7,6 +5,8 @@
 # include <unistd.h>
 #endif
 
+// XXX: Move to header.
+size_t remoteconfig_cmdlength( const char *, const char *);
 
 /* Bug 2853 */
 /* evaluate the length of the command sequence. This breaks at the first

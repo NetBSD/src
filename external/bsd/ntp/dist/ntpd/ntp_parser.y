@@ -1,5 +1,3 @@
-/*	$NetBSD: ntp_parser.y,v 1.1.1.15 2018/04/07 00:15:48 christos Exp $	*/
-
 /* ntp_parser.y
  *
  * The parser for the NTP configuration file.
@@ -23,6 +21,7 @@
   #include "ntp_scanner.h"
   #include "ntp_config.h"
   #include "ntp_crypto.h"
+  #include "ntp_calendar.h"
 
   #include "ntpsim.h"		/* HMS: Do we really want this all the time? */
 				/* SK: It might be a good idea to always

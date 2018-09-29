@@ -1,5 +1,3 @@
-/*	$NetBSD: ntp_datum.h,v 1.1.1.5 2016/01/08 21:21:23 christos Exp $	*/
-
 struct btfp_time                /* Structure for reading 5 time words   */
                                 /* in one ioctl(2) operation.           */
 {

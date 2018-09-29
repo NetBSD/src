@@ -1,5 +1,3 @@
-/*	$NetBSD: refclock_datum.c,v 1.1.1.7 2017/04/13 19:17:28 christos Exp $	*/
-
 /*
 ** refclock_datum - clock driver for the Datum Programmable Time Server
 **
@@ -487,7 +485,8 @@ datum_pts_receive(
 	struct recvbuf *rbufp
 	)
 {
-	int i, nb;
+	int i;
+	size_t nb;
 	l_fp tstmp;
 	struct peer *p;
 	struct datum_pts_unit *datum_pts;

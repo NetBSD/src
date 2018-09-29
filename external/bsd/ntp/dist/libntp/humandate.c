@@ -1,5 +1,3 @@
-/*	$NetBSD: humandate.c,v 1.1.1.8 2016/01/08 21:21:24 christos Exp $	*/
-
 /*
  * humandate.c - convert an NTP (or the current) time to something readable
  */

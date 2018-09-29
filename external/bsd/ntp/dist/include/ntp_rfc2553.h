@@ -1,5 +1,3 @@
-/*	$NetBSD: ntp_rfc2553.h,v 1.1.1.7 2016/01/08 21:21:23 christos Exp $	*/
-
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * All rights reserved.

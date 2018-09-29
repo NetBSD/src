@@ -1,5 +1,3 @@
-/*	$NetBSD: caltontp.c,v 1.1.1.7 2016/01/08 21:21:24 christos Exp $	*/
-
 /*
  * caltontp - convert a date to an NTP time
  */

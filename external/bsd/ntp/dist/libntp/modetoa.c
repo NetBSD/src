@@ -1,5 +1,3 @@
-/*	$NetBSD: modetoa.c,v 1.1.1.8 2016/01/08 21:21:24 christos Exp $	*/
-
 /*
  * modetoa - return an asciized mode
  */

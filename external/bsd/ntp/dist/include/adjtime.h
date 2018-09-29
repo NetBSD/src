@@ -1,5 +1,3 @@
-/*	$NetBSD: adjtime.h,v 1.1.1.5 2016/01/08 21:21:23 christos Exp $	*/
-
 /*************************************************************************/
 /* (c) Copyright Tai Jin, 1988.  All Rights Reserved.                    */
 /*     Hewlett-Packard Laboratories.                                     */

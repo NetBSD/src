@@ -1,5 +1,3 @@
-/*	$NetBSD: lib.c,v 1.1.1.6 2016/01/08 21:21:22 christos Exp $	*/
-
 /*
  * Copyright (C) 2004, 2005, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
@@ -17,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: lib.c,v 1.16 2009/09/02 23:48:02 tbox Exp  */
+/* $Id: lib.c,v 1.1.1.7 2018/09/29 17:28:40 christos Exp $ */
 
 /*! \file */
 

@@ -1,5 +1,3 @@
-/*	$NetBSD: timevalops.h,v 1.1.1.5 2016/01/08 21:21:23 christos Exp $	*/
-
 /*
  * timevalops.h -- calculations on 'struct timeval' values
  *

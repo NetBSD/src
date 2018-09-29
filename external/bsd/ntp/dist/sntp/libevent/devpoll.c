@@ -1,5 +1,3 @@
-/*	$NetBSD: devpoll.c,v 1.1.1.5 2016/01/08 21:21:30 christos Exp $	*/
-
 /*
  * Copyright 2000-2009 Niels Provos <provos@citi.umich.edu>
  * Copyright 2009-2012 Niels Provos and Nick Mathewson

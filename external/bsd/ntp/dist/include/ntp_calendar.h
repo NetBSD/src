@@ -1,5 +1,3 @@
-/*	$NetBSD: ntp_calendar.h,v 1.1.1.10 2018/04/07 00:15:47 christos Exp $	*/
-
 /*
  * ntp_calendar.h - definitions for the calendar time-of-day routine
  */

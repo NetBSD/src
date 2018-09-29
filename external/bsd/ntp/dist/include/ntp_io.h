@@ -1,5 +1,3 @@
-/*	$NetBSD: ntp_io.h,v 1.1.1.8 2016/05/01 15:57:23 christos Exp $	*/
-
 #ifndef NTP_IO_H
 #define NTP_IO_H
 

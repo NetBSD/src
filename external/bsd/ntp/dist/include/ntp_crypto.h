@@ -1,5 +1,3 @@
-/*	$NetBSD: ntp_crypto.h,v 1.1.1.8 2017/04/13 19:17:26 christos Exp $	*/
-
 /*
  * ntp_crypto.h - definitions for cryptographic operations
  */

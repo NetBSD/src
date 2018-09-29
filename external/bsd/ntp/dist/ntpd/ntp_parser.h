@@ -1,5 +1,3 @@
-/*	$NetBSD: ntp_parser.h,v 1.1.1.15 2018/04/07 00:15:49 christos Exp $	*/
-
 /* A Bison parser, made by GNU Bison 3.0.4.  */
 
 /* Bison interface for Yacc-like parsers in C
@@ -456,7 +454,7 @@ extern int yydebug;
 
 union YYSTYPE
 {
-#line 51 "../../ntpd/ntp_parser.y" /* yacc.c:1909  */
+#line 52 "ntp_parser.y" /* yacc.c:1909  */
 
 	char *			String;
 	double			Double;

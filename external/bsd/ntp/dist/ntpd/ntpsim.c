@@ -1,5 +1,3 @@
-/*	$NetBSD: ntpsim.c,v 1.1.1.7 2018/04/07 00:15:48 christos Exp $	*/
-
 /* ntpdsim.c
  *
  * The source code for the ntp discrete event simulator. 

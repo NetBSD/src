@@ -1,5 +1,3 @@
-/*	$NetBSD: md5.c,v 1.1.1.6 2016/01/08 21:21:22 christos Exp $	*/
-
 /*
  * Copyright (C) 2004, 2005, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001  Internet Software Consortium.
@@ -17,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: md5.c,v 1.16 2009/02/06 23:47:42 tbox Exp  */
+/* $Id: md5.c,v 1.1.1.7 2018/09/29 17:28:40 christos Exp $ */
 
 /*! \file
  * This code implements the MD5 message-digest algorithm.

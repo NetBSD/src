@@ -1,5 +1,3 @@
-/*	$NetBSD: systime.c,v 1.1.1.9 2018/04/07 00:15:47 christos Exp $	*/
-
 /*
  * systime -- routines to fiddle a UNIX clock.
  *

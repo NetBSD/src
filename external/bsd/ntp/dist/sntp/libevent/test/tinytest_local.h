@@ -1,5 +1,3 @@
-/*	$NetBSD: tinytest_local.h,v 1.1.1.5 2016/01/08 21:21:31 christos Exp $	*/
-
 
 #include "util-internal.h"
 #ifdef _WIN32

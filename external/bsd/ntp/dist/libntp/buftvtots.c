@@ -1,5 +1,3 @@
-/*	$NetBSD: buftvtots.c,v 1.1.1.6 2016/01/08 21:21:24 christos Exp $	*/
-
 /*
  * buftvtots - pull a Unix-format (struct timeval) time stamp out of
  *	       an octet stream and convert it to a l_fp time stamp.

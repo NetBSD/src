@@ -1,5 +1,3 @@
-/*	$NetBSD: prettydate.c,v 1.1.1.9 2016/01/08 21:21:24 christos Exp $	*/
-
 /*
  * prettydate - convert a time stamp to something readable
  */
@@ -171,6 +169,11 @@ common_prettydate(
 	vint64	     sec;
 
 	LIB_GETBUF(bp);
+
+	if (ts->l_ui == 0 && ts->l_uf == 0) {
+		strlcpy (bp, "(no time)", LIB_BUFLENGTH);
+		return (bp);
+	}
 
 	/* get & fix milliseconds */
 	ntps = ts->l_ui;

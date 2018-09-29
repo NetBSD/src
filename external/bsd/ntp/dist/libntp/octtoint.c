@@ -1,5 +1,3 @@
-/*	$NetBSD: octtoint.c,v 1.1.1.7 2016/01/08 21:21:24 christos Exp $	*/
-
 /*
  * octtoint - convert an ascii string in octal to an unsigned
  *	      long, with error checking

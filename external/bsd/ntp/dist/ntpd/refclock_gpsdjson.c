@@ -1,5 +1,3 @@
-/*	$NetBSD: refclock_gpsdjson.c,v 1.1.1.11 2018/04/07 00:15:50 christos Exp $	*/
-
 /*
  * refclock_gpsdjson.c - clock driver as GPSD JSON client
  *	Juergen Perlinger (perlinger@ntp.org)
@@ -1138,7 +1136,7 @@ json_token_skip(
 	const json_ctx * ctx,
 	tok_ref          tid)
 {
-	if (tid >= 0 && (u_int)tid < ctx->ntok) {
+	if (tid >= 0 && tid < ctx->ntok) {
 		int len = ctx->tok[tid].size;
 		/* For arrays and objects, the size is the number of
 		 * ITEMS in the compound. Thats the number of objects in
@@ -1166,7 +1164,7 @@ json_token_skip(
 		/* The next condition should never be true, but paranoia
 		 * prevails...
 		 */
-		if (tid < 0 || (u_int)tid > ctx->ntok)
+		if (tid < 0 || tid > ctx->ntok)
 			tid = ctx->ntok;
 	}
 	return tid;

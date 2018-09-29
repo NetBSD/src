@@ -1,5 +1,3 @@
-/*	$NetBSD: bufferevent_sock.c,v 1.1.1.6 2016/01/08 21:21:30 christos Exp $	*/
-
 /*
  * Copyright (c) 2007-2012 Niels Provos and Nick Mathewson
  * Copyright (c) 2002-2006 Niels Provos <provos@citi.umich.edu>

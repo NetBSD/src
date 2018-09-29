@@ -1,5 +1,3 @@
-/*	$NetBSD: win32select.c,v 1.1.1.6 2016/01/08 21:21:30 christos Exp $	*/
-
 /*
  * Copyright 2007-2012 Niels Provos and Nick Mathewson
  * Copyright 2000-2007 Niels Provos <provos@citi.umich.edu>

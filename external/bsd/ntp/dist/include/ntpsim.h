@@ -1,5 +1,3 @@
-/*	$NetBSD: ntpsim.h,v 1.1.1.7 2016/01/08 21:21:23 christos Exp $	*/
-
 /* ntpsim.h
  *
  * The header file for the ntp discrete event simulator. 

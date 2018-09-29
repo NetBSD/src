@@ -1,5 +1,3 @@
-/*	$NetBSD: atoint.c,v 1.1.1.7 2016/01/08 21:21:24 christos Exp $	*/
-
 /*
  * atoint - convert an ascii string to a signed long, with error checking
  */

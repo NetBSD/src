@@ -1,5 +1,3 @@
-/*	$NetBSD: timespecops.c,v 1.1.1.7 2018/04/07 00:15:57 christos Exp $	*/
-
 #include "config.h"
 
 #include "ntp_types.h"

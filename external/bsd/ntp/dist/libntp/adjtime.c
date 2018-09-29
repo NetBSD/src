@@ -1,5 +1,3 @@
-/*	$NetBSD: adjtime.c,v 1.1.1.6 2018/04/07 00:15:47 christos Exp $	*/
-
 #ifdef HAVE_CONFIG_H
 # include <config.h>
 #endif

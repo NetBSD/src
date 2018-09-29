@@ -1,5 +1,3 @@
-/*	$NetBSD: refclock_ulink.c,v 1.1.1.6 2016/01/08 21:21:25 christos Exp $	*/
-
 /*
  * refclock_ulink - clock driver for Ultralink  WWVB receiver
  */

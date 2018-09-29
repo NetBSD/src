@@ -1,5 +1,3 @@
-/*	$NetBSD: strlcpy.c,v 1.1.1.5 2016/01/08 21:21:30 christos Exp $	*/
-
 /*	$OpenBSD: strlcpy.c,v 1.5 2001/05/13 15:40:16 deraadt Exp $	*/
 
 /*

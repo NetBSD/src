@@ -1,5 +1,3 @@
-/*	$NetBSD: time.h,v 1.1.1.6 2016/01/08 21:21:23 christos Exp $	*/
-
 /*
  * Copyright (C) 2004, 2006-2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2001  Internet Software Consortium.
@@ -17,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: time.h,v 1.35 2009/01/05 23:47:54 tbox Exp  */
+/* $Id: time.h,v 1.1.1.7 2018/09/29 17:28:40 christos Exp $ */
 
 #ifndef ISC_TIME_H
 #define ISC_TIME_H 1

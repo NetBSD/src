@@ -1,5 +1,3 @@
-/*	$NetBSD: ntp_workimpl.h,v 1.1.1.5 2016/01/08 21:21:23 christos Exp $	*/
-
 /*
  * ntp_workimpl.h - selects worker child implementation
  */

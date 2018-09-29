@@ -1,5 +1,3 @@
-/*	$NetBSD: rpc_struct.h,v 1.1.1.5 2016/01/08 21:21:31 christos Exp $	*/
-
 /*
  * Copyright (c) 2006-2007 Niels Provos <provos@citi.umich.edu>
  * Copyright (c) 2007-2012 Niels Provos and Nick Mathewson

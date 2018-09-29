@@ -1,5 +1,3 @@
-/*	$NetBSD: http.h,v 1.1.1.7 2016/01/08 21:21:31 christos Exp $	*/
-
 /*
  * Copyright (c) 2000-2007 Niels Provos <provos@citi.umich.edu>
  * Copyright (c) 2007-2012 Niels Provos and Nick Mathewson

@@ -1,5 +1,3 @@
-/*	$NetBSD: crypto.c,v 1.1.1.7 2018/04/07 00:15:53 christos Exp $	*/
-
 #include "config.h"
 #include "unity.h"
 #include "ntp_types.h"
@@ -87,7 +85,7 @@ test_MakeSHA1Mac(void)
 void
 test_MakeCMac(void)
 {
-#ifdef OPENSSL
+#if defined(OPENSSL) && defined(ENABLE_CMAC)
 
 	const char* PKT_DATA = "abcdefgh0123";
 	const int PKT_LEN = strlen(PKT_DATA);
@@ -193,7 +191,7 @@ test_VerifyCMAC(void)
 void
 VerifyOpenSSLCMAC(struct key *cmac)
 {
-#ifdef OPENSSL
+#if defined(OPENSSL) && defined(ENABLE_CMAC)
 
 	/* XXX: HMS: auth_md5 must be renamed/incorrect. */
 	// TEST_ASSERT_TRUE(auth_md5(PKT_DATA, PKT_LEN, CMAC_LENGTH, cmac));

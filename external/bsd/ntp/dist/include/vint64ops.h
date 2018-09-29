@@ -1,5 +1,3 @@
-/*	$NetBSD: vint64ops.h,v 1.1.1.5 2016/01/08 21:21:23 christos Exp $	*/
-
 /*
  * vint64ops.h - operations on 'vint64' values
  *

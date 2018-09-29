@@ -1,5 +1,3 @@
-/*	$NetBSD: networking.c,v 1.1.1.12 2018/04/07 00:15:52 christos Exp $	*/
-
 #include <config.h>
 #include "networking.h"
 #include "ntp_debug.h"

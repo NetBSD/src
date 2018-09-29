@@ -1,5 +1,3 @@
-/*	$NetBSD: clk_rcc8000.c,v 1.1.1.6 2016/01/08 21:21:24 christos Exp $	*/
-
 /*
  * /src/NTP/ntp4-dev/libparse/clk_rcc8000.c,v 4.9 2004/11/14 15:29:41 kardel RELEASE_20050508_A
  *

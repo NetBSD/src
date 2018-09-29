@@ -1,5 +1,3 @@
-/*	$NetBSD: kqueue.c,v 1.1.1.6 2016/01/08 21:21:30 christos Exp $	*/
-
 /*	$OpenBSD: kqueue.c,v 1.5 2002/07/10 14:41:31 art Exp $	*/
 
 /*

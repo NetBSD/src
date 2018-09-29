@@ -1,5 +1,3 @@
-/*	$NetBSD: intreswork.h,v 1.1.1.5 2016/01/08 21:21:23 christos Exp $	*/
-
 /*
  * intreswork.h -- declarations private to ntp_intres.c, ntp_worker.c.
  */

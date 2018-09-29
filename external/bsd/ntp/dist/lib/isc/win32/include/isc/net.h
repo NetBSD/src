@@ -1,5 +1,3 @@
-/*	$NetBSD: net.h,v 1.1.1.7 2016/01/08 21:21:23 christos Exp $	*/
-
 /*
  * Copyright (C) 2004, 2005, 2007, 2008, 2012  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
@@ -17,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id */
+/* $Id: net.h,v 1.1.1.8 2018/09/29 17:28:40 christos Exp $ */
 
 #ifndef ISC_NET_H
 #define ISC_NET_H 1

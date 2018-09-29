@@ -1,5 +1,3 @@
-/*	$NetBSD: proto.h,v 1.1.1.8 2016/01/08 21:21:32 christos Exp $	*/
-
 /* -*- buffer-read-only: t -*- vi: set ro:
  *
  * Prototypes for autoopts

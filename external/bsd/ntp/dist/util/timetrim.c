@@ -1,5 +1,3 @@
-/*	$NetBSD: timetrim.c,v 1.1.1.5 2016/01/08 21:21:34 christos Exp $	*/
-
 #if defined(sgi) || defined(_UNICOSMP)
 /*
  * timetrim.c

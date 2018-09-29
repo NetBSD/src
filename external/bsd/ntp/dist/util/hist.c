@@ -1,5 +1,3 @@
-/*	$NetBSD: hist.c,v 1.1.1.6 2016/01/08 21:21:33 christos Exp $	*/
-
 /*
  * This program can be used to calibrate the clock reading jitter of a
  * particular CPU and operating system. It first tickles every element

@@ -1,5 +1,3 @@
-/*	$NetBSD: refclock_jjy.c,v 1.1.1.12 2018/04/07 00:15:49 christos Exp $	*/
-
 /*
  * refclock_jjy - clock driver for JJY receivers
  */

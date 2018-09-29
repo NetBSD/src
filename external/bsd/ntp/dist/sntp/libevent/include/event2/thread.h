@@ -1,5 +1,3 @@
-/*	$NetBSD: thread.h,v 1.1.1.6 2016/01/08 21:21:31 christos Exp $	*/
-
 /*
  * Copyright (c) 2008-2012 Niels Provos and Nick Mathewson
  *

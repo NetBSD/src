@@ -1,5 +1,3 @@
-/*	$NetBSD: ntp_calendar.c,v 1.1.1.10 2018/04/07 00:15:47 christos Exp $	*/
-
 /*
  * ntp_calendar.c - calendar and helper functions
  *
@@ -1875,7 +1873,7 @@ basedate_eval_string(
 		goto buildstamp;
 	}
 
-	rc = scanf(str, "%lu%n", &ned, &nc);
+	rc = sscanf(str, "%lu%n", &ned, &nc);
 	if (rc == 1 && (size_t)nc == sl) {
 		if (ned <= INT32_MAX)
 			return (int32_t)ned;

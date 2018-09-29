@@ -1,5 +1,3 @@
-/*	$NetBSD: main.c,v 1.1.1.11 2018/04/07 00:15:52 christos Exp $	*/
-
 #include <config.h>
 
 #include <event2/util.h>
@@ -1610,3 +1608,10 @@ gettimeofday_cached(
 #endif
 }
 
+/* Dummy function to satisfy libntp/work_fork.c */
+int
+set_user_group_ids(
+	)
+{
+    return 1;
+}

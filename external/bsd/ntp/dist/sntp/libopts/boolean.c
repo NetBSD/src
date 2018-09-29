@@ -1,5 +1,3 @@
-/*	$NetBSD: boolean.c,v 1.1.1.8 2016/01/08 21:21:32 christos Exp $	*/
-
 
 /**
  * \file boolean.c

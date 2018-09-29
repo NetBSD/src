@@ -1,5 +1,3 @@
-/*	$NetBSD: kod_management.c,v 1.1.1.8 2017/04/13 19:17:33 christos Exp $	*/
-
 #include <config.h>
 #include <string.h>
 #include <sys/types.h>

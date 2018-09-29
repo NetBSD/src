@@ -1,5 +1,3 @@
-/*	$NetBSD: bufferevent_compat.h,v 1.1.1.5 2016/01/08 21:21:31 christos Exp $	*/
-
 /*
  * Copyright (c) 2007-2012 Niels Provos, Nick Mathewson
  * Copyright (c) 2000-2007 Niels Provos <provos@citi.umich.edu>

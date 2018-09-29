@@ -1,5 +1,3 @@
-/*	$NetBSD: ntpdc_ops.c,v 1.1.1.10 2018/04/07 00:15:50 christos Exp $	*/
-
 /*
  * ntpdc_ops.c - subroutines which are called to perform operations by
  *		 ntpdc

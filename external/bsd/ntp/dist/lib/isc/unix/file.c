@@ -1,5 +1,3 @@
-/*	$NetBSD: file.c,v 1.1.1.7 2016/01/08 21:21:23 christos Exp $	*/
-
 /*
  * Copyright (C) 2004, 2005, 2007, 2009, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2002  Internet Software Consortium.
@@ -50,7 +48,7 @@
  * SUCH DAMAGE.
  */
 
-/* Id */
+/* $Id: file.c,v 1.1.1.8 2018/09/29 17:28:41 christos Exp $ */
 
 /*! \file */
 

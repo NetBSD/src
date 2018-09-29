@@ -1,5 +1,3 @@
-/*	$NetBSD: jsmn.h,v 1.1.1.5 2016/01/08 21:21:23 christos Exp $	*/
-
 #ifndef __JSMN_H_
 #define __JSMN_H_
 

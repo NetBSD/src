@@ -1,5 +1,3 @@
-/*	$NetBSD: ieee754io.h,v 1.1.1.6 2016/01/08 21:21:23 christos Exp $	*/
-
 /*
  * /src/NTP/ntp4-dev/include/ieee754io.h,v 4.3 2005/04/16 17:32:10 kardel RELEASE_20050508_A
  *
