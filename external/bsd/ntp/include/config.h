@@ -312,6 +312,9 @@
 /* Provide the explicit 127.0.0.0/8 martian filter? */
 #define ENABLE_BUG3020_FIX 1
 
+/* Enable CMAC support? */
+#define ENABLE_CMAC 1
+
 /* nls support in libopts */
 /* #undef ENABLE_NLS */
 
@@ -374,6 +377,14 @@
 
 /* Define to 1 if you have the `daemon' function. */
 #define HAVE_DAEMON 1
+
+/* Define to 1 if you have the declaration of `siglongjmp', and to 0 if you
+   don't. */
+#define HAVE_DECL_SIGLONGJMP 1
+
+/* Define to 1 if you have the declaration of `sigsetjmp', and to 0 if you
+   don't. */
+#define HAVE_DECL_SIGSETJMP 1
 
 /* Define to 1 if you have the declaration of `strerror_r', and to 0 if you
    don't. */
@@ -660,6 +671,12 @@
 
 /* if you have NT Threads */
 /* #undef HAVE_NT_THREADS */
+
+/* Define to 1 if you have the <openssl/cmac.h> header file. */
+#define HAVE_OPENSSL_CMAC_H 1
+
+/* Define to 1 if you have the <openssl/hmac.h> header file. */
+#define HAVE_OPENSSL_HMAC_H 1
 
 /* Define to 1 if the system has the type `pid_t'. */
 #define HAVE_PID_T 1
@@ -968,6 +985,9 @@
 /* Define to 1 if you have the <sys/lock.h> header file. */
 #define HAVE_SYS_LOCK_H 1
 
+/* Define to 1 if you have the <sys/mac.h> header file. */
+/* #undef HAVE_SYS_MAC_H */
+
 /* Define to 1 if you have the <sys/mman.h> header file. */
 #define HAVE_SYS_MMAN_H 1
 
@@ -1127,6 +1147,9 @@
 
 /* Do we have the TIO serial stuff? */
 /* #undef HAVE_TIO_SERIAL_STUFF */
+
+/* Are TrustedBSD MAC policy privileges available? */
+/* #undef HAVE_TRUSTEDBSD_MAC */
 
 /* Define to 1 if the system has the type `uint16_t'. */
 #define HAVE_UINT16_T 1
@@ -1418,7 +1441,7 @@
 /* #undef NO_THREADS */
 
 /* Default location of crypto key info */
-#define NTP_KEYSDIR "/usr/etc"
+#define NTP_KEYSDIR "/etc"
 
 /* Path to sign daemon rendezvous socket */
 /* #undef NTP_SIGND_PATH */
@@ -1460,7 +1483,7 @@
 #define PACKAGE_NAME "ntp"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "ntp 4.2.8p11"
+#define PACKAGE_STRING "ntp 4.2.8p12"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "ntp"
@@ -1469,7 +1492,7 @@
 #define PACKAGE_URL "http://www.ntp.org./"
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "4.2.8p11"
+#define PACKAGE_VERSION "4.2.8p12"
 
 /* data dir */
 #define PERLLIBDIR "/usr/local/share/ntp/lib"
@@ -1624,7 +1647,7 @@ typedef unsigned int	uintptr_t;
 /* #undef USE_UDP_SIGPOLL */
 
 /* Version number of package */
-#define VERSION "4.2.8p11"
+#define VERSION "4.2.8p12"
 
 /* vsnprintf expands "%m" to strerror(errno) */
 /* #undef VSNPRINTF_PERCENT_M */

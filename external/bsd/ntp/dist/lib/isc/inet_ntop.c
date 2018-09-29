@@ -1,4 +1,4 @@
-/*	$NetBSD: inet_ntop.c,v 1.7 2016/01/08 21:35:36 christos Exp $	*/
+/*	$NetBSD: inet_ntop.c,v 1.8 2018/09/29 21:52:31 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -21,7 +21,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 static char rcsid[] =
-	"Id: inet_ntop.c,v 1.21 2009/07/17 23:47:41 tbox Exp ";
+/* Id */
 #endif /* LIBC_SCCS and not lint */
 
 #include <config.h>

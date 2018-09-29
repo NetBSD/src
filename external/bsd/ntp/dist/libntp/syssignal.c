@@ -1,4 +1,4 @@
-/*	$NetBSD: syssignal.c,v 1.4 2016/01/08 21:35:39 christos Exp $	*/
+/*	$NetBSD: syssignal.c,v 1.5 2018/09/29 21:52:33 christos Exp $	*/
 
 #ifdef HAVE_CONFIG_H
 # include <config.h>
@@ -140,12 +140,13 @@ set_ctrl_c_hook(
 
 	if (NULL == c_hook) {
 		handler = SIG_DFL;
-		ctrl_c_hook = NULL;
-	} else {
-		handler = &sigint_handler;
+		signal_no_reset(SIGINT, handler);
 		ctrl_c_hook = c_hook;
+	} else {
+		ctrl_c_hook = c_hook;
+		handler = &sigint_handler;
+		signal_no_reset(SIGINT, handler);
 	}
-	signal_no_reset(SIGINT, handler);
 }
 #else	/* SYS_WINNT follows */
 /*

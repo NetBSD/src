@@ -1,4 +1,4 @@
-/*	$NetBSD: sha2.h,v 1.4 2016/01/08 21:35:36 christos Exp $	*/
+/*	$NetBSD: sha2.h,v 1.5 2018/09/29 21:52:32 christos Exp $	*/
 
 /*
  * Copyright (C) 2005-2007, 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: sha2.h,v 1.12 2009/10/22 02:21:31 each Exp  */
+/* Id */
 
 /*	$FreeBSD: src/sys/crypto/sha2/sha2.h,v 1.1.2.1 2001/07/03 11:01:36 ume Exp $	*/
 /*	$KAME: sha2.h,v 1.3 2001/03/12 08:27:48 itojun Exp $	*/
