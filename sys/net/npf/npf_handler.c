@@ -1,5 +1,3 @@
-/*	$NetBSD: npf_handler.c,v 1.44 2018/07/10 16:49:09 maxv Exp $	*/
-
 /*-
  * Copyright (c) 2009-2013 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -37,7 +35,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_handler.c,v 1.44 2018/07/10 16:49:09 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_handler.c,v 1.45 2018/09/29 14:41:36 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
