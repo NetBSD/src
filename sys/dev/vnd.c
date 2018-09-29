@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.263.2.6 2018/09/19 04:12:43 pgoyette Exp $	*/
+/*	$NetBSD: vnd.c,v 1.263.2.7 2018/09/29 21:36:14 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.263.2.6 2018/09/19 04:12:43 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.263.2.7 2018/09/29 21:36:14 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vnd.h"
@@ -1113,9 +1113,7 @@ vndioctl_get(struct lwp *l, void *data, int unit, struct vattr *va)
 
 MODULE_CALL_HOOK_DECL(compat_vndioctl_30_hook, f,
     (u_long cmd, struct lwp *l, void *data, int unit, struct vattr *vattr,
-     int (*ff)(struct lwp *, void *, int, struct vattr *)),
-    (cmd, l, data, unit, vattr, ff),
-    enosys());
+     int (*ff)(struct lwp *, void *, int, struct vattr *)));
 MODULE_CALL_HOOK(compat_vndioctl_30_hook, f,
     (u_long cmd, struct lwp *l, void *data, int unit, struct vattr *vattr,
      int (*ff)(struct lwp *, void *, int, struct vattr *)),
@@ -1124,9 +1122,7 @@ MODULE_CALL_HOOK(compat_vndioctl_30_hook, f,
 
 MODULE_CALL_HOOK_DECL(compat_vndioctl_50_hook, f,
     (u_long cmd, struct lwp *l, void *data, int unit, struct vattr *vattr,
-     int (*ff)(struct lwp *, void *, int, struct vattr *)),
-    (cmd, l, data, unit, vattr, ff),
-    enosys());
+     int (*ff)(struct lwp *, void *, int, struct vattr *)));
 MODULE_CALL_HOOK(compat_vndioctl_50_hook, f,
     (u_long cmd, struct lwp *l, void *data, int unit, struct vattr *vattr,
      int (*ff)(struct lwp *, void *, int, struct vattr *)),
