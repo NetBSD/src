@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep_13.c,v 1.1.2.2 2018/09/29 08:07:54 pgoyette Exp $	*/
+/*	$NetBSD: netbsd32_machdep_13.c,v 1.1.2.3 2018/09/29 10:59:00 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep_13.c,v 1.1.2.2 2018/09/29 08:07:54 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep_13.c,v 1.1.2.3 2018/09/29 10:59:00 pgoyette Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_coredump.h"
@@ -65,9 +65,6 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep_13.c,v 1.1.2.2 2018/09/29 08:07:54 
 #include <mips/pcb.h>
 
 #include <uvm/uvm_extern.h>
-
-const char machine32[] = MACHINE;
-const char machine_arch32[] = MACHINE32_ARCH;
 
 #if 0
 cpu_coredump32
