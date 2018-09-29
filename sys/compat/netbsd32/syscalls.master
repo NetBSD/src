@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.120.2.18 2018/09/29 04:11:06 pgoyette Exp $
+	$NetBSD: syscalls.master,v 1.120.2.19 2018/09/29 04:22:31 pgoyette Exp $
 
 ;	from: NetBSD: syscalls.master,v 1.81 1998/07/05 08:49:50 jonathan Exp
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -419,7 +419,11 @@
 175	COMPAT_30 MODULAR compat_netbsd32_30	\
 			{ int|netbsd32||ntp_gettime( \
 			    netbsd32_ntptimeval50p_t ntvp); }
+#if defined(NTP) || !defined(_KERNEL_OPT)
 176	STD		{ int|netbsd32||ntp_adjtime(netbsd32_timexp_t tp); }
+#else
+176	EXCL		ntp_adjtime
+#endif
 177	UNIMPL
 178	UNIMPL
 179	UNIMPL
