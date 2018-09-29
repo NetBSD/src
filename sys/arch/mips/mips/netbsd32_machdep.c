@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.15.2.5 2018/09/29 09:45:51 pgoyette Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.15.2.6 2018/09/29 10:22:36 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.15.2.5 2018/09/29 09:45:51 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.15.2.6 2018/09/29 10:22:36 pgoyette Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_coredump.h"
@@ -75,7 +75,7 @@ netbsd32_cpu_upcall
 netbsd32_vm_default_addr
 #endif
 
-static int netbsd32_sendsig_siginfo(const ksiginfo_t *, const sigset_t *);
+int netbsd32_sendsig_siginfo(const ksiginfo_t *, const sigset_t *);
 
 struct sigframe_siginfo32 {
 	siginfo32_t sf_si;
@@ -85,7 +85,7 @@ struct sigframe_siginfo32 {
 /*
  * Send a signal to process.
  */
-static int
+int
 netbsd32_sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 {
 	struct lwp * const l = curlwp;
@@ -108,7 +108,7 @@ netbsd32_sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
         case 0:         /* handled by sendsig_sigcontext */
         case 1:         /* handled by sendsig_sigcontext */
         default:        /* unknown version */
-                printf("sendsig_siginfo: bad version %d\n",
+                printf("%s: bad version %d\n", __func__,
                     ps->sa_sigdesc[sig].sd_vers);
                 sigexit(l, SIGILL);
         case 2:
