@@ -14,7 +14,7 @@
 # C99-compliant implementations.
 #
 
-# $Id: snprintf.m4,v 1.1.1.6 2018/09/29 17:28:46 christos Exp $
+/* Id */
 
 # Copyright (c) 2008 Holger Weiss <holger@jhweiss.de>.
 #

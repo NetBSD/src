@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto.c,v 1.14 2018/04/07 00:19:53 christos Exp $	*/
+/*	$NetBSD: crypto.c,v 1.15 2018/09/29 21:52:34 christos Exp $	*/
 
 /*
  * HMS: we need to test:
@@ -13,13 +13,6 @@
 #include <ctype.h>
 #include "isc/string.h"
 #include "ntp_md5.h"
-
-/* HMS: We may not have OpenSSL, but we have our own AES-128-CMAC */
-#define  CMAC		"AES128CMAC"
-#ifdef OPENSSL
-# include "openssl/cmac.h"
-# define  AES_128_KEY_SIZE	16
-#endif /* OPENSSL */
 
 #ifndef EVP_MAX_MD_SIZE
 # define EVP_MAX_MD_SIZE 32
@@ -47,7 +40,7 @@ compute_mac(
 	INIT_SSL();
 	key_type = keytype_from_text(macname, NULL);
 
-#ifdef OPENSSL
+#if defined(OPENSSL) && defined(ENABLE_CMAC)
 	/* Check if CMAC key type specific code required */
 	if (key_type == NID_cmac) {
 		CMAC_CTX *	ctx    = NULL;

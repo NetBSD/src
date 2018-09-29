@@ -1,4 +1,4 @@
-/*	$NetBSD: inet_pton.c,v 1.8 2017/04/13 20:17:41 christos Exp $	*/
+/*	$NetBSD: inet_pton.c,v 1.9 2018/09/29 21:52:31 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
@@ -21,7 +21,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 static char rcsid[] =
-	"Id: inet_pton.c,v 1.19 2007/06/19 23:47:17 tbox Exp ";
+/* Id */
 #endif /* LIBC_SCCS and not lint */
 
 #include <config.h>

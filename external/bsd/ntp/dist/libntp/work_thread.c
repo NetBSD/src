@@ -1,4 +1,4 @@
-/*	$NetBSD: work_thread.c,v 1.6 2018/04/07 00:19:52 christos Exp $	*/
+/*	$NetBSD: work_thread.c,v 1.7 2018/09/29 21:52:33 christos Exp $	*/
 
 /*
  * work_thread.c - threads implementation for blocking worker child.
@@ -58,6 +58,17 @@
 # define THREAD_MAXSTACKSIZE THREAD_MINSTACKSIZE
 #endif
 
+/* need a good integer to store a pointer... */
+#ifndef UINTPTR_T
+# if defined(UINTPTR_MAX)
+#  define UINTPTR_T uintptr_t
+# elif defined(UINT_PTR)
+#  define UINTPTR_T UINT_PTR
+# else
+#  define UINTPTR_T size_t
+# endif
+#endif
+
 
 #ifdef SYS_WINNT
 
@@ -68,7 +79,7 @@ static BOOL	same_os_sema(const sem_ref obj, void * osobj);
 
 #else
 
-# define thread_exit(c)	pthread_exit((void*)(size_t)(c))
+# define thread_exit(c)	pthread_exit((void*)(UINTPTR_T)(c))
 # define tickle_sem	sem_post
 void *		blocking_thread(void *);
 static	void	block_thread_signals(sigset_t *);
@@ -376,7 +387,9 @@ send_blocking_resp_internal(
 	if (empty)
 	{
 #	    ifdef WORK_PIPE
-		write(c->resp_write_pipe, "", 1);
+		if (1 != write(c->resp_write_pipe, "", 1))
+			msyslog(LOG_WARNING, "async resolver: %s",
+				"failed to notify main thread!");
 #	    else
 		tickle_sem(c->responses_pending);
 #	    endif
