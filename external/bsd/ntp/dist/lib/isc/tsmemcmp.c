@@ -1,5 +1,3 @@
-/*	$NetBSD: tsmemcmp.c,v 1.1.1.1 2016/05/01 15:57:23 christos Exp $	*/
-
 /*
  * Copyright (C) 2004-2007, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001, 2003  Internet Software Consortium.
@@ -17,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id */
+/* $Id: tsmemcmp.c,v 1.1.1.2 2018/09/29 17:28:40 christos Exp $ */
 
 /*! \file */
 
