@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.238.2.9 2018/09/18 23:03:55 pgoyette Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.238.2.10 2018/09/29 21:36:14 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.238.2.9 2018/09/18 23:03:55 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.238.2.10 2018/09/29 21:36:14 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1383,16 +1383,14 @@ COMPATNAME(rt_missmsg)(int type, const struct rt_addrinfo *rtinfo, int flags,
  * COMPAT_xx options and we would otherwise end up with duplicate
  * global symbols.
  */
-MODULE_CALL_HOOK_DECL(rtsock14_hook, f1, (struct ifnet *ifp), (ifp), enosys());
+MODULE_CALL_HOOK_DECL(rtsock14_hook, f1, (struct ifnet *ifp));
 #ifndef COMPAT_RTSOCK
 MODULE_CALL_HOOK(rtsock14_hook, f1, (struct ifnet *ifp), (ifp), enosys());
 #endif
 
 MODULE_CALL_HOOK_DECL(rtsock14_hook, f2,
     (struct ifnet *ifp, struct rt_walkarg *w, struct rt_addrinfo *info,
-     size_t len),
-    (ifp, w, info, len),
-    enosys());
+     size_t len));
 #ifndef COMPAT_RTSOCK
 MODULE_CALL_HOOK(rtsock14_hook, f2,
     (struct ifnet *ifp, struct rt_walkarg *w, struct rt_addrinfo *info,

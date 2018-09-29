@@ -1,4 +1,4 @@
-/*	$NetBSD: ugen.c,v 1.139.2.4 2018/09/18 23:03:55 pgoyette Exp $	*/
+/*	$NetBSD: ugen.c,v 1.139.2.5 2018/09/29 21:36:14 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.139.2.4 2018/09/18 23:03:55 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.139.2.5 2018/09/29 21:36:14 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1442,9 +1442,7 @@ ugen_get_alt_index(struct ugen_softc *sc, int ifaceidx)
 MODULE_CALL_HOOK_DECL(usb_subr_30_hook, f1,
     (struct usbd_device *udev, struct usb_device_info_old * addr, int usedev,
       void (*fill_devinfo_vp)(struct usbd_device *, char *, size_t, char *,
-	size_t, int, int), int (*printBCD)(char *, size_t, int)),
-    (udev, addr, usedev, fill_devinfo_vp, printBCD),
-    enosys());
+	size_t, int, int), int (*printBCD)(char *, size_t, int)));
 
 Static int
 ugen_do_ioctl(struct ugen_softc *sc, int endpt, u_long cmd,

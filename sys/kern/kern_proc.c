@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.209.2.6 2018/09/23 11:50:03 pgoyette Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.209.2.7 2018/09/29 21:36:14 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.209.2.6 2018/09/23 11:50:03 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.209.2.7 2018/09/29 21:36:14 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_kstack.h"
@@ -1858,12 +1858,12 @@ sysctl_doeproc(SYSCTLFN_ARGS)
  */
 #if !defined(_RUMPKERNEL)
 MODULE_CALL_HOOK_DECL(kern_proc_32_hook, f1,
-    (struct proc *p, struct ps_strings *s), (p, s), enosys());
+    (struct proc *p, struct ps_strings *s));
 MODULE_CALL_HOOK(kern_proc_32_hook, f1,
     (struct proc *p, struct ps_strings *s), (p, s), enosys());
 
 MODULE_CALL_HOOK_DECL(kern_proc_32_hook, f2,
-    (char **argv, size_t i, vaddr_t *base), (argv, i, base), enosys());
+    (char **argv, size_t i, vaddr_t *base));
 MODULE_CALL_HOOK(kern_proc_32_hook, f2,
     (char **argv, size_t i, vaddr_t *base), (argv, i, base), enosys());
 #endif /* !defined(_RUMPKERNEL) */

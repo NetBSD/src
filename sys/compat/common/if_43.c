@@ -1,4 +1,4 @@
-/*	$NetBSD: if_43.c,v 1.14.2.5 2018/09/21 02:56:22 pgoyette Exp $	*/
+/*	$NetBSD: if_43.c,v 1.14.2.6 2018/09/29 21:36:13 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_43.c,v 1.14.2.5 2018/09/21 02:56:22 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_43.c,v 1.14.2.6 2018/09/29 21:36:13 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -85,7 +85,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_43.c,v 1.14.2.5 2018/09/21 02:56:22 pgoyette Exp 
  * XXX The if43_20 routine doesn't really have any effect, since its
  * XXX return value is ignored (see compat/common/if_43.c)!
  */
-MODULE_CALL_HOOK_DECL(if43_20_hook, f, (u_long ncmd), (ncmd), enosys());
+MODULE_CALL_HOOK_DECL(if43_20_hook, f, (u_long ncmd));
 MODULE_CALL_HOOK(if43_20_hook, f, (u_long ncmd), (ncmd), enosys());
 
 /* 

@@ -1,4 +1,4 @@
-/* $NetBSD: module_hook.h,v 1.1.2.3 2018/09/23 10:41:01 pgoyette Exp $	*/
+/* $NetBSD: module_hook.h,v 1.1.2.4 2018/09/29 21:36:15 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -161,7 +161,7 @@ static void (hook ## _unset)(void)				\
 	pserialize_destroy(hook.psz);				\
 }
 
-#define MODULE_CALL_HOOK_DECL(hook, which, decl, args, default)	\
+#define MODULE_CALL_HOOK_DECL(hook, which, decl)		\
 int								\
 hook ## _ ## which ## _call decl;
 #define MODULE_CALL_HOOK(hook, which, decl, args, default)	\
