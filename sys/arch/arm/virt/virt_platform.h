@@ -1,4 +1,4 @@
-/* $NetBSD: virt_platform.h,v 1.1 2018/06/14 10:56:39 jmcneill Exp $ */
+/* $NetBSD: virt_platform.h,v 1.2 2018/09/29 15:49:38 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -32,8 +32,8 @@
 #include <arch/evbarm/fdt/platform.h>
 
 #define	VIRT_CORE_VBASE		KERNEL_IO_VBASE
-#define	VIRT_CORE_PBASE		0x00000000
-#define	VIRT_CORE_SIZE		0x10000000
+#define	VIRT_CORE_PBASE		0x08000000
+#define	VIRT_CORE_SIZE		0x08000000
 
 #define	VIRT_CORE_PTOV(p)	(((p) - VIRT_CORE_PBASE) + VIRT_CORE_VBASE)
 
