@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep_16.c,v 1.1.2.2 2018/09/29 06:55:33 pgoyette Exp $	*/
+/*	$NetBSD: netbsd32_machdep_16.c,v 1.1.2.3 2018/09/29 07:36:44 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep_16.c,v 1.1.2.2 2018/09/29 06:55:33 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep_16.c,v 1.1.2.3 2018/09/29 07:36:44 pgoyette Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_coredump.h"
@@ -69,7 +69,10 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep_16.c,v 1.1.2.2 2018/09/29 06:55:33 
 
 void netbsd32_sendsig_siginfo(const ksiginfo_t *, const sigset_t *);
 
-#ifdef COMPAT_16
+int netbsd32_sendsig_16(const ksiginfo_t *, const sigset_t *);
+
+extern struct netbsd32_sendsig_hook_t netbsd32_sendsig_hook;
+
 int
 compat_16_netbsd32___sigreturn14(struct lwp *l,
 	const struct compat_16_netbsd32___sigreturn14_args *uap,
@@ -81,7 +84,6 @@ compat_16_netbsd32___sigreturn14(struct lwp *l,
 
 	return compat_16_sys___sigreturn14(l, &ua, retval);
 }
-#endif
 
 struct sigframe_siginfo32 {
 	siginfo32_t sf_si;
@@ -92,7 +94,7 @@ struct sigframe_siginfo32 {
  * Send a signal to process.
  */
 static void
-netbsd32_sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
+netbsd32_sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *mask)
 {
 	struct lwp * const l = curlwp;
 	struct proc * const p = l->l_proc;
@@ -114,7 +116,7 @@ netbsd32_sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
         case 0:         /* handled by sendsig_sigcontext */
         case 1:         /* handled by sendsig_sigcontext */
         default:        /* unknown version */
-                printf("sendsig_siginfo: bad version %d\n",
+                printf("%s: bad version %d\n", __func__,
                     ps->sa_sigdesc[sig].sd_vers);
                 sigexit(l, SIGILL);
         case 2:
@@ -166,14 +168,12 @@ netbsd32_sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 		l->l_sigstk.ss_flags |= SS_ONSTACK;
 }
 
-void    
+int
 netbsd32_sendsig_16(const ksiginfo_t *ksi, const sigset_t *mask)
 {               
-#ifdef COMPAT_16    
 	if (curproc->p_sigacts->sa_sigdesc[ksi->ksi_signo].sd_vers < 2)
 		netbsd32_sendsig_sigcontext(ksi, mask);
 	else    
-#endif  
 		netbsd32_sendsig_siginfo(ksi, mask);
 }       
 
