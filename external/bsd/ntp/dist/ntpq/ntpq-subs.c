@@ -1,4 +1,4 @@
-/*	$NetBSD: ntpq-subs.c,v 1.16 2018/04/07 00:19:53 christos Exp $	*/
+/*	$NetBSD: ntpq-subs.c,v 1.17 2018/09/29 21:52:34 christos Exp $	*/
 
 /*
  * ntpq-subs.c - subroutines which are called to perform ntpq commands.
@@ -448,6 +448,7 @@ doaddvlist(
 
 	len = strlen(vars);
 	while (nextvar(&len, &vars, &name, &value)) {
+		INSIST(name && value);
 		vl = findlistvar(vlist, name);
 		if (NULL == vl) {
 			fprintf(stderr, "Variable list full\n");
@@ -483,6 +484,7 @@ dormvlist(
 
 	len = strlen(vars);
 	while (nextvar(&len, &vars, &name, &value)) {
+		INSIST(name && value);
 		vl = findlistvar(vlist, name);
 		if (vl == 0 || vl->name == 0) {
 			(void) fprintf(stderr, "Variable `%s' not found\n",
@@ -1155,7 +1157,7 @@ printassoc(
 	 * Output a header
 	 */
 	(void) fprintf(fp,
-			   "\nind assid status  conf reach auth condition  last_event cnt\n");
+			   "ind assid status  conf reach auth condition  last_event cnt\n");
 	(void) fprintf(fp,
 			   "===========================================================\n");
 	for (i = 0; i < numassoc; i++) {
@@ -1477,31 +1479,36 @@ prettyinterval(
 	}
 
 	if (diff <= 2048) {
-		snprintf(buf, cb, "%ld", diff);
+		snprintf(buf, cb, "%u", (unsigned int)diff);
 		return buf;
 	}
 
 	diff = (diff + 29) / 60;
 	if (diff <= 300) {
-		snprintf(buf, cb, "%ldm", diff);
+		snprintf(buf, cb, "%um", (unsigned int)diff);
 		return buf;
 	}
 
 	diff = (diff + 29) / 60;
 	if (diff <= 96) {
-		snprintf(buf, cb, "%ldh", diff);
+		snprintf(buf, cb, "%uh", (unsigned int)diff);
 		return buf;
 	}
 
 	diff = (diff + 11) / 24;
 	if (diff <= 999) {
-		snprintf(buf, cb, "%ldd", diff);
+		snprintf(buf, cb, "%ud", (unsigned int)diff);
 		return buf;
 	}
 
 	/* years are only approximated... */
 	diff = (long)floor(diff / 365.25 + 0.5);
-	snprintf(buf, cb, "%ldy", diff);
+	if (diff <= 999) {
+		snprintf(buf, cb, "%uy", (unsigned int)diff);
+		return buf;
+	}
+	/* Ok, this amounts to infinity... */
+	strlcpy(buf, "INF", cb);
 	return buf;
 }
 
@@ -1640,10 +1647,14 @@ doprintpeers(
 	l_fp rec;
 	l_fp ts;
 	u_long poll_sec;
+	u_long flash = 0;
 	char type = '?';
-	char whenbuf[8], pollbuf[8];
 	char clock_name[LENHOSTNAME];
-
+	char whenbuf[12], pollbuf[12];
+	/* [Bug 3482] formally whenbuf & pollbuf should be able to hold
+	 * a full signed int. Not that we would use that much string
+	 * data for it...
+	 */
 	get_systime(&ts);
 	
 	have_srchost = FALSE;
@@ -1659,6 +1670,7 @@ doprintpeers(
 	ZERO(estdisp);
 
 	while (nextvar(&datalen, &data, &name, &value)) {
+		INSIST(name && value);
 		if (!strcmp("srcadr", name) ||
 		    !strcmp("peeradr", name)) {
 			if (!decodenetnum(value, &srcadr))
@@ -1773,6 +1785,8 @@ doprintpeers(
 		} else if (!strcmp("reftime", name)) {
 			if (!decodets(value, &reftime))
 				L_CLR(&reftime);
+		} else if (!strcmp("flash", name)) {
+		    decodeuint(value, &flash);
 		} else {
 			// fprintf(stderr, "UNRECOGNIZED name=%s ", name);
 		}
@@ -1852,7 +1866,9 @@ doprintpeers(
 							+ 1 + 15 + 1, "");
 		else
 			fprintf(fp, "%c%-15.15s ", c, clock_name);
-		if (!have_da_rid) {
+		if ((flash & TEST12) && (pvl != opeervarlist)) {
+			drlen = fprintf(fp, "(loop)");
+		} else if (!have_da_rid) {
 			drlen = 0;
 		} else {
 			drlen = strlen(dstadr_refid);
@@ -2649,6 +2665,7 @@ collect_mru_list(
 		have_addr_older = FALSE;
 		have_last_older = FALSE;
 		while (!qres && nextvar(&rsize, &rdata, &tag, &val)) {
+			INSIST(tag && val);
 			if (debug > 1)
 				fprintf(stderr, "nextvar gave: %s = %s\n",
 					tag, val);
@@ -3393,11 +3410,9 @@ ifstats(
 	fields = 0;
 	ui = 0;
 	while (nextvar(&dsize, &datap, &tag, &val)) {
+		INSIST(tag && val);
 		if (debug > 1)
-			fprintf(stderr, "nextvar gave: %s = %s\n", tag,
-				(NULL == val)
-				    ? ""
-				    : val);
+		    fprintf(stderr, "nextvar gave: %s = %s\n", tag, val);
 		comprende = FALSE;
 		switch(tag[0]) {
 
@@ -3409,7 +3424,7 @@ ifstats(
 
 		case 'b':
 			if (1 == sscanf(tag, bcast_fmt, &ui) &&
-			    (NULL == val ||
+			    ('\0' == *val ||
 			     decodenetnum(val, &row.bcast)))
 				comprende = TRUE;
 			break;
@@ -3435,7 +3450,6 @@ ifstats(
 		case 'n':
 			if (1 == sscanf(tag, name_fmt, &ui)) {
 				/* strip quotes */
-				INSIST(val);
 				len = strlen(val);
 				if (len >= 2 &&
 				    len - 2 < sizeof(row.name)) {
@@ -3609,11 +3623,9 @@ reslist(
 	fields = 0;
 	ui = 0;
 	while (nextvar(&dsize, &datap, &tag, &val)) {
+		INSIST(tag && val);
 		if (debug > 1)
-			fprintf(stderr, "nextvar gave: %s = %s\n", tag,
-				(NULL == val)
-				    ? ""
-				    : val);
+			fprintf(stderr, "nextvar gave: %s = %s\n", tag, val);
 		comprende = FALSE;
 		switch(tag[0]) {
 
@@ -3720,8 +3732,7 @@ collect_display_vdc(
 	 * the retrieved values.
 	 */
 	while (nextvar(&rsize, &rdata, &tag, &val)) {
-		if (NULL == val)
-			continue;
+		INSIST(tag && val);
 		n = 0;
 		for (pvdc = table; pvdc->tag != NULL; pvdc++) {
 			len = strlen(pvdc->tag);
@@ -3946,9 +3957,9 @@ monstats(
 	)
 {
     static vdc monstats_vdc[] = {
-	VDC_INIT("mru_enabled",	"enabled:            ", NTP_STR),
+	VDC_INIT("mru_enabled",		"enabled:            ", NTP_STR),
 	VDC_INIT("mru_depth",		"addresses:          ", NTP_STR),
-	VDC_INIT("mru_deepest",	"peak addresses:     ", NTP_STR),
+	VDC_INIT("mru_deepest",		"peak addresses:     ", NTP_STR),
 	VDC_INIT("mru_maxdepth",	"maximum addresses:  ", NTP_STR),
 	VDC_INIT("mru_mindepth",	"reclaim above count:", NTP_STR),
 	VDC_INIT("mru_maxage",		"reclaim older than: ", NTP_STR),

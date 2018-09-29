@@ -1,4 +1,4 @@
-/*	$NetBSD: keyboard.h,v 1.4 2016/01/08 21:35:38 christos Exp $	*/
+/*	$NetBSD: keyboard.h,v 1.5 2018/09/29 21:52:33 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2007  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: keyboard.h,v 1.6 2007/06/19 23:47:20 tbox Exp  */
+/* Id */
 
 #ifndef ISC_KEYBOARD_H
 #define ISC_KEYBOARD_H 1

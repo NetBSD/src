@@ -1,4 +1,4 @@
-/*	$NetBSD: inet_aton.c,v 1.4 2016/01/08 21:35:36 christos Exp $	*/
+/*	$NetBSD: inet_aton.c,v 1.5 2018/09/29 21:52:31 christos Exp $	*/
 
 /*
  * Portions Copyright (C) 2004, 2005, 2007, 2008  Internet Systems Consortium, Inc. ("ISC")
@@ -73,7 +73,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 static char sccsid[] = "@(#)inet_addr.c	8.1 (Berkeley) 6/17/93";
-static char rcsid[] = "Id: inet_aton.c,v 1.23 2008/12/01 23:47:45 tbox Exp ";
+/* Id */
 #endif /* LIBC_SCCS and not lint */
 
 #include <config.h>

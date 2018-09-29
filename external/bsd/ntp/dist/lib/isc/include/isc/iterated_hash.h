@@ -1,4 +1,4 @@
-/*	$NetBSD: iterated_hash.h,v 1.4 2016/01/08 21:35:36 christos Exp $	*/
+/*	$NetBSD: iterated_hash.h,v 1.5 2018/09/29 21:52:31 christos Exp $	*/
 
 /*
  * Copyright (C) 2008  Internet Systems Consortium, Inc. ("ISC")
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: iterated_hash.h,v 1.3 2008/09/25 04:02:39 tbox Exp  */
+/* Id */
 
 #ifndef ISC_ITERATED_HASH_H
 #define ISC_ITERATED_HASH_H 1

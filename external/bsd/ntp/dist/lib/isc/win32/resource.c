@@ -1,4 +1,4 @@
-/*	$NetBSD: resource.c,v 1.4 2016/01/08 21:35:38 christos Exp $	*/
+/*	$NetBSD: resource.c,v 1.5 2018/09/29 21:52:33 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2007, 2008  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: resource.c,v 1.10 2008/07/11 23:47:09 tbox Exp  */
+/* Id */
 
 #include <config.h>
 

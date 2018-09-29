@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_md5.h,v 1.7 2017/04/13 20:17:41 christos Exp $	*/
+/*	$NetBSD: ntp_md5.h,v 1.8 2018/09/29 21:52:31 christos Exp $	*/
 
 /*
  * ntp_md5.h: deal with md5.h headers
@@ -9,8 +9,13 @@
 #define NTP_MD5_H
 
 #ifdef OPENSSL
-# include "openssl/evp.h"
+# include <openssl/evp.h>
 # include "libssl_compat.h"
+# ifdef HAVE_OPENSSL_CMAC_H
+#  include <openssl/cmac.h>
+#  define CMAC                  "AES128CMAC"
+#  define AES_128_KEY_SIZE      16
+# endif /*HAVE_OPENSSL_CMAC_H*/
 #else	/* !OPENSSL follows */
 /*
  * Provide OpenSSL-alike MD5 API if we're not using OpenSSL

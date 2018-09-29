@@ -1,4 +1,4 @@
-/*	$NetBSD: ntpdc.c,v 1.16 2018/04/07 00:19:53 christos Exp $	*/
+/*	$NetBSD: ntpdc.c,v 1.17 2018/09/29 21:52:34 christos Exp $	*/
 
 /*
  * ntpdc - control and monitor your ntpd daemon
@@ -228,15 +228,27 @@ static	const char *chosts[MAXHOSTS];
 #define	STREQ(a, b)	(*(a) == *(b) && strcmp((a), (b)) == 0)
 
 /*
- * Jump buffer for longjumping back to the command level
+ * Jump buffer for longjumping back to the command level.
+ *
+ * See ntpq/ntpq.c for an explanation why 'sig{set,long}jmp()' is used
+ * when available.
  */
-static	jmp_buf interrupt_buf;
-static  volatile int jump = 0;
+#if HAVE_DECL_SIGSETJMP && HAVE_DECL_SIGLONGJMP
+# define JMP_BUF	sigjmp_buf
+# define SETJMP(x)	sigsetjmp((x), 1)
+# define LONGJMP(x, v)	siglongjmp((x),(v))
+#else
+# define JMP_BUF	jmp_buf
+# define SETJMP(x)	setjmp((x))
+# define LONGJMP(x, v)	longjmp((x),(v))
+#endif
+static	JMP_BUF		interrupt_buf;
+static	volatile int	jump = 0;
 
 /*
  * Pointer to current output unit
  */
-static	FILE *current_output;
+static	FILE *current_output = NULL;
 
 /*
  * Command table imported from ntpdc_ops.c
@@ -277,7 +289,6 @@ ntpdcmain(
 	char *argv[]
 	)
 {
-
 	delay_time.l_ui = 0;
 	delay_time.l_uf = DEFDELAY;
 
@@ -354,7 +365,7 @@ ntpdcmain(
 
 #ifndef SYS_WINNT /* Under NT cannot handle SIGINT, WIN32 spawns a handler */
 	if (interactive)
-	    (void) signal_no_reset(SIGINT, abortcmd);
+		(void) signal_no_reset(SIGINT, abortcmd);
 #endif /* SYS_WINNT */
 
 	/*
@@ -395,31 +406,28 @@ openhost(
 	)
 {
 	char temphost[LENHOSTNAME];
-	int a_info, i;
+	int a_info;
 	struct addrinfo hints, *ai = NULL;
 	sockaddr_u addr;
 	size_t octets;
-	register const char *cp;
+	const char *cp;
 	char name[LENHOSTNAME];
 	char service[5];
 
 	/*
 	 * We need to get by the [] if they were entered 
 	 */
-	
-	cp = hname;
-	
-	if (*cp == '[') {
-		cp++;	
-		for (i = 0; *cp && *cp != ']'; cp++, i++)
-			name[i] = *cp;
-		if (*cp == ']') {
-			name[i] = '\0';
-			hname = name;
-		} else {
+	if (*hname == '[') {
+		cp = strchr(hname + 1, ']');
+		if (!cp || (octets = (size_t)(cp - hname) - 1) >= sizeof(name)) {
+			errno = EINVAL;
+			warning("%s", "bad hostname/address");
 			return 0;
 		}
-	}	
+		memcpy(name, hname + 1, octets);
+		name[octets] = '\0';
+		hname = name;
+	}
 
 	/*
 	 * First try to resolve it as an ip address and if that fails,
@@ -1120,12 +1128,14 @@ abortcmd(
 	int sig
 	)
 {
-
 	if (current_output == stdout)
-	    (void) fflush(stdout);
+		(void)fflush(stdout);
 	putc('\n', stderr);
-	(void) fflush(stderr);
-	if (jump) longjmp(interrupt_buf, 1);
+	(void)fflush(stderr);
+	if (jump) {
+		jump = 0;
+		LONGJMP(interrupt_buf, 1);
+	}
 }
 #endif /* SYS_WINNT */
 
@@ -1237,14 +1247,22 @@ docmd(
 		current_output = stdout;
 	}
 
-	if (interactive && setjmp(interrupt_buf)) {
-		return;
+	if (interactive) {
+		if ( ! SETJMP(interrupt_buf)) {
+			jump = 1;
+			(xcmd->handler)(&pcmd, current_output);
+			jump = 0;
+		} else {
+			fflush(current_output);
+			fputs("\n >>> command aborted <<<\n", stderr);
+			fflush(stderr);
+		}
 	} else {
-		jump = 1;
-		(xcmd->handler)(&pcmd, current_output);
 		jump = 0;
-		if (current_output != stdout)
-			(void) fclose(current_output);
+		(xcmd->handler)(&pcmd, current_output);
+	}
+	if ((NULL != current_output) && (stdout != current_output)) {
+		(void)fclose(current_output);
 		current_output = NULL;
 	}
 }

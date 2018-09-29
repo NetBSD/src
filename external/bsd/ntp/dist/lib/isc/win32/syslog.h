@@ -1,4 +1,4 @@
-/*	$NetBSD: syslog.h,v 1.4 2016/01/08 21:35:38 christos Exp $	*/
+/*	$NetBSD: syslog.h,v 1.5 2018/09/29 21:52:33 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2007  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: syslog.h,v 1.7 2007/06/19 23:47:19 tbox Exp  */
+/* Id */
 
 #ifndef _SYSLOG_H
 #define _SYSLOG_H

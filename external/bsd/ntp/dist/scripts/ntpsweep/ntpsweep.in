@@ -1,6 +1,6 @@
 #! @PATH_PERL@ -w
 #
-# $Id: ntpsweep.in,v 1.1.1.7 2018/09/29 17:28:42 christos Exp $
+/* Id */
 #
 # DISCLAIMER
 # 
