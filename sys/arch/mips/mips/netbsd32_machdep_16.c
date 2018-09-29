@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep_16.c,v 1.1.2.5 2018/09/29 09:44:53 pgoyette Exp $	*/
+/*	$NetBSD: netbsd32_machdep_16.c,v 1.1.2.6 2018/09/29 10:02:37 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep_16.c,v 1.1.2.5 2018/09/29 09:44:53 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep_16.c,v 1.1.2.6 2018/09/29 10:02:37 pgoyette Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_coredump.h"
@@ -89,7 +89,7 @@ int
 netbsd32_sendsig_16(const ksiginfo_t *ksi, const sigset_t *mask)
 {               
 	if (curproc->p_sigacts->sa_sigdesc[ksi->ksi_signo].sd_vers < 2)
-		netbsd32_sendsig_sigcontext(ksi, mask);
+		sendsig_sigcontext(ksi, mask);
 	else    
 		netbsd32_sendsig_siginfo(ksi, mask);
 
