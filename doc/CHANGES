@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2443 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2444 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -228,3 +228,4 @@ Changes from NetBSD 8.0 to NetBSD 9.0:
 	kernel: Remove the ISDN code, including daic(4), iavc(4), isic(4),
 		ifpci(4), ifritz, iwic(4), and all the ISDN-related
 		userland tools. [maxv 20180923]
+	npf: Converted to use libnv [rmind 20180929]
