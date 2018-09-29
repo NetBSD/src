@@ -1,3 +1,4 @@
+#include "arm_asm.h"
 #include "arm_arch.h"
 
 .text
@@ -211,7 +212,7 @@ bn_GF2m_mul_2x2:
 	veor	q0, q0, q3
 
 	vst1.32	{q0}, [r0]
-	bx	lr		@ bx lr
+	RET		@ bx lr
 #endif
 .size	bn_GF2m_mul_2x2,.-bn_GF2m_mul_2x2
 #if __ARM_MAX_ARCH__>=7

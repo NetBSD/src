@@ -1,3 +1,4 @@
+#include "arm_asm.h"
 #include "arm_arch.h"
 
 .text
@@ -122,7 +123,7 @@ poly1305_init:
 .Lno_key:
 	ldmia	sp!,{r4,r5,r6,r7,r8,r9,r10,r11}
 #if	__ARM_ARCH__>=5
-	bx	lr				@ bx	lr
+	RET				@ bx	lr
 #else
 	tst	lr,#1
 	moveq	pc,lr			@ be binary compatible with V4, yet
@@ -373,7 +374,7 @@ poly1305_emit:
 #endif
 	ldmia	sp!,{r4,r5,r6,r7,r8,r9,r10,r11}
 #if	__ARM_ARCH__>=5
-	bx	lr				@ bx	lr
+	RET				@ bx	lr
 #else
 	tst	lr,#1
 	moveq	pc,lr			@ be binary compatible with V4, yet
@@ -594,7 +595,7 @@ poly1305_init_neon:
 	vst1.32	{d8[0]},[r6]
 	vst1.32	{d8[1]},[r7]
 
-	bx	lr				@ bx	lr
+	RET				@ bx	lr
 .size	poly1305_init_neon,.-poly1305_init_neon
 
 .type	poly1305_blocks_neon,%function
@@ -1080,7 +1081,7 @@ poly1305_blocks_neon:
 	vldmia	sp!,{d8,d9,d10,d11,d12,d13,d14,d15}			@ epilogue
 	ldmia	sp!,{r4,r5,r6,r7}
 .Lno_data_neon:
-	bx	lr					@ bx	lr
+	RET					@ bx	lr
 .size	poly1305_blocks_neon,.-poly1305_blocks_neon
 
 .type	poly1305_emit_neon,%function
@@ -1151,7 +1152,7 @@ poly1305_emit_neon:
 	str	r6,[r1,#12]
 
 	ldmia	sp!,{r4,r5,r6,r7,r8,r9,r10,r11}
-	bx	lr				@ bx	lr
+	RET				@ bx	lr
 .size	poly1305_emit_neon,.-poly1305_emit_neon
 
 .align	5

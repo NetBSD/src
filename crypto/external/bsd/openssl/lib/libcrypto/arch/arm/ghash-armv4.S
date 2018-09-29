@@ -1,3 +1,4 @@
+#include "arm_asm.h"
 #include "arm_arch.h"
 
 .text
@@ -367,7 +368,7 @@ gcm_init_neon:
 	veor	q3,q3,q8		@ twisted H
 	vstmia	r0,{q3}
 
-	bx	lr					@ bx lr
+	RET					@ bx lr
 .size	gcm_init_neon,.-gcm_init_neon
 
 .globl	gcm_gmult_neon
@@ -555,7 +556,7 @@ gcm_ghash_neon:
 	vst1.64	d1,[r0]!		@ write out Xi
 	vst1.64	d0,[r0]
 
-	bx	lr					@ bx lr
+	RET					@ bx lr
 .size	gcm_ghash_neon,.-gcm_ghash_neon
 #endif
 .byte	71,72,65,83,72,32,102,111,114,32,65,82,77,118,52,47,78,69,79,78,44,32,67,82,89,80,84,79,71,65,77,83,32,98,121,32,60,97,112,112,114,111,64,111,112,101,110,115,115,108,46,111,114,103,62,0

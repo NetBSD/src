@@ -1,3 +1,4 @@
+#include "arm_asm.h"
 .text
 
 .align	8	// strategic alignment and padding that allows to use

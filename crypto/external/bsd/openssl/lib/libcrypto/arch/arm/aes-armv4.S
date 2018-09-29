@@ -1,3 +1,4 @@
+#include "arm_asm.h"
 @ Copyright 2007-2018 The OpenSSL Project Authors. All Rights Reserved.
 @
 @ Licensed under the OpenSSL license (the "License").  You may not use
@@ -708,7 +709,7 @@ _armv4_AES_set_encrypt_key:
 	ldmia	sp!,{r4,r5,r6,r7,r8,r9,r10,r11,r12,lr}
 .Labrt:
 #if __ARM_ARCH__>=5
-	bx	lr				@ .word	0xe12fff1e
+	RET				@ .word	0xe12fff1e
 #else
 	tst	lr,#1
 	moveq	pc,lr			@ be binary compatible with V4, yet

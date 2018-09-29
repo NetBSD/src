@@ -1,3 +1,4 @@
+#include "arm_asm.h"
 #include "arm_arch.h"
 
 .text

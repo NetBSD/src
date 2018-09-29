@@ -1,3 +1,4 @@
+#include "arm_asm.h"
 @ Copyright 2012-2018 The OpenSSL Project Authors. All Rights Reserved.
 @
 @ Licensed under the OpenSSL license (the "License").  You may not use
@@ -546,7 +547,7 @@ _bsaes_decrypt8:
 	veor	q5, q5, q8
 	veor	q0, q0, q8
 	veor	q1, q1, q8
-	bx	lr
+	RET
 .size	_bsaes_decrypt8,.-_bsaes_decrypt8
 
 .type	_bsaes_const,%object
@@ -1006,7 +1007,7 @@ _bsaes_encrypt8_bitslice:
 	veor	q5, q5, q8
 	veor	q0, q0, q8
 	veor	q1, q1, q8
-	bx	lr
+	RET
 .size	_bsaes_encrypt8,.-_bsaes_encrypt8
 .type	_bsaes_key_convert,%function
 .align	4
@@ -1065,7 +1066,7 @@ _bsaes_key_convert:
 
 	vmov.i8	q7,#0x63			@ compose .L63
 	@ don't save last round key
-	bx	lr
+	RET
 .size	_bsaes_key_convert,.-_bsaes_key_convert
 
 
