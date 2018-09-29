@@ -1,4 +1,4 @@
-#	$NetBSD: files.mips,v 1.75 2016/07/11 23:06:53 matt Exp $
+#	$NetBSD: files.mips,v 1.75.16.1 2018/09/29 06:31:02 pgoyette Exp $
 #
 
 defflag	opt_cputype.h		NOFPU FPEMUL
@@ -91,13 +91,20 @@ file	arch/mips/mips/bds_emul.S		fpemul
 
 file	arch/mips/mips/procfs_machdep.c		procfs
 
-# Binary compatibility with 32bit NetBSD (COMPAT_NETBSD32)
-file	arch/mips/mips/netbsd32_machdep.c	compat_netbsd32
-include "compat/netbsd32/files.netbsd32"
-
+# 
+# Compatibility modules 
+#
 # Binary compatibility with previous NetBSD releases (COMPAT_XX)
 file	arch/mips/mips/compat_13_machdep.c	compat_13 | compat_ultrix
 file	arch/mips/mips/compat_16_machdep.c	compat_16 | compat_ultrix
+
+# Binary compatibility with 32bit NetBSD (COMPAT_NETBSD32)
+file	arch/mips/mips/netbsd32_machdep.c	compat_netbsd32
+file	arch/mips/mips/netbsd32_machdep_13.c	compat_netbsd32 & compat_13
+file	arch/mips/mips/netbsd32_machdep_16.c	compat_netbsd32 & compat_16
+include "compat/netbsd32/files.netbsd32"
+
+# Binary compatibility with previous NetBSD releases (COMPAT_XX)
 
 # Ultrix Binary Compatibility (COMPAT_ULTRIX)
 include "compat/ultrix/files.ultrix"

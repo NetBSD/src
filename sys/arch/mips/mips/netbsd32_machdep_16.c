@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.15.2.1 2018/09/29 06:31:02 pgoyette Exp $	*/
+/*	$NetBSD: netbsd32_machdep_16.c,v 1.1.2.1 2018/09/29 06:31:02 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.15.2.1 2018/09/29 06:31:02 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep_16.c,v 1.1.2.1 2018/09/29 06:31:02 pgoyette Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_coredump.h"
@@ -66,68 +66,6 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.15.2.1 2018/09/29 06:31:02 pg
 
 #include <uvm/uvm_extern.h>
 
-const char machine32[] = MACHINE;
-const char machine_arch32[] = MACHINE32_ARCH;
-
-#if 0
-cpu_coredump32
-netbsd32_cpu_upcall
-netbsd32_vm_default_addr
-#endif
-
-int
-netbsd32_sysarch(struct lwp *l, const struct netbsd32_sysarch_args *uap,
-	register_t *retval)
-{
-	/* {
-		syscallarg(int) op;
-		syscallarg(netbsd32_voidp) parms;
-	} */
-	struct proc *p = l->l_proc;
-	void *parms = SCARG_P32(uap, parms);
-	int error = 0;
-
-	switch(SCARG(uap, op)) {
-	case MIPS_CACHEFLUSH: {
-		struct mips_cacheflush_args32 cfua;
-
-		error = copyin(parms, &cfua, sizeof(cfua));
-		if (error != 0)
-			return (error);
-		error =  mips_user_cacheflush(p, cfua.va, cfua.nbytes,
-		     cfua.whichcache);
-		break;
-	}
-	case MIPS_CACHECTL: {
-		struct mips_cachectl_args32 ccua;
-
-		error = copyin(parms, &ccua, sizeof(ccua));
-		if (error != 0)
-			return (error);
-		error = mips_user_cachectl(p, ccua.va, ccua.nbytes, ccua.ctl);
-		break;
-	}
-	default:
-		error = ENOSYS;
-		break;
-	}
-	return (error);
-}
-
-#ifdef COMPAT_13
-int
-compat_13_netbsd32_sigreturn(struct lwp *l,
-	const struct compat_13_netbsd32_sigreturn_args *uap,
-	register_t *retval)
-{
-	struct compat_13_sys_sigreturn_args ua;
-
-	NETBSD32TOP_UAP(sigcntxp, struct sigcontext13 *);
-
-	return compat_13_sys_sigreturn(l, &ua, retval);
-}
-#endif
-
 #ifdef COMPAT_16
 int
 compat_16_netbsd32___sigreturn14(struct lwp *l,
@@ -141,17 +79,6 @@ compat_16_netbsd32___sigreturn14(struct lwp *l,
 	return compat_16_sys___sigreturn14(l, &ua, retval);
 }
 #endif
-
-vaddr_t
-netbsd32_vm_default_addr(struct proc *p, vaddr_t base, vsize_t size,
-    int topdown)
-{
-	if (topdown)
-		return VM_DEFAULT_ADDRESS32_TOPDOWN(base, size);
-	else
-		return VM_DEFAULT_ADDRESS32_BOTTOMUP(base, size);
-}
-
 
 struct sigframe_siginfo32 {
 	siginfo32_t sf_si;
@@ -237,123 +164,29 @@ netbsd32_sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 }
 
 void    
-netbsd32_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
+netbsd32_sendsig_16(const ksiginfo_t *ksi, const sigset_t *mask)
 {               
 #ifdef COMPAT_16    
 	if (curproc->p_sigacts->sa_sigdesc[ksi->ksi_signo].sd_vers < 2)
-		sendsig_sigcontext(ksi, mask);
+		netbsd32_sendsig_sigcontext(ksi, mask);
 	else    
 #endif  
 		netbsd32_sendsig_siginfo(ksi, mask);
 }       
 
-void
-cpu_getmcontext32(struct lwp *l, mcontext32_t *mc32, unsigned int *flagsp)
-{
-	mcontext_o32_t * const mco32 = (mcontext_o32_t *)mc32;
-	mcontext_t mc;
-	size_t i;
-
-	if (l->l_proc->p_md.md_abi == _MIPS_BSD_API_N32) {
-		cpu_getmcontext(l, (mcontext_t *)mc32, flagsp);
-		return;
-	}
-
-	cpu_getmcontext(l, &mc, flagsp);
-	for (i = 1; i < __arraycount(mc.__gregs); i++)
-		mco32->__gregs[i] = mc.__gregs[i];
-	if (*flagsp & _UC_FPU)
-		memcpy(&mco32->__fpregs, &mc.__fpregs,
-		    sizeof(struct fpreg_oabi));
-	mco32->_mc_tlsbase = mc._mc_tlsbase;
-	*flagsp |= _UC_TLSBASE;
-}
-
-int
-cpu_mcontext32_validate(struct lwp *l, const mcontext32_t *mc32)
-{
-	return 0;
-}
-
-int
-cpu_setmcontext32(struct lwp *l, const mcontext32_t *mc32, unsigned int flags)
-{
-	const mcontext_o32_t * const mco32 = (const mcontext_o32_t *)mc32;
-	mcontext_t mc;
-	size_t i, error;
-
-	if (flags & _UC_CPU) {
-		error = cpu_mcontext32_validate(l, mc32);
-		if (error)
-			return error;
-	}
-
-	if (l->l_proc->p_md.md_abi == _MIPS_BSD_API_N32)
-		return cpu_setmcontext(l, (const mcontext_t *)mc32, flags);
-
-	for (i = 0; i < __arraycount(mc.__gregs); i++)
-		mc.__gregs[i] = mco32->__gregs[i];
-	if (flags & _UC_FPU)
-		memcpy(&mc.__fpregs, &mco32->__fpregs,
-		    sizeof(struct fpreg_oabi));
-	mc._mc_tlsbase = mco32->_mc_tlsbase;
-	return cpu_setmcontext(l, &mc, flags);
-}
-
-#ifdef COREDUMP
-/*
- * Dump the machine specific segment at the start of a core dump.
- */
-int
-cpu_coredump32(struct lwp *l, struct coredump_iostate *iocookie,
-    struct core32 *chdr)
-{
-	int error;
-	struct coreseg cseg;
-	struct cpustate {
-		struct trapframe frame;
-		struct fpreg fpregs;
-	} cpustate;
-
-	if (iocookie == NULL) {
-		CORE_SETMAGIC(*chdr, COREMAGIC, MID_MACHINE, 0);
-		chdr->c_hdrsize = ALIGN(sizeof(struct core));
-		chdr->c_seghdrsize = ALIGN(sizeof(struct coreseg));
-		chdr->c_cpusize = sizeof(struct cpustate);
-		chdr->c_nseg++;
-		return 0;
-	}
-
-	fpu_save(l);
-
-	struct pcb * const pcb = lwp_getpcb(l);
-	cpustate.frame = *l->l_md.md_utf;
-	cpustate.fpregs = pcb->pcb_fpregs;
-
-	CORE_SETMAGIC(cseg, CORESEGMAGIC, MID_MACHINE, CORE_CPU);
-	cseg.c_addr = 0;
-	cseg.c_size = chdr->c_cpusize;
-
-	error = coredump_write(iocookie, UIO_SYSSPACE, &cseg,
-	    chdr->c_seghdrsize);
-	if (error)
-		return error;
-
-	return coredump_write(iocookie, UIO_SYSSPACE, &cpustate,
-	    chdr->c_cpusize);
-}
-#endif
+MODULE_SET_HOOK(netbsd32_sendsig_hook, "nb32_16", netbsd32_sendsig_16); 
+MODULE_UNSET_HOOK(netbsd32_sendsig_hook);
 
 void    
 netbsd32_machdep_md_init(void)
 {       
                 
-	/* nothing to do */
+	netbsd32_sendsig_hook_set();
 }               
                 
 void            
 netbsd32_machdep_md_fini(void)
 {       
 
-	/* nothing to do */
+	netbsd32_sendsig_hook_unset();
 }
