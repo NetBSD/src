@@ -1,5 +1,3 @@
-/*	$NetBSD: uglydate.c,v 1.1.1.4 2016/01/08 21:21:33 christos Exp $	*/
-
 #include "config.h"
 #include "ntp_fp.h"
 #include "unity.h"

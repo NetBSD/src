@@ -65,9 +65,9 @@ die "Fix the problem(s) noted above!\n" if $problem;
 open(BKU, $bk_u) || die "$0: <$bk_u> failed: $!\n";
 while (<BKU>) {
   chomp;
-  my Name = _;
+  my $Name = $_;
   my $name = lc;
-  # print "Got Name <Name>, name <name>\n";
+  # print "Got Name <$Name>, name <$name>\n";
   if (!defined($authors{$Name})) {
     $problem = 1;
     print "<$Name> is not a defined author!\n";
