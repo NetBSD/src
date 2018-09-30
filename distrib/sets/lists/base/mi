@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1190 2018/09/23 09:20:57 maxv Exp $
+# $NetBSD: mi,v 1.1191 2018/09/30 15:56:47 jmcneill Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -546,6 +546,7 @@
 ./sbin/mount_procfs				base-sysutil-root
 ./sbin/mount_ptyfs				base-miscfs-root
 ./sbin/mount_puffs				base-sysutil-root
+./sbin/mount_qemufwcfg				base-sysutil-root
 ./sbin/mount_smbfs				base-smbfs-root
 ./sbin/mount_sysvbfs				base-sysutil-root
 ./sbin/mount_tmpfs				base-miscfs-root
