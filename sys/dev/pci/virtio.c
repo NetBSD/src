@@ -1,4 +1,4 @@
-/*	$NetBSD: virtio.c,v 1.35 2018/06/15 17:13:43 jakllsch Exp $	*/
+/*	$NetBSD: virtio.c,v 1.36 2018/09/30 15:44:22 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: virtio.c,v 1.35 2018/06/15 17:13:43 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: virtio.c,v 1.36 2018/09/30 15:44:22 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -932,6 +932,9 @@ int
 virtiobusprint(void *aux, const char *pnp)
 {
 	struct virtio_attach_args * const va = aux;
+
+	if (va->sc_childdevid == 0)
+		return QUIET;	/* No device present */
 
 	if (pnp)
 		aprint_normal("Device ID %d at %s", va->sc_childdevid, pnp);
