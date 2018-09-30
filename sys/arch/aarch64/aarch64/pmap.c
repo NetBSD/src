@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.1.28.5 2018/09/06 06:55:22 pgoyette Exp $	*/
+/*	$NetBSD: pmap.c,v 1.1.28.6 2018/09/30 01:45:35 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.1.28.5 2018/09/06 06:55:22 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.1.28.6 2018/09/30 01:45:35 pgoyette Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_ddb.h"
@@ -46,6 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.1.28.5 2018/09/06 06:55:22 pgoyette Exp $
 #include <aarch64/pte.h>
 #include <aarch64/armreg.h>
 #include <aarch64/cpufunc.h>
+#include <aarch64/machdep.h>
 
 //#define PMAP_DEBUG
 //#define PMAP_PV_DEBUG
@@ -576,7 +577,9 @@ pmap_steal_memory(vsize_t size, vaddr_t *vstartp, vaddr_t *vendp)
 			break;
 	}
 
-	KDASSERT(uvm_physseg_valid_p(bank));
+	if (!uvm_physseg_valid_p(bank)) {
+		panic("%s: no memory", __func__);
+	}
 
 	/* Steal pages */
 	pa = ptoa(uvm_physseg_get_avail_start(bank));
@@ -595,8 +598,8 @@ pmap_reference(struct pmap *pm)
 	atomic_inc_uint(&pm->pm_refcnt);
 }
 
-static pd_entry_t *
-_pmap_alloc_pdp(struct pmap *pm, paddr_t *pap)
+pd_entry_t *
+pmap_alloc_pdp(struct pmap *pm, paddr_t *pap)
 {
 	paddr_t pa;
 
@@ -683,7 +686,12 @@ pmap_extract(struct pmap *pm, vaddr_t va, paddr_t *pap)
 		return false;
 #endif
 
-	if (AARCH64_KSEG_START <= va && va < AARCH64_KSEG_END) {
+	extern char __kernel_text[];
+	extern char _end[];
+	if ((vaddr_t)__kernel_text <= va && va < (vaddr_t)_end) {
+		pa = KERN_VTOPHYS(va);
+		found = true;
+	} else if (AARCH64_KSEG_START <= va && va < AARCH64_KSEG_END) {
 		pa = AARCH64_KVA_TO_PA(va);
 		found = true;
 	} else {
@@ -1294,7 +1302,7 @@ pmap_create(void)
 	pm->pm_asid = -1;
 	SLIST_INIT(&pm->pm_vmlist);
 	mutex_init(&pm->pm_lock, MUTEX_DEFAULT, IPL_VM);
-	pm->pm_l0table = _pmap_alloc_pdp(pm, &pm->pm_l0table_pa);
+	pm->pm_l0table = pmap_alloc_pdp(pm, &pm->pm_l0table_pa);
 	KASSERT(((vaddr_t)pm->pm_l0table & (PAGE_SIZE - 1)) == 0);
 
 	UVMHIST_LOG(pmaphist, "pm=%p, pm_l0table=%016lx, pm_l0table_pa=%016lx",
@@ -1414,7 +1422,7 @@ _pmap_enter(struct pmap *pm, vaddr_t va, paddr_t pa, vm_prot_t prot,
 	idx = l0pde_index(va);
 	pde = l0[idx];
 	if (!l0pde_valid(pde)) {
-		_pmap_alloc_pdp(pm, &pdppa);
+		pmap_alloc_pdp(pm, &pdppa);
 		KASSERT(pdppa != POOL_PADDR_INVALID);
 		atomic_swap_64(&l0[idx], pdppa | L0_TABLE);
 		l3only = false;
@@ -1426,7 +1434,7 @@ _pmap_enter(struct pmap *pm, vaddr_t va, paddr_t pa, vm_prot_t prot,
 	idx = l1pde_index(va);
 	pde = l1[idx];
 	if (!l1pde_valid(pde)) {
-		_pmap_alloc_pdp(pm, &pdppa);
+		pmap_alloc_pdp(pm, &pdppa);
 		KASSERT(pdppa != POOL_PADDR_INVALID);
 		atomic_swap_64(&l1[idx], pdppa | L1_TABLE);
 		l3only = false;
@@ -1438,7 +1446,7 @@ _pmap_enter(struct pmap *pm, vaddr_t va, paddr_t pa, vm_prot_t prot,
 	idx = l2pde_index(va);
 	pde = l2[idx];
 	if (!l2pde_valid(pde)) {
-		_pmap_alloc_pdp(pm, &pdppa);
+		pmap_alloc_pdp(pm, &pdppa);
 		KASSERT(pdppa != POOL_PADDR_INVALID);
 		atomic_swap_64(&l2[idx], pdppa | L2_TABLE);
 		l3only = false;
@@ -1816,23 +1824,9 @@ pmap_fault_fixup(struct pmap *pm, vaddr_t va, vm_prot_t accessprot, bool user)
 		goto done;
 	}
 
-	if ((pte & LX_BLKPAG_AF) && ((pte & LX_BLKPAG_AP) == LX_BLKPAG_AP_RW)) {
-#if 1 /* XXX: DEBUG */
-		if (!user) {
-			/*
-			 * pte is readable and writable, but occured fault?
-			 * unprivileged load/store, or else ?
-			 */
-			printf("%s: fault: va=%016lx pte=%08" PRIx64
-			    ": pte is rw."
-			    " unprivileged load/store ? (onfault=%p)\n",
-			    __func__, va, pte, curlwp->l_md.md_onfault);
-		}
-#endif
+	/* pte is readable and writable, but occured fault? probably copy(9) */
+	if ((pte & LX_BLKPAG_AF) && ((pte & LX_BLKPAG_AP) == LX_BLKPAG_AP_RW))
 		goto done;
-	}
-	KASSERT(((pte & LX_BLKPAG_AF) == 0) ||
-	    ((pte & LX_BLKPAG_AP) == LX_BLKPAG_AP_RO));
 
 	pmap_pv_lock(md);
 	if ((pte & LX_BLKPAG_AF) == 0) {

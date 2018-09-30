@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOM0,v 1.149.2.3 2018/09/06 06:55:24 pgoyette Exp $
+# $NetBSD: XEN3_DOM0,v 1.149.2.4 2018/09/30 01:45:36 pgoyette Exp $
 
 include 	"arch/amd64/conf/std.xen"
 
@@ -10,7 +10,7 @@ options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 #options 	UVMHIST_PRINT
 #options 	SYSCALL_DEBUG
 
-#ident		"XEN3_DOM0-$Revision: 1.149.2.3 $"
+#ident		"XEN3_DOM0-$Revision: 1.149.2.4 $"
 
 maxusers	32		# estimated number of users
 
@@ -354,7 +354,6 @@ bce*	at pci? dev ? function ?	# Broadcom 4401 10/100 Ethernet
 bge*	at pci? dev ? function ?	# Broadcom 570x gigabit Ethernet
 bnx*	at pci? dev ? function ?	# Broadcom NetXtremeII gigabit Ethernet
 dge*	at pci? dev ? function ?	# Intel 82597 10GbE LR
-en*	at pci? dev ? function ?	# ENI/Adaptec ATM
 ep*	at pci? dev ? function ?	# 3Com 3c59x
 epic*	at pci? dev ? function ?	# SMC EPIC/100 Ethernet
 esh*	at pci? dev ? function ?	# Essential HIPPI card

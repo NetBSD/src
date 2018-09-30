@@ -1,4 +1,4 @@
-# $NetBSD: rc.subr,v 1.100.10.2 2018/04/16 01:57:33 pgoyette Exp $
+# $NetBSD: rc.subr,v 1.100.10.3 2018/09/30 01:45:07 pgoyette Exp $
 #
 # Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -85,7 +85,9 @@ checkyesno()
 
 	checkyesnox $1
 	var=$?
-	[ $var = 0 -o $var = 1 ] && return $var
+	case "${var}" in
+	( 0 | 1 )	return $var;;
+	esac
 	warn "\$${1} is not set properly - see ${rcvar_manpage}."
 	return 1
 }
@@ -209,7 +211,7 @@ check_pidfile()
 	_pidfile=$1
 	_procname=$2
 	_interpreter=$3
-	if [ -z "$_pidfile" -o -z "$_procname" ]; then
+	if [ -z "$_pidfile" ] || [ -z "$_procname" ]; then
 		err 3 'USAGE: check_pidfile pidfile procname [interpreter]'
 	fi
 	if [ ! -f $_pidfile ]; then
@@ -523,7 +525,7 @@ run_rc_command()
 	_procname=${procname:-${command}}
 
 					# setup pid check command if not fast
-	if [ -z "$rc_fast" -a -n "$_procname" ]; then
+	if [ -z "$rc_fast" ] && [ -n "$_procname" ]; then
 		if [ -n "$pidfile" ]; then
 			_pidcmd='rc_pid=$(check_pidfile '"$pidfile $_procname $command_interpreter"')'
 		else
@@ -561,7 +563,7 @@ run_rc_command()
 					# and return if that failed or warn
 					# user and exit when interactive
 					#
-	if [ -n "${rcvar}" -a "$rc_arg" != "rcvar" ]; then
+	if [ -n "${rcvar}" ] && [ "$rc_arg" != "rcvar" ]; then
 		if ! checkyesno ${rcvar}; then
 					# check whether interactive or not
 			if [ -n "$_run_rc_script" ]; then
@@ -849,7 +851,7 @@ run_rc_script()
 {
 	_file=$1
 	_arg=$2
-	if [ -z "$_file" -o -z "$_arg" ]; then
+	if [ -z "$_file" ] || [ -z "$_arg" ]; then
 		err 3 'USAGE: run_rc_script file arg'
 	fi
 
@@ -940,7 +942,7 @@ load_rc_config_var()
 	fi
 	eval $(eval '(
 		load_rc_config '$1' >/dev/null;
-		if [ -n "${'$2'}" -o "${'$2'-UNSET}" != "UNSET" ]; then
+		if [ -n "${'$2'}" ] || [ "${'$2'-UNSET}" != "UNSET" ]; then
 			echo '$2'=\'\''${'$2'}\'\'';
 		fi
 	)' )
@@ -1039,7 +1041,7 @@ backup_file()
 		# current backup is not lost
 		if [ -f $_cur ]; then
 			# no archive, or current newer than archive
-			if [ ! -f $_cur,v -o $_cur -nt $_cur,v ]; then
+			if [ ! -f $_cur,v ] || [ $_cur -nt $_cur,v ]; then
 				ci -q -f -u -t-"$_msg0" -m"$_msg1" $_cur
 				rcs -q -kb -U $_cur
 				co -q -f -u $_cur
@@ -1339,13 +1341,25 @@ dirname()
 # will call these functions.  To call the real echo and printf
 # commands, use "command echo" or "command printf".
 #
+# Avoid use of echo altogether as much as possible, printf works better
+#
 echo()
 {
-	command echo "$@"
+	local IFS=' ' NL='\n'	# not a literal newline...
+
 	case "$1" in
-	'-n')	_flush_rc_output ;;
+	-n)	NL=; shift;;
 	esac
+
+	command printf "%s${NL}" "$*"
+
+	if test -z "${NL}"
+	then
+		_flush_rc_output
+	fi
+	return 0
 }
+
 printf()
 {
 	command printf "$@"
@@ -1353,6 +1367,7 @@ printf()
 	*'\n')	: ;;
 	*)	_flush_rc_output ;;
 	esac
+	return 0
 }
 
 kat() {

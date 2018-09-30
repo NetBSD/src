@@ -1,5 +1,3 @@
-/*	$NetBSD: npf_extmod.c,v 1.4 2013/03/10 23:57:07 christos Exp $	*/
-
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -34,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_extmod.c,v 1.4 2013/03/10 23:57:07 christos Exp $");
+__RCSID("$NetBSD: npf_extmod.c,v 1.4.28.1 2018/09/30 01:46:01 pgoyette Exp $");
 
 #include <stdlib.h>
 #include <inttypes.h>

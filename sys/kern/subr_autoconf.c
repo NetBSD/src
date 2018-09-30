@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.257.2.2 2018/07/28 04:38:08 pgoyette Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.257.2.3 2018/09/30 01:45:55 pgoyette Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.257.2.2 2018/07/28 04:38:08 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.257.2.3 2018/09/30 01:45:55 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -192,17 +192,17 @@ struct deferred_config {
 
 TAILQ_HEAD(deferred_config_head, deferred_config);
 
-struct deferred_config_head deferred_config_queue =
+static struct deferred_config_head deferred_config_queue =
 	TAILQ_HEAD_INITIALIZER(deferred_config_queue);
-struct deferred_config_head interrupt_config_queue =
+static struct deferred_config_head interrupt_config_queue =
 	TAILQ_HEAD_INITIALIZER(interrupt_config_queue);
-int interrupt_config_threads = 8;
-struct deferred_config_head mountroot_config_queue =
+static int interrupt_config_threads = 8;
+static struct deferred_config_head mountroot_config_queue =
 	TAILQ_HEAD_INITIALIZER(mountroot_config_queue);
-int mountroot_config_threads = 2;
+static int mountroot_config_threads = 2;
 static lwp_t **mountroot_config_lwpids;
 static size_t mountroot_config_lwpids_size;
-static bool root_is_mounted = false;
+bool root_is_mounted = false;
 
 static void config_process_deferred(struct deferred_config_head *, device_t);
 

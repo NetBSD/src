@@ -571,7 +571,7 @@ aes128_t4_cbc_encrypt:
 
 	brnz,pn		%l2, 2f
 	sub		%i2, 1, %i2
-		
+
 	std		%f0, [%i1 + 0]
 	std		%f2, [%i1 + 8]
 	brnz,pt		%i2, .L128_cbc_enc_loop
@@ -641,7 +641,7 @@ aes128_t4_cbc_encrypt:
 	call		_aes128_encrypt_1x
 	add		%i0, 16, %i0
 	sub		%i2, 1, %i2
-		
+
 	stda		%f0, [%i1]0xe2		! ASI_BLK_INIT, T4-specific
 	add		%i1, 8, %i1
 	stda		%f2, [%i1]0xe2		! ASI_BLK_INIT, T4-specific
@@ -731,7 +731,7 @@ aes128_t4_ctr32_encrypt:
 
 	brnz,pn		%l2, 2f
 	sub		%i2, 1, %i2
-		
+
 	std		%f0, [%i1 + 0]
 	std		%f2, [%i1 + 8]
 	brnz,pt		%i2, .L128_ctr32_loop2x
@@ -810,7 +810,7 @@ aes128_t4_ctr32_encrypt:
 
 	brnz,pn		%l2, 2f
 	sub		%i2, 2, %i2
-		
+
 	std		%f0, [%i1 + 0]
 	std		%f2, [%i1 + 8]
 	std		%f4, [%i1 + 16]
@@ -1012,7 +1012,7 @@ aes128_t4_xts_encrypt:
 
 	brnz,pn		%l2, 2f
 	sub		%i2, 1, %i2
-		
+
 	std		%f0, [%i1 + 0]
 	std		%f2, [%i1 + 8]
 	brnz,pt		%i2, .L128_xts_enloop2x
@@ -1123,7 +1123,7 @@ aes128_t4_xts_encrypt:
 
 	brnz,pn		%l2, 2f
 	sub		%i2, 2, %i2
-		
+
 	std		%f0, [%i1 + 0]
 	std		%f2, [%i1 + 8]
 	std		%f4, [%i1 + 16]
@@ -1400,7 +1400,7 @@ aes128_t4_xts_decrypt:
 
 	brnz,pn		%l2, 2f
 	sub		%i2, 1, %i2
-		
+
 	std		%f0, [%i1 + 0]
 	std		%f2, [%i1 + 8]
 	brnz,pt		%i2, .L128_xts_deloop2x
@@ -1511,7 +1511,7 @@ aes128_t4_xts_decrypt:
 
 	brnz,pn		%l2, 2f
 	sub		%i2, 2, %i2
-		
+
 	std		%f0, [%i1 + 0]
 	std		%f2, [%i1 + 8]
 	std		%f4, [%i1 + 16]
@@ -1799,7 +1799,7 @@ aes128_t4_cbc_decrypt:
 
 	brnz,pn		%l2, 2f
 	sub		%i2, 1, %i2
-		
+
 	std		%f0, [%i1 + 0]
 	std		%f2, [%i1 + 8]
 	brnz,pt		%i2, .L128_cbc_dec_loop2x
@@ -1883,7 +1883,7 @@ aes128_t4_cbc_decrypt:
 
 	brnz,pn		%l2, 2f
 	sub		%i2, 2, %i2
-		
+
 	std		%f0, [%i1 + 0]
 	std		%f2, [%i1 + 8]
 	std		%f4, [%i1 + 16]
@@ -2367,7 +2367,7 @@ aes256_t4_cbc_encrypt:
 
 	brnz,pn		%l2, 2f
 	sub		%i2, 1, %i2
-		
+
 	std		%f0, [%i1 + 0]
 	std		%f2, [%i1 + 8]
 	brnz,pt		%i2, .L256_cbc_enc_loop
@@ -2437,7 +2437,7 @@ aes256_t4_cbc_encrypt:
 	call		_aes256_encrypt_1x
 	add		%i0, 16, %i0
 	sub		%i2, 1, %i2
-		
+
 	stda		%f0, [%i1]0xe2		! ASI_BLK_INIT, T4-specific
 	add		%i1, 8, %i1
 	stda		%f2, [%i1]0xe2		! ASI_BLK_INIT, T4-specific
@@ -2514,7 +2514,7 @@ aes192_t4_cbc_encrypt:
 
 	brnz,pn		%l2, 2f
 	sub		%i2, 1, %i2
-		
+
 	std		%f0, [%i1 + 0]
 	std		%f2, [%i1 + 8]
 	brnz,pt		%i2, .L192_cbc_enc_loop
@@ -2584,7 +2584,7 @@ aes192_t4_cbc_encrypt:
 	call		_aes192_encrypt_1x
 	add		%i0, 16, %i0
 	sub		%i2, 1, %i2
-		
+
 	stda		%f0, [%i1]0xe2		! ASI_BLK_INIT, T4-specific
 	add		%i1, 8, %i1
 	stda		%f2, [%i1]0xe2		! ASI_BLK_INIT, T4-specific
@@ -2674,7 +2674,7 @@ aes256_t4_ctr32_encrypt:
 
 	brnz,pn		%l2, 2f
 	sub		%i2, 1, %i2
-		
+
 	std		%f0, [%i1 + 0]
 	std		%f2, [%i1 + 8]
 	brnz,pt		%i2, .L256_ctr32_loop2x
@@ -2753,7 +2753,7 @@ aes256_t4_ctr32_encrypt:
 
 	brnz,pn		%l2, 2f
 	sub		%i2, 2, %i2
-		
+
 	std		%f0, [%i1 + 0]
 	std		%f2, [%i1 + 8]
 	std		%f4, [%i1 + 16]
@@ -2955,7 +2955,7 @@ aes256_t4_xts_encrypt:
 
 	brnz,pn		%l2, 2f
 	sub		%i2, 1, %i2
-		
+
 	std		%f0, [%i1 + 0]
 	std		%f2, [%i1 + 8]
 	brnz,pt		%i2, .L256_xts_enloop2x
@@ -3066,7 +3066,7 @@ aes256_t4_xts_encrypt:
 
 	brnz,pn		%l2, 2f
 	sub		%i2, 2, %i2
-		
+
 	std		%f0, [%i1 + 0]
 	std		%f2, [%i1 + 8]
 	std		%f4, [%i1 + 16]
@@ -3343,7 +3343,7 @@ aes256_t4_xts_decrypt:
 
 	brnz,pn		%l2, 2f
 	sub		%i2, 1, %i2
-		
+
 	std		%f0, [%i1 + 0]
 	std		%f2, [%i1 + 8]
 	brnz,pt		%i2, .L256_xts_deloop2x
@@ -3454,7 +3454,7 @@ aes256_t4_xts_decrypt:
 
 	brnz,pn		%l2, 2f
 	sub		%i2, 2, %i2
-		
+
 	std		%f0, [%i1 + 0]
 	std		%f2, [%i1 + 8]
 	std		%f4, [%i1 + 16]
@@ -3751,7 +3751,7 @@ aes192_t4_ctr32_encrypt:
 
 	brnz,pn		%l2, 2f
 	sub		%i2, 1, %i2
-		
+
 	std		%f0, [%i1 + 0]
 	std		%f2, [%i1 + 8]
 	brnz,pt		%i2, .L192_ctr32_loop2x
@@ -3830,7 +3830,7 @@ aes192_t4_ctr32_encrypt:
 
 	brnz,pn		%l2, 2f
 	sub		%i2, 2, %i2
-		
+
 	std		%f0, [%i1 + 0]
 	std		%f2, [%i1 + 8]
 	std		%f4, [%i1 + 16]
@@ -4009,7 +4009,7 @@ aes192_t4_cbc_decrypt:
 
 	brnz,pn		%l2, 2f
 	sub		%i2, 1, %i2
-		
+
 	std		%f0, [%i1 + 0]
 	std		%f2, [%i1 + 8]
 	brnz,pt		%i2, .L192_cbc_dec_loop2x
@@ -4093,7 +4093,7 @@ aes192_t4_cbc_decrypt:
 
 	brnz,pn		%l2, 2f
 	sub		%i2, 2, %i2
-		
+
 	std		%f0, [%i1 + 0]
 	std		%f2, [%i1 + 8]
 	std		%f4, [%i1 + 16]
@@ -4277,7 +4277,7 @@ aes256_t4_cbc_decrypt:
 
 	brnz,pn		%l2, 2f
 	sub		%i2, 1, %i2
-		
+
 	std		%f0, [%i1 + 0]
 	std		%f2, [%i1 + 8]
 	brnz,pt		%i2, .L256_cbc_dec_loop2x
@@ -4361,7 +4361,7 @@ aes256_t4_cbc_decrypt:
 
 	brnz,pn		%l2, 2f
 	sub		%i2, 2, %i2
-		
+
 	std		%f0, [%i1 + 0]
 	std		%f2, [%i1 + 8]
 	std		%f4, [%i1 + 16]

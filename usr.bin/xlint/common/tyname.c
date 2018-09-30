@@ -1,4 +1,4 @@
-/*	$NetBSD: tyname.c,v 1.12 2016/08/19 10:18:11 christos Exp $	*/
+/*	$NetBSD: tyname.c,v 1.12.12.1 2018/09/30 01:45:59 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tyname.c,v 1.12 2016/08/19 10:18:11 christos Exp $");
+__RCSID("$NetBSD: tyname.c,v 1.12.12.1 2018/09/30 01:45:59 pgoyette Exp $");
 #endif
 
 #include <limits.h>
@@ -68,6 +68,10 @@ basictyname(tspec_t t)
 	case ULONG:	return "unsigned long";
 	case QUAD:	return "long long";
 	case UQUAD:	return "unsigned long long";
+#ifdef INT128_SIZE
+	case INT128:	return "__int128_t";
+	case UINT128:	return "__uint128_t";
+#endif
 	case FLOAT:	return "float";
 	case DOUBLE:	return "double";
 	case LDOUBLE:	return "long double";
@@ -111,6 +115,10 @@ sametype(const type_t *t1, const type_t *t2)
 	case ULONG:
 	case QUAD:
 	case UQUAD:
+#ifdef INT128_SIZE
+	case INT128:
+	case UINT128:
+#endif
 	case FLOAT:
 	case DOUBLE:
 	case LDOUBLE:
@@ -182,6 +190,10 @@ tyname(char *buf, size_t bufsiz, const type_t *tp)
 	case ULONG:
 	case QUAD:
 	case UQUAD:
+#ifdef INT128_SIZE
+	case INT128:
+	case UINT128:
+#endif
 	case FLOAT:
 	case DOUBLE:
 	case LDOUBLE:

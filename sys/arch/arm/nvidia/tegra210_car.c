@@ -1,4 +1,4 @@
-/* $NetBSD: tegra210_car.c,v 1.17.4.1 2018/07/28 04:37:28 pgoyette Exp $ */
+/* $NetBSD: tegra210_car.c,v 1.17.4.2 2018/09/30 01:45:38 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra210_car.c,v 1.17.4.1 2018/07/28 04:37:28 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra210_car.c,v 1.17.4.2 2018/09/30 01:45:38 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -53,7 +53,8 @@ __KERNEL_RCSID(0, "$NetBSD: tegra210_car.c,v 1.17.4.1 2018/07/28 04:37:28 pgoyet
 static int	tegra210_car_match(device_t, cfdata_t, void *);
 static void	tegra210_car_attach(device_t, device_t, void *);
 
-static struct clk *tegra210_car_clock_decode(device_t, const void *, size_t);
+static struct clk *tegra210_car_clock_decode(device_t, int, const void *,
+					     size_t);
 
 static const struct fdtbus_clock_controller_func tegra210_car_fdtclock_funcs = {
 	.decode = tegra210_car_clock_decode
@@ -657,6 +658,7 @@ struct tegra210_init_parent {
 	{ "PLL_U_OUT1",		NULL, 48000000, 1 },
 	{ "PLL_U_OUT2",		NULL, 60000000, 1 },
 	{ "CML0",		NULL, 0, 1 },
+	{ "CML1",		NULL, 0, 0 },
 	{ "AFI",		NULL, 0, 1 },
 	{ "PCIE",		NULL, 0, 1 },
 };
@@ -763,10 +765,13 @@ tegra210_car_attach(device_t parent, device_t self, void *aux)
 	aprint_naive("\n");
 	aprint_normal(": CAR\n");
 
+	sc->sc_clkdom.name = device_xname(self);
 	sc->sc_clkdom.funcs = &tegra210_car_clock_funcs;
 	sc->sc_clkdom.priv = sc;
-	for (n = 0; n < __arraycount(tegra210_car_clocks); n++)
+	for (n = 0; n < __arraycount(tegra210_car_clocks); n++) {
 		tegra210_car_clocks[n].base.domain = &sc->sc_clkdom;
+		clk_attach(&tegra210_car_clocks[n].base);
+	}
 
 	fdtbus_register_clock_controller(self, phandle,
 	    &tegra210_car_fdtclock_funcs);
@@ -1069,7 +1074,8 @@ tegra210_car_clock_find_by_id(u_int clock_id)
 }
 
 static struct clk *
-tegra210_car_clock_decode(device_t dev, const void *data, size_t len)
+tegra210_car_clock_decode(device_t dev, int cc_phandle, const void *data,
+			  size_t len)
 {
 	struct tegra210_car_softc * const sc = device_private(dev);
 	struct tegra_clk *tclk;

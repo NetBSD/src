@@ -1,4 +1,4 @@
-/*	$NetBSD: if_athn_usb.c,v 1.26.2.2 2018/09/06 06:56:04 pgoyette Exp $	*/
+/*	$NetBSD: if_athn_usb.c,v 1.26.2.3 2018/09/30 01:45:51 pgoyette Exp $	*/
 /*	$OpenBSD: if_athn_usb.c,v 1.12 2013/01/14 09:50:31 jsing Exp $	*/
 
 /*-
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_athn_usb.c,v 1.26.2.2 2018/09/06 06:56:04 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_athn_usb.c,v 1.26.2.3 2018/09/30 01:45:51 pgoyette Exp $");
 
 #ifdef	_KERNEL_OPT
 #include "opt_inet.h"
@@ -2974,7 +2974,7 @@ athn_usb_stop_locked(struct ifnet *ifp)
 	athn_set_power_sleep(sc);
 }
 
-MODULE(MODULE_CLASS_DRIVER, if_athn_usb, "bpf");
+MODULE(MODULE_CLASS_DRIVER, if_athn_usb, NULL);
 
 #ifdef _MODULE
 #include "ioconf.c"

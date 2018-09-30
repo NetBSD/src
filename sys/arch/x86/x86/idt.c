@@ -1,4 +1,4 @@
-/*	$NetBSD: idt.c,v 1.6 2017/11/04 08:50:47 cherry Exp $	*/
+/*	$NetBSD: idt.c,v 1.6.2.1 2018/09/30 01:45:48 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2009 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: idt.c,v 1.6 2017/11/04 08:50:47 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: idt.c,v 1.6.2.1 2018/09/30 01:45:48 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -73,15 +73,91 @@ __KERNEL_RCSID(0, "$NetBSD: idt.c,v 1.6 2017/11/04 08:50:47 cherry Exp $");
 #include <sys/cpu.h>
 #include <sys/atomic.h>
 
+#include <uvm/uvm.h>
+
 #include <machine/segments.h>
 
-/* On xen PV this is just numberspace management - used in x86/intr.c */
-#if !defined(XEN)
-
-struct gate_descriptor *idt;
-#endif
+/* 
+ * XEN PV and native have a different idea of what idt entries should
+ * look like.
+ */
+idt_descriptor_t *idt; 
 
 static char idt_allocmap[NIDT];
+
+/* Normalise across XEN PV and native */
+#if defined(XEN)
+
+void
+set_idtgate(idt_descriptor_t *xen_idd, void *function, int ist,
+	    int type, int dpl, int sel)
+{
+	/* 
+	 * Find the page boundary in which the descriptor resides.
+	 * We make an assumption here, that the descriptor is part of
+	 * a table (array), which fits in a page and is page aligned.
+	 *
+	 * This assumption is from the usecases at early startup in
+	 * machine/machdep.c 
+	 *
+	 * Thus this function may not work in the "general" case of a
+	 * randomly located idt entry template (for eg:).
+	 */
+
+	vaddr_t xen_idt_vaddr = ((vaddr_t) xen_idd) & ~PAGE_MASK;
+
+	//kpreempt_disable();
+#if defined(__x86_64__)
+	/* Make it writeable, so we can update the values. */
+	pmap_changeprot_local(xen_idt_vaddr, VM_PROT_READ|VM_PROT_WRITE);
+#endif /* __x86_64 */
+	xen_idd->cs = sel;
+	xen_idd->address = (unsigned long) function;
+	xen_idd->flags = dpl;
+
+	/* 
+	 * Again we make the assumption that the descriptor is
+	 * implicitly part of an idt, which we infer as
+	 * xen_idt_vaddr. (See above).
+	 */
+	xen_idd->vector = xen_idd - (idt_descriptor_t *)xen_idt_vaddr;
+
+	/* Back to read-only, as it should be. */
+#if defined(__x86_64__)
+	pmap_changeprot_local(xen_idt_vaddr, VM_PROT_READ);
+#endif /* __x86_64 */
+	//kpreempt_enable();
+}
+void
+unset_idtgate(idt_descriptor_t *xen_idd)
+{
+#if defined(__x86_64__)
+	vaddr_t xen_idt_vaddr = ((vaddr_t) xen_idd) & PAGE_MASK;
+
+	/* Make it writeable, so we can update the values. */
+	pmap_changeprot_local(xen_idt_vaddr, VM_PROT_READ|VM_PROT_WRITE);
+#endif /* __x86_64 */
+
+	/* Zero it */
+	memset(xen_idd, 0, sizeof (*xen_idd));
+
+#if defined(__x86_64__)
+	/* Back to read-only, as it should be. */
+	pmap_changeprot_local(xen_idt_vaddr, VM_PROT_READ);
+#endif /* __x86_64 */
+}
+#else /* XEN */
+void
+set_idtgate(idt_descriptor_t *idd, void *function, int ist, int type, int dpl, int sel)
+{
+	setgate(idd, function, ist, type, dpl,	sel);
+}
+void
+unset_idtgate(idt_descriptor_t *idd)
+{
+	unsetgate(idd);
+}
+#endif /* XEN */
 
 /*
  * Allocate an IDT vector slot within the given range.
@@ -123,10 +199,8 @@ idt_vec_set(int vec, void (*function)(void))
 {
 
 	KASSERT(idt_allocmap[vec] == 1);
-#if !defined(XEN)
-	setgate(&idt[vec], function, 0, SDT_SYS386IGT, SEL_KPL,
-	    GSEL(GCODE_SEL, SEL_KPL));
-#endif
+	set_idtgate(&idt[vec], function, 0, SDT_SYS386IGT, SEL_KPL,
+	       GSEL(GCODE_SEL, SEL_KPL));
 }
 
 /*
@@ -136,9 +210,7 @@ void
 idt_vec_free(int vec)
 {
 
-#if !defined(XEN)
-	unsetgate(&idt[vec]);
-#endif
+	unset_idtgate(&idt[vec]);
 	idt_allocmap[vec] = 0;
 }
 

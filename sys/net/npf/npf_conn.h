@@ -1,5 +1,3 @@
-/*	$NetBSD: npf_conn.h,v 1.13 2017/12/10 00:07:36 rmind Exp $	*/
-
 /*-
  * Copyright (c) 2009-2014 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -121,10 +119,9 @@ int		npf_conn_setnat(const npf_cache_t *, npf_conn_t *,
 npf_nat_t *	npf_conn_getnat(npf_conn_t *, const int, bool *);
 void		npf_conn_gc(npf_t *, npf_conndb_t *, bool, bool);
 void		npf_conn_worker(npf_t *);
-int		npf_conn_import(npf_t *, npf_conndb_t *, prop_dictionary_t,
+int		npf_conn_import(npf_t *, npf_conndb_t *, const nvlist_t *,
 		    npf_ruleset_t *);
-int		npf_conn_find(npf_t *, prop_dictionary_t, prop_dictionary_t *);
-prop_dictionary_t npf_conn_export(npf_t *, const npf_conn_t *);
+int		npf_conn_find(npf_t *, const nvlist_t *, nvlist_t **);
 void		npf_conn_print(const npf_conn_t *);
 
 /*
@@ -144,6 +141,6 @@ void		npf_conndb_dequeue(npf_conndb_t *, npf_conn_t *,
 		    npf_conn_t *);
 npf_conn_t *	npf_conndb_getlist(npf_conndb_t *);
 void		npf_conndb_settail(npf_conndb_t *, npf_conn_t *);
-int		npf_conndb_export(npf_t *, prop_array_t);
+int		npf_conndb_export(npf_t *, nvlist_t *);
 
 #endif	/* _NPF_CONN_H_ */

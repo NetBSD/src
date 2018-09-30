@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_panel.c,v 1.6.18.1 2018/09/06 06:56:17 pgoyette Exp $	*/
+/*	$NetBSD: intel_panel.c,v 1.6.18.2 2018/09/30 01:45:54 pgoyette Exp $	*/
 
 /*
  * Copyright © 2006-2010 Intel Corporation
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_panel.c,v 1.6.18.1 2018/09/06 06:56:17 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_panel.c,v 1.6.18.2 2018/09/30 01:45:54 pgoyette Exp $");
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
@@ -1782,7 +1782,8 @@ intel_panel_init_backlight_funcs(struct intel_panel *panel)
 		panel->backlight.disable = bxt_disable_backlight;
 		panel->backlight.set = bxt_set_backlight;
 		panel->backlight.get = bxt_get_backlight;
-	} else if (HAS_PCH_LPT(dev) || HAS_PCH_SPT(dev)) {
+	} else if (HAS_PCH_LPT(dev) || HAS_PCH_SPT(dev) ||
+		   HAS_PCH_KBP(dev)) {
 		panel->backlight.setup = lpt_setup_backlight;
 		panel->backlight.enable = lpt_enable_backlight;
 		panel->backlight.disable = lpt_disable_backlight;

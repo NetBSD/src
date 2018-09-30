@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.7 2017/05/04 16:26:10 sevan Exp $	*/
+/*	$NetBSD: main.c,v 1.7.8.1 2018/09/30 01:46:01 pgoyette Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -91,7 +91,8 @@ static const struct f_arg fflagopts[] = {
 	{"xfer dir", "/usr/INSTALL", xfer_dir, sizeof xfer_dir},
 	{"ext dir", "", ext_dir_bin, sizeof ext_dir_bin},
 	{"ext src dir", "", ext_dir_src, sizeof ext_dir_src},
-	{"ftp host", SYSINST_FTP_HOST, ftp.host, sizeof ftp.host},
+	{"ftp host", SYSINST_FTP_HOST, ftp.xfer_host[XFER_FTP], sizeof ftp.xfer_host[XFER_FTP]},
+	{"http host", SYSINST_HTTP_HOST, ftp.xfer_host[XFER_HTTP], sizeof ftp.xfer_host[XFER_HTTP]},
 	{"ftp dir", SYSINST_FTP_DIR, ftp.dir, sizeof ftp.dir},
 	{"ftp prefix", "/" MACH "/binary/sets", set_dir_bin, sizeof set_dir_bin},
 	{"ftp src prefix", "/source/sets", set_dir_src, sizeof set_dir_src},
@@ -108,13 +109,15 @@ static const struct f_arg fflagopts[] = {
 	{"targetroot mount", "/targetroot", targetroot_mnt, sizeof targetroot_mnt},
 	{"dist postfix", ".tgz", dist_postfix, sizeof dist_postfix},
 	{"diskname", "mydisk", bsddiskname, sizeof bsddiskname},
-	{"pkg host", SYSINST_PKG_HOST, pkg.host, sizeof pkg.host},
+	{"pkg host", SYSINST_PKG_HOST, pkg.xfer_host[XFER_FTP], sizeof pkg.xfer_host[XFER_FTP]},
+	{"pkg http host", SYSINST_PKG_HTTP_HOST, pkg.xfer_host[XFER_HTTP], sizeof pkg.xfer_host[XFER_HTTP]},
 	{"pkg dir", SYSINST_PKG_DIR, pkg.dir, sizeof pkg.dir},
-	{"pkg prefix", "/" MACH "/" REL "/All", pkg_dir, sizeof pkg_dir},
+	{"pkg prefix", "/" MACH "/" PKG_SUBDIR "/All", pkg_dir, sizeof pkg_dir},
 	{"pkg user", "ftp", pkg.user, sizeof pkg.user},
 	{"pkg pass", "", pkg.pass, sizeof pkg.pass},
 	{"pkg proxy", "", pkg.proxy, sizeof pkg.proxy},
-	{"pkgsrc host", SYSINST_PKGSRC_HOST, pkgsrc.host, sizeof pkgsrc.host},
+	{"pkgsrc host", SYSINST_PKGSRC_HOST, pkgsrc.xfer_host[XFER_FTP], sizeof pkgsrc.xfer_host[XFER_FTP]},
+	{"pkgsrc http host", SYSINST_PKGSRC_HTTP_HOST, pkgsrc.xfer_host[XFER_HTTP], sizeof pkgsrc.xfer_host[XFER_HTTP]},
 	{"pkgsrc dir", "", pkgsrc.dir, sizeof pkgsrc.dir},
 	{"pkgsrc prefix", "pub/pkgsrc/stable", pkgsrc_dir, sizeof pkgsrc_dir},
 	{"pkgsrc user", "ftp", pkgsrc.user, sizeof pkgsrc.user},
@@ -149,7 +152,7 @@ init(void)
 			strlcpy(arg->var, arg->dflt, arg->size);
 	}
 	strlcpy(pm_new->bsddiskname, bsddiskname, sizeof pm_new->bsddiskname);
-	pkg.xfer_type = pkgsrc.xfer_type = "http";
+	pkg.xfer = pkgsrc.xfer = XFER_HTTP;
 	
 	clr_arg.bg=COLOR_BLUE;
 	clr_arg.fg=COLOR_WHITE;
@@ -176,7 +179,11 @@ main(int argc, char **argv)
 	}
 
 	/* argv processing */
-	while ((ch = getopt(argc, argv, "Dr:f:C:p")) != -1)
+	while ((ch = getopt(argc, argv, "Dr:f:C:"
+#ifndef NO_PARTMAN
+	    "p"
+#endif
+	    )) != -1)
 		switch(ch) {
 		case 'D':	/* set to get past certain errors in testing */
 			debug = 1;
@@ -193,10 +200,12 @@ main(int argc, char **argv)
 			/* Define colors */
 			sscanf(optarg, "%u:%u", &clr_arg.bg, &clr_arg.fg);
 			break;
+#ifndef NO_PARTMAN
 		case 'p':
 			/* Partition tool */
 			partman_go = 1;
 			break;
+#endif
 		case '?':
 		default:
 			usage();

@@ -1,4 +1,4 @@
-/*	$NetBSD: iq80321_machdep.c,v 1.57 2016/12/25 04:35:30 christos Exp $	*/
+/*	$NetBSD: iq80321_machdep.c,v 1.57.14.1 2018/09/30 01:45:42 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -73,8 +73,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iq80321_machdep.c,v 1.57 2016/12/25 04:35:30 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iq80321_machdep.c,v 1.57.14.1 2018/09/30 01:45:42 pgoyette Exp $");
 
+#include "opt_console.h"
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
 #include "opt_pmap_debug.h"

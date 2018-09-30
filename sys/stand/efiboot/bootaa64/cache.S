@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.S,v 1.1.2.2 2018/09/06 06:56:47 pgoyette Exp $	*/
+/*	$NetBSD: cache.S,v 1.1.2.3 2018/09/30 01:45:58 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2014 Robin Randhawa
@@ -33,6 +33,9 @@
  */
 
 #include <aarch64/asm.h>
+
+#define	SCTLR_M	(1<<0)
+#define	SCTLR_C	(1<<2)
 
 	.text
 	.align	2
@@ -96,3 +99,40 @@ ENTRY(aarch64_icache_inv_all)
 	isb
 	ret
 END(aarch64_icache_inv_all)
+
+/*
+ * void aarch64_exec_kernel(paddr_t entry, paddr_t dtb)
+ */
+ENTRY(aarch64_exec_kernel)
+	mov	x20, x0	/* kernel entry point */
+	mov	x21, x1	/* dtb address */
+
+	mrs	x0, CurrentEL
+	lsr	x0, x0, #2
+	cmp	x0, #0x2
+	b.eq	1f
+
+	/* Disable MMU and dcache, CurrentEL = EL1 */
+	mrs	x0, sctlr_el1
+	bic	x0, x0, #SCTLR_M
+	bic	x0, x0, #SCTLR_C
+	msr	sctlr_el1, x0
+	isb
+	b	2f
+1:
+	/* Disable MMU and dcache, CurrentEL = EL2 */
+	mrs	x0, sctlr_el2
+	bic	x0, x0, #SCTLR_M
+	bic	x0, x0, #SCTLR_C
+	msr	sctlr_el2, x0
+	isb
+2:
+
+	/* Jump to kernel */
+	mov	x0, x21
+	mov	x1, xzr
+	mov	x2, xzr
+	mov	x3, xzr
+	br	x20
+
+END(aarch64_exec_kernel)

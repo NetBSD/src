@@ -2359,6 +2359,7 @@ zfs_zaccess(znode_t *zp, int mode, int flags, boolean_t skipaclchk, cred_t *cr)
 	 */
 	if (zp->z_pflags & ZFS_XATTR)
 		return (0);
+	xzp = NULL;	// XXX: hello clang is_attr is false here.
 #else
 	/*
 	 * If attribute then validate against base file

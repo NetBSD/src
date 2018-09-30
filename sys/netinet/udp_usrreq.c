@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.245.2.6 2018/07/28 04:38:10 pgoyette Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.245.2.7 2018/09/30 01:45:56 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.245.2.6 2018/07/28 04:38:10 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.245.2.7 2018/09/30 01:45:56 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -308,21 +308,15 @@ badcsum:
 }
 
 void
-udp_input(struct mbuf *m, ...)
+udp_input(struct mbuf *m, int off, int proto)
 {
-	va_list ap;
 	struct sockaddr_in src, dst;
 	struct ip *ip;
 	struct udphdr *uh;
-	int iphlen;
+	int iphlen = off;
 	int len;
 	int n;
 	u_int16_t ip_len;
-
-	va_start(ap, m);
-	iphlen = va_arg(ap, int);
-	(void)va_arg(ap, int);		/* ignore value, advance ap */
-	va_end(ap);
 
 	MCLAIM(m, &udp_rx_mowner);
 	UDP_STATINC(UDP_STAT_IPACKETS);

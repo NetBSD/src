@@ -1,4 +1,4 @@
-/* $NetBSD: db_machdep.h,v 1.2.16.3 2018/07/28 04:37:26 pgoyette Exp $ */
+/* $NetBSD: db_machdep.h,v 1.2.16.4 2018/09/30 01:45:35 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -68,6 +68,7 @@
 
 #include <sys/types.h>
 #include <aarch64/frame.h>
+#include <ddb/db_user.h>
 
 typedef long long int db_expr_t;
 #define DDB_EXPR_FMT "ll"
@@ -214,6 +215,7 @@ void aarch64_watchpoint_set(int, vaddr_t, int, int);
 #define WATCHPOINT_ACCESS_LOADSTORE	0x03
 #define WATCHPOINT_ACCESS_MASK		0x03
 
+#define DB_ELF_SYMBOLS
 
 #elif defined(__arm__)
 

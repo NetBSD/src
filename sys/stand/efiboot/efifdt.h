@@ -1,4 +1,4 @@
-/* $NetBSD: efifdt.h,v 1.2.2.2 2018/09/06 06:56:47 pgoyette Exp $ */
+/* $NetBSD: efifdt.h,v 1.2.2.3 2018/09/30 01:45:58 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,11 @@
 
 int efi_fdt_probe(void);
 void efi_fdt_memory_map(void);
+int efi_fdt_set_data(void *);
 void *efi_fdt_data(void);
 int efi_fdt_size(void);
 void efi_fdt_show(void);
 void efi_fdt_bootargs(const char *);
+void efi_fdt_initrd(u_long, u_long);
+void efi_fdt_init(u_long, u_long);
+void efi_fdt_fini(void);

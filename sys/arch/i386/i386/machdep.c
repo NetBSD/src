@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.803.2.3 2018/07/28 04:37:34 pgoyette Exp $	*/
+/*	$NetBSD: machdep.c,v 1.803.2.4 2018/09/30 01:45:44 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009, 2017
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.803.2.3 2018/07/28 04:37:34 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.803.2.4 2018/09/30 01:45:44 pgoyette Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_freebsd.h"
@@ -580,7 +580,7 @@ cpu_set_tss_gates(struct cpu_info *ci)
 	    SDT_SYS386TSS, SEL_KPL, 0, 0);
 	ci->ci_gdt[GTRAPTSS_SEL].sd = sd;
 
-	setgate(&idt[8], NULL, 0, SDT_SYSTASKGT, SEL_KPL,
+	set_idtgate(&idt[8], NULL, 0, SDT_SYSTASKGT, SEL_KPL,
 	    GSEL(GTRAPTSS_SEL, SEL_KPL));
 
 #if defined(DDB) && defined(MULTIPROCESSOR)
@@ -602,7 +602,7 @@ cpu_set_tss_gates(struct cpu_info *ci)
 	    SDT_SYS386TSS, SEL_KPL, 0, 0);
 	ci->ci_gdt[GIPITSS_SEL].sd = sd;
 
-	setgate(&idt[ddb_vec], NULL, 0, SDT_SYSTASKGT, SEL_KPL,
+	set_idtgate(&idt[ddb_vec], NULL, 0, SDT_SYSTASKGT, SEL_KPL,
 	    GSEL(GIPITSS_SEL, SEL_KPL));
 #endif
 }
@@ -960,23 +960,15 @@ setsegment(struct segment_descriptor *sd, const void *base, size_t limit,
 extern vector IDTVEC(syscall);
 extern vector *IDTVEC(exceptions)[];
 #ifdef XEN
-#define MAX_XEN_IDT 128
-trap_info_t xen_idt[MAX_XEN_IDT];
-int xen_idt_idx;
 extern union descriptor tmpgdt[];
 #endif
 
 void
 cpu_init_idt(void)
 {
-#ifndef XEN
 	struct region_descriptor region;
 	setregion(&region, pentium_idt, NIDT * sizeof(idt[0]) - 1);
 	lidt(&region);
-#else
-	if (HYPERVISOR_set_trap_table(xen_idt))
-		panic("HYPERVISOR_set_trap_table %p failed\n", xen_idt);
-#endif
 }
 
 void
@@ -1315,13 +1307,13 @@ init386(paddr_t first_avail)
 	memset((void *)gdt_vaddr, 0, PAGE_SIZE);
 	memset((void *)ldt_vaddr, 0, PAGE_SIZE);
 
-#ifndef XEN
 	pmap_kenter_pa(pentium_idt_vaddr, idt_paddr, VM_PROT_READ, 0);
 	pmap_update(pmap_kernel());
 	pentium_idt = (union descriptor *)pentium_idt_vaddr;
+	idt = (idt_descriptor_t *)idt_vaddr;
 
+#ifndef XEN	
 	tgdt = gdtstore;
-	idt = (struct gate_descriptor *)idt_vaddr;
 	gdtstore = (union descriptor *)gdt_vaddr;
 	ldtstore = (union descriptor *)ldt_vaddr;
 
@@ -1342,62 +1334,48 @@ init386(paddr_t first_avail)
 	ldtstore[LUCODEBIG_SEL] = gdtstore[GUCODEBIG_SEL];
 	ldtstore[LUDATA_SEL] = gdtstore[GUDATA_SEL];
 
-#ifndef XEN
 	/* exceptions */
 	for (x = 0; x < 32; x++) {
+		/* Reset to default. Special cases below */
+		int sel;
+#ifdef XEN		
+		sel = SEL_XEN;
+#else
+		sel = SEL_KPL;
+#endif /* XEN */
+
 		idt_vec_reserve(x);
-		setgate(&idt[x], IDTVEC(exceptions)[x], 0, SDT_SYS386IGT,
-		    (x == 3 || x == 4) ? SEL_UPL : SEL_KPL,
-		    GSEL(GCODE_SEL, SEL_KPL));
+
+ 		switch (x) {
+#ifdef XEN
+		case 2:  /* NMI */
+		case 18: /* MCA */
+			sel |= 0x4; /* Auto EOI/mask */
+			break;
+#endif /* XEN */
+		case 3:
+		case 4:
+			sel = SEL_UPL;
+			break;
+		default:
+			break;
+		}
+		set_idtgate(&idt[x], IDTVEC(exceptions)[x], 0, SDT_SYS386IGT,
+		    sel, GSEL(GCODE_SEL, SEL_KPL));
 	}
 
 	/* new-style interrupt gate for syscalls */
 	idt_vec_reserve(128);
-	setgate(&idt[128], &IDTVEC(syscall), 0, SDT_SYS386IGT, SEL_UPL,
+	set_idtgate(&idt[128], &IDTVEC(syscall), 0, SDT_SYS386IGT, SEL_UPL,
 	    GSEL(GCODE_SEL, SEL_KPL));
 
+#ifndef XEN
 	setregion(&region, gdtstore, NGDT * sizeof(gdtstore[0]) - 1);
 	lgdt(&region);
-
-	cpu_init_idt();
-#else /* !XEN */
-	memset(xen_idt, 0, sizeof(trap_info_t) * MAX_XEN_IDT);
-	xen_idt_idx = 0;
-	for (x = 0; x < 32; x++) {
-		KASSERT(xen_idt_idx < MAX_XEN_IDT);
-		idt_vec_reserve(x);
-		xen_idt[xen_idt_idx].vector = x;
-
-		switch (x) {
-		case 2:  /* NMI */
-		case 18: /* MCA */
-			TI_SET_IF(&(xen_idt[xen_idt_idx]), 2);
-			break;
-		case 3:
-		case 4:
-			xen_idt[xen_idt_idx].flags = SEL_UPL;
-			break;
-		default:
-			xen_idt[xen_idt_idx].flags = SEL_XEN;
-			break;
-		}
-
-		xen_idt[xen_idt_idx].cs = GSEL(GCODE_SEL, SEL_KPL);
-		xen_idt[xen_idt_idx].address =
-			(uint32_t)IDTVEC(exceptions)[x];
-		xen_idt_idx++;
-	}
-	KASSERT(xen_idt_idx < MAX_XEN_IDT);
-	idt_vec_reserve(128);
-	xen_idt[xen_idt_idx].vector = 128;
-	xen_idt[xen_idt_idx].flags = SEL_UPL;
-	xen_idt[xen_idt_idx].cs = GSEL(GCODE_SEL, SEL_KPL);
-	xen_idt[xen_idt_idx].address = (uint32_t)&IDTVEC(syscall);
-	xen_idt_idx++;
-	KASSERT(xen_idt_idx < MAX_XEN_IDT);
+#endif
+	
 	lldt(GSEL(GLDT_SEL, SEL_KPL));
 	cpu_init_idt();
-#endif /* XEN */
 
 	init386_ksyms();
 

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.18.2.1 2018/09/06 06:55:34 pgoyette Exp $
+# $NetBSD: GENERIC,v 1.18.2.2 2018/09/30 01:45:44 pgoyette Exp $
 #
 # GENERIC machine description file
 #
@@ -23,7 +23,7 @@ include 	"arch/hppa/conf/std.hppa"
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
-#ident 		"GENERIC-$Revision: 1.18.2.1 $"
+#ident 		"GENERIC-$Revision: 1.18.2.2 $"
 
 maxusers	32		# estimated number of users
 
@@ -463,8 +463,6 @@ an*	at pci? dev ? function ?	# Aironet PC4500/PC4800 (802.11)
 atw*	at pci? dev ? function ?	# ADMtek ADM8211 (802.11)
 bce* 	at pci? dev ? function ?	# Broadcom 4401 10/100 Ethernet
 bge* 	at pci? dev ? function ?	# Broadcom 570x gigabit Ethernet
-# en is broken, uses vtophys
-#en*	at pci? dev ? function ?	# ENI/Adaptec ATM
 ep*	at pci? dev ? function ?	# 3Com 3c59x
 epic*	at pci? dev ? function ?	# SMC EPIC/100 Ethernet
 esh*	at pci? dev ? function ?	# Essential HIPPI card

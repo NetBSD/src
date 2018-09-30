@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.hp300,v 1.93 2018/02/25 00:27:16 mrg Exp $
+#	$NetBSD: Makefile.hp300,v 1.93.2.1 2018/09/30 01:45:44 pgoyette Exp $
 
 # Makefile for NetBSD
 #
@@ -38,7 +38,7 @@ AFLAGS+=	-x assembler-with-cpp
 ##
 ## (3) libkern and compat
 ##
-KERN_AS=	obj
+OPT_MODULAR=	%MODULAR%
 
 ##
 ## (4) local objects, compile rules, and dependencies

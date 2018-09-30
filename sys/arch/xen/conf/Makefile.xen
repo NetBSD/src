@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.xen,v 1.45.2.1 2018/06/25 07:25:47 pgoyette Exp $
+#	$NetBSD: Makefile.xen,v 1.45.2.2 2018/09/30 01:45:48 pgoyette Exp $
 #	NetBSD: Makefile.i386,v 1.132 2003/07/05 16:56:10 simonb Exp 
 
 # Makefile for NetBSD
@@ -62,7 +62,7 @@ CFLAGS+=	-mno-mmx -mno-sse -mno-avx
 ##
 ## (3) libkern and compat
 ##
-KERN_AS=	obj
+OPT_MODULAR=	%MODULAR%
 
 ##
 ## (4) local objects, compile rules, and dependencies

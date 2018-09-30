@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.h,v 1.4 2016/01/08 21:35:35 christos Exp $	*/
+/*	$NetBSD: mem.h,v 1.4.14.1 2018/09/30 01:45:14 pgoyette Exp $	*/
 
 /*
  * libntp local override of isc/mem.h to stub it out.
@@ -28,7 +28,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: mem.h,v 1.78.120.3 2009/02/11 03:07:01 jinmei Exp  */
+/* Id */
 
 #ifndef ISC_MEM_H
 #define ISC_MEM_H 1

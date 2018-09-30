@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.cesfic,v 1.19 2015/09/06 02:17:30 uebayasi Exp $
+#	$NetBSD: Makefile.cesfic,v 1.19.16.1 2018/09/30 01:45:39 pgoyette Exp $
 
 # Makefile for NetBSD
 #
@@ -40,7 +40,7 @@ AFLAGS+=	-Wa,-mcpu=68030 -Wa,-m68040 -Wa,-m68030 -Wa,-m68851
 ##
 ## (3) libkern and compat
 ##
-KERN_AS=	obj
+OPT_MODULAR=	%MODULAR%
 
 ##
 ## (4) local objects, compile rules, and dependencies

@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: buildfloppies.sh,v 1.18 2017/02/11 03:07:06 christos Exp $
+# $NetBSD: buildfloppies.sh,v 1.18.10.1 2018/09/30 01:45:01 pgoyette Exp $
 #
 # Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -58,12 +58,12 @@ _USAGE_
 
 plural()
 {
-	[ $1 -ne 1 ] && echo "s"
+	[ "$1" -ne 1 ] && echo "s"
 }
 
 roundup()
 {
-	echo $(( ( $1 + $2 - 1 ) / ( $2 ) ))
+	echo $(( ( ( $1 ) + ( $2 ) - 1 ) / ( $2 ) ))
 }
 
 
@@ -148,8 +148,10 @@ for file in $files; do
 	set -- $(ls -ln $file)
 	file_bytes=$5
 	pad_bytes=$(($(roundup $file_bytes 512) * 512 - $file_bytes))
-	[ "$file_bytes" != 0 -o "$file" = "${file#USTAR.volsize.}" ] &&
+	if [ "$file_bytes" != 0 ] || [ "$file" = "${file#USTAR.volsize.}" ]
+	then
 		msg="$msg $file $pad_bytes,"
+	fi
 	free_space=$(($free_space - 512 - $file_bytes - $pad_bytes))
 done
 echo "Free space in last tar block:$msg"

@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2013/03/12 20:49:22 christos Exp $
+# $NetBSD: Makefile,v 1.1.40.1 2018/09/30 01:45:56 pgoyette Exp $
 
 .include "../Makefile.inc"
 
@@ -7,5 +7,7 @@
 KMOD=		npf_ext_normalize
 
 SRCS=		npf_ext_normalize.c
+
+CPPFLAGS+=	-I${NETBSDSRCDIR}/sys/external/bsd/libnv/dist
 
 .include <bsd.kmodule.mk>

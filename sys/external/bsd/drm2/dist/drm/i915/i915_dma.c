@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_dma.c,v 1.18.16.1 2018/09/06 06:56:16 pgoyette Exp $	*/
+/*	$NetBSD: i915_dma.c,v 1.18.16.2 2018/09/30 01:45:53 pgoyette Exp $	*/
 
 /* i915_dma.c -- DMA support for the I915 -*- linux-c -*-
  */
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_dma.c,v 1.18.16.1 2018/09/06 06:56:16 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_dma.c,v 1.18.16.2 2018/09/30 01:45:53 pgoyette Exp $");
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
@@ -693,7 +693,8 @@ static void gen9_sseu_info_init(struct drm_device *dev)
 	 * supports EU power gating on devices with more than one EU
 	 * pair per subslice.
 	*/
-	info->has_slice_pg = (IS_SKYLAKE(dev) && (info->slice_total > 1));
+	info->has_slice_pg = ((IS_SKYLAKE(dev) || IS_KABYLAKE(dev)) &&
+			       (info->slice_total > 1));
 	info->has_subslice_pg = (IS_BROXTON(dev) && (info->subslice_total > 1));
 	info->has_eu_pg = (info->eu_per_subslice > 2);
 }
@@ -704,7 +705,7 @@ static void broadwell_sseu_info_init(struct drm_device *dev)
 	struct intel_device_info *info;
 	const int s_max = 3, ss_max = 3, eu_max = 8;
 	int s, ss;
-	u32 fuse2, eu_disable[s_max], s_enable, ss_disable;
+	u32 fuse2, eu_disable[3], s_enable, ss_disable;
 
 	fuse2 = I915_READ(GEN8_FUSE2);
 	s_enable = (fuse2 & GEN8_F2_S_ENA_MASK) >> GEN8_F2_S_ENA_SHIFT;

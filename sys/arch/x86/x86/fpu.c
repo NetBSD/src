@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.28.2.2 2018/07/28 04:37:42 pgoyette Exp $	*/
+/*	$NetBSD: fpu.c,v 1.28.2.3 2018/09/30 01:45:48 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.  All
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.28.2.2 2018/07/28 04:37:42 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.28.2.3 2018/09/30 01:45:48 pgoyette Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -121,9 +121,6 @@ __KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.28.2.2 2018/07/28 04:37:42 pgoyette Exp $"
 #include <x86/cpu.h>
 #include <x86/fpu.h>
 
-/* Check some duplicate definitions match */
-#include <machine/fenv.h>
-
 #ifdef XEN
 #define clts() HYPERVISOR_fpu_taskswitch(0)
 #define stts() HYPERVISOR_fpu_taskswitch(1)
@@ -134,12 +131,168 @@ bool x86_fpu_eager __read_mostly = false;
 static uint32_t x86_fpu_mxcsr_mask __read_mostly = 0;
 
 static inline union savefpu *
-process_fpframe(struct lwp *lwp)
+lwp_fpuarea(struct lwp *l)
 {
-	struct pcb *pcb = lwp_getpcb(lwp);
+	struct pcb *pcb = lwp_getpcb(l);
 
 	return &pcb->pcb_savefpu;
 }
+
+void
+fpuinit(struct cpu_info *ci)
+{
+	/*
+	 * This might not be strictly necessary since it will be initialized
+	 * for each process. However it does no harm.
+	 */
+	clts();
+	fninit();
+	stts();
+}
+
+void
+fpuinit_mxcsr_mask(void)
+{
+#ifndef XEN
+	union savefpu fpusave __aligned(16);
+	u_long psl;
+
+	memset(&fpusave, 0, sizeof(fpusave));
+
+	/* Disable interrupts, and enable FPU */
+	psl = x86_read_psl();
+	x86_disable_intr();
+	clts();
+
+	/* Fill in the FPU area */
+	fxsave(&fpusave);
+
+	/* Restore previous state */
+	stts();
+	x86_write_psl(psl);
+
+	if (fpusave.sv_xmm.fx_mxcsr_mask == 0) {
+		x86_fpu_mxcsr_mask = __INITIAL_MXCSR_MASK__;
+	} else {
+		x86_fpu_mxcsr_mask = fpusave.sv_xmm.fx_mxcsr_mask;
+	}
+#else
+	/*
+	 * XXX XXX XXX: On Xen the FXSAVE above faults. That's because
+	 * &fpusave is not 16-byte aligned. Stack alignment problem
+	 * somewhere, it seems.
+	 */
+	x86_fpu_mxcsr_mask = __INITIAL_MXCSR_MASK__;
+#endif
+}
+
+static void
+fpu_clear_amd(void)
+{
+	/*
+	 * AMD FPUs do not restore FIP, FDP, and FOP on fxrstor and xrstor
+	 * when FSW.ES=0, leaking other threads' execution history.
+	 *
+	 * Clear them manually by loading a zero (fldummy). We do this
+	 * unconditionally, regardless of FSW.ES.
+	 *
+	 * Before that, clear the ES bit in the x87 status word if it is
+	 * currently set, in order to avoid causing a fault in the
+	 * upcoming load.
+	 *
+	 * Newer generations of AMD CPUs have CPUID_Fn80000008_EBX[2],
+	 * which indicates that FIP/FDP/FOP are restored (same behavior
+	 * as Intel). We're not using it though.
+	 */
+	if (fngetsw() & 0x80)
+		fnclex();
+	fldummy();
+}
+
+static void
+fpu_area_save(void *area)
+{
+	clts();
+
+	switch (x86_fpu_save) {
+	case FPU_SAVE_FSAVE:
+		fnsave(area);
+		break;
+	case FPU_SAVE_FXSAVE:
+		fxsave(area);
+		break;
+	case FPU_SAVE_XSAVE:
+		xsave(area, x86_xsave_features);
+		break;
+	case FPU_SAVE_XSAVEOPT:
+		xsaveopt(area, x86_xsave_features);
+		break;
+	}
+}
+
+static void
+fpu_area_restore(void *area)
+{
+	clts();
+
+	switch (x86_fpu_save) {
+	case FPU_SAVE_FSAVE:
+		frstor(area);
+		break;
+	case FPU_SAVE_FXSAVE:
+		if (cpu_vendor == CPUVENDOR_AMD)
+			fpu_clear_amd();
+		fxrstor(area);
+		break;
+	case FPU_SAVE_XSAVE:
+	case FPU_SAVE_XSAVEOPT:
+		if (cpu_vendor == CPUVENDOR_AMD)
+			fpu_clear_amd();
+		xrstor(area, x86_xsave_features);
+		break;
+	}
+}
+
+static void
+fpu_lwp_install(struct lwp *l)
+{
+	struct pcb *pcb = lwp_getpcb(l);
+	struct cpu_info *ci = curcpu();
+
+	KASSERT(ci->ci_fpcurlwp == NULL);
+	KASSERT(pcb->pcb_fpcpu == NULL);
+	ci->ci_fpcurlwp = l;
+	pcb->pcb_fpcpu = ci;
+	fpu_area_restore(&pcb->pcb_savefpu);
+}
+
+void
+fpu_eagerswitch(struct lwp *oldlwp, struct lwp *newlwp)
+{
+	int s;
+
+	s = splhigh();
+#ifdef DIAGNOSTIC
+	if (oldlwp != NULL) {
+		struct pcb *pcb = lwp_getpcb(oldlwp);
+		struct cpu_info *ci = curcpu();
+		if (pcb->pcb_fpcpu == NULL) {
+			KASSERT(ci->ci_fpcurlwp != oldlwp);
+		} else if (pcb->pcb_fpcpu == ci) {
+			KASSERT(ci->ci_fpcurlwp == oldlwp);
+		} else {
+			panic("%s: oldlwp's state installed elsewhere",
+			    __func__);
+		}
+	}
+#endif
+	fpusave_cpu(true);
+	if (!(newlwp->l_flag & LW_SYSTEM))
+		fpu_lwp_install(newlwp);
+	splx(s);
+}
+
+/* -------------------------------------------------------------------------- */
 
 /*
  * The following table is used to ensure that the FPE_... value
@@ -219,202 +372,29 @@ static const uint8_t fpetable[128] = {
 #undef FPE_xxx32
 
 /*
- * Init the FPU.
+ * This is a synchronous trap on either an x87 instruction (due to an unmasked
+ * error on the previous x87 instruction) or on an SSE/SSE2/etc instruction due
+ * to an error on the instruction itself.
  *
- * This might not be strictly necessary since it will be initialised
- * for each process.  However it does no harm.
+ * If trap actually generates a signal, then the fpu state is saved and then
+ * copied onto the lwp's user-stack, and then recovered from there when the
+ * signal returns.
+ *
+ * All this code needs to do is save the reason for the trap. For x87 traps the
+ * status word bits need clearing to stop the trap re-occurring. For SSE traps
+ * the mxcsr bits are 'sticky' and need clearing to not confuse a later trap.
+ *
+ * We come here with interrupts disabled.
  */
-void
-fpuinit(struct cpu_info *ci)
-{
-
-	clts();
-	fninit();
-	stts();
-}
-
-/*
- * Get the value of MXCSR_MASK supported by the CPU.
- */
-void
-fpuinit_mxcsr_mask(void)
-{
-#ifndef XEN
-	union savefpu fpusave __aligned(16);
-	u_long psl;
-
-	memset(&fpusave, 0, sizeof(fpusave));
-
-	/* Disable interrupts, and enable FPU */
-	psl = x86_read_psl();
-	x86_disable_intr();
-	clts();
-
-	/* Fill in the FPU area */
-	fxsave(&fpusave);
-
-	/* Restore previous state */
-	stts();
-	x86_write_psl(psl);
-
-	if (fpusave.sv_xmm.fx_mxcsr_mask == 0) {
-		x86_fpu_mxcsr_mask = __INITIAL_MXCSR_MASK__;
-	} else {
-		x86_fpu_mxcsr_mask = fpusave.sv_xmm.fx_mxcsr_mask;
-	}
-#else
-	/*
-	 * XXX XXX XXX: On Xen the FXSAVE above faults. That's because
-	 * &fpusave is not 16-byte aligned. Stack alignment problem
-	 * somewhere, it seems.
-	 */
-	x86_fpu_mxcsr_mask = __INITIAL_MXCSR_MASK__;
-#endif
-}
-
-static void
-fpu_clear_amd(void)
-{
-	/*
-	 * AMD FPUs do not restore FIP, FDP, and FOP on fxrstor and xrstor
-	 * when FSW.ES=0, leaking other threads' execution history.
-	 *
-	 * Clear them manually by loading a zero (fldummy). We do this
-	 * unconditionally, regardless of FSW.ES.
-	 *
-	 * Before that, clear the ES bit in the x87 status word if it is
-	 * currently set, in order to avoid causing a fault in the
-	 * upcoming load.
-	 *
-	 * Newer generations of AMD CPUs have CPUID_Fn80000008_EBX[2],
-	 * which indicates that FIP/FDP/FOP are restored (same behavior
-	 * as Intel). We're not using it though.
-	 */
-	if (fngetsw() & 0x80)
-		fnclex();
-	fldummy();
-}
-
-static void
-fpu_save(struct lwp *l)
-{
-	struct pcb *pcb = lwp_getpcb(l);
-
-	switch (x86_fpu_save) {
-	case FPU_SAVE_FSAVE:
-		fnsave(&pcb->pcb_savefpu);
-		break;
-	case FPU_SAVE_FXSAVE:
-		fxsave(&pcb->pcb_savefpu);
-		break;
-	case FPU_SAVE_XSAVE:
-		xsave(&pcb->pcb_savefpu, x86_xsave_features);
-		break;
-	case FPU_SAVE_XSAVEOPT:
-		xsaveopt(&pcb->pcb_savefpu, x86_xsave_features);
-		break;
-	}
-}
-
-static void
-fpu_restore(struct lwp *l)
-{
-	struct pcb *pcb = lwp_getpcb(l);
-
-	switch (x86_fpu_save) {
-	case FPU_SAVE_FSAVE:
-		frstor(&pcb->pcb_savefpu);
-		break;
-	case FPU_SAVE_FXSAVE:
-		if (cpu_vendor == CPUVENDOR_AMD)
-			fpu_clear_amd();
-		fxrstor(&pcb->pcb_savefpu);
-		break;
-	case FPU_SAVE_XSAVE:
-	case FPU_SAVE_XSAVEOPT:
-		if (cpu_vendor == CPUVENDOR_AMD)
-			fpu_clear_amd();
-		xrstor(&pcb->pcb_savefpu, x86_xsave_features);
-		break;
-	}
-}
-
-static void
-fpu_eagerrestore(struct lwp *l)
-{
-	struct pcb *pcb = lwp_getpcb(l);
-	struct cpu_info *ci = curcpu();
-
-	clts();
-	KASSERT(ci->ci_fpcurlwp == NULL);
-	KASSERT(pcb->pcb_fpcpu == NULL);
-	ci->ci_fpcurlwp = l;
-	pcb->pcb_fpcpu = ci;
-	fpu_restore(l);
-}
-
-void
-fpu_eagerswitch(struct lwp *oldlwp, struct lwp *newlwp)
-{
-	int s;
-
-	s = splhigh();
-#ifdef DIAGNOSTIC
-	if (oldlwp != NULL) {
-		struct pcb *pcb = lwp_getpcb(oldlwp);
-		struct cpu_info *ci = curcpu();
-		if (pcb->pcb_fpcpu == NULL) {
-			KASSERT(ci->ci_fpcurlwp != oldlwp);
-		} else if (pcb->pcb_fpcpu == ci) {
-			KASSERT(ci->ci_fpcurlwp == oldlwp);
-		} else {
-			panic("%s: oldlwp's state installed elsewhere",
-			    __func__);
-		}
-	}
-#endif
-	fpusave_cpu(true);
-	if (!(newlwp->l_flag & LW_SYSTEM))
-		fpu_eagerrestore(newlwp);
-	splx(s);
-}
-
-/* -------------------------------------------------------------------------- */
-
-/*
- * This is a synchronous trap on either an x87 instruction (due to an
- * unmasked error on the previous x87 instruction) or on an SSE/SSE2 etc
- * instruction due to an error on the instruction itself.
- *
- * If trap actually generates a signal, then the fpu state is saved
- * and then copied onto the process's user-stack, and then recovered
- * from there when the signal returns (or from the jmp_buf if the
- * signal handler exits with a longjmp()).
- *
- * All this code need to do is save the reason for the trap.
- * For x87 interrupts the status word bits need clearing to stop the
- * trap re-occurring.
- *
- * The mxcsr bits are 'sticky' and need clearing to not confuse a later trap.
- *
- * Since this is a synchronous trap, the fpu registers must still belong
- * to the correct process (we trap through an interrupt gate so that
- * interrupts are disabled on entry).
- * Interrupts (these better include IPIs) are left disabled until we've
- * finished looking at fpu registers.
- *
- * For amd64 the calling code (in amd64_trap.S) has already checked
- * that we trapped from usermode.
- */
-
 void
 fputrap(struct trapframe *frame)
 {
 	uint32_t statbits;
 	ksiginfo_t ksi;
 
-	if (!USERMODE(frame->tf_cs))
+	if (__predict_false(!USERMODE(frame->tf_cs))) {
 		panic("fpu trap from kernel, trapframe %p\n", frame);
+	}
 
 	/*
 	 * At this point, fpcurlwp should be curlwp.  If it wasn't, the TS bit
@@ -442,7 +422,7 @@ fputrap(struct trapframe *frame)
 		/* Clear any pending exceptions from status word */
 		fnclex();
 
-		/* Removed masked interrupts */
+		/* Remove masked interrupts */
 		statbits = sw & ~(cw & 0x3f);
 	}
 
@@ -458,7 +438,7 @@ fputrap(struct trapframe *frame)
 }
 
 /*
- * Implement device not available (DNA) exception
+ * Implement device not available (DNA) exception.
  *
  * If we were the last lwp to use the FPU, we can simply return.
  * Otherwise, we save the previous state, if necessary, and restore
@@ -469,18 +449,16 @@ fputrap(struct trapframe *frame)
 void
 fpudna(struct trapframe *frame)
 {
-	struct cpu_info *ci;
+	struct cpu_info *ci = curcpu();
 	struct lwp *l, *fl;
 	struct pcb *pcb;
 	int s;
 
-	if (!USERMODE(frame->tf_cs))
+	if (!USERMODE(frame->tf_cs)) {
 		panic("fpudna from kernel, ip %p, trapframe %p\n",
 		    (void *)X86_TF_RIP(frame), frame);
+	}
 
-	ci = curcpu();
-
-	/* Save soft spl level - interrupts are hard disabled */
 	s = splhigh();
 
 	/* Save state on current CPU. */
@@ -526,19 +504,14 @@ fpudna(struct trapframe *frame)
 		kpreempt_enable();
 	}
 
-	/*
-	 * Restore state on this CPU, or initialize.  Ensure that
-	 * the entire update is atomic with respect to FPU-sync IPIs.
-	 */
-	clts();
-	ci->ci_fpcurlwp = l;
-	pcb->pcb_fpcpu = ci;
-
-	fpu_restore(l);
+	/* Install the LWP's FPU state. */
+	fpu_lwp_install(l);
 
 	KASSERT(ci == curcpu());
 	splx(s);
 }
+
+/* -------------------------------------------------------------------------- */
 
 /*
  * Save current CPU's FPU state.  Must be called at IPL_HIGH.
@@ -560,8 +533,7 @@ fpusave_cpu(bool save)
 	pcb = lwp_getpcb(l);
 
 	if (save) {
-		clts();
-		fpu_save(l);
+		fpu_area_save(&pcb->pcb_savefpu);
 	}
 
 	stts();
@@ -619,7 +591,7 @@ fpusave_lwp(struct lwp *l, bool save)
 void
 fpu_set_default_cw(struct lwp *l, unsigned int x87_cw)
 {
-	union savefpu *fpu_save = process_fpframe(l);
+	union savefpu *fpu_save = lwp_fpuarea(l);
 	struct pcb *pcb = lwp_getpcb(l);
 
 	if (i386_use_fxsave) {
@@ -647,7 +619,7 @@ fpu_save_area_clear(struct lwp *l, unsigned int x87_cw)
 
 	KASSERT(l == curlwp);
 	KASSERT((l->l_flag & LW_SYSTEM) == 0);
-	fpu_save = process_fpframe(l);
+	fpu_save = lwp_fpuarea(l);
 	pcb = lwp_getpcb(l);
 
 	s = splhigh();
@@ -694,7 +666,7 @@ fpu_save_area_clear(struct lwp *l, unsigned int x87_cw)
 	pcb->pcb_fpu_dflt_cw = x87_cw;
 
 	if (x86_fpu_eager) {
-		fpu_eagerrestore(l);
+		fpu_lwp_install(l);
 		splx(s);
 	}
 }
@@ -702,7 +674,7 @@ fpu_save_area_clear(struct lwp *l, unsigned int x87_cw)
 void
 fpu_save_area_reset(struct lwp *l)
 {
-	union savefpu *fpu_save = process_fpframe(l);
+	union savefpu *fpu_save = lwp_fpuarea(l);
 	struct pcb *pcb = lwp_getpcb(l);
 
 	/*
@@ -857,7 +829,7 @@ process_write_fpregs_xmm(struct lwp *l, const struct fxsave *fpregs)
 	union savefpu *fpu_save;
 
 	fpusave_lwp(l, false);
-	fpu_save = process_fpframe(l);
+	fpu_save = lwp_fpuarea(l);
 
 	if (i386_use_fxsave) {
 		memcpy(&fpu_save->sv_xmm, fpregs, sizeof(fpu_save->sv_xmm));
@@ -890,7 +862,7 @@ process_write_fpregs_s87(struct lwp *l, const struct save87 *fpregs)
 	if (i386_use_fxsave) {
 		/* Save so we don't lose the xmm registers */
 		fpusave_lwp(l, true);
-		fpu_save = process_fpframe(l);
+		fpu_save = lwp_fpuarea(l);
 		process_s87_to_xmm(fpregs, &fpu_save->sv_xmm);
 
 		/*
@@ -904,7 +876,7 @@ process_write_fpregs_s87(struct lwp *l, const struct save87 *fpregs)
 		}
 	} else {
 		fpusave_lwp(l, false);
-		fpu_save = process_fpframe(l);
+		fpu_save = lwp_fpuarea(l);
 		memcpy(&fpu_save->sv_87, fpregs, sizeof(fpu_save->sv_87));
 	}
 }
@@ -915,7 +887,7 @@ process_read_fpregs_xmm(struct lwp *l, struct fxsave *fpregs)
 	union savefpu *fpu_save;
 
 	fpusave_lwp(l, true);
-	fpu_save = process_fpframe(l);
+	fpu_save = lwp_fpuarea(l);
 
 	if (i386_use_fxsave) {
 		memcpy(fpregs, &fpu_save->sv_xmm, sizeof(fpu_save->sv_xmm));
@@ -931,7 +903,7 @@ process_read_fpregs_s87(struct lwp *l, struct save87 *fpregs)
 	union savefpu *fpu_save;
 
 	fpusave_lwp(l, true);
-	fpu_save = process_fpframe(l);
+	fpu_save = lwp_fpuarea(l);
 
 	if (i386_use_fxsave) {
 		memset(fpregs, 0, sizeof(*fpregs));

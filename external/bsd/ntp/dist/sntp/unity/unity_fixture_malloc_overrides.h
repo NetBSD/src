@@ -1,5 +1,3 @@
-/*	$NetBSD: unity_fixture_malloc_overrides.h,v 1.1.1.4 2016/01/08 21:21:33 christos Exp $	*/
-
 //- Copyright (c) 2010 James Grenning and Contributed to Unity Project
 /* ==========================================
     Unity Project - A Test Framework for C

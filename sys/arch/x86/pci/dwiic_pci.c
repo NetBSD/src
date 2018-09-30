@@ -1,4 +1,4 @@
-/* $NetBSD: dwiic_pci.c,v 1.1 2017/12/10 17:12:54 bouyer Exp $ */
+/* $NetBSD: dwiic_pci.c,v 1.1.2.1 2018/09/30 01:45:48 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwiic_pci.c,v 1.1 2017/12/10 17:12:54 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwiic_pci.c,v 1.1.2.1 2018/09/30 01:45:48 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -176,6 +176,8 @@ pci_dwiic_attach(device_t parent, device_t self, void *aux)
 	}
 
 	dwiic_attach(&sc->sc_dwiic);
+
+	config_found_ia(self, "i2cbus", &sc->sc_dwiic.sc_iba, iicbus_print);
 
 	pmf_device_register(self, dwiic_suspend, dwiic_resume);
 

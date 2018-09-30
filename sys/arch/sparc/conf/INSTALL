@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.99.2.1 2018/09/06 06:55:41 pgoyette Exp $
+#	$NetBSD: INSTALL,v 1.99.2.2 2018/09/30 01:45:47 pgoyette Exp $
 #
 # from: NetBSD: GENERIC,v 1.84 1999/06/06 13:00:03 mrg Exp
 #
@@ -433,9 +433,6 @@ ie4	at vme0 addr 0x2dff02 irq 3 vect 0x7c		# VME
 qec*		at sbus? slot ? offset ?
 be*		at qec?
 qe*		at qec?
-
-# midway ATM
-en0	at sbus? slot ? offset ?
 
 # PCMCIA ethernet devices
 #ep*	at pcmcia?

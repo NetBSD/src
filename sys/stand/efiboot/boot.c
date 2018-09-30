@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.5.2.2 2018/09/06 06:56:47 pgoyette Exp $	*/
+/*	$NetBSD: boot.c,v 1.5.2.3 2018/09/30 01:45:57 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -30,6 +30,7 @@
 #include "efiboot.h"
 #include "efiblock.h"
 #include "efifdt.h"
+#include "efienv.h"
 
 #include <sys/bootblock.h>
 #include <sys/boot_flag.h>
@@ -53,18 +54,34 @@ static const char * const names[][2] = {
 #define	DEFTIMEOUT	5
 
 static char default_device[32];
+static char initrd_path[255];
+static char dtb_path[255];
 
 void	command_boot(char *);
 void	command_dev(char *);
+void	command_dtb(char *);
+void	command_initrd(char *);
 void	command_ls(char *);
+void	command_printenv(char *);
+void	command_setenv(char *);
+void	command_clearenv(char *);
+void	command_resetenv(char *);
 void	command_reset(char *);
 void	command_version(char *);
 void	command_quit(char *);
 
 const struct boot_command commands[] = {
-	{ "boot",	command_boot,		"boot [fsN:][filename] [args]\n     (ex. \"fs0:\\netbsd.old -s\"" },
+	{ "boot",	command_boot,		"boot [dev:][filename] [args]\n     (ex. \"hd0a:\\netbsd.old -s\"" },
 	{ "dev",	command_dev,		"dev" },
+	{ "dtb",	command_dtb,		"dtb [dev:][filename]" },
+	{ "initrd",	command_initrd,		"initrd [dev:][filename]" },
 	{ "ls",		command_ls,		"ls [hdNn:/path]" },
+	{ "printenv",	command_printenv,	"printenv [key]" },
+	{ "setenv",	command_setenv,		"setenv <key> <value>" },
+	{ "clearenv",	command_clearenv,	"clearenv <key>" },
+	{ "resetenv",	command_resetenv,	"resetenv" },
+	{ "reboot",	command_reset,		"reboot|reset" },
+	{ "reset",	command_reset,		NULL },
 	{ "version",	command_version,	"version" },
 	{ "help",	command_help,		"help|?" },
 	{ "?",		command_help,		NULL },
@@ -111,9 +128,68 @@ command_dev(char *arg)
 }
 
 void
+command_dtb(char *arg)
+{
+	set_dtb_path(arg);
+}
+
+void
+command_initrd(char *arg)
+{
+	set_initrd_path(arg);
+}
+
+void
 command_ls(char *arg)
 {
 	ls(arg);
+}
+
+void
+command_printenv(char *arg)
+{
+	char *val;
+
+	if (arg && *arg) {
+		val = efi_env_get(arg);
+		if (val) {
+			printf("\"%s\" = \"%s\"\n", arg, val);
+			FreePool(val);
+		}
+	} else {
+		efi_env_print();
+	}
+}
+
+void
+command_setenv(char *arg)
+{
+	char *spc;
+
+	spc = strchr(arg, ' ');
+	if (spc == NULL || spc[1] == '\0') {
+		command_help("");
+		return;
+	}
+
+	*spc = '\0';
+	efi_env_set(arg, spc + 1);
+}
+
+void
+command_clearenv(char *arg)
+{
+	if (*arg == '\0') {
+		command_help("");
+		return;
+	}
+	efi_env_clear(arg);
+}
+
+void
+command_resetenv(char *arg)
+{
+	efi_env_reset();
 }
 
 void
@@ -142,6 +218,12 @@ command_quit(char *arg)
 	efi_exit();
 }
 
+void
+command_reset(char *arg)
+{
+	efi_reboot();
+}
+
 int
 set_default_device(char *arg)
 {
@@ -157,6 +239,36 @@ get_default_device(void)
 	return default_device;
 }
 
+int
+set_initrd_path(char *arg)
+{
+	if (strlen(arg) + 1 > sizeof(initrd_path))
+		return ERANGE;
+	strcpy(initrd_path, arg);
+	return 0;
+}
+
+char *
+get_initrd_path(void)
+{
+	return initrd_path;
+}
+
+int
+set_dtb_path(char *arg)
+{
+	if (strlen(arg) + 1 > sizeof(dtb_path))
+		return ERANGE;
+	strcpy(dtb_path, arg);
+	return 0;
+}
+
+char *
+get_dtb_path(void)
+{
+	return dtb_path;
+}
+
 void
 print_banner(void)
 {
@@ -165,10 +277,45 @@ print_banner(void)
 	    bootprog_name, bootprog_rev, bootprog_kernrev);
 }
 
+static void
+read_env(void)
+{
+	char *s;
+
+	s = efi_env_get("fdtfile");
+	if (s) {
+#ifdef EFIBOOT_DEBUG
+		printf(">> Setting DTB path to '%s' from environment\n", s);
+#endif
+		set_dtb_path(s);
+		FreePool(s);
+	}
+
+	s = efi_env_get("initrd");
+	if (s) {
+#ifdef EFIBOOT_DEBUG
+		printf(">> Setting initrd path to '%s' from environment\n", s);
+#endif
+		set_initrd_path(s);
+		FreePool(s);
+	}
+
+	s = efi_env_get("rootdev");
+	if (s) {
+#ifdef EFIBOOT_DEBUG
+		printf(">> Setting default device to '%s' from environment\n", s);
+#endif
+		set_default_device(s);
+		FreePool(s);
+	}
+}
+
 void
 boot(void)
 {
 	int currname, c;
+
+	read_env();
 
 	print_banner();
 

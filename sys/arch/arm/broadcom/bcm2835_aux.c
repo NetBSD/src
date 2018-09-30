@@ -1,4 +1,4 @@
-/* $NetBSD: bcm2835_aux.c,v 1.1 2017/12/10 21:38:26 skrll Exp $ */
+/* $NetBSD: bcm2835_aux.c,v 1.1.2.1 2018/09/30 01:45:37 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_aux.c,v 1.1 2017/12/10 21:38:26 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_aux.c,v 1.1.2.1 2018/09/30 01:45:37 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,7 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: bcm2835_aux.c,v 1.1 2017/12/10 21:38:26 skrll Exp $"
 static int	bcmaux_match(device_t, cfdata_t, void *);
 static void	bcmaux_attach(device_t, device_t, void *);
 
-static struct clk *bcmaux_decode(device_t, const void *, size_t);
+static struct clk *bcmaux_decode(device_t, int, const void *, size_t);
 
 static const struct fdtbus_clock_controller_func bcmaux_fdt_funcs = {
 	.decode = bcmaux_decode
@@ -154,7 +154,7 @@ bcmaux_attach(device_t parent, device_t self, void *aux)
 }
 
 static struct clk *
-bcmaux_decode(device_t dev, const void *data, size_t len)
+bcmaux_decode(device_t dev, int cc_phandle, const void *data, size_t len)
 {
 	struct bcmaux_softc * const sc = device_private(dev);
 	u_int clkid;

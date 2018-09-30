@@ -1,4 +1,4 @@
-/*	$NetBSD: sctp_output.c,v 1.12.2.4 2018/09/06 06:56:44 pgoyette Exp $ */
+/*	$NetBSD: sctp_output.c,v 1.12.2.5 2018/09/30 01:45:56 pgoyette Exp $ */
 /*	$KAME: sctp_output.c,v 1.48 2005/06/16 18:29:24 jinmei Exp $	*/
 
 /*
@@ -30,7 +30,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sctp_output.c,v 1.12.2.4 2018/09/06 06:56:44 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sctp_output.c,v 1.12.2.5 2018/09/30 01:45:56 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -1715,7 +1715,7 @@ sctp_choose_v6_boundall(struct sctp_inpcb *inp,
 	num_eligible_addr = 0;
  bound_all_v6_plan_b:
 	/* ok, if we reach here we either fell through
-	 * due to something changing during an interupt (unlikely)
+	 * due to something changing during an interrupt (unlikely)
 	 * or we have NO eligible source addresses for the ifn
 	 * of the route (most likely). We must look at all the other
 	 * interfaces EXCEPT rt->rt_ifp and do the same game.

@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.243.2.6 2018/09/06 06:51:42 pgoyette Exp $
+# $NetBSD: mi,v 1.243.2.7 2018/09/30 01:45:04 pgoyette Exp $
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib,compatfile
@@ -202,6 +202,7 @@
 ./usr/lib/librumphijack_g.a			comp-c-debuglib		debuglib,compatfile,rump
 ./usr/lib/librumpkern_crypto_g.a		comp-c-debuglib		debuglib,rump
 ./usr/lib/librumpkern_ksem_g.a			comp-obsolete		obsolete,compatfile
+./usr/lib/librumpkern_nv_g.a			comp-c-debuglib		debuglib,rump
 ./usr/lib/librumpkern_sljit_g.a			comp-c-debuglib		debuglib,rump,sljit
 ./usr/lib/librumpkern_solaris_g.a		comp-c-debuglib		debuglib,rump,zfs
 ./usr/lib/librumpkern_sysproxy_g.a		comp-c-debuglib		debuglib,rump
@@ -1042,7 +1043,7 @@
 ./usr/libdata/debug/usr/sbin/cpuctl.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/crash.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/cron.debug		comp-cron-debug		debug
-./usr/libdata/debug/usr/sbin/daicctl.debug	comp-isdn-debug		debug
+./usr/libdata/debug/usr/sbin/daicctl.debug	comp-obsolete		obsolete
 ./usr/libdata/debug/usr/sbin/dbsym.debug	comp-sysutil-debug	binutils,debug
 ./usr/libdata/debug/usr/sbin/ddns-confgen.debug	comp-bind-bin		debug
 ./usr/libdata/debug/usr/sbin/dev_mkdb.debug	comp-sysutil-debug	debug
@@ -1057,7 +1058,7 @@
 ./usr/libdata/debug/usr/sbin/dnssec-settime.debug	comp-bind-debug		debug
 ./usr/libdata/debug/usr/sbin/dnssec-signzone.debug	comp-bind-debug		debug
 ./usr/libdata/debug/usr/sbin/dnssec-verify.debug	comp-bind-debug		debug
-./usr/libdata/debug/usr/sbin/dtmfdecode.debug	comp-isdn-debug		debug
+./usr/libdata/debug/usr/sbin/dtmfdecode.debug	comp-obsolete		obsolete
 ./usr/libdata/debug/usr/sbin/dtrace.debug	comp-util-debug		dtrace,debug
 ./usr/libdata/debug/usr/sbin/dumpfs.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/dumplfs.debug	comp-sysutil-debug	debug
@@ -1104,11 +1105,11 @@
 ./usr/libdata/debug/usr/sbin/irdaattach.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/iscsi-initiator.debug	comp-iscsi-debug	iscsi,debug
 ./usr/libdata/debug/usr/sbin/iscsi-target.debug	comp-iscsi-debug	iscsi,debug
-./usr/libdata/debug/usr/sbin/isdnd.debug	comp-isdn-debug		debug
-./usr/libdata/debug/usr/sbin/isdnmonitor.debug	comp-isdn-debug		debug
-./usr/libdata/debug/usr/sbin/isdntel.debug	comp-isdn-debug		debug
-./usr/libdata/debug/usr/sbin/isdntelctl.debug	comp-isdn-debug		debug
-./usr/libdata/debug/usr/sbin/isdntrace.debug	comp-isdn-debug		debug
+./usr/libdata/debug/usr/sbin/isdnd.debug	comp-obsolete		obsolete
+./usr/libdata/debug/usr/sbin/isdnmonitor.debug	comp-obsolete		obsolete
+./usr/libdata/debug/usr/sbin/isdntel.debug	comp-obsolete		obsolete
+./usr/libdata/debug/usr/sbin/isdntelctl.debug	comp-obsolete		obsolete
+./usr/libdata/debug/usr/sbin/isdntrace.debug	comp-obsolete		obsolete
 ./usr/libdata/debug/usr/sbin/isibootd.debug	comp-bootserver-debug	debug
 ./usr/libdata/debug/usr/sbin/iwictl.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/kadmin.debug	comp-krb5-debug		kerberos,debug
@@ -1209,8 +1210,8 @@
 ./usr/libdata/debug/usr/sbin/pppstats.debug	comp-ppp-debug		debug
 ./usr/libdata/debug/usr/sbin/psrset.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/pstat.debug	comp-sysutil-debug	debug
-./usr/libdata/debug/usr/sbin/pvcsif.debug	comp-netutil-debug	debug
-./usr/libdata/debug/usr/sbin/pvctxctl.debug	comp-netutil-debug	debug
+./usr/libdata/debug/usr/sbin/pvcsif.debug	comp-obsolete		obsolete
+./usr/libdata/debug/usr/sbin/pvctxctl.debug	comp-obsolete		obsolete
 ./usr/libdata/debug/usr/sbin/pwd_mkdb.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/quot.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/quotacheck.debug	comp-sysutil-debug	debug
@@ -1585,16 +1586,16 @@
 ./usr/libdata/debug/usr/tests/crypto/libcrypto/h_ideatest.debug		tests-crypto-debug	debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/crypto/libcrypto/h_lhashtest.debug	tests-crypto-debug	debug,atf,compattestfile,openssl=10
 ./usr/libdata/debug/usr/tests/crypto/libcrypto/h_md2test.debug		tests-crypto-debug	debug,atf,compattestfile
-./usr/libdata/debug/usr/tests/crypto/libcrypto/h_md4test.debug		tests-crypto-debug	debug,atf,compattestfile
-./usr/libdata/debug/usr/tests/crypto/libcrypto/h_md5test.debug		tests-crypto-debug	debug,atf,compattestfile
+./usr/libdata/debug/usr/tests/crypto/libcrypto/h_md4test.debug		tests-obsolete	openssl=11,obsolete
+./usr/libdata/debug/usr/tests/crypto/libcrypto/h_md5test.debug		tests-obsolete	openssl=11,obsolete
 ./usr/libdata/debug/usr/tests/crypto/libcrypto/h_mdc2test.debug		tests-crypto-debug	debug,atf,compattestfile
-./usr/libdata/debug/usr/tests/crypto/libcrypto/h_randtest.debug		tests-crypto-debug	debug,atf,compattestfile
+./usr/libdata/debug/usr/tests/crypto/libcrypto/h_randtest.debug		tests-obsolete	openssl=11,obsolete
 ./usr/libdata/debug/usr/tests/crypto/libcrypto/h_rc2test.debug		tests-crypto-debug	debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/crypto/libcrypto/h_rc4test.debug		tests-crypto-debug	debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/crypto/libcrypto/h_rc5test.debug		tests-crypto-debug	debug,atf,compattestfile
-./usr/libdata/debug/usr/tests/crypto/libcrypto/h_ripemdtest.debug	tests-crypto-debug	debug,atf,compattestfile
+./usr/libdata/debug/usr/tests/crypto/libcrypto/h_ripemdtest.debug	tests-obsolete	openssl=11,obsolete
 ./usr/libdata/debug/usr/tests/crypto/libcrypto/h_rsatest.debug		tests-crypto-debug	debug,atf,compattestfile
-./usr/libdata/debug/usr/tests/crypto/libcrypto/h_sha1test.debug		tests-crypto-debug	debug,atf,compattestfile
+./usr/libdata/debug/usr/tests/crypto/libcrypto/h_sha1test.debug		tests-obsolete	openssl=11,obsolete
 ./usr/libdata/debug/usr/tests/crypto/libcrypto/h_shatest.debug		tests-crypto-debug	debug,atf,compattestfile,openssl=10
 ./usr/libdata/debug/usr/tests/crypto/libcrypto/h_srptest.debug		tests-crypto-debug	debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/crypto/libcrypto/h_threadstest.debug	tests-crypto-debug	debug,atf,compattestfile

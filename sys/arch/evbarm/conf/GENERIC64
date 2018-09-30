@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC64,v 1.1.2.7 2018/09/06 06:55:30 pgoyette Exp $
+#	$NetBSD: GENERIC64,v 1.1.2.8 2018/09/30 01:45:40 pgoyette Exp $
 #
 #	GENERIC ARM (aarch64) kernel
 #
@@ -170,6 +170,7 @@ tegra210car*	at fdt? pass 3		# NVIDIA Tegra CAR (T210)
 
 # GPIO controller
 bcmgpio*	at fdt?			# Broadcom BCM283x GPIO
+pl061gpio*	at fdt?			# ARM PrimeCell PL061 GPIO
 sunxigpio*	at fdt? pass 3		# Allwinner GPIO
 tegragpio*	at fdt? pass 2		# NVIDIA Tegra GPIO
 rkgpio*		at rkiomux?		# Rockchip GPIO
@@ -187,14 +188,17 @@ tegra210xpad*	at fdt?			# NVIDIA Tegra XUSB PADCTL (T210)
 tegra210xphy*	at tegra210xpad?
 
 # PCIE
+pcihost*	at fdt?			# Generic PCI host controller
 tegrapcie0	at fdt?			# NVIDIA Tegra PCIE
-pci*		at tegrapcie0
+pci*		at pcibus? 
 ppb*		at pci? dev ? function ?
 pci*		at ppb?
 
 # Ethernet
 awge*		at fdt?				# DesignWare Gigabit Ethernet
 emac*		at fdt?				# Allwinner Gigabit Ethernet (EMAC)
+mskc*		at pci? dev ? function ?	# Marvell Yukon 2 Gigabit Ethernet
+msk*		at mskc?
 re*		at pci? dev ? function ?	# Realtek RTL8111GS
 
 # MII/PHY support
@@ -229,11 +233,12 @@ ukphy*		at mii? phy ?		# generic unknown PHYs
 #athn*		at pci? dev ? function ?	# Atheros IEEE 802.11
 
 # UART
-com*		at fdt?			# UART
-plcom*		at fdt?			# ARM PL011 UART
+com*		at fdt?	pass 4		# UART
+plcom*		at fdt?	pass 4		# ARM PL011 UART
 
 # I2C controllers
 bsciic*		at fdt?			# Broadcom BCM283x Serial Control
+dwiic*		at fdt?			# Designware I2C
 rkiic*		at fdt?			# Rockchip I2C
 sunxirsb*	at fdt?			# Allwinner RSB
 sunxitwi*	at fdt?			# Allwinner TWI
@@ -243,6 +248,7 @@ iic*		at i2cbus?
 # I2C devices
 titemp*		at iic?
 seeprom*	at iic?
+spdmem*		at iic?			# memory module SPD EEPROM decoder
 as3722pmic*	at iic?
 as3722reg*	at as3722pmic?
 axppmic*	at iic?			# X-Powers AXP Power Management IC
@@ -322,6 +328,7 @@ options 	WSDISPLAY_COMPAT_SYSCONS
 options 	WSDISPLAY_COMPAT_USL
 options 	WSDISPLAY_COMPAT_RAWKBD
 options 	WSDISPLAY_DEFAULTSCREENS=4
+options 	WSDISPLAY_MULTICONS
 pseudo-device	wsmux
 pseudo-device	wsfont
 
@@ -343,12 +350,23 @@ sunxiusb3phy*	at fdt? pass 9		# Allwinner USB3 PHY
 tegrausbphy*	at fdt?			# NVIDIA Tegra USB PHY
 dwctwo*		at fdt?			# Designware USB DRD
 ehci*		at fdt?			# EHCI
+ehci*		at pci?			# EHCI
 motg*		at fdt?			# Mentor Graphics USB OTG
 ohci*		at fdt?			# OHCI
+ohci*		at pci?			# OHCI
 xhci*		at fdt?			# XHCI
+xhci*		at pci?			# XHCI
 usb*		at usbus?
 
 include "dev/usb/usbdevices.config"
 midi*		at midibus?
+
+# Virtio devices
+virtio*		at fdt?			# Virtio MMIO device
+#viomb*		at virtio?		# Virtio memory balloon device
+ld*		at virtio?		# Virtio disk device
+vioif*		at virtio?		# Virtio network device
+viornd*		at virtio?		# Virtio entropy device
+vioscsi*	at virtio?		# Virtio SCSI device
 
 cinclude "arch/evbarm/conf/GENERIC64.local"

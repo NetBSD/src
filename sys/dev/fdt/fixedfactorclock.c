@@ -1,4 +1,4 @@
-/* $NetBSD: fixedfactorclock.c,v 1.1.10.1 2018/05/02 07:20:06 pgoyette Exp $ */
+/* $NetBSD: fixedfactorclock.c,v 1.1.10.2 2018/09/30 01:45:49 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fixedfactorclock.c,v 1.1.10.1 2018/05/02 07:20:06 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fixedfactorclock.c,v 1.1.10.2 2018/09/30 01:45:49 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -42,7 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: fixedfactorclock.c,v 1.1.10.1 2018/05/02 07:20:06 pg
 static int	fixedfactorclock_match(device_t, cfdata_t, void *);
 static void	fixedfactorclock_attach(device_t, device_t, void *);
 
-static struct clk *fixedfactorclock_decode(device_t, const void *, size_t);
+static struct clk *fixedfactorclock_decode(device_t, int, const void *, size_t);
 
 static const struct fdtbus_clock_controller_func fixedfactorclock_fdt_funcs = {
 	.decode = fixedfactorclock_decode
@@ -124,7 +124,8 @@ fixedfactorclock_attach(device_t parent, device_t self, void *aux)
 }
 
 static struct clk *
-fixedfactorclock_decode(device_t dev, const void *data, size_t len)
+fixedfactorclock_decode(device_t dev, int cc_phandle, const void *data,
+			size_t len)
 {
 	struct fixedfactorclock_softc * const sc = device_private(dev);
 

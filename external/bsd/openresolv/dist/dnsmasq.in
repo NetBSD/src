@@ -28,7 +28,7 @@
 
 [ -f "@SYSCONFDIR@"/resolvconf.conf ] || exit 0
 . "@SYSCONFDIR@/resolvconf.conf" || exit 1
-[ -z "$dnsmasq_conf" -a -z "$dnsmasq_resolv" ] && exit 0
+[ -z "${dnsmasq_conf}${dnsmasq_resolv}" ] && exit 0
 [ -z "$RESOLVCONF" ] && eval "$(@SBINDIR@/resolvconf -v)"
 NL="
 "
@@ -98,7 +98,7 @@ for d in $DOMAINS; do
 				empty=false i=0
 				IFS=:
 				set -- $n
-				while [ -n "$1" -o -n "$2" ]; do
+				while [ -n "$1" ] || [ -n "$2" ]; do
 					addr="$1"
 					shift
 					if [ -z "$addr" ]; then

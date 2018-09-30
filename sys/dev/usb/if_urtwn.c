@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urtwn.c,v 1.57.2.3 2018/09/06 06:56:04 pgoyette Exp $	*/
+/*	$NetBSD: if_urtwn.c,v 1.57.2.4 2018/09/30 01:45:51 pgoyette Exp $	*/
 /*	$OpenBSD: if_urtwn.c,v 1.42 2015/02/10 23:25:46 mpi Exp $	*/
 
 /*-
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.57.2.3 2018/09/06 06:56:04 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.57.2.4 2018/09/30 01:45:51 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -5093,7 +5093,7 @@ urtwn_delay_ms(struct urtwn_softc *sc, int ms)
 		usbd_delay_ms(sc->sc_udev, ms);
 }
 
-MODULE(MODULE_CLASS_DRIVER, if_urtwn, "bpf");
+MODULE(MODULE_CLASS_DRIVER, if_urtwn, NULL);
 
 #ifdef _MODULE
 #include "ioconf.c"

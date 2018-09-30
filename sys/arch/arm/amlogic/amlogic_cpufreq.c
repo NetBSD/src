@@ -1,4 +1,4 @@
-/* $NetBSD: amlogic_cpufreq.c,v 1.5 2015/11/29 19:16:58 jmcneill Exp $ */
+/* $NetBSD: amlogic_cpufreq.c,v 1.5.18.1 2018/09/30 01:45:37 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -28,10 +28,8 @@
 
 #include "locators.h"
 
-#include "opt_amlogic.h"
-
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amlogic_cpufreq.c,v 1.5 2015/11/29 19:16:58 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amlogic_cpufreq.c,v 1.5.18.1 2018/09/30 01:45:37 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>

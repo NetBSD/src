@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.h,v 1.58.2.2 2018/09/06 06:55:46 pgoyette Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.h,v 1.58.2.3 2018/09/30 01:45:49 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -212,9 +212,6 @@ dev/wscons/wsconsio.h:241:#define WSDISPLAYIO_SFONT	_IOW('W', 77, struct wsdispl
 
 net/if_ppp.h:110:#define PPPIOCSPASS	_IOW('t', 71, struct bpf_program) /* set pass filter */
 net/if_ppp.h:111:#define PPPIOCSACTIVE	_IOW('t', 70, struct bpf_program) /* set active filt */
-
-net/if_atm.h:88:#define SIOCATMENA	_IOWR('a', 123, struct atm_pseudoioctl) /* enable */
-net/if_atm.h:89:#define SIOCATMDIS	_IOWR('a', 124, struct atm_pseudoioctl) /* disable */
 
 net/if_ppp.h:105:#define PPPIOCSCOMPRESS	_IOW('t', 77, struct ppp_option_data)
 
@@ -563,28 +560,6 @@ struct netbsd32_ksyms_gvalue {
 #define	KIOCGSYMBOL32	_IOWR('l', 5, struct netbsd32_ksyms_gsymbol)
 #endif /* KIOCGSYMBOL */
 
-#include <net/npf/npf.h>
-
-typedef struct netbsd32_npf_ioctl_buf {
-	netbsd32_voidp		buf;
-	netbsd32_size_t		len;
-} netbsd32_npf_ioctl_buf_t;
-
-typedef struct netbsd32_npf_ioctl_table {
-	int			nct_cmd;
-	netbsd32_charp		nct_name;
-	union {
-		npf_ioctl_ent_t ent;
-		netbsd32_npf_ioctl_buf_t buf;
-	} nct_data;
-} netbsd32_npf_ioctl_table_t;
-
-#define IOC_NPF_LOAD32          _IOWR('N', 102, struct netbsd32_plistref)
-#define IOC_NPF_TABLE32         _IOW('N', 103, struct netbsd32_npf_ioctl_table)
-#define IOC_NPF_STATS32         _IOW('N', 104, netbsd32_voidp)
-#define IOC_NPF_SAVE32          _IOR('N', 105, struct netbsd32_plistref)
-#define IOC_NPF_RULE32          _IOWR('N', 107, struct netbsd32_plistref)
-
 /* From sys/drvctlio.h */
 struct netbsd32_devlistargs {
 	char			l_devname[16];
@@ -607,11 +582,19 @@ struct netbsd32_devrescanargs {
 /* From sys/disk.h, sys/dkio.h */
 
 struct netbsd32_dkwedge_list {
-	void			*dkwl_buf;	/* storage for dkwedge_info array */
+	netbsd32_voidp		dkwl_buf; /* storage for dkwedge_info array */
 	netbsd32_size_t		dkwl_bufsize;	/* size	of that	buffer */
 	u_int			dkwl_nwedges;	/* total number	of wedges */
 	u_int			dkwl_ncopied;	/* number actually copied */
-};
+} __packed;
 
 #define DIOCLWEDGES32		_IOWR('d', 124, struct netbsd32_dkwedge_list)
 
+struct netbsd32_disk_strategy {
+	char dks_name[DK_STRATEGYNAMELEN];	/* name of strategy */
+	netbsd32_charp dks_param;		/* notyet; should be NULL */
+	netbsd32_size_t dks_paramlen;		/* notyet; should be 0 */
+} __packed;
+
+#define DIOCGSTRATEGY32		_IOR('d', 125, struct netbsd32_disk_strategy)
+#define DIOCSSTRATEGY32		_IOW('d', 126, struct netbsd32_disk_strategy)

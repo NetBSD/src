@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_encap.c,v 1.67.2.2 2018/06/25 07:26:06 pgoyette Exp $	*/
+/*	$NetBSD: ip_encap.c,v 1.67.2.3 2018/09/30 01:45:56 pgoyette Exp $	*/
 /*	$KAME: ip_encap.c,v 1.73 2001/10/02 08:30:58 itojun Exp $	*/
 
 /*
@@ -68,7 +68,7 @@
 #define USE_RADIX
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_encap.c,v 1.67.2.2 2018/06/25 07:26:06 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_encap.c,v 1.67.2.3 2018/09/30 01:45:56 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_mrouting.h"
@@ -342,18 +342,11 @@ encap4_lookup(struct mbuf *m, int off, int proto, enum direction dir,
 }
 
 void
-encap4_input(struct mbuf *m, ...)
+encap4_input(struct mbuf *m, int off, int proto)
 {
-	int off, proto;
-	va_list ap;
 	const struct encapsw *esw;
 	struct encaptab *match;
 	struct psref match_psref;
-
-	va_start(ap, m);
-	off = va_arg(ap, int);
-	proto = va_arg(ap, int);
-	va_end(ap);
 
 	match = encap4_lookup(m, off, proto, INBOUND, &match_psref);
 	if (match) {

@@ -1,9 +1,9 @@
-/* $NetBSD: ti_platform.c,v 1.2.2.2 2018/09/06 06:55:27 pgoyette Exp $ */
+/* $NetBSD: ti_platform.c,v 1.2.2.3 2018/09/30 01:45:39 pgoyette Exp $ */
 
-#include "opt_fdt_arm.h"
+#include "opt_console.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ti_platform.c,v 1.2.2.2 2018/09/06 06:55:27 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ti_platform.c,v 1.2.2.3 2018/09/30 01:45:39 pgoyette Exp $");
 
 #include <sys/param.h>
 

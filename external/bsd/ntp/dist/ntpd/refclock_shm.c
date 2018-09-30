@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_shm.c,v 1.8 2016/05/01 23:32:01 christos Exp $	*/
+/*	$NetBSD: refclock_shm.c,v 1.8.14.1 2018/09/30 01:45:19 pgoyette Exp $	*/
 
 /*
  * refclock_shm - clock driver for utc via shared memory
@@ -342,6 +342,7 @@ shm_poll(
         if (pp->coderecv != pp->codeproc) {
 		/* have some samples, everything OK */
 		pp->lastref = pp->lastrec;
+		refclock_report(peer, CEVNT_NOMINAL);
 		refclock_receive(peer);
 	} else if (NULL == up->shm) { /* is this possible at all? */
 		/* we're out of business without SHM access */

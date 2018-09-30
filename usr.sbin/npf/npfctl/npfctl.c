@@ -1,5 +1,3 @@
-/*	$NetBSD: npfctl.c,v 1.54.2.1 2018/04/16 02:00:10 pgoyette Exp $	*/
-
 /*-
  * Copyright (c) 2009-2014 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -30,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npfctl.c,v 1.54.2.1 2018/04/16 02:00:10 pgoyette Exp $");
+__RCSID("$NetBSD: npfctl.c,v 1.54.2.2 2018/09/30 01:46:01 pgoyette Exp $");
 
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -154,9 +152,6 @@ usage(void)
 	    progname);
 	fprintf(stderr,
 	    "\t%s list [-46hNnw] [-i <ifname>]\n",
-	    progname);
-	fprintf(stderr,
-	    "\t%s debug [<rule-file>] [<raw-output>]\n",
 	    progname);
 	exit(EXIT_FAILURE);
 }
@@ -686,20 +681,20 @@ npfctl_conn_list(int fd, int argc, char **argv)
 static int
 npfctl_open_dev(const char *path)
 {
-	int fd, ver;
+	int fd, kernver;
 
 	fd = open(path, O_RDONLY);
 	if (fd == -1) {
 		err(EXIT_FAILURE, "cannot open '%s'", path);
 	}
-	if (ioctl(fd, IOC_NPF_VERSION, &ver) == -1) {
+	if (ioctl(fd, IOC_NPF_VERSION, &kernver) == -1) {
 		err(EXIT_FAILURE, "ioctl(IOC_NPF_VERSION)");
 	}
-	if (ver != NPF_VERSION) {
+	if (kernver != NPF_VERSION) {
 		errx(EXIT_FAILURE,
 		    "incompatible NPF interface version (%d, kernel %d)\n"
-		    "Hint: update %s?", NPF_VERSION, ver, 
-		    NPF_VERSION > ver ? "userland" : "kernel");
+		    "Hint: update %s?", NPF_VERSION, kernver, 
+		    kernver > NPF_VERSION ? "userland" : "kernel");
 	}
 	return fd;
 }
@@ -735,7 +730,7 @@ npfctl(int action, int argc, char **argv)
 		npfctl_config_init(false);
 		npfctl_parse_file(argc < 3 ? NPF_CONF_PATH : argv[2]);
 		npfctl_preload_bpfjit();
-		errno = ret = npfctl_config_send(fd, NULL);
+		errno = ret = npfctl_config_send(fd);
 		fun = "npfctl_config_send";
 		break;
 	case NPFCTL_SHOWCONF:
@@ -792,7 +787,7 @@ npfctl(int action, int argc, char **argv)
 	case NPFCTL_DEBUG:
 		npfctl_config_init(true);
 		npfctl_parse_file(argc > 2 ? argv[2] : NPF_CONF_PATH);
-		npfctl_config_send(0, argc > 3 ? argv[3] : "/tmp/npf.plist");
+		npfctl_config_debug(argc > 3 ? argv[3] : "/tmp/npf.nvlist");
 		break;
 	}
 	if (ret) {

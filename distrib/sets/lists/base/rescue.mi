@@ -1,4 +1,4 @@
-# $NetBSD: rescue.mi,v 1.40.8.2 2018/09/06 06:51:42 pgoyette Exp $
+# $NetBSD: rescue.mi,v 1.40.8.3 2018/09/30 01:45:04 pgoyette Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -58,7 +58,7 @@
 ./rescue/init					base-rescue-root
 ./rescue/init.bak				base-rescue-root
 ./rescue/installboot				base-rescue-root
-./rescue/ipppctl				base-rescue-root
+./rescue/ipppctl				base-obsolete	obsolete
 ./rescue/kdump					base-rescue-root
 ./rescue/kill					base-rescue-root
 ./rescue/ksh					base-rescue-root

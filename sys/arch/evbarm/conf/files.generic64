@@ -1,4 +1,4 @@
-#	$NetBSD: files.generic64,v 1.1.2.4 2018/09/06 06:55:30 pgoyette Exp $
+#	$NetBSD: files.generic64,v 1.1.2.5 2018/09/30 01:45:40 pgoyette Exp $
 #
 
 defparam opt_arm_debug.h	EARLYCONS
@@ -10,6 +10,7 @@ include "arch/evbarm/conf/files.fdt"
 
 # Add other board files here
 #
+include "arch/arm/amd/files.seattle"
 include "arch/arm/broadcom/files.bcm2835"
 include "arch/arm/nvidia/files.tegra"
 include "arch/arm/rockchip/files.rockchip"

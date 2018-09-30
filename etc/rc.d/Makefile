@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.97.2.1 2018/07/28 04:33:02 pgoyette Exp $
+# $NetBSD: Makefile,v 1.97.2.2 2018/09/30 01:45:10 pgoyette Exp $
 
 .include <bsd.own.mk>
 
@@ -25,7 +25,7 @@ CONFIGFILES=\
 		gpio \
 		hostapd httpd \
 		identd ifwatchd inetd ip6addrctl ipfilter ipfs ipmon ipnat \
-		ipsec irdaattach iscsi_target iscsid isdnd isibootd \
+		ipsec irdaattach iscsi_target iscsid isibootd \
 		kdc \
 		ldconfig ldpd local lpd lvm \
 		makemandb mdnsd mixerctl modules mopd motd mountall \

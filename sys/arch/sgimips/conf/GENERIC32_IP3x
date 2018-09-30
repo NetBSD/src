@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC32_IP3x,v 1.115.2.2 2018/09/06 06:55:40 pgoyette Exp $
+#	$NetBSD: GENERIC32_IP3x,v 1.115.2.3 2018/09/30 01:45:46 pgoyette Exp $
 #
 # GENERIC32_IP3x machine description file
 # 
@@ -28,7 +28,7 @@ makeoptions	TEXTADDR="0x80069000"	# entry point
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC32_IP3x-$Revision: 1.115.2.2 $"
+#ident		"GENERIC32_IP3x-$Revision: 1.115.2.3 $"
 
 maxusers	32
 
@@ -198,7 +198,6 @@ ubsec*	at pci? dev ? function ?	# Broadcom 5501/5601/580x/582x
 # PCI network devices
 #an*     at pci? dev ? function ?        # Aironet PC4500/PC4800 (802.11)
 #bge*    at pci? dev ? function ?        # Broadcom 570x gigabit Ethernet
-#en*     at pci? dev ? function ?        # ENI/Adaptec ATM
 ep*     at pci? dev ? function ?        # 3Com 3c59x
 epic*   at pci? dev ? function ?        # SMC EPIC/100 Ethernet
 esh*    at pci? dev ? function ?        # Essential HIPPI card

@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.23.12.1 2018/05/21 04:36:19 pgoyette Exp $	*/
+/*	$NetBSD: net.c,v 1.23.12.2 2018/09/30 01:46:01 pgoyette Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -849,6 +849,17 @@ done:
 	return network_up;
 }
 
+const char *
+url_proto(unsigned int xfer)
+{
+	switch (xfer) {
+	case XFER_FTP:	return "ftp";
+	case XFER_HTTP:	return "http";
+	}
+
+	return "";
+}
+
 void
 make_url(char *urlbuffer, struct ftpinfo *f, const char *dir)
 {
@@ -892,8 +903,8 @@ make_url(char *urlbuffer, struct ftpinfo *f, const char *dir)
 			ftp_dir_encoded + sizeof ftp_dir_encoded,
 			RFC1738_SAFE_LESS_SHELL_PLUS_SLASH, 0);
 
-	snprintf(urlbuffer, STRSIZE, "%s://%s%s/%s", f->xfer_type,
-	    ftp_user_encoded, f->host, ftp_dir_encoded);
+	snprintf(urlbuffer, STRSIZE, "%s://%s%s/%s", url_proto(f->xfer),
+	    ftp_user_encoded, f->xfer_host[f->xfer], ftp_dir_encoded);
 }
 
 
@@ -959,12 +970,12 @@ get_pkgsrc(void)
 }
 
 int
-get_via_ftp(const char *xfer_type)
+get_via_ftp(unsigned int xfer)
 {
 	arg_rv arg;
 
 	arg.rv = -1;
-	arg.arg = __UNCONST(xfer_type);
+	arg.arg = (void*)(uintptr_t)(xfer);
 	process_menu(MENU_ftpsource, &arg);
 	
 	if (arg.rv == SET_RETRY)
@@ -972,7 +983,7 @@ get_via_ftp(const char *xfer_type)
 
 	/* We'll fetch each file just before installing it */
 	fetch_fn = ftp_fetch;
-	ftp.xfer_type = xfer_type;
+	ftp.xfer = xfer;
 	snprintf(ext_dir_bin, sizeof ext_dir_bin, "%s/%s", target_prefix(),
 	    xfer_dir + (*xfer_dir == '/'));
 	snprintf(ext_dir_src, sizeof ext_dir_src, "%s/%s", target_prefix(),

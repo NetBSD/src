@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.264.2.2 2018/09/06 06:55:47 pgoyette Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.264.2.3 2018/09/30 01:45:49 pgoyette Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -157,8 +157,8 @@ LINK_O?=	@${_MKSHMSG} "   link  ${.CURDIR:T}/${.TARGET}" && \
 ##
 ## (3) libkern
 ##
-## Set KERN_AS in the port Makefile to "obj" or "library".  The
-## default is "library", as documented in $S/lib/libkern/Makefile.inc.
+## Set OPT_MODULAR in the port Makefile if module(7) is enabled,
+## as documented in $S/lib/libkern/Makefile.inc.
 ##
 
 ### find out what to use for libkern

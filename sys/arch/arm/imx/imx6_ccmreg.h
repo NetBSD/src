@@ -1,4 +1,4 @@
-/*	$NetBSD: imx6_ccmreg.h,v 1.6.4.1 2018/06/25 07:25:39 pgoyette Exp $	*/
+/*	$NetBSD: imx6_ccmreg.h,v 1.6.4.2 2018/09/30 01:45:38 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2014 Ryo Shimizu <ryo@nerv.org>
@@ -32,7 +32,7 @@
 #include <sys/cdefs.h>
 
 /*
- * PERIPHCLK_N is an arm root clock divider for MPcore interupt controller.
+ * PERIPHCLK_N is an arm root clock divider for MPcore interrupt controller.
  * PERIPHCLK_N is equal to, or greater than two.
  * see "Cortex-A9 MPCore Technical Reference Manual" -
  *     Chapter 5: Clocks, Resets, and Power Management, 5.1: Clocks.

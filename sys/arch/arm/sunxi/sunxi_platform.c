@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_platform.c,v 1.20.2.5 2018/09/06 06:55:27 pgoyette Exp $ */
+/* $NetBSD: sunxi_platform.c,v 1.20.2.6 2018/09/30 01:45:39 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -28,10 +28,10 @@
 
 #include "opt_soc.h"
 #include "opt_multiprocessor.h"
-#include "opt_fdt_arm.h"
+#include "opt_console.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_platform.c,v 1.20.2.5 2018/09/06 06:55:27 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_platform.c,v 1.20.2.6 2018/09/30 01:45:39 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -54,7 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: sunxi_platform.c,v 1.20.2.5 2018/09/06 06:55:27 pgoy
 #include <dev/ic/comreg.h>
 
 #include <arm/arm/psci.h>
-#include <arm/fdt/psci_fdt.h>
+#include <arm/fdt/psci_fdtvar.h>
 
 #include <arm/sunxi/sunxi_platform.h>
 
@@ -165,6 +165,17 @@ sunxi_platform_device_register(device_t self, void *aux)
 			prop_dictionary_set_bool(prop, "no-rx-delay", true);
 		}
 	}
+
+	if (device_is_a(self, "armgtmr")) {
+		/* Allwinner A64 has an unstable architectural timer */
+		const char * compat[] = {
+			"allwinner,sun50i-a64",
+			NULL
+		};
+		if (of_match_compatible(OF_finddevice("/"), compat)) {
+			prop_dictionary_set_bool(prop, "sun50i-a64-unstable-timer", true);
+		}
+	}
 }
 
 static u_int
@@ -201,7 +212,7 @@ sunxi_platform_bootstrap(void)
 static void
 sunxi_platform_psci_bootstrap(void)
 {
-	psci_fdt_bootstrap();
+	arm_fdt_cpu_bootstrap();
 	sunxi_platform_bootstrap();
 }
 

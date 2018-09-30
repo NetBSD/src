@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3min.c,v 1.73 2014/03/24 19:31:40 christos Exp $ */
+/* $NetBSD: dec_3min.c,v 1.73.28.1 2018/09/30 01:45:46 pgoyette Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -70,7 +70,7 @@
 #define	__INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dec_3min.c,v 1.73 2014/03/24 19:31:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3min.c,v 1.73.28.1 2018/09/30 01:45:46 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -292,12 +292,7 @@ dec_3min_intr_establish(device_t dev, void *cookie, int level,
 	case SYS_DEV_OPT0:
 	case SYS_DEV_OPT1:
 	case SYS_DEV_OPT2:
-		/* it's an option slot */
-		{
-		int s = splhigh();
-		s |= mask;
-		splx(s);
-		}
+		/* it's an option slot and handled via MIPS_INT_MASK_[012] */
 		break;
 	default:
 		/* it's a baseboard device going via the IOASIC */

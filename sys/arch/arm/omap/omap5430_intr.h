@@ -1,4 +1,4 @@
-/*	$NetBSD: omap5430_intr.h,v 1.3 2015/04/09 21:33:54 matt Exp $	*/
+/*	$NetBSD: omap5430_intr.h,v 1.3.16.1 2018/09/30 01:45:38 pgoyette Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -141,11 +141,11 @@
 #define IRQ_EMIF2		IRQ_SPI(111)	// EMIF2 interrupt
 #define IRQ_MCPDM		IRQ_SPI(112)	// MCPDM interrupt
 #define IRQ_DMM			IRQ_SPI(113)	// DMM interrupt
-#define IRQ_DMIC		IRQ_SPI(114)	// DMIC interupt
+#define IRQ_DMIC		IRQ_SPI(114)	// DMIC interrupt
 #define IRQ_SYS_NIRQ2		IRQ_SPI(119)	// External interrupt 2 (active low)
 #define IRQ_KBD_CTL		IRQ_SPI(120)	// Keyboard controller interrupt
-#define IRQ_GPIO8		IRQ_SPI(121)	// GPIO8 interupt
-#define IRQ_BB2D		IRQ_SPI(125)	// BB2D interupt
+#define IRQ_GPIO8		IRQ_SPI(121)	// GPIO8 interrupt
+#define IRQ_BB2D		IRQ_SPI(125)	// BB2D interrupt
 
 #endif /* _LOCORE */
 

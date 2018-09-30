@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_clock.c,v 1.1.20.2 2018/07/28 04:37:44 pgoyette Exp $ */
+/* $NetBSD: fdt_clock.c,v 1.1.20.3 2018/09/30 01:45:49 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_clock.c,v 1.1.20.2 2018/07/28 04:37:44 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_clock.c,v 1.1.20.3 2018/09/30 01:45:49 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -103,7 +103,7 @@ fdtbus_clock_get_index_prop(int phandle, u_int index, const char *prop)
 			cc = fdtbus_get_clock_controller(cc_phandle);
 			if (cc == NULL)
 				break;
-			clk = cc->cc_funcs->decode(cc->cc_dev,
+			clk = cc->cc_funcs->decode(cc->cc_dev, cc_phandle,
 			    clock_cells > 0 ? &p[1] : NULL, clock_cells * 4);
 			break;
 		}
@@ -195,6 +195,7 @@ fdtbus_clock_byname(const char *clkname)
 					break;
 				const u_int index_raw = htobe32(index);
 				return cc->cc_funcs->decode(cc->cc_dev,
+				    cc->cc_phandle,
 				    clock_cells > 0 ? &index_raw : NULL,
 				    clock_cells > 0 ? 4 : 0);
 			}

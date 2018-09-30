@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_intr_machdep.c,v 1.42.2.1 2018/06/25 07:25:47 pgoyette Exp $	*/
+/*	$NetBSD: pci_intr_machdep.c,v 1.42.2.2 2018/09/30 01:45:48 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2009 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_intr_machdep.c,v 1.42.2.1 2018/06/25 07:25:47 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_intr_machdep.c,v 1.42.2.2 2018/09/30 01:45:48 pgoyette Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

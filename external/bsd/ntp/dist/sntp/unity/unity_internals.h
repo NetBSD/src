@@ -1,5 +1,3 @@
-/*	$NetBSD: unity_internals.h,v 1.1.1.6 2016/05/01 15:57:23 christos Exp $	*/
-
 /* ==========================================
     Unity Project - A Test Framework for C
     Copyright (c) 2007-14 Mike Karlesky, Mark VanderVoord, Greg Williams

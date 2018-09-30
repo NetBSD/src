@@ -25,13 +25,20 @@
  */
 
 /*
- * TODO: Simple linear scan for now (works just well with a few prefixes).
- * TBD on a better algorithm.
+ * Longest Prefix Match (LPM) library supporting IPv4 and IPv6.
+ *
+ * Algorithm:
+ *
+ * Each prefix gets its own hash map and all added prefixes are saved
+ * in a bitmap.  On a lookup, we perform a linear scan of hash maps,
+ * iterating through the added prefixes only.  Usually, there are only
+ * a few unique prefixes used and such simple algorithm is very efficient.
+ * With many IPv6 prefixes, the linear scan might become a bottleneck.
  */
 
 #if defined(_KERNEL)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpm.c,v 1.4 2017/06/01 02:45:14 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpm.c,v 1.4.10.1 2018/09/30 01:45:56 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -60,11 +67,12 @@ __KERNEL_RCSID(0, "$NetBSD: lpm.c,v 1.4 2017/06/01 02:45:14 chs Exp $");
 #define	LPM_MAX_WORDS		(LPM_MAX_PREFIX >> 5)
 #define	LPM_TO_WORDS(x)		((x) >> 2)
 #define	LPM_HASH_STEP		(8)
+#define	LPM_LEN_IDX(len)	((len) >> 4)
 
 #ifdef DEBUG
-#define	ASSERT	assert
+#define	ASSERT			assert
 #else
-#define	ASSERT
+#define	ASSERT(x)
 #endif
 
 typedef struct lpm_ent {
@@ -75,16 +83,18 @@ typedef struct lpm_ent {
 } lpm_ent_t;
 
 typedef struct {
-	uint32_t	hashsize;
-	uint32_t	nitems;
-	lpm_ent_t **bucket;
+	unsigned	hashsize;
+	unsigned	nitems;
+	lpm_ent_t **	bucket;
 } lpm_hmap_t;
 
 struct lpm {
 	uint32_t	bitmask[LPM_MAX_WORDS];
-	void *		defval;
+	void *		defvals[2];
 	lpm_hmap_t	prefix[LPM_MAX_PREFIX + 1];
 };
+
+static const uint32_t zero_address[LPM_MAX_WORDS];
 
 lpm_t *
 lpm_create(void)
@@ -122,8 +132,12 @@ lpm_clear(lpm_t *lpm, lpm_dtor_t dtor, void *arg)
 		hmap->hashsize = 0;
 		hmap->nitems = 0;
 	}
+	if (dtor) {
+		dtor(arg, zero_address, 4, lpm->defvals[0]);
+		dtor(arg, zero_address, 16, lpm->defvals[1]);
+	}
 	memset(lpm->bitmask, 0, sizeof(lpm->bitmask));
-	lpm->defval = NULL;
+	memset(lpm->defvals, 0, sizeof(lpm->defvals));
 }
 
 void
@@ -150,10 +164,10 @@ fnv1a_hash(const void *buf, size_t len)
 }
 
 static bool
-hashmap_rehash(lpm_hmap_t *hmap, uint32_t size)
+hashmap_rehash(lpm_hmap_t *hmap, unsigned size)
 {
 	lpm_ent_t **bucket;
-	uint32_t hashsize;
+	unsigned hashsize;
 
 	for (hashsize = 1; hashsize < size; hashsize <<= 1) {
 		continue;
@@ -165,7 +179,7 @@ hashmap_rehash(lpm_hmap_t *hmap, uint32_t size)
 		while (list) {
 			lpm_ent_t *entry = list;
 			uint32_t hash = fnv1a_hash(entry->key, entry->len);
-			const size_t i = hash & (hashsize - 1);
+			const unsigned i = hash & (hashsize - 1);
 
 			list = entry->next;
 			entry->next = bucket[i];
@@ -182,7 +196,7 @@ hashmap_rehash(lpm_hmap_t *hmap, uint32_t size)
 static lpm_ent_t *
 hashmap_insert(lpm_hmap_t *hmap, const void *key, size_t len)
 {
-	const uint32_t target = hmap->nitems + LPM_HASH_STEP;
+	const unsigned target = hmap->nitems + LPM_HASH_STEP;
 	const size_t entlen = offsetof(lpm_ent_t, key[len]);
 	uint32_t hash, i;
 	lpm_ent_t *entry;
@@ -201,13 +215,14 @@ hashmap_insert(lpm_hmap_t *hmap, const void *key, size_t len)
 		entry = entry->next;
 	}
 
-	entry = kmem_alloc(entlen, KM_SLEEP);
-	memcpy(entry->key, key, len);
-	entry->next = hmap->bucket[i];
-	entry->len = len;
+	if ((entry = kmem_alloc(entlen, KM_SLEEP)) != NULL) {
+		memcpy(entry->key, key, len);
+		entry->next = hmap->bucket[i];
+		entry->len = len;
 
-	hmap->bucket[i] = entry;
-	hmap->nitems++;
+		hmap->bucket[i] = entry;
+		hmap->nitems++;
+	}
 	return entry;
 }
 
@@ -215,8 +230,13 @@ static lpm_ent_t *
 hashmap_lookup(lpm_hmap_t *hmap, const void *key, size_t len)
 {
 	const uint32_t hash = fnv1a_hash(key, len);
-	const uint32_t i = hash & (hmap->hashsize - 1);
-	lpm_ent_t *entry = hmap->bucket[i];
+	const unsigned i = hash & (hmap->hashsize - 1);
+	lpm_ent_t *entry;
+
+	if (hmap->hashsize == 0) {
+		return NULL;
+	}
+	entry = hmap->bucket[i];
 
 	while (entry) {
 		if (entry->len == len && memcmp(entry->key, key, len) == 0) {
@@ -231,8 +251,13 @@ static int
 hashmap_remove(lpm_hmap_t *hmap, const void *key, size_t len)
 {
 	const uint32_t hash = fnv1a_hash(key, len);
-	const uint32_t i = hash & (hmap->hashsize - 1);
-	lpm_ent_t *prev = NULL, *entry = hmap->bucket[i];
+	const unsigned i = hash & (hmap->hashsize - 1);
+	lpm_ent_t *prev = NULL, *entry;
+
+	if (hmap->hashsize == 0) {
+		return -1;
+	}
+	entry = hmap->bucket[i];
 
 	while (entry) {
 		if (entry->len == len && memcmp(entry->key, key, len) == 0) {
@@ -293,10 +318,11 @@ lpm_insert(lpm_t *lpm, const void *addr,
 	const unsigned nwords = LPM_TO_WORDS(len);
 	uint32_t prefix[LPM_MAX_WORDS];
 	lpm_ent_t *entry;
+	KASSERT(len == 4 || len == 16);
 
 	if (preflen == 0) {
-		/* Default is a special case. */
-		lpm->defval = val;
+		/* 0-length prefix is a special case. */
+		lpm->defvals[LPM_LEN_IDX(len)] = val;
 		return 0;
 	}
 	compute_prefix(nwords, addr, preflen, prefix);
@@ -318,9 +344,10 @@ lpm_remove(lpm_t *lpm, const void *addr, size_t len, unsigned preflen)
 {
 	const unsigned nwords = LPM_TO_WORDS(len);
 	uint32_t prefix[LPM_MAX_WORDS];
+	KASSERT(len == 4 || len == 16);
 
 	if (preflen == 0) {
-		lpm->defval = NULL;
+		lpm->defvals[LPM_LEN_IDX(len)] = NULL;
 		return 0;
 	}
 	compute_prefix(nwords, addr, preflen, prefix);
@@ -355,7 +382,31 @@ lpm_lookup(lpm_t *lpm, const void *addr, size_t len)
 			bitmask &= ~(1U << i);
 		}
 	}
-	return lpm->defval;
+	return lpm->defvals[LPM_LEN_IDX(len)];
+}
+
+/*
+ * lpm_lookup_prefix: return the value associated with a prefix
+ *
+ * => Returns the associated value on success or NULL on failure.
+ */
+void *
+lpm_lookup_prefix(lpm_t *lpm, const void *addr, size_t len, unsigned preflen)
+{
+	const unsigned nwords = LPM_TO_WORDS(len);
+	uint32_t prefix[LPM_MAX_WORDS];
+	lpm_ent_t *entry;
+	KASSERT(len == 4 || len == 16);
+
+	if (preflen == 0) {
+		return lpm->defvals[LPM_LEN_IDX(len)];
+	}
+	compute_prefix(nwords, addr, preflen, prefix);
+	entry = hashmap_lookup(&lpm->prefix[preflen], prefix, len);
+	if (entry) {
+		return entry->val;
+	}
+	return NULL;
 }
 
 #if !defined(_KERNEL)

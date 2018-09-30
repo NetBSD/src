@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.acorn32,v 1.23 2008/10/19 22:05:21 apb Exp $
+#	$NetBSD: Makefile.acorn32,v 1.23.80.1 2018/09/30 01:45:36 pgoyette Exp $
 
 # Makefile for NetBSD
 #
@@ -39,7 +39,7 @@ AFLAGS+=	-x assembler-with-cpp
 ##
 ## (3) libkern and compat
 ##
-KERN_AS=	obj
+OPT_MODULAR=	%MODULAR%
 
 ##
 ## (4) local objects, compile rules, and dependencies

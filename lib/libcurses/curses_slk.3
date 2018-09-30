@@ -1,4 +1,4 @@
-.\"	$NetBSD: curses_slk.3,v 1.1 2017/01/24 17:27:30 roy Exp $
+.\"	$NetBSD: curses_slk.3,v 1.1.14.1 2018/09/30 01:45:33 pgoyette Exp $
 .\"
 .\" Copyright (c) 2017 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -28,7 +28,7 @@
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd January 12, 2017
+.Dd September 29, 2018
 .Dt CURSES_SLK 3
 .Os
 .Sh NAME
@@ -64,7 +64,7 @@
 .Ft int
 .Fn slk_attrset "const chtype attr"
 .Ft int
-.Fn slk_attr_set "const attr_t attr" "void *opt"
+.Fn slk_attr_set "const attr_t attr" "short pair" "void *opt"
 .Ft void
 .Fn slk_clear "void"
 .Ft int

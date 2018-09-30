@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.9.14.1 2018/09/06 06:56:51 pgoyette Exp $
+#	$NetBSD: Makefile.inc,v 1.9.14.2 2018/09/30 01:46:01 pgoyette Exp $
 #
 # Makefile for sysinst
 
@@ -13,17 +13,21 @@ WARNS=		4
 
 SRCS+=	menu_defs.c msg_defs.c main.c install.c upgrade.c \
 	txtwalk.c run.c factor.c net.c disks.c disks_lfs.c util.c geom.c \
-	label.c target.c md.c sizemultname.c configmenu.c checkrc.c partman.c
+	label.c target.c md.c sizemultname.c configmenu.c checkrc.c
 
 SRCS+=	${MD_OPTIONS:MAOUT2ELF:S/AOUT2ELF/aout2elf.c/}
 SRCS+=	${MENUS_MD:Mmenus.mbr:S/menus.mbr/mbr.c/}
 SRCS+=	${CPPFLAGS:M-DWSKBD:S/-DWSKBD/wskbd.c/}
 SRCS+=	${NODISKLABEL:D:Ubsddisklabel.c savenewlabel.c}
+SRCS+=	${NOPARTMAN:D:Upartman.c}
 
 DPSRCS+= defs.h
 
 SYSINSTLANG?=	en
 LANGUAGES?=	de en es fr pl
+
+MENUS_MI=	menus.mi
+MENUS_MI+=	${NOPARTMAN:D:Umenus.pm}
 
 MSG_MD?=	msg.md.${SYSINSTLANG}
 MENUS_MD?=	menus.md.${SYSINSTLANG}
@@ -48,11 +52,9 @@ CATALOGDIR=	/usr/share/sysinst/catalog
 CPPFLAGS+=	-I. -I${.CURDIR}/../.. -I${.CURDIR} \
 		-DREL=\"${DISTRIBVER}\" -DMACH=\"${MACHINE}\" \
 		-DMACH_${MACHINE} -DARCH_${MACHINE_ARCH} \
-		${NODISKLABEL:D-DNO_DISKLABEL}
+		${NODISKLABEL:D-DNO_DISKLABEL} \
+		${NOPARTMAN:D-DNO_PARTMAN}
 
-.if (defined(BUILDID))
-COPTS+=	-DBUILDID=\"${BUILDID}\"
-.endif
 .if defined(NETBSD_OFFICIAL_RELEASE) && ${NETBSD_OFFICIAL_RELEASE} == "yes"
 CPPFLAGS+= -DSYSINST_FTP_HOST=\"ftp.NetBSD.org\" -DNETBSD_OFFICIAL_RELEASE
 CPPFLAGS+= -DSYSINST_HTTP_HOST=\"cdn.NetBSD.org\" -DNETBSD_OFFICIAL_RELEASE
@@ -61,10 +63,13 @@ CPPFLAGS+= -DSYSINST_FTP_HOST=\"nyftp.NetBSD.org\"
 CPPFLAGS+= -DSYSINST_HTTP_HOST=\"nycdn.NetBSD.org\"
 .if (${DISTRIBVER:M*.99.*})
 CPPFLAGS+= -DREL_PATH=\"HEAD\"
+CPPFLAGS+= -DPKG_SUBDIR="\"${DISTRIBVER:C/\.99\.[0-9]*[_A-Z]*$//}.0\""
 .elif (${DISTRIBVER:M*.[0-9].[0-9]*})
 CPPFLAGS+= -DREL_PATH=\"netbsd-${DISTRIBVER:C/\.[0-9][_A-Z]*$//:S/./-/}\"
+CPPFLAGS+= -DPKG_SUBDIR="\"${DISTRIBVER:C/_.*$//}\""
 .elif (${DISTRIBVER:M*.[0-9]*})
 CPPFLAGS+= -DREL_PATH=\"netbsd-${DISTRIBVER:C/\.[0-9][_A-Z]*$//}\"
+CPPFLAGS+= -DPKG_SUBDIR="\"${DISTRIBVER:C/_.*$//}\""
 .endif
 .endif
 
@@ -168,7 +173,7 @@ msg.def: msg.mi.${SYSINSTLANG} ${MSG_MD} msgtouch
 	${TOOL_SED} "s/@@MACHINE@@/${MACHINE}/" | \
 	${TOOL_AWK} -f ${UNIF_AWK} -v defines="${MD_OPTIONS}" > ${.TARGET}
 
-menus.def: menus.mi ${MENUS_MD} msgtouch
+menus.def: ${MENUS_MI} ${MENUS_MD} msgtouch
 	${_MKTARGET_CREATE}
 	${TOOL_SED} "s/@@VERSION@@/${DISTRIBVER}/" ${.ALLSRC} | \
 	${TOOL_SED} "s/@@MACHINE@@/${MACHINE}/" | \

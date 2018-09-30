@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.379.2.4 2018/09/22 04:23:22 pgoyette Exp $
+# $NetBSD: GENERIC,v 1.379.2.5 2018/09/30 01:45:36 pgoyette Exp $
 #
 # This machine description file is used to generate the default NetBSD
 # kernel.
@@ -19,7 +19,7 @@ include 	"arch/alpha/conf/std.alpha"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident		"GENERIC-$Revision: 1.379.2.4 $"
+ident		"GENERIC-$Revision: 1.379.2.5 $"
 
 maxusers 32
 
@@ -304,7 +304,6 @@ cy*	at	pci? dev ? function ?		# Cyclades Cyclom-Y (untested)
 cz*	at	pci? dev ? function ?		# Cyclades-Z (untested)
 dpt*	at	pci? dev ? function ?		# DPT SmartCache/SmartRAID
 eap*	at	pci? dev ? function ?		# Ensoniq AudioPCI
-en*	at	pci? dev ? function ?		# ENI PCI ATM (untested)
 ep*	at	pci? dev ? function ?		# 3COM 3c59x/3c90x Ethernet
 epic*	at	pci? dev ? function ?		# SMC EPIC/100 Ethernet
 esh*	at	pci? dev ? function ?		# Essential HIPPI card

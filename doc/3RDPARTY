@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1504.2.10 2018/09/06 06:51:43 pgoyette Exp $
+#	$NetBSD: 3RDPARTY,v 1.1504.2.11 2018/09/30 01:45:07 pgoyette Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -482,7 +482,7 @@ Before importing a new version of external/gpl3/gcc:
 
 Package:	gdb
 Version:	8.0.1
-Current Vers:	8.1.1
+Current Vers:	8.2
 Maintainer:	FSF
 Archive Site:	ftp://ftp.gnu.org/gnu/gdb/
 Home Page:	http://www.gnu.org/software/gdb/
@@ -1494,7 +1494,7 @@ Location:	external/zlib/pigz/dist
 Notes:
 
 Package:	xz
-Version:	5.2.1
+Version:	5.2.4
 Current Vers:	5.2.4
 Maintainer:	Lasse Collin <lasse.collin@tukanni.org>
 Archive Site:	http://tukaani.org/xz/
@@ -1504,8 +1504,9 @@ License:	public-domain
 Location:	external/public-domain/xz/dist
 Notes:
 1. See prepare-import script for stripping down the distribution.
-2. Update configure.ac and use it to generate include/config.h.
-3. Carefully check for GPL components leaked into the dist area.
+2. Use run-configure and double check that the stripped down configure works
+   for tools.
+3. Carefully check for non-autoconf GPL components leaked into the dist area.
 
 Package:	mpc
 Version:	1.1.0
@@ -2051,3 +2052,20 @@ Responsible:
 Location:	sys/dev/microcode/zyd
 Notes:
 
+Package:	libnv
+Version:	20180906
+Current Vers:	$(date)
+Maintainer:	christos
+Archive Site:
+Home Page:
+Mailing List:
+License:	BSD-like (2-clause)
+Responsible:	
+Location:	sys/external/bsd/libnv/dist
+Notes:
+To be used only for npf (library and headers are private)
+Copied from FreeBSD:
+/usr/src/sys/sys/{d,c,}nv.h
+/usr/src/lib/libnv/
+/usr/src/contrib/lib/libnv/
+/usr/src/share/man/man9/{d,c,}nv.9

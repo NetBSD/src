@@ -1,5 +1,3 @@
-/*	$NetBSD: npf_nat.c,v 1.41.14.2 2018/05/21 04:36:15 pgoyette Exp $	*/
-
 /*-
  * Copyright (c) 2014 Mindaugas Rasiukevicius <rmind at netbsd org>
  * Copyright (c) 2010-2013 The NetBSD Foundation, Inc.
@@ -72,7 +70,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_nat.c,v 1.41.14.2 2018/05/21 04:36:15 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_nat.c,v 1.41.14.3 2018/09/30 01:45:56 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -194,19 +192,20 @@ npf_nat_sysfini(void)
  * => Shares portmap if policy is on existing translation address.
  */
 npf_natpolicy_t *
-npf_nat_newpolicy(npf_t *npf, prop_dictionary_t natdict, npf_ruleset_t *rset)
+npf_nat_newpolicy(npf_t *npf, const nvlist_t *nat, npf_ruleset_t *rset)
 {
 	npf_natpolicy_t *np;
-	prop_object_t obj;
 	npf_portmap_t *pm;
+	const void *addr;
+	size_t len;
 
 	np = kmem_zalloc(sizeof(npf_natpolicy_t), KM_SLEEP);
 	np->n_npfctx = npf;
 
 	/* The translation type, flags and policy ID. */
-	prop_dictionary_get_int32(natdict, "type", &np->n_type);
-	prop_dictionary_get_uint32(natdict, "flags", &np->n_flags);
-	prop_dictionary_get_uint64(natdict, "nat-policy", &np->n_id);
+	np->n_type = dnvlist_get_number(nat, "type", 0);
+	np->n_flags = dnvlist_get_number(nat, "flags", 0);
+	np->n_id = dnvlist_get_number(nat, "nat-policy", 0);
 
 	/* Should be exclusively either inbound or outbound NAT. */
 	if (((np->n_type == NPF_NATIN) ^ (np->n_type == NPF_NATOUT)) == 0) {
@@ -216,20 +215,20 @@ npf_nat_newpolicy(npf_t *npf, prop_dictionary_t natdict, npf_ruleset_t *rset)
 	LIST_INIT(&np->n_nat_list);
 
 	/* Translation IP, mask and port (if applicable). */
-	obj = prop_dictionary_get(natdict, "nat-ip");
-	np->n_alen = prop_data_size(obj);
-	if (np->n_alen == 0 || np->n_alen > sizeof(npf_addr_t)) {
+	addr = dnvlist_get_binary(nat, "nat-ip", &len, NULL, 0);
+	if (!addr || len == 0 || len > sizeof(npf_addr_t)) {
 		goto err;
 	}
-	memcpy(&np->n_taddr, prop_data_data_nocopy(obj), np->n_alen);
-	prop_dictionary_get_uint8(natdict, "nat-mask", &np->n_tmask);
-	prop_dictionary_get_uint16(natdict, "nat-port", &np->n_tport);
+	memcpy(&np->n_taddr, addr, len);
+	np->n_alen = len;
 
-	prop_dictionary_get_uint32(natdict, "nat-algo", &np->n_algo);
+	np->n_tmask = dnvlist_get_number(nat, "nat-mask", 0);
+	np->n_tport = dnvlist_get_number(nat, "nat-port", 0);
+
+	np->n_algo = dnvlist_get_number(nat, "nat-algo", 0);
 	switch (np->n_algo) {
 	case NPF_ALGO_NPT66:
-		prop_dictionary_get_uint16(natdict, "npt66-adj",
-		    &np->n_npt66_adj);
+		np->n_npt66_adj = dnvlist_get_number(nat, "npt66-adj", 0);
 		break;
 	default:
 		if (np->n_tmask != NPF_NO_NETMASK)
@@ -266,26 +265,22 @@ err:
 }
 
 int
-npf_nat_policyexport(const npf_natpolicy_t *np, prop_dictionary_t natdict)
+npf_nat_policyexport(const npf_natpolicy_t *np, nvlist_t *nat)
 {
-	prop_data_t d;
+	nvlist_add_number(nat, "type", np->n_type);
+	nvlist_add_number(nat, "flags", np->n_flags);
 
-	prop_dictionary_set_int32(natdict, "type", np->n_type);
-	prop_dictionary_set_uint32(natdict, "flags", np->n_flags);
-
-	d = prop_data_create_data(&np->n_taddr, np->n_alen);
-	prop_dictionary_set_and_rel(natdict, "nat-ip", d);
-
-	prop_dictionary_set_uint8(natdict, "nat-mask", np->n_tmask);
-	prop_dictionary_set_uint16(natdict, "nat-port", np->n_tport);
-	prop_dictionary_set_uint32(natdict, "nat-algo", np->n_algo);
+	nvlist_add_binary(nat, "nat-ip", &np->n_taddr, np->n_alen);
+	nvlist_add_number(nat, "nat-mask", np->n_tmask);
+	nvlist_add_number(nat, "nat-port", np->n_tport);
+	nvlist_add_number(nat, "nat-algo", np->n_algo);
 
 	switch (np->n_algo) {
 	case NPF_ALGO_NPT66:
-		prop_dictionary_set_uint16(natdict, "npt66-adj", np->n_npt66_adj);
+		nvlist_add_number(nat, "npt66-adj", np->n_npt66_adj);
 		break;
 	}
-	prop_dictionary_set_uint64(natdict, "nat-policy", np->n_id);
+	nvlist_add_number(nat, "nat-policy", np->n_id);
 	return 0;
 }
 
@@ -845,49 +840,47 @@ npf_nat_destroy(npf_nat_t *nt)
  * npf_nat_export: serialise the NAT entry with a NAT policy ID.
  */
 void
-npf_nat_export(prop_dictionary_t condict, npf_nat_t *nt)
+npf_nat_export(nvlist_t *condict, npf_nat_t *nt)
 {
 	npf_natpolicy_t *np = nt->nt_natpolicy;
-	prop_dictionary_t natdict;
-	prop_data_t d;
+	nvlist_t *nat;
 
-	natdict = prop_dictionary_create();
-	d = prop_data_create_data(&nt->nt_oaddr, sizeof(npf_addr_t));
-	prop_dictionary_set_and_rel(natdict, "oaddr", d);
-	prop_dictionary_set_uint16(natdict, "oport", nt->nt_oport);
-	prop_dictionary_set_uint16(natdict, "tport", nt->nt_tport);
-	prop_dictionary_set_uint64(natdict, "nat-policy", np->n_id);
-	prop_dictionary_set_and_rel(condict, "nat", natdict);
+	nat = nvlist_create(0);
+	nvlist_add_binary(nat, "oaddr", &nt->nt_oaddr, sizeof(npf_addr_t));
+	nvlist_add_number(nat, "oport", nt->nt_oport);
+	nvlist_add_number(nat, "tport", nt->nt_tport);
+	nvlist_add_number(nat, "nat-policy", np->n_id);
+	nvlist_move_nvlist(condict, "nat", nat);
 }
 
 /*
  * npf_nat_import: find the NAT policy and unserialise the NAT entry.
  */
 npf_nat_t *
-npf_nat_import(npf_t *npf, prop_dictionary_t natdict,
+npf_nat_import(npf_t *npf, const nvlist_t *nat,
     npf_ruleset_t *natlist, npf_conn_t *con)
 {
 	npf_natpolicy_t *np;
 	npf_nat_t *nt;
+	const void *oaddr;
 	uint64_t np_id;
-	const void *d;
+	size_t len;
 
-	prop_dictionary_get_uint64(natdict, "nat-policy", &np_id);
+	np_id = dnvlist_get_number(nat, "nat-policy", UINT64_MAX);
 	if ((np = npf_ruleset_findnat(natlist, np_id)) == NULL) {
 		return NULL;
 	}
 	nt = pool_cache_get(nat_cache, PR_WAITOK);
 	memset(nt, 0, sizeof(npf_nat_t));
 
-	prop_object_t obj = prop_dictionary_get(natdict, "oaddr");
-	if ((d = prop_data_data_nocopy(obj)) == NULL ||
-	    prop_data_size(obj) != sizeof(npf_addr_t)) {
+	oaddr = dnvlist_get_binary(nat, "oaddr", &len, NULL, 0);
+	if (!oaddr || len != sizeof(npf_addr_t)) {
 		pool_cache_put(nat_cache, nt);
 		return NULL;
 	}
-	memcpy(&nt->nt_oaddr, d, sizeof(npf_addr_t));
-	prop_dictionary_get_uint16(natdict, "oport", &nt->nt_oport);
-	prop_dictionary_get_uint16(natdict, "tport", &nt->nt_tport);
+	memcpy(&nt->nt_oaddr, oaddr, sizeof(npf_addr_t));
+	nt->nt_oport = dnvlist_get_number(nat, "oport", 0);
+	nt->nt_tport = dnvlist_get_number(nat, "tport", 0);
 
 	/* Take a specific port from port-map. */
 	if ((np->n_flags & NPF_NAT_PORTMAP) != 0 && nt->nt_tport &&

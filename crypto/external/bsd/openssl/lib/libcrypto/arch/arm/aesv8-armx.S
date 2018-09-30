@@ -1,3 +1,4 @@
+#include "arm_asm.h"
 #include "arm_arch.h"
 
 #if __ARM_MAX_ARCH__>=7
@@ -179,7 +180,7 @@ aes_v8_set_encrypt_key:
 .Lenc_key_abort:
 	mov	r0,r3			@ return value
 
-	bx	lr
+	RET
 .size	aes_v8_set_encrypt_key,.-aes_v8_set_encrypt_key
 
 .globl	aes_v8_set_decrypt_key
@@ -246,7 +247,7 @@ aes_v8_encrypt:
 	veor	q2,q2,q0
 
 	vst1.8	{q2},[r1]
-	bx	lr
+	RET
 .size	aes_v8_encrypt,.-aes_v8_encrypt
 .globl	aes_v8_decrypt
 .type	aes_v8_decrypt,%function
@@ -275,7 +276,7 @@ aes_v8_decrypt:
 	veor	q2,q2,q0
 
 	vst1.8	{q2},[r1]
-	bx	lr
+	RET
 .size	aes_v8_decrypt,.-aes_v8_decrypt
 .globl	aes_v8_cbc_encrypt
 .type	aes_v8_cbc_encrypt,%function

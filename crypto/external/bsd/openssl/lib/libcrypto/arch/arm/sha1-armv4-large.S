@@ -1,3 +1,4 @@
+#include "arm_asm.h"
 #include "arm_arch.h"
 
 .text
@@ -1483,7 +1484,7 @@ sha1_block_data_order_armv8:
 	vst1.32	{d2[0]},[r0]
 
 	vldmia	sp!,{d8,d9,d10,d11,d12,d13,d14,d15}
-	bx	lr					@ bx lr
+	RET					@ bx lr
 .size	sha1_block_data_order_armv8,.-sha1_block_data_order_armv8
 #endif
 #if __ARM_MAX_ARCH__>=7

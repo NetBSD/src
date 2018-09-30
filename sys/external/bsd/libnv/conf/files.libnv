@@ -1,0 +1,13 @@
+# $NetBSD: files.libnv,v 1.1.2.2 2018/09/30 01:45:54 pgoyette Exp $
+
+define		libnv
+makeoptions	libnv	CPPFLAGS+="-I$S/external/bsd/libnv/dist"
+
+prefix	external/bsd/libnv/dist
+
+file	dnvlist.c			libnv
+file	nvlist.c			libnv
+file	nvpair.c			libnv
+file	nv_kern_netbsd.c		libnv
+
+prefix

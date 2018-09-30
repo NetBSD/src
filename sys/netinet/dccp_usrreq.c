@@ -1,5 +1,5 @@
 /*	$KAME: dccp_usrreq.c,v 1.67 2005/11/03 16:05:04 nishida Exp $	*/
-/*	$NetBSD: dccp_usrreq.c,v 1.17.2.1 2018/05/21 04:36:16 pgoyette Exp $ */
+/*	$NetBSD: dccp_usrreq.c,v 1.17.2.2 2018/09/30 01:45:56 pgoyette Exp $ */
 
 /*
  * Copyright (c) 2003 Joacim Häggmark, Magnus Erixzon, Nils-Erik Mattsson 
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dccp_usrreq.c,v 1.17.2.1 2018/05/21 04:36:16 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dccp_usrreq.c,v 1.17.2.2 2018/09/30 01:45:56 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -181,7 +181,7 @@ dccp_init(void)
 }
 
 void
-dccp_input(struct mbuf *m, ...)
+dccp_input(struct mbuf *m, int off, int proto)
 {
 	int iphlen;
 	struct ip *ip = NULL;
@@ -210,12 +210,7 @@ dccp_input(struct mbuf *m, ...)
 	struct ip6_hdr *ip6 = NULL;
 #endif
 
-	int off;
-	va_list ap;
-	
-	va_start(ap, m);
-	iphlen = off = va_arg(ap, int);
-	va_end(ap);
+	iphlen = off;
 
 	DCCP_DEBUG((LOG_INFO, "Got DCCP packet!\n"));
 

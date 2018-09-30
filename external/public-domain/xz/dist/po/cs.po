@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: xz-utils\n"
 "Report-Msgid-Bugs-To: lasse.collin@tukaani.org\n"
-"POT-Creation-Date: 2015-02-26 16:55+0200\n"
+"POT-Creation-Date: 2018-04-29 18:19+0300\n"
 "PO-Revision-Date: 2010-12-03 11:32+0100\n"
 "Last-Translator: Marek Černocký <marek@manet.cz>\n"
 "Language-Team: Czech <diskuze@lists.l10n.cz>\n"
@@ -51,6 +51,14 @@ msgstr "Spolu s přepínači „--files“ nebo „--files0“ může být zadá
 msgid "The environment variable %s contains too many arguments"
 msgstr "Proměnná prostředí %s obsahuje příliš mnoho argumentů"
 
+#: src/xz/args.c:643
+msgid "Compression support was disabled at build time"
+msgstr ""
+
+#: src/xz/args.c:650
+msgid "Decompression support was disabled at build time"
+msgstr ""
+
 #: src/xz/coder.c:110
 msgid "Maximum number of filters is four"
 msgstr "Maximální počet filtrů je čtyři"
@@ -83,36 +91,48 @@ msgstr ""
 msgid "Switching to single-threaded mode due to --flush-timeout"
 msgstr ""
 
-#: src/xz/coder.c:234
+#: src/xz/coder.c:235
 #, c-format
 msgid "Using up to %<PRIu32> threads."
 msgstr ""
 
-#: src/xz/coder.c:247
+#: src/xz/coder.c:251
 msgid "Unsupported filter chain or filter options"
 msgstr "Nepodporovaný omezující filtr nebo volby filtru"
 
-#: src/xz/coder.c:255
+#: src/xz/coder.c:263
 #, c-format
 msgid "Decompression will need %s MiB of memory."
 msgstr "Dekomprimace bude vyžadovat %s MiB paměti."
 
-#: src/xz/coder.c:290
+#: src/xz/coder.c:300
 #, fuzzy, c-format
 msgid "Adjusted the number of threads from %s to %s to not exceed the memory usage limit of %s MiB"
 msgstr "Přizpůsobit velikost slovníku LZMA%c z %s MiB na %s MiB, tak aby nebylo překročeno omezení použitelné paměti %s MiB"
 
-#: src/xz/coder.c:344
+#: src/xz/coder.c:354
 #, c-format
 msgid "Adjusted LZMA%c dictionary size from %s MiB to %s MiB to not exceed the memory usage limit of %s MiB"
 msgstr "Přizpůsobit velikost slovníku LZMA%c z %s MiB na %s MiB, tak aby nebylo překročeno omezení použitelné paměti %s MiB"
 
-#: src/xz/file_io.c:89 src/xz/file_io.c:93 src/xz/file_io.c:101
+#: src/xz/file_io.c:110 src/xz/file_io.c:118
 #, fuzzy, c-format
 msgid "Error creating a pipe: %s"
 msgstr "%s: Chyba při čtení názvů souborů: %s"
 
-#: src/xz/file_io.c:179
+#: src/xz/file_io.c:173
+msgid "Sandbox is disabled due to incompatible command line arguments"
+msgstr ""
+
+#: src/xz/file_io.c:216
+msgid "Sandbox was successfully enabled"
+msgstr ""
+
+#: src/xz/file_io.c:220
+msgid "Failed to enable the sandbox"
+msgstr ""
+
+#: src/xz/file_io.c:262
 #, fuzzy, c-format
 msgid "%s: poll() failed: %s"
 msgstr "%s: Selhalo zavření souboru: %s"
@@ -127,107 +147,107 @@ msgstr "%s: Selhalo zavření souboru: %s"
 #. it is possible that the user has put a new file in place
 #. of the original file, and in that case it obviously
 #. shouldn't be removed.
-#: src/xz/file_io.c:249
+#: src/xz/file_io.c:332
 #, c-format
 msgid "%s: File seems to have been moved, not removing"
 msgstr "%s: Vypadá to, že soubor byl přesunut, proto nebude odstraněn"
 
-#: src/xz/file_io.c:256 src/xz/file_io.c:769
+#: src/xz/file_io.c:339 src/xz/file_io.c:878
 #, c-format
 msgid "%s: Cannot remove: %s"
 msgstr "%s: Nelze odstranit: %s"
 
-#: src/xz/file_io.c:281
+#: src/xz/file_io.c:364
 #, c-format
 msgid "%s: Cannot set the file owner: %s"
 msgstr "%s: Nelze nastavit vlastníka souboru: %s"
 
-#: src/xz/file_io.c:287
+#: src/xz/file_io.c:370
 #, c-format
 msgid "%s: Cannot set the file group: %s"
 msgstr "%s: Nelze nastavit skupinu souboru: %s"
 
-#: src/xz/file_io.c:306
+#: src/xz/file_io.c:389
 #, c-format
 msgid "%s: Cannot set the file permissions: %s"
 msgstr "%s: Nelze nastavit oprávnění souboru: %s"
 
-#: src/xz/file_io.c:416
+#: src/xz/file_io.c:515
 #, fuzzy, c-format
 msgid "Error getting the file status flags from standard input: %s"
 msgstr "Chyba při obnovení příznaku O_APPEND na standardní výstup: %s"
 
-#: src/xz/file_io.c:470 src/xz/file_io.c:532
+#: src/xz/file_io.c:572 src/xz/file_io.c:634
 #, c-format
 msgid "%s: Is a symbolic link, skipping"
 msgstr "%s: Jedná se o symbolický odkaz, vynechává se"
 
-#: src/xz/file_io.c:561
+#: src/xz/file_io.c:663
 #, c-format
 msgid "%s: Is a directory, skipping"
 msgstr "%s: Jedná se o složku, vynechává se"
 
-#: src/xz/file_io.c:567
+#: src/xz/file_io.c:669
 #, c-format
 msgid "%s: Not a regular file, skipping"
 msgstr "%s: Nejedná se o běžný soubor, vynechává se"
 
-#: src/xz/file_io.c:584
+#: src/xz/file_io.c:686
 #, c-format
 msgid "%s: File has setuid or setgid bit set, skipping"
 msgstr "%s: Soubor má nastavený bit setuid nebo setgid, vynechává se"
 
-#: src/xz/file_io.c:591
+#: src/xz/file_io.c:693
 #, c-format
 msgid "%s: File has sticky bit set, skipping"
 msgstr "%s: Soubor má nastavený bit sticky, vynechává se"
 
-#: src/xz/file_io.c:598
+#: src/xz/file_io.c:700
 #, c-format
 msgid "%s: Input file has more than one hard link, skipping"
 msgstr "%s: Vstupní soubor má více než jeden pevný odkaz, vynechává se"
 
-#: src/xz/file_io.c:678
+#: src/xz/file_io.c:788
 #, fuzzy, c-format
 msgid "Error restoring the status flags to standard input: %s"
 msgstr "Chyba při obnovení příznaku O_APPEND na standardní výstup: %s"
 
-#: src/xz/file_io.c:727
+#: src/xz/file_io.c:836
 #, fuzzy, c-format
 msgid "Error getting the file status flags from standard output: %s"
 msgstr "Chyba při obnovení příznaku O_APPEND na standardní výstup: %s"
 
-#: src/xz/file_io.c:905
+#: src/xz/file_io.c:1014
 #, c-format
 msgid "Error restoring the O_APPEND flag to standard output: %s"
 msgstr "Chyba při obnovení příznaku O_APPEND na standardní výstup: %s"
 
-#: src/xz/file_io.c:917
+#: src/xz/file_io.c:1026
 #, c-format
 msgid "%s: Closing the file failed: %s"
 msgstr "%s: Selhalo zavření souboru: %s"
 
-#: src/xz/file_io.c:953 src/xz/file_io.c:1179
+#: src/xz/file_io.c:1062 src/xz/file_io.c:1288
 #, c-format
 msgid "%s: Seeking failed when trying to create a sparse file: %s"
 msgstr "%s: Selhalo nastavení pozice při pokusu o vytvoření souboru řídké matice: %s"
 
-#: src/xz/file_io.c:1048
+#: src/xz/file_io.c:1157
 #, c-format
 msgid "%s: Read error: %s"
 msgstr "%s: Chyba čtení: %s"
 
-#: src/xz/file_io.c:1068
+#: src/xz/file_io.c:1177
 #, c-format
 msgid "%s: Error seeking the file: %s"
 msgstr "%s: Chyba při posunu v rámci souboru: %s"
 
-#: src/xz/file_io.c:1078
+#: src/xz/file_io.c:1187
 #, c-format
 msgid "%s: Unexpected end of file"
 msgstr "%s: Neočekávaný konec souboru"
 
-#: src/xz/file_io.c:1137
+#: src/xz/file_io.c:1246
 #, c-format
 msgid "%s: Write error: %s"
 msgstr "%s: Chyba zápisu: %s"
@@ -324,41 +344,41 @@ msgstr "%s: Je příliš malý na to, aby to mohl být platný soubor .xz"
 #. to Ratio, the columns are right aligned. Check and Filename
 #. are left aligned. If you need longer words, it's OK to
 #. use two lines here. Test with "xz -l foo.xz".
-#: src/xz/list.c:671
+#: src/xz/list.c:677
 msgid "Strms  Blocks   Compressed Uncompressed  Ratio  Check   Filename"
 msgstr "Proud   Bloky      Komprim    Nekomprim  Poměr  Kontrl  Název souboru"
 
-#: src/xz/list.c:711
+#: src/xz/list.c:717
 #, c-format
 msgid "  Streams:            %s\n"
 msgstr "  Proudů:                  %s\n"
 
-#: src/xz/list.c:713
+#: src/xz/list.c:719
 #, c-format
 msgid "  Blocks:             %s\n"
 msgstr "  Bloků:                   %s\n"
 
-#: src/xz/list.c:715
+#: src/xz/list.c:721
 #, c-format
 msgid "  Compressed size:    %s\n"
 msgstr "  Komprimovaná velikost:   %s\n"
 
-#: src/xz/list.c:718
+#: src/xz/list.c:724
 #, c-format
 msgid "  Uncompressed size:  %s\n"
 msgstr "  Nekomprimovaná velikost: %s\n"
 
-#: src/xz/list.c:721
+#: src/xz/list.c:727
 #, c-format
 msgid "  Ratio:              %s\n"
 msgstr "  Poměr komprimace:        %s\n"
 
-#: src/xz/list.c:723
+#: src/xz/list.c:729
 #, c-format
 msgid "  Check:              %s\n"
 msgstr "  Typ kontroly:            %s\n"
 
-#: src/xz/list.c:724
+#: src/xz/list.c:730
 #, c-format
 msgid "  Stream padding:     %s\n"
 msgstr "  Zarovnání proudu:        %s\n"
@@ -366,7 +386,7 @@ msgstr "  Zarovnání proudu:        %s\n"
 #. TRANSLATORS: The second line is column headings. All except
 #. Check are right aligned; Check is left aligned. Test with
 #. "xz -lv foo.xz".
-#: src/xz/list.c:752
+#: src/xz/list.c:758
 msgid ""
 "  Streams:\n"
 "    Stream    Blocks      CompOffset    UncompOffset        CompSize      UncompSize  Ratio  Check      Padding"
@@ -376,7 +396,7 @@ msgstr ""
 
 #. TRANSLATORS: The second line is column headings. All
 #. except Check are right aligned; Check is left aligned.
-#: src/xz/list.c:807
+#: src/xz/list.c:813
 #, c-format
 msgid ""
 "  Blocks:\n"
@@ -392,37 +412,37 @@ msgstr ""
 #. are right aligned. %*s is replaced with 0-120
 #. spaces to make the CheckVal column wide enough.
 #. Test with "xz -lvv foo.xz".
-#: src/xz/list.c:819
+#: src/xz/list.c:825
 #, c-format
 msgid "      CheckVal %*s Header  Flags        CompSize    MemUsage  Filters"
 msgstr "   KontrHod %*s Hlavič  Příznaky     KomprVel    PoužiPam  Filtry"
 
-#: src/xz/list.c:897 src/xz/list.c:1072
+#: src/xz/list.c:903 src/xz/list.c:1078
 #, c-format
 msgid "  Memory needed:      %s MiB\n"
 msgstr "  Potřebná paměť:          %s MiB\n"
 
-#: src/xz/list.c:899 src/xz/list.c:1074
+#: src/xz/list.c:905 src/xz/list.c:1080
 #, c-format
 msgid "  Sizes in headers:   %s\n"
 msgstr "  Velikosti v hlavičkách:  %s\n"
 
-#: src/xz/list.c:900 src/xz/list.c:1075
+#: src/xz/list.c:906 src/xz/list.c:1081
 msgid "Yes"
 msgstr "Ano"
 
-#: src/xz/list.c:900 src/xz/list.c:1075
+#: src/xz/list.c:906 src/xz/list.c:1081
 msgid "No"
 msgstr "Ne"
 
-#: src/xz/list.c:901 src/xz/list.c:1076
+#: src/xz/list.c:907 src/xz/list.c:1082
 #, c-format
 msgid "  Minimum XZ Utils version: %s\n"
 msgstr ""
 
 #. TRANSLATORS: %s is an integer. Only the plural form of this
 #. message is used (e.g. "2 files"). Test with "xz -l foo.xz bar.xz".
-#: src/xz/list.c:1051
+#: src/xz/list.c:1057
 #, c-format
 msgid "%s file\n"
 msgid_plural "%s files\n"
@@ -430,20 +450,20 @@ msgstr[0] "%s soubor\n"
 msgstr[1] "%s soubory\n"
 msgstr[2] "%s souborů\n"
 
-#: src/xz/list.c:1064
+#: src/xz/list.c:1070
 msgid "Totals:"
 msgstr "Celkem:"
 
-#: src/xz/list.c:1065
+#: src/xz/list.c:1071
 #, c-format
 msgid "  Number of files:    %s\n"
 msgstr "  Počet souborů:           %s\n"
 
-#: src/xz/list.c:1140
+#: src/xz/list.c:1146
 msgid "--list works only on .xz files (--format=xz or --format=auto)"
 msgstr "--list pracuje pouze se soubory .xz (--format=xz nebo --format=auto)"
 
-#: src/xz/list.c:1146
+#: src/xz/list.c:1152
 msgid "--list does not support reading from standard input"
 msgstr "--list nepodporuje čtení ze standardního vstupu"
 
@@ -466,7 +486,7 @@ msgstr "%s: Byl nalezen nulový znak při čtení názvů souborů; nechtěli js
 msgid "Compression and decompression with --robot are not supported yet."
 msgstr "Komprimace a dekomprimace s přepínačem --robot není zatím podporovaná."
 
-#: src/xz/main.c:231
+#: src/xz/main.c:252
 msgid "Cannot read data from standard input when reading filenames from standard input"
 msgstr "Ze standardního vstupu nelze číst data, když se ze standardního vstupu načítají názvy souborů"
 
@@ -474,68 +494,68 @@ msgstr "Ze standardního vstupu nelze číst data, když se ze standardního vst
 #. of the line in messages. Usually it becomes "xz: ".
 #. This is a translatable string because French needs
 #. a space before a colon.
-#: src/xz/message.c:713
+#: src/xz/message.c:714
 #, c-format
 msgid "%s: "
 msgstr ""
 
-#: src/xz/message.c:776 src/xz/message.c:826
+#: src/xz/message.c:777 src/xz/message.c:827
 msgid "Internal error (bug)"
 msgstr "Interní chyba"
 
-#: src/xz/message.c:783
+#: src/xz/message.c:784
 msgid "Cannot establish signal handlers"
 msgstr "Nelze ustanovit ovladač signálu"
 
-#: src/xz/message.c:792
+#: src/xz/message.c:793
 msgid "No integrity check; not verifying file integrity"
 msgstr "Žádná kontrola integrity; integrita souboru se nebude ověřovat"
 
-#: src/xz/message.c:795
+#: src/xz/message.c:796
 msgid "Unsupported type of integrity check; not verifying file integrity"
 msgstr "Nepodporovaný typ kontroly integrity; integrita souboru se nebude ověřovat"
 
-#: src/xz/message.c:802
+#: src/xz/message.c:803
 msgid "Memory usage limit reached"
 msgstr "Dosaženo omezení použitelné paměti"
 
-#: src/xz/message.c:805
+#: src/xz/message.c:806
 msgid "File format not recognized"
 msgstr "Formát souboru nebyl rozpoznán"
 
-#: src/xz/message.c:808
+#: src/xz/message.c:809
 msgid "Unsupported options"
 msgstr "Nepodporovaná volba"
 
-#: src/xz/message.c:811
+#: src/xz/message.c:812
 msgid "Compressed data is corrupt"
 msgstr "Komprimovaná data jsou poškozená"
 
-#: src/xz/message.c:814
+#: src/xz/message.c:815
 msgid "Unexpected end of input"
 msgstr "Neočekávaný konec vstupu"
 
-#: src/xz/message.c:847
+#: src/xz/message.c:848
 #, fuzzy, c-format
 msgid "%s MiB of memory is required. The limiter is disabled."
 msgstr "Je vyžadováno %s MiB paměti. Limit je %s."
 
-#: src/xz/message.c:875
+#: src/xz/message.c:876
 #, c-format
 msgid "%s MiB of memory is required. The limit is %s."
 msgstr "Je vyžadováno %s MiB paměti. Limit je %s."
 
-#: src/xz/message.c:1042
+#: src/xz/message.c:1043
 #, c-format
 msgid "%s: Filter chain: %s\n"
 msgstr "%s: Omezující filtr: %s\n"
 
-#: src/xz/message.c:1052
+#: src/xz/message.c:1053
 #, c-format
 msgid "Try `%s --help' for more information."
 msgstr "Zkuste „%s --help“ pro více informací"
 
-#: src/xz/message.c:1078
+#: src/xz/message.c:1079
 #, c-format
 msgid ""
 "Usage: %s [OPTION]... [FILE]...\n"
@@ -546,15 +566,15 @@ msgstr ""
 "Komprimuje nebo dekomprimuje SOUBORy ve formátu xz.\n"
 "\n"
 
-#: src/xz/message.c:1085
+#: src/xz/message.c:1086
 msgid "Mandatory arguments to long options are mandatory for short options too.\n"
 msgstr "Povinné argumenty pro dlouhé přepínače jsou povinné rovněž pro krátké přepínače.\n"
 
-#: src/xz/message.c:1089
+#: src/xz/message.c:1090
 msgid " Operation mode:\n"
 msgstr "Operační režim:\n"
 
-#: src/xz/message.c:1092
+#: src/xz/message.c:1093
 msgid ""
 "  -z, --compress      force compression\n"
 "  -d, --decompress    force decompression\n"
@@ -566,7 +586,7 @@ msgstr ""
 " -t, --test            testovat integritu komprimovaného souboru\n"
 " -l, --list            vypsat informace o souborech .xz"
 
-#: src/xz/message.c:1098
+#: src/xz/message.c:1099
 msgid ""
 "\n"
 " Operation modifiers:\n"
@@ -574,7 +594,7 @@ msgstr ""
 "\n"
 "Modifikátory operací:\n"
 
-#: src/xz/message.c:1101
+#: src/xz/message.c:1102
 msgid ""
 "  -k, --keep          keep (don't delete) input files\n"
 "  -f, --force         force overwrite of output file and (de)compress links\n"
@@ -584,13 +604,13 @@ msgstr ""
 " -f, --force           vynutit přepis výstupního souboru a de/komprimovat odkazy\n"
 " -c, --stdout          zapisovat na standardní výstup a nemazat vstupní soubory"
 
-#: src/xz/message.c:1107
+#: src/xz/message.c:1108
 msgid ""
 "      --single-stream decompress only the first stream, and silently\n"
 "                      ignore possible remaining input data"
 msgstr ""
 
-#: src/xz/message.c:1110
+#: src/xz/message.c:1111
 msgid ""
 "      --no-sparse     do not create sparse files when decompressing\n"
 "  -S, --suffix=.SUF   use the suffix `.SUF' on compressed files\n"
@@ -606,7 +626,7 @@ msgstr ""
 "                       názvy souborů musí být zakončeny znakem nového řádku\n"
 "     --files0[=SOUBOR] stejné jako --files, ale použít k zakončování nulový znak"
 
-#: src/xz/message.c:1119
+#: src/xz/message.c:1120
 msgid ""
 "\n"
 " Basic file format and compression options:\n"
@@ -614,7 +634,7 @@ msgstr ""
 "\n"
 "Základní přepínače pro formát souboru a komprimaci:\n"
 
-#: src/xz/message.c:1121
+#: src/xz/message.c:1122
 msgid ""
 "  -F, --format=FMT    file format to encode or decode; possible values are\n"
 "                      `auto' (default), `xz', `lzma', and `raw'\n"
@@ -626,11 +646,11 @@ msgstr ""
 " -C, --check=KONTROLA  typ kontroly integrity: „none“ (používejte s rozmyslem),\n"
 "                       „crc32“, „crc64“ (výchozí) nebo „sha256“"
 
-#: src/xz/message.c:1126
+#: src/xz/message.c:1127
 msgid "      --ignore-check  don't verify the integrity check when decompressing"
 msgstr ""
 
-#: src/xz/message.c:1130
+#: src/xz/message.c:1131
 msgid ""
 "  -0 ... -9           compression preset; default is 6; take compressor *and*\n"
 "                      decompressor memory usage into account before using 7-9!"
@@ -638,7 +658,7 @@ msgstr ""
 " -0 .. -9              přednastavení komprimace; výchozí je 6; než použijete\n"
 "                       hodnoty 7 – 9, vezměte do úvahy množství použité paměti"
 
-#: src/xz/message.c:1134
+#: src/xz/message.c:1135
 msgid ""
 "  -e, --extreme       try to improve compression ratio by using more CPU time;\n"
 "                      does not affect decompressor memory requirements"
@@ -646,27 +666,27 @@ msgstr ""
 " -e, --extreme         zkusit zlepšit poměr komprimace využitím více času\n"
 "                       procesoru; nemá vliv na paměťové nároky dekomprimace"
 
-#: src/xz/message.c:1138
+#: src/xz/message.c:1139
 msgid ""
 "  -T, --threads=NUM   use at most NUM threads; the default is 1; set to 0\n"
 "                      to use as many threads as there are processor cores"
 msgstr ""
 
-#: src/xz/message.c:1143
+#: src/xz/message.c:1144
 msgid ""
 "      --block-size=SIZE\n"
 "                      start a new .xz block after every SIZE bytes of input;\n"
 "                      use this to set the block size for threaded compression"
 msgstr ""
 
-#: src/xz/message.c:1147
+#: src/xz/message.c:1148
 msgid ""
 "      --block-list=SIZES\n"
 "                      start a new .xz block after the given comma-separated\n"
 "                      intervals of uncompressed data"
 msgstr ""
 
-#: src/xz/message.c:1151
+#: src/xz/message.c:1152
 msgid ""
 "      --flush-timeout=TIMEOUT\n"
 "                      when compressing, if more than TIMEOUT milliseconds has\n"
@@ -674,7 +694,7 @@ msgid ""
 "                      would block, all pending data is flushed out"
 msgstr ""
 
-#: src/xz/message.c:1157
+#: src/xz/message.c:1158
 #, no-c-format
 msgid ""
 "      --memlimit-compress=LIMIT\n"
@@ -690,7 +710,7 @@ msgstr ""
 "                       dekomprimaci nebo obojí; LIMIT je v bajtech, % z paměti\n"
 "                       RAM nebo 0 pro výchozí"
 
-#: src/xz/message.c:1164
+#: src/xz/message.c:1165
 msgid ""
 "      --no-adjust     if compression settings exceed the memory usage limit,\n"
 "                      give an error instead of adjusting the settings downwards"
@@ -698,7 +718,7 @@ msgstr ""
 "     --no-adjust       pokud nastavení komprimace přesáhne omezení použitelné\n"
 "                       paměti, předat chybu namísto snížení nastavení"
 
-#: src/xz/message.c:1170
+#: src/xz/message.c:1171
 msgid ""
 "\n"
 " Custom filter chain for compression (alternative for using presets):"
@@ -706,7 +726,7 @@ msgstr ""
 "\n"
 "Vlastní omezující filtr pro komprimaci (alternativa k použití přednastavených):"
 
-#: src/xz/message.c:1179
+#: src/xz/message.c:1180
 msgid ""
 "\n"
 "  --lzma1[=OPTS]      LZMA1 or LZMA2; OPTS is a comma-separated list of zero or\n"
@@ -735,7 +755,7 @@ msgstr ""
 "                         depth=POČ  maximální hloubka prohledávání;\n"
 "                                    0 = automaticky (výchozí)"
 
-#: src/xz/message.c:1194
+#: src/xz/message.c:1195
 msgid ""
 "\n"
 "  --x86[=OPTS]        x86 BCJ filter (32-bit and 64-bit)\n"
@@ -757,7 +777,7 @@ msgstr ""
 "                       Platné volby pro všechny filtry BCJ:\n"
 "                         start=POČ  počáteční posun pro převody (výchozí=0)"
 
-#: src/xz/message.c:1206
+#: src/xz/message.c:1207
 msgid ""
 "\n"
 "  --delta[=OPTS]      Delta filter; valid OPTS (valid values; default):\n"
@@ -769,7 +789,7 @@ msgstr ""
 "                         dist=POČ   vzdálenost mezi bajty, které jsou odečítány\n"
 "                                    jeden od druhého (1 – 256; 1)"
 
-#: src/xz/message.c:1214
+#: src/xz/message.c:1215
 msgid ""
 "\n"
 " Other options:\n"
@@ -777,7 +797,7 @@ msgstr ""
 "\n"
 " Ostatní přepínače:\n"
 
-#: src/xz/message.c:1217
+#: src/xz/message.c:1218
 msgid ""
 "  -q, --quiet         suppress warnings; specify twice to suppress errors too\n"
 "  -v, --verbose       be verbose; specify twice for even more verbose"
@@ -786,17 +806,17 @@ msgstr ""
 " -v, --verbose         podrobnější zprávy; zadáním dvakrát, budou ještě\n"
 "                       podrobnější"
 
-#: src/xz/message.c:1222
+#: src/xz/message.c:1223
 msgid "  -Q, --no-warn       make warnings not affect the exit status"
 msgstr " -Q, --no-warn         způsobí, že varování neovlivní stav ukončení"
 
-#: src/xz/message.c:1224
+#: src/xz/message.c:1225
 msgid "      --robot         use machine-parsable messages (useful for scripts)"
 msgstr ""
 "     --robot           použít strojově analyzovatelné zprávy (užitečné pro\n"
 "                       skripty)"
 
-#: src/xz/message.c:1227
+#: src/xz/message.c:1228
 msgid ""
 "      --info-memory   display the total amount of RAM and the currently active\n"
 "                      memory usage limits, and exit"
@@ -804,7 +824,7 @@ msgstr ""
 "     --info-memory     zobrazit celkové množství paměti RAM a současné aktivní\n"
 "                       omezení použitelné paměti a skončit"
 
-#: src/xz/message.c:1230
+#: src/xz/message.c:1231
 msgid ""
 "  -h, --help          display the short help (lists only the basic options)\n"
 "  -H, --long-help     display this long help and exit"
@@ -812,7 +832,7 @@ msgstr ""
 " -h, --help            zobrazit krátkou nápovědu (vypíše jen základní přepínače)\n"
 " -H, --long-help       zobrazit tuto úplnou nápovědu a skončit"
 
-#: src/xz/message.c:1234
+#: src/xz/message.c:1235
 msgid ""
 "  -h, --help          display this short help and exit\n"
 "  -H, --long-help     display the long help (lists also the advanced options)"
@@ -820,11 +840,11 @@ msgstr ""
 " -h, --help            zobrazit tuto zkrácenou nápovědu a skončit\n"
 " -H, --long-help       zobrazit úplnou nápovědu (vypíše i pokročilé přepínače)"
 
-#: src/xz/message.c:1239
+#: src/xz/message.c:1240
 msgid "  -V, --version       display the version number and exit"
 msgstr " -V, --version         zobrazit číslo verze a skončit"
 
-#: src/xz/message.c:1241
+#: src/xz/message.c:1242
 msgid ""
 "\n"
 "With no FILE, or when FILE is -, read standard input.\n"
@@ -836,17 +856,17 @@ msgstr ""
 #. for this package. Please add _another line_ saying
 #. "Report translation bugs to <...>\n" with the email or WWW
 #. address for translation bugs. Thanks.
-#: src/xz/message.c:1247
+#: src/xz/message.c:1248
 #, c-format
 msgid "Report bugs to <%s> (in English or Finnish).\n"
 msgstr "Chyby hlaste na <%s> (v angličtině nebo finštině).\n"
 
-#: src/xz/message.c:1249
+#: src/xz/message.c:1250
 #, c-format
 msgid "%s home page: <%s>\n"
 msgstr "Domovská stránka %s: <%s>\n"
 
-#: src/xz/message.c:1253
+#: src/xz/message.c:1254
 msgid "THIS IS A DEVELOPMENT VERSION NOT INTENDED FOR PRODUCTION USE."
 msgstr ""
 

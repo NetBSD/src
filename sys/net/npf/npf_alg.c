@@ -1,5 +1,3 @@
-/*	$NetBSD: npf_alg.c,v 1.16 2016/12/26 23:05:06 christos Exp $	*/
-
 /*-
  * Copyright (c) 2010-2013 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -35,13 +33,14 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_alg.c,v 1.16 2016/12/26 23:05:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_alg.c,v 1.16.14.1 2018/09/30 01:45:56 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
 
 #include <sys/kmem.h>
 #include <sys/pserialize.h>
+#include <sys/psref.h>
 #include <sys/mutex.h>
 #include <net/pfil.h>
 #include <sys/module.h>
@@ -67,10 +66,30 @@ struct npf_algset {
 
 	/* Matching, inspection and translation functions. */
 	npfa_funcs_t	alg_funcs[NPF_MAX_ALGS];
+
+	/* Passive reference until we npf conn lookup is pserialize-safe. */
+	struct psref_target	alg_psref[NPF_MAX_ALGS];
 };
 
 static const char	alg_prefix[] = "npf_alg_";
 #define	NPF_EXT_PREFLEN	(sizeof(alg_prefix) - 1)
+
+__read_mostly static struct psref_class *	npf_alg_psref_class = NULL;
+
+void
+npf_alg_sysinit(void)
+{
+
+	npf_alg_psref_class = psref_class_create("npf_alg", IPL_SOFTNET);
+}
+
+void
+npf_alg_sysfini(void)
+{
+
+	psref_class_destroy(npf_alg_psref_class);
+	npf_alg_psref_class = NULL;
+}
 
 void
 npf_alg_init(npf_t *npf)
@@ -114,6 +133,7 @@ npf_alg_construct(npf_t *npf, const char *name)
 	npf_config_enter(npf);
 	if ((alg = npf_alg_lookup(npf, name)) == NULL) {
 		char modname[NPF_EXT_PREFLEN + 64];
+
 		snprintf(modname, sizeof(modname), "%s%s", alg_prefix, name);
 		npf_config_exit(npf);
 
@@ -160,6 +180,10 @@ npf_alg_register(npf_t *npf, const char *name, const npfa_funcs_t *funcs)
 	alg->na_name = name;
 	alg->na_slot = i;
 
+	/* Prepare a psref target. */
+	psref_target_init(&aset->alg_psref[i], npf_alg_psref_class);
+	membar_producer();
+
 	/* Assign the functions. */
 	afuncs = &aset->alg_funcs[i];
 	afuncs->match = funcs->match;
@@ -189,6 +213,7 @@ npf_alg_unregister(npf_t *npf, npf_alg_t *alg)
 	afuncs->translate = NULL;
 	afuncs->inspect = NULL;
 	pserialize_perform(npf->qsbr);
+	psref_target_destroy(&aset->alg_psref[i], npf_alg_psref_class);
 
 	/* Finally, unregister the ALG. */
 	npf_ruleset_freealg(npf_config_natset(npf), alg);
@@ -246,39 +271,47 @@ npf_alg_conn(npf_cache_t *npc, int di)
 {
 	npf_algset_t *aset = npc->npc_ctx->algset;
 	npf_conn_t *con = NULL;
+	struct psref psref;
 	int s;
 
 	s = pserialize_read_enter();
 	for (u_int i = 0; i < aset->alg_count; i++) {
 		const npfa_funcs_t *f = &aset->alg_funcs[i];
+		struct psref_target *psref_target = &aset->alg_psref[i];
 
 		if (!f->inspect)
 			continue;
-		if ((con = f->inspect(npc, di)) != NULL)
+		membar_consumer();
+		psref_acquire(&psref, psref_target, npf_alg_psref_class);
+		pserialize_read_exit(s);
+		con = f->inspect(npc, di);
+		s = pserialize_read_enter();
+		psref_release(&psref, psref_target, npf_alg_psref_class);
+		if (con != NULL)
 			break;
 	}
 	pserialize_read_exit(s);
 	return con;
 }
 
-prop_array_t
-npf_alg_export(npf_t *npf)
+int
+npf_alg_export(npf_t *npf, nvlist_t *npf_dict)
 {
-	prop_array_t alglist = prop_array_create();
 	npf_algset_t *aset = npf->algset;
 
 	KASSERT(npf_config_locked_p(npf));
 
 	for (u_int i = 0; i < aset->alg_count; i++) {
 		const npf_alg_t *alg = &aset->alg_list[i];
+		nvlist_t *algdict;
 
 		if (alg->na_name == NULL) {
 			continue;
 		}
-		prop_dictionary_t algdict = prop_dictionary_create();
-		prop_dictionary_set_cstring(algdict, "name", alg->na_name);
-		prop_array_add(alglist, algdict);
-		prop_object_release(algdict);
+		algdict = nvlist_create(0);
+		nvlist_add_string(algdict, "name", alg->na_name);
+		nvlist_append_nvlist_array(npf_dict, "algs", algdict);
+		nvlist_destroy(algdict);
 	}
-	return alglist;
+	return 0;
 }

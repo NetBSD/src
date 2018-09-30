@@ -1,4 +1,4 @@
-/*	$NetBSD: e500_intr.c,v 1.37 2018/01/26 17:49:55 flxd Exp $	*/
+/*	$NetBSD: e500_intr.c,v 1.37.2.1 2018/09/30 01:45:46 pgoyette Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -41,7 +41,7 @@
 #define __INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: e500_intr.c,v 1.37 2018/01/26 17:49:55 flxd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: e500_intr.c,v 1.37.2.1 2018/09/30 01:45:46 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -1370,7 +1370,7 @@ e500_intr_cpu_hatch(struct cpu_info *ci)
 {
 	char iname[INTRIDBUF];
 
-	/* Initialize percpu interupts. */
+	/* Initialize percpu interrupts. */
 	e500_intr_init_precpu();
 
 	/*

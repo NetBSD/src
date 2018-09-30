@@ -1,5 +1,3 @@
-/*	$NetBSD: npf.c,v 1.34 2017/06/01 02:45:14 chs Exp $	*/
-
 /*-
  * Copyright (c) 2009-2013 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -35,7 +33,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.34 2017/06/01 02:45:14 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.34.8.1 2018/09/30 01:45:56 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -48,7 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.34 2017/06/01 02:45:14 chs Exp $");
 #include "npf_impl.h"
 #include "npf_conn.h"
 
-__read_mostly static npf_t *	npf_kernel_ctx = NULL;
+static __read_mostly npf_t *	npf_kernel_ctx = NULL;
 
 __dso_public int
 npf_sysinit(unsigned nworkers)
@@ -56,6 +54,7 @@ npf_sysinit(unsigned nworkers)
 	npf_bpf_sysinit();
 	npf_tableset_sysinit();
 	npf_nat_sysinit();
+	npf_alg_sysinit();
 	return npf_worker_sysinit(nworkers);
 }
 
@@ -63,6 +62,7 @@ __dso_public void
 npf_sysfini(void)
 {
 	npf_worker_sysfini();
+	npf_alg_sysfini();
 	npf_nat_sysfini();
 	npf_tableset_sysfini();
 	npf_bpf_sysfini();
@@ -109,9 +109,9 @@ npf_destroy(npf_t *npf)
 }
 
 __dso_public int
-npf_load(npf_t *npf, void *ref, npf_error_t *err)
+npf_load(npf_t *npf, void *config_ref, npf_error_t *err)
 {
-	return npfctl_load(npf, 0, ref);
+	return npfctl_load(npf, 0, config_ref);
 }
 
 __dso_public void
@@ -124,6 +124,13 @@ __dso_public void
 npf_thread_register(npf_t *npf)
 {
 	pserialize_register(npf->qsbr);
+}
+
+__dso_public void
+npf_thread_unregister(npf_t *npf)
+{
+	pserialize_perform(npf->qsbr);
+	pserialize_unregister(npf->qsbr);
 }
 
 void

@@ -1,5 +1,3 @@
-/*	$NetBSD: npf_parse.y,v 1.46 2017/12/10 22:04:41 rmind Exp $	*/
-
 /*-
  * Copyright (c) 2011-2017 The NetBSD Foundation, Inc.
  * All rights reserved.

@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.52 2018/01/15 22:14:24 christos Exp $	*/
+/*	$NetBSD: err.c,v 1.52.2.1 2018/09/30 01:45:59 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: err.c,v 1.52 2018/01/15 22:14:24 christos Exp $");
+__RCSID("$NetBSD: err.c,v 1.52.2.1 2018/09/30 01:45:59 pgoyette Exp $");
 #endif
 
 #include <sys/types.h>
@@ -244,7 +244,7 @@ const	char *msgs[] = {
 	"incompatible pointer types (%s != %s)",		      /* 182 */
 	"illegal combination of %s (%s) and %s (%s)",	      	      /* 183 */
 	"illegal pointer combination",				      /* 184 */
-	"initialisation type mismatch",				      /* 185 */
+	"initialisation type mismatch (%s) and (%s)",		      /* 185 */
 	"bit-field initialisation is illegal in traditional C",	      /* 186 */
 	"non-null byte ignored in string initializer",		      /* 187 */
 	"no automatic aggregate initialization in traditional C",     /* 188 */
@@ -270,7 +270,7 @@ const	char *msgs[] = {
 	"break outside loop or switch",				      /* 208 */
 	"continue outside loop",				      /* 209 */
 	"enum type mismatch in initialisation",			      /* 210 */
-	"return value type mismatch",				      /* 211 */
+	"return value type mismatch (%s) and (%s)",		      /* 211 */
 	"cannot return incomplete type",			      /* 212 */
 	"void function %s cannot return value",			      /* 213 */
 	"function %s expects to return value",			      /* 214 */

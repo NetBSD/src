@@ -1,4 +1,4 @@
-# $NetBSD: printf.sh,v 1.1.2.2 2018/09/06 06:56:49 pgoyette Exp $
+# $NetBSD: printf.sh,v 1.1.2.3 2018/09/30 01:45:58 pgoyette Exp $
 #
 # Copyright (c) 2018 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -408,6 +408,7 @@ d_decimal()
 	expect 49		'%d'		"'1"
 	expect 45		'%d'		"'-1"
 	expect 43		'%d'		"'+1"
+	expect 00		'%.2d'		"'"
 
 	expect 68		'%d'		'"D'
 	expect 069		'%03d'		'"E'
@@ -475,6 +476,8 @@ i_decimal()
 	expect 51		'%i'		063
 	expect '02  '		'%-4.2i'	2
 	expect ' +02'		'%+ 4.2i'	2
+
+	expect 0		'%i'		'"'
 
 	expect_fail '0'		%i	x22
 	expect_fail '123'	%i	123Mb
@@ -996,12 +999,6 @@ e_floats()
 	expect2 '  nan' 'nan(*)'	%5e		nan
 	expect2 'nan  ' 'nan(*)'	%-5e		NAN
 
-	expect 6.500000e+01	'%e'		"'A"
-	expect 6.5e+01		'%.1e'		"'A"
-	expect 5e+01		'%.0e'		"'1"
-	expect 4.50e+01		'%.2e'		"'-1"
-	expect 4.300e+01	'%.3e'		"'+1"
-
 	expect_fail 0.000000e+00 '%e'	NOT-E
 	expect_fail 1.200000e+00 '%e'	1.2Gb
 
@@ -1084,6 +1081,16 @@ g_floats()
 
 	expect 4.4?e+03		%.3g	4444		# p = 3, x = 3 :  %.2e
 	expect 1.2e-05		%.2g	0.000012	# p = 2, x = -5:  $.1e
+
+	expect 1e+10		%g	10000000000
+	expect 1e+10		%g	1e10
+	expect 1e+10		%g	1e+10
+	expect 1e-10		%g	1e-10
+	expect 10000000000	%.11g	10000000000
+	expect 10000000000.	%#.11g	10000000000
+	expect 1e+99		%g	1e99
+	expect 1e+100		%g	1e100
+	expect 1e-100		%g	1e-100
 
 	expect2 inf infinity	%g	Infinity
 	expect2 -inf -infinity	%g	-INF
@@ -1345,6 +1352,15 @@ b_SysV_echo_backslash_c()
 	# This is undefined, though would be nice if we could rely upon it
 	# expect "abcd"		%.1b		'a\c' 'b\c' 'c\c' 'd\c' '\c' e
 
+	# Check for interference from one instance of execution of
+	# a builtin printf execution to another
+	# (this makes no sense to test for standalone printf, and for which
+	# the tests don't handle ';' magic args, so this would not work)
+	if $BUILTIN_TEST
+	then
+		expect abcdefjklmno   %s%b%s abc 'def\c' ghi ';' %s%s jkl mno
+	fi
+
 	return $RVAL
 }
 define	b_SysV_echo_backslash_c	'Use of \c in arg to %b format'
@@ -1539,6 +1555,14 @@ NetBSD_extensions()
 		# to test modifiers attached to floats we'd need to
 		# verify float support, so don't bother...
 	fi
+
+	expect 6.500000e+01	'%e'		"'A"
+	expect 6.5e+01		'%.1e'		"'A"
+	expect 5e+01		'%.0e'		"'1"
+	expect 4.50e+01		'%.2e'		"'-1"
+	expect 4.300e+01	'%.3e'		"'+1"
+	expect 99.000000	'%f'		'"c"
+	expect 97		'%g'		'"a"
 
 	# NetBSD (non-POSIX) format excape extensions
 	expect ''		'\e'
@@ -1741,7 +1765,7 @@ else
 	Failures=0
 
 	STDERR=$(mktemp ${TMPDIR:-/tmp}/Test-XXXXXX)
-	trap 'rm -f "${STDERR}"' EXIT
+	trap "rm -f '${STDERR}'" EXIT
 	exec 3>"${STDERR}"
 
 	case "$#" in

@@ -1,4 +1,4 @@
-/*	$NetBSD: libpfkey.h,v 1.19.40.1 2018/06/25 07:25:05 pgoyette Exp $	*/
+/*	$NetBSD: libpfkey.h,v 1.19.40.2 2018/09/30 01:44:22 pgoyette Exp $	*/
 
 /* Id: libpfkey.h,v 1.13 2005/12/04 20:26:43 manubsd Exp */
 
@@ -53,7 +53,6 @@ extern void pfkey_spdump_withports(struct sadb_msg *);
 struct sockaddr;
 struct sadb_alg;
 
-/* Accomodate different prototypes in <netinet6/ipsec.h> */
 #include <sys/types.h>
 #include PATH_IPSEC_H
 

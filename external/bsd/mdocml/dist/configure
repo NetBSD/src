@@ -387,12 +387,12 @@ cat << __HEREDOC__
 #define __attribute__(x)
 #endif
 
-#ifdef HAVE_NBTOOL_CONFIG_H
-#include "nbtool_config.h"
-#endif
-
 #if defined(__linux__) || defined(__MINT__)
 #define _GNU_SOURCE	/* See test-*.c what needs this. */
+#endif
+
+#ifdef HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
 #endif
 
 __HEREDOC__

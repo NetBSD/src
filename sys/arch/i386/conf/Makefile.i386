@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.i386,v 1.189.2.3 2018/06/25 07:25:42 pgoyette Exp $
+#	$NetBSD: Makefile.i386,v 1.189.2.4 2018/09/30 01:45:44 pgoyette Exp $
 
 # Makefile for NetBSD
 #
@@ -49,11 +49,6 @@ CFLAGS+=	-mindirect-branch-register
 ## (3) libkern and compat
 ##
 OPT_MODULAR=	%MODULAR%
-.if !empty(OPT_MODULAR)
-KERN_AS=	obj
-.else
-KERN_AS=	library
-.endif
 
 ##
 ## (4) local objects, compile rules, and dependencies

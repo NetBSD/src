@@ -1,4 +1,4 @@
-/* $NetBSD: cpu_fdt.c,v 1.4.2.4 2018/09/06 06:55:26 pgoyette Exp $ */
+/* $NetBSD: cpu_fdt.c,v 1.4.2.5 2018/09/30 01:45:38 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -26,10 +26,14 @@
  * SUCH DAMAGE.
  */
 
+#include "opt_multiprocessor.h"
+#include "psci_fdt.h"
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_fdt.c,v 1.4.2.4 2018/09/06 06:55:26 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_fdt.c,v 1.4.2.5 2018/09/30 01:45:38 pgoyette Exp $");
 
 #include <sys/param.h>
+#include <sys/atomic.h>
 #include <sys/bus.h>
 #include <sys/device.h>
 #include <sys/lwp.h>
@@ -41,6 +45,13 @@ __KERNEL_RCSID(0, "$NetBSD: cpu_fdt.c,v 1.4.2.4 2018/09/06 06:55:26 pgoyette Exp
 #include <arm/armreg.h>
 #include <arm/cpu.h>
 #include <arm/cpufunc.h>
+#include <arm/locore.h>
+
+#include <arm/arm/psci.h>
+#include <arm/fdt/arm_fdtvar.h>
+#include <arm/fdt/psci_fdtvar.h>
+
+#include <uvm/uvm_extern.h>
 
 static int	cpu_fdt_match(device_t, cfdata_t, void *);
 static void	cpu_fdt_attach(device_t, device_t, void *);
@@ -68,8 +79,7 @@ static const struct of_compat_data compat_data[] = {
 	{ "arm,cortex-a15",		ARM_CPU_ARMV7 },
 	{ "arm,cortex-a17",		ARM_CPU_ARMV7 },
 
-	{ "arm,armv8",			ARM_CPU_ARMV8 },	/* nonstandard */
-	{ "arm,arm-v8",			ARM_CPU_ARMV8 },
+	{ "arm,armv8",			ARM_CPU_ARMV8 },
 	{ "arm,cortex-a53",		ARM_CPU_ARMV8 },
 	{ "arm,cortex-a57",		ARM_CPU_ARMV8 },
 	{ "arm,cortex-a72",		ARM_CPU_ARMV8 },
@@ -154,4 +164,163 @@ cpu_fdt_attach(device_t parent, device_t self, void *aux)
 
 	/* Attach CPU frequency scaling provider */
 	config_found(self, faa, NULL);
+}
+
+#ifdef MULTIPROCESSOR
+static register_t
+cpu_fdt_mpstart_pa(void)
+{
+#ifdef __aarch64__
+	extern void aarch64_mpstart(void);
+	return (register_t)aarch64_kern_vtophys((vaddr_t)aarch64_mpstart);
+#else
+	extern void cortex_mpstart(void);
+	return (register_t)cortex_mpstart;
+#endif
+}
+
+static int
+spintable_cpu_on(u_int cpuindex, paddr_t entry_point_address, paddr_t cpu_release_addr)
+{
+	/*
+	 * we need devmap for cpu-release-addr in advance.
+	 * __HAVE_MM_MD_DIRECT_MAPPED_PHYS nor pmap didn't work at this point.
+	 */
+	if (pmap_devmap_find_pa(cpu_release_addr, sizeof(paddr_t)) == NULL) {
+		aprint_error("%s: devmap for cpu-release-addr"
+		    " 0x%08"PRIxPADDR" required\n", __func__, cpu_release_addr);
+		return -1;
+	} else {
+		extern struct bus_space arm_generic_bs_tag;
+		bus_space_handle_t ioh;
+
+		bus_space_map(&arm_generic_bs_tag, cpu_release_addr,
+		    sizeof(paddr_t), 0, &ioh);
+		bus_space_write_4(&arm_generic_bs_tag, ioh, 0,
+		    entry_point_address);
+		bus_space_unmap(&arm_generic_bs_tag, ioh, sizeof(paddr_t));
+	}
+
+	return 0;
+}
+#endif /* MULTIPROCESSOR */
+
+#ifdef MULTIPROCESSOR
+static bool
+arm_fdt_cpu_okay(const int child)
+{
+	const char *s;
+
+	s = fdtbus_get_string(child, "device_type");
+	if (!s || strcmp(s, "cpu") != 0)
+		return false;
+
+	s = fdtbus_get_string(child, "status");
+	if (s) {
+		if (strcmp(s, "okay") == 0)
+			return false;
+		if (strcmp(s, "disabled") == 0)
+			return of_hasprop(child, "enable-method");
+		return false;
+	} else {
+		return true;
+	}
+}
+#endif /* MULTIPROCESSOR */
+
+void
+arm_fdt_cpu_bootstrap(void)
+{
+#ifdef MULTIPROCESSOR
+	uint64_t mpidr, bp_mpidr;
+	u_int cpuindex;
+	int child, ret;
+	const char *method;
+
+	const int cpus = OF_finddevice("/cpus");
+	if (cpus == -1) {
+		aprint_error("%s: no /cpus node found\n", __func__);
+		arm_cpu_max = 1;
+		return;
+	}
+
+	/* Count CPUs */
+	arm_cpu_max = 0;
+	for (child = OF_child(cpus); child; child = OF_peer(child))
+		if (arm_fdt_cpu_okay(child))
+			arm_cpu_max++;
+
+#if NPSCI_FDT > 0
+	if (psci_fdt_preinit() != 0)
+		return;
+#endif
+
+	/* MPIDR affinity levels of boot processor. */
+	bp_mpidr = cpu_mpidr_aff_read();
+
+	/* Boot APs */
+	uint32_t started = 0;
+	cpuindex = 1;
+	for (child = OF_child(cpus); child; child = OF_peer(child)) {
+		if (!arm_fdt_cpu_okay(child))
+			continue;
+		if (fdtbus_get_reg64(child, 0, &mpidr, NULL) != 0)
+			continue;
+		if (mpidr == bp_mpidr)
+			continue; 	/* BP already started */
+
+#ifdef __arm__
+		/* XXX NetBSD/arm requires all CPUs to be in the same cluster */
+		if ((mpidr & ~MPIDR_AFF0) != (bp_mpidr & ~MPIDR_AFF0))
+			continue;
+#endif
+
+#ifdef __aarch64__
+		KASSERT(cpuindex < MAXCPUS);
+		cpu_mpidr[cpuindex] = mpidr;
+		cpu_dcache_wb_range((vaddr_t)&cpu_mpidr[cpuindex], sizeof(cpu_mpidr[cpuindex]));
+#endif
+
+		method = fdtbus_get_string(child, "enable-method");
+		if (method == NULL)
+			continue;
+
+		if (strcmp(method, "spin-table") == 0) {
+			uint64_t data;
+			paddr_t cpu_release_addr;
+
+			if (OF_getprop(child, "cpu-release-addr", &data,
+			    sizeof(data)) != sizeof(data))
+				continue;
+
+			cpu_release_addr = (paddr_t)be64toh(data);
+			ret = spintable_cpu_on(mpidr, cpu_fdt_mpstart_pa(), cpu_release_addr);
+			if (ret != 0)
+				continue;
+
+#if NPSCI_FDT > 0
+		} else if (strcmp(method, "psci") == 0) {
+			ret = psci_cpu_on(mpidr, cpu_fdt_mpstart_pa(), 0);
+			if (ret != PSCI_SUCCESS)
+				continue;
+#endif
+		} else {
+			aprint_error("%s: %s: unsupported method\n", __func__, method);
+			continue;
+		}
+
+		started |= __BIT(cpuindex);
+		cpuindex++;
+	}
+
+	/* Wake up AP in case firmware has placed it in WFE state */
+	__asm __volatile("sev" ::: "memory");
+
+	/* Wait for APs to start */
+	for (u_int i = 0x10000000; i > 0; i--) {
+		membar_consumer();
+		if (arm_cpu_hatched == started)
+			break;
+	}
+#endif /* MULTIPROCESSOR */
 }

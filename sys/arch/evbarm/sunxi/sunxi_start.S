@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_start.S,v 1.3 2018/03/03 13:46:32 skrll Exp $ */
+/* $NetBSD: sunxi_start.S,v 1.3.2.1 2018/09/30 01:45:43 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2014, 2015 The NetBSD Foundation, Inc.
@@ -30,18 +30,18 @@
  */
 
 #include "opt_soc.h"
+#include "opt_console.h"
 #include "opt_cpuoptions.h"
 #include "opt_cputypes.h"
 #include "opt_multiprocessor.h"
 #include "opt_arm_debug.h"
-#include "opt_fdt_arm.h"
 #include "opt_fdt.h"
 
 #include <arm/asm.h>
 #include <arm/armreg.h>
 #include "assym.h"
 
-RCSID("$NetBSD: sunxi_start.S,v 1.3 2018/03/03 13:46:32 skrll Exp $")
+RCSID("$NetBSD: sunxi_start.S,v 1.3.2.1 2018/09/30 01:45:43 pgoyette Exp $")
 
 #if defined(VERBOSE_INIT_ARM) && defined(CONSADDR)
 #define	XPUTC(n)	mov r0, n; bl xputc

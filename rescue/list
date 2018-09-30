@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.48.12.2 2018/09/06 06:55:20 pgoyette Exp $
+#	$NetBSD: list,v 1.48.12.3 2018/09/30 01:45:34 pgoyette Exp $
 
 SRCDIRS	bin
 
@@ -96,7 +96,7 @@ PROG	newfs		mount_mfs
 PROG	newfs_lfs
 PROG	newfs_msdos
 PROG	ping
-PROG	pppoectl	ipppctl
+PROG	pppoectl
 PROG	raidctl
 PROG	rcorder
 PROG	reboot		halt

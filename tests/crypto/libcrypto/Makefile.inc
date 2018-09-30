@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.8 2018/02/08 23:41:26 christos Exp $
+# $NetBSD: Makefile.inc,v 1.8.2.1 2018/09/30 01:45:58 pgoyette Exp $
 
 .include <bsd.own.mk>
 .include "../Makefile.inc"
@@ -13,9 +13,6 @@ SRCS=		${HELPER_SRCS}
 MAN=		# empty
 BINDIR=		${TESTSDIR}
 
-DPADD+=		${LIBCRYPTO} ${LIBCRYPT}
-LDADD+=		-lcrypto -lcrypt
-
 CWARNFLAGS.clang+=	-Wno-format
 
 CPPFLAGS+=	-DOPENSSL_FIPS
@@ -25,10 +22,15 @@ CPPFLAGS+=	-I${OPENSSLSRC}/crypto/include
 CRYPTODIST=	${NETBSDSRCDIR}/crypto
 .include "${NETBSDSRCDIR}/crypto/Makefile.openssl"
 .if ${HAVE_OPENSSL} != 10
-.PATH:	${OPENSSLSRC}/test
+.PATH:	${OPENSSLSRC}/test ${OPENSSLSRC}/test/testutil
 .else
 .PATH: ${OPENSSLSRC}/crypto/${HELPER_DIR}
 .endif
+PROGDPLIBS+=	cryptotest ${OPENSSLSRC}/../lib/libcryptotest
+PROGDPLIBS+=	crypto ${OPENSSLSRC}/../lib/libcrypto
+DPADD+=		${LIBCRYPT}
+LDADD+=		-lcrypt
+
 
 .include <bsd.test.mk>
 .include <bsd.prog.mk>

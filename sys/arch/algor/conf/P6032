@@ -1,4 +1,4 @@
-#	$NetBSD: P6032,v 1.76.2.1 2018/09/06 06:55:23 pgoyette Exp $
+#	$NetBSD: P6032,v 1.76.2.2 2018/09/30 01:45:36 pgoyette Exp $
 #
 # Algorithmics P-6032 kernel.
 #
@@ -7,7 +7,7 @@ include	"arch/algor/conf/std.algor"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"P6032-$Revision: 1.76.2.1 $"
+#ident 		"P6032-$Revision: 1.76.2.2 $"
 
 maxusers 32
 
@@ -118,7 +118,6 @@ pci*	at	bonito?
 #cz*	at	pci? dev ? function ?		# Cyclades-Z (untested)
 #dpt*	at	pci? dev ? function ?		# DPT SmartCache/SmartRAID
 #eap*	at	pci? dev ? function ?		# Ensoniq AudioPCI
-#en*	at	pci? dev ? function ?		# ENI PCI ATM (untested)
 #ep*	at	pci? dev ? function ?		# 3COM 3c59x
 #epic*	at	pci? dev ? function ?		# SMC EPIC/100 Ethernet
 #eso*	at	pci? dev ? function ?		# ESS Solo-1 PCI AudioDrive

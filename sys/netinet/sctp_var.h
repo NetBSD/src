@@ -1,5 +1,5 @@
 /*	$KAME: sctp_var.h,v 1.24 2005/03/06 16:04:19 itojun Exp $	*/
-/*	$NetBSD: sctp_var.h,v 1.1.20.1 2018/09/06 06:56:44 pgoyette Exp $ */
+/*	$NetBSD: sctp_var.h,v 1.1.20.2 2018/09/30 01:45:56 pgoyette Exp $ */
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Cisco Systems, Inc.
@@ -144,7 +144,7 @@ struct sctphdr;
 
 void*	sctp_ctlinput(int, const struct sockaddr *, void *);
 int	sctp_ctloutput(int, struct socket *, struct sockopt *);
-void	sctp_input(struct mbuf *, ... );
+void	sctp_input(struct mbuf *, int, int);
 void	sctp_drain(void);
 void	sctp_init(void);
 int	sctp_shutdown(struct socket *);

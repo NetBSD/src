@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.pl,v 1.8.14.1 2018/06/25 07:26:12 pgoyette Exp $	*/
+/*	$NetBSD: msg.mi.pl,v 1.8.14.2 2018/09/30 01:46:01 pgoyette Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.mi.pl,v 1.36 2004/04/17 18:55:35 atatat Exp       */
 
@@ -926,6 +926,7 @@ message Base_dir {Katalog}
 message Set_dir_src {Katalog pakiet binary} /* fix XLAT */
 message Set_dir_bin {Katalog pakiet source} /* fix XLAT */
 message Xfer_dir {Transfer Katalog} /* fix XLAT */
+message transfer_method {Download via}
 message User {Uzytkownik}
 message Password {Haslo}
 message Proxy {Proxy}

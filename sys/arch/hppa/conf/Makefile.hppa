@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.hppa,v 1.5 2015/09/06 02:22:50 uebayasi Exp $
+# $NetBSD: Makefile.hppa,v 1.5.16.1 2018/09/30 01:45:44 pgoyette Exp $
 
 # Makefile for NetBSD
 #
@@ -52,7 +52,7 @@ CFLAGS+=	-fno-omit-frame-pointer
 ##
 ## (3) libkern and compat
 ##
-KERN_AS=	obj
+OPT_MODULAR=	%MODULAR%
 
 ##
 ## (4) local objects, compile rules, and dependencies

@@ -1,4 +1,4 @@
-/*	$NetBSD: socket.h,v 1.123.4.3 2018/09/06 06:56:47 pgoyette Exp $	*/
+/*	$NetBSD: socket.h,v 1.123.4.4 2018/09/30 01:45:58 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -377,15 +377,7 @@ struct sockcred {
 
 
 #if defined(_NETBSD_SOURCE)
-/*
- * Definitions for network related sysctl, CTL_NET.
- *
- * Second level is protocol family.
- * Third level is protocol number.
- *
- * Further levels are defined by the individual families below.
- */
-
+/* Definition for CTL_NET PCB fetching sysctls */
 struct kinfo_pcb {
 	__uint64_t	ki_pcbaddr;	/* PTR: pcb addr */
 	__uint64_t	ki_ppcbaddr;	/* PTR: ppcb addr */

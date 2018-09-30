@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.efiboot,v 1.3.2.2 2018/09/06 06:56:47 pgoyette Exp $
+# $NetBSD: Makefile.efiboot,v 1.3.2.3 2018/09/30 01:45:57 pgoyette Exp $
 
 S=		${.CURDIR}/../../..
 
@@ -22,7 +22,7 @@ AFLAGS.start.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
 .PATH: ${EFIDIR}/gnuefi
 SOURCES=	crt0-efi-${GNUEFIARCH}.S reloc_${GNUEFIARCH}.c
 SOURCES+=	boot.c conf.c console.c dev_net.c devopen.c exec.c panic.c prompt.c
-SOURCES+=	efiboot.c efichar.c efidev.c efigetsecs.c efifdt.c efifile.c efiblock.c efinet.c efipxe.c
+SOURCES+=	efiboot.c efichar.c efidev.c efienv.c efigetsecs.c efifdt.c efifile.c efiblock.c efinet.c efipxe.c
 
 .PATH: ${S}/external/bsd/libfdt/dist
 CPPFLAGS+=	-I${S}/external/bsd/libfdt/dist
@@ -61,6 +61,7 @@ LDFLAGS+= --defsym=EFI_SUBSYSTEM=0xa
 COPTS+= ${${ACTIVE_CC} == "gcc":? -Wno-error=unused-but-set-variable :}
 CPPFLAGS+= -nostdinc -D_STANDALONE
 CPPFLAGS+= -DEFIBOOT
+CPPFLAGS+= -DPROGRESS_FN=efi_progress
 
 CPPFLAGS+= -Wall -Wmissing-prototypes
 CPPFLAGS+= -Wno-pointer-sign

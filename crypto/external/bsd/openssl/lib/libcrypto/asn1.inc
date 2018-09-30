@@ -1,4 +1,4 @@
-#	$NetBSD: asn1.inc,v 1.3 2018/02/08 21:57:24 christos Exp $
+#	$NetBSD: asn1.inc,v 1.3.2.1 2018/09/30 01:44:52 pgoyette Exp $
 #
 #	@(#) Copyright (c) 1995 Simon J. Gerraty
 #
@@ -31,6 +31,7 @@ a_verify.c \
 ameth_lib.c \
 asn1_err.c \
 asn1_gen.c \
+asn1_item_list.c \
 asn1_lib.c \
 asn1_par.c \
 asn_mime.c \

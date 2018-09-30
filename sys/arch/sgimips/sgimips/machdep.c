@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.145.2.1 2018/09/06 06:55:41 pgoyette Exp $	*/
+/*	$NetBSD: machdep.c,v 1.145.2.2 2018/09/30 01:45:47 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.145.2.1 2018/09/06 06:55:41 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.145.2.2 2018/09/30 01:45:47 pgoyette Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -332,6 +332,25 @@ mach_init(int argc, int32_t argv32[], uintptr_t magic, int32_t bip32)
 	 * use the RTC to get a better estimate later.
 	 */
 	curcpu()->ci_cpu_freq = strtoul(cpufreq, NULL, 10) * 1000000;
+
+	/*
+	 * Also initialize ci members for delay and clock by the temporary
+	 * ci_cpu_freq value for early use of delay(9).
+	 * These values will be calibrated later in MD code:
+	 *  - int_attach() in dev/int.c for IP6/10/12/20/22
+	 *  - crime_attach() in dev/crime.c for IP32
+	 *
+	 * XXX: ci_divisor_delay is for mips3_delay() in mips/mips3_clock.c
+	 *      but sgimips abuse it as "instructions per microsecond"
+	 *      for traditional delay(9) implementation derived from
+	 *      4.4BSD/mips (also used in pmax and news3400).
+	 *	(see sys/arch/mips/mips/mips_mcclock.c etc.)
+	 *
+	 * Note ci_cycles_per_hz is for mips3_clockintr.c for MIPS3 so
+	 * there is no early use, but initialize it as a sane default.
+	 */
+	curcpu()->ci_cycles_per_hz = curcpu()->ci_cpu_freq / (2 * hz);
+	curcpu()->ci_divisor_delay = curcpu()->ci_cpu_freq / (2 * 1000000);
 
 	/*
 	 * Check machine (IPn) type.

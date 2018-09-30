@@ -1,5 +1,5 @@
 /*	$KAME: sctp_input.c,v 1.28 2005/04/21 18:36:21 nishida Exp $	*/
-/*	$NetBSD: sctp_input.c,v 1.8.2.2 2018/09/06 06:56:44 pgoyette Exp $	*/
+/*	$NetBSD: sctp_input.c,v 1.8.2.3 2018/09/30 01:45:56 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 2002, 2003, 2004 Cisco Systems Inc,
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sctp_input.c,v 1.8.2.2 2018/09/06 06:56:44 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sctp_input.c,v 1.8.2.3 2018/09/30 01:45:56 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -4049,7 +4049,7 @@ sctp_saveopt(struct sctp_inpcb *inp, struct mbuf **mp, struct ip *ip,
 extern int sctp_no_csum_on_loopback;
 
 void
-sctp_input(struct mbuf *m, ...)
+sctp_input(struct mbuf *m, int off, int proto)
 {
 	int iphlen;
 	u_int8_t ecn_bits;
@@ -4069,12 +4069,7 @@ sctp_input(struct mbuf *m, ...)
 	int refcount_up = 0;
 	int length, mlen, offset;
 
-	int off;
-	va_list ap;
-
-	va_start(ap, m);
-	iphlen = off = va_arg(ap, int);
-	va_end(ap);
+	iphlen = off;
 
 	net = NULL;
 	sctp_pegs[SCTP_INPKTS]++;

@@ -1,4 +1,4 @@
-/* $NetBSD: virt_platform.c,v 1.4.2.3 2018/09/06 06:55:28 pgoyette Exp $ */
+/* $NetBSD: virt_platform.c,v 1.4.2.4 2018/09/30 01:45:39 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -28,10 +28,9 @@
 
 #include "opt_soc.h"
 #include "opt_multiprocessor.h"
-#include "opt_fdt_arm.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: virt_platform.c,v 1.4.2.3 2018/09/06 06:55:28 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: virt_platform.c,v 1.4.2.4 2018/09/30 01:45:39 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -57,7 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: virt_platform.c,v 1.4.2.3 2018/09/06 06:55:28 pgoyet
 #include <arm/cortex/gtmr_var.h>
 
 #include <arm/arm/psci.h>
-#include <arm/fdt/psci_fdt.h>
+#include <arm/fdt/psci_fdtvar.h>
 
 #include <arm/virt/virt_platform.h>
 
@@ -120,7 +119,7 @@ virt_platform_uart_freq(void)
 
 static const struct arm_platform virt_platform = {
 	.ap_devmap = virt_platform_devmap,
-	.ap_bootstrap = psci_fdt_bootstrap,
+	.ap_bootstrap = arm_fdt_cpu_bootstrap,
 	.ap_init_attach_args = virt_platform_init_attach_args,
 	.ap_early_putchar = virt_platform_early_putchar,
 	.ap_device_register = virt_platform_device_register,

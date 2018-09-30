@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.123.2.4 2018/07/28 04:37:42 pgoyette Exp $	*/
+/*	$NetBSD: intr.c,v 1.123.2.5 2018/09/30 01:45:48 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.123.2.4 2018/07/28 04:37:42 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.123.2.5 2018/09/30 01:45:48 pgoyette Exp $");
 
 #include "opt_intrdebug.h"
 #include "opt_multiprocessor.h"
@@ -1266,15 +1266,18 @@ intr_establish_xname(int legacy_irq, struct pic *pic, int pin,
 	intr_handle_t irq;
 	int evtchn;
 
-	KASSERTMSG(legacy_irq == -1 || (0 <= legacy_irq && legacy_irq < 16),
+	KASSERTMSG(legacy_irq == -1 || (0 <= legacy_irq && legacy_irq < NUM_XEN_IRQS),
 	    "bad legacy IRQ value: %d", legacy_irq);
 	KASSERTMSG(!(legacy_irq == -1 && pic == &i8259_pic),
 	    "non-legacy IRQon i8259 ");
 
 	if (pic->pic_type != PIC_I8259) {
 #if NIOAPIC > 0
+		/* Are we passing mp tranmogrified/cascaded irqs ? */
+		irq = (legacy_irq == -1) ? 0 : legacy_irq;
+
 		/* will do interrupts via I/O APIC */
-		irq = APIC_INT_VIA_APIC;
+		irq |= APIC_INT_VIA_APIC;
 		irq |= pic->pic_apicid << APIC_INT_APIC_SHIFT;
 		irq |= pin << APIC_INT_PIN_SHIFT;
 #else /* NIOAPIC */
@@ -1288,6 +1291,7 @@ intr_establish_xname(int legacy_irq, struct pic *pic, int pin,
 	    sizeof(intrstr_buf));
 
 	evtchn = xen_pirq_alloc(&irq, type);
+	irq = (legacy_irq == -1) ? irq : legacy_irq; /* ISA compat */	
 	pih = pirq_establish(irq & 0xff, evtchn, handler, arg, level,
 	    intrstr, xname);
 	pih->pic_type = pic->pic_type;
@@ -1459,9 +1463,11 @@ cpu_intr_init(struct cpu_info *ci)
 {
 #if !defined(XEN)
 	struct intrsource *isp;
-#if NLAPIC > 0 && defined(MULTIPROCESSOR)
-	int i;
+#if NLAPIC > 0
 	static int first = 1;
+#if defined(MULTIPROCESSOR)
+	int i;
+#endif
 #endif
 
 #if NLAPIC > 0

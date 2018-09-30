@@ -38,8 +38,6 @@ base-i18n-root	directories for internationalisation support
 base-i18n-shlib	shared library modules for internationalisation support
 base-ipf-bin utilities for IPfilter
 base-ipf-root directories for IPfilter
-base-isdn-bin	utilities and daemons for ISDN network connectivity
-base-isdn-examples	directories for the ISDN example files
 base-krb5-bin	commands and utilities for the Kerberos V network authentication system
 base-krb5-examples	example configuration files for the Kerberos V network authentication system
 base-krb5-root	root file system support for the Kerberos V network authentication system
@@ -518,7 +516,6 @@ etc-games-scores	empty score files for games
 etc-ipf-rc	startup script for IP filter
 etc-iscsi-etc	configuration files for the NetBSD iSCSI target
 etc-iscsi-rc	startup script for the NetBSD iSCSI target
-etc-isdn-rc	startup script for ISDN (Integrated Services Digital Network) network connectivity utilities
 etc-krb5-rc	startup script for the Kerberos V authentication service 
 etc-libsaslc-etc	configuration file for SASL C library
 etc-libsaslc-postfix	configuration file for postfix SASL
@@ -619,8 +616,6 @@ man-ipf-catman	formatted manual pages for the IPfilter packet filtering software
 man-ipf-man	manual pages source for the IPfilter packet filtering software
 man-iscsi-catman	formatted manual pages for NetBSD iSCSI target
 man-iscsi-man	manual pages source for NetBSD iSCSI target
-man-isdn-catman	formatted manual pages for ISDN (Integrated Services Data Networking) support
-man-isdn-man	manual pages source for ISDN (Integrated Services Data Networking) support
 man-krb5-catman	formatted manual pages for the Kerberos V network authentication system
 man-krb5-info	the GNU texinfo software
 man-krb5-man	manual pages source for the Kerberos V network authentication system
@@ -706,7 +701,6 @@ misc-crypto-examples	example configuration files for cryptographic software
 misc-dhcpd-examples	example configuration files for dhcpd(8)
 misc-fstab-examples	example configuration files for file system tables
 misc-ipf-examples	example configuration files for IPfilter
-misc-isdn-examples	example configuration files for isdn
 misc-krb5-examples	example configuration files for Kerberos5
 misc-libsaslc-examples	example configuration files for libsaslc 
 misc-netutil-examples	example configuration files for network software 

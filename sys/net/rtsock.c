@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.238.2.10 2018/09/29 21:36:14 pgoyette Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.238.2.11 2018/09/30 01:45:56 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.238.2.10 2018/09/29 21:36:14 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.238.2.11 2018/09/30 01:45:56 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -2098,7 +2098,6 @@ static const struct protosw COMPATNAME(route_protosw)[] = {
 		.pr_type = SOCK_RAW,
 		.pr_domain = &COMPATNAME(routedomain),
 		.pr_flags = PR_ATOMIC|PR_ADDR,
-		.pr_input = raw_input,
 		.pr_ctlinput = raw_ctlinput,
 		.pr_ctloutput = route_ctloutput,
 		.pr_usrreqs = &route_usrreqs,

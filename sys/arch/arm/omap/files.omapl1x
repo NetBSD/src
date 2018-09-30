@@ -1,4 +1,4 @@
-# $NetBSD: files.omapl1x,v 1.1 2013/10/02 16:48:26 matt Exp $
+# $NetBSD: files.omapl1x,v 1.1.34.1 2018/09/30 01:45:38 pgoyette Exp $
 #
 # Configuration info for Texas Instruments OMAP-L1x CPU support
 # Based on files.omap2 and files.omap
@@ -32,7 +32,6 @@ file   arch/arm/omap/omapl1x_aintc.c		omapl1xaintc
 attach com at tipb with omapl1xcom
 file	arch/arm/omap/omapl1x_com.c		omapl1xcom
 defparam opt_com.h				OMAPL1X_COM_FREQ
-defparam opt_com.h				CONSADDR CONSPEED CONMODE
 
 #OMAPL1x Timer
 device omapl1xtimer

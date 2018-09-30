@@ -1,4 +1,4 @@
-.\"	$NetBSD: hier.7,v 1.129.2.1 2018/07/28 04:37:25 pgoyette Exp $
+.\"	$NetBSD: hier.7,v 1.129.2.2 2018/09/30 01:45:35 pgoyette Exp $
 .\"
 .\" Copyright (c) 1990, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)hier.7	8.5 (Berkeley) 6/1/94
 .\"
-.Dd July 14, 2018
+.Dd September 6, 2018
 .Dt HIER 7
 .Os
 .Sh NAME
@@ -461,11 +461,9 @@ Include files for Internet standard protocols; see
 .It Pa netinet6/
 Include files for Internet protocol version 6; see
 .Xr inet6 4 .
-.It Pa netkey/
+.It Pa netipsec/
 Include files for secret key management, used for security protocols; see
 .Xr ipsec 4 .
-.It Pa netnatm/
-C include files for native mode ATM.
 .It Pa nfs/
 C include files for NFS (Network File System).
 .It Pa protocols/
@@ -1015,10 +1013,8 @@ AppleTalk networking support.
 IP networking support.
 .It Pa netinet6/
 IPv6 networking support.
-.It Pa netkey/
+.It Pa netipsec/
 Key database for IPsec networking support.
-.It Pa netnatm/
-ATM networking support.
 .It Pa nfs/
 NFS (network file system) support, both client and server.
 .It Pa stand/

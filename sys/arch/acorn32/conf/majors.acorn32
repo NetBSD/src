@@ -1,4 +1,4 @@
-#	$NetBSD: majors.acorn32,v 1.25 2011/06/30 20:09:17 wiz Exp $
+#	$NetBSD: majors.acorn32,v 1.25.52.1 2018/09/30 01:45:36 pgoyette Exp $
 #
 # Device majors for acorn32
 #
@@ -52,11 +52,6 @@ device-major	raid		char 71  block 71	raid
 
 device-major	wsmux		char 73			wsmux
 
-device-major	isdn		char 79			isdn
-device-major	isdnctl		char 80			isdnctl
-device-major	isdnbchan	char 81			isdnbchan
-device-major	isdntrc		char 82			isdntrc
-device-major	isdntel		char 83			isdntel
 device-major	clockctl	char 84			clockctl
 device-major	ksyms		char 86			ksyms
 device-major	wsfont		char 87			wsfont

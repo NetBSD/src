@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.base,v 1.169.2.2 2018/07/28 04:33:02 pgoyette Exp $
+#	$NetBSD: NetBSD.dist.base,v 1.169.2.3 2018/09/30 01:45:10 pgoyette Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -219,9 +219,6 @@
 ./usr/include/net80211
 ./usr/include/netinet6
 ./usr/include/netipsec
-./usr/include/netisdn
-./usr/include/netkey
-./usr/include/netnatm
 ./usr/include/netpgp
 ./usr/include/netsmb
 ./usr/include/nfs
@@ -377,7 +374,6 @@
 ./usr/share/examples/getdate
 ./usr/share/examples/hostapd
 ./usr/share/examples/ipf
-./usr/share/examples/isdn
 ./usr/share/examples/kerberos
 ./usr/share/examples/kyua-cli
 ./usr/share/examples/libsaslc
@@ -1266,6 +1262,7 @@
 ./var/chroot/named/etc/namedb
 ./var/chroot/named/etc/namedb/cache	mode=0775 uname=named gname=named
 ./var/chroot/named/etc/namedb/keys	type=dir mode=0775 uname=named gname=named
+./var/chroot/named/etc/namedb/nta	type=dir mode=0775 uname=named gname=named
 ./var/chroot/named/usr
 ./var/chroot/named/usr/libexec
 ./var/chroot/named/var
@@ -1279,6 +1276,7 @@
 ./var/chroot/nsd/var		mode=0755 uname=_nsd gname=_nsd
 ./var/chroot/nsd/var/db		mode=0755 uname=_nsd gname=_nsd
 ./var/chroot/nsd/var/db/nsd	mode=0755 uname=_nsd gname=_nsd
+./var/chroot/nsd/var/run	mode=0775 uname=_nsd gname=_nsd
 ./var/chroot/ntpd
 ./var/chroot/ntpd/dev
 ./var/chroot/ntpd/etc

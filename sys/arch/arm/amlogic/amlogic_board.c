@@ -1,4 +1,4 @@
-/* $NetBSD: amlogic_board.c,v 1.16 2015/11/26 00:06:59 jmcneill Exp $ */
+/* $NetBSD: amlogic_board.c,v 1.16.18.1 2018/09/30 01:45:37 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,10 +26,8 @@
  * SUCH DAMAGE.
  */
 
-#include "opt_amlogic.h"
-
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amlogic_board.c,v 1.16 2015/11/26 00:06:59 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amlogic_board.c,v 1.16.18.1 2018/09/30 01:45:37 pgoyette Exp $");
 
 #define	_ARM32_BUS_DMA_PRIVATE
 #include <sys/param.h>

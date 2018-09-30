@@ -1,4 +1,4 @@
-/*	$NetBSD: npfext_log.c,v 1.4 2013/03/11 00:29:09 christos Exp $	*/
+/*	$NetBSD: npfext_log.c,v 1.4.28.1 2018/09/30 01:45:33 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npfext_log.c,v 1.4 2013/03/11 00:29:09 christos Exp $");
+__RCSID("$NetBSD: npfext_log.c,v 1.4.28.1 2018/09/30 01:45:33 pgoyette Exp $");
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -38,6 +38,7 @@ __RCSID("$NetBSD: npfext_log.c,v 1.4 2013/03/11 00:29:09 christos Exp $");
 #include <net/if.h>
 
 #include <stdio.h>
+#include <stdbool.h>
 #include <string.h>
 #include <assert.h>
 #include <errno.h>

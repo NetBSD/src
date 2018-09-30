@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.291.2.4 2018/07/28 04:32:56 pgoyette Exp $
+$NetBSD: UPDATING,v 1.291.2.5 2018/09/30 01:44:21 pgoyette Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -18,6 +18,11 @@ See also: BUILDING, build.sh, Makefile.
 
 Recent changes:
 ^^^^^^^^^^^^^^^
+
+20180924:
+	A newer OpenSSL version has been imported. If you are doing
+	update builds, make sure to remove all old obj dirs, like:
+	cd /usr/obj && find . -type d -name openssl | xargs rm -rf
 
 20180717:
 	On aarch64 int64_t and related types have changed from long long

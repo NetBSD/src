@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_subr.c,v 1.30.4.2 2018/09/06 06:55:51 pgoyette Exp $	*/
+/*	$NetBSD: ofw_subr.c,v 1.30.4.3 2018/09/30 01:45:50 pgoyette Exp $	*/
 
 /*
  * Copyright 1998
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_subr.c,v 1.30.4.2 2018/09/06 06:55:51 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_subr.c,v 1.30.4.3 2018/09/30 01:45:50 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -501,8 +501,6 @@ of_enter_i2c_devs(prop_dictionary_t props, int ofnode, size_t cell_size,
 		prop_dictionary_set(props, "i2c-child-devices", array);
 		prop_object_release(array);
 	}
-
-	prop_dictionary_set_bool(props, "i2c-indirect-config", false);
 }
 
 /*

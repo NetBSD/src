@@ -1,5 +1,5 @@
 /*	$OpenBSD: if_mskvar.h,v 1.3 2006/12/28 16:34:42 kettenis Exp $	*/
-/*	$NetBSD: if_mskvar.h,v 1.12.16.2 2018/07/28 04:37:46 pgoyette Exp $	*/
+/*	$NetBSD: if_mskvar.h,v 1.12.16.3 2018/09/30 01:45:50 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -114,12 +114,14 @@ struct msk_chain_data {
 	struct sk_txmap_entry	*sk_tx_map[MSK_TX_RING_CNT];
 	bus_dmamap_t		sk_rx_map[MSK_RX_RING_CNT];
 	bus_dmamap_t		sk_rx_jumbo_map;
-	int			sk_tx_prod;
-	int			sk_tx_cons;
-	int			sk_tx_cnt;
-	int			sk_rx_prod;
-	int			sk_rx_cons;
-	int			sk_rx_cnt;
+	unsigned		sk_tx_prod;
+	unsigned		sk_tx_cons;
+	unsigned		sk_tx_cnt;
+	u_int32_t		sk_tx_hiaddr;
+	unsigned		sk_rx_prod;
+	unsigned		sk_rx_cons;
+	unsigned		sk_rx_cnt;
+	u_int32_t		sk_rx_hiaddr;
 	/* Stick the jumbo mem management stuff here too. */
 	void *			sk_jslots[MSK_JSLOTS];
 	void			*sk_jumbo_buf;

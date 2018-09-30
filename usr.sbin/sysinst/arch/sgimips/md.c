@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.3.14.1 2018/03/22 01:44:52 pgoyette Exp $	*/
+/*	$NetBSD: md.c,v 1.3.14.2 2018/09/30 01:46:02 pgoyette Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -51,7 +51,6 @@
 #include "msg_defs.h"
 #include "menu_defs.h"
 
-struct utsname instsys;
 
 void
 md_init(void)
@@ -61,13 +60,15 @@ md_init(void)
 void
 md_init_set_status(int flags)
 {
+	struct utsname instsys;
+
 	(void)flags;
 
         /*
          * Get the name of the Install Kernel we are running under and
          * enable the installation of the corresponding GENERIC kernel.
          */
-        uname(&instsys);
+	uname(&instsys);
         if (strstr(instsys.version, "(INSTALL32_IP3x"))
                 set_kernel_set(SET_KERNEL_2);
         else if (strstr(instsys.version, "(INSTALL32_IP2x"))
@@ -156,7 +157,10 @@ md_pre_disklabel(void)
 int
 md_post_disklabel(void)
 {
-    if (strstr(instsys.version, "(INSTALL32_IP3x"))
+	struct utsname instsys;
+	uname(&instsys);
+ 
+	if (strstr(instsys.version, "(INSTALL32_IP3x"))
 		return run_program(RUN_DISPLAY,
 		    "%s %s", "/usr/mdec/sgivol -f -w boot /usr/mdec/ip3xboot",
 		    pm->diskdev);
@@ -194,9 +198,12 @@ md_post_extract(void)
 void
 md_cleanup_install(void)
 {
+	struct utsname instsys;
+
 #ifndef DEBUG
 	enable_rc_conf();
 #endif
+	uname(&instsys);
 
 	if (strstr(instsys.version, "(GENERIC32_IP12"))
 		run_program(0, "/usr/mdec/sgivol -f -w netbsd %s %s",
@@ -213,7 +220,7 @@ md_pre_update(void)
 int
 md_update(void)
 {
-	md_post_newfs();
+	md_post_disklabel();
 	return 1;
 }
 

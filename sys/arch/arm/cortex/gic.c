@@ -1,4 +1,4 @@
-/*	$NetBSD: gic.c,v 1.32.2.3 2018/07/28 04:37:27 pgoyette Exp $	*/
+/*	$NetBSD: gic.c,v 1.32.2.4 2018/09/30 01:45:37 pgoyette Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -34,7 +34,7 @@
 #define _INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gic.c,v 1.32.2.3 2018/07/28 04:37:27 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gic.c,v 1.32.2.4 2018/09/30 01:45:37 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -43,6 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: gic.c,v 1.32.2.3 2018/07/28 04:37:27 pgoyette Exp $"
 #include <sys/evcnt.h>
 #include <sys/intr.h>
 #include <sys/proc.h>
+#include <sys/atomic.h>
 
 #include <arm/armreg.h>
 #include <arm/atomic.h>
@@ -514,7 +515,7 @@ armgic_cpu_init(struct pic_softc *pic, struct cpu_info *ci)
 {
 	struct armgic_softc * const sc = PICTOSOFTC(pic);
 	sc->sc_target[cpu_index(ci)] = gicd_find_targets(sc);
-	sc->sc_mptargets |= sc->sc_target[cpu_index(ci)];
+	atomic_or_32(&sc->sc_mptargets, sc->sc_target[cpu_index(ci)]);
 	KASSERTMSG(ci->ci_cpl == IPL_HIGH, "ipl %d not IPL_HIGH", ci->ci_cpl);
 	armgic_cpu_init_priorities(sc);
 	if (!CPU_IS_PRIMARY(ci)) {
@@ -546,9 +547,12 @@ armgic_ipi_send(struct pic_softc *pic, const kcpuset_t *kcp, u_long ipi)
 
 	uint32_t sgir = __SHIFTIN(ARMGIC_SGI_IPIBASE + ipi, GICD_SGIR_SGIINTID);
 	if (kcp != NULL) {
-		uint32_t targets;
-		kcpuset_export_u32(kcp, &targets, sizeof(targets));
-		sgir |= __SHIFTIN(targets, GICD_SGIR_TargetList);
+		uint32_t targets_val = 0;
+		for (int n = 0; n < MAXCPUS; n++) {
+			if (kcpuset_isset(kcp, n))
+				targets_val |= sc->sc_target[n];
+		}
+		sgir |= __SHIFTIN(targets_val, GICD_SGIR_TargetList);
 		sgir |= GICD_SGIR_TargetListFilter_List;
 	} else {
 		if (ncpu == 1)

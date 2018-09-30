@@ -1,4 +1,4 @@
-/* $NetBSD: bcm2835_cprman.c,v 1.1 2017/12/10 21:38:26 skrll Exp $ */
+/* $NetBSD: bcm2835_cprman.c,v 1.1.2.1 2018/09/30 01:45:37 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_cprman.c,v 1.1 2017/12/10 21:38:26 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_cprman.c,v 1.1.2.1 2018/09/30 01:45:37 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,7 +74,7 @@ struct cprman_softc {
 
 
 static struct clk *
-cprman_decode(device_t dev, const void *data, size_t len)
+cprman_decode(device_t dev, int cc_phandle, const void *data, size_t len)
 {
 	struct cprman_softc * const sc = device_private(dev);
 	struct cprman_clk *clk;

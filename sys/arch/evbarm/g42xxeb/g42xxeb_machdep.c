@@ -1,4 +1,4 @@
-/*	$NetBSD: g42xxeb_machdep.c,v 1.30.14.1 2018/09/06 06:55:30 pgoyette Exp $ */
+/*	$NetBSD: g42xxeb_machdep.c,v 1.30.14.2 2018/09/30 01:45:41 pgoyette Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004, 2005  Genetec Corporation.  
@@ -108,6 +108,7 @@
  */
 
 #include "opt_arm_debug.h"
+#include "opt_console.h"
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
 #include "opt_pmap_debug.h"

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.arm,v 1.48 2015/05/01 02:00:41 nat Exp $
+#	$NetBSD: Makefile.arm,v 1.48.16.1 2018/09/30 01:45:37 pgoyette Exp $
 
 # Makefile for NetBSD
 #
@@ -56,8 +56,7 @@ CPPFLAGS.cpufunc_asm_xscale.S+=	-mcpu=xscale
 ##
 ## (3) libkern and compat
 ##
-KERN_AS=	obj
-
+OPT_MODULAR=	%MODULAR%
 
 ##
 ## (4) local objects, compile rules, and dependencies

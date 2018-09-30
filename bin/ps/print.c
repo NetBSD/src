@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.128.2.1 2018/04/16 01:57:31 pgoyette Exp $	*/
+/*	$NetBSD: print.c,v 1.128.2.2 2018/09/30 01:44:21 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2000, 2007 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.6 (Berkeley) 4/16/94";
 #else
-__RCSID("$NetBSD: print.c,v 1.128.2.1 2018/04/16 01:57:31 pgoyette Exp $");
+__RCSID("$NetBSD: print.c,v 1.128.2.2 2018/09/30 01:44:21 pgoyette Exp $");
 #endif
 #endif /* not lint */
 
@@ -927,22 +927,11 @@ wchan(struct pinfo *pi, VARENT *ve, enum mode mode)
 {
 	struct kinfo_lwp *l = pi->li;
 	VAR *v;
-	char *buf;
 
 	v = ve->var;
-	if (l->l_wchan) {
-		if (l->l_wmesg[0]) {
-			strprintorsetwidth(v, l->l_wmesg, mode);
-			v->width = min(v->width, KI_WMESGLEN);
-		} else {
-			(void)asprintf(&buf, "%-*" PRIx64, v->width,
-			    l->l_wchan);
-			if (buf == NULL)
-				err(EXIT_FAILURE, "%s", "");
-			strprintorsetwidth(v, buf, mode);
-			v->width = min(v->width, KI_WMESGLEN);
-			free(buf);
-		}
+	if (l->l_wmesg[0]) {
+		strprintorsetwidth(v, l->l_wmesg, mode);
+		v->width = min(v->width, KI_WMESGLEN);
 	} else {
 		if (mode == PRINTMODE)
 			(void)printf("%-*s", v->width, "-");

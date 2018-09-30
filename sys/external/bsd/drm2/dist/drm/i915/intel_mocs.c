@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_mocs.c,v 1.2.2.2 2018/09/06 06:56:17 pgoyette Exp $	*/
+/*	$NetBSD: intel_mocs.c,v 1.2.2.3 2018/09/30 01:45:54 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2015 Intel Corporation
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_mocs.c,v 1.2.2.2 2018/09/06 06:56:17 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_mocs.c,v 1.2.2.3 2018/09/30 01:45:54 pgoyette Exp $");
 
 #include "intel_mocs.h"
 #include "intel_lrc.h"
@@ -148,7 +148,7 @@ static bool get_mocs_settings(struct drm_device *dev,
 {
 	bool result = false;
 
-	if (IS_SKYLAKE(dev)) {
+	if (IS_SKYLAKE(dev) || IS_KABYLAKE(dev)) {
 		table->size  = ARRAY_SIZE(skylake_mocs_table);
 		table->table = skylake_mocs_table;
 		result = true;

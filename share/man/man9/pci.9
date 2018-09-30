@@ -1,4 +1,4 @@
-.\"     $NetBSD: pci.9,v 1.46 2017/07/03 21:28:48 wiz Exp $
+.\"     $NetBSD: pci.9,v 1.46.4.1 2018/09/30 01:45:35 pgoyette Exp $
 .\"
 .\" Copyright (c) 2001, 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd July 12, 2016
+.Dd September 20, 2018
 .Dt PCI 9
 .Os
 .Sh NAME
@@ -573,13 +573,17 @@ The physical address of the mapping is in the Base Address Register
 (BAR) in configuration space specified by
 .Fa reg .
 Valid values for the type of mapping
-.Fa type
+.Fa type ,
+which can be obtained from
+.Fn pci_mapreg_type ,
 are:
 .Bl -tag -width compact
 .It Dv PCI_MAPREG_TYPE_IO
 The mapping should be to I/O address space.
 .It Dv PCI_MAPREG_TYPE_MEM
 The mapping should be to memory address space.
+.It Dv PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_64BIT
+The mapping should be to 64-bit memory address space.
 .It Dv PCI_MAPREG_TYPE_ROM
 The mapping is to access ROM.
 This type of mapping is only permitted when the value for
@@ -685,10 +689,10 @@ See
 .Xr pci_intr 9 .
 .It Fn pci_intr_disestablish "pc" "ih"
 See
-.Xr pci_msi 9 .
+.Xr pci_intr 9 .
 .It Fn pci_intr_type "pc" "ih"
 See
-.Xr pci_intr 9 .
+.Xr pci_msi 9 .
 .It Fn pci_intr_setattr "pc" "ih" "attr" "data"
 See
 .Xr pci_intr 9 .

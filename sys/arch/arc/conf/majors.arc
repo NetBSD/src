@@ -1,4 +1,4 @@
-#	$NetBSD: majors.arc,v 1.24 2011/06/30 20:09:19 wiz Exp $
+#	$NetBSD: majors.arc,v 1.24.52.1 2018/09/30 01:45:36 pgoyette Exp $
 #
 # Device majors for arc
 #
@@ -39,11 +39,6 @@ device-major	rnd		char 33			rnd
 device-major	ss		char 34			ss
 device-major	ses		char 35			ses
 device-major	ch		char 36			ch
-device-major	isdn		char 37			isdn
-device-major	isdnctl		char 38			isdnctl
-device-major	isdnbchan	char 39			isdnbchan
-device-major	isdntrc		char 40			isdntrc
-device-major	isdntel		char 41			isdntel
 
 device-major	clockctl	char 52			clockctl
 device-major	cgd		char 54  block 10	cgd

@@ -1,7 +1,8 @@
-#	$NetBSD: srcs.inc,v 1.5 2018/02/08 21:57:24 christos Exp $
+#	$NetBSD: srcs.inc,v 1.5.2.1 2018/09/30 01:44:52 pgoyette Exp $
 
 CRYPTOINCS= \
 aes.inc \
+aria.inc \
 asn1.inc \
 async.inc \
 bf.inc \
@@ -18,6 +19,7 @@ comp.inc \
 conf.inc \
 crypto.inc \
 ct.inc \
+curve448.inc \
 des.inc \
 dh.inc \
 dsa.inc \
@@ -48,8 +50,13 @@ ripemd.inc \
 rsa.inc \
 seed.inc \
 sha.inc \
+siphash.inc \
+sm2.inc \
+sm3.inc \
+sm4.inc \
 srp.inc \
 stack.inc \
+store.inc \
 ts.inc \
 txt_db.inc \
 ui.inc \

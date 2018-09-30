@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.276.2.1 2018/09/06 06:56:50 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.276.2.2 2018/09/30 01:45:59 pgoyette Exp $
 #	from: @(#)Makefile	5.20 (Berkeley) 6/12/93
 
 .include <bsd.own.mk>
@@ -12,7 +12,7 @@ SUBDIR=	ac accton acpitools altq apm apmd arp autofs \
 	gpioctl grfconfig gspa \
 	hdaudioctl \
 	i2cscan ifwatchd inetd installboot intrctl iopctl iostat ipwctl irdaattach \
-	isdn isibootd iteconfig iwictl \
+	isibootd iteconfig iwictl \
 	kgmon \
 	lastlogin ldpd link lmcconfig lockstat lpr \
 	mailwrapper makefs map-mbone mdconfig memswitch mlxctl mmcformat \
@@ -51,9 +51,6 @@ SUBDIR+=faithd ifmcstat ip6addrctl ndp rip6query rtsold
 .if (${USE_INET6} != "no")
 SUBDIR+=mld6query route6d rtadvd traceroute6 
 .endif
-
-# ATM PVC
-SUBDIR+=pvcsif pvctxctl
 
 SUBDIR+= racoon racoonctl
 

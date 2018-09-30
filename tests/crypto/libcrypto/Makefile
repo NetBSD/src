@@ -1,9 +1,9 @@
-# $NetBSD: Makefile,v 1.13 2018/02/22 14:24:03 martin Exp $
+# $NetBSD: Makefile,v 1.13.2.1 2018/09/30 01:45:58 pgoyette Exp $
 
 .include <bsd.own.mk>
 
 SUBDIR+=bf bn cast conf des dh dsa ec ecdh ecdsa engine evp hmac \
-	md2 md4 md5 rand rc2 rc4 ripemd rsa sha1 srp threads
+	md2 rc2 rc4 rsa srp threads
 
 SUBDIR+=idea mdc2
 SUBDIR+=rc5

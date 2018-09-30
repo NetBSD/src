@@ -1,4 +1,4 @@
-/*	$NetBSD: imx7_start.S,v 1.1 2016/05/17 06:44:46 ryo Exp $	*/
+/*	$NetBSD: imx7_start.S,v 1.1.20.1 2018/09/30 01:45:41 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2014 Ryo Shimizu <ryo@nerv.org>
@@ -27,6 +27,7 @@
  */
 
 #include "opt_imx.h"
+#include "opt_console.h"
 #include "opt_cpuoptions.h"
 #include "opt_cputypes.h"
 #include "opt_multiprocessor.h"
@@ -37,7 +38,7 @@
 #include <arm/cortex/scu_reg.h>
 #include "assym.h"
 
-RCSID("$NetBSD: imx7_start.S,v 1.1 2016/05/17 06:44:46 ryo Exp $")
+RCSID("$NetBSD: imx7_start.S,v 1.1.20.1 2018/09/30 01:45:41 pgoyette Exp $")
 
 #ifndef CONADDR
 #define CONADDR		0x30a60000

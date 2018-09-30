@@ -1,4 +1,4 @@
-/* $NetBSD: gtmr_var.h,v 1.9.2.1 2018/05/21 04:35:58 pgoyette Exp $ */
+/* $NetBSD: gtmr_var.h,v 1.9.2.2 2018/09/30 01:45:37 pgoyette Exp $ */
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -37,6 +37,8 @@ struct gtmr_softc {
 	device_t sc_dev;
 	struct evcnt sc_ev_missing_ticks;
 	uint32_t sc_freq;
+	uint32_t sc_flags;
+#define	GTMR_FLAG_SUN50I_A64_UNSTABLE_TIMER	__BIT(0)
 	u_long sc_autoinc;
 	void *sc_global_ih;
 #ifdef DIAGNOSTIC

@@ -3005,7 +3005,7 @@ __ecp_nistz256_add:
 	! if a+b >= modulus, subtract modulus.
 	!
 	! But since comparison implies subtraction, we subtract
-	! modulus and then add it back if subraction borrowed.
+	! modulus and then add it back if subtraction borrowed.
 
 	subcc	%l0,-1,%l0
 	subccc	%l1,-1,%l1
@@ -4293,13 +4293,13 @@ ecp_nistz256_scatter_w7:
 	ld	[%i1],%l0
 	add	%i1,4,%i1
 	subcc	%i2,1,%i2
-	stb	%l0,[%i0+64*0-1]
+	stb	%l0,[%i0+64*0]
 	srl	%l0,8,%l1
-	stb	%l1,[%i0+64*1-1]
+	stb	%l1,[%i0+64*1]
 	srl	%l0,16,%l2
-	stb	%l2,[%i0+64*2-1]
+	stb	%l2,[%i0+64*2]
 	srl	%l0,24,%l3
-	stb	%l3,[%i0+64*3-1]
+	stb	%l3,[%i0+64*3]
 	bne	.Loop_scatter_w7
 	add	%i0,64*4,%i0
 
@@ -4585,7 +4585,7 @@ __ecp_nistz256_mul_mont_vis3:
 	.word	0xa7b5c2db !umulxhi	%l7,%i3,%l3
 	.word	0x99b30220 !addxc	%o4,%g0,%o4
 	ldx	[%i2+8*(1+1)],%i3	! bp[1+1]
-	addcc	%o1,%l0,%o1		! accumulate high parts of multiplication 
+	addcc	%o1,%l0,%o1		! accumulate high parts of multiplication
 	 sllx	%o0,32,%l0
 	.word	0x95b28271 !addxccc	%o2,%l1,%o2
 	 srlx	%o0,32,%l1
@@ -4614,7 +4614,7 @@ __ecp_nistz256_mul_mont_vis3:
 	.word	0xa7b5c2db !umulxhi	%l7,%i3,%l3
 	.word	0x99b30220 !addxc	%o4,%g0,%o4
 	ldx	[%i2+8*(2+1)],%i3	! bp[2+1]
-	addcc	%o1,%l0,%o1		! accumulate high parts of multiplication 
+	addcc	%o1,%l0,%o1		! accumulate high parts of multiplication
 	 sllx	%o0,32,%l0
 	.word	0x95b28271 !addxccc	%o2,%l1,%o2
 	 srlx	%o0,32,%l1
@@ -4642,7 +4642,7 @@ __ecp_nistz256_mul_mont_vis3:
 	.word	0x97b2c273 !addxccc	%o3,%l3,%o3
 	.word	0xa7b5c2db !umulxhi	%l7,%i3,%l3
 	.word	0x99b30220 !addxc	%o4,%g0,%o4
-	addcc	%o1,%l0,%o1		! accumulate high parts of multiplication 
+	addcc	%o1,%l0,%o1		! accumulate high parts of multiplication
 	 sllx	%o0,32,%l0
 	.word	0x95b28271 !addxccc	%o2,%l1,%o2
 	 srlx	%o0,32,%l1
@@ -4738,7 +4738,7 @@ __ecp_nistz256_sqr_mont_vis3:
 	 srlx	%o0,32,%l1
 	.word	0x95b2c272 !addxccc	%o3,%l2,%o2		! +=acc[0]*0xFFFFFFFF00000001
 	 sub	%o0,%l0,%l2		! acc0*0xFFFFFFFF00000001, low part
-	.word	0x97b00233 !addxc	%g0,%l3,%o3		! cant't overflow
+	.word	0x97b00233 !addxc	%g0,%l3,%o3		! can't overflow
 	.word	0xa7b202dd !umulxhi	%o0,%i5,%l3	! acc0*0xFFFFFFFF00000001, high part
 	addcc	%o1,%l0,%o0		! +=acc[0]<<96 and omit acc[0]
 	 sllx	%o0,32,%l0
@@ -4746,7 +4746,7 @@ __ecp_nistz256_sqr_mont_vis3:
 	 srlx	%o0,32,%l1
 	.word	0x95b2c272 !addxccc	%o3,%l2,%o2		! +=acc[0]*0xFFFFFFFF00000001
 	 sub	%o0,%l0,%l2		! acc0*0xFFFFFFFF00000001, low part
-	.word	0x97b00233 !addxc	%g0,%l3,%o3		! cant't overflow
+	.word	0x97b00233 !addxc	%g0,%l3,%o3		! can't overflow
 	.word	0xa7b202dd !umulxhi	%o0,%i5,%l3	! acc0*0xFFFFFFFF00000001, high part
 	addcc	%o1,%l0,%o0		! +=acc[0]<<96 and omit acc[0]
 	 sllx	%o0,32,%l0
@@ -4754,7 +4754,7 @@ __ecp_nistz256_sqr_mont_vis3:
 	 srlx	%o0,32,%l1
 	.word	0x95b2c272 !addxccc	%o3,%l2,%o2		! +=acc[0]*0xFFFFFFFF00000001
 	 sub	%o0,%l0,%l2		! acc0*0xFFFFFFFF00000001, low part
-	.word	0x97b00233 !addxc	%g0,%l3,%o3		! cant't overflow
+	.word	0x97b00233 !addxc	%g0,%l3,%o3		! can't overflow
 	.word	0xa7b202dd !umulxhi	%o0,%i5,%l3	! acc0*0xFFFFFFFF00000001, high part
 	addcc	%o1,%l0,%o0		! +=acc[0]<<96 and omit acc[0]
 	.word	0x93b28271 !addxccc	%o2,%l1,%o1

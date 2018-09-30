@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_usrreq.c,v 1.58.2.3 2018/05/21 04:36:15 pgoyette Exp $	*/
+/*	$NetBSD: raw_usrreq.c,v 1.58.2.4 2018/09/30 01:45:56 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_usrreq.c,v 1.58.2.3 2018/05/21 04:36:15 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_usrreq.c,v 1.58.2.4 2018/09/30 01:45:56 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -65,22 +65,12 @@ equal(const struct sockaddr *a1, const struct sockaddr *a2)
  * If nothing exists for this packet, drop it.
  */
 void
-raw_input(struct mbuf *m0, ...)
+raw_input(struct mbuf *m0, struct sockproto *proto, struct sockaddr *src,
+    struct sockaddr *dst, struct rawcbhead *rawcbhead)
 {
 	struct rawcb *rp;
 	struct mbuf *m = m0;
 	struct socket *last;
-	va_list ap;
-	struct sockproto *proto;
-	struct sockaddr *src, *dst;
-	struct rawcbhead *rawcbhead;
-
-	va_start(ap, m0);
-	proto = va_arg(ap, struct sockproto *);
-	src = va_arg(ap, struct sockaddr *);
-	dst = va_arg(ap, struct sockaddr *);
-	rawcbhead = va_arg(ap, struct rawcbhead *);
-	va_end(ap);
 
 	last = NULL;
 	LIST_FOREACH(rp, rawcbhead, rcb_list) {

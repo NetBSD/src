@@ -1,4 +1,4 @@
-/*	$NetBSD: marvell_machdep.c,v 1.33.14.1 2018/09/06 06:55:31 pgoyette Exp $ */
+/*	$NetBSD: marvell_machdep.c,v 1.33.14.2 2018/09/30 01:45:42 pgoyette Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2010 KIYOHARA Takashi
  * All rights reserved.
@@ -25,9 +25,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: marvell_machdep.c,v 1.33.14.1 2018/09/06 06:55:31 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: marvell_machdep.c,v 1.33.14.2 2018/09/30 01:45:42 pgoyette Exp $");
 
 #include "opt_arm_debug.h"
+#include "opt_console.h"
 #include "opt_evbarm_boardtype.h"
 #include "opt_ddb.h"
 #include "opt_pci.h"

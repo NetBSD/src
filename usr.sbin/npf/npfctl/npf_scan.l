@@ -1,5 +1,3 @@
-/*	$NetBSD: npf_scan.l,v 1.26 2017/12/10 22:04:41 rmind Exp $	*/
-
 /*-
  * Copyright (c) 2011-2012 The NetBSD Foundation, Inc.
  * All rights reserved.

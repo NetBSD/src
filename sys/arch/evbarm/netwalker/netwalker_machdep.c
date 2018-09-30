@@ -1,4 +1,4 @@
-/*	$NetBSD: netwalker_machdep.c,v 1.21 2017/09/08 05:29:12 hkenken Exp $	*/
+/*	$NetBSD: netwalker_machdep.c,v 1.21.2.1 2018/09/30 01:45:42 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2005, 2010  Genetec Corporation.
@@ -102,10 +102,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netwalker_machdep.c,v 1.21 2017/09/08 05:29:12 hkenken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netwalker_machdep.c,v 1.21.2.1 2018/09/30 01:45:42 pgoyette Exp $");
 
 #include "opt_evbarm_boardtype.h"
 #include "opt_arm_debug.h"
+#include "opt_console.h"
 #include "opt_cputypes.h"
 #include "opt_ddb.h"
 #include "opt_kgdb.h"

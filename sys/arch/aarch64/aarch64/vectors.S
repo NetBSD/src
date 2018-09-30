@@ -1,4 +1,4 @@
-/*	$NetBSD: vectors.S,v 1.4.2.3 2018/09/06 06:55:22 pgoyette Exp $	*/
+/*	$NetBSD: vectors.S,v 1.4.2.4 2018/09/30 01:45:35 pgoyette Exp $	*/
 
 #include <aarch64/asm.h>
 #include "assym.h"
@@ -78,7 +78,7 @@
 
 
 	.align 11	/* vector table must be aligned 2048 */
-ENTRY(el1_vectors)
+ENTRY_NP(el1_vectors)
 /*
  * Exception taken from current Exception Level with SP_EL0.
  * (These shouldn't happen)

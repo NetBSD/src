@@ -1,4 +1,4 @@
-#	$NetBSD: files.n900,v 1.5.38.1 2018/03/22 01:44:44 pgoyette Exp $
+#	$NetBSD: files.n900,v 1.5.38.2 2018/09/30 01:45:40 pgoyette Exp $
 #
 # Nokia N900 configuration info
 #
@@ -15,7 +15,6 @@ include "arch/arm/omap/files.omap2"
 # NS16550 compatible serial ports
 attach com at obio with obiouart
 file	arch/arm/omap/obio_com.c		obiouart
-defparam opt_com.h				CONSADDR CONSPEED CONMODE
 
 # Audio jack
 device n900audjck: sysmon_envsys

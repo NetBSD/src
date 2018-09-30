@@ -1,5 +1,3 @@
-/*	$NetBSD: npf.h,v 1.55.2.2 2018/04/22 07:20:27 pgoyette Exp $	*/
-
 /*-
  * Copyright (c) 2009-2014 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -39,13 +37,12 @@
 #include <sys/param.h>
 #include <sys/types.h>
 
-#define	NPF_VERSION		19
+#define	NPF_VERSION		20
 
 #if defined(_NPF_STANDALONE)
 #include "npf_stand.h"
 #else
 #include <sys/ioctl.h>
-#include <prop/proplib.h>
 #include <netinet/in_systm.h>
 #include <netinet/in.h>
 #endif
@@ -180,7 +177,7 @@ typedef struct {
 	} npc_l4;
 } npf_cache_t;
 
-static __inline bool
+static inline bool
 npf_iscached(const npf_cache_t *npc, const int inf)
 {
 	KASSERT(npc->npc_nbuf != NULL);
@@ -189,32 +186,6 @@ npf_iscached(const npf_cache_t *npc, const int inf)
 
 #define	NPF_SRC		0
 #define	NPF_DST		1
-
-/*
- * NPF extensions and rule procedure interface.
- */
-
-struct npf_rproc;
-typedef struct npf_rproc	npf_rproc_t;
-
-typedef struct {
-	uint64_t	mi_rid;
-	u_int		mi_retfl;
-	u_int		mi_di;
-} npf_match_info_t;
-
-typedef struct {
-	unsigned int	version;
-	void *		ctx;
-	int		(*ctor)(npf_rproc_t *, prop_dictionary_t);
-	void		(*dtor)(npf_rproc_t *, void *);
-	bool		(*proc)(npf_cache_t *, void *, const npf_match_info_t *,
-				int *);
-} npf_ext_ops_t;
-
-void *		npf_ext_register(npf_t *, const char *, const npf_ext_ops_t *);
-int		npf_ext_unregister(npf_t *, void *);
-void		npf_rproc_assign(npf_rproc_t *, void *);
 
 /*
  * Misc.
@@ -327,12 +298,12 @@ typedef struct npf_ioctl_table {
 
 #define	IOC_NPF_VERSION		_IOR('N', 100, int)
 #define	IOC_NPF_SWITCH		_IOW('N', 101, int)
-#define	IOC_NPF_LOAD		_IOWR('N', 102, struct plistref)
+#define	IOC_NPF_LOAD		_IOWR('N', 102, nvlist_ref_t)
 #define	IOC_NPF_TABLE		_IOW('N', 103, struct npf_ioctl_table)
 #define	IOC_NPF_STATS		_IOW('N', 104, void *)
-#define	IOC_NPF_SAVE		_IOR('N', 105, struct plistref)
-#define	IOC_NPF_RULE		_IOWR('N', 107, struct plistref)
-#define	IOC_NPF_CONN_LOOKUP	_IOWR('N', 108, struct plistref)
+#define	IOC_NPF_SAVE		_IOR('N', 105, nvlist_ref_t)
+#define	IOC_NPF_RULE		_IOWR('N', 107, nvlist_ref_t)
+#define	IOC_NPF_CONN_LOOKUP	_IOWR('N', 108, nvlist_ref_t)
 
 /*
  * NPF error report.

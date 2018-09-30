@@ -1,4 +1,4 @@
-/*	$NetBSD: powerpc_machdep.c,v 1.71 2015/01/23 07:27:05 nonaka Exp $	*/
+/*	$NetBSD: powerpc_machdep.c,v 1.71.16.1 2018/09/30 01:45:46 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: powerpc_machdep.c,v 1.71 2015/01/23 07:27:05 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: powerpc_machdep.c,v 1.71.16.1 2018/09/30 01:45:46 pgoyette Exp $");
 
 #include "opt_altivec.h"
 #include "opt_ddb.h"
@@ -533,7 +533,7 @@ CTASSERT(MAXCPUS <= 32);
 #define	CPUSET_EXPORT(kset, set)	kcpuset_export_u32((kset), &(set), sizeof(set))
 
 /*
- * Send an inter-processor interupt to CPUs in cpuset (excludes curcpu())
+ * Send an inter-processor interrupt to CPUs in cpuset (excludes curcpu())
  */
 static void
 cpu_multicast_ipi(__cpuset_t cpuset, uint32_t msg)

@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_fbc.c,v 1.3.2.2 2018/09/06 06:56:17 pgoyette Exp $	*/
+/*	$NetBSD: intel_fbc.c,v 1.3.2.3 2018/09/30 01:45:54 pgoyette Exp $	*/
 
 /*
  * Copyright © 2014 Intel Corporation
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_fbc.c,v 1.3.2.2 2018/09/06 06:56:17 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_fbc.c,v 1.3.2.3 2018/09/30 01:45:54 pgoyette Exp $");
 
 #include "intel_drv.h"
 #include "i915_drv.h"
@@ -586,7 +586,8 @@ static int find_compression_threshold(struct drm_i915_private *dev_priv,
 	 * reserved range size, so it always assumes the maximum (8mb) is used.
 	 * If we enable FBC using a CFB on that memory range we'll get FIFO
 	 * underruns, even if that range is not reserved by the BIOS. */
-	if (IS_BROADWELL(dev_priv) || IS_SKYLAKE(dev_priv))
+	if (IS_BROADWELL(dev_priv) ||
+	    IS_SKYLAKE(dev_priv) || IS_KABYLAKE(dev_priv))
 		end = dev_priv->gtt.stolen_size - 8 * 1024 * 1024;
 	else
 		end = dev_priv->gtt.stolen_usable_size;

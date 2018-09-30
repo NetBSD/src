@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_machdep.c,v 1.108.2.4 2018/07/28 04:37:42 pgoyette Exp $	*/
+/*	$NetBSD: x86_machdep.c,v 1.108.2.5 2018/09/30 01:45:48 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 YAMAMOTO Takashi,
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.108.2.4 2018/07/28 04:37:42 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.108.2.5 2018/09/30 01:45:48 pgoyette Exp $");
 
 #include "opt_modular.h"
 #include "opt_physmem.h"
@@ -89,7 +89,6 @@ static char x86_cpu_idle_text[16];
 
 #ifdef XEN
 char module_machine_amd64_xen[] = "amd64-xen";
-char module_machine_i386_xen[] = "i386-xen";
 char module_machine_i386pae_xen[] = "i386pae-xen";
 #endif
 
@@ -206,14 +205,10 @@ module_init_md(void)
 
 	/* setup module path for XEN kernels */
 #ifdef XEN
-#if defined(amd64)
+#ifdef __x86_64__
 	module_machine = module_machine_amd64_xen;
-#elif defined(i386)
-#ifdef PAE
-	module_machine = module_machine_i386pae_xen;
 #else
-	module_machine = module_machine_i386_xen;
-#endif
+	module_machine = module_machine_i386pae_xen;
 #endif
 #endif
 

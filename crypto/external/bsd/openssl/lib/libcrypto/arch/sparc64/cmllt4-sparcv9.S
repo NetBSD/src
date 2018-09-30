@@ -1032,7 +1032,7 @@ cmll128_t4_cbc_encrypt:
 
 	brnz,pn		%l2, 2f
 	sub		%i2, 1, %i2
-		
+
 	std		%f0, [%i1 + 0]
 	std		%f2, [%i1 + 8]
 	brnz,pt		%i2, .L128_cbc_enc_loop
@@ -1102,7 +1102,7 @@ cmll128_t4_cbc_encrypt:
 	call		_cmll128_encrypt_1x
 	add		%i0, 16, %i0
 	sub		%i2, 1, %i2
-		
+
 	stda		%f0, [%i1]0xe2		! ASI_BLK_INIT, T4-specific
 	add		%i1, 8, %i1
 	stda		%f2, [%i1]0xe2		! ASI_BLK_INIT, T4-specific
@@ -1179,7 +1179,7 @@ cmll256_t4_cbc_encrypt:
 
 	brnz,pn		%l2, 2f
 	sub		%i2, 1, %i2
-		
+
 	std		%f0, [%i1 + 0]
 	std		%f2, [%i1 + 8]
 	brnz,pt		%i2, .L256_cbc_enc_loop
@@ -1249,7 +1249,7 @@ cmll256_t4_cbc_encrypt:
 	call		_cmll256_encrypt_1x
 	add		%i0, 16, %i0
 	sub		%i2, 1, %i2
-		
+
 	stda		%f0, [%i1]0xe2		! ASI_BLK_INIT, T4-specific
 	add		%i1, 8, %i1
 	stda		%f2, [%i1]0xe2		! ASI_BLK_INIT, T4-specific
@@ -1330,7 +1330,7 @@ cmll128_t4_cbc_decrypt:
 
 	brnz,pn		%l2, 2f
 	sub		%i2, 1, %i2
-		
+
 	std		%f0, [%i1 + 0]
 	std		%f2, [%i1 + 8]
 	brnz,pt		%i2, .L128_cbc_dec_loop2x
@@ -1414,7 +1414,7 @@ cmll128_t4_cbc_decrypt:
 
 	brnz,pn		%l2, 2f
 	sub		%i2, 2, %i2
-		
+
 	std		%f0, [%i1 + 0]
 	std		%f2, [%i1 + 8]
 	std		%f4, [%i1 + 16]
@@ -1598,7 +1598,7 @@ cmll256_t4_cbc_decrypt:
 
 	brnz,pn		%l2, 2f
 	sub		%i2, 1, %i2
-		
+
 	std		%f0, [%i1 + 0]
 	std		%f2, [%i1 + 8]
 	brnz,pt		%i2, .L256_cbc_dec_loop2x
@@ -1682,7 +1682,7 @@ cmll256_t4_cbc_decrypt:
 
 	brnz,pn		%l2, 2f
 	sub		%i2, 2, %i2
-		
+
 	std		%f0, [%i1 + 0]
 	std		%f2, [%i1 + 8]
 	std		%f4, [%i1 + 16]
@@ -1875,7 +1875,7 @@ cmll128_t4_ctr32_encrypt:
 
 	brnz,pn		%l2, 2f
 	sub		%i2, 1, %i2
-		
+
 	std		%f0, [%i1 + 0]
 	std		%f2, [%i1 + 8]
 	brnz,pt		%i2, .L128_ctr32_loop2x
@@ -1954,7 +1954,7 @@ cmll128_t4_ctr32_encrypt:
 
 	brnz,pn		%l2, 2f
 	sub		%i2, 2, %i2
-		
+
 	std		%f0, [%i1 + 0]
 	std		%f2, [%i1 + 8]
 	std		%f4, [%i1 + 16]
@@ -2142,7 +2142,7 @@ cmll256_t4_ctr32_encrypt:
 
 	brnz,pn		%l2, 2f
 	sub		%i2, 1, %i2
-		
+
 	std		%f0, [%i1 + 0]
 	std		%f2, [%i1 + 8]
 	brnz,pt		%i2, .L256_ctr32_loop2x
@@ -2221,7 +2221,7 @@ cmll256_t4_ctr32_encrypt:
 
 	brnz,pn		%l2, 2f
 	sub		%i2, 2, %i2
-		
+
 	std		%f0, [%i1 + 0]
 	std		%f2, [%i1 + 8]
 	std		%f4, [%i1 + 16]

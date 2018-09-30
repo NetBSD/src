@@ -1,4 +1,4 @@
-# $NetBSD: t_libcrypto.sh,v 1.5 2018/02/22 14:24:03 martin Exp $
+# $NetBSD: t_libcrypto.sh,v 1.5.2.1 2018/09/30 01:45:58 pgoyette Exp $
 #
 # Copyright (c) 2008, 2009, 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -35,16 +35,6 @@ engine_body()
 	atf_check -o ignore -e ignore "$(atf_get_srcdir)/h_enginetest"
 }
 
-atf_test_case rand
-rand_head()
-{
-	atf_set "descr" "Checks peudo-random number generator"
-}
-rand_body()
-{
-	atf_check -o ignore -e ignore "$(atf_get_srcdir)/h_randtest"
-}
-
 atf_test_case bn
 bn_head()
 {
@@ -71,17 +61,6 @@ conf_body()
 		$(atf_get_srcdir)/h_conftest
 }
 
-atf_test_case lhash
-lhash_head()
-{
-	atf_set "descr" "Checks lhash - dynamic hash tables"
-}
-lhash_body()
-{
-	atf_check -o ignore -e ignore -x \
-		"echo hoge | $(atf_get_srcdir)/h_lhashtest"
-}
-
 atf_test_case threads
 threads_head()
 {
@@ -99,9 +78,7 @@ threads_body()
 atf_init_test_cases()
 {
 	atf_add_test_case engine
-	atf_add_test_case rand
 	atf_add_test_case bn
 	atf_add_test_case conf
-	openssl version | fgrep -q "OpenSSL 1.0" && atf_add_test_case lhash
 	atf_add_test_case threads
 }

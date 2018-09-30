@@ -1,4 +1,4 @@
-/*	$NetBSD: at91bus.c,v 1.19.14.2 2018/09/06 06:55:25 pgoyette Exp $	*/
+/*	$NetBSD: at91bus.c,v 1.19.14.3 2018/09/30 01:45:37 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2007 Embedtronics Oy
@@ -27,9 +27,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at91bus.c,v 1.19.14.2 2018/09/06 06:55:25 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at91bus.c,v 1.19.14.3 2018/09/30 01:45:37 pgoyette Exp $");
 
 #include "opt_arm_debug.h"
+#include "opt_console.h"
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
 #include "opt_pmap_debug.h"

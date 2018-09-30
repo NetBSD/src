@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.251.2.1 2018/07/28 04:33:00 pgoyette Exp $
+# $NetBSD: mi,v 1.251.2.2 2018/09/30 01:45:05 pgoyette Exp $
 #
 # Note: end-user configuration files that are moved to another location
 #	should not be marked "obsolete"; they should just be removed from
@@ -232,7 +232,7 @@
 ./etc/rc.d/irdaattach				etc-sys-rc
 ./etc/rc.d/iscsi_target				etc-iscsi-rc
 ./etc/rc.d/iscsid				etc-iscsi-rc
-./etc/rc.d/isdnd				etc-isdn-rc
+./etc/rc.d/isdnd				etc-obsolete		obsolete
 ./etc/rc.d/isibootd				etc-bootserver-rc
 ./etc/rc.d/kdc					etc-krb5-rc
 ./etc/rc.d/kerberos				etc-obsolete		obsolete

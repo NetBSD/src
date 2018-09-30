@@ -36,8 +36,6 @@ base-hesiod-bin base-sys-usr
 base-htmldoc-share base-sys-share
 base-i18n-root base-sys-usr
 base-i18n-shlib base-i18n-root
-base-isdn-bin base-sys-usr
-base-isdn-examples base-sys-share
 base-krb5-bin base-sys-usr
 base-krb5-examples base-sys-share
 base-krb5-root base-sys-root
@@ -289,7 +287,6 @@ etc-dhcpd-rc base-sys-root
 etc-games-etc base-sys-root
 etc-games-scores base-games-root
 etc-ipf-rc base-sys-root
-etc-isdn-rc base-sys-root
 etc-krb5-rc base-sys-root
 etc-libsaslc-etc base-sys-root
 etc-libsaslc-postfix base-sys-root
@@ -385,8 +382,6 @@ man-hesiod-man base-man-share
 man-info-share base-texinfo-share
 man-ipf-catman base-man-share
 man-ipf-man base-man-share
-man-isdn-catman base-man-share
-man-isdn-man base-man-share
 man-krb5-catman base-man-share
 man-krb5-info base-texinfo-share
 man-krb5-man base-man-share
@@ -472,7 +467,6 @@ misc-bind-htmldoc base-htmldoc-share
 misc-crypto-examples base-crypto-examples
 misc-dhcpd-examples base-dhcpd-examples
 misc-fstab-examples base-fstab-examples
-misc-isdn-examples base-isdn-examples
 misc-krb5-examples base-krb5-examples
 misc-libsaslc-examples base-libsaslc-examples
 misc-netutil-examples base-netutil-examples

@@ -1,10 +1,4 @@
-#ifdef OPENSSL_FIPSCANISTER
-# include <openssl/fipssyms.h>
-#endif
-
-#if defined(__mips_smartmips) && !defined(_MIPS_ARCH_MIPS32R2)
-#define _MIPS_ARCH_MIPS32R2
-#endif
+#include "mips_arch.h"
 
 .text
 .set	noat
@@ -20,7 +14,7 @@ sha256_block_data_order:
 	.mask	0xc0ff0000,-4
 	.set	noreorder
 	.cpload	$25
-	sub $29,128
+	subu $29,128
 	sw	$31,128-1*4($29)
 	sw	$30,128-2*4($29)
 	sw	$23,128-3*4($29)
@@ -44,16 +38,24 @@ sha256_block_data_order:
 	lw	$30,6*4($4)
 	lw	$31,7*4($4)
 
-	add $23,$5		# pointer to the end of input
+	addu $23,$5		# pointer to the end of input
 	sw	$23,16*4($29)
 	b	.Loop
 
 .align	5
 .Loop:
+#if defined(_MIPS_ARCH_MIPS32R6) || defined(_MIPS_ARCH_MIPS64R6)
+	lw	$8,($5)
+#else
 	lwl	$8,3($5)
 	lwr	$8,0($5)
+#endif
+#if defined(_MIPS_ARCH_MIPS32R6) || defined(_MIPS_ARCH_MIPS64R6)
+	lw	$9,4($5)
+#else
 	lwl	$9,7($5)
 	lwr	$9,4($5)
+#endif
 #if defined(_MIPS_ARCH_MIPS32R2) || defined(_MIPS_ARCH_MIPS64R2)
 	wsbh	$8,$8		# byte swap(0)
 	rotr	$8,$8,16
@@ -130,8 +132,12 @@ sha256_block_data_order:
 	addu	$31,$14			# +=Maj(a,b,c)
 	addu	$7,$12
 	addu	$31,$12
+#if defined(_MIPS_ARCH_MIPS32R6) || defined(_MIPS_ARCH_MIPS64R6)
+	lw	$10,8($5)
+#else
 	lwl	$10,11($5)
 	lwr	$10,8($5)
+#endif
 #if defined(_MIPS_ARCH_MIPS32R2) || defined(_MIPS_ARCH_MIPS64R2)
 	wsbh	$9,$9		# byte swap(1)
 	rotr	$9,$9,16
@@ -208,8 +214,12 @@ sha256_block_data_order:
 	addu	$30,$15			# +=Maj(a,b,c)
 	addu	$3,$13
 	addu	$30,$13
+#if defined(_MIPS_ARCH_MIPS32R6) || defined(_MIPS_ARCH_MIPS64R6)
+	lw	$11,12($5)
+#else
 	lwl	$11,15($5)
 	lwr	$11,12($5)
+#endif
 #if defined(_MIPS_ARCH_MIPS32R2) || defined(_MIPS_ARCH_MIPS64R2)
 	wsbh	$10,$10		# byte swap(2)
 	rotr	$10,$10,16
@@ -286,8 +296,12 @@ sha256_block_data_order:
 	addu	$25,$16			# +=Maj(a,b,c)
 	addu	$2,$14
 	addu	$25,$14
+#if defined(_MIPS_ARCH_MIPS32R6) || defined(_MIPS_ARCH_MIPS64R6)
+	lw	$12,16($5)
+#else
 	lwl	$12,19($5)
 	lwr	$12,16($5)
+#endif
 #if defined(_MIPS_ARCH_MIPS32R2) || defined(_MIPS_ARCH_MIPS64R2)
 	wsbh	$11,$11		# byte swap(3)
 	rotr	$11,$11,16
@@ -364,8 +378,12 @@ sha256_block_data_order:
 	addu	$24,$17			# +=Maj(a,b,c)
 	addu	$1,$15
 	addu	$24,$15
+#if defined(_MIPS_ARCH_MIPS32R6) || defined(_MIPS_ARCH_MIPS64R6)
+	lw	$13,20($5)
+#else
 	lwl	$13,23($5)
 	lwr	$13,20($5)
+#endif
 #if defined(_MIPS_ARCH_MIPS32R2) || defined(_MIPS_ARCH_MIPS64R2)
 	wsbh	$12,$12		# byte swap(4)
 	rotr	$12,$12,16
@@ -442,8 +460,12 @@ sha256_block_data_order:
 	addu	$7,$18			# +=Maj(a,b,c)
 	addu	$31,$16
 	addu	$7,$16
+#if defined(_MIPS_ARCH_MIPS32R6) || defined(_MIPS_ARCH_MIPS64R6)
+	lw	$14,24($5)
+#else
 	lwl	$14,27($5)
 	lwr	$14,24($5)
+#endif
 #if defined(_MIPS_ARCH_MIPS32R2) || defined(_MIPS_ARCH_MIPS64R2)
 	wsbh	$13,$13		# byte swap(5)
 	rotr	$13,$13,16
@@ -520,8 +542,12 @@ sha256_block_data_order:
 	addu	$3,$19			# +=Maj(a,b,c)
 	addu	$30,$17
 	addu	$3,$17
+#if defined(_MIPS_ARCH_MIPS32R6) || defined(_MIPS_ARCH_MIPS64R6)
+	lw	$15,28($5)
+#else
 	lwl	$15,31($5)
 	lwr	$15,28($5)
+#endif
 #if defined(_MIPS_ARCH_MIPS32R2) || defined(_MIPS_ARCH_MIPS64R2)
 	wsbh	$14,$14		# byte swap(6)
 	rotr	$14,$14,16
@@ -598,8 +624,12 @@ sha256_block_data_order:
 	addu	$2,$20			# +=Maj(a,b,c)
 	addu	$25,$18
 	addu	$2,$18
+#if defined(_MIPS_ARCH_MIPS32R6) || defined(_MIPS_ARCH_MIPS64R6)
+	lw	$16,32($5)
+#else
 	lwl	$16,35($5)
 	lwr	$16,32($5)
+#endif
 #if defined(_MIPS_ARCH_MIPS32R2) || defined(_MIPS_ARCH_MIPS64R2)
 	wsbh	$15,$15		# byte swap(7)
 	rotr	$15,$15,16
@@ -676,8 +706,12 @@ sha256_block_data_order:
 	addu	$1,$21			# +=Maj(a,b,c)
 	addu	$24,$19
 	addu	$1,$19
+#if defined(_MIPS_ARCH_MIPS32R6) || defined(_MIPS_ARCH_MIPS64R6)
+	lw	$17,36($5)
+#else
 	lwl	$17,39($5)
 	lwr	$17,36($5)
+#endif
 #if defined(_MIPS_ARCH_MIPS32R2) || defined(_MIPS_ARCH_MIPS64R2)
 	wsbh	$16,$16		# byte swap(8)
 	rotr	$16,$16,16
@@ -754,8 +788,12 @@ sha256_block_data_order:
 	addu	$31,$22			# +=Maj(a,b,c)
 	addu	$7,$20
 	addu	$31,$20
+#if defined(_MIPS_ARCH_MIPS32R6) || defined(_MIPS_ARCH_MIPS64R6)
+	lw	$18,40($5)
+#else
 	lwl	$18,43($5)
 	lwr	$18,40($5)
+#endif
 #if defined(_MIPS_ARCH_MIPS32R2) || defined(_MIPS_ARCH_MIPS64R2)
 	wsbh	$17,$17		# byte swap(9)
 	rotr	$17,$17,16
@@ -832,8 +870,12 @@ sha256_block_data_order:
 	addu	$30,$23			# +=Maj(a,b,c)
 	addu	$3,$21
 	addu	$30,$21
+#if defined(_MIPS_ARCH_MIPS32R6) || defined(_MIPS_ARCH_MIPS64R6)
+	lw	$19,44($5)
+#else
 	lwl	$19,47($5)
 	lwr	$19,44($5)
+#endif
 #if defined(_MIPS_ARCH_MIPS32R2) || defined(_MIPS_ARCH_MIPS64R2)
 	wsbh	$18,$18		# byte swap(10)
 	rotr	$18,$18,16
@@ -910,8 +952,12 @@ sha256_block_data_order:
 	addu	$25,$8			# +=Maj(a,b,c)
 	addu	$2,$22
 	addu	$25,$22
+#if defined(_MIPS_ARCH_MIPS32R6) || defined(_MIPS_ARCH_MIPS64R6)
+	lw	$20,48($5)
+#else
 	lwl	$20,51($5)
 	lwr	$20,48($5)
+#endif
 #if defined(_MIPS_ARCH_MIPS32R2) || defined(_MIPS_ARCH_MIPS64R2)
 	wsbh	$19,$19		# byte swap(11)
 	rotr	$19,$19,16
@@ -988,8 +1034,12 @@ sha256_block_data_order:
 	addu	$24,$9			# +=Maj(a,b,c)
 	addu	$1,$23
 	addu	$24,$23
+#if defined(_MIPS_ARCH_MIPS32R6) || defined(_MIPS_ARCH_MIPS64R6)
+	lw	$21,52($5)
+#else
 	lwl	$21,55($5)
 	lwr	$21,52($5)
+#endif
 #if defined(_MIPS_ARCH_MIPS32R2) || defined(_MIPS_ARCH_MIPS64R2)
 	wsbh	$20,$20		# byte swap(12)
 	rotr	$20,$20,16
@@ -1066,8 +1116,12 @@ sha256_block_data_order:
 	addu	$7,$10			# +=Maj(a,b,c)
 	addu	$31,$8
 	addu	$7,$8
+#if defined(_MIPS_ARCH_MIPS32R6) || defined(_MIPS_ARCH_MIPS64R6)
+	lw	$22,56($5)
+#else
 	lwl	$22,59($5)
 	lwr	$22,56($5)
+#endif
 #if defined(_MIPS_ARCH_MIPS32R2) || defined(_MIPS_ARCH_MIPS64R2)
 	wsbh	$21,$21		# byte swap(13)
 	rotr	$21,$21,16
@@ -1145,8 +1199,12 @@ sha256_block_data_order:
 	addu	$30,$9
 	addu	$3,$9
 	lw	$8,0($29)	# prefetch from ring buffer
+#if defined(_MIPS_ARCH_MIPS32R6) || defined(_MIPS_ARCH_MIPS64R6)
+	lw	$23,60($5)
+#else
 	lwl	$23,63($5)
 	lwr	$23,60($5)
+#endif
 #if defined(_MIPS_ARCH_MIPS32R2) || defined(_MIPS_ARCH_MIPS64R2)
 	wsbh	$22,$22		# byte swap(14)
 	rotr	$22,$22,16
@@ -2908,13 +2966,13 @@ sha256_block_data_order:
 	li	$15,2290
 	.set	noreorder
 	bne	$14,$15,.L16_xx
-	add $6,16*4		# Ktbl+=16
+	addu $6,16*4		# Ktbl+=16
 
 	lw	$23,16*4($29)	# restore pointer to the end of input
 	lw	$8,0*4($4)
 	lw	$9,1*4($4)
 	lw	$10,2*4($4)
-	add $5,16*4
+	addu $5,16*4
 	lw	$11,3*4($4)
 	addu	$1,$8
 	lw	$12,4*4($4)
@@ -2938,7 +2996,7 @@ sha256_block_data_order:
 	sw	$31,7*4($4)
 
 	bne	$5,$23,.Loop
-	sub $6,192	# rewind $6
+	subu $6,192	# rewind $6
 
 	lw	$31,128-1*4($29)
 	lw	$30,128-2*4($29)
@@ -2951,7 +3009,7 @@ sha256_block_data_order:
 	lw	$17,128-9*4($29)
 	lw	$16,128-10*4($29)
 	jr	$31
-	add $29,128
+	addu $29,128
 .end	sha256_block_data_order
 
 .rdata
