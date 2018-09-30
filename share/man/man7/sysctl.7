@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.7,v 1.124.2.4 2018/09/06 06:55:22 pgoyette Exp $
+.\"	$NetBSD: sysctl.7,v 1.124.2.5 2018/09/30 01:45:35 pgoyette Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)sysctl.3	8.4 (Berkeley) 5/9/95
 .\"
-.Dd September 2, 2018
+.Dd September 6, 2018
 .Dt SYSCTL 7
 .Os
 .Sh NAME
@@ -2046,7 +2046,7 @@ The variables are as follows:
 .It Li debug
 Turn on debugging message from within the kernel.
 The value is a bitmap, as defined in
-.In netkey/key_debug.h .
+.In netipsec/key_debug.h .
 .It Li enabled
 Control processing of IPsec control messages.
 .Bl -tag -width indent

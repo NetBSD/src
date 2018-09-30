@@ -1,4 +1,4 @@
-/*	$NetBSD: smdk2410_machdep.c,v 1.36.14.1 2018/09/06 06:55:32 pgoyette Exp $ */
+/*	$NetBSD: smdk2410_machdep.c,v 1.36.14.2 2018/09/30 01:45:43 pgoyette Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Fujitsu Component Limited
@@ -105,9 +105,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smdk2410_machdep.c,v 1.36.14.1 2018/09/06 06:55:32 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smdk2410_machdep.c,v 1.36.14.2 2018/09/30 01:45:43 pgoyette Exp $");
 
 #include "opt_arm_debug.h"
+#include "opt_console.h"
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
 #include "opt_pmap_debug.h"

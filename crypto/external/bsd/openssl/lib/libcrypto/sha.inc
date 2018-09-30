@@ -1,4 +1,4 @@
-#	$NetBSD: sha.inc,v 1.4.2.1 2018/04/07 04:11:56 pgoyette Exp $
+#	$NetBSD: sha.inc,v 1.4.2.2 2018/09/30 01:44:52 pgoyette Exp $
 #
 #	@(#) Copyright (c) 1995 Simon J. Gerraty
 #
@@ -11,8 +11,11 @@
 SHA_SRCS += sha1dgst.c sha1_one.c
 
 # Replaced OpenSSL version to avoid overlap with libc
-SHA_SRCS+= libc-sha512.c libc-sha256.c
+SHA_SRCS+= libc-sha512.c libc-sha256.c libc-sha2xx.c
 #SHA_SRCS+= sha256.c sha512.c
+.if !defined(KECCAKNI)
+SHA_SRCS+= keccak1600.c
+.endif
 
 SRCS += ${SHA_SRCS}
 

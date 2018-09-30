@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_mroute.c,v 1.154.2.5 2018/07/28 04:38:10 pgoyette Exp $	*/
+/*	$NetBSD: ip_mroute.c,v 1.154.2.6 2018/09/30 01:45:56 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.154.2.5 2018/07/28 04:38:10 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.154.2.6 2018/09/30 01:45:56 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -2919,22 +2919,16 @@ pim_register_send_rp(struct ip *ip, struct vif *vifp,
  * is passed to if_simloop().
  */
 void
-pim_input(struct mbuf *m, ...)
+pim_input(struct mbuf *m, int off, int proto)
 {
 	struct ip *ip = mtod(m, struct ip *);
 	struct pim *pim;
 	int minlen;
 	int datalen;
 	int ip_tos;
-	int proto;
 	int iphlen;
-	va_list ap;
 
-	va_start(ap, m);
-	iphlen = va_arg(ap, int);
-	proto = va_arg(ap, int);
-	va_end(ap);
-
+	iphlen = off;
 	datalen = ntohs(ip->ip_len) - iphlen;
 
 	/* Keep statistics */

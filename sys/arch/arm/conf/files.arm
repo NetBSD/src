@@ -1,4 +1,4 @@
-#	$NetBSD: files.arm,v 1.138.2.4 2018/09/27 02:44:24 pgoyette Exp $
+#	$NetBSD: files.arm,v 1.138.2.5 2018/09/30 01:45:37 pgoyette Exp $
 
 # temporary define to allow easy moving to ../arch/arm/arm32
 defflag				ARM32
@@ -86,8 +86,14 @@ defflag  opt_arm_bus_space.h	__BUS_SPACE_HAS_STREAM_METHODS
 # Timer options
 defflag opt_arm_timer.h		__HAVE_GENERIC_CPU_INITCLOCKS
 
+# Console options
+defparam opt_console.h		CONSADDR
+defparam opt_console.h		CONSPEED
+defparam opt_console.h		CONMODE
+defparam opt_console.h		CONADDR
+
 # Floating point emulator
-obsolete defflag				ARMFPE
+obsolete defflag		ARMFPE
 
 # VFP support
 file	arch/arm/vfp/vfp_init.c			arm32

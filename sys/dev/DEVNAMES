@@ -1,4 +1,4 @@
-#	$NetBSD: DEVNAMES,v 1.307.2.3 2018/07/28 04:37:43 pgoyette Exp $
+#	$NetBSD: DEVNAMES,v 1.307.2.4 2018/09/30 01:45:49 pgoyette Exp $
 #
 # This file contains all used device names and defined attributes in
 # alphabetical order. New devices added to the system somewhere should first
@@ -105,8 +105,6 @@ asc			vax
 asiop			amiga		Attribute
 asiop			amigappc	Attribute
 ast			MI
-aster			amiga
-aster			amigappc
 ata			MI		Attribute
 ata_dma			MI		Attribute
 ata_hl			MI		Attribute
@@ -328,7 +326,6 @@ cy			MI
 cy82c693		MI
 cypide			MI
 cz			MI
-#daic			MI
 dbcool			MI
 dbri			sparc
 dcm			hp300
@@ -613,7 +610,6 @@ i2cbus			MI		Attribute
 i2c_eeprom		MI		Attribute
 i8042			shark		Attribute
 i82586			MI		Attribute
-iavc			MI
 ibmcd			MI
 ibus			pmax
 ibus			vax
@@ -630,7 +626,6 @@ ie			MI
 ie			acorn32
 ie			sun3
 ieee1394		MI
-ifpci			MI
 ifuba			MI		Attribute
 igsfb			MI
 iha			MI
@@ -669,13 +664,11 @@ ipaqpcic		hpcarm
 ipmi			amd64
 ipmi			i386
 ipmi			xen
-ippp			MI
 ipw			MI
 irdasir			MI		Attribute
 irframe			MI
 irframedrv		MI		Attribute
 irif			hpcmips
-irip			MI
 isa			MI
 isabeep			alpha
 isabeep			prep
@@ -684,12 +677,6 @@ isabus			MI		Attribute
 isabus			atari
 isadma			MI		Attribute
 isapnp			MI
-isdn			MI
-isdnbchan		MI
-isdnctl			MI
-isdntel			MI
-isdntrc			MI
-isic			MI
 ismt			amd64
 ismt			i386
 isp			MI
@@ -704,7 +691,6 @@ iteide			MI
 ivsc			amiga
 ivsc			amigappc
 iwi			MI
-iwic			MI
 iwm			mac68k
 ix			MI
 ixg			MI

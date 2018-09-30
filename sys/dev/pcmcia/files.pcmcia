@@ -1,4 +1,4 @@
-#	$NetBSD: files.pcmcia,v 1.58 2012/08/25 08:20:03 kiyohara Exp $
+#	$NetBSD: files.pcmcia,v 1.58.38.1 2018/09/30 01:45:51 pgoyette Exp $
 #
 # Config.new file and device description for machine-independent PCMCIA code.
 # Included by ports that need it.
@@ -114,18 +114,6 @@ file	dev/pcmcia/if_cs_pcmcia.c		cs_pcmcia
 # Aironet PC4500/PC4800
 attach	an at pcmcia with an_pcmcia
 file	dev/pcmcia/if_an_pcmcia.c		an_pcmcia
-
-# ISDN devices
-attach	isic at pcmcia with isic_pcmcia
-file	dev/pcmcia/isic_pcmcia.c		isic_pcmcia
-
-defflag	opt_isicpcmcia.h	ISICPCMCIA_AVM_A1 ISICPCMCIA_ELSA_ISDNMC
-				ISICPCMCIA_ELSA_MCALL ISICPCMCIA_SBSPEEDSTAR2
-
-file	dev/pcmcia/isic_pcmcia_avm_fritz.c	isic_pcmcia
-file	dev/pcmcia/isic_pcmcia_elsa_isdnmc.c	isic_pcmcia
-file	dev/pcmcia/isic_pcmcia_elsa_mcall.c	isic_pcmcia
-file	dev/pcmcia/isic_pcmcia_sbspeedstar2.c	isic_pcmcia
 
 # 3Com Bluetooth controller 3CRW6096
 device	bt3c: btbus, bluetooth, firmload

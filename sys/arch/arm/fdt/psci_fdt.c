@@ -1,4 +1,4 @@
-/* $NetBSD: psci_fdt.c,v 1.3.4.3 2018/09/06 06:55:26 pgoyette Exp $ */
+/* $NetBSD: psci_fdt.c,v 1.3.4.4 2018/09/30 01:45:38 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: psci_fdt.c,v 1.3.4.3 2018/09/06 06:55:26 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: psci_fdt.c,v 1.3.4.4 2018/09/30 01:45:38 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -40,12 +40,8 @@ __KERNEL_RCSID(0, "$NetBSD: psci_fdt.c,v 1.3.4.3 2018/09/06 06:55:26 pgoyette Ex
 
 #include <dev/fdt/fdtvar.h>
 
-#include <arm/locore.h>
-#include <arm/armreg.h>
-#include <arm/cpufunc.h>
-
 #include <arm/arm/psci.h>
-#include <arm/fdt/psci_fdt.h>
+#include <arm/fdt/psci_fdtvar.h>
 
 static int	psci_fdt_match(device_t, cfdata_t, void *);
 static void	psci_fdt_attach(device_t, device_t, void *);
@@ -142,7 +138,7 @@ psci_fdt_init(const int phandle)
 	return 0;
 }
 
-static int
+int
 psci_fdt_preinit(void)
 {
 	const int phandle = OF_finddevice("/psci");
@@ -152,84 +148,6 @@ psci_fdt_preinit(void)
 	}
 
 	return psci_fdt_init(phandle);
-}
-
-#ifdef MULTIPROCESSOR
-
-static register_t
-psci_fdt_mpstart_pa(void)
-{
-#ifdef __aarch64__
-	extern void aarch64_mpstart(void);
-	return (register_t)aarch64_kern_vtophys((vaddr_t)aarch64_mpstart);
-#else
-	extern void cortex_mpstart(void);
-	return (register_t)cortex_mpstart;
-#endif
-}
-#endif
-
-void
-psci_fdt_bootstrap(void)
-{
-#ifdef MULTIPROCESSOR
-	uint64_t mpidr, bp_mpidr;
-	u_int cpuindex;
-	int child;
-	const char *devtype;
-
-	const int cpus = OF_finddevice("/cpus");
-	if (cpus == -1) {
-		aprint_error("PSCI: no /cpus node found\n");
-		arm_cpu_max = 1;
-		return;
-	}
-
-	/* Count CPUs */
-	arm_cpu_max = 0;
-	for (child = OF_child(cpus); child; child = OF_peer(child))
-		if (fdtbus_status_okay(child) && ((devtype =
-		    fdtbus_get_string(child, "device_type")) != NULL) &&
-		    (strcmp(devtype, "cpu") == 0))
-			arm_cpu_max++;
-
-	if (psci_fdt_preinit() != 0)
-		return;
-
-	/* MPIDR affinity levels of boot processor. */
-	bp_mpidr = cpu_mpidr_aff_read();
-
-	/* Boot APs */
-	cpuindex = 1;
-	for (child = OF_child(cpus); child; child = OF_peer(child)) {
-		if (!fdtbus_status_okay(child))
-			continue;
-		if (fdtbus_get_reg64(child, 0, &mpidr, NULL) != 0)
-			continue;
-		if (mpidr == bp_mpidr)
-			continue; 	/* BP already started */
-
-#ifdef __aarch64__
-		/* argument for mpstart() */
-		arm_cpu_hatch_arg = cpuindex;
-		cpu_dcache_wb_range((vaddr_t)&arm_cpu_hatch_arg,
-		    sizeof(arm_cpu_hatch_arg));
-#endif
-
-		int ret = psci_cpu_on(cpuindex, psci_fdt_mpstart_pa(), 0);
-		if (ret != PSCI_SUCCESS)
-			continue;
-
-		/* Wait for APs to start */
-		for (u_int i = 0x4000000; i > 0; i--) {
-			membar_consumer();
-			if (arm_cpu_hatched & __BIT(cpuindex))
-				break;
-		}
-
-		cpuindex++;
-	}
-#endif
 }
 
 void

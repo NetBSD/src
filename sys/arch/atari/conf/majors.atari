@@ -1,4 +1,4 @@
-#	$NetBSD: majors.atari,v 1.22 2011/06/30 20:09:20 wiz Exp $
+#	$NetBSD: majors.atari,v 1.22.52.1 2018/09/30 01:45:39 pgoyette Exp $
 #
 # Device majors for atari
 #
@@ -42,11 +42,6 @@ device-major	et		char 40			et
 device-major	wsdisplay	char 41			wsdisplay
 device-major	audio		char 42			audio
 
-device-major	isdn		char 44			isdn
-device-major	isdnctl		char 45			isdnctl
-device-major	isdnbchan	char 46			isdnbchan
-device-major	isdntrc		char 47			isdntrc
-device-major	isdntel		char 48			isdntel
 device-major	scsibus		char 49			scsibus
 device-major	raid		char 50  block 15	raid
 device-major	svr4_net	char 51			compat_svr4

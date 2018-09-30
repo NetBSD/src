@@ -1,4 +1,4 @@
-#	$NetBSD: majors.evbmips,v 1.30 2016/12/08 11:31:10 nat Exp $
+#	$NetBSD: majors.evbmips,v 1.30.14.1 2018/09/30 01:45:43 pgoyette Exp $
 #
 # Device majors for evbmips
 #
@@ -48,11 +48,6 @@ device-major	ulpt		char 47			ulpt
 device-major	ugen		char 48			ugen
 device-major	midi		char 49			midi
 device-major	sequencer	char 50			sequencer
-device-major	isdn		char 51			isdn
-device-major	isdnctl		char 52			isdnctl
-device-major	isdnbchan	char 53			isdnbchan
-device-major	isdntrc		char 54			isdntrc
-device-major	isdntel		char 55			isdntel
 device-major	wsmux		char 56			wsmux
 device-major	ucom		char 57			ucom
 device-major	ses		char 58			ses

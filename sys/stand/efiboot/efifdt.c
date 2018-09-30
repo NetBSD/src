@@ -1,4 +1,4 @@
-/* $NetBSD: efifdt.c,v 1.7.2.2 2018/09/06 06:56:47 pgoyette Exp $ */
+/* $NetBSD: efifdt.c,v 1.7.2.3 2018/09/30 01:45:58 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -65,6 +65,16 @@ efi_fdt_probe(void)
 	return 0;
 }
 
+int
+efi_fdt_set_data(void *data)
+{
+	if (fdt_check_header(data) != 0)
+		return EINVAL;
+
+	fdt_data = data;
+	return 0;
+}
+
 void *
 efi_fdt_data(void)
 {
@@ -75,6 +85,28 @@ int
 efi_fdt_size(void)
 {
 	return fdt_data == NULL ? 0 : fdt_totalsize(fdt_data);
+}
+
+void
+efi_fdt_init(u_long addr, u_long len)
+{
+	int error;
+
+	error = fdt_open_into(fdt_data, (void *)addr, len);
+	if (error < 0)
+		panic("fdt_open_into failed: %d", error);
+
+	fdt_data = (void *)addr;
+}
+
+void
+efi_fdt_fini(void)
+{
+	int error;
+
+	error = fdt_pack(fdt_data);
+	if (error < 0)
+		panic("fdt_pack failed: %d", error);
 }
 
 void
@@ -193,4 +225,22 @@ efi_fdt_bootargs(const char *bootargs)
 			break;
 		}
 	}
+}
+
+void
+efi_fdt_initrd(u_long initrd_addr, u_long initrd_size)
+{
+	int chosen;
+
+	if (initrd_size == 0)
+		return;
+
+	chosen = fdt_path_offset(fdt_data, FDT_CHOSEN_NODE_PATH);
+	if (chosen < 0)
+		chosen = fdt_add_subnode(fdt_data, fdt_path_offset(fdt_data, "/"), FDT_CHOSEN_NODE_NAME);
+	if (chosen < 0)
+		panic("FDT: Failed to create " FDT_CHOSEN_NODE_PATH " node");
+
+	fdt_setprop_u64(fdt_data, chosen, "linux,initrd-start", initrd_addr);
+	fdt_setprop_u64(fdt_data, chosen, "linux,initrd-end", initrd_addr + initrd_size);
 }

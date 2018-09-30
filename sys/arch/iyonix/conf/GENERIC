@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.97.2.2 2018/09/06 06:55:35 pgoyette Exp $
+#	$NetBSD: GENERIC,v 1.97.2.3 2018/09/30 01:45:45 pgoyette Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/iyonix/conf/std.iyonix"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.97.2.2 $"
+#ident 		"GENERIC-$Revision: 1.97.2.3 $"
 
 maxusers	32		# estimated number of users
 
@@ -382,7 +382,6 @@ uk*	at atapibus? drive ? flags 0x0000	# ATAPI unknown
 #bge* 	at pci? dev ? function ?	# Broadcom 570x gigabit Ethernet
 #bnx* 	at pci? dev ? function ?	# Broadcom NetXtremeII gigabit Ethernet
 #dge*	at pci? dev ? function ?	# Intel 82597 10GbE LR
-#en*	at pci? dev ? function ?	# ENI/Adaptec ATM
 #ep*	at pci? dev ? function ?	# 3Com 3c59x
 #epic*	at pci? dev ? function ?	# SMC EPIC/100 Ethernet
 #esh*	at pci? dev ? function ?	# Essential HIPPI card

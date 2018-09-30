@@ -1,4 +1,4 @@
-#	$NetBSD: files.isa,v 1.169 2018/01/02 00:25:35 christos Exp $
+#	$NetBSD: files.isa,v 1.169.2.1 2018/09/30 01:45:50 pgoyette Exp $
 #
 # Config file and device description for machine-independent ISA code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -483,22 +483,6 @@ file	dev/isa/ug_isa.c		ug_isa
 device	aps: sysmon_envsys
 attach	aps at isa with aps
 file	dev/isa/aps.c 			aps
-
-# ISDN devices
-attach	isic at isa with isic_isa
-file	dev/isa/isic_isa.c		isic_isa
-#attach	daic at isa with daic_isa
-#file	dev/isa/daic_isa.c		daic_isa
-
-defflag	opt_isicisa.h	ISICISA_TEL_S0_8 ISICISA_TEL_S0_16 ISICISA_TEL_S0_16_3
-			ISICISA_AVM_A1 ISICISA_USR_STI ISICISA_ITKIX1
-
-file	dev/isa/isic_isa_tel_s08.c	isic_isa
-file	dev/isa/isic_isa_tel_s016.c	isic_isa
-file	dev/isa/isic_isa_tel_s0163.c	isic_isa
-file	dev/isa/isic_isa_avm_a1.c	isic_isa
-file	dev/isa/isic_isa_usr_sti.c	isic_isa
-file	dev/isa/isic_isa_itk_ix1.c	isic_isa
 
 # Game adapter (joystick)
 attach	joy at isa with joy_isa

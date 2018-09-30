@@ -1,3 +1,5 @@
+#include "mips_arch.h"
+
 #ifdef MIPSEB
 # define MSB 0
 # define LSB 7
@@ -23,10 +25,15 @@ poly1305_init:
 
 	beqz	$5,.Lno_key
 
+#if defined(_MIPS_ARCH_MIPS64R6)
+	ld	$8,0($5)
+	ld	$9,8($5)
+#else
 	ldl	$8,0+MSB($5)
 	ldl	$9,8+MSB($5)
 	ldr	$8,0+LSB($5)
 	ldr	$9,8+LSB($5)
+#endif
 #ifdef	MIPSEB
 # if defined(_MIPS_ARCH_MIPS64R2)
 	dsbh	$8,$8		# byte swap
@@ -107,7 +114,7 @@ poly1305_blocks_internal:
 	.frame	$29,6*8,$31
 	.mask	0x00030000,-8
 	.set	noreorder
-	dsub	$29,6*8
+	dsubu	$29,6*8
 	sd	$17,40($29)
 	sd	$16,32($29)
 	.set	reorder
@@ -121,11 +128,16 @@ poly1305_blocks_internal:
 	ld	$17,40($4)
 
 .Loop:
+#if defined(_MIPS_ARCH_MIPS64R6)
+	ld	$8,0($5)		# load input
+	ld	$9,8($5)
+#else
 	ldl	$8,0+MSB($5)	# load input
 	ldl	$9,8+MSB($5)
 	ldr	$8,0+LSB($5)
-	daddiu	$6,-1
 	ldr	$9,8+LSB($5)
+#endif
+	daddiu	$6,-1
 	daddiu	$5,16
 #ifdef	MIPSEB
 # if defined(_MIPS_ARCH_MIPS64R2)
@@ -175,42 +187,42 @@ poly1305_blocks_internal:
 	sltu	$11,$13,$9
 	daddu	$13,$10
 
-	dmultu	$15,$12			# h0*r0
+	dmultu	($15,$12)		# h0*r0
 	 daddu	$14,$7
 	 sltu	$10,$13,$10
-	mflo	$8
-	mfhi	$9
+	mflo	($8,$15,$12)
+	mfhi	($9,$15,$12)
 
-	dmultu	$17,$13			# h1*5*r1
+	dmultu	($17,$13)		# h1*5*r1
 	 daddu	$10,$11
 	 daddu	$14,$10
-	mflo	$10
-	mfhi	$11
+	mflo	($10,$17,$13)
+	mfhi	($11,$17,$13)
 
-	dmultu	$16,$12			# h0*r1
+	dmultu	($16,$12)		# h0*r1
 	 daddu	$8,$10
 	 daddu	$9,$11
-	mflo	$1
-	mfhi	$25
+	mflo	($1,$16,$12)
+	mfhi	($25,$16,$12)
 	 sltu	$10,$8,$10
 	 daddu	$9,$10
 
-	dmultu	$15,$13			# h1*r0
+	dmultu	($15,$13)		# h1*r0
 	 daddu	$9,$1
 	 sltu	$1,$9,$1
-	mflo	$10
-	mfhi	$11
+	mflo	($10,$15,$13)
+	mfhi	($11,$15,$13)
 	 daddu	$25,$1
 
-	dmultu	$17,$14			# h2*5*r1
+	dmultu	($17,$14)		# h2*5*r1
 	 daddu	$9,$10
 	 daddu	$25,$11
-	mflo	$1
+	mflo	($1,$17,$14)
 
-	dmultu	$15,$14			# h2*r0
+	dmultu	($15,$14)		# h2*r0
 	 sltu	$10,$9,$10
 	 daddu	$25,$10
-	mflo	$2
+	mflo	($2,$15,$14)
 
 	daddu	$9,$1
 	daddu	$25,$2
@@ -238,7 +250,7 @@ poly1305_blocks_internal:
 	ld	$17,40($29)		# epilogue
 	ld	$16,32($29)
 	jr	$31
-	dadd	$29,6*8
+	daddu	$29,6*8
 .end	poly1305_blocks_internal
 .align	5
 .globl	poly1305_emit

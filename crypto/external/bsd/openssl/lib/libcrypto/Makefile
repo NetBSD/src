@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15.2.1 2018/04/07 04:11:56 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.15.2.2 2018/09/30 01:44:52 pgoyette Exp $
 
 # RCSid:
 #	Id: Makefile,v 1.33 1998/11/11 11:53:53 sjg Exp
@@ -20,7 +20,7 @@ LIB=	crypto
 USE_FORT?= yes	# cryptographic software
 USE_SHLIBDIR=	yes
 USE_FIPS=	no
-DBG=-g
+#DBG=-g
 
 .include <bsd.own.mk>
 .include <bsd.shlib.mk>
@@ -57,7 +57,7 @@ OS_VERSION!= ${HOST_SH} ${NETBSDSRCDIR}/sys/conf/osrelease.sh
 ${SRCS}: buildinf.h
 buildinf.h: Makefile
 	@echo "#ifndef MK1MF_BUILD" >buildinf.h
-	@echo "#define CFLAGS \"`${CC} -v 2>&1 | grep 'gcc version'`\"" >>buildinf.h
+	@echo "#define compiler_flags \"`${CC} -v 2>&1 | grep 'gcc version'`\"" >>buildinf.h
 	@echo "#define PLATFORM \"NetBSD-${MACHINE_ARCH}\"" >>buildinf.h
 	@echo "#define DATE \"NetBSD ${OS_VERSION}\"" >>buildinf.h
 	@echo "#endif" >>buildinf.h
@@ -66,16 +66,108 @@ CLEANFILES+= buildinf.h
 
 # This list is built from the contents of the include/openssl
 # directory in the OpenSSL source distribution.
-INCS+=	aes.h asn1.h asn1_mac.h asn1t.h bio.h blowfish.h bn.h \
-	buffer.h cast.h cmac.h cms.h comp.h conf.h conf_api.h crypto.h des.h \
-	dh.h dsa.h dso.h e_os2.h ebcdic.h ec.h ecdh.h ecdsa.h engine.h \
-	err.h evp.h hmac.h lhash.h kdf.h md2.h md4.h md5.h modes.h \
-	obj_mac.h objects.h ocsp.h opensslconf.h opensslv.h ossl_typ.h \
-	pem.h pem2.h pkcs12.h pkcs7.h rand.h rc2.h rc4.h ripemd.h \
-	rsa.h safestack.h sha.h srp.h stack.h symhacks.h ts.h txt_db.h \
-	ui.h x509.h x509_vfy.h x509v3.h camellia.h \
-	whrlpool.h seed.h ct.h
-#	des_old.h 
+INCS+= \
+aes.h \
+asn1.h \
+asn1_mac.h \
+asn1err.h \
+asn1t.h \
+async.h \
+asyncerr.h \
+bio.h \
+bioerr.h \
+blowfish.h \
+bn.h \
+bnerr.h \
+buffer.h \
+buffererr.h \
+camellia.h \
+cast.h \
+cmac.h \
+cms.h \
+cmserr.h \
+comp.h \
+comperr.h \
+conf.h \
+conf_api.h \
+conferr.h \
+crypto.h \
+cryptoerr.h \
+ct.h \
+cterr.h \
+des.h \
+dh.h \
+dherr.h \
+dsa.h \
+dsaerr.h \
+dtls1.h \
+e_os2.h \
+ebcdic.h \
+ec.h \
+ecdh.h \
+ecdsa.h \
+ecerr.h \
+engine.h \
+engineerr.h \
+err.h \
+evp.h \
+evperr.h \
+hmac.h \
+kdf.h \
+kdferr.h \
+lhash.h \
+md2.h \
+md4.h \
+md5.h \
+modes.h \
+obj_mac.h \
+objects.h \
+objectserr.h \
+ocsp.h \
+ocsperr.h \
+opensslconf.h \
+opensslv.h \
+ossl_typ.h \
+pem.h \
+pem2.h \
+pemerr.h \
+pkcs12.h \
+pkcs12err.h \
+pkcs7.h \
+pkcs7err.h \
+rand.h \
+rand_drbg.h \
+randerr.h \
+rc2.h \
+rc4.h \
+ripemd.h \
+rsa.h \
+rsaerr.h \
+safestack.h \
+seed.h \
+sha.h \
+srp.h \
+srtp.h \
+ssl.h \
+ssl2.h \
+ssl3.h \
+sslerr.h \
+stack.h \
+store.h \
+storeerr.h \
+symhacks.h \
+tls1.h \
+ts.h \
+tserr.h \
+txt_db.h \
+ui.h \
+uierr.h \
+whrlpool.h \
+x509.h \
+x509_vfy.h \
+x509err.h \
+x509v3.h \
+x509v3err.h
 
 # IDEA - patented, but we install the header anyways
 INCS+=	idea.h

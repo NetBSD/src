@@ -1,4 +1,4 @@
-#	$NetBSD: majors.riscv,v 1.2 2016/12/08 11:31:12 nat Exp $
+#	$NetBSD: majors.riscv,v 1.2.16.1 2018/09/30 01:45:46 pgoyette Exp $
 #
 # Device majors for evbmips
 #
@@ -15,11 +15,6 @@ device-major	satlink		char 38			satlink
 device-major	esh		char 44			esh
 device-major	midi		char 49			midi
 device-major	sequencer	char 50			sequencer
-device-major	isdn		char 51			isdn
-device-major	isdnctl		char 52			isdnctl
-device-major	isdnbchan	char 53			isdnbchan
-device-major	isdntrc		char 54			isdntrc
-device-major	isdntel		char 55			isdntel
 device-major	cy		char 60			cy
 device-major	cz		char 61			cz
 device-major	altq		char 64			altq

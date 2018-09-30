@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_parser.y,v 1.16.10.1 2018/04/07 04:12:01 pgoyette Exp $	*/
+/*	$NetBSD: ntp_parser.y,v 1.16.10.2 2018/09/30 01:45:18 pgoyette Exp $	*/
 
 /* ntp_parser.y
  *
@@ -23,6 +23,7 @@
   #include "ntp_scanner.h"
   #include "ntp_config.h"
   #include "ntp_crypto.h"
+  #include "ntp_calendar.h"
 
   #include "ntpsim.h"		/* HMS: Do we really want this all the time? */
 				/* SK: It might be a good idea to always

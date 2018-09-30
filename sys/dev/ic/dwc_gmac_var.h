@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_gmac_var.h,v 1.7.14.2 2018/07/28 04:37:45 pgoyette Exp $ */
+/* $NetBSD: dwc_gmac_var.h,v 1.7.14.3 2018/09/30 01:45:50 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2013, 2014 The NetBSD Foundation, Inc.

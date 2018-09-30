@@ -1,5 +1,5 @@
 /*	$KAME: dccp6_usrreq.c,v 1.13 2005/07/27 08:42:56 nishida Exp $	*/
-/*	$NetBSD: dccp6_usrreq.c,v 1.11 2017/01/24 07:09:25 ozaki-r Exp $ */
+/*	$NetBSD: dccp6_usrreq.c,v 1.11.14.1 2018/09/30 01:45:57 pgoyette Exp $ */
 
 /*
  * Copyright (C) 2003 WIDE Project.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dccp6_usrreq.c,v 1.11 2017/01/24 07:09:25 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dccp6_usrreq.c,v 1.11.14.1 2018/09/30 01:45:57 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -96,7 +96,7 @@ dccp6_input(struct mbuf **mp, int *offp, int proto)
 	IP6_EXTHDR_CHECK(m, *offp, sizeof(struct dccphdr), IPPROTO_DONE);
 #endif
 
-	dccp_input(m, *offp);
+	dccp_input(m, *offp, proto);
 	return IPPROTO_DONE;
 }
 

@@ -1,5 +1,3 @@
-/*	$NetBSD: npf_handler.c,v 1.37.12.2 2018/07/28 04:38:10 pgoyette Exp $	*/
-
 /*-
  * Copyright (c) 2009-2013 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -37,7 +35,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_handler.c,v 1.37.12.2 2018/07/28 04:38:10 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_handler.c,v 1.37.12.3 2018/09/30 01:45:56 pgoyette Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

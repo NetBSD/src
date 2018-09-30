@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.418.2.4 2018/07/28 04:37:25 pgoyette Exp $
+#       $NetBSD: Makefile,v 1.418.2.5 2018/09/30 01:45:35 pgoyette Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -592,13 +592,6 @@ MLINKS+=pci.9 pci_conf_read.9 \
 	pci.9 pci_mapreg_type.9 \
 	pci.9 pci_mapreg_map.9 \
 	pci.9 pci_mapreg_info.9 \
-	pci.9 pci_intr_map.9 \
-	pci.9 pci_intr_string.9 \
-	pci.9 pci_intr_evcnt.9 \
-	pci.9 pci_intr_establish.9 \
-	pci.9 pci_intr_establish_xname.9 \
-	pci.9 pci_intr_disestablish.9 \
-	pci.9 pci_intr_setattr.9 \
 	pci.9 pci_get_powerstate.9 \
 	pci.9 pci_set_powerstate.9 \
 	pci.9 pci_vpd_read.9 \
@@ -610,6 +603,13 @@ MLINKS+=pci.9 pci_conf_read.9 \
 	pci.9 PCI_VENDOR.9 \
 	pci.9 PCI_PRODUCT.9 \
 	pci.9 PCI_REVISION.9
+MLINKS+=pci_intr.9 pci_intr_map.9 \
+	pci_intr.9 pci_intr_string.9 \
+	pci_intr.9 pci_intr_evcnt.9 \
+	pci_intr.9 pci_intr_establish.9 \
+	pci_intr.9 pci_intr_establish_xname.9 \
+	pci_intr.9 pci_intr_disestablish.9 \
+	pci_intr.9 pci_intr_setattr.9
 MLINKS+=pci_msi.9 pci_msix.9 \
 	pci_msi.9 pci_intr_alloc.9 \
 	pci_msi.9 pci_intr_release.9 \

@@ -1,27 +1,27 @@
 #!/usr/bin/ksh
-/*
- * test.ksh - DTrace include file test script.
- *
- * $Id: test.ksh,v 1.1.1.1 2015/09/30 22:01:09 christos Exp $
- *
- * COPYRIGHT: Copyright (c) 2007 Brendan Gregg.
- *
- * CDDL HEADER START
- *
- *  The contents of this file are subject to the terms of the
- *  Common Development and Distribution License, Version 1.0 only
- *  (the "License").  You may not use this file except in compliance
- *  with the License.
- *
- *  You can obtain a copy of the license at Docs/cddl1.txt
- *  or http://www.opensolaris.org/os/licensing.
- *  See the License for the specific language governing permissions
- *  and limitations under the License.
- *
- * CDDL HEADER END
- *
- * 16-Sep-2007	Brendan Gregg	Created this.
- */
+#
+# test.ksh - DTrace include file test script.
+#
+# $Id: test.ksh,v 1.1.1.1.14.1 2018/09/30 01:45:29 pgoyette Exp $
+#
+# COPYRIGHT: Copyright (c) 2007 Brendan Gregg.
+#
+# CDDL HEADER START
+#
+#  The contents of this file are subject to the terms of the
+#  Common Development and Distribution License, Version 1.0 only
+#  (the "License").  You may not use this file except in compliance
+#  with the License.
+#
+#  You can obtain a copy of the license at Docs/cddl1.txt
+#  or http://www.opensolaris.org/os/licensing.
+#  See the License for the specific language governing permissions
+#  and limitations under the License.
+#
+# CDDL HEADER END
+#
+# 16-Sep-2007	Brendan Gregg	Created this.
+#
 
 dtrace -CI . -s /dev/stdin << END
 

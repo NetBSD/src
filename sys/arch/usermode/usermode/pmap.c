@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.106.16.2 2018/09/06 06:55:43 pgoyette Exp $ */
+/* $NetBSD: pmap.c,v 1.106.16.3 2018/09/30 01:45:48 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@NetBSD.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.106.16.2 2018/09/06 06:55:43 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.106.16.3 2018/09/30 01:45:48 pgoyette Exp $");
 
 #include "opt_memsize.h"
 #include "opt_kmempages.h"
@@ -898,7 +898,7 @@ pmap_do_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, uint flags, i
 		panic("pmap_do_enter: invalid va isued\n");
 #endif
 
-	/* raise interupt level */
+	/* raise interrupt level */
 	s = splvm();
 
 	/* remove existing mapping at this lpn */

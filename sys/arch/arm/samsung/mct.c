@@ -1,4 +1,4 @@
-/*	$NetBSD: mct.c,v 1.12.4.1 2018/07/28 04:37:29 pgoyette Exp $	*/
+/*	$NetBSD: mct.c,v 1.12.4.2 2018/09/30 01:45:38 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2014-2018 The NetBSD Foundation, Inc.
@@ -29,9 +29,12 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "opt_arm_timer.h"
+#include "opt_multiprocessor.h"
+
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: mct.c,v 1.12.4.1 2018/07/28 04:37:29 pgoyette Exp $");
+__KERNEL_RCSID(1, "$NetBSD: mct.c,v 1.12.4.2 2018/09/30 01:45:38 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -53,6 +56,15 @@ __KERNEL_RCSID(1, "$NetBSD: mct.c,v 1.12.4.1 2018/07/28 04:37:29 pgoyette Exp $"
 #include <dev/fdt/fdtvar.h>
 #include <arm/fdt/arm_fdtvar.h>
 
+#if defined(MULTIPROCESSOR)
+#if !defined(__HAVE_GENERIC_CPU_INITCLOCKS)
+#error MULTIPROCESSOR kernels require __HAVE_GENERIC_CPU_INITCLOCKS
+#endif
+#include <arm/cortex/gtmr_intr.h>
+#include <arm/cortex/mpcore_var.h>
+#include <arm/cortex/gtmr_var.h>
+#endif
+
 static struct mct_softc mct_sc;
 
 static int  mct_match(device_t, cfdata_t, void *);
@@ -65,7 +77,7 @@ static struct timecounter mct_timecounter = {
 	.tc_counter_mask = ~0u,
 	.tc_frequency = EXYNOS_F_IN_FREQ,
 	.tc_name = "MCT",
-	.tc_quality = 500,
+	.tc_quality = 400,
 	.tc_priv = &mct_sc,
 };
 
@@ -137,21 +149,16 @@ mct_write_global(struct mct_softc *sc, bus_size_t o, uint32_t v)
 	panic("MCT hangs after writing %#x at %#x", v, (uint32_t) o);
 }
 
-static void
-mct_fdt_cpu_hatch(void *priv, struct cpu_info *ci)
-{
-	panic("%s: not implemented", __func__);
-}
-
 static int
 mct_intr(void *arg)
 {
 	struct mct_softc * const sc = &mct_sc;
-	struct clockframe *frame = arg;
 
 	mct_write_global(sc, MCT_G_INT_CSTAT, G_INT_CSTAT_CLEAR);
 
-	hardclock(frame);
+#if !defined(MULTIPROCESSOR)
+	hardclock(arg);
+#endif
 
 	return 1;
 }
@@ -203,6 +210,19 @@ mct_cpu_initclocks(void)
 	mct_write_global(sc, MCT_G_COMP0_U, (uint32_t)(comp0 >> 32));
 	mct_write_global(sc, MCT_G_INT_ENB, G_INT_ENB_ENABLE);
 	mct_write_global(sc, MCT_G_TCON, G_TCON_START | G_TCON_COMP0_ENABLE | G_TCON_COMP0_AUTOINC);
+
+#if defined(MULTIPROCESSOR)
+	/* Initialize gtmr */
+	gtmr_cpu_initclocks();
+#endif
+}
+
+static void
+mct_fdt_cpu_hatch(void *priv, struct cpu_info *ci)
+{
+#if defined(MULTIPROCESSOR)
+	gtmr_init_cpu_clock(ci);
+#endif
 }
 
 static int
@@ -248,6 +268,17 @@ mct_attach(device_t parent, device_t self, void *aux)
 
 	arm_fdt_cpu_hatch_register(self, mct_fdt_cpu_hatch);
 	arm_fdt_timer_register(mct_cpu_initclocks);
+
+#if defined(MULTIPROCESSOR)
+	/* Start the timer */
+	mct_write_global(sc, MCT_G_TCON, G_TCON_START);
+
+	struct mpcore_attach_args mpcaa = {
+		.mpcaa_name = "armgtmr",
+		.mpcaa_irq = IRQ_GTMR_PPI_VTIMER,
+	};
+	config_found(self, &mpcaa, NULL);
+#endif
 }
 
 void

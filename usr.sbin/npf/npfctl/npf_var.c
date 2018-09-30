@@ -1,5 +1,3 @@
-/*	$NetBSD: npf_var.c,v 1.10 2017/01/11 02:11:21 christos Exp $	*/
-
 /*-
  * Copyright (c) 2011-2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -30,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_var.c,v 1.10 2017/01/11 02:11:21 christos Exp $");
+__RCSID("$NetBSD: npf_var.c,v 1.10.12.1 2018/09/30 01:46:01 pgoyette Exp $");
 
 #include <stdlib.h>
 #include <string.h>

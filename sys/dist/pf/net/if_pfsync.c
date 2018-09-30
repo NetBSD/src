@@ -1,4 +1,4 @@
-/*	$NetBSD: if_pfsync.c,v 1.15.16.1 2018/07/28 04:37:59 pgoyette Exp $	*/
+/*	$NetBSD: if_pfsync.c,v 1.15.16.2 2018/09/30 01:45:52 pgoyette Exp $	*/
 /*	$OpenBSD: if_pfsync.c,v 1.83 2007/06/26 14:44:12 mcbride Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pfsync.c,v 1.15.16.1 2018/07/28 04:37:59 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pfsync.c,v 1.15.16.2 2018/09/30 01:45:52 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -348,7 +348,7 @@ pfsync_insert_net_state(struct pfsync_state *sp, u_int8_t chksum_flag)
 }
 
 void
-pfsync_input(struct mbuf *m, ...)
+pfsync_input(struct mbuf *m, int off, int proto)
 {
 	struct ip *ip = mtod(m, struct ip *);
 	struct pfsync_header *ph;

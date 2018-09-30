@@ -1,4 +1,4 @@
-/*	$NetBSD: pcireg.h,v 1.137.2.2 2018/07/28 04:37:56 pgoyette Exp $	*/
+/*	$NetBSD: pcireg.h,v 1.137.2.3 2018/09/30 01:45:51 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1999, 2000
@@ -1699,7 +1699,10 @@ struct pci_rom {
  * Extended capability ID: 0x0007
  * Root Complex Event Collector Association
  */
-#define	PCI_RCEC_ASSOC_ASSOCBITMAP 0x04
+#define	PCI_RCEC_ASSOC_ASSOCBITMAP 0x04	/* Association Bitmap */
+#define	PCI_RCEC_ASSOC_ASSOCBUSNUM 0x08	/* Associcated Bus Number */
+#define	PCI_RCEC_ASSOCBUSNUM_RCECNEXT __BITS(15, 8)	/* RCEC Next Bus */
+#define	PCI_RCEC_ASSOCBUSNUM_RCECLAST __BITS(23, 16)	/* RCEC Last Bus */
 
 /*
  * Extended capability ID: 0x0008
@@ -1770,6 +1773,7 @@ struct pci_rom {
 #define	PCI_ATS_CAP_INVQDEPTH	__BITS(4, 0)	/* Invalidate Queue Depth */
 #define	PCI_ATS_CAP_PALIGNREQ	__BIT(5)	/* Page Aligned Request */
 #define	PCI_ATS_CAP_GLOBALINVL	__BIT(6)	/* Global Invalidate Support */
+#define	PCI_ATS_CAP_RELAXORD	__BIT(7)	/* Relaxed Ordering */
 #define	PCI_ATS_CTL	0x04	/* Control Register */
 #define	PCI_ATS_CTL_STU		__BITS(20, 16)	/* Smallest Translation Unit */
 #define	PCI_ATS_CTL_EN		__BIT(31)	/* Enable */

@@ -1,4 +1,4 @@
-/* $NetBSD: gicv3_fdt.c,v 1.2.2.2 2018/09/06 06:55:26 pgoyette Exp $ */
+/* $NetBSD: gicv3_fdt.c,v 1.2.2.3 2018/09/30 01:45:38 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2015-2018 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #define	_INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gicv3_fdt.c,v 1.2.2.2 2018/09/06 06:55:26 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gicv3_fdt.c,v 1.2.2.3 2018/09/30 01:45:38 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -44,6 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: gicv3_fdt.c,v 1.2.2.2 2018/09/06 06:55:26 pgoyette E
 #include <dev/fdt/fdtvar.h>
 
 #include <arm/cortex/gicv3.h>
+#include <arm/cortex/gic_reg.h>
 
 #define	GICV3_MAXIRQ	1020
 
@@ -163,7 +164,7 @@ gicv3_fdt_map_registers(struct gicv3_fdt_softc *sc)
 	bus_size_t size, region_off;
 	bus_addr_t addr;
 	size_t reg_off;
-	int n, r;
+	int n, r, max_redist, redist;
 
 	if (of_getprop_uint32(phandle, "#redistributor-regions", &redistributor_regions))
 		redistributor_regions = 1;
@@ -185,15 +186,15 @@ gicv3_fdt_map_registers(struct gicv3_fdt_softc *sc)
 	/*
 	 * GIC Redistributors (GICR)
 	 */
-	for (reg_off = 1, n = 0; n < redistributor_regions; n++, reg_off++) {
+	for (reg_off = 1, max_redist = 0, n = 0; n < redistributor_regions; n++, reg_off++) {
 		if (fdtbus_get_reg(phandle, reg_off, NULL, &size) != 0) {
 			aprint_error_dev(gic->sc_dev, "couldn't get redistributor registers\n");
 			return ENXIO;
 		}
-		gic->sc_bsh_r_count += howmany(size, redistributor_stride);
+		max_redist += howmany(size, redistributor_stride);
 	}
-	gic->sc_bsh_r = kmem_alloc(sizeof(bus_space_handle_t) * gic->sc_bsh_r_count, KM_SLEEP);
-	for (reg_off = 1, n = 0; n < redistributor_regions; n++, reg_off++) {
+	gic->sc_bsh_r = kmem_alloc(sizeof(bus_space_handle_t) * max_redist, KM_SLEEP);
+	for (reg_off = 1, redist = 0, n = 0; n < redistributor_regions; n++, reg_off++) {
 		if (fdtbus_get_reg(phandle, reg_off, &addr, &size) != 0) {
 			aprint_error_dev(gic->sc_dev, "couldn't get redistributor registers\n");
 			return ENXIO;
@@ -204,12 +205,18 @@ gicv3_fdt_map_registers(struct gicv3_fdt_softc *sc)
 		}
 		const int count = howmany(size, redistributor_stride);
 		for (r = 0, region_off = 0; r < count; r++, region_off += redistributor_stride) {
-			if (bus_space_subregion(sc->sc_gic.sc_bst, bsh, region_off, redistributor_stride, &gic->sc_bsh_r[r]) != 0) {
+			if (bus_space_subregion(sc->sc_gic.sc_bst, bsh, region_off, redistributor_stride, &gic->sc_bsh_r[redist++]) != 0) {
 				aprint_error_dev(gic->sc_dev, "couldn't subregion redistributor registers\n");
 				return ENXIO;
 			}
+
+			/* If this is the last redist in this region, skip to the next one */
+			const uint32_t typer = bus_space_read_4(sc->sc_gic.sc_bst, gic->sc_bsh_r[redist - 1], GICR_TYPER);
+			if (typer & GICR_TYPER_Last)
+				break;
 		}
 	}
+	gic->sc_bsh_r_count = redist;
 
 	return 0;
 }

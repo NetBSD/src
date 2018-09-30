@@ -1,6 +1,7 @@
-#	$NetBSD: Makefile,v 1.3 2012/01/15 22:34:33 jmcneill Exp $
+#	$NetBSD: Makefile,v 1.3.40.1 2018/09/30 01:45:03 pgoyette Exp $
 CDBASE=		prepcd		# gives ${CDBASE}.iso
 CDRELEASE=	true		# include $RELEASEDIR/$MACHINE
+CDRELEASE_NODEBUG=	true
 CDMAKEFSOPTIONS=bootimage=powerpc;cdrom/prep/installation/floppy/sysinst_com0.fs
 
 # prep needs a fdisk partition table at the head of the cd, pointing to the

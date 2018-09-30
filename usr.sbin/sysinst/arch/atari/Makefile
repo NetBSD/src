@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2015/08/12 18:20:02 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.2.14.1 2018/09/30 01:46:01 pgoyette Exp $
 #
 # Makefile for atari
 #
@@ -7,5 +7,9 @@
 LANGUAGES=	en de
 
 CPPFLAGS+=	-DSUPPORT_8_3_SOURCE_FILESYSTEM
+
+.ifdef SMALLPROG
+NOPARTMAN=	yes
+.endif
 
 .include "../../Makefile.inc"

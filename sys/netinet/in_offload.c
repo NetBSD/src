@@ -1,4 +1,4 @@
-/*	$NetBSD: in_offload.c,v 1.7.16.1 2018/07/28 04:38:10 pgoyette Exp $	*/
+/*	$NetBSD: in_offload.c,v 1.7.16.2 2018/09/30 01:45:56 pgoyette Exp $	*/
 
 /*
  * Copyright (c)2005, 2006 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_offload.c,v 1.7.16.1 2018/07/28 04:38:10 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_offload.c,v 1.7.16.2 2018/09/30 01:45:56 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -213,7 +213,7 @@ in_undefer_cksum(struct mbuf *m, size_t hdrlen, int csum_flags)
 	if (csum_flags & (M_CSUM_UDPv4|M_CSUM_TCPv4)) {
 		size_t l4offset = hdrlen + iphdrlen;
 
-		csum = in4_cksum(m, 0, l4offset, ip_len - l4offset - hdrlen);
+		csum = in4_cksum(m, 0, l4offset, ip_len - iphdrlen);
 		if (csum == 0 && (csum_flags & M_CSUM_UDPv4) != 0)
 			csum = 0xffff;
 

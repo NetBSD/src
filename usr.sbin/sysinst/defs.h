@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.9.14.3 2018/09/06 06:56:51 pgoyette Exp $	*/
+/*	$NetBSD: defs.h,v 1.9.14.4 2018/09/30 01:46:01 pgoyette Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -340,28 +340,40 @@ int  clean_xfer_dir;
 #define SYSINST_FTP_HOST	"ftp.NetBSD.org"
 #endif
 
+#if !defined(SYSINST_HTTP_HOST)
+#define SYSINST_HTTP_HOST	"cdn.NetBSD.org"
+#endif
+
 #if !defined(SYSINST_FTP_DIR)
 #if defined(NETBSD_OFFICIAL_RELEASE)
 #define SYSINST_FTP_DIR		"pub/NetBSD/NetBSD-" REL
-#elif defined(BUILDID) && defined(REL_PATH)
-#define SYSINST_FTP_DIR		"pub/NetBSD-daily/" REL_PATH "/" BUILDID "Z"
 #elif defined(REL_PATH)
-#define SYSINST_FTP_DIR		"pub/NetBSD-daily/" REL_PATH
+#define SYSINST_FTP_DIR		"pub/NetBSD-daily/" REL_PATH "/latest"
 #else
 #define SYSINST_FTP_DIR		"pub/NetBSD/NetBSD-" REL
 #endif
 #endif
 
 #if !defined(SYSINST_PKG_HOST)
-#define SYSINST_PKG_HOST		"pub/NetBSD/NetBSD-" REL
+#define SYSINST_PKG_HOST	"ftp.NetBSD.org"
+#endif
+#if !defined(SYSINST_PKG_HTTP_HOST)
+#define SYSINST_PKG_HTTP_HOST	"cdn.NetBSD.org"
 #endif
 
 #if !defined(SYSINST_PKG_DIR)
 #define SYSINST_PKG_DIR		"pub/pkgsrc/packages/NetBSD"
 #endif
 
+#if !defined(PKG_SUBDIR)
+#define	PKG_SUBDIR		REL
+#endif
+
 #if !defined(SYSINST_PKGSRC_HOST)
 #define SYSINST_PKGSRC_HOST	SYSINST_PKG_HOST
+#endif
+#if !defined(SYSINST_PKGSRC_HTTP_HOST)
+#define SYSINST_PKGSRC_HTTP_HOST	SYSINST_PKG_HTTP_HOST
 #endif
 
 /* Abs. path we extract binary sets from */
@@ -388,13 +400,17 @@ char pkgsrc_dir[STRSIZE];
 /* User shell */
 const char *ushell;
 
+#define	XFER_FTP	0
+#define	XFER_HTTP	1
+#define	XFER_MAX	XFER_HTTP
+
 struct ftpinfo {
-    char host[STRSIZE];
+    char xfer_host[XFER_MAX+1][STRSIZE];
     char dir[STRSIZE] ;
     char user[SSTRSIZE];
     char pass[STRSIZE];
     char proxy[STRSIZE];
-    const char *xfer_type;		/* "ftp" or "http" */
+    unsigned int xfer;	/* XFER_FTP for "ftp" or XFER_HTTP for "http" */
 };
 
 /* use the same struct for sets ftp and to build pkgpath */
@@ -500,12 +516,13 @@ int	get_real_geom(const char *, struct disklabel *);
 /* from net.c */
 extern int network_up;
 extern char net_namesvr[STRSIZE];
-int	get_via_ftp(const char *);
+int	get_via_ftp(unsigned int);
 int	get_via_nfs(void);
 int	config_network(void);
 void	mnt_net_config(void);
 void	make_url(char *, struct ftpinfo *, const char *);
 int	get_pkgsrc(void);
+const char *url_proto(unsigned int);
 
 /* From run.c */
 int	collect(int, char **, const char *, ...) __printflike(3, 4);
@@ -596,9 +613,16 @@ void	unwind_mounts(void);
 int	target_mounted(void);
 
 /* from partman.c */
+#ifndef NO_PARTMAN
 int partman(void);
-int pm_partusage(pm_devs_t *, int, int);
 int pm_getrefdev(pm_devs_t *);
+void update_wedges(const char *);
+#else
+static inline int partman(void) { return -1; }
+static inline int pm_getrefdev(pm_devs_t *x __unused) { return -1; }
+#define update_wedges(x) __nothing
+#endif
+int pm_partusage(pm_devs_t *, int, int);
 void pm_setfstype(pm_devs_t *, int, int);
 int pm_editpart(int);
 void pm_rename(pm_devs_t *);
@@ -609,13 +633,16 @@ int pm_cgd_edit(void *, part_entry_t *);
 int pm_gpt_convert(pm_devs_t *);
 void pm_wedges_fill(pm_devs_t *);
 void pm_make_bsd_partitions(pm_devs_t *);
-void update_wedges(const char *);
 
 /* flags whether to offer the respective options (depending on helper
    programs available on install media */
 int have_raid, have_vnd, have_cgd, have_lvm, have_gpt, have_dk;
 /* initialize above variables */
+#ifndef NO_PARTMAN
 void check_available_binaries(void);
+#else
+#define check_available_binaries() __nothing
+#endif
 
 /* from bsddisklabel.c */
 int	make_bsd_partitions(void);

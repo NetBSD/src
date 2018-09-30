@@ -1,4 +1,4 @@
-/*	$NetBSD: efiboot.h,v 1.3.2.2 2018/09/06 06:56:47 pgoyette Exp $	*/
+/*	$NetBSD: efiboot.h,v 1.3.2.3 2018/09/30 01:45:57 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -32,6 +32,8 @@
 #include <lib/libsa/stand.h>
 #include <lib/libkern/libkern.h>
 
+#include <loadfile.h>
+
 #include "efiboot_machdep.h"
 
 struct boot_command {
@@ -52,6 +54,11 @@ extern const struct boot_command commands[];
 void command_help(char *);
 int set_default_device(char *);
 char *get_default_device(void);
+int set_initrd_path(char *);
+char *get_initrd_path(void);
+int set_dtb_path(char *);
+char *get_dtb_path(void);
+extern int howto;
 
 /* console.c */
 int ischar(void);
@@ -63,6 +70,7 @@ extern EFI_LOADED_IMAGE *efi_li;
 void efi_cleanup(void);
 void efi_exit(void);
 void efi_delay(int);
+void efi_reboot(void);
 
 /* efichar.c */
 size_t ucs2len(const CHAR16 *);

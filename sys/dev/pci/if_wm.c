@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.566.2.7 2018/09/06 06:55:51 pgoyette Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.566.2.8 2018/09/30 01:45:50 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.566.2.7 2018/09/06 06:55:51 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.566.2.8 2018/09/30 01:45:50 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -197,11 +197,12 @@ static int wm_watchdog_timeout = WM_WATCHDOG_TIMEOUT;
  * of packets, and we go ahead and manage up to 64 (16 for the i82547)
  * of them at a time.
  *
- * We allow up to 256 (!) DMA segments per packet.  Pathological packet
+ * We allow up to 64 DMA segments per packet.  Pathological packet
  * chains containing many small mbufs have been observed in zero-copy
- * situations with jumbo frames.
+ * situations with jumbo frames. If a mbuf chain has more than 64 DMA segments,
+ * m_defrag() is called to reduce it.
  */
-#define	WM_NTXSEGS		256
+#define	WM_NTXSEGS		64
 #define	WM_IFQUEUELEN		256
 #define	WM_TXQUEUELEN_MAX	64
 #define	WM_TXQUEUELEN_MAX_82547	16
@@ -376,23 +377,27 @@ struct wm_txqueue {
 	uint32_t txq_packets;		/* for AIM */
 	uint32_t txq_bytes;		/* for AIM */
 #ifdef WM_EVENT_COUNTERS
-	WM_Q_EVCNT_DEFINE(txq, txsstall)	/* Tx stalled due to no txs */
-	WM_Q_EVCNT_DEFINE(txq, txdstall)	/* Tx stalled due to no txd */
-	WM_Q_EVCNT_DEFINE(txq, txfifo_stall)	/* Tx FIFO stalls (82547) */
-	WM_Q_EVCNT_DEFINE(txq, txdw)		/* Tx descriptor interrupts */
-	WM_Q_EVCNT_DEFINE(txq, txqe)		/* Tx queue empty interrupts */
-						/* XXX not used? */
+	/* TX event counters */
+	WM_Q_EVCNT_DEFINE(txq, txsstall)    /* Stalled due to no txs */
+	WM_Q_EVCNT_DEFINE(txq, txdstall)    /* Stalled due to no txd */
+	WM_Q_EVCNT_DEFINE(txq, fifo_stall)  /* FIFO stalls (82547) */
+	WM_Q_EVCNT_DEFINE(txq, txdw)	    /* Tx descriptor interrupts */
+	WM_Q_EVCNT_DEFINE(txq, txqe)	    /* Tx queue empty interrupts */
+					    /* XXX not used? */
 
-	WM_Q_EVCNT_DEFINE(txq, txipsum)		/* IP checksums comp. out-bound */
-	WM_Q_EVCNT_DEFINE(txq, txtusum)		/* TCP/UDP cksums comp. out-bound */
-	WM_Q_EVCNT_DEFINE(txq, txtusum6)	/* TCP/UDP v6 cksums comp. out-bound */
-	WM_Q_EVCNT_DEFINE(txq, txtso)		/* TCP seg offload out-bound (IPv4) */
-	WM_Q_EVCNT_DEFINE(txq, txtso6)		/* TCP seg offload out-bound (IPv6) */
-	WM_Q_EVCNT_DEFINE(txq, txtsopain)	/* painful header manip. for TSO */
+	WM_Q_EVCNT_DEFINE(txq, ipsum)	    /* IP checksums comp. */
+	WM_Q_EVCNT_DEFINE(txq, tusum)	    /* TCP/UDP cksums comp. */
+	WM_Q_EVCNT_DEFINE(txq, tusum6)	    /* TCP/UDP v6 cksums comp. */
+	WM_Q_EVCNT_DEFINE(txq, tso)	    /* TCP seg offload (IPv4) */
+	WM_Q_EVCNT_DEFINE(txq, tso6)	    /* TCP seg offload (IPv6) */
+	WM_Q_EVCNT_DEFINE(txq, tsopain)     /* Painful header manip. for TSO */
+	WM_Q_EVCNT_DEFINE(txq, pcqdrop)	    /* Pkt dropped in pcq */
+	WM_Q_EVCNT_DEFINE(txq, descdrop)    /* Pkt dropped in MAC desc ring */
+					    /* other than toomanyseg */
 
-	WM_Q_EVCNT_DEFINE(txq, txdrop)		/* Tx packets dropped(too many segs) */
-
-	WM_Q_EVCNT_DEFINE(txq, tu)		/* Tx underrun */
+	WM_Q_EVCNT_DEFINE(txq, toomanyseg)  /* Pkt dropped(toomany DMA segs) */
+	WM_Q_EVCNT_DEFINE(txq, defrag)	    /* m_defrag() */
+	WM_Q_EVCNT_DEFINE(txq, underrun)    /* Tx underrun */
 
 	char txq_txseg_evcnt_names[WM_NTXSEGS][sizeof("txqXXtxsegXXX")];
 	struct evcnt txq_ev_txseg[WM_NTXSEGS]; /* Tx packets w/ N segments */
@@ -433,11 +438,12 @@ struct wm_rxqueue {
 	uint32_t rxq_packets;		/* for AIM */
 	uint32_t rxq_bytes;		/* for AIM */
 #ifdef WM_EVENT_COUNTERS
-	WM_Q_EVCNT_DEFINE(rxq, rxintr);		/* Rx interrupts */
-	WM_Q_EVCNT_DEFINE(rxq, rxdefer);	/* Rx deferred processing */
+	/* RX event counters */
+	WM_Q_EVCNT_DEFINE(rxq, intr);	/* Interrupts */
+	WM_Q_EVCNT_DEFINE(rxq, defer);	/* Rx deferred processing */
 
-	WM_Q_EVCNT_DEFINE(rxq, rxipsum);	/* IP checksums checked in-bound */
-	WM_Q_EVCNT_DEFINE(rxq, rxtusum);	/* TCP/UDP cksums checked in-bound */
+	WM_Q_EVCNT_DEFINE(rxq, ipsum);	/* IP checksums checked */
+	WM_Q_EVCNT_DEFINE(rxq, tusum);	/* TCP/UDP cksums checked */
 #endif
 };
 
@@ -6451,16 +6457,15 @@ wm_alloc_txrx_queues(struct wm_softc *sc)
 
 		WM_Q_MISC_EVCNT_ATTACH(txq, txsstall, txq, i, xname);
 		WM_Q_MISC_EVCNT_ATTACH(txq, txdstall, txq, i, xname);
-		WM_Q_MISC_EVCNT_ATTACH(txq, txfifo_stall, txq, i, xname);
+		WM_Q_MISC_EVCNT_ATTACH(txq, fifo_stall, txq, i, xname);
 		WM_Q_INTR_EVCNT_ATTACH(txq, txdw, txq, i, xname);
 		WM_Q_INTR_EVCNT_ATTACH(txq, txqe, txq, i, xname);
-
-		WM_Q_MISC_EVCNT_ATTACH(txq, txipsum, txq, i, xname);
-		WM_Q_MISC_EVCNT_ATTACH(txq, txtusum, txq, i, xname);
-		WM_Q_MISC_EVCNT_ATTACH(txq, txtusum6, txq, i, xname);
-		WM_Q_MISC_EVCNT_ATTACH(txq, txtso, txq, i, xname);
-		WM_Q_MISC_EVCNT_ATTACH(txq, txtso6, txq, i, xname);
-		WM_Q_MISC_EVCNT_ATTACH(txq, txtsopain, txq, i, xname);
+		WM_Q_MISC_EVCNT_ATTACH(txq, ipsum, txq, i, xname);
+		WM_Q_MISC_EVCNT_ATTACH(txq, tusum, txq, i, xname);
+		WM_Q_MISC_EVCNT_ATTACH(txq, tusum6, txq, i, xname);
+		WM_Q_MISC_EVCNT_ATTACH(txq, tso, txq, i, xname);
+		WM_Q_MISC_EVCNT_ATTACH(txq, tso6, txq, i, xname);
+		WM_Q_MISC_EVCNT_ATTACH(txq, tsopain, txq, i, xname);
 
 		for (j = 0; j < WM_NTXSEGS; j++) {
 			snprintf(txq->txq_txseg_evcnt_names[j],
@@ -6469,9 +6474,11 @@ wm_alloc_txrx_queues(struct wm_softc *sc)
 			    NULL, xname, txq->txq_txseg_evcnt_names[j]);
 		}
 
-		WM_Q_MISC_EVCNT_ATTACH(txq, txdrop, txq, i, xname);
-
-		WM_Q_MISC_EVCNT_ATTACH(txq, tu, txq, i, xname);
+		WM_Q_MISC_EVCNT_ATTACH(txq, pcqdrop, txq, i, xname);
+		WM_Q_MISC_EVCNT_ATTACH(txq, descdrop, txq, i, xname);
+		WM_Q_MISC_EVCNT_ATTACH(txq, toomanyseg, txq, i, xname);
+		WM_Q_MISC_EVCNT_ATTACH(txq, defrag, txq, i, xname);
+		WM_Q_MISC_EVCNT_ATTACH(txq, underrun, txq, i, xname);
 #endif /* WM_EVENT_COUNTERS */
 
 		tx_done++;
@@ -6505,11 +6512,11 @@ wm_alloc_txrx_queues(struct wm_softc *sc)
 #ifdef WM_EVENT_COUNTERS
 		xname = device_xname(sc->sc_dev);
 
-		WM_Q_INTR_EVCNT_ATTACH(rxq, rxintr, rxq, i, xname);
-		WM_Q_INTR_EVCNT_ATTACH(rxq, rxdefer, rxq, i, xname);
+		WM_Q_INTR_EVCNT_ATTACH(rxq, intr, rxq, i, xname);
+		WM_Q_INTR_EVCNT_ATTACH(rxq, defer, rxq, i, xname);
 
-		WM_Q_MISC_EVCNT_ATTACH(rxq, rxipsum, rxq, i, xname);
-		WM_Q_MISC_EVCNT_ATTACH(rxq, rxtusum, rxq, i, xname);
+		WM_Q_MISC_EVCNT_ATTACH(rxq, ipsum, rxq, i, xname);
+		WM_Q_MISC_EVCNT_ATTACH(rxq, tusum, rxq, i, xname);
 #endif /* WM_EVENT_COUNTERS */
 
 		rx_done++;
@@ -6556,10 +6563,10 @@ wm_free_txrx_queues(struct wm_softc *sc)
 		struct wm_rxqueue *rxq = &sc->sc_queue[i].wmq_rxq;
 
 #ifdef WM_EVENT_COUNTERS
-		WM_Q_EVCNT_DETACH(rxq, rxintr, rxq, i);
-		WM_Q_EVCNT_DETACH(rxq, rxdefer, rxq, i);
-		WM_Q_EVCNT_DETACH(rxq, rxipsum, rxq, i);
-		WM_Q_EVCNT_DETACH(rxq, rxtusum, rxq, i);
+		WM_Q_EVCNT_DETACH(rxq, intr, rxq, i);
+		WM_Q_EVCNT_DETACH(rxq, defer, rxq, i);
+		WM_Q_EVCNT_DETACH(rxq, ipsum, rxq, i);
+		WM_Q_EVCNT_DETACH(rxq, tusum, rxq, i);
 #endif /* WM_EVENT_COUNTERS */
 
 		wm_free_rx_buffer(sc, rxq);
@@ -6576,21 +6583,24 @@ wm_free_txrx_queues(struct wm_softc *sc)
 
 		WM_Q_EVCNT_DETACH(txq, txsstall, txq, i);
 		WM_Q_EVCNT_DETACH(txq, txdstall, txq, i);
-		WM_Q_EVCNT_DETACH(txq, txfifo_stall, txq, i);
+		WM_Q_EVCNT_DETACH(txq, fifo_stall, txq, i);
 		WM_Q_EVCNT_DETACH(txq, txdw, txq, i);
 		WM_Q_EVCNT_DETACH(txq, txqe, txq, i);
-		WM_Q_EVCNT_DETACH(txq, txipsum, txq, i);
-		WM_Q_EVCNT_DETACH(txq, txtusum, txq, i);
-		WM_Q_EVCNT_DETACH(txq, txtusum6, txq, i);
-		WM_Q_EVCNT_DETACH(txq, txtso, txq, i);
-		WM_Q_EVCNT_DETACH(txq, txtso6, txq, i);
-		WM_Q_EVCNT_DETACH(txq, txtsopain, txq, i);
+		WM_Q_EVCNT_DETACH(txq, ipsum, txq, i);
+		WM_Q_EVCNT_DETACH(txq, tusum, txq, i);
+		WM_Q_EVCNT_DETACH(txq, tusum6, txq, i);
+		WM_Q_EVCNT_DETACH(txq, tso, txq, i);
+		WM_Q_EVCNT_DETACH(txq, tso6, txq, i);
+		WM_Q_EVCNT_DETACH(txq, tsopain, txq, i);
 
 		for (j = 0; j < WM_NTXSEGS; j++)
 			evcnt_detach(&txq->txq_ev_txseg[j]);
 
-		WM_Q_EVCNT_DETACH(txq, txdrop, txq, i);
-		WM_Q_EVCNT_DETACH(txq, tu, txq, i);
+		WM_Q_EVCNT_DETACH(txq, pcqdrop, txq, i);
+		WM_Q_EVCNT_DETACH(txq, descdrop, txq, i);
+		WM_Q_EVCNT_DETACH(txq, toomanyseg, txq, i);
+		WM_Q_EVCNT_DETACH(txq, defrag, txq, i);
+		WM_Q_EVCNT_DETACH(txq, underrun, txq, i);
 #endif /* WM_EVENT_COUNTERS */
 
 		/* drain txq_interq */
@@ -6939,7 +6949,7 @@ wm_tx_offload(struct wm_softc *sc, struct wm_txqueue *txq,
 			 */
 			struct tcphdr th;
 
-			WM_Q_EVCNT_INCR(txq, txtsopain);
+			WM_Q_EVCNT_INCR(txq, tsopain);
 
 			m_copydata(m0, hlen, sizeof(th), &th);
 			if (v4) {
@@ -6995,10 +7005,10 @@ wm_tx_offload(struct wm_softc *sc, struct wm_txqueue *txq,
 		}
 
 		if (v4) {
-			WM_Q_EVCNT_INCR(txq, txtso);
+			WM_Q_EVCNT_INCR(txq, tso);
 			cmdlen |= WTX_TCPIP_CMD_IP;
 		} else {
-			WM_Q_EVCNT_INCR(txq, txtso6);
+			WM_Q_EVCNT_INCR(txq, tso6);
 			ipcse = 0;
 		}
 		cmd |= WTX_TCPIP_CMD_TSE;
@@ -7018,7 +7028,7 @@ wm_tx_offload(struct wm_softc *sc, struct wm_txqueue *txq,
 	    WTX_TCPIP_IPCSO(offset + offsetof(struct ip, ip_sum)) |
 	    WTX_TCPIP_IPCSE(ipcse);
 	if (m0->m_pkthdr.csum_flags & (M_CSUM_IPv4 | M_CSUM_TSOv4)) {
-		WM_Q_EVCNT_INCR(txq, txipsum);
+		WM_Q_EVCNT_INCR(txq, ipsum);
 		fields |= WTX_IXSM;
 	}
 
@@ -7026,7 +7036,7 @@ wm_tx_offload(struct wm_softc *sc, struct wm_txqueue *txq,
 
 	if (m0->m_pkthdr.csum_flags &
 	    (M_CSUM_TCPv4 | M_CSUM_UDPv4 | M_CSUM_TSOv4)) {
-		WM_Q_EVCNT_INCR(txq, txtusum);
+		WM_Q_EVCNT_INCR(txq, tusum);
 		fields |= WTX_TXSM;
 		tucs = WTX_TCPIP_TUCSS(offset) |
 		    WTX_TCPIP_TUCSO(offset +
@@ -7034,7 +7044,7 @@ wm_tx_offload(struct wm_softc *sc, struct wm_txqueue *txq,
 		    WTX_TCPIP_TUCSE(0) /* rest of packet */;
 	} else if ((m0->m_pkthdr.csum_flags &
 	    (M_CSUM_TCPv6 | M_CSUM_UDPv6 | M_CSUM_TSOv6)) != 0) {
-		WM_Q_EVCNT_INCR(txq, txtusum6);
+		WM_Q_EVCNT_INCR(txq, tusum6);
 		fields |= WTX_TXSM;
 		tucs = WTX_TCPIP_TUCSS(offset) |
 		    WTX_TCPIP_TUCSO(offset +
@@ -7131,7 +7141,7 @@ wm_transmit(struct ifnet *ifp, struct mbuf *m)
 
 	if (__predict_false(!pcq_put(txq->txq_interq, m))) {
 		m_freem(m);
-		WM_Q_EVCNT_INCR(txq, txdrop);
+		WM_Q_EVCNT_INCR(txq, pcqdrop);
 		return ENOBUFS;
 	}
 
@@ -7171,6 +7181,7 @@ wm_send_common_locked(struct ifnet *ifp, struct wm_txqueue *txq,
 	bus_size_t seglen, curlen;
 	uint32_t cksumcmd;
 	uint8_t cksumfields;
+	bool remap = true;
 
 	KASSERT(mutex_owned(txq->txq_lock));
 
@@ -7244,11 +7255,23 @@ wm_send_common_locked(struct ifnet *ifp, struct wm_txqueue *txq,
 		 * since we can't sanely copy a jumbo packet to a single
 		 * buffer.
 		 */
+retry:
 		error = bus_dmamap_load_mbuf(sc->sc_dmat, dmamap, m0,
 		    BUS_DMA_WRITE | BUS_DMA_NOWAIT);
-		if (error) {
+		if (__predict_false(error)) {
 			if (error == EFBIG) {
-				WM_Q_EVCNT_INCR(txq, txdrop);
+				if (remap == true) {
+					struct mbuf *m;
+
+					remap = false;
+					m = m_defrag(m0, M_NOWAIT);
+					if (m != NULL) {
+						WM_Q_EVCNT_INCR(txq, defrag);
+						m0 = m;
+						goto retry;
+					}
+				}
+				WM_Q_EVCNT_INCR(txq, toomanyseg);
 				log(LOG_ERR, "%s: Tx packet consumes too many "
 				    "DMA segments, dropping...\n",
 				    device_xname(sc->sc_dev));
@@ -7310,7 +7333,7 @@ wm_send_common_locked(struct ifnet *ifp, struct wm_txqueue *txq,
 				ifp->if_flags |= IFF_OACTIVE;
 			txq->txq_flags |= WM_TXQ_NO_SPACE;
 			bus_dmamap_unload(sc->sc_dmat, dmamap);
-			WM_Q_EVCNT_INCR(txq, txfifo_stall);
+			WM_Q_EVCNT_INCR(txq, fifo_stall);
 			break;
 		}
 
@@ -7455,7 +7478,7 @@ wm_send_common_locked(struct ifnet *ifp, struct wm_txqueue *txq,
 		if (!is_transmit)
 			ifp->if_flags |= IFF_OACTIVE;
 		txq->txq_flags |= WM_TXQ_NO_SPACE;
-		WM_Q_EVCNT_INCR(txq, txdrop);
+		WM_Q_EVCNT_INCR(txq, descdrop);
 		DPRINTF(WM_DEBUG_TX, ("%s: TX: error after IFQ_DEQUEUE\n",
 			__func__));
 		m_freem(m0);
@@ -7551,7 +7574,7 @@ wm_nq_tx_offload(struct wm_softc *sc, struct wm_txqueue *txq,
 			 */
 			struct tcphdr th;
 
-			WM_Q_EVCNT_INCR(txq, txtsopain);
+			WM_Q_EVCNT_INCR(txq, tsopain);
 
 			m_copydata(m0, hlen, sizeof(th), &th);
 			if (v4) {
@@ -7609,10 +7632,10 @@ wm_nq_tx_offload(struct wm_softc *sc, struct wm_txqueue *txq,
 		*cmdlenp |= NQTX_CMD_TSE;
 
 		if (v4) {
-			WM_Q_EVCNT_INCR(txq, txtso);
+			WM_Q_EVCNT_INCR(txq, tso);
 			*fieldsp |= NQTXD_FIELDS_IXSM | NQTXD_FIELDS_TUXSM;
 		} else {
-			WM_Q_EVCNT_INCR(txq, txtso6);
+			WM_Q_EVCNT_INCR(txq, tso6);
 			*fieldsp |= NQTXD_FIELDS_TUXSM;
 		}
 		*fieldsp |= ((m0->m_pkthdr.len - hlen) << NQTXD_FIELDS_PAYLEN_SHIFT);
@@ -7633,7 +7656,7 @@ wm_nq_tx_offload(struct wm_softc *sc, struct wm_txqueue *txq,
 
 	if (m0->m_pkthdr.csum_flags &
 	    (M_CSUM_UDPv4 | M_CSUM_TCPv4 | M_CSUM_TSOv4)) {
-		WM_Q_EVCNT_INCR(txq, txtusum);
+		WM_Q_EVCNT_INCR(txq, tusum);
 		if (m0->m_pkthdr.csum_flags & (M_CSUM_TCPv4 | M_CSUM_TSOv4)) {
 			cmdc |= NQTXC_CMD_TCP;
 		} else {
@@ -7644,7 +7667,7 @@ wm_nq_tx_offload(struct wm_softc *sc, struct wm_txqueue *txq,
 	}
 	if (m0->m_pkthdr.csum_flags &
 	    (M_CSUM_UDPv6 | M_CSUM_TCPv6 | M_CSUM_TSOv6)) {
-		WM_Q_EVCNT_INCR(txq, txtusum6);
+		WM_Q_EVCNT_INCR(txq, tusum6);
 		if (m0->m_pkthdr.csum_flags & (M_CSUM_TCPv6 | M_CSUM_TSOv6)) {
 			cmdc |= NQTXC_CMD_TCP;
 		} else {
@@ -7725,7 +7748,7 @@ wm_nq_transmit(struct ifnet *ifp, struct mbuf *m)
 
 	if (__predict_false(!pcq_put(txq->txq_interq, m))) {
 		m_freem(m);
-		WM_Q_EVCNT_INCR(txq, txdrop);
+		WM_Q_EVCNT_INCR(txq, pcqdrop);
 		return ENOBUFS;
 	}
 
@@ -7773,6 +7796,7 @@ wm_nq_send_common_locked(struct ifnet *ifp, struct wm_txqueue *txq,
 	bus_dmamap_t dmamap;
 	int error, nexttx, lasttx = -1, seg, segs_needed;
 	bool do_csum, sent;
+	bool remap = true;
 
 	KASSERT(mutex_owned(txq->txq_lock));
 
@@ -7828,11 +7852,23 @@ wm_nq_send_common_locked(struct ifnet *ifp, struct wm_txqueue *txq,
 		 * since we can't sanely copy a jumbo packet to a single
 		 * buffer.
 		 */
+retry:
 		error = bus_dmamap_load_mbuf(sc->sc_dmat, dmamap, m0,
 		    BUS_DMA_WRITE | BUS_DMA_NOWAIT);
-		if (error) {
+		if (__predict_false(error)) {
 			if (error == EFBIG) {
-				WM_Q_EVCNT_INCR(txq, txdrop);
+				if (remap == true) {
+					struct mbuf *m;
+
+					remap = false;
+					m = m_defrag(m0, M_NOWAIT);
+					if (m != NULL) {
+						WM_Q_EVCNT_INCR(txq, defrag);
+						m0 = m;
+						goto retry;
+					}
+				}
+				WM_Q_EVCNT_INCR(txq, toomanyseg);
 				log(LOG_ERR, "%s: Tx packet consumes too many "
 				    "DMA segments, dropping...\n",
 				    device_xname(sc->sc_dev));
@@ -8028,7 +8064,7 @@ wm_nq_send_common_locked(struct ifnet *ifp, struct wm_txqueue *txq,
 		if (!is_transmit)
 			ifp->if_flags |= IFF_OACTIVE;
 		txq->txq_flags |= WM_TXQ_NO_SPACE;
-		WM_Q_EVCNT_INCR(txq, txdrop);
+		WM_Q_EVCNT_INCR(txq, descdrop);
 		DPRINTF(WM_DEBUG_TX, ("%s: TX: error after IFQ_DEQUEUE\n",
 			__func__));
 		m_freem(m0);
@@ -8149,7 +8185,7 @@ wm_txeof(struct wm_txqueue *txq, u_int limit)
 
 #ifdef WM_EVENT_COUNTERS
 		if (status & WTX_ST_TU)
-			WM_Q_EVCNT_INCR(txq, tu);
+			WM_Q_EVCNT_INCR(txq, underrun);
 #endif /* WM_EVENT_COUNTERS */
 
 		if (status & (WTX_ST_EC | WTX_ST_LC)) {
@@ -8377,7 +8413,7 @@ wm_rxdesc_ensure_checksum(struct wm_rxqueue *rxq, uint32_t status,
 	if (!wm_rxdesc_is_set_status(sc, status, WRX_ST_IXSM, 0, 0)) {
 		if (wm_rxdesc_is_set_status(sc, status,
 			WRX_ST_IPCS, EXTRXC_STATUS_IPCS, NQRXC_STATUS_IPCS)) {
-			WM_Q_EVCNT_INCR(rxq, rxipsum);
+			WM_Q_EVCNT_INCR(rxq, ipsum);
 			m->m_pkthdr.csum_flags |= M_CSUM_IPv4;
 			if (wm_rxdesc_is_set_error(sc, errors,
 				WRX_ER_IPE, EXTRXC_ERROR_IPE, NQRXC_ERROR_IPE))
@@ -8390,7 +8426,7 @@ wm_rxdesc_ensure_checksum(struct wm_rxqueue *rxq, uint32_t status,
 			 * so we just set both bits, and expect the
 			 * upper layers to deal.
 			 */
-			WM_Q_EVCNT_INCR(rxq, rxtusum);
+			WM_Q_EVCNT_INCR(rxq, tusum);
 			m->m_pkthdr.csum_flags |=
 			    M_CSUM_TCPv4 | M_CSUM_UDPv4 |
 			    M_CSUM_TCPv6 | M_CSUM_UDPv6;
@@ -8933,7 +8969,7 @@ wm_intr_legacy(void *arg)
 			    ("%s: RX: got Rx intr 0x%08x\n",
 				device_xname(sc->sc_dev),
 				icr & (ICR_RXDMT0 | ICR_RXT0)));
-			WM_Q_EVCNT_INCR(rxq, rxintr);
+			WM_Q_EVCNT_INCR(rxq, intr);
 		}
 #endif
 		/*
@@ -9072,7 +9108,7 @@ wm_txrxintr_msix(void *arg)
 		return 0;
 	}
 
-	WM_Q_EVCNT_INCR(rxq, rxintr);
+	WM_Q_EVCNT_INCR(rxq, intr);
 	rxmore = wm_rxeof(rxq, rxlimit);
 	mutex_exit(rxq->rxq_lock);
 
@@ -9112,7 +9148,7 @@ wm_handle_queue(void *arg)
 		mutex_exit(rxq->rxq_lock);
 		return;
 	}
-	WM_Q_EVCNT_INCR(rxq, rxdefer);
+	WM_Q_EVCNT_INCR(rxq, defer);
 	rxmore = wm_rxeof(rxq, rxlimit);
 	mutex_exit(rxq->rxq_lock);
 

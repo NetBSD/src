@@ -1,4 +1,4 @@
-/*	$NetBSD: jobs.c,v 1.98.2.1 2018/09/06 06:51:32 pgoyette Exp $	*/
+/*	$NetBSD: jobs.c,v 1.98.2.2 2018/09/30 01:44:21 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)jobs.c	8.5 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: jobs.c,v 1.98.2.1 2018/09/06 06:51:32 pgoyette Exp $");
+__RCSID("$NetBSD: jobs.c,v 1.98.2.2 2018/09/30 01:44:21 pgoyette Exp $");
 #endif
 #endif /* not lint */
 
@@ -586,14 +586,13 @@ showjobs(struct output *out, int mode)
 		silent = 1;
 	}
 #endif
-	if (jobs_invalid)
-		return;
 
 	for (jobno = 1, jp = jobtab ; jobno <= njobs ; jobno++, jp++) {
 		if (!jp->used)
 			continue;
 		if (jp->nprocs == 0) {
-			freejob(jp);
+			if (!jobs_invalid)
+				freejob(jp);
 			continue;
 		}
 		if ((mode & SHOW_CHANGED) && !(jp->flags & JOBCHANGED))

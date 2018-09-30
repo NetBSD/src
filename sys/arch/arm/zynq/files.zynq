@@ -1,4 +1,4 @@
-#	$NetBSD: files.zynq,v 1.1 2015/01/23 12:34:09 hkenken Exp $
+#	$NetBSD: files.zynq,v 1.1.22.1 2018/09/30 01:45:39 pgoyette Exp $
 #
 # Configuration info for xilinx Zynq-7000 ARM Peripherals
 #
@@ -19,9 +19,6 @@ file	arch/arm/zynq/zynq7000_board.c
 # Console parameters
 defflag opt_zynq.h				ZYNQ
 defflag opt_zynq.h				ZYNQ7000
-defparam opt_zynq.h				CONADDR
-defparam opt_zynq.h				CONSPEED
-defparam opt_zynq.h				CONMODE
 defparam opt_zynq.h				MEMSIZE
 
 # AXI bus interface and SoC domains

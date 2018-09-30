@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1196.2.13 2018/09/27 21:34:57 pgoyette Exp $
+#	$NetBSD: files,v 1.1196.2.14 2018/09/30 01:45:49 pgoyette Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20171118
@@ -246,7 +246,6 @@ include "netinet/files.netinet"
 include "netinet6/files.netinet6"
 include "netipsec/files.netipsec"
 include "netmpls/files.netmpls"
-include "netnatm/files.netnatm"
 include "netsmb/files.netsmb"
 
 include "net/npf/files.npf"
@@ -427,10 +426,9 @@ include "dev/splash/files.splash"
 include "dev/videomode/files.videomode"
 
 # net device attributes - we have generic code for arc(net), ether(net),
-# fddi, token ring, and atm.
+# fddi, and token ring.
 #
 define	arcnet
-define	atm
 define	ether
 define	fddi
 define	hippi
@@ -788,11 +786,6 @@ file	dev/ic/pdq_ifsubr.c		pdq
 #
 device	cy: tty
 file	dev/ic/cy.c			cy			needs-flag
-
-# Efficient Networks, Inc. ATM interface
-#
-device	en: atm, ifnet
-file	dev/ic/midway.c			en
 
 # NCR 53x9x or Emulex ESP SCSI Controller
 #
@@ -1373,41 +1366,6 @@ attach	cpciic at cpcbus with iic_cpcbus
 file	dev/ic/iic_cpcbus.c		iic_cpcbus
 
 
-# Attributes used by the ISDN subsystem
-#
-define	isdndev		# the ISDN subsystem
-define	passive_isdn	# files needed by passive cards (XXX - protocol
-			# specific)
-define	isdncapi	# ISDN CAPI (http://www.capi.org/)
-
-# The isac found on the Fritz V2.0 Card.
-define	nisacsx
-file	dev/ic/isacsx.c			nisacsx	needs-flag
-
-# The 'standard' isac
-define	nisac
-file	dev/ic/isac.c			nisac	needs-flag
-
-# ISDN cards based on the Siemens ISAC/HSCX chipset (or lookalikes)
-#
-device	isic: isdndev, passive_isdn, nisac
-
-file	dev/ic/isic.c			isic
-file	dev/ic/isic_l1.c		isic|ifpci|ifritz
-file	dev/ic/isic_l1fsm.c		isic|ifpci|ifritz
-file	dev/ic/hscx.c			isic
-file	dev/ic/isic_bchan.c		isic
-
-# (old) Diehl active ISDN cards
-#
-#device	daic: isdndev
-#file	dev/ic/daic.c			daic
-
-# AWM B1/T1
-# XXX: passive_isdn
-device	iavc: isdndev, isdncapi, passive_isdn
-file	dev/ic/iavc.c			iavc
-
 # Broadcom AirForce / Apple Airport Extreme
 device	bwi: arp, ifnet, firmload, wlan
 file	dev/ic/bwi.c			bwi
@@ -1478,19 +1436,6 @@ defpseudo clockctl
 #
 defpseudo accf_data
 defpseudo accf_http
-
-# ISDN userland pseudo devices
-#
-defpseudo isdntrc:	isdndev, tty
-defpseudo isdnbchan:	isdndev, tty
-defpseudo isdntel:	isdndev, tty
-defpseudo isdnctl:	isdndev, tty
-defpseudo isdn:		isdndev, tty
-
-# ISDN network interfaces
-defpseudo irip:		isdndev, ifnet
-defflag opt_irip.h	IRIP_VJ
-defpseudo ippp:		isdndev, sppp, ifnet
 
 # KTTCP network throughput testing pseudo-device
 defpseudo kttcp
@@ -1644,3 +1589,8 @@ include "dev/clk/files.clk"
 #
 include "dev/ofw/files.ofw"
 include "dev/fdt/files.fdt"
+
+#
+# Name value library
+#
+include "external/bsd/libnv/conf/files.libnv"

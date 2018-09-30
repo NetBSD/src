@@ -1,3 +1,4 @@
+#include "arm_asm.h"
 #include "arm_arch.h"
 
 .text
@@ -165,14 +166,15 @@ bn_mul_mont:
 	mov	r4,sp			@ "rewind" r4
 	sub	r2,r2,r5		@ "rewind" r2
 
-	and	r1,r4,r14
-	bic	r3,r2,r14
-	orr	r1,r1,r3		@ ap=borrow?tp:rp
-
-.Lcopy:	ldr	r7,[r1],#4		@ copy or in-place refresh
+.Lcopy:	ldr	r7,[r4]		@ conditional copy
+	ldr	r5,[r2]
 	str	sp,[r4],#4		@ zap tp
-	str	r7,[r2],#4
-	cmp	r4,r0
+#ifdef	__thumb2__
+	it	cc
+#endif
+	movcc	r5,r7
+	str	r5,[r2],#4
+	teq	r4,r0		@ preserve carry
 	bne	.Lcopy
 
 	mov	sp,r0
@@ -182,7 +184,7 @@ bn_mul_mont:
 	mov	r0,#1
 .Labrt:
 #if __ARM_ARCH__>=5
-	bx	lr				@ bx lr
+	RET				@ bx lr
 #else
 	tst	lr,#1
 	moveq	pc,lr			@ be binary compatible with V4, yet
@@ -941,7 +943,7 @@ bn_mul8x_mont_neon:
 	mov	sp,ip
 	vldmia	sp!,{d8,d9,d10,d11,d12,d13,d14,d15}
 	ldmia	sp!,{r4,r5,r6,r7,r8,r9,r10,r11}
-	bx	lr						@ bx lr
+	RET						@ bx lr
 .size	bn_mul8x_mont_neon,.-bn_mul8x_mont_neon
 #endif
 .byte	77,111,110,116,103,111,109,101,114,121,32,109,117,108,116,105,112,108,105,99,97,116,105,111,110,32,102,111,114,32,65,82,77,118,52,47,78,69,79,78,44,32,67,82,89,80,84,79,71,65,77,83,32,98,121,32,60,97,112,112,114,111,64,111,112,101,110,115,115,108,46,111,114,103,62,0

@@ -1,5 +1,3 @@
-/*	$NetBSD: npf_ext_normalize.c,v 1.6.2.2 2018/09/06 06:56:44 pgoyette Exp $	*/
-
 /*-
  * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -28,7 +26,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_ext_normalize.c,v 1.6.2.2 2018/09/06 06:56:44 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_ext_normalize.c,v 1.6.2.3 2018/09/30 01:45:56 pgoyette Exp $");
 
 #include <sys/types.h>
 #include <sys/module.h>
@@ -67,7 +65,7 @@ typedef struct {
  * with the given parameters.
  */
 static int
-npf_normalize_ctor(npf_rproc_t *rp, prop_dictionary_t params)
+npf_normalize_ctor(npf_rproc_t *rp, const nvlist_t *params)
 {
 	npf_normalize_t *np;
 
@@ -75,12 +73,12 @@ npf_normalize_ctor(npf_rproc_t *rp, prop_dictionary_t params)
 	np = kmem_zalloc(sizeof(npf_normalize_t), KM_SLEEP);
 
 	/* IP ID randomisation and IP_DF flag cleansing. */
-	prop_dictionary_get_bool(params, "random-id", &np->n_random_id);
-	prop_dictionary_get_bool(params, "no-df", &np->n_no_df);
+	np->n_random_id = dnvlist_get_bool(params, "random-id", false);
+	np->n_no_df = dnvlist_get_bool(params, "no-df", false);
 
 	/* Minimum IP TTL and maximum TCP MSS. */
-	prop_dictionary_get_uint32(params, "min-ttl", &np->n_minttl);
-	prop_dictionary_get_uint32(params, "max-mss", &np->n_maxmss);
+	np->n_minttl = dnvlist_get_number(params, "min-ttl", 0);
+	np->n_maxmss = dnvlist_get_number(params, "max-mss", 0);
 
 	/* Assign the parameters for this rule procedure. */
 	npf_rproc_assign(rp, np);

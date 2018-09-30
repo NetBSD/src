@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835reg.h,v 1.21.2.1 2018/04/07 04:12:11 pgoyette Exp $	*/
+/*	$NetBSD: bcm2835reg.h,v 1.21.2.2 2018/09/30 01:45:37 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -244,5 +244,8 @@
 #define	BCM2836_LOCAL_MAILBOX1_CLRN(n)		(0xc4 + 0x10 * (n))
 #define	BCM2836_LOCAL_MAILBOX2_CLRN(n)		(0xc8 + 0x10 * (n))
 #define	BCM2836_LOCAL_MAILBOX3_CLRN(n)		(0xcc + 0x10 * (n))
+
+#define	BCM2836_ARM_SMP_BASE		0x00000000
+#define	BCM2836_ARM_SMP_SIZE		0x00001000	/* 4KBytes */
 
 #endif /* _BCM2835REG_H_ */

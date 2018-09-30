@@ -179,7 +179,6 @@ bn_mul_mont_int:
 .Ltail:
 	add	%i3,%i5,%i3
 	add	%i0,%i5,%i0
-	mov	%l4,%i1
 	sub	%g0,%i5,%o7		! k=-num
 	ba	.Lsub
 	subcc	%g0,%g0,%g0		! clear %icc.c
@@ -192,15 +191,14 @@ bn_mul_mont_int:
 	add	%o7,4,%o7
 	brnz	%o7,.Lsub
 	st	%o1,[%l0]
-	subc	%o2,0,%o2		! handle upmost overflow bit
-	and	%l4,%o2,%i1
-	andn	%i0,%o2,%i3
-	or	%i1,%i3,%i1
+	subccc	%o2,0,%o2		! handle upmost overflow bit
 	sub	%g0,%i5,%o7
 
 .Lcopy:
-	ld	[%i1+%o7],%o0		! copy or in-place refresh
+	ld	[%l4+%o7],%o1		! conditional copy
+	ld	[%i0+%o7],%o0
 	st	%g0,[%l4+%o7]		! zap tp
+	movcs	%icc,%o1,%o0
 	st	%o0,[%i0+%o7]
 	add	%o7,4,%o7
 	brnz	%o7,.Lcopy
@@ -400,6 +398,9 @@ bn_mul_mont_int:
 	mulx	%l6,%l3,%o4
 	add	%l7,%o1,%o1
 	ld	[%i3+%l1],%l6			! np[j]
+	srlx	%o1,32,%g4
+	and	%o1,%g1,%o1
+	add	%g4,%o5,%o5
 	add	%o3,%o1,%o1
 	ld	[%l4+8],%l7			! tp[j]
 	add	%o4,%o1,%o1
@@ -516,5 +517,5 @@ bn_mul_mont_int:
 	add	%l4,8,%l4
 .type	bn_mul_mont_int,#function
 .size	bn_mul_mont_int,(.-bn_mul_mont_int)
-.asciz	"Montgomery Multipltication for SPARCv9, CRYPTOGAMS by <appro@openssl.org>"
+.asciz	"Montgomery Multiplication for SPARCv9, CRYPTOGAMS by <appro@openssl.org>"
 .align	32

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.c,v 1.149.2.3 2018/09/06 06:55:47 pgoyette Exp $	*/
+/*	$NetBSD: db_command.c,v 1.149.2.4 2018/09/30 01:45:49 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 1999, 2002, 2009 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.149.2.3 2018/09/06 06:55:47 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.149.2.4 2018/09/30 01:45:49 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_aio.h"
@@ -90,9 +90,9 @@ __KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.149.2.3 2018/09/06 06:55:47 pgoyett
 #include <sys/module.h>
 #include <sys/kernhist.h>
 #include <sys/socketvar.h>
-
-/*include queue macros*/
 #include <sys/queue.h>
+
+#include <dev/cons.h>
 
 #include <ddb/ddb.h>
 
@@ -542,7 +542,14 @@ db_unregister_tbl(uint8_t type,const struct db_command *cmd_tbl)
 	return ENOENT;
 }
 
-/* This function is called from machine trap code. */
+#ifndef _KERNEL
+#define	cnpollc(c)	__nothing
+#endif
+
+/*
+ * This function is called via db_trap() or directly from
+ * machine trap code.
+ */
 void
 db_command_loop(void)
 {
@@ -579,7 +586,9 @@ db_command_loop(void)
 		if (db_print_position() != 0)
 			db_printf("\n");
 		db_output_line = 0;
+		cnpollc(1);
 		(void) db_read_line();
+		cnpollc(0);
 		db_command(&db_last_command);
 	}
 
@@ -1353,10 +1362,10 @@ db_reboot_cmd(db_expr_t addr, bool have_addr,
 	 */
 	db_recover = 0;
 	/* Avoid all mutex errors */
-#ifdef LOCKDEBUG
 	lockdebug_dismiss();
-#endif
 	panicstr = "reboot forced via kernel debugger";
+	/* Make it possible to break into the debugger again */
+	spl0();
 	cpu_reboot((int)bootflags, NULL);
 #else	/* _KERNEL */
 	db_printf("This command can only be used in-kernel.\n");

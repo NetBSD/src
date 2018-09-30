@@ -1,4 +1,4 @@
-#	$NetBSD: files.exynos,v 1.24.4.3 2018/09/06 06:55:27 pgoyette Exp $
+#	$NetBSD: files.exynos,v 1.24.4.4 2018/09/30 01:45:38 pgoyette Exp $
 #
 # Configuration info for Samsung Exynos SoC ARM Peripherals
 #
@@ -18,11 +18,6 @@ file	arch/arm/arm/bus_space_a4x.S
 
 file	arch/arm/samsung/exynos_soc.c
 file	arch/arm/samsung/exynos_smc.S		arm_trustzone_firmware
-
-# Console parameters
-defparam opt_exynos.h				CONADDR
-defparam opt_exynos.h				CONSPEED
-defparam opt_exynos.h				CONMODE
 
 # Memory size in megabytes
 defparam opt_exynos.h				MEMSIZE
@@ -55,7 +50,7 @@ attach  exyortc at fdt with exynos_rtc
 file    arch/arm/samsung/exynos_rtc.c		exynos_rtc
 
 # Multi Core timer
-device	mct
+device	mct : mpcorebus
 attach	mct at fdt with exyo_mct
 file	arch/arm/samsung/mct.c			exyo_mct
 

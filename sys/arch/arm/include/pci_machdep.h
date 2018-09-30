@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.h,v 1.12 2017/04/19 12:58:59 jmcneill Exp $	*/
+/*	$NetBSD: pci_machdep.h,v 1.12.10.1 2018/09/30 01:45:38 pgoyette Exp $	*/
 
 /*
  * Modified for arm32 by Mark Brinicombe
@@ -36,6 +36,10 @@
 /*
  * Machine-specific definitions for PCI autoconfiguration.
  */
+
+#ifdef __aarch64__
+#define _PCI_HAVE_DMA64
+#endif
 
 #include <sys/errno.h>
 

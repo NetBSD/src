@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_encap.h,v 1.24 2018/02/28 10:30:20 maxv Exp $	*/
+/*	$NetBSD: ip_encap.h,v 1.24.2.1 2018/09/30 01:45:56 pgoyette Exp $	*/
 /*	$KAME: ip_encap.h,v 1.7 2000/03/25 07:23:37 sumikawa Exp $	*/
 
 /*
@@ -100,7 +100,7 @@ struct ip_pack6 {
 void	encapinit(void);
 
 void	encap_init(void);
-void	encap4_input(struct mbuf *, ...);
+void	encap4_input(struct mbuf *, int, int);
 int	encap6_input(struct mbuf **, int *, int);
 const struct encaptab *encap_attach(int, int, const struct sockaddr *,
 	const struct sockaddr *, const struct sockaddr *,

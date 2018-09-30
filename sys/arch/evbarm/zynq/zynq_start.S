@@ -1,4 +1,4 @@
-/*	$NetBSD: zynq_start.S,v 1.1 2015/01/23 12:34:09 hkenken Exp $	*/
+/*	$NetBSD: zynq_start.S,v 1.1.22.1 2018/09/30 01:45:43 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,6 +30,7 @@
  */
 
 #include "opt_zynq.h"
+#include "opt_console.h"
 #include "opt_cpuoptions.h"
 #include "opt_cputypes.h"
 #include "opt_multiprocessor.h"
@@ -40,7 +41,7 @@
 #include <arm/cortex/scu_reg.h>
 #include "assym.h"
 
-RCSID("$NetBSD: zynq_start.S,v 1.1 2015/01/23 12:34:09 hkenken Exp $")
+RCSID("$NetBSD: zynq_start.S,v 1.1.22.1 2018/09/30 01:45:43 pgoyette Exp $")
 
 #ifndef CONADDR
 #define	CONADDR		0xe0001000

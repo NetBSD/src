@@ -1,4 +1,4 @@
-/* $NetBSD: fdtvar.h,v 1.28.2.4 2018/07/28 04:37:44 pgoyette Exp $ */
+/* $NetBSD: fdtvar.h,v 1.28.2.5 2018/09/30 01:45:49 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -37,7 +37,9 @@
 #include <dev/pwm/pwmvar.h>
 #include <dev/clk/clk.h>
 
+#ifdef _KERNEL_OPT
 #include "audio.h"
+#endif
 #if NAUDIO > 0
 #include <dev/audio_dai.h>
 #else
@@ -111,7 +113,7 @@ struct fdtbus_regulator_controller_func {
 };
 
 struct fdtbus_clock_controller_func {
-	struct clk *	(*decode)(device_t, const void *, size_t);
+	struct clk *	(*decode)(device_t, int, const void *, size_t);
 };
 
 struct fdtbus_reset_controller;
@@ -271,8 +273,11 @@ int		fdtbus_get_phandle_from_native(int);
 i2c_tag_t	fdtbus_get_i2c_tag(int);
 void *		fdtbus_intr_establish(int, u_int, int, int,
 		    int (*func)(void *), void *arg);
+void *		fdtbus_intr_establish_raw(int, const u_int *, int, int,
+		    int (*func)(void *), void *arg);
 void		fdtbus_intr_disestablish(int, void *);
 bool		fdtbus_intr_str(int, u_int, char *, size_t);
+bool		fdtbus_intr_str_raw(int, const u_int *, char *, size_t);
 struct fdtbus_gpio_pin *fdtbus_gpio_acquire(int, const char *, int);
 struct fdtbus_gpio_pin *fdtbus_gpio_acquire_index(int, const char *, int, int);
 void		fdtbus_gpio_release(struct fdtbus_gpio_pin *);
@@ -355,6 +360,8 @@ const char *	fdtbus_get_string(int, const char *);
 const char *	fdtbus_get_string_index(int, const char *, u_int);
 
 void		fdt_add_bus(device_t, int, struct fdt_attach_args *);
+void		fdt_add_bus_match(device_t, int, struct fdt_attach_args *,
+				  bool (*)(void *, int), void *);
 
 void		fdt_remove_byhandle(int);
 void		fdt_remove_bycompat(const char *[]);

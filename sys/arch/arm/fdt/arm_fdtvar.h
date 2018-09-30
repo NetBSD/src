@@ -1,4 +1,4 @@
-/* $NetBSD: arm_fdtvar.h,v 1.7.6.1 2018/09/06 06:55:26 pgoyette Exp $ */
+/* $NetBSD: arm_fdtvar.h,v 1.7.6.2 2018/09/30 01:45:38 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared D. McNeill <jmcneill@invisible.ca>
@@ -65,6 +65,7 @@ TAILQ_HEAD(arm_platlist, arm_platform_info);
 
 const struct arm_platform *	arm_fdt_platform(void);
 
+void	arm_fdt_cpu_bootstrap(void);
 void    arm_fdt_cpu_hatch_register(void *, void (*)(void *, struct cpu_info *));
 void    arm_fdt_cpu_hatch(struct cpu_info *);
 

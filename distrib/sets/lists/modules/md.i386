@@ -1,7 +1,6 @@
-# $NetBSD: md.i386,v 1.78.2.2 2018/09/06 06:51:43 pgoyette Exp $
+# $NetBSD: md.i386,v 1.78.2.3 2018/09/30 01:45:05 pgoyette Exp $
 #
-# NOTE that there are three sets of files here:
-# @MODULEDIR@, i386-xen, and i386pae-xen
+# NOTE that there are two sets of files here: @MODULEDIR@ and i386pae-xen
 #
 
 ./@MODULEDIR@/acpiacad				base-kernel-modules	kmod

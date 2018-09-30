@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.200.2.2 2018/07/28 04:37:46 pgoyette Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.200.2.3 2018/09/30 01:45:51 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.200.2.2 2018/07/28 04:37:46 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.200.2.3 2018/09/30 01:45:51 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -3061,6 +3061,18 @@ pci_conf_print_rcec_assoc_cap(const pcireg_t *regs, int extcapoff)
 	reg = regs[o2i(extcapoff + PCI_RCEC_ASSOC_ASSOCBITMAP)];
 	printf("    Association Bitmap for Root Complex Integrated Devices:"
 	    " 0x%08x\n", reg);
+
+	if (PCI_EXTCAPLIST_VERSION(regs[o2i(extcapoff)]) >= 2) {
+		reg = regs[o2i(extcapoff + PCI_RCEC_ASSOC_ASSOCBUSNUM)];
+		printf("    RCEC Associated Bus Numbers register: 0x%08x\n",
+		    reg);
+		printf("      RCEC Next Bus: %u\n",
+		    (unsigned int)__SHIFTOUT(reg,
+			PCI_RCEC_ASSOCBUSNUM_RCECNEXT));
+		printf("      RCEC Last Bus: %u\n",
+		    (unsigned int)__SHIFTOUT(reg,
+			PCI_RCEC_ASSOCBUSNUM_RCECLAST));
+	}
 }
 
 /* XXX pci_conf_print_mfvc_cap */
@@ -3152,6 +3164,7 @@ pci_conf_print_ats_cap(const pcireg_t *regs, int extcapoff)
 	printf("      Invalidate Queue Depth: %u\n", num);
 	onoff("Page Aligned Request", reg, PCI_ATS_CAP_PALIGNREQ);
 	onoff("Global Invalidate", reg, PCI_ATS_CAP_GLOBALINVL);
+	onoff("Relaxed Ordering", reg, PCI_ATS_CAP_RELAXORD);
 
 	printf("    Control register: 0x%04x\n", ctl);
 	printf("      Smallest Translation Unit: %u\n",

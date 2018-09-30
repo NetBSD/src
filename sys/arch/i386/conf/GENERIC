@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.1174.2.5 2018/09/06 06:55:34 pgoyette Exp $
+# $NetBSD: GENERIC,v 1.1174.2.6 2018/09/30 01:45:44 pgoyette Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.1174.2.5 $"
+#ident		"GENERIC-$Revision: 1.1174.2.6 $"
 
 maxusers	64		# estimated number of users
 
@@ -976,7 +976,6 @@ bge*	at pci? dev ? function ?	# Broadcom 570x gigabit Ethernet
 bnx*	at pci? dev ? function ?	# Broadcom NetXtremeII gigabit Ethernet
 bwi*	at pci? dev ? function ?	# Broadcom BCM43xx wireless
 dge*	at pci? dev ? function ?	# Intel 82597 10GbE LR
-en*	at pci? dev ? function ?	# ENI/Adaptec ATM
 ep*	at pci? dev ? function ?	# 3Com 3c59x
 epic*	at pci? dev ? function ?	# SMC EPIC/100 Ethernet
 esh*	at pci? dev ? function ?	# Essential HIPPI card

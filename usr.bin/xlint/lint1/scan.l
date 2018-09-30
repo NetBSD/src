@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: scan.l,v 1.80.2.1 2018/07/28 04:38:14 pgoyette Exp $ */
+/* $NetBSD: scan.l,v 1.80.2.2 2018/09/30 01:45:59 pgoyette Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: scan.l,v 1.80.2.1 2018/07/28 04:38:14 pgoyette Exp $");
+__RCSID("$NetBSD: scan.l,v 1.80.2.2 2018/09/30 01:45:59 pgoyette Exp $");
 #endif
 
 #include <stdlib.h>
@@ -205,6 +205,10 @@ static	struct	kwtab {
 	u_int	kw_attr : 1;	/* GCC attribute, keyword */
 	u_int	kw_deco : 3;	/* name[1] __name[2] __name__[4] */
 } kwtab[] = {
+#ifdef INT128_SIZE
+	{ "__int128_t",	T_TYPE,		0,	INT128,	0,	  0,1,0,0,1 },
+	{ "__uint128_t",T_TYPE,		0,	UINT128,0,	  0,1,0,0,1 },
+#endif
 	{ "_Bool",	T_TYPE,		0,	BOOL,	0,	  0,1,0,0,1 },
 	{ "_Complex",	T_TYPE,		0,	COMPLEX,0,	  0,1,0,0,1 },
 	{ "_Generic",	T_GENERIC,	0,	0,	0,	  0,1,0,0,1 },
@@ -553,12 +557,20 @@ icon(int base)
 	const	char *cp;
 	char	c, *eptr;
 	tspec_t	typ;
-	uint64_t uq = 0;
 	int	ansiu;
-	static	tspec_t contypes[2][3] = {
-		{ INT,  LONG,  QUAD },
-		{ UINT, ULONG, UQUAD }
+#ifdef INT128_SIZE
+	__uint128_t uq = 0;
+	static	tspec_t contypes[2][4] = {
+		{ INT,  LONG,  QUAD, INT128, },
+		{ UINT, ULONG, UQUAD, UINT128, }
 	};
+#else
+	uint64_t uq = 0;
+	static	tspec_t contypes[2][3] = {
+		{ INT,  LONG,  QUAD, },
+		{ UINT, ULONG, UQUAD, }
+	};
+#endif
 
 	cp = yytext;
 	len = yyleng;
@@ -675,6 +687,21 @@ icon(int base)
 			warning(252);
 		}
 		break;
+#ifdef INT128_SIZE
+	case INT128:
+		if (uq > TARG_INT128_MAX && !tflag) {
+			typ = UINT128;
+			if (!sflag)
+				ansiu = 1;
+		}
+		break;
+	case UINT128:
+		if (uq > TARG_UINT128_MAX) {
+			/* integer constant out of range */
+			warning(252);
+		}
+		break;
+#endif
 		/* LINTED206: (enumeration values not handled in switch) */
 	case STRUCT:
 	case VOID:

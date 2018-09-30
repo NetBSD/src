@@ -1,4 +1,5 @@
-@ Copyright 2007-2016 The OpenSSL Project Authors. All Rights Reserved.
+#include "arm_asm.h"
+@ Copyright 2007-2018 The OpenSSL Project Authors. All Rights Reserved.
 @
 @ Licensed under the OpenSSL license (the "License").  You may not use
 @ this file except in compliance with the License.  You can obtain a copy
@@ -1831,7 +1832,7 @@ sha256_block_data_order:
 	eor	r12,r12,r6			@ Maj(a,b,c)
 	add	r4,r4,r0,ror#2	@ h+=Sigma0(a)
 	@ add	r4,r4,r12			@ h+=Maj(a,b,c)
-#if __ARM_ARCH__>=7
+#ifdef	__thumb2__
 	ite	eq			@ Thumb2 thing, sanity check in ARM
 #endif
 	ldreq	r3,[sp,#16*4]		@ pull ctx
@@ -2802,7 +2803,7 @@ sha256_block_data_order_armv8:
 
 	vst1.32	{q0,q1},[r0]
 
-	bx	lr		@ bx lr
+	RET		@ bx lr
 .size	sha256_block_data_order_armv8,.-sha256_block_data_order_armv8
 #endif
 .byte	83,72,65,50,53,54,32,98,108,111,99,107,32,116,114,97,110,115,102,111,114,109,32,102,111,114,32,65,82,77,118,52,47,78,69,79,78,47,65,82,77,118,56,44,32,67,82,89,80,84,79,71,65,77,83,32,98,121,32,60,97,112,112,114,111,64,111,112,101,110,115,115,108,46,111,114,103,62,0

@@ -1,4 +1,4 @@
-/*	$NetBSD: wskbdmap_atari.c,v 1.4 2008/04/28 20:23:15 martin Exp $	*/
+/*	$NetBSD: wskbdmap_atari.c,v 1.4.86.1 2018/09/30 01:45:39 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wskbdmap_atari.c,v 1.4 2008/04/28 20:23:15 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wskbdmap_atari.c,v 1.4.86.1 2018/09/30 01:45:39 pgoyette Exp $");
 
 #include <sys/types.h>
 #include <dev/wscons/wsksymdef.h>
@@ -461,9 +461,6 @@ static const keysym_t atarikbd_keydesc_iopener[] = {
 
 #define KBD_MAP(name, base, map) \
 			{ name, base, sizeof(map)/sizeof(keysym_t), map }
-/* KBD_NULLMAP generates a entry for machine native variant.
-   the entry will be modified by machine dependent keyboard driver. */
-#define KBD_NULLMAP(name, base) { name, base, 0, 0 }
 
 const struct wscons_keydesc atarikbd_keydesctab[] = {
 	KBD_MAP(KB_US,			0,	atarikbd_keydesc_us),
@@ -490,12 +487,6 @@ const struct wscons_keydesc atarikbd_keydesctab[] = {
 	KBD_MAP(KB_US | KB_IOPENER | KB_SWAPCTRLCAPS,	KB_US | KB_IOPENER,
 		atarikbd_keydesc_swapctrlcaps),
 	KBD_MAP(KB_ES ,			KB_US,	atarikbd_keydesc_es),
-	KBD_NULLMAP(KB_US | KB_MACHDEP,	KB_US),
-	KBD_NULLMAP(KB_JP | KB_MACHDEP,	KB_JP),
-	KBD_NULLMAP(KB_US | KB_MACHDEP | KB_SWAPCTRLCAPS,
-		    KB_US | KB_SWAPCTRLCAPS),
-	KBD_NULLMAP(KB_JP | KB_MACHDEP | KB_SWAPCTRLCAPS,
-		    KB_JP | KB_SWAPCTRLCAPS),
 	{0, 0, 0, 0}
 };
 

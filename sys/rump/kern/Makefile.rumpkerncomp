@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile.rumpkerncomp,v 1.12 2015/11/15 16:54:16 pooka Exp $
+#	$NetBSD: Makefile.rumpkerncomp,v 1.12.16.1 2018/09/30 01:45:57 pgoyette Exp $
 #
 
 .include <bsd.own.mk>
 
-RUMPKERNCOMPS=	crypto sysproxy tty z
+RUMPKERNCOMPS=	crypto nv sysproxy tty z
 RUMPSYSEMUS=	sys_cygwin sys_linux sys_sunos
 
 .if make(rumpdescribe)

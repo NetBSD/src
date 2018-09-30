@@ -1,4 +1,4 @@
-#	$NetBSD: files.bcm53xx,v 1.4 2013/10/28 22:51:16 matt Exp $
+#	$NetBSD: files.bcm53xx,v 1.4.30.1 2018/09/30 01:45:37 pgoyette Exp $
 #
 # Configuration info for Broadcom BCM5301X ARM Peripherals
 #
@@ -14,10 +14,6 @@ file	arch/arm/arm32/irq_dispatch.S
 file	arch/arm/broadcom/bcm53xx_board.c
 file	arch/arm/broadcom/bcmgen_space.c
 
-# Console parameters
-defparam opt_broadcom.h				CONADDR
-defparam opt_broadcom.h				CONSPEED
-defparam opt_broadcom.h				CONMODE
 defparam opt_broadcom.h				MEMSIZE
 defflag opt_broadcom.h				BCM53XX_CONSOLE_EARLY
 defflag opt_broadcom.h				BCMETH_COUNTERS

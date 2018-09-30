@@ -1,4 +1,4 @@
-/*	$NetBSD: dbregs.c,v 1.6.14.3 2018/07/28 04:37:42 pgoyette Exp $	*/
+/*	$NetBSD: dbregs.c,v 1.6.14.4 2018/09/30 01:45:48 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -144,10 +144,14 @@ x86_dbregs_read(struct lwp *l, struct dbreg *regs)
 	memcpy(regs, pcb->pcb_dbregs, sizeof(*regs));
 }
 
-static void
+void
 x86_dbregs_save(struct lwp *l)
 {
 	struct pcb *pcb = lwp_getpcb(l);
+
+	if (!(pcb->pcb_flags & PCB_DBREGS)) {
+		return;
+	}
 
 	KASSERT(pcb->pcb_dbregs != NULL);
 
@@ -160,10 +164,14 @@ x86_dbregs_save(struct lwp *l)
 	pcb->pcb_dbregs->dr[7] = rdr7();
 }
 
-static void
+void
 x86_dbregs_restore(struct lwp *l)
 {
 	struct pcb *pcb = lwp_getpcb(l);
+
+	if (!(pcb->pcb_flags & PCB_DBREGS)) {
+		return;
+	}
 
 	KASSERT(pcb->pcb_dbregs != NULL);
 

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.651.2.4 2018/09/06 06:55:21 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.651.2.5 2018/09/30 01:45:34 pgoyette Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/18/93
 
 MAN=	aac.4 ac97.4 acardide.4 aceride.4 acphy.4 \
@@ -21,7 +21,7 @@ MAN=	aac.4 ac97.4 acardide.4 aceride.4 acphy.4 \
 	com.4 coram.4 crypto.4 cs80bus.4 cuda.4 cypide.4 cxdtv.4 \
 	ddb.4 ddc.4 de.4 dge.4 dk.4 dm.4 dmoverio.4 \
 	dmphy.4 dpt.4 dpti.4 drm.4 drum.4 drvctl.4 dtv.4 dtviic.4 dwctwo.4 \
-	eap.4 ebus.4 edc.4 elmc.4 emuxki.4 en.4 envsys.4 ep.4 esh.4 \
+	eap.4 ebus.4 edc.4 elmc.4 emuxki.4 envsys.4 ep.4 esh.4 \
 	esa.4 esiop.4 esm.4 eso.4 et.4 etphy.4 exphy.4 \
 	fd.4 filemon.4 finsio.4 flash.4 fpa.4 fms.4 fss.4 \
 	fujbp.4 full.4 fxp.4 \
@@ -143,10 +143,6 @@ MAN +=	hil.4 hilkbd.4 hilid.4 hilms.4
 
 # IPv6/IPsec
 MAN+=	faith.4 gif.4 inet6.4 icmp6.4 ip6.4 ipsec.4 ipsecif.4 stf.4
-
-# ISDN devices
-MAN+=	daic.4 isdntrc.4 isdntel.4 isdnbchan.4 ippp.4 irip.4 isdnctl.4 isdn.4 \
-	ifpci.4 isic.4 iwic.4 isdncapi.4 iavc.4
 
 # onewire bus and devices
 MAN+=	gpioow.4 onewire.4 owtemp.4

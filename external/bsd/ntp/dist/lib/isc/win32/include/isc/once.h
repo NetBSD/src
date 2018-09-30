@@ -1,4 +1,4 @@
-/*	$NetBSD: once.h,v 1.4 2016/01/08 21:35:38 christos Exp $	*/
+/*	$NetBSD: once.h,v 1.4.14.1 2018/09/30 01:45:17 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 2004, 2007  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: once.h,v 1.9 2007/06/19 23:47:20 tbox Exp  */
+/* Id */
 
 #ifndef ISC_ONCE_H
 #define ISC_ONCE_H 1

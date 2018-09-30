@@ -1,4 +1,4 @@
-/* $NetBSD: netisr.h,v 1.45 2017/05/27 21:02:56 bouyer Exp $ */
+/* $NetBSD: netisr.h,v 1.45.8.1 2018/09/30 01:45:56 pgoyette Exp $ */
 
 /*
  * Copyright (c) 1980, 1986, 1989, 1993
@@ -52,7 +52,6 @@
 #include "opt_inet.h"
 #include "opt_atalk.h"
 #include "opt_mpls.h"
-#include "opt_natm.h"
 #include "opt_can.h"
 #include "arp.h"
 #endif /* defined(_KERNEL_OPT) */
@@ -63,7 +62,7 @@
 #include <sys/socket.h>
 
 /*
- * XXX IFNAMSIZE for if_ppp.h, natm.h; struct ifnet decl for in6.h, in.h;
+ * XXX IFNAMSIZE for if_ppp.h; struct ifnet decl for in6.h, in.h;
  * XXX struct mbuf decl for in6.h, in.h, route.h (via in_var.h).
  */
 #include <net/if.h>
@@ -84,9 +83,6 @@
 #endif
 #ifdef MPLS
 #include <netmpls/mpls_var.h>
-#endif
-#ifdef NATM
-#include <netnatm/natm.h>
 #endif
 #ifdef NETATALK
 #include <netatalk/at_extern.h>

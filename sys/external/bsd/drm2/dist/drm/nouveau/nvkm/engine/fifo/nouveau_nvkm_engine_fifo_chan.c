@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_engine_fifo_chan.c,v 1.8.2.2 2018/09/06 06:56:26 pgoyette Exp $	*/
+/*	$NetBSD: nouveau_nvkm_engine_fifo_chan.c,v 1.8.2.3 2018/09/30 01:45:54 pgoyette Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_fifo_chan.c,v 1.8.2.2 2018/09/06 06:56:26 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_fifo_chan.c,v 1.8.2.3 2018/09/30 01:45:54 pgoyette Exp $");
 
 #include "chan.h"
 
@@ -480,7 +480,8 @@ nvkm_fifo_chan_ctor(const struct nvkm_fifo_chan_func *func,
 		bus_space_tag_t mmiot = device->mmiot;
 		bus_space_handle_t mmioh = device->mmioh;
 		bus_size_t mmiosz = device->mmiosz;
-		bus_addr_t mmioaddr = device->func->resource_addr(device, bar);
+		__diagused bus_addr_t mmioaddr =
+		    device->func->resource_addr(device, bar);
 
 		/* Check whether it lies inside the region.  */
 		if (mmiosz < base ||

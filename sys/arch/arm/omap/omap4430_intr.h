@@ -1,4 +1,4 @@
-/*	$NetBSD: omap4430_intr.h,v 1.3 2015/04/09 21:33:54 matt Exp $	*/
+/*	$NetBSD: omap4430_intr.h,v 1.3.16.1 2018/09/30 01:45:38 pgoyette Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -144,7 +144,7 @@
 #define IRQ_EMIF2		(32+111)	// EMIF2 interrupt
 #define IRQ_MCPDM		(32+112)	// MCPDM interrupt
 #define IRQ_DMM			(32+113)	// DMM interrupt
-#define IRQ_DMIC		(32+114)	// DMIC interupt
+#define IRQ_DMIC		(32+114)	// DMIC interrupt
 #define IRQ_SYS_NIRQ2		(32+119)	// External interrupt 2 (active low)
 #define	IRQ_KBD_CTL		(32+120)	// Keyboard controller interrupt
 

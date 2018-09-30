@@ -1,4 +1,4 @@
-/* $NetBSD: test.c,v 1.41 2016/09/05 01:00:07 sevan Exp $ */
+/* $NetBSD: test.c,v 1.41.12.1 2018/09/30 01:44:22 pgoyette Exp $ */
 
 /*
  * test(1); version 7-like  --  author Erik Baalbergen
@@ -12,7 +12,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: test.c,v 1.41 2016/09/05 01:00:07 sevan Exp $");
+__RCSID("$NetBSD: test.c,v 1.41.12.1 2018/09/30 01:44:22 pgoyette Exp $");
 #endif
 
 #include <sys/stat.h>
@@ -91,10 +91,13 @@ enum token {
 
 enum token_types {
 	UNOP,
-	BINOP,
+	BINOP
+#ifndef SMALL
+		,
 	BUNOP,
 	BBINOP,
 	PAREN
+#endif
 };
 
 struct t_op {
@@ -103,9 +106,11 @@ struct t_op {
 };
 
 static const struct t_op cop[] = {
+#ifndef SMALL
 	{"!",	UNOT,	BUNOP},
 	{"(",	LPAREN,	PAREN},
 	{")",	RPAREN,	PAREN},
+#endif
 	{"<",	STRLT,	BINOP},
 	{"=",	STREQ,	BINOP},
 	{">",	STRGT,	BINOP},
@@ -132,7 +137,9 @@ static const struct t_op mop2[] = {
 	{"L",	FILSYM,	UNOP},
 	{"O",	FILUID,	UNOP},
 	{"S",	FILSOCK,UNOP},
+#ifndef SMALL
 	{"a",	BAND,	BBINOP},
+#endif
 	{"b",	FILBDEV,UNOP},
 	{"c",	FILCDEV,UNOP},
 	{"d",	FILDIR,	UNOP},
@@ -142,7 +149,9 @@ static const struct t_op mop2[] = {
 	{"h",	FILSYM,	UNOP},		/* for backwards compat */
 	{"k",	FILSTCK,UNOP},
 	{"n",	STRNZ,	UNOP},
+#ifndef SMALL
 	{"o",	BOR,	BBINOP},
+#endif
 	{"p",	FILFIFO,UNOP},
 	{"r",	FILRD,	UNOP},
 	{"s",	FILGZ,	UNOP},
@@ -153,23 +162,35 @@ static const struct t_op mop2[] = {
 	{"z",	STREZ,	UNOP},
 };
 
+#ifndef SMALL
 static char **t_wp;
 static struct t_op const *t_wp_op;
+#endif
 
+#ifndef SMALL
 __dead static void syntax(const char *, const char *);
 static int oexpr(enum token);
 static int aexpr(enum token);
 static int nexpr(enum token);
 static int primary(enum token);
 static int binop(void);
-static int test_access(struct stat *, mode_t);
-static int filstat(char *, enum token);
 static enum token t_lex(char *);
 static int isoperand(void);
+#endif
+static struct t_op const *findop(const char *);
+static int perform_unop(enum token, const char *);
+static int perform_binop(enum token, const char *, const char *);
+static int test_access(struct stat *, mode_t);
+static int filstat(const char *, enum token);
 static long long getn(const char *);
 static int newerf(const char *, const char *);
 static int olderf(const char *, const char *);
 static int equalf(const char *, const char *);
+
+static int one_arg(const char *);
+static int two_arg(const char *, const char *);
+static int three_arg(const char *, const char *, const char *);
+static int four_arg(const char *, const char *, const char *, const char *);
 
 #if defined(SHELL)
 extern void error(const char *, ...) __dead __printflike(1, 2);
@@ -226,8 +247,67 @@ main(int argc, char *argv[])
 		argv[argc] = NULL;
 	}
 
-	if (argc < 2)
+	/*
+	 * POSIX defines operations of test for up to 4 args
+	 * (depending upon what the args are in some cases)
+	 *
+	 * arg count does not include the command name, (but argc does)
+	 * nor the closing ']' when the command was '[' (removed above)
+	 *
+	 * None of the following allow -a or -o as an operator (those
+	 * only apply in the evaluation of unspeicified expressions)
+	 *
+	 * Note that the xxx_arg() functions return "shell" true/false
+	 * (0 == true, 1 == false) or -1 for "unspecified case"
+	 *
+	 * Other functions return C true/false (1 == true, 0 == false)
+	 *
+	 * Hence we simply return the result from xxx_arg(), but
+	 * invert the result of oexpr() below before returning it.
+	 */
+	switch (argc - 1) {
+	case -1:		/* impossible, but never mind */
+	case 0:			/* test $a    where a=''    false */
 		return 1;
+
+	case 1:			/* test "$a" */
+		return one_arg(argv[1]);		/* always works */
+
+	case 2:			/* test op "$a" */
+		res = two_arg(argv[1], argv[2]);
+		if (res >= 0)
+			return res;
+		break;
+
+	case 3:			/* test "$a" op "$b" or test ! op "$a" */
+		res = three_arg(argv[1], argv[2], argv[3]);
+		if (res >= 0)
+			return res;
+		break;
+
+	case 4:			/* test ! "$a" op "$b" or test ( op "$a" ) */
+		res = four_arg(argv[1], argv[2], argv[3], argv[4]);
+		if (res >= 0)
+			return res;
+		break;
+
+	default:
+		break;
+	}
+
+	/*
+	 * All other cases produce unspecified results
+	 * (including cases above with small arg counts where the
+	 * args are not what was expected to be seen)
+	 *
+	 * We fall back to the old method, of attempting to parse
+	 * the expr (highly ambiguous as there is no distinction between
+	 * operators and operands that happen to look like operators)
+	 */
+
+#ifdef SMALL
+	error("SMALL test, no fallback usage");
+#else
 
 	t_wp = &argv[1];
 	res = !oexpr(t_lex(*t_wp));
@@ -236,8 +316,10 @@ main(int argc, char *argv[])
 		syntax(*t_wp, "unexpected operator");
 
 	return res;
+#endif
 }
 
+#ifndef SMALL
 static void
 syntax(const char *op, const char *msg)
 {
@@ -246,8 +328,95 @@ syntax(const char *op, const char *msg)
 		error("%s: %s", op, msg);
 	else
 		error("%s", msg);
+}	
+#endif
+
+static int
+one_arg(const char *arg)
+{
+	/*
+	 * True (exit 0, so false...) if arg is not a null string
+	 * False (so exit 1, so true) if it is.
+	 */
+	return *arg == '\0';
 }
 
+static int
+two_arg(const char *a1, const char *a2)
+{
+	static struct t_op const *op;
+
+	if (a1[0] == '!' && a1[1] == 0)
+		return !one_arg(a2);
+
+	op = findop(a1);
+	if (op != NULL && op->op_type == UNOP)
+		return !perform_unop(op->op_num, a2);
+
+#ifndef TINY
+	/*
+	 * an extension, but as we've entered the realm of the unspecified
+	 * we're allowed...		test ( $a )	where a=''
+	 */
+	if (a1[0] == '(' && a2[0] == ')' && (a1[1] | a2[1]) == 0)
+		return 1;
+#endif
+
+	return -1;
+}
+
+static int
+three_arg(const char *a1, const char *a2, const char *a3)
+{
+	static struct t_op const *op;
+	int res;
+
+	op = findop(a2);
+	if (op != NULL && op->op_type == BINOP)
+		return !perform_binop(op->op_num, a1, a3);
+
+	if (a1[1] != '\0')
+		return -1;
+
+	if (a1[0] == '!') {
+		res = two_arg(a2, a3);
+		if (res >= 0)
+			res = !res;
+		return res;
+	}
+
+#ifndef TINY
+	if (a1[0] == '(' && a3[0] == ')' && a3[1] == '\0')
+		return one_arg(a2);
+#endif
+
+	return -1;
+}
+
+static int
+four_arg(const char *a1, const char *a2, const char *a3, const char *a4)
+{
+	int res;
+
+	if (a1[1] != '\0')
+		return -1;
+
+	if (a1[0] == '!') {
+		res = three_arg(a2, a3, a4);
+		if (res >= 0)
+			res = !res;
+		return res;
+	}
+
+#ifndef TINY
+	if (a1[0] == '(' && a4[0] == ')' && a4[1] == '\0')
+		return two_arg(a2, a3);
+#endif
+
+	return -1;
+}
+
+#ifndef SMALL
 static int
 oexpr(enum token n)
 {
@@ -305,16 +474,7 @@ primary(enum token n)
 		/* unary expression */
 		if (*++t_wp == NULL)
 			syntax(t_wp_op->op_text, "argument expected");
-		switch (n) {
-		case STREZ:
-			return strlen(*t_wp) == 0;
-		case STRNZ:
-			return strlen(*t_wp) != 0;
-		case FILTT:
-			return isatty((int)getn(*t_wp));
-		default:
-			return filstat(*t_wp, n);
-		}
+		return perform_unop(n, *t_wp);
 	}
 
 	if (t_lex(t_wp[1]), t_wp_op && t_wp_op->op_type == BINOP) {
@@ -323,7 +483,24 @@ primary(enum token n)
 
 	return strlen(*t_wp) > 0;
 }
+#endif /* !SMALL */
 
+static int
+perform_unop(enum token n, const char *opnd)
+{
+	switch (n) {
+	case STREZ:
+		return strlen(opnd) == 0;
+	case STRNZ:
+		return strlen(opnd) != 0;
+	case FILTT:
+		return isatty((int)getn(opnd));
+	default:
+		return filstat(opnd, n);
+	}
+}
+
+#ifndef SMALL
 static int
 binop(void)
 {
@@ -337,7 +514,14 @@ binop(void)
 	if ((opnd2 = *++t_wp) == NULL)
 		syntax(op->op_text, "argument expected");
 		
-	switch (op->op_num) {
+	return perform_binop(op->op_num, opnd1, opnd2);
+}
+#endif
+
+static int
+perform_binop(enum token op_num, const char *opnd1, const char *opnd2)
+{
+	switch (op_num) {
 	case STREQ:
 		return strcmp(opnd1, opnd2) == 0;
 	case STRNE:
@@ -533,7 +717,7 @@ test_access(struct stat *sp, mode_t stmode)
 }
 
 static int
-filstat(char *nm, enum token mode)
+filstat(const char *nm, enum token mode)
 {
 	struct stat s;
 
@@ -626,6 +810,7 @@ findop(const char *s)
 	}
 }
 
+#ifndef SMALL
 static enum token
 t_lex(char *s)
 {
@@ -661,6 +846,7 @@ isoperand(void)
 		return op->op_type == BINOP && (t[0] != ')' || t[1] != '\0'); 
 	return 0;
 }
+#endif
 
 /* atoi with error detection */
 static long long
@@ -676,11 +862,12 @@ getn(const char *s)
 	if (errno == ERANGE && (r == LLONG_MAX || r == LLONG_MIN))
 	      error("%s: out of range", s);
 
-	while (isspace((unsigned char)*p))
-	      p++;
+	if (p != s)
+		while (isspace((unsigned char)*p))
+		      p++;
 	
 	if (*p || p == s)
-	      error("%s: bad number", s);
+	      error("'%s': bad number", s);
 
 	return r;
 }

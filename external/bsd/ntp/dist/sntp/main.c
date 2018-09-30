@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.15.14.1 2018/04/07 04:12:05 pgoyette Exp $	*/
+/*	$NetBSD: main.c,v 1.15.14.2 2018/09/30 01:45:26 pgoyette Exp $	*/
 
 #include <config.h>
 
@@ -1610,3 +1610,10 @@ gettimeofday_cached(
 #endif
 }
 
+/* Dummy function to satisfy libntp/work_fork.c */
+int set_user_group_ids(void);
+int
+set_user_group_ids(void)
+{
+    return 1;
+}

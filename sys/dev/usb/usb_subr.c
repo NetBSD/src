@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.223.2.3 2018/09/06 06:56:05 pgoyette Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.223.2.4 2018/09/30 01:45:51 pgoyette Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.223.2.3 2018/09/06 06:56:05 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.223.2.4 2018/09/30 01:45:51 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -905,6 +905,7 @@ usbd_attachwholedevice(device_t parent, struct usbd_device *dev, int port,
 	dlocs[USBDEVIFCF_INTERFACE] = -1;
 
 	KERNEL_LOCK(1, curlwp);
+	config_pending_incr(parent);
 	dv = config_found_sm_loc(parent, "usbdevif", dlocs, &uaa, usbd_print,
 				 config_stdsubmatch);
 	KERNEL_UNLOCK_ONE(curlwp);
@@ -915,6 +916,7 @@ usbd_attachwholedevice(device_t parent, struct usbd_device *dev, int port,
 		dev->ud_nifaces_claimed = 1; /* XXX */
 		usbd_serialnumber(dv, dev);
 	}
+	config_pending_decr(parent);
 	return USBD_NORMAL_COMPLETION;
 }
 

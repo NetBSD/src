@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: daily,v 1.92 2014/12/13 02:53:08 uebayasi Exp $
+#	$NetBSD: daily,v 1.92.14.1 2018/09/30 01:45:07 pgoyette Exp $
 #	@(#)daily	8.2 (Berkeley) 1/25/94
 #
 
@@ -32,7 +32,7 @@ else
 	exit 1;
 fi
 
-if [ -z "$MAILTO" -o "$USER" != "root" ]; then
+if [ -z "$MAILTO" ] || [ "$USER" != "root" ]; then
 	MAILTO=root
 fi
 
@@ -50,14 +50,14 @@ echo "Uptime: $(uptime)"
 #
 #echo ""
 #echo "Removing scratch and junk files:"
-#if [ -d /tmp -a ! -h /tmp ]; then
+#if [ -d /tmp ] && ! [ -h /tmp ]; then
 #	cd /tmp && {
 #	find . -type f -atime +3 -exec rm -f -- {} \;
 #	find . ! -name . -type d -mtime +1 -exec rmdir -- {} \; \
 #	    >/dev/null 2>&1; }
 #fi
 
-#if [ -d /var/tmp -a ! -h /var/tmp ]; then
+#if [ -d /var/tmp ] && ! [ -h /var/tmp ]; then
 #	cd /var/tmp && {
 #	find . ! -name . -atime +7 -exec rm -f -- {} \;
 #	find . ! \( -name . -o -name vi.recover \) -type d \
@@ -66,14 +66,14 @@ echo "Uptime: $(uptime)"
 #fi
 
 # Additional junk directory cleanup would go like this:
-#if [ -d /scratch -a ! -h /scratch ]; then
+#if [ -d /scratch ] && ! [ -h /scratch ]; then
 #	cd /scratch && {
 #	find . ! -name . -atime +1 -exec rm -f -- {} \;
 #	find . ! -name . -type d -mtime +1 -exec rmdir -- {} \; \
 #	    >/dev/null 2>&1; }
 #fi
 
-#if [ -d /var/rwho -a ! -h /var/rwho ] ; then
+#if [ -d /var/rwho ] && ! [ -h /var/rwho ] ; then
 #	cd /var/rwho && {
 #	find . ! -name . -mtime +7 -exec rm -f -- {} \; ; }
 #fi
@@ -174,7 +174,7 @@ if checkyesno check_disks; then
 	if [ -s /etc/dumpdates ] ; then
 		dump -W > $TMP2
 	fi
-	if [ -s $TMP -o -s $TMP2 ]; then
+	if [ -s $TMP ] || [ -s $TMP2 ]; then
 		echo ""
 		echo "Checking subsystem status:"
 		echo ""
@@ -307,7 +307,7 @@ if checkyesno run_skeyaudit; then
 fi
 
 if checkyesno run_makemandb; then
-	if [ -f /etc/man.conf -a -x /usr/sbin/makemandb ]; then
+	if [ -f /etc/man.conf ] && [ -x /usr/sbin/makemandb ]; then
 		echo ""
 		echo "Updating man page index:"
 		(umask 022; nice -n 5 /usr/sbin/makemandb -Q)

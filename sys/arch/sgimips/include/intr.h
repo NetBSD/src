@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.28 2015/06/26 22:55:06 matt Exp $	*/
+/*	$NetBSD: intr.h,v 1.28.16.1 2018/09/30 01:45:47 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -53,11 +53,12 @@ struct sgimips_intrhand {
 	struct	sgimips_intr *ih_intrhead;
 	struct	sgimips_intrhand *ih_next;
 	int	ih_pending;
+	struct evcnt ih_evcnt;
+	char	ih_evname[8];
 };
 
 struct sgimips_intr {
 	LIST_HEAD(,sgimips_intrhand) intr_q;
-	struct	evcnt ih_evcnt;
 	unsigned long intr_ipl;
 };
 

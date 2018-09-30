@@ -1,4 +1,4 @@
-#	$NetBSD: majors.amiga,v 1.23 2011/10/07 08:44:21 rkujawa Exp $
+#	$NetBSD: majors.amiga,v 1.23.52.1 2018/09/30 01:45:36 pgoyette Exp $
 #
 # Device majors for amiga
 #
@@ -41,11 +41,6 @@ device-major	audio		char 41			audio
 device-major	rnd		char 42			rnd
 device-major	md		char 43  block 15	md
 device-major	scsibus		char 44			scsibus
-device-major	isdn		char 45			isdn
-device-major	isdnctl		char 46			isdnctl
-device-major	isdnbchan	char 47			isdnbchan
-device-major	isdntrc		char 48			isdntrc
-device-major	isdntel		char 49			isdntel
 device-major	raid		char 50  block 16	raid
 device-major	svr4_net	char 51			compat_svr4
 device-major	wd		char 52  block 17	wd

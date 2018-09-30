@@ -1,5 +1,3 @@
-/*	$NetBSD: npf_conn.c,v 1.24 2017/12/10 00:07:36 rmind Exp $	*/
-
 /*-
  * Copyright (c) 2014-2015 Mindaugas Rasiukevicius <rmind at netbsd org>
  * Copyright (c) 2010-2014 The NetBSD Foundation, Inc.
@@ -100,7 +98,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_conn.c,v 1.24 2017/12/10 00:07:36 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_conn.c,v 1.24.2.1 2018/09/30 01:45:56 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -135,6 +133,7 @@ CTASSERT(PFIL_ALL == (0x001 | 0x002));
 enum { CONN_TRACKING_OFF, CONN_TRACKING_ON };
 
 static void	npf_conn_destroy(npf_t *, npf_conn_t *);
+static nvlist_t *npf_conn_export(npf_t *, const npf_conn_t *);
 
 /*
  * npf_conn_sys{init,fini}: initialise/destroy connection tracking.
@@ -913,7 +912,7 @@ npf_conn_worker(npf_t *npf)
  * Note: this is expected to be an expensive operation.
  */
 int
-npf_conndb_export(npf_t *npf, prop_array_t conlist)
+npf_conndb_export(npf_t *npf, nvlist_t *npf_dict)
 {
 	npf_conn_t *con, *prev;
 
@@ -930,11 +929,11 @@ npf_conndb_export(npf_t *npf, prop_array_t conlist)
 	con = npf_conndb_getlist(npf->conn_db);
 	while (con) {
 		npf_conn_t *next = con->c_next;
-		prop_dictionary_t cdict;
+		nvlist_t *cdict;
 
 		if ((cdict = npf_conn_export(npf, con)) != NULL) {
-			prop_array_add(conlist, cdict);
-			prop_object_release(cdict);
+			nvlist_append_nvlist_array(npf_dict, "conn-list", cdict);
+			nvlist_destroy(cdict);
 		}
 		prev = con;
 		con = next;
@@ -944,59 +943,48 @@ npf_conndb_export(npf_t *npf, prop_array_t conlist)
 	return 0;
 }
 
-static prop_dictionary_t
+static nvlist_t *
 npf_connkey_export(const npf_connkey_t *key)
 {
 	uint16_t id[2], alen, proto;
-	prop_dictionary_t kdict;
 	npf_addr_t ips[2];
-	prop_data_t d;
+	nvlist_t *kdict;
 
-	kdict = prop_dictionary_create();
+	kdict = nvlist_create(0);
 	connkey_getkey(key, &proto, ips, id, &alen);
-
-	prop_dictionary_set_uint16(kdict, "proto", proto);
-
-	prop_dictionary_set_uint16(kdict, "sport", id[NPF_SRC]);
-	prop_dictionary_set_uint16(kdict, "dport", id[NPF_DST]);
-
-	d = prop_data_create_data(&ips[NPF_SRC], alen);
-	prop_dictionary_set_and_rel(kdict, "saddr", d);
-
-	d = prop_data_create_data(&ips[NPF_DST], alen);
-	prop_dictionary_set_and_rel(kdict, "daddr", d);
-
+	nvlist_add_number(kdict, "proto", proto);
+	nvlist_add_number(kdict, "sport", id[NPF_SRC]);
+	nvlist_add_number(kdict, "dport", id[NPF_DST]);
+	nvlist_add_binary(kdict, "saddr", &ips[NPF_SRC], alen);
+	nvlist_add_binary(kdict, "daddr", &ips[NPF_DST], alen);
 	return kdict;
 }
 
 /*
  * npf_conn_export: serialise a single connection.
  */
-prop_dictionary_t
+static nvlist_t *
 npf_conn_export(npf_t *npf, const npf_conn_t *con)
 {
-	prop_dictionary_t cdict, kdict;
-	prop_data_t d;
+	nvlist_t *cdict, *kdict;
 
 	if ((con->c_flags & (CONN_ACTIVE|CONN_EXPIRE)) != CONN_ACTIVE) {
 		return NULL;
 	}
-	cdict = prop_dictionary_create();
-	prop_dictionary_set_uint32(cdict, "flags", con->c_flags);
-	prop_dictionary_set_uint32(cdict, "proto", con->c_proto);
+	cdict = nvlist_create(0);
+	nvlist_add_number(cdict, "flags", con->c_flags);
+	nvlist_add_number(cdict, "proto", con->c_proto);
 	if (con->c_ifid) {
 		const char *ifname = npf_ifmap_getname(npf, con->c_ifid);
-		prop_dictionary_set_cstring(cdict, "ifname", ifname);
+		nvlist_add_string(cdict, "ifname", ifname);
 	}
-
-	d = prop_data_create_data(&con->c_state, sizeof(npf_state_t));
-	prop_dictionary_set_and_rel(cdict, "state", d);
+	nvlist_add_binary(cdict, "state", &con->c_state, sizeof(npf_state_t));
 
 	kdict = npf_connkey_export(&con->c_forw_entry);
-	prop_dictionary_set_and_rel(cdict, "forw-key", kdict);
+	nvlist_move_nvlist(cdict, "forw-key", kdict);
 
 	kdict = npf_connkey_export(&con->c_back_entry);
-	prop_dictionary_set_and_rel(cdict, "back-key", kdict);
+	nvlist_move_nvlist(cdict, "back-key", kdict);
 
 	if (con->c_nat) {
 		npf_nat_export(cdict, con->c_nat);
@@ -1005,49 +993,37 @@ npf_conn_export(npf_t *npf, const npf_conn_t *con)
 }
 
 static uint32_t
-npf_connkey_import(prop_dictionary_t kdict, npf_connkey_t *key)
+npf_connkey_import(const nvlist_t *kdict, npf_connkey_t *key)
 {
-	prop_object_t sobj, dobj;
 	npf_addr_t const * ips[2];
-	uint16_t alen, proto, id[2];
+	uint16_t proto, id[2];
+	size_t alen1, alen2;
 
-	if (!prop_dictionary_get_uint16(kdict, "proto", &proto))
+	proto = dnvlist_get_number(kdict, "proto", 0);
+	id[NPF_SRC] = dnvlist_get_number(kdict, "sport", 0);
+	id[NPF_DST] = dnvlist_get_number(kdict, "dport", 0);
+	ips[NPF_SRC] = dnvlist_get_binary(kdict, "saddr", &alen1, NULL, 0);
+	ips[NPF_DST] = dnvlist_get_binary(kdict, "daddr", &alen2, NULL, 0);
+	if (__predict_false(alen1 == 0 || alen1 != alen2)) {
 		return 0;
-
-	if (!prop_dictionary_get_uint16(kdict, "sport", &id[NPF_SRC]))
-		return 0;
-
-	if (!prop_dictionary_get_uint16(kdict, "dport", &id[NPF_DST]))
-		return 0;
-
-	sobj = prop_dictionary_get(kdict, "saddr");
-	if ((ips[NPF_SRC] = prop_data_data_nocopy(sobj)) == NULL)
-		return 0;
-
-	dobj = prop_dictionary_get(kdict, "daddr");
-	if ((ips[NPF_DST] = prop_data_data_nocopy(dobj)) == NULL)
-		return 0;
-
-	alen = prop_data_size(sobj);
-	if (alen != prop_data_size(dobj))
-		return 0;
-
-	return connkey_setkey(key, proto, ips, id, alen, true);
+	}
+	return connkey_setkey(key, proto, ips, id, alen1, true);
 }
 
 /*
  * npf_conn_import: fully reconstruct a single connection from a
- * directory and insert into the given database.
+ * nvlist and insert into the given database.
  */
 int
-npf_conn_import(npf_t *npf, npf_conndb_t *cd, prop_dictionary_t cdict,
+npf_conn_import(npf_t *npf, npf_conndb_t *cd, const nvlist_t *cdict,
     npf_ruleset_t *natlist)
 {
 	npf_conn_t *con;
 	npf_connkey_t *fw, *bk;
-	prop_object_t obj;
+	const nvlist_t *nat, *conkey;
 	const char *ifname;
-	const void *d;
+	const void *state;
+	size_t len;
 
 	/* Allocate a connection and initialise it (clear first). */
 	con = pool_cache_get(npf->conn_cache, PR_WAITOK);
@@ -1055,44 +1031,41 @@ npf_conn_import(npf_t *npf, npf_conndb_t *cd, prop_dictionary_t cdict,
 	mutex_init(&con->c_lock, MUTEX_DEFAULT, IPL_SOFTNET);
 	npf_stats_inc(npf, NPF_STAT_CONN_CREATE);
 
-	prop_dictionary_get_uint32(cdict, "proto", &con->c_proto);
-	prop_dictionary_get_uint32(cdict, "flags", &con->c_flags);
+	con->c_proto = dnvlist_get_number(cdict, "proto", 0);
+	con->c_flags = dnvlist_get_number(cdict, "flags", 0);
 	con->c_flags &= PFIL_ALL | CONN_ACTIVE | CONN_PASS;
 	conn_update_atime(con);
 
-	if (prop_dictionary_get_cstring_nocopy(cdict, "ifname", &ifname) &&
-	    (con->c_ifid = npf_ifmap_register(npf, ifname)) == 0) {
+	ifname = dnvlist_get_string(cdict, "ifname", NULL);
+	if (ifname && (con->c_ifid = npf_ifmap_register(npf, ifname)) == 0) {
 		goto err;
 	}
 
-	obj = prop_dictionary_get(cdict, "state");
-	if ((d = prop_data_data_nocopy(obj)) == NULL ||
-	    prop_data_size(obj) != sizeof(npf_state_t)) {
+	state = dnvlist_get_binary(cdict, "state", &len, NULL, 0);
+	if (!state || len != sizeof(npf_state_t)) {
 		goto err;
 	}
-	memcpy(&con->c_state, d, sizeof(npf_state_t));
+	memcpy(&con->c_state, state, sizeof(npf_state_t));
 
 	/* Reconstruct NAT association, if any. */
-	if ((obj = prop_dictionary_get(cdict, "nat")) != NULL &&
-	    (con->c_nat = npf_nat_import(npf, obj, natlist, con)) == NULL) {
+	if ((nat = dnvlist_get_nvlist(cdict, "nat", NULL)) != NULL &&
+	    (con->c_nat = npf_nat_import(npf, nat, natlist, con)) == NULL) {
 		goto err;
 	}
 
 	/*
 	 * Fetch and copy the keys for each direction.
 	 */
-	obj = prop_dictionary_get(cdict, "forw-key");
+	conkey = dnvlist_get_nvlist(cdict, "forw-key", NULL);
 	fw = &con->c_forw_entry;
-	if (obj == NULL || !npf_connkey_import(obj, fw)) {
+	if (conkey == NULL || !npf_connkey_import(conkey, fw)) {
 		goto err;
 	}
-
-	obj = prop_dictionary_get(cdict, "back-key");
+	conkey = dnvlist_get_nvlist(cdict, "back-key", NULL);
 	bk = &con->c_back_entry;
-	if (obj == NULL || !npf_connkey_import(obj, bk)) {
+	if (conkey == NULL || !npf_connkey_import(conkey, bk)) {
 		goto err;
 	}
-
 	fw->ck_backptr = bk->ck_backptr = con;
 
 	/* Insert the entries and the connection itself. */
@@ -1113,41 +1086,30 @@ err:
 }
 
 int
-npf_conn_find(npf_t *npf, prop_dictionary_t idict, prop_dictionary_t *odict)
+npf_conn_find(npf_t *npf, const nvlist_t *idict, nvlist_t **odict)
 {
-	prop_dictionary_t kdict;
+	const nvlist_t *kdict;
 	npf_connkey_t key;
 	npf_conn_t *con;
 	uint16_t dir;
 	bool forw;
 
-	if ((kdict = prop_dictionary_get(idict, "key")) == NULL)
+	kdict = dnvlist_get_nvlist(idict, "key", NULL);
+	if (!kdict || !npf_connkey_import(kdict, &key)) {
 		return EINVAL;
-
-	if (!npf_connkey_import(kdict, &key))
-		return EINVAL;
-
-	if (!prop_dictionary_get_uint16(idict, "direction", &dir))
-		return EINVAL;
-
+	}
+	dir = dnvlist_get_number(idict, "direction", 0);
 	con = npf_conndb_lookup(npf->conn_db, &key, &forw);
 	if (con == NULL) {
 		return ESRCH;
 	}
-
 	if (!npf_conn_ok(con, dir, true)) {
 		atomic_dec_uint(&con->c_refcnt);
 		return ESRCH;
 	}
-
 	*odict = npf_conn_export(npf, con);
-	if (*odict == NULL) {
-		atomic_dec_uint(&con->c_refcnt);
-		return ENOSPC;
-	}
 	atomic_dec_uint(&con->c_refcnt);
-
-	return 0;
+	return *odict ? 0 : ENOSPC;
 }
 
 #if defined(DDB) || defined(_NPF_TESTING)

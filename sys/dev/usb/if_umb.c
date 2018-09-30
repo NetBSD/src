@@ -1,5 +1,5 @@
-/*	$NetBSD: if_umb.c,v 1.4.4.2 2018/09/06 06:56:04 pgoyette Exp $ */
-/*	$OpenBSD: if_umb.c,v 1.18 2018/02/19 08:59:52 mpi Exp $ */
+/*	$NetBSD: if_umb.c,v 1.4.4.3 2018/09/30 01:45:51 pgoyette Exp $ */
+/*	$OpenBSD: if_umb.c,v 1.20 2018/09/10 17:00:45 gerhard Exp $ */
 
 /*
  * Copyright (c) 2016 genua mbH
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_umb.c,v 1.4.4.2 2018/09/06 06:56:04 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_umb.c,v 1.4.4.3 2018/09/30 01:45:51 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -90,10 +90,6 @@ Static void	 umb_dump(void *, int);
 #endif
 
 #define DEVNAM(sc)		device_xname((sc)->sc_dev)
-
-#ifndef notyet
-#define usb_wait_task(dev, task)
-#endif
 
 /*
  * State change timeout
@@ -584,13 +580,13 @@ umb_detach(device_t self, int flags)
 		umb_down(sc, 1);
 	umb_close(sc);
 
-	usb_rem_task(sc->sc_udev, &sc->sc_get_response_task);
-	usb_wait_task(sc->sc_udev, &sc->sc_get_response_task);
+	usb_rem_task_wait(sc->sc_udev, &sc->sc_get_response_task,
+			USB_TASKQ_DRIVER, NULL);
 	sc->sc_nresp = 0;
 	if (sc->sc_rx_ep != -1 && sc->sc_tx_ep != -1) {
 		callout_destroy(&sc->sc_statechg_timer);
-		usb_rem_task(sc->sc_udev, &sc->sc_umb_task);
-		usb_wait_task(sc->sc_udev, &sc->sc_umb_task);
+		usb_rem_task_wait(sc->sc_udev, &sc->sc_umb_task,
+			USB_TASKQ_DRIVER, NULL);
 	}
 	if (sc->sc_ctrl_pipe) {
 		usbd_close_pipe(sc->sc_ctrl_pipe);
@@ -948,13 +944,7 @@ umb_statechg_timeout(void *arg)
 {
 	struct umb_softc *sc = arg;
 
-	if (sc->sc_info.regstate == MBIM_REGSTATE_ROAMING && !sc->sc_roaming) {
-		/*
-		 * Query the registration state until we're with the home
-		 * network again.
-		 */
-		umb_cmd(sc, MBIM_CID_REGISTER_STATE, MBIM_CMDOP_QRY, NULL, 0);
-	} else
+	if (sc->sc_info.regstate != MBIM_REGSTATE_ROAMING || sc->sc_roaming)
 		printf("%s: state change timeout\n",DEVNAM(sc));
 	usb_add_task(sc->sc_udev, &sc->sc_umb_task, USB_TASKQ_DRIVER);
 }
@@ -1007,6 +997,15 @@ umb_state_task(void *arg)
 	struct ifreq ifr;
 	int	 s;
 	int	 state;
+
+	if (sc->sc_info.regstate == MBIM_REGSTATE_ROAMING && !sc->sc_roaming) {
+		/*
+		 * Query the registration state until we're with the home
+		 * network again.
+		 */
+		umb_cmd(sc, MBIM_CID_REGISTER_STATE, MBIM_CMDOP_QRY, NULL, 0);
+		return;
+	}
 
 	s = splnet();
 	if (ifp->if_flags & IFF_UP)

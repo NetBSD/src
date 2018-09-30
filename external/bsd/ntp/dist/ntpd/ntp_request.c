@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_request.c,v 1.14.14.1 2018/04/07 04:12:02 pgoyette Exp $	*/
+/*	$NetBSD: ntp_request.c,v 1.14.14.2 2018/09/30 01:45:19 pgoyette Exp $	*/
 
 /*
  * ntp_request.c - respond to information requests
@@ -892,6 +892,7 @@ peer_info (
 			ip->flags |= INFO_FLAG_SHORTLIST;
 		ip->leap = pp->leap;
 		ip->hmode = pp->hmode;
+		ip->pmode = pp->pmode;
 		ip->keyid = pp->keyid;
 		ip->stratum = pp->stratum;
 		ip->ppoll = pp->ppoll;

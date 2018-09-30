@@ -1,4 +1,4 @@
-/* $NetBSD: tegra124_car.c,v 1.14 2017/07/21 01:01:22 jmcneill Exp $ */
+/* $NetBSD: tegra124_car.c,v 1.14.4.1 2018/09/30 01:45:38 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra124_car.c,v 1.14 2017/07/21 01:01:22 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra124_car.c,v 1.14.4.1 2018/09/30 01:45:38 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -53,7 +53,8 @@ __KERNEL_RCSID(0, "$NetBSD: tegra124_car.c,v 1.14 2017/07/21 01:01:22 jmcneill E
 static int	tegra124_car_match(device_t, cfdata_t, void *);
 static void	tegra124_car_attach(device_t, device_t, void *);
 
-static struct clk *tegra124_car_clock_decode(device_t, const void *, size_t);
+static struct clk *tegra124_car_clock_decode(device_t, int, const void *,
+					     size_t);
 
 static const struct fdtbus_clock_controller_func tegra124_car_fdtclock_funcs = {
 	.decode = tegra124_car_clock_decode
@@ -757,10 +758,13 @@ tegra124_car_attach(device_t parent, device_t self, void *aux)
 	aprint_naive("\n");
 	aprint_normal(": CAR\n");
 
+	sc->sc_clkdom.name = device_xname(self);
 	sc->sc_clkdom.funcs = &tegra124_car_clock_funcs;
 	sc->sc_clkdom.priv = sc;
-	for (n = 0; n < __arraycount(tegra124_car_clocks); n++)
+	for (n = 0; n < __arraycount(tegra124_car_clocks); n++) {
 		tegra124_car_clocks[n].base.domain = &sc->sc_clkdom;
+		clk_attach(&tegra124_car_clocks[n].base);
+	}
 
 	fdtbus_register_clock_controller(self, phandle,
 	    &tegra124_car_fdtclock_funcs);
@@ -959,7 +963,8 @@ tegra124_car_clock_find_by_id(u_int clock_id)
 }
 
 static struct clk *
-tegra124_car_clock_decode(device_t dev, const void *data, size_t len)
+tegra124_car_clock_decode(device_t dev, int cc_phandle, const void *data,
+			  size_t len)
 {
 	struct tegra124_car_softc * const sc = device_private(dev);
 	struct tegra_clk *tclk;

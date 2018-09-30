@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.es,v 1.6.14.1 2018/06/25 07:26:12 pgoyette Exp $	*/
+/*	$NetBSD: msg.mi.es,v 1.6.14.2 2018/09/30 01:46:01 pgoyette Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -954,6 +954,7 @@ message Base_dir {Directorio base}
 message Set_dir_src {Directorio de conjuntos binary} /* fix XLAT */
 message Set_dir_bin {Directorio de conjuntos source} /* fix XLAT */
 message Xfer_dir {Directorio a transferir a}
+message transfer_method {Download via}
 message User {Usuario}
 message Password {Contraseña}
 message Proxy {Proxy}

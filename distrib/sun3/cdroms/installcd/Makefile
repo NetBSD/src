@@ -1,6 +1,7 @@
-#	$NetBSD: Makefile,v 1.2 2012/01/15 22:34:34 jmcneill Exp $
+#	$NetBSD: Makefile,v 1.2.40.1 2018/09/30 01:45:06 pgoyette Exp $
 CDBASE=		sun3cd			# gives ${CDBASE}.iso
 CDRELEASE=	true			# include $RELEASEDIR/$MACHINE
+CDRELEASE_NODEBUG=	true
 
 # for PRINTOBJDIR
 .include <bsd.own.mk>

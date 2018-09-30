@@ -1,4 +1,4 @@
-#	$NetBSD: ec.inc,v 1.6 2018/02/24 21:45:57 christos Exp $
+#	$NetBSD: ec.inc,v 1.6.2.1 2018/09/30 01:44:52 pgoyette Exp $
 #
 #	@(#) Copyright (c) 1995 Simon J. Gerraty
 #
@@ -10,7 +10,6 @@
 
 EC_SRCS += \
 curve25519.c \
-ec2_mult.c \
 ec2_oct.c \
 ec2_smpl.c \
 ec_ameth.c \

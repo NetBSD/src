@@ -1,5 +1,3 @@
-/*	$NetBSD: npf_data.c,v 1.28 2017/01/19 20:18:17 rmind Exp $	*/
-
 /*-
  * Copyright (c) 2009-2017 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -31,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_data.c,v 1.28 2017/01/19 20:18:17 rmind Exp $");
+__RCSID("$NetBSD: npf_data.c,v 1.28.10.1 2018/09/30 01:46:01 pgoyette Exp $");
 
 #include <stdlib.h>
 #include <stddef.h>
@@ -511,6 +509,8 @@ npfctl_icmptype(int proto, const char *type)
 	default:
 		assert(false);
 	}
+#else
+	(void)proto;
 #endif
 	yyerror("unknown icmp-type %s", type);
 	return ~0;
@@ -602,13 +602,15 @@ npfctl_icmpcode(int proto, uint8_t type, const char *code)
 		if (strcmp(arr[ul], code) == 0)
 			return ul;
 	}
+#else
+	(void)proto;
 #endif
 	yyerror("unknown code %s for icmp-type %d", code, type);
 	return ~0;
 }
 
 npfvar_t *
-npfctl_parse_icmp(int proto, int type, int code)
+npfctl_parse_icmp(int proto __unused, int type, int code)
 {
 	npfvar_t *vp = npfvar_create();
 

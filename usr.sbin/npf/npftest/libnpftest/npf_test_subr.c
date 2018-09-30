@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_test_subr.c,v 1.12 2016/12/26 23:05:05 christos Exp $	*/
+/*	$NetBSD: npf_test_subr.c,v 1.12.12.1 2018/09/30 01:46:01 pgoyette Exp $	*/
 
 /*
  * NPF initialisation and handler routines.
@@ -9,6 +9,7 @@
 #ifdef _KERNEL
 #include <sys/types.h>
 #include <sys/cprng.h>
+#include <sys/kmem.h>
 #include <net/if.h>
 #include <net/if_types.h>
 #endif
@@ -26,6 +27,8 @@ static int		(*_pton_func)(int, const char *, void *);
 static const char *	(*_ntop_func)(int, const void *, char *, socklen_t);
 
 static void		npf_state_sample(npf_state_t *, bool);
+
+static void		load_npf_config_ifs(nvlist_t *, bool);
 
 #ifndef __NetBSD__
 /*
@@ -82,17 +85,27 @@ npf_test_fini(void)
 }
 
 int
-npf_test_load(const void *xml)
+npf_test_load(const void *buf, size_t len, bool verbose)
 {
-	prop_dictionary_t npf_dict = prop_dictionary_internalize(xml);
-	return npfctl_load(npf_getkernctx(), 0, npf_dict);
+	nvlist_t *npf_dict;
+	npf_error_t error;
+
+	npf_dict = nvlist_unpack(buf, len, 0);
+	if (!npf_dict) {
+		printf("%s: could not unpack the nvlist\n", __func__);
+		return EINVAL;
+	}
+	load_npf_config_ifs(npf_dict, verbose);
+
+	// Note: npf_dict will be consumed by npf_load().
+	return npf_load(npf_getkernctx(), npf_dict, &error);
 }
 
 ifnet_t *
 npf_test_addif(const char *ifname, bool reg, bool verbose)
 {
 	npf_t *npf = npf_getkernctx();
-	ifnet_t *ifp = malloc(sizeof(*ifp), M_TEST, M_WAITOK|M_ZERO);
+	ifnet_t *ifp = kmem_zalloc(sizeof(*ifp), KM_SLEEP);
 
 	/*
 	 * This is a "fake" interface with explicitly set index.
@@ -111,6 +124,31 @@ npf_test_addif(const char *ifname, bool reg, bool verbose)
 		printf("+ Interface %s\n", ifname);
 	}
 	return ifp;
+}
+
+static void
+load_npf_config_ifs(nvlist_t *npf_dict, bool verbose)
+{
+	const nvlist_t * const *iflist;
+	const nvlist_t *dbg_dict;
+	size_t nitems;
+
+	dbg_dict = dnvlist_get_nvlist(npf_dict, "debug", NULL);
+	if (!dbg_dict) {
+		return;
+	}
+	if (!nvlist_exists_nvlist_array(dbg_dict, "interfaces")) {
+		return;
+	}
+	iflist = nvlist_get_nvlist_array(dbg_dict, "interfaces", &nitems);
+	for (unsigned i = 0; i < nitems; i++) {
+		const nvlist_t *ifdict = iflist[i];
+		const char *ifname;
+
+		if ((ifname = nvlist_get_string(ifdict, "name")) != NULL) {
+			(void)npf_test_addif(ifname, true, verbose);
+		}
+	}
 }
 
 static const char *

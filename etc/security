@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: security,v 1.122 2018/01/06 23:44:06 mlelstv Exp $
+#	$NetBSD: security,v 1.122.2.1 2018/09/30 01:45:07 pgoyette Exp $
 #	from: @(#)security	8.1 (Berkeley) 6/9/93
 #
 
@@ -86,27 +86,28 @@ migrate_file()
 {
 	_old=$1
 	_new=$2
-	if [ -z "$_old" -o -z "$_new" ]; then
+	if [ -z "$_old" ] || [ -z "$_new" ]; then
 		err 3 "USAGE: migrate_file old new"
 	fi
 	if [ ! -d "${_new%/*}" ]; then
 		mkdir -p "${_new%/*}"
 	fi
-	if [ -f "${_old}" -a ! -f "${_new}" ]; then
+	if [ -f "${_old}" ] && ! [ -f "${_new}" ]; then
 		echo "==> migrating ${_old}"
 		echo "           to ${_new}"
 		mv "${_old}" "${_new}"
 	fi
-	if [ -f "${_old}.current" -a ! -f "${_new}.current" ]; then
+	if [ -f "${_old}.current" ] && ! [ -f "${_new}.current" ]; then
 		echo "==> migrating ${_old}.current"
 		echo "           to ${_new}.current"
 		mv "${_old}.current" "${_new}.current"
-		if [ -f "${_old}.current,v" -a ! -f "${_new}.current,v" ]; then
+		if [ -f "${_old}.current,v" ] &&
+		 ! [ -f "${_new}.current,v" ]; then
 			echo "==> migrating ${_old}.current,v"
 			echo "           to ${_new}.current,v"
 			mv "${_old}.current,v" "${_new}.current,v"
 		fi
-		if [ -f "${_old}.backup" -a ! -f "${_new}.backup" ]; then
+		if [ -f "${_old}.backup" ] && ! [ -f "${_new}.backup" ]; then
 			echo "==> migrating ${_old}.backup"
 			echo "           to ${_new}.backup"
 			mv "${_old}.backup" "${_new}.backup"
@@ -124,7 +125,7 @@ backup_and_diff()
 {
 	_file=$1
 	_printdiff=$2
-	if [ -z "$_file" -o -z "$_printdiff" ]; then
+	if [ -z "$_file" ] || [ -z "$_printdiff" ]; then
 		err 3 "USAGE: backup_and_diff file printdiff"
 	fi
 	! checkyesno _printdiff
@@ -398,12 +399,12 @@ end-of-csh
 			< $TMP1
 		fi
 	done > $OUTPUT
-	if [ $umaskset = "no" -o -s $OUTPUT ] ; then
+	if [ $umaskset = no ] -o [ -s $OUTPUT ] ; then
 		printf "\nChecking root csh paths, umask values:\n$list\n\n"
 		if [ -s $OUTPUT ]; then
 			cat $OUTPUT
 		fi
-		if [ $umaskset = "no" ] ; then
+		if [ $umaskset = no ] ; then
 		    printf "\tRoot csh startup files do not set the umask.\n"
 		fi
 	fi
@@ -443,12 +444,12 @@ end-of-sh
 
 		fi
 	done > $OUTPUT
-	if [ $umaskset = "no" -o -s $OUTPUT ] ; then
+	if [ $umaskset = no ] || [ -s $OUTPUT ] ; then
 		printf "\nChecking root sh paths, umask values:\n$list\n"
 		if [ -s $OUTPUT ]; then
 			cat $OUTPUT
 		fi
-		if [ $umaskset = "no" ] ; then
+		if [ $umaskset = no ] ; then
 			printf "\tRoot sh startup files do not set the umask.\n"
 		fi
 	fi
@@ -507,8 +508,10 @@ if checkyesno check_rhosts; then
 	fi
 
 	while read uid homedir; do
-		if [ -f ${homedir}/.rhosts -a -r ${homedir}/.rhosts ] && \
-		    cat -f ${homedir}/.rhosts | egrep '\+' > /dev/null ; then
+		if [ -f ${homedir}/.rhosts ] &&
+		   [ -r ${homedir}/.rhosts ] &&
+		   cat -f ${homedir}/.rhosts | egrep '\+' > /dev/null
+		then
 			printf -- "$uid: + in .rhosts file.\n"
 		fi
 	done < $MPBYPATH > $OUTPUT

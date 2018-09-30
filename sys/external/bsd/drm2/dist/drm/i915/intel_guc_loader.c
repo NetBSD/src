@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_guc_loader.c,v 1.12.2.2 2018/09/06 06:56:17 pgoyette Exp $	*/
+/*	$NetBSD: intel_guc_loader.c,v 1.12.2.3 2018/09/30 01:45:54 pgoyette Exp $	*/
 
 /*
  * Copyright © 2014 Intel Corporation
@@ -29,7 +29,7 @@
  *    Alex Dai <yu.dai@intel.com>
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_guc_loader.c,v 1.12.2.2 2018/09/06 06:56:17 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_guc_loader.c,v 1.12.2.3 2018/09/30 01:45:54 pgoyette Exp $");
 
 #include <linux/firmware.h>
 #include <linux/module.h>
@@ -68,6 +68,9 @@ __KERNEL_RCSID(0, "$NetBSD: intel_guc_loader.c,v 1.12.2.2 2018/09/06 06:56:17 pg
 
 #define I915_SKL_GUC_UCODE "i915/skl_guc_ver4.bin"
 MODULE_FIRMWARE(I915_SKL_GUC_UCODE);
+
+#define I915_KBL_GUC_UCODE "i915/kbl_guc_ver9_14.bin"
+MODULE_FIRMWARE(I915_KBL_GUC_UCODE);
 
 /* User-friendly representation of an enum */
 const char *intel_guc_fw_status_repr(enum intel_guc_fw_status status)
@@ -589,6 +592,10 @@ void intel_guc_ucode_init(struct drm_device *dev)
 		fw_path = I915_SKL_GUC_UCODE;
 		guc_fw->guc_fw_major_wanted = 4;
 		guc_fw->guc_fw_minor_wanted = 3;
+	} else if (IS_KABYLAKE(dev)) {
+		fw_path = I915_KBL_GUC_UCODE;
+		guc_fw->guc_fw_major_wanted = 9;
+		guc_fw->guc_fw_minor_wanted = 14;
 	} else {
 		i915.enable_guc_submission = false;
 		fw_path = "";	/* unknown device */

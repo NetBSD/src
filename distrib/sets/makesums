@@ -1,13 +1,13 @@
 #!/bin/sh
 #
-# $NetBSD: makesums,v 1.16 2009/09/19 07:09:54 snj Exp $
+# $NetBSD: makesums,v 1.16.46.1 2018/09/30 01:45:04 pgoyette Exp $
 #
 # Make checksum files for files in ``tardir''.  Usage:
 # makesums [-a] [-t tardir] [setname [...]]
 #
 # If -t is omitted, RELEASEDIR must be set and not empty.
 # The ``setname'' arguments comprise a list of files to checksum,
-# and may be omitted (in which case ``*.tgz'' is used).
+# and may be omitted (in which case ``*.tgz *.tar.xz'' is used).
 # If -A is given, then the checksum are appended to possibly existing files.
 # NOTE: Don't use this when running parallel jobs
 # If -a is given, then the list of sets is ignored, and ``*'' is used.
@@ -35,7 +35,7 @@ Usage: ${prog} [-A] [-a] [-t targetdir] [setname [...]]
 	-A		Append to possible existing checksum files 
 	-a		checksum all plain files instead of [setname [...]]
 	-t targetdir	\${RELEASEDIR}		[${targetdir}]
-	setname [...]	sets to checksum 	[*.tgz]
+	setname [...]	sets to checksum 	[*.tgz *.tar.xz]
 USAGE
 	exit 1
 }
@@ -69,7 +69,7 @@ pat="$*"
 if [ "${dash_all}" = yes ]; then
 	pat='*'
 elif [ -z "${pat}" ]; then
-	pat='*.tgz'
+	pat='*.tgz *.tar.xz'
 fi
 lists="$(${FIND} ${pat} -prune \( -type f -o -type l \) \
 	\! -name '*SUM' \! -name MD5 \! -name SHA512 2>/dev/null)"

@@ -1,4 +1,4 @@
-#	$NetBSD: crypto.inc,v 1.7 2018/03/03 04:32:46 christos Exp $
+#	$NetBSD: crypto.inc,v 1.7.2.1 2018/09/30 01:44:52 pgoyette Exp $
 #
 #	@(#) Copyright (c) 1995 Simon J. Gerraty
 #
@@ -11,6 +11,7 @@
 CRYPTO_SRCS += \
 cpt_err.c \
 cryptlib.c \
+ctype.c \
 cversion.c \
 ebcdic.c \
 ex_data.c \

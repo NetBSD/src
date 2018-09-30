@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_TINY,v 1.157.2.1 2018/09/06 06:55:35 pgoyette Exp $
+#	$NetBSD: GENERIC_TINY,v 1.157.2.2 2018/09/30 01:45:44 pgoyette Exp $
 #
 #	GENERIC_TINY -- suitable default for 4M machines
 #			No EISA, PCI, or SCSI.
@@ -363,7 +363,6 @@ fd*	at fdc? drive ?			# the drives themselves
 # Network Interfaces
 
 # PCI network interfaces
-#en*	at pci? dev ? function ?	# ENI/Adaptec ATM
 #ep*	at pci? dev ? function ?	# 3Com 3c59x/3c90x Ethernet
 #epic*	at pci? dev ? function ?	# SMC EPIC/100 Ethernet
 #esh*	at pci? dev ? function ?	# Essential HIPPI card

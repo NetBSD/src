@@ -1,4 +1,4 @@
-/*	$NetBSD: ondestroy.h,v 1.4 2016/01/08 21:35:36 christos Exp $	*/
+/*	$NetBSD: ondestroy.h,v 1.4.14.1 2018/09/30 01:45:15 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: ondestroy.h,v 1.14 2007/06/19 23:47:18 tbox Exp  */
+/* Id */
 
 #ifndef ISC_ONDESTROY_H
 #define ISC_ONDESTROY_H 1

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11.46.1 2018/07/28 04:33:01 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.11.46.2 2018/09/30 01:45:06 pgoyette Exp $
 
 SUBDIR+=base-adosfs-root
 SUBDIR+=base-amd-bin
@@ -32,7 +32,6 @@ SUBDIR+=base-groff-share
 SUBDIR+=base-hesiod-bin
 SUBDIR+=base-htmldoc-share
 SUBDIR+=base-i18n-shlib
-SUBDIR+=base-isdn-bin
 SUBDIR+=base-krb5-bin
 SUBDIR+=base-krb5-examples
 SUBDIR+=base-krb5-root

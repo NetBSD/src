@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_intr.c,v 1.11.6.1 2018/07/28 04:37:44 pgoyette Exp $ */
+/* $NetBSD: fdt_intr.c,v 1.11.6.2 2018/09/30 01:45:49 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2015-2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_intr.c,v 1.11.6.1 2018/07/28 04:37:44 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_intr.c,v 1.11.6.2 2018/09/30 01:45:49 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -134,15 +134,24 @@ void *
 fdtbus_intr_establish(int phandle, u_int index, int ipl, int flags,
     int (*func)(void *), void *arg)
 {
-	struct fdtbus_interrupt_controller *ic;
-	struct fdtbus_interrupt_cookie *c = NULL;
 	const u_int *specifier;
 	int ihandle;
-	void *ih;
 
 	specifier = get_specifier_by_index(phandle, index, &ihandle);
 	if (specifier == NULL)
 		return NULL;
+
+	return fdtbus_intr_establish_raw(ihandle, specifier, ipl,
+	    flags, func, arg);
+}
+
+void *
+fdtbus_intr_establish_raw(int ihandle, const u_int *specifier, int ipl,
+    int flags, int (*func)(void *), void *arg)
+{
+	struct fdtbus_interrupt_controller *ic;
+	struct fdtbus_interrupt_cookie *c;
+	void *ih;
 
 	ic = fdtbus_get_interrupt_controller(ihandle);
 	if (ic == NULL)
@@ -184,11 +193,20 @@ fdtbus_intr_disestablish(int phandle, void *cookie)
 bool
 fdtbus_intr_str(int phandle, u_int index, char *buf, size_t buflen)
 {
-	struct fdtbus_interrupt_controller *ic;
 	const u_int *specifier;
 	int ihandle;
 
 	specifier = get_specifier_by_index(phandle, index, &ihandle);
+	if (specifier == NULL)
+		return false;
+
+	return fdtbus_intr_str_raw(ihandle, specifier, buf, buflen);
+}
+
+bool
+fdtbus_intr_str_raw(int ihandle, const u_int *specifier, char *buf, size_t buflen)
+{
+	struct fdtbus_interrupt_controller *ic;
 
 	ic = fdtbus_get_interrupt_controller(ihandle);
 	if (ic == NULL)

@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.193.2.4 2018/09/06 06:55:22 pgoyette Exp $
+$NetBSD: acronyms.comp,v 1.193.2.5 2018/09/30 01:45:35 pgoyette Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -45,6 +45,7 @@ AM	access method
 AM	alignment mask
 AM	amplitude modulation
 AMD	Advanced Micro Devices Inc
+AMDD	Agile model-driven development
 AMI	alternate mark inversion
 AMP	asymmetric multiprocessing
 AMQP	advanced message queuing protocol
@@ -83,6 +84,7 @@ ASC	advanced smart cache
 ASCII	American Standard Code for Information Interchange
 ASD	agile software development
 ASE	advanced software environment
+ASF	alert standard format
 ASIC	application-specific integrated circuit
 ASK	amplitude shift keying
 ASLR	address space layout randomization
@@ -770,6 +772,7 @@ LSB	Linux standards base
 LSB	least significant {bit,byte}
 LSI	large scale integration
 LSL	load segment limit
+LSM	log structured merge
 LSN	Large Scale NAT
 LSN	log sequence number
 LSR	label switch router
@@ -871,6 +874,7 @@ MRU	most recently used
 MS	Microsoft
 MSAN	Memory Sanitizer
 MSB	most significant {bit,byte}
+MSC	message sequence chart
 MSE	mean square error
 MSF	minutes seconds frames
 MSI	message signaled interrupt
@@ -1001,6 +1005,7 @@ PC	personal computer
 PC	program counter
 PCB	printed circuit board
 PCB	process control block
+PCB	Protocol Control Block
 PCC	Portable C Compiler
 PCD	page-level cache disable
 PCE	path computation element
@@ -1169,6 +1174,7 @@ RLE	run length encoding
 RLL	run length limited
 RLO	right-to-left override
 RM	read miss
+RMCP	Remote Management Control Protocol
 RMI	remote method invocation
 RMO	Relaxed Memory Ordering
 RMPM	rapid memory power management
@@ -1216,6 +1222,7 @@ SAD	security association database
 SAL	{service,system} abstraction layer
 SAM	serial access memory
 SAM	sum addressed memory
+SAML	security assertion markup language
 SAN	storage area network
 SAP	service access point
 SAPIC	streamlined advanced programmable interrupt controller
@@ -1341,6 +1348,7 @@ SSL	secure sockets layer
 SSP	stack smashing protection
 STC	software thermal control
 STD	state transition diagram
+STOMP	Streaming Text Oriented Messaging Protocol
 STP	Spanning Tree Protocol
 STP	shielded twisted pair
 SUS	Single Unix Specification
@@ -1370,7 +1378,7 @@ TCL	tool command language
 TCP	Transmission Control Protocol
 TCQ	tagged command queueing
 TDC	time [to] digital converter
-TDD	test driven development
+TDD	test-driven development
 TDD	time division duplex
 TDM	time division multiplexing
 TDMA	time division multiple access
@@ -1556,6 +1564,7 @@ XSS	cross site scripting
 XT	extended technology
 XUL	XML user interface language
 YACC	yet another compiler compiler
+YAML	YAML ain't markup language
 YANG	yet another next generation
 YAWPFAPR	you are welcome; please file a problem report
 YP	Yellow Pages

@@ -1,4 +1,4 @@
-/*	$NetBSD: hpc.c,v 1.69 2016/07/24 16:47:49 macallan Exp $	*/
+/*	$NetBSD: hpc.c,v 1.69.14.1 2018/09/30 01:45:46 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpc.c,v 1.69 2016/07/24 16:47:49 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpc.c,v 1.69.14.1 2018/09/30 01:45:46 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -201,7 +201,7 @@ static const struct hpc_device hpc3_devices[] = {
 	  -1,
 	  HPCDEV_IP22 | HPCDEV_IP24 },
 
-	{ "panel",	/* Indy front panel */
+	{ "button",	/* Indy front panel */
 	  HPC_BASE_ADDRESS_0,
 	  HPC3_PBUS_CH6_DEVREGS + IOC_PANEL, 0,
 	  9,
@@ -346,9 +346,6 @@ static struct hpc_values hpc3_values = {
 	.scsi_dmactl_active =	HPC3_SCSI_DMACTL_ACTIVE,
 	.scsi_dmactl_reset =	HPC3_SCSI_DMACTL_RESET
 };
-
-
-static int powerintr_established;
 
 static int	hpc_match(device_t, cfdata_t, void *);
 static void	hpc_attach(device_t, device_t, void *);
@@ -547,19 +544,6 @@ hpc_attach(device_t parent, device_t self, void *aux)
 		}
 	}
 
-	/*
-	 * XXX: Only attach the powerfail interrupt once, since the
-	 * interrupt code doesn't let you share interrupt just yet.
-	 *
-	 * Since the powerfail interrupt is hardcoded to read from
-	 * a specific register anyway (XXX#2!), we don't care when
-	 * it gets attached, as long as it only happens once.
-	 */
-	if (mach_type == MACH_SGI_IP22 && !powerintr_established) {
-//		cpu_intr_establish(9, IPL_NONE, hpc_power_intr, sc);
-		powerintr_established++;
-	}
-
 #if defined(BLINK)
 	if (mach_type == MACH_SGI_IP12 || mach_type == MACH_SGI_IP20)
 		hpc_blink(sc);
@@ -671,24 +655,6 @@ hpc_print(void *aux, const char *pnp)
 
 	return (UNCONF);
 }
-
-#if 0
-static int
-hpc_power_intr(void *arg)
-{
-	uint32_t pwr_reg;
-
-	pwr_reg = *((volatile uint32_t *)MIPS_PHYS_TO_KSEG1(0x1fbd9850));
-	*((volatile uint32_t *)MIPS_PHYS_TO_KSEG1(0x1fbd9850)) = pwr_reg;
-
-	printf("hpc_power_intr: panel reg = %08x\n", pwr_reg);
-
-	if (pwr_reg & 2)
-		cpu_reboot(RB_HALT, NULL);
-
-	return 1;
-}
-#endif
 
 #if defined(BLINK)
 static void

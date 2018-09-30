@@ -1,4 +1,4 @@
-/*	$NetBSD: gumstix_machdep.c,v 1.58.12.2 2018/09/06 06:55:30 pgoyette Exp $ */
+/*	$NetBSD: gumstix_machdep.c,v 1.58.12.3 2018/09/30 01:45:41 pgoyette Exp $ */
 /*
  * Copyright (C) 2005, 2006, 2007  WIDE Project and SOUM Corporation.
  * All rights reserved.
@@ -139,6 +139,7 @@
 
 #include "opt_arm_debug.h"
 #include "opt_com.h"
+#include "opt_console.h"
 #include "opt_cputypes.h"
 #include "opt_evbarm_boardtype.h"
 #include "opt_gumstix.h"

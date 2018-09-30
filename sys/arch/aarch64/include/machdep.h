@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.h,v 1.1.2.4 2018/09/06 06:55:23 pgoyette Exp $	*/
+/*	$NetBSD: machdep.h,v 1.1.2.5 2018/09/30 01:45:35 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -36,6 +36,7 @@
 // initarm_common
 #include <machine/bootconfig.h>
 
+struct boot_physmem;
 
 static inline paddr_t
 aarch64_kern_vtophys(vaddr_t va)
@@ -108,6 +109,7 @@ void ucas_ras_check(struct trapframe *);
 int cpu_set_onfault(struct faultbuf *) __returns_twice;
 void cpu_jump_onfault(struct trapframe *, const struct faultbuf *, int);
 
+#if defined(_KERNEL)
 static inline void
 cpu_unset_onfault(void)
 {
@@ -128,6 +130,7 @@ cpu_disable_onfault(void)
 		curlwp->l_md.md_onfault = NULL;
 	return fb;
 }
+#endif
 
 /* fpu.c */
 void fpu_attach(struct cpu_info *);

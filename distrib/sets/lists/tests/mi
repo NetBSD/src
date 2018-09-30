@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.775.2.8 2018/09/06 06:51:43 pgoyette Exp $
+# $NetBSD: mi,v 1.775.2.9 2018/09/30 01:45:05 pgoyette Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1306,7 +1306,17 @@
 ./usr/tests/crypto/libcrypto/d_conf.out		tests-crypto-tests	compattestfile,atf
 ./usr/tests/crypto/libcrypto/d_conf_ssleay.cnf	tests-crypto-tests	compattestfile,atf
 ./usr/tests/crypto/libcrypto/d_server.pem	tests-crypto-tests	compattestfile,atf
-./usr/tests/crypto/libcrypto/evptests.txt	tests-crypto-tests	compattestfile,atf
+./usr/tests/crypto/libcrypto/evptests.txt	tests-obsolete		obsolete
+./usr/tests/crypto/libcrypto/evpcase.txt	tests-crypto-tests	compattestfile,atf
+./usr/tests/crypto/libcrypto/evpciph.txt	tests-crypto-tests	compattestfile,atf
+./usr/tests/crypto/libcrypto/evpdigest.txt	tests-crypto-tests	compattestfile,atf
+./usr/tests/crypto/libcrypto/evpencod.txt	tests-crypto-tests	compattestfile,atf
+./usr/tests/crypto/libcrypto/evpkdf.txt		tests-crypto-tests	compattestfile,atf
+./usr/tests/crypto/libcrypto/evpmac.txt		tests-crypto-tests	compattestfile,atf
+./usr/tests/crypto/libcrypto/evppbe.txt		tests-crypto-tests	compattestfile,atf
+./usr/tests/crypto/libcrypto/evppkey.txt	tests-crypto-tests	compattestfile,atf
+./usr/tests/crypto/libcrypto/evppkey_ecc.txt	tests-crypto-tests	compattestfile,atf
+
 ./usr/tests/crypto/libcrypto/h_bftest		tests-crypto-tests	compattestfile,atf
 ./usr/tests/crypto/libcrypto/h_bntest		tests-crypto-tests	compattestfile,atf
 ./usr/tests/crypto/libcrypto/h_casttest		tests-crypto-tests	compattestfile,atf
@@ -1326,16 +1336,16 @@
 ./usr/tests/crypto/libcrypto/h_lhashtest	comp-obsolete	openssl=11,obsolete
 ./usr/tests/crypto/libcrypto/h_lhashtest	tests-crypto-tests	compattestfile,atf,openssl=10
 ./usr/tests/crypto/libcrypto/h_md2test		tests-crypto-tests	compattestfile,atf
-./usr/tests/crypto/libcrypto/h_md4test		tests-crypto-tests	compattestfile,atf
-./usr/tests/crypto/libcrypto/h_md5test		tests-crypto-tests	compattestfile,atf
+./usr/tests/crypto/libcrypto/h_md4test		tests-obsolete	openssl=11,obsolete
+./usr/tests/crypto/libcrypto/h_md5test		tests-obsolete	openssl=11,obsolete
 ./usr/tests/crypto/libcrypto/h_mdc2test		tests-crypto-tests	compattestfile,atf
-./usr/tests/crypto/libcrypto/h_randtest		tests-crypto-tests	compattestfile,atf
+./usr/tests/crypto/libcrypto/h_randtest		tests-obsolete	openssl=11,obsolete
 ./usr/tests/crypto/libcrypto/h_rc2test		tests-crypto-tests	compattestfile,atf
 ./usr/tests/crypto/libcrypto/h_rc4test		tests-crypto-tests	compattestfile,atf
 ./usr/tests/crypto/libcrypto/h_rc5test		tests-crypto-tests	compattestfile,atf
-./usr/tests/crypto/libcrypto/h_ripemdtest	tests-crypto-tests	compattestfile,atf
+./usr/tests/crypto/libcrypto/h_ripemdtest	tests-obsolete	openssl=11,obsolete
 ./usr/tests/crypto/libcrypto/h_rsatest		tests-crypto-tests	compattestfile,atf
-./usr/tests/crypto/libcrypto/h_sha1test		tests-crypto-tests	compattestfile,atf
+./usr/tests/crypto/libcrypto/h_sha1test		tests-obsolete	openssl=11,obsolete
 ./usr/tests/crypto/libcrypto/h_shatest		tests-crypto-tests	compattestfile,atf,openssl=10
 ./usr/tests/crypto/libcrypto/h_shatest	comp-obsolete	openssl=11,obsolete
 ./usr/tests/crypto/libcrypto/h_srptest		tests-crypto-tests	compattestfile,atf

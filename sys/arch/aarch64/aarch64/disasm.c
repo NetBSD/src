@@ -1,4 +1,4 @@
-/*	$NetBSD: disasm.c,v 1.1.2.5 2018/09/06 06:55:22 pgoyette Exp $	*/
+/*	$NetBSD: disasm.c,v 1.1.2.6 2018/09/30 01:45:35 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2018 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disasm.c,v 1.1.2.5 2018/09/06 06:55:22 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disasm.c,v 1.1.2.6 2018/09/30 01:45:35 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -35,6 +35,10 @@ __KERNEL_RCSID(0, "$NetBSD: disasm.c,v 1.1.2.5 2018/09/06 06:55:22 pgoyette Exp 
 
 #include <arch/aarch64/aarch64/disasm.h>
 
+#ifndef _KERNEL
+#include <stdio.h>
+#include <stdbool.h>
+#endif
 
 #define PRINTF		di->di_printf
 #define PRINTADDR	di->di_printaddr

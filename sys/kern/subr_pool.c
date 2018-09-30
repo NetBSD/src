@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.221.2.2 2018/09/06 06:56:42 pgoyette Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.221.2.3 2018/09/30 01:45:55 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000, 2002, 2007, 2008, 2010, 2014, 2015
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.221.2.2 2018/09/06 06:56:42 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.221.2.3 2018/09/30 01:45:55 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -2749,7 +2749,16 @@ pool_pattern_generate(const void *p)
 static void
 pool_redzone_init(struct pool *pp, size_t requested_size)
 {
+	size_t redzsz;
 	size_t nsz;
+
+#ifdef KASAN
+	redzsz = requested_size;
+	kasan_add_redzone(&redzsz);
+	redzsz -= requested_size;
+#else
+	redzsz = POOL_REDZONE_SIZE;
+#endif
 
 	if (pp->pr_roflags & PR_NOTOUCH) {
 		pp->pr_reqsize = 0;
@@ -2761,7 +2770,7 @@ pool_redzone_init(struct pool *pp, size_t requested_size)
 	 * We may have extended the requested size earlier; check if
 	 * there's naturally space in the padding for a red zone.
 	 */
-	if (pp->pr_size - requested_size >= POOL_REDZONE_SIZE) {
+	if (pp->pr_size - requested_size >= redzsz) {
 		pp->pr_reqsize = requested_size;
 		pp->pr_redzone = true;
 		return;
@@ -2771,7 +2780,7 @@ pool_redzone_init(struct pool *pp, size_t requested_size)
 	 * No space in the natural padding; check if we can extend a
 	 * bit the size of the pool.
 	 */
-	nsz = roundup(pp->pr_size + POOL_REDZONE_SIZE, pp->pr_align);
+	nsz = roundup(pp->pr_size + redzsz, pp->pr_align);
 	if (nsz <= pp->pr_alloc->pa_pagesz) {
 		/* Ok, we can */
 		pp->pr_size = nsz;
@@ -2791,7 +2800,9 @@ pool_redzone_fill(struct pool *pp, void *p)
 	if (!pp->pr_redzone)
 		return;
 #ifdef KASAN
-	kasan_alloc(p, pp->pr_reqsize, pp->pr_reqsize + POOL_REDZONE_SIZE);
+	size_t size_with_redzone = pp->pr_reqsize;
+	kasan_add_redzone(&size_with_redzone);
+	kasan_alloc(p, pp->pr_reqsize, size_with_redzone);
 #else
 	uint8_t *cp, pat;
 	const uint8_t *ep;
@@ -2820,7 +2831,9 @@ pool_redzone_check(struct pool *pp, void *p)
 	if (!pp->pr_redzone)
 		return;
 #ifdef KASAN
-	kasan_free(p, pp->pr_reqsize + POOL_REDZONE_SIZE);
+	size_t size_with_redzone = pp->pr_reqsize;
+	kasan_add_redzone(&size_with_redzone);
+	kasan_free(p, size_with_redzone);
 #else
 	uint8_t *cp, pat, expected;
 	const uint8_t *ep;

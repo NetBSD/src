@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_runtime_pm.c,v 1.5.2.2 2018/09/06 06:56:18 pgoyette Exp $	*/
+/*	$NetBSD: intel_runtime_pm.c,v 1.5.2.3 2018/09/30 01:45:54 pgoyette Exp $	*/
 
 /*
  * Copyright © 2012-2014 Intel Corporation
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_runtime_pm.c,v 1.5.2.2 2018/09/06 06:56:18 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_runtime_pm.c,v 1.5.2.3 2018/09/30 01:45:54 pgoyette Exp $");
 
 #include <linux/pm_runtime.h>
 #include <linux/vgaarb.h>
@@ -55,7 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: intel_runtime_pm.c,v 1.5.2.2 2018/09/06 06:56:18 pgo
  */
 
 #define GEN9_ENABLE_DC5(dev) 0
-#define SKL_ENABLE_DC6(dev) IS_SKYLAKE(dev)
+#define SKL_ENABLE_DC6(dev) (IS_SKYLAKE(dev) || IS_KABYLAKE(dev))
 
 #define for_each_power_well(i, power_well, domain_mask, power_domains)	\
 	for (i = 0;							\
@@ -493,7 +493,8 @@ static void assert_can_enable_dc5(struct drm_i915_private *dev_priv)
 	bool pg2_enabled = intel_display_power_well_is_enabled(dev_priv,
 					SKL_DISP_PW_2);
 
-	WARN_ONCE(!IS_SKYLAKE(dev), "Platform doesn't support DC5.\n");
+	WARN_ONCE(!IS_SKYLAKE(dev) && !IS_KABYLAKE(dev),
+		  "Platform doesn't support DC5.\n");
 	WARN_ONCE(!HAS_RUNTIME_PM(dev), "Runtime PM not enabled.\n");
 	WARN_ONCE(pg2_enabled, "PG2 not disabled to enable DC5.\n");
 
@@ -556,7 +557,8 @@ static void assert_can_enable_dc6(struct drm_i915_private *dev_priv)
 {
 	struct drm_device *dev = dev_priv->dev;
 
-	WARN_ONCE(!IS_SKYLAKE(dev), "Platform doesn't support DC6.\n");
+	WARN_ONCE(!IS_SKYLAKE(dev) && !IS_KABYLAKE(dev),
+		  "Platform doesn't support DC6.\n");
 	WARN_ONCE(!HAS_RUNTIME_PM(dev), "Runtime PM not enabled.\n");
 	WARN_ONCE(I915_READ(UTIL_PIN_CTL) & UTIL_PIN_ENABLE,
 		  "Backlight is not disabled.\n");
@@ -686,7 +688,7 @@ static void skl_set_power_well(struct drm_i915_private *dev_priv,
 		}
 	} else {
 		if (enable_requested) {
-			if (IS_SKYLAKE(dev) &&
+			if ((IS_SKYLAKE(dev) || IS_KABYLAKE(dev)) &&
 				(power_well->data == SKL_DISP_PW_1) &&
 				(intel_csr_load_status_get(dev_priv) == FW_LOADED))
 				DRM_DEBUG_KMS("Not Disabling PW1, dmc will handle\n");
@@ -1848,7 +1850,7 @@ sanitize_disable_power_well_option(const struct drm_i915_private *dev_priv,
 	if (disable_power_well >= 0)
 		return !!disable_power_well;
 
-	if (IS_SKYLAKE(dev_priv)) {
+	if (IS_SKYLAKE(dev_priv) || IS_KABYLAKE(dev_priv)) {
 		DRM_DEBUG_KMS("Disabling display power well support\n");
 		return 0;
 	}
@@ -1891,7 +1893,7 @@ int intel_power_domains_init(struct drm_i915_private *dev_priv)
 		set_power_wells(power_domains, hsw_power_wells);
 	} else if (IS_BROADWELL(dev_priv->dev)) {
 		set_power_wells(power_domains, bdw_power_wells);
-	} else if (IS_SKYLAKE(dev_priv->dev)) {
+	} else if (IS_SKYLAKE(dev_priv->dev) || IS_KABYLAKE(dev_priv->dev)) {
 		set_power_wells(power_domains, skl_power_wells);
 	} else if (IS_BROXTON(dev_priv->dev)) {
 		set_power_wells(power_domains, bxt_power_wells);

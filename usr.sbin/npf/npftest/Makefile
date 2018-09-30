@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.10 2016/08/08 16:31:53 kre Exp $
+# $NetBSD: Makefile,v 1.10.12.1 2018/09/30 01:46:01 pgoyette Exp $
 #
 # Public Domain
 #
@@ -27,9 +27,11 @@ LDADD+=		-lrumpdev
 LDADD+=		-lrumpkern_sljit -lrumpnet_bpfjit
 .endif
 
-LDADD+=		-lrumpnet_npf
+LDADD+=		-lrumpkern_nv -lrumpnet_npf
+LDADD+=		-lpcap -lpthread
 
-LDADD+=		-lpcap -lprop -lpthread
+PROGDPLIBS+=	nv ${NETBSDSRCDIR}/external/bsd/libnv/lib
+CPPFLAGS+=	-I ${NETBSDSRCDIR}/sys/external/bsd/libnv/dist
 
 SUBDIR+=	libnpftest
 

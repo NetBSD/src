@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.ioctl-c,v 1.34.2.1 2018/06/25 07:26:10 pgoyette Exp $
+#	$NetBSD: Makefile.ioctl-c,v 1.34.2.2 2018/09/30 01:45:59 pgoyette Exp $
 
 # NOTE: <bsd.own.mk> needs to be previously .included for NETBSDSRCDIR
 
@@ -42,6 +42,7 @@ DPSRCS+=	${PROG}-ioctl.c
 CPPFLAGS+=	-I${DESTDIR}/usr/X11R7/include/libdrm
 CPPFLAGS+=	-I${DESTDIR}/usr/X11R7/include/pixman-1
 CPPFLAGS+=	-I${DESTDIR}/usr/X11R7/include
+CPPFLAGS+=	-I${NETBSDSRCDIR}/sys/external/bsd/libnv/dist
 .if ${MKDTRACE} != "no"
 CPPFLAGS+=	-I${NETBSDSRCDIR}/external/cddl/osnet/sys
 CPPFLAGS+=	-I${NETBSDSRCDIR}/external/cddl/osnet/dist/uts/common

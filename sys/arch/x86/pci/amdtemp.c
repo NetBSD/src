@@ -1,4 +1,4 @@
-/*      $NetBSD: amdtemp.c,v 1.20 2017/06/01 02:45:08 chs Exp $ */
+/*      $NetBSD: amdtemp.c,v 1.20.8.1 2018/09/30 01:45:48 pgoyette Exp $ */
 /*      $OpenBSD: kate.c,v 1.2 2008/03/27 04:52:03 cnst Exp $   */
 
 /*
@@ -46,9 +46,8 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdtemp.c,v 1.20 2017/06/01 02:45:08 chs Exp $ ");
+__KERNEL_RCSID(0, "$NetBSD: amdtemp.c,v 1.20.8.1 2018/09/30 01:45:48 pgoyette Exp $ ");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -103,17 +102,13 @@ __KERNEL_RCSID(0, "$NetBSD: amdtemp.c,v 1.20 2017/06/01 02:45:08 chs Exp $ ");
 #define K8_T_SEL_S0(v)           (v &= ~(K8_THERM_SENSE_SEL))
 #define K8_T_SEL_S1(v)           (v |= K8_THERM_SENSE_SEL)
 
-
-
 /*
  * AMD Family 10h Processors, Function 3 -- Miscellaneous Control
  */
 
 /* Function 3 Registers */
 #define F10_TEMPERATURE_CTL_R	0xa4
-
-/* Bits within Reported Temperature Control Register */
-#define F10_TEMP_CURTEMP	(1 << 21)
+#define 	F10_TEMP_CURTMP		__BITS(31,21)
 
 /*
  * Revision Guide for AMD NPT Family 0Fh Processors,
@@ -124,10 +119,10 @@ __KERNEL_RCSID(0, "$NetBSD: amdtemp.c,v 1.20 2017/06/01 02:45:08 chs Exp $ ");
 #define K8_SOCKET_S1	3	/* Laptop */
 
 static const struct {
-	const char      rev[5];
+	const char rev[5];
 	const struct {
-		const pcireg_t  cpuid;
-		const uint8_t   socket;
+		const pcireg_t cpuid;
+		const uint8_t socket;
 	} cpu[5];
 } amdtemp_core[] = {
 	{ "BH-F", { { 0x00040FB0, K8_SOCKET_AM2 },	/* F2 */
@@ -151,21 +146,19 @@ static const struct {
 		  { 0, 0 } } }
 };
 
-
 struct amdtemp_softc {
-        pci_chipset_tag_t sc_pc;
-        pcitag_t sc_pcitag;
+	pci_chipset_tag_t sc_pc;
+	pcitag_t sc_pcitag;
 
 	struct sysmon_envsys *sc_sme;
 	envsys_data_t *sc_sensor;
 	size_t sc_sensor_len;
 
-        char sc_rev;
-        int8_t sc_numsensors;
+	char sc_rev;
+	int8_t sc_numsensors;
 	uint32_t sc_family;
 	int32_t sc_adjustment;
 };
-
 
 static int  amdtemp_match(device_t, cfdata_t, void *);
 static void amdtemp_attach(device_t, device_t, void *);
@@ -180,7 +173,7 @@ static void amdtemp_family10_setup_sensors(struct amdtemp_softc *, int);
 static void amdtemp_family10_refresh(struct sysmon_envsys *, envsys_data_t *);
 
 CFATTACH_DECL_NEW(amdtemp, sizeof(struct amdtemp_softc),
-	amdtemp_match, amdtemp_attach, amdtemp_detach, NULL);
+    amdtemp_match, amdtemp_attach, amdtemp_detach, NULL);
 
 static int
 amdtemp_match(device_t parent, cfdata_t match, void *aux)
@@ -194,8 +187,10 @@ amdtemp_match(device_t parent, cfdata_t match, void *aux)
 	cpu_signature = pci_conf_read(pa->pa_pc,
 	    pa->pa_tag, CPUID_FAMILY_MODEL_R);
 
-	/* This CPUID northbridge register has been introduced
-	 * in Revision F */
+	/*
+	 * This CPUID northbridge register has been introduced in
+	 * Revision F.
+	 */
 	if (cpu_signature == 0x0)
 		return 0;
 
@@ -205,13 +200,12 @@ amdtemp_match(device_t parent, cfdata_t match, void *aux)
 	if (family == 0x10) {
 		if (CPUID_TO_BASEMODEL(cpu_signature) < 4)
 			return 0;
-		if (CPUID_TO_BASEMODEL(cpu_signature) == 4
-		    && CPUID_TO_STEPPING(cpu_signature) < 2)
+		if (CPUID_TO_BASEMODEL(cpu_signature) == 4 &&
+		    CPUID_TO_STEPPING(cpu_signature) < 2)
 			return 0;
 	}
 
-
-	/* Not yet supported CPUs */
+	/* Not yet supported CPUs. */
 	if (family > 0x15)
 		return 0;
 
@@ -262,7 +256,7 @@ amdtemp_attach(device_t parent, device_t self, void *aux)
 
 	default:
 		aprint_normal(", family 0x%x not supported\n",
-			     sc->sc_family);
+		    sc->sc_family);
 		return;
 	}
 
@@ -292,8 +286,7 @@ amdtemp_attach(device_t parent, device_t self, void *aux)
 	 * Set properties in sensors.
 	 */
 	for (i = 0; i < sc->sc_numsensors; i++) {
-		if (sysmon_envsys_sensor_attach(sc->sc_sme,
-						&sc->sc_sensor[i]))
+		if (sysmon_envsys_sensor_attach(sc->sc_sme, &sc->sc_sensor[i]))
 			goto bad;
 	}
 
@@ -371,8 +364,8 @@ amdtemp_k8_init(struct amdtemp_softc *sc, pcireg_t cpu_signature)
 
 			sc->sc_rev = amdtemp_core[i].rev[3];
 			aprint_normal(": core rev %.4s%.1x",
-				amdtemp_core[i].rev,
-				CPUID_TO_STEPPING(cpu_signature));
+			    amdtemp_core[i].rev,
+			    CPUID_TO_STEPPING(cpu_signature));
 
 			switch (amdtemp_core[i].cpu[j].socket) {
 			case K8_SOCKET_AM2:
@@ -391,9 +384,11 @@ amdtemp_k8_init(struct amdtemp_softc *sc, pcireg_t cpu_signature)
 	}
 
 	if (sc->sc_rev == '\0') {
-		/* CPUID Family Model Register was introduced in
-		 * Revision F */
-		sc->sc_rev = 'G';       /* newer than E, assume G */
+		/*
+		 * CPUID Family Model Register was introduced in
+		 * Revision F
+		 */
+		sc->sc_rev = 'G';	/* newer than E, assume G */
 		aprint_normal(": cpuid 0x%x", cpu_signature);
 	}
 
@@ -405,15 +400,15 @@ amdtemp_k8_init(struct amdtemp_softc *sc, pcireg_t cpu_signature)
 	sc->sc_numsensors = cmpcap ? 4 : 2;
 }
 
-
 static void
 amdtemp_k8_setup_sensors(struct amdtemp_softc *sc, int dv_unit)
 {
 	uint8_t i;
 
-	/* There are two sensors per CPU core. So we use the
-	 * device unit as socket counter to correctly enumerate
-	 * the CPUs on multi-socket machines.
+	/*
+	 * There are two sensors per CPU core. So we use the device unit as
+	 * socket counter to correctly enumerate the CPUs on multi-socket
+	 * machines.
 	 */
 	dv_unit *= (sc->sc_numsensors / 2);
 	for (i = 0; i < sc->sc_numsensors; i++) {
@@ -422,10 +417,9 @@ amdtemp_k8_setup_sensors(struct amdtemp_softc *sc, int dv_unit)
 		sc->sc_sensor[i].flags = ENVSYS_FHAS_ENTROPY;
 
 		snprintf(sc->sc_sensor[i].desc, sizeof(sc->sc_sensor[i].desc),
-			"CPU%u Sensor%u", dv_unit + (i / 2), i % 2);
+		    "CPU%u Sensor%u", dv_unit + (i / 2), i % 2);
 	}
 }
-
 
 static void
 amdtemp_k8_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
@@ -436,7 +430,7 @@ amdtemp_k8_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 
 	status = pci_conf_read(sc->sc_pc, sc->sc_pcitag, THERMTRIP_STAT_R);
 
-	switch(edata->sensor) { /* sensor number */
+	switch (edata->sensor) { /* sensor number */
 	case 0: /* Core 0 Sensor 0 */
 		K8_T_SEL_C0(status);
 		K8_T_SEL_S0(status);
@@ -467,11 +461,10 @@ amdtemp_k8_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 	edata->state = ENVSYS_SINVALID;
 	if ((tmp == match) && ((value & ~0x3) != 0)) {
 		edata->state = ENVSYS_SVALID;
-		edata->value_cur = (value * 250000 - 49000000) + 273150000
-			+ sc->sc_adjustment;
+		edata->value_cur = (value * 250000 - 49000000) + 273150000 +
+		    sc->sc_adjustment;
 	}
 }
-
 
 static void
 amdtemp_family10_init(struct amdtemp_softc *sc)
@@ -487,18 +480,17 @@ amdtemp_family10_setup_sensors(struct amdtemp_softc *sc, int dv_unit)
 	/* sanity check for future enhancements */
 	KASSERT(sc->sc_numsensors == 1);
 
-	/* There's one sensor per memory controller (= socket)
-	 * so we use the device unit as socket counter
-	 * to correctly enumerate the CPUs
+	/*
+	 * There's one sensor per memory controller (= socket), so we use the
+	 * device unit as socket counter to correctly enumerate the CPUs.
 	 */
 	sc->sc_sensor[0].units = ENVSYS_STEMP;
 	sc->sc_sensor[0].state = ENVSYS_SVALID;
 	sc->sc_sensor[0].flags = ENVSYS_FHAS_ENTROPY;
 
 	snprintf(sc->sc_sensor[0].desc, sizeof(sc->sc_sensor[0].desc),
-		"cpu%u temperature", dv_unit);
+	    "cpu%u temperature", dv_unit);
 }
-
 
 static void
 amdtemp_family10_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
@@ -507,13 +499,13 @@ amdtemp_family10_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 	pcireg_t status;
 	uint32_t value;
 
-	status = pci_conf_read(sc->sc_pc,
-	    sc->sc_pcitag, F10_TEMPERATURE_CTL_R);
+	status = pci_conf_read(sc->sc_pc, sc->sc_pcitag,
+	    F10_TEMPERATURE_CTL_R);
+	value = __SHIFTOUT(status, F10_TEMP_CURTMP);
 
-	value = (status >> 21);
-
+	/* From Celsius to micro-Kelvin. */
+	edata->value_cur = (value * 125000) + 273150000;
 	edata->state = ENVSYS_SVALID;
-	edata->value_cur = (value * 125000) + 273150000; /* From C to uK. */
 }
 
 MODULE(MODULE_CLASS_DRIVER, amdtemp, "sysmon_envsys");

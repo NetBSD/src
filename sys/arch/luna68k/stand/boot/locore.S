@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.11 2014/03/24 10:46:58 martin Exp $	*/
+/*	$NetBSD: locore.S,v 1.11.28.1 2018/09/30 01:45:45 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1992 OMRON Corporation.
@@ -137,7 +137,7 @@ ASGLOBAL(Reset)
 	VECTOR(badtrap)		/* 28: level 4 interrupt autovector */
 	VECTOR(lev5intr)	/* 29: level 5 interrupt autovector */
 	VECTOR(lev6intr)	/* 30: level 6 interrupt autovector */
-	VECTOR(badtrap)		/* 31: level 7 interrupt autovector */
+	VECTOR(exit)		/* 31: level 7 interrupt autovector */
 	VECTOR(illinst)		/* 32: syscalls */
 	VECTOR(illinst)		/* 33: sigreturn syscall or breakpoint */
 	VECTOR(illinst)		/* 34: breakpoint or sigreturn syscall */
@@ -202,11 +202,6 @@ ASENTRY_NOPROFILE(start1)
 	movw	#PSL_HIGHIPL,%sr	| no interrupts
 	movl	#STACK,%sp		| set SP
 
-	movl	#_C_LABEL(prgcore), %a2	| save program address
-	movl	#_ASM_LABEL(Reset), %a2@+	| save start of core
-	movl	#_C_LABEL(end),  %a2@+	| save end of core
-	movl	#STACK, %a2@		| save initial stack addr
-
 /* clear BSS area */
 	movl	#_C_LABEL(edata),%a2	| start of BSS
 	movl	#_C_LABEL(end),%a3	| end
@@ -216,32 +211,21 @@ Lbssclr:
 	bne	Lbssclr			| no, keep going
 
 /* save address to goto ROM monitor */
-	movec	%vbr,%a0		| ROM vbr to %a0
-	movl	%a0@(NMIVEC),%d0	| restore NMIVEC
-	movl	#_ASM_LABEL(gotoROM),%a0	| save to _gotoROM
-	movl	%d0,%a0@		|
+	movec	%vbr,%a0		| save ROM vbr
+	movl	%a0,_ASM_LABEL(romvbr)
 	movl	#_ASM_LABEL(Reset),%a0	| BP vbr to %a0
-	movl	#_C_LABEL(exit),%a0@(NMIVEC)	| save address
-
-
-/* switch vector tabel */
-	movec	%vbr,%a0
-	movl	%a0@(ILLGINST),%sp@-	| save ILLINST vector for BrkPtr
-	movl	%a0@(EVTRAPF),%sp@-
-
-	movl	#_ASM_LABEL(Reset),%a0
-	movl	%sp@+,%a0@(EVTRAPF)
-	movl	%sp@+,%a0@(ILLGINST)	| restore ILLINST vector
+/* copy ROM vectors */
+	movl	%a0@(ILLGINST),_ASM_LABEL(Reset) + ILLGINST
+	movl	%a0@(EVTRAPF),_ASM_LABEL(Reset) + EVTRAPF
 	movec	%a0,%vbr
 
-	movl	#DIPSW,%a0
-	movw	%a0@,%d0
-	lsrl	#8,%d0
-	andl	#0xFF,%d0
-	movl	%d0,_C_LABEL(dipsw1)
-	movw	%a0@,%d0
-	andl	#0xFF,%d0
-	movl	%d0,_C_LABEL(dipsw2)
+	movw	DIPSW,%d0
+	clrl	%d1
+	movw	%d0,%d1
+	lsrl	#8,%d1
+	movl	%d1,_C_LABEL(dipsw1)
+	movb	%d0,%d1
+	movl	%d1,_C_LABEL(dipsw2)
 
 /* determine our CPU */
 
@@ -266,23 +250,19 @@ Lstart0:
 	movl	%d0,_C_LABEL(cputype)
 
 /* final setup for C code */
-	movw	#PSL_LOWIPL,%sr		| no interrupts
+	movw	#PSL_LOWIPL,%sr		| enable interrupts
 	jsr	_C_LABEL(main)		| lets go
 	jsr	start
 
 /*
  * exit to ROM monitor
  */
-
-	ROM_VBR = 0
-
 ENTRY_NOPROFILE(exit)
 GLOBAL(_rtt)
 	movw	#PSL_HIGHIPL,%sr	| no interrupts
-	movl	#ROM_VBR,%a0
+	movl	_ASM_LABEL(romvbr),%a0
 	movec	%a0,%vbr
-	movl	#_ASM_LABEL(gotoROM),%a0
-	movl	%a0@,%a1
+	movl	%a0@(NMIVEC),%a1
 	jmp	%a1@
 
 /*
@@ -765,12 +745,7 @@ ENTRY(spl7)
  * Memory Information Field for secondary booter memory allocator
  */
 
-GLOBAL(prgcore)
-	.long	0
-	.long	0
-	.long	0
-
-ASLOCAL(gotoROM)
+ASLOCAL(romvbr)
 	.long	0
 
 GLOBAL(dipsw1)

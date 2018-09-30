@@ -1,4 +1,4 @@
-# $NetBSD: t_pubkey.sh,v 1.4 2016/10/13 09:25:37 martin Exp $
+# $NetBSD: t_pubkey.sh,v 1.4.12.1 2018/09/30 01:45:58 pgoyette Exp $
 #
 # Copyright (c) 2008, 2009, 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -60,7 +60,7 @@ atf_test_case ec
 ec_head()
 {
 	atf_set "descr" "Checks EC cipher"
-	atf_set "timeout" "480"
+	atf_set "timeout" "960"
 }
 ec_body()
 {

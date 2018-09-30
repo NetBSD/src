@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2012/04/15 08:37:33 mrg Exp $
+#	$NetBSD: Makefile,v 1.7.30.1 2018/09/30 01:45:59 pgoyette Exp $
 #
 
 GNUHOSTDIST=	${.CURDIR}/../../external/bsd/file/dist
@@ -9,7 +9,7 @@ CONFIGURE_ENV+=	CC=${HOST_CC:Q} \
 		CXX=${HOST_CXX:Q}
 
 CONFIGURE_ARGS=	--program-prefix=${_TOOL_PREFIX} --disable-shared \
-		--disable-warnings
+		--disable-warnings --disable-libseccomp
 
 .NOTPARALLEL:
 

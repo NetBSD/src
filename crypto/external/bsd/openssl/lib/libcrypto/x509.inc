@@ -1,4 +1,4 @@
-#	$NetBSD: x509.inc,v 1.2 2018/02/08 21:57:24 christos Exp $
+#	$NetBSD: x509.inc,v 1.2.2.1 2018/09/30 01:44:52 pgoyette Exp $
 #
 #	@(#) Copyright (c) 1995 Simon J. Gerraty
 #
@@ -21,6 +21,7 @@ x509_def.c \
 x509_err.c \
 x509_ext.c \
 x509_lu.c \
+x509_meth.c \
 x509_obj.c \
 x509_r2x.c \
 x509_req.c \

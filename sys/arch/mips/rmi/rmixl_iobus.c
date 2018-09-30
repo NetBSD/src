@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_iobus.c,v 1.3 2011/07/01 19:01:31 dyoung Exp $	*/
+/*	$NetBSD: rmixl_iobus.c,v 1.3.54.1 2018/09/30 01:45:45 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_iobus.c,v 1.3 2011/07/01 19:01:31 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_iobus.c,v 1.3.54.1 2018/09/30 01:45:45 pgoyette Exp $");
 
 #include "locators.h"
 
@@ -150,7 +150,7 @@ rmixl_iobus_attach(device_t parent, device_t self, void *aux)
 	rmixl_iobus_bus_mem_init(&rcp->rc_iobus_memt, rcp);
 	sc->sc_iobus_bst = (bus_space_tag_t)&rcp->rc_iobus_memt;
 
-	/* disable all Flsah interupts */
+	/* disable all Flash interrupts */
 	bus_space_write_4(sc->sc_obio_bst, sc->sc_obio_bsh,
 		RMIXL_FLASH_INT_MASK, 0);
 

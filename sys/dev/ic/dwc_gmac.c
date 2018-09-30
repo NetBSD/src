@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_gmac.c,v 1.45.2.2 2018/07/28 04:37:45 pgoyette Exp $ */
+/* $NetBSD: dwc_gmac.c,v 1.45.2.3 2018/09/30 01:45:50 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2013, 2014 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: dwc_gmac.c,v 1.45.2.2 2018/07/28 04:37:45 pgoyette Exp $");
+__KERNEL_RCSID(1, "$NetBSD: dwc_gmac.c,v 1.45.2.3 2018/09/30 01:45:50 pgoyette Exp $");
 
 /* #define	DWC_GMAC_DEBUG	1 */
 

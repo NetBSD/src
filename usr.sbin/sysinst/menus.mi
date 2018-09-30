@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.mi,v 1.11.12.2 2018/06/25 07:26:12 pgoyette Exp $	*/
+/*	$NetBSD: menus.mi,v 1.11.12.3 2018/09/30 01:46:01 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -84,6 +84,7 @@ remove_sub_menu(int menuID)
 	}
 }
 
+#ifndef NO_PARTMAN
 static void
 remove_menu_option(int menuID, const char *option)
 {
@@ -101,6 +102,7 @@ remove_menu_option(int menuID, const char *option)
 		}
 	}
 }
+#endif
 
 void
 remove_color_options()
@@ -113,6 +115,7 @@ remove_color_options()
 	remove_sub_menu(MENU_colors);
 }
 
+#ifndef NO_PARTMAN
 void
 remove_raid_options()
 {
@@ -152,6 +155,7 @@ remove_cgd_options()
 	remove_menu_option(MENU_pmdiskentry, MSG_encrypt);
 	remove_menu_option(MENU_pmpartentry, MSG_encrypt);
 }
+#endif
 
 }
 
@@ -271,7 +275,13 @@ menu utility, title MSG_NetBSD_VERSION_Utilities, exit,
 			network_up = 0;
 			config_network();
 		};
-	option MSG_Partition_a_disk, action { partman_go = 1; partman(); };
+	option MSG_Partition_a_disk,
+		action {
+#ifndef NO_PARTMAN
+			partman_go = 1;
+			partman();
+#endif
+		};
 	option MSG_Logging_functions, action { do_logging(); };
 	option MSG_Color_scheme, sub menu colors;
 	option MSG_Halt_the_system, exit,
@@ -327,8 +337,8 @@ menu sizechoice, sub menu, y=0, title MSG_Choose_your_size_specifier;
 
 menu distmedium, title MSG_Select_medium, y=-5;
 	option MSG_cdrom,     exit, action { *(int *)arg = get_via_cdrom(); };
-	option MSG_http,      exit, action { *(int *)arg = get_via_ftp("http"); };
-	option MSG_ftp,	      exit, action { *(int *)arg = get_via_ftp("ftp"); };
+	option MSG_http,      exit, action { *(int *)arg = get_via_ftp(XFER_HTTP); };
+	option MSG_ftp,	      exit, action { *(int *)arg = get_via_ftp(XFER_FTP); };
 	option MSG_nfs,	      exit, action { *(int *)arg = get_via_nfs(); };
 	option MSG_floppy,    exit, action { *(int *)arg = get_via_floppy(); };
 	option MSG_local_fs,  exit, action { *(int *)arg = get_via_localfs(); };
@@ -347,9 +357,9 @@ menu distset, title MSG_Select_your_distribution, exit,
 
 menu ftpsource, y=-4, x=0, w=70, no box, no clear,
 	    exitstring MSG_Get_Distribution;
-	display action { msg_display(MSG_ftpsource, ((arg_rv*)arg)->arg); };
-	option {src_legend(menu, MSG_Host, ftp.host);},
-		action { src_prompt(MSG_Host, ftp.host, sizeof ftp.host); };
+	display action { msg_display(MSG_ftpsource, url_proto((uintptr_t)((arg_rv*)arg)->arg)); };
+	option {src_legend(menu, MSG_Host, ftp.xfer_host[(uintptr_t)((arg_rv*)arg)->arg]);},
+		action { src_prompt(MSG_Host, ftp.xfer_host[(uintptr_t)((arg_rv*)arg)->arg], sizeof ftp.xfer_host[(uintptr_t)((arg_rv*)arg)->arg]); };
 	option {src_legend(menu, MSG_Base_dir, ftp.dir);},
 		action { src_prompt(MSG_Base_dir, ftp.dir, sizeof ftp.dir); };
 	option {src_legend(menu, MSG_Set_dir_bin, set_dir_bin);},
@@ -533,8 +543,8 @@ menu zeroconf, title "Zeroconf", no clear;
 menu binpkg, y=-4, x=0, w=70, no box, no clear,
 	    exitstring MSG_Install_pkgin;
 	display action { msg_display(MSG_pkgpath); };
-	option {src_legend(menu, MSG_Host, pkg.host);},
-		action { src_prompt(MSG_Host, pkg.host, sizeof pkg.host); };
+	option {src_legend(menu, MSG_Host, pkg.xfer_host[pkg.xfer]);},
+		action { src_prompt(MSG_Host, pkg.xfer_host[pkg.xfer], sizeof pkg.xfer_host[pkg.xfer]); };
 	option {src_legend(menu, MSG_Base_dir, pkg.dir);},
 		action { src_prompt(MSG_Base_dir, pkg.dir, sizeof pkg.dir); };
 	option {src_legend(menu, MSG_Pkg_dir, pkg_dir);},
@@ -573,14 +583,16 @@ menu binpkg, y=-4, x=0, w=70, no box, no clear,
 			config_network();
 			mnt_net_config();
 		};
+	option {src_legend(menu, MSG_transfer_method, url_proto(pkg.xfer));},
+		action { pkg.xfer = (pkg.xfer+1) % (XFER_MAX+1); };
 	option MSG_quit_pkgs_install, exit, action { ((arg_rv*)arg)->rv = SET_SKIP; };
 
 menu pkgsrc, y=-4, x=0, w=70, no box, no clear,
 	    exit, exitstring MSG_Install_pkgsrc;
 	display action { msg_display(MSG_pkgsrc); };
-	option {src_legend(menu, MSG_Host, pkgsrc.host);},
-		action { src_prompt(MSG_Host, pkgsrc.host,
-			sizeof pkgsrc.host); };
+	option {src_legend(menu, MSG_Host, pkgsrc.xfer_host[pkgsrc.xfer]);},
+		action { src_prompt(MSG_Host, pkgsrc.xfer_host[pkgsrc.xfer],
+			sizeof pkgsrc.xfer_host[pkgsrc.xfer]); };
 	option {src_legend(menu, MSG_Pkgsrc_dir, pkgsrc_dir);},
 		action { src_prompt(MSG_Pkgsrc_dir, pkgsrc_dir, sizeof pkgsrc_dir); };
 	option {src_legend(menu, MSG_User, pkgsrc.user);},
@@ -612,144 +624,11 @@ menu pkgsrc, y=-4, x=0, w=70, no box, no clear,
 	option {src_legend(menu, MSG_delete_xfer_file,
 			clean_xfer_dir ? MSG_Yes : MSG_No);},
 		action {clean_xfer_dir = ask_yesno(MSG_delete_xfer_file); };
+	option {src_legend(menu, MSG_transfer_method, url_proto(pkgsrc.xfer));},
+		action { pkgsrc.xfer = (pkgsrc.xfer+1) % (XFER_MAX+1); };
 	option MSG_quit_pkgsrc, exit, action { *((int*)arg) = SET_SKIP;};
 
 menu usersh, title MSG_User_shell, no clear;
 	option "/bin/sh",  exit, action { ushell = "/bin/sh";}; 
 	option "/bin/ksh", exit, action { ushell = "/bin/ksh";};
 	option "/bin/csh", exit, action { ushell = "/bin/csh";};
-
-
-menu pmdiskentry, x=50, y=5, exit, default exit;
-	option MSG_editbsdpart, exit, action { pm_make_bsd_partitions(pm); };
-	option MSG_editmbr,		exit, action { md_get_info();
-											md_pre_disklabel();
-											memset(&pm->bsdlabel, 0, sizeof pm->bsdlabel);};
-	option MSG_switchgpt,	exit, action { if (pm_gpt_convert(pm) == 0)
-												pm_partusage(pm, -1, 1); };
-	option MSG_renamedisk,	exit, action { pm->unsaved = 1; pm_rename(pm); };
-	option MSG_fmtasraid,	exit, action { pm->unsaved = 1;
-											pm_partusage(pm, -1, 1);
-											layoutkind = LY_NEWRAID;
-											md_make_bsd_partitions();};
-	option MSG_fmtaslvm,	exit, action { pm->unsaved = 1;
-											pm_partusage(pm, -1, 1);
-											layoutkind = LY_NEWLVM;
-											md_make_bsd_partitions(); };
-	option MSG_encrypt,		exit, action { pm->unsaved = 1;
-											pm_partusage(pm, -1, 1);
-											layoutkind = LY_NEWCGD;
-											md_make_bsd_partitions();
-											pm_cgd_edit(0, &(part_entry_t)
-												{.dev_ptr = pm, .dev_num = PART_E}
-											); };
-	option MSG_setbootable,	exit, action { pm->unsaved = 1;
-											pm->bootable = !pm->bootable; };
-	option MSG_erase,		next menu shred_modes;
-	option MSG_undo,		exit, action { label_read(); pm->unsaved = 0;
-											pm_partusage(pm, -1, 1); };
-	option MSG_unconfig,	exit, action { if (pm_unconfigure(pm) == 0)
-												pm_partusage(pm, -1, 1); };
-
-menu pmpartentry, x=50, y=5, exit, default exit;
-	option MSG_edit,		exit, action { 
-									pm->unsaved = 1;
-									int tpfs = pm->bsdlabel[*(int*)arg].pi_fstype;
-									int tplvm = pm->bsdlabel[*(int*)arg].lvmpv;
-									pm_editpart(*(int*)arg);
-									if (tpfs != pm->bsdlabel[*(int*)arg].pi_fstype ||
-										tplvm != pm->bsdlabel[*(int*)arg].lvmpv)
-										/* Oops, partition type changed */
-										pm_partusage(pm, *(int*)arg, 1);
-								};
-	option MSG_fmtasraid,	exit, action {
-									if (pm->gpt || pm->isspecial) {
-										process_menu(MENU_ok, __UNCONST(MSG_notsupported));
-										return -1;
-									}
-									pm->unsaved = 1;
-									pm_partusage(pm, *(int*)arg, 1);
-									pm_setfstype(pm, *(int*)arg, FS_RAID);
-								};
-	option MSG_fmtaslvm,	exit, action {
-									if (pm->gpt || pm->isspecial) {
-										process_menu(MENU_ok, __UNCONST(MSG_notsupported));
-										return -1;
-									}
-									pm->unsaved = 1;
-									pm_partusage(pm, *(int*)arg, 1);
-									pm_setfstype(pm, *(int*)arg, FS_BSDFFS);
-								    pm->bsdlabel[*(int*)arg].lvmpv = 1;
-								};
-	option MSG_encrypt,		exit, action {
-									if (pm->gpt || pm->isspecial) {
-										process_menu(MENU_ok, __UNCONST(MSG_notsupported));
-										return -1;
-									}
-									pm->unsaved = 1;
-									pm_partusage(pm, *(int*)arg, 1);
-									pm_setfstype(pm, *(int*)arg, FS_CGD);
-									pm_cgd_edit(0,
-										&(part_entry_t){.dev_ptr = pm,
-														.dev_num = *(int*)arg});
-								};
-	option MSG_erase,		next menu shred_modes;
-	option MSG_doumount,	exit, action { pm_umount(pm, *(int*)arg); };
-	option MSG_Delete_partition,	exit, action {
-									pm->unsaved = 1;
-									pm_partusage(pm, *(int*)arg, 1);
-									if (pm->isspecial)
-										pm_unconfigure(pm);
-									else
-										pm->bsdlabel[*(int*)arg].pi_fstype = FS_UNUSED;
-									};
-
-menu pmgptentry, x=50, y=8, exit, default exit;
-	option MSG_editbsdpart, exit, action { pm_make_bsd_partitions(pm); };
-	option MSG_switchmbr,	exit, action { if (pm_gpt_convert(pm) == 0)
-												pm_partusage(pm, -1, 1); };
-	option MSG_setbootable,	exit, action { pm->unsaved = 1;
-												pm->bootable = !pm->bootable; };
-	option MSG_erase,		next menu shred_modes;
-	option MSG_undo,		exit, action { label_read(); pm->unsaved = 0;
-											pm_partusage(pm, -1, 1); };
-	option MSG_unconfig,	exit, action { if (pm_unconfigure(pm) == 0)
-												pm_partusage(pm, -1, 1); };
-
-menu shred_modes, x=50, y=5, exit, default exit;
-	option MSG_fillzeros,	exit,
-							action { pm_shred(pm, *(int*)arg, SHRED_ZEROS); };
-	option MSG_fillrandom,	exit,
-							action { pm_shred(pm, *(int*)arg, SHRED_RANDOM); };
-	option MSG_fillcrypto,	exit,
-							action { pm_shred(pm, *(int*)arg, SHRED_CRYPTO); };
-
-menu raidlevel;
-	option MSG_raid0, exit, action { *(int *)arg = 0; };
-	option MSG_raid1, exit, action { *(int *)arg = 1; };
-	option MSG_raid4, exit, action { *(int *)arg = 4; };
-	option MSG_raid5, exit, action { *(int *)arg = 5; };
-
-menu cgd_enctype;
-	option "aes-xts",			exit, action { *(const char**)arg = "aes-xts"; };
-	option "aes-cbc",			exit, action { *(const char**)arg = "aes-cbc"; };
-	option "3des-cbc",			exit, action { *(const char**)arg = "3des-cbc"; };
-	option "blowfish-cbc",		exit, action { *(const char**)arg = "blowfish-cbc"; };
-
-menu cgd_ivtype;
-	option "encblkno1",			exit, action { *(const char**)arg = "encblkno1"; };
-	option "encblkno8",			exit, action { *(const char**)arg = "encblkno8"; };
-
-menu cgd_keygentype;
-	option "pkcs5_pbkdf2/sha1",	exit, action { *(const char**)arg = "pkcs5_pbkdf2/sha1"; };
-	option "pkcs5_pbkdf2",		exit, action { *(const char**)arg = "pkcs5_pbkdf2"; };
-	option "storedkey",			exit, action { *(const char**)arg = "storedkey"; };
-	option "randomkey",			exit, action { *(const char**)arg = "randomkey"; };
-	option "urandomkey",		exit, action { *(const char**)arg = "urandomkey"; };
-	option "shell_cmd",			exit, action { *(const char**)arg = "shell_cmd"; };
-
-menu cgd_verifytype;
-	option "none",				exit, action { *(const char**)arg = "none"; };
-	option "disklabel",			exit, action { *(const char**)arg = "disklabel"; };
-	option "ffs",				exit, action { *(const char**)arg = "ffs"; };
-	option "re-enter",			exit, action { *(const char**)arg = "re-enter"; };

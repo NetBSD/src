@@ -1,4 +1,4 @@
-#	$NetBSD: files.radeon,v 1.12.18.1 2018/09/06 06:56:37 pgoyette Exp $
+#	$NetBSD: files.radeon,v 1.12.18.2 2018/09/30 01:45:54 pgoyette Exp $
 
 version	20180827
 
@@ -22,6 +22,8 @@ makeoptions	radeon	"CWARNFLAGS.radeon"+="-Wno-missing-field-initializers"
 makeoptions	radeon	"CWARNFLAGS.radeon"+="-Wno-missing-prototypes"
 makeoptions	radeon	"CWARNFLAGS.radeon"+="-Wno-shadow"
 makeoptions	radeon	"CWARNFLAGS.radeon"+="-Wno-unused-const-variable"
+
+makeoptions	radeon	"CWARNFLAGS.radeon"+="${${ACTIVE_CC} == gcc:? -Wno-maybe-uninitialized :}"
 
 file	external/bsd/drm2/radeon/radeon_module.c		radeon
 file	external/bsd/drm2/radeon/radeon_pci.c			radeon

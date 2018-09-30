@@ -1,5 +1,3 @@
-/*	$NetBSD: npf_rproc.c,v 1.16 2017/01/29 00:15:54 christos Exp $	*/
-
 /*-
  * Copyright (c) 2009-2013 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -176,7 +174,7 @@ npf_ext_unregister(npf_t *npf, void *extid)
 
 int
 npf_ext_construct(npf_t *npf, const char *name,
-    npf_rproc_t *rp, prop_dictionary_t params)
+    npf_rproc_t *rp, const nvlist_t *params)
 {
 	const npf_ext_ops_t *extops;
 	npf_ext_t *ext;
@@ -262,19 +260,23 @@ npf_rprocset_insert(npf_rprocset_t *rpset, npf_rproc_t *rp)
 }
 
 int
-npf_rprocset_export(const npf_rprocset_t *rpset, prop_array_t rprocs)
+npf_rprocset_export(const npf_rprocset_t *rpset, nvlist_t *npf_dict)
 {
-	prop_dictionary_t rpdict;
 	const npf_rproc_t *rp;
 
 	LIST_FOREACH(rp, &rpset->rps_list, rp_entry) {
-		rpdict = prop_dictionary_create();
-		prop_array_t extcalls = prop_array_create();
-		prop_dictionary_set_and_rel(rpdict, "extcalls", extcalls);
-		prop_dictionary_set_cstring(rpdict, "name", rp->rp_name);
-		prop_dictionary_set_uint32(rpdict, "flags", rp->rp_flags);
-		prop_array_add(rprocs, rpdict);
-		prop_object_release(rpdict);
+		nvlist_t *rproc = nvlist_create(0);
+#if 0 // FIXME/TODO
+		for (unsigned i = 0; i < rp->rp_ext_count; i++) {
+			nvlist_t *meta = rp->rp_ext_meta[i];
+			...
+			nvlist_append_nvlist_array(rproc, "extcalls", meta);
+		}
+#endif
+		nvlist_add_string(rproc, "name", rp->rp_name);
+		nvlist_add_number(rproc, "flags", rp->rp_flags);
+		nvlist_append_nvlist_array(npf_dict, "rprocs", rproc);
+		nvlist_destroy(rproc);
 	}
 	return 0;
 }
@@ -284,12 +286,12 @@ npf_rprocset_export(const npf_rprocset_t *rpset, prop_array_t rprocs)
  * the extension calls with it.
  */
 npf_rproc_t *
-npf_rproc_create(prop_dictionary_t rpdict)
+npf_rproc_create(const nvlist_t *rproc)
 {
 	const char *name;
 	npf_rproc_t *rp;
 
-	if (!prop_dictionary_get_cstring_nocopy(rpdict, "name", &name)) {
+	if ((name = dnvlist_get_string(rproc, "name", NULL)) == NULL) {
 		return NULL;
 	}
 
@@ -297,7 +299,7 @@ npf_rproc_create(prop_dictionary_t rpdict)
 	rp->rp_refcnt = 1;
 
 	strlcpy(rp->rp_name, name, RPROC_NAME_LEN);
-	prop_dictionary_get_uint32(rpdict, "flags", &rp->rp_flags);
+	rp->rp_flags = dnvlist_get_number(rproc, "flags", 0);
 	return rp;
 }
 

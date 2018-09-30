@@ -1,5 +1,3 @@
-/*	$NetBSD: npf_impl.h,v 1.70.2.1 2018/09/06 06:56:44 pgoyette Exp $	*/
-
 /*-
  * Copyright (c) 2009-2014 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -56,6 +54,8 @@
 #include <net/bpfjit.h>
 #include <net/if.h>
 #endif
+#include <dnv.h>
+#include <nv.h>
 
 #include "npf.h"
 #include "npfkern.h"
@@ -102,6 +102,12 @@ typedef struct npf_algset	npf_algset_t;
  */
 
 typedef void (*npf_workfunc_t)(npf_t *);
+
+typedef struct {
+	uint64_t	mi_rid;
+	unsigned	mi_retfl;
+	unsigned	mi_di;
+} npf_match_info_t;
 
 /*
  * Some artificial limits.
@@ -199,6 +205,26 @@ struct npf {
 	/* Statistics. */
 	percpu_t *		stats_percpu;
 };
+
+
+/*
+ * NPF extensions and rule procedure interface.
+ */
+
+struct npf_rproc;
+typedef struct npf_rproc npf_rproc_t;
+
+typedef struct {
+	u_int	version;
+	void *	ctx;
+	int	(*ctor)(npf_rproc_t *, const nvlist_t *);
+	void	(*dtor)(npf_rproc_t *, void *);
+	bool	(*proc)(npf_cache_t *, void *, const npf_match_info_t *, int *);
+} npf_ext_ops_t;
+
+void *		npf_ext_register(npf_t *, const char *, const npf_ext_ops_t *);
+int		npf_ext_unregister(npf_t *, void *);
+void		npf_rproc_assign(npf_rproc_t *, void *);
 
 /*
  * INTERFACES.
@@ -306,13 +332,13 @@ npf_table_t *	npf_tableset_getbyname(npf_tableset_t *, const char *);
 npf_table_t *	npf_tableset_getbyid(npf_tableset_t *, u_int);
 npf_table_t *	npf_tableset_swap(npf_tableset_t *, npf_table_t *);
 void		npf_tableset_reload(npf_t *, npf_tableset_t *, npf_tableset_t *);
-int		npf_tableset_export(npf_t *, const npf_tableset_t *, prop_array_t);
+int		npf_tableset_export(npf_t *, const npf_tableset_t *, nvlist_t *);
 
-npf_table_t *	npf_table_create(const char *, u_int, int, void *, size_t);
+npf_table_t *	npf_table_create(const char *, u_int, int, const void *, size_t);
 void		npf_table_destroy(npf_table_t *);
 
 u_int		npf_table_getid(npf_table_t *);
-int		npf_table_check(npf_tableset_t *, const char *, u_int, int);
+int		npf_table_check(npf_tableset_t *, const char *, uint64_t, uint64_t);
 int		npf_table_insert(npf_table_t *, const int,
 		    const npf_addr_t *, const npf_netmask_t);
 int		npf_table_remove(npf_table_t *, const int,
@@ -330,14 +356,15 @@ void		npf_ruleset_reload(npf_t *, npf_ruleset_t *,
 npf_rule_t *	npf_ruleset_sharepm(npf_ruleset_t *, npf_natpolicy_t *);
 npf_natpolicy_t *npf_ruleset_findnat(npf_ruleset_t *, uint64_t);
 void		npf_ruleset_freealg(npf_ruleset_t *, npf_alg_t *);
-int		npf_ruleset_export(npf_t *, const npf_ruleset_t *, prop_array_t);
+int		npf_ruleset_export(npf_t *, const npf_ruleset_t *,
+		    const char *, nvlist_t *);
 
 npf_rule_t *	npf_ruleset_lookup(npf_ruleset_t *, const char *);
 int		npf_ruleset_add(npf_ruleset_t *, const char *, npf_rule_t *);
 int		npf_ruleset_remove(npf_ruleset_t *, const char *, uint64_t);
 int		npf_ruleset_remkey(npf_ruleset_t *, const char *,
 		    const void *, size_t);
-prop_dictionary_t npf_ruleset_list(npf_t *, npf_ruleset_t *, const char *);
+nvlist_t *	npf_ruleset_list(npf_t *, npf_ruleset_t *, const char *);
 int		npf_ruleset_flush(npf_ruleset_t *, const char *);
 void		npf_ruleset_gc(npf_ruleset_t *);
 
@@ -346,7 +373,7 @@ npf_rule_t *	npf_ruleset_inspect(npf_cache_t *, const npf_ruleset_t *,
 int		npf_rule_conclude(const npf_rule_t *, npf_match_info_t *);
 
 /* Rule interface. */
-npf_rule_t *	npf_rule_alloc(npf_t *, prop_dictionary_t);
+npf_rule_t *	npf_rule_alloc(npf_t *, const nvlist_t *);
 void		npf_rule_setcode(npf_rule_t *, int, void *, size_t);
 void		npf_rule_setrproc(npf_rule_t *, npf_rproc_t *);
 void		npf_rule_free(npf_rule_t *);
@@ -358,15 +385,15 @@ npf_rproc_t *	npf_rule_getrproc(const npf_rule_t *);
 void		npf_ext_init(npf_t *);
 void		npf_ext_fini(npf_t *);
 int		npf_ext_construct(npf_t *, const char *,
-		    npf_rproc_t *, prop_dictionary_t);
+		    npf_rproc_t *, const nvlist_t *);
 
 npf_rprocset_t *npf_rprocset_create(void);
 void		npf_rprocset_destroy(npf_rprocset_t *);
 npf_rproc_t *	npf_rprocset_lookup(npf_rprocset_t *, const char *);
 void		npf_rprocset_insert(npf_rprocset_t *, npf_rproc_t *);
-int		npf_rprocset_export(const npf_rprocset_t *, prop_array_t);
+int		npf_rprocset_export(const npf_rprocset_t *, nvlist_t *);
 
-npf_rproc_t *	npf_rproc_create(prop_dictionary_t);
+npf_rproc_t *	npf_rproc_create(const nvlist_t *);
 void		npf_rproc_acquire(npf_rproc_t *);
 void		npf_rproc_release(npf_rproc_t *);
 const char *	npf_rproc_getname(const npf_rproc_t *);
@@ -385,8 +412,8 @@ int		npf_state_tcp_timeout(const npf_state_t *);
 /* NAT. */
 void		npf_nat_sysinit(void);
 void		npf_nat_sysfini(void);
-npf_natpolicy_t *npf_nat_newpolicy(npf_t *, prop_dictionary_t, npf_ruleset_t *);
-int		npf_nat_policyexport(const npf_natpolicy_t *, prop_dictionary_t);
+npf_natpolicy_t *npf_nat_newpolicy(npf_t *, const nvlist_t *, npf_ruleset_t *);
+int		npf_nat_policyexport(const npf_natpolicy_t *, nvlist_t *);
 void		npf_nat_freepolicy(npf_natpolicy_t *);
 bool		npf_nat_cmppolicy(npf_natpolicy_t *, npf_natpolicy_t *);
 bool		npf_nat_sharepm(npf_natpolicy_t *, npf_natpolicy_t *);
@@ -400,11 +427,13 @@ void		npf_nat_getorig(npf_nat_t *, npf_addr_t **, in_port_t *);
 void		npf_nat_gettrans(npf_nat_t *, npf_addr_t **, in_port_t *);
 void		npf_nat_setalg(npf_nat_t *, npf_alg_t *, uintptr_t);
 
-void		npf_nat_export(prop_dictionary_t, npf_nat_t *);
-npf_nat_t *	npf_nat_import(npf_t *, prop_dictionary_t, npf_ruleset_t *,
+void		npf_nat_export(nvlist_t *, npf_nat_t *);
+npf_nat_t *	npf_nat_import(npf_t *, const nvlist_t *, npf_ruleset_t *,
 		    npf_conn_t *);
 
 /* ALG interface. */
+void		npf_alg_sysinit(void);
+void		npf_alg_sysfini(void);
 void		npf_alg_init(npf_t *);
 void		npf_alg_fini(npf_t *);
 npf_alg_t *	npf_alg_register(npf_t *, const char *, const npfa_funcs_t *);
@@ -413,7 +442,7 @@ npf_alg_t *	npf_alg_construct(npf_t *, const char *);
 bool		npf_alg_match(npf_cache_t *, npf_nat_t *, int);
 void		npf_alg_exec(npf_cache_t *, npf_nat_t *, bool);
 npf_conn_t *	npf_alg_conn(npf_cache_t *, int);
-prop_array_t	npf_alg_export(npf_t *);
+int		npf_alg_export(npf_t *, nvlist_t *);
 
 /* Debugging routines. */
 const char *	npf_addr_dump(const npf_addr_t *, int);
@@ -429,6 +458,7 @@ npf_t *		npf_getkernctx(void);
 #ifdef __NetBSD__
 #define	pserialize_register(x)
 #define	pserialize_checkpoint(x)
+#define	pserialize_unregister(x)
 #endif
 
 #endif	/* _NPF_IMPL_H_ */

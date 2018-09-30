@@ -1,0 +1,9 @@
+#	$NetBSD: files.seattle,v 1.1.2.2 2018/09/30 01:45:37 pgoyette Exp $
+#
+# Configuration info for AMD ARM SoCs
+#
+#
+
+file	arch/arm/amd/seattle_platform.c		soc_seattle
+
+defflag	opt_soc.h				SOC_SEATTLE

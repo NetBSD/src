@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.c,v 1.91.2.3 2018/09/25 21:41:30 pgoyette Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.c,v 1.91.2.4 2018/09/30 01:45:49 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.91.2.3 2018/09/25 21:41:30 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.91.2.4 2018/09/30 01:45:49 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ntp.h"
@@ -73,8 +73,6 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.91.2.3 2018/09/25 21:41:30 pgoy
 
 #include <net/if_pppoe.h>
 #include <net/if_sppp.h>
-
-#include <net/npf/npf.h>
 
 #include <net/bpf.h>
 #include <netinet/in.h>
@@ -492,28 +490,6 @@ netbsd32_to_ksyms_gvalue(
 }
 
 static inline void
-netbsd32_to_npf_ioctl_table(
-    const struct netbsd32_npf_ioctl_table *s32p,
-    struct npf_ioctl_table *p,
-    u_long cmd)
-{
-
-	p->nct_cmd = s32p->nct_cmd;
-	p->nct_name = NETBSD32PTR64(s32p->nct_name);
-	switch (s32p->nct_cmd) {
-	case NPF_CMD_TABLE_LOOKUP:
-	case NPF_CMD_TABLE_ADD:
-	case NPF_CMD_TABLE_REMOVE:
-		p->nct_data.ent = s32p->nct_data.ent;
-		break;
-	case NPF_CMD_TABLE_LIST:
-		p->nct_data.buf.buf = NETBSD32PTR64(s32p->nct_data.buf.buf);
-		p->nct_data.buf.len = s32p->nct_data.buf.len;
-		break;
-	}
-}
-
-static inline void
 netbsd32_to_devlistargs(
     const struct netbsd32_devlistargs *s32p,
     struct devlistargs *p,
@@ -537,12 +513,23 @@ netbsd32_to_devrescanargs(
 }
 
 static inline void
+netbsd32_to_disk_strategy(
+    const struct netbsd32_disk_strategy *s32p,
+    struct disk_strategy *p,
+    u_long cmd)
+{
+	memcpy(p->dks_name, s32p->dks_name, sizeof(p->dks_name));
+	p->dks_param = NETBSD32PTR64(s32p->dks_param);
+	p->dks_paramlen = s32p->dks_paramlen;
+}
+
+static inline void
 netbsd32_to_dkwedge_list(
     const struct netbsd32_dkwedge_list *s32p,
     struct dkwedge_list *p,
     u_long cmd)
 {
-	p->dkwl_buf = s32p->dkwl_buf;
+	p->dkwl_buf = NETBSD32PTR64(s32p->dkwl_buf);
 	p->dkwl_bufsize = s32p->dkwl_bufsize;
 	p->dkwl_nwedges = s32p->dkwl_nwedges;
 	p->dkwl_ncopied = s32p->dkwl_ncopied;
@@ -946,28 +933,6 @@ netbsd32_from_ksyms_gvalue(
 }
 
 static inline void
-netbsd32_from_npf_ioctl_table(
-    const struct npf_ioctl_table *p,
-    struct netbsd32_npf_ioctl_table *s32p,
-    u_long cmd)
-{
-
-	s32p->nct_cmd = p->nct_cmd;
-	NETBSD32PTR32(s32p->nct_name, p->nct_name);
-	switch (p->nct_cmd) {
-	case NPF_CMD_TABLE_LOOKUP:
-	case NPF_CMD_TABLE_ADD:
-	case NPF_CMD_TABLE_REMOVE:
-		s32p->nct_data.ent = p->nct_data.ent;
-		break;
-	case NPF_CMD_TABLE_LIST:
-		NETBSD32PTR32(s32p->nct_data.buf.buf, p->nct_data.buf.buf);
-		s32p->nct_data.buf.len = p->nct_data.buf.len;
-		break;
-	}
-}
-
-static inline void
 netbsd32_from_devlistargs(
     const struct devlistargs *p,
     struct netbsd32_devlistargs *s32p,
@@ -991,12 +956,23 @@ netbsd32_from_devrescanargs(
 }
 
 static inline void
+netbsd32_from_disk_strategy(
+    const struct disk_strategy *p,
+    struct netbsd32_disk_strategy *s32p,
+    u_long cmd)
+{
+	memcpy(s32p->dks_name, p->dks_name, sizeof(p->dks_name));
+	NETBSD32PTR32(s32p->dks_param, p->dks_param);
+	s32p->dks_paramlen = p->dks_paramlen;
+}
+
+static inline void
 netbsd32_from_dkwedge_list(
     const struct dkwedge_list *p,
     struct netbsd32_dkwedge_list *s32p,
     u_long cmd)
 {
-	s32p->dkwl_buf = p->dkwl_buf;
+	NETBSD32PTR32(s32p->dkwl_buf, p->dkwl_buf);
 	s32p->dkwl_bufsize = p->dkwl_bufsize;
 	s32p->dkwl_nwedges = p->dkwl_nwedges;
 	s32p->dkwl_ncopied = p->dkwl_ncopied;
@@ -1441,17 +1417,6 @@ netbsd32_ioctl(struct lwp *l, const struct netbsd32_ioctl_args *uap, register_t 
 	case KIOCGVALUE32:
 		IOCTL_STRUCT_CONV_TO(KIOCGVALUE, ksyms_gvalue);
 
-	case IOC_NPF_LOAD32:
-		IOCTL_STRUCT_CONV_TO(IOC_NPF_LOAD, plistref);
-	case IOC_NPF_TABLE32:
-		IOCTL_STRUCT_CONV_TO(IOC_NPF_TABLE, npf_ioctl_table);
-	case IOC_NPF_STATS32:
-		IOCTL_CONV_TO(IOC_NPF_STATS, voidp);
-	case IOC_NPF_SAVE32:
-		IOCTL_STRUCT_CONV_TO(IOC_NPF_SAVE, plistref);
-	case IOC_NPF_RULE32:
-		IOCTL_STRUCT_CONV_TO(IOC_NPF_RULE, plistref);
-
 	case DRVRESCANBUS32:
 		IOCTL_STRUCT_CONV_TO(DRVRESCANBUS, devrescanargs);
 	case DRVLISTDEV32:
@@ -1461,6 +1426,10 @@ netbsd32_ioctl(struct lwp *l, const struct netbsd32_ioctl_args *uap, register_t 
 	case DRVGETEVENT32:
 		IOCTL_STRUCT_CONV_TO(DRVGETEVENT, plistref);
 
+	case DIOCGSTRATEGY32:
+		IOCTL_STRUCT_CONV_TO(DIOCGSTRATEGY, disk_strategy);
+	case DIOCSSTRATEGY32:
+		IOCTL_STRUCT_CONV_TO(DIOCSSTRATEGY, disk_strategy);
 	case DIOCLWEDGES32:
 		IOCTL_STRUCT_CONV_TO(DIOCLWEDGES, dkwedge_list);
 

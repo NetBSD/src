@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.3,v 1.203 2017/07/03 21:32:49 wiz Exp $
+.\"	$NetBSD: sysctl.3,v 1.203.4.1 2018/09/30 01:45:33 pgoyette Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)sysctl.3	8.4 (Berkeley) 5/9/95
 .\"
-.Dd June 13, 2014
+.Dd September 6, 2018
 .Dt SYSCTL 3
 .Os
 .Sh NAME
@@ -665,9 +665,9 @@ definitions for fourth level TCP identifiers
 definitions for fourth level UDP identifiers
 .It Aq Pa netinet6/udp6_var.h
 definitions for fourth level IPv6 UDP identifiers
-.It Aq Pa netinet6/ipsec.h
+.It Aq Pa netipsec/ipsec.h
 definitions for fourth level IPsec identifiers
-.It Aq Pa netkey/key_var.h
+.It Aq Pa netipsec/key_var.h
 definitions for third level PF_KEY identifiers
 .It Aq Pa machine/cpu.h
 definitions for second level machdep identifiers

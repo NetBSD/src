@@ -1,4 +1,4 @@
-/*	$NetBSD: dbregs.h,v 1.4.14.1 2018/07/28 04:37:42 pgoyette Exp $	*/
+/*	$NetBSD: dbregs.h,v 1.4.14.2 2018/09/30 01:45:48 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -110,6 +110,10 @@ void x86_dbregs_init(void);
 void x86_dbregs_clear(struct lwp *);
 void x86_dbregs_abandon(struct lwp *);
 void x86_dbregs_read(struct lwp *, struct dbreg *);
+
+void x86_dbregs_save(struct lwp *);
+void x86_dbregs_restore(struct lwp *);
+
 void x86_dbregs_store_dr6(struct lwp *);
 int x86_dbregs_user_trap(void);
 int x86_dbregs_validate(const struct dbreg *);

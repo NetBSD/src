@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.86.2.6 2018/09/06 06:56:06 pgoyette Exp $	*/
+/*	$NetBSD: xhci.c,v 1.86.2.7 2018/09/30 01:45:51 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.86.2.6 2018/09/06 06:56:06 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.86.2.7 2018/09/30 01:45:51 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -3705,15 +3705,18 @@ xhci_root_intr_start(struct usbd_xfer *xfer)
 {
 	struct xhci_softc * const sc = XHCI_XFER2SC(xfer);
 	const size_t bn = XHCI_XFER2BUS(xfer) == &sc->sc_bus ? 0 : 1;
+	const bool polling = sc->sc_bus.ub_usepolling;
 
 	XHCIHIST_FUNC(); XHCIHIST_CALLED();
 
 	if (sc->sc_dying)
 		return USBD_IOERROR;
 
-	mutex_enter(&sc->sc_lock);
+	if (!polling)
+		mutex_enter(&sc->sc_lock);
 	sc->sc_intrxfer[bn] = xfer;
-	mutex_exit(&sc->sc_lock);
+	if (!polling)
+		mutex_exit(&sc->sc_lock);
 
 	return USBD_IN_PROGRESS;
 }
@@ -3791,6 +3794,7 @@ xhci_device_ctrl_start(struct usbd_xfer *xfer)
 	uint32_t status;
 	uint32_t control;
 	u_int i;
+	const bool polling = sc->sc_bus.ub_usepolling;
 
 	XHCIHIST_FUNC(); XHCIHIST_CALLED();
 	DPRINTFN(12, "req: %04jx %04jx %04jx %04jx",
@@ -3837,9 +3841,11 @@ xhci_device_ctrl_start(struct usbd_xfer *xfer)
 	xhci_trb_put(&xx->xx_trb[i++], parameter, status, control);
 	xfer->ux_status = USBD_IN_PROGRESS;
 
-	mutex_enter(&tr->xr_lock);
+	if (!polling)
+		mutex_enter(&tr->xr_lock);
 	xhci_ring_put(sc, tr, xfer, xx->xx_trb, i);
-	mutex_exit(&tr->xr_lock);
+	if (!polling)
+		mutex_exit(&tr->xr_lock);
 
 	xhci_db_write_4(sc, XHCI_DOORBELL(xs->xs_idx), dci);
 
@@ -3922,6 +3928,7 @@ xhci_device_bulk_start(struct usbd_xfer *xfer)
 	uint32_t status;
 	uint32_t control;
 	u_int i = 0;
+	const bool polling = sc->sc_bus.ub_usepolling;
 
 	XHCIHIST_FUNC(); XHCIHIST_CALLED();
 
@@ -3955,9 +3962,11 @@ xhci_device_bulk_start(struct usbd_xfer *xfer)
 	xhci_trb_put(&xx->xx_trb[i++], parameter, status, control);
 	xfer->ux_status = USBD_IN_PROGRESS;
 
-	mutex_enter(&tr->xr_lock);
+	if (!polling)
+		mutex_enter(&tr->xr_lock);
 	xhci_ring_put(sc, tr, xfer, xx->xx_trb, i);
-	mutex_exit(&tr->xr_lock);
+	if (!polling)
+		mutex_exit(&tr->xr_lock);
 
 	xhci_db_write_4(sc, XHCI_DOORBELL(xs->xs_idx), dci);
 

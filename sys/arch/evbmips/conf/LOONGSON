@@ -1,4 +1,4 @@
-# $NetBSD: LOONGSON,v 1.36.2.3 2018/09/06 06:55:33 pgoyette Exp $
+# $NetBSD: LOONGSON,v 1.36.2.4 2018/09/30 01:45:43 pgoyette Exp $
 #
 # LOONGSON machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/evbmips/conf/std.loongson"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"LOONGSON-$Revision: 1.36.2.3 $"
+#ident 		"LOONGSON-$Revision: 1.36.2.4 $"
 
 maxusers	16
 
@@ -150,11 +150,6 @@ options 	FONT_GALLANT12x22
 options 	FONT_BOLD8x16
 # compatibility to other console drivers
 options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
-#
-# Hpckbd will set key board layout appropriately. You can use option
-# 'PCKBD_LAYOUT' to overrite the default layout.
-#
-#options 	PCKBD_LAYOUT="(KB_US | KB_SWAPCTRLCAPS | KB_MACHDEP)"
 
 mainbus0	at root
 cpu0		at mainbus0

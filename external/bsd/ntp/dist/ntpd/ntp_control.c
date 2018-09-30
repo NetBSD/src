@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_control.c,v 1.19.10.1 2018/04/07 04:12:01 pgoyette Exp $	*/
+/*	$NetBSD: ntp_control.c,v 1.19.10.2 2018/09/30 01:45:18 pgoyette Exp $	*/
 
 /*
  * ntp_control.c - respond to mode 6 control messages and send async
@@ -918,7 +918,7 @@ is_safe_filename(const char * name)
 	u_int widx, bidx, mask;
 	if ( ! (name && *name))
 		return FALSE;
-	
+
 	mask = 1u;
 	while (0 != (widx = (u_char)*name++)) {
 		bidx = (widx & 15) << 1;
@@ -957,7 +957,7 @@ save_config(
 	 * level.  On POSIX systems we could allow '\\' but such
 	 * filenames are tricky to manipulate from a shell, so just
 	 * reject both types of slashes on all platforms.
-	 */	
+	 */
 	/* TALOS-CAN-0062: block directory traversal for VMS, too */
 	static const char * illegal_in_filename =
 #if defined(VMS)
@@ -985,8 +985,8 @@ save_config(
 #  if defined(_O_TEXT)		/* windows, again */
 	    | _O_TEXT
 #endif
-	    ; 
-	
+	    ;
+
 	char filespec[128];
 	char filename[128];
 	char fullpath[512];
@@ -1048,7 +1048,7 @@ save_config(
 	/* copy data directly as we exactly know the size */
 	memcpy(filespec, reqpt, reqlen);
 	filespec[reqlen] = '\0';
-	
+
 	/*
 	 * allow timestamping of the saved config filename with
 	 * strftime() format such as:
@@ -1156,7 +1156,7 @@ save_config(
 #else	/* !SAVECONFIG follows */
 	ctl_printf("%s",
 		   "saveconfig unavailable, configured with --disable-saveconfig");
-#endif	
+#endif
 	ctl_flushpkt(0);
 }
 
@@ -1508,11 +1508,11 @@ ctl_putdata_ex(
 	} else {
 		datanotbinflag = TRUE;
 		add_len = 3;
-		
+
 		if (datasent) {
 			*datapt++ = ',';
 			datalinelen++;
-			
+
 			/* sum up total length */
 			for (argi = 0, src_len = 0; argi < argc; ++argi)
 				src_len += argv[argi].len;
@@ -1541,14 +1541,14 @@ ctl_putdata_ex(
 			/* Not enough room in this one, flush it out. */
 			if (src_len < cur_len)
 				cur_len = src_len;
-			
+
 			memcpy(datapt, src_ptr, cur_len);
 			datapt      += cur_len;
 			datalinelen += cur_len;
 
 			src_ptr     += cur_len;
 			src_len     -= cur_len;
-			
+
 			ctl_flushpkt(CTL_MORE);
 			cur_len = (size_t)(dataend - datapt);
 		}
@@ -1573,7 +1573,7 @@ ctl_putdata(
 	)
 {
 	CtlMemBufT args[1];
-	
+
 	args[0].buf = dp;
 	args[0].len = dlen;
 	ctl_putdata_ex(args, 1, bin);
@@ -1596,7 +1596,7 @@ ctl_putstr(
 	)
 {
 	CtlMemBufT args[4];
-	
+
 	args[0].buf = tag;
 	args[0].len = strlen(tag);
 	if (data && len) {
@@ -1608,7 +1608,9 @@ ctl_putstr(
 	    args[3].len = 1;
 	    ctl_putdata_ex(args, 4, FALSE);
 	} else {
-	    ctl_putdata_ex(args, 1, FALSE);
+	    args[1].buf = "=\"\"";
+	    args[1].len = 3;
+	    ctl_putdata_ex(args, 2, FALSE);
 	}
 }
 
@@ -1630,17 +1632,17 @@ ctl_putunqstr(
 	)
 {
 	CtlMemBufT args[3];
-	
+
 	args[0].buf = tag;
 	args[0].len = strlen(tag);
+	args[1].buf = "=";
+	args[1].len = 1;
 	if (data && len) {
-	    args[1].buf = "=";
-	    args[1].len = 1;
-	    args[2].buf = data;
-	    args[2].len = len;
-	    ctl_putdata_ex(args, 3, FALSE);
+		args[2].buf = data;
+		args[2].len = len;
+		ctl_putdata_ex(args, 3, FALSE);
 	} else {
-	    ctl_putdata_ex(args, 1, FALSE);
+		ctl_putdata_ex(args, 2, FALSE);
 	}
 }
 
@@ -1658,7 +1660,7 @@ ctl_putdblf(
 {
 	char buffer[40];
 	int  rc;
-	
+
 	rc = snprintf(buffer, sizeof(buffer),
 		      (use_f ? "%.*f" : "%.*g"),
 		      precision, d);
@@ -1718,7 +1720,7 @@ ctl_putfs(
 {
 	char buffer[16];
 	int  rc;
-	
+
 	time_t fstamp = (time_t)uval - JAN_1970;
 	struct tm *tm = gmtime(&fstamp);
 
@@ -1746,7 +1748,7 @@ ctl_puthex(
 {
 	char buffer[24];	/* must fit 64bit int! */
 	int  rc;
-	
+
 	rc = snprintf(buffer, sizeof(buffer), "0x%lx", uval);
 	INSIST(rc >= 0 && (size_t)rc < sizeof(buffer));
 	ctl_putunqstr(tag, buffer, rc);
@@ -1764,7 +1766,7 @@ ctl_putint(
 {
 	char buffer[24];	/*must fit 64bit int */
 	int  rc;
-	
+
 	rc = snprintf(buffer, sizeof(buffer), "%ld", ival);
 	INSIST(rc >= 0 && (size_t)rc < sizeof(buffer));
 	ctl_putunqstr(tag, buffer, rc);
@@ -1782,7 +1784,7 @@ ctl_putts(
 {
 	char buffer[24];
 	int  rc;
-	
+
 	rc = snprintf(buffer, sizeof(buffer),
 		      "0x%08lx.%08lx",
 		      (u_long)ts->l_ui, (u_long)ts->l_uf);
@@ -1802,7 +1804,7 @@ ctl_putadr(
 	)
 {
 	const char *cq;
-	
+
 	if (NULL == addr)
 		cq = numtoa(addr32);
 	else
@@ -1829,7 +1831,9 @@ ctl_putrefid(
 
 	bytes.w = refid;
 	for (nc = 0; nc < sizeof(bytes.b) && bytes.b[nc]; ++nc)
-		if (!isprint(bytes.b[nc]))
+		if (  !isprint(bytes.b[nc])
+		    || isspace(bytes.b[nc])
+		    || bytes.b[nc] == ','  )
 			bytes.b[nc] = '.';
 	ctl_putunqstr(tag, (const char*)bytes.b, nc);
 }
@@ -1876,7 +1880,7 @@ ctl_printf(
 	va_list va;
 	char    fmtbuf[128];
 	int     rc;
-	
+
 	va_start(va, fmt);
 	rc = vsnprintf(fmtbuf, sizeof(fmtbuf), fmt, va);
 	va_end(va);
@@ -1953,10 +1957,10 @@ ctl_putsys(
 		break;
 
 	case CS_REFID:
-		if (sys_stratum > 1 && sys_stratum < STRATUM_UNSPEC)
-			ctl_putadr(sys_var[varid].text, sys_refid, NULL);
-		else
+		if (REFID_ISTEXT(sys_stratum))
 			ctl_putrefid(sys_var[varid].text, sys_refid);
+		else
+			ctl_putadr(sys_var[varid].text, sys_refid, NULL);
 		break;
 
 	case CS_REFTIME:
@@ -2680,11 +2684,10 @@ ctl_putpeer(
 			break;
 		}
 #endif
-		if (p->stratum > 1 && p->stratum < STRATUM_UNSPEC)
-			ctl_putadr(peer_var[id].text, p->refid,
-				   NULL);
-		else
+		if (REFID_ISTEXT(p->stratum))
 			ctl_putrefid(peer_var[id].text, p->refid);
+		else
+			ctl_putadr(peer_var[id].text, p->refid, NULL);
 		break;
 
 	case CP_REFTIME:
@@ -3063,7 +3066,7 @@ ctl_getitem(
 	 * packet; If it's EOV, it will never be NULL again until the
 	 * variable is found and processed in a given 'var_list'. (That
 	 * is, a result is returned that is neither NULL nor EOV).
-	 */ 
+	 */
 	static const struct ctl_var eol = { 0, EOV, NULL };
 	static char buf[128];
 	static u_long quiet_until;
@@ -3103,7 +3106,7 @@ ctl_getitem(
 			++plhead;
 		while (plhead != pltail && isspace((u_char)pltail[-1]))
 			--pltail;
-		
+
 		/* check payload size, terminate packet on overflow */
 		plsize = (size_t)(pltail - plhead);
 		if (plsize >= sizeof(buf))
@@ -3128,7 +3131,7 @@ ctl_getitem(
 	 * variable lists after an EoV was returned.  (Such a behavior
 	 * actually caused Bug 3008.)
 	 */
-	
+
 	if (NULL == var_list)
 		return &eol;
 
@@ -3649,7 +3652,7 @@ static u_int32 derive_nonce(
 	/* [Bug 3457] set flags and don't kill them again */
 	EVP_MD_CTX_set_flags(ctx, EVP_MD_CTX_FLAG_NON_FIPS_ALLOW);
 	EVP_DigestInit_ex(ctx, EVP_get_digestbynid(NID_md5), NULL);
-#   else	
+#   else
 	EVP_DigestInit(ctx, EVP_get_digestbynid(NID_md5));
 #   endif
 	EVP_DigestUpdate(ctx, salt, sizeof(salt));
@@ -3946,7 +3949,7 @@ static void read_mru_list(
 	int restrict_mask
 	)
 {
-	static const char	nulltxt[1] = 		{ '\0' };	
+	static const char	nulltxt[1] = 		{ '\0' };
 	static const char	nonce_text[] =		"nonce";
 	static const char	frags_text[] =		"frags";
 	static const char	limit_text[] =		"limit";
@@ -3956,7 +3959,7 @@ static void read_mru_list(
 	static const char	maxlstint_text[] =	"maxlstint";
 	static const char	laddr_text[] =		"laddr";
 	static const char	resaxx_fmt[] =		"0x%hx";
-	
+
 	u_int			limit;
 	u_short			frags;
 	u_short			resall;

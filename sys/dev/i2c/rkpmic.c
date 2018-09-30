@@ -1,4 +1,4 @@
-/* $NetBSD: rkpmic.c,v 1.1.2.2 2018/09/06 06:55:49 pgoyette Exp $ */
+/* $NetBSD: rkpmic.c,v 1.1.2.3 2018/09/30 01:45:50 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rkpmic.c,v 1.1.2.2 2018/09/06 06:55:49 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rkpmic.c,v 1.1.2.3 2018/09/30 01:45:50 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,12 +52,52 @@ struct rkpmic_ctrl {
 	uint8_t		vsel_mask;
 	u_int		base;
 	u_int		step;	
+	u_int		flags;
+#define	F_ENABLE_WRITE_MASK	0x00
 };
 
 struct rkpmic_config {
 	const char *	name;
 	const struct rkpmic_ctrl *ctrl;
 	u_int		nctrl;
+};
+
+static const struct rkpmic_ctrl rk805_ctrls[] = {
+	/* DCDC */
+	{ .name = "DCDC_REG1",	.flags = F_ENABLE_WRITE_MASK,
+	  .enable_reg = 0x23,	.enable_mask = __BIT(0),
+	  .vsel_reg = 0x2f,	.vsel_mask = __BITS(5,0),
+	  .base = 712500,	.step = 12500 },
+	{ .name = "DCDC_REG2",	.flags = F_ENABLE_WRITE_MASK,
+	  .enable_reg = 0x23,	.enable_mask = __BIT(1),
+	  .vsel_reg = 0x33,	.vsel_mask = __BITS(5,0),
+	  .base = 712500,	.step = 12500 },
+	{ .name = "DCDC_REG3",	.flags = F_ENABLE_WRITE_MASK,
+	  .enable_reg = 0x23,	.enable_mask = __BIT(2) },
+	{ .name = "DCDC_REG4",	.flags = F_ENABLE_WRITE_MASK,
+	  .enable_reg = 0x23,	.enable_mask = __BIT(3),
+	  .vsel_reg = 0x38,	.vsel_mask = __BITS(3,0),
+	  .base = 800000,	.step = 100000 },
+
+	/* LDO */
+	{ .name = "LDO_REG1",	.flags = F_ENABLE_WRITE_MASK,
+	  .enable_reg = 0x27,	.enable_mask = __BIT(0),
+	  .vsel_reg = 0x3b,	.vsel_mask = __BITS(4,0),
+	  .base = 800000,	.step = 100000 },
+	{ .name = "LDO_REG2",	.flags = F_ENABLE_WRITE_MASK,
+	  .enable_reg = 0x27,	.enable_mask = __BIT(1),
+	  .vsel_reg = 0x3d,	.vsel_mask = __BITS(4,0),
+	  .base = 800000,	.step = 100000 },
+	{ .name = "LDO_REG3",	.flags = F_ENABLE_WRITE_MASK,
+	  .enable_reg = 0x27,	.enable_mask = __BIT(2),
+	  .vsel_reg = 0x3f,	.vsel_mask = __BITS(4,0),
+	  .base = 800000,	.step = 100000 },
+};
+
+static const struct rkpmic_config rk805_config = {
+	.name = "RK805",
+	.ctrl = rk805_ctrls,
+	.nctrl = __arraycount(rk805_ctrls),
 };
 
 static const struct rkpmic_ctrl rk808_ctrls[] = {
@@ -145,6 +185,7 @@ struct rkreg_attach_args {
 };
 
 static const struct device_compatible_entry compat_data[] = {
+	{ "rockchip,rk805",	(uintptr_t)&rk805_config },
 	{ "rockchip,rk808",	(uintptr_t)&rk808_config },
 	{ NULL }
 };
@@ -252,7 +293,10 @@ rkreg_enable(device_t dev, bool enable)
 		return EINVAL;
 
 	I2C_LOCK(sc->sc_pmic);
-	val = I2C_READ(sc->sc_pmic, c->enable_reg);
+	if (c->flags & F_ENABLE_WRITE_MASK)
+		val |= c->enable_mask << 4;
+	else
+		val = I2C_READ(sc->sc_pmic, c->enable_reg);
 	if (enable)
 		val |= c->enable_mask;
 	else

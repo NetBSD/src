@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.44.16.1 2018/06/25 07:26:04 pgoyette Exp $
+#	$NetBSD: Makefile.inc,v 1.44.16.2 2018/09/30 01:45:55 pgoyette Exp $
 #
 #	Configuration variables (default values are below):
 #
@@ -7,7 +7,8 @@
 #		objects are to be built.  Defaults to ${.OBJDIR}/lib/kern.
 #	KERN_AS	may be set to 'obj' to build a object from the library's
 #		object files.  (Otherwise, a library will be built.)
-#		Defaults to 'library'.
+#		Defaults to 'obj' if OPT_MODULAR is set. Otherwise,
+#		'library' is used as a default value.
 #	KERNMISCCPPFLAGS
 #		Miscellaneous cpp flags to be passed to the library's Makefile
 #		when building.
@@ -18,7 +19,11 @@
 
 # Default values:
 KERNDST?=	${.OBJDIR}/lib/kern
+.if !empty(OPT_MODULAR)
+KERN_AS?=	obj
+.else
 KERN_AS?=	library
+.endif
 KERNDOTDIR?= ../../.
 
 KERNDIR=	${S:S@^.@${KERNDOTDIR}@:q}/lib/libkern

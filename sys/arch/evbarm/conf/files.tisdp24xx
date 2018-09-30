@@ -1,4 +1,4 @@
-#	$NetBSD: files.tisdp24xx,v 1.2.86.1 2018/03/22 01:44:44 pgoyette Exp $
+#	$NetBSD: files.tisdp24xx,v 1.2.86.2 2018/09/30 01:45:40 pgoyette Exp $
 #
 # TI OMAP2 evaluation board configuration info
 #
@@ -15,5 +15,4 @@ file	arch/evbarm/tisdp24xx/if_sm_gpmc.c	sm_gpmc
 # NS16550 compatible serial ports
 attach com at obio with obiouart
 file	arch/arm/omap/obio_com.c		obiouart
-defparam opt_com.h				CONSADDR CONSPEED CONMODE
 

@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.832.2.7 2018/09/06 06:51:42 pgoyette Exp $
+# $NetBSD: shl.mi,v 1.832.2.8 2018/09/30 01:45:04 pgoyette Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -25,8 +25,8 @@
 ./lib/libcrypto.so				base-crypto-shlib	dynamicroot
 ./lib/libcrypto.so.12				base-crypto-shlib	dynamicroot,openssl=10
 ./lib/libcrypto.so.12.0				base-crypto-shlib	dynamicroot,openssl=10
-./lib/libcrypto.so.13				base-crypto-shlib	dynamicroot,openssl=11
-./lib/libcrypto.so.13.0				base-crypto-shlib	dynamicroot,openssl=11
+./lib/libcrypto.so.14				base-crypto-shlib	dynamicroot,openssl=11
+./lib/libcrypto.so.14.0				base-crypto-shlib	dynamicroot,openssl=11
 ./lib/libdevmapper.so				base-lvm-shlib		dynamicroot,lvm
 ./lib/libdevmapper.so.1				base-lvm-shlib		dynamicroot,lvm
 ./lib/libdevmapper.so.1.0			base-lvm-shlib		dynamicroot,lvm
@@ -232,8 +232,8 @@
 ./usr/lib/libcrypto.so				base-crypto-shlib	compatfile
 ./usr/lib/libcrypto.so.12			base-crypto-shlib	compatfile,openssl=10
 ./usr/lib/libcrypto.so.12.0			base-crypto-shlib	compatfile,openssl=10
-./usr/lib/libcrypto.so.13			base-crypto-shlib	compatfile,openssl=11
-./usr/lib/libcrypto.so.13.0			base-crypto-shlib	compatfile,openssl=11
+./usr/lib/libcrypto.so.14			base-crypto-shlib	compatfile,openssl=11
+./usr/lib/libcrypto.so.14.0			base-crypto-shlib	compatfile,openssl=11
 ./usr/lib/libcrypto_idea.so.7			base-obsolete		compatfile,obsolete
 ./usr/lib/libcrypto_idea.so.7.0			base-obsolete		compatfile,obsolete
 ./usr/lib/libcrypto_mdc2.so.7			base-obsolete		compatfile,obsolete
@@ -250,8 +250,8 @@
 ./usr/lib/libdes.so				base-crypto-shlib	compatfile
 ./usr/lib/libdes.so.12				base-crypto-shlib	compatfile,openssl=10
 ./usr/lib/libdes.so.12.0				base-crypto-shlib	compatfile,openssl=10
-./usr/lib/libdes.so.13				base-crypto-shlib	compatfile,openssl=11
-./usr/lib/libdes.so.13.0				base-crypto-shlib	compatfile,openssl=11
+./usr/lib/libdes.so.14				base-crypto-shlib	compatfile,openssl=11
+./usr/lib/libdes.so.14.0				base-crypto-shlib	compatfile,openssl=11
 ./usr/lib/libdevmapper.so			base-lvm-shlib		compatfile,lvm
 ./usr/lib/libdevmapper.so.1			base-lvm-shlib		compatfile,lvm
 ./usr/lib/libdevmapper.so.1.0			base-lvm-shlib		compatfile,lvm
@@ -689,6 +689,9 @@
 ./usr/lib/librumpkern_ksem.so			base-obsolete		obsolete
 ./usr/lib/librumpkern_ksem.so.0			base-obsolete		obsolete
 ./usr/lib/librumpkern_ksem.so.0.0		base-obsolete		obsolete
+./usr/lib/librumpkern_nv.so			base-rump-shlib		rump
+./usr/lib/librumpkern_nv.so.0			base-rump-shlib		rump
+./usr/lib/librumpkern_nv.so.0.0			base-rump-shlib		rump
 ./usr/lib/librumpkern_sljit.so			base-rump-shlib		rump,sljit
 ./usr/lib/librumpkern_sljit.so.0		base-rump-shlib		rump,sljit
 ./usr/lib/librumpkern_sljit.so.0.0		base-rump-shlib		rump,sljit
@@ -817,8 +820,8 @@
 ./usr/lib/libssl.so				base-crypto-shlib	compatfile
 ./usr/lib/libssl.so.12				base-crypto-shlib	compatfile,openssl=10
 ./usr/lib/libssl.so.12.0			base-crypto-shlib	compatfile,openssl=10
-./usr/lib/libssl.so.13				base-crypto-shlib	compatfile,openssl=11
-./usr/lib/libssl.so.13.0			base-crypto-shlib	compatfile,openssl=11
+./usr/lib/libssl.so.14				base-crypto-shlib	compatfile,openssl=11
+./usr/lib/libssl.so.14.0			base-crypto-shlib	compatfile,openssl=11
 ./usr/lib/libstdc++.so				base-sys-shlib		compatfile,gcc,cxx,libstdcxx
 ./usr/lib/libstdc++.so.8			base-sys-shlib		compatfile,gcc,cxx,libstdcxx
 ./usr/lib/libstdc++.so.8.0			base-sys-shlib		compatfile,gcc=5,cxx,libstdcxx

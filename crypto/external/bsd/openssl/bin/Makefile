@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2018/02/09 22:46:19 christos Exp $
+#	$NetBSD: Makefile,v 1.9.2.1 2018/09/30 01:44:22 pgoyette Exp $
 
 WARNS?=	2	# XXX -Wcast-qual
 
@@ -10,7 +10,7 @@ BINDIR=/usr/bin
 USE_FORT?= yes	# cryptographic software
 
 # RCSid:
-#	$Id: Makefile,v 1.9 2018/02/09 22:46:19 christos Exp $
+#	$Id: Makefile,v 1.9.2.1 2018/09/30 01:44:22 pgoyette Exp $
 #
 #	@(#) Copyright (c) 1995 Simon J. Gerraty
 #
@@ -29,7 +29,7 @@ PROG=	openssl
 
 SRCS=	openssl.c
 SRCS+=	apps.c ecparam.c ec.c pkeyparam.c genpkey.c pkey.c pkeyutl.c ts.c cms.c
-SRCS+=	s_cb.c s_socket.c
+SRCS+=	s_cb.c s_socket.c bf_prefix.c storeutl.c
 SRCS+=	app_rand.c rehash.c
 SRCS+=	verify.c asn1pars.c req.c dgst.c dhparam.c enc.c passwd.c errstr.c \
 	opt.c ca.c \

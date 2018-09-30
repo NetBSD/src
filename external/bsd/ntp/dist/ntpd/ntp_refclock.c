@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_refclock.c,v 1.10.12.1 2018/04/07 04:12:02 pgoyette Exp $	*/
+/*	$NetBSD: ntp_refclock.c,v 1.10.12.2 2018/09/30 01:45:19 pgoyette Exp $	*/
 
 /*
  * ntp_refclock - processing support for reference clocks
@@ -114,7 +114,7 @@ refclock_report(
 		/* ignore others */
 		break;
 	}
-	if (pp->lastevent < 15)
+	if ((code != CEVNT_NOMINAL) && (pp->lastevent < 15))
 		pp->lastevent++;
 	if (pp->currentstatus != code) {
 		pp->currentstatus = (u_char)code;

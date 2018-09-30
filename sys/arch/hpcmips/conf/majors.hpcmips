@@ -1,4 +1,4 @@
-#	$NetBSD: majors.hpcmips,v 1.31 2011/06/30 20:09:31 wiz Exp $
+#	$NetBSD: majors.hpcmips,v 1.31.52.1 2018/09/30 01:45:44 pgoyette Exp $
 #
 # Device majors for hpcmips
 #
@@ -44,11 +44,6 @@ device-major	ucom		char 37			ucom
 device-major	wsmux		char 38			wsmux
 device-major	urio		char 39			urio
 device-major	uscanner	char 40			uscanner
-device-major	isdn		char 41			isdn
-device-major	isdnctl		char 42			isdnctl
-device-major	isdnbchan	char 43			isdnbchan
-device-major	isdntrc		char 44			isdntrc
-device-major	isdntel		char 45			isdntel
 device-major	clockctl	char 46			clockctl
 device-major	audio		char 48			audio
 device-major	cgd		char 50  block 10	cgd

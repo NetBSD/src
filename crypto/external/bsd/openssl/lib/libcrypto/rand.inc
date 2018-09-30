@@ -1,4 +1,4 @@
-#	$NetBSD: rand.inc,v 1.3 2018/02/08 21:57:24 christos Exp $
+#	$NetBSD: rand.inc,v 1.3.2.1 2018/09/30 01:44:52 pgoyette Exp $
 #
 #	@(#) Copyright (c) 1995 Simon J. Gerraty
 #
@@ -9,7 +9,8 @@
 
 
 RAND_SRCS = \
-md_rand.c \
+drbg_ctr.c \
+drbg_lib.c \
 rand_egd.c \
 rand_err.c \
 rand_lib.c \

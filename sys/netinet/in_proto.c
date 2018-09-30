@@ -1,4 +1,4 @@
-/*	$NetBSD: in_proto.c,v 1.126.2.3 2018/09/06 06:56:44 pgoyette Exp $	*/
+/*	$NetBSD: in_proto.c,v 1.126.2.4 2018/09/30 01:45:56 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_proto.c,v 1.126.2.3 2018/09/06 06:56:44 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_proto.c,v 1.126.2.4 2018/09/30 01:45:56 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_mrouting.h"
@@ -216,18 +216,11 @@ PR_WRAP_INPUT(pim_input)
  * the ipsec shared library. We need a wrapper anyway.
  */
 static void
-ipsec4_common_input_wrapper(struct mbuf *m, ...)
+ipsec4_common_input_wrapper(struct mbuf *m, int off, int proto)
 {
 
 	if (ipsec_enabled) {
-		int off, nxt;
-		va_list args;
-		/* XXX just passing args to ipsec4_common_input doesn't work */
-		va_start(args, m);
-		off = va_arg(args, int);
-		nxt = va_arg(args, int);
-		va_end(args);
-		ipsec4_common_input(m, off, nxt);
+		ipsec4_common_input(m, off, proto);
 	} else {
 		m_freem(m);
 	}

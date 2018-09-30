@@ -1,4 +1,4 @@
-/* $NetBSD: efiblock.c,v 1.2.2.2 2018/09/06 06:56:47 pgoyette Exp $ */
+/* $NetBSD: efiblock.c,v 1.2.2.3 2018/09/30 01:45:57 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -115,7 +115,7 @@ efi_block_find_partitions_disklabel(struct efi_block_dev *bdev, struct mbr_secto
 	if (!buf)
 		return ENOMEM;
 
-	lba = ((start + LABELSECTOR) * DEV_BSIZE) / bdev->bio->Media->BlockSize;
+	lba = (((EFI_LBA)start + LABELSECTOR) * DEV_BSIZE) / bdev->bio->Media->BlockSize;
 	status = uefi_call_wrapper(bdev->bio->ReadBlocks, 5, bdev->bio, bdev->media_id, lba, sz, buf);
 	if (EFI_ERROR(status) || getdisklabel(buf, &d) != NULL) {
 		FreePool(buf);

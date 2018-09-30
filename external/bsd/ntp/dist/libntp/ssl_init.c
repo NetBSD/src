@@ -1,4 +1,4 @@
-/*	$NetBSD: ssl_init.c,v 1.10.10.1 2018/04/07 04:12:01 pgoyette Exp $	*/
+/*	$NetBSD: ssl_init.c,v 1.10.10.2 2018/09/30 01:45:18 pgoyette Exp $	*/
 
 /*
  * ssl_init.c	Common OpenSSL initialization code for the various
@@ -15,16 +15,16 @@
 #include <lib_strbuf.h>
 
 #ifdef OPENSSL
-# include "openssl/cmac.h"
-# include "openssl/crypto.h"
-# include "openssl/err.h"
-# include "openssl/evp.h"
-# include "openssl/opensslv.h"
+# include <openssl/crypto.h>
+# include <openssl/err.h>
+# include <openssl/evp.h>
+# include <openssl/opensslv.h>
 # include "libssl_compat.h"
-
-# define CMAC_LENGTH	16
-# define CMAC		"AES128CMAC"
-
+# ifdef HAVE_OPENSSL_CMAC_H
+#  include <openssl/cmac.h>
+#  define CMAC_LENGTH	16
+#  define CMAC		"AES128CMAC"
+# endif /*HAVE_OPENSSL_CMAC_H*/
 int ssl_init_done;
 
 #if OPENSSL_VERSION_NUMBER < 0x10100000L
@@ -128,6 +128,7 @@ keytype_from_text(
 
 	key_type = OBJ_sn2nid(upcased);
 
+#   ifdef ENABLE_CMAC
 	if (!key_type && !strncmp(CMAC, upcased, strlen(CMAC) + 1)) {
 		key_type = NID_cmac;
 
@@ -136,6 +137,7 @@ keytype_from_text(
 				__FILE__, __LINE__, __func__, CMAC);
 		}
 	}
+#   endif /*ENABLE_CMAC*/
 #else
 
 	key_type = 0;
@@ -155,6 +157,7 @@ keytype_from_text(
 		digest_len = (md) ? EVP_MD_size(md) : 0;
 
 		if (!md || digest_len <= 0) {
+#   ifdef ENABLE_CMAC
 		    if (key_type == NID_cmac) {
 			digest_len = CMAC_LENGTH;
 
@@ -162,7 +165,9 @@ keytype_from_text(
 				fprintf(stderr, "%s:%d:%s():%s:len\n",
 					__FILE__, __LINE__, __func__, CMAC);
 			}
-		    } else {
+		    } else
+#   endif /*ENABLE_CMAC*/
+		    {
 			fprintf(stderr,
 				"key type %s is not supported by OpenSSL\n",
 				keytype_name(key_type));
@@ -211,6 +216,7 @@ keytype_name(
 	INIT_SSL();
 	name = OBJ_nid2sn(nid);
 
+#   ifdef ENABLE_CMAC
 	if (NID_cmac == nid) {
 		name = CMAC;
 
@@ -219,6 +225,7 @@ keytype_name(
 				__FILE__, __LINE__, __func__, CMAC);
 		}
 	} else
+#   endif /*ENABLE_CMAC*/
 	if (NULL == name) {
 		name = unknown_type;
 	}

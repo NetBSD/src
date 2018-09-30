@@ -1,9 +1,0 @@
-#	$NetBSD: files.goldengate,v 1.1.40.1 2018/03/22 01:44:44 pgoyette Exp $
-#
-# GoldenGate evaluation board configuration info
-#
-
-file	arch/evbarm/goldengate/g2_machdep.c
-
-# CPU support and integrated peripherals
-include "arch/arm/cortina/files.g2"

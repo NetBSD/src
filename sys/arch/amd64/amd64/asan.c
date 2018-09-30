@@ -1,4 +1,4 @@
-/*	$NetBSD: asan.c,v 1.7.2.2 2018/09/06 06:55:24 pgoyette Exp $	*/
+/*	$NetBSD: asan.c,v 1.7.2.3 2018/09/30 01:45:36 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: asan.c,v 1.7.2.2 2018/09/06 06:55:24 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asan.c,v 1.7.2.3 2018/09/30 01:45:36 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -297,6 +297,9 @@ kasan_unwind(void)
 		}
 
 		rbp = (uint64_t *)*(rbp);
+		if (rbp == 0) {
+			break;
+		}
 		nsym++;
 
 		if (nsym >= 15) {

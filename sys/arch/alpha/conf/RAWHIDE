@@ -1,4 +1,4 @@
-# $NetBSD: RAWHIDE,v 1.41.2.1 2018/09/06 06:55:23 pgoyette Exp $
+# $NetBSD: RAWHIDE,v 1.41.2.2 2018/09/30 01:45:36 pgoyette Exp $
 #
 # Alpha 4100 stripped for action server kernel.
 #
@@ -59,7 +59,6 @@ pci*	at	mcpcia?
 ahc*	at	pci? dev ? function ?		# Adaptec [23]94x, aic78x0 SCSI
 bha*	at	pci? dev ? function ?		# BusLogic 9xx SCSI (untested)
 cy*	at	pci? dev ? function ?		# Cyclades Cyclom-Y (untested)
-en*	at	pci? dev ? function ?		# ENI PCI ATM (untested)
 ep*	at	pci? dev ? function ?		# 3COM 3c59x/3c90x Ethernet
 esh*	at	pci? dev ? function ?		# Essential HIPPI card
 fpa*	at	pci? dev ? function ?		# DEC DEFPA FDDI

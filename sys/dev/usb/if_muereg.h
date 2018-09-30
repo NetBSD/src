@@ -1,4 +1,4 @@
-/*	$NetBSD: if_muereg.h,v 1.2.4.2 2018/09/06 06:56:04 pgoyette Exp $	*/
+/*	$NetBSD: if_muereg.h,v 1.2.4.3 2018/09/30 01:45:51 pgoyette Exp $	*/
 /*	$OpenBSD: if_muereg.h,v 1.1 2018/08/03 01:50:15 kevlo Exp $	*/
 
 /*
@@ -122,8 +122,11 @@
 #define MUE_7800_RX_BUFSIZE		(12 * 1024)
 #define MUE_7800_MAX_RX_FIFO_SIZE	MUE_7800_RX_BUFSIZE
 #define MUE_7800_MAX_TX_FIFO_SIZE	MUE_7800_RX_BUFSIZE
-#define MUE_TX_BUFSIZE			(sizeof(struct mue_txbuf_hdr) + \
-	ETHER_HDR_LEN + ETHER_VLAN_ENCAP_LEN + IP_MAXPACKET)
+#define MUE_MAX_TX_LEN			(ETHER_MAX_LEN + ETHER_VLAN_ENCAP_LEN)
+#define MUE_MAX_TSO_LEN			\
+	(ETHER_HDR_LEN + ETHER_VLAN_ENCAP_LEN + IP_MAXPACKET)
+#define MUE_TX_BUFSIZE			\
+	(sizeof(struct mue_txbuf_hdr) + MUE_MAX_TSO_LEN)
 
 /* interrupt endpoint control register */
 #define MUE_INT_EP_CTL_PHY_INT		0x20000

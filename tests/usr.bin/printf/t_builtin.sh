@@ -1,4 +1,4 @@
-# $NetBSD: t_builtin.sh,v 1.1.2.2 2018/09/06 06:56:49 pgoyette Exp $
+# $NetBSD: t_builtin.sh,v 1.1.2.3 2018/09/30 01:45:58 pgoyette Exp $
 #
 # Copyright (c) 2018 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -63,6 +63,9 @@ do_printf()
 	for ARG
 	do
 		case "${ARG}" in
+		(';')	# Allow multiple commands
+			COMMAND="${COMMAND} ; printf"
+			;;
 		(*\'*)
 			# This is kind of odd, we need a working
 			# printf in order to test printf ...
@@ -95,18 +98,24 @@ Not_builtin()
 
 setup()
 {
-	case "$( ${TEST_SH} -c 'type printf' 2>&1 )" in
+	# If the shell being used for its printf supports "type -t", use it
+	if B=$( ${TEST_SH} -c 'type -t printf' 2>/dev/null )
+	then
+		case "$B" in
+		( builtin )	return 0;;
+		esac
+	else
+		# We get here if type -t is not supported, or it is,
+		# but printf is completely unknown.  No harm trying again.
 
-	( *[Bb]uiltin* | *[Bb]uilt[-\ ][Ii]n* )
-		# nothing here, it all happens below.
-		;;
+		case "$( unset LANG LC_ALL LC_NUMERIC LC_CTYPE LC_MESSAGES
+		    ${TEST_SH} -c 'type printf' 2>&1 )" in
+		( *[Bb]uiltin* | *[Bb]uilt[-\ ][Ii]n* ) return 0;;
+		esac
+	fi
 
-	(*)	Tests=
-		define Not_builtin 'Dummy test to skip when no printf builtin'
-		return 1
-		;;
-	esac
-
+	Tests=
+	define Not_builtin 'Dummy test to skip when no printf builtin'
 	return 0
 }
 

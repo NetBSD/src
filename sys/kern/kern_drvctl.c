@@ -1,4 +1,4 @@
-/* $NetBSD: kern_drvctl.c,v 1.43 2017/11/30 20:25:55 christos Exp $ */
+/* $NetBSD: kern_drvctl.c,v 1.43.2.1 2018/09/30 01:45:55 pgoyette Exp $ */
 
 /*
  * Copyright (c) 2004
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_drvctl.c,v 1.43 2017/11/30 20:25:55 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_drvctl.c,v 1.43.2.1 2018/09/30 01:45:55 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -107,7 +107,6 @@ static const struct fileops drvctl_fileops = {
 
 #define MAXLOCATORS 100
 
-extern int (*devmon_insert_vec)(const char *, prop_dictionary_t);
 static int (*saved_insert_vec)(const char *, prop_dictionary_t) = NULL;
 
 static int drvctl_command(struct lwp *, struct plistref *, u_long, int);

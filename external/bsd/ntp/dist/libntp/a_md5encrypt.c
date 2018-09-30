@@ -1,4 +1,4 @@
-/*	$NetBSD: a_md5encrypt.c,v 1.8.10.1 2018/04/07 04:12:01 pgoyette Exp $	*/
+/*	$NetBSD: a_md5encrypt.c,v 1.8.10.2 2018/09/30 01:45:18 pgoyette Exp $	*/
 
 /*
  *	digest support for NTP, MD5 and with OpenSSL more
@@ -14,12 +14,6 @@
 #include "ntp_md5.h"	/* provides OpenSSL digest API */
 #include "isc/string.h"
 
-#ifdef OPENSSL
-# include "openssl/cmac.h"
-# define  CMAC			"AES128CMAC"
-# define  AES_128_KEY_SIZE	16
-#endif
-
 typedef struct {
 	const void *	buf;
 	size_t		len;
@@ -30,7 +24,7 @@ typedef struct {
 	size_t		len;
 } rwbuffT;
 
-#ifdef OPENSSL
+#if defined(OPENSSL) && defined(ENABLE_CMAC)
 static size_t
 cmac_ctx_size(
 	CMAC_CTX *	ctx)
@@ -44,7 +38,7 @@ cmac_ctx_size(
 	}
 	return mlen;
 }
-#endif /*OPENSSL*/
+#endif /*OPENSSL && ENABLE_CMAC*/
 
 static size_t
 make_mac(
@@ -65,6 +59,7 @@ make_mac(
 	INIT_SSL();
 
 	/* Check if CMAC key type specific code required */
+#   ifdef ENABLE_CMAC
 	if (ktype == NID_cmac) {
 		CMAC_CTX *	ctx    = NULL;
 		void const *	keyptr = key->buf;
@@ -102,7 +97,9 @@ make_mac(
 		if (ctx)
 			CMAC_CTX_cleanup(ctx);
 	}
-	else {	/* generic MAC handling */
+	else
+#   endif /*ENABLE_CMAC*/
+	{	/* generic MAC handling */
 		EVP_MD_CTX *	ctx   = EVP_MD_CTX_new();
 		u_int		uilen = 0;
 		
@@ -155,7 +152,7 @@ make_mac(
 	if (ktype == NID_md5)
 	{
 		EVP_MD_CTX *	ctx   = EVP_MD_CTX_new();
-		uint		uilen = 0;
+		u_int		uilen = 0;
 
 		if (digest->len < 16) {
 			msyslog(LOG_ERR, "%s", "MAC encrypt: MAC md5 buf too small.");

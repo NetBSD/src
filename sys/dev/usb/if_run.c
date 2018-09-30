@@ -1,4 +1,4 @@
-/*	$NetBSD: if_run.c,v 1.26.2.2 2018/09/06 06:56:04 pgoyette Exp $	*/
+/*	$NetBSD: if_run.c,v 1.26.2.3 2018/09/30 01:45:51 pgoyette Exp $	*/
 /*	$OpenBSD: if_run.c,v 1.90 2012/03/24 15:11:04 jsg Exp $	*/
 
 /*-
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_run.c,v 1.26.2.2 2018/09/06 06:56:04 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_run.c,v 1.26.2.3 2018/09/30 01:45:51 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -4842,7 +4842,7 @@ run_setup_beacon(struct run_softc *sc)
 }
 #endif
 
-MODULE(MODULE_CLASS_DRIVER, if_run, "bpf");
+MODULE(MODULE_CLASS_DRIVER, if_run, NULL);
 
 #ifdef _MODULE
 #include "ioconf.c"

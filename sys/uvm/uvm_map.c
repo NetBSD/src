@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.354.2.1 2018/09/06 06:56:48 pgoyette Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.354.2.2 2018/09/30 01:45:58 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.354.2.1 2018/09/06 06:56:48 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.354.2.2 2018/09/30 01:45:58 pgoyette Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pax.h"
@@ -1063,15 +1063,6 @@ uvm_map(struct vm_map *map, vaddr_t *startp /* IN/OUT */, vsize_t size,
 	int error;
 
 	KASSERT((size & PAGE_MASK) == 0);
-
-#ifndef __USER_VA0_IS_SAFE
-	if ((flags & UVM_FLAG_FIXED) && *startp == 0 &&
-	    !VM_MAP_IS_KERNEL(map) && user_va0_disable) {
-		uprintf("%s: process wants to map virtual address 0; see "
-		    "vm.user_va0_disable in sysctl(7).\n", __func__);
-		return EACCES;
-	}
-#endif
 
 	/*
 	 * for pager_map, allocate the new entry first to avoid sleeping

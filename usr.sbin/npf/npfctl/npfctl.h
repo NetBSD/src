@@ -1,5 +1,3 @@
-/*	$NetBSD: npfctl.h,v 1.45 2017/12/10 22:04:41 rmind Exp $	*/
-
 /*-
  * Copyright (c) 2009-2017 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -184,10 +182,11 @@ void		npfctl_bpf_table(npf_bpf_t *, u_int, u_int);
 #define	NPFCTL_NAT_STATIC	2
 
 void		npfctl_config_init(bool);
-int		npfctl_config_send(int, const char *);
+int		npfctl_config_send(int);
 nl_config_t *	npfctl_config_ref(void);
 int		npfctl_config_show(int);
 void		npfctl_config_save(nl_config_t *, const char *);
+void		npfctl_config_debug(const char *);
 
 void		npfctl_show_init(void);
 int		npfctl_ruleset_show(int, const char *);

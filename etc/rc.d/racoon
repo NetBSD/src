@@ -1,10 +1,10 @@
 #!/bin/sh
 #
-# $NetBSD: racoon,v 1.5 2004/12/07 17:37:15 kleink Exp $
+# $NetBSD: racoon,v 1.5.92.1 2018/09/30 01:45:10 pgoyette Exp $
 #
 
 # PROVIDE: ike
-# REQUIRE: isdnd kdc ppp
+# REQUIRE: kdc ppp
 # BEFORE:  SERVERS
 # KEYWORD: shutdown
 

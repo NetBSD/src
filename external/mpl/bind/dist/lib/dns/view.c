@@ -1,4 +1,4 @@
-/*	$NetBSD: view.c,v 1.2.2.2 2018/09/06 06:55:00 pgoyette Exp $	*/
+/*	$NetBSD: view.c,v 1.2.2.3 2018/09/30 01:45:30 pgoyette Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -106,7 +106,7 @@ dns_view_create(isc_mem_t *mctx, dns_rdataclass_t rdclass,
 		goto cleanup_view;
 	}
 
-	result = isc_file_sanitize(NULL, view->name, "nta",
+	result = isc_file_sanitize("nta", view->name, "nta",
 				   buffer, sizeof(buffer));
 	if (result != ISC_R_SUCCESS)
 		goto cleanup_name;

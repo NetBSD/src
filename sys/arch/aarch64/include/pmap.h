@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.h,v 1.1.28.6 2018/09/06 06:55:23 pgoyette Exp $ */
+/* $NetBSD: pmap.h,v 1.1.28.7 2018/09/30 01:45:35 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -34,6 +34,7 @@
 
 #ifdef __aarch64__
 
+#ifdef _KERNEL
 #include <sys/types.h>
 #include <sys/pool.h>
 #include <sys/queue.h>
@@ -135,6 +136,8 @@ const struct pmap_devmap *pmap_devmap_find_va(vaddr_t, vsize_t);
 vaddr_t pmap_devmap_phystov(paddr_t);
 paddr_t pmap_devmap_vtophys(paddr_t);
 
+pd_entry_t *pmap_alloc_pdp(struct pmap *, paddr_t *);
+
 /* devmap use L2 blocks. (2Mbyte) */
 #define DEVMAP_TRUNC_ADDR(x)	((x) & ~L2_OFFSET)
 #define DEVMAP_ROUND_SIZE(x)	(((x) + L2_SIZE - 1) & ~(L2_SIZE - 1))
@@ -213,6 +216,8 @@ aarch64_mmap_flags(paddr_t mdpgno)
 bool	pmap_extract_coherency(pmap_t, vaddr_t, paddr_t *, bool *);
 
 #define	PMAP_MAPSIZE1	L2_SIZE
+
+#endif /* _KERNEL */
 
 #elif defined(__arm__)
 

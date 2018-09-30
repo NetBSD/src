@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_ringbuffer.c,v 1.6.16.1 2018/09/06 06:56:18 pgoyette Exp $	*/
+/*	$NetBSD: intel_ringbuffer.c,v 1.6.16.2 2018/09/30 01:45:54 pgoyette Exp $	*/
 
 /*
  * Copyright © 2008-2010 Intel Corporation
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_ringbuffer.c,v 1.6.16.1 2018/09/06 06:56:18 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_ringbuffer.c,v 1.6.16.2 2018/09/30 01:45:54 pgoyette Exp $");
 
 #include <asm/param.h>
 #include <drm/drmP.h>
@@ -993,7 +993,7 @@ static int gen9_init_workarounds(struct intel_engine_cs *ring)
 	WA_SET_BIT_MASKED(HDC_CHICKEN0, tmp);
 
 	/* WaDisableSamplerPowerBypassForSOPingPong:skl,bxt */
-	if (IS_SKYLAKE(dev) ||
+	if (IS_SKYLAKE(dev) || IS_KABYLAKE(dev) ||
 	    (IS_BROXTON(dev) && INTEL_REVID(dev) <= BXT_REVID_B0)) {
 		WA_SET_BIT_MASKED(HALF_SLICE_CHICKEN3,
 				  GEN8_SAMPLER_POWER_BYPASS_DIS);
@@ -1149,6 +1149,65 @@ static int bxt_init_workarounds(struct intel_engine_cs *ring)
 	return 0;
 }
 
+static int kbl_init_workarounds(struct intel_engine_cs *ring)
+{
+	struct drm_device *dev = ring->dev;
+	struct drm_i915_private *dev_priv = dev->dev_private;
+	int ret;
+
+	ret = gen9_init_workarounds(ring);
+	if (ret)
+		return ret;
+
+	/* WaEnableGapsTsvCreditFix:kbl */
+	I915_WRITE(GEN8_GARBCNTL, (I915_READ(GEN8_GARBCNTL) |
+				   GEN9_GAPS_TSV_CREDIT_DISABLE));
+
+	/* WaDisableDynamicCreditSharing:kbl */
+	if (IS_KBL_REVID(dev_priv, 0, KBL_REVID_B0))
+		WA_SET_BIT(GAMT_CHKN_BIT_REG,
+			   GAMT_CHKN_DISABLE_DYNAMIC_CREDIT_SHARING);
+
+	/* WaDisableFenceDestinationToSLM:kbl (pre-prod) */
+	if (IS_KBL_REVID(dev_priv, KBL_REVID_A0, KBL_REVID_A0))
+		WA_SET_BIT_MASKED(HDC_CHICKEN0,
+				  HDC_FENCE_DEST_SLM_DISABLE);
+
+	/* GEN8_L3SQCREG4 has a dependency with WA batch so any new changes
+	 * involving this register should also be added to WA batch as required.
+	 */
+	if (IS_KBL_REVID(dev_priv, 0, KBL_REVID_E0))
+		/* WaDisableLSQCROPERFforOCL:kbl */
+		I915_WRITE(GEN8_L3SQCREG4, I915_READ(GEN8_L3SQCREG4) |
+			   GEN8_LQSC_RO_PERF_DIS);
+
+	/* WaToEnableHwFixForPushConstHWBug:kbl */
+	if (IS_KBL_REVID(dev_priv, KBL_REVID_C0, REVID_FOREVER))
+		WA_SET_BIT_MASKED(COMMON_SLICE_CHICKEN2,
+				  GEN8_SBE_DISABLE_REPLAY_BUF_OPTIMIZATION);
+
+	/* WaDisableGafsUnitClkGating:kbl */
+	WA_SET_BIT(GEN7_UCGCTL4, GEN8_EU_GAUNIT_CLOCK_GATE_DISABLE);
+
+	/* WaDisableSbeCacheDispatchPortSharing:kbl */
+	WA_SET_BIT_MASKED(
+		GEN7_HALF_SLICE_CHICKEN1,
+		GEN7_SBE_SS_CACHE_DISPATCH_PORT_SHARING_DISABLE);
+
+	/* WaInPlaceDecompressionHang:kbl */
+	WA_SET_BIT(GEN9_GAMT_ECO_REG_RW_IA,
+		   GAMT_ECO_ENABLE_IN_PLACE_DECOMPRESS);
+
+#ifdef notyet
+	/* WaDisableLSQCROPERFforOCL:kbl */
+	ret = wa_ring_whitelist_reg(engine, GEN8_L3SQCREG4);
+	if (ret)
+		return ret;
+#endif
+
+	return 0;
+}
+
 int init_workarounds_ring(struct intel_engine_cs *ring)
 {
 	struct drm_device *dev = ring->dev;
@@ -1169,6 +1228,9 @@ int init_workarounds_ring(struct intel_engine_cs *ring)
 
 	if (IS_BROXTON(dev))
 		return bxt_init_workarounds(ring);
+
+	if (IS_KABYLAKE(dev))
+		return kbl_init_workarounds(ring);
 
 	return 0;
 }

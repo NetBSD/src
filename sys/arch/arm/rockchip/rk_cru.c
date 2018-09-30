@@ -1,4 +1,4 @@
-/* $NetBSD: rk_cru.c,v 1.2.2.4 2018/09/06 06:55:27 pgoyette Exp $ */
+/* $NetBSD: rk_cru.c,v 1.2.2.5 2018/09/30 01:45:38 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,10 +27,10 @@
  */
 
 #include "opt_soc.h"
-#include "opt_fdt_arm.h"
+#include "opt_console.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rk_cru.c,v 1.2.2.4 2018/09/06 06:55:27 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rk_cru.c,v 1.2.2.5 2018/09/30 01:45:38 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -91,7 +91,7 @@ static const struct fdtbus_reset_controller_func rk_cru_fdtreset_funcs = {
 };
 
 static struct clk *
-rk_cru_clock_decode(device_t dev, const void *data, size_t len)
+rk_cru_clock_decode(device_t dev, int cc_phandle, const void *data, size_t len)
 {
 	struct rk_cru_softc * const sc = device_private(dev);
 	struct rk_cru_clk *clk;

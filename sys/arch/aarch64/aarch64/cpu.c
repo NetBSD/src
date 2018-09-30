@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.1.2.4 2018/09/06 06:55:22 pgoyette Exp $ */
+/* $NetBSD: cpu.c,v 1.1.2.5 2018/09/30 01:45:35 pgoyette Exp $ */
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: cpu.c,v 1.1.2.4 2018/09/06 06:55:22 pgoyette Exp $");
+__KERNEL_RCSID(1, "$NetBSD: cpu.c,v 1.1.2.5 2018/09/30 01:45:35 pgoyette Exp $");
 
 #include "locators.h"
 #include "opt_arm_debug.h"
@@ -63,8 +63,9 @@ static void cpu_identify1(device_t self, struct cpu_info *);
 static void cpu_identify2(device_t self, struct cpu_info *);
 
 #ifdef MULTIPROCESSOR
+uint64_t cpu_mpidr[MAXCPUS];
+
 volatile u_int arm_cpu_hatched __cacheline_aligned = 0;
-volatile u_int arm_cpu_hatch_arg __cacheline_aligned;
 volatile uint32_t arm_cpu_mbox __cacheline_aligned = 0;
 u_int arm_cpu_max = 1;
 

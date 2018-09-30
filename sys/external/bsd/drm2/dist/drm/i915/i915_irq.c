@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_irq.c,v 1.10.18.1 2018/09/06 06:56:17 pgoyette Exp $	*/
+/*	$NetBSD: i915_irq.c,v 1.10.18.2 2018/09/30 01:45:53 pgoyette Exp $	*/
 
 /* i915_irq.c -- IRQ support for the I915 -*- linux-c -*-
  */
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_irq.c,v 1.10.18.1 2018/09/06 06:56:17 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_irq.c,v 1.10.18.2 2018/09/30 01:45:53 pgoyette Exp $");
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
@@ -2381,7 +2381,7 @@ static irqreturn_t gen8_irq_handler(DRM_IRQ_ARGS)
 			I915_WRITE(SDEIIR, pch_iir);
 			ret = IRQ_HANDLED;
 
-			if (HAS_PCH_SPT(dev_priv))
+			if (HAS_PCH_SPT(dev_priv) || HAS_PCH_KBP(dev_priv))
 				spt_irq_handler(dev, pch_iir);
 			else
 				cpt_irq_handler(dev, pch_iir);
@@ -4572,7 +4572,7 @@ void intel_irq_init(struct drm_i915_private *dev_priv)
 		dev->driver->disable_vblank = gen8_disable_vblank;
 		if (IS_BROXTON(dev))
 			dev_priv->display.hpd_irq_setup = bxt_hpd_irq_setup;
-		else if (HAS_PCH_SPT(dev))
+		else if (HAS_PCH_SPT(dev) || HAS_PCH_KBP(dev))
 			dev_priv->display.hpd_irq_setup = spt_hpd_irq_setup;
 		else
 			dev_priv->display.hpd_irq_setup = ilk_hpd_irq_setup;

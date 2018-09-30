@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_cmd_parser.c,v 1.4.18.1 2018/09/06 06:56:16 pgoyette Exp $	*/
+/*	$NetBSD: i915_cmd_parser.c,v 1.4.18.2 2018/09/30 01:45:53 pgoyette Exp $	*/
 
 /*
  * Copyright © 2013 Intel Corporation
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_cmd_parser.c,v 1.4.18.1 2018/09/06 06:56:16 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_cmd_parser.c,v 1.4.18.2 2018/09/30 01:45:53 pgoyette Exp $");
 
 #include "i915_drv.h"
 
@@ -555,6 +555,7 @@ static u32 gen7_blt_get_cmd_length_mask(u32 cmd_header)
 	return 0;
 }
 
+__diagused
 static bool validate_cmds_sorted(struct intel_engine_cs *ring,
 				 const struct drm_i915_cmd_table *cmd_tables,
 				 int cmd_table_count)
@@ -611,6 +612,7 @@ static bool check_sorted(int ring_id,
 	return ret;
 }
 
+__diagused
 static bool validate_regs_sorted(struct intel_engine_cs *ring)
 {
 	return check_sorted(ring->id, ring->reg_table, ring->reg_count) &&

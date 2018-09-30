@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.128.2.10 2018/09/06 06:56:02 pgoyette Exp $ */
+/* $NetBSD: ixgbe.c,v 1.128.2.11 2018/09/30 01:45:51 pgoyette Exp $ */
 
 /******************************************************************************
 
@@ -1314,8 +1314,7 @@ ixgbe_setup_interface(device_t dev, struct adapter *adapter)
 	ifp->if_capabilities |= IFCAP_RXCSUM
 			     |  IFCAP_TXCSUM
 			     |  IFCAP_TSOv4
-			     |  IFCAP_TSOv6
-			     |  IFCAP_LRO;
+			     |  IFCAP_TSOv6;
 	ifp->if_capenable = 0;
 
 	ec->ec_capabilities |= ETHERCAP_VLAN_HWTAGGING
@@ -3279,7 +3278,7 @@ ixgbe_add_device_sysctls(struct adapter *adapter)
 			aprint_error_dev(dev, "could not create sysctl\n");
 
 	/* for WoL-capable devices */
-	if (hw->device_id == IXGBE_DEV_ID_X550EM_X_10G_T) {
+	if (adapter->wol_support) {
 		if (sysctl_createv(log, 0, &rnode, &cnode, CTLFLAG_READWRITE,
 		    CTLTYPE_BOOL, "wol_enable",
 		    SYSCTL_DESCR("Enable/Disable Wake on LAN"),
@@ -3665,8 +3664,8 @@ ixgbe_setup_low_power_mode(struct adapter *adapter)
 		IXGBE_WRITE_REG(hw, IXGBE_WUC, 0);
 	} else {
 		/* Turn off support for APM wakeup. (Using ACPI instead) */
-		IXGBE_WRITE_REG(hw, IXGBE_GRC,
-		    IXGBE_READ_REG(hw, IXGBE_GRC) & ~(u32)2);
+		IXGBE_WRITE_REG(hw, IXGBE_GRC_BY_MAC(hw),
+		    IXGBE_READ_REG(hw, IXGBE_GRC_BY_MAC(hw)) & ~(u32)2);
 
 		/*
 		 * Clear Wake Up Status register to prevent any previous wakeup

@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1172.2.5 2018/09/06 06:51:42 pgoyette Exp $
+# $NetBSD: mi,v 1.1172.2.6 2018/09/30 01:45:04 pgoyette Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -509,7 +509,7 @@
 ./sbin/ifconfig					base-netutil-root
 ./sbin/init					base-sysutil-root
 ./sbin/ipf					base-ipf-root		ipfilter
-./sbin/ipppctl					base-netutil-root
+./sbin/ipppctl					base-obsolete		obsolete
 ./sbin/iscsictl					base-iscsi-bin		iscsi
 ./sbin/iscsid					base-iscsi-bin		iscsi
 ./sbin/ispppcontrol				base-obsolete		obsolete
@@ -1213,11 +1213,11 @@
 ./usr/include/netinet				base-c-usr
 ./usr/include/netinet6				base-c-usr
 ./usr/include/netipsec				base-c-usr
-./usr/include/netisdn				base-c-usr
+./usr/include/netisdn				base-obsolete		obsolete
 ./usr/include/netiso				base-obsolete		obsolete
-./usr/include/netkey				base-c-usr
+./usr/include/netkey				base-obsolete		obsolete
 ./usr/include/netmpls				base-c-usr
-./usr/include/netnatm				base-c-usr
+./usr/include/netnatm				base-obsolete		obsolete
 ./usr/include/netns				base-obsolete		obsolete
 ./usr/include/netpgp				base-c-usr
 ./usr/include/netsmb				base-c-usr
@@ -1657,7 +1657,7 @@
 ./usr/sbin/cpuctl				base-sysutil-bin
 ./usr/sbin/crash				base-sysutil-bin
 ./usr/sbin/cron					base-cron-bin
-./usr/sbin/daicctl				base-isdn-bin
+./usr/sbin/daicctl				base-obsolete		obsolete
 ./usr/sbin/dbsym				base-sysutil-bin	binutils
 ./usr/sbin/ddns-confgen				base-bind-bin
 ./usr/sbin/dev_mkdb				base-sysutil-bin
@@ -1677,7 +1677,7 @@
 ./usr/sbin/dnssec-signzone			base-bind-bin
 ./usr/sbin/dnssec-verify			base-bind-bin
 ./usr/sbin/download-vulnerability-list		base-pkgutil-bin
-./usr/sbin/dtmfdecode				base-isdn-bin
+./usr/sbin/dtmfdecode				base-obsolete		obsolete
 ./usr/sbin/dtrace				base-debug-bin		dtrace
 ./usr/sbin/dtruss				base-debug-bin		dtrace
 ./usr/sbin/dumpfs				base-sysutil-bin
@@ -1740,11 +1740,11 @@
 ./usr/sbin/irdaattach				base-sysutil-bin
 ./usr/sbin/iscsi-initiator			base-iscsi-bin		iscsi
 ./usr/sbin/iscsi-target				base-iscsi-bin		iscsi
-./usr/sbin/isdnd				base-isdn-bin
-./usr/sbin/isdnmonitor				base-isdn-bin
-./usr/sbin/isdntel				base-isdn-bin
-./usr/sbin/isdntelctl				base-isdn-bin
-./usr/sbin/isdntrace				base-isdn-bin
+./usr/sbin/isdnd				base-obsolete		obsolete
+./usr/sbin/isdnmonitor				base-obsolete		obsolete
+./usr/sbin/isdntel				base-obsolete		obsolete
+./usr/sbin/isdntelctl				base-obsolete		obsolete
+./usr/sbin/isdntrace				base-obsolete		obsolete
 ./usr/sbin/isibootd				base-bootserver-bin
 ./usr/sbin/ispppcontrol				base-obsolete		obsolete
 ./usr/sbin/iwictl				base-sysutil-bin
@@ -1878,8 +1878,8 @@
 ./usr/sbin/procsystime				base-debug-bin		dtrace
 ./usr/sbin/psrset				base-sysutil-bin
 ./usr/sbin/pstat				base-sysutil-bin
-./usr/sbin/pvcsif				base-netutil-bin
-./usr/sbin/pvctxctl				base-netutil-bin
+./usr/sbin/pvcsif				base-obsolete		obsolete
+./usr/sbin/pvctxctl				base-obsolete		obsolete
 ./usr/sbin/pwd_mkdb				base-sysutil-bin
 ./usr/sbin/quot					base-sysutil-bin
 ./usr/sbin/quotacheck				base-sysutil-bin
@@ -2225,7 +2225,7 @@
 ./usr/share/examples/getdate			base-sys-examples
 ./usr/share/examples/hostapd			base-netutil-examples
 ./usr/share/examples/ipf			base-netutil-examples
-./usr/share/examples/isdn			base-isdn-examples
+./usr/share/examples/isdn			base-obsolete	obsolete
 ./usr/share/examples/kerberos			base-krb5-examples
 ./usr/share/examples/lua			base-sys-examples
 ./usr/share/examples/lua/README			base-sys-examples	share
@@ -5970,6 +5970,7 @@
 ./var/chroot/named/etc/namedb			base-bind-root
 ./var/chroot/named/etc/namedb/cache		base-bind-root
 ./var/chroot/named/etc/namedb/keys		base-bind-root
+./var/chroot/named/etc/namedb/nta		base-bind-root
 ./var/chroot/named/usr				base-bind-root
 ./var/chroot/named/usr/libexec			base-bind-root
 ./var/chroot/named/var				base-bind-root
@@ -5983,6 +5984,7 @@
 ./var/chroot/nsd/var				base-sys-root
 ./var/chroot/nsd/var/db				base-sys-root
 ./var/chroot/nsd/var/db/nsd			base-sys-root
+./var/chroot/nsd/var/run			base-sys-root
 ./var/chroot/ntpd				base-ntp-root
 ./var/chroot/ntpd/dev				base-ntp-root
 ./var/chroot/ntpd/etc				base-ntp-root

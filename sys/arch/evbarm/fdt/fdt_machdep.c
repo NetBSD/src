@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_machdep.c,v 1.20.2.4 2018/09/06 06:55:30 pgoyette Exp $ */
+/* $NetBSD: fdt_machdep.c,v 1.20.2.5 2018/09/30 01:45:41 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.20.2.4 2018/09/06 06:55:30 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.20.2.5 2018/09/30 01:45:41 pgoyette Exp $");
 
 #include "opt_machdep.h"
 #include "opt_bootconfig.h"
@@ -38,6 +38,7 @@ __KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.20.2.4 2018/09/06 06:55:30 pgoyett
 #include "opt_cpuoptions.h"
 
 #include "ukbd.h"
+#include "wsdisplay.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,6 +85,9 @@ __KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.20.2.4 2018/09/06 06:55:30 pgoyett
 #if NUKBD > 0
 #include <dev/usb/ukbdvar.h>
 #endif
+#if NWSDISPLAY > 0
+#include <dev/wscons/wsdisplayvar.h>
+#endif
 
 #ifdef MEMORY_DISK_DYNAMIC
 #include <dev/md.h>
@@ -108,7 +112,7 @@ static uint64_t initrd_start, initrd_end;
 
 #include <libfdt.h>
 #include <dev/fdt/fdtvar.h>
-#define FDT_BUF_SIZE	(256*1024)
+#define FDT_BUF_SIZE	(512*1024)
 static uint8_t fdt_data[FDT_BUF_SIZE];
 
 extern char KERNEL_BASE_phys[];
@@ -116,6 +120,7 @@ extern char KERNEL_BASE_phys[];
 
 static void fdt_update_stdout_path(void);
 static void fdt_device_register(device_t, void *);
+static void fdt_device_register_post_config(device_t, void *);
 static void fdt_cpu_rootconf(void);
 static void fdt_reset(void);
 static void fdt_powerdown(void);
@@ -160,7 +165,7 @@ earlyconsgetc(dev_t dev)
 #ifdef VERBOSE_INIT_ARM
 #define VPRINTF(...)	printf(__VA_ARGS__)
 #else
-#define VPRINTF(...)
+#define VPRINTF(...)	do { } while (/* CONSTCOND */ 0)
 #endif
 
 /*
@@ -372,7 +377,10 @@ initarm(void *arg)
 	/* Load FDT */
 	int error = fdt_check_header(fdt_addr_r);
 	if (error == 0) {
-		error = fdt_move(fdt_addr_r, fdt_data, sizeof(fdt_data));
+		/* If the DTB is too big, try to pack it in place first. */
+		if (fdt_totalsize(fdt_addr_r) > sizeof(fdt_data))
+			(void)fdt_pack(__UNCONST(fdt_addr_r));
+		error = fdt_open_into(fdt_addr_r, fdt_data, sizeof(fdt_data));
 		if (error != 0)
 			panic("fdt_move failed: %s", fdt_strerror(error));
 		fdtbus_set_data(fdt_data);
@@ -413,6 +421,11 @@ initarm(void *arg)
 	 */
 	fdt_update_stdout_path();
 
+	/*
+	 * Done making changes to the FDT.
+	 */
+	fdt_pack(fdt_data);
+
 	VPRINTF("consinit ");
 	consinit();
 	VPRINTF("ok\n");
@@ -423,6 +436,7 @@ initarm(void *arg)
 	cpu_reset_address = fdt_reset;
 	cpu_powerdown_address = fdt_powerdown;
 	evbarm_device_register = fdt_device_register;
+	evbarm_device_register_post_config = fdt_device_register_post_config;
 	evbarm_cpu_rootconf = fdt_cpu_rootconf;
 
 	/* Talk to the user */
@@ -459,7 +473,7 @@ initarm(void *arg)
 
 	parse_mi_bootargs(boot_args);
 
-	#define MAX_PHYSMEM 16
+	#define MAX_PHYSMEM 64
 	static struct boot_physmem fdt_physmem[MAX_PHYSMEM];
 	int nfdt_physmem = 0;
 	struct extent_region *er;
@@ -535,10 +549,6 @@ consinit(void)
 		uart_freq = plat->ap_uart_freq();
 
 	cons->consinit(&faa, uart_freq);
-
-#if NUKBD > 0
-	ukbd_cnattach();	/* allow USB keyboard to become console */
-#endif
 
 	initialized = true;
 }
@@ -621,6 +631,18 @@ fdt_device_register(device_t self, void *aux)
 }
 
 static void
+fdt_device_register_post_config(device_t self, void *aux)
+{
+#if NUKBD > 0 && NWSDISPLAY > 0
+	if (device_is_a(self, "wsdisplay")) {
+		struct wsdisplay_softc *sc = device_private(self);
+		if (wsdisplay_isconsole(sc))
+			ukbd_cnattach();
+	}
+#endif
+}
+
+static void
 fdt_cpu_rootconf(void)
 {
 	device_t dev;
@@ -634,7 +656,7 @@ fdt_cpu_rootconf(void)
 		if (get_bootconf_option(boot_args, "root", BOOTOPT_TYPE_STRING, &ptr) != 0)
 			break;
 
-		if (device_is_a(dev, "ld") || device_is_a(dev, "sd") || device_is_a(dev, "ld"))
+		if (device_is_a(dev, "ld") || device_is_a(dev, "sd") || device_is_a(dev, "wd"))
 			fdt_detect_root_device(dev);
 	}
 	deviter_release(&di);

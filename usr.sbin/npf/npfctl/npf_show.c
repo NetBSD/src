@@ -1,5 +1,3 @@
-/*	$NetBSD: npf_show.c,v 1.25 2017/12/10 22:04:41 rmind Exp $	*/
-
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -36,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_show.c,v 1.25 2017/12/10 22:04:41 rmind Exp $");
+__RCSID("$NetBSD: npf_show.c,v 1.25.2.1 2018/09/30 01:46:01 pgoyette Exp $");
 
 #include <sys/socket.h>
 #define	__FAVOR_BSD
@@ -119,7 +117,7 @@ tcpflags2string(char *buf, u_int tfl)
 }
 
 static char *
-print_family(npf_conf_info_t *ctx, const uint32_t *words)
+print_family(npf_conf_info_t *ctx __unused, const uint32_t *words)
 {
 	const int af = words[0];
 
@@ -135,7 +133,7 @@ print_family(npf_conf_info_t *ctx, const uint32_t *words)
 }
 
 static char *
-print_address(npf_conf_info_t *ctx, const uint32_t *words)
+print_address(npf_conf_info_t *ctx __unused, const uint32_t *words)
 {
 	const int af = *words++;
 	const u_int mask = *words++;
@@ -157,7 +155,7 @@ print_address(npf_conf_info_t *ctx, const uint32_t *words)
 }
 
 static char *
-print_number(npf_conf_info_t *ctx, const uint32_t *words)
+print_number(npf_conf_info_t *ctx __unused, const uint32_t *words)
 {
 	char *p;
 	easprintf(&p, "%u", words[0]);
@@ -198,7 +196,7 @@ print_proto(npf_conf_info_t *ctx, const uint32_t *words)
 }
 
 static char *
-print_tcpflags(npf_conf_info_t *ctx, const uint32_t *words)
+print_tcpflags(npf_conf_info_t *ctx __unused, const uint32_t *words)
 {
 	const u_int tf = words[0], tf_mask = words[1];
 	char buf[16];

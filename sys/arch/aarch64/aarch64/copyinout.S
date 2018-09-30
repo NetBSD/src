@@ -1,4 +1,4 @@
-/* $NetBSD: copyinout.S,v 1.2.2.3 2018/09/06 06:55:22 pgoyette Exp $ */
+/* $NetBSD: copyinout.S,v 1.2.2.4 2018/09/30 01:45:35 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #include <aarch64/asm.h>
 #include "assym.h"
 
-RCSID("$NetBSD: copyinout.S,v 1.2.2.3 2018/09/06 06:55:22 pgoyette Exp $");
+RCSID("$NetBSD: copyinout.S,v 1.2.2.4 2018/09/30 01:45:35 pgoyette Exp $");
 
 	.macro enter_cpu_onfault
 	stp	fp, lr, [sp, #-16]!	/* save fp, lr */
@@ -312,3 +312,47 @@ copyoutstr_done:
 	exit_cpu_onfault
 	ret
 END(copyoutstr)
+
+
+/* LINTSTUB: int copystr(const void *s, void *d, size_t len, size_t *done); */
+
+ENTRY(copystr)
+	enter_cpu_onfault
+
+	mov	x8, #0			/* error = 0 */
+
+	mov	x4, xzr			/* i = 0 */
+	cbz	x2, copystr_done	/* if (len == 0) goto done */
+copystr_loop:
+	ldrb	w5, [x0], #1		/* ch = src[i] */
+	strb	w5, [x1], #1		/* dst[i] = ch */
+	add	x4, x4, #1		/* i++ */
+	cbz	x5, copystr_done	/* if (ch == '\0') goto done */
+
+	cmp	x4, x2			/* if (i < len) goto loop */
+	bcc	copystr_loop
+	mov	x8, #ENAMETOOLONG	/* error = ENAMETOOLONG */
+
+copystr_done:
+	cbz	x3, 1f			/* if (done != NULL) *done = i */
+	str	x4, [x3]
+1:
+	exit_cpu_onfault
+	ret
+END(copystr)
+
+
+/* LINTSTUB: int kcopy(const void *src, void *dst, size_t len); */
+
+ENTRY(kcopy)
+	enter_cpu_onfault
+
+	mov	x3, x0			/* swap src and dst for memcpy */
+	mov	x0, x1
+	mov	x1, x3
+	bl	_C_LABEL(memcpy)
+	mov	x8, #0			/* error = 0 */
+
+	exit_cpu_onfault
+	ret
+END(kcopy)

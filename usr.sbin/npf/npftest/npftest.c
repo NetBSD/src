@@ -1,4 +1,4 @@
-/*	$NetBSD: npftest.c,v 1.21 2017/05/17 18:55:13 christos Exp $	*/
+/*	$NetBSD: npftest.c,v 1.21.8.1 2018/09/30 01:46:01 pgoyette Exp $	*/
 
 /*
  * NPF testing framework.
@@ -22,7 +22,8 @@
 #include <net/if.h>
 #include <arpa/inet.h>
 
-#include <prop/proplib.h>
+#include <dnv.h>
+#include <nv.h>
 
 #include <rump/rump.h>
 #include <rump/rump_syscalls.h>
@@ -81,51 +82,40 @@ result(const char *testcase, bool ok)
 }
 
 static void
-load_npf_config_ifs(prop_dictionary_t dbg_dict)
+load_npf_config(const char *fpath)
 {
-	prop_array_t iflist = prop_dictionary_get(dbg_dict, "interfaces");
-	prop_object_iterator_t it = prop_array_iterator(iflist);
-	prop_dictionary_t ifdict;
+	struct stat sb;
+	int error, fd;
+	size_t len;
+	void *buf;
 
-	while ((ifdict = prop_object_iterator_next(it)) != NULL) {
-		const char *ifname = NULL;
-
-		prop_dictionary_get_cstring_nocopy(ifdict, "name", &ifname);
-		(void)rumpns_npf_test_addif(ifname, true, verbose);
+	/*
+	 * Read the configuration from the specified file.
+	 */
+	if ((fd = open(fpath, O_RDONLY)) == -1) {
+		err(EXIT_FAILURE, "open");
 	}
-	prop_object_iterator_release(it);
-}
-
-static void
-load_npf_config(const char *config)
-{
-	prop_dictionary_t npf_dict, dbg_dict;
-	void *xml;
-	int error;
-
-	/* Read the configuration from the specified file. */
-	npf_dict = prop_dictionary_internalize_from_file(config);
-	if (!npf_dict) {
-		err(EXIT_FAILURE, "prop_dictionary_internalize_from_file");
+	if (fstat(fd, &sb) == -1) {
+		err(EXIT_FAILURE, "fstat");
 	}
-	xml = prop_dictionary_externalize(npf_dict);
-
-	/* Inspect the debug data.  Create the interfaces, if any. */
-	dbg_dict = prop_dictionary_get(npf_dict, "debug");
-	if (dbg_dict) {
-		load_npf_config_ifs(dbg_dict);
+	len = sb.st_size;
+	buf = mmap(NULL, len, PROT_READ, MAP_FILE | MAP_PRIVATE, fd, 0);
+	if (buf == MAP_FAILED) {
+		err(EXIT_FAILURE, "mmap");
 	}
-	prop_object_release(npf_dict);
+	close(fd);
 
-	/* Pass the XML configuration for NPF kernel component to load. */
-	error = rumpns_npf_test_load(xml);
+	/*
+	 * Load the NPF configuration.
+	 */
+	error = rumpns_npf_test_load(buf, len, verbose);
 	if (error) {
 		errx(EXIT_FAILURE, "npf_test_load: %s\n", strerror(error));
 	}
-	free(xml);
+	munmap(buf, len);
 
 	if (verbose) {
-		printf("Loaded NPF config at '%s'\n", config);
+		printf("Loaded NPF config at '%s'\n", fpath);
 	}
 }
 
@@ -194,8 +184,6 @@ npf_kern_fini(void)
 	rump_unschedule();
 #endif
 }
-
-extern int rumpns_npfctl_testing;
 
 int
 main(int argc, char **argv)
@@ -278,7 +266,6 @@ main(int argc, char **argv)
 	/*
 	 * Initialise the NPF kernel component.
 	 */
-	rumpns_npfctl_testing = 1;
 	npf_kern_init();
 	rumpns_npf_test_init(inet_pton, inet_ntop, random);
 

@@ -558,7 +558,7 @@ zfs_fuid_create(zfsvfs_t *zfsvfs, uint64_t id, cred_t *cr,
 	const char *domain;
 	char *kdomain;
 	uint32_t fuid_idx = FUID_INDEX(id);
-	uint32_t rid;
+	uint32_t rid = UID_NOBODY;	// XXX: broken clang
 	idmap_stat status;
 	uint64_t idx = 0;
 	zfs_fuid_t *zfuid = NULL;

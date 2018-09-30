@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.156.2.2 2018/09/06 06:55:28 pgoyette Exp $
+# $NetBSD: GENERIC,v 1.156.2.3 2018/09/30 01:45:39 pgoyette Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/cobalt/conf/std.cobalt"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.156.2.2 $"
+#ident 		"GENERIC-$Revision: 1.156.2.3 $"
 
 maxusers	32
 
@@ -235,7 +235,6 @@ atabus* 	at ata?
 wd* 		at atabus? drive ? flags 0x0000
 
 # PCI network interfaces
-#en*		at pci? dev ? function ?	# ENI/Adaptec ATM
 #ep*		at pci? dev ? function ?	# 3Com 3c59x
 #ex*		at pci? dev ? function ?	# 3Com 90x[BC]
 #epic*		at pci? dev ? function ?	# SMC EPIC/100 Ethernet

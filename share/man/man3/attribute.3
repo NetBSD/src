@@ -1,4 +1,4 @@
-.\" $NetBSD: attribute.3,v 1.16 2014/04/21 15:52:27 riastradh Exp $
+.\" $NetBSD: attribute.3,v 1.16.22.1 2018/09/30 01:45:34 pgoyette Exp $
 .\"
 .\" Copyright (c) 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd October 25, 2013
+.Dd September 14, 2018
 .Dt ATTRIBUTE 3
 .Os
 .Sh NAME
@@ -64,6 +64,10 @@
 .Fn __predict_true "exp"
 .Pp
 .Fn __predict_false "exp"
+.Pp
+.Fn __printflike "fmtarg" "firstvararg"
+.Pp
+.Fn __sysloglike "fmtarg" "firstvararg"
 .Sh DESCRIPTION
 As an extension to the C standard, some compilers allow non-standard
 attributes to be associated with functions, variables, or types, to
@@ -99,10 +103,11 @@ Certain functions, such as
 .Xr abort 3
 and
 .Xr exit 3 ,
-can never return any value.
+can never return.
 When such a function is declared with
 .Ic __dead ,
-certain optimizations are possible.
+certain optimizations are possible and warnings sensitive to the code flow graph
+may be pruned.
 Obviously a
 .Ic __dead
 function can never have return type other than
@@ -356,6 +361,22 @@ empirical evidence should precede the use of
 .Ic __predict_false
 and
 .Ic __predict_true .
+.It Fn __printflike "fmtarg" "firstvararg"
+Marks a function as taking printf-like arguments.
+.Fa fmtarg
+is the index of the format string in the argument list, and
+.Fa firstvararg
+is the index of the first item of the vararg list.
+.It Fn __sysloglike "fmtarg" "firstvararg"
+Marks a function as taking syslog-like arguments.
+Allows use of the %m formatting code.
+.Fa fmtarg
+is the index of the format string in the argument list, and
+.Fa firstvararg
+is the index of the first item of the vararg list, or
+.Dv 0
+if the argument is a
+.Ft va_list .
 .El
 .Sh SEE ALSO
 .Xr clang 1 ,

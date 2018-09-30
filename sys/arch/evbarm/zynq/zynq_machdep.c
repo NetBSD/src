@@ -1,4 +1,4 @@
-/*	$NetBSD: zynq_machdep.c,v 1.1.22.2 2018/09/06 06:55:32 pgoyette Exp $	*/
+/*	$NetBSD: zynq_machdep.c,v 1.1.22.3 2018/09/30 01:45:43 pgoyette Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,10 +29,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zynq_machdep.c,v 1.1.22.2 2018/09/06 06:55:32 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zynq_machdep.c,v 1.1.22.3 2018/09/30 01:45:43 pgoyette Exp $");
 
 #include "opt_evbarm_boardtype.h"
 #include "opt_arm_debug.h"
+#include "opt_console.h"
 #include "opt_kgdb.h"
 #include "com.h"
 #include "opt_zynq.h"

@@ -1,4 +1,4 @@
-$NetBSD: TODO.smpnet,v 1.19.2.2 2018/09/06 06:51:43 pgoyette Exp $
+$NetBSD: TODO.smpnet,v 1.19.2.3 2018/09/30 01:45:07 pgoyette Exp $
 
 MP-safe components
 ==================
@@ -59,7 +59,6 @@ Unprotected ones
 
  - Layer 2
    - ARCNET (if_arcsubr.c)
-   - ATM (if_atmsubr.c)
    - BRIDGE_IPF
    - FDDI (if_fddisubr.c)
    - HIPPI (if_hippisubr.c)
@@ -88,11 +87,9 @@ Unprotected ones
    - pf(4)
  - Others
    - AppleTalk (sys/netatalk/)
-   - ATM (sys/netnatm/)
    - Bluetooth (sys/netbt/)
    - altq(4)
    - CIFS (sys/netsmb/)
-   - ISDN (sys/netisbn/)
    - kttcp(4)
    - NFS
 
@@ -118,9 +115,7 @@ Unfortunately some bpf_mtap on Rx are still called in hardware interrupt context
 This is the list of the functions that have such bpf_mtap:
 
  - sca_frame_process() @ sys/dev/ic/hd64570.c
- - en_intr() @ sys/dev/ic/midway.c
  - rxintr_cleanup() @ sys/dev/pci/if_lmc.c
- - ipr_rx_data_rdy() @ sys/netisdn/i4b_ipr.c
 
 Ideally we should make the functions run in softint somehow, but we don't have
 actual devices, no time (or interest/love) to work on the task, so instead we

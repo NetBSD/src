@@ -1,4 +1,4 @@
-#	$NetBSD: majors.arm32,v 1.37 2015/04/23 23:22:51 pgoyette Exp $
+#	$NetBSD: majors.arm32,v 1.37.16.1 2018/09/30 01:45:37 pgoyette Exp $
 #
 # Device majors for arm32
 #
@@ -72,11 +72,6 @@ device-major	urio		char 75			urio
 device-major	uscanner	char 76			uscanner
 device-major	openfirm	char 77			openfirm
 device-major	biconsdev	char 78			biconsdev
-device-major	isdn		char 79			isdn
-device-major	isdnctl		char 80			isdnctl
-device-major	isdnrchan	char 81			isdnbchan
-device-major	isdntrc		char 82			isdntrc
-device-major	isdntel		char 83			isdntel
 device-major	sacom		char 84			sacom
 device-major	mly		char 85			mly
 device-major	wsfont		char 86			wsfont
@@ -100,7 +95,6 @@ device-major	apm		char 103		apm
 device-major	sscom		char 104		sscom
 device-major	imxcom		char 104		imxuart
 device-major	ksyms		char 105		ksyms
-device-major	isdnbchan	char 106		isdnbchan
 device-major	epcom		char 107		epcom
 device-major	tslcd		char 108		tslcd
 device-major	twe		char 109  		twe

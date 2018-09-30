@@ -1,4 +1,4 @@
-/*	$NetBSD: int.c,v 1.28 2015/02/18 16:47:58 macallan Exp $	*/
+/*	$NetBSD: int.c,v 1.28.16.1 2018/09/30 01:45:46 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2009 Stephen M. Rumble 
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: int.c,v 1.28 2015/02/18 16:47:58 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: int.c,v 1.28.16.1 2018/09/30 01:45:46 pgoyette Exp $");
 
 #define __INTR_PRIVATE
 #include "opt_cputype.h"
@@ -114,6 +114,12 @@ static void
 int_attach(device_t parent, device_t self, void *aux)
 {
 	uint32_t address;
+	int i;
+
+	for (i = 0; i < NINTR; i++) {
+		intrtab[i].ih_fun = NULL;
+		snprintf(intrtab[i].ih_evname, 7, "%d", i);
+	}
 
 	switch (mach_type) {
 	case MACH_SGI_IP6 | MACH_SGI_IP10:
@@ -220,9 +226,17 @@ int_attach(device_t parent, device_t self, void *aux)
 		/* Wire interrupts 7, 11 to mappable interrupt 0,1 handlers */
 		intrtab[7].ih_fun = int2_mappable_intr;
 		intrtab[7].ih_arg = (void*) 0;
+		snprintf(intrtab[7].ih_evname, 7, "map0");
 
 		intrtab[11].ih_fun = int2_mappable_intr;
 		intrtab[11].ih_arg = (void*) 1;
+		snprintf(intrtab[11].ih_evname, 7, "map1");
+	}
+
+	for (i = 0; i < NINTR; i++) {
+		evcnt_attach_dynamic(&intrtab[i].ih_evcnt,
+			    EVCNT_TYPE_INTR, NULL,
+			    "int", intrtab[i].ih_evname);
 	}
 }
 
@@ -246,6 +260,7 @@ int2_mappable_intr(void *arg)
 	for (i = 0; i < 8; i++) {
 		intnum = i + 16 + (which << 3);
 		if (mstat & (1 << i)) {
+			intrtab[intnum].ih_evcnt.ev_count++;
 			for (ih = &intrtab[intnum]; ih != NULL;
 			    ih = ih->ih_next) {
 				if (ih->ih_fun != NULL)
@@ -276,6 +291,7 @@ int1_local_intr(vaddr_t pc, uint32_t status, uint32_t ipend)
 
 	for (i = 0; stat != 0; i++, stat >>= 1) {
 		if (stat & 1) {
+			intrtab[i].ih_evcnt.ev_count++;
 			for (ih = &intrtab[i]; ih != NULL; ih = ih->ih_next) {
 				if (ih->ih_fun != NULL)
 					(ih->ih_fun)(ih->ih_arg);
@@ -302,6 +318,7 @@ int2_local0_intr(vaddr_t pc, uint32_t status, uint32_t ipending)
 
 	for (i = 0; i < 8; i++) {
 		if (l0stat & (1 << i)) {
+			intrtab[i].ih_evcnt.ev_count++;
 			for (ih = &intrtab[i]; ih != NULL; ih = ih->ih_next) {
 				if (ih->ih_fun != NULL)
 					(ih->ih_fun)(ih->ih_arg);
@@ -328,6 +345,7 @@ int2_local1_intr(vaddr_t pc, uint32_t status, uint32_t ipending)
 
 	for (i = 0; i < 8; i++) {
 		if (l1stat & (1 << i)) {
+			intrtab[i].ih_evcnt.ev_count++;
 			for (ih = &intrtab[8+i]; ih != NULL; ih = ih->ih_next) {
 				if (ih->ih_fun != NULL)
 					(ih->ih_fun)(ih->ih_arg);

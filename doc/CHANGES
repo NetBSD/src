@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2363.2.11 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2363.2.12 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -220,3 +220,13 @@ Changes from NetBSD 8.0 to NetBSD 9.0:
 	libpcap: Import 1.9.0. [christos 20180903]
 	mpfr: Updated to version 4.0.1. [mrg 20180904]
 	mpc: Updated to version 1.1.0. [mrg 20180904]
+	kernel: Remove en(4). [maxv 20180906]
+	kernel: Remove the NATM code. [maxv 20180906]
+	libnv: Imported from FreeBSD [christos 20180908]
+	rkpmic(4): Add support for Rockchip RK805 Power Management IC.
+		[jmcneill 20180920]
+	kernel: Remove the ISDN code, including daic(4), iavc(4), isic(4),
+		ifpci(4), ifritz, iwic(4), and all the ISDN-related
+		userland tools. [maxv 20180923]
+	npf: Converted to use libnv [rmind 20180929]
+	ntp: Import ntp 4.2.8p12. [christos 20180929]
