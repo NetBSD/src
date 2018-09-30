@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.5 2009/10/21 23:12:09 snj Exp $	*/
+/*	$NetBSD: net.c,v 1.6 2018/09/30 14:02:06 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -52,6 +52,7 @@
 #include <lib/libsa/stand.h>
 #include <lib/libsa/net.h>
 #include <lib/libsa/bootparam.h>
+#include <lib/libsa/bootp.h>
 #include <lib/libsa/nfs.h>
 
 #include <lib/libkern/libkern.h>
@@ -144,7 +145,7 @@ net_mountroot(void)
 	printf("Using IP address: %s\n", inet_ntoa(myip));
 
 	printf("myip: %s (%s)", hostname, inet_ntoa(myip));
-	if (gateip)
+	if (gateip.s_addr)
 		printf(", gateip: %s", inet_ntoa(gateip));
 	if (netmask)
 		printf(", netmask: %s", intoa(netmask));
