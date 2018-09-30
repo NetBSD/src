@@ -1,4 +1,4 @@
-/* $NetBSD: gicv3.c,v 1.2 2018/08/11 00:32:17 jmcneill Exp $ */
+/* $NetBSD: gicv3.c,v 1.3 2018/09/30 13:53:26 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
 #define	_INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gicv3.c,v 1.2 2018/08/11 00:32:17 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gicv3.c,v 1.3 2018/09/30 13:53:26 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -50,7 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: gicv3.c,v 1.2 2018/08/11 00:32:17 jmcneill Exp $");
 #define	PICTOSOFTC(pic)	\
 	((void *)((uintptr_t)(pic) - offsetof(struct gicv3_softc, sc_pic)))
 
-#define	IPL_TO_PRIORITY(ipl)	((IPL_HIGH - (ipl)) << 4)
+#define	IPL_TO_PRIORITY(ipl)	(0x80 | ((IPL_HIGH - (ipl)) << 4))
 
 static struct gicv3_softc *gicv3_softc;
 
@@ -147,7 +147,7 @@ gicv3_establish_irq(struct pic_softc *pic, struct intrsource *is)
 	uint64_t irouter;
 	u_int n;
 
-	const u_int ipriority_val = 0x80 | IPL_TO_PRIORITY(is->is_ipl);
+	const u_int ipriority_val = IPL_TO_PRIORITY(is->is_ipl);
 	const u_int ipriority_shift = (is->is_irq & 0x3) * 8;
 	const u_int icfg_shift = (is->is_irq & 0xf) * 2;
 
