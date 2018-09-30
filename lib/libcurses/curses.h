@@ -1,4 +1,4 @@
-/*	$NetBSD: curses.h,v 1.122 2018/09/30 10:08:13 kamil Exp $	*/
+/*	$NetBSD: curses.h,v 1.123 2018/09/30 10:55:00 kamil Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -945,7 +945,7 @@ int mvwinwstr(WINDOW *, int, int, wchar_t *);
 int winnwstr(WINDOW *, wchar_t *, int);
 int winwstr(WINDOW *, wchar_t *);
 
-/* cchar handlgin */
+/* cchar handling */
 int setcchar(cchar_t *, const wchar_t *, const attr_t, short, const void *);
 int getcchar(const cchar_t *, wchar_t *, attr_t *, short *, void *);
 
