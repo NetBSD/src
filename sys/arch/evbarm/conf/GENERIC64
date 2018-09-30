@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC64,v 1.39 2018/09/29 16:02:09 jmcneill Exp $
+#	$NetBSD: GENERIC64,v 1.40 2018/09/30 15:31:05 jmcneill Exp $
 #
 #	GENERIC ARM (aarch64) kernel
 #
@@ -264,6 +264,7 @@ tcagpio*	at iic?
 bcmrng*		at fdt?			# Broadcom BCM283x RNG
 
 # RTC
+plrtc*		at fdt?			# ARM PrimeCell RTC
 sunxirtc*	at fdt?			# Allwinner RTC
 tegrartc*	at fdt?			# NVIDIA Tegra RTC
 
