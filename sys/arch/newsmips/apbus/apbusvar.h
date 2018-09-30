@@ -1,4 +1,4 @@
-/*	$NetBSD: apbusvar.h,v 1.9 2007/10/17 19:55:54 garbled Exp $	*/
+/*	$NetBSD: apbusvar.h,v 1.10 2018/09/30 06:14:23 tsutsui Exp $	*/
 
 /*-
  * Copyright (C) 1999 SHIMIZU Ryo.  All rights reserved.
@@ -39,6 +39,7 @@ struct apbus_attach_args {
 	u_long	apa_hwbase;	/* hardware I/O address */
 };
 
+void apbus_map_romwork(void);
 void *apbus_device_to_hwaddr(struct apbus_dev *);
 struct apbus_dev *apbus_lookupdev(char *);
 void apdevice_dump(struct apbus_dev *);
