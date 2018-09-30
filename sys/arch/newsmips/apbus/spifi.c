@@ -1,4 +1,4 @@
-/*	$NetBSD: spifi.c,v 1.18 2017/03/31 08:38:13 msaitoh Exp $	*/
+/*	$NetBSD: spifi.c,v 1.19 2018/09/30 14:23:24 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spifi.c,v 1.18 2017/03/31 08:38:13 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spifi.c,v 1.19 2018/09/30 14:23:24 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -206,7 +206,7 @@ spifi_attach(device_t parent, device_t self, void *aux)
 		intr = NEWS5000_INT0_DMAC;
 	else
 		intr = SLOTTOMASK(apa->apa_slotno);
-	apbus_intr_establish(0, intr, 0, spifi_intr, sc, apa->apa_name,
+	apbus_intr_establish(0, intr, 0, spifi_intr, sc, device_xname(self),
 	    apa->apa_ctlnum);
 
 	config_found(self, &sc->sc_channel, scsiprint);

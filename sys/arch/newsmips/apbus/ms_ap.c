@@ -1,4 +1,4 @@
-/*	$NetBSD: ms_ap.c,v 1.11 2012/10/13 06:25:20 tsutsui Exp $	*/
+/*	$NetBSD: ms_ap.c,v 1.12 2018/09/30 14:23:24 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ms_ap.c,v 1.11 2012/10/13 06:25:20 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ms_ap.c,v 1.12 2018/09/30 14:23:24 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -101,7 +101,7 @@ ms_ap_attach(device_t parent, device_t self, void *aux)
 	reg->ms_intr_en = 0;
 
 	apbus_intr_establish(1, NEWS5000_INT1_KBD, 0, ms_ap_intr, sc,
-	    "", apa->apa_ctlnum);
+	    device_xname(self), apa->apa_ctlnum);
 
 	aa.accessops = &ms_ap_accessops;
 	aa.accesscookie = sc;
