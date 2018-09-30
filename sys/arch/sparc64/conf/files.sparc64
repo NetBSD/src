@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc64,v 1.154 2017/12/19 14:34:08 nakayama Exp $
+#	$NetBSD: files.sparc64,v 1.154.2.1 2018/09/30 00:17:54 pgoyette Exp $
 
 # @(#)files.sparc64	8.1 (Berkeley) 7/19/93
 # sparc64-specific configuration info
@@ -288,8 +288,12 @@ file	arch/sparc64/sparc64/compat_16_machdep.c compat_16
 
 # NetBSD/sparc 32-bit Binary compatibility (COMPAT_NETBSD32)
 include "compat/netbsd32/files.netbsd32"
-file	arch/sparc64/sparc64/netbsd32_machdep.c	compat_netbsd32
-file	arch/sparc64/sparc64/netbsd32_sigcode.s	compat_netbsd32
+file	arch/sparc64/sparc64/netbsd32_machdep.c		compat_netbsd32
+file	arch/sparc64/sparc64/netbsd32_machdep_13.c	compat_netbsd32 &
+							compat_13
+file	arch/sparc64/sparc64/netbsd32_machdep_16.c	compat_netbsd32 &
+							compat_16
+file	arch/sparc64/sparc64/netbsd32_sigcode.s		compat_netbsd32
 
 # SVR4 Binary Compatibility (COMPAT_SVR4)
 include "compat/svr4/files.svr4"
