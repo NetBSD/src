@@ -1,5 +1,7 @@
-# $NetBSD: ad.m68k,v 1.57 2018/08/22 01:05:21 msaitoh Exp $
+# $NetBSD: ad.m68k,v 1.58 2018/09/30 00:42:17 mrg Exp $
 ./usr/bin/elf2aout				comp-sysutil-bin
+./usr/include/gcc-4.5/math-68881.h		comp-c-include		obsolete
+./usr/include/gcc-4.5/tgmath.h			comp-c-include		obsolete
 ./usr/include/gcc-4.8/math-68881.h		comp-c-include		obsolete
 ./usr/include/gcc-4.8/tgmath.h			comp-c-include		obsolete
 ./usr/include/gcc-5/math-68881.h		comp-c-include		gcccmds,gcc=5
