@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sn_ap.c,v 1.11 2008/04/09 15:40:30 tsutsui Exp $	*/
+/*	$NetBSD: if_sn_ap.c,v 1.12 2018/09/30 14:23:24 tsutsui Exp $	*/
 
 /*
  * Copyright (C) 1997 Allen Briggs
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sn_ap.c,v 1.11 2008/04/09 15:40:30 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sn_ap.c,v 1.12 2018/09/30 14:23:24 tsutsui Exp $");
 
 #include "opt_inet.h"
 
@@ -117,7 +117,7 @@ sn_ap_attach(device_t parent, device_t self, void *aux)
 	apbus_intr_establish(0, /* interrupt level (0 or 1) */
 	    intrmask,
 	    0, /* priority */
-	    snintr, sc, apa->apa_name, apa->apa_ctlnum);
+	    snintr, sc, device_xname(self), apa->apa_ctlnum);
 }
 
 int

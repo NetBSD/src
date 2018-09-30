@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_ap.c,v 1.13 2011/07/15 07:49:20 he Exp $	*/
+/*	$NetBSD: if_tlp_ap.c,v 1.14 2018/09/30 14:23:24 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tlp_ap.c,v 1.13 2011/07/15 07:49:20 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tlp_ap.c,v 1.14 2018/09/30 14:23:24 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -222,7 +222,7 @@ tlp_ap_attach(device_t parent, device_t self, void *aux)
 	apbus_intr_establish(0, /* interrupt level (0 or 1) */
 	    intrmask,
 	    0, /* priority */
-	    tlp_intr, sc, apa->apa_name, apa->apa_ctlnum);
+	    tlp_intr, sc, device_xname(self), apa->apa_ctlnum);
 }
 
 static void
