@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC64,v 1.40 2018/09/30 15:31:05 jmcneill Exp $
+#	$NetBSD: GENERIC64,v 1.41 2018/09/30 16:06:02 jmcneill Exp $
 #
 #	GENERIC ARM (aarch64) kernel
 #
@@ -140,6 +140,7 @@ tegramc*	at fdt?	pass 4		# NVIDIA Tegra MC
 # Firmware devices
 bcmmbox*	at fdt?			# Broadcom VideoCore IV mailbox
 vcmbox*		at bcmmbox?
+qemufwcfg*	at fdt?			# QEMU Firmware Configuration device
 
 # DMA controller
 bcmdmac*	at fdt?			# Broadcom BCM283x DMA controller
