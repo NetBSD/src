@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.134 2018/08/01 20:04:13 maxv Exp $
+# $NetBSD: GENERIC,v 1.135 2018/09/30 14:04:51 tsutsui Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/newsmips/conf/std.newsmips"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.134 $"
+#ident 		"GENERIC-$Revision: 1.135 $"
 
 maxusers	16
 
@@ -113,7 +113,8 @@ options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
 #options 	ALTQ_RIO	# RED with IN/OUT
 #options 	ALTQ_WFQ	# Weighted Fair Queueing
 
-options 	NFS_BOOT_BOOTPARAM
+#options 	NFS_BOOT_BOOTPARAM
+options 	NFS_BOOT_DHCP
 
 # JIT compiler for bpfilter
 #options	SLJIT
