@@ -1,4 +1,4 @@
-/*	$NetBSD: if43_20.c,v 1.1.2.3 2018/09/22 04:56:28 pgoyette Exp $	*/
+/*	$NetBSD: if43_20.c,v 1.1.2.4 2018/09/30 21:32:48 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if43_20.c,v 1.1.2.3 2018/09/22 04:56:28 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if43_20.c,v 1.1.2.4 2018/09/30 21:32:48 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -61,7 +61,6 @@ __KERNEL_RCSID(0, "$NetBSD: if43_20.c,v 1.1.2.3 2018/09/22 04:56:28 pgoyette Exp
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
 #include <net/if_gre.h>
-#include <net/if_atm.h>
 #include <net/if_tap.h>
 #include <net80211/ieee80211_ioctl.h>
 
