@@ -1,4 +1,4 @@
-#	$NetBSD: std.newsmips,v 1.17 2005/12/11 12:18:24 christos Exp $
+#	$NetBSD: std.newsmips,v 1.18 2018/09/30 06:14:23 tsutsui Exp $
 
 machine newsmips mips
 include		"conf/std"	# MI standard options
@@ -6,6 +6,8 @@ makeoptions	MACHINE_ARCH="mipseb"
 
 options 	EXEC_ELF32	# exec ELF32 binaries
 options 	EXEC_SCRIPT	# exec #! scripts
+
+options 	ENABLE_MIPS3_WIRED_MAP
 
 makeoptions	DEFTEXTADDR="0x80001000"
 makeoptions	LINKFORMAT="-N"
