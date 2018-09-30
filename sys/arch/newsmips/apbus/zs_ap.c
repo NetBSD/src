@@ -1,4 +1,4 @@
-/*	$NetBSD: zs_ap.c,v 1.27 2010/06/26 03:49:52 tsutsui Exp $	*/
+/*	$NetBSD: zs_ap.c,v 1.28 2018/09/30 14:23:24 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs_ap.c,v 1.27 2010/06/26 03:49:52 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs_ap.c,v 1.28 2018/09/30 14:23:24 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -300,7 +300,7 @@ zs_ap_attach(device_t parent, device_t self, void *aux)
 	    (void (*)(void *))zsc_intr_soft, zsc);
 	apbus_intr_establish(1, /* interrupt level ( 0 or 1 ) */
 	    NEWS5000_INT1_SCC, 0, /* priority */
-	    zshard_ap, zsc, apa->apa_name, apa->apa_ctlnum);
+	    zshard_ap, zsc, device_xname(self), apa->apa_ctlnum);
 	/* XXX; evcnt_attach() ? */
 
 #if 0
