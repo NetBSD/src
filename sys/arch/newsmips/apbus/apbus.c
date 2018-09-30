@@ -1,4 +1,4 @@
-/*	$NetBSD: apbus.c,v 1.23 2018/09/30 06:14:23 tsutsui Exp $	*/
+/*	$NetBSD: apbus.c,v 1.24 2018/09/30 14:09:35 tsutsui Exp $	*/
 
 /*-
  * Copyright (C) 1999 SHIMIZU Ryo.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apbus.c,v 1.23 2018/09/30 06:14:23 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apbus.c,v 1.24 2018/09/30 14:09:35 tsutsui Exp $");
 
 #define __INTR_PRIVATE
 
@@ -201,8 +201,10 @@ apbus_intr_dispatch(int level, int stat)
 
 	nintr = 0;
 	LIST_FOREACH(ih, &ip->intr_q, ih_q) {
-		if (ih->ih_mask & stat)
+		if (ih->ih_mask & stat) {
 			nintr += (*ih->ih_func)(ih->ih_arg);
+			ih->intr_count.ev_count++;
+		}
 	}
 	return nintr;
 }
@@ -227,6 +229,8 @@ apbus_intr_establish(int level, int mask, int priority, int (*func)(void *),
 	ih->ih_priority = priority;
 	ih->ih_func = func;
 	ih->ih_arg = arg;
+	evcnt_attach_dynamic(&ih->intr_count, EVCNT_TYPE_INTR,
+	    NULL, "apbus", name);
 
 	if (LIST_EMPTY(&ip->intr_q)) {
 		LIST_INSERT_HEAD(&ip->intr_q, ih, ih_q);
