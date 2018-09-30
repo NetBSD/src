@@ -1,4 +1,4 @@
-/* $NetBSD: if_pppoe.c,v 1.143 2018/08/24 17:06:29 maxv Exp $ */
+/* $NetBSD: if_pppoe.c,v 1.144 2018/09/30 10:00:24 maxv Exp $ */
 
 /*-
  * Copyright (c) 2002, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.143 2018/08/24 17:06:29 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.144 2018/09/30 10:00:24 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "pppoe.h"
@@ -1743,16 +1743,16 @@ pppoe_send_pado(struct pppoe_softc *sc)
 	if (sc->sc_state != PPPOE_STATE_PADO_SENT)
 		return EIO;
 
-	/* calc length */
-	len = 0;
-	/* include ac_cookie */
-	len += 2 + 2 + sizeof(sc);
-	/* include hunique */
-	len += 2 + 2 + sc->sc_hunique_len;
+	/* Include AC cookie. */
+	len = sizeof(struct pppoetag) + sizeof(sc->sc_id);
+	/* Include hunique. */
+	len += sizeof(struct pppoetag) + sc->sc_hunique_len;
+
 	m0 = pppoe_get_mbuf(len + PPPOE_HEADERLEN);
 	if (!m0)
 		return EIO;
 	p = mtod(m0, uint8_t *);
+
 	PPPOE_ADD_HEADER(p, PPPOE_CODE_PADO, 0, len);
 	PPPOE_ADD_16(p, PPPOE_TAG_ACCOOKIE);
 	PPPOE_ADD_16(p, sizeof(sc->sc_id));
@@ -1779,18 +1779,21 @@ pppoe_send_pads(struct pppoe_softc *sc)
 
 	getbinuptime(&bt);
 	sc->sc_session = bt.sec % 0xff + 1;
-	/* calc length */
-	len = 0;
-	/* include hunique */
-	len += 2 + 2 + 2 + 2 + sc->sc_hunique_len;	/* service name, host unique*/
-	if (sc->sc_service_name != NULL) {		/* service name tag maybe empty */
+
+	/* Include service name. */
+	len = sizeof(struct pppoetag);
+	if (sc->sc_service_name != NULL) {
 		l1 = strlen(sc->sc_service_name);
 		len += l1;
 	}
+	/* Include hunique. */
+	len += sizeof(struct pppoetag) + sc->sc_hunique_len;
+
 	m0 = pppoe_get_mbuf(len + PPPOE_HEADERLEN);
 	if (!m0)
 		return ENOBUFS;
 	p = mtod(m0, uint8_t *);
+
 	PPPOE_ADD_HEADER(p, PPPOE_CODE_PADS, sc->sc_session, len);
 	PPPOE_ADD_16(p, PPPOE_TAG_SNAME);
 	if (sc->sc_service_name != NULL) {
