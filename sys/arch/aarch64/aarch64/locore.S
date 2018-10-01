@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.25 2018/09/10 11:05:12 ryo Exp $	*/
+/*	$NetBSD: locore.S,v 1.26 2018/10/01 19:45:00 skrll Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -35,7 +35,7 @@
 #include <aarch64/hypervisor.h>
 #include "assym.h"
 
-RCSID("$NetBSD: locore.S,v 1.25 2018/09/10 11:05:12 ryo Exp $")
+RCSID("$NetBSD: locore.S,v 1.26 2018/10/01 19:45:00 skrll Exp $")
 
 /* #define DEBUG_LOCORE */
 /* #define DEBUG_MMU */
@@ -124,9 +124,11 @@ ENTRY_NP(aarch64_start)
 	mrs	x0, mpidr_el1
 	bl	print_x0
 
+#if 0
 	PRINT("L2CTLR_EL1       = ")
 	mrs	x0, s3_1_c11_c0_2
 	bl	print_x0
+#endif
 
 	PRINT("ID_AA64MPFR0_EL1 = ")
 	mrs	x0, id_aa64pfr0_el1
