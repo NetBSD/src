@@ -1,4 +1,4 @@
-/*	$NetBSD: gttwsi_core.c,v 1.7 2018/06/18 12:42:29 jakllsch Exp $	*/
+/*	$NetBSD: gttwsi_core.c,v 1.8 2018/10/01 09:39:20 bouyer Exp $	*/
 /*
  * Copyright (c) 2008 Eiji Kawauchi.
  * All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gttwsi_core.c,v 1.7 2018/06/18 12:42:29 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gttwsi_core.c,v 1.8 2018/10/01 09:39:20 bouyer Exp $");
 #include "locators.h"
 
 #include <sys/param.h>
@@ -192,15 +192,15 @@ gttwsi_intr(void *arg)
 	struct gttwsi_softc *sc = arg;
 	uint32_t val;
 
+	mutex_enter(&sc->sc_mtx);
 	val = gttwsi_read_4(sc, TWSI_CONTROL);
 	if (val & CONTROL_IFLG) {
 		gttwsi_write_4(sc, TWSI_CONTROL, val & ~CONTROL_INTEN);
-		mutex_enter(&sc->sc_mtx);
 		cv_broadcast(&sc->sc_cv);
 		mutex_exit(&sc->sc_mtx);
-
 		return 1;	/* handled */
 	}
+	mutex_exit(&sc->sc_mtx);
 	return 0;
 }
 
@@ -377,6 +377,7 @@ gttwsi_wait(struct gttwsi_softc *sc, uint32_t control, uint32_t expect,
 		control |= CONTROL_INTEN;
 	if (sc->sc_iflg_rwc)
 		control |= CONTROL_IFLG;
+	mutex_enter(&sc->sc_mtx);
 	gttwsi_write_4(sc, TWSI_CONTROL, control | CONTROL_TWSIEN);
 
 	timo = 0;
@@ -385,17 +386,21 @@ gttwsi_wait(struct gttwsi_softc *sc, uint32_t control, uint32_t expect,
 		if (control & CONTROL_IFLG)
 			break;
 		if (!(flags & I2C_F_POLL)) {
-			mutex_enter(&sc->sc_mtx);
 			error = cv_timedwait_sig(&sc->sc_cv, &sc->sc_mtx, hz);
-			mutex_exit(&sc->sc_mtx);
 			if (error)
-				return error;
+				break;
+		} else {
+			DELAY(TWSI_RETRY_DELAY);
+			if (timo++ > 1000000)	/* 1sec */
+				break;
 		}
-		DELAY(TWSI_RETRY_DELAY);
-		if (timo++ > 1000000)	/* 1sec */
-			break;
 	}
-
+	if ((control & CONTROL_IFLG) == 0) {
+		aprint_error_dev(sc->sc_dev,
+		    "gttwsi_wait(): timeout, control=0x%x\n", control);
+		error = EWOULDBLOCK;
+		goto end;
+	}
 	status = gttwsi_read_4(sc, TWSI_STATUS);
 	if (status != expect) {
 		/*
@@ -408,7 +413,9 @@ gttwsi_wait(struct gttwsi_softc *sc, uint32_t control, uint32_t expect,
 			aprint_error_dev(sc->sc_dev,
 			    "unexpected status 0x%x: expect 0x%x\n", status,
 			    expect);
-		return EIO;
+		error = EIO;
 	}
+end:
+	mutex_exit(&sc->sc_mtx);
 	return error;
 }
