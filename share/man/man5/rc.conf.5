@@ -1,4 +1,4 @@
-.\"	$NetBSD: rc.conf.5,v 1.175 2018/09/30 10:38:05 martin Exp $
+.\"	$NetBSD: rc.conf.5,v 1.176 2018/10/01 07:11:27 wiz Exp $
 .\"
 .\" Copyright (c) 1996 Matthew R. Green
 .\" All rights reserved.
@@ -353,10 +353,14 @@ Remove block-type swap devices at shutdown time.
 Useful if swapping onto RAIDframe devices.
 .It Sy var_shm_symlink
 A path.
-If set, names a path that /var/shm will be symlinked to.
+If set, names a path that
+.Pa /var/shm
+will be symlinked to.
 .Pp
 The path needs to live on a tmpfs file system.
-A typical value (assuming /tmp is mounted on tmpfs) would be
+A typical value (assuming
+.Pa /tmp
+is mounted on tmpfs) would be
 .Pa /tmp/.shm .
 .El
 .Ss Block device subsystems
