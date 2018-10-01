@@ -1,4 +1,4 @@
-.\"	$NetBSD: rc.conf.5,v 1.176 2018/10/01 07:11:27 wiz Exp $
+.\"	$NetBSD: rc.conf.5,v 1.177 2018/10/01 11:16:04 uwe Exp $
 .\"
 .\" Copyright (c) 1996 Matthew R. Green
 .\" All rights reserved.
@@ -123,21 +123,23 @@ Enabling variables, such as
 .Sy inetd ,
 are generally named after the program or the system they enable,
 and have boolean values (specified using
-.Sq Ic YES ,
-.Sq Ic TRUE ,
-.Sq Ic ON
+.Ql YES ,
+.Ql TRUE ,
+.Ql ON
 or
-.Sq Ic 1
+.Ql 1
 for true, and
-.Sq Ic NO ,
-.Sq Ic FALSE ,
-.Sq Ic OFF
+.Ql NO ,
+.Ql FALSE ,
+.Ql OFF
 or
-.Sq Ic 0
+.Ql 0
 for false, with the values being case insensitive).
 Flags variables, such as
 .Sy inetd_flags
-have the same name with "_flags" appended, and determine what
+have the same name with
+.Dq _flags
+appended, and determine what
 arguments are passed to the program if it is enabled.
 .Pp
 If a variable that
@@ -218,10 +220,10 @@ is true.
 The default value of
 .Va rc_silent_cmd
 is
-.Dq twiddle ,
+.Ql twiddle ,
 which will display a spinning symbol instead of each line of output.
 Another useful value is
-.Dq \&: ,
+.Ql \&: ,
 which will display nothing at all.
 .El
 .Ss Basic network configuration
@@ -300,9 +302,9 @@ is part of this, because it is needed by services such as
 .Xr dhcpcd 8
 which may be required to get the network operational.
 The default is
-.Dq "OPTIONAL:/var" ,
+.Ql "OPTIONAL:" Ns Pa /var ,
 where the
-.Dq "OPTIONAL:"
+.Ql "OPTIONAL:"
 prefix means that it's not an error if the file system is not
 present in
 .Xr fstab 5 .
@@ -313,9 +315,9 @@ File systems such as
 that may require network services to be available to mount,
 that must be available early in the system boot for general services to use.
 The default is
-.Dq "OPTIONAL:/usr" ,
+.Ql "OPTIONAL:" Ns Pa /usr ,
 where the
-.Dq "OPTIONAL:"
+.Ql "OPTIONAL:"
 prefix means that it is not an error if the file system is not
 present in
 .Xr fstab 5 .
@@ -460,7 +462,7 @@ directory.
 can be used to override the default location of the
 .Dq real
 temporary directories,
-.Dq Pa /private/tmp .
+.Pa /private/tmp .
 See
 .Xr security 7
 for additional details.
@@ -556,7 +558,7 @@ Passes
 The directory where crash dumps are stored is specified by
 .Sy savecore_dir .
 The default setting is
-.Dq Pa /var/crash .
+.Pa /var/crash .
 .It Sy sysdb
 Boolean value.
 Builds various system databases, including
@@ -667,7 +669,7 @@ Sets the
 variable (see below) to the output of
 .Xr ifconfig 8
 with the
-.Dq Li -l
+.Fl l
 flag and suppresses warnings about interfaces in this list that
 do not have an ifconfig file or variable.
 .It Sy blacklistd
@@ -726,21 +728,20 @@ List of
 .Sq Em "address netmask"
 pairs to configure additional network addresses for the given
 configured interface
-.Dq *
 (e.g.
 .Sy ifaliases_le0 ) .
 If
 .Em netmask
 is
-.Dq - ,
+.Ql - ,
 then use the default netmask for the interface.
 .Pp
 .Sy ifaliases_*
 covers limited cases only and is considered unrecommended.
 We recommend using
-.Sy ifconfig_nnX
+.Sy ifconfig_xxN
 variables or
-.Pa /etc/ifconfig.xxN
+.Pa /etc/ifconfig. Ns Ar xxN
 files with multiple lines instead.
 .It Sy ifwatchd
 Boolean value.
@@ -753,14 +754,14 @@ Fine grain control of address and routing priorities.
 .It Sy ip6addrctl_policy
 A string.
 Can be:
-.Bl -tag -width auto -compact
-.It Li auto
+.Bl -tag -width "Ql auto" -compact
+.It Ql auto
 automatically determine from system settings; will read priorities from
 .Pa /etc/ip6addrctl.conf
 or if that file does not exist it will default to IPv6 first, then IPv4.
-.It Li ipv4_prefer
+.It Ql ipv4_prefer
 try IPv4 before IPv6.
-.It Li ipv6_prefer
+.It Ql ipv6_prefer
 try IPv6 before IPv4.
 .El
 .It Sy ip6addrctl_verbose
@@ -777,10 +778,10 @@ based on the information advertised by adjacent IPv6 routers.
 By setting
 .Sy ip6mode
 to
-.Dq Li router ,
-.Dq Li host ,
+.Ql router ,
+.Ql host ,
 or
-.Dq Li autohost ,
+.Ql autohost ,
 you can configure your node as a router,
 a non-autoconfigured host, or an autoconfigured host.
 Invalid values will be ignored, and the node will be configured as
@@ -790,7 +791,7 @@ Boolean value.
 If
 .Sy ip6mode
 is equal to
-.Dq Li router ,
+.Ql router ,
 and
 .Sy ip6uniquelocal
 is false,
@@ -835,21 +836,20 @@ A string.
 Specifies arguments to supply to
 .Xr ipmon 8 .
 Defaults to
-.Dq Li -ns .
+.Ql -ns .
 A typical example would be
-.Dq Fl nD Pa /var/log/ipflog
+.Ql "-nD /var/log/ipflog"
 to have
 .Xr ipmon 8
 log directly to a file bypassing
 .Xr syslogd 8 .
 If the
-.Dq -D
+.Fl D
 argument is used, remember to modify
 .Pa /etc/newsyslog.conf
 accordingly; for example:
-.Bd -literal
-/var/log/ipflog  640  10  100  *  Z  /var/run/ipmon.pid
-.Ed
+.Pp
+.Dl /var/log/ipflog  640  10  100  *  Z  /var/run/ipmon.pid
 .It Sy ipnat
 Boolean value.
 Runs
@@ -963,7 +963,7 @@ for a corresponding ppp configuration file in
 and will call
 .Xr pppd 8
 with the
-.Dq call Sy peer
+.Dq Ic call Va peer
 option.
 .It Sy racoon
 Boolean value.
@@ -1000,7 +1000,7 @@ as necessary.
 Passes
 .Sy inetd_flags .
 The
-.Dq Li -l
+.Fl l
 flag turns on libwrap connection logging.
 .It Sy rpcbind
 Boolean value.
@@ -1045,7 +1045,7 @@ Used only if
 .Sy httpd
 is true.
 The default setting is
-.Dq Pa /var/www .
+.Pa /var/www .
 .It Sy httpd_wwwuser
 A string.
 If non-blank and
@@ -1059,7 +1059,7 @@ because
 .Xr httpd 8
 is requiring extra privileges to start listening on default port 80.
 The default setting is
-.Dq Dv _httpd .
+.Ql _httpd .
 .It Sy lpd
 Boolean value.
 Runs
@@ -1067,7 +1067,7 @@ Runs
 and passes
 .Sy lpd_flags .
 The
-.Dq Li -l
+.Fl l
 flag will turn on extra logging.
 .It Sy mdnsd
 Boolean value.
@@ -1090,7 +1090,7 @@ as the unprivileged user and group
 .Xr chroot 2 Ns ed
 to
 .Sy named_chrootdir .
-.Sy named_chrootdir Ns Pa /var/run/log
+.Li \&${named_chrootdir} Ns Pa /var/run/log
 will be added to the list of log sockets that
 .Xr syslogd 8
 listens to.
@@ -1111,12 +1111,12 @@ as the unprivileged user and group
 .Xr chroot 2 Ns ed
 to
 .Sy ntpd_chrootdir .
-.Sy ntpd_chrootdir Ns Pa /var/run/log
+.Li \&${ntpd_chrootdir} Ns Pa /var/run/log
 will be added to the list of log sockets that
 .Xr syslogd 8
 listens to.
 This option requires that the kernel has
-.Dl pseudo-device clockctl
+.D1 Cd pseudo-device clockctl
 compiled in, and that
 .Pa /dev/clockctl
 is present.
@@ -1144,14 +1144,14 @@ Runs
 and passes
 .Sy timed_flags .
 The
-.Dq Li -M
+.Fl M
 option allows
 .Xr timed 8
 to be a master time source as well as a slave.
 If you are also running
 .Xr ntpd 8 ,
 only one machine running both should have the
-.Dq Li -M
+.Fl M
 flag given to
 .Xr timed 8 .
 .El
@@ -1251,7 +1251,7 @@ Passes
 This is only for IPv6 routers, so set
 .Sy ip6mode
 to
-.Dq Li router
+.Ql router
 if you use it.
 .El
 .Ss X Window System daemons
@@ -1295,7 +1295,7 @@ in
 Passes
 .Sy ypserv_flags .
 The
-.Dq Li -d
+.FL d
 flag causes it to use DNS for lookups in
 .Pa /etc/hosts
 that fail.
@@ -1437,7 +1437,7 @@ commands.
 .It Sy autofs
 Boolean value.
 If set to
-.Dq Li YES ,
+.Ql YES ,
 start the
 .Xr automount 8
 utility and the
@@ -1450,7 +1450,7 @@ A string.
 If
 .Sy autofs
 is set to
-.Dq Li YES ,
+.Ql YES ,
 these are the flags to pass to the
 .Xr automount 8
 program.
@@ -1460,7 +1460,7 @@ A string.
 If
 .Sy autofs
 is set to
-.Dq Li YES ,
+.Ql YES ,
 these are the flags to pass to the
 .Xr automountd 8
 daemon.
@@ -1470,7 +1470,7 @@ A string.
 If
 .Sy autofs
 is set to
-.Dq Li YES ,
+.Ql YES ,
 these are the flags to pass to the
 .Xr autounmountd 8
 daemon.
