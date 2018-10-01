@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.268 2018/09/23 13:36:04 christos Exp $
+# $NetBSD: mi,v 1.269 2018/10/01 08:23:53 jmcneill Exp $
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib,compatfile
@@ -377,6 +377,7 @@
 ./usr/libdata/debug/sbin/mount_procfs.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/mount_ptyfs.debug	comp-miscfs-debug	debug
 ./usr/libdata/debug/sbin/mount_puffs.debug	comp-sysutil-debug	debug
+./usr/libdata/debug/sbin/mount_qemufwcfg.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/mount_smbfs.debug	comp-smbfs-debug	debug
 ./usr/libdata/debug/sbin/mount_sysvbfs.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/mount_tmpfs.debug	comp-miscfs-debug	debug
