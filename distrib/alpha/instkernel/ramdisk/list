@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.45 2014/08/02 19:35:13 martin Exp $
+#	$NetBSD: list,v 1.46 2018/10/01 17:50:08 martin Exp $
 
 SRCDIRS	bin sbin external/bsd/less/bin usr.bin usr.sbin
 
@@ -61,7 +61,7 @@ ARGVLN	sh -sh
 SPECIAL	gzip		srcdir	distrib/utils/x_gzip
 SPECIAL	ping		srcdir	distrib/utils/x_ping
 
-LIBS	-ledit -lutil -lcurses -lterminfo -lrmt -lcrypt -ll -lm -lz -lprop
+LIBS	-ledit -lutil -lcurses -lterminfo -lrmt -lcrypt -ll -lm -lz -llzma -lprop
 
 # we need the boot blocks /usr/mdec
 COPY	${DESTDIR}/usr/mdec/boot		usr/mdec/boot
