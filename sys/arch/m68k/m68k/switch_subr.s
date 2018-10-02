@@ -1,4 +1,4 @@
-/*	$NetBSD: switch_subr.s,v 1.32 2013/10/14 12:20:05 isaki Exp $	*/
+/*	$NetBSD: switch_subr.s,v 1.33 2018/10/02 18:37:31 mrg Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation.
@@ -151,7 +151,7 @@ ENTRY(cpu_switchto)
 	movl	P_VMSPACE(%a2),%a2	| vm = p->p_vmspace
 #if defined(DIAGNOSTIC) && !defined(sun2)
 	tstl	%a2			| vm == VM_MAP_NULL?
-	jeq	Lcpu_switch_badsw	| panic
+	jeq	.Lcpu_switch_badsw	| panic
 #endif
 	pea	(%a0)			| save newlwp
 #if !defined(_SUN3X_) || defined(PMAP_DEBUG)
