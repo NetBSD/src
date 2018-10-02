@@ -29,9 +29,9 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: netbsd32_machdep.c,v 1.1.2.3 2018/10/01 21:19:16 pgoyette Exp $");
+__KERNEL_RCSID(1, "$NetBSD: netbsd32_machdep.c,v 1.1.2.4 2018/10/02 01:43:53 pgoyette Exp $");
 
-#if defined(_KERNEL_OPT
+#if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
 #endif
 

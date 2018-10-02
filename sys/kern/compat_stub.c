@@ -1,4 +1,4 @@
-/* $NetBSD: compat_stub.c,v 1.1.2.25 2018/09/25 21:41:30 pgoyette Exp $	*/
+/* $NetBSD: compat_stub.c,v 1.1.2.26 2018/10/02 01:43:53 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -170,3 +170,9 @@ int kern_sig_43_pgid_mask = ~0;
  * hook for kern_proc_32
  */
 struct kern_proc_32_hook_t kern_proc_32_hook;
+
+/*
+ * Hook for sparc fpu code to check if a process is running 
+ * under sunos emulation
+ */
+struct get_emul_sunos_hook_t get_emul_sunos_hook;

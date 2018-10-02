@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos32_mod.c,v 1.3 2014/03/07 01:33:44 christos Exp $	*/
+/*	$NetBSD: sunos32_mod.c,v 1.3.28.1 2018/10/02 01:43:53 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -30,13 +30,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos32_mod.c,v 1.3 2014/03/07 01:33:44 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos32_mod.c,v 1.3.28.1 2018/10/02 01:43:53 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/module.h>
 #include <sys/exec.h>
 #include <sys/exec_aout.h>
 #include <sys/signalvar.h>
+#include <sys/compat_stub.h>
 
 #include <machine/sunos_machdep.h>
 
@@ -62,14 +63,27 @@ static struct execsw sunos_execsw = {
 };
 
 static int
+get_sunos_emul(const struct emul **e)
+{
+ 
+	*e = &emul_sunos;
+	return 0;
+}
+ 
+MODULE_SET_HOOK(get_emul_sunos_hook, "sun_emul", get_sunos_emul);
+MODULE_UNSET_HOOK(get_emul_sunos_hook);
+  
+static int
 compat_sunos_modcmd(modcmd_t cmd, void *arg)
 {
-
+ 
 	switch (cmd) {
 	case MODULE_CMD_INIT:
+		get_emul_sunos_hook_set();
 		return exec_add(&sunos_execsw, 1);
-
+ 
 	case MODULE_CMD_FINI:
+		get_emul_sunos_hook_unset();
 		return exec_remove(&sunos_execsw, 1);
 
 	default:
