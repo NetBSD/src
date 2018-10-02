@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep_13.c,v 1.1.2.1 2018/09/30 00:17:55 pgoyette Exp $	*/
+/*	$NetBSD: netbsd32_machdep_13.c,v 1.1.2.2 2018/10/02 22:00:15 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,11 +27,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep_13.c,v 1.1.2.1 2018/09/30 00:17:55 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep_13.c,v 1.1.2.2 2018/10/02 22:00:15 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
-#include "opt_compat_sunos.h"
 #include "opt_modular.h"
 #include "opt_execfmt.h"
 #include "firm_events.h"
