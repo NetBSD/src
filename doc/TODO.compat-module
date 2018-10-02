@@ -1,4 +1,4 @@
-/* $NetBSD: TODO.compat-module,v 1.1.2.16 2018/09/30 01:48:27 pgoyette Exp $ */
+/* $NetBSD: TODO.compat-module,v 1.1.2.17 2018/10/02 22:00:47 pgoyette Exp $ */
 
 DONE
 ----
@@ -51,14 +51,12 @@ DONE
 14. Cleaned up some previous vectored routines (related to if_43.c) to
     use the MP-safe mechanism.
 
+15. Organized netbsd32 machine-dependent code to fit a common build
+    framework, and split version-specific code from baseline code as
+    needed.
 
 TODO - Required for branch merge
 --------------------------------
-15.  Need to finish cleaning up the netbsd32 machine-dependent code, since
-    the MI code assumes that there's MD file available.  This is done, but
-    there's still an issue with the compat_netbsd32 for sparc64 - it wants
-    to reference emul_sunos but doesn't include sunos_exec.c in the build.
-
 16. The ieee_80211 compat code needs to be verified to make sure it is
     handling the if43_20 compat routine cvtcmd() correctly.
 
