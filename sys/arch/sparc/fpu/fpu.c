@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.27 2012/02/12 16:34:10 matt Exp $ */
+/*	$NetBSD: fpu.c,v 1.27.46.1 2018/10/02 01:43:53 pgoyette Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.27 2012/02/12 16:34:10 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.27.46.1 2018/10/02 01:43:53 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -49,6 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.27 2012/02/12 16:34:10 matt Exp $");
 #include <sys/systm.h>
 #include <sys/syslog.h>
 #include <sys/signalvar.h>
+#include <sys/compat_stub.h>
 
 #include <machine/instr.h>
 #include <machine/reg.h>
@@ -108,7 +109,6 @@ static u_char fpu_codes_native[] = {
 	X8(FPE_FLTOVF),
 	X16(FPE_FLTINV)
 };
-#if defined(COMPAT_SUNOS)
 static u_char fpu_codes_sunos[] = {
 	X1(FPE_FLTINEX_TRAP),
 	X2(FPE_FLTDIV_TRAP),
@@ -116,9 +116,15 @@ static u_char fpu_codes_sunos[] = {
 	X8(FPE_FLTOVF_TRAP),
 	X16(FPE_FLTOPERR_TRAP)
 };
-extern struct emul emul_sunos;
-#endif /* SUNOS_COMPAT */
+
 /* Note: SVR4(Solaris) FPE_* codes happen to be compatible with ours */
+
+/*
+ * HOOK for checking if the lwp's emul matches sunos
+ */
+MODULE_CALL_HOOK_DECL(get_emul_sunos_hook, f, (const struct emul **emul));
+MODULE_CALL_HOOK(get_emul_sunos_hook, f, (const struct emul ** emul), (emul),
+    enosys());
 
 /*
  * The FPU gave us an exception.  Clean up the mess.  Note that the
@@ -142,12 +148,13 @@ fpu_cleanup(
 	struct fpemu fe;
 	u_char *fpu_codes;
 	int code = 0;
+	const struct emul *sunos_emul;
 
-	fpu_codes =
-#ifdef COMPAT_SUNOS
-		(p->p_emul == &emul_sunos) ? fpu_codes_sunos :
-#endif
-		fpu_codes_native;
+	if (get_emul_sunos_hook_f_call(&sunos_emul) == 0 &&
+	    p->p_emul == sunos_emul)
+		fpu_codes = fpu_codes_sunos;
+	else
+		fpu_codes = fpu_codes_native;
 
 	switch ((fsr >> FSR_FTT_SHIFT) & FSR_FTT_MASK) {
 

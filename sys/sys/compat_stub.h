@@ -1,4 +1,4 @@
-/* $NetBSD: compat_stub.h,v 1.1.2.37 2018/09/25 21:41:30 pgoyette Exp $	*/
+/* $NetBSD: compat_stub.h,v 1.1.2.38 2018/10/02 01:43:53 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -217,5 +217,12 @@ extern int kern_sig_43_pgid_mask;
 struct ps_strings;
 MODULE_HOOK2(kern_proc_32_hook, (struct proc *, struct ps_strings *),
     (char **, size_t, vaddr_t *));
+
+/*
+ * Hook to allow sparc fpu code to see if a process is using sunos
+ * emulation, and select proper fup codes
+ */
+struct emul;
+MODULE_HOOK(get_emul_sunos_hook, (const struct emul **));
 
 #endif	/* _SYS_COMPAT_STUB_H */
