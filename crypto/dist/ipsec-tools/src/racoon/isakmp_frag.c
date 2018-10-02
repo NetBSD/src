@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_frag.c,v 1.8 2018/05/19 19:32:16 maxv Exp $	*/
+/*	$NetBSD: isakmp_frag.c,v 1.9 2018/10/02 18:49:24 christos Exp $	*/
 
 /* Id: isakmp_frag.c,v 1.4 2004/11/13 17:31:36 manubsd Exp */
 
@@ -289,11 +289,11 @@ isakmp_frag_extract(iph1, msg)
 	if (last_frag != 0) {
 		item = iph1->frag_chain;
 		for (i = 1; i <= last_frag; i++) {
+			if (item == NULL) /* Not found */
+				break;
 			if (item->frag_num != i)
 				break;
 			item = item->frag_next;
-			if (item == NULL) /* Not found */
-				break;
 		}
 
 		if (i > last_frag) /* It is complete */
