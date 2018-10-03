@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.204 2018/09/27 07:09:29 msaitoh Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.205 2018/10/03 06:46:09 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.204 2018/09/27 07:09:29 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.205 2018/10/03 06:46:09 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -3538,7 +3538,7 @@ static void
 pci_conf_print_tph_req_cap(const pcireg_t *regs, int extcapoff)
 {
 	pcireg_t reg;
-	int size, i, j;
+	int size = 0, i, j;
 	uint8_t sttbloc;
 
 	printf("\n  TPH Requester Extended Capability\n");
@@ -3552,8 +3552,10 @@ pci_conf_print_tph_req_cap(const pcireg_t *regs, int extcapoff)
 	sttbloc = __SHIFTOUT(reg, PCI_TPH_REQ_CAP_STTBLLOC);
 	printf("      ST Table Location: %s\n",
 	    pci_conf_print_tph_req_cap_sttabloc(sttbloc));
-	size = __SHIFTOUT(reg, PCI_TPH_REQ_CAP_STTBLSIZ) + 1;
-	printf("      ST Table Size: %d\n", size);
+	if (sttbloc == PCI_TPH_REQ_STTBLLOC_TPHREQ) {
+		size = __SHIFTOUT(reg, PCI_TPH_REQ_CAP_STTBLSIZ) + 1;
+		printf("      ST Table Size: %d\n", size);
+	}
 
 	reg = regs[o2i(extcapoff + PCI_TPH_REQ_CTL)];
 	printf("    TPH Requester Control register: 0x%08x\n", reg);
