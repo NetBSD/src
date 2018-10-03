@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_40.c,v 1.1.2.1 2018/09/12 21:52:17 pgoyette Exp $	*/
+/*	$NetBSD: netbsd32_compat_40.c,v 1.1.2.2 2018/10/03 07:03:17 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_40.c,v 1.1.2.1 2018/09/12 21:52:17 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_40.c,v 1.1.2.2 2018/10/03 07:03:17 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -76,7 +76,8 @@ static struct syscall_package compat_netbsd32_40_syscalls[] = {
 }; 
 
 
-MODULE(MODULE_CLASS_EXEC, compat_netbsd32_40, "compat_netbsd32,compat_40");
+MODULE(MODULE_CLASS_EXEC, compat_netbsd32_40,
+    "compat_netbsd32,compat_netbsd32_50,compat_40");
 
 static int
 compat_netbsd32_40_modcmd(modcmd_t cmd, void *arg)

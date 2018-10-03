@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_16.c,v 1.1.2.3 2018/09/14 08:38:37 pgoyette Exp $	*/
+/*	$NetBSD: netbsd32_compat_16.c,v 1.1.2.4 2018/10/03 07:03:17 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_16.c,v 1.1.2.3 2018/09/14 08:38:37 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_16.c,v 1.1.2.4 2018/10/03 07:03:17 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,7 +53,8 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_16.c,v 1.1.2.3 2018/09/14 08:38:37 p
 
 struct uvm_object *emul_netbsd32_object;
 
-MODULE(MODULE_CLASS_EXEC, compat_netbsd32_16, "compat_netbsd32,compat_16");
+MODULE(MODULE_CLASS_EXEC, compat_netbsd32_16,
+    "compat_netbsd32,compat_netbsd32_20,compat_16");
 
 static int
 compat_netbsd32_16_modcmd(modcmd_t cmd, void *arg)
