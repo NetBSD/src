@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.288.6.2 2018/09/17 18:36:14 jdolecek Exp $ */
+/*	$NetBSD: wdc.c,v 1.288.6.3 2018/10/03 19:20:48 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.288.6.2 2018/09/17 18:36:14 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.288.6.3 2018/10/03 19:20:48 jdolecek Exp $");
 
 #include "opt_ata.h"
 #include "opt_wdc.h"
@@ -932,19 +932,24 @@ wdc_reset_drive(struct ata_drive_datas *drvp, int flags, uint32_t *sigp)
 {
 	struct ata_channel *chp = drvp->chnl_softc;
 
+	ata_channel_lock_owned(chp);
+
 	KASSERT(sigp == NULL);
 
 	ATADEBUG_PRINT(("wdc_reset_drive %s:%d for drive %d\n",
 	    device_xname(chp->ch_atac->atac_dev), chp->ch_channel,
 	    drvp->drive), DEBUG_FUNCS);
 
-	ata_reset_channel(chp, flags);
+	ata_thread_run(chp, flags, ATACH_TH_RESET, ATACH_NODRIVE);
 }
 
 void
 wdc_reset_channel(struct ata_channel *chp, int flags)
 {
 	struct ata_xfer *xfer;
+
+	ata_channel_lock_owned(chp);
+
 #if NATA_DMA || NATA_PIOBM
 	struct wdc_softc *wdc = CHAN_TO_WDC(chp);
 #endif
@@ -955,9 +960,7 @@ wdc_reset_channel(struct ata_channel *chp, int flags)
 	 * if the current command is on an ATAPI device, issue a
 	 * ATAPI_SOFT_RESET
 	 */
-	xfer = ata_queue_get_active_xfer(chp);
-
-	ata_channel_lock(chp);
+	xfer = ata_queue_get_active_xfer_locked(chp);
 
 	if (xfer && xfer->c_chp == chp && (xfer->c_flags & C_ATAPI)) {
 		wdccommandshort(chp, xfer->c_drive, ATAPI_SOFT_RESET);
@@ -984,9 +987,8 @@ wdc_reset_channel(struct ata_channel *chp, int flags)
 	 */
 	if (xfer) {
 		if (xfer->c_chp != chp) {
-			ata_channel_unlock(chp);
-			ata_reset_channel(xfer->c_chp, flags);
-			ata_channel_lock(chp);
+			ata_thread_run(xfer->c_chp, flags, ATACH_TH_RESET,
+			    ATACH_NODRIVE);
 		} else {
 #if NATA_DMA || NATA_PIOBM
 			/*
@@ -1004,8 +1006,6 @@ wdc_reset_channel(struct ata_channel *chp, int flags)
 	}
 
 	ata_kill_active(chp, KILL_RESET, flags);
-
-	ata_channel_unlock(chp);
 }
 
 static int

@@ -1,4 +1,4 @@
-/* $NetBSD: siisata.c,v 1.35.6.5 2018/09/22 09:22:59 jdolecek Exp $ */
+/* $NetBSD: siisata.c,v 1.35.6.6 2018/10/03 19:20:48 jdolecek Exp $ */
 
 /* from ahcisata_core.c */
 
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siisata.c,v 1.35.6.5 2018/09/22 09:22:59 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siisata.c,v 1.35.6.6 2018/10/03 19:20:48 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -732,7 +732,7 @@ siisata_reset_drive(struct ata_drive_datas *drvp, int flags, uint32_t *sigp)
 
 	siisata_reinit_port(chp, drvp->drive);
 
-	ata_channel_lock(chp);
+	ata_channel_lock_owned(chp);
 
 	/* get a slot for running the command on */
 	if (!ata_queue_alloc_slot(chp, &c_slot, ATA_MAX_OPENINGS)) {
@@ -783,8 +783,6 @@ siisata_reset_drive(struct ata_drive_datas *drvp, int flags, uint32_t *sigp)
 
 	siisata_enable_port_interrupt(chp);
 
-	ata_channel_unlock(chp);
-
 	if (timed_out) {
 		/* timeout */
 		siisata_device_reset(chp);	/* XXX is this right? */
@@ -801,11 +799,7 @@ siisata_reset_drive(struct ata_drive_datas *drvp, int flags, uint32_t *sigp)
 		}
 	}
 
-	ata_channel_lock(chp);
 	ata_queue_free_slot(chp, c_slot);
-	ata_channel_unlock(chp);
-
-	return;
 }
 
 void
@@ -816,6 +810,8 @@ siisata_reset_channel(struct ata_channel *chp, int flags)
 
 	SIISATA_DEBUG_PRINT(("%s: %s channel %d\n", SIISATANAME(sc), __func__,
 	    chp->ch_channel), DEBUG_FUNCS);
+
+	ata_channel_lock_owned(chp);
 
 	if (sata_reset_interface(chp, sc->sc_prt, schp->sch_scontrol,
 	    schp->sch_sstatus, flags) != SStatus_DET_DEV) {
@@ -1572,6 +1568,8 @@ siisata_device_reset(struct ata_channel *chp)
 {
 	struct siisata_softc *sc = (struct siisata_softc *)chp->ch_atac;
 	int ps;
+
+	ata_channel_lock_owned(chp);
 
 	/*
 	 * This is always called after siisata_reinit_port(), so don't
