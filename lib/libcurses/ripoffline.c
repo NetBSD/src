@@ -1,4 +1,4 @@
-/*	$NetBSD: ripoffline.c,v 1.4 2018/10/02 17:35:44 roy Exp $	*/
+/*	$NetBSD: ripoffline.c,v 1.5 2018/10/03 13:22:29 roy Exp $	*/
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ripoffline.c,v 1.4 2018/10/02 17:35:44 roy Exp $");
+__RCSID("$NetBSD: ripoffline.c,v 1.5 2018/10/03 13:22:29 roy Exp $");
 #endif				/* not lint */
 
 #include "curses.h"
@@ -138,22 +138,28 @@ __ripoffscreen(SCREEN *screen)
  *	Called from resizeterm to ensure the ripped off lines are correctly
  *	placed and refreshed.
  */
-void
+int
 __ripoffresize(SCREEN *screen)
 {
-	int rbot = screen->LINES, i;
+	int rbot = screen->LINES, i, nlines, ret = OK;
 	struct __ripoff *rip;
 
 	for (i = 0, rip = screen->ripped; i < screen->nripped; i++, rip++) {
-		if (rip->nlines > 0)
-			touchwin(rip->win);
-		else {
+		if (rip->nlines == 0)
+			continue;
+		nlines = rip->nlines < 0 ? -rip->nlines : rip->nlines;
+		if (wresize(rip->win, nlines, screen->COLS) == ERR)
+			ret = ERR;
+		if (rip->nlines < 0) {
 			/* Reposition the lower windows. */
-			mvwin(rip->win, rbot + rip->nlines, 0);
-			rbot += rip->nlines;
+			if (mvwin(rip->win, rbot + rip->nlines, 0) == ERR)
+				ret = ERR;
+			else
+				rbot += rip->nlines;
 		}
-		wnoutrefresh(rip->win);
 	}
+
+	return ret;
 }
 
 /*
