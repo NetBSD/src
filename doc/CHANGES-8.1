@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.1,v 1.1.2.27 2018/09/27 15:54:21 martin Exp $
+# $NetBSD: CHANGES-8.1,v 1.1.2.28 2018/10/03 18:08:28 martin Exp $
 
 A complete list of changes from the NetBSD 8.0 release to the NetBSD 8.1
 release:
@@ -1177,4 +1177,34 @@ lib/libcurses/getch.c				1.68,1.69
 	Unify resize handling in getch.
 	Call resizeterm if getch issues KEY_RESIZE.
 	[roy, ticket #1042]
+
+lib/libcurses/get_wch.c				1.19
+lib/libcurses/getch.c				1.70
+lib/libcurses/resize.c				1.27
+
+	curses: resizeterm(3) should always send KEY_RESIZE.
+	[roy, ticket #1043]
+
+sys/dev/pad/pad.c				1.58
+
+	pad(4) mixer has only 1 channel, so return EINVAL in the case
+	other than 1 is requested.
+	[nakayama, ticket #1044]
+
+sys/netinet/ip_reass.c				1.19
+
+	Hold ip_off and ip_len in the fragment entry, instead of always
+	reading the associated mbuf (and converting to host order).
+	[maxv, ticket #1045]
+
+sys/net/if_bridge.c				1.157-1.159
+
+	Fix a bug that checksum of spontaneous packets through a bridge
+	became wrong if the output interface's HW offload were enabled.
+	Fixes part of PR#53562. This change doesn't fix a case that a
+	packet is sent not from the outgoing interface which was selected
+	in ip[46]_output() but from other bridge member.
+
+	Micro optimization. m_copym(m, 0, M_COPYALL) -> m_copypacket(m).
+	[msaitoh, ticket #1046]
 
