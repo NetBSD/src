@@ -1,4 +1,4 @@
-/*	$NetBSD: if_43.c,v 1.14.2.8 2018/10/03 21:27:14 pgoyette Exp $	*/
+/*	$NetBSD: if_43.c,v 1.14.2.9 2018/10/03 21:52:02 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_43.c,v 1.14.2.8 2018/10/03 21:27:14 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_43.c,v 1.14.2.9 2018/10/03 21:52:02 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -73,6 +73,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_43.c,v 1.14.2.8 2018/10/03 21:27:14 pgoyette Exp 
 #include <compat/sys/sockio.h>
 
 #include <compat/common/compat_util.h>
+#include <compat/common/compat_mod.h>
 #include <compat/common/if_43.h>
 #include <uvm/uvm_extern.h>
 
