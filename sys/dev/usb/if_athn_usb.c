@@ -1,4 +1,4 @@
-/*	$NetBSD: if_athn_usb.c,v 1.30 2018/09/12 21:57:18 christos Exp $	*/
+/*	$NetBSD: if_athn_usb.c,v 1.31 2018/10/03 10:02:08 martin Exp $	*/
 /*	$OpenBSD: if_athn_usb.c,v 1.12 2013/01/14 09:50:31 jsing Exp $	*/
 
 /*-
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_athn_usb.c,v 1.30 2018/09/12 21:57:18 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_athn_usb.c,v 1.31 2018/10/03 10:02:08 martin Exp $");
 
 #ifdef	_KERNEL_OPT
 #include "opt_inet.h"
@@ -225,6 +225,7 @@ athn_usb_lookup(int vendor, int product)
 		_D( NETGEAR,	NETGEAR_WNDA3200,	AR7010 ),
 		_D( VIA,	VIA_AR9271,		NONE ),
 		_D( MELCO,	MELCO_CEWL_1,		AR7010 ),
+		_D( PANASONIC,	PANASONIC_N5HBZ0000055,	AR7010 ),
 #undef _D
 	};
 
