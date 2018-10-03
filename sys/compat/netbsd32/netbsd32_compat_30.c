@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_30.c,v 1.31.16.12 2018/10/03 07:03:17 pgoyette Exp $	*/
+/*	$NetBSD: netbsd32_compat_30.c,v 1.31.16.13 2018/10/03 11:59:21 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_30.c,v 1.31.16.12 2018/10/03 07:03:17 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_30.c,v 1.31.16.13 2018/10/03 11:59:21 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include <opt_ntp.h>
@@ -361,8 +361,7 @@ static struct syscall_package compat_netbsd32_30_syscalls[] = {
 	{ 0, 0, NULL }
 };
 
-MODULE(MODULE_CLASS_EXEC, compat_netbsd32_30,
-    "compat_netbsd32,compat_netbsd32_40,compat_30");
+MODULE(MODULE_CLASS_EXEC, compat_netbsd32_30, "compat_netbsd32_40,compat_30");
 
 static int
 compat_netbsd32_30_modcmd(modcmd_t cmd, void *arg)
