@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsata.c,v 1.41.2.4 2018/09/22 09:22:59 jdolecek Exp $	*/
+/*	$NetBSD: mvsata.c,v 1.41.2.5 2018/10/03 19:20:48 jdolecek Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.41.2.4 2018/09/22 09:22:59 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.41.2.5 2018/10/03 19:20:48 jdolecek Exp $");
 
 #include "opt_mvsata.h"
 
@@ -703,7 +703,7 @@ mvsata_reset_drive(struct ata_drive_datas *drvp, int flags, uint32_t *sigp)
 	uint32_t edma_c;
 	uint32_t sig;
 
-	ata_channel_lock(chp);
+	ata_channel_lock_owned(chp);
 
 	edma_c = MVSATA_EDMA_READ_4(mvport, EDMA_CMD);
 
@@ -726,10 +726,6 @@ mvsata_reset_drive(struct ata_drive_datas *drvp, int flags, uint32_t *sigp)
 		mvsata_edma_reset_qptr(mvport);
 		mvsata_edma_enable(mvport);
 	}
-
-	ata_channel_unlock(chp);
-
-	return;
 }
 #endif /* MVSATA_WITHOUTDMA */
 
@@ -743,7 +739,7 @@ mvsata_reset_channel(struct ata_channel *chp, int flags)
 	DPRINTF(DEBUG_FUNCS, ("%s: mvsata_reset_channel: channel=%d\n",
 	    device_xname(MVSATA_DEV2(mvport)), chp->ch_channel));
 
-	ata_channel_lock(chp);
+	ata_channel_lock_owned(chp);
 
 	mvsata_hreset_port(mvport);
 	sstat = sata_reset_interface(chp, mvport->port_iot,
@@ -774,10 +770,6 @@ mvsata_reset_channel(struct ata_channel *chp, int flags)
 	mvsata_edma_reset_qptr(mvport);
 	mvsata_edma_enable(mvport);
 #endif
-
-	ata_channel_unlock(chp);
-
-	return;
 }
 
 #ifndef MVSATA_WITHOUTDMA
@@ -3562,6 +3554,8 @@ mvsata_edma_disable(struct mvsata_port *mvport, int timeout, int wflags)
 	uint32_t status, command;
 	uint32_t idlestatus = EDMA_S_EDMAIDLE | EDMA_S_ECACHEEMPTY;
 	int t;
+
+	ata_channel_lock_owned(chp);
 
 	if (MVSATA_EDMA_READ_4(mvport, EDMA_CMD) & EDMA_CMD_EENEDMA) {
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ata.c,v 1.141.6.10 2018/09/24 19:48:02 jdolecek Exp $	*/
+/*	$NetBSD: ata.c,v 1.141.6.11 2018/10/03 19:20:48 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.141.6.10 2018/09/24 19:48:02 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.141.6.11 2018/10/03 19:20:48 jdolecek Exp $");
 
 #include "opt_ata.h"
 
@@ -440,7 +440,7 @@ atabus_thread(void *arg)
 	struct ata_channel *chp = sc->sc_chan;
 	struct ata_queue *chq = chp->ch_queue;
 	struct ata_xfer *xfer;
-	int i, rv, s;
+	int i, rv;
 
 	ata_channel_lock(chp);
 	chp->ch_flags |= ATACH_TH_RUN;
@@ -462,7 +462,8 @@ atabus_thread(void *arg)
 
 	ata_channel_lock(chp);
 	for (;;) {
-		if ((chp->ch_flags & (ATACH_TH_RESET | ATACH_SHUTDOWN)) == 0 &&
+		if ((chp->ch_flags & (ATACH_TH_RESET | ATACH_TH_DRIVE_RESET
+		    | ATACH_SHUTDOWN)) == 0 &&
 		    (chq->queue_active == 0 || chq->queue_freeze == 0)) {
 			chp->ch_flags &= ~ATACH_TH_RUN;
 			cv_wait(&chp->ch_thr_idle, &chp->ch_lock);
@@ -478,12 +479,24 @@ atabus_thread(void *arg)
 			ata_channel_lock(chp);
 		}
 		if (chp->ch_flags & ATACH_TH_RESET) {
-			/* ata_reset_channel() will unfreeze the channel */
-			ata_channel_unlock(chp);
-			s = splbio();
-			ata_reset_channel(chp, AT_WAIT | chp->ch_reset_flags);
-			splx(s);
-			ata_channel_lock(chp);
+			/* this will unfreeze the channel */
+			ata_thread_run(chp, AT_WAIT | chp->ch_reset_flags,
+			    ATACH_TH_RESET, ATACH_NODRIVE);
+		} else if (chp->ch_flags & ATACH_TH_DRIVE_RESET) {
+			for (i = 0; i < chp->ch_ndrives; i++) {
+				struct ata_drive_datas *drvp;
+				int drv_reset_flags;
+
+				drvp = &chp->ch_drive[i];
+				drv_reset_flags = drvp->drive_reset_flags;
+
+				if (drvp->drive_flags & ATACH_TH_DRIVE_RESET) {
+					ata_thread_run(chp,
+					    AT_WAIT | drv_reset_flags,
+					    ATACH_TH_DRIVE_RESET, i);
+				}
+			}
+			chp->ch_flags &= ~ATACH_TH_DRIVE_RESET;
 		} else if (chq->queue_active > 0 && chq->queue_freeze == 1) {
 			/*
 			 * Caller has bumped queue_freeze, decrease it. This
@@ -511,6 +524,11 @@ atabus_thread(void *arg)
 			}
 		} else if (chq->queue_freeze > 1)
 			panic("%s: queue_freeze", __func__);
+
+		/* Try to run down the queue once after each event is handled */
+		ata_channel_unlock(chp);
+		atastart(chp);
+		ata_channel_lock(chp);
 	}
 	chp->ch_thread = NULL;
 	cv_signal(&chp->ch_thr_idle);
@@ -1471,7 +1489,8 @@ ata_timo_xfer_check(struct ata_xfer *xfer)
 			ata_channel_unlock(chp);
 
 	    		device_printf(drvp->drv_softc,
-			    "xfer %p freed while invoking timeout\n", xfer); 
+			    "xfer %"PRIxPTR" freed while invoking timeout\n",
+			    (intptr_t)xfer & PAGE_MASK); 
 
 			ata_free_xfer(chp, xfer);
 			return true;
@@ -1481,7 +1500,8 @@ ata_timo_xfer_check(struct ata_xfer *xfer)
 		ata_channel_unlock(chp);
 
 	    	device_printf(drvp->drv_softc,
-		    "xfer %p deactivated while invoking timeout\n", xfer); 
+		    "xfer %"PRIxPTR" deactivated while invoking timeout\n",
+		    (intptr_t)xfer & PAGE_MASK); 
 		return true;
 	}
 
@@ -1605,44 +1625,28 @@ ata_channel_thaw(struct ata_channel *chp)
 }
 
 /*
- * ata_reset_channel:
+ * ata_thread_run:
  *
- *	Reset and ATA channel.
- *
- *	MUST BE CALLED AT splbio()!
+ *	Reset and ATA channel. Channel lock must be held.
  */
 void
-ata_reset_channel(struct ata_channel *chp, int flags)
+ata_thread_run(struct ata_channel *chp, int flags, int type, int drive)
 {
 	struct atac_softc *atac = chp->ch_atac;
-	int drive;
 	bool threset = false;
+	struct ata_drive_datas *drvp;
 
-#ifdef ATA_DEBUG
-	int spl1, spl2;
-
-	spl1 = splbio();
-	spl2 = splbio();
-	if (spl2 != spl1) {
-		printf("ata_reset_channel: not at splbio()\n");
-		panic("ata_reset_channel");
-	}
-	splx(spl2);
-	splx(spl1);
-#endif /* ATA_DEBUG */
-
-	ata_channel_lock(chp);
+	ata_channel_lock_owned(chp);
 
 	/*
 	 * If we can poll or wait it's OK, otherwise wake up the
 	 * kernel thread to do it for us.
 	 */
-	ATADEBUG_PRINT(("ata_reset_channel flags 0x%x ch_flags 0x%x\n",
-	    flags, chp->ch_flags), DEBUG_FUNCS | DEBUG_XFERS);
+	ATADEBUG_PRINT(("%s flags 0x%x ch_flags 0x%x\n",
+	    __func__, flags, chp->ch_flags), DEBUG_FUNCS | DEBUG_XFERS);
 	if ((flags & (AT_POLL | AT_WAIT)) == 0) {
-		if (chp->ch_flags & ATACH_TH_RESET) {
+		if (chp->ch_flags & type) {
 			/* No need to schedule a reset more than one time. */
-			ata_channel_unlock(chp);
 			return;
 		}
 
@@ -1651,10 +1655,24 @@ ata_reset_channel(struct ata_channel *chp, int flags)
 		 * to a thread.
 		 */
 		ata_channel_freeze_locked(chp);
-		chp->ch_flags |= ATACH_TH_RESET;
-		chp->ch_reset_flags = flags & AT_RST_EMERG;
+		chp->ch_flags |= type;
+
+
+		switch (type) {
+		case ATACH_TH_RESET:
+			chp->ch_reset_flags = flags & AT_RST_EMERG;
+			break;
+		case ATACH_TH_DRIVE_RESET:
+			drvp = &chp->ch_drive[drive];
+			drvp->drive_flags |= ATACH_TH_DRIVE_RESET;
+			drvp->drive_reset_flags = flags;
+			break;
+		default:
+			panic("%s: unknown type: %x", __func__, type);
+			/* NOTREACHED */
+		}
+
 		cv_signal(&chp->ch_thr_idle);
-		ata_channel_unlock(chp);
 		return;
 	}
 
@@ -1666,19 +1684,31 @@ ata_reset_channel(struct ata_channel *chp, int flags)
 	 * the flag now so that the thread won't try to execute it if
 	 * we happen to sleep, and thaw one more time after the reset.
 	 */
-	if (chp->ch_flags & ATACH_TH_RESET) {
-		chp->ch_flags &= ~ATACH_TH_RESET;
+	if (chp->ch_flags & type) {
+		chp->ch_flags &= ~type;
 		threset = true;
 	}
 
-	ata_channel_unlock(chp);
+	switch (type) {
+	case ATACH_TH_RESET:
+		(*atac->atac_bustype_ata->ata_reset_channel)(chp, flags);
 
-	(*atac->atac_bustype_ata->ata_reset_channel)(chp, flags);
+		KASSERT(chp->ch_ndrives == 0 || chp->ch_drive != NULL);
+		for (drive = 0; drive < chp->ch_ndrives; drive++)
+			chp->ch_drive[drive].state = 0;
+		break;
 
-	ata_channel_lock(chp);
-	KASSERT(chp->ch_ndrives == 0 || chp->ch_drive != NULL);
-	for (drive = 0; drive < chp->ch_ndrives; drive++)
-		chp->ch_drive[drive].state = 0;
+	case ATACH_TH_DRIVE_RESET:
+		KASSERT(drive <= chp->ch_ndrives);
+		drvp = &chp->ch_drive[drive];
+		(*atac->atac_bustype_ata->ata_reset_drive)(drvp, flags, NULL);
+		drvp->state = 0;
+		break;
+
+	default:
+		panic("%s: unknown type: %x", __func__, type);
+		/* NOTREACHED */
+	}
 
 	/*
 	 * Thaw one extra time to clear the freeze done when the reset has
@@ -1693,13 +1723,9 @@ ata_reset_channel(struct ata_channel *chp, int flags)
 	/* Signal the thread in case there is an xfer to run */
 	cv_signal(&chp->ch_thr_idle);
 
-	ata_channel_unlock(chp);
-
 	if (flags & AT_RST_EMERG) {
 		/* make sure that we can use polled commands */
 		ata_queue_reset(chp->ch_queue);
-	} else {
-		atastart(chp);
 	}
 }
 
@@ -1846,7 +1872,7 @@ ata_downgrade_mode(struct ata_drive_datas *drvp, int flags)
 	(*atac->atac_set_modes)(chp);
 	ata_print_modes(chp);
 	/* reset the channel, which will schedule all drives for setup */
-	ata_reset_channel(chp, flags);
+	ata_thread_run(chp, flags, ATACH_TH_RESET, ATACH_NODRIVE);
 	return 1;
 }
 #endif	/* NATA_DMA */
@@ -2186,7 +2212,6 @@ atabusioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 	struct ata_channel *chp = sc->sc_chan;
 	int min_drive, max_drive, drive;
 	int error;
-	int s;
 
 	/*
 	 * Enforce write permission for ioctls that change the
@@ -2203,9 +2228,10 @@ atabusioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 
 	switch (cmd) {
 	case ATABUSIORESET:
-		s = splbio();
-		ata_reset_channel(sc->sc_chan, AT_WAIT | AT_POLL);
-		splx(s);
+		ata_channel_lock(chp);
+		ata_thread_run(sc->sc_chan, AT_WAIT | AT_POLL,
+		    ATACH_TH_RESET, ATACH_NODRIVE);
+		ata_channel_unlock(chp);
 		return 0;
 	case ATABUSIOSCAN:
 	{
@@ -2283,11 +2309,11 @@ atabus_resume(device_t dv, const pmf_qual_t *qual)
 	/* unfreeze the queue and reset drives */
 	ata_channel_thaw_locked(chp);
 
-	ata_channel_unlock(chp);
-
 	/* reset channel only if there are drives attached */
 	if (chp->ch_ndrives > 0)
-		ata_reset_channel(chp, AT_WAIT);
+		ata_thread_run(chp, AT_WAIT, ATACH_TH_RESET, ATACH_NODRIVE);
+
+	ata_channel_unlock(chp);
 
 out:
 	return true;
@@ -2336,6 +2362,7 @@ atabus_rescan(device_t self, const char *ifattr, const int *locators)
 void
 ata_delay(struct ata_channel *chp, int ms, const char *msg, int flags)
 {
+	KASSERT(mutex_owned(&chp->ch_lock));
 
 	if ((flags & (AT_WAIT | AT_POLL)) == AT_POLL) {
 		/*
@@ -2346,7 +2373,6 @@ ata_delay(struct ata_channel *chp, int ms, const char *msg, int flags)
 	} else {
 		int pause = mstohz(ms);
 
-		KASSERT(mutex_owned(&chp->ch_lock));
 		kpause(msg, false, pause > 0 ? pause : 1, &chp->ch_lock);
 	}
 }

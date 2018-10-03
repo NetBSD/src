@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.441.2.6 2018/09/22 17:50:09 jdolecek Exp $ */
+/*	$NetBSD: wd.c,v 1.441.2.7 2018/10/03 19:20:48 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.441.2.6 2018/09/22 17:50:09 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.441.2.7 2018/10/03 19:20:48 jdolecek Exp $");
 
 #include "opt_ata.h"
 #include "opt_wd.h"
@@ -661,8 +661,8 @@ wdstart1(struct wd_softc *wd, struct buf *bp, struct ata_xfer *xfer)
 	 */
 	if (BUF_ISREAD(bp) && xfer->c_retries == 0 && wd->drv_chaos_freq > 0 &&
 	    (++wd->drv_chaos_cnt % wd->drv_chaos_freq) == 0) {
-		aprint_normal_dev(dksc->sc_dev, "%s: chaos xfer %p\n",
-		    __func__, xfer);
+		device_printf(dksc->sc_dev, "%s: chaos xfer %"PRIxPTR"\n",
+		    __func__, (intptr_t)xfer & PAGE_MASK);
 		xfer->c_bio.blkno = 7777777 + wd->sc_capacity;
 		xfer->c_flags |= C_CHAOS;
 	}
@@ -840,7 +840,10 @@ wddone(device_t self, struct ata_xfer *xfer)
 retry:		/* Just reset and retry. Can we do more ? */
 		if ((xfer->c_flags & C_RECOVERED) == 0) {
 			int wflags = (xfer->c_flags & C_POLL) ? AT_POLL : 0;
-			(*wd->atabus->ata_reset_drive)(wd->drvp, wflags, NULL);
+			ata_channel_lock(wd->drvp->chnl_softc);
+			ata_thread_run(wd->drvp->chnl_softc, wflags,
+			    ATACH_TH_DRIVE_RESET, wd->drvp->drive);
+			ata_channel_unlock(wd->drvp->chnl_softc);
 		}
 retry2:
 		mutex_enter(&wd->sc_lock);
@@ -848,7 +851,8 @@ retry2:
 		diskerr(bp, "wd", errmsg, LOG_PRINTF,
 		    xfer->c_bio.blkdone, dksc->sc_dkdev.dk_label);
 		if (xfer->c_retries < WDIORETRIES)
-			printf(", xfer %p, retry %d", xfer,
+			printf(", xfer %"PRIxPTR", retry %d",
+			    (intptr_t)xfer & PAGE_MASK,
 			    xfer->c_retries + 1);
 		printf("\n");
 		if (do_perror)
@@ -911,8 +915,9 @@ out:
 		break;
 	case NOERROR:
 noerror:	if ((xfer->c_bio.flags & ATA_CORR) || xfer->c_retries > 0)
-			aprint_error_dev(dksc->sc_dev,
-			    "soft error (corrected) xfer %p\n", xfer);
+			device_printf(dksc->sc_dev,
+			    "soft error (corrected) xfer %"PRIxPTR"\n",
+			    (intptr_t)xfer & PAGE_MASK);
 #ifdef WD_CHAOS_MONKEY
 		KASSERT((xfer->c_flags & C_CHAOS) == 0);
 #endif

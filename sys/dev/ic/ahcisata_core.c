@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata_core.c,v 1.62.2.5 2018/09/22 09:22:59 jdolecek Exp $	*/
+/*	$NetBSD: ahcisata_core.c,v 1.62.2.6 2018/10/03 19:20:48 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.62.2.5 2018/09/22 09:22:59 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.62.2.6 2018/10/03 19:20:48 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -683,7 +683,7 @@ ahci_reset_drive(struct ata_drive_datas *drvp, int flags, uint32_t *sigp)
 	struct ahci_softc *sc = (struct ahci_softc *)chp->ch_atac;
 	uint8_t c_slot;
 
-	ata_channel_lock(chp);
+	ata_channel_lock_owned(chp);
 
 	/* get a slot for running the command on */
 	if (!ata_queue_alloc_slot(chp, &c_slot, ATA_MAX_OPENINGS)) {
@@ -696,13 +696,10 @@ ahci_reset_drive(struct ata_drive_datas *drvp, int flags, uint32_t *sigp)
 	AHCI_WRITE(sc, AHCI_GHC,
 	    AHCI_READ(sc, AHCI_GHC) & ~AHCI_GHC_IE);
 	ahci_channel_stop(sc, chp, flags);
-	if (ahci_do_reset_drive(chp, drvp->drive, flags, sigp, c_slot) != 0)
-		ata_reset_channel(chp, flags);
+	ahci_do_reset_drive(chp, drvp->drive, flags, sigp, c_slot);
 	AHCI_WRITE(sc, AHCI_GHC, AHCI_READ(sc, AHCI_GHC) | AHCI_GHC_IE);
 
 	ata_queue_free_slot(chp, c_slot);
-
-	ata_channel_unlock(chp);
 }
 
 /* return error code from ata_bio */

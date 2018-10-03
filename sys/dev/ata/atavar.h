@@ -1,4 +1,4 @@
-/*	$NetBSD: atavar.h,v 1.99.2.7 2018/09/22 17:50:09 jdolecek Exp $	*/
+/*	$NetBSD: atavar.h,v 1.99.2.8 2018/10/03 19:20:48 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -274,6 +274,8 @@ struct ata_drive_datas {
 #define ATA_DRIVE_WFUA		0x0100	/* drive supports WRITE DMA FUA EXT */
 #define ATA_DRIVE_NCQ		0x0200	/* drive supports NCQ feature set */
 #define ATA_DRIVE_NCQ_PRIO	0x0400	/* drive supports NCQ PRIO field */
+#define ATA_DRIVE_TH_RESET	0x0800	/* drive waits for thread drive reset */
+	int drive_reset_flags;	/* flags for drive reset via thread */
 
 	uint8_t drive_type;
 #define	ATA_DRIVET_NONE		0
@@ -415,6 +417,9 @@ struct ata_channel {
 #define ATACH_TH_RESCAN 0x400	/* rescan requested */
 #define ATACH_NCQ	0x800	/* channel executing NCQ commands */
 #define ATACH_DMA_BEFORE_CMD	0x1000	/* start DMA first */
+#define ATACH_TH_DRIVE_RESET	0x2000	/* thread asked for drive(s) reset */
+
+#define ATACH_NODRIVE	0xff	/* no drive selected for reset */
 
 	/* for the reset callback */
 	int ch_reset_flags;
@@ -543,7 +548,7 @@ void	ata_timeout(void *);
 bool	ata_timo_xfer_check(struct ata_xfer *);
 void	ata_kill_pending(struct ata_drive_datas *);
 void	ata_kill_active(struct ata_channel *, int, int);
-void	ata_reset_channel(struct ata_channel *, int);
+void	ata_thread_run(struct ata_channel *, int, int, int);
 void	ata_channel_freeze(struct ata_channel *);
 void	ata_channel_thaw(struct ata_channel *);
 void	ata_channel_lock(struct ata_channel *);
