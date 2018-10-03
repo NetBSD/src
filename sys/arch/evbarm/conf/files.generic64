@@ -1,4 +1,4 @@
-#	$NetBSD: files.generic64,v 1.5 2018/09/08 00:51:57 jmcneill Exp $
+#	$NetBSD: files.generic64,v 1.6 2018/10/03 09:24:36 skrll Exp $
 #
 
 defparam opt_arm_debug.h	EARLYCONS
@@ -12,6 +12,7 @@ include "arch/evbarm/conf/files.fdt"
 #
 include "arch/arm/amd/files.seattle"
 include "arch/arm/broadcom/files.bcm2835"
+include "arch/arm/cavium/files.thunderx"
 include "arch/arm/nvidia/files.tegra"
 include "arch/arm/rockchip/files.rockchip"
 include "arch/arm/sunxi/files.sunxi"

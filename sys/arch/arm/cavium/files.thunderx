@@ -1,0 +1,9 @@
+#	$NetBSD: files.thunderx,v 1.1 2018/10/03 09:24:36 skrll Exp $
+#
+# Configuration info for Cavium ThunderX based systems.
+#
+#
+
+file	arch/arm/cavium/thunderx_platform.c	soc_thunderx
+
+defflag	opt_soc.h				SOC_THUNDERX
