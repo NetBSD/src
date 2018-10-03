@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.9 2018/10/03 09:59:05 skrll Exp $ */
+/* $NetBSD: cpu.c,v 1.10 2018/10/03 13:59:31 skrll Exp $ */
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: cpu.c,v 1.9 2018/10/03 09:59:05 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: cpu.c,v 1.10 2018/10/03 13:59:31 skrll Exp $");
 
 #include "locators.h"
 #include "opt_arm_debug.h"
@@ -180,7 +180,7 @@ const struct cpuidtab cpuids[] = {
 	{ CPU_ID_THUNDERXRX, "Cavium ThunderX", "Cavium", "V8-A" },
 	{ CPU_ID_THUNDERX81XXRX, "Cavium ThunderX CN81XX", "Cavium", "V8-A" },
 	{ CPU_ID_THUNDERX83XXRX, "Cavium ThunderX CN83XX", "Cavium", "V8-A" },
-	{ CPU_ID_THUNDERX2RX, "Cavium Thunder X2", "Cavium", "V8.1-A" },
+	{ CPU_ID_THUNDERX2RX, "Cavium ThunderX2", "Cavium", "V8.1-A" },
 };
 
 static void
