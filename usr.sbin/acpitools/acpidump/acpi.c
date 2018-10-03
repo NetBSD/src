@@ -1,4 +1,4 @@
-/* $NetBSD: acpi.c,v 1.30 2018/10/03 09:46:11 msaitoh Exp $ */
+/* $NetBSD: acpi.c,v 1.31 2018/10/03 09:52:59 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 1998 Doug Rabson
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: acpi.c,v 1.30 2018/10/03 09:46:11 msaitoh Exp $");
+__RCSID("$NetBSD: acpi.c,v 1.31 2018/10/03 09:52:59 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/endian.h>
@@ -2520,6 +2520,8 @@ devscope_type2str(int type)
 		return ("IOAPIC");
 	case 4:
 		return ("HPET");
+	case 5:
+		return ("ACPI Name space");
 	default:
 		snprintf(typebuf, sizeof(typebuf), "%d", type);
 		return (typebuf);
@@ -2667,6 +2669,17 @@ acpi_handle_dmar_rhsa(ACPI_DMAR_RHSA *rhsa)
 	printf("\tProximityDomain=0x%08x\n", rhsa->ProximityDomain);
 }
 
+static void
+acpi_handle_dmar_andd(ACPI_DMAR_ANDD *andd)
+{
+
+	printf("\n");
+	printf("\tType=ANDD\n");
+	printf("\tLength=%d\n", andd->Header.Length);
+	printf("\tDeviceNumber=%d\n", andd->DeviceNumber);
+	printf("\tDeviceName=0x%s\n", andd->DeviceName);
+}
+
 static int
 acpi_handle_dmar_remapping_structure(void *addr, int remaining)
 {
@@ -2690,6 +2703,9 @@ acpi_handle_dmar_remapping_structure(void *addr, int remaining)
 		break;
 	case ACPI_DMAR_TYPE_HARDWARE_AFFINITY:
 		acpi_handle_dmar_rhsa(addr);
+		break;
+	case ACPI_DMAR_TYPE_NAMESPACE:
+		acpi_handle_dmar_andd(addr);
 		break;
 	default:
 		printf("\n");
@@ -2721,6 +2737,7 @@ acpi_handle_dmar(ACPI_TABLE_HEADER *sdp)
 	printf("\tFlags=");
 	PRINTFLAG(dmar->Flags, INTR_REMAP);
 	PRINTFLAG(dmar->Flags, X2APIC_OPT_OUT);
+	PRINTFLAG(dmar->Flags, X2APIC_MODE);
 	PRINTFLAG_END();
 
 #undef PRINTFLAG
