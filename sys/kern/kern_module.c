@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module.c,v 1.130.2.23 2018/09/09 11:54:10 pgoyette Exp $	*/
+/*	$NetBSD: kern_module.c,v 1.130.2.24 2018/10/03 22:53:52 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.130.2.23 2018/09/09 11:54:10 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.130.2.24 2018/10/03 22:53:52 pgoyette Exp $");
 
 #define _MODULE_INTERNAL
 
@@ -1453,8 +1453,8 @@ module_fetch_info(module_t *mod)
 		return error;
 	}
 	if (size != sizeof(modinfo_t **)) {
-		module_error("`link_set_modules' section wrong size %zu != %zu",
-		    size, sizeof(modinfo_t **));
+		module_error("`link_set_modules' section wrong size "
+		    "(got %zu, wanted %zu)", size, sizeof(modinfo_t **));
 		return ENOEXEC;
 	}
 	mod->mod_info = *(modinfo_t **)addr;
