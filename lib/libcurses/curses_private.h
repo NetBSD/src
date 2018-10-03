@@ -1,4 +1,4 @@
-/*	$NetBSD: curses_private.h,v 1.64 2018/10/02 17:35:44 roy Exp $	*/
+/*	$NetBSD: curses_private.h,v 1.65 2018/10/03 13:22:29 roy Exp $	*/
 
 /*-
  * Copyright (c) 1998-2000 Brett Lymn
@@ -379,7 +379,7 @@ void	 __restore_termios(void);
 void	 __restore_stophandler(void);
 void	 __restore_winchhandler(void);
 int	 __ripoffscreen(SCREEN *);
-void	 __ripoffresize(SCREEN *);
+int	 __ripoffresize(SCREEN *);
 void	 __ripofftouch(SCREEN *);
 int	 __rippedlines(const SCREEN *, int);
 void	 __save_termios(void);
