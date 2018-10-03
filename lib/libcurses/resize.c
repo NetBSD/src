@@ -1,4 +1,4 @@
-/*	$NetBSD: resize.c,v 1.26 2017/01/24 17:27:30 roy Exp $	*/
+/*	$NetBSD: resize.c,v 1.26.4.1 2018/10/03 17:49:06 martin Exp $	*/
 
 /*
  * Copyright (c) 2001
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)resize.c   blymn 2001/08/26";
 #else
-__RCSID("$NetBSD: resize.c,v 1.26 2017/01/24 17:27:30 roy Exp $");
+__RCSID("$NetBSD: resize.c,v 1.26.4.1 2018/10/03 17:49:06 martin Exp $");
 #endif
 #endif				/* not lint */
 
@@ -163,6 +163,8 @@ resizeterm(int nlines, int ncols)
 	__CTRACE(__CTRACE_WINDOW, "resizeterm: (%d, %d)\n", nlines, ncols);
 #endif
 
+	/* Unconditionally inform application screen has been resized. */
+	_cursesi_screen->resized = 1;
 
 	if (!is_term_resized(nlines, ncols))
 		return OK;
