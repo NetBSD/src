@@ -1,4 +1,4 @@
-/*	$NetBSD: slk.c,v 1.3 2018/10/04 18:40:41 roy Exp $	*/
+/*	$NetBSD: slk.c,v 1.4 2018/10/04 19:11:09 roy Exp $	*/
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: slk.c,v 1.3 2018/10/04 18:40:41 roy Exp $");
+__RCSID("$NetBSD: slk.c,v 1.4 2018/10/04 19:11:09 roy Exp $");
 #endif				/* not lint */
 
 #include <ctype.h>
@@ -560,10 +560,12 @@ __slk_init(SCREEN *screen)
 {
 
 	__slk_free(screen);	/* safety */
-	if (slk_fmt == SLK_FMT_INVAL)
-		return OK;
 
 	screen->slk_format = slk_fmt;
+	if (slk_fmt == SLK_FMT_INVAL)
+		return OK;
+	slk_fmt = SLK_FMT_INVAL;
+
 	switch(screen->slk_format) {
 	case SLK_FMT_3_2_3:
 	case SLK_FMT_4_4:
