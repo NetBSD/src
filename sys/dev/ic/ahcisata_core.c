@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata_core.c,v 1.62.2.6 2018/10/03 19:20:48 jdolecek Exp $	*/
+/*	$NetBSD: ahcisata_core.c,v 1.62.2.7 2018/10/04 17:59:35 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.62.2.6 2018/10/03 19:20:48 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.62.2.7 2018/10/04 17:59:35 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -885,7 +885,7 @@ ahci_reset_channel(struct ata_channel *chp, int flags)
 	struct ahci_channel *achp = (struct ahci_channel *)chp;
 	int i, tfd;
 
-	ata_channel_lock(chp);
+	ata_channel_lock_owned(chp);
 
 	ahci_channel_stop(sc, chp, flags);
 	if (sata_reset_interface(chp, sc->sc_ahcit, achp->ahcic_scontrol,
@@ -914,8 +914,6 @@ ahci_reset_channel(struct ata_channel *chp, int flags)
 	    DEBUG_PROBE);
 	/* clear port interrupt register */
 	AHCI_WRITE(sc, AHCI_P_IS(chp->ch_channel), 0xffffffff);
-
-	ata_channel_unlock(chp);
 
 	return;
 }
@@ -1709,7 +1707,9 @@ ahci_channel_recover(struct ahci_softc *sc, struct ata_channel *chp, int tfd)
 		 * transfers.
 		 */
 reset:
+		ata_channel_lock(chp);
 		ahci_reset_channel(chp, AT_POLL);
+		ata_channel_unlock(chp);
 		goto out;
 		/* NOTREACHED */
 

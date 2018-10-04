@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsata.c,v 1.41.2.5 2018/10/03 19:20:48 jdolecek Exp $	*/
+/*	$NetBSD: mvsata.c,v 1.41.2.6 2018/10/04 17:59:35 jdolecek Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.41.2.5 2018/10/03 19:20:48 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.41.2.6 2018/10/04 17:59:35 jdolecek Exp $");
 
 #include "opt_mvsata.h"
 
@@ -635,7 +635,9 @@ mvsata_channel_recover(struct mvsata_port *mvport)
 		 * reset the drive. This will also kill all still outstanding
 		 * transfers.
 		 */
+		ata_channel_lock(chp);
 		mvsata_reset_channel(chp, AT_POLL);
+		ata_channel_unlock(chp);
 		goto out;
 		/* NOTREACHED */
 
