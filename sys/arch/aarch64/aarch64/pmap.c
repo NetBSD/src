@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.25 2018/10/04 09:09:29 ryo Exp $	*/
+/*	$NetBSD: pmap.c,v 1.26 2018/10/04 23:53:13 ryo Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,12 +27,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.25 2018/10/04 09:09:29 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.26 2018/10/04 23:53:13 ryo Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_ddb.h"
-#include "opt_uvmhist.h"
+#include "opt_multiprocessor.h"
 #include "opt_pmap.h"
+#include "opt_uvmhist.h"
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -260,55 +261,33 @@ pm_addr_check(struct pmap *pm, vaddr_t va, const char *prefix)
 
 static const struct pmap_devmap *pmap_devmap_table;
 
-/* XXX: for now, only support for devmap */
 static vsize_t
-_pmap_map_chunk(pd_entry_t *l2, vaddr_t va, paddr_t pa, vsize_t size,
+pmap_map_chunk(vaddr_t va, paddr_t pa, vsize_t size,
     vm_prot_t prot, u_int flags)
 {
-	pd_entry_t oldpte __debugused;
 	pt_entry_t attr;
-	vsize_t resid;
+	psize_t blocksize;
+	int rc;
 
-	oldpte = l2[l2pde_index(va)];
-	KDASSERT(!l2pde_valid(oldpte));
+	/* devmap always use L2 mapping */
+	blocksize = L2_SIZE;
 
 	attr = _pmap_pte_adjust_prot(L2_BLOCK, prot, VM_PROT_ALL, false);
 	attr = _pmap_pte_adjust_cacheflags(attr, flags | PMAP_DEV);
-#ifdef MULTIPROCESSOR
-	attr |= LX_BLKPAG_SH_IS;
-#endif
 	/* user cannot execute, and kernel follows the prot */
 	attr |= (LX_BLKPAG_UXN|LX_BLKPAG_PXN);
 	if (prot & VM_PROT_EXECUTE)
 		attr &= ~LX_BLKPAG_PXN;
 
-	resid = (size + (L2_SIZE - 1)) & ~(L2_SIZE - 1);
-	size = resid;
+	rc = pmapboot_enter(va, pa, size, blocksize, attr,
+	    PMAPBOOT_ENTER_NOOVERWRITE, bootpage_alloc, NULL);
+	if (rc != 0)
+		panic("%s: pmapboot_enter failed. %lx is already mapped?\n",
+		    __func__, va);
 
-	while (resid > 0) {
-		pt_entry_t pte;
+	aarch64_tlbi_by_va(va);
 
-		pte = pa | attr;
-
-		if (prot & VM_PROT_EXECUTE) {
-			pt_entry_t tpte;
-			/* need write permission to invalidate icache */
-			tpte = pte & ~(LX_BLKPAG_AF|LX_BLKPAG_AP);
-			tpte |= (LX_BLKPAG_AF|LX_BLKPAG_AP_RW);
-			tpte |= (LX_BLKPAG_UXN|LX_BLKPAG_PXN);
-			atomic_swap_64(&l2[l2pde_index(va)], tpte);
-			aarch64_tlbi_by_va(va);
-			cpu_icache_sync_range(va, L2_SIZE);
-		}
-		atomic_swap_64(&l2[l2pde_index(va)], pte);
-		aarch64_tlbi_by_va(va);
-
-		va += L2_SIZE;
-		pa += L2_SIZE;
-		resid -= L2_SIZE;
-	}
-
-	return size;
+	return ((va + size + blocksize - 1) & ~(blocksize - 1)) - va;
 }
 
 void
@@ -320,13 +299,10 @@ pmap_devmap_register(const struct pmap_devmap *table)
 void
 pmap_devmap_bootstrap(const struct pmap_devmap *table)
 {
-	pd_entry_t *l0, *l1, *l2;
 	vaddr_t va;
 	int i;
 
 	pmap_devmap_register(table);
-
-	l0 = (void *)AARCH64_PA_TO_KVA(reg_ttbr1_el1_read());
 
 	VPRINTF("%s:\n", __func__);
 	for (i = 0; table[i].pd_size != 0; i++) {
@@ -336,34 +312,16 @@ pmap_devmap_bootstrap(const struct pmap_devmap *table)
 		    table[i].pd_va);
 		va = table[i].pd_va;
 
+		KASSERT((VM_KERNEL_IO_ADDRESS <= va) &&
+		    (va < (VM_KERNEL_IO_ADDRESS + VM_KERNEL_IO_SIZE)));
+
 		/* update and check virtual_devmap_addr */
 		if ((virtual_devmap_addr == 0) ||
 		    (virtual_devmap_addr > va)) {
 			virtual_devmap_addr = va;
-
-			/* XXX: only one L2 table is allocated for devmap  */
-			if ((VM_MAX_KERNEL_ADDRESS - virtual_devmap_addr) >
-			    (L2_SIZE * Ln_ENTRIES)) {
-				panic("devmap va:%016lx out of range."
-				    " available devmap range is %016lx-%016lx",
-				    va,
-				    VM_MAX_KERNEL_ADDRESS -
-				    (L2_SIZE * Ln_ENTRIES),
-				    VM_MAX_KERNEL_ADDRESS);
-			}
 		}
 
-		l1 = (void *)l0pde_pa(l0[l0pde_index(va)]);
-		KASSERT(l1 != NULL);
-		l1 = (void *)AARCH64_PA_TO_KVA((paddr_t)l1);
-
-		l2 = (void *)l1pde_pa(l1[l1pde_index(va)]);
-		if (l2 == NULL)
-			panic("L2 table for devmap is not allocated");
-
-		l2 = (void *)AARCH64_PA_TO_KVA((paddr_t)l2);
-
-		_pmap_map_chunk(l2,
+		pmap_map_chunk(
 		    table[i].pd_va,
 		    table[i].pd_pa,
 		    table[i].pd_size,
@@ -2064,46 +2022,59 @@ pmap_kvattr(vaddr_t va, vm_prot_t prot)
 	return opte;
 }
 
-static void
-pmap_db_pte_print(pt_entry_t pte, int level, void (*pr)(const char *, ...))
+void
+pmap_db_pte_print(pt_entry_t pte, int level,
+    void (*pr)(const char *, ...) __printflike(1, 2))
 {
 	if (pte == 0) {
 		pr(" UNUSED\n");
+		return;
+	}
 
-	} else if (level == 0) {
-		/* L0 pde */
-		pr(", %s",
-		    l1pde_is_table(pte) ? "TABLE" : "***ILLEGAL TYPE***");
-		pr(", %s", l0pde_valid(pte) ? "VALID" : "***INVALID***");
+	pr(" %s", (pte & LX_VALID) ? "VALID" : "**INVALID**");
 
-		pr(", PA=%016lx", l0pde_pa(pte));
+	if ((level == 0) ||
+	    ((level == 1) && l1pde_is_table(pte)) ||
+	    ((level == 2) && l2pde_is_table(pte))) {
+
+		/* L0/L1/L2 TABLE */
+		if ((level == 0) && ((pte & LX_TYPE) != LX_TYPE_TBL))
+			pr(" **ILLEGAL TYPE**"); /* L0 doesn't support block */
+		else
+			pr(" TABLE");
+
+		pr(", PA=%lx", l0pde_pa(pte));
+
+		if (pte & LX_TBL_NSTABLE)
+			pr(", NSTABLE");
+		if (pte & LX_TBL_APTABLE)
+			pr(", APTABLE");
+		if (pte & LX_TBL_UXNTABLE)
+			pr(", UXNTABLE");
+		if (pte & LX_TBL_PXNTABLE)
+			pr(", PXNTABLE");
 
 	} else if (((level == 1) && l1pde_is_block(pte)) ||
 	    ((level == 2) && l2pde_is_block(pte)) ||
-		(level == 3)) {
+	    (level == 3)) {
 
+		/* L1/L2 BLOCK or L3 PAGE */
 		if (level == 3) {
-			pr(", %s",
-			    l3pte_is_page(pte) ? " PAGE" : "**ILLEGAL TYPE**");
-			pr(", %s",
-			    l3pte_valid(pte) ? "VALID" : "**INVALID**");
-		} else {
-			pr(", %s", l1pde_is_table(pte) ? "TABLE" : "BLOCK");
-			pr(", %s",
-			    l1pde_valid(pte) ? "VALID" : "**INVALID**");
-		}
+			pr(" %s", l3pte_is_page(pte) ?
+			    "PAGE" : "**ILLEGAL TYPE**");
+		} else
+			pr(" BLOCK");
 
-		pr(", PA=%016lx", l3pte_pa(pte));
+		pr(", PA=%lx", l3pte_pa(pte));
 
-		/* L[12] block, or L3 pte */
-		pr(", %s", (pte & LX_BLKPAG_UXN) ? "UXN" : "---");
-		pr(", %s", (pte & LX_BLKPAG_PXN) ? "PXN" : "---");
+		pr(", %s", (pte & LX_BLKPAG_UXN) ? "UXN" : "user-exec");
+		pr(", %s", (pte & LX_BLKPAG_PXN) ? "PXN" : "kernel-exec");
 
 		if (pte & LX_BLKPAG_CONTIG)
-			pr(",CONTIG");
+			pr(", CONTIG");
 
-		pr(", %s", (pte & LX_BLKPAG_NG) ? "NG" : "--");
-		pr(", %s", (pte & LX_BLKPAG_AF) ? "AF" : "--");
+		pr(", %s", (pte & LX_BLKPAG_NG) ? "NG" : "global");
+		pr(", %s", (pte & LX_BLKPAG_AF) ? "AF" : "*cannot-access*");
 
 		switch (pte & LX_BLKPAG_SH) {
 		case LX_BLKPAG_SH_NS:
@@ -2122,6 +2093,7 @@ pmap_db_pte_print(pt_entry_t pte, int level, void (*pr)(const char *, ...))
 
 		pr(", %s", (pte & LX_BLKPAG_AP_RO) ? "RO" : "RW");
 		pr(", %s", (pte & LX_BLKPAG_APUSER) ? "EL0" : "EL1");
+		pr(", %s", (pte & LX_BLKPAG_NS) ? "NS" : "secure");
 
 		switch (pte & LX_BLKPAG_ATTR_MASK) {
 		case LX_BLKPAG_ATTR_NORMAL_WB:
@@ -2138,57 +2110,47 @@ pmap_db_pte_print(pt_entry_t pte, int level, void (*pr)(const char *, ...))
 			break;
 		}
 
+		if (pte & LX_BLKPAG_OS_BOOT)
+			pr(", boot");
 		if (pte & LX_BLKPAG_OS_READ)
 			pr(", pmap_read");
 		if (pte & LX_BLKPAG_OS_WRITE)
 			pr(", pmap_write");
-		if ((pte & LX_BLKPAG_UXN) == 0)
-			pr(", user-executable");
-		if ((pte & LX_BLKPAG_PXN) == 0)
-			pr(", kernel-executable");
-
+		if (pte & LX_BLKPAG_OS_WIRED)
+			pr(", pmap_wired");
 	} else {
-		/* L1 and L2 pde */
-		pr(", %s", l1pde_is_table(pte) ? "TABLE" : "BLOCK");
-		pr(", %s", l1pde_valid(pte) ? "VALID" : "**INVALID**");
-		pr(", PA=%016lx", l1pde_pa(pte));
+		pr(" **ILLEGAL TYPE**");
 	}
 	pr("\n");
 }
 
-
 void
 pmap_db_pteinfo(vaddr_t va, void (*pr)(const char *, ...))
 {
-	struct pmap *pm;
 	struct vm_page *pg;
 	bool user;
-
-
-	if (VM_MAXUSER_ADDRESS > va) {
-		pm = curlwp->l_proc->p_vmspace->vm_map.pmap;
-		user = true;
-	} else {
-		pm = pmap_kernel();
-		user = false;
-	}
-
-
 	pd_entry_t *l0, *l1, *l2, *l3;
 	pd_entry_t pde;
 	pt_entry_t pte;
 	struct vm_page_md *md;
+	uint64_t ttbr;
 	paddr_t pa;
 	unsigned int idx;
+
+	if (va & TTBR_SEL_VA) {
+		user = false;
+		ttbr = reg_ttbr1_el1_read();
+	} else {
+		user = true;
+		ttbr = reg_ttbr0_el1_read();
+	}
+	pa = ttbr & TTBR_BADDR;
+	l0 = (pd_entry_t *)AARCH64_PA_TO_KVA(pa);
 
 	/*
 	 * traverse L0 -> L1 -> L2 -> L3 table
 	 */
-
-	l0 = pm->pm_l0table;
-
-	pr("TTBR%d=%016llx (%016llx)", user ? 0 : 1,
-	    pm->pm_l0table_pa, l0);
+	pr("TTBR%d=%016llx, pa=%016lx, va=%016lx", user ? 0 : 1, ttbr, l0);
 	pr(", input-va=%016llx,"
 	    " L0-index=%d, L1-index=%d, L2-index=%d, L3-index=%d\n",
 	    va,
@@ -2200,37 +2162,37 @@ pmap_db_pteinfo(vaddr_t va, void (*pr)(const char *, ...))
 	idx = l0pde_index(va);
 	pde = l0[idx];
 
-	pr("L0[%3d]=%016llx", idx, pde);
+	pr("L0[%3d]=%016llx:", idx, pde);
 	pmap_db_pte_print(pde, 0, pr);
 
 	if (!l0pde_valid(pde))
 		return;
 
-	l1 = (void *)AARCH64_PA_TO_KVA(l0pde_pa(pde));
+	l1 = (pd_entry_t *)AARCH64_PA_TO_KVA(l0pde_pa(pde));
 	idx = l1pde_index(va);
 	pde = l1[idx];
 
-	pr(" L1[%3d]=%016llx", idx, pde);
+	pr(" L1[%3d]=%016llx:", idx, pde);
 	pmap_db_pte_print(pde, 1, pr);
 
 	if (!l1pde_valid(pde) || l1pde_is_block(pde))
 		return;
 
-	l2 = (void *)AARCH64_PA_TO_KVA(l1pde_pa(pde));
+	l2 = (pd_entry_t *)AARCH64_PA_TO_KVA(l1pde_pa(pde));
 	idx = l2pde_index(va);
 	pde = l2[idx];
 
-	pr("  L2[%3d]=%016llx", idx, pde);
+	pr("  L2[%3d]=%016llx:", idx, pde);
 	pmap_db_pte_print(pde, 2, pr);
 
 	if (!l2pde_valid(pde) || l2pde_is_block(pde))
 		return;
 
-	l3 = (void *)AARCH64_PA_TO_KVA(l2pde_pa(pde));
+	l3 = (pd_entry_t *)AARCH64_PA_TO_KVA(l2pde_pa(pde));
 	idx = l3pte_index(va);
 	pte = l3[idx];
 
-	pr("   L3[%3d]=%016llx", idx, pte);
+	pr("   L3[%3d]=%016llx:", idx, pte);
 	pmap_db_pte_print(pte, 3, pr);
 
 	pa = l3pte_pa(pte);
