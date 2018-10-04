@@ -1,4 +1,4 @@
-/*	$NetBSD: slk.c,v 1.2 2017/01/30 17:15:52 roy Exp $	*/
+/*	$NetBSD: slk.c,v 1.3 2018/10/04 18:40:41 roy Exp $	*/
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: slk.c,v 1.2 2017/01/30 17:15:52 roy Exp $");
+__RCSID("$NetBSD: slk.c,v 1.3 2018/10/04 18:40:41 roy Exp $");
 #endif				/* not lint */
 
 #include <ctype.h>
@@ -57,7 +57,7 @@ __RCSID("$NetBSD: slk.c,v 1.2 2017/01/30 17:15:52 roy Exp $");
 #define	SLK_SIZE	MAX_SLK_COLS
 #endif
 
-static int	 slk_fmt;	/* fmt of slk_init */
+static int	 slk_fmt = SLK_FMT_INVAL;	/* fmt of slk_init */
 
 /* Safe variants of public functions. */
 static int	 __slk_attron(SCREEN *, const chtype);
@@ -560,6 +560,8 @@ __slk_init(SCREEN *screen)
 {
 
 	__slk_free(screen);	/* safety */
+	if (slk_fmt == SLK_FMT_INVAL)
+		return OK;
 
 	screen->slk_format = slk_fmt;
 	switch(screen->slk_format) {
