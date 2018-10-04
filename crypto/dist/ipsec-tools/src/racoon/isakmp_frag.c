@@ -182,8 +182,15 @@ isakmp_frag_insert(struct ph1handle *iph1, struct isakmp_frag_item *item)
 	/* no frag yet, just insert at beginning of list */
 	if (iph1->frag_chain == NULL) {
 		iph1->frag_chain = item;
+		plog(LLV_DEBUG, LOCATION, NULL,
+			"first fragment inserted (#%d)\n",
+			item->frag_num);
 		return 0;
 	}
+
+	plog(LLV_DEBUG, LOCATION, NULL,
+		"inserting fragment #%d\n",
+		item->frag_num);
 
 	do {
 		/* duplicate fragment number, abort (CVE-2016-10396) */
@@ -222,6 +229,11 @@ isakmp_frag_extract(iph1, msg)
 	int last_frag = 0;
 	char *data;
 	int i;
+
+	if (iph1->frag_chain == NULL) {
+		plog(LLV_DEBUG, LOCATION, NULL,
+		     "fragmented IKE phase 1 payload:\n");
+	}
 
 	if (msg->l < sizeof(*isakmp) + sizeof(*frag)) {
 		plog(LLV_ERROR, LOCATION, NULL, "Message too short\n");
@@ -289,15 +301,22 @@ isakmp_frag_extract(iph1, msg)
 	if (last_frag != 0) {
 		item = iph1->frag_chain;
 		for (i = 1; i <= last_frag; i++) {
-			if (item == NULL) /* Not found */
+			if (item == NULL ||
+			    item->frag_num != i) {
+				plog(LLV_DEBUG, LOCATION, NULL,
+				    "fragment #%d still missing\n",
+				    i);
 				break;
-			if (item->frag_num != i)
-				break;
+			}
 			item = item->frag_next;
 		}
 
-		if (i > last_frag) /* It is complete */
+		if (i > last_frag) {/* It is complete */
+			plog(LLV_DEBUG, LOCATION, NULL,
+			    "Fragment #%d completed payload.\n",
+			    frag->index);
 			return 1;
+		}
 	}
 		
 	return 0;
