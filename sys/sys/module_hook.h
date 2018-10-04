@@ -1,4 +1,4 @@
-/* $NetBSD: module_hook.h,v 1.1.2.5 2018/10/04 01:56:03 pgoyette Exp $	*/
+/* $NetBSD: module_hook.h,v 1.1.2.6 2018/10/04 02:24:26 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -158,6 +158,8 @@ static void (hook ## _unset)(void)				\
 	/* Wait for existing localcount references to drain.  */\
 	localcount_drain(&hook.lc, &hook.cv, &hook.mtx);	\
 								\
+	/* Release the mutex and clean up all resources */	\
+	mutex_exit(&hook.mtx);					\
 	localcount_fini(&hook.lc);				\
 	cv_destroy(&hook.cv);					\
 	mutex_destroy(&hook.mtx);				\
