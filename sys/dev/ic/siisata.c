@@ -1,4 +1,4 @@
-/* $NetBSD: siisata.c,v 1.35.6.6 2018/10/03 19:20:48 jdolecek Exp $ */
+/* $NetBSD: siisata.c,v 1.35.6.7 2018/10/04 17:59:35 jdolecek Exp $ */
 
 /* from ahcisata_core.c */
 
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siisata.c,v 1.35.6.6 2018/10/03 19:20:48 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siisata.c,v 1.35.6.7 2018/10/04 17:59:35 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -686,7 +686,9 @@ siisata_channel_recover(struct ata_channel *chp, uint32_t tfd)
 		 * transfers.
 		 */
 reset:
+		ata_channel_lock(chp);
 		siisata_device_reset(chp);
+		ata_channel_unlock(chp);
 		goto out;
 		/* NOTREACHED */
 
@@ -730,9 +732,9 @@ siisata_reset_drive(struct ata_drive_datas *drvp, int flags, uint32_t *sigp)
 	int i;
 	bool timed_out;
 
-	siisata_reinit_port(chp, drvp->drive);
-
 	ata_channel_lock_owned(chp);
+
+	siisata_reinit_port(chp, drvp->drive);
 
 	/* get a slot for running the command on */
 	if (!ata_queue_alloc_slot(chp, &c_slot, ATA_MAX_OPENINGS)) {
@@ -1556,7 +1558,9 @@ siisata_reinit_port(struct ata_channel *chp, int drive)
 	}
 	if ((ps & PR_PS_PORT_READY) == 0) {
 		printf("%s: timeout waiting for port to be ready\n", __func__);
+		ata_channel_lock(chp);
 		siisata_reset_channel(chp, AT_POLL);
+		ata_channel_unlock(chp);
 	}
 
 	if (chp->ch_ndrives > 1)
