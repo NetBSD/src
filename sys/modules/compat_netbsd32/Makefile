@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.20.12.14 2018/09/27 02:44:24 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.20.12.15 2018/10/04 02:20:29 pgoyette Exp $
 
 .include "../Makefile.inc"
 .include "../Makefile.assym"
@@ -28,6 +28,7 @@ SRCS+=	netbsd32_core.c netbsd32_event.c
 SRCS+=	netbsd32_exec_elf32.c
 SRCS+=	netbsd32_execve.c netbsd32_fs.c
 SRCS+=	netbsd32_ioctl.c
+SRCS+=	netbsd32_kern_proc.c
 SRCS+=	netbsd32_lwp.c netbsd32_netbsd.c
 SRCS+=	netbsd32_select.c
 SRCS+=	netbsd32_sem.c netbsd32_signal.c
