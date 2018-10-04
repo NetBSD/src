@@ -1,4 +1,4 @@
-#	$NetBSD: files.aarch64,v 1.4 2018/09/21 16:53:20 jakllsch Exp $
+#	$NetBSD: files.aarch64,v 1.5 2018/10/04 23:53:14 ryo Exp $
 
 defflag opt_cpuoptions.h	AARCH64_ALIGNMENT_CHECK
 defflag opt_cpuoptions.h	AARCH64_EL0_STACK_ALIGNMENT_CHECK
@@ -105,6 +105,7 @@ file	arch/aarch64/aarch64/vm_machdep.c
 
 # pmap
 file	arch/aarch64/aarch64/pmap.c
+file	arch/aarch64/aarch64/pmapboot.c
 file	arch/aarch64/aarch64/pmap_page.S
 #file	uvm/pmap/pmap_pvt.c
 
