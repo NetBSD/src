@@ -1,4 +1,4 @@
-/*	$NetBSD: fileio.c,v 1.5 2016/10/22 21:55:06 christos Exp $	*/
+/*	$NetBSD: fileio.c,v 1.5.6.1 2018/10/04 10:20:12 martin Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fileio.c,v 1.5 2016/10/22 21:55:06 christos Exp $");
+__RCSID("$NetBSD: fileio.c,v 1.5.6.1 2018/10/04 10:20:12 martin Exp $");
 #endif				/* not lint */
 
 #include "curses.h"
@@ -195,7 +195,7 @@ getwin(FILE *fp)
 	if (fread(wtmp, sizeof(WINDOW), 1, fp) != 1)
 		goto error0;
 	win = __newwin(_cursesi_screen, wtmp->maxy, wtmp->maxx,
-	    wtmp->begy, wtmp->begx, FALSE);
+	    wtmp->begy, wtmp->begx, FALSE, FALSE);
 	if (win == NULL)
 		goto error0;
 	win->cury = wtmp->cury;
