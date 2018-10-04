@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.h,v 1.10 2018/09/15 19:47:48 jakllsch Exp $ */
+/* $NetBSD: pmap.h,v 1.11 2018/10/04 09:09:29 ryo Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -78,6 +78,21 @@ struct vm_page_md {
 		(pg)->mdpage.mdpg_flags = 0;		\
 	} while (/*CONSTCOND*/ 0)
 
+
+/* saved permission bit for referenced/modified emulation */
+#define LX_BLKPAG_OS_READ		LX_BLKPAG_OS_0
+#define LX_BLKPAG_OS_WRITE		LX_BLKPAG_OS_1
+#define LX_BLKPAG_OS_WIRED		LX_BLKPAG_OS_2
+#define LX_BLKPAG_OS_BOOT		LX_BLKPAG_OS_3
+#define LX_BLKPAG_OS_RWMASK		(LX_BLKPAG_OS_WRITE|LX_BLKPAG_OS_READ)
+
+/* memory attributes are configured MAIR_EL1 in locore */
+#define LX_BLKPAG_ATTR_NORMAL_WB	__SHIFTIN(0, LX_BLKPAG_ATTR_INDX)
+#define LX_BLKPAG_ATTR_NORMAL_NC	__SHIFTIN(1, LX_BLKPAG_ATTR_INDX)
+#define LX_BLKPAG_ATTR_NORMAL_WT	__SHIFTIN(2, LX_BLKPAG_ATTR_INDX)
+#define LX_BLKPAG_ATTR_DEVICE_MEM	__SHIFTIN(3, LX_BLKPAG_ATTR_INDX)
+#define LX_BLKPAG_ATTR_MASK		LX_BLKPAG_ATTR_INDX
+
 #define l0pde_pa(pde)		((paddr_t)((pde) & LX_TBL_PA))
 #define l0pde_index(v)		(((vaddr_t)(v) & L0_ADDR_BITS) >> L0_SHIFT)
 #define l0pde_valid(pde)	(((pde) & LX_VALID) == LX_VALID)
@@ -138,9 +153,14 @@ paddr_t pmap_devmap_vtophys(paddr_t);
 
 pd_entry_t *pmap_alloc_pdp(struct pmap *, paddr_t *);
 
+#define L1_TRUNC_BLOCK(x)	((x) & L1_FRAME)
+#define L1_ROUND_BLOCK(x)	L1_TRUNC_BLOCK((x) + L1_SIZE - 1)
+#define L2_TRUNC_BLOCK(x)	((x) & L2_FRAME)
+#define L2_ROUND_BLOCK(x)	L2_TRUNC_BLOCK((x) + L2_SIZE - 1)
+
 /* devmap use L2 blocks. (2Mbyte) */
-#define DEVMAP_TRUNC_ADDR(x)	((x) & ~L2_OFFSET)
-#define DEVMAP_ROUND_SIZE(x)	(((x) + L2_SIZE - 1) & ~(L2_SIZE - 1))
+#define DEVMAP_TRUNC_ADDR(x)	L2_TRUNC_BLOCK((x))
+#define DEVMAP_ROUND_SIZE(x)	L2_ROUND_BLOCK((x))
 
 #define	DEVMAP_ENTRY(va, pa, sz)			\
 	{						\

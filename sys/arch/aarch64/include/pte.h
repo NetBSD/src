@@ -1,4 +1,4 @@
-/* $NetBSD: pte.h,v 1.4 2018/07/17 10:01:59 ryo Exp $ */
+/* $NetBSD: pte.h,v 1.5 2018/10/04 09:09:29 ryo Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -185,6 +185,8 @@ typedef uint64_t pt_entry_t;	/* L3(4k) table entry */
 /* TTBR0_EL1, TTBR1_EL1 - Translation Table Base Register */
 #define TTBR_ASID		__BITS(63,48)
 #define TTBR_BADDR		__BITS(47,0)
+
+#define TTBR_SEL_VA		__BIT(63)	/* which TTBR is selected */
 
 
 #elif defined(__arm__)

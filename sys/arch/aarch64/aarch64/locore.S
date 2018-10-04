@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.26 2018/10/01 19:45:00 skrll Exp $	*/
+/*	$NetBSD: locore.S,v 1.27 2018/10/04 09:09:29 ryo Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -35,7 +35,7 @@
 #include <aarch64/hypervisor.h>
 #include "assym.h"
 
-RCSID("$NetBSD: locore.S,v 1.26 2018/10/01 19:45:00 skrll Exp $")
+RCSID("$NetBSD: locore.S,v 1.27 2018/10/04 09:09:29 ryo Exp $")
 
 /* #define DEBUG_LOCORE */
 /* #define DEBUG_MMU */
@@ -45,12 +45,6 @@ RCSID("$NetBSD: locore.S,v 1.26 2018/10/01 19:45:00 skrll Exp $")
 #endif
 
 #define LOCORE_EL2
-
-/* attributes are defined in MAIR_EL1 */
-#define L2_BLKPAG_ATTR_NORMAL_WB	LX_BLKPAG_ATTR_INDX_0
-#define L2_BLKPAG_ATTR_NORMAL_NC	LX_BLKPAG_ATTR_INDX_1
-#define L2_BLKPAG_ATTR_NORMAL_WT	LX_BLKPAG_ATTR_INDX_2
-#define L2_BLKPAG_ATTR_DEVICE_MEM	LX_BLKPAG_ATTR_INDX_3
 
 #define PRINT(string)	bl xprint;.asciz string;.align 2
 
@@ -629,7 +623,7 @@ ENTRY_NP(arm_boot_l0pt_init)
 	ADDR	x0, ttbr0_l1table
 	mov	x1, #0			/* VA */
 	mov	x2, #0			/* PA */
-	mov	x3, #L2_BLKPAG_ATTR_DEVICE_MEM
+	mov	x3, #LX_BLKPAG_ATTR_DEVICE_MEM
 	mov	x4, #4			/* 4GB = whole 32bit */
 	bl	l1_setblocks
 
@@ -645,7 +639,7 @@ ENTRY_NP(arm_boot_l0pt_init)
 	ADDR	x0, ttbr1_l1table_kseg
 	mov	x1, #AARCH64_KSEG_START
 	mov	x2, #0
-	mov	x3, #L2_BLKPAG_ATTR_NORMAL_WB
+	mov	x3, #LX_BLKPAG_ATTR_NORMAL_WB
 	orr	x3, x3, #(LX_BLKPAG_PXN|LX_BLKPAG_UXN)
 	mov	x4, #Ln_ENTRIES		/* whole l1 table */
 	bl	l1_setblocks
@@ -669,7 +663,7 @@ ENTRY_NP(arm_boot_l0pt_init)
 	adr	x2, start		/* physical addr. before MMU */
 	and	x2, x2, #L2_BLK_OA	/* L2 block size aligned (2MB) */
 	mov	x1, #VM_MIN_KERNEL_ADDRESS
-	mov	x3, #(L2_BLKPAG_ATTR_NORMAL_WB|LX_BLKPAG_UXN)
+	mov	x3, #(LX_BLKPAG_ATTR_NORMAL_WB|LX_BLKPAG_UXN)
 
 	/* kernelsize = _end - start */
 	ldr	x1, =start
