@@ -1,4 +1,4 @@
-/* $NetBSD: module_hook.h,v 1.1.2.4 2018/09/29 21:36:15 pgoyette Exp $	*/
+/* $NetBSD: module_hook.h,v 1.1.2.5 2018/10/04 01:56:03 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -145,6 +145,9 @@ static void (hook ## _unset)(void)				\
 	KASSERT(hook.hooked);					\
 	KASSERT(hook.f1);					\
 	KASSERT(hook.f2);					\
+								\
+	/* Grab the mutex */					\
+	mutex_enter(&hook.mtx);					\
 								\
 	/* Prevent new localcount_acquire calls.  */		\
 	hook.hooked = false;					\
