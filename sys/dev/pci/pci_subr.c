@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.205 2018/10/03 06:46:09 msaitoh Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.206 2018/10/04 07:43:12 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.205 2018/10/03 06:46:09 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.206 2018/10/04 07:43:12 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -4714,19 +4714,19 @@ pci_conf_print(
 	/* device-dependent header */
 	printf("  Device-dependent header:\n");
 	pci_conf_print_regs(regs, endoff, PCI_CONF_SIZE);
-	printf("\n");
 #ifdef _KERNEL
+	printf("\n");
 	if (printfn)
 		(*printfn)(pc, tag, regs);
 	else
 		printf("    Don't know how to pretty-print device-dependent header.\n");
-	printf("\n");
 #endif /* _KERNEL */
 
 	if (regs[o2i(PCI_EXTCAPLIST_BASE)] == 0xffffffff ||
 	    regs[o2i(PCI_EXTCAPLIST_BASE)] == 0)
 		return;
 
+	printf("\n");
 #ifdef _KERNEL
 	pci_conf_print_extcaplist(pc, tag, regs);
 #else
