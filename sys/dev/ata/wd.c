@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.441.2.7 2018/10/03 19:20:48 jdolecek Exp $ */
+/*	$NetBSD: wd.c,v 1.441.2.8 2018/10/04 17:53:23 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.441.2.7 2018/10/03 19:20:48 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.441.2.8 2018/10/04 17:53:23 jdolecek Exp $");
 
 #include "opt_ata.h"
 #include "opt_wd.h"
@@ -853,7 +853,7 @@ retry2:
 		if (xfer->c_retries < WDIORETRIES)
 			printf(", xfer %"PRIxPTR", retry %d",
 			    (intptr_t)xfer & PAGE_MASK,
-			    xfer->c_retries + 1);
+			    xfer->c_retries);
 		printf("\n");
 		if (do_perror)
 			wdperror(wd, xfer);
