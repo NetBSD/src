@@ -1,6 +1,7 @@
 jdolecek-ncqfixes goals:
-- fix ahci(4) error handling under paralles - invalid bio via WD_CHAOS_MONKEY
-  ends up being handled as NOERROR, triggering KASSERT() in wd(4)
+- re-check READ LOG EXT handling under native and Parallels to make sure
+  the NOERROR under Parallels is their bug and not ours
+- run recovery via atathread, move to new function and share ahci/siisata/mvsata
 - remove controller-specific slot bitmaps (ic/siisata.c, ic/ahcisata_core.c)
 
 Bugs
