@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.2.1 2018/09/22 22:21:46 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.1.2.2 2018/10/04 01:55:17 pgoyette Exp $
 
 .include "../Makefile.inc"
 
@@ -7,8 +7,6 @@
 KMOD=	compat_raid_80
 
 CPPFLAGS+=	-DCOMPAT_80
-
-SRCS+=	compat_80_mod.c
 
 .PATH:	${S}/dev/raidframe
 
