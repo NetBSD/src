@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.441.2.8 2018/10/04 17:53:23 jdolecek Exp $ */
+/*	$NetBSD: wd.c,v 1.441.2.9 2018/10/04 19:42:01 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.441.2.8 2018/10/04 17:53:23 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.441.2.9 2018/10/04 19:42:01 jdolecek Exp $");
 
 #include "opt_ata.h"
 #include "opt_wd.h"
@@ -914,13 +914,23 @@ out:
 		bp->b_error = EIO;
 		break;
 	case NOERROR:
+#ifdef WD_CHAOS_MONKEY
+		/*
+		 * For example Parallels AHCI emulation doesn't actually
+		 * return error for the invalid I/O, so just re-run
+		 * the request and do not panic.
+		 */
+		if (__predict_false(xfer->c_flags & C_CHAOS)) {
+			xfer->c_bio.error = REQUEUE;
+			errmsg = "chaos noerror";
+			goto retry2;
+		}
+#endif
+
 noerror:	if ((xfer->c_bio.flags & ATA_CORR) || xfer->c_retries > 0)
 			device_printf(dksc->sc_dev,
 			    "soft error (corrected) xfer %"PRIxPTR"\n",
 			    (intptr_t)xfer & PAGE_MASK);
-#ifdef WD_CHAOS_MONKEY
-		KASSERT((xfer->c_flags & C_CHAOS) == 0);
-#endif
 		break;
 	case ERR_NODEV:
 		bp->b_error = EIO;
