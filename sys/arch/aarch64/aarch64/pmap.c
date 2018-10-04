@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.24 2018/09/17 00:15:55 ryo Exp $	*/
+/*	$NetBSD: pmap.c,v 1.25 2018/10/04 09:09:29 ryo Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.24 2018/09/17 00:15:55 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.25 2018/10/04 09:09:29 ryo Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_ddb.h"
@@ -141,19 +141,6 @@ PMAP_COUNTER(unwire_failure, "pmap_unwire failure");
 #else /* PMAPCOUNTERS */
 #define PMAP_COUNT(name)		__nothing
 #endif /* PMAPCOUNTERS */
-
-/* saved permission bit for referenced/modified emulation */
-#define LX_BLKPAG_OS_READ	LX_BLKPAG_OS_0
-#define LX_BLKPAG_OS_WRITE	LX_BLKPAG_OS_1
-#define LX_BLKPAG_OS_WIRED	LX_BLKPAG_OS_2
-#define LX_BLKPAG_OS_RWMASK	(LX_BLKPAG_OS_WRITE|LX_BLKPAG_OS_READ)
-
-/* memory attributes are configured MAIR_EL1 in locore */
-#define LX_BLKPAG_ATTR_NORMAL_WB	__SHIFTIN(0, LX_BLKPAG_ATTR_INDX)
-#define LX_BLKPAG_ATTR_NORMAL_NC	__SHIFTIN(1, LX_BLKPAG_ATTR_INDX)
-#define LX_BLKPAG_ATTR_NORMAL_WT	__SHIFTIN(2, LX_BLKPAG_ATTR_INDX)
-#define LX_BLKPAG_ATTR_DEVICE_MEM	__SHIFTIN(3, LX_BLKPAG_ATTR_INDX)
-#define LX_BLKPAG_ATTR_MASK		LX_BLKPAG_ATTR_INDX
 
 /*
  * invalidate TLB entry for ASID and VA.
