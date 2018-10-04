@@ -1,4 +1,4 @@
-/*	$NetBSD: curses_private.h,v 1.65 2018/10/03 13:22:29 roy Exp $	*/
+/*	$NetBSD: curses_private.h,v 1.66 2018/10/04 18:40:41 roy Exp $	*/
 
 /*-
  * Copyright (c) 1998-2000 Brett Lymn
@@ -289,6 +289,7 @@ struct __screen {
 	bool		 is_term_slk;
 	WINDOW		*slk_window;
 	int		 slk_format;
+#define	SLK_FMT_INVAL	-1
 #define	SLK_FMT_3_2_3	0
 #define	SLK_FMT_4_4	1
 	int		 slk_nlabels;
