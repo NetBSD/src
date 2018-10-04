@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.10 2018/10/03 13:59:31 skrll Exp $ */
+/* $NetBSD: cpu.c,v 1.11 2018/10/04 07:36:10 ryo Exp $ */
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: cpu.c,v 1.10 2018/10/03 13:59:31 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: cpu.c,v 1.11 2018/10/04 07:36:10 ryo Exp $");
 
 #include "locators.h"
 #include "opt_arm_debug.h"
@@ -449,8 +449,6 @@ void
 cpu_hatch(struct cpu_info *ci)
 {
 	KASSERT(curcpu() == ci);
-
-	delay(1000 * ci->ci_index);	/* XXX: to attach cpu* in order */
 
 	mutex_enter(&cpu_hatch_lock);
 
