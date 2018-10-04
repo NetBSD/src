@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_machdep.c,v 1.41 2018/09/29 20:58:31 jmcneill Exp $ */
+/* $NetBSD: fdt_machdep.c,v 1.42 2018/10/04 07:33:54 ryo Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.41 2018/09/29 20:58:31 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.42 2018/10/04 07:33:54 ryo Exp $");
 
 #include "opt_machdep.h"
 #include "opt_bootconfig.h"
@@ -137,11 +137,11 @@ static struct consdev earlycons = {
 static void
 fdt_putchar(char c)
 {
+#ifdef EARLYCONS
 	const struct arm_platform *plat = arm_fdt_platform();
 	if (plat && plat->ap_early_putchar) {
 		plat->ap_early_putchar(c);
 	}
-#ifdef EARLYCONS
 	else {
 #define PLATFORM_EARLY_PUTCHAR ___CONCAT(EARLYCONS, _platform_early_putchar)
 		void PLATFORM_EARLY_PUTCHAR(char);
