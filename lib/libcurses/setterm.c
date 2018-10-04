@@ -1,4 +1,4 @@
-/*	$NetBSD: setterm.c,v 1.66 2017/03/23 00:55:39 roy Exp $	*/
+/*	$NetBSD: setterm.c,v 1.66.4.1 2018/10/04 10:20:12 martin Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)setterm.c	8.8 (Berkeley) 10/25/94";
 #else
-__RCSID("$NetBSD: setterm.c,v 1.66 2017/03/23 00:55:39 roy Exp $");
+__RCSID("$NetBSD: setterm.c,v 1.66.4.1 2018/10/04 10:20:12 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -122,7 +122,7 @@ _cursesi_setterm(char *type, SCREEN *screen)
 	if (screen->COLS <= 4)
 		return ERR;
 
-	LINES = screen->LINES - __rippedlines(screen);
+	LINES = screen->LINES;
 	COLS = screen->COLS;
 	ESCDELAY = screen->ESCDELAY;
 	TABSIZE = screen->TABSIZE;
@@ -248,7 +248,7 @@ void
 _cursesi_resetterm(SCREEN *screen)
 {
 
-	LINES = screen->LINES - __rippedlines(screen);
+	LINES = screen->LINES;
 	COLS = screen->COLS;
 	ESCDELAY = screen->ESCDELAY;
 	TABSIZE = screen->TABSIZE;

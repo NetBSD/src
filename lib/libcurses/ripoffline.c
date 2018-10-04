@@ -1,4 +1,4 @@
-/*	$NetBSD: ripoffline.c,v 1.3 2017/01/24 17:27:30 roy Exp $	*/
+/*	$NetBSD: ripoffline.c,v 1.3.6.1 2018/10/04 10:20:12 martin Exp $	*/
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ripoffline.c,v 1.3 2017/01/24 17:27:30 roy Exp $");
+__RCSID("$NetBSD: ripoffline.c,v 1.3.6.1 2018/10/04 10:20:12 martin Exp $");
 #endif				/* not lint */
 
 #include "curses.h"
@@ -54,7 +54,7 @@ ripoffline(int line, int (*init)(WINDOW *, int))
 {
 
 #ifdef DEBUG
-	__CTRACE(__CTRACE_SCREEN, "ripoffline: %d\n", line);
+	__CTRACE(__CTRACE_WINDOW, "ripoffline: %d\n", line);
 #endif
 
 	if (nrips >= MAX_RIPS || init == NULL)
@@ -71,16 +71,16 @@ ripoffline(int line, int (*init)(WINDOW *, int))
  *	Returns the number of ripped lines from the screen.
  */
 int
-__rippedlines(const SCREEN *screen)
+__rippedlines(const SCREEN *screen, int line)
 {
 	const struct __ripoff *rip;
 	int i, n;
 
 	n = 0;
 	for (i = 0, rip = screen->ripped; i < screen->nripped; i++, rip++) {
-		if (rip->nlines < 0)
+		if (line < 1 && rip->nlines < 0)
 			n += -rip->nlines;
-		else
+		else if (line > 0 && rip->nlines > 0)
 			n += rip->nlines;
 	}
 	return n;
@@ -93,38 +93,40 @@ __rippedlines(const SCREEN *screen)
  *	this implemenation allows for N lines if needed.
  */
 int
-__ripoffscreen(SCREEN *screen, int *rtop)
+__ripoffscreen(SCREEN *screen)
 {
-	int i, nlines;
+	int i, nlines, rbot, rtop;
 	const struct ripoff *srip;
 	struct __ripoff *rip;
 	WINDOW *w;
 
-	*rtop = 0;
 	rip = screen->ripped;
+	rbot = LINES;
+	rtop = 0;
 	for (i = 0, srip = ripoffs; i < nrips; i++, srip++) {
 		if (srip->nlines == 0)
 			continue;
 		nlines = srip->nlines < 0 ? -srip->nlines : srip->nlines;
 		w = __newwin(screen, nlines, 0,
-		    srip->nlines < 0 ? LINES - nlines : *rtop,
-		    0, FALSE);
+		    srip->nlines < 0 ? rbot - nlines : rtop,
+		    0, FALSE, FALSE);
 		if (w != NULL) {
 			rip->win = w;
 			rip->nlines = srip->nlines;
 			rip++;
 			screen->nripped++;
-			if (rip->nlines > 0)
-				(*rtop) += rip->nlines;
-			LINES -= nlines;
+			if (srip->nlines > 0)
+				rtop += nlines;
+			else
+				rbot -= nlines;
 		}
 		if (srip->init(w, COLS) == ERR)
 			return ERR;
 #ifdef DEBUG
 		if (w != NULL)
-			__CTRACE(__CTRACE_SCREEN,
-			    "newterm: ripped %d lines from the %s\n",
-			    nlines, srip->nlines < 0 ? "bottom" : "top");
+			__CTRACE(__CTRACE_WINDOW,
+			    "newterm: %p ripped %d line(s) from the %s\n",
+			    w, nlines, srip->nlines < 0 ? "bottom" : "top");
 #endif
 	}
 	nrips = 0; /* Reset the stack. */
@@ -136,20 +138,42 @@ __ripoffscreen(SCREEN *screen, int *rtop)
  *	Called from resizeterm to ensure the ripped off lines are correctly
  *	placed and refreshed.
  */
-void
+int
 __ripoffresize(SCREEN *screen)
 {
-	int rbot = screen->LINES, i;
+	int rbot = screen->LINES, i, nlines, ret = OK;
 	struct __ripoff *rip;
 
 	for (i = 0, rip = screen->ripped; i < screen->nripped; i++, rip++) {
-		if (rip->nlines > 0)
-			touchwin(rip->win);
-		else {
+		if (rip->nlines == 0)
+			continue;
+		nlines = rip->nlines < 0 ? -rip->nlines : rip->nlines;
+		if (wresize(rip->win, nlines, screen->COLS) == ERR)
+			ret = ERR;
+		if (rip->nlines < 0) {
 			/* Reposition the lower windows. */
-			mvwin(rip->win, rbot + rip->nlines, 0);
-			rbot += rip->nlines;
+			if (mvwin(rip->win, rbot + rip->nlines, 0) == ERR)
+				ret = ERR;
+			else
+				rbot += rip->nlines;
 		}
+	}
+
+	return ret;
+}
+
+/*
+ *  __ripofftouch --
+ *	Displays the ripped off lines from initscr.
+ */
+void
+__ripofftouch(SCREEN *screen)
+{
+	int i;
+	struct __ripoff *rip;
+
+	for (i = 0, rip = screen->ripped; i < screen->nripped; i++, rip++) {
+		touchwin(rip->win);
 		wnoutrefresh(rip->win);
 	}
 }

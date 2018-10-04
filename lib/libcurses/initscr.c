@@ -1,4 +1,4 @@
-/*	$NetBSD: initscr.c,v 1.32 2017/01/11 17:15:27 roy Exp $	*/
+/*	$NetBSD: initscr.c,v 1.32.6.1 2018/10/04 10:20:12 martin Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)initscr.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: initscr.c,v 1.32 2017/01/11 17:15:27 roy Exp $");
+__RCSID("$NetBSD: initscr.c,v 1.32.6.1 2018/10/04 10:20:12 martin Exp $");
 #endif
 #endif	/* not lint */
 
@@ -70,6 +70,7 @@ initscr(void)
 
 	set_term(_cursesi_screen);
 	wrefresh(curscr);
+	__ripofftouch(_cursesi_screen);
 
 	return stdscr;
 }

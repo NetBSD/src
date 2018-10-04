@@ -1,4 +1,4 @@
-.\"	$NetBSD: curses_screen.3,v 1.23 2017/01/24 16:45:41 roy Exp $
+.\"	$NetBSD: curses_screen.3,v 1.23.4.1 2018/10/04 10:20:12 martin Exp $
 .\"
 .\" Copyright (c) 2002
 .\"	Brett Lymn (blymn@NetBSD.org, brett_lymn@yahoo.com.au)
@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"
-.Dd January 24, 2017
+.Dd October 2, 2018
 .Dt CURSES_SCREEN 3
 .Os
 .Sh NAME
@@ -74,7 +74,7 @@
 .Fn isendwin "void"
 .Ft bool
 .Fn is_term_resized "int lines" "int cols"
-.Fn int
+.Ft int
 .Fn resize_term "int lines" "int cols"
 .Ft int
 .Fn resizeterm "int lines" "int cols"
@@ -216,7 +216,7 @@ Set lines equal to 1.
 .Pp
 The
 .Fn ripoffline
-funcion will rip a line from
+function will rip a line from
 .Dv stdscr
 at the top if
 .Fa line
@@ -239,8 +239,6 @@ or
 .Xr doupdate 3 ,
 but may call
 .Xr wnoutrefresh 3 .
-.Dv LINES
-will be reduced by the total number of lines ripped off.
 .Fn ripoffline
 can be called up to five times.
 .Pp

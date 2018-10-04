@@ -1,4 +1,4 @@
-/*	$NetBSD: screen.c,v 1.33 2017/03/20 10:20:16 roy Exp $	*/
+/*	$NetBSD: screen.c,v 1.33.4.1 2018/10/04 10:20:12 martin Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)screen.c	8.2 (blymn) 11/27/2001";
 #else
-__RCSID("$NetBSD: screen.c,v 1.33 2017/03/20 10:20:16 roy Exp $");
+__RCSID("$NetBSD: screen.c,v 1.33.4.1 2018/10/04 10:20:12 martin Exp $");
 #endif
 #endif					/* not lint */
 
@@ -74,7 +74,7 @@ set_term(SCREEN *new)
 		old_screen->rawmode = __rawmode;
 		old_screen->noqch = __noqch;
 		old_screen->COLS = COLS;
-		old_screen->LINES = LINES + __rippedlines(old_screen);
+		old_screen->LINES = LINES;
 		old_screen->ESCDELAY = ESCDELAY;
 		old_screen->TABSIZE = TABSIZE;
 		old_screen->COLORS = COLORS;
@@ -91,7 +91,7 @@ set_term(SCREEN *new)
 	__rawmode = new->rawmode;
 	__noqch = new->noqch;
 	COLS = new->COLS;
-	LINES = new->LINES - __rippedlines(new);
+	LINES = new->LINES;
 	ESCDELAY = new->ESCDELAY;
 	TABSIZE = new->TABSIZE;
 	COLORS = new->COLORS;
@@ -130,7 +130,6 @@ newterm(char *type, FILE *outfd, FILE *infd)
 {
 	SCREEN *new_screen;
 	char *sp;
-	int rtop;
 
 	sp = type;
 	if (type == NULL && (sp = getenv("TERM")) == NULL)
@@ -193,21 +192,21 @@ newterm(char *type, FILE *outfd, FILE *infd)
 	new_screen->winlistp = NULL;
 
 	if ((new_screen->curscr = __newwin(new_screen, 0,
-	    0, 0, 0, FALSE)) == NULL)
+	    0, 0, 0, FALSE, FALSE)) == NULL)
 		goto error_exit;
 
 	if ((new_screen->__virtscr = __newwin(new_screen, 0,
-	    0, 0, 0, FALSE)) == NULL)
+	    0, 0, 0, FALSE, FALSE)) == NULL)
 		goto error_exit;
 
 	/* If Soft Label Keys are setup, they will ripoffline. */
 	if (__slk_init(new_screen) == ERR)
 		goto error_exit;
 
-	if (__ripoffscreen(new_screen, &rtop) == ERR)
+	if (__ripoffscreen(new_screen) == ERR)
 		goto error_exit;
 
-	new_screen->stdscr = __newwin(new_screen, LINES, 0, rtop, 0, FALSE);
+	new_screen->stdscr = __newwin(new_screen, 0, 0, 0, 0, FALSE, TRUE);
 	if (new_screen->stdscr == NULL)
 		goto error_exit;
 
