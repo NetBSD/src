@@ -1,4 +1,4 @@
-/*	$NetBSD: disasm.c,v 1.5 2018/09/15 19:47:48 jakllsch Exp $	*/
+/*	$NetBSD: disasm.c,v 1.6 2018/10/04 07:40:09 ryo Exp $	*/
 
 /*
  * Copyright (c) 2018 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disasm.c,v 1.5 2018/09/15 19:47:48 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disasm.c,v 1.6 2018/10/04 07:40:09 ryo Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -3381,6 +3381,52 @@ OP3FUNC(op_simd_sha_reg2, op, Rn, Rd)
 	}
 }
 
+OP4FUNC(op_simd_sha512_reg3, Rm, op, Rn, Rd)
+{
+	const char *shaop[4] = {
+		"sha512h", "sha512h2", "sha512su1", "rax1"
+	};
+
+	switch (op) {
+	case 0:
+	case 1:
+		PRINTF("%s\t%s, %s, %s.2d\n",
+		    shaop[op],
+		    FREGNAME(FREGSZ_Q, Rd),
+		    FREGNAME(FREGSZ_Q, Rn),
+		    VREGNAME(Rm));
+		break;
+	case 2:
+	case 3:
+		PRINTF("%s\t%s.2d, %s,.2d %s.2d\n",
+		    shaop[op],
+		    VREGNAME(Rd),
+		    VREGNAME(Rn),
+		    VREGNAME(Rm));
+		break;
+	}
+}
+
+OP3FUNC(op_simd_sha512_reg2, op, Rn, Rd)
+{
+	const char *shaop[4] = {
+		"sha512su0", "sm4e", NULL, NULL
+	};
+
+	switch (op) {
+	case 0:
+	case 1:
+		PRINTF("%s\t%s.2d, %s.2d\n",
+		    shaop[op],
+		    VREGNAME(Rd),
+		    VREGNAME(Rn));
+		break;
+	default:
+		UNDEFINED(pc, insn, "illegal sha512 operation");
+		break;
+	}
+}
+
 OP5FUNC(op_simd_pmull, q, size, Rm, Rn, Rd)
 {
 	const char *op = (q == 0) ? "pmull" : "pmull2";
@@ -3432,9 +3478,11 @@ struct insn_info {
 	{{ 8, 4}, { 0, 0}, { 0, 0}, { 0, 0}, { 0, 0}, { 0, 0}, { 0, 0}, { 0, 0}}
 #define FMT_CRM_OP2			\
 	{{ 8, 4}, { 5, 3}, { 0, 0}, { 0, 0}, { 0, 0}, { 0, 0}, { 0, 0}, { 0, 0}}
+#define FMT_OP2_RN_RD			\
+	{{10, 2}, { 5, 5}, { 0, 5}, { 0, 0}, { 0, 0}, { 0, 0}, { 0, 0}, { 0, 0}}
 #define FMT_M_D_RN_RD			\
 	{{13, 1}, {12, 1}, { 5, 5}, { 0, 5}, { 0, 0}, { 0, 0}, { 0, 0}, { 0, 0}}
-#define FMT_OP_RN_RD			\
+#define FMT_OP3_RN_RD			\
 	{{12, 3}, { 5, 5}, { 0, 5}, { 0, 0}, { 0, 0}, { 0, 0}, { 0, 0}, { 0, 0}}
 #define FMT_OP1_CRM_OP2			\
 	{{16, 3}, { 8, 4}, { 5, 3}, { 0, 0}, { 0, 0}, { 0, 0}, { 0, 0}, { 0, 0}}
@@ -3444,6 +3492,8 @@ struct insn_info {
 	{{16, 5}, { 5, 5}, { 0, 5}, { 0, 0}, { 0, 0}, { 0, 0}, { 0, 0}, { 0, 0}}
 #define FMT_RS_RN_RT			\
 	{{16, 5}, { 5, 5}, { 0, 5}, { 0, 0}, { 0, 0}, { 0, 0}, { 0, 0}, { 0, 0}}
+#define FMT_RM_OP2_RN_RD		\
+	{{16, 5}, {10, 2}, { 5, 5}, { 0, 5}, { 0, 0}, { 0, 0}, { 0, 0}, { 0, 0}}
 #define FMT_RM_OP_RN_RD			\
 	{{16, 5}, {12, 3}, { 5, 5}, { 0, 5}, { 0, 0}, { 0, 0}, { 0, 0}, { 0, 0}}
 #define FMT_RM_RA_RN_RD			\
@@ -3562,8 +3612,9 @@ static const struct insn_info insn_tables[] = {
  { 0xfffff0ff, 0xd503309f, FMT_CRM,                     op_dsb },
  { 0xfffff0ff, 0xd50330df, FMT_CRM,                     op_isb },
  { 0xfffff01f, 0xd503201f, FMT_CRM_OP2,                 op_hint },
+ { 0xfffff000, 0xcec08000, FMT_OP2_RN_RD,               op_simd_sha512_reg2 },
  { 0xffffcc00, 0x4e284800, FMT_M_D_RN_RD,               op_simd_aes },
- { 0xffff8c00, 0x5e280800, FMT_OP_RN_RD,                op_simd_sha_reg2 },
+ { 0xffff8c00, 0x5e280800, FMT_OP3_RN_RD,               op_simd_sha_reg2 },
  { 0xfff8f01f, 0xd500401f, FMT_OP1_CRM_OP2,             op_msr_imm },
  { 0xfff80000, 0xd5080000, FMT_OP1_CRN_CRM_OP2_RT,      op_sys },
  { 0xfff80000, 0xd5280000, FMT_OP1_CRN_CRM_OP2_RT,      op_sysl },
@@ -3573,6 +3624,7 @@ static const struct insn_info insn_tables[] = {
  { 0xffe0fc00, 0x08007c00, FMT_RS_RN_RT,                op_stxrb },
  { 0xffe0fc00, 0x48007c00, FMT_RS_RN_RT,                op_stxrh },
  { 0xffe0fc00, 0x9bc07c00, FMT_RM_RN_RD,                op_umulh },
+ { 0xffe0f000, 0xce608000, FMT_RM_OP2_RN_RD,            op_simd_sha512_reg3 },
  { 0xffe08c00, 0x5e000000, FMT_RM_OP_RN_RD,             op_simd_sha_reg3 },
  { 0xffe08000, 0x9b208000, FMT_RM_RA_RN_RD,             op_smsubl },
  { 0xffe08000, 0x9ba08000, FMT_RM_RA_RN_RD,             op_umsubl },
