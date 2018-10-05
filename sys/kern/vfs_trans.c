@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_trans.c,v 1.49 2018/09/27 01:03:40 manu Exp $	*/
+/*	$NetBSD: vfs_trans.c,v 1.50 2018/10/05 01:25:38 manu Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_trans.c,v 1.49 2018/09/27 01:03:40 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_trans.c,v 1.50 2018/10/05 01:25:38 manu Exp $");
 
 /*
  * File system transaction operations.
@@ -42,7 +42,6 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_trans.c,v 1.49 2018/09/27 01:03:40 manu Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
 #include <sys/atomic.h>
 #include <sys/buf.h>
 #include <sys/kmem.h>
@@ -533,14 +532,10 @@ fstrans_setstate(struct mount *mp, enum fstrans_state new_state)
 	/*
 	 * All threads see the new state now.
 	 * Wait for transactions invalid at this state to leave.
-	 * We cannot wait forever because many processes would
-	 * get stuck waiting for fstcnt in fstrans_start(). This
-	 * is acute when suspending the root filesystem.
 	 */
 	error = 0;
 	while (! state_change_done(mp)) {
-		error = cv_timedwait_sig(&fstrans_count_cv,
-					  &fstrans_lock, hz / 4);
+		error = cv_wait_sig(&fstrans_count_cv, &fstrans_lock);
 		if (error) {
 			new_state = fmi->fmi_state = FSTRANS_NORMAL;
 			break;
