@@ -1,4 +1,4 @@
-/*	$NetBSD: pmapboot.c,v 1.1 2018/10/04 23:53:13 ryo Exp $	*/
+/*	$NetBSD: pmapboot.c,v 1.2 2018/10/05 01:54:10 ryo Exp $	*/
 
 /*
  * Copyright (c) 2018 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmapboot.c,v 1.1 2018/10/04 23:53:13 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmapboot.c,v 1.2 2018/10/05 01:54:10 ryo Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_ddb.h"
@@ -147,7 +147,9 @@ pmapboot_pte_print(pt_entry_t pte, int level,
 	pmap_db_pte_print(pte, level, pr);
 #else
 	__USE(level);
-	pr(" PA=%016lx\n", lxpde_pa(pte));
+	pr(" %s PA=%016lx\n",
+	    l0pde_valid(pte) ? "VALID" : "INVALID",
+	    l0pde_pa(pte));
 #endif
 }
 
