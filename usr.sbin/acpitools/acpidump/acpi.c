@@ -1,4 +1,4 @@
-/* $NetBSD: acpi.c,v 1.31 2018/10/03 09:52:59 msaitoh Exp $ */
+/* $NetBSD: acpi.c,v 1.32 2018/10/05 05:09:31 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 1998 Doug Rabson
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: acpi.c,v 1.31 2018/10/03 09:52:59 msaitoh Exp $");
+__RCSID("$NetBSD: acpi.c,v 1.32 2018/10/05 05:09:31 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/endian.h>
@@ -2040,7 +2040,7 @@ acpi_handle_spmi(ACPI_TABLE_HEADER *sdp)
 		printf("Reserved(%d)", spmi->InterfaceType);
 		break;
 	}
-	printf("\n\tSpecRevision=%d.%d\n", spmi->SpecRevision >> 8,
+	printf("\n\tSpecRevision=%d.%d", spmi->SpecRevision >> 8,
 		spmi->SpecRevision & 0xff);
 
 	printf("\n\tInterrupt Type={");
