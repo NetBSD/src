@@ -1,4 +1,4 @@
-.\"     $NetBSD: fstrans.9,v 1.28 2018/10/05 15:37:26 wiz Exp $
+.\"     $NetBSD: fstrans.9,v 1.29 2018/10/05 16:21:22 uwe Exp $
 .\"
 .\" Copyright (c) 2007 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -110,7 +110,7 @@ to:
 .It
 enter the
 .Dv FSTRANS_SUSPENDING
-to suspend all normal operations but allow lazy transactions,
+state to suspend all normal operations but allow lazy transactions,
 .It
 enter the
 .Dv FSTRANS_SUSPENDED
@@ -161,7 +161,7 @@ May sleep.
 Like
 .Fn fstrans_start ,
 but return
-.Dv EBUSY
+.Er EBUSY
 immediately if transactions are blocked in its current state.
 .Pp
 May sleep nevertheless on internal locks.
@@ -187,7 +187,7 @@ to
 and wait for all transactions not allowed in
 .Fa new_state
 to complete.
-.Bl -tag -width FSTRANS_SUSPENDING
+.Bl -tag -width "Dv FSTRANS_SUSPENDING"
 .It Dv FSTRANS_NORMAL
 Allow all transactions.
 .It Dv FSTRANS_SUSPENDING
