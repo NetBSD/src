@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.278 2018/09/18 01:25:09 mrg Exp $	*/
+/*	$NetBSD: systm.h,v 1.279 2018/10/05 22:12:37 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -184,6 +184,14 @@ enum hashtype {
 };
 
 #ifdef _KERNEL
+#define COND_SET_VALUE(dst, src, allow)	\
+	do {				\
+		if (allow)		\
+			dst = src;	\
+	} while (/*CONSTCOND*/0);
+
+
+bool	get_expose_address(struct proc *);
 void	*hashinit(u_int, enum hashtype, bool, u_long *);
 void	hashdone(void *, enum hashtype, u_long);
 int	seltrue(dev_t, int, struct lwp *);
