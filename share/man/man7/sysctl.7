@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.7,v 1.131 2018/09/06 10:09:29 maxv Exp $
+.\"	$NetBSD: sysctl.7,v 1.132 2018/10/05 22:16:50 christos Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)sysctl.3	8.4 (Berkeley) 5/9/95
 .\"
-.Dd September 6, 2018
+.Dd October 5, 2018
 .Dt SYSCTL 7
 .Os
 .Sh NAME
@@ -293,6 +293,7 @@ privilege may change the value.
 .It kern.domainname	string	yes
 .It kern.drivers	struct kinfo_drivers	no
 .It kern.dump_on_panic	integer	yes
+.It kern.expose_address	integer	yes
 .It kern.file	struct file	no
 .It kern.forkfsleep	integer	yes
 .It kern.fscale	integer	no
@@ -513,6 +514,16 @@ field is always a NUL terminated string.
 The
 .Va d_bmajor
 field will be set to \-1 if the driver doesn't have a block device.
+.It Li kern.expose_address
+Expose kernel addresses in
+.Xr sysctl 3
+calls used by
+.Xr fstat 1
+and
+.Xr sockstat 1 .
+Defaults to
+.Dv 0 .
+Turning it on renders KASLR ineffective.
 .It Li kern.dump_on_panic ( Dv KERN_DUMP_ON_PANIC )
 Perform a crash dump on system
 .Xr panic 9 .
