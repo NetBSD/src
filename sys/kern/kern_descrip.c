@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.237 2018/09/13 14:44:09 maxv Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.238 2018/10/05 22:12:38 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.237 2018/09/13 14:44:09 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.238 2018/10/05 22:12:38 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2283,49 +2283,37 @@ sysctl_kern_file2(SYSCTLFN_ARGS)
 	return error;
 }
 
-#define SET_KERN_ADDR(dst, src, allow)	\
-	do {				\
-		if (allow)		\
-			dst = src;	\
-	} while (0);
-
 static void
 fill_file(struct kinfo_file *kp, const file_t *fp, const fdfile_t *ff,
 	  int i, pid_t pid)
 {
-	bool allowaddr;
-	int error;
-
-	/* If not privileged, don't expose kernel addresses. */
-	error = kauth_authorize_process(kauth_cred_get(), KAUTH_PROCESS_CANSEE,
-	    curproc, KAUTH_ARG(KAUTH_REQ_PROCESS_CANSEE_KPTR), NULL, NULL);
-	allowaddr = (error == 0);
+	const bool allowaddr = get_expose_address(curproc);
 
 	memset(kp, 0, sizeof(*kp));
 
-	SET_KERN_ADDR(kp->ki_fileaddr, PTRTOUINT64(fp), allowaddr);
+	COND_SET_VALUE(kp->ki_fileaddr, PTRTOUINT64(fp), allowaddr);
 	kp->ki_flag =		fp->f_flag;
 	kp->ki_iflags =		0;
 	kp->ki_ftype =		fp->f_type;
 	kp->ki_count =		fp->f_count;
 	kp->ki_msgcount =	fp->f_msgcount;
-	SET_KERN_ADDR(kp->ki_fucred, PTRTOUINT64(fp->f_cred), allowaddr);
+	COND_SET_VALUE(kp->ki_fucred, PTRTOUINT64(fp->f_cred), allowaddr);
 	kp->ki_fuid =		kauth_cred_geteuid(fp->f_cred);
 	kp->ki_fgid =		kauth_cred_getegid(fp->f_cred);
-	SET_KERN_ADDR(kp->ki_fops, PTRTOUINT64(fp->f_ops), allowaddr);
+	COND_SET_VALUE(kp->ki_fops, PTRTOUINT64(fp->f_ops), allowaddr);
 	kp->ki_foffset =	fp->f_offset;
-	SET_KERN_ADDR(kp->ki_fdata, PTRTOUINT64(fp->f_data), allowaddr);
+	COND_SET_VALUE(kp->ki_fdata, PTRTOUINT64(fp->f_data), allowaddr);
 
 	/* vnode information to glue this file to something */
 	if (fp->f_type == DTYPE_VNODE) {
 		struct vnode *vp = fp->f_vnode;
 
-		SET_KERN_ADDR(kp->ki_vun, PTRTOUINT64(vp->v_un.vu_socket),
+		COND_SET_VALUE(kp->ki_vun, PTRTOUINT64(vp->v_un.vu_socket),
 		    allowaddr);
 		kp->ki_vsize =	vp->v_size;
 		kp->ki_vtype =	vp->v_type;
 		kp->ki_vtag =	vp->v_tag;
-		SET_KERN_ADDR(kp->ki_vdata, PTRTOUINT64(vp->v_data),
+		COND_SET_VALUE(kp->ki_vdata, PTRTOUINT64(vp->v_data),
 		    allowaddr);
 	}
 
