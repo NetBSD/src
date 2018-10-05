@@ -1,4 +1,4 @@
-.\"     $NetBSD: fstrans.9,v 1.27 2018/10/05 09:51:55 hannken Exp $
+.\"     $NetBSD: fstrans.9,v 1.28 2018/10/05 15:37:26 wiz Exp $
 .\"
 .\" Copyright (c) 2007 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -238,7 +238,7 @@ The function
 will be called for every buffer
 .Fa bp
 written through this file system as
-.Dl Fa func Ns Li "(" Ns Fa cookie Ns Li "," Fa bp Ns Li "," Fa data_valid Ns Li ")"
+.Dl Fa func Ns ( Fa cookie , Fa bp , Fa data_valid )
 where
 .Fa data_valid
 is true if and only if the buffer
