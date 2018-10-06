@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.c,v 1.96 2018/09/29 14:41:35 rmind Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.c,v 1.97 2018/10/06 15:22:16 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.96 2018/09/29 14:41:35 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.97 2018/10/06 15:22:16 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ntp.h"
@@ -293,12 +293,14 @@ netbsd32_to_u_long(netbsd32_u_long *s32p, u_long *p, u_long cmd)
 	*p = (u_long)*s32p;
 }
 
+#ifdef notdef
 static inline void
 netbsd32_to_voidp(netbsd32_voidp *s32p, voidp *p, u_long cmd)
 {
 
 	*p = (void *)NETBSD32PTR64(*s32p);
 }
+#endif
 
 static inline void
 netbsd32_to_wdog_conf(struct netbsd32_wdog_conf *s32p, struct wdog_conf *p, u_long cmd)
@@ -855,13 +857,14 @@ netbsd32_from_u_long(u_long *p, netbsd32_u_long *s32p, u_long cmd)
 	*s32p = (netbsd32_u_long)*p;
 }
 
+#ifdef notdef
 static inline void
 netbsd32_from_voidp(voidp *p, netbsd32_voidp *s32p, u_long cmd)
 {
 
 	NETBSD32PTR32(*s32p, *p);
 }
-
+#endif
 
 static inline void
 netbsd32_from_clockctl_settimeofday(
