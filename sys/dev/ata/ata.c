@@ -1,4 +1,4 @@
-/*	$NetBSD: ata.c,v 1.141.6.12 2018/10/06 20:12:37 jdolecek Exp $	*/
+/*	$NetBSD: ata.c,v 1.141.6.13 2018/10/06 20:13:12 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.141.6.12 2018/10/06 20:12:37 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.141.6.13 2018/10/06 20:13:12 jdolecek Exp $");
 
 #include "opt_ata.h"
 
@@ -1675,7 +1675,6 @@ ata_thread_run(struct ata_channel *chp, int flags, int type, int drive)
 		 */
 		ata_channel_freeze_locked(chp);
 		chp->ch_flags |= type;
-
 
 		cv_signal(&chp->ch_thr_idle);
 		return;
