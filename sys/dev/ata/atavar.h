@@ -1,4 +1,4 @@
-/*	$NetBSD: atavar.h,v 1.99.2.8 2018/10/03 19:20:48 jdolecek Exp $	*/
+/*	$NetBSD: atavar.h,v 1.99.2.9 2018/10/06 20:27:36 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -275,7 +275,6 @@ struct ata_drive_datas {
 #define ATA_DRIVE_NCQ		0x0200	/* drive supports NCQ feature set */
 #define ATA_DRIVE_NCQ_PRIO	0x0400	/* drive supports NCQ PRIO field */
 #define ATA_DRIVE_TH_RESET	0x0800	/* drive waits for thread drive reset */
-	int drive_reset_flags;	/* flags for drive reset via thread */
 
 	uint8_t drive_type;
 #define	ATA_DRIVET_NONE		0
@@ -365,9 +364,6 @@ struct ata_bustype {
 	int	(*ata_bio)(struct ata_drive_datas *, struct ata_xfer *);
 	void	(*ata_reset_drive)(struct ata_drive_datas *, int, uint32_t *);
 	void	(*ata_reset_channel)(struct ata_channel *, int);
-/* extra flags for ata_reset_*(), in addition to AT_* */
-#define AT_RST_EMERG 0x10000 /* emergency - e.g. for a dump */
-
 	int	(*ata_exec_command)(struct ata_drive_datas *,
 				    struct ata_xfer *);
 
@@ -420,9 +416,6 @@ struct ata_channel {
 #define ATACH_TH_DRIVE_RESET	0x2000	/* thread asked for drive(s) reset */
 
 #define ATACH_NODRIVE	0xff	/* no drive selected for reset */
-
-	/* for the reset callback */
-	int ch_reset_flags;
 
 	/* for the timeout callout */
 	struct callout c_timo_callout;	/* timeout callout handle */

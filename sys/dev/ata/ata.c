@@ -1,4 +1,4 @@
-/*	$NetBSD: ata.c,v 1.141.6.13 2018/10/06 20:13:12 jdolecek Exp $	*/
+/*	$NetBSD: ata.c,v 1.141.6.14 2018/10/06 20:27:36 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.141.6.13 2018/10/06 20:13:12 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.141.6.14 2018/10/06 20:27:36 jdolecek Exp $");
 
 #include "opt_ata.h"
 
@@ -480,20 +480,17 @@ atabus_thread(void *arg)
 		}
 		if (chp->ch_flags & ATACH_TH_RESET) {
 			/* this will unfreeze the channel */
-			ata_thread_run(chp, AT_WAIT | chp->ch_reset_flags,
+			ata_thread_run(chp, AT_WAIT,
 			    ATACH_TH_RESET, ATACH_NODRIVE);
 		} else if (chp->ch_flags & ATACH_TH_DRIVE_RESET) {
 			for (i = 0; i < chp->ch_ndrives; i++) {
 				struct ata_drive_datas *drvp;
-				int drv_reset_flags;
 
 				drvp = &chp->ch_drive[i];
-				drv_reset_flags = drvp->drive_reset_flags;
 
 				if (drvp->drive_flags & ATA_DRIVE_TH_RESET) {
 					ata_thread_run(chp,
-					    AT_WAIT | drv_reset_flags,
-					    ATACH_TH_DRIVE_RESET, i);
+					    AT_WAIT, ATACH_TH_DRIVE_RESET, i);
 				}
 			}
 			chp->ch_flags &= ~ATACH_TH_DRIVE_RESET;
@@ -1527,9 +1524,6 @@ ata_kill_active(struct ata_channel *chp, int reason, int flags)
 	TAILQ_FOREACH_SAFE(xfer, &chq->active_xfers, c_activechain, xfernext) {
 		xfer->ops->c_kill_xfer(xfer->c_chp, xfer, reason);
 	}
-
-	if (flags & AT_RST_EMERG)
-		ata_queue_reset(chq);
 }
 
 /*
@@ -1651,7 +1645,6 @@ ata_thread_run(struct ata_channel *chp, int flags, int type, int drive)
 				/* No need to schedule another reset */
 				return;
 			}
-			chp->ch_reset_flags = flags & AT_RST_EMERG;
 			break;
 		case ATACH_TH_DRIVE_RESET:
 			KASSERT(drive <= chp->ch_ndrives);
@@ -1662,7 +1655,6 @@ ata_thread_run(struct ata_channel *chp, int flags, int type, int drive)
 				return;
 			}
 			drvp->drive_flags |= ATA_DRIVE_TH_RESET;
-			drvp->drive_reset_flags = flags;
 			break;
 		default:
 			panic("%s: unknown type: %x", __func__, type);
@@ -1726,11 +1718,6 @@ ata_thread_run(struct ata_channel *chp, int flags, int type, int drive)
 
 	/* Signal the thread in case there is an xfer to run */
 	cv_signal(&chp->ch_thr_idle);
-
-	if (flags & AT_RST_EMERG) {
-		/* make sure that we can use polled commands */
-		ata_queue_reset(chp->ch_queue);
-	}
 }
 
 int
