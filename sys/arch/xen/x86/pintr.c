@@ -103,7 +103,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pintr.c,v 1.4 2018/10/06 16:37:11 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pintr.c,v 1.5 2018/10/06 16:44:55 cherry Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_xen.h"
@@ -165,7 +165,7 @@ xen_pirq_alloc(intr_handle_t *pirq, int type)
 	physdev_op_t op;
 	int irq = *pirq;
 #if NIOAPIC > 0
-	extern struct cpu_info phycpu_info_primary; /* XXX */
+
 	/*
 	 * The hypervisor has already allocated vectors and IRQs for the
 	 * devices. Reusing the same IRQ doesn't work because as we bind
@@ -179,7 +179,6 @@ xen_pirq_alloc(intr_handle_t *pirq, int type)
 	 */
 	static int xen_next_irq = 200;
 	struct ioapic_softc *ioapic = ioapic_find(APIC_IRQ_APIC(*pirq));
-	struct pic *pic = &ioapic->sc_pic;
 	int pin = APIC_IRQ_PIN(*pirq);
 
 	if (*pirq & APIC_INT_VIA_APIC) {
@@ -207,8 +206,6 @@ retry:
 				(irq > 0 && irq < 16 &&
 				 vect2irq[op.u.irq_op.vector] == irq));
 			vect2irq[op.u.irq_op.vector] = irq;
-			pic->pic_addroute(pic, &phycpu_info_primary, pin,
-			    op.u.irq_op.vector, type);
 		}
 		*pirq &= ~0xff;
 		*pirq |= irq;
@@ -229,7 +226,6 @@ retry:
 			irq2port[irq] = bind_pirq_to_evtch(irq) + 1;
 		}
 	}
-	KASSERT(irq2port[irq] > 0);
-	return (irq2port[irq] - 1);
+	return (irq2vect[irq]);
 }
 #endif /* defined(DOM0OPS) || NPCI > 0 */
