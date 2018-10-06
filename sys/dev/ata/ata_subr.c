@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_subr.c,v 1.6.2.6 2018/09/22 17:50:09 jdolecek Exp $	*/
+/*	$NetBSD: ata_subr.c,v 1.6.2.7 2018/10/06 21:19:55 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata_subr.c,v 1.6.2.6 2018/09/22 17:50:09 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata_subr.c,v 1.6.2.7 2018/10/06 21:19:55 jdolecek Exp $");
 
 #include "opt_ata.h"
 
@@ -65,7 +65,7 @@ extern int atadebug_mask;
 #define ATADEBUG_PRINT(args, level)
 #endif
 
-void
+static void
 ata_queue_reset(struct ata_queue *chq)
 {
 	/* make sure that we can use polled commands */
