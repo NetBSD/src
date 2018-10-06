@@ -1,4 +1,4 @@
-/*	$NetBSD: ata.c,v 1.141.6.11 2018/10/03 19:20:48 jdolecek Exp $	*/
+/*	$NetBSD: ata.c,v 1.141.6.12 2018/10/06 20:12:37 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.141.6.11 2018/10/03 19:20:48 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.141.6.12 2018/10/06 20:12:37 jdolecek Exp $");
 
 #include "opt_ata.h"
 
@@ -490,7 +490,7 @@ atabus_thread(void *arg)
 				drvp = &chp->ch_drive[i];
 				drv_reset_flags = drvp->drive_reset_flags;
 
-				if (drvp->drive_flags & ATACH_TH_DRIVE_RESET) {
+				if (drvp->drive_flags & ATA_DRIVE_TH_RESET) {
 					ata_thread_run(chp,
 					    AT_WAIT | drv_reset_flags,
 					    ATACH_TH_DRIVE_RESET, i);
@@ -1645,9 +1645,28 @@ ata_thread_run(struct ata_channel *chp, int flags, int type, int drive)
 	ATADEBUG_PRINT(("%s flags 0x%x ch_flags 0x%x\n",
 	    __func__, flags, chp->ch_flags), DEBUG_FUNCS | DEBUG_XFERS);
 	if ((flags & (AT_POLL | AT_WAIT)) == 0) {
-		if (chp->ch_flags & type) {
-			/* No need to schedule a reset more than one time. */
-			return;
+		switch (type) {
+		case ATACH_TH_RESET:
+			if (chp->ch_flags & ATACH_TH_RESET) {
+				/* No need to schedule another reset */
+				return;
+			}
+			chp->ch_reset_flags = flags & AT_RST_EMERG;
+			break;
+		case ATACH_TH_DRIVE_RESET:
+			KASSERT(drive <= chp->ch_ndrives);
+			drvp = &chp->ch_drive[drive];
+
+			if (drvp->drive_flags & ATA_DRIVE_TH_RESET) {
+				/* No need to schedule another reset */
+				return;
+			}
+			drvp->drive_flags |= ATA_DRIVE_TH_RESET;
+			drvp->drive_reset_flags = flags;
+			break;
+		default:
+			panic("%s: unknown type: %x", __func__, type);
+			/* NOTREACHED */
 		}
 
 		/*
@@ -1657,20 +1676,6 @@ ata_thread_run(struct ata_channel *chp, int flags, int type, int drive)
 		ata_channel_freeze_locked(chp);
 		chp->ch_flags |= type;
 
-
-		switch (type) {
-		case ATACH_TH_RESET:
-			chp->ch_reset_flags = flags & AT_RST_EMERG;
-			break;
-		case ATACH_TH_DRIVE_RESET:
-			drvp = &chp->ch_drive[drive];
-			drvp->drive_flags |= ATACH_TH_DRIVE_RESET;
-			drvp->drive_reset_flags = flags;
-			break;
-		default:
-			panic("%s: unknown type: %x", __func__, type);
-			/* NOTREACHED */
-		}
 
 		cv_signal(&chp->ch_thr_idle);
 		return;
