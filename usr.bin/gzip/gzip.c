@@ -1,4 +1,4 @@
-/*	$NetBSD: gzip.c,v 1.113 2018/06/12 00:42:17 kamil Exp $	*/
+/*	$NetBSD: gzip.c,v 1.114 2018/10/06 16:36:45 martin Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 2003, 2004, 2006, 2008, 2009, 2010, 2011, 2015, 2017
@@ -31,7 +31,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1997, 1998, 2003, 2004, 2006, 2008,\
  2009, 2010, 2011, 2015, 2017 Matthew R. Green.  All rights reserved.");
-__RCSID("$NetBSD: gzip.c,v 1.113 2018/06/12 00:42:17 kamil Exp $");
+__RCSID("$NetBSD: gzip.c,v 1.114 2018/10/06 16:36:45 martin Exp $");
 #endif /* not lint */
 
 /*
@@ -213,6 +213,7 @@ __dead static	void	display_version(void);
 static	const suffixes_t *check_suffix(char *, int);
 static	ssize_t	read_retry(int, void *, size_t);
 static	ssize_t	write_retry(int, const void *, size_t);
+static void	print_list_out(off_t, off_t, const char*);
 
 #ifdef SMALL
 #define infile_set(f,t) infile_set(f)
@@ -256,6 +257,7 @@ static	off_t	unpack(int, int, char *, size_t, off_t *);
 
 #ifndef NO_XZ_SUPPORT
 static	off_t	unxz(int, int, char *, size_t, off_t *);
+static	off_t	unxz_len(int);
 #endif
 
 #ifdef SMALL
@@ -1579,10 +1581,10 @@ file_uncompress(char *file, char *outfile, size_t outsize)
 #ifndef NO_XZ_SUPPORT
 	case FT_XZ:
 		if (lflag) {
-			maybe_warnx("no -l with xz files");
-			goto lose;
+			size = unxz_len(fd);
+			print_list_out(in_size, size, file);
+			return -1;
 		}
-
 		size = unxz(fd, zfd, NULL, 0, NULL);
 		break;
 #endif
@@ -2147,6 +2149,12 @@ print_list(int fd, off_t out, const char *outfile, time_t ts)
 	in_tot += in;
 	out_tot += out;
 #endif
+	print_list_out(out, in, outfile);
+}
+
+static void
+print_list_out(off_t out, off_t in, const char *outfile)
+{
 	printf("%12llu %12llu ", (unsigned long long)out, (unsigned long long)in);
 	print_ratio(in, out, stdout);
 	printf(" %s\n", outfile);
