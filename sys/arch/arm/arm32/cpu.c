@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.120 2018/08/15 06:06:05 skrll Exp $	*/
+/*	$NetBSD: cpu.c,v 1.121 2018/10/06 16:04:21 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -46,7 +46,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.120 2018/08/15 06:06:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.121 2018/10/06 16:04:21 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -116,7 +116,7 @@ cpu_attach(device_t dv, cpuid_t id)
 		ci->ci_ctrl = cpu_info_store.ci_ctrl;
 		ci->ci_undefsave[2] = cpu_info_store.ci_undefsave[2];
 		cpu_info[ci->ci_cpuid] = ci;
-		if ((arm_cpu_hatched & (1 << id)) == 0) {
+		if ((arm_cpu_hatched & __BIT(id)) == 0) {
 			ci->ci_dev = dv;
 			dv->dv_private = ci;
 			aprint_naive(": disabled\n");
