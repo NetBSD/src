@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.130 2018/09/20 05:08:45 cherry Exp $	*/
+/*	$NetBSD: intr.c,v 1.131 2018/10/06 16:44:55 cherry Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.130 2018/09/20 05:08:45 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.131 2018/10/06 16:44:55 cherry Exp $");
 
 #include "opt_intrdebug.h"
 #include "opt_multiprocessor.h"
@@ -1264,7 +1264,7 @@ intr_establish_xname(int legacy_irq, struct pic *pic, int pin,
 #if NPCI > 0 || NISA > 0
 	struct pintrhand *pih;
 	intr_handle_t irq;
-	int evtchn;
+	int vector, evtchn;
 
 	KASSERTMSG(legacy_irq == -1 || (0 <= legacy_irq && legacy_irq < NUM_XEN_IRQS),
 	    "bad legacy IRQ value: %d", legacy_irq);
@@ -1290,10 +1290,21 @@ intr_establish_xname(int legacy_irq, struct pic *pic, int pin,
 	intrstr = intr_create_intrid(irq, pic, pin, intrstr_buf,
 	    sizeof(intrstr_buf));
 
-	evtchn = xen_pirq_alloc(&irq, type);
-	irq = (legacy_irq == -1) ? irq : legacy_irq; /* ISA compat */	
+	vector = xen_pirq_alloc(&irq, type);
+	irq = (legacy_irq == -1) ? irq : legacy_irq; /* ISA compat */
+
+#if NIOAPIC > 0
+	extern struct cpu_info phycpu_info_primary; /* XXX */
+	struct cpu_info *ci = &phycpu_info_primary;
+	pic->pic_addroute(pic, ci, pin, vector, type);
+#else
+
+#endif /* NIOAPIC */
+	evtchn = irq2port[vect2irq[vector]];
+	KASSERT(evtchn > 0);
+
 	pih = pirq_establish(irq & 0xff, evtchn, handler, arg, level,
-	    intrstr, xname);
+			     intrstr, xname);
 	pih->pic_type = pic->pic_type;
 	return pih;
 #endif /* NPCI > 0 || NISA > 0 */
