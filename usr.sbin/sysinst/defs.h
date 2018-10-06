@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.19 2018/09/20 12:27:42 rin Exp $	*/
+/*	$NetBSD: defs.h,v 1.20 2018/10/06 18:45:37 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -192,6 +192,7 @@ typedef struct arg_rv {
 typedef struct distinfo {
 	const char	*name;
 	uint		set;
+	bool		force_tgz;	/* this set is always in .tgz format */
 	const char	*desc;
 	const char	*marker_file;	/* set assumed installed if exists */
 } distinfo;
@@ -376,6 +377,10 @@ int  clean_xfer_dir;
 #define SYSINST_PKGSRC_HTTP_HOST	SYSINST_PKG_HTTP_HOST
 #endif
 
+#ifndef SETS_TAR_SUFF
+#define	SETS_TAR_SUFF	 "tgz"
+#endif
+
 /* Abs. path we extract binary sets from */
 char ext_dir_bin[STRSIZE];
 
@@ -433,6 +438,7 @@ char targetroot_mnt[SSTRSIZE];
 int  mnt2_mounted;
 
 char dist_postfix[SSTRSIZE];
+char dist_tgz_postfix[SSTRSIZE];
 
 /* needed prototypes */
 void set_menu_numopts(int, int);
@@ -579,6 +585,8 @@ int	extract_file(distinfo *, int);
 void	do_coloring (unsigned int, unsigned int);
 int set_menu_select(menudesc *, void *);
 const char *safectime(time_t *);
+bool	use_tgz_for_set(const char*);
+const char *set_postfix(const char*);
 
 /* from target.c */
 #if defined(DEBUG)  ||	defined(DEBUG_ROOT)
