@@ -1,8 +1,9 @@
-# $NetBSD: files.fdt,v 1.38 2018/09/26 19:06:33 jakllsch Exp $
+# $NetBSD: files.fdt,v 1.39 2018/10/06 16:28:21 skrll Exp $
 
 include	"external/bsd/libfdt/conf/files.libfdt"
 
-defflag	opt_fdt.h				FDT: libfdt, ofw_subr
+defflag	opt_fdt.h				FDTBASE : libfdt, ofw_subr
+defflag	opt_fdt.h				FDT: FDTBASE
 
 define	fdt { [pass = 10] } : clk, pwm
 
@@ -44,8 +45,8 @@ device	panel: fdt_port
 attach	panel at fdt with fdt_panel
 file	dev/fdt/panel_fdt.c			fdt_panel
 
-file	dev/fdt/fdt_openfirm.c			fdt
-file	dev/fdt/fdt_subr.c			fdt
+file	dev/fdt/fdt_openfirm.c			fdtbase
+file	dev/fdt/fdt_subr.c			fdtbase
 file	dev/fdt/fdt_clock.c			fdt
 file	dev/fdt/fdt_dai.c			fdt
 file	dev/fdt/fdt_dma.c			fdt
