@@ -1,4 +1,4 @@
-/*	$NetBSD: ata.c,v 1.141.6.14 2018/10/06 20:27:36 jdolecek Exp $	*/
+/*	$NetBSD: ata.c,v 1.141.6.15 2018/10/06 21:19:55 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.141.6.14 2018/10/06 20:27:36 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.141.6.15 2018/10/06 21:19:55 jdolecek Exp $");
 
 #include "opt_ata.h"
 
@@ -961,7 +961,7 @@ ata_read_log_ext_ncq(struct ata_drive_datas *drvp, uint8_t flags,
 	 * and to make this a little faster. Realistically, it
 	 * should not matter.
 	 */
-	xfer->c_flags |= C_RECOVERY;
+	xfer->c_flags |= C_SKIP_QUEUE;
 	xfer->c_ata_c.r_command = WDCC_READ_LOG_EXT;
 	xfer->c_ata_c.r_lba = page = WDCC_LOG_PAGE_NCQ;
 	xfer->c_ata_c.r_st_bmask = WDCS_DRDY;
@@ -1087,7 +1087,7 @@ ata_exec_xfer(struct ata_channel *chp, struct ata_xfer *xfer)
 	 * Standard commands are added to the end of command list, but
 	 * recovery commands must be run immediatelly.
 	 */
-	if ((xfer->c_flags & C_RECOVERY) == 0)
+	if ((xfer->c_flags & C_SKIP_QUEUE) == 0)
 		SIMPLEQ_INSERT_TAIL(&chp->ch_queue->queue_xfer, xfer,
 		    c_xferchain);
 	else
@@ -1137,7 +1137,7 @@ atastart(struct ata_channel *chp)
 	struct atac_softc *atac = chp->ch_atac;
 	struct ata_queue *chq = chp->ch_queue;
 	struct ata_xfer *xfer, *axfer;
-	bool recovery;
+	bool skipq;
 
 #ifdef ATA_DEBUG
 	int spl1, spl2;
@@ -1174,18 +1174,18 @@ again:
 		goto out;
 	}
 
-	recovery = ISSET(xfer->c_flags, C_RECOVERY);
+	skipq = ISSET(xfer->c_flags, C_SKIP_QUEUE);
 
 	/* is the queue frozen? */
-	if (__predict_false(!recovery && chq->queue_freeze > 0)) {
+	if (__predict_false(!skipq && chq->queue_freeze > 0)) {
 		if (chq->queue_flags & QF_IDLE_WAIT) {
 			chq->queue_flags &= ~QF_IDLE_WAIT;
 			cv_signal(&chp->ch_queue->queue_idle);
 		}
 		ATADEBUG_PRINT(("%s(chp=%p): channel %d drive %d "
-		    "queue frozen: %d (recovery: %d)\n",
+		    "queue frozen: %d\n",
 		    __func__, chp, chp->ch_channel, xfer->c_drive,
-		    chq->queue_freeze, recovery),
+		    chq->queue_freeze),
 		    DEBUG_XFERS);
 		goto out;
 	}
@@ -1201,7 +1201,7 @@ again:
 	 * Need only check first xfer.
 	 * XXX FIS-based switching - revisit
 	 */
-	if (!recovery && (axfer = TAILQ_FIRST(&chp->ch_queue->active_xfers))) {
+	if (!skipq && (axfer = TAILQ_FIRST(&chp->ch_queue->active_xfers))) {
 		if (!ISSET(xfer->c_flags, C_NCQ) ||
 		    !ISSET(axfer->c_flags, C_NCQ) ||
 		    xfer->c_drive != axfer->c_drive)
@@ -1211,17 +1211,17 @@ again:
 	struct ata_drive_datas * const drvp = &chp->ch_drive[xfer->c_drive];
 
 	/*
-	 * Are we on limit of active xfers ?
-	 * For recovery, we must leave one slot available at all times.
+	 * Are we on limit of active xfers ? If the queue has more
+	 * than 1 openings, we keep one slot reserved for recovery or dump.
 	 */
 	KASSERT(chq->queue_active <= chq->queue_openings);
-	const uint8_t chq_openings = (!recovery && chq->queue_openings > 1)
+	const uint8_t chq_openings = (!skipq && chq->queue_openings > 1)
 	    ? (chq->queue_openings - 1) : chq->queue_openings;
 	const uint8_t drv_openings = ISSET(xfer->c_flags, C_NCQ)
 	    ? drvp->drv_openings : ATA_MAX_OPENINGS;
 	if (chq->queue_active >= MIN(chq_openings, drv_openings)) {
-		if (recovery) {
-			panic("%s: channel %d busy, recovery not possible",
+		if (skipq) {
+			panic("%s: channel %d busy, xfer not possible",
 			    __func__, chp->ch_channel);
 		}
 
@@ -1272,8 +1272,8 @@ again:
 		break;
 	}
 
-	/* Queue more commands if possible, but not during recovery */
-	if (!recovery && chq->queue_active < chq->queue_openings)
+	/* Queue more commands if possible, but not during recovery or dump */
+	if (!skipq && chq->queue_active < chq->queue_openings)
 		goto again;
 
 out:
@@ -1321,17 +1321,9 @@ ata_activate_xfer_locked(struct ata_channel *chp, struct ata_xfer *xfer)
 	struct ata_queue * const chq = chp->ch_queue;
 
 	KASSERT(mutex_owned(&chp->ch_lock));
-
-	/*
-	 * When openings is just 1, can't reserve anything for
-	 * recovery. KASSERT() here is to catch code which naively
-	 * relies on C_RECOVERY to work under this condition.
-	 */
-	KASSERT((xfer->c_flags & C_RECOVERY) == 0 || chq->queue_openings > 1);
-
 	KASSERT((chq->active_xfers_used & __BIT(xfer->c_slot)) == 0);
 
-	if ((xfer->c_flags & C_RECOVERY) == 0)
+	if ((xfer->c_flags & C_SKIP_QUEUE) == 0)
 		TAILQ_INSERT_TAIL(&chq->active_xfers, xfer, c_activechain);
 	else {
 		/*

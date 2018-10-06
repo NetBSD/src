@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.441.2.11 2018/10/06 20:27:36 jdolecek Exp $ */
+/*	$NetBSD: wd.c,v 1.441.2.12 2018/10/06 21:19:55 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.441.2.11 2018/10/06 20:27:36 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.441.2.12 2018/10/06 21:19:55 jdolecek Exp $");
 
 #include "opt_ata.h"
 #include "opt_wd.h"
@@ -1497,15 +1497,12 @@ wd_dumpblocks(device_t dev, void *va, daddr_t blkno, int nblk)
 		ata_thread_run(wd->drvp->chnl_softc, AT_POLL,
 		    ATACH_TH_DRIVE_RESET, wd->drvp->drive);
 
-		/* make sure that we can use polled commands */
-		ata_queue_reset(wd->drvp->chnl_softc->ch_queue);
-
 		wd->drvp->state = RESET;
 		ata_channel_unlock(wd->drvp->chnl_softc);
 	}
 
 	memset(xfer, 0, sizeof(*xfer));
-	xfer->c_flags |= C_PRIVATE_ALLOC;
+	xfer->c_flags |= C_PRIVATE_ALLOC | C_SKIP_QUEUE;
 
 	xfer->c_bio.blkno = blkno;
 	xfer->c_bio.flags = ATA_POLL;

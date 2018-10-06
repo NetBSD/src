@@ -1,4 +1,4 @@
-/*	$NetBSD: atavar.h,v 1.99.2.9 2018/10/06 20:27:36 jdolecek Exp $	*/
+/*	$NetBSD: atavar.h,v 1.99.2.10 2018/10/06 21:19:55 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -194,7 +194,7 @@ struct ata_xfer_ops {
 #define C_FREE		0x0040		/* call ata_free_xfer() asap */
 #define C_PIOBM		0x0080		/* command uses busmastering PIO */
 #define	C_NCQ		0x0100		/* command is queued  */
-#define C_RECOVERY	0x0200		/* executed as part of recovery */
+#define C_SKIP_QUEUE	0x0200		/* skip xfer queue */
 #define C_WAITTIMO	0x0400		/* race vs. timeout */
 #define C_CHAOS		0x0800		/* forced error xfer */
 #define C_RECOVERED	0x1000		/* error recovered, no need for reset */
@@ -563,7 +563,6 @@ void	ata_dmaerr(struct ata_drive_datas *, int);
 struct ata_queue *
 	ata_queue_alloc(uint8_t openings);
 void	ata_queue_free(struct ata_queue *);
-void	ata_queue_reset(struct ata_queue *);
 struct ata_xfer *
 	ata_queue_hwslot_to_xfer(struct ata_channel *, int);
 struct ata_xfer *
