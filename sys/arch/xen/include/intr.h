@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.46 2018/06/24 13:35:32 jdolecek Exp $	*/
+/*	$NetBSD: intr.h,v 1.47 2018/10/06 16:49:54 cherry Exp $	*/
 /*	NetBSD intr.h,v 1.15 2004/10/31 10:39:34 yamt Exp	*/
 
 /*-
@@ -71,7 +71,7 @@ int xen_intr_biglock_wrapper(void *);
 #endif
 
 #if defined(DOM0OPS) || NPCI > 0
-int xen_pirq_alloc(intr_handle_t *, int);
+int xen_vec_alloc(intr_handle_t);
 #endif /* defined(DOM0OPS) || NPCI > 0 */
 
 #ifdef MULTIPROCESSOR
