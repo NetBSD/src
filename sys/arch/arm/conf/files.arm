@@ -1,4 +1,4 @@
-#	$NetBSD: files.arm,v 1.143 2018/09/21 12:04:06 skrll Exp $
+#	$NetBSD: files.arm,v 1.144 2018/10/06 17:46:46 skrll Exp $
 
 # temporary define to allow easy moving to ../arch/arm/arm32
 defflag				ARM32
@@ -74,8 +74,8 @@ defparam opt_cpuoptions.h	ARM_CBAR
 defparam opt_arm_intr_impl.h	ARM_INTR_IMPL
 
 # ARM-specific debug options
-defflag	opt_arm_debug.h		ARM_LOCK_CAS_DEBUG
-defflag	opt_arm_debug.h		VERBOSE_INIT_ARM
+defflag  opt_arm_debug.h	ARM_LOCK_CAS_DEBUG
+defflag  opt_arm_debug.h	VERBOSE_INIT_ARM
 
 # Board-specific bus_space(9)/bus_dma(9) definitions
 defflag  opt_arm_bus_space.h	__BUS_SPACE_HAS_STREAM_METHODS
