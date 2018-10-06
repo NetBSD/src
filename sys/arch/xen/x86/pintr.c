@@ -103,7 +103,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pintr.c,v 1.5 2018/10/06 16:44:55 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pintr.c,v 1.6 2018/10/06 16:49:54 cherry Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_xen.h"
@@ -160,10 +160,10 @@ int vect2irq[256] = {0};
 
 #if defined(DOM0OPS) || NPCI > 0
 int
-xen_pirq_alloc(intr_handle_t *pirq, int type)
+xen_vec_alloc(intr_handle_t pirq)
 {
 	physdev_op_t op;
-	int irq = *pirq;
+	int irq = pirq;
 #if NIOAPIC > 0
 
 	/*
@@ -178,14 +178,14 @@ xen_pirq_alloc(intr_handle_t *pirq, int type)
 	 * or none is available.
 	 */
 	static int xen_next_irq = 200;
-	struct ioapic_softc *ioapic = ioapic_find(APIC_IRQ_APIC(*pirq));
-	int pin = APIC_IRQ_PIN(*pirq);
+	struct ioapic_softc *ioapic = ioapic_find(APIC_IRQ_APIC(pirq));
+	int pin = APIC_IRQ_PIN(pirq);
 
-	if (*pirq & APIC_INT_VIA_APIC) {
+	if (pirq & APIC_INT_VIA_APIC) {
 		irq = vect2irq[ioapic->sc_pins[pin].ip_vector];
 		if (ioapic->sc_pins[pin].ip_vector == 0 || irq == 0) {
 			/* allocate IRQ */
-			irq = APIC_IRQ_LEGACY_IRQ(*pirq);
+			irq = APIC_IRQ_LEGACY_IRQ(pirq);
 			if (irq <= 0 || irq > 15)
 				irq = xen_next_irq--;
 retry:
@@ -207,8 +207,6 @@ retry:
 				 vect2irq[op.u.irq_op.vector] == irq));
 			vect2irq[op.u.irq_op.vector] = irq;
 		}
-		*pirq &= ~0xff;
-		*pirq |= irq;
 	} else
 #endif /* NIOAPIC */
 	{
