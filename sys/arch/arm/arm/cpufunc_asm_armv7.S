@@ -347,7 +347,7 @@ ENTRY_NP(armv7_icache_inv_all)
 	mov	r2, ip			@ r2 now contains set way decr
 
 	/* r3 = ways/sets, r2 = way decr, r1 = set decr, r0 and ip are free */
-1:	mcr	p15, 0, r3, c7, c6, 2	@ invalidate line
+1:	mcr	p15, 0, r3, c7, c6, 2	@ DCISW (data cache invalidate by set/way)
 	movs	r0, r3			@ get current way/set
 	beq	2f			@ at 0 means we are done.
 	lsls	r0, r0, #10		@ clear way bits leaving only set bits
@@ -391,7 +391,7 @@ ENTRY_NP(armv7_dcache_l1inv_all)
 	sub	r2, r2, r0		@ subtract from way decr
 
 	/* r3 = ways/sets/level, r2 = way decr, r1 = set decr, r0 and ip are free */
-1:	mcr	p15, 0, r3, c7, c6, 2	@ invalidate line
+1:	mcr	p15, 0, r3, c7, c6, 2	@ DCISW (data cache invalidate by set/way)
 	cmp	r3, #15			@ are we done with this level (way/set == 0)
 	bls	.Ldone_l1inv		@ yes, we've finished
 	ubfx	r0, r3, #4, #18		@ extract set bits
@@ -445,7 +445,7 @@ ENTRY_NP(armv7_dcache_inv_all)
 	sub	r2, r2, r0		@ subtract from way decr
 
 	/* r3 = ways/sets/level, r2 = way decr, r1 = set decr, r0 and ip are free */
-1:	mcr	p15, 0, r3, c7, c6, 2	@ invalidate line
+1:	mcr	p15, 0, r3, c7, c6, 2	@ DCISW (data cache invalidate by set/way)
 	cmp	r3, #15			@ are we done with this level (way/set == 0)
 	bls	.Lnext_level_inv	@ yes, go to next level
 	ubfx	r0, r3, #4, #18		@ extract set bits
@@ -506,7 +506,7 @@ ENTRY_NP(armv7_dcache_wbinv_all)
 	sub	r2, r2, r0		@ subtract from way decr
 
 	/* r3 = ways/sets/level, r2 = way decr, r1 = set decr, r0 and ip are free */
-1:	mcr	p15, 0, r3, c7, c14, 2	@ writeback and invalidate line
+1:	mcr	p15, 0, r3, c7, c14, 2	@ DCCISW (data cache clean and invalidate by set/way)
 	cmp	r3, #15			@ are we done with this level (way/set == 0)
 	bls	.Lnext_level_wbinv	@ yes, go to next level
 	ubfx	r0, r3, #4, #18		@ extract set bits
