@@ -103,7 +103,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pintr.c,v 1.3 2018/02/17 18:51:53 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pintr.c,v 1.4 2018/10/06 16:37:11 cherry Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_xen.h"
@@ -199,9 +199,13 @@ retry:
 					panic("PHYSDEVOP_ASSIGN_VECTOR irq %d", irq);
 				goto retry;
 			}
-			KASSERT(irq2vect[irq] == 0);
+			KASSERT(irq2vect[irq] == 0 ||
+				(irq > 0 && irq < 16 &&
+				 irq2vect[irq] == op.u.irq_op.vector));
 			irq2vect[irq] = op.u.irq_op.vector;
-			KASSERT(vect2irq[op.u.irq_op.vector] == 0);
+			KASSERT(vect2irq[op.u.irq_op.vector] == 0 ||
+				(irq > 0 && irq < 16 &&
+				 vect2irq[op.u.irq_op.vector] == irq));
 			vect2irq[op.u.irq_op.vector] = irq;
 			pic->pic_addroute(pic, &phycpu_info_primary, pin,
 			    op.u.irq_op.vector, type);
