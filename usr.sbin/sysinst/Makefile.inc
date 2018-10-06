@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.13 2018/09/20 12:27:42 rin Exp $
+#	$NetBSD: Makefile.inc,v 1.14 2018/10/06 18:45:37 martin Exp $
 #
 # Makefile for sysinst
 
@@ -47,9 +47,11 @@ LDADD=		-lcurses -ltermlib -lutil
 UNIF_AWK=	${.CURDIR}/../../unif.awk
 MSG_XLAT_SH=	${.CURDIR}/../../msg_xlat.sh
 
+SETS_TAR_SUFF=${"${USE_XZ_SETS:Uno}"!="no":?"tar.xz":"tgz"}
 
 CATALOGDIR=	/usr/share/sysinst/catalog
 CPPFLAGS+=	-I. -I${.CURDIR}/../.. -I${.CURDIR} \
+		-DSETS_TAR_SUFF=${SETS_TAR_SUFF:Q} \
 		-DREL=\"${DISTRIBVER}\" -DMACH=\"${MACHINE}\" \
 		-DMACH_${MACHINE} -DARCH_${MACHINE_ARCH} \
 		${NODISKLABEL:D-DNO_DISKLABEL} \
