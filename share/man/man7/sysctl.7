@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.7,v 1.132 2018/10/05 22:16:50 christos Exp $
+.\"	$NetBSD: sysctl.7,v 1.133 2018/10/06 13:53:58 wiz Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -2137,9 +2137,9 @@ The variables are as follows:
 .It Li dgram.pcblist
 The Protocol Control Block list structure for datagram sockets.
 Parsed by
-.Xr netstat 8
+.Xr netstat 1
 or
-.Xr sockstat 8 .
+.Xr sockstat 1 .
 .It Li dgram.recvspace
 The default datagram receive buffer size.
 .It Li dgram.sendspace
@@ -2147,15 +2147,15 @@ The default datagram send buffer size.
 .It Li seqpacket.pcblist
 The Protocol Control Block list structure for Sequential Packet sockets.
 Parsed by
-.Xr netstat 8
+.Xr netstat 1
 or
-.Xr sockstat 8 .
+.Xr sockstat 1 .
 .It Li stream.pcblist
 The Protocol Control Block list structure for stream sockets.
 Parsed by
-.Xr netstat 8
+.Xr netstat 1
 or
-.Xr sockstat 8 .
+.Xr sockstat 1 .
 .It Li stream.recvspace
 The default stream receive buffer size.
 .It Li stream.sendspace
@@ -2618,7 +2618,7 @@ See
 .Xr secmodel 9
 for more information.
 .It Li security.pax
-Settings for PaX -- exploit mitigation features.
+Settings for PaX \(em exploit mitigation features.
 For more information on any of the PaX features, please see
 .Xr paxctl 8
 and
