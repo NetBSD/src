@@ -1,4 +1,4 @@
-/*	$NetBSD: getfsspecname.c,v 1.5 2014/05/25 13:46:07 christos Exp $	*/
+/*	$NetBSD: getfsspecname.c,v 1.6 2018/10/06 13:09:53 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: getfsspecname.c,v 1.5 2014/05/25 13:46:07 christos Exp $");
+__RCSID("$NetBSD: getfsspecname.c,v 1.6 2018/10/06 13:09:53 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/ioctl.h>
@@ -59,6 +59,28 @@ getfsspecname(char *buf, size_t bufsiz, const char *name)
 	char *vname;
 
 	p = drives = vname = NULL;
+
+	/*
+	 * If the name starts with "ROOT.", replace it with "/dev/<root_device>",
+	 * where <root_device> is the value of the kern.root_device sysctl. Any
+	 * characters after the special "ROOT." token are appended to the end
+	 * of this path.
+	 */
+	if (strncasecmp(name, "ROOT.", 5) == 0 && strchr(name, ':') == NULL) {
+		static const int mib_root[] = { CTL_KERN, KERN_ROOT_DEVICE };
+		static const int mib_rootlen = __arraycount(mib_root);
+
+		strlcpy(buf, "/dev/", bufsiz);
+		len = bufsiz - 5;
+		if (sysctl(mib_root, mib_rootlen, buf + 5, &len, NULL, 0) == -1) {
+			savee = errno;
+			strlcpy(buf, "sysctl kern.root_device failed", bufsiz);
+			goto out;
+		}
+		strlcat(buf, name + 5, bufsiz);
+		return buf;
+	}
+
 	if (strncasecmp(name, "NAME=", 5) != 0) {
 #ifdef COMPAT_DKWEDGE
 		/*
