@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1077 2018/10/06 18:47:29 martin Exp $
+#	$NetBSD: bsd.own.mk,v 1.1078 2018/10/06 18:52:59 martin Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -1366,7 +1366,6 @@ USE_XZ_SETS?= yes
 .else
 USE_XZ_SETS?= no
 .endif 
-USE_XZ_SETS?= no
 
 #
 # TOOL_GZIP and friends.  These might refer to TOOL_PIGZ or to the host gzip.
