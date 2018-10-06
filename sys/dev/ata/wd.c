@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.441.2.9 2018/10/04 19:42:01 jdolecek Exp $ */
+/*	$NetBSD: wd.c,v 1.441.2.10 2018/10/06 19:25:43 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.441.2.9 2018/10/04 19:42:01 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.441.2.10 2018/10/06 19:25:43 jdolecek Exp $");
 
 #include "opt_ata.h"
 #include "opt_wd.h"
@@ -1492,8 +1492,11 @@ wd_dumpblocks(device_t dev, void *va, daddr_t blkno, int nblk)
 	/* Recalibrate, if first dump transfer. */
 	if (wddumprecalibrated == 0) {
 		wddumprecalibrated = 1;
-		(*wd->atabus->ata_reset_drive)(wd->drvp,
-					       AT_POLL | AT_RST_EMERG, NULL);
+		ata_channel_lock(wd->drvp->chnl_softc);
+		/* This will directly execute the reset due to AT_POLL */
+		ata_thread_run(wd->drvp->chnl_softc, AT_POLL | AT_RST_EMERG,
+		    ATACH_TH_DRIVE_RESET, wd->drvp->drive);
+		ata_channel_unlock(wd->drvp->chnl_softc);
 		wd->drvp->state = RESET;
 	}
 
