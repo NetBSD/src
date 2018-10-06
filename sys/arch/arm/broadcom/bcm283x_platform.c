@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm283x_platform.c,v 1.18 2018/09/10 11:05:12 ryo Exp $	*/
+/*	$NetBSD: bcm283x_platform.c,v 1.19 2018/10/06 16:04:21 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2017 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm283x_platform.c,v 1.18 2018/09/10 11:05:12 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm283x_platform.c,v 1.19 2018/10/06 16:04:21 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_bcm283x.h"
@@ -771,7 +771,7 @@ bcm2836_bootstrap(void)
 		}
 
 		for (size_t i = 1; i < arm_cpu_max; i++) {
-			if ((arm_cpu_hatched & (1 << i)) == 0) {
+			if ((arm_cpu_hatched & __BIT(i)) == 0) {
 				printf("%s: warning: cpu%zu failed to hatch\n",
 				    __func__, i);
 			}
