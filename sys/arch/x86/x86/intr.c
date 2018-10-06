@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.131 2018/10/06 16:44:55 cherry Exp $	*/
+/*	$NetBSD: intr.c,v 1.132 2018/10/06 16:49:54 cherry Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.131 2018/10/06 16:44:55 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.132 2018/10/06 16:49:54 cherry Exp $");
 
 #include "opt_intrdebug.h"
 #include "opt_multiprocessor.h"
@@ -1290,7 +1290,8 @@ intr_establish_xname(int legacy_irq, struct pic *pic, int pin,
 	intrstr = intr_create_intrid(irq, pic, pin, intrstr_buf,
 	    sizeof(intrstr_buf));
 
-	vector = xen_pirq_alloc(&irq, type);
+	vector = xen_vec_alloc(irq);
+	irq = vect2irq[vector];
 	irq = (legacy_irq == -1) ? irq : legacy_irq; /* ISA compat */
 
 #if NIOAPIC > 0
