@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.25 2018/09/11 08:05:18 martin Exp $	*/
+/*	$NetBSD: net.c,v 1.26 2018/10/06 18:45:37 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -909,23 +909,24 @@ make_url(char *urlbuffer, struct ftpinfo *f, const char *dir)
 
 
 /* ftp_fetch() and pkgsrc_fetch() are essentially the same, with a different
- * ftpinfo var. */
-static int do_ftp_fetch(const char *, struct ftpinfo *);
+ * ftpinfo var and pkgsrc always using .tgz suffix, while for
+ * regular sets we only use .tgz for source sets on some architectures. */
+static int do_ftp_fetch(const char *, bool, struct ftpinfo *);
 
 static int
 ftp_fetch(const char *set_name)
 {
-	return do_ftp_fetch(set_name, &ftp);
+	return do_ftp_fetch(set_name, use_tgz_for_set(set_name), &ftp);
 }
 
 static int
 pkgsrc_fetch(const char *set_name)
 {
-	return do_ftp_fetch(set_name, &pkgsrc);
+	return do_ftp_fetch(set_name, true, &pkgsrc);
 }
 
 static int
-do_ftp_fetch(const char *set_name, struct ftpinfo *f)
+do_ftp_fetch(const char *set_name, bool force_tgz, struct ftpinfo *f)
 {
 	const char *ftp_opt;
 	char url[STRSIZE];
@@ -944,7 +945,8 @@ do_ftp_fetch(const char *set_name, struct ftpinfo *f)
 	make_url(url, f, set_dir_for_set(set_name));
 	rval = run_program(RUN_DISPLAY | RUN_PROGRESS | RUN_XFER_DIR,
 		    "/usr/bin/ftp %s%s/%s%s",
-		    ftp_opt, url, set_name, dist_postfix);
+		    ftp_opt, url, set_name,
+		    force_tgz ? dist_tgz_postfix : dist_postfix);
 
 	return rval ? SET_RETRY : SET_OK;
 }
