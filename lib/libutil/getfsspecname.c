@@ -1,4 +1,4 @@
-/*	$NetBSD: getfsspecname.c,v 1.6 2018/10/06 13:09:53 jmcneill Exp $	*/
+/*	$NetBSD: getfsspecname.c,v 1.7 2018/10/06 23:48:00 christos Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: getfsspecname.c,v 1.6 2018/10/06 13:09:53 jmcneill Exp $");
+__RCSID("$NetBSD: getfsspecname.c,v 1.7 2018/10/06 23:48:00 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/ioctl.h>
@@ -68,7 +68,7 @@ getfsspecname(char *buf, size_t bufsiz, const char *name)
 	 */
 	if (strncasecmp(name, "ROOT.", 5) == 0 && strchr(name, ':') == NULL) {
 		static const int mib_root[] = { CTL_KERN, KERN_ROOT_DEVICE };
-		static const int mib_rootlen = __arraycount(mib_root);
+		static const unsigned int mib_rootlen = __arraycount(mib_root);
 
 		strlcpy(buf, "/dev/", bufsiz);
 		len = bufsiz - 5;
