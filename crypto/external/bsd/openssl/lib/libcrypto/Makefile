@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.18 2018/09/27 18:18:53 christos Exp $
+#	$NetBSD: Makefile,v 1.19 2018/10/06 15:31:09 christos Exp $
 
 # RCSid:
 #	Id: Makefile,v 1.33 1998/11/11 11:53:53 sjg Exp
@@ -25,9 +25,11 @@ USE_FIPS=	no
 .include <bsd.own.mk>
 .include <bsd.shlib.mk>
 
-# XXX There's a bit of work to do before we can enable warnings.
+# XXX: There's a bit of work to do before we can enable warnings.
 WARNS=0
 CWARNFLAGS.clang+=	-Wno-empty-body -Wno-unused-value -Wno-parentheses
+# XXX: This warning seems to trigger incorrectly
+CWARNFLAGS.clang+=	-Wno-atomic-alignment
 
 # XXX Not yet.
 LINTFLAGS+=-D__int128='long long'
