@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata_core.c,v 1.62.2.7 2018/10/04 17:59:35 jdolecek Exp $	*/
+/*	$NetBSD: ahcisata_core.c,v 1.62.2.8 2018/10/07 15:44:47 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.62.2.7 2018/10/04 17:59:35 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.62.2.8 2018/10/07 15:44:47 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -1233,6 +1233,9 @@ ahci_cmd_complete(struct ata_channel *chp, struct ata_xfer *xfer, int tfd)
 	achp->ahcic_cmds_active &= ~(1U << xfer->c_slot);
 	ata_deactivate_xfer(chp, xfer);
 
+	if ((ata_c->flags & (AT_TIMEOU|AT_ERROR)) == 0)
+		atastart(chp);
+
 	return 0;
 }
 
@@ -1243,7 +1246,6 @@ ahci_cmd_done(struct ata_channel *chp, struct ata_xfer *xfer)
 	struct ahci_channel *achp = (struct ahci_channel *)chp;
 	struct ata_command *ata_c = &xfer->c_ata_c;
 	uint16_t *idwordbuf;
-	int flags = ata_c->flags;
 	int i;
 
 	AHCIDEBUG_PRINT(("ahci_cmd_done channel %d flags %#x/%#x\n",
@@ -1273,9 +1275,6 @@ ahci_cmd_done(struct ata_channel *chp, struct ata_xfer *xfer)
 		ata_c->flags |= AT_XFDONE;
 
 	ahci_cmd_done_end(chp, xfer);
-
-	if ((flags & (AT_TIMEOU|AT_ERROR)) == 0)
-		atastart(chp);
 }
 
 static void
