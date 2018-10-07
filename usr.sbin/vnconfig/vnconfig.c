@@ -1,4 +1,4 @@
-/*	$NetBSD: vnconfig.c,v 1.47 2018/10/07 11:51:26 mlelstv Exp $	*/
+/*	$NetBSD: vnconfig.c,v 1.48 2018/10/07 20:30:50 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -432,7 +432,7 @@ usage(void)
 {
 	const char *p = getprogname();
 	(void)fprintf(stderr, 
-	    "Usage: %s [-crivz] [-f dsktab] [-t type] vnode_disk"
+	    "Usage: %s [-cirvz] [-f dsktab] [-t type] vnode_disk"
 		" reg-file [geomspec]\n"
 	    "       %s -u [-Fv] vnode_disk\n"
 	    "       %s -l [-m num | vnode_disk...]\n", p, p, p);
