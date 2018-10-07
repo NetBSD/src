@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.268 2018/10/07 11:54:14 mlelstv Exp $	*/
+/*	$NetBSD: vnd.c,v 1.269 2018/10/07 12:00:07 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.268 2018/10/07 11:54:14 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.269 2018/10/07 12:00:07 mlelstv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vnd.h"
@@ -159,6 +159,7 @@ struct vndxfer {
     (MAKEDISKDEV(major((dev)), vndunit((dev)), RAW_PART))
 
 #define	VND_MAXPENDING(vnd)	((vnd)->sc_maxactive * 4)
+#define	VND_MAXPAGES(vnd)	(1024 * 1024 / PAGE_SIZE)
 
 
 static void	vndclear(struct vnd_softc *, int);
@@ -810,12 +811,22 @@ handle_with_rdwr(struct vnd_softc *vnd, const struct buf *obp, struct buf *bp)
 	bp->b_error =
 	    vn_rdwr(doread ? UIO_READ : UIO_WRITE,
 	    vp, bp->b_data, len, offset, UIO_SYSSPACE,
-	    IO_ADV_ENCODE(POSIX_FADV_NOREUSE), vnd->sc_cred, &resid, NULL);
+	    IO_ADV_ENCODE(POSIX_FADV_NOREUSE) | IO_DIRECT,
+		vnd->sc_cred, &resid, NULL);
 	bp->b_resid = resid;
 
+	/*
+	 * Avoid caching too many pages, the vnd user
+	 * is usually a filesystem and caches itself.
+	 * We need some amount of caching to not hinder
+	 * read-ahead and write-behind operations.
+	 */
 	mutex_enter(vp->v_interlock);
-	(void) VOP_PUTPAGES(vp, 0, 0,
-	    PGO_ALLPAGES | PGO_CLEANIT | PGO_FREE | PGO_SYNCIO);
+	if (vp->v_uobj.uo_npages > VND_MAXPAGES(vnd))
+		(void) VOP_PUTPAGES(vp, 0, 0,
+		    PGO_ALLPAGES | PGO_CLEANIT | PGO_FREE);
+	else
+		mutex_exit(vp->v_interlock);
 
 	fstrans_done(vp->v_mount);
 
