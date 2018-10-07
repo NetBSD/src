@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.132 2018/10/06 16:49:54 cherry Exp $	*/
+/*	$NetBSD: intr.c,v 1.133 2018/10/07 05:23:01 cherry Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.132 2018/10/06 16:49:54 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.133 2018/10/07 05:23:01 cherry Exp $");
 
 #include "opt_intrdebug.h"
 #include "opt_multiprocessor.h"
@@ -1263,7 +1263,7 @@ intr_establish_xname(int legacy_irq, struct pic *pic, int pin,
 
 #if NPCI > 0 || NISA > 0
 	struct pintrhand *pih;
-	intr_handle_t irq;
+	int gsi;
 	int vector, evtchn;
 
 	KASSERTMSG(legacy_irq == -1 || (0 <= legacy_irq && legacy_irq < NUM_XEN_IRQS),
@@ -1271,40 +1271,21 @@ intr_establish_xname(int legacy_irq, struct pic *pic, int pin,
 	KASSERTMSG(!(legacy_irq == -1 && pic == &i8259_pic),
 	    "non-legacy IRQon i8259 ");
 
-	if (pic->pic_type != PIC_I8259) {
-#if NIOAPIC > 0
-		/* Are we passing mp tranmogrified/cascaded irqs ? */
-		irq = (legacy_irq == -1) ? 0 : legacy_irq;
+	gsi = xen_pic_to_gsi(pic, pin);
 
-		/* will do interrupts via I/O APIC */
-		irq |= APIC_INT_VIA_APIC;
-		irq |= pic->pic_apicid << APIC_INT_APIC_SHIFT;
-		irq |= pin << APIC_INT_PIN_SHIFT;
-#else /* NIOAPIC */
-		return NULL;
-#endif /* NIOAPIC */
-	} else {
-		irq = legacy_irq;
-	}
-
-	intrstr = intr_create_intrid(irq, pic, pin, intrstr_buf,
+	intrstr = intr_create_intrid(gsi, pic, pin, intrstr_buf,
 	    sizeof(intrstr_buf));
 
-	vector = xen_vec_alloc(irq);
-	irq = vect2irq[vector];
-	irq = (legacy_irq == -1) ? irq : legacy_irq; /* ISA compat */
+	vector = xen_vec_alloc(gsi);
 
-#if NIOAPIC > 0
 	extern struct cpu_info phycpu_info_primary; /* XXX */
 	struct cpu_info *ci = &phycpu_info_primary;
 	pic->pic_addroute(pic, ci, pin, vector, type);
-#else
 
-#endif /* NIOAPIC */
 	evtchn = irq2port[vect2irq[vector]];
 	KASSERT(evtchn > 0);
 
-	pih = pirq_establish(irq & 0xff, evtchn, handler, arg, level,
+	pih = pirq_establish(gsi, evtchn, handler, arg, level,
 			     intrstr, xname);
 	pih->pic_type = pic->pic_type;
 	return pih;
