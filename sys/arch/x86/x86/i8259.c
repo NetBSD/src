@@ -1,4 +1,4 @@
-/*	$NetBSD: i8259.c,v 1.19 2018/10/07 05:28:51 cherry Exp $	*/
+/*	$NetBSD: i8259.c,v 1.20 2018/10/07 16:36:36 cherry Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i8259.c,v 1.19 2018/10/07 05:28:51 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i8259.c,v 1.20 2018/10/07 16:36:36 cherry Exp $");
 
 #include <sys/param.h> 
 #include <sys/systm.h>
@@ -267,6 +267,14 @@ i8259_setup(struct pic *pic, struct cpu_info *ci,
 	int port, irq;
 	irq = vect2irq[idtvec];
 	KASSERT(irq != 0);
+	if (irq2port[irq] != 0) {
+		/* 
+		 * Shared interrupt - we can't rebind.
+		 *  The port is shared instead.
+		 */
+		return;
+	}
+	
 	port = bind_pirq_to_evtch(irq);
 	KASSERT(port < NR_EVENT_CHANNELS);
 	KASSERT(port >= 0);
@@ -292,6 +300,7 @@ i8259_unsetup(struct pic *pic, struct cpu_info *ci,
 
 	KASSERT(port < NR_EVENT_CHANNELS);
 
+	/* XXX: This is problematic for shared interrupts */
 	KASSERT(irq2port[irq] != 0);
 	irq2port[irq] = 0;
 
