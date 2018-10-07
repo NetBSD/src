@@ -1,4 +1,4 @@
-/* $NetBSD: siisata.c,v 1.35.6.7 2018/10/04 17:59:35 jdolecek Exp $ */
+/* $NetBSD: siisata.c,v 1.35.6.8 2018/10/07 15:42:47 jdolecek Exp $ */
 
 /* from ahcisata_core.c */
 
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siisata.c,v 1.35.6.7 2018/10/04 17:59:35 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siisata.c,v 1.35.6.8 2018/10/07 15:42:47 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1179,6 +1179,9 @@ siisata_cmd_complete(struct ata_channel *chp, struct ata_xfer *xfer, int tfd)
 
 	siisata_deactivate_prb(schp, xfer->c_slot);
 	ata_deactivate_xfer(chp, xfer);
+
+	if ((ata_c->flags & (AT_TIMEOU|AT_ERROR)) == 0)
+		atastart(chp);
 
 	return 0;
 }
