@@ -1,4 +1,4 @@
-/*	$NetBSD: xen.h,v 1.39 2018/07/26 15:38:26 maxv Exp $	*/
+/*	$NetBSD: xen.h,v 1.40 2018/10/07 11:25:55 mlelstv Exp $	*/
 
 /*
  *
@@ -44,7 +44,7 @@ struct xen_netinfo {
 };
 
 union xen_cmdline_parseinfo {
-	char			xcp_bootdev[16]; /* sizeof(dv_xname) */
+	char			xcp_bootdev[144];
 	struct xen_netinfo	xcp_netinfo;
 	char			xcp_console[16];
 	char			xcp_pcidevs[64];

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.19 2017/07/29 06:29:32 maxv Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.20 2018/10/07 11:25:55 mlelstv Exp $	*/
 /*	NetBSD: autoconf.c,v 1.75 2003/12/30 12:33:22 pk Exp 	*/
 
 /*-
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.19 2017/07/29 06:29:32 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.20 2018/10/07 11:25:55 mlelstv Exp $");
 
 #include "opt_xen.h"
 #include "opt_multiprocessor.h"
@@ -150,7 +150,8 @@ cpu_rootconf(void)
 	cpu_bootconf();
 
 	printf("boot device: %s\n",
-	    booted_device ? device_xname(booted_device) : "<unknown>");
+	    booted_device ? device_xname(booted_device) :
+	    bootspec ? bootspec : "<unknown>");
 	rootconf();
 }
 
@@ -164,6 +165,7 @@ cpu_bootconf(void)
 	device_t dv;
 	deviter_t di;
 	union xen_cmdline_parseinfo xcp;
+	static char bootspecbuf[sizeof(xcp.xcp_bootdev)];
 
 	if (booted_device)
 		return;
@@ -200,6 +202,18 @@ cpu_bootconf(void)
 		break;
 	}
 	deviter_release(&di);
+
+	if (booted_device)
+		return;
+
+	/*
+	 * not a boot device name, pass through to MI code
+	 */
+	if (xcp.xcp_bootdev[0] != '\0') {
+		strlcpy(bootspecbuf, xcp.xcp_bootdev, sizeof(bootspecbuf));
+		bootspec = bootspecbuf;
+		return;
+	}
 }
 
 #include "pci.h"
