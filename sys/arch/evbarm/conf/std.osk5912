@@ -1,15 +1,15 @@
-#	$NetBSD: std.osk5912,v 1.5 2012/12/16 23:47:56 matt Exp $
+#	$NetBSD: std.osk5912,v 1.6 2018/10/07 07:48:44 skrll Exp $
 #
 # standard NetBSD/evbarm for OSK5912 options
 
-machine	evbarm arm
-include 	"arch/evbarm/conf/std.evbarm"
+machine		evbarm arm
+include		"arch/evbarm/conf/std.evbarm"
 
 # Pull in OSK5912 config definitions.
 include		"arch/evbarm/conf/files.osk5912"
 
-makeoptions	LOADADDRESS="0x80000000"
-makeoptions	BOARDTYPE="osk5912"
-makeoptions	BOARDMKFRAG="${THISARM}/conf/mk.osk5912"
+makeoptions 	LOADADDRESS="0x80000000"
+makeoptions 	BOARDTYPE="osk5912"
+makeoptions 	BOARDMKFRAG="${THISARM}/conf/mk.osk5912"
 
 options 	ARM_INTR_IMPL="<arch/arm/omap/omap5912_intr.h>"

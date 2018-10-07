@@ -1,4 +1,4 @@
-#	$NetBSD: std.hdl_g,v 1.6 2018/01/17 20:30:16 skrll Exp $
+#	$NetBSD: std.hdl_g,v 1.7 2018/10/07 07:48:44 skrll Exp $
 #
 # standard NetBSD/evbarm for I-O DATA HDL-G options
 
@@ -8,8 +8,8 @@ include		"arch/evbarm/conf/std.evbarm"
 # Pull in HDL-G config definitions.
 include		"arch/evbarm/conf/files.hdl_g"
 
-makeoptions	BOARDTYPE="hdlg"
-makeoptions	BOARDMKFRAG="${THISARM}/conf/mk.hdl_g"
+makeoptions 	BOARDTYPE="hdlg"
+makeoptions 	BOARDMKFRAG="${THISARM}/conf/mk.hdl_g"
 
 options 	ARM_INTR_IMPL="<arch/arm/xscale/i80321_intr.h>"
 

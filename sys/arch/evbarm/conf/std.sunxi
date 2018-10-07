@@ -1,8 +1,8 @@
-#	$NetBSD: std.sunxi,v 1.4 2017/08/25 00:07:03 jmcneill Exp $
+#	$NetBSD: std.sunxi,v 1.5 2018/10/07 07:48:44 skrll Exp $
 #
 
-machine	evbarm arm
-include 	"arch/evbarm/conf/std.evbarm"
+machine		evbarm arm
+include		"arch/evbarm/conf/std.evbarm"
 
 include		"arch/evbarm/conf/files.sunxi"
 
@@ -22,16 +22,16 @@ options 	FPU_VFP
 options 	__BUS_SPACE_HAS_STREAM_METHODS
 options 	__HAVE_GENERIC_CPU_INITCLOCKS
 
-makeoptions	KERNEL_BASE_PHYS="0x40008000"
-makeoptions	KERNEL_BASE_VIRT="0x80008000"
-makeoptions	BOARDTYPE="sunxi"
-makeoptions	BOARDMKFRAG="${THISARM}/conf/mk.sunxi"
-makeoptions	CPUFLAGS="-march=armv7-a -mfpu=neon"
+makeoptions 	KERNEL_BASE_PHYS="0x40008000"
+makeoptions 	KERNEL_BASE_VIRT="0x80008000"
+makeoptions 	BOARDTYPE="sunxi"
+makeoptions 	BOARDMKFRAG="${THISARM}/conf/mk.sunxi"
+makeoptions 	CPUFLAGS="-march=armv7-a -mfpu=neon"
 
 options 	ARM_INTR_IMPL="<arch/arm/fdt/fdt_intr.h>"
-options		ARM_GENERIC_TODR
+options 	ARM_GENERIC_TODR
 
 # initrd support
 options 	MEMORY_DISK_HOOKS
 options 	MEMORY_DISK_DYNAMIC
-pseudo-device	md
+pseudo-device 	md
