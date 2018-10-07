@@ -1,8 +1,8 @@
-#	$NetBSD: std.ixm1200,v 1.15 2018/01/17 20:30:16 skrll Exp $
+#	$NetBSD: std.ixm1200,v 1.16 2018/10/07 07:48:44 skrll Exp $
 #
 # standard NetBSD/evbarm for IXM1200 options
 
-machine	evbarm arm
+machine		evbarm arm
 include		"arch/evbarm/conf/std.evbarm"
 
 # Pull in IXM1200 config definitions.
@@ -11,9 +11,9 @@ include		"arch/evbarm/conf/files.ixm1200"
 options 	EXEC_AOUT
 
 options 	KERNEL_BASE_EXT=0xc0000000
-makeoptions	LOADADDRESS="0xC0200000"
-makeoptions	BOARDTYPE="ixm1200"
-makeoptions	BOARDMKFRAG="${THISARM}/conf/mk.ixm1200"
+makeoptions 	LOADADDRESS="0xC0200000"
+makeoptions 	BOARDTYPE="ixm1200"
+makeoptions 	BOARDMKFRAG="${THISARM}/conf/mk.ixm1200"
 
 options 	ARM_INTR_IMPL="<arch/arm/ixp12x0/ixp12x0_intr.h>"
 

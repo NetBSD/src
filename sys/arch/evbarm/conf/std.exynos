@@ -1,15 +1,15 @@
-#	$NetBSD: std.exynos,v 1.6 2018/07/01 23:41:37 jmcneill Exp $
+#	$NetBSD: std.exynos,v 1.7 2018/10/07 07:48:43 skrll Exp $
 #
 
-machine	evbarm arm
-include 	"arch/evbarm/conf/std.evbarm"
+machine		evbarm arm
+include		"arch/evbarm/conf/std.evbarm"
 
 include		"arch/evbarm/conf/files.exynos"
 
 makeoptions 	CPUFLAGS="-march=armv7-a -mfpu=neon"
 
 options 	ARM_TRUSTZONE_FIRMWARE
-options		__NO_FIQ
+options 	__NO_FIQ
 
 options 	FDT				# Flattened Device Tree support
 options 	DRAM_BLOCKS=256
@@ -29,10 +29,10 @@ options 	__HAVE_PCI_CONF_HOOK
 options 	__BUS_SPACE_HAS_STREAM_METHODS
 options 	__HAVE_GENERIC_CPU_INITCLOCKS
 
-makeoptions	KERNEL_BASE_PHYS="0x40000000"
-makeoptions	KERNEL_BASE_VIRT="0x80000000"
-makeoptions	BOARDTYPE="exynos"
-makeoptions	BOARDMKFRAG="${THISARM}/conf/mk.exynos"
+makeoptions 	KERNEL_BASE_PHYS="0x40000000"
+makeoptions 	KERNEL_BASE_VIRT="0x80000000"
+makeoptions 	BOARDTYPE="exynos"
+makeoptions 	BOARDMKFRAG="${THISARM}/conf/mk.exynos"
 
 options 	ARM_INTR_IMPL="<arch/arm/fdt/fdt_intr.h>"
-options		ARM_GENERIC_TODR
+options 	ARM_GENERIC_TODR

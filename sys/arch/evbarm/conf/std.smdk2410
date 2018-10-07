@@ -1,20 +1,20 @@
-#	$NetBSD: std.smdk2410,v 1.8 2018/01/17 20:30:16 skrll Exp $
+#	$NetBSD: std.smdk2410,v 1.9 2018/10/07 07:48:44 skrll Exp $
 #
 # standard NetBSD/evbarm for SMDK2410 options
 
-machine	evbarm arm
-include 	"arch/evbarm/conf/std.evbarm"
+machine		evbarm arm
+include		"arch/evbarm/conf/std.evbarm"
 
 # Config definitions for SMDK2410
 include		"arch/evbarm/conf/files.smdk2410"
 
 options 	EXEC_AOUT
 
-options	SSCOM_S3C2410
+options 	SSCOM_S3C2410
 
-makeoptions	BOARDTYPE="smdk2410"
-makeoptions	BOARDMKFRAG="${THISARM}/conf/mk.smdk2xx0"
-makeoptions	KERNEL_BASE_PHYS=0x30200000
+makeoptions 	BOARDTYPE="smdk2410"
+makeoptions 	BOARDMKFRAG="${THISARM}/conf/mk.smdk2xx0"
+makeoptions 	KERNEL_BASE_PHYS=0x30200000
 options 	KERNEL_BASE_EXT=0xc0000000
 
 options 	ARM_INTR_IMPL="<arch/arm/s3c2xx0/s3c2410_intr.h>"

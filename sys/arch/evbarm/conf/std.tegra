@@ -1,8 +1,8 @@
-#	$NetBSD: std.tegra,v 1.16 2017/07/06 00:35:28 jmcneill Exp $
+#	$NetBSD: std.tegra,v 1.17 2018/10/07 07:48:44 skrll Exp $
 #
 
 machine	evbarm arm
-include 	"arch/evbarm/conf/std.evbarm"
+include		"arch/evbarm/conf/std.evbarm"
 
 include		"arch/evbarm/conf/files.tegra"
 
@@ -23,15 +23,15 @@ options 	PCI_NETBSD_CONFIGURE
 options 	__HAVE_PCI_CONF_HOOK
 options 	__BUS_SPACE_HAS_STREAM_METHODS
 
-makeoptions	KERNEL_BASE_PHYS="0x81000000"
-makeoptions	KERNEL_BASE_VIRT="0x81000000"
-makeoptions	BOARDTYPE="tegra"
-makeoptions	BOARDMKFRAG="${THISARM}/conf/mk.tegra"
+makeoptions 	KERNEL_BASE_PHYS="0x81000000"
+makeoptions 	KERNEL_BASE_VIRT="0x81000000"
+makeoptions 	BOARDTYPE="tegra"
+makeoptions 	BOARDMKFRAG="${THISARM}/conf/mk.tegra"
 
 options 	ARM_INTR_IMPL="<arch/arm/fdt/fdt_intr.h>"
-options		ARM_GENERIC_TODR
+options 	ARM_GENERIC_TODR
 
 # initrd support
 options 	MEMORY_DISK_HOOKS
 options 	MEMORY_DISK_DYNAMIC
-pseudo-device	md
+pseudo-device 	md

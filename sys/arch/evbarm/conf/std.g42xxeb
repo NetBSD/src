@@ -1,9 +1,9 @@
-#	$NetBSD: std.g42xxeb,v 1.8 2012/12/16 23:47:56 matt Exp $
+#	$NetBSD: std.g42xxeb,v 1.9 2018/10/07 07:48:44 skrll Exp $
 #
 # standard NetBSD/evbarm for TWINTAIL (G4255EB) options
 
-machine	evbarm arm
-include 	"arch/evbarm/conf/std.evbarm"
+machine		evbarm arm
+include		"arch/evbarm/conf/std.evbarm"
 
 # Pull in LUBBOCK config definitions.
 include		"arch/evbarm/conf/files.g42xxeb"
@@ -11,13 +11,13 @@ include		"arch/evbarm/conf/files.g42xxeb"
 options 	G42XXEB
 
 options 	KERNEL_BASE_EXT=0xc0000000
-makeoptions	LOADADDRESS="0xc0200000"
-makeoptions	BOARDTYPE="g42xxeb"
-makeoptions	BOARDMKFRAG="${THISARM}/conf/mk.g42xxeb"
+makeoptions 	LOADADDRESS="0xc0200000"
+makeoptions 	BOARDTYPE="g42xxeb"
+makeoptions 	BOARDMKFRAG="${THISARM}/conf/mk.g42xxeb"
 
 options 	ARM_INTR_IMPL="<arch/arm/xscale/pxa2x0_intr.h>"
 
 # OS Timer
-saost*	at pxaip? addr 0x40a00000 size 0x20
+saost* 		at pxaip? addr 0x40a00000 size 0x20
 
 

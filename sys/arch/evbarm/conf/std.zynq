@@ -1,12 +1,12 @@
-#	$NetBSD: std.zynq,v 1.2 2017/08/28 08:00:20 skrll Exp $
+#	$NetBSD: std.zynq,v 1.3 2018/10/07 07:48:44 skrll Exp $
 #
 # standard NetBSD/evbarm for ZYNQ options
 
-machine	evbarm arm
-include 	"arch/evbarm/conf/std.evbarm"
+machine		evbarm arm
+include		"arch/evbarm/conf/std.evbarm"
 
 # Pull in Zynq config definitions.
-include 	"arch/evbarm/conf/files.zynq"
+include		"arch/evbarm/conf/files.zynq"
 
 options 	MODULAR
 options 	MODULAR_DEFAULT_AUTOLOAD
@@ -25,11 +25,11 @@ options 	FPU_VFP
 options 	CORTEX_PMC
 options 	CORTEX_PMC_CCNT_HZ=666666666
 
-makeoptions	LOADADDRESS_VIRT="0x80100000"
-makeoptions	LOADADDRESS="0x00100000"
+makeoptions 	LOADADDRESS_VIRT="0x80100000"
+makeoptions 	LOADADDRESS="0x00100000"
 
-makeoptions	BOARDMKFRAG="${THISARM}/conf/mk.zynq"
-makeoptions	CPPFLAGS+="-I$S/../../../include"
+makeoptions 	BOARDMKFRAG="${THISARM}/conf/mk.zynq"
+makeoptions 	CPPFLAGS+="-I$S/../../../include"
 
 options 	ARM_INTR_IMPL="<arch/arm/zynq/zynq7000_intr.h>"
-options		ARM_GENERIC_TODR
+options 	ARM_GENERIC_TODR

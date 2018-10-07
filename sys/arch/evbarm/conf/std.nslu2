@@ -1,9 +1,9 @@
-#       $NetBSD: std.nslu2,v 1.5 2012/12/16 23:47:56 matt Exp $
+#       $NetBSD: std.nslu2,v 1.6 2018/10/07 07:48:44 skrll Exp $
 #
 # Standard NetBSD/evbarm options for Linksys NSLU2
 
-machine evbarm arm
-include 	"arch/evbarm/conf/std.evbarm"
+machine		 evbarm arm
+include		"arch/evbarm/conf/std.evbarm"
 
 # Pull in NSLU2 config definitions.
 include		"arch/evbarm/conf/files.nslu2"

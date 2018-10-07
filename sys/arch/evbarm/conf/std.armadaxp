@@ -1,11 +1,11 @@
-#	$NetBSD: std.armadaxp,v 1.4 2017/07/01 09:26:51 skrll Exp $
+#	$NetBSD: std.armadaxp,v 1.5 2018/10/07 07:48:43 skrll Exp $
 #
 # standard NetBSD/evbarm for ARMADAXP options
 
 machine		evbarm arm
 include		"conf/std"	# MI standard options
 
-include 	"arch/evbarm/conf/files.armadaxp"
+include		"arch/evbarm/conf/files.armadaxp"
 
 options 	EXEC_ELF32
 options 	EXEC_SCRIPT
@@ -18,20 +18,20 @@ options 	__HAVE_CPU_UAREA_ALLOC_IDLELWP
 
 
 # Build for armv7-a, soft-floats only
-makeoptions	CPUFLAGS="-march=armv7-a -msoft-float"
+makeoptions 	CPUFLAGS="-march=armv7-a -msoft-float"
 
 options 	KERNEL_BASE_EXT=0x80000000
 options 	STARTUP_PAGETABLE_ADDR=0x00100000
 options 	MEMSTART=0x00000000
-makeoptions	LOADADDRESS="0x00200000"
-makeoptions	KERNEL_BASE_PHYS="0x00200000"
-makeoptions	KERNEL_BASE_VIRT="0x80200000"
+makeoptions 	LOADADDRESS="0x00200000"
+makeoptions 	KERNEL_BASE_PHYS="0x00200000"
+makeoptions 	KERNEL_BASE_VIRT="0x80200000"
 
-makeoptions	BOARDTYPE="armadaxp"
-makeoptions	BOARDMKFRAG="${THISARM}/conf/mk.armadaxp"
+makeoptions 	BOARDTYPE="armadaxp"
+makeoptions 	BOARDMKFRAG="${THISARM}/conf/mk.armadaxp"
 
 options 	EVBARM_BOARDTYPE="Armada XP"
-options		ARM_HAS_VBAR
+options 	ARM_HAS_VBAR
 options 	ARM_INTR_IMPL="<arch/arm/marvell/mvsoc_intr.h>"
 options 	COM_REGMAP
 options 	COM_16750

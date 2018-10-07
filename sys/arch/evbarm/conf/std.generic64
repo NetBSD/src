@@ -1,6 +1,6 @@
-#	$NetBSD: std.generic64,v 1.2 2018/09/08 00:42:24 jmcneill Exp $
+#	$NetBSD: std.generic64,v 1.3 2018/10/07 07:48:44 skrll Exp $
 #
-# 	generic NetBSD/evbarm64 with FDT support
+#	generic NetBSD/evbarm64 with FDT support
 
 machine		evbarm aarch64
 include		"conf/std"
@@ -29,9 +29,9 @@ options 	PCI_NETBSD_CONFIGURE
 makeoptions	BOARDMKFRAG="${THISARM}/conf/mk.generic64"
 
 # initrd support
-options		MEMORY_DISK_HOOKS
-options		MEMORY_DISK_DYNAMIC
-pseudo-device	md
+options 	MEMORY_DISK_HOOKS
+options 	MEMORY_DISK_DYNAMIC
+pseudo-device 	md
 
 # General options
 options 	CHILD_MAX=1024	# 160 is too few

@@ -1,19 +1,19 @@
-#	$NetBSD: std.integrator_cp,v 1.2 2018/01/17 20:30:16 skrll Exp $
+#	$NetBSD: std.integrator_cp,v 1.3 2018/10/07 07:48:44 skrll Exp $
 #
 # standard NetBSD/integrator options
 
-machine	evbarm arm
-include 	"arch/evbarm/conf/std.evbarm"
+machine		evbarm arm
+include		"arch/evbarm/conf/std.evbarm"
 
 # Pull in Integrator config definitions.
-include 	"arch/evbarm/conf/files.integrator"
+include		"arch/evbarm/conf/files.integrator"
 
 options 	EXEC_AOUT
 
 options 	_ARM32_NEED_BUS_DMA_BOUNCE
 
-makeoptions	BOARDTYPE="integrator"
-makeoptions	BOARDMKFRAG="${THISARM}/conf/mk.integrator_cp"
+makeoptions 	BOARDTYPE="integrator"
+makeoptions 	BOARDMKFRAG="${THISARM}/conf/mk.integrator_cp"
 
 options 	ARM_INTR_IMPL="<arch/evbarm/ifpga/ifpga_intr.h>"
 
