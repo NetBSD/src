@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.bootimage,v 1.17 2017/02/11 08:08:00 pgoyette Exp $
+#	$NetBSD: Makefile.bootimage,v 1.18 2018/10/07 18:07:00 martin Exp $
 #
 # Copyright (c) 2009, 2010, 2011 Izumi Tsutsui.  All rights reserved.
 #
@@ -217,6 +217,7 @@ WORKFSTAB?=	work.fstab
 WORKRCCONF?=	work.rc.conf
 WORKFS?=        work.rootfs
 TARGETFS?=      imgroot.fs
+TAR_SUFF=	${"${USE_XZ_SETS:Uno}"!="no":?tar.xz:tgz}
 
 CLEANFILES+=	${WORKSPEC} ${WORKFSTAB} ${WORKRCCONF} ${WORKFS}
 CLEANFILES+=	${TARGETFS}
@@ -231,12 +232,12 @@ ${TARGETFS}: prepare_md_post
 	fi;
 	@${MKDIR} ${MKDIRPERM} ${WORKDIR}
 .for set in ${IMG_SETS}
-	@if [ ! -f ${SETS_DIR}/${set}.tgz ]; then 			\
-		echo "Missing ${SETS_DIR}/${set}.tgz, aborting";	\
+	@if [ ! -f ${SETS_DIR}/${set}.${TAR_SUFF} ]; then 		\
+		echo "Missing ${SETS_DIR}/${set}.${TAR_SUFF}, aborting";\
 		false; 							\
 	fi
-	@echo Extracting ${set}.tgz ...
-	@(cd ${WORKDIR}; ${TOOL_PAX} ${PAX_TIMESTAMP} -rnz -f ${SETS_DIR}/${set}.tgz .)
+	@echo Extracting ${set}.${TAR_SUFF} ...
+	@(cd ${WORKDIR}; ${TOOL_PAX} ${PAX_TIMESTAMP} -rnz -f ${SETS_DIR}/${set}.${TAR_SUFF} .)
 .endfor
 .if defined(SECONDARY_BOOT)
 	@echo Copying secondary boot...
