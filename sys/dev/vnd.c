@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.266 2018/10/05 09:51:55 hannken Exp $	*/
+/*	$NetBSD: vnd.c,v 1.267 2018/10/07 11:51:26 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.266 2018/10/05 09:51:55 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.267 2018/10/07 11:51:26 mlelstv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vnd.h"
@@ -1243,6 +1243,8 @@ vndioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		fflags = FREAD;
 		if ((vio->vnd_flags & VNDIOF_READONLY) == 0)
 			fflags |= FWRITE;
+		if ((vio->vnd_flags & VNDIOF_FILEIO) != 0)
+			vnd->sc_flags |= VNF_USE_VN_RDWR;
 		error = pathbuf_copyin(vio->vnd_file, &pb);
 		if (error) {
 			goto unlock_and_exit;
@@ -1266,7 +1268,7 @@ vndioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 
 		/* If using a compressed file, initialize its info */
 		/* (or abort with an error if kernel has no compression) */
-		if (vio->vnd_flags & VNF_COMP) {
+		if (vio->vnd_flags & VNDIOF_COMP) {
 #ifdef VND_COMPRESSION
 			struct vnd_comp_header *ch;
 			int i;
