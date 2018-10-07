@@ -1,4 +1,4 @@
-.\"	$NetBSD: vnconfig.8,v 1.44 2018/10/07 11:51:26 mlelstv Exp $
+.\"	$NetBSD: vnconfig.8,v 1.45 2018/10/07 20:30:50 wiz Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -70,7 +70,7 @@
 .Sh SYNOPSIS
 .Nm
 .\" Fcf:lm:rt:uvz
-.Op Fl crivz
+.Op Fl cirvz
 .Op Fl f Ar disktab
 .Op Fl t Ar typename
 .Ar vnode_disk
@@ -144,6 +144,9 @@ option should look up in
 .Ar disktab
 instead of in
 .Pa /etc/disktab .
+.It Fl i
+Configure the device to use regular file I/O even when direct I/O using
+bmap/strategy would be possible.
 .It Fl l
 List the vnd devices and indicate which ones are in use.
 If one or more specific
@@ -168,9 +171,6 @@ is set to 0,
 then only vnd devices currently in use will be shown.
 .It Fl r
 Configure the device as read-only.
-.It Fl i
-Configure the device to use regular file I/O even when direct I/O using
-bmap/strategy would be possible.
 .It Fl t Ar typename
 If configuring the device, look up
 .Ar typename
