@@ -1,4 +1,4 @@
-#	$NetBSD: std.amlogic,v 1.4 2018/10/07 07:48:43 skrll Exp $
+#	$NetBSD: std.amlogic,v 1.5 2018/10/07 07:51:54 skrll Exp $
 #
 
 machine		evbarm arm
@@ -9,7 +9,7 @@ include		"arch/evbarm/conf/files.amlogic"
 options 	MODULAR
 options 	MODULAR_DEFAULT_AUTOLOAD
 options 	__HAVE_CPU_COUNTER
-options 	 __HAVE_CPU_UAREA_ALLOC_IDLELWP
+options 	__HAVE_CPU_UAREA_ALLOC_IDLELWP
 options 	CORTEX_PMC
 options 	__HAVE_FAST_SOFTINTS		# should be in types.h
 options 	ARM_HAS_VBAR
