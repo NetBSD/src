@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.219 2017/11/14 14:14:29 jmcneill Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.220 2018/10/07 11:24:16 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.219 2017/11/14 14:14:29 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.220 2018/10/07 11:24:16 mlelstv Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -432,11 +432,13 @@ setroot(device_t bootdv, int bootpartition)
 			goto haveroot;
 		}
 
-		if (rootdev == NODEV &&
-		    dv != NULL && device_class(dv) == DV_DISK &&
-		    device_is_a(dv, "dk") &&
-		    (majdev = devsw_name2blk(device_xname(dv), NULL, 0)) >= 0)
+		if (dv != NULL && device_class(dv) == DV_DISK &&
+		    !DEV_USES_PARTITIONS(dv) &&
+		    (majdev = devsw_name2blk(device_xname(dv), NULL, 0)) >= 0) {
+			rootdv = dv;
 			rootdev = makedev(majdev, device_unit(dv));
+			goto haveroot;
+		}
 
 		rootdevname = devsw_blk2name(major(rootdev));
 		if (rootdevname == NULL) {
