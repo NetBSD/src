@@ -1,8 +1,8 @@
-#	$NetBSD: std.iq80310,v 1.23 2012/12/16 23:47:56 matt Exp $
+#	$NetBSD: std.iq80310,v 1.24 2018/10/07 07:48:44 skrll Exp $
 #
 # standard NetBSD/evbarm for IQ80310 options
 
-machine	evbarm arm
+machine		evbarm arm
 include		"arch/evbarm/conf/std.evbarm"
 
 # Pull in IQ80310 config definitions.
@@ -11,8 +11,8 @@ include		"arch/evbarm/conf/files.iq80310"
 options 	EXEC_AOUT
 
 options 	KERNEL_BASE_EXT=0xc0000000
-makeoptions	BOARDTYPE="iq80310"
-makeoptions	BOARDMKFRAG="${THISARM}/conf/mk.iq80310"
+makeoptions 	BOARDTYPE="iq80310"
+makeoptions 	BOARDMKFRAG="${THISARM}/conf/mk.iq80310"
 
 options 	ARM_INTR_IMPL="<arch/evbarm/iq80310/iq80310_intr.h>"
 
