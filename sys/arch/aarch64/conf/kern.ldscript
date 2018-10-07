@@ -42,17 +42,17 @@ SECTIONS
 		*(.data)
 	}
 
-	. = ALIGN(64);	/* COHERENCY_UNIT */
+	. = ALIGN(COHERENCY_UNIT);
 	.data.cacheline_aligned :
 	{
 		*(.data.cacheline_aligned)
 	}
-	. = ALIGN(64);	/* COHERENCY_UNIT */
+	. = ALIGN(COHERENCY_UNIT);
 	.data.read_mostly :
 	{
 		*(.data.read_mostly)
 	}
-	. = ALIGN(64);	/* COHERENCY_UNIT */
+	. = ALIGN(COHERENCY_UNIT);
 
 	_edata = .;
 	PROVIDE (edata = .);
