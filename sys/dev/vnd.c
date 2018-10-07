@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.267 2018/10/07 11:51:26 mlelstv Exp $	*/
+/*	$NetBSD: vnd.c,v 1.268 2018/10/07 11:54:14 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.267 2018/10/07 11:51:26 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.268 2018/10/07 11:54:14 mlelstv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vnd.h"
@@ -1427,12 +1427,19 @@ vndioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 			 * Sanity-check the sector size.
 			 */
 			if (!DK_DEV_BSIZE_OK(vnd->sc_geom.vng_secsize) ||
-			    vnd->sc_geom.vng_ncylinders == 0 ||
 			    vnd->sc_geom.vng_ntracks == 0 ||
 			    vnd->sc_geom.vng_nsectors == 0) {
 				error = EINVAL;
 				goto close_and_exit;
 			}
+
+			/*
+			 * Compute missing cylinder count from size
+			 */
+			if (vnd->sc_geom.vng_ncylinders == 0)
+				vnd->sc_geom.vng_ncylinders = vnd->sc_size /
+					(vnd->sc_geom.vng_ntracks *
+					vnd->sc_geom.vng_nsectors);
 
 			/*
 			 * Compute the size (in DEV_BSIZE blocks) specified
