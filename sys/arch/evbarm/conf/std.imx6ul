@@ -1,12 +1,12 @@
-#	$NetBSD: std.imx6ul,v 1.1 2017/06/09 18:14:59 ryo Exp $
+#	$NetBSD: std.imx6ul,v 1.2 2018/10/07 07:48:44 skrll Exp $
 #
 # standard NetBSD/evbarm options for i.MX6UL
 
-machine	evbarm arm
-include 	"arch/evbarm/conf/std.evbarm"
+machine		evbarm arm
+include		"arch/evbarm/conf/std.evbarm"
 
 # Pull in nitrogen6 config definitions.
-include 	"arch/evbarm/conf/files.nitrogen6"
+include		"arch/evbarm/conf/files.nitrogen6"
 
 options 	NITROGEN6
 
@@ -28,8 +28,8 @@ options 	KERNEL_BASE_EXT=0x80000000
 makeoptions 	KERNEL_BASE_PHYS="0x80800000"
 makeoptions 	KERNEL_BASE_VIRT="0x80800000"
 
-makeoptions	BOARDMKFRAG="${THISARM}/conf/mk.imx6ul"
-makeoptions	CPPFLAGS+="-I$S/../../../include"
+makeoptions 	BOARDMKFRAG="${THISARM}/conf/mk.imx6ul"
+makeoptions 	CPPFLAGS+="-I$S/../../../include"
 
 options 	ARM_INTR_IMPL="<arch/arm/imx/imx6_intr.h>"
-options		ARM_GENERIC_TODR
+options 	ARM_GENERIC_TODR
