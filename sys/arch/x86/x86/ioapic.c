@@ -1,4 +1,4 @@
-/* 	$NetBSD: ioapic.c,v 1.57 2018/10/07 05:28:51 cherry Exp $	*/
+/* 	$NetBSD: ioapic.c,v 1.58 2018/10/07 16:36:36 cherry Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2009 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ioapic.c,v 1.57 2018/10/07 05:28:51 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioapic.c,v 1.58 2018/10/07 16:36:36 cherry Exp $");
 
 #include "opt_ddb.h"
 
@@ -576,6 +576,15 @@ ioapic_addroute(struct pic *pic, struct cpu_info *ci, int pin,
 	int port, irq;
 	irq = vect2irq[idtvec];
 	KASSERT(irq != 0);
+
+	if (irq2port[irq] != 0) {
+		/* 
+		 * Shared interrupt - we can't rebind.
+		 *  The port is shared instead.
+		 */
+		return;
+	}
+
 	port = bind_pirq_to_evtch(irq);
 	KASSERT(port < NR_EVENT_CHANNELS);
 	KASSERT(port >= 0);
@@ -602,6 +611,7 @@ ioapic_delroute(struct pic *pic, struct cpu_info *ci, int pin,
 
 	KASSERT(port < NR_EVENT_CHANNELS);
 
+	/* XXX: This is problematic for shared interrupts */
 	KASSERT(irq2port[irq] != 0);
 	irq2port[irq] = 0;
 
