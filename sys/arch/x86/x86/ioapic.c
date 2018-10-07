@@ -1,4 +1,4 @@
-/* 	$NetBSD: ioapic.c,v 1.56 2017/12/13 16:30:18 bouyer Exp $	*/
+/* 	$NetBSD: ioapic.c,v 1.57 2018/10/07 05:28:51 cherry Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2009 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ioapic.c,v 1.56 2017/12/13 16:30:18 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioapic.c,v 1.57 2018/10/07 05:28:51 cherry Exp $");
 
 #include "opt_ddb.h"
 
@@ -601,6 +601,12 @@ ioapic_delroute(struct pic *pic, struct cpu_info *ci, int pin,
 	port = unbind_pirq_from_evtch(irq);
 
 	KASSERT(port < NR_EVENT_CHANNELS);
+
+	KASSERT(irq2port[irq] != 0);
+	irq2port[irq] = 0;
+
+	xen_atomic_clear_bit(&ci->ci_evtmask[0], port);
+
 #endif
 
 }
