@@ -1,4 +1,4 @@
-/*	$NetBSD: i8259.c,v 1.18 2018/10/07 05:23:01 cherry Exp $	*/
+/*	$NetBSD: i8259.c,v 1.19 2018/10/07 05:28:51 cherry Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i8259.c,v 1.18 2018/10/07 05:23:01 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i8259.c,v 1.19 2018/10/07 05:28:51 cherry Exp $");
 
 #include <sys/param.h> 
 #include <sys/systm.h>
@@ -291,6 +291,11 @@ i8259_unsetup(struct pic *pic, struct cpu_info *ci,
 	port = unbind_pirq_from_evtch(irq);
 
 	KASSERT(port < NR_EVENT_CHANNELS);
+
+	KASSERT(irq2port[irq] != 0);
+	irq2port[irq] = 0;
+
+	xen_atomic_clear_bit(&ci->ci_evtmask[0], port);
 #else
 	if (CPU_IS_PRIMARY(ci))
 		i8259_reinit_irqs();
