@@ -1,4 +1,4 @@
-/*	$NetBSD: i8259.c,v 1.17 2018/02/17 18:51:53 maxv Exp $	*/
+/*	$NetBSD: i8259.c,v 1.18 2018/10/07 05:23:01 cherry Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i8259.c,v 1.17 2018/02/17 18:51:53 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i8259.c,v 1.18 2018/10/07 05:23:01 cherry Exp $");
 
 #include <sys/param.h> 
 #include <sys/systm.h>
@@ -88,6 +88,9 @@ __KERNEL_RCSID(0, "$NetBSD: i8259.c,v 1.17 2018/02/17 18:51:53 maxv Exp $");
 #include <machine/pic.h>
 #include <machine/i8259.h>
 
+#ifdef XEN
+#include <xen/evtchn.h>
+#endif
 
 #ifndef __x86_64__
 #include "mca.h"
@@ -99,6 +102,7 @@ __KERNEL_RCSID(0, "$NetBSD: i8259.c,v 1.17 2018/02/17 18:51:53 maxv Exp $");
 static void i8259_hwmask(struct pic *, int);
 static void i8259_hwunmask(struct pic *, int);
 static void i8259_setup(struct pic *, struct cpu_info *, int, int, int);
+static void i8259_unsetup(struct pic *, struct cpu_info *, int, int, int);
 static void i8259_reinit_irqs(void);
 
 unsigned i8259_imen;
@@ -115,7 +119,7 @@ struct pic i8259_pic = {
 	.pic_hwmask = i8259_hwmask,
 	.pic_hwunmask = i8259_hwunmask,
 	.pic_addroute = i8259_setup,
-	.pic_delroute = i8259_setup,
+	.pic_delroute = i8259_unsetup,
 	.pic_level_stubs = legacy_stubs,
 	.pic_edge_stubs = legacy_stubs,
 };
@@ -252,9 +256,47 @@ static void
 i8259_setup(struct pic *pic, struct cpu_info *ci,
     int pin, int idtvec, int type)
 {
+#if defined(XEN)
+	/*
+	 * This is kludgy, and not the right place, but we can't bind
+	 * before the routing has been set to the appropriate 'vector'.
+	 * in x86/intr.c, this is done after idt_vec_set(), where this
+	 * would have been more appropriate to put this.
+	 */
+
+	int port, irq;
+	irq = vect2irq[idtvec];
+	KASSERT(irq != 0);
+	port = bind_pirq_to_evtch(irq);
+	KASSERT(port < NR_EVENT_CHANNELS);
+	KASSERT(port >= 0);
+
+	KASSERT(irq2port[irq] == 0);
+	irq2port[irq] = port + 1;
+
+	xen_atomic_set_bit(&ci->ci_evtmask[0], port);
+#else
 	if (CPU_IS_PRIMARY(ci))
 		i8259_reinit_irqs();
+#endif
 }
+
+static void
+i8259_unsetup(struct pic *pic, struct cpu_info *ci,
+    int pin, int idtvec, int type)
+{
+#if defined(XEN)
+	int port, irq;
+	irq = vect2irq[idtvec];
+	port = unbind_pirq_from_evtch(irq);
+
+	KASSERT(port < NR_EVENT_CHANNELS);
+#else
+	if (CPU_IS_PRIMARY(ci))
+		i8259_reinit_irqs();
+#endif
+}
+
 
 void
 i8259_reinit(void)
