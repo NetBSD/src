@@ -1,4 +1,4 @@
-/*	$NetBSD: lp64.h,v 1.5 2018/09/07 15:16:15 christos Exp $	*/
+/*	$NetBSD: lp64.h,v 1.6 2018/10/07 14:20:01 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -67,6 +67,9 @@
 #define	TARG_QUAD_MIN	((-TARG_QUAD_MAX) - 1)
 #define	TARG_UQUAD_MAX	((uint64_t) -1)
 
+#ifndef _LP64
+/* XXX on a 32 build for a 64 build host we skip these */
 #define	TARG_INT128_MAX		((__int128_t) (((__uint128_t) -1) >> 1))
 #define	TARG_INT128_MIN		((-TARG_INT128_MAX) - 1)
 #define	TARG_UINT128_MAX	((__uint128_t) -1)
+#endif

@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: scan.l,v 1.83 2018/09/07 15:16:15 christos Exp $ */
+/* $NetBSD: scan.l,v 1.84 2018/10/07 14:20:01 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: scan.l,v 1.83 2018/09/07 15:16:15 christos Exp $");
+__RCSID("$NetBSD: scan.l,v 1.84 2018/10/07 14:20:01 christos Exp $");
 #endif
 
 #include <stdlib.h>
@@ -558,7 +558,7 @@ icon(int base)
 	char	c, *eptr;
 	tspec_t	typ;
 	int	ansiu;
-#ifdef INT128_SIZE
+#ifdef TARG_INT128_MAX
 	__uint128_t uq = 0;
 	static	tspec_t contypes[2][4] = {
 		{ INT,  LONG,  QUAD, INT128, },
@@ -689,17 +689,21 @@ icon(int base)
 		break;
 #ifdef INT128_SIZE
 	case INT128:
+#ifdef TARG_INT128_MAX
 		if (uq > TARG_INT128_MAX && !tflag) {
 			typ = UINT128;
 			if (!sflag)
 				ansiu = 1;
 		}
+#endif
 		break;
 	case UINT128:
+#ifdef TARG_INT128_MAX
 		if (uq > TARG_UINT128_MAX) {
 			/* integer constant out of range */
 			warning(252);
 		}
+#endif
 		break;
 #endif
 		/* LINTED206: (enumeration values not handled in switch) */
