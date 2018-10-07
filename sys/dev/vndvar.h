@@ -1,4 +1,4 @@
-/*	$NetBSD: vndvar.h,v 1.37 2018/09/20 07:18:38 mlelstv Exp $	*/
+/*	$NetBSD: vndvar.h,v 1.38 2018/10/07 11:51:26 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -98,6 +98,8 @@ struct vnd_ioctl {
 #define	VNDIOF_HASGEOM	0x01		/* use specified geometry */
 #define	VNDIOF_READONLY	0x02		/* as read-only device */
 #define	VNDIOF_FORCE	0x04		/* force close */
+#define	VNDIOF_FILEIO	0x08		/* have to use read/write */
+#define	VNDIOF_COMP	0x0400		/* must stay the same as VNF_COMP */
 
 #ifdef _KERNEL
 
