@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.325 2017/06/17 22:35:50 mlelstv Exp $	*/
+/*	$NetBSD: sd.c,v 1.326 2018/10/07 18:14:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.325 2017/06/17 22:35:50 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.326 2018/10/07 18:14:32 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_scsi.h"
@@ -655,6 +655,7 @@ sd_diskstart(device_t dev, struct buf *bp)
 	struct scsipi_xfer *xs;
 	int error, flags, nblks, cmdlen;
 	int cdb_flags;
+	bool havefua = !(periph->periph_quirks & PQUIRK_NOFUA);
 
 	mutex_enter(chan_mtx(chan));
 
@@ -703,12 +704,13 @@ sd_diskstart(device_t dev, struct buf *bp)
 	 * selection, as 6-byte CDB doesn't support the flags.
 	 */
 	cdb_flags = 0;
+	if (havefua) {
+		if (bp->b_flags & B_MEDIA_FUA)
+			cdb_flags |= SRWB_FUA;
 
-	if (bp->b_flags & B_MEDIA_FUA)
-		cdb_flags |= SRWB_FUA;
-
-	if (bp->b_flags & B_MEDIA_DPO)
-		cdb_flags |= SRWB_DPO;
+		if (bp->b_flags & B_MEDIA_DPO)
+			cdb_flags |= SRWB_DPO;
+	}
 
 	/*
 	 * Fill out the scsi command.  Use the smallest CDB possible
@@ -1846,7 +1848,8 @@ sd_getcache(struct sd_softc *sd, int *bitsp)
 	 * Support for FUA/DPO, defined starting with SCSI-2. Use only
 	 * if device claims to support it, according to the MODE SENSE.
 	 */
-	if (ISSET(dev_spec, SMH_DSP_DPOFUA))
+	if (!(periph->periph_quirks & PQUIRK_NOFUA) &&
+	    ISSET(dev_spec, SMH_DSP_DPOFUA))
 		bits |= DKCACHE_FUA | DKCACHE_DPO;
 
 	memset(&scsipi_sense, 0, sizeof(scsipi_sense));
