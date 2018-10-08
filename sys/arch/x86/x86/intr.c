@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.133 2018/10/07 05:23:01 cherry Exp $	*/
+/*	$NetBSD: intr.c,v 1.134 2018/10/08 08:05:08 cherry Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.133 2018/10/07 05:23:01 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.134 2018/10/08 08:05:08 cherry Exp $");
 
 #include "opt_intrdebug.h"
 #include "opt_multiprocessor.h"
@@ -1278,12 +1278,24 @@ intr_establish_xname(int legacy_irq, struct pic *pic, int pin,
 
 	vector = xen_vec_alloc(gsi);
 
-	extern struct cpu_info phycpu_info_primary; /* XXX */
-	struct cpu_info *ci = &phycpu_info_primary;
-	pic->pic_addroute(pic, ci, pin, vector, type);
+	if (irq2port[gsi] == 0) {
+		extern struct cpu_info phycpu_info_primary; /* XXX */
+		struct cpu_info *ci = &phycpu_info_primary;
 
-	evtchn = irq2port[vect2irq[vector]];
-	KASSERT(evtchn > 0);
+		pic->pic_addroute(pic, ci, pin, vector, type);
+
+		evtchn = bind_pirq_to_evtch(gsi);
+		KASSERT(evtchn > 0);
+		KASSERT(evtchn < NR_EVENT_CHANNELS);
+		irq2port[gsi] = evtchn + 1;
+		xen_atomic_set_bit(&ci->ci_evtmask[0], evtchn);
+	} else {
+		/*
+		 * Shared interrupt - we can't rebind.
+		 * The port is shared instead.
+		 */
+		evtchn = irq2port[gsi];
+	}
 
 	pih = pirq_establish(gsi, evtchn, handler, arg, level,
 			     intrstr, xname);
@@ -1337,7 +1349,31 @@ intr_disestablish(struct intrhand *ih)
 		return;
 	}
 #if defined(DOM0OPS)
-	pirq_disestablish((struct pintrhand *)ih);
+	/* 
+	 * Cache state, to prevent a use after free situation with
+	 * ih.
+	 */
+
+	struct pintrhand *pih = (struct pintrhand *)ih;
+
+	int pirq = pih->pirq;
+	int port = pih->evtch;
+	KASSERT(irq2port[pirq] != 0);
+
+	pirq_disestablish(pih);
+
+	if (evtsource[port] == NULL) {
+			/*
+			 * Last handler was removed by
+			 * event_remove_handler().
+			 *
+			 * We can safely unbind the pirq now.
+			 */
+
+			port = unbind_pirq_from_evtch(pirq);
+			KASSERT(port == pih->evtch);
+			irq2port[pirq] = 0;
+	}
 #endif
 	return;
 #endif /* XEN */
