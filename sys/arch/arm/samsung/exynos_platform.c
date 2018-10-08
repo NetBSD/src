@@ -1,4 +1,4 @@
-/* $NetBSD: exynos_platform.c,v 1.17 2018/09/21 12:04:07 skrll Exp $ */
+/* $NetBSD: exynos_platform.c,v 1.18 2018/10/08 08:17:00 skrll Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared D. McNeill <jmcneill@invisible.ca>
@@ -35,7 +35,7 @@
 #include "ukbd.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exynos_platform.c,v 1.17 2018/09/21 12:04:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exynos_platform.c,v 1.18 2018/10/08 08:17:00 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -124,8 +124,6 @@ static void
 exynos_platform_bootstrap(void)
 {
 
-	exynos_bootstrap();
-
 	void (*mp_bootstrap)(void) = NULL;
 	const struct of_compat_data *cd = of_search_compatible(OF_finddevice("/"), mp_compat_data);
 	if (cd)
@@ -205,9 +203,18 @@ exynos4_platform_devmap(void)
 	return devmap;
 }
 
+static void
+exynos4_platform_bootstrap(void)
+{
+
+	exynos_bootstrap(4);
+
+	exynos_platform_bootstrap();
+}
+
 static const struct arm_platform exynos4_platform = {
 	.ap_devmap = exynos4_platform_devmap,
-	.ap_bootstrap = exynos_platform_bootstrap,
+	.ap_bootstrap = exynos4_platform_bootstrap,
 	.ap_init_attach_args = exynos_platform_init_attach_args,
 	.ap_early_putchar = exynos_platform_early_putchar,
 	.ap_device_register = exynos_platform_device_register,
@@ -240,9 +247,18 @@ exynos5_platform_devmap(void)
 	return devmap;
 }
 
+static void
+exynos5_platform_bootstrap(void)
+{
+
+	exynos_bootstrap(5);
+
+	exynos_platform_bootstrap();
+}
+
 static const struct arm_platform exynos5_platform = {
 	.ap_devmap = exynos5_platform_devmap,
-	.ap_bootstrap = exynos_platform_bootstrap,
+	.ap_bootstrap = exynos5_platform_bootstrap,
 	.ap_init_attach_args = exynos_platform_init_attach_args,
 	.ap_early_putchar = exynos_platform_early_putchar,
 	.ap_device_register = exynos_platform_device_register,
