@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_gmac_var.h,v 1.11 2018/09/28 21:51:42 aymeric Exp $ */
+/* $NetBSD: dwc_gmac_var.h,v 1.12 2018/10/08 17:09:31 martin Exp $ */
 
 /*-
  * Copyright (c) 2013, 2014 The NetBSD Foundation, Inc.
@@ -46,7 +46,23 @@
 
 #define		AWGE_MAX_PACKET		0x7ff
 
+struct dwc_gmac_dev_dmadesc;
 
+struct dwc_gmac_desc_methods {
+	void (*tx_init_flags)(struct dwc_gmac_dev_dmadesc *);
+	void (*tx_set_owned_by_dev)(struct dwc_gmac_dev_dmadesc *);
+	int  (*tx_is_owned_by_dev)(struct dwc_gmac_dev_dmadesc *);
+	void (*tx_set_len)(struct dwc_gmac_dev_dmadesc *, int);
+	void (*tx_set_first_frag)(struct dwc_gmac_dev_dmadesc *);
+	void (*tx_set_last_frag)(struct dwc_gmac_dev_dmadesc *);
+
+	void (*rx_init_flags)(struct dwc_gmac_dev_dmadesc *);
+	void (*rx_set_owned_by_dev)(struct dwc_gmac_dev_dmadesc *);
+	int  (*rx_is_owned_by_dev)(struct dwc_gmac_dev_dmadesc *);
+	void (*rx_set_len)(struct dwc_gmac_dev_dmadesc *, int);
+	uint32_t  (*rx_get_len)(struct dwc_gmac_dev_dmadesc *);
+	int  (*rx_has_error)(struct dwc_gmac_dev_dmadesc *);
+};
 
 struct dwc_gmac_rx_data {
 	bus_dmamap_t	rd_map;
@@ -89,6 +105,7 @@ struct dwc_gmac_softc {
 	bus_dma_segment_t sc_dma_ring_seg;	/* and TX ring */
 	struct dwc_gmac_rx_ring sc_rxq;
 	struct dwc_gmac_tx_ring sc_txq;
+	const struct dwc_gmac_desc_methods *sc_descm;
 	short sc_if_flags;			/* shadow of ether flags */
 	uint16_t sc_mii_clk;
 	bool sc_stopping;
