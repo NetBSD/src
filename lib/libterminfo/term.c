@@ -1,4 +1,4 @@
-/* $NetBSD: term.c,v 1.28 2017/05/16 12:03:41 roy Exp $ */
+/* $NetBSD: term.c,v 1.29 2018/10/08 20:44:34 roy Exp $ */
 
 /*
  * Copyright (c) 2009, 2010, 2011 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: term.c,v 1.28 2017/05/16 12:03:41 roy Exp $");
+__RCSID("$NetBSD: term.c,v 1.29 2018/10/08 20:44:34 roy Exp $");
 
 #include <sys/stat.h>
 
@@ -284,9 +284,19 @@ _ti_dbgetterm(TERMINAL *term, const char *path, const char *name, int flags)
 	size_t len, klen;
 	int r;
 
-	if (snprintf(__ti_database, sizeof(__ti_database), "%s.cdb", path) < 0)
-		return -1;
-	db = cdbr_open(__ti_database, CDBR_DEFAULT);
+	r = snprintf(__ti_database, sizeof(__ti_database), "%s.cdb", path);
+	if (r < 0 || (size_t)r > sizeof(__ti_database)) {
+		db = NULL;
+		errno = ENOENT; /* To fall back to a non extension. */
+	} else
+		db = cdbr_open(__ti_database, CDBR_DEFAULT);
+
+	/* Target file *may* be a cdb file without the extension. */
+	if (db == NULL && errno == ENOENT) {
+		len = strlcpy(__ti_database, path, sizeof(__ti_database));
+		if (len < sizeof(__ti_database))
+			db = cdbr_open(__ti_database, CDBR_DEFAULT);
+	}
 	if (db == NULL)
 		return -1;
 
