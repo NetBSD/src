@@ -1,4 +1,4 @@
-#	$NetBSD: std.tegra,v 1.17 2018/10/07 07:48:44 skrll Exp $
+#	$NetBSD: std.tegra,v 1.18 2018/10/08 10:22:17 skrll Exp $
 #
 
 machine	evbarm arm
@@ -6,30 +6,30 @@ include		"arch/evbarm/conf/std.evbarm"
 
 include		"arch/evbarm/conf/files.tegra"
 
-options 	FDT				# Flattened Device Tree support
+# Architecture opions
+options 	ARM_GENERIC_TODR
+options 	ARM_HAS_VBAR
+options 	ARM_INTR_IMPL="<arch/arm/fdt/fdt_intr.h>"
 options 	DRAM_BLOCKS=256
+options 	FDT				# Flattened Device Tree support
+options 	FPU_VFP
 options 	MODULAR
 options 	MODULAR_DEFAULT_AUTOLOAD
-options 	__HAVE_CPU_COUNTER
-options 	__HAVE_FAST_SOFTINTS		# should be in types.h
-options 	ARM_HAS_VBAR
-options 	__HAVE_CPU_UAREA_ALLOC_IDLELWP
-#options 	__HAVE_MM_MD_DIRECT_MAPPED_PHYS
 #options 	PMAP_NEED_ALLOC_POOLPAGE
-options 	TPIDRPRW_IS_CURCPU
-options 	KERNEL_BASE_EXT=0x80000000
-options 	FPU_VFP
 options 	PCI_NETBSD_CONFIGURE
-options 	__HAVE_PCI_CONF_HOOK
+options 	TPIDRPRW_IS_CURCPU
 options 	__BUS_SPACE_HAS_STREAM_METHODS
+options 	__HAVE_CPU_COUNTER
+options 	__HAVE_CPU_UAREA_ALLOC_IDLELWP
+options 	__HAVE_FAST_SOFTINTS		# should be in types.h
+#options 	__HAVE_MM_MD_DIRECT_MAPPED_PHYS
+options 	__HAVE_PCI_CONF_HOOK
 
+makeoptions 	BOARDMKFRAG="${THISARM}/conf/mk.tegra"
+makeoptions 	BOARDTYPE="tegra"
+options 	KERNEL_BASE_EXT=0x80000000
 makeoptions 	KERNEL_BASE_PHYS="0x81000000"
 makeoptions 	KERNEL_BASE_VIRT="0x81000000"
-makeoptions 	BOARDTYPE="tegra"
-makeoptions 	BOARDMKFRAG="${THISARM}/conf/mk.tegra"
-
-options 	ARM_INTR_IMPL="<arch/arm/fdt/fdt_intr.h>"
-options 	ARM_GENERIC_TODR
 
 # initrd support
 options 	MEMORY_DISK_HOOKS

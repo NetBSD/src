@@ -1,4 +1,4 @@
-#	$NetBSD: std.armadaxp,v 1.5 2018/10/07 07:48:43 skrll Exp $
+#	$NetBSD: std.armadaxp,v 1.6 2018/10/08 10:22:17 skrll Exp $
 #
 # standard NetBSD/evbarm for ARMADAXP options
 
@@ -12,27 +12,26 @@ options 	EXEC_SCRIPT
 
 # To support easy transit to ../arch/arm/arm32
 options 	ARM32
-options 	__HAVE_FAST_SOFTINTS		# should be in types.h
-options 	__HAVE_PCI_CONF_HOOK		# should be in types.h
-options 	__HAVE_CPU_UAREA_ALLOC_IDLELWP
-
-
-# Build for armv7-a, soft-floats only
-makeoptions 	CPUFLAGS="-march=armv7-a -msoft-float"
-
-options 	KERNEL_BASE_EXT=0x80000000
-options 	STARTUP_PAGETABLE_ADDR=0x00100000
-options 	MEMSTART=0x00000000
-makeoptions 	LOADADDRESS="0x00200000"
-makeoptions 	KERNEL_BASE_PHYS="0x00200000"
-makeoptions 	KERNEL_BASE_VIRT="0x80200000"
-
-makeoptions 	BOARDTYPE="armadaxp"
-makeoptions 	BOARDMKFRAG="${THISARM}/conf/mk.armadaxp"
-
 options 	EVBARM_BOARDTYPE="Armada XP"
 options 	ARM_HAS_VBAR
 options 	ARM_INTR_IMPL="<arch/arm/marvell/mvsoc_intr.h>"
 options 	COM_REGMAP
 options 	COM_16750
 options 	PIC_MAXSOURCES=128
+options 	__HAVE_FAST_SOFTINTS		# should be in types.h
+options 	__HAVE_PCI_CONF_HOOK		# should be in types.h
+options 	__HAVE_CPU_UAREA_ALLOC_IDLELWP
+
+
+options 	STARTUP_PAGETABLE_ADDR=0x00100000
+options 	MEMSTART=0x00000000
+
+# Build for armv7-a, soft-floats only
+makeoptions 	CPUFLAGS="-march=armv7-a -msoft-float"
+
+options 	KERNEL_BASE_EXT=0x80000000
+makeoptions 	LOADADDRESS="0x00200000"
+makeoptions 	KERNEL_BASE_PHYS="0x00200000"
+makeoptions 	KERNEL_BASE_VIRT="0x80200000"
+makeoptions 	BOARDTYPE="armadaxp"
+makeoptions 	BOARDMKFRAG="${THISARM}/conf/mk.armadaxp"
