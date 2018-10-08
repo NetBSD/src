@@ -1,4 +1,4 @@
-#	$NetBSD: std.armadillo9,v 1.8 2018/10/07 07:48:43 skrll Exp $
+#	$NetBSD: std.armadillo9,v 1.9 2018/10/08 10:22:17 skrll Exp $
 #
 # standard NetBSD/evbarm for Armadillo9 options
 
@@ -8,8 +8,9 @@ include		"arch/evbarm/conf/std.evbarm"
 # Pull in armadillo9 config definitions.
 include		"arch/evbarm/conf/files.armadillo9"
 
-makeoptions 	BOARDTYPE="armadillo9"
+options 	ARM_INTR_IMPL="<arch/arm/ep93xx/ep93xx_intr.h>"
+
 options 	KERNEL_BASE_EXT=0xc0000000
+makeoptions 	BOARDTYPE="armadillo9"
 makeoptions 	LOADADDRESS="0xc0200000"
 makeoptions 	BOARDMKFRAG="${THISARM}/conf/mk.armadillo9"
-options 	ARM_INTR_IMPL="<arch/arm/ep93xx/ep93xx_intr.h>"

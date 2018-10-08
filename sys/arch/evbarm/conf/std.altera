@@ -1,16 +1,16 @@
-# $NetBSD: std.altera,v 1.2 2018/10/07 07:48:43 skrll Exp $
+# $NetBSD: std.altera,v 1.3 2018/10/08 10:22:17 skrll Exp $
 
 machine		evbarm	arm
 
 include		"arch/evbarm/conf/std.evbarm"
 include		"arch/evbarm/conf/files.altera"
 
-options 	DRAM_BLOCKS=256
-options 	FDT
-options 	FPU_VFP
 options 	ARM_HAS_VBAR
 options 	ARM_GENERIC_TODR
 options 	ARM_INTR_IMPL="<arch/arm/fdt/fdt_intr.h>"
+options 	DRAM_BLOCKS=256
+options 	FDT
+options 	FPU_VFP
 options 	TPIDRPRW_IS_CURCPU
 options 	__BUS_SPACE_HAS_STREAM_METHODS
 options 	__HAVE_CPU_COUNTER
@@ -19,10 +19,8 @@ options 	__HAVE_FAST_SOFTINTS
 options 	__HAVE_MM_MD_DIRECT_MAPPED_PHYS
 
 options 	KERNEL_BASE_EXT=0x80000000
-
 makeoptions 	KERNEL_BASE_PHYS="0x10000"
 makeoptions 	KERNEL_BASE_VIRT="0x80010000"
-
 makeoptions 	BOARDTYPE="nanosoc"
 makeoptions 	BOARDMKFRAG="${THISARM}/conf/mk.altera"
 

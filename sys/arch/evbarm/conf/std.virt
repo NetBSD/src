@@ -1,4 +1,4 @@
-#       $NetBSD: std.virt,v 1.4 2018/10/07 07:48:44 skrll Exp $
+#       $NetBSD: std.virt,v 1.5 2018/10/08 10:22:17 skrll Exp $
 #
 # standard NetBSD/evbarm for VIRT options
 
@@ -8,27 +8,27 @@ include		"arch/evbarm/conf/std.evbarm"
 # Pull in VIRT config definitions
 include		"arch/evbarm/conf/files.virt"
 
-options 	FDT				# Flattened Device Tree support
+# Architecture opions
+options 	ARM_HAS_VBAR
+options 	ARM_GENERIC_TODR
+options 	ARM_INTR_IMPL="<arch/arm/fdt/fdt_intr.h>"
 options 	DRAM_BLOCKS=256
+options 	FDT				# Flattened Device Tree support
+options 	FPU_VFP
 options 	MODULAR
 options 	MODULAR_DEFAULT_AUTOLOAD
-options 	ARM_HAS_VBAR
+options 	TPIDRPRW_IS_CURCPU
 options 	__HAVE_CPU_COUNTER
 options 	__HAVE_CPU_UAREA_ALLOC_IDLELWP
 options 	__HAVE_FAST_SOFTINTS            # should be in types.h
 #options 	__HAVE_MM_MD_DIRECT_MAPPED_PHYS
-options 	TPIDRPRW_IS_CURCPU
-options 	KERNEL_BASE_EXT=0x80000000
-options 	FPU_VFP
 
+makeoptions 	BOARDMKFRAG="${THISARM}/conf/mk.virt"
+makeoptions 	BOARDTYPE="virt"
+makeoptions 	CPUFLAGS="-march=armv7-a -mfpu=neon"
+options 	KERNEL_BASE_EXT=0x80000000
 makeoptions 	KERNEL_BASE_PHYS="0x41000000"
 makeoptions 	KERNEL_BASE_VIRT="0x81000000"
-makeoptions 	BOARDTYPE="virt"
-makeoptions 	BOARDMKFRAG="${THISARM}/conf/mk.virt"
-makeoptions 	CPUFLAGS="-march=armv7-a -mfpu=neon"
-
-options 	ARM_INTR_IMPL="<arch/arm/fdt/fdt_intr.h>"
-options 	ARM_GENERIC_TODR
 
 # initrd support
 options 	MEMORY_DISK_HOOKS
