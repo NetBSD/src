@@ -1,4 +1,4 @@
-/*	$NetBSD: exynos_soc.c,v 1.36 2018/09/14 11:58:38 skrll Exp $	*/
+/*	$NetBSD: exynos_soc.c,v 1.37 2018/10/08 08:16:59 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #include "opt_exynos.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exynos_soc.c,v 1.36 2018/09/14 11:58:38 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exynos_soc.c,v 1.37 2018/10/08 08:16:59 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -475,7 +475,7 @@ exynos_clocks_bootstrap(void)
 
 
 void
-exynos_bootstrap(void)
+exynos_bootstrap(int soc)
 {
 	int error;
 	size_t core_size, audiocore_size;
@@ -487,33 +487,40 @@ exynos_bootstrap(void)
 	bus_addr_t exynos_cmu_apll_offset;
 	const vaddr_t iobase = EXYNOS_CORE_VBASE;
 
+	switch (soc) {
 #ifdef SOC_EXYNOS4
-	core_size = EXYNOS4_CORE_SIZE;
-	audiocore_size = EXYNOS4_AUDIOCORE_SIZE;
-	audiocore_pbase = EXYNOS4_AUDIOCORE_PBASE;
-	audiocore_vbase = EXYNOS4_AUDIOCORE_VBASE;
-	exynos_wdt_offset = EXYNOS4_WDT_OFFSET;
-	exynos_pmu_offset = EXYNOS4_PMU_OFFSET;
-	exynos_sysreg_offset = EXYNOS4_SYSREG_OFFSET;
-	exynos_cmu_apll_offset = EXYNOS4_CMU_APLL;
+	case 4:
+		core_size = EXYNOS4_CORE_SIZE;
+		audiocore_size = EXYNOS4_AUDIOCORE_SIZE;
+		audiocore_pbase = EXYNOS4_AUDIOCORE_PBASE;
+		audiocore_vbase = EXYNOS4_AUDIOCORE_VBASE;
+		exynos_wdt_offset = EXYNOS4_WDT_OFFSET;
+		exynos_pmu_offset = EXYNOS4_PMU_OFFSET;
+		exynos_sysreg_offset = EXYNOS4_SYSREG_OFFSET;
+		exynos_cmu_apll_offset = EXYNOS4_CMU_APLL;
 
-	cpu_freq_settings = cpu_freq_settings_exynos4;
-	ncpu_freq_settings = __arraycount(cpu_freq_settings_exynos4);
+		cpu_freq_settings = cpu_freq_settings_exynos4;
+		ncpu_freq_settings = __arraycount(cpu_freq_settings_exynos4);
+		break;
 #endif
-
 #ifdef SOC_EXYNOS5
-	core_size = EXYNOS5_CORE_SIZE;
-	audiocore_size = EXYNOS5_AUDIOCORE_SIZE;
-	audiocore_pbase = EXYNOS5_AUDIOCORE_PBASE;
-	audiocore_vbase = EXYNOS5_AUDIOCORE_VBASE;
-	exynos_wdt_offset = EXYNOS5_WDT_OFFSET;
-	exynos_pmu_offset = EXYNOS5_PMU_OFFSET;
-	exynos_sysreg_offset = EXYNOS5_SYSREG_OFFSET;
-	exynos_cmu_apll_offset = EXYNOS5_CMU_APLL;
+	case 5:
+		core_size = EXYNOS5_CORE_SIZE;
+		audiocore_size = EXYNOS5_AUDIOCORE_SIZE;
+		audiocore_pbase = EXYNOS5_AUDIOCORE_PBASE;
+		audiocore_vbase = EXYNOS5_AUDIOCORE_VBASE;
+		exynos_wdt_offset = EXYNOS5_WDT_OFFSET;
+		exynos_pmu_offset = EXYNOS5_PMU_OFFSET;
+		exynos_sysreg_offset = EXYNOS5_SYSREG_OFFSET;
+		exynos_cmu_apll_offset = EXYNOS5_CMU_APLL;
 
-	cpu_freq_settings = cpu_freq_settings_exynos5;
-	ncpu_freq_settings = __arraycount(cpu_freq_settings_exynos5);
+		cpu_freq_settings = cpu_freq_settings_exynos5;
+		ncpu_freq_settings = __arraycount(cpu_freq_settings_exynos5);
+		break;
 #endif
+	default:
+		panic("%s: unknown soc version", __func__);
+	}
 
 	/* map in the exynos io registers */
 	error = bus_space_map(&armv7_generic_bs_tag, EXYNOS_CORE_PBASE,
