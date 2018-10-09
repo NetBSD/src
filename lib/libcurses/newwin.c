@@ -1,4 +1,4 @@
-/*	$NetBSD: newwin.c,v 1.50.6.1 2018/10/04 10:20:12 martin Exp $	*/
+/*	$NetBSD: newwin.c,v 1.50.6.2 2018/10/09 09:49:35 martin Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)newwin.c	8.3 (Berkeley) 7/27/94";
 #else
-__RCSID("$NetBSD: newwin.c,v 1.50.6.1 2018/10/04 10:20:12 martin Exp $");
+__RCSID("$NetBSD: newwin.c,v 1.50.6.2 2018/10/09 09:49:35 martin Exp $");
 #endif
 #endif				/* not lint */
 
@@ -422,8 +422,14 @@ __swflags(WINDOW *win)
 		win->flags |= __ENDLINE;
 		if (win->begx == 0 && win->maxy == LINES && win->begy == 0)
 			win->flags |= __FULLWIN;
+		/*
+		 * Enable this if we have a terminfo setting which claims
+		 * terminal will scroll. Currently there is none.
+		 */
+#if 0
 		if (win->begy + win->maxy == LINES)
 			win->flags |= __SCROLLWIN;
+#endif
 	}
 }
 
