@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.3,v 1.1.2.1 2018/10/09 15:50:03 snj Exp $
+# $NetBSD: CHANGES-7.3,v 1.1.2.2 2018/10/09 15:54:57 snj Exp $
 
 A complete list of changes from the NetBSD 7.2 release to the NetBSD 7.3
 release:
@@ -9,4 +9,62 @@ sys/sys/param.h					patched by hand
 
 	Welcome to 7.2_STABLE.
 	[snj]
+
+sys/arch/x86/include/cacheinfo.h		1.23-1.26
+sys/arch/x86/include/cpu.h			1.70
+sys/arch/x86/include/specialreg.h		1.91-1.93,1.98,1.100,1.102-1.124,1.126,1.130 via patch
+sys/arch/x86/x86/cpu_topology.c			1.10
+sys/arch/x86/x86/identcpu.c			1.56-1.57,1.70 via patch
+usr.sbin/cpuctl/arch/i386.c			1.71,1.75-1.79,1.81-1.85 via patch
+
+	Add some register definitions for x86:
+	  - Add CLWB bit.
+	  - Fix a few (unused) MSR values, and add some bit definitions of
+	    MSR_EFER from Murray Armfield in PR#42861.
+	  - CPUID_CFLUSH bit is not for CFLUSH insn but CLFLUSH insn, so modify
+	    comments and snprintb() string.
+	  - Define CPUID Fn00000001 %ebx bits and use them.
+	    No functional change.
+	  - Add Structured Extended Flags Enumeration Leaf's bit definitions:
+	    AVX512_{IFMA,VBMI2,VNNI,BITALG,VPOPCNTDQ,4VNNIW,4FMAPS},GFNI&VAES.
+	  - Add Turbo Boost Max Technology 3.0 bit.
+	  - Add AMD SVM features definitions.
+	  - Add Intel cpuid 7 %edx IBRS and STIBP bit definitions.
+	  - Fix swapped comments for EFER LME and LMA
+	  - Add Intel cpuid 7 %edx bit 29 IA32_ARCH_CAPABILITIES supported bit.
+	  - Add MSR_IA32_ARCH_CAPABILITIES definition.
+	  - Add IA32_SPEC_CTRL MSR and IA32_PRED_CMD MSR.
+	  - Add Intel Deterministic Address Translation Parameter Leaf(0x18)
+	    definitions.
+	  - s/CLFUSH/CLFLUSH/
+	  - Add AMD's Disable Indirect Branch Predictor bit definition.
+	  - Add the MSR bits definitions for IBRS, STIBP and IBPB.
+	  - Add Intel Fn0000_0006 %eax new bit 14-20 (HWP stuff).
+	  - Intel Fn0000_0007 %ecx bit 22 is for both RDPID and IA32_TSC_AUX.
+	  - Add AMD's CPUID Fn80000001 %edx MMX and FXSR bit definitions.
+	  - Add RDCL_NO and IBRS_ALL.
+	  - Add SSBD and RSBA bit definitions.
+	  - Add AMD's SSB bit definitions for F15H, F16H and F17H.
+	  - Add cpuid 7 edx L1D_FLUSH bit.
+	  - Add IA32_ARCH_SKIP_L1DFL_VMENTRY bit.
+	  - Add IA32_FLUSH_CMD MSR.
+	  - Add yet another Shared L2 TLB (2M/4M pages).
+	  - Add 3way and 6way of L2 cache or TLB on AMD CPU.
+	  - AMD L3 cache association bitfield is not 8bit but 4bit like others
+	    association bitfields.
+	  - Sort entries. No functional change.
+	  - Modify comment, fix typo in comment and add comment.
+	cpuctl(8):
+	  - Add detection for Quark X1000, Xeon E5 v4, E7 v4,
+	    Core i7-69xx Extreme Edition, Xeon Scalable (Skylake),
+	    Xeon Phi [357]200 (Knights Landing), Atom (Goldmont),
+	    Atom (Denverton), Future Core (Cannon Lake), Atom (Goldmont Plus),
+	    Xeon Phi 7215, 7285 and 7295 (Knights Mill) and
+	    7th or 8th gen Core (Kaby Lake, Coffee Lake).
+	  - Print Structured Extended Feature leaf Fn0000_0007 %ebx on AMD,too.
+	  - Print Fn0000_0007 %ecx on Intel.
+	  - Print Intel cpuid 7 %edx.
+	  - Parse the TLB info from `cpuid leaf 18H' on Intel processor.
+	  - Use aprint_error_dev() for error output.
+	[msaitoh, ticket #1636]
 
