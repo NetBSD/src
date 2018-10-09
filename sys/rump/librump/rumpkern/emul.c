@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.181.6.2 2017/11/30 14:40:46 martin Exp $	*/
+/*	$NetBSD: emul.c,v 1.181.6.3 2018/10/09 09:58:09 martin Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.181.6.2 2017/11/30 14:40:46 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.181.6.3 2018/10/09 09:58:09 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/cprng.h>
@@ -272,6 +272,15 @@ rump_fstrans_start_nowait(struct mount *mp)
 	return 0;
 }
 __weak_alias(fstrans_start_nowait,rump_fstrans_start_nowait);
+
+void rump_fstrans_start_lazy(struct mount *);
+void
+rump_fstrans_start_lazy(struct mount *mp)
+{
+
+}
+__weak_alias(fstrans_start_lazy,rump_fstrans_start_lazy);
+
 
 void rump_fstrans_done(struct mount *);
 void

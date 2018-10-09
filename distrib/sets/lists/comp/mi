@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2138.2.6 2018/06/07 18:24:15 martin Exp $
+#	$NetBSD: mi,v 1.2138.2.7 2018/10/09 09:58:08 martin Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -10567,6 +10567,7 @@
 ./usr/share/man/cat9/fstrans_is_owner.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/fstrans_setstate.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/fstrans_start.0		comp-sys-catman		.cat
+./usr/share/man/cat9/fstrans_start_lazy.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/fstrans_start_nowait.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/fubyte.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/fuibyte.0			comp-sys-catman		.cat
@@ -18033,6 +18034,7 @@
 ./usr/share/man/html9/fstrans_is_owner.html	comp-sys-htmlman	html
 ./usr/share/man/html9/fstrans_setstate.html	comp-sys-htmlman	html
 ./usr/share/man/html9/fstrans_start.html	comp-sys-htmlman	html
+./usr/share/man/html9/fstrans_start_lazy.html	comp-sys-htmlman	html
 ./usr/share/man/html9/fstrans_start_nowait.html comp-sys-htmlman	html
 ./usr/share/man/html9/fubyte.html		comp-sys-htmlman	html
 ./usr/share/man/html9/fuibyte.html		comp-sys-htmlman	html
@@ -25645,6 +25647,7 @@
 ./usr/share/man/man9/fstrans_is_owner.9		comp-sys-man		.man
 ./usr/share/man/man9/fstrans_setstate.9		comp-sys-man		.man
 ./usr/share/man/man9/fstrans_start.9		comp-sys-man		.man
+./usr/share/man/man9/fstrans_start_lazy.9	comp-sys-man		.man
 ./usr/share/man/man9/fstrans_start_nowait.9	comp-sys-man		.man
 ./usr/share/man/man9/fubyte.9			comp-sys-man		.man
 ./usr/share/man/man9/fuibyte.9			comp-sys-man		.man

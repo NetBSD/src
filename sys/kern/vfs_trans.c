@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_trans.c,v 1.45.2.2 2017/06/21 18:24:26 snj Exp $	*/
+/*	$NetBSD: vfs_trans.c,v 1.45.2.3 2018/10/09 09:58:08 martin Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_trans.c,v 1.45.2.2 2017/06/21 18:24:26 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_trans.c,v 1.45.2.3 2018/10/09 09:58:08 martin Exp $");
 
 /*
  * File system transaction operations.
@@ -54,6 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_trans.c,v 1.45.2.2 2017/06/21 18:24:26 snj Exp $
 #include <miscfs/specfs/specdev.h>
 
 enum fstrans_lock_type {
+	FSTRANS_LAZY,			/* Granted while not suspended */
 	FSTRANS_SHARED,			/* Granted while not suspending */
 	FSTRANS_EXCL			/* Internal: exclusive lock */
 };
@@ -342,6 +343,8 @@ grant_lock(const enum fstrans_state state, const enum fstrans_lock_type type)
 		return true;
 	if (type == FSTRANS_EXCL)
 		return true;
+	if  (state == FSTRANS_SUSPENDING && type == FSTRANS_LAZY)
+		return true;
 
 	return false;
 }
@@ -420,6 +423,15 @@ fstrans_start_nowait(struct mount *mp)
 {
 
 	return _fstrans_start(mp, FSTRANS_SHARED, 0);
+}
+
+void
+fstrans_start_lazy(struct mount *mp)
+{
+	int error __diagused;
+
+	error = _fstrans_start(mp, FSTRANS_LAZY, 1);
+	KASSERT(error == 0);
 }
 
 /*
@@ -849,6 +861,9 @@ fstrans_print_lwp(struct proc *p, struct lwp *l, int verbose)
 			printf(" -");
 		} else {
 			switch (fli->fli_lock_type) {
+			case FSTRANS_LAZY:
+				printf(" lazy");
+				break;
 			case FSTRANS_SHARED:
 				printf(" shared");
 				break;
@@ -882,6 +897,9 @@ fstrans_print_mount(struct mount *mp, int verbose)
 	switch (fmi->fmi_state) {
 	case FSTRANS_NORMAL:
 		printf("state normal\n");
+		break;
+	case FSTRANS_SUSPENDING:
+		printf("state suspending\n");
 		break;
 	case FSTRANS_SUSPENDED:
 		printf("state suspended\n");
