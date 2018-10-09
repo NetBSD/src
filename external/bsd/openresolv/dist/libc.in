@@ -234,7 +234,7 @@ if [ -n "$libc_restart" ]; then
 	eval $libc_restart
 elif [ -n "$RESTARTCMD" ]; then
 	set -- ${libc_service}
-	eval $RESTARTCMD
+	eval "$RESTARTCMD"
 else
 	@SBINDIR@/resolvconf -r ${libc_service}
 fi
