@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_reass.c,v 1.11.8.5 2018/10/03 17:53:56 martin Exp $	*/
+/*	$NetBSD: ip_reass.c,v 1.11.8.6 2018/10/09 09:44:31 martin Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_reass.c,v 1.11.8.5 2018/10/03 17:53:56 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_reass.c,v 1.11.8.6 2018/10/09 09:44:31 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -80,8 +80,6 @@ typedef struct ipfr_qent {
 	struct ip *		ipqe_ip;
 	struct mbuf *		ipqe_m;
 	bool			ipqe_mff;
-	uint16_t		ipqe_off;
-	uint16_t		ipqe_len;
 } ipfr_qent_t;
 
 TAILQ_HEAD(ipfr_qent_head, ipfr_qent);
@@ -217,7 +215,7 @@ ip_nmbclusters_changed(void)
 struct mbuf *
 ip_reass(ipfr_qent_t *ipqe, ipfr_queue_t *fp, const u_int hash)
 {
-	struct ip *ip = ipqe->ipqe_ip;
+	struct ip *ip = ipqe->ipqe_ip, *qip;
 	const int hlen = ip->ip_hl << 2;
 	struct mbuf *m = ipqe->ipqe_m, *t;
 	int ipsecflags = m->m_flags & (M_DECRYPTED|M_AUTHIPHDR);
@@ -231,6 +229,16 @@ ip_reass(ipfr_qent_t *ipqe, ipfr_queue_t *fp, const u_int hash)
 	 */
 	m->m_data += hlen;
 	m->m_len -= hlen;
+
+#ifdef	notyet
+	/* Make sure fragment limit is up-to-date. */
+	CHECK_NMBCLUSTER_PARAMS();
+
+	/* If we have too many fragments, drop the older half. */
+	if (ip_nfrags >= ip_maxfrags) {
+		ip_reass_drophalf(void);
+	}
+#endif
 
 	/*
 	 * We are about to add a fragment; increment frag count.
@@ -247,9 +255,9 @@ ip_reass(ipfr_qent_t *ipqe, ipfr_queue_t *fp, const u_int hash)
 		 * never accept fragments  b) if maxfrag is -1, accept
 		 * all fragments without limitation.
 		 */
-		if (ip_maxfragpackets < 0) {
-			/* no limit */
-		} else if (ip_nfragpackets >= ip_maxfragpackets) {
+		if (ip_maxfragpackets < 0)
+			;
+		else if (ip_nfragpackets >= ip_maxfragpackets) {
 			goto dropfrag;
 		}
 		fp = malloc(sizeof(ipfr_queue_t), M_FTABLE, M_NOWAIT);
@@ -277,7 +285,7 @@ ip_reass(ipfr_qent_t *ipqe, ipfr_queue_t *fp, const u_int hash)
 	 * Find a segment which begins after this one does.
 	 */
 	TAILQ_FOREACH(q, &fp->ipq_fragq, ipqe_q) {
-		if (q->ipqe_off > ipqe->ipqe_off)
+		if (ntohs(q->ipqe_ip->ip_off) > ntohs(ip->ip_off))
 			break;
 	}
 	if (q != NULL) {
@@ -292,14 +300,15 @@ ip_reass(ipfr_qent_t *ipqe, ipfr_queue_t *fp, const u_int hash)
 	 * If it provides all of our data, drop us.
 	 */
 	if (p != NULL) {
-		i = p->ipqe_off + p->ipqe_len - ipqe->ipqe_off;
+		i = ntohs(p->ipqe_ip->ip_off) + ntohs(p->ipqe_ip->ip_len) -
+		    ntohs(ip->ip_off);
 		if (i > 0) {
-			if (i >= ipqe->ipqe_len) {
+			if (i >= ntohs(ip->ip_len)) {
 				goto dropfrag;
 			}
 			m_adj(ipqe->ipqe_m, i);
-			ipqe->ipqe_off = ipqe->ipqe_off + i;
-			ipqe->ipqe_len = ipqe->ipqe_len - i;
+			ip->ip_off = htons(ntohs(ip->ip_off) + i);
+			ip->ip_len = htons(ntohs(ip->ip_len) - i);
 		}
 	}
 
@@ -308,13 +317,17 @@ ip_reass(ipfr_qent_t *ipqe, ipfr_queue_t *fp, const u_int hash)
 	 * completely covered, dequeue them.
 	 */
 	while (q != NULL) {
-		i = ipqe->ipqe_off + ipqe->ipqe_len - q->ipqe_off;
-		if (i <= 0) {
+		size_t end;
+
+		qip = q->ipqe_ip;
+		end = ntohs(ip->ip_off) + ntohs(ip->ip_len);
+		if (end <= ntohs(qip->ip_off)) {
 			break;
 		}
-		if (i < q->ipqe_len) {
-			q->ipqe_off = q->ipqe_off + i;
-			q->ipqe_len = q->ipqe_len - i;
+		i = end - ntohs(qip->ip_off);
+		if (i < ntohs(qip->ip_len)) {
+			qip->ip_len = htons(ntohs(qip->ip_len) - i);
+			qip->ip_off = htons(ntohs(qip->ip_off) + i);
 			m_adj(q->ipqe_m, i);
 			break;
 		}
@@ -338,11 +351,12 @@ insert:
 	}
 	next = 0;
 	TAILQ_FOREACH(q, &fp->ipq_fragq, ipqe_q) {
-		if (q->ipqe_off != next) {
+		qip = q->ipqe_ip;
+		if (ntohs(qip->ip_off) != next) {
 			mutex_exit(&ipfr_lock);
 			return NULL;
 		}
-		next += q->ipqe_len;
+		next += ntohs(qip->ip_len);
 	}
 	p = TAILQ_LAST(&fp->ipq_fragq, ipfr_qent_head);
 	if (p->ipqe_mff) {
@@ -637,6 +651,13 @@ ip_reass_packet(struct mbuf **m0, struct ip *ip)
 		return EINVAL;
 	}
 
+	/*
+	 * Adjust total IP length to not reflect header and convert
+	 * offset of this to bytes.  XXX: clobbers struct ip.
+	 */
+	ip->ip_len = htons(flen);
+	ip->ip_off = htons(off);
+
 	/* Look for queue of fragments of this datagram. */
 	mutex_enter(&ipfr_lock);
 	hash = IPREASS_HASH(ip->ip_src.s_addr, ip->ip_id);
@@ -681,8 +702,6 @@ ip_reass_packet(struct mbuf **m0, struct ip *ip)
 	ipqe->ipqe_mff = mff;
 	ipqe->ipqe_m = m;
 	ipqe->ipqe_ip = ip;
-	ipqe->ipqe_off = off;
-	ipqe->ipqe_len = flen;
 
 	*m0 = ip_reass(ipqe, fp, hash);
 	if (*m0) {
