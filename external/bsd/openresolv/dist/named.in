@@ -111,7 +111,7 @@ if $changed; then
 		eval $named_restart
 	elif [ -n "$RESTARTCMD" ]; then
 		set -- ${named_service}
-		eval $RESTARTCMD
+		eval "$RESTARTCMD"
 	else
 		@SBINDIR@/resolvconf -r ${named_service}
 	fi
