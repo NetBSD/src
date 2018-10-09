@@ -1,4 +1,4 @@
-/*	$NetBSD: setup.c,v 1.101 2017/02/08 16:11:40 rin Exp $	*/
+/*	$NetBSD: setup.c,v 1.101.4.1 2018/10/09 09:53:20 martin Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)setup.c	8.10 (Berkeley) 5/9/95";
 #else
-__RCSID("$NetBSD: setup.c,v 1.101 2017/02/08 16:11:40 rin Exp $");
+__RCSID("$NetBSD: setup.c,v 1.101.4.1 2018/10/09 09:53:20 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -73,6 +73,7 @@ static int readsb(int);
 #ifndef NO_APPLE_UFS
 static int readappleufs(void);
 #endif
+static int check_snapinum(void);
 
 int16_t sblkpostbl[256];
 
@@ -334,6 +335,14 @@ setup(const char *dev, const char *origdev)
 		pwarn("INCORRECT FMASK=0x%x IN SUPERBLOCK",
 			sblock->fs_fmask);
 		sblock->fs_fmask = ~(sblock->fs_fsize - 1);
+		if (preen)
+			printf(" (FIXED)\n");
+		if (preen || reply("FIX") == 1) {
+			sbdirty();
+			dirty(&asblk);
+		}
+	}
+	if (check_snapinum()) {
 		if (preen)
 			printf(" (FIXED)\n");
 		if (preen || reply("FIX") == 1) {
@@ -1093,4 +1102,43 @@ calcsb(const char *dev, int devfd, struct fs *fs)
 		    fs->fs_old_cpg);
 	}
 	return (1);
+}
+
+/*
+ * Test the list of snapshot inode numbers for duplicates and repair.
+ */
+static int
+check_snapinum(void)
+{
+	int loc, loc2, res;
+	int *snapinum = &sblock->fs_snapinum[0];
+
+	res = 0;
+ 
+	if (isappleufs)
+		return 0;
+
+	for (loc = 0; loc < FSMAXSNAP; loc++) {
+		if (snapinum[loc] == 0)
+			break;
+		for (loc2 = loc + 1; loc2 < FSMAXSNAP; loc2++) {
+			if (snapinum[loc2] == 0 ||
+			    snapinum[loc2] == snapinum[loc])
+				break;
+		}
+		if (loc2 >= FSMAXSNAP || snapinum[loc2] == 0)
+			continue;
+		pwarn("SNAPSHOT INODE %u ALREADY ON LIST%s", snapinum[loc2],
+		    (res ? "" : "\n"));
+		res = 1;
+		for (loc2 = loc + 1; loc2 < FSMAXSNAP; loc2++) {
+			if (snapinum[loc2] == 0)
+				break;
+			snapinum[loc2 - 1] = snapinum[loc2];
+		}
+		snapinum[loc2 - 1] = 0;
+		loc--;
+	}
+
+	return res;
 }
