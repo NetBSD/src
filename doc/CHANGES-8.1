@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.1,v 1.1.2.31 2018/10/09 09:46:09 martin Exp $
+# $NetBSD: CHANGES-8.1,v 1.1.2.32 2018/10/09 10:11:08 martin Exp $
 
 A complete list of changes from the NetBSD 8.0 release to the NetBSD 8.1
 release:
@@ -1225,4 +1225,38 @@ lib/libcurses/slk.c				1.3,1.4
 	curses: declare SLK format as invalid until slk_init(3) called.
 	curses: once __slk_init is called, reset slk_fmt.
 	[roy, ticket #1048]
+
+bin/sh/jobs.c					1.101
+
+	A change in rev 1.91 interacted badly with the way that showjobs()
+	worked, preventing $(jobs) (and more usefully $(jobs -p) from
+	working.   Fix that.
+	[kre, ticket #1050]
+
+sbin/fsck_ffs/setup.c				1.102
+
+	Add a test for duplicate inodes on the persistent snapshot list.
+	[hannken, ticket #1051]
+
+distrib/sets/lists/comp/mi			1.2233
+share/man/man9/Makefile				1.431
+share/man/man9/fstrans.9			1.27
+sys/dev/vnd.c					1.266
+sys/kern/vfs_trans.c				1.51
+sys/miscfs/genfs/genfs_vfsops.c			1.8
+sys/rump/librump/rumpkern/emul.c		1.187
+sys/sys/fstrans.h				1.12
+
+	Fix for PR kern/53624 (dom0 freeze on domU exit):
+	Bring back three state file system suspension:
+	 NORMAL -> SUSPENDING -> SUSPENDED
+	and add operation fstrans_start_lazy() that only blocks while
+	SUSPENDED.
+	[hannken, ticket #1052]
+
+sys/dev/hdaudio/hdafg.c				1.16
+
+	Fix hdaudio device configuration for COP_AWCAP_TYPE_PIN_COMPLEX,
+	to make e.g. the built-in speaker work on Dell OptiPlex 5060.
+	[manu, ticket #1053]
 
