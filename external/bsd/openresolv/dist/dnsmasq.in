@@ -184,7 +184,7 @@ if $changed; then
 		eval $dnsmasq_restart
 	elif [ -n "$RESTARTCMD" ]; then
 		set -- ${dnsmasq_service}
-		eval $RESTARTCMD
+		eval "$RESTARTCMD""
 	else
 		@SBINDIR@/resolvconf -r ${dnsmasq_service}
 	fi
