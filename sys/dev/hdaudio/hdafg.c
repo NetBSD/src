@@ -1,4 +1,4 @@
-/* $NetBSD: hdafg.c,v 1.12.2.1 2017/08/20 04:50:38 snj Exp $ */
+/* $NetBSD: hdafg.c,v 1.12.2.2 2018/10/09 10:09:51 martin Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdafg.c,v 1.12.2.1 2017/08/20 04:50:38 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdafg.c,v 1.12.2.2 2018/10/09 10:09:51 martin Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -2106,25 +2106,25 @@ hdafg_disable_unassoc(struct hdafg_softc *sc)
 	struct hdaudio_control *ctl;
 	int i, j, k;
 
-	/* Disable unassociated widgets */
 	for (i = sc->sc_startnode; i < sc->sc_endnode; i++) {
 		w = hdafg_widget_lookup(sc, i);
 		if (w == NULL || w->w_enable == false)
 			continue;
-		if (w->w_bindas == -1) {
-			w->w_enable = 0;
-			hda_trace(sc, "disable %02X [unassociated]\n",
-			    w->w_nid);
+		
+		/* Disable unassociated widgets */
+		if (w->w_type != COP_AWCAP_TYPE_PIN_COMPLEX) {
+			if (w->w_bindas == -1) {
+				w->w_enable = 0;
+				hda_trace(sc, "disable %02X [unassociated]\n",
+				    w->w_nid);
+			}
+			continue;
 		}
-	}
 
-	/* Disable input connections on input pin and output on output */
-	for (i = sc->sc_startnode; i < sc->sc_endnode; i++) {
-		w = hdafg_widget_lookup(sc, i);
-		if (w == NULL || w->w_enable == false)
-			continue;
-		if (w->w_type != COP_AWCAP_TYPE_PIN_COMPLEX)
-			continue;
+		/*
+		 * Disable input connections on input pin
+		 * and output on output pin
+		 */
 		if (w->w_bindas < 0)
 			continue;
 		if (as[w->w_bindas].as_dir == HDAUDIO_PINDIR_IN) {
