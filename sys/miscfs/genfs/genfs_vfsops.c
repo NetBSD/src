@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vfsops.c,v 1.7 2017/05/24 09:53:55 hannken Exp $	*/
+/*	$NetBSD: genfs_vfsops.c,v 1.7.2.1 2018/10/09 09:58:09 martin Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vfsops.c,v 1.7 2017/05/24 09:53:55 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vfsops.c,v 1.7.2.1 2018/10/09 09:58:09 martin Exp $");
 
 #include <sys/types.h>
 #include <sys/mount.h>
@@ -83,6 +83,9 @@ genfs_suspendctl(struct mount *mp, int cmd)
 
 	switch (cmd) {
 	case SUSPEND_SUSPEND:
+		error = fstrans_setstate(mp, FSTRANS_SUSPENDING);
+		if (error)
+			return error;
 		error = fstrans_setstate(mp, FSTRANS_SUSPENDED);
 		if (error == 0) {
 			if ((mp->mnt_iflag & IMNT_GONE) != 0)
