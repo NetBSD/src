@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.1,v 1.1.2.30 2018/10/08 19:09:18 martin Exp $
+# $NetBSD: CHANGES-8.1,v 1.1.2.31 2018/10/09 09:46:09 martin Exp $
 
 A complete list of changes from the NetBSD 8.0 release to the NetBSD 8.1
 release:
@@ -1190,12 +1190,6 @@ sys/dev/pad/pad.c				1.58
 	pad(4) mixer has only 1 channel, so return EINVAL in the case
 	other than 1 is requested.
 	[nakayama, ticket #1044]
-
-sys/netinet/ip_reass.c				1.19
-
-	Hold ip_off and ip_len in the fragment entry, instead of always
-	reading the associated mbuf (and converting to host order).
-	[maxv, ticket #1045]
 
 sys/net/if_bridge.c				1.157-1.159
 
