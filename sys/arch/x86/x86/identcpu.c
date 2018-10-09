@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.45.2.2 2016/03/06 17:53:26 martin Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.45.2.3 2018/10/09 15:43:38 snj Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.45.2.2 2016/03/06 17:53:26 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.45.2.3 2018/10/09 15:43:38 snj Exp $");
 
 #include "opt_xen.h"
 
@@ -824,8 +824,9 @@ cpu_probe(struct cpu_info *ci)
 
 		/* CLFLUSH line size is next 8 bits */
 		if (ci->ci_feat_val[0] & CPUID_CFLUSH)
-			ci->ci_cflush_lsize = ((miscbytes >> 8) & 0xff) << 3;
-		ci->ci_initapicid = (miscbytes >> 24) & 0xff;
+			ci->ci_cflush_lsize
+			    = __SHIFTOUT(miscbytes, CPUID_CLFLUSH_SIZE) << 3;
+		ci->ci_initapicid = __SHIFTOUT(miscbytes, CPUID_LOCAL_APIC_ID);
 	}
 
 	/*

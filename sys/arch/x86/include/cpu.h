@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.66.4.1 2016/03/06 17:53:26 martin Exp $	*/
+/*	$NetBSD: cpu.h,v 1.66.4.2 2018/10/09 15:43:38 snj Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -170,7 +170,7 @@ struct cpu_info {
 	const struct cpu_functions *ci_func;  /* start/stop functions */
 	struct trapframe *ci_ddb_regs;
 
-	u_int ci_cflush_lsize;	/* CFLUSH insn line size */
+	u_int ci_cflush_lsize;	/* CLFLUSH insn line size */
 	struct x86_cache_info ci_cinfo[CAI_COUNT];
 
 	union descriptor *ci_gdt;
