@@ -1,4 +1,4 @@
-/*	$NetBSD: refresh.c,v 1.88.4.1 2018/10/09 09:49:35 martin Exp $	*/
+/*	$NetBSD: refresh.c,v 1.88.4.2 2018/10/09 10:01:38 martin Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)refresh.c	8.7 (Berkeley) 8/13/94";
 #else
-__RCSID("$NetBSD: refresh.c,v 1.88.4.1 2018/10/09 09:49:35 martin Exp $");
+__RCSID("$NetBSD: refresh.c,v 1.88.4.2 2018/10/09 10:01:38 martin Exp $");
 #endif
 #endif				/* not lint */
 
@@ -1208,46 +1208,50 @@ makech(int wy)
 			wx++;
 			if (wx >= win->maxx &&
 			    wy == win->maxy - 1 && !_cursesi_screen->curwin) {
-				if (win->flags & __ENDLINE)
-					__unsetattr(1);
-				if (!(win->flags & __SCROLLWIN)) {
-					if (!_cursesi_screen->curwin) {
-						csp->attr = nsp->attr;
-						csp->ch = nsp->ch;
+				if (win->flags & __SCROLLOK) {
+					if (win->flags & __ENDLINE)
+						__unsetattr(1);
+					if (!(win->flags & __SCROLLWIN)) {
+						if (!_cursesi_screen->curwin) {
+							csp->attr = nsp->attr;
+							csp->ch = nsp->ch;
 #ifdef HAVE_WCHAR
-						if (_cursesi_copy_nsp(nsp->nsp, csp) == ERR)
-							return ERR;
+							if (_cursesi_copy_nsp(nsp->nsp, csp) == ERR)
+								return ERR;
 #endif /* HAVE_WCHAR */
-					}
+						}
 #ifndef HAVE_WCHAR
-					__cputchar((int) nsp->ch);
+						__cputchar((int) nsp->ch);
 #else
-					if ( WCOL( *nsp ) > 0 ) {
-						__cputwchar((int)nsp->ch);
+						if ( WCOL( *nsp ) > 0 ) {
+							__cputwchar((int)nsp->ch);
 #ifdef DEBUG
-						__CTRACE(__CTRACE_REFRESH,
-						    "makech: (%d,%d)putwchar(0x%x)\n",
-							wy, wx - 1,
-							nsp->ch );
+							__CTRACE(__CTRACE_REFRESH,
+							    "makech: (%d,%d)putwchar(0x%x)\n",
+								wy, wx - 1,
+								nsp->ch );
 #endif /* DEBUG */
-						/*
-						 * Output non-spacing
-						 * characters for the
-						 * cell.
-						 */
-						__cursesi_putnsp(nsp->nsp, wy, wx);
-					}
+							/*
+							 * Output non-spacing
+							 * characters for the
+							 * cell.
+							 */
+							__cursesi_putnsp(nsp->nsp,
+									 wy, wx);
+
+						}
 #endif /* HAVE_WCHAR */
+					}
+					if (wx < curscr->maxx) {
+						domvcur(win,
+						    _cursesi_screen->ly, wx,
+						    (int)(win->maxy - 1),
+						    (int)(win->maxx - 1));
+					}
+					_cursesi_screen->ly = win->maxy - 1;
+					_cursesi_screen->lx = win->maxx - 1;
+					return (OK);
 				}
-				if (wx < curscr->maxx) {
-					domvcur(win,
-					    _cursesi_screen->ly, wx,
-					    (int)(win->maxy - 1),
-					    (int)(win->maxx - 1));
-				}
-				_cursesi_screen->ly = win->maxy - 1;
-				_cursesi_screen->lx = win->maxx - 1;
-				return OK;
 			}
 			if (wx < win->maxx || wy < win->maxy - 1 ||
 			    !(win->flags & __SCROLLWIN))
