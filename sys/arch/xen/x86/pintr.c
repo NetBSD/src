@@ -103,7 +103,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pintr.c,v 1.7 2018/10/07 05:23:01 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pintr.c,v 1.8 2018/10/10 02:16:34 cherry Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_xen.h"
@@ -176,8 +176,7 @@ xen_vec_alloc(int gsi)
 			irq2vect[gsi] == op.u.irq_op.vector);
 		irq2vect[gsi] = op.u.irq_op.vector;
 		KASSERT(vect2irq[op.u.irq_op.vector] == 0 ||
-			(gsi > 0 && gsi < 16 &&
-			 vect2irq[op.u.irq_op.vector] == gsi));
+			 vect2irq[op.u.irq_op.vector] == gsi);
 		vect2irq[op.u.irq_op.vector] = gsi;
 	}
 
