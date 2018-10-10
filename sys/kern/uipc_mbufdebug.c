@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbufdebug.c,v 1.3 2018/09/03 16:29:35 riastradh Exp $	*/
+/*	$NetBSD: uipc_mbufdebug.c,v 1.4 2018/10/10 10:54:30 msaitoh Exp $	*/
 
 /*
  * Copyright (C) 2017 Internet Initiative Japan Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbufdebug.c,v 1.3 2018/09/03 16:29:35 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbufdebug.c,v 1.4 2018/10/10 10:54:30 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -833,7 +833,7 @@ m_examine_tcp(const struct mbuf *m, int off, const char *modif,
 	(*pr)("TCP: Dst = %u\n", ntohs(tcp.th_dport));
 	(*pr)("TCP: Seq. = %u\n", ntohl(tcp.th_seq));
 	(*pr)("TCP: Ack. = %u\n", ntohl(tcp.th_ack));
-	(*pr)("TCP: Header Length = %u\n", ntohl(tcp.th_off) << 2);
+	(*pr)("TCP: Header Length = %u\n", tcp.th_off << 2);
 	if (tcp.th_flags) {
 		(*pr)("TCP: Flags 0x%02x : ", tcp.th_flags);
 		if (tcp.th_flags & TH_FIN)
