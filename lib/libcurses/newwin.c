@@ -1,4 +1,4 @@
-/*	$NetBSD: newwin.c,v 1.53 2018/10/05 11:59:05 roy Exp $	*/
+/*	$NetBSD: newwin.c,v 1.54 2018/10/10 09:40:11 roy Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)newwin.c	8.3 (Berkeley) 7/27/94";
 #else
-__RCSID("$NetBSD: newwin.c,v 1.53 2018/10/05 11:59:05 roy Exp $");
+__RCSID("$NetBSD: newwin.c,v 1.54 2018/10/10 09:40:11 roy Exp $");
 #endif
 #endif				/* not lint */
 
@@ -416,20 +416,24 @@ __makenew(SCREEN *screen, int nlines, int ncols, int by, int bx, int sub,
 void
 __swflags(WINDOW *win)
 {
+	TERMINAL *term = win->screen->term;
 
 	win->flags &= ~(__ENDLINE | __FULLWIN | __SCROLLWIN | __LEAVEOK);
-	if (win->begx + win->maxx == COLS && !(win->flags & __ISPAD)) {
+	if (win->begx + win->maxx == win->screen->COLS &&
+	    !(win->flags & __ISPAD))
+	{
 		win->flags |= __ENDLINE;
-		if (win->begx == 0 && win->maxy == LINES && win->begy == 0)
+		if (win->begx == 0 &&
+		    win->maxy == win->screen->LINES &&
+		    win->begy == 0)
 			win->flags |= __FULLWIN;
-		/*
-		 * Enable this if we have a terminfo setting which claims
-		 * terminal will scroll. Currently there is none.
-		 */
-#if 0
-		if (win->begy + win->maxy == LINES)
+		if (win->begy + win->maxy == win->screen->LINES &&
+		    t_auto_right_margin(term) &&
+		    !(t_insert_character(term) != NULL ||
+		    t_parm_ich(term) != NULL ||
+		    (t_enter_insert_mode(term) != NULL &&
+		     t_exit_insert_mode(term) != NULL)))
 			win->flags |= __SCROLLWIN;
-#endif
 	}
 }
 
