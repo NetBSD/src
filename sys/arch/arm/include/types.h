@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.35 2018/07/12 10:46:42 maxv Exp $	*/
+/*	$NetBSD: types.h,v 1.36 2018/10/10 19:13:51 skrll Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -43,7 +43,7 @@ typedef struct label_t {	/* Used by setjmp & longjmp */
         int val[11];
 } label_t;
 #endif
-         
+
 #if defined(_KERNEL) || defined(_KMEMUSER) || defined(_KERNTYPES) || defined(_STANDALONE)
 typedef unsigned long	paddr_t;
 typedef unsigned long	psize_t;
