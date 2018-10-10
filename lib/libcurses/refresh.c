@@ -1,4 +1,4 @@
-/*	$NetBSD: refresh.c,v 1.89 2018/10/05 11:59:05 roy Exp $	*/
+/*	$NetBSD: refresh.c,v 1.90 2018/10/10 09:40:11 roy Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)refresh.c	8.7 (Berkeley) 8/13/94";
 #else
-__RCSID("$NetBSD: refresh.c,v 1.89 2018/10/05 11:59:05 roy Exp $");
+__RCSID("$NetBSD: refresh.c,v 1.90 2018/10/10 09:40:11 roy Exp $");
 #endif
 #endif				/* not lint */
 
@@ -772,6 +772,102 @@ cleanup:
 	return fflush(_cursesi_screen->outfd) == EOF ? ERR : OK;
 }
 
+static int
+putch(__LDATA *nsp, __LDATA *csp, int wy, int wx)
+{
+
+	if (!_cursesi_screen->curwin && csp) {
+		csp->attr = nsp->attr;
+		csp->ch = nsp->ch;
+#ifdef HAVE_WCHAR
+		if (_cursesi_copy_nsp(nsp->nsp, csp) == ERR)
+			return ERR;
+#endif /* HAVE_WCHAR */
+	}
+
+#ifndef HAVE_WCHAR
+	__cputchar((int)nsp->ch);
+#else
+	if (WCOL(*nsp) <= 0)
+		return OK;
+	__cputwchar((int)nsp->ch);
+#ifdef DEBUG
+	__CTRACE(__CTRACE_REFRESH,
+	    "makech: (%d,%d)putwchar(0x%x)\n", wy, wx - 1, nsp->ch);
+#endif /* DEBUG */
+
+	/* Output non-spacing characters for the cell. */
+	__cursesi_putnsp(nsp->nsp, wy, wx);
+#endif /* HAVE_WCHAR */
+
+	return OK;
+}
+
+static int
+putchbr(__LDATA *nsp, __LDATA *csp, __LDATA *psp, int wy, int wx)
+{
+	int error, cw, pcw;
+
+	/* Can safely print to bottom right corner. */
+	if (!auto_right_margin)
+		return putch(nsp, csp, wy, wx);
+
+	/* Disable auto margins temporarily. */
+	if (enter_am_mode && exit_am_mode) {
+		tputs(enter_am_mode, 0, __cputchar);
+		error = putch(nsp, csp, wy, wx);
+		tputs(exit_am_mode, 0, __cputchar);
+		return error;
+	}
+
+	/* We need to insert characters.
+	 * To do this, work out their widths. */
+#ifdef HAVE_WCHAR
+	cw = wcwidth(nsp->ch);
+	pcw = psp == NULL ? 0 : wcwidth(psp->ch);
+	if (pcw < 1)
+		return ERR; /* Nothing to insert */
+
+	/* When wide characters we need something other than
+	 * insert_character. */
+	if (pcw > 1 &&
+	    !(parm_ich != NULL ||
+	    (enter_insert_mode != NULL && exit_insert_mode != NULL)))
+		return ERR;
+#else
+	cw = pcw = 1;
+#endif /* HAVE_WCHAR */
+
+	/* Write the corner character at wx - pcw. */
+	__mvcur(wy, wx, wy, wx - pcw, 1);
+	if (putch(nsp, csp, wy, wx) == ERR)
+		return ERR;
+
+	/* Move cursor back. */
+	__mvcur(wy, wx - pcw + cw, wy, wx - cw, 1);
+
+	/* Enter insert mode. */
+	if (pcw == 1 && insert_character != NULL)
+		tputs(insert_character, 0, __cputchar);
+	else if (parm_ich != NULL)
+		tputs(tiparm(parm_ich, (long)pcw), 0, __cputchar);
+	else if (enter_insert_mode != NULL && exit_insert_mode != NULL)
+		tputs(enter_insert_mode, 0, __cputchar);
+	else
+		return ERR;
+
+	/* Insert the old character back. */
+	error = putch(psp, NULL, wy, wx - pcw);
+
+	/* Exit insert mode. */
+	if (insert_character != NULL || parm_ich != NULL)
+		;
+	else if (enter_insert_mode != NULL && exit_insert_mode != NULL)
+		tputs(exit_insert_mode, 0, __cputchar);
+
+	return error;
+}
+
 /*
  * makech --
  *	Make a change on the screen.
@@ -781,10 +877,10 @@ makech(int wy)
 {
 	WINDOW	*win;
 	static __LDATA blank;
-	__LDATA *nsp, *csp, *cp, *cep;
+	__LDATA *nsp, *csp, *cp, *cep, *fsp;
 	__LINE *wlp;
 	size_t	clsp, nlsp;	/* Last space in lines. */
-	int	lch, wx;
+	int	lch, wx, chw;
 	const char	*ce;
 	attr_t	lspc;		/* Last space colour */
 	attr_t	off, on;
@@ -860,7 +956,7 @@ makech(int wy)
 #endif /* DEBUG */
 	}
 
-	nsp = &win->alines[wy]->line[wx];
+	nsp = fsp = &win->alines[wy]->line[wx];
 #ifdef DEBUG
 	if (_cursesi_screen->curwin)
 		__CTRACE(__CTRACE_REFRESH,
@@ -1205,41 +1301,28 @@ makech(int wy)
 				curscr->wattr |= __ALTCHARSET;
 			}
 
-			wx++;
-			if (wx >= win->maxx &&
+#ifdef HAVE_WCHAR
+			chw = wcwidth(nsp->ch);
+#else
+			chw = 1;
+#endif /* HAVE_WCHAR */
+			if (wx + chw >= win->maxx &&
 			    wy == win->maxy - 1 && !_cursesi_screen->curwin) {
 				if (win->flags & __ENDLINE)
 					__unsetattr(1);
 				if (!(win->flags & __SCROLLWIN)) {
-					if (!_cursesi_screen->curwin) {
-						csp->attr = nsp->attr;
-						csp->ch = nsp->ch;
-#ifdef HAVE_WCHAR
-						if (_cursesi_copy_nsp(nsp->nsp, csp) == ERR)
-							return ERR;
-#endif /* HAVE_WCHAR */
-					}
-#ifndef HAVE_WCHAR
-					__cputchar((int) nsp->ch);
-#else
-					if ( WCOL( *nsp ) > 0 ) {
-						__cputwchar((int)nsp->ch);
-#ifdef DEBUG
-						__CTRACE(__CTRACE_REFRESH,
-						    "makech: (%d,%d)putwchar(0x%x)\n",
-							wy, wx - 1,
-							nsp->ch );
-#endif /* DEBUG */
-						/*
-						 * Output non-spacing
-						 * characters for the
-						 * cell.
-						 */
-						__cursesi_putnsp(nsp->nsp, wy, wx);
-					}
-#endif /* HAVE_WCHAR */
+					int e;
+
+					if (win->flags & __SCROLLOK)
+						e = putch(nsp, csp, wy, wx);
+					else
+						e = putchbr(nsp, csp,
+						    nsp == fsp ? NULL : nsp - 1,
+						    wy, wx);
+					if (e == ERR)
+						return ERR;
 				}
-				if (wx < curscr->maxx) {
+				if (wx + chw < curscr->maxx) {
 					domvcur(win,
 					    _cursesi_screen->ly, wx,
 					    (int)(win->maxy - 1),
@@ -1249,42 +1332,19 @@ makech(int wy)
 				_cursesi_screen->lx = win->maxx - 1;
 				return OK;
 			}
-			if (wx < win->maxx || wy < win->maxy - 1 ||
+			if (wx + chw < win->maxx || wy < win->maxy - 1 ||
 			    !(win->flags & __SCROLLWIN))
 			{
-				if (!_cursesi_screen->curwin) {
-					csp->attr = nsp->attr;
-					csp->ch = nsp->ch;
-#ifdef HAVE_WCHAR
-					if (_cursesi_copy_nsp(nsp->nsp,
-							      csp) == ERR)
-						return ERR;
-#endif /* HAVE_WCHAR */
-					csp++;
-				}
-#ifndef HAVE_WCHAR
-				__cputchar((int)nsp->ch);
-#ifdef DEBUG
-				__CTRACE(__CTRACE_REFRESH,
-				    "makech: putchar(%c)\n", nsp->ch & 0177);
-#endif
-#else
-				if (WCOL(*nsp) > 0) {
-					__cputwchar((int)nsp->ch);
-#ifdef DEBUG
-					__CTRACE(__CTRACE_REFRESH,
-					    "makech:(%d,%d) putwchar(%x)\n",
-					    wy, wx - 1, nsp->ch);
-					__cursesi_putnsp(nsp->nsp, wy, wx);
-#endif /* DEBUG */
-				}
-#endif /* HAVE_WCHAR */
+				if (putch(nsp, csp, wy, wx) == ERR)
+					return ERR;
+				csp++;
 			}
 			if (underline_char && ((nsp->attr & __STANDOUT) ||
 			    (nsp->attr & __UNDERSCORE))) {
 				__cputchar('\b');
 				tputs(underline_char, 0, __cputchar);
 			}
+			wx += chw;
 			nsp++;
 #ifdef DEBUG
 			__CTRACE(__CTRACE_REFRESH,
