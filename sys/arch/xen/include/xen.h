@@ -1,4 +1,4 @@
-/*	$NetBSD: xen.h,v 1.40 2018/10/07 11:25:55 mlelstv Exp $	*/
+/*	$NetBSD: xen.h,v 1.41 2018/10/10 04:16:58 cherry Exp $	*/
 
 /*
  *
@@ -248,7 +248,7 @@ xen_atomic_clearbits_l (volatile XATOMIC_T *ptr, unsigned long bits) {
 static __inline XATOMIC_T
 xen_atomic_test_and_clear_bit(volatile void *ptr, unsigned long bitno)
 {
-	int result;
+	long result;
 
 	__asm volatile(__LOCK_PREFIX
 #ifdef __x86_64__
