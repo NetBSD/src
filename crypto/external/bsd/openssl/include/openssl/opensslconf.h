@@ -48,9 +48,6 @@ extern "C" {
 #ifndef OPENSSL_NO_DEVCRYPTOENG
 # define OPENSSL_NO_DEVCRYPTOENG
 #endif
-#ifndef OPENSSL_NO_EC_NISTP_64_GCC_128
-# define OPENSSL_NO_EC_NISTP_64_GCC_128
-#endif
 #ifndef OPENSSL_NO_EGD
 # define OPENSSL_NO_EGD
 #endif
