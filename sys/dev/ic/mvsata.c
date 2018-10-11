@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsata.c,v 1.41.2.6 2018/10/04 17:59:35 jdolecek Exp $	*/
+/*	$NetBSD: mvsata.c,v 1.41.2.7 2018/10/11 20:57:51 jdolecek Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.41.2.6 2018/10/04 17:59:35 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.41.2.7 2018/10/11 20:57:51 jdolecek Exp $");
 
 #include "opt_mvsata.h"
 
@@ -172,8 +172,6 @@ static void mvsata_channel_recover(struct mvsata_port *);
 static int mvsata_port_init(struct mvsata_hc *, int);
 static int mvsata_wdc_reg_init(struct mvsata_port *, struct wdc_regs *);
 #ifndef MVSATA_WITHOUTDMA
-static inline void mvsata_quetag_get(struct mvsata_port *, uint8_t);
-static inline void mvsata_quetag_put(struct mvsata_port *, uint8_t);
 static void *mvsata_edma_resource_prepare(struct mvsata_port *, bus_dma_tag_t,
 					  bus_dmamap_t *, size_t, int);
 static void mvsata_edma_resource_purge(struct mvsata_port *, bus_dma_tag_t,
@@ -539,7 +537,8 @@ mvsata_error(struct mvsata_port *mvport)
 		    device_xname(MVSATA_DEV2(mvport)),
 		    mvport->port_hc->hc, mvport->port);
 
-		if (!mvport->port_recovering)
+		if (!ISSET(mvport->port_ata_channel.ch_flags,
+		    ATACH_RECOVERING))
 			mvsata_channel_recover(mvport);
 	}
 
@@ -547,31 +546,15 @@ mvsata_error(struct mvsata_port *mvport)
 }
 
 static void
-mvsata_hold(struct mvsata_port *mvport)
-{
-	mvport->port_hold_slots |= mvport->port_quetagidx;
-	mvport->port_quetagidx = 0;
-}
-
-static void
-mvsata_unhold(struct mvsata_port *mvport)
-{
-	mvport->port_quetagidx = mvport->port_hold_slots;
-	mvport->port_hold_slots = 0;
-}
-
-static void
 mvsata_channel_recover(struct mvsata_port *mvport)
 {
 	struct ata_channel *chp = &mvport->port_ata_channel;
-	struct ata_drive_datas *drvp;
-	int drive, error;
-	uint8_t eslot, slot, st, err;
-	struct ata_xfer *xfer;
+	int drive, tfd = 1;
 
-	KASSERT(!mvport->port_recovering);
-
-	mvport->port_recovering = true;
+	ata_channel_lock(chp);
+	KASSERT(!ISSET(chp->ch_flags, ATACH_RECOVERING));
+	SET(chp->ch_flags, ATACH_RECOVERING);
+	ata_channel_unlock(chp);
 
 	if (chp->ch_ndrives > PMP_PORT_CTL) {
 		/* Get PM port number for the device in error. This device
@@ -582,90 +565,29 @@ mvsata_channel_recover(struct mvsata_port *mvport)
 	} else
 		drive = 0;
 
-	drvp = &chp->ch_drive[drive];
-
 	/*
 	 * Controller doesn't need any special action. Simply execute
 	 * READ LOG EXT for NCQ to unblock device processing, then continue
 	 * as if nothing happened.
 	 */
-	KASSERT(drive >= 0);
 
-	mvsata_hold(mvport);
+#if 0
+	XXX recheck - mvsata used to have this to handle the successful
+	recovery via read_log_ext:
 
-	/*
-	 * When running NCQ commands, READ LOG EXT is necessary to clear the
-	 * error condition and unblock the device.
-	 */
-	error = ata_read_log_ext_ncq(drvp, AT_POLL, &eslot, &st, &err);
-
-	mvsata_unhold(mvport);
-
-	switch (error) {
-	case 0:
-		/* Error out the particular NCQ xfer, then requeue the others */
-		if ((mvport->port_quetagidx & (1 << eslot)) != 0) {
 			xfer = ata_queue_hwslot_to_xfer(chp, eslot);
 			xfer->c_flags |= C_RECOVERED;
 			xfer->c_bio.error = ERROR;
 			xfer->c_bio.r_error = err;
 			xfer->ops->c_intr(chp, xfer, 1);
-		}
-		break;
+#endif
+	ata_recovery_resume(chp, drive, tfd, AT_POLL);
 
-	case EOPNOTSUPP:
-		/*
-		 * Non-NCQ command error, just find the slot and end it with
-		 * an error. Handler figures the error itself.
-		 */
-		for (slot = 0; slot < MVSATA_EDMAQ_LEN; slot++) {
-			if ((mvport->port_quetagidx & (1 << slot)) != 0) {
-				xfer = ata_queue_hwslot_to_xfer(chp, slot);
-				if (xfer->c_drive != drive)
-					continue;
-
-				xfer->ops->c_intr(chp, xfer, 1);
-			}
-		}
-		break;
-
-	case EAGAIN:
-		/*
-		 * Failed to get resources to run the recovery command, must
-		 * reset the drive. This will also kill all still outstanding
-		 * transfers.
-		 */
-		ata_channel_lock(chp);
-		mvsata_reset_channel(chp, AT_POLL);
-		ata_channel_unlock(chp);
-		goto out;
-		/* NOTREACHED */
-
-	default:
-		/*
-		 * The command to get the slot failed. Kill outstanding
-		 * commands for the same drive only. No need to reset
-		 * the drive, it's unblocked nevertheless.
-		 */
-		break;
-	}
-
-	/* Requeue the non-errorred commands */ 
-	for (slot = 0; slot < MVSATA_EDMAQ_LEN; slot++) {
-		if (((mvport->port_quetagidx >> slot) & 1) == 0)
-			continue;
-
-		xfer = ata_queue_hwslot_to_xfer(chp, slot);
-		if (xfer->c_drive != drive)
-			continue;
-
-		xfer->ops->c_kill_xfer(chp, xfer,
-		    (error == 0) ? KILL_REQUEUE : KILL_RESET);
-	}
-
-out:
 	/* Drive unblocked, back to normal operation */
-	mvport->port_recovering = false;
+	ata_channel_lock(chp);
+	CLR(chp->ch_flags, ATACH_RECOVERING);
+	ata_channel_unlock(chp);
+
 	atastart(chp);
 }
 
@@ -1129,8 +1051,6 @@ mvsata_bio_start(struct ata_channel *chp, struct ata_xfer *xfer)
 
 	ata_channel_lock_owned(chp);
 
-	mvsata_quetag_get(mvport, xfer->c_slot);
-
 	if (xfer->c_flags & C_DMA)
 		if (drvp->n_xfers <= NXFER)
 			drvp->n_xfers++;
@@ -1521,10 +1441,8 @@ mvsata_bio_kill_xfer(struct ata_channel *chp, struct ata_xfer *xfer, int reason)
 	}
 	ata_bio->r_error = WDCE_ABRT;
 
-	if (deactivate) {
-		mvsata_quetag_put(mvport, xfer->c_slot);
+	if (deactivate)
 		ata_deactivate_xfer(chp, xfer);
-	}
 
 	(*chp->ch_drive[drive].drv_done)(chp->ch_drive[drive].drv_softc, xfer);
 }
@@ -1555,7 +1473,6 @@ mvsata_bio_done(struct ata_channel *chp, struct ata_xfer *xfer)
 	ata_bio->bcount = xfer->c_bcount;
 
 	/* mark controller inactive and free xfer */
-	mvsata_quetag_put(mvport, xfer->c_slot);
 	ata_deactivate_xfer(chp, xfer);
 
 	ata_bio->flags |= ATA_ITSDONE;
@@ -1740,8 +1657,6 @@ mvsata_wdc_cmd_start(struct ata_channel *chp, struct ata_xfer *xfer)
 	    device_xname(MVSATA_DEV2(mvport)), chp->ch_channel, drive));
 
 	ata_channel_lock_owned(chp);
-
-	mvsata_quetag_get(mvport, xfer->c_slot);
 
 	/* First, EDMA disable, if enabled this channel. */
 	KASSERT((chp->ch_flags & ATACH_NCQ) == 0);
@@ -1951,10 +1866,8 @@ mvsata_wdc_cmd_kill_xfer(struct ata_channel *chp, struct ata_xfer *xfer,
 
 	mvsata_wdc_cmd_done_end(chp, xfer);
 
-	if (deactivate) {
-		mvsata_quetag_put(mvport, xfer->c_slot);
+	if (deactivate)
 		ata_deactivate_xfer(chp, xfer);
-	}
 }
 
 static void
@@ -2013,8 +1926,6 @@ mvsata_wdc_cmd_done(struct ata_channel *chp, struct ata_xfer *xfer)
 			    (uint64_t)(ata_c->r_device & 0x0f) << 24;
 		}
 	}
-
-	mvsata_quetag_put(mvport, xfer->c_slot);
 
 	if (ata_c->flags & AT_POLL) {
 		/* enable interrupts */
@@ -2126,8 +2037,6 @@ mvsata_atapi_start(struct ata_channel *chp, struct ata_xfer *xfer)
 	    xfer->c_drive, sc_xfer->xs_control));
 
 	ata_channel_lock_owned(chp);
-
-	mvsata_quetag_get(mvport, xfer->c_slot);
 
 	KASSERT((chp->ch_flags  & ATACH_NCQ) == 0);
 	if (mvport->port_edmamode_curr != nodma)
@@ -2566,10 +2475,8 @@ mvsata_atapi_kill_xfer(struct ata_channel *chp, struct ata_xfer *xfer,
 		panic("mvsata_atapi_kill_xfer");
 	}
 
-	if (deactivate) {
-		mvsata_quetag_put(mvport, xfer->c_slot);
+	if (deactivate)
 		ata_deactivate_xfer(chp, xfer);
-	}
 
 	ata_free_xfer(chp, xfer);
 	scsipi_done(sc_xfer);
@@ -2696,7 +2603,6 @@ mvsata_atapi_phase_complete(struct ata_xfer *xfer)
 static void
 mvsata_atapi_done(struct ata_channel *chp, struct ata_xfer *xfer)
 {
-	struct mvsata_port *mvport = (struct mvsata_port *)chp;
 	struct scsipi_xfer *sc_xfer = xfer->c_scsipi;
 	bool iserror = (sc_xfer->error != XS_NOERROR);
 
@@ -2709,7 +2615,6 @@ mvsata_atapi_done(struct ata_channel *chp, struct ata_xfer *xfer)
 		return;
 
 	/* mark controller inactive and free the command */
-	mvsata_quetag_put(mvport, xfer->c_slot);
 	ata_deactivate_xfer(chp, xfer);
 
 	ata_free_xfer(chp, xfer);
@@ -2887,6 +2792,8 @@ mvsata_edma_handle(struct mvsata_port *mvport, struct ata_xfer *xfer1)
 		    erpqop * sizeof(struct crpb),
 		    n * sizeof(struct crpb), BUS_DMASYNC_POSTREAD);
 
+	uint32_t aslots = ata_queue_active(chp);
+
 	prev_erpqop = erpqop;
 	while (erpqop != erpqip) {
 #ifdef MVSATA_DEBUG
@@ -2898,7 +2805,7 @@ mvsata_edma_handle(struct mvsata_port *mvport, struct ata_xfer *xfer1)
 
 		quetag = CRPB_CHOSTQUETAG(le16toh(crpb->id));
 
-		if ((mvport->port_quetagidx & __BIT(quetag)) == 0) {
+		if ((aslots & __BIT(quetag)) == 0) {
 			/* not actually executing */
 			continue;
 		}
@@ -2987,10 +2894,12 @@ mvsata_edma_rqq_remove(struct mvsata_port *mvport, struct ata_xfer *xfer)
 	bus_dmamap_sync(mvport->port_dmat, mvport->port_crqb_dmamap, 0,
 	    sizeof(union mvsata_crqb) * MVSATA_EDMAQ_LEN, BUS_DMASYNC_PREWRITE);
 
+	uint32_t aslots = ata_queue_active(chp);
+
 	for (i = 0, erqqip = 0; i < MVSATA_EDMAQ_LEN; i++) {
 		struct ata_xfer *rqxfer;
 
-		if ((mvport->port_quetagidx & __BIT(i)) == 0)
+		if ((aslots & __BIT(i)) == 0)
 			continue;
 
 		if (i == xfer->c_slot) {
@@ -3294,30 +3203,6 @@ mvsata_wdc_reg_init(struct mvsata_port *mvport, struct wdc_regs *wdr)
 
 
 #ifndef MVSATA_WITHOUTDMA
-/*
- * There are functions to remember Host Queue Tag.
- */
-
-static inline void
-mvsata_quetag_get(struct mvsata_port *mvport, uint8_t quetag)
-{
-	KASSERT(quetag <= 32);
-
-	/*
-	 * Do not check whether it's already set, can happen when
-	 * postponing bio or atapi xfer to thread.
-	 */
-	mvport->port_quetagidx |= __BIT(quetag);
-}
-
-static inline void
-mvsata_quetag_put(struct mvsata_port *mvport, uint8_t quetag)
-{
-	KASSERT(quetag <= 32);
-	KASSERT((mvport->port_quetagidx & __BIT(quetag)) != 0);
-	mvport->port_quetagidx &= ~__BIT(quetag);
-}
-
 static void *
 mvsata_edma_resource_prepare(struct mvsata_port *mvport, bus_dma_tag_t dmat,
 			     bus_dmamap_t *dmamap, size_t size, int write)

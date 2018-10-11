@@ -1,4 +1,4 @@
-/*	$NetBSD: ata.c,v 1.141.6.15 2018/10/06 21:19:55 jdolecek Exp $	*/
+/*	$NetBSD: ata.c,v 1.141.6.16 2018/10/11 20:57:51 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.141.6.15 2018/10/06 21:19:55 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.141.6.16 2018/10/11 20:57:51 jdolecek Exp $");
 
 #include "opt_ata.h"
 
@@ -930,98 +930,6 @@ ata_set_mode(struct ata_drive_datas *drvp, uint8_t mode, uint8_t flags)
 
 out:
 	ata_free_xfer(chp, xfer);
-	return rv;
-}
-
-int
-ata_read_log_ext_ncq(struct ata_drive_datas *drvp, uint8_t flags,
-    uint8_t *slot, uint8_t *status, uint8_t *err)
-{
-	struct ata_xfer *xfer = &drvp->recovery_xfer;
-	int rv;
-	struct ata_channel *chp = drvp->chnl_softc;
-	struct atac_softc *atac = chp->ch_atac;
-	uint8_t *tb, cksum, page;
-
-	ATADEBUG_PRINT(("%s\n", __func__), DEBUG_FUNCS);
-
-	/* Only NCQ ATA drives support/need this */
-	if (drvp->drive_type != ATA_DRIVET_ATA ||
-	    (drvp->drive_flags & ATA_DRIVE_NCQ) == 0)
-		return EOPNOTSUPP;
-
-	memset(xfer, 0, sizeof(*xfer));
-
-	tb = drvp->recovery_blk;
-	memset(tb, 0, sizeof(drvp->recovery_blk));
-
-	/*
-	 * We could use READ LOG DMA EXT if drive supports it (i.e.
-	 * when it supports Streaming feature) to avoid PIO command,
-	 * and to make this a little faster. Realistically, it
-	 * should not matter.
-	 */
-	xfer->c_flags |= C_SKIP_QUEUE;
-	xfer->c_ata_c.r_command = WDCC_READ_LOG_EXT;
-	xfer->c_ata_c.r_lba = page = WDCC_LOG_PAGE_NCQ;
-	xfer->c_ata_c.r_st_bmask = WDCS_DRDY;
-	xfer->c_ata_c.r_st_pmask = WDCS_DRDY;
-	xfer->c_ata_c.r_count = 1;
-	xfer->c_ata_c.r_device = WDSD_LBA;
-	xfer->c_ata_c.flags = AT_READ | AT_LBA | AT_LBA48 | flags;
-	xfer->c_ata_c.timeout = 1000; /* 1s */
-	xfer->c_ata_c.data = tb;
-	xfer->c_ata_c.bcount = sizeof(drvp->recovery_blk);
-
-	if ((*atac->atac_bustype_ata->ata_exec_command)(drvp,
-						xfer) != ATACMD_COMPLETE) {
-		rv = EAGAIN;
-		goto out;
-	}
-	if (xfer->c_ata_c.flags & (AT_ERROR | AT_TIMEOU | AT_DF)) {
-		rv = EINVAL;
-		goto out;
-	}
-
-	cksum = 0;
-	for (int i = 0; i < sizeof(drvp->recovery_blk); i++)
-		cksum += tb[i];
-	if (cksum != 0) {
-		device_printf(drvp->drv_softc,
-		    "invalid checksum %x for READ LOG EXT page %x\n",
-		    cksum, page);
-		rv = EINVAL;
-		goto out;
-	}
-
-	if (tb[0] & WDCC_LOG_NQ) {
-		/* not queued command */
-		rv = EOPNOTSUPP;
-		goto out;
-	}
-
-	*slot = tb[0] & 0x1f;
-	*status = tb[2];
-	*err = tb[3];
-
-	if ((*status & WDCS_ERR) == 0) {
-		/*
-		 * We expect error here. Normal physical drives always
-		 * do, it's part of ATA standard. However, QEMU AHCI emulation
-		 * misehandles READ LOG EXT in a way that the command itself
-		 * returns without error, but no data is transferred.
-		 */
-		device_printf(drvp->drv_softc,
-		    "READ LOG EXT page %x failed to report error: "
-		    "slot %d err %x status %x\n",
-		    page, *slot, *err, *status);
-		rv = EOPNOTSUPP;
-		goto out;
-	}
-
-	rv = 0;
-
-out:
 	return rv;
 }
 
