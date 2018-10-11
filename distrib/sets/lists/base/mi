@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1191 2018/09/30 15:56:47 jmcneill Exp $
+# $NetBSD: mi,v 1.1192 2018/10/11 15:41:07 christos Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -6007,6 +6007,8 @@
 ./var/chroot/unbound				base-sys-root
 ./var/chroot/unbound/etc			base-sys-root
 ./var/chroot/unbound/etc/unbound		base-sys-root
+./var/chroot/unbound/var			base-sys-root
+./var/chroot/unbound/var/run			base-sys-root
 ./var/crash					base-sys-root
 ./var/cron					base-cron-root
 ./var/cron/tabs					base-cron-root
