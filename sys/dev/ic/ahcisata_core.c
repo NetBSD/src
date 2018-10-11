@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata_core.c,v 1.62.2.8 2018/10/07 15:44:47 jdolecek Exp $	*/
+/*	$NetBSD: ahcisata_core.c,v 1.62.2.9 2018/10/11 20:57:51 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.62.2.8 2018/10/07 15:44:47 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.62.2.9 2018/10/11 20:57:51 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -569,6 +569,7 @@ ahci_intr_port(struct ahci_softc *sc, struct ahci_channel *achp)
 	struct ata_xfer *xfer;
 	int slot = -1;
 	bool recover = false;
+	uint32_t aslots;
 
 	is = AHCI_READ(sc, AHCI_P_IS(chp->ch_channel));
 	AHCI_WRITE(sc, AHCI_P_IS(chp->ch_channel), is);
@@ -622,14 +623,14 @@ ahci_intr_port(struct ahci_softc *sc, struct ahci_channel *achp)
 			    DEBUG_INTR);
 		}
 
-		if (!achp->ahcic_recovering)
+		if (!ISSET(chp->ch_flags, ATACH_RECOVERING))
 			recover = true;
 	} else if (is & (AHCI_P_IX_DHRS|AHCI_P_IX_SDBS)) {
 		tfd = AHCI_READ(sc, AHCI_P_TFD(chp->ch_channel));
 
 		/* D2H Register FIS or Set Device Bits */
 		if ((tfd & WDCS_ERR) != 0) {
-			if (!achp->ahcic_recovering)
+			if (!ISSET(chp->ch_flags, ATACH_RECOVERING))
 				recover = true;
 
 			AHCIDEBUG_PRINT(("%s port %d: transfer aborted 0x%x\n",
@@ -643,8 +644,10 @@ ahci_intr_port(struct ahci_softc *sc, struct ahci_channel *achp)
 	if (__predict_false(recover))
 		ata_channel_freeze(chp);
 
+	aslots = ata_queue_active(chp);
+
 	if (slot >= 0) {
-		if ((achp->ahcic_cmds_active & __BIT(slot)) != 0 &&
+		if ((aslots & __BIT(slot)) != 0 &&
 		    (sact & __BIT(slot)) == 0) {
 			xfer = ata_queue_hwslot_to_xfer(chp, slot);
 			xfer->ops->c_intr(chp, xfer, tfd);
@@ -659,7 +662,6 @@ ahci_intr_port(struct ahci_softc *sc, struct ahci_channel *achp)
 		 * can activate another command(s), so must only process
 		 * commands active before we start processing.
 		 */
-		uint32_t aslots = achp->ahcic_cmds_active;
 
 		for (slot=0; slot < sc->sc_ncmds; slot++) {
 			if ((aslots & __BIT(slot)) != 0 &&
@@ -1071,7 +1073,6 @@ ahci_cmd_start(struct ata_channel *chp, struct ata_xfer *xfer)
 	    DEBUG_XFERS);
 
 	ata_channel_lock_owned(chp);
-	KASSERT((achp->ahcic_cmds_active & (1U << slot)) == 0);
 
 	cmd_tbl = achp->ahcic_cmd_tbl[slot];
 	AHCIDEBUG_PRINT(("%s port %d tbl %p\n", AHCINAME(sc), chp->ch_channel,
@@ -1105,8 +1106,6 @@ ahci_cmd_start(struct ata_channel *chp, struct ata_xfer *xfer)
 	}
 	/* start command */
 	AHCI_WRITE(sc, AHCI_P_CI(chp->ch_channel), 1U << slot);
-	/* and says we started this command */
-	achp->ahcic_cmds_active |= 1U << slot;
 
 	if ((ata_c->flags & AT_POLL) == 0) {
 		callout_reset(&chp->c_timo_callout, mstohz(ata_c->timeout),
@@ -1164,7 +1163,6 @@ ahci_cmd_abort(struct ata_channel *chp, struct ata_xfer *xfer)
 static void
 ahci_cmd_kill_xfer(struct ata_channel *chp, struct ata_xfer *xfer, int reason)
 {
-	struct ahci_channel *achp = (struct ahci_channel *)chp;
 	struct ata_command *ata_c = &xfer->c_ata_c;
 	bool deactivate = true;
 
@@ -1191,11 +1189,8 @@ ahci_cmd_kill_xfer(struct ata_channel *chp, struct ata_xfer *xfer, int reason)
 
 	ahci_cmd_done_end(chp, xfer);
 
-	if (deactivate) {
-		KASSERT((achp->ahcic_cmds_active & (1U << xfer->c_slot)) != 0);
-		achp->ahcic_cmds_active &= ~(1U << xfer->c_slot);
+	if (deactivate)
 		ata_deactivate_xfer(chp, xfer);
-	}
 }
 
 static int
@@ -1229,8 +1224,6 @@ ahci_cmd_complete(struct ata_channel *chp, struct ata_xfer *xfer, int tfd)
 
 	ahci_cmd_done(chp, xfer);
 
-	KASSERT((achp->ahcic_cmds_active & (1U << xfer->c_slot)) != 0);
-	achp->ahcic_cmds_active &= ~(1U << xfer->c_slot);
 	ata_deactivate_xfer(chp, xfer);
 
 	if ((ata_c->flags & (AT_TIMEOU|AT_ERROR)) == 0)
@@ -1359,8 +1352,6 @@ ahci_bio_start(struct ata_channel *chp, struct ata_xfer *xfer)
 		AHCI_WRITE(sc, AHCI_P_SACT(chp->ch_channel), 1U << xfer->c_slot);
 	/* start command */
 	AHCI_WRITE(sc, AHCI_P_CI(chp->ch_channel), 1U << xfer->c_slot);
-	/* and says we started this command */
-	achp->ahcic_cmds_active |= 1U << xfer->c_slot;
 
 	if ((xfer->c_flags & C_POLL) == 0) {
 		callout_reset(&chp->c_timo_callout, mstohz(ATA_DELAY),
@@ -1413,7 +1404,6 @@ ahci_bio_kill_xfer(struct ata_channel *chp, struct ata_xfer *xfer, int reason)
 {
 	int drive = xfer->c_drive;
 	struct ata_bio *ata_bio = &xfer->c_bio;
-	struct ahci_channel *achp = (struct ahci_channel *)chp;
 	bool deactivate = true;
 
 	AHCIDEBUG_PRINT(("ahci_bio_kill_xfer channel %d\n", chp->ch_channel),
@@ -1439,11 +1429,8 @@ ahci_bio_kill_xfer(struct ata_channel *chp, struct ata_xfer *xfer, int reason)
 	}
 	ata_bio->r_error = WDCE_ABRT;
 
-	if (deactivate) {
-		KASSERT((achp->ahcic_cmds_active & (1U << xfer->c_slot)) != 0);
-		achp->ahcic_cmds_active &= ~(1U << xfer->c_slot);
+	if (deactivate)
 		ata_deactivate_xfer(chp, xfer);
-	}
 
 	(*chp->ch_drive[drive].drv_done)(chp->ch_drive[drive].drv_softc, xfer);
 }
@@ -1503,8 +1490,6 @@ ahci_bio_complete(struct ata_channel *chp, struct ata_xfer *xfer, int tfd)
 	}
 	AHCIDEBUG_PRINT((" now %ld\n", ata_bio->bcount), DEBUG_XFERS);
 
-	KASSERT((achp->ahcic_cmds_active & (1U << xfer->c_slot)) != 0);
-	achp->ahcic_cmds_active &= ~(1U << xfer->c_slot);
 	ata_deactivate_xfer(chp, xfer);
 
 	(*chp->ch_drive[drive].drv_done)(chp->ch_drive[drive].drv_softc, xfer);
@@ -1579,34 +1564,17 @@ ahci_channel_start(struct ahci_softc *sc, struct ata_channel *chp,
 	AHCI_WRITE(sc, AHCI_P_CMD(chp->ch_channel), p_cmd);
 }
 
-static void
-ahci_hold(struct ahci_channel *achp)
-{
-	achp->ahcic_cmds_hold |= achp->ahcic_cmds_active;
-	achp->ahcic_cmds_active = 0;
-}
-
-static void
-ahci_unhold(struct ahci_channel *achp)
-{
-	achp->ahcic_cmds_active = achp->ahcic_cmds_hold;
-	achp->ahcic_cmds_hold = 0;
-}
-
 /* Recover channel after command failure */
 void
 ahci_channel_recover(struct ahci_softc *sc, struct ata_channel *chp, int tfd)
 {
-	struct ahci_channel *achp = (struct ahci_channel *)chp;
-	struct ata_drive_datas *drvp;
-	uint8_t slot, eslot, st, err;
-	int drive = -1, error;
-	struct ata_xfer *xfer;
+	int drive = ATACH_NODRIVE;
 	bool reset = false;
 
-	KASSERT(!achp->ahcic_recovering);
-
-	achp->ahcic_recovering = true;
+	ata_channel_lock(chp);
+	KASSERT(!ISSET(chp->ch_flags, ATACH_RECOVERING));
+	SET(chp->ch_flags, ATACH_RECOVERING);
+	ata_channel_unlock(chp);
 
 	/*
 	 * Read FBS to get the drive which caused the error, if PM is in use.
@@ -1637,18 +1605,16 @@ ahci_channel_recover(struct ahci_softc *sc, struct ata_channel *chp, int tfd)
 			}
 			if ((fbs & AHCI_P_FBS_DEC) != 0) {
 				/* follow non-device specific recovery */
-				drive = -1;
+				drive = ATACH_NODRIVE;
 				reset = true;
 			}
 		} else {
 			/* not device specific, reset channel */
-			drive = -1;
+			drive = ATACH_NODRIVE;
 			reset = true;
 		}
 	} else
 		drive = 0;
-
-	drvp = &chp->ch_drive[drive];
 
 	/*
 	 * If BSY or DRQ bits are set, must execute COMRESET to return
@@ -1657,86 +1623,26 @@ ahci_channel_recover(struct ahci_softc *sc, struct ata_channel *chp, int tfd)
 	 * After resetting CMD.ST, need to execute READ LOG EXT for NCQ
 	 * to unblock device processing if COMRESET was not done.
 	 */
-	if (reset || (AHCI_TFD_ST(tfd) & (WDCS_BSY|WDCS_DRQ)) != 0)
-		goto reset;
-
-	KASSERT(drive >= 0);
-	ahci_channel_stop(sc, chp, AT_POLL);
-	ahci_channel_start(sc, chp, AT_POLL,
-   	    (sc->sc_ahci_cap & AHCI_CAP_CLO) ? 1 : 0);
-
-	ahci_hold(achp);
-
-	/*
-	 * When running NCQ commands, READ LOG EXT is necessary to clear the
-	 * error condition and unblock the device.
-	 */
-	error = ata_read_log_ext_ncq(drvp, AT_POLL, &eslot, &st, &err);
-
-	ahci_unhold(achp);
-
-	switch (error) {
-	case 0:
-		/* Error out the particular NCQ xfer, then requeue the others */
-		if ((achp->ahcic_cmds_active & (1U << eslot)) != 0) {
-			xfer = ata_queue_hwslot_to_xfer(chp, eslot);
-			xfer->c_flags |= C_RECOVERED;
-			xfer->ops->c_intr(chp, xfer,
-			    (err << AHCI_P_TFD_ERR_SHIFT) | st);
-		}
-		break;
-
-	case EOPNOTSUPP:
-		/*
-		 * Non-NCQ command error, just find the slot and end with
-		 * the error.
-		 */
-		for (slot = 0; slot < sc->sc_ncmds; slot++) {
-			if ((achp->ahcic_cmds_active & (1U << slot)) != 0) {
-				xfer = ata_queue_hwslot_to_xfer(chp, slot);
-				xfer->ops->c_intr(chp, xfer, tfd);
-			}
-		}
-		break;
-
-	case EAGAIN:
-		/*
-		 * Failed to get resources to run the recovery command, must
-		 * reset the drive. This will also kill all still outstanding
-		 * transfers.
-		 */
-reset:
+	if (reset || (AHCI_TFD_ST(tfd) & (WDCS_BSY|WDCS_DRQ)) != 0) {
 		ata_channel_lock(chp);
 		ahci_reset_channel(chp, AT_POLL);
 		ata_channel_unlock(chp);
 		goto out;
-		/* NOTREACHED */
-
-	default:
-		/*
-		 * The command to get the slot failed. Kill outstanding
-		 * commands for the same drive only. No need to reset
-		 * the drive, it's unblocked nevertheless.
-		 */
-		break;
 	}
 
-	/* Requeue all unfinished commands for same drive as failed command */ 
-	for (slot = 0; slot < sc->sc_ncmds; slot++) {
-		if ((achp->ahcic_cmds_active & (1U << slot)) == 0)
-			continue;
+	KASSERT(drive != ATACH_NODRIVE && drive >= 0);
+	ahci_channel_stop(sc, chp, AT_POLL);
+	ahci_channel_start(sc, chp, AT_POLL,
+   	    (sc->sc_ahci_cap & AHCI_CAP_CLO) ? 1 : 0);
 
-		xfer = ata_queue_hwslot_to_xfer(chp, slot);
-		if (drive != xfer->c_drive)
-			continue;
-
-		xfer->ops->c_kill_xfer(chp, xfer,
-		    (error == 0) ? KILL_REQUEUE : KILL_RESET);
-	}
+	ata_recovery_resume(chp, drive, tfd, AT_POLL);
 
 out:
 	/* Drive unblocked, back to normal operation */
-	achp->ahcic_recovering = false;
+	ata_channel_lock(chp);
+	CLR(chp->ch_flags, ATACH_RECOVERING);
+	ata_channel_unlock(chp);
+
 	atastart(chp);
 }
 
@@ -1951,8 +1857,6 @@ ahci_atapi_start(struct ata_channel *chp, struct ata_xfer *xfer)
 	}
 	/* start command */
 	AHCI_WRITE(sc, AHCI_P_CI(chp->ch_channel), 1U << xfer->c_slot);
-	/* and says we started this command */
-	achp->ahcic_cmds_active |= 1U << xfer->c_slot;
 
 	if ((xfer->c_flags & C_POLL) == 0) {
 		callout_reset(&chp->c_timo_callout, mstohz(sc_xfer->timeout),
@@ -2044,8 +1948,6 @@ ahci_atapi_complete(struct ata_channel *chp, struct ata_xfer *xfer, int tfd)
 		}
 	}
 
-	KASSERT((achp->ahcic_cmds_active & (1U << xfer->c_slot)) != 0);
-	achp->ahcic_cmds_active &= ~(1U << xfer->c_slot);
 	ata_deactivate_xfer(chp, xfer);
 
 	ata_free_xfer(chp, xfer);
@@ -2059,7 +1961,6 @@ static void
 ahci_atapi_kill_xfer(struct ata_channel *chp, struct ata_xfer *xfer, int reason)
 {
 	struct scsipi_xfer *sc_xfer = xfer->c_scsipi;
-	struct ahci_channel *achp = (struct ahci_channel *)chp;
 	bool deactivate = true;
 
 	/* remove this command from xfer queue */
@@ -2081,11 +1982,8 @@ ahci_atapi_kill_xfer(struct ata_channel *chp, struct ata_xfer *xfer, int reason)
 		panic("ahci_ata_atapi_kill_xfer");
 	}
 
-	if (deactivate) {
-		KASSERT((achp->ahcic_cmds_active & (1U << xfer->c_slot)) != 0);
-		achp->ahcic_cmds_active &= ~(1U << xfer->c_slot);
+	if (deactivate)
 		ata_deactivate_xfer(chp, xfer);
-	}
 
 	ata_free_xfer(chp, xfer);
 	scsipi_done(sc_xfer);

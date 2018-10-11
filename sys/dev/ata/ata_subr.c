@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_subr.c,v 1.6.2.7 2018/10/06 21:19:55 jdolecek Exp $	*/
+/*	$NetBSD: ata_subr.c,v 1.6.2.8 2018/10/11 20:57:51 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata_subr.c,v 1.6.2.7 2018/10/06 21:19:55 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata_subr.c,v 1.6.2.8 2018/10/11 20:57:51 jdolecek Exp $");
 
 #include "opt_ata.h"
 
@@ -332,4 +332,43 @@ ata_queue_free_slot(struct ata_channel *chp, uint8_t c_slot)
 	KASSERT((chq->queue_xfers_avail & __BIT(c_slot)) == 0);
 
 	chq->queue_xfers_avail |= __BIT(c_slot);
+}
+
+void
+ata_queue_hold(struct ata_channel *chp)
+{
+	struct ata_queue *chq = chp->ch_queue;
+
+	KASSERT(mutex_owned(&chp->ch_lock));
+	
+	chq->queue_hold |= chq->active_xfers_used;
+	chq->active_xfers_used = 0;
+}
+
+void
+ata_queue_unhold(struct ata_channel *chp)
+{
+	struct ata_queue *chq = chp->ch_queue;
+
+	KASSERT(mutex_owned(&chp->ch_lock));
+
+	chq->active_xfers_used |= chq->queue_hold;
+	chq->queue_hold = 0;
+}
+
+/*
+ * Must be called with interrupts blocked.
+ */
+uint32_t
+ata_queue_active(struct ata_channel *chp)
+{
+	struct ata_queue *chq = chp->ch_queue;
+
+	return chq->active_xfers_used;
+}
+
+uint8_t
+ata_queue_openings(struct ata_channel *chp)
+{
+	return chp->ch_queue->queue_openings;
 }

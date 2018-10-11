@@ -1,4 +1,4 @@
-/* $NetBSD: siisata.c,v 1.35.6.8 2018/10/07 15:42:47 jdolecek Exp $ */
+/* $NetBSD: siisata.c,v 1.35.6.9 2018/10/11 20:57:51 jdolecek Exp $ */
 
 /* from ahcisata_core.c */
 
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siisata.c,v 1.35.6.8 2018/10/07 15:42:47 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siisata.c,v 1.35.6.9 2018/10/11 20:57:51 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -535,7 +535,7 @@ siisata_intr_port(struct siisata_channel *schp)
 			 * We don't expect the recovery to trigger error,
 			 * but handle this just in case.
 			 */
-			if (!schp->sch_recovering) 
+			if (!ISSET(chp->ch_flags, ATACH_RECOVERING)) 
 				recover = true;
 			else {
 				aprint_error_dev(sc->sc_atac.atac_dev,
@@ -574,7 +574,7 @@ process:
 		 * can activate another command(s), so must only process
 		 * commands active before we start processing.
 		 */
-		uint32_t aslots = schp->sch_active_slots;
+		uint32_t aslots = ata_queue_active(chp);
 
 		for (int slot=0; slot < SIISATA_MAX_SLOTS; slot++) {
 			if ((aslots & __BIT(slot)) != 0 &&
@@ -591,20 +591,6 @@ process:
 	}
 }
 
-static void
-siisata_hold(struct siisata_channel *schp)
-{
-	schp->sch_hold_slots |= schp->sch_active_slots;
-	schp->sch_active_slots = 0;
-}
-
-static void
-siisata_unhold(struct siisata_channel *schp)
-{
-	schp->sch_active_slots = schp->sch_hold_slots;
-	schp->sch_hold_slots = 0;
-}
-
 /* Recover channel after transfer aborted */
 void
 siisata_channel_recover(struct ata_channel *chp, uint32_t tfd)
@@ -612,14 +598,12 @@ siisata_channel_recover(struct ata_channel *chp, uint32_t tfd)
 	struct siisata_channel *schp = (struct siisata_channel *)chp;
 	struct siisata_softc *sc =
 	    (struct siisata_softc *)schp->ata_channel.ch_atac;
-	struct ata_drive_datas *drvp;
-	int drive, error;
-	uint8_t eslot, slot, st, err;
-	struct ata_xfer *xfer;
+	int drive;
 
-	KASSERT(!schp->sch_recovering);
-
-	schp->sch_recovering = true;
+	ata_channel_lock(chp);
+	KASSERT(!ISSET(chp->ch_flags, ATACH_RECOVERING));
+	SET(chp->ch_flags, ATACH_RECOVERING);
+	ata_channel_unlock(chp);
 
 	if (chp->ch_ndrives > PMP_PORT_CTL) {
 		/* Get PM port number for the device in error */
@@ -628,8 +612,6 @@ siisata_channel_recover(struct ata_channel *chp, uint32_t tfd)
 	} else
 		drive = 0;
 
-	drvp = &chp->ch_drive[drive];
-
 	/*
 	 * If BSY or DRQ bits are set, must execute COMRESET to return
 	 * device to idle state. Otherwise, commands can be reissued
@@ -637,86 +619,24 @@ siisata_channel_recover(struct ata_channel *chp, uint32_t tfd)
 	 * READ LOG EXT for NCQ to unblock device processing if COMRESET
 	 * was not done.
 	 */
-	if ((ATACH_ST(tfd) & (WDCS_BSY|WDCS_DRQ)) != 0)
-		goto reset;
-
-	KASSERT(drive >= 0);
-	siisata_reinit_port(chp, drive);
-
-	siisata_hold(schp);
-
-	/*
-	 * When running NCQ commands, READ LOG EXT is necessary to clear the
-	 * error condition and unblock the device.
-	 */
-	error = ata_read_log_ext_ncq(drvp, AT_POLL, &eslot, &st, &err);
-
-	siisata_unhold(schp);
-
-	switch (error) {
-	case 0:
-		/* Error out the particular NCQ xfer, then requeue the others */
-		if ((schp->sch_active_slots & (1 << eslot)) != 0) {
-			xfer = ata_queue_hwslot_to_xfer(chp, eslot);
-			xfer->c_flags |= C_RECOVERED;
-			xfer->ops->c_intr(chp, xfer, ATACH_ERR_ST(err, st));
-		}
-		break;
-
-	case EOPNOTSUPP:
-		/*
-		 * Non-NCQ command error, just find the slot and end it with
-		 * the error.
-		 */
-		for (slot = 0; slot < SIISATA_MAX_SLOTS; slot++) {
-			if ((schp->sch_active_slots & (1 << slot)) != 0) {
-				xfer = ata_queue_hwslot_to_xfer(chp, slot);
-				if (xfer->c_drive != drive)
-					continue;
-
-				xfer->ops->c_intr(chp, xfer, tfd);
-			}
-		}
-		break;
-
-	case EAGAIN:
-		/*
-		 * Failed to get resources to run the recovery command, must
-		 * reset the drive. This will also kill all still outstanding
-		 * transfers.
-		 */
-reset:
+	if ((ATACH_ST(tfd) & (WDCS_BSY|WDCS_DRQ)) != 0) {
 		ata_channel_lock(chp);
 		siisata_device_reset(chp);
 		ata_channel_unlock(chp);
 		goto out;
-		/* NOTREACHED */
-
-	default:
-		/*
-		 * The command to get the slot failed. Kill outstanding
-		 * commands for the same drive only. No need to reset
-		 * the drive, it's unblocked nevertheless.
-		 */
-		break;
 	}
 
-	/* Requeue the non-errorred commands */ 
-	for (slot = 0; slot < SIISATA_MAX_SLOTS; slot++) {
-		if (((schp->sch_active_slots >> slot) & 1) == 0)
-			continue;
+	KASSERT(drive >= 0);
+	siisata_reinit_port(chp, drive);
 
-		xfer = ata_queue_hwslot_to_xfer(chp, slot);
-		if (xfer->c_drive != drive)
-			continue;
-
-		xfer->ops->c_kill_xfer(chp, xfer,
-		    (error == 0) ? KILL_REQUEUE : KILL_RESET);
-	}
+	ata_recovery_resume(chp, drive, tfd, AT_POLL);
 
 out:
 	/* Drive unblocked, back to normal operation */
-	schp->sch_recovering = false;
+	ata_channel_lock(chp);
+	CLR(chp->ch_flags, ATACH_RECOVERING);
+	ata_channel_unlock(chp);
+
 	atastart(chp);
 }
 
@@ -1493,12 +1413,7 @@ siisata_activate_prb(struct siisata_channel *schp, int slot)
 
 	sc = (struct siisata_softc *)schp->ata_channel.ch_atac;
 
-	KASSERTMSG((schp->sch_active_slots & __BIT(slot)) == 0,
-	    "%s: trying to activate active slot %d", SIISATANAME(sc), slot);
-
 	SIISATA_PRB_SYNC(sc, schp, slot, BUS_DMASYNC_PREWRITE);
-	/* keep track of what's going on */
-	schp->sch_active_slots |= __BIT(slot);
 
 	offset = PRO_CARX(schp->ata_channel.ch_channel, slot);
 
@@ -1515,11 +1430,6 @@ siisata_deactivate_prb(struct siisata_channel *schp, int slot)
 
 	sc = (struct siisata_softc *)schp->ata_channel.ch_atac;
 
-	KASSERTMSG((schp->sch_active_slots & __BIT(slot)) != 0,
-	    "%s: trying to deactivate inactive slot %d", SIISATANAME(sc),
-	    slot);
-
-	schp->sch_active_slots &= ~__BIT(slot); /* mark free */
 	SIISATA_PRB_SYNC(sc, schp, slot, BUS_DMASYNC_POSTWRITE);
 }
 

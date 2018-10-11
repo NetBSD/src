@@ -1,4 +1,4 @@
-/*	$NetBSD: atavar.h,v 1.99.2.10 2018/10/06 21:19:55 jdolecek Exp $	*/
+/*	$NetBSD: atavar.h,v 1.99.2.11 2018/10/11 20:57:51 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -233,6 +233,7 @@ struct ata_queue {
 	TAILQ_HEAD(, ata_xfer) active_xfers; 	/* active commands */
 	uint32_t active_xfers_used;		/* mask of active commands */
 	uint32_t queue_xfers_avail;		/* available xfers mask */
+	uint32_t queue_hold;			/* slots held during recovery */
 	kcondvar_t c_active;		/* somebody actively waiting for xfer */
 	kcondvar_t c_cmd_finish;	/* somebody waiting for cmd finish */
 };
@@ -414,6 +415,7 @@ struct ata_channel {
 #define ATACH_NCQ	0x800	/* channel executing NCQ commands */
 #define ATACH_DMA_BEFORE_CMD	0x1000	/* start DMA first */
 #define ATACH_TH_DRIVE_RESET	0x2000	/* thread asked for drive(s) reset */
+#define ATACH_RECOVERING	0x4000	/* channel is recovering */
 
 #define ATACH_NODRIVE	0xff	/* no drive selected for reset */
 
@@ -524,6 +526,7 @@ int	ata_get_params(struct ata_drive_datas *, uint8_t, struct ataparams *);
 int	ata_set_mode(struct ata_drive_datas *, uint8_t, uint8_t);
 int	ata_read_log_ext_ncq(struct ata_drive_datas *, uint8_t, uint8_t *,
     uint8_t *, uint8_t *);
+void	ata_recovery_resume(struct ata_channel *, int, int, int);
 
 /* return code for these cmds */
 #define CMD_OK    0
@@ -573,6 +576,10 @@ struct ata_xfer *
 	ata_queue_drive_active_xfer(struct ata_channel *, int);
 bool	ata_queue_alloc_slot(struct ata_channel *, uint8_t *, uint8_t);
 void	ata_queue_free_slot(struct ata_channel *, uint8_t);
+uint32_t	ata_queue_active(struct ata_channel *);
+uint8_t	ata_queue_openings(struct ata_channel *);
+void	ata_queue_hold(struct ata_channel *);
+void	ata_queue_unhold(struct ata_channel *);
 
 void	ata_delay(struct ata_channel *, int, const char *, int);
 
