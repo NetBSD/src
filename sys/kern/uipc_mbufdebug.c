@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbufdebug.c,v 1.4 2018/10/10 10:54:30 msaitoh Exp $	*/
+/*	$NetBSD: uipc_mbufdebug.c,v 1.5 2018/10/11 11:17:07 msaitoh Exp $	*/
 
 /*
  * Copyright (C) 2017 Internet Initiative Japan Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbufdebug.c,v 1.4 2018/10/10 10:54:30 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbufdebug.c,v 1.5 2018/10/11 11:17:07 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -697,7 +697,7 @@ m_examine_ip6(const struct mbuf *m, int off, const char *modif,
 	(*pr)("IPv6: Version = %u\n", (vfc & IPV6_VERSION_MASK) >> 4);
 	flow = ntohl(ip6.ip6_flow);
 	(*pr)("IPv6: Flow INFO = 0x%07x\n", flow & IPV6_FLOWINFO_MASK);
-	(*pr)("IPv6: Payload Length = %u\n", ip6.ip6_plen);
+	(*pr)("IPv6: Payload Length = %u\n", ntohs(ip6.ip6_plen));
 	nxt = ip6.ip6_nxt;
 	(*pr)("IPv6: Next Header = %u(%s)\n", nxt, str_ipproto(nxt));
 	(*pr)("IPv6: Hop Limit = %u\n", ip6.ip6_hlim);
