@@ -1,4 +1,4 @@
-/*	$NetBSD: pic.c,v 1.44 2018/07/15 16:03:24 jmcneill Exp $	*/
+/*	$NetBSD: pic.c,v 1.45 2018/10/12 21:46:32 jmcneill Exp $	*/
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -33,7 +33,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.44 2018/07/15 16:03:24 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.45 2018/10/12 21:46:32 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -881,6 +881,24 @@ intr_disestablish(void *ih)
 	KASSERT(!cpu_softintr_p());
 
 	pic_disestablish_source(is);
+}
+
+const char *
+intr_string(intr_handle_t irq, char *buf, size_t len)
+{
+	for (size_t slot = 0; slot < PIC_MAXPICS; slot++) {
+		struct pic_softc * const pic = pic_list[slot];
+		if (pic == NULL || pic->pic_irqbase < 0)
+			continue;
+		if (pic->pic_irqbase <= irq
+		    && irq < pic->pic_irqbase + pic->pic_maxsources) {
+			struct intrsource * const is = pic->pic_sources[irq - pic->pic_irqbase];
+			snprintf(buf, len, "%s %s", pic->pic_name, is->is_source);
+			return buf;
+		}
+	}
+
+	return NULL;
 }
 
 #ifdef MULTIPROCESSOR
