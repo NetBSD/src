@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_machdep.c,v 1.120 2018/08/22 07:47:33 skrll Exp $	*/
+/*	$NetBSD: arm32_machdep.c,v 1.121 2018/10/12 21:44:20 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.120 2018/08/22 07:47:33 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.121 2018/10/12 21:44:20 jmcneill Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_fdt.h"
@@ -284,6 +284,11 @@ cpu_startup(void)
 	 * is initialised
 	 */
 	pmap_postinit();
+
+#ifdef FDT
+	if (arm_fdt_platform()->ap_startup != NULL)
+		arm_fdt_platform()->ap_startup();
+#endif
 
 	/*
 	 * Initialize error message buffer (at end of core).
