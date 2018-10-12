@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.h,v 1.13 2018/10/12 00:57:17 ryo Exp $ */
+/* $NetBSD: pmap.h,v 1.14 2018/10/12 01:28:58 ryo Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -248,6 +248,7 @@ aarch64_mmap_flags(paddr_t mdpgno)
 #define pmap_resident_count(pmap)	((pmap)->pm_stats.resident_count)
 
 bool	pmap_extract_coherency(pmap_t, vaddr_t, paddr_t *, bool *);
+void	pmap_icache_sync_range(pmap_t, vaddr_t, vaddr_t);
 
 #define	PMAP_MAPSIZE1	L2_SIZE
 
