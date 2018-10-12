@@ -1,4 +1,4 @@
-/* $NetBSD: aarch64_machdep.c,v 1.12 2018/10/04 23:53:13 ryo Exp $ */
+/* $NetBSD: aarch64_machdep.c,v 1.13 2018/10/12 21:44:20 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,12 +30,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: aarch64_machdep.c,v 1.12 2018/10/04 23:53:13 ryo Exp $");
+__KERNEL_RCSID(1, "$NetBSD: aarch64_machdep.c,v 1.13 2018/10/12 21:44:20 jmcneill Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_ddb.h"
 #include "opt_kernhist.h"
 #include "opt_modular.h"
+#include "opt_fdt.h"
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -63,6 +64,7 @@ __KERNEL_RCSID(1, "$NetBSD: aarch64_machdep.c,v 1.12 2018/10/04 23:53:13 ryo Exp
 #include <aarch64/vmparam.h>
 
 #include <arch/evbarm/fdt/platform.h>
+#include <arm/fdt/arm_fdtvar.h>
 
 #ifdef VERBOSE_INIT_ARM
 #define VPRINTF(...)	printf(__VA_ARGS__)
@@ -532,6 +534,11 @@ cpu_startup(void)
 	vaddr_t maxaddr, minaddr;
 
 	consinit();
+
+#ifdef FDT
+	if (arm_fdt_platform()->ap_startup != NULL)
+		arm_fdt_platform()->ap_startup();
+#endif
 
 	/*
 	 * Allocate a submap for physio.
