@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2445 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2446 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -230,3 +230,4 @@ Changes from NetBSD 8.0 to NetBSD 9.0:
 		userland tools. [maxv 20180923]
 	npf: Converted to use libnv [rmind 20180929]
 	ntp: Import ntp 4.2.8p12. [christos 20180929]
+	aarch64: add support for compat_netbsd32(8). [ryo 20181012]
