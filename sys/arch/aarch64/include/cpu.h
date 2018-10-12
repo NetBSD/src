@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.8 2018/09/10 11:05:12 ryo Exp $ */
+/* $NetBSD: cpu.h,v 1.9 2018/10/12 21:41:34 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -84,6 +84,9 @@ struct cpu_info {
 	/* interrupt controller */
 	u_int ci_gic_redist;	/* GICv3 redistributor index */
 	uint64_t ci_gic_sgir;	/* GICv3 SGIR target */
+
+	/* ACPI */
+	uint64_t ci_acpiid;	/* ACPI Processor Unique ID */
 
 	uint64_t ci_midr;	/* MIDR_EL1 */
 	uint64_t ci_mpidr;	/* MPIDR_EL1 */
