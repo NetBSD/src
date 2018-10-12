@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC64,v 1.44 2018/10/12 01:28:58 ryo Exp $
+#	$NetBSD: GENERIC64,v 1.45 2018/10/12 22:22:21 jmcneill Exp $
 #
 #	GENERIC ARM (aarch64) kernel
 #
@@ -96,9 +96,14 @@ options 	EXEC_ELF32
 armfdt0		at root
 simplebus*	at fdt? pass 0
 
+# ACPI support
+acpifdt*	at fdt? pass 1
+acpi*		at acpifdt?
+
 # CPUs
 cpus*		at fdt? pass 0
 cpu*		at fdt? pass 0
+cpu*		at acpi?
 
 # Performance monitors
 armpmu*		at fdt?
@@ -123,6 +128,7 @@ syscon*		at fdt? pass 1		# Generic System Controller
 
 # Timer
 gtmr*		at fdt? pass 1		# ARM Generic Timer
+gtmr*		at acpi?
 armgtmr0	at gtmr?
 tegratimer*	at fdt?			# Timers
 
@@ -134,6 +140,7 @@ watchdog*	at fdt?			# Broadcom BCM283x watchdog
 bcmicu*		at fdt? pass 1		# Broadcom BCM283x ICU
 tegralic*	at fdt? pass 1		# NVIDIA Tegra LIC
 gic*		at fdt? pass 1		# ARM GICv2
+gic*		at acpi?
 armgic0		at gic?
 gicvthree*	at fdt? pass 1		# ARM GICv3
 sunxinmi*	at fdt? pass 2		# Allwinner NMI / R_INTC
@@ -240,6 +247,7 @@ ukphy*		at mii? phy ?		# generic unknown PHYs
 # UART
 com*		at fdt?	pass 4		# UART
 plcom*		at fdt?	pass 4		# ARM PL011 UART
+plcom*		at acpi?
 
 # I2C controllers
 bsciic*		at fdt?			# Broadcom BCM283x Serial Control
