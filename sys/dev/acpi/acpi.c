@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.272 2018/10/11 22:58:36 jmcneill Exp $	*/
+/*	$NetBSD: acpi.c,v 1.273 2018/10/12 21:20:54 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.272 2018/10/11 22:58:36 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.273 2018/10/12 21:20:54 jmcneill Exp $");
 
 #include "pci.h"
 #include "opt_acpi.h"
@@ -148,6 +148,7 @@ static uint64_t		 acpi_root_pointer;
 extern kmutex_t		 acpi_interrupt_list_mtx;
 static ACPI_HANDLE	 acpi_scopes[4];
 ACPI_TABLE_HEADER	*madt_header;
+ACPI_TABLE_HEADER	*gtdt_header;
 
 /*
  * This structure provides a context for the ACPI
@@ -1708,6 +1709,28 @@ acpi_madt_unmap(void)
 	madt_header = NULL;
 }
 
+ACPI_STATUS
+acpi_gtdt_map(void)
+{
+	ACPI_STATUS  rv;
+
+	if (gtdt_header != NULL)
+		return AE_ALREADY_EXISTS;
+
+	rv = AcpiGetTable(ACPI_SIG_GTDT, 1, &gtdt_header);
+
+	if (ACPI_FAILURE(rv))
+		return rv;
+
+	return AE_OK;
+}
+
+void
+acpi_gtdt_unmap(void)
+{
+	gtdt_header = NULL;
+}
+
 /*
  * XXX: Refactor to be a generic function that walks tables.
  */
@@ -1723,6 +1746,26 @@ acpi_madt_walk(ACPI_STATUS (*func)(ACPI_SUBTABLE_HEADER *, void *), void *aux)
 	while (where < madtend) {
 
 		hdrp = (ACPI_SUBTABLE_HEADER *)where;
+
+		if (ACPI_FAILURE(func(hdrp, aux)))
+			break;
+
+		where += hdrp->Length;
+	}
+}
+
+void
+acpi_gtdt_walk(ACPI_STATUS (*func)(ACPI_GTDT_HEADER *, void *), void *aux)
+{
+	ACPI_GTDT_HEADER *hdrp;
+	char *gtdtend, *where;
+
+	gtdtend = (char *)gtdt_header + gtdt_header->Length;
+	where = (char *)gtdt_header + sizeof (ACPI_TABLE_GTDT);
+
+	while (where < gtdtend) {
+
+		hdrp = (ACPI_GTDT_HEADER *)where;
 
 		if (ACPI_FAILURE(func(hdrp, aux)))
 			break;
