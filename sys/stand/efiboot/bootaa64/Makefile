@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2018/08/27 22:40:51 jmcneill Exp $
+# $NetBSD: Makefile,v 1.3 2018/10/12 22:08:04 jmcneill Exp $
 
 PROG=		bootaa64.efi
 OBJFMT=		binary
@@ -9,6 +9,7 @@ EXTRA_SOURCES+=	cache.S
 
 COPTS+=		-mgeneral-regs-only -fno-jump-tables
 CFLAGS+=	-DEFIBOOT_ALIGN=0x200000
+#CFLAGS+=	-DEFIBOOT_ACPI
 
 .include "${.CURDIR}/../Makefile.efiboot"
 

@@ -1,4 +1,4 @@
-/* $NetBSD: exec.c,v 1.6 2018/09/15 17:06:32 jmcneill Exp $ */
+/* $NetBSD: exec.c,v 1.7 2018/10/12 22:08:04 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -28,6 +28,7 @@
 
 #include "efiboot.h"
 #include "efifdt.h"
+#include "efiacpi.h"
 
 #include <sys/reboot.h>
 
@@ -152,6 +153,11 @@ exec_netbsd(const char *fname, const char *args)
 	close(fd);
 	load_offset = 0;
 
+#ifdef EFIBOOT_ACPI
+	if (efi_acpi_available()) {
+		efi_acpi_create_fdt();
+	} else
+#endif
 	if (dtb_addr && efi_fdt_set_data((void *)dtb_addr) != 0) {
 		printf("boot: invalid DTB data\n");
 		goto cleanup;

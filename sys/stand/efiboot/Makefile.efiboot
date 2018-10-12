@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.efiboot,v 1.5 2018/09/15 17:06:32 jmcneill Exp $
+# $NetBSD: Makefile.efiboot,v 1.6 2018/10/12 22:08:04 jmcneill Exp $
 
 S=		${.CURDIR}/../../..
 
@@ -22,7 +22,7 @@ AFLAGS.start.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
 .PATH: ${EFIDIR}/gnuefi
 SOURCES=	crt0-efi-${GNUEFIARCH}.S reloc_${GNUEFIARCH}.c
 SOURCES+=	boot.c conf.c console.c dev_net.c devopen.c exec.c panic.c prompt.c
-SOURCES+=	efiboot.c efichar.c efidev.c efienv.c efigetsecs.c efifdt.c efifile.c efiblock.c efinet.c efipxe.c
+SOURCES+=	efiboot.c efichar.c efidev.c efienv.c efigetsecs.c efifdt.c efifile.c efiblock.c efinet.c efipxe.c efiacpi.c
 
 .PATH: ${S}/external/bsd/libfdt/dist
 CPPFLAGS+=	-I${S}/external/bsd/libfdt/dist
