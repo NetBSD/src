@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rndq.c,v 1.89.16.3 2018/09/23 07:44:13 pgoyette Exp $	*/
+/*	$NetBSD: kern_rndq.c,v 1.89.16.4 2018/10/12 22:30:54 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1997-2013 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.89.16.3 2018/09/23 07:44:13 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.89.16.4 2018/10/12 22:30:54 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -53,6 +53,8 @@ __KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.89.16.3 2018/09/23 07:44:13 pgoyette
 #include <sys/rngtest.h>
 #include <sys/file.h>
 #include <sys/systm.h>
+#include <sys/module_hook.h>
+#include <sys/compat_stub.h>
 
 #include <dev/rnd_private.h>
 
@@ -172,11 +174,6 @@ static uint8_t		rnd_testbits[sizeof(rnd_rt.rt_b)];
 #endif
 
 static rndsave_t	*boot_rsp;
-
-int (*vec_compat_50_rnd_ioctl)(struct file *, u_long, void *) =
-    (void *)enosys;
-int (*vec_compat32_50_rnd_ioctl)(struct file *, u_long, void *) =
-    (void *)enosys;
 
 static inline void
 rnd_printf(const char *fmt, ...)
@@ -1449,6 +1446,14 @@ krs_setflags(krndsource_t *kr, uint32_t flags, uint32_t mask)
 	}
 }
 
+MODULE_CALL_HOOK_DECL(rnd_ioctl_50_hook, f, (struct file *, u_long, void *));
+MODULE_CALL_HOOK_DECL(rnd_ioctl_50_32_hook, f, (struct file *, u_long, void *));
+
+MODULE_CALL_HOOK(rnd_ioctl_50_hook, f,
+    (struct file *fp, u_long cmd, void *addr), (fp, cmd, addr), enosys());
+MODULE_CALL_HOOK(rnd_ioctl_50_32_hook, f,
+    (struct file *fp, u_long cmd, void *addr), (fp, cmd, addr), enosys());
+
 int
 rnd_system_ioctl(struct file *fp, u_long cmd, void *addr)
 {
@@ -1495,10 +1500,10 @@ rnd_system_ioctl(struct file *fp, u_long cmd, void *addr)
 		break;
 
 	default:
-		ret = (*vec_compat_50_rnd_ioctl)(fp, cmd, addr);
+		ret = rnd_ioctl_50_hook_f_call(fp, cmd, addr);
 #if defined(_LP64)
 		if (ret == ENOSYS)
-			ret = (*vec_compat32_50_rnd_ioctl)(fp, cmd, addr);
+			ret = rnd_ioctl_50_32_hook_f_call(fp, cmd, addr);
 #endif
 		if (ret == ENOSYS)
 			ret = ENOTTY;

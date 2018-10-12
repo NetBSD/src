@@ -1,4 +1,4 @@
-/* $NetBSD: compat_stub.c,v 1.1.2.26 2018/10/02 01:43:53 pgoyette Exp $	*/
+/* $NetBSD: compat_stub.c,v 1.1.2.27 2018/10/12 22:30:54 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -176,3 +176,9 @@ struct kern_proc_32_hook_t kern_proc_32_hook;
  * under sunos emulation
  */
 struct get_emul_sunos_hook_t get_emul_sunos_hook;
+
+/*
+ * Hook for rnd_ioctl_50 callbacks
+ */
+struct rnd_ioctl_50_hook_t rnd_ioctl_50_hook;
+struct rnd_ioctl_50_32_hook_t rnd_ioctl_50_32_hook;
