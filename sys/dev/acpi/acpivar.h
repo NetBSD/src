@@ -1,4 +1,4 @@
-/*	$NetBSD: acpivar.h,v 1.75 2018/05/05 17:16:23 christos Exp $	*/
+/*	$NetBSD: acpivar.h,v 1.76 2018/10/12 21:20:54 jmcneill Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -348,6 +348,14 @@ void			acpi_enter_sleep_state(int);
 ACPI_STATUS		acpi_madt_map(void);
 void			acpi_madt_unmap(void);
 void			acpi_madt_walk(ACPI_STATUS (*)(ACPI_SUBTABLE_HEADER *,
+				       void *), void *);
+
+/*
+ * GTDT.
+ */
+ACPI_STATUS		acpi_gtdt_map(void);
+void			acpi_gtdt_unmap(void);
+void			acpi_gtdt_walk(ACPI_STATUS (*)(ACPI_GTDT_HEADER *,
 				       void *), void *);
 
 /*
