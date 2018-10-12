@@ -1,4 +1,4 @@
-/* $NetBSD: param.h,v 1.3 2018/04/28 10:53:02 jmcneill Exp $ */
+/* $NetBSD: param.h,v 1.4 2018/10/12 01:28:58 ryo Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -80,7 +80,10 @@
 
 /* AARCH64-specific macro to align a stack pointer (downwards). */
 #define STACK_ALIGNBYTES	(16 - 1)
-#define ALIGNBYTES32		7
+
+#define ALIGNBYTES32		(4 - 1)
+#define ALIGN32(p)		\
+	(((uintptr_t)(p) + ALIGNBYTES32) & ~ALIGNBYTES32)
 
 #define DEV_BSHIFT		9	/* log2(DEV_BSIZE) */
 #define DEV_BSIZE		(1 << DEV_BSHIFT)

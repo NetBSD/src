@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.28 2018/10/04 23:53:13 ryo Exp $	*/
+/*	$NetBSD: locore.S,v 1.29 2018/10/12 01:28:57 ryo Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,6 +27,7 @@
  */
 
 #include "opt_arm_debug.h"
+#include "opt_compat_netbsd32.h"
 #include "opt_console.h"
 #include "opt_cpuoptions.h"
 #include "opt_ddb.h"
@@ -37,7 +38,7 @@
 #include <aarch64/hypervisor.h>
 #include "assym.h"
 
-RCSID("$NetBSD: locore.S,v 1.28 2018/10/04 23:53:13 ryo Exp $")
+RCSID("$NetBSD: locore.S,v 1.29 2018/10/12 01:28:57 ryo Exp $")
 
 
 /*#define DEBUG_LOCORE			/* debug print */
@@ -172,6 +173,7 @@ vstart:
 
 	/* lwp-private = NULL */
 	msr	tpidr_el0, xzr
+	msr	tpidrro_el0, xzr
 
 	/* set curcpu() */
 	ADDR	x0, cpu_info_store	/* cpu_info_store is cpu_info[0] */
@@ -426,6 +428,7 @@ mp_vstart:
 
 	/* lwp-private = NULL */
 	msr	tpidr_el0, xzr
+	msr	tpidrro_el0, xzr
 
 	/* set curcpu(), and fill curcpu()->ci_{midr,mpidr} */
 	mov	x0, #CPU_INFO_SIZE
