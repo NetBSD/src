@@ -1,4 +1,4 @@
-/*	$NetBSD: rndpseudo_50.c,v 1.2.38.1 2018/03/21 02:01:34 pgoyette Exp $	*/
+/*	$nETbsD: rndpseudo_50.c,v 1.2.38.1 2018/03/21 02:01:34 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rndpseudo_50.c,v 1.2.38.1 2018/03/21 02:01:34 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rndpseudo_50.c,v 1.2.38.2 2018/10/12 22:30:54 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -40,7 +40,11 @@ __KERNEL_RCSID(0, "$NetBSD: rndpseudo_50.c,v 1.2.38.1 2018/03/21 02:01:34 pgoyet
 #include <sys/file.h>
 
 #include <sys/rnd.h>
+#include <sys/module_hook.h>
+#include <sys/compat_stub.h>
+
 #include <compat/sys/rnd.h>
+#include <compat/common/compat_mod.h>
 
 /*
  * Convert from rndsource_t to rndsource50_t, for the results from
@@ -115,4 +119,21 @@ compat_50_rnd_ioctl(struct file *fp, u_long cmd, void *addr)
 	}
 
 	return ret;
+}
+
+MODULE_SET_HOOK(rnd_ioctl_50_hook, "rnd_50", compat_50_rnd_ioctl);
+MODULE_UNSET_HOOK(rnd_ioctl_50_hook);
+
+void
+rndpseudo_50_init(void)
+{
+
+	rnd_ioctl_50_hook_set();
+}
+
+void
+rndpseudo_50_fini(void)
+{
+
+	rnd_ioctl_50_hook_unset();
 }
