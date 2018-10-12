@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_util.h,v 1.5 2011/06/21 03:37:21 jruoho Exp $ */
+/*	$NetBSD: acpi_util.h,v 1.6 2018/10/12 23:25:29 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -84,6 +84,7 @@ void		     acpi_match_node_init(struct acpi_devnode *ad);
 
 const char	*acpi_name(ACPI_HANDLE);
 int		 acpi_match_hid(ACPI_DEVICE_INFO *, const char * const *);
+int		 acpi_match_class(ACPI_HANDLE, uint8_t, uint8_t, uint8_t);
 ACPI_HANDLE	 acpi_match_cpu_info(struct cpu_info *);
 struct cpu_info *acpi_match_cpu_handle(ACPI_HANDLE);
 
