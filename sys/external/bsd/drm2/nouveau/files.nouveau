@@ -1,4 +1,4 @@
-#	$NetBSD: files.nouveau,v 1.21 2018/08/27 16:06:01 riastradh Exp $
+#	$NetBSD: files.nouveau,v 1.22 2018/10/12 01:16:20 christos Exp $
 
 version	20180827
 
@@ -27,6 +27,7 @@ makeoptions	nouveau	CPPFLAGS+="-DCONFIG_NOUVEAU_DEBUG_DEFAULT=3"
 
 makeoptions	nouveau	"CWARNFLAGS.nouveau"+="-Wno-missing-field-initializers"
 makeoptions	nouveau	"CWARNFLAGS.nouveau"+="-Wno-shadow"
+makeoptions	nouveau	"CWARNFLAGS.clang"+="-Wno-gnu-variable-sized-type-not-at-end"
 
 file	external/bsd/drm2/nouveau/nouveau_module.c	nouveau
 
