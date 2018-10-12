@@ -1,4 +1,4 @@
-/* $NetBSD: TODO.compat-module,v 1.1.2.17 2018/10/02 22:00:47 pgoyette Exp $ */
+/* $NetBSD: TODO.compat-module,v 1.1.2.18 2018/10/12 04:12:06 pgoyette Exp $ */
 
 DONE
 ----
@@ -55,19 +55,13 @@ DONE
     framework, and split version-specific code from baseline code as
     needed.
 
-TODO - Required for branch merge
---------------------------------
-16. The ieee_80211 compat code needs to be verified to make sure it is
-    handling the if43_20 compat routine cvtcmd() correctly.
-
-
 TODO - Not required for branch merge
 ------------------------------------
-17. Audit the entire code base for any remaining embedded #ifdef's for
+16. Audit the entire code base for any remaining embedded #ifdef's for
     COMPAT_xx.  When found, move the actual compat code into the compat
     hierarchy and replace originals with indirect (vectored) calls.
 
-18. The rtsock compat code is a disaster, with rtsock_50.c #include-ing
+17. The rtsock compat code is a disaster, with rtsock_50.c #include-ing
     the main rtsock.c code with various manipulations of the COMPAT_50
     macro.  Once rtsock is separated, compat_14 references to rtsock_50
     routines needs to be verified.
@@ -77,7 +71,7 @@ TODO - Not required for branch merge
     the compat code can be executed, neither on the branch nor on
     HEAD.
 
-19. The compat_60 module still needs some work for XEN systems.  We
+18. The compat_60 module still needs some work for XEN systems.  We
     probably need some build infrastructure changes to ensure that
     XEN (and, for i386, XEN-PAE) modules are build with the correct
     macros defined and with -I directories specified in the same order
@@ -85,7 +79,7 @@ TODO - Not required for branch merge
     prevents loading of micro-code updates for amd64 processors running
     XEN kernels.  This limitation also exists on HEAD.
 
-20. There seems to be quite a bit of MD compat_xx code, in the various
+19. There seems to be quite a bit of MD compat_xx code, in the various
     sys/arch/ directories.  I haven't yet looked at any of this.  But it
     seems to me that the MI compat build infrastructure should have some
     mechanism to "reach over" to the MD code, #include a Makefile.inc file,
@@ -103,12 +97,12 @@ TODO - Not required for branch merge
     into the monolithic COMPAT module on HEAD.  Thus, its absence from
     any of the version-specific modules is not a regression.
 
-21. For compat_50, in addition to rtsock there are some things in dev/gpio
+20. For compat_50, in addition to rtsock there are some things in dev/gpio
     and dev/wscons/wsmux that I haven't been able to cleanly separate.
     These items are not currently included in the monolithic COMPAT module
     on HEAD, so lack of integration on the branch is not a regression.
 
-22. Find all the remaining dependencies on the compat_utils routines and
+21. Find all the remaining dependencies on the compat_utils routines and
     deal with them appropriately.  For now, we simply ensure that they
     are included in every kernel via 'options COMPAT_UTILS' in file
     sys/conf/std
