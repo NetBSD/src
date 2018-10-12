@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_reass.c,v 1.20 2018/09/17 08:11:27 maxv Exp $	*/
+/*	$NetBSD: ip_reass.c,v 1.21 2018/10/12 05:41:18 maxv Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_reass.c,v 1.20 2018/09/17 08:11:27 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_reass.c,v 1.21 2018/10/12 05:41:18 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -402,6 +402,7 @@ insert:
 	 * header visible.
 	 */
 	ip->ip_len = htons((ip->ip_hl << 2) + next);
+	ip->ip_off = htons(0);
 	ip->ip_src = fp->ipq_src;
 	ip->ip_dst = fp->ipq_dst;
 	free(fp, M_FTABLE);
