@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_func.h,v 1.5 2018/04/19 21:50:08 christos Exp $	*/
+/*	$NetBSD: acpi_func.h,v 1.6 2018/10/12 21:36:24 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2000 Michael Smith
@@ -83,10 +83,12 @@ acpi_release_global_lock(uint32_t *lock)
 /*
  * XXX: Should be in a MD header.
  */
-#ifndef __ia64__
-#define	ACPI_FLUSH_CPU_CACHE()	wbinvd()
+#if defined(__ia64__)
+#define	ACPI_FLUSH_CPU_CACHE()	/* XXX: ia64_fc()? */
+#elif defined(__aarch64__)
+#define	ACPI_FLUSH_CPU_CACHE()	cpu_dcache_wbinv_all()
 #else
-#define ACPI_FLUSH_CPU_CACHE()	/* XXX: ia64_fc()? */
+#define	ACPI_FLUSH_CPU_CACHE()	wbinvd()
 #endif
 
 #endif /* !_SYS_DEV_ACPI_ACPICA_ACPI_FUNC_H */
