@@ -1,4 +1,4 @@
-#	$NetBSD: files.acpi,v 1.102 2018/10/12 21:38:10 jmcneill Exp $
+#	$NetBSD: files.acpi,v 1.103 2018/10/12 23:26:18 jmcneill Exp $
 
 include "dev/acpi/acpica/files.acpica"
 
@@ -228,5 +228,9 @@ file	dev/acpi/sdhc_acpi.c		sdhc_acpi
 # QEMU Firmware Configuration (fw_cfg) device
 attach	qemufwcfg at acpinodebus with qemufwcfg_acpi
 file	dev/acpi/qemufwcfg_acpi.c	qemufwcfg_acpi
+
+# AHCI SATA controller
+attach	ahcisata at acpinodebus with ahcisata_acpi
+file	dev/acpi/ahcisata_acpi.c	ahcisata_acpi
 
 include	"dev/acpi/wmi/files.wmi"
