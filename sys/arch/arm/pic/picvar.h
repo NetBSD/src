@@ -1,4 +1,4 @@
-/*	$NetBSD: picvar.h,v 1.19 2018/09/08 11:54:26 jmcneill Exp $	*/
+/*	$NetBSD: picvar.h,v 1.20 2018/10/12 21:46:32 jmcneill Exp $	*/
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -37,6 +37,8 @@
 #ifdef MULTIPROCESSOR
 #include <sys/kcpuset.h>
 #endif
+
+typedef uint32_t	intr_handle_t;		/* for ACPI */
 
 int	_splraise(int);
 int	_spllower(int);
@@ -86,6 +88,7 @@ void	pic_dispatch(struct intrsource *is, void *frame);
 void	*intr_establish(int irq, int ipl, int type, int (*func)(void *),
 	    void *arg);
 void	intr_disestablish(void *);
+const char *intr_string(intr_handle_t, char *, size_t);
 #ifdef MULTIPROCESSOR
 void	intr_cpu_init(struct cpu_info *);
 void	intr_ipi_send(const kcpuset_t *, u_long ipi);
