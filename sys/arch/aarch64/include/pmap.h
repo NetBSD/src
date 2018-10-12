@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.h,v 1.12 2018/10/04 23:53:14 ryo Exp $ */
+/* $NetBSD: pmap.h,v 1.13 2018/10/12 00:57:17 ryo Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -93,24 +93,25 @@ struct vm_page_md {
 #define LX_BLKPAG_ATTR_DEVICE_MEM	__SHIFTIN(3, LX_BLKPAG_ATTR_INDX)
 #define LX_BLKPAG_ATTR_MASK		LX_BLKPAG_ATTR_INDX
 
-#define l0pde_pa(pde)		((paddr_t)((pde) & LX_TBL_PA))
+#define lxpde_pa(pde)		((paddr_t)((pde) & LX_TBL_PA))
+#define l0pde_pa(pde)		lxpde_pa(pde)
 #define l0pde_index(v)		(((vaddr_t)(v) & L0_ADDR_BITS) >> L0_SHIFT)
 #define l0pde_valid(pde)	(((pde) & LX_VALID) == LX_VALID)
 /* l0pte always contains table entries */
 
-#define l1pde_pa(pde)		((paddr_t)((pde) & LX_TBL_PA))
+#define l1pde_pa(pde)		lxpde_pa(pde)
 #define l1pde_index(v)		(((vaddr_t)(v) & L1_ADDR_BITS) >> L1_SHIFT)
 #define l1pde_valid(pde)	(((pde) & LX_VALID) == LX_VALID)
 #define l1pde_is_block(pde)	(((pde) & LX_TYPE) == LX_TYPE_BLK)
 #define l1pde_is_table(pde)	(((pde) & LX_TYPE) == LX_TYPE_TBL)
 
-#define l2pde_pa(pde)		((paddr_t)((pde) & LX_TBL_PA))
+#define l2pde_pa(pde)		lxpde_pa(pde)
 #define l2pde_index(v)		(((vaddr_t)(v) & L2_ADDR_BITS) >> L2_SHIFT)
 #define l2pde_valid(pde)	(((pde) & LX_VALID) == LX_VALID)
 #define l2pde_is_block(pde)	(((pde) & LX_TYPE) == LX_TYPE_BLK)
 #define l2pde_is_table(pde)	(((pde) & LX_TYPE) == LX_TYPE_TBL)
 
-#define l3pte_pa(pde)		((paddr_t)((pde) & LX_TBL_PA))
+#define l3pte_pa(pde)		lxpde_pa(pde)
 #define l3pte_executable(pde,user)	\
     (((pde) & ((user) ? LX_BLKPAG_UXN : LX_BLKPAG_PXN)) == 0)
 #define l3pte_readable(pde)	((pde) & LX_BLKPAG_AF)
