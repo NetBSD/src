@@ -1,4 +1,4 @@
-/* $NetBSD: module_hook.h,v 1.1.2.6 2018/10/04 02:24:26 pgoyette Exp $	*/
+/* $NetBSD: module_hook.h,v 1.1.2.7 2018/10/12 10:28:29 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -173,18 +173,18 @@ hook ## _ ## which ## _call decl;
 int								\
 hook ## _ ## which ## _call decl				\
 {								\
-	bool hooked;						\
+	bool __hooked;						\
 	int __hook_error, __hook_s;				\
 								\
 	__hook_s = pserialize_read_enter();			\
-	hooked = hook.hooked;					\
-	if (hooked) {						\
+	__hooked = hook.hooked;					\
+	if (__hooked) {						\
 		membar_consumer();				\
 		localcount_acquire(&hook.lc);			\
 	}							\
 	pserialize_read_exit(__hook_s);				\
 								\
-	if (hooked) {						\
+	if (__hooked) {						\
 		__hook_error = (*hook.which)args;		\
 		localcount_release(&hook.lc, &hook.cv,		\
 		    &hook.mtx);					\
