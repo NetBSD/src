@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.27 2018/10/12 00:57:17 ryo Exp $	*/
+/*	$NetBSD: pmap.c,v 1.28 2018/10/12 01:13:51 ryo Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.27 2018/10/12 00:57:17 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.28 2018/10/12 01:13:51 ryo Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_ddb.h"
@@ -232,32 +232,27 @@ pm_unlock(struct pmap *pm)
 	mutex_exit(&pm->pm_lock);
 }
 
-static void __unused
-pm_addr_check(struct pmap *pm, vaddr_t va, const char *prefix)
-{
-	if (pm == pmap_kernel()) {
-		if (VM_MIN_KERNEL_ADDRESS <= va && va < VM_MAX_KERNEL_ADDRESS) {
-			// ok
-		} else {
-			printf("%s: kernel pm %p:"
-			    " va=%016lx is not kernel address\n",
-			    prefix, pm, va);
-			panic("pm_addr_check");
-		}
-	} else {
-		if (VM_MIN_ADDRESS <= va && va <= VM_MAX_ADDRESS) {
-			// ok
-		} else {
-			printf(
-			    "%s: user pm %p: va=%016lx is not kernel address\n",
-			    prefix, pm, va);
-			panic("pm_addr_check");
-		}
-	}
-}
-#define PM_ADDR_CHECK(pm, va)		pm_addr_check(pm, va, __func__)
+#define IN_RANGE(va,sta,end)	(((sta) <= (va)) && ((va) < (end)))
+
 #define IN_KSEG_ADDR(va)	\
-	((AARCH64_KSEG_START <= (va)) && ((va) < AARCH64_KSEG_END))
+	IN_RANGE((va), AARCH64_KSEG_START, AARCH64_KSEG_END)
+
+#define KASSERT_PM_ADDR(pm, va)						\
+	do {								\
+		if ((pm) == pmap_kernel()) {				\
+			KASSERTMSG(IN_RANGE((va), VM_MIN_KERNEL_ADDRESS, \
+			    VM_MAX_KERNEL_ADDRESS),			\
+			    "%s: kernel pm %p: va=%016lx"		\
+			    " is not kernel address\n",			\
+			    __func__, (pm), (va));			\
+		} else {						\
+			KASSERTMSG(IN_RANGE((va),			\
+			    VM_MIN_ADDRESS, VM_MAX_ADDRESS),		\
+			    "%s: user pm %p: va=%016lx"			\
+			    " is not user address\n",			\
+			    __func__, (pm), (va));			\
+		}							\
+	} while (0 /* CONSTCOND */)
 
 
 static const struct pmap_devmap *pmap_devmap_table;
@@ -620,12 +615,22 @@ pmap_extract(struct pmap *pm, vaddr_t va, paddr_t *pap)
 	static pt_entry_t *ptep;
 	paddr_t pa;
 	vsize_t blocksize = 0;
+	extern char __kernel_text[];
+	extern char _end[];
 
-	ptep = _pmap_pte_lookup_bs(pm, va, &blocksize);
-	if (ptep == NULL)
-		return false;
+	if (IN_RANGE(va, (vaddr_t)__kernel_text, (vaddr_t)_end)) {
+		/* fast loookup */
+		pa = KERN_VTOPHYS(va);
+	} else if (IN_KSEG_ADDR(va)) {
+		/* fast loookup. should be used only if actually mapped? */
+		pa = AARCH64_KVA_TO_PA(va);
+	} else {
+		ptep = _pmap_pte_lookup_bs(pm, va, &blocksize);
+		if (ptep == NULL)
+			return false;
+		pa = lxpde_pa(*ptep) + (va & (blocksize - 1));
+	}
 
-	pa = lxpde_pa(*ptep) + (va & (blocksize - 1));
 	if (pap != NULL)
 		*pap = pa;
 	return true;
@@ -637,22 +642,13 @@ vtophys(vaddr_t va)
 	struct pmap *pm;
 	paddr_t pa;
 
-	if (VM_MIN_KERNEL_ADDRESS <= va && va < VM_MAX_KERNEL_ADDRESS) {
-		if (pmap_extract(pmap_kernel(), va, &pa) == false) {
-			return VTOPHYS_FAILED;
-		}
-	} else if (IN_KSEG_ADDR(va)) {
-		pa = AARCH64_KVA_TO_PA(va);
-	} else if (VM_MIN_ADDRESS <= va && va <= VM_MAX_ADDRESS) {
-		if (curlwp->l_proc == NULL)
-			return VTOPHYS_FAILED;
+	if (va & TTBR_SEL_VA)
+		pm = pmap_kernel();
+	else
 		pm = curlwp->l_proc->p_vmspace->vm_map.pmap;
-		if (pmap_extract(pm, va, &pa) == false) {
-			return VTOPHYS_FAILED;
-		}
-	} else {
+
+	if (pmap_extract(pm, va, &pa) == false)
 		return VTOPHYS_FAILED;
-	}
 	return pa;
 }
 
@@ -996,10 +992,10 @@ pmap_kremove(vaddr_t va, vsize_t size)
 	KDASSERT((va & PGOFSET) == 0);
 	KDASSERT((size & PGOFSET) == 0);
 
-	KASSERT(!IN_KSEG_ADDR(va));
+	KDASSERT(!IN_KSEG_ADDR(va));
 
 	eva = va + size;
-	KDASSERT(VM_MIN_KERNEL_ADDRESS <= va && eva < VM_MAX_KERNEL_ADDRESS);
+	KDASSERT(IN_RANGE(va, VM_MIN_KERNEL_ADDRESS, VM_MAX_KERNEL_ADDRESS));
 
 	s = splvm();
 	for (; va < eva; va += PAGE_SIZE) {
@@ -1061,8 +1057,7 @@ pmap_protect(struct pmap *pm, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 	UVMHIST_LOG(pmaphist, "pm=%p, sva=%016lx, eva=%016lx, prot=%08x",
 	    pm, sva, eva, prot);
 
-	PM_ADDR_CHECK(pm, sva);
-
+	KASSERT_PM_ADDR(pm, sva);
 	KASSERT(!IN_KSEG_ADDR(sva));
 
 	if ((prot & VM_PROT_READ) == VM_PROT_NONE) {
@@ -1276,7 +1271,8 @@ _pmap_enter(struct pmap *pm, vaddr_t va, paddr_t pa, vm_prot_t prot,
 	UVMHIST_LOG(pmaphist, "va=%016lx, pa=%016lx, prot=%08x, flags=%08x",
 	    va, pa, prot, flags);
 
-	PM_ADDR_CHECK(pm, va);
+	KASSERT_PM_ADDR(pm, va);
+	KASSERT(!IN_KSEG_ADDR(va));
 
 #ifdef PMAPCOUNTERS
 	PMAP_COUNT(mappings);
@@ -1557,8 +1553,7 @@ pmap_remove(struct pmap *pm, vaddr_t sva, vaddr_t eva)
 {
 	vaddr_t va;
 
-	PM_ADDR_CHECK(pm, sva);
-
+	KASSERT_PM_ADDR(pm, sva);
 	KASSERT(!IN_KSEG_ADDR(sva));
 
 	for (va = sva; va < eva; va += PAGE_SIZE)
@@ -1623,7 +1618,8 @@ pmap_unwire(struct pmap *pm, vaddr_t va)
 
 	PMAP_COUNT(unwire);
 
-	PM_ADDR_CHECK(pm, va);
+	KASSERT_PM_ADDR(pm, va);
+	KASSERT(!IN_KSEG_ADDR(va));
 
 	pm_lock(pm);
 	ptep = _pmap_pte_lookup_l3(pm, va);
@@ -1663,12 +1659,12 @@ pmap_fault_fixup(struct pmap *pm, vaddr_t va, vm_prot_t accessprot, bool user)
 
 
 #if 0
-	PM_ADDR_CHECK(pm, va);
+	KASSERT_PM_ADDR(pm, va);
 #else
 	if (((pm == pmap_kernel()) &&
-	    !(VM_MIN_KERNEL_ADDRESS <= va && va < VM_MAX_KERNEL_ADDRESS)) ||
+	    !(IN_RANGE(va, VM_MIN_KERNEL_ADDRESS, VM_MAX_KERNEL_ADDRESS))) ||
 	    ((pm != pmap_kernel()) &&
-	    !(VM_MIN_ADDRESS <= va && va <= VM_MAX_ADDRESS))) {
+	    !(IN_RANGE(va, VM_MIN_ADDRESS, VM_MAX_ADDRESS)))) {
 
 		UVMHIST_LOG(pmaphist,
 		    "pmap space and va mismatch: pm=%s, va=%016lx",
@@ -1903,7 +1899,7 @@ pmap_is_referenced(struct vm_page *pg)
 pt_entry_t *
 kvtopte(vaddr_t va)
 {
-	KASSERT(VM_MIN_KERNEL_ADDRESS <= va && va < VM_MAX_KERNEL_ADDRESS);
+	KASSERT(IN_RANGE(va, VM_MIN_KERNEL_ADDRESS, VM_MAX_KERNEL_ADDRESS));
 
 	return _pmap_pte_lookup_bs(pmap_kernel(), va, NULL);
 }
@@ -1914,7 +1910,7 @@ pmap_kvattr(vaddr_t va, vm_prot_t prot)
 {
 	pt_entry_t *ptep, pte, opte;
 
-	KASSERT(VM_MIN_KERNEL_ADDRESS <= va && va < VM_MAX_KERNEL_ADDRESS);
+	KASSERT(IN_RANGE(va, VM_MIN_KERNEL_ADDRESS, VM_MAX_KERNEL_ADDRESS));
 
 	ptep = kvtopte(va);
 	if (ptep == NULL)
