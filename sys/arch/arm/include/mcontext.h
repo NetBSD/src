@@ -1,4 +1,4 @@
-/*	$NetBSD: mcontext.h,v 1.20 2018/04/01 04:35:04 ryo Exp $	*/
+/*	$NetBSD: mcontext.h,v 1.21 2018/10/12 01:28:58 ryo Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -142,7 +142,7 @@ typedef struct {
 
 /* Compat structures */
 typedef struct {
-#ifdef __ARM_EABI__
+#if 1 /* __ARM_EABI__ is default on aarch64 */
 	unsigned int	__vfp_fpscr;
 	uint64_t	__vfp_fstmx[32];
 	unsigned int	__vfp_fpsid;

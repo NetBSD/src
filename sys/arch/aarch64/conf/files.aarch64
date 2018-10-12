@@ -1,4 +1,4 @@
-#	$NetBSD: files.aarch64,v 1.6 2018/10/06 17:46:46 skrll Exp $
+#	$NetBSD: files.aarch64,v 1.7 2018/10/12 01:28:57 ryo Exp $
 
 defflag opt_cpuoptions.h	AARCH64_ALIGNMENT_CHECK
 defflag opt_cpuoptions.h	AARCH64_EL0_STACK_ALIGNMENT_CHECK
@@ -117,8 +117,7 @@ file	arch/aarch64/aarch64/pmap_page.S
 # NetBSD 32-bit binary compatibility
 include "compat/netbsd32/files.netbsd32"
 file	arch/aarch64/aarch64/netbsd32_machdep.c		compat_netbsd32
-#file	arch/aarch64/aarch32/aarch32_oabi_machdep.c	compat_aarch32_oabi
-#file	arch/aarch64/aarch32/aarch32_eabi_machdep.c	compat_aarch32_eabi
+file	arch/aarch64/aarch64/netbsd32_syscall.c		compat_netbsd32
 #file	arch/aarch64/aarch32/compat_13_machdep.c	compat_13 & compat_netbsd32
 #file	arch/aarch64/aarch32/compat_16_machdep.c	compat_16 & compat_netbsd32
 

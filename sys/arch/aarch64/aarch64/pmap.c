@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.28 2018/10/12 01:13:51 ryo Exp $	*/
+/*	$NetBSD: pmap.c,v 1.29 2018/10/12 01:28:57 ryo Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.28 2018/10/12 01:13:51 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.29 2018/10/12 01:28:57 ryo Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_ddb.h"
@@ -733,6 +733,47 @@ _pmap_pte_lookup_l3(struct pmap *pm, vaddr_t va)
 		return ptep;
 
 	return NULL;
+}
+
+void
+pmap_icache_sync_range(pmap_t pm, vaddr_t sva, vaddr_t eva)
+{
+	pt_entry_t *ptep, pte;
+	vaddr_t va;
+	vsize_t blocksize = 0;
+
+	pm_lock(pm);
+
+	for (va = sva; va < eva; va += blocksize) {
+		ptep = _pmap_pte_lookup_bs(pm, va, &blocksize);
+		if (blocksize == 0)
+			break;
+		if (ptep != NULL) {
+			vaddr_t eob = (va + blocksize) & ~(blocksize - 1);
+			vsize_t len = ulmin(eva, eob - va);
+
+			pte = *ptep;
+			if (l3pte_writable(pte)) {
+				cpu_icache_sync_range(va, len);
+			} else {
+				/*
+				 * change to writable temporally
+				 * to do cpu_icache_sync_range()
+				 */
+				pt_entry_t opte = pte;
+				pte = pte & ~(LX_BLKPAG_AF|LX_BLKPAG_AP);
+				pte |= (LX_BLKPAG_AF|LX_BLKPAG_AP_RW);
+				atomic_swap_64(ptep, pte);
+				AARCH64_TLBI_BY_ASID_VA(pm->pm_asid, va, true);
+				cpu_icache_sync_range(va, len);
+				atomic_swap_64(ptep, opte);
+				AARCH64_TLBI_BY_ASID_VA(pm->pm_asid, va, true);
+			}
+			va &= ~(blocksize - 1);
+		}
+	}
+
+	pm_unlock(pm);
 }
 
 static pt_entry_t

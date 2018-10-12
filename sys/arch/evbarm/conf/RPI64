@@ -1,5 +1,5 @@
 #
-#	$NetBSD: RPI64,v 1.7 2018/08/01 20:04:11 maxv Exp $
+#	$NetBSD: RPI64,v 1.8 2018/10/12 01:28:58 ryo Exp $
 #
 #	RPI64 - Raspberry Pi 3 and Pi 2 v1.2 in AARCH64 mode
 #
@@ -60,6 +60,9 @@ options 	LOCKDEBUG
 #options 		BOOT_ARGS="\"\""
 
 config		netbsd		root on ? type ?
+
+options 	COMPAT_NETBSD32
+options 	EXEC_ELF32
 
 # Device tree support
 armfdt0 	at root

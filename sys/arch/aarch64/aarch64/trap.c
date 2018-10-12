@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.10 2018/09/14 13:47:14 ryo Exp $ */
+/* $NetBSD: trap.c,v 1.11 2018/10/12 01:28:57 ryo Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.10 2018/09/14 13:47:14 ryo Exp $");
+__KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.11 2018/10/12 01:28:57 ryo Exp $");
 
 #include "opt_arm_intr_impl.h"
 #include "opt_compat_netbsd32.h"
@@ -267,21 +267,21 @@ trap_el0_sync(struct trapframe *tf)
 	case ESR_EC_BRKPNT_EL0:
 	case ESR_EC_SW_STEP_EL0:
 	case ESR_EC_WTCHPNT_EL0:
-		/* XXX notyet */
 		do_trapsignal(l, SIGTRAP, TRAP_BRKPT, (void *)tf->tf_pc, esr);
 		userret(l);
 		break;
 
 	default:
-		/* XXX notyet */
 	case ESR_EC_UNKNOWN:
 #ifdef DDB
 		if (sigill_debug) {
 			/* show illegal instruction */
-			printf("TRAP: pid %d (%s), uid %d: %s: pc=0x%016lx: %s\n",
+			printf("TRAP: pid %d (%s), uid %d: %s:"
+			    " esr=0x%lx: pc=0x%lx: %s\n",
 			    curlwp->l_proc->p_pid, curlwp->l_proc->p_comm,
 			    l->l_cred ? kauth_cred_geteuid(l->l_cred) : -1,
-			    eclass_trapname(eclass), tf->tf_pc, strdisasm(tf->tf_pc));
+			    eclass_trapname(eclass), tf->tf_esr, tf->tf_pc,
+			    strdisasm(tf->tf_pc));
 		}
 #endif
 		/* illegal or not implemented instruction */
@@ -317,48 +317,58 @@ trap_el0_32sync(struct trapframe *tf)
 	daif_enable(DAIF_D|DAIF_A|DAIF_I|DAIF_F);
 
 	switch (eclass) {
-	case ESR_EC_FP_ACCESS:
-		fpu_load(l);
-		userret(l);
-		break;
-
+#ifdef COMPAT_NETBSD32
 	case ESR_EC_INSN_ABT_EL0:
 	case ESR_EC_DATA_ABT_EL0:
 		data_abort_handler(tf, eclass);
 		userret(l);
 		break;
 
+	case ESR_EC_SVC_A32:
+		(*l->l_proc->p_md.md_syscall)(tf);
+		break;
+	case ESR_EC_FP_ACCESS:
+		fpu_load(l);
+		userret(l);
+		break;
+	case ESR_EC_FP_TRAP_A32:
+		do_trapsignal(l, SIGFPE, FPE_FLTUND, NULL, esr); /* XXX */
+		userret(l);
+
 	case ESR_EC_PC_ALIGNMENT:
 		do_trapsignal(l, SIGBUS, BUS_ADRALN, (void *)tf->tf_pc, esr);
 		userret(l);
 		break;
 	case ESR_EC_SP_ALIGNMENT:
-		do_trapsignal(l, SIGBUS, BUS_ADRALN, (void *)tf->tf_sp, esr);
+		do_trapsignal(l, SIGBUS, BUS_ADRALN,
+		    (void *)tf->tf_reg[13], esr); /* sp is r13 on AArch32 */
 		userret(l);
 		break;
 
-#ifdef COMPAT_NETBSD32
-	case ESR_EC_SVC_A32:
-		(*l->l_proc->p_md.md_syscall)(tf);
+	case ESR_EC_BKPT_INSN_A32:
+		do_trapsignal(l, SIGTRAP, TRAP_BRKPT, (void *)tf->tf_pc, esr);
+		userret(l);
 		break;
+
 	case ESR_EC_CP15_RT:
 	case ESR_EC_CP15_RRT:
 	case ESR_EC_CP14_RT:
 	case ESR_EC_CP14_DT:
 	case ESR_EC_CP14_RRT:
-	case ESR_EC_FP_TRAP_A32:
-	case ESR_EC_BKPT_INSN_A32:
-		/* XXX notyet */
-		printf("%s:%d: %s\n", __func__, __LINE__,
-		    eclass_trapname(eclass));
-		do_trapsignal(l, SIGILL, ILL_ILLTRP, (void *)tf->tf_pc, esr);
-		userret(l);
-		break;
 #endif /* COMPAT_NETBSD32 */
 	default:
-		/* XXX notyet */
-		printf("%s:%d: %s\n", __func__, __LINE__,
-		    eclass_trapname(eclass));
+#ifdef DDB
+		if (sigill_debug) {
+			/* show illegal instruction */
+			printf("TRAP: pid %d (%s), uid %d: %s:"
+			    " esr=0x%lx: pc=0x%lx: %s\n",
+			    curlwp->l_proc->p_pid, curlwp->l_proc->p_comm,
+			    l->l_cred ? kauth_cred_geteuid(l->l_cred) : -1,
+			    eclass_trapname(eclass), tf->tf_esr, tf->tf_pc,
+			    strdisasm_aarch32(tf->tf_pc));
+		}
+#endif
+		/* illegal or not implemented instruction */
 		do_trapsignal(l, SIGILL, ILL_ILLTRP, (void *)tf->tf_pc, esr);
 		userret(l);
 		break;
