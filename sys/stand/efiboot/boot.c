@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.9 2018/09/09 18:00:20 jmcneill Exp $	*/
+/*	$NetBSD: boot.c,v 1.10 2018/10/12 22:08:04 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -30,6 +30,7 @@
 #include "efiboot.h"
 #include "efiblock.h"
 #include "efifdt.h"
+#include "efiacpi.h"
 #include "efienv.h"
 
 #include <sys/bootblock.h>
@@ -210,6 +211,7 @@ command_version(char *arg)
 	}
 
 	efi_fdt_show();
+	efi_acpi_show();
 }
 
 void
