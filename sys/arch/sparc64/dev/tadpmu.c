@@ -1,0 +1,261 @@
+/*/* $NetBSD: tadpmu.c,v 1.1 2018/10/12 21:44:32 macallan Exp $ */
+
+/*-
+ * Copyright (c) 2018 Michael Lorenz <macallan@netbsd.org>
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
+
+/* a driver for the PMU found in Tadpole Wiper and possibly SPARCle laptops */
+
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/kernel.h>
+#include <sys/device.h>
+#include <sys/malloc.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
+
+#include <dev/sysmon/sysmonvar.h>
+
+#include <sparc64/dev/tadpmureg.h>
+#include <sparc64/dev/tadpmuvar.h>
+
+static bus_space_tag_t tadpmu_iot;
+static bus_space_handle_t tadpmu_hcmd;
+static bus_space_handle_t tadpmu_hdata;
+static struct sysmon_envsys *tadpmu_sme;
+static envsys_data_t tadpmu_sensors[5];
+
+static inline void
+tadpmu_cmd(uint8_t d)
+{
+	bus_space_write_1(tadpmu_iot, tadpmu_hcmd, 0, d);
+}
+
+static inline void
+tadpmu_wdata(uint8_t d)
+{
+	bus_space_write_1(tadpmu_iot, tadpmu_hdata, 0, d);
+}
+
+static inline uint8_t
+tadpmu_status(void)
+{
+	return bus_space_read_1(tadpmu_iot, tadpmu_hcmd, 0);
+}
+
+static inline uint8_t
+tadpmu_data(void)
+{
+	return bus_space_read_1(tadpmu_iot, tadpmu_hdata, 0);
+}
+
+static void
+tadpmu_flush(void)
+{
+	volatile uint8_t junk, d;
+	int bail = 0;
+
+	d = tadpmu_status();
+	while (d & STATUS_HAVE_DATA) {
+		junk = tadpmu_data();
+		__USE(junk);
+		delay(10);
+		bail++;
+		if (bail > 100) {
+			printf("%s: timeout waiting for data out to clear %2x\n",
+			    __func__, d);
+			break;
+		}
+		d = tadpmu_status();
+	}
+	bail = 0;
+	d = tadpmu_status();
+	while (d & STATUS_SEND_DATA) {
+		bus_space_write_1(tadpmu_iot, tadpmu_hdata, 0, 0);
+		delay(10);
+		bail++;
+		if (bail > 100) {
+			printf("%s: timeout waiting for data in to clear %02x\n",
+			    __func__, d);
+			break;
+		}
+		d = tadpmu_status();
+	}
+}
+
+static void
+tadpmu_send_cmd(uint8_t cmd)
+{
+	int bail = 0;
+	uint8_t d;
+
+	tadpmu_cmd(cmd);
+
+	d = tadpmu_status();
+	while ((d & STATUS_CMD_IN_PROGRESS) == 0) {
+		delay(10);
+		bail++;
+		if (bail > 100) {
+			printf("%s: timeout waiting for command to start\n",
+			    __func__);
+			break;
+		}
+		d = tadpmu_status();
+	}
+}
+
+static uint8_t
+tadpmu_recv(void)
+{
+	int bail = 0;
+	uint8_t d;
+
+	d = tadpmu_status();	
+	while ((d & STATUS_HAVE_DATA) == 0) {
+		delay(10);
+		bail++;
+		if (bail > 1000) {
+			printf("%s: timeout waiting for data %02x\n", __func__, d);
+			break;
+		}
+		d = tadpmu_status();
+	}
+	return bus_space_read_1(tadpmu_iot, tadpmu_hdata, 0);
+}
+
+static void
+tadpmu_send(uint8_t v)
+{
+	int bail = 0;
+	uint8_t d;
+
+	d = tadpmu_status();	
+	while ((d & STATUS_SEND_DATA) == 0) {
+		delay(10);
+		bail++;
+		if (bail > 1000) {
+			printf("%s: timeout waiting for PMU ready %02x\n", __func__, d);
+			break;
+		}
+		d = tadpmu_status();
+	}
+
+	tadpmu_wdata(v);
+
+	while ((d & STATUS_SEND_DATA) != 0) {
+		delay(10);
+		bail++;
+		if (bail > 1000) {
+			printf("%s: timeout waiting for accept data %02x\n", __func__, d);
+			break;
+		}
+		d = tadpmu_status();
+	}
+}
+
+static void
+tadpmu_sensors_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
+{
+	int res;
+	if (edata->private > 0) {
+		tadpmu_flush();
+		tadpmu_send_cmd(edata->private);
+		res = tadpmu_recv();
+		if (edata->units == ENVSYS_STEMP) {
+			edata->value_cur = res * 1000000 + 273150000;
+		} else {
+			edata->value_cur = res;
+		}
+		edata->state = ENVSYS_SVALID;
+	} else {
+		edata->state = ENVSYS_SINVALID;
+	}
+}
+
+int 
+tadpmu_init(bus_space_tag_t t, bus_space_handle_t hcmd, bus_space_handle_t hdata)
+{
+	int ver;
+
+	tadpmu_iot = t;
+	tadpmu_hcmd = hcmd;
+	tadpmu_hdata = hdata;
+
+	tadpmu_flush();
+	delay(1000);
+
+	tadpmu_send_cmd(CMD_READ_VERSION);
+	ver = tadpmu_recv();
+	printf("Tadpole PMU Version 1.%d\n", ver);	
+
+	tadpmu_send_cmd(CMD_SET_OPMODE);
+	tadpmu_send(0x75);
+
+	tadpmu_send_cmd(CMD_READ_SYSTEMP);
+	ver = tadpmu_recv();
+	printf("Temperature %d\n", ver);	
+
+	tadpmu_send_cmd(CMD_READ_VBATT);
+	ver = tadpmu_recv();
+	printf("Battery voltage %d\n", ver);	
+
+	tadpmu_send_cmd(CMD_READ_GENSTAT);
+	ver = tadpmu_recv();
+	printf("status %02x\n", ver);
+
+	tadpmu_sme = sysmon_envsys_create();
+	tadpmu_sme->sme_name = "tadpmu";
+	tadpmu_sme->sme_cookie = NULL;
+	tadpmu_sme->sme_refresh = tadpmu_sensors_refresh;
+
+	tadpmu_sensors[0].units = ENVSYS_STEMP;
+	tadpmu_sensors[0].private = CMD_READ_SYSTEMP;
+	strcpy(tadpmu_sensors[0].desc, "systemp");
+	sysmon_envsys_sensor_attach(tadpmu_sme, &tadpmu_sensors[0]);
+#ifdef TADPMU_DEBUG
+	tadpmu_sensors[1].units = ENVSYS_INTEGER;
+	tadpmu_sensors[1].private = 0x17;
+	strcpy(tadpmu_sensors[1].desc, "reg 17");
+	sysmon_envsys_sensor_attach(tadpmu_sme, &tadpmu_sensors[1]);
+	tadpmu_sensors[2].units = ENVSYS_INTEGER;
+	tadpmu_sensors[2].private = 0x18;
+	strcpy(tadpmu_sensors[2].desc, "reg 18");
+	sysmon_envsys_sensor_attach(tadpmu_sme, &tadpmu_sensors[2]);
+	tadpmu_sensors[3].units = ENVSYS_INTEGER;
+	tadpmu_sensors[3].private = CMD_READ_GENSTAT;
+	strcpy(tadpmu_sensors[3].desc, "genstat");
+	sysmon_envsys_sensor_attach(tadpmu_sme, &tadpmu_sensors[3]);
+#if 0
+	tadpmu_sensors[4].units = ENVSYS_INTEGER;
+	tadpmu_sensors[4].private = CMD_READ_VBATT;
+	strcpy(tadpmu_sensors[4].desc, "Vbatt");
+	sysmon_envsys_sensor_attach(tadpmu_sme, &tadpmu_sensors[4]);
+#endif
+#endif
+	sysmon_envsys_register(tadpmu_sme);
+
+	return 0;
+}
+
