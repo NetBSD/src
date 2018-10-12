@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.6 2018/07/21 13:23:48 ryo Exp $	*/
+/*	$NetBSD: fault.c,v 1.7 2018/10/12 01:28:57 ryo Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,8 +27,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.6 2018/07/21 13:23:48 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.7 2018/10/12 01:28:57 ryo Exp $");
 
+#include "opt_compat_netbsd32.h"
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
 
@@ -118,6 +119,10 @@ is_fatal_abort(uint32_t esr)
 	return true;
 }
 
+/* SPSR_M is SPSR_M_EL0T or SPSR_M_USR32 ? */
+#define IS_SPSR_USER(spsr)	\
+	(((spsr) & (SPSR_M & ~SPSR_A32)) == 0)
+
 void
 data_abort_handler(struct trapframe *tf, uint32_t eclass)
 {
@@ -129,8 +134,8 @@ data_abort_handler(struct trapframe *tf, uint32_t eclass)
 	uint32_t esr, fsc, rw;
 	vm_prot_t ftype;
 	int error = 0, len;
-	const bool user = (__SHIFTOUT(tf->tf_spsr, SPSR_M) == SPSR_M_EL0T) ?
-	    true : false;
+	const bool user = IS_SPSR_USER(tf->tf_spsr) ? true : false;
+
 	bool fatalabort;
 	const char *faultstr;
 	static char panicinfo[256];

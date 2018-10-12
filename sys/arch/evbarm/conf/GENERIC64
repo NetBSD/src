@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC64,v 1.43 2018/10/03 06:02:33 skrll Exp $
+#	$NetBSD: GENERIC64,v 1.44 2018/10/12 01:28:58 ryo Exp $
 #
 #	GENERIC ARM (aarch64) kernel
 #
@@ -88,6 +88,9 @@ makeoptions	DEBUG="-g"	# compile full symbol table
 makeoptions	COPY_SYMTAB=1
 
 config		netbsd		root on ? type ?
+
+options 	COMPAT_NETBSD32
+options 	EXEC_ELF32
 
 # Device tree support
 armfdt0		at root
