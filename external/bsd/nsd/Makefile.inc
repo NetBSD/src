@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.4 2018/02/09 17:13:27 christos Exp $
+# $NetBSD: Makefile.inc,v 1.5 2018/10/12 09:43:59 hannken Exp $
 
 .include <bsd.own.mk>
 
@@ -15,7 +15,7 @@ CPPFLAGS+=      -DINET6
 .endif
 
 .if ${HAVE_OPENSSL} < 11
-CPPFLAGS+=	-DOPENSSL_API_COMPAT 0x10100000L
+CPPFLAGS+=	-DOPENSSL_API_COMPAT=0x10100000L
 .endif
 
 DPLIBS+= event ${NETBSDSRCDIR}/external/bsd/libevent/lib/libevent
