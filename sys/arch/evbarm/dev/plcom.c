@@ -1,4 +1,4 @@
-/*	$NetBSD: plcom.c,v 1.54 2018/10/12 22:18:38 jmcneill Exp $	*/
+/*	$NetBSD: plcom.c,v 1.55 2018/10/12 23:57:00 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2001 ARM Ltd
@@ -94,7 +94,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: plcom.c,v 1.54 2018/10/12 22:18:38 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: plcom.c,v 1.55 2018/10/12 23:57:00 jmcneill Exp $");
 
 #include "opt_plcom.h"
 #include "opt_ddb.h"
@@ -1537,8 +1537,10 @@ plcom_loadchannelregs(struct plcom_softc *sc)
 	switch (pi->pi_type) {
 	case PLCOM_TYPE_PL010:
 		PWRITE1(pi, PL010COM_CR, 0);
-		PWRITE1(pi, PL010COM_DLBL, sc->sc_ratel);
-		PWRITE1(pi, PL010COM_DLBH, sc->sc_rateh);
+		if (sc->sc_frequency != 0) {
+			PWRITE1(pi, PL010COM_DLBL, sc->sc_ratel);
+			PWRITE1(pi, PL010COM_DLBH, sc->sc_rateh);
+		}
 		PWRITE1(pi, PL010COM_LCR, sc->sc_lcr);
 
 		/* XXX device_unit() abuse */
@@ -1552,8 +1554,10 @@ plcom_loadchannelregs(struct plcom_softc *sc)
 
 	case PLCOM_TYPE_PL011:
 		PWRITE4(pi, PL011COM_CR, 0);
-		PWRITE1(pi, PL011COM_FBRD, sc->sc_ratel);
-		PWRITE4(pi, PL011COM_IBRD, sc->sc_rateh);
+		if (sc->sc_frequency != 0) {
+			PWRITE1(pi, PL011COM_FBRD, sc->sc_ratel);
+			PWRITE4(pi, PL011COM_IBRD, sc->sc_rateh);
+		}
 		PWRITE1(pi, PL011COM_LCRH, sc->sc_lcr);
 		sc->sc_mcr_active = sc->sc_mcr;
 		CLR(sc->sc_cr, PL011_MCR(PL01X_MCR_RTS | PL01X_MCR_DTR));
