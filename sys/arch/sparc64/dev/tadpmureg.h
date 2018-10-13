@@ -1,4 +1,4 @@
-/* $NetBSD: tadpmureg.h,v 1.1 2018/10/12 21:44:32 macallan Exp $ */
+/* $NetBSD: tadpmureg.h,v 1.2 2018/10/13 19:53:43 macallan Exp $ */
 
 /*-
  * Copyright (c) 2018 Michael Lorenz <macallan@netbsd.org>
@@ -38,9 +38,10 @@
 #define TADPMU_STATUS	0x6
 #define TADPMU_DATA	0x2
 
-#define STATUS_HAVE_DATA	0x01
+#define STATUS_HAVE_DATA	0x01	/* response from command */
 #define STATUS_CMD_IN_PROGRESS	0x02
-#define STATUS_SEND_DATA	0x08
+#define STATUS_INTR		0x04	/* interrupt happened, read data to ack */
+#define STATUS_SEND_DATA	0x08	/* cmd waiting for data */
 
 #define CMD_SET_OPMODE		0x41	/* not sure what exactly this does... */
 #define		OPMODE_UNIX	0x75	/* other than toggling the UNIX mode  */
@@ -80,6 +81,8 @@
 
 #define GENSTAT2_MUTE		0x02
 
-
+/* messages from interrupts */
+#define TADPMU_LID		0x05
+#define TADPMU_POWERBUTTON	0x06
 
 #endif /* TADPMUREG_H */
