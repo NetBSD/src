@@ -1,5 +1,152 @@
 NSD RELEASE NOTES
 
+4.1.24
+================
+FEATURES:
+	- #4102: control interface via local socket.
+	  configure it with control-interface: "/path/nsd.ctl"  The path
+	  has to start with a / to separate it from an IP address.
+	  The local socket does not use SSL, but unencrypted traffic, use
+	  file and containing directory permissions to restrict access.
+	- configure --enable-systemd (needs pkg-config and libsystemd) can
+	  be used to then use-systemd: yes in nsd.conf and have readiness
+	  signalling with systemd.
+	- RFC8162 support, for record type SMIMEA.
+BUG FIXES:
+	- Patch to fix openwrt for mac os build darwin detection in configure.
+	- Fix that first control-interface determines if TLS is used.  Warn
+	  when IP address interfaces are used without TLS.
+	- #4106: Fix that stats printed from nsd-control are recast from
+	  unsigned long to unsigned (remote.c).
+	- Fix that type CAA (and URI) in the zone file can contain
+	  dots when not in quotes.
+	- #4133: Fix that when IXFR contains a zone with broken NSEC3PARAM
+	  chain, NSD leniently attempts to find a working NSEC3PARAM.
+
+
+4.1.23
+================
+BUG FIXES:
+	- Fix NSD time sensitive TSIG compare vulnerability.
+
+
+4.1.22
+================
+FEATURES:
+	- refuse-any sends truncation (+TC) in reply to ANY queries over UDP,
+	  and allows TCP queries like normal.
+	- Use accept4 to speed up answer of TCP queries, on Linux, FreeBSD
+	  and OpenBSD.
+BUG FIXES:
+	- Fix nsec3 hash of parent and child co-hosted nsec3 enabled zones.
+	- Fix to use same condition for nsec3 hash allocation and free.
+
+
+4.1.21
+================
+FEATURES:
+	- --enable-memclean cleans up memory for use with memory checkers,
+	  eg. valgrind.
+	- refuse-any nsd.conf option that refuses queries of type ANY.
+	- lower memory usage for tcp connections, so tcp-count can be higher.
+BUG FIXES:
+	- Fix unused variable warnings and uninit variable in statistics
+	  printout from clang analyzer.
+	- Fix spelling error in xfr-inspect.
+	- Fix #3562: explain build error when flex missing.
+	- Fix buffer size warnings from compiler on filename lengths.
+	- Fix #4093: Release notes not using 2018.
+
+
+4.1.20
+================
+BUG FIXES:
+	- Fix memory leak in zone file read of unknown rr formatted RRs.
+	- Fix memory leak when rehashing nsec3 after axfr or zonefile read,
+	  in the selectively allocated precompiled nsec3 hashes.
+
+
+4.1.19
+================
+BUG FIXES:
+	- ignore fallthrough compiler warning in flex EOF rule.
+	- Fix warnings emitted by clang for --enable-packed.  Alignment is not
+	  a problem for x86_64, don't enable packed when the platform
+	  requires aligned access.
+	- Fix spelling error in xfr-inspect.
+	- Fix 3392: Fix regression in 4.1.18 for notify lists with ip4
+	  and ip6 targets.
+	- Add test for support of -Wno-address-of-packed-member for
+	  --enable-packed.
+
+
+4.1.18
+================
+FEATURES:
+	- xfr-inspect, it is not installed, it prints xfr files from /tmp
+	  made with 'make xfr-inspect' in the source dir.
+	- retry timeout between sending notifies dropped from 15 to 3 sec.
+	- NSD sends 16 notifies simultaneously.
+	- configure --enable-packed reduces memory usage, at expense of
+	  unaligned reads.  Saves about 17%.
+	- Save memory by selectively allocate precompiled nsec3 hashes,
+	  saves about 16% memory.
+	- make ip-transparent option work on OpenBSD.
+	- Save about 2% memory by changing usage count size in name tree.
+	- Fix #2871: Increase number of sockets for xfrd transfers.
+BUG FIXES:
+	- Fix gcc 7.1.1 warnings.
+	- Fix writev compile warning on FreeBSD.
+	- Fix #1446: A corrupted zone file "propagates" to good ones.
+	- nsd-control zonestatus prints wait time between attempts, for zones
+	  that are in that waiting time.
+	- Fix collision printout of nsec3 to print name, hash and reverse.
+	- Fix #1567: Change crit to err log level for gettimeofday failure.
+	  Add defines for compile without syslog.
+	- Fix crash for DS query when parent and child zones both configured
+	  in nsd.conf and parent zone has not loaded properly.
+
+
+4.1.17
+================
+FEATURES:
+	- zone parser parses type AVC (it has TXT format).
+	- Fix #1272: use writev to put tcp length field with data for outgoing
+	  zone transfer requests.
+BUG FIXES:
+	- Fix potential null pointer in nsec3 adjustment tree.
+	- Fix text format of deletes for CDS and CDNSKEY, single 0 to represent
+	  empty base64 or hex string.
+
+
+4.1.16
+================
+FEATURES:
+	- zone parser can parse acronyms for algorithms ED25519 and ED448.
+	- Fix 1243: Option to make NSD emit really minimal responses,
+	  minimal-responses: yes in nsd.conf.
+BUG FIXES:
+	- Calculate new udb index after growing the array, fix from
+	  Chaofeng Liu.
+	- Fix missing _t to _type conversion for disable-radix-tree option.
+	- Printout serial error with hint it may be too big.
+	- Fix 1228: OpenSSL include is not guarded with HAVE_SSL
+	- Patch for expire state in multi-master when masters includes
+	  broken master, from Manabu Sonoda.
+	- minor manpage fix.
+
+
+4.1.15
+================
+BUG FIXES:
+	- Fix nsd-control and ipv6 only.
+	- Squelch zone transfer error address family not supported by protocol
+	  at low verbosity levels.
+	- Fix #1195: Fix so that NSD fails on non-compliant values for Serial.
+	- Fix to rename _t typedefs because POSIX reserves them.
+	- Fix that nsec3 hash collisions only reported on verbosity level 3.
+
+
 4.1.14
 ================
 FEATURES:

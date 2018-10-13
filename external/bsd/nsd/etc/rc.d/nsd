@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: nsd,v 1.1 2017/01/07 19:51:21 christos Exp $
+# $NetBSD: nsd,v 1.1.8.1 2018/10/13 17:30:01 martin Exp $
 #
 
 # PROVIDE: named
@@ -62,13 +62,14 @@ nsd_migrate()
 
 nsd_precmd()
 {
-	if [ -z "$nsd_chrootdir" ]; then
+	if [ -z "${nsd_chrootdir}" ]; then
 		return
 	fi
 
 	if [ ! -h /etc/nsd ]; then
 		nsd_migrate /etc/nsd ${nsd_chrootdir}
 	fi
+	ln -sf "${nsd_chrootdir}${pidfile}" "${pidfile}"
 }
 
 load_rc_config $name

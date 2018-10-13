@@ -62,7 +62,8 @@ chunk_get_last(void* base, udb_void chunk, int exp)
 static void
 chunk_set_last(void* base, udb_void chunk, int exp, uint8_t value)
 {
-	*((uint8_t*)UDB_REL(base, chunk+(1<<exp)-1)) = value;
+	assert(exp >= 0 && exp <= 63);
+	*((uint8_t*)UDB_REL(base, chunk+((uint64_t)1<<exp)-1)) = value;
 }
 
 /** create udb_base from a file descriptor (must be at start of file) */
@@ -427,8 +428,7 @@ grow_ram_hash(udb_base* udb, udb_ptr** newhash)
 
 void udb_base_link_ptr(udb_base* udb, udb_ptr* ptr)
 {
-	uint32_t i = chunk_hash_ptr(ptr->data) & udb->ram_mask;
-	assert((size_t)i < udb->ram_size);
+	uint32_t i;
 #ifdef UDB_CHECK
 	assert(udb_valid_dataptr(udb, ptr->data)); /* must be to whole chunk*/
 #endif
@@ -441,6 +441,9 @@ void udb_base_link_ptr(udb_base* udb, udb_ptr* ptr)
 			grow_ram_hash(udb, newram);
 		}
 	}
+	i = chunk_hash_ptr(ptr->data) & udb->ram_mask;
+	assert((size_t)i < udb->ram_size);
+
 	ptr->prev = NULL;
 	ptr->next = udb->ram_hash[i];
 	udb->ram_hash[i] = ptr;
@@ -625,6 +628,7 @@ int udb_exp_size(uint64_t a)
 		i >>= 1;
 		x ++;
 	}
+	assert( x>=0 && x<=63);
 	assert( ((uint64_t)1<<x) >= a);
 	assert( x==0 || ((uint64_t)1<<(x-1)) < a);
 	return x;

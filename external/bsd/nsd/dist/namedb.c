@@ -73,15 +73,11 @@ allocate_domain_nsec3(domain_table_type* table, domain_type* result)
 	result->nsec3->nsec3_ds_parent_cover = NULL;
 	result->nsec3->nsec3_is_exact = 0;
 	result->nsec3->nsec3_ds_parent_is_exact = 0;
-	result->nsec3->have_nsec3_hash = 0;
-	result->nsec3->have_nsec3_wc_hash = 0;
-	result->nsec3->have_nsec3_ds_parent_hash = 0;
+	result->nsec3->hash_wc = NULL;
+	result->nsec3->ds_parent_hash = NULL;
 	result->nsec3->prehash_prev = NULL;
 	result->nsec3->prehash_next = NULL;
 	result->nsec3->nsec3_node.key = NULL;
-	result->nsec3->hash_node.key = NULL;
-	result->nsec3->wchash_node.key = NULL;
-	result->nsec3->dshash_node.key = NULL;
 }
 #endif /* NSEC3 */
 
@@ -89,7 +85,7 @@ allocate_domain_nsec3(domain_table_type* table, domain_type* result)
 static void
 numlist_make_last(domain_table_type* table, domain_type* domain)
 {
-	size_t sw;
+	uint32_t sw;
 	domain_type* last = table->numlist_last;
 	if(domain == last)
 		return;
@@ -164,7 +160,7 @@ int domain_is_prehash(domain_table_type* table, domain_type* domain)
 
 /** remove domain node from NSEC3 tree in hash space */
 void
-zone_del_domain_in_hash_tree(rbtree_t* tree, rbnode_t* node)
+zone_del_domain_in_hash_tree(rbtree_type* tree, rbnode_type* node)
 {
 	if(!node->key)
 		return;
@@ -235,15 +231,27 @@ do_deldomain(namedb_type* db, domain_type* domain)
 		if(domain->nsec3->nsec3_node.key)
 			zone_del_domain_in_hash_tree(nsec3_tree_zone(db, domain)
 				->nsec3tree, &domain->nsec3->nsec3_node);
-		if(domain->nsec3->hash_node.key)
-			zone_del_domain_in_hash_tree(nsec3_tree_zone(db, domain)
-				->hashtree, &domain->nsec3->hash_node);
-		if(domain->nsec3->wchash_node.key)
-			zone_del_domain_in_hash_tree(nsec3_tree_zone(db, domain)
-				->wchashtree, &domain->nsec3->wchash_node);
-		if(domain->nsec3->dshash_node.key)
+		if(domain->nsec3->hash_wc) {
+			if(domain->nsec3->hash_wc->hash.node.key)
+				zone_del_domain_in_hash_tree(nsec3_tree_zone(db, domain)
+					->hashtree, &domain->nsec3->hash_wc->hash.node);
+			if(domain->nsec3->hash_wc->wc.node.key)
+				zone_del_domain_in_hash_tree(nsec3_tree_zone(db, domain)
+					->wchashtree, &domain->nsec3->hash_wc->wc.node);
+		}
+		if(domain->nsec3->ds_parent_hash && domain->nsec3->ds_parent_hash->node.key)
 			zone_del_domain_in_hash_tree(nsec3_tree_dszone(db, domain)
-				->dshashtree, &domain->nsec3->dshash_node);
+				->dshashtree, &domain->nsec3->ds_parent_hash->node);
+		if(domain->nsec3->hash_wc) {
+			region_recycle(db->domains->region,
+				domain->nsec3->hash_wc,
+				sizeof(nsec3_hash_wc_node_type));
+		}
+		if(domain->nsec3->ds_parent_hash) {
+			region_recycle(db->domains->region,
+				domain->nsec3->ds_parent_hash,
+				sizeof(nsec3_hash_node_type));
+		}
 		region_recycle(db->domains->region, domain->nsec3,
 			sizeof(struct nsec3_domain_data));
 	}
@@ -280,9 +288,9 @@ domain_table_deldomain(namedb_type* db, domain_type* domain)
 
 /** clear hash tree */
 void
-hash_tree_clear(rbtree_t* tree)
+hash_tree_clear(rbtree_type* tree)
 {
-	rbnode_t* n;
+	rbnode_type* n;
 	if(!tree) return;
 
 	/* note that elements are no longer in the tree */
@@ -293,19 +301,20 @@ hash_tree_clear(rbtree_t* tree)
 	tree->root = RBTREE_NULL;
 }
 
-void hash_tree_delete(region_type* region, rbtree_t* tree)
+void hash_tree_delete(region_type* region, rbtree_type* tree)
 {
-	region_recycle(region, tree, sizeof(rbtree_t));
+	region_recycle(region, tree, sizeof(rbtree_type));
 }
 
 /** add domain nsec3 node to hashedspace tree */
-void zone_add_domain_in_hash_tree(region_type* region, rbtree_t** tree,
+void zone_add_domain_in_hash_tree(region_type* region, rbtree_type** tree,
 	int (*cmpf)(const void*, const void*),
-	domain_type* domain, rbnode_t* node)
+	domain_type* domain, rbnode_type* node)
 {
 	if(!*tree)
 		*tree = rbtree_create(region, cmpf);
-	memset(node, 0, sizeof(rbnode_t));
+	if(node->key) return;
+	memset(node, 0, sizeof(rbnode_type));
 	node->key = domain;
 	rbtree_insert(*tree, node);
 }
@@ -351,7 +360,7 @@ domain_table_create(region_type* region)
 #else
 	result->names_to_domains = rbtree_create(
 		region, (int (*)(const void *, const void *)) dname_compare);
-	rbtree_insert(result->names_to_domains, (rbnode_t *) root);
+	rbtree_insert(result->names_to_domains, (rbnode_type *) root);
 #endif
 
 	result->root = root;
@@ -382,7 +391,7 @@ domain_table_search(domain_table_type *table,
 		dname->name_size, (struct radnode**)closest_match);
 	*closest_match = (domain_type*)((*(struct radnode**)closest_match)->elem);
 #else
-	exact = rbtree_find_less_equal(table->names_to_domains, dname, (rbnode_t **) closest_match);
+	exact = rbtree_find_less_equal(table->names_to_domains, dname, (rbnode_type **) closest_match);
 #endif
 	assert(*closest_match);
 
@@ -445,7 +454,7 @@ domain_table_insert(domain_table_type* table,
 				dname_name(result->dname),
 				result->dname->name_size, result);
 #else
-			rbtree_insert(table->names_to_domains, (rbnode_t *) result);
+			rbtree_insert(table->names_to_domains, (rbnode_type *) result);
 #endif
 
 			/*

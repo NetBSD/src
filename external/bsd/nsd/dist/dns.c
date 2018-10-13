@@ -277,7 +277,12 @@ static rrtype_descriptor_type rrtype_descriptors[(RRTYPE_DESCRIPTORS_LENGTH+1)] 
 	    RDATA_WF_BINARY }, /* certificate association data */
 	  { RDATA_ZF_BYTE, RDATA_ZF_BYTE, RDATA_ZF_BYTE, RDATA_ZF_HEX } },
 	/* 53 */
-	{ 53, NULL, T_UTYPE, 1, 1, { RDATA_WF_BINARY }, { RDATA_ZF_UNKNOWN } },
+	{ TYPE_SMIMEA, "SMIMEA", T_SMIMEA, 4, 4,
+	  { RDATA_WF_BYTE, /* usage */
+	    RDATA_WF_BYTE, /* selector */
+	    RDATA_WF_BYTE, /* matching type */
+	    RDATA_WF_BINARY }, /* certificate association data */
+	  { RDATA_ZF_BYTE, RDATA_ZF_BYTE, RDATA_ZF_BYTE, RDATA_ZF_HEX } },
 	/* 54 */
 	{ 54, NULL, T_UTYPE, 1, 1, { RDATA_WF_BINARY }, { RDATA_ZF_UNKNOWN } },
 	/* 55 - HIP [RFC 5205] */
@@ -739,6 +744,10 @@ static rrtype_descriptor_type rrtype_descriptors[(RRTYPE_DESCRIPTORS_LENGTH+1)] 
 	{ TYPE_CAA, "CAA", T_CAA, 3, 3,
 	  { RDATA_WF_BYTE, RDATA_WF_TEXT, RDATA_WF_LONG_TEXT },
 	  { RDATA_ZF_BYTE, RDATA_ZF_TAG, RDATA_ZF_LONG_TEXT } },
+	/* 258 - AVC */
+	{ TYPE_AVC, "AVC", T_AVC, 1, 1,
+	  { RDATA_WF_TEXTS },
+	  { RDATA_ZF_TEXTS } },
 
 	/* 32768 - TA */
 	/* 32769 */
