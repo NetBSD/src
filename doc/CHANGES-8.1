@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.1,v 1.1.2.32 2018/10/09 10:11:08 martin Exp $
+# $NetBSD: CHANGES-8.1,v 1.1.2.33 2018/10/13 17:32:32 martin Exp $
 
 A complete list of changes from the NetBSD 8.0 release to the NetBSD 8.1
 release:
@@ -1259,4 +1259,123 @@ sys/dev/hdaudio/hdafg.c				1.16
 	Fix hdaudio device configuration for COP_AWCAP_TYPE_PIN_COMPLEX,
 	to make e.g. the built-in speaker work on Dell OptiPlex 5060.
 	[manu, ticket #1053]
+
+sys/dev/dm/device-mapper.c			1.40
+
+	Add ioctls to query geometry.
+	[mlelstv, ticket #1055]
+
+sys/kern/kern_subr.c				1.220
+
+	Set rootdev for wedges.
+	[mlelstv, ticket #1056]
+
+sys/arch/xen/include/xen.h			1.40
+sys/arch/xen/x86/autoconf.c			1.20
+
+	Support bootspec.
+	[mlelstv, ticket #1057]
+
+sys/dev/vnd.c					1.268
+
+	Calculate a missing cylinder count in the geometry spec from
+	image size.
+	[mlelstv, ticket #1058]
+
+sys/dev/vnd.c					1.265
+sys/dev/vndvar.h				1.37
+
+	getdisksize only operates on device vnodes. Use the ioctl on
+	the underlying device instead.
+	[mlelstv, ticket #1059]
+
+external/bsd/nsd/dist/contrib/nsd.service       up to 1.1.1.1
+external/bsd/nsd/dist/contrib/nsd.socket        up to 1.1.1.1
+external/bsd/nsd/dist/xfr-inspect.c             up to 1.1.1.2
+external/bsd/nsd/dist/systemd.m4                up to 1.1.1.1
+external/bsd/nsd/Makefile.inc                   up to 1.5
+external/bsd/nsd/dist/Makefile.in               up to 1.1.1.3
+external/bsd/nsd/dist/axfr.c                    up to 1.1.1.2
+external/bsd/nsd/dist/config.h.in               up to 1.1.1.3
+external/bsd/nsd/dist/configlexer.c             up to 1.3
+external/bsd/nsd/dist/configlexer.lex           up to 1.1.1.3
+external/bsd/nsd/dist/configparser.c            up to 1.3
+external/bsd/nsd/dist/configparser.h            up to 1.3
+external/bsd/nsd/dist/configparser.y            up to 1.1.1.3
+external/bsd/nsd/dist/configure                 up to 1.1.1.3
+external/bsd/nsd/dist/configure.ac              up to 1.1.1.3
+external/bsd/nsd/dist/dbaccess.c                up to 1.1.1.2
+external/bsd/nsd/dist/dbcreate.c                up to 1.1.1.3
+external/bsd/nsd/dist/difffile.c                up to 1.1.1.3
+external/bsd/nsd/dist/difffile.h                up to 1.1.1.2
+external/bsd/nsd/dist/dns.c                     up to 1.1.1.3
+external/bsd/nsd/dist/dns.h                     up to 1.1.1.3
+external/bsd/nsd/dist/ipc.c                     up to 1.1.1.3
+external/bsd/nsd/dist/lookup3.c                 up to 1.1.1.2
+external/bsd/nsd/dist/mini_event.c              up to 1.1.1.2
+external/bsd/nsd/dist/mini_event.h              up to 1.1.1.2
+external/bsd/nsd/dist/namedb.c                  up to 1.1.1.3
+external/bsd/nsd/dist/namedb.h                  up to 1.1.1.2
+external/bsd/nsd/dist/netio.c                   up to 1.1.1.2
+external/bsd/nsd/dist/nsd-checkconf.8.in        up to 1.1.1.3
+external/bsd/nsd/dist/nsd-checkconf.c           up to 1.1.1.3
+external/bsd/nsd/dist/nsd-checkzone.8.in        up to 1.1.1.3
+external/bsd/nsd/dist/nsd-checkzone.c           up to 1.1.1.2
+external/bsd/nsd/dist/nsd-control.8.in          up to 1.1.1.3
+external/bsd/nsd/dist/nsd-control.c             up to 1.1.1.3
+external/bsd/nsd/dist/nsd-mem.c                 up to 1.1.1.3
+external/bsd/nsd/dist/nsd.8.in                  up to 1.1.1.3
+external/bsd/nsd/dist/nsd.c                     up to 1.1.1.3
+external/bsd/nsd/dist/nsd.conf.5.in             up to 1.1.1.3
+external/bsd/nsd/dist/nsd.conf.sample.in        up to 1.1.1.3
+external/bsd/nsd/dist/nsd.h                     up to 1.1.1.3
+external/bsd/nsd/dist/nsec3.c                   up to 1.1.1.3
+external/bsd/nsd/dist/nsec3.h                   up to 1.1.1.2
+external/bsd/nsd/dist/options.c                 up to 1.1.1.3
+external/bsd/nsd/dist/options.h                 up to 1.1.1.3
+external/bsd/nsd/dist/packet.c                  up to 1.1.1.2
+external/bsd/nsd/dist/packet.h                  up to 1.1.1.2
+external/bsd/nsd/dist/query.c                   up to 1.1.1.3
+external/bsd/nsd/dist/query.h                   up to 1.1.1.2
+external/bsd/nsd/dist/radtree.c                 up to 1.1.1.2
+external/bsd/nsd/dist/radtree.h                 up to 1.1.1.2
+external/bsd/nsd/dist/rbtree.c                  up to 1.1.1.2
+external/bsd/nsd/dist/rbtree.h                  up to 1.1.1.2
+external/bsd/nsd/dist/rdata.c                   up to 1.1.1.2
+external/bsd/nsd/dist/region-allocator.c        up to 1.1.1.2
+external/bsd/nsd/dist/remote.c                  up to 1.1.1.3
+external/bsd/nsd/dist/remote.h                  up to 1.1.1.2
+external/bsd/nsd/dist/rrl.c                     up to 1.1.1.3
+external/bsd/nsd/dist/rrl.h                     up to 1.1.1.2
+external/bsd/nsd/dist/server.c                  up to 1.1.1.3
+external/bsd/nsd/dist/tsig.c                    up to 1.1.1.3
+external/bsd/nsd/dist/udb.c                     up to 1.1.1.3
+external/bsd/nsd/dist/udbradtree.c              up to 1.1.1.2
+external/bsd/nsd/dist/udbradtree.h              up to 1.1.1.2
+external/bsd/nsd/dist/udbzone.h                 up to 1.1.1.2
+external/bsd/nsd/dist/util.c                    up to 1.1.1.2
+external/bsd/nsd/dist/util.h                    up to 1.3
+external/bsd/nsd/dist/xfrd-disk.c               up to 1.1.1.3
+external/bsd/nsd/dist/xfrd-notify.c             up to 1.1.1.2
+external/bsd/nsd/dist/xfrd-notify.h             up to 1.1.1.2
+external/bsd/nsd/dist/xfrd-tcp.c                up to 1.1.1.2
+external/bsd/nsd/dist/xfrd-tcp.h                up to 1.1.1.2
+external/bsd/nsd/dist/xfrd.c                    up to 1.1.1.3
+external/bsd/nsd/dist/xfrd.h                    up to 1.1.1.2
+external/bsd/nsd/dist/zlexer.c                  up to 1.3
+external/bsd/nsd/dist/zlexer.lex                up to 1.1.1.2
+external/bsd/nsd/dist/zonec.c                   up to 1.1.1.3
+external/bsd/nsd/dist/zonec.h                   up to 1.1.1.2
+external/bsd/nsd/dist/zparser.c                 up to 1.3
+external/bsd/nsd/dist/zparser.h                 up to 1.3
+external/bsd/nsd/dist/zparser.y                 up to 1.1.1.3
+external/bsd/nsd/dist/contrib/README            up to 1.1.1.2
+external/bsd/nsd/dist/doc/ChangeLog             up to 1.1.1.3
+external/bsd/nsd/dist/doc/README                up to 1.1.1.3
+external/bsd/nsd/dist/doc/RELNOTES              up to 1.1.1.3
+external/bsd/nsd/etc/rc.d/nsd                   up to 1.2
+external/bsd/nsd/include/config.h               up to 1.3
+
+	Update from NSD 4.1.14 to 4.1.24.
+	[hannken, ticket #1060]
 
