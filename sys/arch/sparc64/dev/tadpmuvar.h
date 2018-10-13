@@ -1,4 +1,4 @@
-/* $NetBSD: tadpmuvar.h,v 1.1 2018/10/12 21:44:32 macallan Exp $ */
+/* $NetBSD: tadpmuvar.h,v 1.2 2018/10/13 19:53:43 macallan Exp $ */
 
 /*-
  * Copyright (c) 2018 Michael Lorenz <macallan@netbsd.org>
@@ -32,5 +32,6 @@
 #define TADPMUVAR_H
 
 int tadpmu_init(bus_space_tag_t, bus_space_handle_t, bus_space_handle_t);
- 
+int tadpmu_intr(void *);
+
 #endif /* TADPMUVAR_H */
