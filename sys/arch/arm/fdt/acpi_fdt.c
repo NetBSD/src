@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_fdt.c,v 1.1 2018/10/12 22:20:48 jmcneill Exp $ */
+/* $NetBSD: acpi_fdt.c,v 1.2 2018/10/13 00:15:10 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_fdt.c,v 1.1 2018/10/12 22:20:48 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_fdt.c,v 1.2 2018/10/13 00:15:10 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -44,12 +44,20 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_fdt.c,v 1.1 2018/10/12 22:20:48 jmcneill Exp $"
 #include <dev/acpi/acpivar.h>
 #include <dev/pci/pcivar.h>
 
+#include <arm/arm/psci.h>
+
 static int	acpi_fdt_match(device_t, cfdata_t, void *);
 static void	acpi_fdt_attach(device_t, device_t, void *);
+
+static void	acpi_fdt_poweroff(device_t);
 
 static const char * const compatible[] = {
 	"netbsd,acpi",
 	NULL
+};
+
+static const struct fdtbus_power_controller_func acpi_fdt_power_funcs = {
+	.poweroff = acpi_fdt_poweroff,
 };
 
 CFATTACH_DECL_NEW(acpi_fdt, 0, acpi_fdt_match, acpi_fdt_attach, NULL, NULL);
@@ -71,6 +79,9 @@ acpi_fdt_attach(device_t parent, device_t self, void *aux)
 	aprint_naive("\n");
 	aprint_normal(": ACPI Platform support\n");
 
+	fdtbus_register_power_controller(self, faa->faa_phandle,
+	    &acpi_fdt_power_funcs);
+
 	if (!acpi_probe())
 		aprint_error_dev(self, "failed to probe ACPI\n");
 
@@ -87,4 +98,12 @@ acpi_fdt_attach(device_t parent, device_t self, void *aux)
 	aa.aa_dmat64 = faa->faa_dmat;
 #endif
 	config_found_ia(self, "acpibus", &aa, 0);
+}
+
+static void
+acpi_fdt_poweroff(device_t dev)
+{
+	delay(500000);
+	if (psci_available())
+		psci_system_off();
 }
