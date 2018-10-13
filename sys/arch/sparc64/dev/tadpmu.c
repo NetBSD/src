@@ -1,4 +1,4 @@
-/*/* $NetBSD: tadpmu.c,v 1.2 2018/10/13 19:53:43 macallan Exp $ */
+/*/* $NetBSD: tadpmu.c,v 1.3 2018/10/13 20:11:48 macallan Exp $ */
 
 /*-
  * Copyright (c) 2018 Michael Lorenz <macallan@netbsd.org>
@@ -28,6 +28,8 @@
 
 /* a driver for the PMU found in Tadpole Wiper and possibly SPARCle laptops */
 
+#include "opt_tadpmu.h"
+#ifdef HAVE_TADPMU
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -315,4 +317,4 @@ tadpmu_init(bus_space_tag_t t, bus_space_handle_t hcmd, bus_space_handle_t hdata
 
 	return 0;
 }
-
+#endif /* HAVE_TADPMU */
