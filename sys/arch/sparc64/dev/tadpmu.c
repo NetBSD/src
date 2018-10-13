@@ -1,4 +1,4 @@
-/*/* $NetBSD: tadpmu.c,v 1.1 2018/10/12 21:44:32 macallan Exp $ */
+/*/* $NetBSD: tadpmu.c,v 1.2 2018/10/13 19:53:43 macallan Exp $ */
 
 /*-
  * Copyright (c) 2018 Michael Lorenz <macallan@netbsd.org>
@@ -33,19 +33,31 @@
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
+#include <sys/proc.h>
 #include <sys/bus.h>
 #include <sys/intr.h>
 
 #include <dev/sysmon/sysmonvar.h>
+#include <dev/sysmon/sysmon_taskq.h>
 
 #include <sparc64/dev/tadpmureg.h>
 #include <sparc64/dev/tadpmuvar.h>
+
+#ifdef TADPMU_DEBUG
+#define DPRINTF printf
+#else
+#define DPRINTF while (0) printf
+#endif
 
 static bus_space_tag_t tadpmu_iot;
 static bus_space_handle_t tadpmu_hcmd;
 static bus_space_handle_t tadpmu_hdata;
 static struct sysmon_envsys *tadpmu_sme;
 static envsys_data_t tadpmu_sensors[5];
+static uint8_t idata = 0xff;
+static uint8_t ivalid = 0;
+static wchan_t tadpmu;
+static struct sysmon_pswitch tadpmu_pbutton;
 
 static inline void
 tadpmu_cmd(uint8_t d)
@@ -111,6 +123,7 @@ tadpmu_send_cmd(uint8_t cmd)
 	int bail = 0;
 	uint8_t d;
 
+	ivalid = 0;
 	tadpmu_cmd(cmd);
 
 	d = tadpmu_status();
@@ -132,17 +145,24 @@ tadpmu_recv(void)
 	int bail = 0;
 	uint8_t d;
 
-	d = tadpmu_status();	
-	while ((d & STATUS_HAVE_DATA) == 0) {
-		delay(10);
-		bail++;
-		if (bail > 1000) {
-			printf("%s: timeout waiting for data %02x\n", __func__, d);
-			break;
+	if (cold) {
+		d = tadpmu_status();	
+		while ((d & STATUS_HAVE_DATA) == 0) {
+			delay(10);
+			bail++;
+			if (bail > 1000) {
+				printf("%s: timeout waiting for data %02x\n",
+				    __func__, d);
+				break;
+			}
+			d = tadpmu_status();
 		}
-		d = tadpmu_status();
+		return bus_space_read_1(tadpmu_iot, tadpmu_hdata, 0);
+	} else {
+		while (ivalid == 0)
+			tsleep(tadpmu, 0, "pmucmd", 1);
+		return idata;
 	}
-	return bus_space_read_1(tadpmu_iot, tadpmu_hdata, 0);
 }
 
 static void
@@ -192,6 +212,35 @@ tadpmu_sensors_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 	} else {
 		edata->state = ENVSYS_SINVALID;
 	}
+}
+
+int
+tadpmu_intr(void *cookie)
+{
+	uint8_t s = tadpmu_status(), d;
+	if (s & STATUS_INTR) {
+		/* interrupt message */
+		d = tadpmu_data();
+		DPRINTF("status change %02x\n", d);
+		switch (d) {
+			case TADPMU_POWERBUTTON:
+				sysmon_pswitch_event(&tadpmu_pbutton, 
+				    PSWITCH_EVENT_PRESSED);
+				break;
+			case TADPMU_LID:
+				/* read genstat and report lid */
+				break;
+		}
+	}
+	s = tadpmu_status();
+	if (s & STATUS_HAVE_DATA) {
+		idata = tadpmu_data();
+		ivalid = 1;
+		wakeup(tadpmu);
+		DPRINTF("%s data %02x\n", __func__, idata);
+	}
+	
+	return 1;
 }
 
 int 
@@ -255,6 +304,14 @@ tadpmu_init(bus_space_tag_t t, bus_space_handle_t hcmd, bus_space_handle_t hdata
 #endif
 #endif
 	sysmon_envsys_register(tadpmu_sme);
+
+	sysmon_task_queue_init();
+	memset(&tadpmu_pbutton, 0, sizeof(struct sysmon_pswitch));
+	tadpmu_pbutton.smpsw_name = "tadpmu";
+	tadpmu_pbutton.smpsw_type = PSWITCH_TYPE_POWER;
+	if (sysmon_pswitch_register(&tadpmu_pbutton) != 0)
+		aprint_error(
+		    "unable to register power button with sysmon\n");
 
 	return 0;
 }
