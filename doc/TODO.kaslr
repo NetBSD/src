@@ -23,7 +23,7 @@
        [DONE] - kern.proc
        [DONE] - kern.proc2
        - kern.file
-       - kern.file2
+       [DONE] - kern.file2
        - kern.lwp
        - sysctl_inpcblist
        - sysctl_unpcblist
@@ -38,7 +38,7 @@
 
 [DONE] -- Randomize the direct map.
 
--- Randomize the PCPU area.
+[POINTLESS, BECAUSE CPU LEAKY] -- Randomize the PCPU area.
 
 ====== GENERAL ======
 
