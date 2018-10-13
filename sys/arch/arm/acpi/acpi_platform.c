@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_platform.c,v 1.1 2018/10/12 22:20:04 jmcneill Exp $ */
+/* $NetBSD: acpi_platform.c,v 1.2 2018/10/13 00:08:29 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_platform.c,v 1.1 2018/10/12 22:20:04 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_platform.c,v 1.2 2018/10/13 00:08:29 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -162,6 +162,13 @@ acpi_platform_device_register(device_t self, void *aux)
 {
 }
 
+static void
+acpi_platform_reset(void)
+{
+	if (psci_available())
+		psci_system_reset();
+}
+
 static u_int
 acpi_platform_uart_freq(void)
 {
@@ -175,7 +182,7 @@ static const struct arm_platform acpi_platform = {
 	.ap_init_attach_args = acpi_platform_init_attach_args,
 	.ap_early_putchar = acpi_platform_early_putchar,
 	.ap_device_register = acpi_platform_device_register,
-	.ap_reset = psci_fdt_reset,
+	.ap_reset = acpi_platform_reset,
 	.ap_delay = gtmr_delay,
 	.ap_uart_freq = acpi_platform_uart_freq,
 };
