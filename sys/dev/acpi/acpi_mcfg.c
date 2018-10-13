@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_mcfg.c,v 1.6 2018/04/06 17:30:25 maxv Exp $	*/
+/*	$NetBSD: acpi_mcfg.c,v 1.7 2018/10/13 13:32:50 jmcneill Exp $	*/
 
 /*-
  * Copyright (C) 2015 NONAKA Kimihiro <nonaka@NetBSD.org>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_mcfg.c,v 1.6 2018/04/06 17:30:25 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_mcfg.c,v 1.7 2018/10/13 13:32:50 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -527,6 +527,7 @@ acpimcfg_scan_bus(struct pci_softc *sc, pci_chipset_tag_t pc, int bus)
 	};
 
 	sc->sc_bus = bus;	/* XXX */
+	sc->sc_pc = pc;
 
 	pci_enumerate_bus(sc, wildcard, acpimcfg_device_probe, NULL);
 }
