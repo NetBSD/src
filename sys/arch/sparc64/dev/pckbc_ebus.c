@@ -1,4 +1,4 @@
-/*	$NetBSD: pckbc_ebus.c,v 1.2 2015/08/14 10:59:27 nakayama Exp $ */
+/*	$NetBSD: pckbc_ebus.c,v 1.3 2018/10/13 20:11:48 macallan Exp $ */
 
 /*
  * Copyright (c) 2002 Valeriy E. Ushakov
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbc_ebus.c,v 1.2 2015/08/14 10:59:27 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc_ebus.c,v 1.3 2018/10/13 20:11:48 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,9 +47,13 @@ __KERNEL_RCSID(0, "$NetBSD: pckbc_ebus.c,v 1.2 2015/08/14 10:59:27 nakayama Exp 
 #include <dev/ebus/ebusreg.h>
 #include <dev/ebus/ebusvar.h>
 
+#include "opt_tadpmu.h"
+#include <sparc64/dev/tadpmureg.h>
+#include <sparc64/dev/tadpmuvar.h>
+
 struct pckbc_ebus_softc {
 	struct pckbc_softc psc_pckbc;	/* real "pckbc" softc */
-	uint32_t psc_intr[PCKBC_NSLOTS];
+	uint32_t psc_intr[5];	/* Tadpole Viper's pckbc has 3 slots */
 };
 
 static int	pckbc_ebus_match(device_t, cfdata_t, void *);
@@ -118,7 +122,7 @@ pckbc_ebus_attach(device_t parent, device_t self, void *aux)
 			return;
 		}
 	} else {
-		for (i = 0; i < PCKBC_NSLOTS; i++)
+		for (i = 0; i < ea->ea_nintr; i++)
 			sc->psc_intr[i] = ea->ea_intr[i];
 	}
 
@@ -182,8 +186,42 @@ pckbc_ebus_attach(device_t parent, device_t self, void *aux)
 	/* finish off the attach */
 	aprint_normal("\n");
 	pckbc_attach(psc);
-}
+#ifdef HAVE_TADPMU
+	/* now look for a tadpmu child device */
+	char name[64], *p;
+	int pmu = 0;
+	for (node = prom_firstchild(ea->ea_node);
+	     node != 0; node = prom_nextsibling(node)) {
+		if((p = prom_getpropstringA(node, "name", name, 64)) != NULL) {
+			if (strcmp(name, "tadpmu") == 0) {
+				pmu = node;
+				break;
+			}
+		}
+	}
+	if (pmu != 0) {
+		void *irq;
 
+		bus_space_handle_t hcmd, hdata;
+		if (bus_space_map(iot, ioaddr + TADPMU_CMD,  1, 0, &hcmd) != 0) {
+			bus_space_unmap(iot, hcmd, 1);
+			aprint_error(": unable to map PMU cmd register\n");
+			return;
+		}
+		if (bus_space_map(iot, ioaddr + TADPMU_DATA,  1, 0, &hdata) != 0) {
+			bus_space_unmap(iot, hdata, 1);
+			aprint_error(": unable to map PMU data register\n");
+			return;
+		}
+		tadpmu_init(iot, hcmd, hdata);
+		irq = bus_intr_establish(iot, sc->psc_intr[2], IPL_TTY,
+		                         tadpmu_intr, sc);
+		if (irq == NULL) {
+			aprint_error("failed to establish tadpmu interrupt\n");
+		}
+	}
+#endif
+}
 
 static void
 pckbc_ebus_intr_establish(struct pckbc_softc *sc, pckbport_slot_t slot)

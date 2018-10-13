@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc64,v 1.154 2017/12/19 14:34:08 nakayama Exp $
+#	$NetBSD: files.sparc64,v 1.155 2018/10/13 20:11:48 macallan Exp $
 
 # @(#)files.sparc64	8.1 (Berkeley) 7/19/93
 # sparc64-specific configuration info
@@ -164,8 +164,10 @@ file	arch/sparc64/dev/com_ebus.c		com_ebus
 
 # ebus PS/2 keyboard attachment for Tadpole SPARCle, etc.
 include "dev/pckbport/files.pckbport"
-attach pckbc at ebus with pckbc_ebus
+attach pckbc at ebus with pckbc_ebus : sysmon_envsys
 file	arch/sparc64/dev/pckbc_ebus.c		pckbc_ebus
+defflag opt_tadpmu.h	HAVE_TADPMU
+file	arch/sparc64/dev/tadpmu.c		pckbc_ebus
 
 device zstty {}: tty
 attach zstty at zs
