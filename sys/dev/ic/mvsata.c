@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsata.c,v 1.41.2.7 2018/10/11 20:57:51 jdolecek Exp $	*/
+/*	$NetBSD: mvsata.c,v 1.41.2.8 2018/10/13 07:23:34 jdolecek Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.41.2.7 2018/10/11 20:57:51 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.41.2.8 2018/10/13 07:23:34 jdolecek Exp $");
 
 #include "opt_mvsata.h"
 
@@ -1281,8 +1281,10 @@ mvsata_bio_poll(struct ata_channel *chp, struct ata_xfer *xfer)
 		chp->ch_flags &= ~ATACH_DMA_WAIT;
 	}
 
-	if ((xfer->c_bio.flags & ATA_ITSDONE) == 0)
+	if ((xfer->c_bio.flags & ATA_ITSDONE) == 0) {
+		KASSERT(xfer->c_flags & C_TIMEOU);
 		mvsata_bio_intr(chp, xfer, 0);
+	}
 }
 
 static int
