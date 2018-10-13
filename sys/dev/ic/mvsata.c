@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsata.c,v 1.41.2.8 2018/10/13 07:23:34 jdolecek Exp $	*/
+/*	$NetBSD: mvsata.c,v 1.41.2.9 2018/10/13 09:31:46 jdolecek Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.41.2.8 2018/10/13 07:23:34 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.41.2.9 2018/10/13 09:31:46 jdolecek Exp $");
 
 #include "opt_mvsata.h"
 
@@ -107,9 +107,9 @@ int	mvsata_debug = 0;
 
 
 static void mvsata_probe_drive(struct ata_channel *);
-static void mvsata_reset_channel(struct ata_channel *, int);
 
 #ifndef MVSATA_WITHOUTDMA
+static void mvsata_reset_channel(struct ata_channel *, int);
 static int mvsata_bio(struct ata_drive_datas *, struct ata_xfer *);
 static void mvsata_reset_drive(struct ata_drive_datas *, int, uint32_t *);
 static int mvsata_exec_command(struct ata_drive_datas *, struct ata_xfer *);
@@ -651,7 +651,6 @@ mvsata_reset_drive(struct ata_drive_datas *drvp, int flags, uint32_t *sigp)
 		mvsata_edma_enable(mvport);
 	}
 }
-#endif /* MVSATA_WITHOUTDMA */
 
 static void
 mvsata_reset_channel(struct ata_channel *chp, int flags)
@@ -689,14 +688,11 @@ mvsata_reset_channel(struct ata_channel *chp, int flags)
 
 	ata_kill_active(chp, KILL_RESET, flags);
 
-#ifndef MVSATA_WITHOUTDMA
 	mvsata_edma_config(mvport, mvport->port_edmamode_curr);
 	mvsata_edma_reset_qptr(mvport);
 	mvsata_edma_enable(mvport);
-#endif
 }
 
-#ifndef MVSATA_WITHOUTDMA
 static int
 mvsata_addref(struct ata_drive_datas *drvp)
 {
@@ -896,23 +892,19 @@ mvsata_atapi_kill_pending(struct scsipi_periph *periph)
 static void
 mvsata_setup_channel(struct ata_channel *chp)
 {
-#if !defined(MVSATA_WITHOUTDMA) || defined(MVSATA_DEBUG)
-	struct mvsata_port *mvport = (struct mvsata_port *)chp;
-#endif
-	struct ata_drive_datas *drvp;
-	uint32_t edma_mode;
-	int drive, s;
 #ifndef MVSATA_WITHOUTDMA
+	struct mvsata_port *mvport = (struct mvsata_port *)chp;
+	struct ata_drive_datas *drvp;
+	int drive, s;
+	uint32_t edma_mode = nodma;
 	int i;
 	const int crqb_size = sizeof(union mvsata_crqb) * MVSATA_EDMAQ_LEN;
 	const int crpb_size = sizeof(struct crpb) * MVSATA_EDMAQ_LEN;
 	const int eprd_buf_size = MVSATA_EPRD_MAX_SIZE * MVSATA_EDMAQ_LEN;
-#endif
 
 	DPRINTF(DEBUG_FUNCS, ("%s:%d: mvsata_setup_channel: ",
 	    device_xname(MVSATA_DEV2(mvport)), chp->ch_channel));
 
-	edma_mode = nodma;
 	for (drive = 0; drive < chp->ch_ndrives; drive++) {
 		drvp = &chp->ch_drive[drive];
 
@@ -938,7 +930,6 @@ mvsata_setup_channel(struct ata_channel *chp)
 	DPRINTF(DEBUG_FUNCS,
 	    ("EDMA %sactive mode\n", (edma_mode == nodma) ? "not " : ""));
 
-#ifndef MVSATA_WITHOUTDMA
 	if (edma_mode == nodma) {
 no_edma:
 		if (mvport->port_crqb != NULL)
