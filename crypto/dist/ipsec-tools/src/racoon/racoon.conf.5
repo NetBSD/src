@@ -1,4 +1,4 @@
-.\"	$NetBSD: racoon.conf.5,v 1.67 2013/06/20 15:41:18 christos Exp $
+.\"	$NetBSD: racoon.conf.5,v 1.68 2018/10/13 15:38:28 maxv Exp $
 .\"
 .\"	Id: racoon.conf.5,v 1.54 2006/08/22 18:17:17 manubsd Exp
 .\"
@@ -29,7 +29,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd June 17, 2013
+.Dd October 13, 2018
 .Dt RACOON.CONF 5
 .Os
 .\"
@@ -1106,7 +1106,6 @@ Note that the kernel may not support the algorithm you have specified.
 .Pq used with ESP
 .\"
 .It Ic authentication_algorithm Ar algorithms ;
-.Ic des , 3des , des_iv64 , des_iv32 ,
 .Ic hmac_md5 , hmac_sha1 , hmac_sha256, hmac_sha384, hmac_sha512, non_auth
 .Pq used with ESP authentication and AH
 .\"
