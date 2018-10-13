@@ -23,11 +23,11 @@ static region_type *tsig_region;
 
 struct tsig_key_table
 {
-	rbnode_t node; /* by dname */
+	rbnode_type node; /* by dname */
 	tsig_key_type *key;
 };
 typedef struct tsig_key_table tsig_key_table_type;
-static rbtree_t *tsig_key_table;
+static rbtree_type *tsig_key_table;
 
 struct tsig_algorithm_table
 {
@@ -475,7 +475,7 @@ tsig_verify(tsig_record_type *tsig)
 				    &tsig->prior_mac_size);
 
 	if (tsig->mac_size != tsig->prior_mac_size
-	    || memcmp(tsig->mac_data,
+	    || CRYPTO_memcmp(tsig->mac_data,
 		      tsig->prior_mac_data,
 		      tsig->mac_size) != 0)
 	{

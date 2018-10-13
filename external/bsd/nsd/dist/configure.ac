@@ -4,7 +4,7 @@ dnl
 
 sinclude(acx_nlnetlabs.m4)
 
-AC_INIT(NSD,4.1.14,nsd-bugs@nlnetlabs.nl)
+AC_INIT(NSD,4.1.24,nsd-bugs@nlnetlabs.nl)
 AC_CONFIG_HEADER([config.h])
 
 CFLAGS="$CFLAGS"
@@ -415,7 +415,7 @@ fi
 # Checks for header files.
 AC_HEADER_STDC
 AC_HEADER_SYS_WAIT
-AC_CHECK_HEADERS([time.h arpa/inet.h signal.h string.h strings.h fcntl.h limits.h netinet/in.h netinet/tcp.h stddef.h sys/param.h sys/socket.h syslog.h unistd.h sys/select.h stdarg.h stdint.h netdb.h sys/bitypes.h tcpd.h glob.h grp.h endian.h])
+AC_CHECK_HEADERS([time.h arpa/inet.h signal.h string.h strings.h fcntl.h limits.h netinet/in.h netinet/tcp.h stddef.h sys/param.h sys/socket.h sys/un.h syslog.h unistd.h sys/select.h stdarg.h stdint.h netdb.h sys/bitypes.h tcpd.h glob.h grp.h endian.h])
 
 AC_DEFUN([CHECK_VALIST_DEF],
 [
@@ -586,6 +586,12 @@ AC_CHECK_TYPE(in_addr_t, [], [AC_DEFINE([in_addr_t], [uint32_t], [in_addr_t])], 
 #endif])
 ACX_CHECK_SS_FAMILY
 AC_CHECK_MEMBERS([struct stat.st_mtimensec, struct stat.st_mtim.tv_nsec])
+AC_CHECK_MEMBERS([struct sockaddr_un.sun_len],,,[
+AC_INCLUDES_DEFAULT
+#ifdef HAVE_SYS_UN_H
+#include <sys/un.h>
+#endif
+])
 
 # Checks for library functions.
 AC_FUNC_CHOWN
@@ -597,7 +603,7 @@ AC_SYS_LARGEFILE
 AC_CHECK_SIZEOF(void*)
 AC_CHECK_SIZEOF(off_t)
 AC_CHECK_FUNCS([arc4random arc4random_uniform])
-AC_CHECK_FUNCS([tzset alarm chroot dup2 endpwent gethostname memset memcpy pwrite socket strcasecmp strchr strdup strerror strncasecmp strtol writev getaddrinfo getnameinfo freeaddrinfo gai_strerror sigaction sigprocmask strptime strftime localtime_r setusercontext glob initgroups setresuid setreuid setresgid setregid getpwnam mmap ppoll clock_gettime])
+AC_CHECK_FUNCS([tzset alarm chroot dup2 endpwent gethostname memset memcpy pwrite socket strcasecmp strchr strdup strerror strncasecmp strtol writev getaddrinfo getnameinfo freeaddrinfo gai_strerror sigaction sigprocmask strptime strftime localtime_r setusercontext glob initgroups setresuid setreuid setresgid setregid getpwnam mmap ppoll clock_gettime accept4])
 
 AC_ARG_ENABLE(recvmmsg, AC_HELP_STRING([--enable-recvmmsg], [Enable recvmmsg and sendmmsg compilation, faster but some kernel versions may have implementation problems for IPv6]))
 case "$enable_recvmmsg" in
@@ -641,7 +647,7 @@ AC_DEFINE([HAVE_SENDMMSG], [1], [Define if sendmmsg exists])]
 esac
 
 # check if setreuid en setregid fail, on MacOSX10.4(darwin8).
-if echo $build_os | grep darwin8 > /dev/null; then
+if echo $target_os | grep darwin8 > /dev/null; then
 	AC_DEFINE(DARWIN_BROKEN_SETREUID, 1, [Define this if on macOSX10.4-darwin8 and setreuid and setregid do not work])
 fi
 
@@ -767,6 +773,10 @@ case "$enable_checking" in
                 ;;
 esac
 
+AC_ARG_ENABLE(memclean, AC_HELP_STRING([--enable-memclean], [Cleanup memory (at exit) for eg. valgrind, memcheck]))
+if test "$enable_memclean" = "yes"; then AC_DEFINE_UNQUOTED([MEMCLEAN], [1], [Define this to cleanup memory at exit (eg. for valgrind, etc.)])
+fi
+
 AC_ARG_ENABLE(ratelimit, AC_HELP_STRING([--enable-ratelimit], [Enable rate limiting]))
 case "$enable_ratelimit" in
 	yes)
@@ -884,6 +894,20 @@ case "$enable_radix_tree" in
 	AC_DEFINE_UNQUOTED([USE_RADIX_TREE], [], [Define this to configure to use the radix tree.])
 	;;
 esac
+
+AC_ARG_ENABLE(packed, AC_HELP_STRING([--enable-packed], [Enable packed structure alignment, uses less memory, but unaligned reads.]))
+case "$enable_packed" in
+	yes)
+	AC_DEFINE_UNQUOTED([PACKED_STRUCTS], [], [Define this to use packed structure alignment.])
+	ACX_CHECK_COMPILER_FLAG(Wno-address-of-packed-member, [CFLAGS="$CFLAGS -Wno-address-of-packed-member"])
+	;;
+	no|*)
+	;;
+esac
+
+# Include systemd.m4 - begin
+sinclude(systemd.m4)
+# Include systemd.m4 - end
 
 AH_BOTTOM([
 /* define before includes as it specifies what standard to use. */
@@ -1065,6 +1089,12 @@ AH_BOTTOM([
 #endif /* !__timespec_defined */
 #endif /* !HAVE_STRUCT_TIMESPEC */
 #endif /* !CONFIG_DEFINES */
+
+#ifdef PACKED_STRUCTS
+#define ATTR_PACKED __attribute__((packed))
+#else
+#define ATTR_PACKED
+#endif
 ])
 
 # big fat warning

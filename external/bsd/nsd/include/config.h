@@ -26,6 +26,9 @@
 /* Define to the default facility for syslog. */
 #define FACILITY LOG_DAEMON
 
+/* Define to 1 if you have the `accept4' function. */
+#define HAVE_ACCEPT4 1
+
 /* Define to 1 if you have the `alarm' function. */
 #define HAVE_ALARM 1
 
@@ -69,7 +72,7 @@
 #define HAVE_DUP2 1
 
 /* Define to 1 if you have the <endian.h> header file. */
-/* #undef HAVE_ENDIAN_H */
+#define HAVE_ENDIAN_H 1
 
 /* Define to 1 if you have the `endpwent' function. */
 #define HAVE_ENDPWENT 1
@@ -138,10 +141,10 @@
 #define HAVE_GRP_H 1
 
 /* Define to 1 if you have the `HMAC_CTX_new' function. */
-/* #undef HAVE_HMAC_CTX_NEW */
+#define HAVE_HMAC_CTX_NEW	1
 
 /* Define to 1 if you have the `HMAC_CTX_reset' function. */
-/* #undef HAVE_HMAC_CTX_RESET */
+#define HAVE_HMAC_CTX_RESET	1
 
 /* Define to 1 if you have the `inet_aton' function. */
 #define HAVE_INET_ATON 1
@@ -317,6 +320,9 @@
 /* Define to 1 if you have the `strtol' function. */
 #define HAVE_STRTOL 1
 
+/* Define to 1 if `sun_len' is a member of `struct sockaddr_un'. */
+#define HAVE_STRUCT_SOCKADDR_UN_SUN_LEN 1
+
 /* Define to 1 if `st_mtimensec' is a member of `struct stat'. */
 #define HAVE_STRUCT_STAT_ST_MTIMENSEC 1
 
@@ -349,6 +355,9 @@
 
 /* Define to 1 if you have the <sys/types.h> header file. */
 #define HAVE_SYS_TYPES_H 1
+
+/* Define to 1 if you have the <sys/un.h> header file. */
+#define HAVE_SYS_UN_H 1
 
 /* Define to 1 if you have <sys/wait.h> that is POSIX.1 compatible. */
 #define HAVE_SYS_WAIT_H 1
@@ -397,6 +406,9 @@
 /* Define to the maximum message length to pass to syslog. */
 #define MAXSYSLOGMSGLEN 512
 
+/* Define this to cleanup memory at exit (eg. for valgrind, etc.) */
+/* #undef MEMCLEAN */
+
 /* Define if memcmp() does not compare unsigned bytes */
 /* #undef MEMCMP_IS_BROKEN */
 
@@ -432,7 +444,7 @@
 #define PACKAGE_NAME "NSD"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "NSD 4.1.14"
+#define PACKAGE_STRING "NSD 4.1.24"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "nsd"
@@ -441,7 +453,10 @@
 #define PACKAGE_URL ""
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "4.1.14"
+#define PACKAGE_VERSION "4.1.24"
+
+/* Define this to use packed structure alignment. */
+/* #undef PACKED_STRUCTS */
 
 /* Pathname to the NSD pidfile */
 #define PIDFILE CHROOTDIR "/var/run/nsd.pid"
@@ -837,3 +852,8 @@ int memcmp(const void *x, const void *y, size_t n);
 #endif /* !HAVE_STRUCT_TIMESPEC */
 #endif /* !CONFIG_DEFINES */
 
+#ifdef PACKED_STRUCTS
+#define ATTR_PACKED __attribute__((__packed__))
+#else
+#define ATTR_PACKED
+#endif

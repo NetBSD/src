@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.1.8.1 2017/07/12 13:56:46 martin Exp $
+# $NetBSD: Makefile.inc,v 1.1.8.2 2018/10/13 17:30:00 martin Exp $
 
 .include <bsd.own.mk>
 
@@ -14,9 +14,13 @@ CPPFLAGS+=-I${NSD} -I${NSD}/../include
 CPPFLAGS+=      -DINET6
 .endif
 
+.if ${HAVE_OPENSSL} < 11
+CPPFLAGS+=	-DOPENSSL_API_COMPAT=0x10100000L
+.endif
+
 DPLIBS+= event ${NETBSDSRCDIR}/external/bsd/libevent/lib/libevent
-DPLIBS+= ssl ${NETBSDSRCDIR}/crypto/external/bsd/openssl/lib/libssl
-DPLIBS+= crypto ${NETBSDSRCDIR}/crypto/external/bsd/openssl/lib/libcrypto
+DPLIBS+= ssl ${NETBSDSRCDIR}/crypto/external/bsd/${EXTERNAL_OPENSSL_SUBDIR}/lib/libssl
+DPLIBS+= crypto ${NETBSDSRCDIR}/crypto/external/bsd/${EXTERNAL_OPENSSL_SUBDIR}/lib/libcrypto
 DPLIBS+= crypt ${NETBSDSRCDIR}/lib/libcrypt
 DPLIBS+= util ${NETBSDSRCDIR}/lib/libutil
 DPLIBS+= pthread ${NETBSDSRCDIR}/lib/libpthread

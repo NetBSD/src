@@ -89,6 +89,10 @@ zparser_conv_hex(region_type *region, const char *hex, size_t len)
 	uint8_t *t;
 	int i;
 
+	if(len == 1 && hex[0] == '0') {
+		/* single 0 represents empty buffer */
+		return alloc_rdata(region, 0);
+	}
 	if (len % 2 != 0) {
 		zc_error_prev_line("number of hex digits must be a multiple of 2");
 	} else if (len > MAX_RDLENGTH * 2) {
@@ -250,7 +254,7 @@ zparser_conv_serial(region_type *region, const char *serialstr)
 
 	serial = strtoserial(serialstr, &t);
 	if (*t != '\0') {
-		zc_error_prev_line("serial is expected");
+		zc_error_prev_line("serial is expected or serial too big");
 	} else {
 		serial = htonl(serial);
 		r = alloc_rdata_init(region, &serial, sizeof(serial));
@@ -639,6 +643,10 @@ zparser_conv_b64(region_type *region, const char *b64)
 	uint16_t *r = NULL;
 	int i;
 
+	if(strcmp(b64, "0") == 0) {
+		/* single 0 represents empty buffer */
+		return alloc_rdata(region, 0);
+	}
 	i = b64_pton(b64, buffer, B64BUFSIZE);
 	if (i == -1) {
 		zc_error_prev_line("invalid base64 data");
@@ -797,6 +805,7 @@ precsize_aton (char *cp, char **endptr)
 	}
 
 	if(mval >= poweroften[7]) {
+		assert(poweroften[7] != 0);
 		/* integer overflow possible for *100 */
 		mantissa = mval / poweroften[7];
 		exponent = 9; /* max */
@@ -808,6 +817,7 @@ precsize_aton (char *cp, char **endptr)
 			if (cmval < poweroften[exponent+1])
 				break;
 
+		assert(poweroften[exponent] != 0);
 		mantissa = cmval / poweroften[exponent];
 	}
 	if (mantissa > 9)
@@ -1252,6 +1262,8 @@ parse_unknown_rdata(uint16_t type, uint16_t *wireformat)
 			zadd_rdata_wireformat(rdatas[i].data);
 		}
 	}
+	region_recycle(parser->region, rdatas,
+		rdata_count*sizeof(rdata_atom_type));
 }
 
 
@@ -1618,7 +1630,9 @@ zonec_read(const char* name, const char* zonefile, zone_type* zone)
 			name, domain_to_string(
 			parser->current_zone->soa_rrset->rrs[0].owner));
 	}
+	region_free_all(parser->rr_region);
 
+	parser_flush();
 	fclose(yyin);
 	if(!zone_is_slave(zone->opts))
 		check_dname(zone);
@@ -1658,6 +1672,9 @@ zonec_desetup_parser(void)
 		 * region_recycle(parser->region, (void*)error_domain, 1); */
 		/* clear memory for exit, but this is not portable to
 		 * other versions of lex. yylex_destroy(); */
+#ifdef MEMCLEAN /* OS collects memory pages */
+		yylex_destroy();
+#endif
 	}
 }
 
@@ -1710,6 +1727,8 @@ zonec_parse_string(region_type* region, domain_table_type* domains,
 	/* remove origin if it was not used during the parse */
 	if(parser->origin != error_domain)
 		domain_table_deldomain(parser->db, parser->origin);
+	region_free_all(parser->rr_region);
 	zonec_desetup_string_parser();
+	parser_flush();
 	return errors;
 }

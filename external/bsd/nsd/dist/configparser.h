@@ -131,7 +131,10 @@ extern int yydebug;
     VAR_MIN_REFRESH_TIME = 341,
     VAR_MAX_RETRY_TIME = 342,
     VAR_MIN_RETRY_TIME = 343,
-    VAR_MULTI_MASTER_CHECK = 344
+    VAR_MULTI_MASTER_CHECK = 344,
+    VAR_MINIMAL_RESPONSES = 345,
+    VAR_REFUSE_ANY = 346,
+    VAR_USE_SYSTEMD = 347
   };
 #endif
 /* Tokens.  */
@@ -222,6 +225,9 @@ extern int yydebug;
 #define VAR_MAX_RETRY_TIME 342
 #define VAR_MIN_RETRY_TIME 343
 #define VAR_MULTI_MASTER_CHECK 344
+#define VAR_MINIMAL_RESPONSES 345
+#define VAR_REFUSE_ANY 346
+#define VAR_USE_SYSTEMD 347
 
 /* Value type.  */
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
@@ -232,7 +238,7 @@ union YYSTYPE
 
 	char*	str;
 
-#line 236 "configparser.h" /* yacc.c:1909  */
+#line 242 "configparser.h" /* yacc.c:1909  */
 };
 
 typedef union YYSTYPE YYSTYPE;
