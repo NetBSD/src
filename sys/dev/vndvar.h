@@ -1,4 +1,4 @@
-/*	$NetBSD: vndvar.h,v 1.35 2015/09/06 06:00:59 dholland Exp $	*/
+/*	$NetBSD: vndvar.h,v 1.35.10.1 2018/10/13 17:21:51 martin Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -111,6 +111,7 @@ struct vnd_softc {
 	int		 sc_flags;	/* flags */
 	uint64_t	 sc_size;	/* size of vnd */
 	struct vnode	*sc_vp;		/* vnode */
+	u_int		 sc_iosize;	/* smallest I/O size for backend */
 	kauth_cred_t	 sc_cred;	/* credentials */
 	int		 sc_maxactive;	/* max # of active requests */
 	struct bufq_state *sc_tab;	/* transfer queue */
