@@ -1,4 +1,4 @@
-/*        $NetBSD: device-mapper.c,v 1.38 2016/07/11 11:31:50 msaitoh Exp $ */
+/*        $NetBSD: device-mapper.c,v 1.38.10.1 2018/10/13 17:09:41 martin Exp $ */
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -506,6 +506,42 @@ disk_ioctl_switch(dev_t dev, u_long cmd, void *data)
 			(void)table_en->target->sync(table_en);
 		}
 		dm_table_release(&dmv->table_head, DM_TABLE_ACTIVE);
+		dm_dev_unbusy(dmv);
+		break;
+	}
+
+	case DIOCGSECTORSIZE:
+	{
+		u_int *valp = data;
+		uint64_t numsec;
+		unsigned int secsize;
+
+		if ((dmv = dm_dev_lookup(NULL, NULL, minor(dev))) == NULL)
+			return ENODEV;
+
+		aprint_debug("DIOCGSECTORSIZE ioctl called\n");
+
+		dm_table_disksize(&dmv->table_head, &numsec, &secsize);
+		*valp = secsize;
+
+		dm_dev_unbusy(dmv);
+		break;
+	}
+
+	case DIOCGMEDIASIZE:
+	{
+		off_t *valp = data;
+		uint64_t numsec;
+		unsigned int secsize;
+
+		if ((dmv = dm_dev_lookup(NULL, NULL, minor(dev))) == NULL)
+			return ENODEV;
+
+		aprint_debug("DIOCGMEDIASIZE ioctl called\n");
+
+		dm_table_disksize(&dmv->table_head, &numsec, &secsize);
+		*valp = numsec;
+
 		dm_dev_unbusy(dmv);
 		break;
 	}
