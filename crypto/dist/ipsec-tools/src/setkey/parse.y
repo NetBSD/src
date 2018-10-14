@@ -1,5 +1,4 @@
-/*	$NetBSD: parse.y,v 1.21 2018/05/28 20:34:45 maxv Exp $	*/
-
+/*	$NetBSD: parse.y,v 1.22 2018/10/14 08:27:39 maxv Exp $	*/
 /*	$KAME: parse.y,v 1.81 2003/07/01 04:01:48 itojun Exp $	*/
 
 /*
@@ -92,7 +91,7 @@ static int p_aiflags = 0, p_aifamily = PF_UNSPEC;
 
 static struct addrinfo *parse_addr(char *, char *);
 static int fix_portstr(int, vchar_t *, vchar_t *, vchar_t *);
-static int setvarbuf(char *, int *, struct sadb_ext *, int, 
+static int setvarbuf(char *, int *, struct sadb_ext *, int,
     const void *, int);
 void parse_init(void);
 void free_buffer(void);
@@ -488,14 +487,14 @@ auth_alg
 			p_key_auth = $2.buf;
 #ifdef SADB_X_AALG_TCP_MD5
 			if (p_alg_auth == SADB_X_AALG_TCP_MD5) {
-				if ((p_key_auth_len < 1) || 
+				if ((p_key_auth_len < 1) ||
 				    (p_key_auth_len > 80))
 					return -1;
-			} else 
+			} else
 #endif
 			{
 				if (ipsec_check_keylen(SADB_EXT_SUPPORTED_AUTH,
-				    p_alg_auth, 
+				    p_alg_auth,
 				    PFKEY_UNUNIT64(p_key_auth_len)) < 0) {
 					yyerror(ipsec_strerror());
 					return -1;
@@ -849,8 +848,8 @@ portstr_notempty
 upper_spec
 	:	DECSTRING { $$ = $1; }
 	|	ANY { $$ = IPSEC_ULPROTO_ANY; }
-	|	PR_TCP { 
-				$$ = IPPROTO_TCP; 
+	|	PR_TCP {
+				$$ = IPPROTO_TCP;
 			}
 	|	STRING
 		{
@@ -1047,13 +1046,13 @@ setkeymsg_spdaddr(unsigned int type, unsigned int upper, vchar_t *policy,
 				m_sec_ctx.sadb_x_sec_len =
 				PFKEY_UNIT64(slen + PFKEY_ALIGN8(sec_ctx.len));
 
-				m_sec_ctx.sadb_x_sec_exttype = 
+				m_sec_ctx.sadb_x_sec_exttype =
 					SADB_X_EXT_SEC_CTX;
 				m_sec_ctx.sadb_x_ctx_len = sec_ctx.len;/*bytes*/
 				m_sec_ctx.sadb_x_ctx_doi = sec_ctx.doi;
 				m_sec_ctx.sadb_x_ctx_alg = sec_ctx.alg;
-				setvarbuf(buf, &l, 
-					  (struct sadb_ext *)&m_sec_ctx, slen, 
+				setvarbuf(buf, &l,
+					  (struct sadb_ext *)&m_sec_ctx, slen,
 					  (caddr_t)sec_ctx.buf, sec_ctx.len);
 			}
 #endif
@@ -1386,7 +1385,7 @@ setkeymsg_add(unsigned int type, unsigned int satype, struct addrinfo *srcs,
 		m_sec_ctx.sadb_x_ctx_doi = sec_ctx.doi;
 		m_sec_ctx.sadb_x_ctx_alg = sec_ctx.alg;
 		setvarbuf(buf, &l, (struct sadb_ext *)&m_sec_ctx, slen,
-			  (caddr_t)sec_ctx.buf, sec_ctx.len); 
+			  (caddr_t)sec_ctx.buf, sec_ctx.len);
 	}
 #endif
 
