@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_boot.c,v 1.22 2018/09/16 11:34:20 skrll Exp $	*/
+/*	$NetBSD: arm32_boot.c,v 1.23 2018/10/14 14:31:05 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2005  Genetec Corporation.  All rights reserved.
@@ -122,7 +122,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: arm32_boot.c,v 1.22 2018/09/16 11:34:20 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: arm32_boot.c,v 1.23 2018/10/14 14:31:05 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_cputypes.h"
@@ -155,7 +155,7 @@ __KERNEL_RCSID(1, "$NetBSD: arm32_boot.c,v 1.22 2018/09/16 11:34:20 skrll Exp $"
 #ifdef VERBOSE_INIT_ARM
 #define VPRINTF(...)	printf(__VA_ARGS__)
 #else
-#define VPRINTF(...)	do { } while (/* CONSTCOND */ 0)
+#define VPRINTF(...)	__nothing
 #endif
 
 #ifdef MULTIPROCESSOR

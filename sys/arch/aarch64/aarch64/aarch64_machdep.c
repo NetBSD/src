@@ -1,4 +1,4 @@
-/* $NetBSD: aarch64_machdep.c,v 1.14 2018/10/13 08:32:36 ryo Exp $ */
+/* $NetBSD: aarch64_machdep.c,v 1.15 2018/10/14 14:31:05 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: aarch64_machdep.c,v 1.14 2018/10/13 08:32:36 ryo Exp $");
+__KERNEL_RCSID(1, "$NetBSD: aarch64_machdep.c,v 1.15 2018/10/14 14:31:05 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_ddb.h"
@@ -69,7 +69,7 @@ __KERNEL_RCSID(1, "$NetBSD: aarch64_machdep.c,v 1.14 2018/10/13 08:32:36 ryo Exp
 #ifdef VERBOSE_INIT_ARM
 #define VPRINTF(...)	printf(__VA_ARGS__)
 #else
-#define VPRINTF(...)	do { } while (/* CONSTCOND */ 0)
+#define VPRINTF(...)	__nothing
 #endif
 
 char cpu_model[32];
