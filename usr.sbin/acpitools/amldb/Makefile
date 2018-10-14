@@ -1,8 +1,8 @@
-# $NetBSD: Makefile,v 1.4 2016/01/23 21:22:50 christos Exp $
+# $NetBSD: Makefile,v 1.5 2018/10/14 13:36:32 jmcneill Exp $
 # Id: Makefile,v 1.5 2000/07/14 18:16:30 iwasaki Exp 
 # $FreeBSD: src/usr.sbin/acpi/amldb/Makefile,v 1.7 2001/10/22 17:25:32 iwasaki Exp $
 
-.if (${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64")
+.if (${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64" || ${MACHINE_ARCH} == "aarch64")
 PROG=	amldb
 SRCS=	amldb.c debug.c region.c
 SRCS+=	aml_parse.c aml_name.c aml_amlmem.c aml_memman.c aml_store.c \
