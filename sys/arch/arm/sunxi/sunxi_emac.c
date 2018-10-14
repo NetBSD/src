@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_emac.c,v 1.17 2018/07/19 19:52:00 jmcneill Exp $ */
+/* $NetBSD: sunxi_emac.c,v 1.18 2018/10/14 14:09:53 martin Exp $ */
 
 /*-
  * Copyright (c) 2016-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
 #include "opt_net_mpsafe.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_emac.c,v 1.17 2018/07/19 19:52:00 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_emac.c,v 1.18 2018/10/14 14:09:53 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -1123,7 +1123,7 @@ sunxi_emac_dump_regs(struct sunxi_emac_softc *sc)
 	u_int n;
 
 	for (n = 0; n < __arraycount(regs); n++)
-		device_printf(dev, "  %-20s %08x\n", regs[n].name,
+		device_printf(sc->dev, "  %-20s %08x\n", regs[n].name,
 		    RD4(sc, regs[n].reg));
 }
 #endif
