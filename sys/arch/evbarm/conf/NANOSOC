@@ -1,5 +1,5 @@
 #
-#	$NetBSD: NANOSOC,v 1.1 2018/09/19 17:31:39 aymeric Exp $
+#	$NetBSD: NANOSOC,v 1.2 2018/10/14 18:56:39 aymeric Exp $
 #
 #	Altera DE0 Nano SoC
 #
@@ -57,6 +57,8 @@ ld*		at sdmmc?
 
 dwctwo* 	at fdt?
 usb*		at dwctwo?
+
+dwcwdt* 	at fdt?
 
 include "dev/usb/usbdevices.config"
 
