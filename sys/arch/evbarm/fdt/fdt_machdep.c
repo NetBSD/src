@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_machdep.c,v 1.42 2018/10/04 07:33:54 ryo Exp $ */
+/* $NetBSD: fdt_machdep.c,v 1.43 2018/10/14 14:31:05 skrll Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.42 2018/10/04 07:33:54 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.43 2018/10/14 14:31:05 skrll Exp $");
 
 #include "opt_machdep.h"
 #include "opt_bootconfig.h"
@@ -165,7 +165,7 @@ earlyconsgetc(dev_t dev)
 #ifdef VERBOSE_INIT_ARM
 #define VPRINTF(...)	printf(__VA_ARGS__)
 #else
-#define VPRINTF(...)	do { } while (/* CONSTCOND */ 0)
+#define VPRINTF(...)	__nothing
 #endif
 
 /*

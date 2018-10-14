@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_kvminit.c,v 1.44 2018/08/03 15:46:41 skrll Exp $	*/
+/*	$NetBSD: arm32_kvminit.c,v 1.45 2018/10/14 14:31:05 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2005  Genetec Corporation.  All rights reserved.
@@ -126,7 +126,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_kvminit.c,v 1.44 2018/08/03 15:46:41 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_kvminit.c,v 1.45 2018/10/14 14:31:05 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -157,7 +157,7 @@ __KERNEL_RCSID(0, "$NetBSD: arm32_kvminit.c,v 1.44 2018/08/03 15:46:41 skrll Exp
 #ifdef VERBOSE_INIT_ARM
 #define VPRINTF(...)	printf(__VA_ARGS__)
 #else
-#define VPRINTF(...)	do { } while (/* CONSTCOND */ 0)
+#define VPRINTF(...)	__nothing
 #endif
 
 struct bootmem_info bootmem_info;
