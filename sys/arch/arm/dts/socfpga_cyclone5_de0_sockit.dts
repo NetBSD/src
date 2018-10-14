@@ -13,5 +13,8 @@
 		usb@ffb40000 {
 			dr_mode = "host";
 		};
+		watchdog@ffd02000 {
+			resets = <&rst L4WD0_RESET>;
+		};
 	};
 };
