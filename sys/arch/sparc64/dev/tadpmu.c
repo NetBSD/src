@@ -1,4 +1,4 @@
-/*/* $NetBSD: tadpmu.c,v 1.3 2018/10/13 20:11:48 macallan Exp $ */
+/*/* $NetBSD: tadpmu.c,v 1.4 2018/10/14 05:08:39 macallan Exp $ */
 
 /*-
  * Copyright (c) 2018 Michael Lorenz <macallan@netbsd.org>
@@ -38,6 +38,8 @@
 #include <sys/proc.h>
 #include <sys/bus.h>
 #include <sys/intr.h>
+#include <sys/kthread.h>
+#include <sys/mutex.h>
 
 #include <dev/sysmon/sysmonvar.h>
 #include <dev/sysmon/sysmon_taskq.h>
@@ -58,8 +60,11 @@ static struct sysmon_envsys *tadpmu_sme;
 static envsys_data_t tadpmu_sensors[5];
 static uint8_t idata = 0xff;
 static uint8_t ivalid = 0;
-static wchan_t tadpmu;
-static struct sysmon_pswitch tadpmu_pbutton;
+static wchan_t tadpmu, tadpmuev;
+static struct sysmon_pswitch tadpmu_pbutton, tadpmu_lidswitch;
+static kmutex_t tadpmu_lock;
+static lwp_t *tadpmu_thread;
+static int tadpmu_dying = 0;
 
 static inline void
 tadpmu_cmd(uint8_t d)
@@ -202,9 +207,11 @@ tadpmu_sensors_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 {
 	int res;
 	if (edata->private > 0) {
+		mutex_enter(&tadpmu_lock);
 		tadpmu_flush();
 		tadpmu_send_cmd(edata->private);
 		res = tadpmu_recv();
+		mutex_exit(&tadpmu_lock);
 		if (edata->units == ENVSYS_STEMP) {
 			edata->value_cur = res * 1000000 + 273150000;
 		} else {
@@ -215,6 +222,30 @@ tadpmu_sensors_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 		edata->state = ENVSYS_SINVALID;
 	}
 }
+
+static void
+tadpmu_events(void *cookie)
+{
+	uint8_t res, ores = 0;
+	while (!tadpmu_dying) {
+		mutex_enter(&tadpmu_lock);
+		tadpmu_flush();
+		tadpmu_send_cmd(CMD_READ_GENSTAT);
+		res = tadpmu_recv();
+		mutex_exit(&tadpmu_lock);
+		res &= GENSTAT_LID_CLOSED;
+		if (res != ores) {
+			ores = res;
+			sysmon_pswitch_event(&tadpmu_lidswitch, 
+				    (res & GENSTAT_LID_CLOSED) ? 
+				        PSWITCH_EVENT_PRESSED :
+				        PSWITCH_EVENT_RELEASED);
+		}
+		tsleep(tadpmuev, 0, "tadpmuev", hz); 		
+	}
+	kthread_exit(0);
+}
+
 
 int
 tadpmu_intr(void *cookie)
@@ -231,6 +262,7 @@ tadpmu_intr(void *cookie)
 				break;
 			case TADPMU_LID:
 				/* read genstat and report lid */
+				wakeup(tadpmuev);
 				break;
 		}
 	}
@@ -276,6 +308,8 @@ tadpmu_init(bus_space_tag_t t, bus_space_handle_t hcmd, bus_space_handle_t hdata
 	ver = tadpmu_recv();
 	printf("status %02x\n", ver);
 
+	mutex_init(&tadpmu_lock, MUTEX_DEFAULT, IPL_NONE);
+
 	tadpmu_sme = sysmon_envsys_create();
 	tadpmu_sme->sme_name = "tadpmu";
 	tadpmu_sme->sme_cookie = NULL;
@@ -309,11 +343,20 @@ tadpmu_init(bus_space_tag_t t, bus_space_handle_t hcmd, bus_space_handle_t hdata
 
 	sysmon_task_queue_init();
 	memset(&tadpmu_pbutton, 0, sizeof(struct sysmon_pswitch));
-	tadpmu_pbutton.smpsw_name = "tadpmu";
+	tadpmu_pbutton.smpsw_name = "power";
 	tadpmu_pbutton.smpsw_type = PSWITCH_TYPE_POWER;
 	if (sysmon_pswitch_register(&tadpmu_pbutton) != 0)
 		aprint_error(
 		    "unable to register power button with sysmon\n");
+
+	tadpmu_lidswitch.smpsw_name = "lid";
+	tadpmu_lidswitch.smpsw_type = PSWITCH_TYPE_LID;
+	if (sysmon_pswitch_register(&tadpmu_lidswitch) != 0)
+		aprint_error(
+		    "unable to register lid switch with sysmon\n");
+
+	kthread_create(PRI_NONE, 0, curcpu(), tadpmu_events, NULL,
+	    &tadpmu_thread, "tadpmu_events"); 
 
 	return 0;
 }
