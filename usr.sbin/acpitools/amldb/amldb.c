@@ -1,4 +1,4 @@
-/*	$NetBSD: amldb.c,v 1.3 2011/08/29 20:38:54 joerg Exp $	*/
+/*	$NetBSD: amldb.c,v 1.4 2018/10/14 12:43:58 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1999 Mitsuru IWASAKI <iwasaki@FreeBSD.org>
@@ -29,7 +29,7 @@
  *	$FreeBSD: src/usr.sbin/acpi/amldb/amldb.c,v 1.3 2001/10/22 17:25:32 iwasaki Exp $
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: amldb.c,v 1.3 2011/08/29 20:38:54 joerg Exp $");
+__RCSID("$NetBSD: amldb.c,v 1.4 2018/10/14 12:43:58 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/mman.h>
@@ -156,8 +156,8 @@ usage(const char *progname)
 int
 main(int argc, char *argv[])
 {
-	char	c, *progname;
-	int	i;
+	char	*progname;
+	int	c, i;
 
 	progname = argv[0];
 	while ((c = getopt(argc, argv, "dsth")) != -1) {
