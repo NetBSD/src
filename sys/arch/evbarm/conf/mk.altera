@@ -1,4 +1,9 @@
-#	$NetBSD: mk.altera,v 1.1 2018/09/19 17:31:39 aymeric Exp $
+#	$NetBSD: mk.altera,v 1.2 2018/10/14 18:58:44 aymeric Exp $
+
+.if !empty(MACHINE_ARCH:M*eb)
+EXTRA_LINKFLAGS+=	--be8
+.endif
+
 CPPFLAGS+=		-mcpu=cortex-a9 -mfpu=neon
 
 SYSTEM_FIRST_OBJ=	altera_start.o
