@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.26 2016/07/21 19:49:59 christos Exp $	*/
+/*	$NetBSD: intr.h,v 1.27 2018/10/14 00:10:11 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -77,6 +77,7 @@ extern u_int intrcnt[];
 /* handle i/o device interrupts */
 void news3400_intr(int, vaddr_t, uint32_t);
 void news5000_intr(int, vaddr_t, uint32_t);
+void news4000_intr(int, vaddr_t, uint32_t);
 extern void (*hardware_intr)(int, vaddr_t, uint32_t);
 
 extern void (*enable_intr)(void);

@@ -1,4 +1,4 @@
-/*	$NetBSD: kb_ap.c,v 1.11 2018/09/30 14:23:24 tsutsui Exp $	*/
+/*	$NetBSD: kb_ap.c,v 1.12 2018/10/14 00:10:11 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kb_ap.c,v 1.11 2018/09/30 14:23:24 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kb_ap.c,v 1.12 2018/10/14 00:10:11 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -38,6 +38,7 @@ __KERNEL_RCSID(0, "$NetBSD: kb_ap.c,v 1.11 2018/09/30 14:23:24 tsutsui Exp $");
 #include <dev/wscons/wsksymdef.h>
 
 #include <machine/adrsmap.h>
+#include <machine/cpu.h>
 #include <newsmips/apbus/apbusvar.h>
 
 struct kbreg {
@@ -128,7 +129,7 @@ kb_ap_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_reg = reg;
 
-	if (*dipsw & 7) {
+	if (systype == NEWS5000 && *dipsw & 7) {
 		aprint_normal(" (console)");
 		cons = 1;
 	}

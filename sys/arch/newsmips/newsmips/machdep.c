@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.119 2016/12/22 14:47:58 cherry Exp $	*/
+/*	$NetBSD: machdep.c,v 1.120 2018/10/14 00:10:11 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.119 2016/12/22 14:47:58 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.120 2018/10/14 00:10:11 tsutsui Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -194,13 +194,14 @@ mach_init(int x_boothowto, int x_bootdev, int x_bootname, int x_maxmem)
 	if (systype == 0) 
 		systype = NEWS3400;	/* XXX compatibility for old boot */
 
-#ifdef news5000
-	if (systype == NEWS5000) {
+#if defined(news5000) || defined(news4000)
+	if (systype == NEWS5000 || systype == NEWS4000) {
 		int i;
 		char *bspec = (char *)x_bootdev;
 
 		if (bi_arg == NULL)
-			panic("news5000 requires BTINFO_BOOTARG to boot");
+			panic("%s requires BTINFO_BOOTARG to boot",
+			    systype == NEWS5000 ? "news5000" : "news4000");
 
 		_sip = (void *)bi_arg->sip;
 		x_maxmem = _sip->apbsi_memsize;
@@ -225,7 +226,7 @@ mach_init(int x_boothowto, int x_bootdev, int x_bootname, int x_maxmem)
  bootspec_end:
 		consinit();
 	}
-#endif
+#endif /* news5000 || news4000 */
 
 	/*
 	 * Save parameters into kernel work area.
@@ -347,6 +348,23 @@ mach_init(int x_boothowto, int x_bootdev, int x_bootname, int x_maxmem)
 		break;
 #endif
 
+#ifdef news4000
+	case NEWS4000:
+		news4000_init();
+		cpu_setmodel("%s", idrom.id_machine);
+		model = cpu_getmodel();
+		if (strcmp(model, "news4000") == 0) {
+			/*
+			 * Set up interrupt handling and I/O addresses.
+			 */
+			hardware_intr = news4000_intr;
+			cpuspeed = 40;  /* ??? XXX */
+		} else {
+			printf("kernel not configured for machine %s\n", model);
+		}
+		break;
+#endif
+
 	default:
 		printf("kernel not configured for systype %d\n", systype);
 		break;
@@ -406,8 +424,8 @@ void
 prom_halt(int howto)
 
 {
-#ifdef news5000
-	if (systype == NEWS5000)
+#if defined(news5000) || defined(news4000)
+	if (systype == NEWS5000 || systype == NEWS4000)
 		apcall_exit(howto);
 #endif
 #ifdef news3400

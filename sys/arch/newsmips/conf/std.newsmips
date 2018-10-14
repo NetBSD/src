@@ -1,4 +1,4 @@
-#	$NetBSD: std.newsmips,v 1.18 2018/09/30 06:14:23 tsutsui Exp $
+#	$NetBSD: std.newsmips,v 1.19 2018/10/14 00:10:11 tsutsui Exp $
 
 machine newsmips mips
 include		"conf/std"	# MI standard options
@@ -8,6 +8,7 @@ options 	EXEC_ELF32	# exec ELF32 binaries
 options 	EXEC_SCRIPT	# exec #! scripts
 
 options 	ENABLE_MIPS3_WIRED_MAP
+options 	ENABLE_MIPS_R4700	# NWS-4000 has NKK R4700
 
 makeoptions	DEFTEXTADDR="0x80001000"
 makeoptions	LINKFORMAT="-N"
