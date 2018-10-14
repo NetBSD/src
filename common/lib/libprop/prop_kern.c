@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_kern.c,v 1.23 2017/01/29 02:29:06 christos Exp $	*/
+/*	$NetBSD: prop_kern.c,v 1.24 2018/10/14 17:37:40 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2009 The NetBSD Foundation, Inc.
@@ -412,10 +412,8 @@ _prop_object_copyin(const struct plistref *pref, const prop_type_t type,
 
 	/*
 	 * Allocate an extra byte so we can guarantee NUL-termination.
-	 *
-	 * Allow malloc to fail in case pmap would be exhausted.
 	 */
-	buf = malloc(pref->pref_len + 1, M_TEMP, M_WAITOK | M_CANFAIL);
+	buf = malloc(pref->pref_len + 1, M_TEMP, M_WAITOK);
 	if (buf == NULL)
 		return (ENOMEM);
 	error = copyin(pref->pref_plist, buf, pref->pref_len);
