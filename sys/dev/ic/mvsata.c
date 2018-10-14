@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsata.c,v 1.41.2.9 2018/10/13 09:31:46 jdolecek Exp $	*/
+/*	$NetBSD: mvsata.c,v 1.41.2.10 2018/10/14 14:50:55 jdolecek Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.41.2.9 2018/10/13 09:31:46 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.41.2.10 2018/10/14 14:50:55 jdolecek Exp $");
 
 #include "opt_mvsata.h"
 
@@ -549,7 +549,7 @@ static void
 mvsata_channel_recover(struct mvsata_port *mvport)
 {
 	struct ata_channel *chp = &mvport->port_ata_channel;
-	int drive, tfd = 1;
+	int drive, tfd = ATACH_ERR_ST(0, WDCS_ERR);
 
 	ata_channel_lock(chp);
 	KASSERT(!ISSET(chp->ch_flags, ATACH_RECOVERING));
@@ -571,16 +571,6 @@ mvsata_channel_recover(struct mvsata_port *mvport)
 	 * as if nothing happened.
 	 */
 
-#if 0
-	XXX recheck - mvsata used to have this to handle the successful
-	recovery via read_log_ext:
-
-			xfer = ata_queue_hwslot_to_xfer(chp, eslot);
-			xfer->c_flags |= C_RECOVERED;
-			xfer->c_bio.error = ERROR;
-			xfer->c_bio.r_error = err;
-			xfer->ops->c_intr(chp, xfer, 1);
-#endif
 	ata_recovery_resume(chp, drive, tfd, AT_POLL);
 
 	/* Drive unblocked, back to normal operation */
@@ -1244,6 +1234,11 @@ do_pio:
 	}
 
 intr:
+	KASSERTMSG(((xfer->c_flags & C_DMA) != 0)
+		== (mvport->port_edmamode_curr != nodma),
+		"DMA mode mismatch: flags %x vs edmamode %d != %d",
+		xfer->c_flags, mvport->port_edmamode_curr, nodma); 
+
 	/* Wait for IRQ (either real or polled) */
 	if ((ata_bio->flags & ATA_POLL) != 0)
 		return ATASTART_POLL;
@@ -1279,20 +1274,35 @@ mvsata_bio_poll(struct ata_channel *chp, struct ata_xfer *xfer)
 }
 
 static int
-mvsata_bio_intr(struct ata_channel *chp, struct ata_xfer *xfer, int irq)
+mvsata_bio_intr(struct ata_channel *chp, struct ata_xfer *xfer, int intr_arg)
 {
 	struct atac_softc *atac = chp->ch_atac;
 	struct wdc_softc *wdc = CHAN_TO_WDC(chp);
 	struct ata_bio *ata_bio = &xfer->c_bio;
 	struct ata_drive_datas *drvp = &chp->ch_drive[xfer->c_drive];
-	int tfd;
+	int irq = ISSET(xfer->c_flags, (C_POLL|C_TIMEOU)) ? 0 : 1;
+	int tfd = 0;
+
+	if (ISSET(xfer->c_flags, C_DMA|C_RECOVERED) && irq) {
+		/* Invoked via mvsata_edma_handle() or recovery */
+		tfd = intr_arg;
+
+		if (tfd > 0 && ata_bio->error == NOERROR) {
+			if (ATACH_ST(tfd) & WDCS_ERR)
+				ata_bio->error = ERROR;
+			if (ATACH_ST(tfd) & WDCS_BSY)
+				ata_bio->error = TIMEOUT;
+			ata_bio->r_error = ATACH_ERR(tfd);
+		}
+	}
 
 	DPRINTF(DEBUG_FUNCS|DEBUG_XFERS, ("%s:%d: %s: drive=%d\n",
 	    device_xname(atac->atac_dev), chp->ch_channel, __func__,
 	    xfer->c_drive));
 
-	if (xfer->c_flags & C_TIMEOU && !irq) {
-		/* Cleanup EDMA if invoked from timeout handler */
+	/* Cleanup EDMA if invoked from wdctimeout()/ata_timeout() */
+	if (ISSET(xfer->c_flags, C_TIMEOU) && ISSET(xfer->c_flags, C_DMA)
+	    && !ISSET(xfer->c_flags, C_POLL)) {
 		mvsata_edma_rqq_remove((struct mvsata_port *)chp, xfer);
 	}
 
@@ -2814,17 +2824,14 @@ mvsata_edma_handle(struct mvsata_port *mvport, struct ata_xfer *xfer1)
 
 		ata_bio = &xfer->c_bio;
 		ata_bio->error = NOERROR;
-		ata_bio->r_error = 0;
-		if (st & WDCS_ERR)
-			ata_bio->error = ERROR;
-		if (st & WDCS_BSY)
-			ata_bio->error = TIMEOUT;
 		if (dmaerr != 0)
 			ata_bio->error = ERR_DMA;
 
 		mvsata_dma_bufunload(mvport, quetag, ata_bio->flags);
 
-		mvsata_bio_intr(chp, xfer, 1);
+		KASSERT(xfer->c_flags & C_DMA);
+		mvsata_bio_intr(chp, xfer, ATACH_ERR_ST(0, st));
+
 		if (xfer1 == NULL)
 			handled++;
 		else if (xfer == xfer1) {

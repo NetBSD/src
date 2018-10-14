@@ -4,8 +4,6 @@ jdolecek-ncqfixes goals:
 - run recovery via atathread, move to new function and share ahci/siisata/mvsata
 - maybe do device error handling in not-interrupt-context (maybe this should be
   done on a mpata branch?)
-- adjust mvsata() intr code to accept tfd (instead of irq 0/1) so that
-  ata_recovery_resume() works properly for it
 
 Bugs
 ----
