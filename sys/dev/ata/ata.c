@@ -1,4 +1,4 @@
-/*	$NetBSD: ata.c,v 1.141.6.16 2018/10/11 20:57:51 jdolecek Exp $	*/
+/*	$NetBSD: ata.c,v 1.141.6.17 2018/10/14 16:13:51 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.141.6.16 2018/10/11 20:57:51 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.141.6.17 2018/10/14 16:13:51 jdolecek Exp $");
 
 #include "opt_ata.h"
 
@@ -593,6 +593,7 @@ atabus_attach(device_t parent, device_t self, void *aux)
 	mutex_exit(&atabus_qlock);
 	config_pending_incr(sc->sc_dev);
 
+	/* XXX MPSAFE - no KTHREAD_MPSAFE, so protected by KERNEL_LOCK() */
 	if ((error = kthread_create(PRI_NONE, 0, NULL, atabus_thread, sc,
 	    &chp->ch_thread, "%s", device_xname(self))) != 0)
 		aprint_error_dev(self,
