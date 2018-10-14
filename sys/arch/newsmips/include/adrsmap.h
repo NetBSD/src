@@ -1,4 +1,4 @@
-/*	$NetBSD: adrsmap.h,v 1.8 2005/12/11 12:18:24 christos Exp $	*/
+/*	$NetBSD: adrsmap.h,v 1.9 2018/10/14 00:10:11 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -213,6 +213,9 @@
 
 #define	ABEINT_BADDR	0xbfdc0038
 
+/*----------------------------------------------------------------------
+ *	news5000
+ *----------------------------------------------------------------------*/
 #define	NEWS5000_DIP_SWITCH	0xbf3d0000
 #define	NEWS5000_IDROM		0xbf3c0000
 
@@ -298,5 +301,55 @@
 #define		NEWS5000_APBUS_MAP_COHERENT	0x40000000
 
 #define	NEWS5000_SCCPORT0A	0xbe950000
+
+/*----------------------------------------------------------------------
+ *	news4000
+ *----------------------------------------------------------------------*/
+#define	NEWS4000_IDROM_STATUS	0xbf880018
+#define	NEWS4000_IDROM_DATA	0xbf88001c
+
+#define	NEWS4000_TIMERCTL	0xbf90000c
+#define	NEWS4000_TIMER		0xbf900014
+
+#define	NEWS4000_NVRAM		0xbfb10000
+#define	NEWS4000_NVRAM_SIZE	0x7f8
+#define	NEWS4000_RTC_PORT	0xbfb17fe0
+
+#define	NEWS4000_INTEN0		0xb6000010
+#define	NEWS4000_INTEN1		0xb6000014
+#define	NEWS4000_INTEN2		0xb6000018
+#define	NEWS4000_INTEN3		0xb600001c
+#define	NEWS4000_INTEN4		0xb6000020
+#define	NEWS4000_INTEN5		0xb6000024
+
+#define	NEWS4000_INTST0		0xb6000030
+#define	NEWS4000_INTST1		0xb6000034
+#define	NEWS4000_INTST2		0xbf900010
+#define	NEWS4000_INTST3		0xb600003c
+#define	NEWS4000_INTST4		0xb6000040
+#define	NEWS4000_INTST5		0xb6000044
+
+/*
+ * level0 intr (INTMASK0/INTSTAT0)
+ */
+#define	NEWS4000_INT0_SONIC	0x0800
+
+/*
+ * level2 intr (INTMASK2/INTSTAT2)
+ */
+#define	NEWS4000_INT2_TIMER	0x01
+
+#define	NEWS4000_WBFLUSH	0xbf880000
+
+#define	NEWS4000_LED		0xbfb30004
+#define		NEWS4000_LED0		0x01	/* POWER LED */
+#define		NEWS4000_LED1		0x02	/* NETWORK LED */
+#define		NEWS4000_LED2		0x04	/* FLOPPY LED */
+#define		NEWS4000_LED3		0x08	/* DISK LED */
+
+#define	NEWS4000_SONIC_MEMORY	0xbf3a0000
+#define	NEWS4000_SONIC_BUFFER	0xbf380000
+
+#define	NEWS4000_SCCPORT0A	0xbfb00008
 
 #endif /* !__MACHINE_ADRSMAP__ */

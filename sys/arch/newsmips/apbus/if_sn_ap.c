@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sn_ap.c,v 1.12 2018/09/30 14:23:24 tsutsui Exp $	*/
+/*	$NetBSD: if_sn_ap.c,v 1.13 2018/10/14 00:10:11 tsutsui Exp $	*/
 
 /*
  * Copyright (C) 1997 Allen Briggs
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sn_ap.c,v 1.12 2018/09/30 14:23:24 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sn_ap.c,v 1.13 2018/10/14 00:10:11 tsutsui Exp $");
 
 #include "opt_inet.h"
 
@@ -52,6 +52,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_sn_ap.c,v 1.12 2018/09/30 14:23:24 tsutsui Exp $"
 #include <newsmips/apbus/apbusvar.h>
 #include <newsmips/apbus/if_snreg.h>
 #include <newsmips/apbus/if_snvar.h>
+
+#include <newsmips/newsmips/machid.h>
 
 #define SONIC_MACROM_OFFSET	0x40
 
@@ -86,18 +88,36 @@ sn_ap_attach(device_t parent, device_t self, void *aux)
 	struct sn_softc *sc = device_private(self);
 	struct apbus_attach_args *apa = aux;
 	uint8_t myaddr[ETHER_ADDR_LEN];
-	u_int intrmask;
+	uint32_t intrmask = 0;
 
 	sc->sc_dev = self;
-	sc->sc_hwbase = (void *)apa->apa_hwbase;
-	sc->sc_regbase = (void *)(apa->apa_hwbase + SONIC_APBUS_REG_OFFSET);
-	sc->space = (void *)(apa->apa_hwbase + SONIC_APBUS_MEM_OFFSET);
+	sc->slotno = apa->apa_slotno;
+	if (systype == NEWS4000 && sc->slotno == 0) {
+		sc->sc_flags |= F_NWS40S0;
+	}
+	if ((sc->sc_flags & F_NWS40S0) != 0) {
+		sc->sc_hwbase = (void *)apa->apa_hwbase;
+		sc->sc_regbase = (void *)apa->apa_hwbase;
+		sc->memory = (void *)NEWS4000_SONIC_MEMORY;
+		sc->buffer = (void *)NEWS4000_SONIC_BUFFER;
+	} else {
+		sc->sc_hwbase = (void *)apa->apa_hwbase;
+		sc->sc_regbase =
+		    (void *)(apa->apa_hwbase + SONIC_APBUS_REG_OFFSET);
+		sc->memory =
+		    (void *)(apa->apa_hwbase + SONIC_APBUS_MEM_OFFSET);
+	}
 
 	aprint_normal(" slot%d addr 0x%lx", apa->apa_slotno, apa->apa_hwbase);
 
-	sc->snr_dcr = DCR_WAIT0 | DCR_DMABLOCK | DCR_RFT16 | DCR_TFT16;
-	sc->snr_dcr2 = 0;
-	sc->snr_dcr |= DCR_EXBUS;
+	if ((sc->sc_flags & F_NWS40S0) != 0) {
+		sc->snr_dcr = DCR_STERM | DCR_TFT28;
+		sc->snr_dcr2 = 0x0100;
+	} else {
+		sc->snr_dcr = DCR_WAIT0 | DCR_DMABLOCK | DCR_RFT16 | DCR_TFT16;
+		sc->snr_dcr2 = 0;
+		sc->snr_dcr |= DCR_EXBUS;
+	}
 	sc->bitmode = 1;
 
 	if (sn_ap_getaddr(sc, myaddr)) {
@@ -111,8 +131,14 @@ sn_ap_attach(device_t parent, device_t self, void *aux)
 	if (snsetup(sc, myaddr))
 		return;
 
-	intrmask = (apa->apa_slotno == 0) ?
-	    NEWS5000_INT0_SONIC : SLOTTOMASK(apa->apa_slotno);
+	if (systype == NEWS5000) {
+		intrmask = (apa->apa_slotno == 0) ?
+		    NEWS5000_INT0_SONIC : NEWS5000_SLOTTOMASK(apa->apa_slotno);
+	}
+	if (systype == NEWS4000) {
+		intrmask = (apa->apa_slotno == 0) ?
+		    NEWS4000_INT0_SONIC : NEWS4000_SLOTTOMASK(apa->apa_slotno);
+	}
 
 	apbus_intr_establish(0, /* interrupt level (0 or 1) */
 	    intrmask,
@@ -123,14 +149,21 @@ sn_ap_attach(device_t parent, device_t self, void *aux)
 int
 sn_ap_getaddr(struct sn_softc *sc, uint8_t *lladdr)
 {
-	uint32_t *p;
-	int i;
 
-	p = (uint32_t *)((uint8_t *)sc->sc_hwbase + SONIC_MACROM_OFFSET);
-	for (i = 0; i < ETHER_ADDR_LEN; i++) {
-		int h = *p++ & 0x0f;
-		int l = *p++ & 0x0f;
-		*lladdr++ = (h << 4) + l;
+	if ((sc->sc_flags & F_NWS40S0) != 0) {
+		extern struct idrom idrom;
+		memcpy(lladdr, idrom.id_macadrs, sizeof(idrom.id_macadrs));
+	} else {
+		uint32_t *p;
+		int i;
+
+		p = (uint32_t *)((uint8_t *)sc->sc_hwbase +
+		    SONIC_MACROM_OFFSET);
+		for (i = 0; i < ETHER_ADDR_LEN; i++) {
+			int h = *p++ & 0x0f;
+			int l = *p++ & 0x0f;
+			*lladdr++ = (h << 4) + l;
+		}
 	}
 
 	return 0;
@@ -142,9 +175,15 @@ sn_ap_getaddr(struct sn_softc *sc, uint8_t *lladdr)
 void
 sn_md_init(struct sn_softc *sc)
 {
-	volatile uint32_t *reg = (uint32_t *)APSONIC_INT_REG(sc->sc_hwbase);
 
-	*reg = APSONIC_INT_MASK;
+	if ((sc->sc_flags & F_NWS40S0) != 0) {
+		*(volatile uint32_t *)0xbf700000 = 1;
+	} else {
+		volatile uint32_t *reg =
+		    (uint32_t *)APSONIC_INT_REG(sc->sc_hwbase);
+
+		*reg = APSONIC_INT_MASK;
+	}
 	wbflush();
 	apbus_wbflush();
 	delay(10000);

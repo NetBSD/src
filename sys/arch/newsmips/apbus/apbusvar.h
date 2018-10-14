@@ -1,4 +1,4 @@
-/*	$NetBSD: apbusvar.h,v 1.10 2018/09/30 06:14:23 tsutsui Exp $	*/
+/*	$NetBSD: apbusvar.h,v 1.11 2018/10/14 00:10:11 tsutsui Exp $	*/
 
 /*-
  * Copyright (C) 1999 SHIMIZU Ryo.  All rights reserved.
@@ -50,4 +50,7 @@ void *apbus_intr_establish(int, int, int, int (*)(void *), void *,
 struct newsmips_bus_dma_tag *apbus_dmatag_init(struct apbus_attach_args *);
 void apbus_wbflush(void);
 
-#define	SLOTTOMASK(slot)	((slot) ? (0x0100 << ((slot) - 1)) : 0)
+#define	NEWS5000_SLOTTOMASK(slot)	((slot) ? (0x0100 << ((slot) - 1)) : 0)
+#define	NEWS4000_SLOTTOMASK(slot)	((slot) ? (0x0001 << ((slot) - 1)) : 0)
+#define	SLOTTOMASK(slot)		(systype == NEWS5000 ?		\
+	    NEWS5000_SLOTTOMASK(slot) : NEWS4000_SLOTTOMASK(slot))
