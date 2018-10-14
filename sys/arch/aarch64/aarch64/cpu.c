@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.11 2018/10/04 07:36:10 ryo Exp $ */
+/* $NetBSD: cpu.c,v 1.12 2018/10/14 14:31:05 skrll Exp $ */
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: cpu.c,v 1.11 2018/10/04 07:36:10 ryo Exp $");
+__KERNEL_RCSID(1, "$NetBSD: cpu.c,v 1.12 2018/10/14 14:31:05 skrll Exp $");
 
 #include "locators.h"
 #include "opt_arm_debug.h"
@@ -53,7 +53,7 @@ __KERNEL_RCSID(1, "$NetBSD: cpu.c,v 1.11 2018/10/04 07:36:10 ryo Exp $");
 #ifdef VERBOSE_INIT_ARM
 #define VPRINTF(...)	printf(__VA_ARGS__)
 #else
-#define VPRINTF(...)	do { } while (/* CONSTCOND */ 0)
+#define VPRINTF(...)	__nothing
 #endif
 
 void cpu_attach(device_t, cpuid_t);

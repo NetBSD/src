@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_machdep.c,v 1.121 2018/10/12 21:44:20 jmcneill Exp $	*/
+/*	$NetBSD: arm32_machdep.c,v 1.122 2018/10/14 14:31:05 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.121 2018/10/12 21:44:20 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.122 2018/10/14 14:31:05 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_fdt.h"
@@ -90,7 +90,7 @@ __KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.121 2018/10/12 21:44:20 jmcneill
 #ifdef VERBOSE_INIT_ARM
 #define VPRINTF(...)	printf(__VA_ARGS__)
 #else
-#define VPRINTF(...)	do { } while (/* CONSTCOND */ 0)
+#define VPRINTF(...)	__nothing
 #endif
 
 void (*cpu_reset_address)(void);	/* Used by locore */
