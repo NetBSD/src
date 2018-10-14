@@ -1,4 +1,4 @@
-/*	$NetBSD: news5000.c,v 1.21 2016/07/21 19:49:59 christos Exp $	*/
+/*	$NetBSD: news5000.c,v 1.22 2018/10/14 00:10:11 tsutsui Exp $	*/
 
 /*-
  * Copyright (C) 1999 SHIMIZU Ryo.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: news5000.c,v 1.21 2016/07/21 19:49:59 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: news5000.c,v 1.22 2018/10/14 00:10:11 tsutsui Exp $");
 
 #define __INTR_PRIVATE
 #include <sys/param.h>
@@ -287,6 +287,8 @@ news5000_init(void)
 	enable_intr = news5000_enable_intr;
 	disable_intr = news5000_disable_intr;
 	enable_timer = news5000_enable_timer;
+
+	news_wbflush = (uint32_t *)NEWS5000_WBFLUSH;
 
 	news5000_readidrom((uint8_t *)&idrom);
 	hostid = idrom.id_serial;
