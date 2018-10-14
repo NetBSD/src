@@ -1,5 +1,4 @@
-/*	$NetBSD: token.l,v 1.21 2018/05/28 19:52:18 maxv Exp $	*/
-
+/*	$NetBSD: token.l,v 1.22 2018/10/14 08:27:39 maxv Exp $	*/
 /*	$KAME: token.l,v 1.44 2003/10/21 07:20:58 itojun Exp $	*/
 
 /*
@@ -170,8 +169,8 @@ ah-old		{ yylval.num = 1; return(PR_AH); }
 esp-old		{ yylval.num = 1; return(PR_ESP); }
 esp-udp		{ yylval.num = 0; return(PR_ESPUDP); }
 ipcomp		{ yylval.num = 0; return(PR_IPCOMP); }
-tcp		{ 
-			yylval.num = 0; return(PR_TCP); 
+tcp		{
+			yylval.num = 0; return(PR_TCP);
 		}
 
 	/* authentication alogorithm */
@@ -188,11 +187,11 @@ tcp		{
 <S_AUTHALG>hmac-sha512 { yylval.num = SADB_X_AALG_SHA2_512; BEGIN INITIAL; return(ALG_AUTH); }
 <S_AUTHALG>hmac-ripemd160 { yylval.num = SADB_X_AALG_RIPEMD160HMAC; BEGIN INITIAL; return(ALG_AUTH); }
 <S_AUTHALG>aes-xcbc-mac { yylval.num = SADB_X_AALG_AES_XCBC_MAC; BEGIN INITIAL; return(ALG_AUTH); }
-<S_AUTHALG>tcp-md5	{ 
+<S_AUTHALG>tcp-md5	{
 #ifdef SADB_X_AALG_TCP_MD5
-				yylval.num = SADB_X_AALG_TCP_MD5; 
-				BEGIN INITIAL; 
-				return(ALG_AUTH); 
+				yylval.num = SADB_X_AALG_TCP_MD5;
+				BEGIN INITIAL;
+				return(ALG_AUTH);
 #endif
 			}
 <S_AUTHALG>null { yylval.num = SADB_X_AALG_NULL; BEGIN INITIAL; return(ALG_AUTH_NOKEY); }
@@ -208,20 +207,20 @@ tcp		{
 <S_ENCALG>des-deriv	{ yylval.num = SADB_EALG_DESCBC; BEGIN INITIAL; return(ALG_ENC_DESDERIV); }
 <S_ENCALG>des-32iv	{ yylval.num = SADB_EALG_DESCBC; BEGIN INITIAL; return(ALG_ENC_DES32IV); }
 <S_ENCALG>twofish-cbc	{ yylval.num = SADB_X_EALG_TWOFISHCBC; BEGIN INITIAL; return(ALG_ENC); }
-<S_ENCALG>aes-cbc	{ 
+<S_ENCALG>aes-cbc	{
 #ifdef SADB_X_EALG_AESCBC
-	yylval.num = SADB_X_EALG_AESCBC; BEGIN INITIAL; return(ALG_ENC); 
+	yylval.num = SADB_X_EALG_AESCBC; BEGIN INITIAL; return(ALG_ENC);
 #endif
 }
-<S_ENCALG>rijndael-cbc	{ 
+<S_ENCALG>rijndael-cbc	{
 #ifdef SADB_X_EALG_AESCBC
-	yylval.num = SADB_X_EALG_AESCBC; BEGIN INITIAL; return(ALG_ENC); 
+	yylval.num = SADB_X_EALG_AESCBC; BEGIN INITIAL; return(ALG_ENC);
 #endif
 }
 <S_ENCALG>aes-ctr	{ yylval.num = SADB_X_EALG_AESCTR; BEGIN INITIAL; return(ALG_ENC); }
-<S_ENCALG>camellia-cbc	{ 
+<S_ENCALG>camellia-cbc	{
 #ifdef SADB_X_EALG_CAMELLIACBC
-	yylval.num = SADB_X_EALG_CAMELLIACBC; BEGIN INITIAL; return(ALG_ENC); 
+	yylval.num = SADB_X_EALG_CAMELLIACBC; BEGIN INITIAL; return(ALG_ENC);
 #endif
 }
 <S_ENCALG>aes-gcm-16	{
@@ -355,7 +354,7 @@ parse(FILE **fp)
 }
 
 int
-parse_string (char *src)
+parse_string(char *src)
 {
 	int             result;
 	YY_BUFFER_STATE buf_state;
