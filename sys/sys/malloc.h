@@ -1,4 +1,4 @@
-/*	$NetBSD: malloc.h,v 1.116 2014/12/27 19:32:57 maxv Exp $	*/
+/*	$NetBSD: malloc.h,v 1.117 2018/10/14 17:37:40 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -42,8 +42,7 @@
 #define	M_WAITOK	0x0000	/* can wait for resources */
 #define	M_NOWAIT	0x0001	/* do not wait for resources */
 #define	M_ZERO		0x0002	/* zero the allocation */
-#define	M_CANFAIL	0x0004	/* can fail if requested memory can't ever
-				 * be allocated */
+
 #include <sys/mallocvar.h>
 #if 0
 /*

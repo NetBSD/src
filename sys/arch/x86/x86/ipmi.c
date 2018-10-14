@@ -1,4 +1,4 @@
-/*	$NetBSD: ipmi.c,v 1.66 2017/06/22 13:32:47 joerg Exp $ */
+/*	$NetBSD: ipmi.c,v 1.67 2018/10/14 17:37:40 jdolecek Exp $ */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipmi.c,v 1.66 2017/06/22 13:32:47 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipmi.c,v 1.67 2018/10/14 17:37:40 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1204,7 +1204,7 @@ get_sdr(struct ipmi_softc *sc, uint16_t recid, uint16_t *nxtrec)
 	/* Allocate space for entire SDR Length of SDR in header does not
 	 * include header length */
 	sdrlen = sizeof(shdr) + shdr.record_length;
-	psdr = malloc(sdrlen, M_DEVBUF, M_WAITOK|M_CANFAIL);
+	psdr = malloc(sdrlen, M_DEVBUF, M_WAITOK);
 	if (psdr == NULL)
 		return -1;
 
@@ -1832,7 +1832,7 @@ add_child_sensors(struct ipmi_softc *sc, uint8_t *psdr, int count,
 	sc->sc_nsensors += count;
 	for (idx = 0; idx < count; idx++) {
 		psensor = malloc(sizeof(struct ipmi_sensor), M_DEVBUF,
-		    M_WAITOK|M_CANFAIL);
+		    M_WAITOK);
 		if (psensor == NULL)
 			break;
 

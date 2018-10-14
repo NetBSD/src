@@ -1,4 +1,4 @@
-/* $NetBSD: udf_allocation.c,v 1.39 2017/01/04 15:53:14 christos Exp $ */
+/* $NetBSD: udf_allocation.c,v 1.40 2018/10/14 17:37:40 jdolecek Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_allocation.c,v 1.39 2017/01/04 15:53:14 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_allocation.c,v 1.40 2018/10/14 17:37:40 jdolecek Exp $");
 #endif /* not lint */
 
 
@@ -1540,8 +1540,7 @@ udf_trunc_metadatapart(struct udf_mount *ump, uint32_t num_lb)
 	*sizepos = udf_rw32(*sizepos) - to_trunc;
 
 	/* realloc bitmap for better memory usage */
-	new_sbd = realloc(sbd, inf_len, M_UDFVOLD,
-		M_CANFAIL | M_WAITOK);
+	new_sbd = realloc(sbd, inf_len, M_UDFVOLD, M_WAITOK);
 	if (new_sbd) {
 		/* update pointers */
 		ump->metadata_unalloc_dscr = new_sbd;

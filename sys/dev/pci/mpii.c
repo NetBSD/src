@@ -1,4 +1,4 @@
-/* $NetBSD: mpii.c,v 1.11 2018/01/15 12:58:06 maya Exp $ */
+/* $NetBSD: mpii.c,v 1.12 2018/10/14 17:37:40 jdolecek Exp $ */
 /*	OpenBSD: mpii.c,v 1.51 2012/04/11 13:29:14 naddy Exp 	*/
 /*
  * Copyright (c) 2010 Mike Belopuhov <mkb@crypt.org.ru>
@@ -20,7 +20,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpii.c,v 1.11 2018/01/15 12:58:06 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpii.c,v 1.12 2018/10/14 17:37:40 jdolecek Exp $");
 
 #include "bio.h"
 
@@ -4905,7 +4905,7 @@ mpii_ioctl_cache(struct scsi_link *link, u_long cmd, struct dk_cache *dc)
 		return (EINVAL);
 
 	pagelen = hdr.page_length * 4;
-	vpg = malloc(pagelen, M_TEMP, M_WAITOK | M_CANFAIL | M_ZERO);
+	vpg = malloc(pagelen, M_TEMP, M_WAITOK | M_ZERO);
 	if (vpg == NULL)
 		return (ENOMEM);
 
@@ -5131,7 +5131,7 @@ mpii_ioctl_vol(struct mpii_softc *sc, struct bioc_vol *bv)
 	}
 
 	pagelen = hdr.page_length * 4;
-	vpg = malloc(pagelen, M_TEMP, M_WAITOK | M_CANFAIL | M_ZERO);
+	vpg = malloc(pagelen, M_TEMP, M_WAITOK | M_ZERO);
 	if (vpg == NULL) {
 		printf("%s: unable to allocate space for raid "
 		    "volume page 0\n", DEVNAME(sc));
@@ -5236,7 +5236,7 @@ mpii_ioctl_disk(struct mpii_softc *sc, struct bioc_disk *bd)
 	}
 
 	pagelen = hdr.page_length * 4;
-	vpg = malloc(pagelen, M_TEMP, M_WAITOK | M_CANFAIL | M_ZERO);
+	vpg = malloc(pagelen, M_TEMP, M_WAITOK | M_ZERO);
 	if (vpg == NULL) {
 		printf("%s: unable to allocate space for raid "
 		    "volume page 0\n", DEVNAME(sc));
@@ -5293,7 +5293,7 @@ mpii_bio_hs(struct mpii_softc *sc, struct bioc_disk *bd, int nvdsk,
 	}
 
 	pagelen = le16toh(ehdr.ext_page_length) * 4;
-	cpg = malloc(pagelen, M_TEMP, M_WAITOK | M_CANFAIL | M_ZERO);
+	cpg = malloc(pagelen, M_TEMP, M_WAITOK | M_ZERO);
 	if (cpg == NULL) {
 		printf("%s: unable to allocate space for raid config page 0\n",
 		    DEVNAME(sc));
@@ -5348,7 +5348,7 @@ mpii_bio_disk(struct mpii_softc *sc, struct bioc_disk *bd, u_int8_t dn)
 	DNPRINTF(MPII_D_IOCTL, "%s: mpii_bio_disk %d\n", DEVNAME(sc),
 	    bd->bd_diskid);
 
-	ppg = malloc(sizeof(*ppg), M_TEMP, M_WAITOK | M_CANFAIL | M_ZERO);
+	ppg = malloc(sizeof(*ppg), M_TEMP, M_WAITOK | M_ZERO);
 	if (ppg == NULL) {
 		printf("%s: unable to allocate space for raid physical disk "
 		    "page 0\n", DEVNAME(sc));
