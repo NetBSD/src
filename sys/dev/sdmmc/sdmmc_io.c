@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmc_io.c,v 1.13 2017/10/23 13:47:17 jmcneill Exp $	*/
+/*	$NetBSD: sdmmc_io.c,v 1.14 2018/10/14 17:37:40 jdolecek Exp $	*/
 /*	$OpenBSD: sdmmc_io.c,v 1.10 2007/09/17 01:33:33 krw Exp $	*/
 
 /*
@@ -20,7 +20,7 @@
 /* Routines for SD I/O cards. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdmmc_io.c,v 1.13 2017/10/23 13:47:17 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdmmc_io.c,v 1.14 2018/10/14 17:37:40 jdolecek Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -636,12 +636,11 @@ sdmmc_intr_establish(device_t dev, int (*fun)(void *), void *arg,
 	if (sc->sc_sct->card_enable_intr == NULL)
 		return NULL;
 
-	ih = malloc(sizeof *ih, M_DEVBUF, M_WAITOK|M_CANFAIL|M_ZERO);
+	ih = malloc(sizeof *ih, M_DEVBUF, M_WAITOK|M_ZERO);
 	if (ih == NULL)
 		return NULL;
 
-	ih->ih_name = malloc(strlen(name) + 1, M_DEVBUF,
-	    M_WAITOK|M_CANFAIL|M_ZERO);
+	ih->ih_name = malloc(strlen(name) + 1, M_DEVBUF, M_WAITOK|M_ZERO);
 	if (ih->ih_name == NULL) {
 		free(ih, M_DEVBUF);
 		return NULL;
