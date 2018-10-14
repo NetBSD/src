@@ -1,4 +1,4 @@
-/*	$NetBSD: zs_ap.c,v 1.28 2018/09/30 14:23:24 tsutsui Exp $	*/
+/*	$NetBSD: zs_ap.c,v 1.29 2018/10/14 00:10:11 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs_ap.c,v 1.28 2018/09/30 14:23:24 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs_ap.c,v 1.29 2018/10/14 00:10:11 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,6 +47,9 @@ __KERNEL_RCSID(0, "$NetBSD: zs_ap.c,v 1.28 2018/09/30 14:23:24 tsutsui Exp $");
 #include <sys/conf.h>
 #include <sys/cpu.h>
 #include <sys/intr.h>
+#ifdef NEWS4000_ZS_AP_POLLING
+#include <sys/callout.h>
+#endif
 
 #include <machine/adrsmap.h>
 #include <machine/z8530var.h>
@@ -65,29 +68,55 @@ __KERNEL_RCSID(0, "$NetBSD: zs_ap.c,v 1.28 2018/09/30 14:23:24 tsutsui Exp $");
 #define NZS 2
 #endif
 
-#define PORTB_XPORT	0x00000000
-#define PORTB_RPORT	0x00010000
-#define PORTA_XPORT	0x00020000
-#define PORTA_RPORT	0x00030000
-#define   DMA_MODE_REG		3
-#define     DMA_ENABLE		0x01	/* DMA enable */
-#define     DMA_DIR_DM		0x00	/* device to memory */
-#define     DMA_DIR_MD		0x02	/* memory to device */
-#define     DMA_EXTRDY		0x08	/* DMA external ready */
-#define PORTB_OFFSET	0x00040000
-#define PORTA_OFFSET	0x00050000
-#define   PORT_CTL		2
-#define     PORTCTL_RI		0x01
-#define     PORTCTL_DSR		0x02
-#define     PORTCTL_DTR		0x04
-#define   PORT_SEL		3
-#define     PORTSEL_LOCALTALK	0x01
-#define     PORTSEL_RS232C	0x02
-#define ESCC_REG	0x00060000
-#define   ESCCREG_INTSTAT	0
-#define     INTSTAT_SCC		0x01
-#define   ESCCREG_INTMASK	1
-#define     INTMASK_SCC		0x01
+#define NEWS5000_PORTB_TXPORT	0x00000000
+#define NEWS5000_PORTB_RXPORT	0x00010000
+#define NEWS5000_PORTA_TXPORT	0x00020000
+#define NEWS5000_PORTA_RXPORT	0x00030000
+#define   NEWS5000_DMA_MODE_REG		3
+#define     NEWS5000_DMA_ENABLE		0x01	/* DMA enable */
+#define     NEWS5000_DMA_DIR_DM		0x00	/* device to memory */
+#define     NEWS5000_DMA_DIR_MD		0x02	/* memory to device */
+#define     NEWS5000_DMA_EXTRDY		0x08	/* DMA external ready */
+#define NEWS5000_PORTB_OFFSET	0x00040000
+#define NEWS5000_PORTA_OFFSET	0x00050000
+#define   NEWS5000_PORT_CTL		2
+#define     NEWS5000_PORTCTL_RI		0x01
+#define     NEWS5000_PORTCTL_DSR	0x02
+#define     NEWS5000_PORTCTL_DTR	0x04
+#define   NEWS5000_PORT_SEL		3
+#define     NEWS5000_PORTSEL_LOCALTALK	0x01
+#define     NEWS5000_PORTSEL_RS232C	0x02
+#define NEWS5000_ESCC_REG	0x00060000
+#define   NEWS5000_ESCCREG_INTSTAT	0
+#define     NEWS5000_INTSTAT_SCC	0x01
+#define   NEWS5000_ESCCREG_INTMASK	1
+#define     NEWS5000_INTMASK_SCC	0x01
+
+#define NEWS4000_PORTB_TXPORT	0x00000000	/* XXX: not confirmed */
+#define NEWS4000_PORTB_RXPORT	0x00010000	/* XXX: not confirmed */
+#define NEWS4000_PORTA_TXPORT	0x00040000	/* XXX: not confirmed */
+#define NEWS4000_PORTA_RXPORT	0x00050000	/* XXX: not confirmed */
+#define   NEWS4000_DMA_MODE_REG		3
+#define     NEWS4000_DMA_ENABLE		0x01	/* DMA enable */
+#define     NEWS4000_DMA_DIR_DM		0x00	/* device to memory */
+#define     NEWS4000_DMA_DIR_MD		0x02	/* memory to device */
+#define     NEWS4000_DMA_EXTRDY		0x08	/* DMA external ready */
+#define NEWS4000_PORTB_CTL	0x00020000	/* XXX: not confirmed */
+#define NEWS4000_PORTA_CTL	0x00060000	/* XXX: not confirmed */
+#define   NEWS4000_PORT_CTL		4
+#define     NEWS4000_PORTCTL_RI		0x01
+#define     NEWS4000_PORTCTL_DSR	0x02    
+#define     NEWS4000_PORTCTL_DTR	0x04
+#define   NEWS4000_PORT_SEL		5
+#define     NEWS4000_PORTSEL_LOCALTALK	0x01
+#define     NEWS4000_PORTSEL_RS232C	0x02
+#define NEWS4000_ESCC_REG	0x00060000	/* XXX:  not confirmed */
+#define   NEWS4000_ESCCREG_INTSTAT	0
+#define     NEWS4000_INTSTAT_SCC	0x01
+#define   NEWS4000_ESCCREG_INTMASK	1
+#define     NEWS4000_INTMASK_SCC	0x01
+#define NEWS4000_PORTB_OFFSET	0x00080000
+#define NEWS4000_PORTA_OFFSET	0x00080008
 
 extern int zs_def_cflag;
 extern void (*zs_delay)(void);
@@ -134,6 +163,10 @@ static uint8_t zs_init_reg[16] = {
 	ZSWR15_BREAK_IE,
 };
 
+#ifdef NEWS4000_ZS_AP_POLLING
+static struct callout zscallout;
+#endif
+
 static struct zschan * zs_get_chan_addr(int, int);
 static void zs_ap_delay(void);
 static int zshard_ap(void *);
@@ -144,17 +177,26 @@ struct zschan *
 zs_get_chan_addr(int zs_unit, int channel)
 {
 	void *addr;
-	struct zschan *zc;
+	struct zschan *zc = NULL;
 
 	if (zs_unit >= NZS)
 		return NULL;
 	addr = zsaddr[zs_unit];
 	if (addr == NULL)
 		return NULL;
-	if (channel == 0) {
-		zc = (void *)((uint8_t *)addr + PORTA_OFFSET);
-	} else {
-		zc = (void *)((uint8_t *)addr + PORTB_OFFSET);
+	if (systype == NEWS5000) {
+		if (channel == 0) {
+			zc = (void *)((uint8_t *)addr + NEWS5000_PORTA_OFFSET);
+		} else {
+			zc = (void *)((uint8_t *)addr + NEWS5000_PORTB_OFFSET);
+		}
+	}
+	if (systype == NEWS4000) {
+		if (channel == 0) {
+			zc = (void *)((uint8_t *)addr + NEWS4000_PORTA_OFFSET);
+		} else {
+			zc = (void *)((uint8_t *)addr + NEWS4000_PORTB_OFFSET);
+		}
 	}
 	return zc;
 }
@@ -185,10 +227,11 @@ zs_ap_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct apbus_attach_args *apa = aux;
 
-	if (strcmp("esccf", apa->apa_name) != 0)
-		return 0;
+	if (strcmp("esccf", apa->apa_name) == 0 ||
+	    strcmp("esccg", apa->apa_name) == 0)
+		return 1;
 
-	return 1;
+	return 0;
 }
 
 /*
@@ -206,13 +249,13 @@ zs_ap_attach(device_t parent, device_t self, void *aux)
 	volatile struct zschan *zc;
 	struct zs_chanstate *cs;
 	int s, zs_unit, channel;
-	volatile u_int *txBfifo = (void *)(apa->apa_hwbase + PORTB_XPORT);
-	volatile u_int *rxBfifo = (void *)(apa->apa_hwbase + PORTB_RPORT);
-	volatile u_int *txAfifo = (void *)(apa->apa_hwbase + PORTA_XPORT);
-	volatile u_int *rxAfifo = (void *)(apa->apa_hwbase + PORTA_RPORT);
-	volatile u_int *portBctl = (void *)(apa->apa_hwbase + PORTB_OFFSET);
-	volatile u_int *portActl = (void *)(apa->apa_hwbase + PORTA_OFFSET);
-	volatile u_int *esccregs = (void *)(apa->apa_hwbase + ESCC_REG);
+	volatile uint32_t *txBfifo;
+	volatile uint32_t *rxBfifo;
+	volatile uint32_t *txAfifo;
+	volatile uint32_t *rxAfifo;
+	volatile uint32_t *portBctl;
+	volatile uint32_t *portActl;
+	volatile uint32_t *esccregs;
 
 	zsc->zsc_dev = self;
 	zs_unit = device_unit(self);
@@ -220,17 +263,69 @@ zs_ap_attach(device_t parent, device_t self, void *aux)
 
 	aprint_normal(" slot%d addr 0x%lx\n", apa->apa_slotno, apa->apa_hwbase);
 
-	txAfifo[DMA_MODE_REG] = rxAfifo[DMA_MODE_REG] = DMA_EXTRDY;
-	txBfifo[DMA_MODE_REG] = rxBfifo[DMA_MODE_REG] = DMA_EXTRDY;
+	/* XXX: appease gcc -Wuninitialized */
+	txBfifo  = (void *)(apa->apa_hwbase);
+	rxBfifo  = (void *)(apa->apa_hwbase);
+	txAfifo  = (void *)(apa->apa_hwbase);
+	rxAfifo  = (void *)(apa->apa_hwbase);
+	portBctl = (void *)(apa->apa_hwbase);
+	portActl = (void *)(apa->apa_hwbase);
+	esccregs = (void *)(apa->apa_hwbase);
 
-	/* assert DTR */			/* XXX */
-	portBctl[PORT_CTL] = portActl[PORT_CTL] = PORTCTL_DTR;
+	if (systype == NEWS5000) {
+		txBfifo  = (void *)(apa->apa_hwbase + NEWS5000_PORTB_TXPORT);
+		rxBfifo  = (void *)(apa->apa_hwbase + NEWS5000_PORTB_RXPORT);
+		txAfifo  = (void *)(apa->apa_hwbase + NEWS5000_PORTA_TXPORT);
+		rxAfifo  = (void *)(apa->apa_hwbase + NEWS5000_PORTA_RXPORT);
+		portBctl = (void *)(apa->apa_hwbase + NEWS5000_PORTB_OFFSET);
+		portActl = (void *)(apa->apa_hwbase + NEWS5000_PORTA_OFFSET);
+		esccregs = (void *)(apa->apa_hwbase + NEWS5000_ESCC_REG);
+	}
+	if (systype == NEWS4000) {
+		txBfifo  = (void *)(apa->apa_hwbase + NEWS4000_PORTB_TXPORT);
+		rxBfifo  = (void *)(apa->apa_hwbase + NEWS4000_PORTB_RXPORT);
+		txAfifo  = (void *)(apa->apa_hwbase + NEWS4000_PORTA_TXPORT);
+		rxAfifo  = (void *)(apa->apa_hwbase + NEWS4000_PORTA_RXPORT);
+		portBctl = (void *)(apa->apa_hwbase + NEWS4000_PORTB_CTL);
+		portActl = (void *)(apa->apa_hwbase + NEWS4000_PORTA_CTL);
+		esccregs = (void *)(apa->apa_hwbase + NEWS4000_ESCC_REG);
+	}
 
-	/* select RS-232C (ch1 only) */
-	portActl[PORT_SEL] = PORTSEL_RS232C;
+	if (systype == NEWS5000) {
+		txAfifo[NEWS5000_DMA_MODE_REG] = NEWS5000_DMA_EXTRDY;
+		rxAfifo[NEWS5000_DMA_MODE_REG] = NEWS5000_DMA_EXTRDY;
+		txBfifo[NEWS5000_DMA_MODE_REG] = NEWS5000_DMA_EXTRDY;
+		rxBfifo[NEWS5000_DMA_MODE_REG] = NEWS5000_DMA_EXTRDY;
 
-	/* enable SCC interrupts */
-	esccregs[ESCCREG_INTMASK] = INTMASK_SCC;
+		/* assert DTR */			/* XXX */
+		portBctl[NEWS5000_PORT_CTL] = NEWS5000_PORTCTL_DTR;
+		portActl[NEWS5000_PORT_CTL] = NEWS5000_PORTCTL_DTR;
+
+		/* select RS-232C (ch1 only) */
+		portActl[NEWS5000_PORT_SEL] = NEWS5000_PORTSEL_RS232C;
+
+		/* enable SCC interrupts */
+		esccregs[NEWS5000_ESCCREG_INTMASK] = NEWS5000_INTMASK_SCC;
+	}
+
+	if (systype == NEWS4000) {
+		txAfifo[NEWS4000_DMA_MODE_REG] = NEWS4000_DMA_EXTRDY;
+		rxAfifo[NEWS4000_DMA_MODE_REG] = NEWS4000_DMA_EXTRDY;
+		txBfifo[NEWS4000_DMA_MODE_REG] = NEWS4000_DMA_EXTRDY;
+		rxBfifo[NEWS4000_DMA_MODE_REG] = NEWS4000_DMA_EXTRDY;
+
+#if 1	/* XXX: zsc on news4000 seems mangled by these ops */
+		/* assert DTR */			/* XXX */
+		portBctl[NEWS4000_PORT_CTL] = NEWS4000_PORTCTL_DTR;
+		portActl[NEWS4000_PORT_CTL] = NEWS4000_PORTCTL_DTR;
+
+		/* select RS-232C (ch1 only) */
+		portActl[NEWS4000_PORT_SEL] = NEWS4000_PORTSEL_RS232C;
+#endif
+
+		/* enable SCC interrupts */
+		esccregs[NEWS4000_ESCCREG_INTMASK] = NEWS4000_INTMASK_SCC;
+	}
 
 	zs_delay = zs_ap_delay;
 
@@ -298,9 +393,26 @@ zs_ap_attach(device_t parent, device_t self, void *aux)
 	 */
 	zsc->zsc_si = softint_establish(SOFTINT_SERIAL,
 	    (void (*)(void *))zsc_intr_soft, zsc);
-	apbus_intr_establish(1, /* interrupt level ( 0 or 1 ) */
-	    NEWS5000_INT1_SCC, 0, /* priority */
-	    zshard_ap, zsc, device_xname(self), apa->apa_ctlnum);
+	if (systype == NEWS5000) {
+		apbus_intr_establish(1, /* interrupt level ( 0 or 1 ) */
+				     NEWS5000_INT1_SCC,
+				     0, /* priority */
+				     zshard_ap, zsc,
+				     device_xname(self), apa->apa_ctlnum);
+	}
+	if (systype == NEWS4000) {
+		apbus_intr_establish(1, /* interrupt level ( 0 or 1 ) */
+				     0x0200,
+				     0, /* priority */
+				     zshard_ap, zsc,
+				     device_xname(self), apa->apa_ctlnum);
+#ifdef NEWS4000_ZS_AP_POLLING
+		/* XXX: no info how to enable zs ap interrupt for now */
+		callout_init(&zscallout, 0);
+		callout_reset(&zscallout, 1,
+		    (void (*)(void *))zshard_ap, (void *)zsc);
+#endif
+	}
 	/* XXX; evcnt_attach() ? */
 
 #if 0
@@ -335,6 +447,11 @@ zshard_ap(void *arg)
 {
 
 	zshard(arg);
+#ifdef NEWS4000_ZS_AP_POLLING
+	if (systype == NEWS4000) {
+		callout_schedule(&zscallout, 1);
+	}
+#endif
 	return 1;
 }
 
@@ -426,13 +543,25 @@ zscninit(struct consdev *cn)
 static int
 zscngetc(dev_t dev)
 {
+	void *sccport0a;
 
-	return zs_getc((void *)NEWS5000_SCCPORT0A);
+	if (systype == NEWS5000)
+		sccport0a = (void *)NEWS5000_SCCPORT0A;
+	if (systype == NEWS4000)
+		sccport0a = (void *)NEWS4000_SCCPORT0A;
+ 
+	return zs_getc(sccport0a);
 }
 
 static void
 zscnputc(dev_t dev, int c)
 {
+	void *sccport0a;
 
-	zs_putc((void *)NEWS5000_SCCPORT0A, c);
+	if (systype == NEWS5000)
+		sccport0a = (void *)NEWS5000_SCCPORT0A;
+	if (systype == NEWS4000)
+		sccport0a = (void *)NEWS4000_SCCPORT0A;
+
+	zs_putc(sccport0a, c);
 }
