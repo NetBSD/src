@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.368 2018/09/03 16:29:23 riastradh Exp $	*/
+/*	$NetBSD: pmap.c,v 1.369 2018/10/14 14:31:05 skrll Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -217,7 +217,7 @@
 
 #include <arm/locore.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.368 2018/09/03 16:29:23 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.369 2018/10/14 14:31:05 skrll Exp $");
 
 //#define PMAP_DEBUG
 #ifdef PMAP_DEBUG
@@ -262,7 +262,7 @@ int pmapdebug = 0;
 #ifdef VERBOSE_INIT_ARM
 #define VPRINTF(...)	printf(__VA_ARGS__)
 #else
-#define VPRINTF(...)	do { } while (/* CONSTCOND */ 0)
+#define VPRINTF(...)	__nothing
 #endif
 
 /*
