@@ -35,7 +35,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/gpt.c,v 1.16 2006/07/07 02:44:23 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: gpt.c,v 1.70.4.2 2018/05/04 16:24:46 martin Exp $");
+__RCSID("$NetBSD: gpt.c,v 1.70.4.3 2018/10/15 08:04:04 sborrill Exp $");
 #endif
 
 #include <sys/param.h>
@@ -1043,7 +1043,7 @@ gpt_change_ent(gpt_t gpt, const struct gpt_find *find,
 			utf16_to_utf8(ent->ent_name,
 			    __arraycount(ent->ent_name),
 			    utfbuf, __arraycount(utfbuf));
-			if (strcmp((char *)find->label, (char *)utfbuf) == 0)
+			if (strcmp((char *)find->label, (char *)utfbuf) != 0)
 				continue;
 		}
 
