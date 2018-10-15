@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.275.2.4 2018/09/06 06:56:42 pgoyette Exp $	*/
+/*	$NetBSD: tty.c,v 1.275.2.5 2018/10/15 09:51:33 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.275.2.4 2018/09/06 06:56:42 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.275.2.5 2018/10/15 09:51:33 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -98,6 +98,7 @@ __KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.275.2.4 2018/09/06 06:56:42 pgoyette Exp $
 #include <sys/ioctl_compat.h>
 #include <sys/module.h>
 #include <sys/bitops.h>
+#include <sys/compat_stub.h>
 
 #ifdef COMPAT_60
 #include <compat/sys/ttycom.h>
@@ -209,9 +210,6 @@ struct ttylist_head ttylist = TAILQ_HEAD_INITIALIZER(ttylist);
 int tty_count;
 kmutex_t tty_lock;
 krwlock_t ttcompat_lock;
-int (*vec_compat_ttioctl_60)(dev_t, u_long, void *, int, struct lwp *) = NULL;
-int (*vec_compat_ptmioctl_60)(dev_t, u_long, void *, int, struct lwp *) =
-    stub_compat_ptmioctl_60;
 
 struct ptm_pty *ptm = NULL;
 
@@ -921,6 +919,15 @@ ttyoutput(int c, struct tty *tp)
 }
 
 /*
+ * MODULE_HOOK glue for compat_60_ttioctl
+ */
+MODULE_CALL_HOOK_DECL(compat_60_ioctl_hook, f1, 
+    (dev_t, u_long, void *, int, struct lwp *));
+MODULE_CALL_HOOK(compat_60_ioctl_hook, f1, 
+    (dev_t dev, u_long cmd, void *data, int flag, struct lwp *l),
+    (dev, cmd, data, flag, l), enosys());
+    
+/*
  * Ioctls for all tty devices.  Called after line-discipline specific ioctl
  * has been called to do discipline-specific functions and/or reject any
  * of these ioctl commands.
@@ -1412,19 +1419,24 @@ ttioctl(struct tty *tp, u_long cmd, void *data, int flag, struct lwp *l)
 		default:
 			break;
 		}
-		/* We may have to load the compat module for this. */
+		/* We may have to load the compat_60 module for this. */
 		for (;;) {
 			rw_enter(&ttcompat_lock, RW_READER);
-			if (vec_compat_ttioctl_60 != NULL) {
+			error = compat_60_ioctl_hook_f1_call(tp->t_dev, cmd,
+			    data, flag, l);
+			if (error != ENOSYS) {
 				break;
 			}
 			rw_exit(&ttcompat_lock);
-			(void)module_autoload("compat", MODULE_CLASS_EXEC);
-			if (vec_compat_ttioctl_60 == NULL) {
+			(void)module_autoload("compat_60", MODULE_CLASS_EXEC);
+			rw_enter(&ttcompat_lock, RW_READER);
+			error = compat_60_ioctl_hook_f1_call(tp->t_dev, cmd,
+			    data, flag, l);
+			if (error == ENOSYS) {
+				rw_exit(&ttcompat_lock);
 				return EPASSTHROUGH;
 			}
 		}
-		error = (*vec_compat_ttioctl_60)(tp->t_dev, cmd, data, flag, l);
 		rw_exit(&ttcompat_lock);
 		return error;
 	}
@@ -3067,12 +3079,4 @@ tty_try_xonxoff(struct tty *tp, unsigned char c)
 	}
     }
     return EAGAIN;
-}
-
-int
-stub_compat_ptmioctl_60(dev_t dev, u_long cmd, void *data, int flag,
-    struct lwp *l)
-{
-
-	return EPASSTHROUGH;
 }

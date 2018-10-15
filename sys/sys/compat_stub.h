@@ -1,4 +1,4 @@
-/* $NetBSD: compat_stub.h,v 1.1.2.40 2018/10/15 04:33:34 pgoyette Exp $	*/
+/* $NetBSD: compat_stub.h,v 1.1.2.41 2018/10/15 09:51:34 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -238,5 +238,11 @@ MODULE_HOOK(get_emul_sunos_hook, (const struct emul **));
  */
 MODULE_HOOK(rnd_ioctl_50_hook, (struct file *, u_long, void *));
 MODULE_HOOK(rnd_ioctl_50_32_hook, (struct file *, u_long, void *));
+
+/*
+ * Hooks for compat_60 ttioctl and ptmioctl
+ */
+MODULE_HOOK2(compat_60_ioctl_hook, (dev_t, u_long, void *, int, struct lwp *),
+    (dev_t, u_long, void *, int, struct lwp *));
 
 #endif	/* _SYS_COMPAT_STUB_H */
