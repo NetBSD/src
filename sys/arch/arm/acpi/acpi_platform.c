@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_platform.c,v 1.2 2018/10/13 00:08:29 jmcneill Exp $ */
+/* $NetBSD: acpi_platform.c,v 1.3 2018/10/15 20:09:06 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_platform.c,v 1.2 2018/10/13 00:08:29 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_platform.c,v 1.3 2018/10/15 20:09:06 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -63,7 +63,16 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_platform.c,v 1.2 2018/10/13 00:08:29 jmcneill E
 #include <dev/acpi/acpivar.h>
 #include <arch/arm/acpi/acpi_table.h>
 
-#define	SPCR_INTERFACE_TYPE_PL011	0x0003
+#define	SPCR_INTERFACE_TYPE_PL011		0x0003
+#define	SPCR_INTERFACE_TYPE_SBSA_32BIT		0x000d
+#define	SPCR_INTERFACE_TYPE_SBSA_GENERIC	0x000e
+#define	SPCR_INTERFACE_TYPE_BCM2835		0x0010
+
+#define	SPCR_BAUD_UNKNOWN			0
+#define	SPCR_BAUD_9600				3
+#define	SPCR_BAUD_19200				4
+#define	SPCR_BAUD_57600				6
+#define	SPCR_BAUD_115200			7
 
 extern struct bus_space arm_generic_bs_tag;
 
@@ -90,22 +99,49 @@ acpi_platform_startup(void)
 	ACPI_TABLE_SPCR *spcr;
 	ACPI_TABLE_FADT *fadt;
 	ACPI_TABLE_MADT *madt;
+	int baud_rate;
 
 	/*
 	 * Setup serial console device
 	 */
 	if (ACPI_SUCCESS(acpi_table_find(ACPI_SIG_SPCR, (void **)&spcr))) {
-		if (spcr->InterfaceType == SPCR_INTERFACE_TYPE_PL011 &&
-		    spcr->SerialPort.SpaceId == ACPI_ADR_SPACE_SYSTEM_MEMORY &&
+		if (spcr->SerialPort.SpaceId == ACPI_ADR_SPACE_SYSTEM_MEMORY &&
 		    spcr->SerialPort.Address != 0) {
+			switch (spcr->InterfaceType) {
+			case SPCR_INTERFACE_TYPE_PL011:
+			case SPCR_INTERFACE_TYPE_SBSA_32BIT:
+			case SPCR_INTERFACE_TYPE_SBSA_GENERIC:
+			case SPCR_INTERFACE_TYPE_BCM2835:
+				plcom_console.pi_type = PLCOM_TYPE_PL011;
+				plcom_console.pi_iot = &arm_generic_bs_tag;
+				plcom_console.pi_iobase = spcr->SerialPort.Address;
+				plcom_console.pi_size = PL011COM_UART_SIZE;
+				if (spcr->InterfaceType == SPCR_INTERFACE_TYPE_SBSA_32BIT) {
+					plcom_console.pi_flags = PLC_FLAG_32BIT_ACCESS;
+				} else {
+					plcom_console.pi_flags = ACPI_ACCESS_BIT_WIDTH(spcr->SerialPort.AccessWidth) == 8 ?
+					    0 : PLC_FLAG_32BIT_ACCESS;
+				}
+				switch (spcr->BaudRate) {
+				case SPCR_BAUD_9600:
+					baud_rate = 9600;
+					break;
+				case SPCR_BAUD_19200:
+					baud_rate = 19200;
+					break;
+				case SPCR_BAUD_57600:
+					baud_rate = 57600;
+					break;
+				case SPCR_BAUD_115200:
+				case SPCR_BAUD_UNKNOWN:
+				default:
+					baud_rate = 115200;
+					break;
+				}
 
-			plcom_console.pi_type = PLCOM_TYPE_PL011;
-			plcom_console.pi_flags = PLC_FLAG_32BIT_ACCESS;
-			plcom_console.pi_iot = &arm_generic_bs_tag;
-			plcom_console.pi_iobase = spcr->SerialPort.Address;
-			plcom_console.pi_size = PL011COM_UART_SIZE;
-
-			plcomcnattach(&plcom_console, 115200 /* XXX */, 0, TTYDEF_CFLAG, -1);
+				plcomcnattach(&plcom_console, baud_rate, 0, TTYDEF_CFLAG, -1);
+				break;
+			}
 		}
 		acpi_table_unmap((ACPI_TABLE_HEADER *)spcr);
 	}
