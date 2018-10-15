@@ -1,4 +1,4 @@
-/*	$NetBSD: t_memmem.c,v 1.3 2017/01/11 18:07:37 christos Exp $ */
+/*	$NetBSD: t_memmem.c,v 1.4 2018/10/15 17:55:28 christos Exp $ */
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -34,6 +34,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/mman.h>
 
 char p0[] = "";
 int lp0 = 0;
@@ -94,10 +95,40 @@ ATF_TC_BODY(memmem_basic, tc)
 	expect(memmem(b2, lb2, p8, lp8) == NULL);
 }
 
+ATF_TC(memmem_oob);
+ATF_TC_HEAD(memmem_oob, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Test memmem out of bounds read");
+}
+
+ATF_TC_BODY(memmem_oob, tc)
+{
+	static const char str[] = "abcde";
+	size_t pg = getpagesize();
+	char *src = mmap(NULL, pg, PROT_READ|PROT_WRITE,
+	    MAP_ANON|MAP_PRIVATE, -1, (off_t)0);
+	ATF_CHECK(src != MAP_FAILED); 
+	char *guard = mmap(src + pg, pg,
+	    PROT_NONE, MAP_ANON|MAP_PRIVATE|MAP_FIXED, -1, (off_t)0);
+	for (size_t i = 2; i < 5; i++) {
+		char *search = src + pg - i;
+		char match[sizeof(str)];
+		search[-1] = str[0];
+		search[0] = str[0];
+		search[1] = str[0];
+		memcpy(match, str, i);
+		ATF_CHECK(memmem(search, i, match, i) != search);
+	}
+	munmap(guard, pg);
+	munmap(src, pg);
+}
+
+
 ATF_TP_ADD_TCS(tp)
 {
 
 	ATF_TP_ADD_TC(tp, memmem_basic);
+	ATF_TP_ADD_TC(tp, memmem_oob);
 
 	return atf_no_error();
 }
