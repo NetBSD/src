@@ -50,7 +50,7 @@ extern "C" {
 #endif
 #if !defined(_LP64) || defined(__sparc64__)
 # ifndef OPENSSL_NO_EC_NISTP_64_GCC_128
-  define OPENSSL_NO_EC_NISTP_64_GCC_128
+#  define OPENSSL_NO_EC_NISTP_64_GCC_128
 # endif
 #endif
 #ifndef OPENSSL_NO_EGD
