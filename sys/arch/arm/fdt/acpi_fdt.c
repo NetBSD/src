@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_fdt.c,v 1.2 2018/10/13 00:15:10 jmcneill Exp $ */
+/* $NetBSD: acpi_fdt.c,v 1.3 2018/10/15 11:35:03 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_fdt.c,v 1.2 2018/10/13 00:15:10 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_fdt.c,v 1.3 2018/10/15 11:35:03 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -45,6 +45,8 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_fdt.c,v 1.2 2018/10/13 00:15:10 jmcneill Exp $"
 #include <dev/pci/pcivar.h>
 
 #include <arm/arm/psci.h>
+
+#include <arm/acpi/acpi_pci_machdep.h>
 
 static int	acpi_fdt_match(device_t, cfdata_t, void *);
 static void	acpi_fdt_attach(device_t, device_t, void *);
@@ -87,9 +89,9 @@ acpi_fdt_attach(device_t parent, device_t self, void *aux)
 
 	aa.aa_iot = 0;
 	aa.aa_memt = faa->faa_bst;
-	aa.aa_pc = NULL;
+	aa.aa_pc = &arm_acpi_pci_chipset;
 	aa.aa_pciflags =
-	    PCI_FLAGS_IO_OKAY | PCI_FLAGS_MEM_OKAY |
+	    /*PCI_FLAGS_IO_OKAY |*/ PCI_FLAGS_MEM_OKAY |
 	    PCI_FLAGS_MRL_OKAY | PCI_FLAGS_MRM_OKAY | 
 	    PCI_FLAGS_MWI_OKAY;
 	aa.aa_ic = 0;
