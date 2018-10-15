@@ -1,4 +1,4 @@
-#	$NetBSD: std.kobo,v 1.3 2018/10/07 07:48:44 skrll Exp $
+#	$NetBSD: std.kobo,v 1.4 2018/10/15 16:54:54 skrll Exp $
 #
 # standard NetBSD/evbarm options for Kobo
 
@@ -18,7 +18,6 @@ options 	ARM_HAS_VBAR
 options 	TPIDRPRW_IS_CURCPU
 options 	CORTEX_PMC
 options 	CORTEX_PMC_CCNT_HZ=800000000
-options 	KERNEL_BASE_EXT=0x80000000
 options 	EVBARM_BOARDTYPE="kobo"
 options 	FPU_VFP
 
