@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.base,v 1.160 2017/05/27 21:02:55 bouyer Exp $
+#	$NetBSD: NetBSD.dist.base,v 1.160.2.1 2018/10/15 03:12:41 snj Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -1299,6 +1299,8 @@
 ./var/chroot/unbound		mode=0755 uname=_unbound gname=_unbound
 ./var/chroot/unbound/etc	mode=0755 uname=_unbound gname=_unbound
 ./var/chroot/unbound/etc/unbound	mode=0755 uname=_unbound gname=_unbound
+./var/chroot/unbound/var
+./var/chroot/unbound/var/run	mode=0775 gname=_unbound
 ./var/crash			mode=0770
 ./var/cron
 ./var/cron/tabs			mode=0700
