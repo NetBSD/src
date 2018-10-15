@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.78 2018/06/27 11:12:14 ryo Exp $
+#	$NetBSD: genassym.cf,v 1.79 2018/10/15 05:44:09 skrll Exp $
 
 # Copyright (c) 1982, 1990 The Regents of the University of California.
 # All rights reserved.
@@ -93,8 +93,6 @@ endif
 define	KERNEL_BASE		KERNEL_BASE
 define	VM_MIN_ADDRESS		VM_MIN_ADDRESS
 define	VM_MAXUSER_ADDRESS	VM_MAXUSER_ADDRESS
-
-define	DCACHE_LINE_SIZE	offsetof(struct arm_cache_info, dcache_line_size)
 
 define	PV_PA			offsetof(pv_addr_t, pv_pa)
 define	PMAP_DOMAIN_KERNEL	PMAP_DOMAIN_KERNEL
@@ -255,4 +253,5 @@ define	IP_SRC			offsetof(struct ip, ip_src)
 define	IP_DST			offsetof(struct ip, ip_dst)
 
 # Cache information
+define	DCACHE_LINE_SIZE	offsetof(struct arm_cache_info, dcache_line_size)
 define	DCACHE_SIZE		offsetof(struct arm_cache_info, dcache_size)
