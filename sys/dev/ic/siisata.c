@@ -1,4 +1,4 @@
-/* $NetBSD: siisata.c,v 1.35.6.9 2018/10/11 20:57:51 jdolecek Exp $ */
+/* $NetBSD: siisata.c,v 1.35.6.10 2018/10/15 21:18:53 jdolecek Exp $ */
 
 /* from ahcisata_core.c */
 
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siisata.c,v 1.35.6.9 2018/10/11 20:57:51 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siisata.c,v 1.35.6.10 2018/10/15 21:18:53 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -167,7 +167,7 @@ static void siisata_device_reset(struct ata_channel *);
 static void siisata_activate_prb(struct siisata_channel *, int);
 static void siisata_deactivate_prb(struct siisata_channel *, int);
 static int siisata_dma_setup(struct ata_channel *, int, void *, size_t, int);
-void siisata_channel_recover(struct ata_channel *, uint32_t);
+static void siisata_channel_recover(struct ata_channel *, int, uint32_t);
 
 #if NATAPIBUS > 0
 void siisata_atapibus_attach(struct atabus_softc *);
@@ -192,7 +192,8 @@ const struct ata_bustype siisata_ata_bustype = {
 	ata_get_params,
 	siisata_ata_addref,
 	siisata_ata_delref,
-	siisata_killpending
+	siisata_killpending,
+	siisata_channel_recover,
 };
 
 #if NATAPIBUS > 0
@@ -586,24 +587,23 @@ process:
 	}
 
 	if (__predict_false(recover)) {
-		ata_channel_thaw(chp);
-		siisata_channel_recover(chp, tfd);
+		ata_channel_lock(chp);
+		ata_channel_thaw_locked(chp);
+		ata_thread_run(chp, 0, ATACH_TH_RECOVERY, tfd);
+		ata_channel_unlock(chp);
 	}
 }
 
 /* Recover channel after transfer aborted */
 void
-siisata_channel_recover(struct ata_channel *chp, uint32_t tfd)
+siisata_channel_recover(struct ata_channel *chp, int flags, uint32_t tfd)
 {
 	struct siisata_channel *schp = (struct siisata_channel *)chp;
 	struct siisata_softc *sc =
 	    (struct siisata_softc *)schp->ata_channel.ch_atac;
 	int drive;
 
-	ata_channel_lock(chp);
-	KASSERT(!ISSET(chp->ch_flags, ATACH_RECOVERING));
-	SET(chp->ch_flags, ATACH_RECOVERING);
-	ata_channel_unlock(chp);
+	ata_channel_lock_owned(chp);
 
 	if (chp->ch_ndrives > PMP_PORT_CTL) {
 		/* Get PM port number for the device in error */
@@ -620,24 +620,18 @@ siisata_channel_recover(struct ata_channel *chp, uint32_t tfd)
 	 * was not done.
 	 */
 	if ((ATACH_ST(tfd) & (WDCS_BSY|WDCS_DRQ)) != 0) {
-		ata_channel_lock(chp);
 		siisata_device_reset(chp);
-		ata_channel_unlock(chp);
 		goto out;
 	}
 
 	KASSERT(drive >= 0);
 	siisata_reinit_port(chp, drive);
 
-	ata_recovery_resume(chp, drive, tfd, AT_POLL);
+	ata_recovery_resume(chp, drive, tfd, flags);
 
 out:
 	/* Drive unblocked, back to normal operation */
-	ata_channel_lock(chp);
-	CLR(chp->ch_flags, ATACH_RECOVERING);
-	ata_channel_unlock(chp);
-
-	atastart(chp);
+	return;
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: ata.c,v 1.141.6.17 2018/10/14 16:13:51 jdolecek Exp $	*/
+/*	$NetBSD: ata.c,v 1.141.6.18 2018/10/15 21:18:53 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.141.6.17 2018/10/14 16:13:51 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.141.6.18 2018/10/15 21:18:53 jdolecek Exp $");
 
 #include "opt_ata.h"
 
@@ -129,7 +129,6 @@ static bool atabus_suspend(device_t, const pmf_qual_t *);
 static void atabusconfig_thread(void *);
 
 static void ata_channel_idle(struct ata_channel *);
-static void ata_channel_thaw_locked(struct ata_channel *);
 static void ata_activate_xfer_locked(struct ata_channel *, struct ata_xfer *);
 static void ata_channel_freeze_locked(struct ata_channel *);
 static void ata_thread_wake_locked(struct ata_channel *);
@@ -463,7 +462,7 @@ atabus_thread(void *arg)
 	ata_channel_lock(chp);
 	for (;;) {
 		if ((chp->ch_flags & (ATACH_TH_RESET | ATACH_TH_DRIVE_RESET
-		    | ATACH_SHUTDOWN)) == 0 &&
+		    | ATACH_TH_RECOVERY | ATACH_SHUTDOWN)) == 0 &&
 		    (chq->queue_active == 0 || chq->queue_freeze == 0)) {
 			chp->ch_flags &= ~ATACH_TH_RUN;
 			cv_wait(&chp->ch_thr_idle, &chp->ch_lock);
@@ -483,6 +482,7 @@ atabus_thread(void *arg)
 			ata_thread_run(chp, AT_WAIT,
 			    ATACH_TH_RESET, ATACH_NODRIVE);
 		} else if (chp->ch_flags & ATACH_TH_DRIVE_RESET) {
+			/* this will unfreeze the channel */
 			for (i = 0; i < chp->ch_ndrives; i++) {
 				struct ata_drive_datas *drvp;
 
@@ -494,6 +494,16 @@ atabus_thread(void *arg)
 				}
 			}
 			chp->ch_flags &= ~ATACH_TH_DRIVE_RESET;
+		} else if (chp->ch_flags & ATACH_TH_RECOVERY) {
+			/*
+			 * This will unfreeze the channel; drops locks during
+			 * run, so must wrap in splbio()/splx() to avoid
+			 * spurious interrupts. XXX MPSAFE
+			 */
+			int s = splbio();
+			ata_thread_run(chp, AT_WAIT, ATACH_TH_RECOVERY,
+			    chp->recovery_tfd);
+			splx(s);
 		} else if (chq->queue_active > 0 && chq->queue_freeze == 1) {
 			/*
 			 * Caller has bumped queue_freeze, decrease it. This
@@ -522,10 +532,12 @@ atabus_thread(void *arg)
 		} else if (chq->queue_freeze > 1)
 			panic("%s: queue_freeze", __func__);
 
-		/* Try to run down the queue once after each event is handled */
-		ata_channel_unlock(chp);
-		atastart(chp);
-		ata_channel_lock(chp);
+		/* Try to run down the queue once channel is unfrozen */
+		if (chq->queue_freeze == 0) {
+			ata_channel_unlock(chp);
+			atastart(chp);
+			ata_channel_lock(chp);
+		}
 	}
 	chp->ch_thread = NULL;
 	cv_signal(&chp->ch_thr_idle);
@@ -1499,7 +1511,7 @@ ata_channel_freeze(struct ata_channel *chp)
 	ata_channel_unlock(chp);
 }
 
-static void
+void
 ata_channel_thaw_locked(struct ata_channel *chp)
 {
 	KASSERT(mutex_owned(&chp->ch_lock));
@@ -1511,21 +1523,13 @@ ata_channel_thaw_locked(struct ata_channel *chp)
 	    chp->ch_queue->queue_freeze), DEBUG_FUNCS | DEBUG_XFERS);
 }
 
-void
-ata_channel_thaw(struct ata_channel *chp)
-{
-	ata_channel_lock(chp);
-	ata_channel_thaw_locked(chp);
-	ata_channel_unlock(chp);
-}
-
 /*
  * ata_thread_run:
  *
- *	Reset and ATA channel. Channel lock must be held.
+ *	Reset and ATA channel. Channel lock must be held. arg is type-specific.
  */
 void
-ata_thread_run(struct ata_channel *chp, int flags, int type, int drive)
+ata_thread_run(struct ata_channel *chp, int flags, int type, int arg)
 {
 	struct atac_softc *atac = chp->ch_atac;
 	bool threset = false;
@@ -1548,6 +1552,9 @@ ata_thread_run(struct ata_channel *chp, int flags, int type, int drive)
 			}
 			break;
 		case ATACH_TH_DRIVE_RESET:
+		    {
+			int drive = arg;
+
 			KASSERT(drive <= chp->ch_ndrives);
 			drvp = &chp->ch_drive[drive];
 
@@ -1557,6 +1564,15 @@ ata_thread_run(struct ata_channel *chp, int flags, int type, int drive)
 			}
 			drvp->drive_flags |= ATA_DRIVE_TH_RESET;
 			break;
+		    }
+		case ATACH_TH_RECOVERY:
+		    {
+			uint32_t tfd = (uint32_t)arg;
+
+			KASSERT((chp->ch_flags & ATACH_RECOVERING) == 0);
+			chp->recovery_tfd = tfd;
+			break;
+		    }
 		default:
 			panic("%s: unknown type: %x", __func__, type);
 			/* NOTREACHED */
@@ -1591,16 +1607,33 @@ ata_thread_run(struct ata_channel *chp, int flags, int type, int drive)
 		(*atac->atac_bustype_ata->ata_reset_channel)(chp, flags);
 
 		KASSERT(chp->ch_ndrives == 0 || chp->ch_drive != NULL);
-		for (drive = 0; drive < chp->ch_ndrives; drive++)
+		for (int drive = 0; drive < chp->ch_ndrives; drive++)
 			chp->ch_drive[drive].state = 0;
 		break;
 
 	case ATACH_TH_DRIVE_RESET:
+	    {
+		int drive = arg;
+
 		KASSERT(drive <= chp->ch_ndrives);
 		drvp = &chp->ch_drive[drive];
 		(*atac->atac_bustype_ata->ata_reset_drive)(drvp, flags, NULL);
 		drvp->state = 0;
 		break;
+	    }
+
+	case ATACH_TH_RECOVERY:
+	    {
+		uint32_t tfd = (uint32_t)arg;
+
+		KASSERT((chp->ch_flags & ATACH_RECOVERING) == 0);
+		KASSERT(atac->atac_bustype_ata->ata_recovery != NULL);
+
+		SET(chp->ch_flags, ATACH_RECOVERING);
+		(*atac->atac_bustype_ata->ata_recovery)(chp, flags, tfd);
+		CLR(chp->ch_flags, ATACH_RECOVERING);
+		break;
+	    }
 
 	default:
 		panic("%s: unknown type: %x", __func__, type);

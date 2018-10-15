@@ -1,4 +1,4 @@
-/*	$NetBSD: atavar.h,v 1.99.2.11 2018/10/11 20:57:51 jdolecek Exp $	*/
+/*	$NetBSD: atavar.h,v 1.99.2.12 2018/10/15 21:18:53 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -337,10 +337,6 @@ struct ata_drive_datas {
 	struct disklabel *lp;	/* pointer to drive's label info */
 	uint8_t		multi;	/* # of blocks to transfer in multi-mode */
 	daddr_t	badsect[127];	/* 126 plus trailing -1 marker */
-
-	/* Recovery buffer */
-	struct ata_xfer recovery_xfer;
-	uint8_t recovery_blk[ATA_BSIZE];
 };
 
 /* User config flags that force (or disable) the use of a mode */
@@ -377,6 +373,7 @@ struct ata_bustype {
 	int	(*ata_addref)(struct ata_drive_datas *);
 	void	(*ata_delref)(struct ata_drive_datas *);
 	void	(*ata_killpending)(struct ata_drive_datas *);
+	void	(*ata_recovery)(struct ata_channel *, int, uint32_t);
 };
 
 /* bustype_type */	/* XXX XXX XXX */
@@ -414,8 +411,9 @@ struct ata_channel {
 #define ATACH_TH_RESCAN 0x400	/* rescan requested */
 #define ATACH_NCQ	0x800	/* channel executing NCQ commands */
 #define ATACH_DMA_BEFORE_CMD	0x1000	/* start DMA first */
-#define ATACH_TH_DRIVE_RESET	0x2000	/* thread asked for drive(s) reset */
+#define ATACH_TH_DRIVE_RESET	0x2000	/* asked thread to drive(s) reset */
 #define ATACH_RECOVERING	0x4000	/* channel is recovering */
+#define ATACH_TH_RECOVERY	0x8000	/* asked thread to run recovery */
 
 #define ATACH_NODRIVE	0xff	/* no drive selected for reset */
 
@@ -444,6 +442,11 @@ struct ata_channel {
 
 	/* Number of sata PMP ports, if any */
 	int ch_satapmp_nports;
+
+	/* Recovery buffer */
+	struct ata_xfer recovery_xfer;
+	uint8_t recovery_blk[ATA_BSIZE];
+	uint32_t recovery_tfd;		/* status/err encoded ATACH_ERR_ST() */
 };
 
 /*
@@ -546,7 +549,7 @@ void	ata_kill_pending(struct ata_drive_datas *);
 void	ata_kill_active(struct ata_channel *, int, int);
 void	ata_thread_run(struct ata_channel *, int, int, int);
 void	ata_channel_freeze(struct ata_channel *);
-void	ata_channel_thaw(struct ata_channel *);
+void	ata_channel_thaw_locked(struct ata_channel *);
 void	ata_channel_lock(struct ata_channel *);
 void	ata_channel_unlock(struct ata_channel *);
 void	ata_channel_lock_owned(struct ata_channel *);

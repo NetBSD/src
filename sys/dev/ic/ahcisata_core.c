@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata_core.c,v 1.62.2.9 2018/10/11 20:57:51 jdolecek Exp $	*/
+/*	$NetBSD: ahcisata_core.c,v 1.62.2.10 2018/10/15 21:18:53 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.62.2.9 2018/10/11 20:57:51 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.62.2.10 2018/10/15 21:18:53 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -82,7 +82,7 @@ static void ahci_bio_kill_xfer(struct ata_channel *, struct ata_xfer *, int) ;
 static void ahci_channel_stop(struct ahci_softc *, struct ata_channel *, int);
 static void ahci_channel_start(struct ahci_softc *, struct ata_channel *,
 				int, int);
-void ahci_channel_recover(struct ahci_softc *, struct ata_channel *, int);
+static void ahci_channel_recover(struct ata_channel *, int, uint32_t);
 static int  ahci_dma_setup(struct ata_channel *, int, void *, size_t, int);
 
 #if NATAPIBUS > 0
@@ -121,7 +121,8 @@ const struct ata_bustype ahci_ata_bustype = {
 	ata_get_params,
 	ahci_ata_addref,
 	ahci_ata_delref,
-	ahci_killpending
+	ahci_killpending,
+	ahci_channel_recover,
 };
 
 static void ahci_intr_port(struct ahci_softc *, struct ahci_channel *);
@@ -673,8 +674,10 @@ ahci_intr_port(struct ahci_softc *sc, struct ahci_channel *achp)
 	}
 
 	if (__predict_false(recover)) {
-		ata_channel_thaw(chp);
-		ahci_channel_recover(sc, chp, tfd);
+		ata_channel_lock(chp);
+		ata_channel_thaw_locked(chp);
+		ata_thread_run(chp, 0, ATACH_TH_RECOVERY, tfd); 
+		ata_channel_unlock(chp);
 	}
 }
 
@@ -1565,16 +1568,14 @@ ahci_channel_start(struct ahci_softc *sc, struct ata_channel *chp,
 }
 
 /* Recover channel after command failure */
-void
-ahci_channel_recover(struct ahci_softc *sc, struct ata_channel *chp, int tfd)
+static void
+ahci_channel_recover(struct ata_channel *chp, int flags, uint32_t tfd)
 {
+	struct ahci_softc *sc = (struct ahci_softc *)chp->ch_atac;
 	int drive = ATACH_NODRIVE;
 	bool reset = false;
 
-	ata_channel_lock(chp);
-	KASSERT(!ISSET(chp->ch_flags, ATACH_RECOVERING));
-	SET(chp->ch_flags, ATACH_RECOVERING);
-	ata_channel_unlock(chp);
+	ata_channel_lock_owned(chp);
 
 	/*
 	 * Read FBS to get the drive which caused the error, if PM is in use.
@@ -1624,26 +1625,20 @@ ahci_channel_recover(struct ahci_softc *sc, struct ata_channel *chp, int tfd)
 	 * to unblock device processing if COMRESET was not done.
 	 */
 	if (reset || (AHCI_TFD_ST(tfd) & (WDCS_BSY|WDCS_DRQ)) != 0) {
-		ata_channel_lock(chp);
-		ahci_reset_channel(chp, AT_POLL);
-		ata_channel_unlock(chp);
+		ahci_reset_channel(chp, flags);
 		goto out;
 	}
 
 	KASSERT(drive != ATACH_NODRIVE && drive >= 0);
-	ahci_channel_stop(sc, chp, AT_POLL);
-	ahci_channel_start(sc, chp, AT_POLL,
+	ahci_channel_stop(sc, chp, flags);
+	ahci_channel_start(sc, chp, flags,
    	    (sc->sc_ahci_cap & AHCI_CAP_CLO) ? 1 : 0);
 
-	ata_recovery_resume(chp, drive, tfd, AT_POLL);
+	ata_recovery_resume(chp, drive, tfd, flags);
 
 out:
 	/* Drive unblocked, back to normal operation */
-	ata_channel_lock(chp);
-	CLR(chp->ch_flags, ATACH_RECOVERING);
-	ata_channel_unlock(chp);
-
-	atastart(chp);
+	return;
 }
 
 static int
