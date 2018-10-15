@@ -1,4 +1,4 @@
-/*	$NetBSD: gttwsi_core.c,v 1.2 2014/11/23 13:37:27 jmcneill Exp $	*/
+/*	$NetBSD: gttwsi_core.c,v 1.2.12.1 2018/10/15 03:09:07 snj Exp $	*/
 /*
  * Copyright (c) 2008 Eiji Kawauchi.
  * All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gttwsi_core.c,v 1.2 2014/11/23 13:37:27 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gttwsi_core.c,v 1.2.12.1 2018/10/15 03:09:07 snj Exp $");
 #include "locators.h"
 
 #include <sys/param.h>
@@ -91,7 +91,8 @@ static int	gttwsi_initiate_xfer(void *v, i2c_addr_t addr, int flags);
 static int	gttwsi_read_byte(void *v, uint8_t *valp, int flags);
 static int	gttwsi_write_byte(void *v, uint8_t val, int flags);
 
-static int	gttwsi_wait(struct gttwsi_softc *, uint32_t, uint32_t, int);
+static int	gttwsi_wait(struct gttwsi_softc *, uint32_t, uint32_t,
+			    uint32_t, int);
 
 static inline uint32_t
 gttwsi_read_4(struct gttwsi_softc *sc, uint32_t reg)
@@ -133,7 +134,7 @@ gttwsi_attach_subr(device_t self, bus_space_tag_t iot, bus_space_handle_t ioh)
 	sc->sc_bust = iot;
 	sc->sc_bush = ioh;
 
-	mutex_init(&sc->sc_buslock, MUTEX_DEFAULT, IPL_NONE);
+	mutex_init(&sc->sc_buslock, MUTEX_DEFAULT, IPL_VM);
 	mutex_init(&sc->sc_mtx, MUTEX_DEFAULT, IPL_BIO);
 	cv_init(&sc->sc_cv, device_xname(self));
 
@@ -176,15 +177,15 @@ gttwsi_intr(void *arg)
 	struct gttwsi_softc *sc = arg;
 	uint32_t val;
 
+	mutex_enter(&sc->sc_mtx);
 	val = gttwsi_read_4(sc, TWSI_CONTROL);
 	if (val & CONTROL_IFLG) {
 		gttwsi_write_4(sc, TWSI_CONTROL, val & ~CONTROL_INTEN);
-		mutex_enter(&sc->sc_mtx);
-		cv_signal(&sc->sc_cv);
+		cv_broadcast(&sc->sc_cv);
 		mutex_exit(&sc->sc_mtx);
-
 		return 1;	/* handled */
 	}
+	mutex_exit(&sc->sc_mtx);
 	return 0;
 }
 
@@ -195,6 +196,11 @@ gttwsi_acquire_bus(void *arg, int flags)
 	struct gttwsi_softc *sc = arg;
 
 	mutex_enter(&sc->sc_buslock);
+	while (sc->sc_inuse)
+		cv_wait(&sc->sc_cv, &sc->sc_buslock);
+	sc->sc_inuse = true;
+	mutex_exit(&sc->sc_buslock);
+
 	return 0;
 }
 
@@ -204,6 +210,9 @@ gttwsi_release_bus(void *arg, int flags)
 {
 	struct gttwsi_softc *sc = arg;
 
+	mutex_enter(&sc->sc_buslock);
+	sc->sc_inuse = false;
+	cv_broadcast(&sc->sc_cv);
 	mutex_exit(&sc->sc_buslock);
 }
 
@@ -213,12 +222,14 @@ gttwsi_send_start(void *v, int flags)
 	struct gttwsi_softc *sc = v;
 	int expect;
 
+	KASSERT(sc->sc_inuse);
+
 	if (sc->sc_started)
 		expect = STAT_RSCT;
 	else
 		expect = STAT_SCT;
 	sc->sc_started = true;
-	return gttwsi_wait(sc, CONTROL_START, expect, flags);
+	return gttwsi_wait(sc, CONTROL_START, expect, 0, flags);
 }
 
 static int
@@ -227,6 +238,8 @@ gttwsi_send_stop(void *v, int flags)
 	struct gttwsi_softc *sc = v;
 	int retry = TWSI_RETRY_COUNT;
 	uint32_t control;
+
+	KASSERT(sc->sc_inuse);
 
 	sc->sc_started = false;
 
@@ -250,16 +263,23 @@ static int
 gttwsi_initiate_xfer(void *v, i2c_addr_t addr, int flags)
 {
 	struct gttwsi_softc *sc = v;
-	uint32_t data, expect;
+	uint32_t data, expect, alt;
 	int error, read;
 
-	gttwsi_send_start(v, flags);
+	KASSERT(sc->sc_inuse);
+
+	error = gttwsi_send_start(v, flags);
+	if (error)
+		return error;
 
 	read = (flags & I2C_F_READ) != 0;
-	if (read)
+	if (read) {
 		expect = STAT_ARBT_AR;
-	else
+		alt    = STAT_ARBT_ANR;
+	} else {
 		expect = STAT_AWBT_AR;
+		alt    = STAT_AWBT_ANR;
+	}
 
 	/*
 	 * First byte contains whether this xfer is a read or write.
@@ -272,23 +292,26 @@ gttwsi_initiate_xfer(void *v, i2c_addr_t addr, int flags)
 		 */
 		data |= 0xf0 | ((addr & 0x300) >> 7);
 		gttwsi_write_4(sc, TWSI_DATA, data);
-		error = gttwsi_wait(sc, 0, expect, flags);
+		error = gttwsi_wait(sc, 0, expect, alt, flags);
 		if (error)
 			return error;
 		/*
 		 * The first address byte has been sent, now to send
 		 * the second one.
 		 */
-		if (read)
+		if (read) {
 			expect = STAT_SARBT_AR;
-		else
+			alt    = STAT_SARBT_ANR;
+		} else {
 			expect = STAT_SAWBT_AR;
+			alt    = STAT_SAWBT_ANR;
+		}
 		data = (uint8_t)addr;
 	} else
 		data |= (addr << 1);
 
 	gttwsi_write_4(sc, TWSI_DATA, data);
-	return gttwsi_wait(sc, 0, expect, flags);
+	return gttwsi_wait(sc, 0, expect, alt, flags);
 }
 
 static int
@@ -297,10 +320,12 @@ gttwsi_read_byte(void *v, uint8_t *valp, int flags)
 	struct gttwsi_softc *sc = v;
 	int error;
 
+	KASSERT(sc->sc_inuse);
+
 	if (flags & I2C_F_LAST)
-		error = gttwsi_wait(sc, 0, STAT_MRRD_ANT, flags);
+		error = gttwsi_wait(sc, 0, STAT_MRRD_ANT, 0, flags);
 	else
-		error = gttwsi_wait(sc, CONTROL_ACK, STAT_MRRD_AT, flags);
+		error = gttwsi_wait(sc, CONTROL_ACK, STAT_MRRD_AT, 0, flags);
 	if (!error)
 		*valp = gttwsi_read_4(sc, TWSI_DATA);
 	if ((flags & (I2C_F_LAST | I2C_F_STOP)) == (I2C_F_LAST | I2C_F_STOP))
@@ -314,8 +339,10 @@ gttwsi_write_byte(void *v, uint8_t val, int flags)
 	struct gttwsi_softc *sc = v;
 	int error;
 
+	KASSERT(sc->sc_inuse);
+
 	gttwsi_write_4(sc, TWSI_DATA, val);
-	error = gttwsi_wait(sc, 0, STAT_MTDB_AR, flags);
+	error = gttwsi_wait(sc, 0, STAT_MTDB_AR, 0, flags);
 	if (flags & I2C_F_STOP)
 		gttwsi_send_stop(sc, flags);
 	return error;
@@ -323,16 +350,19 @@ gttwsi_write_byte(void *v, uint8_t val, int flags)
 
 static int
 gttwsi_wait(struct gttwsi_softc *sc, uint32_t control, uint32_t expect,
-	    int flags)
+	    uint32_t alt, int flags)
 {
 	uint32_t status;
 	int timo, error = 0;
+
+	KASSERT(sc->sc_inuse);
 
 	DELAY(5);
 	if (!(flags & I2C_F_POLL))
 		control |= CONTROL_INTEN;
 	if (sc->sc_iflg_rwc)
 		control |= CONTROL_IFLG;
+	mutex_enter(&sc->sc_mtx);
 	gttwsi_write_4(sc, TWSI_CONTROL, control | CONTROL_TWSIEN);
 
 	timo = 0;
@@ -341,22 +371,36 @@ gttwsi_wait(struct gttwsi_softc *sc, uint32_t control, uint32_t expect,
 		if (control & CONTROL_IFLG)
 			break;
 		if (!(flags & I2C_F_POLL)) {
-			mutex_enter(&sc->sc_mtx);
 			error = cv_timedwait_sig(&sc->sc_cv, &sc->sc_mtx, hz);
-			mutex_exit(&sc->sc_mtx);
 			if (error)
-				return error;
+				break;
+		} else {
+			DELAY(TWSI_RETRY_DELAY);
+			if (timo++ > 1000000)	/* 1sec */
+				break;
 		}
-		DELAY(TWSI_RETRY_DELAY);
-		if (timo++ > 1000000)	/* 1sec */
-			break;
 	}
-
+	if ((control & CONTROL_IFLG) == 0) {
+		aprint_error_dev(sc->sc_dev,
+		    "gttwsi_wait(): timeout, control=0x%x\n", control);
+		error = EWOULDBLOCK;
+		goto end;
+	}
 	status = gttwsi_read_4(sc, TWSI_STATUS);
 	if (status != expect) {
-		aprint_error_dev(sc->sc_dev,
-		    "unexpected status 0x%x: expect 0x%x\n", status, expect);
-		return EIO;
+		/*
+		 * In the case of probing for a device, we are expecting
+		 * 2 different status codes: the ACK case (device exists),
+		 * or the NACK case (device does not exist).  We don't
+		 * need to report an error in the later case.
+		 */
+		if (alt != 0 && status != alt)
+			aprint_error_dev(sc->sc_dev,
+			    "unexpected status 0x%x: expect 0x%x\n", status,
+			    expect);
+		error = EIO;
 	}
+end:
+	mutex_exit(&sc->sc_mtx);
 	return error;
 }
