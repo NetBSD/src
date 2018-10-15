@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_machdep.c,v 1.1 2018/10/12 22:12:11 jmcneill Exp $ */
+/* $NetBSD: acpi_machdep.c,v 1.2 2018/10/15 11:35:03 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.1 2018/10/12 22:12:11 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.2 2018/10/15 11:35:03 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -44,6 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.1 2018/10/12 22:12:11 jmcneill Ex
 
 #include <dev/acpi/acpica.h>
 #include <dev/acpi/acpivar.h>
+#include <dev/acpi/acpi_mcfg.h>
 
 #include <arm/pic/picvar.h>
 
@@ -238,6 +239,8 @@ void
 acpi_md_callback(struct acpi_softc *sc)
 {
 	ACPI_TABLE_HEADER *hdrp;
+
+	acpimcfg_init(&arm_generic_bs_tag, NULL);
 
 	if (acpi_madt_map() != AE_OK)
 		panic("Failed to map MADT");
