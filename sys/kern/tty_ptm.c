@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_ptm.c,v 1.37.16.1 2018/09/04 02:21:58 pgoyette Exp $	*/
+/*	$NetBSD: tty_ptm.c,v 1.37.16.2 2018/10/15 09:51:34 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_ptm.c,v 1.37.16.1 2018/09/04 02:21:58 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_ptm.c,v 1.37.16.2 2018/10/15 09:51:34 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -53,6 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: tty_ptm.c,v 1.37.16.1 2018/09/04 02:21:58 pgoyette E
 #include <sys/poll.h>
 #include <sys/pty.h>
 #include <sys/kauth.h>
+#include <sys/compat_stub.h>
 
 #include <miscfs/specfs/specdev.h>
 
@@ -372,6 +373,24 @@ ptmclose(dev_t dev, int flag, int mode, struct lwp *l)
 	return (0);
 }
 
+/*
+ * MODULE_HOOK glue for ptmioctl_60
+ */
+
+int                     
+stub_compat_ptmioctl_60(dev_t dev, u_long cmd, void *data, int flag,
+    struct lwp *l)
+{               
+        
+        return EPASSTHROUGH;
+}
+
+MODULE_CALL_HOOK_DECL(compat_60_ioctl_hook, f2,
+    (dev_t, u_long, void *, int, struct lwp *));
+MODULE_CALL_HOOK(compat_60_ioctl_hook, f2,
+    (dev_t dev, u_long cmd, void *data, int flag, struct lwp *l),
+    (dev, cmd, data, flag, l), enosys());
+
 static int
 /*ARGSUSED*/
 ptmioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
@@ -402,7 +421,7 @@ ptmioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 			goto bad2;
 		return 0;
 	default:
-		error = (*vec_compat_ptmioctl_60)(dev, cmd, data, flag, l);
+		error = compat_60_ioctl_hook_f2_call(dev, cmd, data, flag, l);
 		if (error != EPASSTHROUGH)
 			return error;
 		DPRINTF(("ptmioctl EINVAL\n"));

@@ -1,4 +1,4 @@
-/*	$NetBSD: route_70.h,v 1.1.2.3 2018/10/15 04:33:34 pgoyette Exp $	*/
+/*	$NetBSD: route_70.h,v 1.1.2.4 2018/10/15 09:51:33 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -39,6 +39,6 @@
 void rtsock_70_init(void);
 void rtsock_70_fini(void);
 
-extern bool vec_ocreds_valid;
+extern bool compat70_ocreds_valid;
 
 #endif /* !_COMPAT_NET_ROUTE_70_H_ */
