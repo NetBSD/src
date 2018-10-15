@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_mcfg.c,v 1.7 2018/10/13 13:32:50 jmcneill Exp $	*/
+/*	$NetBSD: acpi_mcfg.c,v 1.8 2018/10/15 10:01:32 jmcneill Exp $	*/
 
 /*-
  * Copyright (C) 2015 NONAKA Kimihiro <nonaka@NetBSD.org>
@@ -25,16 +25,20 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "opt_pci.h"
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_mcfg.c,v 1.7 2018/10/13 13:32:50 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_mcfg.c,v 1.8 2018/10/15 10:01:32 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/kmem.h>
 #include <sys/systm.h>
+#include <sys/extent.h>
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
+#include <dev/pci/pciconf.h>
 #include <dev/pci/pcidevs.h>
 
 #include <dev/acpi/acpireg.h>
@@ -676,6 +680,209 @@ out:
 
 	return error;
 }
+
+#ifdef PCI_NETBSD_CONFIGURE
+struct acpimcfg_resource {
+	struct extent *ioext;
+	struct extent *memext;
+	struct extent *pmemext;
+};
+
+static ACPI_STATUS
+acpimcfg_configure_bus_cb(ACPI_RESOURCE *res, void *ctx)
+{
+	struct acpimcfg_resource *pcires = ctx;
+	struct extent *ex;
+	const char *s;
+	int error;
+
+	if (res->Type != ACPI_RESOURCE_TYPE_ADDRESS32 &&
+	    res->Type != ACPI_RESOURCE_TYPE_ADDRESS64)
+		return AE_OK;
+
+	if (res->Data.Address.ProducerConsumer != ACPI_PRODUCER)
+		return AE_OK;
+
+	if (res->Data.Address.ResourceType != ACPI_MEMORY_RANGE &&
+	    res->Data.Address.ResourceType != ACPI_IO_RANGE)
+		return AE_OK;
+
+	if (res->Data.Address.ResourceType == ACPI_MEMORY_RANGE &&
+	    res->Data.Address.Info.Mem.Caching == ACPI_PREFETCHABLE_MEMORY) {
+		if (pcires->pmemext == NULL) {
+			pcires->pmemext = extent_create("pcipmem", 0, ULONG_MAX,
+			    NULL, 0, EX_WAITOK);
+			error = extent_alloc_region(pcires->pmemext, 0, ULONG_MAX,
+			    EX_WAITOK);
+			if (error) {
+				extent_destroy(pcires->pmemext);
+				pcires->pmemext = NULL;
+				return AE_NO_MEMORY;
+			}
+		}
+		ex = pcires->pmemext;
+		s = "prefetchable";
+	} else if (res->Data.Address.ResourceType == ACPI_MEMORY_RANGE &&
+	    res->Data.Address.Info.Mem.Caching != ACPI_PREFETCHABLE_MEMORY) {
+		if (pcires->memext == NULL) {
+			pcires->memext = extent_create("pcimem", 0, ULONG_MAX,
+			    NULL, 0, EX_WAITOK);
+			error = extent_alloc_region(pcires->memext, 0, ULONG_MAX,
+			    EX_WAITOK);
+			if (error) {
+				extent_destroy(pcires->memext);
+				pcires->memext = NULL;
+				return AE_NO_MEMORY;
+			}
+		}
+		ex = pcires->memext;
+		s = "non-prefetchable";
+	} else if (res->Data.Address.ResourceType == ACPI_IO_RANGE) {
+		if (pcires->ioext == NULL) {
+			pcires->ioext = extent_create("pciio", 0, ULONG_MAX,
+			    NULL, 0, EX_WAITOK);
+			error = extent_alloc_region(pcires->ioext, 0, ULONG_MAX,
+			    EX_WAITOK);
+			if (error) {
+				extent_destroy(pcires->ioext);
+				pcires->ioext = NULL;
+				return AE_NO_MEMORY;
+			}
+		}
+		ex = pcires->ioext;
+		s = "i/o";
+		
+	}
+
+	switch (res->Type) {
+	case ACPI_RESOURCE_TYPE_ADDRESS16:
+		aprint_debug(
+		    "MCFG: range 0x%04" PRIx16 " size %#" PRIx16 " (16-bit %s)\n",
+		    res->Data.Address16.Address.Minimum,
+		    res->Data.Address16.Address.AddressLength,
+		    s);
+		error = extent_free(ex, res->Data.Address16.Address.Minimum,
+		    res->Data.Address16.Address.AddressLength, EX_WAITOK);
+		if (error)
+			return AE_NO_MEMORY;
+		break;
+	case ACPI_RESOURCE_TYPE_ADDRESS32:
+		aprint_debug(
+		    "MCFG: range 0x%08" PRIx32 " size %#" PRIx32 " (32-bit %s)\n",
+		    res->Data.Address32.Address.Minimum,
+		    res->Data.Address32.Address.AddressLength,
+		    s);
+		error = extent_free(ex, res->Data.Address32.Address.Minimum,
+		    res->Data.Address32.Address.AddressLength, EX_WAITOK);
+		if (error)
+			return AE_NO_MEMORY;
+		break;
+	case ACPI_RESOURCE_TYPE_ADDRESS64:
+		aprint_debug(
+		    "MCFG: range 0x%016" PRIx64 " size %#" PRIx64 " (64-bit %s)\n",
+		    res->Data.Address64.Address.Minimum,
+		    res->Data.Address64.Address.AddressLength,
+		    s);
+		error = extent_free(ex, res->Data.Address64.Address.Minimum,
+		    res->Data.Address64.Address.AddressLength, EX_WAITOK);
+		if (error)
+			return AE_NO_MEMORY;
+		break;
+	}
+
+	return AE_OK;
+}
+
+int
+acpimcfg_configure_bus(device_t self, pci_chipset_tag_t pc, ACPI_HANDLE handle,
+    int bus, int cacheline_size)
+{
+	struct acpimcfg_resource res;
+	struct mcfg_segment *seg;
+	struct mcfg_bus *mb;
+	bus_space_handle_t bsh[256];
+	bool bsh_mapped[256];
+	int error, boff, b, d, f;
+	bus_addr_t baddr;
+	ACPI_STATUS rv;
+
+	seg = acpimcfg_get_segment(bus);
+	if (seg == NULL)
+		return ENOENT;
+
+	/*
+	 * Map config space for all possible busses and mark them valid during
+	 * configuration so pci_configure_bus can access them through our chipset
+	 * tag with acpimcfg_conf_read/write below.
+	 */
+	memset(bsh_mapped, 0, sizeof(bsh_mapped));
+	for (b = seg->ms_bus_start; b <= seg->ms_bus_end; b++) {
+		boff = b - seg->ms_bus_start;
+		mb = &seg->ms_bus[boff];
+		baddr = seg->ms_address + (boff * ACPIMCFG_SIZE_PER_BUS);
+
+		/* Map extended configration space of all dev/func. */
+		error = bus_space_map(seg->ms_bst, baddr, ACPIMCFG_SIZE_PER_BUS, 0,
+		    &bsh[b]);
+		if (error != 0)
+			goto cleanup;
+		bsh_mapped[b] = true;
+		for (d = 0; d < 32; d++) {
+			for (f = 0; f < 8; f++) {
+				error = bus_space_subregion(seg->ms_bst, bsh[b],
+				    EXTCONF_OFFSET(d, f, 0), PCI_EXTCONF_SIZE,
+				    &mb->bsh[d][f]);
+				if (error != 0)
+					break;
+			}
+		}
+		if (error != 0)
+			goto cleanup;
+
+		memset(mb->valid_devs, 0xff, sizeof(mb->valid_devs));
+	}
+
+	memset(&res, 0, sizeof(res));
+	rv = AcpiWalkResources(handle, "_CRS", acpimcfg_configure_bus_cb, &res);
+	if (ACPI_FAILURE(rv)) {
+		error = ENXIO;
+		goto cleanup;
+	}
+
+	error = pci_configure_bus(pc, res.ioext, res.memext, res.pmemext, bus,
+	    cacheline_size);
+
+cleanup:
+	/*
+	 * Unmap config space for the segment's busses. Valid devices will be
+	 * re-mapped later on by acpimcfg_map_bus.
+	 */
+	for (b = seg->ms_bus_start; b <= seg->ms_bus_end; b++) {
+		boff = b - seg->ms_bus_start;
+		mb = &seg->ms_bus[boff];
+		memset(mb->valid_devs, 0, sizeof(mb->valid_devs));
+
+		if (bsh_mapped[b])
+			bus_space_unmap(seg->ms_bst, bsh[b], ACPIMCFG_SIZE_PER_BUS);
+	}
+
+	if (res.ioext)
+		extent_destroy(res.ioext);
+	if (res.memext)
+		extent_destroy(res.memext);
+	if (res.pmemext)
+		extent_destroy(res.pmemext);
+
+	return error;
+}
+#else
+int
+acpimcfg_configure_bus(device_t self, pci_chipset_tag_t pc, ACPI_HANDLE handle,
+    int cacheline_size)
+{
+	return ENXIO;
+}
+#endif
 
 int
 acpimcfg_conf_read(pci_chipset_tag_t pc, pcitag_t tag, int reg, pcireg_t *data)
