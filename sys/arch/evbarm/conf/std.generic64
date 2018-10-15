@@ -1,4 +1,4 @@
-#	$NetBSD: std.generic64,v 1.3 2018/10/07 07:48:44 skrll Exp $
+#	$NetBSD: std.generic64,v 1.4 2018/10/15 05:11:08 skrll Exp $
 #
 #	generic NetBSD/evbarm64 with FDT support
 
@@ -23,8 +23,6 @@ options 	PCI_NETBSD_CONFIGURE
 #options 	__HAVE_CPU_UAREA_ALLOC_IDLELWP
 #options 	MODULAR
 #options 	MODULAR_DEFAULT_AUTOLOAD
-#options 	ARM_HAS_VBAR
-#options 	KERNEL_BASE_EXT=0x80000000
 
 makeoptions	BOARDMKFRAG="${THISARM}/conf/mk.generic64"
 
