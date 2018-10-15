@@ -1,4 +1,4 @@
-#	$NetBSD: std.imx6ul,v 1.3 2018/10/08 10:22:17 skrll Exp $
+#	$NetBSD: std.imx6ul,v 1.4 2018/10/15 16:54:54 skrll Exp $
 #
 # standard NetBSD/evbarm options for i.MX6UL
 
@@ -25,6 +25,5 @@ options 	__HAVE_FAST_SOFTINTS		# should be in types.h
 makeoptions 	BOARDMKFRAG="${THISARM}/conf/mk.imx6ul"
 makeoptions 	CPPFLAGS+="-I$S/../../../include"
 makeoptions 	CPUFLAGS="-mcpu=cortex-a7 -mfpu=neon"
-options 	KERNEL_BASE_EXT=0x80000000
 makeoptions 	KERNEL_BASE_PHYS="0x80800000"
 makeoptions 	KERNEL_BASE_VIRT="0x80800000"

@@ -1,4 +1,4 @@
-#	$NetBSD: std.nitrogen6,v 1.7 2018/10/08 10:22:17 skrll Exp $
+#	$NetBSD: std.nitrogen6,v 1.8 2018/10/15 16:54:54 skrll Exp $
 #
 # standard NetBSD/evbarm options for Nitrogen6X
 
@@ -26,6 +26,5 @@ options 	__HAVE_FAST_SOFTINTS		# should be in types.h
 makeoptions 	BOARDMKFRAG="${THISARM}/conf/mk.nitrogen6"
 makeoptions 	CPPFLAGS+="-I$S/../../../include"
 makeoptions 	CPUFLAGS="-mcpu=cortex-a9"
-options 	KERNEL_BASE_EXT=0x80000000
 makeoptions 	KERNEL_BASE_PHYS="0x10800000"
 makeoptions 	KERNEL_BASE_VIRT="0x80800000"

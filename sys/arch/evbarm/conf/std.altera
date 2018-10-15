@@ -1,4 +1,4 @@
-# $NetBSD: std.altera,v 1.3 2018/10/08 10:22:17 skrll Exp $
+# $NetBSD: std.altera,v 1.4 2018/10/15 16:54:54 skrll Exp $
 
 machine		evbarm	arm
 
@@ -18,7 +18,6 @@ options 	__HAVE_CPU_UAREA_ALLOC_IDLELWP
 options 	__HAVE_FAST_SOFTINTS
 options 	__HAVE_MM_MD_DIRECT_MAPPED_PHYS
 
-options 	KERNEL_BASE_EXT=0x80000000
 makeoptions 	KERNEL_BASE_PHYS="0x10000"
 makeoptions 	KERNEL_BASE_VIRT="0x80010000"
 makeoptions 	BOARDTYPE="nanosoc"

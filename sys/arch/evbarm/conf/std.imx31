@@ -1,4 +1,4 @@
-#	$NetBSD: std.imx31,v 1.10 2018/10/07 07:48:44 skrll Exp $
+#	$NetBSD: std.imx31,v 1.11 2018/10/15 16:54:54 skrll Exp $
 #
 # standard NetBSD/evbarm options for FreeScale I.MX31
 
@@ -8,7 +8,6 @@ include		"arch/evbarm/conf/std.evbarm"
 # Pull in i.mx31 config definitions.
 include		"arch/evbarm/conf/files.imx31"
 
-options 	KERNEL_BASE_EXT=0x80000000
 makeoptions 	CPUFLAGS="-march=armv6k -mtune=arm1136j-s -mfpu=vfp"
 
 options 	ARM11_PMC
