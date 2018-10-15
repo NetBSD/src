@@ -1,4 +1,4 @@
-/* $NetBSD: vfs_syscalls_10.c,v 1.1.2.3 2018/09/22 04:56:28 pgoyette Exp $	*/
+/* $NetBSD: vfs_syscalls_10.c,v 1.1.2.4 2018/10/15 10:44:27 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_10.c,v 1.1.2.3 2018/09/22 04:56:28 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_10.c,v 1.1.2.4 2018/10/15 10:44:27 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -40,10 +40,9 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_10.c,v 1.1.2.3 2018/09/22 04:56:28 pgoy
 #include <sys/systm.h>
 #include <sys/namei.h>
 #include <sys/vfs_syscalls.h>
+#include <sys/compat_stub.h>
 
 #include <compat/common/compat_mod.h>
-
-static int (*orig_sys_openat_10)(struct pathbuf **);
 
 static int
 real_sys_openat_10(struct pathbuf **pb)
@@ -53,15 +52,17 @@ real_sys_openat_10(struct pathbuf **pb)
 	return (*pb == NULL ? ENOMEM : 0);
 }
 
+MODULE_SET_HOOK(compat_10_openat_hook, "openat_10", real_sys_openat_10);
+MODULE_UNSET_HOOK(compat_10_openat_hook);
+
 void vfs_syscalls_10_init(void)
 {
 
-	orig_sys_openat_10 = vec_sys_openat_10;
-	vec_sys_openat_10 = real_sys_openat_10;
+	compat_10_openat_hook_set();
 }
 
 void vfs_syscalls_10_fini(void)
 {
 
-	vec_sys_openat_10 = orig_sys_openat_10;
+	compat_10_openat_hook_unset();
 }

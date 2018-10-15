@@ -1,4 +1,4 @@
-/* $NetBSD: compat_stub.h,v 1.1.2.41 2018/10/15 09:51:34 pgoyette Exp $	*/
+/* $NetBSD: compat_stub.h,v 1.1.2.42 2018/10/15 10:44:28 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -244,5 +244,11 @@ MODULE_HOOK(rnd_ioctl_50_32_hook, (struct file *, u_long, void *));
  */
 MODULE_HOOK2(compat_60_ioctl_hook, (dev_t, u_long, void *, int, struct lwp *),
     (dev_t, u_long, void *, int, struct lwp *));
+
+/*
+ * Hook for compat_10 openat
+ */
+struct pathbuf;
+MODULE_HOOK(compat_10_openat_hook, (struct pathbuf **));
 
 #endif	/* _SYS_COMPAT_STUB_H */
