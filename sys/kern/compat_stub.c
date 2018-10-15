@@ -1,4 +1,4 @@
-/* $NetBSD: compat_stub.c,v 1.1.2.29 2018/10/15 09:51:33 pgoyette Exp $	*/
+/* $NetBSD: compat_stub.c,v 1.1.2.30 2018/10/15 10:44:27 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -192,4 +192,9 @@ struct rnd_ioctl_50_32_hook_t rnd_ioctl_50_32_hook;
  * Hooks for compat_60 ttioctl and ptmioctl
  */
 struct compat_60_ioctl_hook_t compat_60_ioctl_hook;
+
+/*
+ * Hook for compat_10 openat
+ */
+struct compat_10_openat_hook_t compat_10_openat_hook;
 
