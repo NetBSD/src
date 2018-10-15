@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1213 2018/09/23 09:21:03 maxv Exp $
+#	$NetBSD: files,v 1.1214 2018/10/15 23:50:48 jmcneill Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20171118
@@ -1318,6 +1318,10 @@ file	dev/ic/pl041.c			aaci
 # ARM PrimeCell PL050 (KMI) PS2 keyboard/mouse interface
 device	plkmi: pckbport
 file	dev/ic/pl050.c			plkmi
+
+# ARM PrimeCell PL061 (GPIO) general purpose input/output
+device	plgpio: gpiobus
+file	dev/ic/pl061.c			plgpio
 
 # ARM PrimeCell PL181 (MMCI) host controller
 device	plmmc: sdmmcbus
