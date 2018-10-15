@@ -1,4 +1,4 @@
-/* $NetBSD: pl061gpio_fdt.c,v 1.3 2018/10/15 23:50:48 jmcneill Exp $ */
+/* $NetBSD: pl061gpio_fdt.c,v 1.4 2018/10/15 23:53:47 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2018 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pl061gpio_fdt.c,v 1.3 2018/10/15 23:50:48 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pl061gpio_fdt.c,v 1.4 2018/10/15 23:53:47 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -98,7 +98,7 @@ plgpio_fdt_attach(device_t parent, device_t self, void *aux)
 	}
 
 	sc->sc_dev = self;
-	sc->sc_bst = faa->faa_a4x_bst;
+	sc->sc_bst = faa->faa_bst;
 	error = bus_space_map(sc->sc_bst, addr, size, 0, &sc->sc_bsh);
 	if (error) {
 		aprint_error(": couldn't map %#"PRIx64": %d", (uint64_t)addr, error);
