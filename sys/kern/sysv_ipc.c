@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_ipc.c,v 1.32.16.5 2018/09/06 06:56:42 pgoyette Exp $	*/
+/*	$NetBSD: sysv_ipc.c,v 1.32.16.6 2018/10/15 22:06:16 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_ipc.c,v 1.32.16.5 2018/09/06 06:56:42 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_ipc.c,v 1.32.16.6 2018/10/15 22:06:16 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sysv.h"
@@ -61,10 +61,9 @@ __KERNEL_RCSID(0, "$NetBSD: sysv_ipc.c,v 1.32.16.5 2018/09/06 06:56:42 pgoyette 
 #include <sys/stat.h>
 #include <sys/sysctl.h>
 #include <sys/kauth.h>
+#include <sys/compat_stub.h>
 
 #include <compat/common/compat_sysv_mod.h>	/* for sysctl routine vector */
-
-int (*vec_sysvipc50_sysctl)(SYSCTLFN_PROTO);
 
 /*
  * Values in support of System V compatible shared memory.	XXX
@@ -342,16 +341,15 @@ sysvipcinit(void)
 	    sysvipc_listener_cb, NULL);
 }
 
-/* Vector the old 50 sysctl stuff */
- 
-static int stub_sysvipc50_sysctl(SYSCTLFN_PROTO);
-int (*vec_sysvipc50_sysctl)(SYSCTLFN_PROTO) = stub_sysvipc50_sysctl;
-
 static int
 stub_sysvipc50_sysctl(SYSCTLFN_ARGS)
 {
 	return EPASSTHROUGH;
 }
+
+MODULE_CALL_HOOK_DECL(sysvipc50_sysctl_hook, f, (SYSCTLFN_PROTO));
+MODULE_CALL_HOOK(sysvipc50_sysctl_hook, f, (SYSCTLFN_ARGS),
+    (SYSCTLFN_CALL(rnode)), stub_sysvipc50_sysctl(SYSCTLFN_CALL(rnode)));
 
 static int
 sysctl_kern_sysvipc(SYSCTLFN_ARGS)
@@ -379,7 +377,7 @@ sysctl_kern_sysvipc(SYSCTLFN_ARGS)
  * to the non-compat sysctl code.
  */
 
-	error = (*vec_sysvipc50_sysctl)(SYSCTLFN_CALL(rnode));
+	error = sysvipc50_sysctl_hook_f_call(SYSCTLFN_CALL(rnode));
 	if (error != EPASSTHROUGH)
 		return error;
 

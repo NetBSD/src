@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_sysv_50_mod.c,v 1.1.2.1 2018/04/17 23:06:11 pgoyette Exp $	*/
+/*	$NetBSD: compat_sysv_50_mod.c,v 1.1.2.2 2018/10/15 22:06:16 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_sysv_50_mod.c,v 1.1.2.1 2018/04/17 23:06:11 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_sysv_50_mod.c,v 1.1.2.2 2018/10/15 22:06:16 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -43,6 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: compat_sysv_50_mod.c,v 1.1.2.1 2018/04/17 23:06:11 p
 #include <sys/syscallargs.h>
 #include <sys/syscallvar.h>
 #include <sys/sysctl.h>
+#include <sys/compat_stub.h>
 
 #include <compat/common/compat_sysv_mod.h>
 
@@ -63,11 +64,12 @@ static const struct syscall_package compat_sysv_50_syscalls[] = {
 	{ 0, 0, NULL }
 };
 
+MODULE_SET_HOOK(sysvipc50_sysctl_hook, "sysv50", sysctl_kern_sysvipc50);
+MODULE_UNSET_HOOK(sysvipc50_sysctl_hook);
+
 static int
 compat_sysv_50_modcmd(modcmd_t cmd, void *arg)
 {
-	static int (*orig_sysvipc50_sysctl)(SYSCTLFN_PROTO);
-
 	int error = 0;
 
 	switch (cmd) {
@@ -76,16 +78,15 @@ compat_sysv_50_modcmd(modcmd_t cmd, void *arg)
 		if (error != 0) {
 			break;
 		}
-		orig_sysvipc50_sysctl = vec_sysvipc50_sysctl;
-		vec_sysvipc50_sysctl = sysctl_kern_sysvipc50;
+		sysvipc50_sysctl_hook_set();
 		break;
 
 	case MODULE_CMD_FINI:
-		vec_sysvipc50_sysctl = orig_sysvipc50_sysctl;
 		error = syscall_disestablish(NULL, compat_sysv_50_syscalls);
 		if (error != 0) {
 			break;
 		}
+		sysvipc50_sysctl_hook_unset();
 		break;
 
 	default:

@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_sysv_mod.h,v 1.1.2.1 2018/04/17 21:59:27 pgoyette Exp $	*/
+/*	$NetBSD: compat_sysv_mod.h,v 1.1.2.2 2018/10/15 22:06:16 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -33,8 +33,6 @@
 #define _COMPAT_COMMON_SYSV_IPC_MOD_H_
 
 #include <sys/sysctl.h>
-
-extern int (*vec_sysvipc50_sysctl)(SYSCTLFN_PROTO);
 
 int sysctl_kern_sysvipc50(SYSCTLFN_PROTO);
 
