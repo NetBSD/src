@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.183.2.4 2018/10/15 09:51:34 pgoyette Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.183.2.5 2018/10/15 11:57:05 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004, 2008, 2009 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.183.2.4 2018/10/15 09:51:34 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.183.2.5 2018/10/15 11:57:05 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -123,6 +123,7 @@ __KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.183.2.4 2018/10/15 09:51:34 pgoyet
 #include <sys/uidinfo.h>
 #include <sys/kernel.h>
 #include <sys/kthread.h>
+#include <sys/compat_stub.h>
 
 #include <compat/sys/socket.h>
 
@@ -197,16 +198,15 @@ static int unp_defer;
 
 /* Compat interface */
 
-static struct mbuf *stub_compat_70_unp_addsockcred(lwp_t *, struct mbuf *);
-struct mbuf *(*vec_compat_70_unp_addsockcred)(struct lwp *, struct mbuf *) =
-    stub_compat_70_unp_addsockcred;
+int stub_compat_70_unp_addsockcred(struct mbuf **, lwp_t *, struct mbuf *);
 
-struct mbuf *stub_compat_70_unp_addsockcred(struct lwp *lwp,
+int stub_compat_70_unp_addsockcred(struct mbuf** ret, struct lwp *lwp,
     struct mbuf *control)
 {
 
 	/* just return our initial argument */
-	return control;
+	*ret = control;
+	return 0;
 }
 
 bool *compat70_ocreds_valid = false;
@@ -331,6 +331,12 @@ unp_free(struct unpcb *unp)
 	kmem_free(unp, sizeof(*unp));
 }
 
+MODULE_CALL_HOOK_DECL(compat_70_unp_hook, f,
+    (struct mbuf **, struct lwp *, struct mbuf *));
+MODULE_CALL_HOOK(compat_70_unp_hook, f,
+    (struct mbuf **ret, struct lwp *lwp, struct mbuf *control),
+    (ret, lwp, control), stub_compat_70_unp_addsockcred(ret, lwp, control));
+
 static int
 unp_output(struct mbuf *m, struct mbuf *control, struct unpcb *unp)
 {
@@ -351,7 +357,7 @@ unp_output(struct mbuf *m, struct mbuf *control, struct unpcb *unp)
 	if (unp->unp_conn->unp_flags & UNP_WANTCRED)
 		control = unp_addsockcred(curlwp, control);
 	if (unp->unp_conn->unp_flags & UNP_OWANTCRED)
-		control = (*vec_compat_70_unp_addsockcred)(curlwp, control);
+		compat_70_unp_hook_f_call(&control, curlwp, control);
 	if (sbappendaddr(&so2->so_rcv, (const struct sockaddr *)sun, m,
 	    control) == 0) {
 		unp_dispose(control);
@@ -530,7 +536,7 @@ unp_send(struct socket *so, struct mbuf *m, struct sockaddr *nam,
 			 * SOCK_STREAM and SOCK_SEQPACKET.
 			 */
 			unp->unp_conn->unp_flags &= ~UNP_OWANTCRED;
-			control = (*vec_compat_70_unp_addsockcred)(l, control);
+			compat_70_unp_hook_f_call(&control, curlwp, control);
 		}
 		/*
 		 * Send to paired receive port, and then reduce
