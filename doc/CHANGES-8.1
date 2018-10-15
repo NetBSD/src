@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.1,v 1.1.2.34 2018/10/15 03:13:46 snj Exp $
+# $NetBSD: CHANGES-8.1,v 1.1.2.35 2018/10/15 08:04:20 sborrill Exp $
 
 A complete list of changes from the NetBSD 8.0 release to the NetBSD 8.1
 release:
@@ -1395,4 +1395,10 @@ etc/mtree/NetBSD.dist.base			1.178-1.179
 
 	Add unbound /var/chroot/unbound/var/run.
 	[hannken, ticket #1062]
+
+sbin/gpt/gpt.c					1.76
+
+	When changing entries, skip those that do not match the -L option.
+	Should fix PR 53668.
+	[mlelstv, ticket #1063]
 
