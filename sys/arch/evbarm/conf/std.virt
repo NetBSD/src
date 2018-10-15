@@ -1,4 +1,4 @@
-#       $NetBSD: std.virt,v 1.5 2018/10/08 10:22:17 skrll Exp $
+#       $NetBSD: std.virt,v 1.6 2018/10/15 16:54:54 skrll Exp $
 #
 # standard NetBSD/evbarm for VIRT options
 
@@ -26,7 +26,6 @@ options 	__HAVE_FAST_SOFTINTS            # should be in types.h
 makeoptions 	BOARDMKFRAG="${THISARM}/conf/mk.virt"
 makeoptions 	BOARDTYPE="virt"
 makeoptions 	CPUFLAGS="-march=armv7-a -mfpu=neon"
-options 	KERNEL_BASE_EXT=0x80000000
 makeoptions 	KERNEL_BASE_PHYS="0x41000000"
 makeoptions 	KERNEL_BASE_VIRT="0x81000000"
 

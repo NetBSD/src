@@ -1,4 +1,4 @@
-/*	$NetBSD: armadaxp_start.S,v 1.4 2015/04/15 10:15:40 hsuenaga Exp $	*/
+/*	$NetBSD: armadaxp_start.S,v 1.5 2018/10/15 16:54:54 skrll Exp $	*/
 /*******************************************************************************
 Copyright (C) Marvell International Ltd. and its affiliates
 
@@ -44,7 +44,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <evbarm/marvell/marvellvar.h>
 #include "assym.h"
 
-RCSID("$NetBSD: armadaxp_start.S,v 1.4 2015/04/15 10:15:40 hsuenaga Exp $")
+RCSID("$NetBSD: armadaxp_start.S,v 1.5 2018/10/15 16:54:54 skrll Exp $")
 
 #ifdef KERNEL_BASES_EQUAL
 #error KERNEL_BASE_VIRT should not equal KERNEL_BASE_PHYS
@@ -143,8 +143,8 @@ uboot_regs_pa:
 
 #define MMU_INIT(va,pa,n_sec,attr) \
 	.word	n_sec					; \
-	.word	4*((va)>>L1_S_SHIFT)			; \
-	.word	(pa)|(attr)				;
+	.word	4*((va & 0xffffffff)>>L1_S_SHIFT)	; \
+	.word	(pa & 0xfffff000)|(attr)		;
 
 mmu_init_table:
 	/* fill all table VA==PA */
@@ -152,9 +152,9 @@ mmu_init_table:
 	MMU_INIT(MEMSTART, MEMSTART, 64, L1_TYPE_S|L1_S_C|L1_S_AP_KRW)
 
 	/* map VA 0x80000000..0x83ffffff to PA */
-	MMU_INIT(KERNEL_BASE_EXT, MEMSTART, 64, L1_TYPE_S|L1_S_C|L1_S_AP_KRW)
+	MMU_INIT(KERNEL_BASE, MEMSTART, 64, L1_TYPE_S|L1_S_C|L1_S_AP_KRW)
 
-	/* 
+	/*
 	 * In case of early start debugging it might be useful to map
 	 * SoC registers (for UART access).
 	 */

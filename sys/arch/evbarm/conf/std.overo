@@ -1,4 +1,4 @@
-#	$NetBSD: std.overo,v 1.9 2018/10/07 07:48:44 skrll Exp $
+#	$NetBSD: std.overo,v 1.10 2018/10/15 16:54:54 skrll Exp $
 #
 # standard NetBSD/evbarm for OVERO options
 
@@ -11,7 +11,6 @@ options 	CORTEX_PMC
 options 	__HAVE_FAST_SOFTINTS		# should be in types.h
 options 	TPIDRPRW_IS_CURCPU
 
-options 	KERNEL_BASE_EXT=0x80000000
 makeoptions 	LOADADDRESS="0x80200000"
 makeoptions 	BOARDMKFRAG="${THISARM}/conf/mk.gumstix"
 
