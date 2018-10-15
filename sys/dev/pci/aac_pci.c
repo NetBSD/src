@@ -1,4 +1,4 @@
-/*	$NetBSD: aac_pci.c,v 1.38 2016/09/27 03:33:32 pgoyette Exp $	*/
+/*	$NetBSD: aac_pci.c,v 1.39 2018/10/15 09:27:30 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aac_pci.c,v 1.38 2016/09/27 03:33:32 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aac_pci.c,v 1.39 2018/10/15 09:27:30 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -360,6 +360,22 @@ static struct aac_ident {
 		AAC_HWIF_I960RX,
 		0,
 		"Adaptec RAID 2405"
+	},
+	{	PCI_VENDOR_ADP2,
+		PCI_PRODUCT_ADP2_ASR2200S,
+		PCI_VENDOR_ADP2,
+		PCI_PRODUCT_ADP2_2445,
+		AAC_HWIF_I960RX,
+		0,
+		"Adaptec RAID 2445"
+	},
+	{	PCI_VENDOR_ADP2,
+		PCI_PRODUCT_ADP2_ASR2200S,
+		PCI_VENDOR_ADP2,
+		PCI_PRODUCT_ADP2_2805,
+		AAC_HWIF_I960RX,
+		0,
+		"Adaptec RAID 2805"
 	},
 	{	PCI_VENDOR_ADP2,
 		PCI_PRODUCT_ADP2_ASR2200S,
