@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_40_mod.c,v 1.1.2.6 2018/09/22 04:56:28 pgoyette Exp $	*/
+/*	$NetBSD: compat_40_mod.c,v 1.1.2.7 2018/10/15 04:33:34 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_40_mod.c,v 1.1.2.6 2018/09/22 04:56:28 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_40_mod.c,v 1.1.2.7 2018/10/15 04:33:34 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -49,8 +49,6 @@ __KERNEL_RCSID(0, "$NetBSD: compat_40_mod.c,v 1.1.2.6 2018/09/22 04:56:28 pgoyet
 
 #include <compat/common/compat_util.h>
 #include <compat/common/compat_mod.h>
-
-#include <compat/common/if_40.h>
 
 int
 compat_40_init(void)

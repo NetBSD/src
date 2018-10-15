@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.238.2.11 2018/09/30 01:45:56 pgoyette Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.238.2.12 2018/10/15 04:33:34 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.238.2.11 2018/09/30 01:45:56 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.238.2.12 2018/10/15 04:33:34 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -103,7 +103,6 @@ extern void sctp_delete_ip_address(struct ifaddr *);
 
 #include <compat/net/if.h>
 #include <compat/net/route.h>
-#include <compat/net/route_70.h>
 
 #ifdef COMPAT_RTSOCK
 #define	RTM_XVERSION	RTM_OVERSION
@@ -199,15 +198,11 @@ sysctl_iflist_addr(struct rt_walkarg *, struct ifaddr *, struct rt_addrinfo *);
 /*
  * Compat linkage
  */
-static void stub_70_rt_newaddrmsg1(int cmd, struct ifaddr*ifa)
+static int stub_70_rt_newaddrmsg1(int cmd, struct ifaddr *ifa)
 {
 
-	/* nothing */
+	return 0;
 }
-
-void (*vec_70_rt_newaddrmsg1)(int, struct ifaddr *) = stub_70_rt_newaddrmsg1;
-int (*vec_70_iflist_addr)(struct rt_walkarg *, struct ifaddr *,
-		       struct rt_addrinfo *)= sysctl_iflist_addr;
 #endif
 
 static void
@@ -1378,10 +1373,6 @@ COMPATNAME(rt_missmsg)(int type, const struct rt_addrinfo *rtinfo, int flags,
 
 /*
  * MODULE_HOOK glue for rtsock14_oifmsg and rtsock14_iflist
- *
- * Make them static since this same code is compiled for different
- * COMPAT_xx options and we would otherwise end up with duplicate
- * global symbols.
  */
 MODULE_CALL_HOOK_DECL(rtsock14_hook, f1, (struct ifnet *ifp));
 #ifndef COMPAT_RTSOCK
@@ -1397,6 +1388,24 @@ MODULE_CALL_HOOK(rtsock14_hook, f2,
      size_t len),
     (ifp, w, info, len),
     enosys());
+#endif
+
+/*
+ * MODULE_HOOK glue for rtsock70_ifaddr_list and rtsock70_newaddrmsg1
+ */
+MODULE_CALL_HOOK_DECL(rtsock_70_hook, f1, (int, struct ifaddr *));
+#ifndef COMPAT_RTSOCK
+MODULE_CALL_HOOK(rtsock_70_hook, f1, (int cmd, struct ifaddr *ifa),
+    (cmd, ifa), stub_70_rt_newaddrmsg1(cmd, ifa));
+#endif
+
+MODULE_CALL_HOOK_DECL(rtsock_70_hook, f2,
+    (struct rt_walkarg *, struct ifaddr *, struct rt_addrinfo *));
+#ifndef COMPAT_RTSOCK
+MODULE_CALL_HOOK(rtsock_70_hook, f2,
+    (struct rt_walkarg *w, struct ifaddr *ifa, struct rt_addrinfo *info),
+    (w, ifa, info), 
+    sysctl_iflist_addr(w, ifa, info));
 #endif
 
 /*
@@ -1516,7 +1525,7 @@ COMPATNAME(rt_newaddrmsg)(int cmd, struct ifaddr *ifa, int error,
 			default:
 				panic("%s: unknown command %d", __func__, cmd);
 			}
-			(*vec_70_rt_newaddrmsg1)(ncmd, ifa);
+			rtsock_70_hook_f1_call(ncmd, ifa);
 			info.rti_info[RTAX_IFA] = sa = ifa->ifa_addr;
 			KASSERT(ifp->if_dl != NULL);
 			info.rti_info[RTAX_IFP] = ifp->if_dl->ifa_addr;
@@ -1848,7 +1857,7 @@ sysctl_iflist(int af, struct rt_walkarg *w, int type)
 			info.rti_info[RTAX_IFA] = ifa->ifa_addr;
 			info.rti_info[RTAX_NETMASK] = ifa->ifa_netmask;
 			info.rti_info[RTAX_BRD] = ifa->ifa_dstaddr;
-			error = (*vec_70_iflist_addr)(w, ifa, &info);
+			error = rtsock_70_hook_f2_call(w, ifa, &info);
 
 			_s = pserialize_read_enter();
 			ifa_release(ifa, &_psref);
