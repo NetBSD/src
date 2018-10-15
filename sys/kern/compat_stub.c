@@ -1,4 +1,4 @@
-/* $NetBSD: compat_stub.c,v 1.1.2.30 2018/10/15 10:44:27 pgoyette Exp $	*/
+/* $NetBSD: compat_stub.c,v 1.1.2.31 2018/10/15 11:57:05 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -197,4 +197,9 @@ struct compat_60_ioctl_hook_t compat_60_ioctl_hook;
  * Hook for compat_10 openat
  */
 struct compat_10_openat_hook_t compat_10_openat_hook;
+
+/*
+ * Hook for compat_70_unp_addsockcred
+ */
+struct compat_70_unp_hook_t compat_70_unp_hook;
 

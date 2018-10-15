@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_70_mod.c,v 1.1.2.11 2018/10/15 09:51:33 pgoyette Exp $	*/
+/*	$NetBSD: compat_70_mod.c,v 1.1.2.12 2018/10/15 11:57:05 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_70_mod.c,v 1.1.2.11 2018/10/15 09:51:33 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_70_mod.c,v 1.1.2.12 2018/10/15 11:57:05 pgoyette Exp $");
 
 #include <sys/systm.h>
 #include <sys/module.h>
@@ -49,6 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: compat_70_mod.c,v 1.1.2.11 2018/10/15 09:51:33 pgoye
 #include <compat/common/compat_util.h>
 #include <compat/common/compat_mod.h>
 #include <compat/sys/sockio.h>
+#include <compat/sys/socket.h>
 
 #include <compat/net/route.h>
 #include <compat/net/route_70.h>
@@ -58,6 +59,7 @@ int compat_70_init(void)
 
 	compat70_ocreds_valid = true;
 	rtsock_70_init();
+	uipc_usrreq_70_init();
 
 	return 0;
 }
@@ -65,6 +67,7 @@ int compat_70_init(void)
 int compat_70_fini(void)
 {
 
+	uipc_usrreq_70_fini();
 	rtsock_70_fini();
 	compat70_ocreds_valid = false;
 
