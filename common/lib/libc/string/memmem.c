@@ -25,7 +25,7 @@
 #if 0
 __FBSDID("$FreeBSD: head/lib/libc/string/memmem.c 315468 2017-03-18 00:53:24Z emaste $");
 #else
-__RCSID("$NetBSD: memmem.c,v 1.2 2018/10/15 18:37:19 christos Exp $");
+__RCSID("$NetBSD: memmem.c,v 1.3 2018/10/15 19:32:48 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -40,7 +40,7 @@ static char *twobyte_memmem(const unsigned char *h, size_t k,
     const unsigned char *n)
 {
 	uint16_t nw = n[0] << 8 | n[1], hw = h[0] << 8 | h[1];
-	for (h += 2, k -= 2; k; k--, hw = hw << 8 | *++h)
+	for (h += 2, k -= 2; k; k--, hw = hw << 8 | *h++)
 		if (hw == nw) return __UNCONST(h - 2);
 	return hw == nw ? __UNCONST(h - 2) : 0;
 }
@@ -50,7 +50,7 @@ static char *threebyte_memmem(const unsigned char *h, size_t k,
 {
 	uint32_t nw = n[0] << 24 | n[1] << 16 | n[2] << 8;
 	uint32_t hw = h[0] << 24 | h[1] << 16 | h[2] << 8;
-	for (h += 3, k -= 3; k; k--, hw = (hw|*++h) << 8)
+	for (h += 3, k -= 3; k; k--, hw = (hw|*h++) << 8)
 		if (hw == nw) return __UNCONST(h - 3);
 	return hw == nw ? __UNCONST(h - 3) : 0;
 }
@@ -60,7 +60,7 @@ static char *fourbyte_memmem(const unsigned char *h, size_t k,
 {
 	uint32_t nw = n[0] << 24 | n[1] << 16 | n[2] << 8 | n[3];
 	uint32_t hw = h[0] << 24 | h[1] << 16 | h[2] << 8 | h[3];
-	for (h += 4, k -= 4; k; k--, hw = hw << 8 | *++h)
+	for (h += 4, k -= 4; k; k--, hw = hw << 8 | *h++)
 		if (hw == nw) return __UNCONST(h - 4);
 	return hw == nw ? __UNCONST(h - 4) : 0;
 	return 0;
