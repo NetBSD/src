@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_pci.c,v 1.22 2018/05/05 17:16:23 christos Exp $ */
+/* $NetBSD: acpi_pci.c,v 1.23 2018/10/15 10:00:30 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_pci.c,v 1.22 2018/05/05 17:16:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_pci.c,v 1.23 2018/10/15 10:00:30 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -383,6 +383,33 @@ acpi_pcidev_find(uint16_t segment, uint16_t bus,
 	return NULL;
 }
 
+/*
+ * acpi_pciroot_find:
+ *
+ *	Finds a PCI root bridge in the ACPI name space.
+ *
+ *	Returns an ACPI device node on success and NULL on failure.
+ */
+struct acpi_devnode *
+acpi_pciroot_find(uint16_t segment, uint16_t bus)
+{
+	struct acpi_softc *sc = acpi_softc;
+	struct acpi_devnode *ad;
+
+	if (sc == NULL)
+		return NULL;
+
+	SIMPLEQ_FOREACH(ad, &sc->ad_head, ad_list) {
+
+		if (ad->ad_pciinfo != NULL &&
+		    (ad->ad_pciinfo->ap_flags & ACPI_PCI_INFO_BRIDGE) &&
+		    ad->ad_pciinfo->ap_segment == segment &&
+		    ad->ad_pciinfo->ap_bus == bus)
+			return ad;
+	}
+
+	return NULL;
+}
 
 /*
  * acpi_pcidev_find_dev:

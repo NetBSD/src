@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_pci.h,v 1.8 2010/12/31 10:56:39 jruoho Exp $ */
+/* $NetBSD: acpi_pci.h,v 1.9 2018/10/15 10:00:30 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -37,5 +37,6 @@ ACPI_STATUS		 acpi_pcidev_ppb_downbus(uint16_t, uint16_t, uint16_t,
 struct acpi_devnode	*acpi_pcidev_find(uint16_t, uint16_t,
 					  uint16_t, uint16_t);
 device_t		 acpi_pcidev_find_dev(struct acpi_devnode *);
+struct acpi_devnode	*acpi_pciroot_find(uint16_t, uint16_t);
 
 #endif	/* !_SYS_DEV_ACPI_ACPI_PCI_H */
