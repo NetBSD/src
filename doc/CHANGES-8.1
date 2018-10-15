@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.1,v 1.1.2.33 2018/10/13 17:32:32 martin Exp $
+# $NetBSD: CHANGES-8.1,v 1.1.2.34 2018/10/15 03:13:46 snj Exp $
 
 A complete list of changes from the NetBSD 8.0 release to the NetBSD 8.1
 release:
@@ -1378,4 +1378,21 @@ external/bsd/nsd/include/config.h               up to 1.3
 
 	Update from NSD 4.1.14 to 4.1.24.
 	[hannken, ticket #1060]
+
+sys/dev/i2c/gttwsi_core.c			1.4-1.8 via patch
+sys/dev/i2c/gttwsivar.h				1.4 via patch
+
+	- allow i2c xfers from interrupt context
+	- don't print an error message when probing for non-existent devices
+	  (PR kern/53356)
+	- make sure we won't handle interrupts before end of xfer in the polling
+	  case. Should fix "send STOP failed" messages which cause axp20x0
+	  sensors to become non-functionnal.
+	[bouyer, ticket #1061]
+
+distrib/sets/lists/base/mi			1.1192
+etc/mtree/NetBSD.dist.base			1.178-1.179
+
+	Add unbound /var/chroot/unbound/var/run.
+	[hannken, ticket #1062]
 
