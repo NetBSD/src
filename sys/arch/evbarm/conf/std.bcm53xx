@@ -1,4 +1,4 @@
-#	$NetBSD: std.bcm53xx,v 1.16 2018/10/08 10:22:17 skrll Exp $
+#	$NetBSD: std.bcm53xx,v 1.17 2018/10/15 16:54:54 skrll Exp $
 #
 # standard NetBSD/evbarm for BCM5301X options
 
@@ -25,7 +25,6 @@ options 	__HAVE_PCI_CONF_HOOK
 options 	__HAVE_MM_MD_DIRECT_MAPPED_PHYS
 options 	__HAVE_MM_MD_CACHE_ALIASING
 
-options 	KERNEL_BASE_EXT=0x80000000
 makeoptions 	BOARDTYPE="bcm53xx"
 makeoptions 	KERNEL_BASE_VIRT="0x80100000"
 makeoptions 	LOADADDRESS="0x00100000"
