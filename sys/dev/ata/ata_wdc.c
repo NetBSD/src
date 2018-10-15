@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_wdc.c,v 1.110.4.3 2018/09/17 20:54:41 jdolecek Exp $	*/
+/*	$NetBSD: ata_wdc.c,v 1.110.4.4 2018/10/15 21:18:53 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata_wdc.c,v 1.110.4.3 2018/09/17 20:54:41 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata_wdc.c,v 1.110.4.4 2018/10/15 21:18:53 jdolecek Exp $");
 
 #include "opt_ata.h"
 #include "opt_wdc.h"
@@ -128,6 +128,7 @@ const struct ata_bustype wdc_ata_bustype = {
 	wdc_ata_addref,
 	wdc_ata_delref,
 	ata_kill_pending,
+	NULL,
 };
 
 static const struct ata_xfer_ops wdc_bio_xfer_ops = {

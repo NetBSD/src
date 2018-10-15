@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_recovery.c,v 1.1.2.1 2018/10/11 20:57:51 jdolecek Exp $	*/
+/*	$NetBSD: ata_recovery.c,v 1.1.2.2 2018/10/15 21:18:53 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata_recovery.c,v 1.1.2.1 2018/10/11 20:57:51 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata_recovery.c,v 1.1.2.2 2018/10/15 21:18:53 jdolecek Exp $");
 
 #include "opt_ata.h"
 
@@ -67,9 +67,9 @@ int
 ata_read_log_ext_ncq(struct ata_drive_datas *drvp, uint8_t flags,
     uint8_t *slot, uint8_t *status, uint8_t *err)
 {
-	struct ata_xfer *xfer = &drvp->recovery_xfer;
 	int rv;
 	struct ata_channel *chp = drvp->chnl_softc;
+	struct ata_xfer *xfer = &chp->recovery_xfer;
 	struct atac_softc *atac = chp->ch_atac;
 	uint8_t *tb, cksum, page;
 
@@ -82,8 +82,8 @@ ata_read_log_ext_ncq(struct ata_drive_datas *drvp, uint8_t flags,
 
 	memset(xfer, 0, sizeof(*xfer));
 
-	tb = drvp->recovery_blk;
-	memset(tb, 0, sizeof(drvp->recovery_blk));
+	tb = chp->recovery_blk;
+	memset(tb, 0, sizeof(chp->recovery_blk));
 
 	/*
 	 * We could use READ LOG DMA EXT if drive supports it (i.e.
@@ -101,7 +101,7 @@ ata_read_log_ext_ncq(struct ata_drive_datas *drvp, uint8_t flags,
 	xfer->c_ata_c.flags = AT_READ | AT_LBA | AT_LBA48 | flags;
 	xfer->c_ata_c.timeout = 1000; /* 1s */
 	xfer->c_ata_c.data = tb;
-	xfer->c_ata_c.bcount = sizeof(drvp->recovery_blk);
+	xfer->c_ata_c.bcount = sizeof(chp->recovery_blk);
 
 	if ((*atac->atac_bustype_ata->ata_exec_command)(drvp,
 						xfer) != ATACMD_COMPLETE) {
@@ -114,7 +114,7 @@ ata_read_log_ext_ncq(struct ata_drive_datas *drvp, uint8_t flags,
 	}
 
 	cksum = 0;
-	for (int i = 0; i < sizeof(drvp->recovery_blk); i++)
+	for (int i = 0; i < sizeof(chp->recovery_blk); i++)
 		cksum += tb[i];
 	if (cksum != 0) {
 		device_printf(drvp->drv_softc,
@@ -167,12 +167,15 @@ ata_recovery_resume(struct ata_channel *chp, int drive, int tfd, int flags)
 	struct ata_xfer *xfer;
 	const uint8_t ch_openings = ata_queue_openings(chp);
 
-	ata_channel_lock(chp);
+	ata_channel_lock_owned(chp);
+
 	ata_queue_hold(chp);
-	ata_channel_unlock(chp);
 
 	KASSERT(drive < chp->ch_ndrives);
 	drvp = &chp->ch_drive[drive];
+
+	/* Drop the lock for the READ LOG EXT request */
+	ata_channel_unlock(chp);
 
 	/*
 	 * When running NCQ commands, READ LOG EXT is necessary to clear the
@@ -243,5 +246,5 @@ ata_recovery_resume(struct ata_channel *chp, int drive, int tfd, int flags)
 
 out:
 	/* Nothing more to do */
-	return;
+	ata_channel_lock(chp);
 }

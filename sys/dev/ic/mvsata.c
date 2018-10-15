@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsata.c,v 1.41.2.10 2018/10/14 14:50:55 jdolecek Exp $	*/
+/*	$NetBSD: mvsata.c,v 1.41.2.11 2018/10/15 21:18:53 jdolecek Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.41.2.10 2018/10/14 14:50:55 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.41.2.11 2018/10/15 21:18:53 jdolecek Exp $");
 
 #include "opt_mvsata.h"
 
@@ -167,11 +167,11 @@ static void mvsata_bdma_start(struct mvsata_port *);
 #endif
 
 static int mvsata_nondma_handle(struct mvsata_port *);
-static void mvsata_channel_recover(struct mvsata_port *);
 
 static int mvsata_port_init(struct mvsata_hc *, int);
 static int mvsata_wdc_reg_init(struct mvsata_port *, struct wdc_regs *);
 #ifndef MVSATA_WITHOUTDMA
+static void mvsata_channel_recover(struct ata_channel *, int, uint32_t);
 static void *mvsata_edma_resource_prepare(struct mvsata_port *, bus_dma_tag_t,
 					  bus_dmamap_t *, size_t, int);
 static void mvsata_edma_resource_purge(struct mvsata_port *, bus_dma_tag_t,
@@ -218,7 +218,8 @@ static const struct ata_bustype mvsata_ata_bustype = {
 	ata_get_params,
 	mvsata_addref,
 	mvsata_delref,
-	mvsata_killpending
+	mvsata_killpending,
+	mvsata_channel_recover,
 };
 
 #if NATAPIBUS > 0
@@ -533,28 +534,29 @@ mvsata_error(struct mvsata_port *mvport)
 		    mvport->port_hc->hc, mvport->port);
 	}
 	if (cause & EDMA_IE_EDEVERR) {
+		struct ata_channel *chp = &mvport->port_ata_channel;
+
 		aprint_error("%s:%d:%d: device error, recovering\n",
 		    device_xname(MVSATA_DEV2(mvport)),
 		    mvport->port_hc->hc, mvport->port);
 
-		if (!ISSET(mvport->port_ata_channel.ch_flags,
-		    ATACH_RECOVERING))
-			mvsata_channel_recover(mvport);
+		ata_channel_lock(chp);
+		ata_thread_run(chp, 0, ATACH_TH_RECOVERY,
+		    ATACH_ERR_ST(0, WDCS_ERR));
+		ata_channel_unlock(chp);
 	}
 
 	return 1;
 }
 
+#ifndef MVSATA_WITHOUTDMA
 static void
-mvsata_channel_recover(struct mvsata_port *mvport)
+mvsata_channel_recover(struct ata_channel *chp, int flags, uint32_t tfd)
 {
-	struct ata_channel *chp = &mvport->port_ata_channel;
-	int drive, tfd = ATACH_ERR_ST(0, WDCS_ERR);
+	struct mvsata_port * const mvport = (struct mvsata_port *)chp;
+	int drive;
 
-	ata_channel_lock(chp);
-	KASSERT(!ISSET(chp->ch_flags, ATACH_RECOVERING));
-	SET(chp->ch_flags, ATACH_RECOVERING);
-	ata_channel_unlock(chp);
+	ata_channel_lock_owned(chp);
 
 	if (chp->ch_ndrives > PMP_PORT_CTL) {
 		/* Get PM port number for the device in error. This device
@@ -574,12 +576,9 @@ mvsata_channel_recover(struct mvsata_port *mvport)
 	ata_recovery_resume(chp, drive, tfd, AT_POLL);
 
 	/* Drive unblocked, back to normal operation */
-	ata_channel_lock(chp);
-	CLR(chp->ch_flags, ATACH_RECOVERING);
-	ata_channel_unlock(chp);
-
-	atastart(chp);
+	return;
 }
+#endif /* !MVSATA_WITHOUTDMA */
 
 /*
  * ATA callback entry points

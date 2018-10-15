@@ -1,9 +1,6 @@
 jdolecek-ncqfixes goals:
 - re-check READ LOG EXT handling under native and Parallels to make sure
   the NOERROR under Parallels is their bug and not ours
-- run recovery via atathread, move to new function and share ahci/siisata/mvsata
-- maybe do device error handling in not-interrupt-context (maybe this should be
-  done on a mpata branch?)
 
 Bugs
 ----

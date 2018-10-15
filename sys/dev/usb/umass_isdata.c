@@ -1,4 +1,4 @@
-/*	$NetBSD: umass_isdata.c,v 1.36.6.1 2018/09/22 09:23:00 jdolecek Exp $	*/
+/*	$NetBSD: umass_isdata.c,v 1.36.6.2 2018/10/15 21:18:53 jdolecek Exp $	*/
 
 /*
  * TODO:
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass_isdata.c,v 1.36.6.1 2018/09/22 09:23:00 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass_isdata.c,v 1.36.6.2 2018/10/15 21:18:53 jdolecek Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -134,6 +134,7 @@ const struct ata_bustype uisdata_bustype = {
 	uisdata_addref,
 	uisdata_delref,
 	uisdata_kill_pending,
+	NULL,
 };
 
 struct ata_cmd {
