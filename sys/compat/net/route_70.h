@@ -1,4 +1,4 @@
-/*	$NetBSD: route_70.h,v 1.1.2.2 2018/03/16 08:10:26 pgoyette Exp $	*/
+/*	$NetBSD: route_70.h,v 1.1.2.3 2018/10/15 04:33:34 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -38,10 +38,6 @@
 
 void rtsock_70_init(void);
 void rtsock_70_fini(void);
-
-extern void (*vec_70_rt_newaddrmsg1)(int, struct ifaddr *);
-extern int (*vec_70_iflist_addr)(struct rt_walkarg *, struct ifaddr *,
-                       struct rt_addrinfo *);
 
 extern bool vec_ocreds_valid;
 

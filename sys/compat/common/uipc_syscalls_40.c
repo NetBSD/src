@@ -1,9 +1,9 @@
-/*	$NetBSD: uipc_syscalls_40.c,v 1.15.2.11 2018/09/22 04:56:28 pgoyette Exp $	*/
+/*	$NetBSD: uipc_syscalls_40.c,v 1.15.2.12 2018/10/15 04:33:34 pgoyette Exp $	*/
 
 /* written by Pavel Cahyna, 2006. Public domain. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls_40.c,v 1.15.2.11 2018/09/22 04:56:28 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls_40.c,v 1.15.2.12 2018/10/15 04:33:34 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -23,11 +23,9 @@ __KERNEL_RCSID(0, "$NetBSD: uipc_syscalls_40.c,v 1.15.2.11 2018/09/22 04:56:28 p
 
 #include <net/if.h>
 
-#include <compat/sys/if.h>
 #include <compat/sys/socket.h>
 #include <compat/sys/sockio.h>
 
-#include <compat/common/if_40.h>
 #include <compat/common/compat_mod.h>
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls_50.c,v 1.3.56.11 2018/09/30 01:45:49 pgoyette Exp $	*/
+/*	$NetBSD: uipc_syscalls_50.c,v 1.3.56.12 2018/10/15 04:33:34 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,6 @@
 #include <compat/sys/time.h>
 #include <compat/sys/socket.h>
 #include <compat/sys/sockio.h>
-#include <compat/sys/if.h>
 
 #include <compat/common/compat_mod.h>
 

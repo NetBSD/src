@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock_70.c,v 1.2.2.1 2018/03/15 05:10:05 pgoyette Exp $	*/
+/*	$NetBSD: rtsock_70.c,v 1.2.2.2 2018/10/15 04:33:34 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -30,13 +30,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock_70.c,v 1.2.2.1 2018/03/15 05:10:05 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock_70.c,v 1.2.2.2 2018/10/15 04:33:34 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
 #endif
 
 #include <sys/mbuf.h>
+#include <sys/compat_stub.h>
+
 #include <net/if.h>
 #include <net/route.h>
 
@@ -44,24 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: rtsock_70.c,v 1.2.2.1 2018/03/15 05:10:05 pgoyette E
 #include <compat/net/route.h>
 #include <compat/net/route_70.h>
 
-static void (*orig_70_rt_newaddrmsg1)(int, struct ifaddr *);
-
-void
-rtsock_70_init(void)
-{
-
-	orig_70_rt_newaddrmsg1 = vec_70_rt_newaddrmsg1;
-	vec_70_rt_newaddrmsg1 = compat_70_rt_newaddrmsg1;
-}
-
-void
-rtsock_70_fini(void)
-{
-
-	vec_70_rt_newaddrmsg1 = orig_70_rt_newaddrmsg1;
-}
-
-void
+int
 compat_70_rt_newaddrmsg1(int cmd, struct ifaddr *ifa)
 {
 	struct rt_addrinfo info;
@@ -102,10 +87,12 @@ compat_70_rt_newaddrmsg1(int cmd, struct ifaddr *ifa)
 
 	m = rt_msg1(ncmd, &info, &ifam, sizeof(ifam));
 	if (m == NULL)
-		return;
+		return 0;
 
 	mtod(m, struct ifa_msghdr70 *)->ifam_addrs = info.rti_addrs;
 	route_enqueue(m, sa ? sa->sa_family : 0);
+
+	return 0;
 }
 
 int
@@ -128,4 +115,22 @@ compat_70_iflist_addr(struct rt_walkarg *w, struct ifaddr *ifa,
 			w->w_where = (char *)w->w_where + len;
 	}
 	return error;
+}
+
+MODULE_SET_HOOK2(rtsock_70_hook, "rts_70", compat_70_rt_newaddrmsg1,
+    compat_70_iflist_addr);
+MODULE_UNSET_HOOK2(rtsock_70_hook);
+
+void
+rtsock_70_init(void)
+{
+
+	rtsock_70_hook_set();
+}
+
+void
+rtsock_70_fini(void)
+{
+
+	rtsock_70_hook_unset();
 }
