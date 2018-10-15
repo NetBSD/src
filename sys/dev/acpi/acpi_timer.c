@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_timer.c,v 1.22 2013/12/27 18:51:44 christos Exp $ */
+/* $NetBSD: acpi_timer.c,v 1.23 2018/10/15 11:33:09 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2006 Matthias Drochner <drochner@NetBSD.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_timer.c,v 1.22 2013/12/27 18:51:44 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_timer.c,v 1.23 2018/10/15 11:33:09 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -52,12 +52,21 @@ static struct timecounter acpi_timecounter = {
 	NULL,
 };
 
+static bool
+acpitimer_supported(void)
+{
+	return AcpiGbl_FADT.PmTimerLength != 0;
+}
+
 int
 acpitimer_init(struct acpi_softc *sc)
 {
 	ACPI_STATUS rv;
 	uint32_t bits;
 	int i, j;
+
+	if (!acpitimer_supported())
+		return -1;
 
 	rv = AcpiGetTimerResolution(&bits);
 
@@ -87,6 +96,9 @@ acpitimer_init(struct acpi_softc *sc)
 int
 acpitimer_detach(void)
 {
+
+	if (!acpitimer_supported())
+		return -1;
 
 	return tc_detach(&acpi_timecounter);
 }
