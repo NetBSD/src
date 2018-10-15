@@ -1,4 +1,4 @@
-#	$NetBSD: files.acpi,v 1.1 2018/10/12 22:20:04 jmcneill Exp $
+#	$NetBSD: files.acpi,v 1.2 2018/10/15 11:35:03 jmcneill Exp $
 #
 # Configuration info for ACPI compliant ARM boards.
 #
@@ -11,6 +11,7 @@ defflag	opt_pcifixup.h		ACPI_PCI_FIXUP
 include "dev/acpi/files.acpi"
 
 file	arch/arm/acpi/acpi_machdep.c		acpi
+file	arch/arm/acpi/acpi_pci_machdep.c	acpi
 file	arch/arm/acpi/acpi_platform.c		acpi
 file	arch/arm/acpi/acpi_table.c		acpi
 
@@ -25,3 +26,7 @@ file	arch/arm/acpi/gtmr_acpi.c		gtmr_acpi
 
 attach	plcom at acpinodebus with plcom_acpi
 file	arch/arm/acpi/plcom_acpi.c		plcom_acpi
+
+device	acpipchb: pcibus
+attach	acpipchb at acpinodebus
+file	arch/arm/acpi/acpipchb.c		acpipchb
