@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.3,v 1.1.2.2 2018/10/09 15:54:57 snj Exp $
+# $NetBSD: CHANGES-7.3,v 1.1.2.3 2018/10/15 07:56:09 sborrill Exp $
 
 A complete list of changes from the NetBSD 7.2 release to the NetBSD 7.3
 release:
@@ -67,4 +67,10 @@ usr.sbin/cpuctl/arch/i386.c			1.71,1.75-1.79,1.81-1.85 via patch
 	  - Parse the TLB info from `cpuid leaf 18H' on Intel processor.
 	  - Use aprint_error_dev() for error output.
 	[msaitoh, ticket #1636]
+
+sbin/gpt/gpt.c			1.76
+
+	When changing entries skip those that do not match the -L option.
+	Should fix PR 53668.
+	[mlelstv, ticket #1643]
 
