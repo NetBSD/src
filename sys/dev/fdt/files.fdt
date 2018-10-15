@@ -1,4 +1,4 @@
-# $NetBSD: files.fdt,v 1.39 2018/10/06 16:28:21 skrll Exp $
+# $NetBSD: files.fdt,v 1.40 2018/10/15 23:50:48 jmcneill Exp $
 
 include	"external/bsd/libfdt/conf/files.libfdt"
 
@@ -123,10 +123,9 @@ file	dev/fdt/virtio_mmio_fdt.c		virtio_mmio_fdt
 attach 	qemufwcfg at fdt with qemufwcfg_fdt
 file	dev/fdt/qemufwcfg_fdt.c			qemufwcfg_fdt
 
-# ARM PrimeCell  General Purpose Input/Output (PL061)
-device	pl061gpio: gpiobus
-attach 	pl061gpio at fdt with pl061gpio_fdt
-file	dev/fdt/pl061gpio_fdt.c			pl061gpio_fdt
+# ARM PrimeCell General Purpose Input/Output (PL061)
+attach 	plgpio at fdt with plgpio_fdt
+file	dev/fdt/pl061gpio_fdt.c			plgpio_fdt
 
 # AHCI SATA controller
 attach	ahcisata at fdt with ahcisata_fdt

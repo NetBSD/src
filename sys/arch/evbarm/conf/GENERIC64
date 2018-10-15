@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC64,v 1.47 2018/10/15 11:35:42 jmcneill Exp $
+#	$NetBSD: GENERIC64,v 1.48 2018/10/15 23:50:48 jmcneill Exp $
 #
 #	GENERIC ARM (aarch64) kernel
 #
@@ -182,7 +182,7 @@ tegra210car*	at fdt? pass 3		# NVIDIA Tegra CAR (T210)
 
 # GPIO controller
 bcmgpio*	at fdt?			# Broadcom BCM283x GPIO
-pl061gpio*	at fdt?			# ARM PrimeCell PL061 GPIO
+plgpio*		at fdt?			# ARM PrimeCell PL061 GPIO
 sunxigpio*	at fdt? pass 3		# Allwinner GPIO
 tegragpio*	at fdt? pass 2		# NVIDIA Tegra GPIO
 rkgpio*		at rkiomux?		# Rockchip GPIO

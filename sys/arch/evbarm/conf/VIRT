@@ -1,5 +1,5 @@
 #
-#	$NetBSD: VIRT,v 1.7 2018/07/14 15:09:41 maxv Exp $
+#	$NetBSD: VIRT,v 1.8 2018/10/15 23:50:48 jmcneill Exp $
 #
 #	QEMU ARM 'virt' virtual machine
 #
@@ -58,7 +58,7 @@ plcom*		at fdt?			# ARM PL011 UART
 plrtc*		at fdt?			# ARM PrimeCell RTC
 
 # GPIO
-pl061gpio*	at fdt?			# ARM PrimeCell GPIO
+plgpio*		at fdt?			# ARM PrimeCell GPIO
 
 # Virtio devices
 virtio*	at fdt?				# Virtio MMIO device
