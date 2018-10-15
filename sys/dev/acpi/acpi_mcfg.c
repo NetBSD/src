@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_mcfg.c,v 1.8 2018/10/15 10:01:32 jmcneill Exp $	*/
+/*	$NetBSD: acpi_mcfg.c,v 1.9 2018/10/15 12:46:43 jmcneill Exp $	*/
 
 /*-
  * Copyright (C) 2015 NONAKA Kimihiro <nonaka@NetBSD.org>
@@ -28,7 +28,7 @@
 #include "opt_pci.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_mcfg.c,v 1.8 2018/10/15 10:01:32 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_mcfg.c,v 1.9 2018/10/15 12:46:43 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -878,7 +878,7 @@ cleanup:
 #else
 int
 acpimcfg_configure_bus(device_t self, pci_chipset_tag_t pc, ACPI_HANDLE handle,
-    int cacheline_size)
+    int bus, int cacheline_size)
 {
 	return ENXIO;
 }
