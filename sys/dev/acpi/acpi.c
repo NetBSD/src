@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.274 2018/10/12 21:35:54 jmcneill Exp $	*/
+/*	$NetBSD: acpi.c,v 1.275 2018/10/16 00:30:08 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.274 2018/10/12 21:35:54 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.275 2018/10/16 00:30:08 jmcneill Exp $");
 
 #include "pci.h"
 #include "opt_acpi.h"
@@ -525,8 +525,9 @@ acpi_attach(device_t parent, device_t self, void *aux)
 	acpi_active = 1;
 
 	/* Show SCI interrupt. */
-	aprint_verbose_dev(self, "SCI interrupting at int %u\n",
-	    AcpiGbl_FADT.SciInterrupt);
+	if (AcpiGbl_FADT.SciInterrupt != 0)
+		aprint_verbose_dev(self, "SCI interrupting at int %u\n",
+		    AcpiGbl_FADT.SciInterrupt);
 
 	/*
 	 * Install fixed-event handlers.
@@ -1409,7 +1410,9 @@ acpi_enter_sleep_state(int state)
 			AcpiClearEvent(ACPI_EVENT_POWER_BUTTON);
 			AcpiClearEvent(ACPI_EVENT_SLEEP_BUTTON);
 			AcpiClearEvent(ACPI_EVENT_RTC);
+#if !defined(ACPI_REDUCED_HARDWARE)
 			AcpiHwDisableAllGpes();
+#endif
 
 			acpi_md_OsEnableInterrupt();
 			rv = AcpiLeaveSleepState(state);
