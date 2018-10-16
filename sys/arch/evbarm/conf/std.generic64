@@ -1,4 +1,4 @@
-#	$NetBSD: std.generic64,v 1.5 2018/10/15 05:14:07 skrll Exp $
+#	$NetBSD: std.generic64,v 1.6 2018/10/16 00:32:07 jmcneill Exp $
 #
 #	generic NetBSD/evbarm64 with FDT support
 
@@ -9,6 +9,7 @@ include		"arch/aarch64/conf/std.aarch64"	# arch standard options
 # Architecture options
 options 	AARCH64
 
+options 	ACPI_REDUCED_HARDWARE
 options 	ARM_GENERIC_TODR
 options 	ARM_INTR_IMPL="<arch/arm/fdt/fdt_intr.h>"
 options 	DRAM_BLOCKS=256
