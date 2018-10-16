@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.275 2018/10/16 00:30:08 jmcneill Exp $	*/
+/*	$NetBSD: acpi.c,v 1.276 2018/10/16 10:25:33 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.275 2018/10/16 00:30:08 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.276 2018/10/16 10:25:33 jmcneill Exp $");
 
 #include "pci.h"
 #include "opt_acpi.h"
@@ -1410,7 +1410,7 @@ acpi_enter_sleep_state(int state)
 			AcpiClearEvent(ACPI_EVENT_POWER_BUTTON);
 			AcpiClearEvent(ACPI_EVENT_SLEEP_BUTTON);
 			AcpiClearEvent(ACPI_EVENT_RTC);
-#if !defined(ACPI_REDUCED_HARDWARE)
+#if (!ACPI_REDUCED_HARDWARE)
 			AcpiHwDisableAllGpes();
 #endif
 
