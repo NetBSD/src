@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1348 2018/10/15 09:01:56 uwe Exp $
+$NetBSD: pcidevs,v 1.1349 2018/10/16 00:07:08 jmcneill Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1042,6 +1042,9 @@ product AMD F12_GPP0	0x1709	Family12h GPP0 Root Port
 product AMD F14_MISC	0x1716	Family12h/14h Misc. Configuration
 product AMD F14_HB18	0x1718	Family12h/14h Host Bridge
 product AMD F14_HB19	0x1719	Family12h/14h Host Bridge
+product AMD SEATTLE_PCHB_1	0x1a00	Seattle Host Bridge
+product AMD SEATTLE_PCHB_2	0x1a01	Seattle Host Bridge
+product AMD SEATTLE_PCIE	0x1a02	Seattle PCIE Root Port
 product AMD PCNET_PCI	0x2000	PCnet-PCI Ethernet
 product AMD PCNET_HOME	0x2001	PCnet-Home HomePNA Ethernet
 product AMD AM_1771_MBW	0x2003	Alchemy AM 1771 MBW
