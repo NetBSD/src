@@ -1,4 +1,4 @@
-/* $NetBSD: acpi.c,v 1.32 2018/10/05 05:09:31 msaitoh Exp $ */
+/* $NetBSD: acpi.c,v 1.33 2018/10/16 21:44:37 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 1998 Doug Rabson
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: acpi.c,v 1.32 2018/10/05 05:09:31 msaitoh Exp $");
+__RCSID("$NetBSD: acpi.c,v 1.33 2018/10/16 21:44:37 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/endian.h>
@@ -819,11 +819,16 @@ acpi_handle_fadt(ACPI_TABLE_HEADER *sdp)
 	fadt = (ACPI_TABLE_FADT *)sdp;
 	acpi_print_fadt(sdp);
 
-	facs = (ACPI_TABLE_FACS *)acpi_map_sdt(
-		acpi_select_address(fadt->Facs, fadt->XFacs));
-	if (memcmp(facs->Signature, ACPI_SIG_FACS, 4) != 0 || facs->Length < 64)
-		errx(EXIT_FAILURE, "FACS is corrupt");
-	acpi_print_facs(facs);
+	if (acpi_select_address(fadt->Facs, fadt->XFacs) == 0) {
+		if ((fadt->Flags & ACPI_FADT_HW_REDUCED) == 0)
+			errx(EXIT_FAILURE, "Missing FACS and HW_REDUCED_ACPI flag not set in FADT");
+	} else {
+		facs = (ACPI_TABLE_FACS *)acpi_map_sdt(
+			acpi_select_address(fadt->Facs, fadt->XFacs));
+		if (memcmp(facs->Signature, ACPI_SIG_FACS, 4) != 0 || facs->Length < 64)
+			errx(EXIT_FAILURE, "FACS is corrupt");
+		acpi_print_facs(facs);
+	}
 
 	dsdp = (ACPI_TABLE_HEADER *)acpi_map_sdt(
 		acpi_select_address(fadt->Dsdt, fadt->XDsdt));
