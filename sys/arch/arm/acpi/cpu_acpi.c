@@ -1,4 +1,4 @@
-/* $NetBSD: cpu_acpi.c,v 1.1 2018/10/12 22:20:04 jmcneill Exp $ */
+/* $NetBSD: cpu_acpi.c,v 1.2 2018/10/16 16:18:15 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_acpi.c,v 1.1 2018/10/12 22:20:04 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_acpi.c,v 1.2 2018/10/16 16:18:15 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -63,8 +63,14 @@ static int
 cpu_acpi_match(device_t parent, cfdata_t cf, void *aux)
 {
 	ACPI_SUBTABLE_HEADER *hdrp = aux;
+	ACPI_MADT_GENERIC_INTERRUPT *gicc;
 
-	return hdrp->Type == ACPI_MADT_TYPE_GENERIC_INTERRUPT;
+	if (hdrp->Type != ACPI_MADT_TYPE_GENERIC_INTERRUPT)
+		return 0;
+
+	gicc = (ACPI_MADT_GENERIC_INTERRUPT *)hdrp;
+
+	return (gicc->Flags & ACPI_MADT_ENABLED) != 0;
 }
 
 static void
