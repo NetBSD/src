@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.276 2018/10/16 10:25:33 jmcneill Exp $	*/
+/*	$NetBSD: acpi.c,v 1.277 2018/10/16 22:29:43 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.276 2018/10/16 10:25:33 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.277 2018/10/16 22:29:43 jmcneill Exp $");
 
 #include "pci.h"
 #include "opt_acpi.h"
@@ -524,16 +524,17 @@ acpi_attach(device_t parent, device_t self, void *aux)
 
 	acpi_active = 1;
 
-	/* Show SCI interrupt. */
-	if (AcpiGbl_FADT.SciInterrupt != 0)
+	if (!AcpiGbl_ReducedHardware) {
+		/* Show SCI interrupt. */
 		aprint_verbose_dev(self, "SCI interrupting at int %u\n",
 		    AcpiGbl_FADT.SciInterrupt);
 
-	/*
-	 * Install fixed-event handlers.
-	 */
-	acpi_register_fixed_button(sc, ACPI_EVENT_POWER_BUTTON);
-	acpi_register_fixed_button(sc, ACPI_EVENT_SLEEP_BUTTON);
+		/*
+		 * Install fixed-event handlers.
+		 */
+		acpi_register_fixed_button(sc, ACPI_EVENT_POWER_BUTTON);
+		acpi_register_fixed_button(sc, ACPI_EVENT_SLEEP_BUTTON);
+	}
 
 	acpitimer_init(sc);
 	acpi_config_tree(sc);
@@ -583,8 +584,10 @@ acpi_detach(device_t self, int flags)
 	if ((rc = acpitimer_detach()) != 0)
 		return rc;
 
-	acpi_deregister_fixed_button(sc, ACPI_EVENT_POWER_BUTTON);
-	acpi_deregister_fixed_button(sc, ACPI_EVENT_SLEEP_BUTTON);
+	if (!AcpiGbl_ReducedHardware) {
+		acpi_deregister_fixed_button(sc, ACPI_EVENT_POWER_BUTTON);
+		acpi_deregister_fixed_button(sc, ACPI_EVENT_SLEEP_BUTTON);
+	}
 
 	pmf_device_deregister(self);
 
