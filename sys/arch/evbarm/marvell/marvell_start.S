@@ -1,4 +1,4 @@
-/*	$NetBSD: marvell_start.S,v 1.9 2018/10/15 16:54:55 skrll Exp $ */
+/*	$NetBSD: marvell_start.S,v 1.10 2018/10/16 11:28:30 skrll Exp $ */
 /*
  * Copyright (C) 2005, 2006 WIDE Project and SOUM Corporation.
  * All rights reserved.
@@ -66,7 +66,7 @@
 #include <evbarm/marvell/marvellreg.h>
 #include "assym.h"
 
-RCSID("$NetBSD: marvell_start.S,v 1.9 2018/10/15 16:54:55 skrll Exp $")
+RCSID("$NetBSD: marvell_start.S,v 1.10 2018/10/16 11:28:30 skrll Exp $")
 
 #ifndef SDRAM_START
 #define SDRAM_START	0x00000000
@@ -244,8 +244,8 @@ cores_end:
 
 #define MMU_INIT(va,pa,n_sec,attr) \
 	.word	n_sec					    ; \
-	.word	4 * ((va) >> L1_S_SHIFT)		    ; \
-	.word	(pa) | (attr)				    ;
+	.word	4 * (((va) & 0xffffffff) >> L1_S_SHIFT)	    ; \
+	.word	((pa) & 0xffffffff) | (attr)		    ;
 
 mmu_init_table:
 	/* fill all table VA==PA */
