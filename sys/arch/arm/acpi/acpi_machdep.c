@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_machdep.c,v 1.2 2018/10/15 11:35:03 jmcneill Exp $ */
+/* $NetBSD: acpi_machdep.c,v 1.3 2018/10/16 16:38:22 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.2 2018/10/15 11:35:03 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.3 2018/10/16 16:38:22 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -122,7 +122,7 @@ acpi_md_OsUnmapMemory(void *va, UINT32 size)
 	vsize_t osz;
 
 	ova = trunc_page((vaddr_t)va);
-	osz = round_page((vaddr_t)va + size) - (vaddr_t)va;
+	osz = round_page((vaddr_t)va + size) - ova;
 
 	pmap_kremove(ova, osz);
 	pmap_update(pmap_kernel());
