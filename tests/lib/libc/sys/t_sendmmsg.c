@@ -1,4 +1,4 @@
-/*	$NetBSD: t_sendmmsg.c,v 1.1 2018/08/21 10:38:09 christos Exp $	*/
+/*	$NetBSD: t_sendmmsg.c,v 1.2 2018/10/16 09:23:29 roy Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_sendmmsg.c,v 1.1 2018/08/21 10:38:09 christos Exp $");
+__RCSID("$NetBSD: t_sendmmsg.c,v 1.2 2018/10/16 09:23:29 roy Exp $");
 
 #include <atf-c.h>
 #include <sys/types.h>
@@ -142,7 +142,7 @@ ATF_TC_BODY(sendmmsg_basic, tc)
 			// XXX: ENOBUFS bug, on the receive side!!!
 			// in npkt = min(mmsgsize, mmsgcnt - n);
 			int npkt = min(3, mmsgcnt - n), a;
-			do { 
+			do {
 				a = 0;
 				ATF_REQUIRE(ioctl(fd[1], FIONSPACE, &a) != -1);
 				printf("1 %d\n", a);
@@ -184,11 +184,11 @@ ATF_TC_BODY(sendmmsg_basic, tc)
 				if (rdied)
 					break;
 				cnt = recv(fd[0], rgram, sizeof(rgram), 0);
-				ATF_REQUIRE_MSG(cnt != -1, "recv failed (%s)",
-				    strerror(errno));
+				ATF_REQUIRE_MSG(cnt != -1 || errno != ENOBUFS,
+				    "recv failed (%s)", strerror(errno));
 				ATF_CHECK_EQ_MSG(cnt, sizeof(rgram),
 				    "packet length");
-				ATF_CHECK_EQ_MSG(rgram[0], n, 
+				ATF_CHECK_EQ_MSG(rgram[0], n,
 				    "number %u != %u", rgram[0], n);
 				ATF_REQUIRE_MSG(memcmp(rgram + 1, DGRAM + 1,
 				    sizeof(rgram) - 1) == 0, "bad data");
