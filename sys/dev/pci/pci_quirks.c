@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_quirks.c,v 1.10 2018/02/28 05:50:06 msaitoh Exp $	*/
+/*	$NetBSD: pci_quirks.c,v 1.11 2018/10/16 00:10:58 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_quirks.c,v 1.10 2018/02/28 05:50:06 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_quirks.c,v 1.11 2018/10/16 00:10:58 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -52,6 +52,10 @@ static const struct pci_quirkdata pci_quirks[] = {
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_XEOND_MEM_0_TTR_1,
 	    PCI_QUIRK_HASEXTCNF },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_COREI76K_IMC_0,
+	    PCI_QUIRK_HASEXTCNF },
+	{ PCI_VENDOR_AMD, PCI_PRODUCT_AMD_SEATTLE_PCHB_1,
+	    PCI_QUIRK_HASEXTCNF },
+	{ PCI_VENDOR_AMD, PCI_PRODUCT_AMD_SEATTLE_PCHB_2,
 	    PCI_QUIRK_HASEXTCNF },
 };
 
