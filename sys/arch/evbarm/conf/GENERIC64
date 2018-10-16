@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC64,v 1.49 2018/10/15 23:59:36 jmcneill Exp $
+#	$NetBSD: GENERIC64,v 1.50 2018/10/16 06:05:38 skrll Exp $
 #
 #	GENERIC ARM (aarch64) kernel
 #
@@ -65,6 +65,7 @@ options 	SOC_SUN50I_A64
 options 	SOC_SUN50I_H5
 options 	SOC_SUN50I_H6
 options 	SOC_TEGRA210
+#options 	SOC_THUNDERX
 options 	SOC_VIRT
 options 	MULTIPROCESSOR
 
