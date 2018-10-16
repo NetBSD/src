@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_timer.c,v 1.23 2018/10/15 11:33:09 jmcneill Exp $ */
+/* $NetBSD: acpi_timer.c,v 1.24 2018/10/16 00:30:08 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2006 Matthias Drochner <drochner@NetBSD.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_timer.c,v 1.23 2018/10/15 11:33:09 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_timer.c,v 1.24 2018/10/16 00:30:08 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -39,6 +39,7 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_timer.c,v 1.23 2018/10/15 11:33:09 jmcneill Exp
 
 #include <machine/acpi_machdep.h>
 
+#if !defined(ACPI_REDUCED_HARDWARE)
 static int	acpitimer_test(void);
 
 static struct timecounter acpi_timecounter = {
@@ -57,10 +58,12 @@ acpitimer_supported(void)
 {
 	return AcpiGbl_FADT.PmTimerLength != 0;
 }
+#endif
 
 int
 acpitimer_init(struct acpi_softc *sc)
 {
+#if !defined(ACPI_REDUCED_HARDWARE)
 	ACPI_STATUS rv;
 	uint32_t bits;
 	int i, j;
@@ -91,18 +94,25 @@ acpitimer_init(struct acpi_softc *sc)
 	    acpi_timecounter.tc_name, bits);
 
 	return 0;
+#else
+	return -1;
+#endif
 }
 
 int
 acpitimer_detach(void)
 {
-
+#if !defined(ACPI_REDUCED_HARDWARE)
 	if (!acpitimer_supported())
 		return -1;
 
 	return tc_detach(&acpi_timecounter);
+#else
+	return -1;
+#endif
 }
 
+#if !defined(ACPI_REDUCED_HARDWARE)
 u_int
 acpitimer_read_fast(struct timecounter *tc)
 {
@@ -190,3 +200,4 @@ acpitimer_test(void)
 
 	return n;
 }
+#endif
