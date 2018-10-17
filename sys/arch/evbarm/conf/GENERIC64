@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC64,v 1.50 2018/10/16 06:05:38 skrll Exp $
+#	$NetBSD: GENERIC64,v 1.51 2018/10/17 00:04:06 jmcneill Exp $
 #
 #	GENERIC ARM (aarch64) kernel
 #
@@ -255,6 +255,7 @@ plcom*		at acpi?
 # I2C controllers
 bsciic*		at fdt?			# Broadcom BCM283x Serial Control
 dwiic*		at fdt?			# Designware I2C
+dwiic*		at acpi?
 rkiic*		at fdt?			# Rockchip I2C
 sunxirsb*	at fdt?			# Allwinner RSB
 sunxitwi*	at fdt?			# Allwinner TWI
