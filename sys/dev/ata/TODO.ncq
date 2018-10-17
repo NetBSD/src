@@ -1,6 +1,6 @@
-jdolecek-ncqfixes goals:
-- re-check READ LOG EXT handling under native and Parallels to make sure
-  the NOERROR under Parallels is their bug and not ours
+jdolecek-ncqfixes to finish:
+- re-check READ LOG EXT handling under native
+- recheck native working for ahcisata(4), siisata(4), mvsata(4) + PMP
 
 Bugs
 ----
