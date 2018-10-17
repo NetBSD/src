@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.1,v 1.1.2.35 2018/10/15 08:04:20 sborrill Exp $
+# $NetBSD: CHANGES-8.1,v 1.1.2.36 2018/10/17 13:51:53 martin Exp $
 
 A complete list of changes from the NetBSD 8.0 release to the NetBSD 8.1
 release:
@@ -1401,4 +1401,26 @@ sbin/gpt/gpt.c					1.76
 	When changing entries, skip those that do not match the -L option.
 	Should fix PR 53668.
 	[mlelstv, ticket #1063]
+
+sys/netinet/ip_reass.c				1.19-1.21
+
+	Cache ip_off and ip_len in the fragment entry.
+	Kick fragments that would introduce several !MFFs
+	in a reassembly chain. 
+	Force ip_off to zero when the reassembly is complete.
+	[maxv, ticket #1045]
+
+sys/dev/pci/aac_pci.c				1.39
+sys/dev/pci/pcidevs				1.1348
+sys/dev/pci/pcidevs.h				(regen)
+sys/dev/pci/pcidevs_data.h			(regen)
+
+	Add Adaptec RAID 2445 and 2805.
+	[uwe, ticket #1064]
+
+distrib/sets/lists/base/mi			1.1186
+etc/mtree/NetBSD.dist.base			1.174
+
+	Add /var/chroot/nsd/var/run.
+	[hannken, ticket #1065]
 
