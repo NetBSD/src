@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.base,v 1.160.2.1 2018/10/15 03:12:41 snj Exp $
+#	$NetBSD: NetBSD.dist.base,v 1.160.2.2 2018/10/17 13:50:25 martin Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -1282,6 +1282,7 @@
 ./var/chroot/nsd/var		mode=0755 uname=_nsd gname=_nsd
 ./var/chroot/nsd/var/db		mode=0755 uname=_nsd gname=_nsd
 ./var/chroot/nsd/var/db/nsd	mode=0755 uname=_nsd gname=_nsd
+./var/chroot/nsd/var/run	mode=0775 uname=_nsd gname=_nsd
 ./var/chroot/ntpd
 ./var/chroot/ntpd/dev
 ./var/chroot/ntpd/etc
