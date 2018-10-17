@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_mcfg.c,v 1.9 2018/10/15 12:46:43 jmcneill Exp $	*/
+/*	$NetBSD: acpi_mcfg.c,v 1.10 2018/10/17 01:16:23 jmcneill Exp $	*/
 
 /*-
  * Copyright (C) 2015 NONAKA Kimihiro <nonaka@NetBSD.org>
@@ -28,7 +28,7 @@
 #include "opt_pci.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_mcfg.c,v 1.9 2018/10/15 12:46:43 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_mcfg.c,v 1.10 2018/10/17 01:16:23 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -52,9 +52,13 @@ ACPI_MODULE_NAME	("acpi_mcfg")
 
 #define	EXTCONF_OFFSET(d, f, r)	((((d) * 8 + (f)) * PCI_EXTCONF_SIZE) + (r))
 
-#define	EXTCONF_SET_VALID(mb, d, f)	((mb)->valid_devs[(d)] |= __BIT((f)))
-#define	EXTCONF_SET_INVALID(mb, d, f)	((mb)->valid_devs[(d)] &= ~__BIT((f)))
-#define	EXTCONF_IS_VALID(mb, d, f)	((mb)->valid_devs[(d)] & __BIT((f)))
+#define	PCIDEV_SET_VALID(mb, d, f)	((mb)->valid_devs[(d)] |= __BIT((f)))
+#define	PCIDEV_SET_INVALID(mb, d, f)	((mb)->valid_devs[(d)] &= ~__BIT((f)))
+#define	PCIDEV_IS_VALID(mb, d, f)	((mb)->valid_devs[(d)] & __BIT((f)))
+
+#define	EXTCONF_SET_VALID(mb, d, f)	((mb)->valid_extconf[(d)] |= __BIT((f)))
+#define	EXTCONF_SET_INVALID(mb, d, f)	((mb)->valid_extconf[(d)] &= ~__BIT((f)))
+#define	EXTCONF_IS_VALID(mb, d, f)	((mb)->valid_extconf[(d)] & __BIT((f)))
 
 struct mcfg_segment {
 	uint64_t ms_address;		/* Base address */
@@ -65,6 +69,7 @@ struct mcfg_segment {
 	struct mcfg_bus {
 		bus_space_handle_t bsh[32][8];
 		uint8_t valid_devs[32];
+		uint8_t valid_extconf[32];
 		int valid_ndevs;
 		pcitag_t last_probed;
 	} *ms_bus;
@@ -489,7 +494,7 @@ acpimcfg_device_probe(const struct pci_attach_args *pa)
 			for (j = last_func; j < end_func; j++) {
 				if (i == last_dev && j == last_func)
 					continue;
-				EXTCONF_SET_INVALID(mb, i, j);
+				PCIDEV_SET_INVALID(mb, i, j);
 			}
 			last_func = 0;
 		}
@@ -513,12 +518,13 @@ acpimcfg_device_probe(const struct pci_attach_args *pa)
 		    "(cfg[0x%03x]=0x%08x, alias=%s)\n", bus, dev, func,
 		    PCI_CONF_SIZE, reg, alias ? "true" : "false");
 		EXTCONF_SET_INVALID(mb, dev, func);
-	} else {
-		aprint_debug_dev(acpi_sc->sc_dev,
-		    "MCFG: %03d:%02d:%d: Ok (cfg[0x%03x]=0x%08x)\n",
-		    bus, dev, func, PCI_CONF_SIZE, reg);
-		mb->valid_ndevs++;
 	}
+
+	aprint_debug_dev(acpi_sc->sc_dev,
+	    "MCFG: %03d:%02d:%d: Ok (cfg[0x%03x]=0x%08x extconf=%c)\n",
+	    bus, dev, func, PCI_CONF_SIZE, reg,
+	    EXTCONF_IS_VALID(mb, dev, func) ? 'Y' : 'N');
+	mb->valid_ndevs++;
 
 	return 0;
 }
@@ -587,6 +593,7 @@ acpimcfg_map_bus(device_t self, pci_chipset_tag_t pc, int bus)
 
 	/* Probe extended configuration space of all devices. */
 	memset(mb->valid_devs, 0xff, sizeof(mb->valid_devs));
+	memset(mb->valid_extconf, 0xff, sizeof(mb->valid_extconf));
 	mb->valid_ndevs = 0;
 	mb->last_probed = pci_make_tag(pc, bus, 0, 0);
 
@@ -613,7 +620,7 @@ acpimcfg_map_bus(device_t self, pci_chipset_tag_t pc, int bus)
 		pci_conf_write(pc, tag, 0x54, reg);
 	}
 
-	/* Unmap extended configration space of all dev/func. */
+	/* Unmap configuration space of all dev/func. */
 	bus_space_unmap(seg->ms_bst, bsh, ACPIMCFG_SIZE_PER_BUS);
 	memset(mb->bsh, 0, sizeof(mb->bsh));
 
@@ -632,15 +639,15 @@ acpimcfg_map_bus(device_t self, pci_chipset_tag_t pc, int bus)
 				/* Don't mark invalid to last probed device. */
 				continue;
 			}
-			EXTCONF_SET_INVALID(mb, i, j);
+			PCIDEV_SET_INVALID(mb, i, j);
 		}
 		last_func = 0;
 	}
 
-	/* Map extended configuration space per dev/func. */
+	/* Map configuration space per dev/func. */
 	for (i = 0; i < 32; i++) {
 		for (j = 0; j < 8; j++) {
-			if (!EXTCONF_IS_VALID(mb, i, j))
+			if (!PCIDEV_IS_VALID(mb, i, j))
 				continue;
 			error = bus_space_map(seg->ms_bst,
 			    baddr + EXTCONF_OFFSET(i, j, 0), PCI_EXTCONF_SIZE,
@@ -649,7 +656,7 @@ acpimcfg_map_bus(device_t self, pci_chipset_tag_t pc, int bus)
 				/* Unmap all handles when map failed. */
 				do {
 					while (--j >= 0) {
-						if (!EXTCONF_IS_VALID(mb, i, j))
+						if (!PCIDEV_IS_VALID(mb, i, j))
 							continue;
 						bus_space_unmap(seg->ms_bst,
 						    mb->bsh[i][j],
@@ -667,7 +674,7 @@ acpimcfg_map_bus(device_t self, pci_chipset_tag_t pc, int bus)
 	aprint_debug_dev(acpi_sc->sc_dev, "MCFG: bus %d: valid devices\n", bus);
 	for (i = 0; i < 32; i++) {
 		for (j = 0; j < 8; j++) {
-			if (EXTCONF_IS_VALID(mb, i, j)) {
+			if (PCIDEV_IS_VALID(mb, i, j)) {
 				aprint_debug_dev(acpi_sc->sc_dev,
 				    "MCFG: %03d:%02d:%d\n", bus, i, j);
 			}
@@ -908,7 +915,11 @@ acpimcfg_conf_read(pci_chipset_tag_t pc, pcitag_t tag, int reg, pcireg_t *data)
 	}
 
 	mb = &seg->ms_bus[bus - seg->ms_bus_start];
-	if (!EXTCONF_IS_VALID(mb, dev, func)) {
+	if (!PCIDEV_IS_VALID(mb, dev, func)) {
+		*data = -1;
+		return EINVAL;
+	}
+	if (!EXTCONF_IS_VALID(mb, dev, func) && reg >= PCI_CONF_SIZE) {
 		*data = -1;
 		return EINVAL;
 	}
@@ -937,7 +948,9 @@ acpimcfg_conf_write(pci_chipset_tag_t pc, pcitag_t tag, int reg, pcireg_t data)
 		return ERANGE;
 
 	mb = &seg->ms_bus[bus - seg->ms_bus_start];
-	if (!EXTCONF_IS_VALID(mb, dev, func))
+	if (!PCIDEV_IS_VALID(mb, dev, func))
+		return EINVAL;
+	if (!EXTCONF_IS_VALID(mb, dev, func) && reg >= PCI_CONF_SIZE)
 		return EINVAL;
 
 	mcfg_ops->ao_write(seg->ms_bst, mb->bsh[dev][func], reg, data);
