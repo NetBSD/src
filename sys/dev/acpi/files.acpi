@@ -1,4 +1,4 @@
-#	$NetBSD: files.acpi,v 1.106 2018/10/16 10:25:33 jmcneill Exp $
+#	$NetBSD: files.acpi,v 1.107 2018/10/17 00:03:47 jmcneill Exp $
 
 include "dev/acpi/acpica/files.acpica"
 
@@ -236,5 +236,9 @@ file	dev/acpi/ahcisata_acpi.c	ahcisata_acpi
 # ARM PrimeCell PL061 GPIO controller
 attach	plgpio at acpinodebus with plgpio_acpi
 file	dev/acpi/plgpio_acpi.c		plgpio_acpi
+
+# DesignWare I2C controller
+attach	dwiic at acpinodebus with dwiic_acpi
+file	dev/acpi/dwiic_acpi.c		dwiic_acpi
 
 include	"dev/acpi/wmi/files.wmi"
