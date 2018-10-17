@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1289.2.9 2018/07/26 23:14:37 snj Exp $
+$NetBSD: pcidevs,v 1.1289.2.10 2018/10/17 13:45:31 martin Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -891,6 +891,8 @@ product ADP2 AAR2810SA		0x0292	AAR-2810SA
 product ADP2 3405		0x02bb	RAID 3405
 product ADP2 3805		0x02bc	RAID 3805
 product ADP2 2405		0x02d5	RAID 2405
+product ADP2 2445		0x02d6	RAID 2445
+product ADP2 2805		0x02d7	RAID 2805
 product ADP2 AAC364		0x0364	AAC-364
 product ADP2 ASR5400S		0x0365	ASR-5400S
 product ADP2 PERC_2QC		0x1364	Dell PERC 2/QC
