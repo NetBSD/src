@@ -1,4 +1,4 @@
-/*      $NetBSD: xenevt.c,v 1.49 2018/10/10 03:54:54 cherry Exp $      */
+/*      $NetBSD: xenevt.c,v 1.50 2018/10/17 03:43:24 cherry Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenevt.c,v 1.49 2018/10/10 03:54:54 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenevt.c,v 1.50 2018/10/17 03:43:24 cherry Exp $");
 
 #include "opt_xen.h"
 #include <sys/param.h>
@@ -163,11 +163,7 @@ xenevtattach(int n)
 {
 	struct intrhand *ih;
 	int level = IPL_HIGH;
-#ifdef MULTIPROCESSOR
 	bool mpsafe = (level != IPL_VM);
-#else
-	bool mpsafe = false;
-#endif /* MULTIPROCESSOR */
 
 	mutex_init(&devevent_lock, MUTEX_DEFAULT, IPL_HIGH);
 	STAILQ_INIT(&devevent_pending);
