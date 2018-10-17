@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1281.2.9 2018/07/26 23:15:55 snj Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1281.2.10 2018/10/17 13:46:40 martin Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1289.2.9 2018/07/26 23:14:37 snj Exp
+ *	NetBSD: pcidevs,v 1.1289.2.10 2018/10/17 13:45:31 martin Exp
  */
 
 /*
@@ -898,6 +898,8 @@
 #define	PCI_PRODUCT_ADP2_3405	0x02bb		/* RAID 3405 */
 #define	PCI_PRODUCT_ADP2_3805	0x02bc		/* RAID 3805 */
 #define	PCI_PRODUCT_ADP2_2405	0x02d5		/* RAID 2405 */
+#define	PCI_PRODUCT_ADP2_2445	0x02d6		/* RAID 2445 */
+#define	PCI_PRODUCT_ADP2_2805	0x02d7		/* RAID 2805 */
 #define	PCI_PRODUCT_ADP2_AAC364	0x0364		/* AAC-364 */
 #define	PCI_PRODUCT_ADP2_ASR5400S	0x0365		/* ASR-5400S */
 #define	PCI_PRODUCT_ADP2_PERC_2QC	0x1364		/* Dell PERC 2/QC */
