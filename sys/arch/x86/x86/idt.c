@@ -1,4 +1,4 @@
-/*	$NetBSD: idt.c,v 1.8 2018/09/23 15:28:49 cherry Exp $	*/
+/*	$NetBSD: idt.c,v 1.9 2018/10/18 04:14:07 cherry Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2009 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: idt.c,v 1.8 2018/09/23 15:28:49 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: idt.c,v 1.9 2018/10/18 04:14:07 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,7 +89,7 @@ static char idt_allocmap[NIDT];
 #if defined(XEN)
 
 void
-set_idtgate(idt_descriptor_t *xen_idd, void *function, int ist,
+set_idtgate(struct trap_info *xen_idd, void *function, int ist,
 	    int type, int dpl, int sel)
 {
 	/* 
@@ -120,7 +120,7 @@ set_idtgate(idt_descriptor_t *xen_idd, void *function, int ist,
 	 * implicitly part of an idt, which we infer as
 	 * xen_idt_vaddr. (See above).
 	 */
-	xen_idd->vector = xen_idd - (idt_descriptor_t *)xen_idt_vaddr;
+	xen_idd->vector = xen_idd - (struct trap_info *)xen_idt_vaddr;
 
 	/* Back to read-only, as it should be. */
 #if defined(__x86_64__)
@@ -129,7 +129,7 @@ set_idtgate(idt_descriptor_t *xen_idd, void *function, int ist,
 	//kpreempt_enable();
 }
 void
-unset_idtgate(idt_descriptor_t *xen_idd)
+unset_idtgate(struct trap_info *xen_idd)
 {
 #if defined(__x86_64__)
 	vaddr_t xen_idt_vaddr = ((vaddr_t) xen_idd) & PAGE_MASK;
@@ -148,12 +148,12 @@ unset_idtgate(idt_descriptor_t *xen_idd)
 }
 #else /* XEN */
 void
-set_idtgate(idt_descriptor_t *idd, void *function, int ist, int type, int dpl, int sel)
+set_idtgate(struct gate_descriptor *idd, void *function, int ist, int type, int dpl, int sel)
 {
 	setgate(idd, function, ist, type, dpl,	sel);
 }
 void
-unset_idtgate(idt_descriptor_t *idd)
+unset_idtgate(struct gate_descriptor *idd)
 {
 	unsetgate(idd);
 }
