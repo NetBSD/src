@@ -1,4 +1,4 @@
-#	$NetBSD: mk.bcm53xx,v 1.4 2013/10/28 22:35:07 matt Exp $
+#	$NetBSD: mk.bcm53xx,v 1.5 2018/10/18 09:01:54 skrll Exp $
 CPPFLAGS+= -mcpu=cortex-a9 -mfpu=neon
 #CPPFLAGS+= -mabi=aapcs-linux -Wa,-meabi=5
 
@@ -6,14 +6,12 @@ CPPFLAGS+= -mcpu=cortex-a9 -mfpu=neon
 EXTRA_LINKFLAGS+=	--be8
 .endif
 
-SYSTEM_FIRST_OBJ=	bcm53xx_start.o
-SYSTEM_FIRST_SFILE=	${THISARM}/bcm53xx/bcm53xx_start.S
-
-GENASSYM_EXTRAS+=	${THISARM}/bcm53xx/genassym.cf
+SYSTEM_FIRST_OBJ=	armv6_start.o
+SYSTEM_FIRST_SFILE=	${ARM}/arm/armv6_start.S
 
 _OSRELEASE!=		${HOST_SH} $S/conf/osrelease.sh
 
-MKUBOOTIMAGEARGS=	-A arm -T kernel
+MKUBOOTIMAGEARGS=	-A arm -T kernel -O linux
 MKUBOOTIMAGEARGS+=	-a $(LOADADDRESS) -e $(LOADADDRESS)
 MKUBOOTIMAGEARGS+=	-n "NetBSD/$(BOARDTYPE) ${_OSRELEASE}"
 MKUBOOTIMAGEARGS_NONE=	${MKUBOOTIMAGEARGS} -C none

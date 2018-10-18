@@ -1,15 +1,13 @@
-#	$NetBSD: mk.zynq,v 1.1 2015/01/23 12:34:09 hkenken Exp $
+#	$NetBSD: mk.zynq,v 1.2 2018/10/18 09:01:54 skrll Exp $
 
 CPPFLAGS+= -mcpu=cortex-a9 -mfpu=neon
 
-SYSTEM_FIRST_OBJ=	zynq_start.o
-SYSTEM_FIRST_SFILE=	${THISARM}/zynq/zynq_start.S
-
-GENASSYM_EXTRAS+=	${THISARM}/zynq/genassym.cf
+SYSTEM_FIRST_OBJ=	armv6_start.o
+SYSTEM_FIRST_SFILE=	${ARM}/arm/armv6_start.S
 
 _OSRELEASE!=		${HOST_SH} $S/conf/osrelease.sh
 
-MKUBOOTIMAGEARGS=	-A arm -T kernel
+MKUBOOTIMAGEARGS=	-A arm -T kernel -O linux
 MKUBOOTIMAGEARGS+=	-a $(LOADADDRESS) -e $(LOADADDRESS)
 MKUBOOTIMAGEARGS+=	-n "NetBSD/$(BOARDTYPE) ${_OSRELEASE}"
 MKUBOOTIMAGEARGS_NONE=	${MKUBOOTIMAGEARGS} -C none

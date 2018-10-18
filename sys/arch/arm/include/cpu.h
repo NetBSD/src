@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.97 2018/08/22 01:05:22 msaitoh Exp $	*/
+/*	$NetBSD: cpu.h,v 1.98 2018/10/18 09:01:52 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -234,6 +234,12 @@ extern struct cpu_info *cpu_info[];
 #endif
 
 #if defined(MULTIPROCESSOR)
+
+extern volatile u_int arm_cpu_hatched;
+extern uint64_t cpu_mpidr[];
+
+void cpu_mpstart(void);
+void cpu_init_secondary_processor(int);
 void cpu_boot_secondary_processors(void);
 #endif
 

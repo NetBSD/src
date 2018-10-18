@@ -1,4 +1,4 @@
-/*	$NetBSD: start.S,v 1.1 2018/09/14 09:06:12 skrll Exp $	*/
+/*	$NetBSD: start.S,v 1.2 2018/10/18 09:01:51 skrll Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -26,13 +26,13 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "opt_arm_debug.h"	/* VERBOSE_INIT_ARM */
+#include "opt_arm_debug.h"	/* VERBOSE_INIT_ARM and EARLYCONS */
 
 #include <sys/cdefs.h>
 
 #include <aarch64/asm.h>
 
-RCSID("$NetBSD: start.S,v 1.1 2018/09/14 09:06:12 skrll Exp $")
+RCSID("$NetBSD: start.S,v 1.2 2018/10/18 09:01:51 skrll Exp $")
 
 /* load far effective address (pc relative) */
 .macro	ADDR, reg, addr

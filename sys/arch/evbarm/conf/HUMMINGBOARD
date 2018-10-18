@@ -1,5 +1,5 @@
 #
-#	$NetBSD: HUMMINGBOARD,v 1.5 2018/10/17 06:19:21 skrll Exp $
+#	$NetBSD: HUMMINGBOARD,v 1.6 2018/10/18 09:01:53 skrll Exp $
 #
 #	Hummingboard -- Freescale i.MX6 Eval Board Kernel
 #
@@ -20,6 +20,9 @@ options 	MULTIPROCESSOR
 
 # Console options.    also need IMXUARTCONSOLE
 options 	CONSDEVNAME="\"imxuart\"",CONADDR=0x02020000
+#options 	VERBOSE_INIT_ARM
+#options 	EARLYCONS=nitrogen6	# CONADDR already defined
+options 	IMXUARTCONSOLE
 options 	CONSPEED=115200	# Console speed
 
 #options 	DAGNOSTIC	# internal consistency checks

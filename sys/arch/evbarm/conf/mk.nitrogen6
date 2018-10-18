@@ -1,16 +1,14 @@
-#	$NetBSD: mk.nitrogen6,v 1.2 2014/09/27 04:03:24 matt Exp $
+#	$NetBSD: mk.nitrogen6,v 1.3 2018/10/18 09:01:54 skrll Exp $
 
-SYSTEM_FIRST_OBJ=	nitrogen6_start.o
-SYSTEM_FIRST_SFILE=	${THISARM}/nitrogen6/nitrogen6_start.S
-
-GENASSYM_EXTRAS+=	${THISARM}/nitrogen6/genassym.cf
+SYSTEM_FIRST_OBJ=	armv6_start.o
+SYSTEM_FIRST_SFILE=	${ARM}/arm/armv6_start.S
 
 _OSRELEASE!=		${HOST_SH} $S/conf/osrelease.sh
 
 KERNEL_BASE_PHYS?=$(LOADADDRESS)
 KERNEL_BASE_VIRT?=$(LOADADDRESS)
 
-MKUBOOTIMAGEARGS=	-A arm -T kernel
+MKUBOOTIMAGEARGS=	-A arm -T kernel -O linux
 MKUBOOTIMAGEARGS+=	-a $(KERNEL_BASE_PHYS) -e $(KERNEL_BASE_PHYS)
 MKUBOOTIMAGEARGS+=	-n "NetBSD/$(BOARDTYPE) ${_OSRELEASE}"
 MKUBOOTIMAGEARGS_NONE=	${MKUBOOTIMAGEARGS} -C none

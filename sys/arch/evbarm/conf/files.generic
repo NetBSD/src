@@ -1,15 +1,24 @@
-#	$NetBSD: files.generic,v 1.1 2018/04/01 04:35:04 ryo Exp $
+#	$NetBSD: files.generic,v 1.2 2018/10/18 09:01:54 skrll Exp $
 #
-
-defparam opt_arm_debug.h	EARLYCONS
+# A generic (aarch32) kernel configuration info
+#
 
 include "arch/arm/pic/files.pic"
 include "arch/arm/cortex/files.cortex"
 
 include "arch/evbarm/conf/files.fdt"
 
+file	arch/arm/arm32/arm32_boot.c
+file	arch/arm/arm32/arm32_kvminit.c
+file	arch/arm/arm32/arm32_reboot.c
+file	arch/arm/arm32/irq_dispatch.S
+file	arch/arm/arm32/armv7_generic_space.c
+file	arch/arm/arm/arm_generic_dma.c
+file	arch/arm/arm/bus_space_a4x.S
+
 # Add other board files here
-#
-#include "arch/arm/broadcom/files.bcm2835"
+include "arch/arm/broadcom/files.bcm2835"
 include "arch/arm/nvidia/files.tegra"
+include "arch/arm/samsung/files.exynos"
 include "arch/arm/sunxi/files.sunxi"
+include "arch/arm/vexpress/files.vexpress"

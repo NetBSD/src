@@ -1,4 +1,4 @@
-#	$NetBSD: std.amlogic,v 1.7 2018/10/15 16:54:54 skrll Exp $
+#	$NetBSD: std.amlogic,v 1.8 2018/10/18 09:01:54 skrll Exp $
 #
 
 machine		evbarm arm
@@ -11,13 +11,16 @@ options 	ARM_GENERIC_TODR
 options 	ARM_HAS_VBAR
 options 	ARM_INTR_IMPL="<arch/arm/amlogic/amlogic_intr.h>"
 options 	CORTEX_PMC
+options 	FDTBASE
 options 	FPU_VFP
+options 	MD_CPU_HATCH=a9tmr_init_cpu_clock
 options 	MODULAR
 options 	MODULAR_DEFAULT_AUTOLOAD
 options 	TPIDRPRW_IS_CURCPU
 options 	__HAVE_CPU_COUNTER
 options 	__HAVE_CPU_UAREA_ALLOC_IDLELWP
 options 	__HAVE_FAST_SOFTINTS		# should be in types.h
+options 	__HAVE_GENERIC_START
 options 	__HAVE_MM_MD_DIRECT_MAPPED_PHYS
 
 makeoptions 	BOARDMKFRAG="${THISARM}/conf/mk.amlogic"

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.h,v 1.5 2018/09/15 19:47:48 jakllsch Exp $	*/
+/*	$NetBSD: machdep.h,v 1.6 2018/10/18 09:01:51 skrll Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -72,6 +72,7 @@ extern u_int arm_cpu_max;
 
 vaddr_t initarm_common(vaddr_t, vsize_t, const struct boot_physmem *, size_t);
 void cpu_kernel_vm_init(paddr_t, psize_t);
+void uartputc(int);
 
 void parse_mi_bootargs(char *);
 void dumpsys(void);

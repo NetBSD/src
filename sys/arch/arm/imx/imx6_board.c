@@ -1,4 +1,4 @@
-/*	$NetBSD: imx6_board.c,v 1.11 2018/08/15 05:58:35 skrll Exp $	*/
+/*	$NetBSD: imx6_board.c,v 1.12 2018/10/18 09:01:52 skrll Exp $	*/
 
 /*
  * Copyright (c) 2012  Genetec Corporation.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: imx6_board.c,v 1.11 2018/08/15 05:58:35 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: imx6_board.c,v 1.12 2018/10/18 09:01:52 skrll Exp $");
 
 #include "arml2cc.h"
 #include "opt_cputypes.h"
@@ -234,14 +234,6 @@ imx6_device_register(device_t self, void *aux)
 	}
 #endif
 }
-
-#ifdef MULTIPROCESSOR
-void
-imx6_cpu_hatch(struct cpu_info *ci)
-{
-	a9tmr_init_cpu_clock(ci);
-}
-#endif
 
 void
 imx6_set_gpio(device_t self, const char *name, int32_t *gpio,

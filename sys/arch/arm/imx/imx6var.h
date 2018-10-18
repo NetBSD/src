@@ -1,4 +1,4 @@
-/*	$NetBSD: imx6var.h,v 1.8 2018/03/17 18:34:09 ryo Exp $	*/
+/*	$NetBSD: imx6var.h,v 1.9 2018/10/18 09:01:52 skrll Exp $	*/
 
 /*
  * Copyright (c) 2014 Ryo Shimizu <ryo@nerv.org>
@@ -45,6 +45,8 @@ extern struct bus_space armv7_generic_bs_tag;
 extern struct arm32_bus_dma_tag arm_generic_dma_tag;
 extern bus_space_tag_t imx6_armcore_bst;
 extern bus_space_handle_t imx6_armcore_bsh;
+extern bus_space_tag_t imx6_ioreg_bst;
+extern bus_space_handle_t imx6_ioreg_bsh;
 
 /* iomux utility functions in imx6_iomux.c */
 struct iomux_conf {
@@ -67,7 +69,6 @@ psize_t imx6_memprobe(void);
 uint32_t imx6_armrootclk(void);
 void imx6_reset(void) __dead;
 void imx6_device_register(device_t, void *);
-void imx6_cpu_hatch(struct cpu_info *);
 void imx6_set_gpio(device_t, const char *, int32_t *, int32_t *, u_int);
 uint32_t imx6_chip_id(void);
 #define CHIPID_MINOR_MASK		0x000000ff

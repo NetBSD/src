@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_machdep.c,v 1.43 2018/10/14 14:31:05 skrll Exp $ */
+/* $NetBSD: fdt_machdep.c,v 1.44 2018/10/18 09:01:54 skrll Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.43 2018/10/14 14:31:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.44 2018/10/18 09:01:54 skrll Exp $");
 
 #include "opt_machdep.h"
 #include "opt_bootconfig.h"
@@ -141,11 +141,8 @@ fdt_putchar(char c)
 	const struct arm_platform *plat = arm_fdt_platform();
 	if (plat && plat->ap_early_putchar) {
 		plat->ap_early_putchar(c);
-	}
-	else {
-#define PLATFORM_EARLY_PUTCHAR ___CONCAT(EARLYCONS, _platform_early_putchar)
-		void PLATFORM_EARLY_PUTCHAR(char);
-		PLATFORM_EARLY_PUTCHAR(c);
+	} else {
+		uartputc(c);
 	}
 #endif
 }
@@ -209,8 +206,8 @@ fdt_get_memory(uint64_t *pstart, uint64_t *pend)
 void
 fdt_add_reserved_memory_range(uint64_t addr, uint64_t size)
 {
-	uint64_t start = trunc_page(addr);
-	uint64_t end = round_page(addr + size);
+	uint64_t start = addr;
+	uint64_t end = addr + size;
 
 	int error = extent_free(fdt_memory_ext, start,
 	     end - start, EX_NOWAIT);
@@ -227,6 +224,7 @@ fdt_add_reserved_memory_range(uint64_t addr, uint64_t size)
 static void
 fdt_add_reserved_memory(uint64_t min_addr, uint64_t max_addr)
 {
+	uint64_t lstart = 0, lend = 0;
 	uint64_t addr, size;
 	int index, error;
 
@@ -234,7 +232,13 @@ fdt_add_reserved_memory(uint64_t min_addr, uint64_t max_addr)
 	for (index = 0; index <= num; index++) {
 		error = fdt_get_mem_rsv(fdtbus_get_data(), index,
 		    &addr, &size);
-		if (error != 0 || size == 0)
+		if (error != 0)
+			continue;
+		if (lstart <= addr && addr <= lend) {
+			size -= (lend - addr);
+			addr = lend;
+		}
+		if (size == 0)
 			continue;
 		if (addr + size <= min_addr)
 			continue;
@@ -247,6 +251,8 @@ fdt_add_reserved_memory(uint64_t min_addr, uint64_t max_addr)
 		if (addr + size > max_addr)
 			size = max_addr - addr;
 		fdt_add_reserved_memory_range(addr, size);
+		lstart = addr;
+		lend = addr + size;
 	}
 }
 
@@ -401,16 +407,19 @@ initarm(void *arg)
 		OF_getprop(chosen, "bootargs", bootargs, sizeof(bootargs));
 	boot_args = bootargs;
 
-	VPRINTF("devmap\n");
-	pmap_devmap_register(plat->ap_devmap());
-#ifdef __aarch64__
-	pmap_devmap_bootstrap(plat->ap_devmap());
-#endif
-
 	/* Heads up ... Setup the CPU / MMU / TLB functions. */
 	VPRINTF("cpufunc\n");
 	if (set_cpufuncs())
 		panic("cpu not recognized!");
+
+	/*
+	 * Memory is still identity/flat mapped this point so using ttbr for
+	 * l1pt VA is fine
+	 */
+
+	VPRINTF("devmap\n");
+	extern char ARM_BOOTSTRAP_LxPT[];
+	pmap_devmap_bootstrap((vaddr_t)ARM_BOOTSTRAP_LxPT, plat->ap_devmap());
 
 	VPRINTF("bootstrap\n");
 	plat->ap_bootstrap();
@@ -419,6 +428,7 @@ initarm(void *arg)
 	 * If stdout-path is specified on the command line, override the
 	 * value in /chosen/stdout-path before initializing console.
 	 */
+	VPRINTF("stdout\n");
 	fdt_update_stdout_path();
 
 	/*
@@ -457,6 +467,9 @@ initarm(void *arg)
 #endif
 	uint64_t memory_size = memory_end - memory_start;
 
+	VPRINTF("%s: memory start %" PRIx64 " end %" PRIx64 " (len %"
+	    PRIx64 ")\n", __func__, memory_start, memory_end, memory_size);
+
 	/* Parse ramdisk info */
 	fdt_probe_initrd(&initrd_start, &initrd_end);
 
@@ -464,6 +477,7 @@ initarm(void *arg)
 	 * Populate bootconfig structure for the benefit of
 	 * dodumpsys
 	 */
+	VPRINTF("%s: fdt_build_bootconfig\n", __func__);
 	fdt_build_bootconfig(memory_start, memory_end);
 
 	/* Perform PT build and VM init */
@@ -478,13 +492,15 @@ initarm(void *arg)
 	int nfdt_physmem = 0;
 	struct extent_region *er;
 
+	VPRINTF("Memory regions :\n");
 	LIST_FOREACH(er, &fdt_memory_ext->ex_regions, er_link) {
 		VPRINTF("  %lx - %lx\n", er->er_start, er->er_end);
 		struct boot_physmem *bp = &fdt_physmem[nfdt_physmem++];
 
 		KASSERT(nfdt_physmem <= MAX_PHYSMEM);
-		bp->bp_start = atop(er->er_start);
-		bp->bp_pages = atop(er->er_end - er->er_start);
+
+		bp->bp_start = atop(round_page(er->er_start));
+		bp->bp_pages = atop(trunc_page(er->er_end + 1)) - bp->bp_start;
 		bp->bp_freelist = VM_FREELIST_DEFAULT;
 
 #ifdef _LP64
@@ -500,8 +516,30 @@ initarm(void *arg)
 #endif
 	}
 
-	return initarm_common(KERNEL_VM_BASE, KERNEL_VM_SIZE, fdt_physmem,
+	u_int sp = initarm_common(KERNEL_VM_BASE, KERNEL_VM_SIZE, fdt_physmem,
 	     nfdt_physmem);
+
+	VPRINTF("mpstart\n");
+	if (plat->ap_mpstart)
+		plat->ap_mpstart();
+
+	/*
+	 * Now we have APs started the pages used for stacks and L1PT can
+	 * be given to uvm
+	 */
+	extern char __start__init_memory[], __stop__init_memory[];
+	if (__start__init_memory != __stop__init_memory) {
+		const paddr_t spa = KERN_VTOPHYS((vaddr_t)__start__init_memory);
+		const paddr_t epa = KERN_VTOPHYS((vaddr_t)__stop__init_memory);
+		const paddr_t spg = atop(spa);
+		const paddr_t epg = atop(epa);
+
+		uvm_page_physload(spg, epg, spg, epg, VM_FREELIST_DEFAULT);
+
+		VPRINTF("           start %08lx  end %08lx", ptoa(spa), ptoa(epa));
+	}
+
+	return sp;
 }
 
 static void

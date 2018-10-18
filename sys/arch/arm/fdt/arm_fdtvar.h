@@ -1,4 +1,4 @@
-/* $NetBSD: arm_fdtvar.h,v 1.10 2018/10/12 21:44:20 jmcneill Exp $ */
+/* $NetBSD: arm_fdtvar.h,v 1.11 2018/10/18 09:01:52 skrll Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared D. McNeill <jmcneill@invisible.ca>
@@ -38,6 +38,7 @@ struct fdt_attach_args;
 struct arm_platform {
 	const struct pmap_devmap * (*ap_devmap)(void);
 	void			(*ap_bootstrap)(void);
+	void			(*ap_mpstart)(void);
 	void			(*ap_startup)(void);
 	void			(*ap_init_attach_args)(struct fdt_attach_args *);
 	void			(*ap_early_putchar)(char);
@@ -67,6 +68,7 @@ TAILQ_HEAD(arm_platlist, arm_platform_info);
 const struct arm_platform *	arm_fdt_platform(void);
 
 void	arm_fdt_cpu_bootstrap(void);
+void	arm_fdt_cpu_mpstart(void);
 void    arm_fdt_cpu_hatch_register(void *, void (*)(void *, struct cpu_info *));
 void    arm_fdt_cpu_hatch(struct cpu_info *);
 

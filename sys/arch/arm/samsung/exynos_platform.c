@@ -1,4 +1,4 @@
-/* $NetBSD: exynos_platform.c,v 1.18 2018/10/08 08:17:00 skrll Exp $ */
+/* $NetBSD: exynos_platform.c,v 1.19 2018/10/18 09:01:53 skrll Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared D. McNeill <jmcneill@invisible.ca>
@@ -35,7 +35,7 @@
 #include "ukbd.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exynos_platform.c,v 1.18 2018/10/08 08:17:00 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exynos_platform.c,v 1.19 2018/10/18 09:01:53 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -56,6 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: exynos_platform.c,v 1.18 2018/10/08 08:17:00 skrll E
 #include <arm/samsung/sscom_reg.h>
 
 #include <evbarm/exynos/platform.h>
+#include <evbarm/fdt/machdep.h>
 
 #include <arm/fdt/arm_fdtvar.h>
 
@@ -75,21 +76,28 @@ void exynos_platform_early_putchar(char);
 #define	EXYNOS5800_SYSRAM_SIZE		0x4
 
 static void
-exynos5800_mp_bootstrap(void)
+exynos_platform_bootstrap(void)
+{
+
+#if defined(MULTIPROCESSOR)
+	arm_cpu_max = 1 + __SHIFTOUT(armreg_l2ctrl_read(), L2CTRL_NUMCPU);
+#endif
+}
+
+static void
+exynos5800_mpstart(void)
 {
 #if defined(MULTIPROCESSOR)
-	extern void cortex_mpstart(void);
+	extern void cpu_mpstart(void);
 	bus_space_tag_t bst = &armv7_generic_bs_tag;
 	bus_space_handle_t pmu_bsh, sysram_bsh;
 	uint32_t val, started = 0;
 	int n;
 
-	arm_cpu_max = 1 + __SHIFTOUT(armreg_l2ctrl_read(), L2CTRL_NUMCPU);
-
 	bus_space_map(bst, EXYNOS5800_PMU_BASE, EXYNOS5800_PMU_SIZE, 0, &pmu_bsh);
 	bus_space_map(bst, EXYNOS5800_SYSRAM_BASE, EXYNOS5800_SYSRAM_SIZE, 0, &sysram_bsh);
 
-	bus_space_write_4(bst, sysram_bsh, 0, (uint32_t)cortex_mpstart);
+	bus_space_write_4(bst, sysram_bsh, 0, KERN_VTOPHYS((vaddr_t)cpu_mpstart));
 	bus_space_barrier(bst, sysram_bsh, 0, 4, BUS_SPACE_BARRIER_READ | BUS_SPACE_BARRIER_WRITE);
 
 	for (n = 1; n < arm_cpu_max; n++) {
@@ -116,21 +124,24 @@ exynos5800_mp_bootstrap(void)
 }
 
 static struct of_compat_data mp_compat_data[] = {
-	{ "samsung,exynos5800",		(uintptr_t)exynos5800_mp_bootstrap },
+	{ "samsung,exynos5800",		(uintptr_t)exynos5800_mpstart },
 	{ NULL }
 };
 
 static void
-exynos_platform_bootstrap(void)
+exynos_platform_mpstart(void)
 {
 
-	void (*mp_bootstrap)(void) = NULL;
+	void (*mp_start)(void) = NULL;
+
+//	exynos_bootstrap();
+
 	const struct of_compat_data *cd = of_search_compatible(OF_finddevice("/"), mp_compat_data);
 	if (cd)
-		mp_bootstrap = (void (*)(void))cd->data;
+		mp_start = (void (*)(void))cd->data;
 
-	if (mp_bootstrap)
-		mp_bootstrap();
+	if (mp_start)
+		mp_start();
 }
 
 static void
@@ -144,7 +155,6 @@ exynos_platform_init_attach_args(struct fdt_attach_args *faa)
 	faa->faa_a4x_bst = &armv7_generic_a4x_bs_tag;
 	faa->faa_dmat = &arm_generic_dma_tag;
 }
-
 
 void
 exynos_platform_early_putchar(char c)
@@ -214,6 +224,7 @@ exynos4_platform_bootstrap(void)
 
 static const struct arm_platform exynos4_platform = {
 	.ap_devmap = exynos4_platform_devmap,
+//	.ap_mpstart = exynos4_mpstart,
 	.ap_bootstrap = exynos4_platform_bootstrap,
 	.ap_init_attach_args = exynos_platform_init_attach_args,
 	.ap_early_putchar = exynos_platform_early_putchar,
@@ -259,6 +270,7 @@ exynos5_platform_bootstrap(void)
 static const struct arm_platform exynos5_platform = {
 	.ap_devmap = exynos5_platform_devmap,
 	.ap_bootstrap = exynos5_platform_bootstrap,
+	.ap_mpstart = exynos_platform_mpstart,
 	.ap_init_attach_args = exynos_platform_init_attach_args,
 	.ap_early_putchar = exynos_platform_early_putchar,
 	.ap_device_register = exynos_platform_device_register,

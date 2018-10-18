@@ -1,4 +1,4 @@
-/*	$NetBSD: imx6_srcreg.h,v 1.1 2014/09/25 05:05:28 ryo Exp $	*/
+/*	$NetBSD: imx6_srcreg.h,v 1.2 2018/10/18 09:01:52 skrll Exp $	*/
 
 /*
  * Copyright (c) 2014 Ryo Shimizu <ryo@nerv.org>
@@ -34,14 +34,18 @@
 /* SRC - System Reset Controller */
 #define SRC_SCR					0x00000000
 #define  SRC_SCR_DBG_RST_MASK_PG		__BIT(25)
+
+#define  SRC_SCR_COREN_ENABLE(n)		__BIT(22 + ((n) - 1))	/* no core0 bit */
 #define  SRC_SCR_CORE3_ENABLE			__BIT(24)
 #define  SRC_SCR_CORE2_ENABLE			__BIT(23)
 #define  SRC_SCR_CORE1_ENABLE			__BIT(22)
 #define  SRC_SCR_CORES_DBG_RST			__BIT(21)
+#define  SRC_SCR_COREN_DBG_RST(n)		__BIT(17 + (n))
 #define  SRC_SCR_CORE3_DBG_RST			__BIT(20)
 #define  SRC_SCR_CORE2_DBG_RST			__BIT(19)
 #define  SRC_SCR_CORE1_DBG_RST			__BIT(18)
 #define  SRC_SCR_CORE0_DBG_RST			__BIT(17)
+#define  SRC_SCR_COREN_RST(n)			__BIT(13 + (n))
 #define  SRC_SCR_CORE3_RST			__BIT(16)
 #define  SRC_SCR_CORE2_RST			__BIT(15)
 #define  SRC_SCR_CORE1_RST			__BIT(14)
@@ -83,6 +87,7 @@
 #define  SRC_SIMR_MASK_VPU_PASSED_RESET		_BIT(1)
 #define  SRC_SIMR_MASK_GPU_PASSED_RESET		_BIT(0)
 #define SRC_SBMR2				0x0000001c
+#define SRC_GPRN_ENTRY(n)			(0x20 + (8 * (n)))
 #define SRC_GPR1				0x00000020 /* core0 entry */
 #define SRC_GPR2				0x00000024
 #define SRC_GPR3				0x00000028 /* core1 entry */

@@ -1,5 +1,5 @@
 #
-#	$NetBSD: RPI2,v 1.6 2018/07/01 15:33:29 skrll Exp $
+#	$NetBSD: RPI2,v 1.7 2018/10/18 09:01:54 skrll Exp $
 #
 #	RPi2 -- Raspberry Pi 2
 #
@@ -16,8 +16,8 @@ no makeoptions	DTS
 
 #options 	VERBOSE_INIT_ARM
 # EARLYCONS is required for early init messages from VERBOSE_INIT_ARM.
-#options 	EARLYCONS=bcm2836	# RaspberryPi2
-#options 	EARLYCONS=bcm2837	# RaspberryPi3
+#options 	EARLYCONS=bcm2836,CONSADDR=0x3f201000	# RPI2
+#options 	EARLYCONS=bcm2837,CONSADDR=0x3f215040	# RPI3
 
 options 	SOC_BCM2836
 options 	CPU_CORTEXA7
