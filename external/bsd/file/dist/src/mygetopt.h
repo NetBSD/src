@@ -1,4 +1,4 @@
-/*	$NetBSD: mygetopt.h,v 1.1.1.4 2015/01/02 20:34:27 christos Exp $	*/
+/*	$NetBSD: mygetopt.h,v 1.1.1.5 2018/10/18 23:54:09 christos Exp $	*/
 
 /*	NetBSD: getopt.h,v 1.8 2007/11/06 19:21:18 christos Exp 	*/
 
@@ -66,5 +66,5 @@ struct option {
 
 int getopt_long(int, char * const *, const char *,
     const struct option *, int *);
- 
+
 #endif /* !_GETOPT_H_ */
