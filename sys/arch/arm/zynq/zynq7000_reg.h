@@ -1,4 +1,4 @@
-/*	$NetBSD: zynq7000_reg.h,v 1.1 2015/01/23 12:34:09 hkenken Exp $	*/
+/*	$NetBSD: zynq7000_reg.h,v 1.2 2018/10/18 09:01:53 skrll Exp $	*/
 /*-
  * Copyright (c) 2015  Genetec Corporation.  All rights reserved.
  * Written by Hashimoto Kenichi for Genetec Corporation.
@@ -28,6 +28,9 @@
 #ifndef _ARM_ZYNQ_ZYNQ7000_REG_H_
 #define _ARM_ZYNQ_ZYNQ7000_REG_H_
 
+#define	ZYNQ7000_DDR_PBASE	0x00000000
+#define	ZYNQ7000_DDR_SIZE	0x40000000
+
 #define	ZYNQ7000_IOREG_PBASE	0xe0000000
 #define	ZYNQ7000_IOREG_SIZE	0x00200000
 
@@ -35,6 +38,11 @@
 #define	ZYNQ7000_ARMCORE_SIZE	0x00100000
 
 #define	ZYNQ7000_IO_SIZE	(ZYNQ7000_IOREG_SIZE + ZYNQ7000_ARMCORE_SIZE)
+
+#define	ZYNQ7000_OCM_PBASE	0xfff00000
+#define	ZYNQ7000_OCM_SIZE	0x00100000
+#define	ZYNQ7000_CPU1_ENTRY	0xfffffff0
+#define	ZYNQ7000_CPU1_ENTRY_SZ	4
 
 #define SLCR_BASE		0xf8000000
 #define SLCR_SIZE		0x00000b78

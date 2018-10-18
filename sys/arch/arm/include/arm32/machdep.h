@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.h,v 1.26 2018/08/05 06:48:50 skrll Exp $ */
+/* $NetBSD: machdep.h,v 1.27 2018/10/18 09:01:52 skrll Exp $ */
 
 #ifndef _ARM32_MACHDEP_H_
 #define _ARM32_MACHDEP_H_
@@ -97,6 +97,7 @@ void arm32_kernel_vm_init(vaddr_t kvm_base, vaddr_t vectors,
 vaddr_t initarm_common(vaddr_t kvm_base, vsize_t kvm_size,
         const struct boot_physmem *bp, size_t nbp);
 
+void uartputc(int);
 
 /* from arm/arm32/intr.c */
 void dosoftints(void);

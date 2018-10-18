@@ -1,4 +1,4 @@
-/*	$NetBSD: zynq7000_var.h,v 1.1 2015/01/23 12:34:09 hkenken Exp $	*/
+/*	$NetBSD: zynq7000_var.h,v 1.2 2018/10/18 09:01:53 skrll Exp $	*/
 /*-
  * Copyright (c) 2015  Genetec Corporation.  All rights reserved.
  * Written by Hashimoto Kenichi for Genetec Corporation.
@@ -86,7 +86,6 @@ struct cpu_softc {
 void zynq7000_bootstrap(vaddr_t);
 psize_t	zynq7000_memprobe(void);
 void zynq7000_device_register(device_t, void *);
-void zynq7000_cpu_hatch(struct cpu_info *);
 
 extern struct bus_space zynq_bs_tag;
 extern struct arm32_bus_dma_tag zynq_bus_dma_tag;

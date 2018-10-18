@@ -1,4 +1,4 @@
-/*	$NetBSD: amlogic_machdep.c,v 1.25 2018/10/18 07:12:57 skrll Exp $ */
+/*	$NetBSD: amlogic_machdep.c,v 1.26 2018/10/18 09:01:53 skrll Exp $ */
 
 /*
  * Machine dependent functions for kernel setup for TI OSK5912 board.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amlogic_machdep.c,v 1.25 2018/10/18 07:12:57 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amlogic_machdep.c,v 1.26 2018/10/18 09:01:53 skrll Exp $");
 
 #include "opt_console.h"
 #include "opt_machdep.h"
@@ -193,6 +193,12 @@ __KERNEL_RCSID(0, "$NetBSD: amlogic_machdep.c,v 1.25 2018/10/18 07:12:57 skrll E
 #include <dev/usb/ukbdvar.h>
 #include <net/if_ether.h>
 
+#ifdef VERBOSE_INIT_ARM
+#define VPRINTF(...)	printf(__VA_ARGS__)
+#else
+#define VPRINTF(...)	__nothing
+#endif
+
 #ifndef AMLOGIC_MAX_BOOT_STRING
 #define AMLOGIC_MAX_BOOT_STRING 1024
 #endif
@@ -204,6 +210,12 @@ char *boot_file = NULL;
 
 /* filled in before cleaning bss. keep in .data */
 u_int uboot_args[4] __attribute__((__section__(".data")));
+const uint8_t *fdt_addr_r __attribute__((__section__(".data")));
+
+#include <libfdt.h>
+#include <dev/fdt/fdtvar.h>
+#define FDT_BUF_SIZE	(24*1024)
+static uint8_t fdt_data[FDT_BUF_SIZE];
 
 /* Same things, but for the free (unused by the kernel) memory. */
 
@@ -215,15 +227,37 @@ extern char _end[];
  * kernel address space.  *Not* for general use.
  */
 #define KERNEL_BASE_PHYS ((paddr_t)KERNEL_BASE_phys)
-#define	AMLOGIC_CORE_VOFFSET	(AMLOGIC_CORE_VBASE - AMLOGIC_CORE_BASE)
 /* Prototypes */
 
 void consinit(void);
 
 static void amlogic_device_register(device_t, void *);
 static void amlogic_reset(void);
+void amlogic_mpstart(void);
+void amlogic_platform_early_putchar(char);
 
 bs_protos(bs_notimpl);
+
+static dev_type_cnputc(earlyconsputc);
+static dev_type_cngetc(earlyconsgetc);
+
+static struct consdev earlycons = {
+	.cn_putc = earlyconsputc,
+	.cn_getc = earlyconsgetc,
+	.cn_pollc = nullcnpollc,
+};
+
+static void
+earlyconsputc(dev_t dev, int c)
+{
+	uartputc(c);
+}
+
+static int
+earlyconsgetc(dev_t dev)
+{
+	return 0;	/* XXX */
+}
 
 /*
  * Static device mappings. These peripheral registers are mapped at
@@ -265,11 +299,14 @@ amlogic_db_trap(int where)
 }
 #endif
 
-#ifdef VERBOSE_INIT_ARM
-static void
-amlogic_putchar(char c)
+
+#ifdef EARLYCONS
+void
+amlogic_platform_early_putchar(char c)
 {
-	volatile uint32_t *uartaddr = (volatile uint32_t *)CONSADDR_VA;
+	volatile uint32_t *uartaddr = cpu_earlydevice_va_p() ?
+	    (volatile uint32_t *)CONSADDR_VA :
+	    (volatile uint32_t *)CONSADDR;
 	int timo = 150000;
 
 	while ((uartaddr[UART_STATUS_REG/4] & UART_STATUS_TX_EMPTY) == 0) {
@@ -284,18 +321,6 @@ amlogic_putchar(char c)
 			break;
 	}
 }
-static void
-amlogic_putstr(const char *s)
-{
-	for (const char *p = s; *p; p++) {
-		amlogic_putchar(*p);
-	}
-}
-#define DPRINTF(...)		printf(__VA_ARGS__)
-#define DPRINT(x)		amlogic_putstr(x)
-#else
-#define DPRINTF(...)
-#define DPRINT(x)
 #endif
 
 static psize_t
@@ -323,16 +348,49 @@ u_int
 initarm(void *arg)
 {
 	psize_t ram_size = 0;
-	DPRINT("initarm:");
 
-	DPRINT(" devmap");
-	pmap_devmap_register(devmap);
+	/* set temporally to work printf()/panic() even before consinit() */
+	cn_tab = &earlycons;
 
-	DPRINT(" bootstrap");
+	VPRINTF("initarm:");
+
+	/* Load FDT */
+	int error = fdt_check_header(fdt_addr_r);
+	if (error == 0) {
+		/* If the DTB is too big, try to pack it in place first. */
+		if (fdt_totalsize(fdt_addr_r) > sizeof(fdt_data))
+			(void)fdt_pack(__UNCONST(fdt_addr_r));
+		error = fdt_open_into(fdt_addr_r, fdt_data, sizeof(fdt_data));
+		if (error != 0)
+			panic("fdt_move failed: %s", fdt_strerror(error));
+		fdtbus_set_data(fdt_data);
+	} else {
+		panic("fdt_check_header failed: %s", fdt_strerror(error));
+	}
+
+	/* Early console may be available, announce ourselves. */
+	VPRINTF("FDT<%p>\n", fdt_addr_r);
+
+	const int chosen = OF_finddevice("/chosen");
+	if (chosen >= 0)
+		OF_getprop(chosen, "bootargs", bootargs, sizeof(bootargs));
+	boot_args = bootargs;
+
+
+	/* Heads up ... Setup the CPU / MMU / TLB functions. */
+	VPRINTF(" cpufunc");
+	if (set_cpufuncs())
+		panic("cpu not recognized!");
+
+	VPRINTF(" devmap");
+	extern char ARM_BOOTSTRAP_LxPT[];
+	pmap_devmap_bootstrap((vaddr_t)ARM_BOOTSTRAP_LxPT, devmap);
+
+	VPRINTF(" bootstrap");
 	amlogic_bootstrap();
 
 #ifdef MULTIPROCESSOR
-	DPRINT(" ncpu");
+	VPRINTF(" ncpu");
 	const bus_addr_t cbar = armreg_cbar_read();
 	if (cbar) {
 		const bus_space_handle_t scu_bsh =
@@ -344,42 +402,37 @@ initarm(void *arg)
 	}
 #endif
 
-	/* Heads up ... Setup the CPU / MMU / TLB functions. */
-	DPRINT(" cpufunc");
-	if (set_cpufuncs())
-		panic("cpu not recognized!");
-
-	DPRINT(" consinit");
+	VPRINTF(" consinit");
 	consinit();
 
 #if NARML2CC > 0
         /*
          * Probe the PL310 L2CC
          */
-	DPRINTF(" l2cc");
+	VPRINTF(" l2cc");
         const bus_space_handle_t pl310_bh =
             AMLOGIC_CORE_VBASE + AMLOGIC_PL310_OFFSET;
         arml2cc_init(&armv7_generic_bs_tag, pl310_bh, 0);
 #endif
 
-	DPRINTF(" cbar=%#x", armreg_cbar_read());
+	VPRINTF(" cbar=%#x", armreg_cbar_read());
 
-	DPRINTF(" ok\n");
+	VPRINTF(" ok\n");
 
-	DPRINTF("uboot: args %#x, %#x, %#x, %#x\n",
+	VPRINTF("uboot: args %#x, %#x, %#x, %#x\n",
 	    uboot_args[0], uboot_args[1], uboot_args[2], uboot_args[3]);
 
 	cpu_reset_address = amlogic_reset;
 
 	/* Talk to the user */
-	DPRINTF("\nNetBSD/evbarm (amlogic) booting ...\n");
+	VPRINTF("\nNetBSD/evbarm (amlogic) booting ...\n");
 
 #ifdef BOOT_ARGS
 	char mi_bootargs[] = BOOT_ARGS;
 	parse_mi_bootargs(mi_bootargs);
 #endif
 
-	DPRINTF("KERNEL_BASE=0x%x, KERNEL_VM_BASE=0x%x, KERNEL_VM_BASE - KERNEL_BASE=0x%x, KERNEL_BASE_VOFFSET=0x%x\n",
+	VPRINTF("KERNEL_BASE=0x%x, KERNEL_VM_BASE=0x%x, KERNEL_VM_BASE - KERNEL_BASE=0x%x, KERNEL_BASE_VOFFSET=0x%x\n",
 		KERNEL_BASE, KERNEL_VM_BASE, KERNEL_VM_BASE - KERNEL_BASE, KERNEL_BASE_VOFFSET);
 
 	ram_size = amlogic_get_ram_size();
@@ -400,7 +453,7 @@ initarm(void *arg)
 #ifdef MEMSIZE
 	if (ram_size == 0 || ram_size > (unsigned)MEMSIZE * 1024 * 1024)
 		ram_size = (unsigned)MEMSIZE * 1024 * 1024;
-	DPRINTF("ram_size = 0x%x\n", (int)ram_size);
+	VPRINTF("ram_size = 0x%x\n", (int)ram_size);
 #else
 	KASSERTMSG(ram_size > 0, "RAM size unknown and MEMSIZE undefined");
 #endif
@@ -423,15 +476,7 @@ initarm(void *arg)
 	arm32_kernel_vm_init(KERNEL_VM_BASE, ARM_VECTORS_HIGH, 0, devmap,
 	    mapallmem_p);
 
-	if (mapallmem_p) {
-		if (uboot_args[3] < ram_size) {
-			const char * const args = (const char *)
-			    (uboot_args[3] + KERNEL_BASE_VOFFSET);
-			strlcpy(bootargs, args, sizeof(bootargs));
-		}
-	}
-
-	DPRINTF("bootargs: %s\n", bootargs);
+	VPRINTF("bootargs: %s\n", bootargs);
 
 	boot_args = bootargs;
 	parse_mi_bootargs(boot_args);
@@ -443,8 +488,12 @@ initarm(void *arg)
 
 	amlogic_cpufreq_bootstrap();
 
-	return initarm_common(KERNEL_VM_BASE, KERNEL_VM_SIZE, NULL, 0);
+	u_int sp = initarm_common(KERNEL_VM_BASE, KERNEL_VM_SIZE, NULL, 0);
 
+	VPRINTF("mpstart");
+	amlogic_mpstart();
+
+	return sp;
 }
 
 #if NAMLOGIC_COM > 0
@@ -458,7 +507,6 @@ initarm(void *arg)
 #define CONMODE ((TTYDEF_CFLAG & ~(CSIZE | CSTOPB | PARENB)) | CS8) /* 8N1 */
 #endif
 
-static const bus_addr_t consaddr = CONSADDR;
 static const int conspeed = CONSPEED;
 static const int conmode = CONMODE;
 #endif
@@ -474,8 +522,7 @@ consinit(void)
 	consinit_called = 1;
 
 #if NAMLOGIC_COM > 0
-        const bus_space_handle_t bsh =
-            AMLOGIC_CORE_VBASE + (consaddr - AMLOGIC_CORE_BASE);
+	const bus_space_handle_t bsh = CONSADDR_VA;
 	amlogic_com_cnattach(&armv7_generic_bs_tag, bsh, conspeed, conmode);
 #else
 #error only UART console is supported
@@ -670,13 +717,25 @@ amlogic_mpinit(uint32_t mpinit_vec)
 
 	const bus_space_handle_t scu_bsh =
 	    cbar - AMLOGIC_CORE_BASE + AMLOGIC_CORE_VBASE;
-	const bus_space_handle_t cpuconf_bsh =
-	    AMLOGIC_CORE_VBASE + AMLOGIC_CPUCONF_OFFSET;
 
 	const uint32_t scu_cfg = bus_space_read_4(bst, scu_bsh, SCU_CFG);
 	const u_int ncpus = (scu_cfg & SCU_CFG_CPUMAX) + 1;
 	if (ncpus < 2)
 		return;
+
+	/*
+	 * Invalidate all SCU cache tags. That is, for all cores (0-3)
+	 */
+	bus_space_write_4(bst, scu_bsh, SCU_INV_ALL_REG, 0xffff);
+
+	uint32_t scu_ctl = bus_space_read_4(bst, scu_bsh, SCU_CTL);
+	scu_ctl |= SCU_CTL_SCU_ENA;
+	bus_space_write_4(bst, scu_bsh,SCU_CTL, scu_ctl);
+
+	armv7_dcache_wbinv_all();
+
+	const bus_space_handle_t cpuconf_bsh =
+	    AMLOGIC_CORE_VBASE + AMLOGIC_CPUCONF_OFFSET;
 
 	for (cpu = 1; cpu < ncpus; cpu++) {
 		bus_space_write_4(bst, cpuconf_bsh,
@@ -699,3 +758,11 @@ amlogic_mpinit(uint32_t mpinit_vec)
 	}
 }
 #endif
+
+void
+amlogic_mpstart(void)
+{
+#if defined(MULTIPROCESSOR)
+	amlogic_mpinit(KERN_VTOPHYS((vaddr_t)cpu_mpstart));
+#endif
+}

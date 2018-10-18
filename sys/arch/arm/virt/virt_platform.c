@@ -1,4 +1,4 @@
-/* $NetBSD: virt_platform.c,v 1.7 2018/09/21 12:04:07 skrll Exp $ */
+/* $NetBSD: virt_platform.c,v 1.8 2018/10/18 09:01:53 skrll Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: virt_platform.c,v 1.7 2018/09/21 12:04:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: virt_platform.c,v 1.8 2018/10/18 09:01:53 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -126,6 +126,7 @@ static const struct arm_platform virt_platform = {
 	.ap_reset = psci_fdt_reset,
 	.ap_delay = gtmr_delay,
 	.ap_uart_freq = virt_platform_uart_freq,
+	.ap_mpstart = arm_fdt_cpu_mpstart,
 };
 
 ARM_PLATFORM(virt, "linux,dummy-virt", &virt_platform);

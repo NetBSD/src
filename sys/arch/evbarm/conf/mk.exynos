@@ -1,14 +1,11 @@
-#	$NetBSD: mk.exynos,v 1.4 2017/12/13 13:52:13 jmcneill Exp $
+#	$NetBSD: mk.exynos,v 1.5 2018/10/18 09:01:54 skrll Exp $
 
 .if !empty(MACHINE_ARCH:M*eb)
 EXTRA_LINKFLAGS+=	--be8
 .endif
 
-SYSTEM_FIRST_OBJ=	exynos_start.o
-SYSTEM_FIRST_SFILE=	${THISARM}/exynos/exynos_start.S
-AFLAGS.exynos_start.S+=	-Wa,-march=armv7-a+virt
-
-GENASSYM_EXTRAS+=	${THISARM}/exynos/genassym.cf
+SYSTEM_FIRST_OBJ=	armv6_start.o
+SYSTEM_FIRST_SFILE=	${ARM}/arm/armv6_start.S
 
 _OSRELEASE!=		${HOST_SH} $S/conf/osrelease.sh
 
