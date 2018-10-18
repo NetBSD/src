@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_emac.c,v 1.18 2018/10/14 14:09:53 martin Exp $ */
+/* $NetBSD: sunxi_emac.c,v 1.19 2018/10/18 12:58:19 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2016-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
 #include "opt_net_mpsafe.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_emac.c,v 1.18 2018/10/14 14:09:53 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_emac.c,v 1.19 2018/10/18 12:58:19 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -584,6 +584,31 @@ sunxi_emac_disable_intr(struct sunxi_emac_softc *sc)
 }
 
 static int
+sunxi_emac_reset(struct sunxi_emac_softc *sc)
+{
+	int retry;
+
+	/* Soft reset all registers and logic */
+	WR4(sc, EMAC_BASIC_CTL_1, BASIC_CTL_SOFT_RST);
+
+	/* Wait for soft reset bit to self-clear */
+	for (retry = SOFT_RST_RETRY; retry > 0; retry--) {
+		if ((RD4(sc, EMAC_BASIC_CTL_1) & BASIC_CTL_SOFT_RST) == 0)
+			break;
+		delay(10);
+	}
+	if (retry == 0) {
+		aprint_debug_dev(sc->dev, "soft reset timed out\n");
+#ifdef SUNXI_EMAC_DEBUG
+		sunxi_emac_dump_regs(sc);
+#endif
+		return ETIMEDOUT;
+	}
+
+	return 0;
+}
+
+static int
 sunxi_emac_init_locked(struct sunxi_emac_softc *sc)
 {
 	struct ifnet *ifp = &sc->ec.ec_if;
@@ -594,6 +619,13 @@ sunxi_emac_init_locked(struct sunxi_emac_softc *sc)
 
 	if ((ifp->if_flags & IFF_RUNNING) != 0)
 		return 0;
+
+	/* Soft reset EMAC core */
+	sunxi_emac_reset(sc);
+
+	/* Write transmit and receive descriptor base address registers */
+	WR4(sc, EMAC_TX_DMA_LIST, sc->tx.desc_ring_paddr);
+	WR4(sc, EMAC_RX_DMA_LIST, sc->rx.desc_ring_paddr);
 
 	sunxi_emac_setup_rxfilter(sc);
 
@@ -1154,37 +1186,6 @@ sunxi_emac_phy_reset(struct sunxi_emac_softc *sc)
 }
 
 static int
-sunxi_emac_reset(struct sunxi_emac_softc *sc)
-{
-	int retry;
-
-	/* Reset PHY if necessary */
-	if (sunxi_emac_phy_reset(sc) != 0) {
-		aprint_error_dev(sc->dev, "failed to reset PHY\n");
-		return ENXIO;
-	}
-
-	/* Soft reset all registers and logic */
-	WR4(sc, EMAC_BASIC_CTL_1, BASIC_CTL_SOFT_RST);
-
-	/* Wait for soft reset bit to self-clear */
-	for (retry = SOFT_RST_RETRY; retry > 0; retry--) {
-		if ((RD4(sc, EMAC_BASIC_CTL_1) & BASIC_CTL_SOFT_RST) == 0)
-			break;
-		delay(10);
-	}
-	if (retry == 0) {
-		aprint_error_dev(sc->dev, "soft reset timed out\n");
-#ifdef SUNXI_EMAC_DEBUG
-		sunxi_emac_dump_regs(sc);
-#endif
-		return ETIMEDOUT;
-	}
-
-	return 0;
-}
-
-static int
 sunxi_emac_setup_dma(struct sunxi_emac_softc *sc)
 {
 	struct mbuf *m;
@@ -1275,10 +1276,6 @@ sunxi_emac_setup_dma(struct sunxi_emac_softc *sc)
 	bus_dmamap_sync(sc->rx.desc_tag, sc->rx.desc_map,
 	    0, sc->rx.desc_map->dm_mapsize,
 	    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
-
-	/* Write transmit and receive descriptor base address registers */
-	WR4(sc, EMAC_TX_DMA_LIST, sc->tx.desc_ring_paddr);
-	WR4(sc, EMAC_RX_DMA_LIST, sc->rx.desc_ring_paddr);
 
 	return 0;
 }
@@ -1400,9 +1397,11 @@ sunxi_emac_attach(device_t parent, device_t self, void *aux)
 	sunxi_emac_get_eaddr(sc, eaddr);
 	aprint_normal_dev(self, "Ethernet address %s\n", ether_sprintf(eaddr));
 
-	/* Soft reset EMAC core */
-	if (sunxi_emac_reset(sc) != 0)
+	/* Reset PHY if necessary */
+	if (sunxi_emac_phy_reset(sc) != 0) {
+		aprint_error_dev(self, "failed to reset PHY\n");
 		return;
+	}
 
 	/* Setup DMA descriptors */
 	if (sunxi_emac_setup_dma(sc) != 0) {
