@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_boot.c,v 1.24 2018/10/18 09:01:52 skrll Exp $	*/
+/*	$NetBSD: arm32_boot.c,v 1.25 2018/10/18 16:44:36 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2005  Genetec Corporation.  All rights reserved.
@@ -122,7 +122,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: arm32_boot.c,v 1.24 2018/10/18 09:01:52 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: arm32_boot.c,v 1.25 2018/10/18 16:44:36 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_cputypes.h"
@@ -286,8 +286,8 @@ initarm_common(vaddr_t kvm_base, vsize_t kvm_size,
 				uvm_page_physload(start, segend, start, segend,
 				    vm_freelist);
 				VPRINTF("         start %08lx  end %08lx"
-				    "... loading in freelist %d\n", ptoa(start),
-				    ptoa(end), vm_freelist);
+				    "... loading in freelist %d", ptoa(start),
+				    ptoa(segend), vm_freelist);
 				start = segend;
 				segend = end;
 			}
