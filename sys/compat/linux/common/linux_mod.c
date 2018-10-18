@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_mod.c,v 1.10.2.2 2018/09/19 06:56:51 pgoyette Exp $	*/
+/*	$NetBSD: linux_mod.c,v 1.10.2.3 2018/10/18 22:09:56 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_mod.c,v 1.10.2.2 2018/09/19 06:56:51 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_mod.c,v 1.10.2.3 2018/10/18 22:09:56 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_execfmt.h"
@@ -66,7 +66,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_mod.c,v 1.10.2.2 2018/09/19 06:56:51 pgoyette 
 # define	MD3	""
 #endif
 
-#define REQ1    "compat_ossaudio,sysv_ipc"
+#define REQ1    "compat_ossaudio,sysv_ipc,compat_util"
 #define REQ2    ",compat_12,compat_30,compat_50,compat_43,compat_sysv_50"
 
 MODULE(MODULE_CLASS_EXEC, compat_linux, REQ1 REQ2 MD1 MD2 MD3);
