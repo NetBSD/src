@@ -1,4 +1,4 @@
-/*	$NetBSD: amlogic_machdep.c,v 1.24 2018/09/21 12:04:07 skrll Exp $ */
+/*	$NetBSD: amlogic_machdep.c,v 1.25 2018/10/18 07:12:57 skrll Exp $ */
 
 /*
  * Machine dependent functions for kernel setup for TI OSK5912 board.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amlogic_machdep.c,v 1.24 2018/09/21 12:04:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amlogic_machdep.c,v 1.25 2018/10/18 07:12:57 skrll Exp $");
 
 #include "opt_console.h"
 #include "opt_machdep.h"
@@ -387,7 +387,7 @@ initarm(void *arg)
 #ifdef __HAVE_MM_MD_DIRECT_MAPPED_PHYS
 	if (ram_size > KERNEL_VM_BASE - KERNEL_BASE) {
 		printf("%s: dropping RAM size from %luMB to %uMB\n",
-		    __func__, (unsigned long) (ram_size >> 20),     
+		    __func__, (unsigned long) (ram_size >> 20),
 		    (KERNEL_VM_BASE - KERNEL_BASE) >> 20);
 		ram_size = KERNEL_VM_BASE - KERNEL_BASE;
 	}
