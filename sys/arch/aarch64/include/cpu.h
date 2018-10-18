@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.9 2018/10/12 21:41:34 jmcneill Exp $ */
+/* $NetBSD: cpu.h,v 1.10 2018/10/18 09:01:51 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -106,10 +106,12 @@ curcpu(void)
 
 #define setsoftast(ci)		atomic_or_uint(&(ci)->ci_astpending, __BIT(0))
 #define cpu_signotify(l)	setsoftast((l)->l_cpu)
+
 void cpu_set_curpri(int);
 void cpu_proc_fork(struct proc *, struct proc *);
 void cpu_need_proftick(struct lwp *l);
 void cpu_boot_secondary_processors(void);
+void cpu_mpstart(void);
 void cpu_hatch(struct cpu_info *);
 
 extern struct cpu_info *cpu_info[];

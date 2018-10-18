@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_var.h,v 1.43 2018/07/07 20:16:16 jmcneill Exp $ */
+/* $NetBSD: tegra_var.h,v 1.44 2018/10/18 09:01:53 skrll Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -75,10 +75,10 @@ struct tegra_cpufreq_func {
 void	tegra_cpufreq_register(const struct tegra_cpufreq_func *);
 
 #if defined(SOC_TEGRA124)
-void	tegra124_mpinit(void);
+void	tegra124_mpstart(void);
 #endif
 #if defined(SOC_TEGRA210)
-void	tegra210_mpinit(void);
+void	tegra210_mpstart(void);
 #endif
 
 static void inline

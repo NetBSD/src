@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm53xx_machdep.c,v 1.17 2018/10/18 07:17:46 skrll Exp $	*/
+/*	$NetBSD: bcm53xx_machdep.c,v 1.18 2018/10/18 09:01:53 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #define IDM_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm53xx_machdep.c,v 1.17 2018/10/18 07:17:46 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm53xx_machdep.c,v 1.18 2018/10/18 09:01:53 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_console.h"
@@ -90,12 +90,6 @@ u_int uboot_args[4] __attribute__((__section__(".data")));
 
 static void bcm53xx_system_reset(void);
 
-/*
- * Macros to translate between physical and virtual for a subset of the
- * kernel address space.  *Not* for general use.
- */
-#define	KERN_VTOPDIFF	((vaddr_t)KERNEL_BASE_phys - (vaddr_t)KERNEL_BASE_virt)
-
 #ifndef CONADDR
 #define CONADDR		(BCM53XX_IOREG_PBASE + CCA_UART0_BASE)
 #endif
@@ -116,6 +110,27 @@ int comcnmode = CONMODE | CLOCAL;
 #ifdef KGDB
 #include <sys/kgdb.h>
 #endif
+
+static dev_type_cnputc(earlyconsputc);
+static dev_type_cngetc(earlyconsgetc);
+
+static struct consdev earlycons = {
+	.cn_putc = earlyconsputc,
+	.cn_getc = earlyconsgetc,
+	.cn_pollc = nullcnpollc,
+};
+
+static void
+earlyconsputc(dev_t dev, int c)
+{
+	uartputc(c);
+}
+
+static int
+earlyconsgetc(dev_t dev)
+{
+	return 0;	/* XXX */
+}
 
 /*
  * Static device mappings. These peripheral registers are mapped at
@@ -195,9 +210,17 @@ static const struct boot_physmem bp_first256 = {
 u_int
 initarm(void *arg)
 {
-	kern_vtopdiff = KERN_VTOPDIFF;
+	/*
+	 * Heads up ... Setup the CPU / MMU / TLB functions
+	 */
+	if (set_cpufuncs())		// starts PMC counter
+		panic("cpu not recognized!");
 
-	pmap_devmap_register(devmap);
+	cn_tab = &earlycons;
+
+	extern char ARM_BOOTSTRAP_LxPT[];
+	pmap_devmap_bootstrap((vaddr_t)ARM_BOOTSTRAP_LxPT, devmap);
+
 	bcm53xx_bootstrap(KERNEL_IO_IOREG_VBASE);
 
 #ifdef MULTIPROCESSOR
@@ -206,12 +229,6 @@ initarm(void *arg)
 	arm_cpu_max = 1 + (scu_cfg & SCU_CFG_CPUMAX);
 	membar_producer();
 #endif
-	/*
-	 * Heads up ... Setup the CPU / MMU / TLB functions
-	 */
-	if (set_cpufuncs())		// starts PMC counter
-		panic("cpu not recognized!");
-
 	cpu_domains((DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL*2)) | DOMAIN_CLIENT);
 
 	consinit();
