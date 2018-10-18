@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm53xx_machdep.c,v 1.16 2018/09/21 12:04:08 skrll Exp $	*/
+/*	$NetBSD: bcm53xx_machdep.c,v 1.17 2018/10/18 07:17:46 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #define IDM_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm53xx_machdep.c,v 1.16 2018/09/21 12:04:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm53xx_machdep.c,v 1.17 2018/10/18 07:17:46 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_console.h"
@@ -83,7 +83,7 @@ extern int KERNEL_BASE_virt[];
 
 BootConfig bootconfig;
 static char bootargs[MAX_BOOT_STRING];
-char *boot_args = NULL;     
+char *boot_args = NULL;
 
 /* filled in before cleaning bss. keep in .data */
 u_int uboot_args[4] __attribute__((__section__(".data")));
@@ -227,7 +227,7 @@ initarm(void *arg)
 #endif
 
 	printf("uboot arg = %#x, %#x, %#x, %#x\n",
-	    uboot_args[0], uboot_args[1], uboot_args[2], uboot_args[3]);      
+	    uboot_args[0], uboot_args[1], uboot_args[2], uboot_args[3]);
 
 	/* Talk to the user */
 	printf("\nNetBSD/evbarm (" ___STRING(EVBARM_BOARDTYPE) ") booting ...\n");
@@ -251,7 +251,7 @@ initarm(void *arg)
 	if ((memsize >> 20) > MEMSIZE)
 		memsize = MEMSIZE*1024*1024;
 #endif
-	const bool bigmem_p = (memsize >> 20) > 256; 
+	const bool bigmem_p = (memsize >> 20) > 256;
 
 #ifdef __HAVE_MM_MD_DIRECT_MAPPED_PHYS
 	const bool mapallmem_p = true;
