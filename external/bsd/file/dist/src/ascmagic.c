@@ -1,4 +1,4 @@
-/*	$NetBSD: ascmagic.c,v 1.1.1.9 2018/04/15 19:32:48 christos Exp $	*/
+/*	$NetBSD: ascmagic.c,v 1.1.1.10 2018/10/18 23:54:09 christos Exp $	*/
 
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
@@ -38,9 +38,9 @@
 
 #ifndef	lint
 #if 0
-FILE_RCSID("@(#)$File: ascmagic.c,v 1.98 2017/11/02 20:25:39 christos Exp $")
+FILE_RCSID("@(#)$File: ascmagic.c,v 1.100 2018/10/15 16:29:16 christos Exp $")
 #else
-__RCSID("$NetBSD: ascmagic.c,v 1.1.1.9 2018/04/15 19:32:48 christos Exp $");
+__RCSID("$NetBSD: ascmagic.c,v 1.1.1.10 2018/10/18 23:54:09 christos Exp $");
 #endif
 #endif	/* lint */
 
@@ -86,7 +86,7 @@ file_ascmagic(struct magic_set *ms, const struct buffer *b, int text)
 	const char *type = NULL;
 
 	bb = *b;
-	bb.flen = trim_nuls(b->fbuf, b->flen);
+	bb.flen = trim_nuls(CAST(const unsigned char *, b->fbuf), b->flen);
 
 	/* If file doesn't look like any sort of text, give up. */
 	if (file_encoding(ms, &bb, &ubuf, &ulen, &code, &code_mime,
@@ -102,12 +102,12 @@ file_ascmagic(struct magic_set *ms, const struct buffer *b, int text)
 }
 
 protected int
-file_ascmagic_with_encoding(struct magic_set *ms, 
+file_ascmagic_with_encoding(struct magic_set *ms,
     const struct buffer *b, unichar *ubuf, size_t ulen, const char *code,
     const char *type, int text)
 {
 	struct buffer bb;
-	const unsigned char *buf = b->fbuf;
+	const unsigned char *buf = CAST(const unsigned char *, b->fbuf);
 	size_t nbytes = b->flen;
 	unsigned char *utf8_buf = NULL, *utf8_end;
 	size_t mlen, i;
