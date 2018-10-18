@@ -1,4 +1,4 @@
-/*	$NetBSD: beagle_machdep.c,v 1.75 2018/10/18 06:36:53 skrll Exp $ */
+/*	$NetBSD: beagle_machdep.c,v 1.76 2018/10/18 09:01:53 skrll Exp $ */
 
 /*
  * Machine dependent functions for kernel setup for TI OSK5912 board.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: beagle_machdep.c,v 1.75 2018/10/18 06:36:53 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: beagle_machdep.c,v 1.76 2018/10/18 09:01:53 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_console.h"
@@ -134,6 +134,7 @@ __KERNEL_RCSID(0, "$NetBSD: beagle_machdep.c,v 1.75 2018/10/18 06:36:53 skrll Ex
 #include "opt_kgdb.h"
 #include "opt_machdep.h"
 #include "opt_md.h"
+#include "opt_multiprocessor.h"
 #include "opt_omap.h"
 
 #include "com.h"
@@ -240,6 +241,22 @@ int use_fb_console = true;
 
 #ifdef CPU_CORTEXA15
 uint32_t omap5_cnt_frq;
+#endif
+
+#ifdef MULTIPROCESSOR
+
+void beagle_cpu_hatch(struct cpu_info *);
+
+void
+beagle_cpu_hatch(struct cpu_info *ci)
+{
+#if defined(CPU_CORTEXA9)
+	a9tmr_init_cpu_clock(ci);
+#elif defined(CPU_CORTEXA7) || defined(CPU_CORTEXA15)
+	gtmr_init_cpu_clock(ci);
+#endif
+}
+
 #endif
 
 /*
@@ -441,6 +458,30 @@ beagle_putchar(char c)
 			break;
 	}
 #endif
+}
+
+void beagle_platform_early_putchar(char);
+
+void
+beagle_platform_early_putchar(char c)
+{
+	volatile uint32_t *com0addr = cpu_earlydevice_va_p() ?
+	    (volatile uint32_t *)CONSADDR_VA :
+	    (volatile uint32_t *)CONSADDR;
+
+	int timo = 150000;
+
+	while ((com0addr[com_lsr] & LSR_TXRDY) == 0) {
+		if (--timo == 0)
+			break;
+	}
+
+	com0addr[com_data] = c;
+
+	while ((com0addr[com_lsr] & LSR_TXRDY) == 0) {
+		if (--timo == 0)
+			break;
+	}
 }
 #else
 #define beagle_putchar(c)	((void)0)

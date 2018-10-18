@@ -1,4 +1,4 @@
-/*	$NetBSD: exynos_soc.c,v 1.37 2018/10/08 08:16:59 skrll Exp $	*/
+/*	$NetBSD: exynos_soc.c,v 1.38 2018/10/18 09:01:53 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #include "opt_exynos.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exynos_soc.c,v 1.37 2018/10/08 08:16:59 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exynos_soc.c,v 1.38 2018/10/18 09:01:53 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -401,6 +401,8 @@ sysctl_cpufreq_current(SYSCTLFN_ARGS)
 
 
 #ifdef VERBOSE_INIT_ARM
+#define VPRINTF(...)	printf(__VA_ARGS__)
+
 #define DUMP_PLL(v, var) \
 	reg = EXYNOS##v##_CMU_##var + PLL_CON0_OFFSET;\
 	regval = bus_space_read_4(&armv7_generic_bs_tag, exynos_cmu_bsh, reg); \
@@ -434,6 +436,8 @@ exynos_dump_clocks(void)
 #endif
 }
 #undef DUMP_PLL
+#else
+#define VPRINTF(...)	__nothing
 #endif
 
 

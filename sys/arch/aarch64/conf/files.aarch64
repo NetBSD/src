@@ -1,4 +1,4 @@
-#	$NetBSD: files.aarch64,v 1.7 2018/10/12 01:28:57 ryo Exp $
+#	$NetBSD: files.aarch64,v 1.8 2018/10/18 09:01:51 skrll Exp $
 
 defflag opt_cpuoptions.h	AARCH64_ALIGNMENT_CHECK
 defflag opt_cpuoptions.h	AARCH64_EL0_STACK_ALIGNMENT_CHECK
@@ -17,6 +17,7 @@ defparam opt_arm_intr_impl.h	ARM_INTR_IMPL
 # ARM-specific debug options (for compat arch/arm/*)
 defflag  opt_arm_debug.h	ARM_LOCK_CAS_DEBUG
 defflag  opt_arm_debug.h	VERBOSE_INIT_ARM
+defparam opt_arm_debug.h	EARLYCONS
 
 # Timer options
 defflag opt_arm_timer.h		__HAVE_GENERIC_CPU_INITCLOCKS
