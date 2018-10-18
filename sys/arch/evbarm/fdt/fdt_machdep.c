@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_machdep.c,v 1.44 2018/10/18 09:01:54 skrll Exp $ */
+/* $NetBSD: fdt_machdep.c,v 1.45 2018/10/18 17:34:10 skrll Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.44 2018/10/18 09:01:54 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.45 2018/10/18 17:34:10 skrll Exp $");
 
 #include "opt_machdep.h"
 #include "opt_bootconfig.h"
@@ -450,7 +450,7 @@ initarm(void *arg)
 	evbarm_cpu_rootconf = fdt_cpu_rootconf;
 
 	/* Talk to the user */
-	VPRINTF("\nNetBSD/evbarm (fdt) booting ...\n");
+	printf("NetBSD/evbarm (fdt) booting ...\n");
 
 #ifdef BOOT_ARGS
 	char mi_bootargs[] = BOOT_ARGS;
