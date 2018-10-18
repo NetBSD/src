@@ -1,4 +1,4 @@
-/* $NetBSD: acpi.c,v 1.37 2018/10/18 05:04:44 msaitoh Exp $ */
+/* $NetBSD: acpi.c,v 1.38 2018/10/18 05:20:05 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 1998 Doug Rabson
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: acpi.c,v 1.37 2018/10/18 05:04:44 msaitoh Exp $");
+__RCSID("$NetBSD: acpi.c,v 1.38 2018/10/18 05:20:05 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/endian.h>
@@ -2102,8 +2102,7 @@ acpi_print_pptt_cache(ACPI_PPTT_CACHE *cache)
 		printf("\tAssociativity=%d\n", cache->Associativity);
 	if (cache->Flags & ACPI_PPTT_ALLOCATION_TYPE_VALID) {
 		printf("\tAllocation type=");
-		switch (__SHIFTOUT(cache->Attributes,
-			ACPI_PPTT_MASK_ALLOCATION_TYPE)) {
+		switch (cache->Attributes & ACPI_PPTT_MASK_ALLOCATION_TYPE) {
 		case ACPI_PPTT_CACHE_READ_ALLOCATE:
 			printf("Read allocate\n");
 			break;
@@ -2118,8 +2117,7 @@ acpi_print_pptt_cache(ACPI_PPTT_CACHE *cache)
 	}
 	if (cache->Flags & ACPI_PPTT_CACHE_TYPE_VALID) {
 		printf("\tCache type=");
-		switch (__SHIFTOUT(cache->Attributes,
-			ACPI_PPTT_MASK_CACHE_TYPE)) {
+		switch (cache->Attributes & ACPI_PPTT_MASK_CACHE_TYPE) {
 		case ACPI_PPTT_CACHE_TYPE_DATA:
 			printf("Data\n");
 			break;
