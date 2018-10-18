@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.S,v 1.24 2018/09/23 15:28:48 cherry Exp $	*/
+/*	$NetBSD: cpufunc.S,v 1.25 2018/10/18 04:11:14 cherry Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 #include <sys/errno.h>
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.S,v 1.24 2018/09/23 15:28:48 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.S,v 1.25 2018/10/18 04:11:14 cherry Exp $");
 
 #include "opt_xen.h"
 
@@ -66,7 +66,7 @@ ENTRY(x86_mfence)
 END(x86_mfence)
 
 #ifndef XEN
-	ENTRY(lidt)
+ENTRY(lidt)
 	movl	4(%esp), %eax
 	lidt	(%eax)
 	ret
