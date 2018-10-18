@@ -1,4 +1,4 @@
-/*	$NetBSD: beagle_machdep.c,v 1.74 2018/09/21 12:04:08 skrll Exp $ */
+/*	$NetBSD: beagle_machdep.c,v 1.75 2018/10/18 06:36:53 skrll Exp $ */
 
 /*
  * Machine dependent functions for kernel setup for TI OSK5912 board.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: beagle_machdep.c,v 1.74 2018/09/21 12:04:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: beagle_machdep.c,v 1.75 2018/10/18 06:36:53 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_console.h"
@@ -314,7 +314,7 @@ static const struct pmap_devmap devmap[] = {
 	{
 		/*
 		 * Map the all 1MB of the L4 Core area
-		 * this gets us the console UART3, GPT[2-9], WDT1, 
+		 * this gets us the console UART3, GPT[2-9], WDT1,
 		 * and GPIO[2-6].
 		 */
 		.pd_va = _A(OMAP_L4_PERIPHERAL_VBASE),
@@ -573,7 +573,7 @@ initarm(void *arg)
 #ifdef __HAVE_MM_MD_DIRECT_MAPPED_PHYS
 	if (ram_size > KERNEL_VM_BASE - KERNEL_BASE) {
 		printf("%s: dropping RAM size from %luMB to %uMB\n",
-		    __func__, (unsigned long) (ram_size >> 20),     
+		    __func__, (unsigned long) (ram_size >> 20),
 		    (KERNEL_VM_BASE - KERNEL_BASE) >> 20);
 		ram_size = KERNEL_VM_BASE - KERNEL_BASE;
 	}
@@ -803,8 +803,8 @@ omap4_cpu_clk(void)
 	if ((armreg_pfr1_read() & ARM_PFR1_GTIMER_MASK) != 0) {
 		beagle_putchar('0');
 		uint32_t voffset = OMAP_L4_PERIPHERAL_VBASE - OMAP_L4_PERIPHERAL_BASE;
-		uint32_t frac1_reg = OMAP5_PRM_FRAC_INCREMENTER_NUMERATOR; 
-		uint32_t frac2_reg = OMAP5_PRM_FRAC_INCREMENTER_DENUMERATOR_RELOAD; 
+		uint32_t frac1_reg = OMAP5_PRM_FRAC_INCREMENTER_NUMERATOR;
+		uint32_t frac2_reg = OMAP5_PRM_FRAC_INCREMENTER_DENUMERATOR_RELOAD;
 		uint32_t frac1 = *(volatile uint32_t *)(frac1_reg + voffset);
 		beagle_putchar('1');
 		uint32_t frac2 = *(volatile uint32_t *)(frac2_reg + voffset);
@@ -867,7 +867,7 @@ emif_read_sdram_config(vaddr_t emif_base)
 #endif
 }
 
-static psize_t 
+static psize_t
 emif_memprobe(void)
 {
 	uint32_t sdram_config = emif_read_sdram_config(OMAP_EMIF1_VBASE);
@@ -910,7 +910,7 @@ emif_memprobe(void)
 #if defined(OMAP_3XXX)
 #define SDRC_MCFG(p)		(0x80 + (0x30 * (p)))
 #define SDRC_MCFG_MEMSIZE(m)	((((m) & __BITS(8,17)) >> 8) * 2)
-static psize_t 
+static psize_t
 omap3_memprobe(void)
 {
 	const vaddr_t gpmc_base = OMAP_SDRC_VBASE;
@@ -971,13 +971,13 @@ beagle_device_register(device_t self, void *aux)
 		 * XXX KLUDGE ALERT XXX
 		 * The iot mainbus supplies is completely wrong since it scales
 		 * addresses by 2.  The simpliest remedy is to replace with our
-		 * bus space used for the armcore registers (which armperiph uses). 
+		 * bus space used for the armcore registers (which armperiph uses).
 		 */
 		struct mainbus_attach_args * const mb = aux;
 		mb->mb_iot = &omap_bs_tag;
 		return;
 	}
- 
+
 #ifdef CPU_CORTEXA9
 	/*
 	 * We need to tell the A9 Global/Watchdog Timer
