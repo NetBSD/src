@@ -1,4 +1,4 @@
-/*	$NetBSD: osf1_mod.c,v 1.5 2017/02/12 21:02:20 chs Exp $	*/
+/*	$NetBSD: osf1_mod.c,v 1.5.12.1 2018/10/18 22:04:23 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_mod.c,v 1.5 2017/02/12 21:02:20 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_mod.c,v 1.5.12.1 2018/10/18 22:04:23 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/module.h>
@@ -46,7 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: osf1_mod.c,v 1.5 2017/02/12 21:02:20 chs Exp $");
 #include <compat/osf1/osf1.h>
 #include <compat/osf1/osf1_exec.h>
 
-MODULE(MODULE_CLASS_EXEC, compat_osf1, "compat,exec_ecoff");
+MODULE(MODULE_CLASS_EXEC, compat_osf1, "compat,compat_util,exec_ecoff");
 
 #define OSF1_ARGLEN \
 	(OSF1_MAX_AUX_ENTRIES * sizeof (struct osf1_auxv) + \
