@@ -1,6 +1,6 @@
 
 #------------------------------------------------------------------------------
-# $File: cad,v 1.15 2017/06/24 15:24:56 christos Exp $
+# $File: cad,v 1.18 2018/08/02 06:23:27 christos Exp $
 # autocad:  file(1) magic for cad files
 #
 
@@ -153,9 +153,38 @@
 >>8	lelong		0xa
 >>>16	leshort		0x3d3d	3D Studio model
 !:mime	image/x-3ds
-!:extension 3ds
+!:ext 3ds
 
 # MegaCAD 2D/3D drawing (.prt)
 # http://megacad.de/
 # From: Markus Heidelberg <markus.heidelberg@web.de>
 0	string	MegaCad23\0	MegaCAD 2D/3D drawing
+
+# Hoops CAD files
+# https://docs.techsoft3d.com/visualize/3df/latest/build/general/hsf/\
+# HSF_architecture.html
+# Stephane Charette <stephane.charette@gmail.com>
+0	string	;;\020HSF\020V		OpenHSF (Hoops Stream Format)
+>7	regex/9 V[.0-9]{4,5}\020	%s
+!:ext hsf
+
+# AutoCAD Drawing Exchange Format
+0	regex		\^[\ \t]*0\r?\000$
+>1	regex		\^[\ \t]*SECTION\r?$
+>>2	regex		\^[\ \t]*2\r?$
+>>>3	regex		\^[\ \t]*HEADER\r?$	AutoCAD Drawing Exchange Format
+!:mime	application/x-dxf
+!:ext	dxf
+>>>>&1	search/8192	AC1006			\b, R10
+>>>>&1	search/8192	AC1009			\b, R11/R12
+>>>>&1	search/8192	AC1012			\b, R13
+>>>>&1	search/8192	AC1014			\b, R14
+>>>>&1	search/8192	AC1015			\b, version 2000
+>>>>&1	search/8192	AC1018			\b, version 2004
+>>>>&1	search/8192	AC1021			\b, version 2007
+>>>>&1	search/8192	AC1024			\b, version 2010
+
+# The Sketchup 3D model format https://www.sketchup.com/
+0	string	\xff\xfe\xff\x0e\x53\x00\x6b\x00\x65\x00\x74\x00\x63\x00\x68\x00\x55\x00\x70\x00\x20\x00\x4d\x00\x6f\x00\x64\x00\x65\x00\x6c\x00	SketchUp Model
+!:mime application/vnd.sketchup.skp
+!:ext skp
