@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbufdebug.c,v 1.6 2018/10/12 05:49:38 msaitoh Exp $	*/
+/*	$NetBSD: uipc_mbufdebug.c,v 1.7 2018/10/18 05:44:19 msaitoh Exp $	*/
 
 /*
  * Copyright (C) 2017 Internet Initiative Japan Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbufdebug.c,v 1.6 2018/10/12 05:49:38 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbufdebug.c,v 1.7 2018/10/18 05:44:19 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -144,9 +144,8 @@ m_peek_len(const struct mbuf *m, const char *modif)
 		}
 	}
 
-	if (opt_c == true) {
+	if (opt_c == true)
 		return m->m_len;
-	}
 
 	if ((m->m_flags & M_PKTHDR) != 0)
 		return m->m_pkthdr.len;
@@ -185,6 +184,7 @@ str_ip6addr(const struct in6_addr *ap)
 static const char *
 str_ipproto(const uint8_t proto)
 {
+
 	switch (proto) {
 	case IPPROTO_HOPOPTS:
 		return ("IPv6 Hop-by-Hop");
@@ -408,12 +408,11 @@ m_examine_ppp(const struct mbuf *m, int off, const char *modif,
 		break;
 	case CISCO_MULTICAST:
 	case CISCO_UNICAST:
-		if (h.address == CISCO_MULTICAST) {
+		if (h.address == CISCO_MULTICAST)
 			(*pr)("MULTICAST)\n");
-		}
-		else {
+		else
 			(*pr)("UNICAST)\n");
-		}
+
 		(*pr)("SPPP: Protocol = %d(", protocol);
 		switch (protocol) {
 		case CISCO_KEEPALIVE:
@@ -569,24 +568,19 @@ m_examine_ip(const struct mbuf *m, int off, const char *modif,
 	(*pr)("IP: ID = %u\n", ntohs(ip.ip_id));
 	offset = ntohs(ip.ip_off);
 	(*pr)("IP: Offset = %u\n", (offset & IP_OFFMASK));
-	if (offset & IP_RF) {
+	if (offset & IP_RF)
 		(*pr)("IP: Flag 0x%04x (reserved)\n", IP_RF);
-	}
-	if (offset & IP_EF) {
+	if (offset & IP_EF)
 		(*pr)("IP: Flag 0x%04x (evil flag)\n", IP_EF);
-	}
-	if (offset & IP_DF) {
+	if (offset & IP_DF)
 		(*pr)("IP: Flag 0x%04x (don't fragment)\n", IP_DF);
-	}
-	if (offset & IP_MF) {
+	if (offset & IP_MF)
 		(*pr)("IP: Flag 0x%04x (more fragment)\n", IP_MF);
-	}
 	(*pr)("IP: TTL = %u\n", ip.ip_ttl);
 	(*pr)("IP: protocol = %u(%s)\n", ip.ip_p, str_ipproto(ip.ip_p));
 	(*pr)("IP: checksum = 0x%04x\n", ntohs(ip.ip_sum));
 	(*pr)("IP: Src = %s\n", str_ipaddr(&ip.ip_src));
 	(*pr)("IP: Dst = %s\n", str_ipaddr(&ip.ip_dst));
-
 
 	switch (ip.ip_p) {
 	case IPPROTO_ICMP:
@@ -984,10 +978,8 @@ m_examine_hex(const struct mbuf *m, int off, const char *modif,
 		if ((newline % EXAMINE_HEX_COL) == 0) {
 			(*pr)("\n");
 			(*pr)("offset %04d: ", off);
-		}
-		else {
+		} else
 			(*pr)(" ");
-		}
 	}
 	(*pr)("\n");
 }
