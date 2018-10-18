@@ -1,4 +1,4 @@
-/*	$NetBSD: exynos_combiner.c,v 1.8 2018/07/02 12:18:32 jmcneill Exp $ */
+/*	$NetBSD: exynos_combiner.c,v 1.9 2018/10/18 07:35:15 skrll Exp $ */
 
 /*-
 * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #include "gpio.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exynos_combiner.c,v 1.8 2018/07/02 12:18:32 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exynos_combiner.c,v 1.9 2018/10/18 07:35:15 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -160,7 +160,7 @@ exynos_combiner_new_group(struct exynos_combiner_softc *sc, int group_no)
 	sc->irq_groups = n;
 	return n;
 }
-			  
+
 static struct exynos_combiner_irq_group *
 exynos_combiner_get_group(struct exynos_combiner_softc *sc, int group_no)
 {
