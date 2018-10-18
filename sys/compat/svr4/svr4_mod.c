@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_mod.c,v 1.4 2014/03/07 08:40:59 martin Exp $	*/
+/*	$NetBSD: svr4_mod.c,v 1.4.28.1 2018/10/18 22:09:56 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_mod.c,v 1.4 2014/03/07 08:40:59 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_mod.c,v 1.4.28.1 2018/10/18 22:09:56 pgoyette Exp $");
 
 #ifndef ELFSIZE
 #define ELFSIZE ARCH_ELFSIZE
@@ -55,7 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: svr4_mod.c,v 1.4 2014/03/07 08:40:59 martin Exp $");
 # define	MD2	""
 #endif
 
-MODULE(MODULE_CLASS_EXEC, compat_svr4, "compat" MD1 MD2);
+MODULE(MODULE_CLASS_EXEC, compat_svr4, "compat,compat_util" MD1 MD2);
 
 #define ELF32_AUXSIZE (howmany(ELF_AUX_ENTRIES * sizeof(Aux32Info), \
     sizeof(Elf32_Addr)) + MAXPATHLEN + ALIGN(1))
