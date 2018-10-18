@@ -1,4 +1,4 @@
-/* $NetBSD: cpu_fdt.c,v 1.15 2018/10/04 08:58:13 ryo Exp $ */
+/* $NetBSD: cpu_fdt.c,v 1.16 2018/10/18 09:01:52 skrll Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #include "psci_fdt.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_fdt.c,v 1.15 2018/10/04 08:58:13 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_fdt.c,v 1.16 2018/10/18 09:01:52 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -170,13 +170,13 @@ cpu_fdt_attach(device_t parent, device_t self, void *aux)
 static register_t
 cpu_fdt_mpstart_pa(void)
 {
-#ifdef __aarch64__
-	extern void aarch64_mpstart(void);
-	return (register_t)aarch64_kern_vtophys((vaddr_t)aarch64_mpstart);
-#else
-	extern void cortex_mpstart(void);
-	return (register_t)cortex_mpstart;
-#endif
+	bool ok __diagused;
+	paddr_t pa;
+
+	ok = pmap_extract(pmap_kernel(), (vaddr_t)cpu_mpstart, &pa);
+	KASSERT(ok);
+
+	return pa;
 }
 
 static int
@@ -234,11 +234,7 @@ arm_fdt_cpu_bootstrap(void)
 #ifdef MULTIPROCESSOR
 	uint64_t mpidr, bp_mpidr;
 	u_int cpuindex;
-	int child, ret;
-	const char *method;
-#if NPSCI_FDT > 0
-	bool nopsci = false;
-#endif
+	int child;
 
 	const int cpus = OF_finddevice("/cpus");
 	if (cpus == -1) {
@@ -249,24 +245,17 @@ arm_fdt_cpu_bootstrap(void)
 
 	/* Count CPUs */
 	arm_cpu_max = 0;
-	for (child = OF_child(cpus); child; child = OF_peer(child))
-		if (arm_fdt_cpu_okay(child))
-			arm_cpu_max++;
-
-#if NPSCI_FDT > 0
-	if (psci_fdt_preinit() != 0)
-		nopsci = true;
-#endif
 
 	/* MPIDR affinity levels of boot processor. */
 	bp_mpidr = cpu_mpidr_aff_read();
 
 	/* Boot APs */
-	uint32_t started = 0;
 	cpuindex = 1;
 	for (child = OF_child(cpus); child; child = OF_peer(child)) {
 		if (!arm_fdt_cpu_okay(child))
 			continue;
+
+		arm_cpu_max++;
 		if (fdtbus_get_reg64(child, 0, &mpidr, NULL) != 0)
 			continue;
 		if (mpidr == bp_mpidr)
@@ -278,10 +267,59 @@ arm_fdt_cpu_bootstrap(void)
 			continue;
 #endif
 
-#ifdef __aarch64__
 		KASSERT(cpuindex < MAXCPUS);
 		cpu_mpidr[cpuindex] = mpidr;
-		cpu_dcache_wb_range((vaddr_t)&cpu_mpidr[cpuindex], sizeof(cpu_mpidr[cpuindex]));
+		cpu_dcache_wb_range((vaddr_t)&cpu_mpidr[cpuindex],
+		    sizeof(cpu_mpidr[cpuindex]));
+
+		cpuindex++;
+	}
+#endif
+}
+
+void
+arm_fdt_cpu_mpstart(void)
+{
+#ifdef MULTIPROCESSOR
+	uint64_t mpidr, bp_mpidr;
+	u_int cpuindex;
+	int child, ret;
+	const char *method;
+#if NPSCI_FDT > 0
+	bool nopsci = false;
+#endif
+
+	const int cpus = OF_finddevice("/cpus");
+	if (cpus == -1) {
+		aprint_error("%s: no /cpus node found\n", __func__);
+		return;
+	}
+
+#if NPSCI_FDT > 0
+	if (psci_fdt_preinit() != 0)
+		nopsci = true;
+#endif
+
+	/* MPIDR affinity levels of boot processor. */
+	bp_mpidr = cpu_mpidr_aff_read();
+
+	/* Boot APs */
+	uint32_t started = 0;
+
+	cpuindex = 1;
+	for (child = OF_child(cpus); child; child = OF_peer(child)) {
+		if (!arm_fdt_cpu_okay(child))
+			continue;
+
+		if (fdtbus_get_reg64(child, 0, &mpidr, NULL) != 0)
+			continue;
+		if (mpidr == bp_mpidr)
+			continue; 	/* BP already started */
+
+#ifdef __arm__
+		/* XXX NetBSD/arm requires all CPUs to be in the same cluster */
+		if ((mpidr & ~MPIDR_AFF0) != (bp_mpidr & ~MPIDR_AFF0))
+			continue;
 #endif
 
 		method = fdtbus_get_string(child, "enable-method");
