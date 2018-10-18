@@ -1,4 +1,4 @@
-/*	$NetBSD: xenfunc.c,v 1.21 2018/09/23 15:28:49 cherry Exp $	*/
+/*	$NetBSD: xenfunc.c,v 1.22 2018/10/18 04:17:18 cherry Exp $	*/
 
 /*
  * Copyright (c) 2004 Christian Limpach.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenfunc.c,v 1.21 2018/09/23 15:28:49 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenfunc.c,v 1.22 2018/10/18 04:17:18 cherry Exp $");
 
 #include <sys/param.h>
 
@@ -40,6 +40,8 @@ __KERNEL_RCSID(0, "$NetBSD: xenfunc.c,v 1.21 2018/09/23 15:28:49 cherry Exp $");
 //#include <xen/evtchn.h>
 #include <xen/xenpmap.h>
 #include <machine/pte.h>
+
+#define MAX_XEN_IDT 128
 
 void xen_set_ldt(vaddr_t, uint32_t);
 
@@ -59,7 +61,8 @@ lidt(struct region_descriptor *rd)
 	 * will be available at the boot stage when this is called.
 	 */
 	static char xen_idt_page[PAGE_SIZE] __attribute__((__aligned__ (PAGE_SIZE)));
-
+	memset(xen_idt_page, 0, PAGE_SIZE);
+	
 	struct trap_info *xen_idt = (void * )xen_idt_page;
 	int xen_idt_idx = 0;
 	
@@ -73,9 +76,9 @@ lidt(struct region_descriptor *rd)
 	 * back in the requestor array.
 	 */
 	for (i = 0; i < nidt; i++) {
-		if (idd->address == 0) /* Skip gap */
+		if (idd[i].address == 0) /* Skip gap */
 			continue;
-
+		KASSERT(xen_idt_idx < MAX_XEN_IDT);
 		/* Copy over entry */
 		xen_idt[xen_idt_idx++] = idd[i];
 	}
