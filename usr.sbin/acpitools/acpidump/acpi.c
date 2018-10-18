@@ -1,4 +1,4 @@
-/* $NetBSD: acpi.c,v 1.33 2018/10/16 21:44:37 jmcneill Exp $ */
+/* $NetBSD: acpi.c,v 1.34 2018/10/18 04:25:34 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 1998 Doug Rabson
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: acpi.c,v 1.33 2018/10/16 21:44:37 jmcneill Exp $");
+__RCSID("$NetBSD: acpi.c,v 1.34 2018/10/18 04:25:34 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/endian.h>
@@ -1270,6 +1270,39 @@ acpi_handle_dbgp(ACPI_TABLE_HEADER *sdp)
 	printf(END_COMMENT);
 }
 
+/* This function is used by DBG2 and SPCR. */
+static void
+acpi_print_dbg2_serial_subtype(uint16_t subtype)
+{
+
+	switch (subtype) {
+	case ACPI_DBG2_16550_COMPATIBLE:
+		printf("Fully 16550 compatible\n");
+		break;
+	case ACPI_DBG2_16550_SUBSET:
+		printf("16550 subset with DBGP Rev. 1\n");
+		break;
+	case ACPI_DBG2_ARM_PL011:
+		printf("ARM PL011\n");
+		break;
+	case ACPI_DBG2_ARM_SBSA_32BIT:
+		printf("ARM SBSA 32bit only\n");
+		break;
+	case ACPI_DBG2_ARM_SBSA_GENERIC:
+		printf("ARM SBSA Generic\n");
+		break;
+	case ACPI_DBG2_ARM_DCC:
+		printf("ARM DCC\n");
+		break;
+	case ACPI_DBG2_BCM2835:
+		printf("BCM2835\n");
+		break;
+	default:
+		printf("reserved (%04hx)\n", subtype);
+		break;
+	}
+}
+
 static void
 acpi_print_dbg2_device(ACPI_DBG2_DEVICE *dev)
 {
@@ -1293,32 +1326,7 @@ acpi_print_dbg2_device(ACPI_DBG2_DEVICE *dev)
 	switch (dev->PortType) {
 	case ACPI_DBG2_SERIAL_PORT:
 		printf("Serial\n" "\t\tPortSubtype=");
-		switch (dev->PortSubtype) {
-		case ACPI_DBG2_16550_COMPATIBLE:
-			printf("Fully 16550 compatible\n");
-			break;
-		case ACPI_DBG2_16550_SUBSET:
-			printf("16550 subset with DBGP Rev. 1\n");
-			break;
-		case ACPI_DBG2_ARM_PL011:
-			printf("ARM PL011\n");
-			break;
-		case ACPI_DBG2_ARM_SBSA_32BIT:
-			printf("ARM SBSA 32bit only\n");
-			break;
-		case ACPI_DBG2_ARM_SBSA_GENERIC:
-			printf("ARM SBSA Generic\n");
-			break;
-		case ACPI_DBG2_ARM_DCC:
-			printf("ARM DCC\n");
-			break;
-		case ACPI_DBG2_BCM2835:
-			printf("BCM2835\n");
-			break;
-		default:
-			printf("reserved (%04hx)\n", dev->PortSubtype);
-			break;
-		}
+		acpi_print_dbg2_serial_subtype(dev->PortSubtype);
 		break;
 	case ACPI_DBG2_1394_PORT:
 		printf("IEEE1394\n" "\t\tPortSubtype=");
@@ -1914,6 +1922,21 @@ acpi_handle_spcr(ACPI_TABLE_HEADER *sdp)
 	acpi_print_sdt(sdp);
 	spcr = (ACPI_TABLE_SPCR *)sdp;
 
+	printf("\n\tInterface Type=");
+	switch (sdp->Revision) {
+	case 1:
+		printf("full 16550%s\n",
+		    (spcr->InterfaceType == 1) ?
+		    "(must also accept writing FCR register)" : "");
+		break;
+	case 2:
+		acpi_print_dbg2_serial_subtype(spcr->InterfaceType);
+		break;
+	default:
+		printf("unknown Revision\n");
+		break;
+	}
+	
 	printf("\tSerial Port=");
 	acpi_print_gas(&spcr->SerialPort);
 	printf("\n\tInterrupt Type={");
@@ -1935,6 +1958,9 @@ acpi_handle_spcr(ACPI_TABLE_HEADER *sdp)
 	}
 	if (spcr->InterruptType & 0x4) {
 		printf("\n\t\tIO SAPIC={ GSI=%d }", spcr->Interrupt);
+	}
+	if (spcr->InterruptType & 0x8) {
+		printf("\n\t\tARMH GIC={ GSI=%d }", spcr->Interrupt);
 	}
 	printf("\n\t}\n");
 
