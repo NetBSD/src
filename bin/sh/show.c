@@ -1,4 +1,4 @@
-/*	$NetBSD: show.c,v 1.49 2018/08/19 10:47:45 kre Exp $	*/
+/*	$NetBSD: show.c,v 1.50 2018/10/18 04:44:27 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)show.c	8.3 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: show.c,v 1.49 2018/08/19 10:47:45 kre Exp $");
+__RCSID("$NetBSD: show.c,v 1.50 2018/10/18 04:44:27 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -67,21 +67,6 @@ __RCSID("$NetBSD: show.c,v 1.49 2018/08/19 10:47:45 kre Exp $");
 #include "output.h"
 #include "var.h"
 #include "builtins.h"
-
-#if defined(DEBUG) && !defined(DBG_PID)
-/*
- * If this is compiled, it means this is being compiled in a shell that still
- * has an older shell.h (a simpler TRACE() mechanism than is coming soon.)
- *
- * Compensate for as much of that as is missing and is needed here
- * to compile and operate at all.   After the other changes have appeared,
- * this little block can (and should be) deleted (sometime).
- *
- * Try to avoid waiting 22 years...
- */
-#define	DBG_PID		1
-#define	DBG_NEST	2
-#endif
 
 #define DEFINE_NODENAMES
 #include "nodenames.h"		/* does almost nothing if !defined(DEBUG) */
