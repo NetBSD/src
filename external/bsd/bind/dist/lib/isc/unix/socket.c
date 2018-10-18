@@ -1,4 +1,4 @@
-/*	$NetBSD: socket.c,v 1.23 2018/08/13 08:46:53 christos Exp $	*/
+/*	$NetBSD: socket.c,v 1.24 2018/10/18 14:30:54 he Exp $	*/
 
 /*
  * Copyright (C) 2004-2018  Internet Systems Consortium, Inc. ("ISC")
@@ -1548,7 +1548,8 @@ build_msghdr_send(isc__socket_t *sock, isc_socketevent_t *dev,
 
 #if defined(IPV6_USE_MIN_MTU)
 	if ((sock->type == isc_sockettype_udp) &&
-	    ((dev->attributes & ISC_SOCKEVENTATTR_USEMINMTU) != 0))
+	    ((dev->attributes & ISC_SOCKEVENTATTR_USEMINMTU) != 0) &&
+	    (sock->pf == AF_INET6))
 	{
 		int use_min_mtu = 1;	/* -1, 0, 1 */
 
