@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC,v 1.7 2018/08/23 20:54:43 skrll Exp $
+#	$NetBSD: GENERIC,v 1.8 2018/10/18 07:35:15 skrll Exp $
 #
 #	GENERIC ARM (aarch32) kernel
 #
@@ -192,7 +192,7 @@ options 	DEBUG
 # TEGRA TK1
 #options 	EARLYCONS=tegra, CONSADDR=0x70006300
 
-# 
+#
 #options 	EARLYCONS=vexpress, CONSADDR=0x1c090000
 #options 	EARLYCONS=virt
 
