@@ -1,4 +1,4 @@
-/* $NetBSD: acpi.c,v 1.35 2018/10/18 04:29:44 msaitoh Exp $ */
+/* $NetBSD: acpi.c,v 1.36 2018/10/18 04:52:00 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 1998 Doug Rabson
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: acpi.c,v 1.35 2018/10/18 04:29:44 msaitoh Exp $");
+__RCSID("$NetBSD: acpi.c,v 1.36 2018/10/18 04:52:00 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/endian.h>
@@ -3490,9 +3490,10 @@ acpi_print_fadt(ACPI_TABLE_HEADER *sdp)
 		printf("\tPM2_CNT_BLK=0x%x-0x%x\n",
 		       fadt->Pm2ControlBlock,
 		       fadt->Pm2ControlBlock + fadt->Pm2ControlLength - 1);
-	printf("\tPM_TMR_BLK=0x%x-0x%x\n",
-	       fadt->PmTimerBlock,
-	       fadt->PmTimerBlock + fadt->PmTimerLength - 1);
+	if (fadt->PmTimerBlock != 0)
+		printf("\tPM_TMR_BLK=0x%x-0x%x\n",
+		    fadt->PmTimerBlock,
+		    fadt->PmTimerBlock + fadt->PmTimerLength - 1);
 	if (fadt->Gpe0Block != 0)
 		printf("\tGPE0_BLK=0x%x-0x%x\n",
 		       fadt->Gpe0Block,
