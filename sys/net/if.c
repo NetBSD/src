@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.436 2018/09/07 13:24:14 christos Exp $	*/
+/*	$NetBSD: if.c,v 1.437 2018/10/18 11:34:54 knakahara Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.436 2018/09/07 13:24:14 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.437 2018/10/18 11:34:54 knakahara Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -201,7 +201,6 @@ static void if_detach_queues(struct ifnet *, struct ifqueue *);
 static void sysctl_sndq_setup(struct sysctllog **, const char *,
     struct ifaltq *);
 static void if_slowtimo(void *);
-static void if_free_sadl(struct ifnet *, int);
 static void if_attachdomain1(struct ifnet *);
 static int ifconf(u_long, void *);
 static int if_transmit(struct ifnet *, struct mbuf *);
@@ -573,7 +572,7 @@ if_activate_sadl(struct ifnet *ifp, struct ifaddr *ifa0,
  * Free the link level name for the specified interface.  This is
  * a detach helper.  This is called from if_detach().
  */
-static void
+void
 if_free_sadl(struct ifnet *ifp, int factory)
 {
 	struct ifaddr *ifa;
