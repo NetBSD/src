@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_emac.c,v 1.19 2018/10/18 12:58:19 jmcneill Exp $ */
+/* $NetBSD: sunxi_emac.c,v 1.20 2018/10/18 13:33:10 martin Exp $ */
 
 /*-
  * Copyright (c) 2016-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
 #include "opt_net_mpsafe.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_emac.c,v 1.19 2018/10/18 12:58:19 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_emac.c,v 1.20 2018/10/18 13:33:10 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -583,6 +583,47 @@ sunxi_emac_disable_intr(struct sunxi_emac_softc *sc)
 	WR4(sc, EMAC_INT_EN, 0);
 }
 
+#ifdef SUNXI_EMAC_DEBUG
+static void
+sunxi_emac_dump_regs(struct sunxi_emac_softc *sc)
+{
+	static const struct {
+		const char *name;
+		u_int reg;
+	} regs[] = {
+		{ "BASIC_CTL_0", EMAC_BASIC_CTL_0 },
+		{ "BASIC_CTL_1", EMAC_BASIC_CTL_1 },
+		{ "INT_STA", EMAC_INT_STA },
+		{ "INT_EN", EMAC_INT_EN },
+		{ "TX_CTL_0", EMAC_TX_CTL_0 },
+		{ "TX_CTL_1", EMAC_TX_CTL_1 },
+		{ "TX_FLOW_CTL", EMAC_TX_FLOW_CTL },
+		{ "TX_DMA_LIST", EMAC_TX_DMA_LIST },
+		{ "RX_CTL_0", EMAC_RX_CTL_0 },
+		{ "RX_CTL_1", EMAC_RX_CTL_1 },
+		{ "RX_DMA_LIST", EMAC_RX_DMA_LIST },
+		{ "RX_FRM_FLT", EMAC_RX_FRM_FLT },
+		{ "RX_HASH_0", EMAC_RX_HASH_0 },
+		{ "RX_HASH_1", EMAC_RX_HASH_1 },
+		{ "MII_CMD", EMAC_MII_CMD },
+		{ "ADDR_HIGH0", EMAC_ADDR_HIGH(0) },
+		{ "ADDR_LOW0", EMAC_ADDR_LOW(0) },
+		{ "TX_DMA_STA", EMAC_TX_DMA_STA },
+		{ "TX_DMA_CUR_DESC", EMAC_TX_DMA_CUR_DESC },
+		{ "TX_DMA_CUR_BUF", EMAC_TX_DMA_CUR_BUF },
+		{ "RX_DMA_STA", EMAC_RX_DMA_STA },
+		{ "RX_DMA_CUR_DESC", EMAC_RX_DMA_CUR_DESC },
+		{ "RX_DMA_CUR_BUF", EMAC_RX_DMA_CUR_BUF },
+		{ "RGMII_STA", EMAC_RGMII_STA },
+	};
+	u_int n;
+
+	for (n = 0; n < __arraycount(regs); n++)
+		device_printf(sc->dev, "  %-20s %08x\n", regs[n].name,
+		    RD4(sc, regs[n].reg));
+}
+#endif
+
 static int
 sunxi_emac_reset(struct sunxi_emac_softc *sc)
 {
@@ -1118,47 +1159,6 @@ sunxi_emac_get_eaddr(struct sunxi_emac_softc *sc, uint8_t *eaddr)
 	eaddr[4] = machi & 0xff;
 	eaddr[5] = (machi >> 8) & 0xff;
 }
-
-#ifdef SUNXI_EMAC_DEBUG
-static void
-sunxi_emac_dump_regs(struct sunxi_emac_softc *sc)
-{
-	static const struct {
-		const char *name;
-		u_int reg;
-	} regs[] = {
-		{ "BASIC_CTL_0", EMAC_BASIC_CTL_0 },
-		{ "BASIC_CTL_1", EMAC_BASIC_CTL_1 },
-		{ "INT_STA", EMAC_INT_STA },
-		{ "INT_EN", EMAC_INT_EN },
-		{ "TX_CTL_0", EMAC_TX_CTL_0 },
-		{ "TX_CTL_1", EMAC_TX_CTL_1 },
-		{ "TX_FLOW_CTL", EMAC_TX_FLOW_CTL },
-		{ "TX_DMA_LIST", EMAC_TX_DMA_LIST },
-		{ "RX_CTL_0", EMAC_RX_CTL_0 },
-		{ "RX_CTL_1", EMAC_RX_CTL_1 },
-		{ "RX_DMA_LIST", EMAC_RX_DMA_LIST },
-		{ "RX_FRM_FLT", EMAC_RX_FRM_FLT },
-		{ "RX_HASH_0", EMAC_RX_HASH_0 },
-		{ "RX_HASH_1", EMAC_RX_HASH_1 },
-		{ "MII_CMD", EMAC_MII_CMD },
-		{ "ADDR_HIGH0", EMAC_ADDR_HIGH(0) },
-		{ "ADDR_LOW0", EMAC_ADDR_LOW(0) },
-		{ "TX_DMA_STA", EMAC_TX_DMA_STA },
-		{ "TX_DMA_CUR_DESC", EMAC_TX_DMA_CUR_DESC },
-		{ "TX_DMA_CUR_BUF", EMAC_TX_DMA_CUR_BUF },
-		{ "RX_DMA_STA", EMAC_RX_DMA_STA },
-		{ "RX_DMA_CUR_DESC", EMAC_RX_DMA_CUR_DESC },
-		{ "RX_DMA_CUR_BUF", EMAC_RX_DMA_CUR_BUF },
-		{ "RGMII_STA", EMAC_RGMII_STA },
-	};
-	u_int n;
-
-	for (n = 0; n < __arraycount(regs); n++)
-		device_printf(sc->dev, "  %-20s %08x\n", regs[n].name,
-		    RD4(sc, regs[n].reg));
-}
-#endif
 
 static int
 sunxi_emac_phy_reset(struct sunxi_emac_softc *sc)
