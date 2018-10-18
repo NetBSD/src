@@ -1,4 +1,4 @@
-/*	$NetBSD: cdf.h,v 1.1.1.9 2017/05/24 23:59:57 christos Exp $	*/
+/*	$NetBSD: cdf.h,v 1.1.1.10 2018/10/18 23:54:09 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 Christos Zoulas
@@ -274,7 +274,7 @@ typedef struct {
 typedef struct {
 	uint16_t ce_namlen;
 	uint32_t ce_num;
-	uint64_t ce_timestamp; 
+	uint64_t ce_timestamp;
 	uint16_t ce_name[256];
 } cdf_catalog_entry_t;
 
