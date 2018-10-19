@@ -1,4 +1,4 @@
-/*	$NetBSD: file.h,v 1.21 2018/10/19 00:24:57 christos Exp $	*/
+/*	$NetBSD: file.h,v 1.22 2018/10/19 00:32:47 christos Exp $	*/
 
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
@@ -384,7 +384,7 @@ struct mlist {
 #define CCAST(T, b)	const_cast<T>(b)
 #else
 #define CAST(T, b)	((T)(b))
-#define RCAST(T, b)	((T)(void *)(b))
+#define RCAST(T, b)	((T)(uintptr_t)(b))
 #define CCAST(T, b)	((T)(uintptr_t)(b))
 #endif
 

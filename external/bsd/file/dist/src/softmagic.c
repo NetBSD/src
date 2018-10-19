@@ -1,4 +1,4 @@
-/*	$NetBSD: softmagic.c,v 1.20 2018/10/19 00:11:48 christos Exp $	*/
+/*	$NetBSD: softmagic.c,v 1.21 2018/10/19 00:32:47 christos Exp $	*/
 
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
@@ -37,7 +37,7 @@
 #if 0
 FILE_RCSID("@(#)$File: softmagic.c,v 1.271 2018/10/15 16:29:16 christos Exp $")
 #else
-__RCSID("$NetBSD: softmagic.c,v 1.20 2018/10/19 00:11:48 christos Exp $");
+__RCSID("$NetBSD: softmagic.c,v 1.21 2018/10/19 00:32:47 christos Exp $");
 #endif
 #endif	/* lint */
 
@@ -1441,7 +1441,7 @@ msetoffset(struct magic_set *ms, struct magic *m, struct buffer *bb,
 		if ((size_t)-m->offset > b->elen)
 			return -1;
 		buffer_init(bb, -1, b->ebuf, b->elen);
-		ms->eoffset = ms->offset = b->elen + m->offset;
+		ms->eoffset = ms->offset = (int32_t)(b->elen + m->offset);
 	} else {
 		if (cont_level == 0) {
 normal:
