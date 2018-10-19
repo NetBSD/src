@@ -1,4 +1,6 @@
-/*	$NetBSD: private.h,v 1.52 2018/05/04 15:51:00 christos Exp $	*/
+/* Private header for tzdb code.  */
+
+/*	$NetBSD: private.h,v 1.53 2018/10/19 23:05:35 christos Exp $	*/
 
 #ifndef PRIVATE_H
 #define PRIVATE_H
