@@ -1,4 +1,4 @@
-/*	$NetBSD: schizoreg.h,v 1.11 2015/11/23 21:40:14 jdc Exp $	*/
+/*	$NetBSD: schizoreg.h,v 1.12 2018/10/19 21:47:03 macallan Exp $	*/
 /*	$OpenBSD: schizoreg.h,v 1.20 2008/07/12 13:08:04 kettenis Exp $	*/
 
 /*
@@ -111,6 +111,16 @@ struct schizo_regs {
 #define	SCZ_UE_AFAR			0x10038
 #define	SCZ_CE_AFSR			0x10040
 #define	SCZ_CE_AFAR			0x10048
+#define SCZ_JBUS_ESTAR			0x10050
+#define SCZ_JBUS_CHANGE_INIT		0x10058
+
+#define SCZ_JBUS_GPIO_0			0x60000	/* 8bit */
+#define SCZ_JBUS_GPIO_1			0x60001	/* 8bit */
+#define SCZ_JBUS_GPIO_2			0x62000	/* 8bit */
+#define SCZ_JBUS_GPIO_3			0x62001	/* 8bit */
+#define SCZ_JBUS_GPIO_DATA		0x64000	/* 64bit, data in lower 4 */
+#define SCZ_JBUS_GPIO_DIR		0x64008	/* 1 - output, 0 - input */
+
 
 /* These are relative to the PBM */
 #define	SCZ_PCI_IOMMU_CTRL		0x00200
@@ -300,6 +310,10 @@ struct schizo_regs {
 #define	SCZ_PCIERR_A_INO		0x32	/* PCI A bus error */
 #define	SCZ_PCIERR_B_INO		0x33	/* PCI B bus error */
 #define	SCZ_SERR_INO			0x34	/* safari interface error */
+
+#define SCZ_JBUS_ESTAR_FULL		(1UL << 0)	/* full speed */
+#define SCZ_JBUS_ESTAR_HALF		(1UL << 1)	/* half speed */
+#define SCZ_JBUS_ESTAR_SLOW		(1UL << 5)	/* 1/32 speed */
 
 struct schizo_range {
 	u_int32_t	cspace;
