@@ -1,4 +1,4 @@
-/*	$NetBSD: der.c,v 1.3 2017/05/25 00:11:26 christos Exp $	*/
+/*	$NetBSD: der.c,v 1.4 2018/10/19 00:11:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 2016 Christos Zoulas
@@ -38,9 +38,9 @@
 
 #ifndef lint
 #if 0
-FILE_RCSID("@(#)$File: der.c,v 1.12 2017/02/10 18:14:01 christos Exp $")
+FILE_RCSID("@(#)$File: der.c,v 1.15 2018/10/15 16:29:16 christos Exp $")
 #else
-__RCSID("$NetBSD: der.c,v 1.3 2017/05/25 00:11:26 christos Exp $");
+__RCSID("$NetBSD: der.c,v 1.4 2018/10/19 00:11:48 christos Exp $");
 #endif
 #endif
 #endif
@@ -205,7 +205,7 @@ getlength(const uint8_t *c, size_t *p, size_t l)
 	for (i = 0; i < digits; i++)
 		len = (len << 8) | c[(*p)++];
 
-	if (*p + len >= l)
+	if (len > UINT32_MAX - *p || *p + len >= l)
 		return DER_BAD;
 	return CAST(uint32_t, len);
 }
@@ -213,7 +213,7 @@ getlength(const uint8_t *c, size_t *p, size_t l)
 static const char *
 der_tag(char *buf, size_t len, uint32_t tag)
 {
-	if (tag < DER_TAG_LONG) 
+	if (tag < DER_TAG_LONG)
 		strlcpy(buf, der__tag[tag], len);
 	else
 		snprintf(buf, len, "%#x", tag);
@@ -234,7 +234,7 @@ der_data(char *buf, size_t blen, uint32_t tag, const void *q, uint32_t len)
 	default:
 		break;
 	}
-		
+
 	for (uint32_t i = 0; i < len; i++) {
 		uint32_t z = i << 1;
 		if (z < blen - 2)
@@ -251,18 +251,21 @@ der_offs(struct magic_set *ms, struct magic *m, size_t nbytes)
 
 	if (gettag(b, &offs, len) == DER_BAD)
 		return -1;
-	DPRINTF(("%s1: %d %zu %u\n", __func__, ms->offset, offs, m->offset));
+	DPRINTF(("%s1: %d %" SIZE_T_FORMAT "u %u\n", __func__, ms->offset,
+	    offs, m->offset));
 
 	uint32_t tlen = getlength(b, &offs, len);
 	if (tlen == DER_BAD)
 		return -1;
-	DPRINTF(("%s2: %d %zu %u\n", __func__, ms->offset, offs, tlen));
+	DPRINTF(("%s2: %d %" SIZE_T_FORMAT "u %u\n", __func__, ms->offset,
+	    offs, tlen));
 
 	offs += ms->offset + m->offset;
 	DPRINTF(("cont_level = %d\n", m->cont_level));
 #ifdef DEBUG_DER
 	for (size_t i = 0; i < m->cont_level; i++)
-		printf("cont_level[%zu] = %u\n", i, ms->c.li[i].off);
+		printf("cont_level[%" SIZE_T_FORMAT "u] = %u\n", i,
+		    ms->c.li[i].off);
 #endif
 	if (m->cont_level != 0) {
 		if (offs + tlen > nbytes)
@@ -318,14 +321,15 @@ again:
 			slen = slen * 10 + *s - '0';
 		while (isdigit((unsigned char)*++s));
 		if ((ms->flags & MAGIC_DEBUG) != 0)
-			fprintf(stderr, "%s: len %zu %u\n", __func__,
-			    slen, tlen);
+			fprintf(stderr, "%s: len %" SIZE_T_FORMAT "u %u\n",
+			    __func__, slen, tlen);
 		if (tlen != slen)
 			return 0;
 		goto again;
 	}
 val:
-	DPRINTF(("%s: before data %zu %u\n", __func__, offs, tlen));
+	DPRINTF(("%s: before data %" SIZE_T_FORMAT "u %u\n", __func__, offs,
+	    tlen));
 	der_data(buf, sizeof(buf), tag, b + offs, tlen);
 	if ((ms->flags & MAGIC_DEBUG) != 0)
 		fprintf(stderr, "%s: data %s %s\n", __func__, buf, s);
@@ -349,7 +353,7 @@ printtag(uint32_t tag, const void *q, uint32_t len)
 	default:
 		break;
 	}
-		
+
 	for (uint32_t i = 0; i < len; i++)
 		printf("%.2x", d[i]);
 	printf("\n");
@@ -373,8 +377,9 @@ printdata(size_t level, const void *v, size_t x, size_t l)
 		if (p + x >= ep)
 			break;
 		uint32_t len = getlength(p, &x, ep - p + x);
-		
-		printf("%zu %zu-%zu %c,%c,%s,%u:", level, ox, x,
+
+		printf("%" SIZE_T_FORMAT "u %" SIZE_T_FORMAT "u-%"
+		    SIZE_T_FORMAT "u %c,%c,%s,%u:", level, ox, x,
 		    der_class[c], der_type[t],
 		    der_tag(buf, sizeof(buf), tag), len);
 		q = p + x;
