@@ -1,4 +1,4 @@
-/* $NetBSD: gpioctl.c,v 1.24 2018/05/19 13:59:07 thorpej Exp $ */
+/* $NetBSD: gpioctl.c,v 1.25 2018/10/19 22:51:13 christos Exp $ */
 
 /*
  * Copyright (c) 2008, 2010, 2011, 2013 Marc Balmer <mbalmer@NetBSD.org>
@@ -16,6 +16,8 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: gpioctl.c,v 1.25 2018/10/19 22:51:13 christos Exp $");
 
 /*
  * Program to control GPIO devices.
