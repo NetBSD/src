@@ -1,4 +1,4 @@
-/*	$NetBSD: zs_ap.c,v 1.29 2018/10/14 00:10:11 tsutsui Exp $	*/
+/*	$NetBSD: zs_ap.c,v 1.30 2018/10/19 13:40:33 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs_ap.c,v 1.29 2018/10/14 00:10:11 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs_ap.c,v 1.30 2018/10/19 13:40:33 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -138,11 +138,13 @@ struct zschan {
 
 static void *zsaddr[NZS];
 
-/* Flags from cninit() */
-static int zs_hwflags[NZS][2];
-
 /* Default speed for all channels */
 static int zs_defspeed = 9600;
+
+/* console status from cninit */
+static struct zs_chanstate zs_ap_conschan_store;
+static struct zs_chanstate *zs_ap_conschan;
+static struct zschan *zc_ap_cons;
 
 static uint8_t zs_init_reg[16] = {
 	0,	/* 0: CMD (reset, etc.) */
@@ -157,7 +159,7 @@ static uint8_t zs_init_reg[16] = {
 	ZSWR9_MASTER_IE,
 	0,	/*10: Misc. TX/RX control bits */
 	ZSWR11_TXCLK_BAUD | ZSWR11_RXCLK_BAUD,
-	((PCLK/32)/9600)-2,	/*12: BAUDLO (default=9600) */
+	BPS_TO_TCONST(PCLK/16,9600),	/*12: BAUDLO (default=9600) */
 	0,			/*13: BAUDHI (default=9600) */
 	ZSWR14_BAUD_ENA | ZSWR14_BAUD_FROM_PCLK,
 	ZSWR15_BREAK_IE,
@@ -334,7 +336,6 @@ zs_ap_attach(device_t parent, device_t self, void *aux)
 	 */
 	for (channel = 0; channel < 2; channel++) {
 		zsc_args.channel = channel;
-		zsc_args.hwflags = zs_hwflags[zs_unit][channel];
 		cs = &zsc->zsc_cs_store[channel];
 		zsc->zsc_cs[channel] = cs;
 
@@ -345,18 +346,19 @@ zs_ap_attach(device_t parent, device_t self, void *aux)
 		cs->cs_brg_clk = PCLK / 16;
 
 		zc = zs_get_chan_addr(zs_unit, channel);
-		cs->cs_reg_csr  = &zc->zc_csr;
-		cs->cs_reg_data = &zc->zc_data;
 
-		memcpy(cs->cs_creg, zs_init_reg, 16);
-		memcpy(cs->cs_preg, zs_init_reg, 16);
-
-		/* XXX: Get these from the EEPROM instead? */
-		/* XXX: See the mvme167 code.  Better. */
-		if (zsc_args.hwflags & ZS_HWFLAG_CONSOLE)
-			cs->cs_defspeed = zs_get_speed(cs);
-		else
+		if (zc == zc_ap_cons) {
+			memcpy(cs, zs_ap_conschan, sizeof(struct zs_chanstate));
+			zs_ap_conschan = cs;
+			zsc_args.hwflags = ZS_HWFLAG_CONSOLE;
+		} else {
+			cs->cs_reg_csr  = &zc->zc_csr;
+			cs->cs_reg_data = &zc->zc_data;
+			memcpy(cs->cs_creg, zs_init_reg, 16);
+			memcpy(cs->cs_preg, zs_init_reg, 16);
 			cs->cs_defspeed = zs_defspeed;
+			zsc_args.hwflags = 0;
+		}
 		cs->cs_defcflag = zs_def_cflag;
 
 		/* Make these correspond to cs_defcflag (-crtscts) */
@@ -534,21 +536,47 @@ static void
 zscninit(struct consdev *cn)
 {
 	extern const struct cdevsw zstty_cdevsw;
+	struct zs_chanstate *cs;
+	u_int tconst;
+
+	/* Wait a while for PROM console output to complete */
+	DELAY(20000);
 
 	cn->cn_dev = makedev(cdevsw_lookup_major(&zstty_cdevsw), 0);
 	cn->cn_pri = CN_REMOTE;
-	zs_hwflags[0][0] = ZS_HWFLAG_CONSOLE;
+
+	zc_ap_cons = sccport0a;
+	zs_delay = zs_ap_delay;
+
+	zs_ap_conschan = cs = &zs_ap_conschan_store;
+
+	/* Setup temporary chanstate. */
+	cs->cs_reg_csr  = &zc_ap_cons->zc_csr;
+	cs->cs_reg_data = &zc_ap_cons->zc_data;
+
+	/* Initialize the pending registers. */
+	memcpy(cs->cs_preg, zs_init_reg, 16);
+	cs->cs_preg[5] |= ZSWR5_DTR | ZSWR5_RTS;
+
+	cs->cs_brg_clk = PCLK / 16;
+	cs->cs_defspeed = 9600;	/* PROM use 9600 bps */
+	tconst = BPS_TO_TCONST(cs->cs_brg_clk, cs->cs_defspeed);
+	cs->cs_preg[12] = tconst;
+	cs->cs_preg[13] = tconst >> 8;
+
+	/* Clear the master interrupt enable. */
+	zs_write_reg(cs, 9, 0);
+
+	/* Reset the whole SCC chip. */
+	zs_write_reg(cs, 9, ZSWR9_HARD_RESET);
+
+	/* Copy "pending" to "current" and H/W */
+	zs_loadchannelregs(cs);
 }
 
 static int
 zscngetc(dev_t dev)
 {
-	void *sccport0a;
-
-	if (systype == NEWS5000)
-		sccport0a = (void *)NEWS5000_SCCPORT0A;
-	if (systype == NEWS4000)
-		sccport0a = (void *)NEWS4000_SCCPORT0A;
  
 	return zs_getc(sccport0a);
 }
@@ -556,12 +584,6 @@ zscngetc(dev_t dev)
 static void
 zscnputc(dev_t dev, int c)
 {
-	void *sccport0a;
-
-	if (systype == NEWS5000)
-		sccport0a = (void *)NEWS5000_SCCPORT0A;
-	if (systype == NEWS4000)
-		sccport0a = (void *)NEWS4000_SCCPORT0A;
 
 	zs_putc(sccport0a, c);
 }
