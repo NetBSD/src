@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vlan.c,v 1.132 2018/10/18 11:34:54 knakahara Exp $	*/
+/*	$NetBSD: if_vlan.c,v 1.133 2018/10/19 00:12:56 knakahara Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.132 2018/10/18 11:34:54 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.133 2018/10/19 00:12:56 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -415,6 +415,7 @@ vlan_clone_destroy(struct ifnet *ifp)
 
 	psref_target_destroy(&ifv->ifv_mib->ifvm_psref, ifvm_psref_class);
 	kmem_free(ifv->ifv_mib, sizeof(struct ifvlan_linkmib));
+	pserialize_destroy(ifv->ifv_psz);
 	mutex_destroy(&ifv->ifv_lock);
 	free(ifv, M_DEVBUF);
 
