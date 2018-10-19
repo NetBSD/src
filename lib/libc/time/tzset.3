@@ -1,5 +1,5 @@
-.\"	$NetBSD: tzset.3,v 1.38 2018/05/04 15:51:00 christos Exp $
-.Dd May 5, 2018
+.\"	$NetBSD: tzset.3,v 1.39 2018/10/19 23:05:35 christos Exp $
+.Dd October 19, 2018
 .Dt TZSET 3
 .Os
 .Sh NAME
@@ -37,7 +37,7 @@ functions.
 .Pp
 If
 .Ar tz
-is not a valid time zone description, or if the object cannot be allocated,
+is not a valid timezone description, or if the object cannot be allocated,
 .Fn tzalloc
 returns a
 .Dv NULL
@@ -104,13 +104,13 @@ The
 .Fn tzset
 function acts like
 .Dv tzalloc(getenv("TZ")) ,
-except it saves any resulting time zone object into internal
+except it saves any resulting timezone object into internal
 storage that is accessed by
 .Fn localtime ,
 .Fn localtime_r ,
 and
 .Fn mktime .
-The anonymous shared time zone object is freed by the next call to
+The anonymous shared timezone object is freed by the next call to
 .Fn tzset .
 If the implied call to
 .Fn tzalloc
@@ -178,7 +178,7 @@ Three or more bytes that are the designation for the standard
 or the alternative
 .Cm ( dst 
 such as daylight saving time)
-time zone.
+timezone.
 Only
 .Cm std
 is required; if
@@ -233,7 +233,7 @@ The hour must be between zero and 24, and the minutes (and
 seconds) \*(en if present \*(en between zero and 59.
 If preceded by a
 .Dq -
-the time zone shall be east of the Prime Meridian; otherwise it shall be
+the timezone shall be east of the Prime Meridian; otherwise it shall be
 west (which may be indicated by an optional preceding
 .Dq + ) .
 .It Cm rule
@@ -331,7 +331,7 @@ is not given, is
 .Pp
 Here are some examples of
 .Va TZ
-values that directly specify the time zone rules; they use some of the
+values that directly specify the timezone rules; they use some of the
 extensions to POSIX.
 .Bl -tag
 .It EST5
@@ -398,11 +398,11 @@ from the rest of the specification.
 .Sh FILES
 .Bl -tag -width /usr/share/zoneinfo/posixrules -compact
 .It Pa /etc/localtime
-local time zone file
+local timezone file
 .It Pa /usr/share/zoneinfo
-time zone information directory
-\" .It Pa /usr/share/zoneinfo/localtime
-\" local time zone file
+local timezone information directory
+.\" .It Pa /usr/share/zoneinfo/localtime
+.\" local timezone file
 .It Pa /usr/share/zoneinfo/posixrules
 used with POSIX-style TZ's
 .It Pa /usr/share/zoneinfo/GMT
