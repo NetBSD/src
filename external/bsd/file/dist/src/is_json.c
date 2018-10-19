@@ -1,4 +1,4 @@
-/*	$NetBSD: is_json.c,v 1.1.1.1 2018/10/18 23:54:09 christos Exp $	*/
+/*	$NetBSD: is_json.c,v 1.2 2018/10/19 00:24:57 christos Exp $	*/
 
 /*-
  * Copyright (c) 2018 Christos Zoulas
@@ -37,7 +37,7 @@
 #if 0
 FILE_RCSID("@(#)$File: is_json.c,v 1.11 2018/10/15 16:29:16 christos Exp $")
 #else
-__RCSID("$NetBSD: is_json.c,v 1.1.1.1 2018/10/18 23:54:09 christos Exp $");
+__RCSID("$NetBSD: is_json.c,v 1.2 2018/10/19 00:24:57 christos Exp $");
 #endif
 #endif
 
@@ -50,7 +50,7 @@ __RCSID("$NetBSD: is_json.c,v 1.1.1.1 2018/10/18 23:54:09 christos Exp $");
 #define DPRINTF(a, b, c)	\
     printf("%s [%.2x/%c] %.20s\n", (a), *(b), *(b), (const char *)(c))
 #else
-#define DPRINTF(a, b, c)	(void)0
+#define DPRINTF(a, b, c)	do { } while (/*CONSTCOND*/0)
 #endif
 
 #define JSON_ARRAY	0

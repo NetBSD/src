@@ -1,4 +1,4 @@
-/*	$NetBSD: compress.c,v 1.16 2018/10/19 00:11:48 christos Exp $	*/
+/*	$NetBSD: compress.c,v 1.17 2018/10/19 00:24:57 christos Exp $	*/
 
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
@@ -40,7 +40,7 @@
 #if 0
 FILE_RCSID("@(#)$File: compress.c,v 1.113 2018/10/15 16:29:16 christos Exp $")
 #else
-__RCSID("$NetBSD: compress.c,v 1.16 2018/10/19 00:11:48 christos Exp $");
+__RCSID("$NetBSD: compress.c,v 1.17 2018/10/19 00:24:57 christos Exp $");
 #endif
 #endif
 
@@ -428,7 +428,7 @@ file_pipe2file(struct magic_set *ms, int fd, const void *startbuf,
 #else
 	{
 		int te;
-		int ou = umask(0);
+		mode_t ou = umask(0);
 		tfd = mkstemp(buf);
 		(void)umask(ou);
 		te = errno;
