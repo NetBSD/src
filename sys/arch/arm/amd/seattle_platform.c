@@ -1,4 +1,4 @@
-/* $NetBSD: seattle_platform.c,v 1.3 2018/09/21 12:04:06 skrll Exp $ */
+/* $NetBSD: seattle_platform.c,v 1.4 2018/10/19 20:33:23 jakllsch Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
 #define _ARM32_BUS_DMA_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: seattle_platform.c,v 1.3 2018/09/21 12:04:06 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: seattle_platform.c,v 1.4 2018/10/19 20:33:23 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -154,6 +154,7 @@ static const struct arm_platform seattle_platform = {
 	.ap_reset = psci_fdt_reset,
 	.ap_delay = gtmr_delay,
 	.ap_uart_freq = seattle_platform_uart_freq,
+	.ap_mpstart = arm_fdt_cpu_mpstart,
 };
 
 ARM_PLATFORM(seattle, "amd,seattle", &seattle_platform);
