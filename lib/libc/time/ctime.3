@@ -1,4 +1,4 @@
-.\" $NetBSD: ctime.3,v 1.59 2018/05/04 15:51:00 christos Exp $
+.\" $NetBSD: ctime.3,v 1.60 2018/10/19 23:05:35 christos Exp $
 .\"
 .\" XXX: License missing?
 .\"
@@ -158,7 +158,7 @@ functions
 are like their unsuffixed counterparts, except that they accept an
 extra initial
 .Ar zone
-argument specifying the time zone to be used for conversion.
+argument specifying the timezone to be used for conversion.
 If
 .Fa zone
 is
@@ -196,7 +196,7 @@ is comparable to
 .Fn gmtime .
 However,
 .Fn localtime
-corrects for the time zone and any time zone adjustments
+corrects for the timezone and any timezone adjustments
 (such as Daylight Saving Time in the U.S.A.).
 After filling in the
 .Va tm
@@ -205,7 +205,7 @@ structure, the function sets the
 element of
 .Fa tzname
 to a pointer to an
-ASCII string that is the time zone abbreviation to be used with
+ASCII string that is the timezone abbreviation to be used with
 .Fn localtime Ns 's
 return value.
 .It Fn localtime_r "clock" "result"
@@ -441,11 +441,11 @@ function returns string containing the name of the timezone given in
 .Sh FILES
 .Bl -tag -width /usr/share/zoneinfo/posixrules -compact
 .It Pa /etc/localtime
-local time zone file
+local timezone file
 .It Pa /usr/share/zoneinfo
-time zone information directory
-.\" .It Pa usr/share/zoneinfo/localtime
-.\" local time zone file
+timezone information directory
+.It Pa usr/share/zoneinfo/localtime
+local timezone file
 .It Pa /usr/share/zoneinfo/posixrules
 used with POSIX-style TZ's
 .It Pa /usr/share/zoneinfo/GMT
@@ -511,7 +511,7 @@ can be freed or overwritten by later calls to the functions
 .Fn tzfree ,
 and
 .Fn tzset ,
-if these functions affect the time zone information that specifies the
+if these functions affect the timezone information that specifies the
 abbreviation in question.
 The remaining functions and data are thread-safe.
 The functions that do take an explicit
