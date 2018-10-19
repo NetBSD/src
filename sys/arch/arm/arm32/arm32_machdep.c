@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_machdep.c,v 1.123 2018/10/18 09:01:52 skrll Exp $	*/
+/*	$NetBSD: arm32_machdep.c,v 1.124 2018/10/19 08:30:57 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.123 2018/10/18 09:01:52 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.124 2018/10/19 08:30:57 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_arm_start.h"
@@ -90,11 +90,16 @@ __KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.123 2018/10/18 09:01:52 skrll Ex
 #endif
 
 #ifdef VERBOSE_INIT_ARM
+#define VPRINTF(...)	printf(__VA_ARGS__)
+#ifdef __HAVE_GENERIC_START
 void generic_prints(const char *);
 void generic_printx(int);
-#define VPRINTF(...)	printf(__VA_ARGS__)
 #define VPRINTS(s)	generic_prints(s)
 #define VPRINTX(x)	generic_printx(x)
+#else
+#define VPRINTS(s)	__nothing
+#define VPRINTX(x)	__nothing
+#endif
 #else
 #define VPRINTF(...)	__nothing
 #define VPRINTS(s)	__nothing
