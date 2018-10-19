@@ -1,4 +1,4 @@
-/*	$NetBSD: readelf.c,v 1.19 2018/10/19 00:24:57 christos Exp $	*/
+/*	$NetBSD: readelf.c,v 1.20 2018/10/19 00:32:47 christos Exp $	*/
 
 /*
  * Copyright (c) Christos Zoulas 2003.
@@ -32,7 +32,7 @@
 #if 0
 FILE_RCSID("@(#)$File: readelf.c,v 1.154 2018/10/15 16:29:16 christos Exp $")
 #else
-__RCSID("$NetBSD: readelf.c,v 1.19 2018/10/19 00:24:57 christos Exp $");
+__RCSID("$NetBSD: readelf.c,v 1.20 2018/10/19 00:32:47 christos Exp $");
 #endif
 #endif
 
@@ -792,7 +792,7 @@ do_core_note(struct magic_set *ms, unsigned char *nbuf, uint32_t type,
 			pidoff = argoff + 81 + 2;
 			if (doff + pidoff + 4 <= size) {
 				if (file_printf(ms, ", pid=%u",
-				    elf_getu32(swap, *RCAST(uint32 *, (nbuf +
+				    elf_getu32(swap, *RCAST(uint32_t *, (nbuf +
 				    doff + pidoff)))) == -1)
 					return 1;
 			}
