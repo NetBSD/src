@@ -1,4 +1,4 @@
-/*	$NetBSD: apprentice.c,v 1.21 2018/10/19 00:11:48 christos Exp $	*/
+/*	$NetBSD: apprentice.c,v 1.22 2018/10/19 00:24:57 christos Exp $	*/
 
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
@@ -37,7 +37,7 @@
 #if 0
 FILE_RCSID("@(#)$File: apprentice.c,v 1.281 2018/10/10 17:41:10 christos Exp $")
 #else
-__RCSID("$NetBSD: apprentice.c,v 1.21 2018/10/19 00:11:48 christos Exp $");
+__RCSID("$NetBSD: apprentice.c,v 1.22 2018/10/19 00:24:57 christos Exp $");
 #endif
 #endif	/* lint */
 
@@ -299,9 +299,9 @@ get_type(const struct type_tbl_s *tbl, const char *l, const char **t)
 
 private off_t
 maxoff_t(void) {
-	if (sizeof(off_t) == sizeof(int))
+	if (/*CONSTCOND*/sizeof(off_t) == sizeof(int))
 		return CAST(off_t, INT_MAX);
-	if (sizeof(off_t) == sizeof(long))
+	if (/*CONSTCOND*/sizeof(off_t) == sizeof(long))
 		return CAST(off_t, LONG_MAX);
 	return 0x7fffffff;
 }
