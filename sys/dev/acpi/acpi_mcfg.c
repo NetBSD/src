@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_mcfg.c,v 1.10 2018/10/17 01:16:23 jmcneill Exp $	*/
+/*	$NetBSD: acpi_mcfg.c,v 1.11 2018/10/19 14:06:13 jmcneill Exp $	*/
 
 /*-
  * Copyright (C) 2015 NONAKA Kimihiro <nonaka@NetBSD.org>
@@ -28,7 +28,7 @@
 #include "opt_pci.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_mcfg.c,v 1.10 2018/10/17 01:16:23 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_mcfg.c,v 1.11 2018/10/19 14:06:13 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -304,7 +304,7 @@ acpimcfg_probe(struct acpi_softc *sc)
 		    ama->Address);
 		nsegs++;
 		offset += sizeof(ACPI_MCFG_ALLOCATION);
-		ama = ACPI_ADD_PTR(ACPI_MCFG_ALLOCATION, ama, offset);
+		ama = ACPI_ADD_PTR(ACPI_MCFG_ALLOCATION, mcfg, offset);
 	}
 	if (nsegs == 0) {
 		mcfg = NULL;
@@ -413,7 +413,7 @@ acpimcfg_init(bus_space_tag_t memt, const struct acpimcfg_ops *ops)
 
  next:
 		offset += sizeof(ACPI_MCFG_ALLOCATION);
-		ama = ACPI_ADD_PTR(ACPI_MCFG_ALLOCATION, ama, offset);
+		ama = ACPI_ADD_PTR(ACPI_MCFG_ALLOCATION, mcfg, offset);
 	}
 	if (nsegs == 0)
 		return ENOENT;
