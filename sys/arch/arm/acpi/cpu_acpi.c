@@ -1,4 +1,4 @@
-/* $NetBSD: cpu_acpi.c,v 1.3 2018/10/18 09:01:52 skrll Exp $ */
+/* $NetBSD: cpu_acpi.c,v 1.4 2018/10/19 11:11:03 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_acpi.c,v 1.3 2018/10/18 09:01:52 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_acpi.c,v 1.4 2018/10/19 11:11:03 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -46,6 +46,8 @@ __KERNEL_RCSID(0, "$NetBSD: cpu_acpi.c,v 1.3 2018/10/18 09:01:52 skrll Exp $");
 #include <arm/locore.h>
 
 #include <arm/arm/psci.h>
+
+extern struct cpu_info cpu_info_store[];
 
 static int	cpu_acpi_match(device_t, cfdata_t, void *);
 static void	cpu_acpi_attach(device_t, device_t, void *);
@@ -78,6 +80,8 @@ cpu_acpi_attach(device_t parent, device_t self, void *aux)
 {
 	ACPI_MADT_GENERIC_INTERRUPT *gicc = aux;
 	const uint64_t mpidr = gicc->ArmMpidr;
+	const int unit = device_unit(self);
+	struct cpu_info *ci = &cpu_info_store[unit];
 	int error;
 
 	if (cpu_mpidr_aff_read() != mpidr) {
@@ -101,6 +105,9 @@ cpu_acpi_attach(device_t parent, device_t self, void *aux)
 				break;
 		}
 	}
+
+	/* Store the ACPI Processor UID in cpu_info */
+	ci->ci_acpiid = gicc->Uid;
 
 	/* Attach the CPU */
 	cpu_attach(self, mpidr);
