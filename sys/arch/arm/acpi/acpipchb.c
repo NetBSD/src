@@ -1,4 +1,4 @@
-/* $NetBSD: acpipchb.c,v 1.1 2018/10/15 11:35:03 jmcneill Exp $ */
+/* $NetBSD: acpipchb.c,v 1.2 2018/10/19 11:40:27 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpipchb.c,v 1.1 2018/10/15 11:35:03 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpipchb.c,v 1.2 2018/10/19 11:40:27 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -54,12 +54,15 @@ __KERNEL_RCSID(0, "$NetBSD: acpipchb.c,v 1.1 2018/10/15 11:35:03 jmcneill Exp $"
 #include <dev/acpi/acpivar.h>
 #include <dev/acpi/acpi_mcfg.h>
 
+#include <arm/acpi/acpi_pci_machdep.h>
+
 #define	PCIHOST_CACHELINE_SIZE		arm_dcache_align
 
 struct acpipchb_softc {
 	device_t		sc_dev;
 
 	struct arm32_bus_dma_tag sc_dmat;
+	struct acpi_pci_context sc_ap;
 
 	ACPI_HANDLE		sc_handle;
 	ACPI_INTEGER		sc_bus;
@@ -102,7 +105,7 @@ acpipchb_attach(device_t parent, device_t self, void *aux)
 	struct acpipchb_softc * const sc = device_private(self);
 	struct acpi_attach_args *aa = aux;
 	struct pcibus_attach_args pba;
-	ACPI_INTEGER cca;
+	ACPI_INTEGER cca, seg;
 
 	sc->sc_dev = self;
 	sc->sc_handle = aa->aa_node->ad_handle;
@@ -110,21 +113,28 @@ acpipchb_attach(device_t parent, device_t self, void *aux)
 	if (ACPI_FAILURE(acpi_eval_integer(sc->sc_handle, "_BBN", &sc->sc_bus)))
 		sc->sc_bus = 0;
 
+	if (ACPI_FAILURE(acpi_eval_integer(sc->sc_handle, "_SEG", &seg)))
+		seg = 0;
+
 	if (ACPI_FAILURE(acpi_eval_integer(sc->sc_handle, "_CCA", &cca)))
 		cca = 0;
 
 	aprint_naive("\n");
 	aprint_normal(": PCI Express Host Bridge\n");
 
-	if (acpimcfg_configure_bus(self, aa->aa_pc, sc->sc_handle, sc->sc_bus, PCIHOST_CACHELINE_SIZE) != 0) {
-		aprint_error_dev(self, "failed to configure PCI bus\n");
-		return;
-	}
-
 	sc->sc_dmat = *aa->aa_dmat;
 	if (cca) {
 		sc->sc_dmat._ranges = ahcipchb_coherent_ranges;
 		sc->sc_dmat._nranges = __arraycount(ahcipchb_coherent_ranges);
+	}
+
+	sc->sc_ap.ap_pc = *aa->aa_pc;
+	sc->sc_ap.ap_pc.pc_conf_v = &sc->sc_ap;
+	sc->sc_ap.ap_seg = seg;
+
+	if (acpimcfg_configure_bus(self, &sc->sc_ap.ap_pc, sc->sc_handle, sc->sc_bus, PCIHOST_CACHELINE_SIZE) != 0) {
+		aprint_error_dev(self, "failed to configure PCI bus\n");
+		return;
 	}
 
 	memset(&pba, 0, sizeof(pba));
@@ -135,7 +145,7 @@ acpipchb_attach(device_t parent, device_t self, void *aux)
 #ifdef _PCI_HAVE_DMA64
 	pba.pba_dmat64 = &sc->sc_dmat;
 #endif
-	pba.pba_pc = aa->aa_pc;
+	pba.pba_pc = &sc->sc_ap.ap_pc;
 	pba.pba_bus = sc->sc_bus;
 
 	config_found_ia(self, "pcibus", &pba, pcibusprint);

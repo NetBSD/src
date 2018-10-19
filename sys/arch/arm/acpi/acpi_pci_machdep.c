@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_pci_machdep.c,v 1.1 2018/10/15 11:35:03 jmcneill Exp $ */
+/* $NetBSD: acpi_pci_machdep.c,v 1.2 2018/10/19 11:40:27 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_pci_machdep.c,v 1.1 2018/10/15 11:35:03 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_pci_machdep.c,v 1.2 2018/10/19 11:40:27 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -54,6 +54,8 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_pci_machdep.c,v 1.1 2018/10/15 11:35:03 jmcneil
 #include <dev/acpi/acpivar.h>
 #include <dev/acpi/acpi_mcfg.h>
 #include <dev/acpi/acpi_pci.h>
+
+#include <arm/acpi/acpi_pci_machdep.h>
 
 #define	IH_INDEX_MASK			0x0000ffff
 #define	IH_MPSAFE			0x80000000
@@ -150,12 +152,13 @@ static void
 acpi_pci_md_attach_hook(device_t parent, device_t self,
     struct pcibus_attach_args *pba)
 {
+	struct acpi_pci_context *ap = pba->pba_pc->pc_conf_v;
 	struct acpi_pci_prt *prt, *prtp;
 	struct acpi_devnode *ad;
 	ACPI_HANDLE handle;
 	int seg, bus, dev, func;
 
-	seg = 0;	/* XXX segment */
+	seg = ap->ap_seg;
 	handle = NULL;
 
 	if (pba->pba_bridgetag) {
@@ -228,12 +231,13 @@ acpi_pci_md_decompose_tag(void *v, pcitag_t tag, int *bp, int *dp, int *fp)
 static pcireg_t
 acpi_pci_md_conf_read(void *v, pcitag_t tag, int offset)
 {
+	struct acpi_pci_context * const ap = v;
 	pcireg_t val;
 
 	if (offset < 0 || offset >= PCI_EXTCONF_SIZE)
 		return (pcireg_t) -1;
 
-	acpimcfg_conf_read(&arm_acpi_pci_chipset, tag, offset, &val);
+	acpimcfg_conf_read(&ap->ap_pc, tag, offset, &val);
 
 	return val;
 }
@@ -241,10 +245,12 @@ acpi_pci_md_conf_read(void *v, pcitag_t tag, int offset)
 static void
 acpi_pci_md_conf_write(void *v, pcitag_t tag, int offset, pcireg_t val)
 {
+	struct acpi_pci_context * const ap = v;
+
 	if (offset < 0 || offset >= PCI_EXTCONF_SIZE)
 		return;
 
-	acpimcfg_conf_write(&arm_acpi_pci_chipset, tag, offset, val);
+	acpimcfg_conf_write(&ap->ap_pc, tag, offset, val);
 }
 
 static int
