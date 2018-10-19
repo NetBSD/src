@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_platform.c,v 1.3 2018/10/15 20:09:06 jmcneill Exp $ */
+/* $NetBSD: acpi_platform.c,v 1.4 2018/10/19 15:29:00 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -29,8 +29,11 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "com.h"
+#include "plcom.h"
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_platform.c,v 1.3 2018/10/15 20:09:06 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_platform.c,v 1.4 2018/10/19 15:29:00 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -58,6 +61,7 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_platform.c,v 1.3 2018/10/15 20:09:06 jmcneill E
 #include <evbarm/dev/plcomvar.h>
 #include <dev/ic/ns16550reg.h>
 #include <dev/ic/comreg.h>
+#include <dev/ic/comvar.h>
 
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
@@ -75,6 +79,7 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_platform.c,v 1.3 2018/10/15 20:09:06 jmcneill E
 #define	SPCR_BAUD_115200			7
 
 extern struct bus_space arm_generic_bs_tag;
+extern struct bus_space arm_generic_a4x_bs_tag;
 
 static struct plcom_instance plcom_console;
 
@@ -105,13 +110,31 @@ acpi_platform_startup(void)
 	 * Setup serial console device
 	 */
 	if (ACPI_SUCCESS(acpi_table_find(ACPI_SIG_SPCR, (void **)&spcr))) {
+
+		switch (spcr->BaudRate) {
+		case SPCR_BAUD_9600:
+			baud_rate = 9600;
+			break;
+		case SPCR_BAUD_19200:
+			baud_rate = 19200;
+			break;
+		case SPCR_BAUD_57600:
+			baud_rate = 57600;
+			break;
+		case SPCR_BAUD_115200:
+		case SPCR_BAUD_UNKNOWN:
+		default:
+			baud_rate = 115200;
+			break;
+		}
+
 		if (spcr->SerialPort.SpaceId == ACPI_ADR_SPACE_SYSTEM_MEMORY &&
 		    spcr->SerialPort.Address != 0) {
 			switch (spcr->InterfaceType) {
+#if NPLCOM > 0
 			case SPCR_INTERFACE_TYPE_PL011:
 			case SPCR_INTERFACE_TYPE_SBSA_32BIT:
 			case SPCR_INTERFACE_TYPE_SBSA_GENERIC:
-			case SPCR_INTERFACE_TYPE_BCM2835:
 				plcom_console.pi_type = PLCOM_TYPE_PL011;
 				plcom_console.pi_iot = &arm_generic_bs_tag;
 				plcom_console.pi_iobase = spcr->SerialPort.Address;
@@ -122,24 +145,19 @@ acpi_platform_startup(void)
 					plcom_console.pi_flags = ACPI_ACCESS_BIT_WIDTH(spcr->SerialPort.AccessWidth) == 8 ?
 					    0 : PLC_FLAG_32BIT_ACCESS;
 				}
-				switch (spcr->BaudRate) {
-				case SPCR_BAUD_9600:
-					baud_rate = 9600;
-					break;
-				case SPCR_BAUD_19200:
-					baud_rate = 19200;
-					break;
-				case SPCR_BAUD_57600:
-					baud_rate = 57600;
-					break;
-				case SPCR_BAUD_115200:
-				case SPCR_BAUD_UNKNOWN:
-				default:
-					baud_rate = 115200;
-					break;
-				}
 
 				plcomcnattach(&plcom_console, baud_rate, 0, TTYDEF_CFLAG, -1);
+				break;
+#endif
+#if NCOM > 0
+			case SPCR_INTERFACE_TYPE_BCM2835:
+				comcnattach(&arm_generic_a4x_bs_tag, spcr->SerialPort.Address + 0x40, baud_rate, -1,
+				    COM_TYPE_BCMAUXUART, TTYDEF_CFLAG);
+				cn_set_magic("+++++");
+				break;
+#endif
+			default:
+				printf("SPCR: kernel does not support interface type %#x\n", spcr->InterfaceType);
 				break;
 			}
 		}
