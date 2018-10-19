@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.120 2018/10/14 00:10:11 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.121 2018/10/19 13:40:33 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.120 2018/10/14 00:10:11 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.121 2018/10/19 13:40:33 tsutsui Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -111,6 +111,7 @@ struct vm_map *phys_map = NULL;
 char *bootinfo = NULL;		/* pointer to bootinfo structure */
 int systype;			/* what type of NEWS we are */
 struct apbus_sysinfo *_sip = NULL;
+void *sccport0a;
 
 phys_ram_seg_t mem_clusters[VM_PHYSSEG_MAX];
 int mem_cluster_cnt;
@@ -194,6 +195,12 @@ mach_init(int x_boothowto, int x_bootdev, int x_bootname, int x_maxmem)
 	if (systype == 0) 
 		systype = NEWS3400;	/* XXX compatibility for old boot */
 
+#ifdef news3400
+	if (systype == NEWS3400) {
+		sccport0a = (void *)SCCPORT0A;
+	}
+#endif
+
 #if defined(news5000) || defined(news4000)
 	if (systype == NEWS5000 || systype == NEWS4000) {
 		int i;
@@ -224,6 +231,8 @@ mach_init(int x_boothowto, int x_bootdev, int x_bootname, int x_maxmem)
 			x_bootdev |= (i << 8);		/* partition */
 		}
  bootspec_end:
+		sccport0a = (systype == NEWS5000) ?
+		    (void *)NEWS5000_SCCPORT0A : (void *)NEWS4000_SCCPORT0A;
 		consinit();
 	}
 #endif /* news5000 || news4000 */
