@@ -1,4 +1,4 @@
-/*	$NetBSD: adb.c,v 1.56 2014/10/18 08:33:25 snj Exp $	*/
+/*	$NetBSD: adb.c,v 1.57 2018/10/19 18:21:55 martin Exp $	*/
 
 /*
  * Copyright (C) 1994	Bradley A. Grantham
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adb.c,v 1.56 2014/10/18 08:33:25 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adb.c,v 1.57 2018/10/19 18:21:55 martin Exp $");
 
 #include "opt_adb.h"
 
@@ -192,11 +192,13 @@ adbprint(void *args, const char *name)
 		/* print out what kind of ADB device we have found */
 		aprint_normal("%s addr %d: ", name, aa_args->adbaddr);
 		switch(aa_args->origaddr) {
-#ifdef DIAGNOSTIC
 		case 0:
+#ifdef DIAGNOSTIC
 			aprint_normal("ADB event device");
+#endif
 			rv = UNCONF;
 			break;
+#ifdef DIAGNOSTIC
 		case ADBADDR_SECURE:
 			aprint_normal("security dongle (%d)",
 			    aa_args->handler_id);
