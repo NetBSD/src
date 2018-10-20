@@ -1,4 +1,4 @@
-.\"	$NetBSD: rc.conf.5,v 1.178 2018/10/19 14:11:12 martin Exp $
+.\"	$NetBSD: rc.conf.5,v 1.179 2018/10/20 08:47:03 wiz Exp $
 .\"
 .\" Copyright (c) 1996 Matthew R. Green
 .\" All rights reserved.
@@ -358,15 +358,15 @@ Useful if swapping onto RAIDframe devices.
 or
 .Dq "manual" .
 Before removing block-type swap devices, it is wise to unmount tmpfs filesystems to avoid having to swap their contents back into RAM.
-By default 
+By default
 .Dq ( "auto" )
 all tmpfs filesystems that contain no device nodes are unmounted.
-Set to 
+Set to
 .Dq "manual"
 to explicitly specify which filesystems to unmount before removing swap.
 .It Sy swapoff_umount_fs
 A space-separated list of absolute paths to tmpfs mount points.
-If 
+If
 .Sy swapoff_umount
 is set to
 .Dq "manual" ,
@@ -1314,7 +1314,7 @@ in
 Passes
 .Sy ypserv_flags .
 The
-.FL d
+.Fl d
 flag causes it to use DNS for lookups in
 .Pa /etc/hosts
 that fail.
