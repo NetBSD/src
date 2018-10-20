@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm283x_platform.c,v 1.20 2018/10/18 09:01:52 skrll Exp $	*/
+/*	$NetBSD: bcm283x_platform.c,v 1.21 2018/10/20 05:53:22 ryo Exp $	*/
 
 /*-
  * Copyright (c) 2017 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm283x_platform.c,v 1.20 2018/10/18 09:01:52 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm283x_platform.c,v 1.21 2018/10/20 05:53:22 ryo Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_bcm283x.h"
@@ -729,6 +729,8 @@ static void
 bcm2836_mpstart(void)
 {
 #ifdef MULTIPROCESSOR
+#ifdef __arm__
+	/* implementation dependent string "brcm,bcm2836-smp" for ARM 32-bit */
 	const char *method;
 
 	const int cpus = OF_finddevice("/cpus");
@@ -738,7 +740,6 @@ bcm2836_mpstart(void)
 		return;
 	}
 
-	/* implementation dependent string "brcm,bcm2836-smp" for ARM 32-bit */
 	method = fdtbus_get_string(cpus, "enable-method");
 	if ((method != NULL) && (strcmp(method, "brcm,bcm2836-smp") == 0)) {
 		arm_cpu_max = RPI_CPU_MAX;
@@ -772,9 +773,10 @@ bcm2836_mpstart(void)
 		}
 		return;
 	}
+#endif /* __arm__ */
 
 	/* try enable-method each cpus */
-	arm_fdt_cpu_bootstrap();
+	arm_fdt_cpu_mpstart();
 #endif /* MULTIPROCESSOR */
 }
 
@@ -1183,6 +1185,7 @@ bcm2836_platform_bootstrap(void)
 
 #ifdef MULTIPROCESSOR
 	arm_cpu_max = RPI_CPU_MAX;
+	arm_fdt_cpu_bootstrap();
 #endif
 }
 #endif
