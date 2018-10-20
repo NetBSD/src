@@ -1,4 +1,4 @@
-/* $NetBSD: spdmem_i2c.c,v 1.16 2018/09/26 20:15:08 jakllsch Exp $ */
+/* $NetBSD: spdmem_i2c.c,v 1.17 2018/10/20 03:23:05 macallan Exp $ */
 
 /*
  * Copyright (c) 2007 Nicolas Joly
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spdmem_i2c.c,v 1.16 2018/09/26 20:15:08 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spdmem_i2c.c,v 1.17 2018/10/20 03:23:05 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -173,8 +173,9 @@ error:
 }
 
 static const struct device_compatible_entry compat_data[] = {
-	{ "atmel,spd",	0 },
-	{ NULL,		0 }
+	{ "atmel,spd",	 0 },
+	{ "i2c-at34c02", 0 },
+	{ NULL,		 0 }
 };
 
 static int
