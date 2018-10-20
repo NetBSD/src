@@ -1,4 +1,4 @@
-/*	$NetBSD: ntpd.c,v 1.16 2018/09/29 21:52:33 christos Exp $	*/
+/*	$NetBSD: ntpd.c,v 1.17 2018/10/20 02:30:43 christos Exp $	*/
 
 /*
  * ntpd.c - main program for the fixed point NTP daemon
@@ -688,24 +688,9 @@ getgroup:
 	return 1;
 }
 
-/*
- * Change (effective) user and group IDs, also initialize the supplementary group access list
- */
-int set_user_group_ids(void);
-int
-set_user_group_ids(void)
+static int
+set_group_ids(void)
 {
-	/* If the the user was already mapped, no need to map it again */
-	if ((NULL != user) && (0 == sw_uid)) {
-		if (0 == map_user())
-			exit (-1);
-	}
-	/* same applies for the group */
-	if ((NULL != group) && (0 == sw_gid)) {
-		if (0 == map_group())
-			exit (-1);
-	}
-
 	if (user && initgroups(user, sw_gid)) {
 		msyslog(LOG_ERR, "Cannot initgroups() to user `%s': %m", user);
 		return 0;
@@ -729,6 +714,12 @@ set_user_group_ids(void)
 			msyslog(LOG_ERR, "initgroups(<%s>, %d) filed: %m", pw->pw_name, pw->pw_gid);
 			return 0;
 		}
+	return 1;
+}
+
+static int
+set_user_ids(void)
+{
 	if (user && setuid(sw_uid)) {
 		msyslog(LOG_ERR, "Cannot setuid() to user `%s': %m", user);
 		return 0;
@@ -737,6 +728,31 @@ set_user_group_ids(void)
 		msyslog(LOG_ERR, "Cannot seteuid() to user `%s': %m", user);
 		return 0;
 	}
+	return 1;
+}
+
+/*
+ * Change (effective) user and group IDs, also initialize the supplementary group access list
+ */
+int set_user_group_ids(void);
+int
+set_user_group_ids(void)
+{
+	/* If the the user was already mapped, no need to map it again */
+	if ((NULL != user) && (0 == sw_uid)) {
+		if (0 == map_user())
+			exit (-1);
+	}
+	/* same applies for the group */
+	if ((NULL != group) && (0 == sw_gid)) {
+		if (0 == map_group())
+			exit (-1);
+	}
+
+	if (getegid() != sw_gid && 0 == set_group_ids())
+		return 0;
+	if (geteuid() != sw_uid && 0 == set_user_ids())
+		return 0;
 
 	return 1;
 }
