@@ -1,4 +1,4 @@
-/*	$NetBSD: nitrogen6_machdep.c,v 1.11 2018/10/18 09:01:54 skrll Exp $	*/
+/*	$NetBSD: nitrogen6_machdep.c,v 1.12 2018/10/20 05:58:34 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nitrogen6_machdep.c,v 1.11 2018/10/18 09:01:54 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nitrogen6_machdep.c,v 1.12 2018/10/20 05:58:34 skrll Exp $");
 
 #include "opt_evbarm_boardtype.h"
 #include "opt_arm_debug.h"
@@ -74,7 +74,7 @@ __KERNEL_RCSID(0, "$NetBSD: nitrogen6_machdep.c,v 1.11 2018/10/18 09:01:54 skrll
 #ifdef VERBOSE_INIT_ARM
 #define VPRINTF(...)	printf(__VA_ARGS__)
 #else
-#define VPRINTF(...)	do { } while (/* CONSTCOND */ 0)
+#define VPRINTF(...)	__nothing
 #endif
 
 extern int _end[];
