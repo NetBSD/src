@@ -1,4 +1,4 @@
-/*	$NetBSD: fstrans.h,v 1.11 2017/06/04 08:05:42 hannken Exp $	*/
+/*	$NetBSD: fstrans.h,v 1.11.4.1 2018/10/20 06:58:46 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -43,12 +43,14 @@
 
 enum fstrans_state {
 	FSTRANS_NORMAL,
-	FSTRANS_SUSPENDED
+	FSTRANS_SUSPENDED,
+	FSTRANS_SUSPENDING
 };
 
 void	fstrans_init(void);
 void	fstrans_start(struct mount *);
 int	fstrans_start_nowait(struct mount *);
+void	fstrans_start_lazy(struct mount *);
 void	fstrans_done(struct mount *);
 int	fstrans_is_owner(struct mount *);
 int	fstrans_mount(struct mount *);

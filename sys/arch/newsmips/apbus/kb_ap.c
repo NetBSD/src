@@ -1,4 +1,4 @@
-/*	$NetBSD: kb_ap.c,v 1.10 2012/10/13 06:25:20 tsutsui Exp $	*/
+/*	$NetBSD: kb_ap.c,v 1.10.36.1 2018/10/20 06:58:29 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kb_ap.c,v 1.10 2012/10/13 06:25:20 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kb_ap.c,v 1.10.36.1 2018/10/20 06:58:29 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -38,6 +38,7 @@ __KERNEL_RCSID(0, "$NetBSD: kb_ap.c,v 1.10 2012/10/13 06:25:20 tsutsui Exp $");
 #include <dev/wscons/wsksymdef.h>
 
 #include <machine/adrsmap.h>
+#include <machine/cpu.h>
 #include <newsmips/apbus/apbusvar.h>
 
 struct kbreg {
@@ -128,7 +129,7 @@ kb_ap_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_reg = reg;
 
-	if (*dipsw & 7) {
+	if (systype == NEWS5000 && *dipsw & 7) {
 		aprint_normal(" (console)");
 		cons = 1;
 	}
@@ -144,7 +145,7 @@ kb_ap_attach(device_t parent, device_t self, void *aux)
 	reg->kb_tx_intr_en = 0;
 
 	apbus_intr_establish(1, NEWS5000_INT1_KBD, 0, kb_ap_intr, sc,
-	    "", apa->apa_ctlnum);
+	    device_xname(self), apa->apa_ctlnum);
 
 	waa.console = cons;
 	waa.keymap = &kb_ap_keymapdata;

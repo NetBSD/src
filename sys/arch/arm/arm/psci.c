@@ -1,4 +1,4 @@
-/* $NetBSD: psci.c,v 1.1.10.1 2018/06/25 07:25:38 pgoyette Exp $ */
+/* $NetBSD: psci.c,v 1.1.10.2 2018/10/20 06:58:24 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_diagnostic.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: psci.c,v 1.1.10.1 2018/06/25 07:25:38 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: psci.c,v 1.1.10.2 2018/10/20 06:58:24 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -104,6 +104,12 @@ void
 psci_init(psci_fn fn)
 {
 	psci_call_fn = fn;
+}
+
+bool
+psci_available(void)
+{
+	return psci_call_fn != NULL;
 }
 
 void

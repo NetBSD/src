@@ -1,8 +1,9 @@
-# $NetBSD: files.fdt,v 1.22.4.7 2018/09/30 01:45:49 pgoyette Exp $
+# $NetBSD: files.fdt,v 1.22.4.8 2018/10/20 06:58:31 pgoyette Exp $
 
 include	"external/bsd/libfdt/conf/files.libfdt"
 
-defflag	opt_fdt.h				FDT: libfdt, ofw_subr
+defflag	opt_fdt.h				FDTBASE : libfdt, ofw_subr
+defflag	opt_fdt.h				FDT: FDTBASE
 
 define	fdt { [pass = 10] } : clk, pwm
 
@@ -44,8 +45,8 @@ device	panel: fdt_port
 attach	panel at fdt with fdt_panel
 file	dev/fdt/panel_fdt.c			fdt_panel
 
-file	dev/fdt/fdt_openfirm.c			fdt
-file	dev/fdt/fdt_subr.c			fdt
+file	dev/fdt/fdt_openfirm.c			fdtbase
+file	dev/fdt/fdt_subr.c			fdtbase
 file	dev/fdt/fdt_clock.c			fdt
 file	dev/fdt/fdt_dai.c			fdt
 file	dev/fdt/fdt_dma.c			fdt
@@ -122,10 +123,9 @@ file	dev/fdt/virtio_mmio_fdt.c		virtio_mmio_fdt
 attach 	qemufwcfg at fdt with qemufwcfg_fdt
 file	dev/fdt/qemufwcfg_fdt.c			qemufwcfg_fdt
 
-# ARM PrimeCell  General Purpose Input/Output (PL061)
-device	pl061gpio: gpiobus
-attach 	pl061gpio at fdt with pl061gpio_fdt
-file	dev/fdt/pl061gpio_fdt.c			pl061gpio_fdt
+# ARM PrimeCell General Purpose Input/Output (PL061)
+attach 	plgpio at fdt with plgpio_fdt
+file	dev/fdt/pl061gpio_fdt.c			plgpio_fdt
 
 # AHCI SATA controller
 attach	ahcisata at fdt with ahcisata_fdt
@@ -134,3 +134,7 @@ file	dev/fdt/ahcisata_fdt.c			ahcisata_fdt
 # Designware I2C
 attach 	dwiic at fdt with dwiic_fdt
 file	dev/fdt/dwiic_fdt.c			dwiic_fdt
+
+# AMD Cryptographic Coprocessor
+attach	amdccp at fdt with amdccp_fdt
+file	dev/fdt/amdccp_fdt.c			amdccp_fdt

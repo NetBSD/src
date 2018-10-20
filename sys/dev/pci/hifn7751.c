@@ -1,4 +1,4 @@
-/*	$NetBSD: hifn7751.c,v 1.61 2015/05/14 07:27:14 maxv Exp $	*/
+/*	$NetBSD: hifn7751.c,v 1.61.16.1 2018/10/20 06:58:31 pgoyette Exp $	*/
 /*	$FreeBSD: hifn7751.c,v 1.5.2.7 2003/10/08 23:52:00 sam Exp $ */
 /*	$OpenBSD: hifn7751.c,v 1.140 2003/08/01 17:55:54 deraadt Exp $	*/
 
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hifn7751.c,v 1.61 2015/05/14 07:27:14 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hifn7751.c,v 1.61.16.1 2018/10/20 06:58:31 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -372,7 +372,8 @@ hifn_attach(device_t parent, device_t self, void *aux)
 	sc->sc_ih = pci_intr_establish(pc, ih, IPL_NET, hifn_intr, sc,
 	    device_xname(self));
 #else
-	sc->sc_ih = pci_intr_establish(pc, ih, IPL_NET, hifn_intr, sc);
+	sc->sc_ih = pci_intr_establish_xname(pc, ih, IPL_NET, hifn_intr, sc,
+	    device_xname(self));
 #endif
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(sc->sc_dv, "couldn't establish interrupt\n");

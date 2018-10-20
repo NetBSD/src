@@ -1,4 +1,4 @@
-/* $NetBSD: psci_fdt.c,v 1.3.4.4 2018/09/30 01:45:38 pgoyette Exp $ */
+/* $NetBSD: psci_fdt.c,v 1.3.4.5 2018/10/20 06:58:25 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -29,14 +29,14 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: psci_fdt.c,v 1.3.4.4 2018/09/30 01:45:38 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: psci_fdt.c,v 1.3.4.5 2018/10/20 06:58:25 pgoyette Exp $");
 
 #include <sys/param.h>
+#include <sys/atomic.h>
 #include <sys/bus.h>
 #include <sys/device.h>
-#include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/atomic.h>
+#include <sys/systm.h>
 
 #include <dev/fdt/fdtvar.h>
 

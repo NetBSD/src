@@ -1,4 +1,4 @@
-#	$NetBSD: IMX6UL-STARTER,v 1.5.4.2 2018/09/06 06:55:30 pgoyette Exp $
+#	$NetBSD: IMX6UL-STARTER,v 1.5.4.3 2018/10/20 06:58:27 pgoyette Exp $
 #
 #	IMX6UL-STARTER - Freescale i.MX6UL Evaluation Board
 #
@@ -159,7 +159,8 @@ options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
 # Device options
 
 # Console options.    also need IMXUARTCONSOLE
-options 	CONSDEVNAME="\"imxuart\"",CONADDR=0x021f4000,CONSPEED=115200
+options 	EARLYCONS=nitrogen6,CONADDR=0x021f4000
+options 	CONSDEVNAME="\"imxuart\"",CONSPEED=115200
 options 	CONS_OVERRIDE
 
 # These options enable verbose messages for several subsystems.

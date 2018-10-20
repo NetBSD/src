@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1046.2.11 2018/09/30 01:45:35 pgoyette Exp $
+#	$NetBSD: bsd.own.mk,v 1.1046.2.12 2018/10/20 06:58:23 pgoyette Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -1361,8 +1361,11 @@ ${var}?= no
 
 # Default to USE_XZ_SETS on some 64bit architectures where decompressor
 # memory will likely not be in short supply.
-# XXX incomplete feature, set to no everywhere
+.if ${MACHINE} == "amd64" || ${MACHINE} == "sparc64" || ${MACHINE} == "alpha"
+USE_XZ_SETS?= yes
+.else
 USE_XZ_SETS?= no
+.endif 
 
 #
 # TOOL_GZIP and friends.  These might refer to TOOL_PIGZ or to the host gzip.

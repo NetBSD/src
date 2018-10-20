@@ -1,4 +1,4 @@
-/*	$NetBSD: log.c,v 1.17.2.1 2018/09/06 06:51:33 pgoyette Exp $	*/
+/*	$NetBSD: log.c,v 1.17.2.2 2018/10/20 06:58:16 pgoyette Exp $	*/
 /* $OpenBSD: log.c,v 1.51 2018/07/27 12:03:17 markus Exp $ */
 
 /*
@@ -37,7 +37,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: log.c,v 1.17.2.1 2018/09/06 06:51:33 pgoyette Exp $");
+__RCSID("$NetBSD: log.c,v 1.17.2.2 2018/10/20 06:58:16 pgoyette Exp $");
 #include <sys/types.h>
 #include <sys/uio.h>
 
@@ -183,7 +183,7 @@ logdie(const char *fmt,...)
 	va_start(args, fmt);
 	do_log(SYSLOG_LEVEL_INFO, fmt, args);
 	va_end(args);
-	cleanup_exit(255);
+	cleanup_exit(254);
 }
 
 /* Log this message (information that usually should go to the log). */

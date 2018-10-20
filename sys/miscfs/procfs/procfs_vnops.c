@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.202.2.2 2018/09/06 06:56:43 pgoyette Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.202.2.3 2018/10/20 06:58:45 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.202.2.2 2018/09/06 06:56:43 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.202.2.3 2018/10/20 06:58:45 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -664,7 +664,7 @@ procfs_getattr(void *v)
 		/*FALLTHROUGH*/
 	case PFScwd:
 	case PFSchroot:
-		path = malloc(MAXPATHLEN + 4, M_TEMP, M_WAITOK|M_CANFAIL);
+		path = malloc(MAXPATHLEN + 4, M_TEMP, M_WAITOK);
 		if (path == NULL && procp != NULL) {
 			procfs_proc_unlock(procp);
 			return (ENOMEM);
@@ -1629,7 +1629,7 @@ procfs_readlink(void *v)
 	    pfs->pfs_fileno == PROCFS_FILENO(pfs->pfs_pid, PFSchroot, -1)) {
 		if ((error = procfs_proc_lock(pfs->pfs_pid, &pown, ESRCH)) != 0)
 			return error;
-		path = malloc(MAXPATHLEN + 4, M_TEMP, M_WAITOK|M_CANFAIL);
+		path = malloc(MAXPATHLEN + 4, M_TEMP, M_WAITOK);
 		if (path == NULL) {
 			procfs_proc_unlock(pown);
 			return (ENOMEM);

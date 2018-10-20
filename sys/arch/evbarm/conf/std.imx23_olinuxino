@@ -1,18 +1,18 @@
-# $Id: std.imx23_olinuxino,v 1.4 2013/10/07 17:36:40 matt Exp $
+# $Id: std.imx23_olinuxino,v 1.4.28.1 2018/10/20 06:58:27 pgoyette Exp $
 #
 # IMX23_OLINUXINO standard kernel options.
 
 machine		evbarm arm
 include		"arch/evbarm/conf/std.evbarm"
 
-options		CPU_ARM9E
+options 	CPU_ARM9E
 
-options		ARM_INTR_IMPL="<arch/arm/imx/imx23_intr.h>"
-options		EVBARM_BOARDTYPE=OLinuXino
-options		KERNEL_BASE_EXT=0xc0000000
+options 	ARM_INTR_IMPL="<arch/arm/imx/imx23_intr.h>"
+options 	EVBARM_BOARDTYPE=OLinuXino
+options 	KERNEL_BASE_EXT=0xc0000000
 
-makeoptions	BOARDMKFRAG="${THISARM}/conf/mk.imx23_olinuxino"
-makeoptions	CPUFLAGS="-march=armv5te -mtune=arm926ej-s"
-makeoptions	LOADADDRESS="0x40000000"
+makeoptions 	BOARDMKFRAG="${THISARM}/conf/mk.imx23_olinuxino"
+makeoptions 	CPUFLAGS="-march=armv5te -mtune=arm926ej-s"
+makeoptions 	LOADADDRESS="0x40000000"
 
-include		"arch/evbarm/conf/files.imx23_olinuxino"
+include 	"arch/evbarm/conf/files.imx23_olinuxino"

@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.c,v 1.91.2.4 2018/09/30 01:45:49 pgoyette Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.c,v 1.91.2.5 2018/10/20 06:58:30 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.91.2.4 2018/09/30 01:45:49 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.91.2.5 2018/10/20 06:58:30 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ntp.h"
@@ -294,12 +294,14 @@ netbsd32_to_u_long(netbsd32_u_long *s32p, u_long *p, u_long cmd)
 	*p = (u_long)*s32p;
 }
 
+#ifdef notdef
 static inline void
 netbsd32_to_voidp(netbsd32_voidp *s32p, voidp *p, u_long cmd)
 {
 
 	*p = (void *)NETBSD32PTR64(*s32p);
 }
+#endif
 
 static inline void
 netbsd32_to_wdog_conf(struct netbsd32_wdog_conf *s32p, struct wdog_conf *p, u_long cmd)
@@ -856,13 +858,14 @@ netbsd32_from_u_long(u_long *p, netbsd32_u_long *s32p, u_long cmd)
 	*s32p = (netbsd32_u_long)*p;
 }
 
+#ifdef notdef
 static inline void
 netbsd32_from_voidp(voidp *p, netbsd32_voidp *s32p, u_long cmd)
 {
 
 	NETBSD32PTR32(*s32p, *p);
 }
-
+#endif
 
 static inline void
 netbsd32_from_clockctl_settimeofday(
@@ -1346,6 +1349,12 @@ netbsd32_ioctl(struct lwp *l, const struct netbsd32_ioctl_args *uap, register_t 
 		IOCTL_STRUCT_CONV_TO(BIOCSUDPF, bpf_program);
 	case BIOCGDLTLIST32:
 		IOCTL_STRUCT_CONV_TO(BIOCGDLTLIST, bpf_dltlist);
+	case BIOCSRTIMEOUT32:
+#define netbsd32_to_timeval(s32p, p, cmd) netbsd32_to_timeval(s32p, p)
+#define netbsd32_from_timeval(p, s32p, cmd) netbsd32_from_timeval(p, s32p)
+		IOCTL_STRUCT_CONV_TO(BIOCSRTIMEOUT, timeval);
+#undef netbsd32_to_timeval
+#undef netbsd32_from_timeval
 
 	case WSDISPLAYIO_ADDSCREEN32:
 		IOCTL_STRUCT_CONV_TO(WSDISPLAYIO_ADDSCREEN, wsdisplay_addscreendata);

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.204.2.2 2018/09/30 01:45:47 pgoyette Exp $
+# $NetBSD: GENERIC,v 1.204.2.3 2018/10/20 06:58:29 pgoyette Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/sparc64/conf/std.sparc64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.204.2.2 $"
+#ident		"GENERIC-$Revision: 1.204.2.3 $"
 
 maxusers	64
 
@@ -282,6 +282,7 @@ ms0	at com?					# mouse
 
 ## Tadpole SPARCle PS/2 keyboard and mouse
 pckbc*		at ebus?		# PC keyboard controller
+options 	HAVE_TADPMU		# include support for Tadpole Viper PMU
 pckbd*		at pckbc?		# PC keyboard
 pms*		at pckbc?		# PS/2 mouse for wsmouse
 options 	PMS_SYNAPTICS_TOUCHPAD	# Enable support for Synaptics Touchpads

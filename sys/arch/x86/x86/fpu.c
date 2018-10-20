@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.28.2.3 2018/09/30 01:45:48 pgoyette Exp $	*/
+/*	$NetBSD: fpu.c,v 1.28.2.4 2018/10/20 06:58:29 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.  All
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.28.2.3 2018/09/30 01:45:48 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.28.2.4 2018/10/20 06:58:29 pgoyette Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -126,9 +126,8 @@ __KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.28.2.3 2018/09/30 01:45:48 pgoyette Exp $"
 #define stts() HYPERVISOR_fpu_taskswitch(1)
 #endif
 
+uint32_t x86_fpu_mxcsr_mask __read_mostly = 0;
 bool x86_fpu_eager __read_mostly = false;
-
-static uint32_t x86_fpu_mxcsr_mask __read_mostly = 0;
 
 static inline union savefpu *
 lwp_fpuarea(struct lwp *l)
@@ -209,7 +208,7 @@ fpu_clear_amd(void)
 	fldummy();
 }
 
-static void
+void
 fpu_area_save(void *area)
 {
 	clts();
@@ -230,7 +229,7 @@ fpu_area_save(void *area)
 	}
 }
 
-static void
+void
 fpu_area_restore(void *area)
 {
 	clts();

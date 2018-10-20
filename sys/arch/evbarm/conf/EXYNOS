@@ -1,5 +1,5 @@
 #
-#	$NetBSD: EXYNOS,v 1.22.6.3 2018/09/30 01:45:40 pgoyette Exp $
+#	$NetBSD: EXYNOS,v 1.22.6.4 2018/10/20 06:58:27 pgoyette Exp $
 #
 #	Samsung Exynos SoC kernel
 #
@@ -8,6 +8,9 @@ include	"arch/evbarm/conf/std.exynos"
 include	"arch/evbarm/conf/GENERIC.common"
 
 makeoptions 	DTS="
+	exynos4412-odroidu3.dts
+	exynos4412-odroidx.dts
+	exynos4412-odroidx2.dts
 	exynos5410-odroidxu.dts
 	exynos5410-smdk5410.dts
 	exynos5422-odroidxu3-lite.dts
@@ -17,6 +20,7 @@ makeoptions 	DTS="
 
 options 	CPU_CORTEXA7
 options 	CPU_CORTEXA15
+options 	SOC_EXYNOS4412
 options 	SOC_EXYNOS5422
 options 	MULTIPROCESSOR
 

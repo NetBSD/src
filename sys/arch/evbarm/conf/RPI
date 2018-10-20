@@ -1,5 +1,5 @@
 #
-#	$NetBSD: RPI,v 1.78.2.2 2018/09/06 06:55:30 pgoyette Exp $
+#	$NetBSD: RPI,v 1.78.2.3 2018/10/20 06:58:27 pgoyette Exp $
 #
 #	RPi -- Raspberry Pi
 #
@@ -31,6 +31,8 @@ makeoptions 	CPUFLAGS="-march=armv6z -mtune=arm1176jzf-s -mfpu=vfp"
 
 # Development and Debugging options
 #options 	KGDB,KGDB_PLCOMUNIT=0,KGDB_DEVRATE=115200,KGDB_CONMODE=0xB00
+#options 	VERBOSE_INIT_ARM
+#options 	EARLYCONS=bcm2835,CONSADDR=0x20201000
 makeoptions	DEBUG="-g"	# compile full symbol table
 makeoptions	COPY_SYMTAB=1
 options 	PLCONSOLE

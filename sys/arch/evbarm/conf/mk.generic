@@ -1,17 +1,14 @@
-#	$NetBSD: mk.generic,v 1.1.2.2 2018/04/07 04:12:12 pgoyette Exp $
-CPPFLAGS+=		-mcpu=cortex-a15 -mfpu=neon
+#	$NetBSD: mk.generic,v 1.1.2.3 2018/10/20 06:58:27 pgoyette Exp $
 
 .include "$S/arch/arm/nvidia/tegra_xusb-fw.mk"
 
-SYSTEM_FIRST_OBJ=	tegra_start.o
-SYSTEM_FIRST_SFILE=	${THISARM}/tegra/tegra_start.S
-
-GENASSYM_EXTRAS+=	${THISARM}/tegra/genassym.cf
+SYSTEM_FIRST_OBJ=	armv6_start.o
+SYSTEM_FIRST_SFILE=	${ARM}/arm/armv6_start.S
 
 _OSRELEASE!=		${HOST_SH} $S/conf/osrelease.sh
 
-MKUBOOTIMAGEARGS=	-A arm -T kernel -O linux
-MKUBOOTIMAGEARGS+=	-a $(KERNEL_BASE_PHYS) -e $(KERNEL_BASE_PHYS)
+MKUBOOTIMAGEARGS=	-A arm -T kernel_noload -O linux
+MKUBOOTIMAGEARGS+=	-e 0
 MKUBOOTIMAGEARGS+=	-n "NetBSD/$(BOARDTYPE) ${_OSRELEASE}"
 MKUBOOTIMAGEARGS_NONE=	${MKUBOOTIMAGEARGS} -C none
 MKUBOOTIMAGEARGS_GZ=	${MKUBOOTIMAGEARGS} -C gz

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_snvar.h,v 1.13 2011/02/20 07:56:31 matt Exp $	*/
+/*	$NetBSD: if_snvar.h,v 1.13.54.1 2018/10/20 06:58:29 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1991   Algorithmics Ltd (http://www.algor.co.uk)
@@ -27,7 +27,11 @@
 #define	NIC_GET(sc, reg)	((sc)->sc_regbase[(reg) * 4 + 3])
 #define	NIC_PUT(sc, reg, val)	((sc)->sc_regbase[(reg) * 4 + 3] = val)
 
-#define	SONIC_GETDMA(p)	((uint32_t)(p))
+#define	SONIC_GETDMA(sc, p)	(((sc)->sc_flags & F_NWS40S0) == 0 ?	\
+	    ((uint32_t)(p)) : (((uint32_t)(p) & 0xffff) | 0xfff00000))
+#define	SONIC_BUFFER(sc, p)	(((sc)->sc_flags & F_NWS40S0) == 0 ?	\
+	    (p) :							\
+	    (void *)(((uint32_t)((sc)->buffer)) | ((uint32_t)(p) & 0xffff)))
 
 #define	SN_REGSIZE	(SN_NREGS * 4)
 
@@ -118,7 +122,10 @@ struct sn_softc {
 	void		*p_cda;
 	uint32_t	v_cda;
 
-	unsigned char	*space;
+	uint8_t		*memory;
+	uint8_t		*buffer;
+	u_int		sc_flags;
+#define	F_NWS40S0	0x0001
 };
 
 /*

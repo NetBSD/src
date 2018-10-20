@@ -1,4 +1,4 @@
-# $NetBSD: ad.aarch64,v 1.26.2.2 2018/07/28 04:33:00 pgoyette Exp $
+# $NetBSD: ad.aarch64,v 1.26.2.3 2018/10/20 06:58:18 pgoyette Exp $
 ./usr/lib/eabi/libarm_g.a					comp-sys-debug	debuglib,compat,llvm
 ./usr/lib/eabi/libc_vfp_g.a					comp-sys-debug	debuglib,compat,llvm
 ./usr/lib/eabihf/libarm_g.a					comp-sys-debug	debuglib,compat,llvm
@@ -13,6 +13,7 @@
 ./usr/libdata/debug/libexec/ld.elf_so-eabi.debug		comp-sys-debug	debug,compat,llvm
 ./usr/libdata/debug/libexec/ld.elf_so-eabihf.debug		comp-sys-debug	debug,compat,llvm
 ./usr/libdata/debug/libexec/ld.elf_so-oabi.debug		comp-sys-debug	debug,compat,llvm
+./usr/libdata/debug/usr/bin/iasl.debug				comp-util-debug	debug
 ./usr/libdata/debug/usr/lib/eabi				comp-sys-debug	compat,llvm
 ./usr/libdata/debug/usr/lib/eabi/i18n				comp-sys-debug	compat,llvm
 ./usr/libdata/debug/usr/lib/eabi/libarm.so.0.0.debug		comp-sys-debug	debug,compat,pic,llvm
@@ -27,5 +28,7 @@
 ./usr/libdata/debug/usr/libexec/ld.elf_so-eabi.debug		comp-sys-debug	debug,compat,llvm
 ./usr/libdata/debug/usr/libexec/ld.elf_so-eabihf.debug		comp-sys-debug	debug,compat,llvm
 ./usr/libdata/debug/usr/libexec/ld.elf_so-oabi.debug		comp-sys-debug	debug,compat,llvm
+./usr/libdata/debug/usr/sbin/acpidump.debug			comp-sysutil-debug	debug
+./usr/libdata/debug/usr/sbin/amldb.debug			comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/ofctl.debug			comp-util-debug		debug
 ./usr/libdata/debug/usr/sbin/tpctl.debug			comp-sysutil-debug	debug

@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.20 2016/08/26 05:56:03 mlelstv Exp $	*/
+/*	$NetBSD: param.h,v 1.20.14.1 2018/10/20 06:58:25 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -144,6 +144,8 @@
 #  endif
 # endif /* __ARMEB__ */
 #endif /* !_KERNEL */
+
+#define MAXCPUS		8
 
 #define	MID_MACHINE	MID_ARM6
 

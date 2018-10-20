@@ -1,18 +1,18 @@
-#	$NetBSD: std.npwr_fc,v 1.7 2018/01/17 20:30:16 skrll Exp $
+#	$NetBSD: std.npwr_fc,v 1.7.2.1 2018/10/20 06:58:27 pgoyette Exp $
 #
 # standard NetBSD/evbarm for IQ80321 options
 
-machine	evbarm arm
-include 	"arch/evbarm/conf/std.evbarm"
+machine		evbarm arm
+include		"arch/evbarm/conf/std.evbarm"
 
 # Pull in IQ80321 config definitions.
 include		"arch/evbarm/conf/files.npwr_fc"
 
 options 	EXEC_AOUT
 
-options         KERNEL_BASE_EXT=0xc0000000
-makeoptions	BOARDTYPE="iq80321"
-makeoptions	BOARDMKFRAG="${THISARM}/conf/mk.iq80321"
+options 	KERNEL_BASE_EXT=0xc0000000
+makeoptions 	BOARDTYPE="iq80321"
+makeoptions 	BOARDMKFRAG="${THISARM}/conf/mk.iq80321"
 
 options 	ARM_INTR_IMPL="<arch/arm/xscale/i80321_intr.h>"
 

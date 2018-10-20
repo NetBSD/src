@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: security,v 1.122.2.1 2018/09/30 01:45:07 pgoyette Exp $
+#	$NetBSD: security,v 1.122.2.2 2018/10/20 06:58:18 pgoyette Exp $
 #	from: @(#)security	8.1 (Berkeley) 6/9/93
 #
 
@@ -399,7 +399,7 @@ end-of-csh
 			< $TMP1
 		fi
 	done > $OUTPUT
-	if [ $umaskset = no ] -o [ -s $OUTPUT ] ; then
+	if [ $umaskset = no ] || [ -s $OUTPUT ] ; then
 		printf "\nChecking root csh paths, umask values:\n$list\n\n"
 		if [ -s $OUTPUT ]; then
 			cat $OUTPUT

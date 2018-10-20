@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.132.2.1 2018/09/06 06:55:20 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.132.2.2 2018/10/20 06:58:22 pgoyette Exp $
 #	@(#)Makefile	8.5 (Berkeley) 3/31/94
 
 # Not ported: XNSrouted enpload scsiformat startslip
@@ -47,15 +47,12 @@ SUBDIR+= mount_portal
 SUBDIR+= mount_procfs
 SUBDIR+= mount_ptyfs
 SUBDIR+= mount_puffs
+SUBDIR+= mount_qemufwcfg
 SUBDIR+= mount_sysvbfs
 SUBDIR+= mount_tmpfs
 SUBDIR+= mount_umap
 SUBDIR+= mount_union
 SUBDIR+= mount_v7fs
-
-.if ${MACHINE} == "amd64" || ${MACHINE} == "i386"
-SUBDIR+= mount_qemufwcfg
-.endif
 
 .if (${USE_INET6} != "no")
 SUBDIR+= ping6

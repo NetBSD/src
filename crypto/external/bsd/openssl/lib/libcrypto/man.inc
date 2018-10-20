@@ -1,4 +1,4 @@
-#	$NetBSD: man.inc,v 1.7.2.3 2018/09/30 01:44:52 pgoyette Exp $
+#	$NetBSD: man.inc,v 1.7.2.4 2018/10/20 06:58:16 pgoyette Exp $
 
 .PATH:	${.CURDIR}/man
 
@@ -92,7 +92,6 @@ CTLOG_STORE_new.3 \
 CTLOG_new.3 \
 CT_POLICY_EVAL_CTX_new.3 \
 DEFINE_STACK_OF.3 \
-DES_random_key.3 \
 DH_generate_key.3 \
 DH_generate_parameters.3 \
 DH_get0_pqg.3 \
@@ -198,8 +197,6 @@ EVP_sm3.3 \
 EVP_sm4_cbc.3 \
 EVP_whirlpool.3 \
 Ed25519.7 \
-HMAC.3 \
-MD5.3 \
 MDC2_Init.3 \
 OBJ_nid2obj.3 \
 OCSP_REQUEST_new.3 \

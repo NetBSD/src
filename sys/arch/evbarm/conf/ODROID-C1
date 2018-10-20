@@ -1,11 +1,22 @@
 #
-#	$NetBSD: ODROID-C1,v 1.22.14.1 2018/06/25 07:25:40 pgoyette Exp $
+#	$NetBSD: ODROID-C1,v 1.22.14.2 2018/10/20 06:58:27 pgoyette Exp $
 #
 #	Hardkernel ODROID-C1 (Amlogic S805) based SBC (Single Board Computer)
 #
 
 include	"arch/evbarm/conf/std.amlogic"
 include	"arch/evbarm/conf/GENERIC.common"
+
+#
+# FDT files supported by this kernel - add to DTSSUBDIR and DTS as
+# appropriate
+#
+makeoptions 	DTSARCH="arm"
+makeoptions 	DTSGNUARCH="arm"
+makeoptions 	DTSSUBDIR="amlogic"
+makeoptions 	DTS="
+	meson8b-odroidc1.dts
+"
 
 options 	CPU_CORTEXA5
 options 	MULTIPROCESSOR
@@ -15,6 +26,9 @@ options 	MULTIPROCESSOR
 #options 	LOCKDEBUG
 makeoptions	DEBUG="-g"	# compile full symbol table
 makeoptions	COPY_SYMTAB=1
+#options 	VERBOSE_INIT_ARM
+#options 	EARLYCONS=amlogic
+options 	CONSADDR=0xc81004c0, CONSPEED=115200
 
 config		netbsd		root on ? type ?
 
@@ -32,7 +46,6 @@ amlogicio0	at mainbus?
 
 # On-board UARTs
 amlogiccom0	at amlogicio0 port 0
-options 	CONSADDR=0xc81004c0, CONSPEED=115200
 
 # GPIO
 amlogicgpio0	at amlogicio0

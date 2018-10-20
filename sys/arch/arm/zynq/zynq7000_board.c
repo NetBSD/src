@@ -1,4 +1,4 @@
-/*	$NetBSD: zynq7000_board.c,v 1.2.16.2 2018/09/30 01:45:39 pgoyette Exp $	*/
+/*	$NetBSD: zynq7000_board.c,v 1.2.16.3 2018/10/20 06:58:26 pgoyette Exp $	*/
 /*-
  * Copyright (c) 2015  Genetec Corporation.  All rights reserved.
  * Written by Hashimoto Kenichi for Genetec Corporation.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: zynq7000_board.c,v 1.2.16.2 2018/09/30 01:45:39 pgoyette Exp $");
+__KERNEL_RCSID(1, "$NetBSD: zynq7000_board.c,v 1.2.16.3 2018/10/20 06:58:26 pgoyette Exp $");
 
 #include "opt_zynq.h"
 #include "arml2cc.h"
@@ -131,10 +131,3 @@ zynq7000_device_register(device_t self, void *aux)
 	}
 }
 
-#ifdef MULTIPROCESSOR
-void
-zynq7000_cpu_hatch(struct cpu_info *ci)
-{
-	a9tmr_init_cpu_clock(ci);
-}
-#endif

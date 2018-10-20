@@ -1,8 +1,10 @@
-/* $NetBSD: cycv_reg.h,v 1.1.2.2 2018/09/30 01:45:37 pgoyette Exp $ */
+/* $NetBSD: cycv_reg.h,v 1.1.2.3 2018/10/20 06:58:24 pgoyette Exp $ */
 #ifndef _ARM_ALTERA_CYCV_REG_H
 #define _ARM_ALTERA_CYCV_REG_H
 
+#define CYCV_SDRAM_VBASE	0xf0000000
 #define CYCV_SDRAM_BASE		0x0
+#define CYCV_SDRAM_SIZE		L1_S_SIZE
 
 #define CYCV_PERIPHERAL_BASE	0xFC000000
 #define CYCV_PERIPHERAL_SIZE	(64 * 1024 * 1024)

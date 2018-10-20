@@ -1,4 +1,4 @@
-/* $NetBSD: dwcwdt_fdt.c,v 1.1.2.2 2018/07/28 04:37:44 pgoyette Exp $ */
+/* $NetBSD: dwcwdt_fdt.c,v 1.1.2.3 2018/10/20 06:58:31 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwcwdt_fdt.c,v 1.1.2.2 2018/07/28 04:37:44 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwcwdt_fdt.c,v 1.1.2.3 2018/10/20 06:58:31 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -61,7 +61,7 @@ __KERNEL_RCSID(0, "$NetBSD: dwcwdt_fdt.c,v 1.1.2.2 2018/07/28 04:37:44 pgoyette 
 #define	WDT_EOI				0x14
 #define	 WDT_EOI_WDT_INT_CLR		__BIT(0)
 
-static const uint8_t wdt_torr[] = {
+static const uint32_t wdt_torr[] = {
 	0x0000ffff,
 	0x0001ffff,
 	0x0003ffff,

@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1319.2.10 2018/09/06 06:55:51 pgoyette Exp $
+$NetBSD: pcidevs,v 1.1319.2.11 2018/10/20 06:58:31 pgoyette Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -891,6 +891,8 @@ product ADP2 AAR2810SA		0x0292	AAR-2810SA
 product ADP2 3405		0x02bb	RAID 3405
 product ADP2 3805		0x02bc	RAID 3805
 product ADP2 2405		0x02d5	RAID 2405
+product ADP2 2445		0x02d6	RAID 2445
+product ADP2 2805		0x02d7	RAID 2805
 product ADP2 AAC364		0x0364	AAC-364
 product ADP2 ASR5400S		0x0365	ASR-5400S
 product ADP2 PERC_2QC		0x1364	Dell PERC 2/QC
@@ -1040,6 +1042,9 @@ product AMD F12_GPP0	0x1709	Family12h GPP0 Root Port
 product AMD F14_MISC	0x1716	Family12h/14h Misc. Configuration
 product AMD F14_HB18	0x1718	Family12h/14h Host Bridge
 product AMD F14_HB19	0x1719	Family12h/14h Host Bridge
+product AMD SEATTLE_PCHB_1	0x1a00	Seattle Host Bridge
+product AMD SEATTLE_PCHB_2	0x1a01	Seattle Host Bridge
+product AMD SEATTLE_PCIE	0x1a02	Seattle PCIE Root Port
 product AMD PCNET_PCI	0x2000	PCnet-PCI Ethernet
 product AMD PCNET_HOME	0x2001	PCnet-Home HomePNA Ethernet
 product AMD AM_1771_MBW	0x2003	Alchemy AM 1771 MBW

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.133.2.1 2018/09/06 06:55:38 pgoyette Exp $
+# $NetBSD: GENERIC,v 1.133.2.2 2018/10/20 06:58:29 pgoyette Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,11 +22,12 @@ include 	"arch/newsmips/conf/std.newsmips"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.133.2.1 $"
+#ident 		"GENERIC-$Revision: 1.133.2.2 $"
 
 maxusers	16
 
 options 	news3400		# NWS-3400/3700 support
+options 	news4000		# NWS-4000 support
 options 	news5000		# NWS-5000 support
 options 	MIPS1			# R2000/R3000 support
 options 	MIPS3			# R4000 support
@@ -113,7 +114,8 @@ options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
 #options 	ALTQ_RIO	# RED with IN/OUT
 #options 	ALTQ_WFQ	# Weighted Fair Queueing
 
-options 	NFS_BOOT_BOOTPARAM
+#options 	NFS_BOOT_BOOTPARAM
+options 	NFS_BOOT_DHCP
 
 # JIT compiler for bpfilter
 #options	SLJIT
@@ -153,6 +155,7 @@ zsc0	at hb0 addr 0xbfec0000 level 1 flags 0x0	# on-board serial
 zsc1	at hb0 addr 0xb8c40100 level 1 flags 0x1	# NWB-231A 4ch serial
 zsc2	at hb0 addr 0xb8c40104 level 1 flags 0x1	#
 zsc0	at ap?
+options 	NEWS4000_ZS_AP_POLLING	# XXX: can't get interrupt on news4000
 
 zstty0	at zsc0 channel 0		# tty00
 zstty1	at zsc0 channel 1		# tty01

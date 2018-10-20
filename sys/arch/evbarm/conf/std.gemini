@@ -1,8 +1,8 @@
-#	$NetBSD: std.gemini,v 1.8 2013/11/01 18:41:06 skrll Exp $
+#	$NetBSD: std.gemini,v 1.8.28.1 2018/10/20 06:58:27 pgoyette Exp $
 #
 # standard NetBSD/evbarm for GEMINI options
 
-machine	evbarm arm
+machine		evbarm arm
 include		"arch/evbarm/conf/std.evbarm"
  
 # Pull in GEMINI config definitions.
@@ -13,13 +13,13 @@ options 	ARM9
 options 	__HAVE_FAST_SOFTINTS		# should be in types.h
 options 	__HAVE_PCI_CONF_HOOK		# should be in types.h
 
-makeoptions	KERNEL_BASE_PHYS="0x00200000"
-makeoptions	KERNEL_BASE_VIRT="0x80200000"
-makeoptions	LOADADDRESS="0x00200000"
-makeoptions	BOARDTYPE="gemini"
-makeoptions	BOARDMKFRAG="${THISARM}/conf/mk.gemini"
+makeoptions 	KERNEL_BASE_PHYS="0x00200000"
+makeoptions 	KERNEL_BASE_VIRT="0x80200000"
+makeoptions 	LOADADDRESS="0x00200000"
+makeoptions 	BOARDTYPE="gemini"
+makeoptions 	BOARDMKFRAG="${THISARM}/conf/mk.gemini"
 
-options		EVBARM_BOARDTYPE=gemini
+options 	EVBARM_BOARDTYPE=gemini
 options 	ARM_INTR_IMPL="<arch/arm/gemini/gemini_intr.h>"
 #options 	ARM_GENERIC_TODR
 

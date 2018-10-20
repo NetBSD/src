@@ -1,4 +1,4 @@
-/*	$NetBSD: getopt_long.c,v 1.1.1.4 2015/01/02 20:34:27 christos Exp $	*/
+/*	$NetBSD: getopt_long.c,v 1.1.1.4.14.1 2018/10/20 06:58:20 pgoyette Exp $	*/
 
 /*	NetBSD: getopt_long.c,v 1.21.4.1 2008/01/09 01:34:14 matt Exp 	*/
 
@@ -35,9 +35,9 @@
 
 #ifndef	lint
 #if 0
-FILE_RCSID("@(#)$File: getopt_long.c,v 1.6 2009/02/13 18:48:05 christos Exp $")
+FILE_RCSID("@(#)$File: getopt_long.c,v 1.7 2018/09/09 20:33:28 christos Exp $")
 #else
-__RCSID("$NetBSD: getopt_long.c,v 1.1.1.4 2015/01/02 20:34:27 christos Exp $");
+__RCSID("$NetBSD: getopt_long.c,v 1.1.1.4.14.1 2018/10/20 06:58:20 pgoyette Exp $");
 #endif
 #endif	/* lint */
 
@@ -130,7 +130,7 @@ gcd(a, b)
 		b = c;
 		c = a % b;
 	}
-	   
+
 	return b;
 }
 
@@ -229,7 +229,7 @@ start:
 			place = EMSG;
 			if (IN_ORDER) {
 				/*
-				 * GNU extension: 
+				 * GNU extension:
 				 * return non-option as argument to option 1
 				 */
 				optarg = nargv[optind++];
@@ -275,7 +275,7 @@ start:
 	}
 	if (optchar == 'W' && oli[1] == ';') {		/* -W long-option */
 		/* XXX: what if no long options provided (called by getopt)? */
-		if (*place) 
+		if (*place)
 			return -2;
 
 		if (++optind >= nargc) {	/* no arg */
@@ -410,7 +410,7 @@ getopt_long(nargc, nargv, options, long_options, idx)
 			has_equal++;
 		} else
 			current_argv_len = strlen(current_argv);
-	    
+
 		for (i = 0; long_options[i].name; i++) {
 			/* find matching long option */
 			if (strncmp(current_argv, long_options[i].name,
@@ -494,7 +494,7 @@ getopt_long(nargc, nargv, options, long_options, idx)
 		if (long_options[match].flag) {
 			*long_options[match].flag = long_options[match].val;
 			retval = 0;
-		} else 
+		} else
 			retval = long_options[match].val;
 		if (idx)
 			*idx = match;

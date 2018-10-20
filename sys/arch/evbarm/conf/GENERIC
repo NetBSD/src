@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC,v 1.1.2.4 2018/09/06 06:55:30 pgoyette Exp $
+#	$NetBSD: GENERIC,v 1.1.2.5 2018/10/20 06:58:27 pgoyette Exp $
 #
 #	GENERIC ARM (aarch32) kernel
 #
@@ -192,7 +192,7 @@ options 	DEBUG
 # TEGRA TK1
 #options 	EARLYCONS=tegra, CONSADDR=0x70006300
 
-# 
+#
 #options 	EARLYCONS=vexpress, CONSADDR=0x1c090000
 #options 	EARLYCONS=virt
 
@@ -316,18 +316,17 @@ tegra210xpad*	at fdt?			# NVIDIA Tegra XUSB PADCTL (T210)
 tegra210xphy*	at tegra210xpad?
 
 # PCIE
-# XXXNH not yet
-#tegrapcie0	at fdt?			# NVIDIA Tegra PCIE
-#pci*		at tegrapcie0
-#ppb*		at pci? dev ? function ?
-#pci*		at ppb?
+tegrapcie0	at fdt?			# NVIDIA Tegra PCIE
+pci*		at tegrapcie0
+ppb*		at pci? dev ? function ?
+pci*		at ppb?
 
 # Ethernet
 emac*		at fdt?			# Allwinner Gigabit Ethernet (EMAC)
 smsh*		at fdt?			# SMSC LAN9118
 
 # PCI Ethernet
-#re*		at pci? dev ? function ?	# Realtek RTL8111GS
+re*		at pci? dev ? function ?	# Realtek RTL8111GS
 
 # MII/PHY support
 exphy* 		at mii? phy ?		# 3Com internal PHYs

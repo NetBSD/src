@@ -1,4 +1,4 @@
-/*	$NetBSD: reloc.c,v 1.111.2.1 2018/04/07 04:12:09 pgoyette Exp $	 */
+/*	$NetBSD: reloc.c,v 1.111.2.2 2018/10/20 06:58:22 pgoyette Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: reloc.c,v 1.111.2.1 2018/04/07 04:12:09 pgoyette Exp $");
+__RCSID("$NetBSD: reloc.c,v 1.111.2.2 2018/10/20 06:58:22 pgoyette Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -219,21 +219,6 @@ _rtld_relocate_objects(Obj_Entry *first, bool bind_now)
 		}
 		if (!ok)
 			return -1;
-
-		/* Set some sanity-checking numbers in the Obj_Entry. */
-		obj->magic = RTLD_MAGIC;
-		obj->version = RTLD_VERSION;
-
-		/*
-		 * Fill in the backwards compatibility dynamic linker entry points.
-		 *
-		 * DO NOT ADD TO THIS LIST
-		 */
-		obj->dlopen = dlopen;
-		obj->dlsym = dlsym;
-		obj->dlerror = dlerror;
-		obj->dlclose = dlclose;
-		obj->dladdr = dladdr;
 
 		dbg(("fixing up PLTGOT"));
 		/* Set the special PLTGOT entries. */

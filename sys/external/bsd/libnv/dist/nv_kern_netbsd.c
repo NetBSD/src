@@ -1,4 +1,4 @@
-/*	$NetBSD: nv_kern_netbsd.c,v 1.5.2.2 2018/09/30 01:45:55 pgoyette Exp $	*/
+/*	$NetBSD: nv_kern_netbsd.c,v 1.5.2.3 2018/10/20 06:58:45 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: nv_kern_netbsd.c,v 1.5.2.2 2018/09/30 01:45:55 pgoyette Exp $");
+__RCSID("$NetBSD: nv_kern_netbsd.c,v 1.5.2.3 2018/10/20 06:58:45 pgoyette Exp $");
 
 #if !defined(_KERNEL) && !defined(_STANDALONE)
 #include <sys/mman.h>
@@ -78,6 +78,9 @@ nvlist_copyin(const nvlist_ref_t *nref, nvlist_t **nvlp, size_t lim)
 	nvlist_t *nvl;
 	void *buf;
 
+	if (len == 0) {
+		return EINVAL;
+	}
 	if (len >= lim) {
 		return E2BIG;
 	}
@@ -124,7 +127,7 @@ nvlist_copyout(nvlist_ref_t *nref, const nvlist_t *nvl)
 	error = copyout(buf, uaddr, len);
 	if (error) {
 		uvm_unmap(&p->p_vmspace->vm_map, (vaddr_t)uaddr,
-		    (vaddr_t)uaddr + len);
+		    (vaddr_t)uaddr + rlen);
 		goto err;
 	}
 	nref->flags = nvlist_flags(nvl);
@@ -225,7 +228,7 @@ nv_strdup(const char *s1)
 	s2 = nv_malloc(len);
 	if (s2) {
 		memcpy(s2, s1, len);
-		s2[len] = '\0';
+		s2[len-1] = '\0';
 	}
 	return s2;
 }

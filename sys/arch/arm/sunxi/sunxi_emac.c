@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_emac.c,v 1.13.2.2 2018/07/28 04:37:29 pgoyette Exp $ */
+/* $NetBSD: sunxi_emac.c,v 1.13.2.3 2018/10/20 06:58:26 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2016-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
 #include "opt_net_mpsafe.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_emac.c,v 1.13.2.2 2018/07/28 04:37:29 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_emac.c,v 1.13.2.3 2018/10/20 06:58:26 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -583,6 +583,72 @@ sunxi_emac_disable_intr(struct sunxi_emac_softc *sc)
 	WR4(sc, EMAC_INT_EN, 0);
 }
 
+#ifdef SUNXI_EMAC_DEBUG
+static void
+sunxi_emac_dump_regs(struct sunxi_emac_softc *sc)
+{
+	static const struct {
+		const char *name;
+		u_int reg;
+	} regs[] = {
+		{ "BASIC_CTL_0", EMAC_BASIC_CTL_0 },
+		{ "BASIC_CTL_1", EMAC_BASIC_CTL_1 },
+		{ "INT_STA", EMAC_INT_STA },
+		{ "INT_EN", EMAC_INT_EN },
+		{ "TX_CTL_0", EMAC_TX_CTL_0 },
+		{ "TX_CTL_1", EMAC_TX_CTL_1 },
+		{ "TX_FLOW_CTL", EMAC_TX_FLOW_CTL },
+		{ "TX_DMA_LIST", EMAC_TX_DMA_LIST },
+		{ "RX_CTL_0", EMAC_RX_CTL_0 },
+		{ "RX_CTL_1", EMAC_RX_CTL_1 },
+		{ "RX_DMA_LIST", EMAC_RX_DMA_LIST },
+		{ "RX_FRM_FLT", EMAC_RX_FRM_FLT },
+		{ "RX_HASH_0", EMAC_RX_HASH_0 },
+		{ "RX_HASH_1", EMAC_RX_HASH_1 },
+		{ "MII_CMD", EMAC_MII_CMD },
+		{ "ADDR_HIGH0", EMAC_ADDR_HIGH(0) },
+		{ "ADDR_LOW0", EMAC_ADDR_LOW(0) },
+		{ "TX_DMA_STA", EMAC_TX_DMA_STA },
+		{ "TX_DMA_CUR_DESC", EMAC_TX_DMA_CUR_DESC },
+		{ "TX_DMA_CUR_BUF", EMAC_TX_DMA_CUR_BUF },
+		{ "RX_DMA_STA", EMAC_RX_DMA_STA },
+		{ "RX_DMA_CUR_DESC", EMAC_RX_DMA_CUR_DESC },
+		{ "RX_DMA_CUR_BUF", EMAC_RX_DMA_CUR_BUF },
+		{ "RGMII_STA", EMAC_RGMII_STA },
+	};
+	u_int n;
+
+	for (n = 0; n < __arraycount(regs); n++)
+		device_printf(sc->dev, "  %-20s %08x\n", regs[n].name,
+		    RD4(sc, regs[n].reg));
+}
+#endif
+
+static int
+sunxi_emac_reset(struct sunxi_emac_softc *sc)
+{
+	int retry;
+
+	/* Soft reset all registers and logic */
+	WR4(sc, EMAC_BASIC_CTL_1, BASIC_CTL_SOFT_RST);
+
+	/* Wait for soft reset bit to self-clear */
+	for (retry = SOFT_RST_RETRY; retry > 0; retry--) {
+		if ((RD4(sc, EMAC_BASIC_CTL_1) & BASIC_CTL_SOFT_RST) == 0)
+			break;
+		delay(10);
+	}
+	if (retry == 0) {
+		aprint_debug_dev(sc->dev, "soft reset timed out\n");
+#ifdef SUNXI_EMAC_DEBUG
+		sunxi_emac_dump_regs(sc);
+#endif
+		return ETIMEDOUT;
+	}
+
+	return 0;
+}
+
 static int
 sunxi_emac_init_locked(struct sunxi_emac_softc *sc)
 {
@@ -594,6 +660,13 @@ sunxi_emac_init_locked(struct sunxi_emac_softc *sc)
 
 	if ((ifp->if_flags & IFF_RUNNING) != 0)
 		return 0;
+
+	/* Soft reset EMAC core */
+	sunxi_emac_reset(sc);
+
+	/* Write transmit and receive descriptor base address registers */
+	WR4(sc, EMAC_TX_DMA_LIST, sc->tx.desc_ring_paddr);
+	WR4(sc, EMAC_RX_DMA_LIST, sc->rx.desc_ring_paddr);
 
 	sunxi_emac_setup_rxfilter(sc);
 
@@ -1087,47 +1160,6 @@ sunxi_emac_get_eaddr(struct sunxi_emac_softc *sc, uint8_t *eaddr)
 	eaddr[5] = (machi >> 8) & 0xff;
 }
 
-#ifdef SUNXI_EMAC_DEBUG
-static void
-sunxi_emac_dump_regs(struct sunxi_emac_softc *sc)
-{
-	static const struct {
-		const char *name;
-		u_int reg;
-	} regs[] = {
-		{ "BASIC_CTL_0", EMAC_BASIC_CTL_0 },
-		{ "BASIC_CTL_1", EMAC_BASIC_CTL_1 },
-		{ "INT_STA", EMAC_INT_STA },
-		{ "INT_EN", EMAC_INT_EN },
-		{ "TX_CTL_0", EMAC_TX_CTL_0 },
-		{ "TX_CTL_1", EMAC_TX_CTL_1 },
-		{ "TX_FLOW_CTL", EMAC_TX_FLOW_CTL },
-		{ "TX_DMA_LIST", EMAC_TX_DMA_LIST },
-		{ "RX_CTL_0", EMAC_RX_CTL_0 },
-		{ "RX_CTL_1", EMAC_RX_CTL_1 },
-		{ "RX_DMA_LIST", EMAC_RX_DMA_LIST },
-		{ "RX_FRM_FLT", EMAC_RX_FRM_FLT },
-		{ "RX_HASH_0", EMAC_RX_HASH_0 },
-		{ "RX_HASH_1", EMAC_RX_HASH_1 },
-		{ "MII_CMD", EMAC_MII_CMD },
-		{ "ADDR_HIGH0", EMAC_ADDR_HIGH(0) },
-		{ "ADDR_LOW0", EMAC_ADDR_LOW(0) },
-		{ "TX_DMA_STA", EMAC_TX_DMA_STA },
-		{ "TX_DMA_CUR_DESC", EMAC_TX_DMA_CUR_DESC },
-		{ "TX_DMA_CUR_BUF", EMAC_TX_DMA_CUR_BUF },
-		{ "RX_DMA_STA", EMAC_RX_DMA_STA },
-		{ "RX_DMA_CUR_DESC", EMAC_RX_DMA_CUR_DESC },
-		{ "RX_DMA_CUR_BUF", EMAC_RX_DMA_CUR_BUF },
-		{ "RGMII_STA", EMAC_RGMII_STA },
-	};
-	u_int n;
-
-	for (n = 0; n < __arraycount(regs); n++)
-		device_printf(dev, "  %-20s %08x\n", regs[n].name,
-		    RD4(sc, regs[n].reg));
-}
-#endif
-
 static int
 sunxi_emac_phy_reset(struct sunxi_emac_softc *sc)
 {
@@ -1149,37 +1181,6 @@ sunxi_emac_phy_reset(struct sunxi_emac_softc *sc)
 	delay(htole32(delay_prop[1]));
 	fdtbus_gpio_write(sc->pin_reset, pin_value);
 	delay(htole32(delay_prop[2]));
-
-	return 0;
-}
-
-static int
-sunxi_emac_reset(struct sunxi_emac_softc *sc)
-{
-	int retry;
-
-	/* Reset PHY if necessary */
-	if (sunxi_emac_phy_reset(sc) != 0) {
-		aprint_error_dev(sc->dev, "failed to reset PHY\n");
-		return ENXIO;
-	}
-
-	/* Soft reset all registers and logic */
-	WR4(sc, EMAC_BASIC_CTL_1, BASIC_CTL_SOFT_RST);
-
-	/* Wait for soft reset bit to self-clear */
-	for (retry = SOFT_RST_RETRY; retry > 0; retry--) {
-		if ((RD4(sc, EMAC_BASIC_CTL_1) & BASIC_CTL_SOFT_RST) == 0)
-			break;
-		delay(10);
-	}
-	if (retry == 0) {
-		aprint_error_dev(sc->dev, "soft reset timed out\n");
-#ifdef SUNXI_EMAC_DEBUG
-		sunxi_emac_dump_regs(sc);
-#endif
-		return ETIMEDOUT;
-	}
 
 	return 0;
 }
@@ -1275,10 +1276,6 @@ sunxi_emac_setup_dma(struct sunxi_emac_softc *sc)
 	bus_dmamap_sync(sc->rx.desc_tag, sc->rx.desc_map,
 	    0, sc->rx.desc_map->dm_mapsize,
 	    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
-
-	/* Write transmit and receive descriptor base address registers */
-	WR4(sc, EMAC_TX_DMA_LIST, sc->tx.desc_ring_paddr);
-	WR4(sc, EMAC_RX_DMA_LIST, sc->rx.desc_ring_paddr);
 
 	return 0;
 }
@@ -1400,9 +1397,11 @@ sunxi_emac_attach(device_t parent, device_t self, void *aux)
 	sunxi_emac_get_eaddr(sc, eaddr);
 	aprint_normal_dev(self, "Ethernet address %s\n", ether_sprintf(eaddr));
 
-	/* Soft reset EMAC core */
-	if (sunxi_emac_reset(sc) != 0)
+	/* Reset PHY if necessary */
+	if (sunxi_emac_phy_reset(sc) != 0) {
+		aprint_error_dev(self, "failed to reset PHY\n");
 		return;
+	}
 
 	/* Setup DMA descriptors */
 	if (sunxi_emac_setup_dma(sc) != 0) {

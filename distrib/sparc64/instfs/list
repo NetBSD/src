@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.26.24.1 2018/09/30 01:45:06 pgoyette Exp $
+#	$NetBSD: list,v 1.26.24.2 2018/10/20 06:58:18 pgoyette Exp $
 
 SRCDIRS	bin sbin libexec external/bsd/less/bin usr.bin usr.sbin
 
@@ -79,7 +79,7 @@ SPECIAL	route		srcdir	distrib/utils/x_route
 # SPECIAL	xz		srcdir	external/public-domain/xz/bin
 
 LIBS	libhack.o
-LIBS	-ledit -lutil -lcurses -lterminfo -lrmt -lcrypt -ll -lm -lpcap -lz -lprop
+LIBS	-ledit -lutil -lcurses -lterminfo -lrmt -lcrypt -ll -lm -lpcap -lz -llzma -lprop
 
 # various files that we need in /etc for the install
 COPY	${NETBSDSRCDIR}/etc/group		etc/group

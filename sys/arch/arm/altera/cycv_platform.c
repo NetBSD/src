@@ -1,4 +1,4 @@
-/* $NetBSD: cycv_platform.c,v 1.1.2.2 2018/09/30 01:45:37 pgoyette Exp $ */
+/* $NetBSD: cycv_platform.c,v 1.1.2.3 2018/10/20 06:58:24 pgoyette Exp $ */
 
 /* This file is in the public domain. */
 
@@ -6,7 +6,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cycv_platform.c,v 1.1.2.2 2018/09/30 01:45:37 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cycv_platform.c,v 1.1.2.3 2018/10/20 06:58:24 pgoyette Exp $");
 
 #define	_ARM32_BUS_DMA_PRIVATE
 #include <sys/param.h>
@@ -15,6 +15,8 @@ __KERNEL_RCSID(0, "$NetBSD: cycv_platform.c,v 1.1.2.2 2018/09/30 01:45:37 pgoyet
 #include <sys/device.h>
 
 #include <uvm/uvm_extern.h>
+
+#include <arm/arm32/machdep.h>
 
 #include <arm/altera/cycv_reg.h>
 #include <arm/altera/cycv_var.h>
@@ -42,17 +44,26 @@ cycv_platform_devmap(void) {
 	return devmap;
 }
 
-extern void cortex_mpstart(void);
-
 static void
-cycv_platform_bootstrap(void) {
-	uint32_t startfunc = (uint32_t) cortex_mpstart;
+cycv_platform_bootstrap(void)
+{
 	bus_space_tag_t bst = &armv7_generic_bs_tag;
 	bus_space_handle_t bsh_l2c;
+
+	bus_space_map(bst, CYCV_L2CACHE_BASE, CYCV_L2CACHE_SIZE, 0, &bsh_l2c);
+
+#if NARML2CC > 0
+	arml2cc_init(bst, bsh_l2c, 0);
+#endif
+}
+
+static void
+cycv_mpstart(void)
+{
+	bus_space_tag_t bst = &armv7_generic_bs_tag;
 	bus_space_handle_t bsh_rst;
 	bus_space_handle_t bsh_scu;
 
-	bus_space_map(bst, CYCV_L2CACHE_BASE, CYCV_L2CACHE_SIZE, 0, &bsh_l2c);
 	bus_space_map(bst, CYCV_RSTMGR_BASE, CYCV_RSTMGR_SIZE, 0, &bsh_rst);
 	bus_space_map(bst, CYCV_SCU_BASE, CYCV_SCU_SIZE, 0, &bsh_scu);
 
@@ -60,9 +71,7 @@ cycv_platform_bootstrap(void) {
 	bus_space_write_4(bst, bsh_rst, SCU_CTL,
 		bus_space_read_4(bst, bsh_rst, SCU_CTL) | SCU_CTL_SCU_ENA);
 
-#if NARML2CC > 0
-	arml2cc_init(bst, bsh_l2c, 0);
-#endif
+	const uint32_t startfunc = (uint32_t) KERN_VTOPHYS((vaddr_t)cpu_mpstart);
 
 	/*
 	 * We place a "B cortex_mpstart" at address 0 in order to bootstrap
@@ -70,14 +79,15 @@ cycv_platform_bootstrap(void) {
 	 * it was unmapped by u-boot in favor of the SDRAM. Plus the dtb is
 	 * stored very low in RAM so we can't re-map the Boot ROM easily.
 	 */
+	extern vaddr_t cpu_ttb;
 
-	*(volatile uint32_t *) 0x0 = 0xea000000 | ((startfunc - 8 - 0x0) >> 2);
+	pmap_map_chunk(cpu_ttb, CYCV_SDRAM_VBASE, CYCV_SDRAM_BASE, L1_S_SIZE,
+	    VM_PROT_READ|VM_PROT_WRITE, PMAP_NOCACHE);
+	*(volatile uint32_t *) CYCV_SDRAM_VBASE =
+	    htole32(0xea000000 | ((startfunc - 8 - 0x0) >> 2));
+	pmap_unmap_chunk(cpu_ttb, CYCV_SDRAM_BASE, L1_S_SIZE);
 
 	arm_cpu_max = 2;
-
-	arm_dsb();
-
-	armv7_dcache_wbinv_all();
 
 	bus_space_write_4(bst, bsh_rst, CYCV_RSTMGR_MPUMODRST,
 		bus_space_read_4(bst, bsh_rst, CYCV_RSTMGR_MPUMODRST) &
@@ -97,10 +107,10 @@ cycv_platform_early_putchar(char c) {
 #define CONSADDR_VA (CONSADDR - CYCV_PERIPHERAL_BASE + CYCV_PERIPHERAL_VBASE)
 	volatile uint32_t *uartaddr = (volatile uint32_t *) CONSADDR_VA;
 
-	while ((uartaddr[com_lsr] & LSR_TXRDY) == 0)
+	while ((le32toh(uartaddr[com_lsr]) & LSR_TXRDY) == 0)
 		;
 
-	uartaddr[com_data] = c;
+	uartaddr[com_data] = htole32(c);
 #endif
 }
 
@@ -140,6 +150,7 @@ static const struct arm_platform cycv_platform = {
 	.ap_reset = cycv_platform_reset,
 	.ap_delay = a9tmr_delay,
 	.ap_uart_freq = cycv_platform_uart_freq,
+	.ap_mpstart = cycv_mpstart,
 };
 
 ARM_PLATFORM(cycv, "altr,socfpga-cyclone5", &cycv_platform);

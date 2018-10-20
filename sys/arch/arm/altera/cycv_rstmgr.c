@@ -1,9 +1,9 @@
-/* $NetBSD: cycv_rstmgr.c,v 1.1.2.2 2018/09/30 01:45:37 pgoyette Exp $ */
+/* $NetBSD: cycv_rstmgr.c,v 1.1.2.3 2018/10/20 06:58:24 pgoyette Exp $ */
 
 /* This file is in the public domain. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cycv_rstmgr.c,v 1.1.2.2 2018/09/30 01:45:37 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cycv_rstmgr.c,v 1.1.2.3 2018/10/20 06:58:24 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -98,11 +98,11 @@ cycv_rst_acquire(device_t dev, const void *data, size_t len) {
 
 	value = of_decode_int(data);
 	if (value < 0 || value >
-	    (CYCV_RSTMGR_MISCMODRST - CYCV_RSTMGR_PERMODRST + 4) / 4 * 32)
+	    (CYCV_RSTMGR_MISCMODRST - CYCV_RSTMGR_MPUMODRST + 4) / 4 * 32)
 		goto err_decode;
 
 	reset = kmem_alloc(sizeof *reset, KM_SLEEP);
-	reset->address = CYCV_RSTMGR_PERMODRST + value / 32 * 4;
+	reset->address = CYCV_RSTMGR_MPUMODRST + value / 32 * 4;
 	reset->mask = 1 << (value % 32);
 
 	if (0) {

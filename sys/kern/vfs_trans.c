@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_trans.c,v 1.48.4.1 2018/09/30 01:45:55 pgoyette Exp $	*/
+/*	$NetBSD: vfs_trans.c,v 1.48.4.2 2018/10/20 06:58:45 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_trans.c,v 1.48.4.1 2018/09/30 01:45:55 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_trans.c,v 1.48.4.2 2018/10/20 06:58:45 pgoyette Exp $");
 
 /*
  * File system transaction operations.
@@ -42,7 +42,6 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_trans.c,v 1.48.4.1 2018/09/30 01:45:55 pgoyette 
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
 #include <sys/atomic.h>
 #include <sys/buf.h>
 #include <sys/kmem.h>
@@ -55,6 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_trans.c,v 1.48.4.1 2018/09/30 01:45:55 pgoyette 
 #include <miscfs/specfs/specdev.h>
 
 enum fstrans_lock_type {
+	FSTRANS_LAZY,			/* Granted while not suspended */
 	FSTRANS_SHARED,			/* Granted while not suspending */
 	FSTRANS_EXCL			/* Internal: exclusive lock */
 };
@@ -343,6 +343,8 @@ grant_lock(const enum fstrans_state state, const enum fstrans_lock_type type)
 		return true;
 	if (type == FSTRANS_EXCL)
 		return true;
+	if  (state == FSTRANS_SUSPENDING && type == FSTRANS_LAZY)
+		return true;
 
 	return false;
 }
@@ -421,6 +423,15 @@ fstrans_start_nowait(struct mount *mp)
 {
 
 	return _fstrans_start(mp, FSTRANS_SHARED, 0);
+}
+
+void
+fstrans_start_lazy(struct mount *mp)
+{
+	int error __diagused;
+
+	error = _fstrans_start(mp, FSTRANS_LAZY, 1);
+	KASSERT(error == 0);
 }
 
 /*
@@ -533,14 +544,10 @@ fstrans_setstate(struct mount *mp, enum fstrans_state new_state)
 	/*
 	 * All threads see the new state now.
 	 * Wait for transactions invalid at this state to leave.
-	 * We cannot wait forever because many processes would
-	 * get stuck waiting for fstcnt in fstrans_start(). This
-	 * is acute when suspending the root filesystem.
 	 */
 	error = 0;
 	while (! state_change_done(mp)) {
-		error = cv_timedwait_sig(&fstrans_count_cv,
-					  &fstrans_lock, hz / 4);
+		error = cv_wait_sig(&fstrans_count_cv, &fstrans_lock);
 		if (error) {
 			new_state = fmi->fmi_state = FSTRANS_NORMAL;
 			break;
@@ -854,6 +861,9 @@ fstrans_print_lwp(struct proc *p, struct lwp *l, int verbose)
 			printf(" -");
 		} else {
 			switch (fli->fli_lock_type) {
+			case FSTRANS_LAZY:
+				printf(" lazy");
+				break;
 			case FSTRANS_SHARED:
 				printf(" shared");
 				break;
@@ -887,6 +897,9 @@ fstrans_print_mount(struct mount *mp, int verbose)
 	switch (fmi->fmi_state) {
 	case FSTRANS_NORMAL:
 		printf("state normal\n");
+		break;
+	case FSTRANS_SUSPENDING:
+		printf("state suspending\n");
 		break;
 	case FSTRANS_SUSPENDED:
 		printf("state suspended\n");

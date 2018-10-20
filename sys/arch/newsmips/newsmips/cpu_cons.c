@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_cons.c,v 1.13 2012/07/28 23:08:57 matt Exp $	*/
+/*	$NetBSD: cpu_cons.c,v 1.13.38.1 2018/10/20 06:58:29 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_cons.c,v 1.13 2012/07/28 23:08:57 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_cons.c,v 1.13.38.1 2018/10/20 06:58:29 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -124,5 +124,17 @@ consinit(void)
 		break;
 
 #endif /* news5000 */
+
+#ifdef news4000
+	case NEWS4000:
+		dipsw = 0;	/* XXX */
+		(void)dipsw;
+#if NZSC > 0
+		cn_tab = &consdev_zs_ap;
+		(*cn_tab->cn_init)(cn_tab);
+#endif
+		break;
+
+#endif /* news4000 */
 	}
 }

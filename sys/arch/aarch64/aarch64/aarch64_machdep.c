@@ -1,4 +1,4 @@
-/* $NetBSD: aarch64_machdep.c,v 1.1.28.5 2018/09/06 06:55:22 pgoyette Exp $ */
+/* $NetBSD: aarch64_machdep.c,v 1.1.28.6 2018/10/20 06:58:23 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,12 +30,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: aarch64_machdep.c,v 1.1.28.5 2018/09/06 06:55:22 pgoyette Exp $");
+__KERNEL_RCSID(1, "$NetBSD: aarch64_machdep.c,v 1.1.28.6 2018/10/20 06:58:23 pgoyette Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_ddb.h"
 #include "opt_kernhist.h"
 #include "opt_modular.h"
+#include "opt_fdt.h"
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -63,11 +64,12 @@ __KERNEL_RCSID(1, "$NetBSD: aarch64_machdep.c,v 1.1.28.5 2018/09/06 06:55:22 pgo
 #include <aarch64/vmparam.h>
 
 #include <arch/evbarm/fdt/platform.h>
+#include <arm/fdt/arm_fdtvar.h>
 
 #ifdef VERBOSE_INIT_ARM
 #define VPRINTF(...)	printf(__VA_ARGS__)
 #else
-#define VPRINTF(...)	do { } while (/* CONSTCOND */ 0)
+#define VPRINTF(...)	__nothing
 #endif
 
 char cpu_model[32];
@@ -100,28 +102,57 @@ vaddr_t physical_end;
 /* filled in before cleaning bss. keep in .data */
 u_long kern_vtopdiff __attribute__((__section__(".data")));
 
+long kernend_extra;	/* extra memory allocated from round_page(_end[]) */
+
 void
 cpu_kernel_vm_init(uint64_t memory_start, uint64_t memory_size)
 {
-
 	extern char __kernel_text[];
 	extern char _end[];
+	extern char __data_start[];
+	extern char __rodata_start[];
 
 	vaddr_t kernstart = trunc_page((vaddr_t)__kernel_text);
 	vaddr_t kernend = round_page((vaddr_t)_end);
-
-	paddr_t	kernstart_phys = KERN_VTOPHYS(kernstart);
+	paddr_t kernstart_phys = KERN_VTOPHYS(kernstart);
 	paddr_t kernend_phys = KERN_VTOPHYS(kernend);
+	vaddr_t data_start = (vaddr_t)__data_start;
+	vaddr_t rodata_start = (vaddr_t)__rodata_start;
 
-	VPRINTF("%s: kernel phys start %lx end %lx\n", __func__,
-	    kernstart_phys, kernend_phys);
-
-        fdt_add_reserved_memory_range(kernstart_phys,
-	     kernend_phys - kernstart_phys);
+	/* add KSEG mappings of whole memory */
+	VPRINTF("Creating KSEG tables for 0x%016lx-0x%016lx\n",
+	    memory_start, memory_start + memory_size);
+	const pt_entry_t ksegattr =
+	    LX_BLKPAG_ATTR_NORMAL_WB |
+	    LX_BLKPAG_AP_RW |
+	    LX_BLKPAG_PXN |
+	    LX_BLKPAG_UXN;
+	pmapboot_enter(AARCH64_PA_TO_KVA(memory_start), memory_start,
+	    memory_size, L1_SIZE, ksegattr, PMAPBOOT_ENTER_NOOVERWRITE,
+	    bootpage_alloc, NULL);
 
 	/*
-	 * XXX whole bunch of stuff to map kernel correctly
+	 * at this point, whole kernel image is mapped as "rwx".
+	 * permission should be changed to:
+	 *
+	 *    text     rwx => r-x
+	 *    rodata   rwx => r--
+	 *    data     rwx => rw-
+	 *
+	 * kernel image has mapped by L2 block. (2Mbyte)
 	 */
+	pmapboot_protect(L2_TRUNC_BLOCK(kernstart),
+	    L2_TRUNC_BLOCK(data_start), VM_PROT_WRITE);
+	pmapboot_protect(L2_ROUND_BLOCK(rodata_start),
+	    L2_ROUND_BLOCK(kernend + kernend_extra), VM_PROT_EXECUTE);
+
+	aarch64_tlbi_all();
+
+
+	VPRINTF("%s: kernel phys start %lx end %lx+%lx\n", __func__,
+	    kernstart_phys, kernend_phys, kernend_extra);
+	fdt_add_reserved_memory_range(kernstart_phys,
+	     kernend_phys - kernstart_phys + kernend_extra);
 }
 
 
@@ -172,8 +203,8 @@ initarm_common(vaddr_t kvm_base, vsize_t kvm_size,
 
 	kernstart = trunc_page((vaddr_t)__kernel_text);
 	kernend = round_page((vaddr_t)_end);
-	kernstart_l2 = kernstart & -L2_SIZE;		/* trunk L2_SIZE(2M) */
-	kernend_l2 = (kernend + L2_SIZE - 1) & -L2_SIZE;/* round L2_SIZE(2M) */
+	kernstart_l2 = L2_TRUNC_BLOCK(kernstart);
+	kernend_l2 = L2_ROUND_BLOCK(kernend + kernend_extra);
 	kernelvmstart = kernend_l2;
 
 #ifdef MODULAR
@@ -212,13 +243,15 @@ initarm_common(vaddr_t kvm_base, vsize_t kvm_size,
 	    "kernel_start_l2       = 0x%016lx\n"
 	    "kernel_start          = 0x%016lx\n"
 	    "kernel_end            = 0x%016lx\n"
+	    "pagetables            = 0x%016lx\n"
+	    "pagetables_end        = 0x%016lx\n"
 	    "kernel_end_l2         = 0x%016lx\n"
 #ifdef MODULAR
 	    "module_start          = 0x%016lx\n"
 	    "module_end            = 0x%016lx\n"
 #endif
 	    "(kernel va area)\n"
-	    "(devmap va area)\n"
+	    "(devmap va area)      = 0x%016lx\n"
 	    "VM_MAX_KERNEL_ADDRESS = 0x%016lx\n"
 	    "------------------------------------------\n",
 	    kern_vtopdiff,
@@ -230,11 +263,14 @@ initarm_common(vaddr_t kvm_base, vsize_t kvm_size,
 	    kernstart_l2,
 	    kernstart,
 	    kernend,
+	    round_page(kernend),
+	    round_page(kernend) + kernend_extra,
 	    kernend_l2,
 #ifdef MODULAR
 	    module_start,
 	    module_end,
 #endif
+	    VM_KERNEL_IO_ADDRESS,
 	    VM_MAX_KERNEL_ADDRESS);
 
 	/*
@@ -492,12 +528,56 @@ mm_md_physacc(paddr_t pa, vm_prot_t prot)
 	    KAUTH_MACHDEP_UNMANAGEDMEM, NULL, NULL, NULL, NULL);
 }
 
+#ifdef __HAVE_MM_MD_KERNACC
+int
+mm_md_kernacc(void *ptr, vm_prot_t prot, bool *handled)
+{
+	extern char __kernel_text[];
+	extern char _end[];
+	extern char __data_start[];
+	extern char __rodata_start[];
+
+	vaddr_t kernstart = trunc_page((vaddr_t)__kernel_text);
+	vaddr_t kernend = round_page((vaddr_t)_end);
+	paddr_t kernstart_phys = KERN_VTOPHYS(kernstart);
+	vaddr_t data_start = (vaddr_t)__data_start;
+	vaddr_t rodata_start = (vaddr_t)__rodata_start;
+	vsize_t rosize = kernend - rodata_start;
+
+	const vaddr_t v = (vaddr_t)ptr;
+
+#define IN_RANGE(addr,sta,end)	(((sta) <= (addr)) && ((addr) < (end)))
+
+	*handled = false;
+	if (IN_RANGE(v, kernstart, kernend + kernend_extra)) {
+		*handled = true;
+		if ((v < data_start) && (prot & VM_PROT_WRITE))
+			return EFAULT;
+	} else if (IN_RANGE(v, AARCH64_KSEG_START, AARCH64_KSEG_END)) {
+		paddr_t pa = AARCH64_KVA_TO_PA(v);
+		if (IN_RANGE(pa, physical_start, physical_end)) {
+			*handled = true;
+			if (IN_RANGE(pa, kernstart_phys,
+			    kernstart_phys + rosize) &&
+			    (prot & VM_PROT_WRITE))
+				return EFAULT;
+		}
+	}
+	return 0;
+}
+#endif
+
 void
 cpu_startup(void)
 {
 	vaddr_t maxaddr, minaddr;
 
 	consinit();
+
+#ifdef FDT
+	if (arm_fdt_platform()->ap_startup != NULL)
+		arm_fdt_platform()->ap_startup();
+#endif
 
 	/*
 	 * Allocate a submap for physio.

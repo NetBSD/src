@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.185.2.1 2018/09/06 06:56:46 pgoyette Exp $	*/
+/*	$NetBSD: emul.c,v 1.185.2.2 2018/10/20 06:58:46 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.185.2.1 2018/09/06 06:56:46 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.185.2.2 2018/10/20 06:58:46 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/cprng.h>
@@ -275,6 +275,15 @@ rump_fstrans_start_nowait(struct mount *mp)
 }
 __weak_alias(fstrans_start_nowait,rump_fstrans_start_nowait);
 
+void rump_fstrans_start_lazy(struct mount *);
+void
+rump_fstrans_start_lazy(struct mount *mp)
+{
+
+}
+__weak_alias(fstrans_start_lazy,rump_fstrans_start_lazy);
+
+
 void rump_fstrans_done(struct mount *);
 void
 rump_fstrans_done(struct mount *mp)
@@ -392,4 +401,10 @@ cpu_getmodel(void)
 {
 
 	return "rumpcore (virtual)";
+}
+
+bool
+get_expose_address(struct proc *p)
+{
+	return 1;
 }

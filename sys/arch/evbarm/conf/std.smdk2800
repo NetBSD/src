@@ -1,9 +1,9 @@
-#	$NetBSD: std.smdk2800,v 1.16 2018/01/17 20:30:16 skrll Exp $
+#	$NetBSD: std.smdk2800,v 1.16.2.1 2018/10/20 06:58:27 pgoyette Exp $
 #
 # standard NetBSD/evbarm for SMDK2800 options
 
-machine	evbarm arm
-include 	"arch/evbarm/conf/std.evbarm"
+machine		evbarm arm
+include		"arch/evbarm/conf/std.evbarm"
 
 # Config definitions for SMDK2800
 include		"arch/evbarm/conf/files.smdk2800"
@@ -14,9 +14,9 @@ options 	ARM9_CACHE_WRITE_THROUGH   # we have problem with WB dcache
 
 options 	SSCOM_S3C2800
 
-makeoptions	BOARDTYPE="smdk2800"
-makeoptions	BOARDMKFRAG="${THISARM}/conf/mk.smdk2xx0"
-makeoptions	KERNEL_BASE_PHYS=0x08200000
+makeoptions 	BOARDTYPE="smdk2800"
+makeoptions 	BOARDMKFRAG="${THISARM}/conf/mk.smdk2xx0"
+makeoptions 	KERNEL_BASE_PHYS=0x08200000
 options 	KERNEL_BASE_EXT=0xc0000000
 
 options 	ARM_INTR_IMPL="<arch/arm/s3c2xx0/s3c2800_intr.h>"

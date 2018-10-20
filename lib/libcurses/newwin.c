@@ -1,4 +1,4 @@
-/*	$NetBSD: newwin.c,v 1.51 2017/09/18 10:18:13 roy Exp $	*/
+/*	$NetBSD: newwin.c,v 1.51.2.1 2018/10/20 06:58:22 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)newwin.c	8.3 (Berkeley) 7/27/94";
 #else
-__RCSID("$NetBSD: newwin.c,v 1.51 2017/09/18 10:18:13 roy Exp $");
+__RCSID("$NetBSD: newwin.c,v 1.51.2.1 2018/10/20 06:58:22 pgoyette Exp $");
 #endif
 #endif				/* not lint */
 
@@ -85,7 +85,8 @@ dupwin(WINDOW *win)
 	WINDOW *new_one;
 
 	if ((new_one = __newwin(_cursesi_screen, win->maxy, win->maxx,
-				win->begy, win->begx, FALSE)) == NULL)
+				win->begy, win->begx, FALSE,
+				win == stdscr ? TRUE : FALSE)) == NULL)
 		return NULL;
 
 	overwrite(win, new_one);
@@ -100,7 +101,7 @@ WINDOW *
 newwin(int nlines, int ncols, int by, int bx)
 {
 
-	return __newwin(_cursesi_screen, nlines, ncols, by, bx, FALSE);
+	return __newwin(_cursesi_screen, nlines, ncols, by, bx, FALSE, FALSE);
 }
 
 /*
@@ -113,22 +114,29 @@ newpad(int nlines, int ncols)
 
 	if (nlines < 1 || ncols < 1)
 		return NULL;
-	return __newwin(_cursesi_screen, nlines, ncols, 0, 0, TRUE);
+	return __newwin(_cursesi_screen, nlines, ncols, 0, 0, TRUE, FALSE);
 }
 
 WINDOW *
-__newwin(SCREEN *screen, int nlines, int ncols, int by, int bx, int ispad)
+__newwin(SCREEN *screen, int nlines, int ncols, int by, int bx, int ispad,
+    int isstdscr)
 {
 	WINDOW *win;
 	__LINE *lp;
 	int     i, j;
-	int	maxy, maxx;
+	int	ry, maxy, maxx;
 	__LDATA *sp;
 
 	if (by < 0 || bx < 0)
 		return NULL;
 
-	maxy = nlines > 0 ? nlines : LINES - by + nlines;
+	if (isstdscr) {
+		ry = __rippedlines(screen, -1);
+		by += __rippedlines(screen, 1);
+	} else
+		ry = 0;
+
+	maxy = nlines > 0 ? nlines : LINES - by - ry + nlines;
 	maxx = ncols > 0 ? ncols : COLS - bx + ncols;
 
 	if ((win = __makenew(screen, maxy, maxx, by, bx, 0, ispad)) == NULL)
@@ -408,13 +416,23 @@ __makenew(SCREEN *screen, int nlines, int ncols, int by, int bx, int sub,
 void
 __swflags(WINDOW *win)
 {
+	TERMINAL *term = win->screen->term;
 
 	win->flags &= ~(__ENDLINE | __FULLWIN | __SCROLLWIN | __LEAVEOK);
-	if (win->begx + win->maxx == COLS && !(win->flags & __ISPAD)) {
+	if (win->begx + win->maxx == win->screen->COLS &&
+	    !(win->flags & __ISPAD))
+	{
 		win->flags |= __ENDLINE;
-		if (win->begx == 0 && win->maxy == LINES && win->begy == 0)
+		if (win->begx == 0 &&
+		    win->maxy == win->screen->LINES &&
+		    win->begy == 0)
 			win->flags |= __FULLWIN;
-		if (win->begy + win->maxy == LINES)
+		if (win->begy + win->maxy == win->screen->LINES &&
+		    t_auto_right_margin(term) &&
+		    !(t_insert_character(term) != NULL ||
+		    t_parm_ich(term) != NULL ||
+		    (t_enter_insert_mode(term) != NULL &&
+		     t_exit_insert_mode(term) != NULL)))
 			win->flags |= __SCROLLWIN;
 	}
 }

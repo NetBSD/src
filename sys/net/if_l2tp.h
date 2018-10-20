@@ -1,4 +1,4 @@
-/*	$NetBSD: if_l2tp.h,v 1.3.4.2 2018/05/02 07:20:22 pgoyette Exp $	*/
+/*	$NetBSD: if_l2tp.h,v 1.3.4.3 2018/10/20 06:58:46 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2017 Internet Initiative Japan Inc.
@@ -36,6 +36,7 @@
 #include <sys/queue.h>
 #include <sys/ioccom.h>
 #ifdef _KERNEL
+#include <sys/pserialize.h>
 #include <sys/psref.h>
 #include <sys/pslist.h>
 #endif
@@ -104,6 +105,7 @@ struct l2tp_softc {
 					* instead of direct dereference.
 					*/
 	kmutex_t l2tp_lock;		/* writer lock for l2tp_var */
+	pserialize_t l2tp_psz;
 
 	LIST_ENTRY(l2tp_softc) l2tp_list; /* list of all l2tps */
 	struct pslist_entry l2tp_hash;	/* hashed list to lookup by session id */

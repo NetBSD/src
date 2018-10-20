@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_suser.c,v 1.43.4.3 2018/09/06 06:56:47 pgoyette Exp $ */
+/* $NetBSD: secmodel_suser.c,v 1.43.4.4 2018/10/20 06:58:46 pgoyette Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_suser.c,v 1.43.4.3 2018/09/06 06:56:47 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_suser.c,v 1.43.4.4 2018/10/20 06:58:46 pgoyette Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -443,6 +443,12 @@ secmodel_suser_system_cb(kauth_cred_t cred, kauth_action_t action,
 		default:
 			break;
 		}
+
+		break;
+
+	case KAUTH_SYSTEM_KERNADDR:
+		if (isroot)
+			result = KAUTH_RESULT_ALLOW;
 
 		break;
 

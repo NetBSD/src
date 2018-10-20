@@ -1,4 +1,4 @@
-/*	$NetBSD: sbt.c,v 1.5.16.1 2018/04/22 07:20:26 pgoyette Exp $	*/
+/*	$NetBSD: sbt.c,v 1.5.16.2 2018/10/20 06:58:43 pgoyette Exp $	*/
 /*	$OpenBSD: sbt.c,v 1.9 2007/06/19 07:59:57 uwe Exp $	*/
 
 /*
@@ -20,7 +20,7 @@
 /* Driver for Type-A/B SDIO Bluetooth cards */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbt.c,v 1.5.16.1 2018/04/22 07:20:26 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbt.c,v 1.5.16.2 2018/10/20 06:58:43 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -182,7 +182,7 @@ sbt_attach(device_t parent, device_t self, void *aux)
 	/* It may be Type-B, but we use it only in Type-A mode. */
 	printf("%s: SDIO Bluetooth Type-A\n", DEVNAME(sc));
 
-	sc->sc_buf = malloc(SBT_PKT_BUFSIZ, M_DEVBUF, M_NOWAIT | M_CANFAIL);
+	sc->sc_buf = malloc(SBT_PKT_BUFSIZ, M_DEVBUF, M_NOWAIT);
 	if (sc->sc_buf == NULL) {
 		aprint_error("%s: can't allocate cmd buffer\n", DEVNAME(sc));
 		return;

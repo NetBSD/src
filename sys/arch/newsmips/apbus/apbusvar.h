@@ -1,4 +1,4 @@
-/*	$NetBSD: apbusvar.h,v 1.9 2007/10/17 19:55:54 garbled Exp $	*/
+/*	$NetBSD: apbusvar.h,v 1.9.106.1 2018/10/20 06:58:29 pgoyette Exp $	*/
 
 /*-
  * Copyright (C) 1999 SHIMIZU Ryo.  All rights reserved.
@@ -39,6 +39,7 @@ struct apbus_attach_args {
 	u_long	apa_hwbase;	/* hardware I/O address */
 };
 
+void apbus_map_romwork(void);
 void *apbus_device_to_hwaddr(struct apbus_dev *);
 struct apbus_dev *apbus_lookupdev(char *);
 void apdevice_dump(struct apbus_dev *);
@@ -49,4 +50,7 @@ void *apbus_intr_establish(int, int, int, int (*)(void *), void *,
 struct newsmips_bus_dma_tag *apbus_dmatag_init(struct apbus_attach_args *);
 void apbus_wbflush(void);
 
-#define	SLOTTOMASK(slot)	((slot) ? (0x0100 << ((slot) - 1)) : 0)
+#define	NEWS5000_SLOTTOMASK(slot)	((slot) ? (0x0100 << ((slot) - 1)) : 0)
+#define	NEWS4000_SLOTTOMASK(slot)	((slot) ? (0x0001 << ((slot) - 1)) : 0)
+#define	SLOTTOMASK(slot)		(systype == NEWS5000 ?		\
+	    NEWS5000_SLOTTOMASK(slot) : NEWS4000_SLOTTOMASK(slot))

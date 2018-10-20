@@ -1,4 +1,4 @@
-/*	$NetBSD: resize.c,v 1.26.10.1 2018/09/30 01:45:33 pgoyette Exp $	*/
+/*	$NetBSD: resize.c,v 1.26.10.2 2018/10/20 06:58:22 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2001
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)resize.c   blymn 2001/08/26";
 #else
-__RCSID("$NetBSD: resize.c,v 1.26.10.1 2018/09/30 01:45:33 pgoyette Exp $");
+__RCSID("$NetBSD: resize.c,v 1.26.10.2 2018/10/20 06:58:22 pgoyette Exp $");
 #endif
 #endif				/* not lint */
 
@@ -176,10 +176,7 @@ resizeterm(int nlines, int ncols)
 	clearok(curscr, TRUE);
 
 	if (result == OK) {
-		/* We know how to repaint the ripoffs */
-		__ripoffresize(_cursesi_screen);
-
-		/* We do need to reposition our slks. */
+		/* Redraw the soft label keys to the new size. */
 		__slk_resize(_cursesi_screen, ncols);
 		__slk_noutrefresh(_cursesi_screen);
 	}
@@ -209,27 +206,26 @@ resize_term(int nlines, int ncols)
 		return ERR;
 	if (__resizeterm(__virtscr, nlines, ncols) == ERR)
 		return ERR;
-	rlines = nlines - __rippedlines(_cursesi_screen);
+	rlines = nlines - __rippedlines(_cursesi_screen, 0);
 	if (__resizeterm(stdscr, rlines, ncols) == ERR)
 		return ERR;
 
 	_cursesi_screen->LINES = nlines;
 	_cursesi_screen->COLS = ncols;
-	LINES = rlines;
+	LINES = nlines;
 	COLS = ncols;
 
-	if (_cursesi_screen->slk_window != NULL &&
-	    __resizewin(_cursesi_screen->slk_window,
-		        _cursesi_screen->slk_window->reqy, ncols) == ERR)
-		return ERR;
-
-	  /* tweak the flags now that we have updated the LINES and COLS */
+	/* tweak the flags now that we have updated the LINES and COLS */
 	for (list = _cursesi_screen->winlistp; list != NULL; list = list->nextp) {
 		win = list->winp;
 
 		if (!(win->flags & __ISPAD))
 			__swflags(win);
 	}
+
+	/* Resize and re-position the ripped off windows. */
+	if (__ripoffresize(_cursesi_screen) == ERR)
+		return ERR;
 
 	return OK;
 }

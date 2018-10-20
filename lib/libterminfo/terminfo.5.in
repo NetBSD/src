@@ -1,4 +1,4 @@
-.\"	$NetBSD: terminfo.5.in,v 1.22 2017/01/29 16:52:38 abhinav Exp $
+.\"	$NetBSD: terminfo.5.in,v 1.22.10.1 2018/10/20 06:58:22 pgoyette Exp $
 .\"
 .\" Copyright (c) 2009, 2010, 2011, 2013 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -131,7 +131,7 @@ push the dynamic variable [a-z].
 .It Sy %P[A-Z]
 pop a parameter and push it to static variable [a-z].
 .It Sy %g[A-Z]
-push the dynamic variable [A-Z].
+push the static variable [a-z].
 .Pp
 Static variables persist over
 .Fn tparm

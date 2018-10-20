@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1172.2.6 2018/09/30 01:45:04 pgoyette Exp $
+# $NetBSD: mi,v 1.1172.2.7 2018/10/20 06:58:17 pgoyette Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -546,6 +546,7 @@
 ./sbin/mount_procfs				base-sysutil-root
 ./sbin/mount_ptyfs				base-miscfs-root
 ./sbin/mount_puffs				base-sysutil-root
+./sbin/mount_qemufwcfg				base-sysutil-root
 ./sbin/mount_smbfs				base-smbfs-root
 ./sbin/mount_sysvbfs				base-sysutil-root
 ./sbin/mount_tmpfs				base-miscfs-root
@@ -6006,6 +6007,8 @@
 ./var/chroot/unbound				base-sys-root
 ./var/chroot/unbound/etc			base-sys-root
 ./var/chroot/unbound/etc/unbound		base-sys-root
+./var/chroot/unbound/var			base-sys-root
+./var/chroot/unbound/var/run			base-sys-root
 ./var/crash					base-sys-root
 ./var/cron					base-cron-root
 ./var/cron/tabs					base-cron-root

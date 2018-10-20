@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2363.2.12 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2363.2.13 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -24,11 +24,11 @@
 # ----------------------------------------------------------------------------
 
 Changes from NetBSD 8.0 to NetBSD 9.0:
- 	byacc: Update to 20170430. [christos 20170605]
- 	vax: Add support for VAXstation 4000 TURBOchannel. [flxd 20170609]
- 	wsbell(4): Added console bell support for all speaker devices, not
+	byacc: Update to 20170430. [christos 20170605]
+	vax: Add support for VAXstation 4000 TURBOchannel. [flxd 20170609]
+	wsbell(4): Added console bell support for all speaker devices, not
 		only those attached at pcppi. [nat 20170612]
- 	bind: Import version 9.10.5-P1. [christos 20170615]
+	bind: Import version 9.10.5-P1. [christos 20170615]
 	dts: Import dts files from Linux 4.11.5. [jmcneill 20170615]
 	amd64: Support 16TB of PA, and 32TB of kernel VA on the architecture
 		side. [maxv 20170617]
@@ -196,7 +196,7 @@ Changes from NetBSD 8.0 to NetBSD 9.0:
 	lua: Import version 5.3.5. [alnsn 20180804]
 	arm: Add driver for ARM GICv3 interrupt controllers. [jmcneill 20180808]
 	kernel: Remove the n8 driver. [maya 20180808]
- 	bind: Import version 9.12.2-P1. [christos 20180812]
+	bind: Import version 9.12.2-P1. [christos 20180812]
 	arm: Add support for Rockchip RK3399 SoC. [jmcneill 20180812]
 	amd64: Randomize by default all the randomizable VM areas in the kernel.
 		[maxv 20180812]
@@ -230,3 +230,13 @@ Changes from NetBSD 8.0 to NetBSD 9.0:
 		userland tools. [maxv 20180923]
 	npf: Converted to use libnv [rmind 20180929]
 	ntp: Import ntp 4.2.8p12. [christos 20180929]
+	aarch64: add support for compat_netbsd32(8). [ryo 20181012]
+	newsmips: Add support for NWS-4000.  Based on nonaka@'s porting effort
+		back in 2002.  [tsutsui 20181014]
+	file(1): Upgraded to 5.35. [christos 20181013]
+	arm: Provide generic start code that allows a GENERIC kernel to be used
+		on FDTised boards. [skrll 20181018]
+	tzdata: updated to 2018f [kre 20181019]
+	amdccp(4): Add driver for AMD Cryptographic Coprocessor RNG.
+		[jakllsch 20181019]
+	libc: Update to tzcode2018f. [christos 20181019]

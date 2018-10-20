@@ -1,4 +1,4 @@
-/*	$NetBSD: gtmr.c,v 1.23.2.6 2018/09/30 01:45:37 pgoyette Exp $	*/
+/*	$NetBSD: gtmr.c,v 1.23.2.7 2018/10/20 06:58:25 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtmr.c,v 1.23.2.6 2018/09/30 01:45:37 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtmr.c,v 1.23.2.7 2018/10/20 06:58:25 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -120,12 +120,6 @@ gtmr_attach(device_t parent, device_t self, void *aux)
 		aprint_debug_dev(self, "enabling Allwinner A64 timer workaround\n");
 	}
 
-	/*
-	 * Enable the virtual counter to be accessed from usermode.
-	 */
-	gtmr_cntk_ctl_write(gtmr_cntk_ctl_read() |
-	    CNTKCTL_PL0VCTEN | CNTKCTL_PL0PCTEN);
-
 	self->dv_private = sc;
 	sc->sc_dev = self;
 
@@ -193,6 +187,13 @@ gtmr_init_cpu_clock(struct cpu_info *ci)
 	KASSERT(ci == curcpu());
 
 	int s = splsched();
+
+	/*
+	 * Allow the virtual and physical counters to be accessed from
+	 * usermode. (PL0)
+	 */
+	gtmr_cntk_ctl_write(gtmr_cntk_ctl_read() |
+	    CNTKCTL_PL0VCTEN | CNTKCTL_PL0PCTEN);
 
 	/*
 	 * enable timer and stop masking the timer.

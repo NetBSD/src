@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_bo.c,v 1.7.16.1 2018/09/06 06:56:18 pgoyette Exp $	*/
+/*	$NetBSD: nouveau_bo.c,v 1.7.16.2 2018/10/20 06:58:45 pgoyette Exp $	*/
 
 /*
  * Copyright 2007 Dave Airlied
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_bo.c,v 1.7.16.1 2018/09/06 06:56:18 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_bo.c,v 1.7.16.2 2018/10/20 06:58:45 pgoyette Exp $");
 
 #include <linux/dma-mapping.h>
 #include <linux/swiotlb.h>
@@ -543,6 +543,7 @@ nouveau_bo_validate(struct nouveau_bo *nvbo, bool interruptible,
 #  define	iowrite16_native	fake_iowrite16_native
 #  define	iowrite32_native	fake_iowrite32_native
 
+#ifdef notdef
 static inline uint16_t
 ioread16_native(const void __iomem *ptr)
 {
@@ -553,6 +554,7 @@ ioread16_native(const void __iomem *ptr)
 
 	return v;
 }
+#endif
 
 static inline uint32_t
 ioread32_native(const void __iomem *ptr)

@@ -1,4 +1,4 @@
-/* $NetBSD: kauth.h,v 1.75.2.3 2018/09/06 06:56:47 pgoyette Exp $ */
+/* $NetBSD: kauth.h,v 1.75.2.4 2018/10/20 06:58:46 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>  
@@ -144,6 +144,7 @@ enum {
 	KAUTH_SYSTEM_FS_EXTATTR,
 	KAUTH_SYSTEM_FS_SNAPSHOT,
 	KAUTH_SYSTEM_INTR,
+	KAUTH_SYSTEM_KERNADDR,
 };
 
 /*

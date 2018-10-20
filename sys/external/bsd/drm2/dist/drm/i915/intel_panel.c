@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_panel.c,v 1.6.18.2 2018/09/30 01:45:54 pgoyette Exp $	*/
+/*	$NetBSD: intel_panel.c,v 1.6.18.3 2018/10/20 06:58:45 pgoyette Exp $	*/
 
 /*
  * Copyright © 2006-2010 Intel Corporation
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_panel.c,v 1.6.18.2 2018/09/30 01:45:54 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_panel.c,v 1.6.18.3 2018/10/20 06:58:45 pgoyette Exp $");
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
@@ -432,6 +432,7 @@ static uint32_t scale(uint32_t source_val,
 	return target_val;
 }
 
+#if IS_ENABLED(CONFIG_BACKLIGHT_CLASS_DEVICE)
 /* Scale user_level in range [0..user_max] to [hw_min..hw_max]. */
 static inline u32 scale_user_to_hw(struct intel_connector *connector,
 				   u32 user_level, u32 user_max)
@@ -441,6 +442,7 @@ static inline u32 scale_user_to_hw(struct intel_connector *connector,
 	return scale(user_level, 0, user_max,
 		     panel->backlight.min, panel->backlight.max);
 }
+#endif
 
 /* Scale user_level in range [0..user_max] to [0..hw_max], clamping the result
  * to [hw_min..hw_max]. */
@@ -456,6 +458,7 @@ static inline u32 clamp_user_to_hw(struct intel_connector *connector,
 	return hw_level;
 }
 
+#if IS_ENABLED(CONFIG_BACKLIGHT_CLASS_DEVICE)
 /* Scale hw_level in range [hw_min..hw_max] to [0..user_max]. */
 static inline u32 scale_hw_to_user(struct intel_connector *connector,
 				   u32 hw_level, u32 user_max)
@@ -465,6 +468,7 @@ static inline u32 scale_hw_to_user(struct intel_connector *connector,
 	return scale(hw_level, panel->backlight.min, panel->backlight.max,
 		     0, user_max);
 }
+#endif
 
 static u32 intel_panel_compute_brightness(struct intel_connector *connector,
 					  u32 val)

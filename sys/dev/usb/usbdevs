@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.745.2.5 2018/09/06 06:56:05 pgoyette Exp $
+$NetBSD: usbdevs,v 1.745.2.6 2018/10/20 06:58:43 pgoyette Exp $
 
 /*-
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -2583,6 +2583,7 @@ product PANASONIC KXLRW32AN	0x0d09	CD-R Drive KXL-RW32AN
 product PANASONIC KXLCB20AN	0x0d0a	CD-R Drive KXL-CB20AN
 product PANASONIC KXLCB35AN	0x0d0e	DVD-ROM & CD-R/RW
 product PANASONIC SDCAAE	0x1b00	MultiMediaCard Adapter
+product	PANASONIC N5HBZ0000055	0x3904	Wireless LAN USB Adapter
 product PANASONIC DMCFS45	0x2372	Lumix Camera DMC-FS45
 product PANASONIC TYTP50P6S	0x3900	TY-TP50P6-S 50in Touch Panel
 

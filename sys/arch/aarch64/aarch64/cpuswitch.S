@@ -1,4 +1,4 @@
-/* $NetBSD: cpuswitch.S,v 1.1.2.3 2018/07/28 04:37:25 pgoyette Exp $ */
+/* $NetBSD: cpuswitch.S,v 1.1.2.4 2018/10/20 06:58:23 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -33,9 +33,10 @@
 #include <aarch64/locore.h>
 #include "assym.h"
 
+#include "opt_compat_netbsd32.h"
 #include "opt_ddb.h"
 
-RCSID("$NetBSD: cpuswitch.S,v 1.1.2.3 2018/07/28 04:37:25 pgoyette Exp $")
+RCSID("$NetBSD: cpuswitch.S,v 1.1.2.4 2018/10/20 06:58:23 pgoyette Exp $")
 
 /*
  * At IPL_SCHED:
@@ -308,6 +309,9 @@ ENTRY_NP(el0_trap_exit)
 
 	ldr	x0, [x9, #L_PRIVATE]	/* tpidr_el0 = curlwp->l_private */
 	msr	tpidr_el0, x0
+#ifdef COMPAT_NETBSD32
+	msr	tpidrro_el0, x0
+#endif
 
 	unwind_x3_x30
 

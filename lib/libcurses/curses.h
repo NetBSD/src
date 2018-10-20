@@ -1,4 +1,4 @@
-/*	$NetBSD: curses.h,v 1.121 2017/01/24 17:27:30 roy Exp $	*/
+/*	$NetBSD: curses.h,v 1.121.10.1 2018/10/20 06:58:22 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -431,7 +431,7 @@ __END_DECLS
 /* Standard screen pseudo functions. */
 #define	addbytes(s, n)			__waddbytes(stdscr, s, n, 0)
 #define	addch(ch)			waddch(stdscr, ch)
-#define	addchnstr(s)			waddchnstr(stdscr, s, n)
+#define	addchnstr(s, n)			waddchnstr(stdscr, s, n)
 #define	addchstr(s)			waddchnstr(stdscr, s, -1)
 #define	addnstr(s, n)			waddnstr(stdscr, s, n)
 #define	addstr(s)			waddnstr(stdscr, s, -1)
@@ -945,7 +945,7 @@ int mvwinwstr(WINDOW *, int, int, wchar_t *);
 int winnwstr(WINDOW *, wchar_t *, int);
 int winwstr(WINDOW *, wchar_t *);
 
-/* cchar handlgin */
+/* cchar handling */
 int setcchar(cchar_t *, const wchar_t *, const attr_t, short, const void *);
 int getcchar(const cchar_t *, wchar_t *, attr_t *, short *, void *);
 

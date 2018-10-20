@@ -1,4 +1,4 @@
-/*	$NetBSD: fmtcheck.c,v 1.1.1.3 2017/02/10 17:42:57 christos Exp $	*/
+/*	$NetBSD: fmtcheck.c,v 1.1.1.3.10.1 2018/10/20 06:58:20 pgoyette Exp $	*/
 
 /*	NetBSD: fmtcheck.c,v 1.8 2008/04/28 20:22:59 martin Exp 	*/
 
@@ -237,7 +237,7 @@ fmtcheck(const char *f1, const char *f2)
 	EFT		f1t, f2t;
 
 	if (!f1) return f2;
-	
+
 	f1p = f1;
 	f1t = FMTCHECK_START;
 	f2p = f2;

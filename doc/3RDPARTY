@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1504.2.11 2018/09/30 01:45:07 pgoyette Exp $
+#	$NetBSD: 3RDPARTY,v 1.1504.2.12 2018/10/20 06:58:18 pgoyette Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -115,7 +115,7 @@ bc includes dc, both of which are in the NetBSD tree.
 
 Package:	bind [named and utils]
 Version:	9.10.7/BSD	9.12.2-P1/MPL
-Current Vers:	9.10.7/BSD	9.12.2-P1/MPL
+Current Vers:			9.12.2-P1/MPL
 Maintainer:	ISC
 Archive Site:	ftp://ftp.isc.org/isc/bind9/
 Home Page:	http://www.isc.org/software/bind/
@@ -425,8 +425,8 @@ Notes:
 Please use "expat" as the vendor tag for CVS imports.
 
 Package:	file
-Version:	5.33
-Current Vers:	5.34
+Version:	5.35
+Current Vers:	5.35
 Maintainer:	Christos Zoulas <christos@zoulas.com>
 Archive Site:	ftp://ftp.astron.com/pub/file/
 Home Page:	http://www.darwinsys.com/file/
@@ -954,7 +954,7 @@ and ndbootd-raw.c.  Restore saved config.h, and force it to define
 HAVE_STRICT_ALIGNMENT.  Fix RCS IDs, import.
 
 Package:	ntp
-Version:	4.2.8p11
+Version:	4.2.8p12
 Current Vers:	4.2.8p12
 Maintainer:	David L. Mills <mills@udel.edu>
 Archive Site:	http://www.ntp.org/
@@ -1411,8 +1411,8 @@ Notes:
 Added changes from a5 -> a12 manually.
 
 Package:	tz
-Version:	tzcode2018e / tzdata2018e
-Current Vers:	tzcode2018e / tzdata2018e
+Version:	tzcode2018f / tzdata2018f
+Current Vers:	tzcode2018f / tzdata2018f
 Maintainer:	Paul Eggert <eggert@cs.ucla.edu>
 Archive Site:	ftp://ftp.iana.org/tz/releases/
 Archive Site:	ftp://munnari.oz.au/pub/oldtz/

@@ -1,0 +1,32 @@
+#	$NetBSD: files.acpi,v 1.2.2.2 2018/10/20 06:58:24 pgoyette Exp $
+#
+# Configuration info for ACPI compliant ARM boards.
+#
+#
+
+device	fdc { drive = -1 }	# XXX
+include "dev/apm/files.apm"	# XXX
+defflag	opt_pcifixup.h		ACPI_PCI_FIXUP
+
+include "dev/acpi/files.acpi"
+
+file	arch/arm/acpi/acpi_machdep.c		acpi
+file	arch/arm/acpi/acpi_pci_machdep.c	acpi
+file	arch/arm/acpi/acpi_platform.c		acpi
+file	arch/arm/acpi/acpi_table.c		acpi
+
+attach	cpu at acpimadtbus with cpu_acpi
+file	arch/arm/acpi/cpu_acpi.c		cpu_acpi
+
+attach	gic at acpimadtbus with gic_acpi
+file	arch/arm/acpi/gic_acpi.c		gic_acpi
+
+attach	gtmr at acpisdtbus with gtmr_acpi
+file	arch/arm/acpi/gtmr_acpi.c		gtmr_acpi
+
+attach	plcom at acpinodebus with plcom_acpi
+file	arch/arm/acpi/plcom_acpi.c		plcom_acpi
+
+device	acpipchb: pcibus
+attach	acpipchb at acpinodebus
+file	arch/arm/acpi/acpipchb.c		acpipchb

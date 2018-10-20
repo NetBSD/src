@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: resize_disklabel,v 1.2 2017/04/14 13:47:21 jmcneill Exp $
+# $NetBSD: resize_disklabel,v 1.2.10.1 2018/10/20 06:58:18 pgoyette Exp $
 #
 
 # PROVIDE: resize_disklabel
@@ -80,12 +80,10 @@ grow_disklabel()
 resize_disklabel_start()
 {
 	if [ x"${resize_disklabel_disk}" = "x" ]; then
-		warn "\${resize_disklabel_disk} is not set, not resizing disklabel"
-		return
+		resize_disklabel_disk="$(/sbin/sysctl -n kern.root_device)"
 	fi
 	if [ x"${resize_disklabel_part}" = "x" ]; then
-		warn "\${resize_disklabel_part} is not set, not resizing disklabel"
-		return
+		resize_disklabel_part=$(printf \\$(printf '%03o' $(( 97 + $(sysctl -n kern.root_partition) ))))
 	fi
 
 	grow_mbrpart "${resize_disklabel_disk}"

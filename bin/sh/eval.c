@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.c,v 1.153.2.3 2018/09/06 06:51:32 pgoyette Exp $	*/
+/*	$NetBSD: eval.c,v 1.153.2.4 2018/10/20 06:58:15 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.9 (Berkeley) 6/8/95";
 #else
-__RCSID("$NetBSD: eval.c,v 1.153.2.3 2018/09/06 06:51:32 pgoyette Exp $");
+__RCSID("$NetBSD: eval.c,v 1.153.2.4 2018/10/20 06:58:15 pgoyette Exp $");
 #endif
 #endif /* not lint */
 
@@ -625,7 +625,7 @@ evalredir(union node *n, int flags)
 		handler = savehandler;
 		e = exception;
 		popredir();
-		if (xflag && n->nredir.redirect) {
+		if (PS4 != NULL) {
 			outxstr(PS4);
 			/* { */ outxstr("} failed\n");
 			flushout(outx);
@@ -650,7 +650,7 @@ evalredir(union node *n, int flags)
 	popredir();
 	INTON;
 
-	if (xflag && n->nredir.redirect) {
+	if (PS4 != NULL) {
 		outxstr(PS4);
 		/* { */ outxstr("} done\n");
 		flushout(outx);

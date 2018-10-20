@@ -1,4 +1,4 @@
-/*	$NetBSD: vnconfig.c,v 1.44.14.1 2018/03/15 09:12:08 pgoyette Exp $	*/
+/*	$NetBSD: vnconfig.c,v 1.44.14.2 2018/10/20 06:58:47 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -98,6 +98,7 @@
 
 static int	verbose = 0;
 static int	readonly = 0;
+static int	fileio = 0;
 static int	force = 0;
 static int	compressed = 0;
 static int	minimum = DUMMY_FREE;
@@ -116,7 +117,7 @@ main(int argc, char *argv[])
 	char *end;
 	unsigned long cnt;
 
-	while ((ch = getopt(argc, argv, "Fcf:lm:rt:uvz")) != -1) {
+	while ((ch = getopt(argc, argv, "Fcf:lm:rit:uvz")) != -1) {
 		switch (ch) {
 		case 'F':
 			force = 1;
@@ -139,6 +140,9 @@ main(int argc, char *argv[])
 			break;
 		case 'r':
 			readonly = 1;
+			break;
+		case 'i':
+			fileio = 1;
 			break;
 		case 't':
 			tabname = optarg;
@@ -321,6 +325,9 @@ config(char *dev, char *file, char *geom, int action)
 	if (compressed)
 		vndio.vnd_flags |= VNF_COMP;
 
+	if (fileio)
+		vndio.vnd_flags |= VNDIOF_FILEIO;
+
 	/*
 	 * Clear (un-configure) the device
 	 */
@@ -425,7 +432,7 @@ usage(void)
 {
 	const char *p = getprogname();
 	(void)fprintf(stderr, 
-	    "Usage: %s [-crvz] [-f dsktab] [-t type] vnode_disk"
+	    "Usage: %s [-cirvz] [-f dsktab] [-t type] vnode_disk"
 		" reg-file [geomspec]\n"
 	    "       %s -u [-Fv] vnode_disk\n"
 	    "       %s -l [-m num | vnode_disk...]\n", p, p, p);

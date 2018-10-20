@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.190.2.2 2018/04/07 04:12:09 pgoyette Exp $	 */
+/*	$NetBSD: rtld.c,v 1.190.2.3 2018/10/20 06:58:22 pgoyette Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rtld.c,v 1.190.2.2 2018/04/07 04:12:09 pgoyette Exp $");
+__RCSID("$NetBSD: rtld.c,v 1.190.2.3 2018/10/20 06:58:22 pgoyette Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -786,7 +786,7 @@ _rtld(Elf_Addr *sp, Elf_Addr relocbase)
 	 */
 
 	((void **) osp)[0] = _rtld_exit;
-	((void **) osp)[1] = _rtld_objmain;
+	((void **) osp)[1] = __UNCONST(_rtld_compat_obj);
 	return (Elf_Addr) _rtld_objmain->entry;
 }
 

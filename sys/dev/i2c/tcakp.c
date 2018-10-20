@@ -1,4 +1,4 @@
-/* $NetBSD: tcakp.c,v 1.5.2.3 2018/07/28 04:37:44 pgoyette Exp $ */
+/* $NetBSD: tcakp.c,v 1.5.2.4 2018/10/20 06:58:31 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_fdt.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcakp.c,v 1.5.2.3 2018/07/28 04:37:44 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcakp.c,v 1.5.2.4 2018/10/20 06:58:31 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -364,14 +364,26 @@ tcakp_attach(device_t parent, device_t self, void *aux)
 static int
 tcakp_read(struct tcakp_softc *sc, uint8_t reg, uint8_t *val)
 {
-	return iic_exec(sc->sc_i2c, I2C_OP_READ_WITH_STOP, sc->sc_addr,
+	int error;
+
+	iic_acquire_bus(sc->sc_i2c, I2C_F_POLL);
+	error = iic_exec(sc->sc_i2c, I2C_OP_READ_WITH_STOP, sc->sc_addr,
 	    &reg, 1, val, 1, I2C_F_POLL);
+	iic_release_bus(sc->sc_i2c, I2C_F_POLL);
+
+	return error;
 }
 
 static int
 tcakp_write(struct tcakp_softc *sc, uint8_t reg, uint8_t val)
 {
 	uint8_t buf[2] = { reg, val };
-	return iic_exec(sc->sc_i2c, I2C_OP_WRITE_WITH_STOP, sc->sc_addr,
+	int error;
+
+	iic_acquire_bus(sc->sc_i2c, I2C_F_POLL);
+	error = iic_exec(sc->sc_i2c, I2C_OP_WRITE_WITH_STOP, sc->sc_addr,
 	    NULL, 0, buf, 2, I2C_F_POLL);
+	iic_release_bus(sc->sc_i2c, I2C_F_POLL);
+
+	return error;
 }

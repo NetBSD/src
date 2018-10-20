@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.181.2.8 2018/09/06 06:56:42 pgoyette Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.181.2.9 2018/10/20 06:58:45 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.181.2.8 2018/09/06 06:56:42 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.181.2.9 2018/10/20 06:58:45 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_mbuftrace.h"
@@ -328,7 +328,7 @@ sysctl_kern_mbuf(SYSCTLFN_ARGS)
 
 #ifdef MBUFTRACE
 static void
-mowner_conver_to_user_cb(void *v1, void *v2, struct cpu_info *ci)
+mowner_convert_to_user_cb(void *v1, void *v2, struct cpu_info *ci)
 {
 	struct mowner_counter *mc = v1;
 	struct mowner_user *mo_user = v2;
@@ -348,7 +348,7 @@ mowner_convert_to_user(struct mowner *mo, struct mowner_user *mo_user)
 	CTASSERT(sizeof(mo_user->mo_descr) == sizeof(mo->mo_descr));
 	memcpy(mo_user->mo_name, mo->mo_name, sizeof(mo->mo_name));
 	memcpy(mo_user->mo_descr, mo->mo_descr, sizeof(mo->mo_descr));
-	percpu_foreach(mo->mo_counters, mowner_conver_to_user_cb, mo_user);
+	percpu_foreach(mo->mo_counters, mowner_convert_to_user_cb, mo_user);
 }
 
 static int

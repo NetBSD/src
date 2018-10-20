@@ -1,5 +1,5 @@
 #
-#	$NetBSD: PARALLELLA,v 1.3.4.1 2018/06/25 07:25:40 pgoyette Exp $
+#	$NetBSD: PARALLELLA,v 1.3.4.2 2018/10/20 06:58:27 pgoyette Exp $
 #
 #	Parallella -- Xilinx Zynq Eval Board Kernel
 #
@@ -23,6 +23,8 @@ options		MEMSIZE=1024
 # Architecture options
 
 # Console options.    also need IMXUARTCONSOLE
+#options 	VERBOSE_INIT_ARM
+options 	EARLYCONS=zynq
 options 	CONSDEVNAME="\"zynquart\"",CONADDR=0xe0001000
 options 	CONSPEED=115200	# Console speed
 

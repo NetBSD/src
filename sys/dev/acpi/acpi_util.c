@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_util.c,v 1.10.2.1 2018/03/22 01:44:48 pgoyette Exp $ */
+/*	$NetBSD: acpi_util.c,v 1.10.2.2 2018/10/20 06:58:30 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -65,10 +65,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_util.c,v 1.10.2.1 2018/03/22 01:44:48 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_util.c,v 1.10.2.2 2018/10/20 06:58:30 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
+#include <sys/cpu.h>
 
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
@@ -336,6 +337,43 @@ acpi_match_hid(ACPI_DEVICE_INFO *ad, const char * const *ids)
 	}
 
 	return 0;
+}
+
+/*
+ * Match a PCI-defined bass-class, sub-class, and programming interface
+ * against a handle's _CLS object.
+ */
+int
+acpi_match_class(ACPI_HANDLE handle, uint8_t pci_class, uint8_t pci_subclass,
+    uint8_t pci_interface)
+{
+	ACPI_BUFFER buf;
+	ACPI_OBJECT *obj;
+	ACPI_STATUS rv;
+	int match = 0;
+
+	rv = acpi_eval_struct(handle, "_CLS", &buf);
+	if (ACPI_FAILURE(rv))
+		goto done;
+
+	obj = buf.Pointer;
+	if (obj->Type != ACPI_TYPE_PACKAGE)
+		goto done;
+	if (obj->Package.Count != 3)
+		goto done;
+	if (obj->Package.Elements[0].Type != ACPI_TYPE_INTEGER ||
+	    obj->Package.Elements[1].Type != ACPI_TYPE_INTEGER ||
+	    obj->Package.Elements[2].Type != ACPI_TYPE_INTEGER)
+		goto done;
+
+	match = obj->Package.Elements[0].Integer.Value == pci_class &&
+		obj->Package.Elements[1].Integer.Value == pci_subclass &&
+		obj->Package.Elements[2].Integer.Value == pci_interface;
+
+done:
+	if (buf.Pointer)
+		ACPI_FREE(buf.Pointer);
+	return match;
 }
 
 /*

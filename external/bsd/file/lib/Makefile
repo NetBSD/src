@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8.10.1 2018/04/22 07:20:09 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.8.10.2 2018/10/20 06:58:21 pgoyette Exp $
 #
 
 USE_FORT?= yes	# data driven bugs?
@@ -18,8 +18,8 @@ CPPFLAGS+=-I.
 .endif
 
 SRCS=		magic.c apprentice.c softmagic.c ascmagic.c compress.c	\
-		is_tar.c readelf.c print.c fsmagic.c apptype.c funcs.c \
-		cdf.c readcdf.c cdf_time.c encoding.c der.c buffer.c
+		is_json.c is_tar.c readelf.c print.c fsmagic.c apptype.c \
+		funcs.c cdf.c readcdf.c cdf_time.c encoding.c der.c buffer.c
 MAN=		libmagic.3
 MLINKS+=	libmagic.3 magic_open.3 \
 		libmagic.3 magic_close.3 \

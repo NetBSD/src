@@ -1,4 +1,4 @@
-/*	$NetBSD: vectors.S,v 1.4.2.4 2018/09/30 01:45:35 pgoyette Exp $	*/
+/*	$NetBSD: vectors.S,v 1.4.2.5 2018/10/20 06:58:23 pgoyette Exp $	*/
 
 #include <aarch64/asm.h>
 #include "assym.h"
@@ -7,7 +7,7 @@
 	/*
 	 * vector_entry macro must be small enough to fit 0x80 bytes!
 	 */
-	.macro	vector_entry, el, label
+	.macro	vector_entry, el, label, tpidr
 	.align 7	/* aligned 0x80 */
 
 	.if \el == 1
@@ -61,11 +61,11 @@
 	.endif
 
 	.if \el == 0
-	/* curlwp->l_private = tpidr_el0 */
+	/* curlwp->l_private = tpidr{,ro}_el0 */
 	mrs	x1, tpidr_el1		/* curcpu() */
-	ldr	x1, [x1, #CI_CURLWP]	/* x0 = curcpu()->ci_curlwp */
-	mrs	x0, tpidr_el0
-	str	x0, [x1, #L_PRIVATE]	/* curlwp->l_private = tpidr_el0 */
+	ldr	x1, [x1, #CI_CURLWP]	/* x1 = curcpu()->ci_curlwp */
+	mrs	x0, tpidr\tpidr\()_el0
+	str	x0, [x1, #L_PRIVATE]	/* curlwp->l_private = tpidr{,ro}_el0 */
 	.endif
 
 	adr	x30, el\el\()_trap_exit	/* el[01]_trap_exit */
@@ -110,8 +110,8 @@ ENTRY_NP(el1_vectors)
  * Exception taken from lower Exception Level which is using AArch32
  * There are entries for exceptions caused in EL0 (compat user exceptions).
  */
-	vector_entry	0, trap_el0_32sync
-	vector_entry	0, interrupt
-	vector_entry	0, trap_el0_32fiq
-	vector_entry	0, trap_el0_32error
+	vector_entry	0, trap_el0_32sync, ro
+	vector_entry	0, interrupt, ro
+	vector_entry	0, trap_el0_32fiq, ro
+	vector_entry	0, trap_el0_32error, ro
 END(el1_vectors)

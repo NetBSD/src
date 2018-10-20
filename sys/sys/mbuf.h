@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.178.2.9 2018/09/06 06:56:47 pgoyette Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.178.2.10 2018/10/20 06:58:46 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1999, 2001, 2007 The NetBSD Foundation, Inc.
@@ -888,8 +888,32 @@ void m_print(const struct mbuf *, const char *, void (*)(const char *, ...)
     __printflike(1, 2));
 
 /* from uipc_mbufdebug.c */
-void	m_examine(const struct mbuf *, int, const char *, void (*)(const char *, ...)
-    __printflike(1, 2));
+void	m_examine(const struct mbuf *, int, const char *,
+    void (*)(const char *, ...) __printflike(1, 2));
+
+/* parsers for m_examine() */
+void m_examine_ether(const struct mbuf *, int, const char *,
+    void (*)(const char *, ...) __printflike(1, 2));
+void m_examine_pppoe(const struct mbuf *, int, const char *,
+    void (*)(const char *, ...) __printflike(1, 2));
+void m_examine_ppp(const struct mbuf *, int, const char *,
+    void (*)(const char *, ...) __printflike(1, 2));
+void m_examine_arp(const struct mbuf *, int, const char *,
+    void (*)(const char *, ...) __printflike(1, 2));
+void m_examine_ip(const struct mbuf *, int, const char *,
+    void (*)(const char *, ...) __printflike(1, 2));
+void m_examine_icmp(const struct mbuf *, int, const char *,
+    void (*)(const char *, ...) __printflike(1, 2));
+void m_examine_ip6(const struct mbuf *, int, const char *,
+    void (*)(const char *, ...) __printflike(1, 2));
+void m_examine_icmp6(const struct mbuf *, int, const char *,
+    void (*)(const char *, ...) __printflike(1, 2));
+void m_examine_tcp(const struct mbuf *, int, const char *,
+    void (*)(const char *, ...) __printflike(1, 2));
+void m_examine_udp(const struct mbuf *, int, const char *,
+    void (*)(const char *, ...) __printflike(1, 2));
+void m_examine_hex(const struct mbuf *, int, const char *,
+    void (*)(const char *, ...) __printflike(1, 2));
 
 /*
  * Get rcvif of a mbuf.

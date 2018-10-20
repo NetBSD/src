@@ -1,4 +1,4 @@
-/*	$NetBSD: pcireg.h,v 1.137.2.3 2018/09/30 01:45:51 pgoyette Exp $	*/
+/*	$NetBSD: pcireg.h,v 1.137.2.4 2018/10/20 06:58:43 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1999, 2000
@@ -1186,8 +1186,8 @@ struct pci_msix_table_entry {
 	uint32_t pci_msix_vector_control;
 };
 #define	PCI_MSIX_VECTCTL_MASK	__BIT(0)
-#define	PCI_MSIX_VECTCTL_STLO	__BITS(23, 16)
-#define	PCI_MSIX_VECTCTL_STUP	__BITS(31, 24)
+#define	PCI_MSIX_VECTCTL_STLO	__BITS(23, 16)	/* ST lower */
+#define	PCI_MSIX_VECTCTL_STUP	__BITS(31, 24)	/* ST upper */
 
  /* Max number of MSI-X vectors. See PCI-SIG specification. */
 #define	PCI_MSIX_MAX_VECTORS	2048

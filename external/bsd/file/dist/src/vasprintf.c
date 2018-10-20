@@ -1,10 +1,10 @@
-/*	$NetBSD: vasprintf.c,v 1.1.1.6 2017/09/08 13:22:41 christos Exp $	*/
+/*	$NetBSD: vasprintf.c,v 1.1.1.6.2.1 2018/10/20 06:58:20 pgoyette Exp $	*/
 
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
  * Software written by Ian F. Darwin and others;
  * maintained 1995-present by Christos Zoulas and others.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -14,7 +14,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- *  
+ *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -53,7 +53,7 @@ form must reproduce the above copyright notice, this list of conditions and
 the following disclaimer in the documentation and/or other materials
 provided with the distribution. The name of the author may not be used to
 endorse or promote products derived from this software without specific
-prior written permission. 
+prior written permission.
 
 THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR IMPLIED
 WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
@@ -111,9 +111,9 @@ you use strange formats.
 
 #ifndef	lint
 #if 0
-FILE_RCSID("@(#)$File: vasprintf.c,v 1.14 2017/08/13 00:21:47 christos Exp $")
+FILE_RCSID("@(#)$File: vasprintf.c,v 1.16 2018/10/01 18:45:39 christos Exp $")
 #else
-__RCSID("$NetBSD: vasprintf.c,v 1.1.1.6 2017/09/08 13:22:41 christos Exp $");
+__RCSID("$NetBSD: vasprintf.c,v 1.1.1.6.2.1 2018/10/20 06:58:20 pgoyette Exp $");
 #endif
 #endif	/* lint */
 
@@ -122,12 +122,8 @@ __RCSID("$NetBSD: vasprintf.c,v 1.1.1.6 2017/09/08 13:22:41 christos Exp $");
 #include <stdlib.h>
 #include <stdarg.h>
 #include <ctype.h>
-#ifdef HAVE_LIMITS_H
 #include <limits.h>
-#endif
-#ifdef HAVE_STDDEF_H
 #include <stddef.h>
-#endif
 
 #define ALLOC_CHUNK 2048
 #define ALLOC_SECURITY_MARGIN 1024   /* big value because some platforms have very big 'G' exponent */

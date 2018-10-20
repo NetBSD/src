@@ -1,4 +1,4 @@
-/*	$NetBSD: monitor_wrap.c,v 1.18.2.3 2018/09/30 01:44:22 pgoyette Exp $	*/
+/*	$NetBSD: monitor_wrap.c,v 1.18.2.4 2018/10/20 06:58:16 pgoyette Exp $	*/
 /* $OpenBSD: monitor_wrap.c,v 1.107 2018/07/20 03:46:34 djm Exp $ */
 
 /*
@@ -28,7 +28,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: monitor_wrap.c,v 1.18.2.3 2018/09/30 01:44:22 pgoyette Exp $");
+__RCSID("$NetBSD: monitor_wrap.c,v 1.18.2.4 2018/10/20 06:58:16 pgoyette Exp $");
 #include <sys/types.h>
 #include <sys/uio.h>
 #include <sys/queue.h>
@@ -151,7 +151,7 @@ mm_request_receive(int sock, struct sshbuf *m)
 
 	if (atomicio(read, sock, buf, sizeof(buf)) != sizeof(buf)) {
 		if (errno == EPIPE)
-			cleanup_exit(255);
+			cleanup_exit(254);
 		fatal("%s: read: %s", __func__, strerror(errno));
 	}
 	msg_len = PEEK_U32(buf);

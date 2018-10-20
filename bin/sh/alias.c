@@ -1,4 +1,4 @@
-/*	$NetBSD: alias.c,v 1.16 2017/07/24 12:34:45 kre Exp $	*/
+/*	$NetBSD: alias.c,v 1.16.2.1 2018/10/20 06:58:15 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)alias.c	8.3 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: alias.c,v 1.16 2017/07/24 12:34:45 kre Exp $");
+__RCSID("$NetBSD: alias.c,v 1.16.2.1 2018/10/20 06:58:15 pgoyette Exp $");
 #endif
 #endif /* not lint */
 
@@ -58,6 +58,8 @@ __RCSID("$NetBSD: alias.c,v 1.16 2017/07/24 12:34:45 kre Exp $");
 struct alias *atab[ATABSIZE];
 
 STATIC void setalias(char *, char *);
+STATIC int by_name(const void *, const void *);
+STATIC void list_aliases(void);
 STATIC int unalias(char *);
 STATIC struct alias **hashalias(const char *);
 
@@ -204,9 +206,47 @@ alias_text(void *dummy __unused, const char *name)
 	return ap->val;
 }
 
-/*
- * TODO - sort output
- */
+STATIC int
+by_name(const void *a, const void *b)
+{
+
+	return strcmp(
+		(*(const struct alias * const *)a)->name,
+		(*(const struct alias * const *)b)->name);
+}
+
+STATIC void
+list_aliases(void)
+{
+	size_t i, j, n;
+	const struct alias **aliases;
+	const struct alias *ap;
+
+	n = 0;
+	for (i = 0; i < ATABSIZE; i++)
+		for (ap = atab[i]; ap != NULL; ap = ap->next)
+			if (ap->name[0] != '\0')
+				n++;
+
+	aliases = ckmalloc(n * sizeof aliases[0]);
+
+	j = 0;
+	for (i = 0; i < ATABSIZE; i++)
+		for (ap = atab[i]; ap != NULL; ap = ap->next)
+			if (ap->name[0] != '\0')
+				aliases[j++] = ap;
+
+	qsort(aliases, n, sizeof aliases[0], by_name);
+
+	for (i = 0; i < n; i++) {
+		out1fmt("alias %s=", aliases[i]->name);
+		print_quoted(aliases[i]->val);
+		out1c('\n');
+	}
+
+	ckfree(aliases);
+}
+
 int
 aliascmd(int argc, char **argv)
 {
@@ -215,18 +255,10 @@ aliascmd(int argc, char **argv)
 	struct alias *ap;
 
 	if (argc == 1) {
-		int i;
-
-		for (i = 0; i < ATABSIZE; i++)
-			for (ap = atab[i]; ap; ap = ap->next) {
-				if (*ap->name != '\0') {
-					out1fmt("alias %s=", ap->name);
-					print_quoted(ap->val);
-					out1c('\n');
-				}
-			}
+		list_aliases();
 		return (0);
 	}
+
 	while ((n = *++argv) != NULL) {
 		if ((v = strchr(n+1, '=')) == NULL) { /* n+1: funny ksh stuff */
 			if ((ap = lookupalias(n, 0)) == NULL) {

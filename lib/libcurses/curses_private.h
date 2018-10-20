@@ -1,4 +1,4 @@
-/*	$NetBSD: curses_private.h,v 1.62.10.1 2018/09/30 01:45:33 pgoyette Exp $	*/
+/*	$NetBSD: curses_private.h,v 1.62.10.2 2018/10/20 06:58:22 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1998-2000 Brett Lymn
@@ -289,6 +289,7 @@ struct __screen {
 	bool		 is_term_slk;
 	WINDOW		*slk_window;
 	int		 slk_format;
+#define	SLK_FMT_INVAL	-1
 #define	SLK_FMT_3_2_3	0
 #define	SLK_FMT_4_4	1
 	int		 slk_nlabels;
@@ -368,7 +369,7 @@ void	__cursesi_chtype_to_cchar(chtype, cchar_t *);
 int	 __fgetc_resize(FILE *);
 int	 __unget(wint_t);
 int	 __mvcur(int, int, int, int, int);
-WINDOW  *__newwin(SCREEN *, int, int, int, int, int);
+WINDOW  *__newwin(SCREEN *, int, int, int, int, int, int);
 int	 __nodelay(void);
 int	 __notimeout(void);
 void	 __restartwin(void);
@@ -378,9 +379,10 @@ void     __restore_meta_state(void);
 void	 __restore_termios(void);
 void	 __restore_stophandler(void);
 void	 __restore_winchhandler(void);
-int	 __ripoffscreen(SCREEN *, int *);
-void	 __ripoffresize(SCREEN *);
-int	 __rippedlines(const SCREEN *);
+int	 __ripoffscreen(SCREEN *);
+int	 __ripoffresize(SCREEN *);
+void	 __ripofftouch(SCREEN *);
+int	 __rippedlines(const SCREEN *, int);
 void	 __save_termios(void);
 void	 __set_color(WINDOW *win, attr_t attr);
 void	 __set_stophandler(void);

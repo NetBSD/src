@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.7.8.1 2018/09/30 01:46:01 pgoyette Exp $	*/
+/*	$NetBSD: main.c,v 1.7.8.2 2018/10/20 06:58:47 pgoyette Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -107,7 +107,8 @@ static const struct f_arg fflagopts[] = {
 	{"local fs", "ffs", localfs_fs, sizeof localfs_fs},
 	{"local dir", "release", localfs_dir, sizeof localfs_dir},
 	{"targetroot mount", "/targetroot", targetroot_mnt, sizeof targetroot_mnt},
-	{"dist postfix", ".tgz", dist_postfix, sizeof dist_postfix},
+	{"dist postfix", "." SETS_TAR_SUFF, dist_postfix, sizeof dist_postfix},
+	{"dist tgz postfix", ".tgz", dist_tgz_postfix, sizeof dist_tgz_postfix},
 	{"diskname", "mydisk", bsddiskname, sizeof bsddiskname},
 	{"pkg host", SYSINST_PKG_HOST, pkg.xfer_host[XFER_FTP], sizeof pkg.xfer_host[XFER_FTP]},
 	{"pkg http host", SYSINST_PKG_HTTP_HOST, pkg.xfer_host[XFER_HTTP], sizeof pkg.xfer_host[XFER_HTTP]},

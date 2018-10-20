@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.gnuhost,v 1.44.14.2 2018/04/22 07:20:30 pgoyette Exp $
+#	$NetBSD: Makefile.gnuhost,v 1.44.14.3 2018/10/20 06:58:46 pgoyette Exp $
 #
 # Rules used when building a GNU host package.  Expects MODULE to be set.
 #
@@ -62,6 +62,7 @@ CONFIGURE_ENV+= \
 		INSTALL=${HOST_INSTALL_FILE:Q} \
 		LDFLAGS=${HOST_LDFLAGS:Q} \
 		LEX=${LEX:Q} \
+		FLEX=${LEX:Q} \
 		M4=${TOOL_M4:Q} \
 		MAKE=${MAKE_PROGRAM:Q} \
 		PATH="${TOOLDIR}/bin:$$PATH" \

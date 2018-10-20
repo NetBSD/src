@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.38 2017/10/14 15:35:02 skrll Exp $	*/
+/*	$NetBSD: locore.S,v 1.38.2.1 2018/10/20 06:58:24 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 1994-1997 Mark Brinicombe
@@ -31,7 +31,10 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "opt_arm_debug.h"
+
 #include "assym.h"
+#include <sys/cdefs.h>
 #include <sys/syscall.h>
 #include <sys/errno.h>
 #include <arm/asm.h>
@@ -40,7 +43,7 @@
 /* What size should this really be ? It is only used by init_arm() */
 #define INIT_ARM_STACK_SIZE	2048
 
-	RCSID("$NetBSD: locore.S,v 1.38 2017/10/14 15:35:02 skrll Exp $")
+	RCSID("$NetBSD: locore.S,v 1.38.2.1 2018/10/20 06:58:24 pgoyette Exp $")
 
 /*
  * This is for kvm_mkdb, and should be the address of the beginning
@@ -103,6 +106,13 @@ ASENTRY_NP(start)
 	b	_C_LABEL(panic)
 	/* NOTREACHED */
 
+ENTRY_NP(uartputc)
+#ifdef EARLYCONS
+	b	___CONCAT(EARLYCONS, _platform_early_putchar)
+#endif
+	RET
+ASEND(uartputc)
+
 .Lstart:
 	.word	_edata
 	.word	_end
@@ -111,7 +121,7 @@ ASENTRY_NP(start)
 #else
 	.word	_C_LABEL(cpu_info_store)
 #endif
-	.word	svcstk + INIT_ARM_STACK_SIZE
+	.word	svcstk_end
 
 .Lmainreturned:
 	.asciz	"main() returned"
@@ -124,6 +134,7 @@ ASEND(start)
 #endif
 svcstk:
 	.space	INIT_ARM_STACK_SIZE
+svcstk_end:
 
 	.text
 	.align	0

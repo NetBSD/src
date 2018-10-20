@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.1.28.6 2018/09/30 01:45:35 pgoyette Exp $	*/
+/*	$NetBSD: pmap.c,v 1.1.28.7 2018/10/20 06:58:23 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,12 +27,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.1.28.6 2018/09/30 01:45:35 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.1.28.7 2018/10/20 06:58:23 pgoyette Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_ddb.h"
-#include "opt_uvmhist.h"
+#include "opt_multiprocessor.h"
 #include "opt_pmap.h"
+#include "opt_uvmhist.h"
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -54,7 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.1.28.6 2018/09/30 01:45:35 pgoyette Exp $
 #ifdef VERBOSE_INIT_ARM
 #define VPRINTF(...)	printf(__VA_ARGS__)
 #else
-#define VPRINTF(...)	do { } while (/* CONSTCOND */ 0)
+#define VPRINTF(...)	__nothing
 #endif
 
 UVMHIST_DEFINE(pmaphist);
@@ -142,19 +143,6 @@ PMAP_COUNTER(unwire_failure, "pmap_unwire failure");
 #define PMAP_COUNT(name)		__nothing
 #endif /* PMAPCOUNTERS */
 
-/* saved permission bit for referenced/modified emulation */
-#define LX_BLKPAG_OS_READ	LX_BLKPAG_OS_0
-#define LX_BLKPAG_OS_WRITE	LX_BLKPAG_OS_1
-#define LX_BLKPAG_OS_WIRED	LX_BLKPAG_OS_2
-#define LX_BLKPAG_OS_RWMASK	(LX_BLKPAG_OS_WRITE|LX_BLKPAG_OS_READ)
-
-/* memory attributes are configured MAIR_EL1 in locore */
-#define LX_BLKPAG_ATTR_NORMAL_WB	__SHIFTIN(0, LX_BLKPAG_ATTR_INDX)
-#define LX_BLKPAG_ATTR_NORMAL_NC	__SHIFTIN(1, LX_BLKPAG_ATTR_INDX)
-#define LX_BLKPAG_ATTR_NORMAL_WT	__SHIFTIN(2, LX_BLKPAG_ATTR_INDX)
-#define LX_BLKPAG_ATTR_DEVICE_MEM	__SHIFTIN(3, LX_BLKPAG_ATTR_INDX)
-#define LX_BLKPAG_ATTR_MASK		LX_BLKPAG_ATTR_INDX
-
 /*
  * invalidate TLB entry for ASID and VA.
  * `ll' invalidates only the Last Level (usually L3) of TLB entry
@@ -198,7 +186,8 @@ struct pv_entry {
 	pt_entry_t *pv_ptep;	/* for fast pte lookup */
 };
 
-static pt_entry_t *_pmap_pte_lookup(struct pmap *, vaddr_t);
+static pt_entry_t *_pmap_pte_lookup_l3(struct pmap *, vaddr_t);
+static pt_entry_t *_pmap_pte_lookup_bs(struct pmap *, vaddr_t, vsize_t *);
 static pt_entry_t _pmap_pte_adjust_prot(pt_entry_t, vm_prot_t, vm_prot_t, bool);
 static pt_entry_t _pmap_pte_adjust_cacheflags(pt_entry_t, u_int);
 static void _pmap_remove(struct pmap *, vaddr_t, bool);
@@ -243,85 +232,58 @@ pm_unlock(struct pmap *pm)
 	mutex_exit(&pm->pm_lock);
 }
 
-static void __unused
-pm_addr_check(struct pmap *pm, vaddr_t va, const char *prefix)
-{
-	if (pm == pmap_kernel()) {
-		if (VM_MIN_KERNEL_ADDRESS <= va && va < VM_MAX_KERNEL_ADDRESS) {
-			// ok
-		} else {
-			printf("%s: kernel pm %p:"
-			    " va=%016lx is not kernel address\n",
-			    prefix, pm, va);
-			panic("pm_addr_check");
-		}
-	} else {
-		if (VM_MIN_ADDRESS <= va && va <= VM_MAX_ADDRESS) {
-			// ok
-		} else {
-			printf(
-			    "%s: user pm %p: va=%016lx is not kernel address\n",
-			    prefix, pm, va);
-			panic("pm_addr_check");
-		}
-	}
-}
-#define PM_ADDR_CHECK(pm, va)		pm_addr_check(pm, va, __func__)
+#define IN_RANGE(va,sta,end)	(((sta) <= (va)) && ((va) < (end)))
+
 #define IN_KSEG_ADDR(va)	\
-	((AARCH64_KSEG_START <= (va)) && ((va) < AARCH64_KSEG_END))
+	IN_RANGE((va), AARCH64_KSEG_START, AARCH64_KSEG_END)
+
+#define KASSERT_PM_ADDR(pm, va)						\
+	do {								\
+		if ((pm) == pmap_kernel()) {				\
+			KASSERTMSG(IN_RANGE((va), VM_MIN_KERNEL_ADDRESS, \
+			    VM_MAX_KERNEL_ADDRESS),			\
+			    "%s: kernel pm %p: va=%016lx"		\
+			    " is not kernel address\n",			\
+			    __func__, (pm), (va));			\
+		} else {						\
+			KASSERTMSG(IN_RANGE((va),			\
+			    VM_MIN_ADDRESS, VM_MAX_ADDRESS),		\
+			    "%s: user pm %p: va=%016lx"			\
+			    " is not user address\n",			\
+			    __func__, (pm), (va));			\
+		}							\
+	} while (0 /* CONSTCOND */)
 
 
 static const struct pmap_devmap *pmap_devmap_table;
 
-/* XXX: for now, only support for devmap */
 static vsize_t
-_pmap_map_chunk(pd_entry_t *l2, vaddr_t va, paddr_t pa, vsize_t size,
+pmap_map_chunk(vaddr_t va, paddr_t pa, vsize_t size,
     vm_prot_t prot, u_int flags)
 {
-	pd_entry_t oldpte __debugused;
 	pt_entry_t attr;
-	vsize_t resid;
+	psize_t blocksize;
+	int rc;
 
-	oldpte = l2[l2pde_index(va)];
-	KDASSERT(!l2pde_valid(oldpte));
+	/* devmap always use L2 mapping */
+	blocksize = L2_SIZE;
 
 	attr = _pmap_pte_adjust_prot(L2_BLOCK, prot, VM_PROT_ALL, false);
 	attr = _pmap_pte_adjust_cacheflags(attr, flags | PMAP_DEV);
-#ifdef MULTIPROCESSOR
-	attr |= LX_BLKPAG_SH_IS;
-#endif
 	/* user cannot execute, and kernel follows the prot */
 	attr |= (LX_BLKPAG_UXN|LX_BLKPAG_PXN);
 	if (prot & VM_PROT_EXECUTE)
 		attr &= ~LX_BLKPAG_PXN;
 
-	resid = (size + (L2_SIZE - 1)) & ~(L2_SIZE - 1);
-	size = resid;
+	rc = pmapboot_enter(va, pa, size, blocksize, attr,
+	    PMAPBOOT_ENTER_NOOVERWRITE, bootpage_alloc, NULL);
+	if (rc != 0)
+		panic("%s: pmapboot_enter failed. %lx is already mapped?\n",
+		    __func__, va);
 
-	while (resid > 0) {
-		pt_entry_t pte;
+	aarch64_tlbi_by_va(va);
 
-		pte = pa | attr;
-
-		if (prot & VM_PROT_EXECUTE) {
-			pt_entry_t tpte;
-			/* need write permission to invalidate icache */
-			tpte = pte & ~(LX_BLKPAG_AF|LX_BLKPAG_AP);
-			tpte |= (LX_BLKPAG_AF|LX_BLKPAG_AP_RW);
-			tpte |= (LX_BLKPAG_UXN|LX_BLKPAG_PXN);
-			atomic_swap_64(&l2[l2pde_index(va)], tpte);
-			aarch64_tlbi_by_va(va);
-			cpu_icache_sync_range(va, L2_SIZE);
-		}
-		atomic_swap_64(&l2[l2pde_index(va)], pte);
-		aarch64_tlbi_by_va(va);
-
-		va += L2_SIZE;
-		pa += L2_SIZE;
-		resid -= L2_SIZE;
-	}
-
-	return size;
+	return ((va + size + blocksize - 1) & ~(blocksize - 1)) - va;
 }
 
 void
@@ -331,15 +293,12 @@ pmap_devmap_register(const struct pmap_devmap *table)
 }
 
 void
-pmap_devmap_bootstrap(const struct pmap_devmap *table)
+pmap_devmap_bootstrap(vaddr_t l0pt, const struct pmap_devmap *table)
 {
-	pd_entry_t *l0, *l1, *l2;
 	vaddr_t va;
 	int i;
 
 	pmap_devmap_register(table);
-
-	l0 = (void *)AARCH64_PA_TO_KVA(reg_ttbr1_el1_read());
 
 	VPRINTF("%s:\n", __func__);
 	for (i = 0; table[i].pd_size != 0; i++) {
@@ -349,34 +308,16 @@ pmap_devmap_bootstrap(const struct pmap_devmap *table)
 		    table[i].pd_va);
 		va = table[i].pd_va;
 
+		KASSERT((VM_KERNEL_IO_ADDRESS <= va) &&
+		    (va < (VM_KERNEL_IO_ADDRESS + VM_KERNEL_IO_SIZE)));
+
 		/* update and check virtual_devmap_addr */
 		if ((virtual_devmap_addr == 0) ||
 		    (virtual_devmap_addr > va)) {
 			virtual_devmap_addr = va;
-
-			/* XXX: only one L2 table is allocated for devmap  */
-			if ((VM_MAX_KERNEL_ADDRESS - virtual_devmap_addr) >
-			    (L2_SIZE * Ln_ENTRIES)) {
-				panic("devmap va:%016lx out of range."
-				    " available devmap range is %016lx-%016lx",
-				    va,
-				    VM_MAX_KERNEL_ADDRESS -
-				    (L2_SIZE * Ln_ENTRIES),
-				    VM_MAX_KERNEL_ADDRESS);
-			}
 		}
 
-		l1 = (void *)l0pde_pa(l0[l0pde_index(va)]);
-		KASSERT(l1 != NULL);
-		l1 = (void *)AARCH64_PA_TO_KVA((paddr_t)l1);
-
-		l2 = (void *)l1pde_pa(l1[l1pde_index(va)]);
-		if (l2 == NULL)
-			panic("L2 table for devmap is not allocated");
-
-		l2 = (void *)AARCH64_PA_TO_KVA((paddr_t)l2);
-
-		_pmap_map_chunk(l2,
+		pmap_map_chunk(
 		    table[i].pd_va,
 		    table[i].pd_pa,
 		    table[i].pd_size,
@@ -673,91 +614,26 @@ pmap_extract(struct pmap *pm, vaddr_t va, paddr_t *pap)
 {
 	static pt_entry_t *ptep;
 	paddr_t pa;
-	bool found;
-
-#if 0
-	PM_ADDR_CHECK(pm, va);
-#else
-	if (((pm == pmap_kernel()) &&
-	    !(VM_MIN_KERNEL_ADDRESS <= va && va < VM_MAX_KERNEL_ADDRESS) &&
-	    !(AARCH64_KSEG_START <= va && va < AARCH64_KSEG_END)) ||
-	    ((pm != pmap_kernel()) &&
-	    !(VM_MIN_ADDRESS <= va && va <= VM_MAX_ADDRESS)))
-		return false;
-#endif
-
+	vsize_t blocksize = 0;
 	extern char __kernel_text[];
 	extern char _end[];
-	if ((vaddr_t)__kernel_text <= va && va < (vaddr_t)_end) {
+
+	if (IN_RANGE(va, (vaddr_t)__kernel_text, (vaddr_t)_end)) {
+		/* fast loookup */
 		pa = KERN_VTOPHYS(va);
-		found = true;
-	} else if (AARCH64_KSEG_START <= va && va < AARCH64_KSEG_END) {
+	} else if (IN_KSEG_ADDR(va)) {
+		/* fast loookup. should be used only if actually mapped? */
 		pa = AARCH64_KVA_TO_PA(va);
-		found = true;
 	} else {
-		pt_entry_t pte;
-
-		ptep = _pmap_pte_lookup(pm, va);
-		if (ptep == NULL) {
-			pd_entry_t pde, *l1, *l2, *l3;
-
-			/*
-			 * traverse L0 -> L1 -> L2 -> L3 table
-			 * with considering block
-			 */
-			pde = pm->pm_l0table[l0pde_index(va)];
-			if (!l0pde_valid(pde)) {
-				found = false;
-				goto done;
-			}
-
-			l1 = (void *)AARCH64_PA_TO_KVA(l0pde_pa(pde));
-			pde = l1[l1pde_index(va)];
-			if (!l1pde_valid(pde)) {
-				found = false;
-				goto done;
-			}
-			if (l1pde_is_block(pde)) {
-				pa = l1pde_pa(pde) + (va & L1_OFFSET);
-				found = true;
-				goto done;
-			}
-
-			KASSERT(l1pde_is_table(pde));
-
-			l2 = (void *)AARCH64_PA_TO_KVA(l1pde_pa(pde));
-			pde = l2[l2pde_index(va)];
-			if (!l2pde_valid(pde)) {
-				found = false;
-				goto done;
-			}
-			if (l2pde_is_block(pde)) {
-				pa = l2pde_pa(pde) + (va & L2_OFFSET);
-				found = true;
-				goto done;
-			}
-
-			KASSERT(l2pde_is_table(pde));
-
-			l3 = (void *)AARCH64_PA_TO_KVA(l2pde_pa(pde));
-			pte = l3[l3pte_index(va)];
-
-		} else {
-			pte = *ptep;
-		}
-		if (!l3pte_valid(pte) || !l3pte_is_page(pte)) {
-			found = false;
-			goto done;
-		}
-
-		KASSERT(l3pte_is_page(pte));
-		pa = l3pte_pa(pte) + (va & L3_OFFSET);
-		found = true;
+		ptep = _pmap_pte_lookup_bs(pm, va, &blocksize);
+		if (ptep == NULL)
+			return false;
+		pa = lxpde_pa(*ptep) + (va & (blocksize - 1));
 	}
- done:
-	if (found && (pap != NULL))
+
+	if (pap != NULL)
 		*pap = pa;
-	return found;
+	return true;
 }
 
 paddr_t
@@ -766,71 +642,138 @@ vtophys(vaddr_t va)
 	struct pmap *pm;
 	paddr_t pa;
 
-	if (VM_MIN_KERNEL_ADDRESS <= va && va < VM_MAX_KERNEL_ADDRESS) {
-		if (pmap_extract(pmap_kernel(), va, &pa) == false) {
-			return VTOPHYS_FAILED;
-		}
-	} else if (IN_KSEG_ADDR(va)) {
-		pa = AARCH64_KVA_TO_PA(va);
-	} else if (VM_MIN_ADDRESS <= va && va <= VM_MAX_ADDRESS) {
-		if (curlwp->l_proc == NULL)
-			return VTOPHYS_FAILED;
+	if (va & TTBR_SEL_VA)
+		pm = pmap_kernel();
+	else
 		pm = curlwp->l_proc->p_vmspace->vm_map.pmap;
-		if (pmap_extract(pm, va, &pa) == false) {
-			return VTOPHYS_FAILED;
-		}
-	} else {
+
+	if (pmap_extract(pm, va, &pa) == false)
 		return VTOPHYS_FAILED;
-	}
 	return pa;
 }
 
 static pt_entry_t *
-_pmap_pte_lookup(struct pmap *pm, vaddr_t va)
+_pmap_pte_lookup_bs(struct pmap *pm, vaddr_t va, vsize_t *bs)
 {
-	if (AARCH64_KSEG_START <= va && va < AARCH64_KSEG_END) {
-		panic("page entry is mapped in KSEG");
-	} else {
-		pd_entry_t *l0, *l1, *l2, *l3;
-		pd_entry_t pde;
-		pt_entry_t *ptep;
-		unsigned int idx;
+	pt_entry_t *ptep;
+	pd_entry_t *l0, *l1, *l2, *l3;
+	pd_entry_t pde;
+	vsize_t blocksize;
+	unsigned int idx;
 
-		/*
-		 * traverse L0 -> L1 -> L2 -> L3 table
-		 */
-		l0 = pm->pm_l0table;
-
-		idx = l0pde_index(va);
-		pde = l0[idx];
-		if (!l0pde_valid(pde))
-			return NULL;
-
-		l1 = (void *)AARCH64_PA_TO_KVA(l0pde_pa(pde));
-		idx = l1pde_index(va);
-		pde = l1[idx];
-		if (!l1pde_valid(pde))
-			return NULL;
-
-		if (l1pde_is_block(pde))
-			return NULL;
-
-		l2 = (void *)AARCH64_PA_TO_KVA(l1pde_pa(pde));
-		idx = l2pde_index(va);
-		pde = l2[idx];
-		if (!l2pde_valid(pde))
-			return NULL;
-		if (l2pde_is_block(pde))
-			return NULL;
-
-		l3 = (void *)AARCH64_PA_TO_KVA(l2pde_pa(pde));
-		idx = l3pte_index(va);
-		ptep = &l3[idx];	/* as PTE */
-
-		return ptep;
+	if (((pm == pmap_kernel()) && ((va & TTBR_SEL_VA) == 0)) ||
+	    ((pm != pmap_kernel()) && ((va & TTBR_SEL_VA) != 0))) {
+		blocksize = 0;
+		ptep = NULL;
+		goto done;
 	}
 
+	/*
+	 * traverse L0 -> L1 -> L2 -> L3
+	 */
+	blocksize = L0_SIZE;
+	l0 = pm->pm_l0table;
+	idx = l0pde_index(va);
+	pde = l0[idx];
+	if (!l0pde_valid(pde)) {
+		ptep = NULL;
+		goto done;
+	}
+
+	blocksize = L1_SIZE;
+	l1 = (pd_entry_t *)AARCH64_PA_TO_KVA(l0pde_pa(pde));
+	idx = l1pde_index(va);
+	pde = l1[idx];
+	if (!l1pde_valid(pde)) {
+		ptep = NULL;
+		goto done;
+	}
+	if (l1pde_is_block(pde)) {
+		ptep = &l1[idx];
+		goto done;
+	}
+
+	blocksize = L2_SIZE;
+	l2 = (pd_entry_t *)AARCH64_PA_TO_KVA(l1pde_pa(pde));
+	idx = l2pde_index(va);
+	pde = l2[idx];
+	if (!l2pde_valid(pde)) {
+		ptep = NULL;
+		goto done;
+	}
+	if (l2pde_is_block(pde)) {
+		ptep = &l2[idx];
+		goto done;
+	}
+
+	blocksize = L3_SIZE;
+	l3 = (pd_entry_t *)AARCH64_PA_TO_KVA(l2pde_pa(pde));
+	idx = l3pte_index(va);
+	pde = l3[idx];
+	if (!l3pte_valid(pde)) {
+		ptep = NULL;
+		goto done;
+	}
+	ptep = &l3[idx];
+
+ done:
+	if (bs != NULL)
+		*bs = blocksize;
+	return ptep;
+}
+
+static pt_entry_t *
+_pmap_pte_lookup_l3(struct pmap *pm, vaddr_t va)
+{
+	pt_entry_t *ptep;
+	vsize_t blocksize = 0;
+
+	ptep = _pmap_pte_lookup_bs(pm, va, &blocksize);
+	if ((ptep != NULL) && (blocksize == L3_SIZE))
+		return ptep;
+
 	return NULL;
+}
+
+void
+pmap_icache_sync_range(pmap_t pm, vaddr_t sva, vaddr_t eva)
+{
+	pt_entry_t *ptep, pte;
+	vaddr_t va;
+	vsize_t blocksize = 0;
+
+	pm_lock(pm);
+
+	for (va = sva; va < eva; va += blocksize) {
+		ptep = _pmap_pte_lookup_bs(pm, va, &blocksize);
+		if (blocksize == 0)
+			break;
+		if (ptep != NULL) {
+			vaddr_t eob = (va + blocksize) & ~(blocksize - 1);
+			vsize_t len = ulmin(eva, eob - va);
+
+			pte = *ptep;
+			if (l3pte_writable(pte)) {
+				cpu_icache_sync_range(va, len);
+			} else {
+				/*
+				 * change to writable temporally
+				 * to do cpu_icache_sync_range()
+				 */
+				pt_entry_t opte = pte;
+				pte = pte & ~(LX_BLKPAG_AF|LX_BLKPAG_AP);
+				pte |= (LX_BLKPAG_AF|LX_BLKPAG_AP_RW);
+				atomic_swap_64(ptep, pte);
+				AARCH64_TLBI_BY_ASID_VA(pm->pm_asid, va, true);
+				cpu_icache_sync_range(va, len);
+				atomic_swap_64(ptep, opte);
+				AARCH64_TLBI_BY_ASID_VA(pm->pm_asid, va, true);
+			}
+			va &= ~(blocksize - 1);
+		}
+	}
+
+	pm_unlock(pm);
 }
 
 static pt_entry_t
@@ -1090,10 +1033,10 @@ pmap_kremove(vaddr_t va, vsize_t size)
 	KDASSERT((va & PGOFSET) == 0);
 	KDASSERT((size & PGOFSET) == 0);
 
-	KASSERT(!IN_KSEG_ADDR(va));
+	KDASSERT(!IN_KSEG_ADDR(va));
 
 	eva = va + size;
-	KDASSERT(VM_MIN_KERNEL_ADDRESS <= va && eva < VM_MAX_KERNEL_ADDRESS);
+	KDASSERT(IN_RANGE(va, VM_MIN_KERNEL_ADDRESS, VM_MAX_KERNEL_ADDRESS));
 
 	s = splvm();
 	for (; va < eva; va += PAGE_SIZE) {
@@ -1155,8 +1098,7 @@ pmap_protect(struct pmap *pm, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 	UVMHIST_LOG(pmaphist, "pm=%p, sva=%016lx, eva=%016lx, prot=%08x",
 	    pm, sva, eva, prot);
 
-	PM_ADDR_CHECK(pm, sva);
-
+	KASSERT_PM_ADDR(pm, sva);
 	KASSERT(!IN_KSEG_ADDR(sva));
 
 	if ((prot & VM_PROT_READ) == VM_PROT_NONE) {
@@ -1181,7 +1123,7 @@ pmap_protect(struct pmap *pm, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 		uint32_t mdattr;
 		bool executable;
 
-		ptep = _pmap_pte_lookup(pm, va);
+		ptep = _pmap_pte_lookup_l3(pm, va);
 		if (ptep == NULL) {
 			PMAP_COUNT(protect_none);
 			continue;
@@ -1370,7 +1312,8 @@ _pmap_enter(struct pmap *pm, vaddr_t va, paddr_t pa, vm_prot_t prot,
 	UVMHIST_LOG(pmaphist, "va=%016lx, pa=%016lx, prot=%08x, flags=%08x",
 	    va, pa, prot, flags);
 
-	PM_ADDR_CHECK(pm, va);
+	KASSERT_PM_ADDR(pm, va);
+	KASSERT(!IN_KSEG_ADDR(va));
 
 #ifdef PMAPCOUNTERS
 	PMAP_COUNT(mappings);
@@ -1616,7 +1559,7 @@ _pmap_remove(struct pmap *pm, vaddr_t va, bool kremove)
 
 	pm_lock(pm);
 
-	ptep = _pmap_pte_lookup(pm, va);
+	ptep = _pmap_pte_lookup_l3(pm, va);
 	if (ptep != NULL) {
 		pte = *ptep;
 		if (!l3pte_valid(pte))
@@ -1651,8 +1594,7 @@ pmap_remove(struct pmap *pm, vaddr_t sva, vaddr_t eva)
 {
 	vaddr_t va;
 
-	PM_ADDR_CHECK(pm, sva);
-
+	KASSERT_PM_ADDR(pm, sva);
 	KASSERT(!IN_KSEG_ADDR(sva));
 
 	for (va = sva; va < eva; va += PAGE_SIZE)
@@ -1717,10 +1659,11 @@ pmap_unwire(struct pmap *pm, vaddr_t va)
 
 	PMAP_COUNT(unwire);
 
-	PM_ADDR_CHECK(pm, va);
+	KASSERT_PM_ADDR(pm, va);
+	KASSERT(!IN_KSEG_ADDR(va));
 
 	pm_lock(pm);
-	ptep = _pmap_pte_lookup(pm, va);
+	ptep = _pmap_pte_lookup_l3(pm, va);
 	if (ptep != NULL) {
 		pte = *ptep;
 		if (!l3pte_valid(pte) ||
@@ -1757,12 +1700,12 @@ pmap_fault_fixup(struct pmap *pm, vaddr_t va, vm_prot_t accessprot, bool user)
 
 
 #if 0
-	PM_ADDR_CHECK(pm, va);
+	KASSERT_PM_ADDR(pm, va);
 #else
 	if (((pm == pmap_kernel()) &&
-	    !(VM_MIN_KERNEL_ADDRESS <= va && va < VM_MAX_KERNEL_ADDRESS)) ||
+	    !(IN_RANGE(va, VM_MIN_KERNEL_ADDRESS, VM_MAX_KERNEL_ADDRESS))) ||
 	    ((pm != pmap_kernel()) &&
-	    !(VM_MIN_ADDRESS <= va && va <= VM_MAX_ADDRESS))) {
+	    !(IN_RANGE(va, VM_MIN_ADDRESS, VM_MAX_ADDRESS)))) {
 
 		UVMHIST_LOG(pmaphist,
 		    "pmap space and va mismatch: pm=%s, va=%016lx",
@@ -1773,7 +1716,7 @@ pmap_fault_fixup(struct pmap *pm, vaddr_t va, vm_prot_t accessprot, bool user)
 
 	pm_lock(pm);
 
-	ptep = _pmap_pte_lookup(pm, va);
+	ptep = _pmap_pte_lookup_l3(pm, va);
 	if (ptep == NULL) {
 		UVMHIST_LOG(pmaphist, "pte_lookup failure: va=%016lx",
 		    va, 0, 0, 0);
@@ -1997,45 +1940,9 @@ pmap_is_referenced(struct vm_page *pg)
 pt_entry_t *
 kvtopte(vaddr_t va)
 {
-	pd_entry_t *l0, *l1, *l2, *l3;
-	pd_entry_t pde;
-	pt_entry_t *ptep;
-	unsigned int idx;
+	KASSERT(IN_RANGE(va, VM_MIN_KERNEL_ADDRESS, VM_MAX_KERNEL_ADDRESS));
 
-	KASSERT(VM_MIN_KERNEL_ADDRESS <= va && va < VM_MAX_KERNEL_ADDRESS);
-
-	/*
-	 * traverse L0 -> L1 -> L2 block (or -> L3 table)
-	 */
-	l0 = pmap_kernel()->pm_l0table;
-
-	idx = l0pde_index(va);
-	pde = l0[idx];
-	if (!l0pde_valid(pde))
-		return NULL;
-
-	l1 = (void *)AARCH64_PA_TO_KVA(l0pde_pa(pde));
-	idx = l1pde_index(va);
-	pde = l1[idx];
-	if (!l1pde_valid(pde))
-		return NULL;
-
-	if (l1pde_is_block(pde))
-		return NULL;
-
-	l2 = (void *)AARCH64_PA_TO_KVA(l1pde_pa(pde));
-	idx = l2pde_index(va);
-	pde = l2[idx];
-	if (!l2pde_valid(pde))
-		return NULL;
-	if (l2pde_is_block(pde))
-		return &l2[idx];	/* kernel text/data use L2 blocks */
-
-	l3 = (void *)AARCH64_PA_TO_KVA(l2pde_pa(pde));
-	idx = l3pte_index(va);
-	ptep = &l3[idx];		/* or may use L3 page? */
-
-	return ptep;
+	return _pmap_pte_lookup_bs(pmap_kernel(), va, NULL);
 }
 
 /* change attribute of kernel segment */
@@ -2044,7 +1951,7 @@ pmap_kvattr(vaddr_t va, vm_prot_t prot)
 {
 	pt_entry_t *ptep, pte, opte;
 
-	KASSERT(VM_MIN_KERNEL_ADDRESS <= va && va < VM_MAX_KERNEL_ADDRESS);
+	KASSERT(IN_RANGE(va, VM_MIN_KERNEL_ADDRESS, VM_MAX_KERNEL_ADDRESS));
 
 	ptep = kvtopte(va);
 	if (ptep == NULL)
@@ -2077,46 +1984,59 @@ pmap_kvattr(vaddr_t va, vm_prot_t prot)
 	return opte;
 }
 
-static void
-pmap_db_pte_print(pt_entry_t pte, int level, void (*pr)(const char *, ...))
+void
+pmap_db_pte_print(pt_entry_t pte, int level,
+    void (*pr)(const char *, ...) __printflike(1, 2))
 {
 	if (pte == 0) {
 		pr(" UNUSED\n");
+		return;
+	}
 
-	} else if (level == 0) {
-		/* L0 pde */
-		pr(", %s",
-		    l1pde_is_table(pte) ? "TABLE" : "***ILLEGAL TYPE***");
-		pr(", %s", l0pde_valid(pte) ? "VALID" : "***INVALID***");
+	pr(" %s", (pte & LX_VALID) ? "VALID" : "**INVALID**");
 
-		pr(", PA=%016lx", l0pde_pa(pte));
+	if ((level == 0) ||
+	    ((level == 1) && l1pde_is_table(pte)) ||
+	    ((level == 2) && l2pde_is_table(pte))) {
+
+		/* L0/L1/L2 TABLE */
+		if ((level == 0) && ((pte & LX_TYPE) != LX_TYPE_TBL))
+			pr(" **ILLEGAL TYPE**"); /* L0 doesn't support block */
+		else
+			pr(" TABLE");
+
+		pr(", PA=%lx", l0pde_pa(pte));
+
+		if (pte & LX_TBL_NSTABLE)
+			pr(", NSTABLE");
+		if (pte & LX_TBL_APTABLE)
+			pr(", APTABLE");
+		if (pte & LX_TBL_UXNTABLE)
+			pr(", UXNTABLE");
+		if (pte & LX_TBL_PXNTABLE)
+			pr(", PXNTABLE");
 
 	} else if (((level == 1) && l1pde_is_block(pte)) ||
 	    ((level == 2) && l2pde_is_block(pte)) ||
-		(level == 3)) {
+	    (level == 3)) {
 
+		/* L1/L2 BLOCK or L3 PAGE */
 		if (level == 3) {
-			pr(", %s",
-			    l3pte_is_page(pte) ? " PAGE" : "**ILLEGAL TYPE**");
-			pr(", %s",
-			    l3pte_valid(pte) ? "VALID" : "**INVALID**");
-		} else {
-			pr(", %s", l1pde_is_table(pte) ? "TABLE" : "BLOCK");
-			pr(", %s",
-			    l1pde_valid(pte) ? "VALID" : "**INVALID**");
-		}
+			pr(" %s", l3pte_is_page(pte) ?
+			    "PAGE" : "**ILLEGAL TYPE**");
+		} else
+			pr(" BLOCK");
 
-		pr(", PA=%016lx", l3pte_pa(pte));
+		pr(", PA=%lx", l3pte_pa(pte));
 
-		/* L[12] block, or L3 pte */
-		pr(", %s", (pte & LX_BLKPAG_UXN) ? "UXN" : "---");
-		pr(", %s", (pte & LX_BLKPAG_PXN) ? "PXN" : "---");
+		pr(", %s", (pte & LX_BLKPAG_UXN) ? "UXN" : "user-exec");
+		pr(", %s", (pte & LX_BLKPAG_PXN) ? "PXN" : "kernel-exec");
 
 		if (pte & LX_BLKPAG_CONTIG)
-			pr(",CONTIG");
+			pr(", CONTIG");
 
-		pr(", %s", (pte & LX_BLKPAG_NG) ? "NG" : "--");
-		pr(", %s", (pte & LX_BLKPAG_AF) ? "AF" : "--");
+		pr(", %s", (pte & LX_BLKPAG_NG) ? "NG" : "global");
+		pr(", %s", (pte & LX_BLKPAG_AF) ? "AF" : "*cannot-access*");
 
 		switch (pte & LX_BLKPAG_SH) {
 		case LX_BLKPAG_SH_NS:
@@ -2135,6 +2055,7 @@ pmap_db_pte_print(pt_entry_t pte, int level, void (*pr)(const char *, ...))
 
 		pr(", %s", (pte & LX_BLKPAG_AP_RO) ? "RO" : "RW");
 		pr(", %s", (pte & LX_BLKPAG_APUSER) ? "EL0" : "EL1");
+		pr(", %s", (pte & LX_BLKPAG_NS) ? "NS" : "secure");
 
 		switch (pte & LX_BLKPAG_ATTR_MASK) {
 		case LX_BLKPAG_ATTR_NORMAL_WB:
@@ -2151,57 +2072,47 @@ pmap_db_pte_print(pt_entry_t pte, int level, void (*pr)(const char *, ...))
 			break;
 		}
 
+		if (pte & LX_BLKPAG_OS_BOOT)
+			pr(", boot");
 		if (pte & LX_BLKPAG_OS_READ)
 			pr(", pmap_read");
 		if (pte & LX_BLKPAG_OS_WRITE)
 			pr(", pmap_write");
-		if ((pte & LX_BLKPAG_UXN) == 0)
-			pr(", user-executable");
-		if ((pte & LX_BLKPAG_PXN) == 0)
-			pr(", kernel-executable");
-
+		if (pte & LX_BLKPAG_OS_WIRED)
+			pr(", pmap_wired");
 	} else {
-		/* L1 and L2 pde */
-		pr(", %s", l1pde_is_table(pte) ? "TABLE" : "BLOCK");
-		pr(", %s", l1pde_valid(pte) ? "VALID" : "**INVALID**");
-		pr(", PA=%016lx", l1pde_pa(pte));
+		pr(" **ILLEGAL TYPE**");
 	}
 	pr("\n");
 }
 
-
 void
 pmap_db_pteinfo(vaddr_t va, void (*pr)(const char *, ...))
 {
-	struct pmap *pm;
 	struct vm_page *pg;
 	bool user;
-
-
-	if (VM_MAXUSER_ADDRESS > va) {
-		pm = curlwp->l_proc->p_vmspace->vm_map.pmap;
-		user = true;
-	} else {
-		pm = pmap_kernel();
-		user = false;
-	}
-
-
 	pd_entry_t *l0, *l1, *l2, *l3;
 	pd_entry_t pde;
 	pt_entry_t pte;
 	struct vm_page_md *md;
+	uint64_t ttbr;
 	paddr_t pa;
 	unsigned int idx;
+
+	if (va & TTBR_SEL_VA) {
+		user = false;
+		ttbr = reg_ttbr1_el1_read();
+	} else {
+		user = true;
+		ttbr = reg_ttbr0_el1_read();
+	}
+	pa = ttbr & TTBR_BADDR;
+	l0 = (pd_entry_t *)AARCH64_PA_TO_KVA(pa);
 
 	/*
 	 * traverse L0 -> L1 -> L2 -> L3 table
 	 */
-
-	l0 = pm->pm_l0table;
-
-	pr("TTBR%d=%016llx (%016llx)", user ? 0 : 1,
-	    pm->pm_l0table_pa, l0);
+	pr("TTBR%d=%016llx, pa=%016lx, va=%016lx", user ? 0 : 1, ttbr, l0);
 	pr(", input-va=%016llx,"
 	    " L0-index=%d, L1-index=%d, L2-index=%d, L3-index=%d\n",
 	    va,
@@ -2213,37 +2124,37 @@ pmap_db_pteinfo(vaddr_t va, void (*pr)(const char *, ...))
 	idx = l0pde_index(va);
 	pde = l0[idx];
 
-	pr("L0[%3d]=%016llx", idx, pde);
+	pr("L0[%3d]=%016llx:", idx, pde);
 	pmap_db_pte_print(pde, 0, pr);
 
 	if (!l0pde_valid(pde))
 		return;
 
-	l1 = (void *)AARCH64_PA_TO_KVA(l0pde_pa(pde));
+	l1 = (pd_entry_t *)AARCH64_PA_TO_KVA(l0pde_pa(pde));
 	idx = l1pde_index(va);
 	pde = l1[idx];
 
-	pr(" L1[%3d]=%016llx", idx, pde);
+	pr(" L1[%3d]=%016llx:", idx, pde);
 	pmap_db_pte_print(pde, 1, pr);
 
 	if (!l1pde_valid(pde) || l1pde_is_block(pde))
 		return;
 
-	l2 = (void *)AARCH64_PA_TO_KVA(l1pde_pa(pde));
+	l2 = (pd_entry_t *)AARCH64_PA_TO_KVA(l1pde_pa(pde));
 	idx = l2pde_index(va);
 	pde = l2[idx];
 
-	pr("  L2[%3d]=%016llx", idx, pde);
+	pr("  L2[%3d]=%016llx:", idx, pde);
 	pmap_db_pte_print(pde, 2, pr);
 
 	if (!l2pde_valid(pde) || l2pde_is_block(pde))
 		return;
 
-	l3 = (void *)AARCH64_PA_TO_KVA(l2pde_pa(pde));
+	l3 = (pd_entry_t *)AARCH64_PA_TO_KVA(l2pde_pa(pde));
 	idx = l3pte_index(va);
 	pte = l3[idx];
 
-	pr("   L3[%3d]=%016llx", idx, pte);
+	pr("   L3[%3d]=%016llx:", idx, pte);
 	pmap_db_pte_print(pte, 3, pr);
 
 	pa = l3pte_pa(pte);

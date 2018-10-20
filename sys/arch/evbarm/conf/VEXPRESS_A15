@@ -1,5 +1,5 @@
 #
-#	$NetBSD: VEXPRESS_A15,v 1.17.6.2 2018/07/28 04:37:31 pgoyette Exp $
+#	$NetBSD: VEXPRESS_A15,v 1.17.6.3 2018/10/20 06:58:27 pgoyette Exp $
 #
 #	ARM Versatile Express A15
 #
@@ -19,7 +19,7 @@ pseudo-device 	openfirm	# /dev/openfirm
 #options 	LOCKDEBUG
 #options 	PMAP_DEBUG	# Enable pmap_debug_level code
 #options 	VERBOSE_INIT_ARM # verbose bootstrapping messages
-#options 	CONSADDR=0x1c090000
+#options 	EARLYCONS=vexpress, CONSADDR=0x1c090000
 
 makeoptions	DEBUG="-g"	# compile full symbol table
 makeoptions	COPY_SYMTAB=1

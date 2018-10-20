@@ -1,4 +1,4 @@
-#	$NetBSD: files.newsmips,v 1.30 2014/07/20 10:22:54 alnsn Exp $
+#	$NetBSD: files.newsmips,v 1.30.26.1 2018/10/20 06:58:29 pgoyette Exp $
 
 # NEWSMIPS-specific configuration info
 
@@ -90,7 +90,8 @@ file arch/newsmips/newsmips/bus.c
 file arch/newsmips/newsmips/clock.c
 file arch/newsmips/newsmips/machdep.c
 file arch/newsmips/newsmips/news3400.c		hb
-file arch/newsmips/newsmips/news5000.c		ap
+file arch/newsmips/newsmips/news4000.c		ap & news4000
+file arch/newsmips/newsmips/news5000.c		ap & news5000
 file arch/newsmips/newsmips/disksubr.c
 file arch/newsmips/newsmips/mainbus.c
 file arch/newsmips/newsmips/cpu_cons.c

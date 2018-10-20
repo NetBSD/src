@@ -1,4 +1,4 @@
-/*	$NetBSD: apbus.c,v 1.22 2011/02/20 07:56:31 matt Exp $	*/
+/*	$NetBSD: apbus.c,v 1.22.54.1 2018/10/20 06:58:29 pgoyette Exp $	*/
 
 /*-
  * Copyright (C) 1999 SHIMIZU Ryo.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apbus.c,v 1.22 2011/02/20 07:56:31 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apbus.c,v 1.22.54.1 2018/10/20 06:58:29 pgoyette Exp $");
 
 #define __INTR_PRIVATE
 
@@ -78,6 +78,8 @@ CFATTACH_DECL_NEW(ap, 0,
 #define	NLEVEL	2
 static struct newsmips_intr apintr_tab[NLEVEL];
 
+volatile uint32_t *news_wbflush;
+
 static int
 apbusmatch(device_t parent, cfdata_t cf, void *aux)
 {
@@ -99,12 +101,20 @@ apbusattach(device_t parent, device_t self, void *aux)
 	struct newsmips_intr *ip;
 	int i;
 
+	apbus_map_romwork();
 	mips_set_wbflush(apbus_wbflush);
 
-	*(volatile uint32_t *)(NEWS5000_APBUS_INTST) = 0xffffffff;
-	*(volatile uint32_t *)(NEWS5000_APBUS_INTMSK) = 0xffffffff;
-	*(volatile uint32_t *)(NEWS5000_APBUS_CTRL) = 0x00000004;
-	*(volatile uint32_t *)(NEWS5000_APBUS_DMA) = 0xffffffff;
+	if (systype == NEWS5000) {
+		*(volatile uint32_t *)(NEWS5000_APBUS_INTST) = 0xffffffff;
+		*(volatile uint32_t *)(NEWS5000_APBUS_INTMSK) = 0xffffffff;
+		*(volatile uint32_t *)(NEWS5000_APBUS_CTRL) = 0x00000004;
+		*(volatile uint32_t *)(NEWS5000_APBUS_DMA) = 0xffffffff;
+	}
+	if (systype == NEWS4000) {
+		*(volatile uint32_t *)0xb60000a4 = 0x1fffffff;
+		*(volatile uint32_t *)0xb6000070 = 0xffffffff;
+		*(volatile uint32_t *)0xb6000098 = 0xffffffff;
+	}
 
 	aprint_normal("\n");
 
@@ -180,10 +190,9 @@ aptokseg0(void *va)
 void
 apbus_wbflush(void)
 {
-	volatile int32_t * const our_wbflush = (int32_t *)NEWS5000_WBFLUSH;
 
 	(*mips_locore_jumpvec.ljv_wbflush)();
-	(void)*our_wbflush;
+	(void)*news_wbflush;
 }
 
 /*
@@ -200,8 +209,10 @@ apbus_intr_dispatch(int level, int stat)
 
 	nintr = 0;
 	LIST_FOREACH(ih, &ip->intr_q, ih_q) {
-		if (ih->ih_mask & stat)
+		if (ih->ih_mask & stat) {
 			nintr += (*ih->ih_func)(ih->ih_arg);
+			ih->intr_count.ev_count++;
+		}
 	}
 	return nintr;
 }
@@ -226,6 +237,8 @@ apbus_intr_establish(int level, int mask, int priority, int (*func)(void *),
 	ih->ih_priority = priority;
 	ih->ih_func = func;
 	ih->ih_arg = arg;
+	evcnt_attach_dynamic(&ih->intr_count, EVCNT_TYPE_INTR,
+	    NULL, "apbus", name);
 
 	if (LIST_EMPTY(&ip->intr_q)) {
 		LIST_INSERT_HEAD(&ip->intr_q, ih, ih_q);
@@ -244,13 +257,19 @@ apbus_intr_establish(int level, int mask, int priority, int (*func)(void *),
 	LIST_INSERT_AFTER(curih, ih, ih_q);
 
  done:
+	if (systype == NEWS5000) {
+		inten0 = (uint32_t *)NEWS5000_INTEN0;
+		inten1 = (uint32_t *)NEWS5000_INTEN1;
+	}
+	if (systype == NEWS4000) {
+		inten0 = (uint32_t *)NEWS4000_INTEN0;
+		inten1 = (uint32_t *)NEWS4000_INTEN1;
+	}
 	switch (level) {
 	case 0:
-		inten0 = (volatile uint32_t *)NEWS5000_INTEN0;
 		*inten0 |= mask;
 		break;
 	case 1:
-		inten1 = (volatile uint32_t *)NEWS5000_INTEN1;
 		*inten1 |= mask;
 		break;
 	}

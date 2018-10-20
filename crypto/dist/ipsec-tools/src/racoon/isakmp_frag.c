@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_frag.c,v 1.7.2.1 2018/05/21 04:35:49 pgoyette Exp $	*/
+/*	$NetBSD: isakmp_frag.c,v 1.7.2.2 2018/10/20 06:58:16 pgoyette Exp $	*/
 
 /* Id: isakmp_frag.c,v 1.4 2004/11/13 17:31:36 manubsd Exp */
 
@@ -219,9 +219,14 @@ isakmp_frag_extract(iph1, msg)
 	struct isakmp_frag *frag;
 	struct isakmp_frag_item *item;
 	vchar_t *buf;
-	int last_frag = 0;
+	const char *m;
 	char *data;
 	int i;
+
+ 	if (iph1->frag_chain == NULL) {
+		plog(LLV_DEBUG, LOCATION, NULL,
+		     "fragmented IKE phase 1 message payload detected\n");
+	}
 
 	if (msg->l < sizeof(*isakmp) + sizeof(*frag)) {
 		plog(LLV_ERROR, LOCATION, NULL, "Message too short\n");
@@ -260,47 +265,66 @@ isakmp_frag_extract(iph1, msg)
 	item->frag_next = NULL;
 	item->frag_packet = buf;
 
-	/* Check for the last frag before inserting the new item in the chain */
-	if (item->frag_last) {
-		/* if we have the last fragment, indices must match */
-		if (iph1->frag_last_index != 0 &&
-		    item->frag_last != iph1->frag_last_index) {
-			plog(LLV_ERROR, LOCATION, NULL,
-			     "Repeated last fragment index mismatch\n");
-			racoon_free(item);
-			vfree(buf);
-			return -1;
+
+	/* Perform required last frag checks before inserting the new item in
+	   the chain */
+	if (iph1->frag_last_index != 0) {
+		/* Only one fragment payload allowed with last frag flag set */
+		if (item->frag_last) {
+			m = "Message has multiple tail fragments\n";
+			goto out;
 		}
 
-		last_frag = iph1->frag_last_index = item->frag_num;
+		/* Fragment payload with fragment number greater than the
+		   fragment number of the last fragment is not allowed*/
+		if (item->frag_num > iph1->frag_last_index) {
+			m = "Fragment number greater than tail fragment number\n";
+			goto out;
+		}
 	}
 
 	/* insert fragment into chain */
 	if (isakmp_frag_insert(iph1, item) == -1) {
-		plog(LLV_ERROR, LOCATION, NULL,
-		    "Repeated fragment index mismatch\n");
-		racoon_free(item);
-		vfree(buf);
-		return -1;
+		m = "Duplicate fragment number\n";
+		goto out;
 	}
+
+	plog(LLV_DEBUG, LOCATION, NULL,
+	     "fragment payload #%d queued\n", item->frag_num);
+
+	/* remember last frag after insertion into fragment chain */
+	if (item->frag_last)
+		iph1->frag_last_index = item->frag_num;
 
 	/* If we saw the last frag, check if the chain is complete
 	 * we have a sorted list now, so just walk through */
-	if (last_frag != 0) {
+ 	if (iph1->frag_last_index != 0) {
 		item = iph1->frag_chain;
-		for (i = 1; i <= last_frag; i++) {
-			if (item->frag_num != i)
-				break;
+		for (i = 1; i <= iph1->frag_last_index; i++) {
+			if (item == NULL ||
+			    item->frag_num != i) {
+				plog(LLV_DEBUG, LOCATION, NULL,
+				     "fragment payload #%d still missing\n",
+				     i);
+ 				break;
+			}
 			item = item->frag_next;
-			if (item == NULL) /* Not found */
-				break;
 		}
 
-		if (i > last_frag) /* It is complete */
-			return 1;
+		if (i > iph1->frag_last_index) {/* It is complete */
+			plog(LLV_DEBUG, LOCATION, NULL,
+			     "fragment #%d completed IKE phase 1 message payload.\n",
+			     frag->index);
+ 			return 1;
+		}
 	}
 		
 	return 0;
+out:
+	plog(LLV_ERROR, LOCATION, NULL, m);
+	racoon_free(item);
+	vfree(buf);
+	return -1;
 }
 
 vchar_t *
@@ -359,6 +383,7 @@ out:
 	} while (item != NULL);
 
 	iph1->frag_chain = NULL;
+	iph1->frag_last_index = 0;
 
 	return buf;
 }

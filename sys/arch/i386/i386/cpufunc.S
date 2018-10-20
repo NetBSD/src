@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.S,v 1.21.18.2 2018/09/30 01:45:44 pgoyette Exp $	*/
+/*	$NetBSD: cpufunc.S,v 1.21.18.3 2018/10/20 06:58:28 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 #include <sys/errno.h>
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.S,v 1.21.18.2 2018/09/30 01:45:44 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.S,v 1.21.18.3 2018/10/20 06:58:28 pgoyette Exp $");
 
 #include "opt_xen.h"
 
@@ -66,7 +66,7 @@ ENTRY(x86_mfence)
 END(x86_mfence)
 
 #ifndef XEN
-	ENTRY(lidt)
+ENTRY(lidt)
 	movl	4(%esp), %eax
 	lidt	(%eax)
 	ret
