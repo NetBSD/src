@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_malloc.c,v 1.153 2018/08/22 14:12:30 christos Exp $	*/
+/*	$NetBSD: kern_malloc.c,v 1.154 2018/10/20 14:09:47 martin Exp $	*/
 
 /*
  * Copyright (c) 1987, 1991, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.153 2018/08/22 14:12:30 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.154 2018/10/20 14:09:47 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -101,12 +101,13 @@ struct malloc_header {
 } __aligned(ALIGNBYTES + 1);
 
 void *
-kern_malloc(unsigned long size, int flags)
+kern_malloc(unsigned long reqsize, int flags)
 {
 	const int kmflags = (flags & M_NOWAIT) ? KM_NOSLEEP : KM_SLEEP;
 #ifdef KASAN
-	const size_t origsize = size;
+	const size_t origsize = reqsize;
 #endif
+	size_t size = reqsize;
 	size_t allocsize, hdroffset;
 	struct malloc_header *mh;
 	void *p;
