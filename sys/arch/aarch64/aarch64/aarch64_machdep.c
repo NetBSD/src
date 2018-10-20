@@ -1,4 +1,4 @@
-/* $NetBSD: aarch64_machdep.c,v 1.15 2018/10/14 14:31:05 skrll Exp $ */
+/* $NetBSD: aarch64_machdep.c,v 1.16 2018/10/20 06:18:18 ryo Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: aarch64_machdep.c,v 1.15 2018/10/14 14:31:05 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: aarch64_machdep.c,v 1.16 2018/10/20 06:18:18 ryo Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_ddb.h"
@@ -228,9 +228,28 @@ initarm_common(vaddr_t kvm_base, vsize_t kvm_size,
 	paddr_t kernstart_phys __unused = KERN_VTOPHYS(kernstart);
 	paddr_t kernend_phys __unused = KERN_VTOPHYS(kernend);
 
-	/* XXX */
+	/* XXX: arm/arm32/bus_dma.c refers physical_{start,end} */
 	physical_start = bootconfig.dram[0].address;
 	physical_end = physical_start + ptoa(bootconfig.dram[0].pages);
+
+	/*
+	 * msgbuf is allocated from the bottom of any one of memory blocks
+	 * to avoid corruption due to bootloader or changing kernel layout.
+	 */
+	paddr_t msgbufaddr = 0;
+	for (i = 0; i < bootconfig.dramblocks; i++) {
+		/* this block has enough space for msgbuf? */
+		if (bootconfig.dram[i].pages < atop(round_page(MSGBUFSIZE)))
+			continue;
+
+		/* allocate msgbuf from the bottom of this block */
+		bootconfig.dram[i].pages -= atop(round_page(MSGBUFSIZE));
+		msgbufaddr = bootconfig.dram[i].address +
+		    ptoa(bootconfig.dram[i].pages);
+		break;
+	}
+	KASSERT(msgbufaddr != 0);	/* no space for msgbuf */
+	initmsgbuf((void *)AARCH64_PA_TO_KVA(msgbufaddr), MSGBUFSIZE);
 
 	VPRINTF(
 	    "------------------------------------------\n"
@@ -238,6 +257,7 @@ initarm_common(vaddr_t kvm_base, vsize_t kvm_size,
 	    "physical_start        = 0x%016lx\n"
 	    "kernel_start_phys     = 0x%016lx\n"
 	    "kernel_end_phys       = 0x%016lx\n"
+	    "msgbuf                = 0x%016lx\n"
 	    "physical_end          = 0x%016lx\n"
 	    "VM_MIN_KERNEL_ADDRESS = 0x%016lx\n"
 	    "kernel_start_l2       = 0x%016lx\n"
@@ -258,6 +278,7 @@ initarm_common(vaddr_t kvm_base, vsize_t kvm_size,
 	    physical_start,
 	    kernstart_phys,
 	    kernend_phys,
+	    msgbufaddr,
 	    physical_end,
 	    VM_MIN_KERNEL_ADDRESS,
 	    kernstart_l2,
@@ -272,14 +293,6 @@ initarm_common(vaddr_t kvm_base, vsize_t kvm_size,
 #endif
 	    VM_KERNEL_IO_ADDRESS,
 	    VM_MAX_KERNEL_ADDRESS);
-
-	/*
-	 * msgbuf is always allocated from bottom of 1st memory block.
-	 * against corruption by bootloader, or changing kernel layout.
-	 */
-	physical_end -= round_page(MSGBUFSIZE);
-	bootconfig.dram[0].pages -= atop(round_page(MSGBUFSIZE));
-	initmsgbuf((void *)AARCH64_PA_TO_KVA(physical_end), MSGBUFSIZE);
 
 #ifdef DDB
 	db_machdep_init();
@@ -505,23 +518,35 @@ module_init_md(void)
 }
 #endif /* MODULAR */
 
+static bool
+in_dram_p(paddr_t pa, psize_t size)
+{
+	int i;
+
+	for (i = 0; i < bootconfig.dramblocks; i++) {
+		paddr_t s, e;
+		s = bootconfig.dram[i].address;
+		e = bootconfig.dram[i].address + ptoa(bootconfig.dram[i].pages);
+		if ((s <= pa) && ((pa + size) <= e))
+			return true;
+	}
+	return false;
+}
+
 bool
 mm_md_direct_mapped_phys(paddr_t pa, vaddr_t *vap)
 {
-	/* XXX */
-	if (physical_start <= pa && pa < physical_end) {
+	if (in_dram_p(pa, 0)) {
 		*vap = AARCH64_PA_TO_KVA(pa);
 		return true;
 	}
-
 	return false;
 }
 
 int
 mm_md_physacc(paddr_t pa, vm_prot_t prot)
 {
-	/* XXX */
-	if (physical_start <= pa && pa < physical_end)
+	if (in_dram_p(pa, 0))
 		return 0;
 
 	return kauth_authorize_machdep(kauth_cred_get(),
@@ -554,8 +579,12 @@ mm_md_kernacc(void *ptr, vm_prot_t prot, bool *handled)
 		if ((v < data_start) && (prot & VM_PROT_WRITE))
 			return EFAULT;
 	} else if (IN_RANGE(v, AARCH64_KSEG_START, AARCH64_KSEG_END)) {
+		/*
+		 * if defined PMAP_MAP_POOLPAGE, direct mapped address (KSEG)
+		 * will be appeared as kvm(3) address.
+		 */
 		paddr_t pa = AARCH64_KVA_TO_PA(v);
-		if (IN_RANGE(pa, physical_start, physical_end)) {
+		if (in_dram_p(pa, 0)) {
 			*handled = true;
 			if (IN_RANGE(pa, kernstart_phys,
 			    kernstart_phys + rosize) &&
