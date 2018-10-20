@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.h,v 1.131.2.2 2018/04/07 04:12:09 pgoyette Exp $	 */
+/*	$NetBSD: rtld.h,v 1.131.2.3 2018/10/20 06:58:22 pgoyette Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -136,9 +136,6 @@ typedef struct _rtld_library_xform_t {
  *
  * Items marked with "(%)" are dynamically allocated, and must be freed
  * when the structure is destroyed.
- *
- * The layout of this structure needs to be preserved because pre-2.0 binaries
- * hard-coded the location of dlopen() and friends.
  */
 
 #define RTLD_MAGIC	0xd550b87a
@@ -195,18 +192,6 @@ typedef struct Struct_Obj_Entry {
 
 	Elf_Addr	init;		/* Initialization function to call */
 	Elf_Addr	fini;		/* Termination function to call */
-
-	/*
-	 * BACKWARDS COMPAT Entry points for dlopen() and friends.
-	 *
-	 * DO NOT MOVE OR ADD TO THE LIST
-	 *
-	 */
-	void           *(*dlopen)(const char *, int);
-	void           *(*dlsym)(void *, const char *);
-	char           *(*dlerror)(void);
-	int             (*dlclose)(void *);
-	int             (*dladdr)(const void *, Dl_info *);
 
 	u_int32_t	mainprog:1,	/* True if this is the main program */
 	        	rtld:1,		/* True if this is the dynamic linker */
@@ -328,6 +313,7 @@ extern Obj_Entry *_rtld_objlist;
 extern Obj_Entry **_rtld_objtail;
 extern u_int _rtld_objcount;
 extern u_int _rtld_objloads;
+extern const uintptr_t _rtld_compat_obj[];
 extern Obj_Entry *_rtld_objmain;
 extern Obj_Entry _rtld_objself;
 extern Search_Path *_rtld_paths;

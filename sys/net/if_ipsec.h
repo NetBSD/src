@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ipsec.h,v 1.1.4.2 2018/05/02 07:20:22 pgoyette Exp $  */
+/*	$NetBSD: if_ipsec.h,v 1.1.4.3 2018/10/20 06:58:46 pgoyette Exp $  */
 
 /*
  * Copyright (c) 2017 Internet Initiative Japan Inc.
@@ -35,6 +35,7 @@
 
 #include <sys/queue.h>
 #ifdef _KERNEL
+#include <sys/pserialize.h>
 #include <sys/psref.h>
 #endif
 
@@ -98,6 +99,7 @@ struct ipsec_softc {
 					  * instead of direct dereference.
 					  */
 	kmutex_t ipsec_lock;		/* writer lock for ipsec_var */
+	pserialize_t ipsec_psz;
 
 	LIST_ENTRY(ipsec_softc) ipsec_list; /* list of all gifs */
 };

@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.c,v 1.139.12.3 2018/09/06 06:56:41 pgoyette Exp $ */
+/* $NetBSD: udf_subr.c,v 1.139.12.4 2018/10/20 06:58:45 pgoyette Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.139.12.3 2018/09/06 06:56:41 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.139.12.4 2018/10/20 06:58:45 pgoyette Exp $");
 #endif /* not lint */
 
 
@@ -1771,7 +1771,7 @@ udf_read_metadata_partition_spacetable(struct udf_mount *ump)
 		"%"PRIu64" bytes\n", inflen));
 
 	/* allocate space for bitmap */
-	dscr = malloc(inflen, M_UDFVOLD, M_CANFAIL | M_WAITOK);
+	dscr = malloc(inflen, M_UDFVOLD, M_WAITOK);
 	if (!dscr)
 		return ENOMEM;
 
@@ -2739,7 +2739,7 @@ udf_vat_write(struct udf_node *vat_node, uint8_t *blob, int size, uint32_t offse
 		/* realloc */
 		new_vat_table = realloc(ump->vat_table,
 			ump->vat_table_alloc_len + UDF_VAT_CHUNKSIZE,
-			M_UDFVOLD, M_WAITOK | M_CANFAIL);
+			M_UDFVOLD, M_WAITOK);
 		if (!new_vat_table) {
 			printf("udf_vat_write: can't extent VAT, out of mem\n");
 			return ENOMEM;
@@ -2936,8 +2936,7 @@ udf_check_for_vat(struct udf_node *vat_node)
 		((vat_length + UDF_VAT_CHUNKSIZE-1) / UDF_VAT_CHUNKSIZE)
 			* UDF_VAT_CHUNKSIZE;
 
-	vat_table = malloc(vat_table_alloc_len, M_UDFVOLD,
-		M_CANFAIL | M_WAITOK);
+	vat_table = malloc(vat_table_alloc_len, M_UDFVOLD, M_WAITOK);
 	if (vat_table == NULL) {
 		printf("allocation of %d bytes failed for VAT\n",
 			vat_table_alloc_len);

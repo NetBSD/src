@@ -1,4 +1,4 @@
-.\"	$NetBSD: malloc.9,v 1.54 2017/07/03 21:28:48 wiz Exp $
+.\"	$NetBSD: malloc.9,v 1.54.4.1 2018/10/20 06:58:23 pgoyette Exp $
 .\"
 .\" Copyright (c) 1996, 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd August 7, 2015
+.Dd October 14, 2018
 .Dt MALLOC 9
 .Os
 .Sh NAME
@@ -126,7 +126,7 @@ The
 argument further qualifies
 .Fn malloc
 operational characteristics as follows:
-.Bl -tag -offset indent -width M_CANFAIL
+.Bl -tag -offset indent -width M_NOWAIT
 .It Dv M_NOWAIT
 Causes
 .Fn malloc
@@ -153,22 +153,6 @@ is conveniently defined to be 0, and hence may be or'ed into the
 argument to indicate that it's ok to wait for resources.
 .It Dv M_ZERO
 Causes the allocated memory to be set to all zeros.
-.It Dv M_CANFAIL
-Changes behaviour for
-.Dv M_WAITOK
-case - if the requested memory size is bigger than
-.Fn malloc
-can ever allocate, return failure, rather than calling
-.Xr panic 9 .
-This is different to M_NOWAIT, since
-the call can still wait for resources.
-.Pp
-Rather than depending on
-.Dv M_CANFAIL ,
-kernel code should do proper bound checking itself.
-This flag should only be used in cases where this is not feasible.
-Since it can hide real kernel bugs, its usage is
-.Em strongly discouraged .
 .El
 .Pp
 The

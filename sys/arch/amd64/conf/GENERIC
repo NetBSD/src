@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.485.2.9 2018/09/30 01:45:36 pgoyette Exp $
+# $NetBSD: GENERIC,v 1.485.2.10 2018/10/20 06:58:24 pgoyette Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.485.2.9 $"
+#ident		"GENERIC-$Revision: 1.485.2.10 $"
 
 maxusers	64		# estimated number of users
 
@@ -74,11 +74,14 @@ options 	USERCONF	# userconf(4) support
 options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
 # CPU-related options
-#options 	USER_LDT	# user-settable LDT; used by WINE
 options 	SVS		# Separate Virtual Space
 makeoptions	SPECTRE_V2_GCC_MITIGATION=1	# GCC Spectre variant 2
 						# migitation
 options 	SPECTRE_V2_GCC_MITIGATION
+
+# USER_LDT. You need to disable SVS to use it.
+#options 	USER_LDT	# user-settable LDT; used by WINE
+#no options	SVS
 
 # CPU features
 acpicpu*	at cpu?		# ACPI CPU (including frequency scaling)

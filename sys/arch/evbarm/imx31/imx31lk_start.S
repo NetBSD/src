@@ -1,4 +1,4 @@
-/*	$NetBSD: imx31lk_start.S,v 1.5 2014/03/30 23:12:26 matt Exp $	*/
+/*	$NetBSD: imx31lk_start.S,v 1.5.28.1 2018/10/20 06:58:27 pgoyette Exp $	*/
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -32,7 +32,7 @@
 #include <arm/armreg.h>
 #include "assym.h"
 
-RCSID("$NetBSD: imx31lk_start.S,v 1.5 2014/03/30 23:12:26 matt Exp $")
+RCSID("$NetBSD: imx31lk_start.S,v 1.5.28.1 2018/10/20 06:58:27 pgoyette Exp $")
 
 #ifndef SDRAM_START
 #define SDRAM_START 0x80000000
@@ -60,7 +60,7 @@ _C_LABEL(imx31lk_start):
 	mcr	p15, 0, r3, c2, c0, 2		/* set TTBCR to enable TTBR1 */
 #endif
 
-	mov	r1, #(KERNEL_BASE_EXT >> L1_S_SHIFT)
+	mov	r1, #(KERNEL_BASE >> L1_S_SHIFT)
 	add	r2, r1, #0x80			/* 128 1MB entries */
 	ldr	r3, .Lsdram_pde
 1:

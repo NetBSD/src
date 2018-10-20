@@ -1,20 +1,12 @@
-#	$NetBSD: files.exynos,v 1.24.4.4 2018/09/30 01:45:38 pgoyette Exp $
+#	$NetBSD: files.exynos,v 1.24.4.5 2018/10/20 06:58:26 pgoyette Exp $
 #
 # Configuration info for Samsung Exynos SoC ARM Peripherals
 #
 
-include "arch/arm/pic/files.pic"
-include "arch/arm/cortex/files.cortex"
+#include "arch/arm/pic/files.pic"
+#include "arch/arm/cortex/files.cortex"
 
 defflag	opt_cpuoptions.h			ARM_TRUSTZONE_FIRMWARE
-
-file	arch/arm/arm32/arm32_boot.c
-file	arch/arm/arm32/arm32_kvminit.c
-file	arch/arm/arm32/arm32_reboot.c
-file	arch/arm/arm32/irq_dispatch.S
-file	arch/arm/arm32/armv7_generic_space.c
-file	arch/arm/arm/arm_generic_dma.c
-file	arch/arm/arm/bus_space_a4x.S
 
 file	arch/arm/samsung/exynos_soc.c
 file	arch/arm/samsung/exynos_smc.S		arm_trustzone_firmware

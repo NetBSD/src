@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.418.2.5 2018/09/30 01:45:35 pgoyette Exp $
+#       $NetBSD: Makefile,v 1.418.2.6 2018/10/20 06:58:23 pgoyette Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -357,6 +357,7 @@ MLINKS+=fstrans.9 fstrans_done.9 \
 	fstrans.9 fstrans_getstate.9 \
 	fstrans.9 fstrans_setstate.9 \
 	fstrans.9 fstrans_start.9 \
+	fstrans.9 fstrans_start_lazy.9 \
 	fstrans.9 fstrans_start_nowait.9 \
 	fstrans.9 fscow_establish.9 \
 	fstrans.9 fscow_disestablish.9 \

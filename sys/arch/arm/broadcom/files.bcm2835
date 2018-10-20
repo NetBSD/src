@@ -1,15 +1,7 @@
-#	$NetBSD: files.bcm2835,v 1.29.2.2 2018/04/07 04:12:11 pgoyette Exp $
+#	$NetBSD: files.bcm2835,v 1.29.2.3 2018/10/20 06:58:25 pgoyette Exp $
 #
 # Configuration info for Broadcom BCM2835 ARM Peripherals
 #
-
-file	arch/arm/arm32/arm32_boot.c			arm32
-file	arch/arm/arm32/arm32_kvminit.c			arm32
-file	arch/arm/arm32/arm32_reboot.c			arm32
-file	arch/arm/arm32/irq_dispatch.S			arm32
-file	arch/arm/arm32/armv7_generic_space.c		arm32
-file	arch/arm/arm/bus_space_a4x.S			arm32
-#file	arch/arm/arm/arm_generic_dma.c
 
 file	arch/arm/broadcom/bcm2835_dma.c
 file	arch/arm/broadcom/bcm2835_mbox_subr.c

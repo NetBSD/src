@@ -1,29 +1,28 @@
-#	$NetBSD: std.netwalker,v 1.10 2014/08/24 07:59:22 jnemeth Exp $
+#	$NetBSD: std.netwalker,v 1.10.18.1 2018/10/20 06:58:27 pgoyette Exp $
 #
 # standard NetBSD/evbarm options for Sharp NetWalker
 
-machine	evbarm arm
-include 	"arch/evbarm/conf/std.evbarm"
+machine		evbarm arm
+include		"arch/evbarm/conf/std.evbarm"
 
 # Pull in i.mx51 config definitions.
-include	  	"arch/evbarm/conf/files.netwalker"
+include		"arch/evbarm/conf/files.netwalker"
 
 options 	MODULAR
 options 	MODULAR_DEFAULT_AUTOLOAD
 options 	__HAVE_FAST_SOFTINTS		# should be in types.h
 options 	__HAVE_CPU_COUNTER
-options         __HAVE_MM_MD_DIRECT_MAPPED_PHYS
+options 	__HAVE_MM_MD_DIRECT_MAPPED_PHYS
 options 	ARM_HAS_VBAR
 options 	TPIDRPRW_IS_CURCPU
 options 	CORTEX_PMC
 options 	CORTEX_PMC_CCNT_HZ=800000000
-options 	KERNEL_BASE_EXT=0x80000000
 options 	EVBARM_BOARDTYPE="netwalker"
 options 	FPU_VFP
 
-makeoptions	LOADADDRESS="0x90100000"
-makeoptions	BOARDTYPE="netwalker"
-makeoptions	BOARDMKFRAG="${THISARM}/conf/mk.netwalker"
+makeoptions 	LOADADDRESS="0x90100000"
+makeoptions 	BOARDTYPE="netwalker"
+makeoptions 	BOARDMKFRAG="${THISARM}/conf/mk.netwalker"
 
 options 	ARM_INTR_IMPL="<arch/arm/imx/imx51_intr.h>"
-options		ARM_GENERIC_TODR
+options 	ARM_GENERIC_TODR

@@ -1,4 +1,4 @@
-#	$NetBSD: files.aarch64,v 1.2.2.3 2018/10/02 01:43:53 pgoyette Exp $
+#	$NetBSD: files.aarch64,v 1.2.2.4 2018/10/20 06:58:24 pgoyette Exp $
 
 defflag opt_cpuoptions.h	AARCH64_ALIGNMENT_CHECK
 defflag opt_cpuoptions.h	AARCH64_EL0_STACK_ALIGNMENT_CHECK
@@ -15,8 +15,9 @@ defflag	opt_cputypes.h		CPU_CORTEXA57: CPU_CORTEX
 defparam opt_arm_intr_impl.h	ARM_INTR_IMPL
 
 # ARM-specific debug options (for compat arch/arm/*)
-defflag opt_arm_debug.h		ARM_LOCK_CAS_DEBUG
-defflag opt_arm_debug.h		VERBOSE_INIT_ARM
+defflag  opt_arm_debug.h	ARM_LOCK_CAS_DEBUG
+defflag  opt_arm_debug.h	VERBOSE_INIT_ARM
+defparam opt_arm_debug.h	EARLYCONS
 
 # Timer options
 defflag opt_arm_timer.h		__HAVE_GENERIC_CPU_INITCLOCKS
@@ -105,6 +106,7 @@ file	arch/aarch64/aarch64/vm_machdep.c
 
 # pmap
 file	arch/aarch64/aarch64/pmap.c
+file	arch/aarch64/aarch64/pmapboot.c
 file	arch/aarch64/aarch64/pmap_page.S
 #file	uvm/pmap/pmap_pvt.c
 
@@ -116,10 +118,7 @@ file	arch/aarch64/aarch64/pmap_page.S
 # NetBSD 32-bit binary compatibility
 include "compat/netbsd32/files.netbsd32"
 file	arch/aarch64/aarch64/netbsd32_machdep.c		compat_netbsd32
-#file	arch/aarch64/aarch32/aarch32_oabi_machdep.c	compat_aarch32_oabi
-#file	arch/aarch64/aarch32/aarch32_eabi_machdep.c	compat_aarch32_eabi
-file	arch/aarch64/aarch32/netbsd32_machdep_13.c	compat_13 & compat_netbsd32
-file	arch/aarch64/aarch32/netbsd32_machdep_16.c	compat_16 & compat_netbsd32
+file	arch/aarch64/aarch64/netbsd32_syscall.c		compat_netbsd32
 
 # Linux binary compatibility (COMPAT_LINUX)
 #include "compat/ossaudio/files.ossaudio"

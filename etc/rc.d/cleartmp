@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: cleartmp,v 1.12 2015/07/03 18:36:54 dholland Exp $
+# $NetBSD: cleartmp,v 1.12.14.1 2018/10/20 06:58:19 pgoyette Exp $
 #
 
 # PROVIDE: cleartmp
@@ -45,6 +45,13 @@ cleartmp_start()
 	(cd ${tmp_dir} &&
 	    find -x . ! -name . ! -name lost+found ! -name quota.user \
 		! -name quota.group -exec rm -rf -- {} \+ -type d -prune)
+
+	# if requested, create symlink for /var/shm
+	if [ -n "${var_shm_symlink}" ]; then
+		/bin/rm -rf /var/shm
+		/bin/mkdir -m 1777 "${var_shm_symlink}"
+		/bin/ln -s "${var_shm_symlink}" /var/shm
+	fi
 }
 
 load_rc_config $name

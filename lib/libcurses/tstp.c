@@ -1,4 +1,4 @@
-/*	$NetBSD: tstp.c,v 1.42.12.1 2018/09/30 01:45:33 pgoyette Exp $	*/
+/*	$NetBSD: tstp.c,v 1.42.12.2 2018/10/20 06:58:22 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,11 +34,12 @@
 #if 0
 static char sccsid[] = "@(#)tstp.c	8.3 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: tstp.c,v 1.42.12.1 2018/09/30 01:45:33 pgoyette Exp $");
+__RCSID("$NetBSD: tstp.c,v 1.42.12.2 2018/10/20 06:58:22 pgoyette Exp $");
 #endif
 #endif				/* not lint */
 
 #include <sys/ioctl.h>
+#include <sys/param.h>
 
 #include <errno.h>
 #include <signal.h>
@@ -252,7 +253,9 @@ __stopwin(void)
 	(void)tputs(cursor_normal, 0, __cputchar);
 	(void)tputs(exit_ca_mode, 0, __cputchar);
 	(void)fflush(_cursesi_screen->outfd);
+#ifdef BSD
 	(void)setvbuf(_cursesi_screen->outfd, NULL, _IOLBF, 0);
+#endif
 
 	_cursesi_screen->endwin = 1;
 

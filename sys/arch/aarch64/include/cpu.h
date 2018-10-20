@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.1.28.4 2018/09/30 01:45:35 pgoyette Exp $ */
+/* $NetBSD: cpu.h,v 1.1.28.5 2018/10/20 06:58:24 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -85,6 +85,9 @@ struct cpu_info {
 	u_int ci_gic_redist;	/* GICv3 redistributor index */
 	uint64_t ci_gic_sgir;	/* GICv3 SGIR target */
 
+	/* ACPI */
+	uint64_t ci_acpiid;	/* ACPI Processor Unique ID */
+
 	uint64_t ci_midr;	/* MIDR_EL1 */
 	uint64_t ci_mpidr;	/* MPIDR_EL1 */
 
@@ -103,10 +106,12 @@ curcpu(void)
 
 #define setsoftast(ci)		atomic_or_uint(&(ci)->ci_astpending, __BIT(0))
 #define cpu_signotify(l)	setsoftast((l)->l_cpu)
+
 void cpu_set_curpri(int);
 void cpu_proc_fork(struct proc *, struct proc *);
 void cpu_need_proftick(struct lwp *l);
 void cpu_boot_secondary_processors(void);
+void cpu_mpstart(void);
 void cpu_hatch(struct cpu_info *);
 
 extern struct cpu_info *cpu_info[];

@@ -1,4 +1,4 @@
-/*	$NetBSD: shell.h,v 1.25.2.1 2018/07/28 04:32:56 pgoyette Exp $	*/
+/*	$NetBSD: shell.h,v 1.25.2.2 2018/10/20 06:58:15 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -101,21 +101,10 @@ extern	int		ShNest;
 #define	DBG_EXTRAS(n)	((DBG_VBOSE_SHIFT * 2) + (n))
 
 /*
- * Unconditional tracing for compatibility with old tracing setup.
- */
-#define TRACE(param)		do {					\
-					trace param;			\
-				} while (/*CONSTCOND*/ 0)
-#define TRACEV(param)		do {					\
-					tracev param;			\
-				} while (/*CONSTCOND*/ 0)
-
-/*
- * and the newer conditional tracing, so the mainainer can control
+ * Macros to enable tracing, so the mainainer can control
  * just how much debug output is dumped to the trace file
- * (once the rest of the shell is converted to use it).
  *
- * in the X forms, "xtra" can be any legal C statement(s) without (bare) commas
+ * In the X forms, "xtra" can be any legal C statement(s) without (bare) commas
  * executed if the relevant debug flag is enabled, after any tracing output.
  */
 #define CTRACE(when, param)	do {					\

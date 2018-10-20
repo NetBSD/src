@@ -1,4 +1,4 @@
-/* $NetBSD: types.h,v 1.5.16.3 2018/07/28 04:37:26 pgoyette Exp $ */
+/* $NetBSD: types.h,v 1.5.16.4 2018/10/20 06:58:24 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -94,6 +94,7 @@ typedef __uint64_t __register_t;
 
 #define __HAVE_FAST_SOFTINTS
 #define __HAVE_MM_MD_DIRECT_MAPPED_PHYS
+#define __HAVE_MM_MD_KERNACC
 #define __HAVE_CPU_COUNTER
 #define __HAVE_SYSCALL_INTERN
 #define __HAVE_NEW_STYLE_BUS_H

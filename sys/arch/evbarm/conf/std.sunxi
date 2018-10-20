@@ -1,37 +1,37 @@
-#	$NetBSD: std.sunxi,v 1.4 2017/08/25 00:07:03 jmcneill Exp $
+#	$NetBSD: std.sunxi,v 1.4.6.1 2018/10/20 06:58:27 pgoyette Exp $
 #
 
-machine	evbarm arm
-include 	"arch/evbarm/conf/std.evbarm"
+machine		evbarm arm
+include		"arch/evbarm/conf/std.evbarm"
 
 include		"arch/evbarm/conf/files.sunxi"
 
-options 	FDT				# Flattened Device Tree support
+# Architecture opions
+options 	ARM_GENERIC_TODR
+options 	ARM_HAS_VBAR
+options 	ARM_INTR_IMPL="<arch/arm/fdt/fdt_intr.h>"
 options 	DRAM_BLOCKS=256
+options 	FDT				# Flattened Device Tree support
+options 	FPU_VFP
 options 	MODULAR
 options 	MODULAR_DEFAULT_AUTOLOAD
-options 	__HAVE_CPU_COUNTER
-options 	__HAVE_FAST_SOFTINTS		# should be in types.h
-options 	__HAVE_CPU_UAREA_ALLOC_IDLELWP
-options 	ARM_HAS_VBAR
-#options 	__HAVE_MM_MD_DIRECT_MAPPED_PHYS
 #options 	PMAP_NEED_ALLOC_POOLPAGE
 options 	TPIDRPRW_IS_CURCPU
-options 	KERNEL_BASE_EXT=0x80000000
-options 	FPU_VFP
 options 	__BUS_SPACE_HAS_STREAM_METHODS
+options 	__HAVE_CPU_COUNTER
+options 	__HAVE_CPU_UAREA_ALLOC_IDLELWP
+options 	__HAVE_FAST_SOFTINTS		# should be in types.h
+options 	__HAVE_GENERIC_START
 options 	__HAVE_GENERIC_CPU_INITCLOCKS
+#options 	__HAVE_MM_MD_DIRECT_MAPPED_PHYS
 
-makeoptions	KERNEL_BASE_PHYS="0x40008000"
-makeoptions	KERNEL_BASE_VIRT="0x80008000"
-makeoptions	BOARDTYPE="sunxi"
-makeoptions	BOARDMKFRAG="${THISARM}/conf/mk.sunxi"
-makeoptions	CPUFLAGS="-march=armv7-a -mfpu=neon"
-
-options 	ARM_INTR_IMPL="<arch/arm/fdt/fdt_intr.h>"
-options		ARM_GENERIC_TODR
+makeoptions 	BOARDTYPE="sunxi"
+makeoptions 	BOARDMKFRAG="${THISARM}/conf/mk.sunxi"
+makeoptions 	CPUFLAGS="-march=armv7-a -mfpu=neon"
+makeoptions 	KERNEL_BASE_PHYS="0x40008000"
+makeoptions 	KERNEL_BASE_VIRT="0x80008000"
 
 # initrd support
 options 	MEMORY_DISK_HOOKS
 options 	MEMORY_DISK_DYNAMIC
-pseudo-device	md
+pseudo-device 	md

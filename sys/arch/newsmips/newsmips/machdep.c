@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.119 2016/12/22 14:47:58 cherry Exp $	*/
+/*	$NetBSD: machdep.c,v 1.119.14.1 2018/10/20 06:58:29 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.119 2016/12/22 14:47:58 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.119.14.1 2018/10/20 06:58:29 pgoyette Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -111,6 +111,7 @@ struct vm_map *phys_map = NULL;
 char *bootinfo = NULL;		/* pointer to bootinfo structure */
 int systype;			/* what type of NEWS we are */
 struct apbus_sysinfo *_sip = NULL;
+void *sccport0a;
 
 phys_ram_seg_t mem_clusters[VM_PHYSSEG_MAX];
 int mem_cluster_cnt;
@@ -194,13 +195,20 @@ mach_init(int x_boothowto, int x_bootdev, int x_bootname, int x_maxmem)
 	if (systype == 0) 
 		systype = NEWS3400;	/* XXX compatibility for old boot */
 
-#ifdef news5000
-	if (systype == NEWS5000) {
+#ifdef news3400
+	if (systype == NEWS3400) {
+		sccport0a = (void *)SCCPORT0A;
+	}
+#endif
+
+#if defined(news5000) || defined(news4000)
+	if (systype == NEWS5000 || systype == NEWS4000) {
 		int i;
 		char *bspec = (char *)x_bootdev;
 
 		if (bi_arg == NULL)
-			panic("news5000 requires BTINFO_BOOTARG to boot");
+			panic("%s requires BTINFO_BOOTARG to boot",
+			    systype == NEWS5000 ? "news5000" : "news4000");
 
 		_sip = (void *)bi_arg->sip;
 		x_maxmem = _sip->apbsi_memsize;
@@ -223,9 +231,11 @@ mach_init(int x_boothowto, int x_bootdev, int x_bootname, int x_maxmem)
 			x_bootdev |= (i << 8);		/* partition */
 		}
  bootspec_end:
+		sccport0a = (systype == NEWS5000) ?
+		    (void *)NEWS5000_SCCPORT0A : (void *)NEWS4000_SCCPORT0A;
 		consinit();
 	}
-#endif
+#endif /* news5000 || news4000 */
 
 	/*
 	 * Save parameters into kernel work area.
@@ -347,6 +357,23 @@ mach_init(int x_boothowto, int x_bootdev, int x_bootname, int x_maxmem)
 		break;
 #endif
 
+#ifdef news4000
+	case NEWS4000:
+		news4000_init();
+		cpu_setmodel("%s", idrom.id_machine);
+		model = cpu_getmodel();
+		if (strcmp(model, "news4000") == 0) {
+			/*
+			 * Set up interrupt handling and I/O addresses.
+			 */
+			hardware_intr = news4000_intr;
+			cpuspeed = 40;  /* ??? XXX */
+		} else {
+			printf("kernel not configured for machine %s\n", model);
+		}
+		break;
+#endif
+
 	default:
 		printf("kernel not configured for systype %d\n", systype);
 		break;
@@ -406,8 +433,8 @@ void
 prom_halt(int howto)
 
 {
-#ifdef news5000
-	if (systype == NEWS5000)
+#if defined(news5000) || defined(news4000)
+	if (systype == NEWS5000 || systype == NEWS4000)
 		apcall_exit(howto);
 #endif
 #ifdef news3400

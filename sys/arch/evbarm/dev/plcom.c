@@ -1,4 +1,4 @@
-/*	$NetBSD: plcom.c,v 1.53 2017/11/07 07:21:13 skrll Exp $	*/
+/*	$NetBSD: plcom.c,v 1.53.2.1 2018/10/20 06:58:27 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2001 ARM Ltd
@@ -94,7 +94,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: plcom.c,v 1.53 2017/11/07 07:21:13 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: plcom.c,v 1.53.2.1 2018/10/20 06:58:27 pgoyette Exp $");
 
 #include "opt_plcom.h"
 #include "opt_ddb.h"
@@ -1537,8 +1537,10 @@ plcom_loadchannelregs(struct plcom_softc *sc)
 	switch (pi->pi_type) {
 	case PLCOM_TYPE_PL010:
 		PWRITE1(pi, PL010COM_CR, 0);
-		PWRITE1(pi, PL010COM_DLBL, sc->sc_ratel);
-		PWRITE1(pi, PL010COM_DLBH, sc->sc_rateh);
+		if (sc->sc_frequency != 0) {
+			PWRITE1(pi, PL010COM_DLBL, sc->sc_ratel);
+			PWRITE1(pi, PL010COM_DLBH, sc->sc_rateh);
+		}
 		PWRITE1(pi, PL010COM_LCR, sc->sc_lcr);
 
 		/* XXX device_unit() abuse */
@@ -1552,8 +1554,10 @@ plcom_loadchannelregs(struct plcom_softc *sc)
 
 	case PLCOM_TYPE_PL011:
 		PWRITE4(pi, PL011COM_CR, 0);
-		PWRITE1(pi, PL011COM_FBRD, sc->sc_ratel);
-		PWRITE4(pi, PL011COM_IBRD, sc->sc_rateh);
+		if (sc->sc_frequency != 0) {
+			PWRITE1(pi, PL011COM_FBRD, sc->sc_ratel);
+			PWRITE4(pi, PL011COM_IBRD, sc->sc_rateh);
+		}
 		PWRITE1(pi, PL011COM_LCRH, sc->sc_lcr);
 		sc->sc_mcr_active = sc->sc_mcr;
 		CLR(sc->sc_cr, PL011_MCR(PL01X_MCR_RTS | PL01X_MCR_DTR));
@@ -2367,18 +2371,22 @@ plcominit(struct plcom_instance *pi, int rate, int frequency, tcflag_t cflag)
 	case PLCOM_TYPE_PL010:
 		PWRITE1(pi, PL010COM_CR, 0);
 
-		rate = pl010comspeed(rate, frequency);
-		PWRITE1(pi, PL010COM_DLBL, (rate & 0xff));
-		PWRITE1(pi, PL010COM_DLBH, ((rate >> 8) & 0xff));
+		if (rate && frequency) {
+			rate = pl010comspeed(rate, frequency);
+			PWRITE1(pi, PL010COM_DLBL, (rate & 0xff));
+			PWRITE1(pi, PL010COM_DLBH, ((rate >> 8) & 0xff));
+		}
 		PWRITE1(pi, PL010COM_LCR, lcr);
 		PWRITE1(pi, PL010COM_CR, PL01X_CR_UARTEN);
 		break;
 	case PLCOM_TYPE_PL011:
 		PWRITE4(pi, PL011COM_CR, 0);
 
-		rate = pl011comspeed(rate, frequency);
-		PWRITE1(pi, PL011COM_FBRD, rate & ((1 << 6) - 1));
-		PWRITE4(pi, PL011COM_IBRD, rate >> 6);
+		if (rate && frequency) {
+			rate = pl011comspeed(rate, frequency);
+			PWRITE1(pi, PL011COM_FBRD, rate & ((1 << 6) - 1));
+			PWRITE4(pi, PL011COM_IBRD, rate >> 6);
+		}
 		PWRITE1(pi, PL011COM_LCRH, lcr);
 		PWRITE4(pi, PL011COM_CR,
 		    PL01X_CR_UARTEN | PL011_CR_RXE | PL011_CR_TXE);

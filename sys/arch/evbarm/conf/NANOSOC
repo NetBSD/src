@@ -1,5 +1,5 @@
 #
-#	$NetBSD: NANOSOC,v 1.1.2.2 2018/09/30 01:45:40 pgoyette Exp $
+#	$NetBSD: NANOSOC,v 1.1.2.3 2018/10/20 06:58:27 pgoyette Exp $
 #
 #	Altera DE0 Nano SoC
 #
@@ -19,7 +19,7 @@ options 	MULTIPROCESSOR
 #options 	LOCKDEBUG
 #options 	PMAP_DEBUG	# Enable pmap_debug_level code
 #options 	IPKDB		# remote kernel debugging
-#options 	VERBOSE_INIT_ARM # verbose bootstraping messages
+options 	VERBOSE_INIT_ARM # verbose bootstraping messages
 makeoptions	DEBUG="-g"	# compile full symbol table
 makeoptions	COPY_SYMTAB=1
 
@@ -57,6 +57,8 @@ ld*		at sdmmc?
 
 dwctwo* 	at fdt?
 usb*		at dwctwo?
+
+dwcwdt* 	at fdt?
 
 include "dev/usb/usbdevices.config"
 

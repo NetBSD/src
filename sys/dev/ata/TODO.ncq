@@ -36,5 +36,3 @@ mvsata - move pci-specific code to the pci attach code
 
 mvsata(4) 64-bit DMA
 - at least with AHA1430SA does not really work, crash in mvsata_intr() on boot
-
-malloc(M_CANFAIL) actually doesn't do anything

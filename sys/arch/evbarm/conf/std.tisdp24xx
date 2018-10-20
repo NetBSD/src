@@ -1,9 +1,9 @@
-#	$NetBSD: std.tisdp24xx,v 1.9 2013/11/01 18:41:06 skrll Exp $
+#	$NetBSD: std.tisdp24xx,v 1.9.28.1 2018/10/20 06:58:27 pgoyette Exp $
 #
 # standard NetBSD/evbarm for SDP2430 options
 
-machine	evbarm arm
-include 	"arch/evbarm/conf/std.evbarm"
+machine		evbarm arm
+include		"arch/evbarm/conf/std.evbarm"
 
 # Pull in SDP2430 config definitions.
 include		"arch/evbarm/conf/files.tisdp24xx"
@@ -13,12 +13,11 @@ options 	ARM11_PMC_CCNT_HZ=266000000
 options 	__HAVE_FAST_SOFTINTS		# should be in types.h
 #options 	TPIDRPRW_IS_CURLWP
 #options 	TPIDRPRW_IS_CURCPU
-options 	KERNEL_BASE_EXT=0x80000000
 
-makeoptions	LOADADDRESS="0x80300000"
-#makeoptions	LOADADDRESS="0xc0000000"
-makeoptions	BOARDTYPE="sdp2430"
-makeoptions	BOARDMKFRAG="${THISARM}/conf/mk.tisdp24xx"
+makeoptions 	LOADADDRESS="0x80300000"
+#makeoptions 	LOADADDRESS="0xc0000000"
+makeoptions 	BOARDTYPE="sdp2430"
+makeoptions 	BOARDMKFRAG="${THISARM}/conf/mk.tisdp24xx"
 
 options 	ARM_INTR_IMPL="<arch/arm/omap/omap2_intr.h>"
-options		ARM_GENERIC_TODR
+options 	ARM_GENERIC_TODR

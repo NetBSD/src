@@ -1,11 +1,9 @@
-#	$NetBSD: mk.rpi,v 1.5 2017/12/10 21:38:26 skrll Exp $
+#	$NetBSD: mk.rpi,v 1.5.2.1 2018/10/20 06:58:27 pgoyette Exp $
 
-SYSTEM_FIRST_OBJ=	rpi_start.o
-SYSTEM_FIRST_SFILE=	${THISARM}/rpi/rpi_start.S
+SYSTEM_FIRST_OBJ=	armv6_start.o
+SYSTEM_FIRST_SFILE=	${ARM}/arm/armv6_start.S
 
 _OSRELEASE!=		${HOST_SH} $S/conf/osrelease.sh
-
-GENASSYM_EXTRAS+=	${THISARM}/rpi/genassym.cf
 
 KERNEL_BASE_PHYS=0x00008000
 KERNEL_BASE_VIRT=0x80008000

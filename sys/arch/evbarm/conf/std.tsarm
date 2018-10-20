@@ -1,19 +1,19 @@
-#	$NetBSD: std.tsarm,v 1.8 2012/12/16 23:47:57 matt Exp $
+#	$NetBSD: std.tsarm,v 1.8.36.1 2018/10/20 06:58:27 pgoyette Exp $
 #
 # standard NetBSD/evbarm for TS7200 options
 
-machine	evbarm arm
-include 	"arch/evbarm/conf/std.evbarm"
+machine		evbarm arm
+include		"arch/evbarm/conf/std.evbarm"
 
 # Pull in tsarm config definitions.
 include		"arch/evbarm/conf/files.tsarm"
 
 options 	EXEC_AOUT
 
-options		HZ=64
+options 	HZ=64
 
-makeoptions	BOARDTYPE="tsarm"
+makeoptions 	BOARDTYPE="tsarm"
 options 	KERNEL_BASE_EXT=0xc0000000
-makeoptions	LOADADDRESS="0xc0200000"
-makeoptions	BOARDMKFRAG="${THISARM}/conf/mk.tsarm"
+makeoptions 	LOADADDRESS="0xc0200000"
+makeoptions 	BOARDMKFRAG="${THISARM}/conf/mk.tsarm"
 options 	ARM_INTR_IMPL="<arch/arm/ep93xx/ep93xx_intr.h>"

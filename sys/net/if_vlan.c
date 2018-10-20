@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vlan.c,v 1.124.2.4 2018/09/06 06:56:44 pgoyette Exp $	*/
+/*	$NetBSD: if_vlan.c,v 1.124.2.5 2018/10/20 06:58:46 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.124.2.4 2018/09/06 06:56:44 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.124.2.5 2018/10/20 06:58:46 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -415,6 +415,7 @@ vlan_clone_destroy(struct ifnet *ifp)
 
 	psref_target_destroy(&ifv->ifv_mib->ifvm_psref, ifvm_psref_class);
 	kmem_free(ifv->ifv_mib, sizeof(struct ifvlan_linkmib));
+	pserialize_destroy(ifv->ifv_psz);
 	mutex_destroy(&ifv->ifv_lock);
 	free(ifv, M_DEVBUF);
 
@@ -633,6 +634,9 @@ vlan_unconfig_locked(struct ifvlan *ifv, struct ifvlan_linkmib *nmib)
 		ether_ifdetach(ifp);
 		IFNET_LOCK(ifp);
 		mutex_enter(&ifv->ifv_lock);
+
+		/* if_free_sadl must be called with IFNET_LOCK */
+		if_free_sadl(ifp, 1);
 
 		/* Restore vlan_ioctl overwritten by ether_ifdetach */
 		ifp->if_ioctl = vlan_ioctl;

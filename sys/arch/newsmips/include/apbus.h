@@ -1,4 +1,4 @@
-/*	$NetBSD: apbus.h,v 1.5 2005/12/11 12:18:24 christos Exp $	*/
+/*	$NetBSD: apbus.h,v 1.5.164.1 2018/10/20 06:58:29 pgoyette Exp $	*/
 
 /*-
  * Copyright (C) 1999 SHIMIZU Ryo.  All rights reserved.
@@ -103,6 +103,8 @@ struct apbus_sysinfo {
  */
 
 extern struct apbus_sysinfo *_sip;
+extern volatile uint32_t *news_wbflush;
+extern void *sccport0a;
 void apbus_wbflush(void);
 
 #endif /* !__MACHINE_APBUS__ */

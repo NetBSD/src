@@ -1,4 +1,4 @@
-/*	$NetBSD: strftime.c,v 1.40.2.1 2018/05/21 04:35:55 pgoyette Exp $	*/
+/*	$NetBSD: strftime.c,v 1.40.2.2 2018/10/20 06:58:22 pgoyette Exp $	*/
 
 /* Convert a broken-down timestamp to a string.  */
 
@@ -35,7 +35,7 @@
 static char	elsieid[] = "@(#)strftime.c	7.64";
 static char	elsieid[] = "@(#)strftime.c	8.3";
 #else
-__RCSID("$NetBSD: strftime.c,v 1.40.2.1 2018/05/21 04:35:55 pgoyette Exp $");
+__RCSID("$NetBSD: strftime.c,v 1.40.2.2 2018/10/20 06:58:22 pgoyette Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -486,7 +486,8 @@ label:
 				/*
 				** C99 and later say that %Z must be
 				** replaced by the empty string if the
-				** time zone is not determinable.
+				** time zone abbreviation is not
+				** determinable.
 				*/
 				continue;
 			case 'z':

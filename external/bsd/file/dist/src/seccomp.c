@@ -1,4 +1,4 @@
-/*	$NetBSD: seccomp.c,v 1.1.1.1.2.2 2018/04/22 07:20:09 pgoyette Exp $	*/
+/*	$NetBSD: seccomp.c,v 1.1.1.1.2.3 2018/10/20 06:58:20 pgoyette Exp $	*/
 
 /*
  * Redistribution and use in source and binary forms, with or without
@@ -30,9 +30,9 @@
 
 #ifndef	lint
 #if 0
-FILE_RCSID("@(#)$File: seccomp.c,v 1.2 2017/11/04 01:14:25 christos Exp $")
+FILE_RCSID("@(#)$File: seccomp.c,v 1.7 2018/09/09 20:33:28 christos Exp $")
 #else
-__RCSID("$NetBSD: seccomp.c,v 1.1.1.1.2.2 2018/04/22 07:20:09 pgoyette Exp $");
+__RCSID("$NetBSD: seccomp.c,v 1.1.1.1.2.3 2018/10/20 06:58:20 pgoyette Exp $");
 #endif
 #endif	/* lint */
 
@@ -65,12 +65,7 @@ enable_sandbox_basic(void)
 	if (prctl(PR_SET_NO_NEW_PRIVS, 1, 0, 0, 0) == -1)
 		return -1;
 
-#if 0
-	// prevent escape via ptrace
-	prctl(PR_SET_DUMPABLE, 0);
-#endif
-
-	if (prctl (PR_SET_DUMPABLE, 0, 0, 0, 0) == -1)
+	if (prctl(PR_SET_DUMPABLE, 0, 0, 0, 0) == -1)
 		return -1;
 
 	// initialize the filter
@@ -137,14 +132,14 @@ enable_sandbox_basic(void)
 	DENY_RULE (socket);
 	// ...
 
-	
+
 	// applying filter...
 	if (seccomp_load (ctx) == -1)
 		goto out;
 	// free ctx after the filter has been loaded into the kernel
 	seccomp_release(ctx);
 	return 0;
-	
+
 out:
 	seccomp_release(ctx);
 	return -1;
@@ -162,7 +157,7 @@ enable_sandbox_full(void)
 
 	if (prctl(PR_SET_DUMPABLE, 0, 0, 0, 0) == -1)
 		return -1;
-	
+
 	// initialize the filter
 	ctx = seccomp_init(SCMP_ACT_KILL);
 	if (ctx == NULL)
@@ -174,16 +169,27 @@ enable_sandbox_full(void)
 	ALLOW_RULE(dup2);
 	ALLOW_RULE(exit);
 	ALLOW_RULE(exit_group);
-	ALLOW_RULE(fcntl);  
+	ALLOW_RULE(fcntl);
+ 	ALLOW_RULE(fcntl64);
 	ALLOW_RULE(fstat);
+ 	ALLOW_RULE(fstat64);
 	ALLOW_RULE(getdents);
+#ifdef __NR_getdents64
+	ALLOW_RULE(getdents64);
+#endif
 	ALLOW_RULE(ioctl);
 	ALLOW_RULE(lseek);
+ 	ALLOW_RULE(_llseek);
 	ALLOW_RULE(lstat);
+ 	ALLOW_RULE(lstat64);
 	ALLOW_RULE(mmap);
+ 	ALLOW_RULE(mmap2);
 	ALLOW_RULE(mprotect);
 	ALLOW_RULE(mremap);
 	ALLOW_RULE(munmap);
+#ifdef __NR_newfstatat
+	ALLOW_RULE(newfstatat);
+#endif
 	ALLOW_RULE(open);
 	ALLOW_RULE(openat);
 	ALLOW_RULE(pread64);
@@ -194,6 +200,7 @@ enable_sandbox_full(void)
 	ALLOW_RULE(rt_sigreturn);
 	ALLOW_RULE(select);
 	ALLOW_RULE(stat);
+	ALLOW_RULE(stat64);
 	ALLOW_RULE(sysinfo);
 	ALLOW_RULE(unlink);
 	ALLOW_RULE(write);

@@ -329,11 +329,11 @@ detect_init()
 			fi'
 	elif [ -x /usr/sbin/service ]; then
 		# Could be FreeBSD
-		RESTARTCMD='
-			if /usr/sbin/service $1 $status >/dev/null 2>&1
+		RESTARTCMD="
+			if /usr/sbin/service \$1 $status >/dev/null 2>&1
 			then
-				/usr/sbin/service $1 restart
-			fi'
+				/usr/sbin/service \$1 restart
+			fi"
 	elif [ -x /bin/sv ]; then
 		RESTARTCMD='/bin/sv status $1 >/dev/null 2>&1 &&
 			    /bin/sv try-restart $1'
@@ -697,7 +697,7 @@ if [ "$cmd" = r ] || [ "$cmd" = R ]; then
 	detect_init || exit 1
 	if [ "$cmd" = r ]; then
 		set -- $args
-		eval $RESTARTCMD
+		eval "$RESTARTCMD"
 	else
 		echo "$RESTARTCMD"
 	fi

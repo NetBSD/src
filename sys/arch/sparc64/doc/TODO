@@ -1,4 +1,4 @@
- /* $NetBSD: TODO,v 1.25.2.1 2018/04/16 01:59:56 pgoyette Exp $ */
+ /* $NetBSD: TODO,v 1.25.2.2 2018/10/20 06:58:29 pgoyette Exp $ */
 
 Things to be done:
 
@@ -12,7 +12,7 @@ sun4u:
 
 sun4v:
  - current status: The kernel boots and starts the init process (pid 1) 
-   which spawns /bin/sh (pid 2). This is forked as a new/bin/sh (pid 3) which crashes, probably due to MMU DPROT issues.
+   which spawns /sbin/sh (pid 2). This is forked as a new /sbin/sh (pid 3) which crashes, probably due to MMU DPROT issues.
 - 64-bit kernel support
 - 32-bit kernel support
 - libkvm
@@ -33,4 +33,7 @@ sun4v:
 - vdsk and ldc drivers: code maked with OPENBSD_BUSDMA - make the bus_dma stuff work properly
 - vbus.c: handle prom_getprop() memory leaks
 - locore.s: rft_user (sun4v specific manaul fill) - seems to work, but is it good enough (compared to openbsds rft_user?
-
+ - platforms tested so far:
+ -- qemu sun4v/niagara - crash in init process relaed to fork (stack?)
+ -- T2000 - mmu fault somewhere
+ -- T5 - stickcmpr is not properly initialized ???

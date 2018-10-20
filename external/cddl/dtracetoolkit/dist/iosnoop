@@ -1,12 +1,14 @@
-#!/usr/bin/sh
+#!/bin/sh
 #
 # iosnoop - A program to print disk I/O events as they happen, with useful
-#           details such as UID, PID, filename, command, etc. 
-#           Written using DTrace (Solaris 10 3/05).
+#           details such as UID, PID, filename (if available), command, etc.
+#           Written using DTrace (Solaris 10 3/05, MacOS X 10.5).
 #
-# This is measuring disk events that have made it past system caches.
+# This is measuring events that have made it past system caches, such as
+# disk events for local file systems, and network events for remote
+# filesystems (such as NFS.)
 #
-# $Id: iosnoop,v 1.1.1.1 2015/09/30 22:01:06 christos Exp $
+# $Id: iosnoop,v 1.1.1.1.14.1 2018/10/20 06:58:21 pgoyette Exp $
 #
 # USAGE: 	iosnoop [-a|-A|-DeghiNostv] [-d device] [-f filename] 
 #			[-m mount_point] [-n name] [-p PID]
@@ -67,7 +69,7 @@
 #	    Solaris Dynamic Tracing Guide, http://docs.sun.com
 #	    DTrace Tools, http://www.brendangregg.com/dtrace.html
 #
-# COPYRIGHT: Copyright (c) 2005 Brendan Gregg.
+# COPYRIGHT: Copyright (c) 2009 Brendan Gregg.
 #
 # CDDL HEADER START
 #
@@ -83,8 +85,6 @@
 #
 # CDDL HEADER END
 #
-# Author: Brendan Gregg  [Sydney, Australia]
-#
 # 12-Mar-2004	Brendan Gregg	Created this, build 51.
 # 23-May-2004	   "	  "	Fixed mntpt bug.
 # 10-Oct-2004	   "      "	Rewritten to use the io provider, build 63.
@@ -93,7 +93,7 @@
 # 15-Jul-2005	   "      "	Improved DTIME calculation.
 # 25-Jul-2005	   "      "	Added -p, -n. Improved code.
 # 17-Sep-2005	   "      "	Increased switchrate.
-# 17-Sep-2005	   "      "	Last update.
+# 15-Sep-2009	   "      "	Removed genunix for both MacOS X and NFS.
 #
 
 
@@ -199,6 +199,9 @@ fi
  #pragma D option quiet
  #pragma D option switchrate=10hz
 
+ /* boost the following if you get "dynamic variable drops" */
+ #pragma D option dynvarsize=16m
+
  /*
   * Print header
   */
@@ -207,14 +210,14 @@ fi
 	last_event[""] = 0;
 
 	/* print optional headers */
- 	OPT_start   ? printf("%-14s ","STIME")   : 1;
- 	OPT_end     ? printf("%-14s ","TIME")    : 1;
+ 	OPT_start   ? printf("%-14s ","STIME(us)")   : 1;
+ 	OPT_end     ? printf("%-14s ","TIME(us)")    : 1;
  	OPT_endstr  ? printf("%-20s ","STRTIME") : 1;
  	OPT_devname ? printf("%-7s ","DEVICE")   : 1;
  	OPT_ins     ? printf("%-3s ","INS")      : 1;
  	OPT_nums    ? printf("%-3s %-3s ","MAJ","MIN") : 1;
- 	OPT_delta   ? printf("%-10s ","DELTA")   : 1;
- 	OPT_dtime   ? printf("%-10s ","DTIME")   : 1;
+ 	OPT_delta   ? printf("%-10s ","DELTA(us)")   : 1;
+ 	OPT_dtime   ? printf("%-10s ","DTIME(us)")   : 1;
 
 	/* print main headers */
 	OPT_dump ? 
@@ -230,7 +233,7 @@ fi
  /*
   * Check event is being traced
   */
- io:genunix::start
+ io:::start
  { 
 	/* default is to trace unless filtering, */
 	self->ok = FILTER ? 0 : 1;
@@ -247,7 +250,7 @@ fi
   * Reset last_event for disk idle -> start
   * this prevents idle time being counted as disk time.
   */
- io:genunix::start
+ io:::start
  /! pending[args[1]->dev_statname]/
  {
 	/* save last disk event */
@@ -257,7 +260,7 @@ fi
  /*
   * Store entry details
   */
- io:genunix::start
+ io:::start
  /self->ok/
  {
 	/* these are used as a unique disk event key, */
@@ -281,7 +284,7 @@ fi
  /*
   * Process and Print completion
   */
- io:genunix::done
+ io:::done
  /start_time[args[0]->b_edev, args[0]->b_blkno]/
  {
 	/* decrease disk event pending count */
@@ -359,7 +362,7 @@ fi
   * Prevent pending from underflowing
   * this can happen if this program is started during disk events.
   */
- io:genunix::done
+ io:::done
  /pending[args[1]->dev_statname] < 0/
  {
 	pending[args[1]->dev_statname] = 0;

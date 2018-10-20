@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.123.2.5 2018/09/30 01:45:48 pgoyette Exp $	*/
+/*	$NetBSD: intr.c,v 1.123.2.6 2018/10/20 06:58:29 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.123.2.5 2018/09/30 01:45:48 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.123.2.6 2018/10/20 06:58:29 pgoyette Exp $");
 
 #include "opt_intrdebug.h"
 #include "opt_multiprocessor.h"
@@ -1263,37 +1263,42 @@ intr_establish_xname(int legacy_irq, struct pic *pic, int pin,
 
 #if NPCI > 0 || NISA > 0
 	struct pintrhand *pih;
-	intr_handle_t irq;
-	int evtchn;
+	int gsi;
+	int vector, evtchn;
 
 	KASSERTMSG(legacy_irq == -1 || (0 <= legacy_irq && legacy_irq < NUM_XEN_IRQS),
 	    "bad legacy IRQ value: %d", legacy_irq);
 	KASSERTMSG(!(legacy_irq == -1 && pic == &i8259_pic),
 	    "non-legacy IRQon i8259 ");
 
-	if (pic->pic_type != PIC_I8259) {
-#if NIOAPIC > 0
-		/* Are we passing mp tranmogrified/cascaded irqs ? */
-		irq = (legacy_irq == -1) ? 0 : legacy_irq;
+	gsi = xen_pic_to_gsi(pic, pin);
 
-		/* will do interrupts via I/O APIC */
-		irq |= APIC_INT_VIA_APIC;
-		irq |= pic->pic_apicid << APIC_INT_APIC_SHIFT;
-		irq |= pin << APIC_INT_PIN_SHIFT;
-#else /* NIOAPIC */
-		return NULL;
-#endif /* NIOAPIC */
-	} else {
-		irq = legacy_irq;
-	}
-
-	intrstr = intr_create_intrid(irq, pic, pin, intrstr_buf,
+	intrstr = intr_create_intrid(gsi, pic, pin, intrstr_buf,
 	    sizeof(intrstr_buf));
 
-	evtchn = xen_pirq_alloc(&irq, type);
-	irq = (legacy_irq == -1) ? irq : legacy_irq; /* ISA compat */	
-	pih = pirq_establish(irq & 0xff, evtchn, handler, arg, level,
-	    intrstr, xname);
+	vector = xen_vec_alloc(gsi);
+
+	if (irq2port[gsi] == 0) {
+		extern struct cpu_info phycpu_info_primary; /* XXX */
+		struct cpu_info *ci = &phycpu_info_primary;
+
+		pic->pic_addroute(pic, ci, pin, vector, type);
+
+		evtchn = bind_pirq_to_evtch(gsi);
+		KASSERT(evtchn > 0);
+		KASSERT(evtchn < NR_EVENT_CHANNELS);
+		irq2port[gsi] = evtchn + 1;
+		xen_atomic_set_bit(&ci->ci_evtmask[0], evtchn);
+	} else {
+		/*
+		 * Shared interrupt - we can't rebind.
+		 * The port is shared instead.
+		 */
+		evtchn = irq2port[gsi];
+	}
+
+	pih = pirq_establish(gsi, evtchn, handler, arg, level,
+			     intrstr, xname);
 	pih->pic_type = pic->pic_type;
 	return pih;
 #endif /* NPCI > 0 || NISA > 0 */
@@ -1344,7 +1349,31 @@ intr_disestablish(struct intrhand *ih)
 		return;
 	}
 #if defined(DOM0OPS)
-	pirq_disestablish((struct pintrhand *)ih);
+	/* 
+	 * Cache state, to prevent a use after free situation with
+	 * ih.
+	 */
+
+	struct pintrhand *pih = (struct pintrhand *)ih;
+
+	int pirq = pih->pirq;
+	int port = pih->evtch;
+	KASSERT(irq2port[pirq] != 0);
+
+	pirq_disestablish(pih);
+
+	if (evtsource[port] == NULL) {
+			/*
+			 * Last handler was removed by
+			 * event_remove_handler().
+			 *
+			 * We can safely unbind the pirq now.
+			 */
+
+			port = unbind_pirq_from_evtch(pirq);
+			KASSERT(port == pih->evtch);
+			irq2port[pirq] = 0;
+	}
 #endif
 	return;
 #endif /* XEN */

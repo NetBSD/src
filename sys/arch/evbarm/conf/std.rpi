@@ -1,28 +1,28 @@
-#	$NetBSD: std.rpi,v 1.20 2017/12/10 21:38:26 skrll Exp $
+#	$NetBSD: std.rpi,v 1.20.2.1 2018/10/20 06:58:27 pgoyette Exp $
 #
 # standard NetBSD/evbarm for Raspberry Pi options
 
 machine		evbarm arm
-include 	"arch/evbarm/conf/std.evbarm"
+include		"arch/evbarm/conf/std.evbarm"
 
 # Pull in Raspberry Pi config definitions.
 include		"arch/evbarm/conf/files.rpi"
 
-options 	FDT				# Flattened Device Tree support
+# Architecture opions
+options 	ARM_GENERIC_TODR
+options 	ARM_HAS_VBAR
+options 	ARM_INTR_IMPL="<arch/arm/fdt/fdt_intr.h>"
 options 	DRAM_BLOCKS=256
+options 	EVBARM_BOARDTYPE="rpi"
+options 	FDT				# Flattened Device Tree support
+options 	FPU_VFP
 options 	MODULAR
 options 	MODULAR_DEFAULT_AUTOLOAD
-options 	FPU_VFP
 options 	__HAVE_CPU_COUNTER
 options 	__HAVE_CPU_UAREA_ALLOC_IDLELWP
 options 	__HAVE_FAST_SOFTINTS		# should be in types.h
+options 	__HAVE_GENERIC_START
 options 	__HAVE_MM_MD_DIRECT_MAPPED_PHYS
-options 	ARM_HAS_VBAR
-options 	KERNEL_BASE_EXT=0x80000000
 
-options 	EVBARM_BOARDTYPE="rpi"
-makeoptions	BOARDMKFRAG="${THISARM}/conf/mk.rpi"
-makeoptions	LOADADDRESS="0x80008000"
-
-options 	ARM_INTR_IMPL="<arch/arm/fdt/fdt_intr.h>"
-options 	ARM_GENERIC_TODR
+makeoptions 	BOARDMKFRAG="${THISARM}/conf/mk.rpi"
+makeoptions 	LOADADDRESS="0x80008000"

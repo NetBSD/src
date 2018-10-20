@@ -30,9 +30,9 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)strftime.3	5.12 (Berkeley) 6/29/91
-.\"	$NetBSD: strftime.3,v 1.33 2017/03/11 18:23:14 christos Exp $
+.\"	$NetBSD: strftime.3,v 1.33.10.1 2018/10/20 06:58:22 pgoyette Exp $
 .\"
-.Dd March 11, 2017
+.Dd October 19, 2018
 .Dt STRFTIME 3
 .Os
 .Sh NAME
@@ -188,13 +188,15 @@ is replaced by the year with century as a decimal number.
 .It Cm \&%y
 is replaced by the year without century as a decimal number [00,99].
 .It Cm \&%Z
-is replaced by the time zone name.
+is replaced by the time zone abbreviation,
+or the empty string if this is not determinable.
 .It Cm \&%z
 is replaced by the offset from the Prime Meridian in the format
 +HHMM or -HHMM (ISO 8601) as appropriate, with positive values representing
 locations east of Greenwich, or by the empty string if this is
 not determinable.
-The numeric time zone [-]0000 is used when the time is Universal Time
+The numeric time zone abbreviation \&-0000 is used when the time is
+Universal Time
 but local time is indeterminate; by convention this is used for
 locations while uninhabited, and corresponds to a zero offset when the
 time zone abbreviation begins with

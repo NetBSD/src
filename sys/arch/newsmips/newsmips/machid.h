@@ -1,4 +1,4 @@
-/*	$NetBSD: machid.h,v 1.6 2005/12/11 12:18:25 christos Exp $	*/
+/*	$NetBSD: machid.h,v 1.6.164.1 2018/10/20 06:58:29 pgoyette Exp $	*/
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -158,7 +158,7 @@ struct idrom {
 };
 #endif /* news700 || news800 || news1700 || news1800 */
 
-#if defined(news1200) || defined(news3400) || defined(news3800) || defined(news5000)
+#if defined(news1200) || defined(news3400) || defined(news3800) || defined(news5000) || defined(news4000)
 struct idrom {
 /*00*/	unsigned char	id_id;          	/* always 0xff */
 /*01*/	unsigned char	id_netid[5];    	/* network ID */
@@ -180,7 +180,7 @@ struct idrom {
 /*7c*/	unsigned int	id_csum3;
 /*80*/
 };
-#endif /* news1200 || news3400 || news3800 */
+#endif /* news1200 || news3400 || news3800 || news5000 || news4000 */
 
 #endif /* !LOCORE */
 

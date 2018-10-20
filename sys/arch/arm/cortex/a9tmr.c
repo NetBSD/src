@@ -1,4 +1,4 @@
-/*	$NetBSD: a9tmr.c,v 1.14.16.1 2018/06/25 07:25:39 pgoyette Exp $	*/
+/*	$NetBSD: a9tmr.c,v 1.14.16.2 2018/10/20 06:58:25 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: a9tmr.c,v 1.14.16.1 2018/06/25 07:25:39 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: a9tmr.c,v 1.14.16.2 2018/10/20 06:58:25 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -121,7 +121,7 @@ a9tmr_attach(device_t parent, device_t self, void *aux)
 	const char *cpu_type;
 
 	/*
-	 * This runs at the ARM PERIPHCLOCK which should be 1/2 of the CPU clock.
+	 * This runs at the ARM PERIPHCLOCK.
 	 * The MD code should have setup our frequency for us.
 	 */
 	if (!prop_dictionary_get_uint32(dict, "frequency", &sc->sc_freq)) {

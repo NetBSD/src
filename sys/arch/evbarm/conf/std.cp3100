@@ -1,18 +1,18 @@
-# $NetBSD: std.cp3100,v 1.5 2012/12/16 23:47:56 matt Exp $
+# $NetBSD: std.cp3100,v 1.5.36.1 2018/10/20 06:58:27 pgoyette Exp $
 #
 # Standard NetBSD/evbarm options for CP3100
 
-machine	evbarm arm
-include 	"arch/evbarm/conf/std.evbarm"
+machine		evbarm arm
+include		"arch/evbarm/conf/std.evbarm"
 
 # Pull in CP3100 config definitions.
 include		"arch/evbarm/conf/files.cp3100"
 
 options 	EXEC_AOUT
 
-options         KERNEL_BASE_EXT=0xc0000000
-makeoptions	BOARDTYPE="cp3100"
-makeoptions	BOARDMKFRAG="${THISARM}/conf/mk.iq80321"
+options 	KERNEL_BASE_EXT=0xc0000000
+makeoptions 	BOARDTYPE="cp3100"
+makeoptions 	BOARDMKFRAG="${THISARM}/conf/mk.iq80321"
 
 options 	ARM_INTR_IMPL="<arch/arm/xscale/i80321_intr.h>"
 

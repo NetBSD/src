@@ -1,4 +1,4 @@
-.\"	$NetBSD: ddb.4,v 1.174.2.3 2018/09/06 06:55:22 pgoyette Exp $
+.\"	$NetBSD: ddb.4,v 1.174.2.4 2018/10/20 06:58:23 pgoyette Exp $
 .\"
 .\" Copyright (c) 1997 - 2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -56,7 +56,7 @@
 .\" any improvements or extensions that they make and grant Carnegie Mellon
 .\" the rights to redistribute these changes.
 .\"
-.Dd August 12, 2018
+.Dd October 12, 2018
 .Dt DDB 4
 .Os
 .Sh NAME
@@ -679,7 +679,7 @@ Print the mbuf structure at
 Valid modifiers:
 .Bl -tag -width 4n -compact
 .It Cm /c
-The mbufs in the chain are followed.
+The mbufs in the chain are NOT followed.
 .It Cm /d
 The data is dumped.
 .It Cm /v

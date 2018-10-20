@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Name: acnetbsd.h - OS specific defines, etc.
- *       $Revision: 1.16.2.1 $
+ *       $Revision: 1.16.2.2 $
  *
  *****************************************************************************/
 
@@ -113,6 +113,10 @@
 #define ACPI_DEBUGGER
 #endif /* DDB */
 #endif /* ACPI_DEBUG */
+
+#ifdef ACPI_REDUCED_HW
+#define ACPI_REDUCED_HARDWARE TRUE
+#endif /* ACPI_REDUCED_HW */
 
 #else /* defined(_KERNEL) || defined(_STANDALONE) */
 

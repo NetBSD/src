@@ -1,4 +1,4 @@
-/*	$NetBSD: logger.c,v 1.4 2006/09/09 16:22:09 manu Exp $	*/
+/*	$NetBSD: logger.c,v 1.4.86.1 2018/10/20 06:58:16 pgoyette Exp $	*/
 
 /*	$KAME: logger.c,v 1.9 2002/09/03 14:37:03 itojun Exp $	*/
 
@@ -79,13 +79,13 @@ log_open(siz, fname)
 	}
 	memset(p->buf, 0, sizeof(char *) * siz);
 
-	p->tbuf = (time_t *)racoon_malloc(sizeof(time_t *) * siz);
+	p->tbuf = (time_t *)racoon_malloc(sizeof(time_t) * siz);
 	if (p->tbuf == NULL) {
 		racoon_free(p->buf);
 		racoon_free(p);
 		return NULL;
 	}
-	memset(p->tbuf, 0, sizeof(time_t *) * siz);
+	memset(p->tbuf, 0, sizeof(time_t) * siz);
 
 	p->siz = siz;
 	if (fname)

@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.7,v 1.124.2.5 2018/09/30 01:45:35 pgoyette Exp $
+.\"	$NetBSD: sysctl.7,v 1.124.2.6 2018/10/20 06:58:23 pgoyette Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)sysctl.3	8.4 (Berkeley) 5/9/95
 .\"
-.Dd September 6, 2018
+.Dd October 5, 2018
 .Dt SYSCTL 7
 .Os
 .Sh NAME
@@ -293,6 +293,7 @@ privilege may change the value.
 .It kern.domainname	string	yes
 .It kern.drivers	struct kinfo_drivers	no
 .It kern.dump_on_panic	integer	yes
+.It kern.expose_address	integer	yes
 .It kern.file	struct file	no
 .It kern.forkfsleep	integer	yes
 .It kern.fscale	integer	no
@@ -513,6 +514,16 @@ field is always a NUL terminated string.
 The
 .Va d_bmajor
 field will be set to \-1 if the driver doesn't have a block device.
+.It Li kern.expose_address
+Expose kernel addresses in
+.Xr sysctl 3
+calls used by
+.Xr fstat 1
+and
+.Xr sockstat 1 .
+Defaults to
+.Dv 0 .
+Turning it on renders KASLR ineffective.
 .It Li kern.dump_on_panic ( Dv KERN_DUMP_ON_PANIC )
 Perform a crash dump on system
 .Xr panic 9 .
@@ -2126,9 +2137,9 @@ The variables are as follows:
 .It Li dgram.pcblist
 The Protocol Control Block list structure for datagram sockets.
 Parsed by
-.Xr netstat 8
+.Xr netstat 1
 or
-.Xr sockstat 8 .
+.Xr sockstat 1 .
 .It Li dgram.recvspace
 The default datagram receive buffer size.
 .It Li dgram.sendspace
@@ -2136,15 +2147,15 @@ The default datagram send buffer size.
 .It Li seqpacket.pcblist
 The Protocol Control Block list structure for Sequential Packet sockets.
 Parsed by
-.Xr netstat 8
+.Xr netstat 1
 or
-.Xr sockstat 8 .
+.Xr sockstat 1 .
 .It Li stream.pcblist
 The Protocol Control Block list structure for stream sockets.
 Parsed by
-.Xr netstat 8
+.Xr netstat 1
 or
-.Xr sockstat 8 .
+.Xr sockstat 1 .
 .It Li stream.recvspace
 The default stream receive buffer size.
 .It Li stream.sendspace
@@ -2607,7 +2618,7 @@ See
 .Xr secmodel 9
 for more information.
 .It Li security.pax
-Settings for PaX -- exploit mitigation features.
+Settings for PaX \(em exploit mitigation features.
 For more information on any of the PaX features, please see
 .Xr paxctl 8
 and

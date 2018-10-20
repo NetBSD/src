@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.77.2.1 2018/07/28 04:37:27 pgoyette Exp $
+#	$NetBSD: genassym.cf,v 1.77.2.2 2018/10/20 06:58:24 pgoyette Exp $
 
 # Copyright (c) 1982, 1990 The Regents of the University of California.
 # All rights reserved.
@@ -94,19 +94,14 @@ define	KERNEL_BASE		KERNEL_BASE
 define	VM_MIN_ADDRESS		VM_MIN_ADDRESS
 define	VM_MAXUSER_ADDRESS	VM_MAXUSER_ADDRESS
 
-define	DCACHE_LINE_SIZE	offsetof(struct arm_cache_info, dcache_line_size)
-
 define	PV_PA			offsetof(pv_addr_t, pv_pa)
 define	PMAP_DOMAIN_KERNEL	PMAP_DOMAIN_KERNEL
 define	DOMAIN_CLIENT		DOMAIN_CLIENT
-ifdef ARM_MMU_EXTENDED
-define	DOMAIN_DEFAULT		((DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL*2)) | (DOMAIN_CLIENT << (PMAP_DOMAIN_USER*2)))
-else
-define	DOMAIN_DEFAULT		((DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL*2)) | DOMAIN_CLIENT)
-endif
+define	DOMAIN_DEFAULT		DOMAIN_DEFAULT
 
 define	L1_S_PROTO_generic	L1_S_PROTO_generic
 define	L1_S_PROTO_armv7	L1_S_PROTO_armv7
+
 define	L1_S_PROTO_xscale	L1_S_PROTO_xscale
 if ARM_NMMUS == 1
 define	L1_S_PROTO		L1_S_PROTO
@@ -151,6 +146,12 @@ define	UPAGES			UPAGES
 define	PGSHIFT			PGSHIFT
 
 define	MAXCPUS			MAXCPUS
+
+#define	PSR_HYP32_MODE		PSR_HYP32_MODE
+#define	PSR_SVC32_MODE		PSR_SVC32_MODE
+#define	PSR_MODE		PSR_MODE
+#define	CPU_CONTROL_DC_ENABLE	CPU_CONTROL_DC_ENABLE
+#define	TTBCR_S_PD0		TTBCR_S_PD0
 
 # Important offsets into the lwp and proc structs & associated constants
 define	L_PCB			offsetof(struct lwp, l_addr)
@@ -255,4 +256,5 @@ define	IP_SRC			offsetof(struct ip, ip_src)
 define	IP_DST			offsetof(struct ip, ip_dst)
 
 # Cache information
+define	DCACHE_LINE_SIZE	offsetof(struct arm_cache_info, dcache_line_size)
 define	DCACHE_SIZE		offsetof(struct arm_cache_info, dcache_size)

@@ -1,15 +1,14 @@
-#	$NetBSD: std.imx31,v 1.9 2014/03/30 23:14:15 matt Exp $
+#	$NetBSD: std.imx31,v 1.9.28.1 2018/10/20 06:58:27 pgoyette Exp $
 #
 # standard NetBSD/evbarm options for FreeScale I.MX31
 
-machine	evbarm arm
+machine		evbarm arm
 include		"arch/evbarm/conf/std.evbarm"
 
 # Pull in i.mx31 config definitions.
 include		"arch/evbarm/conf/files.imx31"
 
-options 	KERNEL_BASE_EXT=0x80000000
-makeoptions	CPUFLAGS="-march=armv6k -mtune=arm1136j-s -mfpu=vfp"
+makeoptions 	CPUFLAGS="-march=armv6k -mtune=arm1136j-s -mfpu=vfp"
 
 options 	ARM11_PMC
 options 	ARM11_CACHE_WRITE_THROUGH
@@ -21,9 +20,9 @@ options 	__HAVE_CPU_UAREA_ALLOC_IDLELWP
 options 	TPIDRPRW_IS_CURCPU
 
 
-makeoptions	LOADADDRESS="0x80100000"
-makeoptions	BOARDTYPE="imx31"
-makeoptions	BOARDMKFRAG="${THISARM}/conf/mk.imx31"
+makeoptions 	LOADADDRESS="0x80100000"
+makeoptions 	BOARDTYPE="imx31"
+makeoptions 	BOARDMKFRAG="${THISARM}/conf/mk.imx31"
 
 options 	ARM_INTR_IMPL="<arch/arm/imx/imx31_intr.h>"
-options		ARM_GENERIC_TODR
+options 	ARM_GENERIC_TODR

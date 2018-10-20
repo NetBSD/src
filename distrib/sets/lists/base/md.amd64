@@ -1,7 +1,6 @@
-# $NetBSD: md.amd64,v 1.274.2.1 2018/07/28 04:32:59 pgoyette Exp $
+# $NetBSD: md.amd64,v 1.274.2.2 2018/10/20 06:58:17 pgoyette Exp $
 ./dev/lms0					base-obsolete		obsolete
 ./dev/mms0					base-obsolete		obsolete
-./sbin/mount_qemufwcfg				base-sysutil-root
 ./libexec/ld.elf_so-i386			base-sys-shlib		compat,pic
 ./usr/bin/fdformat				base-util-bin
 ./usr/bin/iasl					base-util-bin
@@ -69,6 +68,3 @@
 ./usr/mdec/pxeboot_ia32_com0.bin		base-obsolete		obsolete
 ./usr/sbin/acpidump				base-sysutil-bin
 ./usr/sbin/amldb				base-sysutil-bin
-./usr/share/man/cat8/mount_qemufwcfg.0		man-sysutil-catman	.cat
-./usr/share/man/html8/mount_qemufwcfg.html	man-sysutil-htmlman	html
-./usr/share/man/man8/mount_qemufwcfg.8		man-sysutil-man		.man

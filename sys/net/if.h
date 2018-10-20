@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.258.2.14 2018/09/06 06:56:44 pgoyette Exp $	*/
+/*	$NetBSD: if.h,v 1.258.2.15 2018/10/20 06:58:45 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -1075,6 +1075,7 @@ void if_activate_sadl(struct ifnet *, struct ifaddr *,
     const struct sockaddr_dl *);
 void	if_set_sadl(struct ifnet *, const void *, u_char, bool);
 void	if_alloc_sadl(struct ifnet *);
+void	if_free_sadl(struct ifnet *, int);
 int	if_initialize(struct ifnet *);
 void	if_register(struct ifnet *);
 int	if_attach(struct ifnet *); /* Deprecated. Use if_initialize and if_register */

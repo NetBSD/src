@@ -1,10 +1,13 @@
-#	$NetBSD: mk.altera,v 1.1.2.2 2018/09/30 01:45:40 pgoyette Exp $
+#	$NetBSD: mk.altera,v 1.1.2.3 2018/10/20 06:58:27 pgoyette Exp $
+
+.if !empty(MACHINE_ARCH:M*eb)
+EXTRA_LINKFLAGS+=	--be8
+.endif
+
 CPPFLAGS+=		-mcpu=cortex-a9 -mfpu=neon
 
-SYSTEM_FIRST_OBJ=	altera_start.o
-SYSTEM_FIRST_SFILE=	${THISARM}/altera/altera_start.S
-
-GENASSYM_EXTRAS+=	${THISARM}/altera/genassym.cf
+SYSTEM_FIRST_OBJ=	armv6_start.o
+SYSTEM_FIRST_SFILE=	${ARM}/arm/armv6_start.S
 
 _OSRELEASE!=		${HOST_SH} $S/conf/osrelease.sh
 

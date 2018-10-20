@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.7.14.2 2018/06/25 07:26:12 pgoyette Exp $	*/
+/*	$NetBSD: util.c,v 1.7.14.3 2018/10/20 06:58:47 pgoyette Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -95,75 +95,75 @@ struct  tarstats {
 
 distinfo dist_list[] = {
 #ifdef SET_KERNEL_1_NAME
-	{SET_KERNEL_1_NAME,	SET_KERNEL_1,		MSG_set_kernel_1, NULL},
+	{SET_KERNEL_1_NAME,	SET_KERNEL_1,		false, MSG_set_kernel_1, NULL},
 #endif
 #ifdef SET_KERNEL_2_NAME
-	{SET_KERNEL_2_NAME,	SET_KERNEL_2,		MSG_set_kernel_2, NULL},
+	{SET_KERNEL_2_NAME,	SET_KERNEL_2,		false, MSG_set_kernel_2, NULL},
 #endif
 #ifdef SET_KERNEL_3_NAME
-	{SET_KERNEL_3_NAME,	SET_KERNEL_3,		MSG_set_kernel_3, NULL},
+	{SET_KERNEL_3_NAME,	SET_KERNEL_3,		false, MSG_set_kernel_3, NULL},
 #endif
 #ifdef SET_KERNEL_4_NAME
-	{SET_KERNEL_4_NAME,	SET_KERNEL_4,		MSG_set_kernel_4, NULL},
+	{SET_KERNEL_4_NAME,	SET_KERNEL_4,		false, MSG_set_kernel_4, NULL},
 #endif
 #ifdef SET_KERNEL_5_NAME
-	{SET_KERNEL_5_NAME,	SET_KERNEL_5,		MSG_set_kernel_5, NULL},
+	{SET_KERNEL_5_NAME,	SET_KERNEL_5,		false, MSG_set_kernel_5, NULL},
 #endif
 #ifdef SET_KERNEL_6_NAME
-	{SET_KERNEL_6_NAME,	SET_KERNEL_6,		MSG_set_kernel_6, NULL},
+	{SET_KERNEL_6_NAME,	SET_KERNEL_6,		false, MSG_set_kernel_6, NULL},
 #endif
 #ifdef SET_KERNEL_7_NAME
-	{SET_KERNEL_7_NAME,	SET_KERNEL_7,		MSG_set_kernel_7, NULL},
+	{SET_KERNEL_7_NAME,	SET_KERNEL_7,		false, MSG_set_kernel_7, NULL},
 #endif
 #ifdef SET_KERNEL_8_NAME
-	{SET_KERNEL_8_NAME,	SET_KERNEL_8,		MSG_set_kernel_8, NULL},
+	{SET_KERNEL_8_NAME,	SET_KERNEL_8,		false, MSG_set_kernel_8, NULL},
 #endif
 #ifdef SET_KERNEL_9_NAME
-	{SET_KERNEL_9_NAME,	SET_KERNEL_9,		MSG_set_kernel_9, NULL},
+	{SET_KERNEL_9_NAME,	SET_KERNEL_9,		false, MSG_set_kernel_9, NULL},
 #endif
 
-	{"modules",		SET_MODULES,		MSG_set_modules, NULL},
-	{"base",		SET_BASE,		MSG_set_base, NULL},
-	{"etc",			SET_ETC,		MSG_set_system, NULL},
-	{"comp",		SET_COMPILER,		MSG_set_compiler, NULL},
-	{"games",		SET_GAMES,		MSG_set_games, NULL},
-	{"man",			SET_MAN_PAGES,		MSG_set_man_pages, NULL},
-	{"misc",		SET_MISC,		MSG_set_misc, NULL},
-	{"tests",		SET_TESTS,		MSG_set_tests, NULL},
-	{"text",		SET_TEXT_TOOLS,		MSG_set_text_tools, NULL},
+	{"modules",		SET_MODULES,		false, MSG_set_modules, NULL},
+	{"base",		SET_BASE,		false, MSG_set_base, NULL},
+	{"etc",			SET_ETC,		false, MSG_set_system, NULL},
+	{"comp",		SET_COMPILER,		false, MSG_set_compiler, NULL},
+	{"games",		SET_GAMES,		false, MSG_set_games, NULL},
+	{"man",			SET_MAN_PAGES,		false, MSG_set_man_pages, NULL},
+	{"misc",		SET_MISC,		false, MSG_set_misc, NULL},
+	{"tests",		SET_TESTS,		false, MSG_set_tests, NULL},
+	{"text",		SET_TEXT_TOOLS,		false, MSG_set_text_tools, NULL},
 
-	{NULL,			SET_GROUP,		MSG_set_X11, NULL},
-	{"xbase",		SET_X11_BASE,		MSG_set_X11_base, NULL},
-	{"xcomp",		SET_X11_PROG,		MSG_set_X11_prog, NULL},
-	{"xetc",		SET_X11_ETC,		MSG_set_X11_etc, NULL},
-	{"xfont",		SET_X11_FONTS,		MSG_set_X11_fonts, NULL},
-	{"xserver",		SET_X11_SERVERS,	MSG_set_X11_servers, NULL},
-	{NULL,			SET_GROUP_END,		NULL, NULL},
+	{NULL,			SET_GROUP,		false, MSG_set_X11, NULL},
+	{"xbase",		SET_X11_BASE,		false, MSG_set_X11_base, NULL},
+	{"xcomp",		SET_X11_PROG,		false, MSG_set_X11_prog, NULL},
+	{"xetc",		SET_X11_ETC,		false, MSG_set_X11_etc, NULL},
+	{"xfont",		SET_X11_FONTS,		false, MSG_set_X11_fonts, NULL},
+	{"xserver",		SET_X11_SERVERS,	false, MSG_set_X11_servers, NULL},
+	{NULL,			SET_GROUP_END,		false, NULL, NULL},
 
 #ifdef SET_MD_1_NAME
-	{SET_MD_1_NAME,		SET_MD_1,		MSG_set_md_1, NULL},
+	{SET_MD_1_NAME,		SET_MD_1,		false, MSG_set_md_1, NULL},
 #endif
 #ifdef SET_MD_2_NAME
-	{SET_MD_2_NAME,		SET_MD_2,		MSG_set_md_2, NULL},
+	{SET_MD_2_NAME,		SET_MD_2,		false, MSG_set_md_2, NULL},
 #endif
 #ifdef SET_MD_3_NAME
-	{SET_MD_3_NAME,		SET_MD_3,		MSG_set_md_3, NULL},
+	{SET_MD_3_NAME,		SET_MD_3,		false, MSG_set_md_3, NULL},
 #endif
 #ifdef SET_MD_4_NAME
-	{SET_MD_4_NAME,		SET_MD_4,		MSG_set_md_4, NULL},
+	{SET_MD_4_NAME,		SET_MD_4,		false, MSG_set_md_4, NULL},
 #endif
 
-	{NULL,			SET_GROUP,		MSG_set_source, NULL},
-	{"syssrc",		SET_SYSSRC,		MSG_set_syssrc, NULL},
-	{"src",			SET_SRC,		MSG_set_src, NULL},
-	{"sharesrc",		SET_SHARESRC,		MSG_set_sharesrc, NULL},
-	{"gnusrc",		SET_GNUSRC,		MSG_set_gnusrc, NULL},
-	{"xsrc",		SET_XSRC,		MSG_set_xsrc, NULL},
-	{"debug",		SET_DEBUG,		MSG_set_debug, NULL},
-	{"xdebug",		SET_X11_DEBUG,		MSG_set_xdebug, NULL},
-	{NULL,			SET_GROUP_END,		NULL, NULL},
+	{NULL,			SET_GROUP,		true, MSG_set_source, NULL},
+	{"syssrc",		SET_SYSSRC,		true, MSG_set_syssrc, NULL},
+	{"src",			SET_SRC,		true, MSG_set_src, NULL},
+	{"sharesrc",		SET_SHARESRC,		true, MSG_set_sharesrc, NULL},
+	{"gnusrc",		SET_GNUSRC,		true, MSG_set_gnusrc, NULL},
+	{"xsrc",		SET_XSRC,		true, MSG_set_xsrc, NULL},
+	{"debug",		SET_DEBUG,		false, MSG_set_debug, NULL},
+	{"xdebug",		SET_X11_DEBUG,		false, MSG_set_xdebug, NULL},
+	{NULL,			SET_GROUP_END,		false, NULL, NULL},
 
-	{NULL,			SET_LAST,		NULL, NULL},
+	{NULL,			SET_LAST,		false, NULL, NULL},
 };
 
 #define MAX_CD_INFOS	16	/* how many media can be found? */
@@ -342,7 +342,8 @@ floppy_fetch(const char *set_name)
 		if (run_program(RUN_DISPLAY,
 			    "sh -c '/bin/cat /mnt2/%s.%s %s %s/%s/%s%s'",
 			    set_name, post, write_mode,
-			    target_prefix(), xfer_dir, set_name, dist_postfix))
+			    target_prefix(), xfer_dir, set_name,
+			    set_postfix(set_name)))
 			/* XXX: a read error will give a corrupt file! */
 			continue;
 
@@ -887,7 +888,7 @@ extract_file(distinfo *dist, int update)
 		make_target_dir(xfer_dir);
 
 	(void)snprintf(path, sizeof path, "%s/%s%s",
-	    ext_dir_for_set(dist->name), dist->name, dist_postfix);
+	    ext_dir_for_set(dist->name), dist->name, set_postfix(dist->name));
 
 	owd = getcwd(NULL, 0);
 
@@ -907,7 +908,7 @@ extract_file(distinfo *dist, int update)
 	 * characters and check again
 	 */
 	(void)snprintf(path, sizeof path, "%s/%.8s%.4s", /* 4 as includes '.' */
-	    ext_dir_for_set(dist->name), dist->name, dist_postfix);
+	    ext_dir_for_set(dist->name), dist->name, set_postfix(dist->name));
 		if (!file_exists_p(path)) {
 #endif /* SUPPORT_8_3_SOURCE_FILESYSTEM */
 
@@ -1743,3 +1744,25 @@ ask_noyes(const char *msgtxt)
 	process_menu(MENU_noyes, &p);
 	return p.rv;
 }
+
+bool
+use_tgz_for_set(const char *set_name)
+{
+	const struct distinfo *dist;
+	
+	for (dist = dist_list; dist->set != SET_LAST; dist++) {
+		if (dist->name == NULL)
+			continue;
+		if (strcmp(set_name, dist->name) == 0)
+			return dist->force_tgz;
+	}
+
+	return false;
+}
+
+/* Return the postfix used for a given set */
+const char *set_postfix(const char *set_name)
+{
+	return use_tgz_for_set(set_name) ? dist_tgz_postfix : dist_postfix;
+}
+

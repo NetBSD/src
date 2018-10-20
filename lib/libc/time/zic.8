@@ -1,10 +1,10 @@
-.\"	$NetBSD: zic.8,v 1.28.2.1 2018/05/21 04:35:55 pgoyette Exp $
-.Dd May 5, 2018
+.\"	$NetBSD: zic.8,v 1.28.2.2 2018/10/20 06:58:22 pgoyette Exp $
+.Dd October 19, 2018
 .Dt ZIC 8
 .Os
 .Sh NAME
 .Nm zic
-.Nd time zone compiler
+.Nd timezone compiler
 .Sh SYNOPSIS
 .Nm
 .Op Fl \-version
@@ -18,19 +18,22 @@
 .Op Fl y Ar command
 .Op Ar Filename ...
 .Sh DESCRIPTION
+The
 .Nm
-reads text from the file(s) named on the command line
+program reads text from the file(s) named on the command line
 and creates the time conversion information files specified in this input.
 If a
 .Ar filename
 is
 .Ar \&- ,
-the standard input is read.
+standard input is read.
 .Pp
-These options are available:
+.Sh OPTIONS
 .Bl -tag -width XXXXXXXXXX -compact
 .It Fl \-version
 Output version information and exit.
+.It Fl \-help
+Output short usage message and exit.
 .It Fl d Ar directory
 Create time conversion information files in the named directory rather than
 in the standard directory named below.
@@ -39,13 +42,17 @@ Read leap second information from the file with the given name.
 If this option is not used,
 no leap second information appears in output files.
 .It Fl l Ar timezone
-Use the given time zone as local time.
+Use the 
+.Ar timezone
+as local time.
 .Nm
 will act as if the input contained a link line of the form
 .Dl Link	timezone	localtime
 .It Fl p Ar timezone
-Use the given time zone's rules when handling POSIX-format
-time zone environment variables.
+Use
+.Ar timezone's
+rules when handling POSIX-format
+timezone environment variables.
 .Nm
 will act as if the input contained a link line of the form
 .Dl Link	timezone	posixrules
@@ -78,7 +85,7 @@ Pre-2004 versions of
 prohibit this.
 .It
 The output file does not contain all the information about the
-long-term future of a zone, because the future cannot be summarized as
+long-term future of a timezone, because the future cannot be summarized as
 an extended POSIX TZ string.
 For example, as of 2013 this problem
 occurs for Iran's daylight-saving rules for the predicted future, as
@@ -89,7 +96,7 @@ The output contains data that may not be handled properly by client
 code designed for older
 .Xr zic 8
 output formats.
-These compatibility issues affect only time stamps
+These compatibility issues affect only timestamps
 before 1970 or after the start of 2038.
 .It
 A time zone abbreviation has fewer than 3 characters.
@@ -140,7 +147,7 @@ quotes
 .\" XXX "
 if they're to be used as part of a field.
 Any line that is blank (after comment stripping) is ignored.
-Non-blank lines are expected to be of one of three types:
+Nonblank lines are expected to be of one of three types:
 rule lines, zone lines, and link lines.
 .Pp
 Names must be in English and are case insensitive.
@@ -160,12 +167,20 @@ A rule line has the form
 .Pp
 For example:
 .Pp
-.Dl Rule	US	1967	1973	\-	Apr	lastSun	2:00s	1:00d	D
+.Dl Rule	US	1967	1973	\-	Apr	lastSun	2:00w	1:00d	D
 .Pp
 The fields that make up a rule line are:
 .Bl -tag -width "LETTER/S"
 .It NAME
-Gives the (arbitrary) name of the set of rules this rule is part of.
+Gives the name of the rule set that contains this line.
+The name must start with a character that is neither
+an ASCII digit nor
+.Ar \&-
+nor
+.Ar + .
+To allow for future extensions,
+an unquoted name should not contain characters from the set
+.Ar !$%&'()*,/:;<=>?@[\e]^`{|}~ .
 .It FROM
 Gives the first year in which the rule applies.
 Any signed integer year can be supplied; the proleptic Gregorian calendar
@@ -230,7 +245,8 @@ Note that there must be no spaces within the
 .Em ON
 field.
 .It AT
-Gives the time of day at which the rule takes effect.
+Gives the time of day at which the rule takes effect,
+relative to 00:00, the start of a calendar day.
 Recognized forms include:
 .Pp
 .Bl -tag -width "00X19X32X13" -compact -offset indent
@@ -242,8 +258,12 @@ time in hours and minutes
 time in hours, minutes, and seconds
 .It 00:19:32.13
 time with fractional seconds
+.It 12:00
+midday, 12 hours after 00:00
 .It 15:00
-24-hour format time (for times after noon)
+3 PM, 15 hours after 00:00
+.It 24:00
+end of day, 24 hours after 00:00
 .It 260:00
 260 hours after 00:00
 .It \-2:30
@@ -252,8 +272,6 @@ time with fractional seconds
 equivalent to 0
 .El
 .Pp
-where hour 0 is midnight at the start of the day,
-and hour 24 is midnight at the end of the day.
 Although
 .I zic
 rounds times to the nearest integer second
@@ -324,7 +342,7 @@ the variable part is null.
 .Pp
 A zone line has the form
 .Pp
-.Dl Zone	NAME			GMTOFF	RULES/SAVE	FORMAT	[UNTIL]
+.Dl Zone	NAME			UTOFF	RULES/SAVE	FORMAT	[UNTIL]
 .Pp
 For example:
 .Pp
@@ -333,17 +351,17 @@ For example:
 The fields that make up a zone line are:
 .Bl -tag -width "RULES/SAVE"
 .It NAME
-The name of the time zone.
+The name of the timezone.
 This is the name used in creating the time conversion information file for the
-zone.
+timezone.
 It should not contain a file name component
 .Dq .
 or
 .Dq .. ;
 a file name component is a maximal substring that does not contain
 .Dq / .
-.It GMTOFF
-The amount of time to add to UT to get standard time in this zone.
+.It UTOFF
+The amount of time to add to UT to get standard time.
 This field has the same format as the
 .Em AT
 and
@@ -351,17 +369,17 @@ and
 fields of rule lines;
 begin the field with a minus sign if time must be subtracted from UT.
 .It RULES
-The name of the rules that apply in the time zone or,
+The name of the rules that apply in the timezone or,
 alternatively, a field in the same format as a rule-line SAVE column,
 giving of the amount of time to be added to local standard time
 effect, and whether the resulting time is standard or daylight saving.
 If this field is
 .Em \&-
-then standard time always applies in the time zone.
+then standard time always applies.
 When an amount of time is given, only the sum of standard time and
 this amount matters.
 .It FORMAT
-The format for time zone abbreviations in this time zone.
+The format for time zone abbreviations.
 The pair of characters
 .Em %s
 is used to show where the
@@ -385,7 +403,10 @@ a slash
 .Pq \&/
 separates standard and daylight abbreviations.
 To conform to POSIX, a time zone abbreviation should contain only
-alphanumeric ASCII characters, "+" and "\*-".
+alphanumeric ASCII characters,
+.Dq +
+and
+.Dq \&- .
 .It UNTIL
 The time at which the UT offset or the rule(s) change for a location.
 It takes the form of YEAR [MONTH [DAY [TIME]]].
@@ -499,7 +520,7 @@ and for its predecessor organization, the European Communities.
 .El
 .Pp
 .Bl -column -compact -offset indent "# Zone" "Europe/Zurich" "0:34:08" "RULES/SAVE" "FORMAT" "UNTIL"
-.It # Zone	NAME	GMTOFF	RULES/SAVE	FORMAT	[UNTIL]
+.It # Zone	NAME	UTOFF	RULES/SAVE	FORMAT	[UNTIL]
 .It Zone	Europe/Zurich	0:34:08	-	LMT	1853 Jul 16
 .It 		0:29:44	-	BMT	1894 Jun
 .It 		1:00	Swiss	CE%sT	1981
@@ -510,7 +531,7 @@ and for its predecessor organization, the European Communities.
 .It Link	Europe/Zurich	Europe/Vaduz
 .El
 .Pp
-In this example, the zone is named Europe/Zurich but it has an alias
+In this example, the timezone is named Europe/Zurich but it has an alias
 as Europe/Vaduz.
 This example says that Zurich was 34 minutes and 8
 seconds east of UT until 1853-07-16 at 00:00, when the legal offset
@@ -518,8 +539,10 @@ was changed to 7\(de\|26\(fm\|22.50\(sd; although this works out to
 0:29:45.50, the input format cannot represent fractional seconds so it
 is rounded here.
 After 1894-06-01 at 00:00 the UT offset became one hour
-and Swiss daylight saving rules (defined with lines beginning with "Rule
-Swiss") apply.
+and Swiss daylight saving rules (defined with lines beginning with
+.Dq "Rule Swiss"
+apply.
+From 1981 to the present, EU daylight saving rules have
 From 1981 to the present, EU daylight saving rules have
 .Pp
 In 1941 and 1942, daylight saving time applied from the first Monday
@@ -531,12 +554,22 @@ saving has begun on the last Sunday in March at 01:00 UTC.
 Until 1995 it ended the last Sunday in September at 01:00 UTC,
 but this changed to the last Sunday in October starting in 1996.
 .Pp
-For purposes of
-display, "LMT" and "BMT" were initially used, respectively.
+For purposes of display,
+.Dq LMT
+and
+.Dq BMT
+were initially used, respectively.
 Since
-Swiss rules and later EU rules were applied, the display name for the
-time zone has been CET for standard time and CEST for daylight saving
+Swiss rules and later EU rules were applied, the time zone abbreviation
+has been CET for standard time and CEST for daylight saving
 time.
+.Sh FILES
+.Bl -tag -width /usr/share/zoneinfo -compact
+.It Pa /etc/localtime
+Default local timezone file    
+.It Pa /usr/share/zoneinfo
+Default timezone information directory
+.El
 .Sh NOTES
 For areas with more than two types of local time,
 you may need to use local standard time in the
@@ -545,7 +578,7 @@ field of the earliest transition time's rule to ensure that
 the earliest transition time recorded in the compiled file is correct.
 .Pp
 If,
-for a particular zone,
+for a particular timezone,
 a clock advance caused by the start of daylight saving
 coincides with and is equal to
 a clock retreat caused by a change in UT offset,
@@ -555,20 +588,7 @@ produces a single transition to daylight saving at the new UT offset
 To get separate transitions
 use multiple zone continuation lines
 specifying transition instants using universal time.
-.Pp
-Time stamps well before the Big Bang are silently omitted from the output.
-This works around bugs in software that mishandles large negative time stamps.
-Call it sour grapes, but pre-Big-Bang time stamps are physically suspect anyway.
-The pre-Big-Bang cutoff time is approximate and may change in future versions.
-.Sh FILES
-.Bl -tag -width /usr/share/zoneinfo -compact
-.It Pa /etc/localtime
-default local time zone file
-.It Pa /usr/share/zoneinfo
-standard directory used for created files
-.El
 .Sh SEE ALSO
-.Xr ctime 3 ,
 .Xr tzfile 5 ,
 .Xr zdump 8
 .\" @(#)zic.8	8.6

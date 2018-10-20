@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.167.2.3 2018/09/06 06:55:25 pgoyette Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.167.2.4 2018/10/20 06:58:24 pgoyette Exp $	*/
 
 /*
  * arm7tdmi support code Copyright (c) 2001 John Fremlin
@@ -49,11 +49,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.167.2.3 2018/09/06 06:55:25 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.167.2.4 2018/10/20 06:58:24 pgoyette Exp $");
 
+#include "opt_arm_start.h"
 #include "opt_compat_netbsd.h"
 #include "opt_cpuoptions.h"
 #include "opt_cputypes.h"
+#include "opt_multiprocessor.h"
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1955,6 +1957,7 @@ set_cpufuncs(void)
 		pmap_pte_init_armv7();
 		if (arm_cache_prefer_mask)
 			uvmexp.ncolors = (arm_cache_prefer_mask >> PGSHIFT) + 1;
+
 		/*
 		 * Start and reset the PMC Cycle Counter.
 		 */
@@ -2455,7 +2458,6 @@ arm6_setup(char *args)
 	cpu_idcache_wbinv_all();
 
 	/* Set the control register */
-	curcpu()->ci_ctrl = cpuctrl;
 	cpu_control(0xffffffff, cpuctrl);
 }
 #endif	/* CPU_ARM6 */
@@ -2504,7 +2506,6 @@ arm7_setup(char *args)
 	cpu_idcache_wbinv_all();
 
 	/* Set the control register */
-	curcpu()->ci_ctrl = cpuctrl;
 	cpu_control(0xffffffff, cpuctrl);
 }
 #endif	/* CPU_ARM7 */
@@ -2542,7 +2543,6 @@ arm7tdmi_setup(char *args)
 	cpu_idcache_wbinv_all();
 
 	/* Set the control register */
-	curcpu()->ci_ctrl = cpuctrl;
 	cpu_control(0xffffffff, cpuctrl);
 }
 #endif	/* CPU_ARM7TDMI */
@@ -2625,7 +2625,6 @@ arm8_setup(char *args)
 	cpu_idcache_wbinv_all();
 
 	/* Set the control register */
-	curcpu()->ci_ctrl = cpuctrl;
 	cpu_control(0xffffffff, cpuctrl);
 
 	/* Set the clock/test register */
@@ -2682,7 +2681,6 @@ arm9_setup(char *args)
 	cpu_idcache_wbinv_all();
 
 	/* Set the control register */
-	curcpu()->ci_ctrl = cpuctrl;
 	cpu_control(cpuctrlmask, cpuctrl);
 
 }
@@ -2739,7 +2737,6 @@ arm10_setup(char *args)
 	__asm volatile ("mcr\tp15, 0, r0, c7, c7, 0" : : );
 
 	/* Set the control register */
-	curcpu()->ci_ctrl = cpuctrl;
 	cpu_control(0xffffffff, cpuctrl);
 
 	/* And again. */
@@ -2799,7 +2796,6 @@ arm11_setup(char *args)
 	armreg_cpacr_write(0x0fffffff);
 
 	/* Set the control register */
-	curcpu()->ci_ctrl = cpuctrl;
 	cpu_control(cpuctrlmask, cpuctrl);
 
 	/* And again. */
@@ -2848,7 +2844,7 @@ arm11mpcore_setup(char *args)
 	armreg_cpacr_write(0x0fffffff);
 
 	/* Set the control register */
-	curcpu()->ci_ctrl = cpu_control(cpuctrlmask, cpuctrl);
+	cpu_control(cpuctrlmask, cpuctrl);
 
 	/* And again. */
 	cpu_idcache_wbinv_all();
@@ -2922,8 +2918,6 @@ pj4bv7_setup(char *args)
 #ifdef L2CACHE_ENABLE
 	armadaxp_sdcache_wbinv_all();
 #endif
-
-	curcpu()->ci_ctrl = cpuctrl;
 }
 #endif /* CPU_PJ4B */
 
@@ -2940,19 +2934,30 @@ struct cpu_option armv7_options[] = {
 void
 armv7_setup(char *args)
 {
-
-	int cpuctrl = CPU_CONTROL_MMU_ENABLE | CPU_CONTROL_IC_ENABLE
-	    | CPU_CONTROL_DC_ENABLE | CPU_CONTROL_BPRD_ENABLE
+	int cpuctrl =
+	    CPU_CONTROL_MMU_ENABLE |
+	    CPU_CONTROL_IC_ENABLE |
+	    CPU_CONTROL_DC_ENABLE |
+	    CPU_CONTROL_BPRD_ENABLE |
+	    CPU_CONTROL_UNAL_ENABLE |
+	    0;
 #ifdef __ARMEB__
-	    | CPU_CONTROL_EX_BEND
+	cpuctrl |= CPU_CONTROL_EX_BEND;
 #endif
 #ifndef ARM32_DISABLE_ALIGNMENT_FAULTS
-	    | CPU_CONTROL_AFLT_ENABLE;
+	cpuctrl |= CPU_CONTROL_AFLT_ENABLE;
 #endif
-	    | CPU_CONTROL_UNAL_ENABLE;
+#ifdef ARM_MMU_EXTENDED
+	cpuctrl |= CPU_CONTROL_XP_ENABLE;
+#endif
 
-	int cpuctrlmask = cpuctrl | CPU_CONTROL_AFLT_ENABLE;
-
+	int cpuctrlmask = cpuctrl |
+	    CPU_CONTROL_EX_BEND |
+	    CPU_CONTROL_AFLT_ENABLE |
+	    CPU_CONTROL_TR_ENABLE |
+	    CPU_CONTROL_VECRELOC |
+	    CPU_CONTROL_XP_ENABLE |
+	    0;
 
 	cpuctrl = parse_cpu_options(args, armv7_options, cpuctrl);
 
@@ -2961,12 +2966,64 @@ armv7_setup(char *args)
 		cpuctrl |= CPU_CONTROL_VECRELOC;
 #endif
 
-	/* Clear out the cache */
-	cpu_idcache_wbinv_all();
+#ifdef __HAVE_GENERIC_START
+	const u_int lcputype = cpufunc_id();
+	int actlr_set = 0;
+	int actlr_clr = 0;
 
-	/* Set the control register */
-	curcpu()->ci_ctrl = cpuctrl;
+	if (CPU_ID_CORTEX_A5_P(lcputype)) {
+		/*
+		 * Disable exclusive L1/L2 cache control
+		 * Enable SMP mode
+		 * Enable Cache and TLB maintenance broadcast
+		 */
+		actlr_clr = CORTEXA5_ACTLR_EXCL;
+		actlr_set = CORTEXA5_ACTLR_SMP | CORTEXA5_ACTLR_FW;
+	} else if (CPU_ID_CORTEX_A7_P(lcputype)) {
+#ifdef MULTIPROCESSOR
+		actlr_set |= CORTEXA7_ACTLR_SMP;
+#endif
+	} else if (CPU_ID_CORTEX_A8_P(lcputype)) {
+		actlr_set = CORTEXA8_ACTLR_L2EN;
+		actlr_clr = CORTEXA8_ACTLR_L1ALIAS;
+	} else if (CPU_ID_CORTEX_A9_P(lcputype)) {
+		actlr_set =
+		    CORTEXA9_AUXCTL_FW |
+		    CORTEXA9_AUXCTL_L2PE |	// Not in FreeBSD
+		    CORTEXA9_AUXCTL_SMP |
+		    0;
+	} else if (CPU_ID_CORTEX_A15_P(lcputype)) {
+		actlr_set =
+		    CORTEXA15_ACTLR_SMP |
+		    CORTEXA15_ACTLR_SDEH |
+		    0;
+#if 0
+	} else if (CPU_ID_CORTEX_A12_P(lcputype) ||
+	    CPU_ID_CORTEX_A17_P(lcputype)) {
+		actlr_set =
+		    CORTEXA17_ACTLR_SMP;
+#endif
+	} else if (CPU_ID_CORTEX_A53_P(lcputype)) {
+	} else if (CPU_ID_CORTEX_A57_P(lcputype)) {
+	} else if (CPU_ID_CORTEX_A72_P(lcputype)) {
+	}
+
+	uint32_t actlr = armreg_auxctl_read();
+	actlr &= ~actlr_clr;
+	actlr |= actlr_set;
+
+	armreg_auxctl_write(actlr);
+
+	/* Set the control register - does dsb; isb */
 	cpu_control(cpuctrlmask, cpuctrl);
+
+	/* does tlb and branch predictor flush, and dsb; isb */
+	cpu_tlb_flushID();
+#else
+	/* Set the control register - does dsb; isb */
+	cpu_control(cpuctrlmask, cpuctrl);
+#endif
+
 }
 #endif /* CPU_ARMV7 */
 
@@ -3071,7 +3128,6 @@ arm11x6_setup(char *args)
 	armreg_cpacr_write(0x0fffffff);
 
 	/* Set the control register */
-	curcpu()->ci_ctrl = cpuctrl;
 	cpu_control(~cpuctrl_wax, cpuctrl);
 
 	/* Update auxctlr */
@@ -3135,7 +3191,6 @@ sa110_setup(char *args)
 	cpu_idcache_wbinv_all();
 
 	/* Set the control register */
-	curcpu()->ci_ctrl = cpuctrl;
 #if 0
 	cpu_control(cpuctrlmask, cpuctrl);
 #endif
@@ -3203,7 +3258,6 @@ sa11x0_setup(char *args)
 	cpu_idcache_wbinv_all();
 
 	/* Set the control register */
-	curcpu()->ci_ctrl = cpuctrl;
 	cpu_control(0xffffffff, cpuctrl);
 }
 #endif	/* CPU_SA1100 || CPU_SA1110 */
@@ -3258,7 +3312,6 @@ fa526_setup(char *args)
 	cpu_idcache_wbinv_all();
 
 	/* Set the control register */
-	curcpu()->ci_ctrl = cpuctrl;
 	cpu_control(0xffffffff, cpuctrl);
 }
 #endif	/* CPU_FA526 */
@@ -3309,7 +3362,6 @@ ixp12x0_setup(char *args)
 	cpu_idcache_wbinv_all();
 
 	/* Set the control register */
-	curcpu()->ci_ctrl = cpuctrl;
 	/* cpu_control(0xffffffff, cpuctrl); */
 	cpu_control(cpuctrlmask, cpuctrl);
 }
@@ -3379,7 +3431,6 @@ xscale_setup(char *args)
 	 * Set the control register.  Note that bits 6:3 must always
 	 * be set to 1.
 	 */
-	curcpu()->ci_ctrl = cpuctrl;
 #if 0
 	cpu_control(cpuctrlmask, cpuctrl);
 #endif
@@ -3478,7 +3529,6 @@ sheeva_setup(char *args)
 	__asm volatile ("mcr\tp15, 0, r0, c7, c7, 0" : : );
 
 	/* Set the control register */
-	curcpu()->ci_ctrl = cpuctrl;
 	cpu_control(0xffffffff, cpuctrl);
 
 	/* And again. */
@@ -3488,7 +3538,6 @@ sheeva_setup(char *args)
 #endif
 }
 #endif	/* CPU_SHEEVA */
-
 
 bool
 cpu_gtmr_exists_p(void)
@@ -3505,5 +3554,18 @@ cpu_clusterid(void)
 bool
 cpu_earlydevice_va_p(void)
 {
-	return armreg_sctlr_read() & CPU_CONTROL_MMU_ENABLE;
+	const bool mmu_enabled_p =
+	    armreg_sctlr_read() & CPU_CONTROL_MMU_ENABLE;
+
+	if (!mmu_enabled_p)
+		return false;
+
+	/* Don't access cpu_ttb unless the mmu is enabled */
+	extern uint32_t cpu_ttb;
+
+	const bool cpul1pt_p =
+	    ((armreg_ttbr_read() & -L1_TABLE_SIZE) == cpu_ttb) ||
+	    ((armreg_ttbr1_read() & -L1_TABLE_SIZE) == cpu_ttb);
+
+	return cpul1pt_p;
 }

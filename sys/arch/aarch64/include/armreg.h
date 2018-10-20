@@ -1,4 +1,4 @@
-/* $NetBSD: armreg.h,v 1.3.2.6 2018/09/06 06:55:23 pgoyette Exp $ */
+/* $NetBSD: armreg.h,v 1.3.2.7 2018/10/20 06:58:24 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -599,6 +599,7 @@ AARCH64REG_WRITE_INLINE(spsr_el1)
 #define	SPSR_I	 		__BIT(7)	// IRQ Mask
 #define	SPSR_F	 		__BIT(6)	// FIQ Mask
 #define	SPSR_A32_T 		__BIT(5)	// A32 Thumb Mode
+#define	SPSR_A32		__BIT(4)	// A32 Mode (a part of SPSR_M)
 #define	SPSR_M	 		__BITS(4,0)	// Execution State
 #define	 SPSR_M_EL3H 		 0x0d
 #define	 SPSR_M_EL3T 		 0x0c

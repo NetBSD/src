@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.280.4.1 2018/09/06 06:56:04 pgoyette Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.280.4.2 2018/10/20 06:58:43 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.280.4.1 2018/09/06 06:56:04 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.280.4.2 2018/10/20 06:58:43 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -631,6 +631,8 @@ static const struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	 ""	   , "DFRSS2F",		 ""},	  PQUIRK_AUTOSAVE},
 	{{T_DIRECT, T_FIXED,
 	 "Initio  ", "",		 ""},	  PQUIRK_NOBIGMODESENSE},
+	{{T_DIRECT, T_FIXED,
+	 "JMicron ", "Generic         ", ""},	  PQUIRK_NOFUA},
 	{{T_DIRECT, T_REMOV,
 	 "MPL     ", "MC-DISK-        ", ""},     PQUIRK_NOLUNS},
 	{{T_DIRECT, T_FIXED,

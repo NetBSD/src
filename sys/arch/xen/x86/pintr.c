@@ -103,7 +103,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pintr.c,v 1.3 2018/02/17 18:51:53 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pintr.c,v 1.3.2.1 2018/10/20 06:58:30 pgoyette Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_xen.h"
@@ -143,8 +143,8 @@ struct intrstub x2apic_edge_stubs[MAX_INTR_SOURCES] = {{0,0}};
 struct intrstub x2apic_level_stubs[MAX_INTR_SOURCES] = {{0,0}};
 #include <machine/i82093var.h>
 int irq2port[NR_EVENT_CHANNELS] = {0}; /* actually port + 1, so that 0 is invaid */
-int irq2vect[256] = {0};
-int vect2irq[256] = {0};
+static int irq2vect[256] = {0};
+static int vect2irq[256] = {0};
 #endif /* NIOAPIC */
 #if NACPICA > 0
 #include <machine/mpconfig.h>
@@ -160,72 +160,63 @@ int vect2irq[256] = {0};
 
 #if defined(DOM0OPS) || NPCI > 0
 int
-xen_pirq_alloc(intr_handle_t *pirq, int type)
+xen_vec_alloc(int gsi)
 {
 	physdev_op_t op;
-	int irq = *pirq;
-#if NIOAPIC > 0
-	extern struct cpu_info phycpu_info_primary; /* XXX */
-	/*
-	 * The hypervisor has already allocated vectors and IRQs for the
-	 * devices. Reusing the same IRQ doesn't work because as we bind
-	 * them for each devices, we can't then change the route entry
-	 * of the next device if this one used this IRQ. The easiest is
-	 * to allocate IRQs top-down, starting with a high number.
-	 * 250 and 230 have been tried, but got rejected by Xen.
-	 *
-	 * Xen 3.5 also rejects 200. Try out all values until Xen accepts
-	 * or none is available.
-	 */
-	static int xen_next_irq = 200;
-	struct ioapic_softc *ioapic = ioapic_find(APIC_IRQ_APIC(*pirq));
-	struct pic *pic = &ioapic->sc_pic;
-	int pin = APIC_IRQ_PIN(*pirq);
 
-	if (*pirq & APIC_INT_VIA_APIC) {
-		irq = vect2irq[ioapic->sc_pins[pin].ip_vector];
-		if (ioapic->sc_pins[pin].ip_vector == 0 || irq == 0) {
-			/* allocate IRQ */
-			irq = APIC_IRQ_LEGACY_IRQ(*pirq);
-			if (irq <= 0 || irq > 15)
-				irq = xen_next_irq--;
-retry:
-			/* allocate vector and route interrupt */
-			op.cmd = PHYSDEVOP_ASSIGN_VECTOR;
-			op.u.irq_op.irq = irq;
-			if (HYPERVISOR_physdev_op(&op) < 0) {
-				irq = xen_next_irq--;
-				if (xen_next_irq == 15)
-					panic("PHYSDEVOP_ASSIGN_VECTOR irq %d", irq);
-				goto retry;
-			}
-			KASSERT(irq2vect[irq] == 0);
-			irq2vect[irq] = op.u.irq_op.vector;
-			KASSERT(vect2irq[op.u.irq_op.vector] == 0);
-			vect2irq[op.u.irq_op.vector] = irq;
-			pic->pic_addroute(pic, &phycpu_info_primary, pin,
-			    op.u.irq_op.vector, type);
+	KASSERT(gsi < 255);
+
+	if (irq2port[gsi] == 0) {
+		op.cmd = PHYSDEVOP_ASSIGN_VECTOR;
+		op.u.irq_op.irq = gsi;
+		if (HYPERVISOR_physdev_op(&op) < 0) {
+			panic("PHYSDEVOP_ASSIGN_VECTOR gsi %d", gsi);
 		}
-		*pirq &= ~0xff;
-		*pirq |= irq;
-	} else
-#endif /* NIOAPIC */
-	{
-		if (irq2port[irq] == 0) {
-			op.cmd = PHYSDEVOP_ASSIGN_VECTOR;
-			op.u.irq_op.irq = irq;
-			if (HYPERVISOR_physdev_op(&op) < 0) {
-				panic("PHYSDEVOP_ASSIGN_VECTOR irq %d", irq);
-			}
-			KASSERT(irq2vect[irq] == 0);
-			irq2vect[irq] = op.u.irq_op.vector;
-			KASSERT(vect2irq[op.u.irq_op.vector] == 0);
-			vect2irq[op.u.irq_op.vector] = irq;
-			KASSERT(irq2port[irq] == 0);
-			irq2port[irq] = bind_pirq_to_evtch(irq) + 1;
-		}
+		KASSERT(irq2vect[gsi] == 0 ||
+			irq2vect[gsi] == op.u.irq_op.vector);
+		irq2vect[gsi] = op.u.irq_op.vector;
+		KASSERT(vect2irq[op.u.irq_op.vector] == 0 ||
+			 vect2irq[op.u.irq_op.vector] == gsi);
+		vect2irq[op.u.irq_op.vector] = gsi;
 	}
-	KASSERT(irq2port[irq] > 0);
-	return (irq2port[irq] - 1);
+
+	return (irq2vect[gsi]);
 }
+
+/*
+ * This function doesn't "allocate" anything. It merely translates our
+ * understanding of PIC to the XEN 'gsi' namespace. In the case of
+ * MSIs, pirq == irq. In the case of everything else, the hypervisor
+ * doesn't really care, so we just use the native conventions that
+ * have been setup during boot by mpbios.c/mpacpi.c
+ */
+int
+xen_pic_to_gsi(struct pic *pic, int pin)
+{
+	int gsi;
+
+	KASSERT(pic != NULL);
+
+	/*
+	 * We assume that mpbios/mpacpi have done the right thing.
+	 * If so, legacy_irq should identity map correctly to gsi.
+	 */
+	gsi = pic->pic_vecbase + pin;
+
+	switch (pic->pic_type) {
+	case PIC_I8259:
+		KASSERT(gsi < 16);
+		break;
+	case PIC_IOAPIC:
+		break;
+	default: /* XXX: MSI Support */
+		panic("XXX: MSI(X) Support");
+		break;
+	}
+
+	KASSERT(gsi < 255);
+	return gsi;
+}
+
+
 #endif /* defined(DOM0OPS) || NPCI > 0 */

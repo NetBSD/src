@@ -1,4 +1,4 @@
-/*      $NetBSD: pciback.c,v 1.12.4.1 2018/06/25 07:25:48 pgoyette Exp $      */
+/*      $NetBSD: pciback.c,v 1.12.4.2 2018/10/20 06:58:30 pgoyette Exp $      */
 
 /*
  * Copyright (c) 2009 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciback.c,v 1.12.4.1 2018/06/25 07:25:48 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciback.c,v 1.12.4.2 2018/10/20 06:58:30 pgoyette Exp $");
 
 #include "opt_xen.h"
 
@@ -188,6 +188,7 @@ struct pb_xenbus_instance {
 	struct pciback_pci_devlist pbx_pb_pci_dev; /* list of exported PCI devices */
 	/* communication with the domU */
         unsigned int pbx_evtchn; /* our even channel */
+	struct intrhand *pbx_ih;
         struct xen_pci_sharedinfo *pbx_sh_info;
         struct xen_pci_op op;
         grant_handle_t pbx_shinfo_handle; /* to unmap shared page */
@@ -524,9 +525,7 @@ pciback_xenbus_destroy(void *arg)
 	int err;
 
 	hypervisor_mask_event(pbxi->pbx_evtchn);
-	event_remove_handler(pbxi->pbx_evtchn,
-	    pciback_xenbus_evthandler, pbxi);
-
+	intr_disestablish(pbxi->pbx_ih);
 	mutex_enter(&pb_xenbus_lock);
 	SLIST_REMOVE(&pb_xenbus_instances,
 	    pbxi, pb_xenbus_instance, pbx_next);
@@ -620,8 +619,9 @@ pciback_xenbus_frontend_changed(void *arg, XenbusState new_state)
 		x86_sfence();
 		xenbus_switch_state(xbusd, NULL, XenbusStateConnected);
 		x86_sfence();
-		event_set_handler(pbxi->pbx_evtchn, pciback_xenbus_evthandler,
-		    pbxi, IPL_BIO, "pciback", "pciback"); // XXX intr info?
+		pbxi->pbx_ih = intr_establish_xname(0, &xen_pic, pbxi->pbx_evtchn, IST_LEVEL, IPL_BIO,
+		    pciback_xenbus_evthandler, pbxi, true, "pciback");
+		KASSERT(pbxi->pbx_ih != NULL);
 		hypervisor_enable_event(pbxi->pbx_evtchn);
 		hypervisor_notify_via_evtchn(pbxi->pbx_evtchn);
 		break;

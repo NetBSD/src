@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.1.2.5 2018/09/30 01:45:35 pgoyette Exp $ */
+/* $NetBSD: cpu.c,v 1.1.2.6 2018/10/20 06:58:23 pgoyette Exp $ */
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: cpu.c,v 1.1.2.5 2018/09/30 01:45:35 pgoyette Exp $");
+__KERNEL_RCSID(1, "$NetBSD: cpu.c,v 1.1.2.6 2018/10/20 06:58:23 pgoyette Exp $");
 
 #include "locators.h"
 #include "opt_arm_debug.h"
@@ -53,7 +53,7 @@ __KERNEL_RCSID(1, "$NetBSD: cpu.c,v 1.1.2.5 2018/09/30 01:45:35 pgoyette Exp $")
 #ifdef VERBOSE_INIT_ARM
 #define VPRINTF(...)	printf(__VA_ARGS__)
 #else
-#define VPRINTF(...)	do { } while (/* CONSTCOND */ 0)
+#define VPRINTF(...)	__nothing
 #endif
 
 void cpu_attach(device_t, cpuid_t);
@@ -176,7 +176,11 @@ const struct cpuidtab cpuids[] = {
 	{ CPU_ID_CORTEXA72R0 & CPU_PARTMASK, "Cortex-A72", "Cortex", "V8-A" },
 	{ CPU_ID_CORTEXA73R0 & CPU_PARTMASK, "Cortex-A73", "Cortex", "V8-A" },
 	{ CPU_ID_CORTEXA55R1 & CPU_PARTMASK, "Cortex-A55", "Cortex", "V8.2-A" },
-	{ CPU_ID_CORTEXA75R2 & CPU_PARTMASK, "Cortex-A75", "Cortex", "V8.2-A" }
+	{ CPU_ID_CORTEXA75R2 & CPU_PARTMASK, "Cortex-A75", "Cortex", "V8.2-A" },
+	{ CPU_ID_THUNDERXRX, "Cavium ThunderX", "Cavium", "V8-A" },
+	{ CPU_ID_THUNDERX81XXRX, "Cavium ThunderX CN81XX", "Cavium", "V8-A" },
+	{ CPU_ID_THUNDERX83XXRX, "Cavium ThunderX CN83XX", "Cavium", "V8-A" },
+	{ CPU_ID_THUNDERX2RX, "Cavium ThunderX2", "Cavium", "V8.1-A" },
 };
 
 static void
@@ -445,8 +449,6 @@ void
 cpu_hatch(struct cpu_info *ci)
 {
 	KASSERT(curcpu() == ci);
-
-	delay(1000 * ci->ci_index);	/* XXX: to attach cpu* in order */
 
 	mutex_enter(&cpu_hatch_lock);
 

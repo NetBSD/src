@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbufdebug.c,v 1.2.2.3 2018/09/06 06:56:42 pgoyette Exp $	*/
+/*	$NetBSD: uipc_mbufdebug.c,v 1.2.2.4 2018/10/20 06:58:45 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 2017 Internet Initiative Japan Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbufdebug.c,v 1.2.2.3 2018/09/06 06:56:42 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbufdebug.c,v 1.2.2.4 2018/10/20 06:58:45 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,30 +62,6 @@ static char *str_ethaddr(const uint8_t *);
 static char *str_ipaddr(const struct in_addr *);
 static char *str_ip6addr(const struct in6_addr *);
 static const char *str_ipproto(const uint8_t);
-
-/* parsers for m_examine() */
-static void m_examine_ether(const struct mbuf *, int, const char *,
-    void (*)(const char *, ...));
-static void m_examine_pppoe(const struct mbuf *, int, const char *,
-    void (*)(const char *, ...));
-static void m_examine_ppp(const struct mbuf *, int, const char *,
-    void (*)(const char *, ...));
-static void m_examine_arp(const struct mbuf *, int, const char *,
-    void (*)(const char *, ...));
-static void m_examine_ip(const struct mbuf *, int, const char *,
-    void (*)(const char *, ...));
-static void m_examine_icmp(const struct mbuf *, int, const char *,
-    void (*)(const char *, ...));
-static void m_examine_ip6(const struct mbuf *, int, const char *,
-    void (*)(const char *, ...));
-static void m_examine_icmp6(const struct mbuf *, int, const char *,
-    void (*)(const char *, ...));
-static void m_examine_tcp(const struct mbuf *, int, const char *,
-    void (*)(const char *, ...));
-static void m_examine_udp(const struct mbuf *, int, const char *,
-    void (*)(const char *, ...));
-static void m_examine_hex(const struct mbuf *, int, const char *,
-    void (*)(const char *, ...));
 
 /* header structure for some protocol */
 struct pppoehdr {
@@ -157,20 +133,19 @@ m_peek_len(const struct mbuf *m, const char *modif)
 {
 	const struct mbuf *m0;
 	unsigned int pktlen;
-	boolean_t opt_c = FALSE;
+	bool opt_c = false;
 	unsigned char ch;
 
-	while ( modif && (ch = *(modif++)) != '\0') {
+	while (modif && (ch = *(modif++)) != '\0') {
 		switch (ch) {
 		case 'c':
-			opt_c = TRUE;
+			opt_c = true;
 			break;
 		}
 	}
 
-	if (opt_c == TRUE) {
+	if (opt_c == true)
 		return m->m_len;
-	}
 
 	if ((m->m_flags & M_PKTHDR) != 0)
 		return m->m_pkthdr.len;
@@ -209,6 +184,7 @@ str_ip6addr(const struct in6_addr *ap)
 static const char *
 str_ipproto(const uint8_t proto)
 {
+
 	switch (proto) {
 	case IPPROTO_HOPOPTS:
 		return ("IPv6 Hop-by-Hop");
@@ -242,7 +218,7 @@ str_ipproto(const uint8_t proto)
 	return NULL;
 }
 
-static void
+void
 m_examine_ether(const struct mbuf *m, int off, const char *modif,
     void (*pr)(const char *, ...))
 {
@@ -251,7 +227,8 @@ m_examine_ether(const struct mbuf *m, int off, const char *modif,
 
 	pktlen = m_peek_len(m, modif) - off;
 	if (pktlen < sizeof(eh)) {
-		(*pr)("%s: too short mbuf chain\n", __func__);
+		(*pr)("%s: too short mbuf chain (%u < %u)\n", __func__,
+		    pktlen, sizeof(eh));
 		return m_examine_hex(m, off, modif, pr);
 	}
 
@@ -290,7 +267,7 @@ m_examine_ether(const struct mbuf *m, int off, const char *modif,
 	return m_examine_hex(m, off, modif, pr);
 }
 
-static void
+void
 m_examine_pppoe(const struct mbuf *m, int off, const char *modif,
     void (*pr)(const char *, ...))
 {
@@ -301,7 +278,8 @@ m_examine_pppoe(const struct mbuf *m, int off, const char *modif,
 
 	pktlen = m_peek_len(m, modif) - off;
 	if (pktlen < sizeof(ph)) {
-		(*pr)("%s: too short mbuf chain\n", __func__);
+		(*pr)("%s: too short mbuf chain (%u, %u)\n", __func__,
+		    pktlen, sizeof(ph));
 		return m_examine_hex(m, off, modif, pr);
 	}
 
@@ -371,7 +349,7 @@ m_examine_pppoe(const struct mbuf *m, int off, const char *modif,
 	return m_examine_ppp(m, off, modif, pr);
 }
 
-static void
+void
 m_examine_ppp(const struct mbuf *m, int off, const char *modif,
     void (*pr)(const char *, ...))
 {
@@ -381,7 +359,8 @@ m_examine_ppp(const struct mbuf *m, int off, const char *modif,
 
 	pktlen = m_peek_len(m, modif) - off;
 	if (pktlen < sizeof(h)) {
-		(*pr)("%s: too short mbuf chain\n", __func__);
+		(*pr)("%s: too short mbuf chain (%u < %u)\n", __func__,
+		    pktlen, sizeof(h));
 		return m_examine_hex(m, off, modif, pr);
 	}
 
@@ -429,12 +408,11 @@ m_examine_ppp(const struct mbuf *m, int off, const char *modif,
 		break;
 	case CISCO_MULTICAST:
 	case CISCO_UNICAST:
-		if (h.address == CISCO_MULTICAST) {
+		if (h.address == CISCO_MULTICAST)
 			(*pr)("MULTICAST)\n");
-		}
-		else {
+		else
 			(*pr)("UNICAST)\n");
-		}
+
 		(*pr)("SPPP: Protocol = %d(", protocol);
 		switch (protocol) {
 		case CISCO_KEEPALIVE:
@@ -462,7 +440,7 @@ m_examine_ppp(const struct mbuf *m, int off, const char *modif,
 	return m_examine_hex(m, off, modif, pr);
 }
 
-static void
+void
 m_examine_arp(const struct mbuf *m, int off, const char *modif,
     void (*pr)(const char *, ...))
 {
@@ -474,7 +452,8 @@ m_examine_arp(const struct mbuf *m, int off, const char *modif,
 
 	pktlen = m_peek_len(m, modif) - off;
 	if (pktlen < sizeof(ar)) {
-		(*pr)("%s: too short mbuf chain\n", __func__);
+		(*pr)("%s: too short mbuf chain (%u < %u)\n", __func__,
+		    pktlen, sizeof(ar));
 		return m_examine_hex(m, off, modif, pr);
 	}
 
@@ -561,7 +540,7 @@ m_examine_arp(const struct mbuf *m, int off, const char *modif,
 	return m_examine_hex(m, off, modif, pr);
 }
 
-static void
+void
 m_examine_ip(const struct mbuf *m, int off, const char *modif,
     void (*pr)(const char *, ...))
 {
@@ -571,7 +550,8 @@ m_examine_ip(const struct mbuf *m, int off, const char *modif,
 
 	pktlen = m_peek_len(m, modif) - off;
 	if (pktlen < sizeof(ip)) {
-		(*pr)("%s: too short mbuf chain\n", __func__);
+		(*pr)("%s: too short mbuf chain (%u < %u)\n", __func__,
+		    pktlen, sizeof(ip));
 		return m_examine_hex(m, off, modif, pr);
 	}
 
@@ -588,23 +568,19 @@ m_examine_ip(const struct mbuf *m, int off, const char *modif,
 	(*pr)("IP: ID = %u\n", ntohs(ip.ip_id));
 	offset = ntohs(ip.ip_off);
 	(*pr)("IP: Offset = %u\n", (offset & IP_OFFMASK));
-	if (offset & IP_RF) {
+	if (offset & IP_RF)
 		(*pr)("IP: Flag 0x%04x (reserved)\n", IP_RF);
-	}
-	if (offset & IP_EF) {
+	if (offset & IP_EF)
 		(*pr)("IP: Flag 0x%04x (evil flag)\n", IP_EF);
-	}
-	if (offset & IP_DF) {
+	if (offset & IP_DF)
 		(*pr)("IP: Flag 0x%04x (don't fragment)\n", IP_DF);
-	}
-	if (offset & IP_MF) {
+	if (offset & IP_MF)
 		(*pr)("IP: Flag 0x%04x (more fragment)\n", IP_MF);
-	}
 	(*pr)("IP: TTL = %u\n", ip.ip_ttl);
 	(*pr)("IP: protocol = %u(%s)\n", ip.ip_p, str_ipproto(ip.ip_p));
+	(*pr)("IP: checksum = 0x%04x\n", ntohs(ip.ip_sum));
 	(*pr)("IP: Src = %s\n", str_ipaddr(&ip.ip_src));
 	(*pr)("IP: Dst = %s\n", str_ipaddr(&ip.ip_dst));
-
 
 	switch (ip.ip_p) {
 	case IPPROTO_ICMP:
@@ -620,11 +596,10 @@ m_examine_ip(const struct mbuf *m, int off, const char *modif,
 		break;
 	}
 
-
 	return m_examine_hex(m, off, modif, pr);
 }
 
-static void
+void
 m_examine_icmp(const struct mbuf *m, int off, const char *modif,
     void (*pr)(const char *, ...))
 {
@@ -633,7 +608,8 @@ m_examine_icmp(const struct mbuf *m, int off, const char *modif,
 
 	pktlen = m_peek_len(m, modif) - off;
 	if (pktlen < sizeof(icmphdr)) {
-		(*pr)("%s: too short mbuf chain\n", __func__);
+		(*pr)("%s: too short mbuf chain (%u < %u)\n", __func__,
+		    pktlen, sizeof(icmphdr));
 		return m_examine_hex(m, off, modif, pr);
 	}
 
@@ -669,7 +645,7 @@ m_examine_icmp(const struct mbuf *m, int off, const char *modif,
 	return m_examine_hex(m, off, modif, pr);
 }
 
-static void
+void
 m_examine_ip6(const struct mbuf *m, int off, const char *modif,
     void (*pr)(const char *, ...))
 {
@@ -683,7 +659,8 @@ m_examine_ip6(const struct mbuf *m, int off, const char *modif,
 
 	pktlen = m_peek_len(m, modif) - off;
 	if (pktlen < sizeof(ip6)) {
-		(*pr)("%s: too short mbuf chain\n", __func__);
+		(*pr)("%s: too short mbuf chain (%u < %u)\n", __func__,
+		    pktlen, sizeof(ip6));
 		return m_examine_hex(m, off, modif, pr);
 	}
 
@@ -697,7 +674,7 @@ m_examine_ip6(const struct mbuf *m, int off, const char *modif,
 	(*pr)("IPv6: Version = %u\n", (vfc & IPV6_VERSION_MASK) >> 4);
 	flow = ntohl(ip6.ip6_flow);
 	(*pr)("IPv6: Flow INFO = 0x%07x\n", flow & IPV6_FLOWINFO_MASK);
-	(*pr)("IPv6: Payload Length = %u\n", ip6.ip6_plen);
+	(*pr)("IPv6: Payload Length = %u\n", ntohs(ip6.ip6_plen));
 	nxt = ip6.ip6_nxt;
 	(*pr)("IPv6: Next Header = %u(%s)\n", nxt, str_ipproto(nxt));
 	(*pr)("IPv6: Hop Limit = %u\n", ip6.ip6_hlim);
@@ -735,7 +712,7 @@ m_examine_ip6(const struct mbuf *m, int off, const char *modif,
 	return m_examine_hex(m, off, modif, pr);
 }
 
-static void
+void
 m_examine_icmp6(const struct mbuf *m, int off, const char *modif,
     void (*pr)(const char *, ...))
 {
@@ -744,7 +721,8 @@ m_examine_icmp6(const struct mbuf *m, int off, const char *modif,
 
 	pktlen = m_peek_len(m, modif) - off;
 	if (pktlen < sizeof(icmp6)) {
-		(*pr)("%s: too short mbuf chain\n", __func__);
+		(*pr)("%s: too short mbuf chain (%u < %u)\n", __func__,
+		    pktlen, sizeof(icmp6));
 		return m_examine_hex(m, off, modif, pr);
 	}
 
@@ -810,7 +788,7 @@ m_examine_icmp6(const struct mbuf *m, int off, const char *modif,
 	return m_examine_hex(m, off, modif, pr);
 }
 
-static void
+void
 m_examine_tcp(const struct mbuf *m, int off, const char *modif,
     void (*pr)(const char *, ...))
 {
@@ -819,7 +797,8 @@ m_examine_tcp(const struct mbuf *m, int off, const char *modif,
 
 	pktlen = m_peek_len(m, modif) - off;
 	if (pktlen < sizeof(tcp)) {
-		(*pr)("%s: too short mbuf chain\n", __func__);
+		(*pr)("%s: too short mbuf chain (%u < %u)\n", __func__,
+		    pktlen, sizeof(tcp));
 		return m_examine_hex(m, off, modif, pr);
 	}
 
@@ -833,7 +812,7 @@ m_examine_tcp(const struct mbuf *m, int off, const char *modif,
 	(*pr)("TCP: Dst = %u\n", ntohs(tcp.th_dport));
 	(*pr)("TCP: Seq. = %u\n", ntohl(tcp.th_seq));
 	(*pr)("TCP: Ack. = %u\n", ntohl(tcp.th_ack));
-	(*pr)("TCP: Header Length = %u\n", ntohl(tcp.th_off) << 2);
+	(*pr)("TCP: Header Length = %u\n", tcp.th_off << 2);
 	if (tcp.th_flags) {
 		(*pr)("TCP: Flags 0x%02x : ", tcp.th_flags);
 		if (tcp.th_flags & TH_FIN)
@@ -853,12 +832,96 @@ m_examine_tcp(const struct mbuf *m, int off, const char *modif,
 		(*pr)("\n");
 	}
 	(*pr)("TCP: Windows Size = %u\n", ntohs(tcp.th_win));
+	(*pr)("TCP: checksum = 0x%04x\n", ntohs(tcp.th_sum));
 	(*pr)("TCP: Urgent Pointer = %u\n", ntohs(tcp.th_urp));
 
-	return m_examine_hex(m, off, modif, pr);
+	int len;
+	len = (tcp.th_off << 2) - sizeof(struct tcphdr);
+	if (len > 0) {
+		uint8_t *bufp, *op, opt, optlen;
+
+		bufp = malloc(len, M_TEMP, M_DONTWAIT);
+		if ((bufp == NULL) || (m_peek_data(m, off, len, bufp) < 0)) {
+			(*pr)("%s: cannot read TCP option\n", __func__);
+			if (bufp != NULL)
+				free(bufp, M_TEMP);
+			return m_examine_hex(m, off, modif, pr);
+		}
+		off += len;
+		op = bufp;
+
+		while (len > 0) {
+			opt = op[0];
+			if (opt == TCPOPT_EOL)
+				break;
+			if (opt == TCPOPT_NOP) {
+				(*pr)("TCP: OPTION: NOP\n");
+				op++;
+				len--;
+				continue;
+			}
+			if (opt == TCPOPT_PAD) {
+				(*pr)("TCP: OPTION: PAD\n");
+				op++;
+				len--;
+				continue;
+			}
+			optlen = op[1];
+			if (optlen == 0)
+				break;
+
+			if (opt == TCPOPT_MAXSEG && optlen == TCPOLEN_MAXSEG) {
+				uint16_t mss;
+
+				bcopy(op + 2, &mss, sizeof(mss));
+				(*pr)("TCP: OPTION: MSS = %d\n",
+				    ntohs(mss));
+
+				op += optlen;
+				len -= optlen;
+				continue;
+			} else if (opt == TCPOPT_WINDOW
+			    && optlen == TCPOLEN_WINDOW) {
+				(*pr)("TCP: OPTION: wscale = %d\n", op[2]);
+				op += optlen;
+				len -= optlen;
+				continue;
+			} else if (opt == TCPOPT_SACK_PERMITTED
+			    && optlen == TCPOLEN_SACK_PERMITTED) {
+				(*pr)("TCP: OPTION: SACK OK\n");
+				op += optlen;
+				len -= optlen;
+				continue;
+			} else if (opt == TCPOPT_TIMESTAMP
+			    && optlen == TCPOLEN_TIMESTAMP) {
+				uint32_t ts_val, ts_ecr;
+
+				memcpy(&ts_val, op + 2, sizeof(ts_val));
+				memcpy(&ts_ecr, op + 6, sizeof(ts_ecr));
+				(*pr)("TCP: OPTION: TIMESTAMP = %u, "
+				    "ECR = %u\n",
+				    ntohl(ts_val), ntohl(ts_ecr));
+				op += optlen;
+				len -= optlen;
+				continue;
+			} else {
+				(*pr)("TCP: OPTION: unknown (%d, len = %d)\n",
+				    opt, optlen);
+				op += optlen;
+				len -= optlen;
+				continue;
+			}
+		}
+		free(bufp, M_TEMP);
+	}
+
+	if (off < pktlen)
+		m_examine_hex(m, off, modif, pr);
+
+	return;
 }
 
-static void
+void
 m_examine_udp(const struct mbuf *m, int off, const char *modif,
     void (*pr)(const char *, ...))
 {
@@ -867,7 +930,8 @@ m_examine_udp(const struct mbuf *m, int off, const char *modif,
 
 	pktlen = m_peek_len(m, modif) - off;
 	if (pktlen < sizeof(udp)) {
-		(*pr)("%s: too short mbuf chain\n", __func__);
+		(*pr)("%s: too short mbuf chain (%u < %u)\n", __func__,
+		    pktlen, sizeof(udp));
 		return m_examine_hex(m, off, modif, pr);
 	}
 
@@ -884,7 +948,7 @@ m_examine_udp(const struct mbuf *m, int off, const char *modif,
 	return m_examine_hex(m, off, modif, pr);
 }
 
-static void
+void
 m_examine_hex(const struct mbuf *m, int off, const char *modif,
     void (*pr)(const char *, ...))
 {
@@ -914,10 +978,8 @@ m_examine_hex(const struct mbuf *m, int off, const char *modif,
 		if ((newline % EXAMINE_HEX_COL) == 0) {
 			(*pr)("\n");
 			(*pr)("offset %04d: ", off);
-		}
-		else {
+		} else
 			(*pr)(" ");
-		}
 	}
 	(*pr)("\n");
 }

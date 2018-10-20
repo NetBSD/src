@@ -1,4 +1,4 @@
-/* $NetBSD: efiboot.c,v 1.5.2.3 2018/09/30 01:45:57 pgoyette Exp $ */
+/* $NetBSD: efiboot.c,v 1.5.2.4 2018/10/20 06:58:46 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -30,6 +30,7 @@
 #include "efifile.h"
 #include "efiblock.h"
 #include "efifdt.h"
+#include "efiacpi.h"
 
 #include <sys/reboot.h>
 
@@ -79,6 +80,7 @@ efi_main(EFI_HANDLE imageHandle, EFI_SYSTEM_TABLE *systemTable)
 	Print(L"Image file        : %s\n", DevicePathToStr(efi_li->FilePath));
 #endif
 
+	efi_acpi_probe();
 	efi_fdt_probe();
 	efi_file_system_probe();
 	efi_block_probe();

@@ -1,4 +1,4 @@
-/*	$NetBSD: zynq_machdep.c,v 1.1.22.3 2018/09/30 01:45:43 pgoyette Exp $	*/
+/*	$NetBSD: zynq_machdep.c,v 1.1.22.4 2018/10/20 06:58:28 pgoyette Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zynq_machdep.c,v 1.1.22.3 2018/09/30 01:45:43 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zynq_machdep.c,v 1.1.22.4 2018/10/20 06:58:28 pgoyette Exp $");
 
 #include "opt_evbarm_boardtype.h"
 #include "opt_arm_debug.h"
@@ -58,10 +58,19 @@ __KERNEL_RCSID(0, "$NetBSD: zynq_machdep.c,v 1.1.22.3 2018/09/30 01:45:43 pgoyet
 #include <machine/bootconfig.h>
 
 #include <arm/cortex/scu_reg.h>
+#include <arm/cortex/a9tmr_var.h>
+
 #include <arm/zynq/zynq7000_var.h>
+#include <arm/zynq/zynq_uartreg.h>
 #include <arm/zynq/zynq_uartvar.h>
 
 #include <evbarm/zynq/platform.h>
+
+#ifdef VERBOSE_INIT_ARM
+#define VPRINTF(...)	printf(__VA_ARGS__)
+#else
+#define VPRINTF(...)	__nothing
+#endif
 
 extern int _end[];
 extern int KERNEL_BASE_phys[];
@@ -78,8 +87,6 @@ u_int uboot_args[4] __attribute__((__section__(".data")));
  * Macros to translate between physical and virtual for a subset of the
  * kernel address space.  *Not* for general use.
  */
-#define	KERN_VTOPDIFF	((vaddr_t)KERNEL_BASE_phys - (vaddr_t)KERNEL_BASE_virt)
-
 #ifndef CONADDR
 #define CONADDR	(UART1_BASE)
 #endif
@@ -94,9 +101,32 @@ static const bus_addr_t comcnaddr = (bus_addr_t)CONADDR;
 static const int comcnspeed = CONSPEED;
 static const int comcnmode = CONMODE | CLOCAL;
 
+void zynq_platform_early_putchar(char);
+
 #ifdef KGDB
 #include <sys/kgdb.h>
 #endif
+
+static dev_type_cnputc(earlyconsputc);
+static dev_type_cngetc(earlyconsgetc);
+
+static struct consdev earlycons = {
+	.cn_putc = earlyconsputc,
+	.cn_getc = earlyconsgetc,
+	.cn_pollc = nullcnpollc,
+};
+
+static void
+earlyconsputc(dev_t dev, int c)
+{
+	uartputc(c);
+}
+
+static int
+earlyconsgetc(dev_t dev)
+{
+	return 0;	/* XXX */
+}
 
 /*
  * Static device mappings. These peripheral registers are mapped at
@@ -128,8 +158,96 @@ static const struct pmap_devmap devmap[] = {
 		VM_PROT_READ|VM_PROT_WRITE,
 		PTE_NOCACHE,
 	},
+	{
+		KERNEL_IO_OCM_VBASE,
+		ZYNQ7000_OCM_PBASE,		/* 0xfff00000 */
+		ZYNQ7000_OCM_SIZE,		/* 1MB */
+		VM_PROT_READ|VM_PROT_WRITE,
+		PTE_NOCACHE,
+	},
 	{ 0, 0, 0, 0, 0 }
 };
+
+void
+zynq_platform_early_putchar(char c)
+{
+#define CONADDR_VA (CONADDR - ZYNQ7000_IOREG_PBASE + KERNEL_IO_IOREG_VBASE)
+	volatile uint32_t *uartaddr = cpu_earlydevice_va_p() ?
+	    (volatile uint32_t *)CONADDR_VA :
+	    (volatile uint32_t *)CONADDR;
+
+	int timo = 150000;
+
+	while ((uartaddr[UART_CHANNEL_STS / 4] & STS_TEMPTY) == 0) {
+		if (--timo == 0)
+			break;
+	}
+
+	uartaddr[UART_TX_RX_FIFO / 4] = c;
+
+	timo = 150000;
+	while ((uartaddr[UART_CHANNEL_STS / 4] & STS_TEMPTY) == 0) {
+		if (--timo == 0)
+			break;
+	}
+}
+
+static void
+zynq_mpstart(void)
+{
+#ifdef MULTIPROCESSOR
+	/*
+	 * Invalidate all SCU cache tags. That is, for all cores (0-3)
+	 */
+	bus_space_write_4(zynq7000_armcore_bst, zynq7000_armcore_bsh,
+	    ARMCORE_SCU_BASE + SCU_INV_ALL_REG, 0xffff);
+
+	uint32_t scu_ctl = bus_space_read_4(zynq7000_armcore_bst,
+	    zynq7000_armcore_bsh, ARMCORE_SCU_BASE + SCU_CTL);
+	scu_ctl |= SCU_CTL_SCU_ENA;
+	bus_space_write_4(zynq7000_armcore_bst, zynq7000_armcore_bsh,
+	    ARMCORE_SCU_BASE + SCU_CTL, scu_ctl);
+
+	armv7_dcache_wbinv_all();
+
+	bus_space_tag_t bst = &zynq_bs_tag;
+	bus_space_handle_t bsh;
+	int error = bus_space_map(bst, ZYNQ7000_CPU1_ENTRY,
+	    ZYNQ7000_CPU1_ENTRY_SZ, 0, &bsh);
+	if (error)
+		panic("%s: Couldn't map OCM", __func__);
+
+	/* Write start address for CPU1. */
+	bus_space_write_4(bst, bsh, 0, KERN_VTOPHYS((vaddr_t)cpu_mpstart));
+
+	bus_space_unmap(bst, bsh, ZYNQ7000_CPU1_ENTRY_SZ);
+
+	arm_dsb();
+	__asm __volatile("sev" ::: "memory");
+
+
+	for (int loop = 0; loop < 16; loop++) {
+		VPRINTF("%u hatched %#x\n", loop, arm_cpu_hatched);
+		if (arm_cpu_hatched == __BITS(arm_cpu_max - 1, 1))
+			break;
+		int timo = 1500000;
+		while (arm_cpu_hatched != __BITS(arm_cpu_max - 1, 1))
+			if (--timo == 0)
+				break;
+	}
+	for (size_t i = 1; i < arm_cpu_max; i++) {
+		if ((arm_cpu_hatched & __BIT(i)) == 0) {
+		printf("%s: warning: cpu%zu failed to hatch\n",
+			    __func__, i);
+		}
+	}
+
+	VPRINTF(" (%u cpu%s, hatched %#x)",
+	    arm_cpu_max, arm_cpu_max ? "s" : "",
+	    arm_cpu_hatched);
+#endif /* MULTIPROCESSOR */
+}
+
 
 /*
  * u_int initarm(...)
@@ -146,24 +264,26 @@ static const struct pmap_devmap devmap[] = {
 u_int
 initarm(void *arg)
 {
-	kern_vtopdiff = KERN_VTOPDIFF;
-
-	pmap_devmap_register(devmap);
-	zynq7000_bootstrap(KERNEL_IO_IOREG_VBASE);
-
-#ifdef MULTIPROCESSOR
-	uint32_t scu_cfg = bus_space_read_4(zynq7000_armcore_bst, zynq7000_armcore_bsh,
-	    ARMCORE_SCU_BASE + SCU_CFG);
-	arm_cpu_max = (scu_cfg & SCU_CFG_CPUMAX) + 1;
-	membar_producer();
-#endif /* MULTIPROCESSOR */
-	consinit();
-
 	/*
 	 * Heads up ... Setup the CPU / MMU / TLB functions
 	 */
 	if (set_cpufuncs())		// starts PMC counter
 		panic("cpu not recognized!");
+
+	cn_tab = &earlycons;
+
+	extern char ARM_BOOTSTRAP_LxPT[];
+	pmap_devmap_bootstrap((vaddr_t)ARM_BOOTSTRAP_LxPT, devmap);
+
+	zynq7000_bootstrap(KERNEL_IO_IOREG_VBASE);
+
+#ifdef MULTIPROCESSOR
+	uint32_t scu_cfg = bus_space_read_4(zynq7000_armcore_bst,
+	    zynq7000_armcore_bsh, ARMCORE_SCU_BASE + SCU_CFG);
+	arm_cpu_max = (scu_cfg & SCU_CFG_CPUMAX) + 1;
+	membar_producer();
+#endif /* MULTIPROCESSOR */
+	consinit();
 
 	cpu_domains((DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL*2)) | DOMAIN_CLIENT);
 
@@ -185,17 +305,10 @@ initarm(void *arg)
 #endif /* BOOT_ARGS */
 	bootargs[0] = '\0';
 
-#ifdef VERBOSE_INIT_ARM
-	printf("initarm: Configuring system");
-#ifdef MULTIPROCESSOR
-	printf(" (%u cpu%s, hatched %#x)",
-	    arm_cpu_max, arm_cpu_max ? "s" : "",
-	    arm_cpu_hatched);
-#endif /* MULTIPROCESSOR */
-	printf(", CLIDR=%010o CTR=%#x",
+	VPRINTF("initarm: Configuring system");
+	VPRINTF(", CLIDR=%010o CTR=%#x",
 	    armreg_clidr_read(), armreg_ctr_read());
-	printf("\n");
-#endif /* VERBOSE_INIT_ARM */
+	VPRINTF("\n");
 
 	psize_t memsize = zynq7000_memprobe();
 #ifdef MEMSIZE
@@ -204,7 +317,7 @@ initarm(void *arg)
 #endif
 
 	bootconfig.dramblocks = 1;
-	bootconfig.dram[0].address = KERN_VTOPHYS(KERNEL_BASE);
+	bootconfig.dram[0].address = ZYNQ7000_DDR_PBASE;
 	bootconfig.dram[0].pages = memsize / PAGE_SIZE;
 
 	arm32_bootmem_init(bootconfig.dram[0].address,
@@ -220,12 +333,17 @@ initarm(void *arg)
 	 * abtstack, undstack, kernelstack, msgbufphys will be set to point to
 	 * the memory that was allocated for them.
 	 */
-	arm32_kernel_vm_init(KERNEL_VM_BASE, ARM_VECTORS_HIGH, 0, devmap, true);
+	arm32_kernel_vm_init(KERNEL_VM_BASE, ARM_VECTORS_HIGH, 0, devmap, false);
 
 	/* we've a specific device_register routine */
 	evbarm_device_register = zynq7000_device_register;
 
-	return initarm_common(KERNEL_VM_BASE, KERNEL_VM_SIZE, NULL, 0);
+	u_int sp = initarm_common(KERNEL_VM_BASE, KERNEL_VM_SIZE, NULL, 0);
+
+	VPRINTF("mpstart\n");
+	zynq_mpstart();
+
+	return sp;
 }
 
 void

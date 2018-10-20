@@ -1,4 +1,4 @@
-/* $NetBSD: elf_machdep.h,v 1.2.2.1 2018/09/06 06:55:23 pgoyette Exp $ */
+/* $NetBSD: elf_machdep.h,v 1.2.2.2 2018/10/20 06:58:24 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -64,8 +64,8 @@
 #define	EF_ARM_EABI_VER4	0x04000000
 #define	EF_ARM_EABI_VER5	0x05000000
 
-#define ELF32_MACHDEP_ID_CASES                                          \
-		case EM_AARCH64:					\
+#define ELF32_MACHDEP_ID_CASES						\
+		case EM_ARM:						\
 			break;
 
 #define	ELF64_MACHDEP_ID_CASES						\
@@ -73,6 +73,7 @@
 			break;
 
 #define	ELF64_MACHDEP_ID	EM_AARCH64
+#define ELF32_MACHDEP_ID	EM_ARM
 
 #define	KERN_ELFSIZE		64
 #define ARCH_ELFSIZE		64	/* MD native binary size */
@@ -241,6 +242,8 @@
 struct exec_package;
 
 int aarch64_netbsd_elf64_probe(struct lwp *, struct exec_package *, void *,
+	char *, vaddr_t *);
+int aarch64_netbsd_elf32_probe(struct lwp *, struct exec_package *, void *,
 	char *, vaddr_t *);
 #endif
 

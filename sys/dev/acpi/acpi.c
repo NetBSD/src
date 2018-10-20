@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.268.2.3 2018/06/25 07:25:49 pgoyette Exp $	*/
+/*	$NetBSD: acpi.c,v 1.268.2.4 2018/10/20 06:58:30 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.268.2.3 2018/06/25 07:25:49 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.268.2.4 2018/10/20 06:58:30 pgoyette Exp $");
 
 #include "pci.h"
 #include "opt_acpi.h"
@@ -148,6 +148,7 @@ static uint64_t		 acpi_root_pointer;
 extern kmutex_t		 acpi_interrupt_list_mtx;
 static ACPI_HANDLE	 acpi_scopes[4];
 ACPI_TABLE_HEADER	*madt_header;
+ACPI_TABLE_HEADER	*gtdt_header;
 
 /*
  * This structure provides a context for the ACPI
@@ -172,6 +173,9 @@ static const char * const acpi_ignored_ids[] = {
 #endif
 #if defined(x86_64)
 	"PNP0C04",	/* FPU is handled internally */
+#endif
+#if defined(__aarch64__)
+	"ACPI0007",	/* ACPI CPUs are attached via MADT GICC subtables */
 #endif
 	NULL
 };
@@ -520,15 +524,17 @@ acpi_attach(device_t parent, device_t self, void *aux)
 
 	acpi_active = 1;
 
-	/* Show SCI interrupt. */
-	aprint_verbose_dev(self, "SCI interrupting at int %u\n",
-	    AcpiGbl_FADT.SciInterrupt);
+	if (!AcpiGbl_ReducedHardware) {
+		/* Show SCI interrupt. */
+		aprint_verbose_dev(self, "SCI interrupting at int %u\n",
+		    AcpiGbl_FADT.SciInterrupt);
 
-	/*
-	 * Install fixed-event handlers.
-	 */
-	acpi_register_fixed_button(sc, ACPI_EVENT_POWER_BUTTON);
-	acpi_register_fixed_button(sc, ACPI_EVENT_SLEEP_BUTTON);
+		/*
+		 * Install fixed-event handlers.
+		 */
+		acpi_register_fixed_button(sc, ACPI_EVENT_POWER_BUTTON);
+		acpi_register_fixed_button(sc, ACPI_EVENT_SLEEP_BUTTON);
+	}
 
 	acpitimer_init(sc);
 	acpi_config_tree(sc);
@@ -578,8 +584,10 @@ acpi_detach(device_t self, int flags)
 	if ((rc = acpitimer_detach()) != 0)
 		return rc;
 
-	acpi_deregister_fixed_button(sc, ACPI_EVENT_POWER_BUTTON);
-	acpi_deregister_fixed_button(sc, ACPI_EVENT_SLEEP_BUTTON);
+	if (!AcpiGbl_ReducedHardware) {
+		acpi_deregister_fixed_button(sc, ACPI_EVENT_POWER_BUTTON);
+		acpi_deregister_fixed_button(sc, ACPI_EVENT_SLEEP_BUTTON);
+	}
 
 	pmf_device_deregister(self);
 
@@ -1196,7 +1204,7 @@ acpi_register_fixed_button(struct acpi_softc *sc, int event)
 	}
 
 	aprint_normal_dev(sc->sc_dev, "fixed %s button present\n",
-	    (type != ACPI_EVENT_SLEEP_BUTTON) ? "power" : "sleep");
+	    (type != PSWITCH_TYPE_SLEEP) ? "power" : "sleep");
 
 	return;
 
@@ -1405,7 +1413,9 @@ acpi_enter_sleep_state(int state)
 			AcpiClearEvent(ACPI_EVENT_POWER_BUTTON);
 			AcpiClearEvent(ACPI_EVENT_SLEEP_BUTTON);
 			AcpiClearEvent(ACPI_EVENT_RTC);
+#if (!ACPI_REDUCED_HARDWARE)
 			AcpiHwDisableAllGpes();
+#endif
 
 			acpi_md_OsEnableInterrupt();
 			rv = AcpiLeaveSleepState(state);
@@ -1708,6 +1718,28 @@ acpi_madt_unmap(void)
 	madt_header = NULL;
 }
 
+ACPI_STATUS
+acpi_gtdt_map(void)
+{
+	ACPI_STATUS  rv;
+
+	if (gtdt_header != NULL)
+		return AE_ALREADY_EXISTS;
+
+	rv = AcpiGetTable(ACPI_SIG_GTDT, 1, &gtdt_header);
+
+	if (ACPI_FAILURE(rv))
+		return rv;
+
+	return AE_OK;
+}
+
+void
+acpi_gtdt_unmap(void)
+{
+	gtdt_header = NULL;
+}
+
 /*
  * XXX: Refactor to be a generic function that walks tables.
  */
@@ -1723,6 +1755,26 @@ acpi_madt_walk(ACPI_STATUS (*func)(ACPI_SUBTABLE_HEADER *, void *), void *aux)
 	while (where < madtend) {
 
 		hdrp = (ACPI_SUBTABLE_HEADER *)where;
+
+		if (ACPI_FAILURE(func(hdrp, aux)))
+			break;
+
+		where += hdrp->Length;
+	}
+}
+
+void
+acpi_gtdt_walk(ACPI_STATUS (*func)(ACPI_GTDT_HEADER *, void *), void *aux)
+{
+	ACPI_GTDT_HEADER *hdrp;
+	char *gtdtend, *where;
+
+	gtdtend = (char *)gtdt_header + gtdt_header->Length;
+	where = (char *)gtdt_header + sizeof (ACPI_TABLE_GTDT);
+
+	while (where < gtdtend) {
+
+		hdrp = (ACPI_GTDT_HEADER *)where;
 
 		if (ACPI_FAILURE(func(hdrp, aux)))
 			break;

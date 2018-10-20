@@ -1,4 +1,4 @@
-#	$NetBSD: files.rpi,v 1.9.2.1 2018/04/07 04:12:12 pgoyette Exp $
+#	$NetBSD: files.rpi,v 1.9.2.2 2018/10/20 06:58:27 pgoyette Exp $
 #
 # Raspberry Pi
 #
@@ -7,6 +7,14 @@ include "arch/arm/pic/files.pic"
 include "arch/arm/cortex/files.cortex"
 
 include "arch/evbarm/conf/files.fdt"
+
+file	arch/arm/arm32/arm32_boot.c			arm32
+file	arch/arm/arm32/arm32_kvminit.c			arm32
+file	arch/arm/arm32/arm32_reboot.c			arm32
+file	arch/arm/arm32/irq_dispatch.S			arm32
+file	arch/arm/arm32/armv7_generic_space.c		arm32
+file	arch/arm/arm/bus_space_a4x.S			arm32
+#file	arch/arm/arm/arm_generic_dma.c
 
 # CPU support and integrated peripherals
 include "arch/arm/broadcom/files.bcm2835"

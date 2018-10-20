@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.154.2.1 2018/04/07 04:12:12 pgoyette Exp $	*/
+/*	$NetBSD: pmap.h,v 1.154.2.2 2018/10/20 06:58:25 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Wasabi Systems, Inc.
@@ -412,6 +412,7 @@ const struct pmap_devmap *pmap_devmap_find_va(vaddr_t, vsize_t);
 void	pmap_map_section(vaddr_t, vaddr_t, paddr_t, int, int);
 void	pmap_map_entry(vaddr_t, vaddr_t, paddr_t, int, int);
 vsize_t	pmap_map_chunk(vaddr_t, vaddr_t, paddr_t, vsize_t, int, int);
+void	pmap_unmap_chunk(vaddr_t, vaddr_t, vsize_t);
 void	pmap_link_l2pt(vaddr_t, vaddr_t, pv_addr_t *);
 void	pmap_devmap_bootstrap(vaddr_t, const struct pmap_devmap *);
 void	pmap_devmap_register(const struct pmap_devmap *);
@@ -729,8 +730,12 @@ extern void (*pmap_zero_page_func)(paddr_t);
  */
 #define	PMAP_DOMAINS		15	/* 15 'user' domains (1-15) */
 #define	PMAP_DOMAIN_KERNEL	0	/* The kernel pmap uses domain #0 */
+
 #ifdef ARM_MMU_EXTENDED
 #define	PMAP_DOMAIN_USER	1	/* User pmaps use domain #1 */
+#define	DOMAIN_DEFAULT		((DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL*2)) | (DOMAIN_CLIENT << (PMAP_DOMAIN_USER*2)))
+#else
+#define	DOMAIN_DEFAULT		((DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL*2)))
 #endif
 
 /*

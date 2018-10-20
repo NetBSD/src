@@ -1,4 +1,4 @@
-/*	$NetBSD: vndvar.h,v 1.36.2.1 2018/09/30 01:45:49 pgoyette Exp $	*/
+/*	$NetBSD: vndvar.h,v 1.36.2.2 2018/10/20 06:58:30 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -98,6 +98,8 @@ struct vnd_ioctl {
 #define	VNDIOF_HASGEOM	0x01		/* use specified geometry */
 #define	VNDIOF_READONLY	0x02		/* as read-only device */
 #define	VNDIOF_FORCE	0x04		/* force close */
+#define	VNDIOF_FILEIO	0x08		/* have to use read/write */
+#define	VNDIOF_COMP	0x0400		/* must stay the same as VNF_COMP */
 
 #ifdef _KERNEL
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipiconf.h,v 1.126.14.2 2018/09/06 06:56:04 pgoyette Exp $	*/
+/*	$NetBSD: scsipiconf.h,v 1.126.14.3 2018/10/20 06:58:43 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2004 The NetBSD Foundation, Inc.
@@ -478,6 +478,7 @@ struct scsipi_periph {
 #define PQUIRK_CAP_WIDE16	0x00100000	/* SCSI device with ST wide op*/
 #define PQUIRK_CAP_NODT		0x00200000	/* signals DT, but can't. */
 #define PQUIRK_START		0x00400000	/* needs start before tur */
+#define	PQUIRK_NOFUA		0x00800000	/* does not grok FUA */
 
 
 /*

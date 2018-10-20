@@ -1,4 +1,4 @@
-.\"	$NetBSD: vnconfig.8,v 1.42.14.1 2018/05/02 07:20:28 pgoyette Exp $
+.\"	$NetBSD: vnconfig.8,v 1.42.14.2 2018/10/20 06:58:47 pgoyette Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -70,7 +70,7 @@
 .Sh SYNOPSIS
 .Nm
 .\" Fcf:lm:rt:uvz
-.Op Fl crvz
+.Op Fl cirvz
 .Op Fl f Ar disktab
 .Op Fl t Ar typename
 .Ar vnode_disk
@@ -144,6 +144,9 @@ option should look up in
 .Ar disktab
 instead of in
 .Pa /etc/disktab .
+.It Fl i
+Configure the device to use regular file I/O even when direct I/O using
+bmap/strategy would be possible.
 .It Fl l
 List the vnd devices and indicate which ones are in use.
 If one or more specific

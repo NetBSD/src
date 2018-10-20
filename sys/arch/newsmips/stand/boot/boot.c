@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.20 2014/03/26 17:43:11 christos Exp $	*/
+/*	$NetBSD: boot.c,v 1.20.28.1 2018/10/20 06:58:29 pgoyette Exp $	*/
 
 /*-
  * Copyright (C) 1999 Tsubai Masanari.  All rights reserved.
@@ -195,7 +195,15 @@ boot(uint32_t a0, uint32_t a1, uint32_t a2, uint32_t a3, uint32_t a4,
 	strcpy(bi_bpath.bootpath, file);
 	bi_add(&bi_bpath, BTINFO_BOOTPATH, sizeof(bi_bpath));
 
-	bi_sys.type = apbus ? NEWS5000 : NEWS3400;		/* XXX */
+	if (apbus) {
+		char *machine = (char *)apcall_getenv("machine");
+
+		bi_sys.type = NEWS5000;
+		if (machine != NULL && (strncmp(machine, "news4000", 8) == 0))
+			bi_sys.type = NEWS4000;
+	} else {
+		bi_sys.type = NEWS3400;
+	}
 	bi_add(&bi_sys, BTINFO_SYSTYPE, sizeof(bi_sys));
 
 	entry = (void *)marks[MARK_ENTRY];

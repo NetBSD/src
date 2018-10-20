@@ -1,28 +1,28 @@
-#	$NetBSD: std.mpcsa,v 1.3 2012/12/16 23:47:56 matt Exp $
+#	$NetBSD: std.mpcsa,v 1.3.36.1 2018/10/20 06:58:27 pgoyette Exp $
 #
 # NetBSD/evbarm options for MPCSA evaluation board
 #
 
-machine	evbarm arm
+machine		evbarm arm
 include		"arch/evbarm/conf/std.evbarm"
 
 # Pull in MPCSA config definitions.
 include		"arch/evbarm/conf/files.mpcsa"
 
-options		AT91RM9200	# enable AT91RM9200 support
+options 	AT91RM9200	# enable AT91RM9200 support
 
 options 	EXEC_AOUT
 
 options 	ARM_GENERIC_TODR
 
 # timer speed
-options		HZ=1000
+options 	HZ=1000
 
 
 options 	KERNEL_BASE_EXT=0xc0000000
-makeoptions	BOARDTYPE="mpcsa"
-makeoptions	BOARDMKFRAG="${THISARM}/conf/mk.mpcsa"
-makeoptions	KERNEL_BASE_PHYS=0x20200000
-makeoptions	KERNEL_BASE_VIRT=0xc0200000
+makeoptions 	BOARDTYPE="mpcsa"
+makeoptions 	BOARDMKFRAG="${THISARM}/conf/mk.mpcsa"
+makeoptions 	KERNEL_BASE_PHYS=0x20200000
+makeoptions 	KERNEL_BASE_VIRT=0xc0200000
 
 options 	ARM_INTR_IMPL="<arch/arm/at91/at91intr.h>"

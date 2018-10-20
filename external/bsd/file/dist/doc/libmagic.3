@@ -1,8 +1,8 @@
-.\"	$NetBSD: libmagic.3,v 1.17 2017/10/22 11:17:39 abhinav Exp $
+.\"	$NetBSD: libmagic.3,v 1.17.2.1 2018/10/20 06:58:19 pgoyette Exp $
 .\"
-.\" $File: libmagic.man,v 1.41 2017/05/23 21:54:07 christos Exp $
+.\" $File: libmagic.man,v 1.44 2018/09/09 20:33:28 christos Exp $
 .\"
-.\" Copyright (c) Christos Zoulas 2003.
+.\" Copyright (c) Christos Zoulas 2003, 2018.
 .\" All Rights Reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -27,7 +27,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd May 23, 2017
+.Dd August 18, 2018
 .Dt LIBMAGIC 3
 .Os
 .Sh NAME
@@ -162,6 +162,8 @@ Don't examine tar files.
 Don't check for various types of text files.
 .It Dv MAGIC_NO_CHECK_TOKENS
 Don't look for known tokens inside ascii files.
+.It Dv MAGIC_NO_CHECK_JSON
+Don't example JSON files.
 .El
 .Pp
 The
@@ -395,6 +397,19 @@ The compiled default magic database.
 .Sh SEE ALSO
 .Xr file 1 ,
 .Xr magic 5
+.Sh BUGS
+The results from
+.Fn magic_buffer
+and
+.Fn magic_file
+where the buffer and the file contain the same data
+can produce different results, because in the
+.Fn magic_file
+case, the program can
+.Xr lseek 2
+and
+.Xr stat 2
+the file descriptor.
 .Sh AUTHORS
 .An M\(oans Rullg\(oard
 Initial libmagic implementation, and configuration.

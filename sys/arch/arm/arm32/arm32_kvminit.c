@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_kvminit.c,v 1.41.2.1 2018/09/06 06:55:25 pgoyette Exp $	*/
+/*	$NetBSD: arm32_kvminit.c,v 1.41.2.2 2018/10/20 06:58:24 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2005  Genetec Corporation.  All rights reserved.
@@ -122,11 +122,12 @@
  */
 
 #include "opt_arm_debug.h"
+#include "opt_arm_start.h"
 #include "opt_fdt.h"
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_kvminit.c,v 1.41.2.1 2018/09/06 06:55:25 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_kvminit.c,v 1.41.2.2 2018/10/20 06:58:24 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -146,6 +147,7 @@ __KERNEL_RCSID(0, "$NetBSD: arm32_kvminit.c,v 1.41.2.1 2018/09/06 06:55:25 pgoye
 
 #if defined(FDT)
 #include <arch/evbarm/fdt/platform.h>
+#include <arm/fdt/arm_fdtvar.h>
 #endif
 
 #ifdef MULTIPROCESSOR
@@ -157,7 +159,7 @@ __KERNEL_RCSID(0, "$NetBSD: arm32_kvminit.c,v 1.41.2.1 2018/09/06 06:55:25 pgoye
 #ifdef VERBOSE_INIT_ARM
 #define VPRINTF(...)	printf(__VA_ARGS__)
 #else
-#define VPRINTF(...)	do { } while (/* CONSTCOND */ 0)
+#define VPRINTF(...)	__nothing
 #endif
 
 struct bootmem_info bootmem_info;
@@ -184,17 +186,36 @@ arm32_bootmem_init(paddr_t memstart, psize_t memsize, vsize_t kernelstart)
 	pv_addr_t *pv = bmi->bmi_freeblocks;
 
 	/*
-	 * FDT/generic boot fills in kern_vtopdiff early
+	 * FDT/generic start fills in kern_vtopdiff early
 	 */
+#if defined(__HAVE_GENERIC_START)
+	extern char KERNEL_BASE_virt[];
+	extern char ARM_BOOTSTRAP_LxPT[];
+
+	VPRINTF("%s: kern_vtopdiff=%#lx\n", __func__, kern_vtopdiff);
+
+	vaddr_t kstartva = trunc_page((vaddr_t)KERNEL_BASE_virt);
+	vaddr_t kendva = round_page((vaddr_t)ARM_BOOTSTRAP_LxPT + L1_TABLE_SIZE);
+
+	kernelstart = KERN_VTOPHYS(kstartva);
+
+	VPRINTF("%s: kstartva=%#lx, kernelstart=%#lx\n", __func__, kstartva, kernelstart);
+#else
+	vaddr_t kendva = round_page((vaddr_t)_end);
+
 #if defined(KERNEL_BASE_VOFFSET)
 	kern_vtopdiff = KERNEL_BASE_VOFFSET;
 #else
 	KASSERT(memstart == kernelstart);
 	kern_vtopdiff = KERNEL_BASE + memstart;
 #endif
+#endif
+	paddr_t kernelend = KERN_VTOPHYS(kendva);
 
-	VPRINTF("%s: memstart=%#lx, memsize=%#lx, kernelstart=%#lx\n",
-	    __func__, memstart, memsize, kernelstart);
+	VPRINTF("%s: memstart=%#lx, memsize=%#lx\n",
+	    __func__, memstart, memsize);
+	VPRINTF("%s: kernelstart=%#lx, kernelend=%#lx\n", __func__,
+	    kernelstart, kernelend);
 
 	physical_start = bmi->bmi_start = memstart;
 	physical_end = bmi->bmi_end = memstart + memsize;
@@ -212,16 +233,22 @@ arm32_bootmem_init(paddr_t memstart, psize_t memsize, vsize_t kernelstart)
 	/*
 	 * Let's record where the kernel lives.
 	 */
+
 	bmi->bmi_kernelstart = kernelstart;
-	bmi->bmi_kernelend = KERN_VTOPHYS(round_page((vaddr_t)_end));
+	bmi->bmi_kernelend = kernelend;
 
 #if defined(FDT)
 	fdt_add_reserved_memory_range(bmi->bmi_kernelstart,
 	    bmi->bmi_kernelend - bmi->bmi_kernelstart);
 #endif
 
-	VPRINTF("%s: kernelend=%#lx\n", __func__, bmi->bmi_kernelend);
+	VPRINTF("%s: kernel phys start %#lx end %#lx\n", __func__, kernelstart,
+	    kernelend);
 
+#if 0
+	// XXX Makes RPI abort
+	KASSERT((kernelstart & (L2_S_SEGSIZE - 1)) == 0);
+#endif
 	/*
 	 * Now the rest of the free memory must be after the kernel.
 	 */
@@ -234,7 +261,7 @@ arm32_bootmem_init(paddr_t memstart, psize_t memsize, vsize_t kernelstart)
 	    pv->pv_pa + pv->pv_size - 1, pv->pv_va);
 	pv++;
 
-#if !defined(FDT)
+#if !defined(__HAVE_GENERIC_START)
 	/*
 	 * Add a free block for any memory before the kernel.
 	 */
@@ -263,9 +290,11 @@ concat_pvaddr(pv_addr_t *acc_pv, pv_addr_t *pv)
 	    && acc_pv->pv_va + acc_pv->pv_size == pv->pv_va
 	    && acc_pv->pv_prot == pv->pv_prot
 	    && acc_pv->pv_cache == pv->pv_cache) {
+#if 0
 		VPRINTF("%s: appending pv %p (%#lx..%#lx) to %#lx..%#lx\n",
-		    __func__, pv, pv->pv_pa, pv->pv_pa + pv->pv_size + 1,
-		    acc_pv->pv_pa, acc_pv->pv_pa + acc_pv->pv_size + 1);
+		    __func__, pv, pv->pv_pa, pv->pv_pa + pv->pv_size,
+		    acc_pv->pv_pa, acc_pv->pv_pa + acc_pv->pv_size);
+#endif
 		acc_pv->pv_size += pv->pv_size;
 		return true;
 	}
@@ -337,6 +366,8 @@ valloc_pages(struct bootmem_info *bmi, pv_addr_t *pv, size_t npages,
 	    && (free_pv->pv_pa & (L1_TABLE_SIZE - 1)) == 0
 	    && free_pv->pv_size >= L1_TABLE_SIZE) {
 		l1pt_found = true;
+		VPRINTF(" l1pt");
+
 		valloc_pages(bmi, &kernel_l1pt, L1_TABLE_SIZE / PAGE_SIZE,
 		    VM_PROT_READ|VM_PROT_WRITE, PTE_PAGETABLE, true);
 		add_pages(bmi, &kernel_l1pt);
@@ -392,6 +423,9 @@ valloc_pages(struct bootmem_info *bmi, pv_addr_t *pv, size_t npages,
 		memset((void *)pv->pv_va, 0, nbytes);
 }
 
+// Define a TTB value that can never be used.
+uint32_t cpu_ttb = ~0;
+
 void
 arm32_kernel_vm_init(vaddr_t kernel_vm_base, vaddr_t vectors, vaddr_t iovbase,
 	const struct pmap_devmap *devmap, bool mapallmem_p)
@@ -402,6 +436,7 @@ arm32_kernel_vm_init(vaddr_t kernel_vm_base, vaddr_t vectors, vaddr_t iovbase,
 #else
 	const size_t cpu_num = 1;
 #endif
+
 #ifdef ARM_HAS_VBAR
 	const bool map_vectors_p = false;
 #elif defined(CPU_ARMV7) || defined(CPU_ARM11)
@@ -575,6 +610,8 @@ arm32_kernel_vm_init(vaddr_t kernel_vm_base, vaddr_t vectors, vaddr_t iovbase,
 		 * This page will just contain the system vectors and can be
 		 * shared by all processes.
 		 */
+		VPRINTF(" vector");
+
 		valloc_pages(bmi, &systempage, 1, VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE,
 		    PTE_CACHE, true);
 	}
@@ -601,8 +638,8 @@ arm32_kernel_vm_init(vaddr_t kernel_vm_base, vaddr_t vectors, vaddr_t iovbase,
 		panic("%s: Failed to allocate or align the kernel "
 		    "page directory", __func__);
 
-
-	VPRINTF("Creating L1 page table at 0x%08lx\n", kernel_l1pt.pv_pa);
+	VPRINTF("Creating L1 page table at 0x%08lx/0x%08lx\n",
+	    kernel_l1pt.pv_va, kernel_l1pt.pv_pa);
 
 	/*
 	 * Now we start construction of the L1 page table
@@ -622,8 +659,16 @@ arm32_kernel_vm_init(vaddr_t kernel_vm_base, vaddr_t vectors, vaddr_t iovbase,
 		    bmi->bmi_vector_l2pt.pv_pa, systempage.pv_va);
 	}
 
+	/*
+	 * This enforces a alignment requirement of L2_S_SEGSIZE for kernel
+	 * start PA
+	 */
 	const vaddr_t kernel_base =
 	    KERN_PHYSTOV(bmi->bmi_kernelstart & -L2_S_SEGSIZE);
+
+	VPRINTF("%s: kernel_base %lx KERNEL_L2PT_KERNEL_NUM %zu\n", __func__,
+	    kernel_base, KERNEL_L2PT_KERNEL_NUM);
+
 	for (size_t idx = 0; idx < KERNEL_L2PT_KERNEL_NUM; idx++) {
 		pmap_link_l2pt(l1pt_va, kernel_base + idx * L2_S_SEGSIZE,
 		    &kernel_l2pt[idx]);
@@ -631,6 +676,9 @@ arm32_kernel_vm_init(vaddr_t kernel_vm_base, vaddr_t vectors, vaddr_t iovbase,
 		    __func__, kernel_l2pt[idx].pv_va,
 		    kernel_l2pt[idx].pv_pa, kernel_base + idx * L2_S_SEGSIZE);
 	}
+
+	VPRINTF("%s: kernel_vm_base %lx KERNEL_L2PT_KERNEL_NUM %zu\n", __func__,
+	    kernel_vm_base, KERNEL_L2PT_KERNEL_NUM);
 
 	for (size_t idx = 0; idx < KERNEL_L2PT_VMDATA_NUM; idx++) {
 		pmap_link_l2pt(l1pt_va, kernel_vm_base + idx * L2_S_SEGSIZE,
@@ -649,6 +697,9 @@ arm32_kernel_vm_init(vaddr_t kernel_vm_base, vaddr_t vectors, vaddr_t iovbase,
 	/* update the top of the kernel VM */
 	pmap_curmaxkvaddr =
 	    kernel_vm_base + (KERNEL_L2PT_VMDATA_NUM * L2_S_SEGSIZE);
+
+	// This could be done earlier and then the kernel data and pages
+	// allocated above would get merged (concatentated)
 
 	VPRINTF("Mapping kernel\n");
 
@@ -837,9 +888,12 @@ arm32_kernel_vm_init(vaddr_t kernel_vm_base, vaddr_t vectors, vaddr_t iovbase,
 	    "%20s: 0x%08lx 0x%08lx                       %zu\n";
 #endif
 
+#if 0
+	// XXX Doesn't make sense if kernel not at bottom of RAM
 	VPRINTF(mem_fmt, "SDRAM", bmi->bmi_start, bmi->bmi_end - 1,
 	    KERN_PHYSTOV(bmi->bmi_start), KERN_PHYSTOV(bmi->bmi_end - 1),
 	    (int)physmem);
+#endif
 	VPRINTF(mem_fmt, "text section",
 	       text.pv_pa, text.pv_pa + text.pv_size - 1,
 	       text.pv_va, text.pv_va + text.pv_size - 1,
@@ -914,16 +968,25 @@ arm32_kernel_vm_init(vaddr_t kernel_vm_base, vaddr_t vectors, vaddr_t iovbase,
 	VPRINTF("\n");
 
 	/* Switch tables */
-	VPRINTF("switching to new L1 page table @%#lx...", l1pt_pa);
+	VPRINTF("switching to new L1 page table @%#lx...\n", l1pt_pa);
 
-#ifdef ARM_MMU_EXTENDED
-	cpu_domains((DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL*2))
-	    | (DOMAIN_CLIENT << (PMAP_DOMAIN_USER*2)));
-#else
-	cpu_domains((DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL*2)) | DOMAIN_CLIENT);
-#endif
+	extern uint32_t cpu_ttb;
+	cpu_ttb = l1pt_pa;
+
+	cpu_domains(DOMAIN_DEFAULT);
+
 	cpu_idcache_wbinv_all();
+
+#ifdef __HAVE_GENERIC_START
+
+	/*
+	 * Turn on caches and set SCTLR/ACTLR
+	 */
+	cpu_setup(boot_args);
+#endif
+
 	VPRINTF(" ttb");
+
 #ifdef ARM_MMU_EXTENDED
 	/*
 	 * TTBCR should have been initialized by the MD start code.
@@ -938,24 +1001,26 @@ arm32_kernel_vm_init(vaddr_t kernel_vm_base, vaddr_t vectors, vaddr_t iovbase,
 	arm_isb();
 #else
 	cpu_setttb(l1pt_pa, true);
-	cpu_domains(DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL*2));
 #endif
+
 	cpu_tlb_flushID();
 
 #ifdef ARM_MMU_EXTENDED
-	VPRINTF(" (TTBCR=%#x TTBR0=%#x TTBR1=%#x)",
-	    armreg_ttbcr_read(), armreg_ttbr_read(), armreg_ttbr1_read());
+	VPRINTF("\nsctlr=%#x actlr=%#x\n",
+	    armreg_sctlr_read(), armreg_auxctl_read());
 #else
 	VPRINTF(" (TTBR0=%#x)", armreg_ttbr_read());
 #endif
 
 #ifdef MULTIPROCESSOR
+#ifndef __HAVE_GENERIC_START
 	/*
 	 * Kick the secondaries to load the TTB.  After which they'll go
 	 * back to sleep to wait for the final kick so they will hatch.
 	 */
 	VPRINTF(" hatchlings");
 	cpu_boot_secondary_processors();
+#endif
 #endif
 
 	VPRINTF(" OK\n");

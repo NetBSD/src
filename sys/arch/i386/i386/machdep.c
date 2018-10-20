@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.803.2.4 2018/09/30 01:45:44 pgoyette Exp $	*/
+/*	$NetBSD: machdep.c,v 1.803.2.5 2018/10/20 06:58:28 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009, 2017
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.803.2.4 2018/09/30 01:45:44 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.803.2.5 2018/10/20 06:58:28 pgoyette Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_freebsd.h"
@@ -1326,7 +1326,7 @@ init386(paddr_t first_avail)
 	    GSEL(GCODE_SEL, SEL_KPL), (unsigned long)hypervisor_callback,
 	    GSEL(GCODE_SEL, SEL_KPL), (unsigned long)failsafe_callback);
 
-	ldtstore = (union descriptor *)idt_vaddr;
+	ldtstore = (union descriptor *)ldt_vaddr;
 #endif /* XEN */
 
 	/* make ldt gates and memory segments */

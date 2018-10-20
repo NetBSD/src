@@ -1,4 +1,4 @@
-/*	$NetBSD: exynos_combiner.c,v 1.7.6.1 2018/07/28 04:37:29 pgoyette Exp $ */
+/*	$NetBSD: exynos_combiner.c,v 1.7.6.2 2018/10/20 06:58:26 pgoyette Exp $ */
 
 /*-
 * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -31,13 +31,15 @@
 
 #include "opt_exynos.h"
 #include "opt_arm_debug.h"
+#include "opt_multiprocessor.h"
 #include "gpio.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exynos_combiner.c,v 1.7.6.1 2018/07/28 04:37:29 pgoyette Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exynos_combiner.c,v 1.7.6.2 2018/10/20 06:58:26 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
+#include <sys/cpu.h>
 #include <sys/device.h>
 #include <sys/intr.h>
 #include <sys/systm.h>
@@ -160,7 +162,7 @@ exynos_combiner_new_group(struct exynos_combiner_softc *sc, int group_no)
 	sc->irq_groups = n;
 	return n;
 }
-			  
+
 static struct exynos_combiner_irq_group *
 exynos_combiner_get_group(struct exynos_combiner_softc *sc, int group_no)
 {

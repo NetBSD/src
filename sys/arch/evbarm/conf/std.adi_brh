@@ -1,8 +1,8 @@
-#	$NetBSD: std.adi_brh,v 1.10 2012/12/16 23:47:56 matt Exp $
+#	$NetBSD: std.adi_brh,v 1.10.36.1 2018/10/20 06:58:27 pgoyette Exp $
 #
 # standard NetBSD/evbarm for ADI BRH options
 
-machine	evbarm arm
+machine		evbarm arm
 include		"arch/evbarm/conf/std.evbarm"
 
 # Pull in ADI BRH config definitions.
@@ -11,9 +11,9 @@ include		"arch/evbarm/conf/files.adi_brh"
 options 	EXEC_AOUT
 
 options 	KERNEL_BASE_EXT=0xc0000000
-makeoptions	LOADADDRESS="0xc0200000"
-makeoptions	BOARDTYPE="adi_brh"
-makeoptions	BOARDMKFRAG="${THISARM}/conf/mk.adi_brh"
+makeoptions 	LOADADDRESS="0xc0200000"
+makeoptions 	BOARDTYPE="adi_brh"
+makeoptions 	BOARDMKFRAG="${THISARM}/conf/mk.adi_brh"
 
 options 	ARM_INTR_IMPL="<arch/arm/xscale/becc_intr.h>"
 

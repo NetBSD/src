@@ -1,4 +1,4 @@
-#	$NetBSD: OPENBLOCKS_AX3,v 1.23.2.2 2018/09/06 06:55:30 pgoyette Exp $
+#	$NetBSD: OPENBLOCKS_AX3,v 1.23.2.3 2018/10/20 06:58:27 pgoyette Exp $
 #
 #	OPENBLOCKS_AX3 -- Plat'Home. OpenBlockS AX3 kernel
 #
@@ -33,8 +33,6 @@ options 	__HAVE_MM_MD_DIRECT_MAPPED_PHYS
 #options 	MULTIPROCESSOR
 options 	TPIDRPRW_IS_CURCPU
 
-no options 	KERNEL_BASE_EXT
-options 	KERNEL_BASE_EXT=0x80000000
 makeoptions 	KERNEL_BASE_VIRT="0x80008000"
 
 # Standard system options
