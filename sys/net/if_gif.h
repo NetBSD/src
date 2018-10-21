@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gif.h,v 1.25.8.3 2018/05/17 14:07:03 martin Exp $	*/
+/*	$NetBSD: if_gif.h,v 1.25.8.4 2018/10/21 11:55:54 martin Exp $	*/
 /*	$KAME: if_gif.h,v 1.23 2001/07/27 09:21:42 itojun Exp $	*/
 
 /*
@@ -40,6 +40,7 @@
 #include <sys/queue.h>
 #include <sys/percpu.h>
 #ifdef _KERNEL
+#include <sys/pserialize.h>
 #include <sys/psref.h>
 #endif
 
@@ -78,6 +79,7 @@ struct gif_softc {
 					 * instead of direct dereference.
 					 */
 	kmutex_t gif_lock;		/* writer lock for gif_var */
+	pserialize_t gif_psz;
 
 	LIST_ENTRY(gif_softc) gif_list;	/* list of all gifs */
 };
