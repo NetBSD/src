@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.1,v 1.1.2.36 2018/10/17 13:51:53 martin Exp $
+# $NetBSD: CHANGES-8.1,v 1.1.2.37 2018/10/21 12:12:51 martin Exp $
 
 A complete list of changes from the NetBSD 8.0 release to the NetBSD 8.1
 release:
@@ -1424,3 +1424,52 @@ etc/mtree/NetBSD.dist.base			1.174
 	Add /var/chroot/nsd/var/run.
 	[hannken, ticket #1065]
 
+sys/net/if_gif.c				1.144
+sys/net/if_gif.h				1.32
+sys/net/if_ipsec.c				1.18
+sys/net/if_ipsec.h				1.4
+sys/net/if_l2tp.c				1.30
+sys/net/if_l2tp.h				1.6
+sys/net/if_vlan.c				1.133
+
+	Fix panic when doing ioctl to multiple pseudo interfaces.
+	[knakahara, ticket #1066]
+
+bin/sh/mkinit.sh				1.9
+
+	Dynamically detect the way the shell matches \ in a pattern,
+	and use whatever works for the sh running this script.
+	[kre, ticket #1067]
+
+external/public-domain/tz/dist/CONTRIBUTING     up to 1.1.1.6
+external/public-domain/tz/dist/Makefile         up to 1.1.1.22
+external/public-domain/tz/dist/NEWS             up to 1.1.1.23
+external/public-domain/tz/dist/README           up to 1.1.1.7
+external/public-domain/tz/dist/TZDATA_VERSION   up to 1.13
+external/public-domain/tz/dist/africa           up to 1.1.1.16
+external/public-domain/tz/dist/antarctica       up to 1.1.1.11
+external/public-domain/tz/dist/asia             up to 1.1.1.21
+external/public-domain/tz/dist/australasia      up to 1.1.1.16
+external/public-domain/tz/dist/backward         up to 1.1.1.9
+external/public-domain/tz/dist/backzone         up to 1.1.1.15
+external/public-domain/tz/dist/etcetera         up to 1.1.1.3
+external/public-domain/tz/dist/europe           up to 1.1.1.22
+external/public-domain/tz/dist/factory          up to 1.1.1.3
+external/public-domain/tz/dist/leap-seconds.list up to 1.1.1.10
+external/public-domain/tz/dist/leapseconds      up to 1.1.1.11
+external/public-domain/tz/dist/leapseconds.awk  up to 1.1.1.7
+external/public-domain/tz/dist/northamerica     up to 1.1.1.20
+external/public-domain/tz/dist/pacificnew       up to 1.1.1.2
+external/public-domain/tz/dist/southamerica     up to 1.1.1.15
+external/public-domain/tz/dist/systemv          up to 1.1.1.2
+external/public-domain/tz/dist/theory.html      up to 1.1.1.5
+external/public-domain/tz/dist/version          up to 1.1.1.10
+external/public-domain/tz/dist/yearistype.sh    up to 1.1.1.2
+external/public-domain/tz/dist/zishrink.awk     up to 1.1.1.4
+external/public-domain/tz/dist/zone.tab         up to 1.1.1.15
+external/public-domain/tz/dist/zone1970.tab     up to 1.1.1.17
+external/public-domain/tz/dist/zoneinfo2tdf.pl  up to 1.1.1.2
+doc/3RDPARTY					1.1568 (patch)
+
+	tzdata updated to 2018f.
+	[kre, ticket #1068]
