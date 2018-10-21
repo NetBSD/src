@@ -1,4 +1,4 @@
-/*	$NetBSD: refresh.c,v 1.90 2018/10/10 09:40:11 roy Exp $	*/
+/*	$NetBSD: refresh.c,v 1.91 2018/10/21 12:47:33 roy Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)refresh.c	8.7 (Berkeley) 8/13/94";
 #else
-__RCSID("$NetBSD: refresh.c,v 1.90 2018/10/10 09:40:11 roy Exp $");
+__RCSID("$NetBSD: refresh.c,v 1.91 2018/10/21 12:47:33 roy Exp $");
 #endif
 #endif				/* not lint */
 
@@ -46,6 +46,10 @@ __RCSID("$NetBSD: refresh.c,v 1.90 2018/10/10 09:40:11 roy Exp $");
 #include "curses_private.h"
 
 static void	domvcur(const WINDOW *, int, int, int, int);
+static void	putattr(__LDATA *);
+static void	putattr_out(__LDATA *);
+static int	putch(__LDATA *, __LDATA *, int, int);
+static int	putchbr(__LDATA *, __LDATA *, __LDATA *, int, int);
 static int	makech(int);
 static void	quickch(void);
 static void	scrolln(int, int, int, int, int);
@@ -772,9 +776,209 @@ cleanup:
 	return fflush(_cursesi_screen->outfd) == EOF ? ERR : OK;
 }
 
+static void
+putattr(__LDATA *nsp)
+{
+	attr_t	off, on;
+
+#ifdef DEBUG
+	__CTRACE(__CTRACE_REFRESH,
+	    "makech: have attr %08x, need attr %08x\n",
+	    curscr->wattr
+#ifndef HAVE_WCHAR
+	    & __ATTRIBUTES
+#else
+	    & WA_ATTRIBUTES
+#endif
+	    ,  nsp->attr
+#ifndef HAVE_WCHAR
+	    & __ATTRIBUTES
+#else
+	    & WA_ATTRIBUTES
+#endif
+	    );
+#endif
+
+	off = (~nsp->attr & curscr->wattr)
+#ifndef HAVE_WCHAR
+	    & __ATTRIBUTES
+#else
+	    & WA_ATTRIBUTES
+#endif
+	    ;
+
+	/*
+	 * Unset attributes as appropriate.  Unset first
+	 * so that the relevant attributes can be reset
+	 * (because 'me' unsets 'mb', 'md', 'mh', 'mk',
+	 * 'mp' and 'mr').  Check to see if we also turn off
+	 * standout, attributes and colour.
+	 */
+	if (off & __TERMATTR && exit_attribute_mode != NULL) {
+		tputs(exit_attribute_mode, 0, __cputchar);
+		curscr->wattr &= __mask_me;
+		off &= __mask_me;
+	}
+
+	/*
+	 * Exit underscore mode if appropriate.
+	 * Check to see if we also turn off standout,
+	 * attributes and colour.
+	 */
+	if (off & __UNDERSCORE && exit_underline_mode != NULL) {
+		tputs(exit_underline_mode, 0, __cputchar);
+		curscr->wattr &= __mask_ue;
+		off &= __mask_ue;
+	}
+
+	/*
+	 * Exit standout mode as appropriate.
+	 * Check to see if we also turn off underscore,
+	 * attributes and colour.
+	 * XXX
+	 * Should use uc if so/se not available.
+	 */
+	if (off & __STANDOUT && exit_standout_mode != NULL) {
+		tputs(exit_standout_mode, 0, __cputchar);
+		curscr->wattr &= __mask_se;
+		off &= __mask_se;
+	}
+
+	if (off & __ALTCHARSET && exit_alt_charset_mode != NULL) {
+		tputs(exit_alt_charset_mode, 0, __cputchar);
+		curscr->wattr &= ~__ALTCHARSET;
+	}
+
+	/* Set/change colour as appropriate. */
+	if (__using_color)
+		__set_color(curscr, nsp->attr & __COLOR);
+
+	on = (nsp->attr & ~curscr->wattr)
+#ifndef HAVE_WCHAR
+	    & __ATTRIBUTES
+#else
+	    & WA_ATTRIBUTES
+#endif
+	    ;
+
+	/*
+	 * Enter standout mode if appropriate.
+	 */
+	if (on & __STANDOUT &&
+	    enter_standout_mode != NULL &&
+	    exit_standout_mode != NULL)
+	{
+		tputs(enter_standout_mode, 0, __cputchar);
+		curscr->wattr |= __STANDOUT;
+	}
+
+	/*
+	 * Enter underscore mode if appropriate.
+	 * XXX
+	 * Should use uc if us/ue not available.
+	 */
+	if (on & __UNDERSCORE &&
+	    enter_underline_mode != NULL &&
+	    exit_underline_mode != NULL)
+	{
+		tputs(enter_underline_mode, 0, __cputchar);
+		curscr->wattr |= __UNDERSCORE;
+	}
+
+	/*
+	 * Set other attributes as appropriate.
+	 */
+	if (exit_attribute_mode != NULL) {
+		if (on & __BLINK && enter_blink_mode != NULL)
+		{
+			tputs(enter_blink_mode, 0, __cputchar);
+			curscr->wattr |= __BLINK;
+		}
+		if (on & __BOLD && enter_bold_mode != NULL)
+		{
+			tputs(enter_bold_mode, 0, __cputchar);
+			curscr->wattr |= __BOLD;
+		}
+		if (on & __DIM && enter_dim_mode != NULL)
+		{
+			tputs(enter_dim_mode, 0, __cputchar);
+			curscr->wattr |= __DIM;
+		}
+		if (on & __BLANK && enter_secure_mode != NULL)
+		{
+			tputs(enter_secure_mode, 0, __cputchar);
+			curscr->wattr |= __BLANK;
+		}
+		if (on & __PROTECT && enter_protected_mode != NULL)
+		{
+			tputs(enter_protected_mode, 0, __cputchar);
+			curscr->wattr |= __PROTECT;
+		}
+		if (on & __REVERSE && enter_reverse_mode != NULL)
+		{
+			tputs(enter_reverse_mode, 0, __cputchar);
+			curscr->wattr |= __REVERSE;
+		}
+#ifdef HAVE_WCHAR
+		if (on & WA_TOP && enter_top_hl_mode != NULL)
+		{
+			tputs(enter_top_hl_mode, 0, __cputchar);
+			curscr->wattr |= WA_TOP;
+		}
+		if (on & WA_LOW && enter_low_hl_mode != NULL)
+		{
+			tputs(enter_low_hl_mode, 0, __cputchar);
+			curscr->wattr |= WA_LOW;
+		}
+		if (on & WA_LEFT && enter_left_hl_mode != NULL)
+		{
+			tputs(enter_left_hl_mode, 0, __cputchar);
+			curscr->wattr |= WA_LEFT;
+		}
+		if (on & WA_RIGHT && enter_right_hl_mode != NULL)
+		{
+			tputs(enter_right_hl_mode, 0, __cputchar);
+			curscr->wattr |= WA_RIGHT;
+		}
+		if (on & WA_HORIZONTAL && enter_horizontal_hl_mode != NULL)
+		{
+			tputs(enter_horizontal_hl_mode, 0, __cputchar);
+			curscr->wattr |= WA_HORIZONTAL;
+		}
+		if (on & WA_VERTICAL && enter_vertical_hl_mode != NULL)
+		{
+			tputs(enter_vertical_hl_mode, 0, __cputchar);
+			curscr->wattr |= WA_VERTICAL;
+		}
+#endif /* HAVE_WCHAR */
+	}
+
+	/* Enter/exit altcharset mode as appropriate. */
+	if (on & __ALTCHARSET && enter_alt_charset_mode != NULL &&
+	    exit_alt_charset_mode != NULL) {
+		tputs(enter_alt_charset_mode, 0, __cputchar);
+		curscr->wattr |= __ALTCHARSET;
+	}
+}
+
+static void
+putattr_out(__LDATA *nsp)
+{
+
+	if (underline_char &&
+	    ((nsp->attr & __STANDOUT) || (nsp->attr & __UNDERSCORE)))
+	{
+		__cputchar('\b');
+		tputs(underline_char, 0, __cputchar);
+	}
+}
+
 static int
 putch(__LDATA *nsp, __LDATA *csp, int wy, int wx)
 {
+
+	if (csp != NULL)
+		putattr(nsp);
 
 	if (!_cursesi_screen->curwin && csp) {
 		csp->attr = nsp->attr;
@@ -789,7 +993,7 @@ putch(__LDATA *nsp, __LDATA *csp, int wy, int wx)
 	__cputchar((int)nsp->ch);
 #else
 	if (WCOL(*nsp) <= 0)
-		return OK;
+		goto out;
 	__cputwchar((int)nsp->ch);
 #ifdef DEBUG
 	__CTRACE(__CTRACE_REFRESH,
@@ -798,8 +1002,11 @@ putch(__LDATA *nsp, __LDATA *csp, int wy, int wx)
 
 	/* Output non-spacing characters for the cell. */
 	__cursesi_putnsp(nsp->nsp, wy, wx);
+out:
 #endif /* HAVE_WCHAR */
 
+	if (csp != NULL)
+		putattr_out(nsp);
 	return OK;
 }
 
@@ -821,7 +1028,8 @@ putchbr(__LDATA *nsp, __LDATA *csp, __LDATA *psp, int wy, int wx)
 	}
 
 	/* We need to insert characters.
-	 * To do this, work out their widths. */
+	 * To do this, work out their widths.
+	 * XXX This does not work when the bottom right corner is an ACS. */
 #ifdef HAVE_WCHAR
 	cw = wcwidth(nsp->ch);
 	pcw = psp == NULL ? 0 : wcwidth(psp->ch);
@@ -846,6 +1054,8 @@ putchbr(__LDATA *nsp, __LDATA *csp, __LDATA *psp, int wy, int wx)
 	/* Move cursor back. */
 	__mvcur(wy, wx - pcw + cw, wy, wx - cw, 1);
 
+	putattr(psp);
+
 	/* Enter insert mode. */
 	if (pcw == 1 && insert_character != NULL)
 		tputs(insert_character, 0, __cputchar);
@@ -865,6 +1075,8 @@ putchbr(__LDATA *nsp, __LDATA *csp, __LDATA *psp, int wy, int wx)
 	else if (enter_insert_mode != NULL && exit_insert_mode != NULL)
 		tputs(exit_insert_mode, 0, __cputchar);
 
+	putattr_out(psp);
+
 	return error;
 }
 
@@ -883,7 +1095,6 @@ makech(int wy)
 	int	lch, wx, chw;
 	const char	*ce;
 	attr_t	lspc;		/* Last space colour */
-	attr_t	off, on;
 
 #ifdef __GNUC__
 	nlsp = lspc = 0;	/* XXX gcc -Wuninitialized */
@@ -1110,204 +1321,14 @@ makech(int wy)
 				ce = NULL;
 			}
 
-#ifdef DEBUG
-				__CTRACE(__CTRACE_REFRESH,
-				    "makech: have attr %08x, need attr %08x\n",
-				    curscr->wattr
-#ifndef HAVE_WCHAR
-				 & __ATTRIBUTES
-#else
-				 & WA_ATTRIBUTES
-#endif
-					 ,  nsp->attr
-#ifndef HAVE_WCHAR
-				 & __ATTRIBUTES
-#else
-				 & WA_ATTRIBUTES
-#endif
-					);
-#endif
-
-			off = (~nsp->attr & curscr->wattr)
-#ifndef HAVE_WCHAR
-				 & __ATTRIBUTES
-#else
-				 & WA_ATTRIBUTES
-#endif
-				;
-
-			/*
-			 * Unset attributes as appropriate.  Unset first
-			 * so that the relevant attributes can be reset
-			 * (because 'me' unsets 'mb', 'md', 'mh', 'mk',
-			 * 'mp' and 'mr').  Check to see if we also turn off
-			 * standout, attributes and colour.
-			 */
-			if (off & __TERMATTR && exit_attribute_mode != NULL) {
-				tputs(exit_attribute_mode, 0, __cputchar);
-				curscr->wattr &= __mask_me;
-				off &= __mask_me;
-			}
-
-			/*
-			 * Exit underscore mode if appropriate.
-			 * Check to see if we also turn off standout,
-			 * attributes and colour.
-			 */
-			if (off & __UNDERSCORE && exit_underline_mode != NULL) {
-				tputs(exit_underline_mode, 0, __cputchar);
-				curscr->wattr &= __mask_ue;
-				off &= __mask_ue;
-			}
-
-			/*
-			 * Exit standout mode as appropriate.
-			 * Check to see if we also turn off underscore,
-			 * attributes and colour.
-			 * XXX
-			 * Should use uc if so/se not available.
-			 */
-			if (off & __STANDOUT && exit_standout_mode != NULL) {
-				tputs(exit_standout_mode, 0, __cputchar);
-				curscr->wattr &= __mask_se;
-				off &= __mask_se;
-			}
-
-			if (off & __ALTCHARSET && exit_alt_charset_mode != NULL) {
-				tputs(exit_alt_charset_mode, 0, __cputchar);
-				curscr->wattr &= ~__ALTCHARSET;
-			}
-
-			/* Set/change colour as appropriate. */
-			if (__using_color)
-				__set_color(curscr, nsp->attr & __COLOR);
-
-			on = (nsp->attr & ~curscr->wattr)
-#ifndef HAVE_WCHAR
-				 & __ATTRIBUTES
-#else
-				 & WA_ATTRIBUTES
-#endif
-				 ;
-
-			/*
-			 * Enter standout mode if appropriate.
-			 */
-			if (on & __STANDOUT &&
-			    enter_standout_mode != NULL &&
-			    exit_standout_mode != NULL)
-			{
-				tputs(enter_standout_mode, 0, __cputchar);
-				curscr->wattr |= __STANDOUT;
-			}
-
-			/*
-			 * Enter underscore mode if appropriate.
-			 * XXX
-			 * Should use uc if us/ue not available.
-			 */
-			if (on & __UNDERSCORE &&
-			    enter_underline_mode != NULL &&
-			    exit_underline_mode != NULL)
-			{
-				tputs(enter_underline_mode, 0, __cputchar);
-				curscr->wattr |= __UNDERSCORE;
-			}
-
-			/*
-			 * Set other attributes as appropriate.
-			 */
-			if (exit_attribute_mode != NULL) {
-				if (on & __BLINK &&
-				    enter_blink_mode != NULL)
-				{
-					tputs(enter_blink_mode, 0, __cputchar);
-					curscr->wattr |= __BLINK;
-				}
-				if (on & __BOLD &&
-				    enter_bold_mode != NULL)
-				{
-					tputs(enter_bold_mode, 0, __cputchar);
-					curscr->wattr |= __BOLD;
-				}
-				if (on & __DIM &&
-				    enter_dim_mode != NULL)
-				{
-					tputs(enter_dim_mode, 0, __cputchar);
-					curscr->wattr |= __DIM;
-				}
-				if (on & __BLANK &&
-				    enter_secure_mode != NULL)
-				{
-					tputs(enter_secure_mode, 0, __cputchar);
-					curscr->wattr |= __BLANK;
-				}
-				if (on & __PROTECT &&
-				    enter_protected_mode != NULL)
-				{
-					tputs(enter_protected_mode, 0, __cputchar);
-					curscr->wattr |= __PROTECT;
-				}
-				if (on & __REVERSE &&
-				    enter_reverse_mode != NULL)
-				{
-					tputs(enter_reverse_mode, 0, __cputchar);
-					curscr->wattr |= __REVERSE;
-				}
-#ifdef HAVE_WCHAR
-				if (on & WA_TOP &&
-				    enter_top_hl_mode != NULL)
-				{
-					tputs(enter_top_hl_mode, 0, __cputchar);
-					curscr->wattr |= WA_TOP;
-				}
-				if (on & WA_LOW &&
-				    enter_low_hl_mode != NULL)
-				{
-					tputs(enter_low_hl_mode, 0, __cputchar);
-					curscr->wattr |= WA_LOW;
-				}
-				if (on & WA_LEFT &&
-				    enter_left_hl_mode != NULL)
-				{
-					tputs(enter_left_hl_mode, 0, __cputchar);
-					curscr->wattr |= WA_LEFT;
-				}
-				if (on & WA_RIGHT &&
-				    enter_right_hl_mode != NULL)
-				{
-					tputs(enter_right_hl_mode, 0, __cputchar);
-					curscr->wattr |= WA_RIGHT;
-				}
-				if (on & WA_HORIZONTAL &&
-				    enter_horizontal_hl_mode != NULL)
-				{
-					tputs(enter_horizontal_hl_mode, 0, __cputchar);
-					curscr->wattr |= WA_HORIZONTAL;
-				}
-				if (on & WA_VERTICAL &&
-				    enter_vertical_hl_mode != NULL)
-				{
-					tputs(enter_vertical_hl_mode, 0, __cputchar);
-					curscr->wattr |= WA_VERTICAL;
-				}
-#endif /* HAVE_WCHAR */
-			}
-
-			/* Enter/exit altcharset mode as appropriate. */
-			if (on & __ALTCHARSET && enter_alt_charset_mode != NULL &&
-			    exit_alt_charset_mode != NULL) {
-				tputs(enter_alt_charset_mode, 0, __cputchar);
-				curscr->wattr |= __ALTCHARSET;
-			}
-
 #ifdef HAVE_WCHAR
 			chw = wcwidth(nsp->ch);
 #else
 			chw = 1;
 #endif /* HAVE_WCHAR */
 			if (wx + chw >= win->maxx &&
-			    wy == win->maxy - 1 && !_cursesi_screen->curwin) {
+			    wy == win->maxy - 1 && !_cursesi_screen->curwin)
+			{
 				if (win->flags & __ENDLINE)
 					__unsetattr(1);
 				if (!(win->flags & __SCROLLWIN)) {
@@ -1338,11 +1359,9 @@ makech(int wy)
 				if (putch(nsp, csp, wy, wx) == ERR)
 					return ERR;
 				csp++;
-			}
-			if (underline_char && ((nsp->attr & __STANDOUT) ||
-			    (nsp->attr & __UNDERSCORE))) {
-				__cputchar('\b');
-				tputs(underline_char, 0, __cputchar);
+			} else {
+				putattr(nsp);
+				putattr_out(nsp);
 			}
 			wx += chw;
 			nsp++;
