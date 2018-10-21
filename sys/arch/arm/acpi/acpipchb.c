@@ -1,4 +1,4 @@
-/* $NetBSD: acpipchb.c,v 1.2 2018/10/19 11:40:27 jmcneill Exp $ */
+/* $NetBSD: acpipchb.c,v 1.3 2018/10/21 11:05:24 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpipchb.c,v 1.2 2018/10/19 11:40:27 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpipchb.c,v 1.3 2018/10/21 11:05:24 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -52,6 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: acpipchb.c,v 1.2 2018/10/19 11:40:27 jmcneill Exp $"
 #include <dev/pci/pciconf.h>
 
 #include <dev/acpi/acpivar.h>
+#include <dev/acpi/acpi_pci.h>
 #include <dev/acpi/acpi_mcfg.h>
 
 #include <arm/acpi/acpi_pci_machdep.h>
@@ -132,9 +133,9 @@ acpipchb_attach(device_t parent, device_t self, void *aux)
 	sc->sc_ap.ap_pc.pc_conf_v = &sc->sc_ap;
 	sc->sc_ap.ap_seg = seg;
 
-	if (acpimcfg_configure_bus(self, &sc->sc_ap.ap_pc, sc->sc_handle, sc->sc_bus, PCIHOST_CACHELINE_SIZE) != 0) {
-		aprint_error_dev(self, "failed to configure PCI bus\n");
-		return;
+	if (acpi_pci_ignore_boot_config(sc->sc_handle)) {
+		if (acpimcfg_configure_bus(self, &sc->sc_ap.ap_pc, sc->sc_handle, sc->sc_bus, PCIHOST_CACHELINE_SIZE) != 0)
+			aprint_error_dev(self, "failed to configure bus\n");
 	}
 
 	memset(&pba, 0, sizeof(pba));
