@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_pci_machdep.c,v 1.3 2018/10/21 00:42:05 jmcneill Exp $ */
+/* $NetBSD: acpi_pci_machdep.c,v 1.4 2018/10/21 11:56:26 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_pci_machdep.c,v 1.3 2018/10/21 00:42:05 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_pci_machdep.c,v 1.4 2018/10/21 11:56:26 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -187,13 +187,6 @@ acpi_pci_md_attach_hook(device_t parent, device_t self,
 			handle = ad->ad_handle;
 	}
 
-	if (ad != NULL) {
-		/*
-		 * This is a new ACPI managed bus. Add PCI link references.
-		 */
-		acpi_pci_md_pci_link(ad->ad_handle, pba->pba_bus);
-	}
-
 	if (handle != NULL) {
 		prt = kmem_alloc(sizeof(*prt), KM_SLEEP);
 		prt->prt_bus = pba->pba_bus;
@@ -202,6 +195,13 @@ acpi_pci_md_attach_hook(device_t parent, device_t self,
 	}
 
 	acpimcfg_map_bus(self, pba->pba_pc, pba->pba_bus);
+
+	if (ad != NULL) {
+		/*
+		 * This is a new ACPI managed bus. Add PCI link references.
+		 */
+		acpi_pci_md_pci_link(ad->ad_handle, pba->pba_bus);
+	}
 }
 
 static int
