@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_pci.c,v 1.23 2018/10/15 10:00:30 jmcneill Exp $ */
+/* $NetBSD: acpi_pci.c,v 1.24 2018/10/21 11:04:26 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_pci.c,v 1.23 2018/10/15 10:00:30 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_pci.c,v 1.24 2018/10/21 11:04:26 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -56,6 +56,14 @@ ACPI_MODULE_NAME	  ("acpi_pci")
 static ACPI_STATUS	  acpi_pcidev_pciroot_bus(ACPI_HANDLE, uint16_t *);
 static ACPI_STATUS	  acpi_pcidev_pciroot_bus_callback(ACPI_RESOURCE *,
 							   void *);
+
+/*
+ * UUID for _DSM control method, from PCI Firmware Specification.
+ */
+static UINT8 acpi_pci_dsm_uuid[ACPI_UUID_LENGTH] = {
+	0xd0, 0x37, 0xc9, 0xe5, 0x53, 0x35, 0x7a, 0x4d,
+	0x91, 0x17, 0xea, 0x4d, 0x19, 0xc3, 0x43, 0x4d
+};
 
 /*
  * Regarding PCI Segment Groups (ACPI 4.0, p. 277):
@@ -458,4 +466,55 @@ acpi_pcidev_find_dev(struct acpi_devnode *ad)
 	deviter_release(&di);
 
 	return dv;
+}
+
+/*
+ * acpi_pci_ignore_boot_config:
+ *
+ *	Returns 1 if the operating system may ignore the boot configuration
+ *	of PCI resources.
+ */
+ACPI_INTEGER
+acpi_pci_ignore_boot_config(ACPI_HANDLE handle)
+{
+	ACPI_OBJECT_LIST objs;
+	ACPI_OBJECT obj[4], *pobj;
+	ACPI_BUFFER buf;
+	ACPI_INTEGER ret;
+
+	objs.Count = 4;
+	objs.Pointer = obj;
+	obj[0].Type = ACPI_TYPE_BUFFER;
+	obj[0].Buffer.Length = ACPI_UUID_LENGTH;
+	obj[0].Buffer.Pointer = acpi_pci_dsm_uuid;
+	obj[1].Type = ACPI_TYPE_INTEGER;
+	obj[1].Integer.Value = 1;
+	obj[2].Type = ACPI_TYPE_INTEGER;
+	obj[2].Integer.Value = 5;
+	obj[3].Type = ACPI_TYPE_PACKAGE;
+	obj[3].Package.Count = 0;
+	obj[3].Package.Elements = NULL;
+
+	buf.Pointer = NULL;
+	buf.Length = ACPI_ALLOCATE_LOCAL_BUFFER;
+
+	if (ACPI_FAILURE(AcpiEvaluateObject(handle, "_DSM", &objs, &buf)) || buf.Pointer == NULL)
+		return 0;
+
+	ret = 0;
+
+	pobj = buf.Pointer;
+	switch (pobj->Type) {
+	case ACPI_TYPE_INTEGER:
+		ret = pobj->Integer.Value;
+		break;
+	case ACPI_TYPE_PACKAGE:
+		if (pobj->Package.Count == 1 && pobj->Package.Elements[0].Type == ACPI_TYPE_INTEGER)
+			ret = pobj->Package.Elements[0].Integer.Value;
+		break;
+	}
+
+	ACPI_FREE(buf.Pointer);
+
+	return ret;
 }
