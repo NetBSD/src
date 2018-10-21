@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC64,v 1.53 2018/10/21 12:07:47 jmcneill Exp $
+#	$NetBSD: GENERIC64,v 1.54 2018/10/21 12:26:59 jmcneill Exp $
 #
 #	GENERIC ARM (aarch64) kernel
 #
@@ -385,6 +385,7 @@ midi*		at midibus?
 
 # Virtio devices
 virtio*		at fdt?			# Virtio MMIO device
+virtio*		at acpi?
 #viomb*		at virtio?		# Virtio memory balloon device
 ld*		at virtio?		# Virtio disk device
 vioif*		at virtio?		# Virtio network device
