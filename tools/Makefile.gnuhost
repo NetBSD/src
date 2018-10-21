@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.gnuhost,v 1.49 2018/10/14 10:23:32 martin Exp $
+#	$NetBSD: Makefile.gnuhost,v 1.50 2018/10/21 00:26:24 christos Exp $
 #
 # Rules used when building a GNU host package.  Expects MODULE to be set.
 #
@@ -19,7 +19,8 @@
 
 # Disable use of pre-compiled headers on Darwin.
 BUILD_OSTYPE!= uname -s
-.if ${BUILD_OSTYPE} == "Darwin"
+HOST_COMPILER_CLANG != if ${HOST_CC} --version | grep -q -s clang; then echo yes; else echo no; fi
+.if ${HOST_COMPILER_CLANG} == "yes"
 HOST_CFLAGS+=-O2 -no-cpp-precomp
 .endif
 
