@@ -1,5 +1,5 @@
 #! /bin/sh
-#	$NetBSD: mkinit.sh,v 1.7 2016/03/27 14:34:46 christos Exp $
+#	$NetBSD: mkinit.sh,v 1.7.8.1 2018/10/21 12:00:32 martin Exp $
 
 # Copyright (c) 2003 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -33,7 +33,37 @@ srcs="$*"
 nl='
 '
 openparen='('
-backslash='\'
+
+# shells have bugs (including older NetBSD sh) in how \ is
+# used in pattern matching.   So work out what the shell
+# running this script expects.   We could also just use a
+# literal \ in the pattern, which would need to be quoted
+# of course, but then we'd run into a whole host of potential
+# other shell bugs (both with the quoting in the pattern, and
+# with the matching that follows if that works as inended).
+# Far easier, and more reliable, is to just work out what works,
+# and then use it, which more or less mandates using a variable...
+backslash='\\'
+var='abc\'			# dummy test case.
+if [ "$var" = "${var%$backslash}" ]
+then
+	# buggy sh, try the broken way
+	backslash='\'
+	if [ "$var" = "${var%$backslash}" ]
+	then
+		printf >&2 "$0: %s\n" 'No pattern match with \ (broken shell)'
+		exit 1
+	fi
+fi
+# We know we can detect the presence of a trailing \, which is all we need.
+# Now to confirm we will not generate false matches.
+var='abc'
+if [ "$var" != "${var%$backslash}" ]
+then
+	printf >&2 "$0: %s\n" 'Bogus pattern match with \ (broken shell)'
+	exit 1
+fi
+unset var
 
 includes=' "shell.h" "mystring.h" "init.h" '
 defines=
