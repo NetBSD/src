@@ -1,4 +1,4 @@
-/* $NetBSD: amdccp_acpi.c,v 1.1 2018/10/19 21:09:10 jakllsch Exp $ */
+/* $NetBSD: amdccp_acpi.c,v 1.2 2018/10/21 11:09:20 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2018 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdccp_acpi.c,v 1.1 2018/10/19 21:09:10 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdccp_acpi.c,v 1.2 2018/10/21 11:09:20 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -85,21 +85,21 @@ amdccp_acpi_attach(device_t parent, device_t self, void *aux)
 
 	mem = acpi_res_mem(&res, 0);
 	if (mem == NULL) {
-		aprint_error(": couldn't find mem resource\n");
+		aprint_error_dev(self, "couldn't find mem resource\n");
 		goto done;
 	}
 
 #if notyet
 	irq = acpi_res_irq(&res, 0);
 	if (irq == NULL) {
-		aprint_error(": couldn't find irq resource\n");
+		aprint_error_dev(self, "couldn't find irq resource\n");
 		goto done;
 	}
 
 #endif
 	sc->sc_bst = aa->aa_memt;
 	if (bus_space_map(aa->aa_memt, mem->ar_base, mem->ar_length, 0, &sc->sc_bsh) != 0) {
-		aprint_error(": couldn't map registers\n");
+		aprint_error_dev(self, "couldn't map registers\n");
 		goto done;
 	}
 
@@ -112,9 +112,6 @@ amdccp_acpi_attach(device_t parent, device_t self, void *aux)
 	}
 
 #endif
-
-	aprint_naive("\n");
-	aprint_normal(": AMD CCP\n");
 
 	amdccp_common_attach(sc);
 
