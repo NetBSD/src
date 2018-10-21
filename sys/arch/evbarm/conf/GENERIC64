@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC64,v 1.55 2018/10/21 18:32:23 jmcneill Exp $
+#	$NetBSD: GENERIC64,v 1.56 2018/10/21 21:18:59 jmcneill Exp $
 #
 #	GENERIC ARM (aarch64) kernel
 #
@@ -146,6 +146,7 @@ gic*		at fdt? pass 1		# ARM GICv2
 gic*		at acpi?
 armgic0		at gic?
 gicvthree*	at fdt? pass 1		# ARM GICv3
+gicvthree*	at acpi?
 sunxinmi*	at fdt? pass 2		# Allwinner NMI / R_INTC
 
 # Memory controller
