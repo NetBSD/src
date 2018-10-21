@@ -1,4 +1,4 @@
-/*	$NetBSD: if_l2tp.c,v 1.11.2.9 2018/07/26 23:55:31 snj Exp $	*/
+/*	$NetBSD: if_l2tp.c,v 1.11.2.10 2018/10/21 11:55:54 martin Exp $	*/
 
 /*
  * Copyright (c) 2017 Internet Initiative Japan Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_l2tp.c,v 1.11.2.9 2018/07/26 23:55:31 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_l2tp.c,v 1.11.2.10 2018/10/21 11:55:54 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -245,6 +245,7 @@ l2tp_clone_create(struct if_clone *ifc, int unit)
 
 	sc->l2tp_var = var;
 	mutex_init(&sc->l2tp_lock, MUTEX_DEFAULT, IPL_NONE);
+	sc->l2tp_psz = pserialize_create();
 	PSLIST_ENTRY_INIT(sc, l2tp_hash);
 
 	sc->l2tp_ro_percpu = percpu_alloc(sizeof(struct l2tp_ro));
@@ -339,6 +340,7 @@ l2tp_clone_destroy(struct ifnet *ifp)
 	percpu_free(sc->l2tp_ro_percpu, sizeof(struct l2tp_ro));
 
 	kmem_free(var, sizeof(struct l2tp_variant));
+	pserialize_destroy(sc->l2tp_psz);
 	mutex_destroy(&sc->l2tp_lock);
 	kmem_free(sc, sizeof(struct l2tp_softc));
 
@@ -1202,7 +1204,7 @@ l2tp_variant_update(struct l2tp_softc *sc, struct l2tp_variant *nvar)
 	KASSERT(mutex_owned(&sc->l2tp_lock));
 
 	sc->l2tp_var = nvar;
-	pserialize_perform(l2tp_psz);
+	pserialize_perform(sc->l2tp_psz);
 	psref_target_destroy(&ovar->lv_psref, lv_psref_class);
 
 	/*

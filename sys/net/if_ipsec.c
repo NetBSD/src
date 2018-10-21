@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ipsec.c,v 1.3.2.9 2018/06/07 16:22:43 martin Exp $  */
+/*	$NetBSD: if_ipsec.c,v 1.3.2.10 2018/10/21 11:55:54 martin Exp $  */
 
 /*
  * Copyright (c) 2017 Internet Initiative Japan Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ipsec.c,v 1.3.2.9 2018/06/07 16:22:43 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ipsec.c,v 1.3.2.10 2018/10/21 11:55:54 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -145,7 +145,6 @@ static struct {
 	kmutex_t lock;
 } ipsec_softcs __cacheline_aligned;
 
-pserialize_t ipsec_psz __read_mostly;
 struct psref_class *iv_psref_class __read_mostly;
 
 struct if_clone ipsec_cloner =
@@ -160,7 +159,6 @@ ipsecifattach(int count)
 	mutex_init(&ipsec_softcs.lock, MUTEX_DEFAULT, IPL_NONE);
 	LIST_INIT(&ipsec_softcs.list);
 
-	ipsec_psz = pserialize_create();
 	iv_psref_class = psref_class_create("ipsecvar", IPL_SOFTNET);
 
 	if_clone_attach(&ipsec_cloner);
@@ -184,6 +182,7 @@ if_ipsec_clone_create(struct if_clone *ifc, int unit)
 
 	sc->ipsec_var = var;
 	mutex_init(&sc->ipsec_lock, MUTEX_DEFAULT, IPL_NONE);
+	sc->ipsec_psz = pserialize_create();
 	sc->ipsec_ro_percpu = percpu_alloc(sizeof(struct ipsec_ro));
 	percpu_foreach(sc->ipsec_ro_percpu, if_ipsec_ro_init_pc, NULL);
 
@@ -254,6 +253,7 @@ if_ipsec_clone_destroy(struct ifnet *ifp)
 	percpu_foreach(sc->ipsec_ro_percpu, if_ipsec_ro_fini_pc, NULL);
 	percpu_free(sc->ipsec_ro_percpu, sizeof(struct ipsec_ro));
 
+	pserialize_destroy(sc->ipsec_psz);
 	mutex_destroy(&sc->ipsec_lock);
 
 	var = sc->ipsec_var;
@@ -1785,7 +1785,7 @@ if_ipsec_update_variant(struct ipsec_softc *sc, struct ipsec_variant *nvar,
 	 * "null" config variant to sc->ipsec_var.
 	 */
 	sc->ipsec_var = nullvar;
-	pserialize_perform(ipsec_psz);
+	pserialize_perform(sc->ipsec_psz);
 	psref_target_destroy(&ovar->iv_psref, iv_psref_class);
 
 	error = if_ipsec_replace_sp(sc, ovar, nvar);
@@ -1796,7 +1796,7 @@ if_ipsec_update_variant(struct ipsec_softc *sc, struct ipsec_variant *nvar,
 		psref_target_init(&ovar->iv_psref, iv_psref_class);
 	}
 
-	pserialize_perform(ipsec_psz);
+	pserialize_perform(sc->ipsec_psz);
 	psref_target_destroy(&nullvar->iv_psref, iv_psref_class);
 
 	if (if_ipsec_variant_is_configured(sc->ipsec_var))
