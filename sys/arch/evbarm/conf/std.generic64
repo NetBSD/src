@@ -1,4 +1,4 @@
-#	$NetBSD: std.generic64,v 1.7 2018/10/16 10:25:33 jmcneill Exp $
+#	$NetBSD: std.generic64,v 1.8 2018/10/21 00:42:06 jmcneill Exp $
 #
 #	generic NetBSD/evbarm64 with FDT support
 
@@ -18,6 +18,7 @@ options 	FDT				# Flattened Device Tree support
 options 	FPU_VFP
 options 	PCI_NETBSD_CONFIGURE
 options 	__HAVE_PCI_CONF_HOOK
+options 	__HAVE_PCI_MSI_MSIX
 
 # XXXNH not yet
 #options 	__HAVE_CPU_UAREA_ALLOC_IDLELWP
