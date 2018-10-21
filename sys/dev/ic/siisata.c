@@ -1,4 +1,4 @@
-/* $NetBSD: siisata.c,v 1.35.6.10 2018/10/15 21:18:53 jdolecek Exp $ */
+/* $NetBSD: siisata.c,v 1.35.6.11 2018/10/21 18:13:14 jdolecek Exp $ */
 
 /* from ahcisata_core.c */
 
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siisata.c,v 1.35.6.10 2018/10/15 21:18:53 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siisata.c,v 1.35.6.11 2018/10/21 18:13:14 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -162,7 +162,7 @@ void siisata_bio_abort(struct ata_channel *, struct ata_xfer *);
 void siisata_bio_kill_xfer(struct ata_channel *, struct ata_xfer *, int);
 int siisata_exec_command(struct ata_drive_datas *, struct ata_xfer *);
 
-static void siisata_reinit_port(struct ata_channel *, int);
+static int siisata_reinit_port(struct ata_channel *, int);
 static void siisata_device_reset(struct ata_channel *);
 static void siisata_activate_prb(struct siisata_channel *, int);
 static void siisata_deactivate_prb(struct siisata_channel *, int);
@@ -261,11 +261,12 @@ siisata_enable_port_interrupt(struct ata_channel *chp)
 	    PR_PIS_CMDERRR | PR_PIS_CMDCMPL);
 }
 
-static void
+static int
 siisata_init_port(struct siisata_softc *sc, int port)
 {
 	struct siisata_channel *schp;
 	struct ata_channel *chp;
+	int error;
 
 	schp = &sc->sc_channels[port];
 	chp = (struct ata_channel *)schp;
@@ -277,11 +278,13 @@ siisata_init_port(struct siisata_softc *sc, int port)
 	PRWRITE(sc, PRX(chp->ch_channel, PRO_PCC),
 	    PR_PC_32BA | PR_PC_INCOR | PR_PC_PORT_RESET);
 	/* initialize port */
-	siisata_reinit_port(chp, -1);
+	error = siisata_reinit_port(chp, -1);
 	/* enable CmdErrr+CmdCmpl interrupting */
 	siisata_enable_port_interrupt(chp);
 	/* enable port interrupt */
 	GRWRITE(sc, GR_GC, GRREAD(sc, GR_GC) | GR_GC_PXIE(chp->ch_channel));
+
+	return error;
 }
 
 static void
@@ -398,7 +401,7 @@ siisata_attach_port(struct siisata_softc *sc, int port)
 		return;
 	}
 
-	siisata_init_port(sc, port);
+	(void)siisata_init_port(sc, port);
 
 	ata_channel_attach(chp);
 
@@ -450,15 +453,22 @@ siisata_detach(struct siisata_softc *sc, int flags)
 void
 siisata_resume(struct siisata_softc *sc)
 {
-	int i;
-
 	/* come out of reset state */
 	GRWRITE(sc, GR_GC, 0);
 
-	for (i = 0; i < sc->sc_atac.atac_nchannels; i++) {
-		siisata_init_port(sc, i);
-	}
+	for (int port = 0; port < sc->sc_atac.atac_nchannels; port++) {
+		int error;
 
+		error = siisata_init_port(sc, port);
+		if (error) {
+			struct siisata_channel *schp = &sc->sc_channels[port];
+			struct ata_channel *chp = (struct ata_channel *)schp;
+
+			ata_channel_lock(chp);
+			siisata_reset_channel(chp, AT_POLL);
+			ata_channel_unlock(chp);
+		}
+	}
 }
 
 int
@@ -625,7 +635,7 @@ siisata_channel_recover(struct ata_channel *chp, int flags, uint32_t tfd)
 	}
 
 	KASSERT(drive >= 0);
-	siisata_reinit_port(chp, drive);
+	(void)siisata_reinit_port(chp, drive);
 
 	ata_recovery_resume(chp, drive, tfd, flags);
 
@@ -648,7 +658,8 @@ siisata_reset_drive(struct ata_drive_datas *drvp, int flags, uint32_t *sigp)
 
 	ata_channel_lock_owned(chp);
 
-	siisata_reinit_port(chp, drvp->drive);
+	if (siisata_reinit_port(chp, drvp->drive))
+		siisata_reset_channel(chp, flags);
 
 	/* get a slot for running the command on */
 	if (!ata_queue_alloc_slot(chp, &c_slot, ATA_MAX_OPENINGS)) {
@@ -815,7 +826,8 @@ siisata_probe_drive(struct ata_channel *chp)
 			aprint_error_dev(sc->sc_atac.atac_dev,
 			    "timed out waiting for PORT_READY on port %d, " 
 			    "reinitializing\n", chp->ch_channel);
-			siisata_reinit_port(chp, -1);
+			if (siisata_reinit_port(chp, -1))
+				siisata_reset_channel(chp, AT_WAIT);
 		}
 
 		prb = schp->sch_prb[c_slot];
@@ -851,7 +863,8 @@ siisata_probe_drive(struct ata_channel *chp)
 			    PRREAD(sc, PRX(chp->ch_channel, PRO_PCE)),
 			    PRREAD(sc, PRX(chp->ch_channel, PRO_PSS)),
 			    PRREAD(sc, PRX(chp->ch_channel, PRO_PIS)));
-			siisata_reinit_port(chp, -1);
+			if (siisata_reinit_port(chp, -1))
+				siisata_reset_channel(chp, AT_WAIT);
 			break;
 		}
 
@@ -1427,12 +1440,12 @@ siisata_deactivate_prb(struct siisata_channel *schp, int slot)
 	SIISATA_PRB_SYNC(sc, schp, slot, BUS_DMASYNC_POSTWRITE);
 }
 
-static void
+static int
 siisata_reinit_port(struct ata_channel *chp, int drive)
 {
 	struct siisata_softc *sc = (struct siisata_softc *)chp->ch_atac;
 	int ps;
-
+	int error = 0;
 
 	if (chp->ch_ndrives > 1) {
 		/*
@@ -1465,13 +1478,13 @@ siisata_reinit_port(struct ata_channel *chp, int drive)
 	}
 	if ((ps & PR_PS_PORT_READY) == 0) {
 		printf("%s: timeout waiting for port to be ready\n", __func__);
-		ata_channel_lock(chp);
-		siisata_reset_channel(chp, AT_POLL);
-		ata_channel_unlock(chp);
+		error = EBUSY;
 	}
 
 	if (chp->ch_ndrives > 1)
 		PRWRITE(sc, PRX(chp->ch_channel, PRO_PCS), PR_PC_PMP_ENABLE);
+
+	return error;
 }
 
 static void
