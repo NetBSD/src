@@ -1,4 +1,4 @@
-/* $NetBSD: if_msk.c,v 1.78 2018/09/14 18:46:47 jakllsch Exp $ */
+/* $NetBSD: if_msk.c,v 1.79 2018/10/21 00:51:12 jmcneill Exp $ */
 /*	$OpenBSD: if_msk.c,v 1.79 2009/10/15 17:54:56 deraadt Exp $	*/
 
 /*
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_msk.c,v 1.78 2018/09/14 18:46:47 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_msk.c,v 1.79 2018/10/21 00:51:12 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1359,7 +1359,6 @@ mskc_attach(device_t parent, device_t self, void *aux)
 	struct skc_attach_args skca;
 	pci_chipset_tag_t pc = pa->pa_pc;
 	pcireg_t command, memtype;
-	pci_intr_handle_t ih;
 	const char *intrstr = NULL;
 	int rc, sk_nodenum;
 	u_int8_t hw, pmd;
@@ -1431,13 +1430,13 @@ mskc_attach(device_t parent, device_t self, void *aux)
 	DPRINTFN(2, ("mskc_attach: allocate interrupt\n"));
 
 	/* Allocate interrupt */
-	if (pci_intr_map(pa, &ih)) {
+	if (pci_intr_alloc(pa, &sc->sk_pihp, NULL, 0)) {
 		aprint_error(": couldn't map interrupt\n");
 		goto fail_1;
 	}
 
-	intrstr = pci_intr_string(pc, ih, intrbuf, sizeof(intrbuf));
-	sc->sk_intrhand = pci_intr_establish_xname(pc, ih, IPL_NET, msk_intr,
+	intrstr = pci_intr_string(pc, sc->sk_pihp[0], intrbuf, sizeof(intrbuf));
+	sc->sk_intrhand = pci_intr_establish_xname(pc, sc->sk_pihp[0], IPL_NET, msk_intr,
 	    sc, device_xname(sc->sk_dev));
 	if (sc->sk_intrhand == NULL) {
 		aprint_error(": couldn't establish interrupt");
@@ -1743,6 +1742,11 @@ mskc_detach(device_t self, int flags)
 	if (sc->sk_intrhand) {
 		pci_intr_disestablish(sc->sk_pc, sc->sk_intrhand);
 		sc->sk_intrhand = NULL;
+	}
+
+	if (sc->sk_pihp != NULL) {
+		pci_intr_release(sc->sk_pc, sc->sk_pihp, 1);
+		sc->sk_pihp = NULL;
 	}
 
 	rv = config_detach_children(self, flags);
