@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_machdep.c,v 1.3 2018/10/16 16:38:22 jmcneill Exp $ */
+/* $NetBSD: acpi_machdep.c,v 1.4 2018/10/21 13:34:33 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.3 2018/10/16 16:38:22 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.4 2018/10/21 13:34:33 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -216,11 +216,23 @@ acpi_md_ncpus(void)
 }
 
 static ACPI_STATUS
-acpi_md_madt_probe(ACPI_SUBTABLE_HEADER *hdrp, void *aux)
+acpi_md_madt_probe_cpu(ACPI_SUBTABLE_HEADER *hdrp, void *aux)
 {
 	struct acpi_softc * const sc = aux;
 
-	config_found_ia(sc->sc_dev, "acpimadtbus", hdrp, NULL);
+	if (hdrp->Type == ACPI_MADT_TYPE_GENERIC_INTERRUPT)
+		config_found_ia(sc->sc_dev, "acpimadtbus", hdrp, NULL);
+
+	return AE_OK;
+}
+
+static ACPI_STATUS
+acpi_md_madt_probe_gic(ACPI_SUBTABLE_HEADER *hdrp, void *aux)
+{
+	struct acpi_softc * const sc = aux;
+
+	if (hdrp->Type == ACPI_MADT_TYPE_GENERIC_DISTRIBUTOR)
+		config_found_ia(sc->sc_dev, "acpimadtbus", hdrp, NULL);
 
 	return AE_OK;
 }
@@ -244,7 +256,8 @@ acpi_md_callback(struct acpi_softc *sc)
 
 	if (acpi_madt_map() != AE_OK)
 		panic("Failed to map MADT");
-	acpi_madt_walk(acpi_md_madt_probe, sc);
+	acpi_madt_walk(acpi_md_madt_probe_cpu, sc);
+	acpi_madt_walk(acpi_md_madt_probe_gic, sc);
 	acpi_madt_unmap();
 
 	if (acpi_gtdt_map() != AE_OK)
