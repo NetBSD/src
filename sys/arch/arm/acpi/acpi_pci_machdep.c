@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_pci_machdep.c,v 1.2 2018/10/19 11:40:27 jmcneill Exp $ */
+/* $NetBSD: acpi_pci_machdep.c,v 1.3 2018/10/21 00:42:05 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_pci_machdep.c,v 1.2 2018/10/19 11:40:27 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_pci_machdep.c,v 1.3 2018/10/21 00:42:05 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -57,8 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_pci_machdep.c,v 1.2 2018/10/19 11:40:27 jmcneil
 
 #include <arm/acpi/acpi_pci_machdep.h>
 
-#define	IH_INDEX_MASK			0x0000ffff
-#define	IH_MPSAFE			0x80000000
+#include <arm/pci/pci_msi_machdep.h>
 
 struct acpi_pci_prt {
 	u_int				prt_bus;
@@ -331,7 +330,13 @@ done:
 static const char *
 acpi_pci_md_intr_string(void *v, pci_intr_handle_t ih, char *buf, size_t len)
 {
-	snprintf(buf, len, "irq %d", (int)(ih & IH_INDEX_MASK));
+	const int irq = __SHIFTOUT(ih, ARM_PCI_INTR_IRQ);
+
+	if (ih & ARM_PCI_INTR_MSI)
+		snprintf(buf, len, "irq %d (MSI)", irq);
+	else
+		snprintf(buf, len, "irq %d", irq);
+
 	return buf;
 }
 
@@ -347,9 +352,9 @@ acpi_pci_md_intr_setattr(void *v, pci_intr_handle_t *ih, int attr, uint64_t data
 	switch (attr) {
 	case PCI_INTR_MPSAFE:
 		if (data)
-			*ih |= IH_MPSAFE;
+			*ih |= ARM_PCI_INTR_MPSAFE;
 		else
-			*ih &= ~IH_MPSAFE;
+			*ih &= ~ARM_PCI_INTR_MPSAFE;
 		return 0;
 	default:
 		return ENODEV;
@@ -360,8 +365,13 @@ static void *
 acpi_pci_md_intr_establish(void *v, pci_intr_handle_t ih, int ipl,
     int (*callback)(void *), void *arg)
 {
-	const int irq = ih & IH_INDEX_MASK;
-	const int mpsafe = (ih & IH_MPSAFE) ? IST_MPSAFE : 0;
+	struct acpi_pci_context * const ap = v;
+
+	if (ih & ARM_PCI_INTR_MSI)
+		return arm_pci_msi_intr_establish(&ap->ap_pc, ih, ipl, callback, arg);
+
+	const int irq = (int)__SHIFTOUT(ih, ARM_PCI_INTR_IRQ);
+	const int mpsafe = (ih & ARM_PCI_INTR_MPSAFE) ? IST_MPSAFE : 0;
 
 	return intr_establish(irq, ipl, IST_LEVEL | mpsafe, callback, arg);
 }

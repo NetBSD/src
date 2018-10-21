@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_fdt.c,v 1.3 2018/10/15 11:35:03 jmcneill Exp $ */
+/* $NetBSD: acpi_fdt.c,v 1.4 2018/10/21 00:42:05 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_fdt.c,v 1.3 2018/10/15 11:35:03 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_fdt.c,v 1.4 2018/10/21 00:42:05 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -94,6 +94,9 @@ acpi_fdt_attach(device_t parent, device_t self, void *aux)
 	    /*PCI_FLAGS_IO_OKAY |*/ PCI_FLAGS_MEM_OKAY |
 	    PCI_FLAGS_MRL_OKAY | PCI_FLAGS_MRM_OKAY | 
 	    PCI_FLAGS_MWI_OKAY;
+#ifdef __HAVE_PCI_MSI_MSIX
+	aa.aa_pciflags |= PCI_FLAGS_MSI_OKAY;
+#endif
 	aa.aa_ic = 0;
 	aa.aa_dmat = faa->faa_dmat;
 #ifdef _PCI_HAVE_DMA64
