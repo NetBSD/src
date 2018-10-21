@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_fdt.c,v 1.4 2018/10/21 00:42:05 jmcneill Exp $ */
+/* $NetBSD: acpi_fdt.c,v 1.5 2018/10/21 12:06:22 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_fdt.c,v 1.4 2018/10/21 00:42:05 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_fdt.c,v 1.5 2018/10/21 12:06:22 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -52,6 +52,8 @@ static int	acpi_fdt_match(device_t, cfdata_t, void *);
 static void	acpi_fdt_attach(device_t, device_t, void *);
 
 static void	acpi_fdt_poweroff(device_t);
+
+static struct acpi_pci_context acpi_fdt_pci_context;
 
 static const char * const compatible[] = {
 	"netbsd,acpi",
@@ -87,9 +89,13 @@ acpi_fdt_attach(device_t parent, device_t self, void *aux)
 	if (!acpi_probe())
 		aprint_error_dev(self, "failed to probe ACPI\n");
 
+	acpi_fdt_pci_context.ap_pc = arm_acpi_pci_chipset;
+	acpi_fdt_pci_context.ap_pc.pc_conf_v = &acpi_fdt_pci_context;
+	acpi_fdt_pci_context.ap_seg = 0;
+
 	aa.aa_iot = 0;
 	aa.aa_memt = faa->faa_bst;
-	aa.aa_pc = &arm_acpi_pci_chipset;
+	aa.aa_pc = &acpi_fdt_pci_context.ap_pc;
 	aa.aa_pciflags =
 	    /*PCI_FLAGS_IO_OKAY |*/ PCI_FLAGS_MEM_OKAY |
 	    PCI_FLAGS_MRL_OKAY | PCI_FLAGS_MRM_OKAY | 
