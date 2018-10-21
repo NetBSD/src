@@ -1,7 +1,3 @@
-jdolecek-ncqfixes to finish:
-- re-check READ LOG EXT handling under native
-- recheck native working for ahcisata(4), siisata(4), mvsata(4) + PMP
-
 Bugs
 ----
 test wd* at umass?, confirm the ata_channel kludge works
@@ -29,7 +25,7 @@ add support for the NCQ TRIM if supported by device?
 
 implement DIOCGCACHE/DIOCCACHESYNC for ld@ataraid? just passthrough, like ccd
 
-MSI/MSI-X support for AHCI and mvsata(4)
+MSI/MSI-X support for ahcisata(4), siisata(4) and mvsata(4)
 
 mvsata - move pci-specific code to the pci attach code
 
