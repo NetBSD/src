@@ -24,7 +24,7 @@ Testing
 -------
 
 On a running NetBSD system  
-    cd /usr/tests; atf-run |atf-report
+    cd /usr/tests; atf-run | atf-report
 
 Troubleshooting
 ---------------
