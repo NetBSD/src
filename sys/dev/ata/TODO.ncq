@@ -1,7 +1,3 @@
-Bugs
-----
-test wd* at umass?, confirm the ata_channel kludge works
-
 Other random notes (do outside the NCQ branch):
 -----------------------------------------------------
 do biodone() in wddone() starting the dump to not leak bufs when dumping from
@@ -24,5 +20,3 @@ set
 add support for the NCQ TRIM if supported by device?
 
 implement DIOCGCACHE/DIOCCACHESYNC for ld@ataraid? just passthrough, like ccd
-
-MSI/MSI-X support for ahcisata(4), siisata(4)
