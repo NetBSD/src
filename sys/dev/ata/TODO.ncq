@@ -1,9 +1,5 @@
 Other random notes (do outside the NCQ branch):
 -----------------------------------------------------
-do biodone() in wddone() starting the dump to not leak bufs when dumping from
-active system? make sure to not trigger atastart()
-- call ata_kill_active() + ata_kill_pending() when dumping
-
 implement support for PM FIS-based switching, remove restriction in atastart()
 for hw which supports it, adjust error handling in controller drivers to handle
 xfers for several different drives
