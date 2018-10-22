@@ -12,7 +12,7 @@ Cross-building is possible from most UNIX-like operating systems.
 To build for amd64 (x86_64), in the src directory:  
     ./build.sh -U -u -j4 -m amd64 -O ~/obj release
 
-Additional build information available in the BUILDING file.
+Additional build information available in the [BUILDING](BUILDING) file.
 
 Binaries
 --------
@@ -31,7 +31,7 @@ Troubleshooting
 
 - Bugs and patches can be sent [via web form](https://www.netbsd.org/cgi-bin/sendpr.cgi?gndb=netbsd).  
 - Several [mailing lists](https://www.netbsd.org/mailinglists/) exist.  
-  The netbsd-users list is a good choice for many problems.  
+  The [netbsd-users](https://netbsd.org/mailinglists/#netbsd-users) list is a good choice for many problems.  
 - A community IRC channel exist on [#netbsd @ freenode](https://webchat.freenode.net/?channels=#netbsd)
 
 Latest sources
