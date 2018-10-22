@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata_pci.c,v 1.38 2016/10/13 17:11:09 jdolecek Exp $	*/
+/*	$NetBSD: ahcisata_pci.c,v 1.39 2018/10/22 21:04:53 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_pci.c,v 1.38 2016/10/13 17:11:09 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_pci.c,v 1.39 2018/10/22 21:04:53 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -200,7 +200,8 @@ struct ahci_pci_softc {
 	struct ahci_softc ah_sc;
 	pci_chipset_tag_t sc_pc;
 	pcitag_t sc_pcitag;
-	void * sc_ih;
+	pci_intr_handle_t *sc_pihp;
+	void *sc_ih;
 };
 
 static int  ahci_pci_has_quirk(pci_vendor_id_t, pci_product_id_t);
@@ -270,7 +271,6 @@ ahci_pci_attach(device_t parent, device_t self, void *aux)
 	const char *intrstr;
 	bool ahci_cap_64bit;
 	bool ahci_bad_64bit;
-	pci_intr_handle_t intrhandle;
 	char intrbuf[PCI_INTRSTR_LEN];
 
 	sc->sc_atac.atac_dev = self;
@@ -286,14 +286,14 @@ ahci_pci_attach(device_t parent, device_t self, void *aux)
 
 	pci_aprint_devinfo(pa, "AHCI disk controller");
 	
-	if (pci_intr_map(pa, &intrhandle) != 0) {
+	if (pci_intr_alloc(pa, &psc->sc_pihp, NULL, 0) != 0) {
 		aprint_error_dev(self, "couldn't map interrupt\n");
 		return;
 	}
-	intrstr = pci_intr_string(pa->pa_pc, intrhandle,
+	intrstr = pci_intr_string(pa->pa_pc, psc->sc_pihp[0],
 	    intrbuf, sizeof(intrbuf));
-	psc->sc_ih = pci_intr_establish_xname(pa->pa_pc, intrhandle, IPL_BIO,
-	    ahci_intr, sc, device_xname(sc->sc_atac.atac_dev));
+	psc->sc_ih = pci_intr_establish_xname(pa->pa_pc, psc->sc_pihp[0],
+	    IPL_BIO, ahci_intr, sc, device_xname(sc->sc_atac.atac_dev));
 	if (psc->sc_ih == NULL) {
 		aprint_error_dev(self, "couldn't establish interrupt\n");
 		return;
@@ -343,8 +343,15 @@ ahci_pci_detach(device_t dv, int flags)
 
 	pmf_device_deregister(dv);
 
-	if (psc->sc_ih != NULL)
+	if (psc->sc_pihp != NULL) {
+		pci_intr_release(psc->sc_pc, psc->sc_pihp, 1);
+		psc->sc_pihp = NULL;
+	}
+
+	if (psc->sc_ih != NULL) {
 		pci_intr_disestablish(psc->sc_pc, psc->sc_ih);
+		psc->sc_ih = NULL;
+	}
 
 	bus_space_unmap(sc->sc_ahcit, sc->sc_ahcih, sc->sc_ahcis);
 
