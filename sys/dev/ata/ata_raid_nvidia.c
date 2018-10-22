@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_raid_nvidia.c,v 1.3 2017/11/01 19:34:46 mlelstv Exp $	*/
+/*	$NetBSD: ata_raid_nvidia.c,v 1.4 2018/10/22 19:38:06 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2000 - 2008 Søren Schmidt <sos@FreeBSD.org>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata_raid_nvidia.c,v 1.3 2017/11/01 19:34:46 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata_raid_nvidia.c,v 1.4 2018/10/22 19:38:06 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -43,7 +43,6 @@ __KERNEL_RCSID(0, "$NetBSD: ata_raid_nvidia.c,v 1.3 2017/11/01 19:34:46 mlelstv 
 #include <sys/disk.h>
 #include <sys/disklabel.h>
 #include <sys/fcntl.h>
-#include <sys/malloc.h>
 #include <sys/vnode.h>
 #include <sys/kauth.h>
 
@@ -136,7 +135,7 @@ ata_raid_read_config_nvidia(struct wd_softc *sc)
 	  struct _arrayno *next;
 	} arrayno = { 0, 0, NULL}, *anptr;
 
-	info = malloc(sizeof(*info), M_DEVBUF, M_WAITOK);
+	info = kmem_zalloc(sizeof(*info), KM_SLEEP);
 
 	bmajor = devsw_name2blk(dksc->sc_xname, NULL, 0);
 
@@ -200,7 +199,7 @@ ata_raid_read_config_nvidia(struct wd_softc *sc)
 		/* new array */
 		anptr->magic1 = info->magic_1;
 		anptr->magic2 = info->magic_2;
-		anptr->next = malloc(sizeof(arrayno), M_DEVBUF, M_WAITOK);
+		anptr->next = kmem_zalloc(sizeof(arrayno), KM_SLEEP);
 	}
 	aai = ata_raid_get_array_info(ATA_RAID_TYPE_NVIDIA, count);
 
@@ -257,6 +256,6 @@ ata_raid_read_config_nvidia(struct wd_softc *sc)
 	error = 0;
 
  out:
-	free(info, M_DEVBUF);
+	kmem_free(info, sizeof(*info));
 	return (error);
 }
