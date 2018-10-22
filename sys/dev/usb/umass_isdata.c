@@ -1,4 +1,4 @@
-/*	$NetBSD: umass_isdata.c,v 1.37 2018/09/03 16:29:34 riastradh Exp $	*/
+/*	$NetBSD: umass_isdata.c,v 1.38 2018/10/22 20:13:47 jdolecek Exp $	*/
 
 /*
  * TODO:
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass_isdata.c,v 1.37 2018/09/03 16:29:34 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass_isdata.c,v 1.38 2018/10/22 20:13:47 jdolecek Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -134,6 +134,7 @@ const struct ata_bustype uisdata_bustype = {
 	uisdata_addref,
 	uisdata_delref,
 	uisdata_kill_pending,
+	NULL,
 };
 
 struct ata_cmd {
@@ -540,7 +541,7 @@ uisdata_get_params(struct ata_drive_datas *drvp, uint8_t flags,
 	memset(tb, 0, DEV_BSIZE);
 	memset(prms, 0, sizeof(struct ataparams));
 
-	xfer = ata_get_xfer(drvp->chnl_softc);
+	xfer = ata_get_xfer(drvp->chnl_softc, false);
 	if (!xfer) {
 		rv = CMD_AGAIN;
 		goto out;

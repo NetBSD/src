@@ -1,4 +1,4 @@
-/*	$NetBSD: wdvar.h,v 1.46 2017/11/03 13:01:26 mlelstv Exp $	*/
+/*	$NetBSD: wdvar.h,v 1.47 2018/10/22 20:13:47 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -53,7 +53,6 @@ struct wd_softc {
 #define WDF_WAIT	0x020 /* waiting for resources */
 #define WDF_LBA		0x040 /* using LBA mode */
 #define WDF_LBA48	0x100 /* using 48-bit LBA mode */
-#define WDF_FLUSH_PEND	0x200 /* cache flush waits for free xfer */
 #define WDF_OPEN	0x400 /* device is open */
 	uint64_t sc_capacity; /* full capacity of the device */
 	uint64_t sc_capacity512; /* ... in DEV_BSIZE blocks */
@@ -65,11 +64,18 @@ struct wd_softc {
 	u_int sc_bscount;
 #endif
 
+	/* Retry/requeue failed transfers */
+	SLIST_HEAD(, ata_xfer) sc_retry_list;
+	struct callout sc_retry_callout;	/* retry callout handle */
+	struct callout sc_restart_diskqueue;	/* restart queue processing */
+
+	SLIST_HEAD(, ata_xfer) sc_requeue_list;
+	struct callout sc_requeue_callout;	/* requeue callout handle */
+
+	struct ata_xfer dump_xfer;
+
 	/* Sysctl nodes specific for the disk */
 	struct sysctllog *nodelog;
-	int drv_max_tags;
-#define WD_MAX_OPENINGS(wd)	\
-	(MAX(1, MIN((wd)->drvp->drv_openings, (wd)->drv_max_tags)))
 	bool drv_ncq;
 #define WD_USE_NCQ(wd)	\
 	((wd)->drv_ncq && ((wd)->drvp->drive_flags & ATA_DRIVE_NCQ))

@@ -1,4 +1,4 @@
-/*	$NetBSD: atavar.h,v 1.99 2018/08/10 22:43:22 jdolecek Exp $	*/
+/*	$NetBSD: atavar.h,v 1.100 2018/10/22 20:13:47 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -125,19 +125,15 @@ struct ata_command {
 
 /* Forward declaration for ata_xfer */
 struct scsipi_xfer;
+struct ata_xfer_ops;
 
 /*
  * Description of a command to be handled by an ATA controller.  These
  * commands are queued in a list.
  */
 struct ata_xfer {
-	struct callout c_timo_callout;	/* timeout callout handle */
-	struct callout c_retry_callout;	/* retry callout handle */
-	kcondvar_t c_active;		/* somebody actively waiting for xfer */
-	kcondvar_t c_finish;		/* somebody waiting for xfer finish */
 	int8_t c_slot;			/* queue slot # */
 
-#define c_startzero	c_chp
 	/* Channel and drive that are to process the request. */
 	struct ata_channel *c_chp;
 	uint16_t	c_drive;
@@ -147,8 +143,6 @@ struct ata_xfer {
 	void	*c_databuf;		/* pointer to data buffer */
 	int	c_bcount;		/* byte count left */
 	int	c_skip;			/* bytes already transferred */
-	int	c_dscpoll;		/* counter for dsc polling (ATAPI) */
-	int	c_lenoff;		/* offset to c_bcount (ATAPI) */
 #define ATACH_ERR_ST(error, status)	((error) << 8 | (status))
 #define ATACH_ERR(val)			(((val) >> 8) & 0xff)
 #define ATACH_ST(val)			(((val) >> 0) & 0xff)
@@ -156,17 +150,29 @@ struct ata_xfer {
 	union {
 		struct ata_bio	c_bio;		/* ATA transfer */
 		struct ata_command c_ata_c;	/* ATA command */ 
-		struct scsipi_xfer *c_scsipi;	/* SCSI transfer */
+		struct {
+			struct scsipi_xfer *c_scsipi;	/* SCSI transfer */
+			int	c_dscpoll; /* counter for dsc polling (ATAPI) */
+			int	c_lenoff;  /* offset to c_bcount (ATAPI) */
+		} atapi;
 	} u;
 #define c_bio	u.c_bio
 #define c_ata_c	u.c_ata_c
-#define c_scsipi u.c_scsipi
+#define c_atapi u.atapi
+#define c_scsipi c_atapi.c_scsipi
 
 	/* Link on the command queue. */
-	TAILQ_ENTRY(ata_xfer) c_xferchain;
+	SIMPLEQ_ENTRY(ata_xfer) c_xferchain;
 	TAILQ_ENTRY(ata_xfer) c_activechain;
 
+	/* Links for error handling */
+	SLIST_ENTRY(ata_xfer) c_retrychain;
+
 	/* Low-level protocol handlers. */
+	const struct ata_xfer_ops *ops;
+};
+
+struct ata_xfer_ops {
 	int	(*c_start)(struct ata_channel *, struct ata_xfer *);
 #define ATASTART_STARTED	0	/* xfer started, waiting for intr */
 #define ATASTART_TH		1	/* xfer needs to be run in thread */
@@ -188,10 +194,11 @@ struct ata_xfer {
 #define C_FREE		0x0040		/* call ata_free_xfer() asap */
 #define C_PIOBM		0x0080		/* command uses busmastering PIO */
 #define	C_NCQ		0x0100		/* command is queued  */
-#define C_RECOVERY	0x0200		/* executed as part of recovery */
+#define C_SKIP_QUEUE	0x0200		/* skip xfer queue */
 #define C_WAITTIMO	0x0400		/* race vs. timeout */
 #define C_CHAOS		0x0800		/* forced error xfer */
 #define C_RECOVERED	0x1000		/* error recovered, no need for reset */
+#define C_PRIVATE_ALLOC	0x2000		/* private alloc, skip pool_put() */
 
 /* reasons for c_kill_xfer() */
 #define KILL_GONE 1		/* device is gone while xfer was active */
@@ -219,15 +226,16 @@ struct ata_queue {
 #define QF_NEED_XFER	0x02    	/* someone wants xfer */
 	int8_t queue_active; 		/* number of active transfers */
 	uint8_t queue_openings;			/* max number of active xfers */
-	TAILQ_HEAD(, ata_xfer) queue_xfer; 	/* queue of pending commands */
+	SIMPLEQ_HEAD(, ata_xfer) queue_xfer; 	/* queue of pending commands */
 	int queue_freeze; 			/* freeze count for the queue */
-	kcondvar_t queue_busy;			/* c: waiting of xfer */
 	kcondvar_t queue_drain;			/* c: waiting of queue drain */
 	kcondvar_t queue_idle;			/* c: waiting of queue idle */
 	TAILQ_HEAD(, ata_xfer) active_xfers; 	/* active commands */
 	uint32_t active_xfers_used;		/* mask of active commands */
 	uint32_t queue_xfers_avail;		/* available xfers mask */
-	struct ata_xfer queue_xfers[0];		/* xfers */
+	uint32_t queue_hold;			/* slots held during recovery */
+	kcondvar_t c_active;		/* somebody actively waiting for xfer */
+	kcondvar_t c_cmd_finish;	/* somebody waiting for cmd finish */
 };
 #endif
 
@@ -267,6 +275,7 @@ struct ata_drive_datas {
 #define ATA_DRIVE_WFUA		0x0100	/* drive supports WRITE DMA FUA EXT */
 #define ATA_DRIVE_NCQ		0x0200	/* drive supports NCQ feature set */
 #define ATA_DRIVE_NCQ_PRIO	0x0400	/* drive supports NCQ PRIO field */
+#define ATA_DRIVE_TH_RESET	0x0800	/* drive waits for thread drive reset */
 
 	uint8_t drive_type;
 #define	ATA_DRIVET_NONE		0
@@ -320,7 +329,6 @@ struct ata_drive_datas {
 
 	/* Callbacks into the drive's driver. */
 	void	(*drv_done)(device_t, struct ata_xfer *); /* xfer is done */
-	void	(*drv_start)(device_t);			  /* start queue */
 
 	device_t drv_softc;		/* ATA drives softc, if any */
 	struct ata_channel *chnl_softc;	/* channel softc */
@@ -329,9 +337,6 @@ struct ata_drive_datas {
 	struct disklabel *lp;	/* pointer to drive's label info */
 	uint8_t		multi;	/* # of blocks to transfer in multi-mode */
 	daddr_t	badsect[127];	/* 126 plus trailing -1 marker */
-
-	/* Recovery buffer */
-	uint8_t recovery_blk[ATA_BSIZE];
 };
 
 /* User config flags that force (or disable) the use of a mode */
@@ -356,9 +361,6 @@ struct ata_bustype {
 	int	(*ata_bio)(struct ata_drive_datas *, struct ata_xfer *);
 	void	(*ata_reset_drive)(struct ata_drive_datas *, int, uint32_t *);
 	void	(*ata_reset_channel)(struct ata_channel *, int);
-/* extra flags for ata_reset_*(), in addition to AT_* */
-#define AT_RST_EMERG 0x10000 /* emergency - e.g. for a dump */
-
 	int	(*ata_exec_command)(struct ata_drive_datas *,
 				    struct ata_xfer *);
 
@@ -371,6 +373,7 @@ struct ata_bustype {
 	int	(*ata_addref)(struct ata_drive_datas *);
 	void	(*ata_delref)(struct ata_drive_datas *);
 	void	(*ata_killpending)(struct ata_drive_datas *);
+	void	(*ata_recovery)(struct ata_channel *, int, uint32_t);
 };
 
 /* bustype_type */	/* XXX XXX XXX */
@@ -408,9 +411,14 @@ struct ata_channel {
 #define ATACH_TH_RESCAN 0x400	/* rescan requested */
 #define ATACH_NCQ	0x800	/* channel executing NCQ commands */
 #define ATACH_DMA_BEFORE_CMD	0x1000	/* start DMA first */
+#define ATACH_TH_DRIVE_RESET	0x2000	/* asked thread to drive(s) reset */
+#define ATACH_RECOVERING	0x4000	/* channel is recovering */
+#define ATACH_TH_RECOVERY	0x8000	/* asked thread to run recovery */
 
-	/* for the reset callback */
-	int ch_reset_flags;
+#define ATACH_NODRIVE	0xff	/* no drive selected for reset */
+
+	/* for the timeout callout */
+	struct callout c_timo_callout;	/* timeout callout handle */
 
 	/* per-drive info */
 	int ch_ndrives; /* number of entries in ch_drive[] */
@@ -434,6 +442,11 @@ struct ata_channel {
 
 	/* Number of sata PMP ports, if any */
 	int ch_satapmp_nports;
+
+	/* Recovery buffer */
+	struct ata_xfer recovery_xfer;
+	uint8_t recovery_blk[ATA_BSIZE];
+	uint32_t recovery_tfd;		/* status/err encoded ATACH_ERR_ST() */
 };
 
 /*
@@ -516,29 +529,27 @@ int	ata_get_params(struct ata_drive_datas *, uint8_t, struct ataparams *);
 int	ata_set_mode(struct ata_drive_datas *, uint8_t, uint8_t);
 int	ata_read_log_ext_ncq(struct ata_drive_datas *, uint8_t, uint8_t *,
     uint8_t *, uint8_t *);
+void	ata_recovery_resume(struct ata_channel *, int, int, int);
 
 /* return code for these cmds */
 #define CMD_OK    0
 #define CMD_ERR   1
 #define CMD_AGAIN 2
 
-struct ata_xfer *ata_get_xfer_ext(struct ata_channel *, int, uint8_t);
-#define ata_get_xfer(chp) ata_get_xfer_ext((chp), C_WAIT, 0)
+struct ata_xfer *ata_get_xfer(struct ata_channel *, bool);
 void	ata_free_xfer(struct ata_channel *, struct ata_xfer *);
 void	ata_deactivate_xfer(struct ata_channel *, struct ata_xfer *);
 void	ata_exec_xfer(struct ata_channel *, struct ata_xfer *);
 int	ata_xfer_start(struct ata_xfer *xfer);
-void	ata_wait_xfer(struct ata_channel *, struct ata_xfer *xfer);
-void	ata_wake_xfer(struct ata_channel *, struct ata_xfer *xfer);
+void	ata_wait_cmd(struct ata_channel *, struct ata_xfer *xfer);
 
 void	ata_timeout(void *);
 bool	ata_timo_xfer_check(struct ata_xfer *);
 void	ata_kill_pending(struct ata_drive_datas *);
 void	ata_kill_active(struct ata_channel *, int, int);
-void	ata_reset_channel(struct ata_channel *, int);
+void	ata_thread_run(struct ata_channel *, int, int, int);
 void	ata_channel_freeze(struct ata_channel *);
-void	ata_channel_thaw(struct ata_channel *);
-void	ata_channel_start(struct ata_channel *, int, bool);
+void	ata_channel_thaw_locked(struct ata_channel *);
 void	ata_channel_lock(struct ata_channel *);
 void	ata_channel_unlock(struct ata_channel *);
 void	ata_channel_lock_owned(struct ata_channel *);
@@ -558,7 +569,6 @@ void	ata_dmaerr(struct ata_drive_datas *, int);
 struct ata_queue *
 	ata_queue_alloc(uint8_t openings);
 void	ata_queue_free(struct ata_queue *);
-void	ata_queue_reset(struct ata_queue *);
 struct ata_xfer *
 	ata_queue_hwslot_to_xfer(struct ata_channel *, int);
 struct ata_xfer *
@@ -567,6 +577,12 @@ struct ata_xfer *
 	ata_queue_get_active_xfer_locked(struct ata_channel *);
 struct ata_xfer *
 	ata_queue_drive_active_xfer(struct ata_channel *, int);
+bool	ata_queue_alloc_slot(struct ata_channel *, uint8_t *, uint8_t);
+void	ata_queue_free_slot(struct ata_channel *, uint8_t);
+uint32_t	ata_queue_active(struct ata_channel *);
+uint8_t	ata_queue_openings(struct ata_channel *);
+void	ata_queue_hold(struct ata_channel *);
+void	ata_queue_unhold(struct ata_channel *);
 
 void	ata_delay(struct ata_channel *, int, const char *, int);
 

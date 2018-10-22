@@ -1,4 +1,4 @@
-/*	$NetBSD: satapmp_subr.c,v 1.14 2018/07/29 14:11:30 jdolecek Exp $	*/
+/*	$NetBSD: satapmp_subr.c,v 1.15 2018/10/22 20:13:47 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2012 Manuel Bouyer.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: satapmp_subr.c,v 1.14 2018/07/29 14:11:30 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: satapmp_subr.c,v 1.15 2018/10/22 20:13:47 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,6 +62,7 @@ satapmp_read_8(struct ata_channel *chp, int port, int reg, uint64_t *value,
 	KASSERT(drvp->drive == PMP_PORT_CTL);
 	ata_channel_lock_owned(chp);
 
+	memset(xfer, 0, sizeof(*xfer));
 	xfer->c_ata_c.r_command = PMPC_READ_PORT;
 	xfer->c_ata_c.r_features = reg;
 	xfer->c_ata_c.r_device = port;
@@ -133,6 +134,7 @@ satapmp_write_8(struct ata_channel *chp, int port, int reg, uint64_t value,
 	KASSERT(drvp->drive == PMP_PORT_CTL);
 	ata_channel_lock_owned(chp);
 
+	memset(xfer, 0, sizeof(*xfer));
 	xfer->c_ata_c.r_command = PMPC_WRITE_PORT;
 	xfer->c_ata_c.r_features = reg;
 	xfer->c_ata_c.r_device = port;
@@ -261,10 +263,10 @@ satapmp_rescan(struct ata_channel *chp, struct ata_xfer *xfer)
 			    device_xname(chp->atabus), i);
 			continue;
 		}
-		ata_channel_unlock(chp);
+
+		ata_channel_lock_owned(chp);
 		chp->ch_atac->atac_bustype_ata->ata_reset_drive(
 		    &chp->ch_drive[i], AT_WAIT, &sig);
-		ata_channel_lock(chp);
 
 		sata_interpret_sig(chp, i, sig);
 	}
@@ -276,7 +278,7 @@ satapmp_attach(struct ata_channel *chp)
 	uint32_t id, rev, inf;
 	struct ata_xfer *xfer;
 
-	xfer = ata_get_xfer(chp);
+	xfer = ata_get_xfer(chp, false);
 	if (xfer == NULL) {
 		aprint_normal_dev(chp->atabus, "no available xfer\n");
 		return;

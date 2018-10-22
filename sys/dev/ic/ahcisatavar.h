@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisatavar.h,v 1.18 2017/10/07 16:05:32 jdolecek Exp $	*/
+/*	$NetBSD: ahcisatavar.h,v 1.19 2018/10/22 20:13:47 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -82,9 +82,6 @@ struct ahci_softc {
 		struct ahci_cmd_tbl *ahcic_cmd_tbl[AHCI_MAX_CMDS];
 		bus_addr_t ahcic_bus_cmd_tbl[AHCI_MAX_CMDS];
 		bus_dmamap_t ahcic_datad[AHCI_MAX_CMDS];
-		volatile uint32_t  ahcic_cmds_active;	/* active commands */
-		uint32_t  ahcic_cmds_hold; 	/* held commands */
-		bool ahcic_recovering;
 	} sc_channels[AHCI_MAX_PORTS];
 
 	void	(*sc_channel_start)(struct ahci_softc *, struct ata_channel *);
