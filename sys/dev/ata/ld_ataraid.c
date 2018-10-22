@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_ataraid.c,v 1.46 2018/09/03 16:29:30 riastradh Exp $ */
+/*	$NetBSD: ld_ataraid.c,v 1.47 2018/10/22 19:36:28 jdolecek Exp $ */
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_ataraid.c,v 1.46 2018/09/03 16:29:30 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_ataraid.c,v 1.47 2018/10/22 19:36:28 jdolecek Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "bio.h"
@@ -64,7 +64,6 @@ __KERNEL_RCSID(0, "$NetBSD: ld_ataraid.c,v 1.46 2018/09/03 16:29:30 riastradh Ex
 #include <sys/disk.h>
 #include <sys/disklabel.h>
 #include <sys/fcntl.h>
-#include <sys/malloc.h>
 #include <sys/vnode.h>
 #include <sys/kauth.h>
 #include <sys/module.h>
