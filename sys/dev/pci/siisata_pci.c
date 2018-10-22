@@ -1,4 +1,4 @@
-/* $NetBSD: siisata_pci.c,v 1.17 2018/10/22 20:57:07 jdolecek Exp $ */
+/* $NetBSD: siisata_pci.c,v 1.18 2018/10/22 21:40:45 jdolecek Exp $ */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siisata_pci.c,v 1.17 2018/10/22 20:57:07 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siisata_pci.c,v 1.18 2018/10/22 21:40:45 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -290,15 +290,16 @@ siisata_pci_detach(device_t dv, int flags)
 	if (rv)
 		return rv;
 
+	if (psc->sc_ih != NULL) {
+		pci_intr_disestablish(psc->sc_pc, psc->sc_ih);
+		psc->sc_ih = NULL;
+	}
+
 	if (psc->sc_pihp != NULL) {
 		pci_intr_release(psc->sc_pc, psc->sc_pihp, 1);
 		psc->sc_pihp = NULL;
 	}
 	
-	if (psc->sc_ih != NULL) {
-		pci_intr_disestablish(psc->sc_pc, psc->sc_ih);
-	}
-
 	bus_space_unmap(sc->sc_prt, sc->sc_prh, sc->sc_prs);
 	bus_space_unmap(sc->sc_grt, sc->sc_grh, sc->sc_grs);
 
