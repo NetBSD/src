@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsata.c,v 1.43 2018/10/22 20:13:47 jdolecek Exp $	*/
+/*	$NetBSD: mvsata.c,v 1.44 2018/10/22 20:30:52 jdolecek Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.43 2018/10/22 20:13:47 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.44 2018/10/22 20:30:52 jdolecek Exp $");
 
 #include "opt_mvsata.h"
 
@@ -57,6 +57,16 @@ __KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.43 2018/10/22 20:13:47 jdolecek Exp $")
 #include "atapibus.h"
 
 #include <dev/pci/pcidevs.h> /* XXX should not be here */
+
+/*
+ * Nice things to do:
+ *
+ * - MSI/MSI-X support - though on some models MSI actually doesn't work
+ *   even when hardware claims to support it, according to FreeBSD/OpenBSD
+ * - move pci-specific code to the pci attach code
+ * - mvsata(4) use 64-bit DMA on hardware which claims to support it
+ *   - e.g. AHA1430SA does not really work, crash in mvsata_intr() on boot
+ */
 
 #include <dev/ic/mvsatareg.h>
 #include <dev/ic/mvsatavar.h>
