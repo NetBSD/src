@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC64,v 1.56 2018/10/21 21:18:59 jmcneill Exp $
+#	$NetBSD: GENERIC64,v 1.57 2018/10/22 22:36:41 jmcneill Exp $
 #
 #	GENERIC ARM (aarch64) kernel
 #
@@ -101,6 +101,7 @@ simplebus*	at fdt? pass 0
 acpifdt*	at fdt? pass 1
 acpi*		at acpifdt?
 acpibut*	at acpi?
+acpiged*	at acpi?
 acpilid*	at acpi?
 
 # CPUs
