@@ -1,4 +1,4 @@
-/* $NetBSD: plgpio_acpi.c,v 1.2 2018/10/21 18:31:58 jmcneill Exp $ */
+/* $NetBSD: plgpio_acpi.c,v 1.3 2018/10/22 22:29:35 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: plgpio_acpi.c,v 1.2 2018/10/21 18:31:58 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: plgpio_acpi.c,v 1.3 2018/10/22 22:29:35 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -40,6 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: plgpio_acpi.c,v 1.2 2018/10/21 18:31:58 jmcneill Exp
 
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
+#include <dev/acpi/acpi_event.h>
 
 #include <dev/gpio/gpiovar.h>
 #include <dev/ic/pl061var.h>
@@ -47,28 +48,18 @@ __KERNEL_RCSID(0, "$NetBSD: plgpio_acpi.c,v 1.2 2018/10/21 18:31:58 jmcneill Exp
 
 struct plgpio_acpi_softc;
 
-struct plgpio_acpi_event {
-	struct plgpio_acpi_softc *ev_sc;
-	u_int			ev_pin;
-	ACPI_HANDLE		ev_method;
-	bool			ev_method_evt;
-};
-
 struct plgpio_acpi_softc {
 	struct plgpio_softc	sc_base;
 
 	ACPI_HANDLE		sc_handle;
-	uint32_t		sc_aei_pins;		/* bitmask */
-	ACPI_RESOURCE_GPIO	sc_aei_res[8];
 
-	struct plgpio_acpi_event sc_event[8];
+	struct acpi_event *	sc_event[8];
 };
 
 static int	plgpio_acpi_match(device_t, cfdata_t, void *);
 static void	plgpio_acpi_attach(device_t, device_t, void *);
 
-static void	plgpio_acpi_init(struct plgpio_acpi_softc *);
-static void	plgpio_acpi_notify(void *);
+static void	plgpio_acpi_register_event(void *, struct acpi_event *, ACPI_RESOURCE_GPIO *);
 static int	plgpio_acpi_intr(void *);
 
 CFATTACH_DECL_NEW(plgpio_acpi, sizeof(struct plgpio_acpi_softc), plgpio_acpi_match, plgpio_acpi_attach, NULL, NULL);
@@ -132,161 +123,83 @@ plgpio_acpi_attach(device_t parent, device_t self, void *aux)
 
 	plgpio_attach(sc);
 
+	if (ACPI_FAILURE(acpi_event_create_gpio(self, asc->sc_handle, plgpio_acpi_register_event, asc))) {
+		aprint_error_dev(self, "failed to create events\n");
+		goto done;
+	}
+
 	const int type = (irq->ar_type == ACPI_EDGE_SENSITIVE) ? IST_EDGE : IST_LEVEL;
 	ih = intr_establish(irq->ar_irq, IPL_VM, type, plgpio_acpi_intr, asc);
 	if (ih == NULL)
 		aprint_error_dev(self, "couldn't establish interrupt\n");
 
-	plgpio_acpi_init(asc);
-
 done:
 	acpi_resource_cleanup(&res);
 }
 
-static ACPI_STATUS
-plgpio_acpi_resource_cb(ACPI_RESOURCE *res, void *ctx)
-{
-	struct plgpio_acpi_softc * const asc = ctx;
-	ACPI_RESOURCE_GPIO *gpio;
-	UINT16 pin;
-
-	if (res->Type != ACPI_RESOURCE_TYPE_GPIO)
-		return AE_OK;
-
-	gpio = &res->Data.Gpio;
-	if (gpio->ConnectionType != ACPI_RESOURCE_GPIO_TYPE_INT ||
-	    gpio->PinTableLength != 1)
-		return AE_OK;
-
-	pin = gpio->PinTable[0];
-	if (pin >= __arraycount(asc->sc_aei_res)) {
-		aprint_error_dev(asc->sc_base.sc_dev, "_AEI pin %u out of range\n", pin);
-		return AE_OK;
-	}
-
-	asc->sc_aei_pins |= __BIT(pin);
-	asc->sc_aei_res[pin] = *gpio;
-
-	return AE_OK;
-}
-
 static void
-plgpio_acpi_init(struct plgpio_acpi_softc *asc)
+plgpio_acpi_register_event(void *priv, struct acpi_event *ev, ACPI_RESOURCE_GPIO *gpio)
 {
+	struct plgpio_acpi_softc * const asc = priv;
 	struct plgpio_softc * const sc = &asc->sc_base;
-	ACPI_RESOURCE_GPIO *gpio;
-	ACPI_HANDLE handle;
-	char namebuf[5];
-	ACPI_STATUS rv;
 	uint32_t ibe, iev, is, ie;
-	int pin;
 
-	rv = AcpiWalkResources(asc->sc_handle, "_AEI", plgpio_acpi_resource_cb, asc);
-	if (ACPI_FAILURE(rv)) {
-		if (rv != AE_NOT_FOUND)
-			aprint_error_dev(asc->sc_base.sc_dev, "failed to parse _AEI: %s\n",
-			    AcpiFormatException(rv));
+	const int pin = gpio->PinTable[0];
+
+	if (pin >= __arraycount(asc->sc_event)) {
+		aprint_error_dev(asc->sc_base.sc_dev,
+		    "ignoring event for pin %u (out of range)\n", pin);
+		return;
+	}
+	if (asc->sc_event[pin] != NULL) {
+		aprint_error_dev(asc->sc_base.sc_dev,
+		    "ignoring duplicate pin %u\n", pin);
 		return;
 	}
 
-	if (!asc->sc_aei_pins)
-		return;
-
-	aprint_verbose_dev(asc->sc_base.sc_dev, "ACPI event pins: %#x\n", asc->sc_aei_pins);
-
-	sc->sc_reserved_mask = asc->sc_aei_pins;
+	asc->sc_event[pin] = ev;
+	asc->sc_base.sc_reserved_mask |= __BIT(pin);
 
 	/*
-	 * For each event pin, find the corresponding event method (_Exx, _Lxx, or _EVT).
+	 * Configure and enable interrupts for this pin.
 	 */
-	for (pin = 0; pin < __arraycount(asc->sc_aei_res); pin++) {
-		if ((asc->sc_aei_pins & __BIT(pin)) == 0)
-			continue;
 
-		gpio = &asc->sc_aei_res[pin];
-
-		const char trig = gpio->Triggering == ACPI_LEVEL_SENSITIVE ? 'L' : 'E';
-		handle = NULL;
-		snprintf(namebuf, sizeof(namebuf), "_%c%02X", trig, pin);
-		if (ACPI_FAILURE(AcpiGetHandle(asc->sc_handle, namebuf, &handle))) {
-			(void)AcpiGetHandle(asc->sc_handle, "_EVT", &handle);
-			if (handle != NULL)
-				asc->sc_event[pin].ev_method_evt = true;
-		}
-
-		if (handle == NULL)
-			continue;
-
-		asc->sc_event[pin].ev_sc = asc;
-		asc->sc_event[pin].ev_pin = pin;
-		asc->sc_event[pin].ev_method = handle;
-
-		/*
-		 * Configure and enable interrupts for this pin.
-		 */
-
-		ibe = PLGPIO_READ(sc, PL061_GPIOIBE_REG);
-		iev = PLGPIO_READ(sc, PL061_GPIOIEV_REG);
-		switch (gpio->Polarity) {
-		case ACPI_ACTIVE_HIGH:
-			ibe &= ~__BIT(pin);
-			iev |= __BIT(pin);
-			break;
-		case ACPI_ACTIVE_LOW:
-			ibe &= ~__BIT(pin);
-			iev &= ~__BIT(pin);
-			break;
-		case ACPI_ACTIVE_BOTH:
-			ibe |= __BIT(pin);
-			break;
-		}
-		PLGPIO_WRITE(sc, PL061_GPIOIBE_REG, ibe);
-		PLGPIO_WRITE(sc, PL061_GPIOIEV_REG, iev);
-
-		is = PLGPIO_READ(sc, PL061_GPIOIS_REG);
-		switch (gpio->Triggering) {
-		case ACPI_LEVEL_SENSITIVE:
-			is |= __BIT(pin);
-			break;
-		case ACPI_EDGE_SENSITIVE:
-			is &= ~__BIT(pin);
-			break;
-		}
-		PLGPIO_WRITE(sc, PL061_GPIOIS_REG, is);
-
-		delay(20);
-
-		PLGPIO_WRITE(sc, PL061_GPIOIC_REG, __BIT(pin));
-
-		ie = PLGPIO_READ(sc, PL061_GPIOIE_REG);
-		ie |= __BIT(pin);
-		PLGPIO_WRITE(sc, PL061_GPIOIE_REG, ie);
+	ibe = PLGPIO_READ(sc, PL061_GPIOIBE_REG);
+	iev = PLGPIO_READ(sc, PL061_GPIOIEV_REG);
+	switch (gpio->Polarity) {
+	case ACPI_ACTIVE_HIGH:
+		ibe &= ~__BIT(pin);
+		iev |= __BIT(pin);
+		break;
+	case ACPI_ACTIVE_LOW:
+		ibe &= ~__BIT(pin);
+		iev &= ~__BIT(pin);
+		break;
+	case ACPI_ACTIVE_BOTH:
+		ibe |= __BIT(pin);
+		break;
 	}
-}
+	PLGPIO_WRITE(sc, PL061_GPIOIBE_REG, ibe);
+	PLGPIO_WRITE(sc, PL061_GPIOIEV_REG, iev);
 
-static void
-plgpio_acpi_notify(void *priv)
-{
-	struct plgpio_acpi_event * const ev = priv;
-	struct plgpio_acpi_softc * const asc = ev->ev_sc;
-	struct plgpio_softc * const sc = &asc->sc_base;
-	ACPI_STATUS rv;
-
-	if (ev->ev_method_evt) {
-		ACPI_OBJECT_LIST objs;
-		ACPI_OBJECT obj[1];
-		objs.Count = 1;
-		objs.Pointer = obj;
-		obj[0].Type = ACPI_TYPE_INTEGER;
-		obj[0].Integer.Value = ev->ev_pin;
-		rv = AcpiEvaluateObject(ev->ev_method, NULL, &objs, NULL);
-	} else {
-		rv = AcpiEvaluateObject(ev->ev_method, NULL, NULL, NULL);
+	is = PLGPIO_READ(sc, PL061_GPIOIS_REG);
+	switch (gpio->Triggering) {
+	case ACPI_LEVEL_SENSITIVE:
+		is |= __BIT(pin);
+		break;
+	case ACPI_EDGE_SENSITIVE:
+		is &= ~__BIT(pin);
+		break;
 	}
+	PLGPIO_WRITE(sc, PL061_GPIOIS_REG, is);
 
-	if (ACPI_FAILURE(rv))
-		device_printf(sc->sc_dev, "failed to handle %s event: %s\n",
-		    acpi_name(ev->ev_method), AcpiFormatException(rv));
+	delay(20);
+
+	PLGPIO_WRITE(sc, PL061_GPIOIC_REG, __BIT(pin));
+
+	ie = PLGPIO_READ(sc, PL061_GPIOIE_REG);
+	ie |= __BIT(pin);
+	PLGPIO_WRITE(sc, PL061_GPIOIE_REG, ie);
 }
 
 static int
@@ -302,11 +215,10 @@ plgpio_acpi_intr(void *priv)
 
 	while ((bit = __builtin_ffs(mis)) != 0) {
 		const int pin = bit - 1;
-		struct plgpio_acpi_event * const ev = &asc->sc_event[pin];
+		struct acpi_event * const ev = asc->sc_event[pin];
+		KASSERT(ev != NULL);
 
-		KASSERT(ev->ev_method != NULL);
-
-		AcpiOsExecute(OSL_NOTIFY_HANDLER, plgpio_acpi_notify, ev);
+		acpi_event_notify(ev);
 
 		mis &= ~__BIT(pin);
 	}
