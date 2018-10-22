@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_raid_intel.c,v 1.8 2017/11/01 19:34:46 mlelstv Exp $	*/
+/*	$NetBSD: ata_raid_intel.c,v 1.9 2018/10/22 19:38:06 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2000-2008 Søren Schmidt <sos@FreeBSD.org>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata_raid_intel.c,v 1.8 2017/11/01 19:34:46 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata_raid_intel.c,v 1.9 2018/10/22 19:38:06 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -43,7 +43,6 @@ __KERNEL_RCSID(0, "$NetBSD: ata_raid_intel.c,v 1.8 2017/11/01 19:34:46 mlelstv E
 #include <sys/disk.h>
 #include <sys/disklabel.h>
 #include <sys/fcntl.h>
-#include <sys/malloc.h>
 #include <sys/vnode.h>
 #include <sys/kauth.h>
 
@@ -138,6 +137,7 @@ ata_raid_read_config_intel(struct wd_softc *sc)
 {
 	struct dk_softc *dksc = &sc->sc_dksc;
 	struct intel_raid_conf *info;
+	const size_t infosz = 1536;
 	struct intel_raid_mapping *map;
 	struct ataraid_array_info *aai;
 	struct ataraid_disk_info *adi;
@@ -148,7 +148,7 @@ ata_raid_read_config_intel(struct wd_softc *sc)
 	dev_t dev;
 	int volumeid, diskidx;
 
-	info = malloc(1536, M_DEVBUF, M_WAITOK|M_ZERO);
+	info = kmem_zalloc(infosz, KM_SLEEP);
 
 	bmajor = devsw_name2blk(dksc->sc_xname, NULL, 0);
 
@@ -298,7 +298,7 @@ findvol:
 	}
 
  out:
-	free(info, M_DEVBUF);
+	kmem_free(info, infosz);
 	return error;
 }
 
