@@ -1,4 +1,4 @@
-.\" $NetBSD: mvsata.4,v 1.6 2017/10/07 17:35:48 jdolecek Exp $
+.\" $NetBSD: mvsata.4,v 1.7 2018/10/22 19:53:25 jdolecek Exp $
 .\"
 .\" Copyright (c) 2009 KIYOHARA Takashi
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd October 7, 2017
+.Dd October 22, 2018
 .Dt MVSATA 4
 .Os
 .Sh NAME
@@ -88,6 +88,7 @@ Triones Technologies RocketRAID 2310 RAID card
 .El
 .El
 .Sh SEE ALSO
+.Xr ahci 4 ,
 .Xr ata 4 ,
 .Xr atapi 4 ,
 .Xr pci 4 ,
@@ -109,11 +110,19 @@ NCQ support was added by
 .An Jaromir Dolecek Aq Mt jdolecek@NetBSD.org .
 .Sh BUGS
 .Bl -tag -width Ds -compact
-.It NCQ is not enabled on Gen II controllers yet .
+.It NCQ is only enabled on Gen IIe controllers .
 .It Device hot swapping is not yet supported .
-.It Marvell's Software RAID is not yet supported by the
+.It Marvell's Software RAID is not supported by the
 .Xr ataraid 4
 driver.
 .Xr raid 4
 can be used instead.
 .El
+.Pp
+This controler hardware is very old and pretty peculiar, with
+poor ATAPI support. It's very unlikely that the driver will
+receive any further changes, particularily not for the Gen I and Gen II
+controllers.
+Use an
+.Xr ahci 4
+compatible controller instead.
