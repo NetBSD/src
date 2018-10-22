@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.288 2017/10/20 07:06:07 jdolecek Exp $ */
+/*	$NetBSD: wdc.c,v 1.289 2018/10/22 20:13:47 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.288 2017/10/20 07:06:07 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.289 2018/10/22 20:13:47 jdolecek Exp $");
 
 #include "opt_ata.h"
 #include "opt_wdc.h"
@@ -919,8 +919,8 @@ ignore:
 	}
 #endif
 	chp->ch_flags &= ~ATACH_IRQ_WAIT;
-	KASSERT(xfer->c_intr != NULL);
-	ret = xfer->c_intr(chp, xfer, 1);
+	KASSERT(xfer->ops != NULL && xfer->ops->c_intr != NULL);
+	ret = xfer->ops->c_intr(chp, xfer, 1);
 	if (ret == 0) /* irq was not for us, still waiting for irq */
 		chp->ch_flags |= ATACH_IRQ_WAIT;
 	return (ret);
@@ -932,19 +932,24 @@ wdc_reset_drive(struct ata_drive_datas *drvp, int flags, uint32_t *sigp)
 {
 	struct ata_channel *chp = drvp->chnl_softc;
 
+	ata_channel_lock_owned(chp);
+
 	KASSERT(sigp == NULL);
 
 	ATADEBUG_PRINT(("wdc_reset_drive %s:%d for drive %d\n",
 	    device_xname(chp->ch_atac->atac_dev), chp->ch_channel,
 	    drvp->drive), DEBUG_FUNCS);
 
-	ata_reset_channel(chp, flags);
+	ata_thread_run(chp, flags, ATACH_TH_RESET, ATACH_NODRIVE);
 }
 
 void
 wdc_reset_channel(struct ata_channel *chp, int flags)
 {
 	struct ata_xfer *xfer;
+
+	ata_channel_lock_owned(chp);
+
 #if NATA_DMA || NATA_PIOBM
 	struct wdc_softc *wdc = CHAN_TO_WDC(chp);
 #endif
@@ -955,9 +960,7 @@ wdc_reset_channel(struct ata_channel *chp, int flags)
 	 * if the current command is on an ATAPI device, issue a
 	 * ATAPI_SOFT_RESET
 	 */
-	xfer = ata_queue_get_active_xfer(chp);
-
-	ata_channel_lock(chp);
+	xfer = ata_queue_get_active_xfer_locked(chp);
 
 	if (xfer && xfer->c_chp == chp && (xfer->c_flags & C_ATAPI)) {
 		wdccommandshort(chp, xfer->c_drive, ATAPI_SOFT_RESET);
@@ -984,9 +987,8 @@ wdc_reset_channel(struct ata_channel *chp, int flags)
 	 */
 	if (xfer) {
 		if (xfer->c_chp != chp) {
-			ata_channel_unlock(chp);
-			ata_reset_channel(xfer->c_chp, flags);
-			ata_channel_lock(chp);
+			ata_thread_run(xfer->c_chp, flags, ATACH_TH_RESET,
+			    ATACH_NODRIVE);
 		} else {
 #if NATA_DMA || NATA_PIOBM
 			/*
@@ -1004,8 +1006,6 @@ wdc_reset_channel(struct ata_channel *chp, int flags)
 	}
 
 	ata_kill_active(chp, KILL_RESET, flags);
-
-	ata_channel_unlock(chp);
 }
 
 static int
@@ -1324,8 +1324,8 @@ wdc_dmawait(struct ata_channel *chp, struct ata_xfer *xfer, int timeout)
 void
 wdctimeout(void *arg)
 {
-	struct ata_xfer *xfer = arg;
-	struct ata_channel *chp = xfer->c_chp;
+	struct ata_xfer *xfer;
+	struct ata_channel *chp = arg;
 #if NATA_DMA || NATA_PIOBM
 	struct wdc_softc *wdc = CHAN_TO_WDC(chp);
 #endif
@@ -1334,6 +1334,10 @@ wdctimeout(void *arg)
 	ATADEBUG_PRINT(("wdctimeout\n"), DEBUG_FUNCS);
 
 	s = splbio();
+
+	callout_ack(&chp->c_timo_callout);
+
+	xfer = ata_queue_get_active_xfer(chp);
 	KASSERT(xfer != NULL);
 
 	if (ata_timo_xfer_check(xfer)) {
@@ -1361,14 +1365,22 @@ wdctimeout(void *arg)
 	 * in case it will miss another irq while in this transfer
 	 * We arbitray chose it to be 1s
 	 */
-	callout_reset(&xfer->c_timo_callout, hz, wdctimeout, xfer);
+	callout_reset(&chp->c_timo_callout, hz, wdctimeout, chp);
 	xfer->c_flags |= C_TIMEOU;
-	KASSERT(xfer->c_intr != NULL);
-	xfer->c_intr(chp, xfer, 1);
+	KASSERT(xfer->ops != NULL && xfer->ops->c_intr != NULL);
+	xfer->ops->c_intr(chp, xfer, 1);
 
 out:
 	splx(s);
 }
+
+static const struct ata_xfer_ops wdc_cmd_xfer_ops = {
+	.c_start = __wdccommand_start,
+	.c_poll = __wdccommand_poll,
+	.c_abort = __wdccommand_done,
+	.c_intr = __wdccommand_intr,
+	.c_kill_xfer = __wdccommand_kill_xfer,
+};
 
 int
 wdc_exec_command(struct ata_drive_datas *drvp, struct ata_xfer *xfer)
@@ -1391,11 +1403,7 @@ wdc_exec_command(struct ata_drive_datas *drvp, struct ata_xfer *xfer)
 	xfer->c_drive = drvp->drive;
 	xfer->c_databuf = ata_c->data;
 	xfer->c_bcount = ata_c->bcount;
-	xfer->c_start = __wdccommand_start;
-	xfer->c_poll = __wdccommand_poll;
-	xfer->c_abort = __wdccommand_done;
-	xfer->c_intr = __wdccommand_intr;
-	xfer->c_kill_xfer = __wdccommand_kill_xfer;
+	xfer->ops = &wdc_cmd_xfer_ops;
 
 	s = splbio();
 	ata_exec_xfer(chp, xfer);
@@ -1408,12 +1416,7 @@ wdc_exec_command(struct ata_drive_datas *drvp, struct ata_xfer *xfer)
 		ret = ATACMD_COMPLETE;
 	} else {
 		if (ata_c->flags & AT_WAIT) {
-			ata_channel_lock(chp);
-			if ((ata_c->flags & AT_DONE) == 0) {
-				ata_wait_xfer(chp, xfer);
-				KASSERT((ata_c->flags & AT_DONE) != 0);
-			}
-			ata_channel_unlock(chp);
+			ata_wait_cmd(chp, xfer);
 			ret = ATACMD_COMPLETE;
 		} else {
 			ret = ATACMD_QUEUED;
@@ -1474,8 +1477,8 @@ __wdccommand_start(struct ata_channel *chp, struct ata_xfer *xfer)
 
 	if ((ata_c->flags & AT_POLL) == 0) {
 		chp->ch_flags |= ATACH_IRQ_WAIT; /* wait for interrupt */
-		callout_reset(&xfer->c_timo_callout, ata_c->timeout / 1000 * hz,
-		    wdctimeout, xfer);
+		callout_reset(&chp->c_timo_callout, ata_c->timeout / 1000 * hz,
+		    wdctimeout, chp);
 		return ATASTART_STARTED;
 	}
 
@@ -1597,8 +1600,8 @@ again:
 		ata_c->flags |= AT_XFDONE;
 		if ((ata_c->flags & AT_POLL) == 0) {
 			chp->ch_flags |= ATACH_IRQ_WAIT; /* wait for interrupt */
-			callout_reset(&xfer->c_timo_callout,
-			    mstohz(ata_c->timeout), wdctimeout, xfer);
+			callout_reset(&chp->c_timo_callout,
+			    mstohz(ata_c->timeout), wdctimeout, chp);
 			ata_channel_unlock(chp);
 			return 1;
 		} else {
@@ -1691,9 +1694,9 @@ __wdccommand_done(struct ata_channel *chp, struct ata_xfer *xfer)
 		ata_c->r_device &= 0xf0;
 	}
 
-	ata_deactivate_xfer(chp, xfer);
-
 	__wdccommand_done_end(chp, xfer);
+
+	ata_deactivate_xfer(chp, xfer);
 
 out:
 	if (ata_c->flags & AT_POLL) {
@@ -1713,11 +1716,7 @@ __wdccommand_done_end(struct ata_channel *chp, struct ata_xfer *xfer)
 {
 	struct ata_command *ata_c = &xfer->c_ata_c;
 
-	ata_channel_lock(chp);
 	ata_c->flags |= AT_DONE;
-	if (ata_c->flags & AT_WAIT)
-		ata_wake_xfer(chp, xfer);
-	ata_channel_unlock(chp);
 }
 
 static void
@@ -1743,10 +1742,10 @@ __wdccommand_kill_xfer(struct ata_channel *chp, struct ata_xfer *xfer,
 		panic("__wdccommand_kill_xfer");
 	}
 
+	__wdccommand_done_end(chp, xfer);
+
 	if (deactivate)
 		ata_deactivate_xfer(chp, xfer);
-
-	__wdccommand_done_end(chp, xfer);
 }
 
 /*
