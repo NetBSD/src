@@ -1,4 +1,4 @@
-/*	$NetBSD: umass_isdata.c,v 1.38 2018/10/22 20:13:47 jdolecek Exp $	*/
+/*	$NetBSD: umass_isdata.c,v 1.39 2018/10/22 21:23:16 jdolecek Exp $	*/
 
 /*
  * TODO:
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass_isdata.c,v 1.38 2018/10/22 20:13:47 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass_isdata.c,v 1.39 2018/10/22 21:23:16 jdolecek Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -64,6 +64,11 @@ int umass_wd_attach(struct umass_softc *);
 
 #include <dev/ata/atareg.h>
 #include <dev/ata/atavar.h>
+
+/*
+ * XXX This driver likely doesn't work after ATA NCQ changes.
+ * XXX Need to confirm if the ata_channel kludge works
+ */
 
 /* XXX move this */
 struct isd200_config {
