@@ -1,4 +1,4 @@
-/*      $NetBSD: plcom_ifpga.c,v 1.16 2013/02/19 10:57:10 skrll Exp $ */
+/*      $NetBSD: plcom_ifpga.c,v 1.17 2018/10/23 09:15:36 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2001 ARM Ltd
@@ -32,7 +32,7 @@
 /* Interface to plcom (PL010) serial driver. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: plcom_ifpga.c,v 1.16 2013/02/19 10:57:10 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: plcom_ifpga.c,v 1.17 2018/10/23 09:15:36 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/device.h>
@@ -96,6 +96,9 @@ plcom_ifpga_attach(device_t parent, device_t self, void *aux)
 		printf("%s: unable to map device\n", device_xname(sc->sc_dev));
 		return;
 	}
+
+	aprint_naive("\n");
+	aprint_normal("\n");
 
 	plcom_attach_subr(sc);
 	isc->sc_ih = ifpga_intr_establish(ifa->ifa_irq, IPL_SERIAL,
