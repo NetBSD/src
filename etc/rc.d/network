@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: network,v 1.75 2018/07/27 15:31:02 roy Exp $
+# $NetBSD: network,v 1.76 2018/10/23 09:25:33 mrg Exp $
 #
 
 # PROVIDE: network
@@ -567,8 +567,9 @@ network_stop_route()
 {
 	# flush routes
 	#
-	/sbin/route -qn flush
-
+	if checkyesno flushroutes; then
+		/sbin/route -qn flush
+	fi
 }
 
 load_rc_config $name
