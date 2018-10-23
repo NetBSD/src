@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_fdt.c,v 1.5 2018/10/21 12:06:22 jmcneill Exp $ */
+/* $NetBSD: acpi_fdt.c,v 1.6 2018/10/23 10:13:34 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_fdt.c,v 1.5 2018/10/21 12:06:22 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_fdt.c,v 1.6 2018/10/23 10:13:34 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -38,6 +38,7 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_fdt.c,v 1.5 2018/10/21 12:06:22 jmcneill Exp $"
 #include <sys/lwp.h>
 #include <sys/kmem.h>
 #include <sys/queue.h>
+#include <sys/sysctl.h>
 
 #include <dev/fdt/fdtvar.h>
 
@@ -53,7 +54,11 @@ static void	acpi_fdt_attach(device_t, device_t, void *);
 
 static void	acpi_fdt_poweroff(device_t);
 
+static void	acpi_fdt_sysctl_init(void);
+
 static struct acpi_pci_context acpi_fdt_pci_context;
+
+static uint64_t smbios_table = 0;
 
 static const char * const compatible[] = {
 	"netbsd,acpi",
@@ -109,6 +114,8 @@ acpi_fdt_attach(device_t parent, device_t self, void *aux)
 	aa.aa_dmat64 = faa->faa_dmat;
 #endif
 	config_found_ia(self, "acpibus", &aa, 0);
+
+	acpi_fdt_sysctl_init();
 }
 
 static void
@@ -117,4 +124,29 @@ acpi_fdt_poweroff(device_t dev)
 	delay(500000);
 	if (psci_available())
 		psci_system_off();
+}
+
+static void
+acpi_fdt_sysctl_init(void)
+{
+	const struct sysctlnode *rnode;
+	int error;
+
+	const int chosen = OF_finddevice("/chosen");
+	if (chosen >= 0)
+		of_getprop_uint64(chosen, "netbsd,smbios-table", &smbios_table);
+
+	error = sysctl_createv(NULL, 0, NULL, &rnode,
+	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "machdep", NULL,
+	    NULL, 0, NULL, 0, CTL_MACHDEP, CTL_EOL);
+	if (error)
+		return;
+
+	if (smbios_table != 0) {
+		(void)sysctl_createv(NULL, 0, &rnode, NULL,
+		    CTLFLAG_PERMANENT | CTLFLAG_READONLY | CTLFLAG_HEX, CTLTYPE_QUAD,
+		    "smbios", SYSCTL_DESCR("SMBIOS table pointer"),
+		    NULL, 0, &smbios_table, sizeof(smbios_table),
+		    CTL_CREATE, CTL_EOL);
+	}
 }
