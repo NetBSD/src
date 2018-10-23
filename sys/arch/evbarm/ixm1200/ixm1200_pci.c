@@ -1,4 +1,4 @@
-/*      $NetBSD: ixm1200_pci.c,v 1.11 2014/03/29 19:28:27 christos Exp $ */
+/*      $NetBSD: ixm1200_pci.c,v 1.12 2018/10/23 08:38:18 jmcneill Exp $ */
 #define PCI_DEBUG
 /*
  * Copyright (c) 2002, 2003
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixm1200_pci.c,v 1.11 2014/03/29 19:28:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixm1200_pci.c,v 1.12 2018/10/23 08:38:18 jmcneill Exp $");
 
 /*
  * IXM1200 PCI interrupt support.
@@ -92,7 +92,7 @@ ixm1200_pci_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 const char *
 ixm1200_pci_intr_string(void *v, pci_intr_handle_t ih, char *buf, size_t len)
 {
-	snprintf(buf, len, "IXM1200 irq %ld", ih);
+	snprintf(buf, len, "IXM1200 irq %" PRIu64, ih);
 	return buf;
 }
 
