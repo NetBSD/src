@@ -1,8 +1,8 @@
-#	$NetBSD: XLSATX,v 1.26 2018/08/01 20:04:11 maxv Exp $
+#	$NetBSD: XLSATX,v 1.27 2018/10/23 19:58:52 jdolecek Exp $
 
 include 	"arch/evbmips/conf/std.rmixl"
 
-#ident 		"XLSATX-$Revision: 1.26 $"
+#ident 		"XLSATX-$Revision: 1.27 $"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
@@ -165,7 +165,6 @@ usb*		at ehci?
 uhub*		at usb?
 uhub*		at uhub? port ?
 umass*		at uhub? port ? configuration ? interface ?
-wd*		at umass?
 scsibus* 	at umass? channel ?
 sd*		at scsibus? target ? lun ?
 

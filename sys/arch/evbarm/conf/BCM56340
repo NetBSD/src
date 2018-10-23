@@ -1,5 +1,5 @@
 #
-#	$NetBSD: BCM56340,v 1.17 2018/07/14 15:09:41 maxv Exp $
+#	$NetBSD: BCM56340,v 1.18 2018/10/23 19:58:52 jdolecek Exp $
 #
 #	BCM5301X -- Broadcom BCM5301X Eval Board Kernel
 #
@@ -244,7 +244,6 @@ uhub*		at uhub? port ?
 umass*		at uhub? port ? configuration ? interface ?
 scsibus*	at scsi?
 sd*		at scsibus? target ? lun ?
-#wd*		at umass?
 
 # USB Ethernet adapters
 axe*		at uhub? port ? configuration ? interface ?

@@ -1,4 +1,4 @@
-#	$NetBSD: NSLU2,v 1.45 2018/08/25 20:52:40 rin Exp $
+#	$NetBSD: NSLU2,v 1.46 2018/10/23 19:58:52 jdolecek Exp $
 #
 #	Linksys NSLU2 "Slug" NAS Device
 #
@@ -180,7 +180,6 @@ uhub*	at uhub? port ?
 
 # USB Mass Storage Devices
 umass*		at uhub? port ? configuration ? interface ?
-wd* 		at umass?
 scsibus*	at umass? channel ?
 sd*		at scsibus? target ? lun ?	# SCSI disk drives
 

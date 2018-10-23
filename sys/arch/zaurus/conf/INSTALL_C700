@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL_C700,v 1.5 2018/08/26 23:30:29 rin Exp $
+# $NetBSD: INSTALL_C700,v 1.6 2018/10/23 19:58:53 jdolecek Exp $
 #
 # INSTALL config file (C700 with memory disk root)
 #
@@ -31,7 +31,6 @@ no wskbd* at ukbd?
 no uhid*
 
 no umass*
-no wd* at umass?
 
 no scsibus*
 no atapibus*

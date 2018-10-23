@@ -1,5 +1,5 @@
 #
-#	$NetBSD: TISDP2420,v 1.39 2018/07/14 15:09:41 maxv Exp $
+#	$NetBSD: TISDP2420,v 1.40 2018/10/23 19:58:52 jdolecek Exp $
 #
 #	TISDP2420 -- TI OMAP 2420 Eval Board Kernel
 #
@@ -209,7 +209,6 @@ sm0		at gpmc? addr 0x08000300 intr 188	# (intr is GPIO92)
 ##usb*		at ohci?
 ##uhub*		at usb?
 ##umass*		at uhub? port ? configuration ? interface ?
-##wd*		at umass?
 
 # Pseudo-Devices
 

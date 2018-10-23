@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.167 2018/08/25 20:52:41 rin Exp $
+# $NetBSD: GENERIC,v 1.168 2018/10/23 19:58:52 jdolecek Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/ofppc/conf/std.ofppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.167 $"
+#ident 		"GENERIC-$Revision: 1.168 $"
 
 maxusers	32
 
@@ -328,7 +328,6 @@ uhub*	at uhub? port ?
 
 # USB Mass Storage
 umass*	at uhub? port ? configuration ? interface ?
-wd*	at umass?
 
 uhidev*	at uhub? port ? configuration ? interface ?	# USB HID device
 

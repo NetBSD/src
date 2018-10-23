@@ -1,4 +1,4 @@
-#	$NetBSD: TS7200,v 1.71 2018/08/25 20:52:40 rin Exp $
+#	$NetBSD: TS7200,v 1.72 2018/10/23 19:58:52 jdolecek Exp $
 #
 #	TS7200 - Kernel for Technologic Systems TS7200 ARM hardware
 #
@@ -308,8 +308,6 @@ uhub*	at uhub? port ?
 #ses*    at scsibus? target ? lun ?      # SCSI Enclosure Services devices
 #ss*     at scsibus? target ? lun ?      # SCSI scanners
 #uk*     at scsibus? target ? lun ?      # SCSI unknown
-
-# wd*	at umass?
 
 # USB audio
 #uaudio*	at uhub? port ? configuration ?

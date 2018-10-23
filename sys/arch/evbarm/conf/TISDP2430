@@ -1,5 +1,5 @@
 #
-#	$NetBSD: TISDP2430,v 1.38 2018/07/14 15:09:41 maxv Exp $
+#	$NetBSD: TISDP2430,v 1.39 2018/10/23 19:58:52 jdolecek Exp $
 #
 #	TISDP2430 -- TI OMAP 2430 Eval Board Kernel
 #
@@ -208,7 +208,6 @@ ohci*		at obio? addr 0x4805e000 size 0x1000 intr 75
 usb*		at ohci?
 uhub*		at usb?
 umass*		at uhub? port ? configuration ? interface ?
-wd*		at umass?
 
 # Hardware clocking and power management
 

@@ -184,7 +184,6 @@ usb* at ehci?
 uhub* at usb?
 uhub* at uhub? port ?
 umass* at uhub? port ? configuration ? interface ?
-wd* at umass?
 
 # USB Ethernet adapters
 axe* at uhub?

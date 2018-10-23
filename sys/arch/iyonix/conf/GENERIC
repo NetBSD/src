@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.102 2018/09/06 05:36:50 maxv Exp $
+#	$NetBSD: GENERIC,v 1.103 2018/10/23 19:58:52 jdolecek Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/iyonix/conf/std.iyonix"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.102 $"
+#ident 		"GENERIC-$Revision: 1.103 $"
 
 maxusers	32		# estimated number of users
 
@@ -544,7 +544,6 @@ uhso*	at uhub? port ? configuration ?
 
 # USB Mass Storage
 umass*	at uhub? port ? configuration ? interface ?
-wd*	at umass?
 
 # USB audio
 uaudio*	at uhub? port ? configuration ?

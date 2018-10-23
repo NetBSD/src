@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOM0,v 1.157 2018/09/06 05:36:49 maxv Exp $
+# $NetBSD: XEN3_DOM0,v 1.158 2018/10/23 19:58:52 jdolecek Exp $
 
 include 	"arch/amd64/conf/std.xen"
 
@@ -10,7 +10,7 @@ options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 #options 	UVMHIST_PRINT
 #options 	SYSCALL_DEBUG
 
-#ident		"XEN3_DOM0-$Revision: 1.157 $"
+#ident		"XEN3_DOM0-$Revision: 1.158 $"
 
 maxusers	32		# estimated number of users
 
@@ -633,7 +633,6 @@ uhso*	at uhub? port ? configuration ?
 
 # USB Mass Storage
 umass*	at uhub? port ? configuration ? interface ?
-wd*	at umass?
 
 # USB audio
 uaudio* at uhub? port ? configuration ?

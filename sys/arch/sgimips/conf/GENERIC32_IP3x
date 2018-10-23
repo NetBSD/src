@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC32_IP3x,v 1.119 2018/09/06 05:36:50 maxv Exp $
+#	$NetBSD: GENERIC32_IP3x,v 1.120 2018/10/23 19:58:53 jdolecek Exp $
 #
 # GENERIC32_IP3x machine description file
 # 
@@ -28,7 +28,7 @@ makeoptions	TEXTADDR="0x80069000"	# entry point
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC32_IP3x-$Revision: 1.119 $"
+#ident		"GENERIC32_IP3x-$Revision: 1.120 $"
 
 maxusers	32
 
@@ -321,7 +321,6 @@ uhso*	at uhub? port ? configuration ?
 
 # USB Mass Storage
 umass*  at uhub? port ? configuration ? interface ?
-#wd* at umass?
 
 # USB audio
 uaudio* at uhub? port ? configuration ?

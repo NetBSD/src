@@ -1,4 +1,4 @@
-# $NetBSD: HDL_G,v 1.54 2018/08/25 20:52:40 rin Exp $
+# $NetBSD: HDL_G,v 1.55 2018/10/23 19:58:52 jdolecek Exp $
 #
 #       HDL_G -- I-O DATA HDL-G Kernel
 #
@@ -275,7 +275,6 @@ uhso*	at uhub? port ? configuration ?
 
 # USB Mass Storage
 umass*	at uhub? port ? configuration ? interface ?
-wd*	at umass?
 
 # USB audio
 uaudio*	at uhub? port ? configuration ?
