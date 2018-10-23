@@ -1,4 +1,4 @@
-#	$NetBSD: HPT5325,v 1.39 2018/08/25 20:52:40 rin Exp $
+#	$NetBSD: HPT5325,v 1.40 2018/10/23 19:58:52 jdolecek Exp $
 #
 #  This configuration supports for HP T5325 Thin Client
 #
@@ -271,7 +271,6 @@ uhso*	at uhub? port ? configuration ?
 
 # USB Mass Storage
 umass*	at uhub? port ? configuration ? interface ?
-wd*	at umass?
 scsibus* at scsi?
 sd*	at scsibus? target ? lun ?	# SCSI disk drives
 cd*	at scsibus? target ? lun ?	# SCSI CD-ROM drives
