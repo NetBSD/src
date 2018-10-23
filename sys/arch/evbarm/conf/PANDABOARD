@@ -1,5 +1,5 @@
 #
-#	$NetBSD: PANDABOARD,v 1.27 2018/07/14 15:09:41 maxv Exp $
+#	$NetBSD: PANDABOARD,v 1.28 2018/10/23 19:58:52 jdolecek Exp $
 #
 #	PANDABOARD -- TI OMAP 4430 Eval Board Kernel
 #
@@ -249,7 +249,6 @@ uhub*		at uhub? port ?
 umass*		at uhub? port ? configuration ? interface ?
 scsibus*	at scsi?
 sd*		at scsibus? target ? lun ?
-wd*		at umass?
 #uhidev*		at uhub?
 #ukbd*		at uhidev?
 #ums*		at uhidev?

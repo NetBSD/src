@@ -1,4 +1,4 @@
-#	$NetBSD: OPENBLOCKS_A6,v 1.33 2018/08/25 20:52:40 rin Exp $
+#	$NetBSD: OPENBLOCKS_A6,v 1.34 2018/10/23 19:58:52 jdolecek Exp $
 #
 #	OPENBLOCKS_A6 -- Plat'Home. OpenBlockS A6 kernel
 #
@@ -226,7 +226,6 @@ uhso*	at uhub? port ? configuration ?
 
 # USB Mass Storage
 umass*	at uhub? port ? configuration ? interface ?
-wd*	at umass?
 scsibus* at scsi?
 sd*	at scsibus? target ? lun ?	# SCSI disk drives
 cd*	at scsibus? target ? lun ?	# SCSI CD-ROM drives

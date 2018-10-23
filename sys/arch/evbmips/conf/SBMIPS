@@ -1,10 +1,10 @@
-# $NetBSD: SBMIPS,v 1.6 2018/08/01 20:04:11 maxv Exp $
+# $NetBSD: SBMIPS,v 1.7 2018/10/23 19:58:52 jdolecek Exp $
 
 include 	"arch/evbmips/conf/std.sbmips"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.6 $"
+#ident 		"GENERIC-$Revision: 1.7 $"
 
 #options 	LOCKDEBUG	# XXX XXX XXX XXX
 #options 	DEBUG		# extra kernel debugging support
@@ -150,7 +150,6 @@ usb*		at ohci?
 uhub*		at usb?
 uhub*		at uhub? port ?
 umass*		at uhub? port ? configuration ? interface ?
-wd*		at umass?
 scsibus*	at umass? channel ?
 sd*		at scsibus? target ? lun ?
 uplcom* 	at uhub? port ? 	# I/O DATA USB-RSAQ2 serial adapter
