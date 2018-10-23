@@ -1,4 +1,4 @@
-/*	$NetBSD: sched.h,v 1.11 2018/10/23 03:56:33 riastradh Exp $	*/
+/*	$NetBSD: sched.h,v 1.12 2018/10/23 03:56:47 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -74,8 +74,8 @@ schedule_timeout_uninterruptible(long timeout)
 	}
 
 	start = hardclock_ticks;
-	/* XXX Integer truncation...not likely to matter here.  */
-	(void)kpause("loonix", false /*!intr*/, timeout, NULL);
+	/* Caller is expected to loop anyway, so no harm in truncating.  */
+	(void)kpause("loonix", false /*!intr*/, MIN(timeout, INT_MAX), NULL);
 	end = hardclock_ticks;
 
 	remain = timeout - (end - start);
