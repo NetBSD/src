@@ -1,4 +1,4 @@
-/*	$NetBSD: ifpga_pci.c,v 1.20 2017/04/21 12:18:59 jmcneill Exp $	*/
+/*	$NetBSD: ifpga_pci.c,v 1.21 2018/10/23 08:38:18 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2001 ARM Ltd
@@ -64,7 +64,7 @@
 #define _ARM32_BUS_DMA_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ifpga_pci.c,v 1.20 2017/04/21 12:18:59 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ifpga_pci.c,v 1.21 2018/10/23 08:38:18 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -340,7 +340,7 @@ ifpga_pci_intr_string(void *pcv, pci_intr_handle_t ih, char *buf, size_t len)
 	if (ih == 0)
 		panic("ifpga_pci_intr_string: bogus handle 0x%lx", ih);
 
-	snprintf(buf, len, "pciint%ld", ih - IFPGA_INTRNUM_PCIINT0);
+	snprintf(buf, len, "pciint%" PRIu64, ih - IFPGA_INTRNUM_PCIINT0);
 	return buf;	
 }
 
