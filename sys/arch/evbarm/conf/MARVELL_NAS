@@ -1,4 +1,4 @@
-#	$NetBSD: MARVELL_NAS,v 1.32 2018/08/01 20:04:11 maxv Exp $
+#	$NetBSD: MARVELL_NAS,v 1.33 2018/10/23 19:58:52 jdolecek Exp $
 #
 #  This configuration supports for generically Marvell NAS.
 
@@ -210,7 +210,6 @@ uhub*	at uhub? port ?
 
 # USB Mass Storage
 umass*	at uhub? port ? configuration ? interface ?
-wd*	at umass?
 
 # USB Serial
 uplcom* at uhub? port ?			# I/O DATA USB-RSAQ2 serial adapter
