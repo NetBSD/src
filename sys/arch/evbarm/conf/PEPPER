@@ -1,5 +1,5 @@
 #
-#	$NetBSD: PEPPER,v 1.10 2018/08/01 20:04:11 maxv Exp $
+#	$NetBSD: PEPPER,v 1.11 2018/10/23 19:58:52 jdolecek Exp $
 #
 #	PEPPER -- Gumstix. Inc. Pepper Single Board Computer platforms kernel
 #
@@ -285,7 +285,6 @@ ums*	at uhidev? reportid ?
 wsmouse* at ums? mux 0
 
 umass*		at uhub? port ? configuration ? interface ?
-wd*		at umass?
 # SCSI bus support
 scsibus*	at scsi?
 # SCSI devices

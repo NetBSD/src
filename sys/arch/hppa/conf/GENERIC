@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.21 2018/09/06 05:36:50 maxv Exp $
+# $NetBSD: GENERIC,v 1.22 2018/10/23 19:58:52 jdolecek Exp $
 #
 # GENERIC machine description file
 #
@@ -23,7 +23,7 @@ include 	"arch/hppa/conf/std.hppa"
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
-#ident 		"GENERIC-$Revision: 1.21 $"
+#ident 		"GENERIC-$Revision: 1.22 $"
 
 maxusers	32		# estimated number of users
 
@@ -589,7 +589,6 @@ uhso*	at uhub? port ? configuration ?
 
 # USB Mass Storage
 umass*	at uhub? port ? configuration ? interface ?
-wd*	at umass?
 
 # USB audio
 uaudio* at uhub? port ? configuration ?
