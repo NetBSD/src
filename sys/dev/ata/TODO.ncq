@@ -15,4 +15,5 @@ set
 
 add support for the NCQ TRIM if supported by device?
 
-implement DIOCGCACHE/DIOCCACHESYNC for ld@ataraid? just passthrough, like ccd
+ahcisata(4)/siisata(4) - enable detach on shutdown, and fix the issue
+with atabus being detached several times
