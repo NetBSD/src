@@ -1,4 +1,4 @@
-/* $NetBSD: efiacpi.c,v 1.1 2018/10/12 22:08:04 jmcneill Exp $ */
+/* $NetBSD: efiacpi.c,v 1.2 2018/10/23 10:12:59 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -38,8 +38,10 @@
 #define	ACPI_FDT_SIZE	(64 * 1024)
 
 static EFI_GUID Acpi20TableGuid = ACPI_20_TABLE_GUID;
+static EFI_GUID Smbios3TableGuid = SMBIOS3_TABLE_GUID;
 
 static void *acpi_root = NULL;
+static void *smbios3_table = NULL;
 
 int
 efi_acpi_probe(void)
@@ -49,6 +51,10 @@ efi_acpi_probe(void)
 	status = LibGetSystemConfigurationTable(&Acpi20TableGuid, &acpi_root);
 	if (EFI_ERROR(status))
 		return EIO;
+
+	status = LibGetSystemConfigurationTable(&Smbios3TableGuid, &smbios3_table);
+	if (EFI_ERROR(status))
+		smbios3_table = NULL;
 
 	return 0;
 }
@@ -65,7 +71,10 @@ efi_acpi_show(void)
 	if (!efi_acpi_available())
 		return;
 
-	printf("ACPI: RSDP %p\n", acpi_root);
+	printf("ACPI: RSDP %p", acpi_root);
+	if (smbios3_table)
+		printf(", SMBIOS %p", smbios3_table);
+	printf("\n");
 }
 
 int
@@ -92,6 +101,8 @@ efi_acpi_create_fdt(void)
 
 	fdt_add_subnode(fdt, fdt_path_offset(fdt, "/"), "chosen");
 	fdt_setprop_u64(fdt, fdt_path_offset(fdt, "/chosen"), "netbsd,acpi-root-table", (uint64_t)(uintptr_t)acpi_root);
+	if (smbios3_table)
+		fdt_setprop_u64(fdt, fdt_path_offset(fdt, "/chosen"), "netbsd,smbios-table", (uint64_t)(uintptr_t)smbios3_table);
 
 	fdt_add_subnode(fdt, fdt_path_offset(fdt, "/"), "acpi");
 	fdt_setprop_string(fdt, fdt_path_offset(fdt, "/acpi"), "compatible", "netbsd,acpi");
