@@ -1,4 +1,4 @@
-.\"	$NetBSD: diskless.8,v 1.32 2017/07/03 21:31:00 wiz Exp $
+.\"	$NetBSD: diskless.8,v 1.33 2018/10/23 09:30:09 mrg Exp $
 .\"
 .\" Copyright (c) 1994 Gordon W. Ross, Theo de Raadt
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd October 7, 2006
+.Dd October 23, 2018
 .Dt DISKLESS 8
 .Os
 .Sh NAME
@@ -790,6 +790,13 @@ specify the swap file in
 or it will not be used!
 See
 .Xr swapctl 8 .
+.Pp
+It may be useful to set
+.Dq flushroutes=NO
+in
+.Pa /etc/rc.conf
+to avoid the default route supplied by the boot setup
+disappearing mid-boot.
 .Sh FILES
 .Bl -tag -width /usr/mdec/rbootd -compact
 .It Pa /etc/hosts
