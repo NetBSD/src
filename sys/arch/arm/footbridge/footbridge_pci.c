@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_pci.c,v 1.29 2017/04/19 08:30:00 skrll Exp $	*/
+/*	$NetBSD: footbridge_pci.c,v 1.30 2018/10/23 08:38:18 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: footbridge_pci.c,v 1.29 2017/04/19 08:30:00 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: footbridge_pci.c,v 1.30 2018/10/23 08:38:18 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -314,18 +314,18 @@ const char *
 footbridge_pci_intr_string(void *pcv, pci_intr_handle_t ih, char *buf, size_t len)
 {
 #ifdef PCI_DEBUG
-	printf("footbridge_pci_intr_string(pcv=%p, ih=0x%lx)\n", pcv, ih);
+	printf("footbridge_pci_intr_string(pcv=%p, ih=0x%" PRIx64 ")\n", pcv, ih);
 #endif
 	if (ih == 0)
-		panic("footbridge_pci_intr_string: bogus handle 0x%lx", ih);
+		panic("footbridge_pci_intr_string: bogus handle 0x%" PRIx64, ih);
 
 #if NISA > 0
 	if (ih >= 0x80 && ih <= 0x8f) {
-		snprintf(buf, len, "isairq %ld", (ih & 0x0f));
+		snprintf(buf, len, "isairq %" PRIu64, (ih & 0x0f));
 		return buf;
 	}
 #endif
-	snprintf(buf, len, "irq %ld", ih);
+	snprintf(buf, len, "irq %" PRIu64, ih);
 	return buf;	
 }
 
@@ -342,7 +342,7 @@ footbridge_pci_intr_establish(
 	const char *intrstr;
 
 #ifdef PCI_DEBUG
-	printf("footbridge_pci_intr_establish(pcv=%p, ih=0x%lx, level=%d, func=%p, arg=%p)\n",
+	printf("footbridge_pci_intr_establish(pcv=%p, ih=0x%" PRIx64 ", level=%d, func=%p, arg=%p)\n",
 	    pcv, ih, level, func, arg);
 #endif
 
