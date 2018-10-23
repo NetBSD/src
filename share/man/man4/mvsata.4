@@ -1,4 +1,4 @@
-.\" $NetBSD: mvsata.4,v 1.7 2018/10/22 19:53:25 jdolecek Exp $
+.\" $NetBSD: mvsata.4,v 1.8 2018/10/23 05:30:58 jdolecek Exp $
 .\"
 .\" Copyright (c) 2009 KIYOHARA Takashi
 .\" All rights reserved.
@@ -88,7 +88,7 @@ Triones Technologies RocketRAID 2310 RAID card
 .El
 .El
 .Sh SEE ALSO
-.Xr ahci 4 ,
+.Xr ahcisata 4 ,
 .Xr ata 4 ,
 .Xr atapi 4 ,
 .Xr pci 4 ,
@@ -124,5 +124,5 @@ poor ATAPI support. It's very unlikely that the driver will
 receive any further changes, particularily not for the Gen I and Gen II
 controllers.
 Use an
-.Xr ahci 4
+.Xr ahcisata 4
 compatible controller instead.
