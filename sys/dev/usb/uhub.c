@@ -1,4 +1,4 @@
-/*	$NetBSD: uhub.c,v 1.140 2018/10/19 00:33:27 manu Exp $	*/
+/*	$NetBSD: uhub.c,v 1.141 2018/10/23 01:49:37 manu Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 /*	$OpenBSD: uhub.c,v 1.86 2015/06/29 18:27:40 mpi Exp $ */
 
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.140 2018/10/19 00:33:27 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.141 2018/10/23 01:49:37 manu Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -413,11 +413,11 @@ uhub_attach(device_t parent, device_t self, void *aux)
 			     sizeof(struct usbd_tt), KM_SLEEP);
 	}
 	/* Set up data structures */
-	for (p = 0; p < nports; p++) {
-		struct usbd_port *up = &hub->uh_ports[p];
+	for (p = 1; p <= nports; p++) {
+		struct usbd_port *up = &hub->uh_ports[p - 1];
 		up->up_dev = NULL;
 		up->up_parent = dev;
-		up->up_portno = p + 1;
+		up->up_portno = p;
 		if (dev->ud_selfpowered)
 			/* Self powered hub, give ports maximum current. */
 			up->up_power = USB_MAX_POWER;
@@ -426,7 +426,7 @@ uhub_attach(device_t parent, device_t self, void *aux)
 		up->up_restartcnt = 0;
 		up->up_reattach = 0;
 		if (UHUB_IS_HIGH_SPEED(sc)) {
-			up->up_tt = &tts[UHUB_IS_SINGLE_TT(sc) ? 0 : p];
+			up->up_tt = &tts[UHUB_IS_SINGLE_TT(sc) ? 0 : p - 1];
 			up->up_tt->utt_hub = hub;
 		} else {
 			up->up_tt = NULL;
