@@ -1,4 +1,4 @@
-/* $NetBSD: plgpio_acpi.c,v 1.3 2018/10/22 22:29:35 jmcneill Exp $ */
+/* $NetBSD: plgpio_acpi.c,v 1.4 2018/10/23 09:19:02 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: plgpio_acpi.c,v 1.3 2018/10/22 22:29:35 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: plgpio_acpi.c,v 1.4 2018/10/23 09:19:02 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -123,8 +123,10 @@ plgpio_acpi_attach(device_t parent, device_t self, void *aux)
 
 	plgpio_attach(sc);
 
-	if (ACPI_FAILURE(acpi_event_create_gpio(self, asc->sc_handle, plgpio_acpi_register_event, asc))) {
-		aprint_error_dev(self, "failed to create events\n");
+	rv = acpi_event_create_gpio(self, asc->sc_handle, plgpio_acpi_register_event, asc);
+	if (ACPI_FAILURE(rv)) {
+		if (rv != AE_NOT_FOUND)
+			aprint_error_dev(self, "failed to create events: %s\n", AcpiFormatException(rv));
 		goto done;
 	}
 
