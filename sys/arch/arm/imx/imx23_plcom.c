@@ -1,4 +1,4 @@
-/* $Id: imx23_plcom.c,v 1.1 2012/11/20 19:06:13 jkunz Exp $ */
+/* $Id: imx23_plcom.c,v 1.2 2018/10/23 09:15:35 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -82,6 +82,9 @@ imx23_plcom_attach(device_t parent, device_t self, void *aux)
 
 	if (plcom_attached)
 		return;
+
+	aprint_naive("\n");
+	aprint_normal("\n");
 
 	sc->sc_dev = self;
 	sc->sc_frequency = IMX23_UART_CLK;
