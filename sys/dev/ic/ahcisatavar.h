@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisatavar.h,v 1.19 2018/10/22 20:13:47 jdolecek Exp $	*/
+/*	$NetBSD: ahcisatavar.h,v 1.20 2018/10/24 19:38:00 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -117,6 +117,7 @@ struct ahci_softc {
 
 void ahci_attach(struct ahci_softc *);
 int  ahci_detach(struct ahci_softc *, int);
+void ahci_childdetached(struct ahci_softc *, device_t);
 void ahci_resume(struct ahci_softc *);
 
 int  ahci_intr(void *);
