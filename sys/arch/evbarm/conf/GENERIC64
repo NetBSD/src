@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC64,v 1.57 2018/10/22 22:36:41 jmcneill Exp $
+#	$NetBSD: GENERIC64,v 1.58 2018/10/24 11:02:13 jmcneill Exp $
 #
 #	GENERIC ARM (aarch64) kernel
 #
@@ -137,6 +137,7 @@ armgtmr0	at gtmr?
 tegratimer*	at fdt?			# Timers
 
 # Watchdog
+sbsawdt*	at acpi?		# ARM SBSA-compliant watchdog
 sunxiwdt*	at fdt?			# Allwinner watchdog
 watchdog*	at fdt?			# Broadcom BCM283x watchdog
 
