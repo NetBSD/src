@@ -1,4 +1,4 @@
-/*	$NetBSD: umass.c,v 1.163 2018/01/21 13:57:12 skrll Exp $	*/
+/*	$NetBSD: umass.c,v 1.164 2018/10/24 07:42:12 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -124,13 +124,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.163 2018/01/21 13:57:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.164 2018/10/24 07:42:12 jdolecek Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
 #endif
 
 #include "atapibus.h"
+#include "ata_dma.h"
 #include "scsibus.h"
 #include "wd.h"
 
@@ -751,7 +752,7 @@ umass_attach(device_t parent, device_t self, void *aux)
 		break;
 
 	case UMASS_CPROTO_ISD_ATA:
-#if NWD > 0
+#if NWD > 0 && NATABUS > 0
 		error = umass_isdata_attach(sc);
 #else
 		aprint_error_dev(self, "isdata not configured\n");
