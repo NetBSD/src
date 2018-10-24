@@ -1,4 +1,4 @@
-/*	$NetBSD: atavar.h,v 1.100 2018/10/22 20:13:47 jdolecek Exp $	*/
+/*	$NetBSD: atavar.h,v 1.101 2018/10/24 19:38:00 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -410,10 +410,11 @@ struct ata_channel {
 #define ATACH_TH_RESET 0x200	/* someone ask the thread to reset */
 #define ATACH_TH_RESCAN 0x400	/* rescan requested */
 #define ATACH_NCQ	0x800	/* channel executing NCQ commands */
-#define ATACH_DMA_BEFORE_CMD	0x1000	/* start DMA first */
-#define ATACH_TH_DRIVE_RESET	0x2000	/* asked thread to drive(s) reset */
-#define ATACH_RECOVERING	0x4000	/* channel is recovering */
-#define ATACH_TH_RECOVERY	0x8000	/* asked thread to run recovery */
+#define ATACH_DMA_BEFORE_CMD	0x01000	/* start DMA first */
+#define ATACH_TH_DRIVE_RESET	0x02000	/* asked thread to drive(s) reset */
+#define ATACH_RECOVERING	0x04000	/* channel is recovering */
+#define ATACH_TH_RECOVERY	0x08000	/* asked thread to run recovery */
+#define ATACH_DETACHED		0x10000 /* channel was destroyed */
 
 #define ATACH_NODRIVE	0xff	/* no drive selected for reset */
 
