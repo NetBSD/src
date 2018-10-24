@@ -1,4 +1,4 @@
-/*      $NetBSD: xbd_xenbus.c,v 1.88 2018/08/26 21:04:16 jdolecek Exp $      */
+/*      $NetBSD: xbd_xenbus.c,v 1.89 2018/10/24 03:59:33 cherry Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.88 2018/08/26 21:04:16 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.89 2018/10/24 03:59:33 cherry Exp $");
 
 #include "opt_xen.h"
 
@@ -465,7 +465,7 @@ xbd_xenbus_resume(device_t dev, const pmf_qual_t *qual)
 
 	aprint_verbose_dev(dev, "using event channel %d\n",
 	    sc->sc_evtchn);
-	sc->sc_ih = intr_establish_xname(0, &xen_pic, sc->sc_evtchn, IST_LEVEL,
+	sc->sc_ih = intr_establish_xname(-1, &xen_pic, sc->sc_evtchn, IST_LEVEL,
 	    IPL_BIO, &xbd_handler, sc, false, device_xname(dev));
 	KASSERT(sc->sc_ih != NULL);
 
