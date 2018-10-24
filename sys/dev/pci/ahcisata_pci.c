@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata_pci.c,v 1.40 2018/10/22 21:40:45 jdolecek Exp $	*/
+/*	$NetBSD: ahcisata_pci.c,v 1.41 2018/10/24 19:38:00 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_pci.c,v 1.40 2018/10/22 21:40:45 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_pci.c,v 1.41 2018/10/24 19:38:00 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -208,11 +208,13 @@ static int  ahci_pci_has_quirk(pci_vendor_id_t, pci_product_id_t);
 static int  ahci_pci_match(device_t, cfdata_t, void *);
 static void ahci_pci_attach(device_t, device_t, void *);
 static int  ahci_pci_detach(device_t, int);
+static void ahci_pci_childdetached(device_t, device_t);
 static bool ahci_pci_resume(device_t, const pmf_qual_t *);
 
 
-CFATTACH_DECL_NEW(ahcisata_pci, sizeof(struct ahci_pci_softc),
-    ahci_pci_match, ahci_pci_attach, ahci_pci_detach, NULL);
+CFATTACH_DECL3_NEW(ahcisata_pci, sizeof(struct ahci_pci_softc),
+    ahci_pci_match, ahci_pci_attach, ahci_pci_detach, NULL,
+    NULL, ahci_pci_childdetached, DVF_DETACH_SHUTDOWN);
 
 static int
 ahci_pci_has_quirk(pci_vendor_id_t vendor, pci_product_id_t product)
@@ -326,6 +328,15 @@ ahci_pci_attach(device_t parent, device_t self, void *aux)
 
 	if (!pmf_device_register(self, NULL, ahci_pci_resume))
 		aprint_error_dev(self, "couldn't establish power handler\n");
+}
+
+static void
+ahci_pci_childdetached(device_t dv, device_t child)
+{
+	struct ahci_pci_softc *psc = device_private(dv);
+	struct ahci_softc *sc = &psc->ah_sc;
+
+	ahci_childdetached(sc, child);
 }
 
 static int
