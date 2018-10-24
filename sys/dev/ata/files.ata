@@ -1,4 +1,4 @@
-#	$NetBSD: files.ata,v 1.28 2018/10/22 20:13:47 jdolecek Exp $
+#	$NetBSD: files.ata,v 1.29 2018/10/24 06:53:26 jdolecek Exp $
 #
 # Config file and device description for machine-independent devices
 # which attach to ATA busses.  Included by ports that need it.  Ports
@@ -16,7 +16,7 @@ defflag	opt_wd.h	WD_CHAOS_MONKEY
 
 file	dev/ata/ata.c			(ata_hl | atapi) & atabus
 file	dev/ata/ata_subr.c		(ata_hl | atapi)
-file	dev/ata/ata_recovery.c		(ata_hl | atapi)
+file	dev/ata/ata_recovery.c		(ata_hl | atapi) & atabus
 
 # ATA RAID configuration support
 defpseudodev ataraid {[vendtype = -1], [unit = -1]}
