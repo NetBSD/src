@@ -1,4 +1,4 @@
-/*	$NetBSD: ata.c,v 1.144 2018/10/24 20:01:13 jdolecek Exp $	*/
+/*	$NetBSD: ata.c,v 1.145 2018/10/24 20:25:52 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.144 2018/10/24 20:01:13 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.145 2018/10/24 20:25:52 jdolecek Exp $");
 
 #include "opt_ata.h"
 
@@ -1445,7 +1445,9 @@ ata_kill_active(struct ata_channel *chp, int reason, int flags)
 	KASSERT(mutex_owned(&chp->ch_lock));
 
 	TAILQ_FOREACH_SAFE(xfer, &chq->active_xfers, c_activechain, xfernext) {
+		ata_channel_unlock(chp);
 		xfer->ops->c_kill_xfer(xfer->c_chp, xfer, reason);
+		ata_channel_lock(chp);
 	}
 }
 
