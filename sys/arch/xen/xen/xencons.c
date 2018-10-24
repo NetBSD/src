@@ -1,4 +1,4 @@
-/*	$NetBSD: xencons.c,v 1.44 2018/06/24 13:35:33 jdolecek Exp $	*/
+/*	$NetBSD: xencons.c,v 1.45 2018/10/24 03:59:33 cherry Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -53,7 +53,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xencons.c,v 1.44 2018/06/24 13:35:33 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xencons.c,v 1.45 2018/10/24 03:59:33 cherry Exp $");
 
 #include "opt_xen.h"
 
@@ -233,7 +233,7 @@ xencons_resume(device_t dev, const pmf_qual_t *qual) {
 		/* dom0 console resume is required only during first start-up */
 		if (cold) {
 			evtch = bind_virq_to_evtch(VIRQ_CONSOLE);
-			ih = intr_establish_xname(0, &xen_pic, evtch,
+			ih = intr_establish_xname(-1, &xen_pic, evtch,
 			    IST_LEVEL, IPL_TTY, xencons_intr,
 			    xencons_console_device, false,
 			    device_xname(dev));
@@ -241,7 +241,7 @@ xencons_resume(device_t dev, const pmf_qual_t *qual) {
 		}
 	} else {
 		evtch = xen_start_info.console_evtchn;
-		ih = intr_establish_xname(0, &xen_pic, evtch,
+		ih = intr_establish_xname(-1, &xen_pic, evtch,
 		    IST_LEVEL, IPL_TTY, xencons_handler,
 		    xencons_console_device, false, device_xname(dev));
 		KASSERT(ih != NULL);
