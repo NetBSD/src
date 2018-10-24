@@ -1,4 +1,4 @@
-/* $NetBSD: siisata.c,v 1.37 2018/10/24 19:38:00 jdolecek Exp $ */
+/* $NetBSD: siisata.c,v 1.38 2018/10/24 20:07:37 jdolecek Exp $ */
 
 /* from ahcisata_core.c */
 
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siisata.c,v 1.37 2018/10/24 19:38:00 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siisata.c,v 1.38 2018/10/24 20:07:37 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -578,7 +578,9 @@ siisata_intr_port(struct siisata_channel *schp)
 			    PRREAD(sc, PRX(chp->ch_channel, PRO_PCR)));
 
 			/* okay, we have a "Fatal Error" */
+			ata_channel_lock(chp);
 			siisata_device_reset(chp);
+			ata_channel_unlock(chp);
 		}
 	}
 
