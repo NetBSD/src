@@ -1,4 +1,4 @@
-/*	$NetBSD: umass.c,v 1.164 2018/10/24 07:42:12 jdolecek Exp $	*/
+/*	$NetBSD: umass.c,v 1.165 2018/10/24 09:41:24 martin Exp $	*/
 
 /*
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -124,14 +124,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.164 2018/10/24 07:42:12 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.165 2018/10/24 09:41:24 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
 #endif
 
 #include "atapibus.h"
-#include "ata_dma.h"
 #include "scsibus.h"
 #include "wd.h"
 
