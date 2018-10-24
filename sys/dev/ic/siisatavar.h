@@ -1,4 +1,4 @@
-/* $NetBSD: siisatavar.h,v 1.8 2018/10/22 20:13:47 jdolecek Exp $ */
+/* $NetBSD: siisatavar.h,v 1.9 2018/10/24 19:38:00 jdolecek Exp $ */
 
 /* from ahcisatavar.h */
 
@@ -114,6 +114,7 @@ struct siisata_softc {
 
 void siisata_attach(struct siisata_softc *);
 int siisata_detach(struct siisata_softc *, int);
+void siisata_childdetached(struct siisata_softc *, device_t);
 void siisata_resume(struct siisata_softc *);
 int siisata_intr(void *);
 
