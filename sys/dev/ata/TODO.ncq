@@ -12,5 +12,3 @@ set
 - not easy to fix, open needs to read disklabel and all this mechanics
   is too much for emergency crash dump code path
 - old bug - kern/16789
-
-add support for the NCQ TRIM if supported by device?
