@@ -1,4 +1,4 @@
-/*	$NetBSD: ata.c,v 1.143 2018/10/24 19:38:00 jdolecek Exp $	*/
+/*	$NetBSD: ata.c,v 1.144 2018/10/24 20:01:13 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.143 2018/10/24 19:38:00 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.144 2018/10/24 20:01:13 jdolecek Exp $");
 
 #include "opt_ata.h"
 
@@ -1053,6 +1053,14 @@ ata_exec_xfer(struct ata_channel *chp, struct ata_xfer *xfer)
  * are shared.
  *
  * MUST BE CALLED AT splbio()!
+ *
+ * XXX FIS-based switching with PMP
+ * Currently atastart() never schedules concurrent NCQ transfers to more than
+ * one drive, even when channel has several SATA drives attached via PMP.
+ * To support concurrent transfers to different drives with PMP, it would be
+ * necessary to implement FIS-based switching support in controller driver,
+ * and then adjust error handling and recovery to stop assuming at most
+ * one active drive.
  */
 void
 atastart(struct ata_channel *chp)
