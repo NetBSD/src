@@ -1,4 +1,4 @@
-#	$NetBSD: files.acpi,v 1.3 2018/10/21 21:18:41 jmcneill Exp $
+#	$NetBSD: files.acpi,v 1.4 2018/10/24 11:01:47 jmcneill Exp $
 #
 # Configuration info for ACPI compliant ARM boards.
 #
@@ -26,6 +26,10 @@ file	arch/arm/acpi/gicv3_acpi.c		gicv3_acpi
 
 attach	gtmr at acpisdtbus with gtmr_acpi
 file	arch/arm/acpi/gtmr_acpi.c		gtmr_acpi
+
+device	sbsawdt: sysmon_wdog
+attach	sbsawdt at acpigtdtbus with sbsawdt_acpi
+file	arch/arm/acpi/sbsawdt_acpi.c		sbsawdt_acpi
 
 attach	plcom at acpinodebus with plcom_acpi
 file	arch/arm/acpi/plcom_acpi.c		plcom_acpi
