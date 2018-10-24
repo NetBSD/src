@@ -1,4 +1,4 @@
-/* $NetBSD: sbsawdt_acpi.c,v 1.1 2018/10/24 11:01:47 jmcneill Exp $ */
+/* $NetBSD: sbsawdt_acpi.c,v 1.2 2018/10/24 11:04:54 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbsawdt_acpi.c,v 1.1 2018/10/24 11:01:47 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbsawdt_acpi.c,v 1.2 2018/10/24 11:04:54 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -182,7 +182,7 @@ sbsawdt_acpi_setmode(struct sysmon_wdog *smw)
 	 * second time that the offset is reached, the WD1 signal is raised
 	 * which will either interrupt privileged software or cause a PE reset.
 	 */
-	const uint32_t wor = (smw->smw_period * sc->sc_cntfreq) / 2;
+	const uint32_t wor = smw->smw_period * sc->sc_cntfreq / 2;
 
 	CONTROL_WR4(sc, C_WCS_REG, 0);
 	CONTROL_WR4(sc, C_WOR_REG, wor);
