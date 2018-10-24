@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.442 2018/10/22 20:13:47 jdolecek Exp $ */
+/*	$NetBSD: wd.c,v 1.443 2018/10/24 19:46:44 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.442 2018/10/22 20:13:47 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.443 2018/10/24 19:46:44 jdolecek Exp $");
 
 #include "opt_ata.h"
 #include "opt_wd.h"
@@ -1819,6 +1819,9 @@ out_xfer:
 	return error;
 }
 
+/*
+ * Execute TRIM command, assumes sleep context.
+ */
 static int
 wd_trim(struct wd_softc *wd, daddr_t bno, long size)
 {
@@ -1838,6 +1841,14 @@ wd_trim(struct wd_softc *wd, daddr_t bno, long size)
 	req[5] = (bno >> 40) & 0xff;
 	req[6] = size & 0xff;
 	req[7] = (size >> 8) & 0xff;
+
+	/*
+ 	 * XXX We could possibly use NCQ TRIM, which supports executing
+ 	 * this command concurrently. It would need some investigation, some
+ 	 * early or not so early disk firmware caused data loss with NCQ TRIM.
+	 * atastart() et.al would need to be adjusted to allow and support
+	 * running several non-I/O ATA commands in parallel.
+	 */
 
 	xfer->c_ata_c.r_command = ATA_DATA_SET_MANAGEMENT;
 	xfer->c_ata_c.r_count = 1;
