@@ -1,4 +1,4 @@
-/*      $NetBSD: xennetback_xenbus.c,v 1.69 2018/09/03 16:29:29 riastradh Exp $      */
+/*      $NetBSD: xennetback_xenbus.c,v 1.70 2018/10/24 03:59:33 cherry Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xennetback_xenbus.c,v 1.69 2018/09/03 16:29:29 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xennetback_xenbus.c,v 1.70 2018/10/24 03:59:33 cherry Exp $");
 
 #include "opt_xen.h"
 
@@ -556,7 +556,7 @@ xennetback_connect(struct xnetback_instance *xneti)
 	xneti->xni_status = CONNECTED;
 	xen_wmb();
 
-	xneti->xni_ih = intr_establish_xname(0, &xen_pic, xneti->xni_evtchn,
+	xneti->xni_ih = intr_establish_xname(-1, &xen_pic, xneti->xni_evtchn,
 	    IST_LEVEL, IPL_NET, xennetback_evthandler, xneti, false,
 	    xneti->xni_if.if_xname);
 	KASSERT(xneti->xni_ih != NULL);
