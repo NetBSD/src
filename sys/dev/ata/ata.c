@@ -1,4 +1,4 @@
-/*	$NetBSD: ata.c,v 1.142 2018/10/22 20:13:47 jdolecek Exp $	*/
+/*	$NetBSD: ata.c,v 1.143 2018/10/24 19:38:00 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.142 2018/10/22 20:13:47 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.143 2018/10/24 19:38:00 jdolecek Exp $");
 
 #include "opt_ata.h"
 
@@ -216,6 +216,8 @@ ata_channel_detach(struct ata_channel *chp)
 		return;
 
 	ata_channel_destroy(chp);
+
+	chp->ch_flags |= ATACH_DETACHED;
 }
 
 static void

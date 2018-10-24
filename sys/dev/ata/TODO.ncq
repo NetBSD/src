@@ -14,6 +14,3 @@ set
 - old bug - kern/16789
 
 add support for the NCQ TRIM if supported by device?
-
-ahcisata(4)/siisata(4) - enable detach on shutdown, and fix the issue
-with atabus being detached several times

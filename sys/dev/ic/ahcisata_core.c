@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata_core.c,v 1.64 2018/10/22 20:13:47 jdolecek Exp $	*/
+/*	$NetBSD: ahcisata_core.c,v 1.65 2018/10/24 19:38:00 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.64 2018/10/22 20:13:47 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.65 2018/10/24 19:38:00 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -477,6 +477,24 @@ end:
 	}
 }
 
+void
+ahci_childdetached(struct ahci_softc *sc, device_t child)
+{
+	struct ahci_channel *achp;
+	struct ata_channel *chp;
+
+	for (int i = 0; i < AHCI_MAX_PORTS; i++) {
+		achp = &sc->sc_channels[i];
+		chp = &achp->ata_channel;
+
+		if ((sc->sc_ahci_ports & (1U << i)) == 0)
+			continue;
+
+		if (child == chp->atabus)
+			chp->atabus = NULL;
+	}
+}
+
 int
 ahci_detach(struct ahci_softc *sc, int flags)
 {
@@ -502,10 +520,15 @@ ahci_detach(struct ahci_softc *sc, int flags)
 			break;
 		}
 
-		if (chp->atabus == NULL)
+		if (chp->atabus != NULL) {
+			if ((error = config_detach(chp->atabus, flags)) != 0)
+				return error;
+
+			KASSERT(chp->atabus == NULL);
+		}
+
+		if (chp->ch_flags & ATACH_DETACHED)
 			continue;
-		if ((error = config_detach(chp->atabus, flags)) != 0)
-			return error;
 
 		for (j = 0; j < sc->sc_ncmds; j++)
 			bus_dmamap_destroy(sc->sc_dmat, achp->ahcic_datad[j]);
@@ -516,8 +539,6 @@ ahci_detach(struct ahci_softc *sc, int flags)
 		    AHCI_CMDTBL_SIZE * sc->sc_ncmds);
 		bus_dmamem_free(sc->sc_dmat, &achp->ahcic_cmd_tbl_seg,
 		    achp->ahcic_cmd_tbl_nseg);
-
-		chp->atabus = NULL;
 
 		ata_channel_detach(chp);
 	}

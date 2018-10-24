@@ -1,4 +1,4 @@
-/* $NetBSD: siisata.c,v 1.36 2018/10/22 20:13:47 jdolecek Exp $ */
+/* $NetBSD: siisata.c,v 1.37 2018/10/24 19:38:00 jdolecek Exp $ */
 
 /* from ahcisata_core.c */
 
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siisata.c,v 1.36 2018/10/22 20:13:47 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siisata.c,v 1.37 2018/10/24 19:38:00 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -408,6 +408,19 @@ siisata_attach_port(struct siisata_softc *sc, int port)
 	return;
 }
 
+void
+siisata_childdetached(struct siisata_softc *sc, device_t child)
+{
+	struct ata_channel *chp;
+
+	for (int i = 0; i < sc->sc_atac.atac_nchannels; i++) {
+		chp = sc->sc_chanarray[i];
+
+		if (child == chp->atabus)
+			chp->atabus = NULL;
+	}
+}
+
 int
 siisata_detach(struct siisata_softc *sc, int flags)
 {
@@ -417,14 +430,22 @@ siisata_detach(struct siisata_softc *sc, int flags)
 	struct ata_channel *chp;
 	int i, j, error;
 
+	if (adapt->adapt_refcnt != 0)
+		return EBUSY;
+
 	for (i = 0; i < sc->sc_atac.atac_nchannels; i++) {
 		schp = &sc->sc_channels[i];
 		chp = sc->sc_chanarray[i];
 
-		if (chp->atabus == NULL)
+		if (chp->atabus != NULL) {
+			if ((error = config_detach(chp->atabus, flags)) != 0)
+				return error;
+
+			KASSERT(chp->atabus == NULL);
+		}
+
+		if (chp->ch_flags & ATACH_DETACHED)
 			continue;
-		if ((error = config_detach(chp->atabus, flags)) != 0)
-			return error;
 
 		for (j = 0; j < SIISATA_MAX_SLOTS; j++)
 			bus_dmamap_destroy(sc->sc_dmat, schp->sch_datad[j]);
@@ -436,13 +457,8 @@ siisata_detach(struct siisata_softc *sc, int flags)
 		bus_dmamem_free(sc->sc_dmat,
 		    &schp->sch_prb_seg, schp->sch_prb_nseg);
 
-		chp->atabus = NULL;
-
 		ata_channel_detach(chp);
 	}
-
-	if (adapt->adapt_refcnt != 0)
-		return EBUSY;
 
 	/* leave the chip in reset */
 	GRWRITE(sc, GR_GC, GR_GC_GLBLRST);
