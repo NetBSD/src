@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2234 2018/10/25 10:36:56 uwe Exp $
+#	$NetBSD: mi,v 1.2235 2018/10/25 13:20:01 uwe Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -14161,7 +14161,7 @@
 ./usr/share/man/html3/curses_input.html		comp-c-htmlman		html
 ./usr/share/man/html3/curses_insch.html		comp-c-htmlman		html
 ./usr/share/man/html3/curses_insdelln.html	comp-c-htmlman		html
-./usr/share/man/html3/curses_insertch.html	comp-c-htmlman		html
+./usr/share/man/html3/curses_insertch.html	comp-obsolete		obsolete
 ./usr/share/man/html3/curses_insertln.html	comp-c-htmlman		html
 ./usr/share/man/html3/curses_keyname.html	comp-c-htmlman		html
 ./usr/share/man/html3/curses_line.html		comp-c-htmlman		html
