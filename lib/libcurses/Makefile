@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.85 2018/06/10 17:55:11 christos Exp $
+#	$NetBSD: Makefile,v 1.86 2018/10/25 10:36:56 uwe Exp $
 #	@(#)Makefile	8.2 (Berkeley) 1/2/94
 
 .include <bsd.own.mk>
@@ -31,7 +31,7 @@ MAN=	curses.3 curses_addch.3 curses_addchstr.3 curses_addstr.3 \
 	curses_chgat.3 curses_clear.3 curses_color.3 \
 	curses_cursor.3 curses_default_colors.3 \
 	curses_delch.3 curses_deleteln.3 curses_echochar.3 curses_fileio.3 \
-	curses_inch.3 curses_input.3 curses_insertch.3 curses_insertln.3 \
+	curses_inch.3 curses_input.3 curses_insch.3 curses_insertln.3 \
 	curses_insdelln.3 curses_keyname.3 curses_line.3 curses_pad.3 \
 	curses_print.3 curses_refresh.3 curses_scanw.3 curses_screen.3 \
 	curses_scroll.3 curses_slk.3 curses_standout.3 curses_termcap.3 \
@@ -98,7 +98,7 @@ MLINKS+= curses_addch.3 addch.3 curses_addchstr.3 addchnstr.3 \
 	 curses_inch.3 inchnstr.3 curses_inch.3 inchstr.3 \
 	 curses_inch.3 innstr.3 curses_color.3 init_color.3 \
 	 curses_color.3 init_pair.3 curses_screen.3 initscr.3 \
-	 curses_insertch.3 insch.3 curses_insdelln.3 insdelln.3 \
+	 curses_insch.3 insch.3 curses_insdelln.3 insdelln.3 \
 	 curses_insertln.3 insertln.3 curses_inch.3 instr.3 \
 	 curses_tty.3 intrflush.3 \
 	 curses_input.3 is_keypad.3 \
@@ -124,8 +124,10 @@ MLINKS+= curses_addch.3 addch.3 curses_addchstr.3 addchnstr.3 \
 	 curses_line.3 mvwhline.3 curses_window.3 mvwin.3 \
 	 curses_inch.3 mvinchnstr.3 \
 	 curses_inch.3 mvinchstr.3 curses_inch.3 mvinnstr.3 \
+	 curses_insch.3 mvinsch.3 \
 	 curses_inch.3 mvinstr.3 curses_inch.3 mvwinchnstr.3 \
 	 curses_inch.3 mvwinchstr.3 curses_inch.3 mvwinnstr.3 \
+	 curses_insch.3 mvwinsch.3 \
 	 curses_inch.3 mvwinstr.3 curses_print.3 mvwprintw.3 \
 	 curses_line.3 mvwvline.3 curses_tty.3 napms.3 \
 	 curses_pad.3 newpad.3 curses_screen.3 newterm.3 \
@@ -186,7 +188,7 @@ MLINKS+= curses_addch.3 addch.3 curses_addchstr.3 addchnstr.3 \
 	 curses_input.3 wgetnstr.3 curses_input.3 wgetstr.3 \
 	 curses_line.3 whline.3 curses_inch.3 winch.3 \
 	 curses_inch.3 winchnstr.3 curses_inch.3 winchstr.3 \
-	 curses_inch.3 winnstr.3 curses_insertch.3 winsch.3 \
+	 curses_inch.3 winnstr.3 curses_insch.3 winsch.3 \
 	 curses_insdelln.3 winsdelln.3 curses_insertln.3 winsertln.3 \
 	 curses_inch.3 winstr.3 curses_cursor.3 wmove.3 \
 	 curses_refresh.3 wnoutrefresh.3 curses_print.3 wprintw.3 \
