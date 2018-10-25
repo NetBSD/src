@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_lockdebug.c,v 1.67 2018/09/13 01:55:16 mrg Exp $	*/
+/*	$NetBSD: subr_lockdebug.c,v 1.68 2018/10/25 09:30:45 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.67 2018/09/13 01:55:16 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.68 2018/10/25 09:30:45 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -898,7 +898,11 @@ lockdebug_show_all_locks_cpu(void (*pr)(const char *, ...), bool show_trace)
 			lockdebug_dump(ld, pr);
 			if (show_trace) {
 				db_stack_trace_print(
+#ifdef MULTIPROCESSOR
 				    (db_expr_t)(intptr_t)ci->ci_curlwp,
+#else
+				    (db_expr_t)(intptr_t)curlwp,
+#endif
 				    true,
 				    32 /* Limit just in case */,
 				    "a", pr);
