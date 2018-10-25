@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.211.6.7 2018/06/23 11:03:27 martin Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.211.6.8 2018/10/25 18:32:54 martin Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.211.6.7 2018/06/23 11:03:27 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.211.6.8 2018/10/25 18:32:54 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -2866,7 +2866,6 @@ icmp6_redirect_timeout(struct rtentry *rt, struct rttimer *r)
 
 	if ((rt->rt_flags & (RTF_GATEWAY | RTF_DYNAMIC | RTF_HOST)) ==
 	    (RTF_GATEWAY | RTF_DYNAMIC | RTF_HOST)) {
-		printf("%s: RTM_DELETE\n", __func__);
 		rtrequest(RTM_DELETE, rt_getkey(rt),
 		    rt->rt_gateway, rt_mask(rt), rt->rt_flags, &retrt);
 		rt_unref(rt);
