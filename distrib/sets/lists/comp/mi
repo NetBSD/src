@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2233 2018/10/05 09:51:55 hannken Exp $
+#	$NetBSD: mi,v 1.2234 2018/10/25 10:36:56 uwe Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -5435,7 +5435,7 @@
 ./usr/share/man/cat3/acosf.0			comp-c-catman		.cat
 ./usr/share/man/cat3/acosh.0			comp-c-catman		.cat
 ./usr/share/man/cat3/acoshf.0			comp-c-catman		.cat
-./usr/share/man/cat3/addch.0			comp-c-catman		.cat
+./usr/share/man/cat3/addch.0			comp-obsolete		obsolete
 ./usr/share/man/cat3/addchnstr.0		comp-c-catman		.cat
 ./usr/share/man/cat3/addchstr.0			comp-c-catman		.cat
 ./usr/share/man/cat3/addnstr.0			comp-c-catman		.cat
@@ -5863,14 +5863,14 @@
 ./usr/share/man/cat3/atomic_swap_ptr.0		comp-c-catman		.cat
 ./usr/share/man/cat3/atomic_swap_uint.0		comp-c-catman		.cat
 ./usr/share/man/cat3/atomic_swap_ulong.0	comp-c-catman		.cat
-./usr/share/man/cat3/attr_get.0			comp-c-catman		.cat
-./usr/share/man/cat3/attr_off.0			comp-c-catman		.cat
-./usr/share/man/cat3/attr_on.0			comp-c-catman		.cat
-./usr/share/man/cat3/attr_set.0			comp-c-catman		.cat
-./usr/share/man/cat3/attribute.0		comp-c-catman		.cat
-./usr/share/man/cat3/attroff.0			comp-c-catman		.cat
-./usr/share/man/cat3/attron.0			comp-c-catman		.cat
-./usr/share/man/cat3/attrset.0			comp-c-catman		.cat
+./usr/share/man/cat3/attr_get.0			comp-obsolete		obsolete
+./usr/share/man/cat3/attr_off.0			comp-obsolete		obsolete
+./usr/share/man/cat3/attr_on.0			comp-obsolete		obsolete
+./usr/share/man/cat3/attr_set.0			comp-obsolete		obsolete
+./usr/share/man/cat3/attribute.0		comp-obsolete		obsolete
+./usr/share/man/cat3/attroff.0			comp-obsolete		obsolete
+./usr/share/man/cat3/attron.0			comp-obsolete		obsolete
+./usr/share/man/cat3/attrset.0			comp-obsolete		obsolete
 ./usr/share/man/cat3/auth_destroy.0		comp-c-catman		.cat
 ./usr/share/man/cat3/authnone_create.0		comp-c-catman		.cat
 ./usr/share/man/cat3/authsys_create.0		comp-c-catman		.cat
@@ -6178,7 +6178,7 @@
 ./usr/share/man/cat3/clrtoeol.0			comp-c-catman		.cat
 ./usr/share/man/cat3/cmsg.0			comp-c-catman		.cat
 ./usr/share/man/cat3/color_content.0		comp-c-catman		.cat
-./usr/share/man/cat3/color_set.0		comp-c-catman		.cat
+./usr/share/man/cat3/color_set.0		comp-obsolete		obsolete
 ./usr/share/man/cat3/com_err.0			comp-krb5-catman	kerberos,.cat
 ./usr/share/man/cat3/com_err_va.0		comp-krb5-catman	kerberos,.cat
 ./usr/share/man/cat3/confstr.0			comp-c-catman		.cat
@@ -6240,11 +6240,11 @@
 ./usr/share/man/cat3/current_field.0		comp-c-catman		.cat
 ./usr/share/man/cat3/current_item.0		comp-c-catman		.cat
 ./usr/share/man/cat3/curs_set.0			comp-c-catman		.cat
-./usr/share/man/cat3/curses.0			comp-c-catman		.cat
-./usr/share/man/cat3/curses_addch.0		comp-c-catman		.cat
+./usr/share/man/cat3/curses.0			comp-obsolete		obsolete
+./usr/share/man/cat3/curses_addch.0		comp-obsolete		obsolete
 ./usr/share/man/cat3/curses_addchstr.0		comp-c-catman		.cat
 ./usr/share/man/cat3/curses_addstr.0		comp-c-catman		.cat
-./usr/share/man/cat3/curses_attributes.0	comp-c-catman		.cat
+./usr/share/man/cat3/curses_attributes.0	comp-obsolete		obsolete
 ./usr/share/man/cat3/curses_background.0	comp-c-catman		.cat
 ./usr/share/man/cat3/curses_border.0		comp-c-catman		.cat
 ./usr/share/man/cat3/curses_chgat.0		comp-c-catman		.cat
@@ -6252,14 +6252,14 @@
 ./usr/share/man/cat3/curses_color.0		comp-c-catman		.cat
 ./usr/share/man/cat3/curses_cursor.0		comp-c-catman		.cat
 ./usr/share/man/cat3/curses_default_colors.0	comp-c-catman		.cat
-./usr/share/man/cat3/curses_delch.0		comp-c-catman		.cat
+./usr/share/man/cat3/curses_delch.0		comp-obsolete		obsolete
 ./usr/share/man/cat3/curses_deleteln.0		comp-c-catman		.cat
 ./usr/share/man/cat3/curses_echochar.0		comp-c-catman		.cat
 ./usr/share/man/cat3/curses_fileio.0		comp-c-catman		.cat
-./usr/share/man/cat3/curses_inch.0		comp-c-catman		.cat
+./usr/share/man/cat3/curses_inch.0		comp-obsolete		obsolete
 ./usr/share/man/cat3/curses_input.0		comp-c-catman		.cat
 ./usr/share/man/cat3/curses_insdelln.0		comp-c-catman		.cat
-./usr/share/man/cat3/curses_insertch.0		comp-c-catman		.cat
+./usr/share/man/cat3/curses_insertch.0		comp-obsolete		obsolete
 ./usr/share/man/cat3/curses_insertln.0		comp-c-catman		.cat
 ./usr/share/man/cat3/curses_keyname.0		comp-c-catman		.cat
 ./usr/share/man/cat3/curses_line.0		comp-c-catman		.cat
@@ -6319,7 +6319,7 @@
 ./usr/share/man/cat3/del_curterm.0		comp-c-catman		.cat
 ./usr/share/man/cat3/del_panel.0		comp-c-catman		.cat
 ./usr/share/man/cat3/delay_output.0		comp-c-catman		.cat
-./usr/share/man/cat3/delch.0			comp-c-catman		.cat
+./usr/share/man/cat3/delch.0			comp-obsolete		obsolete
 ./usr/share/man/cat3/deleteln.0			comp-c-catman		.cat
 ./usr/share/man/cat3/delscreen.0		comp-c-catman		.cat
 ./usr/share/man/cat3/delwin.0			comp-c-catman		.cat
@@ -7100,7 +7100,7 @@
 ./usr/share/man/cat3/gelf_xlatetom.0		comp-c-catman		.cat
 ./usr/share/man/cat3/get_myaddress.0		comp-c-catman		.cat
 ./usr/share/man/cat3/getaddrinfo.0		comp-c-catman		.cat
-./usr/share/man/cat3/getattrs.0			comp-c-catman		.cat
+./usr/share/man/cat3/getattrs.0			comp-obsolete		obsolete
 ./usr/share/man/cat3/getbegx.0			comp-c-catman		.cat
 ./usr/share/man/cat3/getbegy.0			comp-c-catman		.cat
 ./usr/share/man/cat3/getbkgd.0			comp-c-catman		.cat
@@ -7353,9 +7353,9 @@
 ./usr/share/man/cat3/imaxabs.0			comp-c-catman		.cat
 ./usr/share/man/cat3/imaxdiv.0			comp-c-catman		.cat
 ./usr/share/man/cat3/immedok.0			comp-c-catman		.cat
-./usr/share/man/cat3/inch.0			comp-c-catman		.cat
-./usr/share/man/cat3/inchnstr.0			comp-c-catman		.cat
-./usr/share/man/cat3/inchstr.0			comp-c-catman		.cat
+./usr/share/man/cat3/inch.0			comp-obsolete		obsolete
+./usr/share/man/cat3/inchnstr.0			comp-obsolete		obsolete
+./usr/share/man/cat3/inchstr.0			comp-obsolete		obsolete
 ./usr/share/man/cat3/index.0			comp-c-catman		.cat
 ./usr/share/man/cat3/inet.0			comp-c-catman		.cat
 ./usr/share/man/cat3/inet6_getscopeid.0		comp-c-catman		.cat
@@ -7406,12 +7406,12 @@
 ./usr/share/man/cat3/initscr.0			comp-c-catman		.cat
 ./usr/share/man/cat3/initstate.0		comp-c-catman		.cat
 ./usr/share/man/cat3/innetgr.0			comp-c-catman		.cat
-./usr/share/man/cat3/innstr.0			comp-c-catman		.cat
-./usr/share/man/cat3/insch.0			comp-c-catman		.cat
+./usr/share/man/cat3/innstr.0			comp-obsolete		obsolete
+./usr/share/man/cat3/insch.0			comp-obsolete		obsolete
 ./usr/share/man/cat3/insdelln.0			comp-c-catman		.cat
 ./usr/share/man/cat3/insertln.0			comp-c-catman		.cat
 ./usr/share/man/cat3/insque.0			comp-c-catman		.cat
-./usr/share/man/cat3/instr.0			comp-c-catman		.cat
+./usr/share/man/cat3/instr.0			comp-obsolete		obsolete
 ./usr/share/man/cat3/intrflush.0		comp-c-catman		.cat
 ./usr/share/man/cat3/intro.0			comp-c-catman		.cat
 ./usr/share/man/cat3/inttypes.0			comp-c-catman		.cat
@@ -8421,7 +8421,7 @@
 ./usr/share/man/cat3/mq_unlink.0		comp-c-catman		.cat
 ./usr/share/man/cat3/mqueue.0			comp-c-catman		.cat
 ./usr/share/man/cat3/mrand48.0			comp-c-catman		.cat
-./usr/share/man/cat3/mvaddch.0			comp-c-catman		.cat
+./usr/share/man/cat3/mvaddch.0			comp-obsolete		obsolete
 ./usr/share/man/cat3/mvaddchnstr.0		comp-c-catman		.cat
 ./usr/share/man/cat3/mvaddchstr.0		comp-c-catman		.cat
 ./usr/share/man/cat3/mvaddnstr.0		comp-c-catman		.cat
@@ -8433,13 +8433,13 @@
 ./usr/share/man/cat3/mvgetnstr.0		comp-c-catman		.cat
 ./usr/share/man/cat3/mvgetstr.0			comp-c-catman		.cat
 ./usr/share/man/cat3/mvhline.0			comp-c-catman		.cat
-./usr/share/man/cat3/mvinchnstr.0		comp-c-catman		.cat
-./usr/share/man/cat3/mvinchstr.0		comp-c-catman		.cat
-./usr/share/man/cat3/mvinnstr.0			comp-c-catman		.cat
-./usr/share/man/cat3/mvinstr.0			comp-c-catman		.cat
+./usr/share/man/cat3/mvinchnstr.0		comp-obsolete		obsolete
+./usr/share/man/cat3/mvinchstr.0		comp-obsolete		obsolete
+./usr/share/man/cat3/mvinnstr.0			comp-obsolete		obsolete
+./usr/share/man/cat3/mvinstr.0			comp-obsolete		obsolete
 ./usr/share/man/cat3/mvprintw.0			comp-c-catman		.cat
 ./usr/share/man/cat3/mvvline.0			comp-c-catman		.cat
-./usr/share/man/cat3/mvwaddch.0			comp-c-catman		.cat
+./usr/share/man/cat3/mvwaddch.0			comp-obsolete		obsolete
 ./usr/share/man/cat3/mvwaddchnstr.0		comp-c-catman		.cat
 ./usr/share/man/cat3/mvwaddchstr.0		comp-c-catman		.cat
 ./usr/share/man/cat3/mvwaddnstr.0		comp-c-catman		.cat
@@ -8450,10 +8450,10 @@
 ./usr/share/man/cat3/mvwgetstr.0		comp-c-catman		.cat
 ./usr/share/man/cat3/mvwhline.0			comp-c-catman		.cat
 ./usr/share/man/cat3/mvwin.0			comp-c-catman		.cat
-./usr/share/man/cat3/mvwinchnstr.0		comp-c-catman		.cat
-./usr/share/man/cat3/mvwinchstr.0		comp-c-catman		.cat
-./usr/share/man/cat3/mvwinnstr.0		comp-c-catman		.cat
-./usr/share/man/cat3/mvwinstr.0			comp-c-catman		.cat
+./usr/share/man/cat3/mvwinchnstr.0		comp-obsolete		obsolete
+./usr/share/man/cat3/mvwinchstr.0		comp-obsolete		obsolete
+./usr/share/man/cat3/mvwinnstr.0		comp-obsolete		obsolete
+./usr/share/man/cat3/mvwinstr.0			comp-obsolete		obsolete
 ./usr/share/man/cat3/mvwprintw.0		comp-c-catman		.cat
 ./usr/share/man/cat3/mvwvline.0			comp-c-catman		.cat
 ./usr/share/man/cat3/nan.0			comp-c-catman		.cat
@@ -10165,7 +10165,7 @@
 ./usr/share/man/cat3/vwarnx.0			comp-c-catman		.cat
 ./usr/share/man/cat3/vwprintf.0			comp-c-catman		.cat
 ./usr/share/man/cat3/vwscanf.0			comp-c-catman		.cat
-./usr/share/man/cat3/waddch.0			comp-c-catman		.cat
+./usr/share/man/cat3/waddch.0			comp-obsolete		obsolete
 ./usr/share/man/cat3/waddchnstr.0		comp-c-catman		.cat
 ./usr/share/man/cat3/waddchstr.0		comp-c-catman		.cat
 ./usr/share/man/cat3/waddnstr.0			comp-c-catman		.cat
@@ -10173,13 +10173,13 @@
 ./usr/share/man/cat3/warn.0			comp-c-catman		.cat
 ./usr/share/man/cat3/warnc.0			comp-c-catman		.cat
 ./usr/share/man/cat3/warnx.0			comp-c-catman		.cat
-./usr/share/man/cat3/wattr_get.0		comp-c-catman		.cat
-./usr/share/man/cat3/wattr_off.0		comp-c-catman		.cat
-./usr/share/man/cat3/wattr_on.0			comp-c-catman		.cat
-./usr/share/man/cat3/wattr_set.0		comp-c-catman		.cat
-./usr/share/man/cat3/wattroff.0			comp-c-catman		.cat
-./usr/share/man/cat3/wattron.0			comp-c-catman		.cat
-./usr/share/man/cat3/wattrset.0			comp-c-catman		.cat
+./usr/share/man/cat3/wattr_get.0		comp-obsolete		obsolete
+./usr/share/man/cat3/wattr_off.0		comp-obsolete		obsolete
+./usr/share/man/cat3/wattr_on.0			comp-obsolete		obsolete
+./usr/share/man/cat3/wattr_set.0		comp-obsolete		obsolete
+./usr/share/man/cat3/wattroff.0			comp-obsolete		obsolete
+./usr/share/man/cat3/wattron.0			comp-obsolete		obsolete
+./usr/share/man/cat3/wattrset.0			comp-obsolete		obsolete
 ./usr/share/man/cat3/wbkgd.0			comp-c-catman		.cat
 ./usr/share/man/cat3/wbkgdset.0			comp-c-catman		.cat
 ./usr/share/man/cat3/wborder.0			comp-c-catman		.cat
@@ -10187,7 +10187,7 @@
 ./usr/share/man/cat3/wclear.0			comp-c-catman		.cat
 ./usr/share/man/cat3/wclrtobot.0		comp-c-catman		.cat
 ./usr/share/man/cat3/wclrtoeol.0		comp-c-catman		.cat
-./usr/share/man/cat3/wcolor_set.0		comp-c-catman		.cat
+./usr/share/man/cat3/wcolor_set.0		comp-obsolete		obsolete
 ./usr/share/man/cat3/wcrtomb.0			comp-c-catman		.cat
 ./usr/share/man/cat3/wcscasecmp.0		comp-c-catman		.cat
 ./usr/share/man/cat3/wcscat.0			comp-c-catman		.cat
@@ -10231,7 +10231,7 @@
 ./usr/share/man/cat3/wctype.0			comp-c-catman		.cat
 ./usr/share/man/cat3/wcursyncup.0		comp-c-catman		.cat
 ./usr/share/man/cat3/wcwidth.0			comp-c-catman		.cat
-./usr/share/man/cat3/wdelch.0			comp-c-catman		.cat
+./usr/share/man/cat3/wdelch.0			comp-obsolete		obsolete
 ./usr/share/man/cat3/wdeleteln.0		comp-c-catman		.cat
 ./usr/share/man/cat3/wechochar.0		comp-c-catman		.cat
 ./usr/share/man/cat3/werase.0			comp-c-catman		.cat
@@ -10239,14 +10239,14 @@
 ./usr/share/man/cat3/wgetnstr.0			comp-c-catman		.cat
 ./usr/share/man/cat3/wgetstr.0			comp-c-catman		.cat
 ./usr/share/man/cat3/whline.0			comp-c-catman		.cat
-./usr/share/man/cat3/winch.0			comp-c-catman		.cat
-./usr/share/man/cat3/winchnstr.0		comp-c-catman		.cat
-./usr/share/man/cat3/winchstr.0			comp-c-catman		.cat
-./usr/share/man/cat3/winnstr.0			comp-c-catman		.cat
-./usr/share/man/cat3/winsch.0			comp-c-catman		.cat
+./usr/share/man/cat3/winch.0			comp-obsolete		obsolete
+./usr/share/man/cat3/winchnstr.0		comp-obsolete		obsolete
+./usr/share/man/cat3/winchstr.0			comp-obsolete		obsolete
+./usr/share/man/cat3/winnstr.0			comp-obsolete		obsolete
+./usr/share/man/cat3/winsch.0			comp-obsolete		obsolete
 ./usr/share/man/cat3/winsdelln.0		comp-c-catman		.cat
 ./usr/share/man/cat3/winsertln.0		comp-c-catman		.cat
-./usr/share/man/cat3/winstr.0			comp-c-catman		.cat
+./usr/share/man/cat3/winstr.0			comp-obsolete		obsolete
 ./usr/share/man/cat3/wmemchr.0			comp-c-catman		.cat
 ./usr/share/man/cat3/wmemcmp.0			comp-c-catman		.cat
 ./usr/share/man/cat3/wmemcpy.0			comp-c-catman		.cat
@@ -14159,6 +14159,7 @@
 ./usr/share/man/html3/curses_fileio.html	comp-c-htmlman		html
 ./usr/share/man/html3/curses_inch.html		comp-c-htmlman		html
 ./usr/share/man/html3/curses_input.html		comp-c-htmlman		html
+./usr/share/man/html3/curses_insch.html		comp-c-htmlman		html
 ./usr/share/man/html3/curses_insdelln.html	comp-c-htmlman		html
 ./usr/share/man/html3/curses_insertch.html	comp-c-htmlman		html
 ./usr/share/man/html3/curses_insertln.html	comp-c-htmlman		html
@@ -16311,6 +16312,7 @@
 ./usr/share/man/html3/mvinchnstr.html		comp-c-htmlman		html
 ./usr/share/man/html3/mvinchstr.html		comp-c-htmlman		html
 ./usr/share/man/html3/mvinnstr.html		comp-c-htmlman		html
+./usr/share/man/html3/mvinsch.html		comp-c-htmlman		html
 ./usr/share/man/html3/mvinstr.html		comp-c-htmlman		html
 ./usr/share/man/html3/mvprintw.html		comp-c-htmlman		html
 ./usr/share/man/html3/mvvline.html		comp-c-htmlman		html
@@ -16328,6 +16330,7 @@
 ./usr/share/man/html3/mvwinchnstr.html		comp-c-htmlman		html
 ./usr/share/man/html3/mvwinchstr.html		comp-c-htmlman		html
 ./usr/share/man/html3/mvwinnstr.html		comp-c-htmlman		html
+./usr/share/man/html3/mvwinsch.html		comp-c-htmlman		html
 ./usr/share/man/html3/mvwinstr.html		comp-c-htmlman		html
 ./usr/share/man/html3/mvwprintw.html		comp-c-htmlman		html
 ./usr/share/man/html3/mvwvline.html		comp-c-htmlman		html
@@ -21985,7 +21988,7 @@
 ./usr/share/man/man3/current_item.3		comp-c-man		.man
 ./usr/share/man/man3/curs_set.3			comp-c-man		.man
 ./usr/share/man/man3/curses.3			comp-c-man		.man
-./usr/share/man/man3/curses_addch.3		comp-c-man		.man
+./usr/share/man/man3/curses_addch.3		comp-obsolete		obsolete
 ./usr/share/man/man3/curses_addchstr.3		comp-c-man		.man
 ./usr/share/man/man3/curses_addstr.3		comp-c-man		.man
 ./usr/share/man/man3/curses_attributes.3	comp-c-man		.man
@@ -22002,8 +22005,9 @@
 ./usr/share/man/man3/curses_fileio.3		comp-c-man		.man
 ./usr/share/man/man3/curses_inch.3		comp-c-man		.man
 ./usr/share/man/man3/curses_input.3		comp-c-man		.man
+./usr/share/man/man3/curses_insch.3		comp-c-man		.man
 ./usr/share/man/man3/curses_insdelln.3		comp-c-man		.man
-./usr/share/man/man3/curses_insertch.3		comp-c-man		.man
+./usr/share/man/man3/curses_insertch.3		comp-obsolete		obsolete
 ./usr/share/man/man3/curses_insertln.3		comp-c-man		.man
 ./usr/share/man/man3/curses_keyname.3		comp-c-man		.man
 ./usr/share/man/man3/curses_line.3		comp-c-man		.man
@@ -24192,6 +24196,7 @@
 ./usr/share/man/man3/mvinchnstr.3		comp-c-man		.man
 ./usr/share/man/man3/mvinchstr.3		comp-c-man		.man
 ./usr/share/man/man3/mvinnstr.3			comp-c-man		.man
+./usr/share/man/man3/mvinsch.3			comp-c-man		.man
 ./usr/share/man/man3/mvinstr.3			comp-c-man		.man
 ./usr/share/man/man3/mvprintw.3			comp-c-man		.man
 ./usr/share/man/man3/mvvline.3			comp-c-man		.man
@@ -24209,6 +24214,7 @@
 ./usr/share/man/man3/mvwinchnstr.3		comp-c-man		.man
 ./usr/share/man/man3/mvwinchstr.3		comp-c-man		.man
 ./usr/share/man/man3/mvwinnstr.3		comp-c-man		.man
+./usr/share/man/man3/mvwinsch.3			comp-c-man		.man
 ./usr/share/man/man3/mvwinstr.3			comp-c-man		.man
 ./usr/share/man/man3/mvwprintw.3		comp-c-man		.man
 ./usr/share/man/man3/mvwvline.3			comp-c-man		.man
