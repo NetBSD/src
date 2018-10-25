@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_resource.c,v 1.37 2015/07/27 04:50:50 msaitoh Exp $	*/
+/*	$NetBSD: acpi_resource.c,v 1.38 2018/10/25 10:38:57 jmcneill Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_resource.c,v 1.37 2015/07/27 04:50:50 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_resource.c,v 1.38 2018/10/25 10:38:57 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -246,12 +246,12 @@ acpi_resource_parse_callback(ACPI_RESOURCE *res, void *context)
 		if (res->Data.Address32.Address.AddressLength == 0 ||
 		    res->Data.Address32.ProducerConsumer != ACPI_CONSUMER)
 			break;
-#define ADRRESS32_FIXED2(r)						\
+#define ADDRESS32_FIXED2(r)						\
 	((r)->Data.Address32.MinAddressFixed == ACPI_ADDRESS_FIXED &&	\
 	 (r)->Data.Address32.MaxAddressFixed == ACPI_ADDRESS_FIXED)
 		switch (res->Data.Address32.ResourceType) {
 		case ACPI_MEMORY_RANGE:
-			if (ADRRESS32_FIXED2(res)) {
+			if (ADDRESS32_FIXED2(res)) {
 				if (ops->memory)
 					(*ops->memory)(arg->dev, arg->context,
 					    res->Data.Address32.Address.Minimum,
@@ -266,7 +266,7 @@ acpi_resource_parse_callback(ACPI_RESOURCE *res, void *context)
 			}
 			break;
 		case ACPI_IO_RANGE:
-			if (ADRRESS32_FIXED2(res)) {
+			if (ADDRESS32_FIXED2(res)) {
 				if (ops->ioport)
 					(*ops->ioport)(arg->dev, arg->context,
 					    res->Data.Address32.Address.Minimum,
@@ -285,7 +285,7 @@ acpi_resource_parse_callback(ACPI_RESOURCE *res, void *context)
 				      "Address32/BusNumber unimplemented\n"));
 			break;
 		}
-#undef ADRRESS32_FIXED2
+#undef ADDRESS32_FIXED2
 		break;
 
 	case ACPI_RESOURCE_TYPE_ADDRESS16:
@@ -294,8 +294,55 @@ acpi_resource_parse_callback(ACPI_RESOURCE *res, void *context)
 		break;
 
 	case ACPI_RESOURCE_TYPE_ADDRESS64:
+#ifdef _LP64
+		/* XXX Only fixed size supported for now */
+		if (res->Data.Address64.Address.AddressLength == 0 ||
+		    res->Data.Address64.ProducerConsumer != ACPI_CONSUMER)
+			break;
+#define ADDRESS64_FIXED2(r)						\
+	((r)->Data.Address64.MinAddressFixed == ACPI_ADDRESS_FIXED &&	\
+	 (r)->Data.Address64.MaxAddressFixed == ACPI_ADDRESS_FIXED)
+		switch (res->Data.Address64.ResourceType) {
+		case ACPI_MEMORY_RANGE:
+			if (ADDRESS64_FIXED2(res)) {
+				if (ops->memory)
+					(*ops->memory)(arg->dev, arg->context,
+					    res->Data.Address64.Address.Minimum,
+					    res->Data.Address64.Address.AddressLength);
+			} else {
+				if (ops->memrange)
+					(*ops->memrange)(arg->dev, arg->context,
+					    res->Data.Address64.Address.Minimum,
+					    res->Data.Address64.Address.Maximum,
+					    res->Data.Address64.Address.AddressLength,
+					    res->Data.Address64.Address.Granularity);
+			}
+			break;
+		case ACPI_IO_RANGE:
+			if (ADDRESS64_FIXED2(res)) {
+				if (ops->ioport)
+					(*ops->ioport)(arg->dev, arg->context,
+					    res->Data.Address64.Address.Minimum,
+					    res->Data.Address64.Address.AddressLength);
+			} else {
+				if (ops->iorange)
+					(*ops->iorange)(arg->dev, arg->context,
+					    res->Data.Address64.Address.Minimum,
+					    res->Data.Address64.Address.Maximum,
+					    res->Data.Address64.Address.AddressLength,
+					    res->Data.Address64.Address.Granularity);
+			}
+			break;
+		case ACPI_BUS_NUMBER_RANGE:
+			ACPI_DEBUG_PRINT((ACPI_DB_RESOURCES,
+				      "Address64/BusNumber unimplemented\n"));
+			break;
+		}
+#undef ADDRESS64_FIXED2
+#else
 		ACPI_DEBUG_PRINT((ACPI_DB_RESOURCES,
 				     "Address64 unimplemented\n"));
+#endif
 		break;
 	case ACPI_RESOURCE_TYPE_EXTENDED_ADDRESS64:
 		ACPI_DEBUG_PRINT((ACPI_DB_RESOURCES,
@@ -423,9 +470,11 @@ acpi_resource_print(device_t dev, struct acpi_resources *res)
 		sep = "";
 		aprint_normal(" mem ");
 		SIMPLEQ_FOREACH(ar, &res->ar_mem, ar_list) {
-			aprint_normal("%s0x%x", sep, ar->ar_base);
+			aprint_normal("%s0x%" PRIx64, sep,
+			    (uint64_t)ar->ar_base);
 			if (ar->ar_length > 1)
-				aprint_normal("-0x%x", ar->ar_base +
+				aprint_normal("-0x%" PRIx64,
+				    (uint64_t)ar->ar_base +
 				    ar->ar_length - 1);
 			sep = ",";
 		}
@@ -597,10 +646,10 @@ static void	acpi_res_parse_ioport(device_t, void *, uint32_t,
 static void	acpi_res_parse_iorange(device_t, void *, uint32_t,
 		    uint32_t, uint32_t, uint32_t);
 
-static void	acpi_res_parse_memory(device_t, void *, uint32_t,
-		    uint32_t);
-static void	acpi_res_parse_memrange(device_t, void *, uint32_t,
-		    uint32_t, uint32_t, uint32_t);
+static void	acpi_res_parse_memory(device_t, void *, uint64_t,
+		    uint64_t);
+static void	acpi_res_parse_memrange(device_t, void *, uint64_t,
+		    uint64_t, uint64_t, uint64_t);
 
 static void	acpi_res_parse_irq(device_t, void *, uint32_t, uint32_t);
 static void	acpi_res_parse_drq(device_t, void *, uint32_t);
@@ -747,8 +796,8 @@ acpi_res_parse_iorange(device_t dev, void *context, uint32_t low,
 }
 
 static void
-acpi_res_parse_memory(device_t dev, void *context, uint32_t base,
-    uint32_t length)
+acpi_res_parse_memory(device_t dev, void *context, uint64_t base,
+    uint64_t length)
 {
 	struct acpi_resources *res = context;
 	struct acpi_mem *ar;
@@ -769,8 +818,8 @@ acpi_res_parse_memory(device_t dev, void *context, uint32_t base,
 }
 
 static void
-acpi_res_parse_memrange(device_t dev, void *context, uint32_t low,
-    uint32_t high, uint32_t length, uint32_t align)
+acpi_res_parse_memrange(device_t dev, void *context, uint64_t low,
+    uint64_t high, uint64_t length, uint64_t align)
 {
 	struct acpi_resources *res = context;
 	struct acpi_memrange *ar;
