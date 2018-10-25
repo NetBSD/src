@@ -1,4 +1,4 @@
-/* $NetBSD: siisata_pci.c,v 1.19 2018/10/24 19:38:00 jdolecek Exp $ */
+/* $NetBSD: siisata_pci.c,v 1.20 2018/10/25 21:03:19 jdolecek Exp $ */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siisata_pci.c,v 1.19 2018/10/24 19:38:00 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siisata_pci.c,v 1.20 2018/10/25 21:03:19 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -222,6 +222,9 @@ siisata_pci_attach(device_t parent, device_t self, void *aux)
 	psc->sc_ih = pci_intr_establish_xname(pa->pa_pc, psc->sc_pihp[0],
 	    IPL_BIO, siisata_intr, sc, device_xname(self));
 	if (psc->sc_ih == NULL) {
+		pci_intr_release(psc->sc_pc, psc->sc_pihp, 1);
+		psc->sc_pihp = NULL;
+
 		bus_space_unmap(sc->sc_grt, sc->sc_grh, grsize);
 		bus_space_unmap(sc->sc_prt, sc->sc_prh, prsize);
 		aprint_error_dev(self, "couldn't establish interrupt at %s\n",
