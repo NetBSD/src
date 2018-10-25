@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata_pci.c,v 1.41 2018/10/24 19:38:00 jdolecek Exp $	*/
+/*	$NetBSD: ahcisata_pci.c,v 1.42 2018/10/25 21:03:19 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_pci.c,v 1.41 2018/10/24 19:38:00 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_pci.c,v 1.42 2018/10/25 21:03:19 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -297,6 +297,9 @@ ahci_pci_attach(device_t parent, device_t self, void *aux)
 	psc->sc_ih = pci_intr_establish_xname(pa->pa_pc, psc->sc_pihp[0],
 	    IPL_BIO, ahci_intr, sc, device_xname(sc->sc_atac.atac_dev));
 	if (psc->sc_ih == NULL) {
+		pci_intr_release(psc->sc_pc, psc->sc_pihp, 1);
+		psc->sc_pihp = NULL;
+
 		aprint_error_dev(self, "couldn't establish interrupt\n");
 		return;
 	}
