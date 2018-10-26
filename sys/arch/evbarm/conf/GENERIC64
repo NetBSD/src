@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC64,v 1.58 2018/10/24 11:02:13 jmcneill Exp $
+#	$NetBSD: GENERIC64,v 1.59 2018/10/26 10:46:49 jmcneill Exp $
 #
 #	GENERIC ARM (aarch64) kernel
 #
@@ -378,6 +378,7 @@ tegrausbphy*	at fdt?			# NVIDIA Tegra USB PHY
 dwctwo*		at fdt?			# Designware USB DRD
 ehci*		at fdt?			# EHCI
 ehci*		at pci?			# EHCI
+ehci*		at acpi?		# EHCI
 motg*		at fdt?			# Mentor Graphics USB OTG
 ohci*		at fdt?			# OHCI
 ohci*		at pci?			# OHCI
