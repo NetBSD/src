@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC64,v 1.59 2018/10/26 10:46:49 jmcneill Exp $
+#	$NetBSD: GENERIC64,v 1.60 2018/10/26 23:34:05 jmcneill Exp $
 #
 #	GENERIC ARM (aarch64) kernel
 #
@@ -384,6 +384,7 @@ ohci*		at fdt?			# OHCI
 ohci*		at pci?			# OHCI
 xhci*		at fdt?			# XHCI
 xhci*		at pci?			# XHCI
+xhci*		at acpi?		# XHCI
 usb*		at usbus?
 
 include "dev/usb/usbdevices.config"
