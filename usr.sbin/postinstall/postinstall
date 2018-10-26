@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.218 2018/09/23 07:24:21 maxv Exp $
+# $NetBSD: postinstall,v 1.219 2018/10/26 18:06:34 martin Exp $
 #
 # Copyright (c) 2002-2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -757,6 +757,21 @@ detect_x11()
 }
 
 #
+#	find out where MAKEDEV lives, set MAKEDEV_DIR appropriately
+#
+find_makedev()
+{
+	if [ -e "${DEST_DIR}/dev/MAKEDEV" ]; then
+		MAKEDEV_DIR="${DEST_DIR}/dev"
+	elif [ -e "${DEST_DIR}/etc/MAKEDEV" ]; then
+		MAKEDEV_DIR="${DEST_DIR}/etc"
+	else
+		MAKEDEV_DIR="${DEST_DIR}/dev"
+	fi
+}
+
+
+#
 #	items
 #	-----
 #
@@ -1149,7 +1164,8 @@ do_makedev()
 	    "${SCRATCHDIR}" "${SRC_DIR}/dev" \
 	    || return 1
 			# ${dir} is set by find_file_in_dirlist()
-	compare_dir "$1" "${dir}" "${DEST_DIR}/dev" 555 MAKEDEV
+	find_makedev
+	compare_dir "$1" "${dir}" "${MAKEDEV_DIR}" 555 MAKEDEV
 	failed=$(( ${failed} + $? ))
 
 	find_file_in_dirlist MAKEDEV.local "MAKEDEV.local" \
@@ -2140,8 +2156,9 @@ do_ptyfsoldnodes()
 	# Output from awk, used in the eval statement, looks like this:
 	# maj_ptym=6; maj_ptys=5;
 	#
+	find_makedev
 	eval "$(
-	    ${HOST_SH} "${DEST_DIR}/dev/MAKEDEV" -s pty0 2>/dev/null \
+	    ${HOST_SH} "${MAKEDEV_DIR}/MAKEDEV" -s pty0 2>/dev/null \
 	    | ${AWK} '\
 	    BEGIN { before_re = ".*device=[a-zA-Z]*,"; after_re = ",.*"; }
 	    /ptyp0/ { maj_ptym = gensub(before_re, "", 1, $0);
