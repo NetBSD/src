@@ -1,4 +1,4 @@
-/*	$NetBSD: hypervisor.h,v 1.45 2018/09/23 02:27:24 cherry Exp $	*/
+/*	$NetBSD: hypervisor.h,v 1.46 2018/10/26 05:33:21 cherry Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -55,7 +55,8 @@
 #define _XEN_HYPERVISOR_H_
 
 #include "opt_xen.h"
-
+#include "isa.h"
+#include "pci.h"
 
 struct hypervisor_attach_args {
 	const char 		*haa_busname;
@@ -130,8 +131,10 @@ extern volatile shared_info_t *HYPERVISOR_shared_info;
 struct intrframe;
 struct cpu_info;
 void do_hypervisor_callback(struct intrframe *regs);
+#if NPCI > 0 || NISA > 0
 void hypervisor_prime_pirq_event(int, unsigned int);
-void hypervisor_enable_event(unsigned int);
+void hypervisor_ack_pirq_event(unsigned int);
+#endif /* NPCI > 0 || NISA > 0 */
 
 extern int xen_version;
 #define XEN_MAJOR(x) (((x) & 0xffff0000) >> 16)

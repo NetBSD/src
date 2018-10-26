@@ -1,4 +1,4 @@
-/*      $NetBSD: xennetback_xenbus.c,v 1.70 2018/10/24 03:59:33 cherry Exp $      */
+/*      $NetBSD: xennetback_xenbus.c,v 1.71 2018/10/26 05:33:21 cherry Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xennetback_xenbus.c,v 1.70 2018/10/24 03:59:33 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xennetback_xenbus.c,v 1.71 2018/10/26 05:33:21 cherry Exp $");
 
 #include "opt_xen.h"
 
@@ -561,7 +561,7 @@ xennetback_connect(struct xnetback_instance *xneti)
 	    xneti->xni_if.if_xname);
 	KASSERT(xneti->xni_ih != NULL);
 	xennetback_ifinit(&xneti->xni_if);
-	hypervisor_enable_event(xneti->xni_evtchn);
+	hypervisor_unmask_event(xneti->xni_evtchn);
 	hypervisor_notify_via_evtchn(xneti->xni_evtchn);
 	return 0;
 

@@ -1,4 +1,4 @@
-/* $NetBSD: xen_ipi.c,v 1.27 2018/10/24 03:59:33 cherry Exp $ */
+/* $NetBSD: xen_ipi.c,v 1.28 2018/10/26 05:33:21 cherry Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -33,10 +33,10 @@
 
 /* 
  * Based on: x86/ipi.c
- * __KERNEL_RCSID(0, "$NetBSD: xen_ipi.c,v 1.27 2018/10/24 03:59:33 cherry Exp $");
+ * __KERNEL_RCSID(0, "$NetBSD: xen_ipi.c,v 1.28 2018/10/26 05:33:21 cherry Exp $");
  */
 
-__KERNEL_RCSID(0, "$NetBSD: xen_ipi.c,v 1.27 2018/10/24 03:59:33 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_ipi.c,v 1.28 2018/10/26 05:33:21 cherry Exp $");
 
 #include "opt_ddb.h"
 
@@ -143,7 +143,7 @@ xen_ipi_init(void)
 		/* NOTREACHED */
 	}
 
-	hypervisor_enable_event(evtchn);
+	hypervisor_unmask_event(evtchn);
 }
 
 #ifdef DIAGNOSTIC

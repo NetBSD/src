@@ -1,4 +1,4 @@
-/*      $NetBSD: xbd_xenbus.c,v 1.89 2018/10/24 03:59:33 cherry Exp $      */
+/*      $NetBSD: xbd_xenbus.c,v 1.90 2018/10/26 05:33:21 cherry Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.89 2018/10/24 03:59:33 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.90 2018/10/26 05:33:21 cherry Exp $");
 
 #include "opt_xen.h"
 
@@ -509,7 +509,7 @@ again:
 		 */
 		sc->sc_backend_status = BLKIF_STATE_CONNECTED;
 		xenbus_device_resume(sc->sc_xbusd);
-		hypervisor_enable_event(sc->sc_evtchn);
+		hypervisor_unmask_event(sc->sc_evtchn);
 		xenbus_switch_state(sc->sc_xbusd, NULL, XenbusStateConnected);
 	}
 
@@ -568,8 +568,7 @@ xbd_backend_changed(void *arg, XenbusState new_state)
 
 		xbd_connect(sc);
 		sc->sc_shutdown = BLKIF_SHUTDOWN_RUN;
-		hypervisor_enable_event(sc->sc_evtchn);
-
+		hypervisor_unmask_event(sc->sc_evtchn);
 		sc->sc_xbdsize =
 		    sc->sc_sectors * (uint64_t)sc->sc_secsize / DEV_BSIZE;
 		dg = &sc->sc_dksc.sc_dkdev.dk_geom;
