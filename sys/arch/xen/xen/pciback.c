@@ -1,4 +1,4 @@
-/*      $NetBSD: pciback.c,v 1.16 2018/10/24 03:59:33 cherry Exp $      */
+/*      $NetBSD: pciback.c,v 1.17 2018/10/26 05:33:21 cherry Exp $      */
 
 /*
  * Copyright (c) 2009 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciback.c,v 1.16 2018/10/24 03:59:33 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciback.c,v 1.17 2018/10/26 05:33:21 cherry Exp $");
 
 #include "opt_xen.h"
 
@@ -622,7 +622,7 @@ pciback_xenbus_frontend_changed(void *arg, XenbusState new_state)
 		pbxi->pbx_ih = intr_establish_xname(-1, &xen_pic, pbxi->pbx_evtchn, IST_LEVEL, IPL_BIO,
 		    pciback_xenbus_evthandler, pbxi, true, "pciback");
 		KASSERT(pbxi->pbx_ih != NULL);
-		hypervisor_enable_event(pbxi->pbx_evtchn);
+		hypervisor_unmask_event(pbxi->pbx_evtchn);
 		hypervisor_notify_via_evtchn(pbxi->pbx_evtchn);
 		break;
 
