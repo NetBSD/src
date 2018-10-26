@@ -1,4 +1,4 @@
-#	$NetBSD: files.acpi,v 1.112 2018/10/26 10:46:21 jmcneill Exp $
+#	$NetBSD: files.acpi,v 1.113 2018/10/26 23:33:38 jmcneill Exp $
 
 include "dev/acpi/acpica/files.acpica"
 
@@ -32,6 +32,7 @@ file	dev/acpi/acpi_resource.c	acpi
 file	dev/acpi/acpi_srat.c		acpi
 file	dev/acpi/acpi_slit.c		acpi
 file	dev/acpi/acpi_timer.c		acpi
+file	dev/acpi/acpi_usb.c		acpi
 file	dev/acpi/acpi_util.c		acpi
 file	dev/acpi/acpi_wakedev.c		acpi
 file	dev/acpi/acpi_verbose.c		acpi & acpiverbose
@@ -258,5 +259,9 @@ file	dev/acpi/virtio_acpi.c		virtio_acpi
 # EHCI-compliant USB controller
 attach	ehci at acpinodebus with ehci_acpi
 file	dev/acpi/ehci_acpi.c		ehci_acpi
+
+# XHCI-compliant USB controller
+attach	xhci at acpinodebus with xhci_acpi
+file	dev/acpi/xhci_acpi.c		xhci_acpi
 
 include	"dev/acpi/wmi/files.wmi"

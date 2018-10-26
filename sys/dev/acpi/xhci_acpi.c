@@ -1,4 +1,4 @@
-/* $NetBSD: ehci_acpi.c,v 1.2 2018/10/26 23:33:38 jmcneill Exp $ */
+/* $NetBSD: xhci_acpi.c,v 1.1 2018/10/26 23:33:38 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci_acpi.c,v 1.2 2018/10/26 23:33:38 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci_acpi.c,v 1.1 2018/10/26 23:33:38 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -41,35 +41,35 @@ __KERNEL_RCSID(0, "$NetBSD: ehci_acpi.c,v 1.2 2018/10/26 23:33:38 jmcneill Exp $
 #include <dev/usb/usbdi.h>
 #include <dev/usb/usbdivar.h>
 #include <dev/usb/usb_mem.h>
-#include <dev/usb/ehcireg.h>
-#include <dev/usb/ehcivar.h>
+#include <dev/usb/xhcireg.h>
+#include <dev/usb/xhcivar.h>
 
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
 #include <dev/acpi/acpi_usb.h>
 
 static const char * const compatible[] = {
-	"PNP0D20",	/* EHCI-compliant USB controller without standard debug */
-	"PNP0D25",	/* EHCI-compliant USB controller with standard debug */
+	"PNP0D10",	/* EHCI-compliant USB controller without standard debug */
+	"PNP0D15",	/* EHCI-compliant USB controller with standard debug */
 	NULL
 };
 
-struct ehci_acpi_softc {
-	struct ehci_softc	sc_ehci;
+struct xhci_acpi_softc {
+	struct xhci_softc	sc_xhci;
 	ACPI_HANDLE		sc_handle;
 };
 
-static int	ehci_acpi_match(device_t, cfdata_t, void *);
-static void	ehci_acpi_attach(device_t, device_t, void *);
+static int	xhci_acpi_match(device_t, cfdata_t, void *);
+static void	xhci_acpi_attach(device_t, device_t, void *);
 
-static void	ehci_acpi_init(struct ehci_softc *);
+static void	xhci_acpi_init(struct xhci_softc *);
 
-CFATTACH_DECL2_NEW(ehci_acpi, sizeof(struct ehci_acpi_softc),
-	ehci_acpi_match, ehci_acpi_attach, NULL,
-	ehci_activate, NULL, ehci_childdet);
+CFATTACH_DECL2_NEW(xhci_acpi, sizeof(struct xhci_acpi_softc),
+	xhci_acpi_match, xhci_acpi_attach, NULL,
+	xhci_activate, NULL, xhci_childdet);
 
 static int
-ehci_acpi_match(device_t parent, cfdata_t cf, void *aux)
+xhci_acpi_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct acpi_attach_args *aa = aux;
 
@@ -80,10 +80,10 @@ ehci_acpi_match(device_t parent, cfdata_t cf, void *aux)
 }
 
 static void
-ehci_acpi_attach(device_t parent, device_t self, void *aux)
+xhci_acpi_attach(device_t parent, device_t self, void *aux)
 {
-	struct ehci_acpi_softc * const asc = device_private(self);
-	struct ehci_softc * const sc = &asc->sc_ehci;
+	struct xhci_acpi_softc * const asc = device_private(self);
+	struct xhci_softc * const sc = &asc->sc_xhci;
 	struct acpi_attach_args *aa = aux;
 	struct acpi_resources res;
 	struct acpi_mem *mem;
@@ -97,9 +97,9 @@ ehci_acpi_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dev = self;
 	sc->sc_bus.ub_hcpriv = sc;
 	sc->sc_bus.ub_dmatag = aa->aa_dmat;
-	sc->sc_bus.ub_revision = USBREV_2_0;
-	sc->sc_flags = EHCIF_ETTF;
-	sc->sc_vendor_init = ehci_acpi_init;
+	sc->sc_bus.ub_revision = USBREV_3_0;
+	sc->sc_quirks = 0;
+	sc->sc_vendor_init = xhci_acpi_init;
 
 	rv = acpi_resource_parse(sc->sc_dev, asc->sc_handle, "_CRS",
 	    &res, &acpi_resource_parse_ops_default);
@@ -118,41 +118,38 @@ ehci_acpi_attach(device_t parent, device_t self, void *aux)
 		goto done;
 	}
 
-	sc->sc_size = mem->ar_length;
-	sc->iot = aa->aa_memt;
-	error = bus_space_map(sc->iot, mem->ar_base, mem->ar_length, 0, &sc->ioh);
+	sc->sc_ios = mem->ar_length;
+	sc->sc_iot = aa->aa_memt;
+	error = bus_space_map(sc->sc_iot, mem->ar_base, mem->ar_length, 0, &sc->sc_ioh);
 	if (error) {
 		aprint_error_dev(self, "couldn't map registers\n");
 		return;
 	}
 
-	/* Disable interrupts */
-	sc->sc_offs = EREAD1(sc, EHCI_CAPLENGTH);
-	EOWRITE4(sc, EHCI_USBINTR, 0);
-
 	const int type = (irq->ar_type == ACPI_EDGE_SENSITIVE) ? IST_EDGE : IST_LEVEL;
-	ih = intr_establish(irq->ar_irq, IPL_USB, type, ehci_intr, sc);
+	ih = intr_establish(irq->ar_irq, IPL_USB, type, xhci_intr, sc);
 	if (ih == NULL) {
 		aprint_error_dev(self, "couldn't establish interrupt\n");
 		return;
 	}
 
-	error = ehci_init(sc);
+	error = xhci_init(sc);
 	if (error) {
 		aprint_error_dev(self, "init failed, error = %d\n", error);
 		return;
 	}
 
 	sc->sc_child = config_found(self, &sc->sc_bus, usbctlprint);
+	sc->sc_child2 = config_found(self, &sc->sc_bus2, usbctlprint);
 
 done:
 	acpi_resource_cleanup(&res);
 }
 
 static void
-ehci_acpi_init(struct ehci_softc *sc)
+xhci_acpi_init(struct xhci_softc *sc)
 {
-	struct ehci_acpi_softc * const asc = (struct ehci_acpi_softc *)sc;
+	struct xhci_acpi_softc * const asc = (struct xhci_acpi_softc *)sc;
 
 	acpi_usb_post_reset(asc->sc_handle);
 }
