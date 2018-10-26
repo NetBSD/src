@@ -1,4 +1,4 @@
-/*	$NetBSD: setterm.c,v 1.67 2018/10/02 17:35:44 roy Exp $	*/
+/*	$NetBSD: setterm.c,v 1.68 2018/10/26 22:22:24 uwe Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)setterm.c	8.8 (Berkeley) 10/25/94";
 #else
-__RCSID("$NetBSD: setterm.c,v 1.67 2018/10/02 17:35:44 roy Exp $");
+__RCSID("$NetBSD: setterm.c,v 1.68 2018/10/26 22:22:24 uwe Exp $");
 #endif
 #endif /* not lint */
 
@@ -339,6 +339,35 @@ does_esc_m(const char *cap)
 }
 
 /*
+ * capdup_nodelay --
+ * A helper for does_ctrl_o below that creates a copy of the given
+ * capability with delay specifications dropped.
+ */
+static char *
+capdup_nodelay(const char *src)
+{
+	char *clean, *dst;
+
+	dst = clean = malloc(strlen(src) + 1);
+	if (__predict_false(clean == NULL))
+		return NULL;
+
+	while (*src != '\0') {
+		if (src[0] == '$' && src[1] == '<') {
+			const char *end = strchr(src + 2, '>');
+			if (__predict_true(end != NULL)) {
+				src = end + 1;
+				continue;
+			}
+		}
+		*dst++ = *src++;
+	}
+
+	*dst = '\0';
+	return clean;
+}
+
+/*
  * does_ctrl_o --
  * A hack for vt100/xterm-like terminals where the "me" capability also
  * unsets acs.
@@ -346,19 +375,28 @@ does_esc_m(const char *cap)
 static int
 does_ctrl_o(const char *exit_cap, const char *acs_cap)
 {
-	const char *eptr = exit_cap, *aptr = acs_cap;
-	int l;
+	char *eptr, *aptr;
+	int res;
 
 #ifdef DEBUG
-	__CTRACE(__CTRACE_INIT, "does_ctrl_o: Testing %s for %s\n", eptr, aptr);
+	__CTRACE(__CTRACE_INIT, "does_ctrl_o: Testing %s for %s\n", exit_cap, acs_cap);
 #endif
-	l = strlen(acs_cap);
-	while (*eptr != 0) {
-		if (!strncmp(eptr, aptr, l))
-			return 1;
-		eptr++;
+
+	eptr = capdup_nodelay(exit_cap);
+	if (__predict_false(eptr == NULL))
+		return 0;
+
+	aptr = capdup_nodelay(acs_cap);
+	if (__predict_false(aptr == NULL)) {
+		free(eptr);
+		return 0;
 	}
-	return 0;
+
+	res = strstr(eptr, aptr) != NULL;
+
+	free(eptr);
+	free(aptr);
+	return res;
 }
 
 /*
