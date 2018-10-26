@@ -1,4 +1,4 @@
-/*	$NetBSD: jbus-i2c.c,v 1.1 2018/10/20 06:25:46 macallan Exp $	*/
+/*	$NetBSD: jbus-i2c.c,v 1.2 2018/10/26 01:57:59 macallan Exp $	*/
 
 /*
  * Copyright (c) 2018 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: jbus-i2c.c,v 1.1 2018/10/20 06:25:46 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: jbus-i2c.c,v 1.2 2018/10/26 01:57:59 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -39,15 +39,13 @@ __KERNEL_RCSID(0, "$NetBSD: jbus-i2c.c,v 1.1 2018/10/20 06:25:46 macallan Exp $"
 #include <dev/i2c/i2cvar.h>
 #include <dev/i2c/i2c_bitbang.h>
 
-#include <dev/pci/pcivar.h>
-#include <dev/pci/pcireg.h>
-#include <sparc64/dev/iommureg.h>
-#include <sparc64/dev/iommuvar.h>
-#include <sparc64/dev/schizovar.h>
-#include <sparc64/dev/schizoreg.h>
 #include <machine/openfirm.h>
 
+#ifdef JBUSI2C_DEBUG
 #define DPRINTF printf
+#else
+#define DPRINTF if (0) printf
+#endif
 
 /* I2C glue */
 static int jbusi2c_i2c_acquire_bus(void *, int);
@@ -82,6 +80,8 @@ struct jbusi2c_softc {
 	device_t sc_dev;
 	struct i2c_controller sc_i2c;
 	kmutex_t sc_i2c_lock;
+	bus_space_tag_t sc_bustag;
+	bus_space_handle_t sc_regh;
 	int sc_node;
 };
 
@@ -90,7 +90,9 @@ static void jbusi2c_setup_i2c(struct jbusi2c_softc *);
 CFATTACH_DECL_NEW(jbusi2c, sizeof(struct jbusi2c_softc),
     jbusi2c_match, jbusi2c_attach, NULL, NULL);
 
-extern struct schizo_softc *schizo0;
+/* schizo GPIO registers */
+#define DATA	0
+#define DIR	8
 
 int
 jbusi2c_match(device_t parent, cfdata_t match, void *aux)
@@ -114,13 +116,19 @@ jbusi2c_attach(device_t parent, device_t self, void *aux)
 	struct jbusi2c_softc *sc = device_private(self);
 	struct mainbus_attach_args *ma = aux;
 
-	aprint_normal("\n");
+	aprint_normal(": addr %lx\n", ma->ma_reg[0].ur_paddr);
 
 	sc->sc_dev = self;
 	sc->sc_node = ma->ma_node;
+	sc->sc_bustag = ma->ma_bustag;
 
-	if (schizo0 != NULL)
-		jbusi2c_setup_i2c(sc);
+	if (bus_space_map(sc->sc_bustag, ma->ma_reg[0].ur_paddr, 16, 0,
+	    &sc->sc_regh)) {
+		aprint_error(": failed to map registers\n");
+		return;
+	}
+
+	jbusi2c_setup_i2c(sc);
 }
 
 
@@ -133,11 +141,10 @@ jbusi2c_setup_i2c(struct jbusi2c_softc *sc)
 	prop_dictionary_t dev;
 	prop_data_t data;
 	prop_dictionary_t dict = device_properties(sc->sc_dev);
-	int ret, devs, regs[2], addr;
-	uint8_t reg = 0, val[128];
+	int devs, regs[2], addr;
 	char name[64], compat[256];
 
-	sc->sc_i2c.ic_cookie = schizo0;
+	sc->sc_i2c.ic_cookie = sc;
 	sc->sc_i2c.ic_acquire_bus = jbusi2c_i2c_acquire_bus;
 	sc->sc_i2c.ic_release_bus = jbusi2c_i2c_release_bus;
 	sc->sc_i2c.ic_send_start = jbusi2c_i2c_send_start;
@@ -146,11 +153,6 @@ jbusi2c_setup_i2c(struct jbusi2c_softc *sc)
 	sc->sc_i2c.ic_read_byte = jbusi2c_i2c_read_byte;
 	sc->sc_i2c.ic_write_byte = jbusi2c_i2c_write_byte;
 	sc->sc_i2c.ic_exec = NULL;
-
-	val[0] = 0;
-	ret = iic_exec(&sc->sc_i2c, I2C_OP_READ_WITH_STOP, 0x50,
-		    &reg, 1, val, 1, I2C_F_POLL);
-	printf("ret %d val %02x\n", ret, val[0]);
 
 	/* round up i2c devices */
 	devs = OF_child(sc->sc_node);
@@ -188,45 +190,59 @@ jbusi2c_setup_i2c(struct jbusi2c_softc *sc)
 	    iicbus_print);
 }
 
+static inline void
+jbusi2c_write(struct jbusi2c_softc *sc, int reg, uint64_t bits)
+{
+	bus_space_write_8(sc->sc_bustag, sc->sc_regh, reg, bits);
+}
+
+static inline uint64_t
+jbusi2c_read(struct jbusi2c_softc *sc, int reg)
+{
+	return bus_space_read_8(sc->sc_bustag, sc->sc_regh, reg);
+}
+
 /* I2C bitbanging */
 static void
 jbusi2c_i2cbb_set_bits(void *cookie, uint32_t bits)
 {
-	struct schizo_softc *sc = cookie;
+	struct jbusi2c_softc *sc = cookie;
 
-	schizo_write(sc, SCZ_JBUS_GPIO_DATA, bits);
+	jbusi2c_write(sc, DATA, bits);
 }
 
 static void
 jbusi2c_i2cbb_set_dir(void *cookie, uint32_t dir)
 {
-	struct schizo_softc *sc = cookie;
+	struct jbusi2c_softc *sc = cookie;
 
-	schizo_write(sc, SCZ_JBUS_GPIO_DIR, dir);
+	jbusi2c_write(sc, DIR, dir);
 }
 
 static uint32_t
 jbusi2c_i2cbb_read(void *cookie)
 {
-	struct schizo_softc *sc = cookie;
+	struct jbusi2c_softc *sc = cookie;
 
-	return schizo_read(sc, SCZ_JBUS_GPIO_DATA);
+	return jbusi2c_read(sc, DATA);
 }
 
 /* higher level I2C stuff */
 static int
 jbusi2c_i2c_acquire_bus(void *cookie, int flags)
 {
+	struct jbusi2c_softc *sc = cookie;
 
-	/* private bus */
+	mutex_enter(&sc->sc_i2c_lock);
 	return 0;
 }
 
 static void
 jbusi2c_i2c_release_bus(void *cookie, int flags)
 {
+	struct jbusi2c_softc *sc = cookie;
 
-	/* private bus */
+	mutex_exit(&sc->sc_i2c_lock);
 }
 
 static int
