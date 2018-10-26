@@ -1,4 +1,4 @@
-#	$NetBSD: files.acpi,v 1.111 2018/10/22 22:36:19 jmcneill Exp $
+#	$NetBSD: files.acpi,v 1.112 2018/10/26 10:46:21 jmcneill Exp $
 
 include "dev/acpi/acpica/files.acpica"
 
@@ -254,5 +254,9 @@ file	dev/acpi/amdccp_acpi.c		amdccp_acpi
 # QEMU Virtio
 attach	virtio at acpinodebus with virtio_acpi
 file	dev/acpi/virtio_acpi.c		virtio_acpi
+
+# EHCI-compliant USB controller
+attach	ehci at acpinodebus with ehci_acpi
+file	dev/acpi/ehci_acpi.c		ehci_acpi
 
 include	"dev/acpi/wmi/files.wmi"
