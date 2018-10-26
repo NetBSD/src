@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.498 2018/07/03 03:37:03 ozaki-r Exp $	*/
+/*	$NetBSD: init_main.c,v 1.499 2018/10/26 18:16:42 martin Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.498 2018/07/03 03:37:03 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.499 2018/10/26 18:16:42 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -889,12 +889,14 @@ check_console(struct lwp *l)
 
 	error = namei_simple_kernel("/dev/console",
 				NSM_FOLLOW_NOEMULROOT, &vp);
-	if (error == 0)
+	if (error == 0) {
 		vrele(vp);
-	else if (error == ENOENT)
-		printf("warning: no /dev/console\n");
-	else
+	} else if (error == ENOENT) {
+		if (boothowto & (AB_VERBOSE|AB_DEBUG))
+			printf("warning: no /dev/console\n");
+	} else {
 		printf("warning: lookup /dev/console: error %d\n", error);
+	}
 }
 
 /*
