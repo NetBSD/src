@@ -1,4 +1,4 @@
-/*	$NetBSD: gzip.c,v 1.114 2018/10/06 16:36:45 martin Exp $	*/
+/*	$NetBSD: gzip.c,v 1.115 2018/10/26 22:10:15 christos Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 2003, 2004, 2006, 2008, 2009, 2010, 2011, 2015, 2017
@@ -31,7 +31,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1997, 1998, 2003, 2004, 2006, 2008,\
  2009, 2010, 2011, 2015, 2017 Matthew R. Green.  All rights reserved.");
-__RCSID("$NetBSD: gzip.c,v 1.114 2018/10/06 16:36:45 martin Exp $");
+__RCSID("$NetBSD: gzip.c,v 1.115 2018/10/26 22:10:15 christos Exp $");
 #endif /* not lint */
 
 /*
@@ -85,6 +85,9 @@ enum filetype {
 #ifndef NO_XZ_SUPPORT
 	FT_XZ,
 #endif
+#ifndef NO_LZ_SUPPORT
+	FT_LZ,
+#endif
 	FT_LAST,
 	FT_UNKNOWN
 };
@@ -109,6 +112,11 @@ enum filetype {
 #include <lzma.h>
 #define XZ_SUFFIX	".xz"
 #define XZ_MAGIC	"\3757zXZ"
+#endif
+
+#ifndef NO_LZ_SUPPORT
+#define LZ_SUFFIX	".lz"
+#define LZ_MAGIC	"LZIP"
 #endif
 
 #define GZ_SUFFIX	".gz"
@@ -153,6 +161,9 @@ static suffixes_t suffixes[] = {
 #endif
 #ifndef NO_XZ_SUPPORT
 	SUFFIX(XZ_SUFFIX,	""),
+#endif
+#ifndef NO_LZ_SUPPORT
+	SUFFIX(LZ_SUFFIX,	""),
 #endif
 	SUFFIX(GZ_SUFFIX,	""),	/* Overwritten by -S "" */
 #endif /* SMALL */
@@ -258,6 +269,10 @@ static	off_t	unpack(int, int, char *, size_t, off_t *);
 #ifndef NO_XZ_SUPPORT
 static	off_t	unxz(int, int, char *, size_t, off_t *);
 static	off_t	unxz_len(int);
+#endif
+
+#ifndef NO_LZ_SUPPORT
+static	off_t	unlz(int, int, char *, size_t, off_t *);
 #endif
 
 #ifdef SMALL
@@ -1138,6 +1153,11 @@ file_gettype(u_char *buf)
 		return FT_XZ;
 	else
 #endif
+#ifndef NO_LZ_SUPPORT
+	if (memcmp(buf, LZ_MAGIC, 4) == 0)
+		return FT_LZ;
+#endif
+	else
 		return FT_UNKNOWN;
 }
 
@@ -1589,6 +1609,15 @@ file_uncompress(char *file, char *outfile, size_t outsize)
 		break;
 #endif
 
+#ifndef NO_LZ_SUPPORT
+	case FT_LZ:
+		if (lflag) {
+			maybe_warnx("no -l with lzip files");
+			goto lose;
+		}
+		size = unlz(fd, zfd, NULL, 0, NULL);
+		break;
+#endif
 #ifndef SMALL
 	case FT_UNKNOWN:
 		if (lflag) {
@@ -1818,6 +1847,12 @@ handle_stdin(void)
 #ifndef NO_XZ_SUPPORT
 	case FT_XZ:
 		usize = unxz(STDIN_FILENO, STDOUT_FILENO,
+			     (char *)header1, sizeof header1, &gsize);
+		break;
+#endif
+#ifndef NO_LZ_SUPPORT
+	case FT_LZ:
+		usize = unlz(STDIN_FILENO, STDOUT_FILENO,
 			     (char *)header1, sizeof header1, &gsize);
 		break;
 #endif
@@ -2216,6 +2251,9 @@ display_version(void)
 #endif
 #ifndef NO_XZ_SUPPORT
 #include "unxz.c"
+#endif
+#ifndef NO_LZ_SUPPORT
+#include "unlz.c"
 #endif
 
 static ssize_t
