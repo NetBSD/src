@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.10 2018/10/12 22:08:04 jmcneill Exp $	*/
+/*	$NetBSD: boot.c,v 1.11 2018/10/26 20:56:35 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -43,20 +43,23 @@ extern const char bootprog_name[], bootprog_rev[], bootprog_kernrev[];
 
 extern char twiddle_toggle;
 
-static const char * const names[][2] = {
-	{ "netbsd", "netbsd.gz" },
-	{ "onetbsd", "onetbsd.gz" },
-	{ "netbsd.old", "netbsd.old.gz" },
+static const char * const names[] = {
+	"netbsd", "netbsd.gz",
+	"onetbsd", "onetbsd.gz",
+	"netbsd.old", "netbsd.old.gz",
 };
 
 #define NUMNAMES	__arraycount(names)
-#define DEFFILENAME	names[0][0]
-
-#define	DEFTIMEOUT	5
 
 static char default_device[32];
 static char initrd_path[255];
 static char dtb_path[255];
+static char bootfile[255];
+
+#define	DEFTIMEOUT	5
+#define DEFFILENAME	names[0]
+
+int	set_bootfile(const char *);
 
 void	command_boot(char *);
 void	command_dev(char *);
@@ -106,9 +109,13 @@ void
 command_boot(char *arg)
 {
 	char *fname = arg;
+	const char *kernel = *fname ? fname : bootfile;
 	char *bootargs = gettrailer(arg);
 
-	exec_netbsd(*fname ? fname : DEFFILENAME, bootargs);
+	if (!kernel || !*kernel)
+		kernel = DEFFILENAME;
+
+	exec_netbsd(kernel, bootargs);
 }
 
 void
@@ -227,7 +234,7 @@ command_reset(char *arg)
 }
 
 int
-set_default_device(char *arg)
+set_default_device(const char *arg)
 {
 	if (strlen(arg) + 1 > sizeof(default_device))
 		return ERANGE;
@@ -242,7 +249,7 @@ get_default_device(void)
 }
 
 int
-set_initrd_path(char *arg)
+set_initrd_path(const char *arg)
 {
 	if (strlen(arg) + 1 > sizeof(initrd_path))
 		return ERANGE;
@@ -257,7 +264,7 @@ get_initrd_path(void)
 }
 
 int
-set_dtb_path(char *arg)
+set_dtb_path(const char *arg)
 {
 	if (strlen(arg) + 1 > sizeof(dtb_path))
 		return ERANGE;
@@ -269,6 +276,15 @@ char *
 get_dtb_path(void)
 {
 	return dtb_path;
+}
+
+int
+set_bootfile(const char *arg)
+{
+	if (strlen(arg) + 1 > sizeof(bootfile))
+		return ERANGE;
+	strcpy(bootfile, arg);
+	return 0;
 }
 
 void
@@ -302,6 +318,15 @@ read_env(void)
 		FreePool(s);
 	}
 
+	s = efi_env_get("bootfile");
+	if (s) {
+#ifdef EFIBOOT_DEBUG
+		printf(">> Setting bootfile path to '%s' from environment\n", s);
+#endif
+		set_bootfile(s);
+		FreePool(s);
+	}
+
 	s = efi_env_get("rootdev");
 	if (s) {
 #ifdef EFIBOOT_DEBUG
@@ -318,23 +343,24 @@ boot(void)
 	int currname, c;
 
 	read_env();
-
 	print_banner();
-
 	printf("Press return to boot now, any other key for boot prompt\n");
-	for (currname = 0; currname < NUMNAMES; currname++) {
-		printf("booting %s - starting in ", names[currname][0]);
+
+	if (bootfile[0] != '\0')
+		currname = -1;
+	else
+		currname = 0;
+
+	for (; currname < NUMNAMES; currname++) {
+		if (currname >= 0)
+			set_bootfile(names[currname]);
+		printf("booting %s - starting in ", bootfile);
 
 		c = awaitkey(DEFTIMEOUT, 1);
-		if ((c != '\r') && (c != '\n') && (c != '\0')) {
+		if (c != '\r' && c != '\n' && c != '\0')
 			bootprompt(); /* does not return */
-		}
 
-		/*
-		 * try pairs of names[] entries, foo and foo.gz
-		 */
-		exec_netbsd(names[currname][0], "");
-		exec_netbsd(names[currname][1], "");
+		exec_netbsd(bootfile, "");
 	}
 
 	bootprompt();	/* does not return */
