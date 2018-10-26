@@ -1,4 +1,4 @@
-/*	$NetBSD: evtchn.c,v 1.81 2018/09/23 02:27:24 cherry Exp $	*/
+/*	$NetBSD: evtchn.c,v 1.82 2018/10/26 05:33:21 cherry Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -54,7 +54,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.81 2018/09/23 02:27:24 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.82 2018/10/26 05:33:21 cherry Exp $");
 
 #include "opt_xen.h"
 #include "isa.h"
@@ -269,8 +269,10 @@ events_init(void)
 	 */
 	evtsource[debug_port] = (void *)-1;
 	xen_atomic_set_bit(&curcpu()->ci_evtmask[0], debug_port);
-	hypervisor_enable_event(debug_port);
-
+	hypervisor_unmask_event(debug_port);
+#if NPCI > 0 || NISA > 0
+	hypervisor_ack_pirq_event(debug_port);
+#endif /* NPCI > 0 || NISA > 0 */
 	x86_enable_intr();		/* at long last... */
 }
 
@@ -331,7 +333,10 @@ evtchn_do_event(int evtch, struct intrframe *regs)
 	 */
 	if (__predict_false(evtch == debug_port)) {
 		xen_debug_handler(NULL);
-		hypervisor_enable_event(evtch);
+		hypervisor_unmask_event(debug_port);
+#if NPCI > 0 || NISA > 0
+		hypervisor_ack_pirq_event(debug_port);
+#endif /* NPCI > 0 || NISA > 0 */		
 		return 0;
 	}
 
@@ -391,7 +396,11 @@ evtchn_do_event(int evtch, struct intrframe *regs)
 	}
 	mutex_spin_exit(&evtlock[evtch]);
 	cli();
-	hypervisor_enable_event(evtch);
+	hypervisor_unmask_event(evtch);
+#if NPCI > 0 || NISA > 0
+	hypervisor_ack_pirq_event(evtch);
+#endif /* NPCI > 0 || NISA > 0 */		
+
 splx:
 	/*
 	 * C version of spllower(). ASTs will be checked when
@@ -759,7 +768,8 @@ pirq_establish(int pirq, int evtch, int (*func)(void *), void *arg, int level,
 	}
 
 	hypervisor_prime_pirq_event(pirq, evtch);
-	hypervisor_enable_event(evtch);
+	hypervisor_unmask_event(evtch);
+	hypervisor_ack_pirq_event(evtch);
 	return ih;
 }
 
@@ -994,10 +1004,10 @@ event_remove_handler(int evtch, int (*func)(void *), void *arg)
 	return 0;
 }
 
+#if NPCI > 0 || NISA > 0
 void
 hypervisor_prime_pirq_event(int pirq, unsigned int evtch)
 {
-#if NPCI > 0 || NISA > 0
 	physdev_op_t physdev_op;
 	physdev_op.cmd = PHYSDEVOP_IRQ_STATUS_QUERY;
 	physdev_op.u.irq_status_query.irq = pirq;
@@ -1010,19 +1020,16 @@ hypervisor_prime_pirq_event(int pirq, unsigned int evtch)
 		printf("pirq %d needs notify\n", pirq);
 #endif
 	}
-#endif /* NPCI > 0 || NISA > 0 */
 }
 
 void
-hypervisor_enable_event(unsigned int evtch)
+hypervisor_ack_pirq_event(unsigned int evtch)
 {
 #ifdef IRQ_DEBUG
 	if (evtch == IRQ_DEBUG)
-		printf("hypervisor_enable_evtch: evtch %d\n", evtch);
+		printf("%s: evtch %d\n", __func__, evtch);
 #endif
 
-	hypervisor_unmask_event(evtch);
-#if NPCI > 0 || NISA > 0
 	if (pirq_needs_unmask_notify[evtch >> 5] & (1 << (evtch & 0x1f))) {
 #ifdef  IRQ_DEBUG
 		if (evtch == IRQ_DEBUG)
@@ -1030,8 +1037,8 @@ hypervisor_enable_event(unsigned int evtch)
 #endif
 		(void)HYPERVISOR_physdev_op(&physdev_op_notify);
 	}
-#endif /* NPCI > 0 || NISA > 0 */
 }
+#endif /* NPCI > 0 || NISA > 0 */
 
 int
 xen_debug_handler(void *arg)

@@ -1,4 +1,4 @@
-/*      $NetBSD: xbdback_xenbus.c,v 1.68 2018/10/24 03:59:33 cherry Exp $      */
+/*      $NetBSD: xbdback_xenbus.c,v 1.69 2018/10/26 05:33:21 cherry Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.68 2018/10/24 03:59:33 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.69 2018/10/26 05:33:21 cherry Exp $");
 
 #include <sys/atomic.h>
 #include <sys/buf.h>
@@ -654,7 +654,7 @@ xbdback_connect(struct xbdback_instance *xbdi)
 
 	/* enable the xbdback event handler machinery */
 	xbdi->xbdi_status = WAITING;
-	hypervisor_enable_event(xbdi->xbdi_evtchn);
+	hypervisor_unmask_event(xbdi->xbdi_evtchn);
 	hypervisor_notify_via_evtchn(xbdi->xbdi_evtchn);
 
 	if (kthread_create(PRI_NONE, KTHREAD_MPSAFE, NULL,

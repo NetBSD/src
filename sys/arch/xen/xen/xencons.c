@@ -1,4 +1,4 @@
-/*	$NetBSD: xencons.c,v 1.45 2018/10/24 03:59:33 cherry Exp $	*/
+/*	$NetBSD: xencons.c,v 1.46 2018/10/26 05:33:21 cherry Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -53,7 +53,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xencons.c,v 1.45 2018/10/24 03:59:33 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xencons.c,v 1.46 2018/10/26 05:33:21 cherry Exp $");
 
 #include "opt_xen.h"
 
@@ -249,7 +249,7 @@ xencons_resume(device_t dev, const pmf_qual_t *qual) {
 
 	if (evtch != -1) {
 		aprint_verbose_dev(dev, "using event channel %d\n", evtch);
-		hypervisor_enable_event(evtch);
+		hypervisor_unmask_event(evtch);
 	}
 
 	return true;

@@ -1,4 +1,4 @@
-/*      $NetBSD: if_xennet_xenbus.c,v 1.80 2018/10/24 03:59:33 cherry Exp $      */
+/*      $NetBSD: if_xennet_xenbus.c,v 1.81 2018/10/26 05:33:21 cherry Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.80 2018/10/24 03:59:33 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.81 2018/10/26 05:33:21 cherry Exp $");
 
 #include "opt_xen.h"
 #include "opt_nfs_boot.h"
@@ -1386,7 +1386,7 @@ xennet_init(struct ifnet *ifp)
 	if ((ifp->if_flags & IFF_RUNNING) == 0) {
 		sc->sc_rx_ring.sring->rsp_event =
 		    sc->sc_rx_ring.rsp_cons + 1;
-		hypervisor_enable_event(sc->sc_evtchn);
+		hypervisor_unmask_event(sc->sc_evtchn);
 		hypervisor_notify_via_evtchn(sc->sc_evtchn);
 		xennet_reset(sc);
 	}

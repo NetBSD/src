@@ -1,4 +1,4 @@
-/*	$NetBSD: hypervisor_machdep.c,v 1.28 2014/09/21 12:46:15 bouyer Exp $	*/
+/*	$NetBSD: hypervisor_machdep.c,v 1.29 2018/10/26 05:33:21 cherry Exp $	*/
 
 /*
  *
@@ -54,7 +54,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hypervisor_machdep.c,v 1.28 2014/09/21 12:46:15 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hypervisor_machdep.c,v 1.29 2018/10/26 05:33:21 cherry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,6 +71,8 @@ __KERNEL_RCSID(0, "$NetBSD: hypervisor_machdep.c,v 1.28 2014/09/21 12:46:15 bouy
 #include <xen/xenpmap.h>
 
 #include "opt_xen.h"
+#include "isa.h"
+#include "pci.h"
 
 /*
  * arch-dependent p2m frame lists list (L3 and L2)
@@ -392,7 +394,10 @@ evt_enable_event(unsigned int port, unsigned int l1i,
 		 unsigned int l2i, void *args)
 {
 	KASSERT(args == NULL);
-	hypervisor_enable_event(port);
+	hypervisor_unmask_event(port);
+#if NPCI > 0 || NISA > 0
+	hypervisor_ack_pirq_event(port);
+#endif /* NPCI > 0 || NISA > 0 */
 }
 
 void
