@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.1,v 1.1.2.39 2018/10/25 18:33:52 martin Exp $
+# $NetBSD: CHANGES-8.1,v 1.1.2.40 2018/10/26 15:14:46 martin Exp $
 
 A complete list of changes from the NetBSD 8.0 release to the NetBSD 8.1
 release:
@@ -1485,4 +1485,12 @@ sys/netinet6/icmp6.c				1.240
 
 	Remove a leftover debug printf.
 	[ozaki-r, ticket #1071]
+
+tools/Makefile.gnuhost				(apply patch)
+
+	Force -std=gnu++03 when building gnu tools when the host
+	compiler is clang. Newer clang versions default to newer
+	standards, and this version of gcc has not been adapted.
+	[maya, ticket #1070]
+
 
