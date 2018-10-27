@@ -1,4 +1,4 @@
-/*	$NetBSD: unlz.c,v 1.1 2018/10/26 22:10:15 christos Exp $	*/
+/*	$NetBSD: unlz.c,v 1.2 2018/10/27 11:52:26 kre Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -577,7 +577,7 @@ lz_decode(int fin, int fdout, unsigned dict_size)
 #else
 	rv = ftello(lz.fout);
 #endif
-	fprintf(stderr, "%td\n", rv);
+	fprintf(stderr, "%jd\n", (intmax_t)rv);
 out:
 	lz_destroy(&lz);
 	return rv;
