@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_tftproot.c,v 1.21 2018/02/08 09:05:20 dholland Exp $ */
+/*	$NetBSD: subr_tftproot.c,v 1.22 2018/10/27 09:13:45 mlelstv Exp $ */
 
 /*-
  * Copyright (c) 2007 Emmanuel Dreyfus, all rights reserved.
@@ -39,7 +39,7 @@
 #include "opt_md.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_tftproot.c,v 1.21 2018/02/08 09:05:20 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_tftproot.c,v 1.22 2018/10/27 09:13:45 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -318,9 +318,10 @@ tftproot_getfile(struct tftproot_handle *trh, struct lwp *l)
 	 * file.
 	 */
 	if ((error = (*so->so_send)(so, mtod(m_serv, struct sockaddr *), NULL,
-	    m_outbuf, NULL, 0, l)) != 0)
+	    m_outbuf, NULL, 0, l)) != 0) {
 		DPRINTF(("%s():%d tftproot: sosend returned %d\n", 
 		    __func__, __LINE__, error));
+	}
 
 	/* Freed by the protocol */
 	m_outbuf = NULL;
