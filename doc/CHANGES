@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2454 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2455 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -240,3 +240,4 @@ Changes from NetBSD 8.0 to NetBSD 9.0:
 	amdccp(4): Add driver for AMD Cryptographic Coprocessor RNG.
 		[jakllsch 20181019]
 	libc: Update to tzcode2018f. [christos 20181019]
+	tzdata: updated to 2018g [kre 20181027]
