@@ -1,4 +1,4 @@
-/*	$NetBSD: asan.c,v 1.9 2018/10/27 06:06:31 maxv Exp $	*/
+/*	$NetBSD: asan.c,v 1.10 2018/10/27 06:35:54 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: asan.c,v 1.9 2018/10/27 06:06:31 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asan.c,v 1.10 2018/10/27 06:35:54 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -330,13 +330,20 @@ kasan_report(unsigned long addr, size_t size, bool write, unsigned long rip)
 #define KASAN_STACK_PARTIAL	0xF4
 #define KASAN_USE_AFTER_SCOPE	0xF8
 
-static void
-kasan_shadow_fill(const void *addr, size_t size, uint8_t val)
+static __always_inline void
+kasan_shadow_1byte_markvalid(unsigned long addr)
+{
+	int8_t *byte = kasan_addr_to_shad((void *)addr);
+	int8_t last = (addr & KASAN_SHADOW_MASK) + 1;
+
+	*byte = last;
+}
+
+static __always_inline void
+kasan_shadow_Nbyte_fill(const void *addr, size_t size, uint8_t val)
 {
 	void *shad;
 
-	if (__predict_false(!kasan_enabled))
-		return;
 	if (__predict_false(size == 0))
 		return;
 	if (__predict_false(kasan_unsupported((vaddr_t)addr)))
@@ -349,15 +356,6 @@ kasan_shadow_fill(const void *addr, size_t size, uint8_t val)
 	size = size >> KASAN_SHADOW_SCALE_SHIFT;
 
 	__builtin_memset(shad, val, size);
-}
-
-static __always_inline void
-kasan_shadow_1byte_markvalid(unsigned long addr)
-{
-	int8_t *byte = kasan_addr_to_shad((void *)addr);
-	int8_t last = (addr & KASAN_SHADOW_MASK) + 1;
-
-	*byte = last;
 }
 
 void
@@ -380,7 +378,7 @@ kasan_markmem(const void *addr, size_t size, bool valid)
 		}
 	} else {
 		KASSERT(size % KASAN_SHADOW_SCALE_SIZE == 0);
-		kasan_shadow_fill(addr, size, KASAN_MEMORY_REDZONE);
+		kasan_shadow_Nbyte_fill(addr, size, KASAN_MEMORY_REDZONE);
 	}
 }
 
@@ -389,7 +387,7 @@ kasan_softint(struct lwp *l)
 {
 	const void *stk = (const void *)uvm_lwp_getuarea(l);
 
-	kasan_shadow_fill(stk, USPACE, 0);
+	kasan_shadow_Nbyte_fill(stk, USPACE, 0);
 }
 
 void
@@ -681,8 +679,6 @@ void __asan_loadN_noabort(unsigned long, size_t);
 void __asan_storeN(unsigned long, size_t);
 void __asan_storeN_noabort(unsigned long, size_t);
 void __asan_handle_no_return(void);
-void __asan_poison_stack_memory(const void *, size_t);
-void __asan_unpoison_stack_memory(const void *, size_t);
 
 void
 __asan_loadN(unsigned long addr, size_t size)
@@ -712,20 +708,6 @@ void
 __asan_handle_no_return(void)
 {
 	/* nothing */
-}
-
-void
-__asan_poison_stack_memory(const void *addr, size_t size)
-{
-	KASSERT((vaddr_t)addr % KASAN_SHADOW_SCALE_SIZE == 0);
-	kasan_shadow_fill(addr, size, KASAN_USE_AFTER_SCOPE);
-}
-
-void
-__asan_unpoison_stack_memory(const void *addr, size_t size)
-{
-	KASSERT((vaddr_t)addr % KASAN_SHADOW_SCALE_SIZE == 0);
-	kasan_shadow_fill(addr, size, 0);
 }
 
 #define ASAN_SET_SHADOW(byte) \
