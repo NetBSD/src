@@ -1,4 +1,4 @@
-/*	$NetBSD: unlz.c,v 1.3 2018/10/27 13:20:21 christos Exp $	*/
+/*	$NetBSD: unlz.c,v 1.4 2018/10/27 23:40:04 christos Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -537,7 +537,7 @@ lz_decode_member(struct lz_decoder *lz)
 
 
 static off_t
-lz_decode(int fin, int fdout, unsigned dict_size)
+lz_decode(int fin, int fdout, unsigned dict_size, off_t *insize)
 {
 	struct lz_decoder lz;
 	off_t rv = -1;
@@ -568,15 +568,14 @@ lz_decode(int fin, int fdout, unsigned dict_size)
 	if (crc != lz_get_crc(&lz) || data_size != lz_get_data_position(&lz))
 		goto out;
 
-#if 0
 	rv = 0;
 	for (int i = 19; i >= 12; --i) {
 		rv <<= 8;
 		rv += trailer[i];
 	}
-#else
+	if (insize)
+		*insize = rv;
 	rv = ftello(lz.fout);
-#endif
 out:
 	lz_destroy(&lz);
 	return rv;
@@ -612,13 +611,21 @@ unlz(int fin, int fout, char *pre, size_t prelen, off_t *bytes_in)
 
 	char header[HDR_SIZE];
 
-	switch (read(fin, header, sizeof(header))) {
-	case 0:
-		return 0;
-	case sizeof(header):
-		break;
-	default:
+	if (prelen > sizeof(header))
 		return -1;
+	if (pre && prelen)
+		memcpy(header, pre, prelen);
+	
+	ssize_t nr = read(fin, header + prelen, sizeof(header) - prelen);
+	switch (nr) {
+	case -1:
+		return -1;
+	case 0:
+		return prelen ? -1 : 0;
+	default:
+		if ((size_t)nr != sizeof(header) - prelen)
+			return -1;
+		break;
 	}
 
 	if (memcmp(header, hdrmagic, sizeof(hdrmagic)) != 0)
@@ -628,5 +635,5 @@ unlz(int fin, int fout, char *pre, size_t prelen, off_t *bytes_in)
 	if (dict_size == 0)
 		return -1;
 
-	return lz_decode(fin, fout, dict_size);
+	return lz_decode(fin, fout, dict_size, bytes_in);
 }
