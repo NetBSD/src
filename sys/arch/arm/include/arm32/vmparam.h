@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.41 2017/02/13 09:46:30 skrll Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.42 2018/10/27 13:26:23 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -48,7 +48,7 @@
 #include <arm/arm32/param.h>
 #include <arm/arm32/pte.h>	/* pt_entry_t */
 
-#define	__USE_TOPDOWN_VM 
+#define	__USE_TOPDOWN_VM
 #define	USRSTACK	VM_MAXUSER_ADDRESS
 
 /*
