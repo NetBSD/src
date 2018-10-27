@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2235 2018/10/25 13:20:01 uwe Exp $
+#	$NetBSD: mi,v 1.2236 2018/10/27 07:24:58 kamil Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -6258,6 +6258,7 @@
 ./usr/share/man/cat3/curses_fileio.0		comp-c-catman		.cat
 ./usr/share/man/cat3/curses_inch.0		comp-obsolete		obsolete
 ./usr/share/man/cat3/curses_input.0		comp-c-catman		.cat
+./usr/share/man/cat3/curses_insch.0		comp-c-catman		.cat
 ./usr/share/man/cat3/curses_insdelln.0		comp-c-catman		.cat
 ./usr/share/man/cat3/curses_insertch.0		comp-obsolete		obsolete
 ./usr/share/man/cat3/curses_insertln.0		comp-c-catman		.cat
@@ -8436,6 +8437,7 @@
 ./usr/share/man/cat3/mvinchnstr.0		comp-obsolete		obsolete
 ./usr/share/man/cat3/mvinchstr.0		comp-obsolete		obsolete
 ./usr/share/man/cat3/mvinnstr.0			comp-obsolete		obsolete
+./usr/share/man/cat3/mvinsch.0			comp-c-catman		.cat
 ./usr/share/man/cat3/mvinstr.0			comp-obsolete		obsolete
 ./usr/share/man/cat3/mvprintw.0			comp-c-catman		.cat
 ./usr/share/man/cat3/mvvline.0			comp-c-catman		.cat
@@ -8449,6 +8451,7 @@
 ./usr/share/man/cat3/mvwgetnstr.0		comp-c-catman		.cat
 ./usr/share/man/cat3/mvwgetstr.0		comp-c-catman		.cat
 ./usr/share/man/cat3/mvwhline.0			comp-c-catman		.cat
+./usr/share/man/cat3/mvwinsch.0			comp-c-catman		.cat
 ./usr/share/man/cat3/mvwin.0			comp-c-catman		.cat
 ./usr/share/man/cat3/mvwinchnstr.0		comp-obsolete		obsolete
 ./usr/share/man/cat3/mvwinchstr.0		comp-obsolete		obsolete
