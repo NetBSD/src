@@ -1,5 +1,5 @@
-.\"	$NetBSD: zdump.8,v 1.18 2018/10/19 23:05:35 christos Exp $
-.Dd October 19, 2018
+.\"	$NetBSD: zdump.8,v 1.19 2018/10/27 22:29:24 christos Exp $
+.Dd October 27, 2018
 .Dt ZDUMP 8
 .Os
 .Sh NAME
@@ -147,13 +147,14 @@ tabbed columns line up.)
 .Bd -literal
 TZ="Pacific/Honolulu"
 .Ed
-.Bl -column "XXXX-XX-XX" "HH:MM:SS" "-HH:MM:SS" "TZT" "X" -compact
-.It - Ta - Ta -10:31:26 Ta LMT Ta
-.It 1896-01-13 Ta 12:01:26 Ta -10:30 Ta HST Ta
-.It 1933-04-30 Ta 03 Ta -09:30 Ta HDT Ta 1
-.It 1933-05-21 Ta 11 Ta -10:30 Ta HST Ta
-.It 1942-02-09 Ta 03 Ta -09:30 Ta HDT Ta 1
-.It 1945-09-30 Ta 01 Ta -10:30 Ta HST Ta
+.Bl -column "XXXX-XX-XX" "HH:MM:SS" "-HHMMSS" "TZT" "X" -compact
+.It - Ta - Ta -103126 Ta LMT Ta
+.It 1896-01-13 Ta 12:01:26 Ta -1030 Ta HST Ta
+.It 1933-04-30 Ta 03 Ta -0930 Ta HDT Ta 1
+.It 1933-05-21 Ta 11 Ta -1030 Ta HST Ta
+.It 1942-02-09 Ta 03 Ta -0930 Ta HDT Ta 1
+.It 1945-08-14 Ta 13:30 Ta -0930 Ta HPT Ta 1
+.It 1945-09-30 Ta 01 Ta -1030 Ta HST Ta
 .It 1947-06-08 Ta 02:30 Ta -10 Ta HST Ta
 .El
 .Pp
@@ -174,7 +175,7 @@ Here are excerpts from another example:
 TZ="Europe/Astrakhan"
 .Ed
 .Bl -column "XXXX-XX-XX" "HH:MM:SS" "-HH:MM:SS" "TZT" "X" -compact
-.It - Ta - Ta +03:12:12 Ta LMT Ta
+.It - Ta - Ta +031212 Ta LMT Ta
 .It 1924-04-30 Ta 23:47:48 Ta +03 Ta Ta
 .It 1930-06-21 Ta 01 Ta +04 Ta Ta
 .It 1981-04-01 Ta 01 Ta +05 Ta Ta 1
