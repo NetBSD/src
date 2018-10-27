@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2455 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2456 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -241,3 +241,4 @@ Changes from NetBSD 8.0 to NetBSD 9.0:
 		[jakllsch 20181019]
 	libc: Update to tzcode2018f. [christos 20181019]
 	tzdata: updated to 2018g [kre 20181027]
+	libc: Update to tzcode2018g. [christos 20181027]
