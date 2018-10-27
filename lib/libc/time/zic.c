@@ -1,4 +1,4 @@
-/*	$NetBSD: zic.c,v 1.71 2018/05/04 15:51:00 christos Exp $	*/
+/*	$NetBSD: zic.c,v 1.72 2018/10/27 22:29:24 christos Exp $	*/
 /*
 ** This file is in the public domain, so clarified as of
 ** 2006-07-17 by Arthur David Olson.
@@ -10,7 +10,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: zic.c,v 1.71 2018/05/04 15:51:00 christos Exp $");
+__RCSID("$NetBSD: zic.c,v 1.72 2018/10/27 22:29:24 christos Exp $");
 #endif /* !defined lint */
 
 #include "private.h"
@@ -71,6 +71,11 @@ typedef int_fast64_t	zic_t;
 /* The maximum ptrdiff_t value, for pre-C99 platforms.  */
 #ifndef PTRDIFF_MAX
 static ptrdiff_t const PTRDIFF_MAX = MAXVAL(ptrdiff_t, TYPE_BIT(ptrdiff_t));
+#endif
+
+/* The minimum alignment of a type, for pre-C11 platforms.  */
+#if __STDC_VERSION__ < 201112
+# define _Alignof(type) offsetof(struct { char a; type b; }, b)
 #endif
 
 /* The type for line numbers.  Use PRIdMAX to format them; formerly
@@ -199,7 +204,9 @@ enum { PERCENT_Z_LEN_BOUND = sizeof "+995959" - 1 };
    QTBUG-53071 <https://bugreports.qt.io/browse/QTBUG-53071>.  This
    workaround will no longer be needed when Qt 5.6.1 and earlier are
    obsolete, say in the year 2021.  */
+#ifndef WORK_AROUND_QTBUG_53071
 enum { WORK_AROUND_QTBUG_53071 = 1 };
+#endif
 
 static int		charcnt;
 static bool		errors;
@@ -439,6 +446,16 @@ size_product(size_t nitems, size_t itemsize)
 	if (SIZE_MAX / itemsize < nitems)
 		memory_exhausted(_("size overflow"));
 	return nitems * itemsize;
+}
+
+static ATTRIBUTE_PURE size_t
+align_to(size_t size, size_t alignment)
+{
+  size_t aligned_size = size + alignment - 1;
+  aligned_size -= aligned_size % alignment;
+  if (aligned_size < size)
+    memory_exhausted(_("alignment overflow"));
+  return aligned_size;
 }
 
 #if !HAVE_STRDUP
@@ -1761,12 +1778,6 @@ atcomp(const void *avp, const void *bvp)
 	return (a < b) ? -1 : (a > b);
 }
 
-static bool
-is32(const zic_t x)
-{
-	return INT32_MIN <= x && x <= INT32_MAX;
-}
-
 static void
 writezone(const char *const name, const char *const string, char version)
 {
@@ -1781,7 +1792,11 @@ writezone(const char *const name, const char *const string, char version)
 	zic_t one = 1;
 	zic_t y2038_boundary = one << 31;
 	ptrdiff_t nats = timecnt + WORK_AROUND_QTBUG_53071;
-	zic_t *ats = zic_malloc(size_product(nats, sizeof *ats + 1));
+
+	/* Allocate the ATS and TYPES arrays via a single malloc,
+	   as this is a bit faster.  */
+	zic_t *ats = zic_malloc(align_to(size_product(nats, sizeof *ats + 1),
+				_Alignof(zic_t)));
 	void *typesptr = ats + nats;
 	unsigned char *types = typesptr;
 
@@ -1834,18 +1849,6 @@ writezone(const char *const name, const char *const string, char version)
 		types[i] = attypes[i].type;
 	}
 
-	/* Work around QTBUG-53071 for time stamps less than y2038_boundary - 1,
-	   by inserting a no-op transition at time y2038_boundary - 1.
-	   This works only for timestamps before the boundary, which
-	   should be good enough in practice as QTBUG-53071 should be
-	   long-dead by 2038.  */
-	if (WORK_AROUND_QTBUG_53071 && timecnt != 0
-	    && ats[timecnt - 1] < y2038_boundary - 1 && strchr(string, '<')) {
-	  ats[timecnt] = y2038_boundary - 1;
-	  types[timecnt] = types[timecnt - 1];
-	  timecnt++;
-	}
-
 	/*
 	** Correct for leap seconds.
 	*/
@@ -1857,6 +1860,22 @@ writezone(const char *const name, const char *const string, char version)
 				break;
 			}
 	}
+
+	/* Work around QTBUG-53071 for timestamps less than y2038_boundary - 1,
+	   by inserting a no-op transition at time y2038_boundary - 1.
+	   This works only for timestamps before the boundary, which
+	   should be good enough in practice as QTBUG-53071 should be
+	   long-dead by 2038.  Do this after correcting for leap
+	   seconds, as the idea is to insert a transition just before
+	   32-bit time_t rolls around, and this occurs at a slightly
+	   different moment if transitions are leap-second corrected.  */
+	if (WORK_AROUND_QTBUG_53071 && timecnt != 0
+	    && ats[timecnt - 1] < y2038_boundary - 1 && strchr(string, '<')) {
+	  ats[timecnt] = y2038_boundary - 1;
+	  types[timecnt] = types[timecnt - 1];
+	  timecnt++;
+	}
+
 	/*
 	** Figure out 32-bit-limited starts and counts.
 	*/
@@ -1864,22 +1883,22 @@ writezone(const char *const name, const char *const string, char version)
 	timei32 = 0;
 	leapcnt32 = leapcnt;
 	leapi32 = 0;
-	while (timecnt32 > 0 && !is32(ats[timecnt32 - 1]))
+	while (0 < timecnt32 && INT32_MAX < ats[timecnt32 - 1])
 		--timecnt32;
-	while (timecnt32 > 0 && !is32(ats[timei32])) {
+	while (1 < timecnt32 && ats[timei32] < INT32_MIN
+	       && ats[timei32 + 1] <= INT32_MIN) {
+		/* Discard too-low transitions, except keep any last too-low
+		   transition if no transition is exactly at INT32_MIN.
+		   The kept transition will be output as an INT32_MIN
+		   "transition" appropriate for buggy 32-bit clients that do
+		   not use time type 0 for timestamps before the first
+		   transition; see below.  */
 		--timecnt32;
 		++timei32;
 	}
-	/*
-	** Output an INT32_MIN "transition" if appropriate; see below.
-	*/
-	if (timei32 > 0 && ats[timei32] > INT32_MIN) {
-		--timei32;
-		++timecnt32;
-	}
-	while (leapcnt32 > 0 && !is32(trans[leapcnt32 - 1]))
+	while (0 < leapcnt32 && INT32_MAX < trans[leapcnt32 - 1])
 		--leapcnt32;
-	while (leapcnt32 > 0 && !is32(trans[leapi32])) {
+	while (0 < leapcnt32 && trans[leapi32] < INT32_MIN) {
 		--leapcnt32;
 		++leapi32;
 	}
