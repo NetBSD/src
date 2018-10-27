@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_input.c,v 1.71 2018/09/14 05:09:51 maxv Exp $	*/
+/*	$NetBSD: ipsec_input.c,v 1.72 2018/10/27 05:42:23 maxv Exp $	*/
 /*	$FreeBSD: ipsec_input.c,v 1.2.4.2 2003/03/28 20:32:53 sam Exp $	*/
 /*	$OpenBSD: ipsec_input.c,v 1.63 2003/02/20 18:35:43 deraadt Exp $	*/
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_input.c,v 1.71 2018/09/14 05:09:51 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_input.c,v 1.72 2018/10/27 05:42:23 maxv Exp $");
 
 /*
  * IPsec input processing.
@@ -168,6 +168,18 @@ ipsec4_fixup_checksum(struct mbuf *m)
 	}
 
 	return m;
+}
+
+static void
+nat_t_ports_get(struct mbuf *m, uint16_t *dport, uint16_t *sport)
+{
+	struct m_tag *tag;
+
+	if ((tag = m_tag_find(m, PACKET_TAG_IPSEC_NAT_T_PORTS, NULL))) {
+		*sport = ((uint16_t *)(tag + 1))[0];
+		*dport = ((uint16_t *)(tag + 1))[1];
+	} else
+		*sport = *dport = 0;
 }
 
 /*

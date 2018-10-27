@@ -1,4 +1,4 @@
-/* $NetBSD: ipsec.c,v 1.165 2018/07/11 05:25:45 maxv Exp $ */
+/* $NetBSD: ipsec.c,v 1.166 2018/10/27 05:42:23 maxv Exp $ */
 /* $FreeBSD: ipsec.c,v 1.2.2.2 2003/07/01 01:38:13 sam Exp $ */
 /* $KAME: ipsec.c,v 1.103 2001/05/24 07:14:18 sakane Exp $ */
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.165 2018/07/11 05:25:45 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.166 2018/10/27 05:42:23 maxv Exp $");
 
 /*
  * IPsec controller part.
@@ -1866,18 +1866,6 @@ xform_init(struct secasvar *sav, int xftype)
 
 	IPSECLOG(LOG_DEBUG, "no match for xform type %d\n", xftype);
 	return EINVAL;
-}
-
-void
-nat_t_ports_get(struct mbuf *m, u_int16_t *dport, u_int16_t *sport)
-{
-	struct m_tag *tag;
-
-	if ((tag = m_tag_find(m, PACKET_TAG_IPSEC_NAT_T_PORTS, NULL))) {
-		*sport = ((u_int16_t *)(tag + 1))[0];
-		*dport = ((u_int16_t *)(tag + 1))[1];
-	} else
-		*sport = *dport = 0;
 }
 
 /*
