@@ -1,4 +1,4 @@
-/*	$NetBSD: gzip.c,v 1.115 2018/10/26 22:10:15 christos Exp $	*/
+/*	$NetBSD: gzip.c,v 1.116 2018/10/27 11:39:12 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 2003, 2004, 2006, 2008, 2009, 2010, 2011, 2015, 2017
@@ -31,7 +31,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1997, 1998, 2003, 2004, 2006, 2008,\
  2009, 2010, 2011, 2015, 2017 Matthew R. Green.  All rights reserved.");
-__RCSID("$NetBSD: gzip.c,v 1.115 2018/10/26 22:10:15 christos Exp $");
+__RCSID("$NetBSD: gzip.c,v 1.116 2018/10/27 11:39:12 skrll Exp $");
 #endif /* not lint */
 
 /*
@@ -1156,8 +1156,8 @@ file_gettype(u_char *buf)
 #ifndef NO_LZ_SUPPORT
 	if (memcmp(buf, LZ_MAGIC, 4) == 0)
 		return FT_LZ;
-#endif
 	else
+#endif
 		return FT_UNKNOWN;
 }
 
