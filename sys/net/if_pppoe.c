@@ -1,6 +1,6 @@
-/* $NetBSD: if_pppoe.c,v 1.144 2018/09/30 10:00:24 maxv Exp $ */
+/* $NetBSD: if_pppoe.c,v 1.145 2018/10/27 05:56:10 maxv Exp $ */
 
-/*-
+/*
  * Copyright (c) 2002, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.144 2018/09/30 10:00:24 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.145 2018/10/27 05:56:10 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "pppoe.h"
@@ -528,7 +528,8 @@ pppoeintr(void)
 			IFQ_LOCK(&ppoediscinq);
 			IF_DEQUEUE(&ppoediscinq, m);
 			IFQ_UNLOCK(&ppoediscinq);
-			if (m == NULL) break;
+			if (m == NULL)
+				break;
 			disc_done = 1;
 			pppoe_disc_input(m);
 		}
@@ -537,7 +538,8 @@ pppoeintr(void)
 			IFQ_LOCK(&ppoeinq);
 			IF_DEQUEUE(&ppoeinq, m);
 			IFQ_UNLOCK(&ppoeinq);
-			if (m == NULL) break;
+			if (m == NULL)
+				break;
 			data_done = 1;
 			pppoe_data_input(m);
 		}
@@ -577,7 +579,7 @@ pppoe_dispatch_disc_pkt(struct mbuf *m, int off)
 	errortag = 0;
 	if (m->m_len < sizeof(*eh)) {
 		m = m_pullup(m, sizeof(*eh));
-		if (!m)
+		if (m == NULL)
 			goto done;
 	}
 	eh = mtod(m, struct ether_header *);
@@ -617,6 +619,7 @@ pppoe_dispatch_disc_pkt(struct mbuf *m, int off)
 		goto done;
 	}
 	m_adj(m, off + plen - m->m_pkthdr.len);	/* ignore trailing garbage */
+
 	tag = 0;
 	len = 0;
 	sc = NULL;
@@ -738,6 +741,7 @@ pppoe_dispatch_disc_pkt(struct mbuf *m, int off)
 		off += sizeof(*pt) + len;
 	}
 breakbreak:;
+
 	switch (ph->code) {
 	case PPPOE_CODE_PADI:
 #ifdef PPPOE_SERVER
@@ -770,7 +774,6 @@ breakbreak:;
 		rw_exit(&pppoe_softc_list_lock);
 
 		if (sc == NULL) {
-/*			printf("pppoe: free passive interface is not found\n");*/
 			goto done;
 		}
 
@@ -792,6 +795,7 @@ breakbreak:;
 		PPPOE_UNLOCK(sc);
 		break;
 #endif /* PPPOE_SERVER */
+
 	case PPPOE_CODE_PADR:
 #ifdef PPPOE_SERVER
 		/*
@@ -806,9 +810,7 @@ breakbreak:;
 		rcvif = m_get_rcvif_psref(m, &psref);
 		if (__predict_true(rcvif != NULL)) {
 			sc = pppoe_find_softc_by_hunique(ac_cookie,
-							 ac_cookie_len,
-							 rcvif,
-							 RW_WRITER);
+			    ac_cookie_len, rcvif, RW_WRITER);
 		}
 		m_put_rcvif_psref(rcvif, &psref);
 		if (sc == NULL) {
@@ -851,6 +853,7 @@ breakbreak:;
 		/* ignore, we are no access concentrator */
 		goto done;
 #endif /* PPPOE_SERVER */
+
 	case PPPOE_CODE_PADO:
 		rcvif = m_get_rcvif_psref(m, &psref);
 		if (__predict_false(rcvif == NULL))
@@ -858,9 +861,7 @@ breakbreak:;
 
 		if (hunique != NULL) {
 			sc = pppoe_find_softc_by_hunique(hunique,
-							 hunique_len,
-							 rcvif,
-							 RW_WRITER);
+			    hunique_len, rcvif, RW_WRITER);
 		}
 
 		m_put_rcvif_psref(rcvif, &psref);
@@ -929,6 +930,7 @@ breakbreak:;
 
 		PPPOE_UNLOCK(sc);
 		break;
+
 	case PPPOE_CODE_PADS:
 		rcvif = m_get_rcvif_psref(m, &psref);
 		if (__predict_false(rcvif == NULL))
@@ -936,9 +938,7 @@ breakbreak:;
 
 		if (hunique != NULL) {
 			sc = pppoe_find_softc_by_hunique(hunique,
-							 hunique_len,
-							 rcvif,
-							 RW_WRITER);
+			    hunique_len, rcvif, RW_WRITER);
 		}
 
 		m_put_rcvif_psref(rcvif, &psref);
@@ -956,6 +956,7 @@ breakbreak:;
 
 		sc->sc_sppp.pp_up(&sc->sc_sppp);	/* notify upper layers */
 		break;
+
 	case PPPOE_CODE_PADT:
 		rcvif = m_get_rcvif_psref(m, &psref);
 		if (__predict_false(rcvif == NULL))
@@ -972,6 +973,7 @@ breakbreak:;
 		pppoe_clear_softc(sc, "received PADT");
 		PPPOE_UNLOCK(sc);
 		break;
+
 	default:
 		rcvif = m_get_rcvif_psref(m, &psref);
 		if (__predict_false(rcvif == NULL))
@@ -979,9 +981,7 @@ breakbreak:;
 
 		if (hunique != NULL) {
 			sc = pppoe_find_softc_by_hunique(hunique,
-							 hunique_len,
-							 rcvif,
-							 RW_READER);
+			    hunique_len, rcvif, RW_READER);
 		}
 
 		m_put_rcvif_psref(rcvif, &psref);
@@ -1071,7 +1071,7 @@ pppoe_data_input(struct mbuf *m)
 
 	if (m->m_len < sizeof(*ph)) {
 		m = m_pullup(m, sizeof(*ph));
-		if (!m) {
+		if (m == NULL) {
 			printf("pppoe: could not get PPPoE header\n");
 			return;
 		}
@@ -1100,8 +1100,8 @@ pppoe_data_input(struct mbuf *m)
 			 * session stage pakcets for other hosts when parent
 			 * ethernet is promiscuous mode.
 			 */
-			if (pppoe_is_my_frame(dhost, rcvif)
-			    && ppsratecheck(&lasttime, &curpps,
+			if (pppoe_is_my_frame(dhost, rcvif) &&
+			    ppsratecheck(&lasttime, &curpps,
 				pppoe_term_unknown_pps)) {
 				printf("pppoe: input for unknown session %#x, "
 				    "sending PADT\n", session);
@@ -1140,7 +1140,7 @@ pppoe_data_input(struct mbuf *m)
 		goto drop;
 
 	/*
-	 *  Fix incoming interface pointer (not the raw ethernet interface
+	 * Fix incoming interface pointer (not the raw ethernet interface
 	 * anymore)
 	 */
 	m_set_rcvif(m, &sc->sc_sppp.pp_if);
@@ -1203,7 +1203,7 @@ pppoe_ioctl(struct ifnet *ifp, unsigned long cmd, void *data)
 		    NULL) != 0)
 			return EPERM;
 		if (parms->eth_ifname[0] != 0) {
-			struct ifnet	*eth_if;
+			struct ifnet *eth_if;
 
 			PPPOE_LOCK(sc, RW_WRITER);
 			eth_if = ifunit(parms->eth_ifname);
