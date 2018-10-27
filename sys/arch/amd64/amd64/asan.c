@@ -1,4 +1,4 @@
-/*	$NetBSD: asan.c,v 1.8 2018/09/24 05:47:33 maxv Exp $	*/
+/*	$NetBSD: asan.c,v 1.9 2018/10/27 06:06:31 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: asan.c,v 1.8 2018/09/24 05:47:33 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asan.c,v 1.9 2018/10/27 06:06:31 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -683,8 +683,6 @@ void __asan_storeN_noabort(unsigned long, size_t);
 void __asan_handle_no_return(void);
 void __asan_poison_stack_memory(const void *, size_t);
 void __asan_unpoison_stack_memory(const void *, size_t);
-void __asan_alloca_poison(unsigned long, size_t);
-void __asan_allocas_unpoison(const void *, const void *);
 
 void
 __asan_loadN(unsigned long addr, size_t size)
@@ -728,18 +726,6 @@ __asan_unpoison_stack_memory(const void *addr, size_t size)
 {
 	KASSERT((vaddr_t)addr % KASAN_SHADOW_SCALE_SIZE == 0);
 	kasan_shadow_fill(addr, size, 0);
-}
-
-void
-__asan_alloca_poison(unsigned long addr, size_t size)
-{
-	panic("%s: impossible!", __func__);
-}
-
-void
-__asan_allocas_unpoison(const void *stack_top, const void *stack_bottom)
-{
-	panic("%s: impossible!", __func__);
 }
 
 #define ASAN_SET_SHADOW(byte) \
