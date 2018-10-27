@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.h,v 1.83 2018/09/14 05:09:51 maxv Exp $	*/
+/*	$NetBSD: ipsec.h,v 1.84 2018/10/27 05:42:23 maxv Exp $	*/
 /*	$FreeBSD: ipsec.h,v 1.2.4.2 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: ipsec.h,v 1.53 2001/11/20 08:32:38 itojun Exp $	*/
 
@@ -301,8 +301,6 @@ struct mbuf *m_clone(struct mbuf *);
 struct mbuf *m_makespace(struct mbuf *, int, int, int *);
 void *m_pad(struct mbuf *, int);
 int m_striphdr(struct mbuf *, int, int);
-
-void nat_t_ports_get(struct mbuf *, u_int16_t *, u_int16_t *);
 
 extern int ipsec_used __read_mostly;
 extern int ipsec_enabled __read_mostly;
