@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_platform.c,v 1.29 2018/10/18 09:01:53 skrll Exp $ */
+/* $NetBSD: sunxi_platform.c,v 1.30 2018/10/28 13:56:21 skrll Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
 #include "opt_console.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_platform.c,v 1.29 2018/10/18 09:01:53 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_platform.c,v 1.30 2018/10/28 13:56:21 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -187,6 +187,8 @@ sunxi_platform_uart_freq(void)
 static void
 sunxi_platform_bootstrap(void)
 {
+	arm_fdt_cpu_bootstrap();
+
 	void *fdt_data = __UNCONST(fdtbus_get_data());
 	const int chosen_off = fdt_path_offset(fdt_data, "/chosen");
 	if (chosen_off < 0)
@@ -207,8 +209,6 @@ sunxi_platform_bootstrap(void)
 		fdt_setprop_string(fdt_data, chosen_off,
 		    "stdout-path", "serial0:115200n8");
 	}
-
-	arm_fdt_cpu_bootstrap();
 }
 
 
