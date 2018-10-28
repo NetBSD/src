@@ -1,4 +1,4 @@
-/*	$NetBSD: at91bus.c,v 1.22 2018/09/21 12:04:06 skrll Exp $	*/
+/*	$NetBSD: at91bus.c,v 1.23 2018/10/28 14:30:30 skrll Exp $	*/
 
 /*
  * Copyright (c) 2007 Embedtronics Oy
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at91bus.c,v 1.22 2018/09/21 12:04:06 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at91bus.c,v 1.23 2018/10/28 14:30:30 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_console.h"
@@ -517,7 +517,7 @@ at91bus_setup(BootConfig *mem)
 	    atop(physical_start), atop(physical_freeend_low),
 	    VM_FREELIST_DEFAULT);
 
-	/* Boot strap pmap telling it where the kernel page table is */
+	/* Boot strap pmap telling it where managed kernel virtual memory is */
 #ifdef VERBOSE_INIT_ARM
 	printf("pmap ");
 #endif

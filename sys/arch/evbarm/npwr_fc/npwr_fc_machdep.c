@@ -1,4 +1,4 @@
-/*	$NetBSD: npwr_fc_machdep.c,v 1.23 2018/09/21 12:04:10 skrll Exp $	*/
+/*	$NetBSD: npwr_fc_machdep.c,v 1.24 2018/10/28 14:30:32 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npwr_fc_machdep.c,v 1.23 2018/09/21 12:04:10 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npwr_fc_machdep.c,v 1.24 2018/10/28 14:30:32 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_console.h"
@@ -719,7 +719,7 @@ initarm(void *arg)
 	    atop(physical_freestart), atop(physical_freeend),
 	    VM_FREELIST_DEFAULT);
 
-	/* Boot strap pmap telling it where the kernel page table is */
+	/* Boot strap pmap telling it where managed kernel virtual memory is */
 #ifdef VERBOSE_INIT_ARM
 	printf("pmap ");
 #endif

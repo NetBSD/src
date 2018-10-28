@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.6 2018/09/03 16:29:24 riastradh Exp $	*/
+/*	$NetBSD: machdep.c,v 1.7 2018/10/28 14:30:31 skrll Exp $	*/
 /*
  * Copyright (c) 2012, 2013 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.6 2018/09/03 16:29:24 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.7 2018/10/28 14:30:31 skrll Exp $");
 
 #include "clpscom.h"
 #include "clpslcd.h"
@@ -463,7 +463,7 @@ initarm(void *arg)
 			physical_end = start + size;
 	}
 
-	/* Boot strap pmap telling it where the kernel page table is */
+	/* Boot strap pmap telling it where managed kernel virtual memory is */
 	pmap_bootstrap(KERNEL_VM_BASE, KERNEL_VM_BASE + KERNEL_VM_SIZE);
 
 #ifdef __HAVE_MEMORY_DISK__

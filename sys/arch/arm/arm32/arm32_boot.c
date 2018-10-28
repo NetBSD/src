@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_boot.c,v 1.25 2018/10/18 16:44:36 skrll Exp $	*/
+/*	$NetBSD: arm32_boot.c,v 1.26 2018/10/28 14:30:30 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2005  Genetec Corporation.  All rights reserved.
@@ -122,7 +122,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: arm32_boot.c,v 1.25 2018/10/18 16:44:36 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: arm32_boot.c,v 1.26 2018/10/28 14:30:30 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_cputypes.h"
@@ -294,7 +294,7 @@ initarm_common(vaddr_t kvm_base, vsize_t kvm_size,
 		}
 	}
 
-	/* Boot strap pmap telling it where the kernel page table is */
+	/* Boot strap pmap telling it where the managed kernel virtual memory is */
 	VPRINTF("pmap ");
 	pmap_bootstrap(kvm_base, kvm_base + kvm_size);
 
