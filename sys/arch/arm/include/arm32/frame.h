@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.45 2017/07/07 16:59:35 skrll Exp $	*/
+/*	$NetBSD: frame.h,v 1.46 2018/10/28 14:45:02 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -484,7 +484,7 @@ LOCK_CAS_DEBUG_LOCALS
  */
 
 #define PULLFRAMEFROMSVCANDEXIT						   \
-	ldr     r0, [sp], #0x0008;	/* Pop the SPSR from stack */	   \
+	ldr     r0, [sp], #TF_R0;	/* Pop the SPSR from stack */	   \
 	msr     spsr_fsxc, r0;		/* restore SPSR */		   \
 	ldmia   sp, {r0-r14}^;		/* Restore registers (usr mode) */ \
 	mov     r0, r0;	  		/* NOP for previous instruction */ \
