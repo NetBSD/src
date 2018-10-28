@@ -1,4 +1,4 @@
-/*	$NetBSD: a9tmr.c,v 1.17 2018/10/14 19:01:00 aymeric Exp $	*/
+/*	$NetBSD: a9tmr.c,v 1.18 2018/10/28 21:08:13 aymeric Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: a9tmr.c,v 1.17 2018/10/14 19:01:00 aymeric Exp $");
+__KERNEL_RCSID(0, "$NetBSD: a9tmr.c,v 1.18 2018/10/28 21:08:13 aymeric Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -149,6 +149,9 @@ a9tmr_attach(device_t parent, device_t self, void *aux)
 
 	bus_space_subregion(sc->sc_memt, sc->sc_memh,
 	    mpcaa->mpcaa_off1, TMR_GLOBAL_SIZE, &sc->sc_global_memh);
+
+	/* Enable the timer early for delay(), disable all other features */
+	a9tmr_global_write(sc, TMR_GBL_CTL, TMR_CTL_ENABLE);
 
 	if (mpcaa->mpcaa_irq != -1) {
 		sc->sc_global_ih = intr_establish(mpcaa->mpcaa_irq, IPL_CLOCK,
