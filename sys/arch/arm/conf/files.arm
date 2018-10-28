@@ -1,4 +1,4 @@
-#	$NetBSD: files.arm,v 1.145 2018/10/18 09:01:52 skrll Exp $
+#	$NetBSD: files.arm,v 1.146 2018/10/28 10:21:42 jmcneill Exp $
 
 # temporary define to allow easy moving to ../arch/arm/arm32
 defflag				ARM32
@@ -107,6 +107,10 @@ file	arch/arm/vfp/vfp_init.c			arm32
 device	psci
 file	arch/arm/arm/psci.c			psci
 file	arch/arm/arm/psci_arm.S			psci
+
+# EFI support
+defflag	opt_efi.h		EFI_RUNTIME
+file	arch/arm/arm/efi_runtime.c		efi_runtime
 
 # PMAP_DEBUG (heavily abused option)
 defflag				PMAP_DEBUG

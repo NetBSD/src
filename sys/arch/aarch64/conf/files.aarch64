@@ -1,4 +1,4 @@
-#	$NetBSD: files.aarch64,v 1.8 2018/10/18 09:01:51 skrll Exp $
+#	$NetBSD: files.aarch64,v 1.9 2018/10/28 10:21:42 jmcneill Exp $
 
 defflag opt_cpuoptions.h	AARCH64_ALIGNMENT_CHECK
 defflag opt_cpuoptions.h	AARCH64_EL0_STACK_ALIGNMENT_CHECK
@@ -44,6 +44,10 @@ file	arch/arm/arm32/bus_dma.c
 device	psci
 file	arch/arm/arm/psci.c			psci
 file	arch/arm/arm/psci_arm.S			psci
+
+# EFI support
+defflag	opt_efi.h		EFI_RUNTIME
+file	arch/arm/arm/efi_runtime.c		efi_runtime
 
 # PMAP_DEBUG (heavily abused option)
 defflag				PMAP_DEBUG
@@ -109,6 +113,9 @@ file	arch/aarch64/aarch64/pmap.c
 file	arch/aarch64/aarch64/pmapboot.c
 file	arch/aarch64/aarch64/pmap_page.S
 #file	uvm/pmap/pmap_pvt.c
+
+# EFI runtime (machdep)
+file	arch/aarch64/aarch64/efi_machdep.c		efi_runtime
 
 # cyclecounter
 #file	arch/aarch64/aarch64/cctr_machdep.c
