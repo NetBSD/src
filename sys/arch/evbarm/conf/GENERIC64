@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC64,v 1.60 2018/10/26 23:34:05 jmcneill Exp $
+#	$NetBSD: GENERIC64,v 1.61 2018/10/28 10:21:42 jmcneill Exp $
 #
 #	GENERIC ARM (aarch64) kernel
 #
@@ -92,6 +92,9 @@ config		netbsd		root on ? type ?
 
 options 	COMPAT_NETBSD32
 options 	EXEC_ELF32
+
+# EFI runtime support
+options 	EFI_RUNTIME
 
 # Device tree support
 armfdt0		at root
