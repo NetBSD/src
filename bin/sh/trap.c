@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.45 2018/08/19 23:50:27 kre Exp $	*/
+/*	$NetBSD: trap.c,v 1.46 2018/10/28 18:26:52 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)trap.c	8.5 (Berkeley) 6/5/95";
 #else
-__RCSID("$NetBSD: trap.c,v 1.45 2018/08/19 23:50:27 kre Exp $");
+__RCSID("$NetBSD: trap.c,v 1.46 2018/10/28 18:26:52 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -83,6 +83,7 @@ volatile int pendingsigs;	/* indicates some signal received */
 
 static int getsigaction(int, sig_t *);
 STATIC const char *trap_signame(int);
+void printsignals(struct output *, int);
 
 /*
  * return the signal number described by `p' (as a number or a name)
@@ -100,13 +101,10 @@ signame_to_signum(const char *p)
 	if (strcasecmp(p, "exit") == 0 )
 		return 0;
 	
-	if (strncasecmp(p, "sig", 3) == 0)
-		p += 3;
-
-	for (i = 0; i < NSIG; ++i)
-		if (strcasecmp (p, sys_signame[i]) == 0)
-			return i;
-	return -1;
+	i = signalnumber(p);
+	if (i == 0)
+		i = -1;
+	return i;
 }
 
 /*
@@ -116,36 +114,37 @@ STATIC const char *
 trap_signame(int signo)
 {
 	static char nbuf[12];
-	const char *p = NULL;
+	const char *p;
 
 	if (signo == 0)
 		return "EXIT";
-	if (signo > 0 && signo < NSIG)
-		p = sys_signame[signo];
+	p = signalname(signo);
 	if (p != NULL)
 		return p;
 	(void)snprintf(nbuf, sizeof nbuf, "%d", signo);
 	return nbuf;
 }
 
+#if 0		/* Share the version of this in src/bin/kill/kill.c */
 /*
  * Print a list of valid signal names
  */
-static void
-printsignals(void)
+void
+printsignals(struct output *out, int len)
 {
 	int n;
 
-	out1str("EXIT ");
-
+	if (len != 0)
+		outc(' ', out);
 	for (n = 1; n < NSIG; n++) {
-		out1fmt("%s", trap_signame(n));
+		outfmt(out, "%s", trap_signame(n));
 		if ((n == NSIG/2) ||  n == (NSIG - 1))
-			out1str("\n");
+			outstr("\n", out);
 		else
-			out1c(' ');
+			outc(' ', out);
 	}
 }
+#endif
 
 /*
  * The trap builtin.
@@ -163,7 +162,8 @@ trapcmd(int argc, char **argv)
 	ap = argv + 1;
 
 	if (argc == 2 && strcmp(*ap, "-l") == 0) {
-		printsignals();
+		out1str("EXIT");
+		printsignals(out1, 4);
 		return 0;
 	}
 	if (argc == 2 && strcmp(*ap, "-") == 0) {
