@@ -1,4 +1,4 @@
-/*	$NetBSD: armadillo9_machdep.c,v 1.31 2018/09/21 12:04:08 skrll Exp $	*/
+/*	$NetBSD: armadillo9_machdep.c,v 1.32 2018/10/28 14:30:31 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -110,7 +110,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: armadillo9_machdep.c,v 1.31 2018/09/21 12:04:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: armadillo9_machdep.c,v 1.32 2018/10/28 14:30:31 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_console.h"
@@ -832,7 +832,7 @@ initarm(void *arg)
 		physmem += bootconfig.dram[loop].pages;
 	}
 
-	/* Boot strap pmap telling it where the kernel page table is */
+	/* Boot strap pmap telling it where managed kernel virtual memory is */
 #ifdef VERBOSE_INIT_ARM
 	printf("pmap ");
 #endif
