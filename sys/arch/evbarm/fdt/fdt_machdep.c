@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_machdep.c,v 1.45 2018/10/18 17:34:10 skrll Exp $ */
+/* $NetBSD: fdt_machdep.c,v 1.46 2018/10/28 10:21:42 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.45 2018/10/18 17:34:10 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.46 2018/10/28 10:21:42 jmcneill Exp $");
 
 #include "opt_machdep.h"
 #include "opt_bootconfig.h"
@@ -36,6 +36,7 @@ __KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.45 2018/10/18 17:34:10 skrll Exp $
 #include "opt_arm_debug.h"
 #include "opt_multiprocessor.h"
 #include "opt_cpuoptions.h"
+#include "opt_efi.h"
 
 #include "ukbd.h"
 #include "wsdisplay.h"
@@ -81,6 +82,10 @@ __KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.45 2018/10/18 17:34:10 skrll Exp $
 #include <evbarm/fdt/platform.h>
 
 #include <arm/fdt/arm_fdtvar.h>
+
+#ifdef EFI_RUNTIME
+#include <arm/arm/efi_runtime.h>
+#endif
 
 #if NUKBD > 0
 #include <dev/usb/ukbdvar.h>
@@ -369,6 +374,31 @@ fdt_setup_initrd(void)
 #endif
 }
 
+#ifdef EFI_RUNTIME
+static void
+fdt_map_efi_runtime(const char *prop, bool exec)
+{
+	int len;
+
+	const int chosen_off = fdt_path_offset(fdt_data, "/chosen");
+	if (chosen_off < 0)
+		return;
+
+	const uint64_t *map = fdt_getprop(fdt_data, chosen_off, prop, &len);
+	if (map == NULL)
+		return;
+
+	while (len >= 24) {
+		const paddr_t pa = be64toh(map[0]);
+		const vaddr_t va = be64toh(map[1]);
+		const uint64_t sz = be64toh(map[2]);
+		arm_efirt_md_map_range(va, pa, sz, exec);
+		map += 3;
+		len -= 24;
+	}
+}
+#endif
+
 u_int initarm(void *arg);
 
 u_int
@@ -479,6 +509,11 @@ initarm(void *arg)
 	 */
 	VPRINTF("%s: fdt_build_bootconfig\n", __func__);
 	fdt_build_bootconfig(memory_start, memory_end);
+
+#ifdef EFI_RUNTIME
+	fdt_map_efi_runtime("netbsd,uefi-runtime-code", true);
+	fdt_map_efi_runtime("netbsd,uefi-runtime-data", false);
+#endif
 
 	/* Perform PT build and VM init */
 	cpu_kernel_vm_init(memory_start, memory_size);

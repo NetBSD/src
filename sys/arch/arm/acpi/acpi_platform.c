@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_platform.c,v 1.4 2018/10/19 15:29:00 jmcneill Exp $ */
+/* $NetBSD: acpi_platform.c,v 1.5 2018/10/28 10:21:42 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -31,9 +31,10 @@
 
 #include "com.h"
 #include "plcom.h"
+#include "opt_efi.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_platform.c,v 1.4 2018/10/19 15:29:00 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_platform.c,v 1.5 2018/10/28 10:21:42 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -63,9 +64,15 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_platform.c,v 1.4 2018/10/19 15:29:00 jmcneill E
 #include <dev/ic/comreg.h>
 #include <dev/ic/comvar.h>
 
+#ifdef EFI_RUNTIME
+#include <arm/arm/efi_runtime.h>
+#endif
+
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
-#include <arch/arm/acpi/acpi_table.h>
+#include <arm/acpi/acpi_table.h>
+
+#include <libfdt.h>
 
 #define	SPCR_INTERFACE_TYPE_PL011		0x0003
 #define	SPCR_INTERFACE_TYPE_SBSA_32BIT		0x000d
@@ -219,6 +226,10 @@ acpi_platform_device_register(device_t self, void *aux)
 static void
 acpi_platform_reset(void)
 {
+#ifdef EFI_RUNTIME
+	if (arm_efirt_reset(EFI_RESET_COLD) == 0)
+		return;
+#endif
 	if (psci_available())
 		psci_system_reset();
 }
