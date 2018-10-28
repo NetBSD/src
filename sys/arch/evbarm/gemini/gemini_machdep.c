@@ -1,4 +1,4 @@
-/*	$NetBSD: gemini_machdep.c,v 1.28 2018/09/21 12:04:08 skrll Exp $	*/
+/*	$NetBSD: gemini_machdep.c,v 1.29 2018/10/28 14:30:31 skrll Exp $	*/
 
 /* adapted from:
  *	NetBSD: sdp24xx_machdep.c,v 1.4 2008/08/27 11:03:10 matt Exp
@@ -129,7 +129,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gemini_machdep.c,v 1.28 2018/09/21 12:04:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gemini_machdep.c,v 1.29 2018/10/28 14:30:31 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_console.h"
@@ -725,7 +725,7 @@ initarm(void *arg)
 	    atop(GEMINI_DRAM_BASE), atop(KERNEL_BASE_phys),
 	    VM_FREELIST_DEFAULT);
 
-	/* Boot strap pmap telling it where the kernel page table is */
+	/* Boot strap pmap telling it where managed kernel virtual memory is */
 #ifdef VERBOSE_INIT_ARM
 	printf("pmap ");
 #endif
