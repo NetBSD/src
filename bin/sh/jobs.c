@@ -1,4 +1,4 @@
-/*	$NetBSD: jobs.c,v 1.101 2018/09/13 22:12:35 kre Exp $	*/
+/*	$NetBSD: jobs.c,v 1.102 2018/10/28 18:16:01 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)jobs.c	8.5 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: jobs.c,v 1.101 2018/09/13 22:12:35 kre Exp $");
+__RCSID("$NetBSD: jobs.c,v 1.102 2018/10/28 18:16:01 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -494,11 +494,7 @@ showjob(struct output *out, struct job *jp, int mode)
 			else /* WIFSIGNALED(ps->status) */
 #endif
 				st = WTERMSIG(ps->status);
-			st &= 0x7f;
-			if (st < NSIG && sys_siglist[st])
-				scopyn(sys_siglist[st], s + col, 32);
-			else
-				fmtstr(s + col, 16, "Signal %d", st);
+			scopyn(strsignal(st), s + col, 32);
 			if (WCOREDUMP(ps->status)) {
 				col += strlen(s + col);
 				scopyn(" (core dumped)", s + col,  64 - col);
