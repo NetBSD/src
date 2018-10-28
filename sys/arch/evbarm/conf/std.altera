@@ -1,4 +1,4 @@
-# $NetBSD: std.altera,v 1.5 2018/10/18 09:01:54 skrll Exp $
+# $NetBSD: std.altera,v 1.6 2018/10/28 15:00:19 aymeric Exp $
 
 machine 	evbarm	arm
 
@@ -15,6 +15,7 @@ options 	ARM_INTR_IMPL="<arch/arm/fdt/fdt_intr.h>"
 options 	__HAVE_FAST_SOFTINTS
 options 	__HAVE_CPU_COUNTER
 options 	__HAVE_CPU_UAREA_ALLOC_IDLELWP
+options 	__HAVE_GENERIC_START
 options 	__HAVE_MM_MD_DIRECT_MAPPED_PHYS
 options 	__BUS_SPACE_HAS_STREAM_METHODS
 
