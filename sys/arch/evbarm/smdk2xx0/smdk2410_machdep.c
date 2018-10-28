@@ -1,4 +1,4 @@
-/*	$NetBSD: smdk2410_machdep.c,v 1.38 2018/09/21 12:04:10 skrll Exp $ */
+/*	$NetBSD: smdk2410_machdep.c,v 1.39 2018/10/28 14:30:32 skrll Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Fujitsu Component Limited
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smdk2410_machdep.c,v 1.38 2018/09/21 12:04:10 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smdk2410_machdep.c,v 1.39 2018/10/28 14:30:32 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_console.h"
@@ -852,7 +852,7 @@ initarm(void *arg)
 	    VM_FREELIST_DEFAULT);
 
 	LEDSTEP();
-	/* Boot strap pmap telling it where the kernel page table is */
+	/* Boot strap pmap telling it where managed kernel virtual memory is */
 #ifdef VERBOSE_INIT_ARM
 	printf("pmap ");
 #endif

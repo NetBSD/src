@@ -1,4 +1,4 @@
-/*	$NetBSD: tsarm_machdep.c,v 1.26 2018/09/21 12:04:10 skrll Exp $ */
+/*	$NetBSD: tsarm_machdep.c,v 1.27 2018/10/28 14:30:32 skrll Exp $ */
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tsarm_machdep.c,v 1.26 2018/09/21 12:04:10 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tsarm_machdep.c,v 1.27 2018/10/28 14:30:32 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_console.h"
@@ -753,7 +753,7 @@ initarm(void *arg)
 	physmem = 0x2000000 / PAGE_SIZE;
 	
 
-	/* Boot strap pmap telling it where the kernel page table is */
+	/* Boot strap pmap telling it where managed kernel virtual memory is */
 #ifdef VERBOSE_INIT_ARM
 	printf("pmap ");
 #endif

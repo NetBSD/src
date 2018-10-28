@@ -1,4 +1,4 @@
-/*	$NetBSD: ixm1200_machdep.c,v 1.60 2018/09/21 12:04:09 skrll Exp $ */
+/*	$NetBSD: ixm1200_machdep.c,v 1.61 2018/10/28 14:30:31 skrll Exp $ */
 
 /*
  * Copyright (c) 2002, 2003
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixm1200_machdep.c,v 1.60 2018/09/21 12:04:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixm1200_machdep.c,v 1.61 2018/10/28 14:30:31 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_console.h"
@@ -679,7 +679,7 @@ initarm(void *arg)
 	    atop(physical_freestart), atop(physical_freeend),
 	    VM_FREELIST_DEFAULT);
 
-	/* Boot strap pmap telling it where the kernel page table is */
+	/* Boot strap pmap telling it where managed kernel virtual memory is */
 #ifdef VERBOSE_INIT_ARM
 	printf("pmap ");
 #endif

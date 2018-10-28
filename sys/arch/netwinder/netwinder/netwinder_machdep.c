@@ -1,4 +1,4 @@
-/*	$NetBSD: netwinder_machdep.c,v 1.85 2016/12/22 16:05:15 cherry Exp $	*/
+/*	$NetBSD: netwinder_machdep.c,v 1.86 2018/10/28 14:30:33 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netwinder_machdep.c,v 1.85 2016/12/22 16:05:15 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netwinder_machdep.c,v 1.86 2018/10/28 14:30:33 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -813,7 +813,7 @@ initarm(void *arg)
 #endif /* NISADMA > 0 */
 	}
 
-	/* Boot strap pmap telling it where the kernel page table is */
+	/* Boot strap pmap telling it where managed kernel virtual memory is */
 	printf("pmap ");
 	pmap_bootstrap(KERNEL_VM_BASE, KERNEL_VM_BASE + KERNEL_VM_SIZE);
 

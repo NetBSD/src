@@ -1,4 +1,4 @@
-/*	$NetBSD: g42xxeb_machdep.c,v 1.32 2018/09/21 12:04:08 skrll Exp $ */
+/*	$NetBSD: g42xxeb_machdep.c,v 1.33 2018/10/28 14:30:31 skrll Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004, 2005  Genetec Corporation.  
@@ -835,7 +835,7 @@ initarm(void *arg)
 	    atop(physical_freestart), atop(physical_freeend),
 	    VM_FREELIST_DEFAULT);
 
-	/* Boot strap pmap telling it where the kernel page table is */
+	/* Boot strap pmap telling it where managed kernel virtual memory is */
 #ifdef	VERBOSE_INIT_ARM
 	printf("pmap ");
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_machdep.c,v 1.91 2016/12/22 14:47:53 cherry Exp $	*/
+/*	$NetBSD: rpc_machdep.c,v 1.92 2018/10/28 14:30:30 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000-2002 Reinoud Zandijk.
@@ -55,7 +55,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: rpc_machdep.c,v 1.91 2016/12/22 14:47:53 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rpc_machdep.c,v 1.92 2018/10/28 14:30:30 skrll Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -947,7 +947,7 @@ initarm(void *cookie)
 		}
 	}
 
-	/* Boot strap pmap telling it where the kernel page table is */
+	/* Boot strap pmap telling it where managed kernel virtual memory is */
 #ifdef VERBOSE_INIT_ARM
 	printf("pmap ");
 #endif
