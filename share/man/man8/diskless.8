@@ -1,4 +1,4 @@
-.\"	$NetBSD: diskless.8,v 1.33 2018/10/23 09:30:09 mrg Exp $
+.\"	$NetBSD: diskless.8,v 1.34 2018/10/29 21:04:18 wiz Exp $
 .\"
 .\" Copyright (c) 1994 Gordon W. Ross, Theo de Raadt
 .\" All rights reserved.
@@ -34,7 +34,6 @@
 .Sh DESCRIPTION
 The ability to boot a system over the network is useful for
 two kinds of systems:
-.Pp
 .Bl -tag -width diskless
 .It Em diskless
 a system with no attached mass storage media to boot or run from
@@ -373,7 +372,6 @@ and some must run independently, started from
 .Pa /etc/rc ;
 see
 .Xr rc.conf 5 .
-.Pp
 .Bl -column "Protocol" "rpc.bootparamd" "inetd.conf(5)" -offset indent
 .It Sy Protocol Ta Sy Program Ta Sy Startup
 .It RARP Ta rarpd Ta Xr rc.conf 5
@@ -504,7 +502,6 @@ mounted.
 .Pp
 An example for
 .Pa /etc/dhcpd.conf
-.Pp
 .Bd -literal -offset indent
 host myclient {
 	hardware ethernet 8:0:20:7:c5:c7;
