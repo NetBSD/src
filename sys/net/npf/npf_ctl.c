@@ -36,7 +36,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_ctl.c,v 1.51 2018/09/29 14:41:36 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_ctl.c,v 1.52 2018/10/29 15:37:06 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -76,28 +76,24 @@ npfctl_switch(void *data)
 #endif
 
 static int
-npf_nvlist_copyin(u_long cmd, void *data, nvlist_t **nvl)
+npf_nvlist_copyin(npf_t *npf, void *data, nvlist_t **nvl)
 {
 	int error = 0;
 
-#if defined(_NPF_TESTING) || defined(_NPF_STANDALONE)
-	*nvl = (nvlist_t *)data;
-#else
-	error = nvlist_copyin(data, nvl, NPF_IOCTL_DATA_LIMIT);
-#endif
+	if (npf->mbufops != NULL)
+		*nvl = (nvlist_t *)data;
+	else
+		error = nvlist_copyin(data, nvl, NPF_IOCTL_DATA_LIMIT);
 	return error;
 }
 
 static int
-npf_nvlist_copyout(u_long cmd, void *data, nvlist_t *nvl)
+npf_nvlist_copyout(npf_t *npf, void *data, nvlist_t *nvl)
 {
 	int error = 0;
 
-#if defined(_NPF_TESTING) || defined(_NPF_STANDALONE)
-	(void)cmd; (void)data;
-#else
-	error = nvlist_copyout(data, nvl);
-#endif
+	if (npf->mbufops == NULL)
+		error = nvlist_copyout(data, nvl);
 	nvlist_destroy(nvl);
 	return error;
 }
@@ -591,14 +587,14 @@ npfctl_load(npf_t *npf, u_long cmd, void *data)
 	 * Retrieve the configuration and check the version.
 	 * Construct a response with error reporting.
 	 */
-	error = npf_nvlist_copyin(cmd, data, &request);
+	error = npf_nvlist_copyin(npf, data, &request);
 	if (error) {
 		return error;
 	}
 	response = nvlist_create(0);
 	error = npfctl_load_nvlist(npf, request, response);
 	nvlist_add_number(response, "errno", error);
-	return npf_nvlist_copyout(cmd, data, response);
+	return npf_nvlist_copyout(npf, data, response);
 }
 
 /*
@@ -644,7 +640,7 @@ npfctl_save(npf_t *npf, u_long cmd, void *data)
 		goto out;
 	}
 	nvlist_add_bool(npf_dict, "active", npf_pfil_registered_p());
-	error = npf_nvlist_copyout(cmd, data, npf_dict);
+	error = npf_nvlist_copyout(npf, data, npf_dict);
 	npf_dict = NULL;
 out:
 	npf_config_exit(npf);
@@ -663,7 +659,7 @@ npfctl_conn_lookup(npf_t *npf, u_long cmd, void *data)
 	nvlist_t *conn_data, *conn_result;
 	int error;
 
-	error = npf_nvlist_copyin(cmd, data, &conn_data);
+	error = npf_nvlist_copyin(npf, data, &conn_data);
 	if (error) {
 		return error;
 	}
@@ -671,7 +667,7 @@ npfctl_conn_lookup(npf_t *npf, u_long cmd, void *data)
 	if (error) {
 		goto out;
 	}
-	error = npf_nvlist_copyout(cmd, data, conn_result);
+	error = npf_nvlist_copyout(npf, data, conn_result);
 out:
 	nvlist_destroy(conn_data);
 	return error;
@@ -690,7 +686,7 @@ npfctl_rule(npf_t *npf, u_long cmd, void *data)
 	uint32_t rcmd;
 	int error = 0;
 
-	error = npf_nvlist_copyin(cmd, data, &npf_rule);
+	error = npf_nvlist_copyin(npf, data, &npf_rule);
 	if (error) {
 		return error;
 	}
@@ -767,7 +763,7 @@ npfctl_rule(npf_t *npf, u_long cmd, void *data)
 		npf_rule_free(rl);
 	}
 out:
-	if (retdict && npf_nvlist_copyout(cmd, data, retdict) != 0) {
+	if (retdict && npf_nvlist_copyout(npf, data, retdict) != 0) {
 		error = EFAULT; // copyout failure
 	}
 	nvlist_destroy(npf_rule);
