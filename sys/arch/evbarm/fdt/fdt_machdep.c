@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_machdep.c,v 1.46 2018/10/28 10:21:42 jmcneill Exp $ */
+/* $NetBSD: fdt_machdep.c,v 1.47 2018/10/29 21:05:58 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.46 2018/10/28 10:21:42 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.47 2018/10/29 21:05:58 jmcneill Exp $");
 
 #include "opt_machdep.h"
 #include "opt_bootconfig.h"
@@ -297,6 +297,15 @@ fdt_build_bootconfig(uint64_t mem_start, uint64_t mem_end)
 	const uint64_t initrd_size = initrd_end - initrd_start;
 	if (initrd_size > 0)
 		fdt_add_reserved_memory_range(initrd_start, initrd_size);
+
+	const int framebuffer = OF_finddevice("/chosen/framebuffer");
+	if (framebuffer >= 0) {
+		for (index = 0;
+		     fdtbus_get_reg64(framebuffer, index, &addr, &size) == 0;
+		     index++) {
+			fdt_add_reserved_memory_range(addr, size);
+		}
+	}
 
 	VPRINTF("Usable memory:\n");
 	bc->dramblocks = 0;
