@@ -1,4 +1,4 @@
-.\" $NetBSD: mvsata.4,v 1.9 2018/10/24 18:27:15 jdolecek Exp $
+.\" $NetBSD: mvsata.4,v 1.10 2018/10/29 21:02:15 wiz Exp $
 .\"
 .\" Copyright (c) 2009 KIYOHARA Takashi
 .\" All rights reserved.
@@ -120,9 +120,9 @@ can be used instead.
 .El
 .Pp
 This controller hardware is very old and pretty peculiar, with
-poor ATAPI support. It's very unlikely that the driver will
-receive any further changes, particularily not for the Gen I and Gen II
-controllers.
+poor ATAPI support.
+It's very unlikely that the driver will receive any further changes,
+particularily not for the Gen I and Gen II controllers.
 Use an
 .Xr ahcisata 4
 compatible controller instead.
