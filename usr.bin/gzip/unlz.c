@@ -1,4 +1,4 @@
-/*	$NetBSD: unlz.c,v 1.4 2018/10/27 23:40:04 christos Exp $	*/
+/*	$NetBSD: unlz.c,v 1.5 2018/10/29 00:14:37 christos Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -597,7 +597,7 @@ static unsigned
 lz_get_dict_size(unsigned char c)
 {
 	unsigned dict_size = 1 << (c & 0x1f);
-	dict_size = (dict_size >> 2) * ( (c >> 5) & 0x7);
+	dict_size -= (dict_size >> 2) * ( (c >> 5) & 0x7);
 	if (dict_size < MIN_DICTIONARY_SIZE || dict_size > MAX_DICTIONARY_SIZE)
 		return 0;
 	return dict_size;
