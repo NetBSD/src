@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.11 2018/10/26 20:56:35 mrg Exp $	*/
+/*	$NetBSD: boot.c,v 1.12 2018/10/29 05:15:21 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -351,7 +351,7 @@ boot(void)
 	else
 		currname = 0;
 
-	for (; currname < NUMNAMES; currname++) {
+	for (; currname < (int)NUMNAMES; currname++) {
 		if (currname >= 0)
 			set_bootfile(names[currname]);
 		printf("booting %s - starting in ", bootfile);
