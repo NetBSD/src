@@ -1,4 +1,4 @@
-/*	$NetBSD: addch.c,v 1.18 2017/01/06 14:06:00 roy Exp $	*/
+/*	$NetBSD: addch.c,v 1.19 2018/10/29 01:19:54 uwe Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)addch.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: addch.c,v 1.18 2017/01/06 14:06:00 roy Exp $");
+__RCSID("$NetBSD: addch.c,v 1.19 2018/10/29 01:19:54 uwe Exp $");
 #endif
 #endif				/* not lint */
 
@@ -82,43 +82,45 @@ mvwaddch(WINDOW *win, int y, int x, chtype ch)
 
 #endif
 
+#ifdef HAVE_WCHAR
 /*
  * waddch --
  *	Add the character to the current position in the given window.
- *
  */
 int
 waddch(WINDOW *win, chtype ch)
 {
-#ifdef HAVE_WCHAR
 	cchar_t cc;
-#else
-	__LDATA buf;
-#endif
 
-#ifdef HAVE_WCHAR
 	__cursesi_chtype_to_cchar(ch, &cc);
-#else
-	buf.ch = (wchar_t)ch & __CHARTEXT;
-	buf.attr = (attr_t)ch & __ATTRIBUTES;
-#endif
-
 #ifdef DEBUG
-#ifdef HAVE_WCHAR
 	__CTRACE(__CTRACE_INPUT,
 		 "addch: %d : 0x%x (adding char as wide char)\n",
 		 cc.vals[0], cc.attributes);
-#else
-	__CTRACE(__CTRACE_INPUT, "addch: %d : 0x%x\n", buf.ch, buf.attr);
-#endif
 #endif
 
-#ifdef HAVE_WCHAR
 	return wadd_wch(win, &cc);
-#else
-	return __waddch(win, &buf);
-#endif
 }
+
+#else /* !HAVE_WCHAR */
+
+/*
+ * waddch --
+ *	Add the character to the current position in the given window.
+ */
+int
+waddch(WINDOW *win, chtype ch)
+{
+	__LDATA buf;
+
+	buf.ch = (wchar_t)ch & __CHARTEXT;
+	buf.attr = (attr_t)ch & __ATTRIBUTES;
+#ifdef DEBUG
+	__CTRACE(__CTRACE_INPUT, "addch: %d : 0x%x\n", buf.ch, buf.attr);
+#endif
+	return __waddch(win, &buf);
+}
+#endif /* !HAVE_WCHAR */
 
 int
 __waddch(WINDOW *win, __LDATA *dp)
