@@ -1,4 +1,4 @@
-/*	$NetBSD: attributes.c,v 1.23 2017/01/10 21:56:50 roy Exp $	*/
+/*	$NetBSD: attributes.c,v 1.24 2018/10/29 01:27:39 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: attributes.c,v 1.23 2017/01/10 21:56:50 roy Exp $");
+__RCSID("$NetBSD: attributes.c,v 1.24 2018/10/29 01:27:39 uwe Exp $");
 #endif				/* not lint */
 
 #include "curses.h"
@@ -245,7 +245,7 @@ wattr_off(WINDOW *win, attr_t attr, void *opt)
 			win->wattr &= ~WA_RIGHT;
 		if (attr & WA_HORIZONTAL)
 			win->wattr &= ~WA_HORIZONTAL;
-	if (attr & WA_VERTICAL)
+		if (attr & WA_VERTICAL)
 			win->wattr &= ~WA_VERTICAL;
 #endif /* HAVE_WCHAR */
 	}
