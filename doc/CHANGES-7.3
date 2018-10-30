@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.3,v 1.1.2.5 2018/10/30 08:36:19 sborrill Exp $
+# $NetBSD: CHANGES-7.3,v 1.1.2.6 2018/10/30 09:57:05 sborrill Exp $
 
 A complete list of changes from the NetBSD 7.2 release to the NetBSD 7.3
 release:
@@ -79,4 +79,9 @@ sys/dev/pci/if_wm.c				1.589
 	Fix KASSERT to prevent panic on CNP(Intel 300 series + I219) with
 	INTx interrupt (Xen dom0 or pre netbsd-8).
 	[msaitoh, ticket #1647]
+
+sys/dev/hpc/hpckbd.c				1.33-1.35
+
+	Fix kernel crash on hpcmips when console is attached.
+	[rin, ticket #1638]
 
