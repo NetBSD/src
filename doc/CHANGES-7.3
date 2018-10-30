@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.3,v 1.1.2.8 2018/10/30 10:14:55 sborrill Exp $
+# $NetBSD: CHANGES-7.3,v 1.1.2.9 2018/10/30 10:17:52 sborrill Exp $
 
 A complete list of changes from the NetBSD 7.2 release to the NetBSD 7.3
 release:
@@ -99,4 +99,10 @@ usr.sbin/sysinst/arch/sgimips/md.c		1.5-1.6
 	Make the struct utsname local to avoid future similar issues.
 	Make sure to install a bootloader even on upgrade installation.
 	[tsutsui, #1640]
+
+sys/arch/pmax/pmax/dec_3min.c			1.74
+
+	Fix hangup after framebuffers are attached on 3MIN.
+	Addresses PR port-pmax/53611
+	[tsutsui, #1641]
 
