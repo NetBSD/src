@@ -1,4 +1,4 @@
-/*	$NetBSD: boot32.c,v 1.44 2018/10/30 20:15:57 christos Exp $	*/
+/*	$NetBSD: boot32.c,v 1.45 2018/10/30 20:23:29 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002 Reinoud Zandijk
@@ -760,7 +760,7 @@ create_configuration(int argc, char **argv, int start_args)
 	}
 }
 
-int main(int, char **argv);
+int main(int, char **);
 
 int
 main(int argc, char **argv)
