@@ -1,4 +1,4 @@
-/* $NetBSD: virt_platform.c,v 1.8 2018/10/18 09:01:53 skrll Exp $ */
+/* $NetBSD: virt_platform.c,v 1.9 2018/10/30 16:41:52 skrll Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: virt_platform.c,v 1.8 2018/10/18 09:01:53 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: virt_platform.c,v 1.9 2018/10/30 16:41:52 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -62,6 +62,25 @@ __KERNEL_RCSID(0, "$NetBSD: virt_platform.c,v 1.8 2018/10/18 09:01:53 skrll Exp 
 
 #define	VIRT_UART_BASE	0x09000000
 
+void virt_platform_early_putchar(char);
+
+void
+virt_platform_early_putchar(char c)
+{
+	volatile uint32_t *uartaddr = cpu_earlydevice_va_p() ?
+		(volatile uint32_t *)VIRT_CORE_PTOV(VIRT_UART_BASE) :
+		(volatile uint32_t *)VIRT_UART_BASE;
+
+	while ((le32toh(uartaddr[PL01XCOM_FR / 4]) & PL01X_FR_TXFF) != 0)
+		continue;
+
+	uartaddr[PL01XCOM_DR / 4] = htole32(c);
+	arm_dsb();
+
+	while ((le32toh(uartaddr[PL01XCOM_FR / 4]) & PL01X_FR_TXFE) == 0)
+		continue;
+}
+
 static const struct pmap_devmap *
 virt_platform_devmap(void)
 {
@@ -87,25 +106,6 @@ virt_platform_init_attach_args(struct fdt_attach_args *faa)
 	faa->faa_dmat = &arm_generic_dma_tag;
 }
 
-void virt_platform_early_putchar(char);
-
-void
-virt_platform_early_putchar(char c)
-{
-	volatile uint32_t *uartaddr = cpu_earlydevice_va_p() ?
-		(volatile uint32_t *)VIRT_CORE_PTOV(VIRT_UART_BASE) :
-		(volatile uint32_t *)VIRT_UART_BASE;
-
-	while ((le32toh(uartaddr[PL01XCOM_FR / 4]) & PL01X_FR_TXFF) != 0)
-		continue;
-
-	uartaddr[PL01XCOM_DR / 4] = htole32(c);
-	arm_dsb();
-
-	while ((le32toh(uartaddr[PL01XCOM_FR / 4]) & PL01X_FR_TXFE) == 0)
-		continue;
-}
-
 static void
 virt_platform_device_register(device_t self, void *aux)
 {
@@ -121,7 +121,6 @@ static const struct arm_platform virt_platform = {
 	.ap_devmap = virt_platform_devmap,
 	.ap_bootstrap = arm_fdt_cpu_bootstrap,
 	.ap_init_attach_args = virt_platform_init_attach_args,
-	.ap_early_putchar = virt_platform_early_putchar,
 	.ap_device_register = virt_platform_device_register,
 	.ap_reset = psci_fdt_reset,
 	.ap_delay = gtmr_delay,

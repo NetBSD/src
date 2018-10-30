@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm283x_platform.c,v 1.21 2018/10/20 05:53:22 ryo Exp $	*/
+/*	$NetBSD: bcm283x_platform.c,v 1.22 2018/10/30 16:41:52 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2017 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm283x_platform.c,v 1.21 2018/10/20 05:53:22 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm283x_platform.c,v 1.22 2018/10/30 16:41:52 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_bcm283x.h"
@@ -110,7 +110,6 @@ __KERNEL_RCSID(0, "$NetBSD: bcm283x_platform.c,v 1.21 2018/10/20 05:53:22 ryo Ex
 
 #define RPI_CPU_MAX	4
 
-void bcm283x_platform_early_putchar(vaddr_t, paddr_t, char c);
 void bcm2835_platform_early_putchar(char c);
 void bcm2836_platform_early_putchar(char c);
 void bcm2837_platform_early_putchar(char c);
@@ -1221,7 +1220,7 @@ bcm2836_platform_init_attach_args(struct fdt_attach_args *faa)
 #endif
 
 
-void
+static void
 bcm283x_platform_early_putchar(vaddr_t va, paddr_t pa, char c)
 {
 	volatile uint32_t *uartaddr =
@@ -1350,7 +1349,6 @@ static const struct arm_platform bcm2835_platform = {
 	.ap_devmap = bcm2835_platform_devmap,
 	.ap_bootstrap = bcm2835_platform_bootstrap,
 	.ap_init_attach_args = bcm2835_platform_init_attach_args,
-	.ap_early_putchar = bcm2835_platform_early_putchar,
 	.ap_device_register = bcm283x_platform_device_register,
 	.ap_reset = bcm2835_system_reset,
 	.ap_delay = bcm2835_tmr_delay,
@@ -1372,7 +1370,6 @@ static const struct arm_platform bcm2836_platform = {
 	.ap_devmap = bcm2836_platform_devmap,
 	.ap_bootstrap = bcm2836_platform_bootstrap,
 	.ap_init_attach_args = bcm2836_platform_init_attach_args,
-	.ap_early_putchar = bcm2836_platform_early_putchar,
 	.ap_device_register = bcm283x_platform_device_register,
 	.ap_reset = bcm2835_system_reset,
 	.ap_delay = gtmr_delay,
@@ -1384,7 +1381,6 @@ static const struct arm_platform bcm2837_platform = {
 	.ap_devmap = bcm2836_platform_devmap,
 	.ap_bootstrap = bcm2836_platform_bootstrap,
 	.ap_init_attach_args = bcm2836_platform_init_attach_args,
-	.ap_early_putchar = bcm2837_platform_early_putchar,
 	.ap_device_register = bcm283x_platform_device_register,
 	.ap_reset = bcm2835_system_reset,
 	.ap_delay = gtmr_delay,

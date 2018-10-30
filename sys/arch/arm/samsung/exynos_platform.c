@@ -1,4 +1,4 @@
-/* $NetBSD: exynos_platform.c,v 1.19 2018/10/18 09:01:53 skrll Exp $ */
+/* $NetBSD: exynos_platform.c,v 1.20 2018/10/30 16:41:52 skrll Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared D. McNeill <jmcneill@invisible.ca>
@@ -35,7 +35,7 @@
 #include "ukbd.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exynos_platform.c,v 1.19 2018/10/18 09:01:53 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exynos_platform.c,v 1.20 2018/10/30 16:41:52 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -227,7 +227,6 @@ static const struct arm_platform exynos4_platform = {
 //	.ap_mpstart = exynos4_mpstart,
 	.ap_bootstrap = exynos4_platform_bootstrap,
 	.ap_init_attach_args = exynos_platform_init_attach_args,
-	.ap_early_putchar = exynos_platform_early_putchar,
 	.ap_device_register = exynos_platform_device_register,
 	.ap_reset = exynos5_platform_reset,
 	.ap_delay = mct_delay,
@@ -272,7 +271,6 @@ static const struct arm_platform exynos5_platform = {
 	.ap_bootstrap = exynos5_platform_bootstrap,
 	.ap_mpstart = exynos_platform_mpstart,
 	.ap_init_attach_args = exynos_platform_init_attach_args,
-	.ap_early_putchar = exynos_platform_early_putchar,
 	.ap_device_register = exynos_platform_device_register,
 	.ap_reset = exynos5_platform_reset,
 	.ap_delay = mct_delay,

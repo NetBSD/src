@@ -1,4 +1,4 @@
-/* $NetBSD: rk_platform.c,v 1.7 2018/10/20 05:38:27 ryo Exp $ */
+/* $NetBSD: rk_platform.c,v 1.8 2018/10/30 16:41:52 skrll Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
 #include "opt_console.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rk_platform.c,v 1.7 2018/10/20 05:38:27 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rk_platform.c,v 1.8 2018/10/30 16:41:52 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -148,7 +148,6 @@ static const struct arm_platform rk3328_platform = {
 	.ap_devmap = rk3328_platform_devmap,
 	.ap_bootstrap = rk_platform_bootstrap,
 	.ap_init_attach_args = rk_platform_init_attach_args,
-	.ap_early_putchar = rk3328_platform_early_putchar,
 	.ap_device_register = rk_platform_device_register,
 	.ap_reset = psci_fdt_reset,
 	.ap_delay = gtmr_delay,
@@ -207,7 +206,6 @@ static const struct arm_platform rk3399_platform = {
 	.ap_devmap = rk3399_platform_devmap,
 	.ap_bootstrap = rk_platform_bootstrap,
 	.ap_init_attach_args = rk_platform_init_attach_args,
-	.ap_early_putchar = rk3399_platform_early_putchar,
 	.ap_device_register = rk_platform_device_register,
 	.ap_reset = psci_fdt_reset,
 	.ap_delay = gtmr_delay,
