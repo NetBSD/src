@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.215 2018/10/30 05:54:42 ozaki-r Exp $	*/
+/*	$NetBSD: route.c,v 1.216 2018/10/30 05:56:02 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.215 2018/10/30 05:54:42 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.216 2018/10/30 05:56:02 ozaki-r Exp $");
 
 #include <sys/param.h>
 #ifdef RTFLUSH_DEBUG
@@ -1730,7 +1730,21 @@ rt_ifa_remlocal(struct ifaddr *ifa, struct ifaddr *alt_ifa)
 			}
 			rt_newaddrmsg(RTM_DELADDR, ifa, 0, NULL);
 		} else {
+#ifdef NET_MPSAFE
+			int error = rt_update_prepare(rt);
+			if (error == 0) {
+				rt_replace_ifa(rt, alt_ifa);
+				rt_update_finish(rt);
+			} else {
+				/*
+				 * If error != 0, the rtentry is being
+				 * destroyed, so doing nothing doesn't
+				 * matter.
+				 */
+			}
+#else
 			rt_replace_ifa(rt, alt_ifa);
+#endif
 			rt_newmsg(RTM_CHANGE, rt);
 		}
 	} else
