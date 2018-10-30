@@ -1,4 +1,4 @@
-/*	$NetBSD: rstat_proc.c,v 1.52 2014/06/26 03:24:51 dholland Exp $	*/
+/*	$NetBSD: rstat_proc.c,v 1.53 2018/10/30 21:18:39 kre Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -36,7 +36,7 @@ static char sccsid[] =
 static char sccsid[] =
 	"from: @(#)rstat_proc.c	2.2 88/08/01 4.0 RPCSRC";
 #endif
-__RCSID("$NetBSD: rstat_proc.c,v 1.52 2014/06/26 03:24:51 dholland Exp $");
+__RCSID("$NetBSD: rstat_proc.c,v 1.53 2018/10/30 21:18:39 kre Exp $");
 
 /*
  * rstat service:  built with rstat.x and derived from rpc.rstatd.c
@@ -180,7 +180,8 @@ updatestat(int dummy)
 	int mib[2], s;
 	struct uvmexp_sysctl uvmexp;
 	double avrun[3];
-	struct timeval tm, btm;
+	struct timeval tm;
+	struct timespec btm;
 
 #ifdef DEBUG
 	syslog(LOG_DEBUG, "entering updatestat");
@@ -221,7 +222,7 @@ updatestat(int dummy)
 		exit(1);
 	}
 	stats_all.s3.boottime.tv_sec = btm.tv_sec;
-	stats_all.s3.boottime.tv_usec = btm.tv_usec;
+	stats_all.s3.boottime.tv_usec = (suseconds_t)(btm.tv_nsec / 1000L);
 
 
 #ifdef DEBUG
@@ -245,7 +246,7 @@ updatestat(int dummy)
 	stats_all.s3.v_swtch = uvmexp.swtch;
 	gettimeofday(&tm, (struct timezone *) 0);
 	stats_all.s3.v_intr -= hz*(tm.tv_sec - btm.tv_sec) +
-	    hz*(tm.tv_usec - btm.tv_usec)/1000000;
+	    hz*(tm.tv_usec - (suseconds_t)(btm.tv_nsec / 1000))/1000000;
 	
 	stats_all.s3.if_ipackets = 0;
 	stats_all.s3.if_opackets = 0;
