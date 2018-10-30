@@ -1,4 +1,4 @@
-#	$NetBSD: mk.generic,v 1.4 2018/10/30 08:59:09 skrll Exp $
+#	$NetBSD: mk.generic,v 1.5 2018/10/30 09:06:07 martin Exp $
 
 .include "$S/arch/arm/nvidia/tegra_xusb-fw.mk"
 
@@ -13,7 +13,7 @@ _OSRELEASE!=		${HOST_SH} $S/conf/osrelease.sh
 
 MKUBOOTIMAGEARGS=	-A arm -T kernel_noload -O linux
 MKUBOOTIMAGEARGS+=	-e 0
-MKUBOOTIMAGEARGS+=	-n "NetBSD/${BOARDTYPE?${BOARDTYPE} :}${_OSRELEASE}"
+MKUBOOTIMAGEARGS+=	-n "NetBSD/${BOARDTYPE:U${MACHINE_ARCH}} ${_OSRELEASE}"
 MKUBOOTIMAGEARGS_NONE=	${MKUBOOTIMAGEARGS} -C none
 MKUBOOTIMAGEARGS_GZ=	${MKUBOOTIMAGEARGS} -C gz
 
