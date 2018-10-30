@@ -1,4 +1,4 @@
-/*	$NetBSD: pcireg.h,v 1.130.2.6 2018/09/23 17:40:37 martin Exp $	*/
+/*	$NetBSD: pcireg.h,v 1.130.2.7 2018/10/30 09:32:32 sborrill Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1999, 2000
@@ -1186,8 +1186,8 @@ struct pci_msix_table_entry {
 	uint32_t pci_msix_vector_control;
 };
 #define	PCI_MSIX_VECTCTL_MASK	__BIT(0)
-#define	PCI_MSIX_VECTCTL_STLO	__BITS(23, 16)
-#define	PCI_MSIX_VECTCTL_STUP	__BITS(31, 24)
+#define	PCI_MSIX_VECTCTL_STLO	__BITS(23, 16)	/* ST lower */
+#define	PCI_MSIX_VECTCTL_STUP	__BITS(31, 24)	/* ST upper */
 
  /* Max number of MSI-X vectors. See PCI-SIG specification. */
 #define	PCI_MSIX_MAX_VECTORS	2048
@@ -1699,7 +1699,10 @@ struct pci_rom {
  * Extended capability ID: 0x0007
  * Root Complex Event Collector Association
  */
-#define	PCI_RCEC_ASSOC_ASSOCBITMAP 0x04
+#define	PCI_RCEC_ASSOC_ASSOCBITMAP 0x04	/* Association Bitmap */
+#define	PCI_RCEC_ASSOC_ASSOCBUSNUM 0x08	/* Associcated Bus Number */
+#define	PCI_RCEC_ASSOCBUSNUM_RCECNEXT __BITS(15, 8)	/* RCEC Next Bus */
+#define	PCI_RCEC_ASSOCBUSNUM_RCECLAST __BITS(23, 16)	/* RCEC Last Bus */
 
 /*
  * Extended capability ID: 0x0008
