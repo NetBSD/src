@@ -1,4 +1,4 @@
-/*	$NetBSD: function.c,v 1.72 2013/05/04 06:29:32 uebayasi Exp $	*/
+/*	$NetBSD: function.c,v 1.72.6.1 2018/10/30 10:07:08 sborrill Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "from: @(#)function.c	8.10 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: function.c,v 1.72 2013/05/04 06:29:32 uebayasi Exp $");
+__RCSID("$NetBSD: function.c,v 1.72.6.1 2018/10/30 10:07:08 sborrill Exp $");
 #endif
 #endif /* not lint */
 
@@ -669,7 +669,9 @@ c_exec(char ***argvp, int isok)
 		size_t c, bufsize;
 
 		cnt = ap - *argvp - 1;			/* units are words */
-		new->ep_maxargs = 5000;
+		new->ep_maxargs = ARG_MAX / (sizeof (char *) + 16);
+		if (new->ep_maxargs > 5000)
+			new->ep_maxargs = 5000;
 		new->e_argv = emalloc((cnt + new->ep_maxargs)
 		    * sizeof(*new->e_argv));
 
@@ -690,7 +692,9 @@ c_exec(char ***argvp, int isok)
 				errx(1, "Arguments too long");
 			new->e_argv[cnt] = *argv;
 		}
-		bufsize = MAXARG - c;
+		if (c + new->ep_maxargs * sizeof (char *) >= MAXARG)
+			errx(1, "Arguments too long");
+		bufsize = MAXARG - c - new->ep_maxargs * sizeof (char *);
 
 		/*
 		 * Allocate, and then initialize current, base, and
