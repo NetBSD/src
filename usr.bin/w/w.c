@@ -1,4 +1,4 @@
-/*	$NetBSD: w.c,v 1.83 2016/11/16 02:03:30 christos Exp $	*/
+/*	$NetBSD: w.c,v 1.84 2018/10/30 21:15:09 kre Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)w.c	8.6 (Berkeley) 6/30/94";
 #else
-__RCSID("$NetBSD: w.c,v 1.83 2016/11/16 02:03:30 christos Exp $");
+__RCSID("$NetBSD: w.c,v 1.84 2018/10/30 21:15:09 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -86,7 +86,7 @@ __RCSID("$NetBSD: w.c,v 1.83 2016/11/16 02:03:30 christos Exp $");
 
 #include "extern.h"
 
-struct timeval	boottime;
+struct timespec	boottime;
 struct winsize	ws;
 kvm_t	       *kd;
 time_t		now;		/* the current time of day */
