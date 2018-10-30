@@ -1,4 +1,4 @@
-.\" $NetBSD: time_second.9,v 1.6 2017/03/14 07:23:50 dholland Exp $
+.\" $NetBSD: time_second.9,v 1.7 2018/10/30 20:10:23 kre Exp $
 .\"
 .\" Copyright (c) 1994 Christopher G. Demetriou
 .\" All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\" <<Id: LICENSE,v 1.2 2000/06/14 15:57:33 cgd Exp>>
 .\"
-.Dd March 14, 2017
+.Dd October 30, 2018
 .Dt TIME_SECOND 9
 .Os
 .Sh NAME
@@ -76,8 +76,10 @@ with
 The variable may be read and written without special precautions.
 .Pp
 All of these variables contain times
-expressed in seconds and nanoseconds since midnight (0 hour),
-January 1, 1970.
+expressed in seconds (and for
+.Va boottime ,
+nanoseconds) since midnight (0 hour),
+January 1, 1970, UTC.
 .Pp
 The
 .Xr bintime 9 ,
