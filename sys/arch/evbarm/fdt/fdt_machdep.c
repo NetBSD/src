@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_machdep.c,v 1.48 2018/10/30 16:41:53 skrll Exp $ */
+/* $NetBSD: fdt_machdep.c,v 1.49 2018/10/30 21:32:35 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.48 2018/10/30 16:41:53 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.49 2018/10/30 21:32:35 jmcneill Exp $");
 
 #include "opt_machdep.h"
 #include "opt_bootconfig.h"
@@ -55,7 +55,6 @@ __KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.48 2018/10/30 16:41:53 skrll Exp $
 #include <sys/proc.h>
 #include <sys/reboot.h>
 #include <sys/termios.h>
-#include <sys/extent.h>
 #include <sys/bootblock.h>
 #include <sys/disklabel.h>
 #include <sys/vnode.h>
@@ -80,6 +79,7 @@ __KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.48 2018/10/30 16:41:53 skrll Exp $
 #include <evbarm/include/autoconf.h>
 #include <evbarm/fdt/machdep.h>
 #include <evbarm/fdt/platform.h>
+#include <evbarm/fdt/fdt_memory.h>
 
 #include <arm/fdt/arm_fdtvar.h>
 
@@ -109,9 +109,6 @@ char *boot_args = NULL;
 /* filled in before cleaning bss. keep in .data */
 u_long uboot_args[4] __attribute__((__section__(".data")));
 const uint8_t *fdt_addr_r __attribute__((__section__(".data")));
-
-static char fdt_memory_ext_storage[EXTENT_FIXED_STORAGE_SIZE(DRAM_BLOCKS)];
-static struct extent *fdt_memory_ext;
 
 static uint64_t initrd_start, initrd_end;
 
@@ -198,16 +195,7 @@ fdt_get_memory(uint64_t *pstart, uint64_t *pend)
 void
 fdt_add_reserved_memory_range(uint64_t addr, uint64_t size)
 {
-	uint64_t start = addr;
-	uint64_t end = addr + size;
-
-	int error = extent_free(fdt_memory_ext, start,
-	     end - start, EX_NOWAIT);
-	if (error != 0)
-		printf("MEM ERROR: res %" PRIx64 "-%" PRIx64 " failed: %d\n",
-		    start, end, error);
-	else
-		VPRINTF("MEM: res %" PRIx64 "-%" PRIx64 "\n", start, end);
+	fdt_memory_remove_range(addr, size);
 }
 
 /*
@@ -248,6 +236,49 @@ fdt_add_reserved_memory(uint64_t min_addr, uint64_t max_addr)
 	}
 }
 
+static void
+fdt_add_dram_blocks(const struct fdt_memory *m, void *arg)
+{
+	BootConfig *bc = arg;
+
+	VPRINTF("  %lx - %lx\n", m->start, m->end - 1);
+	bc->dram[bc->dramblocks].address = m->start;
+	bc->dram[bc->dramblocks].pages =
+	    (m->end - m->start) / PAGE_SIZE;
+	bc->dramblocks++;
+}
+
+#define MAX_PHYSMEM 64
+static int nfdt_physmem = 0;
+static struct boot_physmem fdt_physmem[MAX_PHYSMEM];
+
+static void
+fdt_add_boot_physmem(const struct fdt_memory *m, void *arg)
+{
+	struct boot_physmem *bp = &fdt_physmem[nfdt_physmem++];
+
+	VPRINTF("  %lx - %lx\n", m->start, m->end - 1);
+
+	KASSERT(nfdt_physmem <= MAX_PHYSMEM);
+
+	bp->bp_start = atop(round_page(m->start));
+	bp->bp_pages = atop(trunc_page(m->end)) - bp->bp_start;
+	bp->bp_freelist = VM_FREELIST_DEFAULT;
+
+#ifdef _LP64
+	if (m->end > 0x100000000)
+		bp->bp_freelist = VM_FREELIST_HIGHMEM;
+#endif
+
+#ifdef PMAP_NEED_ALLOC_POOLPAGE
+	const uint64_t memory_size = *(uint64_t *)arg;
+	if (atop(memory_size) > bp->bp_pages) {
+		arm_poolpage_vmfreelist = VM_FREELIST_DIRECTMAP;
+		bp->bp_freelist = VM_FREELIST_DIRECTMAP;
+	}
+#endif
+}
+
 /*
  * Define usable memory regions.
  */
@@ -256,12 +287,8 @@ fdt_build_bootconfig(uint64_t mem_start, uint64_t mem_end)
 {
 	const int memory = OF_finddevice("/memory");
 	BootConfig *bc = &bootconfig;
-	struct extent_region *er;
 	uint64_t addr, size;
-	int index, error;
-
-	fdt_memory_ext = extent_create("FDT Memory", mem_start, mem_end,
-	    fdt_memory_ext_storage, sizeof(fdt_memory_ext_storage), EX_EARLY);
+	int index;
 
 	for (index = 0;
 	     fdtbus_get_reg64(memory, index, &addr, &size) == 0;
@@ -271,19 +298,14 @@ fdt_build_bootconfig(uint64_t mem_start, uint64_t mem_end)
 		if (addr + size > mem_end)
 			size = mem_end - addr;
 
-		error = extent_alloc_region(fdt_memory_ext, addr, size,
-		    EX_NOWAIT);
-		if (error != 0)
-			printf("MEM ERROR: add %" PRIx64 "-%" PRIx64 " failed: %d\n",
-			    addr, addr + size, error);
-		VPRINTF("MEM: add %" PRIx64 "-%" PRIx64 "\n", addr, addr + size);
+		fdt_memory_add_range(addr, size);
 	}
 
 	fdt_add_reserved_memory(mem_start, mem_end);
 
 	const uint64_t initrd_size = initrd_end - initrd_start;
 	if (initrd_size > 0)
-		fdt_add_reserved_memory_range(initrd_start, initrd_size);
+		fdt_memory_remove_range(initrd_start, initrd_size);
 
 	const int framebuffer = OF_finddevice("/chosen/framebuffer");
 	if (framebuffer >= 0) {
@@ -296,13 +318,7 @@ fdt_build_bootconfig(uint64_t mem_start, uint64_t mem_end)
 
 	VPRINTF("Usable memory:\n");
 	bc->dramblocks = 0;
-	LIST_FOREACH(er, &fdt_memory_ext->ex_regions, er_link) {
-		VPRINTF("  %lx - %lx\n", er->er_start, er->er_end);
-		bc->dram[bc->dramblocks].address = er->er_start;
-		bc->dram[bc->dramblocks].pages =
-		    (er->er_end - er->er_start) / PAGE_SIZE;
-		bc->dramblocks++;
-	}
+	fdt_memory_foreach(fdt_add_dram_blocks, bc);
 }
 
 static void
@@ -518,34 +534,8 @@ initarm(void *arg)
 
 	parse_mi_bootargs(boot_args);
 
-	#define MAX_PHYSMEM 64
-	static struct boot_physmem fdt_physmem[MAX_PHYSMEM];
-	int nfdt_physmem = 0;
-	struct extent_region *er;
-
-	VPRINTF("Memory regions :\n");
-	LIST_FOREACH(er, &fdt_memory_ext->ex_regions, er_link) {
-		VPRINTF("  %lx - %lx\n", er->er_start, er->er_end);
-		struct boot_physmem *bp = &fdt_physmem[nfdt_physmem++];
-
-		KASSERT(nfdt_physmem <= MAX_PHYSMEM);
-
-		bp->bp_start = atop(round_page(er->er_start));
-		bp->bp_pages = atop(trunc_page(er->er_end + 1)) - bp->bp_start;
-		bp->bp_freelist = VM_FREELIST_DEFAULT;
-
-#ifdef _LP64
-		if (er->er_end > 0x100000000)
-			bp->bp_freelist = VM_FREELIST_HIGHMEM;
-#endif
-
-#ifdef PMAP_NEED_ALLOC_POOLPAGE
-		if (atop(memory_size) > bp->bp_pages) {
-			arm_poolpage_vmfreelist = VM_FREELIST_DIRECTMAP;
-			bp->bp_freelist = VM_FREELIST_DIRECTMAP;
-		}
-#endif
-	}
+	VPRINTF("Memory regions:\n");
+	fdt_memory_foreach(fdt_add_boot_physmem, &memory_size);
 
 	u_int sp = initarm_common(KERNEL_VM_BASE, KERNEL_VM_SIZE, fdt_physmem,
 	     nfdt_physmem);
