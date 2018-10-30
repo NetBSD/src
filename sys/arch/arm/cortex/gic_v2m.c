@@ -1,4 +1,4 @@
-/* $NetBSD: gic_v2m.c,v 1.1 2018/10/21 00:42:05 jmcneill Exp $ */
+/* $NetBSD: gic_v2m.c,v 1.2 2018/10/30 23:59:47 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #define _INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gic_v2m.c,v 1.1 2018/10/21 00:42:05 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gic_v2m.c,v 1.2 2018/10/30 23:59:47 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -141,7 +141,10 @@ gic_v2m_msi_alloc(struct arm_pci_msi *msi, int *count,
 {
 	struct gic_v2m_frame * const frame = msi->msi_priv;
 	pci_intr_handle_t *vectors;
-	int n;
+	int n, off;
+
+	if (!pci_get_capability(pa->pa_pc, pa->pa_tag, PCI_CAP_MSI, &off, NULL))
+		return NULL;
 
 	const int avail = gic_v2m_msi_available_spi(frame);
 	if (exact && *count > avail)
