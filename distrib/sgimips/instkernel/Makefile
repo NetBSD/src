@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2013/08/31 10:42:18 he Exp $
+#	$NetBSD: Makefile,v 1.11.4.1 2018/10/30 19:02:51 martin Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -30,9 +30,7 @@ MDSETTARGETS=	INSTALL${NX}_IP2x ${RAMDISK} netbsd-INSTALL${NX}_IP2x${SFX} \
 MDSET_RELEASEDIR=	binary/kernel
 
 MDSET_SUFFIXES.netbsd-INSTALL${NX}_IP2x=ecoff create-ecoff
-create-ecoff=	${OBJCOPY} --impure -O ecoff-bigmips \
-		-R .pdr -R .mdebug.abi32 -R .comment -R .ident \
-		${.TARGET:R} ${.TARGET}
+create-ecoff=	${ELF2ECOFF} ${.TARGET:R} ${.TARGET}
 
 IMAGE_RELEASEDIR=	installation/diskimage
 
