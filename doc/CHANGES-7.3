@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.3,v 1.1.2.6 2018/10/30 09:57:05 sborrill Exp $
+# $NetBSD: CHANGES-7.3,v 1.1.2.7 2018/10/30 10:07:52 sborrill Exp $
 
 A complete list of changes from the NetBSD 7.2 release to the NetBSD 7.3
 release:
@@ -84,4 +84,12 @@ sys/dev/hpc/hpckbd.c				1.33-1.35
 
 	Fix kernel crash on hpcmips when console is attached.
 	[rin, ticket #1638]
+
+usr.bin/find/function.c				1.77
+
+	When calculating the length of the args that can be
+	appended in a "find .... -exec something {} +"
+	usage, remember to allow for the arg pointers, which
+	form part of what is allowed in ARG_MAX.
+	[mrg, ticket #1642]
 
