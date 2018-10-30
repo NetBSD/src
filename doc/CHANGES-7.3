@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.3,v 1.1.2.7 2018/10/30 10:07:52 sborrill Exp $
+# $NetBSD: CHANGES-7.3,v 1.1.2.8 2018/10/30 10:14:55 sborrill Exp $
 
 A complete list of changes from the NetBSD 7.2 release to the NetBSD 7.3
 release:
@@ -92,4 +92,11 @@ usr.bin/find/function.c				1.77
 	usage, remember to allow for the arg pointers, which
 	form part of what is allowed in ARG_MAX.
 	[mrg, ticket #1642]
+
+usr.sbin/sysinst/arch/sgimips/md.c		1.5-1.6
+
+	PR port-sgimips/53583: fetch kernel name always before using it.
+	Make the struct utsname local to avoid future similar issues.
+	Make sure to install a bootloader even on upgrade installation.
+	[tsutsui, #1640]
 
