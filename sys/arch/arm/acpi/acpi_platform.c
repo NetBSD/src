@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_platform.c,v 1.5 2018/10/28 10:21:42 jmcneill Exp $ */
+/* $NetBSD: acpi_platform.c,v 1.6 2018/10/30 16:41:51 skrll Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #include "opt_efi.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_platform.c,v 1.5 2018/10/28 10:21:42 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_platform.c,v 1.6 2018/10/30 16:41:51 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -214,11 +214,6 @@ acpi_platform_init_attach_args(struct fdt_attach_args *faa)
 }
 
 static void
-acpi_platform_early_putchar(char c)
-{
-}
-
-static void
 acpi_platform_device_register(device_t self, void *aux)
 {
 }
@@ -245,7 +240,6 @@ static const struct arm_platform acpi_platform = {
 	.ap_bootstrap = acpi_platform_bootstrap,
 	.ap_startup = acpi_platform_startup,
 	.ap_init_attach_args = acpi_platform_init_attach_args,
-	.ap_early_putchar = acpi_platform_early_putchar,
 	.ap_device_register = acpi_platform_device_register,
 	.ap_reset = acpi_platform_reset,
 	.ap_delay = gtmr_delay,

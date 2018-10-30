@@ -1,4 +1,4 @@
-/* $NetBSD: cycv_platform.c,v 1.5 2018/10/28 14:58:20 aymeric Exp $ */
+/* $NetBSD: cycv_platform.c,v 1.6 2018/10/30 16:41:52 skrll Exp $ */
 
 /* This file is in the public domain. */
 
@@ -6,7 +6,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cycv_platform.c,v 1.5 2018/10/28 14:58:20 aymeric Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cycv_platform.c,v 1.6 2018/10/30 16:41:52 skrll Exp $");
 
 #define	_ARM32_BUS_DMA_PRIVATE
 #include <sys/param.h>
@@ -30,7 +30,20 @@ __KERNEL_RCSID(0, "$NetBSD: cycv_platform.c,v 1.5 2018/10/28 14:58:20 aymeric Ex
 #include <arm/fdt/arm_fdtvar.h>
 #include <dev/fdt/fdtvar.h>
 
-static void cycv_platform_early_putchar(char);
+void cycv_platform_early_putchar(char);
+
+void
+cycv_platform_early_putchar(char c) {
+#ifdef CONSADDR
+#define CONSADDR_VA (CONSADDR - CYCV_PERIPHERAL_BASE + CYCV_PERIPHERAL_VBASE)
+	volatile uint32_t *uartaddr = (volatile uint32_t *) CONSADDR_VA;
+
+	while ((le32toh(uartaddr[com_lsr]) & LSR_TXRDY) == 0)
+		;
+
+	uartaddr[com_data] = htole32(c);
+#endif
+}
 
 static const struct pmap_devmap *
 cycv_platform_devmap(void) {
@@ -100,19 +113,6 @@ cycv_platform_init_attach_args(struct fdt_attach_args *faa) {
 }
 
 static void
-cycv_platform_early_putchar(char c) {
-#ifdef CONSADDR
-#define CONSADDR_VA (CONSADDR - CYCV_PERIPHERAL_BASE + CYCV_PERIPHERAL_VBASE)
-	volatile uint32_t *uartaddr = (volatile uint32_t *) CONSADDR_VA;
-
-	while ((le32toh(uartaddr[com_lsr]) & LSR_TXRDY) == 0)
-		;
-
-	uartaddr[com_data] = htole32(c);
-#endif
-}
-
-static void
 cycv_platform_device_register(device_t dev, void *aux) {
 	prop_dictionary_t dict = device_properties(dev);
 
@@ -143,7 +143,6 @@ static const struct arm_platform cycv_platform = {
 	.ap_devmap = cycv_platform_devmap,
 	.ap_bootstrap = cycv_platform_bootstrap,
 	.ap_init_attach_args = cycv_platform_init_attach_args,
-	.ap_early_putchar = cycv_platform_early_putchar,
 	.ap_device_register = cycv_platform_device_register,
 	.ap_reset = cycv_platform_reset,
 	.ap_delay = a9tmr_delay,
