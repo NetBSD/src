@@ -1,9 +1,9 @@
-/* $NetBSD: ti_platform.c,v 1.5 2018/09/21 12:04:07 skrll Exp $ */
+/* $NetBSD: ti_platform.c,v 1.6 2018/10/30 16:41:52 skrll Exp $ */
 
 #include "opt_console.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ti_platform.c,v 1.5 2018/09/21 12:04:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ti_platform.c,v 1.6 2018/10/30 16:41:52 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -17,6 +17,23 @@ __KERNEL_RCSID(0, "$NetBSD: ti_platform.c,v 1.5 2018/09/21 12:04:07 skrll Exp $"
 extern struct bus_space armv7_generic_bs_tag;
 extern struct bus_space armv7_generic_a4x_bs_tag;
 extern struct arm32_bus_dma_tag arm_generic_dma_tag;
+
+void am33xx_platform_early_putchar(char);
+
+void
+am33xx_platform_early_putchar(char c)
+{
+#ifdef CONSADDR
+#define CONSADDR_VA ((CONSADDR - 0x44c00000) + 0xe4c00000)
+	volatile uint32_t *uartaddr = (volatile uint32_t *)CONSADDR_VA;
+
+	while ((le32toh(uartaddr[com_lsr]) & LSR_TXRDY) == 0)
+		;
+
+	uartaddr[com_data] = htole32(c);
+#endif
+}
+
 
 static const struct pmap_devmap *
 am33xx_platform_devmap(void)
@@ -37,20 +54,6 @@ am33xx_platform_init_attach_args(struct fdt_attach_args *faa)
 	faa->faa_bst = &armv7_generic_bs_tag;
 	faa->faa_a4x_bst = &armv7_generic_a4x_bs_tag;
 	faa->faa_dmat = &arm_generic_dma_tag;
-}
-
-static void
-am33xx_platform_early_putchar(char c)
-{
-#ifdef CONSADDR
-#define CONSADDR_VA ((CONSADDR - 0x44c00000) + 0xe4c00000)
-	volatile uint32_t *uartaddr = (volatile uint32_t *)CONSADDR_VA;
-
-	while ((le32toh(uartaddr[com_lsr]) & LSR_TXRDY) == 0)
-		;
-
-	uartaddr[com_data] = htole32(c);
-#endif
 }
 
 static void
@@ -126,7 +129,6 @@ am33xx_platform_delay(u_int n)
 static const struct arm_platform am33xx_platform = {
 	.ap_devmap = am33xx_platform_devmap,
 	.ap_init_attach_args = am33xx_platform_init_attach_args,
-	.ap_early_putchar = am33xx_platform_early_putchar,
 	.ap_bootstrap = am33xx_platform_bootstrap,
 	.ap_uart_freq = am33xx_platform_uart_freq,
 	.ap_delay = am33xx_platform_delay,

@@ -1,4 +1,4 @@
-/* $NetBSD: arm_fdtvar.h,v 1.11 2018/10/18 09:01:52 skrll Exp $ */
+/* $NetBSD: arm_fdtvar.h,v 1.12 2018/10/30 16:41:52 skrll Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared D. McNeill <jmcneill@invisible.ca>
@@ -41,7 +41,6 @@ struct arm_platform {
 	void			(*ap_mpstart)(void);
 	void			(*ap_startup)(void);
 	void			(*ap_init_attach_args)(struct fdt_attach_args *);
-	void			(*ap_early_putchar)(char);
 	void			(*ap_device_register)(device_t, void *);
 	void			(*ap_reset)(void);
 	void			(*ap_delay)(u_int);
