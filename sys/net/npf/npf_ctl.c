@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_ctl.c,v 1.38.2.3 2015/06/10 16:57:58 snj Exp $	*/
+/*	$NetBSD: npf_ctl.c,v 1.38.2.4 2018/10/30 19:52:56 martin Exp $	*/
 
 /*-
  * Copyright (c) 2009-2014 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_ctl.c,v 1.38.2.3 2015/06/10 16:57:58 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_ctl.c,v 1.38.2.4 2018/10/30 19:52:56 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -512,7 +512,8 @@ npfctl_load(u_long cmd, void *data)
 
 	/* Retrieve the dictionary. */
 #ifndef _NPF_TESTING
-	error = prop_dictionary_copyin_ioctl(pref, cmd, &npf_dict);
+	error = prop_dictionary_copyin_ioctl_size(pref, cmd, &npf_dict,
+	    4 * 1024 * 1024);
 	if (error)
 		return error;
 #else
