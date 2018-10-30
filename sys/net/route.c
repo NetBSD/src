@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.213 2018/09/05 02:49:40 ozaki-r Exp $	*/
+/*	$NetBSD: route.c,v 1.214 2018/10/30 05:30:31 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.213 2018/09/05 02:49:40 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.214 2018/10/30 05:30:31 ozaki-r Exp $");
 
 #include <sys/param.h>
 #ifdef RTFLUSH_DEBUG
@@ -406,6 +406,11 @@ rt_ifa_connected(const struct rtentry *rt, const struct ifaddr *ifa)
 void
 rt_replace_ifa(struct rtentry *rt, struct ifaddr *ifa)
 {
+	struct ifaddr *old;
+
+	if (rt->rt_ifa == ifa)
+		return;
+
 	if (rt->rt_ifa &&
 	    rt->rt_ifa != ifa &&
 	    rt->rt_ifa->ifa_flags & IFA_ROUTE &&
@@ -424,8 +429,9 @@ rt_replace_ifa(struct rtentry *rt, struct ifaddr *ifa)
 	}
 
 	ifaref(ifa);
-	ifafree(rt->rt_ifa);
+	old = rt->rt_ifa;
 	rt_set_ifa1(rt, ifa);
+	ifafree(old);
 }
 
 static void
