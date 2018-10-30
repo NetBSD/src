@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.1,v 1.1.2.41 2018/10/30 09:26:05 sborrill Exp $
+# $NetBSD: CHANGES-8.1,v 1.1.2.42 2018/10/30 09:32:48 sborrill Exp $
 
 A complete list of changes from the NetBSD 8.0 release to the NetBSD 8.1
 release:
@@ -1498,4 +1498,17 @@ sys/dev/pci/if_wm.c				1.589
 	Fix KASSERT to prevent panic on CNP(Intel 300 series + I219) with
 	INTx interrupt (Xen dom0 or pre netbsd-8).
 	[msaitoh, ticket #1075]
+
+sys/dev/pci/pci_subr.c				1.204-1.206
+sys/dev/pci/pcireg.h				1.141-1.142
+
+	Root Complex Event Collector Bus Number Association ECN.
+	- If capability version is 2 (or greater), decode RCEC
+	  Associated Bus Numbers  register.
+	- Don't print TPH requester's ST Table Size if the ST table
+	  location field is not PCI_TPH_REQ_STTBLLOC_TPHREQ because
+	  the size field is only applicable for
+	  PCI_TPH_REQ_STTBLLOC_TPHREQ case.
+	- Add comment.
+	[msaitoh, ticket #1074]
 
