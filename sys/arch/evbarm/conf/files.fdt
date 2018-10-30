@@ -1,8 +1,9 @@
-#	$NetBSD: files.fdt,v 1.4 2018/04/01 04:35:04 ryo Exp $
+#	$NetBSD: files.fdt,v 1.5 2018/10/30 22:32:33 jmcneill Exp $
 #
 # FDT-based kernel configuration info
 #
 
 file	arch/evbarm/fdt/fdt_machdep.c		fdt
+file	arch/evbarm/fdt/fdt_memory.c		fdt
 
 include "arch/arm/fdt/files.fdt"
