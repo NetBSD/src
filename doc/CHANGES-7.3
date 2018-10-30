@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.3,v 1.1.2.9 2018/10/30 10:17:52 sborrill Exp $
+# $NetBSD: CHANGES-7.3,v 1.1.2.10 2018/10/30 10:54:41 sborrill Exp $
 
 A complete list of changes from the NetBSD 7.2 release to the NetBSD 7.3
 release:
@@ -105,4 +105,10 @@ sys/arch/pmax/pmax/dec_3min.c			1.74
 	Fix hangup after framebuffers are attached on 3MIN.
 	Addresses PR port-pmax/53611
 	[tsutsui, #1641]
+
+usr.bin/systat/main.c				1.52 via patch
+
+	Add missing 'b' to the list of options.
+	Alpha-sort the option handling.
+	[mrg, ticket #1639]
 
