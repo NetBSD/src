@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC,v 1.9 2018/10/18 09:01:53 skrll Exp $
+#	$NetBSD: GENERIC,v 1.10 2018/10/30 06:55:07 skrll Exp $
 #
 #	GENERIC ARM (aarch32) kernel
 #
@@ -20,9 +20,9 @@ makeoptions	DTS="
 	bcm2837-rpi-3-b.dts
 	bcm2837-rpi-3-b-plus.dts
 
-	exynos4412-odroidx2.dts
-	exynos4412-odroidx.dts
 	exynos4412-odroidu3.dts
+	exynos4412-odroidx.dts
+	exynos4412-odroidx2.dts
 	exynos5410-odroidxu.dts
 	exynos5410-smdk5410.dts
 	exynos5422-odroidxu3-lite.dts
@@ -251,10 +251,14 @@ vxsysreg*	at fdt?
 # SRAM controller
 sunxisramc*     at fdt? pass 4          # SRAM controller
 
+# System Controller
+syscon*		at fdt? pass 1		# Generic System Controller
+
 # Timer
 gtmr*		at fdt? pass 1		# ARM Generic Timer
 armgtmr0	at gtmr?
 mct*		at fdt? pass 2		# Exynos Multi Core Timer (MCT)
+armgtmr*	at mct?
 sunxitimer*     at fdt?                 # Allwinner async timer
 tegratimer*	at fdt?			# Timers
 
@@ -509,6 +513,7 @@ dwctwo*		at fdt?			# Designware USB DRD
 ehci*		at fdt?			# EHCI
 #motg*		at fdt?			# Mentor Graphics USB OTG
 ohci*		at fdt?			# OHCI
+ehci*		at fdt?			# EHCI
 xhci*		at fdt?			# XHCI
 usb*		at usbus?
 
@@ -520,7 +525,6 @@ ld*	at virtio?			# Virtio disk device
 vioif*	at virtio?			# Virtio network device
 viornd* at virtio?			# Virtio entropy device
 vioscsi* at virtio?			# Virtio SCSI device
-
 
 include "dev/usb/usbdevices.config"
 midi*		at midibus?
