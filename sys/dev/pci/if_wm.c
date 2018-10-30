@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.289.2.15 2018/08/11 13:34:20 martin Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.289.2.16 2018/10/30 08:35:56 sborrill Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.289.2.15 2018/08/11 13:34:20 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.289.2.16 2018/10/30 08:35:56 sborrill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -12523,7 +12523,8 @@ wm_legacy_irq_quirk_spt(struct wm_softc *sc)
 
 	DPRINTF(WM_DEBUG_INIT, ("%s: %s called\n",
 		device_xname(sc->sc_dev), __func__));
-	KASSERT(sc->sc_type == WM_T_PCH_SPT);
+	KASSERT((sc->sc_type == WM_T_PCH_SPT)
+	    || (sc->sc_type == WM_T_PCH_CNP));
 
 	reg = CSR_READ(sc, WMREG_FEXTNVM7);
 	reg |= FEXTNVM7_SIDE_CLK_UNGATE;
