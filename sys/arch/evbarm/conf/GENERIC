@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC,v 1.10 2018/10/30 06:55:07 skrll Exp $
+#	$NetBSD: GENERIC,v 1.11 2018/10/30 07:51:09 skrll Exp $
 #
 #	GENERIC ARM (aarch32) kernel
 #
@@ -87,6 +87,7 @@ makeoptions	DTS="
 	sun7i-a20-lamobo-r1.dts
 	sun7i-a20-m3.dts
 	sun7i-a20-mk808c.dts
+	sun7i-a20-olimex-som-evb-emmc.dts
 	sun7i-a20-olimex-som-evb.dts
 	sun7i-a20-olimex-som204-evb-emmc.dts
 	sun7i-a20-olimex-som204-evb.dts
@@ -107,10 +108,14 @@ makeoptions	DTS="
 	sun8i-a83t-cubietruck-plus.dts
 	sun8i-a83t-tbs-a711.dts
 
+	sun8i-h2-plus-bananapi-m2-zero.dts
+	sun8i-h2-plus-libretech-all-h3-cc.dts
+	sun8i-h2-plus-orangepi-r1.dts
 	sun8i-h2-plus-orangepi-zero.dts
 
 	sun8i-h3-bananapi-m2-plus.dts
 	sun8i-h3-beelink-x2.dts
+	sun8i-h3-libretech-all-h3-cc.dts
 	sun8i-h3-nanopi-m1.dts
 	sun8i-h3-nanopi-m1-plus.dts
 	sun8i-h3-nanopi-neo.dts
@@ -126,10 +131,22 @@ makeoptions	DTS="
 	sun9i-a80-cubieboard4.dts
 	sun9i-a80-optimus.dts
 
+	sun50i-a64-bananapi-m64.dts
+	sun50i-a64-nanopi-a64.dts
+	sun50i-a64-olinuxino.dts
+	sun50i-a64-orangepi-win.dts
+	sun50i-a64-pine64-plus.dts
+	sun50i-a64-pine64.dts
+	sun50i-a64-pinebook.dts
+	sun50i-a64-sopine-baseboard.dts
+	sun50i-a64-teres-i.dts
+
+	sun50i-h5-libretech-all-h3-cc.dts
 	sun50i-h5-nanopi-neo-plus2.dts
 	sun50i-h5-nanopi-neo2.dts
 	sun50i-h5-orangepi-pc2.dts
 	sun50i-h5-orangepi-prime.dts
+	sun50i-h5-orangepi-zero-plus.dts
 	sun50i-h5-orangepi-zero-plus2.dts
 
 	tegra124-apalis-eval.dts
@@ -142,9 +159,11 @@ makeoptions	DTS="
 "
 
 options 	CPU_CORTEXA7
-options 	CPU_CORTEXA9
 options 	CPU_CORTEXA8
+options 	CPU_CORTEXA9
 options 	CPU_CORTEXA15
+
+options 	CPU_CORTEXA53
 
 # Can't add SOC_BCM2835 until interrupt and register issues sorted out
 #options 	SOC_BCM2835
@@ -294,6 +313,13 @@ tegrafuse*	at fdt? pass 4		# NVIDIA Tegra FUSE
 # Power management controller
 tegrapmc*	at fdt? pass 4		# NVIDIA Tegra PMC
 
+# Performance monitors
+armpmu*		at fdt?
+pseudo-device	tprof
+
+# Power state coordination interface
+psci*		at fdt?
+
 # Clock and Reset controller
 bcmcprman*	at fdt? pass 1		# Broadcom BCM283x Clock Manager
 bcmaux*		at fdt? pass 1		# Broadcom BCM283x Aux Periph Clocks
@@ -308,8 +334,12 @@ gpio*		at gpiobus?
 # MPIO / Pinmux
 tegrapinmux*	at fdt?			# NVIDIA Tegra MPIO
 
-# PWM timer
+# PWM controller
 expwm*		at fdt? pass 4		# PWM
+sunxipwm*	at fdt? pass 3		# Allwinner PWM
+
+# Backlight
+pwmbacklight*	at fdt?			# PWM Backlight controls
 
 # Fan
 pwmfan*		at fdt?			# PWM Fan controls
@@ -326,7 +356,8 @@ ppb*		at pci? dev ? function ?
 pci*		at ppb?
 
 # Ethernet
-emac*		at fdt?			# Allwinner Gigabit Ethernet (EMAC)
+awge*		at fdt?			# Allwinner Gigabit Ethernet (GMAC)
+emac*		at fdt?			# Allwinner Fast/Gigabit Ethernet (EMAC)
 smsh*		at fdt?			# SMSC LAN9118
 
 # PCI Ethernet
@@ -377,12 +408,26 @@ tegrai2c*	at fdt? pass 4		# NVIDIA Tegra I2C
 iic*		at i2cbus?
 
 # I2C devices
-titemp*		at iic?
-seeprom*	at iic?
 as3722pmic*	at iic?
 as3722reg*	at as3722pmic?
+axp20x*		at iic?			# AXP209 Power Management IC
+axp20xreg*	at axp20x?
+axp22x*		at iic?			# AXP221 Power Management IC
+axppmic*	at iic?			# X-Powers AXP Power Management IC
+axpreg*		at axppmic?
 max77620pmic*	at iic?
+pcf8563rtc*	at iic?			# PCF8563 RTC
+seeprom*	at iic?			# AT24Cxx Serial EEPROM
+sy8106a*	at iic?			# Silergy SY81061 regulator
+tcakp*		at iic?			# TI TCA8418 Keypad Scan IC
 tcagpio*	at iic?
+titemp*		at iic?
+wskbd*		at tcakp? console ?
+
+# CAN bus
+options         CAN             # Controller Area Network protocol
+pseudo-device   canloop         # CAN loopback interface
+sunxican*	at fdt?		# A10/A20 CAN controller
 
 # SPI
 sun6ispi*       at fdt?
@@ -393,6 +438,9 @@ bcmrng*		at fdt?			# Broadcom BCM283x RNG
 
 # Security ID EFUSE
 sunxisid*       at fdt? pass 4          # SID
+
+# Low res ADC
+sunxilradc*	at fdt?
 
 # RTC
 #exyortc*	at fdt?			# RTC
@@ -408,16 +456,16 @@ vchiq0		at fdt?
 vcaudio0	at vchiq0
 
 # Audio
-a64acodec*	at fdt?			# A64 audio codec (analog part)
+a64acodec*	at fdt?			# Allwinner A64 audio codec (analog part)
 aaci*		at fdt?			# ARM PrimeCell AACI
 ausoc*		at fdt?			# Simple SoC audio card
+h3codec*	at fdt?			# Allwinner H3 audio codec (analog part)
 hdaudio*	at fdt?			# Intel HDA
 hdafg*		at hdaudiobus?
 options 	HDAUDIOVERBOSE
 options 	HDAUDIO_32BIT_ACCESS
 options 	HDAUDIO_ENABLE_HDMI
 options 	HDAUDIO_ENABLE_DISPLAYPORT
-h3codec*	at fdt?			# H3 audio codec (analog part)
 sun8icodec*	at fdt?			# Audio codec (sun8i/sun50i)
 sunxicodec*	at fdt?			# Allwinner audio codec
 sunxii2s*	at fdt?			# I2S/PCM
@@ -431,6 +479,7 @@ plmmc*		at fdt?			# ARM PrimeCell MCI
 sdhc*		at fdt?			# SD Host Controller Interface
 sdhost*		at fdt?			# Broadcom BCM283x SD Host Interface
 sunximmc*	at fdt?			# Allwinner SD/MMC
+sdmmc*		at sunximmc?
 sdmmc*		at sdmmcbus?
 ld0		at sdmmc0
 ld1		at sdmmc1
@@ -508,10 +557,11 @@ tegrasoctherm*	at fdt?			# NVIDIA Tegra SOC_THERM
 exusbphy*	at fdt? pass 9		# Samsung Exynos USB2 PHY
 exusbdrdphy*	at fdt? pass 9		# Samsung Exynos USB3 DRD PHY
 sunxiusbphy*	at fdt? pass 9		# Allwinner USB PHY
+sunxiusb3phy*	at fdt? pass 9		# Allwinner USB3 PHY
 tegrausbphy*	at fdt?			# NVIDIA Tegra USB PHY
 dwctwo*		at fdt?			# Designware USB DRD
 ehci*		at fdt?			# EHCI
-#motg*		at fdt?			# Mentor Graphics USB OTG
+motg*		at fdt?			# Mentor Graphics USB OTG
 ohci*		at fdt?			# OHCI
 ehci*		at fdt?			# EHCI
 xhci*		at fdt?			# XHCI
