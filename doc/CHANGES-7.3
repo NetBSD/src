@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.3,v 1.1.2.4 2018/10/15 08:05:43 sborrill Exp $
+# $NetBSD: CHANGES-7.3,v 1.1.2.5 2018/10/30 08:36:19 sborrill Exp $
 
 A complete list of changes from the NetBSD 7.2 release to the NetBSD 7.3
 release:
@@ -73,4 +73,10 @@ sbin/gpt/gpt.c					1.76
 	When changing entries skip those that do not match the -L option.
 	Should fix PR 53668.
 	[mlelstv, ticket #1643]
+
+sys/dev/pci/if_wm.c				1.589
+
+	Fix KASSERT to prevent panic on CNP(Intel 300 series + I219) with
+	INTx interrupt (Xen dom0 or pre netbsd-8).
+	[msaitoh, ticket #1647]
 
