@@ -1,4 +1,4 @@
-/*     $NetBSD: prop_array.h,v 1.13 2011/09/30 22:08:18 jym Exp $    */
+/*     $NetBSD: prop_array.h,v 1.13.22.1 2018/10/30 19:49:07 martin Exp $    */
 
 /*-
  * Copyright (c) 2006, 2009 The NetBSD Foundation, Inc.
@@ -79,9 +79,14 @@ int		prop_array_recv_syscall(const struct plistref *,
 					prop_array_t *);
 #elif defined(_KERNEL)
 int		prop_array_copyin(const struct plistref *, prop_array_t *);
+int		prop_array_copyin_size(const struct plistref *, prop_array_t *,
+				       size_t);
 int		prop_array_copyout(struct plistref *, prop_array_t);
 int		prop_array_copyin_ioctl(const struct plistref *, const u_long,
 					prop_array_t *);
+int		prop_array_copyin_ioctl_size(const struct plistref *,
+					     const u_long, prop_array_t *,
+					     size_t);
 int		prop_array_copyout_ioctl(struct plistref *, const u_long,
 					 prop_array_t);
 #endif
