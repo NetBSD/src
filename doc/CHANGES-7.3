@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.3,v 1.1.2.10 2018/10/30 10:54:41 sborrill Exp $
+# $NetBSD: CHANGES-7.3,v 1.1.2.11 2018/10/30 19:54:56 martin Exp $
 
 A complete list of changes from the NetBSD 7.2 release to the NetBSD 7.3
 release:
@@ -111,4 +111,61 @@ usr.bin/systat/main.c				1.52 via patch
 	Add missing 'b' to the list of options.
 	Alpha-sort the option handling.
 	[mrg, ticket #1639]
+
+distrib/sgimips/instkernel/Makefile		1.13
+sys/arch/sgimips/conf/INSTALL32_IP2x		1.10
+sys/arch/sgimips/stand/boot/Makefile		1.20
+
+	Disable misc options to shrink an INSTALL kernel for IP2x.
+	Use elf2ecoff(1) rather than objcopy(1) to generat ecoff for
+	old machines.
+	[tsutsui, ticket #1637]
+
+external/public-domain/tz/dist/CONTRIBUTING     up to 1.1.1.6
+external/public-domain/tz/dist/Makefile         up to 1.1.1.22
+external/public-domain/tz/dist/NEWS             up to 1.1.1.24
+external/public-domain/tz/dist/README           up to 1.1.1.7
+external/public-domain/tz/dist/TZDATA_VERSION   up to 1.14
+external/public-domain/tz/dist/africa           up to 1.1.1.17
+external/public-domain/tz/dist/antarctica       up to 1.1.1.11
+external/public-domain/tz/dist/asia             up to 1.1.1.21
+external/public-domain/tz/dist/australasia      up to 1.1.1.16
+external/public-domain/tz/dist/backward         up to 1.1.1.9
+external/public-domain/tz/dist/backzone         up to 1.1.1.15
+external/public-domain/tz/dist/etcetera         up to 1.1.1.3
+external/public-domain/tz/dist/europe           up to 1.1.1.23
+external/public-domain/tz/dist/factory          up to 1.1.1.3
+external/public-domain/tz/dist/leap-seconds.list up to 1.1.1.10
+external/public-domain/tz/dist/leapseconds      up to 1.1.1.11
+external/public-domain/tz/dist/leapseconds.awk  up to 1.1.1.7
+external/public-domain/tz/dist/northamerica     up to 1.1.1.21
+external/public-domain/tz/dist/pacificnew       up to 1.1.1.2
+external/public-domain/tz/dist/southamerica     up to 1.1.1.15
+external/public-domain/tz/dist/systemv          up to 1.1.1.2
+external/public-domain/tz/dist/theory.html      up to 1.1.1.6
+external/public-domain/tz/dist/version          up to 1.1.1.11
+external/public-domain/tz/dist/yearistype.sh    up to 1.1.1.2
+external/public-domain/tz/dist/ziguard.awk      up to 1.1.1.3
+external/public-domain/tz/dist/zishrink.awk     up to 1.1.1.5
+external/public-domain/tz/dist/zone.tab         up to 1.1.1.15
+external/public-domain/tz/dist/zone1970.tab     up to 1.1.1.17
+external/public-domain/tz/dist/zoneinfo2tdf.pl  up to 1.1.1.2
+doc/3RDPARTY					(apply patch)
+
+	Updated tzdata to 2018g.
+	[kre, ticket #1644]
+
+common/include/prop/prop_array.h		1.15,1.16
+common/include/prop/prop_dictionary.h		1.16
+common/lib/libprop/prop_copyin_ioctl.9		1.12
+common/lib/libprop/prop_kern.c			1.21-1.23 (patch)
+
+	proplib: add sized versions of the copyin ioctls and document them.
+	[sborrill, ticket #1645]
+
+sys/net/npf/npf_ctl.c				1.47 (partial, patch)
+
+	Increase copyin buffer size to 4MB to allow larger rulesets
+	to be loaded.
+	[sborrill, ticket #1646]
 
