@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.439 2018/10/30 05:29:21 ozaki-r Exp $	*/
+/*	$NetBSD: if.c,v 1.440 2018/10/30 05:54:42 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.439 2018/10/30 05:29:21 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.440 2018/10/30 05:54:42 ozaki-r Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -2183,7 +2183,8 @@ link_rtrequest(int cmd, struct rtentry *rt, const struct rt_addrinfo *info)
 	struct psref psref;
 
 	if (cmd != RTM_ADD || (ifa = rt->rt_ifa) == NULL ||
-	    (ifp = ifa->ifa_ifp) == NULL || (dst = rt_getkey(rt)) == NULL)
+	    (ifp = ifa->ifa_ifp) == NULL || (dst = rt_getkey(rt)) == NULL ||
+	    ISSET(info->rti_flags, RTF_DONTCHANGEIFA))
 		return;
 	if ((ifa = ifaof_ifpforaddr_psref(dst, ifp, &psref)) != NULL) {
 		rt_replace_ifa(rt, ifa);
@@ -2436,6 +2437,9 @@ p2p_rtrequest(int req, struct rtentry *rt,
 			break;
 
 		rt->rt_ifp = lo0ifp;
+
+		if (ISSET(info->rti_flags, RTF_DONTCHANGEIFA))
+			break;
 
 		IFADDR_READER_FOREACH(ifa, ifp) {
 			if (equal(rt_getkey(rt), ifa->ifa_addr))
