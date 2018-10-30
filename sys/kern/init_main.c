@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.499 2018/10/26 18:16:42 martin Exp $	*/
+/*	$NetBSD: init_main.c,v 1.500 2018/10/30 19:40:35 kre Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.499 2018/10/26 18:16:42 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.500 2018/10/30 19:40:35 kre Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -663,7 +663,16 @@ main(void)
 	 * munched in mi_switch() after the time got set.
 	 */
 	getnanotime(&time);
-	boottime = time;
+	{
+		struct timespec ut;
+		/*
+		 * was:
+		 *	boottime = time;
+		 * but we can do better
+		 */
+		nanouptime(&ut);
+		timespecsub(&time, &ut, &boottime);
+	}
 
 	mutex_enter(proc_lock);
 	LIST_FOREACH(p, &allproc, p_list) {
