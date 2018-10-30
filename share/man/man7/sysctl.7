@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.7,v 1.133 2018/10/06 13:53:58 wiz Exp $
+.\"	$NetBSD: sysctl.7,v 1.134 2018/10/30 19:41:21 kre Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)sysctl.3	8.4 (Berkeley) 5/9/95
 .\"
-.Dd October 5, 2018
+.Dd October 30, 2018
 .Dt SYSCTL 7
 .Os
 .Sh NAME
@@ -278,7 +278,7 @@ privilege may change the value.
 .It kern.arandom	integer	no
 .It kern.argmax	integer	no
 .It kern.boothowto	integer	no
-.It kern.boottime	struct timeval	no
+.It kern.boottime	struct timespec	no
 .It kern.buildinfo	string	no
 .\".It kern.bufq	node	not applicable
 .It kern.ccpu	integer	no
@@ -396,9 +396,11 @@ Flags passed from the boot loader; see
 for the meanings of the flags.
 .It Li kern.boottime ( Dv KERN_BOOTTIME )
 A
-.Vt struct timeval
+.Vt struct timespec
 structure is returned.
 This structure contains the time that the system was booted.
+That time is defined (for this purpose) to be the time at
+which the kernel first started accumulating clock ticks.
 .It Li kern.bufq
 This variable contains information on the
 .Xr bufq 9

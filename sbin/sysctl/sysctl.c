@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.c,v 1.160 2018/02/04 09:03:23 mrg Exp $ */
+/*	$NetBSD: sysctl.c,v 1.161 2018/10/30 19:41:21 kre Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: sysctl.c,v 1.160 2018/02/04 09:03:23 mrg Exp $");
+__RCSID("$NetBSD: sysctl.c,v 1.161 2018/10/30 19:41:21 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -2189,32 +2189,32 @@ kern_clockrate(HANDLER_ARGS)
 static void
 kern_boottime(HANDLER_ARGS)
 {
-	struct timeval timeval;
+	struct timespec timespec;
 	time_t boottime;
 	size_t sz;
 	int rc;
 
-	sz = sizeof(timeval);
-	rc = prog_sysctl(name, namelen, &timeval, &sz, NULL, 0);
+	sz = sizeof(timespec);
+	rc = prog_sysctl(name, namelen, &timespec, &sz, NULL, 0);
 	if (rc == -1) {
 		sysctlerror(1);
 		return;
 	}
-	if (sz != sizeof(timeval))
+	if (sz != sizeof(timespec))
 		errx(EXIT_FAILURE, "%s: !returned size wrong!", sname);
 
-	boottime = timeval.tv_sec;
+	boottime = timespec.tv_sec;
 	if (xflag || rflag)
-		display_struct(pnode, sname, &timeval, sz,
+		display_struct(pnode, sname, &timespec, sz,
 			       DISPLAY_VALUE);
 	else if (!nflag)
 		/* ctime() provides the \n */
 		printf("%s%s%s", sname, eq, ctime(&boottime));
 	else if (nflag == 1)
-		printf("%ld\n", (long)boottime);
+		printf("%lld\n", (long long)boottime);
 	else
-		printf("%ld.%06ld\n", (long)timeval.tv_sec,
-		       (long)timeval.tv_usec);
+		printf("%lld.%9.9ld\n", (long long)timespec.tv_sec,
+		       timespec.tv_nsec);
 }
 
 /*ARGSUSED*/
