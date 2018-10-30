@@ -1,4 +1,4 @@
-/*	$NetBSD: route.h,v 1.119 2018/04/19 21:20:43 christos Exp $	*/
+/*	$NetBSD: route.h,v 1.120 2018/10/30 05:54:42 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -172,6 +172,11 @@ struct ortentry {
 #define RTF_LOCAL	0x40000		/* route represents a local address */
 #define RTF_BROADCAST	0x80000		/* route represents a bcast address */
 #define RTF_UPDATING	0x100000	/* route is updating */
+/*
+ * The flag is nevert set to rt_flags.  It just tells rtrequest1 to set a passed
+ * ifa to rt_ifa (via rti_ifa) and not replace rt_ifa in ifa_rtrequest.
+ */
+#define RTF_DONTCHANGEIFA	0x200000	/* suppress rt_ifa replacement */
 
 /*
  * 0x400 is exposed to userland just for backward compatibility. For that
