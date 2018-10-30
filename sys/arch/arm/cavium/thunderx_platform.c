@@ -1,4 +1,4 @@
-/*	$NetBSD: thunderx_platform.c,v 1.1 2018/10/03 09:24:36 skrll Exp $	*/
+/*	$NetBSD: thunderx_platform.c,v 1.2 2018/10/30 16:41:52 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: thunderx_platform.c,v 1.1 2018/10/03 09:24:36 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: thunderx_platform.c,v 1.2 2018/10/30 16:41:52 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -121,7 +121,6 @@ static const struct arm_platform thunderx_platform = {
 	.ap_devmap = thunderx_platform_devmap,
 	.ap_bootstrap = arm_fdt_cpu_bootstrap,
 	.ap_init_attach_args = thunderx_platform_init_attach_args,
-	.ap_early_putchar = thunderx_platform_early_putchar,
 	.ap_device_register = thunderx_platform_device_register,
 	.ap_reset = psci_fdt_reset,
 	.ap_delay = gtmr_delay,
