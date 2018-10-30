@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_time.c,v 1.49 2017/02/26 10:26:19 njoly Exp $	*/
+/*	$NetBSD: netbsd32_time.c,v 1.50 2018/10/30 14:43:38 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_time.c,v 1.49 2017/02/26 10:26:19 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_time.c,v 1.50 2018/10/30 14:43:38 riastradh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ntp.h"
@@ -66,6 +66,7 @@ netbsd32___ntp_gettime50(struct lwp *l,
 	if (SCARG_P32(uap, ntvp)) {
 		ntp_gettime(&ntv);
 
+		memset(&ntv32, 0, sizeof(ntv32));
 		ntv32.time.tv_sec = ntv.time.tv_sec;
 		ntv32.time.tv_nsec = ntv.time.tv_nsec;
 		ntv32.maxerror = (netbsd32_long)ntv.maxerror;
@@ -96,6 +97,7 @@ compat_50_netbsd32_ntp_gettime(struct lwp *l,
 	if (SCARG_P32(uap, ntvp)) {
 		ntp_gettime(&ntv);
 
+		memset(&ntv32, 0, sizeof(ntv32));
 		ntv32.time.tv_sec = (int32_t)ntv.time.tv_sec;
 		ntv32.time.tv_nsec = ntv.time.tv_nsec;
 		ntv32.maxerror = (netbsd32_long)ntv.maxerror;
@@ -126,6 +128,7 @@ compat_30_netbsd32_ntp_gettime(struct lwp *l, const struct compat_30_netbsd32_nt
 	if (SCARG_P32(uap, ntvp)) {
 		ntp_gettime(&ntv);
 
+		memset(&ntv32, 0, sizeof(ntv32));
 		ntv32.time.tv_sec = ntv.time.tv_sec;
 		ntv32.time.tv_usec = ntv.time.tv_nsec / 1000;
 		ntv32.maxerror = (netbsd32_long)ntv.maxerror;
