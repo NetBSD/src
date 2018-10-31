@@ -1,4 +1,4 @@
-/* $NetBSD: efifdt.c,v 1.10 2018/10/31 09:13:32 jmcneill Exp $ */
+/* $NetBSD: efifdt.c,v 1.11 2018/10/31 12:59:43 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -158,6 +158,8 @@ efi_fdt_memory_map(void)
 		    md->PhysicalStart, md->VirtualStart,
 		    (u_long)md->NumberOfPages * EFI_PAGE_SIZE);
 #endif
+		if ((md->Attribute & EFI_MEMORY_RUNTIME) != 0)
+			continue;
 		if ((md->Attribute & EFI_MEMORY_WB) == 0)
 			continue;
 		if (!FDT_MEMORY_USABLE(md))
