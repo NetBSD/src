@@ -1,4 +1,4 @@
-/* $NetBSD: pci_msi_machdep.c,v 1.1 2018/10/21 00:42:06 jmcneill Exp $ */
+/* $NetBSD: pci_msi_machdep.c,v 1.2 2018/10/31 15:42:17 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_msi_machdep.c,v 1.1 2018/10/21 00:42:06 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_msi_machdep.c,v 1.2 2018/10/31 15:42:17 jmcneill Exp $");
 
 #include <sys/kernel.h>
 #include <sys/kmem.h>
@@ -73,6 +73,28 @@ arm_pci_msi_alloc_common(pci_intr_handle_t **ihps, int *count, const struct pci_
 		return EINVAL;
 
 	vectors = msi->msi_alloc(msi, count, pa, exact);
+	if (vectors == NULL)
+		return ENOMEM;
+
+	*ihps = vectors;
+
+	return 0;
+}
+
+static int
+arm_pci_msix_alloc_common(pci_intr_handle_t **ihps, u_int *table_indexes, int *count, const struct pci_attach_args *pa, bool exact)
+{
+	pci_intr_handle_t *vectors;
+	struct arm_pci_msi *msi;
+
+	if ((pa->pa_flags & PCI_FLAGS_MSIX_OKAY) == 0)
+		return ENODEV;
+
+	msi = SIMPLEQ_FIRST(&arm_pci_msi_list);		/* XXX multiple frame support */
+	if (msi == NULL || msi->msix_alloc == NULL)
+		return EINVAL;
+
+	vectors = msi->msix_alloc(msi, table_indexes, count, pa, exact);
 	if (vectors == NULL)
 		return ENOMEM;
 
@@ -125,19 +147,19 @@ pci_msi_alloc_exact(const struct pci_attach_args *pa, pci_intr_handle_t **ihps, 
 int
 pci_msix_alloc(const struct pci_attach_args *pa, pci_intr_handle_t **ihps, int *count)
 {
-	return EOPNOTSUPP;
+	return arm_pci_msix_alloc_common(ihps, NULL, count, pa, false);
 }
 
 int
 pci_msix_alloc_exact(const struct pci_attach_args *pa, pci_intr_handle_t **ihps, int count)
 {
-	return EOPNOTSUPP;
+	return arm_pci_msix_alloc_common(ihps, NULL, &count, pa, true);
 }
 
 int
 pci_msix_alloc_map(const struct pci_attach_args *pa, pci_intr_handle_t **ihps, u_int *table_indexes, int count)
 {
-	return EOPNOTSUPP;
+	return arm_pci_msix_alloc_common(ihps, table_indexes, &count, pa, true);
 }
 
 int

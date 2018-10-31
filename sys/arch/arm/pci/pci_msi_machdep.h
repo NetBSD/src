@@ -1,4 +1,4 @@
-/* $NetBSD: pci_msi_machdep.h,v 1.1 2018/10/21 00:42:06 jmcneill Exp $ */
+/* $NetBSD: pci_msi_machdep.h,v 1.2 2018/10/31 15:42:17 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -42,6 +42,7 @@ struct arm_pci_msi {
 	void *			msi_priv;
 
 	pci_intr_handle_t *	(*msi_alloc)(struct arm_pci_msi *, int *, const struct pci_attach_args *, bool);
+	pci_intr_handle_t *	(*msix_alloc)(struct arm_pci_msi *, u_int *, int *, const struct pci_attach_args *, bool);
 	void *			(*msi_intr_establish)(struct arm_pci_msi *,
 				    pci_intr_handle_t, int, int (*)(void *), void *);
 	void			(*msi_intr_release)(struct arm_pci_msi *,
