@@ -1,4 +1,4 @@
-/* $NetBSD: efi_machdep.c,v 1.2 2018/10/31 13:01:48 jmcneill Exp $ */
+/* $NetBSD: efi_machdep.c,v 1.3 2018/10/31 14:15:12 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: efi_machdep.c,v 1.2 2018/10/31 13:01:48 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: efi_machdep.c,v 1.3 2018/10/31 14:15:12 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <uvm/uvm_extern.h>
@@ -45,8 +45,8 @@ arm_efirt_md_map_range(vaddr_t va, paddr_t pa, size_t sz, enum arm_efirt_mem_typ
 
 	switch (type) {
 	case ARM_EFIRT_MEM_CODE:
-		attr = LX_BLKPAG_OS_READ |
-		       LX_BLKPAG_AF | LX_BLKPAG_AP_RO | LX_BLKPAG_UXN |
+		attr = LX_BLKPAG_OS_READ | LX_BLKPAG_OS_WRITE |
+		       LX_BLKPAG_AF | LX_BLKPAG_AP_RW | LX_BLKPAG_UXN |
 		       LX_BLKPAG_ATTR_NORMAL_WB;
 		break;
 	case ARM_EFIRT_MEM_DATA:
