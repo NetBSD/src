@@ -1,4 +1,4 @@
-/*	$NetBSD: atactl.c,v 1.77 2016/10/04 21:37:46 mrg Exp $	*/
+/*	$NetBSD: atactl.c,v 1.78 2018/10/31 20:00:56 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: atactl.c,v 1.77 2016/10/04 21:37:46 mrg Exp $");
+__RCSID("$NetBSD: atactl.c,v 1.78 2018/10/31 20:00:56 mrg Exp $");
 #endif
 
 
@@ -107,7 +107,7 @@ static void	print_bitinfo(const char *, const char *, u_int,
     const struct bitinfo *);
 static void	print_bitinfo2(const char *, const char *, u_int, u_int,
     const struct bitinfo *);
-static void	print_smart_status(void *, void *);
+static void	print_smart_status(void *, void *, const char *);
 static void	print_error_entry(int, const struct ata_smart_error *);
 static void	print_selftest_entry(int, const struct ata_smart_selftest *);
 
@@ -143,7 +143,7 @@ static const struct command device_commands[] = {
 	{ "sleep",	"",			device_idle },
 	{ "checkpower",	"",			device_checkpower },
 	{ "smart",
-		"enable|disable|status|offline #|error-log|selftest-log",
+		"enable|disable|status [vendor]|offline #|error-log|selftest-log",
 						device_smart },
 	{ "security",
 		"status|freeze|[setpass|unlock|disable|erase] [user|master]",
@@ -255,8 +255,15 @@ static const struct bitinfo ata_sata_feat[] = {
 	{ 0, NULL },
 };
 
-static const struct {
-	const int	id;
+/*
+ * Global SMART attribute table.  All known attributes should be defined
+ * here with overrides outside of the standard in a vendor specific table.
+ *
+ * XXX Some of these should be duplicated to vendor-specific tables now that
+ * XXX they exist and have non generic names.
+ */
+static const struct attr_table {
+	const unsigned	id;
 	const char	*name;
 	void (*special)(const struct ata_smart_attr *, uint64_t);
 } smart_attrs[] = {
@@ -279,7 +286,7 @@ static const struct {
 	{ 171,          "Program Fail Count", NULL },
 	{ 172,          "Erase Fail Count", NULL },
 	{ 173,          "Wear Leveller Worst Case Erase Count", NULL },
-	{ 174,          "Unexpected Power Loss", NULL },
+	{ 174,          "Unexpected Power Loss Count", NULL },
 	{ 175,          "Program Fail Count", NULL },
 	{ 176,          "Erase Fail Count", NULL },
 	{ 177,          "Wear Leveling Count", NULL },
@@ -292,7 +299,7 @@ static const struct {
 	{ 184,          "End-to-end error", NULL },
 	{ 185,          "Head Stability", NULL },
 	{ 186,          "Induced Op-Vibration Detection", NULL },
-	{ 187,          "Reported uncorrect", NULL },
+	{ 187,          "Reported Uncorrectable Errors", NULL },
 	{ 188,          "Command Timeout", NULL },
 	{ 189,          "High Fly Writes", NULL },
 	{ 190,          "Airflow Temperature",		device_smart_temp },
@@ -334,11 +341,40 @@ static const struct {
 	{ 242,		"Total LBAs Read", NULL },
 	{ 246,		"Total Host Sector Writes", NULL },
 	{ 247,		"Host Program NAND Pages Count", NULL },
-	{ 248,		"FTL Program Pages Count ", NULL },
+	{ 248,		"FTL Program Pages Count", NULL },
 	{ 249,		"Total Raw NAND Writes (1GiB units)", NULL },
 	{ 250,		"Read error retry rate", NULL },
 	{ 254,		"Free Fall Sensor", NULL },
 	{   0,		"Unknown", NULL },
+};
+
+/*
+ * Micron specific SMART attributes published by Micron in:
+ * "TN-FD-22: Client SATA SSD SMART Attribute Reference"
+ */
+static const struct attr_table micron_smart_names[] = {
+	{   5,		"Reallocated NAND block count", NULL },
+	{ 173,          "Average block erase count", NULL },
+	{ 184,          "Error correction count", NULL },
+	{ 197,		"Current pending ECC count", NULL },
+	{ 198,		"SMART offline scan uncorrectable error count", NULL },
+	{ 202,		"Percent lifetime remaining", NULL },
+	{ 206,		"Write error rate", NULL },
+	{ 247,		"Number of NAND pages of data written by the host", NULL },
+	{ 248,		"Number of NAND pages written by the FTL", NULL },
+	{   0,		"Unknown", NULL },
+};
+
+/*
+ * Vendor-specific SMART attribute table.  Can be used to override
+ * a particular attribute name and special printer function, with the
+ * default is the main table.
+ */
+const struct vendor_name_table {
+	const char *name;
+	const struct attr_table *table;
+} vendor_smart_names[] = {
+	{ .name = "Micron", .table = micron_smart_names },
 };
 
 static const struct bitinfo ata_sec_st[] = {
@@ -516,22 +552,36 @@ device_smart_temp(const struct ata_smart_attr *attr, uint64_t raw_value)
 		    attr->raw[2], attr->raw[4]);
 }
 
-
 /*
  * Print out SMART attribute thresholds and values
  */
 
 static void
-print_smart_status(void *vbuf, void *tbuf)
+print_smart_status(void *vbuf, void *tbuf, const char *vendor)
 {
 	const struct ata_smart_attributes *value_buf = vbuf;
 	const struct ata_smart_thresholds *threshold_buf = tbuf;
 	const struct ata_smart_attr *attr;
 	uint64_t raw_value;
 	int flags;
-	int i, j;
-	int aid;
+	unsigned i, j;
+	unsigned aid, vid;
 	uint8_t checksum;
+	const struct attr_table *vendor_table = NULL;
+	void (*special)(const struct ata_smart_attr *, uint64_t);
+
+	if (vendor) {
+		for (i = 0; i < __arraycount(vendor_smart_names); i++) {
+			if (strcasecmp(vendor,
+			    vendor_smart_names[i].name) == 0) {
+				vendor_table = vendor_smart_names[i].table;
+				break;
+			}
+		}
+		if (vendor_table == NULL)
+			fprintf(stderr,
+			    "SMART vendor '%s' has no special table\n", vendor);
+	}
 
 	for (i = checksum = 0; i < 512; i++)
 		checksum += ((const uint8_t *) value_buf)[i];
@@ -551,6 +601,7 @@ print_smart_status(void *vbuf, void *tbuf)
 	    "                 raw\n");
 	for (i = 0; i < 256; i++) {
 		int thresh = 0;
+		const char *name = NULL;
 
 		attr = NULL;
 
@@ -574,20 +625,34 @@ print_smart_status(void *vbuf, void *tbuf)
 		     aid++)
 			;
 
+		if (vendor_table) {
+			for (vid = 0;
+			     vendor_table[vid].id != i && vendor_table[vid].id != 0;
+			     vid++)
+				;
+			if (vendor_table[vid].id != 0) {
+				name = vendor_table[vid].name;
+				special = vendor_table[vid].special;
+			}
+		}
+		if (name == NULL) {
+			name = smart_attrs[aid].name;
+			special = smart_attrs[aid].special;
+		}
+
 		flags = le16toh(attr->flags);
 
 		printf("%3d %3d  %3d     %-3s %-7s %stive    %-27s ",
 		    i, attr->value, thresh,
 		    flags & WDSM_ATTR_ADVISORY ? "yes" : "no",
 		    flags & WDSM_ATTR_COLLECTIVE ? "online" : "offline",
-		    attr->value > thresh ? "posi" : "nega",
-		    smart_attrs[aid].name);
+		    attr->value > thresh ? "posi" : "nega", name);
 
 		for (j = 0, raw_value = 0; j < 6; j++)
 			raw_value += ((uint64_t)attr->raw[j]) << (8*j);
 
-		if (smart_attrs[aid].special)
-			(*smart_attrs[aid].special)(attr, raw_value);
+		if (special)
+			(*special)(attr, raw_value);
 		else
 			printf("%" PRIu64, raw_value);
 		printf("\n");
@@ -1296,6 +1361,7 @@ device_smart(int argc, char *argv[])
 		is_smart();
 	} else if (strcmp(argv[0], "status") == 0) {
 		int rv;
+		char *vendor = argc > 1 ? argv[1] : NULL;
 
 		rv = is_smart();
 
@@ -1350,7 +1416,7 @@ device_smart(int argc, char *argv[])
 
 		ata_command(&req);
 
-		print_smart_status(inbuf, inbuf2);
+		print_smart_status(inbuf, inbuf2, vendor);
 
 	} else if (strcmp(argv[0], "offline") == 0) {
 		if (argc != 2)
