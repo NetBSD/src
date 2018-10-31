@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_pci_machdep.c,v 1.4 2018/10/21 11:56:26 jmcneill Exp $ */
+/* $NetBSD: acpi_pci_machdep.c,v 1.5 2018/10/31 15:42:36 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_pci_machdep.c,v 1.4 2018/10/21 11:56:26 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_pci_machdep.c,v 1.5 2018/10/31 15:42:36 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -331,9 +331,12 @@ static const char *
 acpi_pci_md_intr_string(void *v, pci_intr_handle_t ih, char *buf, size_t len)
 {
 	const int irq = __SHIFTOUT(ih, ARM_PCI_INTR_IRQ);
+	const int vec = __SHIFTOUT(ih, ARM_PCI_INTR_MSI_VEC);
 
-	if (ih & ARM_PCI_INTR_MSI)
-		snprintf(buf, len, "irq %d (MSI)", irq);
+	if (ih & ARM_PCI_INTR_MSIX)
+		snprintf(buf, len, "irq %d (MSI-X vec %d)", irq, vec);
+	else if (ih & ARM_PCI_INTR_MSI)
+		snprintf(buf, len, "irq %d (MSI vec %d)", irq, vec);
 	else
 		snprintf(buf, len, "irq %d", irq);
 
@@ -367,7 +370,7 @@ acpi_pci_md_intr_establish(void *v, pci_intr_handle_t ih, int ipl,
 {
 	struct acpi_pci_context * const ap = v;
 
-	if (ih & ARM_PCI_INTR_MSI)
+	if ((ih & (ARM_PCI_INTR_MSI | ARM_PCI_INTR_MSIX)) != 0)
 		return arm_pci_msi_intr_establish(&ap->ap_pc, ih, ipl, callback, arg);
 
 	const int irq = (int)__SHIFTOUT(ih, ARM_PCI_INTR_IRQ);
