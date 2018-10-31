@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1557.2.5 2018/06/07 18:24:16 martin Exp $
+# $NetBSD: mi,v 1.1557.2.6 2018/10/31 10:39:55 martin Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -951,6 +951,7 @@
 ./usr/share/man/cat4/btms.0			man-sys-catman		.cat
 ./usr/share/man/cat4/btsco.0			man-sys-catman		.cat
 ./usr/share/man/cat4/btuart.0			man-sys-catman		.cat
+./usr/share/man/cat4/bwfm.0			man-sys-catman		.cat
 ./usr/share/man/cat4/bwi.0			man-sys-catman		.cat
 ./usr/share/man/cat4/ca.0			man-obsolete		obsolete
 ./usr/share/man/cat4/cac.0			man-sys-catman		.cat
@@ -4072,6 +4073,7 @@
 ./usr/share/man/html4/btms.html			man-sys-htmlman		html
 ./usr/share/man/html4/btsco.html		man-sys-htmlman		html
 ./usr/share/man/html4/btuart.html		man-sys-htmlman		html
+./usr/share/man/html4/bwfm.html			man-sys-htmlman		html
 ./usr/share/man/html4/bwi.html			man-sys-htmlman		html
 ./usr/share/man/html4/cac.html			man-sys-htmlman		html
 ./usr/share/man/html4/can.html			man-sys-htmlman		html
@@ -6963,6 +6965,7 @@
 ./usr/share/man/man4/btms.4			man-sys-man		.man
 ./usr/share/man/man4/btsco.4			man-sys-man		.man
 ./usr/share/man/man4/btuart.4			man-sys-man		.man
+./usr/share/man/man4/bwfm.4			man-sys-man		.man
 ./usr/share/man/man4/bwi.4			man-sys-man		.man
 ./usr/share/man/man4/ca.4			man-obsolete		obsolete
 ./usr/share/man/man4/cac.4			man-sys-man		.man
