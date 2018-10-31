@@ -1,4 +1,4 @@
-#	$NetBSD: files.kern,v 1.23 2018/09/14 01:55:19 mrg Exp $
+#	$NetBSD: files.kern,v 1.24 2018/10/31 06:26:26 maxv Exp $
 
 #
 # kernel sources
@@ -95,6 +95,7 @@ file	kern/kern_uuid.c		kern
 file	kern/kgdb_stub.c		kgdb
 file	kern/sched_4bsd.c		sched_4bsd
 file	kern/sched_m2.c			sched_m2
+file	kern/subr_asan.c		kasan
 file	kern/subr_autoconf.c		kern
 file	kern/subr_blist.c		vmswap
 file	kern/subr_bufq.c		kern
