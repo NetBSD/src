@@ -1,10 +1,10 @@
-/*	$NetBSD: usbdevs.h,v 1.727 2017/05/30 20:16:08 jnemeth Exp $	*/
+/*	$NetBSD: usbdevs.h,v 1.727.2.1 2018/10/31 09:32:21 martin Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: usbdevs,v 1.736 2017/05/30 20:13:35 jnemeth Exp
+ *	NetBSD: usbdevs,v 1.736.2.1 2018/10/31 09:30:10 martin Exp
  */
 
 /*
@@ -1102,8 +1102,14 @@
 #define	USB_PRODUCT_BILLIONTON_USB2AR	0x90ff		/* USB2AR Ethernet */
 
 /* Broadcom products */
+#define	USB_PRODUCT_BROADCOM_BCMFW	0x0bdc		/* BCMFW */
 #define	USB_PRODUCT_BROADCOM_BCM2033	0x2000		/* BCM2033 */
 #define	USB_PRODUCT_BROADCOM_BCM2033NF	0x2033		/* BCM2033 (no firmware) */
+#define	USB_PRODUCT_BROADCOM_BCM43236	0xbd17		/* BCM43236 */
+#define	USB_PRODUCT_BROADCOM_BCM43143	0xbd1e		/* BCM43143 */
+#define	USB_PRODUCT_BROADCOM_BCM43242	0xbd1f		/* BCM43242 */
+#define	USB_PRODUCT_BROADCOM_BCM43569	0xbd27		/* BCM43569 */
+
 
 /* Brother Industries products */
 #define	USB_PRODUCT_BROTHER_HL1050	0x0002		/* HL-1050 laser printer */
