@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.1,v 1.1.2.42 2018/10/30 09:32:48 sborrill Exp $
+# $NetBSD: CHANGES-8.1,v 1.1.2.43 2018/10/31 10:05:33 martin Exp $
 
 A complete list of changes from the NetBSD 8.0 release to the NetBSD 8.1
 release:
@@ -1511,4 +1511,57 @@ sys/dev/pci/pcireg.h				1.141-1.142
 	  PCI_TPH_REQ_STTBLLOC_TPHREQ case.
 	- Add comment.
 	[msaitoh, ticket #1074]
+
+distrib/sets/lists/base/mi				(patch)
+etc/mtree/NetBSD.dist.base				(patch)
+external/Makefile					(patch)
+external/broadcom/Makefile				1.3 (patch)
+external/broadcom/Makefile.inc				1.1 (patch)
+external/broadcom/bwfm/Makefile				1.3 (patch)
+external/broadcom/bwfm/dist/LICENCE.broadcom_bcm43xx	1.1.1.1 (patch)
+external/broadcom/bwfm/dist/brcmfmac43143.bin		1.1.1.1 (patch)
+external/broadcom/bwfm/dist/brcmfmac43236b.bin		1.1.1.1 (patch)
+external/broadcom/bwfm/dist/brcmfmac43242a.bin		1.1.1.1 (patch)
+external/broadcom/bwfm/dist/brcmfmac4350-pcie.bin	1.1 (patch)
+external/broadcom/bwfm/dist/brcmfmac4350c2-pcie.bin	1.1 (patch)
+external/broadcom/bwfm/dist/brcmfmac43569.bin		1.1.1.1 (patch)
+external/broadcom/bwfm/dist/brcmfmac43602-pcie.bin	1.1 (patch)
+sys/arch/amd64/conf/GENERIC				(patch)
+sys/arch/i386/conf/GENERIC				(patch)
+sys/conf/files						(patch)
+sys/dev/pci/files.pci					(patch)
+sys/dev/usb/files.usb					(patch)
+sys/dev/usb/usbdevs					(patch)
+sys/dev/ic/bwfm.c					1.14 (patch)
+sys/dev/ic/bwfmreg.h					1.3 (patch)
+sys/dev/ic/bwfmvar.h					1.3 (patch)
+sys/dev/pci/if_bwfm_pci.c 				1.4 (patch)
+sys/dev/pci/if_bwfm_pci.h				1.8 (patch)
+sys/dev/usb/if_bwfm_usb.c 				1.8 (patch)
+distrib/sets/lists/man/mi				(patch)
+share/man/man4/bwfm.4					1.3 (patch)
+sys/dev/usb/usbdevs.h					(regen)
+sys/dev/usb/usbdevs_data.h				(regen)
+
+	Add backport of bwfm(4).
+	[maya, ticket #1072]
+
+external/public-domain/tz/dist/NEWS             up to 1.1.1.24
+external/public-domain/tz/dist/TZDATA_VERSION   up to 1.14
+external/public-domain/tz/dist/africa           up to 1.1.1.17
+external/public-domain/tz/dist/europe           up to 1.1.1.23
+external/public-domain/tz/dist/northamerica     up to 1.1.1.21
+external/public-domain/tz/dist/theory.html      up to 1.1.1.6
+external/public-domain/tz/dist/version          up to 1.1.1.11
+external/public-domain/tz/dist/ziguard.awk      up to 1.1.1.3
+external/public-domain/tz/dist/zishrink.awk     up to 1.1.1.5
+doc/3RDPARTY					(patch)
+
+	Updated tzdata to 2018g.
+	[kre, ticket #1073]
+
+sys/arch/arm/arm/disassem.c			1.40
+
+	Allow "setend be" decode.
+	[skrll, ticket #1076]
 
