@@ -1,4 +1,4 @@
-/* $NetBSD: efiboot.c,v 1.10 2018/10/28 10:17:47 jmcneill Exp $ */
+/* $NetBSD: efiboot.c,v 1.11 2018/10/31 13:00:35 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -143,6 +143,11 @@ efi_set_virtual_address_map(EFI_MEMORY_DESCRIPTOR *memmap, UINTN nentries, UINTN
 			fdt_appendprop_u64(fdt, fdt_path_offset(fdt, "/chosen"), "netbsd,uefi-runtime-data", md->PhysicalStart);
 			fdt_appendprop_u64(fdt, fdt_path_offset(fdt, "/chosen"), "netbsd,uefi-runtime-data", md->VirtualStart);
 			fdt_appendprop_u64(fdt, fdt_path_offset(fdt, "/chosen"), "netbsd,uefi-runtime-data", md->NumberOfPages * EFI_PAGE_SIZE);
+			break;
+		case EfiMemoryMappedIO:
+			fdt_appendprop_u64(fdt, fdt_path_offset(fdt, "/chosen"), "netbsd,uefi-runtime-mmio", md->PhysicalStart);
+			fdt_appendprop_u64(fdt, fdt_path_offset(fdt, "/chosen"), "netbsd,uefi-runtime-mmio", md->VirtualStart);
+			fdt_appendprop_u64(fdt, fdt_path_offset(fdt, "/chosen"), "netbsd,uefi-runtime-mmio", md->NumberOfPages * EFI_PAGE_SIZE);
 			break;
 		default:
 			break;
