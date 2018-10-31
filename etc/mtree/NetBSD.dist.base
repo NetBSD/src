@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.base,v 1.160.2.2 2018/10/17 13:50:25 martin Exp $
+#	$NetBSD: NetBSD.dist.base,v 1.160.2.3 2018/10/31 08:55:32 martin Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -69,6 +69,7 @@
 ./libdata
 ./libdata/firmware
 ./libdata/firmware/if_athn
+./libdata/firmware/if_bwfm
 ./libdata/firmware/if_ipw
 ./libdata/firmware/if_iwi
 ./libdata/firmware/if_iwm

@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1158.2.4 2018/10/17 13:50:25 martin Exp $
+# $NetBSD: mi,v 1.1158.2.5 2018/10/31 08:55:32 martin Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -138,6 +138,15 @@
 ./libdata/firmware/if_athn/athn-ar7010-11	base-firmware-root
 ./libdata/firmware/if_athn/athn-ar9271		base-firmware-root
 ./libdata/firmware/if_athn/athn-license		base-firmware-root
+./libdata/firmware/if_bwfm			base-firmware-root
+./libdata/firmware/if_bwfm/LICENCE.broadcom_bcm43xx	base-firmware-root
+./libdata/firmware/if_bwfm/brcmfmac43143.bin	base-firmware-root
+./libdata/firmware/if_bwfm/brcmfmac43236b.bin	base-firmware-root
+./libdata/firmware/if_bwfm/brcmfmac43242a.bin	base-firmware-root
+./libdata/firmware/if_bwfm/brcmfmac43569.bin	base-firmware-root
+./libdata/firmware/if_bwfm/brcmfmac4350-pcie.bin	base-firmware-root
+./libdata/firmware/if_bwfm/brcmfmac4350c2-pcie.bin	base-firmware-root
+./libdata/firmware/if_bwfm/brcmfmac43602-pcie.bin	base-firmware-root
 ./libdata/firmware/if_ipw			base-firmware-root
 ./libdata/firmware/if_ipw/LICENSE		base-firmware-root
 ./libdata/firmware/if_ipw/ipw2100-1.2-i.fw	base-firmware-root
