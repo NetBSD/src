@@ -1,4 +1,4 @@
-/* $NetBSD: efi_runtime.h,v 1.1 2018/10/28 10:21:42 jmcneill Exp $ */
+/* $NetBSD: efi_runtime.h,v 1.2 2018/10/31 13:01:48 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -39,6 +39,12 @@ int		arm_efirt_gettime(struct efi_tm *);
 int		arm_efirt_settime(struct efi_tm *);
 int		arm_efirt_reset(enum efi_reset);
 
-void		arm_efirt_md_map_range(vaddr_t, paddr_t, size_t, bool);
+enum arm_efirt_mem_type {
+	ARM_EFIRT_MEM_CODE,
+	ARM_EFIRT_MEM_DATA,
+	ARM_EFIRT_MEM_MMIO,
+};
+
+void		arm_efirt_md_map_range(vaddr_t, paddr_t, size_t, enum arm_efirt_mem_type);
 
 #endif /* !_ARM_EFI_RUNTIME_H */
