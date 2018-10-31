@@ -1,4 +1,4 @@
-/* $NetBSD: efi_machdep.c,v 1.1 2018/10/28 10:21:42 jmcneill Exp $ */
+/* $NetBSD: efi_machdep.c,v 1.2 2018/10/31 13:01:48 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: efi_machdep.c,v 1.1 2018/10/28 10:21:42 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: efi_machdep.c,v 1.2 2018/10/31 13:01:48 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <uvm/uvm_extern.h>
@@ -39,16 +39,30 @@ __KERNEL_RCSID(0, "$NetBSD: efi_machdep.c,v 1.1 2018/10/28 10:21:42 jmcneill Exp
 #include <arm/arm/efi_runtime.h>
 
 void
-arm_efirt_md_map_range(vaddr_t va, paddr_t pa, size_t sz, bool exec)
+arm_efirt_md_map_range(vaddr_t va, paddr_t pa, size_t sz, enum arm_efirt_mem_type type)
 {       
 	pt_entry_t attr;
-        
-	attr = LX_BLKPAG_OS_READ | LX_BLKPAG_AF | LX_BLKPAG_UXN | LX_BLKPAG_ATTR_NORMAL_WB;
-	if (exec)
-		attr |= LX_BLKPAG_AP_RO;
-	else    
-		attr |= LX_BLKPAG_AP_RW | LX_BLKPAG_OS_WRITE | LX_BLKPAG_PXN;
-        
+
+	switch (type) {
+	case ARM_EFIRT_MEM_CODE:
+		attr = LX_BLKPAG_OS_READ |
+		       LX_BLKPAG_AF | LX_BLKPAG_AP_RO | LX_BLKPAG_UXN |
+		       LX_BLKPAG_ATTR_NORMAL_WB;
+		break;
+	case ARM_EFIRT_MEM_DATA:
+		attr = LX_BLKPAG_OS_READ | LX_BLKPAG_OS_WRITE |
+		       LX_BLKPAG_AF | LX_BLKPAG_AP_RW | LX_BLKPAG_UXN | LX_BLKPAG_PXN |
+		       LX_BLKPAG_ATTR_NORMAL_WB;
+		break;
+	case ARM_EFIRT_MEM_MMIO:
+		attr = LX_BLKPAG_OS_READ | LX_BLKPAG_OS_WRITE |
+		       LX_BLKPAG_AF | LX_BLKPAG_AP_RW | LX_BLKPAG_UXN | LX_BLKPAG_PXN |
+		       LX_BLKPAG_ATTR_DEVICE_MEM;
+		break;
+	default:
+		panic("arm_efirt_md_map_range: unsupported type %d", type);
+	}
+
 	pmapboot_enter(va, pa, sz, L3_SIZE, attr, 0, bootpage_alloc, NULL);
 	while (sz >= PAGE_SIZE) {
 		aarch64_tlbi_by_va(va);

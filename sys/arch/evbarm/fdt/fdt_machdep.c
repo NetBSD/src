@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_machdep.c,v 1.50 2018/10/31 09:15:25 skrll Exp $ */
+/* $NetBSD: fdt_machdep.c,v 1.51 2018/10/31 13:01:48 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.50 2018/10/31 09:15:25 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.51 2018/10/31 13:01:48 jmcneill Exp $");
 
 #include "opt_machdep.h"
 #include "opt_bootconfig.h"
@@ -388,7 +388,7 @@ fdt_setup_initrd(void)
 
 #ifdef EFI_RUNTIME
 static void
-fdt_map_efi_runtime(const char *prop, bool exec)
+fdt_map_efi_runtime(const char *prop, enum arm_efirt_mem_type type)
 {
 	int len;
 
@@ -404,7 +404,8 @@ fdt_map_efi_runtime(const char *prop, bool exec)
 		const paddr_t pa = be64toh(map[0]);
 		const vaddr_t va = be64toh(map[1]);
 		const uint64_t sz = be64toh(map[2]);
-		arm_efirt_md_map_range(va, pa, sz, exec);
+		VPRINTF("%s: %s %lx-%lx (%lx-%lx)\n", __func__, prop, pa, pa+sz-1, va, va+sz-1);
+		arm_efirt_md_map_range(va, pa, sz, type);
 		map += 3;
 		len -= 24;
 	}
@@ -523,8 +524,9 @@ initarm(void *arg)
 	fdt_build_bootconfig(memory_start, memory_end);
 
 #ifdef EFI_RUNTIME
-	fdt_map_efi_runtime("netbsd,uefi-runtime-code", true);
-	fdt_map_efi_runtime("netbsd,uefi-runtime-data", false);
+	fdt_map_efi_runtime("netbsd,uefi-runtime-code", ARM_EFIRT_MEM_CODE);
+	fdt_map_efi_runtime("netbsd,uefi-runtime-data", ARM_EFIRT_MEM_DATA);
+	fdt_map_efi_runtime("netbsd,uefi-runtime-mmio", ARM_EFIRT_MEM_MMIO);
 #endif
 
 	/* Perform PT build and VM init */
