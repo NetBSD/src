@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.589 2018/10/05 08:23:58 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.590 2018/10/31 06:04:48 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.589 2018/10/05 08:23:58 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.590 2018/10/31 06:04:48 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -8188,13 +8188,27 @@ wm_txeof(struct wm_txqueue *txq, u_int limit)
 			WM_Q_EVCNT_INCR(txq, underrun);
 #endif /* WM_EVENT_COUNTERS */
 
-		if (status & (WTX_ST_EC | WTX_ST_LC)) {
+		/*
+		 * 82574 and newer's document says the status field has neither
+		 * EC (Excessive Collision) bit nor LC (Late Collision) bit
+		 * (reserved). Refer "PCIe GbE Controller Open Source Software
+		 * Developer's Manual", 82574 datasheet and newer.
+		 *
+		 * XXX I saw the LC bit was set on I218 even though the media
+		 * was full duplex, so the bit might be used for other
+		 * meaning ...(I have no document).
+		 */
+
+		if (((status & (WTX_ST_EC | WTX_ST_LC)) != 0)
+		    && ((sc->sc_type < WM_T_82574)
+			|| (sc->sc_type == WM_T_80003))) {
 			ifp->if_oerrors++;
 			if (status & WTX_ST_LC)
 				log(LOG_WARNING, "%s: late collision\n",
 				    device_xname(sc->sc_dev));
 			else if (status & WTX_ST_EC) {
-				ifp->if_collisions += 16;
+				ifp->if_collisions +=
+				    TX_COLLISION_THRESHOLD + 1;
 				log(LOG_WARNING, "%s: excessive collisions\n",
 				    device_xname(sc->sc_dev));
 			}
