@@ -1,4 +1,4 @@
-/* $NetBSD: aarch64_machdep.c,v 1.16 2018/10/20 06:18:18 ryo Exp $ */
+/* $NetBSD: aarch64_machdep.c,v 1.17 2018/10/31 13:42:24 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: aarch64_machdep.c,v 1.16 2018/10/20 06:18:18 ryo Exp $");
+__KERNEL_RCSID(1, "$NetBSD: aarch64_machdep.c,v 1.17 2018/10/31 13:42:24 jmcneill Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_ddb.h"
@@ -45,6 +45,7 @@ __KERNEL_RCSID(1, "$NetBSD: aarch64_machdep.c,v 1.16 2018/10/20 06:18:18 ryo Exp
 #include <sys/module.h>
 #include <sys/msgbuf.h>
 #include <sys/sysctl.h>
+#include <sys/reboot.h>
 
 #include <dev/mm.h>
 
@@ -501,6 +502,20 @@ SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 void
 parse_mi_bootargs(char *args)
 {
+	int val;
+
+	if (get_bootconf_option(args, "-s", BOOTOPT_TYPE_BOOLEAN, &val) && val)
+		boothowto |= RB_SINGLE;
+	if (get_bootconf_option(args, "-d", BOOTOPT_TYPE_BOOLEAN, &val) && val)
+		boothowto |= RB_KDB;
+	if (get_bootconf_option(args, "-a", BOOTOPT_TYPE_BOOLEAN, &val) && val)
+		boothowto |= RB_ASKNAME;
+	if (get_bootconf_option(args, "-q", BOOTOPT_TYPE_BOOLEAN, &val) && val)
+		boothowto |= AB_QUIET;
+	if (get_bootconf_option(args, "-v", BOOTOPT_TYPE_BOOLEAN, &val) && val)
+		boothowto |= AB_VERBOSE;
+	if (get_bootconf_option(args, "-x", BOOTOPT_TYPE_BOOLEAN, &val) && val)
+		boothowto |= AB_DEBUG;
 }
 
 void
