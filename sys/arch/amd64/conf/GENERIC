@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.459.2.11 2018/09/07 12:27:26 martin Exp $
+# $NetBSD: GENERIC,v 1.459.2.12 2018/10/31 09:30:10 martin Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.459.2.11 $"
+#ident		"GENERIC-$Revision: 1.459.2.12 $"
 
 maxusers	64		# estimated number of users
 
@@ -753,6 +753,7 @@ bce*	at pci? dev ? function ?	# Broadcom 440x 10/100 Ethernet
 bge*	at pci? dev ? function ?	# Broadcom 570x gigabit Ethernet
 bnx*	at pci? dev ? function ?	# Broadcom NetXtremeII gigabit Ethernet
 bwi*	at pci? dev ? function ?	# Broadcom BCM43xx wireless
+bwfm*	at pci? dev ? function ?	# Broadcom FullMAC
 dge*	at pci? dev ? function ?	# Intel 82597 10GbE LR
 en*	at pci? dev ? function ?	# ENI/Adaptec ATM
 ep*	at pci? dev ? function ?	# 3Com 3c59x
