@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1173.2.5 2018/04/09 12:49:31 bouyer Exp $
+#	$NetBSD: files,v 1.1173.2.6 2018/10/31 09:30:10 martin Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20170615
@@ -1400,6 +1400,11 @@ file	dev/ic/isic_bchan.c		isic
 # XXX: passive_isdn
 device	iavc: isdndev, isdncapi, passive_isdn
 file	dev/ic/iavc.c			iavc
+
+
+# Broadcom FullMAC 802.11 driver
+device	bwfm: arp, ifnet, wlan
+file	dev/ic/bwfm.c			bwfm
 
 # Broadcom AirForce / Apple Airport Extreme
 device	bwi: arp, ifnet, firmload, wlan

@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.736 2017/05/30 20:13:35 jnemeth Exp $
+$NetBSD: usbdevs,v 1.736.2.1 2018/10/31 09:30:10 martin Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -1095,8 +1095,14 @@ product BILLIONTON USBE100	0x8511	USBE100
 product BILLIONTON USB2AR	0x90ff	USB2AR Ethernet
 
 /* Broadcom products */
+product BROADCOM BCMFW		0x0bdc	BCMFW
 product BROADCOM BCM2033	0x2000	BCM2033
 product BROADCOM BCM2033NF	0x2033	BCM2033 (no firmware)
+product BROADCOM BCM43236	0xbd17	BCM43236
+product BROADCOM BCM43143	0xbd1e	BCM43143
+product BROADCOM BCM43242	0xbd1f	BCM43242
+product BROADCOM BCM43569	0xbd27	BCM43569
+
 
 /* Brother Industries products */
 product BROTHER HL1050		0x0002	HL-1050 laser printer
