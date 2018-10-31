@@ -1,11 +1,11 @@
-/*	$NetBSD: asan.c,v 1.10 2018/10/27 06:35:54 maxv Exp $	*/
+/*	$NetBSD: subr_asan.c,v 1.1 2018/10/31 06:26:26 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Maxime Villard, and Siddharth Muralee.
+ * by Maxime Villard.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,118 +30,74 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: asan.c,v 1.10 2018/10/27 06:35:54 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_asan.c,v 1.1 2018/10/31 06:26:26 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/kernel.h>
-#include <sys/module.h>
 #include <sys/param.h>
 #include <sys/conf.h>
 #include <sys/systm.h>
 #include <sys/types.h>
-#include <sys/ksyms.h>
 #include <sys/asan.h>
 
 #include <uvm/uvm.h>
-#include <amd64/pmap.h>
-#include <amd64/vmparam.h>
 
-#define VIRTUAL_SHIFT		47	/* 48bit address space, cut half */
-#define CANONICAL_BASE		0xFFFF800000000000
-
+/* ASAN constants. Part of the compiler ABI. */
 #define KASAN_SHADOW_SCALE_SHIFT	3
 #define KASAN_SHADOW_SCALE_SIZE		(1UL << KASAN_SHADOW_SCALE_SHIFT)
 #define KASAN_SHADOW_MASK		(KASAN_SHADOW_SCALE_SIZE - 1)
 
-#define KASAN_SHADOW_SIZE	(1ULL << (VIRTUAL_SHIFT - KASAN_SHADOW_SCALE_SHIFT))
-#define KASAN_SHADOW_START	(VA_SIGN_NEG((L4_SLOT_KASAN * NBPD_L4)))
-#define KASAN_SHADOW_END	(KASAN_SHADOW_START + KASAN_SHADOW_SIZE)
+/* The MD code. */
+#include <machine/asan.h>
+
+/* Our redzone values. */
+#define KASAN_GLOBAL_REDZONE	0xFA
+#define KASAN_MEMORY_REDZONE	0xFB
+
+/* Stack redzone values. Part of the compiler ABI. */
+#define KASAN_STACK_LEFT	0xF1
+#define KASAN_STACK_MID		0xF2
+#define KASAN_STACK_RIGHT	0xF3
+#define KASAN_STACK_PARTIAL	0xF4
+#define KASAN_USE_AFTER_SCOPE	0xF8
+
+/* ASAN ABI version. */
+#if defined(__clang__) && (__clang_major__ - 0 >= 6)
+#define ASAN_ABI_VERSION	8
+#elif __GNUC_PREREQ__(7, 1) && !defined(__clang__)
+#define ASAN_ABI_VERSION	8
+#elif __GNUC_PREREQ__(6, 1) && !defined(__clang__)
+#define ASAN_ABI_VERSION	6
+#else
+#error "Unsupported compiler version"
+#endif
 
 #define __RET_ADDR	(unsigned long)__builtin_return_address(0)
 
-void kasan_softint(struct lwp *);
-void kasan_shadow_map(void *, size_t);
-void kasan_early_init(void);
-void kasan_init(void);
+/* Global variable descriptor. Part of the compiler ABI.  */
+struct __asan_global_source_location {
+	const char *filename;
+	int line_no;
+	int column_no;
+};
+struct __asan_global {
+	const void *beg;		/* address of the global variable */
+	size_t size;			/* size of the global variable */
+	size_t size_with_redzone;	/* size with the redzone */
+	const void *name;		/* name of the variable */
+	const void *module_name;	/* name of the module where the var is declared */
+	unsigned long has_dynamic_init;	/* the var has dyn initializer (c++) */
+	struct __asan_global_source_location *location;
+#if ASAN_ABI_VERSION >= 7
+	uintptr_t odr_indicator;	/* the address of the ODR indicator symbol */
+#endif
+};
 
 static bool kasan_enabled __read_mostly = false;
 
-static inline int8_t *kasan_addr_to_shad(const void *addr)
-{
-	vaddr_t va = (vaddr_t)addr;
-	return (int8_t *)(KASAN_SHADOW_START +
-	    ((va - CANONICAL_BASE) >> KASAN_SHADOW_SCALE_SHIFT));
-}
-
-static __always_inline bool
-kasan_unsupported(vaddr_t addr)
-{
-	return (addr >= (vaddr_t)PTE_BASE &&
-	    addr < ((vaddr_t)PTE_BASE + NBPD_L4));
-}
-
 /* -------------------------------------------------------------------------- */
 
-static bool kasan_early __read_mostly = true;
-static uint8_t earlypages[8 * PAGE_SIZE] __aligned(PAGE_SIZE);
-static size_t earlytaken = 0;
-
-static paddr_t
-kasan_early_palloc(void)
-{
-	paddr_t ret;
-
-	KASSERT(earlytaken < 8);
-
-	ret = (paddr_t)(&earlypages[0] + earlytaken * PAGE_SIZE);
-	earlytaken++;
-
-	ret -= KERNBASE;
-
-	return ret;
-}
-
-static paddr_t
-kasan_palloc(void)
-{
-	paddr_t pa;
-
-	if (__predict_false(kasan_early))
-		pa = kasan_early_palloc();
-	else
-		pa = pmap_get_physpage();
-
-	return pa;
-}
-
-static void
-kasan_shadow_map_page(vaddr_t va)
-{
-	paddr_t pa;
-
-	if (!pmap_valid_entry(L4_BASE[pl4_i(va)])) {
-		pa = kasan_palloc();
-		L4_BASE[pl4_i(va)] = pa | PG_KW | pmap_pg_nx | PG_V;
-	}
-	if (!pmap_valid_entry(L3_BASE[pl3_i(va)])) {
-		pa = kasan_palloc();
-		L3_BASE[pl3_i(va)] = pa | PG_KW | pmap_pg_nx | PG_V;
-	}
-	if (!pmap_valid_entry(L2_BASE[pl2_i(va)])) {
-		pa = kasan_palloc();
-		L2_BASE[pl2_i(va)] = pa | PG_KW | pmap_pg_nx | PG_V;
-	}
-	if (!pmap_valid_entry(L1_BASE[pl1_i(va)])) {
-		pa = kasan_palloc();
-		L1_BASE[pl1_i(va)] = pa | PG_KW | pmap_pg_g | pmap_pg_nx | PG_V;
-	}
-}
-
-/*
- * Allocate the necessary stuff in the shadow, so that we can monitor the
- * passed area.
- */
 void
 kasan_shadow_map(void *addr, size_t size)
 {
@@ -152,29 +108,20 @@ kasan_shadow_map(void *addr, size_t size)
 
 	sz = roundup(size, KASAN_SHADOW_SCALE_SIZE) / KASAN_SHADOW_SCALE_SIZE;
 
-	sva = (vaddr_t)kasan_addr_to_shad(addr);
-	eva = (vaddr_t)kasan_addr_to_shad(addr) + sz;
+	sva = (vaddr_t)kasan_md_addr_to_shad(addr);
+	eva = (vaddr_t)kasan_md_addr_to_shad(addr) + sz;
 
 	sva = rounddown(sva, PAGE_SIZE);
 	eva = roundup(eva, PAGE_SIZE);
 
 	npages = (eva - sva) / PAGE_SIZE;
 
-	KASSERT(sva >= KASAN_SHADOW_START && eva < KASAN_SHADOW_END);
+	KASSERT(sva >= KASAN_MD_SHADOW_START && eva < KASAN_MD_SHADOW_END);
 
 	for (i = 0; i < npages; i++) {
-		kasan_shadow_map_page(sva + i * PAGE_SIZE);
+		kasan_md_shadow_map_page(sva + i * PAGE_SIZE);
 	}
 }
-
-/* -------------------------------------------------------------------------- */
-
-#ifdef __HAVE_PCPU_AREA
-#error "PCPU area not allowed with KASAN"
-#endif
-#ifdef __HAVE_DIRECT_MAP
-#error "DMAP not allowed with KASAN"
-#endif
 
 static void
 kasan_ctors(void)
@@ -197,143 +144,38 @@ kasan_ctors(void)
 	}
 }
 
-/*
- * Map only the current stack. We will map the rest in kasan_init.
- */
 void
-kasan_early_init(void)
+kasan_early_init(void *stack)
 {
-	extern vaddr_t lwp0uarea;
-
-	kasan_shadow_map((void *)lwp0uarea, USPACE);
-	kasan_early = false;
+	kasan_md_early_init(stack);
 }
 
-/*
- * Create the shadow mapping. We don't create the 'User' area, because we
- * exclude it from the monitoring. The 'Main' area is created dynamically
- * in pmap_growkernel.
- */
 void
 kasan_init(void)
 {
-	extern struct bootspace bootspace;
-	size_t i;
+	/* MD initialization. */
+	kasan_md_init();
 
-	CTASSERT((KASAN_SHADOW_SIZE / NBPD_L4) == NL4_SLOT_KASAN);
-
-	/* Kernel. */
-	for (i = 0; i < BTSPACE_NSEGS; i++) {
-		if (bootspace.segs[i].type == BTSEG_NONE) {
-			continue;
-		}
-		kasan_shadow_map((void *)bootspace.segs[i].va,
-		    bootspace.segs[i].sz);
-	}
-
-	/* Boot region. */
-	kasan_shadow_map((void *)bootspace.boot.va, bootspace.boot.sz);
-
-	/* Module map. */
-	kasan_shadow_map((void *)bootspace.smodule,
-	    (size_t)(bootspace.emodule - bootspace.smodule));
-
-	/* The bootstrap spare va. */
-	kasan_shadow_map((void *)bootspace.spareva, PAGE_SIZE);
-
+	/* Now officially enabled. */
 	kasan_enabled = true;
 
 	/* Call the ASAN constructors. */
 	kasan_ctors();
 }
 
-/* -------------------------------------------------------------------------- */
-
-static inline bool
-kasan_unwind_end(const char *name)
-{
-	if (!strcmp(name, "syscall") ||
-	    !strcmp(name, "handle_syscall") ||
-	    !strncmp(name, "Xintr", 5) ||
-	    !strncmp(name, "Xhandle", 7) ||
-	    !strncmp(name, "Xresume", 7) ||
-	    !strncmp(name, "Xstray", 6) ||
-	    !strncmp(name, "Xhold", 5) ||
-	    !strncmp(name, "Xrecurse", 8) ||
-	    !strcmp(name, "Xdoreti") ||
-	    !strncmp(name, "Xsoft", 5)) {
-		return true;
-	}
-
-	return false;
-}
-
 static void
-kasan_unwind(void)
-{
-	uint64_t *rbp, rip;
-	const char *mod;
-	const char *sym;
-	size_t nsym;
-	int error;
-
-	rbp = (uint64_t *)__builtin_frame_address(0);
-	nsym = 0;
-
-	while (1) {
-		/* 8(%rbp) contains the saved %rip. */
-		rip = *(rbp + 1);
-
-		if (rip < KERNBASE) {
-			break;
-		}
-		error = ksyms_getname(&mod, &sym, (vaddr_t)rip, KSYMS_PROC);
-		if (error) {
-			break;
-		}
-		printf("#%zu %p in %s <%s>\n", nsym, (void *)rip, sym, mod);
-		if (kasan_unwind_end(sym)) {
-			break;
-		}
-
-		rbp = (uint64_t *)*(rbp);
-		if (rbp == 0) {
-			break;
-		}
-		nsym++;
-
-		if (nsym >= 15) {
-			break;
-		}
-	}
-}
-
-static void
-kasan_report(unsigned long addr, size_t size, bool write, unsigned long rip)
+kasan_report(unsigned long addr, size_t size, bool write, unsigned long pc)
 {
 	printf("kASan: Unauthorized Access In %p: Addr %p [%zu byte%s, %s]\n",
-	    (void *)rip, (void *)addr, size, (size > 1 ? "s" : ""),
+	    (void *)pc, (void *)addr, size, (size > 1 ? "s" : ""),
 	    (write ? "write" : "read"));
-	kasan_unwind();
+	kasan_md_unwind();
 }
-
-/* -------------------------------------------------------------------------- */
-
-/* Our redzone values. */
-#define KASAN_GLOBAL_REDZONE	0xFA
-#define KASAN_MEMORY_REDZONE	0xFB
-
-/* Stack redzone shadow values. Part of the compiler ABI. */
-#define KASAN_STACK_LEFT	0xF1
-#define KASAN_STACK_MID		0xF2
-#define KASAN_STACK_RIGHT	0xF3
-#define KASAN_STACK_PARTIAL	0xF4
-#define KASAN_USE_AFTER_SCOPE	0xF8
 
 static __always_inline void
 kasan_shadow_1byte_markvalid(unsigned long addr)
 {
-	int8_t *byte = kasan_addr_to_shad((void *)addr);
+	int8_t *byte = kasan_md_addr_to_shad((void *)addr);
 	int8_t last = (addr & KASAN_SHADOW_MASK) + 1;
 
 	*byte = last;
@@ -346,13 +188,13 @@ kasan_shadow_Nbyte_fill(const void *addr, size_t size, uint8_t val)
 
 	if (__predict_false(size == 0))
 		return;
-	if (__predict_false(kasan_unsupported((vaddr_t)addr)))
+	if (__predict_false(kasan_md_unsupported((vaddr_t)addr)))
 		return;
 
 	KASSERT((vaddr_t)addr % KASAN_SHADOW_SCALE_SIZE == 0);
 	KASSERT(size % KASAN_SHADOW_SCALE_SIZE == 0);
 
-	shad = (void *)kasan_addr_to_shad(addr);
+	shad = (void *)kasan_md_addr_to_shad(addr);
 	size = size >> KASAN_SHADOW_SCALE_SHIFT;
 
 	__builtin_memset(shad, val, size);
@@ -412,7 +254,7 @@ kasan_free(const void *addr, size_t sz_with_redz)
 static __always_inline bool
 kasan_shadow_1byte_isvalid(unsigned long addr)
 {
-	int8_t *byte = kasan_addr_to_shad((void *)addr);
+	int8_t *byte = kasan_md_addr_to_shad((void *)addr);
 	int8_t last = (addr & KASAN_SHADOW_MASK) + 1;
 
 	return __predict_true(*byte == 0 || last <= *byte);
@@ -428,7 +270,7 @@ kasan_shadow_2byte_isvalid(unsigned long addr)
 		    kasan_shadow_1byte_isvalid(addr+1));
 	}
 
-	byte = kasan_addr_to_shad((void *)addr);
+	byte = kasan_md_addr_to_shad((void *)addr);
 	last = ((addr + 1) & KASAN_SHADOW_MASK) + 1;
 
 	return __predict_true(*byte == 0 || last <= *byte);
@@ -444,7 +286,7 @@ kasan_shadow_4byte_isvalid(unsigned long addr)
 		    kasan_shadow_2byte_isvalid(addr+2));
 	}
 
-	byte = kasan_addr_to_shad((void *)addr);
+	byte = kasan_md_addr_to_shad((void *)addr);
 	last = ((addr + 3) & KASAN_SHADOW_MASK) + 1;
 
 	return __predict_true(*byte == 0 || last <= *byte);
@@ -460,7 +302,7 @@ kasan_shadow_8byte_isvalid(unsigned long addr)
 		    kasan_shadow_4byte_isvalid(addr+4));
 	}
 
-	byte = kasan_addr_to_shad((void *)addr);
+	byte = kasan_md_addr_to_shad((void *)addr);
 	last = ((addr + 7) & KASAN_SHADOW_MASK) + 1;
 
 	return __predict_true(*byte == 0 || last <= *byte);
@@ -489,7 +331,7 @@ kasan_shadow_check(unsigned long addr, size_t size, bool write,
 		return;
 	if (__predict_false(size == 0))
 		return;
-	if (__predict_false(kasan_unsupported(addr)))
+	if (__predict_false(kasan_md_unsupported(addr)))
 		return;
 
 	if (__builtin_constant_p(size)) {
@@ -594,37 +436,6 @@ kasan_strlen(const char *str)
 }
 
 /* -------------------------------------------------------------------------- */
-
-#if defined(__clang__) && (__clang_major__ - 0 >= 6)
-#define ASAN_ABI_VERSION	8
-#elif __GNUC_PREREQ__(7, 1) && !defined(__clang__)
-#define ASAN_ABI_VERSION	8
-#elif __GNUC_PREREQ__(6, 1) && !defined(__clang__)
-#define ASAN_ABI_VERSION	6
-#else
-#error "Unsupported compiler version"
-#endif
-
-/*
- * Part of the compiler ABI.
- */
-struct __asan_global_source_location {
-	const char *filename;
-	int line_no;
-	int column_no;
-};
-struct __asan_global {
-	const void *beg;		/* address of the global variable */
-	size_t size;			/* size of the global variable */
-	size_t size_with_redzone;	/* size with the redzone */
-	const void *name;		/* name of the variable */
-	const void *module_name;	/* name of the module where the var is declared */
-	unsigned long has_dynamic_init;	/* the var has dyn initializer (c++) */
-	struct __asan_global_source_location *location;
-#if ASAN_ABI_VERSION >= 7
-	uintptr_t odr_indicator;	/* the address of the ODR indicator symbol */
-#endif
-};
 
 void __asan_register_globals(struct __asan_global *, size_t);
 void __asan_unregister_globals(struct __asan_global *, size_t);
