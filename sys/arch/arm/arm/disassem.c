@@ -1,4 +1,4 @@
-/*	$NetBSD: disassem.c,v 1.39 2017/06/03 11:51:59 skrll Exp $	*/
+/*	$NetBSD: disassem.c,v 1.39.2.1 2018/10/31 10:03:48 martin Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe.
@@ -49,7 +49,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: disassem.c,v 1.39 2017/06/03 11:51:59 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disassem.c,v 1.39.2.1 2018/10/31 10:03:48 martin Exp $");
 
 #include <sys/systm.h>
 
@@ -134,7 +134,7 @@ static const struct arm32_insn arm32_i[] = {
      * miscellaneous instructions
      */
     { 0xfff10020, 0xf1000000, "cps",	"C!c" },
-    { 0xfff100f0, 0xf1010000, "setend\tle", "" },
+    { 0xfff102f0, 0xf1010000, "setend\tle", "" },
     { 0xfff102f0, 0xf1010200, "setend\tbe", "" },
 /* pli */
 /* pld */
