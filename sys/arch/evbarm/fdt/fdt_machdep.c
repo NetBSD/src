@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_machdep.c,v 1.51 2018/10/31 13:01:48 jmcneill Exp $ */
+/* $NetBSD: fdt_machdep.c,v 1.52 2018/10/31 13:37:35 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.51 2018/10/31 13:01:48 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.52 2018/10/31 13:37:35 jmcneill Exp $");
 
 #include "opt_machdep.h"
 #include "opt_bootconfig.h"
@@ -241,7 +241,7 @@ fdt_add_dram_blocks(const struct fdt_memory *m, void *arg)
 {
 	BootConfig *bc = arg;
 
-	VPRINTF("  %llx - %llx\n", m->start, m->end - 1);
+	VPRINTF("  %" PRIx64 " - %" PRIx64 "\n", m->start, m->end - 1);
 	bc->dram[bc->dramblocks].address = m->start;
 	bc->dram[bc->dramblocks].pages =
 	    (m->end - m->start) / PAGE_SIZE;
@@ -257,7 +257,7 @@ fdt_add_boot_physmem(const struct fdt_memory *m, void *arg)
 {
 	struct boot_physmem *bp = &fdt_physmem[nfdt_physmem++];
 
-	VPRINTF("  %llx - %llx\n", m->start, m->end - 1);
+	VPRINTF("  %" PRIx64 " - %" PRIx64 "\n", m->start, m->end - 1);
 
 	KASSERT(nfdt_physmem <= MAX_PHYSMEM);
 
