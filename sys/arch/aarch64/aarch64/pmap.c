@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.31 2018/10/18 09:01:51 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.32 2018/10/31 06:36:19 ryo Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.31 2018/10/18 09:01:51 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.32 2018/10/31 06:36:19 ryo Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_ddb.h"
@@ -1302,7 +1302,7 @@ _pmap_enter(struct pmap *pm, vaddr_t va, paddr_t pa, vm_prot_t prot,
 	unsigned int idx;
 	int error = 0;
 	const bool user = (pm != pmap_kernel());
-	bool executable;
+	bool need_sync_icache;
 	bool l3only = true;
 
 	UVMHIST_FUNC(__func__);
@@ -1405,7 +1405,7 @@ _pmap_enter(struct pmap *pm, vaddr_t va, paddr_t pa, vm_prot_t prot,
 #ifdef UVMHIST
 	opte = pte;
 #endif
-	executable = l3pte_executable(pte, user);
+	need_sync_icache = (prot & VM_PROT_EXECUTE);
 
 	if (l3pte_valid(pte)) {
 		KASSERT(!kenter);	/* pmap_kenter_pa() cannot override */
@@ -1413,7 +1413,11 @@ _pmap_enter(struct pmap *pm, vaddr_t va, paddr_t pa, vm_prot_t prot,
 		PMAP_COUNT(remappings);
 
 		/* pte is Already mapped */
-		if (l3pte_pa(pte) != pa) {
+		if (l3pte_pa(pte) == pa) {
+			if (need_sync_icache && l3pte_executable(pte, user))
+				need_sync_icache = false;
+
+		} else {
 			struct vm_page *opg;
 
 #ifdef PMAPCOUNTERS
@@ -1492,7 +1496,7 @@ _pmap_enter(struct pmap *pm, vaddr_t va, paddr_t pa, vm_prot_t prot,
 
 	pte = pa | attr;
 
-	if (!executable && (prot & VM_PROT_EXECUTE)) {
+	if (need_sync_icache) {
 		/* non-exec -> exec */
 		UVMHIST_LOG(pmaphist,
 		    "icache_sync: pm=%p, va=%016lx, pte: %016lx -> %016lx",
