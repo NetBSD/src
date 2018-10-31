@@ -1,4 +1,4 @@
-/* $NetBSD: efifdt.c,v 1.9 2018/09/09 13:37:54 jmcneill Exp $ */
+/* $NetBSD: efifdt.c,v 1.10 2018/10/31 09:13:32 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -146,10 +146,6 @@ efi_fdt_memory_map(void)
 		panic("FDT: Failed to create " FDT_MEMORY_NODE_PATH " node");
 
 	fdt_delprop(fdt_data, memory, "reg");
-	while (fdt_num_mem_rsv(fdt_data) > 0) {
-		if (fdt_del_mem_rsv(fdt_data, 0) < 0)
-			panic("FDT: Failed to remove reserved memory map entry");
-	}
 
 	const int address_cells = fdt_address_cells(fdt_data, fdt_path_offset(fdt_data, "/"));
 	const int size_cells = fdt_size_cells(fdt_data, fdt_path_offset(fdt_data, "/"));
