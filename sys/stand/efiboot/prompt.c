@@ -1,4 +1,4 @@
-/*	$NetBSD: prompt.c,v 1.3 2018/09/15 16:41:37 jmcneill Exp $	*/
+/*	$NetBSD: prompt.c,v 1.4 2018/10/31 23:49:34 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997
@@ -73,6 +73,7 @@ char
 awaitkey(int timeout, int tell)
 {
 	int i = timeout * POLL_FREQ;
+	int last_secs = -1, secs;
 	char c = 0;
 
 	for (;;) {
@@ -80,13 +81,17 @@ awaitkey(int timeout, int tell)
 			char buf[32];
 			int len;
 
-			len = snprintf(buf, sizeof(buf), "%d seconds. ", (i + POLL_FREQ - 1) / POLL_FREQ);
-			if (len > 0 && len < sizeof(buf)) {
-				char *p = buf;
-				printf("%s", buf);
-				while (*p)
-					*p++ = '\b';
-				printf("%s", buf);
+			secs = (i + POLL_FREQ - 1) / POLL_FREQ;
+			if (secs != last_secs) {
+				len = snprintf(buf, sizeof(buf), "%d seconds. ", (i + POLL_FREQ - 1) / POLL_FREQ);
+				if (len > 0 && len < sizeof(buf)) {
+					char *p = buf;
+					printf("%s", buf);
+					while (*p)
+						*p++ = '\b';
+					printf("%s", buf);
+				}
+				last_secs = secs;
 			}
 		}
 		if (ischar()) {
