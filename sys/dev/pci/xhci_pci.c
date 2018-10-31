@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci_pci.c,v 1.14 2018/09/18 05:24:10 mrg Exp $	*/
+/*	$NetBSD: xhci_pci.c,v 1.15 2018/10/31 16:11:29 jmcneill Exp $	*/
 /*	OpenBSD: xhci_pci.c,v 1.4 2014/07/12 17:38:51 yuo Exp	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci_pci.c,v 1.14 2018/09/18 05:24:10 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci_pci.c,v 1.15 2018/10/31 16:11:29 jmcneill Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_xhci_pci.h"
@@ -186,6 +186,9 @@ xhci_pci_attach(device_t parent, device_t self, void *aux)
 #ifndef XHCI_DISABLE_MSI
 		[PCI_INTR_TYPE_MSI] = 1,
 #endif
+#ifndef XHCI_DISABLE_MSIX
+		[PCI_INTR_TYPE_MSIX] = 1,
+#endif
 	};
 
 alloc_retry:
@@ -203,6 +206,12 @@ alloc_retry:
 		pci_intr_release(pc, psc->sc_pihp, 1);
 		psc->sc_ih = NULL;
 		switch (intr_type) {
+		case PCI_INTR_TYPE_MSIX:
+			/* The next try is for MSI: Disable MSIX */
+			counts[PCI_INTR_TYPE_MSIX] = 0;
+			counts[PCI_INTR_TYPE_MSI] = 1;
+			counts[PCI_INTR_TYPE_INTX] = 1;
+			goto alloc_retry;
 		case PCI_INTR_TYPE_MSI:
 			/* The next try is for INTx: Disable MSI */
 			counts[PCI_INTR_TYPE_MSI] = 0;
