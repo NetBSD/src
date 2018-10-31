@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.21 2018/10/31 06:26:26 maxv Exp $
+#	$NetBSD: Makefile,v 1.22 2018/10/31 18:35:04 maxv Exp $
 
 INCSDIR= /usr/include/amd64
 
-INCS=	ansi.h aout_machdep.h asan.h asm.h \
+INCS=	ansi.h aout_machdep.h asm.h \
 	bootinfo.h bswap.h byte_swap.h \
 	cdefs.h cpu.h cpu_rng.h\
 	disklabel.h \
