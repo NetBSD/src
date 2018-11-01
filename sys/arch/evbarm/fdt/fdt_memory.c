@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_memory.c,v 1.1 2018/10/30 21:32:35 jmcneill Exp $ */
+/* $NetBSD: fdt_memory.c,v 1.2 2018/11/01 10:21:41 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include "opt_bootconfig.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_memory.c,v 1.1 2018/10/30 21:32:35 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_memory.c,v 1.2 2018/11/01 10:21:41 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/queue.h>
@@ -147,15 +147,18 @@ fdt_memory_remove_range(uint64_t start, uint64_t size)
 			next->mr_mem.end = mr->mr_mem.end;
 			mr->mr_mem.end = start;
 			TAILQ_INSERT_AFTER(&fdt_memory_ranges, mr, next, mr_list);
-		} else {
+		} else if (start <= mr->mr_mem.start && end < mr->mr_mem.end) {
 			/*
-			 * Partial overlap.
+			 * Partial overlap at the beginning of the range.
 			 */
-			if (start >= mr->mr_mem.start && start < mr->mr_mem.end)
-				mr->mr_mem.end = start;
-			if (end < mr->mr_mem.end && end > mr->mr_mem.start)
-				mr->mr_mem.start = end;
+			mr->mr_mem.start = end;
+		} else if (start > mr->mr_mem.start && end >= mr->mr_mem.end) {
+			/*
+			 * Partial overlap at the end of the range.
+			 */
+			mr->mr_mem.end = start;
 		}
+		KASSERT(mr->mr_mem.start < mr->mr_mem.end);
 	}
 }
 
