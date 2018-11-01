@@ -4,25 +4,31 @@ if test "${board}" = "am335x" ; then
 	setenv bootargs root=ld0a
 fi
 if test "${soc}" = "exynos" ; then
-	setenv kernel netbsd-EXYNOS.ub
+	setenv kernel netbsd-GENERIC.ub
 	setenv bootargs 'root=ld1a'
 	setenv mmcpart 0:1
 	setenv use_fdt 1
 fi
 if test "${soc}" = "sunxi" ; then
-	setenv kernel netbsd-SUNXI.ub
+	setenv kernel netbsd-GENERIC.ub
 	setenv bootargs 'root=ld0a'
 	setenv mmcpart 0:1
 	setenv use_fdt 1
 fi
 if test "${soc}" = "tegra" ; then
-	setenv kernel netbsd-TEGRA.ub
+	setenv kernel netbsd-GENERIC.ub
 	setenv bootargs root=ld1a
 	setenv mmcpart 1:1
 	setenv use_fdt 1
 fi
+if test "${soc}" = "tegra124" ; then
+	setenv kernel netbsd-GENERIC.ub
+	setenv bootargs root=ld0a
+	setenv mmcpart 1:1
+	setenv use_fdt 1
+fi
 if test "${soc}" = "tegra210" ; then
-	setenv kernel netbsd-TEGRA.ub
+	setenv kernel netbsd-GENERIC.ub
 	setenv bootargs root=ld0a
 	setenv mmcpart 1:1
 	setenv use_fdt 1
