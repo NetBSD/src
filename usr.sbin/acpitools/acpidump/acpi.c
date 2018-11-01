@@ -1,4 +1,4 @@
-/* $NetBSD: acpi.c,v 1.38 2018/10/18 05:20:05 msaitoh Exp $ */
+/* $NetBSD: acpi.c,v 1.39 2018/11/01 03:08:46 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 1998 Doug Rabson
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: acpi.c,v 1.38 2018/10/18 05:20:05 msaitoh Exp $");
+__RCSID("$NetBSD: acpi.c,v 1.39 2018/11/01 03:08:46 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/endian.h>
@@ -40,6 +40,7 @@ __RCSID("$NetBSD: acpi.c,v 1.38 2018/10/18 05:20:05 msaitoh Exp $");
 #include <err.h>
 #include <fcntl.h>
 #include <paths.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -53,7 +54,11 @@ __RCSID("$NetBSD: acpi.c,v 1.38 2018/10/18 05:20:05 msaitoh Exp $");
 #define BEGIN_COMMENT	"/*\n"
 #define END_COMMENT	" */\n"
 
+/* Commonly used helper functions */
 static void	acpi_print_string(char *s, size_t length);
+static void	acpi_print_tabs(unsigned int n);
+static void	acpi_dump_bytes(uint8_t *p, uint32_t len, unsigned int ntabs);
+static void	acpi_dump_table(ACPI_TABLE_HEADER *sdp);
 static void	acpi_print_gas(ACPI_GENERIC_ADDRESS *gas);
 static void	acpi_print_pci(uint16_t vendorid, uint16_t deviceid,
 		    uint8_t seg, uint8_t bus, uint8_t device, uint8_t func);
@@ -68,6 +73,8 @@ static void	acpi_print_whea(ACPI_WHEA_HEADER *whea,
 		    void (*print_ins)(ACPI_WHEA_HEADER *),
 		    void (*print_flags)(ACPI_WHEA_HEADER *));
 static uint64_t	acpi_select_address(uint32_t, uint64_t);
+
+/* Handlers for each table */
 static void	acpi_handle_fadt(ACPI_TABLE_HEADER *fadt);
 static void	acpi_print_cpu(u_char cpu_id);
 static void	acpi_print_cpu_uid(uint32_t uid, char *uid_string);
@@ -81,6 +88,7 @@ static void	acpi_print_madt(ACPI_SUBTABLE_HEADER *mp);
 static void	acpi_handle_bert(ACPI_TABLE_HEADER *sdp);
 static void	acpi_handle_boot(ACPI_TABLE_HEADER *sdp);
 static void	acpi_handle_cpep(ACPI_TABLE_HEADER *sdp);
+static void	acpi_handle_csrt(ACPI_TABLE_HEADER *sdp);
 static void	acpi_handle_dbgp(ACPI_TABLE_HEADER *sdp);
 static void	acpi_handle_dbg2(ACPI_TABLE_HEADER *sdp);
 static void	acpi_handle_einj(ACPI_TABLE_HEADER *sdp);
@@ -113,7 +121,6 @@ static void	acpi_handle_wdat(ACPI_TABLE_HEADER *sdp);
 static void	acpi_handle_wddt(ACPI_TABLE_HEADER *sdp);
 static void	acpi_handle_wdrt(ACPI_TABLE_HEADER *sdp);
 static void	acpi_print_sdt(ACPI_TABLE_HEADER *sdp);
-static void	acpi_dump_bytes(ACPI_TABLE_HEADER *sdp);
 static void	acpi_print_fadt(ACPI_TABLE_HEADER *sdp);
 static void	acpi_print_facs(ACPI_TABLE_FACS *facs);
 static void	acpi_print_dsdt(ACPI_TABLE_HEADER *dsdp);
@@ -1245,6 +1252,130 @@ acpi_handle_cpep(ACPI_TABLE_HEADER *sdp)
 		printf("\tPoll Interval=%d msec\n", poll->Interval);
 		cpep_pos += sizeof(ACPI_CPEP_POLLING);
 	}
+	printf(END_COMMENT);
+}
+
+static void
+acpi_print_csrt_resource_group(ACPI_CSRT_GROUP *grp)
+{
+	ACPI_CSRT_DESCRIPTOR *desc;
+
+	printf("\tLength=%u\n", grp->Length);
+	printf("\tVendorId=");
+	acpi_print_string((char *)&grp->VendorId, 4);
+	printf("\n");
+	if (grp->SubvendorId != 0) {
+		printf("\tSubvendorId=");
+		acpi_print_string((char *)&grp->SubvendorId, 4);
+		printf("\n");
+	}
+	printf("\tDeviceId=0x%08x\n", grp->DeviceId);
+	if (grp->SubdeviceId != 0)
+		printf("\tSubdeviceId=0x%08x\n", grp->SubdeviceId);
+	printf("\tRevision=%hu\n", grp->Revision);
+	printf("\tSharedInfoLength=%u\n", grp->SharedInfoLength);
+
+	/* Next is Shared Info */
+	if (grp->SharedInfoLength != 0) {
+		printf("\tShared Info ");
+		acpi_dump_bytes((uint8_t *)(grp + 1),
+		    grp->SharedInfoLength, 1);
+	}
+
+	/* And then, Resource Descriptors */
+	desc = (ACPI_CSRT_DESCRIPTOR *)
+	    ((vaddr_t)(grp + 1) + grp->SharedInfoLength);
+	while (desc < (ACPI_CSRT_DESCRIPTOR *)((vaddr_t)grp + grp->Length)) {
+		bool unknownsubytpe = false;
+		printf("\n\tLength=%u\n", desc->Length);
+		printf("\tResource Type=");
+		switch (desc->Type) {
+		case ACPI_CSRT_TYPE_INTERRUPT:
+			printf("Interrupt");
+			switch (desc->Subtype) {
+			case ACPI_CSRT_XRUPT_LINE:
+				printf("(Interrupt line)\n");
+				break;
+			case ACPI_CSRT_XRUPT_CONTROLLER:
+				printf("(Interrupt controller)\n");
+				break;
+			default:
+				unknownsubytpe = true;
+				break;
+			}
+			break;
+		case ACPI_CSRT_TYPE_TIMER:
+			printf("Timer");
+			switch (desc->Subtype) {
+			case ACPI_CSRT_TIMER:
+				printf("\n");
+				break;
+			default:
+				unknownsubytpe = true;
+				break;
+			}
+			break;
+		case ACPI_CSRT_TYPE_DMA:
+			printf("DMA");
+			switch (desc->Subtype) {
+			case ACPI_CSRT_DMA_CHANNEL:
+				printf("(DMA channel)\n");
+				break;
+			case ACPI_CSRT_DMA_CONTROLLER:
+				printf("(DMA controller)\n");
+				break;
+			default:
+				unknownsubytpe = true;
+				break;
+			}
+			break;
+		case 0x0004: /* XXX Platform Security */
+			printf("Platform Security");
+			switch (desc->Subtype) {
+			case 0x0001:
+				printf("\n");
+				/* Platform Security */
+				break;
+			default:
+				unknownsubytpe = true;
+				break;
+			}
+			break;
+		default:
+			printf("Unknown (%hx)\n", desc->Type);
+			break;
+		}
+		if (unknownsubytpe)
+			printf("(unknown subtype(%hx))\n", desc->Subtype);
+
+		printf("\tUID=0x%08x\n", desc->Uid);
+		printf("\tVendor defined info ");
+		acpi_dump_bytes((uint8_t *)(desc + 1),
+		    desc->Length - sizeof(ACPI_CSRT_DESCRIPTOR), 1);
+
+		/* Next */
+		desc = (ACPI_CSRT_DESCRIPTOR *)((vaddr_t)desc + desc->Length);
+	}
+}
+
+static void
+acpi_handle_csrt(ACPI_TABLE_HEADER *sdp)
+{
+	ACPI_CSRT_GROUP *grp;
+	uint totallen = sdp->Length;
+
+	printf(BEGIN_COMMENT);
+	acpi_print_sdt(sdp);
+	grp = (ACPI_CSRT_GROUP *)(sdp + 1);
+
+	while (grp < (ACPI_CSRT_GROUP *)((vaddr_t)sdp + totallen)) {
+		printf("\n");
+		acpi_print_csrt_resource_group(grp);
+
+		/* Next */
+		grp = (ACPI_CSRT_GROUP *)((vaddr_t)grp + grp->Length);
+	}
+
 	printf(END_COMMENT);
 }
 
@@ -3388,30 +3519,50 @@ acpi_print_sdt(ACPI_TABLE_HEADER *sdp)
 	printf(", Creator Revision=0x%x\n", sdp->AslCompilerRevision);
 }
 
+void
+acpi_print_tabs(unsigned int n)
+{
+
+	while (n-- > 0)
+		printf("\t");
+}
+
 static void
-acpi_dump_bytes(ACPI_TABLE_HEADER *sdp)
+acpi_dump_bytes(uint8_t *p, uint32_t len, unsigned int ntabs)
 {
 	unsigned int i;
-	uint8_t *p;
 
-	p = (uint8_t *)sdp;
-	printf("\n\tData={");
-	for (i = 0; i < sdp->Length; i++) {
+	acpi_print_tabs(ntabs);
+	printf("Data={");
+	for (i = 0; i < len; i++) {
 		if (cflag) {
-			if (i % 64 == 0)
-				printf("\n\t ");
-			else if (i % 16 == 0)
+			if (i % 64 == 0) {
+				printf("\n");
+				acpi_print_tabs(ntabs);
+				printf(" ");
+			}else if (i % 16 == 0)
 				printf(" ");
 			printf("%c", (p[i] >= ' ' && p[i] <= '~') ? p[i] : '.');
 		} else {
-			if (i % 16 == 0)
-				printf("\n\t\t");
-			else if (i % 8 == 0)
+			if (i % 16 == 0) {
+				printf("\n");
+				acpi_print_tabs(ntabs + 1);
+			} else if (i % 8 == 0)
 				printf("   ");
 			printf(" %02x", p[i]);
 		}
 	}
-	printf("\n\t}\n");
+	printf("\n");
+	acpi_print_tabs(ntabs);
+	printf("}\n");
+}
+
+/* Dump data which has ACPI_TABLE_HEADER */
+static void
+acpi_dump_table(ACPI_TABLE_HEADER *sdp)
+{
+
+	acpi_dump_bytes((uint8_t *)sdp, sdp->Length, 1);
 }
 
 static void
@@ -3749,6 +3900,8 @@ acpi_handle_rsdt(ACPI_TABLE_HEADER *rsdp)
 			acpi_handle_boot(sdp);
 		else if (!memcmp(sdp->Signature, ACPI_SIG_CPEP, 4))
 			acpi_handle_cpep(sdp);
+		else if (!memcmp(sdp->Signature, ACPI_SIG_CSRT, 4))
+			acpi_handle_csrt(sdp);
 		else if (!memcmp(sdp->Signature, ACPI_SIG_DBGP, 4))
 			acpi_handle_dbgp(sdp);
 		else if (!memcmp(sdp->Signature, ACPI_SIG_DBG2, 4))
@@ -3804,7 +3957,8 @@ acpi_handle_rsdt(ACPI_TABLE_HEADER *rsdp)
 		else {
 			printf(BEGIN_COMMENT);
 			acpi_print_sdt(sdp);
-			acpi_dump_bytes(sdp);
+			printf("\n");
+			acpi_dump_table(sdp);
 			printf(END_COMMENT);
 		}
 	}
