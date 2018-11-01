@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_machdep.c,v 1.52 2018/10/31 13:37:35 jmcneill Exp $ */
+/* $NetBSD: fdt_machdep.c,v 1.53 2018/11/01 00:44:06 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.52 2018/10/31 13:37:35 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.53 2018/11/01 00:44:06 jmcneill Exp $");
 
 #include "opt_machdep.h"
 #include "opt_bootconfig.h"
@@ -60,6 +60,8 @@ __KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.52 2018/10/31 13:37:35 jmcneill Ex
 #include <sys/vnode.h>
 #include <sys/kauth.h>
 #include <sys/fcntl.h>
+#include <sys/uuid.h>
+#include <sys/disk.h>
 #include <sys/md5.h>
 
 #include <dev/cons.h>
@@ -629,7 +631,7 @@ fdt_detect_root_device(device_t dev)
 	uint8_t buf[DEV_BSIZE];
 	uint8_t hash[16];
 	const uint8_t *rhash;
-	char rootarg[32];
+	char rootarg[64];
 	struct vnode *vp;
 	MD5_CTX md5ctx;
 	int error, len;
@@ -676,6 +678,27 @@ fdt_detect_root_device(device_t dev)
 
 		snprintf(rootarg, sizeof(rootarg), " root=%s%c", device_xname(dev), part + 'a');
 		strcat(boot_args, rootarg);
+	}
+
+	if (of_hasprop(chosen, "netbsd,gpt-guid")) {
+		char guidbuf[UUID_STR_LEN];
+		const struct uuid *guid = fdtbus_get_prop(chosen, "netbsd,gpt-guid", &len);
+		if (guid == NULL || len != 16)
+			return;
+
+		uuid_snprintf(guidbuf, sizeof(guidbuf), guid);
+		snprintf(rootarg, sizeof(rootarg), " root=wedge:%s", guidbuf);
+		strcat(boot_args, rootarg);
+	}
+
+	if (of_hasprop(chosen, "netbsd,gpt-label")) {
+		const char *label = fdtbus_get_string(chosen, "netbsd,gpt-label");
+		if (label == NULL || *label == '\0')
+			return;
+
+		device_t dv = dkwedge_find_by_wname(label);
+		if (dv != NULL)
+			booted_device = dv;
 	}
 }
 
