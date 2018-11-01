@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_nouveau.c,v 1.11 2018/08/27 15:31:51 riastradh Exp $ */
+/* $NetBSD: tegra_nouveau.c,v 1.12 2018/11/01 16:14:54 skrll Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_nouveau.c,v 1.11 2018/08/27 15:31:51 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_nouveau.c,v 1.12 2018/11/01 16:14:54 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -132,7 +132,7 @@ tegra_nouveau_attach(device_t parent, device_t self, void *aux)
 	prop_dictionary_t prop = device_properties(self);
 	const struct of_compat_data *data =
 	    of_search_compatible(faa->faa_phandle, compat_data);
-	const struct nvkm_device_tegra_func *tegra_func =
+	const struct nvkm_device_tegra_func *tegra_func __diagused =
 	    (const void *)data->data;
 	int error;
 
