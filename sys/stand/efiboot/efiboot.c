@@ -1,4 +1,4 @@
-/* $NetBSD: efiboot.c,v 1.11 2018/10/31 13:00:35 jmcneill Exp $ */
+/* $NetBSD: efiboot.c,v 1.12 2018/11/01 00:43:38 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -84,10 +84,10 @@ efi_main(EFI_HANDLE imageHandle, EFI_SYSTEM_TABLE *systemTable)
 
 	efi_acpi_probe();
 	efi_fdt_probe();
-	efi_file_system_probe();
-	efi_block_probe();
 	efi_pxe_probe();
 	efi_net_probe();
+	efi_file_system_probe();
+	efi_block_probe();
 
 	boot();
 

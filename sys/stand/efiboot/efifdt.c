@@ -1,4 +1,4 @@
-/* $NetBSD: efifdt.c,v 1.11 2018/10/31 12:59:43 jmcneill Exp $ */
+/* $NetBSD: efifdt.c,v 1.12 2018/11/01 00:43:38 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -218,6 +218,19 @@ efi_fdt_bootargs(const char *bootargs)
 			    bpart->hash, sizeof(bpart->hash));
 			fdt_setprop_u32(fdt_data, chosen, "netbsd,partition",
 			    bpart->index);
+			break;
+		case EFI_BLOCK_PART_GPT:
+			if (bpart->gpt.ent.ent_name[0] == 0x0000) {
+				fdt_setprop(fdt_data, chosen, "netbsd,gpt-guid",
+				    bpart->hash, sizeof(bpart->hash));
+			} else {
+				char *label = NULL;
+				int rv = ucs2_to_utf8(bpart->gpt.ent.ent_name, &label);
+				if (rv == 0) {
+					fdt_setprop_string(fdt_data, chosen, "netbsd,gpt-label", label);
+					FreePool(label);
+				}
+			}
 			break;
 		default:
 			break;

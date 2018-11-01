@@ -1,4 +1,4 @@
-/* $NetBSD: efiblock.h,v 1.2 2018/08/27 09:51:32 jmcneill Exp $ */
+/* $NetBSD: efiblock.h,v 1.3 2018/11/01 00:43:38 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -29,6 +29,7 @@
 #include <sys/queue.h>
 #include <sys/bootblock.h>
 #include <sys/disklabel.h>
+#include <sys/disklabel_gpt.h>
 
 enum efi_block_part_type {
 	EFI_BLOCK_PART_DISKLABEL,
@@ -52,12 +53,18 @@ struct efi_block_part_disklabel {
 	struct partition part;
 };
 
+struct efi_block_part_gpt {
+	uint8_t fstype;
+	struct gpt_ent ent;
+};
+
 struct efi_block_part {
 	uint32_t index;
 	struct efi_block_dev *bdev;
 	enum efi_block_part_type type;
 	union {
 		struct efi_block_part_disklabel disklabel;
+		struct efi_block_part_gpt gpt;
 	};
 	uint8_t hash[16];
 
