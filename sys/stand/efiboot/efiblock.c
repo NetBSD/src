@@ -1,4 +1,4 @@
-/* $NetBSD: efiblock.c,v 1.3 2018/09/14 21:37:03 jakllsch Exp $ */
+/* $NetBSD: efiblock.c,v 1.4 2018/11/01 00:43:38 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -31,6 +31,7 @@
 
 #include <sys/param.h>
 #include <sys/md5.h>
+#include <sys/uuid.h>
 
 #include "efiboot.h"
 #include "efiblock.h"
@@ -192,16 +193,114 @@ efi_block_find_partitions_mbr(struct efi_block_dev *bdev)
 	return 0;
 }
 
+static const struct {
+	struct uuid guid;
+	uint8_t fstype;
+} gpt_guid_to_str[] = {
+	{ GPT_ENT_TYPE_NETBSD_FFS,		FS_BSDFFS },
+	{ GPT_ENT_TYPE_NETBSD_LFS,		FS_BSDLFS },
+	{ GPT_ENT_TYPE_NETBSD_RAIDFRAME,	FS_RAID },
+	{ GPT_ENT_TYPE_NETBSD_CCD,		FS_CCD },
+	{ GPT_ENT_TYPE_NETBSD_CGD,		FS_CGD },
+	{ GPT_ENT_TYPE_MS_BASIC_DATA,		FS_MSDOS },	/* or NTFS? ambiguous */
+};
+
+static int
+efi_block_find_partitions_gpt_entry(struct efi_block_dev *bdev, struct gpt_hdr *hdr, struct gpt_ent *ent, UINT32 index)
+{
+	struct efi_block_part *bpart;
+	uint8_t fstype = FS_UNUSED;
+	struct uuid uuid;
+	int n;
+
+	memcpy(&uuid, ent->ent_type, sizeof(uuid));
+	for (n = 0; n < __arraycount(gpt_guid_to_str); n++)
+		if (memcmp(ent->ent_type, &gpt_guid_to_str[n].guid, sizeof(ent->ent_type)) == 0) {
+			fstype = gpt_guid_to_str[n].fstype;
+			break;
+		}
+	if (fstype == FS_UNUSED)
+		return 0;
+
+	bpart = alloc(sizeof(*bpart));
+	bpart->index = index;
+	bpart->bdev = bdev;
+	bpart->type = EFI_BLOCK_PART_GPT;
+	bpart->gpt.fstype = fstype;
+	bpart->gpt.ent = *ent;
+	memcpy(bpart->hash, ent->ent_guid, sizeof(bpart->hash));
+	TAILQ_INSERT_TAIL(&bdev->partitions, bpart, entries);
+
+	return 0;
+}
+
+static int
+efi_block_find_partitions_gpt(struct efi_block_dev *bdev)
+{
+	struct gpt_hdr hdr;
+	struct gpt_ent ent;
+	EFI_STATUS status;
+	UINT32 sz, entry;
+	uint8_t *buf;
+
+	sz = __MAX(sizeof(hdr), bdev->bio->Media->BlockSize);
+	sz = roundup(sz, bdev->bio->Media->BlockSize);
+	buf = AllocatePool(sz);
+	if (!buf)
+		return ENOMEM;
+
+	status = uefi_call_wrapper(bdev->bio->ReadBlocks, 5, bdev->bio, bdev->media_id, GPT_HDR_BLKNO, sz, buf);
+	if (EFI_ERROR(status)) {
+		FreePool(buf);
+		return EIO;
+	}
+	memcpy(&hdr, buf, sizeof(hdr));
+	FreePool(buf);
+
+	if (memcmp(hdr.hdr_sig, GPT_HDR_SIG, sizeof(hdr.hdr_sig)) != 0)
+		return ENOENT;
+	if (le32toh(hdr.hdr_entsz) < sizeof(ent))
+		return EINVAL;
+
+	sz = __MAX(le32toh(hdr.hdr_entsz) * le32toh(hdr.hdr_entries), bdev->bio->Media->BlockSize);
+	sz = roundup(sz, bdev->bio->Media->BlockSize);
+	buf = AllocatePool(sz);
+	if (!buf)
+		return ENOMEM;
+
+	status = uefi_call_wrapper(bdev->bio->ReadBlocks, 5, bdev->bio, bdev->media_id, le64toh(hdr.hdr_lba_table), sz, buf);
+	if (EFI_ERROR(status)) {
+		FreePool(buf);
+		return EIO;
+	}
+
+	for (entry = 0; entry < le32toh(hdr.hdr_entries); entry++) {
+		memcpy(&ent, buf + (entry * le32toh(hdr.hdr_entsz)), sizeof(ent));
+		efi_block_find_partitions_gpt_entry(bdev, &hdr, &ent, entry);
+	}
+
+	FreePool(buf);
+
+	return 0;
+}
+
 static int
 efi_block_find_partitions(struct efi_block_dev *bdev)
 {
-	return efi_block_find_partitions_mbr(bdev);
+	int error;
+
+	error = efi_block_find_partitions_gpt(bdev);
+	if (error)
+		error = efi_block_find_partitions_mbr(bdev);
+
+	return error;
 }
 
 void
 efi_block_probe(void)
 {
 	struct efi_block_dev *bdev;
+	struct efi_block_part *bpart;
 	EFI_BLOCK_IO *bio;
 	EFI_STATUS status;
 	uint16_t devindex = 0;
@@ -234,13 +333,40 @@ efi_block_probe(void)
 		TAILQ_INIT(&bdev->partitions);
 		TAILQ_INSERT_TAIL(&efi_block_devs, bdev, entries);
 
-		if (depth > 0 && efi_device_path_ncmp(efi_bootdp, DevicePathFromHandle(efi_block[n]), depth) == 0) {
-			char devname[9];
-			snprintf(devname, sizeof(devname), "hd%ua", bdev->index);
-			set_default_device(devname);
-		}
-
 		efi_block_find_partitions(bdev);
+
+		if (depth > 0 && efi_device_path_ncmp(efi_bootdp, DevicePathFromHandle(efi_block[n]), depth) == 0) {
+			TAILQ_FOREACH(bpart, &bdev->partitions, entries) {
+				uint8_t fstype = FS_UNUSED;
+				switch (bpart->type) {
+				case EFI_BLOCK_PART_DISKLABEL:
+					fstype = bpart->disklabel.part.p_fstype;
+					break;
+				case EFI_BLOCK_PART_GPT:
+					fstype = bpart->gpt.fstype;
+					break;
+				}
+				if (fstype == FS_BSDFFS) {
+					char devname[9];
+					snprintf(devname, sizeof(devname), "hd%u%c", bdev->index, bpart->index + 'a');
+					set_default_device(devname);
+					break;
+				}
+			}
+		}
+	}
+}
+
+static void
+print_guid(const uint8_t *guid)
+{
+	const int index[] = { 3, 2, 1, 0, 5, 4, 7, 6, 8, 9, 10, 11, 12, 13, 14, 15 };
+	int i;
+
+	for (i = 0; i < 16; i++) {
+		printf("%02x", guid[index[i]]);
+		if (i == 3 || i == 5 || i == 7 || i == 9)
+			printf("-");
 	}
 }
 
@@ -283,6 +409,27 @@ efi_block_show(void)
 				printf("): ");
 
 				printf("%s\n", fstypenames[bpart->disklabel.part.p_fstype]);
+				break;
+			case EFI_BLOCK_PART_GPT:
+				printf("  hd%u%c ", bdev->index, bpart->index + 'a');
+
+				if (bpart->gpt.ent.ent_name[0] == 0x0000) {
+					printf("\"");
+					print_guid(bpart->gpt.ent.ent_guid);
+					printf("\"");
+				} else {
+					Print(L"\"%s\"", bpart->gpt.ent.ent_name);
+				}
+			
+				/* Size in MB */
+				size = (le64toh(bpart->gpt.ent.ent_lba_end) - le64toh(bpart->gpt.ent.ent_lba_start)) * bdev->bio->Media->BlockSize;
+				size /= (1024 * 1024);
+				if (size >= 10000)
+					printf(" (%"PRIu64" GB): ", size / 1024);
+				else
+					printf(" (%"PRIu64" MB): ", size);
+
+				printf("%s\n", fstypenames[bpart->gpt.fstype]);
 				break;
 			default:
 				break;
@@ -356,6 +503,14 @@ efi_block_strategy(void *devdata, int rw, daddr_t dblk, size_t size, void *buf, 
 			return EIO;
 		}
 		dblk += bpart->disklabel.part.p_offset;
+		break;
+	case EFI_BLOCK_PART_GPT:
+		if (bpart->bdev->bio->Media->BlockSize != DEV_BSIZE) {
+			printf("%s: unsupported block size %d (expected %d)\n", __func__,
+			    bpart->bdev->bio->Media->BlockSize, DEV_BSIZE);
+			return EIO;
+		}
+		dblk += le64toh(bpart->gpt.ent.ent_lba_start);
 		break;
 	default:
 		return EINVAL;
