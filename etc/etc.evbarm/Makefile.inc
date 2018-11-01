@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.96 2018/11/01 11:05:24 skrll Exp $
+#	$NetBSD: Makefile.inc,v 1.97 2018/11/01 18:23:25 skrll Exp $
 #
 #	etc.evbarm/Makefile.inc -- evbarm-specific etc Makefile targets
 #
@@ -24,6 +24,8 @@ EVBARM_BOARDS.armv7+=		BCM5301X
 EVBARM_BOARDS.armv7hf+=		BCM5301X
 #EVBARM_BOARDS.armv7+=		BCM56340
 #EVBARM_BOARDS.armv7hf+= 	BCM56340
+KERNEL_SETS.armv7+=		GENERIC
+KERNEL_SETS.armv7hf+=		GENERIC
 KERNEL_SETS.armv7+=		SUNXI
 KERNEL_SETS.armv7hf+=		SUNXI
 KERNEL_SETS.armv7+=		VEXPRESS_A15
