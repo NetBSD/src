@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.aarch64,v 1.12 2018/09/22 12:24:01 rin Exp $
+#	$NetBSD: Makefile.aarch64,v 1.13 2018/11/01 20:34:49 maxv Exp $
 
 # Makefile for NetBSD
 #
@@ -39,6 +39,14 @@ CFLAGS+=	-fno-omit-frame-pointer
 CFLAGS+=	-mno-omit-leaf-frame-pointer
 #CFLAGS+=	-mno-unaligned-access
 
+.if ${KASAN:U0} > 0 && ${HAVE_GCC:U0} > 0
+KASANFLAGS=	-fsanitize=kernel-address \
+		--param asan-globals=1
+.for f in subr_asan.c
+KASANFLAGS.${f}=	# empty
+.endfor
+CFLAGS+=	${KASANFLAGS.${.IMPSRC:T}:U${KASANFLAGS}}
+.endif
 
 ##
 ## (3) libkern and compat
