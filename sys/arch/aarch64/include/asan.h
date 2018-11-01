@@ -1,0 +1,136 @@
+/*	$NetBSD: asan.h,v 1.1 2018/11/01 20:34:50 maxv Exp $	*/
+
+/*
+ * Copyright (c) 2018 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Maxime Villard.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
+
+#include <sys/atomic.h>
+#include <aarch64/pmap.h>
+#include <aarch64/vmparam.h>
+#include <aarch64/cpufunc.h>
+#include <aarch64/armreg.h>
+
+#define __MD_VIRTUAL_SHIFT	48	/* 49bit address space, cut half */
+#define __MD_CANONICAL_BASE	0xFFFF000000000000
+
+#define __MD_SHADOW_SIZE	(1ULL << (__MD_VIRTUAL_SHIFT - KASAN_SHADOW_SCALE_SHIFT))
+#define KASAN_MD_SHADOW_START	(AARCH64_KSEG_END)
+#define KASAN_MD_SHADOW_END	(KASAN_MD_SHADOW_START + __MD_SHADOW_SIZE)
+
+static inline int8_t *
+kasan_md_addr_to_shad(const void *addr)
+{
+	vaddr_t va = (vaddr_t)addr;
+	return (int8_t *)(KASAN_MD_SHADOW_START +
+	    ((va - __MD_CANONICAL_BASE) >> KASAN_SHADOW_SCALE_SHIFT));
+}
+
+static inline bool
+kasan_md_unsupported(vaddr_t addr)
+{
+	return (addr < VM_MIN_KERNEL_ADDRESS) ||
+	    (addr >= VM_KERNEL_IO_ADDRESS);
+}
+
+static paddr_t
+__md_palloc(void)
+{
+	paddr_t pa;
+
+	pmap_alloc_pdp(pmap_kernel(), &pa);
+
+	return pa;
+}
+
+static void
+kasan_md_shadow_map_page(vaddr_t va)
+{
+	pd_entry_t *l0, *l1, *l2, *l3;
+	paddr_t l0pa, pa;
+	pd_entry_t pde;
+	size_t idx;
+
+	l0pa = reg_ttbr1_el1_read();
+	l0 = (void *)AARCH64_PA_TO_KVA(l0pa);
+
+	idx = l0pde_index(va);
+	pde = l0[idx];
+	if (!l0pde_valid(pde)) {
+		pa = __md_palloc();
+		atomic_swap_64(&l0[idx], pa | L0_TABLE);
+	} else {
+		pa = l0pde_pa(pde);
+	}
+	l1 = (void *)AARCH64_PA_TO_KVA(pa);
+
+	idx = l1pde_index(va);
+	pde = l1[idx];
+	if (!l1pde_valid(pde)) {
+		pa = __md_palloc();
+		atomic_swap_64(&l1[idx], pa | L1_TABLE);
+	} else {
+		pa = l1pde_pa(pde);
+	}
+	l2 = (void *)AARCH64_PA_TO_KVA(pa);
+
+	idx = l2pde_index(va);
+	pde = l2[idx];
+	if (!l2pde_valid(pde)) {
+		pa = __md_palloc();
+		atomic_swap_64(&l2[idx], pa | L2_TABLE);
+	} else {
+		pa = l2pde_pa(pde);
+	}
+	l3 = (void *)AARCH64_PA_TO_KVA(pa);
+
+	idx = l3pte_index(va);
+	pde = l3[idx];
+	if (!l3pte_valid(pde)) {
+		pa = __md_palloc();
+		atomic_swap_64(&l3[idx], pa | L3_PAGE | LX_BLKPAG_UXN |
+		    LX_BLKPAG_PXN | LX_BLKPAG_AF | LX_BLKPAG_AP_RW);
+		aarch64_tlbi_by_va(va);
+	}
+}
+
+#define kasan_md_early_init(a)	__nothing
+
+static void
+kasan_md_init(void)
+{
+	vaddr_t eva, dummy;
+
+	CTASSERT((__MD_SHADOW_SIZE / L0_SIZE) == 64);
+
+	/* The VAs we've created until now. */
+	pmap_virtual_space(&eva, &dummy);
+	kasan_shadow_map((void *)VM_MIN_KERNEL_ADDRESS,
+	    eva - VM_MIN_KERNEL_ADDRESS);
+}
+
+#define kasan_md_unwind()	__nothing
