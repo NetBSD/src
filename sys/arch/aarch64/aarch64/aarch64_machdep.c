@@ -1,4 +1,4 @@
-/* $NetBSD: aarch64_machdep.c,v 1.17 2018/10/31 13:42:24 jmcneill Exp $ */
+/* $NetBSD: aarch64_machdep.c,v 1.18 2018/11/01 20:34:49 maxv Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,10 +30,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: aarch64_machdep.c,v 1.17 2018/10/31 13:42:24 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: aarch64_machdep.c,v 1.18 2018/11/01 20:34:49 maxv Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_ddb.h"
+#include "opt_kasan.h"
 #include "opt_kernhist.h"
 #include "opt_modular.h"
 #include "opt_fdt.h"
@@ -46,6 +47,7 @@ __KERNEL_RCSID(1, "$NetBSD: aarch64_machdep.c,v 1.17 2018/10/31 13:42:24 jmcneil
 #include <sys/msgbuf.h>
 #include <sys/sysctl.h>
 #include <sys/reboot.h>
+#include <sys/asan.h>
 
 #include <dev/mm.h>
 
@@ -357,6 +359,10 @@ initarm_common(vaddr_t kvm_base, vsize_t kvm_size,
 	 * virtual space start from 2MB aligned kernend
 	 */
 	pmap_bootstrap(kernelvmstart, VM_MAX_KERNEL_ADDRESS);
+
+#ifdef KASAN
+	kasan_init();
+#endif
 
 	/*
 	 * setup lwp0
