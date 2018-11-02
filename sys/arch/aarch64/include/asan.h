@@ -1,4 +1,4 @@
-/*	$NetBSD: asan.h,v 1.1 2018/11/01 20:34:50 maxv Exp $	*/
+/*	$NetBSD: asan.h,v 1.2 2018/11/02 08:18:18 skrll Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,6 +30,8 @@
  */
 
 #include <sys/atomic.h>
+#include <sys/ksyms.h>
+
 #include <aarch64/pmap.h>
 #include <aarch64/vmparam.h>
 #include <aarch64/cpufunc.h>
@@ -133,4 +135,57 @@ kasan_md_init(void)
 	    eva - VM_MIN_KERNEL_ADDRESS);
 }
 
-#define kasan_md_unwind()	__nothing
+static inline bool
+__md_unwind_end(const char *name)
+{
+	if (!strncmp(name, "el0_trap", 8) ||
+	    !strncmp(name, "el1_trap", 8)) {
+		return true;
+	}
+
+	return false;
+}
+
+static void
+kasan_md_unwind(void)
+{
+	uint64_t lr, *fp;
+	const char *mod;
+	const char *sym;
+	size_t nsym;
+	int error;
+
+	fp = (uint64_t *)__builtin_frame_address(0);
+	nsym = 0;
+
+	while (1) {
+		/*
+		 * normal stack frame
+		 *  fp[0]  saved fp(x29) value
+		 *  fp[1]  saved lr(x30) value
+		 */
+		lr = fp[1];
+
+		if (lr < VM_MIN_KERNEL_ADDRESS) {
+			break;
+		}
+		error = ksyms_getname(&mod, &sym, (vaddr_t)lr, KSYMS_PROC);
+		if (error) {
+			break;
+		}
+		printf("#%zu %p in %s <%s>\n", nsym, (void *)lr, sym, mod);
+		if (__md_unwind_end(sym)) {
+			break;
+		}
+
+		fp = (uint64_t *)fp[0];
+		if (fp == NULL) {
+			break;
+		}
+		nsym++;
+
+		if (nsym >= 15) {
+			break;
+		}
+	}
+}
