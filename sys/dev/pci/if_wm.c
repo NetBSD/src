@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.590 2018/10/31 06:04:48 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.591 2018/11/02 03:22:19 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.590 2018/10/31 06:04:48 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.591 2018/11/02 03:22:19 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -966,6 +966,7 @@ static void	wm_kmrn_lock_loss_workaround_ich8lan(struct wm_softc *);
 static void	wm_gig_downshift_workaround_ich8lan(struct wm_softc *);
 static void	wm_hv_phy_workaround_ich8lan(struct wm_softc *);
 static void	wm_lv_phy_workaround_ich8lan(struct wm_softc *);
+static int	wm_k1_workaround_lpt_lp(struct wm_softc *, bool);
 static int	wm_k1_gig_workaround_hv(struct wm_softc *, int);
 static void	wm_set_mdio_slow_mode_hv(struct wm_softc *);
 static void	wm_configure_k1_ich8lan(struct wm_softc *, int);
@@ -8671,10 +8672,12 @@ wm_linkintr_gmii(struct wm_softc *sc, uint32_t icr)
 		__func__));
 
 	if (icr & ICR_LSC) {
-		uint32_t reg;
 		uint32_t status = CSR_READ(sc, WMREG_STATUS);
+		uint32_t reg;
+		bool link;
 
-		if ((status & STATUS_LU) != 0) {
+		link = status & STATUS_LU;
+		if (link) {
 			DPRINTF(WM_DEBUG_LINK, ("%s: LINK: LSC -> up %s\n",
 				device_xname(sc->sc_dev),
 				(status & STATUS_FD) ? "FDX" : "HDX"));
@@ -8682,7 +8685,7 @@ wm_linkintr_gmii(struct wm_softc *sc, uint32_t icr)
 			DPRINTF(WM_DEBUG_LINK, ("%s: LINK: LSC -> down\n",
 				device_xname(sc->sc_dev)));
 		}
-		if ((sc->sc_type == WM_T_ICH8) && ((status & STATUS_LU) == 0))
+		if ((sc->sc_type == WM_T_ICH8) && (link == false))
 			wm_gig_downshift_workaround_ich8lan(sc);
 
 		if ((sc->sc_type == WM_T_ICH8)
@@ -8762,8 +8765,12 @@ wm_linkintr_gmii(struct wm_softc *sc, uint32_t icr)
 			CSR_WRITE(sc, WMREG_FEXTNVM4, reg);
 		}
 
-		/* XXX Work-around I218 hang issue */
-		/* e1000_k1_workaround_lpt_lp() */
+		/* Work-around I218 hang issue */
+		if ((sc->sc_pcidevid == PCI_PRODUCT_INTEL_I218_LM) ||
+		    (sc->sc_pcidevid == PCI_PRODUCT_INTEL_I218_V) ||
+		    (sc->sc_pcidevid == PCI_PRODUCT_INTEL_I218_LM3) ||
+		    (sc->sc_pcidevid == PCI_PRODUCT_INTEL_I218_V3))
+			wm_k1_workaround_lpt_lp(sc, link);
 
 		if (sc->sc_type >= WM_T_PCH_LPT) {
 			/*
@@ -14375,6 +14382,82 @@ wm_lv_phy_workaround_ich8lan(struct wm_softc *sc)
 	wm_set_mdio_slow_mode_hv(sc);
 }
 
+/**
+ *  e1000_k1_workaround_lpt_lp - K1 workaround on Lynxpoint-LP
+ *  @link: link up bool flag
+ *
+ *  When K1 is enabled for 1Gbps, the MAC can miss 2 DMA completion indications
+ *  preventing further DMA write requests.  Workaround the issue by disabling
+ *  the de-assertion of the clock request when in 1Gpbs mode.
+ *  Also, set appropriate Tx re-transmission timeouts for 10 and 100Half link
+ *  speeds in order to avoid Tx hangs.
+ **/
+static int
+wm_k1_workaround_lpt_lp(struct wm_softc *sc, bool link)
+{
+	uint32_t fextnvm6 = CSR_READ(sc, WMREG_FEXTNVM6);
+	uint32_t status = CSR_READ(sc, WMREG_STATUS);
+	uint32_t speed = __SHIFTOUT(status, STATUS_SPEED);
+	uint16_t phyreg;
+	int rv;
+
+	if (link && (speed == STATUS_SPEED_1000)) {
+		sc->phy.acquire(sc);
+		rv = wm_kmrn_readreg_locked(sc, KUMCTRLSTA_OFFSET_K1_CONFIG,
+		    &phyreg);
+		if (rv != 0)
+			goto release;
+		rv = wm_kmrn_writereg_locked(sc, KUMCTRLSTA_OFFSET_K1_CONFIG,
+		    phyreg & ~KUMCTRLSTA_K1_ENABLE);
+		if (rv != 0)
+			goto release;
+		delay(20);
+		CSR_WRITE(sc, WMREG_FEXTNVM6, fextnvm6 | FEXTNVM6_REQ_PLL_CLK);
+		
+		rv = wm_kmrn_readreg_locked(sc, KUMCTRLSTA_OFFSET_K1_CONFIG,
+		    &phyreg);
+release:
+		sc->phy.release(sc);
+	} else {
+		struct mii_softc *child;
+
+		fextnvm6 &= ~FEXTNVM6_REQ_PLL_CLK;
+
+		child = LIST_FIRST(&sc->sc_mii.mii_phys);
+		if (((child != NULL) && (child->mii_mpd_rev > 5))
+		    || !link
+		    || ((speed == STATUS_SPEED_100) && (status & STATUS_FD)))
+			goto update_fextnvm6;
+
+		phyreg = wm_gmii_hv_readreg(sc->sc_dev, 2, I217_INBAND_CTRL);
+
+		/* Clear link status transmit timeout */
+		phyreg &= ~I217_INBAND_CTRL_LINK_STAT_TX_TIMEOUT_MASK;
+		if (speed == STATUS_SPEED_100) {
+			/* Set inband Tx timeout to 5x10us for 100Half */
+			phyreg |=
+			    5 << I217_INBAND_CTRL_LINK_STAT_TX_TIMEOUT_SHIFT;
+
+			/* Do not extend the K1 entry latency for 100Half */
+			fextnvm6 &= ~FEXTNVM6_ENABLE_K1_ENTRY_CONDITION;
+		} else {
+			/* Set inband Tx timeout to 50x10us for 10Full/Half */
+			phyreg |=
+			    50 << I217_INBAND_CTRL_LINK_STAT_TX_TIMEOUT_SHIFT;
+
+			/* Extend the K1 entry latency for 10 Mbps */
+			fextnvm6 |= FEXTNVM6_ENABLE_K1_ENTRY_CONDITION;
+		}
+
+		wm_gmii_hv_writereg(sc->sc_dev, 2, I217_INBAND_CTRL, phyreg);
+
+update_fextnvm6:
+		CSR_WRITE(sc, WMREG_FEXTNVM6, fextnvm6);
+	}
+
+	return rv;
+}
+	
 static int
 wm_k1_gig_workaround_hv(struct wm_softc *sc, int link)
 {
