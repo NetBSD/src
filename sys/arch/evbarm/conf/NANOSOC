@@ -1,5 +1,5 @@
 #
-#	$NetBSD: NANOSOC,v 1.3 2018/10/18 09:01:53 skrll Exp $
+#	$NetBSD: NANOSOC,v 1.4 2018/11/02 18:11:24 aymeric Exp $
 #
 #	Altera DE0 Nano SoC
 #
@@ -45,7 +45,7 @@ l2cc0		at fdt? pass 2
 arml2cc0	at l2cc0
 
 com*		at fdt?
-options 	CONSADDR=0xFFC02000, CONSPEED=115200
+options 	EARLYCONS=cycv, CONSADDR=0xFFC02000, CONSPEED=115200
 
 awge* 		at fdt?
 #micphy* 	at mii? phy?

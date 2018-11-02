@@ -1,12 +1,13 @@
-/* $NetBSD: cycv_platform.c,v 1.7 2018/11/02 18:09:17 aymeric Exp $ */
+/* $NetBSD: cycv_platform.c,v 1.8 2018/11/02 18:11:24 aymeric Exp $ */
 
 /* This file is in the public domain. */
 
 #include "arml2cc.h"
+#include "opt_console.h"
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cycv_platform.c,v 1.7 2018/11/02 18:09:17 aymeric Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cycv_platform.c,v 1.8 2018/11/02 18:11:24 aymeric Exp $");
 
 #define	_ARM32_BUS_DMA_PRIVATE
 #include <sys/param.h>
@@ -29,6 +30,7 @@ __KERNEL_RCSID(0, "$NetBSD: cycv_platform.c,v 1.7 2018/11/02 18:09:17 aymeric Ex
 
 #include <arm/fdt/arm_fdtvar.h>
 #include <dev/fdt/fdtvar.h>
+#include <dev/ic/comreg.h>
 
 void cycv_platform_early_putchar(char);
 
@@ -36,7 +38,9 @@ void
 cycv_platform_early_putchar(char c) {
 #ifdef CONSADDR
 #define CONSADDR_VA (CONSADDR - CYCV_PERIPHERAL_BASE + CYCV_PERIPHERAL_VBASE)
-	volatile uint32_t *uartaddr = (volatile uint32_t *) CONSADDR_VA;
+	volatile uint32_t *uartaddr = cpu_earlydevice_va_p() ?
+	    (volatile uint32_t *) CONSADDR_VA :
+	    (volatile uint32_t *) CONSADDR;
 
 	while ((le32toh(uartaddr[com_lsr]) & LSR_TXRDY) == 0)
 		;
