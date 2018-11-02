@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.591 2018/11/02 03:22:19 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.592 2018/11/02 08:04:42 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.591 2018/11/02 03:22:19 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.592 2018/11/02 08:04:42 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -10096,18 +10096,25 @@ wm_gmii_mdic_readreg(device_t dev, int phy, int reg)
 	if ((mdic & MDIC_READY) == 0) {
 		log(LOG_WARNING, "%s: MDIC read timed out: phy %d reg %d\n",
 		    device_xname(dev), phy, reg);
-		rv = 0;
+		return 0;
 	} else if (mdic & MDIC_E) {
 #if 0 /* This is normal if no PHY is present. */
 		log(LOG_WARNING, "%s: MDIC read error: phy %d reg %d\n",
 		    device_xname(dev), phy, reg);
 #endif
-		rv = 0;
+		return 0;
 	} else {
 		rv = MDIC_DATA(mdic);
 		if (rv == 0xffff)
 			rv = 0;
 	}
+
+	/*
+	 * Allow some time after each MDIC transaction to avoid
+	 * reading duplicate data in the next MDIC transaction.
+	 */
+	if (sc->sc_type == WM_T_PCH2)
+		delay(100);
 
 	return rv;
 }
@@ -10140,12 +10147,22 @@ wm_gmii_mdic_writereg(device_t dev, int phy, int reg, int val)
 		delay(50);
 	}
 
-	if ((mdic & MDIC_READY) == 0)
+	if ((mdic & MDIC_READY) == 0) {
 		log(LOG_WARNING, "%s: MDIC write timed out: phy %d reg %d\n",
 		    device_xname(dev), phy, reg);
-	else if (mdic & MDIC_E)
+		return;
+	} else if (mdic & MDIC_E) {
 		log(LOG_WARNING, "%s: MDIC write error: phy %d reg %d\n",
 		    device_xname(dev), phy, reg);
+		return;
+	}
+
+	/*
+	 * Allow some time after each MDIC transaction to avoid
+	 * reading duplicate data in the next MDIC transaction.
+	 */
+	if (sc->sc_type == WM_T_PCH2)
+		delay(100);
 }
 
 /*
