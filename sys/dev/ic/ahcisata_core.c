@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata_core.c,v 1.65 2018/10/24 19:38:00 jdolecek Exp $	*/
+/*	$NetBSD: ahcisata_core.c,v 1.66 2018/11/02 21:27:30 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.65 2018/10/24 19:38:00 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.66 2018/11/02 21:27:30 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -184,6 +184,7 @@ ahci_setup_ports(struct ahci_softc *sc)
 			break;
 		}
 		ahci_setup_port(sc, i);
+		port++;
 	}
 }
 
@@ -206,6 +207,7 @@ ahci_reprobe_drives(struct ahci_softc *sc)
 		chp = &achp->ata_channel;
 
 		ahci_probe_drive(chp);
+		port++;
 	}
 }
 
@@ -502,19 +504,19 @@ ahci_detach(struct ahci_softc *sc, int flags)
 	struct ahci_channel *achp;
 	struct ata_channel *chp;
 	struct scsipi_adapter *adapt;
-	int i, j;
+	int i, j, port;
 	int error;
 
 	atac = &sc->sc_atac;
 	adapt = &atac->atac_atapi_adapter._generic;
 
-	for (i = 0; i < AHCI_MAX_PORTS; i++) {
+	for (i = 0, port = 0; i < AHCI_MAX_PORTS; i++) {
 		achp = &sc->sc_channels[i];
 		chp = &achp->ata_channel;
 
 		if ((sc->sc_ahci_ports & (1U << i)) == 0)
 			continue;
-		if (i >= sc->sc_atac.atac_nchannels) {
+		if (port >= sc->sc_atac.atac_nchannels) {
 			aprint_error("%s: more ports than announced\n",
 			    AHCINAME(sc));
 			break;
@@ -541,6 +543,7 @@ ahci_detach(struct ahci_softc *sc, int flags)
 		    achp->ahcic_cmd_tbl_nseg);
 
 		ata_channel_detach(chp);
+		port++;
 	}
 
 	bus_dmamap_unload(sc->sc_dmat, sc->sc_cmd_hdrd);
