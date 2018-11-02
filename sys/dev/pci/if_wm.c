@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.593 2018/11/02 08:09:21 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.594 2018/11/02 08:16:49 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.593 2018/11/02 08:09:21 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.594 2018/11/02 08:16:49 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -3874,7 +3874,16 @@ wm_phy_post_reset(struct wm_softc *sc)
 	/* Configure the LCD with the extended configuration region in NVM */
 	wm_init_lcd_from_nvm(sc);
 
-	/* Configure the LCD with the OEM bits in NVM */
+	/* XXX Configure the LCD with the OEM bits in NVM */
+
+	if (sc->sc_type == WM_T_PCH2) {
+		/* Ungate automatic PHY configuration on non-managed 82579 */
+		if ((CSR_READ(sc, WMREG_FWSM) & FWSM_FW_VALID) == 0) {
+			delay(10 * 1000);
+			wm_gate_hw_phy_config_ich8lan(sc, false);
+		}
+		/* XXX Set EEE LPI Update Timer to 200usec */	
+	}
 }
 
 /* Only for PCH and newer */
@@ -4652,6 +4661,14 @@ wm_reset(struct wm_softc *sc)
 		break;
 	}
 
+	/* Set Phy Config Counter to 50msec */
+	if (sc->sc_type == WM_T_PCH2) {
+		reg = CSR_READ(sc, WMREG_FEXTNVM3);
+		reg &= ~FEXTNVM3_PHY_CFG_COUNTER_MASK;
+		reg |= FEXTNVM3_PHY_CFG_COUNTER_50MS;
+		CSR_WRITE(sc, WMREG_FEXTNVM3, reg);
+	}
+	
 	if (phy_reset != 0)
 		wm_get_cfg_done(sc);
 
