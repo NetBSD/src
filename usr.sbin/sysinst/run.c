@@ -1,4 +1,4 @@
-/*	$NetBSD: run.c,v 1.5 2014/12/30 10:10:22 martin Exp $	*/
+/*	$NetBSD: run.c,v 1.6 2018/11/02 18:07:33 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -59,8 +59,13 @@
 
 #define MAXBUF 256
 
-#ifdef DEBUG
-#define Xsystem(y) printf ("%s\n", y), 0
+#if defined(DEBUG) && defined(DEBUG_SYSTEM)
+static inline int
+Xsystem(const char *y)
+{
+	printf ("%s\n", y);
+	return 0;
+}
 #else
 #define Xsystem(y) system(y)
 #endif
