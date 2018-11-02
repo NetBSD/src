@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.12 2018/10/29 05:15:21 mrg Exp $	*/
+/*	$NetBSD: boot.c,v 1.13 2018/11/02 01:22:39 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -51,6 +51,24 @@ static const char * const names[] = {
 
 #define NUMNAMES	__arraycount(names)
 
+static const char *efi_memory_type[] = {
+        [EfiReservedMemoryType]         = "Reserved Memory Type",
+        [EfiLoaderCode]                 = "Loader Code",
+        [EfiLoaderData]                 = "Loader Data",
+        [EfiBootServicesCode]           = "Boot Services Code",
+        [EfiBootServicesData]           = "Boot Services Data",
+        [EfiRuntimeServicesCode]        = "Runtime Services Code",
+        [EfiRuntimeServicesData]        = "Runtime Services Data",
+        [EfiConventionalMemory]         = "Conventional Memory",
+        [EfiUnusableMemory]             = "Unusable Memory",
+        [EfiACPIReclaimMemory]          = "ACPI Reclaim Memory",
+        [EfiACPIMemoryNVS]              = "ACPI Memory NVS",
+        [EfiMemoryMappedIO]             = "MMIO",
+        [EfiMemoryMappedIOPortSpace]    = "MMIO (Port Space)",
+        [EfiPalCode]                    = "Pal Code",
+        [EfiPersistentMemory]           = "Persistent Memory",
+};
+
 static char default_device[32];
 static char initrd_path[255];
 static char dtb_path[255];
@@ -66,6 +84,7 @@ void	command_dev(char *);
 void	command_dtb(char *);
 void	command_initrd(char *);
 void	command_ls(char *);
+void	command_mem(char *);
 void	command_printenv(char *);
 void	command_setenv(char *);
 void	command_clearenv(char *);
@@ -80,6 +99,7 @@ const struct boot_command commands[] = {
 	{ "dtb",	command_dtb,		"dtb [dev:][filename]" },
 	{ "initrd",	command_initrd,		"initrd [dev:][filename]" },
 	{ "ls",		command_ls,		"ls [hdNn:/path]" },
+	{ "mem",	command_mem,		"mem" },
 	{ "printenv",	command_printenv,	"printenv [key]" },
 	{ "setenv",	command_setenv,		"setenv <key> <value>" },
 	{ "clearenv",	command_clearenv,	"clearenv <key>" },
@@ -151,6 +171,28 @@ void
 command_ls(char *arg)
 {
 	ls(arg);
+}
+
+void
+command_mem(char *arg)
+{
+	EFI_MEMORY_DESCRIPTOR *md, *memmap;
+	UINTN nentries, mapkey, descsize;
+	UINT32 descver;
+	int n;
+
+	printf("Type                    Start             End               Attributes\n");
+	printf("----------------------  ----------------  ----------------  ----------------\n");
+	memmap = LibMemoryMap(&nentries, &mapkey, &descsize, &descver);
+	for (n = 0, md = memmap; n < nentries; n++, md = NextMemoryDescriptor(md, descsize)) {
+		const char *mem_type = "<unknown>";
+		if (md->Type < __arraycount(efi_memory_type))
+			mem_type = efi_memory_type[md->Type];
+
+		printf("%-22s  %016" PRIx64 "  %016" PRIx64 "  %016" PRIx64 "\n",
+		    mem_type, md->PhysicalStart, md->PhysicalStart + (md->NumberOfPages * EFI_PAGE_SIZE) - 1,
+		    md->Attribute);
+	}
 }
 
 void
