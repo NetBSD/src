@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_mcfg.c,v 1.11 2018/10/19 14:06:13 jmcneill Exp $	*/
+/*	$NetBSD: acpi_mcfg.c,v 1.12 2018/11/02 15:01:18 jmcneill Exp $	*/
 
 /*-
  * Copyright (C) 2015 NONAKA Kimihiro <nonaka@NetBSD.org>
@@ -28,7 +28,7 @@
 #include "opt_pci.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_mcfg.c,v 1.11 2018/10/19 14:06:13 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_mcfg.c,v 1.12 2018/11/02 15:01:18 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -448,14 +448,22 @@ acpimcfg_ext_conf_is_aliased(pci_chipset_tag_t pc, pcitag_t tag)
 }
 
 static struct mcfg_segment *
-acpimcfg_get_segment(int bus)
+acpimcfg_get_segment(pci_chipset_tag_t pc, int bus)
 {
 	struct mcfg_segment *seg;
+	u_int segment;
 	int i;
+
+#ifdef __HAVE_PCI_GET_SEGMENT
+	segment = pci_get_segment(pc);
+#else
+	segment = 0;
+#endif
 
 	for (i = 0; i < mcfg_nsegs; i++) {
 		seg = &mcfg_segs[i];
-		if (bus >= seg->ms_bus_start && bus <= seg->ms_bus_end)
+		if (segment == seg->ms_segment &&
+		    bus >= seg->ms_bus_start && bus <= seg->ms_bus_end)
 			return seg;
 	}
 	return NULL;
@@ -479,7 +487,7 @@ acpimcfg_device_probe(const struct pci_attach_args *pa)
 	bool force_noextcnf = false;
 	int i, j;
 
-	seg = acpimcfg_get_segment(bus);
+	seg = acpimcfg_get_segment(pc, bus);
 	if (seg == NULL)
 		return 0;
 
@@ -561,7 +569,7 @@ acpimcfg_map_bus(device_t self, pci_chipset_tag_t pc, int bus)
 	if (!mcfg_inited)
 		return ENXIO;
 
-	seg = acpimcfg_get_segment(bus);
+	seg = acpimcfg_get_segment(pc, bus);
 	if (seg == NULL)
 		return ENOENT;
 
@@ -813,7 +821,7 @@ acpimcfg_configure_bus(device_t self, pci_chipset_tag_t pc, ACPI_HANDLE handle,
 	bus_addr_t baddr;
 	ACPI_STATUS rv;
 
-	seg = acpimcfg_get_segment(bus);
+	seg = acpimcfg_get_segment(pc, bus);
 	if (seg == NULL)
 		return ENOENT;
 
@@ -908,7 +916,7 @@ acpimcfg_conf_read(pci_chipset_tag_t pc, pcitag_t tag, int reg, pcireg_t *data)
 
 	pci_decompose_tag(pc, tag, &bus, &dev, &func);
 
-	seg = acpimcfg_get_segment(bus);
+	seg = acpimcfg_get_segment(pc, bus);
 	if (seg == NULL) {
 		*data = -1;
 		return ERANGE;
@@ -943,7 +951,7 @@ acpimcfg_conf_write(pci_chipset_tag_t pc, pcitag_t tag, int reg, pcireg_t data)
 
 	pci_decompose_tag(pc, tag, &bus, &dev, &func);
 
-	seg = acpimcfg_get_segment(bus);
+	seg = acpimcfg_get_segment(pc, bus);
 	if (seg == NULL)
 		return ERANGE;
 
