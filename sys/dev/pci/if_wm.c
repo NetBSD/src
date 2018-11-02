@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.594 2018/11/02 08:16:49 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.595 2018/11/02 08:26:32 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.594 2018/11/02 08:16:49 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.595 2018/11/02 08:26:32 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -1870,10 +1870,9 @@ wm_attach(device_t parent, device_t self, void *aux)
 					0, &sc->sc_iot, &sc->sc_ioh,
 					NULL, &sc->sc_ios) == 0) {
 				sc->sc_flags |= WM_F_IOH_VALID;
-			} else {
+			} else
 				aprint_error_dev(sc->sc_dev,
 				    "WARNING: unable to map I/O space\n");
-			}
 		}
 
 	}
@@ -3259,9 +3258,9 @@ wm_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 
 		error = 0;
 
-		if (cmd == SIOCSIFCAP) {
+		if (cmd == SIOCSIFCAP)
 			error = (*ifp->if_init)(ifp);
-		} else if (cmd != SIOCADDMULTI && cmd != SIOCDELMULTI)
+		else if (cmd != SIOCADDMULTI && cmd != SIOCDELMULTI)
 			;
 		else if (ifp->if_flags & IFF_RUNNING) {
 			/*
@@ -3859,7 +3858,7 @@ wm_phy_post_reset(struct wm_softc *sc)
 	/* Perform any necessary post-reset workarounds */
 	if (sc->sc_type == WM_T_PCH)
 		wm_hv_phy_workaround_ich8lan(sc);
-	if (sc->sc_type == WM_T_PCH2)
+	else if (sc->sc_type == WM_T_PCH2)
 		wm_lv_phy_workaround_ich8lan(sc);
 
 	/* Clear the host wakeup bit after lcd reset */
@@ -4520,9 +4519,8 @@ wm_reset(struct wm_softc *sc)
 		if (sc->sc_type != WM_T_82574) {
 			CSR_WRITE(sc, WMREG_EIMC, 0xffffffffU);
 			CSR_WRITE(sc, WMREG_EIAC, 0);
-		} else {
+		} else
 			CSR_WRITE(sc, WMREG_EIAC_82574, 0);
-		}
 	}
 
 	/* Stop the transmit and receive processes. */
@@ -5885,9 +5883,9 @@ wm_init_locked(struct ifnet *ifp)
 			CSR_WRITE(sc, WMREG_RLPML, ETHER_MAX_LEN_JUMBO);
 	}
 
-	if (MCLBYTES == 2048) {
+	if (MCLBYTES == 2048)
 		sc->sc_rctl |= RCTL_2k;
-	} else {
+	else {
 		if (sc->sc_type >= WM_T_82543) {
 			switch (MCLBYTES) {
 			case 4096:
@@ -5904,7 +5902,8 @@ wm_init_locked(struct ifnet *ifp)
 				    MCLBYTES);
 				break;
 			}
-		} else panic("wm_init: i82542 requires MCLBYTES = 2048");
+		} else
+			panic("wm_init: i82542 requires MCLBYTES = 2048");
 	}
 
 	/* Enable ECC */
@@ -6944,9 +6943,9 @@ wm_tx_offload(struct wm_softc *sc, struct wm_txqueue *txq,
 	if ((m0->m_pkthdr.csum_flags &
 	    (M_CSUM_TSOv4 | M_CSUM_UDPv4 | M_CSUM_TCPv4 | M_CSUM_IPv4)) != 0) {
 		iphl = M_CSUM_DATA_IPv4_IPHL(m0->m_pkthdr.csum_data);
-	} else {
+	} else
 		iphl = M_CSUM_DATA_IPv6_IPHL(m0->m_pkthdr.csum_data);
-	}
+
 	ipcse = offset + iphl - 1;
 
 	cmd = WTX_CMD_DEXT | WTX_DTYP_D;
@@ -7675,22 +7674,22 @@ wm_nq_tx_offload(struct wm_softc *sc, struct wm_txqueue *txq,
 	if (m0->m_pkthdr.csum_flags &
 	    (M_CSUM_UDPv4 | M_CSUM_TCPv4 | M_CSUM_TSOv4)) {
 		WM_Q_EVCNT_INCR(txq, tusum);
-		if (m0->m_pkthdr.csum_flags & (M_CSUM_TCPv4 | M_CSUM_TSOv4)) {
+		if (m0->m_pkthdr.csum_flags & (M_CSUM_TCPv4 | M_CSUM_TSOv4))
 			cmdc |= NQTXC_CMD_TCP;
-		} else {
+		else
 			cmdc |= NQTXC_CMD_UDP;
-		}
+
 		cmdc |= NQTXC_CMD_IP4;
 		*fieldsp |= NQTXD_FIELDS_TUXSM;
 	}
 	if (m0->m_pkthdr.csum_flags &
 	    (M_CSUM_UDPv6 | M_CSUM_TCPv6 | M_CSUM_TSOv6)) {
 		WM_Q_EVCNT_INCR(txq, tusum6);
-		if (m0->m_pkthdr.csum_flags & (M_CSUM_TCPv6 | M_CSUM_TSOv6)) {
+		if (m0->m_pkthdr.csum_flags & (M_CSUM_TCPv6 | M_CSUM_TSOv6))
 			cmdc |= NQTXC_CMD_TCP;
-		} else {
+		else
 			cmdc |= NQTXC_CMD_UDP;
-		}
+
 		cmdc |= NQTXC_CMD_IP6;
 		*fieldsp |= NQTXD_FIELDS_TUXSM;
 	}
@@ -7988,9 +7987,9 @@ retry:
 				    htole32(WTX_CMD_VLE);
 				txq->txq_descs[nexttx].wtx_fields.wtxu_vlan =
 				    htole16(vlan_get_tag(m0));
-			} else {
+			} else
 				txq->txq_descs[nexttx].wtx_fields.wtxu_vlan =0;
-			}
+
 			dcmdlen = 0;
 		} else {
 			/* setup an advanced data descriptor */
@@ -9845,10 +9844,9 @@ wm_gmii_mediainit(struct wm_softc *sc, pci_product_id_t prodid)
 				CSR_WRITE(sc, WMREG_CTRL_EXT, ctrl_ext);
 			}
 		}
-	} else {
+	} else
 		mii_attach(sc->sc_dev, &sc->sc_mii, 0xffffffff, MII_PHY_ANY,
 		    MII_OFFSET_ANY, MIIF_DOPAUSE);
-	}
 
 	/*
 	 * If the MAC is PCH2 or PCH_LPT and failed to detect MII PHY, call
@@ -12178,9 +12176,8 @@ wm_ich8_cycle_init(struct wm_softc *sc)
 		hsfsts = ICH8_FLASH_READ16(sc, ICH_FLASH_HSFSTS);
 
 	/* May be check the Flash Des Valid bit in Hw status */
-	if ((hsfsts & HSFSTS_FLDVAL) == 0) {
+	if ((hsfsts & HSFSTS_FLDVAL) == 0)
 		return error;
-	}
 
 	/* Clear FCERR in Hw status by writing 1 */
 	/* Clear DAEL in Hw status by writing a 1 */
@@ -14652,9 +14649,8 @@ wm_phy_is_accessible_pchlan(struct wm_softc *sc)
 			continue;
 		break;
 	}
-	if (!MII_INVALIDID(id1) && !MII_INVALIDID(id2)) {
+	if (!MII_INVALIDID(id1) && !MII_INVALIDID(id2))
 		goto out;
-	}
 
 	if (sc->sc_type < WM_T_PCH_LPT) {
 		sc->phy.release(sc);
