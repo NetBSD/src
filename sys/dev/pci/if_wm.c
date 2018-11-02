@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.592 2018/11/02 08:04:42 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.593 2018/11/02 08:09:21 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.592 2018/11/02 08:04:42 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.593 2018/11/02 08:09:21 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -10087,10 +10087,10 @@ wm_gmii_mdic_readreg(device_t dev, int phy, int reg)
 	    MDIC_REGADD(reg));
 
 	for (i = 0; i < WM_GEN_POLL_TIMEOUT * 3; i++) {
+		delay(50);
 		mdic = CSR_READ(sc, WMREG_MDIC);
 		if (mdic & MDIC_READY)
 			break;
-		delay(50);
 	}
 
 	if ((mdic & MDIC_READY) == 0) {
@@ -10141,10 +10141,10 @@ wm_gmii_mdic_writereg(device_t dev, int phy, int reg, int val)
 	    MDIC_REGADD(reg) | MDIC_DATA(val));
 
 	for (i = 0; i < WM_GEN_POLL_TIMEOUT * 3; i++) {
+		delay(50);
 		mdic = CSR_READ(sc, WMREG_MDIC);
 		if (mdic & MDIC_READY)
 			break;
-		delay(50);
 	}
 
 	if ((mdic & MDIC_READY) == 0) {
