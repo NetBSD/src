@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_mcfg.c,v 1.12 2018/11/02 15:01:18 jmcneill Exp $	*/
+/*	$NetBSD: acpi_mcfg.c,v 1.13 2018/11/02 19:51:08 jmcneill Exp $	*/
 
 /*-
  * Copyright (C) 2015 NONAKA Kimihiro <nonaka@NetBSD.org>
@@ -28,7 +28,7 @@
 #include "opt_pci.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_mcfg.c,v 1.12 2018/11/02 15:01:18 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_mcfg.c,v 1.13 2018/11/02 19:51:08 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -394,6 +394,7 @@ acpimcfg_init(bus_space_tag_t memt, const struct acpimcfg_ops *ops)
 			    ama->Address, ama->StartBusNumber, bus_end);
 		}
 
+#ifndef __HAVE_PCI_GET_SEGMENT
 		if (ama->PciSegment != 0) {
 			aprint_debug_dev(acpi_sc->sc_dev,
 			    "MCFG: segment %d, bus %d-%d, address 0x%016" PRIx64
@@ -401,6 +402,7 @@ acpimcfg_init(bus_space_tag_t memt, const struct acpimcfg_ops *ops)
 			    ama->StartBusNumber, bus_end, ama->Address);
 			goto next;
 		}
+#endif
 
 		seg = &mcfg_segs[nsegs++];
 		seg->ms_address = ama->Address;
