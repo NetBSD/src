@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.238 2018/10/05 22:12:38 christos Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.239 2018/11/02 12:27:47 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.238 2018/10/05 22:12:38 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.239 2018/11/02 12:27:47 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -149,6 +149,8 @@ fd_sys_init(void)
 	static struct sysctllog *clog;
 
 	mutex_init(&filelist_lock, MUTEX_DEFAULT, IPL_NONE);
+
+	LIST_INIT(&filehead);
 
 	file_cache = pool_cache_init(sizeof(file_t), coherency_unit, 0,
 	    0, "file", NULL, IPL_NONE, file_ctor, file_dtor, NULL);
