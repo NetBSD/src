@@ -1,4 +1,4 @@
-/* $NetBSD: cycv_platform.c,v 1.6 2018/10/30 16:41:52 skrll Exp $ */
+/* $NetBSD: cycv_platform.c,v 1.7 2018/11/02 18:09:17 aymeric Exp $ */
 
 /* This file is in the public domain. */
 
@@ -6,7 +6,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cycv_platform.c,v 1.6 2018/10/30 16:41:52 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cycv_platform.c,v 1.7 2018/11/02 18:09:17 aymeric Exp $");
 
 #define	_ARM32_BUS_DMA_PRIVATE
 #include <sys/param.h>
@@ -81,8 +81,9 @@ cycv_mpstart(void)
 	bus_space_map(bst, CYCV_SCU_BASE, CYCV_SCU_SIZE, 0, &bsh_scu);
 
 	/* Enable Snoop Control Unit */
-	bus_space_write_4(bst, bsh_rst, SCU_CTL,
-		bus_space_read_4(bst, bsh_rst, SCU_CTL) | SCU_CTL_SCU_ENA);
+	bus_space_write_4(bst, bsh_scu, SCU_INV_ALL_REG, 0xff);
+	bus_space_write_4(bst, bsh_scu, SCU_CTL,
+		bus_space_read_4(bst, bsh_scu, SCU_CTL) | SCU_CTL_SCU_ENA);
 
 	const uint32_t startfunc = (uint32_t) KERN_VTOPHYS((vaddr_t)cpu_mpstart);
 
