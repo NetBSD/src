@@ -1,4 +1,4 @@
-/*	$NetBSD: ifpga_pci.c,v 1.21 2018/10/23 08:38:18 jmcneill Exp $	*/
+/*	$NetBSD: ifpga_pci.c,v 1.22 2018/11/02 13:46:24 maya Exp $	*/
 
 /*
  * Copyright (c) 2001 ARM Ltd
@@ -64,7 +64,7 @@
 #define _ARM32_BUS_DMA_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ifpga_pci.c,v 1.21 2018/10/23 08:38:18 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ifpga_pci.c,v 1.22 2018/11/02 13:46:24 maya Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -335,10 +335,10 @@ const char *
 ifpga_pci_intr_string(void *pcv, pci_intr_handle_t ih, char *buf, size_t len)
 {
 #ifdef PCI_DEBUG
-	printf("ifpga_pci_intr_string(pcv=%p, ih=0x%lx)\n", pcv, ih);
+	printf("ifpga_pci_intr_string(pcv=%p, ih=0x%" PRIu64 ")\n", pcv, ih);
 #endif
 	if (ih == 0)
-		panic("ifpga_pci_intr_string: bogus handle 0x%lx", ih);
+		panic("ifpga_pci_intr_string: bogus handle 0x%" PRIu64, ih);
 
 	snprintf(buf, len, "pciint%" PRIu64, ih - IFPGA_INTRNUM_PCIINT0);
 	return buf;	
@@ -359,7 +359,7 @@ ifpga_pci_intr_establish(void *pcv, pci_intr_handle_t ih, int level,
 	void *intr;
 
 #ifdef PCI_DEBUG
-	printf("ifpga_pci_intr_establish(pcv=%p, ih=0x%lx, level=%d, "
+	printf("ifpga_pci_intr_establish(pcv=%p, ih=0x%" PRIu64 ", level=%d, "
 	    "func=%p, arg=%p)\n", pcv, ih, level, func, arg);
 #endif
 
