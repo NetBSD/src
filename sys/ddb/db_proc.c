@@ -1,4 +1,4 @@
-/*	$NetBSD: db_proc.c,v 1.7 2018/11/02 08:59:59 maxv Exp $	*/
+/*	$NetBSD: db_proc.c,v 1.8 2018/11/02 11:59:59 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_proc.c,v 1.7 2018/11/02 08:59:59 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_proc.c,v 1.8 2018/11/02 11:59:59 maxv Exp $");
 
 #ifndef _KERNEL
 #include <stdbool.h>
@@ -114,7 +114,7 @@ db_read_string(const char *src, size_t len, char *dst)
 
 	for (i = 0; i < len; i++) {
 		db_read_bytes((db_addr_t)&src[i], 1, &dst[i]);
-		if (src[i] == '\0')
+		if (dst[i] == '\0')
 			break;
 	}
 }
