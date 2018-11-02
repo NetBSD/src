@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_pci_machdep.c,v 1.5 2018/10/31 15:42:36 jmcneill Exp $ */
+/* $NetBSD: acpi_pci_machdep.c,v 1.6 2018/11/02 15:01:18 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_pci_machdep.c,v 1.5 2018/10/31 15:42:36 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_pci_machdep.c,v 1.6 2018/11/02 15:01:18 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -73,6 +73,7 @@ static void	acpi_pci_md_attach_hook(device_t, device_t,
 static int	acpi_pci_md_bus_maxdevs(void *, int);
 static pcitag_t	acpi_pci_md_make_tag(void *, int, int, int);
 static void	acpi_pci_md_decompose_tag(void *, pcitag_t, int *, int *, int *);
+static u_int	acpi_pci_md_get_segment(void *);
 static pcireg_t	acpi_pci_md_conf_read(void *, pcitag_t, int);
 static void	acpi_pci_md_conf_write(void *, pcitag_t, int, pcireg_t);
 static int	acpi_pci_md_conf_hook(void *, int, int, int, pcireg_t);
@@ -94,6 +95,7 @@ struct arm32_pci_chipset arm_acpi_pci_chipset = {
 	.pc_bus_maxdevs = acpi_pci_md_bus_maxdevs,
 	.pc_make_tag = acpi_pci_md_make_tag,
 	.pc_decompose_tag = acpi_pci_md_decompose_tag,
+	.pc_get_segment = acpi_pci_md_get_segment,
 	.pc_conf_read = acpi_pci_md_conf_read,
 	.pc_conf_write = acpi_pci_md_conf_write,
 	.pc_conf_hook = acpi_pci_md_conf_hook,
@@ -225,6 +227,14 @@ acpi_pci_md_decompose_tag(void *v, pcitag_t tag, int *bp, int *dp, int *fp)
 		*dp = (tag >> 11) & 0x1f;
 	if (fp)
 		*fp = (tag >> 8) & 0x7;
+}
+
+static u_int
+acpi_pci_md_get_segment(void *v)
+{
+	struct acpi_pci_context * const ap = v;
+
+	return ap->ap_seg;
 }
 
 static pcireg_t
