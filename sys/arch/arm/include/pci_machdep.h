@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.h,v 1.14 2018/10/21 00:42:06 jmcneill Exp $	*/
+/*	$NetBSD: pci_machdep.h,v 1.15 2018/11/02 15:01:18 jmcneill Exp $	*/
 
 /*
  * Modified for arm32 by Mark Brinicombe
@@ -40,6 +40,8 @@
 #ifdef __aarch64__
 #define _PCI_HAVE_DMA64
 #endif
+
+#define __HAVE_PCI_GET_SEGMENT
 
 #include <sys/errno.h>
 
@@ -89,6 +91,7 @@ struct arm32_pci_chipset {
 	pcitag_t	(*pc_make_tag)(void *, int, int, int);
 	void		(*pc_decompose_tag)(void *, pcitag_t, int *,
 			    int *, int *);
+	u_int		(*pc_get_segment)(void *);
 	pcireg_t	(*pc_conf_read)(void *, pcitag_t, int);
 	void		(*pc_conf_write)(void *, pcitag_t, int, pcireg_t);
 
@@ -143,6 +146,8 @@ struct arm32_pci_chipset {
     (*(c)->pc_make_tag)((c)->pc_conf_v, (b), (d), (f))
 #define	pci_decompose_tag(c, t, bp, dp, fp)				\
     (*(c)->pc_decompose_tag)((c)->pc_conf_v, (t), (bp), (dp), (fp))
+#define pci_get_segment(c)						\
+    ((c)->pc_get_segment ? (*(c)->pc_get_segment)((c)->pc_conf_v) : 0)
 #define	pci_conf_read(c, t, r)						\
     (*(c)->pc_conf_read)((c)->pc_conf_v, (t), (r))
 #define	pci_conf_write(c, t, r, v)					\
