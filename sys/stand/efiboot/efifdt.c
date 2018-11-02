@@ -1,4 +1,4 @@
-/* $NetBSD: efifdt.c,v 1.12 2018/11/01 00:43:38 jmcneill Exp $ */
+/* $NetBSD: efifdt.c,v 1.13 2018/11/02 01:22:39 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -152,12 +152,6 @@ efi_fdt_memory_map(void)
 
 	memmap = LibMemoryMap(&nentries, &mapkey, &descsize, &descver);
 	for (n = 0, md = memmap; n < nentries; n++, md = NextMemoryDescriptor(md, descsize)) {
-#ifdef EFI_MEMORY_DEBUG
-		printf("MEM: %u: Type 0x%x Attr 0x%lx Phys 0x%lx Virt 0x%lx Size 0x%lx\n",
-		    n, md->Type, md->Attribute,
-		    md->PhysicalStart, md->VirtualStart,
-		    (u_long)md->NumberOfPages * EFI_PAGE_SIZE);
-#endif
 		if ((md->Attribute & EFI_MEMORY_RUNTIME) != 0)
 			continue;
 		if ((md->Attribute & EFI_MEMORY_WB) == 0)
