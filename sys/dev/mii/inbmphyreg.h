@@ -1,4 +1,4 @@
-/*	$NetBSD: inbmphyreg.h,v 1.10 2017/07/13 08:22:20 msaitoh Exp $	*/
+/*	$NetBSD: inbmphyreg.h,v 1.11 2018/11/02 03:22:19 msaitoh Exp $	*/
 /*******************************************************************************
 Copyright (c) 2001-2005, Intel Corporation 
 All rights reserved.
@@ -103,6 +103,10 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #define	HV_PM_CTRL		BME1000_REG(770, 17)
 #define	HV_PM_CTRL_K1_ENA	__BIT(14)
+
+#define	I217_INBAND_CTRL	BME1000_REG(770, 18)
+#define	I217_INBAND_CTRL_LINK_STAT_TX_TIMEOUT_MASK	0x3f00
+#define	I217_INBAND_CTRL_LINK_STAT_TX_TIMEOUT_SHIFT	8
 
 #define	IGP3_KMRN_DIAG		BME1000_REG(770, 19)
 #define	IGP3_KMRN_DIAG_PCS_LOCK_LOSS	(1 << 1)
