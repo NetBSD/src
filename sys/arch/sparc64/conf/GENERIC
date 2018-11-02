@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.209 2018/10/23 19:58:53 jdolecek Exp $
+# $NetBSD: GENERIC,v 1.210 2018/11/02 19:57:32 macallan Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/sparc64/conf/std.sparc64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.209 $"
+#ident		"GENERIC-$Revision: 1.210 $"
 
 maxusers	64
 
@@ -252,6 +252,10 @@ rtc*	at ebus?
 
 ## Timer chip found on 4/300, sun4c, sun4m and (some) sun4u systems.
 timer*	at mainbus0				# sun4c
+
+## found in schizo-based systems
+jbusi2c* 	at mainbus0
+iic* 	at jbusi2c?
 
 # Virtual devices for sun4v systems.
 vrtc0	at vbus?
