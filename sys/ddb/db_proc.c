@@ -1,4 +1,4 @@
-/*	$NetBSD: db_proc.c,v 1.6 2011/10/23 13:30:20 jym Exp $	*/
+/*	$NetBSD: db_proc.c,v 1.7 2018/11/02 08:59:59 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_proc.c,v 1.6 2011/10/23 13:30:20 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_proc.c,v 1.7 2018/11/02 08:59:59 maxv Exp $");
 
 #ifndef _KERNEL
 #include <stdbool.h>
@@ -105,6 +105,18 @@ db_proc_find(pid_t pid)
 		}
 	}
 	return NULL;
+}
+
+static void
+db_read_string(const char *src, size_t len, char *dst)
+{
+	size_t i;
+
+	for (i = 0; i < len; i++) {
+		db_read_bytes((db_addr_t)&src[i], 1, &dst[i]);
+		if (src[i] == '\0')
+			break;
+	}
 }
 
 void
@@ -176,8 +188,9 @@ db_show_all_procs(db_expr_t addr, bool haddr, db_expr_t count,
 		case 'l':
 			 while (lp != NULL) {
 			 	if (l.l_name != NULL) {
-					db_read_bytes((db_addr_t)l.l_name,
+					db_read_string(l.l_name,
 					    MAXCOMLEN, db_nbuf);
+					db_nbuf[MAXCOMLEN] = '\0';
 				} else {
 					strlcpy(db_nbuf, p.p_comm,
 					    sizeof(db_nbuf));
@@ -191,8 +204,9 @@ db_show_all_procs(db_expr_t addr, bool haddr, db_expr_t count,
 				} else
 					cpuno = -1;
 				if (l.l_wchan && l.l_wmesg) {
-					db_read_bytes((db_addr_t)l.l_wmesg,
-					    sizeof(wbuf), (char *)wbuf);
+					db_read_string(l.l_wmesg,
+					    sizeof(wbuf), wbuf);
+					wbuf[MAXCOMLEN] = '\0';
 				} else {
 					wbuf[0] = '\0';
 				}
@@ -212,8 +226,9 @@ db_show_all_procs(db_expr_t addr, bool haddr, db_expr_t count,
 			db_read_bytes((db_addr_t)p.p_pgrp, sizeof(pgrp),
 			    (char *)&pgrp);
 			if (lp != NULL && l.l_wchan && l.l_wmesg) {
-				db_read_bytes((db_addr_t)l.l_wmesg,
-				    sizeof(wbuf), (char *)wbuf);
+				db_read_string(l.l_wmesg,
+				    sizeof(wbuf), wbuf);
+				wbuf[MAXCOMLEN] = '\0';
 			} else {
 				wbuf[0] = '\0';
 			}
@@ -232,8 +247,9 @@ db_show_all_procs(db_expr_t addr, bool haddr, db_expr_t count,
 		case 'w':
 			 while (lp != NULL) {
 				if (l.l_wchan && l.l_wmesg) {
-					db_read_bytes((db_addr_t)l.l_wmesg,
-					    sizeof(wbuf), (char *)wbuf);
+					db_read_string(l.l_wmesg,
+					    sizeof(wbuf), wbuf);
+					wbuf[MAXCOMLEN] = '\0';
 				} else {
 					wbuf[0] = '\0';
 				}
@@ -241,8 +257,10 @@ db_show_all_procs(db_expr_t addr, bool haddr, db_expr_t count,
 				    (l.l_pflag & LP_RUNNING) != 0);
 				db_read_bytes((db_addr_t)&p.p_emul->e_name,
 				    sizeof(ename), (char *)&ename);
-				db_read_bytes((db_addr_t)ename,
-				    sizeof(db_nbuf), db_nbuf);
+
+				db_read_string(ename, sizeof(db_nbuf), db_nbuf);
+				db_nbuf[MAXCOMLEN] = '\0';
+
 				db_printf(
 				    "%c%4d %16s %8s %4d %-12s %-18lx\n",
 				    (run ? '>' : ' '), l.l_lid,
@@ -318,8 +336,8 @@ db_show_proc(db_expr_t addr, bool haddr, db_expr_t count, const char *modif)
 
 		db_printf("%slwp %d", (run ? "> " : "  "), l.l_lid);
 		if (l.l_name != NULL) {
-			db_read_bytes((db_addr_t)l.l_name,
-			    MAXCOMLEN, db_nbuf);
+			db_read_string(l.l_name, MAXCOMLEN, db_nbuf);
+			db_nbuf[MAXCOMLEN] = '\0';
 			db_printf(" [%s]", db_nbuf);
 		}
 		db_printf(" %lx pcb %lx\n", (long)lp, (long)l.l_addr);
@@ -334,8 +352,8 @@ db_show_proc(db_expr_t addr, bool haddr, db_expr_t count, const char *modif)
 		    l.l_stat, l.l_flag, cpuno, l.l_priority);
 
 		if (l.l_wchan && l.l_wmesg) {
-			db_read_bytes((db_addr_t)l.l_wmesg,
-			    sizeof(wbuf), (char *)wbuf);
+			db_read_string(l.l_wmesg, MAXCOMLEN, wbuf);
+			wbuf[MAXCOMLEN] = '\0';
 			db_printf("    wmesg %s wchan %lx\n",
 			    wbuf, (long)l.l_wchan);
 		}
