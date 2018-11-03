@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm53xx_machdep.c,v 1.18 2018/10/18 09:01:53 skrll Exp $	*/
+/*	$NetBSD: bcm53xx_machdep.c,v 1.19 2018/11/03 15:02:32 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #define IDM_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm53xx_machdep.c,v 1.18 2018/10/18 09:01:53 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm53xx_machdep.c,v 1.19 2018/11/03 15:02:32 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_console.h"
@@ -111,15 +111,6 @@ int comcnmode = CONMODE | CLOCAL;
 #include <sys/kgdb.h>
 #endif
 
-static dev_type_cnputc(earlyconsputc);
-static dev_type_cngetc(earlyconsgetc);
-
-static struct consdev earlycons = {
-	.cn_putc = earlyconsputc,
-	.cn_getc = earlyconsgetc,
-	.cn_pollc = nullcnpollc,
-};
-
 static void
 earlyconsputc(dev_t dev, int c)
 {
@@ -129,8 +120,14 @@ earlyconsputc(dev_t dev, int c)
 static int
 earlyconsgetc(dev_t dev)
 {
-	return 0;	/* XXX */
+	return 0;
 }
+
+static struct consdev earlycons = {
+	.cn_putc = earlyconsputc,
+	.cn_getc = earlyconsgetc,
+	.cn_pollc = nullcnpollc,
+};
 
 /*
  * Static device mappings. These peripheral registers are mapped at

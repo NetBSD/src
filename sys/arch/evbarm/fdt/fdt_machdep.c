@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_machdep.c,v 1.53 2018/11/01 00:44:06 jmcneill Exp $ */
+/* $NetBSD: fdt_machdep.c,v 1.54 2018/11/03 15:02:32 skrll Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.53 2018/11/01 00:44:06 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.54 2018/11/03 15:02:32 skrll Exp $");
 
 #include "opt_machdep.h"
 #include "opt_bootconfig.h"
@@ -129,15 +129,6 @@ static void fdt_cpu_rootconf(void);
 static void fdt_reset(void);
 static void fdt_powerdown(void);
 
-static dev_type_cnputc(earlyconsputc);
-static dev_type_cngetc(earlyconsgetc);
-
-static struct consdev earlycons = {
-	.cn_putc = earlyconsputc,
-	.cn_getc = earlyconsgetc,
-	.cn_pollc = nullcnpollc,
-};
-
 static void
 earlyconsputc(dev_t dev, int c)
 {
@@ -147,8 +138,14 @@ earlyconsputc(dev_t dev, int c)
 static int
 earlyconsgetc(dev_t dev)
 {
-	return 0;	/* XXX */
+	return 0;
 }
+
+static struct consdev earlycons = {
+	.cn_putc = earlyconsputc,
+	.cn_getc = earlyconsgetc,
+	.cn_pollc = nullcnpollc,
+};
 
 #ifdef VERBOSE_INIT_ARM
 #define VPRINTF(...)	printf(__VA_ARGS__)
