@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_lockdebug.c,v 1.68 2018/10/25 09:30:45 mrg Exp $	*/
+/*	$NetBSD: subr_lockdebug.c,v 1.69 2018/11/03 15:20:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.68 2018/10/25 09:30:45 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.69 2018/11/03 15:20:03 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -820,7 +820,8 @@ lockdebug_abort1(const char *func, size_t line, lockdebug_t *ld, int s,
 #include <ddb/db_interface.h>
 
 void
-lockdebug_lock_print(void *addr, void (*pr)(const char *, ...))
+lockdebug_lock_print(void *addr,
+    void (*pr)(const char *, ...) __printflike(1, 2))
 {
 #ifdef LOCKDEBUG
 	lockdebug_t *ld;
@@ -845,7 +846,27 @@ lockdebug_lock_print(void *addr, void (*pr)(const char *, ...))
 
 #ifdef LOCKDEBUG
 static void
-lockdebug_show_all_locks_lwp(void (*pr)(const char *, ...), bool show_trace)
+lockdebug_show_one(lockdebug_t *ld, int i,
+    void (*pr)(const char *, ...) __printflike(1, 2))
+{
+	const char *sym;
+
+	ksyms_getname(NULL, &sym, (vaddr_t)ld->ld_initaddr,
+	    KSYMS_CLOSEST|KSYMS_PROC|KSYMS_ANY);
+	(*pr)("Lock %d (initialized at %s)\n", i++, sym);
+	lockdebug_dump(ld, pr);
+}
+
+static void
+lockdebug_show_trace(const void *ptr,
+    void (*pr)(const char *, ...) __printflike(1, 2))
+{
+    db_stack_trace_print((db_expr_t)(intptr_t)ptr, true, 32, "a", pr);
+}
+
+static void
+lockdebug_show_all_locks_lwp(void (*pr)(const char *, ...) __printflike(1, 2),
+    bool show_trace)
 {
 	struct proc *p;
 
@@ -853,37 +874,28 @@ lockdebug_show_all_locks_lwp(void (*pr)(const char *, ...), bool show_trace)
 		struct lwp *l;
 		LIST_FOREACH(l, &p->p_lwps, l_sibling) {
 			lockdebug_t *ld;
-			const char *sym;
 			int i = 0;
 			if (TAILQ_EMPTY(&l->l_ld_locks))
 				continue;
 			(*pr)("Locks held by an LWP (%s):\n",
 			    l->l_name ? l->l_name : p->p_comm);
 			TAILQ_FOREACH(ld, &l->l_ld_locks, ld_chain) {
-				ksyms_getname(NULL, &sym,
-				    (vaddr_t)ld->ld_initaddr,
-				    KSYMS_CLOSEST|KSYMS_PROC|KSYMS_ANY);
-				(*pr)("Lock %d (initialized at %s)\n", i++, sym);
-				lockdebug_dump(ld, pr);
+				lockdebug_show_one(ld, i++, pr);
 			}
-			if (show_trace) {
-				db_stack_trace_print((db_expr_t)(intptr_t)l,
-				    true,
-				    32 /* Limit just in case */,
-				    "a", pr);
-			}
+			if (show_trace)
+				lockdebug_show_trace(l, pr);
 			(*pr)("\n");
 		}
 	}
 }
 
 static void
-lockdebug_show_all_locks_cpu(void (*pr)(const char *, ...), bool show_trace)
+lockdebug_show_all_locks_cpu(void (*pr)(const char *, ...) __printflike(1, 2),
+    bool show_trace)
 {
 	lockdebug_t *ld;
 	CPU_INFO_ITERATOR cii;
 	struct cpu_info *ci;
-	const char *sym;
 
 	for (CPU_INFO_FOREACH(cii, ci)) {
 		int i = 0;
@@ -891,22 +903,13 @@ lockdebug_show_all_locks_cpu(void (*pr)(const char *, ...), bool show_trace)
 			continue;
 		(*pr)("Locks held on CPU %u:\n", ci->ci_index);
 		TAILQ_FOREACH(ld, &ci->ci_data.cpu_ld_locks, ld_chain) {
-			ksyms_getname(NULL, &sym,
-			    (vaddr_t)ld->ld_initaddr,
-			    KSYMS_CLOSEST|KSYMS_PROC|KSYMS_ANY);
-			(*pr)("Lock %d (initialized at %s)\n", i++, sym);
-			lockdebug_dump(ld, pr);
-			if (show_trace) {
-				db_stack_trace_print(
+			lockdebug_show_one(ld, i++, pr);
+			if (show_trace)
 #ifdef MULTIPROCESSOR
-				    (db_expr_t)(intptr_t)ci->ci_curlwp,
+				lockdebug_show_trace(ci->ci_curlwp, pr);
 #else
-				    (db_expr_t)(intptr_t)curlwp,
+				lockdebug_show_trace(ci->ci_curlwp, pr);
 #endif
-				    true,
-				    32 /* Limit just in case */,
-				    "a", pr);
-			}
 			(*pr)("\n");
 		}
 	}
@@ -914,7 +917,8 @@ lockdebug_show_all_locks_cpu(void (*pr)(const char *, ...), bool show_trace)
 #endif	/* LOCKDEBUG */
 
 void
-lockdebug_show_all_locks(void (*pr)(const char *, ...), const char *modif)
+lockdebug_show_all_locks(void (*pr)(const char *, ...) __printflike(1, 2),
+    const char *modif)
 {
 #ifdef LOCKDEBUG
 	bool show_trace = false;
@@ -934,7 +938,7 @@ lockdebug_show_all_locks(void (*pr)(const char *, ...), const char *modif)
 }
 
 void
-lockdebug_show_lockstats(void (*pr)(const char *, ...))
+lockdebug_show_lockstats(void (*pr)(const char *, ...) __printflike(1, 2))
 {
 #ifdef LOCKDEBUG
 	lockdebug_t *ld;
