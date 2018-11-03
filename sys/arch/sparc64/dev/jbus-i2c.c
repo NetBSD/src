@@ -1,4 +1,4 @@
-/*	$NetBSD: jbus-i2c.c,v 1.2 2018/10/26 01:57:59 macallan Exp $	*/
+/*	$NetBSD: jbus-i2c.c,v 1.3 2018/11/03 14:56:36 martin Exp $	*/
 
 /*
  * Copyright (c) 2018 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: jbus-i2c.c,v 1.2 2018/10/26 01:57:59 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: jbus-i2c.c,v 1.3 2018/11/03 14:56:36 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -116,7 +116,7 @@ jbusi2c_attach(device_t parent, device_t self, void *aux)
 	struct jbusi2c_softc *sc = device_private(self);
 	struct mainbus_attach_args *ma = aux;
 
-	aprint_normal(": addr %lx\n", ma->ma_reg[0].ur_paddr);
+	aprint_normal(": addr %" PRIx64 "\n", ma->ma_reg[0].ur_paddr);
 
 	sc->sc_dev = self;
 	sc->sc_node = ma->ma_node;
