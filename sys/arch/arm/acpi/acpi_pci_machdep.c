@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_pci_machdep.c,v 1.6 2018/11/02 15:01:18 jmcneill Exp $ */
+/* $NetBSD: acpi_pci_machdep.c,v 1.7 2018/11/03 12:03:05 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_pci_machdep.c,v 1.6 2018/11/02 15:01:18 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_pci_machdep.c,v 1.7 2018/11/03 12:03:05 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -60,6 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_pci_machdep.c,v 1.6 2018/11/02 15:01:18 jmcneil
 #include <arm/pci/pci_msi_machdep.h>
 
 struct acpi_pci_prt {
+	u_int				prt_segment;
 	u_int				prt_bus;
 	ACPI_HANDLE			prt_handle;
 	TAILQ_ENTRY(acpi_pci_prt)	prt_list;
@@ -192,6 +193,7 @@ acpi_pci_md_attach_hook(device_t parent, device_t self,
 	if (handle != NULL) {
 		prt = kmem_alloc(sizeof(*prt), KM_SLEEP);
 		prt->prt_bus = pba->pba_bus;
+		prt->prt_segment = ap->ap_seg;
 		prt->prt_handle = handle;
 		TAILQ_INSERT_TAIL(&acpi_pci_irq_routes, prt, prt_list);
 	}
@@ -274,13 +276,16 @@ acpi_pci_md_conf_interrupt(void *v, int bus, int dev, int ipin, int sqiz, int *i
 }
 
 static struct acpi_pci_prt *
-acpi_pci_md_intr_find_prt(u_int bus)
+acpi_pci_md_intr_find_prt(pci_chipset_tag_t pc, u_int bus)
 {
 	struct acpi_pci_prt *prt, *prtp;
+	u_int segment;
+
+	segment = pci_get_segment(pc);
 
 	prt = NULL;
 	TAILQ_FOREACH(prtp, &acpi_pci_irq_routes, prt_list)
-		if (prtp->prt_bus == bus) {
+		if (prtp->prt_segment == segment && prtp->prt_bus == bus) {
 			prt = prtp;
 			break;
 		}
@@ -301,7 +306,7 @@ acpi_pci_md_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ih)
 	if (pa->pa_intrpin == PCI_INTERRUPT_PIN_NONE)
 		return EINVAL;
 
-	prt = acpi_pci_md_intr_find_prt(pa->pa_bus);
+	prt = acpi_pci_md_intr_find_prt(pa->pa_pc, pa->pa_bus);
 	if (prt == NULL)
 		return ENXIO;
 
