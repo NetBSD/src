@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.pl,v 1.10 2018/09/11 08:05:18 martin Exp $	*/
+/*	$NetBSD: msg.mi.pl,v 1.11 2018/11/03 18:30:00 martin Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.mi.pl,v 1.36 2004/04/17 18:55:35 atatat Exp       */
 
@@ -35,10 +35,6 @@
  */
 
 /* MI Message catalog -- polish, machine independent */
-
-message usage
-{uzycie: sysinst [-D] [-f plik_definicja] [-r wersja] [-C bg:fg]
-}
 
 /*
  * We can not use non ascii characters in this message - it is displayed
