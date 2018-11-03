@@ -1,4 +1,4 @@
-/*	$NetBSD: pdir.h,v 1.5 2018/08/12 12:42:54 maxv Exp $	*/
+/*	$NetBSD: pdir.h,v 1.6 2018/11/03 08:27:16 maxv Exp $	*/
 
 /*
  * Copyright (c) 2017 The NetBSD Foundation, Inc. All rights reserved.
@@ -48,9 +48,6 @@
 #define NKL3_KIMG_ENTRIES	1
 #define NKL2_KIMG_ENTRIES	48
 
-/*
- * Now we define various constants for playing with virtual addresses.
- */
 #define L1_SHIFT	12
 #define L2_SHIFT	21
 #define L3_SHIFT	30
@@ -70,21 +67,10 @@
 #define L2_FRAME	(L3_FRAME|L2_MASK)
 #define L1_FRAME	(L2_FRAME|L1_MASK)
 
-/*
- * Mask to get rid of the sign-extended part of addresses.
- */
 #define VA_SIGN_MASK		0xffff000000000000
 #define VA_SIGN_NEG(va)		((va) | VA_SIGN_MASK)
-/* XXXfvdl this one's not right */
-#define VA_SIGN_POS(va)		((va) & ~VA_SIGN_MASK)
 
-/*
- * pl*_i: generate index into pde/pte arrays in virtual space
- *
- * pl_i(va, X) == plX_i(va) <= pl_i_roundup(va, X)
- */
-#define pl1_i(VA)	(((VA_SIGN_POS(VA)) & L1_FRAME) >> L1_SHIFT)
-#define pl2_i(VA)	(((VA_SIGN_POS(VA)) & L2_FRAME) >> L2_SHIFT)
-#define pl3_i(VA)	(((VA_SIGN_POS(VA)) & L3_FRAME) >> L3_SHIFT)
-#define pl4_i(VA)	(((VA_SIGN_POS(VA)) & L4_FRAME) >> L4_SHIFT)
-
+#define pl1_i(va)	(((va) & L1_FRAME) >> L1_SHIFT)
+#define pl2_i(va)	(((va) & L2_FRAME) >> L2_SHIFT)
+#define pl3_i(va)	(((va) & L3_FRAME) >> L3_SHIFT)
+#define pl4_i(va)	(((va) & L4_FRAME) >> L4_SHIFT)
