@@ -1,4 +1,4 @@
-.\"	$NetBSD: atactl.8,v 1.25 2018/10/31 20:00:56 mrg Exp $
+.\"	$NetBSD: atactl.8,v 1.26 2018/11/03 10:51:14 wiz Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -84,7 +84,7 @@ A value of 0 will disable the Standby timer.
 .It Cm checkpower
 Will print out if the device is in Active, Idle, or Standby power
 management mode.
-.It Cm apm Bq Ar disable | set #
+.It Cm apm Oo Ar disable | set # Oc
 Controls the Advanced Power Management feature of the specified device.
 Advanced Power Management is an optional feature used to specify a power
 management level to balance between device performance and power consumption.
@@ -103,7 +103,7 @@ and other from 127 to 253.
 Per the specification, values of 127 and higher do not permit the device
 to spin down to save power.
 .El
-.It Cm smart Bq Ar enable | disable | status [ vendor ] | offline # | error-log | selftest-log
+.It Cm smart Oo Ar enable | disable | status Oo vendor Oc | offline # | error-log | selftest-log Oc
 Controls SMART feature set of the specified device.
 SMART stands for Self-Monitoring, Analysis, and Reporting Technology.
 It provides an early warning system by comparing subtle operation
@@ -119,7 +119,7 @@ be preserved by the device across power cycles.
 .It Ar disable
 Disables access to SMART capabilities within the device.
 Attribute values will be saved, and will no longer be monitored.
-.It Ar status Bq Ar vendor
+.It Ar status Op Ar vendor
 Reports whether SMART is supported by the device, and whether SMART is
 enabled on the device (can only be determined on ATA6 or better devices).
 If SMART is enabled, then a table of attribute information is printed.
@@ -169,7 +169,7 @@ Prints the error log.
 .It Ar selftest-log
 Prints the self-test log.
 .El
-.It Cm security Bq Ar status | freeze | setpass | unlock | disable | erase
+.It Cm security Oo Ar status | freeze | setpass | unlock | disable | erase Oc
 Controls
 .Dq security
 (password protection) features of modern ATA drives.
@@ -188,13 +188,13 @@ command early in the boot process.
 displays the drive's security status
 .It Ar freeze
 freezes the drive's security status
-.It Ar setpass Bq user | master
+.It Ar setpass Oo user | master Oc
 sets the drive's user or master password
-.It Ar unlock Bq user | master
+.It Ar unlock Oo user | master Oc
 unlocks a password-protected drive
-.It Ar disable Bq user | master
+.It Ar disable Oo user | master Oc
 disables password protection
-.It Ar erase Bq user | master
+.It Ar erase Oo user | master Oc
 erases the device and clears security state, using enhanced erasure if
 the drive supports it; may take a long time to run
 .El
@@ -264,12 +264,15 @@ The
 command first appeared in
 .Nx 1.4 .
 .Sh AUTHORS
+.An -nosplit
 The
 .Nm
-command was written by Ken Hornstein.
+command was written by
+.An Ken Hornstein .
 It was based heavily on the
 .Xr scsictl 8
-command written by Jason R. Thorpe.
+command written by
+.An Jason R. Thorpe .
 .Sh BUGS
 The output from the
 .Cm identify
@@ -285,4 +288,5 @@ locked.
 The
 .Cm smart status
 command is currently unable to automatically determine the vendor
-attribute name table to use, and must be specified manually.
+attribute name table to use.
+The vendor must be specified manually.
