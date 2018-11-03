@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.1,v 1.1.2.46 2018/11/02 15:36:21 martin Exp $
+# $NetBSD: CHANGES-8.1,v 1.1.2.47 2018/11/03 17:20:35 martin Exp $
 
 A complete list of changes from the NetBSD 8.0 release to the NetBSD 8.1
 release:
@@ -1570,4 +1570,9 @@ sys/arch/evbarm/conf/RPI_INSTALL		1.10
 
 	Bump image size to 28000k, adjust ramdisk size accordingly.
 
+external/bsd/nsd/include/config.h		1.4
+
+	Disable {send,recv}mmsg until we make our syscalls not have "sticky"
+	errors.
+	[christos, ticket #1077]
 
