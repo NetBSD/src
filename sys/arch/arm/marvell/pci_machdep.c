@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.12 2017/04/19 12:26:00 jmcneill Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.13 2018/11/03 17:26:41 jmcneill Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.12 2017/04/19 12:26:00 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.13 2018/11/03 17:26:41 jmcneill Exp $");
 
 #include "opt_mvsoc.h"
 #include "gtpci.h"
@@ -82,6 +82,7 @@ struct arm32_pci_chipset arm32_gtpci_chipset = {
 	gtpci_bus_maxdevs,
 	gtpci_make_tag,
 	gtpci_decompose_tag,
+	NULL,	/* get_segment */
 #if NGTPCI_MBUS > 0
 	gtpci_mbus_conf_read,		/* XXXX: always this functions */
 	gtpci_mbus_conf_write,
@@ -114,6 +115,7 @@ struct arm32_pci_chipset arm32_mvpex0_chipset = {
 	mvpex_bus_maxdevs,
 	mvpex_make_tag,
 	mvpex_decompose_tag,
+	NULL,	/* get_segment */
 #if NMVPEX_MBUS > 0
 	mvpex_mbus_conf_read,		/* XXXX: always this functions */
 #else
@@ -138,6 +140,7 @@ struct arm32_pci_chipset arm32_mvpex1_chipset = {
 	mvpex_bus_maxdevs,
 	mvpex_make_tag,
 	mvpex_decompose_tag,
+	NULL,	/* get_segment */
 #if NMVPEX_MBUS > 0
 	mvpex_mbus_conf_read,		/* XXXX: always this functions */
 #else
@@ -162,6 +165,7 @@ struct arm32_pci_chipset arm32_mvpex2_chipset = {
 	mvpex_bus_maxdevs,
 	mvpex_make_tag,
 	mvpex_decompose_tag,
+	NULL,	/* get_segment */
 #if NMVPEX_MBUS > 0
 	mvpex_mbus_conf_read,		/* XXXX: always this functions */
 #else
@@ -186,6 +190,7 @@ struct arm32_pci_chipset arm32_mvpex3_chipset = {
 	mvpex_bus_maxdevs,
 	mvpex_make_tag,
 	mvpex_decompose_tag,
+	NULL,	/* get_segment */
 #if NMVPEX_MBUS > 0
 	mvpex_mbus_conf_read,		/* XXXX: always this functions */
 #else
@@ -210,6 +215,7 @@ struct arm32_pci_chipset arm32_mvpex4_chipset = {
 	mvpex_bus_maxdevs,
 	mvpex_make_tag,
 	mvpex_decompose_tag,
+	NULL,	/* get_segment */
 #if NMVPEX_MBUS > 0
 	mvpex_mbus_conf_read,		/* XXXX: always this functions */
 #else
@@ -234,6 +240,7 @@ struct arm32_pci_chipset arm32_mvpex5_chipset = {
 	mvpex_bus_maxdevs,
 	mvpex_make_tag,
 	mvpex_decompose_tag,
+	NULL,	/* get_segment */
 #if NMVPEX_MBUS > 0
 	mvpex_mbus_conf_read,		/* XXXX: always this functions */
 #else
@@ -258,6 +265,7 @@ struct arm32_pci_chipset arm32_mvpex6_chipset = {
 	mvpex_bus_maxdevs,
 	mvpex_make_tag,
 	mvpex_decompose_tag,
+	NULL,	/* get_segment */
 #if NMVPEX_MBUS > 0
 	mvpex_mbus_conf_read,		/* XXXX: always this functions */
 #else
