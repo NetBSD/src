@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.595 2018/11/02 08:26:32 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.596 2018/11/03 21:39:10 christos Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.595 2018/11/02 08:26:32 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.596 2018/11/03 21:39:10 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -14430,11 +14430,10 @@ wm_k1_workaround_lpt_lp(struct wm_softc *sc, bool link)
 	uint32_t status = CSR_READ(sc, WMREG_STATUS);
 	uint32_t speed = __SHIFTOUT(status, STATUS_SPEED);
 	uint16_t phyreg;
-	int rv;
 
 	if (link && (speed == STATUS_SPEED_1000)) {
 		sc->phy.acquire(sc);
-		rv = wm_kmrn_readreg_locked(sc, KUMCTRLSTA_OFFSET_K1_CONFIG,
+		int rv = wm_kmrn_readreg_locked(sc, KUMCTRLSTA_OFFSET_K1_CONFIG,
 		    &phyreg);
 		if (rv != 0)
 			goto release;
@@ -14449,44 +14448,40 @@ wm_k1_workaround_lpt_lp(struct wm_softc *sc, bool link)
 		    &phyreg);
 release:
 		sc->phy.release(sc);
-	} else {
-		struct mii_softc *child;
-
-		fextnvm6 &= ~FEXTNVM6_REQ_PLL_CLK;
-
-		child = LIST_FIRST(&sc->sc_mii.mii_phys);
-		if (((child != NULL) && (child->mii_mpd_rev > 5))
-		    || !link
-		    || ((speed == STATUS_SPEED_100) && (status & STATUS_FD)))
-			goto update_fextnvm6;
-
-		phyreg = wm_gmii_hv_readreg(sc->sc_dev, 2, I217_INBAND_CTRL);
-
-		/* Clear link status transmit timeout */
-		phyreg &= ~I217_INBAND_CTRL_LINK_STAT_TX_TIMEOUT_MASK;
-		if (speed == STATUS_SPEED_100) {
-			/* Set inband Tx timeout to 5x10us for 100Half */
-			phyreg |=
-			    5 << I217_INBAND_CTRL_LINK_STAT_TX_TIMEOUT_SHIFT;
-
-			/* Do not extend the K1 entry latency for 100Half */
-			fextnvm6 &= ~FEXTNVM6_ENABLE_K1_ENTRY_CONDITION;
-		} else {
-			/* Set inband Tx timeout to 50x10us for 10Full/Half */
-			phyreg |=
-			    50 << I217_INBAND_CTRL_LINK_STAT_TX_TIMEOUT_SHIFT;
-
-			/* Extend the K1 entry latency for 10 Mbps */
-			fextnvm6 |= FEXTNVM6_ENABLE_K1_ENTRY_CONDITION;
-		}
-
-		wm_gmii_hv_writereg(sc->sc_dev, 2, I217_INBAND_CTRL, phyreg);
-
-update_fextnvm6:
-		CSR_WRITE(sc, WMREG_FEXTNVM6, fextnvm6);
+		return rv;
 	}
 
-	return rv;
+	fextnvm6 &= ~FEXTNVM6_REQ_PLL_CLK;
+
+	struct mii_softc *child = LIST_FIRST(&sc->sc_mii.mii_phys);
+	if (((child != NULL) && (child->mii_mpd_rev > 5))
+	    || !link
+	    || ((speed == STATUS_SPEED_100) && (status & STATUS_FD)))
+		goto update_fextnvm6;
+
+	phyreg = wm_gmii_hv_readreg(sc->sc_dev, 2, I217_INBAND_CTRL);
+
+	/* Clear link status transmit timeout */
+	phyreg &= ~I217_INBAND_CTRL_LINK_STAT_TX_TIMEOUT_MASK;
+	if (speed == STATUS_SPEED_100) {
+		/* Set inband Tx timeout to 5x10us for 100Half */
+		phyreg |= 5 << I217_INBAND_CTRL_LINK_STAT_TX_TIMEOUT_SHIFT;
+
+		/* Do not extend the K1 entry latency for 100Half */
+		fextnvm6 &= ~FEXTNVM6_ENABLE_K1_ENTRY_CONDITION;
+	} else {
+		/* Set inband Tx timeout to 50x10us for 10Full/Half */
+		phyreg |= 50 << I217_INBAND_CTRL_LINK_STAT_TX_TIMEOUT_SHIFT;
+
+		/* Extend the K1 entry latency for 10 Mbps */
+		fextnvm6 |= FEXTNVM6_ENABLE_K1_ENTRY_CONDITION;
+	}
+
+	wm_gmii_hv_writereg(sc->sc_dev, 2, I217_INBAND_CTRL, phyreg);
+
+update_fextnvm6:
+	CSR_WRITE(sc, WMREG_FEXTNVM6, fextnvm6);
+	return 0;
 }
 	
 static int
