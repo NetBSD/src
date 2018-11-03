@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.es,v 1.8 2018/09/11 08:05:18 martin Exp $	*/
+/*	$NetBSD: msg.mi.es,v 1.9 2018/11/03 18:30:00 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -33,10 +33,6 @@
  */
 
 /* MI Message catalog -- spanish, machine independent */
-
-message usage
-{uso: sysinst [-D] [-f fichero_definición] [-r versión] [-C bg:fg]
-}
 
 /*
  * We can not use non ascii characters in this message - it is displayed
