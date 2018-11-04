@@ -1,4 +1,4 @@
-.\"	$NetBSD: syslogd.8,v 1.56 2018/11/04 20:23:08 roy Exp $
+.\"	$NetBSD: syslogd.8,v 1.57 2018/11/04 20:45:21 roy Exp $
 .\"
 .\" Copyright (c) 1983, 1986, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -37,7 +37,7 @@
 .Nd log systems messages
 .Sh SYNOPSIS
 .Nm
-.Op Fl dnrSsTUv
+.Op Fl dnrSsTUvX
 .Op Fl b Ar bind_address
 .Op Fl B Ar buffer_length
 .Op Fl f Ar config_file
@@ -65,6 +65,9 @@ which corresponds to it is used.
 Sets the receiving buffer length.
 The default is 16384 bytes.
 If syslogd reports buffer overflow, this needs increasing.
+If you don't care about it being reported, see the
+.Fl X
+option.
 .It Fl d
 Enable debugging to the standard output,
 and do not disassociate from the controlling terminal.
@@ -154,6 +157,8 @@ If specified once, the numeric facility and priority are logged with
 each locally-written message.
 If specified more than once, the names of the facility and priority are
 logged with each locally-written message.
+.It Fl X
+Disable logging of buffer overflow.
 .El
 .Pp
 .Nm
