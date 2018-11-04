@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.194 2018/09/23 09:20:57 maxv Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.195 2018/11/04 12:48:01 maxv Exp $
 #
 # Copyright (c) 2003,2007,2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -277,6 +277,7 @@
 #	stic*	PixelStamp interface chip
 #	sysmon	System Monitoring hardware
 #	tap*	virtual Ethernet device
+#	tprof   task profiler
 #	tun*	network tunnel driver
 #	twa	3ware Apache control interface
 #	twe	3ware Escalade control interface
@@ -1238,6 +1239,10 @@ dk[0-9]*)
 	name=dk; unit=${i#dk}; blk=%dk_blk%; chr=%dk_chr%
 	mkdev r$name$unit c $chr $unit 0640 $g_operator
 	mkdev $name$unit b $blk  $unit 0640 $g_operator
+	;;
+
+tprof)
+	mkdev tprof c %tprof_chr% 0
 	;;
 
 ttyCY[0-9]*)
