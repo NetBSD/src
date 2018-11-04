@@ -55,6 +55,7 @@ along with GCC; see the file COPYING3.  If not see
 #include "params.h"
 #include "tree-ssa-address.h"
 #include "tree-affine.h"
+#include "tree-eh.h"
 #include "builtins.h"
 
 /* Information about a strength reduction candidate.  Each statement
@@ -257,6 +258,10 @@ struct slsr_cand_d
      commutativity).  So we can have multiple "interpretations"
      of a statement.  */
   cand_idx next_interp;
+
+  /* Index of the first candidate record in a chain for the same
+     statement.  */
+  cand_idx first_interp;
 
   /* Index of the basis statement S0, if any, in the candidate vector.  */
   cand_idx basis;
@@ -469,7 +474,8 @@ find_phi_def (tree base)
 
   c = base_cand_from_table (base);
 
-  if (!c || c->kind != CAND_PHI)
+  if (!c || c->kind != CAND_PHI
+      || SSA_NAME_OCCURS_IN_ABNORMAL_PHI (gimple_phi_result (c->cand_stmt)))
     return 0;
 
   return c->cand_num;
@@ -505,6 +511,11 @@ find_basis_for_base_expr (slsr_cand_t c, tree base_expr)
 	  || !dominated_by_p (CDI_DOMINATORS,
 			      gimple_bb (c->cand_stmt),
 			      gimple_bb (one_basis->cand_stmt)))
+	continue;
+
+      tree lhs = gimple_assign_lhs (one_basis->cand_stmt);
+      if (lhs && TREE_CODE (lhs) == SSA_NAME
+	  && SSA_NAME_OCCURS_IN_ABNORMAL_PHI (lhs))
 	continue;
 
       if (!basis || basis->cand_num < one_basis->cand_num)
@@ -627,6 +638,7 @@ alloc_cand_and_find_basis (enum cand_kind kind, gimple *gs, tree base,
   c->kind = kind;
   c->cand_num = cand_vec.length () + 1;
   c->next_interp = 0;
+  c->first_interp = c->cand_num;
   c->dependent = 0;
   c->sibling = 0;
   c->def_phi = kind == CAND_MULT ? find_phi_def (base) : 0;
@@ -1192,6 +1204,7 @@ slsr_process_mul (gimple *gs, tree rhs1, tree rhs2, bool speed)
 	 is the stride and RHS2 is the base expression.  */
       c2 = create_mul_ssa_cand (gs, rhs2, rhs1, speed);
       c->next_interp = c2->cand_num;
+      c2->first_interp = c->cand_num;
     }
   else
     {
@@ -1419,7 +1432,10 @@ slsr_process_add (gimple *gs, tree rhs1, tree rhs2, bool speed)
 	{
 	  c2 = create_add_ssa_cand (gs, rhs2, rhs1, false, speed);
 	  if (c)
-	    c->next_interp = c2->cand_num;
+	    {
+	      c->next_interp = c2->cand_num;
+	      c2->first_interp = c->cand_num;
+	    }
 	  else
 	    add_cand_for_stmt (gs, c2);
 	}
@@ -1545,6 +1561,8 @@ slsr_process_cast (gimple *gs, tree rhs1, bool speed)
 
   if (base_cand && base_cand->kind != CAND_PHI)
     {
+      slsr_cand_t first_cand = NULL;
+
       while (base_cand)
 	{
 	  /* Propagate all data from the base candidate except the type,
@@ -1558,6 +1576,12 @@ slsr_process_cast (gimple *gs, tree rhs1, bool speed)
 					 base_cand->base_expr,
 					 base_cand->index, base_cand->stride,
 					 ctype, savings);
+	  if (!first_cand)
+	    first_cand = c;
+
+	  if (first_cand != c)
+	    c->first_interp = first_cand->cand_num;
+
 	  if (base_cand->next_interp)
 	    base_cand = lookup_cand (base_cand->next_interp);
 	  else
@@ -1580,6 +1604,7 @@ slsr_process_cast (gimple *gs, tree rhs1, bool speed)
       c2 = alloc_cand_and_find_basis (CAND_MULT, gs, rhs1,
 				      0, integer_one_node, ctype, 0);
       c->next_interp = c2->cand_num;
+      c2->first_interp = c->cand_num;
     }
 
   /* Add the first (or only) interpretation to the statement-candidate
@@ -1604,6 +1629,8 @@ slsr_process_copy (gimple *gs, tree rhs1, bool speed)
 
   if (base_cand && base_cand->kind != CAND_PHI)
     {
+      slsr_cand_t first_cand = NULL;
+
       while (base_cand)
 	{
 	  /* Propagate all data from the base candidate.  */
@@ -1615,6 +1642,12 @@ slsr_process_copy (gimple *gs, tree rhs1, bool speed)
 					 base_cand->base_expr,
 					 base_cand->index, base_cand->stride,
 					 base_cand->cand_type, savings);
+	  if (!first_cand)
+	    first_cand = c;
+
+	  if (first_cand != c)
+	    c->first_interp = first_cand->cand_num;
+
 	  if (base_cand->next_interp)
 	    base_cand = lookup_cand (base_cand->next_interp);
 	  else
@@ -1637,6 +1670,7 @@ slsr_process_copy (gimple *gs, tree rhs1, bool speed)
       c2 = alloc_cand_and_find_basis (CAND_MULT, gs, rhs1,
 				      0, integer_one_node, TREE_TYPE (rhs1), 0);
       c->next_interp = c2->cand_num;
+      c2->first_interp = c->cand_num;
     }
 
   /* Add the first (or only) interpretation to the statement-candidate
@@ -1667,6 +1701,9 @@ find_candidates_dom_walker::before_dom_children (basic_block bb)
        gsi_next (&gsi))
     {
       gimple *gs = gsi_stmt (gsi);
+
+      if (stmt_could_throw_p (gs))
+	continue;
 
       if (gimple_vuse (gs) && gimple_assign_single_p (gs))
 	slsr_process_ref (gs);
@@ -1790,8 +1827,9 @@ dump_candidate (slsr_cand_t c)
   print_generic_expr (dump_file, c->cand_type, 0);
   fprintf (dump_file, "\n     basis: %d  dependent: %d  sibling: %d\n",
 	   c->basis, c->dependent, c->sibling);
-  fprintf (dump_file, "     next-interp: %d  dead-savings: %d\n",
-	   c->next_interp, c->dead_savings);
+  fprintf (dump_file,
+	   "     next-interp: %d  first-interp: %d  dead-savings: %d\n",
+	   c->next_interp, c->first_interp, c->dead_savings);
   if (c->def_phi)
     fprintf (dump_file, "     phi:  %d\n", c->def_phi);
   fputs ("\n", dump_file);
@@ -2005,91 +2043,102 @@ replace_mult_candidate (slsr_cand_t c, tree basis_name, widest_int bump)
   tree target_type = TREE_TYPE (gimple_assign_lhs (c->cand_stmt));
   enum tree_code cand_code = gimple_assign_rhs_code (c->cand_stmt);
 
-  /* It is highly unlikely, but possible, that the resulting
-     bump doesn't fit in a HWI.  Abandon the replacement
-     in this case.  This does not affect siblings or dependents
-     of C.  Restriction to signed HWI is conservative for unsigned
-     types but allows for safe negation without twisted logic.  */
-  if (wi::fits_shwi_p (bump)
-      && bump.to_shwi () != HOST_WIDE_INT_MIN
-      /* It is not useful to replace casts, copies, or adds of
-	 an SSA name and a constant.  */
-      && cand_code != MODIFY_EXPR
-      && !CONVERT_EXPR_CODE_P (cand_code)
-      && cand_code != PLUS_EXPR
-      && cand_code != POINTER_PLUS_EXPR
-      && cand_code != MINUS_EXPR)
+  /* It is not useful to replace casts, copies, negates, or adds of
+     an SSA name and a constant.  */
+  if (cand_code == MODIFY_EXPR
+      || CONVERT_EXPR_CODE_P (cand_code)
+      || cand_code == PLUS_EXPR
+      || cand_code == POINTER_PLUS_EXPR
+      || cand_code == MINUS_EXPR
+      || cand_code == NEGATE_EXPR)
+    return;
+
+  enum tree_code code = PLUS_EXPR;
+  tree bump_tree;
+  gimple *stmt_to_print = NULL;
+
+  /* If the basis name and the candidate's LHS have incompatible
+     types, introduce a cast.  */
+  if (!useless_type_conversion_p (target_type, TREE_TYPE (basis_name)))
+    basis_name = introduce_cast_before_cand (c, target_type, basis_name);
+  if (wi::neg_p (bump))
     {
-      enum tree_code code = PLUS_EXPR;
-      tree bump_tree;
-      gimple *stmt_to_print = NULL;
+      code = MINUS_EXPR;
+      bump = -bump;
+    }
 
-      /* If the basis name and the candidate's LHS have incompatible
-	 types, introduce a cast.  */
-      if (!useless_type_conversion_p (target_type, TREE_TYPE (basis_name)))
-	basis_name = introduce_cast_before_cand (c, target_type, basis_name);
-      if (wi::neg_p (bump))
+ /* It is possible that the resulting bump doesn't fit in target_type.
+    Abandon the replacement in this case.  This does not affect
+    siblings or dependents of C.  */
+  if (bump != wi::ext (bump, TYPE_PRECISION (target_type),
+		       TYPE_SIGN (target_type)))
+    return;
+
+  bump_tree = wide_int_to_tree (target_type, bump);
+
+  if (dump_file && (dump_flags & TDF_DETAILS))
+    {
+      fputs ("Replacing: ", dump_file);
+      print_gimple_stmt (dump_file, c->cand_stmt, 0, 0);
+    }
+
+  if (bump == 0)
+    {
+      tree lhs = gimple_assign_lhs (c->cand_stmt);
+      gassign *copy_stmt = gimple_build_assign (lhs, basis_name);
+      gimple_stmt_iterator gsi = gsi_for_stmt (c->cand_stmt);
+      slsr_cand_t cc = lookup_cand (c->first_interp);
+      gimple_set_location (copy_stmt, gimple_location (c->cand_stmt));
+      gsi_replace (&gsi, copy_stmt, false);
+      while (cc)
 	{
-	  code = MINUS_EXPR;
-	  bump = -bump;
+	  cc->cand_stmt = copy_stmt;
+	  cc = cc->next_interp ? lookup_cand (cc->next_interp) : NULL;
 	}
-
-      bump_tree = wide_int_to_tree (target_type, bump);
-
       if (dump_file && (dump_flags & TDF_DETAILS))
+	stmt_to_print = copy_stmt;
+    }
+  else
+    {
+      tree rhs1, rhs2;
+      if (cand_code != NEGATE_EXPR) {
+	rhs1 = gimple_assign_rhs1 (c->cand_stmt);
+	rhs2 = gimple_assign_rhs2 (c->cand_stmt);
+      }
+      if (cand_code != NEGATE_EXPR
+	  && ((operand_equal_p (rhs1, basis_name, 0)
+	       && operand_equal_p (rhs2, bump_tree, 0))
+	      || (operand_equal_p (rhs1, bump_tree, 0)
+		  && operand_equal_p (rhs2, basis_name, 0))))
 	{
-	  fputs ("Replacing: ", dump_file);
-	  print_gimple_stmt (dump_file, c->cand_stmt, 0, 0);
-	}
-
-      if (bump == 0)
-	{
-	  tree lhs = gimple_assign_lhs (c->cand_stmt);
-	  gassign *copy_stmt = gimple_build_assign (lhs, basis_name);
-	  gimple_stmt_iterator gsi = gsi_for_stmt (c->cand_stmt);
-	  gimple_set_location (copy_stmt, gimple_location (c->cand_stmt));
-	  gsi_replace (&gsi, copy_stmt, false);
-	  c->cand_stmt = copy_stmt;
 	  if (dump_file && (dump_flags & TDF_DETAILS))
-	    stmt_to_print = copy_stmt;
+	    {
+	      fputs ("(duplicate, not actually replacing)", dump_file);
+	      stmt_to_print = c->cand_stmt;
+	    }
 	}
       else
 	{
-	  tree rhs1, rhs2;
-	  if (cand_code != NEGATE_EXPR) {
-	    rhs1 = gimple_assign_rhs1 (c->cand_stmt);
-	    rhs2 = gimple_assign_rhs2 (c->cand_stmt);
-	  }
-	  if (cand_code != NEGATE_EXPR
-	      && ((operand_equal_p (rhs1, basis_name, 0)
-		   && operand_equal_p (rhs2, bump_tree, 0))
-		  || (operand_equal_p (rhs1, bump_tree, 0)
-		      && operand_equal_p (rhs2, basis_name, 0))))
+	  gimple_stmt_iterator gsi = gsi_for_stmt (c->cand_stmt);
+	  slsr_cand_t cc = lookup_cand (c->first_interp);
+	  gimple_assign_set_rhs_with_ops (&gsi, code,
+					  basis_name, bump_tree);
+	  update_stmt (gsi_stmt (gsi));
+	  while (cc)
 	    {
-	      if (dump_file && (dump_flags & TDF_DETAILS))
-		{
-		  fputs ("(duplicate, not actually replacing)", dump_file);
-		  stmt_to_print = c->cand_stmt;
-		}
+	      cc->cand_stmt = gsi_stmt (gsi);
+	      cc = cc->next_interp ? lookup_cand (cc->next_interp) : NULL;
 	    }
-	  else
-	    {
-	      gimple_stmt_iterator gsi = gsi_for_stmt (c->cand_stmt);
-	      gimple_assign_set_rhs_with_ops (&gsi, code,
-					      basis_name, bump_tree);
-	      update_stmt (gsi_stmt (gsi));
-              c->cand_stmt = gsi_stmt (gsi);
-	      if (dump_file && (dump_flags & TDF_DETAILS))
-		stmt_to_print = gsi_stmt (gsi);
-	    }
+	  if (dump_file && (dump_flags & TDF_DETAILS))
+	    stmt_to_print = gsi_stmt (gsi);
 	}
+    }
   
-      if (dump_file && (dump_flags & TDF_DETAILS))
-	{
-	  fputs ("With: ", dump_file);
-	  print_gimple_stmt (dump_file, stmt_to_print, 0, 0);
-	  fputs ("\n", dump_file);
-  	}
+  if (dump_file && (dump_flags & TDF_DETAILS))
+    {
+      fputs ("With: ", dump_file);
+      print_gimple_stmt (dump_file, stmt_to_print, 0, 0);
+      fputs ("\n", dump_file);
     }
 }
 
@@ -2141,8 +2190,6 @@ create_add_on_incoming_edge (slsr_cand_t c, tree basis_name,
 			     widest_int increment, edge e, location_t loc,
 			     bool known_stride)
 {
-  basic_block insert_bb;
-  gimple_stmt_iterator gsi;
   tree lhs, basis_type;
   gassign *new_stmt;
 
@@ -2197,19 +2244,13 @@ create_add_on_incoming_edge (slsr_cand_t c, tree basis_name,
 	gcc_unreachable ();
     }
 
-  insert_bb = single_succ_p (e->src) ? e->src : split_edge (e);
-  gsi = gsi_last_bb (insert_bb);
-
-  if (!gsi_end_p (gsi) && is_ctrl_stmt (gsi_stmt (gsi)))
-    gsi_insert_before (&gsi, new_stmt, GSI_NEW_STMT);
-  else
-    gsi_insert_after (&gsi, new_stmt, GSI_NEW_STMT);
-
   gimple_set_location (new_stmt, loc);
+  gsi_insert_on_edge (e, new_stmt);
 
   if (dump_file && (dump_flags & TDF_DETAILS))
     {
-      fprintf (dump_file, "Inserting in block %d: ", insert_bb->index);
+      fprintf (dump_file, "Inserting on edge %d->%d: ", e->src->index,
+	       e->dest->index);
       print_gimple_stmt (dump_file, new_stmt, 0, 0);
     }
 
@@ -3136,6 +3177,23 @@ insert_initializers (slsr_cand_t c)
 	 that block, the earliest one will be returned in WHERE.  */
       bb = nearest_common_dominator_for_cands (c, incr, &where);
 
+      /* If the NCD is not dominated by the block containing the
+	 definition of the stride, we can't legally insert a
+	 single initializer.  Mark the increment as unprofitable
+	 so we don't make any replacements.  FIXME: Multiple
+	 initializers could be placed with more analysis.  */
+      gimple *stride_def = SSA_NAME_DEF_STMT (c->stride);
+      basic_block stride_bb = gimple_bb (stride_def);
+
+      if (stride_bb && !dominated_by_p (CDI_DOMINATORS, bb, stride_bb))
+	{
+	  if (dump_file && (dump_flags & TDF_DETAILS))
+	    fprintf (dump_file,
+		     "Initializer #%d cannot be legally placed\n", i);
+	  incr_vec[i].cost = COST_INFINITE;
+	  continue;
+	}
+
       /* Create a new SSA name to hold the initializer's value.  */
       stride_type = TREE_TYPE (c->stride);
       new_name = make_temp_ssa_name (stride_type, NULL, "slsr");
@@ -3280,10 +3338,14 @@ replace_rhs_if_not_dup (enum tree_code new_code, tree new_rhs1, tree new_rhs2,
 	      || !operand_equal_p (new_rhs2, old_rhs1, 0))))
     {
       gimple_stmt_iterator gsi = gsi_for_stmt (c->cand_stmt);
+      slsr_cand_t cc = lookup_cand (c->first_interp);
       gimple_assign_set_rhs_with_ops (&gsi, new_code, new_rhs1, new_rhs2);
       update_stmt (gsi_stmt (gsi));
-      c->cand_stmt = gsi_stmt (gsi);
-
+      while (cc)
+	{
+	  cc->cand_stmt = gsi_stmt (gsi);
+	  cc = cc->next_interp ? lookup_cand (cc->next_interp) : NULL;
+	}
       if (dump_file && (dump_flags & TDF_DETAILS))
 	return gsi_stmt (gsi);
     }
@@ -3313,6 +3375,11 @@ replace_one_candidate (slsr_cand_t c, unsigned i, tree basis_name)
   orig_rhs1 = gimple_assign_rhs1 (c->cand_stmt);
   orig_rhs2 = gimple_assign_rhs2 (c->cand_stmt);
   cand_incr = cand_increment (c);
+
+  /* If orig_rhs2 is NULL, we have already replaced this in situ with
+     a copy statement under another interpretation.  */
+  if (!orig_rhs2)
+    return;
 
   if (dump_file && (dump_flags & TDF_DETAILS))
     {
@@ -3386,10 +3453,14 @@ replace_one_candidate (slsr_cand_t c, unsigned i, tree basis_name)
 	  || !operand_equal_p (rhs2, orig_rhs2, 0))
 	{
 	  gimple_stmt_iterator gsi = gsi_for_stmt (c->cand_stmt);
+	  slsr_cand_t cc = lookup_cand (c->first_interp);
 	  gimple_assign_set_rhs_with_ops (&gsi, MINUS_EXPR, basis_name, rhs2);
 	  update_stmt (gsi_stmt (gsi));
-          c->cand_stmt = gsi_stmt (gsi);
-
+	  while (cc)
+	    {
+	      cc->cand_stmt = gsi_stmt (gsi);
+	      cc = cc->next_interp ? lookup_cand (cc->next_interp) : NULL;
+	    }
 	  if (dump_file && (dump_flags & TDF_DETAILS))
 	    stmt_to_print = gsi_stmt (gsi);
 	}
@@ -3407,10 +3478,14 @@ replace_one_candidate (slsr_cand_t c, unsigned i, tree basis_name)
 	{
 	  gassign *copy_stmt = gimple_build_assign (lhs, basis_name);
 	  gimple_stmt_iterator gsi = gsi_for_stmt (c->cand_stmt);
+	  slsr_cand_t cc = lookup_cand (c->first_interp);
 	  gimple_set_location (copy_stmt, gimple_location (c->cand_stmt));
 	  gsi_replace (&gsi, copy_stmt, false);
-	  c->cand_stmt = copy_stmt;
-
+	  while (cc)
+	    {
+	      cc->cand_stmt = copy_stmt;
+	      cc = cc->next_interp ? lookup_cand (cc->next_interp) : NULL;
+	    }
 	  if (dump_file && (dump_flags & TDF_DETAILS))
 	    stmt_to_print = copy_stmt;
 	}
@@ -3418,10 +3493,14 @@ replace_one_candidate (slsr_cand_t c, unsigned i, tree basis_name)
 	{
 	  gimple_stmt_iterator gsi = gsi_for_stmt (c->cand_stmt);
 	  gassign *cast_stmt = gimple_build_assign (lhs, NOP_EXPR, basis_name);
+	  slsr_cand_t cc = lookup_cand (c->first_interp);
 	  gimple_set_location (cast_stmt, gimple_location (c->cand_stmt));
 	  gsi_replace (&gsi, cast_stmt, false);
-	  c->cand_stmt = cast_stmt;
-
+	  while (cc)
+	    {
+	      cc->cand_stmt = cast_stmt;
+	      cc = cc->next_interp ? lookup_cand (cc->next_interp) : NULL;
+	    }
 	  if (dump_file && (dump_flags & TDF_DETAILS))
 	    stmt_to_print = cast_stmt;
 	}
@@ -3577,6 +3656,10 @@ analyze_candidates_and_replace (void)
 	  free (incr_vec);
 	}
     }
+
+  /* For conditional candidates, we may have uncommitted insertions
+     on edges to clean up.  */
+  gsi_commit_edge_inserts ();
 }
 
 namespace {

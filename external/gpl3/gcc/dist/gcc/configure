@@ -7352,10 +7352,10 @@ fi
 if test "${enable_coverage+set}" = set; then :
   enableval=$enable_coverage; case "${enableval}" in
   yes|noopt)
-    coverage_flags="-fprofile-arcs -ftest-coverage -frandom-seed=\$@ -O0"
+    coverage_flags="-fprofile-arcs -ftest-coverage -frandom-seed=\$@ -O0 -fkeep-static-functions"
     ;;
   opt)
-    coverage_flags="-fprofile-arcs -ftest-coverage -frandom-seed=\$@ -O2"
+    coverage_flags="-fprofile-arcs -ftest-coverage -frandom-seed=\$@ -O2 -fkeep-static-functions"
     ;;
   no)
     # a.k.a. --disable-coverage
@@ -23567,6 +23567,14 @@ fi
 $as_echo "$gcc_cv_as_shf_merge" >&6; }
 
 fi
+case "$target" in
+  i?86-*-solaris2.10* | x86_64-*-solaris2.10*)
+    # SHF_MERGE support in Solaris 10/x86 ld is broken.
+    if test x"$gnu_ld" = xno; then
+      gcc_cv_as_shf_merge=no
+    fi
+    ;;
+esac
 
 cat >>confdefs.h <<_ACEOF
 #define HAVE_GAS_SHF_MERGE `if test $gcc_cv_as_shf_merge = yes; then echo 1; else echo 0; fi`
@@ -25365,6 +25373,37 @@ $as_echo "$as_me: WARNING: LTO for $target requires binutils >= 2.20.1, but vers
 	fi
 	;;
     esac
+
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking assembler for -xbrace_comment" >&5
+$as_echo_n "checking assembler for -xbrace_comment... " >&6; }
+if test "${gcc_cv_as_ix86_xbrace_comment+set}" = set; then :
+  $as_echo_n "(cached) " >&6
+else
+  gcc_cv_as_ix86_xbrace_comment=no
+  if test x$gcc_cv_as != x; then
+    $as_echo '.text' > conftest.s
+    if { ac_try='$gcc_cv_as $gcc_cv_as_flags -xbrace_comment=no -o conftest.o conftest.s >&5'
+  { { eval echo "\"\$as_me\":${as_lineno-$LINENO}: \"$ac_try\""; } >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; }; }
+    then
+	gcc_cv_as_ix86_xbrace_comment=yes
+    else
+      echo "configure: failed program was" >&5
+      cat conftest.s >&5
+    fi
+    rm -f conftest.o conftest.s
+  fi
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $gcc_cv_as_ix86_xbrace_comment" >&5
+$as_echo "$gcc_cv_as_ix86_xbrace_comment" >&6; }
+if test $gcc_cv_as_ix86_xbrace_comment = yes; then
+
+$as_echo "#define HAVE_AS_XBRACE_COMMENT_OPTION 1" >>confdefs.h
+
+fi
 
     # Test if the assembler supports the section flag 'e' for specifying
     # an excluded section.
@@ -27857,7 +27896,7 @@ elif test x$gcc_cv_ld != x; then
   else
     case "$target" in
       *-*-solaris2.1[1-9]*)
-	# Solaris 11.x and Solaris 12 added PIE support.
+	# Solaris 11.3 added PIE support.
 	if $gcc_cv_ld -z help 2>&1 | grep -- type.*pie > /dev/null; then
 	  gcc_cv_ld_pie=yes
 	fi
