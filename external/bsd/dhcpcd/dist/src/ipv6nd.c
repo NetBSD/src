@@ -217,6 +217,13 @@ ipv6nd_open(struct dhcpcd_ctx *ctx)
 	    &on, sizeof(on)) == -1)
 		goto eexit;
 
+#ifdef SO_RERROR
+	on = 1;
+	if (setsockopt(ctx->nd_fd, SOL_SOCKET, SO_RERROR,
+	    &on, sizeof(on)) == -1)
+		goto eexit;
+#endif
+
 	ICMP6_FILTER_SETBLOCKALL(&filt);
 	ICMP6_FILTER_SETPASS(ND_NEIGHBOR_ADVERT, &filt);
 	ICMP6_FILTER_SETPASS(ND_ROUTER_ADVERT, &filt);

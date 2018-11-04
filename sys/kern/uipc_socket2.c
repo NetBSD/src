@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket2.c,v 1.132 2018/09/03 16:29:35 riastradh Exp $	*/
+/*	$NetBSD: uipc_socket2.c,v 1.133 2018/11/04 16:30:29 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.132 2018/09/03 16:29:35 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.133 2018/11/04 16:30:29 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -509,8 +509,10 @@ soroverflow(struct socket *so)
 	KASSERT(solocked(so));
 
 	so->so_rcv.sb_overflowed++;
-	so->so_rerror = ENOBUFS;
-	sorwakeup(so);
+	if (so->so_options & SO_RERROR)  {
+		so->so_rerror = ENOBUFS;
+		sorwakeup(so);
+	}
 }
 
 /*

@@ -1,4 +1,4 @@
-.\"	$NetBSD: getsockopt.2,v 1.37 2018/07/31 22:28:26 sevan Exp $
+.\"	$NetBSD: getsockopt.2,v 1.38 2018/11/04 16:30:28 christos Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)getsockopt.2	8.4 (Berkeley) 5/2/95
 .\"
-.Dd July 31, 2018
+.Dd November 3, 2018
 .Dt GETSOCKOPT 2
 .Os
 .Sh NAME
@@ -179,6 +179,7 @@ and set with
 .It Dv SO_RCVTIMEO Ta "set timeout value for input"
 .It Dv SO_TIMESTAMP Ta "enables reception of a timestamp with datagrams"
 .It Dv SO_ACCEPTFILTER Ta "set accept filter on listening socket"
+.It Dv SO_RERROR Ta "enables receive size error reporting"
 .It Dv SO_NOSIGPIPE Ta
 controls generation of
 .Dv SIGPIPE
@@ -213,6 +214,19 @@ indicates that outgoing messages should
 bypass the standard routing facilities.
 Instead, messages are directed to the appropriate network interface
 according to the network portion of the destination address.
+.Dv SO_RERROR
+indicates that receive buffer overflows should be handled as errors.
+Historically receive buffer overflows have been ignored and programs
+could not tell if they missed messages or messages had been truncated
+because of overflows.
+Since programs historically do not expect to get receive overflow errors,
+this behavior is not the default, but the default can be changed by
+setting the
+.Dv SO_RERROR
+flag using
+.Xr sysctl 1
+and
+.Dv kern.sooptions .
 .Pp
 .Dv SO_LINGER
 controls the action taken when unsent messages

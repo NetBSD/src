@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.7,v 1.134 2018/10/30 19:41:21 kre Exp $
+.\"	$NetBSD: sysctl.7,v 1.135 2018/11/04 16:30:28 christos Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)sysctl.3	8.4 (Berkeley) 5/9/95
 .\"
-.Dd October 30, 2018
+.Dd November 3, 2018
 .Dt SYSCTL 7
 .Os
 .Sh NAME
@@ -359,6 +359,7 @@ privilege may change the value.
 .It kern.sched	node	not applicable
 .It kern.securelevel	integer	raise only
 .It kern.somaxkva	integer	yes
+.It kern.sooptions	integer	yes
 .It kern.synchronized_io	integer	no
 .It kern.timecounter	node	not applicable
 .It kern.timex	struct	no
@@ -1062,8 +1063,7 @@ Return the offset of real time clock from UTC in minutes.
 .It Li kern.saved_ids ( Dv KERN_SAVED_IDS )
 Returns 1 if saved set-group and saved set-user ID is available.
 .It Li kern.sbmax ( Dv KERN_SBMAX )
-Maximum socket buffer size.
-.\" XXX units?
+Maximum socket buffer size in bytes.
 .It Li kern.securelevel ( Dv KERN_SECURELVL )
 See
 .Xr secmodel_securelevel 9 .
@@ -1166,8 +1166,14 @@ See
 .Xr sched 3 .
 .El
 .It Li kern.somaxkva ( Dv KERN_SOMAXKVA )
-Maximum amount of kernel memory to be used for socket buffers.
-.\" XXX units?
+Maximum amount of kernel memory to be used for socket buffers in bytes.
+.It Li kern.sooptions
+Set the default socket option flags for
+.Xr socket 2
+creation.
+See
+.Xr setsockopt 2
+for a list of supported flags.
 .It Li kern.synchronized_io ( Dv KERN_SYNCHRONIZED_IO )
 Returns 1 if the
 .St -p1003.1b-93

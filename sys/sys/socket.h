@@ -1,4 +1,4 @@
-/*	$NetBSD: socket.h,v 1.128 2018/09/16 20:40:20 mrg Exp $	*/
+/*	$NetBSD: socket.h,v 1.129 2018/11/04 16:30:29 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -132,7 +132,30 @@ typedef	_BSD_SSIZE_T_	ssize_t;
 #define	SO_NOSIGPIPE	0x0800		/* no SIGPIPE from EPIPE */
 #define	SO_ACCEPTFILTER	0x1000		/* there is an accept filter */
 #define	SO_TIMESTAMP	0x2000		/* timestamp received dgram traffic */
+#define	SO_RERROR	0x4000		/* Keep track of receive errors */
 
+/* Allowed default option flags */
+#define SO_DEFOPTS	(SO_DEBUG|SO_REUSEADDR|SO_KEEPALIVE|SO_DONTROUTE| \
+    SO_BROADCAST|SO_USELOOPBACK|SO_LINGER|SO_OOBINLINE|SO_REUSEPORT| \
+    SO_NOSIGPIPE|SO_TIMESTAMP|SO_RERROR)
+
+#define __SO_OPTION_BITS \
+	"\20" \
+	"\1SO_DEBUG" \
+	"\2SO_ACCEPTCONN" \
+	"\3SO_REUSEADDR" \
+	"\4SO_KEEPALIVE" \
+	"\5SO_DONTROUTE" \
+	"\6SO_BROADCAST" \
+	"\7SO_USELOOPBACK" \
+	"\10SO_LINGER" \
+	"\11SO_OOBINLINE" \
+	"\12SO_REUSEPORT" \
+	"\13SO_OTIMESTAMP" \
+	"\14SO_NOSIGPIPE" \
+	"\15SO_ACCEPTFILTER" \
+	"\16SO_TIMESTAMP" \
+	"\17SO_RERROR"
 
 /*
  * Additional options, not kept in so_options.
