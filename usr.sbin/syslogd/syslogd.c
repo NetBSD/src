@@ -1,4 +1,4 @@
-/*	$NetBSD: syslogd.c,v 1.126 2018/11/04 20:23:08 roy Exp $	*/
+/*	$NetBSD: syslogd.c,v 1.127 2018/11/04 20:45:21 roy Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: syslogd.c,v 1.126 2018/11/04 20:23:08 roy Exp $");
+__RCSID("$NetBSD: syslogd.c,v 1.127 2018/11/04 20:45:21 roy Exp $");
 #endif
 #endif /* not lint */
 
@@ -193,6 +193,7 @@ int	SyncKernel = 0;		/* write kernel messages synchronously */
 int	UniquePriority = 0;	/* only log specified priority */
 int	LogFacPri = 0;		/* put facility and priority in log messages: */
 				/* 0=no, 1=numeric, 2=names */
+int	LogOverflow = 1;	/* 0=no, any other value = yes */
 bool	BSDOutputFormat = true;	/* if true emit traditional BSD Syslog lines,
 				 * otherwise new syslog-protocol lines
 				 *
@@ -316,7 +317,7 @@ main(int argc, char *argv[])
 	/* should we set LC_TIME="C" to ensure correct timestamps&parsing? */
 	(void)setlocale(LC_ALL, "");
 
-	while ((ch = getopt(argc, argv, "b:B:dnsSf:m:o:p:P:ru:g:t:TUv")) != -1)
+	while ((ch = getopt(argc, argv, "b:B:dnsSf:m:o:p:P:ru:g:t:TUvX")) != -1)
 		switch(ch) {
 		case 'b':
 			bindhostname = optarg;
@@ -394,6 +395,9 @@ main(int argc, char *argv[])
 		case 'v':		/* log facility and priority */
 			if (LogFacPri < 2)
 				LogFacPri++;
+			break;
+		case 'X':
+			LogOverflow = 0;
 			break;
 		default:
 			usage();
@@ -663,7 +667,7 @@ usage(void)
 {
 
 	(void)fprintf(stderr,
-	    "usage: %s [-dnrSsTUv] [-b bind_address] [-B buffer_length]\n"
+	    "usage: %s [-dnrSsTUvX] [-b bind_address] [-B buffer_length]\n"
 	    "\t[-f config_file] [-g group]\n"
 	    "\t[-m mark_interval] [-P file_list] [-p log_socket\n"
 	    "\t[-p log_socket2 ...]] [-t chroot_dir] [-u user]\n",
@@ -712,7 +716,10 @@ dispatch_read_klog(int fd, short event, void *ev)
 	if (rv > 0) {
 		klog_linebuf[klog_linebufoff + rv] = '\0';
 		printsys(klog_linebuf);
-	} else if (rv < 0 && errno != EINTR) {
+	} else if (rv < 0 &&
+	    errno != EINTR &&
+	    (errno != ENOBUFS || LogOverflow))
+	{
 		/*
 		 * /dev/klog has croaked.  Disable the event
 		 * so it won't bother us again.
@@ -756,7 +763,10 @@ dispatch_read_funix(int fd, short event, void *ev)
 	if (rv > 0) {
 		linebuf[rv] = '\0';
 		printline(LocalFQDN, linebuf, 0);
-	} else if (rv < 0 && errno != EINTR) {
+	} else if (rv < 0 &&
+	    errno != EINTR &&
+	    (errno != ENOBUFS || LogOverflow))
+	{
 		logerror("recvfrom() unix `%.*s'",
 			(int)SUN_PATHLEN(&myname), myname.sun_path);
 	}
@@ -791,7 +801,9 @@ dispatch_read_finet(int fd, short event, void *ev)
 	len = sizeof(frominet);
 	rv = recvfrom(fd, linebuf, linebufsize-1, 0,
 	    (struct sockaddr *)&frominet, &len);
-	if (rv == 0 || (rv < 0 && errno == EINTR))
+	if (rv == 0 ||
+	    (rv < 0 && (errno == EINTR ||
+			(errno == ENOBUFS && LogOverflow == 0))))
 		return;
 	else if (rv < 0) {
 		logerror("recvfrom inet");
