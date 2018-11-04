@@ -1,4 +1,4 @@
-/*	$NetBSD: uhub.c,v 1.136.2.2 2018/09/27 14:52:26 martin Exp $	*/
+/*	$NetBSD: uhub.c,v 1.136.2.3 2018/11/04 11:08:10 martin Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 /*	$OpenBSD: uhub.c,v 1.86 2015/06/29 18:27:40 mpi Exp $ */
 
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.136.2.2 2018/09/27 14:52:26 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.136.2.3 2018/11/04 11:08:10 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -412,11 +412,11 @@ uhub_attach(device_t parent, device_t self, void *aux)
 			     sizeof(struct usbd_tt), KM_SLEEP);
 	}
 	/* Set up data structures */
-	for (p = 0; p < nports; p++) {
-		struct usbd_port *up = &hub->uh_ports[p];
+	for (p = 1; p <= nports; p++) {
+		struct usbd_port *up = &hub->uh_ports[p - 1];
 		up->up_dev = NULL;
 		up->up_parent = dev;
-		up->up_portno = p + 1;
+		up->up_portno = p;
 		if (dev->ud_selfpowered)
 			/* Self powered hub, give ports maximum current. */
 			up->up_power = USB_MAX_POWER;
@@ -425,7 +425,7 @@ uhub_attach(device_t parent, device_t self, void *aux)
 		up->up_restartcnt = 0;
 		up->up_reattach = 0;
 		if (UHUB_IS_HIGH_SPEED(sc)) {
-			up->up_tt = &tts[UHUB_IS_SINGLE_TT(sc) ? 0 : p];
+			up->up_tt = &tts[UHUB_IS_SINGLE_TT(sc) ? 0 : p - 1];
 			up->up_tt->utt_hub = hub;
 		} else {
 			up->up_tt = NULL;
@@ -822,8 +822,8 @@ uhub_detach(device_t self, int flags)
 	KERNEL_LOCK(1, curlwp);
 
 	nports = hub->uh_hubdesc.bNbrPorts;
-	for (port = 0; port < nports; port++) {
-		rup = &hub->uh_ports[port];
+	for (port = 1; port <= nports; port++) {
+		rup = &hub->uh_ports[port - 1];
 		if (rup->up_dev == NULL)
 			continue;
 		if ((rc = usb_disconnect_port(rup, self, flags)) != 0) {
@@ -870,8 +870,8 @@ uhub_rescan(device_t self, const char *ifattr, const int *locators)
 	struct usbd_device *dev;
 	int port;
 
-	for (port = 0; port < hub->uh_hubdesc.bNbrPorts; port++) {
-		dev = hub->uh_ports[port].up_dev;
+	for (port = 1; port <= hub->uh_hubdesc.bNbrPorts; port++) {
+		dev = hub->uh_ports[port - 1].up_dev;
 		if (dev == NULL)
 			continue;
 		usbd_reattach_device(sc->sc_dev, dev, port, locators);
@@ -895,8 +895,8 @@ uhub_childdet(device_t self, device_t child)
 		panic("hub not fully initialised, but child deleted?");
 
 	nports = devhub->ud_hub->uh_hubdesc.bNbrPorts;
-	for (port = 0; port < nports; port++) {
-		dev = devhub->ud_hub->uh_ports[port].up_dev;
+	for (port = 1; port <= nports; port++) {
+		dev = devhub->ud_hub->uh_ports[port - 1].up_dev;
 		if (!dev || dev->ud_subdevlen == 0)
 			continue;
 		for (i = 0; i < dev->ud_subdevlen; i++) {
