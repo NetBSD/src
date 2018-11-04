@@ -601,6 +601,7 @@ xtensa_mem_offset (unsigned v, machine_mode mode)
     case HImode:
       return xtensa_uimm8x2 (v);
 
+    case DImode:
     case DFmode:
       return (xtensa_uimm8x4 (v) && xtensa_uimm8x4 (v + 4));
 
@@ -1582,9 +1583,9 @@ xtensa_expand_atomic (enum rtx_code code, rtx target, rtx mem, rtx val,
       break;
 
     case MULT: /* NAND */
-      tmp = expand_simple_binop (SImode, XOR, old, ac.modemask,
+      tmp = expand_simple_binop (SImode, AND, old, val,
 				 NULL_RTX, 1, OPTAB_DIRECT);
-      tmp = expand_simple_binop (SImode, AND, tmp, val,
+      tmp = expand_simple_binop (SImode, XOR, tmp, ac.modemask,
 				 new_rtx, 1, OPTAB_DIRECT);
       break;
 

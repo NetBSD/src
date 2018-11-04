@@ -1919,6 +1919,45 @@ cxx_eval_conditional_expression (const constexpr_ctx *ctx, tree t,
 				       jump_target);
 }
 
+/* Subroutine of cxx_eval_constant_expression.
+   Attempt to evaluate vector condition expressions.  Unlike
+   cxx_eval_conditional_expression, VEC_COND_EXPR acts like a normal
+   ternary arithmetics operation, where all 3 arguments have to be
+   evaluated as constants and then folding computes the result from
+   them.  */
+
+static tree
+cxx_eval_vector_conditional_expression (const constexpr_ctx *ctx, tree t,
+					bool *non_constant_p, bool *overflow_p)
+{
+  tree arg1 = cxx_eval_constant_expression (ctx, TREE_OPERAND (t, 0),
+					    /*lval*/false,
+					    non_constant_p, overflow_p);
+  VERIFY_CONSTANT (arg1);
+  tree arg2 = cxx_eval_constant_expression (ctx, TREE_OPERAND (t, 1),
+					    /*lval*/false,
+					    non_constant_p, overflow_p);
+  VERIFY_CONSTANT (arg2);
+  tree arg3 = cxx_eval_constant_expression (ctx, TREE_OPERAND (t, 2),
+					    /*lval*/false,
+					    non_constant_p, overflow_p);
+  VERIFY_CONSTANT (arg3);
+  location_t loc = EXPR_LOCATION (t);
+  tree type = TREE_TYPE (t);
+  tree r = fold_ternary_loc (loc, VEC_COND_EXPR, type, arg1, arg2, arg3);
+  if (r == NULL_TREE)
+    {
+      if (arg1 == TREE_OPERAND (t, 0)
+	  && arg2 == TREE_OPERAND (t, 1)
+	  && arg3 == TREE_OPERAND (t, 2))
+	r = t;
+      else
+	r = build3_loc (loc, VEC_COND_EXPR, type, arg1, arg2, arg3);
+    }
+  VERIFY_CONSTANT (r);
+  return r;
+}
+
 /* Returns less than, equal to, or greater than zero if KEY is found to be
    less than, to match, or to be greater than the constructor_elt's INDEX.  */
 
@@ -2698,9 +2737,8 @@ cxx_eval_vec_init_1 (const constexpr_ctx *ctx, tree atype, tree init,
 	  if (!real_lvalue_p (init))
 	    eltinit = move (eltinit);
 	  eltinit = force_rvalue (eltinit, tf_warning_or_error);
-	  eltinit = (cxx_eval_constant_expression
-		     (&new_ctx, eltinit, lval,
-		      non_constant_p, overflow_p));
+	  eltinit = cxx_eval_constant_expression (&new_ctx, eltinit, lval,
+						  non_constant_p, overflow_p);
 	}
       if (*non_constant_p && !ctx->quiet)
 	break;
@@ -2713,12 +2751,13 @@ cxx_eval_vec_init_1 (const constexpr_ctx *ctx, tree atype, tree init,
       else
 	CONSTRUCTOR_APPEND_ELT (*p, idx, eltinit);
       /* Reuse the result of cxx_eval_constant_expression call
-	  from the first iteration to all others if it is a constant
-	  initializer that doesn't require relocations.  */
+	 from the first iteration to all others if it is a constant
+	 initializer that doesn't require relocations.  */
       if (reuse
 	  && max > 1
-	  && (initializer_constant_valid_p (eltinit, TREE_TYPE (eltinit))
-	      == null_pointer_node))
+	  && (eltinit == NULL_TREE
+	      || (initializer_constant_valid_p (eltinit, TREE_TYPE (eltinit))
+		  == null_pointer_node)))
 	{
 	  if (new_ctx.ctor != ctx->ctor)
 	    eltinit = new_ctx.ctor;
@@ -4031,11 +4070,13 @@ cxx_eval_constant_expression (const constexpr_ctx *ctx, tree t,
 					      jump_target);
 	  break;
 	}
-      /* FALLTHRU */
-    case VEC_COND_EXPR:
       r = cxx_eval_conditional_expression (ctx, t, lval,
 					   non_constant_p, overflow_p,
 					   jump_target);
+      break;
+    case VEC_COND_EXPR:
+      r = cxx_eval_vector_conditional_expression (ctx, t, non_constant_p,
+						  overflow_p);
       break;
 
     case CONSTRUCTOR:

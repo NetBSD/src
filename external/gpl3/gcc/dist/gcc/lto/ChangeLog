@@ -1,3 +1,98 @@
+2018-10-26  Release Manager
+
+	* GCC 6.5.0 released.
+
+2018-04-25  Martin Liska  <mliska@suse.cz>
+
+	Backport from mainline
+	2018-04-10  Martin Liska  <mliska@suse.cz>
+
+	PR lto/85248
+	* lto-symtab.c (lto_symtab_merge_p): Do not check for
+	TREE_VALUES of error attributes.
+
+2018-04-25  Martin Liska  <mliska@suse.cz>
+
+	Backport from mainline
+	2018-04-10  Richard Biener  <rguenther@suse.de>
+		    Martin Liska  <mliska@suse.cz>
+
+	PR lto/85248
+	* lto-symtab.c (lto_symtab_merge_p): Handle noreturn attribute.
+
+2018-03-07  Martin Liska  <mliska@suse.cz>
+
+	Backport from mainline
+	2018-01-23  Martin Liska  <mliska@suse.cz>
+
+	PR lto/81440
+	* lto-symtab.c (lto_symtab_merge): Handle and do not warn about
+	trailing arrays at the end of a struct.
+
+2018-03-07  Martin Liska  <mliska@suse.cz>
+
+	Backport from mainline
+	2018-02-08  Jan Hubicka  <hubicka@ucw.cz>
+
+	* lto-partition.c (lto_balanced_map): Watch overflow.
+
+2018-03-07  Martin Liska  <mliska@suse.cz>
+
+	Backport from mainline
+	2018-02-08  Jan Hubicka  <hubicka@ucw.cz>
+
+	PR ipa/81360
+	* lto.c (unify_scc): Register prevailing trees, not trees to be freed.
+	(read_cgraph_and_symbols): Use
+	symtab_node::output_to_lto_symbol_table_p.
+
+2018-03-07  Martin Liska  <mliska@suse.cz>
+
+	Backport from mainline
+	2018-01-30  Jan Hubicka  <hubicka@ucw.cz>
+
+	* lto.c (register_resolution): Remove forgotten sanity check.
+
+2018-03-07  Martin Liska  <mliska@suse.cz>
+
+	Backport from mainline
+	2018-01-30  Jan Hubicka  <hubicka@ucw.cz>
+
+	PR lto/81004
+	* lto.c: Include builtins.h
+	(register_resolution): Merge resolutions in case trees was
+	merged across units.
+	(lto_maybe_register_decl): Break out from ...
+	(lto_read_decls): ... here.
+	(unify_scc): Also register decls here.
+	(read_cgraph_and_symbols): Sanity check that all resolutions was
+	read.
+
+2018-03-07  Martin Liska  <mliska@suse.cz>
+
+	Backport from mainline
+	2018-02-02  Eric Botcazou  <ebotcazou@adacore.com>
+
+	PR lto/83954
+	* lto-symtab.c (warn_type_compatibility_p): Do not recurse into the
+	component type of array types with non-aliased component.
+
+2018-03-07  Martin Liska  <mliska@suse.cz>
+
+	Backport from mainline
+	2018-01-30  Jan Hubicka  <hubicka@ucw.cz>
+
+	PR lto/83954
+	* lto-symtab.c (warn_type_compatibility_p): Silence false positive
+	for type match warning on arrays of pointers.
+
+2018-03-07  Martin Liska  <mliska@suse.cz>
+
+	Backport from mainline
+	2017-10-13  Jan Hubicka  <hubicka@ucw.cz>
+
+	* lto-lang.c (lto_post_options): Clean shlib flag when not doing PIC.
+
 2017-07-04  Release Manager
 
 	* GCC 6.4.0 released.

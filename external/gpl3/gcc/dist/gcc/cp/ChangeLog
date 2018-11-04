@@ -1,3 +1,228 @@
+2018-10-26  Release Manager
+
+	* GCC 6.5.0 released.
+
+2018-10-23  Tom de Vries  <tdevries@suse.de>
+
+	backport from trunk:
+	2018-07-31  Tom de Vries  <tdevries@suse.de>
+
+	PR debug/86687
+	* optimize.c (update_cloned_parm): Copy DECL_BY_REFERENCE.
+
+2018-10-12  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from mainline
+	2018-07-16  Jakub Jelinek  <jakub@redhat.com>
+
+	PR c++/3698
+	PR c++/86208
+	* cp-gimplify.c (cp_genericize_r): When using extern_decl_map, or
+	in TREE_USED flag from stmt to h->to.
+
+2018-06-26  Jakub Jelinek  <jakub@redhat.com>
+
+	PR c++/86291
+	* parser.c (cp_parser_omp_for_loop_init): Change for_block argument
+	type from vec<tree, va_gc> * to vec<tree, va_gc> *&.
+
+2018-06-25  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from mainline
+	2018-04-03  Jakub Jelinek  <jakub@redhat.com>
+
+	PR c++/85147
+	* pt.c (fixed_parameter_pack_p_1): Punt if parm is error_mark_node.
+
+	PR c++/85140
+	* name-lookup.c (handle_namespace_attrs): Return early if attributes
+	is error_mark_node.
+
+	2018-03-30  Jakub Jelinek  <jakub@redhat.com>
+
+	PR c++/84791
+	* semantics.c (finish_omp_reduction_clause): If
+	OMP_CLAUSE_REDUCTION_PLACEHOLDER is error_mark_node, return true
+	even if processing_template_decl.
+
+	2018-03-27  Jakub Jelinek  <jakub@redhat.com>
+
+	PR c++/85076
+	* tree.c (cp_build_reference_type): If to_type is error_mark_node,
+	return it right away.
+
+	PR c++/85068
+	* class.c (update_vtable_entry_for_fn): Don't ICE if base_binfo
+	is NULL.  Assert if thunk_binfo is NULL then errorcount is non-zero.
+
+	2018-03-16  Jakub Jelinek  <jakub@redhat.com>
+
+	PR c++/84874
+	* decl.c (reshape_init_class): Don't assert d->cur->index == field
+	if d->cur->index is a FIELD_DECL, instead set field to d->cur->index.
+
+	2018-03-15  Jakub Jelinek  <jakub@redhat.com>
+
+	PR c++/84222
+	* cp-tree.h (cp_warn_deprecated_use): Declare.
+	* tree.c (cp_warn_deprecated_use): New function.
+	* typeck2.c (build_functional_cast): Use it.
+	* decl.c (grokparms): Likewise.
+	(grokdeclarator): Likewise.  Temporarily push nested class scope
+	around grokparms call for out of class member definitions.
+
+	2018-03-09  Jason Merrill  <jason@redhat.com>
+		    Jakub Jelinek  <jakub@redhat.com>
+
+	PR c++/84076
+	* call.c (convert_arg_to_ellipsis): Instead of cp_build_addr_expr
+	build ADDR_EXPR with REFERENCE_TYPE.
+	(build_over_call): For purposes of check_function_arguments, if
+	argarray[j] is ADDR_EXPR with REFERENCE_TYPE created above, use
+	its operand rather than the argument itself.
+
+	2018-03-02  Jakub Jelinek  <jakub@redhat.com>
+
+	PR c++/84662
+	* pt.c (tsubst_copy_and_build) <case TEMPLATE_ID_EXPR>: Use
+	RETURN instead of return.
+	<case POINTER_PLUS_EXPR>: Likewise.
+	<case CONVERT_EXPR>: If op0 is error_mark_node, just return
+	it instead of wrapping it into CONVERT_EXPR.
+
+	2018-02-26  Jakub Jelinek  <jakub@redhat.com>
+
+	PR c++/84558
+	* constexpr.c (cxx_eval_vec_init_1): For reuse, treat NULL eltinit like
+	a valid constant initializer.  Formatting fixes.
+
+	2018-02-19  Jakub Jelinek  <jakub@redhat.com>
+
+	PR c++/84448
+	* parser.c (cp_parser_binary_expression): For no_toplevel_fold_p, if
+	either operand is error_mark_node, set current.lhs to that instead of
+	creating a binary op with error_mark_node operands.
+
+	2018-02-12  Jakub Jelinek  <jakub@redhat.com>
+
+	PR c++/84341
+	* parser.c (cp_parser_binary_expression): Use build_min instead of
+	build2_loc to build the no_toplevel_fold_p toplevel binary expression.
+
+	2018-02-10  Jakub Jelinek  <jakub@redhat.com>
+
+	PR sanitizer/83987
+	* tree.c (cp_free_lang_data): Revert 2018-01-23 change.
+
+	2018-01-23  Jakub Jelinek  <jakub@redhat.com>
+
+	PR sanitizer/83987
+	* tree.c (cp_free_lang_data): Change DECL_VALUE_EXPR of
+	DECL_OMP_PRIVATIZED_MEMBER vars to error_mark_node.
+
+	2018-01-18  Jakub Jelinek  <jakub@redhat.com>
+
+	PR c++/83824
+	* parser.c (attr_chainon): New function.
+	(cp_parser_label_for_labeled_statement, cp_parser_decl_specifier_seq,
+	cp_parser_namespace_definition, cp_parser_init_declarator,
+	cp_parser_type_specifier_seq, cp_parser_parameter_declaration,
+	cp_parser_gnu_attributes_opt): Use it.
+	(cp_parser_member_declaration, cp_parser_objc_class_ivars,
+	cp_parser_objc_struct_declaration): Likewise.  Don't reset
+	prefix_attributes if attributes is error_mark_node.
+
+	2017-12-14  Jakub Jelinek  <jakub@redhat.com>
+
+	PR c++/79650
+	* pt.c (convert_nontype_argument): Diagnose
+	reduced_constant_expression_p expressions that aren't INTEGER_CST.
+
+	2017-12-06  Jakub Jelinek  <jakub@redhat.com>
+
+	PR c++/80259
+	* decl2.c (grokfield): Diagnose = delete redefinition of a friend.
+
+	2017-11-23  Jakub Jelinek  <jakub@redhat.com>
+
+	* parser.c (cp_parser_omp_declare): Change return type to bool from
+	void, return true for declare simd.
+	(cp_parser_pragma): Return cp_parser_omp_declare returned value
+	rather than always false.
+
+	2017-11-20  Jakub Jelinek  <jakub@redhat.com>
+
+	PR c++/82781
+	* constexpr.c (cxx_eval_vector_conditional_expression): New function.
+	(cxx_eval_constant_expression) <case VEC_COND_EXPR>: Use it instead
+	of cxx_eval_conditional_expression.
+
+2018-03-29  Ville Voutilainen  <ville.voutilainen@gmail.com>
+
+	Backport from mainline
+	2018-03-23  Ville Voutilainen  <ville.voutilainen@gmail.com>
+
+	Implement P0962
+	* parser.c (cp_parser_perform_range_for_lookup): Change
+	the condition for deciding whether to use members.
+
+2018-03-23  Jason Merrill  <jason@redhat.com>
+
+	PR c++/78489 - Substitution in wrong order
+	PR c++/84489
+	* pt.c (type_unification_real): Revert last two changes.
+
+2018-03-09  Jason Merrill  <jason@redhat.com>
+
+	PR c++/84785 - ICE with alias template and default targs.
+	* pt.c (type_unification_real): Set processing_template_decl if
+	saw_undeduced == 1.
+
+2018-03-03  Jason Merrill  <jason@redhat.com>
+
+	PR c++/84686 - missing volatile loads.
+	* cvt.c (convert_to_void): Call maybe_undo_parenthesized_ref.
+
+2018-03-02  Jason Merrill  <jason@redhat.com>
+
+	PR c++/84489 - dependent default template argument
+	* pt.c (type_unification_real): Handle early substitution failure.
+
+2018-02-28  Jason Merrill  <jason@redhat.com>
+
+	PR c++/71784 - ICE with ref-qualifier and explicit specialization.
+	* pt.c (determine_specialization): Check ref-qualifier.
+
+2018-02-26  Jason Merrill  <jason@redhat.com>
+
+	PR c++/84441 - ICE with base initialized from ?:
+	* call.c (unsafe_copy_elision_p): Handle COND_EXPR.
+
+	PR c++/84520 - ICE with generic lambda in NSDMI.
+	* lambda.c (lambda_expr_this_capture): Don't look for fake NSDMI
+	'this' in a generic lambda instantiation.
+
+2018-02-16  Jason Merrill  <jason@redhat.com>
+
+	PR c++/84151 - unnecessary volatile load with static member.
+	* call.c (build_new_method_call_1): Avoid loading from a volatile
+	lvalue used as the object argument for a static member function.
+
+2017-09-15  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from mainline
+	2017-09-14  Jakub Jelinek  <jakub@redhat.com>
+
+	PR c++/81314
+	* cp-gimplify.c (omp_var_to_track): Look through references.
+	(omp_cxx_notice_variable): Likewise.
+
+2017-08-14  Paolo Carlini  <paolo.carlini@oracle.com>
+
+	PR c++/71570
+	* lambda.c (add_capture): Early return if we cannot capture by
+	reference.
+
 2017-07-04  Release Manager
 
 	* GCC 6.4.0 released.

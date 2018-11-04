@@ -1814,8 +1814,9 @@ vn_reference_lookup_3 (ao_ref *ref, tree vuse, void *vr_,
 	  int len;
 
 	  len = native_encode_expr (gimple_assign_rhs1 (def_stmt),
-				    buffer, sizeof (buffer));
-	  if (len > 0)
+				    buffer, sizeof (buffer),
+				    (offset - offset2) / BITS_PER_UNIT);
+	  if (len > 0 && len * BITS_PER_UNIT >= ref->size)
 	    {
 	      tree type = vr->type;
 	      /* Make sure to interpret in a type that has a range
@@ -1824,10 +1825,7 @@ vn_reference_lookup_3 (ao_ref *ref, tree vuse, void *vr_,
 		  && ref->size != TYPE_PRECISION (vr->type))
 		type = build_nonstandard_integer_type (ref->size,
 						       TYPE_UNSIGNED (type));
-	      tree val = native_interpret_expr (type,
-						buffer
-						+ ((offset - offset2)
-						   / BITS_PER_UNIT),
+	      tree val = native_interpret_expr (type, buffer,
 						ref->size / BITS_PER_UNIT);
 	      /* If we chop off bits because the types precision doesn't
 		 match the memory access size this is ok when optimizing
@@ -2169,7 +2167,7 @@ vn_reference_lookup_3 (ao_ref *ref, tree vuse, void *vr_,
       memset (&op, 0, sizeof (op));
       op.type = vr->type;
       op.opcode = MEM_REF;
-      op.op0 = build_int_cst (ptr_type_node, at - rhs_offset);
+      op.op0 = build_int_cst (ptr_type_node, at - lhs_offset + rhs_offset);
       op.off = at - lhs_offset + rhs_offset;
       vr->operands[0] = op;
       op.type = TREE_TYPE (rhs);
@@ -2841,16 +2839,13 @@ vn_phi_eq (const_vn_phi_t const vp1, const_vn_phi_t const vp2)
 	      return false;
 
 	    /* Verify the controlling stmt is the same.  */
-	    gimple *last1 = last_stmt (idom1);
-	    gimple *last2 = last_stmt (idom2);
-	    if (gimple_code (last1) != GIMPLE_COND
-		|| gimple_code (last2) != GIMPLE_COND)
+	    gcond *last1 = safe_dyn_cast <gcond *> (last_stmt (idom1));
+	    gcond *last2 = safe_dyn_cast <gcond *> (last_stmt (idom2));
+	    if (! last1 || ! last2)
 	      return false;
 	    bool inverted_p;
-	    if (! cond_stmts_equal_p (as_a <gcond *> (last1),
-				      vp1->cclhs, vp1->ccrhs,
-				      as_a <gcond *> (last2),
-				      vp2->cclhs, vp2->ccrhs,
+	    if (! cond_stmts_equal_p (last1, vp1->cclhs, vp1->ccrhs,
+				      last2, vp2->cclhs, vp2->ccrhs,
 				      &inverted_p))
 	      return false;
 
@@ -2935,7 +2930,7 @@ vn_phi_lookup (gimple *phi)
   vp1.ccrhs = NULL_TREE;
   basic_block idom1 = get_immediate_dominator (CDI_DOMINATORS, vp1.block);
   if (EDGE_COUNT (idom1->succs) == 2)
-    if (gcond *last1 = dyn_cast <gcond *> (last_stmt (idom1)))
+    if (gcond *last1 = safe_dyn_cast <gcond *> (last_stmt (idom1)))
       {
 	vp1.cclhs = vn_valueize (gimple_cond_lhs (last1));
 	vp1.ccrhs = vn_valueize (gimple_cond_rhs (last1));
@@ -2981,7 +2976,7 @@ vn_phi_insert (gimple *phi, tree result)
   vp1->ccrhs = NULL_TREE;
   basic_block idom1 = get_immediate_dominator (CDI_DOMINATORS, vp1->block);
   if (EDGE_COUNT (idom1->succs) == 2)
-    if (gcond *last1 = dyn_cast <gcond *> (last_stmt (idom1)))
+    if (gcond *last1 = safe_dyn_cast <gcond *> (last_stmt (idom1)))
       {
 	vp1->cclhs = vn_valueize (gimple_cond_lhs (last1));
 	vp1->ccrhs = vn_valueize (gimple_cond_rhs (last1));

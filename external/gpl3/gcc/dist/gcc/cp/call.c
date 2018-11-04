@@ -6837,7 +6837,7 @@ convert_arg_to_ellipsis (tree arg, tsubst_flags_t complain)
 		     "passing objects of non-trivially-copyable "
 		     "type %q#T through %<...%> is conditionally supported",
 		     arg_type);
-	  return cp_build_addr_expr (arg, complain);
+	  return build1 (ADDR_EXPR, build_reference_type (arg_type), arg);
 	}
     }
 
@@ -7189,6 +7189,15 @@ unsafe_copy_elision_p (tree target, tree exp)
   /* build_compound_expr pushes COMPOUND_EXPR inside TARGET_EXPR.  */
   while (TREE_CODE (init) == COMPOUND_EXPR)
     init = TREE_OPERAND (init, 1);
+  if (TREE_CODE (init) == COND_EXPR)
+    {
+      /* We'll end up copying from each of the arms of the COND_EXPR directly
+	 into the target, so look at them. */
+      if (tree op = TREE_OPERAND (init, 1))
+	if (unsafe_copy_elision_p (target, op))
+	  return true;
+      return unsafe_copy_elision_p (target, TREE_OPERAND (init, 2));
+    }
   return (TREE_CODE (init) == AGGR_INIT_EXPR
 	  && !AGGR_INIT_VIA_CTOR_P (init));
 }
@@ -7569,7 +7578,15 @@ build_over_call (struct z_candidate *cand, int flags, tsubst_flags_t complain)
       tree *fargs = (!nargs ? argarray
 			    : (tree *) alloca (nargs * sizeof (tree)));
       for (j = 0; j < nargs; j++)
-	fargs[j] = maybe_constant_value (argarray[j]);
+	{
+	  /* For -Wformat undo the implicit passing by hidden reference
+	     done by convert_arg_to_ellipsis.  */
+	  if (TREE_CODE (argarray[j]) == ADDR_EXPR
+	      && TREE_CODE (TREE_TYPE (argarray[j])) == REFERENCE_TYPE)
+	    fargs[j] = TREE_OPERAND (argarray[j], 0);
+	  else
+	    fargs[j] = maybe_constant_value (argarray[j]);
+	}
 
       check_function_arguments (input_location, TREE_TYPE (fn), nargs, fargs);
     }
@@ -8437,8 +8454,14 @@ build_new_method_call_1 (tree instance, tree fns, vec<tree, va_gc> **args,
 	      if (TREE_CODE (TREE_TYPE (fn)) != METHOD_TYPE
 		  && !is_dummy_object (instance)
 		  && TREE_SIDE_EFFECTS (instance))
-		call = build2 (COMPOUND_EXPR, TREE_TYPE (call),
-			       instance, call);
+		{
+		  /* But avoid the implicit lvalue-rvalue conversion when 'a'
+		     is volatile.  */
+		  tree a = instance;
+		  if (TREE_THIS_VOLATILE (a))
+		    a = build_this (a);
+		  call = build2 (COMPOUND_EXPR, TREE_TYPE (call), a, call);
+		}
 	      else if (call != error_mark_node
 		       && DECL_DESTRUCTOR_P (cand->fn)
 		       && !VOID_TYPE_P (TREE_TYPE (call)))

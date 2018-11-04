@@ -785,6 +785,46 @@ _GLIBCXX_BEGIN_NAMESPACE_CXX11
       _AutomatonPtr          _M_automaton;
     };
 
+  template<typename _Ch, typename _Tr>
+    constexpr regex_constants::syntax_option_type
+    basic_regex<_Ch, _Tr>::icase;
+
+  template<typename _Ch, typename _Tr>
+    constexpr regex_constants::syntax_option_type
+    basic_regex<_Ch, _Tr>::nosubs;
+
+  template<typename _Ch, typename _Tr>
+    constexpr regex_constants::syntax_option_type
+    basic_regex<_Ch, _Tr>::optimize;
+
+  template<typename _Ch, typename _Tr>
+    constexpr regex_constants::syntax_option_type
+    basic_regex<_Ch, _Tr>::collate;
+
+  template<typename _Ch, typename _Tr>
+    constexpr regex_constants::syntax_option_type
+    basic_regex<_Ch, _Tr>::ECMAScript;
+
+  template<typename _Ch, typename _Tr>
+    constexpr regex_constants::syntax_option_type
+    basic_regex<_Ch, _Tr>::basic;
+
+  template<typename _Ch, typename _Tr>
+    constexpr regex_constants::syntax_option_type
+    basic_regex<_Ch, _Tr>::extended;
+
+  template<typename _Ch, typename _Tr>
+    constexpr regex_constants::syntax_option_type
+    basic_regex<_Ch, _Tr>::awk;
+
+  template<typename _Ch, typename _Tr>
+    constexpr regex_constants::syntax_option_type
+    basic_regex<_Ch, _Tr>::grep;
+
+  template<typename _Ch, typename _Tr>
+    constexpr regex_constants::syntax_option_type
+    basic_regex<_Ch, _Tr>::egrep;
+
   /** @brief Standard regular expressions. */
   typedef basic_regex<char>    regex;
 
@@ -1751,7 +1791,7 @@ _GLIBCXX_BEGIN_NAMESPACE_CXX11
        */
       const_iterator
       end() const
-      { return _Base_type::end() - 3; }
+      { return _Base_type::end() - (empty() ? 0 : 3); }
 
       /**
        * @brief Gets an iterator to one-past-the-end of the collection.

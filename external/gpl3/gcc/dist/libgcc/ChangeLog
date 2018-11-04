@@ -1,3 +1,119 @@
+2018-10-26  Release Manager
+
+	* GCC 6.5.0 released.
+
+2018-08-17  John David Anglin  <danglin@gcc.gnu.org>
+
+	Backport from mainline
+	2018-08-11  John David Anglin  <danglin@gcc.gnu.org>
+
+	* config/pa/linux-atomic.c: Update comment.
+	(FETCH_AND_OP_2, OP_AND_FETCH_2, FETCH_AND_OP_WORD, OP_AND_FETCH_WORD,
+	COMPARE_AND_SWAP_2, __sync_val_compare_and_swap_4,
+	SYNC_LOCK_TEST_AND_SET_2, __sync_lock_test_and_set_4): Use
+	__ATOMIC_RELAXED for atomic loads.
+	(SYNC_LOCK_RELEASE_1): New define.  Use __sync_synchronize() and
+	unordered store to release lock.
+	(__sync_lock_release_8): Likewise.
+	(SYNC_LOCK_RELEASE_2): Remove define.
+	 
+2018-04-02  H.J. Lu  <hongjiu.lu@intel.com>
+
+	Backport from mainline
+	2018-03-29  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR target/85100
+	* config/i386/cpuinfo.c (XCR_XFEATURE_ENABLED_MASK): New.
+	(XSTATE_FP): Likewise.
+	(XSTATE_SSE): Likewise.
+	(XSTATE_YMM): Likewise.
+	(XSTATE_OPMASK): Likewise.
+	(XSTATE_ZMM): Likewise.
+	(XSTATE_HI_ZMM): Likewise.
+	(XCR_AVX_ENABLED_MASK): Likewise.
+	(XCR_AVX512F_ENABLED_MASK): Likewise.
+	(get_available_features): Enable AVX and AVX512 features only
+	if their states are supported by OSXSAVE.
+
+2018-03-11  John David Anglin  <danglin@gcc.gnu.org>
+
+	Backport from mainline
+	2018-03-06  John David Anglin  <danglin@gcc.gnu.org>
+
+	* config/pa/fptr.c (_dl_read_access_allowed): New.
+	(__canonicalize_funcptr_for_compare): Use it.
+	
+2018-02-20  Max Filippov  <jcmvbkbc@gmail.com>
+
+	Backport from mainline
+	2018-02-20  Max Filippov  <jcmvbkbc@gmail.com>
+
+	* config/xtensa/ieee754-df.S (__adddf3_aux): Add
+	.literal_position directive.
+	* config/xtensa/ieee754-sf.S (__addsf3_aux): Likewise.
+
+2018-01-23  Max Filippov  <jcmvbkbc@gmail.com>
+
+	Backport from mainline
+	2018-01-23  Max Filippov  <jcmvbkbc@gmail.com>
+
+	* config/xtensa/ieee754-df.S (__addsf3, __subsf3, __mulsf3)
+	(__divsf3): Make NaN return value quiet.
+	* config/xtensa/ieee754-sf.S (__adddf3, __subdf3, __muldf3)
+	(__divdf3): Make NaN return value quiet.
+
+2017-11-21  Rainer Orth  <ro@CeBiTec.Uni-Bielefeld.DE>
+
+	Backport from mainline
+	2017-11-14  Rainer Orth  <ro@CeBiTec.Uni-Bielefeld.DE>
+
+	* config.host (*-*-solaris2*): Adapt comment for Solaris 12
+	renaming.
+	* config/sol2/crtpg.c (__start_crt_compiler): Likewise.
+	* configure.ac (libgcc_cv_solaris_crts): Likewise.
+	* configure: Regenerate.
+
+2017-11-05  Andreas Tobler  <andreast@gcc.gnu.org>
+
+	Backport from mainline
+	2017-11-04  Andreas Tobler  <andreast@gcc.gnu.org>
+
+	PR libgcc/82635
+	* config/i386/freebsd-unwind.h (MD_FALLBACK_FRAME_STATE_FOR): Use a
+	sysctl to determine whether we're in a trampoline.
+	Keep the pattern matching method for systems without
+	KERN_PROC_SIGTRAMP sysctl.
+
+2017-10-13  Jakub Jelinek  <jakub@redhat.com>
+
+	PR target/82274
+	* libgcc2.c (__mulvDI3): If both operands have
+	the same highpart of -1 and the topmost bit of lowpart is 0,
+	multiplication overflows even if both lowparts are 0.
+
+2017-07-20  Peter Bergner  <bergner@vnet.ibm.com>
+
+	Backport from mainline
+	2017-07-07  Peter Bergner  <bergner@vnet.ibm.com>
+
+	* config/rs6000/float128-ifunc.c: Don't include auxv.h.
+	(have_ieee_hw_p): Delete function.
+	(SW_OR_HW) Use __builtin_cpu_supports().
+
+2017-07-04  Joseph Myers  <joseph@codesourcery.com>
+
+	* config/aarch64/linux-unwind.h (aarch64_fallback_frame_state),
+	config/alpha/linux-unwind.h (alpha_fallback_frame_state),
+	config/bfin/linux-unwind.h (bfin_fallback_frame_state),
+	config/i386/linux-unwind.h (x86_64_fallback_frame_state,
+	x86_fallback_frame_state), config/m68k/linux-unwind.h (struct
+	uw_ucontext), config/nios2/linux-unwind.h (struct nios2_ucontext),
+	config/pa/linux-unwind.h (pa32_fallback_frame_state),
+	config/sh/linux-unwind.h (sh_fallback_frame_state),
+	config/tilepro/linux-unwind.h (tile_fallback_frame_state),
+	config/xtensa/linux-unwind.h (xtensa_fallback_frame_state): Use
+	ucontext_t instead of struct ucontext.
+
 2017-07-04  Release Manager
 
 	* GCC 6.4.0 released.
