@@ -1,4 +1,4 @@
-/*	$NetBSD: syslogd.c,v 1.125 2018/05/06 19:16:36 christos Exp $	*/
+/*	$NetBSD: syslogd.c,v 1.126 2018/11/04 20:23:08 roy Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: syslogd.c,v 1.125 2018/05/06 19:16:36 christos Exp $");
+__RCSID("$NetBSD: syslogd.c,v 1.126 2018/11/04 20:23:08 roy Exp $");
 #endif
 #endif /* not lint */
 
@@ -114,6 +114,7 @@ typedef struct deadq_entry {
 #define DQ_TIMO_INIT	2
 
 #define	RCVBUFLEN	16384
+int	buflen = RCVBUFLEN;
 /*
  * Intervals at which we flush out "message repeated" messages,
  * in seconds after previous message is logged.	 After each flush,
@@ -315,10 +316,15 @@ main(int argc, char *argv[])
 	/* should we set LC_TIME="C" to ensure correct timestamps&parsing? */
 	(void)setlocale(LC_ALL, "");
 
-	while ((ch = getopt(argc, argv, "b:dnsSf:m:o:p:P:ru:g:t:TUv")) != -1)
+	while ((ch = getopt(argc, argv, "b:B:dnsSf:m:o:p:P:ru:g:t:TUv")) != -1)
 		switch(ch) {
 		case 'b':
 			bindhostname = optarg;
+			break;
+		case 'B':
+			buflen = atoi(optarg);
+			if (buflen < RCVBUFLEN)
+				buflen = RCVBUFLEN;
 			break;
 		case 'd':		/* debug */
 			Debug = D_DEFAULT;
@@ -657,7 +663,8 @@ usage(void)
 {
 
 	(void)fprintf(stderr,
-	    "usage: %s [-dnrSsTUv] [-b bind_address] [-f config_file] [-g group]\n"
+	    "usage: %s [-dnrSsTUv] [-b bind_address] [-B buffer_length]\n"
+	    "\t[-f config_file] [-g group]\n"
 	    "\t[-m mark_interval] [-P file_list] [-p log_socket\n"
 	    "\t[-p log_socket2 ...]] [-t chroot_dir] [-u user]\n",
 	    getprogname());
@@ -667,15 +674,15 @@ usage(void)
 static void
 setsockbuf(int fd, const char *name)
 {
-	int buflen;
+	int curbuflen;
 	socklen_t socklen = sizeof(buflen);
-	if (getsockopt(fd, SOL_SOCKET, SO_RCVBUF, &buflen, &socklen) == -1) {
+
+	if (getsockopt(fd, SOL_SOCKET, SO_RCVBUF, &curbuflen, &socklen) == -1) {
 		logerror("getsockopt: SO_RCVBUF: `%s'", name);
 		return;
 	}
-	if (buflen >= RCVBUFLEN)
+	if (curbuflen >= buflen)
 		return;
-	buflen = RCVBUFLEN;
 	if (setsockopt(fd, SOL_SOCKET, SO_RCVBUF, &buflen, socklen) == -1) {
 		logerror("setsockopt: SO_RCVBUF: `%s'", name);
 		return;
