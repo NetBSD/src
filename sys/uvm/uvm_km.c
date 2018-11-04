@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_km.c,v 1.144 2017/10/28 00:37:13 pgoyette Exp $	*/
+/*	$NetBSD: uvm_km.c,v 1.145 2018/11/04 13:48:27 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -152,7 +152,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.144 2017/10/28 00:37:13 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.145 2018/11/04 13:48:27 mlelstv Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -786,10 +786,7 @@ again:
 			return ENOMEM;
 		}
 		va = PMAP_MAP_POOLPAGE(VM_PAGE_TO_PHYS(pg));
-		if (__predict_false(va == 0)) {
-			uvm_pagefree(pg);
-			return ENOMEM;
-		}
+		KASSERT(va != 0);
 		*addr = va;
 		return 0;
 	}
