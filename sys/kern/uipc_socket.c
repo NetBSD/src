@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.265 2018/09/03 16:29:35 riastradh Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.266 2018/11/04 16:30:29 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.265 2018/09/03 16:29:35 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.266 2018/11/04 16:30:29 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -118,6 +118,7 @@ MALLOC_DEFINE(M_SONAME, "soname", "socket name");
 
 extern const struct fileops socketops;
 
+static int	sooptions;
 extern int	somaxconn;			/* patchable (XXX sysctl) */
 int		somaxconn = SOMAXCONN;
 kmutex_t	*softnet_lock;
@@ -537,6 +538,7 @@ socreate(int dom, struct socket **aso, int type, int proto, struct lwp *l,
 	so->so_proto = prp;
 	so->so_send = sosend;
 	so->so_receive = soreceive;
+	so->so_options = sooptions;
 #ifdef MBUFTRACE
 	so->so_rcv.sb_mowner = &prp->pr_domain->dom_mowner;
 	so->so_snd.sb_mowner = &prp->pr_domain->dom_mowner;
@@ -1757,6 +1759,7 @@ sosetopt1(struct socket *so, const struct sockopt *sopt)
 	case SO_OOBINLINE:
 	case SO_TIMESTAMP:
 	case SO_NOSIGPIPE:
+	case SO_RERROR:
 #ifdef SO_OTIMESTAMP
 	case SO_OTIMESTAMP:
 #endif
@@ -1958,6 +1961,7 @@ sogetopt1(struct socket *so, struct sockopt *sopt)
 	case SO_OOBINLINE:
 	case SO_TIMESTAMP:
 	case SO_NOSIGPIPE:
+	case SO_RERROR:
 #ifdef SO_OTIMESTAMP
 	case SO_OTIMESTAMP:
 #endif
@@ -2522,6 +2526,31 @@ sysctl_kern_sbmax(SYSCTLFN_ARGS)
 	return (error);
 }
 
+/*
+ * sysctl helper routine for kern.sooptions. Ensures that only allowed
+ * options can be set.
+ */
+static int
+sysctl_kern_sooptions(SYSCTLFN_ARGS)
+{
+	int error, new_options;
+	struct sysctlnode node;
+
+	new_options = sooptions;
+	node = *rnode;
+	node.sysctl_data = &new_options;
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+	if (error || newp == NULL)
+		return error;
+
+	if (new_options & ~SO_DEFOPTS)
+		return EINVAL;
+
+	sooptions = new_options;
+
+	return 0;
+}
+
 static void
 sysctl_kern_socket_setup(void)
 {
@@ -2542,4 +2571,11 @@ sysctl_kern_socket_setup(void)
 		       SYSCTL_DESCR("Maximum socket buffer size"),
 		       sysctl_kern_sbmax, 0, NULL, 0,
 		       CTL_KERN, KERN_SBMAX, CTL_EOL);
+
+	sysctl_createv(&socket_sysctllog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "sooptions",
+		       SYSCTL_DESCR("Default socket options"),
+		       sysctl_kern_sooptions, 0, NULL, 0,
+		       CTL_KERN, CTL_CREATE, CTL_EOL);
 }
