@@ -321,11 +321,18 @@ program source code.  The format is
 Additional block information may succeed each line, when requested by
 command line option.  The @var{execution_count} is @samp{-} for lines
 containing no code.  Unexecuted lines are marked @samp{#####} or
-@samp{====}, depending on whether they are reachable by
+@samp{=====}, depending on whether they are reachable by
 non-exceptional paths or only exceptional paths such as C++ exception
 handlers, respectively. Given @samp{-a} option, unexecuted blocks are
 marked @samp{$$$$$} or @samp{%%%%%}, depending on whether a basic block
 is reachable via non-exceptional or exceptional paths.
+
+Note that GCC can completely remove the bodies of functions that are
+not needed -- for instance if they are inlined everywhere.  Such functions
+are marked with @samp{-}, which can be confusing.
+Use the @option{-fkeep-inline-functions} and @option{-fkeep-static-functions}
+options to retain these functions and
+allow gcov to properly show their @var{execution_count}.
 
 Some lines of information at the start have @var{line_number} of zero.
 These preamble lines are of the form
@@ -604,6 +611,8 @@ facilities to restrict profile collection to the program region of
 interest. Calling @code{_gcov_reset(void)} will clear all profile counters
 to zero, and calling @code{_gcov_dump(void)} will cause the profile information
 collected at that point to be dumped to @file{.gcda} output files.
+If an executable loads a dynamic shared object via dlopen functionality,
+@option{-Wl,--dynamic-list-data} is needed to dump all profile data.
 
 @c man end
 
