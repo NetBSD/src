@@ -1,4 +1,4 @@
-.\"	$NetBSD: syslogd.8,v 1.55 2017/07/03 21:35:32 wiz Exp $
+.\"	$NetBSD: syslogd.8,v 1.56 2018/11/04 20:23:08 roy Exp $
 .\"
 .\" Copyright (c) 1983, 1986, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     from: @(#)syslogd.8	8.1 (Berkeley) 6/6/93
 .\"
-.Dd March 28, 2012
+.Dd November 4, 2018
 .Dt SYSLOGD 8
 .Os
 .Sh NAME
@@ -39,6 +39,7 @@
 .Nm
 .Op Fl dnrSsTUv
 .Op Fl b Ar bind_address
+.Op Fl B Ar buffer_length
 .Op Fl f Ar config_file
 .Op Fl g Ar group
 .Op Fl m Ar mark_interval
@@ -60,6 +61,10 @@ The options are as follows:
 Specify one specific IP address or hostname to bind to.
 If a hostname is specified, the IPv4 or IPv6 address
 which corresponds to it is used.
+.It Fl B Ar buffer_length
+Sets the receiving buffer length.
+The default is 16384 bytes.
+If syslogd reports buffer overflow, this needs increasing.
 .It Fl d
 Enable debugging to the standard output,
 and do not disassociate from the controlling terminal.
