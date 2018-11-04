@@ -136,7 +136,6 @@ extern bool rs6000_emit_set_const (rtx, rtx);
 extern int rs6000_emit_cmove (rtx, rtx, rtx, rtx);
 extern int rs6000_emit_vector_cond_expr (rtx, rtx, rtx, rtx, rtx, rtx);
 extern void rs6000_emit_minmax (rtx, enum rtx_code, rtx, rtx);
-extern void rs6000_split_signbit (rtx, rtx);
 extern void rs6000_expand_atomic_compare_and_swap (rtx op[]);
 extern void rs6000_expand_atomic_exchange (rtx op[]);
 extern void rs6000_expand_atomic_op (enum rtx_code, rtx, rtx, rtx, rtx, rtx);
@@ -216,6 +215,7 @@ extern void rs6000_sibcall_aix (rtx, rtx, rtx, rtx);
 extern void rs6000_aix_asm_output_dwarf_table_ref (char *);
 extern void get_ppc476_thunk_name (char name[32]);
 extern bool rs6000_overloaded_builtin_p (enum rs6000_builtins);
+extern int rs6000_store_data_bypass_p (rtx_insn *, rtx_insn *);
 extern HOST_WIDE_INT rs6000_builtin_mask_calculate (void);
 extern void rs6000_asm_output_dwarf_pcrel (FILE *file, int size,
 					   const char *label);
@@ -229,6 +229,7 @@ extern void rs6000_cpu_cpp_builtins (struct cpp_reader *);
 #ifdef TREE_CODE
 extern bool rs6000_pragma_target_parse (tree, tree);
 #endif
+extern void rs6000_activate_target_options (tree new_tree);
 extern void rs6000_target_modify_macros (bool, HOST_WIDE_INT, HOST_WIDE_INT);
 extern void (*rs6000_target_modify_macros_ptr) (bool, HOST_WIDE_INT,
 						HOST_WIDE_INT);
