@@ -1,4 +1,4 @@
-/* $NetBSD: udp6_usrreq.c,v 1.141 2018/04/28 13:26:57 maxv Exp $ */
+/* $NetBSD: udp6_usrreq.c,v 1.142 2018/11/04 08:48:01 mlelstv Exp $ */
 /* $KAME: udp6_usrreq.c,v 1.86 2001/05/27 17:33:00 itojun Exp $ */
 /* $KAME: udp6_output.c,v 1.43 2001/10/15 09:19:52 itojun Exp $ */
 
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp6_usrreq.c,v 1.141 2018/04/28 13:26:57 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp6_usrreq.c,v 1.142 2018/11/04 08:48:01 mlelstv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -763,7 +763,10 @@ udp6_output(struct in6pcb * const in6p, struct mbuf *m,
 			    in6p->in6p_moptions,
 			    &in6p->in6p_route,
 			    &in6p->in6p_laddr, &oifp, &psref, &_laddr);
-			/* XXX need error check? */
+			if (error)
+				laddr = NULL;
+			else
+				laddr = &_laddr;
 			if (oifp && scope_ambiguous &&
 			    (error = in6_setscope(&sin6->sin6_addr,
 			    oifp, NULL))) {
@@ -773,7 +776,6 @@ udp6_output(struct in6pcb * const in6p, struct mbuf *m,
 			}
 			if_put(oifp, &psref);
 			curlwp_bindx(bound);
-			laddr = &_laddr;
 		} else {
 			/*
 			 * XXX: freebsd[34] does not have in_selectsrc, but
