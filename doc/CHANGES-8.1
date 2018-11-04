@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.1,v 1.1.2.47 2018/11/03 17:20:35 martin Exp $
+# $NetBSD: CHANGES-8.1,v 1.1.2.48 2018/11/04 11:15:10 martin Exp $
 
 A complete list of changes from the NetBSD 8.0 release to the NetBSD 8.1
 release:
@@ -1575,4 +1575,18 @@ external/bsd/nsd/include/config.h		1.4
 	Disable {send,recv}mmsg until we make our syscalls not have "sticky"
 	errors.
 	[christos, ticket #1077]
+
+sys/dev/usb/uhub.c				1.140,1.141
+sys/dev/usb/usb_subr.c				1.228
+
+	Make USB port numbers display consistent.
+	[manu, ticket #1078]
+
+sys/netinet6/udp6_usrreq.c			1.142
+	(applied to udp6_output.c, due to code refactoring
+	in -current)
+
+	Fix error path in ip6 source address selection.
+	[mlelstv, ticket #1079]
+
 
