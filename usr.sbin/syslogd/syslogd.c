@@ -1,4 +1,4 @@
-/*	$NetBSD: syslogd.c,v 1.128 2018/11/05 08:34:20 martin Exp $	*/
+/*	$NetBSD: syslogd.c,v 1.129 2018/11/05 09:22:30 wiz Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: syslogd.c,v 1.128 2018/11/05 08:34:20 martin Exp $");
+__RCSID("$NetBSD: syslogd.c,v 1.129 2018/11/05 09:22:30 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -686,7 +686,7 @@ usage(void)
 {
 
 	(void)fprintf(stderr,
-	    "usage: %s [-dnrSsTUvX] [-b bind_address] [-B buffer_length]\n"
+	    "usage: %s [-dnrSsTUvX] [-B buffer_length] [-b bind_address]\n"
 	    "\t[-f config_file] [-g group]\n"
 	    "\t[-m mark_interval] [-P file_list] [-p log_socket\n"
 	    "\t[-p log_socket2 ...]] [-t chroot_dir] [-u user]\n",
