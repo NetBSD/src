@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.211 2017/05/26 14:21:01 riastradh Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.212 2018/11/05 02:28:32 manu Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.211 2017/05/26 14:21:01 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.212 2018/11/05 02:28:32 manu Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -913,7 +913,10 @@ puffs_vnop_open(void *v)
 		 * - we do not want to discard cached write by direct write
 		 * - read cache is now useless and should be freed
 		 */
+		mutex_enter(&pn->pn_sizemtx);
 		flushvncache(vp, 0, 0, true);
+		mutex_exit(&pn->pn_sizemtx);
+
 		if (mode & FREAD)
 			pn->pn_stat |= PNODE_RDIRECT;
 		if (mode & FWRITE)
