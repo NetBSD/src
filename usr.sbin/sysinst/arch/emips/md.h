@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.1 2014/07/26 19:30:45 dholland Exp $	*/
+/*	$NetBSD: md.h,v 1.2 2018/11/05 19:45:56 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -50,12 +50,6 @@
 #define DEFVARSIZE	32	/* Default /var size, if created */
 #define DEFUSRSIZE	120	/* Default /usr size, if /home */
 #define XNEEDMB		100	/* Extra megs for full X installation */
-
-/*
- * Disk names accepted as valid targets for a from-scratch installation.
- *
- */
-#define DISK_NAMES "ace", "sd", "wd", "ld", "raid"
 
 /* have support for booting from UFS2 */
 #define HAVE_UFS2_BOOT

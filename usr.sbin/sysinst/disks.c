@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.16 2018/06/03 13:18:06 martin Exp $ */
+/*	$NetBSD: disks.c,v 1.17 2018/11/05 19:45:56 martin Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -36,6 +36,7 @@
 
 
 #include <errno.h>
+#include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -109,12 +110,6 @@ static void fixsb(const char *, const char *, char);
 static bool is_gpt(const char *);
 static int incoregpt(pm_devs_t *, partinfo *);
 
-#ifndef DISK_NAMES
-#define DISK_NAMES "wd", "sd", "ld", "raid"
-#endif
-
-static const char *disk_names[] = { DISK_NAMES,
-				    "vnd", "cgd", "dk:no_part", NULL };
 
 static bool tmpfs_on_var_shm(void);
 
@@ -510,72 +505,86 @@ is_ffs_wedge(const char *dev)
 static int
 get_disks(struct disk_desc *dd, bool with_non_partitionable)
 {
-	const char **xd;
-	char *cp;
+	static const int mib[] = { CTL_HW, HW_DISKNAMES };
+	static const unsigned int miblen = __arraycount(mib);
+	const char *xd;
 	struct disklabel l;
-	int i;
 	int numdisks;
+	size_t len;
+	char *disk_names;
 
 	/* initialize */
 	numdisks = 0;
 
-	for (xd = disk_names; *xd != NULL; xd++) {
-		for (i = 0; i < MAX_DISKS; i++) {
-			strlcpy(dd->dd_name, *xd, sizeof dd->dd_name - 2);
-			cp = strchr(dd->dd_name, ':');
-			if (cp != NULL) {
-				dd->dd_no_mbr = !strcmp(cp, ":no_mbr");
-				dd->dd_no_part = !strcmp(cp, ":no_part");
-			} else {
-				dd->dd_no_mbr = false;
-				dd->dd_no_part = false;
-				cp = strchr(dd->dd_name, 0);
-			}
-			if (dd->dd_no_part && !with_non_partitionable)
-				continue;
+	if (sysctl(mib, miblen, NULL, &len, NULL, 0) == -1)
+		return 0;
+	disk_names = malloc(len);
+	if (disk_names == NULL)
+		return 0;
 
-			snprintf(cp, 2 + 1, "%d", i);
-			if (!get_geom(dd->dd_name, &l)) {
-				if (errno == ENOENT)
-					break;
-				if (errno != ENOTTY || !dd->dd_no_part)
-					/*
-					 * Allow plain partitions,
-					 * like already existing wedges
-					 * (like dk0) if marked as
-					 * non-partitioning device.
-					 * For all other cases, continue
-					 * with the next disk.
-					 */
-					continue;
-				if (!is_ffs_wedge(dd->dd_name))
-					continue;
-			}
-
-			/*
-			 * Exclude a disk mounted as root partition,
-			 * in case of install-image on a USB memstick.
-			 */
-			if (is_active_rootpart(dd->dd_name, 0))
-				continue;
-
-			if (!dd->dd_no_part) {
-				dd->dd_cyl = l.d_ncylinders;
-				dd->dd_head = l.d_ntracks;
-				dd->dd_sec = l.d_nsectors;
-				dd->dd_secsize = l.d_secsize;
-				dd->dd_totsec = l.d_secperunit;
-			}
-			if (dd->dd_no_part)
-				get_wedge_descr(dd);
-			else
-				get_descr(dd);
-			dd++;
-			numdisks++;
-			if (numdisks >= MAX_DISKS)
-				return numdisks;
-		}
+	if (sysctl(mib, miblen, disk_names, &len, NULL, 0) == -1) {
+		free(disk_names);
+		return 0;
 	}
+
+	for (xd = strtok(disk_names, " "); xd != NULL; xd = strtok(NULL, " ")) {
+		strlcpy(dd->dd_name, xd, sizeof dd->dd_name - 2);
+		dd->dd_no_mbr = false;
+		dd->dd_no_part = false;
+
+		if (strncmp(xd, "dk", 2) == 0) {
+			char *endp;
+			int e;
+
+			/* if this device is dkNNNN, no partitioning is possible */
+			strtou(xd+2, &endp, 10, 0, INT_MAX, &e);
+			if (endp && *endp == 0 && e == 0)
+				dd->dd_no_part = true;
+		}
+		if (dd->dd_no_part && !with_non_partitionable)
+			continue;
+
+		if (!get_geom(dd->dd_name, &l)) {
+			if (errno == ENOENT)
+				break;
+			if (errno != ENOTTY || !dd->dd_no_part)
+				/*
+				 * Allow plain partitions,
+				 * like already existing wedges
+				 * (like dk0) if marked as
+				 * non-partitioning device.
+				 * For all other cases, continue
+				 * with the next disk.
+				 */
+				continue;
+			if (!is_ffs_wedge(dd->dd_name))
+				continue;
+		}
+
+		/*
+		 * Exclude a disk mounted as root partition,
+		 * in case of install-image on a USB memstick.
+		 */
+		if (is_active_rootpart(dd->dd_name, 0))
+			continue;
+
+		if (!dd->dd_no_part) {
+			dd->dd_cyl = l.d_ncylinders;
+			dd->dd_head = l.d_ntracks;
+			dd->dd_sec = l.d_nsectors;
+			dd->dd_secsize = l.d_secsize;
+			dd->dd_totsec = l.d_secperunit;
+		}
+		if (dd->dd_no_part)
+			get_wedge_descr(dd);
+		else
+			get_descr(dd);
+		dd++;
+		numdisks++;
+		if (numdisks == MAX_DISKS)
+			break;
+	}
+	free(disk_names);
 	return numdisks;
 }
 
