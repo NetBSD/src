@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.98 2018/11/04 21:41:12 skrll Exp $
+#	$NetBSD: Makefile.inc,v 1.99 2018/11/05 21:34:33 skrll Exp $
 #
 #	etc.evbarm/Makefile.inc -- evbarm-specific etc Makefile targets
 #
@@ -175,7 +175,7 @@ BUILD_KERNELS+=		${board}_INSTALL
 KERNEL_SETS+=		${KERNEL_SETS.${arch}}
 .endfor
 
-.if !empty(MACHINE_ARCH:M*earmv[67])
+.if !empty(MACHINE_ARCH:Mearmv7*)
 KERNEL_SETS+=		GENERIC
 .endif
 
