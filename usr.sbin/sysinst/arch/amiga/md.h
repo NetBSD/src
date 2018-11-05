@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.1 2014/07/26 19:30:44 dholland Exp $	*/
+/*	$NetBSD: md.h,v 1.2 2018/11/05 19:45:56 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -55,14 +55,6 @@
  */
 
 #define SET_KERNEL_1_NAME	"kern-GENERIC"
-
-/*
- * Disk names accepted as valid targets for a from-scratch installation.
- *
- * On amiga, disks are always named "sd", regardless they are attached
- * to the IDE bus or to the SCSI bus.
- */
-#define DISK_NAMES "sd"
 
 /*
  * Machine-specific command to write a new label to a disk.

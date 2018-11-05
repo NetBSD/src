@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.1 2014/07/26 19:30:47 dholland Exp $	*/
+/*	$NetBSD: md.h,v 1.2 2018/11/05 19:45:56 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -63,11 +63,6 @@
 #define SET_KERNEL_2_NAME	"kern-GENERIC_SCSI3"
 #define SET_KERNEL_3_NAME	"kern-GENERIC_SUN4U"
 #define SET_KERNEL_4_NAME	"kern-GENERIC.MP"
-
-/*
- * Disk names accepted as valid targets for a from-scratch installation.
- */
-#define DISK_NAMES "sd", "xy", "xd"
 
 /*
  * Machine-specific command to write a new label to a disk.
