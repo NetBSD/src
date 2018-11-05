@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.1 2014/07/26 19:30:45 dholland Exp $	*/
+/*	$NetBSD: md.h,v 1.2 2018/11/05 19:45:56 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -68,13 +68,6 @@
  *      base etc comp games man misc tests text xbase xcomp xetc xfont xserver
  */
 #define SET_KERNEL_1_NAME	"kern-GENERIC"
-
-/*
- * Disk names accepted as valid targets for a from-scratch installation.
- *
- * On  hp300, allow "rd" HP-IB and "sd" scsi disks.
- */
-#define DISK_NAMES "rd", "sd"
 
 
 /*
