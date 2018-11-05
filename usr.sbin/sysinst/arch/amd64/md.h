@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.2 2015/11/14 23:00:17 pgoyette Exp $	*/
+/*	$NetBSD: md.h,v 1.3 2018/11/05 19:45:56 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -83,14 +83,6 @@
 #define SET_KERNEL_1_NAME	"kern-GENERIC"
 
 #define SET_KERNEL_GENERIC	SET_KERNEL_1
-
-/*
- * Disk names accepted as valid targets for a from-scratch installation.
- *
- * On amd64, we allow "wd"  ST-506/IDE disks,  "sd" scsi disks, "ld" logical
- * disks and "raid" raidframe disks.
- */
-#define DISK_NAMES "wd", "sd", "ld", "raid:no_mbr", "xbd:no_mbr"
 
 /*
  * Machine-specific command to write a new label to a disk.
