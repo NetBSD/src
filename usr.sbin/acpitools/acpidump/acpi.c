@@ -1,4 +1,4 @@
-/* $NetBSD: acpi.c,v 1.39 2018/11/01 03:08:46 msaitoh Exp $ */
+/* $NetBSD: acpi.c,v 1.40 2018/11/05 07:39:57 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 1998 Doug Rabson
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: acpi.c,v 1.39 2018/11/01 03:08:46 msaitoh Exp $");
+__RCSID("$NetBSD: acpi.c,v 1.40 2018/11/05 07:39:57 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/endian.h>
@@ -86,6 +86,7 @@ static void	acpi_print_intr(uint32_t intr, uint16_t mps_flags);
 static void	acpi_print_local_nmi(u_int lint, uint16_t mps_flags);
 static void	acpi_print_madt(ACPI_SUBTABLE_HEADER *mp);
 static void	acpi_handle_bert(ACPI_TABLE_HEADER *sdp);
+static void	acpi_handle_bgrt(ACPI_TABLE_HEADER *sdp);
 static void	acpi_handle_boot(ACPI_TABLE_HEADER *sdp);
 static void	acpi_handle_cpep(ACPI_TABLE_HEADER *sdp);
 static void	acpi_handle_csrt(ACPI_TABLE_HEADER *sdp);
@@ -1217,6 +1218,37 @@ acpi_handle_bert(ACPI_TABLE_HEADER *sdp)
 
 	printf("\tLength of Boot Error Region=%d bytes\n", bert->RegionLength);
 	printf("\tPhysical Address of Region=0x%"PRIx64"\n", bert->Address);
+
+	printf(END_COMMENT);
+}
+
+static void
+acpi_handle_bgrt(ACPI_TABLE_HEADER *sdp)
+{
+	ACPI_TABLE_BGRT *bgrt;
+	unsigned int degree;
+
+	printf(BEGIN_COMMENT);
+	acpi_print_sdt(sdp);
+	bgrt = (ACPI_TABLE_BGRT *)sdp;
+
+	printf("\tVersion=%hu\n", bgrt->Version);
+	degree = ((unsigned int)(bgrt->Status & ACPI_BGRT_ORIENTATION_OFFSET)
+	    >> 1) * 90;
+	printf("\tDegree=%u\n", degree);
+	printf("\tDisplayed=%hhu\n", bgrt->Status & ACPI_BGRT_DISPLAYED);
+	printf("\tImage Type=");
+	switch (bgrt->ImageType) {
+	case 0:
+		printf("Bitmap\n");
+		break;
+	default:
+		printf("reserved (0x%hhx)\n", bgrt->ImageType);
+		break;
+	}
+	printf("\tImage Address=0x%"PRIx64"\n", bgrt->ImageAddress);
+	printf("\tImage Offset X=0x%08x\n", bgrt->ImageOffsetX);
+	printf("\tImage Offset Y=0x%08x\n", bgrt->ImageOffsetY);
 
 	printf(END_COMMENT);
 }
@@ -3896,6 +3928,8 @@ acpi_handle_rsdt(ACPI_TABLE_HEADER *rsdp)
 			acpi_handle_fadt(sdp);
 		else if (!memcmp(sdp->Signature, ACPI_SIG_BERT, 4))
 			acpi_handle_bert(sdp);
+		else if (!memcmp(sdp->Signature, ACPI_SIG_BGRT, 4))
+			acpi_handle_bgrt(sdp);
 		else if (!memcmp(sdp->Signature, ACPI_SIG_BOOT, 4))
 			acpi_handle_boot(sdp);
 		else if (!memcmp(sdp->Signature, ACPI_SIG_CPEP, 4))
