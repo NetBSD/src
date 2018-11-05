@@ -1,4 +1,4 @@
-/* $NetBSD: if_plip.c,v 1.31 2018/07/25 07:55:45 msaitoh Exp $ */
+/* $NetBSD: if_plip.c,v 1.32 2018/11/05 18:37:18 mlelstv Exp $ */
 
 /*-
  * Copyright (c) 1997 Poul-Henning Kamp
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_plip.c,v 1.31 2018/07/25 07:55:45 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_plip.c,v 1.32 2018/11/05 18:37:18 mlelstv Exp $");
 
 /*
  * Parallel port TCP/IP interfaces added.  I looked at the driver from
@@ -375,8 +375,10 @@ lpioctl(struct ifnet *ifp, u_long cmd, void *data)
 		ifp->if_flags |= IFF_UP;
 	/* FALLTHROUGH */
 	case SIOCSIFFLAGS:
-		if ((error = ifioctl_common(ifp, cmd, data)) != 0)
-			break;
+		if (cmd == SIOCSIFFLAGS) {
+			if ((error = ifioctl_common(ifp, cmd, data)) != 0)
+				break;
+		}
 		if ((ifp->if_flags & (IFF_UP|IFF_RUNNING)) == IFF_UP) {
 			if ((error = ppbus_request_bus(ppbus, dev, 0, 0)))
 				break;
