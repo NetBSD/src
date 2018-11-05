@@ -1,4 +1,4 @@
-#	$NetBSD: files.generic,v 1.2 2018/10/18 09:01:54 skrll Exp $
+#	$NetBSD: files.generic,v 1.3 2018/11/05 07:42:56 skrll Exp $
 #
 # A generic (aarch32) kernel configuration info
 #
@@ -22,3 +22,4 @@ include "arch/arm/nvidia/files.tegra"
 include "arch/arm/samsung/files.exynos"
 include "arch/arm/sunxi/files.sunxi"
 include "arch/arm/vexpress/files.vexpress"
+include "arch/arm/virt/files.virt"
