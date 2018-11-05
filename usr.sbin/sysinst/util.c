@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.12 2018/10/06 18:45:37 martin Exp $	*/
+/*	$NetBSD: util.c,v 1.13 2018/11/05 17:04:03 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1757,11 +1757,12 @@ use_tgz_for_set(const char *set_name)
 			return dist->force_tgz;
 	}
 
-	return false;
+	return true;
 }
 
 /* Return the postfix used for a given set */
-const char *set_postfix(const char *set_name)
+const char *
+set_postfix(const char *set_name)
 {
 	return use_tgz_for_set(set_name) ? dist_tgz_postfix : dist_postfix;
 }
