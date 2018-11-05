@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC,v 1.12 2018/10/31 08:10:01 skrll Exp $
+#	$NetBSD: GENERIC,v 1.13 2018/11/05 07:41:46 skrll Exp $
 #
 #	GENERIC ARM (aarch32) kernel
 #
@@ -162,6 +162,7 @@ options 	CPU_CORTEXA7
 options 	CPU_CORTEXA8
 options 	CPU_CORTEXA9
 options 	CPU_CORTEXA15
+options 	CPU_CORTEXA17
 
 options 	CPU_CORTEXA53
 
@@ -184,6 +185,8 @@ options 	SOC_SUN50I_H5
 options 	SOC_SUN50I_H6
 
 options 	SOC_TEGRA124
+
+options 	SOC_VIRT
 
 options 	MULTIPROCESSOR
 
@@ -327,6 +330,7 @@ bcmaux*		at fdt? pass 1		# Broadcom BCM283x Aux Periph Clocks
 # GPIO controller
 bcmgpio*	at fdt?			# Broadcom BCM283x GPIO
 exyopctl*	at fdt? pass 2		# Samsung Exynos GPIO
+plgpio*		at fdt?			# ARM PrimeCell GPIO
 sunxigpio*	at fdt? pass 3		# Allwinner GPIO
 tegragpio*	at fdt? pass 2		# NVIDIA Tegra GPIO
 gpio*		at gpiobus?
@@ -569,12 +573,22 @@ usb*		at usbus?
 
 # Virtio devices
 virtio*	at fdt?				# Virtio MMIO device
-# the baloon driver can not work on machines with non-4k pages
+# the balloon driver cannot work on machines with non-4k pages
 #viomb*	at virtio?			# Virtio memory balloon device
 ld*	at virtio?			# Virtio disk device
 vioif*	at virtio?			# Virtio network device
 viornd* at virtio?			# Virtio entropy device
 vioscsi* at virtio?			# Virtio SCSI device
+
+# SCSI
+scsibus* at scsi?
+sd*	at scsibus? target ? lun ?	# SCSI disks
+st*	at scsibus? target ? lun ?	# SCSI tapes
+cd*	at scsibus? target ? lun ?	# SCSI CD-ROMs
+ch*	at scsibus? target ? lun ?	# SCSI changer devices
+ss*	at scsibus? target ? lun ?	# SCSI scanners
+ses*	at scsibus? target ? lun ?	# SCSI SES/SAF-TE devices
+uk*	at scsibus? target ? lun ?	# unknown SCSI
 
 include "dev/usb/usbdevices.config"
 midi*		at midibus?
