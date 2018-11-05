@@ -1,4 +1,4 @@
-/*	$NetBSD: syslogd.c,v 1.129 2018/11/05 09:22:30 wiz Exp $	*/
+/*	$NetBSD: syslogd.c,v 1.130 2018/11/05 10:27:06 martin Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: syslogd.c,v 1.129 2018/11/05 09:22:30 wiz Exp $");
+__RCSID("$NetBSD: syslogd.c,v 1.130 2018/11/05 10:27:06 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -74,9 +74,6 @@ __RCSID("$NetBSD: syslogd.c,v 1.129 2018/11/05 09:22:30 wiz Exp $");
 #include <poll.h>
 #include "syslogd.h"
 #include "extern.h"
-
-/* Minimum size of the logpath socket buffer */
-#define	RCVBUFLEN		16384
 
 #ifndef DISABLE_SIGN
 #include "sign.h"
@@ -496,9 +493,6 @@ getgroup:
 		die(0, 0, NULL);
 	}
 	for (j = 0, pp = LogPaths; *pp; pp++, j++) {
-		int buf_len;
-		socklen_t socklen = sizeof(buf_len);
-
 		DPRINTF(D_NET, "Making unix dgram socket `%s'\n", *pp);
 		unlink(*pp);
 		memset(&sunx, 0, sizeof(sunx));
@@ -513,19 +507,6 @@ getgroup:
 		}
 		setsockbuf(funix[j], *pp);
 		DPRINTF(D_NET, "Listening on unix dgram socket `%s'\n", *pp);
-		if (getsockopt(funix[j], SOL_SOCKET, SO_RCVBUF,
-			       &buf_len, &socklen) == -1) {
-			logerror("getsockopt: SO_RCVBUF: `%s'", *pp);
-			continue;
-		}
-		if (buf_len >= RCVBUFLEN)
-			continue;
-		buf_len = RCVBUFLEN;
-		if (setsockopt(funix[j], SOL_SOCKET, SO_RCVBUF,
-			       &buf_len, socklen) == -1) {
-			logerror("setsockopt: SO_RCVBUF: `%s'", *pp);
-			continue;
-		}
 	}
 
 	if ((fklog = open(_PATH_KLOG, O_RDONLY, 0)) < 0) {
