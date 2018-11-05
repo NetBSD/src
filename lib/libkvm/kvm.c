@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm.c,v 1.103 2018/02/07 14:03:18 maxv Exp $	*/
+/*	$NetBSD: kvm.c,v 1.104 2018/11/05 00:43:30 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm.c	8.2 (Berkeley) 2/13/94";
 #else
-__RCSID("$NetBSD: kvm.c,v 1.103 2018/02/07 14:03:18 maxv Exp $");
+__RCSID("$NetBSD: kvm.c,v 1.104 2018/11/05 00:43:30 mrg Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -255,6 +255,7 @@ _kvm_open(kvm_t *kd, const char *uf, const char *mf, const char *sf, int flag,
 	kd->fdalign = 1;
 	kd->iobuf = NULL;
 	kd->iobufsz = 0;
+	kd->errbuf[0] = '\0';
 
 	if (flag & KVM_NO_FILES) {
 		kd->alive = KVM_ALIVE_SYSCTL;
@@ -851,8 +852,10 @@ kvm_read(kvm_t *kd, u_long kva, void *buf, size_t len)
 			off_t	foff;
 
 			cc = _kvm_kvatop(kd, (vaddr_t)kva, &pa);
-			if (cc == 0)
+			if (cc == 0) {
+				_kvm_err(kd, kd->program, "_kvm_kvatop(%lx)", kva);
 				return (-1);
+			}
 			if (cc > len)
 				cc = len;
 			foff = _kvm_pa2off(kd, pa);
