@@ -1,4 +1,4 @@
-/* $NetBSD: udp6_usrreq.c,v 1.142 2018/11/04 08:48:01 mlelstv Exp $ */
+/* $NetBSD: udp6_usrreq.c,v 1.143 2018/11/06 04:27:41 ozaki-r Exp $ */
 /* $KAME: udp6_usrreq.c,v 1.86 2001/05/27 17:33:00 itojun Exp $ */
 /* $KAME: udp6_output.c,v 1.43 2001/10/15 09:19:52 itojun Exp $ */
 
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp6_usrreq.c,v 1.142 2018/11/04 08:48:01 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp6_usrreq.c,v 1.143 2018/11/06 04:27:41 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -668,6 +668,10 @@ udp6_output(struct in6pcb * const in6p, struct mbuf *m,
 
 	if (addr6) {
 		sin6 = addr6;
+		if (sin6->sin6_len != sizeof(*sin6)) {
+			error = EINVAL;
+			goto release;
+		}
 		if (sin6->sin6_family != AF_INET6) {
 			error = EAFNOSUPPORT;
 			goto release;
