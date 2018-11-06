@@ -372,12 +372,12 @@ const bfd_target core_sco5_vec =
       sco5_core_file_p			/* a core file */
     },
     {				/* bfd_set_format */
-      bfd_false, bfd_false,
-      bfd_false, bfd_false
+      _bfd_bool_bfd_false_error, bfd_false,
+      _bfd_bool_bfd_false_error, bfd_false
     },
     {				/* bfd_write_contents */
-      bfd_false, bfd_false,
-      bfd_false, bfd_false
+      _bfd_bool_bfd_false_error, bfd_false,
+      _bfd_bool_bfd_false_error, bfd_false
     },
 
     BFD_JUMP_TABLE_GENERIC (_bfd_generic),

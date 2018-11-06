@@ -108,6 +108,16 @@ extern def_file_export *def_file_add_export (def_file *, const char *,
 extern def_file_import *def_file_add_import (def_file *, const char *,
 					     const char *, int, const char *,
 					     const char *, int *);
+extern int def_file_add_import_from (def_file *fdef,
+				     int num_imports,
+				     const char *name,
+				     const char *module,
+				     int ordinal,
+				     const char *internal_name,
+				     const char *its_name);
+extern def_file_import *def_file_add_import_at (def_file *, int, const char *,
+						const char *, int, const char *,
+					        const char *);
 extern void def_file_add_directive (def_file *, const char *, int);
 extern def_file_module *def_get_module (def_file *, const char *);
 #ifdef DEF_FILE_PRINT

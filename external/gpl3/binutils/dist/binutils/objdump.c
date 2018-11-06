@@ -664,9 +664,7 @@ slurp_dynamic_symtab (bfd *abfd)
 static bfd_boolean
 is_significant_symbol_name (const char * name)
 {
-  return strcmp (name, ".plt") == 0
-    ||   strcmp (name, ".got") == 0
-    ||   strcmp (name, ".plt.got") == 0;
+  return strncmp (name, ".plt", 4) == 0 || strcmp (name, ".got") == 0;
 }
 
 /* Filter out (in place) symbols that are useless for disassembly.
@@ -937,6 +935,7 @@ find_symbol_for_address (bfd_vma vma,
   asection *sec;
   unsigned int opb;
   bfd_boolean want_section;
+  long rel_count;
 
   if (sorted_symcount < 1)
     return NULL;
@@ -1065,33 +1064,57 @@ find_symbol_for_address (bfd_vma vma,
      and we have dynamic relocations available, then we can produce
      a better result by matching a relocation to the address and
      using the symbol associated with that relocation.  */
+  rel_count = aux->dynrelcount;
   if (!want_section
-      && aux->dynrelbuf != NULL
       && sorted_syms[thisplace]->value != vma
+      && rel_count > 0
+      && aux->dynrelbuf != NULL
+      && aux->dynrelbuf[0]->address <= vma
+      && aux->dynrelbuf[rel_count - 1]->address >= vma
       /* If we have matched a synthetic symbol, then stick with that.  */
       && (sorted_syms[thisplace]->flags & BSF_SYNTHETIC) == 0)
     {
-      long        rel_count;
-      arelent **  rel_pp;
+      arelent **  rel_low;
+      arelent **  rel_high;
 
-      for (rel_count = aux->dynrelcount, rel_pp = aux->dynrelbuf;
-	   rel_count--;)
+      rel_low = aux->dynrelbuf;
+      rel_high = rel_low + rel_count - 1;
+      while (rel_low <= rel_high)
 	{
-	  arelent * rel = rel_pp[rel_count];
+	  arelent **rel_mid = &rel_low[(rel_high - rel_low) / 2];
+	  arelent * rel = *rel_mid;
 
-	  if (rel->address == vma
-	      && rel->sym_ptr_ptr != NULL
-	      /* Absolute relocations do not provide a more helpful symbolic address.  */
-	      && ! bfd_is_abs_section ((* rel->sym_ptr_ptr)->section))
+	  if (rel->address == vma)
 	    {
-	      if (place != NULL)
-		* place = thisplace;
-	      return * rel->sym_ptr_ptr;
+	      /* Absolute relocations do not provide a more helpful
+	         symbolic address.  Find a non-absolute relocation
+		 with the same address.  */
+	      arelent **rel_vma = rel_mid;
+	      for (rel_mid--;
+		   rel_mid >= rel_low && rel_mid[0]->address == vma;
+		   rel_mid--)
+		rel_vma = rel_mid;
+
+	      for (; rel_vma <= rel_high && rel_vma[0]->address == vma;
+		   rel_vma++)
+		{
+		  rel = *rel_vma;
+		  if (rel->sym_ptr_ptr != NULL
+		      && ! bfd_is_abs_section ((* rel->sym_ptr_ptr)->section))
+		    {
+		      if (place != NULL)
+			* place = thisplace;
+		      return * rel->sym_ptr_ptr;
+		    }
+		}
+	      break;
 	    }
 
-	  /* We are scanning backwards, so if we go below the target address
-	     we have failed.  */
-	  if (rel_pp[rel_count]->address < vma)
+	  if (vma < rel->address)
+	    rel_high = rel_mid;
+	  else if (vma >= rel_mid[1]->address)
+	    rel_low = rel_mid + 1;
+	  else
 	    break;
 	}
     }
@@ -2466,6 +2489,7 @@ load_specific_debug_section (enum dwarf_section_display_enum debug,
   struct dwarf_section *section = &debug_displays [debug].section;
   bfd *abfd = (bfd *) file;
   bfd_byte *contents;
+  bfd_size_type amt;
 
   if (section->start != NULL)
     {
@@ -2480,9 +2504,11 @@ load_specific_debug_section (enum dwarf_section_display_enum debug,
   section->num_relocs = 0;
   section->address = bfd_get_section_vma (abfd, sec);
   section->size = bfd_get_section_size (sec);
-  section->start = contents = malloc (section->size + 1);
+  amt = section->size + 1;
+  section->start = contents = malloc (amt);
   section->user_data = sec;
-  if (section->start == NULL
+  if (amt == 0
+      || section->start == NULL
       || !bfd_get_full_section_contents (abfd, sec, &contents))
     {
       free_debug_section (debug);
@@ -2727,6 +2753,10 @@ dump_dwarf (bfd *abfd)
 
     case bfd_arch_s390:
       init_dwarf_regnames_s390 ();
+      break;
+
+    case bfd_arch_riscv:
+      init_dwarf_regnames_riscv ();
       break;
 
     default:
@@ -3552,7 +3582,7 @@ dump_bfd (bfd *abfd)
     printf (_("\n%s:     file format %s\n"), bfd_get_filename (abfd),
 	    abfd->xvec->name);
   if (dump_ar_hdrs)
-    print_arelt_descr (stdout, abfd, TRUE);
+    print_arelt_descr (stdout, abfd, TRUE, FALSE);
   if (dump_file_header)
     dump_bfd_header (abfd);
   if (dump_private_headers)
@@ -3616,8 +3646,8 @@ dump_bfd (bfd *abfd)
 	      exit_status = 1;
 	    }
 	}
-      /* PR 6483: If there was no STABS or IEEE debug
-	 info in the file, try DWARF instead.  */
+      /* PR 6483: If there was no STABS debug info in the file, try
+	 DWARF instead.  */
       else if (! dump_dwarf_section_info)
 	{
 	  dwarf_select_sections_all ();

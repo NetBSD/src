@@ -1,6 +1,6 @@
 ARCH="aarch64:ilp32"
 MACHINE=
-NOP=0
+NOP=0x1f2003d5
 
 SCRIPT_NAME=elf
 ELFSIZE=32
@@ -27,9 +27,9 @@ DATA_START_SYMBOLS='PROVIDE (__data_start = .);';
 # AArch64 does not support .s* sections.
 NO_SMALL_DATA=yes
 
-OTHER_BSS_SYMBOLS='__bss_start__ = .;'
-OTHER_BSS_END_SYMBOLS='_bss_end__ = . ; __bss_end__ = . ;'
-OTHER_END_SYMBOLS='__end__ = . ;'
+OTHER_BSS_SYMBOLS="${CREATE_SHLIB+PROVIDE (}__bss_start__ = .${CREATE_SHLIB+)};"
+OTHER_BSS_END_SYMBOLS="${CREATE_SHLIB+PROVIDE (}_bss_end__ = .${CREATE_SHLIB+)}; ${CREATE_SHLIB+PROVIDE (}__bss_end__ = .${CREATE_SHLIB+)};"
+OTHER_END_SYMBOLS="${CREATE_SHLIB+PROVIDE (}__end__ = .${CREATE_SHLIB+)};"
 
 OTHER_SECTIONS='.note.gnu.arm.ident 0 : { KEEP (*(.note.gnu.arm.ident)) }'
 ATTRS_SECTIONS='.ARM.attributes 0 : { KEEP (*(.ARM.attributes)) KEEP (*(.gnu.attributes)) }'

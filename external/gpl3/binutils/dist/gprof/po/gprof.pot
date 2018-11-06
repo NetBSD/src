@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: bug-binutils@gnu.org\n"
-"POT-Creation-Date: 2018-01-13 13:55+0000\n"
+"POT-Creation-Date: 2018-06-24 19:43+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -211,52 +211,52 @@ msgstr ""
 msgid "<cycle %d>"
 msgstr ""
 
-#: corefile.c:62
+#: corefile.c:61
 #, c-format
 msgid "%s: unable to parse mapping file %s.\n"
 msgstr ""
 
-#: corefile.c:90 corefile.c:527
+#: corefile.c:89 corefile.c:521
 #, c-format
 msgid "%s: could not open %s.\n"
 msgstr ""
 
-#: corefile.c:192
+#: corefile.c:191
 #, c-format
 msgid "%s: %s: not in executable format\n"
 msgstr ""
 
-#: corefile.c:203
+#: corefile.c:202
 #, c-format
 msgid "%s: can't find .text section in %s\n"
 msgstr ""
 
-#: corefile.c:278
+#: corefile.c:276
 #, c-format
 msgid "%s: ran out room for %lu bytes of text space\n"
 msgstr ""
 
-#: corefile.c:292
+#: corefile.c:290
 #, c-format
 msgid "%s: can't do -c\n"
 msgstr ""
 
-#: corefile.c:335
+#: corefile.c:329
 #, c-format
 msgid "%s: -c not supported on architecture %s\n"
 msgstr ""
 
-#: corefile.c:536 corefile.c:642
+#: corefile.c:530 corefile.c:635
 #, c-format
 msgid "%s: file `%s' has no symbols\n"
 msgstr ""
 
-#: corefile.c:541
+#: corefile.c:535
 #, c-format
 msgid "%s: file `%s' has too many symbols\n"
 msgstr ""
 
-#: corefile.c:909
+#: corefile.c:902
 #, c-format
 msgid "%s: somebody miscounted: ltab.len=%d instead of %ld\n"
 msgstr ""
