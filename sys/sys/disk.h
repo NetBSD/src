@@ -1,4 +1,4 @@
-/*	$NetBSD: disk.h,v 1.72 2017/06/13 14:05:47 chs Exp $	*/
+/*	$NetBSD: disk.h,v 1.73 2018/11/06 04:04:34 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 2004 The NetBSD Foundation, Inc.
@@ -208,6 +208,9 @@ struct dkwedge_list {
 #define	DKW_PTYPE_NILFS		"nilfs"
 #define	DKW_PTYPE_CGD		"cgd"
 #define	DKW_PTYPE_MINIXFS3	"minixfs3"
+#define	DKW_PTYPE_VMKCORE	"vmkcore"
+#define	DKW_PTYPE_VMFS		"vmfs"
+#define	DKW_PTYPE_VMWRESV	"vmwresv"
 
 /*
  * Ensure each symbol used in FSTYPE_DEFN in <sys/disklabel.h>
