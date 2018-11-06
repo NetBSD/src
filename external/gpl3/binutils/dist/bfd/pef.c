@@ -38,7 +38,7 @@
 #define bfd_pef_bfd_free_cached_info		    _bfd_generic_bfd_free_cached_info
 #define bfd_pef_new_section_hook		    _bfd_generic_new_section_hook
 #define bfd_pef_bfd_is_local_label_name		    bfd_generic_is_local_label_name
-#define bfd_pef_bfd_is_target_special_symbol ((bfd_boolean (*) (bfd *, asymbol *)) bfd_false)
+#define bfd_pef_bfd_is_target_special_symbol        _bfd_bool_bfd_asymbol_false
 #define bfd_pef_get_lineno			    _bfd_nosymbols_get_lineno
 #define bfd_pef_find_nearest_line		    _bfd_nosymbols_find_nearest_line
 #define bfd_pef_find_line			    _bfd_nosymbols_find_line
@@ -59,6 +59,7 @@
 #define bfd_pef_bfd_discard_group		    bfd_generic_discard_group
 #define bfd_pef_section_already_linked		    _bfd_generic_section_already_linked
 #define bfd_pef_bfd_define_common_symbol	    bfd_generic_define_common_symbol
+#define bfd_pef_bfd_link_hide_symbol		    _bfd_generic_link_hide_symbol
 #define bfd_pef_bfd_define_start_stop		    bfd_generic_define_start_stop
 #define bfd_pef_bfd_link_hash_table_create	    _bfd_generic_link_hash_table_create
 #define bfd_pef_bfd_link_add_symbols		    _bfd_generic_link_add_symbols
@@ -1030,16 +1031,16 @@ const bfd_target pef_vec =
     _bfd_dummy_target,
   },
   {				/* bfd_set_format.  */
-    bfd_false,
+    _bfd_bool_bfd_false_error,
     bfd_pef_mkobject,
-    bfd_false,
-    bfd_false,
+    _bfd_bool_bfd_false_error,
+    _bfd_bool_bfd_false_error,
   },
   {				/* bfd_write_contents.  */
-    bfd_false,
-    bfd_true,
-    bfd_false,
-    bfd_false,
+    _bfd_bool_bfd_false_error,
+    _bfd_bool_bfd_true,
+    _bfd_bool_bfd_false_error,
+    _bfd_bool_bfd_false_error,
   },
 
   BFD_JUMP_TABLE_GENERIC (bfd_pef),
@@ -1174,16 +1175,16 @@ const bfd_target pef_xlib_vec =
     _bfd_dummy_target,
   },
   {				/* bfd_set_format.  */
-    bfd_false,
+    _bfd_bool_bfd_false_error,
     bfd_pef_mkobject,
-    bfd_false,
-    bfd_false,
+    _bfd_bool_bfd_false_error,
+    _bfd_bool_bfd_false_error,
   },
   {				/* bfd_write_contents.  */
-    bfd_false,
-    bfd_true,
-    bfd_false,
-    bfd_false,
+    _bfd_bool_bfd_false_error,
+    _bfd_bool_bfd_true,
+    _bfd_bool_bfd_false_error,
+    _bfd_bool_bfd_false_error,
   },
 
   BFD_JUMP_TABLE_GENERIC (bfd_pef_xlib),

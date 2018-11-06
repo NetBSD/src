@@ -40,21 +40,87 @@ DESCRIPTION
 	completeness.
 */
 
+bfd_boolean
+_bfd_bool_bfd_false (bfd *abfd ATTRIBUTE_UNUSED)
+{
+  return FALSE;
+}
+
+bfd_boolean
+_bfd_bool_bfd_asymbol_false (bfd *abfd ATTRIBUTE_UNUSED,
+			     asymbol *sym ATTRIBUTE_UNUSED)
+{
+  return FALSE;
+}
+
 /* A routine which is used in target vectors for unsupported
    operations.  */
 
 bfd_boolean
-bfd_false (bfd *ignore ATTRIBUTE_UNUSED)
+_bfd_bool_bfd_false_error (bfd *ignore ATTRIBUTE_UNUSED)
 {
   bfd_set_error (bfd_error_invalid_operation);
   return FALSE;
+}
+
+bfd_boolean
+_bfd_bool_bfd_link_false_error (bfd *abfd,
+				struct bfd_link_info *info ATTRIBUTE_UNUSED)
+{
+  return _bfd_bool_bfd_false_error (abfd);
 }
 
 /* A routine which is used in target vectors for supported operations
    which do not actually do anything.  */
 
 bfd_boolean
-bfd_true (bfd *ignore ATTRIBUTE_UNUSED)
+_bfd_bool_bfd_true (bfd *ignore ATTRIBUTE_UNUSED)
+{
+  return TRUE;
+}
+
+bfd_boolean
+_bfd_bool_bfd_link_true (bfd *abfd ATTRIBUTE_UNUSED,
+			 struct bfd_link_info *info ATTRIBUTE_UNUSED)
+{
+  return TRUE;
+}
+
+bfd_boolean
+_bfd_bool_bfd_bfd_true (bfd *ibfd ATTRIBUTE_UNUSED,
+			bfd *obfd ATTRIBUTE_UNUSED)
+{
+  return TRUE;
+}
+
+bfd_boolean
+_bfd_bool_bfd_uint_true (bfd *abfd ATTRIBUTE_UNUSED,
+			 unsigned int flags ATTRIBUTE_UNUSED)
+{
+  return TRUE;
+}
+
+bfd_boolean
+_bfd_bool_bfd_asection_bfd_asection_true (bfd *ibfd ATTRIBUTE_UNUSED,
+					  asection *isec ATTRIBUTE_UNUSED,
+					  bfd *obfd ATTRIBUTE_UNUSED,
+					  asection *osec ATTRIBUTE_UNUSED)
+{
+  return TRUE;
+}
+
+bfd_boolean
+_bfd_bool_bfd_asymbol_bfd_asymbol_true (bfd *ibfd ATTRIBUTE_UNUSED,
+					asymbol *isym ATTRIBUTE_UNUSED,
+					bfd *obfd ATTRIBUTE_UNUSED,
+					asymbol *osym ATTRIBUTE_UNUSED)
+{
+  return TRUE;
+}
+
+bfd_boolean
+_bfd_bool_bfd_ptr_true (bfd *abfd ATTRIBUTE_UNUSED,
+			void *ptr ATTRIBUTE_UNUSED)
 {
   return TRUE;
 }
@@ -63,26 +129,26 @@ bfd_true (bfd *ignore ATTRIBUTE_UNUSED)
    operations which return a pointer value.  */
 
 void *
-bfd_nullvoidptr (bfd *ignore ATTRIBUTE_UNUSED)
+_bfd_ptr_bfd_null_error (bfd *ignore ATTRIBUTE_UNUSED)
 {
   bfd_set_error (bfd_error_invalid_operation);
   return NULL;
 }
 
 int
-bfd_0 (bfd *ignore ATTRIBUTE_UNUSED)
+_bfd_int_bfd_0 (bfd *ignore ATTRIBUTE_UNUSED)
 {
   return 0;
 }
 
 unsigned int
-bfd_0u (bfd *ignore ATTRIBUTE_UNUSED)
+_bfd_uint_bfd_0 (bfd *ignore ATTRIBUTE_UNUSED)
 {
    return 0;
 }
 
 long
-bfd_0l (bfd *ignore ATTRIBUTE_UNUSED)
+_bfd_long_bfd_0 (bfd *ignore ATTRIBUTE_UNUSED)
 {
   return 0;
 }
@@ -91,14 +157,26 @@ bfd_0l (bfd *ignore ATTRIBUTE_UNUSED)
    operations which return -1 on error.  */
 
 long
-_bfd_n1 (bfd *ignore_abfd ATTRIBUTE_UNUSED)
+_bfd_long_bfd_n1_error (bfd *ignore_abfd ATTRIBUTE_UNUSED)
 {
   bfd_set_error (bfd_error_invalid_operation);
   return -1;
 }
 
 void
-bfd_void (bfd *ignore ATTRIBUTE_UNUSED)
+_bfd_void_bfd (bfd *ignore ATTRIBUTE_UNUSED)
+{
+}
+
+void
+_bfd_void_bfd_link (bfd *abfd ATTRIBUTE_UNUSED,
+		    struct bfd_link_info *info ATTRIBUTE_UNUSED)
+{
+}
+
+void
+_bfd_void_bfd_asection (bfd *abfd ATTRIBUTE_UNUSED,
+			asection *sec ATTRIBUTE_UNUSED)
 {
 }
 
@@ -535,6 +613,27 @@ bfd_putl16 (bfd_vma data, void *p)
   addr[1] = (data >> 8) & 0xff;
 }
 
+
+void
+bfd_putb24 (bfd_vma data, void *p)
+{
+  bfd_byte *addr = (bfd_byte *) p;
+  addr[0] = (data >> 16) & 0xff;
+  addr[1] = (data >> 8) & 0xff;
+  addr[2] = data & 0xff;
+}
+
+
+void
+bfd_putl24 (bfd_vma data, void *p)
+{
+  bfd_byte *addr = (bfd_byte *) p;
+  addr[0] = data & 0xff;
+  addr[1] = (data >> 8) & 0xff;
+  addr[2] = (data >> 16) & 0xff;
+}
+
+
 bfd_vma
 bfd_getb32 (const void *p)
 {
@@ -796,7 +895,7 @@ _bfd_generic_get_section_contents (bfd *abfd,
     {
       _bfd_error_handler
 	/* xgettext:c-format */
-	(_("%B: unable to get decompressed section %A"),
+	(_("%pB: unable to get decompressed section %pA"),
 	 abfd, section);
       bfd_set_error (bfd_error_invalid_operation);
       return FALSE;

@@ -37,7 +37,7 @@
    %rbp-2040 (offset is encoded in offset bits * 8).  Registers saved are
    encoded in registers bits, 3 bits per register.  */
 #define MACH_O_UNWIND_X86_64_MODE_RBP_FRAME  0x01000000
-#define  MACH_O_UNWIND_X86_64_RBP_FRAME_REGSITERS 0x00007FFF
+#define  MACH_O_UNWIND_X86_64_RBP_FRAME_REGISTERS 0x00007FFF
 #define  MACH_O_UNWIND_X86_64_RBP_FRAME_OFFSET    0x00FF0000
 
 /* Frameless function, with a small stack size.  */
@@ -75,7 +75,7 @@
    %ebp-240 (offset is encoded in offset bits * 4).  Registers saved are
    encoded in registers bits, 3 bits per register.  */
 #define MACH_O_UNWIND_X86_MODE_EBP_FRAME  0x01000000
-#define  MACH_O_UNWIND_X86_EBP_FRAME_REGSITERS 0x00007FFF
+#define  MACH_O_UNWIND_X86_EBP_FRAME_REGISTERS 0x00007FFF
 #define  MACH_O_UNWIND_X86_EBP_FRAME_OFFSET    0x00FF0000
 
 /* Frameless function, with a small stack size.  */

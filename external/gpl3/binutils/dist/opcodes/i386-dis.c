@@ -248,7 +248,9 @@ fetch_data (struct disassemble_info *info, bfd_byte *addr)
 #define Eb { OP_E, b_mode }
 #define Ebnd { OP_E, bnd_mode }
 #define EbS { OP_E, b_swap_mode }
+#define EbndS { OP_E, bnd_swap_mode }
 #define Ev { OP_E, v_mode }
+#define Eva { OP_E, va_mode }
 #define Ev_bnd { OP_E, v_bnd_mode }
 #define EvS { OP_E, v_swap_mode }
 #define Ed { OP_E, d_mode }
@@ -279,6 +281,7 @@ fetch_data (struct disassemble_info *info, bfd_byte *addr)
 #define Gd { OP_G, d_mode }
 #define Gdq { OP_G, dq_mode }
 #define Gm { OP_G, m_mode }
+#define Gva { OP_G, va_mode }
 #define Gw { OP_G, w_mode }
 #define Rd { OP_R, d_mode }
 #define Rdq { OP_R, dq_mode }
@@ -498,6 +501,8 @@ enum
   v_mode,
   /* operand size depends on prefixes with operand swapped */
   v_swap_mode,
+  /* operand size depends on address prefix */
+  va_mode,
   /* word operand */
   w_mode,
   /* double word operand  */
@@ -560,7 +565,10 @@ enum
   dq_mode,
   /* registers like dq_mode, memory like w_mode.  */
   dqw_mode,
+  /* bounds operand */
   bnd_mode,
+  /* bounds operand with operand swapped */
+  bnd_swap_mode,
   /* 4- or 6-byte pointer operand */
   f_mode,
   const_1_mode,
@@ -731,6 +739,7 @@ enum
   REG_0F01,
   REG_0F0D,
   REG_0F18,
+  REG_0F1C_MOD_0,
   REG_0F1E_MOD_3,
   REG_0F71,
   REG_0F72,
@@ -785,6 +794,7 @@ enum
   MOD_0F1A_PREFIX_0,
   MOD_0F1B_PREFIX_0,
   MOD_0F1B_PREFIX_1,
+  MOD_0F1C_PREFIX_0,
   MOD_0F1E_PREFIX_1,
   MOD_0F24,
   MOD_0F26,
@@ -826,6 +836,8 @@ enum
   MOD_0F382A_PREFIX_2,
   MOD_0F38F5_PREFIX_2,
   MOD_0F38F6_PREFIX_0,
+  MOD_0F38F8_PREFIX_2,
+  MOD_0F38F9_PREFIX_0,
   MOD_62_32BIT,
   MOD_C4_32BIT,
   MOD_C5_32BIT,
@@ -956,12 +968,14 @@ enum
   PREFIX_MOD_0_0F01_REG_5,
   PREFIX_MOD_3_0F01_REG_5_RM_0,
   PREFIX_MOD_3_0F01_REG_5_RM_2,
+  PREFIX_0F09,
   PREFIX_0F10,
   PREFIX_0F11,
   PREFIX_0F12,
   PREFIX_0F16,
   PREFIX_0F1A,
   PREFIX_0F1B,
+  PREFIX_0F1C,
   PREFIX_0F1E,
   PREFIX_0F2A,
   PREFIX_0F2B,
@@ -1003,7 +1017,8 @@ enum
   PREFIX_MOD_3_0FAE_REG_4,
   PREFIX_MOD_0_0FAE_REG_5,
   PREFIX_MOD_3_0FAE_REG_5,
-  PREFIX_0FAE_REG_6,
+  PREFIX_MOD_0_0FAE_REG_6,
+  PREFIX_MOD_1_0FAE_REG_6,
   PREFIX_0FAE_REG_7,
   PREFIX_0FB8,
   PREFIX_0FBC,
@@ -1069,6 +1084,8 @@ enum
   PREFIX_0F38F1,
   PREFIX_0F38F5,
   PREFIX_0F38F6,
+  PREFIX_0F38F8,
+  PREFIX_0F38F9,
   PREFIX_0F3A08,
   PREFIX_0F3A09,
   PREFIX_0F3A0A,
@@ -2531,8 +2548,7 @@ struct dis386 {
 	  prefix and behave as 'S' otherwise
    'W' => print 'b', 'w' or 'l' ('d' in Intel mode)
    'X' => print 's', 'd' depending on data16 prefix (for XMM)
-   'Y' => 'q' if instruction has an REX 64bit overwrite prefix and
-	  suffix_always is true.
+   'Y' unused.
    'Z' => print 'q' in 64bit mode and behave as 'L' otherwise
    '!' => change condition from true to false or from false to true.
    '%' => add 1 upper case letter to the macro.
@@ -2869,7 +2885,7 @@ static const struct dis386 dis386_twobyte[] = {
   { "sysret%LP",		{ XX }, 0 },
   /* 08 */
   { "invd",		{ XX }, 0 },
-  { "wbinvd",		{ XX }, 0 },
+  { PREFIX_TABLE (PREFIX_0F09) },
   { Bad_Opcode },
   { "ud2",		{ XX }, 0 },
   { Bad_Opcode },
@@ -2890,7 +2906,7 @@ static const struct dis386 dis386_twobyte[] = {
   { "nopQ",		{ Ev }, 0 },
   { PREFIX_TABLE (PREFIX_0F1A) },
   { PREFIX_TABLE (PREFIX_0F1B) },
-  { "nopQ",		{ Ev }, 0 },
+  { PREFIX_TABLE (PREFIX_0F1C) },
   { "nopQ",		{ Ev }, 0 },
   { PREFIX_TABLE (PREFIX_0F1E) },
   { "nopQ",		{ Ev }, 0 },
@@ -3642,6 +3658,17 @@ static const struct dis386 reg_table[][8] = {
     { MOD_TABLE (MOD_0F18_REG_6) },
     { MOD_TABLE (MOD_0F18_REG_7) },
   },
+  /* REG_0F1C_MOD_0 */
+  {
+    { "cldemote",	{ Mb }, 0 },
+    { "nopQ",		{ Ev }, 0 },
+    { "nopQ",		{ Ev }, 0 },
+    { "nopQ",		{ Ev }, 0 },
+    { "nopQ",		{ Ev }, 0 },
+    { "nopQ",		{ Ev }, 0 },
+    { "nopQ",		{ Ev }, 0 },
+    { "nopQ",		{ Ev }, 0 },
+  },
   /* REG_0F1E_MOD_3 */
   {
     { "nopQ",		{ Ev }, 0 },
@@ -3840,6 +3867,12 @@ static const struct dis386 prefix_table[][4] = {
     { "saveprevssp",	{ Skip_MODRM }, PREFIX_OPCODE },
   },
 
+  /* PREFIX_0F09 */
+  {
+    { "wbinvd",   { XX }, 0 },
+    { "wbnoinvd", { XX }, 0 },
+  },
+
   /* PREFIX_0F10 */
   {
     { "movups",	{ XM, EXx }, PREFIX_OPCODE },
@@ -3883,8 +3916,16 @@ static const struct dis386 prefix_table[][4] = {
   {
     { MOD_TABLE (MOD_0F1B_PREFIX_0) },
     { MOD_TABLE (MOD_0F1B_PREFIX_1) },
-    { "bndmov", { Ebnd, Gbnd }, 0 },
+    { "bndmov", { EbndS, Gbnd }, 0 },
     { "bndcn",  { Gbnd, Ev_bnd }, 0 },
+  },
+
+  /* PREFIX_0F1C */
+  {
+    { MOD_TABLE (MOD_0F1C_PREFIX_0) },
+    { "nopQ",	{ Ev }, PREFIX_OPCODE },
+    { "nopQ",	{ Ev }, PREFIX_OPCODE },
+    { "nopQ",	{ Ev }, PREFIX_OPCODE },
   },
 
   /* PREFIX_0F1E */
@@ -3914,17 +3955,17 @@ static const struct dis386 prefix_table[][4] = {
   /* PREFIX_0F2C */
   {
     { "cvttps2pi", { MXC, EXq }, PREFIX_OPCODE },
-    { "cvttss2siY", { Gv, EXd }, PREFIX_OPCODE },
+    { "cvttss2si", { Gv, EXd }, PREFIX_OPCODE },
     { "cvttpd2pi", { MXC, EXx }, PREFIX_OPCODE },
-    { "cvttsd2siY", { Gv, EXq }, PREFIX_OPCODE },
+    { "cvttsd2si", { Gv, EXq }, PREFIX_OPCODE },
   },
 
   /* PREFIX_0F2D */
   {
     { "cvtps2pi", { MXC, EXq }, PREFIX_OPCODE },
-    { "cvtss2siY", { Gv, EXd }, PREFIX_OPCODE },
+    { "cvtss2si", { Gv, EXd }, PREFIX_OPCODE },
     { "cvtpd2pi", { MXC, EXx }, PREFIX_OPCODE },
-    { "cvtsd2siY", { Gv, EXq }, PREFIX_OPCODE },
+    { "cvtsd2si", { Gv, EXq }, PREFIX_OPCODE },
   },
 
   /* PREFIX_0F2E */
@@ -4181,11 +4222,19 @@ static const struct dis386 prefix_table[][4] = {
     { "incsspK",	{ Rdq }, PREFIX_OPCODE },
   },
 
-  /* PREFIX_0FAE_REG_6 */
+  /* PREFIX_MOD_0_0FAE_REG_6 */
   {
     { "xsaveopt",	{ FXSAVE }, PREFIX_OPCODE },
     { "clrssbsy",	{ Mq }, PREFIX_OPCODE },
     { "clwb",	{ Mb }, PREFIX_OPCODE },
+  },
+
+  /* PREFIX_MOD_1_0FAE_REG_6 */
+  {
+    { RM_TABLE (RM_0FAE_REG_6) },
+    { "umonitor",	{ Eva }, PREFIX_OPCODE },
+    { "tpause",	{ Edq }, PREFIX_OPCODE },
+    { "umwait",	{ Edq }, PREFIX_OPCODE },
   },
 
   /* PREFIX_0FAE_REG_7 */
@@ -4634,6 +4683,18 @@ static const struct dis386 prefix_table[][4] = {
     { "adoxS",	{ Gdq, Edq}, PREFIX_OPCODE },
     { "adcxS",	{ Gdq, Edq}, PREFIX_OPCODE },
     { Bad_Opcode },
+  },
+
+  /* PREFIX_0F38F8 */
+  {
+    { Bad_Opcode },
+    { Bad_Opcode },
+    { MOD_TABLE (MOD_0F38F8_PREFIX_2) },
+  },
+
+  /* PREFIX_0F38F9 */
+  {
+    { MOD_TABLE (MOD_0F38F9_PREFIX_0) },
   },
 
   /* PREFIX_0F3A08 */
@@ -7400,8 +7461,8 @@ static const struct dis386 three_byte_table[][256] = {
     { PREFIX_TABLE (PREFIX_0F38F6) },
     { Bad_Opcode },
     /* f8 */
-    { Bad_Opcode },
-    { Bad_Opcode },
+    { PREFIX_TABLE (PREFIX_0F38F8) },
+    { PREFIX_TABLE (PREFIX_0F38F9) },
     { Bad_Opcode },
     { Bad_Opcode },
     { Bad_Opcode },
@@ -9536,26 +9597,26 @@ static const struct dis386 vex_len_table[][2] = {
 
   /* VEX_LEN_0F2C_P_1 */
   {
-    { "vcvttss2siY",	{ Gv, EXdScalar }, 0 },
-    { "vcvttss2siY",	{ Gv, EXdScalar }, 0 },
+    { "vcvttss2si",	{ Gv, EXdScalar }, 0 },
+    { "vcvttss2si",	{ Gv, EXdScalar }, 0 },
   },
 
   /* VEX_LEN_0F2C_P_3 */
   {
-    { "vcvttsd2siY",	{ Gv, EXqScalar }, 0 },
-    { "vcvttsd2siY",	{ Gv, EXqScalar }, 0 },
+    { "vcvttsd2si",	{ Gv, EXqScalar }, 0 },
+    { "vcvttsd2si",	{ Gv, EXqScalar }, 0 },
   },
 
   /* VEX_LEN_0F2D_P_1 */
   {
-    { "vcvtss2siY",	{ Gv, EXdScalar }, 0 },
-    { "vcvtss2siY",	{ Gv, EXdScalar }, 0 },
+    { "vcvtss2si",	{ Gv, EXdScalar }, 0 },
+    { "vcvtss2si",	{ Gv, EXdScalar }, 0 },
   },
 
   /* VEX_LEN_0F2D_P_3 */
   {
-    { "vcvtsd2siY",	{ Gv, EXqScalar }, 0 },
-    { "vcvtsd2siY",	{ Gv, EXqScalar }, 0 },
+    { "vcvtsd2si",	{ Gv, EXqScalar }, 0 },
+    { "vcvtsd2si",	{ Gv, EXqScalar }, 0 },
   },
 
   /* VEX_LEN_0F2E_P_0 */
@@ -11599,6 +11660,11 @@ static const struct dis386 mod_table[][2] = {
     { "nopQ",		{ Ev }, 0 },
   },
   {
+    /* MOD_0F1C_PREFIX_0 */
+    { REG_TABLE (REG_0F1C_MOD_0) },
+    { "nopQ",		{ Ev }, 0 },
+  },
+  {
     /* MOD_0F1E_PREFIX_1 */
     { "nopQ",		{ Ev }, 0 },
     { REG_TABLE (REG_0F1E_MOD_3) },
@@ -11716,8 +11782,8 @@ static const struct dis386 mod_table[][2] = {
   },
   {
     /* MOD_0FAE_REG_6 */
-    { PREFIX_TABLE (PREFIX_0FAE_REG_6) },
-    { RM_TABLE (RM_0FAE_REG_6) },
+    { PREFIX_TABLE (PREFIX_MOD_0_0FAE_REG_6) },
+    { PREFIX_TABLE (PREFIX_MOD_1_0FAE_REG_6) },
   },
   {
     /* MOD_0FAE_REG_7 */
@@ -11786,6 +11852,14 @@ static const struct dis386 mod_table[][2] = {
   {
     /* MOD_0F38F6_PREFIX_0 */
     { "wrssK",		{ M, Gdq }, PREFIX_OPCODE },
+  },
+  {
+    /* MOD_0F38F8_PREFIX_2 */
+    { "movdir64b",	{ Gva, M }, PREFIX_OPCODE },
+  },
+  {
+    /* MOD_0F38F9_PREFIX_0 */
+    { "movdiri",	{ Em, Gv }, PREFIX_OPCODE },
   },
   {
     /* MOD_62_32BIT */
@@ -12252,6 +12326,7 @@ static const struct dis386 rm_table[][8] = {
     { "vmlaunch",	{ Skip_MODRM }, 0 },
     { "vmresume",	{ Skip_MODRM }, 0 },
     { "vmxoff",		{ Skip_MODRM }, 0 },
+    { "pconfig",	{ Skip_MODRM }, 0 },
   },
   {
     /* RM_0F01_REG_1 */
@@ -12815,7 +12890,6 @@ get_valid_dis386 (const struct dis386 *dp, disassemble_info *info)
       switch ((*codep & 0x3))
 	{
 	case 0:
-	  vex.prefix = 0;
 	  break;
 	case 1:
 	  vex.prefix = DATA_PREFIX_OPCODE;
@@ -12880,7 +12954,6 @@ get_valid_dis386 (const struct dis386 *dp, disassemble_info *info)
       switch ((*codep & 0x3))
 	{
 	case 0:
-	  vex.prefix = 0;
 	  break;
 	case 1:
 	  vex.prefix = DATA_PREFIX_OPCODE;
@@ -12918,12 +12991,10 @@ get_valid_dis386 (const struct dis386 *dp, disassemble_info *info)
       /* For the 2-byte VEX prefix in 32-bit mode, the highest bit in
 	 VEX.vvvv is 1.  */
       vex.register_specifier = (~(*codep >> 3)) & 0xf;
-      vex.w = 0;
       vex.length = (*codep & 0x4) ? 256 : 128;
       switch ((*codep & 0x3))
 	{
 	case 0:
-	  vex.prefix = 0;
 	  break;
 	case 1:
 	  vex.prefix = DATA_PREFIX_OPCODE;
@@ -12998,7 +13069,6 @@ get_valid_dis386 (const struct dis386 *dp, disassemble_info *info)
       switch ((*codep & 0x3))
 	{
 	case 0:
-	  vex.prefix = 0;
 	  break;
 	case 1:
 	  vex.prefix = DATA_PREFIX_OPCODE;
@@ -13356,7 +13426,7 @@ print_insn (bfd_vma pc, disassemble_info *info)
   need_vex = 0;
   need_vex_reg = 0;
   vex_w_done = 0;
-  vex.evex = 0;
+  memset (&vex, 0, sizeof (vex));
 
   if (dp->name == NULL && dp->op[0].bytemode == FLOATCODE)
     {
@@ -13729,10 +13799,10 @@ static const struct dis386 float_reg[][8] = {
     { "fmul",	{ STi, ST }, 0 },
     { Bad_Opcode },
     { Bad_Opcode },
-    { "fsub!M",	{ STi, ST }, 0 },
-    { "fsubM",	{ STi, ST }, 0 },
-    { "fdiv!M",	{ STi, ST }, 0 },
-    { "fdivM",	{ STi, ST }, 0 },
+    { "fsub{!M|r}",	{ STi, ST }, 0 },
+    { "fsub{M|}",	{ STi, ST }, 0 },
+    { "fdiv{!M|r}",	{ STi, ST }, 0 },
+    { "fdiv{M|}",	{ STi, ST }, 0 },
   },
   /* dd */
   {
@@ -13751,10 +13821,10 @@ static const struct dis386 float_reg[][8] = {
     { "fmulp",	{ STi, ST }, 0 },
     { Bad_Opcode },
     { FGRPde_3 },
-    { "fsub!Mp", { STi, ST }, 0 },
-    { "fsubMp",	{ STi, ST }, 0 },
-    { "fdiv!Mp", { STi, ST }, 0 },
-    { "fdivMp",	{ STi, ST }, 0 },
+    { "fsub{!M|r}p",	{ STi, ST }, 0 },
+    { "fsub{M|}p",	{ STi, ST }, 0 },
+    { "fdiv{!M|r}p",	{ STi, ST }, 0 },
+    { "fdiv{M|}p",	{ STi, ST }, 0 },
   },
   /* df */
   {
@@ -14402,16 +14472,7 @@ case_S:
 	  break;
 	case 'Y':
 	  if (l == 0 && len == 1)
-	    {
-	      if (intel_syntax || !(sizeflag & SUFFIX_ALWAYS))
-		break;
-	      if (rex & REX_W)
-		{
-		  USED_REX (REX_W);
-		  *obufp++ = 'q';
-		}
-	      break;
-	    }
+	    abort ();
 	  else
 	    {
 	      if (l != 1 || len != 2 || last[0] != 'X')
@@ -15039,6 +15100,7 @@ OP_E_register (int bytemode, int sizeflag)
 
   if ((sizeflag & SUFFIX_ALWAYS)
       && (bytemode == b_swap_mode
+	  || bytemode == bnd_swap_mode
 	  || bytemode == v_swap_mode))
     swap_operand ();
 
@@ -15068,6 +15130,7 @@ OP_E_register (int bytemode, int sizeflag)
       names = address_mode == mode_64bit ? names64 : names32;
       break;
     case bnd_mode:
+    case bnd_swap_mode:
       if (reg > 0x3)
 	{
 	  oappend ("(bad)");
@@ -15108,6 +15171,21 @@ OP_E_register (int bytemode, int sizeflag)
 	  else
 	    names = names16;
 	  used_prefixes |= (prefixes & PREFIX_DATA);
+	}
+      break;
+    case va_mode:
+      names = (address_mode == mode_64bit
+	       ? names64 : names32);
+      if (!(prefixes & PREFIX_ADDR))
+	names = (address_mode == mode_16bit
+		     ? names16 : names);
+      else
+	{
+	  /* Remove "addr16/addr32".  */
+	  all_prefixes[last_addr_prefix] = 0;
+	  names = (address_mode != mode_32bit
+		       ? names32 : names16);
+	  used_prefixes |= PREFIX_ADDR;
 	}
       break;
     case mask_bd_mode:
@@ -15264,7 +15342,8 @@ OP_E_memory (int bytemode, int sizeflag)
       int scale = 0;
       int addr32flag = !((sizeflag & AFLAG)
 			 || bytemode == v_bnd_mode
-			 || bytemode == bnd_mode);
+			 || bytemode == bnd_mode
+			 || bytemode == bnd_swap_mode);
       const char **indexes64 = names64;
       const char **indexes32 = names32;
 
@@ -15381,7 +15460,8 @@ OP_E_memory (int bytemode, int sizeflag)
 
       if ((havebase || haveindex || riprel)
 	  && (bytemode != v_bnd_mode)
-	  && (bytemode != bnd_mode))
+	  && (bytemode != bnd_mode)
+	  && (bytemode != bnd_swap_mode))
 	used_prefixes |= PREFIX_ADDR;
 
       if (havedisp || (intel_syntax && riprel))
@@ -15597,6 +15677,7 @@ static void
 OP_G (int bytemode, int sizeflag)
 {
   int add = 0;
+  const char **names;
   USED_REX (REX_R);
   if (rex & REX_R)
     add += 8;
@@ -15644,6 +15725,24 @@ OP_G (int bytemode, int sizeflag)
 	    oappend (names16[modrm.reg + add]);
 	  used_prefixes |= (prefixes & PREFIX_DATA);
 	}
+      break;
+    case va_mode:
+      names = (address_mode == mode_64bit
+	       ? names64 : names32);
+      if (!(prefixes & PREFIX_ADDR))
+	{
+	  if (address_mode == mode_16bit)
+	    names = names16;
+	}
+      else
+	{
+	  /* Remove "addr16/addr32".  */
+	  all_prefixes[last_addr_prefix] = 0;
+	  names = (address_mode != mode_32bit
+		       ? names32 : names16);
+	  used_prefixes |= PREFIX_ADDR;
+	}
+      oappend (names[modrm.reg + add]);
       break;
     case m_mode:
       if (address_mode == mode_64bit)

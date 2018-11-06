@@ -123,6 +123,7 @@ processor names are recognized:
 @code{bdver3},
 @code{bdver4},
 @code{znver1},
+@code{znver2},
 @code{btver1},
 @code{btver2},
 @code{generic32} and
@@ -176,6 +177,8 @@ accept various extension mnemonics.  For example,
 @code{clflushopt},
 @code{se1},
 @code{clwb},
+@code{movdiri},
+@code{movdir64b},
 @code{avx512f},
 @code{avx512cd},
 @code{avx512er},
@@ -229,6 +232,10 @@ accept various extension mnemonics.  For example,
 @code{clflush},
 @code{mwaitx},
 @code{clzero},
+@code{wbnoinvd},
+@code{pconfig},
+@code{waitpkg},
+@code{cldemote},
 @code{lwp},
 @code{fma4},
 @code{xop},
@@ -408,6 +415,28 @@ with 01, 10 and 11 RC bits, respectively.
 @itemx -mintel64
 This option specifies that the assembler should accept only AMD64 or
 Intel64 ISA in 64-bit mode.  The default is to accept both.
+
+@cindex @samp{-O0} option, i386
+@cindex @samp{-O0} option, x86-64
+@cindex @samp{-O} option, i386
+@cindex @samp{-O} option, x86-64
+@cindex @samp{-O1} option, i386
+@cindex @samp{-O1} option, x86-64
+@cindex @samp{-O2} option, i386
+@cindex @samp{-O2} option, x86-64
+@cindex @samp{-Os} option, i386
+@cindex @samp{-Os} option, x86-64
+@item -O0 | -O | -O1 | -O2 | -Os
+Optimize instruction encoding with smaller instruction size.  @samp{-O}
+and @samp{-O1} encode 64-bit register load instructions with 64-bit
+immediate as 32-bit register load instructions with 31-bit or 32-bits
+immediates and encode 64-bit register clearing instructions with 32-bit
+register clearing instructions.  @samp{-O2} includes @samp{-O1}
+optimization plus encodes 256-bit and 512-bit vector register clearing
+instructions with 128-bit vector register clearing instructions.
+@samp{-Os} includes @samp{-O2} optimization plus encodes 16-bit, 32-bit
+and 64-bit register tests with immediate as 8-bit register test with
+immediate.  @samp{-O0} turns off this optimization.
 
 @end table
 @c man end
@@ -640,6 +669,14 @@ Different encoding options can be specified via pseudo prefixes:
 
 @item
 @samp{@{evex@}} --  encode with EVEX prefix.
+
+@item
+@samp{@{rex@}} -- prefer REX prefix for integer and legacy vector
+instructions (x86-64 only).  Note that this differs from the @samp{rex}
+prefix which generates REX prefix unconditionally.
+
+@item
+@samp{@{nooptimize@}} -- disable instruction size optimization.
 @end itemize
 
 @cindex conversion instructions, i386
@@ -1222,8 +1259,8 @@ supported on the CPU specified.  The choices for @var{cpu_type} are:
 @item @samp{corei7} @tab @samp{l1om} @tab @samp{k1om} @samp{iamcu}
 @item @samp{k6} @tab @samp{k6_2} @tab @samp{athlon} @tab @samp{k8}
 @item @samp{amdfam10} @tab @samp{bdver1} @tab @samp{bdver2} @tab @samp{bdver3}
-@item @samp{bdver4} @tab @samp{znver1} @tab @samp{btver1} @tab @samp{btver2}
-@item @samp{generic32} @tab @samp{generic64}
+@item @samp{bdver4} @tab @samp{znver1} @tab @samp{znver2} @tab @samp{btver1}
+@item @samp{btver2} @samp{generic32} @tab @samp{generic64}
 @item @samp{.mmx} @tab @samp{.sse} @tab @samp{.sse2} @tab @samp{.sse3}
 @item @samp{.ssse3} @tab @samp{.sse4.1} @tab @samp{.sse4.2} @tab @samp{.sse4}
 @item @samp{.avx} @tab @samp{.vmx} @tab @samp{.smx} @tab @samp{.ept}
@@ -1239,12 +1276,14 @@ supported on the CPU specified.  The choices for @var{cpu_type} are:
 @item @samp{.avx512vbmi} @tab @samp{.avx512_4fmaps} @tab @samp{.avx512_4vnniw}
 @item @samp{.avx512_vpopcntdq} @tab @samp{.avx512_vbmi2} @tab @samp{.avx512_vnni}
 @item @samp{.avx512_bitalg}
-@item @samp{.clwb} @tab @samp{.rdpid} @tab @samp{.ptwrite} @tab @item @samp{.cet}
+@item @samp{.clwb} @tab @samp{.rdpid} @tab @samp{.ptwrite} @tab @item @samp{.ibt}
+@item @samp{.wbnoinvd} @tab @samp{.pconfig} @tab @samp{.waitpkg} @tab @samp{.cldemote}
+@item @samp{.shstk} @tab @samp{.gfni} @tab @samp{.vaes} @tab @samp{.vpclmulqdq}
+@item @samp{.movdiri} @tab @samp{.movdir64b}
 @item @samp{.3dnow} @tab @samp{.3dnowa} @tab @samp{.sse4a} @tab @samp{.sse5}
 @item @samp{.syscall} @tab @samp{.rdtscp} @tab @samp{.svme} @tab @samp{.abm}
 @item @samp{.lwp} @tab @samp{.fma4} @tab @samp{.xop} @tab @samp{.cx16}
-@item @samp{.padlock} @tab @samp{.clzero} @tab @samp{.mwaitx} @tab @samp{.gfni}
-@item @samp{.vaes} @tab @samp{.vpclmulqdq}
+@item @samp{.padlock} @tab @samp{.clzero} @tab @samp{.mwaitx}
 @end multitable
 
 Apart from the warning, there are only two other effects on

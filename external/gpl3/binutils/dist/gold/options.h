@@ -471,7 +471,11 @@ struct Struct_special : public Struct_var
 									  \
   options::String_set::const_iterator					  \
   varname__##_end() const						  \
-  { return this->varname__##_.value.end(); }
+  { return this->varname__##_.value.end(); }                              \
+                                                                          \
+  options::String_set::size_type                                          \
+  varname__##_size() const                                                \
+  { return this->varname__##_.value.size(); }                             \
 
 // When you have a list of possible values (expressed as string)
 // After helparg__ should come an initializer list, like
@@ -1108,10 +1112,6 @@ class General_options
 	      N_("(PowerPC64 only) Optimize calls to ELFv2 localentry:0 functions"),
 	      N_("(PowerPC64 only) Don't optimize ELFv2 calls"));
 
-  DEFINE_bool(speculate_indirect_jumps, options::TWO_DASHES, '\0', true,
-	      N_("(PowerPC only) PLT call stubs without speculation barrier"),
-	      N_("(PowerPC only) PLT call stubs with speculation barrier"));
-
   DEFINE_bool(plt_static_chain, options::TWO_DASHES, '\0', false,
 	      N_("(PowerPC64 only) PLT call stubs should load r11"),
 	      N_("(PowerPC64 only) PLT call stubs should not load r11"));
@@ -1125,6 +1125,12 @@ class General_options
 		 N_("Load a plugin library"), N_("PLUGIN"));
   DEFINE_special(plugin_opt, options::TWO_DASHES, '\0',
 		 N_("Pass an option to the plugin"), N_("OPTION"));
+#else
+  DEFINE_special(plugin, options::TWO_DASHES, '\0',
+		 N_("Load a plugin library (not supported)"), N_("PLUGIN"));
+  DEFINE_special(plugin_opt, options::TWO_DASHES, '\0',
+		 N_("Pass an option to the plugin (not supported)"),
+		 N_("OPTION"));
 #endif
 
   DEFINE_bool(posix_fallocate, options::TWO_DASHES, '\0', true,
@@ -1500,6 +1506,10 @@ class General_options
 	      N_("Move .text.unlikely sections to a separate segment."),
 	      N_("Do not move .text.unlikely sections to a separate "
 		 "segment."));
+  DEFINE_bool(keep_text_section_prefix, options::DASH_Z, '\0', false,
+	      N_("Keep .text.hot, .text.startup, .text.exit and .text.unlikely "
+		 "as separate sections in the final binary."),
+	      N_("Merge all .text.* prefix sections."));
 
 
  public:

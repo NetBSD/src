@@ -1040,8 +1040,8 @@ static const struct bfin_reloc_map bfin_reloc_map [] =
 };
 
 
-static void
-bfin_info_to_howto (bfd *abfd ATTRIBUTE_UNUSED,
+static bfd_boolean
+bfin_info_to_howto (bfd *abfd,
 		    arelent *cache_ptr,
 		    Elf_Internal_Rela *dst)
 {
@@ -1056,7 +1056,15 @@ bfin_info_to_howto (bfd *abfd ATTRIBUTE_UNUSED,
     cache_ptr->howto = &bfin_gnuext_howto_table [r_type - BFIN_GNUEXT_RELOC_MIN];
 
   else
-    cache_ptr->howto = (reloc_howto_type *) NULL;
+    {
+      /* xgettext:c-format */
+      _bfd_error_handler (_("%pB: unsupported relocation type %#x"),
+			  abfd, r_type);
+      bfd_set_error (bfd_error_bad_value);
+      return FALSE;
+    }
+
+  return TRUE;
 }
 
 /* Given a BFD reloc type, return the howto.  */
@@ -1574,9 +1582,10 @@ bfin_relocate_section (bfd * output_bfd,
 	{
 	  _bfd_error_handler
 	    /* xgettext:c-format */
-	    (_("%B(%A+%#Lx): unresolvable relocation against symbol `%s'"),
-	     input_bfd,
-	     input_section, rel->r_offset, h->root.root.string);
+	    (_("%pB(%pA+%#" PRIx64 "): "
+	       "unresolvable relocation against symbol `%s'"),
+	     input_bfd, input_section, (uint64_t) rel->r_offset,
+	     h->root.root.string);
 	  return FALSE;
 	}
 
@@ -1605,8 +1614,9 @@ bfin_relocate_section (bfd * output_bfd,
 	    {
 	      _bfd_error_handler
 		/* xgettext:c-format */
-		(_("%B(%A+%#Lx): reloc against `%s': error %d"),
-		 input_bfd, input_section, rel->r_offset, name, (int) r);
+		(_("%pB(%pA+%#" PRIx64 "): reloc against `%s': error %d"),
+		 input_bfd, input_section, (uint64_t) rel->r_offset,
+		 name, (int) r);
 	      return FALSE;
 	    }
 	}
@@ -2625,8 +2635,9 @@ bfinfdpic_relocate_section (bfd * output_bfd,
 	    {
 	      _bfd_error_handler
 		/* xgettext:c-format */
-		(_("%B: relocation at `%A+%#Lx' references symbol `%s' with nonzero addend"),
-		 input_bfd, input_section, rel->r_offset, name);
+		(_("%pB: relocation at `%pA+%#" PRIx64 "' "
+		   "references symbol `%s' with nonzero addend"),
+		 input_bfd, input_section, (uint64_t) rel->r_offset, name);
 	      return FALSE;
 
 	    }
@@ -4684,7 +4695,7 @@ bfinfdpic_check_relocs (bfd *abfd, struct bfd_link_info *info,
 	bad_reloc:
 	  _bfd_error_handler
 	    /* xgettext:c-format */
-	    (_("%B: unsupported relocation type %d"),
+	    (_("%pB: unsupported relocation type %#x"),
 	     abfd, (int) ELF32_R_TYPE (rel->r_info));
 	  return FALSE;
 	}
@@ -4759,7 +4770,7 @@ elf32_bfin_merge_private_bfd_data (bfd *ibfd, struct bfd_link_info *info)
   if (0)
 #endif
   _bfd_error_handler
-    ("old_flags = 0x%.8x, new_flags = 0x%.8x, init = %s, filename = %B",
+    ("old_flags = 0x%.8x, new_flags = 0x%.8x, init = %s, filename = %pB",
      old_flags, new_flags, elf_flags_init (obfd) ? "yes" : "no", ibfd);
 
   if (!elf_flags_init (obfd))			/* First call, no flags set.  */
@@ -4773,11 +4784,11 @@ elf32_bfin_merge_private_bfd_data (bfd *ibfd, struct bfd_link_info *info)
       error = TRUE;
       if (IS_FDPIC (obfd))
 	_bfd_error_handler
-	  (_("%B: cannot link non-fdpic object file into fdpic executable"),
+	  (_("%pB: cannot link non-fdpic object file into fdpic executable"),
 	   ibfd);
       else
 	_bfd_error_handler
-	  (_("%B: cannot link fdpic object file into non-fdpic executable"),
+	  (_("%pB: cannot link fdpic object file into non-fdpic executable"),
 	   ibfd);
     }
 
@@ -5337,7 +5348,7 @@ bfd_bfin_elf32_create_embedded_relocs (bfd *abfd,
       /* We can only relocate absolute longword relocs at run time.  */
       if (ELF32_R_TYPE (irel->r_info) != (int) R_BFIN_BYTE4_DATA)
 	{
-	  *errmsg = _("unsupported reloc type");
+	  *errmsg = _("unsupported relocation type");
 	  bfd_set_error (bfd_error_bad_value);
 	  goto error_return;
 	}
@@ -5421,7 +5432,7 @@ struct bfd_elf_special_section const elf32_bfin_special_sections[] =
 #define bfd_elf32_bfd_reloc_name_lookup \
 					bfin_bfd_reloc_name_lookup
 #define elf_info_to_howto		bfin_info_to_howto
-#define elf_info_to_howto_rel		0
+#define elf_info_to_howto_rel		NULL
 #define elf_backend_object_p		elf32_bfin_object_p
 
 #define bfd_elf32_bfd_is_local_label_name \

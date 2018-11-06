@@ -86,7 +86,7 @@ elf32_sparc_merge_private_bfd_data (bfd *ibfd, struct bfd_link_info *info)
     {
       error = TRUE;
       _bfd_error_handler
-	(_("%B: compiled for a 64 bit system and target is 32 bit"), ibfd);
+	(_("%pB: compiled for a 64 bit system and target is 32 bit"), ibfd);
     }
   else if ((ibfd->flags & DYNAMIC) == 0)
     {
@@ -99,7 +99,7 @@ elf32_sparc_merge_private_bfd_data (bfd *ibfd, struct bfd_link_info *info)
       && previous_ibfd_e_flags != (unsigned long) -1)
     {
       _bfd_error_handler
-	(_("%B: linking little endian files with big endian files"), ibfd);
+	(_("%pB: linking little endian files with big endian files"), ibfd);
       error = TRUE;
     }
   previous_ibfd_e_flags = elf_elfheader (ibfd)->e_flags & EF_SPARC_LEDATA;
@@ -175,25 +175,6 @@ elf32_sparc_reloc_type_class (const struct bfd_link_info *info ATTRIBUTE_UNUSED,
     }
 }
 
-/* Hook called by the linker routine which adds symbols from an object
-   file.  */
-
-static bfd_boolean
-elf32_sparc_add_symbol_hook (bfd * abfd,
-			     struct bfd_link_info * info,
-			     Elf_Internal_Sym * sym,
-			     const char ** namep ATTRIBUTE_UNUSED,
-			     flagword * flagsp ATTRIBUTE_UNUSED,
-			     asection ** secp ATTRIBUTE_UNUSED,
-			     bfd_vma * valp ATTRIBUTE_UNUSED)
-{
-  if (ELF_ST_TYPE (sym->st_info) == STT_GNU_IFUNC
-      && (abfd->flags & DYNAMIC) == 0
-      && bfd_get_flavour (info->output_bfd) == bfd_target_elf_flavour)
-    elf_tdata (info->output_bfd)->has_gnu_symbols |= elf_gnu_symbol_ifunc;
-  return TRUE;
-}
-
 #define TARGET_BIG_SYM	sparc_elf32_vec
 #define TARGET_BIG_NAME	"elf32-sparc"
 #define ELF_ARCH	bfd_arch_sparc
@@ -248,8 +229,6 @@ elf32_sparc_add_symbol_hook (bfd * abfd,
 #define elf_backend_got_header_size 4
 #define elf_backend_want_dynrelro 1
 #define elf_backend_rela_normal 1
-
-#define elf_backend_add_symbol_hook		elf32_sparc_add_symbol_hook
 
 #define elf_backend_linux_prpsinfo32_ugid16	TRUE
 

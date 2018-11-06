@@ -7,7 +7,6 @@
 @clear INTERNALS
 @clear MULTI-OBJ
 @clear AOUT
-@clear BOUT
 @set COFF
 @clear ELF
 @set Renesas-all

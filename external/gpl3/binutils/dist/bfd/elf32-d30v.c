@@ -508,8 +508,8 @@ bfd_elf32_bfd_reloc_name_lookup (bfd *abfd ATTRIBUTE_UNUSED,
 
 /* Set the howto pointer for an D30V ELF reloc (type REL).  */
 
-static void
-d30v_info_to_howto_rel (bfd *abfd ATTRIBUTE_UNUSED,
+static bfd_boolean
+d30v_info_to_howto_rel (bfd *abfd,
 			arelent *cache_ptr,
 			Elf_Internal_Rela *dst)
 {
@@ -519,16 +519,19 @@ d30v_info_to_howto_rel (bfd *abfd ATTRIBUTE_UNUSED,
   if (r_type >= (unsigned int) R_D30V_max)
     {
       /* xgettext:c-format */
-      _bfd_error_handler (_("%B: invalid D30V reloc number: %d"), abfd, r_type);
-      r_type = 0;
+      _bfd_error_handler (_("%pB: unsupported relocation type %#x"),
+			  abfd, r_type);
+      bfd_set_error (bfd_error_bad_value);
+      return FALSE;
     }
   cache_ptr->howto = &elf_d30v_howto_table[r_type];
+  return TRUE;
 }
 
 /* Set the howto pointer for an D30V ELF reloc (type RELA).  */
 
-static void
-d30v_info_to_howto_rela (bfd *abfd ATTRIBUTE_UNUSED,
+static bfd_boolean
+d30v_info_to_howto_rela (bfd *abfd,
 			 arelent *cache_ptr,
 			 Elf_Internal_Rela *dst)
 {
@@ -538,10 +541,13 @@ d30v_info_to_howto_rela (bfd *abfd ATTRIBUTE_UNUSED,
   if (r_type >= (unsigned int) R_D30V_max)
     {
       /* xgettext:c-format */
-      _bfd_error_handler (_("%B: invalid D30V reloc number: %d"), abfd, r_type);
-      r_type = 0;
+      _bfd_error_handler (_("%pB: unsupported relocation type %#x"),
+			  abfd, r_type);
+      bfd_set_error (bfd_error_bad_value);
+      return FALSE;
     }
   cache_ptr->howto = &elf_d30v_howto_table[r_type];
+  return TRUE;
 }
 
 #define ELF_ARCH		bfd_arch_d30v
