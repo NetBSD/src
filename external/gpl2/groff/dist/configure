@@ -2511,6 +2511,8 @@ if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
    'extern "C" void std::exit (int); using std::exit;' \
    'extern "C" void exit (int) throw ();' \
    'extern "C" void exit (int);' \
+   'extern "C" [[noreturn]] void exit (int);' \
+   'extern "C" _Noreturn void exit (int);' \
    'void exit (int);'
 do
   cat >conftest.$ac_ext <<_ACEOF
@@ -2977,6 +2979,8 @@ for ac_declaration in \
    'extern "C" void std::exit (int); using std::exit;' \
    'extern "C" void exit (int) throw ();' \
    'extern "C" void exit (int);' \
+   'extern "C" [[noreturn]] void exit (int);' \
+   'extern "C" _Noreturn void exit (int);' \
    'void exit (int);'
 do
   cat >conftest.$ac_ext <<_ACEOF
