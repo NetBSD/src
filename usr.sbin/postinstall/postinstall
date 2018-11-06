@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.219 2018/10/26 18:06:34 martin Exp $
+# $NetBSD: postinstall,v 1.220 2018/11/06 06:16:00 plunky Exp $
 #
 # Copyright (c) 2002-2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1392,6 +1392,7 @@ cron
 devpubd
 dhcpcd
 dhcpd
+dhcpd6
 dhcrelay
 dmesg
 downinterfaces
