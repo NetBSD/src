@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.212 2018/11/05 02:28:32 manu Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.213 2018/11/06 02:39:49 manu Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.212 2018/11/05 02:28:32 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.213 2018/11/06 02:39:49 manu Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -1470,6 +1470,10 @@ puffs_vnop_reclaim(void *v)
 		notifyserver = false;
 	}
 
+	/* See the comment on top of puffs_vnop_inactive(). */
+	if (vp->v_type == VNON)
+		notifyserver = false;
+
 	/*
 	 * purge info from kernel before issueing FAF, since we
 	 * don't really know when we'll get around to it after
@@ -1723,6 +1727,11 @@ puffs_vnop_fsync(void *v)
 	pn = VPTOPP(vp);
 	KASSERT(pn != NULL);
 	pmp = MPTOPUFFSMP(vp->v_mount);
+
+	/* See the comment on top of puffs_vnop_inactive(). */
+	if (vp->v_type == VNON)
+		return 0;
+
 	if (ap->a_flags & FSYNC_WAIT) {
 		mutex_enter(&pn->pn_sizemtx);
 	} else {
