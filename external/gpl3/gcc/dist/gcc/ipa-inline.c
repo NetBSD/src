@@ -2435,7 +2435,11 @@ ipa_inline (void)
      could remove other nodes with flatten attribute.  See PR82801.  */
   struct cgraph_node_hook_list *node_removal_hook_holder = NULL;
   hash_set<struct cgraph_node *> *flatten_removed_nodes = NULL;
-  if (j < nnodes - 2)
+  /*
+   * XXXMRG: added "nnodes > 1" as -O2 (but not -O) warn:
+   *    "assuming signed overflow does not occur"
+   */
+  if (nnodes > 1 && j < nnodes - 2)
     {
       flatten_removed_nodes = new hash_set<struct cgraph_node *>;
       node_removal_hook_holder
