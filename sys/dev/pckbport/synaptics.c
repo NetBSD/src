@@ -1,4 +1,4 @@
-/*	$NetBSD: synaptics.c,v 1.43 2018/11/06 08:55:02 blymn Exp $	*/
+/*	$NetBSD: synaptics.c,v 1.44 2018/11/06 09:13:17 blymn Exp $	*/
 
 /*
  * Copyright (c) 2005, Steve C. Woodford
@@ -48,7 +48,7 @@
 #include "opt_pms.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: synaptics.c,v 1.43 2018/11/06 08:55:02 blymn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: synaptics.c,v 1.44 2018/11/06 09:13:17 blymn Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -115,9 +115,14 @@ static int synaptics_button3 = SYNAPTICS_EDGE_LEFT + 2 * (SYNAPTICS_EDGE_RIGHT -
 static int synaptics_two_fingers_emul = 0;
 static int synaptics_scale_x = 16;
 static int synaptics_scale_y = 16;
+static int synaptics_scale_z = 1;
 static int synaptics_max_speed_x = 32;
 static int synaptics_max_speed_y = 32;
+static int synaptics_max_speed_z = 2;
 static int synaptics_movement_threshold = 4;
+static int synaptics_fscroll_min = 5;
+static int synaptics_fscroll_max = 12;
+static int synaptics_dz_hold = 30;
 static int synaptics_movement_enable = 1;
 
 /* Sysctl nodes. */
@@ -138,9 +143,14 @@ static int synaptics_finger_low_nodenum;
 static int synaptics_two_fingers_emul_nodenum;
 static int synaptics_scale_x_nodenum;
 static int synaptics_scale_y_nodenum;
+static int synaptics_scale_z_nodenum;
 static int synaptics_max_speed_x_nodenum;
 static int synaptics_max_speed_y_nodenum;
+static int synaptics_max_speed_z_nodenum;
 static int synaptics_movement_threshold_nodenum;
+static int synaptics_finger_scroll_min_nodenum;
+static int synaptics_finger_scroll_max_nodenum;
+static int synaptics_dz_hold_nodenum;
 static int synaptics_movement_enable_nodenum;
 
 static int
@@ -424,7 +434,7 @@ pms_synaptics_enable(void *vsc)
 	struct pms_softc *psc = vsc;
 	struct synaptics_softc *sc = &psc->u.synaptics;
 	u_char enable_modes;
-	int res;
+	int res, i;
 
 	if (sc->flags & SYN_FLAG_HAS_PASSTHROUGH) {
 		/*
@@ -452,7 +462,7 @@ pms_synaptics_enable(void *vsc)
  	*/
 	synaptics_poll_cmd(psc, PMS_DEV_DISABLE, 0);
 	/* a couple of set scales to clear out pending commands */
-	for (int i = 0; i < 2; i++)
+	for (i = 0; i < 2; i++)
 		synaptics_poll_cmd(psc, PMS_SET_SCALE11, 0);
 
 	res = synaptics_special_write(psc, SYNAPTICS_CMD_SET_MODE2, enable_modes);
@@ -460,7 +470,7 @@ pms_synaptics_enable(void *vsc)
 		aprint_error("synaptics: set mode error\n");
 
 	/* a couple of set scales to clear out pending commands */
-	for (int i = 0; i < 2; i++)
+	for (i = 0; i < 2; i++)
 		synaptics_poll_cmd(psc, PMS_SET_SCALE11, 0);
 
 	/* Set advanced gesture mode */
@@ -476,10 +486,11 @@ pms_synaptics_enable(void *vsc)
 	sc->gesture_tap_packet = 0;
 	sc->gesture_type = 0;
 	sc->gesture_buttons = 0;
-	sc->rem_x[0] = sc->rem_y[0] = 0;
-	sc->rem_x[1] = sc->rem_y[1] = 0;
-	sc->movement_history[0] = 0;
-	sc->movement_history[1] = 0;
+	sc->dz_hold = 0;
+	for (i = 0; i < SYN_MAX_FINGERS; i++) {
+		sc->rem_x[i] = sc->rem_y[i] = sc->rem_z[i] = 0;
+		sc->movement_history[i] = 0;
+	}
 	sc->button_history = 0;
 }
 
@@ -673,6 +684,18 @@ pms_sysctl_synaptics(struct sysctllog **clog)
 
 	if ((rc = sysctl_createv(clog, 0, NULL, &node,
 	    CTLFLAG_PERMANENT | CTLFLAG_READWRITE,
+	    CTLTYPE_INT, "scale_z",
+	    SYSCTL_DESCR("Sroll wheel emulation scale factor"),
+	    pms_sysctl_synaptics_verify, 0,
+	    &synaptics_scale_z,
+	    0, CTL_HW, root_num, CTL_CREATE,
+	    CTL_EOL)) != 0)
+		goto err;
+
+	synaptics_scale_z_nodenum = node->sysctl_num;
+
+	if ((rc = sysctl_createv(clog, 0, NULL, &node,
+	    CTLFLAG_PERMANENT | CTLFLAG_READWRITE,
 	    CTLTYPE_INT, "max_speed_x",
 	    SYSCTL_DESCR("Horizontal movement maximum speed"),
 	    pms_sysctl_synaptics_verify, 0,
@@ -694,6 +717,18 @@ pms_sysctl_synaptics(struct sysctllog **clog)
 		goto err;
 
 	synaptics_max_speed_y_nodenum = node->sysctl_num;
+
+	if ((rc = sysctl_createv(clog, 0, NULL, &node,
+	    CTLFLAG_PERMANENT | CTLFLAG_READWRITE,
+	    CTLTYPE_INT, "max_speed_z",
+	    SYSCTL_DESCR("Scroll wheel emulation maximum speed"),
+	    pms_sysctl_synaptics_verify, 0,
+	    &synaptics_max_speed_z,
+	    0, CTL_HW, root_num, CTL_CREATE,
+	    CTL_EOL)) != 0)
+		goto err;
+
+	synaptics_max_speed_z_nodenum = node->sysctl_num;
 
 	if ((rc = sysctl_createv(clog, 0, NULL, &node,
 	    CTLFLAG_PERMANENT | CTLFLAG_READWRITE,
@@ -754,6 +789,42 @@ pms_sysctl_synaptics(struct sysctllog **clog)
 		goto err;
 
 	synaptics_button3_nodenum = node->sysctl_num;
+
+	if ((rc = sysctl_createv(clog, 0, NULL, &node,
+	    CTLFLAG_PERMANENT | CTLFLAG_READWRITE,
+	    CTLTYPE_INT, "finger_scroll-min",
+	    SYSCTL_DESCR("Minimum width for finger scrolling detection"),
+	    pms_sysctl_synaptics_verify, 0,
+	    &synaptics_fscroll_min,
+	    0, CTL_HW, root_num, CTL_CREATE,
+	    CTL_EOL)) != 0)
+		goto err;
+
+	synaptics_finger_scroll_min_nodenum = node->sysctl_num;
+
+	if ((rc = sysctl_createv(clog, 0, NULL, &node,
+	    CTLFLAG_PERMANENT | CTLFLAG_READWRITE,
+	    CTLTYPE_INT, "finger_scroll-max",
+	    SYSCTL_DESCR("Maximum width for finger scrolling detection"),
+	    pms_sysctl_synaptics_verify, 0,
+	    &synaptics_fscroll_max,
+	    0, CTL_HW, root_num, CTL_CREATE,
+	    CTL_EOL)) != 0)
+		goto err;
+
+	synaptics_finger_scroll_max_nodenum = node->sysctl_num;
+
+	if ((rc = sysctl_createv(clog, 0, NULL, &node,
+	    CTLFLAG_PERMANENT | CTLFLAG_READWRITE,
+	    CTLTYPE_INT, "finger_scroll-hysteresis",
+	    SYSCTL_DESCR("Number of packets to stay in finger scroll mode"),
+	    pms_sysctl_synaptics_verify, 0,
+	    &synaptics_dz_hold,
+	    0, CTL_HW, root_num, CTL_CREATE,
+	    CTL_EOL)) != 0)
+		goto err;
+
+	synaptics_dz_hold_nodenum = node->sysctl_num;
 	return;
 
 err:
@@ -823,6 +894,13 @@ pms_sysctl_synaptics_verify(SYSCTLFN_ARGS)
 	if (node.sysctl_num == synaptics_button2_nodenum ||
 	    node.sysctl_num == synaptics_button3_nodenum) {
 		if (t < SYNAPTICS_EDGE_LEFT || t > SYNAPTICS_EDGE_RIGHT)
+			return (EINVAL);
+	} else
+	if (node.sysctl_num == synaptics_finger_scroll_min_nodenum ||
+	    node.sysctl_num == synaptics_finger_scroll_max_nodenum) {
+		/* make sure we avoid the "magic" widths, 4 and below
+		   are for fingers, 15 is palm detect. */
+		if ((t < 5) || (t > 14))
 			return (EINVAL);
 	} else
 	if (node.sysctl_num == synaptics_movement_enable_nodenum) {
@@ -1446,17 +1524,27 @@ synaptics_scale(int delta, int scale, int *remp)
 
 static inline void
 synaptics_movement(struct synaptics_softc *sc, struct synaptics_packet *sp,
-    int finger, int *dxp, int *dyp)
+    int finger, int scroll_emul, int *dxp, int *dyp, int *dzp)
 {
-	int dx, dy, edge;
+	int dx, dy, dz, edge;
+
+	dx = dy = dz = 0;
 
 	/*
-	 * Compute the next values of dx and dy
+	 * Compute the next values of dx and dy and dz.  If scroll_emul
+	 * is non-zero, take the dy and used it as use it as dz so we
+	 * can emulate a scroll wheel.
 	 */
-	dx = synaptics_filter_policy(sc, finger, sc->history_x[finger],
-		sp->sp_x);
-	dy = synaptics_filter_policy(sc, finger, sc->history_y[finger],
-		sp->sp_y);
+	if (scroll_emul == 0) {
+		dx = synaptics_filter_policy(sc, finger, sc->history_x[finger],
+			sp->sp_x);
+		dy = synaptics_filter_policy(sc, finger, sc->history_y[finger],
+			sp->sp_y);
+	} else {
+		dz = synaptics_filter_policy(sc, finger, sc->history_z[finger],
+			sp->sp_y);
+		dx = dy = 0;
+	}
 
 	/*
 	 * If we're dealing with a drag gesture, and the finger moves to
@@ -1477,10 +1565,11 @@ synaptics_movement(struct synaptics_softc *sc, struct synaptics_packet *sp,
 	}
 
 	/*
-	 * Apply scaling to both deltas
+	 * Apply scaling to the deltas
 	 */
 	dx = synaptics_scale(dx, synaptics_scale_x, &sc->rem_x[finger]);
 	dy = synaptics_scale(dy, synaptics_scale_y, &sc->rem_y[finger]);
+	dz = synaptics_scale(dz, synaptics_scale_z, &sc->rem_z[finger]);
 
 	/*
 	 * Clamp deltas to specified maximums.
@@ -1489,9 +1578,12 @@ synaptics_movement(struct synaptics_softc *sc, struct synaptics_packet *sp,
 		dx = ((dx >= 0)? 1 : -1) * synaptics_max_speed_x;
 	if (abs(dy) > synaptics_max_speed_y)
 		dy = ((dy >= 0)? 1 : -1) * synaptics_max_speed_y;
+	if (abs(dz) > synaptics_max_speed_z)
+		dz = ((dz >= 0)? 1 : -1) * synaptics_max_speed_z;
 
 	*dxp = dx;
 	*dyp = dy;
+	*dzp = dz;
 
 	sc->movement_history[finger]++;
 }
@@ -1502,7 +1594,7 @@ pms_synaptics_process_packet(struct pms_softc *psc, struct synaptics_packet *sp)
 	struct synaptics_softc *sc = &psc->u.synaptics;
 	int dx, dy, dz;
 	int fingers, palm, buttons, changed;
-	int s;
+	int s, z_emul;
 
 	/*
 	 * Do Z-axis emulation using up/down buttons if required.
@@ -1571,7 +1663,20 @@ pms_synaptics_process_packet(struct pms_softc *psc, struct synaptics_packet *sp)
 	 */
 	if (palm == 0 && synaptics_movement_enable) {
 		if (fingers == 1) {
-			synaptics_movement(sc, sp, sp->sp_finger, &dx, &dy);
+			z_emul = 0;
+
+			if ((sp->sp_w >= synaptics_fscroll_min) &&
+			    (sp->sp_w <= synaptics_fscroll_max)) {
+				z_emul = 1;
+				sc->dz_hold = synaptics_dz_hold;
+			}
+
+			if (sc->dz_hold > 0) {
+				z_emul = 1;
+			}
+
+			synaptics_movement(sc, sp, sp->sp_finger,
+				z_emul, &dx, &dy, &dz);
 		} else {
 			/*
 			 * No valid finger. Therefore no movement.
@@ -1585,9 +1690,12 @@ pms_synaptics_process_packet(struct pms_softc *psc, struct synaptics_packet *sp)
 		 * No valid finger. Therefore no movement.
 		 */
 		sc->movement_history[0] = 0;
-		sc->rem_x[0] = sc->rem_y[0] = 0;
-		dx = dy = 0;
+		sc->rem_x[0] = sc->rem_y[0] = sc->rem_z[0] = 0;
+		dx = dy = dz = 0;
 	}
+
+	if (sc->dz_hold > 0)
+		sc->dz_hold--;
 
 	/*
 	 * Pass the final results up to wsmouse_input() if necessary.
