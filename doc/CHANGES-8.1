@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.1,v 1.1.2.48 2018/11/04 11:15:10 martin Exp $
+# $NetBSD: CHANGES-8.1,v 1.1.2.49 2018/11/06 14:48:37 martin Exp $
 
 A complete list of changes from the NetBSD 8.0 release to the NetBSD 8.1
 release:
@@ -1589,4 +1589,26 @@ sys/netinet6/udp6_usrreq.c			1.142
 	Fix error path in ip6 source address selection.
 	[mlelstv, ticket #1079]
 
+sys/net/if.c					1.438,1.439
+sys/net/if.c					1.440
+sys/net/route.c					1.214-1.216
+sys/net/route.h					1.120
+sys/netinet/if_arp.c				1.276
+sys/netinet6/in6.c				1.270
+sys/netinet6/nd6.c				1.251
+
+	Avoid race conditions on ifaddr and rtentry changes.
+	[ozaki-r, ticket #1080]
+
+sys/netinet6/udp6_usrreq.c			1.143
+	(applied to udp6_output.c due to code refactoring)
+
+	Restore the length check of a sockaddr passed from userland at
+	udp6_output.
+	[ozaki-r, ticket #1081]
+
+sys/fs/puffs/puffs_vnops.c			1.213
+
+	Fix use after RECLAIM in PUFFS filesystems.
+	[manu, ticket #1082]
 
