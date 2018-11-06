@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.232.2.8 2018/06/07 17:48:31 martin Exp $	*/
+/*	$NetBSD: nd6.c,v 1.232.2.9 2018/11/06 14:38:58 martin Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.232.2.8 2018/06/07 17:48:31 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.232.2.9 2018/11/06 14:38:58 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -1567,7 +1567,8 @@ nd6_rtrequest(int req, struct rtentry *rt, const struct rt_addrinfo *info)
 				 * that the rt_ifa points to the address instead
 				 * of the loopback address.
 				 */
-				if (ifa != rt->rt_ifa)
+				if (!ISSET(info->rti_flags, RTF_DONTCHANGEIFA)
+				    && ifa != rt->rt_ifa)
 					rt_replace_ifa(rt, ifa);
 			}
 		} else if (rt->rt_flags & RTF_ANNOUNCE) {
