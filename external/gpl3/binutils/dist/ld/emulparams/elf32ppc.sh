@@ -15,6 +15,10 @@ GOTPLT=".plt          ${RELOCATING-0} : SPECIAL { *(.plt) }"
 PLT=".plt          ${RELOCATING-0} : SPECIAL { *(.plt) }
   .iplt         ${RELOCATING-0} : { *(.iplt) }"
 OTHER_TEXT_SECTIONS="*(.glink)"
+OTHER_GOT_RELOC_SECTIONS="
+  .rela.branch_lt	${RELOCATING-0} : { *(.rela.branch_lt) }"
+OTHER_RELRO_SECTIONS_2="
+  .branch_lt	${RELOCATING-0} :${RELOCATING+ ALIGN(4)} { *(.branch_lt) }"
 EXTRA_EM_FILE=ppc32elf
 if grep -q 'ld_elf32_spu_emulation' ldemul-list.h; then
 # crt1.o defines data_start and __data_start.  Keep them first.

@@ -17,12 +17,12 @@
 # <http://www.gnu.org/licenses/>.
 #
 
-AUTOMAKE_OPTIONS = 1.8 cygnus
+AUTOMAKE_OPTIONS = info-in-builddir no-texinfo.tex foreign
 
 # What version of the manual you want; "all" includes everything
 CONFIG=all
 
-# Options to extract the man page from as.texinfo
+# Options to extract the man page from as.texi
 MANCONF = -Dman
 
 TEXI2POD = perl $(BASEDIR)/etc/texi2pod.pl $(AM_MAKEINFOFLAGS)
@@ -32,7 +32,7 @@ POD2MAN = pod2man --center="GNU Development Tools" \
 
 man_MANS = as.1
 
-info_TEXINFOS = as.texinfo
+info_TEXINFOS = as.texi
 as_TEXINFOS = asconfig.texi $(CPU_DOCS)
 
 AM_MAKEINFOFLAGS = -I "$(srcdir)" -I "$(top_srcdir)/../libiberty" \
@@ -58,16 +58,14 @@ CPU_DOCS = \
 	c-epiphany.texi \
 	c-h8300.texi \
 	c-hppa.texi \
-	c-i370.texi \
 	c-i386.texi \
-	c-i860.texi \
-	c-i960.texi \
 	c-ip2k.texi \
 	c-lm32.texi \
 	c-m32c.texi \
 	c-m32r.texi \
 	c-m68hc11.texi \
 	c-m68k.texi \
+	c-s12z.texi \
 	c-metag.texi \
 	c-microblaze.texi \
 	c-mips.texi \
@@ -87,7 +85,6 @@ CPU_DOCS = \
 	c-s390.texi \
 	c-score.texi \
 	c-sh.texi \
-	c-sh64.texi \
 	c-sparc.texi \
         c-tic54x.texi \
         c-tic6x.texi \
@@ -123,9 +120,9 @@ info-local: $(MANS)
 # Build the man page from the texinfo file
 # The sed command removes the no-adjust Nroff command so that
 # the man output looks standard.
-as.1: $(srcdir)/as.texinfo asconfig.texi $(CPU_DOCS)
+as.1: $(srcdir)/as.texi asconfig.texi $(CPU_DOCS)
 	touch $@
-	-$(TEXI2POD) $(MANCONF) < $(srcdir)/as.texinfo > as.pod
+	-$(TEXI2POD) $(MANCONF) < $(srcdir)/as.texi > as.pod
 	-($(POD2MAN) as.pod | \
 	        sed -e '/^.if n .na/d' > $@.T$$$$ && \
 	        mv -f $@.T$$$$ $@) || \
@@ -133,10 +130,3 @@ as.1: $(srcdir)/as.texinfo asconfig.texi $(CPU_DOCS)
 	rm -f as.pod
 
 MAINTAINERCLEANFILES += as.info
-
-# Automake 1.9 will only build info files in the objdir if they are
-# mentioned in DISTCLEANFILES.  It doesn't have to be unconditional,
-# though, so we use a bogus condition.
-if GENINSRC_NEVER
-DISTCLEANFILES = as.info
-endif

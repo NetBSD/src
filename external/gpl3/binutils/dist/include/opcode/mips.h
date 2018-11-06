@@ -989,6 +989,9 @@ mips_opcode_32bit_p (const struct mips_opcode *mo)
    "-A" symbolic offset (-262144 .. 262143) << 2 at bit 0
    "-B" symbolic offset (-131072 .. 131071) << 3 at bit 0
 
+   GINV ASE usage:
+   "+\" 2 bit Global TLB invalidate type at bit 8
+
    Other:
    "()" parens surrounding optional value
    ","  separates operands
@@ -1003,7 +1006,7 @@ mips_opcode_32bit_p (const struct mips_opcode *mo)
    Extension character sequences used so far ("+" followed by the
    following), for quick reference when adding more:
    "1234567890"
-   "~!@#$%^&*|:'";"
+   "~!@#$%^&*|:'";\"
    "ABCEFGHIJKLMNOPQRSTUVWXZ"
    "abcdefghijklmnopqrstuvwxyz"
 
@@ -1294,6 +1297,11 @@ static const unsigned int mips_isa_table[] = {
 /* The Virtualization ASE has eXtended Physical Addressing (XPA)
    instructions which are only valid when both ASEs are enabled.  */
 #define ASE_XPA_VIRT		0x00020000
+/* Cyclic redundancy check (CRC) ASE.  */
+#define ASE_CRC			0x00040000
+#define ASE_CRC64		0x00080000
+/* Global INValidate Extension.  */
+#define ASE_GINV		0x00100000
 
 /* MIPS ISA defines, use instead of hardcoding ISA level.  */
 
@@ -1889,13 +1897,12 @@ extern int bfd_mips_num_opcodes;
    "A" 8 bit PC relative address * 4 (MIPS16OP_*_IMM8)
    "B" 5 bit PC relative address * 8 (MIPS16OP_*_IMM5)
    "E" 5 bit PC relative address * 4 (MIPS16OP_*_IMM5)
-   "m" 7 bit register list for save instruction (18 bit extended)
-   "M" 7 bit register list for restore instruction (18 bit extended)
+   "m" 7 bit register list for SAVE/RESTORE instruction (18 bit extended)
 
    Characters used so far, for quick reference when adding more:
    "0123456 89"
    ".[]<>"
-   "ABCDEFGHI KLMNOPQRSTUVWXYZ"
+   "ABCDEFGHI KL NOPQRSTUVWXYZ"
    "abcde   ijklmnopqrs uvwxyz"
   */
 

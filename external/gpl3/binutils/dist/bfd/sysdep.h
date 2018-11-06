@@ -108,6 +108,10 @@ extern char *strrchr ();
 #ifndef O_ACCMODE
 #define O_ACCMODE (O_RDONLY | O_WRONLY | O_RDWR)
 #endif
+/* Systems that don't already define this, don't need it.  */
+#ifndef O_BINARY
+#define O_BINARY 0
+#endif
 
 #ifndef SEEK_SET
 #define SEEK_SET 0

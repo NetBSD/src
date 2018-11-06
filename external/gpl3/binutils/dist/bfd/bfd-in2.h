@@ -41,6 +41,7 @@ extern "C" {
 
 #include "ansidecl.h"
 #include "symcat.h"
+#include "diagnostics.h"
 #include <stdarg.h>
 #include <sys/stat.h>
 
@@ -96,6 +97,24 @@ extern "C" {
 #define BFD_HOST_U_64_BIT @BFD_HOST_U_64_BIT@
 typedef BFD_HOST_64_BIT bfd_int64_t;
 typedef BFD_HOST_U_64_BIT bfd_uint64_t;
+#endif
+
+#ifdef HAVE_INTTYPES_H
+# include <inttypes.h>
+#else
+# if BFD_HOST_64BIT_LONG
+#  define BFD_PRI64 "l"
+# elif defined (__MSVCRT__)
+#  define BFD_PRI64 "I64"
+# else
+#  define BFD_PRI64 "ll"
+# endif
+# undef PRId64
+# define PRId64 BFD_PRI64 "d"
+# undef PRIu64
+# define PRIu64 BFD_PRI64 "u"
+# undef PRIx64
+# define PRIx64 BFD_PRI64 "x"
 #endif
 
 #if BFD_ARCH_SIZE >= 64
@@ -570,6 +589,8 @@ void bfd_putb64 (bfd_uint64_t, void *);
 void bfd_putl64 (bfd_uint64_t, void *);
 void bfd_putb32 (bfd_vma, void *);
 void bfd_putl32 (bfd_vma, void *);
+void bfd_putb24 (bfd_vma, void *);
+void bfd_putl24 (bfd_vma, void *);
 void bfd_putb16 (bfd_vma, void *);
 void bfd_putl16 (bfd_vma, void *);
 
@@ -597,8 +618,6 @@ extern bfd_boolean _bfd_handle_already_linked
 
 /* Externally visible ECOFF routines.  */
 
-extern bfd_vma bfd_ecoff_get_gp_value
-  (bfd * abfd);
 extern bfd_boolean bfd_ecoff_set_gp_value
   (bfd *abfd, bfd_vma gp_value);
 extern bfd_boolean bfd_ecoff_set_regmasks
@@ -767,8 +786,6 @@ extern bfd_boolean bfd_sunos_size_dynamic_sections
 
 extern bfd_boolean bfd_i386linux_size_dynamic_sections
   (bfd *, struct bfd_link_info *);
-extern bfd_boolean bfd_m68klinux_size_dynamic_sections
-  (bfd *, struct bfd_link_info *);
 extern bfd_boolean bfd_sparclinux_size_dynamic_sections
   (bfd *, struct bfd_link_info *);
 
@@ -836,9 +853,6 @@ union internal_auxent;
 
 extern bfd_boolean bfd_coff_set_symbol_class
   (bfd *, struct bfd_symbol *, unsigned int);
-
-extern bfd_boolean bfd_m68k_coff_create_embedded_relocs
-  (bfd *, struct bfd_link_info *, struct bfd_section *, struct bfd_section *, char **);
 
 /* ARM VFP11 erratum workaround support.  */
 typedef enum
@@ -1324,13 +1338,10 @@ typedef struct bfd_section
   /* The section contains thread local data.  */
 #define SEC_THREAD_LOCAL                0x400
 
-  /* The section has GOT references.  This flag is only for the
-     linker, and is currently only used by the elf32-hppa back end.
-     It will be set if global offset table references were detected
-     in this section, which indicate to the linker that the section
-     contains PIC code, and must be handled specially when doing a
-     static link.  */
-#define SEC_HAS_GOT_REF                 0x800
+  /* The section's size is fixed.  Generic linker code will not
+     recalculate it and it is up to whoever has set this flag to
+     get the size right.  */
+#define SEC_FIXED_SIZE                  0x800
 
   /* The section contains common symbols (symbols may be defined
      multiple times, the value of a symbol is the amount of
@@ -1884,8 +1895,6 @@ asection *bfd_make_section_with_flags
 
 asection *bfd_make_section (bfd *, const char *name);
 
-int bfd_get_next_section_id (void);
-
 bfd_boolean bfd_set_section_flags
    (bfd *abfd, asection *sec, flagword flags);
 
@@ -1964,23 +1973,6 @@ enum bfd_architecture
 #define bfd_mach_mcf_isa_c_nodiv_mac   30
 #define bfd_mach_mcf_isa_c_nodiv_emac  31
   bfd_arch_vax,       /* DEC Vax.  */
-  bfd_arch_i960,      /* Intel 960.  */
-    /* The order of the following is important.
-       lower number indicates a machine type that
-       only accepts a subset of the instructions
-       available to machines with higher numbers.
-       The exception is the "ca", which is
-       incompatible with all other machines except
-       "core".  */
-
-#define bfd_mach_i960_core     1
-#define bfd_mach_i960_ka_sa    2
-#define bfd_mach_i960_kb_sb    3
-#define bfd_mach_i960_mc       4
-#define bfd_mach_i960_xa       5
-#define bfd_mach_i960_ca       6
-#define bfd_mach_i960_jx       7
-#define bfd_mach_i960_hx       8
 
   bfd_arch_or1k,      /* OpenRISC 1000.  */
 #define bfd_mach_or1k          1
@@ -2096,13 +2088,8 @@ enum bfd_architecture
 #define bfd_mach_iamcu                 (1 << 8)
 #define bfd_mach_i386_iamcu            (bfd_mach_i386_i386 | bfd_mach_iamcu)
 #define bfd_mach_i386_iamcu_intel_syntax (bfd_mach_i386_iamcu | bfd_mach_i386_intel_syntax)
-  bfd_arch_we32k,     /* AT&T WE32xxx.  */
-  bfd_arch_tahoe,     /* CCI/Harris Tahoe.  */
-  bfd_arch_i860,      /* Intel 860.  */
-  bfd_arch_i370,      /* IBM 360/370 Mainframes.  */
   bfd_arch_romp,      /* IBM ROMP PC/RT.  */
   bfd_arch_convex,    /* Convex.  */
-  bfd_arch_m88k,      /* Motorola 88xxx.  */
   bfd_arch_m98k,      /* Motorola 98xxx.  */
   bfd_arch_pyramid,   /* Pyramid Technology.  */
   bfd_arch_h8300,     /* Renesas H8/300 (formerly Hitachi H8/300).  */
@@ -2165,10 +2152,11 @@ enum bfd_architecture
 #define bfd_mach_m6812s        2
   bfd_arch_m9s12x,    /* Freescale S12X.  */
   bfd_arch_m9s12xg,   /* Freescale XGATE.  */
+  bfd_arch_s12z,    /* Freescale S12Z.  */
+#define bfd_mach_s12z_default 0
   bfd_arch_z8k,       /* Zilog Z8000.  */
 #define bfd_mach_z8001         1
 #define bfd_mach_z8002         2
-  bfd_arch_h8500,     /* Renesas H8/500 (formerly Hitachi H8/500).  */
   bfd_arch_sh,        /* Renesas / SuperH SH (formerly Hitachi SH).  */
 #define bfd_mach_sh                            1
 #define bfd_mach_sh2                           0x20
@@ -2190,7 +2178,6 @@ enum bfd_architecture
 #define bfd_mach_sh4a                          0x4a
 #define bfd_mach_sh4a_nofpu                    0x4b
 #define bfd_mach_sh4al_dsp                     0x4d
-#define bfd_mach_sh5                           0x50
   bfd_arch_alpha,     /* Dec Alpha.  */
 #define bfd_mach_alpha_ev4     0x10
 #define bfd_mach_alpha_ev5     0x20
@@ -2217,7 +2204,6 @@ enum bfd_architecture
 #define bfd_mach_n1h_v3        4
 #define bfd_mach_n1h_v3m       5
   bfd_arch_ns32k,     /* National Semiconductors ns32000.  */
-  bfd_arch_w65,       /* WDC 65816.  */
   bfd_arch_tic30,     /* Texas Instruments TMS320C30.  */
   bfd_arch_tic4x,     /* Texas Instruments TMS320C3X/4X.  */
 #define bfd_mach_tic3x         30
@@ -2398,6 +2384,9 @@ enum bfd_architecture
 #define bfd_mach_wasm32        1
   bfd_arch_pru,       /* PRU.  */
 #define bfd_mach_pru           0
+  bfd_arch_nfp,       /* Netronome Flow Processor */
+#define bfd_mach_nfp3200       0x3200
+#define bfd_mach_nfp6000       0x6000
   bfd_arch_last
   };
 
@@ -2491,10 +2480,9 @@ typedef enum bfd_reloc_status
   /* The symbol to relocate against was undefined.  */
   bfd_reloc_undefined,
 
-  /* The relocation was performed, but may not be ok - presently
-     generated only when linking i960 coff files with i960 b.out
-     symbols.  If this type is returned, the error_message argument
-     to bfd_perform_relocation will be set.  */
+  /* The relocation was performed, but may not be ok.  If this type is
+     returned, the error_message argument to bfd_perform_relocation
+     will be set.  */
   bfd_reloc_dangerous
  }
  bfd_reloc_status_type;
@@ -2574,8 +2562,7 @@ struct reloc_howto_struct
 
   /* If this field is non null, then the supplied function is
      called rather than the normal function.  This allows really
-     strange relocation methods to be accommodated (e.g., i960 callj
-     instructions).  */
+     strange relocation methods to be accommodated.  */
   bfd_reloc_status_type (*special_function)
     (bfd *, arelent *, struct bfd_symbol *, void *, asection *,
      bfd *, char **);
@@ -2619,7 +2606,7 @@ struct reloc_howto_struct
      slot of the instruction, so that a PC relative relocation can
      be made just by adding in an ordinary offset (e.g., sun3 a.out).
      Some formats leave the displacement part of an instruction
-     empty (e.g., m88k bcs); this flag signals the fact.  */
+     empty (e.g., ELF); this flag signals the fact.  */
   bfd_boolean pcrel_offset;
 };
 
@@ -2700,9 +2687,7 @@ enum bfd_reloc_code_real {
 
 /* PC-relative relocations.  Sometimes these are relative to the address
 of the relocation itself; sometimes they are relative to the start of
-the section containing the relocation.  It depends on the specific target.
-
-The 24-bit relocation is used in some Intel 960 configurations.  */
+the section containing the relocation.  It depends on the specific target.  */
   BFD_RELOC_64_PCREL,
   BFD_RELOC_32_PCREL,
   BFD_RELOC_24_PCREL,
@@ -2793,9 +2778,6 @@ handled specially, because the value the register will have is
 decided relatively late.  */
   BFD_RELOC_GPREL16,
   BFD_RELOC_GPREL32,
-
-/* Reloc types used for i960/b.out.  */
-  BFD_RELOC_I960_CALLJ,
 
 /* SPARC ELF relocations.  There is probably some overlap with other
 relocation types already defined.  */
@@ -3549,6 +3531,15 @@ pc-relative or some form of GOT-indirect relocation.  */
   BFD_RELOC_ARM_THUMB_MOVT,
   BFD_RELOC_ARM_THUMB_MOVW_PCREL,
   BFD_RELOC_ARM_THUMB_MOVT_PCREL,
+
+/* ARM FDPIC specific relocations.  */
+  BFD_RELOC_ARM_GOTFUNCDESC,
+  BFD_RELOC_ARM_GOTOFFFUNCDESC,
+  BFD_RELOC_ARM_FUNCDESC,
+  BFD_RELOC_ARM_FUNCDESC_VALUE,
+  BFD_RELOC_ARM_TLS_GD32_FDPIC,
+  BFD_RELOC_ARM_TLS_LDM32_FDPIC,
+  BFD_RELOC_ARM_TLS_IE32_FDPIC,
 
 /* Relocations for setting up GOTs and PLTs for shared libraries.  */
   BFD_RELOC_ARM_JUMP_SLOT,
@@ -5267,6 +5258,11 @@ This is the 8 bit high part of an absolute address and immediately follows
 a matching LO8XG part.  */
   BFD_RELOC_M68HC12_HI8XG,
 
+/* Freescale S12Z reloc.
+This is a 15 bit relative address.  If the most significant bits are all zero
+then it may be truncated to 8 bits.  */
+  BFD_RELOC_S12Z_15_PCREL,
+
 /* NS CR16C Relocations.  */
   BFD_RELOC_16C_NUM08,
   BFD_RELOC_16C_NUM08_C,
@@ -5419,40 +5415,6 @@ a matching LO8XG part.  */
   BFD_RELOC_CRIS_16_TPREL,
   BFD_RELOC_CRIS_DTPMOD,
   BFD_RELOC_CRIS_32_IE,
-
-/* Intel i860 Relocations.  */
-  BFD_RELOC_860_COPY,
-  BFD_RELOC_860_GLOB_DAT,
-  BFD_RELOC_860_JUMP_SLOT,
-  BFD_RELOC_860_RELATIVE,
-  BFD_RELOC_860_PC26,
-  BFD_RELOC_860_PLT26,
-  BFD_RELOC_860_PC16,
-  BFD_RELOC_860_LOW0,
-  BFD_RELOC_860_SPLIT0,
-  BFD_RELOC_860_LOW1,
-  BFD_RELOC_860_SPLIT1,
-  BFD_RELOC_860_LOW2,
-  BFD_RELOC_860_SPLIT2,
-  BFD_RELOC_860_LOW3,
-  BFD_RELOC_860_LOGOT0,
-  BFD_RELOC_860_SPGOT0,
-  BFD_RELOC_860_LOGOT1,
-  BFD_RELOC_860_SPGOT1,
-  BFD_RELOC_860_LOGOTOFF0,
-  BFD_RELOC_860_SPGOTOFF0,
-  BFD_RELOC_860_LOGOTOFF1,
-  BFD_RELOC_860_SPGOTOFF1,
-  BFD_RELOC_860_LOGOTOFF2,
-  BFD_RELOC_860_LOGOTOFF3,
-  BFD_RELOC_860_LOPC,
-  BFD_RELOC_860_HIGHADJ,
-  BFD_RELOC_860_HAGOT,
-  BFD_RELOC_860_HAGOTOFF,
-  BFD_RELOC_860_HAPC,
-  BFD_RELOC_860_HIGH,
-  BFD_RELOC_860_HIGOT,
-  BFD_RELOC_860_HIGOTOFF,
 
 /* OpenRISC 1000 Relocations.  */
   BFD_RELOC_OR1K_REL_26,
@@ -5793,6 +5755,9 @@ the linker could optimize the movq to a leaq if possible.  */
 /* Same as BFD_RELOC_32_PCREL but with an implicit -4 addend.  */
   BFD_RELOC_MACH_O_X86_64_PCREL32_4,
 
+/* Used when referencing a TLV entry.  */
+  BFD_RELOC_MACH_O_X86_64_TLV,
+
 /* Addend for PAGE or PAGEOFF.  */
   BFD_RELOC_MACH_O_ARM64_ADDEND,
 
@@ -5889,6 +5854,16 @@ to two words (uses imm instruction).  */
 to two words (uses imm instruction).  */
   BFD_RELOC_MICROBLAZE_64_TLSTPREL,
 
+/* This is a 64 bit reloc that stores the 32 bit pc relative
+value in two words (with an imm instruction).  The relocation is
+PC-relative offset from start of TEXT.  */
+  BFD_RELOC_MICROBLAZE_64_TEXTPCREL,
+
+/* This is a 64 bit reloc that stores the 32 bit offset
+value in two words (with an imm instruction).  The relocation is
+relative offset from start of TEXT.  */
+  BFD_RELOC_MICROBLAZE_64_TEXTREL,
+
 /* AArch64 pseudo relocation code to mark the start of the AArch64
 relocation enumerators.  N.B. the order of the enumerators is
 important as several tables in the AArch64 bfd backend are indexed
@@ -5956,6 +5931,36 @@ value's sign.  */
 of a signed value.  Changes instruction to MOVZ or MOVN depending on the
 value's sign.  */
   BFD_RELOC_AARCH64_MOVW_G2_S,
+
+/* AArch64 MOV[NZ] instruction with most significant bits 0 to 15
+of a signed value.  Changes instruction to MOVZ or MOVN depending on the
+value's sign.  */
+  BFD_RELOC_AARCH64_MOVW_PREL_G0,
+
+/* AArch64 MOV[NZ] instruction with most significant bits 0 to 15
+of a signed value.  Changes instruction to MOVZ or MOVN depending on the
+value's sign.  */
+  BFD_RELOC_AARCH64_MOVW_PREL_G0_NC,
+
+/* AArch64 MOVK instruction with most significant bits 16 to 31
+of a signed value.  */
+  BFD_RELOC_AARCH64_MOVW_PREL_G1,
+
+/* AArch64 MOVK instruction with most significant bits 16 to 31
+of a signed value.  */
+  BFD_RELOC_AARCH64_MOVW_PREL_G1_NC,
+
+/* AArch64 MOVK instruction with most significant bits 32 to 47
+of a signed value.  */
+  BFD_RELOC_AARCH64_MOVW_PREL_G2,
+
+/* AArch64 MOVK instruction with most significant bits 32 to 47
+of a signed value.  */
+  BFD_RELOC_AARCH64_MOVW_PREL_G2_NC,
+
+/* AArch64 MOVK instruction with most significant bits 47 to 63
+of a signed value.  */
+  BFD_RELOC_AARCH64_MOVW_PREL_G3,
 
 /* AArch64 Load Literal instruction, holding a 19 bit pc-relative word
 offset.  The lowest two bits must be zero and are not stored in the
@@ -6184,6 +6189,34 @@ instructions.  */
 /* AArch64 TLS LOCAL EXEC relocation.  */
   BFD_RELOC_AARCH64_TLSLE_ADD_TPREL_LO12_NC,
 
+/* bit[11:1] of byte offset to module TLS base address, encoded in ldst
+instructions.  */
+  BFD_RELOC_AARCH64_TLSLE_LDST16_TPREL_LO12,
+
+/* Similar as BFD_RELOC_AARCH64_TLSLE_LDST16_TPREL_LO12, but no overflow check.  */
+  BFD_RELOC_AARCH64_TLSLE_LDST16_TPREL_LO12_NC,
+
+/* bit[11:2] of byte offset to module TLS base address, encoded in ldst
+instructions.  */
+  BFD_RELOC_AARCH64_TLSLE_LDST32_TPREL_LO12,
+
+/* Similar as BFD_RELOC_AARCH64_TLSLE_LDST32_TPREL_LO12, but no overflow check.  */
+  BFD_RELOC_AARCH64_TLSLE_LDST32_TPREL_LO12_NC,
+
+/* bit[11:3] of byte offset to module TLS base address, encoded in ldst
+instructions.  */
+  BFD_RELOC_AARCH64_TLSLE_LDST64_TPREL_LO12,
+
+/* Similar as BFD_RELOC_AARCH64_TLSLE_LDST64_TPREL_LO12, but no overflow check.  */
+  BFD_RELOC_AARCH64_TLSLE_LDST64_TPREL_LO12_NC,
+
+/* bit[11:0] of byte offset to module TLS base address, encoded in ldst
+instructions.  */
+  BFD_RELOC_AARCH64_TLSLE_LDST8_TPREL_LO12,
+
+/* Similar as BFD_RELOC_AARCH64_TLSLE_LDST8_TPREL_LO12, but no overflow check.  */
+  BFD_RELOC_AARCH64_TLSLE_LDST8_TPREL_LO12_NC,
+
 /* AArch64 TLS DESC relocation.  */
   BFD_RELOC_AARCH64_TLSDESC_LD_PREL19,
 
@@ -6266,6 +6299,14 @@ any object files.  */
 
 /* Similar as BFD_RELOC_AARCH64_TLSLD_LDST_DTPREL_LO12, but no overflow check.  */
   BFD_RELOC_AARCH64_TLSLD_LDST_DTPREL_LO12_NC,
+
+/* AArch64 pseudo relocation code for TLS local exec mode.  It's to be
+used internally by the AArch64 assembler and not (currently) written to
+any object files.  */
+  BFD_RELOC_AARCH64_TLSLE_LDST_TPREL_LO12,
+
+/* Similar as BFD_RELOC_AARCH64_TLSLE_LDST_TPREL_LO12, but no overflow check.  */
+  BFD_RELOC_AARCH64_TLSLE_LDST_TPREL_LO12_NC,
 
 /* AArch64 pseudo relocation code to be used internally by the AArch64
 assembler and not (currently) written to any object files.  */
@@ -6751,8 +6792,9 @@ struct bfd
      least-recently-used list of BFDs.  */
   struct bfd *lru_prev, *lru_next;
 
-  /* When a file is closed by the caching routines, BFD retains
-     state information on the file here...  */
+  /* Track current file position (or current buffer offset for
+     in-memory BFDs).  When a file is closed by the caching routines,
+     BFD retains state information on the file here.  */
   ufile_ptr where;
 
   /* File modified time, if mtime_set is TRUE.  */
@@ -6981,21 +7023,15 @@ struct bfd
     {
       struct aout_data_struct *aout_data;
       struct artdata *aout_ar_data;
-      struct _oasys_data *oasys_obj_data;
-      struct _oasys_ar_data *oasys_ar_data;
       struct coff_tdata *coff_obj_data;
       struct pe_tdata *pe_obj_data;
       struct xcoff_tdata *xcoff_obj_data;
       struct ecoff_tdata *ecoff_obj_data;
-      struct ieee_data_struct *ieee_data;
-      struct ieee_ar_data_struct *ieee_ar_data;
       struct srec_data_struct *srec_data;
       struct verilog_data_struct *verilog_data;
       struct ihex_data_struct *ihex_data;
       struct tekhex_data_struct *tekhex_data;
       struct elf_obj_tdata *elf_obj_data;
-      struct nlm_obj_tdata *nlm_obj_data;
-      struct bout_data_struct *bout_data;
       struct mmo_data_struct *mmo_data;
       struct sun_core_struct *sun_core_data;
       struct sco5_core_struct *sco5_core_data;
@@ -7079,6 +7115,8 @@ void bfd_perror (const char *message);
 
 
 typedef void (*bfd_error_handler_type) (const char *, va_list);
+
+void _bfd_error_handler (const char *fmt, ...) ATTRIBUTE_PRINTF_1;
 
 bfd_error_handler_type bfd_set_error_handler (bfd_error_handler_type);
 
@@ -7230,7 +7268,7 @@ bfd_vma bfd_emul_get_maxpagesize (const char *);
 
 void bfd_emul_set_maxpagesize (const char *, bfd_vma);
 
-bfd_vma bfd_emul_get_commonpagesize (const char *);
+bfd_vma bfd_emul_get_commonpagesize (const char *, bfd_boolean);
 
 void bfd_emul_set_commonpagesize (const char *, bfd_vma);
 
@@ -7304,9 +7342,6 @@ enum bfd_flavour
   bfd_target_ecoff_flavour,
   bfd_target_xcoff_flavour,
   bfd_target_elf_flavour,
-  bfd_target_ieee_flavour,
-  bfd_target_nlm_flavour,
-  bfd_target_oasys_flavour,
   bfd_target_tekhex_flavour,
   bfd_target_srec_flavour,
   bfd_target_verilog_flavour,
@@ -7619,6 +7654,7 @@ typedef struct bfd_target
   NAME##_bfd_discard_group, \
   NAME##_section_already_linked, \
   NAME##_bfd_define_common_symbol, \
+  NAME##_bfd_link_hide_symbol, \
   NAME##_bfd_define_start_stop
 
   int         (*_bfd_sizeof_headers) (bfd *, struct bfd_link_info *);
@@ -7684,6 +7720,10 @@ typedef struct bfd_target
   /* Define a common symbol.  */
   bfd_boolean (*_bfd_define_common_symbol) (bfd *, struct bfd_link_info *,
                                             struct bfd_link_hash_entry *);
+
+  /* Hide a symbol.  */
+  void (*_bfd_link_hide_symbol) (bfd *, struct bfd_link_info *,
+                                 struct bfd_link_hash_entry *);
 
   /* Define a __start, __stop, .startof. or .sizeof. symbol.  */
   struct bfd_link_hash_entry *
@@ -7767,6 +7807,13 @@ bfd_boolean bfd_generic_define_common_symbol
 
 #define bfd_define_common_symbol(output_bfd, info, h) \
        BFD_SEND (output_bfd, _bfd_define_common_symbol, (output_bfd, info, h))
+
+void _bfd_generic_link_hide_symbol
+   (bfd *output_bfd, struct bfd_link_info *info,
+    struct bfd_link_hash_entry *h);
+
+#define bfd_link_hide_symbol(output_bfd, info, h) \
+       BFD_SEND (output_bfd, _bfd_link_hide_symbol, (output_bfd, info, h))
 
 struct bfd_link_hash_entry *bfd_generic_define_start_stop
    (struct bfd_link_info *info,

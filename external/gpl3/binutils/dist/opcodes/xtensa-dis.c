@@ -27,6 +27,8 @@
 #include "xtensa-isa.h"
 #include "ansidecl.h"
 #include "libiberty.h"
+#include "bfd.h"
+#include "elf/xtensa.h"
 #include "disassemble.h"
 
 #include <setjmp.h>
@@ -43,8 +45,119 @@ struct dis_private
 {
   bfd_byte *byte_buf;
   OPCODES_SIGJMP_BUF bailout;
+  /* Persistent fields, valid for last_section only.  */
+  asection *last_section;
+  property_table_entry *insn_table_entries;
+  int insn_table_entry_count;
+  /* Cached property table search position.  */
+  bfd_vma insn_table_cur_addr;
+  int insn_table_cur_idx;
 };
 
+static void
+xtensa_coalesce_insn_tables (struct dis_private *priv)
+{
+  const int mask = ~(XTENSA_PROP_DATA | XTENSA_PROP_NO_TRANSFORM);
+  int count = priv->insn_table_entry_count;
+  int i, j;
+
+  /* Loop over all entries, combining adjacent ones that differ only in
+     the flag bits XTENSA_PROP_DATA and XTENSA_PROP_NO_TRANSFORM.  */
+
+  for (i = j = 0; j < count; ++i)
+    {
+      property_table_entry *entry = priv->insn_table_entries + i;
+
+      *entry = priv->insn_table_entries[j];
+
+      for (++j; j < count; ++j)
+	{
+	  property_table_entry *next = priv->insn_table_entries + j;
+	  int fill = xtensa_compute_fill_extra_space (entry);
+	  int size = entry->size + fill;
+
+	  if (entry->address + size == next->address)
+	    {
+	      int entry_flags = entry->flags & mask;
+	      int next_flags = next->flags & mask;
+
+	      if (next_flags == entry_flags)
+		entry->size = next->address - entry->address + next->size;
+	      else
+		break;
+	    }
+	  else
+	    {
+	      break;
+	    }
+	}
+    }
+  priv->insn_table_entry_count = i;
+}
+
+static property_table_entry *
+xtensa_find_table_entry (bfd_vma memaddr, struct disassemble_info *info)
+{
+  struct dis_private *priv = (struct dis_private *) info->private_data;
+  int i;
+
+  if (priv->insn_table_entries == NULL
+      || priv->insn_table_entry_count < 0)
+    return NULL;
+
+  if (memaddr < priv->insn_table_cur_addr)
+    priv->insn_table_cur_idx = 0;
+
+  for (i = priv->insn_table_cur_idx; i < priv->insn_table_entry_count; ++i)
+    {
+      property_table_entry *block = priv->insn_table_entries + i;
+
+      if (block->size != 0)
+	{
+	  if ((memaddr >= block->address
+	       && memaddr < block->address + block->size)
+	      || memaddr < block->address)
+	    {
+	      priv->insn_table_cur_addr = memaddr;
+	      priv->insn_table_cur_idx = i;
+	      return block;
+	    }
+	}
+    }
+  return NULL;
+}
+
+/* Check whether an instruction crosses an instruction block boundary
+   (according to property tables).
+   If it does, return 0 (doesn't fit), else return 1.  */
+
+static int
+xtensa_instruction_fits (bfd_vma memaddr, int size,
+			 property_table_entry *insn_block)
+{
+  unsigned max_size;
+
+  /* If no property table info, assume it fits.  */
+  if (insn_block == NULL || size <= 0)
+    return 1;
+
+  /* If too high, limit nextstop by the next insn address.  */
+  if (insn_block->address > memaddr)
+    {
+      /* memaddr is not in an instruction block, but is followed by one.  */
+      max_size = insn_block->address - memaddr;
+    }
+  else
+    {
+      /* memaddr is in an instruction block, go no further than the end.  */
+      max_size = insn_block->address + insn_block->size - memaddr;
+    }
+
+  /* Crossing a boundary, doesn't "fit".  */
+  if ((unsigned)size > max_size)
+    return 0;
+  return 1;
+}
 
 static int
 fetch_data (struct disassemble_info *info, bfd_vma memaddr)
@@ -52,6 +165,8 @@ fetch_data (struct disassemble_info *info, bfd_vma memaddr)
   int length, status = 0;
   struct dis_private *priv = (struct dis_private *) info->private_data;
   int insn_size = xtensa_isa_maxlength (xtensa_default_isa);
+
+  insn_size = MAX (insn_size, 4);
 
   /* Read the maximum instruction size, padding with zeros if we go past
      the end of the text section.  This code will automatically adjust
@@ -140,11 +255,12 @@ print_insn_xtensa (bfd_vma memaddr, struct disassemble_info *info)
   xtensa_isa isa;
   xtensa_opcode opc;
   xtensa_format fmt;
-  struct dis_private priv;
+  static struct dis_private priv;
   static bfd_byte *byte_buf = NULL;
   static xtensa_insnbuf insn_buffer = NULL;
   static xtensa_insnbuf slot_buffer = NULL;
   int first, first_slot, valid_insn;
+  property_table_entry *insn_block;
 
   if (!xtensa_default_isa)
     xtensa_default_isa = xtensa_isa_init (0, 0);
@@ -175,48 +291,105 @@ print_insn_xtensa (bfd_vma memaddr, struct disassemble_info *info)
   priv.byte_buf = byte_buf;
 
   info->private_data = (void *) &priv;
+
+  /* Prepare instruction tables.  */
+
+  if (info->section != NULL)
+    {
+      asection *section = info->section;
+
+      if (priv.last_section != section)
+	{
+	  bfd *abfd = section->owner;
+
+	  if (priv.last_section != NULL)
+	    {
+	      /* Reset insn_table_entries.  */
+	      priv.insn_table_entry_count = 0;
+	      if (priv.insn_table_entries)
+		free (priv.insn_table_entries);
+	      priv.insn_table_entries = NULL;
+	    }
+	  priv.last_section = section;
+
+	  /* Read insn_table_entries.  */
+	  priv.insn_table_entry_count =
+	    xtensa_read_table_entries (abfd, section,
+				       &priv.insn_table_entries,
+				       XTENSA_PROP_SEC_NAME, FALSE);
+	  if (priv.insn_table_entry_count == 0)
+	    {
+	      if (priv.insn_table_entries)
+		free (priv.insn_table_entries);
+	      priv.insn_table_entries = NULL;
+	      /* Backwards compatibility support.  */
+	      priv.insn_table_entry_count =
+		xtensa_read_table_entries (abfd, section,
+					   &priv.insn_table_entries,
+					   XTENSA_INSN_SEC_NAME, FALSE);
+	    }
+	  priv.insn_table_cur_idx = 0;
+	  xtensa_coalesce_insn_tables (&priv);
+	}
+      /* Else nothing to do, same section as last time.  */
+    }
+
   if (OPCODES_SIGSETJMP (priv.bailout) != 0)
       /* Error return.  */
       return -1;
+
+  /* Fetch the maximum size instruction.  */
+  bytes_fetched = fetch_data (info, memaddr);
+
+  insn_block = xtensa_find_table_entry (memaddr, info);
 
   /* Don't set "isa" before the setjmp to keep the compiler from griping.  */
   isa = xtensa_default_isa;
   size = 0;
   nslots = 0;
-
-  /* Fetch the maximum size instruction.  */
-  bytes_fetched = fetch_data (info, memaddr);
-
-  /* Copy the bytes into the decode buffer.  */
-  memset (insn_buffer, 0, (xtensa_insnbuf_size (isa) *
-			   sizeof (xtensa_insnbuf_word)));
-  xtensa_insnbuf_from_chars (isa, insn_buffer, priv.byte_buf, bytes_fetched);
-
-  fmt = xtensa_format_decode (isa, insn_buffer);
-  if (fmt == XTENSA_UNDEFINED
-      || ((size = xtensa_format_length (isa, fmt)) > bytes_fetched))
-    valid_insn = 0;
-  else
+  valid_insn = 0;
+  fmt = 0;
+  if (!insn_block || (insn_block->flags & XTENSA_PROP_INSN))
     {
-      /* Make sure all the opcodes are valid.  */
-      valid_insn = 1;
-      nslots = xtensa_format_num_slots (isa, fmt);
-      for (n = 0; n < nslots; n++)
+      /* Copy the bytes into the decode buffer.  */
+      memset (insn_buffer, 0, (xtensa_insnbuf_size (isa) *
+			       sizeof (xtensa_insnbuf_word)));
+      xtensa_insnbuf_from_chars (isa, insn_buffer, priv.byte_buf,
+				 bytes_fetched);
+
+      fmt = xtensa_format_decode (isa, insn_buffer);
+      if (fmt != XTENSA_UNDEFINED
+	  && ((size = xtensa_format_length (isa, fmt)) <= bytes_fetched)
+	  && xtensa_instruction_fits (memaddr, size, insn_block))
 	{
-	  xtensa_format_get_slot (isa, fmt, n, insn_buffer, slot_buffer);
-	  if (xtensa_opcode_decode (isa, fmt, n, slot_buffer)
-	      == XTENSA_UNDEFINED)
+	  /* Make sure all the opcodes are valid.  */
+	  valid_insn = 1;
+	  nslots = xtensa_format_num_slots (isa, fmt);
+	  for (n = 0; n < nslots; n++)
 	    {
-	      valid_insn = 0;
-	      break;
+	      xtensa_format_get_slot (isa, fmt, n, insn_buffer, slot_buffer);
+	      if (xtensa_opcode_decode (isa, fmt, n, slot_buffer)
+		  == XTENSA_UNDEFINED)
+		{
+		  valid_insn = 0;
+		  break;
+		}
 	    }
 	}
     }
 
   if (!valid_insn)
     {
-      (*info->fprintf_func) (info->stream, ".byte %#02x", priv.byte_buf[0]);
-      return 1;
+      if (insn_block && (insn_block->flags & XTENSA_PROP_LITERAL)
+	  && (memaddr & 3) == 0 && bytes_fetched >= 4)
+	{
+	  return 4;
+	}
+      else
+	{
+	  (*info->fprintf_func) (info->stream, ".byte %#02x", priv.byte_buf[0]);
+	  return 1;
+	}
     }
 
   if (nslots > 1)

@@ -1211,14 +1211,13 @@ group_signature (asection *group)
     return NULL;
 
   ghdr = &elf_section_data (group)->this_hdr;
-  if (ghdr->sh_link < elf_numsections (abfd))
+  if (ghdr->sh_link == elf_onesymtab (abfd))
     {
       const struct elf_backend_data *bed = get_elf_backend_data (abfd);
-      Elf_Internal_Shdr *symhdr = elf_elfsections (abfd) [ghdr->sh_link];
+      Elf_Internal_Shdr *symhdr = &elf_symtab_hdr (abfd);
 
-      if (symhdr->sh_type == SHT_SYMTAB
-	  && ghdr->sh_info > 0
-	  && ghdr->sh_info < (symhdr->sh_size / bed->s->sizeof_sym))
+      if (ghdr->sh_info > 0
+	  && ghdr->sh_info < symhdr->sh_size / bed->s->sizeof_sym)
 	return isympp[ghdr->sh_info - 1];
     }
   return NULL;
@@ -1344,14 +1343,15 @@ is_strip_section (bfd *abfd ATTRIBUTE_UNUSED, asection *sec)
       const char *gname;
       asection *elt, *first;
 
+      gsym = group_signature (sec);
+      /* Strip groups without a valid signature.  */
+      if (gsym == NULL)
+	return TRUE;
+
       /* PR binutils/3181
 	 If we are going to strip the group signature symbol, then
 	 strip the group section too.  */
-      gsym = group_signature (sec);
-      if (gsym != NULL)
-	gname = gsym->name;
-      else
-	gname = sec->name;
+      gname = gsym->name;
       if ((strip_symbols == STRIP_ALL
 	   && !is_specified_symbol (gname, keep_specific_htab))
 	  || is_specified_symbol (gname, strip_specific_htab))
@@ -2064,7 +2064,7 @@ merge_gnu_build_notes (bfd * abfd, asection * sec, bfd_size_type size, bfd_byte 
 	     For now though, since v1 and v2 was not intended to
 	     handle gaps, we chose an artificially large end
 	     address.  */
-	  end = (bfd_vma) 0x7ffffffffffffffUL;
+	  end = (bfd_vma) -1;
 	  break;
 	  
 	case 8:
@@ -2083,7 +2083,7 @@ merge_gnu_build_notes (bfd * abfd, asection * sec, bfd_size_type size, bfd_byte 
 		 For now though, since v1 and v2 was not intended to
 		 handle gaps, we chose an artificially large end
 		 address.  */
-	      end = (bfd_vma) 0x7ffffffffffffffUL;
+	      end = (bfd_vma) -1;
 	    }
 	  break;
 
@@ -3023,9 +3023,18 @@ copy_object (bfd *ibfd, bfd *obfd, const bfd_arch_info_type *input_arch)
 	 ignore input sections which have no corresponding output
 	 section.  */
       if (strip_symbols != STRIP_ALL)
-	bfd_map_over_sections (ibfd,
-			       mark_symbols_used_in_relocations,
-			       isympp);
+	{
+	  bfd_set_error (bfd_error_no_error);
+	  bfd_map_over_sections (ibfd,
+				 mark_symbols_used_in_relocations,
+				 isympp);
+	  if (bfd_get_error () != bfd_error_no_error)
+	    {
+	      status = 1;
+	      return FALSE;
+	    }
+	}
+
       osympp = (asymbol **) xmalloc ((symcount + add_symbols + 1) * sizeof (asymbol *));
       symcount = filter_symbols (ibfd, obfd, osympp, isympp, symcount);
     }
@@ -4242,9 +4251,6 @@ write_debugging_info (bfd *obfd, void *dhandle,
 		      long *symcountp ATTRIBUTE_UNUSED,
 		      asymbol ***symppp ATTRIBUTE_UNUSED)
 {
-  if (bfd_get_flavour (obfd) == bfd_target_ieee_flavour)
-    return write_ieee_debugging_info (obfd, dhandle);
-
   if (bfd_get_flavour (obfd) == bfd_target_coff_flavour
       || bfd_get_flavour (obfd) == bfd_target_elf_flavour)
     {

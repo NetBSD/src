@@ -51,7 +51,6 @@ static bfd_boolean get_src_info
 extern void i386_find_call  (Sym *, bfd_vma, bfd_vma);
 extern void alpha_find_call (Sym *, bfd_vma, bfd_vma);
 extern void vax_find_call   (Sym *, bfd_vma, bfd_vma);
-extern void tahoe_find_call (Sym *, bfd_vma, bfd_vma);
 extern void sparc_find_call (Sym *, bfd_vma, bfd_vma);
 extern void mips_find_call  (Sym *, bfd_vma, bfd_vma);
 extern void aarch64_find_call (Sym *, bfd_vma, bfd_vma);
@@ -250,7 +249,6 @@ core_init (const char * aout_name)
   switch (bfd_get_arch (core_bfd))
     {
     case bfd_arch_vax:
-    case bfd_arch_tahoe:
       offset_to_code = 2;
       break;
 
@@ -317,10 +315,6 @@ find_call (Sym *parent, bfd_vma p_lowpc, bfd_vma p_highpc)
 
     case bfd_arch_sparc:
       sparc_find_call (parent, p_lowpc, p_highpc);
-      break;
-
-    case bfd_arch_tahoe:
-      tahoe_find_call (parent, p_lowpc, p_highpc);
       break;
 
     case bfd_arch_mips:
@@ -609,7 +603,6 @@ core_create_function_syms (void)
     case bfd_target_ecoff_flavour:
     case bfd_target_xcoff_flavour:
     case bfd_target_elf_flavour:
-    case bfd_target_nlm_flavour:
     case bfd_target_som_flavour:
       core_has_func_syms = 1;
     }

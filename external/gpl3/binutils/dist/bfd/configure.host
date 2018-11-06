@@ -72,8 +72,6 @@ mips*-*-sysv4*)		;;
 mips*-*-sysv*)		HDEFINES="-G 4" ;;
 mips*-*-riscos*)	HDEFINES="-G 4" ;;
 
-m68*-hp-hpux*)		HDEFINES=-DHOST_HP300HPUX ;;
-
 # Some Solaris systems (osol0906 at least) have a libc that doesn't recognise
 # the "MS-ANSI" code page name, so we define an override for CP_ACP (sets the
 # default code page used by windres/windmc when not specified by a commandline

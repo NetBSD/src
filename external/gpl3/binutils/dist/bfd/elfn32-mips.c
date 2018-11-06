@@ -66,11 +66,9 @@ static bfd_reloc_status_type mips16_gprel_reloc
   (bfd *, arelent *, asymbol *, void *, asection *, bfd *, char **);
 static reloc_howto_type *bfd_elf32_bfd_reloc_type_lookup
   (bfd *, bfd_reloc_code_real_type);
-static reloc_howto_type *mips_elf_n32_rtype_to_howto
-  (unsigned int, bfd_boolean);
-static void mips_info_to_howto_rel
+static bfd_boolean mips_info_to_howto_rel
   (bfd *, arelent *, Elf_Internal_Rela *);
-static void mips_info_to_howto_rela
+static bfd_boolean mips_info_to_howto_rela
   (bfd *, arelent *, Elf_Internal_Rela *);
 static bfd_boolean mips_elf_sym_is_global
   (bfd *, asymbol *);
@@ -3402,8 +3400,10 @@ bfd_elf32_bfd_reloc_name_lookup (bfd *abfd ATTRIBUTE_UNUSED,
 /* Given a MIPS Elf_Internal_Rel, fill in an arelent structure.  */
 
 static reloc_howto_type *
-mips_elf_n32_rtype_to_howto (unsigned int r_type, bfd_boolean rela_p)
+mips_elf_n32_rtype_to_howto (bfd *abfd, unsigned int r_type, bfd_boolean rela_p)
 {
+  reloc_howto_type *howto = NULL;
+
   switch (r_type)
     {
     case R_MIPS_GNU_VTINHERIT:
@@ -3427,40 +3427,46 @@ mips_elf_n32_rtype_to_howto (unsigned int r_type, bfd_boolean rela_p)
       if (r_type >= R_MICROMIPS_min && r_type < R_MICROMIPS_max)
 	{
 	  if (rela_p)
-	    return &elf_micromips_howto_table_rela[r_type - R_MICROMIPS_min];
+	    howto = &elf_micromips_howto_table_rela[r_type - R_MICROMIPS_min];
 	  else
-	    return &elf_micromips_howto_table_rel[r_type - R_MICROMIPS_min];
+	    howto = &elf_micromips_howto_table_rel[r_type - R_MICROMIPS_min];
 	}
       if (r_type >= R_MIPS16_min && r_type < R_MIPS16_max)
 	{
 	  if (rela_p)
-	    return &elf_mips16_howto_table_rela[r_type - R_MIPS16_min];
+	    howto = &elf_mips16_howto_table_rela[r_type - R_MIPS16_min];
 	  else
-	    return &elf_mips16_howto_table_rel[r_type - R_MIPS16_min];
+	    howto = &elf_mips16_howto_table_rel[r_type - R_MIPS16_min];
 	}
-      if (r_type >= R_MIPS_max)
+      if (r_type < R_MIPS_max)
 	{
-	  _bfd_error_handler (_("unrecognised MIPS reloc number: %d"), r_type);
-	  bfd_set_error (bfd_error_bad_value);
-	  r_type = R_MIPS_NONE;
+	  if (rela_p)
+	    howto = &elf_mips_howto_table_rela[r_type];
+	  else
+	    howto = &elf_mips_howto_table_rel[r_type];
 	}
-      if (rela_p)
-	return &elf_mips_howto_table_rela[r_type];
-      else
-	return &elf_mips_howto_table_rel[r_type];
-      break;
+      if (howto != NULL && howto->name != NULL)
+	return howto;
+
+      _bfd_error_handler (_("%pB: unsupported relocation type %#x"),
+			  abfd, r_type);
+      bfd_set_error (bfd_error_bad_value);
+      return NULL;
     }
 }
 
 /* Given a MIPS Elf_Internal_Rel, fill in an arelent structure.  */
 
-static void
+static bfd_boolean
 mips_info_to_howto_rel (bfd *abfd, arelent *cache_ptr, Elf_Internal_Rela *dst)
 {
   unsigned int r_type;
 
   r_type = ELF32_R_TYPE (dst->r_info);
-  cache_ptr->howto = mips_elf_n32_rtype_to_howto (r_type, FALSE);
+  cache_ptr->howto = mips_elf_n32_rtype_to_howto (abfd, r_type, FALSE);
+
+  if (cache_ptr->howto == NULL)
+    return FALSE;
 
   /* The addend for a GPREL16 or LITERAL relocation comes from the GP
      value for the object file.  We get the addend now, rather than
@@ -3469,19 +3475,22 @@ mips_info_to_howto_rel (bfd *abfd, arelent *cache_ptr, Elf_Internal_Rela *dst)
   if (((*cache_ptr->sym_ptr_ptr)->flags & BSF_SECTION_SYM) != 0
       && (gprel16_reloc_p (r_type) || r_type == (unsigned int) R_MIPS_LITERAL))
     cache_ptr->addend = elf_gp (abfd);
+
+  return TRUE;
 }
 
 /* Given a MIPS Elf_Internal_Rela, fill in an arelent structure.  */
 
-static void
-mips_info_to_howto_rela (bfd *abfd ATTRIBUTE_UNUSED,
+static bfd_boolean
+mips_info_to_howto_rela (bfd *abfd,
 			 arelent *cache_ptr, Elf_Internal_Rela *dst)
 {
   unsigned int r_type;
 
   r_type = ELF32_R_TYPE (dst->r_info);
-  cache_ptr->howto = mips_elf_n32_rtype_to_howto (r_type, TRUE);
+  cache_ptr->howto = mips_elf_n32_rtype_to_howto (abfd, r_type, TRUE);
   cache_ptr->addend = dst->r_addend;
+  return cache_ptr->howto != NULL;
 }
 
 /* Determine whether a symbol is global for the purposes of splitting

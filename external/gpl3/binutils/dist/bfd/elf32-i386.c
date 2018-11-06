@@ -194,7 +194,7 @@ static reloc_howto_type elf_howto_table[]=
 #endif
 
 static reloc_howto_type *
-elf_i386_reloc_type_lookup (bfd *abfd ATTRIBUTE_UNUSED,
+elf_i386_reloc_type_lookup (bfd *abfd,
 			    bfd_reloc_code_real_type code)
 {
   switch (code)
@@ -346,11 +346,13 @@ elf_i386_reloc_type_lookup (bfd *abfd ATTRIBUTE_UNUSED,
       return &elf_howto_table[R_386_GNU_VTENTRY - R_386_vt_offset];
 
     default:
-      break;
+      TRACE ("Unknown");
+      /* xgettext:c-format */
+      _bfd_error_handler (_("%pB: unsupported relocation type: %#x"),
+			  abfd, (int) code);
+      bfd_set_error (bfd_error_bad_value);
+      return NULL;
     }
-
-  TRACE ("Unknown");
-  return 0;
 }
 
 static reloc_howto_type *
@@ -368,7 +370,7 @@ elf_i386_reloc_name_lookup (bfd *abfd ATTRIBUTE_UNUSED,
 }
 
 static reloc_howto_type *
-elf_i386_rtype_to_howto (bfd *abfd, unsigned r_type)
+elf_i386_rtype_to_howto (bfd *abfd ATTRIBUTE_UNUSED, unsigned r_type)
 {
   unsigned int indx;
 
@@ -379,25 +381,30 @@ elf_i386_rtype_to_howto (bfd *abfd, unsigned r_type)
 	  >= R_386_ext2 - R_386_ext)
       && ((indx = r_type - R_386_vt_offset) - R_386_ext2
 	  >= R_386_vt - R_386_ext2))
-    {
-      /* xgettext:c-format */
-      _bfd_error_handler (_("%B: invalid relocation type %d"),
-			  abfd, (int) r_type);
-      indx = R_386_NONE;
-    }
+      return NULL;
   /* PR 17512: file: 0f67f69d.  */
   if (elf_howto_table [indx].type != r_type)
     return NULL;
   return &elf_howto_table[indx];
 }
 
-static void
-elf_i386_info_to_howto_rel (bfd *abfd ATTRIBUTE_UNUSED,
+static bfd_boolean
+elf_i386_info_to_howto_rel (bfd *abfd,
 			    arelent *cache_ptr,
 			    Elf_Internal_Rela *dst)
 {
   unsigned int r_type = ELF32_R_TYPE (dst->r_info);
-  cache_ptr->howto = elf_i386_rtype_to_howto (abfd, r_type);
+
+  if ((cache_ptr->howto = elf_i386_rtype_to_howto (abfd, r_type)) == NULL)
+    {
+      /* xgettext:c-format */
+      _bfd_error_handler (_("%pB: unsupported relocation type %#x"),
+			  abfd, r_type);
+      bfd_set_error (bfd_error_bad_value);
+      return FALSE;
+    }
+
+  return TRUE;
 }
 
 /* Return whether a symbol name implies a local label.  The UnixWare
@@ -759,6 +766,12 @@ static const struct elf_x86_lazy_plt_layout elf_i386_lazy_plt =
     sizeof (elf_i386_lazy_plt0_entry),	/* plt0_entry_size */
     elf_i386_lazy_plt_entry,		/* plt_entry */
     LAZY_PLT_ENTRY_SIZE,		/* plt_entry_size */
+    NULL,				/* plt_tlsdesc_entry */
+    0,					/* plt_tlsdesc_entry_size*/
+    0,					/* plt_tlsdesc_got1_offset */
+    0,					/* plt_tlsdesc_got2_offset */
+    0,					/* plt_tlsdesc_got1_insn_end */
+    0,					/* plt_tlsdesc_got2_insn_end */
     2,					/* plt0_got1_offset */
     8,					/* plt0_got2_offset */
     0,					/* plt0_got2_insn_end */
@@ -791,6 +804,12 @@ static const struct elf_x86_lazy_plt_layout elf_i386_lazy_ibt_plt =
     sizeof (elf_i386_lazy_ibt_plt0_entry), /* plt0_entry_size */
     elf_i386_lazy_ibt_plt_entry,	/* plt_entry */
     LAZY_PLT_ENTRY_SIZE,		/* plt_entry_size */
+    NULL,				/* plt_tlsdesc_entry */
+    0,					/* plt_tlsdesc_entry_size*/
+    0,					/* plt_tlsdesc_got1_offset */
+    0,					/* plt_tlsdesc_got2_offset */
+    0,					/* plt_tlsdesc_got1_insn_end */
+    0,					/* plt_tlsdesc_got2_insn_end */
     2,					/* plt0_got1_offset */
     8,					/* plt0_got2_offset */
     0,					/* plt0_got2_insn_end */
@@ -1156,10 +1175,10 @@ elf_i386_tls_transition (struct bfd_link_info *info, bfd *abfd,
 
       _bfd_error_handler
 	/* xgettext:c-format */
-	(_("%B: TLS transition from %s to %s against `%s' at %#Lx "
-	   "in section `%A' failed"),
+	(_("%pB: TLS transition from %s to %s against `%s'"
+	   " at %#" PRIx64 " in section `%pA' failed"),
 	 abfd, from->name, to->name, name,
-	 rel->r_offset, sec);
+	 (uint64_t) rel->r_offset, sec);
       bfd_set_error (bfd_error_bad_value);
       return FALSE;
     }
@@ -1247,7 +1266,7 @@ elf_i386_convert_load_reloc (bfd *abfd, Elf_Internal_Shdr *symtab_hdr,
 
       _bfd_error_handler
 	/* xgettext:c-format */
-	(_("%B: direct GOT relocation R_386_GOT32X against `%s' without base"
+	(_("%pB: direct GOT relocation R_386_GOT32X against `%s' without base"
 	   " register can not be used when making a shared object"),
 	 abfd, name);
       return FALSE;
@@ -1507,7 +1526,7 @@ elf_i386_check_relocs (bfd *abfd,
       if (r_symndx >= NUM_SHDR_ENTRIES (symtab_hdr))
 	{
 	  /* xgettext:c-format */
-	  _bfd_error_handler (_("%B: bad symbol index: %d"),
+	  _bfd_error_handler (_("%pB: bad symbol index: %d"),
 			      abfd, r_symndx);
 	  goto error_return;
 	}
@@ -1577,6 +1596,10 @@ elf_i386_check_relocs (bfd *abfd,
 				     &r_type, GOT_UNKNOWN,
 				     rel, rel_end, h, r_symndx, FALSE))
 	goto error_return;
+
+      /* Check if _GLOBAL_OFFSET_TABLE_ is referenced.  */
+      if (h == htab->elf.hgot)
+	htab->got_referenced = TRUE;
 
       switch (r_type)
 	{
@@ -1700,7 +1723,7 @@ elf_i386_check_relocs (bfd *abfd,
 					     NULL);
 		    _bfd_error_handler
 		      /* xgettext:c-format */
-		      (_("%B: `%s' accessed both as normal and "
+		      (_("%pB: `%s' accessed both as normal and "
 			 "thread local symbol"),
 		       abfd, name);
 		    bfd_set_error (bfd_error_bad_value);
@@ -1720,11 +1743,19 @@ elf_i386_check_relocs (bfd *abfd,
 
 	case R_386_GOTOFF:
 	case R_386_GOTPC:
-	create_got:
+create_got:
 	  if (r_type != R_386_TLS_IE)
 	    {
 	      if (eh != NULL)
-		eh->zero_undefweak &= 0x2;
+		{
+		  eh->zero_undefweak &= 0x2;
+
+		  /* Need GOT to resolve undefined weak symbol to 0.  */
+		  if (r_type == R_386_GOTOFF
+		      && h->root.type == bfd_link_hash_undefweak
+		      && bfd_link_executable (info))
+		    htab->got_referenced = TRUE;
+		}
 	      break;
 	    }
 	  /* Fall through */
@@ -1764,7 +1795,7 @@ do_relocation:
 		    {
 		      _bfd_error_handler
 			/* xgettext:c-format */
-			(_("%B: unsupported non-PIC call to IFUNC `%s'"),
+			(_("%pB: unsupported non-PIC call to IFUNC `%s'"),
 			 abfd, h->root.root.string);
 		      bfd_set_error (bfd_error_bad_value);
 		      goto error_return;
@@ -1800,7 +1831,7 @@ do_relocation:
 
 	  size_reloc = FALSE;
 do_size:
-	  if (NEED_DYNAMIC_RELOCATION_P (info, h, sec, r_type,
+	  if (NEED_DYNAMIC_RELOCATION_P (info, FALSE, h, sec, r_type,
 					 R_386_32))
 	    {
 	      struct elf_dyn_relocs *p;
@@ -2202,6 +2233,10 @@ elf_i386_relocate_section (bfd *output_bfd,
 
 	  if ((input_section->flags & SEC_ALLOC) == 0)
 	    {
+	      /* If this is a SHT_NOTE section without SHF_ALLOC, treat
+	         STT_GNU_IFUNC symbol as STT_FUNC.  */
+	      if (elf_section_type (input_section) == SHT_NOTE)
+		goto skip_ifunc;
 	      /* Dynamic relocs are not propagated for SEC_DEBUGGING
 		 sections because such sections are not SEC_ALLOC and
 		 thus ld.so will not process them.  */
@@ -2342,7 +2377,7 @@ bad_ifunc_reloc:
 					 NULL);
 	      _bfd_error_handler
 		/* xgettext:c-format */
-		(_("%B: relocation %s against STT_GNU_IFUNC "
+		(_("%pB: relocation %s against STT_GNU_IFUNC "
 		   "symbol `%s' isn't supported"), input_bfd,
 		 howto->name, name);
 	      bfd_set_error (bfd_error_bad_value);
@@ -2375,7 +2410,7 @@ do_ifunc_pointer:
 
 		  if (POINTER_LOCAL_IFUNC_P (info, h))
 		    {
-		      info->callbacks->minfo (_("Local IFUNC function `%s' in %B\n"),
+		      info->callbacks->minfo (_("Local IFUNC function `%s' in %pB\n"),
 					      h->root.root.string,
 					      h->root.u.def.section->owner);
 
@@ -2421,72 +2456,14 @@ do_ifunc_pointer:
 	    }
 	}
 
+skip_ifunc:
       resolved_to_zero = (eh != NULL
 			  && UNDEFINED_WEAK_RESOLVED_TO_ZERO (info, eh));
 
       switch (r_type)
 	{
 	case R_386_GOT32X:
-	  /* Avoid optimizing _DYNAMIC since ld.so may use its
-	     link-time address.  */
-	  if (h == htab->elf.hdynamic)
-	    goto r_386_got32;
-
-	  if (bfd_link_pic (info))
-	    {
-	      /* It is OK to convert mov to lea and convert indirect
-		 branch to direct branch.  It is OK to convert adc,
-		 add, and, cmp, or, sbb, sub, test, xor only when PIC
-		 is false.   */
-	      unsigned int opcode, addend;
-	      addend = bfd_get_32 (input_bfd, contents + rel->r_offset);
-	      if (addend != 0)
-		goto r_386_got32;
-	      opcode = bfd_get_8 (input_bfd, contents + rel->r_offset - 2);
-	      if (opcode != 0x8b && opcode != 0xff)
-		goto r_386_got32;
-	    }
-
-	  /* Resolve "mov GOT[(%reg)], %reg",
-	     "call/jmp *GOT[(%reg)]", "test %reg, foo@GOT[(%reg)]"
-	     and "binop foo@GOT[(%reg)], %reg".  */
-	  if (h == NULL
-	      || (h->plt.offset == (bfd_vma) -1
-		  && h->got.offset == (bfd_vma) -1)
-	      || htab->elf.sgotplt == NULL)
-	    abort ();
-
-	  offplt = (htab->elf.sgotplt->output_section->vma
-		    + htab->elf.sgotplt->output_offset);
-
-	  /* It is relative to .got.plt section.  */
-	  if (h->got.offset != (bfd_vma) -1)
-	    /* Use GOT entry.  Mask off the least significant bit in
-	       GOT offset which may be set by R_386_GOT32 processing
-	       below.  */
-	    relocation = (htab->elf.sgot->output_section->vma
-			  + htab->elf.sgot->output_offset
-			  + (h->got.offset & ~1) - offplt);
-	  else
-	    /* Use GOTPLT entry.  */
-	    relocation = (h->plt.offset / plt_entry_size
-			  - htab->plt.has_plt0 + 3) * 4;
-
-	  if (!bfd_link_pic (info))
-	    {
-	      /* If not PIC, add the .got.plt section address for
-		 baseless addressing.  */
-	      unsigned int modrm;
-	      modrm = bfd_get_8 (input_bfd, contents + rel->r_offset - 1);
-	      if ((modrm & 0xc7) == 0x5)
-		relocation += offplt;
-	    }
-
-	  unresolved_reloc = FALSE;
-	  break;
-
 	case R_386_GOT32:
-r_386_got32:
 	  /* Relocation is to the entry for this symbol in the global
 	     offset table.  */
 	  if (htab->elf.sgot == NULL)
@@ -2590,7 +2567,7 @@ disallow_got32:
 
 		  _bfd_error_handler
 		    /* xgettext:c-format */
-		    (_("%B: direct GOT relocation %s against `%s'"
+		    (_("%pB: direct GOT relocation %s against `%s'"
 		       " without base register can not be used"
 		       " when making a shared object"),
 		     input_bfd, howto->name, name);
@@ -2640,7 +2617,7 @@ disallow_got32:
 
 		  _bfd_error_handler
 		    /* xgettext:c-format */
-		    (_("%B: relocation R_386_GOTOFF against undefined %s"
+		    (_("%pB: relocation R_386_GOTOFF against undefined %s"
 		       " `%s' can not be used when making a shared object"),
 		     input_bfd, v, h->root.root.string);
 		  bfd_set_error (bfd_error_bad_value);
@@ -2653,7 +2630,7 @@ disallow_got32:
 		{
 		  _bfd_error_handler
 		    /* xgettext:c-format */
-		    (_("%B: relocation R_386_GOTOFF against protected %s"
+		    (_("%pB: relocation R_386_GOTOFF against protected %s"
 		       " `%s' can not be used when making a shared object"),
 		     input_bfd,
 		     h->type == STT_FUNC ? "function" : "data",
@@ -3430,10 +3407,10 @@ disallow_got32:
 	{
 	  _bfd_error_handler
 	    /* xgettext:c-format */
-	    (_("%B(%A+%#Lx): unresolvable %s relocation against symbol `%s'"),
+	    (_("%pB(%pA+%#" PRIx64 "): unresolvable %s relocation against symbol `%s'"),
 	     input_bfd,
 	     input_section,
-	     rel->r_offset,
+	     (uint64_t) rel->r_offset,
 	     howto->name,
 	     h->root.root.string);
 	  return FALSE;
@@ -3470,9 +3447,9 @@ check_relocation_error:
 	    {
 	      _bfd_error_handler
 		/* xgettext:c-format */
-		(_("%B(%A+%#Lx): reloc against `%s': error %d"),
+		(_("%pB(%pA+%#" PRIx64 "): reloc against `%s': error %d"),
 		 input_bfd, input_section,
-		 rel->r_offset, name, (int) r);
+		 (uint64_t) rel->r_offset, name, (int) r);
 	      return FALSE;
 	    }
 	}
@@ -3681,7 +3658,7 @@ elf_i386_finish_dynamic_symbol (bfd *output_bfd,
 			  + got_offset);
 	  if (PLT_LOCAL_IFUNC_P (info, h))
 	    {
-	      info->callbacks->minfo (_("Local IFUNC function `%s' in %B\n"),
+	      info->callbacks->minfo (_("Local IFUNC function `%s' in %pB\n"),
 				      h->root.root.string,
 				      h->root.u.def.section->owner);
 
@@ -3781,6 +3758,8 @@ elf_i386_finish_dynamic_symbol (bfd *output_bfd,
 	sym->st_value = 0;
     }
 
+  _bfd_x86_elf_link_fixup_ifunc_symbol (info, htab, h, sym);
+
   /* Don't generate dynamic GOT relocation against undefined weak
      symbol in executable.  */
   if (h->got.offset != (bfd_vma) -1
@@ -3820,7 +3799,7 @@ elf_i386_finish_dynamic_symbol (bfd *output_bfd,
 		}
 	      if (SYMBOL_REFERENCES_LOCAL_P (info, h))
 		{
-		  info->callbacks->minfo (_("Local IFUNC function `%s' in %B\n"),
+		  info->callbacks->minfo (_("Local IFUNC function `%s' in %pB\n"),
 					  h->root.root.string,
 					  h->root.u.def.section->owner);
 
@@ -4178,6 +4157,7 @@ elf_i386_get_synthetic_symtab (bfd *abfd,
   switch (get_elf_x86_backend_data (abfd)->target_os)
     {
     case is_normal:
+    case is_solaris:
       non_lazy_plt = &elf_i386_non_lazy_plt;
       lazy_ibt_plt = &elf_i386_lazy_ibt_plt;
       non_lazy_ibt_plt = &elf_i386_non_lazy_ibt_plt;
@@ -4337,6 +4317,7 @@ elf_i386_link_setup_gnu_properties (struct bfd_link_info *info)
   switch (get_elf_x86_backend_data (info->output_bfd)->target_os)
     {
     case is_normal:
+    case is_solaris:
       init_table.plt0_pad_byte = 0x0;
       init_table.lazy_plt = &elf_i386_lazy_plt;
       init_table.non_lazy_plt = &elf_i386_non_lazy_plt;
@@ -4409,6 +4390,8 @@ elf_i386_link_setup_gnu_properties (struct bfd_link_info *info)
 
 #define elf_backend_linux_prpsinfo32_ugid16	TRUE
 
+#define	elf32_bed			      elf32_i386_bed
+
 #include "elf32-target.h"
 
 /* FreeBSD support.  */
@@ -4453,6 +4436,14 @@ elf_i386_fbsd_post_process_headers (bfd *abfd, struct bfd_link_info *info)
 #define	TARGET_LITTLE_SYM		i386_elf32_sol2_vec
 #undef	TARGET_LITTLE_NAME
 #define	TARGET_LITTLE_NAME		"elf32-i386-sol2"
+
+static const struct elf_x86_backend_data elf_i386_solaris_arch_bed =
+  {
+    is_solaris				/* os */
+  };
+
+#undef	elf_backend_arch_data
+#define	elf_backend_arch_data		&elf_i386_solaris_arch_bed
 
 #undef elf_backend_post_process_headers
 
@@ -4579,6 +4570,9 @@ elf32_iamcu_elf_object_p (bfd *abfd)
 
 #undef	ELF_MACHINE_CODE
 #define	ELF_MACHINE_CODE		EM_IAMCU
+
+#undef	elf_backend_arch_data
+#define	elf_backend_arch_data		&elf_i386_arch_bed
 
 #undef	ELF_OSABI
 
@@ -4746,6 +4740,12 @@ static const struct elf_x86_lazy_plt_layout elf_i386_nacl_plt =
     sizeof (elf_i386_nacl_plt0_entry),	/* plt0_entry_size */
     elf_i386_nacl_plt_entry,		/* plt_entry */
     NACL_PLT_ENTRY_SIZE,		/* plt_entry_size */
+    NULL,				/* plt_tlsdesc_entry */
+    0,					/* plt_tlsdesc_entry_size*/
+    0,					/* plt_tlsdesc_got1_offset */
+    0,					/* plt_tlsdesc_got2_offset */
+    0,					/* plt_tlsdesc_got1_insn_end */
+    0,					/* plt_tlsdesc_got2_insn_end */
     2,					/* plt0_got1_offset */
     8,					/* plt0_got2_offset */
     0,					/* plt0_got2_insn_end */

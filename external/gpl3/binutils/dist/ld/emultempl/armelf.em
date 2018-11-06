@@ -111,7 +111,8 @@ arm_elf_before_allocation (void)
 	      || !bfd_elf32_arm_stm32l4xx_erratum_scan (is->the_bfd,
 							&link_info))
 	    /* xgettext:c-format */
-	    einfo (_("Errors encountered processing file %s"), is->filename);
+	    einfo (_("%P: errors encountered processing file %s\n"),
+		   is->filename);
 	}
 
       /* We have seen it all.  Allocate it, and carry on.  */
@@ -405,7 +406,7 @@ gld${EMULATION_NAME}_after_allocation (void)
 				      & elf32_arm_add_stub_section,
 				      & gldarm_layout_sections_again))
 	    {
-	      einfo (_("%X%P: cannot size stub section: %E\n"));
+	      einfo (_("%X%P: can not size stub section: %E\n"));
 	      return;
 	    }
 	}
@@ -512,8 +513,8 @@ arm_elf_create_output_section_statements (void)
 	 These will only be created if the output format is an arm format,
 	 hence we do not support linking and changing output formats at the
 	 same time.  Use a link followed by objcopy to change output formats.  */
-      einfo (_("%F%X%P: error: Cannot change output format "
-	       "whilst linking ARM binaries.\n"));
+      einfo (_("%F%P: error: cannot change output format "
+	       "whilst linking %s binaries\n"), "ARM");
       return;
     }
 
@@ -523,10 +524,10 @@ arm_elf_create_output_section_statements (void)
 					bfd_get_target (link_info.output_bfd));
 
       if (params.in_implib_bfd == NULL)
-	einfo (_("%F%s: Can't open: %E\n"), in_implib_filename);
+	einfo (_("%F%P: %s: can't open: %E\n"), in_implib_filename);
 
       if (!bfd_check_format (params.in_implib_bfd, bfd_object))
-	einfo (_("%F%s: Not a relocatable file: %E\n"), in_implib_filename);
+	einfo (_("%F%P: %s: not a relocatable file: %E\n"), in_implib_filename);
     }
 
   bfd_elf32_arm_set_target_params (link_info.output_bfd, &link_info, &params);
@@ -540,7 +541,7 @@ arm_elf_create_output_section_statements (void)
 			      bfd_get_arch (link_info.output_bfd),
 			      bfd_get_mach (link_info.output_bfd)))
     {
-      einfo (_("%X%P: can not create BFD %E\n"));
+      einfo (_("%F%P: can not create BFD: %E\n"));
       return;
     }
 
@@ -654,13 +655,13 @@ PARSE_AND_LIST_OPTIONS='
                    "                                remain stable\n"));
   fprintf (file, _("\
   --stub-group-size=N         Maximum size of a group of input sections that\n\
-                               can be handled by one stub section.  A negative\n\
-                               value locates all stubs after their branches\n\
-                               (with a group size of -N), while a positive\n\
-                               value allows two groups of input sections, one\n\
-                               before, and one after each stub section.\n\
-                               Values of +/-1 indicate the linker should\n\
-                               choose suitable defaults.\n"));
+                                can be handled by one stub section.  A negative\n\
+                                value locates all stubs after their branches\n\
+                                (with a group size of -N), while a positive\n\
+                                value allows two groups of input sections, one\n\
+                                before, and one after each stub section.\n\
+                                Values of +/-1 indicate the linker should\n\
+                                choose suitable defaults.\n"));
   fprintf (file, _("  --[no-]fix-cortex-a8        Disable/enable Cortex-A8 Thumb-2 branch erratum fix\n"));
   fprintf (file, _("  --no-merge-exidx-entries    Disable merging exidx entries\n"));
   fprintf (file, _("  --[no-]fix-arm1176          Disable/enable ARM1176 BLX immediate erratum fix\n"));
@@ -711,7 +712,7 @@ PARSE_AND_LIST_ARGS_CASES='
       else if (strcmp (optarg, "vector") == 0)
 	params.vfp11_denorm_fix = BFD_ARM_VFP11_FIX_VECTOR;
       else
-	einfo (_("Unrecognized VFP11 fix type '\''%s'\''.\n"), optarg);
+	einfo (_("%P: unrecognized VFP11 fix type '\''%s'\''\n"), optarg);
       break;
 
     case OPTION_STM32L4XX_FIX:
@@ -724,7 +725,7 @@ PARSE_AND_LIST_ARGS_CASES='
       else if (strcmp (optarg, "all") == 0)
 	params.stm32l4xx_fix = BFD_ARM_STM32L4XX_FIX_ALL;
       else
-	einfo (_("Unrecognized STM32L4XX fix type '\''%s'\''.\n"), optarg);
+	einfo (_("%P: unrecognized STM32L4XX fix type '\''%s'\''\n"), optarg);
       break;
 
     case OPTION_NO_ENUM_SIZE_WARNING:
@@ -745,7 +746,7 @@ PARSE_AND_LIST_ARGS_CASES='
 
 	group_size = bfd_scan_vma (optarg, &end, 0);
 	if (*end)
-	  einfo (_("%P%F: invalid number `%s'\''\n"), optarg);
+	  einfo (_("%F%P: invalid number `%s'\''\n"), optarg);
       }
       break;
 

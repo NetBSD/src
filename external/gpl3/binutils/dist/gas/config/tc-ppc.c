@@ -1403,7 +1403,11 @@ ppc_set_cpu (void)
   if ((ppc_cpu & ~(ppc_cpu_t) PPC_OPCODE_ANY) == 0)
     {
       if (ppc_obj64)
-	ppc_cpu |= PPC_OPCODE_PPC | PPC_OPCODE_64;
+	if (target_big_endian)
+	  ppc_cpu |= PPC_OPCODE_PPC | PPC_OPCODE_64;
+	else
+	  /* The minimum supported cpu for 64-bit little-endian is power8.  */
+	  ppc_cpu |= ppc_parse_cpu (ppc_cpu, &sticky, "power8");
       else if (strncmp (default_os, "aix", 3) == 0
 	       && default_os[3] >= '4' && default_os[3] <= '9')
 	ppc_cpu |= PPC_OPCODE_COMMON;
@@ -1598,28 +1602,24 @@ ppc_setup_opcodes (void)
     {
       if (ENABLE_CHECKING)
 	{
-	  if (op != powerpc_opcodes)
-	    {
-	      int old_opcode = PPC_OP (op[-1].opcode);
-	      int new_opcode = PPC_OP (op[0].opcode);
+	  unsigned int new_opcode = PPC_OP (op[0].opcode);
 
 #ifdef PRINT_OPCODE_TABLE
-	      printf ("%-14s\t#%04u\tmajor op: 0x%x\top: 0x%llx\tmask: 0x%llx\tflags: 0x%llx\n",
-		      op->name, (unsigned int) (op - powerpc_opcodes),
-		      (unsigned int) new_opcode, (unsigned long long) op->opcode,
-		      (unsigned long long) op->mask, (unsigned long long) op->flags);
+	  printf ("%-14s\t#%04u\tmajor op: 0x%x\top: 0x%llx\tmask: 0x%llx\tflags: 0x%llx\n",
+		  op->name, (unsigned int) (op - powerpc_opcodes),
+		  new_opcode, (unsigned long long) op->opcode,
+		  (unsigned long long) op->mask, (unsigned long long) op->flags);
 #endif
 
-	      /* The major opcodes had better be sorted.  Code in the
-		 disassembler assumes the insns are sorted according to
-		 major opcode.  */
-	      if (new_opcode < old_opcode)
-		{
-		  as_bad (_("major opcode is not sorted for %s"),
-			  op->name);
-		  bad_insn = TRUE;
-		}
+	  /* The major opcodes had better be sorted.  Code in the disassembler
+	     assumes the insns are sorted according to major opcode.  */
+	  if (op != powerpc_opcodes
+	      && new_opcode < PPC_OP (op[-1].opcode))
+	    {
+	      as_bad (_("major opcode is not sorted for %s"), op->name);
+	      bad_insn = TRUE;
 	    }
+
 	  if ((op->flags & PPC_OPCODE_VLE) != 0)
 	    {
 	      as_bad (_("%s is enabled by vle flag"), op->name);
@@ -1659,30 +1659,22 @@ ppc_setup_opcodes (void)
     {
       if (ENABLE_CHECKING)
 	{
-	  if (op != vle_opcodes)
-	    {
-	      unsigned old_seg, new_seg;
-
-	      old_seg = VLE_OP (op[-1].opcode, op[-1].mask);
-	      old_seg = VLE_OP_TO_SEG (old_seg);
-	      new_seg = VLE_OP (op[0].opcode, op[0].mask);
-	      new_seg = VLE_OP_TO_SEG (new_seg);
+	  unsigned new_seg = VLE_OP_TO_SEG (VLE_OP (op[0].opcode, op[0].mask));
 
 #ifdef PRINT_OPCODE_TABLE
-	      printf ("%-14s\t#%04u\tmajor op: 0x%x\top: 0x%llx\tmask: 0x%llx\tflags: 0x%llx\n",
-		      op->name, (unsigned int) (op - powerpc_opcodes),
-		      (unsigned int) new_seg, (unsigned long long) op->opcode,
-		      (unsigned long long) op->mask, (unsigned long long) op->flags);
+	  printf ("%-14s\t#%04u\tmajor op: 0x%x\top: 0x%llx\tmask: 0x%llx\tflags: 0x%llx\n",
+		  op->name, (unsigned int) (op - vle_opcodes),
+		  (unsigned int) new_seg, (unsigned long long) op->opcode,
+		  (unsigned long long) op->mask, (unsigned long long) op->flags);
 #endif
-	      /* The major opcodes had better be sorted.  Code in the
-		 disassembler assumes the insns are sorted according to
-		 major opcode.  */
-	      if (new_seg < old_seg)
-		{
-		  as_bad (_("major opcode is not sorted for %s"),
-			  op->name);
-		  bad_insn = TRUE;
-		}
+
+	  /* The major opcodes had better be sorted.  Code in the disassembler
+	     assumes the insns are sorted according to major opcode.  */
+	  if (op != vle_opcodes
+	      && new_seg < VLE_OP_TO_SEG (VLE_OP (op[-1].opcode, op[-1].mask)))
+	    {
+	      as_bad (_("major opcode is not sorted for %s"), op->name);
+	      bad_insn = TRUE;
 	    }
 
 	  bad_insn |= insn_validate (op);
@@ -2747,7 +2739,7 @@ md_assemble (char *str)
   struct ppc_fixup fixups[MAX_INSN_FIXUPS];
   int fc;
   char *f;
-  int addr_mod;
+  int addr_mask;
   int i;
   unsigned int insn_length;
 
@@ -2815,11 +2807,9 @@ md_assemble (char *str)
 		}
 	    }
 
-	  /* Compute the number of expected operands.
-	     Do not count fake operands.  */
+	  /* Compute the number of expected operands.  */
 	  for (num_operands_expected = 0, i = 0; opcode->operands[i]; i ++)
-	    if ((powerpc_operands [opcode->operands[i]].flags & PPC_OPERAND_FAKE) == 0)
-	      ++ num_operands_expected;
+	    ++ num_operands_expected;
 
 	  /* If there are fewer operands in the line then are called
 	     for by the instruction, we want to skip the optional
@@ -2851,16 +2841,6 @@ md_assemble (char *str)
 	  next_opindex = 0;
 	}
       errmsg = NULL;
-
-      /* If this is a fake operand, then we do not expect anything
-	 from the input.  */
-      if ((operand->flags & PPC_OPERAND_FAKE) != 0)
-	{
-	  insn = (*operand->insert) (insn, 0L, ppc_cpu, &errmsg);
-	  if (errmsg != (const char *) NULL)
-	    as_bad ("%s", errmsg);
-	  continue;
-	}
 
       /* If this is an optional operand, and we are skipping it, just
 	 insert a zero.  */
@@ -3520,31 +3500,34 @@ md_assemble (char *str)
 #endif
 
   /* Write out the instruction.  */
-  /* Differentiate between two and four byte insns.  */
+
+  addr_mask = 3;
   if ((ppc_cpu & PPC_OPCODE_VLE) != 0)
+    /* All instructions can start on a 2 byte boundary for VLE.  */
+    addr_mask = 1;
+
+  if (frag_now->insn_addr != addr_mask)
     {
-      if (PPC_OP_SE_VLE (insn))
-        insn_length = 2;
-      else
-        insn_length = 4;
-      addr_mod = frag_now_fix () & 1;
+      /* Don't emit instructions to a frag started for data, or for a
+	 CPU differing in VLE mode.  Data is allowed to be misaligned,
+	 and it's possible to start a new frag in the middle of
+	 misaligned data.  */
+      frag_wane (frag_now);
+      frag_new (0);
     }
-  else
-    {
-      insn_length = 4;
-      addr_mod = frag_now_fix () & 3;
-    }
-  /* All instructions can start on a 2 byte boundary for VLE.  */
+
+  /* Check that insns within the frag are aligned.  ppc_frag_check
+     will ensure that the frag start address is aligned.  */
+  if ((frag_now_fix () & addr_mask) != 0)
+    as_bad (_("instruction address is not a multiple of %d"), addr_mask + 1);
+
+  /* Differentiate between two and four byte insns.  */
+  insn_length = 4;
+  if ((ppc_cpu & PPC_OPCODE_VLE) != 0 && PPC_OP_SE_VLE (insn))
+    insn_length = 2;
+
   f = frag_more (insn_length);
-  if (frag_now->has_code && frag_now->insn_addr != addr_mod)
-    {
-      if ((ppc_cpu & PPC_OPCODE_VLE) != 0)
-        as_bad (_("instruction address is not a multiple of 2"));
-      else
-        as_bad (_("instruction address is not a multiple of 4"));
-    }
-  frag_now->insn_addr = addr_mod;
-  frag_now->has_code = 1;
+  frag_now->insn_addr = addr_mask;
   md_number_to_chars (f, insn, insn_length);
   last_insn = insn;
   last_seg = now_seg;
@@ -6491,19 +6474,10 @@ ppc_fix_adjustable (fixS *fix)
 void
 ppc_frag_check (struct frag *fragP)
 {
-  if (!fragP->has_code)
-    return;
-
-  if ((ppc_cpu & PPC_OPCODE_VLE) != 0)
-    {
-      if (((fragP->fr_address + fragP->insn_addr) & 1) != 0)
-        as_bad (_("instruction address is not a multiple of 2"));
-    }
-  else
-    {
-      if (((fragP->fr_address + fragP->insn_addr) & 3) != 0)
-        as_bad (_("instruction address is not a multiple of 4"));
-    }
+  if ((fragP->fr_address & fragP->insn_addr) != 0)
+    as_bad_where (fragP->fr_file, fragP->fr_line,
+		  _("instruction address is not a multiple of %d"),
+		  fragP->insn_addr + 1);
 }
 
 /* Implement HANDLE_ALIGN.  This writes the NOP pattern into an
@@ -6555,15 +6529,13 @@ ppc_handle_align (struct frag *fragP)
       md_number_to_chars (dest, 0x60000000, 4);
 
       if ((ppc_cpu & PPC_OPCODE_POWER6) != 0
-	  || (ppc_cpu & PPC_OPCODE_POWER7) != 0
-	  || (ppc_cpu & PPC_OPCODE_POWER8) != 0
-	  || (ppc_cpu & PPC_OPCODE_POWER9) != 0)
+	  && (ppc_cpu & PPC_OPCODE_POWER9) == 0)
 	{
-	  /* For power6, power7, power8 and power9, we want the last nop to be
-	     a group terminating one.  Do this by inserting an rs_fill frag
-	     immediately after this one, with its address set to the last nop
-	     location.  This will automatically reduce the number of nops in
-	     the current frag by one.  */
+	  /* For power6, power7, and power8, we want the last nop to
+	     be a group terminating one.  Do this by inserting an
+	     rs_fill frag immediately after this one, with its address
+	     set to the last nop location.  This will automatically
+	     reduce the number of nops in the current frag by one.  */
 	  if (count > 4)
 	    {
 	      struct frag *group_nop = xmalloc (SIZEOF_STRUCT_FRAG + 4);
@@ -6577,15 +6549,13 @@ ppc_handle_align (struct frag *fragP)
 	      dest = group_nop->fr_literal;
 	    }
 
-	  if ((ppc_cpu & PPC_OPCODE_POWER7) != 0
-	      || (ppc_cpu & PPC_OPCODE_POWER8) != 0
-	      || (ppc_cpu & PPC_OPCODE_POWER9) != 0)
+	  if ((ppc_cpu & PPC_OPCODE_POWER7) != 0)
 	    {
 	      if (ppc_cpu & PPC_OPCODE_E500MC)
 		/* e500mc group terminating nop: "ori 0,0,0".  */
 		md_number_to_chars (dest, 0x60000000, 4);
 	      else
-		/* power7/power8/power9 group terminating nop: "ori 2,2,0".  */
+		/* power7/power8 group terminating nop: "ori 2,2,0".  */
 		md_number_to_chars (dest, 0x60420000, 4);
 	    }
 	  else

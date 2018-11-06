@@ -341,7 +341,7 @@ static reloc_howto_type howto_table[] =
 	 FALSE),		/* pcrel_offset */
 };
 
-static void
+static bfd_boolean
 rtype_to_howto (bfd *abfd, arelent *cache_ptr, Elf_Internal_Rela *dst)
 {
   unsigned int indx = ELF32_R_TYPE (dst->r_info);
@@ -349,11 +349,13 @@ rtype_to_howto (bfd *abfd, arelent *cache_ptr, Elf_Internal_Rela *dst)
   if (indx >= (unsigned int) R_68K_max)
     {
       /* xgettext:c-format */
-      _bfd_error_handler (_("%B: invalid relocation type %d"),
-			  abfd, (int) indx);
-      indx = R_68K_NONE;
+      _bfd_error_handler (_("%pB: unsupported relocation type %#x"),
+			  abfd, indx);
+      bfd_set_error (bfd_error_bad_value);
+      return FALSE;
     }
   cache_ptr->howto = &howto_table[indx];
+  return TRUE;
 }
 
 #define elf_info_to_howto rtype_to_howto
@@ -1655,15 +1657,15 @@ elf_m68k_add_entry_to_got (struct elf_m68k_got *got,
     {
       if (got->n_slots[R_8] > ELF_M68K_R_8_MAX_N_SLOTS_IN_GOT (info))
 	/* xgettext:c-format */
-	_bfd_error_handler (_("%B: GOT overflow: "
-			      "Number of relocations with 8-bit "
+	_bfd_error_handler (_("%pB: GOT overflow: "
+			      "number of relocations with 8-bit "
 			      "offset > %d"),
 			    abfd,
 			    ELF_M68K_R_8_MAX_N_SLOTS_IN_GOT (info));
       else
 	/* xgettext:c-format */
-	_bfd_error_handler (_("%B: GOT overflow: "
-			      "Number of relocations with 8- or 16-bit "
+	_bfd_error_handler (_("%pB: GOT overflow: "
+			      "number of relocations with 8- or 16-bit "
 			      "offset > %d"),
 			    abfd,
 			    ELF_M68K_R_8_16_MAX_N_SLOTS_IN_GOT (info));
@@ -3698,8 +3700,10 @@ elf_m68k_relocate_section (bfd *output_bfd,
 	    {
 	      _bfd_error_handler
 		/* xgettext:c-format */
-		(_("%B(%A+%#Lx): %s relocation not permitted in shared object"),
-		 input_bfd, input_section, rel->r_offset, howto->name);
+		(_("%pB(%pA+%#" PRIx64 "): "
+		   "%s relocation not permitted in shared object"),
+		 input_bfd, input_section, (uint64_t) rel->r_offset,
+		 howto->name);
 
 	      return FALSE;
 	    }
@@ -3892,10 +3896,11 @@ elf_m68k_relocate_section (bfd *output_bfd,
 	{
 	  _bfd_error_handler
 	    /* xgettext:c-format */
-	    (_("%B(%A+%#Lx): unresolvable %s relocation against symbol `%s'"),
+	    (_("%pB(%pA+%#" PRIx64 "): "
+	       "unresolvable %s relocation against symbol `%s'"),
 	     input_bfd,
 	     input_section,
-	     rel->r_offset,
+	     (uint64_t) rel->r_offset,
 	     howto->name,
 	     h->root.root.string);
 	  return FALSE;
@@ -3928,12 +3933,12 @@ elf_m68k_relocate_section (bfd *output_bfd,
 	      _bfd_error_handler
 		((sym_type == STT_TLS
 		  /* xgettext:c-format */
-		  ? _("%B(%A+%#Lx): %s used with TLS symbol %s")
+		  ? _("%pB(%pA+%#" PRIx64 "): %s used with TLS symbol %s")
 		  /* xgettext:c-format */
-		  : _("%B(%A+%#Lx): %s used with non-TLS symbol %s")),
+		  : _("%pB(%pA+%#" PRIx64 "): %s used with non-TLS symbol %s")),
 		 input_bfd,
 		 input_section,
-		 rel->r_offset,
+		 (uint64_t) rel->r_offset,
 		 howto->name,
 		 name);
 	    }
@@ -3968,9 +3973,9 @@ elf_m68k_relocate_section (bfd *output_bfd,
 	    {
 	      _bfd_error_handler
 		/* xgettext:c-format */
-		(_("%B(%A+%#Lx): reloc against `%s': error %d"),
+		(_("%pB(%pA+%#" PRIx64 "): reloc against `%s': error %d"),
 		 input_bfd, input_section,
-		 rel->r_offset, name, (int) r);
+		 (uint64_t) rel->r_offset, name, (int) r);
 	      return FALSE;
 	    }
 	}
@@ -4382,7 +4387,7 @@ bfd_m68k_elf32_create_embedded_relocs (bfd *abfd, struct bfd_link_info *info,
       /* We can only relocate absolute longword relocs at run time.  */
       if (ELF32_R_TYPE (irel->r_info) != (int) R_68K_32)
 	{
-	  *errmsg = _("unsupported reloc type");
+	  *errmsg = _("unsupported relocation type");
 	  bfd_set_error (bfd_error_bad_value);
 	  goto error_return;
 	}
@@ -4584,26 +4589,6 @@ elf_m68k_grok_psinfo (bfd *abfd, Elf_Internal_Note *note)
   return TRUE;
 }
 
-/* Hook called by the linker routine which adds symbols from an object
-   file.  */
-
-static bfd_boolean
-elf_m68k_add_symbol_hook (bfd *abfd,
-			  struct bfd_link_info *info,
-			  Elf_Internal_Sym *sym,
-			  const char **namep ATTRIBUTE_UNUSED,
-			  flagword *flagsp ATTRIBUTE_UNUSED,
-			  asection **secp ATTRIBUTE_UNUSED,
-			  bfd_vma *valp ATTRIBUTE_UNUSED)
-{
-  if (ELF_ST_TYPE (sym->st_info) == STT_GNU_IFUNC
-      && (abfd->flags & DYNAMIC) == 0
-      && bfd_get_flavour (info->output_bfd) == bfd_target_elf_flavour)
-    elf_tdata (info->output_bfd)->has_gnu_symbols |= elf_gnu_symbol_ifunc;
-
-  return TRUE;
-}
-
 #define TARGET_BIG_SYM			m68k_elf32_vec
 #define TARGET_BIG_NAME			"elf32-m68k"
 #define ELF_MACHINE_CODE		EM_68K
@@ -4641,7 +4626,6 @@ elf_m68k_add_symbol_hook (bfd *abfd,
 #define elf_backend_object_p		elf32_m68k_object_p
 #define elf_backend_grok_prstatus	elf_m68k_grok_prstatus
 #define elf_backend_grok_psinfo		elf_m68k_grok_psinfo
-#define elf_backend_add_symbol_hook	elf_m68k_add_symbol_hook
 
 #define elf_backend_can_gc_sections 1
 #define elf_backend_can_refcount 1

@@ -48,13 +48,9 @@ OTHER_GOT_RELOC_SECTIONS="
 "
 # GOT-related settings.
 # If the output has a GOT section, there must be exactly 0x7ff0 bytes
-# between .got and _gp.  The ". = ." below stops the orphan code from
-# inserting other sections between the assignment to _gp and the start
-# of .got.
-OTHER_GOT_SYMBOLS='
-  . = .;
-  HIDDEN (_gp = ALIGN (16) + 0x7ff0);
-'
+# between .got and _gp.
+OTHER_GOT_SYMBOLS='HIDDEN (_gp = ALIGN (16) + 0x7ff0);'
+
 # .got.plt is only used for the PLT psABI extension.  It should not be
 # included in the .sdata block with .got, as there is no need to access
 # the section from _gp.  Note that the traditional:
@@ -81,9 +77,9 @@ OTHER_SDATA_SECTIONS="
 "
 
 # Magic symbols.
-TEXT_START_SYMBOLS='_ftext = . ;'
-DATA_START_SYMBOLS='_fdata = . ;'
-OTHER_BSS_SYMBOLS='_fbss = .;'
+TEXT_START_SYMBOLS="${CREATE_SHLIB+PROVIDE (}_ftext = .${CREATE_SHLIB+)};"
+DATA_START_SYMBOLS="${CREATE_SHLIB+PROVIDE (}_fdata = .${CREATE_SHLIB+)};"
+OTHER_BSS_SYMBOLS="${CREATE_SHLIB+PROVIDE (}_fbss = .${CREATE_SHLIB+)};"
 
 INITIAL_READONLY_SECTIONS=
 if test -z "${CREATE_SHLIB}"; then

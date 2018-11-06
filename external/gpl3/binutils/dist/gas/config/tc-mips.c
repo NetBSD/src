@@ -1460,7 +1460,8 @@ enum options
     OPTION_NO_MCU,
     OPTION_MIPS16E2,
     OPTION_NO_MIPS16E2,
-    OPTION_COMPAT_ARCH_BASE,
+    OPTION_CRC,
+    OPTION_NO_CRC,
     OPTION_M4650,
     OPTION_NO_M4650,
     OPTION_M4010,
@@ -1526,6 +1527,8 @@ enum options
     OPTION_NAN,
     OPTION_ODD_SPREG,
     OPTION_NO_ODD_SPREG,
+    OPTION_GINV,
+    OPTION_NO_GINV,
     OPTION_END_OF_ENUM
   };
 
@@ -1582,6 +1585,10 @@ struct option md_longopts[] =
   {"mno-xpa", no_argument, NULL, OPTION_NO_XPA},
   {"mmips16e2", no_argument, NULL, OPTION_MIPS16E2},
   {"mno-mips16e2", no_argument, NULL, OPTION_NO_MIPS16E2},
+  {"mcrc", no_argument, NULL, OPTION_CRC},
+  {"mno-crc", no_argument, NULL, OPTION_NO_CRC},
+  {"mginv", no_argument, NULL, OPTION_GINV},
+  {"mno-ginv", no_argument, NULL, OPTION_NO_GINV},
 
   /* Old-style architecture options.  Don't add more of these.  */
   {"m4650", no_argument, NULL, OPTION_M4650},
@@ -1769,6 +1776,16 @@ static const struct mips_ase mips_ases[] = {
     OPTION_MIPS16E2, OPTION_NO_MIPS16E2,
     2,  2, -1, -1,
     6 },
+
+  { "crc", ASE_CRC, ASE_CRC64,
+    OPTION_CRC, OPTION_NO_CRC,
+    6,  6, -1, -1,
+    -1 },
+
+  { "ginv", ASE_GINV, 0,
+    OPTION_GINV, OPTION_NO_GINV,
+    6,  6, 6, 6,
+    -1 },
 };
 
 /* The set of ASEs that require -mfp64.  */
@@ -13956,7 +13973,7 @@ mips_lookup_insn (struct hash_control *hash, const char *start,
 	suffix = 0;
       if (suffix)
 	{
-	  memcpy (name + opend - 2, name + opend, length - opend + 1);
+	  memmove (name + opend - 2, name + opend, length - opend + 1);
 	  insn = (struct mips_opcode *) hash_find (hash, name);
 	  if (insn)
 	    {
@@ -18977,6 +18994,10 @@ mips_convert_ase_flags (int ase)
     ext_ases |= AFL_ASE_XPA;
   if (ase & ASE_MIPS16E2)
     ext_ases |= file_ase_mips16 ? AFL_ASE_MIPS16E2 : 0;
+  if (ase & ASE_CRC)
+    ext_ases |= AFL_ASE_CRC;
+  if (ase & ASE_GINV)
+    ext_ases |= AFL_ASE_GINV;
 
   return ext_ases;
 }
@@ -19325,7 +19346,7 @@ s_mips_file (int x ATTRIBUTE_UNUSED)
     {
       char *filename;
 
-      filename = dwarf2_directive_file (0);
+      filename = dwarf2_directive_filename ();
 
       /* Versions of GCC up to 3.1 start files with a ".file"
 	 directive even for stabs output.  Make sure that this
@@ -19958,6 +19979,9 @@ MIPS options:\n\
 -mips16			generate mips16 instructions\n\
 -no-mips16		do not generate mips16 instructions\n"));
   fprintf (stream, _("\
+-mmips16e2		generate MIPS16e2 instructions\n\
+-mno-mips16e2		do not generate MIPS16e2 instructions\n"));
+  fprintf (stream, _("\
 -mmicromips		generate microMIPS instructions\n\
 -mno-micromips		do not generate microMIPS instructions\n"));
   fprintf (stream, _("\
@@ -19988,6 +20012,12 @@ MIPS options:\n\
 -mvirt			generate Virtualization instructions\n\
 -mno-virt		do not generate Virtualization instructions\n"));
   fprintf (stream, _("\
+-mcrc			generate CRC instructions\n\
+-mno-crc		do not generate CRC instructions\n"));
+  fprintf (stream, _("\
+-mginv			generate Global INValidate (GINV) instructions\n\
+-mno-ginv		do not generate Global INValidate instructions\n"));
+  fprintf (stream, _("\
 -minsn32		only generate 32-bit microMIPS instructions\n\
 -mno-insn32		generate all microMIPS instructions\n"));
   fprintf (stream, _("\
@@ -20000,8 +20030,9 @@ MIPS options:\n\
 -mgp32			use 32-bit GPRs, regardless of the chosen ISA\n\
 -mfp32			use 32-bit FPRs, regardless of the chosen ISA\n\
 -msym32			assume all symbols have 32-bit values\n\
--O0			remove unneeded NOPs, do not swap branches\n\
--O			remove unneeded NOPs and swap branches\n\
+-O0			do not remove unneeded NOPs, do not swap branches\n\
+-O, -O1			remove unneeded NOPs, do not swap branches\n\
+-O2			remove unneeded NOPs and swap branches\n\
 --trap, --no-break	trap exception on div by 0 and mult overflow\n\
 --break, --no-trap	break exception on div by 0 and mult overflow\n"));
   fprintf (stream, _("\
@@ -20044,9 +20075,14 @@ MIPS options:\n\
   fputc ('\n', stream);
 
   fprintf (stream, _("\
--32			create o32 ABI object file (default)\n\
--n32			create n32 ABI object file\n\
--64			create 64 ABI object file\n"));
+-32			create o32 ABI object file%s\n"),
+	   MIPS_DEFAULT_ABI == O32_ABI ? _(" (default)") : "");
+  fprintf (stream, _("\
+-n32			create n32 ABI object file%s\n"),
+	   MIPS_DEFAULT_ABI == N32_ABI ? _(" (default)") : "");
+  fprintf (stream, _("\
+-64			create 64 ABI object file%s\n"),
+	   MIPS_DEFAULT_ABI == N64_ABI ? _(" (default)") : "");
 }
 
 #ifdef TE_IRIX
