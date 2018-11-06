@@ -32,12 +32,14 @@ SECTIONS
     {
       *(.rel.text)
       ${RELOCATING+*(.rel.text.*)}
+      ${RELOCATING+*(.rel.text:*)}
       ${RELOCATING+*(.rel.gnu.linkonce.t*)}
     }
   .rela.text   ${RELOCATING-0} :
     {
       *(.rela.text)
       ${RELOCATING+*(.rela.text.*)}
+      ${RELOCATING+*(.rela.text:*)}
       ${RELOCATING+*(.rela.gnu.linkonce.t*)}
     }
   .rel.fini    ${RELOCATING-0} : { *(.rel.fini)		}
@@ -46,36 +48,40 @@ SECTIONS
     {
       *(.rel.rodata)
       ${RELOCATING+*(.rel.rodata.*)}
+      ${RELOCATING+*(.rel.rodata:*)}
       ${RELOCATING+*(.rel.gnu.linkonce.r*)}
     }
   .rela.rodata ${RELOCATING-0} :
     {
       *(.rela.rodata)
       ${RELOCATING+*(.rela.rodata.*)}
+      ${RELOCATING+*(.rela.rodata:*)}
       ${RELOCATING+*(.rela.gnu.linkonce.r*)}
     }
   .rel.data    ${RELOCATING-0} :
     {
       *(.rel.data)
       ${RELOCATING+*(.rel.data.*)}
+      ${RELOCATING+*(.rel.data:*)}
       ${RELOCATING+*(.rel.gnu.linkonce.d*)}
     }
   .rela.data   ${RELOCATING-0} :
     {
       *(.rela.data)
       ${RELOCATING+*(.rela.data.*)}
+      ${RELOCATING+*(.rela.data:*)}
       ${RELOCATING+*(.rela.gnu.linkonce.d*)}
     }
-  .rel.ctors   ${RELOCATING-0} : { *(.rel.ctors)	}
-  .rela.ctors  ${RELOCATING-0} : { *(.rela.ctors)	}
-  .rel.dtors   ${RELOCATING-0} : { *(.rel.dtors)	}
-  .rela.dtors  ${RELOCATING-0} : { *(.rela.dtors)	}
-  .rel.got     ${RELOCATING-0} : { *(.rel.got)		}
-  .rela.got    ${RELOCATING-0} : { *(.rela.got)		}
-  .rel.bss     ${RELOCATING-0} : { *(.rel.bss)		}
-  .rela.bss    ${RELOCATING-0} : { *(.rela.bss)		}
-  .rel.plt     ${RELOCATING-0} : { *(.rel.plt)		}
-  .rela.plt    ${RELOCATING-0} : { *(.rela.plt)		}
+  .rel.init_array   	${RELOCATING-0} : { *(.rel.init_array)	}
+  .rela.init_array  	${RELOCATING-0} : { *(.rela.init_array)	}
+  .rel.fini_array   	${RELOCATING-0} : { *(.rel.fini_array)	}
+  .rela.fini_array  	${RELOCATING-0} : { *(.rela.fini_array)	}
+  .rel.got     		${RELOCATING-0} : { *(.rel.got)		}
+  .rela.got    		${RELOCATING-0} : { *(.rela.got)	}
+  .rel.bss     		${RELOCATING-0} : { *(.rel.bss)		}
+  .rela.bss    		${RELOCATING-0} : { *(.rela.bss)	}
+  .rel.plt     		${RELOCATING-0} : { *(.rel.plt)		}
+  .rela.plt    		${RELOCATING-0} : { *(.rela.plt)	}
 
   /* Internal text space.  */
   .text ${RELOCATING-0} :
@@ -92,6 +98,8 @@ SECTIONS
     ${RELOCATING+. = ALIGN(4);}
     ${RELOCATING+*(.text.*)}
     ${RELOCATING+. = ALIGN(4);}
+    ${RELOCATING+*(.text:*)}
+    ${RELOCATING+. = ALIGN(4);}
     ${RELOCATING+*(.gnu.linkonce.t*)}
     ${RELOCATING+. = ALIGN(4);}
 
@@ -105,14 +113,14 @@ SECTIONS
 
     /* CRT is prepared for constructor/destructor table to have
        a "valid" NULL address.  */
-    ${CONSTRUCTING+ _ctors_start = . ; }
-    ${CONSTRUCTING+ KEEP (*(SORT_BY_INIT_PRIORITY(.ctors.*)))}
-    ${CONSTRUCTING+ KEEP (*(.ctors))}
-    ${CONSTRUCTING+ _ctors_end = . ; }
-    ${CONSTRUCTING+ _dtors_start = . ; }
-    ${CONSTRUCTING+ KEEP (*(SORT_BY_INIT_PRIORITY(.dtors.*)))}
-    ${CONSTRUCTING+ KEEP (*(.dtors))}
-    ${CONSTRUCTING+ _dtors_end = . ; }
+    ${CONSTRUCTING+ __init_array_begin = . ; }
+    ${CONSTRUCTING+ KEEP (*(SORT_BY_INIT_PRIORITY(.init_array.*)))}
+    ${CONSTRUCTING+ KEEP (*(.init_array))}
+    ${CONSTRUCTING+ __init_array_end = . ; }
+    ${CONSTRUCTING+ __fini_array_begin = . ; }
+    ${CONSTRUCTING+ KEEP (*(SORT_BY_INIT_PRIORITY(.fini_array.*)))}
+    ${CONSTRUCTING+ KEEP (*(.fini_array))}
+    ${CONSTRUCTING+ __fini_array_end = . ; }
 
     /* DATA memory starts at address 0.  So to avoid placing a valid static
        variable at the invalid NULL address, we introduce the .data.atzero
@@ -123,8 +131,10 @@ SECTIONS
     ${RELOCATING+ PROVIDE (_data_start = .) ; }
     *(.data)
     ${RELOCATING+ *(.data*)}
+    ${RELOCATING+ *(.data:*)}
     ${RELOCATING+ *(.rodata)  /* We need to include .rodata here if gcc is used.  */}
     ${RELOCATING+ *(.rodata.*) /* with -fdata-sections.  */}
+    ${RELOCATING+ *(.rodata:*)}
     ${RELOCATING+*(.gnu.linkonce.d*)}
     ${RELOCATING+*(.gnu.linkonce.r*)}
     ${RELOCATING+. = ALIGN(4);}
@@ -142,6 +152,7 @@ SECTIONS
     ${RELOCATING+ PROVIDE (_bss_start = .) ; }
     *(.bss)
     ${RELOCATING+ *(.bss.*)}
+    ${RELOCATING+ *(.bss:*)}
     ${RELOCATING+*(.gnu.linkonce.b*)}
     *(COMMON)
     ${RELOCATING+ PROVIDE (_bss_end = .) ; }

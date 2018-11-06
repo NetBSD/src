@@ -62,7 +62,6 @@ decode_mips16_operand (char type, bfd_boolean extended_p)
 
     case 'G': SPECIAL (0, 0, REG28);
     case 'L': SPECIAL (6, 5, ENTRY_EXIT_LIST);
-    case 'M': SPECIAL (7, 0, SAVE_RESTORE_LIST);
     case 'N': REG (5, 0, COPRO);
     case 'O': UINT (3, 21);
     case 'Q': REG (5, 16, HW);
@@ -445,7 +444,7 @@ const struct mips_opcode mips16_opcodes[] =
 {"xor",	    "x,y",	0xe80e, 0xf81f,		MOD_1|RD_2,		SH,		I1,	0,	0 },
 {"xori",    "x,u",	0xf0006880, 0xf800f8e0,	WR_1,			0,		0,	E2,	0 },
   /* MIPS16e additions; see above for compact jumps.  */
-{"restore", "M",	0x6400, 0xff80,		WR_31|NODS,		MOD_SP,		I32,	0,	0 },
+{"restore", "m",	0x6400, 0xff80,		WR_31|NODS,		MOD_SP,		I32,	0,	0 },
 {"save",    "m",	0x6480, 0xff80,		NODS,			RD_31|MOD_SP,	I32,	0,	0 },
 {"sdbbp",   "",		0xe801, 0xffff,		TRAP,			SH,		I32,	0,	0 },
 {"sdbbp",   "6",	0xe801, 0xf81f,		TRAP,			SH,		I32,	0,	0 },

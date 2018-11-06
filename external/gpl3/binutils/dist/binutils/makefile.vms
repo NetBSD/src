@@ -36,7 +36,7 @@ LIBIBERTY = [-.libiberty]libiberty.olb/lib
 OPCODES_DEP = [-.opcodes]libopcodes.olb
 OPCODES = [-.opcodes]libopcodes.olb/lib
 
-DEBUG_OBJS = rddbg.obj,debug.obj,stabs.obj,ieee.obj,rdcoff.obj,dwarf.obj,\
+DEBUG_OBJS = rddbg.obj,debug.obj,stabs.obj,rdcoff.obj,dwarf.obj,\
   elfcomm.obj
 
 BULIBS = bucomm.obj,version.obj,filemode.obj

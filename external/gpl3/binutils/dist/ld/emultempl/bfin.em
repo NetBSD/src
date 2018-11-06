@@ -50,9 +50,9 @@ PARSE_AND_LIST_LONGOPTS='
 
 PARSE_AND_LIST_OPTIONS='
   fprintf (file, _("\
-  --code-in-l1                Put code in L1.\n\
-  --data-in-l1                Put data in L1.\n"
-		   ));
+  --code-in-l1                Put code in L1\n"));
+  fprintf (file, _("\
+  --data-in-l1                Put data in L1\n"));
 '
 
 PARSE_AND_LIST_ARGS_CASES='

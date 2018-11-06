@@ -35,8 +35,12 @@ fragment <<EOF
    .dynsym table of executables and shared objects.  If generating a
    versioned shared object, they must always be bound to the base version.
 
+   The Solaris 2 ABI also requires two local symbols to be emitted for
+   every executable and shared object.
+
    Cf. Linker and Libraries Guide, Ch. 2, Link-Editor, Generating the Output
    File, p.63.  */
+
 static void
 elf_solaris2_before_allocation (void)
 {
@@ -48,6 +52,13 @@ elf_solaris2_before_allocation (void)
     "_edata",
     "_end",
     "_etext",
+    NULL
+  };
+  /* Local symbols required by the Solaris 2 ABI.  Already emitted by
+     emulparams/solaris2.sh.  */
+  static const char *local_syms[] = {
+    "_START_",
+    "_END_",
     NULL
   };
   const char **sym;
@@ -71,6 +82,22 @@ elf_solaris2_before_allocation (void)
 
 	  /* Emit it into the .dynamic section, too.  */
 	  bfd_elf_link_record_dynamic_symbol (&link_info, h);
+	}
+
+      for (sym = local_syms; *sym != NULL; sym++)
+	{
+	  struct elf_link_hash_entry *h;
+
+	  /* Lookup symbol.  */
+	  h = elf_link_hash_lookup (elf_hash_table (&link_info), *sym,
+				    FALSE, FALSE, FALSE);
+	  if (h == NULL)
+	    continue;
+
+	  /* Turn it local.  */
+	  h->forced_local = 1;
+	  /* Type should be STT_OBJECT, not STT_NOTYPE.  */
+	  h->type = STT_OBJECT;
 	}
     }
 
@@ -110,47 +137,6 @@ elf_solaris2_before_allocation (void)
   gld${EMULATION_NAME}_before_allocation ();
 }
 
-/* The Solaris 2 ABI requires two local symbols to be emitted for every
-   executable and shared object.
-
-   Cf. Linker and Libraries Guide, Ch. 2, Link-Editor, Generating the Output
-   File, p.63.  */
-static void
-elf_solaris2_after_allocation (void)
-{
-  /* Local symbols required by the Solaris 2 ABI.  Already emitted by
-     emulparams/solaris2.sh.  */
-  static const char *local_syms[] = {
-    "_START_",
-    "_END_",
-    NULL
-  };
-  const char **sym;
-
-  /* Do this for both executables and shared objects.  */
-  if (!bfd_link_relocatable (&link_info))
-    {
-      for (sym = local_syms; *sym != NULL; sym++)
-	{
-	  struct elf_link_hash_entry *h;
-
-	  /* Lookup symbol.  */
-	  h = elf_link_hash_lookup (elf_hash_table (&link_info), *sym,
-				    FALSE, FALSE, FALSE);
-	  if (h == NULL)
-	    continue;
-
-	  /* Turn it local.  */
-	  h->forced_local = 1;
-	  /* Type should be STT_OBJECT, not STT_NOTYPE.  */
-	  h->type = STT_OBJECT;
-	}
-    }
-
-  gld${EMULATION_NAME}_after_allocation ();
-}
-
 EOF
 
 LDEMUL_BEFORE_ALLOCATION=elf_solaris2_before_allocation
-LDEMUL_AFTER_ALLOCATION=elf_solaris2_after_allocation

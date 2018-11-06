@@ -190,7 +190,7 @@ bfd_arm_merge_machines (bfd *ibfd, bfd *obfd)
     {
       /* xgettext: c-format */
       _bfd_error_handler (_("\
-error: %B is compiled for the EP9312, whereas %B is compiled for XScale"),
+error: %pB is compiled for the EP9312, whereas %pB is compiled for XScale"),
 			  ibfd, obfd);
       bfd_set_error (bfd_error_wrong_format);
       return FALSE;
@@ -202,7 +202,7 @@ error: %B is compiled for the EP9312, whereas %B is compiled for XScale"),
     {
       /* xgettext: c-format */
       _bfd_error_handler (_("\
-error: %B is compiled for the EP9312, whereas %B is compiled for XScale"),
+error: %pB is compiled for the EP9312, whereas %pB is compiled for XScale"),
 			  obfd, ibfd);
       bfd_set_error (bfd_error_wrong_format);
       return FALSE;
@@ -335,7 +335,7 @@ bfd_arm_update_notes (bfd *abfd, const char *note_section)
 	{
 	  _bfd_error_handler
 	    /* xgettext: c-format */
-	    (_("warning: unable to update contents of %s section in %B"),
+	    (_("warning: unable to update contents of %s section in %pB"),
 	     note_section, abfd);
 	  goto FAIL;
 	}

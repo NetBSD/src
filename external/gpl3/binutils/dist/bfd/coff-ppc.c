@@ -1038,9 +1038,9 @@ coff_ppc_relocate_section (bfd *output_bfd,
       switch (r_type)
 	{
 	default:
-	  _bfd_error_handler
-	    /* xgettext: c-format */
-	    (_("%B: unsupported relocation type 0x%02x"), input_bfd, r_type);
+	  /* xgettext: c-format */
+	  _bfd_error_handler (_("%pB: unsupported relocation type %#x"),
+			      input_bfd, r_type);
 	  bfd_set_error (bfd_error_bad_value);
 	  return FALSE;
 	case IMAGE_REL_PPC_TOCREL16:
@@ -1131,9 +1131,9 @@ coff_ppc_relocate_section (bfd *output_bfd,
 		      {
 			_bfd_error_handler
 			  /* xgettext: c-format */
-			  (_("%B: Relocation for %s of %#Lx exceeds "
+			  (_("%pB: Relocation for %s of %#" PRIx64 " exceeds "
 			     "Toc size limit"),
-			   input_bfd, name, our_toc_offset);
+			   input_bfd, name, (uint64_t) our_toc_offset);
 			bfd_set_error (bfd_error_bad_value);
 			return FALSE;
 		      }
@@ -1185,8 +1185,8 @@ coff_ppc_relocate_section (bfd *output_bfd,
 	      {
 		_bfd_error_handler
 		  /* xgettext: c-format */
-		  (_("%B: Relocation exceeds allocated TOC (%#Lx)"),
-		   input_bfd, toc_section->size);
+		  (_("%pB: Relocation exceeds allocated TOC (%#" PRIx64 ")"),
+		   input_bfd, (uint64_t) toc_section->size);
 		bfd_set_error (bfd_error_bad_value);
 		return FALSE;
 	      }
@@ -1240,10 +1240,11 @@ coff_ppc_relocate_section (bfd *output_bfd,
 
 	    _bfd_error_handler
 	      /* xgettext: c-format */
-	      (_("Warning: unsupported reloc %s <file %B, section %A>\n"
-		 "sym %ld (%s), r_vaddr %Ld (%#Lx)"),
+	      (_("warning: unsupported reloc %s <file %pB, section %pA>\n"
+		 "sym %ld (%s), r_vaddr %" PRId64 " (%#" PRIx64 ")"),
 	       howto->name, input_bfd, input_section,
-	       rel->r_symndx, my_name, rel->r_vaddr, rel->r_vaddr);
+	       rel->r_symndx, my_name,
+	       (int64_t) rel->r_vaddr, (uint64_t) rel->r_vaddr);
 	  }
 	  break;
 	case IMAGE_REL_PPC_IMGLUE:
@@ -1258,7 +1259,7 @@ coff_ppc_relocate_section (bfd *output_bfd,
 
 	    _bfd_error_handler
 	      /* xgettext: c-format */
-	      (_("%B: Out of order IMGLUE reloc for %s"), input_bfd, my_name);
+	      (_("%pB: Out of order IMGLUE reloc for %s"), input_bfd, my_name);
 	    bfd_set_error (bfd_error_bad_value);
 	    return FALSE;
 	  }
@@ -2480,9 +2481,9 @@ const bfd_target TARGET_LITTLE_SYM =
   BFD_ENDIAN_LITTLE,		/* data byte order is little */
   BFD_ENDIAN_LITTLE,		/* header byte order is little */
 
-  (HAS_RELOC | EXEC_P |		/* FIXME: object flags */
-   HAS_LINENO | HAS_DEBUG |
-   HAS_SYMS | HAS_LOCALS | WP_TEXT | D_PAGED),
+  (HAS_RELOC | EXEC_P		/* FIXME: object flags */
+   | HAS_LINENO | HAS_DEBUG
+   | HAS_SYMS | HAS_LOCALS | WP_TEXT | D_PAGED),
 
 #ifndef COFF_WITH_PE
   (SEC_HAS_CONTENTS | SEC_ALLOC | SEC_LOAD | SEC_CODE | SEC_READONLY
@@ -2505,12 +2506,24 @@ const bfd_target TARGET_LITTLE_SYM =
   bfd_getl32, bfd_getl_signed_32, bfd_putl32,
   bfd_getl16, bfd_getl_signed_16, bfd_putl16, /* hdrs */
 
-  {_bfd_dummy_target, coff_object_p,	/* bfd_check_format */
-     bfd_generic_archive_p, /* _bfd_dummy_target */ coff_object_p },
-  {bfd_false, coff_mkobject, _bfd_generic_mkarchive, /* bfd_set_format */
-     bfd_false},
-  {bfd_false, coff_write_object_contents,	/* bfd_write_contents */
-     _bfd_write_archive_contents, bfd_false},
+  {				/* bfd_check_format */
+    _bfd_dummy_target,
+    coff_object_p,
+    bfd_generic_archive_p,
+    coff_object_p
+  },
+  {				/* bfd_set_format */
+    _bfd_bool_bfd_false_error,
+    coff_mkobject,
+    _bfd_generic_mkarchive,
+    _bfd_bool_bfd_false_error
+  },
+  {				/* bfd_write_contents */
+    _bfd_bool_bfd_false_error,
+    coff_write_object_contents,
+    _bfd_write_archive_contents,
+    _bfd_bool_bfd_false_error
+  },
 
   BFD_JUMP_TABLE_GENERIC (coff),
   BFD_JUMP_TABLE_COPY (coff),
@@ -2524,7 +2537,7 @@ const bfd_target TARGET_LITTLE_SYM =
 
   /* Alternative_target.  */
 #ifdef TARGET_BIG_SYM
-  & TARGET_BIG_SYM,
+  &TARGET_BIG_SYM,
 #else
   NULL,
 #endif
@@ -2541,9 +2554,9 @@ const bfd_target TARGET_BIG_SYM =
   BFD_ENDIAN_BIG,		/* data byte order is big */
   BFD_ENDIAN_BIG,		/* header byte order is big */
 
-  (HAS_RELOC | EXEC_P |		/* FIXME: object flags */
-   HAS_LINENO | HAS_DEBUG |
-   HAS_SYMS | HAS_LOCALS | WP_TEXT | D_PAGED),
+  (HAS_RELOC | EXEC_P		/* FIXME: object flags */
+   | HAS_LINENO | HAS_DEBUG
+   | HAS_SYMS | HAS_LOCALS | WP_TEXT | D_PAGED),
 
 #ifndef COFF_WITH_PE
   (SEC_HAS_CONTENTS | SEC_ALLOC | SEC_LOAD | SEC_CODE | SEC_READONLY
@@ -2566,12 +2579,24 @@ const bfd_target TARGET_BIG_SYM =
   bfd_getb32, bfd_getb_signed_32, bfd_putb32,
   bfd_getb16, bfd_getb_signed_16, bfd_putb16, /* hdrs */
 
-  {_bfd_dummy_target, coff_object_p,	/* bfd_check_format */
-     bfd_generic_archive_p, /* _bfd_dummy_target */ coff_object_p },
-  {bfd_false, coff_mkobject, _bfd_generic_mkarchive, /* bfd_set_format */
-     bfd_false},
-  {bfd_false, coff_write_object_contents,	/* bfd_write_contents */
-     _bfd_write_archive_contents, bfd_false},
+  {				/* bfd_check_format */
+    _bfd_dummy_target,
+    coff_object_p,
+    bfd_generic_archive_p,
+    coff_object_p
+  },
+  {				/* bfd_set_format */
+    _bfd_bool_bfd_false_error,
+    coff_mkobject,
+    _bfd_generic_mkarchive,
+    _bfd_bool_bfd_false_error
+  },
+  {				/* bfd_write_contents */
+    _bfd_bool_bfd_false_error,
+    coff_write_object_contents,
+    _bfd_write_archive_contents,
+    _bfd_bool_bfd_false_error
+  },
 
   BFD_JUMP_TABLE_GENERIC (coff),
   BFD_JUMP_TABLE_COPY (coff),
@@ -2585,7 +2610,7 @@ const bfd_target TARGET_BIG_SYM =
 
   /* Alternative_target.  */
 #ifdef TARGET_LITTLE_SYM
-  & TARGET_LITTLE_SYM,
+  &TARGET_LITTLE_SYM,
 #else
   NULL,
 #endif

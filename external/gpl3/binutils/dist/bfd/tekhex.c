@@ -962,7 +962,7 @@ tekhex_print_symbol (bfd *abfd,
 #define	tekhex_close_and_cleanup		    _bfd_generic_close_and_cleanup
 #define tekhex_bfd_free_cached_info		    _bfd_generic_bfd_free_cached_info
 #define tekhex_new_section_hook			    _bfd_generic_new_section_hook
-#define tekhex_bfd_is_target_special_symbol ((bfd_boolean (*) (bfd *, asymbol *)) bfd_false)
+#define tekhex_bfd_is_target_special_symbol	    _bfd_bool_bfd_asymbol_false
 #define tekhex_bfd_is_local_label_name		     bfd_generic_is_local_label_name
 #define tekhex_get_lineno			    _bfd_nosymbols_get_lineno
 #define tekhex_find_nearest_line		    _bfd_nosymbols_find_nearest_line
@@ -981,6 +981,7 @@ tekhex_print_symbol (bfd *abfd,
 #define tekhex_bfd_discard_group		    bfd_generic_discard_group
 #define tekhex_section_already_linked		    _bfd_generic_section_already_linked
 #define tekhex_bfd_define_common_symbol		    bfd_generic_define_common_symbol
+#define tekhex_bfd_link_hide_symbol		    _bfd_generic_link_hide_symbol
 #define tekhex_bfd_define_start_stop		    bfd_generic_define_start_stop
 #define tekhex_bfd_link_hash_table_create	    _bfd_generic_link_hash_table_create
 #define tekhex_bfd_link_add_symbols		    _bfd_generic_link_add_symbols
@@ -1020,16 +1021,16 @@ const bfd_target tekhex_vec =
     _bfd_dummy_target,
   },
   {
-    bfd_false,
+    _bfd_bool_bfd_false_error,
     tekhex_mkobject,
     _bfd_generic_mkarchive,
-    bfd_false,
+    _bfd_bool_bfd_false_error,
   },
   {				/* bfd_write_contents.  */
-    bfd_false,
+    _bfd_bool_bfd_false_error,
     tekhex_write_object_contents,
     _bfd_write_archive_contents,
-    bfd_false,
+    _bfd_bool_bfd_false_error,
   },
 
   BFD_JUMP_TABLE_GENERIC (tekhex),
