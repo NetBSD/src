@@ -129,12 +129,16 @@ class Expression
   virtual uint64_t
   value(const Expression_eval_info*) = 0;
 
+  // Sets all symbols used in expressions as seen in a real ELF object.
+  virtual void
+  set_expr_sym_in_real_elf(Symbol_table*) const
+  { return; }
+
  private:
   // May not be copied.
   Expression(const Expression&);
   Expression& operator=(const Expression&);
 };
-
 
 // Version_script_info stores information parsed from the version
 // script, either provided by --version-script or as part of a linker
@@ -344,6 +348,14 @@ class Symbol_assignment
   void
   finalize(Symbol_table*, const Layout*);
 
+  bool
+  is_defsym() const
+  { return is_defsym_; }
+
+  Expression *
+  value() const
+  { return val_; }
+
   // Finalize the symbol value when it can refer to the dot symbol.
   void
   finalize_with_dot(Symbol_table*, const Layout*, uint64_t dot_value,
@@ -453,6 +465,13 @@ class Script_options
   // Define a symbol from the command line.
   bool
   define_symbol(const char* definition);
+
+  // Populates the set with symbol names used in LHS of defsym.
+  void
+  find_defsym_defs(Unordered_set<std::string>&);
+
+  // Set symbols used in defsym expressions as seen in a real ELF object.
+  void set_defsym_uses_in_real_elf(Symbol_table*) const;
 
   // Create sections required by any linker scripts.
   void

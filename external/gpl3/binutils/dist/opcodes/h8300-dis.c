@@ -59,7 +59,8 @@ bfd_h8_disassemble_init (void)
 
       if (i & 1)
 	{
-	  fprintf (stderr, "Internal error, h8_disassemble_init.\n");
+	  /* xgettext:c-format */
+	  opcodes_error_handler (_("internal error, h8_disassemble_init"));
 	  abort ();
 	}
 

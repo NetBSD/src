@@ -83,12 +83,11 @@ responsibility among the other maintainers.
   GOLD		   Ian Lance Taylor <iant@google.com>
   GOLD		   Cary Coutant <ccoutant@gmail.com>
   H8300		   Prafulla Thakare <prafulla.thakare@kpitcummins.com>
-  HPPA		   Dave Anglin <dave.anglin@nrc.ca>
+  HPPA		   Dave Anglin <dave.anglin@bell.net>
   HPPA elf32	   Alan Modra <amodra@gmail.com>
   HPPA elf64	   Jeff Law <law@redhat.com> [Basic maintainance only]
   IA-64		   Jim Wilson <wilson@tuliptree.org>
   IQ2000	   Stan Cox <scox@redhat.com>
-  i860		   Jason Eckhardt <jle@rice.edu>
   ix86		   H.J. Lu <hjl.tools@gmail.com>
   ix86 PE	   Christopher Faylor <me+binutils@cgf.cx>
   ix86 COFF	   DJ Delorie <dj@redhat.com>
@@ -98,7 +97,6 @@ responsibility among the other maintainers.
   M32R             Doug Evans <dje@sebabeach.org>
   M68HC11 M68HC12  Stephane Carrez <Stephane.Carrez@gmail.com>
   M68HC11 M68HC12  Sean Keys <skeys@ipdatasys.com>
-  M88k		   Mark Kettenis <kettenis@gnu.org>
   MACH-O           Tristan Gingold <tgingold@free.fr>
   MAXQ		   Inderpreet Singh <inderpreetb@noida.hcltech.com>
   MEP		   Dave Brolley <brolley@redhat.com>
@@ -157,6 +155,8 @@ goes with them.
 
   Paul Brook
   Eric Christopher
+  Jason Eckhardt
+  Mark Kettenis
   Mei Ligang
   Mark Mitchell
   Bernd Schmidt

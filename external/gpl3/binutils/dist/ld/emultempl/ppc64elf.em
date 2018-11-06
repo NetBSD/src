@@ -38,7 +38,7 @@ static struct ppc64_elf_params params = { NULL,
 					  &ppc_layout_sections_again,
 					  1, -1, 0,
 					  ${DEFAULT_PLT_STATIC_CHAIN-0}, -1, 5,
-					  -1, 1, 0, -1, -1, 0};
+					  -1, 0, -1, -1, 0};
 
 /* Fake input file for stubs.  */
 static lang_input_statement_type *stub_file;
@@ -54,6 +54,9 @@ static int no_tls_opt = 0;
 
 /* Whether to run opd optimization.  */
 static int no_opd_opt = 0;
+
+/* Whether to convert inline PLT calls to direct.  */
+static int no_inline_opt = 0;
 
 /* Whether to run toc optimization.  */
 static int no_toc_opt = 0;
@@ -281,6 +284,15 @@ ppc_before_allocation (void)
       if (!no_opd_opt
 	  && !ppc64_elf_edit_opd (&link_info))
 	einfo (_("%X%P: can not edit %s: %E\n"), "opd");
+
+      if (!no_inline_opt
+	  && !bfd_link_relocatable (&link_info))
+	{
+	  prelim_size_sections ();
+
+	  if (!ppc64_elf_inline_plt (&link_info))
+	    einfo (_("%X%P: inline PLT: %E\n"));
+	}
 
       if (ppc64_elf_tls_setup (&link_info)
 	  && !no_tls_opt)
@@ -692,8 +704,6 @@ enum ppc64_opt
   OPTION_NO_PLT_STATIC_CHAIN,
   OPTION_PLT_THREAD_SAFE,
   OPTION_NO_PLT_THREAD_SAFE,
-  OPTION_SPECULATE_INDIRECT_JUMPS,
-  OPTION_NO_SPECULATE_INDIRECT_JUMPS,
   OPTION_PLT_ALIGN,
   OPTION_NO_PLT_ALIGN,
   OPTION_PLT_LOCALENTRY,
@@ -708,6 +718,7 @@ enum ppc64_opt
   OPTION_TLS_GET_ADDR_OPT,
   OPTION_NO_TLS_GET_ADDR_OPT,
   OPTION_NO_OPD_OPT,
+  OPTION_NO_INLINE_OPT,
   OPTION_NO_TOC_OPT,
   OPTION_NO_MULTI_TOC,
   OPTION_NO_TOC_SORT,
@@ -721,8 +732,6 @@ PARSE_AND_LIST_LONGOPTS=${PARSE_AND_LIST_LONGOPTS}'
   { "no-plt-static-chain", no_argument, NULL, OPTION_NO_PLT_STATIC_CHAIN },
   { "plt-thread-safe", no_argument, NULL, OPTION_PLT_THREAD_SAFE },
   { "no-plt-thread-safe", no_argument, NULL, OPTION_NO_PLT_THREAD_SAFE },
-  { "speculate-indirect-jumps", no_argument, NULL, OPTION_SPECULATE_INDIRECT_JUMPS },
-  { "no-speculate-indirect-jumps", no_argument, NULL, OPTION_NO_SPECULATE_INDIRECT_JUMPS },
   { "plt-align", optional_argument, NULL, OPTION_PLT_ALIGN },
   { "no-plt-align", no_argument, NULL, OPTION_NO_PLT_ALIGN },
   { "plt-localentry", optional_argument, NULL, OPTION_PLT_LOCALENTRY },
@@ -737,6 +746,7 @@ PARSE_AND_LIST_LONGOPTS=${PARSE_AND_LIST_LONGOPTS}'
   { "tls-get-addr-optimize", no_argument, NULL, OPTION_TLS_GET_ADDR_OPT },
   { "no-tls-get-addr-optimize", no_argument, NULL, OPTION_NO_TLS_GET_ADDR_OPT },
   { "no-opd-optimize", no_argument, NULL, OPTION_NO_OPD_OPT },
+  { "no-inline-optimize", no_argument, NULL, OPTION_NO_INLINE_OPT },
   { "no-toc-optimize", no_argument, NULL, OPTION_NO_TOC_OPT },
   { "no-multi-toc", no_argument, NULL, OPTION_NO_MULTI_TOC },
   { "no-toc-sort", no_argument, NULL, OPTION_NO_TOC_SORT },
@@ -755,40 +765,34 @@ PARSE_AND_LIST_OPTIONS=${PARSE_AND_LIST_OPTIONS}'
                                 choose suitable defaults.\n"
 		   ));
   fprintf (file, _("\
-  --plt-static-chain          PLT call stubs should load r11.'${DEFAULT_PLT_STATIC_CHAIN- (default)}'\n"
+  --plt-static-chain          PLT call stubs should load r11'${DEFAULT_PLT_STATIC_CHAIN- (default)}'\n"
 		   ));
   fprintf (file, _("\
-  --no-plt-static-chain       PLT call stubs should not load r11.'${DEFAULT_PLT_STATIC_CHAIN+ (default)}'\n"
+  --no-plt-static-chain       PLT call stubs should not load r11'${DEFAULT_PLT_STATIC_CHAIN+ (default)}'\n"
 		   ));
   fprintf (file, _("\
-  --plt-thread-safe           PLT call stubs with load-load barrier.\n"
+  --plt-thread-safe           PLT call stubs with load-load barrier\n"
 		   ));
   fprintf (file, _("\
-  --no-plt-thread-safe        PLT call stubs without load-load barrier.\n"
+  --no-plt-thread-safe        PLT call stubs without barrier\n"
 		   ));
   fprintf (file, _("\
-  --speculate-indirect-jumps  PLT call stubs without speculation barrier.\n"
+  --plt-align [=<align>]      Align PLT call stubs to fit cache lines\n"
 		   ));
   fprintf (file, _("\
-  --no-speculate-indirect-jumps PLT call stubs with speculation barrier.\n"
+  --no-plt-align              Dont'\''t align individual PLT call stubs\n"
 		   ));
   fprintf (file, _("\
-  --plt-align [=<align>]      Align PLT call stubs to fit cache lines.\n"
+  --plt-localentry            Optimize calls to ELFv2 localentry:0 functions\n"
 		   ));
   fprintf (file, _("\
-  --no-plt-align              Dont'\''t align individual PLT call stubs.\n"
+  --no-plt-localentry         Don'\''t optimize ELFv2 calls\n"
 		   ));
   fprintf (file, _("\
-  --plt-localentry            Optimize calls to ELFv2 localentry:0 functions.\n"
+  --emit-stub-syms            Label linker stubs with a symbol\n"
 		   ));
   fprintf (file, _("\
-  --no-plt-localentry         Don'\''t optimize ELFv2 calls.\n"
-		   ));
-  fprintf (file, _("\
-  --emit-stub-syms            Label linker stubs with a symbol.\n"
-		   ));
-  fprintf (file, _("\
-  --no-emit-stub-syms         Don'\''t label linker stubs with a symbol.\n"
+  --no-emit-stub-syms         Don'\''t label linker stubs with a symbol\n"
 		   ));
   fprintf (file, _("\
   --dotsyms                   For every version pattern \"foo\" in a version\n\
@@ -797,7 +801,7 @@ PARSE_AND_LIST_OPTIONS=${PARSE_AND_LIST_OPTIONS}'
                                 descriptor symbols.  Defaults to on.\n"
 		   ));
   fprintf (file, _("\
-  --no-dotsyms                Don'\''t do anything special in version scripts.\n"
+  --no-dotsyms                Don'\''t do anything special in version scripts\n"
 		   ));
   fprintf (file, _("\
   --save-restore-funcs        Provide register save and restore routines used\n\
@@ -805,32 +809,35 @@ PARSE_AND_LIST_OPTIONS=${PARSE_AND_LIST_OPTIONS}'
                                 final link, off for ld -r.\n"
 		   ));
   fprintf (file, _("\
-  --no-save-restore-funcs     Don'\''t provide these routines.\n"
+  --no-save-restore-funcs     Don'\''t provide these routines\n"
 		   ));
   fprintf (file, _("\
-  --no-tls-optimize           Don'\''t try to optimize TLS accesses.\n"
+  --no-tls-optimize           Don'\''t try to optimize TLS accesses\n"
 		   ));
   fprintf (file, _("\
-  --tls-get-addr-optimize     Force use of special __tls_get_addr call.\n"
+  --tls-get-addr-optimize     Force use of special __tls_get_addr call\n"
 		   ));
   fprintf (file, _("\
-  --no-tls-get-addr-optimize  Don'\''t use a special __tls_get_addr call.\n"
+  --no-tls-get-addr-optimize  Don'\''t use a special __tls_get_addr call\n"
 		   ));
   fprintf (file, _("\
-  --no-opd-optimize           Don'\''t optimize the OPD section.\n"
+  --no-opd-optimize           Don'\''t optimize the OPD section\n"
 		   ));
   fprintf (file, _("\
-  --no-toc-optimize           Don'\''t optimize the TOC section.\n"
+  --no-inline-optimize        Don'\''t convert inline PLT to direct calls\n"
 		   ));
   fprintf (file, _("\
-  --no-multi-toc              Disallow automatic multiple toc sections.\n"
+  --no-toc-optimize           Don'\''t optimize the TOC section\n"
 		   ));
   fprintf (file, _("\
-  --no-toc-sort               Don'\''t sort TOC and GOT sections.\n"
+  --no-multi-toc              Disallow automatic multiple toc sections\n"
+		   ));
+  fprintf (file, _("\
+  --no-toc-sort               Don'\''t sort TOC and GOT sections\n"
 		   ));
   fprintf (file, _("\
   --non-overlapping-opd       Canonicalize .opd, so that there are no\n\
-                                overlapping .opd entries.\n"
+                                overlapping .opd entries\n"
 		   ));
 '
 
@@ -840,7 +847,7 @@ PARSE_AND_LIST_ARGS_CASES=${PARSE_AND_LIST_ARGS_CASES}'
 	const char *end;
 	params.group_size = bfd_scan_vma (optarg, &end, 0);
 	if (*end)
-	  einfo (_("%P%F: invalid number `%s'\''\n"), optarg);
+	  einfo (_("%F%P: invalid number `%s'\''\n"), optarg);
       }
       break;
 
@@ -860,21 +867,13 @@ PARSE_AND_LIST_ARGS_CASES=${PARSE_AND_LIST_ARGS_CASES}'
       params.plt_thread_safe = 0;
       break;
 
-    case OPTION_SPECULATE_INDIRECT_JUMPS:
-      params.speculate_indirect_jumps = 1;
-      break;
-
-    case OPTION_NO_SPECULATE_INDIRECT_JUMPS:
-      params.speculate_indirect_jumps = 0;
-      break;
-
     case OPTION_PLT_ALIGN:
       if (optarg != NULL)
 	{
 	  char *end;
 	  long val = strtol (optarg, &end, 0);
 	  if (*end || (unsigned long) val + 8 > 16)
-	    einfo (_("%P%F: invalid --plt-align `%s'\''\n"), optarg);
+	    einfo (_("%F%P: invalid --plt-align `%s'\''\n"), optarg);
 	  params.plt_stub_align = val;
 	}
       else
@@ -931,6 +930,10 @@ PARSE_AND_LIST_ARGS_CASES=${PARSE_AND_LIST_ARGS_CASES}'
 
     case OPTION_NO_OPD_OPT:
       no_opd_opt = 1;
+      break;
+
+    case OPTION_NO_INLINE_OPT:
+      no_inline_opt = 1;
       break;
 
     case OPTION_NO_TOC_OPT:
