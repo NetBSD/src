@@ -1,4 +1,4 @@
-/*	$NetBSD: gpt_uuid.c,v 1.15 2017/02/16 22:40:19 christos Exp $	*/
+/*	$NetBSD: gpt_uuid.c,v 1.16 2018/11/06 04:04:33 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __RCSID
-__RCSID("$NetBSD: gpt_uuid.c,v 1.15 2017/02/16 22:40:19 christos Exp $");
+__RCSID("$NetBSD: gpt_uuid.c,v 1.16 2018/11/06 04:04:33 mrg Exp $");
 #endif
 
 #include <err.h>
@@ -87,6 +87,9 @@ static const struct {
 	{ GPT_ENT_TYPE_NETBSD_RAIDFRAME, "raid",
 	    "NetBSD RAIDFrame component" },
 	{ GPT_ENT_TYPE_NETBSD_SWAP, "swap", "NetBSD swap" },
+	{ GPT_ENT_TYPE_VMWARE_VMKCORE, "swap", "VMware VMkernel core dump" },
+	{ GPT_ENT_TYPE_VMWARE_VMFS, "swap", "VMware VMFS" },
+	{ GPT_ENT_TYPE_VMWARE_RESERVED, "swap", "VMware reserved" },
 };
 
 static void
