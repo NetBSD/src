@@ -1,4 +1,4 @@
-/*	$NetBSD: t_sendrecv.c,v 1.4 2018/08/22 06:31:37 christos Exp $	*/
+/*	$NetBSD: t_sendrecv.c,v 1.5 2018/11/06 17:55:04 christos Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_sendrecv.c,v 1.4 2018/08/22 06:31:37 christos Exp $");
+__RCSID("$NetBSD: t_sendrecv.c,v 1.5 2018/11/06 17:55:04 christos Exp $");
 
 #include <atf-c.h>
 #include <sys/types.h>
@@ -44,11 +44,6 @@ __RCSID("$NetBSD: t_sendrecv.c,v 1.4 2018/08/22 06:31:37 christos Exp $");
 #include <sched.h>
 #include <signal.h>
 
-ATF_TC(sendrecv_basic);
-ATF_TC_HEAD(sendrecv_basic, tc)
-{
-	atf_tc_set_md_var(tc, "descr", "A basic test of sendrecv(2)");
-}
 
 #define COUNT 100
 
@@ -78,7 +73,7 @@ sender(int fd)
 			continue;
 		printf(">>%zd %d %ju\n", n, errno, p.seq);
 		ATF_REQUIRE_MSG(errno == ENOBUFS, "send %s", strerror(errno));
-		sched_yield();
+//		sched_yield();
 	}
 	printf("sender done\n");
 }
@@ -110,16 +105,22 @@ receiver(int fd)
 	} while (p.seq < COUNT);
 }
 
-ATF_TC_BODY(sendrecv_basic, tc)
+static void
+sendrecv(int rerror)
 {
 	int fd[2], error;
 	struct sigaction sa;
 
-//	atf_tc_fail("does not terminate");
-
 	error = socketpair(AF_UNIX, SOCK_DGRAM, 0, fd);
 //	error = pipe(fd);
 	ATF_REQUIRE_MSG(error != -1, "socketpair failed (%s)", strerror(errno));
+
+	for (size_t i = 0; i < __arraycount(fd); i++) {
+		error = setsockopt(fd[i], SOL_SOCKET, SO_RERROR, &rerror,
+		    sizeof(rerror));
+		ATF_REQUIRE_MSG(error != -1,
+		    "setsockopt(SO_RERROR) failed (%s)", strerror(errno));
+	}
 
 	memset(&sa, 0, sizeof(sa));
 	sa.sa_flags = 0;
@@ -146,10 +147,35 @@ ATF_TC_BODY(sendrecv_basic, tc)
 	}
 }
 
+ATF_TC(sendrecv_basic);
+
+ATF_TC_HEAD(sendrecv_basic, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "A basic test of send/recv(2)");
+}
+
+ATF_TC_BODY(sendrecv_basic, tc)
+{
+	sendrecv(0);
+}
+
+ATF_TC(sendrecv_rerror);
+
+ATF_TC_HEAD(sendrecv_rerror, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Test send/recv(2) with receiver error");
+}
+
+ATF_TC_BODY(sendrecv_rerror, tc)
+{
+	sendrecv(1);
+}
+
 ATF_TP_ADD_TCS(tp)
 {
 
 	ATF_TP_ADD_TC(tp, sendrecv_basic);
+	ATF_TP_ADD_TC(tp, sendrecv_rerror);
 
 	return atf_no_error();
 }
