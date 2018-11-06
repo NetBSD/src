@@ -422,8 +422,20 @@ enum Output_section_order
   // The PLT.
   ORDER_PLT,
 
+  // The hot text sections, prefixed by .text.hot.
+  ORDER_TEXT_HOT,
+
   // The regular text sections.
   ORDER_TEXT,
+
+  // The startup text sections, prefixed by .text.startup.
+  ORDER_TEXT_STARTUP,
+
+  // The startup text sections, prefixed by .text.startup.
+  ORDER_TEXT_EXIT,
+
+  // The unlikely text sections, prefixed by .text.unlikely.
+  ORDER_TEXT_UNLIKELY,
 
   // The .fini section.
   ORDER_FINI,
@@ -525,7 +537,8 @@ class Layout
   Output_section*
   layout(Sized_relobj_file<size, big_endian> *object, unsigned int shndx,
 	 const char* name, const elfcpp::Shdr<size, big_endian>& shdr,
-	 unsigned int reloc_shndx, unsigned int reloc_type, off_t* offset);
+	 unsigned int sh_type, unsigned int reloc_shndx,
+	 unsigned int reloc_type, off_t* offset);
 
   std::map<Section_id, unsigned int>*
   get_section_order_map()
@@ -679,6 +692,25 @@ class Layout
   void
   layout_gnu_stack(bool seen_gnu_stack, uint64_t gnu_stack_flags,
 		   const Object*);
+
+  // Layout a .note.gnu.property section.
+  void
+  layout_gnu_property(unsigned int note_type,
+		      unsigned int pr_type,
+		      size_t pr_datasz,
+		      const unsigned char* pr_data,
+		      const Object* object);
+
+  // Merge per-object properties with program properties.
+  void
+  merge_gnu_properties(const Object* object);
+
+  // Add a target-specific property for the output .note.gnu.property section.
+  void
+  add_gnu_property(unsigned int note_type,
+		   unsigned int pr_type,
+		   size_t pr_datasz,
+		   const unsigned char* pr_data);
 
   // Add an Output_section_data to the layout.  This is used for
   // special sections like the GOT section.  ORDER is where the
@@ -1015,6 +1047,14 @@ class Layout
   };
   static const Section_name_mapping section_name_mapping[];
   static const int section_name_mapping_count;
+  static const Section_name_mapping text_section_name_mapping[];
+  static const int text_section_name_mapping_count;
+
+  // Find section name NAME in map and return the mapped name if found
+  // with the length set in PLEN.
+  static const char* match_section_name(const Section_name_mapping* map,
+					const int count, const char* name,
+					size_t* plen);
 
   // During a relocatable link, a list of group sections and
   // signatures.
@@ -1039,6 +1079,10 @@ class Layout
   Output_section*
   create_note(const char* name, int note_type, const char* section_name,
 	      size_t descsz, bool allocate, size_t* trailing_padding);
+
+  // Create a note section for gnu program properties.
+  void
+  create_gnu_properties_note();
 
   // Create a note section for gold version.
   void
@@ -1326,6 +1370,14 @@ class Layout
     std::vector<Section_info> section_infos_;
   };
 
+  // Program properties from .note.gnu.property sections.
+  struct Gnu_property
+  {
+    size_t pr_datasz;
+    unsigned char* pr_data;
+  };
+  typedef std::map<unsigned int, Gnu_property> Gnu_properties;
+
   // The number of input files, for sizing tables.
   int number_of_input_files_;
   // Information set by scripts or by command line options.
@@ -1452,6 +1504,8 @@ class Layout
   Incremental_binary* incremental_base_;
   // For incremental links, a list of free space within the file.
   Free_list free_list_;
+  // Program properties.
+  Gnu_properties gnu_properties_;
 };
 
 // This task handles writing out data in output sections which is not

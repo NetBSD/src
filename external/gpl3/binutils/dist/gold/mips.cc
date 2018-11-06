@@ -631,11 +631,11 @@ struct Got_page_range
 struct Got_page_entry
 {
   Got_page_entry()
-    : object(NULL), symndx(-1U), ranges(NULL), num_pages(0)
+    : object(NULL), symndx(-1U), ranges(NULL)
   { }
 
   Got_page_entry(Object* object_, unsigned int symndx_)
-    : object(object_), symndx(symndx_), ranges(NULL), num_pages(0)
+    : object(object_), symndx(symndx_), ranges(NULL)
   { }
 
   // The input object that needs the GOT page entry.
@@ -644,8 +644,6 @@ struct Got_page_entry
   unsigned int symndx;
   // The ranges for this page entry.
   Got_page_range* ranges;
-  // The maximum number of page entries needed for RANGES.
-  unsigned int num_pages;
 };
 
 // Hash for Got_page_entry.
@@ -775,7 +773,7 @@ class Mips_got_info
 
   // Add FROM's GOT page entries.
   void
-  add_got_page_entries(Mips_got_info<size, big_endian>* from);
+  add_got_page_count(Mips_got_info<size, big_endian>* from);
 
   // Return GOT size.
   unsigned int
@@ -928,7 +926,7 @@ class Mips_got_info
   Global_got_entry_set global_got_symbols_;
   // A hash table holding GOT entries.
   Got_entry_set got_entries_;
-  // A hash table of GOT page entries.
+  // A hash table of GOT page entries (only used in master GOT).
   Got_page_entry_set got_page_entries_;
   // The offset of first GOT page entry for this GOT.
   unsigned int got_page_offset_start_;
@@ -5794,14 +5792,8 @@ Mips_got_info<size, big_endian>::record_got_page_entry(
   else
     this->got_page_entries_.insert(entry);
 
-  // Add the same entry to the OBJECT's GOT.
-  Got_page_entry* entry2 = NULL;
+  // Get the object's GOT, but we don't need to insert an entry here.
   Mips_got_info<size, big_endian>* g2 = object->get_or_create_got_info();
-  if (g2->got_page_entries_.find(entry) == g2->got_page_entries_.end())
-    {
-      entry2 = new Got_page_entry(*entry);
-      g2->got_page_entries_.insert(entry2);
-    }
 
   // Skip over ranges whose maximum extent cannot share a page entry
   // with ADDEND.
@@ -5821,9 +5813,6 @@ Mips_got_info<size, big_endian>::record_got_page_entry(
       range->max_addend = addend;
 
       *range_ptr = range;
-      ++entry->num_pages;
-      if (entry2 != NULL)
-        ++entry2->num_pages;
       ++this->page_gotno_;
       ++g2->page_gotno_;
       return;
@@ -5851,9 +5840,6 @@ Mips_got_info<size, big_endian>::record_got_page_entry(
   new_pages = range->get_max_pages();
   if (old_pages != new_pages)
     {
-      entry->num_pages += new_pages - old_pages;
-      if (entry2 != NULL)
-        entry2->num_pages += new_pages - old_pages;
       this->page_gotno_ += new_pages - old_pages;
       g2->page_gotno_ += new_pages - old_pages;
     }
@@ -6353,22 +6339,10 @@ Mips_got_info<size, big_endian>::add_got_entries(
 
 template<int size, bool big_endian>
 void
-Mips_got_info<size, big_endian>::add_got_page_entries(
+Mips_got_info<size, big_endian>::add_got_page_count(
     Mips_got_info<size, big_endian>* from)
 {
-  for (typename Got_page_entry_set::iterator
-       p = from->got_page_entries_.begin();
-       p != from->got_page_entries_.end();
-       ++p)
-    {
-      Got_page_entry* entry = *p;
-      if (this->got_page_entries_.find(entry) == this->got_page_entries_.end())
-        {
-          Got_page_entry* entry2 = new Got_page_entry(*entry);
-          this->got_page_entries_.insert(entry2);
-          this->page_gotno_ += entry->num_pages;
-        }
-    }
+  this->page_gotno_ += from->page_gotno_;
 }
 
 // Mips_output_data_got methods.
@@ -6569,7 +6543,7 @@ Mips_output_data_got<size, big_endian>::merge_got_with(
 
   // Transfer the object's GOT information from FROM to TO.
   to->add_got_entries(from);
-  to->add_got_page_entries(from);
+  to->add_got_page_count(from);
 
   // Record that OBJECT should use output GOT TO.
   object->set_got_info(to);
@@ -12633,6 +12607,7 @@ const Target::Target_info Target_mips<size, big_endian>::mips_info =
   NULL,                 // attributes_vendor
   "__start",		// entry_symbol_name
   32,			// hash_entry_size
+  elfcpp::SHT_PROGBITS,	// unwind_section_type
 };
 
 template<int size, bool big_endian>
@@ -12673,6 +12648,7 @@ const Target::Target_info Target_mips_nacl<size, big_endian>::mips_nacl_info =
   NULL,                 // attributes_vendor
   "_start",             // entry_symbol_name
   32,			// hash_entry_size
+  elfcpp::SHT_PROGBITS,	// unwind_section_type
 };
 
 // Target selector for Mips.  Note this is never instantiated directly.

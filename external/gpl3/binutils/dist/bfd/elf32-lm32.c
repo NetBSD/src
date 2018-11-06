@@ -525,8 +525,8 @@ lm32_reloc_name_lookup (bfd *abfd ATTRIBUTE_UNUSED,
 
 /* Set the howto pointer for an Lattice Mico32 ELF reloc.  */
 
-static void
-lm32_info_to_howto_rela (bfd *abfd ATTRIBUTE_UNUSED,
+static bfd_boolean
+lm32_info_to_howto_rela (bfd *abfd,
 			 arelent *cache_ptr,
 			 Elf_Internal_Rela *dst)
 {
@@ -536,10 +536,13 @@ lm32_info_to_howto_rela (bfd *abfd ATTRIBUTE_UNUSED,
   if (r_type >= (unsigned int) R_LM32_max)
     {
       /* xgettext:c-format */
-      _bfd_error_handler (_("%B: invalid LM32 reloc number: %d"), abfd, r_type);
-      r_type = 0;
+      _bfd_error_handler (_("%pB: unsupported relocation type %#x"),
+			  abfd, r_type);
+      bfd_set_error (bfd_error_bad_value);
+      return FALSE;
     }
   cache_ptr->howto = &lm32_elf_howto_table[r_type];
+  return TRUE;
 }
 
 /* Set the right machine number for an Lattice Mico32 ELF file. */
@@ -995,7 +998,9 @@ lm32_elf_relocate_section (bfd *output_bfd,
 
 	      /* Addend should be zero.  */
 	      if (rel->r_addend != 0)
-		_bfd_error_handler (_("internal error: addend should be zero for R_LM32_16_GOT"));
+		_bfd_error_handler
+		  (_("internal error: addend should be zero for %s"),
+		   "R_LM32_16_GOT");
 
 	      r = _bfd_final_link_relocate (howto,
 					    input_bfd,
@@ -1073,7 +1078,8 @@ lm32_elf_relocate_section (bfd *output_bfd,
 	  const char *msg = NULL;
 	  arelent bfd_reloc;
 
-	  lm32_info_to_howto_rela (input_bfd, &bfd_reloc, rel);
+	  if (! lm32_info_to_howto_rela (input_bfd, &bfd_reloc, rel))
+	    continue;
 	  howto = bfd_reloc.howto;
 
 	  if (h != NULL)
@@ -1427,8 +1433,9 @@ lm32_elf_finish_dynamic_sections (bfd *output_bfd,
 	      != (lm32fdpic_fixup32_section (info)->reloc_count * 4))
 	{
 	  _bfd_error_handler
-	    ("LINKER BUG: .rofixup section size mismatch: size/4 %Ld != relocs %d",
-	    lm32fdpic_fixup32_section (info)->size/4,
+	    ("LINKER BUG: .rofixup section size mismatch: size/4 %" PRId64
+	     " != relocs %d",
+	    (int64_t) (lm32fdpic_fixup32_section (info)->size / 4),
 	    lm32fdpic_fixup32_section (info)->reloc_count);
 	  return FALSE;
 	}
@@ -1449,7 +1456,9 @@ lm32_elf_finish_dynamic_sections (bfd *output_bfd,
 	  if (hend->u.def.value != value)
 	    {
 	      _bfd_error_handler
-		("LINKER BUG: .rofixup section hend->u.def.value != value: %Ld != %Ld", hend->u.def.value, value);
+		("LINKER BUG: .rofixup section hend->u.def.value != value: %"
+		 PRId64 " != %" PRId64,
+		 (int64_t) hend->u.def.value, (int64_t) value);
 	      return FALSE;
 	    }
 	}
@@ -1986,7 +1995,7 @@ maybe_set_textrel (struct elf_link_hash_entry *h, void *info_p)
 
       info->flags |= DF_TEXTREL;
       info->callbacks->minfo
-	(_("%B: dynamic relocation against `%T' in read-only section `%A'\n"),
+	(_("%pB: dynamic relocation against `%pT' in read-only section `%pA'\n"),
 	 sec->owner, h->root.root.string, sec);
 
       /* Not an error, just cut short the traversal.  */
@@ -2562,7 +2571,7 @@ lm32_elf_fdpic_copy_private_bfd_data (bfd *ibfd, bfd *obfd)
 #define bfd_elf32_bfd_reloc_type_lookup		lm32_reloc_type_lookup
 #define bfd_elf32_bfd_reloc_name_lookup		lm32_reloc_name_lookup
 #define elf_info_to_howto			lm32_info_to_howto_rela
-#define elf_info_to_howto_rel			0
+#define elf_info_to_howto_rel			NULL
 #define elf_backend_rela_normal			1
 #define elf_backend_object_p			lm32_elf_object_p
 #define elf_backend_final_write_processing	lm32_elf_final_write_processing
@@ -2580,7 +2589,7 @@ lm32_elf_fdpic_copy_private_bfd_data (bfd *ibfd, bfd *obfd)
 #define elf_backend_reloc_type_class		lm32_elf_reloc_type_class
 #define elf_backend_copy_indirect_symbol	lm32_elf_copy_indirect_symbol
 #define elf_backend_size_dynamic_sections	lm32_elf_size_dynamic_sections
-#define elf_backend_omit_section_dynsym		((bfd_boolean (*) (bfd *, struct bfd_link_info *, asection *)) bfd_true)
+#define elf_backend_omit_section_dynsym		_bfd_elf_omit_section_dynsym_all
 #define elf_backend_create_dynamic_sections	lm32_elf_create_dynamic_sections
 #define elf_backend_finish_dynamic_sections	lm32_elf_finish_dynamic_sections
 #define elf_backend_adjust_dynamic_symbol	lm32_elf_adjust_dynamic_symbol

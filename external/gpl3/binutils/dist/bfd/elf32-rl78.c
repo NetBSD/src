@@ -278,8 +278,8 @@ rl78_reloc_name_lookup (bfd * abfd ATTRIBUTE_UNUSED, const char * r_name)
 
 /* Set the howto pointer for an RL78 ELF reloc.  */
 
-static void
-rl78_info_to_howto_rela (bfd *		     abfd ATTRIBUTE_UNUSED,
+static bfd_boolean
+rl78_info_to_howto_rela (bfd *		     abfd,
 			 arelent *	     cache_ptr,
 			 Elf_Internal_Rela * dst)
 {
@@ -289,10 +289,13 @@ rl78_info_to_howto_rela (bfd *		     abfd ATTRIBUTE_UNUSED,
   if (r_type >= (unsigned int) R_RL78_max)
     {
       /* xgettext:c-format */
-      _bfd_error_handler (_("%B: invalid RL78 reloc number: %d"), abfd, r_type);
-      r_type = 0;
+      _bfd_error_handler (_("%pB: unsupported relocation type %#x"),
+			  abfd, r_type);
+      bfd_set_error (bfd_error_bad_value);
+      return FALSE;
     }
   cache_ptr->howto = rl78_elf_howto_table + r_type;
+  return TRUE;
 }
 
 static bfd_vma
@@ -367,7 +370,7 @@ static unsigned int rl78_stack_top;
       if (rl78_stack_top < NUM_STACK_ENTRIES)	\
 	rl78_stack [rl78_stack_top ++] = (val);	\
       else					\
-	_bfd_error_handler (_("Internal Error: RL78 reloc stack overflow")); \
+	_bfd_error_handler (_("internal error: RL78 reloc stack overflow")); \
     }						\
   while (0)
 
@@ -378,7 +381,7 @@ static unsigned int rl78_stack_top;
 	(dest) = rl78_stack [-- rl78_stack_top];\
       else					\
 	{					\
-	  _bfd_error_handler (_("Internal Error: RL78 reloc stack underflow")); \
+	  _bfd_error_handler (_("internal error: RL78 reloc stack underflow")); \
 	  (dest) = 0;				\
 	}					\
     }						\
@@ -1047,7 +1050,8 @@ rl78_elf_relocate_section
 	    {
 	      relocation = 0;
 	      if (h->root.type != bfd_link_hash_undefweak)
-		_bfd_error_handler (_("Warning: RL78_SYM reloc with an unknown symbol"));
+		_bfd_error_handler
+		  (_("warning: RL78_SYM reloc with an unknown symbol"));
 	    }
 	  (void) rl78_compute_complex_reloc (r_type, relocation, input_section);
 	  break;
@@ -1078,7 +1082,7 @@ rl78_elf_relocate_section
 		 and emit a more helpful error message.  */
 	      if (r_type == R_RL78_DIR24S_PCREL)
 		/* xgettext:c-format */
-		msg = _("%B(%A): error: call to undefined function '%s'");
+		msg = _("%pB(%pA): error: call to undefined function '%s'");
 	      else
 		(*info->callbacks->reloc_overflow)
 		  (info, (h ? &h->root : NULL), name, howto->name, (bfd_vma) 0,
@@ -1092,27 +1096,27 @@ rl78_elf_relocate_section
 
 	    case bfd_reloc_other:
 	      /* xgettext:c-format */
-	      msg = _("%B(%A): warning: unaligned access to symbol '%s' in the small data area");
+	      msg = _("%pB(%pA): warning: unaligned access to symbol '%s' in the small data area");
 	      break;
 
 	    case bfd_reloc_outofrange:
 	      /* xgettext:c-format */
-	      msg = _("%B(%A): internal error: out of range error");
+	      msg = _("%pB(%pA): internal error: out of range error");
 	      break;
 
 	    case bfd_reloc_notsupported:
 	      /* xgettext:c-format */
-	      msg = _("%B(%A): internal error: unsupported relocation error");
+	      msg = _("%pB(%pA): internal error: unsupported relocation error");
 	      break;
 
 	    case bfd_reloc_dangerous:
 	      /* xgettext:c-format */
-	      msg = _("%B(%A): internal error: dangerous relocation");
+	      msg = _("%pB(%pA): internal error: dangerous relocation");
 	      break;
 
 	    default:
 	      /* xgettext:c-format */
-	      msg = _("%B(%A): internal error: unknown error");
+	      msg = _("%pB(%pA): internal error: unknown error");
 	      break;
 	    }
 
@@ -1199,8 +1203,8 @@ rl78_elf_merge_private_bfd_data (bfd *ibfd, struct bfd_link_info *info)
 
 		  _bfd_error_handler
 		    /* xgettext:c-format */
-		    (_("RL78 ABI conflict: G10 file %B cannot be linked"
-		       " with %s file %B"),
+		    (_("RL78 ABI conflict: G10 file %pB cannot be linked"
+		       " with %s file %pB"),
 		     ibfd, rl78_cpu_name (out_cpu), obfd);
 		}
 	      else
@@ -1216,7 +1220,7 @@ rl78_elf_merge_private_bfd_data (bfd *ibfd, struct bfd_link_info *info)
 
 	      _bfd_error_handler
 		/* xgettext:c-format */
-		(_("RL78 ABI conflict: cannot link %s file %B with %s file %B"),
+		(_("RL78 ABI conflict: cannot link %s file %pB with %s file %pB"),
 		 rl78_cpu_name (in_cpu),  ibfd,
 		 rl78_cpu_name (out_cpu), obfd);
 	    }
@@ -1229,11 +1233,11 @@ rl78_elf_merge_private_bfd_data (bfd *ibfd, struct bfd_link_info *info)
 
 	  if (old_flags & E_FLAG_RL78_64BIT_DOUBLES)
 	    /* xgettext:c-format */
-	    _bfd_error_handler (_("- %B is 64-bit, %B is not"),
+	    _bfd_error_handler (_("- %pB is 64-bit, %pB is not"),
 				obfd, ibfd);
 	  else
 	    /* xgettext:c-format */
-	    _bfd_error_handler (_("- %B is 64-bit, %B is not"),
+	    _bfd_error_handler (_("- %pB is 64-bit, %pB is not"),
 				ibfd, obfd);
 	  error = TRUE;
 	}

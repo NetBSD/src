@@ -106,7 +106,6 @@ static const bfd_mach_o_xlat_name bfd_mach_o_cpu_name[] =
   { "arm", BFD_MACH_O_CPU_TYPE_ARM },
   { "mc88000", BFD_MACH_O_CPU_TYPE_MC88000 },
   { "sparc", BFD_MACH_O_CPU_TYPE_SPARC },
-  { "i860", BFD_MACH_O_CPU_TYPE_I860 },
   { "alpha", BFD_MACH_O_CPU_TYPE_ALPHA },
   { "powerpc", BFD_MACH_O_CPU_TYPE_POWERPC },
   { "powerpc_64", BFD_MACH_O_CPU_TYPE_POWERPC_64 },
@@ -1689,7 +1688,7 @@ dump_unwind_encoding_x86 (unsigned int encoding, unsigned int sz,
 	unsigned int regs;
 	char pfx = sz == 8 ? 'R' : 'E';
 
-	regs = encoding & MACH_O_UNWIND_X86_64_RBP_FRAME_REGSITERS;
+	regs = encoding & MACH_O_UNWIND_X86_64_RBP_FRAME_REGISTERS;
 	printf (" %cSP frame", pfx);
 	if (regs != 0)
 	  {

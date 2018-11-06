@@ -247,7 +247,12 @@ gc_process_relocs(
 		(*secvec).push_back(Section_id(src_obj, dst_indx));
 	      else
                 (*secvec).push_back(Section_id(NULL, 0));
-              (*symvec).push_back(NULL);
+              // If the target of the relocation is an STT_SECTION symbol,
+              // make a note of that by storing -1 in the symbol vector.
+              if (lsym.get_st_type() == elfcpp::STT_SECTION)
+		(*symvec).push_back(reinterpret_cast<Symbol*>(-1));
+	      else
+		(*symvec).push_back(NULL);
 	      (*addendvec).push_back(std::make_pair(
 					static_cast<long long>(symvalue),
 					static_cast<long long>(addend)));
@@ -263,7 +268,7 @@ gc_process_relocs(
 	  if (is_ordinary
 	      && check_section_for_function_pointers
               && lsym.get_st_type() != elfcpp::STT_OBJECT
- 	      && scan.local_reloc_may_be_function_pointer(symtab, NULL, NULL,
+ 	      && scan.local_reloc_may_be_function_pointer(symtab, NULL, target,
 							  src_obj, src_indx,
 			                       		  NULL, reloc, r_type,
 							  lsym))
@@ -300,7 +305,7 @@ gc_process_relocs(
               && dst_obj != NULL
               && (!is_ordinary
                   || scan.global_reloc_may_be_function_pointer(
-                       symtab, NULL, NULL, src_obj, src_indx, NULL, reloc,
+                       symtab, NULL, target, src_obj, src_indx, NULL, reloc,
                        r_type, gsym)))
             symtab->icf()->set_section_has_function_pointers(dst_obj, dst_indx);
 

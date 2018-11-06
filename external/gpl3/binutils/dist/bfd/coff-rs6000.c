@@ -2090,7 +2090,7 @@ xcoff_write_archive_contents_old (bfd *abfd)
   char decbuf[XCOFFARMAG_ELEMENT_SIZE + 1];
 
   memset (&fhdr, 0, sizeof fhdr);
-  (void) strncpy (fhdr.magic, XCOFFARMAG, SXCOFFARMAG);
+  (void) memcpy (fhdr.magic, XCOFFARMAG, SXCOFFARMAG);
   sprintf (fhdr.firstmemoff, "%d", SIZEOF_AR_FILE_HDR);
   sprintf (fhdr.freeoff, "%d", 0);
 
@@ -2770,7 +2770,7 @@ xcoff_reloc_type_fail (bfd *input_bfd,
 {
   _bfd_error_handler
     /* xgettext: c-format */
-    (_("%B: unsupported relocation type 0x%02x"),
+    (_("%pB: unsupported relocation type %#x"),
      input_bfd, (unsigned int) rel->r_type);
   bfd_set_error (bfd_error_bad_value);
   return FALSE;
@@ -2856,8 +2856,8 @@ xcoff_reloc_type_toc (bfd *input_bfd,
 	{
 	  _bfd_error_handler
 	    /* xgettext: c-format */
-	    (_("%B: TOC reloc at %#Lx to symbol `%s' with no TOC entry"),
-	     input_bfd, rel->r_vaddr, h->root.root.string);
+	    (_("%pB: TOC reloc at %#" PRIx64 " to symbol `%s' with no TOC entry"),
+	     input_bfd, (uint64_t) rel->r_vaddr, h->root.root.string);
 	  bfd_set_error (bfd_error_bad_value);
 	  return FALSE;
 	}
@@ -3602,7 +3602,7 @@ xcoff_create_csect_from_smclas (bfd *abfd,
     {
       _bfd_error_handler
 	/* xgettext: c-format */
-	(_("%B: symbol `%s' has unrecognized smclas %d"),
+	(_("%pB: symbol `%s' has unrecognized smclas %d"),
 	 abfd, symbol_name, aux->x_csect.x_smclas);
       bfd_set_error (bfd_error_bad_value);
     }
@@ -3970,7 +3970,7 @@ const struct xcoff_dwsect_name xcoff_dwsect_names[] = {
 
 /* For generic entry points.  */
 #define _bfd_xcoff_close_and_cleanup _bfd_archive_close_and_cleanup
-#define _bfd_xcoff_bfd_free_cached_info bfd_true
+#define _bfd_xcoff_bfd_free_cached_info _bfd_bool_bfd_true
 #define _bfd_xcoff_new_section_hook coff_new_section_hook
 #define _bfd_xcoff_get_section_contents _bfd_generic_get_section_contents
 #define _bfd_xcoff_get_section_contents_in_window \
@@ -4001,7 +4001,7 @@ const struct xcoff_dwsect_name xcoff_dwsect_names[] = {
 #define _bfd_xcoff_write_ar_hdr _bfd_generic_write_ar_hdr
 #define _bfd_xcoff_get_elt_at_index _bfd_generic_get_elt_at_index
 #define _bfd_xcoff_generic_stat_arch_elt _bfd_xcoff_stat_arch_elt
-#define _bfd_xcoff_update_armap_timestamp bfd_true
+#define _bfd_xcoff_update_armap_timestamp _bfd_bool_bfd_true
 
 /* For symbols entry points.  */
 #define _bfd_xcoff_get_symtab_upper_bound coff_get_symtab_upper_bound
@@ -4045,6 +4045,7 @@ const struct xcoff_dwsect_name xcoff_dwsect_names[] = {
 #define _bfd_xcoff_bfd_discard_group bfd_generic_discard_group
 #define _bfd_xcoff_section_already_linked _bfd_generic_section_already_linked
 #define _bfd_xcoff_bfd_define_common_symbol _bfd_xcoff_define_common_symbol
+#define _bfd_xcoff_bfd_link_hide_symbol _bfd_generic_link_hide_symbol
 #define _bfd_xcoff_bfd_define_start_stop    bfd_generic_define_start_stop
 #define _bfd_xcoff_bfd_link_check_relocs    _bfd_generic_link_check_relocs
 
@@ -4195,17 +4196,17 @@ const bfd_target rs6000_xcoff_vec =
     },
 
     { /* bfd_set_format */
-      bfd_false,
+      _bfd_bool_bfd_false_error,
       coff_mkobject,
       _bfd_generic_mkarchive,
-      bfd_false
+      _bfd_bool_bfd_false_error
     },
 
     {/* bfd_write_contents */
-      bfd_false,
+      _bfd_bool_bfd_false_error,
       coff_write_object_contents,
       _bfd_xcoff_write_archive_contents,
-      bfd_false
+      _bfd_bool_bfd_false_error
     },
 
     BFD_JUMP_TABLE_GENERIC (_bfd_xcoff),
@@ -4376,17 +4377,17 @@ const bfd_target powerpc_xcoff_vec =
     },
 
     { /* bfd_set_format */
-      bfd_false,
+      _bfd_bool_bfd_false_error,
       coff_mkobject,
       _bfd_generic_mkarchive,
-      bfd_false
+      _bfd_bool_bfd_false_error
     },
 
     {/* bfd_write_contents */
-      bfd_false,
+      _bfd_bool_bfd_false_error,
       coff_write_object_contents,
       _bfd_xcoff_write_archive_contents,
-      bfd_false
+      _bfd_bool_bfd_false_error
     },
 
     BFD_JUMP_TABLE_GENERIC (_bfd_xcoff),

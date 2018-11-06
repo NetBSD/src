@@ -1,3 +1,21 @@
+Changes in 1.16:
+
+* Improve warning messages for relocations that refer to discarded sections.
+
+* Add --debug=plugin option for easier debugging of plugin-related problems.
+
+* Add -z keep_text_section_prefix option.
+
+* Add support for R_AARCH64_TLSLE_LDST8_TPREL_LO12, etc., relocations
+  (Aarch64 only).
+
+* Update configuration to enable plugins and threads automatically.
+
+* Add support for .note.gnu.property sections (from Linux ABI extensions).
+
+* Add support for Intel Indirect Branch Tracking (IBT) and Shadow Stack
+  (x86-64 only).
+
 Changes in 1.15:
 
 * Add support for .MIPS.options sections (MIPS only).

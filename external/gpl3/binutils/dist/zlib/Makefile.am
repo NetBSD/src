@@ -1,6 +1,6 @@
 ## Process this file with automake to create Makefile.in.
 
-AUTOMAKE_OPTIONS = 1.8 cygnus
+AUTOMAKE_OPTIONS = foreign
 
 ACLOCAL_AMFLAGS = -I .. -I ../config
 

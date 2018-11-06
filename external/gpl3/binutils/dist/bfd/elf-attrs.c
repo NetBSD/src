@@ -42,6 +42,8 @@ uleb128_size (unsigned int i)
 static bfd_boolean
 is_default_attr (obj_attribute *attr)
 {
+  if (ATTR_TYPE_HAS_ERROR (attr->type))
+    return TRUE;
   if (ATTR_TYPE_HAS_INT_VAL (attr->type) && attr->i != 0)
     return FALSE;
   if (ATTR_TYPE_HAS_STR_VAL (attr->type) && attr->s && *attr->s)
@@ -438,6 +440,15 @@ _bfd_elf_parse_attributes (bfd *abfd, Elf_Internal_Shdr * hdr)
   /* PR 17512: file: 2844a11d.  */
   if (hdr->sh_size == 0)
     return;
+  if (hdr->sh_size > bfd_get_file_size (abfd))
+    {
+      /* xgettext:c-format */
+      _bfd_error_handler (_("%pB: error: attribute section '%pA' too big: %#llx"),
+			  abfd, hdr->bfd_section, (long long) hdr->sh_size);
+      bfd_set_error (bfd_error_invalid_operation);
+      return;
+    }
+
   contents = (bfd_byte *) bfd_malloc (hdr->sh_size + 1);
   if (!contents)
     return;
@@ -472,8 +483,9 @@ _bfd_elf_parse_attributes (bfd *abfd, Elf_Internal_Shdr * hdr)
 	  len -= section_len;
 	  if (section_len <= 4)
 	    {
-	      _bfd_error_handler (_("%B: error: attribute section length too small: %ld"),
-				  abfd, section_len);
+	      _bfd_error_handler
+		(_("%pB: error: attribute section length too small: %" PRId64),
+		 abfd, (int64_t) section_len);
 	      break;
 	    }
 	  section_len -= 4;
@@ -600,7 +612,7 @@ _bfd_elf_merge_object_attributes (bfd *ibfd, struct bfd_link_info *info)
 	{
 	  _bfd_error_handler
 	    /* xgettext:c-format */
-		(_("error: %B: Object has vendor-specific contents that "
+		(_("error: %pB: object has vendor-specific contents that "
 		   "must be processed by the '%s' toolchain"),
 		 ibfd, in_attr->s);
 	  return FALSE;
@@ -610,7 +622,7 @@ _bfd_elf_merge_object_attributes (bfd *ibfd, struct bfd_link_info *info)
 	  || (in_attr->i != 0 && strcmp (in_attr->s, out_attr->s) != 0))
 	{
 	  /* xgettext:c-format */
-	  _bfd_error_handler (_("error: %B: Object tag '%d, %s' is "
+	  _bfd_error_handler (_("error: %pB: object tag '%d, %s' is "
 				"incompatible with tag '%d, %s'"),
 			      ibfd,
 			      in_attr->i, in_attr->s ? in_attr->s : "",

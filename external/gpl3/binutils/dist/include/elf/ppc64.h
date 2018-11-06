@@ -154,6 +154,10 @@ START_RELOC_NUMBERS (elf_ppc64_reloc_type)
   RELOC_NUMBER (R_PPC64_ADDR64_LOCAL,	   117)
   RELOC_NUMBER (R_PPC64_ENTRY,		   118)
 
+/* Marker reloc for inline plt call insns.  */
+  RELOC_NUMBER (R_PPC64_PLTSEQ,		   119)
+  RELOC_NUMBER (R_PPC64_PLTCALL,	   120)
+
 #ifndef RELOC_MACROS_GEN_FUNC
 /* Relocation only used internally by ld.  If you need to use these
    reloc numbers, you can change them to some other unused value

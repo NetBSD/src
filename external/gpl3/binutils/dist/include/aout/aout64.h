@@ -476,25 +476,7 @@ enum reloc_type
   RELOC_11,	
   RELOC_WDISP2_14,
   RELOC_WDISP19,
-  RELOC_HHI22,			/* data[0:21] = (addend + sv) >> 42     */
-  RELOC_HLO10,			/* data[0:9] = (addend + sv) >> 32      */
-  
-  /* 29K relocation types.  */
-  RELOC_JUMPTARG,
-  RELOC_CONST,
-  RELOC_CONSTH,
-  
-  /* All the new ones I can think of, for sparc v9.  */
-  RELOC_64,			/* data[0:63] = addend + sv 		*/
-  RELOC_DISP64,			/* data[0:63] = addend - pc + sv 	*/
-  RELOC_WDISP21,		/* data[0:20] = (addend + sv - pc)>>2 	*/
-  RELOC_DISP21,			/* data[0:20] = addend - pc + sv        */
-  RELOC_DISP14,			/* data[0:13] = addend - pc + sv 	*/
-  /* Q .
-     What are the other ones,
-     Since this is a clean slate, can we throw away the ones we dont
-     understand ? Should we sort the values ? What about using a
-     microcode format like the 68k ?  */
+
   NO_RELOC
   };
 

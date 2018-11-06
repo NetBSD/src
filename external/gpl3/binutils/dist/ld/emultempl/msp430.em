@@ -482,15 +482,14 @@ gld${EMULATION_NAME}_add_options
 static void
 gld${EMULATION_NAME}_list_options (FILE * file)
 {
-  fprintf (file, _("\
-  --code-region={either,lower,upper,none}\n\
-  \tTransform .text* sections to {either,lower,upper,none}.text* sections.\n\
-  --data-region={either,lower,upper,none}\n\
-  \tTransform .data*, .rodata* and .bss* sections to\n\
-  {either,lower,upper,none}.{bss,data,rodata}* sections\n\
-  --disable-sec-transformation\n\
-  \tDisable transformation of .{text,data,bss,rodata}* sections to\n\
-  \tadd the {either,lower,upper,none} prefixes\n"));
+  fprintf (file, _("  --code-region={either,lower,upper,none}\n\
+        Transform .text* sections to {either,lower,upper,none}.text* sections\n"));
+  fprintf (file, _("  --data-region={either,lower,upper,none}\n\
+        Transform .data*, .rodata* and .bss* sections to\n\
+        {either,lower,upper,none}.{bss,data,rodata}* sections\n"));
+  fprintf (file, _("  --disable-sec-transformation\n\
+        Disable transformation of .{text,data,bss,rodata}* sections to\n\
+        add the {either,lower,upper,none} prefixes\n"));
 }
 
 static bfd_boolean
@@ -509,14 +508,14 @@ gld${EMULATION_NAME}_handle_option (int optc)
 	code_region = REGION_NONE;
       else if (strlen (optarg) == 0)
 	{
-	  einfo (_("%P: --code-region requires an argument: \
-		   {upper,lower,either,none}\n"));
+	  einfo (_("%P: --code-region requires an argument: "
+		   "{upper,lower,either,none}\n"));
 	  return FALSE;
 	}
       else
 	{
-	  einfo (_("%P: error: unrecognized argument to --code-region= option: \
-		   \"%s\"\n"), optarg);
+	  einfo (_("%P: error: unrecognized argument to --code-region= option: "
+		   "\"%s\"\n"), optarg);
 	  return FALSE;
 	}
       break;
@@ -532,14 +531,14 @@ gld${EMULATION_NAME}_handle_option (int optc)
 	data_region = REGION_NONE;
       else if (strlen (optarg) == 0)
 	{
-	  einfo (_("%P: --data-region requires an argument: \
-		   {upper,lower,either,none}\n"));
+	  einfo (_("%P: --data-region requires an argument: "
+		   "{upper,lower,either,none}\n"));
 	  return FALSE;
 	}
       else
 	{
-	  einfo (_("%P: error: unrecognized argument to --data-region= option: \
-		   \"%s\"\n"), optarg);
+	  einfo (_("%P: error: unrecognized argument to --data-region= option: "
+		   "\"%s\"\n"), optarg);
 	  return FALSE;
 	}
       break;

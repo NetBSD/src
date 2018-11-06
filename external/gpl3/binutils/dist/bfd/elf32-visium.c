@@ -25,6 +25,7 @@
 #include "libbfd.h"
 #include "elf-bfd.h"
 #include "elf/visium.h"
+#include "libiberty.h"
 
 static bfd_reloc_status_type visium_elf_howto_parity_reloc
   (bfd *, arelent *, asymbol *, PTR, asection *, bfd *, char **);
@@ -458,8 +459,8 @@ visium_reloc_name_lookup (bfd *abfd ATTRIBUTE_UNUSED, const char *r_name)
 
 /* Set the howto pointer for a VISIUM ELF reloc.  */
 
-static void
-visium_info_to_howto_rela (bfd *abfd ATTRIBUTE_UNUSED, arelent *cache_ptr,
+static bfd_boolean
+visium_info_to_howto_rela (bfd *abfd, arelent *cache_ptr,
 			   Elf_Internal_Rela *dst)
 {
   unsigned int r_type = ELF32_R_TYPE (dst->r_info);
@@ -475,15 +476,18 @@ visium_info_to_howto_rela (bfd *abfd ATTRIBUTE_UNUSED, arelent *cache_ptr,
       break;
 
     default:
-      if (r_type >= (unsigned int) R_VISIUM_max)
+      if (r_type >= ARRAY_SIZE (visium_elf_howto_table))
 	{
 	  /* xgettext:c-format */
-	  _bfd_error_handler (_("%B: invalid Visium reloc number: %d"), abfd, r_type);
-	  r_type = 0;
+	  _bfd_error_handler (_("%pB: unsupported relocation type %#x"),
+			      abfd, r_type);
+	  bfd_set_error (bfd_error_bad_value);
+	  return FALSE;
 	}
       cache_ptr->howto = &visium_elf_howto_table[r_type];
       break;
     }
+  return TRUE;
 }
 
 /* Look through the relocs for a section during the first phase.
@@ -814,7 +818,7 @@ visium_elf_merge_private_bfd_data (bfd *ibfd, struct bfd_link_info *info)
       if (mismatch)
 	_bfd_error_handler
 	  /* xgettext:c-format */
-	  (_("%B: compiled %s -mtune=%s and linked with modules"
+	  (_("%pB: compiled %s -mtune=%s and linked with modules"
 	     " compiled %s -mtune=%s"),
 	   ibfd, new_opt_with, opt_arch, old_opt_with, opt_arch);
     }

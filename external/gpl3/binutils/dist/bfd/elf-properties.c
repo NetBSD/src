@@ -62,7 +62,7 @@ _bfd_elf_get_property (bfd *abfd, unsigned int type, unsigned int datasz)
   p = (elf_property_list *) bfd_alloc (abfd, sizeof (*p));
   if (p == NULL)
     {
-      _bfd_error_handler (_("%B: out of memory in _bfd_elf_get_property"),
+      _bfd_error_handler (_("%pB: out of memory in _bfd_elf_get_property"),
 			  abfd);
       _exit (EXIT_FAILURE);
     }
@@ -88,7 +88,7 @@ _bfd_elf_parse_gnu_properties (bfd *abfd, Elf_Internal_Note *note)
     {
 bad_size:
       _bfd_error_handler
-	(_("warning: %B: corrupt GNU_PROPERTY_TYPE (%ld) size: %#lx"),
+	(_("warning: %pB: corrupt GNU_PROPERTY_TYPE (%ld) size: %#lx"),
 	 abfd, note->type, note->descsz);
       return FALSE;
     }
@@ -109,7 +109,7 @@ bad_size:
       if (datasz > (size_t) (ptr_end - ptr))
 	{
 	  _bfd_error_handler
-	    (_("warning: %B: corrupt GNU_PROPERTY_TYPE (%ld) type (0x%x) datasz: 0x%x"),
+	    (_("warning: %pB: corrupt GNU_PROPERTY_TYPE (%ld) type (0x%x) datasz: 0x%x"),
 	     abfd, note->type, type, datasz);
 	  /* Clear all properties.  */
 	  elf_properties (abfd) = NULL;
@@ -148,7 +148,7 @@ bad_size:
 	      if (datasz != align_size)
 		{
 		  _bfd_error_handler
-		    (_("warning: %B: corrupt stack size: 0x%x"),
+		    (_("warning: %pB: corrupt stack size: 0x%x"),
 		     abfd, datasz);
 		  /* Clear all properties.  */
 		  elf_properties (abfd) = NULL;
@@ -166,7 +166,7 @@ bad_size:
 	      if (datasz != 0)
 		{
 		  _bfd_error_handler
-		    (_("warning: %B: corrupt no copy on protected size: 0x%x"),
+		    (_("warning: %pB: corrupt no copy on protected size: 0x%x"),
 		     abfd, datasz);
 		  /* Clear all properties.  */
 		  elf_properties (abfd) = NULL;
@@ -183,7 +183,7 @@ bad_size:
 	}
 
       _bfd_error_handler
-	(_("warning: %B: unsupported GNU_PROPERTY_TYPE (%ld) type: 0x%x"),
+	(_("warning: %pB: unsupported GNU_PROPERTY_TYPE (%ld) type: 0x%x"),
 	 abfd, note->type, type);
 
 next:

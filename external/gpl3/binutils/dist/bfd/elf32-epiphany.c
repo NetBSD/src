@@ -362,8 +362,8 @@ epiphany_elf_relax_section (bfd *abfd, asection *sec,
 
 /* Set the howto pointer for a EPIPHANY ELF reloc.  */
 
-static void
-epiphany_info_to_howto_rela (bfd * abfd ATTRIBUTE_UNUSED,
+static bfd_boolean
+epiphany_info_to_howto_rela (bfd * abfd,
 			     arelent * cache_ptr,
 			     Elf_Internal_Rela * dst)
 {
@@ -373,10 +373,13 @@ epiphany_info_to_howto_rela (bfd * abfd ATTRIBUTE_UNUSED,
   if (r_type >= (unsigned int) R_EPIPHANY_max)
     {
       /* xgettext:c-format */
-      _bfd_error_handler (_("%B: invalid Epiphany reloc number: %d"), abfd, r_type);
-      r_type = 0;
+      _bfd_error_handler (_("%pB: unsupported relocation type %#x"),
+			  abfd, r_type);
+      bfd_set_error (bfd_error_bad_value);
+      return FALSE;
     }
   cache_ptr->howto = & epiphany_elf_howto_table [r_type];
+  return TRUE;
 }
 
 /* Perform a single relocation.

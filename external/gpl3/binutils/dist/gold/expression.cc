@@ -206,6 +206,14 @@ class Symbol_expression : public Expression
   value(const Expression_eval_info*);
 
   void
+  set_expr_sym_in_real_elf(Symbol_table* symtab) const
+  {
+    Symbol* sym = symtab->lookup(this->name_.c_str());
+    if (sym != NULL)
+      sym->set_in_real_elf();
+  }
+
+  void
   print(FILE* f) const
   { fprintf(f, "%s", this->name_.c_str()); }
 
@@ -317,6 +325,10 @@ class Unary_expression : public Expression
   void
   arg_print(FILE* f) const
   { this->arg_->print(f); }
+
+  void
+  set_expr_sym_in_real_elf(Symbol_table* symtab) const
+  { return this->arg_->set_expr_sym_in_real_elf(symtab); }
 
  private:
   Expression* arg_;
@@ -435,6 +447,13 @@ class Binary_expression : public Expression
     fprintf(f, ", ");
     this->right_print(f);
     fprintf(f, ")");
+  }
+
+  void
+  set_expr_sym_in_real_elf(Symbol_table* symtab) const
+  {
+    this->left_->set_expr_sym_in_real_elf(symtab);
+    this->right_->set_expr_sym_in_real_elf(symtab);
   }
 
  private:
@@ -621,6 +640,14 @@ class Trinary_expression : public Expression
   void
   arg3_print(FILE* f) const
   { this->arg3_->print(f); }
+
+  void
+  set_expr_sym_in_real_elf(Symbol_table* symtab) const
+  {
+    this->arg1_->set_expr_sym_in_real_elf(symtab);
+    this->arg2_->set_expr_sym_in_real_elf(symtab);
+    this->arg3_->set_expr_sym_in_real_elf(symtab);
+  }
 
  private:
   Expression* arg1_;

@@ -97,10 +97,10 @@ extern reloc_howto_type *_bfd_sparc_elf_reloc_type_lookup
   (bfd *, bfd_reloc_code_real_type);
 extern reloc_howto_type *_bfd_sparc_elf_reloc_name_lookup
   (bfd *, const char *);
-extern void _bfd_sparc_elf_info_to_howto
+extern bfd_boolean _bfd_sparc_elf_info_to_howto
   (bfd *, arelent *, Elf_Internal_Rela *);
 extern reloc_howto_type *_bfd_sparc_elf_info_to_howto_ptr
-  (unsigned int);
+  (bfd*, unsigned int);
 extern bfd_boolean _bfd_sparc_elf_mkobject
   (bfd *);
 extern struct bfd_link_hash_table *_bfd_sparc_elf_link_hash_table_create

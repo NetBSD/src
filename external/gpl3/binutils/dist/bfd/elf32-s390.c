@@ -323,12 +323,13 @@ elf_s390_reloc_name_lookup (bfd *abfd ATTRIBUTE_UNUSED,
 /* We need to use ELF32_R_TYPE so we have our own copy of this function,
    and elf32-s390.c has its own copy.  */
 
-static void
-elf_s390_info_to_howto (bfd *abfd ATTRIBUTE_UNUSED,
+static bfd_boolean
+elf_s390_info_to_howto (bfd *abfd,
 			arelent *cache_ptr,
 			Elf_Internal_Rela *dst)
 {
   unsigned int r_type = ELF32_R_TYPE(dst->r_info);
+
   switch (r_type)
     {
     case R_390_GNU_VTINHERIT:
@@ -343,12 +344,15 @@ elf_s390_info_to_howto (bfd *abfd ATTRIBUTE_UNUSED,
       if (r_type >= sizeof (elf_howto_table) / sizeof (elf_howto_table[0]))
 	{
 	  /* xgettext:c-format */
-	  _bfd_error_handler (_("%B: invalid relocation type %d"),
-			      abfd, (int) r_type);
-	  r_type = R_390_NONE;
+	  _bfd_error_handler (_("%pB: unsupported relocation type %#x"),
+			      abfd, r_type);
+	  bfd_set_error (bfd_error_bad_value);
+	  return FALSE;
 	}
       cache_ptr->howto = &elf_howto_table[r_type];
     }
+
+  return TRUE;
 }
 
 /* A relocation function which doesn't do anything.  */
@@ -953,7 +957,7 @@ elf_s390_check_relocs (bfd *abfd,
       if (r_symndx >= NUM_SHDR_ENTRIES (symtab_hdr))
 	{
 	  /* xgettext:c-format */
-	  _bfd_error_handler (_("%B: bad symbol index: %d"),
+	  _bfd_error_handler (_("%pB: bad symbol index: %d"),
 			      abfd, r_symndx);
 	  return FALSE;
 	}
@@ -1181,7 +1185,7 @@ elf_s390_check_relocs (bfd *abfd,
 		{
 		  _bfd_error_handler
 		    /* xgettext:c-format */
-		    (_("%B: `%s' accessed both as normal and thread local symbol"),
+		    (_("%pB: `%s' accessed both as normal and thread local symbol"),
 		     abfd, h->root.root.string);
 		  return FALSE;
 		}
@@ -1848,7 +1852,7 @@ maybe_set_textrel (struct elf_link_hash_entry *h, void *info_p)
 
       info->flags |= DF_TEXTREL;
       info->callbacks->minfo
-	(_("%B: dynamic relocation against `%T' in read-only section `%A'\n"),
+	(_("%pB: dynamic relocation against `%pT' in read-only section `%pA'\n"),
 	 sec->owner, h->root.root.string, sec);
 
       /* Not an error, just cut short the traversal.  */
@@ -2134,10 +2138,10 @@ invalid_tls_insn (bfd *input_bfd,
   howto = elf_howto_table + ELF32_R_TYPE (rel->r_info);
   _bfd_error_handler
     /* xgettext:c-format */
-    (_("%B(%A+%#Lx): invalid instruction for TLS relocation %s"),
+    (_("%pB(%pA+%#" PRIx64 "): invalid instruction for TLS relocation %s"),
      input_bfd,
      input_section,
-     rel->r_offset,
+     (uint64_t) rel->r_offset,
      howto->name);
   bfd_set_error (bfd_error_bad_value);
 }
@@ -2601,6 +2605,9 @@ elf_s390_relocate_section (bfd *output_bfd,
 	case R_390_8:
 	case R_390_16:
 	case R_390_32:
+	  if ((input_section->flags & SEC_ALLOC) == 0)
+	    break;
+
 	  if (h != NULL
 	      && s390_is_ifunc_symbol_p (h)
 	      && h->def_regular)
@@ -2661,9 +2668,6 @@ elf_s390_relocate_section (bfd *output_bfd,
 		  continue;
 		}
 	    }
-
-	  if ((input_section->flags & SEC_ALLOC) == 0)
-	    break;
 
 	  if ((bfd_link_pic (info)
 	       && (h == NULL
@@ -3201,10 +3205,11 @@ elf_s390_relocate_section (bfd *output_bfd,
 				      rel->r_offset) != (bfd_vma) -1)
 	_bfd_error_handler
 	  /* xgettext:c-format */
-	  (_("%B(%A+%#Lx): unresolvable %s relocation against symbol `%s'"),
+	  (_("%pB(%pA+%#" PRIx64 "): "
+	     "unresolvable %s relocation against symbol `%s'"),
 	   input_bfd,
 	   input_section,
-	   rel->r_offset,
+	   (uint64_t) rel->r_offset,
 	   howto->name,
 	   h->root.root.string);
 
@@ -3258,9 +3263,9 @@ elf_s390_relocate_section (bfd *output_bfd,
 	    {
 	      _bfd_error_handler
 		/* xgettext:c-format */
-		(_("%B(%A+%#Lx): reloc against `%s': error %d"),
+		(_("%pB(%pA+%#" PRIx64 "): reloc against `%s': error %d"),
 		 input_bfd, input_section,
-		 rel->r_offset, name, (int) r);
+		 (uint64_t) rel->r_offset, name, (int) r);
 	      return FALSE;
 	    }
 	}
@@ -3937,7 +3942,7 @@ elf_s390_write_core_note (bfd *abfd, char *buf, int *bufsiz,
 
     case NT_PRPSINFO:
       {
-	char data[124] = { 0 };
+	char data[124] ATTRIBUTE_NONSTRING = { 0 };
 	const char *fname, *psargs;
 
 	va_start (ap, note_type);
@@ -3946,7 +3951,18 @@ elf_s390_write_core_note (bfd *abfd, char *buf, int *bufsiz,
 	va_end (ap);
 
 	strncpy (data + 28, fname, 16);
+#if GCC_VERSION == 8001
+	DIAGNOSTIC_PUSH;
+	/* GCC 8.1 warns about 80 equals destination size with
+	   -Wstringop-truncation:
+	   https://gcc.gnu.org/bugzilla/show_bug.cgi?id=85643
+	 */
+	DIAGNOSTIC_IGNORE_STRINGOP_TRUNCATION;
+#endif
 	strncpy (data + 44, psargs, 80);
+#if GCC_VERSION == 8001
+	DIAGNOSTIC_POP;
+#endif
 	return elfcore_write_note (abfd, buf, bufsiz, "CORE", note_type,
 				   &data, sizeof (data));
       }
@@ -4044,7 +4060,6 @@ elf32_s390_merge_private_bfd_data (bfd *ibfd, struct bfd_link_info *info)
 #define elf_backend_grok_psinfo		      elf_s390_grok_psinfo
 #define elf_backend_write_core_note	      elf_s390_write_core_note
 #define elf_backend_plt_sym_val		      elf_s390_plt_sym_val
-#define elf_backend_add_symbol_hook	      elf_s390_add_symbol_hook
 #define elf_backend_sort_relocs_p	      elf_s390_elf_sort_relocs_p
 
 #define bfd_elf32_mkobject		elf_s390_mkobject

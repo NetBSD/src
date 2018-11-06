@@ -829,7 +829,7 @@ xcoff_link_add_dynamic_symbols (bfd *abfd, struct bfd_link_info *info)
    if (info->output_bfd->xvec != abfd->xvec)
     {
       _bfd_error_handler
-	(_("%B: XCOFF shared object when not producing XCOFF output"),
+	(_("%pB: XCOFF shared object when not producing XCOFF output"),
 	 abfd);
       bfd_set_error (bfd_error_invalid_operation);
       return FALSE;
@@ -850,7 +850,7 @@ xcoff_link_add_dynamic_symbols (bfd *abfd, struct bfd_link_info *info)
   if (lsec == NULL)
     {
       _bfd_error_handler
-	(_("%B: dynamic object with no .loader section"),
+	(_("%pB: dynamic object with no .loader section"),
 	 abfd);
       bfd_set_error (bfd_error_no_symbols);
       return FALSE;
@@ -1410,7 +1410,7 @@ xcoff_link_add_symbols (bfd *abfd, struct bfd_link_info *info)
 		{
 		  _bfd_error_handler
 		    /* xgettext:c-format */
-		    (_("%B: `%s' has line numbers but no enclosing section"),
+		    (_("%pB: `%s' has line numbers but no enclosing section"),
 		     abfd, name);
 		  bfd_set_error (bfd_error_bad_value);
 		  goto error_return;
@@ -1463,7 +1463,7 @@ xcoff_link_add_symbols (bfd *abfd, struct bfd_link_info *info)
 	{
 	  _bfd_error_handler
 	    /* xgettext:c-format */
-	    (_("%B: class %d symbol `%s' has no aux entries"),
+	    (_("%pB: class %d symbol `%s' has no aux entries"),
 	     abfd, sym.n_sclass, name);
 	  bfd_set_error (bfd_error_bad_value);
 	  goto error_return;
@@ -1486,7 +1486,7 @@ xcoff_link_add_symbols (bfd *abfd, struct bfd_link_info *info)
 	default:
 	  _bfd_error_handler
 	    /* xgettext:c-format */
-	    (_("%B: symbol `%s' has unrecognized csect type %d"),
+	    (_("%pB: symbol `%s' has unrecognized csect type %d"),
 	     abfd, name, smtyp);
 	  bfd_set_error (bfd_error_bad_value);
 	  goto error_return;
@@ -1499,9 +1499,10 @@ xcoff_link_add_symbols (bfd *abfd, struct bfd_link_info *info)
 	    {
 	      _bfd_error_handler
 		/* xgettext:c-format */
-		(_("%B: bad XTY_ER symbol `%s': class %d scnum %d scnlen %Ld"),
+		(_("%pB: bad XTY_ER symbol `%s': class %d scnum %d "
+		   "scnlen %" PRId64),
 		 abfd, name, sym.n_sclass, sym.n_scnum,
-		 aux.x_csect.x_scnlen.l);
+		 (int64_t) aux.x_csect.x_scnlen.l);
 	      bfd_set_error (bfd_error_bad_value);
 	      goto error_return;
 	    }
@@ -1529,8 +1530,8 @@ xcoff_link_add_symbols (bfd *abfd, struct bfd_link_info *info)
 		{
 		  _bfd_error_handler
 		    /* xgettext:c-format */
-		    (_("%B: XMC_TC0 symbol `%s' is class %d scnlen %Ld"),
-		     abfd, name, sym.n_sclass, aux.x_csect.x_scnlen.l);
+		    (_("%pB: XMC_TC0 symbol `%s' is class %d scnlen %" PRId64),
+		     abfd, name, sym.n_sclass, (int64_t) aux.x_csect.x_scnlen.l);
 		  bfd_set_error (bfd_error_bad_value);
 		  goto error_return;
 		}
@@ -1676,7 +1677,7 @@ xcoff_link_add_symbols (bfd *abfd, struct bfd_link_info *info)
 	      {
 		_bfd_error_handler
 		  /* xgettext:c-format */
-		  (_("%B: csect `%s' not in enclosing section"),
+		  (_("%pB: csect `%s' not in enclosing section"),
 		   abfd, name);
 		bfd_set_error (bfd_error_bad_value);
 		goto error_return;
@@ -1784,7 +1785,7 @@ xcoff_link_add_symbols (bfd *abfd, struct bfd_link_info *info)
 	      {
 		_bfd_error_handler
 		  /* xgettext:c-format */
-		  (_("%B: misplaced XTY_LD `%s'"),
+		  (_("%pB: misplaced XTY_LD `%s'"),
 		   abfd, name);
 		bfd_set_error (bfd_error_bad_value);
 		goto error_return;
@@ -2105,8 +2106,8 @@ xcoff_link_add_symbols (bfd *abfd, struct bfd_link_info *info)
 		{
 		  _bfd_error_handler
 		    /* xgettext:c-format */
-		    (_("%B: reloc %s:%Ld not in csect"),
-		     abfd, o->name, i);
+		    (_("%pB: reloc %s:%" PRId64 " not in csect"),
+		     abfd, o->name, (int64_t) i);
 		  bfd_set_error (bfd_error_bad_value);
 		  goto error_return;
 		}
@@ -4059,7 +4060,7 @@ xcoff_create_ldrel (bfd *output_bfd, struct xcoff_final_link_info *flinfo,
 	{
 	  _bfd_error_handler
 	    /* xgettext:c-format */
-	    (_("%B: loader reloc in unrecognized section `%s'"),
+	    (_("%pB: loader reloc in unrecognized section `%s'"),
 	     reference_bfd, secname);
 	  bfd_set_error (bfd_error_nonrepresentable_section);
 	  return FALSE;
@@ -4071,7 +4072,7 @@ xcoff_create_ldrel (bfd *output_bfd, struct xcoff_final_link_info *flinfo,
 	{
 	  _bfd_error_handler
 	    /* xgettext:c-format */
-	    (_("%B: `%s' in loader reloc but not loader sym"),
+	    (_("%pB: `%s' in loader reloc but not loader sym"),
 	     reference_bfd, h->root.root.string);
 	  bfd_set_error (bfd_error_bad_value);
 	  return FALSE;
@@ -4088,7 +4089,7 @@ xcoff_create_ldrel (bfd *output_bfd, struct xcoff_final_link_info *flinfo,
     {
       _bfd_error_handler
 	/* xgettext:c-format */
-	(_("%B: loader reloc in read-only section %A"),
+	(_("%pB: loader reloc in read-only section %pA"),
 	 reference_bfd, output_section);
       bfd_set_error (bfd_error_invalid_operation);
       return FALSE;
@@ -5112,9 +5113,9 @@ xcoff_find_tc0 (bfd *output_bfd, struct xcoff_final_link_info *flinfo)
       if (best_address > toc_start + 0x8000)
 	{
 	  _bfd_error_handler
-	    (_("TOC overflow: %#Lx > 0x10000; try -mminimal-toc "
+	    (_("TOC overflow: %#" PRIx64 " > 0x10000; try -mminimal-toc "
 	       "when compiling"),
-	     toc_end - toc_start);
+	     (uint64_t) (toc_end - toc_start));
 	  bfd_set_error (bfd_error_file_too_big);
 	  return FALSE;
 	}

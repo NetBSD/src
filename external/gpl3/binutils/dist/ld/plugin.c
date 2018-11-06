@@ -243,7 +243,7 @@ plugin_opt_plugin (const char *plugin)
   newplug->name = plugin;
   newplug->dlhandle = dlopen (plugin, RTLD_NOW);
   if (!newplug->dlhandle)
-    einfo (_("%P%F: %s: error loading plugin: %s\n"), plugin, dlerror ());
+    einfo (_("%F%P: %s: error loading plugin: %s\n"), plugin, dlerror ());
 
   /* Check if plugin has been loaded already.  */
   while (curplug)
@@ -336,7 +336,7 @@ plugin_get_ir_dummy_bfd (const char *name, bfd *srctemplate)
 	}
     }
 report_error:
-  einfo (_("could not create dummy IR bfd: %F%E\n"));
+  einfo (_("%F%P: could not create dummy IR bfd: %E\n"));
   return NULL;
 }
 
@@ -424,11 +424,11 @@ asymbol_from_plugin_symbol (bfd *abfd, asymbol *asym,
       unsigned char visibility;
 
       if (!elfsym)
-	einfo (_("%P%F: %s: non-ELF symbol in ELF BFD!\n"), asym->name);
+	einfo (_("%F%P: %s: non-ELF symbol in ELF BFD!\n"), asym->name);
       switch (ldsym->visibility)
 	{
 	default:
-	  einfo (_("%P%F: unknown ELF symbol visibility: %d!\n"),
+	  einfo (_("%F%P: unknown ELF symbol visibility: %d!\n"),
 		 ldsym->visibility);
 	  return LDPS_ERR;
 
@@ -539,7 +539,7 @@ get_view (const void *handle, const void **viewp)
 
   /* FIXME: einfo should support %lld.  */
   if ((off_t) size != input->filesize)
-    einfo (_("%P%F: unsupported input file size: %s (%ld bytes)\n"),
+    einfo (_("%F%P: unsupported input file size: %s (%ld bytes)\n"),
 	   input->name, (long) input->filesize);
 
   /* Check the cached view buffer.  */
@@ -625,8 +625,6 @@ static inline bfd_boolean
 is_visible_from_outside (struct ld_plugin_symbol *lsym,
 			 struct bfd_link_hash_entry *blhe)
 {
-  struct bfd_sym_chain *sym;
-
   if (bfd_link_relocatable (&link_info))
     return TRUE;
   if (blhe->non_ir_ref_dynamic
@@ -657,11 +655,6 @@ is_visible_from_outside (struct ld_plugin_symbol *lsym,
       return (lsym->visibility == LDPV_DEFAULT
 	      || lsym->visibility == LDPV_PROTECTED);
     }
-
-  for (sym = &entry_symbol; sym != NULL; sym = sym->next)
-    if (sym->name
-	&& strcmp (sym->name, blhe->root.string) == 0)
-      return TRUE;
 
   return FALSE;
 }
@@ -723,7 +716,7 @@ get_symbols (const void *handle, int nsyms, struct ld_plugin_symbol *syms,
 	  && blhe->type != bfd_link_hash_common)
 	{
 	  /* We should not have a new, indirect or warning symbol here.  */
-	  einfo (_("%P%F: %s: plugin symbol table corrupt (sym type %d)\n"),
+	  einfo (_("%F%P: %s: plugin symbol table corrupt (sym type %d)\n"),
 		 called_plugin->name, blhe->type);
 	}
 
@@ -783,7 +776,7 @@ get_symbols (const void *handle, int nsyms, struct ld_plugin_symbol *syms,
     report_symbol:
       syms[n].resolution = res;
       if (report_plugin_symbols)
-	einfo (_("%P: %B: symbol `%s' "
+	einfo (_("%P: %pB: symbol `%s' "
 		 "definition: %d, visibility: %d, resolution: %d\n"),
 	       abfd, syms[n].name,
 	       syms[n].def, syms[n].visibility, res);
@@ -858,7 +851,7 @@ message (int level, const char *format, ...)
       break;
     case LDPL_WARNING:
       {
-	char *newfmt = concat ("%P: warning: ", format, "\n",
+	char *newfmt = concat (_("%P: warning: "), format, "\n",
 			       (const char *) NULL);
 	vfinfo (stdout, newfmt, args, TRUE);
 	free (newfmt);
@@ -868,8 +861,8 @@ message (int level, const char *format, ...)
     case LDPL_ERROR:
     default:
       {
-	char *newfmt = concat (level == LDPL_FATAL ? "%P%F" : "%P%X",
-			       ": error: ", format, "\n",
+	char *newfmt = concat (level == LDPL_FATAL ? "%F" : "%X",
+			       _("%P: error: "), format, "\n",
 			       (const char *) NULL);
 	fflush (stdout);
 	vfinfo (stderr, newfmt, args, TRUE);
@@ -1014,14 +1007,14 @@ plugin_load_plugins (void)
       if (!onloadfn)
 	onloadfn = (ld_plugin_onload) dlsym (curplug->dlhandle, "_onload");
       if (!onloadfn)
-	einfo (_("%P%F: %s: error loading plugin: %s\n"),
+	einfo (_("%F%P: %s: error loading plugin: %s\n"),
 	       curplug->name, dlerror ());
       set_tv_plugin_args (curplug, &my_tv[tv_header_size]);
       called_plugin = curplug;
       rv = (*onloadfn) (my_tv);
       called_plugin = NULL;
       if (rv != LDPS_OK)
-	einfo (_("%P%F: %s: plugin error: %d\n"), curplug->name, rv);
+	einfo (_("%F%P: %s: plugin error: %d\n"), curplug->name, rv);
       curplug = curplug->next;
     }
 
@@ -1053,14 +1046,10 @@ plugin_call_claim_file (const struct ld_plugin_input_file *file, int *claimed)
     {
       if (curplug->claim_file_handler)
 	{
-	  off_t cur_offset;
 	  enum ld_plugin_status rv;
 
 	  called_plugin = curplug;
-	  cur_offset = lseek (file->fd, 0, SEEK_CUR);
 	  rv = (*curplug->claim_file_handler) (file, claimed);
-	  if (!*claimed)
-	    lseek (file->fd, cur_offset, SEEK_SET);
 	  called_plugin = NULL;
 	  if (rv != LDPS_OK)
 	    set_plugin_error (curplug->name);
@@ -1080,7 +1069,7 @@ plugin_strdup (bfd *abfd, const char *str)
   strlength = strlen (str) + 1;
   copy = bfd_alloc (abfd, strlength);
   if (copy == NULL)
-    einfo (_("%P%F: plugin_strdup failed to allocate memory: %s\n"),
+    einfo (_("%F%P: plugin_strdup failed to allocate memory: %s\n"),
 	   bfd_get_error ());
   memcpy (copy, str, strlength);
   return copy;
@@ -1112,7 +1101,7 @@ plugin_object_p (bfd *ibfd)
 
   input = bfd_alloc (abfd, sizeof (*input));
   if (input == NULL)
-    einfo (_("%P%F: plugin failed to allocate memory for input: %s\n"),
+    einfo (_("%F%P: plugin failed to allocate memory for input: %s\n"),
 	   bfd_get_error ());
 
   if (!bfd_plugin_open_input (ibfd, &file))
@@ -1126,12 +1115,6 @@ plugin_object_p (bfd *ibfd)
     }
 
   file.handle = input;
-  /* The plugin API expects that the file descriptor won't be closed
-     and reused as done by the bfd file cache.  So dup one.  */
-  file.fd = dup (file.fd);
-  if (file.fd < 0)
-    return NULL;
-
   input->abfd = abfd;
   input->view_buffer.addr = NULL;
   input->view_buffer.filesize = 0;
@@ -1145,7 +1128,7 @@ plugin_object_p (bfd *ibfd)
   claimed = 0;
 
   if (plugin_call_claim_file (&file, &claimed))
-    einfo (_("%P%F: %s: plugin reported error claiming file\n"),
+    einfo (_("%F%P: %s: plugin reported error claiming file\n"),
 	   plugin_error_plugin ());
 
   if (input->fd != -1 && !bfd_plugin_target_p (ibfd->xvec))

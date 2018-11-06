@@ -8528,7 +8528,7 @@ pa_vtable_entry (int ignore ATTRIBUTE_UNUSED)
 {
   struct fix *new_fix;
 
-  new_fix = obj_elf_vtable_entry (0);
+  new_fix = obj_elf_get_vtable_entry ();
 
   if (new_fix)
     {
@@ -8549,7 +8549,7 @@ pa_vtable_inherit (int ignore ATTRIBUTE_UNUSED)
 {
   struct fix *new_fix;
 
-  new_fix = obj_elf_vtable_inherit (0);
+  new_fix = obj_elf_get_vtable_inherit ();
 
   if (new_fix)
     {

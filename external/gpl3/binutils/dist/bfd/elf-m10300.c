@@ -798,8 +798,8 @@ bfd_elf32_bfd_reloc_name_lookup (bfd *abfd ATTRIBUTE_UNUSED,
 
 /* Set the howto pointer for an MN10300 ELF reloc.  */
 
-static void
-mn10300_info_to_howto (bfd *abfd ATTRIBUTE_UNUSED,
+static bfd_boolean
+mn10300_info_to_howto (bfd *abfd,
 		       arelent *cache_ptr,
 		       Elf_Internal_Rela *dst)
 {
@@ -809,12 +809,13 @@ mn10300_info_to_howto (bfd *abfd ATTRIBUTE_UNUSED,
   if (r_type >= R_MN10300_MAX)
     {
       /* xgettext:c-format */
-      _bfd_error_handler (_("%B: unrecognised MN10300 reloc number: %d"),
+      _bfd_error_handler (_("%pB: unsupported relocation type %#x"),
 			  abfd, r_type);
       bfd_set_error (bfd_error_bad_value);
-      r_type = R_MN10300_NONE;
+      return FALSE;
     }
   cache_ptr->howto = elf_mn10300_howto_table + r_type;
+  return TRUE;
 }
 
 static int
@@ -1025,7 +1026,7 @@ mn10300_do_tls_transition (bfd *	 input_bfd,
     default:
       _bfd_error_handler
 	/* xgettext:c-format */
-	(_("%B: Unsupported transition from %s to %s"),
+	(_("%pB: unsupported transition from %s to %s"),
 	 input_bfd,
 	 elf_mn10300_howto_table[r_type].name,
 	 elf_mn10300_howto_table[tls_r_type].name);
@@ -1194,7 +1195,7 @@ mn10300_elf_check_relocs (bfd *abfd,
 		  else
 		    _bfd_error_handler
 		      /* xgettext:c-format */
-		      (_("%B: %s' accessed both as normal and thread local symbol"),
+		      (_("%pB: %s' accessed both as normal and thread local symbol"),
 		       abfd, h ? h->root.root.string : "<local>");
 		}
 
@@ -2090,10 +2091,11 @@ mn10300_elf_relocate_section (bfd *output_bfd,
 
 	    _bfd_error_handler
 	      /* xgettext:c-format */
-	      (_("%B(%A+%#Lx): unresolvable %s relocation against symbol `%s'"),
+	      (_("%pB(%pA+%#" PRIx64 "): "
+		 "unresolvable %s relocation against symbol `%s'"),
 	       input_bfd,
 	       input_section,
-	       rel->r_offset,
+	       (uint64_t) rel->r_offset,
 	       howto->name,
 	       h->root.root.root.string);
 	}
@@ -2155,7 +2157,7 @@ mn10300_elf_relocate_section (bfd *output_bfd,
 			" library (did you forget -fpic?)");
 	      else if (r_type == R_MN10300_GOT32)
 		/* xgettext:c-format */
-		msg = _("%B: taking the address of protected function"
+		msg = _("%pB: taking the address of protected function"
 			" '%s' cannot be done when making a shared library");
 	      else
 		msg = _("internal error: suspicious relocation type used"
@@ -5543,7 +5545,7 @@ mn10300_elf_mkobject (bfd *abfd)
 #endif
 
 #define elf_info_to_howto		mn10300_info_to_howto
-#define elf_info_to_howto_rel		0
+#define elf_info_to_howto_rel		NULL
 #define elf_backend_can_gc_sections	1
 #define elf_backend_rela_normal		1
 #define elf_backend_check_relocs	mn10300_elf_check_relocs
@@ -5574,8 +5576,7 @@ mn10300_elf_mkobject (bfd *abfd)
   _bfd_mn10300_elf_adjust_dynamic_symbol
 #define elf_backend_size_dynamic_sections \
   _bfd_mn10300_elf_size_dynamic_sections
-#define elf_backend_omit_section_dynsym \
-  ((bfd_boolean (*) (bfd *, struct bfd_link_info *, asection *)) bfd_true)
+#define elf_backend_omit_section_dynsym _bfd_elf_omit_section_dynsym_all
 #define elf_backend_finish_dynamic_symbol \
   _bfd_mn10300_elf_finish_dynamic_symbol
 #define elf_backend_finish_dynamic_sections \

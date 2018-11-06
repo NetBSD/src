@@ -182,6 +182,13 @@ _bfd_ecoff_new_section_hook (bfd *abfd, asection *section)
   return _bfd_generic_new_section_hook (abfd, section);
 }
 
+void
+_bfd_ecoff_set_alignment_hook (bfd *abfd ATTRIBUTE_UNUSED,
+			       asection *section ATTRIBUTE_UNUSED,
+			       void *scnhdr ATTRIBUTE_UNUSED)
+{
+}
+
 /* Determine the machine architecture and type.  This is called from
    the generic COFF routines.  It is the inverse of ecoff_get_magic,
    below.  This could be an ECOFF backend routine, with one version
@@ -961,7 +968,7 @@ _bfd_ecoff_slurp_symbol_table (bfd *abfd)
       bfd_get_symcount (abfd) = internal_ptr - internal;
       _bfd_error_handler
 	/* xgettext:c-format */
-	(_("%B: warning: isymMax (%ld) is greater than ifdMax (%ld)"),
+	(_("%pB: warning: isymMax (%ld) is greater than ifdMax (%ld)"),
 	 abfd, ecoff_data (abfd)->debug_info.symbolic_header.isymMax,
 	 ecoff_data (abfd)->debug_info.symbolic_header.ifdMax);
     }
@@ -1258,7 +1265,7 @@ ecoff_type_to_string (bfd *abfd, FDR *fdr, unsigned int indx)
       break;
 
     default:
-      sprintf (p1, _("Unknown basic type %d"), (int) basic_type);
+      sprintf (p1, _("unknown basic type %d"), (int) basic_type);
       break;
     }
 
@@ -2209,22 +2216,6 @@ _bfd_ecoff_set_section_contents (bfd *abfd,
     return FALSE;
 
   return TRUE;
-}
-
-/* Get the GP value for an ECOFF file.  This is a hook used by
-   nlmconv.  */
-
-bfd_vma
-bfd_ecoff_get_gp_value (bfd *abfd)
-{
-  if (bfd_get_flavour (abfd) != bfd_target_ecoff_flavour
-      || bfd_get_format (abfd) != bfd_object)
-    {
-      bfd_set_error (bfd_error_invalid_operation);
-      return 0;
-    }
-
-  return ecoff_data (abfd)->gp;
 }
 
 /* Set the GP value for an ECOFF file.  This is a hook used by the

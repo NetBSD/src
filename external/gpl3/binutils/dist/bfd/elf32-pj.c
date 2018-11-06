@@ -310,8 +310,8 @@ pj_elf_reloc_name_lookup (bfd *abfd ATTRIBUTE_UNUSED,
 
 /* Given an ELF reloc, fill in the howto field of a relent.  */
 
-static void
-pj_elf_info_to_howto (bfd *abfd ATTRIBUTE_UNUSED,
+static bfd_boolean
+pj_elf_info_to_howto (bfd *abfd,
 		      arelent *cache_ptr,
 		      Elf_Internal_Rela *dst)
 {
@@ -322,13 +322,14 @@ pj_elf_info_to_howto (bfd *abfd ATTRIBUTE_UNUSED,
   if (r >= R_PJ_max)
     {
       /* xgettext:c-format */
-      _bfd_error_handler (_("%B: unrecognised PicoJava reloc number: %d"),
+      _bfd_error_handler (_("%pB: unsupported relocation type %#x"),
 			  abfd, r);
       bfd_set_error (bfd_error_bad_value);
-      r = R_PJ_NONE;
+      return FALSE;
     }
 
   cache_ptr->howto = &pj_elf_howto_table[r];
+  return TRUE;
 }
 
 /* Take this moment to fill in the special picoJava bits in the

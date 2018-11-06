@@ -20,17 +20,16 @@
    02110-1301, USA.  */
 
 
-#include <config.h>
+#include "sysdep.h"
 
-#include <stdlib.h>
 #include <stdint.h>
-#include <string.h>
 #include <assert.h>
 
 #include "safe-ctype.h"
 #include "libiberty.h"
 #include "hashtab.h"
 #include "bfd.h"
+#include "opintl.h"
 
 #include "opcode/nds32.h"
 #include "nds32-asm.h"
@@ -1505,9 +1504,11 @@ build_opcode_syntax (struct nds32_opcode *opc)
 
       if (fd == NULL)
 	{
-	  fprintf (stderr, "Internal error: Unknown operand, %s\n", str);
+	  /* xgettext: c-format */
+	  opcodes_error_handler (_("internal error: unknown operand, %s"), str);
+	  abort ();
 	}
-      assert (fd && fidx >= 0 && fidx < (int) ARRAY_SIZE (operand_fields));
+      assert (fidx >= 0 && fidx < (int) ARRAY_SIZE (operand_fields));
       *plex |= LEX_SET_FIELD (fidx);
 
       str += len;
@@ -2057,14 +2058,16 @@ parse_operand (nds32_asm_desc_t *pdesc, nds32_asm_insn_t *pinsn,
 	    value = value & 0xfffff;
 	  break;
 	default:
-	  fprintf (stderr, "Internal error: Don't know how to handle "
-		   "parsing results.\n");
+	  /* xgettext: c-format */
+	  opcodes_error_handler (_("internal error: don't know how to handle "
+				   "parsing results"));
 	  abort ();
 	}
     }
   else
     {
-      fprintf (stderr, "Internal error: Unknown hardware resource.\n");
+      /* xgettext: c-format */
+      opcodes_error_handler (_("internal error: unknown hardware resource"));
       abort ();
     }
 

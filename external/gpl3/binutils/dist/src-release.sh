@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-#   Copyright (C) 1990-2017 Free Software Foundation
+#   Copyright (C) 1990-2018 Free Software Foundation
 #
 # This file is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -37,7 +37,7 @@ MAKEINFOFLAGS=--split-size=5000000
 #
 # Support for building net releases
 
-# Files in devo used in any net release.
+# Files in root used in any net release.
 DEVO_SUPPORT="README Makefile.in configure configure.ac \
 	config.guess config.sub config move-if-change \
 	COPYING COPYING.LIB install-sh config-ml.in symlink-tree \
@@ -46,7 +46,7 @@ DEVO_SUPPORT="README Makefile.in configure configure.ac \
 	Makefile.def Makefile.tpl src-release.sh config.rpath \
 	ChangeLog MAINTAINERS README-maintainer-mode \
 	lt~obsolete.m4 ltgcc.m4 depcomp mkdep compile \
-	COPYING3 COPYING3.LIB"
+	COPYING3 COPYING3.LIB test-driver ar-lib"
 
 # Files in devo/etc used in any net release.
 ETC_SUPPORT="Makefile.in configure configure.in standards.texi \
@@ -77,6 +77,10 @@ do_proto_toplev()
     ver=$2
     tool=$3
     support_files=$4
+
+    echo "==> Cleaning sources."
+    find \( -name "*.orig" -o  -name "*.rej" -o -name "*~" -o -name ".#*" -o -name "*~$bkpat" \) -exec rm {} \;
+    
     echo "==> Making $package-$ver/"
     # Take out texinfo from a few places.
     sed -e '/^all\.normal: /s/\all-texinfo //' \
@@ -93,8 +97,8 @@ do_proto_toplev()
 	    *) disables="$disables --disable-$dir" ;;
 	esac
     done
-    echo "==> configure --target=i386-pc-linux-gnu $disables $enables"
-    ./configure --target=i386-pc-linux-gnu $disables $enables
+    echo "==> configure --target=x86_64-pc-linux-gnu $disables $enables"
+    ./configure --quiet --target=x86_64-pc-linux-gnu $disables $enables
     $MAKE configure-host configure-target \
 	ALL_GCC="" ALL_GCC_C="" ALL_GCC_CXX="" \
 	CC_FOR_TARGET="$CC" CXX_FOR_TARGET="$CXX"

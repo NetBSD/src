@@ -72,7 +72,7 @@ ia64coff_object_p (bfd *abfd)
 {
 #ifdef COFF_IMAGE_WITH_PE
   {
-    struct external_PEI_DOS_hdr dos_hdr;
+    struct external_DOS_hdr dos_hdr;
     struct external_PEI_IMAGE_hdr image_hdr;
     file_ptr offset;
 
@@ -87,7 +87,7 @@ ia64coff_object_p (bfd *abfd)
 
     /* There are really two magic numbers involved; the magic number
        that says this is a NT executable (PEI) and the magic number
-       that determines the architecture.  The former is DOSMAGIC,
+       that determines the architecture.  The former is IMAGE_DOS_SIGNATURE,
        stored in the e_magic field.  The latter is stored in the
        f_magic field.  If the NT magic number isn't valid, the
        architecture magic number could be mimicked by some other
@@ -95,7 +95,7 @@ ia64coff_object_p (bfd *abfd)
        this routine can only be called correctly for a PEI file, check
        the e_magic number here, and, if it doesn't match, clobber the
        f_magic number so that we don't get a false match.  */
-    if (H_GET_16 (abfd, dos_hdr.e_magic) != DOSMAGIC)
+    if (H_GET_16 (abfd, dos_hdr.e_magic) != IMAGE_DOS_SIGNATURE)
       {
 	bfd_set_error (bfd_error_wrong_format);
 	return NULL;
@@ -149,9 +149,9 @@ const bfd_target
   BFD_ENDIAN_LITTLE,		/* data byte order is little */
   BFD_ENDIAN_LITTLE,		/* header byte order is little */
 
-  (HAS_RELOC | EXEC_P |		/* object flags */
-   HAS_LINENO | HAS_DEBUG |
-   HAS_SYMS | HAS_LOCALS | WP_TEXT | D_PAGED),
+  (HAS_RELOC | EXEC_P		/* object flags */
+   | HAS_LINENO | HAS_DEBUG
+   | HAS_SYMS | HAS_LOCALS | WP_TEXT | D_PAGED),
 
 #ifndef COFF_WITH_PE
   (SEC_HAS_CONTENTS | SEC_ALLOC | SEC_LOAD | SEC_RELOC /* section flags */
@@ -179,22 +179,34 @@ const bfd_target
      bfd_getl16, bfd_getl_signed_16, bfd_putl16, /* hdrs */
 
 /* Note that we allow an object file to be treated as a core file as well.  */
-    {_bfd_dummy_target, ia64coff_object_p, /* bfd_check_format */
-       bfd_generic_archive_p, ia64coff_object_p},
-    {bfd_false, coff_mkobject, _bfd_generic_mkarchive, /* bfd_set_format */
-       bfd_false},
-    {bfd_false, coff_write_object_contents, /* bfd_write_contents */
-       _bfd_write_archive_contents, bfd_false},
+  {				/* bfd_check_format */
+    _bfd_dummy_target,
+    ia64coff_object_p,
+    bfd_generic_archive_p,
+    ia64coff_object_p
+  },
+  {				/* bfd_set_format */
+    _bfd_bool_bfd_false_error,
+    coff_mkobject,
+    _bfd_generic_mkarchive,
+    _bfd_bool_bfd_false_error
+  },
+  {				/* bfd_write_contents */
+    _bfd_bool_bfd_false_error,
+    coff_write_object_contents,
+    _bfd_write_archive_contents,
+    _bfd_bool_bfd_false_error
+  },
 
-     BFD_JUMP_TABLE_GENERIC (coff),
-     BFD_JUMP_TABLE_COPY (coff),
-     BFD_JUMP_TABLE_CORE (_bfd_nocore),
-     BFD_JUMP_TABLE_ARCHIVE (_bfd_archive_coff),
-     BFD_JUMP_TABLE_SYMBOLS (coff),
-     BFD_JUMP_TABLE_RELOCS (coff),
-     BFD_JUMP_TABLE_WRITE (coff),
-     BFD_JUMP_TABLE_LINK (coff),
-     BFD_JUMP_TABLE_DYNAMIC (_bfd_nodynamic),
+  BFD_JUMP_TABLE_GENERIC (coff),
+  BFD_JUMP_TABLE_COPY (coff),
+  BFD_JUMP_TABLE_CORE (_bfd_nocore),
+  BFD_JUMP_TABLE_ARCHIVE (_bfd_archive_coff),
+  BFD_JUMP_TABLE_SYMBOLS (coff),
+  BFD_JUMP_TABLE_RELOCS (coff),
+  BFD_JUMP_TABLE_WRITE (coff),
+  BFD_JUMP_TABLE_LINK (coff),
+  BFD_JUMP_TABLE_DYNAMIC (_bfd_nodynamic),
 
   NULL,
 

@@ -32,7 +32,7 @@
 /* Relocation functions.  */
 static reloc_howto_type *bfd_elf32_bfd_reloc_type_lookup
   (bfd *, bfd_reloc_code_real_type);
-static void m68hc11_info_to_howto_rel
+static bfd_boolean m68hc11_info_to_howto_rel
   (bfd *, arelent *, Elf_Internal_Rela *);
 
 /* Trampoline generation.  */
@@ -497,8 +497,8 @@ bfd_elf32_bfd_reloc_name_lookup (bfd *abfd ATTRIBUTE_UNUSED,
 
 /* Set the howto pointer for an M68HC11 ELF reloc.  */
 
-static void
-m68hc11_info_to_howto_rel (bfd *abfd ATTRIBUTE_UNUSED,
+static bfd_boolean
+m68hc11_info_to_howto_rel (bfd *abfd,
 			   arelent *cache_ptr, Elf_Internal_Rela *dst)
 {
   unsigned int r_type;
@@ -507,10 +507,13 @@ m68hc11_info_to_howto_rel (bfd *abfd ATTRIBUTE_UNUSED,
   if (r_type >= (unsigned int) R_M68HC11_max)
     {
       /* xgettext:c-format */
-      _bfd_error_handler (_("%B: invalid M68HC12 reloc number: %d"), abfd, r_type);
-      r_type = 0;
+      _bfd_error_handler (_("%pB: unsupported relocation type %#x"),
+			  abfd, r_type);
+      bfd_set_error (bfd_error_bad_value);
+      return FALSE;
     }
   cache_ptr->howto = &elf_m68hc11_howto_table[r_type];
+  return TRUE;
 }
 
 
@@ -646,7 +649,7 @@ static const struct bfd_elf_special_section elf32_m68hc12_special_sections[] =
 #define TARGET_BIG_SYM		m68hc12_elf32_vec
 #define TARGET_BIG_NAME		"elf32-m68hc12"
 
-#define elf_info_to_howto	0
+#define elf_info_to_howto	NULL
 #define elf_info_to_howto_rel	m68hc11_info_to_howto_rel
 #define elf_backend_check_relocs     elf32_m68hc11_check_relocs
 #define elf_backend_relocate_section elf32_m68hc11_relocate_section

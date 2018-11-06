@@ -641,7 +641,7 @@ _bfd_cr16_elf_create_got_section (bfd * abfd, struct bfd_link_info * info)
 /* Retrieve a howto ptr using a BFD reloc_code.  */
 
 static reloc_howto_type *
-elf_cr16_reloc_type_lookup (bfd *abfd ATTRIBUTE_UNUSED,
+elf_cr16_reloc_type_lookup (bfd *abfd,
 			    bfd_reloc_code_real_type code)
 {
   unsigned int i;
@@ -650,7 +650,8 @@ elf_cr16_reloc_type_lookup (bfd *abfd ATTRIBUTE_UNUSED,
     if (code == cr16_reloc_map[i].bfd_reloc_enum)
       return &cr16_elf_howto_table[cr16_reloc_map[i].cr16_reloc_type];
 
-  _bfd_error_handler (_("Unsupported CR16 relocation type: 0x%x\n"), code);
+  _bfd_error_handler (_("%pB: unsupported relocation type %#x"),
+		      abfd, code);
   return NULL;
 }
 
@@ -670,8 +671,8 @@ elf_cr16_reloc_name_lookup (bfd *abfd ATTRIBUTE_UNUSED,
 
 /* Retrieve a howto ptr using an internal relocation entry.  */
 
-static void
-elf_cr16_info_to_howto (bfd *abfd ATTRIBUTE_UNUSED, arelent *cache_ptr,
+static bfd_boolean
+elf_cr16_info_to_howto (bfd *abfd, arelent *cache_ptr,
 			Elf_Internal_Rela *dst)
 {
   unsigned int r_type = ELF32_R_TYPE (dst->r_info);
@@ -679,12 +680,13 @@ elf_cr16_info_to_howto (bfd *abfd ATTRIBUTE_UNUSED, arelent *cache_ptr,
   if (r_type >= R_CR16_MAX)
     {
       /* xgettext:c-format */
-      _bfd_error_handler (_("%B: unrecognised CR16 reloc number: %d"),
+      _bfd_error_handler (_("%pB: unsupported relocation type %#x"),
 			  abfd, r_type);
       bfd_set_error (bfd_error_bad_value);
-      r_type = R_CR16_NONE;
+      return FALSE;
     }
   cache_ptr->howto = cr16_elf_howto_table + r_type;
+  return TRUE;
 }
 
 /* Look through the relocs for a section during the first phase.
@@ -2798,7 +2800,7 @@ bfd_cr16_elf32_create_embedded_relocs (bfd *abfd,
       if (!((ELF32_R_TYPE (irel->r_info) == (int) R_CR16_NUM32a)
 	  || (ELF32_R_TYPE (irel->r_info) == (int) R_CR16_NUM32)))
 	{
-	  *errmsg = _("unsupported reloc type");
+	  *errmsg = _("unsupported relocation type");
 	  bfd_set_error (bfd_error_bad_value);
 	  goto error_return;
 	}
@@ -2894,7 +2896,7 @@ _bfd_cr16_elf_reloc_type_class (const struct bfd_link_info *info ATTRIBUTE_UNUSE
 #define bfd_elf32_bfd_reloc_type_lookup	  elf_cr16_reloc_type_lookup
 #define bfd_elf32_bfd_reloc_name_lookup	  elf_cr16_reloc_name_lookup
 #define elf_info_to_howto		  elf_cr16_info_to_howto
-#define elf_info_to_howto_rel		  0
+#define elf_info_to_howto_rel		  NULL
 #define elf_backend_relocate_section	  elf32_cr16_relocate_section
 #define bfd_elf32_bfd_relax_section	  elf32_cr16_relax_section
 #define bfd_elf32_bfd_get_relocated_section_contents \
@@ -2921,8 +2923,7 @@ _bfd_cr16_elf_reloc_type_class (const struct bfd_link_info *info ATTRIBUTE_UNUSE
 				  _bfd_cr16_elf_adjust_dynamic_symbol
 #define elf_backend_size_dynamic_sections \
 				  _bfd_cr16_elf_size_dynamic_sections
-#define elf_backend_omit_section_dynsym \
-      ((bfd_boolean (*) (bfd *, struct bfd_link_info *, asection *)) bfd_true)
+#define elf_backend_omit_section_dynsym _bfd_elf_omit_section_dynsym_all
 #define elf_backend_finish_dynamic_symbol \
 				   _bfd_cr16_elf_finish_dynamic_symbol
 #define elf_backend_finish_dynamic_sections \

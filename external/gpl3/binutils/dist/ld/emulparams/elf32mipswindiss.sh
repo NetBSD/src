@@ -1,4 +1,5 @@
 TEMPLATE_NAME=elf32
+EXTRA_EM_FILE=mipself
 SCRIPT_NAME=elf
 OUTPUT_FORMAT="elf32-bigmips"
 BIG_OUTPUT_FORMAT="elf32-bigmips"

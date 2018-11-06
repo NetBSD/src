@@ -23,7 +23,7 @@ else
   unset SBSS_START_SYMBOLS
   unset SBSS_END_SYMBOLS
 fi
-OTHER_END_SYMBOLS="__end = .;"
+OTHER_END_SYMBOLS="${CREATE_SHLIB+PROVIDE (}__end = .${CREATE_SHLIB+)};"
 OTHER_RELRO_SECTIONS="
   .fixup        ${RELOCATING-0} : { *(.fixup) }
   .got1         ${RELOCATING-0} : { *(.got1) }

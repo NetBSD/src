@@ -336,12 +336,6 @@ COFF.
 ECOFF.
 @item bfd_target_elf_flavour
 ELF.
-@item bfd_target_ieee_flavour
-IEEE-695.
-@item bfd_target_nlm_flavour
-NLM.
-@item bfd_target_oasys_flavour
-OASYS.
 @item bfd_target_tekhex_flavour
 Tektronix hex format.
 @item bfd_target_srec_flavour
@@ -1104,34 +1098,9 @@ This file is the source for the generated files @file{elf32-target.h}
 and @file{elf64-target.h}, one of which is included by every ELF target.
 It defines the ELF target vector.
 
-@item freebsd.h
-@cindex @file{freebsd.h}
-Presumably intended to be included by all FreeBSD targets, but in fact
-there is only one such target, @samp{i386-freebsd}.  This defines a
-function used to set the right magic number for FreeBSD, as well as
-various macros, and includes @file{aout-target.h}.
-
 @item netbsd.h
 @cindex @file{netbsd.h}
-Like @file{freebsd.h}, except that there are several files which include
-it.
-
-@item nlm-target.h
-@cindex @file{nlm-target.h}
-Defines the target vector for a standard NLM target.
-
-@item nlmcode.h
-@cindex @file{nlmcode.h}
-Like @file{elfcode.h}, but for NLM targets.  This is only included by
-@file{nlm32.c} and @file{nlm64.c}, both of which define the macro
-@samp{ARCH_SIZE} to an appropriate value.  There are no 64 bit NLM
-targets anyhow, so this is sort of useless.
-
-@item nlmswap.h
-@cindex @file{nlmswap.h}
-Like @file{coffswap.h}, but for NLM targets.  This is included by each
-NLM target, but I think it winds up compiling to the exact same code for
-every target, and as such is fairly useless.
+Used by all netbsd aout targets.  Several other files include it.
 
 @item peicode.h
 @cindex @file{peicode.h}
@@ -1186,8 +1155,7 @@ address of the section contents.
 In general, relocations can be arbitrarily complex.  For example,
 relocations used in dynamic linking systems often require the linker to
 allocate space in a different section and use the offset within that
-section as the value to store.  In the IEEE object file format,
-relocations may involve arbitrary expressions.
+section as the value to store.
 
 When doing a relocatable link, the linker may or may not have to do
 anything with a relocation, depending upon the definition of the
@@ -1825,11 +1793,6 @@ information.  Normally produced by a linker.
 @item LMA
 Load Memory Address.  This is the address at which a section will be
 loaded.  Compare with VMA, below.
-
-@item NLM
-NetWare Loadable Module.  Used to describe the format of an object which
-be loaded into NetWare, which is some kind of PC based network server
-program.
 
 @item object file
 A binary file including machine instructions, symbols, and relocation

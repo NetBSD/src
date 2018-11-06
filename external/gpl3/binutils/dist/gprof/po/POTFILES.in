@@ -33,7 +33,6 @@ sym_ids.c
 sym_ids.h
 symtab.c
 symtab.h
-tahoe.c
 utils.c
 utils.h
 vax.c
