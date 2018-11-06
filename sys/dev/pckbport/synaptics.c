@@ -1,4 +1,4 @@
-/*	$NetBSD: synaptics.c,v 1.42 2018/07/14 00:47:33 maya Exp $	*/
+/*	$NetBSD: synaptics.c,v 1.43 2018/11/06 08:55:02 blymn Exp $	*/
 
 /*
  * Copyright (c) 2005, Steve C. Woodford
@@ -48,7 +48,7 @@
 #include "opt_pms.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: synaptics.c,v 1.42 2018/07/14 00:47:33 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: synaptics.c,v 1.43 2018/11/06 08:55:02 blymn Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1485,10 +1485,10 @@ synaptics_movement(struct synaptics_softc *sc, struct synaptics_packet *sp,
 	/*
 	 * Clamp deltas to specified maximums.
 	 */
-	if (dx > synaptics_max_speed_x)
-		dx = synaptics_max_speed_x;
-	if (dy > synaptics_max_speed_y)
-		dy = synaptics_max_speed_y;
+	if (abs(dx) > synaptics_max_speed_x)
+		dx = ((dx >= 0)? 1 : -1) * synaptics_max_speed_x;
+	if (abs(dy) > synaptics_max_speed_y)
+		dy = ((dy >= 0)? 1 : -1) * synaptics_max_speed_y;
 
 	*dxp = dx;
 	*dyp = dy;
