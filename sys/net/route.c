@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.194.6.11 2018/09/07 12:31:30 martin Exp $	*/
+/*	$NetBSD: route.c,v 1.194.6.12 2018/11/06 14:38:58 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.194.6.11 2018/09/07 12:31:30 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.194.6.12 2018/11/06 14:38:58 martin Exp $");
 
 #include <sys/param.h>
 #ifdef RTFLUSH_DEBUG
@@ -406,6 +406,11 @@ rt_ifa_connected(const struct rtentry *rt, const struct ifaddr *ifa)
 void
 rt_replace_ifa(struct rtentry *rt, struct ifaddr *ifa)
 {
+	struct ifaddr *old;
+
+	if (rt->rt_ifa == ifa)
+		return;
+
 	if (rt->rt_ifa &&
 	    rt->rt_ifa != ifa &&
 	    rt->rt_ifa->ifa_flags & IFA_ROUTE &&
@@ -424,8 +429,9 @@ rt_replace_ifa(struct rtentry *rt, struct ifaddr *ifa)
 	}
 
 	ifaref(ifa);
-	ifafree(rt->rt_ifa);
+	old = rt->rt_ifa;
 	rt_set_ifa1(rt, ifa);
+	ifafree(old);
 }
 
 static void
@@ -1236,7 +1242,7 @@ rtrequest1(int req, struct rt_addrinfo *info, struct rtentry **ret_nrt)
 		if (rt == NULL)
 			senderr(ENOBUFS);
 		memset(rt, 0, sizeof(*rt));
-		rt->rt_flags = RTF_UP | flags;
+		rt->rt_flags = RTF_UP | (flags & ~RTF_DONTCHANGEIFA);
 		LIST_INIT(&rt->rt_timer);
 
 		RT_DPRINTF("rt->_rt_key = %p\n", (void *)rt->_rt_key);
@@ -1599,7 +1605,7 @@ rtinit(struct ifaddr *ifa, int cmd, int flags)
 	}
 	memset(&info, 0, sizeof(info));
 	info.rti_ifa = ifa;
-	info.rti_flags = flags | ifa->ifa_flags;
+	info.rti_flags = flags | ifa->ifa_flags | RTF_DONTCHANGEIFA;
 	info.rti_info[RTAX_DST] = dst;
 	info.rti_info[RTAX_GATEWAY] = ifa->ifa_addr;
 
@@ -1630,40 +1636,7 @@ rtinit(struct ifaddr *ifa, int cmd, int flags)
 		rt_unref(rt);
 		break;
 	case RTM_ADD:
-		/*
-		 * XXX it looks just reverting rt_ifa replaced by ifa_rtrequest
-		 * called via rtrequest1. Can we just prevent the replacement
-		 * somehow and remove the following code? And also doesn't
-		 * calling ifa_rtrequest(RTM_ADD) replace rt_ifa again?
-		 */
-		if (rt->rt_ifa != ifa) {
-			printf("rtinit: wrong ifa (%p) was (%p)\n", ifa,
-				rt->rt_ifa);
-#ifdef NET_MPSAFE
-			KASSERT(!cpu_softintr_p());
-
-			error = rt_update_prepare(rt);
-			if (error == 0) {
-#endif
-				if (rt->rt_ifa->ifa_rtrequest != NULL) {
-					rt->rt_ifa->ifa_rtrequest(RTM_DELETE,
-					    rt, &info);
-				}
-				rt_replace_ifa(rt, ifa);
-				rt->rt_ifp = ifa->ifa_ifp;
-				if (ifa->ifa_rtrequest != NULL)
-					ifa->ifa_rtrequest(RTM_ADD, rt, &info);
-#ifdef NET_MPSAFE
-				rt_update_finish(rt);
-			} else {
-				/*
-				 * If error != 0, the rtentry is being
-				 * destroyed, so doing nothing doesn't
-				 * matter.
-				 */
-			}
-#endif
-		}
+		KASSERT(rt->rt_ifa == ifa);
 		rt_newmsg(cmd, rt);
 		rt_unref(rt);
 		RT_REFCNT_TRACE(rt);
@@ -1695,17 +1668,16 @@ rt_ifa_addlocal(struct ifaddr *ifa)
 		struct rtentry *nrt;
 
 		memset(&info, 0, sizeof(info));
-		info.rti_flags = RTF_HOST | RTF_LOCAL;
+		info.rti_flags = RTF_HOST | RTF_LOCAL | RTF_DONTCHANGEIFA;
 		info.rti_info[RTAX_DST] = ifa->ifa_addr;
 		info.rti_info[RTAX_GATEWAY] =
 		    (const struct sockaddr *)ifa->ifa_ifp->if_sadl;
 		info.rti_ifa = ifa;
 		nrt = NULL;
 		e = rtrequest1(RTM_ADD, &info, &nrt);
-		if (nrt && ifa != nrt->rt_ifa)
-			rt_replace_ifa(nrt, ifa);
 		rt_newaddrmsg(RTM_ADD, ifa, e, nrt);
 		if (nrt != NULL) {
+			KASSERT(nrt->rt_ifa == ifa);
 #ifdef RT_DEBUG
 			dump_rt(nrt);
 #endif
@@ -1758,7 +1730,21 @@ rt_ifa_remlocal(struct ifaddr *ifa, struct ifaddr *alt_ifa)
 			}
 			rt_newaddrmsg(RTM_DELADDR, ifa, 0, NULL);
 		} else {
+#ifdef NET_MPSAFE
+			int error = rt_update_prepare(rt);
+			if (error == 0) {
+				rt_replace_ifa(rt, alt_ifa);
+				rt_update_finish(rt);
+			} else {
+				/*
+				 * If error != 0, the rtentry is being
+				 * destroyed, so doing nothing doesn't
+				 * matter.
+				 */
+			}
+#else
 			rt_replace_ifa(rt, alt_ifa);
+#endif
 			rt_newmsg(RTM_CHANGE, rt);
 		}
 	} else
