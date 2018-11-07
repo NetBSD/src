@@ -129,7 +129,7 @@
 .\" ========================================================================
 .\"
 .IX Title "AS 1"
-.TH AS 1 "2018-01-27" "binutils-2.30" "GNU Development Tools"
+.TH AS 1 "2018-06-24" "binutils-2.30.90" "GNU Development Tools"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -156,6 +156,7 @@ as [\fB\-a\fR[\fBcdghlns\fR][=\fIfile\fR]] [\fB\-\-alternate\fR] [\fB\-D\fR]
  [\fB\-Z\fR] [\fB@\fR\fI\s-1FILE\s0\fR]
  [\fB\-\-sectname\-subst\fR] [\fB\-\-size\-check=[error|warning]\fR]
  [\fB\-\-elf\-stt\-common=[no|yes]\fR]
+ [\fB\-\-generate\-missing\-build\-notes=[no|yes]\fR]
  [\fB\-\-target\-help\fR] [\fItarget-options\fR]
  [\fB\-\-\fR|\fIfiles\fR ...]
 .SH "TARGET"
@@ -217,11 +218,6 @@ as [\fB\-a\fR[\fBcdghlns\fR][=\fIfile\fR]] [\fB\-\-alternate\fR] [\fB\-D\fR]
 \&\fITarget i386 options:\fR
    [\fB\-\-32\fR|\fB\-\-x32\fR|\fB\-\-64\fR] [\fB\-n\fR]
    [\fB\-march\fR=\fI\s-1CPU\s0\fR[+\fI\s-1EXTENSION\s0\fR...]] [\fB\-mtune\fR=\fI\s-1CPU\s0\fR]
-.PP
-\&\fITarget i960 options:\fR
-   [\fB\-ACA\fR|\fB\-ACA_A\fR|\fB\-ACB\fR|\fB\-ACC\fR|\fB\-AKA\fR|\fB\-AKB\fR|
-    \fB\-AKC\fR|\fB\-AMC\fR]
-   [\fB\-b\fR] [\fB\-no\-relax\fR]
 .PP
 \&\fITarget \s-1IA\-64\s0 options:\fR
    [\fB\-mconstant\-gp\fR|\fB\-mauto\-pic\fR]
@@ -289,6 +285,8 @@ as [\fB\-a\fR[\fBcdghlns\fR][=\fIfile\fR]] [\fB\-\-alternate\fR] [\fB\-D\fR]
    [\fB\-mxpa\fR] [\fB\-mno\-xpa\fR]
    [\fB\-mmt\fR] [\fB\-mno\-mt\fR]
    [\fB\-mmcu\fR] [\fB\-mno\-mcu\fR]
+   [\fB\-mcrc\fR] [\fB\-mno\-crc\fR]
+   [\fB\-mginv\fR] [\fB\-mno\-ginv\fR]
    [\fB\-minsn32\fR] [\fB\-mno\-insn32\fR]
    [\fB\-mfix7000\fR] [\fB\-mno\-fix7000\fR]
    [\fB\-mfix\-rm7000\fR] [\fB\-mno\-fix\-rm7000\fR]
@@ -642,6 +640,16 @@ Issue an error or warning for invalid \s-1ELF\s0 .size directive.
 These options control whether the \s-1ELF\s0 assembler should generate common
 symbols with the \f(CW\*(C`STT_COMMON\*(C'\fR type.  The default can be controlled
 by a configure option \fB\-\-enable\-elf\-stt\-common\fR.
+.IP "\fB\-\-generate\-missing\-build\-notes=yes\fR" 4
+.IX Item "--generate-missing-build-notes=yes"
+.PD 0
+.IP "\fB\-\-generate\-missing\-build\-notes=no\fR" 4
+.IX Item "--generate-missing-build-notes=no"
+.PD
+These options control whether the \s-1ELF\s0 assembler should generate \s-1GNU\s0 Build
+attribute notes if none are present in the input sources.
+The default can be controlled by the \fB\-\-enable\-generate\-build\-notes\fR
+configure option.
 .IP "\fB\-\-help\fR" 4
 .IX Item "--help"
 Print a summary of the command line options and exit.
@@ -778,6 +786,7 @@ on the target processor.  The following processor names are recognized:
 \&\f(CW\*(C`cortex\-a72\*(C'\fR,
 \&\f(CW\*(C`cortex\-a73\*(C'\fR,
 \&\f(CW\*(C`cortex\-a75\*(C'\fR,
+\&\f(CW\*(C`cortex\-a76\*(C'\fR,
 \&\f(CW\*(C`exynos\-m1\*(C'\fR,
 \&\f(CW\*(C`falkor\*(C'\fR,
 \&\f(CW\*(C`qdf24xx\*(C'\fR,
@@ -1117,6 +1126,7 @@ processor names are recognized:
 \&\f(CW\*(C`bdver3\*(C'\fR,
 \&\f(CW\*(C`bdver4\*(C'\fR,
 \&\f(CW\*(C`znver1\*(C'\fR,
+\&\f(CW\*(C`znver2\*(C'\fR,
 \&\f(CW\*(C`btver1\*(C'\fR,
 \&\f(CW\*(C`btver2\*(C'\fR,
 \&\f(CW\*(C`generic32\*(C'\fR and
@@ -1170,6 +1180,8 @@ accept various extension mnemonics.  For example,
 \&\f(CW\*(C`clflushopt\*(C'\fR,
 \&\f(CW\*(C`se1\*(C'\fR,
 \&\f(CW\*(C`clwb\*(C'\fR,
+\&\f(CW\*(C`movdiri\*(C'\fR,
+\&\f(CW\*(C`movdir64b\*(C'\fR,
 \&\f(CW\*(C`avx512f\*(C'\fR,
 \&\f(CW\*(C`avx512cd\*(C'\fR,
 \&\f(CW\*(C`avx512er\*(C'\fR,
@@ -1223,6 +1235,10 @@ accept various extension mnemonics.  For example,
 \&\f(CW\*(C`clflush\*(C'\fR,
 \&\f(CW\*(C`mwaitx\*(C'\fR,
 \&\f(CW\*(C`clzero\*(C'\fR,
+\&\f(CW\*(C`wbnoinvd\*(C'\fR,
+\&\f(CW\*(C`pconfig\*(C'\fR,
+\&\f(CW\*(C`waitpkg\*(C'\fR,
+\&\f(CW\*(C`cldemote\*(C'\fR,
 \&\f(CW\*(C`lwp\*(C'\fR,
 \&\f(CW\*(C`fma4\*(C'\fR,
 \&\f(CW\*(C`xop\*(C'\fR,
@@ -1406,19 +1422,18 @@ with 01, 10 and 11 \s-1RC\s0 bits, respectively.
 .PD
 This option specifies that the assembler should accept only \s-1AMD64\s0 or
 Intel64 \s-1ISA\s0 in 64\-bit mode.  The default is to accept both.
-.PP
-The following options are available when as is configured for the
-Intel 80960 processor.
-.IP "\fB\-ACA | \-ACA_A | \-ACB | \-ACC | \-AKA | \-AKB | \-AKC | \-AMC\fR" 4
-.IX Item "-ACA | -ACA_A | -ACB | -ACC | -AKA | -AKB | -AKC | -AMC"
-Specify which variant of the 960 architecture is the target.
-.IP "\fB\-b\fR" 4
-.IX Item "-b"
-Add code to collect statistics about branches taken.
-.IP "\fB\-no\-relax\fR" 4
-.IX Item "-no-relax"
-Do not alter compare-and-branch instructions for long displacements;
-error if necessary.
+.IP "\fB\-O0 | \-O | \-O1 | \-O2 | \-Os\fR" 4
+.IX Item "-O0 | -O | -O1 | -O2 | -Os"
+Optimize instruction encoding with smaller instruction size.  \fB\-O\fR
+and \fB\-O1\fR encode 64\-bit register load instructions with 64\-bit
+immediate as 32\-bit register load instructions with 31\-bit or 32\-bits
+immediates and encode 64\-bit register clearing instructions with 32\-bit
+register clearing instructions.  \fB\-O2\fR includes \fB\-O1\fR
+optimization plus encodes 256\-bit and 512\-bit vector register clearing
+instructions with 128\-bit vector register clearing instructions.
+\&\fB\-Os\fR includes \fB\-O2\fR optimization plus encodes 16\-bit, 32\-bit
+and 64\-bit register tests with immediate as 8\-bit register test with
+immediate.  \fB\-O0\fR turns off this optimization.
 .PP
 The following options are available when as is configured for the
 Ubicom \s-1IP2K\s0 series.
@@ -1786,6 +1801,24 @@ This tells the assembler to accept \s-1MT\s0 instructions.
 Generate code for the \s-1MCU\s0 Application Specific Extension.
 This tells the assembler to accept \s-1MCU\s0 instructions.
 \&\fB\-mno\-mcu\fR turns off this option.
+.IP "\fB\-mcrc\fR" 4
+.IX Item "-mcrc"
+.PD 0
+.IP "\fB\-mno\-crc\fR" 4
+.IX Item "-mno-crc"
+.PD
+Generate code for the \s-1MIPS\s0 cyclic redundancy check (\s-1CRC\s0) Application
+Specific Extension.  This tells the assembler to accept \s-1CRC\s0 instructions.
+\&\fB\-mno\-crc\fR turns off this option.
+.IP "\fB\-mginv\fR" 4
+.IX Item "-mginv"
+.PD 0
+.IP "\fB\-mno\-ginv\fR" 4
+.IX Item "-mno-ginv"
+.PD
+Generate code for the Global INValidate (\s-1GINV\s0) Application Specific
+Extension.  This tells the assembler to accept \s-1GINV\s0 instructions.
+\&\fB\-mno\-ginv\fR turns off this option.
 .IP "\fB\-minsn32\fR" 4
 .IX Item "-minsn32"
 .PD 0
@@ -2194,7 +2227,15 @@ Select the base isa, as specified by \s-1ISA.\s0  For example \-march=rv32ima.
 Selects the \s-1ABI,\s0 which is either \*(L"ilp32\*(R" or \*(L"lp64\*(R", optionally followed
 by \*(L"f\*(R", \*(L"d\*(R", or \*(L"q\*(R" to indicate single-precision, double-precision, or
 quad-precision floating-point calling convention, or none to indicate
-the soft-float calling convention.
+the soft-float calling convention.  Also, \*(L"ilp32\*(R" can optionally be followed
+by \*(L"e\*(R" to indicate the \s-1RVE ABI,\s0 which is always soft-float.
+.IP "\fB\-mrelax\fR" 4
+.IX Item "-mrelax"
+Take advantage of linker relaxations to reduce the number of instructions
+required to materialize symbol addresses. (default)
+.IP "\fB\-mno\-relax\fR" 4
+.IX Item "-mno-relax"
+Don't do linker relaxations.
 .PP
 See the info pages for documentation of the RX-specific options.
 .PP

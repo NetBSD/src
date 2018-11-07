@@ -96,7 +96,7 @@ map_over_list (bfd *arch, void (*function) (bfd *, bfd *), struct list *list)
 static void
 ar_directory_doer (bfd *abfd, bfd *ignore ATTRIBUTE_UNUSED)
 {
-  print_arelt_descr(outfile, abfd, verbose);
+  print_arelt_descr(outfile, abfd, verbose, FALSE);
 }
 
 void

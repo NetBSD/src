@@ -757,6 +757,13 @@ _bfd_generic_get_elt_at_index (bfd *abfd, symindex sym_index)
   return _bfd_get_elt_at_filepos (abfd, entry->file_offset);
 }
 
+bfd *
+_bfd_noarchive_get_elt_at_index (bfd *abfd,
+				 symindex sym_index ATTRIBUTE_UNUSED)
+{
+  return (bfd *) _bfd_ptr_bfd_null_error (abfd);
+}
+
 /*
 FUNCTION
 	bfd_openr_next_archived_file
@@ -829,6 +836,13 @@ bfd_generic_openr_next_archived_file (bfd *archive, bfd *last_file)
   return _bfd_get_elt_at_filepos (archive, filestart);
 }
 
+bfd *
+_bfd_noarchive_openr_next_archived_file (bfd *archive,
+					 bfd *last_file ATTRIBUTE_UNUSED)
+{
+  return (bfd *) _bfd_ptr_bfd_null_error (archive);
+}
+
 const bfd_target *
 bfd_generic_archive_p (bfd *abfd)
 {
@@ -846,7 +860,6 @@ bfd_generic_archive_p (bfd *abfd)
   bfd_is_thin_archive (abfd) = (strncmp (armag, ARMAGT, SARMAG) == 0);
 
   if (strncmp (armag, ARMAG, SARMAG) != 0
-      && strncmp (armag, ARMAGB, SARMAG) != 0
       && ! bfd_is_thin_archive (abfd))
     {
       bfd_set_error (bfd_error_wrong_format);
@@ -1041,21 +1054,6 @@ do_slurp_coff_armap (bfd *abfd)
   nsymz = bfd_getb32 (int_buf);
   stringsize = parsed_size - (4 * nsymz) - 4;
 
-  /* ... except that some archive formats are broken, and it may be our
-     fault - the i960 little endian coff sometimes has big and sometimes
-     little, because our tools changed.  Here's a horrible hack to clean
-     up the crap.  */
-
-  if (stringsize > 0xfffff
-      && bfd_get_arch (abfd) == bfd_arch_i960
-      && bfd_get_flavour (abfd) == bfd_target_coff_flavour)
-    {
-      /* This looks dangerous, let's do it the other way around.  */
-      nsymz = bfd_getl32 (int_buf);
-      stringsize = parsed_size - (4 * nsymz) - 4;
-      swap = bfd_getl32;
-    }
-
   /* The coff armap must be read sequentially.  So we construct a
      bsd-style one in core all at once, for simplicity.  */
 
@@ -1194,115 +1192,6 @@ bfd_slurp_armap (bfd *abfd)
     }
 
   bfd_has_map (abfd) = FALSE;
-  return TRUE;
-}
-
-/* Returns FALSE on error, TRUE otherwise.  */
-/* Flavor 2 of a bsd armap, similar to bfd_slurp_bsd_armap except the
-   header is in a slightly different order and the map name is '/'.
-   This flavour is used by hp300hpux.  */
-
-#define HPUX_SYMDEF_COUNT_SIZE 2
-
-bfd_boolean
-bfd_slurp_bsd_armap_f2 (bfd *abfd)
-{
-  struct areltdata *mapdata;
-  char nextname[17];
-  unsigned int counter;
-  bfd_byte *raw_armap, *rbase;
-  struct artdata *ardata = bfd_ardata (abfd);
-  char *stringbase;
-  unsigned int stringsize;
-  unsigned int left;
-  bfd_size_type amt;
-  carsym *set;
-  int i = bfd_bread (nextname, 16, abfd);
-
-  if (i == 0)
-    return TRUE;
-  if (i != 16)
-    return FALSE;
-
-  /* The archive has at least 16 bytes in it.  */
-  if (bfd_seek (abfd, (file_ptr) -16, SEEK_CUR) != 0)
-    return FALSE;
-
-  if (CONST_STRNEQ (nextname, "__.SYMDEF       ")
-      || CONST_STRNEQ (nextname, "__.SYMDEF/      ")) /* Old Linux archives.  */
-    return do_slurp_bsd_armap (abfd);
-
-  if (! CONST_STRNEQ (nextname, "/               "))
-    {
-      bfd_has_map (abfd) = FALSE;
-      return TRUE;
-    }
-
-  mapdata = (struct areltdata *) _bfd_read_ar_hdr (abfd);
-  if (mapdata == NULL)
-    return FALSE;
-
-  if (mapdata->parsed_size < HPUX_SYMDEF_COUNT_SIZE + BSD_STRING_COUNT_SIZE)
-    {
-      free (mapdata);
-    wrong_format:
-      bfd_set_error (bfd_error_wrong_format);
-    byebye:
-      return FALSE;
-    }
-  left = mapdata->parsed_size - HPUX_SYMDEF_COUNT_SIZE - BSD_STRING_COUNT_SIZE;
-
-  amt = mapdata->parsed_size;
-  free (mapdata);
-
-  raw_armap = (bfd_byte *) bfd_zalloc (abfd, amt);
-  if (raw_armap == NULL)
-    goto byebye;
-
-  if (bfd_bread (raw_armap, amt, abfd) != amt)
-    {
-      if (bfd_get_error () != bfd_error_system_call)
-	bfd_set_error (bfd_error_malformed_archive);
-      goto byebye;
-    }
-
-  ardata->symdef_count = H_GET_16 (abfd, raw_armap);
-
-  ardata->cache = 0;
-
-  stringsize = H_GET_32 (abfd, raw_armap + HPUX_SYMDEF_COUNT_SIZE);
-  if (stringsize > left)
-    goto wrong_format;
-  left -= stringsize;
-
-  /* Skip sym count and string sz.  */
-  stringbase = ((char *) raw_armap
-		+ HPUX_SYMDEF_COUNT_SIZE
-		+ BSD_STRING_COUNT_SIZE);
-  rbase = (bfd_byte *) stringbase + stringsize;
-  amt = ardata->symdef_count * BSD_SYMDEF_SIZE;
-  if (amt > left)
-    goto wrong_format;
-
-  ardata->symdefs = (struct carsym *) bfd_alloc (abfd, amt);
-  if (!ardata->symdefs)
-    return FALSE;
-
-  for (counter = 0, set = ardata->symdefs;
-       counter < ardata->symdef_count;
-       counter++, set++, rbase += BSD_SYMDEF_SIZE)
-    {
-      set->name = H_GET_32 (abfd, rbase) + stringbase;
-      set->file_offset = H_GET_32 (abfd, rbase + BSD_SYMDEF_OFFSET_SIZE);
-    }
-
-  ardata->first_file_filepos = bfd_tell (abfd);
-  /* Pad to an even boundary if you have to.  */
-  ardata->first_file_filepos += (ardata->first_file_filepos) % 2;
-  /* FIXME, we should provide some way to free raw_ardata when
-     we are done using the strings from it.  For now, it seems
-     to be allocated on an objalloc anyway...  */
-  bfd_has_map (abfd) = TRUE;
   return TRUE;
 }
 
@@ -1597,6 +1486,15 @@ _bfd_archive_coff_construct_extended_name_table (bfd *abfd,
 {
   *name = "//";
   return _bfd_construct_extended_name_table (abfd, TRUE, tabloc, tablen);
+}
+
+bfd_boolean
+_bfd_noarchive_construct_extended_name_table (bfd *abfd ATTRIBUTE_UNUSED,
+					      char **tabloc ATTRIBUTE_UNUSED,
+					      bfd_size_type *len ATTRIBUTE_UNUSED,
+					      const char **name ATTRIBUTE_UNUSED)
+{
+  return TRUE;
 }
 
 /* Follows archive_head and produces an extended name table if
@@ -1897,6 +1795,12 @@ _bfd_bsd44_write_ar_hdr (bfd *archive, bfd *abfd)
     }
   return TRUE;
 }
+
+bfd_boolean
+_bfd_noarchive_write_ar_hdr (bfd *archive, bfd *abfd ATTRIBUTE_UNUSED)
+{
+  return _bfd_bool_bfd_false_error (archive);
+}
 
 /* A couple of functions for creating ar_hdrs.  */
 
@@ -2167,6 +2071,13 @@ bfd_gnu_truncate_arname (bfd *abfd, const char *pathname, char *arhdr)
   if (length < 16)
     (hdr->ar_name)[length] = ar_padchar (abfd);
 }
+
+void
+_bfd_noarchive_truncate_arname (bfd *abfd ATTRIBUTE_UNUSED,
+				const char *pathname ATTRIBUTE_UNUSED,
+				char *arhdr ATTRIBUTE_UNUSED)
+{
+}
 
 /* The BFD is open for write and has its format set to bfd_archive.  */
 
@@ -2326,7 +2237,7 @@ _bfd_write_archive_contents (bfd *arch)
 	  if (bfd_update_armap_timestamp (arch))
 	    break;
 	  _bfd_error_handler
-	    (_("Warning: writing archive was slow: rewriting timestamp\n"));
+	    (_("warning: writing archive was slow: rewriting timestamp"));
 	}
       while (++tries < 6);
     }
@@ -2442,7 +2353,7 @@ _bfd_compute_and_write_armap (bfd *arch, unsigned int elength)
 				     + (syms[src_count]->name[2] == '_'),
 				     "__gnu_lto_slim") == 0)
 			_bfd_error_handler
-			  (_("%B: plugin needed to handle lto object"),
+			  (_("%pB: plugin needed to handle lto object"),
 			   current);
 		      namelen = strlen (syms[src_count]->name);
 		      amt = sizeof (char *);
@@ -2863,6 +2774,17 @@ _bfd_coff_write_armap (bfd *arch,
 	return FALSE;
     }
 
+  return TRUE;
+}
+
+bfd_boolean
+_bfd_noarchive_write_armap
+    (bfd *arch ATTRIBUTE_UNUSED,
+     unsigned int elength ATTRIBUTE_UNUSED,
+     struct orl *map ATTRIBUTE_UNUSED,
+     unsigned int orl_count ATTRIBUTE_UNUSED,
+     int stridx ATTRIBUTE_UNUSED)
+{
   return TRUE;
 }
 
