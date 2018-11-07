@@ -1,4 +1,4 @@
-/* $NetBSD: t_sin.c,v 1.5 2018/11/07 03:59:36 riastradh Exp $ */
+/* $NetBSD: t_sin.c,v 1.6 2018/11/07 04:00:13 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -33,12 +33,6 @@
 #include <atf-c.h>
 #include <float.h>
 #include <math.h>
-
-#if defined(__i386__) || defined(__x86_64__)
-const int TRIG_BUSTED = 1;
-#else
-const int TRIG_BUSTED = 0;
-#endif
 
 static const struct {
 	int		angle;
@@ -93,19 +87,11 @@ ATF_TC_BODY(sin_angles, tc)
 			ok = (fabs((sin(theta) - sin_theta)/sin_theta) <= eps);
 		}
 
-		if (TRIG_BUSTED &&
-		    sin_theta != 0 &&
-		    fabs(sin_theta) < 2*DBL_EPSILON)
-			atf_tc_expect_fail("sin near +/- pi is busted");
 		if (!ok) {
 			atf_tc_fail_nonfatal("sin(%d deg = %.17g) = %.17g"
 			    " != %.17g",
 			    deg, theta, sin(theta), sin_theta);
 		}
-		if (TRIG_BUSTED &&
-		    sin_theta != 0 &&
-		    fabs(sin_theta) < 2*DBL_EPSILON)
-			atf_tc_expect_pass();
 	}
 }
 

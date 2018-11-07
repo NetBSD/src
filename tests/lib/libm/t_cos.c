@@ -1,4 +1,4 @@
-/* $NetBSD: t_cos.c,v 1.5 2018/11/07 03:59:36 riastradh Exp $ */
+/* $NetBSD: t_cos.c,v 1.6 2018/11/07 04:00:13 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -33,12 +33,6 @@
 #include <atf-c.h>
 #include <float.h>
 #include <math.h>
-
-#if defined(__i386__) || defined(__x86_64__)
-const int TRIG_BUSTED = 1;
-#else
-const int TRIG_BUSTED = 0;
-#endif
 
 static const struct {
 	int		angle;
@@ -86,15 +80,11 @@ ATF_TC_BODY(cos_angles, tc)
 		double cos_theta = angles[i].y;
 
 		assert(cos_theta != 0);
-		if (TRIG_BUSTED && fabs(cos_theta) < 2*DBL_EPSILON)
-			atf_tc_expect_fail("cos near +/-pi/2 is busted");
 		if (!(fabs((cos(theta) - cos_theta)/cos_theta) <= eps)) {
 			atf_tc_fail_nonfatal("cos(%d deg = %.17g) = %.17g"
 			    " != %.17g",
 			    deg, theta, cos(theta), cos_theta);
 		}
-		if (TRIG_BUSTED && fabs(cos_theta) < 2*DBL_EPSILON)
-			atf_tc_expect_pass();
 	}
 }
 

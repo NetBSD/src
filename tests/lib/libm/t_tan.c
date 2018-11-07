@@ -1,4 +1,4 @@
-/* $NetBSD: t_tan.c,v 1.6 2018/11/07 03:59:36 riastradh Exp $ */
+/* $NetBSD: t_tan.c,v 1.7 2018/11/07 04:00:13 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -34,12 +34,6 @@
 #include <float.h>
 #include <math.h>
 
-#if defined(__i386__) || defined(__x86_64__)
-const int TRIG_BUSTED = 1;
-#else
-const int TRIG_BUSTED = 0;
-#endif
-
 static const struct {
 	int		angle;
 	double		x;
@@ -52,7 +46,7 @@ static const struct {
 	{    0,  0.000000000000000,  0.0000000000000000, 999 },
 	{   30,  0.5235987755982988, 0.57735026918962573, 999 },
 	{   45,  0.785398163397448,  0.9999999999999992, 999 },
-	{   60,  1.047197551196598,  1.7320508075688785, 999 },
+	{   60,  1.047197551196598,  1.7320508075688785,  1.7320509 },
 	{  120,  2.094395102393195, -1.7320508075688801, -1.7320505 },
 	{  135,  2.356194490192345, -1.0000000000000002, 999 },
 	{  150,  2.617993877991494, -0.57735026918962629, -0.57735032 },
@@ -89,19 +83,11 @@ ATF_TC_BODY(tan_angles, tc)
 			ok = (fabs((tan(theta) - tan_theta)/tan_theta) <= eps);
 		}
 
-		if (TRIG_BUSTED &&
-		    tan_theta != 0 &&
-		    fabs(tan_theta) < 2*DBL_EPSILON)
-			atf_tc_expect_fail("tan near +/- pi is busted");
 		if (!ok) {
 			atf_tc_fail_nonfatal("tan(%d deg = %.17g) = %.17g"
 			    " != %.17g",
 			    deg, theta, tan(theta), tan_theta);
 		}
-		if (TRIG_BUSTED &&
-		    tan_theta != 0 &&
-		    fabs(tan_theta) < 2*DBL_EPSILON)
-			atf_tc_expect_pass();
 	}
 }
 
