@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_subr.c,v 1.7 2018/10/22 20:13:47 jdolecek Exp $	*/
+/*	$NetBSD: ata_subr.c,v 1.8 2018/11/07 17:05:54 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata_subr.c,v 1.7 2018/10/22 20:13:47 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata_subr.c,v 1.8 2018/11/07 17:05:54 jdolecek Exp $");
 
 #include "opt_ata.h"
 
@@ -363,6 +363,9 @@ uint32_t
 ata_queue_active(struct ata_channel *chp)
 {
 	struct ata_queue *chq = chp->ch_queue;
+
+	if (chp->ch_flags & ATACH_DETACHED)
+		return 0;
 
 	return chq->active_xfers_used;
 }
